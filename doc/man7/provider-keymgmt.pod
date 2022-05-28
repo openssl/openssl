@@ -46,9 +46,9 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  const char *OSSL_FUNC_keymgmt_query_operation_name(int operation_id);
 
  /* Key object import and export functions */
- int OSSL_FUNC_keymgmt_import(int selection, void *keydata, const OSSL_PARAM params[]);
+ int OSSL_FUNC_keymgmt_import(void *keydata, int selection, const OSSL_PARAM params[]);
  const OSSL_PARAM *OSSL_FUNC_keymgmt_import_types(int selection);
- int OSSL_FUNC_keymgmt_export(int selection, void *keydata,
+ int OSSL_FUNC_keymgmt_export(void *keydata, int selection,
                               OSSL_CALLBACK *param_cb, void *cbarg);
  const OSSL_PARAM *OSSL_FUNC_keymgmt_export_types(int selection);
 
