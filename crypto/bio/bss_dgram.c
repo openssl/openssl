@@ -1037,6 +1037,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     } break;
 
     default:
+        ERR_raise_data(ERR_LIB_BIO, ERR_R_UNSUPPORTED, "cmd=%d", cmd);
         ret = 0;
         break;
     }

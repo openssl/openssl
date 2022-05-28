@@ -326,19 +326,22 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_SET_CLOSE:
         b->shutdown = (int)num;
         break;
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
     case BIO_CTRL_WPENDING:
+    case BIO_CTRL_GET_INDENT:
+    case BIO_CTRL_SET_INDENT:
         ret = 0L;
         break;
     case BIO_CTRL_PENDING:
         ret = (long)bm->length;
         break;
-    case BIO_CTRL_PUSH:
-    case BIO_CTRL_POP:
     case BIO_CTRL_DUP:
     case BIO_CTRL_FLUSH:
         break;
 
     default:
+        ERR_raise_data(ERR_LIB_BIO, ERR_R_UNSUPPORTED, "cmd=%d", cmd);
         ret = 0;
         break;
     }

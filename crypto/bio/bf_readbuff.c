@@ -202,7 +202,9 @@ static long readbuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DUP:
     case BIO_CTRL_FLUSH:
         break;
+
     default:
+        ERR_raise_data(ERR_LIB_BIO, ERR_R_UNSUPPORTED, "cmd=%d", cmd);
         ret = 0;
         break;
     }
