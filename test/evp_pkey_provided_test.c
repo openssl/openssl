@@ -398,7 +398,7 @@ static int test_fromdata_rsa(void)
 
         if (!TEST_int_gt(EVP_PKEY_check(key_ctx), 0)
             || !TEST_int_gt(EVP_PKEY_public_check(key_ctx), 0)
-            || !TEST_true(EVP_PKEY_private_check(key_ctx))
+            || !TEST_int_gt(EVP_PKEY_private_check(key_ctx), 0)
             || !TEST_int_gt(EVP_PKEY_pairwise_check(key_ctx), 0))
             goto err;
 
@@ -662,7 +662,7 @@ static int test_fromdata_dh_named_group(void)
 
         if (!TEST_int_gt(EVP_PKEY_check(key_ctx), 0)
             || !TEST_int_gt(EVP_PKEY_public_check(key_ctx), 0)
-            || !TEST_true(EVP_PKEY_private_check(key_ctx))
+            || !TEST_int_gt(EVP_PKEY_private_check(key_ctx), 0)
             || !TEST_int_gt(EVP_PKEY_pairwise_check(key_ctx), 0))
             goto err;
         EVP_PKEY_CTX_free(key_ctx);
@@ -843,7 +843,7 @@ static int test_fromdata_dh_fips186_4(void)
 
         if (!TEST_int_gt(EVP_PKEY_check(key_ctx), 0)
             || !TEST_int_gt(EVP_PKEY_public_check(key_ctx), 0)
-            || !TEST_true(EVP_PKEY_private_check(key_ctx))
+            || !TEST_int_gt(EVP_PKEY_private_check(key_ctx), 0)
             || !TEST_int_gt(EVP_PKEY_pairwise_check(key_ctx), 0))
             goto err;
         EVP_PKEY_CTX_free(key_ctx);
@@ -1114,7 +1114,7 @@ static int test_fromdata_ecx(int tst)
         } else {
             /* The private key check should fail if there is only a public key */
             if (!TEST_int_gt(EVP_PKEY_public_check(ctx2), 0)
-                || !TEST_false(EVP_PKEY_private_check(ctx2))
+                || !TEST_int_le(EVP_PKEY_private_check(ctx2), 0)
                 || !TEST_int_le(EVP_PKEY_check(ctx2), 0))
                 goto err;
         }
@@ -1608,7 +1608,7 @@ static int test_fromdata_dsa_fips186_4(void)
 
         if (!TEST_int_gt(EVP_PKEY_check(key_ctx), 0)
             || !TEST_int_gt(EVP_PKEY_public_check(key_ctx), 0)
-            || !TEST_true(EVP_PKEY_private_check(key_ctx))
+            || !TEST_int_gt(EVP_PKEY_private_check(key_ctx), 0)
             || !TEST_int_gt(EVP_PKEY_pairwise_check(key_ctx), 0))
             goto err;
         EVP_PKEY_CTX_free(key_ctx);
@@ -1662,7 +1662,7 @@ static int test_check_dsa(void)
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "DSA", NULL))
         || !TEST_int_le(EVP_PKEY_check(ctx), 0)
         || !TEST_int_le(EVP_PKEY_public_check(ctx), 0)
-        || !TEST_false(EVP_PKEY_private_check(ctx))
+        || !TEST_int_le(EVP_PKEY_private_check(ctx), 0)
         || !TEST_int_le(EVP_PKEY_pairwise_check(ctx), 0))
        goto err;
 
