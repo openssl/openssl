@@ -329,7 +329,7 @@ int dhparam_main(int argc, char **argv)
             BIO_printf(bio_err, "Error, failed to check DH parameters\n");
             goto end;
         }
-        if (!EVP_PKEY_param_check(ctx)) {
+        if (EVP_PKEY_param_check(ctx) <= 0) {
             BIO_printf(bio_err, "Error, invalid parameters generated\n");
             goto end;
         }
