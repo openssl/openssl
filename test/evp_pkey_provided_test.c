@@ -399,7 +399,7 @@ static int test_fromdata_rsa(void)
         if (!TEST_int_gt(EVP_PKEY_check(key_ctx), 0)
             || !TEST_true(EVP_PKEY_public_check(key_ctx))
             || !TEST_true(EVP_PKEY_private_check(key_ctx))
-            || !TEST_true(EVP_PKEY_pairwise_check(key_ctx)))
+            || !TEST_int_gt(EVP_PKEY_pairwise_check(key_ctx), 0))
             goto err;
 
         /* EVP_PKEY_copy_parameters() should fail for RSA */
@@ -663,7 +663,7 @@ static int test_fromdata_dh_named_group(void)
         if (!TEST_int_gt(EVP_PKEY_check(key_ctx), 0)
             || !TEST_true(EVP_PKEY_public_check(key_ctx))
             || !TEST_true(EVP_PKEY_private_check(key_ctx))
-            || !TEST_true(EVP_PKEY_pairwise_check(key_ctx)))
+            || !TEST_int_gt(EVP_PKEY_pairwise_check(key_ctx), 0))
             goto err;
         EVP_PKEY_CTX_free(key_ctx);
         key_ctx = NULL;
@@ -844,7 +844,7 @@ static int test_fromdata_dh_fips186_4(void)
         if (!TEST_int_gt(EVP_PKEY_check(key_ctx), 0)
             || !TEST_true(EVP_PKEY_public_check(key_ctx))
             || !TEST_true(EVP_PKEY_private_check(key_ctx))
-            || !TEST_true(EVP_PKEY_pairwise_check(key_ctx)))
+            || !TEST_int_gt(EVP_PKEY_pairwise_check(key_ctx), 0))
             goto err;
         EVP_PKEY_CTX_free(key_ctx);
         key_ctx = NULL;
@@ -1609,7 +1609,7 @@ static int test_fromdata_dsa_fips186_4(void)
         if (!TEST_int_gt(EVP_PKEY_check(key_ctx), 0)
             || !TEST_true(EVP_PKEY_public_check(key_ctx))
             || !TEST_true(EVP_PKEY_private_check(key_ctx))
-            || !TEST_true(EVP_PKEY_pairwise_check(key_ctx)))
+            || !TEST_int_gt(EVP_PKEY_pairwise_check(key_ctx), 0))
             goto err;
         EVP_PKEY_CTX_free(key_ctx);
         key_ctx = NULL;
@@ -1663,7 +1663,7 @@ static int test_check_dsa(void)
         || !TEST_int_le(EVP_PKEY_check(ctx), 0)
         || !TEST_false(EVP_PKEY_public_check(ctx))
         || !TEST_false(EVP_PKEY_private_check(ctx))
-        || !TEST_false(EVP_PKEY_pairwise_check(ctx)))
+        || !TEST_int_le(EVP_PKEY_pairwise_check(ctx), 0))
        goto err;
 
     ret = 1;
