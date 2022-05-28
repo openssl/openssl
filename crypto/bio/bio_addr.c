@@ -238,18 +238,19 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
             } else
 # endif
             {
-#if !defined(_WIN32_WCE)
+# if !defined(_WIN32_WCE)
                 ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB, gai_strerror(ret));
-#else
+# else
                 wchar_t *wstr_error = gai_strerrorW(ret);
                 size_t length = wcslen(wstr_error) + 1;
                 char *str_error = OPENSSL_malloc(length);
+
                 if (str_error != NULL) {
                     wcstombs(str_error, wstr_error, length);
                     ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB, str_error);
                     OPENSSL_free(str_error);
                 }
-#endif
+# endif
             }
             return 0;
         }
@@ -758,21 +759,22 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                 goto retry;
             }
 # endif
-#if !defined(_WIN32_WCE)
+# if !defined(_WIN32_WCE)
             ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB,
                            gai_strerror(old_ret ? old_ret : gai_ret));
-#else
+# else
             {
                 wchar_t *wstr_error = gai_strerrorW(old_ret ? old_ret : gai_ret);
                 size_t length = wcslen(wstr_error) + 1;
                 char *str_error = OPENSSL_malloc(length);
+
                 if (str_error != NULL) {
                     wcstombs(str_error, wstr_error, length);
                     ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB, str_error);
                     OPENSSL_free(str_error);
                 }
             }
-#endif
+# endif
             break;
         }
     } else {
