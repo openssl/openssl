@@ -529,7 +529,7 @@ int ocsp_main(int argc, char **argv)
             break;
         case OPT_MULTI:
 #ifdef HTTP_DAEMON
-            multi = atoi(opt_arg());
+            n_responders = atoi(opt_arg());
 #endif
             break;
         case OPT_PROV_CASES:
@@ -633,7 +633,7 @@ int ocsp_main(int argc, char **argv)
     }
 
 #ifdef HTTP_DAEMON
-    if (multi != 0 && acbio != NULL)
+    if (n_responders != 0 && acbio != NULL)
         spawn_loop(prog);
     if (acbio != NULL && req_timeout > 0)
         signal(SIGALRM, socket_timeout);

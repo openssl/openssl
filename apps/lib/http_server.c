@@ -41,7 +41,7 @@ static int verbosity = LOG_INFO;
 
 #ifdef HTTP_DAEMON
 
-int multi = 0; /* run multiple responder processes, set by ocsp.c */
+int n_responders = 0; /* run multiple responder processes, set by ocsp.c */
 int acfd = (int) INVALID_SOCKET;
 
 static int print_syslog(const char *str, size_t len, void *levPtr)
@@ -91,7 +91,7 @@ void trace_log_message(int category,
         return;
     }
 #ifdef HTTP_DAEMON
-    if (multi != 0) {
+    if (n_responders != 0) {
         vsyslog(level, fmt, ap);
         if (level <= LOG_ERR)
             ERR_print_errors_cb(print_syslog, &level);
@@ -119,7 +119,7 @@ static void killall(int ret, pid_t *kidpids)
 {
     int i;
 
-    for (i = 0; i < multi; ++i)
+    for (i = 0; i < n_responders; ++i)
         if (kidpids[i] != 0)
             (void)kill(kidpids[i], SIGTERM);
     OPENSSL_free(kidpids);
@@ -153,8 +153,8 @@ void spawn_loop(const char *prog)
                strerror(errno));
         exit(1);
     }
-    kidpids = app_malloc(multi * sizeof(*kidpids), "child PID array");
-    for (i = 0; i < multi; ++i)
+    kidpids = app_malloc(n_responders * sizeof(*kidpids), "child PID array");
+    for (i = 0; i < n_responders; ++i)
         kidpids[i] = 0;
 
     signal(SIGINT, noteterm);
@@ -167,7 +167,7 @@ void spawn_loop(const char *prog)
          * Wait for a child to replace when we're at the limit.
          * Slow down if a child exited abnormally or waitpid() < 0
          */
-        while (termsig == 0 && procs >= multi) {
+        while (termsig == 0 && procs >= n_responders) {
             if ((fpid = waitpid(-1, &status, 0)) > 0) {
                 for (i = 0; i < procs; ++i) {
                     if (kidpids[i] == fpid) {
@@ -176,7 +176,7 @@ void spawn_loop(const char *prog)
                         break;
                     }
                 }
-                if (i >= multi) {
+                if (i >= n_responders) {
                     syslog(LOG_ERR, "fatal: internal error: "
                            "no matching child slot for pid: %ld",
                            (long)fpid);
@@ -221,14 +221,14 @@ void spawn_loop(const char *prog)
             }
             return;
         default:            /* parent */
-            for (i = 0; i < multi; ++i) {
+            for (i = 0; i < n_responders; ++i) {
                 if (kidpids[i] == 0) {
                     kidpids[i] = fpid;
                     procs++;
                     break;
                 }
             }
-            if (i >= multi) {
+            if (i >= n_responders) {
                 syslog(LOG_ERR, "fatal: internal error: no free child slots");
                 killall(1, kidpids);
             }
