@@ -230,7 +230,7 @@ int ec_main(int argc, char **argv)
             BIO_printf(bio_err, "unable to check EC key\n");
             goto end;
         }
-        if (!EVP_PKEY_check(pctx))
+        if (EVP_PKEY_check(pctx) <= 0)
             BIO_printf(bio_err, "EC Key Invalid!\n");
         else
             BIO_printf(bio_err, "EC Key valid.\n");
