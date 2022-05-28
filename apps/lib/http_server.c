@@ -24,6 +24,7 @@
 #include <openssl/trace.h>
 #include <openssl/rand.h>
 #include "s_apps.h"
+#include "log.h"
 
 #if defined(__TANDEM)
 # if defined(OPENSSL_TANDEM_FLOSS)
@@ -31,75 +32,11 @@
 # endif
 #endif
 
-static int verbosity = LOG_INFO;
-
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
 #define HTTP_PREFIX_VERSION HTTP_PREFIX""HTTP_VERSION_PATT
 #define HTTP_1_0 HTTP_PREFIX_VERSION"0" /* "HTTP/1.0" */
 #define HTTP_VERSION_STR " "HTTP_PREFIX_VERSION
-
-#ifdef HTTP_DAEMON
-
-int n_responders = 0; /* run multiple responder processes, set by ocsp.c */
-int acfd = (int) INVALID_SOCKET;
-
-static int print_syslog(const char *str, size_t len, void *levPtr)
-{
-    int level = *(int *)levPtr;
-    int ilen = len > MAXERRLEN ? MAXERRLEN : len;
-
-    syslog(level, "%.*s", ilen, str);
-
-    return ilen;
-}
-#endif
-
-static void log_with_prefix(const char *prog, const char *fmt, va_list ap)
-{
-    char prefix[80];
-    BIO *bio, *pre = BIO_new(BIO_f_prefix());
-
-    (void)snprintf(prefix, sizeof(prefix), "%s: ", prog);
-    (void)BIO_set_prefix(pre, prefix);
-    bio = BIO_push(pre, bio_err);
-    (void)BIO_vprintf(bio, fmt, ap);
-    (void)BIO_printf(bio, "\n");
-    (void)BIO_flush(bio);
-    (void)BIO_pop(pre);
-    BIO_free(pre);
-}
-
-void trace_log_message(int category,
-                       const char *prog, int level, const char *fmt, ...)
-{
-    va_list ap;
-
-    va_start(ap, fmt);
-    if (category >= 0 && OSSL_trace_enabled(category)) {
-        va_list ap_copy;
-        BIO *out = OSSL_trace_begin(category);
-
-        va_copy(ap_copy, ap);
-        (void)BIO_vprintf(out, fmt, ap_copy);
-        (void)BIO_printf(out, "\n");
-        va_end(ap_copy);
-        OSSL_trace_end(category, out);
-    }
-    if (verbosity < level) {
-        va_end(ap);
-        return;
-    }
-#ifdef HTTP_DAEMON
-    if (n_responders != 0) {
-        vsyslog(level, fmt, ap);
-        if (level <= LOG_ERR)
-            ERR_print_errors_cb(print_syslog, &level);
-    } else
-#endif
-    log_with_prefix(prog, fmt, ap);
-    va_end(ap);
-}
 
 #define log_HTTP(prog, level, text) \
     trace_log_message(OSSL_TRACE_CATEGORY_HTTP, prog, level, "%s", text)
@@ -107,8 +44,13 @@ void trace_log_message(int category,
     trace_log_message(OSSL_TRACE_CATEGORY_HTTP, prog, level, fmt, arg)
 #define log_HTTP2(prog, level, fmt, arg1, arg2) \
     trace_log_message(OSSL_TRACE_CATEGORY_HTTP, prog, level, fmt, arg1, arg2)
+#define log_HTTP3(prog, level, fmt, a1, a2, a3)                        \
+    trace_log_message(OSSL_TRACE_CATEGORY_HTTP, prog, level, fmt, a1, a2, a3)
 
 #ifdef HTTP_DAEMON
+int n_responders = 0; /* run multiple responder processes, set by ocsp.c */
+int acfd = (int)INVALID_SOCKET;
+
 void socket_timeout(int signum)
 {
     if (acfd != (int)INVALID_SOCKET)
@@ -149,8 +91,9 @@ void spawn_loop(const char *prog)
     openlog(prog, LOG_PID, LOG_DAEMON);
 
     if (setpgid(0, 0)) {
-        syslog(LOG_ERR, "fatal: error detaching from parent process group: %s",
-               strerror(errno));
+        log_HTTP1(prog, LOG_ERR,
+                  "fatal: error detaching from parent process group: %s",
+                  strerror(errno));
         exit(1);
     }
     kidpids = app_malloc(n_responders * sizeof(*kidpids), "child PID array");
@@ -177,27 +120,33 @@ void spawn_loop(const char *prog)
                     }
                 }
                 if (i >= n_responders) {
-                    syslog(LOG_ERR, "fatal: internal error: "
-                           "no matching child slot for pid: %ld",
-                           (long)fpid);
+                    log_HTTP1(prog, LOG_ERR, "fatal: internal error: "
+                              "no matching child slot for pid: %ld",
+                              (long)fpid);
                     killall(1, kidpids);
                 }
                 if (status != 0) {
-                    if (WIFEXITED(status))
-                        syslog(LOG_WARNING, "child process: %ld, exit status: %d",
-                               (long)fpid, WEXITSTATUS(status));
-                    else if (WIFSIGNALED(status))
-                        syslog(LOG_WARNING, "child process: %ld, term signal %d%s",
-                               (long)fpid, WTERMSIG(status),
+                    if (WIFEXITED(status)) {
+                        log_HTTP2(prog, LOG_WARNING,
+                                  "child process: %ld, exit status: %d",
+                                  (long)fpid, WEXITSTATUS(status));
+                    } else if (WIFSIGNALED(status)) {
+                        char *dumped = "";
+
 # ifdef WCOREDUMP
-                               WCOREDUMP(status) ? " (core dumped)" :
+                        if (WCOREDUMP(status))
+                            dumped = " (core dumped)";
 # endif
-                               "");
+                        log_HTTP3(prog, LOG_WARNING,
+                                  "child process: %ld, term signal %d%s",
+                                  (long)fpid, WTERMSIG(status), dumped);
+                    }
                     ossl_sleep(1000);
                 }
                 break;
             } else if (errno != EINTR) {
-                syslog(LOG_ERR, "fatal: waitpid(): %s", strerror(errno));
+                log_HTTP1(prog, LOG_ERR,
+                          "fatal: waitpid(): %s", strerror(errno));
                 killall(1, kidpids);
             }
         }
@@ -216,7 +165,7 @@ void spawn_loop(const char *prog)
             if (termsig)
                 _exit(0);
             if (RAND_poll() <= 0) {
-                syslog(LOG_ERR, "fatal: RAND_poll() failed");
+                log_HTTP(prog, LOG_ERR, "fatal: RAND_poll() failed");
                 _exit(1);
             }
             return;
@@ -229,7 +178,8 @@ void spawn_loop(const char *prog)
                 }
             }
             if (i >= n_responders) {
-                syslog(LOG_ERR, "fatal: internal error: no free child slots");
+                log_HTTP(prog, LOG_ERR,
+                         "fatal: internal error: no free child slots");
                 killall(1, kidpids);
             }
             break;
@@ -237,7 +187,7 @@ void spawn_loop(const char *prog)
     }
 
     /* The loop above can only break on termsig */
-    syslog(LOG_INFO, "terminating on signal: %d", termsig);
+    log_HTTP1(prog, LOG_INFO, "terminating on signal: %d", termsig);
     killall(0, kidpids);
 }
 #endif
@@ -249,14 +199,8 @@ BIO *http_server_init(const char *prog, const char *port, int verb)
     int asock;
     int port_num;
 
-    if (verb >= 0) {
-        if (verb > LOG_TRACE) {
-            log_HTTP1(prog, LOG_ERR,
-                      "Logging verbosity level %d too high", verb);
-            return NULL;
-        }
-        verbosity = verb;
-    }
+    if (verb >= 0 && !log_set_verbosity(prog, verb))
+        return NULL;
     bufbio = BIO_new(BIO_f_buffer());
     if (bufbio == NULL)
         goto err;
@@ -380,7 +324,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
     if (((end = strchr(reqbuf, '\r')) != NULL && end[1] == '\n')
             || (end = strchr(reqbuf, '\n')) != NULL)
         *end = '\0';
-    if (verbosity < LOG_TRACE)
+    if (log_get_verbosity() < LOG_TRACE)
         trace_log_message(-1, prog, LOG_INFO,
                           "Received request, 1st line: %s", reqbuf);
     log_HTTP(prog, LOG_TRACE, "Received request header:");
@@ -571,7 +515,7 @@ int http_server_send_asn1_resp(const char *prog, BIO *cbio, int keep_alive,
 
     if (ret < 0 || (size_t)ret >= sizeof(buf))
         return 0;
-    if (verbosity < LOG_TRACE && (p = strchr(buf, '\r')) != NULL)
+    if (log_get_verbosity() < LOG_TRACE && (p = strchr(buf, '\r')) != NULL)
         trace_log_message(-1, prog, LOG_INFO,
                           "Sending response, 1st line: %.*s", (int)(p - buf),
                           buf);

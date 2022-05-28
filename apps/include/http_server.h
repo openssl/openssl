@@ -11,6 +11,7 @@
 # define OSSL_HTTP_SERVER_H
 
 # include "apps.h"
+# include "log.h"
 
 # ifndef HAVE_FORK
 #  if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS)
@@ -31,36 +32,9 @@
 #  define HTTP_DAEMON
 #  include <sys/types.h>
 #  include <sys/wait.h>
-#  include <syslog.h>
 #  include <signal.h>
 #  define MAXERRLEN 1000 /* limit error text sent to syslog to 1000 bytes */
 # endif
-
-# undef LOG_TRACE
-# undef LOG_DEBUG
-# undef LOG_INFO
-# undef LOG_WARNING
-# undef LOG_ERR
-# define LOG_TRACE     8
-# define LOG_DEBUG     7
-# define LOG_INFO      6
-# define LOG_WARNING   4
-# define LOG_ERR       3
-
-/*-
- * Output a message using the trace API with the given category
- * if the category is >= 0 and tracing is enabled.
- * Log the message to syslog if multi-threaded HTTP_DAEMON, else to bio_err
- * if the verbosity is sufficient for the given level of severity.
- * category: trace category as defined in trace.h, or -1
- * prog: the name of the current app, or NULL
- * level: the severity of the message, e.g., LOG_ERR
- * fmt: message format, which should not include a trailing newline
- * ...: potential extra parameters like with printf()
- * returns nothing
- */
-void trace_log_message(int category,
-                       const char *prog, int level, const char *fmt, ...);
 
 # ifndef OPENSSL_NO_SOCK
 /*-
