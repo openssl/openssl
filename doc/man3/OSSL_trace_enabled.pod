@@ -33,6 +33,7 @@ OSSL_TRACE_ENABLED
  } OSSL_TRACE_END(category);
 
  /* one-shot trace macros */
+ OSSL_TRACE(category, text)
  OSSL_TRACE1(category, format, arg1)
  OSSL_TRACE2(category, format, arg1, arg2)
  ...
