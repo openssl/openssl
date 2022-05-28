@@ -125,7 +125,7 @@ int http_server_send_status(const char *prog, BIO *cbio,
 # endif
 
 # ifdef HTTP_DAEMON
-extern int multi;
+extern int n_responders;
 extern int acfd;
 
 void socket_timeout(int signum);
