@@ -27,7 +27,33 @@
 #  endif
 #  include <dlfcn.h>
 #  define HAVE_DLINFO 1
-#  if defined(__SCO_VERSION__) || defined(_SCO_ELF) || \
+
+/* Cygwin initially did not support `dladdr`
+ * (as acknowledged by OpenSSL commit 73133962 on 2008-01-04
+ * and even earlier by OpenSSL commit 0ef888cd on 2006-04-11).
+ *
+ * Cygwin support for `dladdr` seems to have been added on 2017-03-06:
+ *   In the <https://cygwin.com/git/?p=newlib-cygwin.git;a=commit;h=c8432a01c8401c121940c806a9d868c4adc4cefd> gitweb page,
+ *   we can click on the *diff* links corresponding to:
+ *     - `winsup/cygwin/include/dlfcn.h`;
+ *     - `winsup/cygwin/include/cygwin/version.h`.
+ *
+ * OpenSSL commit 38f6f99c (pull request #9402 on 2019-07-17)
+ * takes advantage of newer, `dladdr`-supporting versions of Cygwin,
+ * but drops support for older, non-`dladdr`-supporting versions of Cygwin
+ * (e.g. as reported in issue #10200 on 2019-10-16).
+ *
+ * Unfortunately, Cygwin cannot generally be updated, as it periodically drops support
+ * for various versions of Windows (first XP, now all 32-bit and Vista, soon 7):
+ * <http://www.crouchingtigerhiddenfruitbat.org/cygwin/timemachine.html>.
+ *
+ * We now support both new and old versions of Cygwin
+ * by detecting `dladdr` support: if it exists, we continue to use it,
+ * but if it does not exist, we fallback to our old behaviour.
+ */
+
+#  if defined(__CYGWIN__) && CYGWIN_VERSION_API_MINOR < 308 || \
+     defined(__SCO_VERSION__) || defined(_SCO_ELF) || \
      (defined(__osf__) && !defined(RTLD_NEXT))     || \
      (defined(__OpenBSD__) && !defined(RTLD_SELF)) || \
      defined(__ANDROID__) || defined(__TANDEM)
