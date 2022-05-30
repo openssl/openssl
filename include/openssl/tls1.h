@@ -592,7 +592,7 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb
 # define TLS1_3_CK_AES_128_CCM_SHA256                     0x03001304
 # define TLS1_3_CK_AES_128_CCM_8_SHA256                   0x03001305
 
-/* draft-camwinget-tls-ts13-macciphersuites-02 */
+/* TLS v1.3 authentication and integrity-only ciphersuites from RFC 9150 */
 # define TLS1_3_CK_MACCIPHERS_SHA256_SHA256                             0x0300C0B4
 # define TLS1_3_CK_MACCIPHERS_SHA384_SHA384                             0x0300C0B5
 
