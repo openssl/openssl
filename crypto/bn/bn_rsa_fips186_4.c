@@ -349,7 +349,11 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
                     goto err;
             }
             /* (Step 8-10) */
-            if (++i >= imax || !BN_add(Y, Y, r1r2x2))
+            if (++i >= imax) {
+                ERR_raise(ERR_LIB_BN, BN_R_NO_PRIME_CANDIDATE);
+                goto err;
+            }
+            if (!BN_add(Y, Y, r1r2x2))
                 goto err;
         }
     }
