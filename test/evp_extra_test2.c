@@ -359,6 +359,35 @@ static int test_dh_tofrom_data_select(void)
 #endif
 
 #ifndef OPENSSL_NO_EC
+
+static int test_ec_d2i_i2d_pubkey(void)
+{
+    int ret = 0;
+    FILE *fp = NULL;
+    EVP_PKEY *key = NULL, *outkey = NULL;
+    static const char *filename = "pubkey.der";
+
+    if (!TEST_ptr(fp = fopen(filename, "wb"))
+        || !TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "EC", "P-256"))
+        || !TEST_true(i2d_PUBKEY_fp(fp, key))
+        || !TEST_int_eq(fclose(fp), 0))
+        goto err;
+    fp = NULL;
+
+    if (!TEST_ptr(fp = fopen(filename, "rb"))
+        || !TEST_ptr(outkey = d2i_PUBKEY_ex_fp(fp, NULL, mainctx, NULL))
+        || !TEST_int_eq(EVP_PKEY_eq(key, outkey), 1))
+        goto err;
+
+    ret = 1;
+
+err:
+    EVP_PKEY_free(outkey);
+    EVP_PKEY_free(key);
+    fclose(fp);
+    return ret;
+}
+
 static int test_ec_tofrom_data_select(void)
 {
     int ret;
@@ -1117,6 +1146,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 2);
     ADD_TEST(test_ec_tofrom_data_select);
     ADD_TEST(test_ecx_tofrom_data_select);
+    ADD_TEST(test_ec_d2i_i2d_pubkey);
 #else
     ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 1);
 #endif

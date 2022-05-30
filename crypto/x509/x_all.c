@@ -705,6 +705,22 @@ int i2d_PUBKEY_fp(FILE *fp, const EVP_PKEY *pkey)
     return ASN1_i2d_fp_of(EVP_PKEY, i2d_PUBKEY, fp, pkey);
 }
 
+EVP_PKEY *d2i_PUBKEY_ex_fp(FILE *fp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
+                           const char *propq)
+{
+    BIO *b;
+    void *ret;
+
+    if ((b = BIO_new(BIO_s_file())) == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
+        return NULL;
+    }
+    BIO_set_fp(b, fp, BIO_NOCLOSE);
+    ret = d2i_PUBKEY_ex_bio(b, a, libctx, propq);
+    BIO_free(b);
+    return ret;
+}
+
 EVP_PKEY *d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a)
 {
     return ASN1_d2i_fp_of(EVP_PKEY, EVP_PKEY_new, d2i_PUBKEY, fp, a);
@@ -770,6 +786,25 @@ EVP_PKEY *d2i_PrivateKey_ex_bio(BIO *bp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
 int i2d_PUBKEY_bio(BIO *bp, const EVP_PKEY *pkey)
 {
     return ASN1_i2d_bio_of(EVP_PKEY, i2d_PUBKEY, bp, pkey);
+}
+
+EVP_PKEY *d2i_PUBKEY_ex_bio(BIO *bp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
+                            const char *propq)
+{
+    BUF_MEM *b = NULL;
+    const unsigned char *p;
+    void *ret = NULL;
+    int len;
+
+    len = asn1_d2i_read_bio(bp, &b);
+    if (len < 0)
+        goto err;
+
+    p = (unsigned char *)b->data;
+    ret = d2i_PUBKEY_ex(a, &p, len, libctx, propq);
+ err:
+    BUF_MEM_free(b);
+    return ret;
 }
 
 EVP_PKEY *d2i_PUBKEY_bio(BIO *bp, EVP_PKEY **a)
