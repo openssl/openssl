@@ -45,7 +45,7 @@ static int test_old(void)
     UI_add_user_data(ui, defpass);
 
     if (UI_add_input_string(ui, "prompt", UI_INPUT_FLAG_DEFAULT_PWD,
-                             pass, 0, sizeof(pass) - 1) < 0)
+                             pass, 0, sizeof(pass) - 1) <= 0)
         goto err;
 
     switch (UI_process(ui)) {

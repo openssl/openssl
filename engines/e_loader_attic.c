@@ -71,7 +71,7 @@ static char *file_get_pass(const UI_METHOD *ui_method, char *pass,
         ATTICerr(0, ERR_R_MALLOC_FAILURE);
         pass = NULL;
     } else if (UI_add_input_string(ui, prompt, UI_INPUT_FLAG_DEFAULT_PWD,
-                                    pass, 0, maxsize - 1) < 0) {
+                                    pass, 0, maxsize - 1) <= 0) {
         ATTICerr(0, ERR_R_UI_LIB);
         pass = NULL;
     } else {
