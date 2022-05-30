@@ -443,13 +443,15 @@ The default filename consists of the CA certificate file base name with
 ".srl" appended. For example if the CA certificate file is called
 "mycacert.pem" it expects to find a serial number file called "mycacert.srl".
 
+If the B<-CA> option is specified and both the <-CAserial> and <-CAcreateserial>
+options are not given and the default serial number file does not exist,
+a random number is generated; this is the recommended practice.
+
 =item B<-CAcreateserial>
 
-With this option the CA serial number file is created if it does not exist:
-it will contain the serial number "02" and the certificate being signed will
-have the 1 as its serial number. If the B<-CA> option is specified
-and the serial number file does not exist a random number is generated;
-this is the recommended practice.
+With this option the CA serial number file is created if it does not exist.
+A random number is generated, used for the certificate, and saved into the
+serial number file in that case.
 
 =item B<-extfile filename>
 
