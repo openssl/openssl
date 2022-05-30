@@ -303,7 +303,14 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
     if (BN_is_negative(R) && !BN_add(R, R, r1r2x2))
         goto err;
 
-    imax = 5 * bits; /* max = 5/2 * nbits */
+    /*
+     * In FIPS 186-4 imax was set to 5 * nlen/2.
+     * Analysis by Allen Roginsky (See https://csrc.nist.gov/CSRC/media/Publications/fips/186/4/final/documents/comments-received-fips186-4-december-2015.pdf
+     * page 68) indicates this has a 1 in 2 million chance of failure.
+     * The number has been updated to 20 * nlen/2 as used in
+     * FIPS186-5 Appendix B.9 Step 9.
+     */
+    imax = 20 * bits; /* max = 20/2 * nbits */
     for (;;) {
         if (Xin == NULL) {
             /*
