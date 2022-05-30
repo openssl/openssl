@@ -425,12 +425,13 @@ static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,
                       BIGNUM *e_value, BN_GENCB *cb, int pairwise_test)
 {
     int ok = 0;
+    int ebits = e_value != NULL ? BN_num_bits(e_value) : 17;
 
     /*
      * Only multi-prime keys or insecure keys with a small key length will use
      * the older rsa_multiprime_keygen().
      */
-    if (primes == 2 && bits >= 2048)
+    if (primes == 2 && bits >= 2048 && ebits > 16)
         ok = ossl_rsa_sp800_56b_generate_key(rsa, bits, e_value, cb);
 #ifndef FIPS_MODULE
     else
