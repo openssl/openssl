@@ -22,31 +22,33 @@
 
 #define MACCIPHER_SHA384_KEY_SIZE 64
 #define MACCIPHER_SHA384_IV_LEN 16
-#define MACCIPHER_SHA384_CTX_DATA_SIZE 608
 
-#define data(ctx) ((EVP_MACCIPHER_SHA384_KEY*) EVP_CIPHER_CTX_get_cipher_data(ctx))
+#define data(ctx) ((EVP_MACCIPHER_SHA384_KEY *) \
+                   EVP_CIPHER_CTX_get_cipher_data(ctx))
 
 typedef struct {
     unsigned char ks[MACCIPHER_SHA384_KEY_SIZE];
     unsigned char iv[EVP_MAX_IV_LENGTH];
     SHA512_CTX head, tail, md;
 } EVP_MACCIPHER_SHA384_KEY;
+#define MACCIPHER_SHA384_CTX_DATA_SIZE sizeof(EVP_MACCIPHER_SHA384_KEY)
 
-
-
-static int maccipher_sha384_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                         const unsigned char *iv, int enc);
+static int maccipher_sha384_init_key(EVP_CIPHER_CTX *ctx,
+                                     const unsigned char *key,
+                                     const unsigned char *iv, int enc);
 static int maccipher_sha384_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                       const unsigned char *in, size_t inl);
+                                   const unsigned char *in, size_t inl);
 static int maccipher_sha384_cipher_ctrl(EVP_CIPHER_CTX *ctx, int type,
-                        int arg, void *ptr);
+                                        int arg, void *ptr);
 static const EVP_CIPHER cipher = {
 #ifdef NID_maccipher_sha384
     NID_maccipher_sha384,
 #else
     NID_undef,
 #endif
-    MACCIPHER_SHA384_KEY_SIZE, MACCIPHER_SHA384_KEY_SIZE, MACCIPHER_SHA384_IV_LEN, 0,
+    MACCIPHER_SHA384_KEY_SIZE,
+    MACCIPHER_SHA384_KEY_SIZE,
+    MACCIPHER_SHA384_IV_LEN, 0,
     EVP_ORIG_GLOBAL,
     maccipher_sha384_init_key,
     maccipher_sha384_cipher,
@@ -63,10 +65,12 @@ const EVP_CIPHER *EVP_maccipher_sha384(void)
     return &cipher;
 }
 
-static int maccipher_sha384_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                         const unsigned char *iv, int enc)
+static int maccipher_sha384_init_key(EVP_CIPHER_CTX *ctx,
+                                     const unsigned char *key,
+                                     const unsigned char *iv, int enc)
 {
     EVP_MACCIPHER_SHA384_KEY *key_data = data(ctx);
+
     memset(key_data->ks, 0, ctx->key_len);
     memcpy(key_data->ks, key, ctx->key_len);
 
@@ -77,54 +81,52 @@ static int maccipher_sha384_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *k
     return 1;
 }
 
-
-
 static int maccipher_sha384_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                       const unsigned char *in, size_t inl)
+                                   const unsigned char *in, size_t len)
 {
     EVP_MACCIPHER_SHA384_KEY *key = data(ctx);
+    const unsigned char *in_hash = in + len - SHA384_DIGEST_LENGTH;
+    unsigned char *out_hash = out + len - SHA384_DIGEST_LENGTH;
 
-    if (out != NULL){
+    if (out != NULL) {
         if (EVP_CIPHER_CTX_encrypting(ctx)) {
+            /* TODO combine with below code */
             if (in != out)
-                memcpy(out, in, inl);
+                memcpy(out, in, len);
 
             key->md = key->tail;
-            SHA384_Update(&key->md, in, inl - SHA384_DIGEST_LENGTH);
-            SHA384_Final(out + inl - SHA384_DIGEST_LENGTH, &key->md);
+            SHA384_Update(&key->md, in, len - SHA384_DIGEST_LENGTH);
+            SHA384_Final(out_hash, &key->md);
             key->md = key->head;
-            SHA384_Update(&key->md, out + inl - SHA384_DIGEST_LENGTH, SHA384_DIGEST_LENGTH);
-            SHA384_Final(out + inl - SHA384_DIGEST_LENGTH, &key->md);
-
-        }
-        else
-        {
+            SHA384_Update(&key->md, out_hash, SHA384_DIGEST_LENGTH);
+            SHA384_Final(out_hash, &key->md);
+        } else {
+            /* TODO combine with above code */
             if (in != out)
-                memcpy(out, in, inl);
+                memcpy(out, in, len);
 
             key->md = key->tail;
-            SHA384_Update(&key->md, in, inl - SHA384_DIGEST_LENGTH);
-            SHA384_Final(out + inl - SHA384_DIGEST_LENGTH, &key->md);
+            SHA384_Update(&key->md, in, len - SHA384_DIGEST_LENGTH);
+            SHA384_Final(out_hash, &key->md);
             key->md = key->head;
-            SHA384_Update(&key->md, out + inl - SHA384_DIGEST_LENGTH, SHA384_DIGEST_LENGTH);
-            SHA384_Final(out + inl - SHA384_DIGEST_LENGTH, &key->md);
+            SHA384_Update(&key->md, out_hash, SHA384_DIGEST_LENGTH);
+            SHA384_Final(out_hash, &key->md);
 
-            if (CRYPTO_memcmp(out + inl - SHA384_DIGEST_LENGTH, in + inl - SHA384_DIGEST_LENGTH, SHA384_DIGEST_LENGTH))
-                    return 0;
+            if (CRYPTO_memcmp(out_hash, in_hash, SHA384_DIGEST_LENGTH) != 0)
+                return 0;
         }
     }
 
     return 1;
 }
 
-
-static int maccipher_sha384_cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
+static int maccipher_sha384_cipher_ctrl(EVP_CIPHER_CTX *ctx, int type,
+                                        int arg, void *ptr)
 {
-
     EVP_MACCIPHER_SHA384_KEY *key_data = data(ctx);
 
     switch (type) {
-        case EVP_CTRL_AEAD_SET_MAC_KEY:
+    case EVP_CTRL_AEAD_SET_MAC_KEY:
         {
             unsigned int i;
             unsigned char hmac_key[MACCIPHER_SHA384_KEY_SIZE];
@@ -145,7 +147,6 @@ static int maccipher_sha384_cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, 
             SHA384_Init(&key_data->head);
             SHA384_Update(&key_data->head, hmac_key, sizeof(hmac_key));
 
-
             for (i = 0; i < sizeof(hmac_key); i++)
                 hmac_key[i] ^= 0x36 ^ 0x5c; /* opad */
 
@@ -156,25 +157,24 @@ static int maccipher_sha384_cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, 
             return SHA384_DIGEST_LENGTH;
         }
 
-        case EVP_CTRL_GET_IVLEN:
-            *(int *)ptr = MACCIPHER_SHA384_IV_LEN;
-            return 1;
+    case EVP_CTRL_GET_IVLEN:
+        *(int *)ptr = MACCIPHER_SHA384_IV_LEN;
+        return 1;
 
-        case EVP_CTRL_AEAD_SET_IVLEN:
-            return 1;
+    case EVP_CTRL_AEAD_SET_IVLEN:
+        return 1;
 
-        case EVP_CTRL_AEAD_SET_TAG:
-            if (arg <= 0 || arg > 16)
-                return 0;
-            memcpy(ctx->buf, ptr, arg);
-            return 1;
+    case EVP_CTRL_AEAD_SET_TAG:
+        if (arg <= 0 || arg > 16)
+            return 0;
+        memcpy(ctx->buf, ptr, arg);
+        return 1;
 
-        case EVP_CTRL_AEAD_GET_TAG:
-            memcpy(ptr, ctx->buf, arg);
-            return 1;
+    case EVP_CTRL_AEAD_GET_TAG:
+        memcpy(ptr, ctx->buf, arg);
+        return 1;
 
-        default:
-            return -1;
-
-        }
+    default:
+        return -1;
+    }
 }
