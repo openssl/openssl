@@ -5656,7 +5656,7 @@ int SSL_stateless(SSL *s)
     ret = SSL_accept(s);
     s->s3->flags &= ~TLS1_FLAGS_STATELESS;
 
-    if (ret > 0 && s->ext.cookieok)
+    if (ret > 0 && (s->ext.cookieok || !SSL_IS_TLS13(s)))
         return 1;
 
     if (s->hello_retry_request == SSL_HRR_PENDING && !ossl_statem_in_error(s))

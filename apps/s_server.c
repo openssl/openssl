@@ -1634,7 +1634,12 @@ int s_server_main(int argc, char *argv[])
 #endif
 
     if (stateless && socket_type != SOCK_STREAM) {
-        BIO_printf(bio_err, "Can only use --stateless with TLS\n");
+        BIO_printf(bio_err, "Can only use -stateless with TLS\n");
+        goto end;
+    }
+
+    if (stateless && s_nbio) {
+        BIO_printf(bio_err, "Can't use -stateless with -nbio\n");
         goto end;
     }
 
@@ -2880,7 +2885,8 @@ static int init_ssl_connection(SSL *con)
                     retry = is_retryable(con, i);
             }
 #endif
-        } while (i < 0 && SSL_waiting_for_async(con));
+        } while ((i < 0 && SSL_waiting_for_async(con))
+                 || SSL_get_error(con, i) == SSL_ERROR_WANT_WRITE);
     }
 
     if (i <= 0) {

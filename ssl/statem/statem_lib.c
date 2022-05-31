@@ -1185,6 +1185,7 @@ int tls_get_message_header(SSL *s, int *mt)
                      * not return success until we see the second ClientHello
                      * with a valid cookie.
                      */
+                    s->hello_retry_request = SSL_HRR_PENDING;
                     return 0;
                 }
                 s->s3->tmp.message_type = *mt = SSL3_MT_CHANGE_CIPHER_SPEC;
