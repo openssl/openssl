@@ -113,7 +113,7 @@ static SSL_CIPHER tls13_ciphers[] = {
         64, /* CCM8 uses a short tag, so we have a low security strength */
         128,
     },
-#if !defined(OPENSSL_NO_TLS13MACCIPHERS)
+#ifndef OPENSSL_NO_MACCIPHERS
     {
         1,
         TLS1_3_TXT_MACCIPHERS_SHA256_SHA256,
