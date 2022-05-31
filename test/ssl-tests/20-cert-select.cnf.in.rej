@@ -1,0 +1,14 @@
+--- test/ssl-tests/20-cert-select.cnf.in
++++ test/ssl-tests/20-cert-select.cnf.in
+@@ -908,8 +908,9 @@
+         test   => {
+             #We only configured brainpoolP256r1 on the client side, but TLSv1.3
+             #is enabled and this group is not allowed in TLSv1.3. Therefore this
+-            #should fail
+-            "ExpectedResult" => "ClientFail"
++            #should negotiate TLSv1.2
++            "ExpectedProtocol" => "TLSv1.2",
++            "ExpectedResult" => "Success"
+         },
+     },
+     {

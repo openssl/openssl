@@ -951,7 +951,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-30]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect233k1
 
 
 # ===========================================================
@@ -978,7 +980,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-31]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect233r1
 
 
 # ===========================================================
@@ -1005,7 +1009,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-32]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect283k1
 
 
 # ===========================================================
@@ -1032,7 +1038,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-33]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect283r1
 
 
 # ===========================================================
@@ -1059,7 +1067,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-34]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect409k1
 
 
 # ===========================================================
@@ -1086,7 +1096,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-35]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect409r1
 
 
 # ===========================================================
@@ -1113,7 +1125,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-36]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect571k1
 
 
 # ===========================================================
@@ -1140,7 +1154,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-37]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect571r1
 
 
 # ===========================================================
@@ -1167,7 +1183,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-38]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = secp224r1
 
 
 # ===========================================================
@@ -1194,7 +1212,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-39]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect163k1
 
 
 # ===========================================================
@@ -1221,7 +1241,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-40]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect163r2
 
 
 # ===========================================================
@@ -1248,7 +1270,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-41]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = prime192v1
 
 
 # ===========================================================
@@ -1275,7 +1299,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-42]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect163r1
 
 
 # ===========================================================
@@ -1302,7 +1328,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-43]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect193r1
 
 
 # ===========================================================
@@ -1329,7 +1357,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-44]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect193r2
 
 
 # ===========================================================
@@ -1356,7 +1386,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-45]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = sect239k1
 
 
 # ===========================================================
@@ -1383,7 +1415,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-46]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = secp160k1
 
 
 # ===========================================================
@@ -1410,7 +1444,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-47]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = secp160r1
 
 
 # ===========================================================
@@ -1437,7 +1473,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-48]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = secp160r2
 
 
 # ===========================================================
@@ -1464,7 +1502,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-49]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = secp192k1
 
 
 # ===========================================================
@@ -1491,7 +1531,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-50]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = secp224k1
 
 
 # ===========================================================
@@ -1518,7 +1560,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-51]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = secp256k1
 
 
 # ===========================================================
@@ -1545,7 +1589,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-52]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = brainpoolP256r1
 
 
 # ===========================================================
@@ -1572,7 +1618,9 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-53]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = brainpoolP384r1
 
 
 # ===========================================================
@@ -1599,6 +1647,8 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-54]
-ExpectedResult = ClientFail
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedTmpKeyType = brainpoolP512r1
 
 

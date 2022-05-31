@@ -1728,8 +1728,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-52]
-ExpectedProtocol = TLSv1.3
-ExpectedResult = Success
+ExpectedResult = ServerFail
 
 
 # ===========================================================
