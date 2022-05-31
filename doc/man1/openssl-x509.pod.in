@@ -499,7 +499,7 @@ Sets the CA serial number file to use.
 When creating a certificate with this option, the certificate serial number
 is stored in the given file. This file consists of one line containing
 an even number of hex digits with the serial number used.
-Before the next use the number is incremented and written out to the file again.
+Before the use the number is incremented and written out to the file again.
 
 The default filename consists of the CA certificate file base name with
 F<.srl> appended. For example if the CA certificate file is called
