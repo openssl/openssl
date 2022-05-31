@@ -662,9 +662,19 @@ int x509_main(int argc, char **argv)
             BIO_printf(bio_err, "Cannot use both -key/-signkey and -CA option\n");
             goto err;
         }
-    } else if (CAkeyfile != NULL) {
-        BIO_printf(bio_err,
-                   "Warning: ignoring -CAkey option since no -CA option is given\n");
+    } else {
+#define WARN_NO_CA(opt) BIO_printf(bio_err, \
+        "Warning: ignoring " opt " option since -CA option is not given\n");
+        if (CAkeyfile != NULL)
+            WARN_NO_CA("-CAkey");
+        if (CAkeyformat != FORMAT_UNDEF)
+            WARN_NO_CA("-CAkeyform");
+        if (CAformat != FORMAT_UNDEF)
+            WARN_NO_CA("-CAform");
+        if (CAserial != NULL)
+            WARN_NO_CA("-CAserial");
+        if (CA_createserial)
+            WARN_NO_CA("-CAcreateserial");
     }
 
     if (extfile == NULL) {
