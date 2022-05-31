@@ -152,6 +152,13 @@ IF[{- !$disabled{legacy} -}]
       SOURCE[legacy]=legacy.ld
       GENERATE[legacy.ld]=../util/providers.num
     ENDIF
+
+    # Add VERSIONINFO resource for windows
+    IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
+      GENERATE[legacy.rc]=../util/mkrc.pl legacy
+      SOURCE[$LEGACYGOAL]=legacy.rc
+    ENDIF
+
     SOURCE[$LIBLEGACY]=prov_running.c
   ENDIF
 
