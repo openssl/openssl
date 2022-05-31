@@ -78,6 +78,8 @@ static const ERR_STRING_DATA BIO_str_reasons[] = {
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_WSASTARTUP), "WSAStartup"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_LOCAL_ADDR_NOT_AVAILABLE),
      "local address not available"},
+    {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_PEER_ADDR_NOT_AVAILABLE),
+     "peer address not available"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_NON_FATAL),
      "non-fatal or transient error"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_PORT_MISMATCH),

@@ -148,6 +148,13 @@ BIO_destroy_bio_pair                    define
 BIO_dgram_get_local_addr_cap            define
 BIO_dgram_get_local_addr_enable         define
 BIO_dgram_set_local_addr_enable         define
+BIO_dgram_set_no_trunc                  define
+BIO_dgram_get_no_trunc                  define
+BIO_dgram_get_caps                      define
+BIO_dgram_set_caps                      define
+BIO_dgram_get_effective_caps            define
+BIO_dgram_get_mtu                       define
+BIO_dgram_set_mtu                       define
 BIO_do_accept                           define
 BIO_do_connect                          define
 BIO_do_handshake                        define

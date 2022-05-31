@@ -24,6 +24,7 @@
 #include <openssl/rsa.h>
 #include <openssl/aes.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #include "internal/tsan_assist.h"
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -43,6 +44,8 @@ static int multidefault_run = 0;
 static const char *default_provider[] = { "default", NULL };
 static const char *fips_provider[] = { "fips", NULL };
 static const char *fips_and_default_providers[] = { "default", "fips", NULL };
+
+static CRYPTO_RWLOCK *global_lock;
 
 #ifdef TSAN_REQUIRES_LOCKING
 static CRYPTO_RWLOCK *tsan_lock;
@@ -266,6 +269,19 @@ static void multi_intialise(void)
     memset(multi_provider, 0, sizeof(multi_provider));
 }
 
+static void multi_set_success(int ok)
+{
+    if (CRYPTO_THREAD_write_lock(global_lock) == 0) {
+        /* not synchronized, but better than not reporting failure */
+        multi_success = ok;
+        return;
+    }
+
+    multi_success = ok;
+
+    CRYPTO_THREAD_unlock(global_lock);
+}
+
 static void thead_teardown_libctx(void)
 {
     OSSL_PROVIDER **p;
@@ -407,7 +423,7 @@ static void thread_general_worker(void)
     EVP_CIPHER_free(ciph);
     EVP_PKEY_free(pkey);
     if (!testresult)
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static void thread_multi_simple_fetch(void)
@@ -417,7 +433,7 @@ static void thread_multi_simple_fetch(void)
     if (md != NULL)
         EVP_MD_free(md);
     else
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static EVP_PKEY *shared_evp_pkey = NULL;
@@ -466,7 +482,7 @@ static void thread_shared_evp_pkey(void)
  err:
     EVP_PKEY_CTX_free(ctx);
     if (!success)
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static void thread_provider_load_unload(void)
@@ -475,7 +491,7 @@ static void thread_provider_load_unload(void)
 
     if (!TEST_ptr(deflt)
             || !TEST_true(OSSL_PROVIDER_available(multi_libctx, "default")))
-        multi_success = 0;
+        multi_set_success(0);
 
     OSSL_PROVIDER_unload(deflt);
 }
@@ -532,7 +548,7 @@ static void thread_downgrade_shared_evp_pkey(void)
      * downgrading
      */
     if (EVP_PKEY_get0_RSA(shared_evp_pkey) == NULL)
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static int test_multi_downgrade_shared_pkey(void)
@@ -588,7 +604,7 @@ static void test_multi_load_worker(void)
 
     if (!TEST_ptr(prov = OSSL_PROVIDER_load(multi_libctx, multi_load_provider))
             || !TEST_true(OSSL_PROVIDER_unload(prov)))
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static int test_multi_default(void)
@@ -644,7 +660,7 @@ static void test_obj_create_one(void)
     if (!TEST_int_ne(id, 0)
             || !TEST_true(id = OBJ_create(oid, sn, ln))
             || !TEST_true(OBJ_add_sigid(id, NID_sha3_256, NID_rsa)))
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static int test_obj_add(void)
@@ -657,7 +673,7 @@ static int test_obj_add(void)
 static void test_lib_ctx_load_config_worker(void)
 {
     if (!TEST_int_eq(OSSL_LIB_CTX_load_config(multi_libctx, config_file), 1))
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static int test_lib_ctx_load_config(void)
@@ -666,6 +682,64 @@ static int test_lib_ctx_load_config(void)
                            MAXIMUM_THREADS, &test_lib_ctx_load_config_worker,
                            1, default_provider);
 }
+
+#if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
+static BIO *multi_bio1, *multi_bio2;
+
+static void test_bio_dgram_pair_worker(void)
+{
+    ossl_unused int r;
+    int ok = 0;
+    uint8_t ch = 0;
+    uint8_t scratch[64];
+    BIO_MSG msg = {0};
+    size_t num_processed = 0;
+
+    if (!TEST_int_eq(RAND_bytes_ex(multi_libctx, &ch, 1, 64), 1))
+        goto err;
+
+    msg.data     = scratch;
+    msg.data_len = sizeof(scratch);
+
+    /*
+     * We do not test for failure here as recvmmsg may fail if no sendmmsg
+     * has been called yet. The purpose of this code is to exercise tsan.
+     */
+    if (ch & 2)
+        r = BIO_sendmmsg(ch & 1 ? multi_bio2 : multi_bio1, &msg,
+                         sizeof(BIO_MSG), 1, 0, &num_processed);
+    else
+        r = BIO_recvmmsg(ch & 1 ? multi_bio2 : multi_bio1, &msg,
+                         sizeof(BIO_MSG), 1, 0, &num_processed);
+
+    ok = 1;
+err:
+    if (ok == 0)
+        multi_set_success(0);
+}
+
+static int test_bio_dgram_pair(void)
+{
+    int r;
+    BIO *bio1 = NULL, *bio2 = NULL;
+
+    r = BIO_new_bio_dgram_pair(&bio1, 0, &bio2, 0);
+    if (!TEST_int_eq(r, 1))
+        goto err;
+
+    multi_bio1 = bio1;
+    multi_bio2 = bio2;
+
+    r  = thread_run_test(&test_bio_dgram_pair_worker,
+                         MAXIMUM_THREADS, &test_bio_dgram_pair_worker,
+                         1, default_provider);
+
+err:
+    BIO_free(bio1);
+    BIO_free(bio2);
+    return r;
+}
+#endif
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -713,6 +787,9 @@ int setup_tests(void)
     if (!TEST_ptr(privkey))
         return 0;
 
+    if (!TEST_ptr(global_lock = CRYPTO_THREAD_lock_new()))
+        return 0;
+
 #ifdef TSAN_REQUIRES_LOCKING
     if (!TEST_ptr(tsan_lock = CRYPTO_THREAD_lock_new()))
         return 0;
@@ -736,6 +813,9 @@ int setup_tests(void)
     ADD_TEST(test_multi_load_unload_provider);
     ADD_TEST(test_obj_add);
     ADD_TEST(test_lib_ctx_load_config);
+#if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
+    ADD_TEST(test_bio_dgram_pair);
+#endif
     return 1;
 }
 
@@ -745,4 +825,5 @@ void cleanup_tests(void)
 #ifdef TSAN_REQUIRES_LOCKING
     CRYPTO_THREAD_lock_free(tsan_lock);
 #endif
+    CRYPTO_THREAD_lock_free(global_lock);
 }

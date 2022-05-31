@@ -158,6 +158,11 @@ particular may be noted:
 The I<local> field was set to a non-NULL value, but local address support is not
 available or not enabled on the BIO.
 
+=item B<BIO_R_PEER_ADDR_NOT_AVAILABLE>
+
+The I<peer> field was set to a non-NULL value, but peer address support is not
+available on the BIO.
+
 =item B<BIO_R_UNSUPPORTED_METHOD>
 
 The BIO_sendmmsg() or BIO_recvmmsg() method is not supported on the BIO.
