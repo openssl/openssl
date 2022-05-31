@@ -24,6 +24,7 @@
 #include <openssl/rsa.h>
 #include <openssl/aes.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #include "internal/tsan_assist.h"
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -47,6 +48,8 @@ static const char *fips_and_default_providers[] = { "default", "fips", NULL };
 #ifdef TSAN_REQUIRES_LOCKING
 static CRYPTO_RWLOCK *tsan_lock;
 #endif
+
+static BIO *multi_bio1, *multi_bio2;
 
 /* Grab a globally unique integer value, return 0 on failure */
 static int get_new_uid(void)
@@ -667,6 +670,56 @@ static int test_lib_ctx_load_config(void)
                            1, default_provider);
 }
 
+static void test_bio_dgram_pair_worker(void)
+{
+    ossl_unused int r;
+    int ok = 0;
+    uint8_t ch = 0;
+    uint8_t scratch[64];
+    BIO_MSG msg = {0};
+
+    if (!TEST_int_eq(RAND_bytes_ex(multi_libctx, &ch, 1, 64), 1))
+        goto err;
+
+    msg.data     = scratch;
+    msg.data_len = sizeof(scratch);
+
+    /*
+     * We do not test for failure here as recvmmsg may fail if no sendmmsg
+     * has been called yet. The purpose of this code is to exercise tsan.
+     */
+    if (ch & 2)
+        r = BIO_sendmmsg(ch & 1 ? multi_bio2 : multi_bio1, &msg, sizeof(BIO_MSG), 1, 0);
+    else
+        r = BIO_recvmmsg(ch & 1 ? multi_bio2 : multi_bio1, &msg, sizeof(BIO_MSG), 1, 0);
+
+    ok = 1;
+err:
+    multi_success = ok;
+}
+
+static int test_bio_dgram_pair(void)
+{
+    int r;
+    BIO *bio1 = NULL, *bio2 = NULL;
+
+    r = BIO_new_bio_dgram_pair(&bio1, 0, &bio2, 0);
+    if (!TEST_int_eq(r, 1))
+        goto err;
+
+    multi_bio1 = bio1;
+    multi_bio2 = bio2;
+
+    r  = thread_run_test(&test_bio_dgram_pair_worker,
+                         MAXIMUM_THREADS, &test_bio_dgram_pair_worker,
+                         1, default_provider);
+
+err:
+    BIO_free(bio1);
+    BIO_free(bio2);
+    return r;
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -736,6 +789,7 @@ int setup_tests(void)
     ADD_TEST(test_multi_load_unload_provider);
     ADD_TEST(test_obj_add);
     ADD_TEST(test_lib_ctx_load_config);
+    ADD_TEST(test_bio_dgram_pair);
     return 1;
 }
 

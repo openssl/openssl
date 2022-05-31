@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <openssl/bio.h>
+#include <openssl/rand.h>
 #include "testutil.h"
 #include "internal/sockets.h"
 
@@ -450,6 +451,282 @@ static int test_bio_dgram(int idx)
                                bio_dgram_cases[idx].local);
 }
 
+static int random_data(const uint32_t *key, uint8_t *data, size_t data_len, size_t offset)
+{
+    int ret = 0, outl;
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    static const uint8_t zeroes[2048];
+    uint32_t counter[4] = { (uint32_t)offset };
+
+    ctx = EVP_CIPHER_CTX_new();
+    if (ctx == NULL)
+        goto err;
+
+    cipher = EVP_CIPHER_fetch(NULL, "ChaCha20", NULL);
+    if (cipher == NULL)
+        goto err;
+
+    if (EVP_EncryptInit_ex2(ctx, cipher, (uint8_t *)key, (uint8_t *)counter, NULL) == 0)
+        goto err;
+
+    while (data_len > 0) {
+        outl = data_len > sizeof(zeroes) ? (int)sizeof(zeroes) : (int)data_len;
+        if (EVP_EncryptUpdate(ctx, data, &outl, zeroes, outl) != 1)
+            goto err;
+
+        data     += outl;
+        data_len -= outl;
+    }
+
+    ret = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+static int test_bio_dgram_pair(void)
+{
+    int testresult = 0, blen, mtu1, mtu2, r;
+    BIO *bio1 = NULL, *bio2 = NULL;
+    uint8_t scratch[2048+4], scratch2[2048];
+    uint32_t key[8];
+    size_t i, num_dgram;
+    BIO_MSG msgs[2] = {0}, rmsgs[2] = {0};
+    BIO_ADDR *addr1 = NULL, *addr2 = NULL, *addr3 = NULL, *addr4 = NULL;
+    struct in_addr in_local = {ntohl(0x7f000001)};
+    const uint32_t ref_caps = BIO_DGRAM_CAP_HANDLES_SRC_ADDR
+                            | BIO_DGRAM_CAP_HANDLES_DST_ADDR
+                            | BIO_DGRAM_CAP_PROVIDES_SRC_ADDR
+                            | BIO_DGRAM_CAP_PROVIDES_DST_ADDR;
+
+    if (!TEST_int_eq(RAND_bytes((uint8_t *)key, sizeof(key)), 1))
+        goto err;
+
+    if (!TEST_int_eq(BIO_new_bio_dgram_pair(&bio1, 0, &bio2, 0), 1))
+        goto err;
+
+    mtu1 = BIO_dgram_get_mtu(bio1);
+    if (!TEST_int_ge(mtu1, 1280))
+        goto err;
+
+    mtu2 = BIO_dgram_get_mtu(bio2);
+    if (!TEST_int_ge(mtu2, 1280))
+        goto err;
+
+    if (!TEST_int_eq(mtu1, mtu2))
+        goto err;
+
+    if (!TEST_int_le(mtu1, sizeof(scratch)-4))
+        goto err;
+
+    for (i=0;; ++i) {
+        if (!TEST_int_eq(random_data(key, scratch, sizeof(scratch), i), 1))
+            goto err;
+
+        blen = (*(uint32_t*)scratch) % mtu1;
+        r = BIO_write(bio1, scratch+4, blen);
+        if (r == -1)
+            break;
+
+        if (!TEST_int_eq(r, blen))
+            goto err;
+    }
+
+    /*
+     * Should be able to fit at least 9 datagrams in default write buffer size
+     * in worst case
+     */
+    if (!TEST_int_ge(i, 9))
+        goto err;
+
+    /* Check we read back the same data */
+    num_dgram = i;
+    for (i=0; i<num_dgram; ++i) {
+        if (!TEST_int_eq(random_data(key, scratch, sizeof(scratch), i), 1))
+            goto err;
+
+        blen = (*(uint32_t*)scratch) % mtu1;
+        r = BIO_read(bio2, scratch2, sizeof(scratch2));
+        if (!TEST_int_eq(r, blen))
+            goto err;
+
+        if (!TEST_mem_eq(scratch+4, blen, scratch2, blen))
+            goto err;
+    }
+
+    /* Should now be out of data */
+    if (!TEST_int_eq(BIO_read(bio2, scratch2, sizeof(scratch2)), -1))
+        goto err;
+
+    /* sendmmsg/recvmmsg */
+    if (!TEST_int_eq(random_data(key, scratch, sizeof(scratch), 0), 1))
+        goto err;
+
+    msgs[0].data     = scratch;
+    msgs[0].data_len = 19;
+    msgs[1].data     = scratch + 19;
+    msgs[1].data_len = 46;
+
+    r = BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG), OSSL_NELEM(msgs), 0);
+    if (!TEST_int_eq(r, 2))
+        goto err;
+
+    rmsgs[0].data       = scratch2;
+    rmsgs[0].data_len   = 64;
+    rmsgs[1].data       = scratch2 + 64;
+    rmsgs[1].data_len   = 64;
+    r = BIO_recvmmsg(bio2, rmsgs, sizeof(BIO_MSG), OSSL_NELEM(rmsgs), 0);
+    if (!TEST_int_eq(r, 2))
+        goto err;
+
+    if (!TEST_int_eq(rmsgs[0].data_len, 19))
+        goto err;
+
+    if (!TEST_int_eq(rmsgs[1].data_len, 46))
+        goto err;
+
+    /* sendmmsg/recvmmsg with peer */
+    addr1 = BIO_ADDR_new();
+    if (!TEST_ptr(addr1))
+        goto err;
+
+    if (!TEST_int_eq(BIO_ADDR_rawmake(addr1, AF_INET, &in_local,
+                                      sizeof(in_local), 1234), 1))
+        goto err;
+
+    addr2 = BIO_ADDR_new();
+    if (!TEST_ptr(addr2))
+        goto err;
+
+    if (!TEST_int_eq(BIO_ADDR_rawmake(addr2, AF_INET, &in_local,
+                                      sizeof(in_local), 2345), 1))
+        goto err;
+
+    addr3 = BIO_ADDR_new();
+    if (!TEST_ptr(addr3))
+        goto err;
+
+    addr4 = BIO_ADDR_new();
+    if (!TEST_ptr(addr4))
+        goto err;
+
+    msgs[0].peer = addr1;
+
+    /* fails due to lack of caps on peer */
+    r = BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG), OSSL_NELEM(msgs), 0);
+    if (!TEST_int_eq(r, -1))
+        goto err;
+
+    if (!TEST_int_eq(BIO_dgram_set_caps(bio2, ref_caps), 1))
+        goto err;
+
+    if (!TEST_int_eq(BIO_dgram_get_caps(bio2), ref_caps))
+        goto err;
+
+    if (!TEST_int_eq(BIO_dgram_get_effective_caps(bio1), ref_caps))
+        goto err;
+
+    if (!TEST_int_eq(BIO_dgram_get_effective_caps(bio2), 0))
+        goto err;
+
+    if (!TEST_int_eq(BIO_dgram_set_caps(bio1, ref_caps), 1))
+        goto err;
+
+    /* succeeds with cap now available */
+    r = BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG), 1, 0);
+    if (!TEST_int_eq(r, 1))
+        goto err;
+
+    /* enable local addr support */
+    if (!TEST_int_eq(BIO_dgram_set_local_addr_enable(bio2, 1), 1))
+        goto err;
+
+    rmsgs[0].data       = scratch2;
+    rmsgs[0].data_len   = 64;
+    rmsgs[0].peer       = addr3;
+    rmsgs[0].local      = addr4;
+    r = BIO_recvmmsg(bio2, rmsgs, sizeof(BIO_MSG), OSSL_NELEM(rmsgs), 0);
+    if (!TEST_int_eq(r, 1))
+        goto err;
+
+    if (!TEST_int_eq(rmsgs[0].data_len, 19))
+        goto err;
+
+    /* We didn't set the source address so this should be zero */
+    if (!TEST_int_eq(BIO_ADDR_family(addr3), 0))
+        goto err;
+
+    if (!TEST_int_eq(BIO_ADDR_family(addr4), AF_INET))
+        goto err;
+
+    if (!TEST_int_eq(BIO_ADDR_rawport(addr4), 1234))
+        goto err;
+
+    /* test source address */
+    msgs[0].local = addr2;
+
+    if (!TEST_int_eq(BIO_dgram_set_local_addr_enable(bio1, 1), 1))
+        goto err;
+
+    r = BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG), 1, 0);
+    if (!TEST_int_eq(r, 1))
+        goto err;
+
+    rmsgs[0].data       = scratch2;
+    rmsgs[0].data_len   = 64;
+    r = BIO_recvmmsg(bio2, rmsgs, sizeof(BIO_MSG), OSSL_NELEM(rmsgs), 0);
+    if (!TEST_int_eq(r, 1))
+        goto err;
+
+    if (!TEST_int_eq(BIO_ADDR_family(addr3), AF_INET))
+        goto err;
+
+    if (!TEST_int_eq(BIO_ADDR_rawport(addr3), 2345))
+        goto err;
+
+    if (!TEST_int_eq(BIO_ADDR_family(addr4), AF_INET))
+        goto err;
+
+    if (!TEST_int_eq(BIO_ADDR_rawport(addr4), 1234))
+        goto err;
+
+    /* test truncation, pending */
+    r = BIO_write(bio1, scratch, 64);
+    if (!TEST_int_eq(r, 64))
+        goto err;
+
+    memset(scratch2, 0, 64);
+    if (!TEST_int_eq(BIO_dgram_set_no_trunc(bio2, 1), 1))
+        goto err;
+
+    if (!TEST_int_eq(BIO_read(bio2, scratch2, 32), -1))
+        goto err;
+
+    if (!TEST_int_eq(BIO_pending(bio2), 64))
+        goto err;
+
+    if (!TEST_int_eq(BIO_dgram_set_no_trunc(bio2, 0), 1))
+        goto err;
+
+    if (!TEST_int_eq(BIO_read(bio2, scratch2, 32), 32))
+        goto err;
+
+    if (!TEST_mem_eq(scratch, 32, scratch2, 32))
+        goto err;
+
+    testresult = 1;
+err:
+    BIO_free(bio1);
+    BIO_free(bio2);
+    BIO_ADDR_free(addr1);
+    BIO_ADDR_free(addr2);
+    BIO_ADDR_free(addr3);
+    BIO_ADDR_free(addr4);
+    return testresult;
+}
+
 #endif /* !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK) */
 
 int setup_tests(void)
@@ -461,6 +738,8 @@ int setup_tests(void)
 
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
     ADD_ALL_TESTS(test_bio_dgram, OSSL_NELEM(bio_dgram_cases));
+    ADD_TEST(test_bio_dgram_pair);
 #endif
+
     return 1;
 }

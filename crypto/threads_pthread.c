@@ -106,6 +106,21 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
     return 1;
 }
 
+__owur int CRYPTO_THREAD_try_read_lock(CRYPTO_RWLOCK *lock)
+{
+# ifdef USE_RWLOCK
+    if (pthread_rwlock_tryrdlock(lock) != 0)
+        return 0;
+# else
+    if (pthread_mutex_trylock(lock) != 0) {
+        assert(errno != EDEADLK);
+        return 0;
+    }
+# endif
+
+    return 1;
+}
+
 __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
@@ -114,6 +129,21 @@ __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 # else
     if (pthread_mutex_lock(lock) != 0) {
         assert(errno != EDEADLK && errno != EBUSY);
+        return 0;
+    }
+# endif
+
+    return 1;
+}
+
+__owur int CRYPTO_THREAD_try_write_lock(CRYPTO_RWLOCK *lock)
+{
+# ifdef USE_RWLOCK
+    if (pthread_rwlock_trywrlock(lock) != 0)
+        return 0;
+# else
+    if (pthread_mutex_trylock(lock) != 0) {
+        assert(errno != EDEADLK);
         return 0;
     }
 # endif
