@@ -49,8 +49,6 @@ static const char *fips_and_default_providers[] = { "default", "fips", NULL };
 static CRYPTO_RWLOCK *tsan_lock;
 #endif
 
-static BIO *multi_bio1, *multi_bio2;
-
 /* Grab a globally unique integer value, return 0 on failure */
 static int get_new_uid(void)
 {
@@ -670,6 +668,9 @@ static int test_lib_ctx_load_config(void)
                            1, default_provider);
 }
 
+#if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
+static BIO *multi_bio1, *multi_bio2;
+
 static void test_bio_dgram_pair_worker(void)
 {
     ossl_unused int r;
@@ -719,6 +720,7 @@ err:
     BIO_free(bio2);
     return r;
 }
+#endif
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -789,7 +791,9 @@ int setup_tests(void)
     ADD_TEST(test_multi_load_unload_provider);
     ADD_TEST(test_obj_add);
     ADD_TEST(test_lib_ctx_load_config);
+#if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
     ADD_TEST(test_bio_dgram_pair);
+#endif
     return 1;
 }
 

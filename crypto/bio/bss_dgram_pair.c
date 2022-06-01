@@ -12,6 +12,8 @@
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 
+#if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
+
 /* ===========================================================================
  * Byte-wise ring buffer which supports pushing and popping blocks of multiple
  * bytes at a time.
@@ -194,8 +196,8 @@ struct bio_dgram_pair_st {
      * reads.
      */
     CRYPTO_RWLOCK *lock;
-    unsigned char no_trunc          : 1; /* Reads fail if they would truncate */
-    unsigned char local_addr_enable : 1; /* Can use BIO_MSG->local? */
+    unsigned int no_trunc          : 1; /* Reads fail if they would truncate */
+    unsigned int local_addr_enable : 1; /* Can use BIO_MSG->local? */
 };
 
 #define MIN_BUF_LEN (1024)
@@ -1024,3 +1026,5 @@ out:
     CRYPTO_THREAD_unlock(b->lock);
     return ret;
 }
+
+#endif

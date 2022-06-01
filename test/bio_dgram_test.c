@@ -726,6 +726,7 @@ err:
     BIO_ADDR_free(addr4);
     return testresult;
 }
+#endif
 
 #endif /* !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK) */
 
