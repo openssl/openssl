@@ -1,5 +1,5 @@
 # -*- mode: perl; -*-
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -19,10 +19,8 @@ our @tests = (
     {
         name => "ct-permissive-without-scts",
         server => {
-            "CipherString" => 'DEFAULT@SECLEVEL=1',
         },
         client => {
-            "CipherString" => 'DEFAULT@SECLEVEL=1',
             extra => {
                 "CTValidation" => "Permissive",
             },
@@ -34,12 +32,10 @@ our @tests = (
     {
         name => "ct-permissive-with-scts",
         server => {
-            "CipherString" => 'DEFAULT@SECLEVEL=1',
             "Certificate" => test_pem("embeddedSCTs1.pem"),
             "PrivateKey"  => test_pem("embeddedSCTs1-key.pem"),
         },
         client => {
-            "CipherString" => 'DEFAULT@SECLEVEL=1',
             "VerifyCAFile" => test_pem("embeddedSCTs1_issuer.pem"),
             extra => {
                 "CTValidation" => "Permissive",
@@ -52,10 +48,8 @@ our @tests = (
     {
         name => "ct-strict-without-scts",
         server => {
-            "CipherString" => 'DEFAULT@SECLEVEL=1',
         },
         client => {
-            "CipherString" => 'DEFAULT@SECLEVEL=1',
             extra => {
                 "CTValidation" => "Strict",
             },
@@ -68,12 +62,10 @@ our @tests = (
     {
         name => "ct-strict-with-scts",
         server => {
-            "CipherString" => 'DEFAULT@SECLEVEL=1',
             "Certificate" => test_pem("embeddedSCTs1.pem"),
             "PrivateKey"  => test_pem("embeddedSCTs1-key.pem"),
         },
         client => {
-            "CipherString" => 'DEFAULT@SECLEVEL=1',
             "VerifyCAFile" => test_pem("embeddedSCTs1_issuer.pem"),
             extra => {
                 "CTValidation" => "Strict",
@@ -86,12 +78,10 @@ our @tests = (
     {
         name => "ct-permissive-resumption",
         server => {
-            "CipherString" => 'DEFAULT@SECLEVEL=1',
             "Certificate" => test_pem("embeddedSCTs1.pem"),
             "PrivateKey"  => test_pem("embeddedSCTs1-key.pem"),
         },
         client => {
-            "CipherString" => 'DEFAULT@SECLEVEL=1',
             "VerifyCAFile" => test_pem("embeddedSCTs1_issuer.pem"),
             extra => {
                 "CTValidation" => "Permissive",
@@ -106,12 +96,10 @@ our @tests = (
     {
         name => "ct-strict-resumption",
         server => {
-            "CipherString" => 'DEFAULT@SECLEVEL=1',
             "Certificate" => test_pem("embeddedSCTs1.pem"),
             "PrivateKey"  => test_pem("embeddedSCTs1-key.pem"),
         },
         client => {
-            "CipherString" => 'DEFAULT@SECLEVEL=1',
             "VerifyCAFile" => test_pem("embeddedSCTs1_issuer.pem"),
             extra => {
                 "CTValidation" => "Strict",
