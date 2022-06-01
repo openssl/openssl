@@ -5,10 +5,176 @@ We need to evolve the API surface of BIO which is relevant to BIO_dgram (and the
 eventual BIO_dgram_mem) to support APIs which allow multiple datagrams to be
 sent or received simultaneously, such as sendmmsg(2)/recvmmsg(2).
 
-Options for the API surface include:
+The adopted design
+------------------
 
-sendmmsg/recvmmsg-like API
---------------------------
+### Design decisions
+
+The adopted design makes the following design decisions:
+
+- We use a sendmmsg/recvmmsg-like API. The alternative API was not considered
+  for adoption because it is an explicit goal that the adopted API be suitable
+  for concurrent use on the same BIO.
+
+- We define our own structures rather than using the OS's `struct mmsghdr`.
+  The motivations for this are:
+
+  - It ensures portability between OSes and allows the API to be used
+    on OSes which do not support `sendmmsg` or `sendmsg`.
+
+  - It allows us to use structures in keeping with OpenSSL's existing
+    abstraction layers (e.g. `BIO_ADDR` rather than `struct sockaddr`).
+
+  - We do not have to expose functionality which we cannot guarantee
+    we can support on all platforms (for example, arbitrary control messages).
+
+  - It avoids the need to include OS headers in our own public headers,
+    which would pollute the environment of applications which include
+    our headers, potentially undesirably.
+
+- For OSes which do not support `sendmmsg`, we emulate it using repeated
+  calls to `sendmsg`. For OSes which do not support `sendmsg`, we emulate it
+  using `sendto` to the extent feasible. This avoids the need for code consuming
+  these new APIs to define a fallback code path.
+
+- We do not define any flags at this time, as the flags previously considered
+  for adoption cannot be supported on all platforms (Win32 does not have
+  `MSG_DONTWAIT`).
+
+- We ensure the extensibility of our `BIO_MSG` structure in a way that preserves
+  ABI compatibility using a `stride` argument which callers must set to
+  `sizeof(BIO_MSG)`. Implementations can examine the stride field to determine
+  whether a given field is part of a `BIO_MSG`. This allows us to add optional
+  fields to `BIO_MSG` at a later time without breaking ABI. All new fields must
+  be added to the end of the structure.
+
+- The BIO methods are designed to support stateless operation in which they
+  are simply calls to the equivalent system calls, where supported, without
+  changing BIO state. In particular, this means that things like retry flags are
+  not set or cleared by `BIO_sendmmsg` or `BIO_recvmmsg`.
+
+  The motivation for this is that these functions are intended to support
+  concurrent use on the same BIO. If they read or modify BIO state, they would
+  need to be sychronised with a lock, undermining performance on what (for
+  `BIO_dgram`) would otherwise be a straight system call.
+
+- We do not support iovecs. The motivations for this are:
+
+  - Not all platforms can support iovecs (e.g. Windows).
+
+  - The only way we could emulate iovecs on platforms which don't support
+    them is by copying the data to be sent into a staging buffer. This would
+    defeat all of the advantages of iovecs and prevent us from meeting our
+    zero/single-copy requirements. Moreover, it would lead lead to extremely
+    surprising performance variations for consumers of the API.
+
+  - We do not believe iovecs are needed to meet our performance requirements
+    for QUIC. The reason for this is that aside from a minimal packet header,
+    all data in QUIC is encrypted, so all data sent via QUIC must pass through
+    an encrypt step anyway, meaning that all data sent will already be copied
+    and there is not going to be any issue depositing the ciphertext in a
+    staging buffer together with the frame header.
+
+  - Even if we did support iovecs, we would have to impose a limit
+    on the number of iovecs supported, because we translate from our own
+    structures (as discussed above) and also intend these functions to be
+    stateless and not requiire locking. Therefore the OS-native iovec structures
+    would need to be allocated on the stack.
+
+- Sometimes, an application may wish to learn the local interface address
+  associated with a receive operation or specify the local interface address to
+  be used for a send operation. We support this, but require this functionality
+  to be explicitly enabled before use.
+
+  The reason for this is that enabling this functionality generally requires
+  that the socket be reconfigured using `setsockopt` on most platforms. Doing
+  this on-demand would require state in the BIO to determine whether this
+  functionality is currently switched on, which would require otherwise
+  unnecessary locking, undermining performance in concurrent usage of this API
+  on a given BIO. By requiring this functionality to be enabled explicitly
+  before use, this allows this initialization to be done up front without
+  performance cost. It also aids users of the API to understand that this
+  functionality is not always available and to detect when this functionality is
+  available in advance.
+
+### Design
+
+The currently proposed design is as follows:
+
+```c
+typedef struct bio_msg_st {
+    void *data;
+    size_t data_len;
+    BIO_ADDR *peer, *local;
+    uint64_t flags;
+} BIO_MSG;
+
+#define BIO_UNPACK_ERRNO(e)     /*...*/
+#define BIO_IS_ERRNO(e)         /*...*/
+
+ossl_ssize_t BIO_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
+                          size_t num_msg, uint64_t flags);
+ossl_ssize_t BIO_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride,
+                          size_t num_msg, uint64_t flags);
+```
+
+The API is used as follows:
+
+- `msg` points to an array of `num_msg` `BIO_MSG` structures.
+
+- Both functions have identical prototypes, and return the number of messages
+  processed in the array. If no messages were sent due to an error, `-1` is
+  returned. If an OS-level socket error occurs, a negative value `v` is
+  returned. The caller should determine that `v` is an OS-level socket error by
+  calling `BIO_IS_ERRNO(v)` and may obtain the OS-level socket error code by
+  calling `BIO_UNPACK_ERRNO(v)`.
+
+- `stride` must be set to `sizeof(BIO_MSG)`.
+
+- `data` points the buffer of data to be sent or to be filled with received
+  data. `data_len` is the size of the buffer in bytes on call. If the
+  given message in the array is processed (i.e., if the return value
+  exceeds the index of that message in the array), `data_len` is updated
+  to the actual amount of data sent or received at return time.
+
+- `flags` in the `BIO_MSG` structure provides per-message flags to
+  the `BIO_sendmmsg` or `BIO_recvmmsg` call. If the given message in the array
+  is processed, `flags` is written with zero or more result flags at return
+  time. The `flags` argument to the call itself provides for global flags
+  affecting all messages in the array. Currently, no per-message or global flags
+  are defined and all of these fields are set to zero on call and on return.
+
+- `peer` and `local` are optional pointers to `BIO_ADDR` structures into
+  which the remote and local addresses are to be filled. If either of these
+  are NULL, the given addressing information is not requested. Local address
+  support may not be available in all circumstances, in which case processing of
+  the message fails. (This means that the function returns the number of
+  messages processed, or -1 if the message in question is the first message.)
+
+  Support for `local` must be explicitly enabled before use, otherwise
+  attempts to use it fail.
+
+Local address support is enabled as follows:
+
+```c
+int BIO_dgram_set_local_addr_enable(BIO *b, int enable);
+int BIO_dgram_get_local_addr_enable(BIO *b);
+int BIO_dgram_get_local_addr_cap(BIO *b);
+```
+
+`BIO_dgram_get_local_addr_cap()` returns 1 if local address support is enabled.
+It is then enabled using `BIO_dgram_set_local_addr_enable()`, which fails if
+support is not available.
+
+Options which were considered
+-----------------------------
+
+Options for the API surface which were considered included:
+
+### sendmmsg/recvmmsg-like API
+
+This design was chosen to form the basis of the adopted design, which is
+described above.
 
 ```c
 int BIO_readm(BIO *b, BIO_mmsghdr *msgvec,
@@ -29,7 +195,7 @@ subset of `struct mmsghdr` as being supported, specifically no control messages;
 The flags argument is defined by us. Initially we can support something like
 `MSG_DONTWAIT` (say, `BIO_DONTWAIT`).
 
-### Implementation Questions
+#### Implementation Questions
 
 If we go with this, there are some issues that arise:
 
@@ -128,8 +294,7 @@ If we go with this, there are some issues that arise:
       above. It would return failure if not possible and this would give client
       code a clear way to determine if its expectations are met.
 
-Alternate API
--------------
+### Alternate API
 
 Could we use a simplified API? For example, could we have an API that returns
 one datagram where BIO_dgram uses `readmmsg` internally and queues the returned
@@ -287,13 +452,13 @@ Probably not worth supporting this. So we can have the following rule:
 
 Of course, all of the above applies analogously to the TX side.
 
-### BIO_dgram_mem
+#### BIO_dgram_mem
 
 We will also implement from scratch a BIO_dgram_mem. This will be provided as a
 BIO pair which provides identical semantics to the BIO_dgram above, both for the
 legacy and zero-copy code paths.
 
-### Thread safety
+#### Thread safety
 
 It is a functional assumption of the above design that we would never want to
 have more than one thread doing TX on the same BIO and never have more than one
@@ -310,13 +475,13 @@ would need to revisit the set-call-then-execute-call API approach above
 mention this only for completeness. Our recent learnt lessons on cache
 contention suggest that this probably wouldn't be a good idea anyway.
 
-### Other questions
+#### Other questions
 
 BIO_dgram will call the allocation function to get buffers for `recvmmsg` to
 fill. We might want to have a way to specify how many buffers it should offer to
 `recvmmsg`, and thus how many buffers it allocates in advance.
 
-### Premature destruction
+#### Premature destruction
 
 If BIO_dgram is freed before all datagrams are read, the read buffer free
 callback is used to free any unreturned read buffers.
