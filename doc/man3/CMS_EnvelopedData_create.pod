@@ -42,9 +42,9 @@ L<CMS_add0_recipient_key(3)>.
 The B<CMS_ContentInfo> structure needs to be finalized using L<CMS_final(3)>
 and then freed using L<CMS_ContentInfo_free(3)>.
 
-CMS_EnvelopedData_create() and CMS_AuthEnvelopedData_create are similar to
-CMS_EnvelopedData_create_ex() and
-CMS_AuthEnvelopedData_create_ex() but use default values of NULL for
+CMS_EnvelopedData_create() and CMS_AuthEnvelopedData_create() are similar to
+CMS_EnvelopedData_create_ex() and CMS_AuthEnvelopedData_create_ex()
+but use default values of NULL for
 the library context I<libctx> and the property query I<propq>.
 
 =head1 NOTES

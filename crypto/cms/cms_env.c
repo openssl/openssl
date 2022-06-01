@@ -244,7 +244,8 @@ CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher)
 
 BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
                                EVP_PKEY *pkey, X509 *cert,
-                               ASN1_OCTET_STRING *secret, unsigned int flags)
+                               ASN1_OCTET_STRING *secret, unsigned int flags,
+                               OSSL_LIB_CTX *libctx, const char *propq)
 {
     CMS_ContentInfo *ci;
     BIO *bio = NULL;
@@ -255,7 +256,7 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
         return NULL;
     }
 
-    if ((ci = CMS_ContentInfo_new()) == NULL
+    if ((ci = CMS_ContentInfo_new_ex(libctx, propq)) == NULL
             || (bio = BIO_new(BIO_s_mem())) == NULL)
         goto end;
     ci->contentType = OBJ_nid2obj(NID_pkcs7_enveloped);

@@ -15,7 +15,8 @@ CMS_EncryptedData_decrypt, CMS_EnvelopedData_decrypt
 
  BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
                                 EVP_PKEY *pkey, X509 *cert,
-                                ASN1_OCTET_STRING *secret, unsigned int flags);
+                                ASN1_OCTET_STRING *secret, unsigned int flags,
+                                OSSL_LIB_CTX *libctx, const char *propq);
 
 =head1 DESCRIPTION
 
@@ -34,8 +35,9 @@ returned.
 CMS_EnvelopedData_decrypt() decrypts, similarly to CMS_decrypt(3),
 a CMS EnvelopedData object I<env> using the symmetric key I<secret> or
 the private key of the recipient B<pkey> and its associated certificate B<cert>.
-
-The optional I<flags> and I<dcont> parameters are used as described above.
+The optional parameters I<flags> and I<dcont> are used as described above.
+The optional parameters library context I<libctx> and property query I<propq>
+are used when retrieving algorithms from providers.
 
 =head1 RETURN VALUES
 
