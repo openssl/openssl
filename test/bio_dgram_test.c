@@ -177,7 +177,7 @@ static int test_bio_dgram_impl(int af, int use_local)
 
     /* First effort should fail due to missing destination address */
     ret = BIO_sendmmsg(b1, tx_msg, sizeof(BIO_MSG), 1, 0);
-    if (!TEST_int_le((int)ret, -32))
+    if (!TEST_int_eq(BIO_IS_ERRNO(ret), 1))
         goto err;
 
     /*
@@ -187,7 +187,7 @@ static int test_bio_dgram_impl(int af, int use_local)
     tx_msg[0].peer  = addr2;
     tx_msg[0].local = addr1;
     ret = BIO_sendmmsg(b1, tx_msg, sizeof(BIO_MSG), 1, 0);
-    if (!TEST_int_eq((int)ret, -3))
+    if (!TEST_int_eq((int)ret, -1))
         goto err;
 
     /* Enable local if we are using it */
@@ -217,7 +217,7 @@ static int test_bio_dgram_impl(int af, int use_local)
      * enabled
      */
     ret = BIO_recvmmsg(b2, rx_msg, sizeof(BIO_MSG), 1, 0);
-    if (!TEST_int_eq((int)ret, -3))
+    if (!TEST_int_eq((int)ret, -1))
         goto err;
 
     /* Fields have not been modified */
@@ -273,23 +273,23 @@ err:
     return testresult;
 }
 
-static int test_bio_dgram(void)
-{
+struct bio_dgram_case {
+    int af, local;
+};
+
+static const struct bio_dgram_case bio_dgram_cases[] = {
     /* Test without local */
-    if (test_bio_dgram_impl(AF_INET, 0) < 1)
-        return 0;
-
-    if (test_bio_dgram_impl(AF_INET6, 0) < 1)
-        return 0;
-
+    { AF_INET,  0 },
+    { AF_INET6, 0 },
     /* Test with local */
-    if (test_bio_dgram_impl(AF_INET, 1) < 1)
-        return 0;
+    { AF_INET,  1 },
+    { AF_INET6, 1 }
+};
 
-    if (test_bio_dgram_impl(AF_INET6, 1) < 1)
-        return 0;
-
-    return 1;
+static int test_bio_dgram(int idx)
+{
+    return test_bio_dgram_impl(bio_dgram_cases[idx].af,
+                               bio_dgram_cases[idx].local);
 }
 
 #endif
@@ -302,7 +302,7 @@ int setup_tests(void)
     }
 
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
-    ADD_TEST(test_bio_dgram);
+    ADD_ALL_TESTS(test_bio_dgram, OSSL_NELEM(bio_dgram_cases));
 #endif
     return 1;
 }
