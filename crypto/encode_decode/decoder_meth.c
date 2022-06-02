@@ -191,8 +191,11 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
         return NULL;
     }
     decoder->base.algodef = algodef;
-    decoder->base.parsed_propdef
-        = ossl_parse_property(libctx, algodef->property_definition);
+    if ((decoder->base.parsed_propdef
+         = ossl_parse_property(libctx, algodef->property_definition)) == NULL) {
+        OSSL_DECODER_free(decoder);
+        return NULL;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
