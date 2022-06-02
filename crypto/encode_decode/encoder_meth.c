@@ -191,8 +191,11 @@ static void *encoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
         return NULL;
     }
     encoder->base.algodef = algodef;
-    encoder->base.parsed_propdef
-        = ossl_parse_property(libctx, algodef->property_definition);
+    if ((encoder->base.parsed_propdef
+         = ossl_parse_property(libctx, algodef->property_definition)) == NULL) {
+        OSSL_ENCODER_free(encoder);
+        return NULL;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
