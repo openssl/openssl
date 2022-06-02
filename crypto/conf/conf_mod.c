@@ -82,6 +82,8 @@ static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
 static CONF_MODULE *module_load_dso(const CONF *cnf, const char *name,
                                     const char *value);
 
+static int conf_modules_finish_int(void);
+
 static void module_lists_free(void)
 {
     CRYPTO_THREAD_lock_free(module_list_lock);
@@ -477,7 +479,8 @@ void CONF_modules_unload(int all)
     int i;
     CONF_MODULE *md;
 
-    CONF_modules_finish(); /* also inits module list lock */
+    if (!conf_modules_finish_int()) /* also inits module list lock */
+        return;
 
     if (!CRYPTO_THREAD_write_lock(module_list_lock))
         return;
@@ -511,15 +514,15 @@ static void module_free(CONF_MODULE *md)
 
 /* finish and free up all modules instances */
 
-void CONF_modules_finish(void)
+static int conf_modules_finish_int(void)
 {
     CONF_IMODULE *imod;
 
     if (!RUN_ONCE(&init_module_list_lock, do_init_module_list_lock))
-        return;
+        return 0;
 
     if (!CRYPTO_THREAD_write_lock(module_list_lock))
-        return;
+        return 0;
 
     while (sk_CONF_IMODULE_num(initialized_modules) > 0) {
         imod = sk_CONF_IMODULE_pop(initialized_modules);
@@ -529,6 +532,13 @@ void CONF_modules_finish(void)
     initialized_modules = NULL;
 
     CRYPTO_THREAD_unlock(module_list_lock);
+
+    return 1;
+}
+
+void CONF_modules_finish(void)
+{
+    conf_modules_finish_int();
 }
 
 /* finish a module instance */
