@@ -425,7 +425,7 @@ static int rlayer_early_data_count_ok(OSSL_RECORD_LAYER *rl, size_t length,
  * SSL3_RT_APPLICATION_DATA. The number of records returned will always be <=
  * |max_pipelines|
  */
-static int tls_get_more_records(OSSL_RECORD_LAYER *rl)
+int tls_get_more_records(OSSL_RECORD_LAYER *rl)
 {
     int enc_err, rret;
     int i;
@@ -975,7 +975,7 @@ int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,  int *rversion,
             return OSSL_RECORD_RETURN_FATAL;
         }
 
-        ret = tls_get_more_records(rl);
+        ret = rl->funcs->get_more_records(rl);
 
         if (ret != OSSL_RECORD_RETURN_SUCCESS)
             return ret;
@@ -990,8 +990,12 @@ int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,  int *rversion,
     *rechandle = rec;
     *rversion = rec->rec_version;
     *type = rec->type;
-    *data = rec->data;
+    *data = rec->data + rec->off;
     *datalen = rec->length;
+    if (rl->isdtls) {
+        *epoch = (uint16_t)rec->epoch;
+        memcpy(seq_num, rec->seq_num, sizeof(rec->seq_num));
+    }
 
     return OSSL_RECORD_RETURN_SUCCESS;
 }
@@ -1209,53 +1213,6 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     return ret;
 }
 
-/* TODO(RECLAYER): Temporary funcs */
-static int dtls_set_protocol_version(OSSL_RECORD_LAYER *rl, int version)
-{
-    rl->version = version;
-    return 1;
-}
-static struct record_functions_st dtls_funcs = {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    dtls_set_protocol_version,
-    NULL
-};
-
-static int
-dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
-                      int role, int direction, int level, unsigned char *key,
-                      size_t keylen, unsigned char *iv, size_t ivlen,
-                      unsigned char *mackey, size_t mackeylen,
-                      const EVP_CIPHER *ciph, size_t taglen,
-                      /* TODO(RECLAYER): This probably should not be an int */
-                      int mactype,
-                      const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
-                      BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
-                      const OSSL_PARAM *settings, const OSSL_PARAM *options,
-                      const OSSL_DISPATCH *fns, void *cbarg,
-                      OSSL_RECORD_LAYER **retrl)
-{
-    int ret;
-
-
-    ret = tls_int_new_record_layer(libctx, propq, vers, role, direction, level,
-                                   key, keylen, iv, ivlen, mackey, mackeylen,
-                                   ciph, taglen, mactype, md, comp, prev,
-                                   transport, next, local, peer, settings,
-                                   options, fns, cbarg, retrl);
-
-    if (ret != OSSL_RECORD_RETURN_SUCCESS)
-        return ret;
-
-    (*retrl)->isdtls = 1;
-    (*retrl)->funcs = &dtls_funcs;
-
-    return OSSL_RECORD_RETURN_SUCCESS;
-}
-
 static void tls_int_free(OSSL_RECORD_LAYER *rl)
 {
     /* TODO(RECLAYER): Cleanse sensitive fields */
@@ -1430,40 +1387,6 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_set1_bio,
     tls_set_protocol_version,
     tls_set_plain_alerts,
-    tls_set_first_handshake,
-    tls_set_max_pipelines,
-
-    /*
-     * TODO(RECLAYER): Remove these. These function pointers are temporary hacks
-     * during the record layer refactoring. They need to be removed before the
-     * refactor is complete.
-     */
-    tls_default_read_n,
-    tls_get0_rbuf,
-    tls_get0_packet,
-    tls_set0_packet,
-    tls_get_packet_length,
-    tls_reset_packet_length
-};
-
-const OSSL_RECORD_METHOD ossl_dtls_record_method = {
-    dtls_new_record_layer,
-    tls_free,
-    tls_reset,
-    tls_unprocessed_read_pending,
-    tls_processed_read_pending,
-    tls_app_data_pending,
-    tls_write_pending,
-    tls_get_max_record_len,
-    tls_get_max_records,
-    tls_write_records,
-    tls_retry_write_records,
-    tls_read_record,
-    tls_release_record,
-    tls_get_alert_code,
-    tls_set1_bio,
-    tls_set_protocol_version,
-    NULL,
     tls_set_first_handshake,
     tls_set_max_pipelines,
 

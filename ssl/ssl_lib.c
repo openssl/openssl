@@ -1791,13 +1791,13 @@ int SSL_has_pending(const SSL *s)
 
     /* Check buffered app data if any first */
     if (SSL_CONNECTION_IS_DTLS(sc)) {
-        DTLS1_RECORD_DATA *rdata;
+        TLS_RECORD *rdata;
         pitem *item, *iter;
 
         iter = pqueue_iterator(sc->rlayer.d->buffered_app_data.q);
         while ((item = pqueue_next(&iter)) != NULL) {
             rdata = item->data;
-            if (rdata->rrec.length > 0)
+            if (rdata->length > 0)
                 return 1;
         }
     }

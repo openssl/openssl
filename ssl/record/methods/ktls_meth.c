@@ -473,6 +473,7 @@ static int ktls_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
 static struct record_functions_st ossl_ktls_funcs = {
     ktls_set_crypto_state,
     ktls_read_n,
+    tls_get_more_records,
     ktls_cipher,
     NULL,
     tls_default_set_protocol_version,

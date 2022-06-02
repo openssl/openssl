@@ -86,6 +86,13 @@ typedef struct tls_record_st {
     size_t length;
     /* Offset into the data buffer where to start reading */
     size_t off;
+    /* epoch number. DTLS only */
+    uint16_t epoch;
+    /* sequence number. DTLS only */
+    unsigned char seq_num[SEQ_NUM_SIZE];
+#ifndef OPENSSL_NO_SCTP
+    struct bio_dgram_sctp_rcvinfo recordinfo;
+#endif
 } TLS_RECORD;
 
 typedef struct dtls1_bitmap_st {
@@ -122,9 +129,6 @@ typedef struct dtls_record_layer_st {
     DTLS1_BITMAP bitmap;
     /* renegotiation starts a new set of sequence numbers */
     DTLS1_BITMAP next_bitmap;
-    /* Received handshake records (processed and unprocessed) */
-    record_pqueue unprocessed_rcds;
-    record_pqueue processed_rcds;
     /*
      * Buffered application records. Only for records between CCS and
      * Finished to prevent either protocol violation or unnecessary message
@@ -220,10 +224,6 @@ typedef struct ssl_mac_buf_st SSL_MAC_BUF;
 #define RECORD_LAYER_get_packet_length(rl)      ((rl)->packet_length)
 #define RECORD_LAYER_add_packet_length(rl, inc) ((rl)->packet_length += (inc))
 #define DTLS_RECORD_LAYER_get_w_epoch(rl)       ((rl)->d->w_epoch)
-#define DTLS_RECORD_LAYER_get_processed_rcds(rl) \
-                                                ((rl)->d->processed_rcds)
-#define DTLS_RECORD_LAYER_get_unprocessed_rcds(rl) \
-                                                ((rl)->d->unprocessed_rcds)
 #define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
 #define RECORD_LAYER_get_wbuf(rl)               ((rl)->wbuf)
 
@@ -276,7 +276,7 @@ int do_dtls1_write(SSL_CONNECTION *s, int type, const unsigned char *buf,
 void dtls1_reset_seq_numbers(SSL_CONNECTION *s, int rw);
 int dtls_buffer_listen_record(SSL_CONNECTION *s, size_t len, unsigned char *seq,
                               size_t off);
-
+void ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr);
 
 # define HANDLE_RLAYER_RETURN(s, ret) \
     ossl_tls_handle_rlayer_return(s, ret, OPENSSL_FILE, OPENSSL_LINE)

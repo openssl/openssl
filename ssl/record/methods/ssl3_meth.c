@@ -299,6 +299,7 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
 struct record_functions_st ssl_3_0_funcs = {
     ssl3_set_crypto_state,
     tls_default_read_n,
+    tls_get_more_records,
     ssl3_cipher,
     ssl3_mac,
     tls_default_set_protocol_version,

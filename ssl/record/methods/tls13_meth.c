@@ -241,6 +241,7 @@ static int tls13_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
 struct record_functions_st tls_1_3_funcs = {
     tls13_set_crypto_state,
     tls_default_read_n,
+    tls_get_more_records,
     tls13_cipher,
     NULL,
     tls_default_set_protocol_version,
