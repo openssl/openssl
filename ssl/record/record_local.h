@@ -36,18 +36,8 @@
 #define RECORD_LAYER_clear_first_record(rl)     ((rl)->is_first_record = 0)
 #define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
 
-DTLS1_BITMAP *dtls1_get_bitmap(SSL_CONNECTION *s, SSL3_RECORD *rr,
-                               unsigned int *is_next_epoch);
-int dtls1_process_buffered_records(SSL_CONNECTION *s);
-int dtls1_retrieve_buffered_record(SSL_CONNECTION *s, record_pqueue *queue);
-int dtls1_buffer_record(SSL_CONNECTION *s, record_pqueue *q,
-                        unsigned char *priority);
+int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec);
 void ssl3_record_sequence_update(unsigned char *seq);
-
-/* Functions provided by the DTLS1_BITMAP component */
-
-int dtls1_record_replay_check(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap);
-void dtls1_record_bitmap_update(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap);
 
 /* Macros/functions provided by the SSL3_BUFFER component */
 
@@ -120,8 +110,6 @@ __owur int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                            size_t block_size, size_t mac_size,
                                            int aead,
                                            OSSL_LIB_CTX *libctx);
-int dtls1_process_record(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap);
-__owur int dtls1_get_record(SSL_CONNECTION *s);
 uint32_t ossl_get_max_early_data(SSL_CONNECTION *s);
 int ossl_early_data_count_ok(SSL_CONNECTION *s, size_t length, size_t overhead,
                              int send);

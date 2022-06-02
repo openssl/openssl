@@ -1544,6 +1544,7 @@ static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
     int testresult = 0;
     void *zbuf;
     SSL_CONNECTION *serversc;
+    TLS_RECORD *rr;
 
     static unsigned char cbuf[16000];
     static unsigned char sbuf[16000];
@@ -1606,24 +1607,11 @@ static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
      */
     if (!TEST_ptr(serversc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl)))
         goto end;
+    rr = serversc->rlayer.tlsrecs;
 
-    /*
-     * TODO(RECLAYER): This is temporary until DTLS is converted to use the new
-     * record layer code.
-     */
-    if (!SSL_is_dtls(serverssl)) {
-        TLS_RECORD *rr = serversc->rlayer.tlsrecs;
-
-        zbuf = &rr->data[rr->off];
-        if (!TEST_int_eq(rr->length, sizeof(cbuf)))
-            goto end;
-    } else {
-        SSL3_RECORD *rr = serversc->rlayer.rrec;
-
-        zbuf = &rr->data[rr->off];
-        if (!TEST_int_eq(rr->length, sizeof(cbuf)))
-            goto end;
-    }
+    zbuf = &rr->data[rr->off];
+    if (!TEST_int_eq(rr->length, sizeof(cbuf)))
+        goto end;
 
     /*
      * After SSL_peek() the plaintext must still be stored in the

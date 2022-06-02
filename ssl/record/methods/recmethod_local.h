@@ -34,6 +34,9 @@ struct record_functions_st
 
     int (*read_n)(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                   int clearold, size_t *readbytes);
+
+    int (*get_more_records)(OSSL_RECORD_LAYER *rl);
+
     /*
      * Returns:
      *    0: if the record is publicly invalid, or an internal error, or AEAD
@@ -169,6 +172,10 @@ struct ossl_record_layer_st
 
     size_t taglen;
 
+    /* DTLS eceived handshake records (processed and unprocessed) */
+    record_pqueue unprocessed_rcds;
+    record_pqueue processed_rcds;
+
     /* Callbacks */
     void *cbarg;
     OSSL_FUNC_rlayer_skip_early_data_fn *skip_early_data;
@@ -180,6 +187,14 @@ struct ossl_record_layer_st
     /* Function pointers for version specific functions */
     struct record_functions_st *funcs;
 };
+
+typedef struct dtls_rlayer_record_data_st {
+    unsigned char *packet;
+    size_t packet_length;
+    SSL3_BUFFER rbuf;
+    SSL3_RECORD rrec;
+} DTLS_RLAYER_RECORD_DATA;
+
 
 extern struct record_functions_st ssl_3_0_funcs;
 extern struct record_functions_st tls_1_funcs;
@@ -216,6 +231,7 @@ __owur int ssl3_cbc_digest_record(const EVP_MD *md,
 
 int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                        int clearold, size_t *readbytes);
+int tls_get_more_records(OSSL_RECORD_LAYER *rl);
 
 int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *re);

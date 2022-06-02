@@ -78,34 +78,12 @@ void RECORD_LAYER_release(RECORD_LAYER *rl)
 /* Checks if we have unprocessed read ahead data pending */
 int RECORD_LAYER_read_pending(const RECORD_LAYER *rl)
 {
-    /*
-     * TODO(RECLAYER): Temporarily do it the old way until DTLS is converted to
-     * the new record layer code
-     */
-    if (SSL_CONNECTION_IS_DTLS(rl->s))
-        return SSL3_BUFFER_get_left(&rl->rbuf) != 0;
-
     return rl->s->rrlmethod->unprocessed_read_pending(rl->s->rrl);
 }
 
 /* Checks if we have decrypted unread record data pending */
 int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl)
 {
-    /*
-     * TODO(RECLAYER): Temporarily do it the old way until DTLS is converted to
-     * the new record layer code
-     */
-    if (SSL_CONNECTION_IS_DTLS(rl->s)) {
-        const SSL3_RECORD *rr = rl->rrec;
-
-        size_t curr_rec = 0, num_recs = RECORD_LAYER_get_numrpipes(rl);
-
-        while (curr_rec < num_recs && SSL3_RECORD_is_read(&rr[curr_rec]))
-            curr_rec++;
-
-        return curr_rec < num_recs;
-    }
-
     return (rl->curr_rec < rl->num_recs)
            || rl->s->rrlmethod->processed_read_pending(rl->s->rrl);
 }
@@ -137,32 +115,21 @@ size_t ssl3_pending(const SSL *s)
     if (sc->rlayer.rstate == SSL_ST_READ_BODY)
         return 0;
 
-    /*
-     * TODO(RECLAYER): We need to do it the old way temporary for DTLS until
-     * that is converted to use the new record layer code
-     */
     if (SSL_CONNECTION_IS_DTLS(sc)) {
-        DTLS1_RECORD_DATA *rdata;
+        TLS_RECORD *rdata;
         pitem *item, *iter;
 
         iter = pqueue_iterator(sc->rlayer.d->buffered_app_data.q);
         while ((item = pqueue_next(&iter)) != NULL) {
             rdata = item->data;
-            num += rdata->rrec.length;
+            num += rdata->length;
         }
+    }
 
-        for (i = 0; i < RECORD_LAYER_get_numrpipes(&sc->rlayer); i++) {
-            if (SSL3_RECORD_get_type(&sc->rlayer.rrec[i])
-                != SSL3_RT_APPLICATION_DATA)
-                return 0;
-            num += SSL3_RECORD_get_length(&sc->rlayer.rrec[i]);
-        }
-    } else {
-        for (i = 0; i <sc->rlayer.num_recs; i++) {
-            if (sc->rlayer.tlsrecs[i].type != SSL3_RT_APPLICATION_DATA)
-                return 0;
-            num += sc->rlayer.tlsrecs[i].length;
-        }
+    for (i = 0; i < sc->rlayer.num_recs; i++) {
+        if (sc->rlayer.tlsrecs[i].type != SSL3_RT_APPLICATION_DATA)
+            return num;
+        num += sc->rlayer.tlsrecs[i].length;
     }
 
     return num;
@@ -1170,6 +1137,18 @@ int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int ret, char *file,
     return ret;
 }
 
+void ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr)
+{
+    if (rr->rechandle != NULL) {
+        /* The record layer allocated the buffers for this record */
+        s->rrlmethod->release_record(s->rrl, rr->rechandle);
+    } else {
+        /* We allocated the buffers for this record (only happens with DTLS) */
+        OPENSSL_free(rr->data);
+    }
+    s->rlayer.curr_rec++;
+}
+
 /*-
  * Return up to 'len' payload bytes received in 'type' records.
  * 'type' is one of the following:
@@ -1360,10 +1339,9 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
              * SSL_read() with a zero length buffer will eventually cause
              * SSL_pending() to report data as being available.
              */
-            if (rr->length == 0) {
-                s->rrlmethod->release_record(s->rrl, rr->rechandle);
-                s->rlayer.curr_rec++;
-            }
+            if (rr->length == 0)
+                ssl_release_record(s, rr);
+
             return 0;
         }
 
@@ -1379,10 +1357,8 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
             buf += n;
             if (peek) {
                 /* Mark any zero length record as consumed CVE-2016-6305 */
-                if (rr->length == 0) {
-                    s->rrlmethod->release_record(s->rrl, rr->rechandle);
-                    s->rlayer.curr_rec++;
-                }
+                if (rr->length == 0)
+                    ssl_release_record(s, rr);
             } else {
                 if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
                     OPENSSL_cleanse(&(rr->data[rr->off]), n);
@@ -1393,8 +1369,7 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
                     #if 0
                     s->rlayer.rstate = SSL_ST_READ_HEADER;
                     #endif
-                    s->rrlmethod->release_record(s->rrl, rr->rechandle);
-                    s->rlayer.curr_rec++;
+                    ssl_release_record(s, rr);
                 }
             }
             if (rr->length == 0
@@ -1490,8 +1465,7 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
         if ((!is_tls13 && alert_level == SSL3_AL_WARNING)
                 || (is_tls13 && alert_descr == SSL_AD_USER_CANCELLED)) {
             s->s3.warn_alert = alert_descr;
-            s->rrlmethod->release_record(s->rrl, rr->rechandle);
-            s->rlayer.curr_rec++;
+            ssl_release_record(s, rr);
 
             s->rlayer.alert_count++;
             if (s->rlayer.alert_count == MAX_WARN_ALERT_COUNT) {
@@ -1518,8 +1492,7 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
                           SSL_AD_REASON_OFFSET + alert_descr,
                           "SSL alert number %d", alert_descr);
             s->shutdown |= SSL_RECEIVED_SHUTDOWN;
-            s->rrlmethod->release_record(s->rrl, rr->rechandle);
-            s->rlayer.curr_rec++;
+            ssl_release_record(s, rr);
             SSL_CTX_remove_session(s->session_ctx, s->session);
             return 0;
         } else if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
@@ -1554,8 +1527,7 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
              * sent close_notify.
              */
             if (!SSL_CONNECTION_IS_TLS13(s)) {
-                s->rrlmethod->release_record(s->rrl, rr->rechandle);
-                s->rlayer.curr_rec++;
+                ssl_release_record(s, rr);
 
                 if ((s->mode & SSL_MODE_AUTO_RETRY) != 0)
                     goto start;
@@ -1574,8 +1546,7 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
              * above.
              * No alert sent because we already sent close_notify
              */
-            s->rrlmethod->release_record(s->rrl, rr->rechandle);
-            s->rlayer.curr_rec++;
+            ssl_release_record(s, rr);
             SSLfatal(s, SSL_AD_NO_ALERT,
                      SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY);
             return -1;
@@ -1602,10 +1573,8 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
         rr->off += n;
         rr->length -= n;
         *dest_len += n;
-        if (rr->length == 0) {
-            s->rrlmethod->release_record(s->rrl, rr->rechandle);
-            s->rlayer.curr_rec++;
-        }
+        if (rr->length == 0)
+            ssl_release_record(s, rr);
 
         if (*dest_len < dest_maxlen)
             goto start;     /* fragment was too small */
@@ -1709,8 +1678,7 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
                 /* SSLfatal() already called */
                 return -1;
             }
-            s->rrlmethod->release_record(s->rrl, rr->rechandle);
-            s->rlayer.curr_rec++;
+            ssl_release_record(s, rr);
             goto start;
         } else {
             SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);

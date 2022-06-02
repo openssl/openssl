@@ -144,6 +144,7 @@ static int tls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
 struct record_functions_st tls_any_funcs = {
     tls_any_set_crypto_state,
     tls_default_read_n,
+    tls_get_more_records,
     tls_any_cipher,
     NULL,
     tls_any_set_protocol_version,
