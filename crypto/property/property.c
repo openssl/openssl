@@ -304,7 +304,11 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
         impl->properties = ossl_parse_property(store->ctx, properties);
         if (impl->properties == NULL)
             goto err;
-        ossl_prop_defn_set(store->ctx, properties, impl->properties);
+        if (!ossl_prop_defn_set(store->ctx, properties, impl->properties)) {
+            ossl_property_free(impl->properties);
+            impl->properties = NULL;
+            goto err;
+        }
     }
 
     alg = ossl_method_store_retrieve(store, nid);
