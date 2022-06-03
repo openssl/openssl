@@ -383,7 +383,7 @@ inner_ossl_decoder_fetch(struct decoder_data_st *methdata,
         ERR_raise_data(ERR_LIB_OSSL_DECODER, code,
                        "%s, Name (%s : %d), Properties (%s)",
                        ossl_lib_ctx_get_descriptor(methdata->libctx),
-                       name = NULL ? "<null>" : name, id,
+                       name == NULL ? "<null>" : name, id,
                        properties == NULL ? "<null>" : properties);
     }
 
