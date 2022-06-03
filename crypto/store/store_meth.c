@@ -360,7 +360,7 @@ inner_loader_fetch(struct loader_data_st *methdata, int id,
                        "%s%s, Scheme (%s : %d), Properties (%s)",
                        helpful_msg,
                        ossl_lib_ctx_get_descriptor(methdata->libctx),
-                       scheme = NULL ? "<null>" : scheme, id,
+                       scheme == NULL ? "<null>" : scheme, id,
                        properties == NULL ? "<null>" : properties);
     }
 
