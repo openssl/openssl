@@ -1695,7 +1695,7 @@ int s_server_main(int argc, char *argv[])
     }
 
     if (stateless && s_nbio) {
-        BIO_printf(bio_err, "Can't only use -stateless with -nbio\n");
+        BIO_printf(bio_err, "Can't use -stateless with -nbio\n");
         goto end;
     }
 
