@@ -1973,6 +1973,8 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
 #ifndef FIPS_MODULE
 int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
 {
+    EVP_PKEY *allocpkey = NULL;
+
     if (!ossl_assert(dest != NULL))
         return 0;
 
@@ -2003,7 +2005,7 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
 
         /* Make sure we have a clean slate to copy into */
         if (*dest == NULL) {
-            *dest = EVP_PKEY_new();
+            allocpkey = *dest = EVP_PKEY_new();
             if (*dest == NULL) {
                 ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
                 return 0;
@@ -2052,6 +2054,10 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
         }
     }
 
+    if (allocpkey != NULL) {
+        EVP_PKEY_free(allocpkey);
+        *dest = NULL;
+    }
     return 0;
 }
 
