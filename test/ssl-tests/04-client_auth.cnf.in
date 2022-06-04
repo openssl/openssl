@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 use OpenSSL::Test;
-use OpenSSL::Test::Utils qw(anydisabled disabled);
+use OpenSSL::Test::Utils qw(alldisabled anydisabled disabled);
 setup("no_test_here");
 
 our $fips_mode;
@@ -176,7 +176,8 @@ sub generate_tests() {
                         "Options" => "StrictCertCheck",
                     },
                     test   => {
-                        "ExpectedResult" => "Success",
+                        "ExpectedResult" => alldisabled("tls1_2", "tls1_3")
+                                            ? "ServerFail" : "Success",
                         "ExpectedClientCertType" => "RSA-PSS",
                         "ExpectedClientCANames" => test_pem("rootcert.pem"),
                         "Method" => $method,
