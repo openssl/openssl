@@ -66,6 +66,11 @@ OpenSSL 3.1
 
    *Hugo Landau*
 
+ * When generating safe-prime DH parameters set the recommended private key
+   length equivalent to minimum key lengths as in RFC 7919.
+
+   *Tomáš Mráz*
+
 OpenSSL 3.0
 -----------
 
