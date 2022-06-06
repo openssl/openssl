@@ -498,6 +498,8 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 
     if (ok && (params = OSSL_PARAM_BLD_to_param(tmpl)) != NULL)
         ok = param_cb(params, cbarg);
+    else
+        ok = 0;
 end:
     OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(tmpl);
