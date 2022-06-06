@@ -27,6 +27,7 @@
 #include "testutil.h"
 
 #include "internal/ffc.h"
+#include "crypto/security_bits.h"
 
 #ifndef OPENSSL_NO_DSA
 static const unsigned char dsa_2048_224_sha224_p[] = {
@@ -598,6 +599,9 @@ static int ffc_private_gen_test(int index)
     /* fail since N > len(q) */
     if (!TEST_false(ossl_ffc_generate_private_key(ctx, params, N + 1, 112, priv)))
         goto err;
+    /* s must be always set */
+    if (!TEST_false(ossl_ffc_generate_private_key(ctx, params, N, 0, priv)))
+        goto err;
     /* pass since 2s <= N <= len(q) */
     if (!TEST_true(ossl_ffc_generate_private_key(ctx, params, N, 112, priv)))
         goto err;
@@ -609,9 +613,10 @@ static int ffc_private_gen_test(int index)
         goto err;
     if (!TEST_true(ossl_ffc_validate_private_key(params->q, priv, &res)))
         goto err;
-
-    /* N and s are ignored in this case */
-    if (!TEST_true(ossl_ffc_generate_private_key(ctx, params, 0, 0, priv)))
+    /* N is ignored in this case */
+    if (!TEST_true(ossl_ffc_generate_private_key(ctx, params, 0,
+                                                 ossl_ifc_ffc_compute_security_bits(BN_num_bits(params->p)),
+                                                 priv)))
         goto err;
     if (!TEST_true(ossl_ffc_validate_private_key(params->q, priv, &res)))
         goto err;
