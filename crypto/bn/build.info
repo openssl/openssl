@@ -86,6 +86,9 @@ IF[{- !$disabled{asm} -}]
   $BNASM_c64xplus_ec2m=c64xplus-gf2m.s
   $BNDEF_c64xplus_ec2m=OPENSSL_BN_ASM_GF2m
 
+  $BNASM_riscv64=bn_asm.c bn_riscv64_vector.c riscv64-vector-mont-256.S riscv64-vector-mont-4096.S
+  $BNDEF_riscv64=OPENSSL_BN_ASM_MONT
+
   # Now that we have defined all the arch specific variables, use the
   # appropriate ones, and define the appropriate macros
   IF[$BNASM_{- $target{asm_arch} -}]
@@ -183,3 +186,6 @@ GENERATE[armv4-gf2m.S]=asm/armv4-gf2m.pl
 INCLUDE[armv4-gf2m.o]=..
 GENERATE[armv8-mont.S]=asm/armv8-mont.pl
 INCLUDE[armv8-mont.o]=..
+
+GENERATE[riscv64-vector-mont-256.S]=asm/riscv64-vector-mont-256.pl
+GENERATE[riscv64-vector-mont-4096.S]=asm/riscv64-vector-mont-4096.pl
