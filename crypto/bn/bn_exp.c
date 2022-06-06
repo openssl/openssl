@@ -303,11 +303,15 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     BIGNUM *val[TABLE_SIZE];
     BN_MONT_CTX *mont = NULL;
 
+#if defined(__riscv) && __riscv_xlen == 64 && defined(__riscv_v)
+    // avoid go into consttime (it uses different R)
+#else
     if (BN_get_flags(p, BN_FLG_CONSTTIME) != 0
             || BN_get_flags(a, BN_FLG_CONSTTIME) != 0
             || BN_get_flags(m, BN_FLG_CONSTTIME) != 0) {
         return BN_mod_exp_mont_consttime(rr, a, p, m, ctx, in_mont);
     }
+#endif
 
     bn_check_top(a);
     bn_check_top(p);
@@ -377,6 +381,21 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     wstart = bits - 1;          /* The top bit of the window */
     wend = 0;                   /* The bottom bit of the window */
 
+#if defined(__riscv) && __riscv_xlen == 64 && defined(__riscv_v)
+    /* prepare d with same length as modulus */
+    /* required by bn_mont_mul */
+    if (bn_wexpand(d, m->top) == NULL)
+        goto err;
+    d->top = m->top;
+    d->d[0] = 1;
+    for (i = 1; i != d->top; ++i) {
+        d->d[i] = 0;
+    }
+    if (!bn_to_mont_fixed_top(r, d, mont, ctx))
+        goto err;
+#else
+/* this suggestion uses the assumption that R = 2^(m->top*BN_BITS2) */
+/* this is not true in RISC-V Vector impl */
 #if 1                           /* by Shay Gueron's suggestion */
     j = m->top;                 /* borrow j */
     if (m->d[j - 1] & (((BN_ULONG)1) << (BN_BITS2 - 1))) {
@@ -392,6 +411,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 #endif
     if (!bn_to_mont_fixed_top(r, BN_value_one(), mont, ctx))
         goto err;
+#endif
     for (;;) {
         if (BN_is_bit_set(p, wstart) == 0) {
             if (!start) {
