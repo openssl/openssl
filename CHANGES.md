@@ -139,6 +139,13 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
+### Changes between 3.0.4 and 3.0.5
+
+ * When generating safe-prime DH parameters set the recommended private key
+   length equivalent to minimum key lengths as in RFC 7919.
+
+   *Tomáš Mráz*
+
 ### Changes between 3.0.3 and 3.0.4 [21 June 2022]
 
  * In addition to the c_rehash shell command injection identified in

@@ -112,6 +112,8 @@ typedef struct ffc_params_st {
      */
     const char *mdname;
     const char *mdprops;
+    /* Default key length for known named groups according to RFC7919 */
+    int keylength;
 } FFC_PARAMS;
 
 void ossl_ffc_params_init(FFC_PARAMS *params);
