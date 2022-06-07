@@ -1123,8 +1123,11 @@ static int print_set_indent(BIO **out, int *pop_f_prefix, long *saved_indent,
 
         *saved_indent =  (i < 0 ? 0 : i);
         if (BIO_set_indent(*out, indent) <= 0) {
-            if ((*out = BIO_push(BIO_new(BIO_f_prefix()), *out)) == NULL)
+            BIO *prefbio = BIO_new(BIO_f_prefix());
+
+            if (prefbio == NULL)
                 return 0;
+            *out = BIO_push(prefbio, *out);
             *pop_f_prefix = 1;
         }
         if (BIO_set_indent(*out, indent) <= 0) {
@@ -2090,7 +2093,7 @@ void *evp_pkey_get_legacy(EVP_PKEY *pk)
         return ret;
 
     if (!evp_pkey_copy_downgraded(&tmp_copy, pk))
-        return NULL;
+        goto err;
 
     if (!CRYPTO_THREAD_write_lock(pk->lock))
         goto err;
