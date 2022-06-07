@@ -369,7 +369,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
         OPENSSL_free(ginf->tlsname);
         OPENSSL_free(ginf->realname);
         OPENSSL_free(ginf->algorithm);
-        ginf->tlsname = ginf->realname = NULL;
+        ginf->algorithm = ginf->tlsname = ginf->realname = NULL;
     }
     return ret;
 }
