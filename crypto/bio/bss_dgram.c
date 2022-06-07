@@ -127,8 +127,12 @@ static long dgram_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int dgram_new(BIO *h);
 static int dgram_free(BIO *data);
 static int dgram_clear(BIO *bio);
-static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t num_msg, uint64_t flags);
-static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t num_msg, uint64_t flags);
+static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg,
+                                   size_t stride, size_t num_msg,
+                                   uint64_t flags);
+static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg,
+                                   size_t stride, size_t num_msg,
+                                   uint64_t flags);
 
 # ifndef OPENSSL_NO_SCTP
 static int dgram_sctp_write(BIO *h, const char *buf, int num);
@@ -975,7 +979,7 @@ static int dgram_puts(BIO *bp, const char *str)
 }
 
 #if M_METHOD == M_METHOD_WSARECVMSG
-static void translate_msg_win(WSAMSG *mh, WSABUF *iov,
+static void translate_msg_win(BIO *b, WSAMSG *mh, WSABUF *iov,
                               unsigned char *control, BIO_MSG *msg)
 {
     iov->len = msg->data_len;
@@ -983,10 +987,10 @@ static void translate_msg_win(WSAMSG *mh, WSABUF *iov,
 
     /* Windows requires namelen to be set exactly */
     mh->name = msg->peer != NULL ? &msg[0].peer->sa : NULL;
-    if (msg->peer != NULL && msg->peer->sa.sa_family == AF_INET)
+    if (msg->peer != NULL && dgram_get_sock_family(b) == AF_INET)
         mh->namelen = sizeof(struct sockaddr_in);
 #if OPENSSL_USE_IPV6
-    else if (msg->peer != NULL && msg->peer->sa.sa_family == AF_INET6)
+    else if (msg->peer != NULL && dgram_get_sock_family(b) == AF_INET6)
         mh->namelen = sizeof(struct sockaddr_in6);
 #endif
     else
@@ -1010,7 +1014,7 @@ static void translate_msg_win(WSAMSG *mh, WSABUF *iov,
 
 #if M_METHOD == M_METHOD_RECVMMSG || M_METHOD == M_METHOD_RECVMSG
 /* Translates a BIO_MSG to a msghdr and iovec. */
-static void translate_msg(struct msghdr *mh, struct iovec *iov,
+static void translate_msg(BIO *b, struct msghdr *mh, struct iovec *iov,
                           unsigned char *control, BIO_MSG *msg)
 {
     iov->iov_base = msg->data;
@@ -1018,10 +1022,10 @@ static void translate_msg(struct msghdr *mh, struct iovec *iov,
 
     /* macOS requires msg_namelen be 0 if msg_name is NULL */
     mh->msg_name = msg->peer != NULL ? &msg->peer->sa : NULL;
-    if (msg->peer != NULL && msg->peer->sa.sa_family == AF_INET)
+    if (msg->peer != NULL && dgram_get_sock_family(b) == AF_INET)
         mh->msg_namelen = sizeof(struct sockaddr_in);
 #if OPENSSL_USE_IPV6
-    else if (msg->peer != NULL && msg->peer->sa.sa_family == AF_INET6)
+    else if (msg->peer != NULL && dgram_get_sock_family(b) == AF_INET6)
         mh->msg_namelen = sizeof(struct sockaddr_in6);
 #endif
     else
@@ -1052,7 +1056,8 @@ static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
             if (cmsg->cmsg_type != IP_PKTINFO)
                 continue;
 
-            local->s_in.sin_addr = ((struct in_pktinfo *)BIO_CMSG_DATA(cmsg))->ipi_addr;
+            local->s_in.sin_addr =
+                ((struct in_pktinfo *)BIO_CMSG_DATA(cmsg))->ipi_addr;
 
 #  elif defined(IP_RECVDSTADDR)
             if (cmsg->cmsg_type != IP_RECVDSTADDR)
@@ -1082,10 +1087,12 @@ static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
 
             {
                 bio_dgram_data *data = b->ptr;
-                local->s_in6.sin6_addr     = ((struct in6_pktinfo *)BIO_CMSG_DATA(cmsg))->ipi6_addr;
+                local->s_in6.sin6_addr     =
+                    ((struct in6_pktinfo *)BIO_CMSG_DATA(cmsg))->ipi6_addr;
                 local->s_in6.sin6_family   = AF_INET6;
                 local->s_in6.sin6_port     = data->local_addr.s_in6.sin6_port;
-                local->s_in6.sin6_scope_id = data->local_addr.s_in6.sin6_scope_id;
+                local->s_in6.sin6_scope_id =
+                    data->local_addr.s_in6.sin6_scope_id;
                 local->s_in6.sin6_flowinfo = 0;
             }
             return 1;
@@ -1129,8 +1136,10 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
          * ignore this.)
          */
         if (local->s_in.sin_port != 0
-            && data->local_addr.s_in.sin_port != local->s_in.sin_port)
+            && data->local_addr.s_in.sin_port != local->s_in.sin_port) {
+            ERR_raise(ERR_LIB_BIO, ERR_R_UNSUPPORTED);
             return 0;
+        }
 
 #  if defined(OPENSSL_SYS_WINDOWS)
         mh->Control.len = BIO_CMSG_SPACE(sizeof(struct in_pktinfo));
@@ -1153,8 +1162,10 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
 
         /* See comment above. */
         if (local->s_in.sin_port != 0
-            && data->local_addr.s_in.sin_port != local->s_in.sin_port)
+            && data->local_addr.s_in.sin_port != local->s_in.sin_port) {
+            ERR_raise(ERR_LIB_BIO, ERR_R_UNSUPPORTED);
             return 0;
+        }
 
         mh->msg_controllen = BIO_CMSG_SPACE(sizeof(struct in_addr));
         return 1;
@@ -1185,12 +1196,16 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
          * in sockaddr_in6.
          */
         if (local->s_in6.sin6_port != 0
-            && data->local_addr.s_in6.sin6_port != local->s_in6.sin6_port)
+            && data->local_addr.s_in6.sin6_port != local->s_in6.sin6_port) {
+            ERR_raise(ERR_LIB_BIO, ERR_R_UNSUPPORTED);
             return 0;
+        }
 
         if (local->s_in6.sin6_scope_id != 0
-            && data->local_addr.s_in6.sin6_scope_id != local->s_in6.sin6_scope_id)
+            && data->local_addr.s_in6.sin6_scope_id != local->s_in6.sin6_scope_id) {
+            ERR_raise(ERR_LIB_BIO, ERR_R_UNSUPPORTED);
             return 0;
+        }
 
 #   if defined(OPENSSL_SYS_WINDOWS)
         mh->Control.len = BIO_CMSG_SPACE(sizeof(struct in6_pktinfo));
@@ -1220,23 +1235,22 @@ static int translate_flags(uint64_t flags) {
 static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                                    size_t num_msg, uint64_t flags)
 {
-#if M_METHOD != M_METHOD_NONE
+#if M_METHOD != M_METHOD_NONE && M_METHOD != M_METHOD_RECVMSG
     int ret;
 #endif
 #if M_METHOD == M_METHOD_RECVMMSG
 # define BIO_MAX_MSGS_PER_CALL   64
     int sysflags;
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
-    size_t i, j, jlim;
-    ossl_ssize_t num_done = 0;
+    size_t i;
     struct mmsghdr mh[BIO_MAX_MSGS_PER_CALL];
     struct iovec iov[BIO_MAX_MSGS_PER_CALL];
-    unsigned char control[BIO_CMSG_ALLOC_LEN][BIO_MAX_MSGS_PER_CALL];
+    unsigned char control[BIO_MAX_MSGS_PER_CALL][BIO_CMSG_ALLOC_LEN];
     int have_local_enabled = data->local_addr_enabled;
 #elif M_METHOD == M_METHOD_RECVMSG
     int sysflags;
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
-    size_t i;
+    ossl_ssize_t l;
     struct msghdr mh;
     struct iovec iov;
     unsigned char control[BIO_CMSG_ALLOC_LEN];
@@ -1256,92 +1270,80 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     if (num_msg == 0)
         return 0;
 
+    if (num_msg > OSSL_SSIZE_MAX)
+        num_msg = OSSL_SSIZE_MAX;
+
 #if M_METHOD != M_METHOD_NONE
     sysflags = translate_flags(flags);
 #endif
 
 #if M_METHOD == M_METHOD_RECVMMSG
     /*
-     * In the sendmmsg/recvmmsg case, the messages passed to us are chunked into
-     * one or more sendmmsg calls. We have to do this because we need to
-     * allocate our translated struct msghdr and struct iovec on the stack to
-     * support multithreaded use.
+     * In the sendmmsg/recvmmsg case, we need to allocate our translated struct
+     * msghdr and struct iovec on the stack to support multithreaded use. Thus
+     * we place a fixed limit on the number of messages per call, in the
+     * expectation that we will be called again if there were more messages to
+     * be sent.
      */
-    for (i = 0; i < num_msg; i += BIO_MAX_MSGS_PER_CALL) {
-        /* Translate all messages in this batch */
-        jlim = BIO_MAX_MSGS_PER_CALL;
-        if (jlim > num_msg - i)
-            jlim = num_msg - i;
-        for (j = 0; j < jlim; ++j) {
-            translate_msg(&mh[j].msg_hdr, &iov[j],
-                          control[j], &BIO_MSG_N(msg, i + j));
+    if (num_msg > BIO_MAX_MSGS_PER_CALL)
+        num_msg = BIO_MAX_MSGS_PER_CALL;
 
-            /* If local address was requested, it must have been enabled */
-            if (BIO_MSG_N(msg, i + j).local != NULL) {
-                if (!have_local_enabled)
-                    /*
-                     * If we have done at least one message, we must return the
-                     * count; if we haven't done any, we can give an error code
-                     */
-                    return num_done > 0 ? num_done : -1;
+    for (i = 0; i < num_msg; ++i) {
+        translate_msg(b, &mh[i].msg_hdr, &iov[i],
+                      control[i], &BIO_MSG_N(msg, i));
 
-                if (pack_local(b, &mh[j].msg_hdr, BIO_MSG_N(msg, i + j).local) < 1)
-                    return num_done > 0 ? num_done : -1;
-            }
+        /* If local address was requested, it must have been enabled */
+        if (BIO_MSG_N(msg, i).local != NULL) {
+            if (!have_local_enabled)
+                return -1;
+
+            if (pack_local(b, &mh[i].msg_hdr,
+                           BIO_MSG_N(msg, i).local) < 1)
+                return -1;
         }
-
-        /* Do the batch */
-        ret = sendmmsg(b->num, mh, jlim, sysflags);
-        if (ret > 0) {
-            for (j = 0; j < (size_t)ret; ++j) {
-                BIO_MSG_N(msg, i + j).data_len = mh[j].msg_len;
-                BIO_MSG_N(msg, i + j).flags    = 0;
-            }
-            num_done += ret;
-        } else if (ret < 0) {
-            return num_done > 0 ? num_done : PACK_ERRNO(get_last_socket_error());
-        }
-
-        /*
-         * If we didn't send as many messages as we asked for, OS buffers must
-         * be full, so stop here.
-         */
-        if ((size_t)ret < jlim)
-            break;
     }
 
-    return num_done;
+    /* Do the batch */
+    ret = sendmmsg(b->num, mh, num_msg, sysflags);
+    if (ret > 0) {
+        for (i = 0; i < (size_t)ret; ++i) {
+            BIO_MSG_N(msg, i).data_len = mh[i].msg_len;
+            BIO_MSG_N(msg, i).flags    = 0;
+        }
+    } else if (ret < 0) {
+        return PACK_ERRNO(get_last_socket_error());
+    }
+
+    return ret;
 
 #elif M_METHOD == M_METHOD_RECVMSG
     /*
-     * If sendmsg is available, we emulate sendmmsg using multiple calls.
+     * If sendmsg is available, use it.
      */
-    for (i = 0; i < num_msg; ++i) {
-        translate_msg(&mh, &iov, control, &BIO_MSG_N(msg, i));
+    translate_msg(b, &mh, &iov, control, msg);
 
-        if (BIO_MSG_N(msg, i).local != NULL) {
-            if (!have_local_enabled)
-                return i > 0 ? (ossl_ssize_t)i : -1;
+    if (msg->local != NULL) {
+        if (!have_local_enabled)
+            return -1;
 
-            if (pack_local(b, &mh, BIO_MSG_N(msg, i).local) < 1)
-                return i > 0 ? (ossl_ssize_t)i : -1;
-        }
-
-        ret = sendmsg(b->num, &mh, sysflags);
-        if (ret <= 0)
-            break;
-
-        BIO_MSG_N(msg, i).data_len = ret;
-        BIO_MSG_N(msg, i).flags    = 0;
+        if (pack_local(b, &mh, msg->local) < 1)
+            return -1;
     }
 
-    return i > 0 ? (ossl_ssize_t)i : PACK_ERRNO(get_last_socket_error());
+    l = sendmsg(b->num, &mh, sysflags);
+    if (l < 0)
+        return PACK_ERRNO(get_last_socket_error());
+
+    msg->data_len   = (size_t)l;
+    msg->flags      = 0;
+
+    return 1;
 
 #elif M_METHOD == M_METHOD_WSARECVMSG || M_METHOD == M_METHOD_RECVFROM
 # if M_METHOD == M_METHOD_WSARECVMSG
     if (bio_WSASendMsg != NULL) {
         /* WSASendMsg-based implementation for Windows. */
-        translate_msg_win(&wmsg, &wbuf, control, msg);
+        translate_msg_win(b, &wmsg, &wbuf, control, msg);
 
         if (msg[0].local != NULL) {
             if (!have_local_enabled)
@@ -1393,25 +1395,25 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
 #endif
 }
 
-static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t num_msg, uint64_t flags)
+static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg,
+                                   size_t stride, size_t num_msg,
+                                   uint64_t flags)
 {
-#if M_METHOD != M_METHOD_NONE
+#if M_METHOD != M_METHOD_NONE && M_METHOD != M_METHOD_RECVMSG
     int ret;
 #endif
 #if M_METHOD == M_METHOD_RECVMMSG
-# define BIO_MAX_MSGS_PER_CALL   64
     int sysflags;
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
-    size_t i, j, jlim;
-    ossl_ssize_t num_done = 0;
+    size_t i;
     struct mmsghdr mh[BIO_MAX_MSGS_PER_CALL];
     struct iovec iov[BIO_MAX_MSGS_PER_CALL];
-    unsigned char control[BIO_CMSG_ALLOC_LEN][BIO_MAX_MSGS_PER_CALL];
+    unsigned char control[BIO_MAX_MSGS_PER_CALL][BIO_CMSG_ALLOC_LEN];
     int have_local_enabled = data->local_addr_enabled;
 #elif M_METHOD == M_METHOD_RECVMSG
     int sysflags;
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
-    size_t i;
+    ossl_ssize_t l;
     struct msghdr mh;
     struct iovec iov;
     unsigned char control[BIO_CMSG_ALLOC_LEN];
@@ -1432,101 +1434,86 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t n
     if (num_msg == 0)
         return 0;
 
+    if (num_msg > OSSL_SSIZE_MAX)
+        num_msg = OSSL_SSIZE_MAX;
+
 #if M_METHOD != M_METHOD_NONE
     sysflags = translate_flags(flags);
 #endif
 
 #if M_METHOD == M_METHOD_RECVMMSG
     /*
-     * If MSG_WAITFORONE is defined, take this as a cue that recvmmsg is
-     * available. The messages passed to us are chunked into one or more
-     * recvmmsg calls. We have to do this because we need to allocate our
-     * translated struct msghdr and struct iovec on the stack to support
-     * multithreaded use.
+     * In the sendmmsg/recvmmsg case, we need to allocate our translated struct
+     * msghdr and struct iovec on the stack to support multithreaded use. Thus
+     * we place a fixed limit on the number of messages per call, in the
+     * expectation that we will be called again if there were more messages to
+     * be sent.
      */
-    for (i = 0; i < num_msg; i += BIO_MAX_MSGS_PER_CALL) {
-        /* Translate all messages in this batch */
-        jlim = BIO_MAX_MSGS_PER_CALL;
-        if (jlim > num_msg - i)
-            jlim = num_msg - i;
-        for (j = 0; j < jlim; ++j) {
-            translate_msg(&mh[j].msg_hdr, &iov[j], 
-                          control[j], &BIO_MSG_N(msg, i + j));
+    if (num_msg > BIO_MAX_MSGS_PER_CALL)
+        num_msg = BIO_MAX_MSGS_PER_CALL;
 
-            /* If local address was requested, it must have been enabled */
-            if (msg[i + j].local != NULL && !have_local_enabled)
-                /*
-                 * If we have done at least one message, we must return the
-                 * count; if we haven't done any, we can give an error code
-                 */
-                return num_done > 0 ? num_done : -1;
-        }
-
-        /* Do the batch */
-        ret = recvmmsg(b->num, mh, jlim, sysflags, NULL);
-        if (ret > 0) {
-            for (j = 0; j < (size_t)ret; ++j) {
-                msg[i + j].data_len = mh[j].msg_len;
-                msg[i + j].flags    = 0;
-                /*
-                 * *(msg->peer) will have been filled in by recvmmsg;
-                 * for msg->local we parse the control data returned
-                 */
-                if (BIO_MSG_N(msg, i + j).local != NULL)
-                    if (extract_local(b, &mh[j].msg_hdr,
-                                      BIO_MSG_N(msg, i + j).local) < 1)
-                        return num_done > 0 ? num_done : -1;
-
-                ++num_done;
-            }
-        } else if (ret < 0) {
-            return num_done > 0 ? num_done : PACK_ERRNO(get_last_socket_error());
-        }
-
-        /*
-         * If we didn't receive as many messages as we asked for,
-         * we must be out of incoming messages, so stop here
-         */
-        if ((size_t)ret < jlim)
-            break;
-    }
-
-    return num_done;
-
-#elif M_METHOD == M_METHOD_RECVMSG
-    /*
-     * If CMSG_LEN is defined, take this as a cue that recvmsg is available.
-     * We emulate recvmmsg using multiple calls.
-     */
     for (i = 0; i < num_msg; ++i) {
-        translate_msg(&mh, &iov, control, &BIO_MSG_N(msg, i));
+        translate_msg(b, &mh[i].msg_hdr, &iov[i], 
+                      control[i], &BIO_MSG_N(msg, i));
 
         /* If local address was requested, it must have been enabled */
         if (BIO_MSG_N(msg, i).local != NULL && !have_local_enabled)
-            /*
-             * If we have done at least one message, we must return the
-             * count; if we haven't done any, we can give an error code
-             */
-            return i > 0 ? (ossl_ssize_t)i : -1;
-
-        ret = recvmsg(b->num, &mh, sysflags);
-        if (ret <= 0)
-            break;
-
-        BIO_MSG_N(msg, i).data_len = ret;
-        BIO_MSG_N(msg, i).flags    = 0;
-        if (BIO_MSG_N(msg, i).local != NULL)
-            if (extract_local(b, &mh, BIO_MSG_N(msg, i).local) < 1)
-                return i > 0 ? (ossl_ssize_t)i : -1;
+            return -1;
     }
 
-    return i > 0 ? (ossl_ssize_t)i : PACK_ERRNO(get_last_socket_error());
+    /* Do the batch */
+    ret = recvmmsg(b->num, mh, num_msg, sysflags, NULL);
+    if (ret > 0) {
+        for (i = 0; i < (size_t)ret; ++i) {
+            BIO_MSG_N(msg, i).data_len = mh[i].msg_len;
+            BIO_MSG_N(msg, i).flags    = 0;
+            /*
+             * *(msg->peer) will have been filled in by recvmmsg;
+             * for msg->local we parse the control data returned
+             */
+            if (BIO_MSG_N(msg, i).local != NULL)
+                if (extract_local(b, &mh[i].msg_hdr,
+                                  BIO_MSG_N(msg, i).local) < 1)
+                    return i > 0 ? (ossl_ssize_t)i : -1;
+        }
+    } else if (ret < 0) {
+        return PACK_ERRNO(get_last_socket_error());
+    }
+
+    return ret;
+
+#elif M_METHOD == M_METHOD_RECVMSG
+    /*
+     * If recvmsg is available, use it.
+     */
+    translate_msg(b, &mh, &iov, control, msg);
+
+    /* If local address was requested, it must have been enabled */
+    if (msg->local != NULL && !have_local_enabled)
+        /*
+         * If we have done at least one message, we must return the
+         * count; if we haven't done any, we can give an error code
+         */
+        return -1;
+
+    l = recvmsg(b->num, &mh, sysflags);
+    if (l < 0)
+        return PACK_ERRNO(get_last_socket_error());
+
+    msg->data_len   = (size_t)l;
+    msg->flags      = 0;
+
+    if (msg->local != NULL)
+        if (extract_local(b, &mh, msg->local) < 1)
+            return -1;
+
+    return 1;
 
 #elif M_METHOD == M_METHOD_RECVFROM || M_METHOD == M_METHOD_WSARECVMSG
 # if M_METHOD == M_METHOD_WSARECVMSG
     if (bio_WSARecvMsg != NULL) {
         /* WSARecvMsg-based implementation for Windows. */
-        translate_msg_win(&wmsg, &wbuf, control, msg);
+        translate_msg_win(b, &wmsg, &wbuf, control, msg);
 
         /* If local address was requested, it must have been enabled */
         if (msg[0].local != NULL && !have_local_enabled)
