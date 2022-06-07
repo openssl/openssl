@@ -65,7 +65,7 @@ The adopted design makes the following design decisions:
   - The only way we could emulate iovecs on platforms which don't support
     them is by copying the data to be sent into a staging buffer. This would
     defeat all of the advantages of iovecs and prevent us from meeting our
-    zero/single-copy requirements. Moreover, it would lead lead to extremely
+    zero/single-copy requirements. Moreover, it would lead to extremely
     surprising performance variations for consumers of the API.
 
   - We do not believe iovecs are needed to meet our performance requirements
@@ -131,7 +131,7 @@ The API is used as follows:
 
 - `stride` must be set to `sizeof(BIO_MSG)`.
 
-- `data` points the buffer of data to be sent or to be filled with received
+- `data` points to the buffer of data to be sent or to be filled with received
   data. `data_len` is the size of the buffer in bytes on call. If the
   given message in the array is processed (i.e., if the return value
   exceeds the index of that message in the array), `data_len` is updated
@@ -162,9 +162,9 @@ int BIO_dgram_get_local_addr_enable(BIO *b);
 int BIO_dgram_get_local_addr_cap(BIO *b);
 ```
 
-`BIO_dgram_get_local_addr_cap()` returns 1 if local address support is enabled.
-It is then enabled using `BIO_dgram_set_local_addr_enable()`, which fails if
-support is not available.
+`BIO_dgram_get_local_addr_cap()` returns 1 if local address support is
+available. It is then enabled using `BIO_dgram_set_local_addr_enable()`, which
+fails if support is not available.
 
 Options which were considered
 -----------------------------
@@ -399,7 +399,7 @@ Cons of this approach:
     `BIO_read`/`BIO_write` as a less efficient fallback for existing third party
     users of BIO_dgram.
 
-### Compatibility interop
+#### Compatibility interop
 
 Suppose the following sequence happens:
 
@@ -452,9 +452,9 @@ Probably not worth supporting this. So we can have the following rule:
 
 Of course, all of the above applies analogously to the TX side.
 
-#### BIO_dgram_mem
+#### BIO_dgram_pair
 
-We will also implement from scratch a BIO_dgram_mem. This will be provided as a
+We will also implement from scratch a BIO_dgram_pair. This will be provided as a
 BIO pair which provides identical semantics to the BIO_dgram above, both for the
 legacy and zero-copy code paths.
 
