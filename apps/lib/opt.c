@@ -397,7 +397,7 @@ int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp)
         }
         return 1;
     }
-    ERR_clear_last_mark();
+    ERR_pop_to_mark();
     return 0;
 }
 
@@ -456,7 +456,7 @@ int opt_md_silent(const char *name, EVP_MD **mdp)
         }
         return 1;
     }
-    ERR_clear_last_mark();
+    ERR_pop_to_mark();
     return 0;
 }
 
