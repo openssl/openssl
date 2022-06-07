@@ -192,9 +192,8 @@ its build information.
 
  OSSL_PROVIDER *prov = NULL;
  const char *build = NULL;
- size_t build_l = 0;
  OSSL_PARAM request[] = {
-     { "buildinfo", OSSL_PARAM_UTF8_PTR, &build, 0, build_l },
+     { "buildinfo", OSSL_PARAM_UTF8_PTR, &build, 0, 0 },
      { NULL, 0, NULL, 0, 0 }
  };
 
