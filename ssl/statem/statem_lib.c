@@ -2196,9 +2196,21 @@ int ssl_set_client_hello_version(SSL_CONNECTION *s)
 
     s->version = ver_max;
 
-    /* TLS1.3 always uses TLS1.2 in the legacy_version field */
-    if (!SSL_CONNECTION_IS_DTLS(s) && ver_max > TLS1_2_VERSION)
+    if (SSL_CONNECTION_IS_DTLS(s)) {
+        if (ver_max == DTLS1_BAD_VER) {
+            /*
+             * Even though this is technically before version negotiation,
+             * because we have asked for DTLS1_BAD_VER we will never negotiate
+             * anything else, and this has impacts on the record layer for when
+             * we read the ServerHello. So we need to tell the record layer
+             * about this immediately.
+             */
+            s->rrlmethod->set_protocol_version(s->rrl, ver_max);
+        }
+    } else if (ver_max > TLS1_2_VERSION) {
+        /* TLS1.3 always uses TLS1.2 in the legacy_version field */
         ver_max = TLS1_2_VERSION;
+    }
 
     s->client_version = ver_max;
     return 0;

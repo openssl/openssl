@@ -242,55 +242,18 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         else
             s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_TLSTREE;
 
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            if (s->enc_read_ctx != NULL) {
-                reuse_dd = 1;
-            } else if ((s->enc_read_ctx = EVP_CIPHER_CTX_new()) == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-                goto err;
-            } else {
-                /*
-                * make sure it's initialised in case we exit later with an error
-                */
-                EVP_CIPHER_CTX_reset(s->enc_read_ctx);
-            }
-            dd = s->enc_read_ctx;
-            mac_ctx = ssl_replace_hash(&s->read_hash, NULL);
-            if (mac_ctx == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-    #ifndef OPENSSL_NO_COMP
-            COMP_CTX_free(s->expand);
-            s->expand = NULL;
-            if (comp != NULL) {
-                s->expand = COMP_CTX_new(comp->method);
-                if (s->expand == NULL) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                            SSL_R_COMPRESSION_LIBRARY_ERROR);
-                    goto err;
-                }
-            }
-    #endif
-            /*
-            * this is done by dtls1_reset_seq_numbers for DTLS
-            */
-            if (!SSL_CONNECTION_IS_DTLS(s))
-                RECORD_LAYER_reset_read_sequence(&s->rlayer);
-        } else {
-            if (!ssl_set_new_record_layer(s, s->version,
-                                          OSSL_RECORD_DIRECTION_READ,
-                                          OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                          key, cl, iv, (size_t)k, mac_secret,
-                                          mac_secret_size, c, taglen, mac_type,
-                                          m, comp)) {
-                /* SSLfatal already called */
-                goto err;
-            }
-
-            /* TODO(RECLAYER): Temporary - remove me */
-            goto skip_ktls;
+        if (!ssl_set_new_record_layer(s, s->version,
+                                        OSSL_RECORD_DIRECTION_READ,
+                                        OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
+                                        key, cl, iv, (size_t)k, mac_secret,
+                                        mac_secret_size, c, taglen, mac_type,
+                                        m, comp)) {
+            /* SSLfatal already called */
+            goto err;
         }
+
+        /* TODO(RECLAYER): Temporary - remove me */
+        goto skip_ktls;
     } else {
         s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
         if (s->ext.use_etm)

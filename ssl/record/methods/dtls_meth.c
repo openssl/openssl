@@ -36,12 +36,11 @@ static int satsub64be(const unsigned char *v1, const unsigned char *v2)
         return (int)ret;
 }
 
-static int dtls1_record_replay_check(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
+static int dtls1_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap)
 {
     int cmp;
     unsigned int shift;
-    const unsigned char *seq = s->rlayer.read_sequence;
-    OSSL_RECORD_LAYER *rl = (OSSL_RECORD_LAYER *)s->rrl;
+    const unsigned char *seq = rl->sequence;
 
     cmp = satsub64be(seq, bitmap->max_seq_num);
     if (cmp > 0) {
@@ -58,11 +57,12 @@ static int dtls1_record_replay_check(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
     return 1;
 }
 
-static void dtls1_record_bitmap_update(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
+static void dtls1_record_bitmap_update(OSSL_RECORD_LAYER *rl,
+                                       DTLS1_BITMAP *bitmap)
 {
     int cmp;
     unsigned int shift;
-    const unsigned char *seq = RECORD_LAYER_get_read_sequence(&s->rlayer);
+    const unsigned char *seq = rl->sequence;
 
     cmp = satsub64be(seq, bitmap->max_seq_num);
     if (cmp > 0) {
@@ -79,14 +79,15 @@ static void dtls1_record_bitmap_update(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
     }
 }
 
-static DTLS1_BITMAP *dtls1_get_bitmap(SSL_CONNECTION *s, SSL3_RECORD *rr,
+static DTLS1_BITMAP *dtls1_get_bitmap(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rr,
                                       unsigned int *is_next_epoch)
 {
-    OSSL_RECORD_LAYER *rl = s->rrl;
+    SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
+
     *is_next_epoch = 0;
 
     /* In current epoch, accept HM, CCS, DATA, & ALERT */
-    if (rr->epoch == s->rlayer.d->r_epoch)
+    if (rr->epoch == rl->epoch)
         return &s->rlayer.d->bitmap;
 
     /*
@@ -94,8 +95,8 @@ static DTLS1_BITMAP *dtls1_get_bitmap(SSL_CONNECTION *s, SSL3_RECORD *rr,
      * have already processed all of the unprocessed records from the last
      * epoch
      */
-    else if (rr->epoch == (unsigned long)(s->rlayer.d->r_epoch + 1) &&
-             rl->unprocessed_rcds.epoch != s->rlayer.d->r_epoch &&
+    else if (rr->epoch == (unsigned long)(rl->epoch + 1) &&
+             rl->unprocessed_rcds.epoch != rl->epoch &&
              (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ALERT)) {
         *is_next_epoch = 1;
         return &s->rlayer.d->next_bitmap;
@@ -104,32 +105,27 @@ static DTLS1_BITMAP *dtls1_get_bitmap(SSL_CONNECTION *s, SSL3_RECORD *rr,
     return NULL;
 }
 
-static int dtls1_process_record(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
+static int dtls1_process_record(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap)
 {
     int i;
     int enc_err;
-    SSL_SESSION *sess;
     SSL3_RECORD *rr;
     int imac_size;
     size_t mac_size = 0;
     unsigned char md[EVP_MAX_MD_SIZE];
-    size_t max_plain_length = SSL3_RT_MAX_PLAIN_LENGTH;
     SSL_MAC_BUF macbuf = { NULL, 0 };
     int ret = 0;
-    OSSL_RECORD_LAYER *rl = (OSSL_RECORD_LAYER *)s->rrl;
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     rr = &rl->rrec[0];
-    sess = s->session;
 
     /*
-     * At this point, s->rlayer.packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
-     * and we have that many bytes in s->rlayer.packet
+     * At this point, rl->packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
+     * and we have that many bytes in rl->packet
      */
-    rr->input = &(s->rrlmethod->get0_packet(s->rrl)[DTLS1_RT_HEADER_LENGTH]);
+    rr->input = &(rl->packet[DTLS1_RT_HEADER_LENGTH]);
 
     /*
-     * ok, we can now read from 's->rlayer.packet' data into 'rr'. rr->input
+     * ok, we can now read from 'rl->packet' data into 'rr'. rr->input
      * points at rr->length bytes, which need to be copied into rr->data by
      * either the decryption or by the decompression. When the data is 'copied'
      * into the rr->data buffer, rr->input will be pointed at the new buffer
@@ -142,7 +138,7 @@ static int dtls1_process_record(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
 
     /* check is not needed I believe */
     if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
-        SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
+        RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
         return 0;
     }
 
@@ -150,32 +146,32 @@ static int dtls1_process_record(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
     rr->data = rr->input;
     rr->orig_len = rr->length;
 
-    if (s->read_hash != NULL) {
-        const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(s->read_hash);
+    if (rl->md_ctx != NULL) {
+        const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(rl->md_ctx);
 
         if (tmpmd != NULL) {
             imac_size = EVP_MD_get_size(tmpmd);
             if (!ossl_assert(imac_size >= 0 && imac_size <= EVP_MAX_MD_SIZE)) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
                     return 0;
             }
             mac_size = (size_t)imac_size;
         }
     }
 
-    if (SSL_READ_ETM(s) && s->read_hash) {
+    if (rl->use_etm && rl->md_ctx) {
         unsigned char *mac;
 
         if (rr->orig_len < mac_size) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_TOO_SHORT);
+            RLAYERfatal(rl, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_TOO_SHORT);
             return 0;
         }
         rr->length -= mac_size;
         mac = rr->data + rr->length;
-        i = ssl->method->ssl3_enc->mac(s, rr, md, 0 /* not send */ );
+        i = rl->funcs->mac(rl, rr, md, 0 /* not send */);
         if (i == 0 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0) {
-            SSLfatal(s, SSL_AD_BAD_RECORD_MAC,
-                     SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
+            RLAYERfatal(rl, SSL_AD_BAD_RECORD_MAC,
+                        SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
             return 0;
         }
         /*
@@ -191,7 +187,7 @@ static int dtls1_process_record(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
      * errors in the queue from processing bogus junk that we ignored.
      */
     ERR_set_mark();
-    enc_err = ssl->method->ssl3_enc->enc(s, rr, 1, 0, &macbuf, mac_size);
+    enc_err = rl->funcs->cipher(rl, rr, 1, 0, &macbuf, mac_size);
 
     /*-
      * enc_err is:
@@ -201,13 +197,13 @@ static int dtls1_process_record(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
      */
     if (enc_err == 0) {
         ERR_pop_to_mark();
-        if (ossl_statem_in_error(s)) {
+        if (rl->alert != 0) {
             /* SSLfatal() got called */
             goto end;
         }
         /* For DTLS we simply ignore bad packets. */
         rr->length = 0;
-        s->rrlmethod->reset_packet_length(s->rrl);
+        rl->packet_length = 0;
         goto end;
     }
     ERR_clear_last_mark();
@@ -217,13 +213,12 @@ static int dtls1_process_record(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
     } OSSL_TRACE_END(TLS);
 
     /* r->length is now the compressed data plus mac */
-    if ((sess != NULL)
-            && !SSL_READ_ETM(s)
-            && (s->enc_read_ctx != NULL)
-            && (EVP_MD_CTX_get0_md(s->read_hash) != NULL)) {
-        /* s->read_hash != NULL => mac_size != -1 */
+    if (!rl->use_etm
+            && (rl->enc_ctx != NULL)
+            && (EVP_MD_CTX_get0_md(rl->md_ctx) != NULL)) {
+        /* rl->md_ctx != NULL => mac_size != -1 */
 
-        i = ssl->method->ssl3_enc->mac(s, rr, md, 0 /* not send */ );
+        i = rl->funcs->mac(rl, rr, md, 0 /* not send */ );
         if (i == 0 || macbuf.mac == NULL
             || CRYPTO_memcmp(md, macbuf.mac, mac_size) != 0)
             enc_err = 0;
@@ -234,32 +229,32 @@ static int dtls1_process_record(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
     if (enc_err == 0) {
         /* decryption failed, silently discard message */
         rr->length = 0;
-        s->rrlmethod->reset_packet_length(s->rrl);
+        rl->packet_length = 0;
         goto end;
     }
 
     /* r->length is now just compressed */
-    if (s->expand != NULL) {
+    if (rl->expand != NULL) {
         if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
-            SSLfatal(s, SSL_AD_RECORD_OVERFLOW,
-                     SSL_R_COMPRESSED_LENGTH_TOO_LONG);
+            RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW,
+                        SSL_R_COMPRESSED_LENGTH_TOO_LONG);
             goto end;
         }
-        if (!ssl3_do_uncompress(s, rr)) {
-            SSLfatal(s, SSL_AD_DECOMPRESSION_FAILURE, SSL_R_BAD_DECOMPRESSION);
+        if (!tls_do_uncompress(rl, rr)) {
+            RLAYERfatal(rl, SSL_AD_DECOMPRESSION_FAILURE, SSL_R_BAD_DECOMPRESSION);
             goto end;
         }
     }
 
-    /* use current Max Fragment Length setting if applicable */
-    if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session))
-        max_plain_length = GET_MAX_FRAGMENT_LENGTH(s->session);
-
-    /* send overflow if the plaintext is too long now it has passed MAC */
-    if (rr->length > max_plain_length) {
-        SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_R_DATA_LENGTH_TOO_LONG);
+    /*
+     * Check if the received packet overflows the current Max Fragment
+     * Length setting.
+     */
+    if (rl->max_frag_len > 0 && rr->length > rl->max_frag_len) {
+        RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW, SSL_R_DATA_LENGTH_TOO_LONG);
         goto end;
     }
+
 
     rr->off = 0;
     /*-
@@ -272,10 +267,10 @@ static int dtls1_process_record(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
      */
 
     /* we have pulled in a full packet so zero things */
-    s->rrlmethod->reset_packet_length(s->rrl);
+    rl->packet_length = 0;
 
     /* Mark receipt of record. */
-    dtls1_record_bitmap_update(s, bitmap);
+    dtls1_record_bitmap_update(rl, bitmap);
 
     ret = 1;
  end:
@@ -284,12 +279,11 @@ static int dtls1_process_record(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
     return ret;
 }
 
-static int dtls_rlayer_buffer_record(SSL_CONNECTION *s, record_pqueue *queue,
+static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, record_pqueue *queue,
                                      unsigned char *priority)
 {
     DTLS_RLAYER_RECORD_DATA *rdata;
     pitem *item;
-    OSSL_RECORD_LAYER *rl = (OSSL_RECORD_LAYER *)s->rrl;
 
     /* Limit the size of the queue to prevent DOS attacks */
     if (pqueue_size(queue->q) >= 100)
@@ -300,22 +294,24 @@ static int dtls_rlayer_buffer_record(SSL_CONNECTION *s, record_pqueue *queue,
     if (rdata == NULL || item == NULL) {
         OPENSSL_free(rdata);
         pitem_free(item);
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return -1;
     }
 
-    rdata->packet = s->rrlmethod->get0_packet(s->rrl);
-    rdata->packet_length = s->rrlmethod->get_packet_length(s->rrl);
-    memcpy(&(rdata->rbuf), s->rrlmethod->get0_rbuf(s->rrl), sizeof(SSL3_BUFFER));
+    rdata->packet = rl->packet;
+    rdata->packet_length = rl->packet_length;
+    memcpy(&(rdata->rbuf), &rl->rbuf, sizeof(SSL3_BUFFER));
     memcpy(&(rdata->rrec), &rl->rrec[0], sizeof(SSL3_RECORD));
 
     item->data = rdata;
 
-    s->rrlmethod->set0_packet(s->rrl, NULL, 0);
-    memset(s->rrlmethod->get0_rbuf(s->rrl), 0, sizeof(SSL3_BUFFER));
+    rl->packet = NULL;
+    rl->packet_length = 0;
+    memset(&rl->rbuf, 0, sizeof(SSL3_BUFFER));
     memset(&rl->rrec[0], 0, sizeof(rl->rrec[0]));
 
-    if (!ssl3_setup_buffers(s)) {
+
+    if (!rlayer_setup_read_buffer(rl)) {
         /* SSLfatal() already called */
         OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(rdata);
@@ -337,18 +333,18 @@ static int dtls_rlayer_buffer_record(SSL_CONNECTION *s, record_pqueue *queue,
 static int dtls_copy_rlayer_record(OSSL_RECORD_LAYER *rl, pitem *item)
 {
     DTLS_RLAYER_RECORD_DATA *rdata;
-    SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
 
     rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
 
-    SSL3_BUFFER_release(s->rrlmethod->get0_rbuf(s->rrl));
+    SSL3_BUFFER_release(&rl->rbuf);
 
-    s->rrlmethod->set0_packet(s->rrl, rdata->packet, rdata->packet_length);
-    memcpy(s->rrlmethod->get0_rbuf(s->rrl), &(rdata->rbuf), sizeof(SSL3_BUFFER));
+    rl->packet = rdata->packet;
+    rl->packet_length = rdata->packet_length;
+    memcpy(&rl->rbuf, &(rdata->rbuf), sizeof(SSL3_BUFFER));
     memcpy(&rl->rrec[0], &(rdata->rrec), sizeof(SSL3_RECORD));
 
     /* Set proper sequence number for mac calculation */
-    memcpy(&(s->rlayer.read_sequence[2]), &(rdata->packet[5]), 6);
+    memcpy(&(rl->sequence[2]), &(rdata->packet[5]), 6);
 
     return 1;
 }
@@ -371,7 +367,7 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
     return 0;
 }
 
-static int dtls_process_rlayer_buffered_records(SSL_CONNECTION *s)
+static int dtls_process_rlayer_buffered_records(OSSL_RECORD_LAYER *rl)
 {
     pitem *item;
     SSL3_BUFFER *rb;
@@ -379,17 +375,16 @@ static int dtls_process_rlayer_buffered_records(SSL_CONNECTION *s)
     DTLS1_BITMAP *bitmap;
     unsigned int is_next_epoch;
     int replayok = 1;
-    OSSL_RECORD_LAYER *rl = s->rrl;
 
     item = pqueue_peek(rl->unprocessed_rcds.q);
     if (item) {
         /* Check if epoch is current. */
-        if (rl->unprocessed_rcds.epoch != s->rlayer.d->r_epoch)
+        if (rl->unprocessed_rcds.epoch != rl->epoch)
             return 1;         /* Nothing to do. */
 
         rr = rl->rrec;
 
-        rb = s->rrlmethod->get0_rbuf(s->rrl);
+        rb = &rl->rbuf;
 
         if (SSL3_BUFFER_get_left(rb) > 0) {
             /*
@@ -404,19 +399,19 @@ static int dtls_process_rlayer_buffered_records(SSL_CONNECTION *s)
         /* Process all the records. */
         while (pqueue_peek(rl->unprocessed_rcds.q)) {
             dtls_retrieve_rlayer_buffered_record(rl, &(rl->unprocessed_rcds));
-            bitmap = dtls1_get_bitmap(s, rr, &is_next_epoch);
+            bitmap = dtls1_get_bitmap(rl, rr, &is_next_epoch);
             if (bitmap == NULL) {
                 /*
                  * Should not happen. This will only ever be NULL when the
                  * current record is from a different epoch. But that cannot
                  * be the case because we already checked the epoch above
                  */
-                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                  return 0;
             }
 #ifndef OPENSSL_NO_SCTP
             /* Only do replay check if no SCTP bio */
-            if (!BIO_dgram_is_sctp(SSL_get_rbio(s)))
+            if (!BIO_dgram_is_sctp(rl->bio))
 #endif
             {
                 /*
@@ -425,21 +420,21 @@ static int dtls_process_rlayer_buffered_records(SSL_CONNECTION *s)
                  * we might have updated the window since then due to
                  * records we subsequently processed.
                  */
-                replayok = dtls1_record_replay_check(s, bitmap);
+                replayok = dtls1_record_replay_check(rl, bitmap);
             }
 
-            if (!replayok || !dtls1_process_record(s, bitmap)) {
-                if (ossl_statem_in_error(s)) {
-                    /* dtls1_process_record called SSLfatal() */
+            if (!replayok || !dtls1_process_record(rl, bitmap)) {
+                if (rl->alert != 0) {
+                    /* dtls1_process_record called RLAYERfatal() */
                     return 0;
                 }
                 /* dump this record */
                 rr->length = 0;
-                s->rrlmethod->reset_packet_length(s->rrl);
+                rl->packet_length = 0;
                 continue;
             }
 
-            if (dtls_rlayer_buffer_record(s, &(rl->processed_rcds),
+            if (dtls_rlayer_buffer_record(rl, &(rl->processed_rcds),
                     SSL3_RECORD_get_seq_num(&rl->rrec[0])) < 0) {
                 /* SSLfatal() already called */
                 return 0;
@@ -451,16 +446,17 @@ static int dtls_process_rlayer_buffered_records(SSL_CONNECTION *s)
      * sync epoch numbers once all the unprocessed records have been
      * processed
      */
-    rl->processed_rcds.epoch = s->rlayer.d->r_epoch;
-    rl->unprocessed_rcds.epoch = s->rlayer.d->r_epoch + 1;
+    rl->processed_rcds.epoch = rl->epoch;
+    rl->unprocessed_rcds.epoch = rl->epoch + 1;
 
     return 1;
 }
 
-int dtls_buffer_listen_record(SSL_CONNECTION *s, size_t len, unsigned char *seq, size_t off)
+/* TODO(RECLAYER): FIXME. This is called directly from d1_lib.c. It should not be */
+int dtls_buffer_listen_record(OSSL_RECORD_LAYER *rl, size_t len,
+                              unsigned char *seq, size_t off)
 {
     SSL3_RECORD *rr;
-    OSSL_RECORD_LAYER *rl = s->rrl;
 
     rr = &rl->rrec[0];
     memset(rr, 0, sizeof(SSL3_RECORD));
@@ -470,11 +466,11 @@ int dtls_buffer_listen_record(SSL_CONNECTION *s, size_t len, unsigned char *seq,
     memcpy(rr->seq_num, seq, sizeof(rr->seq_num));
     rr->off = off;
 
-    s->rrlmethod->set0_packet(s->rrl, s->rrlmethod->get0_rbuf(s->rrl)->buf,
-                              DTLS1_RT_HEADER_LENGTH + len);
-    rr->data = s->rrlmethod->get0_packet(s->rrl) + DTLS1_RT_HEADER_LENGTH;
+    rl->packet = rl->rbuf.buf;
+    rl->packet_length = DTLS1_RT_HEADER_LENGTH + len;
+    rr->data = rl->packet + DTLS1_RT_HEADER_LENGTH;
 
-    if (dtls_rlayer_buffer_record(s, &(rl->processed_rcds),
+    if (dtls_rlayer_buffer_record(rl, &(rl->processed_rcds),
                                   SSL3_RECORD_get_seq_num(rr)) <= 0) {
         /* SSLfatal() already called */
         return 0;
@@ -493,7 +489,7 @@ int dtls_buffer_listen_record(SSL_CONNECTION *s, size_t len, unsigned char *seq,
  * ssl->s3.rrec.length  - number of bytes
  */
 /* used only by dtls1_read_bytes */
-static int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
+int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 {
     int ssl_major, ssl_minor;
     int rret;
@@ -518,7 +514,7 @@ static int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
      * The epoch may have changed.  If so, process all the pending records.
      * This is a non-blocking operation.
      */
-    if (!dtls_process_rlayer_buffered_records(s)) {
+    if (!dtls_process_rlayer_buffered_records(rl)) {
         /* SSLfatal() already called */
         return OSSL_RECORD_RETURN_FATAL;
     }
@@ -532,11 +528,10 @@ static int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     /* get something from the wire */
 
     /* check if we have the header */
-    if ((RECORD_LAYER_get_rstate(&s->rlayer) != SSL_ST_READ_BODY) ||
-        (s->rrlmethod->get_packet_length(s->rrl) < DTLS1_RT_HEADER_LENGTH)) {
-        rret = s->rrlmethod->read_n(s->rrl, DTLS1_RT_HEADER_LENGTH,
-                                    SSL3_BUFFER_get_len(s->rrlmethod->get0_rbuf(s->rrl)),
-                                    0, 1, &n);
+    if ((rl->rstate != SSL_ST_READ_BODY) ||
+        (rl->packet_length < DTLS1_RT_HEADER_LENGTH)) {
+        rret = rl->funcs->read_n(rl, DTLS1_RT_HEADER_LENGTH,
+                                 SSL3_BUFFER_get_len(&rl->rbuf), 0, 1, &n);
         /* read timeout is handled by dtls1_read_bytes */
         if (rret < OSSL_RECORD_RETURN_SUCCESS) {
             /* SSLfatal() already called if appropriate */
@@ -544,18 +539,17 @@ static int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         }
 
         /* this packet contained a partial record, dump it */
-        if (s->rrlmethod->get_packet_length(s->rrl) != DTLS1_RT_HEADER_LENGTH) {
-            s->rrlmethod->reset_packet_length(s->rrl);
+        if (rl->packet_length != DTLS1_RT_HEADER_LENGTH) {
+            rl->packet_length = 0;
             goto again;
         }
 
-        RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_BODY);
+        rl->rstate = SSL_ST_READ_BODY;
 
-        p = s->rrlmethod->get0_packet(s->rrl);
+        p = rl->packet;
 
-        if (s->msg_callback)
-            s->msg_callback(0, 0, SSL3_RT_HEADER, p, DTLS1_RT_HEADER_LENGTH,
-                            ssl, s->msg_callback_arg);
+        rl->msg_callback(0, 0, SSL3_RT_HEADER, p, DTLS1_RT_HEADER_LENGTH,
+                         rl->cbarg);
 
         /* Pull apart the header into the DTLS1_RECORD */
         rr->type = *(p++);
@@ -566,7 +560,7 @@ static int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         /* sequence number is 64 bits, with top 2 bytes = epoch */
         n2s(p, rr->epoch);
 
-        memcpy(&(RECORD_LAYER_get_read_sequence(&s->rlayer)[2]), p, 6);
+        memcpy(&(rl->sequence[2]), p, 6);
         p += 6;
 
         n2s(p, rr->length);
@@ -576,21 +570,24 @@ static int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
          * Lets check the version. We tolerate alerts that don't have the exact
          * version number (e.g. because of protocol version errors)
          */
-        if (!s->first_packet && rr->type != SSL3_RT_ALERT) {
-            if (version != s->version) {
+        if (!rl->is_first_record && rr->type != SSL3_RT_ALERT) {
+            if (version != rl->version) {
                 /* unexpected version, silently discard */
                 rr->length = 0;
                 rr->read = 1;
-                s->rrlmethod->reset_packet_length(s->rrl);
+                rl->packet_length = 0;
                 goto again;
             }
         }
 
-        if ((version & 0xff00) != (s->version & 0xff00)) {
+
+        if (ssl_major !=
+                (rl->version == DTLS_ANY_VERSION ? DTLS1_VERSION_MAJOR
+                                                   : rl->version >> 8)) {
             /* wrong version, silently discard record */
             rr->length = 0;
             rr->read = 1;
-            s->rrlmethod->reset_packet_length(s->rrl);
+            rl->packet_length = 0;
             goto again;
         }
 
@@ -598,66 +595,70 @@ static int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
             /* record too long, silently discard it */
             rr->length = 0;
             rr->read = 1;
-            s->rrlmethod->reset_packet_length(s->rrl);
+            rl->packet_length = 0;
             goto again;
         }
 
-        /* If received packet overflows own-client Max Fragment Length setting */
-        if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
-                && rr->length > GET_MAX_FRAGMENT_LENGTH(s->session) + SSL3_RT_MAX_ENCRYPTED_OVERHEAD) {
+
+        /*
+         * If received packet overflows maximum possible fragment length then
+         * silently discard it
+         */
+        if (rl->max_frag_len > 0
+                && rr->length > rl->max_frag_len + SSL3_RT_MAX_ENCRYPTED_OVERHEAD) {
             /* record too long, silently discard it */
             rr->length = 0;
             rr->read = 1;
-            s->rrlmethod->reset_packet_length(s->rrl);
+            rl->packet_length = 0;
             goto again;
         }
 
-        /* now s->rlayer.rstate == SSL_ST_READ_BODY */
+        /* now rl->rstate == SSL_ST_READ_BODY */
     }
 
-    /* s->rlayer.rstate == SSL_ST_READ_BODY, get and decode the data */
+    /* rl->rstate == SSL_ST_READ_BODY, get and decode the data */
 
     if (rr->length >
-        s->rrlmethod->get_packet_length(s->rrl) - DTLS1_RT_HEADER_LENGTH) {
-        /* now s->rlayer.packet_length == DTLS1_RT_HEADER_LENGTH */
+        rl->packet_length - DTLS1_RT_HEADER_LENGTH) {
+        /* now rl->packet_length == DTLS1_RT_HEADER_LENGTH */
         more = rr->length;
-        rret = s->rrlmethod->read_n(s->rrl, more, more, 1, 1, &n);
+        rret = rl->funcs->read_n(rl, more, more, 1, 1, &n);
         /* this packet contained a partial record, dump it */
         if (rret < OSSL_RECORD_RETURN_SUCCESS || n != more) {
-            if (ossl_statem_in_error(s)) {
-                /* read_n() called SSLfatal() */
+            if (rl->alert != 0) {
+                /* read_n() called RLAYERfatal() */
                 return OSSL_RECORD_RETURN_FATAL;
             }
             rr->length = 0;
             rr->read = 1;
-            s->rrlmethod->reset_packet_length(s->rrl);
+            rl->packet_length = 0;
             goto again;
         }
 
         /*
-         * now n == rr->length, and s->rlayer.packet_length ==
-         * DTLS1_RT_HEADER_LENGTH + rr->length
+         * now n == rr->length,
+         * and rl->packet_length ==  DTLS1_RT_HEADER_LENGTH + rr->length
          */
     }
     /* set state for later operations */
-    RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_HEADER);
+    rl->rstate = SSL_ST_READ_HEADER;
 
     /* match epochs.  NULL means the packet is dropped on the floor */
-    bitmap = dtls1_get_bitmap(s, rr, &is_next_epoch);
+    bitmap = dtls1_get_bitmap(rl, rr, &is_next_epoch);
     if (bitmap == NULL) {
         rr->length = 0;
-        s->rrlmethod->reset_packet_length(s->rrl); /* dump this record */
+        rl->packet_length = 0; /* dump this record */
         goto again;             /* get another record */
     }
 #ifndef OPENSSL_NO_SCTP
     /* Only do replay check if no SCTP bio */
-    if (!BIO_dgram_is_sctp(SSL_get_rbio(s))) {
+    if (!BIO_dgram_is_sctp(rl->bio)) {
 #endif
         /* Check whether this is a repeat, or aged record. */
-        if (!dtls1_record_replay_check(s, bitmap)) {
+        if (!dtls1_record_replay_check(rl, bitmap)) {
             rr->length = 0;
             rr->read = 1;
-            s->rrlmethod->reset_packet_length(s->rrl); /* dump this record */
+            rl->packet_length = 0; /* dump this record */
             goto again;         /* get another record */
         }
 #ifndef OPENSSL_NO_SCTP
@@ -677,7 +678,7 @@ static int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
      */
     if (is_next_epoch) {
         if ((SSL_in_init(ssl) || ossl_statem_get_in_handshake(s))) {
-            if (dtls_rlayer_buffer_record (s,
+            if (dtls_rlayer_buffer_record(rl,
                     &(rl->unprocessed_rcds),
                     rr->seq_num) < 0) {
                 /* SSLfatal() already called */
@@ -686,18 +687,18 @@ static int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         }
         rr->length = 0;
         rr->read = 1;
-        s->rrlmethod->reset_packet_length(s->rrl);
+        rl->packet_length = 0;
         goto again;
     }
 
-    if (!dtls1_process_record(s, bitmap)) {
-        if (ossl_statem_in_error(s)) {
-            /* dtls1_process_record() called SSLfatal */
+    if (!dtls1_process_record(rl, bitmap)) {
+        if (rl->alert != 0) {
+            /* dtls1_process_record() called RLAYERfatal */
             return OSSL_RECORD_RETURN_FATAL;
         }
         rr->length = 0;
         rr->read = 1;
-        s->rrlmethod->reset_packet_length(s->rrl); /* dump this record */
+        rl->packet_length = 0; /* dump this record */
         goto again;             /* get another record */
     }
 
@@ -705,22 +706,6 @@ static int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     return OSSL_RECORD_RETURN_SUCCESS;
 
 }
-
-static int dtls_set_protocol_version(OSSL_RECORD_LAYER *rl, int version)
-{
-    rl->version = version;
-    return 1;
-}
-
-static struct record_functions_st dtls_funcs = {
-    NULL,
-    NULL,
-    dtls_get_more_records,
-    NULL,
-    NULL,
-    dtls_set_protocol_version,
-    NULL
-};
 
 static int dtls_free(OSSL_RECORD_LAYER *rl)
 {
@@ -752,9 +737,9 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
 
 static int
 dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
-                      int role, int direction, int level, unsigned char *key,
-                      size_t keylen, unsigned char *iv, size_t ivlen,
-                      unsigned char *mackey, size_t mackeylen,
+                      int role, int direction, int level, unsigned int epoch,
+                      unsigned char *key, size_t keylen, unsigned char *iv,
+                      size_t ivlen, unsigned char *mackey, size_t mackeylen,
                       const EVP_CIPHER *ciph, size_t taglen,
                       /* TODO(RECLAYER): This probably should not be an int */
                       int mactype,
@@ -786,9 +771,34 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     }
 
     (*retrl)->isdtls = 1;
-    (*retrl)->funcs = &dtls_funcs;
+    (*retrl)->epoch = epoch;
 
-    return OSSL_RECORD_RETURN_SUCCESS;
+    switch (vers) {
+    case DTLS_ANY_VERSION:
+        (*retrl)->funcs = &dtls_any_funcs;
+        break;
+    case DTLS1_2_VERSION:
+    case DTLS1_VERSION:
+    case DTLS1_BAD_VER:
+        (*retrl)->funcs = &dtls_1_funcs;
+        break;
+    default:
+        /* Should not happen */
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ret = OSSL_RECORD_RETURN_FATAL;
+        goto err;
+    }
+
+    ret = (*retrl)->funcs->set_crypto_state(*retrl, level, key, keylen, iv,
+                                             ivlen, mackey, mackeylen, ciph,
+                                             taglen, mactype, md, comp);
+
+ err:
+    if (ret != OSSL_RECORD_RETURN_SUCCESS) {
+        OPENSSL_free(*retrl);
+        *retrl = NULL;
+    }
+    return ret;
 }
 
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {

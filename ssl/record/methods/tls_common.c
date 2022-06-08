@@ -95,7 +95,7 @@ static int rlayer_allow_compression(OSSL_RECORD_LAYER *rl)
 }
 #endif
 
-static int rlayer_setup_read_buffer(OSSL_RECORD_LAYER *rl)
+int rlayer_setup_read_buffer(OSSL_RECORD_LAYER *rl)
 {
     unsigned char *p;
     size_t len, align = 0, headerlen;
@@ -879,7 +879,7 @@ int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     return 1;
 }
 
-static int tls_do_uncompress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+int tls_do_uncompress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
 {
 #ifndef OPENSSL_NO_COMP
     int i;
@@ -1156,9 +1156,9 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
 static int
 tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
-                     int role, int direction, int level, unsigned char *key,
-                     size_t keylen, unsigned char *iv, size_t ivlen,
-                     unsigned char *mackey, size_t mackeylen,
+                     int role, int direction, int level, unsigned int epoch,
+                     unsigned char *key, size_t keylen, unsigned char *iv,
+                     size_t ivlen, unsigned char *mackey, size_t mackeylen,
                      const EVP_CIPHER *ciph, size_t taglen,
                      /* TODO(RECLAYER): This probably should not be an int */
                      int mactype,
