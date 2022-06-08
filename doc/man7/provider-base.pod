@@ -416,17 +416,17 @@ provider_get_params() can return the following provider parameters to the core:
 
 =over 4
 
-=item "name" (B<OSSL_PROV_PARAM_NAME>) <UTF8 string ptr>
+=item "name" (B<OSSL_PROV_PARAM_NAME>) <UTF8 ptr>
 
 This points to a string that should give a unique name for the provider.
 
-=item "version" (B<OSSL_PROV_PARAM_VERSION>) <UTF8 string ptr>
+=item "version" (B<OSSL_PROV_PARAM_VERSION>) <UTF8 ptr>
 
 This points to a string that is a version number associated with this provider.
 OpenSSL in-built providers use OPENSSL_VERSION_STR, but this may be different
 for any third party provider. This string is for informational purposes only.
 
-=item "buildinfo" (B<OSSL_PROV_PARAM_BUILDINFO>) <UTF8 string ptr>
+=item "buildinfo" (B<OSSL_PROV_PARAM_BUILDINFO>) <UTF8 ptr>
 
 This points to a string that is a build information associated with this provider.
 OpenSSL in-built providers use OPENSSL_FULL_VERSION_STR, but this may be
