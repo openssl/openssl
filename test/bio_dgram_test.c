@@ -337,6 +337,24 @@ static int test_bio_dgram_impl(int af, int use_local)
     if (!TEST_int_eq(compare_addr(addr5, addr1), 1))
         goto err;
 
+    /*
+     * Do not test local address yet as some platforms do not reliably return
+     * local addresses for messages queued for RX before local address support
+     * was enabled. Instead, send some new messages and test they're received
+     * with the correct local addresses.
+     */
+    ret = do_sendmmsg(b1, tx_msg, 2, 0);
+    if (!TEST_int_eq((int)ret, 2))
+        goto err;
+
+    /* Receive the messages. */
+    rx_msg[0].data_len = sizeof(rx_buf);
+    rx_msg[1].data_len = sizeof(rx_buf2);
+
+    ret = do_recvmmsg(b2, rx_msg, 2, 0);
+    if (!TEST_int_eq((int)ret, 2))
+        goto err;
+
     if (rx_msg[0].local != NULL) {
         /* If we are using local, it should match expected */
         if (!TEST_int_eq(compare_addr(addr4, addr2), 1))

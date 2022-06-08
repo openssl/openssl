@@ -1504,8 +1504,33 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg,
     msg->flags      = 0;
 
     if (msg->local != NULL)
-        if (extract_local(b, &mh, msg->local) < 1)
+        if (extract_local(b, &mh, msg->local) < 1) {
+            /*
+             * OS X exhibits odd behaviour where it appears that if a packet is
+             * sent before the receiving interface enables IP_PKTINFO, it will
+             * sometimes not have any control data returned even if the
+             * receiving interface enables IP_PKTINFO before calling recvmsg().
+             * This appears to occur non-deterministically. Presumably, OS X
+             * handles IP_PKTINFO at the time the packet is enqueued into a
+             * socket's receive queue, rather than at the time recvmsg() is
+             * called, unlike most other operating systems. Thus (if this
+             * hypothesis is correct) there is a race between where IP_PKTINFO
+             * is enabled by the process and when the kernel's network stack
+             * queues the incoming message.
+             *
+             * We cannot return the local address if we do not have it, but this
+             * is not a caller error either, so just return a zero address
+             * structure.
+             *
+             * We enable this workaround for Apple only as it should not
+             * be necessary otherwise.
+             */
+#if defined(__APPLE__)
+            memset(msg->local, 0, sizeof(*msg->local));
+#else
             return -1;
+#endif
+        }
 
     return 1;
 
