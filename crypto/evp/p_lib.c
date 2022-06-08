@@ -1853,7 +1853,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
 
         if (ctx == NULL)
             goto end;
-        tmp_keymgmt = ctx->keymgmt;
+        allocated_keymgmt = tmp_keymgmt = ctx->keymgmt;
         ctx->keymgmt = NULL;
         EVP_PKEY_CTX_free(ctx);
     }
@@ -1966,8 +1966,10 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
     if (keydata == NULL)
         tmp_keymgmt = NULL;
 
-    if (keymgmt != NULL)
+    if (keymgmt != NULL && tmp_keymgmt != NULL) {
         *keymgmt = tmp_keymgmt;
+        allocated_keymgmt = NULL;
+    }
 
     EVP_KEYMGMT_free(allocated_keymgmt);
     return keydata;
