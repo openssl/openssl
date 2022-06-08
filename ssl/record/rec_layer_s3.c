@@ -1892,6 +1892,11 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     for (;;) {
         int rlret;
         BIO *prev = s->rrlnext;
+        unsigned int epoch = 0;;
+
+        if (SSL_CONNECTION_IS_DTLS(s)
+                && level != OSSL_RECORD_PROTECTION_LEVEL_NONE)
+            epoch =  DTLS_RECORD_LAYER_get_r_epoch(&s->rlayer) + 1; /* new epoch */
 
         s->rrlnext = BIO_new(BIO_s_mem());
 
@@ -1903,12 +1908,12 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 
         rlret = s->rrlmethod->new_record_layer(sctx->libctx, sctx->propq,
                                                version, s->server, direction,
-                                               level, key, keylen, iv, ivlen,
-                                               mackey, mackeylen, ciph, taglen,
-                                               mactype, md, comp, prev, s->rbio,
-                                               s->rrlnext, NULL, NULL, settings,
-                                               options, rlayer_dispatch, s,
-                                               &s->rrl);
+                                               level, epoch, key, keylen, iv,
+                                               ivlen, mackey, mackeylen, ciph,
+                                               taglen, mactype, md, comp, prev,
+                                               s->rbio, s->rrlnext, NULL, NULL,
+                                               settings, options,
+                                               rlayer_dispatch, s, &s->rrl);
         BIO_free(prev);
         switch (rlret) {
         case OSSL_RECORD_RETURN_FATAL:

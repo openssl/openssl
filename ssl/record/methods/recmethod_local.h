@@ -68,6 +68,8 @@ struct ossl_record_layer_st
     int role;
     int direction;
     int level;
+    /* DTLS only */
+    unsigned int epoch;
 
     /*
      * A BIO containing any data read in the previous epoch that was destined
@@ -200,6 +202,8 @@ extern struct record_functions_st ssl_3_0_funcs;
 extern struct record_functions_st tls_1_funcs;
 extern struct record_functions_st tls_1_3_funcs;
 extern struct record_functions_st tls_any_funcs;
+extern struct record_functions_st dtls_1_funcs;
+extern struct record_functions_st dtls_any_funcs;
 
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
                        const char *fmt, ...);
@@ -211,7 +215,8 @@ void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
      ossl_rlayer_fatal)
 
 # define RLAYER_USE_EXPLICIT_IV(rl) ((rl)->version == TLS1_1_VERSION \
-                                     || (rl)->version == TLS1_2_VERSION)
+                                     || (rl)->version == TLS1_2_VERSION \
+                                     || (rl)->isdtls)
 
 int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
                                      EVP_CIPHER_CTX *ctx,
@@ -232,9 +237,11 @@ __owur int ssl3_cbc_digest_record(const EVP_MD *md,
 int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                        int clearold, size_t *readbytes);
 int tls_get_more_records(OSSL_RECORD_LAYER *rl);
+int dtls_get_more_records(OSSL_RECORD_LAYER *rl);
 
 int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *re);
+int tls_do_uncompress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
 int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
 int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
 
@@ -281,3 +288,4 @@ void tls_set0_packet(OSSL_RECORD_LAYER *rl, unsigned char *packet,
                      size_t packetlen);
 size_t tls_get_packet_length(OSSL_RECORD_LAYER *rl);
 void tls_reset_packet_length(OSSL_RECORD_LAYER *rl);
+int rlayer_setup_read_buffer(OSSL_RECORD_LAYER *rl);

@@ -665,7 +665,7 @@ int ossl_ssl_connection_reset(SSL *s)
      * assign it.
      */
     if (!ssl_set_new_record_layer(sc,
-                                  TLS_ANY_VERSION,
+                                  SSL_CONNECTION_IS_DTLS(sc) ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
                                   OSSL_RECORD_DIRECTION_READ,
                                   OSSL_RECORD_PROTECTION_LEVEL_NONE,
                                   NULL, 0, NULL, 0, NULL,  0, NULL, 0,

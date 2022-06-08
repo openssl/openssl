@@ -148,6 +148,8 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
     size_t bs, ctr, padnum, loop;
     unsigned char padval;
     const EVP_CIPHER *enc;
+    /* TODO(RECLAYER): FIXME */
+    SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
 
     if (n_recs == 0) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -226,7 +228,6 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
             seq = rl->sequence;
 
             if (rl->isdtls) {
-#if 0
                 /* TODO(RECLAYER): FIXME */
                 /* DTLS does not support pipelining */
                 unsigned char dtlsseq[8], *p = dtlsseq;
@@ -235,7 +236,6 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
                     DTLS_RECORD_LAYER_get_r_epoch(&s->rlayer), p);
                 memcpy(p, &seq[2], 6);
                 memcpy(buf[ctr], dtlsseq, 8);
-#endif
             } else {
                 memcpy(buf[ctr], seq, 8);
                 for (i = 7; i >= 0; i--) { /* increment */
@@ -452,6 +452,8 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
     unsigned char header[13];
     int t;
     int ret = 0;
+    /* TODO(RECLAYER): FIXME */
+    SSL_CONNECTION *ssl = (SSL_CONNECTION *)rl->cbarg;
 
     hash = rl->md_ctx;
 
@@ -477,7 +479,6 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
     }
 
     if (rl->isdtls) {
-#if 0
         /* TODO(RECLAYER): FIX ME */
         unsigned char dtlsseq[8], *p = dtlsseq;
 
@@ -486,7 +487,6 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
         memcpy(p, &seq[2], 6);
 
         memcpy(header, dtlsseq, 8);
-#endif
     } else
         memcpy(header, seq, 8);
 
@@ -551,4 +551,15 @@ struct record_functions_st tls_1_funcs = {
     tls_default_set_protocol_version,
     tls_default_validate_record_header,
     tls_default_post_process_record
+};
+
+struct record_functions_st dtls_1_funcs = {
+    tls1_set_crypto_state,
+    tls_default_read_n,
+    dtls_get_more_records,
+    tls1_cipher,
+    tls1_mac,
+    tls_default_set_protocol_version,
+    NULL,
+    NULL
 };

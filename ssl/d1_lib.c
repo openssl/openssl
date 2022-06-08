@@ -849,7 +849,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
 
     /* Buffer the record in the processed_rcds queue */
     /* TODO(RECLAYER): This is nasty and reaches inside the record layer. FIXME */
-    if (!dtls_buffer_listen_record(s, reclen, seq, align))
+    if (!dtls_buffer_listen_record(s->rrl, reclen, seq, align))
         return -1;
 
     ret = 1;

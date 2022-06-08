@@ -274,8 +274,8 @@ __owur int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
 int do_dtls1_write(SSL_CONNECTION *s, int type, const unsigned char *buf,
                    size_t len, int create_empty_fragment, size_t *written);
 void dtls1_reset_seq_numbers(SSL_CONNECTION *s, int rw);
-int dtls_buffer_listen_record(SSL_CONNECTION *s, size_t len, unsigned char *seq,
-                              size_t off);
+int dtls_buffer_listen_record(OSSL_RECORD_LAYER *rl, size_t len,
+                              unsigned char *seq, size_t off);
 void ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr);
 
 # define HANDLE_RLAYER_RETURN(s, ret) \

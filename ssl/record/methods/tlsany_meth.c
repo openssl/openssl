@@ -151,3 +151,23 @@ struct record_functions_st tls_any_funcs = {
     tls_validate_record_header,
     tls_default_post_process_record
 };
+
+static int dtls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
+{
+    if (rl->version != DTLS_ANY_VERSION && rl->version != vers)
+        return 0;
+    rl->version = vers;
+
+    return 1;
+}
+
+struct record_functions_st dtls_any_funcs = {
+    tls_any_set_crypto_state,
+    tls_default_read_n,
+    dtls_get_more_records,
+    tls_any_cipher,
+    NULL,
+    dtls_any_set_protocol_version,
+    NULL,
+    NULL
+};
