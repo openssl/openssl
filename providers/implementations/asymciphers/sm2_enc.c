@@ -138,6 +138,8 @@ static void *sm2_dupctx(void *vpsm2ctx)
         return NULL;
 
     *dstctx = *srcctx;
+    memset(&dstctx->md, 0, sizeof(dstctx->md));
+
     if (dstctx->key != NULL && !EC_KEY_up_ref(dstctx->key)) {
         OPENSSL_free(dstctx);
         return NULL;
