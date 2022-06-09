@@ -326,6 +326,12 @@ static const OSSL_ALGORITHM deflt_macs[] = {
 #ifndef OPENSSL_NO_POLY1305
     { PROV_NAMES_POLY1305, "provider=default", ossl_poly1305_functions },
 #endif
+#ifndef OPENSSL_NO_MACCIPHERS
+# if 0 /* TODO */
+    { PROV_NAMES_MACCIPHER_SHA256, "provider=default", ossl_maccipher_sha256_functions },
+    { PROV_NAMES_MACCIPHER_SHA384, "provider=default", ossl_maccipher_sha384_functions },
+# endif
+#endif
     { NULL, NULL, NULL }
 };
 

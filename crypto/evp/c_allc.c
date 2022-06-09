@@ -267,9 +267,7 @@ void openssl_add_all_ciphers_int(void)
 #endif
 
 #ifndef OPENSSL_NO_MACCIPHERS
-    EVP_add_cipher(EVP_maccipher_sha256());
-    EVP_add_cipher_alias(SN_maccipher_sha256, "MACCIPHER-SHA256");
-    EVP_add_cipher(EVP_maccipher_sha384());
-    EVP_add_cipher_alias(SN_maccipher_sha384, "MACCIPHER-SHA384");
+    EVP_add_cipher(EVP_maccipher_sha256()); /* not really relevant */
+    EVP_add_cipher(EVP_maccipher_sha384()); /* not really relevant */
 #endif
 }
