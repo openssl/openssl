@@ -237,6 +237,8 @@ void RSAZ_1024_mod_exp_avx2(BN_ULONG result_norm[16],
 
     rsaz_1024_red2norm_avx2(result_norm, result);
 
+    bn_reduce_once_in_place(result_norm, /*carry=*/0, m_norm, storage, 16);
+
     OPENSSL_cleanse(storage, sizeof(storage));
 }
 
@@ -308,6 +310,8 @@ void RSAZ_512_mod_exp(BN_ULONG result[8],
 
     /* from Montgomery */
     rsaz_512_mul_by_one(result, temp, m, k0);
+
+    bn_reduce_once_in_place(result, /*carry=*/0, m, storage, 8);
 
     OPENSSL_cleanse(storage, sizeof(storage));
 }
