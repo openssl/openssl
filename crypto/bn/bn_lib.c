@@ -829,9 +829,6 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
     BN_ULONG t;
     int i;
 
-    if (a == b)
-        return;
-
     bn_wcheck_size(a, nwords);
     bn_wcheck_size(b, nwords);
 

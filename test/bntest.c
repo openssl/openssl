@@ -168,6 +168,11 @@ static int test_swap(void)
             || !equalBN("swap", b, c))
         goto err;
 
+    /* regular swap: same pointer */
+    BN_swap(a, a);
+    if (!equalBN("swap with same pointer", a, d))
+        goto err;
+
     /* conditional swap: true */
     cond = 1;
     BN_consttime_swap(cond, a, b, top);
@@ -175,11 +180,21 @@ static int test_swap(void)
             || !equalBN("cswap true", b, d))
         goto err;
 
+    /* conditional swap: true, same pointer */
+    BN_consttime_swap(cond, a, a, top);
+    if (!equalBN("cswap true", a, c))
+        goto err;
+
     /* conditional swap: false */
     cond = 0;
     BN_consttime_swap(cond, a, b, top);
     if (!equalBN("cswap false", a, c)
             || !equalBN("cswap false", b, d))
+        goto err;
+
+    /* conditional swap: false, same pointer */
+    BN_consttime_swap(cond, a, a, top);
+    if (!equalBN("cswap false", a, c))
         goto err;
 
     /* same tests but checking flag swap */
