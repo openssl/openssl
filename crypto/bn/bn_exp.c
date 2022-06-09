@@ -1011,6 +1011,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
             }
         }
 
+        tmp.top = top;
         /*
          * The result is now in |tmp| in Montgomery form, but it may not be
          * fully reduced. This is within bounds for |BN_from_montgomery|
