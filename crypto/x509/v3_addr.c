@@ -603,8 +603,12 @@ int X509v3_addr_add_prefix(IPAddrBlocks *addr,
 {
     IPAddressOrRanges *aors = make_prefix_or_range(addr, afi, safi);
     IPAddressOrRange *aor;
+    int maxprefixlen = length_from_afi(afi) * 8;
 
-    if (aors == NULL || !make_addressPrefix(&aor, a, prefixlen))
+    if (aors == NULL
+            || prefixlen < 1
+            || prefixlen > maxprefixlen
+            || !make_addressPrefix(&aor, a, prefixlen))
         return 0;
     if (sk_IPAddressOrRange_push(aors, aor))
         return 1;
@@ -1009,7 +1013,10 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
         switch (delim) {
         case '/':
             prefixlen = (int)strtoul(s + i2, &t, 10);
-            if (t == s + i2 || *t != '\0') {
+            if (t == s + i2
+                    || *t != '\0'
+                    || prefixlen > (length * 8)
+                    || prefixlen < 1) {
                 ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
