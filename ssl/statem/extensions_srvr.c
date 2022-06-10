@@ -1659,11 +1659,12 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         /*
          * This causes the crypto state to be updated based on the derived keys
          */
-        s->s3.tmp.pkey = skey;
         if (ssl_derive(s, skey, ckey, 1) == 0) {
             /* SSLfatal() already called */
+            EVP_PKEY_free(skey);
             return EXT_RETURN_FAIL;
         }
+        s->s3.tmp.pkey = skey;
     } else {
         /* KEM mode */
         unsigned char *ct = NULL;
