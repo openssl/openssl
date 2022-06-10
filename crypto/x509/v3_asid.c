@@ -700,17 +700,15 @@ int X509v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b)
     if (X509v3_asid_inherits(a) || X509v3_asid_inherits(b))
         return 0;
 
-    subset = (a->asnum == NULL && b->asnum == NULL)
-             || (a->asnum != NULL
-                 && b->asnum != NULL
+    subset = a->asnum == NULL
+             || (b->asnum != NULL
                  && asid_contains(b->asnum->u.asIdsOrRanges,
                                   a->asnum->u.asIdsOrRanges));
     if (!subset)
         return 0;
 
-    return (a->rdi == NULL && b->rdi == NULL)
-           || (a->rdi != NULL
-               && b->rdi != NULL
+    return a->rdi == NULL
+           || (b->rdi != NULL
                && asid_contains(b->rdi->u.asIdsOrRanges,
                                 a->rdi->u.asIdsOrRanges));
 }

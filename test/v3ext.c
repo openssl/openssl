@@ -41,7 +41,7 @@ static int test_asid(void)
 {
     ASN1_INTEGER *val1 = NULL, *val2 = NULL;
     ASIdentifiers *asid1 = ASIdentifiers_new(), *asid2 = ASIdentifiers_new(),
-                  *asid3 = ASIdentifiers_new();
+                  *asid3 = ASIdentifiers_new(), *asid4 = ASIdentifiers_new();
     int testresult = 0;
 
     if (!TEST_ptr(asid1)
@@ -86,7 +86,10 @@ static int test_asid(void)
             || !TEST_true(X509v3_asid_subset(asid2, asid2))
             || !TEST_true(X509v3_asid_subset(asid1, asid3))
             || !TEST_true(X509v3_asid_subset(asid2, asid3))
-            || !TEST_true(X509v3_asid_subset(asid3, asid3)))
+            || !TEST_true(X509v3_asid_subset(asid3, asid3))
+            || !TEST_true(X509v3_asid_subset(asid4, asid1))
+            || !TEST_true(X509v3_asid_subset(asid4, asid2))
+            || !TEST_true(X509v3_asid_subset(asid4, asid3)))
         goto err;
 
     /* Not subsets */
@@ -94,7 +97,10 @@ static int test_asid(void)
             || !TEST_false(X509v3_asid_subset(asid1, asid2))
             || !TEST_false(X509v3_asid_subset(asid2, asid1))
             || !TEST_false(X509v3_asid_subset(asid3, asid1))
-            || !TEST_false(X509v3_asid_subset(asid3, asid2)))
+            || !TEST_false(X509v3_asid_subset(asid3, asid2))
+            || !TEST_false(X509v3_asid_subset(asid1, asid4))
+            || !TEST_false(X509v3_asid_subset(asid2, asid4))
+            || !TEST_false(X509v3_asid_subset(asid3, asid4)))
         goto err;
 
     testresult = 1;
@@ -104,6 +110,7 @@ static int test_asid(void)
     ASIdentifiers_free(asid1);
     ASIdentifiers_free(asid2);
     ASIdentifiers_free(asid3);
+    ASIdentifiers_free(asid4);
     return testresult;
 }
 
