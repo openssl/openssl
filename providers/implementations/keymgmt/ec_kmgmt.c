@@ -501,7 +501,7 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         goto end;
     }
 
-    param_cb(params, cbarg);
+    ok = param_cb(params, cbarg);
     OSSL_PARAM_free(params);
 end:
     OSSL_PARAM_BLD_free(tmpl);
