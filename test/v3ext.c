@@ -232,8 +232,7 @@ static struct extvalues_st {
 } extvalues[] = {
     /* No prefix is ok */
     { "sbgp-ipAddrBlock = IPv4:192.0.0.1\n", 1 },
-    /* Zero length prefix does not make sense */
-    { "sbgp-ipAddrBlock = IPv4:192.0.0.0/0\n", 0 },
+    { "sbgp-ipAddrBlock = IPv4:192.0.0.0/0\n", 1 },
     { "sbgp-ipAddrBlock = IPv4:192.0.0.0/1\n", 1 },
     { "sbgp-ipAddrBlock = IPv4:192.0.0.0/32\n", 1 },
     /* Prefix is too long */
@@ -251,8 +250,7 @@ static struct extvalues_st {
     /* No prefix is ok */
     { "sbgp-ipAddrBlock = IPv6:2001:db8::\n", 1 },
     { "sbgp-ipAddrBlock = IPv6:2001:0db8:0000:0000:0000:0000:0000:0000\n", 1 },
-    /* Zero length prefix does not make sense */
-    { "sbgp-ipAddrBlock = IPv6:2001:db8::/0\n", 0 },
+    { "sbgp-ipAddrBlock = IPv6:2001:db8::/0\n", 1 },
     { "sbgp-ipAddrBlock = IPv6:2001:db8::/1\n", 1 },
     { "sbgp-ipAddrBlock = IPv6:2001:db8::/32\n", 1 },
     { "sbgp-ipAddrBlock = IPv6:2001:0db8:0000:0000:0000:0000:0000:0000/32\n", 1 },
