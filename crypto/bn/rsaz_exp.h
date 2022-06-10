@@ -51,12 +51,10 @@ static ossl_inline void bn_select_words(BN_ULONG *r, BN_ULONG mask,
 static ossl_inline BN_ULONG bn_reduce_once_in_place(BN_ULONG *r,
                                                     BN_ULONG carry,
                                                     const BN_ULONG *m,
-                                                    void *tmp, size_t num)
+                                                    BN_ULONG *tmp, size_t num)
 {
-    BN_ULONG *tmpbn = tmp;
-
-    carry -= bn_sub_words(tmpbn, r, m, num);
-    bn_select_words(r, carry, r /* tmpbn < 0 */, tmpbn /* tmpbn >= 0 */, num);
+    carry -= bn_sub_words(tmp, r, m, num);
+    bn_select_words(r, carry, r /* tmp < 0 */, tmp /* tmp >= 0 */, num);
     return carry;
 }
 
