@@ -29,6 +29,7 @@ sub checkdhparams {
     my $gen = shift; #2, 5 or something else (0 is "something else")?
     my $format = shift; #DER or PEM?
     my $bits = shift; #Number of bits in p
+    my $keybits = shift; #Recommended private key bits
     my $pemtype;
     my $readtype;
     my $readbits = 0;
@@ -84,6 +85,13 @@ sub checkdhparams {
 
     ok((grep { (index($_, $genline) + length ($genline)) == length ($_)} @textdata),
        "Checking generator is correct");
+
+    if ($keybits) {
+        my $keybits_line = "recommended-private-length: $keybits bits";
+        ok((grep { (index($_, $keybits_line) + length($keybits_line))
+                   == length($_) } @textdata),
+           "Checking recommended private key bits is correct");
+    }
 }
 
 #Test some "known good" parameter files to check that we can read them
@@ -122,28 +130,28 @@ subtest "Read: 1024 bit X9.42 params, DER file" => sub {
 #Test that generating parameters of different types creates what we expect. We
 #use 512 for the size for speed reasons. Don't use this in real applications!
 subtest "Generate: 512 bit PKCS3 params, generator 2, PEM file" => sub {
-    plan tests => 5;
+    plan tests => 6;
     ok(run(app([ 'openssl', 'dhparam', '-out', 'gen-pkcs3-2-512.pem',
                  '512' ])));
-    checkdhparams("gen-pkcs3-2-512.pem", "PKCS3", 2, "PEM", 512);
+    checkdhparams("gen-pkcs3-2-512.pem", "PKCS3", 2, "PEM", 512, 125);
 };
 subtest "Generate: 512 bit PKCS3 params, explicit generator 2, PEM file" => sub {
-    plan tests => 5;
+    plan tests => 6;
     ok(run(app([ 'openssl', 'dhparam', '-out', 'gen-pkcs3-exp2-512.pem', '-2',
                  '512' ])));
-    checkdhparams("gen-pkcs3-exp2-512.pem", "PKCS3", 2, "PEM", 512);
+    checkdhparams("gen-pkcs3-exp2-512.pem", "PKCS3", 2, "PEM", 512, 125);
 };
 subtest "Generate: 512 bit PKCS3 params, generator 5, PEM file" => sub {
-    plan tests => 5;
+    plan tests => 6;
     ok(run(app([ 'openssl', 'dhparam', '-out', 'gen-pkcs3-5-512.pem', '-5',
                  '512' ])));
-    checkdhparams("gen-pkcs3-5-512.pem", "PKCS3", 5, "PEM", 512);
+    checkdhparams("gen-pkcs3-5-512.pem", "PKCS3", 5, "PEM", 512, 125);
 };
 subtest "Generate: 512 bit PKCS3 params, generator 2, explicit PEM file" => sub {
-    plan tests => 5;
+    plan tests => 6;
     ok(run(app([ 'openssl', 'dhparam', '-out', 'gen-pkcs3-2-512.exp.pem',
                  '-outform', 'PEM', '512' ])));
-    checkdhparams("gen-pkcs3-2-512.exp.pem", "PKCS3", 2, "PEM", 512);
+    checkdhparams("gen-pkcs3-2-512.exp.pem", "PKCS3", 2, "PEM", 512, 125);
 };
 SKIP: {
     skip "Skipping tests that require DSA", 4 if disabled("dsa");
