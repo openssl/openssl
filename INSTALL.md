@@ -526,6 +526,12 @@ access to algorithm internals that are not normally accessible.
 Additional information related to ACVP can be found at
 <https://github.com/usnistgov/ACVP>.
 
+### no-apps
+
+Do not build the OpenSSL application.
+
+This may be desirable when building with the [no-shared](#no-shared) option.
+
 ### no-asm
 
 Do not use assembler code.

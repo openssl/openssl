@@ -24,6 +24,11 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * Allow disabling OpenSSL application builds with no-apps at configuration
+   time.
+
+   *Derzsi Dániel*
+
  * Add more SRTP protection profiles from RFC8723 and RFC8269.
 
    *Kijin Kim*
