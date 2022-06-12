@@ -2897,7 +2897,23 @@ static int pkey_kdf_test_run(EVP_TEST *t)
 {
     PKEY_KDF_DATA *expected = t->data;
     unsigned char *got = NULL;
-    size_t got_len = expected->output_len;
+    size_t got_len = 0;
+
+    /* Find out the KDF output size */
+    if (EVP_PKEY_derive(expected->ctx, NULL, &got_len) <= 0) {
+        t->err = "INTERNAL_ERROR";
+        goto err;
+    }
+
+    /*
+     * We may get an absurd output size, which signals that anything goes.
+     * If not, we specify a too big buffer for the output, to test that
+     * EVP_PKEY_derive() can cope with it.
+     */
+    if (got_len == SIZE_MAX || got_len == 0)
+        got_len = expected->output_len;
+    else
+        got_len = expected->output_len * 2;
 
     if (!TEST_ptr(got = OPENSSL_malloc(got_len == 0 ? 1 : got_len))) {
         t->err = "INTERNAL_ERROR";
