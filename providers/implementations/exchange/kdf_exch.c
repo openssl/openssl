@@ -107,16 +107,19 @@ static int kdf_derive(void *vpkdfctx, unsigned char *secret, size_t *secretlen,
         return 1;
     }
 
-    if (outlen < kdfsize) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
-        return 0;
+    if (kdfsize != SIZE_MAX) {
+        if (outlen < kdfsize) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+            return 0;
+        }
+        outlen = kdfsize;
     }
 
-    ret = EVP_KDF_derive(pkdfctx->kdfctx, secret, kdfsize, NULL);
+    ret = EVP_KDF_derive(pkdfctx->kdfctx, secret, outlen, NULL);
     if (ret <= 0)
         return 0;
 
-    *secretlen = kdfsize;
+    *secretlen = outlen;
     return 1;
 }
 
