@@ -222,6 +222,7 @@ sub link_hash {
                                        "-fingerprint", "-noout",
                                        "-in", $fname);
     chomp $hash;
+    $hash =~ s/^.*=// if !$is_cert;
     chomp $fprint;
     return if !$hash;
     $fprint =~ s/^.*=//;
