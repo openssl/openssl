@@ -44,7 +44,9 @@ struct ossl_init_stop_st {
 };
 
 static OPENSSL_INIT_STOP *stop_handlers = NULL;
+/* Guards access to the optsdone variable on platforms without atomics */
 static CRYPTO_RWLOCK *optsdone_lock = NULL;
+/* Guards simultaneous INIT_LOAD_CONFIG calls with non-NULL settings */
 static CRYPTO_RWLOCK *init_lock = NULL;
 static CRYPTO_THREAD_LOCAL in_init_config_local;
 
