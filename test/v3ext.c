@@ -115,17 +115,6 @@ static int test_asid(void)
     return testresult;
 }
 
-static int IPAddressFamily_cmp(const IPAddressFamily *const *a_,
-                               const IPAddressFamily *const *b_)
-{
-    const ASN1_OCTET_STRING *a = (*a_)->addressFamily;
-    const ASN1_OCTET_STRING *b = (*b_)->addressFamily;
-    int len = ((a->length <= b->length) ? a->length : b->length);
-    int cmp = memcmp(a->data, b->data, len);
-
-    return cmp ? cmp : a->length - b->length;
-}
-
 static struct ip_ranges_st {
     const unsigned int afi;
     const char *ip1;
@@ -188,8 +177,14 @@ static int test_addr_ranges(void)
     int testresult = 0;
 
     for (i = 0; i < OSSL_NELEM(ranges); i++) {
-        addr = sk_IPAddressFamily_new(IPAddressFamily_cmp);
+        addr = sk_IPAddressFamily_new_null();
         if (!TEST_ptr(addr))
+            goto end;
+        /*
+         * Has the side effect of installing the comparison function onto the
+         * stack.
+         */
+        if (!TEST_true(X509v3_addr_canonize(addr)))
             goto end;
 
         ip1 = a2i_IPADDRESS(ranges[i].ip1);

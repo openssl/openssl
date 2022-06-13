@@ -346,9 +346,9 @@ static int range_should_be_prefix(const unsigned char *min,
     int i, j;
 
     /*
-     * It is the responsibility of the caller to confirm min < max. We don't use
-     * ossl_assert() here since we have no way of signalling an error from this
-     * function - so we just use a plain assert instead.
+     * It is the responsibility of the caller to confirm min <= max. We don't
+     * use ossl_assert() here since we have no way of signalling an error from
+     * this function - so we just use a plain assert instead.
      */
     assert(memcmp(min, max, length) <= 0);
 
