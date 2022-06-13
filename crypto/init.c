@@ -44,6 +44,9 @@ struct ossl_init_stop_st {
 };
 
 static OPENSSL_INIT_STOP *stop_handlers = NULL;
+/* Guards access to the optsdone variable on platforms without atomics */
+static CRYPTO_RWLOCK *optsdone_lock = NULL;
+/* Guards simultaneous INIT_LOAD_CONFIG calls with non-NULL settings */
 static CRYPTO_RWLOCK *init_lock = NULL;
 static CRYPTO_THREAD_LOCAL in_init_config_local;
 
@@ -58,8 +61,10 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
     ossl_malloc_setup_failures();
 #endif
 
-    if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
+    if ((optsdone_lock = CRYPTO_THREAD_lock_new()) == NULL
+        || (init_lock = CRYPTO_THREAD_lock_new()) == NULL)
         goto err;
+
     OPENSSL_cpuid_setup();
 
     if (!ossl_init_thread())
@@ -73,6 +78,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 
 err:
     OSSL_TRACE(INIT, "ossl_init_base failed!\n");
+    CRYPTO_THREAD_lock_free(optsdone_lock);
+    optsdone_lock = NULL;
     CRYPTO_THREAD_lock_free(init_lock);
     init_lock = NULL;
 
@@ -367,6 +374,8 @@ void OPENSSL_cleanup(void)
     }
     stop_handlers = NULL;
 
+    CRYPTO_THREAD_lock_free(optsdone_lock);
+    optsdone_lock = NULL;
     CRYPTO_THREAD_lock_free(init_lock);
     init_lock = NULL;
 
@@ -465,7 +474,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     /*
      * We ignore failures from this function. It is probably because we are
      * on a platform that doesn't support lockless atomic loads (we may not
-     * have created init_lock yet so we can't use it). This is just an
+     * have created optsdone_lock yet so we can't use it). This is just an
      * optimisation to skip the full checks in this function if we don't need
      * to, so we carry on regardless in the event of failure.
      *
@@ -502,12 +511,12 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 1;
 
     /*
-     * init_lock should definitely be set up now, so we can now repeat the
+     * optsdone_lock should definitely be set up now, so we can now repeat the
      * same check from above but be sure that it will work even on platforms
      * without lockless CRYPTO_atomic_load
      */
     if (!aloaddone) {
-        if (!CRYPTO_atomic_load(&optsdone, &tmp, init_lock))
+        if (!CRYPTO_atomic_load(&optsdone, &tmp, optsdone_lock))
             return 0;
         if ((tmp & opts) == opts)
             return 1;
@@ -637,7 +646,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     }
 #endif
 
-    if (!CRYPTO_atomic_or(&optsdone, opts, &tmp, init_lock))
+    if (!CRYPTO_atomic_or(&optsdone, opts, &tmp, optsdone_lock))
         return 0;
 
     return 1;
