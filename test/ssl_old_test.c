@@ -1741,6 +1741,8 @@ int main(int argc, char *argv[])
         /* Use a fixed key so that we can decrypt the ticket. */
         size = SSL_CTX_set_tlsext_ticket_keys(s_ctx, NULL, 0);
         keys = OPENSSL_zalloc(size);
+        if (keys == NULL)
+            goto end;
         SSL_CTX_set_tlsext_ticket_keys(s_ctx, keys, size);
         OPENSSL_free(keys);
     }
