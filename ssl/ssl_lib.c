@@ -1819,6 +1819,7 @@ static int ssl_io_intern(void *vargs)
 
 int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes)
 {
+    BIO_clear_retry_flags(SSL_get_rbio(s));
     if (s->handshake_func == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNINITIALIZED);
         return -1;
@@ -1950,6 +1951,7 @@ int SSL_get_early_data_status(const SSL *s)
 
 static int ssl_peek_internal(SSL *s, void *buf, size_t num, size_t *readbytes)
 {
+    BIO_clear_retry_flags(SSL_get_rbio(s));
     if (s->handshake_func == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNINITIALIZED);
         return -1;
@@ -2010,6 +2012,7 @@ int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
 
 int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
 {
+    BIO_clear_retry_flags(SSL_get_rbio(s));
     if (s->handshake_func == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNINITIALIZED);
         return -1;
@@ -2301,6 +2304,7 @@ static int can_renegotiate(const SSL *s)
 
 int SSL_renegotiate(SSL *s)
 {
+    BIO_clear_retry_flags(SSL_get_rbio(s));
     if (!can_renegotiate(s))
         return 0;
 
@@ -2311,6 +2315,7 @@ int SSL_renegotiate(SSL *s)
 
 int SSL_renegotiate_abbreviated(SSL *s)
 {
+    BIO_clear_retry_flags(SSL_get_rbio(s));
     if (!can_renegotiate(s))
         return 0;
 
@@ -3812,19 +3817,13 @@ int SSL_get_error(const SSL *s, int i)
     if (i > 0)
         return SSL_ERROR_NONE;
 
-    /*
-     * Make things return SSL_ERROR_SYSCALL when doing SSL_do_handshake etc,
-     * where we do encode the error
-     */
-    if ((l = ERR_peek_error()) != 0) {
-        if (ERR_GET_LIB(l) == ERR_LIB_SYS)
-            return SSL_ERROR_SYSCALL;
-        else
-            return SSL_ERROR_SSL;
+    if(s == NULL || ossl_statem_in_error(s)) {
+        return SSL_ERROR_SSL;
     }
 
-    if (SSL_want_read(s)) {
-        bio = SSL_get_rbio(s);
+    /* Fetch the IO status with high priority */
+    bio = SSL_get_rbio(s);
+    if (SSL_want_read(s) && BIO_should_retry(bio)) {
         if (BIO_should_read(bio))
             return SSL_ERROR_WANT_READ;
         else if (BIO_should_write(bio))
@@ -3849,9 +3848,9 @@ int SSL_get_error(const SSL *s, int i)
         }
     }
 
-    if (SSL_want_write(s)) {
-        /* Access wbio directly - in order to use the buffered bio if present */
-        bio = s->wbio;
+    /* Access wbio directly - in order to use the buffered bio if present */
+    bio = s->wbio;
+    if (SSL_want_write(s) && BIO_should_retry(bio)) {
         if (BIO_should_write(bio))
             return SSL_ERROR_WANT_WRITE;
         else if (BIO_should_read(bio))
@@ -3884,6 +3883,17 @@ int SSL_get_error(const SSL *s, int i)
         (s->s3.warn_alert == SSL_AD_CLOSE_NOTIFY))
         return SSL_ERROR_ZERO_RETURN;
 
+    /*
+     * Make things return SSL_ERROR_SYSCALL when doing SSL_do_handshake etc,
+     * where we do encode the error
+     */
+    if ((l = ERR_peek_error()) != 0) {
+        if (ERR_GET_LIB(l) == ERR_LIB_SYS)
+            return SSL_ERROR_SYSCALL;
+        else
+            return SSL_ERROR_SSL;
+    }
+
     return SSL_ERROR_SYSCALL;
 }
 
@@ -3906,6 +3916,7 @@ int SSL_do_handshake(SSL *s)
         ERR_raise(ERR_LIB_SSL, SSL_R_CONNECTION_TYPE_NOT_SET);
         return -1;
     }
+    BIO_clear_retry_flags(SSL_get_rbio(s));
 
     ossl_statem_check_finish_init(s, -1);
 

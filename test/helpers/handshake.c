@@ -1609,6 +1609,18 @@ static HANDSHAKE_RESULT *do_handshake_internal(
                         ret->result = SSL_TEST_INTERNAL_ERROR;
                         goto err;
                     }
+                } else if (client_turn && server.status == PEER_ERROR) {
+                    /*
+                     * The server Failed and result client non-block.
+                     */
+                    ret->result = SSL_TEST_SERVER_FAIL;
+                    goto err;
+                } else if (!client_turn && client.status == PEER_ERROR) {
+                    /*
+                     * The client Failed and result server non-block.
+                     */
+                    ret->result = SSL_TEST_CLIENT_FAIL;
+                    goto err;
                 } else {
                     /* Continue. */
                     client_turn ^= 1;
