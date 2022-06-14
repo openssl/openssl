@@ -311,6 +311,7 @@ static int cb_server_alpn(SSL *s, const unsigned char **out,
      */
     alpn_selected = OPENSSL_malloc(*outlen);
     if (alpn_selected == NULL) {
+        fprintf(stderr, "failed to allocate memory");
         OPENSSL_free(protos);
         abort();
     }
