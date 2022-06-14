@@ -54,15 +54,17 @@ struct sockaddr_un {
 /*
  * HPNS:
  *
- *  Our current MQ 5.3 EGD requires compatability-mode sockets
- *  This code forces the mode to compatibility if required
- *  and then restores the mode.
+ *  This code forces the use of compatibility mode if required on HPE NonStop
+ *  when coreutils PRNGD is used and then restores the previous mode
+ *  after establishing the socket. This is not required on x86 where hardware
+ *  randomization should be used instead of EGD available as of OpenSSL 3.0.
+ *  Use --with-rand-seed=rdcpu when configuring x86 with 3.0 and above.
  *
  *  Needs review:
  *
  *  The better long-term solution is to either run two EGD's each in one of
  *  the two modes or revise the EGD code to listen on two different sockets
- *  (each in one of the two modes).
+ *  (each in one of the two modes) or use the hardware randomizer.
  */
 _variable
 int hpns_socket(int family,
