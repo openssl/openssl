@@ -3812,17 +3812,7 @@ int SSL_get_error(const SSL *s, int i)
     if (i > 0)
         return SSL_ERROR_NONE;
 
-    /*
-     * Make things return SSL_ERROR_SYSCALL when doing SSL_do_handshake etc,
-     * where we do encode the error
-     */
-    if ((l = ERR_peek_error()) != 0) {
-        if (ERR_GET_LIB(l) == ERR_LIB_SYS)
-            return SSL_ERROR_SYSCALL;
-        else
-            return SSL_ERROR_SSL;
-    }
-
+    /* Fetch the IO status with high priority */
     if (SSL_want_read(s)) {
         bio = SSL_get_rbio(s);
         if (BIO_should_read(bio))
@@ -3883,6 +3873,17 @@ int SSL_get_error(const SSL *s, int i)
     if ((s->shutdown & SSL_RECEIVED_SHUTDOWN) &&
         (s->s3.warn_alert == SSL_AD_CLOSE_NOTIFY))
         return SSL_ERROR_ZERO_RETURN;
+
+    /*
+     * Make things return SSL_ERROR_SYSCALL when doing SSL_do_handshake etc,
+     * where we do encode the error
+     */
+    if ((l = ERR_peek_error()) != 0) {
+        if (ERR_GET_LIB(l) == ERR_LIB_SYS)
+            return SSL_ERROR_SYSCALL;
+        else
+            return SSL_ERROR_SSL;
+    }
 
     return SSL_ERROR_SYSCALL;
 }
