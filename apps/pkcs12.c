@@ -20,6 +20,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/provider.h>
 #include <openssl/kdf.h>
+#include <openssl/rand.h>
 
 #define NOKEYS          0x1
 #define NOCERTS         0x2
@@ -61,7 +62,7 @@ typedef enum OPTION_choice {
 #ifndef OPENSSL_NO_DES
     OPT_DESCERT,
 #endif
-    OPT_EXPORT, OPT_ITER, OPT_NOITER, OPT_MACITER, OPT_NOMACITER,
+    OPT_EXPORT, OPT_ITER, OPT_NOITER, OPT_MACITER, OPT_NOMACITER, OPT_MACSALTLEN,
     OPT_NOMAC, OPT_LMK, OPT_NODES, OPT_NOENC, OPT_MACALG, OPT_CERTPBE, OPT_KEYPBE,
     OPT_INKEY, OPT_CERTFILE, OPT_UNTRUSTED, OPT_PASSCERTS,
     OPT_NAME, OPT_CSP, OPT_CANAME,
@@ -148,6 +149,7 @@ const OPTIONS pkcs12_options[] = {
     {"noiter", OPT_NOITER, '-', "Don't use encryption iteration"},
     {"nomaciter", OPT_NOMACITER, '-', "Don't use MAC iteration)"},
     {"maciter", OPT_MACITER, '-', "Unused, kept for backwards compatibility"},
+    {"macsaltlen", OPT_MACSALTLEN, '-', "Specify the salt len for MAC"},
     {"nomac", OPT_NOMAC, '-', "Don't generate MAC"},
     {NULL}
 };
@@ -165,6 +167,7 @@ int pkcs12_main(int argc, char **argv)
 #endif
     /* use library defaults for the iter, maciter, cert, and key PBE */
     int iter = 0, maciter = 0;
+    int macsaltlen = PKCS12_SALT_LEN;
     int cert_pbe = NID_undef;
     int key_pbe = NID_undef;
     int ret = 1, macver = 1, add_lmk = 0, private = 0;
@@ -260,6 +263,9 @@ int pkcs12_main(int argc, char **argv)
             break;
         case OPT_NOMACITER:
             maciter = 1;
+            break;
+        case OPT_MACSALTLEN:
+            macsaltlen = opt_int_arg();
             break;
         case OPT_NOMAC:
             cert_pbe = -1;
@@ -423,6 +429,8 @@ int pkcs12_main(int argc, char **argv)
             WARN_NO_EXPORT("nomaciter");
         if (cert_pbe == -1 && maciter == -1)
             WARN_NO_EXPORT("nomac");
+        if (macsaltlen != 0)
+            WARN_NO_EXPORT("macsaltlen");
     }
 #ifndef OPENSSL_NO_DES
     if (use_legacy) {
@@ -676,13 +684,13 @@ int pkcs12_main(int argc, char **argv)
                 goto opthelp;
         }
 
-        if (maciter != -1)
-            if (!PKCS12_set_mac(p12, mpass, -1, NULL, 0, maciter, macmd)) {
+        if (maciter != -1) {
+            if (!PKCS12_set_mac(p12, mpass, -1, NULL, macsaltlen, maciter, macmd)) {
                 BIO_printf(bio_err, "Error creating PKCS12 MAC; no PKCS12KDF support?\n");
                 BIO_printf(bio_err, "Use -nomac if MAC not required and PKCS12KDF support not available.\n");
                 goto export_end;
             }
-
+        }
         assert(private);
 
         out = bio_open_owner(outfile, FORMAT_PKCS12, private);

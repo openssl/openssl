@@ -45,6 +45,7 @@ extern "C" {
 
 # define PKCS12_MAC_KEY_LENGTH 20
 
+/* The macro is expected to be used only internally. Kept for backwards compatibility. */
 # define PKCS12_SALT_LEN 8
 
 /* It's not clear if these are actually needed... */
