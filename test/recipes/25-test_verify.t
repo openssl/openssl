@@ -29,7 +29,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 172;
+plan tests => 182;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -261,6 +261,28 @@ ok(!verify("ee-timestampsign-rfc3161-noncritxku", "timestampsign", [qw(root-cert
    "fail timestampsign according to RFC 3161 with extendedKeyUsage not critical");
 ok(verify("ee-timestampsign-rfc3161-digsig", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
    "accept timestampsign according to RFC 3161 with digitalSignature");
+
+# EE variants wrt code signing
+ok(verify("ee-codesign", "codesign", [qw(root-cert)], [qw(ca-cert)]),
+   "accept codesign");
+ok(!verify("ee-codesign-serverauth", "codesign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail codesign with additional serverAuth");
+ok(!verify("ee-codesign-anyextkeyusage", "codesign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail codesign with additional anyExtendedKeyUsage");
+ok(!verify("ee-codesign-crlsign", "codesign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail codesign with additional cRLSign");
+ok(!verify("ee-codesign-keycertsign", "codesign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail codesign with additional keyCertSign");
+ok(!verify("ee-codesign-noncritical", "codesign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail codesign without critical KU");
+ok(!verify("ee-cert", "codesign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail sslserver as code sign");
+ok(!verify("ee-client", "codesign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail sslclient as codesign");
+ok(!verify("ee-timestampsign-CABforum", "codesign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to CAB forum as codesign");
+ok(!verify("ee-timestampsign-rfc3161", "codesign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to RFC 3161 as codesign");
 
 # Proxy certificates
 ok(!verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)]),
