@@ -54,6 +54,19 @@ keyUsage=critical, keyAgreement
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid
 
+[ codesign_cert ]
+
+# These extensions are added when 'ca' signs a request for an end entity
+# certificate
+
+basicConstraints=critical, CA:FALSE
+keyUsage=critical, digitalSignature
+extendedKeyUsage=codeSigning
+
+# PKIX recommendations harmless if included in all certificates.
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid
+
 [ v3_ca ]
 
 

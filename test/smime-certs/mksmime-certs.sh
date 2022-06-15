@@ -81,5 +81,13 @@ CN="Test S/MIME EE DH #1" $OPENSSL req -config ca.cnf -noenc \
 $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 36500 \
 	-force_pubkey dhpub.pem \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smdh.pem
+
+# EE RSA code signing certificates: create request first
+CN="Test CodeSign EE RSA #1" $OPENSSL req -config ca.cnf -noenc \
+	-keyout csrsa1.pem -out req.pem -newkey rsa:2048
+# Sign request: end entity extensions
+$OPENSSL x509 -req -in req.pem -CA smroot.pem -days 36500 \
+	-extfile ca.cnf -extensions codesign_cert -CAcreateserial >>csrsa1.pem
+
 # Remove temp files.
 rm -f req.pem ecp.pem ecp2.pem dsap.pem dhp.pem dhpub.pem smtmp.pem smroot.srl

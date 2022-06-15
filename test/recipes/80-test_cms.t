@@ -50,7 +50,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 14;
+plan tests => 15;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -887,6 +887,50 @@ subtest "CMS signed digest, S/MIME format" => sub {
                     "-CAfile", catfile($smdir, "smroot.pem"),
                     "-content", $smcont])),
        "Verify CMS signed digest, S/MIME format");
+};
+
+subtest "CMS code signing test" => sub {
+    plan tests => 7;
+    my $sig_file = "signature.p7s";
+    ok(run(app(["openssl", "cms", @prov, "-sign", "-in", $smcont,
+                   "-certfile", catfile($smdir, "smroot.pem"),
+                   "-signer", catfile($smdir, "smrsa1.pem"),
+                   "-out", $sig_file])),
+       "accept perform CMS signature with smime certificate");
+
+    ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig_file,
+                    "-CAfile", catfile($smdir, "smroot.pem"),
+                    "-content", $smcont])),
+       "accept verify CMS signature with smime certificate");
+
+    ok(!run(app(["openssl", "cms", @prov, "-verify", "-in", $sig_file,
+                    "-CAfile", catfile($smdir, "smroot.pem"),
+                    "-purpose", "codesign",
+                    "-content", $smcont])),
+       "fail verify CMS signature with smime certificate for purpose code signing");
+
+    ok(!run(app(["openssl", "cms", @prov, "-verify", "-in", $sig_file,
+                    "-CAfile", catfile($smdir, "smroot.pem"),
+                    "-purpose", "football",
+                    "-content", $smcont])),
+       "fail verify CMS signature with invalid purpose argument");
+
+    ok(run(app(["openssl", "cms", @prov, "-sign", "-in", $smcont,
+                   "-certfile", catfile($smdir, "smroot.pem"),
+                   "-signer", catfile($smdir, "csrsa1.pem"),
+                   "-out", $sig_file])),
+        "accept perform CMS signature with code signing certificate");
+
+    ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig_file,
+                    "-CAfile", catfile($smdir, "smroot.pem"),
+                    "-purpose", "codesign",
+                    "-content", $smcont])),
+       "accept verify CMS signature with code signing certificate for purpose code signing");
+
+    ok(!run(app(["openssl", "cms", @prov, "-verify", "-in", $sig_file,
+                    "-CAfile", catfile($smdir, "smroot.pem"),
+                    "-content", $smcont])),
+       "fail verify CMS signature with code signing certificate for purpose smime_sign");
 };
 
 sub check_availability {
