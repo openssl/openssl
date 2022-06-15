@@ -8,6 +8,7 @@ The QUIC ACK manager is responsible for, on the TX side:
   - Generating notifications that a packet we sent was lost
 
 On the RX side, it is responsible for:
+
   - Generating ACK frames for later transmission in response to packets we
     received
 
@@ -143,7 +144,7 @@ typedef struct  quic_ackm_tx_pkt_st {
     void (*on_lost)(void *arg);
     /* Callback called if frames in this packet are acked. arg is cb_arg. */
     void (*on_acked)(void *arg);
-    /* 
+    /*
      * Callback called if frames in this packet are neither acked nor lost. arg
      * is cb_arg.
      */
@@ -188,7 +189,7 @@ typedef struct quic_ackm_rx_pkt_st {
     /* The time at which the packet was received. */
     OSSL_TIME time;
 
-    /* 
+    /*
      * One of the QUIC_PN_SPACE_* values. This qualifies the pkt_num field
      * into a packet number space.
      */
@@ -218,7 +219,7 @@ Returns 1 on success.
 ```c
 typedef struct quic_ackm_ack_range_st {
     /*
-     * Represents an inclusive range of packet numbers [start, end]. 
+     * Represents an inclusive range of packet numbers [start, end].
      * start must be <= end.
      */
     QUIC_PN start, end;
@@ -232,7 +233,7 @@ typedef struct quic_ackm_ack {
      *      [ 95, 100]
      *      [ 90,  92]
      *      etc.
-     * 
+     *
      * As such, ack_ranges[0].end is always the highest packet number
      * being acknowledged and ack_ranges[num_ack_ranges-1].start is
      * aalways the lowest packet number being acknowledged.
