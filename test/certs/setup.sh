@@ -185,6 +185,14 @@ openssl x509 -in ee-client.pem -trustout \
 ./mkcert.sh genee -p timeStamping server.example ee-key ee-timestampsign-rfc3161-noncritxku ca-key ca-cert
 ./mkcert.sh genee -p critical,timeStamping -k digitalSignature server.example ee-key ee-timestampsign-rfc3161-digsig ca-key ca-cert
 
+# code signing certificate
+./mkcert.sh genee -p codeSigning -k critical,digitalSignature server.example ee-key ee-codesign ca-key ca-cert
+./mkcert.sh genee -p codeSigning,serverAuth -k critical,digitalSignature server.example ee-key ee-codesign-serverauth ca-key ca-cert
+./mkcert.sh genee -p codeSigning,2.5.29.37.0 -k critical,digitalSignature server.example ee-key ee-codesign-anyextkeyusage ca-key ca-cert
+./mkcert.sh genee -p codeSigning -k critical,digitalSignature,cRLSign server.example ee-key ee-codesign-crlsign ca-key ca-cert
+./mkcert.sh genee -p codeSigning -k critical,digitalSignature,keyCertSign server.example ee-key ee-codesign-keycertsign ca-key ca-cert
+./mkcert.sh genee -p codeSigning -k digitalSignature server.example ee-key ee-codesign-noncritical ca-key ca-cert
+
 # Leaf cert security level variants
 # MD5 issuer signature
 OPENSSL_SIGALG=md5 \
