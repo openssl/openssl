@@ -288,6 +288,9 @@ static int run_cert(X509 *crt, const char *nameincert,
         char *name = OPENSSL_malloc(namelen + 1);
         int match, ret;
 
+        if (name == NULL) {
+            return 1;
+        }
         memcpy(name, *pname, namelen + 1);
 
         match = -1;
