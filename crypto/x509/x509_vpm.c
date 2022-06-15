@@ -512,7 +512,8 @@ static const X509_VERIFY_PARAM default_table[] = {
      100,                       /* depth */
      -1,                        /* auth_level */
      NULL,                      /* policies */
-     vpm_empty_id},
+     vpm_empty_id
+    },
     {
      "pkcs7",                   /* S/MIME sign parameters */
      0,                         /* check time to use */
@@ -523,7 +524,8 @@ static const X509_VERIFY_PARAM default_table[] = {
      -1,                        /* depth */
      -1,                        /* auth_level */
      NULL,                      /* policies */
-     vpm_empty_id},
+     vpm_empty_id
+    },
     {
      "smime_sign",              /* S/MIME sign parameters */
      0,                         /* check time to use */
@@ -534,7 +536,8 @@ static const X509_VERIFY_PARAM default_table[] = {
      -1,                        /* depth */
      -1,                        /* auth_level */
      NULL,                      /* policies */
-     vpm_empty_id},
+     vpm_empty_id
+    },
     {
      "ssl_client",              /* SSL/TLS client parameters */
      0,                         /* check time to use */
@@ -545,7 +548,8 @@ static const X509_VERIFY_PARAM default_table[] = {
      -1,                        /* depth */
      -1,                        /* auth_level */
      NULL,                      /* policies */
-     vpm_empty_id},
+     vpm_empty_id
+    },
     {
      "ssl_server",              /* SSL/TLS server parameters */
      0,                         /* check time to use */
@@ -556,7 +560,8 @@ static const X509_VERIFY_PARAM default_table[] = {
      -1,                        /* depth */
      -1,                        /* auth_level */
      NULL,                      /* policies */
-     vpm_empty_id}
+     vpm_empty_id
+    }
 };
 
 static STACK_OF(X509_VERIFY_PARAM) *param_table = NULL;
