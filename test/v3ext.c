@@ -249,6 +249,7 @@ static struct extvalues_st {
     /* IPv6 */
     /* No prefix is ok */
     { "sbgp-ipAddrBlock = IPv6:2001:db8::\n", 1 },
+    { "sbgp-ipAddrBlock = IPv6:2001::db8\n", 1 },
     { "sbgp-ipAddrBlock = IPv6:2001:0db8:0000:0000:0000:0000:0000:0000\n", 1 },
     { "sbgp-ipAddrBlock = IPv6:2001:db8::/0\n", 1 },
     { "sbgp-ipAddrBlock = IPv6:2001:db8::/1\n", 1 },
