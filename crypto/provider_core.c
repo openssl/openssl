@@ -1841,7 +1841,7 @@ OSSL_FUNC_BIO_up_ref_fn ossl_core_bio_up_ref;
 OSSL_FUNC_BIO_free_fn ossl_core_bio_free;
 OSSL_FUNC_BIO_vprintf_fn ossl_core_bio_vprintf;
 OSSL_FUNC_BIO_vsnprintf_fn BIO_vsnprintf;
-static OSSL_FUNC_BIO_ctrl_fn ossl_core_bio_ctrl;
+OSSL_FUNC_BIO_ctrl_fn ossl_core_bio_ctrl;
 static OSSL_FUNC_self_test_cb_fn core_self_test_get_callback;
 OSSL_FUNC_get_entropy_fn ossl_rand_get_entropy;
 OSSL_FUNC_cleanup_entropy_fn ossl_rand_cleanup_entropy;
