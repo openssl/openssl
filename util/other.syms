@@ -205,6 +205,7 @@ BIO_set_fd                              define
 BIO_set_fp                              define
 BIO_set_indent                          define
 BIO_set_info_callback                   define
+BIO_set_initial_dgram_size              define
 BIO_set_md                              define
 BIO_set_mem_buf                         define
 BIO_set_mem_eof_return                  define
