@@ -53,6 +53,13 @@ static const BIO_METHOD secmem_method = {
     NULL,                      /* mem_callback_ctrl */
 };
 
+struct buf_mem_dgram_st {
+    /* Pointer into the buffer for where the dgram starts */
+    char *dgram;
+    /* Length of the dgram */
+    size_t dgramlen;
+};
+
 /*
  * BIO memory stores buffer and read pointer
  * however the roles are different for read only BIOs.
@@ -62,6 +69,10 @@ static const BIO_METHOD secmem_method = {
 typedef struct bio_buf_mem_st {
     struct buf_mem_st *buf;   /* allocated buffer */
     struct buf_mem_st *readp; /* read pointer */
+    struct buf_mem_dgram_st *dgrams; /* dgram data */
+    size_t nextdgram; /* Next dgram to be read */
+    size_t numdgrams; /* Number of dgrams currently stored */
+    size_t maxdgrams; /* Max number of dgrams that can be stored */
 } BIO_BUF_MEM;
 
 /*
@@ -150,6 +161,7 @@ static int mem_free(BIO *a)
     if (!mem_buf_free(a))
         return 0;
     OPENSSL_free(bb->readp);
+    OPENSSL_free(bb->dgrams);
     OPENSSL_free(bb);
     return 1;
 }
@@ -184,6 +196,12 @@ static int mem_buf_sync(BIO *b)
             bbm->buf->length = bbm->readp->length;
             bbm->readp->data = bbm->buf->data;
         }
+        if (bbm->nextdgram > 0) {
+            if (bbm->numdgrams > 0)
+                memmove(bbm->dgrams, &bbm->dgrams[bbm->nextdgram],
+                        sizeof(*bbm->dgrams) * bbm->numdgrams);
+            bbm->nextdgram = 0;
+        }
     }
     return 0;
 }
@@ -193,17 +211,36 @@ static int mem_read(BIO *b, char *out, int outl)
     int ret = -1;
     BIO_BUF_MEM *bbm = (BIO_BUF_MEM *)b->ptr;
     BUF_MEM *bm = bbm->readp;
+    size_t maxreadlen = 0;
+    int eof = 0;
 
     if (b->flags & BIO_FLAGS_MEM_RDONLY)
         bm = bbm->buf;
     BIO_clear_retry_flags(b);
-    ret = (outl >= 0 && (size_t)outl > bm->length) ? (int)bm->length : outl;
+    if (bbm->maxdgrams > 0) {
+        if (bbm->numdgrams > 0) {
+            maxreadlen = bbm->dgrams[bbm->nextdgram++].dgramlen;
+            if (!ossl_assert(maxreadlen <= bm->length))
+                return 0;
+            bbm->numdgrams--;
+        } else {
+            eof = 1;
+        }
+    } else {
+        maxreadlen = bm->length;
+        eof = (maxreadlen == 0);
+    }
+    ret = (outl >= 0 && (size_t)outl > maxreadlen) ? (int)maxreadlen : outl;
     if ((out != NULL) && (ret > 0)) {
+        size_t flushlen;
+
         memcpy(out, bm->data, ret);
-        bm->length -= ret;
-        bm->max -= ret;
-        bm->data += ret;
-    } else if (bm->length == 0) {
+        flushlen = (bbm->maxdgrams > 0) ? maxreadlen : (size_t)ret;
+            
+        bm->length -= flushlen;
+        bm->max -= flushlen;
+        bm->data += flushlen;
+    } else if (eof) {
         ret = b->num;
         if (ret != 0)
             BIO_set_retry_read(b);
@@ -222,8 +259,10 @@ static int mem_write(BIO *b, const char *in, int inl)
         goto end;
     }
     BIO_clear_retry_flags(b);
+
     if (inl == 0)
         return 0;
+
     if (in == NULL) {
         ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         goto end;
@@ -232,8 +271,35 @@ static int mem_write(BIO *b, const char *in, int inl)
     mem_buf_sync(b);
     if (BUF_MEM_grow_clean(bbm->buf, blen + inl) == 0)
         goto end;
+
     memcpy(bbm->buf->data + blen, in, inl);
     *bbm->readp = *bbm->buf;
+
+    if (bbm->maxdgrams > 0) {
+        size_t off = bbm->numdgrams + bbm->nextdgram;
+
+        if (off == bbm->maxdgrams) {
+            size_t newmax;
+            struct buf_mem_dgram_st *tmp = bbm->dgrams;
+
+            if (bbm->maxdgrams <= SIZE_MAX / (sizeof(*bbm->dgrams) * 2))
+                newmax = bbm->maxdgrams * 2;
+            else
+                goto end;
+
+            bbm->dgrams = OPENSSL_realloc(bbm->dgrams,
+                                          sizeof(*bbm->dgrams) * newmax);
+            if (bbm->dgrams == NULL) {
+                bbm->dgrams = tmp;
+                goto end;
+            }
+            bbm->maxdgrams = newmax;
+        }
+        bbm->dgrams[off].dgram = bbm->buf->data + blen;
+        bbm->dgrams[off].dgramlen = inl;
+        bbm->numdgrams++;
+    }
+
     ret = inl;
  end:
     return ret;
@@ -272,6 +338,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
                 *bbm->buf = *bbm->readp;
             }
         }
+        bbm->nextdgram = bbm->numdgrams = 0;
         break;
     case BIO_C_FILE_SEEK:
         if (num < 0 || num > off + remain)
@@ -286,10 +353,13 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = off;
         break;
     case BIO_CTRL_EOF:
-        ret = (long)(bm->length == 0);
+        ret = (long)(bm->length == 0 && bbm->numdgrams == 0);
         break;
     case BIO_C_SET_BUF_MEM_EOF_RETURN:
-        b->num = (int)num;
+        if (bbm->maxdgrams == 0)
+            b->num = (int)num;
+        else
+            ret = -1;
         break;
     case BIO_CTRL_INFO:
         ret = (long)bm->length;
@@ -311,6 +381,34 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
             bm = bbm->buf;
             pptr = (char **)ptr;
             *pptr = (char *)bm;
+        }
+        break;
+    case BIO_C_SET_INITIAL_DGRAM_SIZE:
+        /*
+         * We only allow setting the maxdgrams if no dgrams have been written.
+         * We don't support this for read only mem bios
+         */
+        if (bbm->numdgrams == 0
+                && (b->flags & BIO_FLAGS_MEM_RDONLY) == 0
+                && num > 0) {
+            struct buf_mem_dgram_st *tmp = bbm->dgrams;
+
+            if (bbm->maxdgrams == 0)
+                bbm->dgrams = OPENSSL_malloc(sizeof(*bbm->dgrams) * num);
+            else
+                bbm->dgrams = OPENSSL_realloc(bbm->dgrams,
+                                              sizeof(*bbm->dgrams) * num);
+
+            if (bbm->dgrams != NULL) {
+                bbm->maxdgrams = num;
+                b->num = -1;
+            } else {
+                /* Failed. Restore the previous pointer (which may also be NULL) */
+                bbm->dgrams = tmp;
+                ret = -1;
+            }
+        } else {
+            ret = -1;
         }
         break;
     case BIO_CTRL_GET_CLOSE:
@@ -349,7 +447,7 @@ static int mem_gets(BIO *bp, char *buf, int size)
     if (bp->flags & BIO_FLAGS_MEM_RDONLY)
         bm = bbm->buf;
     BIO_clear_retry_flags(bp);
-    j = bm->length;
+    j = bbm->numdgrams > 0 ? bbm->dgrams[bbm->nextdgram].dgramlen : bm->length;
     if ((size - 1) < j)
         j = size - 1;
     if (j <= 0) {

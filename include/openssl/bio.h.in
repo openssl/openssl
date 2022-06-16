@@ -407,6 +407,8 @@ struct bio_dgram_sctp_prinfo {
 
 # define BIO_C_SET_TFO                           156 /* like BIO_C_SET_NBIO */
 
+# define BIO_C_SET_INITIAL_DGRAM_SIZE            157
+
 # define BIO_set_app_data(s,arg)         BIO_set_ex_data(s,0,arg)
 # define BIO_get_app_data(s)             BIO_get_ex_data(s,0)
 
@@ -451,6 +453,8 @@ struct bio_dgram_sctp_prinfo {
 #  define BIO_set_accept_ip_family(b,f) BIO_int_ctrl(b,BIO_C_SET_ACCEPT,4,f)
 #  define BIO_get_accept_ip_family(b)   BIO_ctrl(b,BIO_C_GET_ACCEPT,4,NULL)
 #  define BIO_set_tfo_accept(b,n)       BIO_ctrl(b,BIO_C_SET_ACCEPT,5,(n)?(void *)"a":NULL)
+
+#  define BIO_set_initial_dgram_size(b,n)   BIO_ctrl(b, BIO_C_SET_INITIAL_DGRAM_SIZE, n, NULL)
 
 /* Aliases kept for backward compatibility */
 #  define BIO_BIND_NORMAL                 0
