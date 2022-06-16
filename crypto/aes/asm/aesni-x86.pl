@@ -2025,7 +2025,7 @@ my ($l_,$block,$i1,$i3,$i5) = ($rounds_,$key_,$rounds,$len,$out);
 	&movdqu		(&QWP(-16*2,$out,$inp),$inout4);
 	&movdqu		(&QWP(-16*1,$out,$inp),$inout5);
 	&cmp		($inp,$len);			# done yet?
-	&jb		(&label("grandloop"));
+	&jbe		(&label("grandloop"));
 
 &set_label("short");
 	&add		($len,16*6);
@@ -2451,7 +2451,7 @@ my ($l_,$block,$i1,$i3,$i5) = ($rounds_,$key_,$rounds,$len,$out);
 	&pxor		($rndkey1,$inout5);
 	&movdqu		(&QWP(-16*1,$out,$inp),$inout5);
 	&cmp		($inp,$len);			# done yet?
-	&jb		(&label("grandloop"));
+	&jbe		(&label("grandloop"));
 
 &set_label("short");
 	&add		($len,16*6);
