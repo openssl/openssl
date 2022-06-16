@@ -24,6 +24,10 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * Added a new BIO_s_dgram_mem() to read/write datagrams to memory
+
+   *Matt Caswell*
+
  * Add a mac salt length option for the pkcs12 command.
 
    *Xinping Chen*
