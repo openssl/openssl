@@ -63,7 +63,18 @@ typedef struct {
 struct ossl_method_store_st {
     OSSL_LIB_CTX *ctx;
     SPARSE_ARRAY_OF(ALGORITHM) *algs;
+    /*
+     * Lock to protect the |algs| array from concurrent writing, when
+     * individual implementations or queries are inserted.  This is used
+     * by the appropriate functions here.
+     */
     CRYPTO_RWLOCK *lock;
+    /*
+     * Lock to reserve the whole store.  This is used when fetching a set
+     * of algorithms, via these functions, found in crypto/core_fetch.c:
+     * ossl_method_construct_reserve_store()
+     * ossl_method_construct_unreserve_store()
+     */
     CRYPTO_RWLOCK *biglock;
 
     /* query cache specific values */
