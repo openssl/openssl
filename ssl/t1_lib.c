@@ -343,6 +343,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
      * it.
      */
     ret = 1;
+    ERR_set_mark();
     keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, ginf->algorithm, ctx->propq);
     if (keymgmt != NULL) {
         /*
@@ -364,6 +365,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
         }
         EVP_KEYMGMT_free(keymgmt);
     }
+    ERR_pop_to_mark();
  err:
     if (ginf != NULL) {
         OPENSSL_free(ginf->tlsname);
@@ -723,8 +725,11 @@ static int gid_cb(const char *elem, int len, void *arg)
     etmp[len] = 0;
 
     gid = tls1_group_name2id(garg->ctx, etmp);
-    if (gid == 0)
+    if (gid == 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "group '%s' cannot be set", etmp);
         return 0;
+    }
     for (i = 0; i < garg->gidcnt; i++)
         if (garg->gid_arr[i] == gid)
             return 0;
