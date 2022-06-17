@@ -1292,7 +1292,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"nsSGC", "Netscape Server Gated Crypto", NID_ns_sgc, 9, &so[743]},
     {"deltaCRL", "X509v3 Delta CRL Indicator", NID_delta_crl, 3, &so[752]},
     {"CRLReason", "X509v3 CRL Reason Code", NID_crl_reason, 3, &so[755]},
-    {"invalidityDate", "X509v3 Invalidity Date", NID_invalidity_date, 3, &so[758]},
+    {"invalidityDate", "Invalidity Date", NID_invalidity_date, 3, &so[758]},
     {"SXNetID", "Strong Extranet ID", NID_sxnet, 5, &so[761]},
     {"PBE-SHA1-RC4-128", "pbeWithSHA1And128BitRC4", NID_pbe_WithSHA1And128BitRC4, 10, &so[766]},
     {"PBE-SHA1-RC4-40", "pbeWithSHA1And40BitRC4", NID_pbe_WithSHA1And40BitRC4, 10, &so[776]},
@@ -3816,6 +3816,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      667,    /* "Independent" */
      665,    /* "Inherit all" */
      647,    /* "International Organizations" */
+     142,    /* "Invalidity Date" */
      504,    /* "MIME MHS" */
      388,    /* "Mail" */
      383,    /* "Management" */
@@ -3927,7 +3928,6 @@ static const unsigned int ln_objs[NUM_LN] = {
     1278,    /* "X509v3 Holder Name Constraints" */
     1271,    /* "X509v3 Indirect Issuer" */
      748,    /* "X509v3 Inhibit Any Policy" */
-     142,    /* "X509v3 Invalidity Date" */
     1273,    /* "X509v3 Issued On Behalf Of" */
       86,    /* "X509v3 Issuer Alternative Name" */
      770,    /* "X509v3 Issuing Distribution Point" */

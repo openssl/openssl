@@ -841,7 +841,7 @@ id-ce 20		: crlNumber		: X509v3 CRL Number
 !Cname crl-reason
 id-ce 21		: CRLReason		: X509v3 CRL Reason Code
 !Cname invalidity-date
-id-ce 24		: invalidityDate	: X509v3 Invalidity Date
+id-ce 24		: invalidityDate	: Invalidity Date
 !Cname delta-crl
 id-ce 27		: deltaCRL		: X509v3 Delta CRL Indicator
 !Cname issuing-distribution-point
