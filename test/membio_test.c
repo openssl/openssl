@@ -14,7 +14,7 @@
 
 static int test_dgram(void)
 {
-    BIO *bio = BIO_new(BIO_s_mem()), *rbio;
+    BIO *bio = BIO_new(BIO_s_mem()), *rbio = NULL;
     int testresult = 0;
     const char msg1[] = "12345656";
     const char msg2[] = "abcdefghijklmno";
