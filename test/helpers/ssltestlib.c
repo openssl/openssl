@@ -406,8 +406,91 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
     }
 
     memcpy(out, thispkt->data, outl);
+
     mempacket_free(thispkt);
     return outl;
+}
+
+/*
+ * Look for records from different epochs and swap them around
+ */
+int mempacket_swap_epoch(BIO *bio)
+{
+    MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
+    MEMPACKET *thispkt;
+    int rem, len, prevlen = 0, pktnum;
+    unsigned char *rec, *prevrec = NULL, *tmp;
+    unsigned int epoch;
+    int numpkts = sk_MEMPACKET_num(ctx->pkts);
+
+    if (numpkts <= 0)
+        return 0;
+
+    /*
+     * If there are multiple packets we only look in the last one. This should
+     * always be the one where any epoch change occurs.
+     */
+    thispkt = sk_MEMPACKET_value(ctx->pkts, numpkts - 1);
+    if (thispkt == NULL)
+        return 0;
+
+    for (rem = thispkt->len, rec = thispkt->data; rem > 0; rem -= len, rec += len) {
+        if (rem < DTLS1_RT_HEADER_LENGTH)
+            return 0;
+        epoch = (rec[EPOCH_HI] << 8) | rec[EPOCH_LO];
+        len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO])
+                + DTLS1_RT_HEADER_LENGTH;
+        if (rem < len)
+            return 0;
+
+        /* Assumes the epoch change does not happen on the first record */
+        if (epoch != ctx->epoch) {
+            if (prevrec == NULL)
+                return 0;
+
+            /*
+             * We found 2 records with different epochs. Take a copy of the
+             * earlier record
+             */
+            tmp = OPENSSL_malloc(prevlen);
+            if (tmp == NULL)
+                return 0;
+
+            memcpy(tmp, prevrec, prevlen);
+            /*
+             * Move everything from this record onwards, including any trailing
+             * records, and overwrite the earlier record
+             */
+            memmove(prevrec, rec, rem);
+            thispkt->len -= prevlen;
+            pktnum = thispkt->num;
+
+            /*
+             * Create a new packet for the earlier record that we took out and
+             * add it to the end of the packet list.
+             */
+            thispkt = OPENSSL_malloc(sizeof(*thispkt));
+            if (thispkt == NULL) {
+                OPENSSL_free(tmp);
+                return 0;
+            }
+            thispkt->type = INJECT_PACKET;
+            thispkt->data = tmp;
+            thispkt->len = prevlen;
+            thispkt->num = pktnum + 1;
+            if (sk_MEMPACKET_insert(ctx->pkts, thispkt, numpkts) <= 0) {
+                OPENSSL_free(tmp);
+                OPENSSL_free(thispkt);
+                return 0;
+            }
+
+            return 1;
+        }
+        prevrec = rec;
+        prevlen = len;
+    }
+
+    return 0;
 }
 
 /* Take the last and penultimate packets and swap them around */
