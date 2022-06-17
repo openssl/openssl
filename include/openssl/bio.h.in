@@ -454,8 +454,6 @@ struct bio_dgram_sctp_prinfo {
 #  define BIO_get_accept_ip_family(b)   BIO_ctrl(b,BIO_C_GET_ACCEPT,4,NULL)
 #  define BIO_set_tfo_accept(b,n)       BIO_ctrl(b,BIO_C_SET_ACCEPT,5,(n)?(void *)"a":NULL)
 
-#  define BIO_set_initial_dgram_size(b,n)   BIO_ctrl(b, BIO_C_SET_INITIAL_DGRAM_SIZE, n, NULL)
-
 /* Aliases kept for backward compatibility */
 #  define BIO_BIND_NORMAL                 0
 #  define BIO_BIND_REUSEADDR              BIO_SOCK_REUSEADDR
@@ -527,6 +525,9 @@ int BIO_read_filename(BIO *b, const char *name);
                                           (char *)(pp))
 # define BIO_set_mem_eof_return(b,v) \
                                 BIO_ctrl(b,BIO_C_SET_BUF_MEM_EOF_RETURN,v,NULL)
+
+# define BIO_set_initial_dgram_size(b,n) \
+                                BIO_ctrl(b, BIO_C_SET_INITIAL_DGRAM_SIZE, n, NULL)
 
 /* For the BIO_f_buffer() type */
 # define BIO_get_buffer_num_lines(b)     BIO_ctrl(b,BIO_C_GET_BUFF_NUM_LINES,0,NULL)
