@@ -16,6 +16,7 @@ jobs:
           no-dtls,
           no-ec,
           no-ec2m,
+          no-rfc3779,
           no-sock,
           no-srp,
           no-srtp,
