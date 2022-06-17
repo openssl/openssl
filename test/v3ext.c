@@ -37,6 +37,7 @@ end:
     return ret;
 }
 
+#ifndef OPENSSL_NO_RFC3779
 static int test_asid(void)
 {
     ASN1_INTEGER *val1 = NULL, *val2 = NULL;
@@ -113,6 +114,7 @@ static int test_asid(void)
     ASIdentifiers_free(asid4);
     return testresult;
 }
+#endif /* OPENSSL_NO_RFC3779 */
 
 OPT_TEST_DECLARE_USAGE("cert.pem\n")
 
@@ -127,6 +129,8 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_pathlen);
+#ifndef OPENSSL_NO_RFC3779
     ADD_TEST(test_asid);
+#endif /* OPENSSL_NO_RFC3779 */
     return 1;
 }
