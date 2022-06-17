@@ -109,7 +109,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[cmp-test]=cmp.c test-corpus.c fuzz_rand.c
   INCLUDE[cmp-test]=../include
-  DEPEND[cmp-test]=../libcrypto.a
+  DEPEND[cmp-test]=../libcmp.a ../libcrypto.a
   # referring to static lib allows using non-exported functions
 
   SOURCE[cms-test]=cms.c test-corpus.c

@@ -507,7 +507,7 @@ build_man_docs: $(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7)
 build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
 
 build_generated: $(GENERATED_MANDATORY)
-build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
+build_libs_nodep: libcrypto.pc libcmp.pc libssl.pc openssl.pc
 build_modules_nodep: $(MODULES)
 build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
 
@@ -590,7 +590,7 @@ clean: libclean
 	$(RM) tags TAGS doc-nits md-nits
 	$(RM) -r test/test-runs
 	$(RM) providers/fips*.new
-	$(RM) openssl.pc libcrypto.pc libssl.pc
+	$(RM) openssl.pc libcrypto.pc libcmp.pc libssl.pc
 	-find . -type l \! -name '.*' -exec $(RM) {} \;
 
 distclean: clean
@@ -759,6 +759,9 @@ install_dev: install_runtime_libs
 	@$(ECHO) "install libcrypto.pc -> $(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc"
 	@cp libcrypto.pc $(DESTDIR)$(libdir)/pkgconfig
 	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc
+	@$(ECHO) "install libcmp.pc -> $(DESTDIR)$(libdir)/pkgconfig/libcmp.pc"
+	@cp libcmp.pc $(DESTDIR)$(libdir)/pkgconfig
+	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/libcmp.pc
 	@$(ECHO) "install libssl.pc -> $(DESTDIR)$(libdir)/pkgconfig/libssl.pc"
 	@cp libssl.pc $(DESTDIR)$(libdir)/pkgconfig
 	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/libssl.pc
@@ -809,6 +812,7 @@ uninstall_dev: uninstall_runtime_libs
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
 	$(RM) $(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc
+	$(RM) $(DESTDIR)$(libdir)/pkgconfig/libcmp.pc
 	$(RM) $(DESTDIR)$(libdir)/pkgconfig/libssl.pc
 	$(RM) $(DESTDIR)$(libdir)/pkgconfig/openssl.pc
 	-$(RMDIR) $(DESTDIR)$(libdir)/pkgconfig
@@ -1259,6 +1263,8 @@ errors:
            include/openssl/srtp.h
            include/openssl/quic.h
            include/openssl/sslerr_legacy.h );
+   my @cmpheaders_tmpl =
+       qw( include/openssl/cmp.h );
    my @cryptoheaders_tmpl =
        qw( include/internal/dso.h
            include/internal/o_dir.h
@@ -1273,6 +1279,7 @@ errors:
            include/openssl/opensslconf.h
            include/openssl/symhacks.h ) );
    our %cryptoheaders = ();
+   our %cmpheaders = ();
    our %sslheaders = ();
    foreach my $d ( qw( include/openssl include/internal ) ) {
        my @header_patterns =
@@ -1297,6 +1304,8 @@ errors:
                if (($d eq 'include/openssl'
                     || ( grep { $_ eq $fn } @cryptoheaders_tmpl ))
                    && !( grep { $_ eq $fn } @cryptoskipheaders ));
+           # The logic to add files to @cmpheaders is much simpler...
+           $cmpheaders{$new_f} = 1 if grep { $_ eq $fn } @cmpheaders_tmpl;
            # The logic to add files to @sslheaders is much simpler...
            $sslheaders{$new_f} = 1 if grep { $_ eq $fn } @sslheaders_tmpl;
        }
@@ -1305,6 +1314,8 @@ errors:
 -}
 CRYPTOHEADERS={- join(" \\\n" . ' ' x 14,
                       fill_lines(" ", $COLUMNS - 14, sort keys %cryptoheaders)) -}
+CMPHEADERS={- join(" \\\n" . ' ' x 14,
+                      fill_lines(" ", $COLUMNS - 14, sort keys %cmpheaders)) -}
 SSLHEADERS={- join(" \\\n" . ' ' x 11,
                    fill_lines(" ", $COLUMNS - 11, sort keys %sslheaders)) -}
 
@@ -1314,6 +1325,11 @@ renumber: build_generated
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 --renumber \
                 $(CRYPTOHEADERS)
+	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
+                --ordinals $(SRCDIR)/util/libcmp.num \
+                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
+                --renumber \
+                $(CMPHEADERS)
 	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
                 --ordinals $(SRCDIR)/util/libssl.num \
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
@@ -1325,6 +1341,10 @@ ordinals: build_generated
                 --ordinals $(SRCDIR)/util/libcrypto.num \
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 $(CRYPTOHEADERS)
+	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
+                --ordinals $(SRCDIR)/util/libcmp.num \
+                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
+                $(CMPHEADERS)
 	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
                 --ordinals $(SRCDIR)/util/libssl.num \
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
@@ -1389,7 +1409,7 @@ FORCE:
 
 # Building targets ###################################################
 
-libcrypto.pc libssl.pc openssl.pc: Makefile $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // platform->sharedlib_import($_) // platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
+libcrypto.pc libcmp.pc libssl.pc openssl.pc: Makefile $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // platform->sharedlib_import($_) // platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
 
 libcrypto.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
@@ -1409,6 +1429,23 @@ libcrypto.pc:
 	    echo 'Libs: -L$${libdir} -lcrypto'; \
 	    echo 'Libs.private: $(LIB_EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir}' ) > libcrypto.pc
+
+libcmp.pc:
+	@ ( echo 'prefix=$(INSTALLTOP)'; \
+	    echo 'exec_prefix=$${prefix}'; \
+	    if [ -n "$(LIBDIR)" ]; then \
+	        echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
+	    else \
+	        echo 'libdir=$(libdir)'; \
+	    fi; \
+	    echo 'includedir=$${prefix}/include'; \
+	    echo ''; \
+	    echo 'Name: OpenSSL-libcmp'; \
+	    echo 'Description: certificate management protocol'; \
+	    echo 'Version: '$(VERSION); \
+	    echo 'Requires.private: libcrypto'; \
+	    echo 'Libs: -L$${libdir} -lcmp'; \
+	    echo 'Cflags: -I$${includedir}' ) > libcmp.pc
 
 libssl.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \

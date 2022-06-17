@@ -59,7 +59,7 @@ IF[{- !$disabled{apps} -}]
   PROGRAMS=openssl
   SOURCE[openssl]=$INITSRC $OPENSSLSRC
   INCLUDE[openssl]=.. ../include include
-  DEPEND[openssl]=libapps.a ../libssl
+  DEPEND[openssl]=libapps.a ../libssl ../libcmp
 
   # The nocheck attribute is picked up by progs.pl as a signal not to look
   # at that file; some systems may have locked it as the output file, and

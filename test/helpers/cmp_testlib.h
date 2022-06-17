@@ -16,7 +16,7 @@
 # include <openssl/pem.h>
 # include <openssl/rand.h>
 
-# include "../../crypto/cmp/cmp_local.h"
+# include "../../cmp/cmp_local.h"
 # include "../testutil.h"
 
 # ifndef OPENSSL_NO_CMP

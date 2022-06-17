@@ -38,6 +38,17 @@ extern "C" {
 
 #  define OSSL_CMP_PVNO 2
 
+
+/* OPENSSL_INIT flag 0x010000 reserved for internal use */
+# define OPENSSL_INIT_NO_LOAD_CMP_STRINGS    0x01000000L
+# define OPENSSL_INIT_LOAD_CMP_STRINGS       0x02000000L
+
+# define OPENSSL_INIT_CMP_DEFAULT \
+        (OPENSSL_INIT_LOAD_CMP_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS)
+
+int OPENSSL_init_cmp(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
+
+
 /*-
  *   PKIFailureInfo ::= BIT STRING {
  *   -- since we can fail in more than one way!

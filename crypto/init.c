@@ -30,7 +30,6 @@
 #include "crypto/dso_conf.h"
 #include "internal/dso.h"
 #include "crypto/store.h"
-#include <openssl/cmp_util.h> /* for OSSL_CMP_log_close() */
 #include <openssl/trace.h>
 #include "crypto/ctype.h"
 
@@ -442,11 +441,6 @@ void OPENSSL_cleanup(void)
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: CRYPTO_secure_malloc_done()\n");
     CRYPTO_secure_malloc_done();
-
-#ifndef OPENSSL_NO_CMP
-    OSSL_TRACE(INIT, "OPENSSL_cleanup: OSSL_CMP_log_close()\n");
-    OSSL_CMP_log_close();
-#endif
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_trace_cleanup()\n");
     ossl_trace_cleanup();

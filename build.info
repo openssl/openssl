@@ -1,7 +1,7 @@
 # Note that some of these directories are filtered in Configure.  Look for
 # %skipdir there for further explanations.
 
-SUBDIRS=crypto ssl apps util tools fuzz providers doc
+SUBDIRS=crypto cmp ssl apps util tools fuzz providers doc
 IF[{- !$disabled{tests} -}]
   SUBDIRS=test
 ENDIF
@@ -9,9 +9,11 @@ IF[{- !$disabled{'deprecated-3.0'} -}]
   SUBDIRS=engines
 ENDIF
 
-LIBS=libcrypto libssl
+LIBS=libcrypto libcmp libssl
 INCLUDE[libcrypto]=. include
+INCLUDE[libcmp]=. include
 INCLUDE[libssl]=. include
+DEPEND[libcmp]=libcrypto
 DEPEND[libssl]=libcrypto
 
 # Empty DEPEND "indices" means the dependencies are expected to be built
@@ -75,18 +77,22 @@ GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld
+  SHARED_SOURCE[libcmp]=libcmp.ld
   SHARED_SOURCE[libssl]=libssl.ld
 
   GENERATE[libcrypto.ld]=util/libcrypto.num libcrypto
+  GENERATE[libcmp.ld]=util/libcmp.num libcmp
   GENERATE[libssl.ld]=util/libssl.num libssl
-  DEPEND[libcrypto.ld libssl.ld]=configdata.pm util/perl/OpenSSL/Ordinals.pm
+  DEPEND[libcrypto.ld libcmp.ld libssl.ld]=configdata.pm util/perl/OpenSSL/Ordinals.pm
 ENDIF
 
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
   GENERATE[libcrypto.rc]=util/mkrc.pl libcrypto
+  GENERATE[libcmp.rc]=util/mkrc.pl libcmp
   GENERATE[libssl.rc]=util/mkrc.pl libssl
-  DEPEND[libcrypto.rc libssl.rc]=configdata.pm
+  DEPEND[libcrypto.rc libcmp.rc libssl.rc]=configdata.pm
 
   SHARED_SOURCE[libcrypto]=libcrypto.rc
+  SHARED_SOURCE[libcmp]=libcmp.rc
   SHARED_SOURCE[libssl]=libssl.rc
 ENDIF
