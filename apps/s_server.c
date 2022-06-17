@@ -1160,6 +1160,8 @@ int s_server_main(int argc, char *argv[])
         case OPT_UNIX:
             socket_family = AF_UNIX;
             OPENSSL_free(host); host = OPENSSL_strdup(opt_arg());
+            if (host == NULL)
+                goto end;
             OPENSSL_free(port); port = NULL;
             break;
         case OPT_UNLINK:
