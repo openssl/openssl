@@ -29,7 +29,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 163;
+plan tests => 172;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -241,6 +241,26 @@ ok(verify("ee-pathlen", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
    "accept non-ca with pathlen:0 by default");
 ok(!verify("ee-pathlen", "sslserver", [qw(root-cert)], [qw(ca-cert)], "-x509_strict"),
    "reject non-ca with pathlen:0 with strict flag");
+
+# EE veaiants wrt timestamp signing
+ok(verify("ee-timestampsign-CABforum", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "accept timestampsign according to CAB forum");
+ok(!verify("ee-timestampsign-CABforum-noncritxku", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to CAB forum with extendedKeyUsage not critical");
+ok(!verify("ee-timestampsign-CABforum-serverauth", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to CAB forum with serverAuth");
+ok(!verify("ee-timestampsign-CABforum-anyextkeyusage", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to CAB forum with anyExtendedKeyUsage");
+ok(!verify("ee-timestampsign-CABforum-crlsign", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to CAB forum with cRLSign");
+ok(!verify("ee-timestampsign-CABforum-keycertsign", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to CAB forum with keyCertSign");
+ok(verify("ee-timestampsign-rfc3161", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "accept timestampsign according to RFC 3161");
+ok(!verify("ee-timestampsign-rfc3161-noncritxku", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to RFC 3161 with extendedKeyUsage not critical");
+ok(verify("ee-timestampsign-rfc3161-digsig", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "accept timestampsign according to RFC 3161 with digitalSignature");
 
 # Proxy certificates
 ok(!verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)]),
