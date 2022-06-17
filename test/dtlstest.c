@@ -463,6 +463,80 @@ static int test_just_finished(void)
 }
 
 /*
+ * Test that swapping a record from the next epoch into the current epoch still
+ * works. Libssl should buffer the record until it needs it.
+ */
+static int test_swap_epoch(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    int testresult = 0;
+    BIO *bio;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+                                       DTLS_client_method(),
+                                       DTLS1_VERSION, 0,
+                                       &sctx, &cctx, cert, privkey)))
+        return 0;
+
+#ifndef OPENSSL_NO_DTLS1_2
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA")))
+        goto end;
+#else
+    /* Default sigalgs are SHA1 based in <DTLS1.2 which is in security level 0 */
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "AES128-SHA:@SECLEVEL=0"))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                  "AES128-SHA:@SECLEVEL=0")))
+        goto end;
+#endif
+
+
+    /* BIO is freed by create_ssl_connection on error */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl,
+                                      NULL, NULL)))
+        goto end;
+
+    /* Send flight 1: ClientHello */
+    if (!TEST_int_le(SSL_connect(cssl), 0))
+        goto end;
+
+    /* Recv flight 1, send flight 2: ServerHello, Certificate, ServerHelloDone */
+    if (!TEST_int_le(SSL_accept(sssl), 0))
+        goto end;
+
+    /* Recv flight 2, send flight 3: ClientKeyExchange, CCS, Finished */
+    if (!TEST_int_le(SSL_connect(cssl), 0))
+        goto end;
+
+    bio = SSL_get_wbio(cssl);
+    if (!TEST_ptr(bio)
+            || !TEST_true(mempacket_swap_epoch(bio)))
+        goto end;
+
+    /*
+     * Recv flight 3, send flight 4: CCS, Finished.
+     * This should work in a single call because we have all the messages we
+     * need. Even though we had out of order packets, the record for the next
+     * epoch that we read early should be buffered and used later.
+     */
+    if (!TEST_int_gt(SSL_accept(sssl), 0))
+        goto end;
+
+
+    /* Recv flight 4 */
+    if (!TEST_int_gt(SSL_connect(cssl), 0))
+        goto end;
+
+    testresult = 1;
+ end:
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
+
+/*
  * Test that swapping an app data record so that it is received before the
  * Finished message still works.
  */
@@ -569,6 +643,7 @@ int setup_tests(void)
     ADD_TEST(test_cookie);
     ADD_TEST(test_dtls_duplicate_records);
     ADD_TEST(test_just_finished);
+    ADD_TEST(test_swap_epoch);
     ADD_TEST(test_swap_app_data);
 
     return 1;
