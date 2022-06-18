@@ -3081,6 +3081,16 @@ int s_client_main(int argc, char **argv)
                 goto shut;
             }
 
+            if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'C' && cmdletters))) {
+                cbuf_len = 0;
+                BIO_printf(bio_c_out,
+                           "RECONNECTING\n");
+                do_ssl_shutdown(con);
+                SSL_set_connect_state(con);
+                BIO_closesocket(SSL_get_fd(con));
+                goto re_start;
+            }
+
             if ((!c_ign_eof) && (cbuf[0] == 'R' && cmdletters)) {
                 BIO_printf(bio_err, "RENEGOTIATING\n");
                 SSL_renegotiate(con);
