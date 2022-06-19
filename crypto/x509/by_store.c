@@ -109,8 +109,6 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
                             long argl, char **retp, OSSL_LIB_CTX *libctx,
                             const char *propq)
 {
-    char *data;
-
     switch (cmd) {
     case X509_L_ADD_STORE:
         /* If no URI is given, use the default cert dir as default URI */
@@ -126,7 +124,7 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
                 uris = sk_OPENSSL_STRING_new_null();
                 X509_LOOKUP_set_method_data(ctx, uris);
             }
-            data = OPENSSL_strdup(argp);
+            char *data = OPENSSL_strdup(argp);
             if (data == NULL)
                 return -1;
             return sk_OPENSSL_STRING_push(uris, data) > 0;
