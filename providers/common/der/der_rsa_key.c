@@ -305,6 +305,15 @@ int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
     saltlen = ossl_rsa_pss_params_30_saltlen(pss);
     trailerfield = ossl_rsa_pss_params_30_trailerfield(pss);
 
+    if (saltlen < 0) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_SALT_LENGTH);
+        return 0;
+    }
+    if (trailerfield != 1) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_TRAILER);
+        return 0;
+    }
+
     /* Getting default values */
     default_hashalg_nid = ossl_rsa_pss_params_30_hashalg(NULL);
     default_saltlen = ossl_rsa_pss_params_30_saltlen(NULL);
