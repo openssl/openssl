@@ -1245,7 +1245,6 @@ static int mac_test_parse(EVP_TEST *t,
                           const char *keyword, const char *value)
 {
     MAC_DATA *mdata = t->data;
-    char *data;
 
     if (strcmp(keyword, "Key") == 0)
         return parse_bin(value, &mdata->key, &mdata->key_len);
@@ -1257,7 +1256,7 @@ static int mac_test_parse(EVP_TEST *t,
         return parse_bin(value, &mdata->salt, &mdata->salt_len);
     if (strcmp(keyword, "Algorithm") == 0) {
         mdata->alg = OPENSSL_strdup(value);
-        if (!mdata->alg)
+        if (mdata->alg == NULL)
             return -1;
         return 1;
     }
@@ -1270,8 +1269,8 @@ static int mac_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "NoReinit") == 0)
         return mdata->no_reinit = 1;
     if (strcmp(keyword, "Ctrl") == 0) {
-        data = OPENSSL_strdup(value);
-        if (!data)
+        char *data = OPENSSL_strdup(value);
+        if (data == NULL)
             return -1;
         return sk_OPENSSL_STRING_push(mdata->controls, data) != 0;
     }
