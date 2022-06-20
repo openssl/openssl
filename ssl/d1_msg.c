@@ -13,9 +13,13 @@ int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
                                size_t *written)
 {
     int i;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
-    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(s)) {
-        i = s->handshake_func(s);
+    if (sc == NULL)
+        return -1;
+
+    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(sc)) {
+        i = sc->handshake_func(s);
         if (i < 0)
             return i;
         if (i == 0) {
@@ -29,16 +33,20 @@ int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
         return -1;
     }
 
-    return dtls1_write_bytes(s, type, buf_, len, written);
+    return dtls1_write_bytes(sc, type, buf_, len, written);
 }
 
-int dtls1_dispatch_alert(SSL *s)
+int dtls1_dispatch_alert(SSL *ssl)
 {
     int i, j;
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
     unsigned char buf[DTLS1_AL_HEADER_LENGTH];
     unsigned char *ptr = &buf[0];
     size_t written;
+    SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+
+    if (s == NULL)
+        return 0;
 
     s->s3.alert_dispatch = 0;
 
@@ -55,16 +63,16 @@ int dtls1_dispatch_alert(SSL *s)
 
         if (s->msg_callback)
             s->msg_callback(1, s->version, SSL3_RT_ALERT, s->s3.send_alert,
-                            2, s, s->msg_callback_arg);
+                            2, ssl, s->msg_callback_arg);
 
         if (s->info_callback != NULL)
             cb = s->info_callback;
-        else if (s->ctx->info_callback != NULL)
-            cb = s->ctx->info_callback;
+        else if (ssl->ctx->info_callback != NULL)
+            cb = ssl->ctx->info_callback;
 
         if (cb != NULL) {
             j = (s->s3.send_alert[0] << 8) | s->s3.send_alert[1];
-            cb(s, SSL_CB_WRITE_ALERT, j);
+            cb(ssl, SSL_CB_WRITE_ALERT, j);
         }
     }
     return i;

@@ -55,6 +55,7 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
     size_t mtus[30];
     unsigned char buf[600];
     int rv = 0;
+    SSL_CONNECTION *clnt_sc;
 
     memset(buf, 0x5a, sizeof(buf));
 
@@ -132,8 +133,10 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
             }
         }
     }
+    if (!TEST_ptr(clnt_sc = SSL_CONNECTION_FROM_SSL_ONLY(clnt_ssl)))
+        goto end;
     rv = 1;
-    if (SSL_READ_ETM(clnt_ssl))
+    if (SSL_READ_ETM(clnt_sc))
         rv = 2;
  end:
     SSL_free(clnt_ssl);

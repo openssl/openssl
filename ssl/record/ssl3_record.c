@@ -67,7 +67,7 @@ void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num)
  * Peeks ahead into "read_ahead" data to see if we have a whole record waiting
  * for us in the buffer.
  */
-static int ssl3_record_app_data_waiting(SSL *s)
+static int ssl3_record_app_data_waiting(SSL_CONNECTION *s)
 {
     SSL3_BUFFER *rbuf;
     size_t left, len;
@@ -102,7 +102,8 @@ static int ssl3_record_app_data_waiting(SSL *s)
     return 1;
 }
 
-int early_data_count_ok(SSL *s, size_t length, size_t overhead, int send)
+int ossl_early_data_count_ok(SSL_CONNECTION *s, size_t length,
+                             size_t overhead, int send)
 {
     uint32_t max_early_data;
     SSL_SESSION *sess = s->session;
@@ -170,7 +171,7 @@ int early_data_count_ok(SSL *s, size_t length, size_t overhead, int send)
  * |max_pipelines|
  */
 /* used only by ssl3_read_bytes */
-int ssl3_get_record(SSL *s)
+int ssl3_get_record(SSL_CONNECTION *s)
 {
     int enc_err, rret;
     int i;
@@ -188,6 +189,7 @@ int ssl3_get_record(SSL *s)
     int using_ktls;
     SSL_MAC_BUF *macbufs = NULL;
     int ret = -1;
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
     rbuf = RECORD_LAYER_get_rbuf(&s->rlayer);
@@ -291,7 +293,7 @@ int ssl3_get_record(SSL *s)
                         || !PACKET_get_net_2(&pkt, &version)
                         || !PACKET_get_net_2_len(&pkt, &thisrr->length)) {
                     if (s->msg_callback)
-                        s->msg_callback(0, 0, SSL3_RT_HEADER, p, 5, s,
+                        s->msg_callback(0, 0, SSL3_RT_HEADER, p, 5, ssl,
                                         s->msg_callback_arg);
                     SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_INTERNAL_ERROR);
                     return -1;
@@ -300,7 +302,7 @@ int ssl3_get_record(SSL *s)
                 thisrr->rec_version = version;
 
                 if (s->msg_callback)
-                    s->msg_callback(0, version, SSL3_RT_HEADER, p, 5, s,
+                    s->msg_callback(0, version, SSL3_RT_HEADER, p, 5, ssl,
                                     s->msg_callback_arg);
 
                 /*
@@ -310,7 +312,7 @@ int ssl3_get_record(SSL *s)
                  * yet, but we still treat it as TLSv1.3, so we must check for
                  * that explicitly
                  */
-                if (!s->first_packet && !SSL_IS_TLS13(s)
+                if (!s->first_packet && !SSL_CONNECTION_IS_TLS13(s)
                         && s->hello_retry_request != SSL_HRR_PENDING
                         && version != (unsigned int)s->version) {
                     if ((s->version & 0xFF00) == (version & 0xFF00)
@@ -366,7 +368,7 @@ int ssl3_get_record(SSL *s)
                     }
                 }
 
-                if (SSL_IS_TLS13(s)
+                if (SSL_CONNECTION_IS_TLS13(s)
                         && s->enc_read_ctx != NULL
                         && !using_ktls) {
                     if (thisrr->type != SSL3_RT_APPLICATION_DATA
@@ -397,7 +399,7 @@ int ssl3_get_record(SSL *s)
             /* now s->rlayer.rstate == SSL_ST_READ_BODY */
         }
 
-        if (SSL_IS_TLS13(s)) {
+        if (SSL_CONNECTION_IS_TLS13(s)) {
             size_t len = SSL3_RT_MAX_TLS13_ENCRYPTED_LENGTH;
 
             /* KTLS strips the inner record type. */
@@ -503,7 +505,8 @@ int ssl3_get_record(SSL *s)
 
     if (num_recs == 1
             && thisrr->type == SSL3_RT_CHANGE_CIPHER_SPEC
-            && (SSL_IS_TLS13(s) || s->hello_retry_request != SSL_HRR_NONE)
+            && (SSL_CONNECTION_IS_TLS13(s)
+                || s->hello_retry_request != SSL_HRR_NONE)
             && SSL_IS_FIRST_HANDSHAKE(s)) {
         /*
          * CCS messages must be exactly 1 byte long, containing the value 0x01
@@ -563,7 +566,7 @@ int ssl3_get_record(SSL *s)
             }
             thisrr->length -= mac_size;
             mac = thisrr->data + thisrr->length;
-            i = s->method->ssl3_enc->mac(s, thisrr, md, 0 /* not send */ );
+            i = ssl->method->ssl3_enc->mac(s, thisrr, md, 0 /* not send */ );
             if (i == 0 || CRYPTO_memcmp(md, mac, mac_size) != 0) {
                 SSLfatal(s, SSL_AD_BAD_RECORD_MAC,
                          SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
@@ -585,7 +588,7 @@ int ssl3_get_record(SSL *s)
         }
     }
 
-    enc_err = s->method->ssl3_enc->enc(s, rr, num_recs, 0, macbufs, mac_size);
+    enc_err = ssl->method->ssl3_enc->enc(s, rr, num_recs, 0, macbufs, mac_size);
 
     /*-
      * enc_err is:
@@ -606,8 +609,8 @@ int ssl3_get_record(SSL *s)
 
             thisrr = &rr[0];
 
-            if (!early_data_count_ok(s, thisrr->length,
-                                     EARLY_DATA_CIPHERTEXT_OVERHEAD, 0)) {
+            if (!ossl_early_data_count_ok(s, thisrr->length,
+                                          EARLY_DATA_CIPHERTEXT_OVERHEAD, 0)) {
                 /* SSLfatal() already called */
                 goto end;
             }
@@ -638,7 +641,7 @@ int ssl3_get_record(SSL *s)
             SSL_MAC_BUF *thismb = &macbufs[j];
             thisrr = &rr[j];
 
-            i = s->method->ssl3_enc->mac(s, thisrr, md, 0 /* not send */ );
+            i = ssl->method->ssl3_enc->mac(s, thisrr, md, 0 /* not send */ );
             if (i == 0 || thismb == NULL || thismb->mac == NULL
                 || CRYPTO_memcmp(md, thismb->mac, (size_t)mac_size) != 0)
                 enc_err = 0;
@@ -683,7 +686,7 @@ int ssl3_get_record(SSL *s)
             }
         }
 
-        if (SSL_IS_TLS13(s)
+        if (SSL_CONNECTION_IS_TLS13(s)
                 && s->enc_read_ctx != NULL
                 && thisrr->type != SSL3_RT_ALERT) {
             /*
@@ -717,14 +720,14 @@ int ssl3_get_record(SSL *s)
             }
             if (s->msg_callback)
                 s->msg_callback(0, s->version, SSL3_RT_INNER_CONTENT_TYPE,
-                                &thisrr->type, 1, s, s->msg_callback_arg);
+                                &thisrr->type, 1, ssl, s->msg_callback_arg);
         }
 
         /*
          * TLSv1.3 alert and handshake records are required to be non-zero in
          * length.
          */
-        if (SSL_IS_TLS13(s)
+        if (SSL_CONNECTION_IS_TLS13(s)
                 && (thisrr->type == SSL3_RT_HANDSHAKE
                     || thisrr->type == SSL3_RT_ALERT)
                 && thisrr->length == 0) {
@@ -781,7 +784,7 @@ int ssl3_get_record(SSL *s)
     if (s->early_data_state == SSL_EARLY_DATA_READING) {
         thisrr = &rr[0];
         if (thisrr->type == SSL3_RT_APPLICATION_DATA
-                && !early_data_count_ok(s, thisrr->length, 0, 0)) {
+                && !ossl_early_data_count_ok(s, thisrr->length, 0, 0)) {
             /* SSLfatal already called */
             goto end;
         }
@@ -800,7 +803,7 @@ int ssl3_get_record(SSL *s)
     return ret;
 }
 
-int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr)
+int ssl3_do_uncompress(SSL_CONNECTION *sc, SSL3_RECORD *rr)
 {
 #ifndef OPENSSL_NO_COMP
     int i;
@@ -812,7 +815,7 @@ int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr)
     if (rr->comp == NULL)
         return 0;
 
-    i = COMP_expand_block(ssl->expand, rr->comp,
+    i = COMP_expand_block(sc->expand, rr->comp,
                           SSL3_RT_MAX_PLAIN_LENGTH, rr->data, (int)rr->length);
     if (i < 0)
         return 0;
@@ -823,12 +826,12 @@ int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr)
     return 1;
 }
 
-int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
+int ssl3_do_compress(SSL_CONNECTION *sc, SSL3_RECORD *wr)
 {
 #ifndef OPENSSL_NO_COMP
     int i;
 
-    i = COMP_compress_block(ssl->compress, wr->data,
+    i = COMP_compress_block(sc->compress, wr->data,
                             (int)(wr->length + SSL3_RT_MAX_COMPRESSED_OVERHEAD),
                             wr->input, (int)wr->length);
     if (i < 0)
@@ -850,7 +853,7 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
  *    0: if the record is publicly invalid, or an internal error
  *    1: Success or Mac-then-encrypt decryption failed (MAC will be randomised)
  */
-int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending,
+int ssl3_enc(SSL_CONNECTION *s, SSL3_RECORD *inrecs, size_t n_recs, int sending,
              SSL_MAC_BUF *mac, size_t macsize)
 {
     SSL3_RECORD *rec;
@@ -957,7 +960,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending,
                                            (mac != NULL) ? &mac->alloced : NULL,
                                            bs,
                                            macsize,
-                                           s->ctx->libctx);
+                                           SSL_CONNECTION_GET_CTX(s)->libctx);
         }
     }
     return 1;
@@ -974,7 +977,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending,
  *       decryption failed, or Encrypt-then-mac decryption failed.
  *    1: Success or Mac-then-encrypt decryption failed (MAC will be randomised)
  */
-int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
+int tls1_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs, int sending,
              SSL_MAC_BUF *macs, size_t macsize)
 {
     EVP_CIPHER_CTX *ds;
@@ -1022,7 +1025,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
                          */
                         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                         return 0;
-                    } else if (RAND_bytes_ex(s->ctx->libctx, recs[ctr].input,
+                    } else if (RAND_bytes_ex(SSL_CONNECTION_GET_CTX(s)->libctx,
+                                             recs[ctr].input,
                                              ivlen, 0) <= 0) {
                         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                         return 0;
@@ -1076,7 +1080,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
                 seq = sending ? RECORD_LAYER_get_write_sequence(&s->rlayer)
                     : RECORD_LAYER_get_read_sequence(&s->rlayer);
 
-                if (SSL_IS_DTLS(s)) {
+                if (SSL_CONNECTION_IS_DTLS(s)) {
                     /* DTLS does not support pipelining */
                     unsigned char dtlsseq[8], *p = dtlsseq;
 
@@ -1163,7 +1167,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             }
         }
 
-        if (!SSL_IS_DTLS(s) && tlstree_enc) {
+        if (!SSL_CONNECTION_IS_DTLS(s) && tlstree_enc) {
             unsigned char *seq;
             int decrement_seq = 0;
 
@@ -1282,7 +1286,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
                                          pad ? (size_t)pad : macsize,
                                          (EVP_CIPHER_get_flags(enc)
                                          & EVP_CIPH_FLAG_AEAD_CIPHER) != 0,
-                                         s->ctx->libctx))
+                                         SSL_CONNECTION_GET_CTX(s)->libctx))
                         return 0;
                 }
             }
@@ -1310,7 +1314,8 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
     }
 }
 
-int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
+int n_ssl3_mac(SSL_CONNECTION *sc, SSL3_RECORD *rec, unsigned char *md,
+               int sending)
 {
     unsigned char *mac_sec, *seq;
     const EVP_MD_CTX *hash;
@@ -1320,13 +1325,13 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
     int t;
 
     if (sending) {
-        mac_sec = &(ssl->s3.write_mac_secret[0]);
-        seq = RECORD_LAYER_get_write_sequence(&ssl->rlayer);
-        hash = ssl->write_hash;
+        mac_sec = &(sc->s3.write_mac_secret[0]);
+        seq = RECORD_LAYER_get_write_sequence(&sc->rlayer);
+        hash = sc->write_hash;
     } else {
-        mac_sec = &(ssl->s3.read_mac_secret[0]);
-        seq = RECORD_LAYER_get_read_sequence(&ssl->rlayer);
-        hash = ssl->read_hash;
+        mac_sec = &(sc->s3.read_mac_secret[0]);
+        seq = RECORD_LAYER_get_read_sequence(&sc->rlayer);
+        hash = sc->read_hash;
     }
 
     t = EVP_MD_CTX_get_size(hash);
@@ -1336,7 +1341,7 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
     npad = (48 / md_size) * md_size;
 
     if (!sending
-        && EVP_CIPHER_CTX_get_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE
+        && EVP_CIPHER_CTX_get_mode(sc->enc_read_ctx) == EVP_CIPH_CBC_MODE
         && ssl3_cbc_record_digest_supported(hash)) {
 #ifdef OPENSSL_NO_DEPRECATED_3_0
         return 0;
@@ -1410,7 +1415,8 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
     return 1;
 }
 
-int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
+int tls1_mac(SSL_CONNECTION *sc, SSL3_RECORD *rec, unsigned char *md,
+             int sending)
 {
     unsigned char *seq;
     EVP_MD_CTX *hash;
@@ -1418,19 +1424,19 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
     int i;
     EVP_MD_CTX *hmac = NULL, *mac_ctx;
     unsigned char header[13];
-    int stream_mac = sending ? (ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM)
-                             : (ssl->mac_flags & SSL_MAC_FLAG_READ_MAC_STREAM);
-    int tlstree_mac = sending ? (ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_TLSTREE)
-                              : (ssl->mac_flags & SSL_MAC_FLAG_READ_MAC_TLSTREE);
+    int stream_mac = sending ? (sc->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM)
+                             : (sc->mac_flags & SSL_MAC_FLAG_READ_MAC_STREAM);
+    int tlstree_mac = sending ? (sc->mac_flags & SSL_MAC_FLAG_WRITE_MAC_TLSTREE)
+                              : (sc->mac_flags & SSL_MAC_FLAG_READ_MAC_TLSTREE);
     int t;
     int ret = 0;
 
     if (sending) {
-        seq = RECORD_LAYER_get_write_sequence(&ssl->rlayer);
-        hash = ssl->write_hash;
+        seq = RECORD_LAYER_get_write_sequence(&sc->rlayer);
+        hash = sc->write_hash;
     } else {
-        seq = RECORD_LAYER_get_read_sequence(&ssl->rlayer);
-        hash = ssl->read_hash;
+        seq = RECORD_LAYER_get_read_sequence(&sc->rlayer);
+        hash = sc->read_hash;
     }
 
     t = EVP_MD_CTX_get_size(hash);
@@ -1449,15 +1455,16 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         mac_ctx = hmac;
     }
 
-    if (!SSL_IS_DTLS(ssl) && tlstree_mac && EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_TLSTREE, 0, seq) <= 0) {
+    if (!SSL_CONNECTION_IS_DTLS(sc) && tlstree_mac
+        && EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_TLSTREE, 0, seq) <= 0) {
         goto end;
     }
 
-    if (SSL_IS_DTLS(ssl)) {
+    if (SSL_CONNECTION_IS_DTLS(sc)) {
         unsigned char dtlsseq[8], *p = dtlsseq;
 
-        s2n(sending ? DTLS_RECORD_LAYER_get_w_epoch(&ssl->rlayer) :
-            DTLS_RECORD_LAYER_get_r_epoch(&ssl->rlayer), p);
+        s2n(sending ? DTLS_RECORD_LAYER_get_w_epoch(&sc->rlayer) :
+            DTLS_RECORD_LAYER_get_r_epoch(&sc->rlayer), p);
         memcpy(p, &seq[2], 6);
 
         memcpy(header, dtlsseq, 8);
@@ -1465,13 +1472,13 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         memcpy(header, seq, 8);
 
     header[8] = rec->type;
-    header[9] = (unsigned char)(ssl->version >> 8);
-    header[10] = (unsigned char)(ssl->version);
+    header[9] = (unsigned char)(sc->version >> 8);
+    header[10] = (unsigned char)(sc->version);
     header[11] = (unsigned char)(rec->length >> 8);
     header[12] = (unsigned char)(rec->length & 0xff);
 
-    if (!sending && !SSL_READ_ETM(ssl)
-        && EVP_CIPHER_CTX_get_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE
+    if (!sending && !SSL_READ_ETM(sc)
+        && EVP_CIPHER_CTX_get_mode(sc->enc_read_ctx) == EVP_CIPH_CBC_MODE
         && ssl3_cbc_record_digest_supported(mac_ctx)) {
         OSSL_PARAM tls_hmac_params[2], *p = tls_hmac_params;
 
@@ -1498,7 +1505,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         BIO_dump_indent(trc_out, rec->data, rec->length, 4);
     } OSSL_TRACE_END(TLS);
 
-    if (!SSL_IS_DTLS(ssl)) {
+    if (!SSL_CONNECTION_IS_DTLS(sc)) {
         for (i = 7; i >= 0; i--) {
             ++seq[i];
             if (seq[i] != 0)
@@ -1515,7 +1522,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
     return ret;
 }
 
-int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
+int dtls1_process_record(SSL_CONNECTION *s, DTLS1_BITMAP *bitmap)
 {
     int i;
     int enc_err;
@@ -1527,6 +1534,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     size_t max_plain_length = SSL3_RT_MAX_PLAIN_LENGTH;
     SSL_MAC_BUF macbuf = { NULL, 0 };
     int ret = 0;
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
     sess = s->session;
@@ -1581,7 +1589,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         }
         rr->length -= mac_size;
         mac = rr->data + rr->length;
-        i = s->method->ssl3_enc->mac(s, rr, md, 0 /* not send */ );
+        i = ssl->method->ssl3_enc->mac(s, rr, md, 0 /* not send */ );
         if (i == 0 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0) {
             SSLfatal(s, SSL_AD_BAD_RECORD_MAC,
                      SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
@@ -1600,7 +1608,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
      * errors in the queue from processing bogus junk that we ignored.
      */
     ERR_set_mark();
-    enc_err = s->method->ssl3_enc->enc(s, rr, 1, 0, &macbuf, mac_size);
+    enc_err = ssl->method->ssl3_enc->enc(s, rr, 1, 0, &macbuf, mac_size);
 
     /*-
      * enc_err is:
@@ -1632,7 +1640,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
             && (EVP_MD_CTX_get0_md(s->read_hash) != NULL)) {
         /* s->read_hash != NULL => mac_size != -1 */
 
-        i = s->method->ssl3_enc->mac(s, rr, md, 0 /* not send */ );
+        i = ssl->method->ssl3_enc->mac(s, rr, md, 0 /* not send */ );
         if (i == 0 || macbuf.mac == NULL
             || CRYPTO_memcmp(md, macbuf.mac, mac_size) != 0)
             enc_err = 0;
@@ -1710,7 +1718,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
  * ssl->s3.rrec.length  - number of bytes
  */
 /* used only by dtls1_read_bytes */
-int dtls1_get_record(SSL *s)
+int dtls1_get_record(SSL_CONNECTION *s)
 {
     int ssl_major, ssl_minor;
     int rret;
@@ -1720,6 +1728,7 @@ int dtls1_get_record(SSL *s)
     unsigned short version;
     DTLS1_BITMAP *bitmap;
     unsigned int is_next_epoch;
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
 
@@ -1763,7 +1772,7 @@ int dtls1_get_record(SSL *s)
 
         if (s->msg_callback)
             s->msg_callback(0, 0, SSL3_RT_HEADER, p, DTLS1_RT_HEADER_LENGTH,
-                            s, s->msg_callback_arg);
+                            ssl, s->msg_callback_arg);
 
         /* Pull apart the header into the DTLS1_RECORD */
         rr->type = *(p++);
@@ -1859,7 +1868,7 @@ int dtls1_get_record(SSL *s)
     }
 #ifndef OPENSSL_NO_SCTP
     /* Only do replay check if no SCTP bio */
-    if (!BIO_dgram_is_sctp(SSL_get_rbio(s))) {
+    if (!BIO_dgram_is_sctp(SSL_get_rbio(ssl))) {
 #endif
         /* Check whether this is a repeat, or aged record. */
         if (!dtls1_record_replay_check(s, bitmap)) {
@@ -1884,7 +1893,7 @@ int dtls1_get_record(SSL *s)
      * processed at this time.
      */
     if (is_next_epoch) {
-        if ((SSL_in_init(s) || ossl_statem_get_in_handshake(s))) {
+        if ((SSL_in_init(ssl) || ossl_statem_get_in_handshake(s))) {
             if (dtls1_buffer_record (s,
                     &(DTLS_RECORD_LAYER_get_unprocessed_rcds(&s->rlayer)),
                     rr->seq_num) < 0) {
@@ -1913,7 +1922,8 @@ int dtls1_get_record(SSL *s)
 
 }
 
-int dtls_buffer_listen_record(SSL *s, size_t len, unsigned char *seq, size_t off)
+int dtls_buffer_listen_record(SSL_CONNECTION *s, size_t len, unsigned char *seq,
+                              size_t off)
 {
     SSL3_RECORD *rr;
 

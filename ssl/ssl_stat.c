@@ -13,7 +13,9 @@
 
 const char *SSL_state_string_long(const SSL *s)
 {
-    if (ossl_statem_in_error(s))
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+
+    if (sc == NULL || ossl_statem_in_error(sc))
         return "error";
 
     switch (SSL_get_state(s)) {
@@ -120,7 +122,9 @@ const char *SSL_state_string_long(const SSL *s)
 
 const char *SSL_state_string(const SSL *s)
 {
-    if (ossl_statem_in_error(s))
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+
+    if (sc == NULL || ossl_statem_in_error(sc))
         return "SSLERR";
 
     switch (SSL_get_state(s)) {

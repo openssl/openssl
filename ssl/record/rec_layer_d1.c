@@ -124,7 +124,7 @@ void DTLS_RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, unsigned char *seq)
 }
 
 /* copy buffered record into SSL structure */
-static int dtls1_copy_record(SSL *s, pitem *item)
+static int dtls1_copy_record(SSL_CONNECTION *s, pitem *item)
 {
     DTLS1_RECORD_DATA *rdata;
 
@@ -143,10 +143,14 @@ static int dtls1_copy_record(SSL *s, pitem *item)
     return 1;
 }
 
-int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
+int dtls1_buffer_record(SSL_CONNECTION *s, record_pqueue *queue,
+                        unsigned char *priority)
 {
     DTLS1_RECORD_DATA *rdata;
     pitem *item;
+#ifndef OPENSSL_NO_SCTP
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+#endif
 
     /* Limit the size of the queue to prevent DOS attacks */
     if (pqueue_size(queue->q) >= 100)
@@ -170,10 +174,10 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 
 #ifndef OPENSSL_NO_SCTP
     /* Store bio_dgram_sctp_rcvinfo struct */
-    if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
-        (SSL_get_state(s) == TLS_ST_SR_FINISHED
-         || SSL_get_state(s) == TLS_ST_CR_FINISHED)) {
-        BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SCTP_GET_RCVINFO,
+    if (BIO_dgram_is_sctp(SSL_get_rbio(ssl)) &&
+        (SSL_get_state(ssl) == TLS_ST_SR_FINISHED
+         || SSL_get_state(ssl) == TLS_ST_CR_FINISHED)) {
+        BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_SCTP_GET_RCVINFO,
                  sizeof(rdata->recordinfo), &rdata->recordinfo);
     }
 #endif
@@ -201,7 +205,7 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
     return 1;
 }
 
-int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue)
+int dtls1_retrieve_buffered_record(SSL_CONNECTION *s, record_pqueue *queue)
 {
     pitem *item;
 
@@ -226,7 +230,7 @@ int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue)
                    dtls1_retrieve_buffered_record((s), \
                    &((s)->rlayer.d->unprocessed_rcds))
 
-int dtls1_process_buffered_records(SSL *s)
+int dtls1_process_buffered_records(SSL_CONNECTION *s)
 {
     pitem *item;
     SSL3_BUFFER *rb;
@@ -270,7 +274,7 @@ int dtls1_process_buffered_records(SSL *s)
             }
 #ifndef OPENSSL_NO_SCTP
             /* Only do replay check if no SCTP bio */
-            if (!BIO_dgram_is_sctp(SSL_get_rbio(s)))
+            if (!BIO_dgram_is_sctp(SSL_get_rbio(SSL_CONNECTION_GET_SSL(s))))
 #endif
             {
                 /*
@@ -347,10 +351,14 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     size_t n;
     SSL3_RECORD *rr;
     void (*cb) (const SSL *ssl, int type2, int val) = NULL;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (!SSL3_BUFFER_is_initialised(&s->rlayer.rbuf)) {
+    if (sc == NULL)
+        return -1;
+
+    if (!SSL3_BUFFER_is_initialised(&sc->rlayer.rbuf)) {
         /* Not initialized yet */
-        if (!ssl3_setup_buffers(s)) {
+        if (!ssl3_setup_buffers(sc)) {
             /* SSLfatal() already called */
             return -1;
         }
@@ -359,13 +367,13 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     if ((type && (type != SSL3_RT_APPLICATION_DATA) &&
          (type != SSL3_RT_HANDSHAKE)) ||
         (peek && (type != SSL3_RT_APPLICATION_DATA))) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return -1;
     }
 
-    if (!ossl_statem_get_in_handshake(s) && SSL_in_init(s)) {
+    if (!ossl_statem_get_in_handshake(sc) && SSL_in_init(s)) {
         /* type == SSL3_RT_APPLICATION_DATA */
-        i = s->handshake_func(s);
+        i = sc->handshake_func(s);
         /* SSLfatal() already called if appropriate */
         if (i < 0)
             return i;
@@ -374,7 +382,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     }
 
  start:
-    s->rwstate = SSL_NOTHING;
+    sc->rwstate = SSL_NOTHING;
 
     /*-
      * s->s3.rrec.type     - is the type of record
@@ -382,7 +390,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * s->s3.rrec.off,     - offset into 'data' for next read
      * s->s3.rrec.length,  - number of bytes.
      */
-    rr = s->rlayer.rrec;
+    rr = sc->rlayer.rrec;
 
     /*
      * We are not handshaking and have no data yet, so process data buffered
@@ -390,7 +398,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      */
     if (SSL_is_init_finished(s) && SSL3_RECORD_get_length(rr) == 0) {
         pitem *item;
-        item = pqueue_pop(s->rlayer.d->buffered_app_data.q);
+        item = pqueue_pop(sc->rlayer.d->buffered_app_data.q);
         if (item) {
 #ifndef OPENSSL_NO_SCTP
             /* Restore bio_dgram_sctp_rcvinfo struct */
@@ -401,7 +409,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             }
 #endif
 
-            dtls1_copy_record(s, item);
+            dtls1_copy_record(sc, item);
 
             OPENSSL_free(item->data);
             pitem_free(item);
@@ -409,20 +417,20 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     }
 
     /* Check for timeout */
-    if (dtls1_handle_timeout(s) > 0) {
+    if (dtls1_handle_timeout(sc) > 0) {
         goto start;
-    } else if (ossl_statem_in_error(s)) {
+    } else if (ossl_statem_in_error(sc)) {
         /* dtls1_handle_timeout() has failed with a fatal error */
         return -1;
     }
 
     /* get new packet if necessary */
     if ((SSL3_RECORD_get_length(rr) == 0)
-        || (s->rlayer.rstate == SSL_ST_READ_BODY)) {
-        RECORD_LAYER_set_numrpipes(&s->rlayer, 0);
-        iret = dtls1_get_record(s);
+        || (sc->rlayer.rstate == SSL_ST_READ_BODY)) {
+        RECORD_LAYER_set_numrpipes(&sc->rlayer, 0);
+        iret = dtls1_get_record(sc);
         if (iret <= 0) {
-            iret = dtls1_read_failed(s, iret);
+            iret = dtls1_read_failed(sc, iret);
             /*
              * Anything other than a timeout is an error. SSLfatal() already
              * called if appropriate.
@@ -432,7 +440,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             else
                 goto start;
         }
-        RECORD_LAYER_set_numrpipes(&s->rlayer, 1);
+        RECORD_LAYER_set_numrpipes(&sc->rlayer, 1);
     }
 
     /*
@@ -441,11 +449,11 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      */
     if (SSL3_RECORD_get_type(rr) != SSL3_RT_ALERT
             && SSL3_RECORD_get_length(rr) != 0)
-        s->rlayer.alert_count = 0;
+        sc->rlayer.alert_count = 0;
 
     /* we now have a packet which can be read and processed */
 
-    if (s->s3.change_cipher_spec /* set when we receive ChangeCipherSpec,
+    if (sc->s3.change_cipher_spec /* set when we receive ChangeCipherSpec,
                                   * reset by ssl3_get_finished */
         && (SSL3_RECORD_get_type(rr) != SSL3_RT_HANDSHAKE)) {
         /*
@@ -453,7 +461,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * the packets were reordered on their way, so buffer the application
          * data for later processing rather than dropping the connection.
          */
-        if (dtls1_buffer_record(s, &(s->rlayer.d->buffered_app_data),
+        if (dtls1_buffer_record(sc, &(sc->rlayer.d->buffered_app_data),
                                 SSL3_RECORD_get_seq_num(rr)) < 0) {
             /* SSLfatal() already called */
             return -1;
@@ -467,10 +475,10 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * If the other end has shut down, throw anything we read away (even in
      * 'peek' mode)
      */
-    if (s->shutdown & SSL_RECEIVED_SHUTDOWN) {
+    if (sc->shutdown & SSL_RECEIVED_SHUTDOWN) {
         SSL3_RECORD_set_length(rr, 0);
         SSL3_RECORD_set_read(rr);
-        s->rwstate = SSL_NOTHING;
+        sc->rwstate = SSL_NOTHING;
         return 0;
     }
 
@@ -487,8 +495,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * doing a handshake for the first time
          */
         if (SSL_in_init(s) && (type == SSL3_RT_APPLICATION_DATA) &&
-            (s->enc_read_ctx == NULL)) {
-            SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
+            (sc->enc_read_ctx == NULL)) {
+            SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE,
                      SSL_R_APP_DATA_IN_HANDSHAKE);
             return -1;
         }
@@ -517,12 +525,12 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             if (SSL3_RECORD_get_length(rr) == 0)
                 SSL3_RECORD_set_read(rr);
         } else {
-            if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
+            if (sc->options & SSL_OP_CLEANSE_PLAINTEXT)
                 OPENSSL_cleanse(&(SSL3_RECORD_get_data(rr)[SSL3_RECORD_get_off(rr)]), n);
             SSL3_RECORD_sub_length(rr, n);
             SSL3_RECORD_add_off(rr, n);
             if (SSL3_RECORD_get_length(rr) == 0) {
-                s->rlayer.rstate = SSL_ST_READ_HEADER;
+                sc->rlayer.rstate = SSL_ST_READ_HEADER;
                 SSL3_RECORD_set_off(rr, 0);
                 SSL3_RECORD_set_read(rr);
             }
@@ -534,9 +542,9 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * anymore, finally set shutdown.
          */
         if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
-            s->d1->shutdown_received
+            sc->d1->shutdown_received
             && BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s)) <= 0) {
-            s->shutdown |= SSL_RECEIVED_SHUTDOWN;
+            sc->shutdown |= SSL_RECEIVED_SHUTDOWN;
             return 0;
         }
 #endif
@@ -559,16 +567,16 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 || !PACKET_get_1(&alert, &alert_level)
                 || !PACKET_get_1(&alert, &alert_descr)
                 || PACKET_remaining(&alert) != 0) {
-            SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_INVALID_ALERT);
+            SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_INVALID_ALERT);
             return -1;
         }
 
-        if (s->msg_callback)
-            s->msg_callback(0, s->version, SSL3_RT_ALERT, alert_bytes, 2, s,
-                            s->msg_callback_arg);
+        if (sc->msg_callback)
+            sc->msg_callback(0, sc->version, SSL3_RT_ALERT, alert_bytes, 2, s,
+                             sc->msg_callback_arg);
 
-        if (s->info_callback != NULL)
-            cb = s->info_callback;
+        if (sc->info_callback != NULL)
+            cb = sc->info_callback;
         else if (s->ctx->info_callback != NULL)
             cb = s->ctx->info_callback;
 
@@ -578,12 +586,12 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         }
 
         if (alert_level == SSL3_AL_WARNING) {
-            s->s3.warn_alert = alert_descr;
+            sc->s3.warn_alert = alert_descr;
             SSL3_RECORD_set_read(rr);
 
-            s->rlayer.alert_count++;
-            if (s->rlayer.alert_count == MAX_WARN_ALERT_COUNT) {
-                SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
+            sc->rlayer.alert_count++;
+            if (sc->rlayer.alert_count == MAX_WARN_ALERT_COUNT) {
+                SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE,
                          SSL_R_TOO_MANY_WARN_ALERTS);
                 return -1;
             }
@@ -597,37 +605,37 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                  */
                 if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
                     BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s)) > 0) {
-                    s->d1->shutdown_received = 1;
-                    s->rwstate = SSL_READING;
+                    sc->d1->shutdown_received = 1;
+                    sc->rwstate = SSL_READING;
                     BIO_clear_retry_flags(SSL_get_rbio(s));
                     BIO_set_retry_read(SSL_get_rbio(s));
                     return -1;
                 }
 #endif
-                s->shutdown |= SSL_RECEIVED_SHUTDOWN;
+                sc->shutdown |= SSL_RECEIVED_SHUTDOWN;
                 return 0;
             }
         } else if (alert_level == SSL3_AL_FATAL) {
-            s->rwstate = SSL_NOTHING;
-            s->s3.fatal_alert = alert_descr;
-            SSLfatal_data(s, SSL_AD_NO_ALERT,
+            sc->rwstate = SSL_NOTHING;
+            sc->s3.fatal_alert = alert_descr;
+            SSLfatal_data(sc, SSL_AD_NO_ALERT,
                           SSL_AD_REASON_OFFSET + alert_descr,
                           "SSL alert number %d", alert_descr);
-            s->shutdown |= SSL_RECEIVED_SHUTDOWN;
+            sc->shutdown |= SSL_RECEIVED_SHUTDOWN;
             SSL3_RECORD_set_read(rr);
-            SSL_CTX_remove_session(s->session_ctx, s->session);
+            SSL_CTX_remove_session(sc->session_ctx, sc->session);
             return 0;
         } else {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_ALERT_TYPE);
+            SSLfatal(sc, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_ALERT_TYPE);
             return -1;
         }
 
         goto start;
     }
 
-    if (s->shutdown & SSL_SENT_SHUTDOWN) { /* but we have not received a
+    if (sc->shutdown & SSL_SENT_SHUTDOWN) { /* but we have not received a
                                             * shutdown */
-        s->rwstate = SSL_NOTHING;
+        sc->rwstate = SSL_NOTHING;
         SSL3_RECORD_set_length(rr, 0);
         SSL3_RECORD_set_read(rr);
         return 0;
@@ -647,14 +655,14 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
     if ((SSL3_RECORD_get_type(rr) == SSL3_RT_HANDSHAKE) &&
-            !ossl_statem_get_in_handshake(s)) {
+            !ossl_statem_get_in_handshake(sc)) {
         struct hm_header_st msg_hdr;
 
         /*
          * This may just be a stale retransmit. Also sanity check that we have
          * at least enough record bytes for a message header
          */
-        if (SSL3_RECORD_get_epoch(rr) != s->rlayer.d->r_epoch
+        if (SSL3_RECORD_get_epoch(rr) != sc->rlayer.d->r_epoch
                 || SSL3_RECORD_get_length(rr) < DTLS1_HM_HEADER_LENGTH) {
             SSL3_RECORD_set_length(rr, 0);
             SSL3_RECORD_set_read(rr);
@@ -668,24 +676,24 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * here, then retransmit our CCS and FINISHED.
          */
         if (msg_hdr.type == SSL3_MT_FINISHED) {
-            if (dtls1_check_timeout_num(s) < 0) {
+            if (dtls1_check_timeout_num(sc) < 0) {
                 /* SSLfatal) already called */
                 return -1;
             }
 
-            if (dtls1_retransmit_buffered_messages(s) <= 0) {
+            if (dtls1_retransmit_buffered_messages(sc) <= 0) {
                 /* Fail if we encountered a fatal error */
-                if (ossl_statem_in_error(s))
+                if (ossl_statem_in_error(sc))
                     return -1;
             }
             SSL3_RECORD_set_length(rr, 0);
             SSL3_RECORD_set_read(rr);
-            if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
-                if (SSL3_BUFFER_get_left(&s->rlayer.rbuf) == 0) {
+            if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
+                if (SSL3_BUFFER_get_left(&sc->rlayer.rbuf) == 0) {
                     /* no read-ahead left? */
                     BIO *bio;
 
-                    s->rwstate = SSL_READING;
+                    sc->rwstate = SSL_READING;
                     bio = SSL_get_rbio(s);
                     BIO_clear_retry_flags(bio);
                     BIO_set_retry_read(bio);
@@ -702,22 +710,22 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * finished
          */
         if (!ossl_assert(SSL_is_init_finished(s))) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return -1;
         }
 
         /* We found handshake data, so we're going back into init */
-        ossl_statem_set_in_init(s, 1);
+        ossl_statem_set_in_init(sc, 1);
 
-        i = s->handshake_func(s);
+        i = sc->handshake_func(s);
         /* SSLfatal() called if appropriate */
         if (i < 0)
             return i;
         if (i == 0)
             return -1;
 
-        if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
-            if (SSL3_BUFFER_get_left(&s->rlayer.rbuf) == 0) {
+        if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
+            if (SSL3_BUFFER_get_left(&sc->rlayer.rbuf) == 0) {
                 /* no read-ahead left? */
                 BIO *bio;
                 /*
@@ -726,7 +734,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                  * option set.  Otherwise renegotiation may cause nasty
                  * problems in the blocking world
                  */
-                s->rwstate = SSL_READING;
+                sc->rwstate = SSL_READING;
                 bio = SSL_get_rbio(s);
                 BIO_clear_retry_flags(bio);
                 BIO_set_retry_read(bio);
@@ -738,7 +746,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
     switch (SSL3_RECORD_get_type(rr)) {
     default:
-        SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);
+        SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);
         return -1;
     case SSL3_RT_CHANGE_CIPHER_SPEC:
     case SSL3_RT_ALERT:
@@ -748,7 +756,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * SSL3_RT_HANDSHAKE when ossl_statem_get_in_handshake(s) is true, but
          * that should not happen when type != rr->type
          */
-        SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, ERR_R_INTERNAL_ERROR);
+        SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, ERR_R_INTERNAL_ERROR);
         return -1;
     case SSL3_RT_APPLICATION_DATA:
         /*
@@ -758,13 +766,13 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * application data at this point (session renegotiation not yet
          * started), we will indulge it.
          */
-        if (s->s3.in_read_app_data &&
-            (s->s3.total_renegotiations != 0) &&
-            ossl_statem_app_data_allowed(s)) {
-            s->s3.in_read_app_data = 2;
+        if (sc->s3.in_read_app_data &&
+            (sc->s3.total_renegotiations != 0) &&
+            ossl_statem_app_data_allowed(sc)) {
+            sc->s3.in_read_app_data = 2;
             return -1;
         } else {
-            SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);
+            SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);
             return -1;
         }
     }
@@ -775,8 +783,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
  * Call this to write data in records of type 'type' It will return <= 0 if
  * not all data has been sent or non-blocking IO.
  */
-int dtls1_write_bytes(SSL *s, int type, const void *buf, size_t len,
-                      size_t *written)
+int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
+                      size_t len, size_t *written)
 {
     int i;
 
@@ -789,7 +797,7 @@ int dtls1_write_bytes(SSL *s, int type, const void *buf, size_t len,
     return i;
 }
 
-int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
+int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
                    size_t len, int create_empty_fragment, size_t *written)
 {
     unsigned char *p, *pseq;
@@ -799,20 +807,21 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     SSL3_RECORD wr;
     SSL3_BUFFER *wb;
     SSL_SESSION *sess;
+    SSL *s = SSL_CONNECTION_GET_SSL(sc);
 
-    wb = &s->rlayer.wbuf[0];
+    wb = &sc->rlayer.wbuf[0];
 
     /*
      * DTLS writes whole datagrams, so there can't be anything left in
      * the buffer.
      */
     if (!ossl_assert(SSL3_BUFFER_get_left(wb) == 0)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     /* If we have an alert to send, lets send it */
-    if (s->s3.alert_dispatch) {
+    if (sc->s3.alert_dispatch) {
         i = s->method->ssl_dispatch_alert(s);
         if (i <= 0)
             return i;
@@ -822,24 +831,24 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     if (len == 0 && !create_empty_fragment)
         return 0;
 
-    if (len > ssl_get_max_send_fragment(s)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
+    if (len > ssl_get_max_send_fragment(sc)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
         return 0;
     }
 
-    sess = s->session;
+    sess = sc->session;
 
     if ((sess == NULL)
-            || (s->enc_write_ctx == NULL)
-            || (EVP_MD_CTX_get0_md(s->write_hash) == NULL))
+            || (sc->enc_write_ctx == NULL)
+            || (EVP_MD_CTX_get0_md(sc->write_hash) == NULL))
         clear = 1;
 
     if (clear)
         mac_size = 0;
     else {
-        mac_size = EVP_MD_CTX_get_size(s->write_hash);
+        mac_size = EVP_MD_CTX_get_size(sc->write_hash);
         if (mac_size < 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+            SSLfatal(sc, SSL_AD_INTERNAL_ERROR,
                      SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
             return -1;
         }
@@ -857,12 +866,12 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
      * header: otherwise some clients will ignore it.
      */
     if (s->method->version == DTLS_ANY_VERSION &&
-        s->max_proto_version != DTLS1_BAD_VER) {
+        sc->max_proto_version != DTLS1_BAD_VER) {
         *(p++) = DTLS1_VERSION >> 8;
         *(p++) = DTLS1_VERSION & 0xff;
     } else {
-        *(p++) = s->version >> 8;
-        *(p++) = s->version & 0xff;
+        *(p++) = sc->version >> 8;
+        *(p++) = sc->version & 0xff;
     }
 
     /* field where we are to write out packet epoch, seq num and len */
@@ -870,10 +879,10 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     p += 10;
 
     /* Explicit IV length, block ciphers appropriate version flag */
-    if (s->enc_write_ctx) {
-        int mode = EVP_CIPHER_CTX_get_mode(s->enc_write_ctx);
+    if (sc->enc_write_ctx) {
+        int mode = EVP_CIPHER_CTX_get_mode(sc->enc_write_ctx);
         if (mode == EVP_CIPH_CBC_MODE) {
-            eivlen = EVP_CIPHER_CTX_get_iv_length(s->enc_write_ctx);
+            eivlen = EVP_CIPHER_CTX_get_iv_length(sc->enc_write_ctx);
             if (eivlen <= 1)
                 eivlen = 0;
         }
@@ -897,9 +906,9 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
      */
 
     /* first we compress */
-    if (s->compress != NULL) {
-        if (!ssl3_do_compress(s, &wr)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
+    if (sc->compress != NULL) {
+        if (!ssl3_do_compress(sc, &wr)) {
+            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
             return -1;
         }
     } else {
@@ -914,11 +923,11 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
      * wb->buf
      */
 
-    if (!SSL_WRITE_ETM(s) && mac_size != 0) {
-        if (!s->method->ssl3_enc->mac(s, &wr,
+    if (!SSL_WRITE_ETM(sc) && mac_size != 0) {
+        if (!s->method->ssl3_enc->mac(sc, &wr,
                                       &(p[SSL3_RECORD_get_length(&wr) + eivlen]),
                                       1)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return -1;
         }
         SSL3_RECORD_add_length(&wr, mac_size);
@@ -931,17 +940,17 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     if (eivlen)
         SSL3_RECORD_add_length(&wr, eivlen);
 
-    if (s->method->ssl3_enc->enc(s, &wr, 1, 1, NULL, mac_size) < 1) {
-        if (!ossl_statem_in_error(s)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+    if (s->method->ssl3_enc->enc(sc, &wr, 1, 1, NULL, mac_size) < 1) {
+        if (!ossl_statem_in_error(sc)) {
+            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         }
         return -1;
     }
 
-    if (SSL_WRITE_ETM(s) && mac_size != 0) {
-        if (!s->method->ssl3_enc->mac(s, &wr,
+    if (SSL_WRITE_ETM(sc) && mac_size != 0) {
+        if (!s->method->ssl3_enc->mac(sc, &wr,
                                       &(p[SSL3_RECORD_get_length(&wr)]), 1)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return -1;
         }
         SSL3_RECORD_add_length(&wr, mac_size);
@@ -951,15 +960,15 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 
     /* there's only one epoch between handshake and app data */
 
-    s2n(s->rlayer.d->w_epoch, pseq);
+    s2n(sc->rlayer.d->w_epoch, pseq);
 
-    memcpy(pseq, &(s->rlayer.write_sequence[2]), 6);
+    memcpy(pseq, &(sc->rlayer.write_sequence[2]), 6);
     pseq += 6;
     s2n(SSL3_RECORD_get_length(&wr), pseq);
 
-    if (s->msg_callback)
-        s->msg_callback(1, 0, SSL3_RT_HEADER, pseq - DTLS1_RT_HEADER_LENGTH,
-                        DTLS1_RT_HEADER_LENGTH, s, s->msg_callback_arg);
+    if (sc->msg_callback)
+        sc->msg_callback(1, 0, SSL3_RT_HEADER, pseq - DTLS1_RT_HEADER_LENGTH,
+                         DTLS1_RT_HEADER_LENGTH, s, sc->msg_callback_arg);
 
     /*
      * we should now have wr.data pointing to the encrypted data, which is
@@ -968,7 +977,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     SSL3_RECORD_set_type(&wr, type); /* not needed but helps for debugging */
     SSL3_RECORD_add_length(&wr, DTLS1_RT_HEADER_LENGTH);
 
-    ssl3_record_sequence_update(&(s->rlayer.write_sequence[0]));
+    ssl3_record_sequence_update(&(sc->rlayer.write_sequence[0]));
 
     if (create_empty_fragment) {
         /*
@@ -987,16 +996,16 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
      * memorize arguments so that ssl3_write_pending can detect bad write
      * retries later
      */
-    s->rlayer.wpend_tot = len;
-    s->rlayer.wpend_buf = buf;
-    s->rlayer.wpend_type = type;
-    s->rlayer.wpend_ret = len;
+    sc->rlayer.wpend_tot = len;
+    sc->rlayer.wpend_buf = buf;
+    sc->rlayer.wpend_type = type;
+    sc->rlayer.wpend_ret = len;
 
     /* we now just need to write the buffer. Calls SSLfatal() as required. */
-    return ssl3_write_pending(s, type, buf, len, written);
+    return ssl3_write_pending(sc, type, buf, len, written);
 }
 
-DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
+DTLS1_BITMAP *dtls1_get_bitmap(SSL_CONNECTION *s, SSL3_RECORD *rr,
                                unsigned int *is_next_epoch)
 {
 
@@ -1021,7 +1030,7 @@ DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
     return NULL;
 }
 
-void dtls1_reset_seq_numbers(SSL *s, int rw)
+void dtls1_reset_seq_numbers(SSL_CONNECTION *s, int rw)
 {
     unsigned char *seq;
     unsigned int seq_bytes = sizeof(s->rlayer.read_sequence);

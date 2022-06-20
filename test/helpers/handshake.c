@@ -978,9 +978,15 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
         return;
     } else if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_POST_HANDSHAKE_AUTH) {
         if (SSL_is_server(peer->ssl)) {
+            SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(peer->ssl);
+
+            if (sc == NULL) {
+                peer->status = PEER_ERROR;
+                return;
+            }
             /* Make the server believe it's received the extension */
             if (test_ctx->extra.server.force_pha)
-                peer->ssl->post_handshake_auth = SSL_PHA_EXT_RECEIVED;
+                sc->post_handshake_auth = SSL_PHA_EXT_RECEIVED;
             ret = SSL_verify_client_post_handshake(peer->ssl);
             if (!ret) {
                 peer->status = PEER_ERROR;
