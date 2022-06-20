@@ -207,7 +207,7 @@ static int dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
     ASN1_STRING_clear_free(prkey);
 
-    if (dplen < 0) {
+    if (dplen <= 0) {
         ERR_raise(ERR_LIB_DH, DH_R_BN_ERROR);
         goto err;
     }
