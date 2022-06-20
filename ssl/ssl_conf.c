@@ -431,16 +431,23 @@ static int cmd_Certificate(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
     CERT *c = NULL;
-    if (cctx->ctx) {
+    if (cctx->ctx != NULL) {
         rv = SSL_CTX_use_certificate_chain_file(cctx->ctx, value);
         c = cctx->ctx->cert;
     }
-    if (cctx->ssl) {
-        rv = SSL_use_certificate_chain_file(cctx->ssl, value);
-        c = cctx->ssl->cert;
+    if (cctx->ssl != NULL) {
+        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
+
+        if (sc != NULL) {
+            rv = SSL_use_certificate_chain_file(cctx->ssl, value);
+            c = sc->cert;
+        } else {
+            rv = 0;
+        }
     }
-    if (rv > 0 && c && cctx->flags & SSL_CONF_FLAG_REQUIRE_PRIVATE) {
+    if (rv > 0 && c != NULL && cctx->flags & SSL_CONF_FLAG_REQUIRE_PRIVATE) {
         char **pfilename = &cctx->cert_filename[c->key - c->pkeys];
+
         OPENSSL_free(*pfilename);
         *pfilename = OPENSSL_strdup(value);
         if (*pfilename == NULL)
@@ -484,7 +491,12 @@ static int do_store(SSL_CONF_CTX *cctx,
         cert = cctx->ctx->cert;
         ctx = cctx->ctx;
     } else if (cctx->ssl != NULL) {
-        cert = cctx->ssl->cert;
+        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
+
+        if (sc == NULL)
+            return 0;
+
+        cert = sc->cert;
         ctx = cctx->ssl->ctx;
     } else {
         return 1;
@@ -977,11 +989,16 @@ int SSL_CONF_CTX_finish(SSL_CONF_CTX *cctx)
     /* See if any certificates are missing private keys */
     size_t i;
     CERT *c = NULL;
-    if (cctx->ctx)
+
+    if (cctx->ctx != NULL) {
         c = cctx->ctx->cert;
-    else if (cctx->ssl)
-        c = cctx->ssl->cert;
-    if (c && cctx->flags & SSL_CONF_FLAG_REQUIRE_PRIVATE) {
+    } else if (cctx->ssl != NULL) {
+        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(cctx->ssl);
+
+        if (sc != NULL)
+            c = sc->cert;
+    }
+    if (c != NULL && cctx->flags & SSL_CONF_FLAG_REQUIRE_PRIVATE) {
         for (i = 0; i < SSL_PKEY_NUM; i++) {
             const char *p = cctx->cert_filename[i];
             /*
@@ -1050,12 +1067,16 @@ void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl)
 {
     cctx->ssl = ssl;
     cctx->ctx = NULL;
-    if (ssl) {
-        cctx->poptions = &ssl->options;
-        cctx->min_version = &ssl->min_proto_version;
-        cctx->max_version = &ssl->max_proto_version;
-        cctx->pcert_flags = &ssl->cert->cert_flags;
-        cctx->pvfy_flags = &ssl->verify_mode;
+    if (ssl != NULL) {
+        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+        if (sc == NULL)
+            return;
+        cctx->poptions = &sc->options;
+        cctx->min_version = &sc->min_proto_version;
+        cctx->max_version = &sc->max_proto_version;
+        cctx->pcert_flags = &sc->cert->cert_flags;
+        cctx->pvfy_flags = &sc->verify_mode;
     } else {
         cctx->poptions = NULL;
         cctx->min_version = NULL;

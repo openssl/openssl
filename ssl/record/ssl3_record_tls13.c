@@ -20,7 +20,7 @@
  *    0: On failure
  *    1: if the record encryption/decryption was successful.
  */
-int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
+int tls13_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs, int sending,
               ossl_unused SSL_MAC_BUF *mac, ossl_unused size_t macsize)
 {
     EVP_CIPHER_CTX *ctx;
@@ -140,8 +140,8 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
 
     if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, sending) <= 0
             || (!sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                             taglen,
-                                             rec->data + rec->length) <= 0)) {
+                                                taglen,
+                                                rec->data + rec->length) <= 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }

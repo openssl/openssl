@@ -64,10 +64,14 @@ const EVP_MD *tls_get_digest_from_engine(int nid)
 }
 
 #ifndef OPENSSL_NO_ENGINE
-int tls_engine_load_ssl_client_cert(SSL *s, X509 **px509, EVP_PKEY **ppkey)
+int tls_engine_load_ssl_client_cert(SSL_CONNECTION *s, X509 **px509,
+                                    EVP_PKEY **ppkey)
 {
-    return ENGINE_load_ssl_client_cert(s->ctx->client_cert_engine, s,
-                                       SSL_get_client_CA_list(s),
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
+    return ENGINE_load_ssl_client_cert(SSL_CONNECTION_GET_CTX(s)->client_cert_engine,
+                                       ssl,
+                                       SSL_get_client_CA_list(ssl),
                                        px509, ppkey, NULL, NULL, NULL);
 }
 #endif

@@ -688,12 +688,12 @@ static int ssl_print_random(BIO *bio, int indent,
     return 1;
 }
 
-static int ssl_print_signature(BIO *bio, int indent, const SSL *ssl,
+static int ssl_print_signature(BIO *bio, int indent, const SSL_CONNECTION *sc,
                                const unsigned char **pmsg, size_t *pmsglen)
 {
     if (*pmsglen < 2)
         return 0;
-    if (SSL_USE_SIGALGS(ssl)) {
+    if (SSL_USE_SIGALGS(sc)) {
         const unsigned char *p = *pmsg;
         unsigned int sigalg = (p[0] << 8) | p[1];
 
@@ -948,7 +948,7 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
     return 1;
 }
 
-static int ssl_print_client_hello(BIO *bio, const SSL *ssl, int indent,
+static int ssl_print_client_hello(BIO *bio, const SSL_CONNECTION *sc, int indent,
                                   const unsigned char *msg, size_t msglen)
 {
     size_t len;
@@ -960,7 +960,7 @@ static int ssl_print_client_hello(BIO *bio, const SSL *ssl, int indent,
         return 0;
     if (!ssl_print_hexbuf(bio, indent, "session_id", 1, &msg, &msglen))
         return 0;
-    if (SSL_IS_DTLS(ssl)) {
+    if (SSL_CONNECTION_IS_DTLS(sc)) {
         if (!ssl_print_hexbuf(bio, indent, "cookie", 1, &msg, &msglen))
             return 0;
     }
@@ -1051,9 +1051,9 @@ static int ssl_print_server_hello(BIO *bio, int indent,
     return 1;
 }
 
-static int ssl_get_keyex(const char **pname, const SSL *ssl)
+static int ssl_get_keyex(const char **pname, const SSL_CONNECTION *sc)
 {
-    unsigned long alg_k = ssl->s3.tmp.new_cipher->algorithm_mkey;
+    unsigned long alg_k = sc->s3.tmp.new_cipher->algorithm_mkey;
 
     if (alg_k & SSL_kRSA) {
         *pname = "rsa";
@@ -1099,11 +1099,11 @@ static int ssl_get_keyex(const char **pname, const SSL *ssl)
     return 0;
 }
 
-static int ssl_print_client_keyex(BIO *bio, int indent, const SSL *ssl,
+static int ssl_print_client_keyex(BIO *bio, int indent, const SSL_CONNECTION *sc,
                                   const unsigned char *msg, size_t msglen)
 {
     const char *algname;
-    int id = ssl_get_keyex(&algname, ssl);
+    int id = ssl_get_keyex(&algname, sc);
 
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "KeyExchangeAlgorithm=%s\n", algname);
@@ -1116,7 +1116,7 @@ static int ssl_print_client_keyex(BIO *bio, int indent, const SSL *ssl,
 
     case SSL_kRSA:
     case SSL_kRSAPSK:
-        if (TLS1_get_version(ssl) == SSL3_VERSION) {
+        if (TLS1_get_version(SSL_CONNECTION_GET_SSL(sc)) == SSL3_VERSION) {
             ssl_print_hex(bio, indent + 2,
                           "EncryptedPreMasterSecret", msg, msglen);
         } else {
@@ -1151,11 +1151,11 @@ static int ssl_print_client_keyex(BIO *bio, int indent, const SSL *ssl,
     return !msglen;
 }
 
-static int ssl_print_server_keyex(BIO *bio, int indent, const SSL *ssl,
+static int ssl_print_server_keyex(BIO *bio, int indent, const SSL_CONNECTION *sc,
                                   const unsigned char *msg, size_t msglen)
 {
     const char *algname;
-    int id = ssl_get_keyex(&algname, ssl);
+    int id = ssl_get_keyex(&algname, sc);
 
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "KeyExchangeAlgorithm=%s\n", algname);
@@ -1215,7 +1215,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, const SSL *ssl,
         break;
     }
     if (!(id & SSL_PSK))
-        ssl_print_signature(bio, indent, ssl, &msg, &msglen);
+        ssl_print_signature(bio, indent, sc, &msg, &msglen);
     return !msglen;
 }
 
@@ -1254,13 +1254,13 @@ static int ssl_print_certificate(BIO *bio, int indent,
     return 1;
 }
 
-static int ssl_print_certificates(BIO *bio, const SSL *ssl, int server,
+static int ssl_print_certificates(BIO *bio, const SSL_CONNECTION *sc, int server,
                                   int indent, const unsigned char *msg,
                                   size_t msglen)
 {
     size_t clen;
 
-    if (SSL_IS_TLS13(ssl)
+    if (SSL_CONNECTION_IS_TLS13(sc)
             && !ssl_print_hexbuf(bio, indent, "context", 1, &msg, &msglen))
         return 0;
 
@@ -1275,7 +1275,7 @@ static int ssl_print_certificates(BIO *bio, const SSL *ssl, int server,
     while (clen > 0) {
         if (!ssl_print_certificate(bio, indent + 2, &msg, &clen))
             return 0;
-        if (SSL_IS_TLS13(ssl)
+        if (SSL_CONNECTION_IS_TLS13(sc)
             && !ssl_print_extensions(bio, indent + 2, server,
                                      SSL3_MT_CERTIFICATE, &msg, &clen))
             return 0;
@@ -1284,13 +1284,13 @@ static int ssl_print_certificates(BIO *bio, const SSL *ssl, int server,
     return 1;
 }
 
-static int ssl_print_cert_request(BIO *bio, int indent, const SSL *ssl,
+static int ssl_print_cert_request(BIO *bio, int indent, const SSL_CONNECTION *sc,
                                   const unsigned char *msg, size_t msglen)
 {
     size_t xlen;
     unsigned int sigalg;
 
-    if (SSL_IS_TLS13(ssl)) {
+    if (SSL_CONNECTION_IS_TLS13(sc)) {
         if (!ssl_print_hexbuf(bio, indent, "request_context", 1, &msg, &msglen))
             return 0;
         if (!ssl_print_extensions(bio, indent, 1,
@@ -1311,7 +1311,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL *ssl,
         msg += xlen;
         msglen -= xlen + 1;
     }
-    if (SSL_USE_SIGALGS(ssl)) {
+    if (SSL_USE_SIGALGS(sc)) {
         if (msglen < 2)
             return 0;
         xlen = (msg[0] << 8) | msg[1];
@@ -1365,7 +1365,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL *ssl,
         xlen -= dlen + 2;
         msg += dlen;
     }
-    if (SSL_IS_TLS13(ssl)) {
+    if (SSL_CONNECTION_IS_TLS13(sc)) {
         if (!ssl_print_hexbuf(bio, indent, "request_extensions", 2,
                               &msg, &msglen))
             return 0;
@@ -1373,7 +1373,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL *ssl,
     return msglen == 0;
 }
 
-static int ssl_print_ticket(BIO *bio, int indent, const SSL *ssl,
+static int ssl_print_ticket(BIO *bio, int indent, const SSL_CONNECTION *sc,
                             const unsigned char *msg, size_t msglen)
 {
     unsigned int tick_life;
@@ -1393,7 +1393,7 @@ static int ssl_print_ticket(BIO *bio, int indent, const SSL *ssl,
     msg += 4;
     BIO_indent(bio, indent + 2, 80);
     BIO_printf(bio, "ticket_lifetime_hint=%u\n", tick_life);
-    if (SSL_IS_TLS13(ssl)) {
+    if (SSL_CONNECTION_IS_TLS13(sc)) {
         unsigned int ticket_age_add;
 
         if (msglen < 4)
@@ -1413,7 +1413,7 @@ static int ssl_print_ticket(BIO *bio, int indent, const SSL *ssl,
     }
     if (!ssl_print_hexbuf(bio, indent + 2, "ticket", 2, &msg, &msglen))
         return 0;
-    if (SSL_IS_TLS13(ssl)
+    if (SSL_CONNECTION_IS_TLS13(sc)
             && !ssl_print_extensions(bio, indent + 2, 0,
                                      SSL3_MT_NEWSESSION_TICKET, &msg, &msglen))
         return 0;
@@ -1422,7 +1422,7 @@ static int ssl_print_ticket(BIO *bio, int indent, const SSL *ssl,
     return 1;
 }
 
-static int ssl_print_handshake(BIO *bio, const SSL *ssl, int server,
+static int ssl_print_handshake(BIO *bio, const SSL_CONNECTION *sc, int server,
                                const unsigned char *msg, size_t msglen,
                                int indent)
 {
@@ -1438,7 +1438,7 @@ static int ssl_print_handshake(BIO *bio, const SSL *ssl, int server,
                ssl_trace_str(htype, ssl_handshake_tbl), (int)hlen);
     msg += 4;
     msglen -= 4;
-    if (SSL_IS_DTLS(ssl)) {
+    if (SSL_CONNECTION_IS_DTLS(sc)) {
         if (msglen < 8)
             return 0;
         BIO_indent(bio, indent, 80);
@@ -1454,7 +1454,7 @@ static int ssl_print_handshake(BIO *bio, const SSL *ssl, int server,
         return 0;
     switch (htype) {
     case SSL3_MT_CLIENT_HELLO:
-        if (!ssl_print_client_hello(bio, ssl, indent + 2, msg, msglen))
+        if (!ssl_print_client_hello(bio, sc, indent + 2, msg, msglen))
             return 0;
         break;
 
@@ -1469,27 +1469,27 @@ static int ssl_print_handshake(BIO *bio, const SSL *ssl, int server,
         break;
 
     case SSL3_MT_SERVER_KEY_EXCHANGE:
-        if (!ssl_print_server_keyex(bio, indent + 2, ssl, msg, msglen))
+        if (!ssl_print_server_keyex(bio, indent + 2, sc, msg, msglen))
             return 0;
         break;
 
     case SSL3_MT_CLIENT_KEY_EXCHANGE:
-        if (!ssl_print_client_keyex(bio, indent + 2, ssl, msg, msglen))
+        if (!ssl_print_client_keyex(bio, indent + 2, sc, msg, msglen))
             return 0;
         break;
 
     case SSL3_MT_CERTIFICATE:
-        if (!ssl_print_certificates(bio, ssl, server, indent + 2, msg, msglen))
+        if (!ssl_print_certificates(bio, sc, server, indent + 2, msg, msglen))
             return 0;
         break;
 
     case SSL3_MT_CERTIFICATE_VERIFY:
-        if (!ssl_print_signature(bio, indent + 2, ssl, &msg, &msglen))
+        if (!ssl_print_signature(bio, indent + 2, sc, &msg, &msglen))
             return 0;
         break;
 
     case SSL3_MT_CERTIFICATE_REQUEST:
-        if (!ssl_print_cert_request(bio, indent + 2, ssl, msg, msglen))
+        if (!ssl_print_cert_request(bio, indent + 2, sc, msg, msglen))
             return 0;
         break;
 
@@ -1503,7 +1503,7 @@ static int ssl_print_handshake(BIO *bio, const SSL *ssl, int server,
         break;
 
     case SSL3_MT_NEWSESSION_TICKET:
-        if (!ssl_print_ticket(bio, indent + 2, ssl, msg, msglen))
+        if (!ssl_print_ticket(bio, indent + 2, sc, msg, msglen))
             return 0;
         break;
 
@@ -1536,6 +1536,10 @@ void SSL_trace(int write_p, int version, int content_type,
 {
     const unsigned char *msg = buf;
     BIO *bio = arg;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (sc == NULL)
+        return;
 
     switch (content_type) {
     case SSL3_RT_HEADER:
@@ -1543,7 +1547,7 @@ void SSL_trace(int write_p, int version, int content_type,
             int hvers;
 
             /* avoid overlapping with length at the end of buffer */
-            if (msglen < (size_t)(SSL_IS_DTLS(ssl) ?
+            if (msglen < (size_t)(SSL_CONNECTION_IS_DTLS(sc) ?
                      DTLS1_RT_HEADER_LENGTH : SSL3_RT_HEADER_LENGTH)) {
                 BIO_puts(bio, write_p ? "Sent" : "Received");
                 ssl_print_hex(bio, 0, " too short message", msg, msglen);
@@ -1553,7 +1557,7 @@ void SSL_trace(int write_p, int version, int content_type,
             BIO_puts(bio, write_p ? "Sent" : "Received");
             BIO_printf(bio, " Record\nHeader:\n  Version = %s (0x%x)\n",
                        ssl_trace_str(hvers, ssl_version_tbl), hvers);
-            if (SSL_IS_DTLS(ssl)) {
+            if (SSL_CONNECTION_IS_DTLS(sc)) {
                 BIO_printf(bio,
                            "  epoch=%d, sequence_number=%04x%04x%04x\n",
                            (msg[3] << 8 | msg[4]),
@@ -1573,7 +1577,7 @@ void SSL_trace(int write_p, int version, int content_type,
         break;
 
     case SSL3_RT_HANDSHAKE:
-        if (!ssl_print_handshake(bio, ssl, ssl->server ? write_p : !write_p,
+        if (!ssl_print_handshake(bio, sc, sc->server ? write_p : !write_p,
                                  msg, msglen, 4))
             BIO_printf(bio, "Message length parse error!\n");
         break;

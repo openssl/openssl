@@ -9,9 +9,10 @@
 
 #include "ssl_local.h"
 
-int ssl3_do_change_cipher_spec(SSL *s)
+int ssl3_do_change_cipher_spec(SSL_CONNECTION *s)
 {
     int i;
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     if (s->server)
         i = SSL3_CHANGE_CIPHER_SERVER_READ;
@@ -26,13 +27,13 @@ int ssl3_do_change_cipher_spec(SSL *s)
         }
 
         s->session->cipher = s->s3.tmp.new_cipher;
-        if (!s->method->ssl3_enc->setup_key_block(s)) {
+        if (!ssl->method->ssl3_enc->setup_key_block(s)) {
             /* SSLfatal() already called */
             return 0;
         }
     }
 
-    if (!s->method->ssl3_enc->change_cipher_state(s, i)) {
+    if (!ssl->method->ssl3_enc->change_cipher_state(s, i)) {
         /* SSLfatal() already called */
         return 0;
     }
@@ -40,13 +41,15 @@ int ssl3_do_change_cipher_spec(SSL *s)
     return 1;
 }
 
-int ssl3_send_alert(SSL *s, int level, int desc)
+int ssl3_send_alert(SSL_CONNECTION *s, int level, int desc)
 {
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
     /* Map tls/ssl alert value to correct one */
-    if (SSL_TREAT_AS_TLS13(s))
+    if (SSL_CONNECTION_TREAT_AS_TLS13(s))
         desc = tls13_alert_code(desc);
     else
-        desc = s->method->ssl3_enc->alert_value(desc);
+        desc = ssl->method->ssl3_enc->alert_value(desc);
     if (s->version == SSL3_VERSION && desc == SSL_AD_PROTOCOL_VERSION)
         desc = SSL_AD_HANDSHAKE_FAILURE; /* SSL 3.0 does not have
                                           * protocol_version alerts */
@@ -63,7 +66,7 @@ int ssl3_send_alert(SSL *s, int level, int desc)
     s->s3.send_alert[1] = desc;
     if (!RECORD_LAYER_write_pending(&s->rlayer)) {
         /* data still being written out? */
-        return s->method->ssl_dispatch_alert(s);
+        return ssl->method->ssl_dispatch_alert(ssl);
     }
     /*
      * else data is still being written out, we will get written some time in
@@ -78,31 +81,35 @@ int ssl3_dispatch_alert(SSL *s)
     size_t alertlen;
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
     size_t written;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    s->s3.alert_dispatch = 0;
+    if (sc == NULL)
+        return -1;
+
+    sc->s3.alert_dispatch = 0;
     alertlen = 2;
-    i = do_ssl3_write(s, SSL3_RT_ALERT, &s->s3.send_alert[0], &alertlen, 1, 0,
+    i = do_ssl3_write(sc, SSL3_RT_ALERT, &sc->s3.send_alert[0], &alertlen, 1, 0,
                       &written);
     if (i <= 0) {
-        s->s3.alert_dispatch = 1;
+        sc->s3.alert_dispatch = 1;
     } else {
         /*
          * Alert sent to BIO - now flush. If the message does not get sent due
          * to non-blocking IO, we will not worry too much.
          */
-        (void)BIO_flush(s->wbio);
+        (void)BIO_flush(sc->wbio);
 
-        if (s->msg_callback)
-            s->msg_callback(1, s->version, SSL3_RT_ALERT, s->s3.send_alert,
-                            2, s, s->msg_callback_arg);
+        if (sc->msg_callback)
+            sc->msg_callback(1, sc->version, SSL3_RT_ALERT, sc->s3.send_alert,
+                             2, s, sc->msg_callback_arg);
 
-        if (s->info_callback != NULL)
-            cb = s->info_callback;
+        if (sc->info_callback != NULL)
+            cb = sc->info_callback;
         else if (s->ctx->info_callback != NULL)
             cb = s->ctx->info_callback;
 
         if (cb != NULL) {
-            j = (s->s3.send_alert[0] << 8) | s->s3.send_alert[1];
+            j = (sc->s3.send_alert[0] << 8) | sc->s3.send_alert[1];
             cb(s, SSL_CB_WRITE_ALERT, j);
         }
     }

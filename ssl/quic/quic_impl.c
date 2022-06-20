@@ -11,14 +11,72 @@
 #include <openssl/objects.h>
 #include "quic_local.h"
 
-int ossl_quic_new(SSL *s)
+SSL *ossl_quic_new(SSL_CTX *ctx)
+{
+    QUIC_CONNECTION *qc;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *sc;
+
+    qc = OPENSSL_zalloc(sizeof(*qc));
+    if (qc == NULL)
+        goto err;
+
+    ssl = &qc->ssl;
+    if (!ossl_ssl_init(ssl, ctx, SSL_TYPE_QUIC_CONNECTION)) {
+        OPENSSL_free(qc);
+        ssl = NULL;
+        goto err;
+    }
+    qc->tls = ossl_ssl_connection_new(ctx);
+    if (qc->tls == NULL || (sc = SSL_CONNECTION_FROM_SSL(qc->tls)) == NULL)
+        goto err;
+    /* override the user_ssl of the inner connection */
+    sc->user_ssl = ssl;
+
+    /* We'll need to set proper TLS method on qc->tls here */
+    return ssl;
+err:
+    ossl_quic_free(ssl);
+    return NULL;
+}
+
+int ossl_quic_init(SSL *s)
 {
     return s->method->ssl_clear(s);
 }
 
-void ossl_quic_free(SSL *s)
+void ossl_quic_deinit(SSL *s)
 {
     return;
+}
+
+void ossl_quic_free(SSL *s)
+{
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (qc == NULL) {
+        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+
+        if (sc != NULL)
+            ossl_ssl_connection_free(s);
+        return;
+    }
+
+    SSL_free(qc->tls);
+    return;
+}
+
+int ossl_quic_reset(SSL *s)
+{
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (qc == NULL) {
+        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+
+        return sc != NULL ? ossl_ssl_connection_reset(s) : 0;
+    }
+
+    return ossl_ssl_connection_reset(qc->tls);
 }
 
 int ossl_quic_clear(SSL *s)
@@ -28,13 +86,23 @@ int ossl_quic_clear(SSL *s)
 
 int ossl_quic_accept(SSL *s)
 {
-    s->statem.in_init = 0;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_QUIC_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    sc->statem.in_init = 0;
     return 1;
 }
 
 int ossl_quic_connect(SSL *s)
 {
-    s->statem.in_init = 0;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_QUIC_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    sc->statem.in_init = 0;
     return 1;
 }
 
@@ -42,14 +110,15 @@ int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *readbytes)
 {
     int ret;
     BIO *rbio = SSL_get_rbio(s);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_QUIC_SSL(s);
 
-    if (rbio == NULL)
+    if (sc == NULL || rbio == NULL)
         return 0;
 
-    s->rwstate = SSL_READING;
+    sc->rwstate = SSL_READING;
     ret = BIO_read_ex(rbio, buf, len, readbytes);
     if (ret > 0 || !BIO_should_retry(rbio))
-        s->rwstate = SSL_NOTHING;
+        sc->rwstate = SSL_NOTHING;
     return ret <= 0 ? -1 : ret;
 }
 
@@ -62,14 +131,15 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
 {
     BIO *wbio = SSL_get_wbio(s);
     int ret;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_QUIC_SSL(s);
 
-    if (wbio == NULL)
+    if (sc == NULL || wbio == NULL)
         return 0;
 
-    s->rwstate = SSL_WRITING;
+    sc->rwstate = SSL_WRITING;
     ret = BIO_write_ex(wbio, buf, len, written);
     if (ret > 0 || !BIO_should_retry(wbio))
-        s->rwstate = SSL_NOTHING;
+        sc->rwstate = SSL_NOTHING;
     return ret;
 }
 
@@ -80,12 +150,17 @@ int ossl_quic_shutdown(SSL *s)
 
 long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_QUIC_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
     switch(cmd) {
     case SSL_CTRL_CHAIN:
         if (larg)
-            return ssl_cert_set1_chain(s, NULL, (STACK_OF(X509) *)parg);
+            return ssl_cert_set1_chain(sc, NULL, (STACK_OF(X509) *)parg);
         else
-            return ssl_cert_set0_chain(s, NULL, (STACK_OF(X509) *)parg);
+            return ssl_cert_set0_chain(sc, NULL, (STACK_OF(X509) *)parg);
     }
     return 0;
 }
