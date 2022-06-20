@@ -1270,6 +1270,7 @@ static int mac_test_parse(EVP_TEST *t,
         return mdata->no_reinit = 1;
     if (strcmp(keyword, "Ctrl") == 0) {
         char *data = OPENSSL_strdup(value);
+
         if (data == NULL)
             return -1;
         return sk_OPENSSL_STRING_push(mdata->controls, data) != 0;
