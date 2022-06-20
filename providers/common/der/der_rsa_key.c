@@ -347,8 +347,8 @@ int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
 
     return ossl_DER_w_begin_sequence(pkt, tag)
         && (trailerfield == default_trailerfield
-            || ossl_DER_w_ulong(pkt, 3, trailerfield))
-        && (saltlen == default_saltlen || ossl_DER_w_ulong(pkt, 2, saltlen))
+            || ossl_DER_w_uint32(pkt, 3, trailerfield))
+        && (saltlen == default_saltlen || ossl_DER_w_uint32(pkt, 2, saltlen))
         && DER_w_MaskGenAlgorithm(pkt, 1, pss)
         && (hashalg_nid == default_hashalg_nid
             || ossl_DER_w_precompiled(pkt, 0, hashalg, hashalg_sz))
