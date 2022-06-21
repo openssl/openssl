@@ -9,6 +9,7 @@ openssl-speed - test library performance
 
 B<openssl speed>
 [B<-help>]
+[B<-config> I<filename>]
 [B<-elapsed>]
 [B<-evp> I<algo>]
 [B<-hmac> I<algo>]
@@ -38,6 +39,12 @@ This command is used to test the performance of cryptographic algorithms.
 =item B<-help>
 
 Print out a usage message.
+
+=item B<-config> I<filename>
+
+Specifies the configuration file to use.
+Optional; for a description of the default value,
+see L<openssl(1)/COMMAND SUMMARY>.
 
 =item B<-elapsed>
 

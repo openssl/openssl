@@ -211,7 +211,7 @@ static int opt_found(const char *name, unsigned int *result,
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_ELAPSED, OPT_EVP, OPT_HMAC, OPT_DECRYPT, OPT_ENGINE, OPT_MULTI,
-    OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM, OPT_PROV_ENUM,
+    OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM, OPT_PROV_ENUM, OPT_CONFIG,
     OPT_PRIMES, OPT_SECONDS, OPT_BYTES, OPT_AEAD, OPT_CMAC
 } OPTION_CHOICE;
 
@@ -234,6 +234,7 @@ const OPTIONS speed_options[] = {
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"primes", OPT_PRIMES, 'p', "Specify number of primes (for RSA only)"},
+    OPT_CONFIG_OPTION,
 
     OPT_SECTION("Selection"),
     {"evp", OPT_EVP, 's', "Use EVP-named cipher or digest"},
@@ -1342,6 +1343,7 @@ static EVP_PKEY *get_ecdsa(const EC_CURVE *curve)
 
 int speed_main(int argc, char **argv)
 {
+    CONF *conf = NULL;
     ENGINE *e = NULL;
     loopargs_t *loopargs = NULL;
     const char *prog;
@@ -1596,6 +1598,11 @@ int speed_main(int argc, char **argv)
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
+                goto end;
+            break;
+        case OPT_CONFIG:
+            conf = app_load_config_modules(opt_arg());
+            if (conf == NULL)
                 goto end;
             break;
         case OPT_PRIMES:
@@ -3350,6 +3357,7 @@ skip_hmac:
     release_engine(e);
     EVP_CIPHER_free(evp_cipher);
     EVP_MAC_free(mac);
+    NCONF_free(conf);
     return ret;
 }
 
