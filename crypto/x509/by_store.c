@@ -122,7 +122,7 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
             char *data = OPENSSL_strdup(argp);
 
             if (data == NULL) {
-                return -1;
+                return 0;
             }
             if (uris == NULL) {
                 uris = sk_OPENSSL_STRING_new_null();
