@@ -305,7 +305,7 @@ int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
     saltlen = ossl_rsa_pss_params_30_saltlen(pss);
     trailerfield = ossl_rsa_pss_params_30_trailerfield(pss);
 
-    if (saltlen < 0) {
+    if (saltlen < 0 || (unsigned int)saltlen > UINT32_MAX) {
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_SALT_LENGTH);
         return 0;
     }
@@ -347,8 +347,8 @@ int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
 
     return ossl_DER_w_begin_sequence(pkt, tag)
         && (trailerfield == default_trailerfield
-            || ossl_DER_w_uint32(pkt, 3, trailerfield))
-        && (saltlen == default_saltlen || ossl_DER_w_uint32(pkt, 2, saltlen))
+            || ossl_DER_w_uint32(pkt, 3, (uint32_t)trailerfield))
+        && (saltlen == default_saltlen || ossl_DER_w_uint32(pkt, 2, (uint32_t)saltlen))
         && DER_w_MaskGenAlgorithm(pkt, 1, pss)
         && (hashalg_nid == default_hashalg_nid
             || ossl_DER_w_precompiled(pkt, 0, hashalg, hashalg_sz))
