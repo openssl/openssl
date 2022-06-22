@@ -407,8 +407,6 @@ struct bio_dgram_sctp_prinfo {
 
 # define BIO_C_SET_TFO                           156 /* like BIO_C_SET_NBIO */
 
-# define BIO_C_SET_INITIAL_DGRAM_SIZE            157
-
 # define BIO_set_app_data(s,arg)         BIO_set_ex_data(s,0,arg)
 # define BIO_get_app_data(s)             BIO_get_ex_data(s,0)
 
@@ -525,9 +523,6 @@ int BIO_read_filename(BIO *b, const char *name);
                                           (char *)(pp))
 # define BIO_set_mem_eof_return(b,v) \
                                 BIO_ctrl(b,BIO_C_SET_BUF_MEM_EOF_RETURN,v,NULL)
-
-# define BIO_set_initial_dgram_size(b,n) \
-                                BIO_ctrl(b, BIO_C_SET_INITIAL_DGRAM_SIZE, n, NULL)
 
 /* For the BIO_f_buffer() type */
 # define BIO_get_buffer_num_lines(b)     BIO_ctrl(b,BIO_C_GET_BUFF_NUM_LINES,0,NULL)
@@ -654,6 +649,7 @@ int BIO_nwrite0(BIO *bio, char **buf);
 int BIO_nwrite(BIO *bio, char **buf, int num);
 
 const BIO_METHOD *BIO_s_mem(void);
+const BIO_METHOD *BIO_s_dgram_mem(void);
 const BIO_METHOD *BIO_s_secmem(void);
 BIO *BIO_new_mem_buf(const void *buf, int len);
 # ifndef OPENSSL_NO_SOCK
