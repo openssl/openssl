@@ -66,7 +66,7 @@ const OPTIONS dgst_options[] = {
     {"keyform", OPT_KEYFORM, 'f', "Key file format (ENGINE, other values ignored)"},
     {"hex", OPT_HEX, '-', "Print as hex dump"},
     {"binary", OPT_BINARY, '-', "Print in binary form"},
-    {"xoflen", OPT_XOFLEN, 'p', "Output length for XOF algorithms"},
+    {"xoflen", OPT_XOFLEN, 'p', "Output length for XOF algorithms. Use 32 or higher to ensure a security strength of 128 bits"},
     {"d", OPT_DEBUG, '-', "Print debug info"},
     {"debug", OPT_DEBUG, '-', "Print debug info"},
 
@@ -407,10 +407,27 @@ int dgst_main(int argc, char **argv)
             BIO_printf(bio_err, "Length can only be specified for XOF\n");
             goto end;
         }
+        /*
+         * Signing using XOF is not supported by any algorithms currently since
+         * each algorithm only calls EVP_DigestFinal_ex() in their sign_final
+         * and verify_final methods.
+         */
         if (sigkey != NULL) {
             BIO_printf(bio_err, "Signing key cannot be specified for XOF\n");
             goto end;
         }
+    } else {
+        /*
+         * Print a warning if the default security strength is less than 128 bits,
+         * but don't fail if the -xoflen was not specified.
+         */
+        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF)
+                && EVP_MD_get_size(md) < 32)
+            BIO_printf(bio_err,
+                       "Warning: The -xoflen option was not set.\n"
+                       "By default this XOF algorithm has a bit length which results in a\n"
+                       "security strength less than 128 bits.\n"
+                       "The xoflen should be set to at least 32.\n");
     }
 
     if (argc == 0) {

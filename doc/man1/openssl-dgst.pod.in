@@ -86,7 +86,15 @@ Output the digest or signature in binary form.
 
 =item B<-xoflen> I<length>
 
-Set the output length for XOF algorithms, such as B<shake128>.
+Set the output length for XOF algorithms, such as B<shake128> and B<shake256>.
+This option is not supported for signing operations.
+It is recommended to set this value to at least 32 to ensure a security strength
+of 128 bits.
+
+B<shake128> defaults to 16 (which is only a security strength of 64 bits).
+
+B<shake256> defaults to 32. Use a value of at least 64 to ensure it uses the
+maximum security strength of 256 bits.
 
 =item B<-r>
 
