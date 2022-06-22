@@ -794,7 +794,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
     }
 
     /* extract the order */
-    if ((a = ASN1_INTEGER_to_BN(params->order, a)) == NULL) {
+    if (ASN1_INTEGER_to_BN(params->order, a) == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, ERR_R_ASN1_LIB);
         goto err;
     }
