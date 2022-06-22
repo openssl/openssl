@@ -27,6 +27,8 @@ jobs:
           }, {
             cc: gcc-10
           }, {
+            cc: gcc-11
+          }, {
             cc: clang-6.0
           }, {
             cc: clang-7
@@ -46,6 +48,12 @@ jobs:
     steps:
     - name: install packages
       run: |
+        echo "deb https://ppa.launchpadcontent.net/ubuntu-toolchain-r/ppa/ubuntu focal main" | sudo tee /etc/apt/sources.list.d/gcc.list
+        echo "deb-src https://ppa.launchpadcontent.net/ubuntu-toolchain-r/ppa/ubuntu focal main" | sudo tee /etc/apt/sources.list.d/gcc.list
+
+        # From https://launchpad.net/~ubuntu-toolchain-r/+archive/ubuntu/ppa
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 60C317803A41BA51845E371A1E9377A2BA9EF27F
+
         sudo apt-get update
         sudo apt-get -yq --force-yes install ${{ matrix.zoo.cc }}
     - uses: actions/checkout@v2
