@@ -27,14 +27,14 @@ PEM_X509_INFO_read_ex, PEM_X509_INFO_read, PEM_X509_INFO_read_bio_ex, PEM_X509_I
 
 PEM_X509_INFO_read_ex() loads the B<X509_INFO> objects from a file I<fp>.
 
-PEM_X509_INFO_read() is similar to PEM_X509_INFO_read_ex() 
-but uses the default (NULL) library context I<libctx> 
+PEM_X509_INFO_read() is similar to PEM_X509_INFO_read_ex()
+but uses the default (NULL) library context I<libctx>
 and empty property query I<propq>.
 
 PEM_X509_INFO_read_bio_ex() loads the B<X509_INFO> objects using a bio I<bp>.
 
-PEM_X509_INFO_read_bio() is similar to PEM_X509_INFO_read_bio_ex() 
-but uses the default (NULL) library context I<libctx> 
+PEM_X509_INFO_read_bio() is similar to PEM_X509_INFO_read_bio_ex()
+but uses the default (NULL) library context I<libctx>
 and empty property query I<propq>.
 
 Each of the loaded B<X509_INFO> objects can contain a CRL, a certificate,
@@ -56,7 +56,7 @@ algorithms from providers.
 
 =head1 RETURN VALUES
 
-PEM_X509_INFO_read_ex(), PEM_X509_INFO_read(), 
+PEM_X509_INFO_read_ex(), PEM_X509_INFO_read(),
 PEM_X509_INFO_read_bio_ex() and PEM_X509_INFO_read_bio() return
 a stack of B<X509_INFO> objects or NULL on failure.
 
