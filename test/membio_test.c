@@ -14,7 +14,7 @@
 
 static int test_dgram(void)
 {
-    BIO *bio = BIO_new(BIO_s_mem()), *rbio = NULL;
+    BIO *bio = BIO_new(BIO_s_dgram_mem()), *rbio = NULL;
     int testresult = 0;
     const char msg1[] = "12345656";
     const char msg2[] = "abcdefghijklmno";
@@ -29,21 +29,8 @@ static int test_dgram(void)
     if (!TEST_ptr(rbio))
         goto err;
 
-    /* Attempting to convert a read-only BIO to datagram semantics should fail */
-    if (!TEST_int_le(BIO_set_initial_dgram_size(rbio, 3), 0))
-        goto err;
-
     /* Seeting the EOF return value on a non datagram mem BIO should be fine */
     if (!TEST_int_gt(BIO_set_mem_eof_return(rbio, 0), 0))
-        goto err;
-
-    /* The initial dgram size must be greater than 0 */
-    if (!TEST_int_le(BIO_set_initial_dgram_size(bio, -1), 0)
-            || !TEST_int_le(BIO_set_initial_dgram_size(bio, 0), 0))
-        goto err;
-
-    /* Handle 3 dgrams initially */
-    if (!TEST_int_gt(BIO_set_initial_dgram_size(bio, 3), 0))
         goto err;
 
     /* Setting the EOF return value on a datagram mem BIO should fail */
@@ -57,7 +44,6 @@ static int test_dgram(void)
         goto err;
     if (!TEST_int_eq(BIO_write(bio, msg3, sizeof(msg3)), sizeof(msg3)))
         goto err;
-    /* Writing more dgrams that the initial buffer size should be fine */
     if (!TEST_int_eq(BIO_write(bio, msg4, sizeof(msg4)), sizeof(msg4)))
         goto err;
 
@@ -69,8 +55,7 @@ static int test_dgram(void)
             || !TEST_int_eq(BIO_read(bio, buf, sizeof(buf)), sizeof(msg3))
             || !TEST_mem_eq(buf, sizeof(msg3), msg3, sizeof(msg3))
             || !TEST_int_eq(BIO_read(bio, buf, sizeof(buf)), sizeof(msg4))
-            || !TEST_mem_eq(buf, sizeof(msg4), msg4, sizeof(msg4))
-            || !TEST_int_lt(BIO_read(bio, buf, sizeof(buf)), 0))
+            || !TEST_mem_eq(buf, sizeof(msg4), msg4, sizeof(msg4)))
         goto err;
 
     /* Interleaving writes and reads should be fine */
@@ -107,11 +92,11 @@ static int test_dgram(void)
     /*
      * Writing a zero length datagram will return zero, but no datagrams will
      * be written. Attempting to read when there are no datagrams to read should
-     * return a negative result and indicate eof. Retry flags will be set.
+     * return a negative result, but not eof. Retry flags will be set.
      */
     if (!TEST_int_eq(BIO_write(bio, NULL, 0), 0)
             || !TEST_int_lt(BIO_read(bio, buf, sizeof(buf)), 0)
-            || !TEST_true(BIO_eof(bio))
+            || !TEST_false(BIO_eof(bio))
             || !TEST_true(BIO_should_retry(bio)))
         goto err;
 
