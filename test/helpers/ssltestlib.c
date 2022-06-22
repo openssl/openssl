@@ -471,6 +471,7 @@ int mempacket_swap_epoch(BIO *bio)
             thispkt = OPENSSL_malloc(sizeof(*thispkt));
             if (thispkt == NULL)
                 return 0;
+            thispkt->type = INJECT_PACKET;
             thispkt->data = tmp;
             thispkt->len = prevlen;
             thispkt->num = pktnum + 1;
