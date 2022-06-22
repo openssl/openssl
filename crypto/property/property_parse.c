@@ -600,7 +600,7 @@ static void put_str(const char *str, char **buf, size_t *remain, size_t *needed)
         len = *remain - 1;
 
     if (len > 0) {
-        strncpy(*buf, str, len);
+        memcpy(*buf, str, len);
         *buf += len;
         *remain -= len;
     }
