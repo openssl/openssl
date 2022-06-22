@@ -480,7 +480,7 @@ static int test_swap_epoch(void)
     if (!TEST_int_le(SSL_connect(cssl), 0))
         goto end;
 
-    /* Recv fligt 1, send flight 2: ServerHello, Certificate, ServerHelloDone */
+    /* Recv flight 1, send flight 2: ServerHello, Certificate, ServerHelloDone */
     if (!TEST_int_le(SSL_accept(sssl), 0))
         goto end;
 

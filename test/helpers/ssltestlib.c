@@ -418,7 +418,7 @@ int mempacket_swap_epoch(BIO *bio)
 {
     MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
     MEMPACKET *thispkt;
-    int rem, len, prevlen, pktnum;
+    int rem, len, prevlen = 0, pktnum;
     unsigned char *rec, *prevrec = NULL, *tmp;
     unsigned int epoch;
     int numpkts = sk_MEMPACKET_num(ctx->pkts);
