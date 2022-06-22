@@ -1,6 +1,5 @@
-state: draft
----
-# RX depacketizer
+RX depacketizer
+===============
 
 This component takes a QUIC packet and parses the frames contained therein,
 to be forwarded to appropriate other components for further processing.
@@ -8,7 +7,8 @@ to be forwarded to appropriate other components for further processing.
 In the [overview], this is called the "RX Frame Handler".  The name "RX
 depacketizer" was chosen to reflect the kinship with the [TX packetizer].
 
-## Structures
+Structures
+----------
 
 ### Connection
 
@@ -86,7 +86,8 @@ struct ossl_quic_packet_st {
 typedef struct ossl_quic_packet_st OSSL_QUIC_PACKET;
 ```
 
-## Interactions
+Interactions
+------------
 
 The RX depacketizer receives a packet from an QUIC Read Record Layer, and
 the processes frames in two phases:
@@ -116,7 +117,6 @@ interact with:
     talking directly with, so it's possible that the Connection manager will
     turn out to be the Handshake manager.
 -   Stream SSL objects, to pass the stream data to.
-
 
 ### Receiving data
 
