@@ -66,7 +66,7 @@ const OPTIONS dgst_options[] = {
     {"keyform", OPT_KEYFORM, 'f', "Key file format (ENGINE, other values ignored)"},
     {"hex", OPT_HEX, '-', "Print as hex dump"},
     {"binary", OPT_BINARY, '-', "Print in binary form"},
-    {"xoflen", OPT_XOFLEN, 'p', "Output length for XOF algorithms"},
+    {"xoflen", OPT_XOFLEN, 'p', "Output length for XOF algorithms. To obtain the maximum security strength set this to 32 (or greater) for SHAKE128, and 64 (or greater) for SHAKE256"},
     {"d", OPT_DEBUG, '-', "Print debug info"},
     {"debug", OPT_DEBUG, '-', "Print debug info"},
 
@@ -418,6 +418,11 @@ int dgst_main(int argc, char **argv)
             BIO_printf(bio_err, "Length can only be specified for XOF\n");
             goto end;
         }
+        /*
+         * Signing using XOF is not supported by any algorithms currently since
+         * each algorithm only calls EVP_DigestFinal_ex() in their sign_final
+         * and verify_final methods.
+         */
         if (sigkey != NULL) {
             BIO_printf(bio_err, "Signing key cannot be specified for XOF\n");
             goto end;
