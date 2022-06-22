@@ -220,6 +220,9 @@ int ossl_rsaz_mod_exp_avx512_x2(BN_ULONG *res1,
     from_words52(res1, factor_size, rr1_red);
     from_words52(res2, factor_size, rr2_red);
 
+    /* bn_reduce_once_in_place expects number of BN_ULONG, not bit size */
+    factor_size /= sizeof(BN_ULONG) * 8;
+
     bn_reduce_once_in_place(res1, /*carry=*/0, m1, storage, factor_size);
     bn_reduce_once_in_place(res2, /*carry=*/0, m2, storage, factor_size);
 
