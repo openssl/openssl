@@ -421,7 +421,7 @@ int dgst_main(int argc, char **argv)
          * Print a warning if the default security strength is less than 128 bits,
          * but don't fail if the -xoflen was not specified.
          */
-        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF)
+        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0
                 && EVP_MD_get_size(md) < 32)
             BIO_printf(bio_err,
                        "Warning: The -xoflen option was not set.\n"
