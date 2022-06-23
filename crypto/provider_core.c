@@ -639,7 +639,8 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
         if (!ossl_provider_up_ref(actualtmp)) {
             ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
             actualtmp = NULL;
-            goto err;
+            ossl_provider_free(*actualprov);
+            return 0;
         }
         *actualprov = actualtmp;
     }
