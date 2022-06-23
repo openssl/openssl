@@ -42,6 +42,22 @@ static unsigned char certstatus[] = {
 
 #define RECORD_SEQUENCE 10
 
+static const char dummy_cookie[] = "0123456";
+
+static int generate_cookie_cb(SSL *ssl, unsigned char *cookie,
+                              unsigned int *cookie_len)
+{
+    memcpy(cookie, dummy_cookie, sizeof(dummy_cookie));
+    *cookie_len = sizeof(dummy_cookie);
+    return 1;
+}
+
+static int verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
+                            unsigned int cookie_len)
+{
+    return TEST_mem_eq(cookie, cookie_len, dummy_cookie, sizeof(dummy_cookie));
+}
+
 static unsigned int timer_cb(SSL *s, unsigned int timer_us)
 {
     ++timer_cb_count;
@@ -127,6 +143,17 @@ static int test_dtls_unprocessed(int testidx)
     return testresult;
 }
 
+/* One record for the cookieless initial ClientHello */
+#define CLI_TO_SRV_COOKIE_EXCH 1
+
+/*
+ * In a resumption handshake we use 2 records for the initial ClientHello in
+ * this test because we are using a very small MTU and the ClientHello is
+ * bigger than in the non resumption case.
+ */
+#define CLI_TO_SRV_RESUME_COOKIE_EXCH 2
+#define SRV_TO_CLI_COOKIE_EXCH 1
+
 #define CLI_TO_SRV_EPOCH_0_RECS 3
 #define CLI_TO_SRV_EPOCH_1_RECS 1
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
@@ -141,7 +168,8 @@ static int test_dtls_unprocessed(int testidx)
 #endif
 #define SRV_TO_CLI_EPOCH_1_RECS 1
 #define TOTAL_FULL_HAND_RECORDS \
-            (CLI_TO_SRV_EPOCH_0_RECS + CLI_TO_SRV_EPOCH_1_RECS + \
+            (CLI_TO_SRV_COOKIE_EXCH + SRV_TO_CLI_COOKIE_EXCH + \
+             CLI_TO_SRV_EPOCH_0_RECS + CLI_TO_SRV_EPOCH_1_RECS + \
              SRV_TO_CLI_EPOCH_0_RECS + SRV_TO_CLI_EPOCH_1_RECS)
 
 #define CLI_TO_SRV_RESUME_EPOCH_0_RECS 3
@@ -149,7 +177,8 @@ static int test_dtls_unprocessed(int testidx)
 #define SRV_TO_CLI_RESUME_EPOCH_0_RECS 2
 #define SRV_TO_CLI_RESUME_EPOCH_1_RECS 1
 #define TOTAL_RESUME_HAND_RECORDS \
-            (CLI_TO_SRV_RESUME_EPOCH_0_RECS + CLI_TO_SRV_RESUME_EPOCH_1_RECS + \
+            (CLI_TO_SRV_RESUME_COOKIE_EXCH + SRV_TO_CLI_COOKIE_EXCH + \
+             CLI_TO_SRV_RESUME_EPOCH_0_RECS + CLI_TO_SRV_RESUME_EPOCH_1_RECS + \
              SRV_TO_CLI_RESUME_EPOCH_0_RECS + SRV_TO_CLI_RESUME_EPOCH_1_RECS)
 
 #define TOTAL_RECORDS (TOTAL_FULL_HAND_RECORDS + TOTAL_RESUME_HAND_RECORDS)
@@ -167,7 +196,8 @@ static int test_dtls_drop_records(int idx)
     int testresult = 0;
     int epoch = 0;
     SSL_SESSION *sess = NULL;
-    int cli_to_srv_epoch0, cli_to_srv_epoch1, srv_to_cli_epoch0;
+    int cli_to_srv_cookie, cli_to_srv_epoch0, cli_to_srv_epoch1;
+    int srv_to_cli_epoch0;
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
@@ -185,6 +215,10 @@ static int test_dtls_drop_records(int idx)
 
     if (!TEST_true(SSL_CTX_set_dh_auto(sctx, 1)))
         goto end;
+
+    SSL_CTX_set_options(sctx, SSL_OP_COOKIE_EXCHANGE);
+    SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
+    SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_cb);
 
     if (idx >= TOTAL_FULL_HAND_RECORDS) {
         /* We're going to do a resumption handshake. Get a session first. */
@@ -204,11 +238,13 @@ static int test_dtls_drop_records(int idx)
         cli_to_srv_epoch0 = CLI_TO_SRV_RESUME_EPOCH_0_RECS;
         cli_to_srv_epoch1 = CLI_TO_SRV_RESUME_EPOCH_1_RECS;
         srv_to_cli_epoch0 = SRV_TO_CLI_RESUME_EPOCH_0_RECS;
+        cli_to_srv_cookie = CLI_TO_SRV_RESUME_COOKIE_EXCH;
         idx -= TOTAL_FULL_HAND_RECORDS;
     } else {
         cli_to_srv_epoch0 = CLI_TO_SRV_EPOCH_0_RECS;
         cli_to_srv_epoch1 = CLI_TO_SRV_EPOCH_1_RECS;
         srv_to_cli_epoch0 = SRV_TO_CLI_EPOCH_0_RECS;
+        cli_to_srv_cookie = CLI_TO_SRV_COOKIE_EXCH;
     }
 
     c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
@@ -229,18 +265,18 @@ static int test_dtls_drop_records(int idx)
     DTLS_set_timer_cb(serverssl, timer_cb);
 
     /* Work out which record to drop based on the test number */
-    if (idx >= cli_to_srv_epoch0 + cli_to_srv_epoch1) {
+    if (idx >= cli_to_srv_cookie + cli_to_srv_epoch0 + cli_to_srv_epoch1) {
         mempackbio = SSL_get_wbio(serverssl);
-        idx -= cli_to_srv_epoch0 + cli_to_srv_epoch1;
-        if (idx >= srv_to_cli_epoch0) {
+        idx -= cli_to_srv_cookie + cli_to_srv_epoch0 + cli_to_srv_epoch1;
+        if (idx >= SRV_TO_CLI_COOKIE_EXCH + srv_to_cli_epoch0) {
             epoch = 1;
-            idx -= srv_to_cli_epoch0;
+            idx -= SRV_TO_CLI_COOKIE_EXCH + srv_to_cli_epoch0;
         }
     } else {
         mempackbio = SSL_get_wbio(clientssl);
-        if (idx >= cli_to_srv_epoch0) {
+        if (idx >= cli_to_srv_cookie + cli_to_srv_epoch0) {
             epoch = 1;
-            idx -= cli_to_srv_epoch0;
+            idx -= cli_to_srv_cookie + cli_to_srv_epoch0;
         }
          mempackbio = BIO_next(mempackbio);
     }
@@ -269,22 +305,6 @@ static int test_dtls_drop_records(int idx)
     return testresult;
 }
 #endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
-
-static const char dummy_cookie[] = "0123456";
-
-static int generate_cookie_cb(SSL *ssl, unsigned char *cookie,
-                              unsigned int *cookie_len)
-{
-    memcpy(cookie, dummy_cookie, sizeof(dummy_cookie));
-    *cookie_len = sizeof(dummy_cookie);
-    return 1;
-}
-
-static int verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
-                            unsigned int cookie_len)
-{
-    return TEST_mem_eq(cookie, cookie_len, dummy_cookie, sizeof(dummy_cookie));
-}
 
 static int test_cookie(void)
 {
