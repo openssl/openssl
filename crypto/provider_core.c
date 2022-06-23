@@ -641,7 +641,7 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
         if (!ossl_provider_up_ref(actualtmp)) {
             ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
             actualtmp = NULL;
-            goto err;
+            return 0;
         }
         *actualprov = actualtmp;
     }
@@ -665,8 +665,6 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
 
  err:
     CRYPTO_THREAD_unlock(store->lock);
-    if (actualprov != NULL)
-        ossl_provider_free(*actualprov);
     return 0;
 }
 
