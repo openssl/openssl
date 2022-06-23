@@ -19,41 +19,59 @@ jobs:
       matrix:
         zoo: [
           {
-            cc: gcc-7
+            cc: gcc-7,
+            distro: ubuntu-20.04
           }, {
-            cc: gcc-8
+            cc: gcc-8,
+            distro: ubuntu-20.04
           }, {
-            cc: gcc-9
+            cc: gcc-9,
+            distro: ubuntu-20.04
           }, {
-            cc: gcc-10
+            cc: gcc-10,
+            distro: ubuntu-20.04
           }, {
-            cc: gcc-11
+            cc: gcc-11,
+            distro: ubuntu-22.04
           }, {
-            cc: clang-6.0
+            cc: gcc-12,
+            distro: ubuntu-22.04
           }, {
-            cc: clang-7
+            cc: clang-6.0,
+            distro: ubuntu-20.04
           }, {
-            cc: clang-8
+            cc: clang-7,
+            distro: ubuntu-20.04
           }, {
-            cc: clang-9
+            cc: clang-8,
+            distro: ubuntu-20.04
           }, {
-            cc: clang-10
+            cc: clang-9,
+            distro: ubuntu-20.04
           }, {
-            cc: clang-11
+            cc: clang-10,
+            distro: ubuntu-20.04
           }, {
-            cc: clang-12
+            cc: clang-11,
+            distro: ubuntu-20.04
+          }, {
+            cc: clang-12,
+            distro: ubuntu-20.04
+          }, {
+            cc: clang-13,
+            distro: ubuntu-22.04
+          }, {
+            cc: clang-14,
+            distro: ubuntu-22.04
           }
         ]
-    runs-on: ubuntu-latest
+    # We set per-compiler now to allow testing with both older and newer sets
+    # Often, the full range of oldest->newest compilers we want aren't available
+    # in a single version of Ubuntu.
+    runs-on: ${{ matrix.zoo.distro }}
     steps:
     - name: install packages
       run: |
-        echo "deb https://ppa.launchpadcontent.net/ubuntu-toolchain-r/ppa/ubuntu focal main" | sudo tee /etc/apt/sources.list.d/gcc.list
-        echo "deb-src https://ppa.launchpadcontent.net/ubuntu-toolchain-r/ppa/ubuntu focal main" | sudo tee /etc/apt/sources.list.d/gcc.list
-
-        # From https://launchpad.net/~ubuntu-toolchain-r/+archive/ubuntu/ppa
-        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 60C317803A41BA51845E371A1E9377A2BA9EF27F
-
         sudo apt-get update
         sudo apt-get -yq --force-yes install ${{ matrix.zoo.cc }}
     - uses: actions/checkout@v2
