@@ -196,7 +196,7 @@ subtest "SHAKE digest generation with no xoflen set `dgst` CLI" => sub {
 };
 
 SKIP: {
-    skip "EdDSA is not supported by this OpenSSL build", 1
+    skip "ECDSA is not supported by this OpenSSL build", 1
         if disabled("ec");
 
     subtest "signing with xoflen is not supported `dgst` CLI" => sub {
