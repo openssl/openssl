@@ -403,7 +403,7 @@ int dgst_main(int argc, char **argv)
         md_name = EVP_MD_get0_name(md);
 
     if (xoflen > 0) {
-        if (!(EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF)) {
+        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) == 0) {
             BIO_printf(bio_err, "Length can only be specified for XOF\n");
             goto end;
         }
@@ -421,13 +421,14 @@ int dgst_main(int argc, char **argv)
          * Print a warning if the default security strength is less than 128 bits,
          * but don't fail if the -xoflen was not specified.
          */
-        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0
-                && EVP_MD_get_size(md) < 32)
+        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0)
             BIO_printf(bio_err,
                        "Warning: The -xoflen option was not set.\n"
-                       "By default this XOF algorithm has a bit length which results in a\n"
-                       "security strength less than 128 bits.\n"
-                       "The xoflen should be set to at least 32.\n");
+                       "By default the xoflen is set to half of the maximum security strength\n"
+                       "SHAKE256 should set this value to 64 to obtain the"
+                       "maximum security strength of 256 bits.\n"
+                       "SHAKE128 should set this value to 32 to obtain the"
+                       "maximum security strength of 128 bits.\n");
     }
 
     if (argc == 0) {
