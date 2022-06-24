@@ -1,6 +1,8 @@
 QUIC ACK Manager
 ================
 
+![(Overview block diagram.)](images/ackm.png "QUIC ACK Manager Block Diagram")
+
 The QUIC ACK manager is responsible for, on the TX side:
 
   - Handling received ACK frames
@@ -182,8 +184,13 @@ This must be called whenever a packet is received. It should be called after
 Returns 1 on success.
 
 ```c
+#define QUIC_ACKM_ECN_NONE      0
+#define QUIC_ACKM_ECN_ECT1      1
+#define QUIC_ACKM_ECN_ECT0      2
+#define QUIC_ACKM_ECN_ECNCE     3
+
 typedef struct quic_ackm_rx_pkt_st {
-    /* Thje packet number of the received packet. */
+    /* The packet number of the received packet. */
     uint64_t pkt_num;
 
     /* The time at which the packet was received. */
@@ -196,7 +203,13 @@ typedef struct quic_ackm_rx_pkt_st {
     unsigned int pkt_space :2;
 
     /* 1 if the packet has one or more ACK-eliciting frames. */
-   unsigned int is_ack_eliciting :1;
+    unsigned int is_ack_eliciting :1;
+
+    /*
+     * One of the QUIC_ACKM_ECN_* values. This is the ECN labelling applied
+     * to the received packet. If unknown, use QUIC_ACKM_ECN_NONE.
+     */
+    unsigned int ecn :2;
 } QUIC_ACKM_RX_PKT;
 
 int QUIC_ACKM_on_rx_packet(QUIC_ACKM *ackm, const QUIC_ACKM_RX_PKT *pkt);
@@ -236,7 +249,7 @@ typedef struct quic_ackm_ack {
      *
      * As such, ack_ranges[0].end is always the highest packet number
      * being acknowledged and ack_ranges[num_ack_ranges-1].start is
-     * aalways the lowest packet number being acknowledged.
+     * always the lowest packet number being acknowledged.
      *
      * num_ack_ranges must be greater than zero, as an ACK frame must
      * acknowledge at least one packet number.
@@ -246,6 +259,8 @@ typedef struct quic_ackm_ack {
 
     OSSL_TIME                   delay_time;
     uint64_t                    ect0, ect1, ecnce;
+    /* 1 if the ect0, ect1 and ecnce fields are valid */
+    char                        ecn_present;
 } QUIC_ACKM_ACK;
 
 int QUIC_ACKM_on_rx_ack_frame(QUIC_ACKM *ackm, const QUIC_ACKM_ACK *ack,
@@ -265,11 +280,11 @@ Returns 1 on success.
 int QUIC_ACKM_on_pkt_space_discarded(QUIC_ACKM *ackm, int pkt_space);
 ```
 
-### On Handshake Connfirmed
+### On Handshake Confirmed
 
-This should be called by the user when the QUIC handshake is confirmed. The PTO
-algorithm behaves differently depending on whether the QUIC handshake is
-confirmed yet.
+This should be called by the user when the QUIC handshake is confirmed. The
+Probe Timeout (PTO) algorithm behaves differently depending on whether the QUIC
+handshake is confirmed yet.
 
 Returns 1 on success.
 
@@ -309,8 +324,9 @@ OSSL_TIME QUIC_ACKM_get_loss_detection_timeout(QUIC_ACKM *ackm);
 This returns a pointer to a `QUIC_ACKM_ACK` structure representing the
 information which should be packed into an ACK frame and transmitted.
 
-If no new ACK frame is currently needed, returns NULL. After calling this
-function, calling the function immediately again will return NULL.
+This generates an ACK frame regardless of whether the ACK manager thinks one
+should currently be sent. To determine if the ACK manager thinks an ACK frame
+should be sent, use `QUIC_ACKM_is_ack_desired`, discussed below.
 
 The structure pointed to by the returned pointer, and the referenced ACK range
 structures, are guaranteed to remain valid until the next call to any
@@ -320,7 +336,39 @@ This function is used to provide ACK frames for acknowledging packets which have
 been received and notified to the ACK manager via `QUIC_ACKM_on_rx_packet`.
 
 ```c
-const QUIC_ACKM_ACK *QUIC_ACKM_get_ack_frame(QUIC_ACKM *ackm);
+const QUIC_ACKM_ACK *QUIC_ACKM_get_ack_frame(QUIC_ACKM *ackm, int pkt_space);
+```
+
+### Is ACK Desired
+
+This returns 1 if the ACK manager thinks an ACK frame ought to be generated and
+sent at this time. `QUIC_ACKM_get_ack_frrame` will always provide an ACK frame
+whether or not this returns 1, so it is suggested that you call this function
+first to determine whether you need to generate an ACK frame.
+
+The return value of this function can change based on calls to
+`QUIC_ACKM_on_rx_packet` and based on the passage of time (see
+`QUIC_ACKM_get_ack_deadline`).
+
+```c
+int QUIC_ACKM_is_ack_desired(QUIC_ACKM *ackm, int pkt_space);
+```
+
+### Get ACK Deadline
+
+The ACK manager may defer generation of ACK frames to optimize performance. For
+example, after a packet requiring acknowledgement is received, it may decide to
+wait until a few more packets are received before generating an ACK frame, so
+that a single ACK frame can acknowledge all of them. However, if further
+packets do not arrive, an ACK frame must be generated anyway within a certain
+amount of time.
+
+This function returns the deadline at which the return value of
+`QUIC_ACKM_is_ack_desired` will change to 1, or `OSSL_TIME_ZERO`, which means
+that no deadline is currently applicable.
+
+```c
+OSSL_TIME QUIC_ACKM_get_ack_deadline(QUIC_ACKM *ackm);
 ```
 
 ### Get Probe Packet
@@ -354,7 +402,9 @@ will return zero values for all fields.
 
 ```c
 typedef struct quic_ackm_probe_info_st {
-    uint32_t handshake, padded_initial, pto[QUIC_PN_SPACE_NUM];
+    uint32_t handshake;
+    uint32_t padded_initial;
+    uint32_t pto[QUIC_PN_SPACE_NUM];
 } QUIC_ACKM_PROBE_INFO;
 
 int QUIC_ACKM_get_probe_request(QUIC_ACKM *ackm, int clear,
