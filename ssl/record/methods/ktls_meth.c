@@ -545,6 +545,7 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_set_plain_alerts,
     tls_set_first_handshake,
     tls_set_max_pipelines,
+    NULL,
 
     /*
      * TODO(RECLAYER): Remove these. These function pointers are temporary hacks

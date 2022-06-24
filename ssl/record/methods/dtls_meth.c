@@ -82,13 +82,11 @@ static void dtls1_record_bitmap_update(OSSL_RECORD_LAYER *rl,
 static DTLS1_BITMAP *dtls1_get_bitmap(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rr,
                                       unsigned int *is_next_epoch)
 {
-    SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
-
     *is_next_epoch = 0;
 
     /* In current epoch, accept HM, CCS, DATA, & ALERT */
     if (rr->epoch == rl->epoch)
-        return &s->rlayer.d->bitmap;
+        return &rl->bitmap;
 
     /*
      * Only HM and ALERT messages can be from the next epoch and only if we
@@ -99,10 +97,15 @@ static DTLS1_BITMAP *dtls1_get_bitmap(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rr,
              rl->unprocessed_rcds.epoch != rl->epoch &&
              (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ALERT)) {
         *is_next_epoch = 1;
-        return &s->rlayer.d->next_bitmap;
+        return &rl->next_bitmap;
     }
 
     return NULL;
+}
+
+static void dtls_set_in_init(OSSL_RECORD_LAYER *rl, int in_init)
+{
+    rl->in_init = in_init;
 }
 
 static int dtls1_process_record(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap)
@@ -329,7 +332,7 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, record_pqueue *queue
     return 1;
 }
 
-/* copy buffered record into SSL structure */
+/* copy buffered record into OSSL_RECORD_LAYER structure */
 static int dtls_copy_rlayer_record(OSSL_RECORD_LAYER *rl, pitem *item)
 {
     DTLS_RLAYER_RECORD_DATA *rdata;
@@ -414,9 +417,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     unsigned short version;
     DTLS1_BITMAP *bitmap;
     unsigned int is_next_epoch;
-    /* TODO(RECLAYER): Remove me */
-    SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     rl->num_recs = 0;
     rl->curr_rec = 0;
@@ -583,7 +583,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
      * processed at this time.
      */
     if (is_next_epoch) {
-        if ((SSL_in_init(ssl) || ossl_statem_get_in_handshake(s))) {
+        if (rl->in_init) {
             if (dtls_rlayer_buffer_record(rl,
                     &(rl->unprocessed_rcds),
                     rr->seq_num) < 0) {
@@ -700,6 +700,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     (*retrl)->isdtls = 1;
     (*retrl)->epoch = epoch;
+    (*retrl)->in_init = 1;
 
     switch (vers) {
     case DTLS_ANY_VERSION:
@@ -729,8 +730,6 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     return ret;
 }
 
-
-
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_new_record_layer,
     dtls_free,
@@ -751,6 +750,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     NULL,
     tls_set_first_handshake,
     tls_set_max_pipelines,
+    dtls_set_in_init,
 
     /*
      * TODO(RECLAYER): Remove these. These function pointers are temporary hacks

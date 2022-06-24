@@ -299,7 +299,7 @@ struct ossl_record_method_st {
     void (*set_plain_alerts)(OSSL_RECORD_LAYER *rl, int allow);
 
     /*
-     * Called immediately after creation of the recory layer if we are in a
+     * Called immediately after creation of the record layer if we are in a
      * first handshake. Also called at the end of the first handshake
      */
     void (*set_first_handshake)(OSSL_RECORD_LAYER *rl, int first);
@@ -309,6 +309,12 @@ struct ossl_record_method_st {
      * The default is 1.
      */
     void (*set_max_pipelines)(OSSL_RECORD_LAYER *rl, size_t max_pipelines);
+
+    /*
+     * Called to tell the record layer whether we are currently "in init" or
+     * not. Default at creation of the record layer is "yes".
+     */
+    void (*set_in_init)(OSSL_RECORD_LAYER *rl, int in_init);
 
     /*
      * TODO(RECLAYER): Remove these. These function pointers are temporary hacks
