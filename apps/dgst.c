@@ -66,7 +66,7 @@ const OPTIONS dgst_options[] = {
     {"keyform", OPT_KEYFORM, 'f', "Key file format (ENGINE, other values ignored)"},
     {"hex", OPT_HEX, '-', "Print as hex dump"},
     {"binary", OPT_BINARY, '-', "Print in binary form"},
-    {"xoflen", OPT_XOFLEN, 'p', "Output length for XOF algorithms. Use 32 or higher to ensure a security strength of 128 bits"},
+    {"xoflen", OPT_XOFLEN, 'p', "Output length for XOF algorithms. To obtain the maximum security strength set this to 32 (or greater) for SHAKE128, and 64 (or greater) for SHAKE256"},
     {"d", OPT_DEBUG, '-', "Print debug info"},
     {"debug", OPT_DEBUG, '-', "Print debug info"},
 
@@ -403,7 +403,7 @@ int dgst_main(int argc, char **argv)
         md_name = EVP_MD_get0_name(md);
 
     if (xoflen > 0) {
-        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) == 0) {
+        if (!(EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF)) {
             BIO_printf(bio_err, "Length can only be specified for XOF\n");
             goto end;
         }
@@ -416,19 +416,6 @@ int dgst_main(int argc, char **argv)
             BIO_printf(bio_err, "Signing key cannot be specified for XOF\n");
             goto end;
         }
-    } else {
-        /*
-         * Print a warning if the default security strength is less than 128 bits,
-         * but don't fail if the -xoflen was not specified.
-         */
-        if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0)
-            BIO_printf(bio_err,
-                       "Warning: The -xoflen option was not set.\n"
-                       "By default the xoflen is set to half of the maximum security strength\n"
-                       "SHAKE256 should set this value to 64 to obtain the"
-                       "maximum security strength of 256 bits.\n"
-                       "SHAKE128 should set this value to 32 to obtain the"
-                       "maximum security strength of 128 bits.\n");
     }
 
     if (argc == 0) {

@@ -180,19 +180,13 @@ subtest "Custom length XOF digest generation with `dgst` CLI" => sub {
 };
 
 subtest "SHAKE digest generation with no xoflen set `dgst` CLI" => sub {
-    plan tests => 2;
+    plan tests => 1;
 
     my $testdata = srctop_file('test', 'data.bin');
-
-    # For SHAKE128 check that it prints a warning if the -xoflen option is not set
     my @xofdata = run(app(['openssl', 'dgst', '-shake128', $testdata], stderr => "outerr.txt"), capture => 1);
     chomp(@xofdata);
     my $expected = qr/SHAKE-128\(\Q$testdata\E\)= bb565dac72640109e1c926ef441d3fa6/;
     ok($xofdata[0] =~ $expected, "Check short digest is output");
-    open DATA, "outerr.txt";
-    my @match = grep /Warning: The -xoflen option was not set/, <DATA>;
-    close DATA;
-    ok(scalar @match > 0 ? 1 : 0);
 };
 
 SKIP: {

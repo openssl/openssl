@@ -88,13 +88,18 @@ Output the digest or signature in binary form.
 
 Set the output length for XOF algorithms, such as B<shake128> and B<shake256>.
 This option is not supported for signing operations.
-It is recommended to set this value to at least 32 to ensure a security strength
-of 128 bits.
 
-B<shake128> defaults to 16 (which is only a security strength of 64 bits).
+For OpenSSL providers it is recommended to set this value for shake algorithms,
+since the default values are set to only supply half of the maximum security
+strength.
 
-B<shake256> defaults to 32. Use a value of at least 64 to ensure it uses the
-maximum security strength of 256 bits.
+For backwards compatibility reasons the default xoflen length for B<shake128> is
+16 (bytes) which results in a security strength of only 64 bits. To ensure the
+maximum security strength of 128 bits, the xoflen should be set to at least 32.
+
+For backwards compatibility reasons the default xoflen length for B<shake256> is
+32 (bytes) which results in a security strength of only 128 bits. To ensure the
+maximum security strength of 256 bits, the xoflen should be set to at least 64.
 
 =item B<-r>
 
