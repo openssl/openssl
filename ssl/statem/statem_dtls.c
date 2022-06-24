@@ -581,11 +581,11 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
         if (ret) {
             if (chretran) {
                 /*
-                * We got a new ClientHello with a message sequence of 0.
-                * Reset the read/write sequences back to the beginning.
-                * We process it like this is the first time we've seen a
-                * ClientHello from the client.
-                */
+                 * We got a new ClientHello with a message sequence of 0.
+                 * Reset the read/write sequences back to the beginning.
+                 * We process it like this is the first time we've seen a
+                 * ClientHello from the client.
+                 */
                 s->d1->handshake_read_seq = 0;
                 s->d1->next_handshake_write_seq = 0;
             }
