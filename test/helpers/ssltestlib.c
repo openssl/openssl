@@ -469,8 +469,10 @@ int mempacket_swap_epoch(BIO *bio)
              * add it to the end of the packet list.
              */
             thispkt = OPENSSL_malloc(sizeof(*thispkt));
-            if (thispkt == NULL)
+            if (thispkt == NULL) {
+                OPENSSL_free(tmp);
                 return 0;
+            }
             thispkt->type = INJECT_PACKET;
             thispkt->data = tmp;
             thispkt->len = prevlen;
