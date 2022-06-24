@@ -367,91 +367,6 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
     return 0;
 }
 
-static int dtls_process_rlayer_buffered_records(OSSL_RECORD_LAYER *rl)
-{
-    pitem *item;
-    SSL3_BUFFER *rb;
-    SSL3_RECORD *rr;
-    DTLS1_BITMAP *bitmap;
-    unsigned int is_next_epoch;
-    int replayok = 1;
-
-    item = pqueue_peek(rl->unprocessed_rcds.q);
-    if (item) {
-        /* Check if epoch is current. */
-        if (rl->unprocessed_rcds.epoch != rl->epoch)
-            return 1;         /* Nothing to do. */
-
-        rr = rl->rrec;
-
-        rb = &rl->rbuf;
-
-        if (SSL3_BUFFER_get_left(rb) > 0) {
-            /*
-             * We've still got data from the current packet to read. There could
-             * be a record from the new epoch in it - so don't overwrite it
-             * with the unprocessed records yet (we'll do it when we've
-             * finished reading the current packet).
-             */
-            return 1;
-        }
-
-        /* Process all the records. */
-        while (pqueue_peek(rl->unprocessed_rcds.q)) {
-            dtls_retrieve_rlayer_buffered_record(rl, &(rl->unprocessed_rcds));
-            bitmap = dtls1_get_bitmap(rl, rr, &is_next_epoch);
-            if (bitmap == NULL) {
-                /*
-                 * Should not happen. This will only ever be NULL when the
-                 * current record is from a different epoch. But that cannot
-                 * be the case because we already checked the epoch above
-                 */
-                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                 return 0;
-            }
-#ifndef OPENSSL_NO_SCTP
-            /* Only do replay check if no SCTP bio */
-            if (!BIO_dgram_is_sctp(rl->bio))
-#endif
-            {
-                /*
-                 * Check whether this is a repeat, or aged record. We did this
-                 * check once already when we first received the record - but
-                 * we might have updated the window since then due to
-                 * records we subsequently processed.
-                 */
-                replayok = dtls1_record_replay_check(rl, bitmap);
-            }
-
-            if (!replayok || !dtls1_process_record(rl, bitmap)) {
-                if (rl->alert != 0) {
-                    /* dtls1_process_record called RLAYERfatal() */
-                    return 0;
-                }
-                /* dump this record */
-                rr->length = 0;
-                rl->packet_length = 0;
-                continue;
-            }
-
-            if (dtls_rlayer_buffer_record(rl, &(rl->processed_rcds),
-                    SSL3_RECORD_get_seq_num(&rl->rrec[0])) < 0) {
-                /* SSLfatal() already called */
-                return 0;
-            }
-        }
-    }
-
-    /*
-     * sync epoch numbers once all the unprocessed records have been
-     * processed
-     */
-    rl->processed_rcds.epoch = rl->epoch;
-    rl->unprocessed_rcds.epoch = rl->epoch + 1;
-
-    return 1;
-}
-
 /* TODO(RECLAYER): FIXME. This is called directly from d1_lib.c. It should not be */
 int dtls_buffer_listen_record(OSSL_RECORD_LAYER *rl, size_t len,
                               unsigned char *seq, size_t off)
@@ -510,15 +425,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     rr = rl->rrec;
 
  again:
-    /*
-     * The epoch may have changed.  If so, process all the pending records.
-     * This is a non-blocking operation.
-     */
-    if (!dtls_process_rlayer_buffered_records(rl)) {
-        /* SSLfatal() already called */
-        return OSSL_RECORD_RETURN_FATAL;
-    }
-
     /* if we're renegotiating, then there may be buffered records */
     if (dtls_retrieve_rlayer_buffered_record(rl, &rl->processed_rcds)) {
         rl->num_recs = 1;
@@ -709,12 +615,31 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 
 static int dtls_free(OSSL_RECORD_LAYER *rl)
 {
+    SSL3_BUFFER *rbuf;
+    size_t left, written;
     pitem *item;
     DTLS_RLAYER_RECORD_DATA *rdata;
+    int ret = 1;
 
-    if (rl->unprocessed_rcds.q == NULL) {
+    rbuf = &rl->rbuf;
+
+    left = rbuf->left;
+    if (left > 0) {
+        /*
+         * This record layer is closing but we still have data left in our
+         * buffer. It must be destined for the next epoch - so push it there.
+         */
+        ret = BIO_write_ex(rl->next, rbuf->buf + rbuf->offset, left, &written);
+        rbuf->left = 0;
+    }
+
+    if (rl->unprocessed_rcds.q != NULL) {
         while ((item = pqueue_pop(rl->unprocessed_rcds.q)) != NULL) {
             rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
+            /* Push to the next record layer */
+            /* TODO(RECLAYER): Handle SCTP meta data */
+            ret &= BIO_write_ex(rl->next, rdata->packet, rdata->packet_length,
+                                &written);
             OPENSSL_free(rdata->rbuf.buf);
             OPENSSL_free(item->data);
             pitem_free(item);
@@ -722,7 +647,7 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
         pqueue_free(rl->unprocessed_rcds.q);
     }
 
-    if (rl->processed_rcds.q == NULL) {
+    if (rl->processed_rcds.q != NULL) {
         while ((item = pqueue_pop(rl->processed_rcds.q)) != NULL) {
             rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
             OPENSSL_free(rdata->rbuf.buf);
@@ -732,7 +657,7 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
         pqueue_free(rl->processed_rcds.q);
     }
 
-    return tls_free(rl);
+    return tls_free(rl) && ret;
 }
 
 static int
@@ -770,6 +695,9 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
+    (*retrl)->unprocessed_rcds.epoch = epoch + 1;
+    (*retrl)->processed_rcds.epoch = epoch;
+
     (*retrl)->isdtls = 1;
     (*retrl)->epoch = epoch;
 
@@ -800,6 +728,8 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     }
     return ret;
 }
+
+
 
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_new_record_layer,
