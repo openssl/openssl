@@ -91,7 +91,7 @@ int ossl_quic_accept(SSL *s)
     if (sc == NULL)
         return 0;
 
-    sc->statem.in_init = 0;
+    ossl_statem_set_in_init(sc, 0);
     return 1;
 }
 
@@ -102,7 +102,7 @@ int ossl_quic_connect(SSL *s)
     if (sc == NULL)
         return 0;
 
-    sc->statem.in_init = 0;
+    ossl_statem_set_in_init(sc, 0);
     return 1;
 }
 

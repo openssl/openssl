@@ -148,8 +148,6 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
     size_t bs, ctr, padnum, loop;
     unsigned char padval;
     const EVP_CIPHER *enc;
-    /* TODO(RECLAYER): FIXME */
-    SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
 
     if (n_recs == 0) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -232,8 +230,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
                 /* DTLS does not support pipelining */
                 unsigned char dtlsseq[8], *p = dtlsseq;
 
-                s2n(sending ? DTLS_RECORD_LAYER_get_w_epoch(&s->rlayer) :
-                    DTLS_RECORD_LAYER_get_r_epoch(&s->rlayer), p);
+                s2n(rl->epoch, p);
                 memcpy(p, &seq[2], 6);
                 memcpy(buf[ctr], dtlsseq, 8);
             } else {
@@ -452,8 +449,6 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
     unsigned char header[13];
     int t;
     int ret = 0;
-    /* TODO(RECLAYER): FIXME */
-    SSL_CONNECTION *ssl = (SSL_CONNECTION *)rl->cbarg;
 
     hash = rl->md_ctx;
 
@@ -482,8 +477,7 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
         /* TODO(RECLAYER): FIX ME */
         unsigned char dtlsseq[8], *p = dtlsseq;
 
-        s2n(sending ? DTLS_RECORD_LAYER_get_w_epoch(&ssl->rlayer) :
-            DTLS_RECORD_LAYER_get_r_epoch(&ssl->rlayer), p);
+        s2n(rl->epoch, p);
         memcpy(p, &seq[2], 6);
 
         memcpy(header, dtlsseq, 8);

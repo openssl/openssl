@@ -123,7 +123,7 @@ void ossl_statem_clear(SSL_CONNECTION *s)
 {
     s->statem.state = MSG_FLOW_UNINITED;
     s->statem.hand_state = TLS_ST_BEFORE;
-    s->statem.in_init = 1;
+    ossl_statem_set_in_init(s, 1);
     s->statem.no_cert_verify = 0;
 }
 
@@ -132,7 +132,7 @@ void ossl_statem_clear(SSL_CONNECTION *s)
  */
 void ossl_statem_set_renegotiate(SSL_CONNECTION *s)
 {
-    s->statem.in_init = 1;
+    ossl_statem_set_in_init(s, 1);
     s->statem.request_state = TLS_ST_SW_HELLO_REQ;
 }
 
@@ -141,7 +141,7 @@ void ossl_statem_send_fatal(SSL_CONNECTION *s, int al)
     /* We shouldn't call SSLfatal() twice. Once is enough */
     if (s->statem.in_init && s->statem.state == MSG_FLOW_ERROR)
       return;
-    s->statem.in_init = 1;
+    ossl_statem_set_in_init(s, 1);
     s->statem.state = MSG_FLOW_ERROR;
     if (al != SSL_AD_NO_ALERT
             && s->statem.enc_write_state != ENC_WRITE_STATE_INVALID)
@@ -196,6 +196,8 @@ int ossl_statem_in_error(const SSL_CONNECTION *s)
 void ossl_statem_set_in_init(SSL_CONNECTION *s, int init)
 {
     s->statem.in_init = init;
+    if (s->rrlmethod != NULL && s->rrlmethod->set_in_init != NULL)
+        s->rrlmethod->set_in_init(s->rrl, init);
 }
 
 int ossl_statem_get_in_handshake(SSL_CONNECTION *s)
@@ -270,7 +272,7 @@ void ossl_statem_check_finish_init(SSL_CONNECTION *s, int sending)
 void ossl_statem_set_hello_verify_done(SSL_CONNECTION *s)
 {
     s->statem.state = MSG_FLOW_UNINITED;
-    s->statem.in_init = 1;
+    ossl_statem_set_in_init(s, 1);
     /*
      * This will get reset (briefly) back to TLS_ST_BEFORE when we enter
      * state_machine() because |state| is MSG_FLOW_UNINITED, but until then any
