@@ -24,7 +24,7 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
- * Added the ability for BIO_s_mem() to read/write datagrams
+ * Added a new BIO_s_dgram_mem() to read/write datagrams to memory
 
    *Matt Caswell*
 
