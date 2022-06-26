@@ -1900,20 +1900,19 @@ static void get_current_time(struct timeval *t)
 {
 # if defined(_WIN32)
     SYSTEMTIME st;
-    union {
-        unsigned __int64 ul;
-        FILETIME ft;
-    } now;
+    unsigned __int64 now_ul;
+    FILETIME now_ft;
 
     GetSystemTime(&st);
-    SystemTimeToFileTime(&st, &now.ft);
+    SystemTimeToFileTime(&st, &now_ft);
+    now_ul = ((unsigned __int64)now_ft.dwHighDateTime << 32) | now_ft.dwLowDateTime;
 #  ifdef  __MINGW32__
-    now.ul -= 116444736000000000ULL;
+    now_ul -= 116444736000000000ULL;
 #  else
-    now.ul -= 116444736000000000UI64; /* re-bias to 1/1/1970 */
+    now_ul -= 116444736000000000UI64; /* re-bias to 1/1/1970 */
 #  endif
-    t->tv_sec = (long)(now.ul / 10000000);
-    t->tv_usec = ((int)(now.ul % 10000000)) / 10;
+    t->tv_sec = (long)(now_ul / 10000000);
+    t->tv_usec = ((int)(now_ul % 10000000)) / 10;
 # else
     gettimeofday(t, NULL);
 # endif
