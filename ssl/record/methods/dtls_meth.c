@@ -36,7 +36,7 @@ static int satsub64be(const unsigned char *v1, const unsigned char *v2)
         return (int)ret;
 }
 
-static int dtls1_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap)
+static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap)
 {
     int cmp;
     unsigned int shift;
@@ -57,8 +57,8 @@ static int dtls1_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap
     return 1;
 }
 
-static void dtls1_record_bitmap_update(OSSL_RECORD_LAYER *rl,
-                                       DTLS1_BITMAP *bitmap)
+static void dtls_record_bitmap_update(OSSL_RECORD_LAYER *rl,
+                                      DTLS1_BITMAP *bitmap)
 {
     int cmp;
     unsigned int shift;
@@ -79,8 +79,8 @@ static void dtls1_record_bitmap_update(OSSL_RECORD_LAYER *rl,
     }
 }
 
-static DTLS1_BITMAP *dtls1_get_bitmap(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rr,
-                                      unsigned int *is_next_epoch)
+static DTLS1_BITMAP *dtls_get_bitmap(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rr,
+                                     unsigned int *is_next_epoch)
 {
     *is_next_epoch = 0;
 
@@ -108,7 +108,7 @@ static void dtls_set_in_init(OSSL_RECORD_LAYER *rl, int in_init)
     rl->in_init = in_init;
 }
 
-static int dtls1_process_record(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap)
+static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap)
 {
     int i;
     int enc_err;
@@ -273,7 +273,7 @@ static int dtls1_process_record(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap)
     rl->packet_length = 0;
 
     /* Mark receipt of record. */
-    dtls1_record_bitmap_update(rl, bitmap);
+    dtls_record_bitmap_update(rl, bitmap);
 
     ret = 1;
  end:
@@ -406,7 +406,6 @@ int dtls_buffer_listen_record(OSSL_RECORD_LAYER *rl, size_t len,
  * ssl->s3.rrec.data    - data
  * ssl->s3.rrec.length  - number of bytes
  */
-/* used only by dtls1_read_bytes */
 int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 {
     int ssl_major, ssl_minor;
@@ -550,7 +549,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     rl->rstate = SSL_ST_READ_HEADER;
 
     /* match epochs.  NULL means the packet is dropped on the floor */
-    bitmap = dtls1_get_bitmap(rl, rr, &is_next_epoch);
+    bitmap = dtls_get_bitmap(rl, rr, &is_next_epoch);
     if (bitmap == NULL) {
         rr->length = 0;
         rl->packet_length = 0; /* dump this record */
@@ -561,7 +560,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     if (!BIO_dgram_is_sctp(rl->bio)) {
 #endif
         /* Check whether this is a repeat, or aged record. */
-        if (!dtls1_record_replay_check(rl, bitmap)) {
+        if (!dtls_record_replay_check(rl, bitmap)) {
             rr->length = 0;
             rr->read = 1;
             rl->packet_length = 0; /* dump this record */
@@ -597,9 +596,9 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         goto again;
     }
 
-    if (!dtls1_process_record(rl, bitmap)) {
+    if (!dtls_process_record(rl, bitmap)) {
         if (rl->alert != 0) {
-            /* dtls1_process_record() called RLAYERfatal */
+            /* dtls_process_record() called RLAYERfatal */
             return OSSL_RECORD_RETURN_FATAL;
         }
         rr->length = 0;
