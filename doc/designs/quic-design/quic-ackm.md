@@ -8,11 +8,16 @@ The QUIC ACK manager is responsible for, on the TX side:
   - Handling received ACK frames
   - Generating notifications that a packet we sent was delivered successfully
   - Generating notifications that a packet we sent was lost
+  - Generating requests for probe transmission
+  - Providing information on the largest unacked packet number so that packet
+    numbers in packet headers can be encoded and decoded correctly
 
 On the RX side, it is responsible for:
 
   - Generating ACK frames for later transmission in response to packets we
     received
+  - Providing information on whether a given RX packet number is potentially
+    duplicate and should not be processed
 
 In order to allow it to perform these tasks, the ACK manager must:
 
@@ -37,6 +42,9 @@ The ACK manager provides the following outputs:
   - It indicates when probes should be generated.
 
   - It indicates what ACK frames should be generated.
+
+  - It indicates the current deadline by which new ACK frames
+    will be generated, if any.
 
   - It indicates the largest unacknowledged packet number
     for a given packet number space.
@@ -471,40 +479,38 @@ the abridged packet number in the packet header.
 int ossl_ackm_get_largest_unacked(OSSL_ACKM *ackm, int pkt_space, QUIC_PN *pn);
 ```
 
-RTT Tracker
------------
+Callback Functionality
+----------------------
 
-RTT statistics must be kept and will be needed by the ACK manager, but also are
-likely to be needed by other parts of the QUIC implementation.
-
-The ACK manager consumes the following interface (which could be polymorphic or
-have a fixed implementation):
+The ACK manager supports optional callback functionality when its deadlines
+are updated. By default, the callback functionality is not enabled. To use
+the callback functionality, call either or both of the following functions
+with a non-NULL function pointer:
 
 ```c
-typedef struct quic_rtt_stats_st {
-    /* As defined in RFC 9002. */
-    OSSL_TIME min_rtt,
-              latest_rtt,
-              smoothed_rtt,
-              max_ack_delay;
-} QUIC_RTT_STATS;
+void ossl_ackm_set_loss_detection_deadline_callback(OSSL_ACKM *ackm,
+                                                    void (*fn)(OSSL_TIME deadline,
+                                                               void *arg),
+                                                    void *arg);
 
-int QUIC_RTT_init(QUIC_RTT *rtt);
-
-int QUIC_RTT_destroy(QUIC_RTT *rtt);
-
-int QUIC_RTT_get_stats(QUIC_RTT *rtt, QUIC_RTT_STATS *stats);
-
-int QUIC_RTT_update(QUIC_RTT *rtt,
-                    OSSL_TIME ack_delay,
-                    OSSL_TIME override_latest_rtt);
+void ossl_ackm_set_ack_deadline_callback(OSSL_ACKM *ackm,
+                                         void (*fn)(OSSL_TIME deadline,
+                                                    int pkt_space,
+                                                    void *arg),
+                                         void *arg);
 ```
 
-The user calls `QUIC_RTT_get_stats` to retrieve statistics; `stats` is filled
-with various durations as defined in RFC 9002. To update the RTT statistics,
-call `QUIC_RTT_update`, which corresponds to `UpdateRtt()` in RFC 9002. If
-`override_latest_rtt` is nonzero, it is used as the value of `latest_rtt`
-instead of `QUIC_RTT`'s internal value for the purposes of the update
-calculations.
+Callbacks can be subsequently disabled by calling these functions with a NULL
+function pointer. The callbacks are not called at the time that they are set,
+therefore it is recommended to call them immediately after the call to
+`ossl_ackm_new`.
 
-All of these functions return 1 on success.
+The loss detection deadline callback is called whenever the value returned
+by `ossl_ackm_get_loss_detection_deadline` changes.
+
+The ACK deadline callback is called whenever the value returned by
+`ossl_ackm_get_ack_deadline` changes for a given packet space.
+
+The `deadline` argument reflects the value which will be newly returned by the
+corresponding function. If the configured callback calls either of these
+functions, the returned value will reflect the new deadline.
