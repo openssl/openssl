@@ -443,6 +443,7 @@ int mempacket_swap_epoch(BIO *bio)
         if (rem < len)
             return 0;
 
+        /* Assumes the epoch change does not happen on the first record */
         if (epoch != ctx->epoch) {
             if (prevrec == NULL)
                 return 0;
