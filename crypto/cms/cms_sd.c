@@ -1048,6 +1048,47 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
 
 }
 
+BIO *CMS_SignedData_verify(CMS_SignedData *sd, BIO *detached_data,
+                           STACK_OF(X509) *scerts, X509_STORE *store,
+                           STACK_OF(X509) *extra, STACK_OF(X509_CRL) *crls,
+                           unsigned int flags,
+                           OSSL_LIB_CTX *libctx, const char *propq)
+{
+    CMS_ContentInfo *ci;
+    BIO *bio = NULL;
+    int i, res = 0;
+
+    if (sd == NULL) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if ((ci = CMS_ContentInfo_new_ex(libctx, propq)) == NULL)
+        return NULL;
+    if ((bio = BIO_new(BIO_s_mem())) == NULL)
+        goto end;
+    ci->contentType = OBJ_nid2obj(NID_pkcs7_signed);
+    ci->d.signedData = sd;
+
+    for (i = 0; i < sk_X509_num(extra); i++)
+        if (!CMS_add1_cert(ci, sk_X509_value(extra, i)))
+            goto end;
+    for (i = 0; i < sk_X509_CRL_num(crls); i++)
+        if (!CMS_add1_crl(ci, sk_X509_CRL_value(crls, i)))
+            goto end;
+    res = CMS_verify(ci, scerts, store, detached_data, bio, flags);
+
+ end:
+    if (ci != NULL)
+        ci->d.signedData = NULL; /* do not indirectly free |sd| */
+    CMS_ContentInfo_free(ci);
+    if (!res) {
+        BIO_free(bio);
+        bio = NULL;
+    }
+    return bio;
+}
+
 int CMS_add_smimecap(CMS_SignerInfo *si, STACK_OF(X509_ALGOR) *algs)
 {
     unsigned char *smder = NULL;
