@@ -79,7 +79,7 @@ IF[{- !$disabled{asm} -}]
 
   $BNASM_ppc32=bn_ppc.c bn-ppc.s ppc-mont.s
   $BNDEF_ppc32=OPENSSL_BN_ASM_MONT
-  $BNASM_ppc64=$BNASM_ppc32
+  $BNASM_ppc64=$BNASM_ppc32 ppc64-mont-fixed.s
   $BNDEF_ppc64=$BNDEF_ppc32
 
   $BNASM_c64xplus=asm/bn-c64xplus.asm
@@ -173,6 +173,7 @@ GENERATE[parisc-mont.s]=asm/parisc-mont.pl
 GENERATE[bn-ppc.s]=asm/ppc.pl
 GENERATE[ppc-mont.s]=asm/ppc-mont.pl
 GENERATE[ppc64-mont.s]=asm/ppc64-mont.pl
+GENERATE[ppc64-mont-fixed.s]=asm/ppc64-mont-fixed.pl
 
 GENERATE[alpha-mont.S]=asm/alpha-mont.pl
 
