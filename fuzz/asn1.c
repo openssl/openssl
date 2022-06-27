@@ -321,6 +321,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                 OPENSSL_free(der);
                 ASN1_item_free(o, i);
             }
+            else {
+                OPENSSL_free(o);
+                o = NULL;
+            }
         }
     }
 
