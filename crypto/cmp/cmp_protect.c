@@ -90,7 +90,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
             goto end;
 
         if ((prot = ASN1_BIT_STRING_new()) == NULL)
-            return NULL;
+            goto end;
         /* OpenSSL defaults all bit strings to be encoded as ASN.1 NamedBitList */
         prot->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
         prot->flags |= ASN1_STRING_FLAG_BITS_LEFT;
