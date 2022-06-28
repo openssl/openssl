@@ -53,7 +53,7 @@ struct ossl_http_req_ctx_st {
     char *proxy;                /* Optional proxy name or URI */
     char *server;               /* Optional server host name */
     char *port;                 /* Optional server port */
-    BIO *mem;                   /* Memory BIO holding request/response header */
+    BIO *mem;                   /* Mem BIO holding request header or response */
     BIO *req;                   /* BIO holding the request provided by caller */
     int method_POST;            /* HTTP method is POST (else GET) */
     char *expected_ct;          /* Optional expected Content-Type */
