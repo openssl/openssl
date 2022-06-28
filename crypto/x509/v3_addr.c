@@ -400,12 +400,10 @@ static int make_addressPrefix(IPAddressOrRange **result,
         goto err;
     if (!ASN1_BIT_STRING_set(aor->u.addressPrefix, addr, bytelen))
         goto err;
-    aor->u.addressPrefix->flags &= ~7;
-    aor->u.addressPrefix->flags |= ASN1_STRING_FLAG_BITS_LEFT;
     if (bitlen > 0) {
         aor->u.addressPrefix->data[bytelen - 1] &= ~(0xFF >> bitlen);
-        aor->u.addressPrefix->flags |= 8 - bitlen;
     }
+    ossl_asn1_string_set_bits_left(aor->u.addressPrefix, 8 - bitlen);
 
     *result = aor;
     return 1;
@@ -445,8 +443,7 @@ static int make_addressRange(IPAddressOrRange **result,
     for (i = length; i > 0 && min[i - 1] == 0x00; --i) ;
     if (!ASN1_BIT_STRING_set(aor->u.addressRange->min, min, i))
         goto err;
-    aor->u.addressRange->min->flags &= ~7;
-    aor->u.addressRange->min->flags |= ASN1_STRING_FLAG_BITS_LEFT;
+    ossl_asn1_string_set_bits_left(aor->u.addressRange->min, 0);
     if (i > 0) {
         unsigned char b = min[i - 1];
         int j = 1;
@@ -458,8 +455,7 @@ static int make_addressRange(IPAddressOrRange **result,
     for (i = length; i > 0 && max[i - 1] == 0xFF; --i) ;
     if (!ASN1_BIT_STRING_set(aor->u.addressRange->max, max, i))
         goto err;
-    aor->u.addressRange->max->flags &= ~7;
-    aor->u.addressRange->max->flags |= ASN1_STRING_FLAG_BITS_LEFT;
+    ossl_asn1_string_set_bits_left(aor->u.addressRange->max, 0);
     if (i > 0) {
         unsigned char b = max[i - 1];
         int j = 1;
