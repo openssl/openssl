@@ -567,7 +567,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         if (rctx->req != NULL && !BIO_eof(rctx->req)) {
             n = BIO_read(rctx->req, rctx->buf, rctx->buf_size);
             if (n <= 0) {
-                if (BIO_should_retry(rctx->rbio))
+                if (BIO_should_retry(rctx->req))
                     return -1;
                 ERR_raise(ERR_LIB_HTTP, HTTP_R_FAILED_READING_DATA);
                 return 0;
