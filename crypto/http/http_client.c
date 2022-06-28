@@ -806,9 +806,7 @@ next_io:
                         && (strchr(rctx->expected_ct, ';') != NULL
                             || (semicolon = strchr(value, ';')) == NULL
                             || (size_t)(semicolon - value) != strlen(rctx->expected_ct)
-                            || OPENSSL_strncasecmp(rctx->expected_ct, value,
-                                   semicolon - value)
-                                != 0)) {
+                            || OPENSSL_strncasecmp(rctx->expected_ct, value, semicolon - value) != 0)) {
                         ERR_raise_data(ERR_LIB_HTTP,
                             HTTP_R_UNEXPECTED_CONTENT_TYPE,
                             "expected=%s, actual=%s",
