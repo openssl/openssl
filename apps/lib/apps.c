@@ -2436,7 +2436,7 @@ static const char *tls_error_hint(void)
     if (ERR_GET_LIB(err) != ERR_LIB_SSL)
         err = ERR_peek_last_error();
     if (ERR_GET_LIB(err) != ERR_LIB_SSL)
-        return NULL;
+        return NULL; /* likely no TLS error */
 
     switch (ERR_GET_REASON(err)) {
     case SSL_R_WRONG_VERSION_NUMBER:
@@ -2449,9 +2449,27 @@ static const char *tls_error_hint(void)
         return "Server did not accept our TLS certificate, likely due to mismatch with server's trust anchor or missing revocation status";
     case SSL_AD_REASON_OFFSET + SSL3_AD_HANDSHAKE_FAILURE:
         return "TLS handshake failure. Possibly the server requires our TLS certificate but did not receive it";
-    default: /* no error or no hint available for error */
-        return NULL;
+    default:
+        return NULL; /* no hint available for TLS error */
     }
+}
+
+static BIO *http_tls_shutdown(BIO *bio)
+{
+    if (bio != NULL) {
+        BIO *cbio;
+        const char *hint = tls_error_hint();
+
+        if (hint != NULL)
+            BIO_printf(bio_err, "%s\n", hint);
+        (void)ERR_set_mark();
+        BIO_ssl_shutdown(bio);
+        cbio = BIO_pop(bio); /* connect+HTTP BIO */
+        BIO_free(bio); /* SSL BIO */
+        (void)ERR_pop_to_mark(); /* hide SSL_R_READ_BIO_NOT_SET etc. */
+        bio = cbio;
+    }
+    return bio;
 }
 
 /* HTTP callback function that supports TLS connection also via HTTPS proxy */
@@ -2474,7 +2492,7 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
                 || (sbio = BIO_new(BIO_f_ssl())) == NULL) {
             return NULL;
         }
-        if (ssl_ctx == NULL || (ssl = SSL_new(ssl_ctx)) == NULL) {
+        if ((ssl = SSL_new(ssl_ctx)) == NULL) {
             BIO_free(sbio);
             return NULL;
         }
@@ -2486,24 +2504,8 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
         BIO_set_ssl(sbio, ssl, BIO_CLOSE);
 
         bio = BIO_push(sbio, bio);
-    }
-    if (!connect) {
-        const char *hint;
-        BIO *cbio;
-
-        if (!detail) { /* disconnecting after error */
-            hint = tls_error_hint();
-            if (hint != NULL)
-                ERR_add_error_data(2, " : ", hint);
-        }
-        if (ssl_ctx != NULL) {
-            (void)ERR_set_mark();
-            BIO_ssl_shutdown(bio);
-            cbio = BIO_pop(bio); /* connect+HTTP BIO */
-            BIO_free(bio); /* SSL BIO */
-            (void)ERR_pop_to_mark(); /* hide SSL_R_READ_BIO_NOT_SET etc. */
-            bio = cbio;
-        }
+    } else { /* disconnect from TLS */
+        bio = http_tls_shutdown(bio);
     }
     return bio;
 }
