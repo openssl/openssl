@@ -459,7 +459,7 @@ uninstall: uninstall_docs uninstall_sw {- $disabled{fips} ? "" : "uninstall_fips
 
 libclean:
 	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """{.,apps,test,fuzz}/$$1.*"""; } @ARGV" $(SHLIBS)
-	-del /Q /F $(LIBS) libcrypto.* libssl.* ossl_static.pdb
+	-del /Q /F $(LIBS) libcrypto.* libcmp.* libssl.* ossl_static.pdb
 
 clean: libclean
 	{- join("\n\t", map { "-del /Q /F $_" } @HTMLDOCS1) || "\@rem" -}

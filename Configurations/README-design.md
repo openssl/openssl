@@ -55,7 +55,7 @@ composed of the program `apps/openssl`, the libraries `libssl` and
 dependencies.
 
     # build.info
-    LIBS=libcrypto libssl
+    LIBS=libcrypto libcmp libssl
     INCLUDE[libcrypto]=include
     INCLUDE[libssl]=include
     DEPEND[libssl]=libcrypto

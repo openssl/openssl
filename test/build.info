@@ -562,39 +562,39 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[cmp_asn_test]=cmp_asn_test.c helpers/cmp_testlib.c
   INCLUDE[cmp_asn_test]=.. ../include ../apps/include
-  DEPEND[cmp_asn_test]=../libcrypto.a libtestutil.a
+  DEPEND[cmp_asn_test]=../libcmp.a ../libcrypto.a libtestutil.a
 
   SOURCE[cmp_ctx_test]=cmp_ctx_test.c helpers/cmp_testlib.c
   INCLUDE[cmp_ctx_test]=.. ../include ../apps/include
-  DEPEND[cmp_ctx_test]=../libcrypto.a libtestutil.a
+  DEPEND[cmp_ctx_test]=../libcmp.a ../libcrypto.a libtestutil.a
 
   SOURCE[cmp_hdr_test]=cmp_hdr_test.c helpers/cmp_testlib.c
   INCLUDE[cmp_hdr_test]=.. ../include ../apps/include
-  DEPEND[cmp_hdr_test]=../libcrypto.a libtestutil.a
+  DEPEND[cmp_hdr_test]=../libcmp.a ../libcrypto.a libtestutil.a
 
   SOURCE[cmp_status_test]=cmp_status_test.c helpers/cmp_testlib.c
   INCLUDE[cmp_status_test]=.. ../include ../apps/include
-  DEPEND[cmp_status_test]=../libcrypto.a libtestutil.a
+  DEPEND[cmp_status_test]=../libcmp.a ../libcrypto.a libtestutil.a
 
   SOURCE[cmp_protect_test]=cmp_protect_test.c helpers/cmp_testlib.c
   INCLUDE[cmp_protect_test]=.. ../include ../apps/include
-  DEPEND[cmp_protect_test]=../libcrypto.a libtestutil.a
+  DEPEND[cmp_protect_test]=../libcmp.a ../libcrypto.a libtestutil.a
 
   SOURCE[cmp_msg_test]=cmp_msg_test.c helpers/cmp_testlib.c
   INCLUDE[cmp_msg_test]=.. ../include ../apps/include
-  DEPEND[cmp_msg_test]=../libcrypto.a libtestutil.a
+  DEPEND[cmp_msg_test]=../libcmp.a ../libcrypto.a libtestutil.a
 
   SOURCE[cmp_vfy_test]=cmp_vfy_test.c helpers/cmp_testlib.c
   INCLUDE[cmp_vfy_test]=.. ../include ../apps/include
-  DEPEND[cmp_vfy_test]=../libcrypto.a libtestutil.a
+  DEPEND[cmp_vfy_test]=../libcmp.a ../libcrypto.a libtestutil.a
 
   SOURCE[cmp_server_test]=cmp_server_test.c helpers/cmp_testlib.c
   INCLUDE[cmp_server_test]=.. ../include ../apps/include
-  DEPEND[cmp_server_test]=../libcrypto.a libtestutil.a
+  DEPEND[cmp_server_test]=../libcmp.a ../libcrypto.a libtestutil.a
 
   SOURCE[cmp_client_test]=cmp_client_test.c helpers/cmp_testlib.c ../apps/lib/cmp_mock_srv.c
   INCLUDE[cmp_client_test]=.. ../include ../apps/include
-  DEPEND[cmp_client_test]=../libcrypto.a libtestutil.a
+  DEPEND[cmp_client_test]=../libcmp.a ../libcrypto.a libtestutil.a
 
   SOURCE[ca_internals_test]=ca_internals_test.c ../apps/ca.c ../apps/lib/apps.c \
                             ../apps/lib/app_rand.c ../apps/lib/engine.c ../apps/lib/app_provider.c \
