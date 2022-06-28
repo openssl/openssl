@@ -125,9 +125,7 @@ ASN1_BIT_STRING *ossl_c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
     } else
         s = NULL;
 
-    ret->length = (int)len;
-    OPENSSL_free(ret->data);
-    ret->data = s;
+    ASN1_STRING_set0(ret, s, (int)len);
     ret->type = V_ASN1_BIT_STRING;
     if (a != NULL)
         (*a) = ret;

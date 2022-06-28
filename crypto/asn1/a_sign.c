@@ -96,10 +96,8 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         goto err;
     }
-    OPENSSL_free(signature->data);
-    signature->data = buf_out;
+    ASN1_STRING_set0(signature, buf_out, outl);
     buf_out = NULL;
-    signature->length = outl;
     /*
      * In the interests of compatibility, I'll make sure that the bit string
      * has a 'not-used bits' value of 0
@@ -282,10 +280,8 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         goto err;
     }
-    OPENSSL_free(signature->data);
-    signature->data = buf_out;
+    ASN1_STRING_set0(signature, buf_out, outl);
     buf_out = NULL;
-    signature->length = outl;
     /*
      * In the interests of compatibility, I'll make sure that the bit string
      * has a 'not-used bits' value of 0
