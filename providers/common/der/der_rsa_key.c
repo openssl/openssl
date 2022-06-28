@@ -305,7 +305,7 @@ int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
     saltlen = ossl_rsa_pss_params_30_saltlen(pss);
     trailerfield = ossl_rsa_pss_params_30_trailerfield(pss);
 
-    if (saltlen < 0 || (unsigned int)saltlen > UINT32_MAX) {
+    if (saltlen < 0) {
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_SALT_LENGTH);
         return 0;
     }
