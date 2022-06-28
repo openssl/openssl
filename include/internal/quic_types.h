@@ -12,6 +12,12 @@
 
 # include <openssl/ssl.h>
 
+/* QUIC packet number spaces. */
+#define QUIC_PN_SPACE_INITIAL       0
+#define QUIC_PN_SPACE_HANDSHAKE     1
+#define QUIC_PN_SPACE_APP           2
+#define QUIC_PN_SPACE_NUM           3
+
 /* QUIC packet number representation. */
 typedef uint64_t QUIC_PN;
 # define QUIC_PN_INVALID            UINT64_MAX
