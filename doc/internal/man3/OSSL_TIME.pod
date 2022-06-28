@@ -5,8 +5,9 @@
 OSSL_TIME, OSSL_TIME_SECOND, ossl_time_infinite, ossl_time_zero,
 ossl_ticks2time, ossl_time2ticks,
 ossl_time_now, ossl_time_time_to_timeval, ossl_time_compare,
-ossl_time_add, ossl_time_subtract
-- times and durations
+ossl_time_add, ossl_time_subtract, ossl_time_multiply,
+ossl_time_divide, ossl_time_abs_difference, ossl_time_max,
+ossl_time_min - times and durations
 
 =head1 SYNOPSIS
 
@@ -28,6 +29,11 @@ ossl_time_add, ossl_time_subtract
  int ossl_time_compare(OSSL_TIME a, OSSL_TIME b);
  OSSL_TIME ossl_time_add(OSSL_TIME a, OSSL_TIME b);
  OSSL_TIME ossl_time_subtract(OSSL_TIME a, OSSL_TIME b);
+ OSSL_TIME ossl_time_multiply(OSSL_TIME a, uint64_t b);
+ OSSL_TIME ossl_time_divide(OSSL_TIME a, uint64_t b);
+ OSSL_TIME ossl_time_abs_difference(OSSL_TIME a, OSSL_TIME b);
+ OSSL_TIME ossl_time_max(OSSL_TIME a, OSSL_TIME b);
+ OSSL_TIME ossl_time_min(OSSL_TIME a, OSSL_TIME b);
 
 =head1 DESCRIPTION
 
@@ -78,6 +84,19 @@ B<ossl_time_subtract> performs a saturating subtraction of the two items,
 returning I<a> - I<b>.
 If the difference would be negative,  B<0> is returned.
 
+B<ossl_time_multiply> performs a saturating multiplication of a time value by a
+given integer multiplier.
+
+B<ossl_time_divide> performs floor division of a time value by a given integer
+divisor.
+
+B<ossl_time_abs_difference> returns the magnitude of the difference between two
+time values.
+
+B<ossl_time_min> returns the lesser of two time values.
+
+B<ossl_time_max> returns the greater of two time values.
+
 =head1 NOTES
 
 The largest representable duration is guaranteed to be at least 500 years.
@@ -101,6 +120,17 @@ the last representable time on overflow.
 
 B<ossl_time_subtract> returns the difference of the two times or the
 time of the Epoch on underflow.
+
+B<ossl_time_multiply> returns the result of multiplying the given time by the
+given integral multiplier, or B<OSSL_TIME_INFINITY> on overflow.
+
+B<ossl_time_divide> returns the result of dividing the given time by the given
+integral divisor.
+
+B<ossl_time_abs_difference> returns the magnitude of the difference between the
+input time values.
+
+B<ossl_time_min> and B<ossl_time_max> choose and return one of the input values.
 
 =head1 HISTORY
 

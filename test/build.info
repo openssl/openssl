@@ -964,12 +964,16 @@ ENDIF
   ENDIF
 
   IF[{- !$disabled{'quic'} -}]
-    PROGRAMS{noinst}=quicapitest quic_wire_test
+    PROGRAMS{noinst}=quicapitest quic_wire_test quic_ackm_test
   ENDIF
 
   SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c
   INCLUDE[quicapitest]=../include ../apps/include
   DEPEND[quicapitest]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[quic_ackm_test]=quic_ackm_test.c
+  INCLUDE[quic_ackm_test]=../include ../apps/include
+  DEPEND[quic_ackm_test]=../libcrypto.a ../libssl.a libtestutil.a
 
 {-
    use File::Spec::Functions;
