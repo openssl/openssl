@@ -601,7 +601,7 @@ int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b)
 # define USE_TIMEGM
 #endif
 
-time_t asn1_string_to_time_t(const char *asn1_string)
+time_t ossl_asn1_string_to_time_t(const char *asn1_string)
 {
     ASN1_TIME *timestamp_asn1 = NULL;
     struct tm *timestamp_tm = NULL;
