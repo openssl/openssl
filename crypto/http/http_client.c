@@ -952,7 +952,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
     if (bio_update_fn != NULL) {
         BIO *orig_bio = cbio;
 
-        cbio = (*bio_update_fn)(cbio, arg, 1 /* connect */, use_ssl);
+        cbio = (*bio_update_fn)(cbio, arg, 1 /* connect */, use_ssl != 0);
         if (cbio == NULL) {
             if (bio == NULL) /* cbio was not provided by caller */
                 BIO_free_all(orig_bio);
