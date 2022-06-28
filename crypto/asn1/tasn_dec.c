@@ -935,9 +935,7 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         }
         /* If we've already allocated a buffer use it */
         if (*free_cont) {
-            OPENSSL_free(stmp->data);
-            stmp->data = (unsigned char *)cont; /* UGLY CAST! RL */
-            stmp->length = len;
+            ASN1_STRING_set0(stmp, (unsigned char *)cont /* UGLY CAST! */, len);
             *free_cont = 0;
         } else {
             if (!ASN1_STRING_set(stmp, cont, len)) {

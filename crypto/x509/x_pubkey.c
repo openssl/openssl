@@ -980,9 +980,7 @@ int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp)
 void X509_PUBKEY_set0_public_key(X509_PUBKEY *pub,
                                  unsigned char *penc, int penclen)
 {
-    OPENSSL_free(pub->public_key->data);
-    pub->public_key->data = penc;
-    pub->public_key->length = penclen;
+    ASN1_STRING_set0(pub->public_key, penc, penclen);
     /* Set number of unused bits to zero */
     pub->public_key->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
     pub->public_key->flags |= ASN1_STRING_FLAG_BITS_LEFT;
