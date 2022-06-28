@@ -714,7 +714,15 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             if (OPENSSL_strcasecmp(key, "Content-Type") == 0) {
                 if (rctx->state == OHS_HEADERS
                     && rctx->expected_ct != NULL) {
-                    if (OPENSSL_strcasecmp(rctx->expected_ct, value) != 0) {
+                    const char *semicolon;
+
+                    if (OPENSSL_strcasecmp(rctx->expected_ct, value) != 0
+                        /* ignore past ';' unless expected_ct contains ';' */
+                        && (strchr(rctx->expected_ct, ';') != NULL
+                            || (semicolon = strchr(value, ';')) == NULL
+                            || (size_t)(semicolon - value) != strlen(rctx->expected_ct)
+                            || OPENSSL_strncasecmp(rctx->expected_ct, value,
+                                                   semicolon - value) != 0)) {
                         ERR_raise_data(ERR_LIB_HTTP,
                                        HTTP_R_UNEXPECTED_CONTENT_TYPE,
                                        "expected=%s, actual=%s",

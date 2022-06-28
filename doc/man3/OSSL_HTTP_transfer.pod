@@ -169,9 +169,17 @@ else HTTP POST with the contents of I<req> and optional I<content_type>, where
 the length of the data in I<req> does not need to be determined in advance: the
 BIO will be read on-the-fly while sending the request, which supports streaming.
 The optional list I<headers> may contain additional custom HTTP header lines.
-If the parameter I<expected_content_type>
-is not NULL then the client will check that the given content type string
+
+If the I<expected_content_type> argument is not NULL,
+the client will check that the specified content-type string
 is included in the HTTP header of the response and return an error if not.
+In the content-type header line the specified string should be present either
+as a whole, or in case the specified string does not include a C<;> character,
+it is sufficient that the specified string appears as a prefix
+in the header line, followed by a C<;> character and any further text.
+For instance, if I<expected_content_type> specifies C<text/html>,
+this is matched by C<text/html>, C<text/html; charset=UTF-8>, etc.
+
 If the I<expect_asn1> parameter is nonzero,
 a structure in ASN.1 encoding will be expected as response content.
 The I<max_resp_len> parameter specifies the maximum allowed

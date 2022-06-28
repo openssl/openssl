@@ -89,9 +89,17 @@ OSSL_HTTP_REQ_CTX_set_expected() optionally sets in I<rctx> some expectations
 of the HTTP client on the response.
 Due to the structure of an HTTP request, if the I<keep_alive> argument is
 nonzero the function must be used before calling OSSL_HTTP_REQ_CTX_set1_req().
-If the I<content_type> parameter
-is not NULL then the client will check that the given content type string
+
+If the I<content_type> argument is not NULL,
+the client will check that the specified content-type string
 is included in the HTTP header of the response and return an error if not.
+In the content-type header line the specified string should be present either
+as a whole, or in case the specified string does not include a C<;> character,
+it is sufficient that the specified string appears as a prefix
+in the header line, followed by a C<;> character and any further text.
+For instance, if the I<content_type> argument specifies C<text/html>,
+this is matched by C<text/html>, C<text/html; charset=UTF-8>, etc.
+
 If the I<asn1> parameter is nonzero a structure in ASN.1 encoding will be
 expected as the response content and input streaming is disabled.  This means
 that an ASN.1 sequence header is required, its length field is checked, and
