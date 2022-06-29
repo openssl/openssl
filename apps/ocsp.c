@@ -176,7 +176,7 @@ const OPTIONS ocsp_options[] = {
     {"no_intern", OPT_NO_INTERN, '-',
      "Don't search certificates contained in response for signer"},
     {"badsig", OPT_BADSIG, '-',
-        "Corrupt last byte of loaded OSCP response signature (for test)"},
+        "Corrupt last byte of loaded OCSP response signature (for test)"},
     {"text", OPT_TEXT, '-', "Print text form of request and response"},
     {"req_text", OPT_REQ_TEXT, '-', "Print text form of request"},
     {"resp_text", OPT_RESP_TEXT, '-', "Print text form of response"},
