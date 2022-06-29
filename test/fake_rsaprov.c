@@ -260,7 +260,8 @@ static void *fake_rsa_st_open(void *provctx, const char *uri)
         return NULL;
 
     storectx = OPENSSL_zalloc(1);
-    TEST_ptr(storectx);
+    if (!TEST_ptr(storectx))
+        return NULL;
 
     TEST_info("fake_rsa_open called");
 
