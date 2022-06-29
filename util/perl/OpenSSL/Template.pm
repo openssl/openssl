@@ -22,12 +22,12 @@ following additions:
 
 =over 4
 
-=item -
+=item *
 
 The template perl code delimiters (given with the C<DELIMITER> option)
 are set to C<{-> and C<-}> by default.
 
-=item -
+=item *
 
 A few extra functions are offered to be used by the template perl code, see
 L</Functions>.

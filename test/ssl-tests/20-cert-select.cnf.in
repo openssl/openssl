@@ -585,9 +585,14 @@ my @tests_pss = (
 my @tests_tls_1_1 = (
     {
         name => "Only RSA-PSS Certificate, TLS v1.1",
-        server => $server_pss_only,
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            "Certificate" => test_pem("server-pss-cert.pem"),
+            "PrivateKey" => test_pem("server-pss-key.pem"),
+        },
         client => {
             "MaxProtocol" => "TLSv1.1",
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
         },
         test   => {
             "ExpectedResult" => "ServerFail"
@@ -909,7 +914,7 @@ my @tests_tls_1_3_non_fips = (
             #We only configured brainpoolP256r1 on the client side, but TLSv1.3
             #is enabled and this group is not allowed in TLSv1.3. Therefore this
             #should fail
-            "ExpectedResult" => "ClientFail"
+            "ExpectedResult" => "ServerFail"
         },
     },
     {
@@ -924,7 +929,7 @@ my @tests_tls_1_3_non_fips = (
             "MaxProtocol" => "TLSv1.3"
         },
         test   => {
-            "ExpectedResult" => "ServerFail"
+            "ExpectedResult" => "Success"
         },
     },
 );

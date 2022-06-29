@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -129,7 +129,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                    CONF *conf, unsigned long certopt, unsigned long nameopt,
                    int default_op, int ext_copy, int selfsign, unsigned long dateopt);
 static int get_certificate_status(const char *ser_status, CA_DB *db);
-static int do_updatedb(CA_DB *db);
 static int check_time_format(const char *str);
 static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
                      const char *extval);
@@ -154,7 +153,7 @@ typedef enum OPTION_choice {
     OPT_CRLDAYS, OPT_CRLHOURS, OPT_CRLSEC,
     OPT_INFILES, OPT_SS_CERT, OPT_SPKAC, OPT_REVOKE, OPT_VALID,
     OPT_EXTENSIONS, OPT_EXTFILE, OPT_STATUS, OPT_UPDATEDB, OPT_CRLEXTS,
-    OPT_RAND_SERIAL,
+    OPT_RAND_SERIAL, OPT_QUIET,
     OPT_R_ENUM, OPT_PROV_ENUM,
     /* Do not change the order here; see related case statements below */
     OPT_CRL_REASON, OPT_CRL_HOLD, OPT_CRL_COMPROMISE, OPT_CRL_CA_COMPROMISE
@@ -166,6 +165,7 @@ const OPTIONS ca_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output during processing"},
+    {"quiet", OPT_QUIET, '-', "Terse output during processing"},
     {"outdir", OPT_OUTDIR, '/', "Where to put output cert"},
     {"in", OPT_IN, '<', "The input cert request(s)"},
     {"inform", OPT_INFORM, 'F', "CSR input format (DER or PEM); default PEM"},
@@ -331,6 +331,9 @@ opthelp:
             break;
         case OPT_VERBOSE:
             verbose = 1;
+            break;
+        case OPT_QUIET:
+            verbose = 0;
             break;
         case OPT_CONFIG:
             configfile = opt_arg();
@@ -751,7 +754,7 @@ end_of_options:
         if (verbose)
             BIO_printf(bio_err, "Updating %s ...\n", dbfile);
 
-        i = do_updatedb(db);
+        i = do_updatedb(db, NULL);
         if (i == -1) {
             BIO_printf(bio_err, "Malloc failure\n");
             goto end;
@@ -1325,7 +1328,7 @@ end_of_options:
     BIO_free_all(Sout);
     BIO_free_all(out);
     BIO_free_all(in);
-    sk_X509_pop_free(cert_sk, X509_free);
+    OSSL_STACK_OF_X509_free(cert_sk);
 
     cleanse(passin);
     if (free_passin)
@@ -1709,7 +1712,16 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     /* Initialize the context structure */
     X509V3_set_ctx(&ext_ctx, selfsign ? ret : x509,
-                   ret, req, NULL, X509V3_CTX_REPLACE);
+                   ret, NULL /* no need to give req, needed info is in ret */,
+                   NULL, X509V3_CTX_REPLACE);
+    /* prepare fallback for AKID, but only if issuer cert equals subject cert */
+    if (selfsign) {
+        if (!X509V3_set_issuer_pkey(&ext_ctx, pkey))
+            goto end;
+        if (!cert_matches_key(ret, pkey))
+            BIO_printf(bio_err,
+                       "Warning: Signature key and public key of cert do not match\n");
+    }
 
     /* Lets add the extensions, if there are any */
     if (ext_sect) {
@@ -1846,7 +1858,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
             p = "Valid";
         else
             p = "\ninvalid type, Data base error\n";
-        BIO_printf(bio_err, "Type          :%s\n", p);;
+        BIO_printf(bio_err, "Type          :%s\n", p);
         if (rrow[DB_type][0] == DB_TYPE_REV) {
             p = rrow[DB_exp_date];
             if (p == NULL)
@@ -2277,7 +2289,7 @@ static int get_certificate_status(const char *serial, CA_DB *db)
     return ok;
 }
 
-static int do_updatedb(CA_DB *db)
+int do_updatedb(CA_DB *db, time_t *now)
 {
     ASN1_TIME *a_tm = NULL;
     int i, cnt = 0;
@@ -2288,7 +2300,7 @@ static int do_updatedb(CA_DB *db)
         return -1;
 
     /* get actual time */
-    if (X509_gmtime_adj(a_tm, 0) == NULL) {
+    if (X509_time_adj(a_tm, 0, now) == NULL) {
         ASN1_TIME_free(a_tm);
         return -1;
     }
@@ -2367,7 +2379,7 @@ static char *make_revocation_str(REVINFO_TYPE rev_type, const char *rev_arg)
 
     case REV_CRL_REASON:
         for (i = 0; i < 8; i++) {
-            if (strcasecmp(rev_arg, crl_reasons[i]) == 0) {
+            if (OPENSSL_strcasecmp(rev_arg, crl_reasons[i]) == 0) {
                 reason = crl_reasons[i];
                 break;
             }
@@ -2467,18 +2479,18 @@ static int make_revoked(X509_REVOKED *rev, const char *str)
         rtmp = ASN1_ENUMERATED_new();
         if (rtmp == NULL || !ASN1_ENUMERATED_set(rtmp, reason_code))
             goto end;
-        if (!X509_REVOKED_add1_ext_i2d(rev, NID_crl_reason, rtmp, 0, 0))
+        if (X509_REVOKED_add1_ext_i2d(rev, NID_crl_reason, rtmp, 0, 0) <= 0)
             goto end;
     }
 
     if (rev && comp_time) {
-        if (!X509_REVOKED_add1_ext_i2d
-            (rev, NID_invalidity_date, comp_time, 0, 0))
+        if (X509_REVOKED_add1_ext_i2d
+            (rev, NID_invalidity_date, comp_time, 0, 0) <= 0)
             goto end;
     }
     if (rev && hold) {
-        if (!X509_REVOKED_add1_ext_i2d
-            (rev, NID_hold_instruction_code, hold, 0, 0))
+        if (X509_REVOKED_add1_ext_i2d
+            (rev, NID_hold_instruction_code, hold, 0, 0) <= 0)
             goto end;
     }
 
@@ -2584,7 +2596,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
     }
     if (reason_str) {
         for (i = 0; i < NUM_REASONS; i++) {
-            if (strcasecmp(reason_str, crl_reasons[i]) == 0) {
+            if (OPENSSL_strcasecmp(reason_str, crl_reasons[i]) == 0) {
                 reason_code = i;
                 break;
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2016 VMS Software, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -120,7 +120,7 @@ typedef struct _SocketPairTimeoutBlock {
 } SPTB;
 
 # ifdef TERM_SOCK_TEST
-
+
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
@@ -132,7 +132,7 @@ int main (int argc, char *argv[], char *envp[])
         len;
 
     LogMessage ("Enter 'q' or 'Q' to quit ...");
-    while (strcasecmp (TermBuff, "Q")) {
+    while (OPENSSL_strcasecmp (TermBuff, "Q")) {
         /*
         ** Create the terminal socket
         */
@@ -160,7 +160,7 @@ int main (int argc, char *argv[], char *envp[])
 
 }
 # endif
-
+
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
@@ -275,7 +275,7 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
     return TERM_SOCK_SUCCESS;
 
 }
-
+
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
@@ -441,7 +441,7 @@ static int CreateSocketPair (int SocketFamily,
     sin.sin_port = LocalHostPort ;
 
     status = connect (SockDesc2, (struct sockaddr *) &sin, sizeof(sin));
-    if (status < 0 ) {
+    if (status < 0) {
         LogMessage ("CreateSocketPair: connect () - %d", errno);
         sys$cantim (&sptb, 0);
         sys$cancel (TcpAcceptChan);
@@ -485,7 +485,7 @@ static int CreateSocketPair (int SocketFamily,
     return (0) ;
 
 }
-
+
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
@@ -499,7 +499,7 @@ static void SocketPairTimeoutAst (int astparm)
     return;
 
 }
-
+
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
@@ -538,7 +538,7 @@ static int TerminalDeviceAst (int astparm)
     return status;
 
 }
-
+
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*----------------------------------------------------------------------------*/

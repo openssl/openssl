@@ -1,0 +1,96 @@
+=pod
+
+=head1 NAME
+
+OSSL_TIME, OSSL_TIME_SECOND, OSSL_TIME_INFINITY,
+ossl_time_now, ossl_time_time_to_timeval, ossl_time_compare,
+ossl_time_add, ossl_time_subtract
+- times and durations
+
+=head1 SYNOPSIS
+
+ #include "internal/time.h"
+
+ typedef uint64_t OSSL_TIME;
+
+ #define OSSL_TIME_SECOND
+ #define OSSL_TIME_INFINITY
+
+ OSSL_TIME ossl_time_now(void);
+ void ossl_time_time_to_timeval(OSSL_TIME t, struct timeval *out);
+
+ int ossl_time_compare(OSSL_TIME a, OSSL_TIME b);
+ OSSL_TIME ossl_time_add(OSSL_TIME a, OSSL_TIME b);
+ OSSL_TIME ossl_time_subtract(OSSL_TIME a, OSSL_TIME b);
+
+=head1 DESCRIPTION
+
+These functions allow the current time to be obtained and for basic
+arithmetic operations to be safely performed with times and durations.
+
+B<OSSL_TIME> can represent a duration, or a point in time. Where it is
+used to represent a point in time, it does so by expressing a duration
+relative to some reference Epoch.  The OSSL_TIME structure itself does
+not contain information about the Epoch used; thus, interpretation of
+an OSSL_TIME requires that the Epoch it is to be interpreted relative
+to is contextually understood.
+
+B<OSSL_TIME_SECOND> is an integer that indicates the precision of an
+B<OSSL_TIME>.  Specifically, it is the number of counts per second that
+a time can represent.  The accuracy is independent of this and is system
+dependent.
+
+B<OSSL_TIME_INFINITY> is the largest representable B<OSSL_TIME>.  This value
+is returned when an overflow would otherwise occur.
+
+B<ossl_time_now> returns the current time relative to an Epoch which
+is undefined but unchanging for at least the duration of program
+execution.  The time returned is monotonic and need not represent
+wall-clock time.  The time returned by this function is useful for
+scheduling timeouts, deadlines and recurring events, but due to its
+undefined Epoch and monotonic nature, is not suitable for other uses.
+
+B<ossl_time_time_to_timeval> converts a time to a I<struct timeval>.
+
+B<ossl_time_compare> compares I<a> with I<b> and returns -1 if I<a>
+is smaller than I<b>, 0 if they are equal and +1 if I<a> is
+larger than I<b>.
+
+B<ossl_time_add> performs a saturating addition of the two times,
+returning I<a> + I<b>.
+If the summation would overflow B<OSSL_TIME_INFINITY> is returned.
+
+B<ossl_time_subtract> performs a saturating subtraction of the two items,
+returning I<a> - I<b>.
+If the difference would be negative,  B<0> is returned.
+
+=head1 NOTES
+
+The largest representable duration is guaranteed to be at least 500 years.
+
+=head1 RETURN VALUES
+
+B<ossl_time_now> returns the current time, or 0 on error.
+
+B<ossl_time_compare> returns -1, 0 or 1 depending on the comparison.
+
+B<ossl_time_add> returns the summation of the two times or
+B<OSSL_TIME_INFINITY> on overflow.
+
+B<ossl_time_subtract> returns the difference of the two times or the
+0 on underflow.
+
+=head1 HISTORY
+
+This functionality was added in OpenSSL 3.1.
+
+=head1 COPYRIGHT
+
+Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use this
+file except in compliance with the License.  You can obtain a copy in the file
+LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

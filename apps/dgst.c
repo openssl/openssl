@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -115,6 +115,7 @@ int dgst_main(int argc, char **argv)
     buf = app_malloc(BUFSIZE, "I/O buffer");
     md = (EVP_MD *)EVP_get_digestbyname(argv[0]);
 
+    opt_set_unknown_name("digest");
     prog = opt_init(argc, argv, dgst_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -335,7 +336,7 @@ int dgst_main(int argc, char **argv)
         EVP_PKEY_CTX *pctx = NULL;
         int res;
 
-        if (!BIO_get_md_ctx(bmd, &mctx)) {
+        if (BIO_get_md_ctx(bmd, &mctx) <= 0) {
             BIO_printf(bio_err, "Error getting context\n");
             goto end;
         }
@@ -362,7 +363,7 @@ int dgst_main(int argc, char **argv)
     /* we use md as a filter, reading from 'in' */
     else {
         EVP_MD_CTX *mctx = NULL;
-        if (!BIO_get_md_ctx(bmd, &mctx)) {
+        if (BIO_get_md_ctx(bmd, &mctx) <= 0) {
             BIO_printf(bio_err, "Error getting context\n");
             goto end;
         }
@@ -503,7 +504,7 @@ static const char *newline_escape_filename(const char *file, int * backslash)
     file_cpy = app_malloc(mem_len, file);
     i = 0;
 
-    while(e < length) {
+    while (e < length) {
         const char c = file[e];
         if (c == '\n') {
             file_cpy[i++] = '\\';

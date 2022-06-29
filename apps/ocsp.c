@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -76,7 +76,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
 
 static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
-                        const char *port, int timeout);
+                        int timeout);
 static int send_ocsp_response(BIO *cbio, const OCSP_RESPONSE *resp);
 static char *prog;
 
@@ -196,8 +196,10 @@ const OPTIONS ocsp_options[] = {
     {"VAfile", OPT_VAFILE, '<', "Validator certificates file"},
     {"verify_other", OPT_VERIFY_OTHER, '<',
      "Additional certificates to search for signer"},
-    {"cert", OPT_CERT, '<', "Certificate to check"},
-    {"serial", OPT_SERIAL, 's', "Serial number to check"},
+    {"cert", OPT_CERT, '<',
+     "Certificate to check; may be given multiple times"},
+    {"serial", OPT_SERIAL, 's',
+     "Serial number to check; may be given multiple times"},
     {"validity_period", OPT_VALIDITY_PERIOD, 'u',
      "Maximum validity discrepancy in seconds"},
     {"signkey", OPT_SIGNKEY, 's', "Private key to sign OCSP request with"},
@@ -261,6 +263,7 @@ int ocsp_main(int argc, char **argv)
             || (vpm = X509_VERIFY_PARAM_new()) == NULL)
         goto end;
 
+    opt_set_unknown_name("digest");
     prog = opt_init(argc, argv, ocsp_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -436,6 +439,7 @@ int ocsp_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_CERT:
+            reset_unknown();
             X509_free(cert);
             cert = load_cert(opt_arg(), FORMAT_UNDEF, "certificate");
             if (cert == NULL)
@@ -449,6 +453,7 @@ int ocsp_main(int argc, char **argv)
             trailing_md = 0;
             break;
         case OPT_SERIAL:
+            reset_unknown();
             if (cert_id_md == NULL)
                 cert_id_md = (EVP_MD *)EVP_sha1();
             if (!add_ocsp_serial(&req, opt_arg(), cert_id_md, issuer, ids))
@@ -535,8 +540,7 @@ int ocsp_main(int argc, char **argv)
     }
 
     /* No extra arguments. */
-    argc = opt_num_rest();
-    if (argc != 0)
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     if (trailing_md) {
@@ -576,7 +580,7 @@ int ocsp_main(int argc, char **argv)
 
     if (req == NULL && port != NULL) {
 #ifndef OPENSSL_NO_SOCK
-        acbio = http_server_init_bio(prog, port);
+        acbio = http_server_init(prog, port, -1);
         if (acbio == NULL)
             goto end;
 #else
@@ -657,7 +661,7 @@ redo_accept:
 #endif
 
         req = NULL;
-        res = do_responder(&req, &cbio, acbio, port, req_timeout);
+        res = do_responder(&req, &cbio, acbio, req_timeout);
         if (res == 0)
             goto redo_accept;
 
@@ -856,9 +860,9 @@ redo_accept:
     EVP_MD_free(rsign_md);
     EVP_MD_free(resp_certid_md);
     X509_free(cert);
-    sk_X509_pop_free(issuers, X509_free);
+    OSSL_STACK_OF_X509_free(issuers);
     X509_free(rsigner);
-    sk_X509_pop_free(rca_cert, X509_free);
+    OSSL_STACK_OF_X509_free(rca_cert);
     free_index(rdb);
     BIO_free_all(cbio);
     BIO_free_all(acbio);
@@ -868,8 +872,8 @@ redo_accept:
     OCSP_BASICRESP_free(bs);
     sk_OPENSSL_STRING_free(reqnames);
     sk_OCSP_CERTID_free(ids);
-    sk_X509_pop_free(sign_other, X509_free);
-    sk_X509_pop_free(verify_other, X509_free);
+    OSSL_STACK_OF_X509_free(sign_other);
+    OSSL_STACK_OF_X509_free(verify_other);
     sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);
     OPENSSL_free(thost);
     OPENSSL_free(tport);
@@ -1115,6 +1119,11 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
             single = OCSP_basic_add1_status(bs, cid,
                                             V_OCSP_CERTSTATUS_REVOKED,
                                             reason, revtm, thisupd, nextupd);
+            if (single == NULL) {
+                *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR,
+                                             NULL);
+                goto end;
+            }
             if (invtm != NULL)
                 OCSP_SINGLERESP_add1_ext_i2d(single, NID_invalidity_date,
                                              invtm, 0, 0);
@@ -1132,7 +1141,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
     OCSP_copy_nonce(bs, req);
 
     mctx = EVP_MD_CTX_new();
-    if ( mctx == NULL || !EVP_DigestSignInit(mctx, &pkctx, rmd, NULL, rkey)) {
+    if (mctx == NULL || !EVP_DigestSignInit(mctx, &pkctx, rmd, NULL, rkey)) {
         *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, NULL);
         goto end;
     }
@@ -1176,10 +1185,12 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
     bn = ASN1_INTEGER_to_BN(ser, NULL);
     OPENSSL_assert(bn);         /* FIXME: should report an error at this
                                  * point and abort */
-    if (BN_is_zero(bn))
+    if (BN_is_zero(bn)) {
         itmp = OPENSSL_strdup("00");
-    else
+        OPENSSL_assert(itmp);
+    } else {
         itmp = BN_bn2hex(bn);
+    }
     row[DB_serial] = itmp;
     BN_free(bn);
     rrow = TXT_DB_get_by_index(db->db, DB_serial, row);
@@ -1188,13 +1199,13 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
 }
 
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
-                        const char *port, int timeout)
+                        int timeout)
 {
 #ifndef OPENSSL_NO_SOCK
     return http_server_get_asn1_req(ASN1_ITEM_rptr(OCSP_REQUEST),
                                     (ASN1_VALUE **)preq, NULL, pcbio, acbio,
                                     NULL /* found_keep_alive */,
-                                    prog, port, 1 /* accept_get */, timeout);
+                                    prog, 1 /* accept_get */, timeout);
 #else
     BIO_printf(bio_err,
                "Error getting OCSP request - sockets not supported\n");

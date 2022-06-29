@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,7 @@
 #include <sys/sysctl.h>
 #endif
 #include "internal/cryptlib.h"
+#include <unistd.h>
 
 #include "arm_arch.h"
 
@@ -52,8 +53,43 @@ void _armv8_sha1_probe(void);
 void _armv8_sha256_probe(void);
 void _armv8_pmull_probe(void);
 # ifdef __aarch64__
+void _armv8_sm3_probe(void);
+void _armv8_sm4_probe(void);
 void _armv8_sha512_probe(void);
 unsigned int _armv8_cpuid_probe(void);
+void _armv8_sve_probe(void);
+void _armv8_sve2_probe(void);
+void _armv8_rng_probe(void);
+
+size_t OPENSSL_rndr_asm(unsigned char *buf, size_t len);
+size_t OPENSSL_rndrrs_asm(unsigned char *buf, size_t len);
+
+size_t OPENSSL_rndr_bytes(unsigned char *buf, size_t len);
+size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len);
+
+static size_t OPENSSL_rndr_wrapper(size_t (*func)(unsigned char *, size_t), unsigned char *buf, size_t len)
+{
+    size_t buffer_size = 0;
+    int i;
+
+    for (i = 0; i < 8; i++) {
+        buffer_size = func(buf, len);
+        if (buffer_size == len)
+            break;
+        usleep(5000);  /* 5000 microseconds (5 milliseconds) */
+    }
+    return buffer_size;
+}
+
+size_t OPENSSL_rndr_bytes(unsigned char *buf, size_t len)
+{
+    return OPENSSL_rndr_wrapper(OPENSSL_rndr_asm, buf, len);
+}
+
+size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len)
+{
+    return OPENSSL_rndr_wrapper(OPENSSL_rndrrs_asm, buf, len);
+}
 # endif
 uint32_t _armv7_tick(void);
 
@@ -71,6 +107,12 @@ void OPENSSL_cpuid_setup(void) __attribute__ ((constructor));
 
 # if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
 #  if __GLIBC_PREREQ(2, 16)
+#   include <sys/auxv.h>
+#   define OSSL_IMPLEMENT_GETAUXVAL
+#  endif
+# elif defined(__ANDROID_API__)
+/* see https://developer.android.google.cn/ndk/guides/cpu-features */
+#  if __ANDROID_API__ >= 18
 #   include <sys/auxv.h>
 #   define OSSL_IMPLEMENT_GETAUXVAL
 #  endif
@@ -106,20 +148,23 @@ static unsigned long getauxval(unsigned long key)
  * ARM puts the feature bits for Crypto Extensions in AT_HWCAP2, whereas
  * AArch64 used AT_HWCAP.
  */
+# ifndef AT_HWCAP
+#  define AT_HWCAP               16
+# endif
+# ifndef AT_HWCAP2
+#  define AT_HWCAP2              26
+# endif
 # if defined(__arm__) || defined (__arm)
-#  define HWCAP                  16
-                                  /* AT_HWCAP */
+#  define HWCAP                  AT_HWCAP
 #  define HWCAP_NEON             (1 << 12)
 
-#  define HWCAP_CE               26
-                                  /* AT_HWCAP2 */
+#  define HWCAP_CE               AT_HWCAP2
 #  define HWCAP_CE_AES           (1 << 0)
 #  define HWCAP_CE_PMULL         (1 << 1)
 #  define HWCAP_CE_SHA1          (1 << 2)
 #  define HWCAP_CE_SHA256        (1 << 3)
 # elif defined(__aarch64__)
-#  define HWCAP                  16
-                                  /* AT_HWCAP */
+#  define HWCAP                  AT_HWCAP
 #  define HWCAP_NEON             (1 << 1)
 
 #  define HWCAP_CE               HWCAP
@@ -128,7 +173,15 @@ static unsigned long getauxval(unsigned long key)
 #  define HWCAP_CE_SHA1          (1 << 5)
 #  define HWCAP_CE_SHA256        (1 << 6)
 #  define HWCAP_CPUID            (1 << 11)
+#  define HWCAP_SHA3             (1 << 17)
+#  define HWCAP_CE_SM3           (1 << 18)
+#  define HWCAP_CE_SM4           (1 << 19)
 #  define HWCAP_CE_SHA512        (1 << 21)
+#  define HWCAP_SVE              (1 << 22)
+                                  /* AT_HWCAP2 */
+#  define HWCAP2                 26
+#  define HWCAP2_SVE2            (1 << 1)
+#  define HWCAP2_RNG             (1 << 16)
 # endif
 
 void OPENSSL_cpuid_setup(void)
@@ -168,11 +221,20 @@ void OPENSSL_cpuid_setup(void)
      */
 #   else
     {
-        unsigned int sha512;
-        size_t len = sizeof(sha512);
+        unsigned int feature;
+        size_t len = sizeof(feature);
+        char uarch[64];
 
-        if (sysctlbyname("hw.optional.armv8_2_sha512", &sha512, &len, NULL, 0) == 0 && sha512 == 1)
+        if (sysctlbyname("hw.optional.armv8_2_sha512", &feature, &len, NULL, 0) == 0 && feature == 1)
             OPENSSL_armcap_P |= ARMV8_SHA512;
+        feature = 0;
+        if (sysctlbyname("hw.optional.armv8_2_sha3", &feature, &len, NULL, 0) == 0 && feature == 1) {
+            OPENSSL_armcap_P |= ARMV8_SHA3;
+            len = sizeof(uarch);
+            if ((sysctlbyname("machdep.cpu.brand_string", uarch, &len, NULL, 0) == 0) &&
+                (strncmp(uarch, "Apple M1", 8) == 0))
+                OPENSSL_armcap_P |= ARMV8_UNROLL8_EOR3;
+        }
     }
 #   endif
 # endif
@@ -196,13 +258,31 @@ void OPENSSL_cpuid_setup(void)
             OPENSSL_armcap_P |= ARMV8_SHA256;
 
 #  ifdef __aarch64__
+        if (hwcap & HWCAP_CE_SM4)
+            OPENSSL_armcap_P |= ARMV8_SM4;
+
         if (hwcap & HWCAP_CE_SHA512)
             OPENSSL_armcap_P |= ARMV8_SHA512;
 
         if (hwcap & HWCAP_CPUID)
             OPENSSL_armcap_P |= ARMV8_CPUID;
+
+        if (hwcap & HWCAP_CE_SM3)
+            OPENSSL_armcap_P |= ARMV8_SM3;
+        if (hwcap & HWCAP_SHA3)
+            OPENSSL_armcap_P |= ARMV8_SHA3;
 #  endif
     }
+#  ifdef __aarch64__
+        if (getauxval(HWCAP) & HWCAP_SVE)
+            OPENSSL_armcap_P |= ARMV8_SVE;
+
+        if (getauxval(HWCAP2) & HWCAP2_SVE2)
+            OPENSSL_armcap_P |= ARMV8_SVE2;
+
+        if (getauxval(HWCAP2) & HWCAP2_RNG)
+            OPENSSL_armcap_P |= ARMV8_RNG;
+#  endif
 # endif
 
     sigfillset(&all_masked);
@@ -241,11 +321,40 @@ void OPENSSL_cpuid_setup(void)
         }
 #  if defined(__aarch64__) && !defined(__APPLE__)
         if (sigsetjmp(ill_jmp, 1) == 0) {
+            _armv8_sm4_probe();
+            OPENSSL_armcap_P |= ARMV8_SM4;
+        }
+
+        if (sigsetjmp(ill_jmp, 1) == 0) {
             _armv8_sha512_probe();
             OPENSSL_armcap_P |= ARMV8_SHA512;
         }
+
+        if (sigsetjmp(ill_jmp, 1) == 0) {
+            _armv8_sm3_probe();
+            OPENSSL_armcap_P |= ARMV8_SM3;
+        if (sigsetjmp(ill_jmp, 1) == 0) {
+            _armv8_eor3_probe();
+            OPENSSL_armcap_P |= ARMV8_SHA3;
+        }
 #  endif
     }
+#  ifdef __aarch64__
+    if (sigsetjmp(ill_jmp, 1) == 0) {
+        _armv8_sve_probe();
+        OPENSSL_armcap_P |= ARMV8_SVE;
+    }
+
+    if (sigsetjmp(ill_jmp, 1) == 0) {
+        _armv8_sve2_probe();
+        OPENSSL_armcap_P |= ARMV8_SVE2;
+    }
+
+    if (sigsetjmp(ill_jmp, 1) == 0) {
+        _armv8_rng_probe();
+        OPENSSL_armcap_P |= ARMV8_RNG;
+    }
+#  endif
 # endif
 
     /* Things that getauxval didn't tell us */
@@ -266,6 +375,10 @@ void OPENSSL_cpuid_setup(void)
         (OPENSSL_armcap_P & ARMV7_NEON)) {
             OPENSSL_armv8_rsa_neonized = 1;
     }
+    if ((MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V1) ||
+         MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N2)) &&
+        (OPENSSL_armcap_P & ARMV8_SHA3))
+        OPENSSL_armcap_P |= ARMV8_UNROLL8_EOR3;
 # endif
 }
 #endif

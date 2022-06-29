@@ -76,7 +76,8 @@ static int i2r_pci(X509V3_EXT_METHOD *method, PROXY_CERT_INFO_EXTENSION *pci,
     BIO_printf(out, "%*sPolicy Language: ", indent, "");
     i2a_ASN1_OBJECT(out, pci->proxyPolicy->policyLanguage);
     if (pci->proxyPolicy->policy && pci->proxyPolicy->policy->data)
-        BIO_printf(out, "\n%*sPolicy Text: %s", indent, "",
+        BIO_printf(out, "\n%*sPolicy Text: %.*s", indent, "",
+                   pci->proxyPolicy->policy->length,
                    pci->proxyPolicy->policy->data);
     return 1;
 }
@@ -111,6 +112,7 @@ static int process_pci_value(CONF_VALUE *val,
             return 0;
         }
     } else if (strcmp(val->name, "policy") == 0) {
+        char *valp = val->value;
         unsigned char *tmp_data = NULL;
         long val_len;
 
@@ -123,9 +125,9 @@ static int process_pci_value(CONF_VALUE *val,
             }
             free_policy = 1;
         }
-        if (strncmp(val->value, "hex:", 4) == 0) {
+        if (CHECK_AND_SKIP_PREFIX(valp, "hex:")) {
             unsigned char *tmp_data2 =
-                OPENSSL_hexstr2buf(val->value + 4, &val_len);
+                OPENSSL_hexstr2buf(valp, &val_len);
 
             if (!tmp_data2) {
                 X509V3_conf_err(val);
@@ -154,10 +156,10 @@ static int process_pci_value(CONF_VALUE *val,
                 goto err;
             }
             OPENSSL_free(tmp_data2);
-        } else if (strncmp(val->value, "file:", 5) == 0) {
+        } else if (CHECK_AND_SKIP_PREFIX(valp, "file:")) {
             unsigned char buf[2048];
             int n;
-            BIO *b = BIO_new_file(val->value + 5, "r");
+            BIO *b = BIO_new_file(valp, "r");
             if (!b) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_BIO_LIB);
                 X509V3_conf_err(val);
@@ -193,8 +195,8 @@ static int process_pci_value(CONF_VALUE *val,
                 X509V3_conf_err(val);
                 goto err;
             }
-        } else if (strncmp(val->value, "text:", 5) == 0) {
-            val_len = strlen(val->value + 5);
+        } else if (CHECK_AND_SKIP_PREFIX(valp, "text:")) {
+            val_len = strlen(valp);
             tmp_data = OPENSSL_realloc((*policy)->data,
                                        (*policy)->length + val_len + 1);
             if (tmp_data) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,6 @@
  */
 #include "internal/deprecated.h"
 
-#include "e_os.h" /* strcasecmp */
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
@@ -124,10 +123,13 @@ static int rsa_check_padding(const PROV_RSA_CTX *prsactx,
                              const char *mdname, const char *mgf1_mdname,
                              int mdnid)
 {
-    switch(prsactx->pad_mode) {
+    switch (prsactx->pad_mode) {
         case RSA_NO_PADDING:
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PADDING_MODE);
-            return 0;
+            if (mdname != NULL || mdnid != NID_undef) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PADDING_MODE);
+                return 0;
+            }
+            break;
         case RSA_X931_PADDING:
             if (RSA_X931_hash_id(mdnid) == -1) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_X931_DIGEST);
@@ -187,13 +189,16 @@ static void *rsa_newctx(void *provctx, const char *propq)
     prsactx->libctx = PROV_LIBCTX_OF(provctx);
     prsactx->flag_allow_md = 1;
     prsactx->propq = propq_copy;
+    /* Maximum for sign, auto for verify */
+    prsactx->saltlen = RSA_PSS_SALTLEN_AUTO;
+    prsactx->min_saltlen = -1;
     return prsactx;
 }
 
 static int rsa_pss_compute_saltlen(PROV_RSA_CTX *ctx)
 {
     int saltlen = ctx->saltlen;
- 
+
     if (saltlen == RSA_PSS_SALTLEN_DIGEST) {
         saltlen = EVP_MD_get_size(ctx->md);
     } else if (saltlen == RSA_PSS_SALTLEN_AUTO || saltlen == RSA_PSS_SALTLEN_MAX) {
@@ -229,7 +234,7 @@ static unsigned char *rsa_generate_signature_aid(PROV_RSA_CTX *ctx,
         return NULL;
     }
 
-    switch(ctx->pad_mode) {
+    switch (ctx->pad_mode) {
     case RSA_PKCS1_PADDING:
         ret = ossl_DER_w_algorithmIdentifier_MDWithRSAEncryption(&pkt, -1,
                                                                  ctx->mdnid);
@@ -305,6 +310,17 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
             return 0;
         }
 
+        if (!ctx->flag_allow_md) {
+            if (ctx->mdname[0] != '\0' && !EVP_MD_is_a(md, ctx->mdname)) {
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
+                               "digest %s != %s", mdname, ctx->mdname);
+                EVP_MD_free(md);
+                return 0;
+            }
+            EVP_MD_free(md);
+            return 1;
+        }
+
         if (!ctx->mgf1_md_set) {
             if (!EVP_MD_up_ref(md)) {
                 EVP_MD_free(md);
@@ -372,23 +388,25 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || prsactx == NULL)
         return 0;
 
-    if (prsactx == NULL || vrsa == NULL)
+    if (vrsa == NULL && prsactx->rsa == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;
+    }
 
-    if (!ossl_rsa_check_key(prsactx->libctx, vrsa, operation))
-        return 0;
+    if (vrsa != NULL) {
+        if (!ossl_rsa_check_key(prsactx->libctx, vrsa, operation))
+            return 0;
 
-    if (!RSA_up_ref(vrsa))
-        return 0;
-    RSA_free(prsactx->rsa);
-    prsactx->rsa = vrsa;
+        if (!RSA_up_ref(vrsa))
+            return 0;
+        RSA_free(prsactx->rsa);
+        prsactx->rsa = vrsa;
+    }
+
     prsactx->operation = operation;
-
-    if (!rsa_set_ctx_params(prsactx, params))
-        return 0;
 
     /* Maximum for sign, auto for verify */
     prsactx->saltlen = RSA_PSS_SALTLEN_AUTO;
@@ -443,9 +461,10 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa,
                 prsactx->saltlen = min_saltlen;
 
                 /* call rsa_setup_mgf1_md before rsa_setup_md to avoid duplication */
-                return rsa_setup_mgf1_md(prsactx, mgf1mdname, prsactx->propq)
-                    && rsa_setup_md(prsactx, mdname, prsactx->propq)
-                    && rsa_check_parameters(prsactx, min_saltlen);
+                if (!rsa_setup_mgf1_md(prsactx, mgf1mdname, prsactx->propq)
+                    || !rsa_setup_md(prsactx, mdname, prsactx->propq)
+                    || !rsa_check_parameters(prsactx, min_saltlen))
+                    return 0;
             }
         }
 
@@ -454,6 +473,9 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa,
         ERR_raise(ERR_LIB_RSA, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
+
+    if (!rsa_set_ctx_params(prsactx, params))
+        return 0;
 
     return 1;
 }
@@ -826,20 +848,21 @@ static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
     if (!ossl_prov_is_running())
         return 0;
 
-    if (prsactx != NULL)
-        prsactx->flag_allow_md = 0;
     if (!rsa_signverify_init(vprsactx, vrsa, params, operation))
         return 0;
+
     if (mdname != NULL
         /* was rsa_setup_md already called in rsa_signverify_init()? */
-        && (mdname[0] == '\0' || strcasecmp(prsactx->mdname, mdname) != 0)
+        && (mdname[0] == '\0' || OPENSSL_strcasecmp(prsactx->mdname, mdname) != 0)
         && !rsa_setup_md(prsactx, mdname, prsactx->propq))
         return 0;
 
-    prsactx->mdctx = EVP_MD_CTX_new();
+    prsactx->flag_allow_md = 0;
+
     if (prsactx->mdctx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
-        goto error;
+        prsactx->mdctx = EVP_MD_CTX_new();
+        if (prsactx->mdctx == NULL)
+            goto error;
     }
 
     if (!EVP_DigestInit_ex2(prsactx->mdctx, prsactx->md, params))
@@ -849,9 +872,7 @@ static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
 
  error:
     EVP_MD_CTX_free(prsactx->mdctx);
-    EVP_MD_free(prsactx->md);
     prsactx->mdctx = NULL;
-    prsactx->md = NULL;
     return 0;
 }
 
@@ -1141,9 +1162,6 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     saltlen = prsactx->saltlen;
 
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
-    /* Not allowed during certain operations */
-    if (p != NULL && !prsactx->flag_allow_md)
-        return 0;
     if (p != NULL) {
         const OSSL_PARAM *propsp =
             OSSL_PARAM_locate_const(params,

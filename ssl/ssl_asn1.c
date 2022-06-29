@@ -229,7 +229,7 @@ static int ssl_session_strndup(char **pdst, ASN1_OCTET_STRING *src)
 static int ssl_session_memcpy(unsigned char *dst, size_t *pdstlen,
                               ASN1_OCTET_STRING *src, size_t maxlen)
 {
-    if (src == NULL) {
+    if (src == NULL || src->length == 0) {
         *pdstlen = 0;
         return 1;
     }

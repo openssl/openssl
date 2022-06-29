@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -49,27 +49,28 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
     }
 
     /* Check the mac */
-
-    /*
-     * If password is zero length or NULL then try verifying both cases to
-     * determine which password is correct. The reason for this is that under
-     * PKCS#12 password based encryption no password and a zero length
-     * password are two different things...
-     */
-
-    if (pass == NULL || *pass == '\0') {
-        if (!PKCS12_mac_present(p12)
-            || PKCS12_verify_mac(p12, NULL, 0))
-            pass = NULL;
-        else if (PKCS12_verify_mac(p12, "", 0))
-            pass = "";
-        else {
+    if (PKCS12_mac_present(p12)) {
+        /*
+         * If password is zero length or NULL then try verifying both cases to
+         * determine which password is correct. The reason for this is that under
+         * PKCS#12 password based encryption no password and a zero length
+         * password are two different things...
+         */
+        if (pass == NULL || *pass == '\0') {
+            if (PKCS12_verify_mac(p12, NULL, 0))
+                pass = NULL;
+            else if (PKCS12_verify_mac(p12, "", 0))
+                pass = "";
+            else {
+                ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_VERIFY_FAILURE);
+                goto err;
+            }
+        } else if (!PKCS12_verify_mac(p12, pass, -1)) {
             ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_VERIFY_FAILURE);
             goto err;
         }
-    } else if (!PKCS12_verify_mac(p12, pass, -1)) {
-        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_VERIFY_FAILURE);
-        goto err;
+    } else if (pass == NULL || *pass == '\0') {
+        pass = NULL;
     }
 
     /* If needed, allocate stack for other certificates */
@@ -125,7 +126,7 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
         *cert = NULL;
     }
     X509_free(x);
-    sk_X509_pop_free(ocerts, X509_free);
+    OSSL_STACK_OF_X509_free(ocerts);
     return 0;
 
 }

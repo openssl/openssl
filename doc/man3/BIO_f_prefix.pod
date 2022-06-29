@@ -46,13 +46,13 @@ implemented as macros.
 
 BIO_f_prefix() returns the prefix BIO method.
 
-BIO_set_prefix() returns 1 if the prefix was correctly set, or 0 on
+BIO_set_prefix() returns 1 if the prefix was correctly set, or <=0 on
 failure.
 
-BIO_set_indent() returns 1 if the prefix was correctly set, or 0 on
+BIO_set_indent() returns 1 if the prefix was correctly set, or <=0 on
 failure.
 
-BIO_get_indent() returns the current indentation.
+BIO_get_indent() returns the current indentation, or a negative value for failure.
 
 =head1 SEE ALSO
 

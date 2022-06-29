@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -67,7 +67,7 @@ typedef int write_bio_of_void_fn(BIO *bp, const void *x);
 /* Free the blob allocated during key_to_paramstring_fn */
 static void free_asn1_data(int type, void *data)
 {
-    switch(type) {
+    switch (type) {
     case V_ASN1_OBJECT:
         ASN1_OBJECT_free(data);
         break;
@@ -167,9 +167,8 @@ static X509_PUBKEY *key_to_pubkey(const void *key, int key_nid,
  * key_to_epki_* produce encoded output with the private key data in a
  * EncryptedPrivateKeyInfo structure (defined by PKCS#8).  They require
  * that there's an intent to encrypt, anything else is an error.
- * They are currently only called from the corresponding key_to_pki_ function.
  *
- * key_to_pki_* primarly produce encoded output with the private key data
+ * key_to_pki_* primarily produce encoded output with the private key data
  * in a PrivateKeyInfo structure (also defined by PKCS#8).  However, if
  * there is an intent to encrypt the data, the corresponding key_to_epki_*
  * function is used instead.
@@ -402,7 +401,7 @@ static int key_to_type_specific_pem_bio_cb(BIO *out, const void *key,
 {
     return
         PEM_ASN1_write_bio(k2d, pemname, out, key, ctx->cipher,
-                           NULL, 0, ossl_pw_pem_password, &ctx->pwdata) > 0;
+                           NULL, 0, cb, cbarg) > 0;
 }
 
 static int key_to_type_specific_pem_priv_bio(BIO *out, const void *key,
@@ -509,6 +508,8 @@ static int dh_pki_priv_to_der(const void *dh, unsigned char **pder)
     ASN1_STRING_clear_free(priv_key);
     return ret;
 }
+
+# define dh_epki_priv_to_der dh_pki_priv_to_der
 
 static int dh_type_specific_params_to_der(const void *dh, unsigned char **pder)
 {
@@ -623,6 +624,8 @@ static int dsa_pki_priv_to_der(const void *dsa, unsigned char **pder)
     return ret;
 }
 
+# define dsa_epki_priv_to_der dsa_pki_priv_to_der
+
 # define dsa_type_specific_priv_to_der   (i2d_of_void *)i2d_DSAPrivateKey
 # define dsa_type_specific_pub_to_der    (i2d_of_void *)i2d_DSAPublicKey
 # define dsa_type_specific_params_to_der (i2d_of_void *)i2d_DSAparams
@@ -698,6 +701,10 @@ static int prepare_ec_params(const void *eckey, int nid, int save,
 
 static int ec_spki_pub_to_der(const void *eckey, unsigned char **pder)
 {
+    if (EC_KEY_get0_public_key(eckey) == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PUBLIC_KEY);
+        return 0;
+    }
     return i2o_ECPublicKey(eckey, pder);
 }
 
@@ -721,8 +728,10 @@ static int ec_pki_priv_to_der(const void *veckey, unsigned char **pder)
     return ret; /* return the length of the der encoded data */
 }
 
+# define ec_epki_priv_to_der ec_pki_priv_to_der
+
 # define ec_type_specific_params_to_der (i2d_of_void *)i2d_ECParameters
-# define ec_type_specific_pub_to_der    (i2d_of_void *)i2o_ECPublicKey
+/* No ec_type_specific_pub_to_der, there simply is no such thing */
 # define ec_type_specific_priv_to_der   (i2d_of_void *)i2d_ECPrivateKey
 
 # define ec_check_key_type      NULL
@@ -785,6 +794,8 @@ static int ecx_pki_priv_to_der(const void *vecxkey, unsigned char **pder)
 
     return keybloblen;
 }
+
+# define ecx_epki_priv_to_der ecx_pki_priv_to_der
 
 /*
  * ED25519, ED448, X25519 and X448 only has PKCS#8 / SubjectPublicKeyInfo
@@ -889,6 +900,7 @@ static int prepare_rsa_params(const void *rsa, int nid, int save,
  * field as well as the SubjectPublicKeyInfo |subjectPublicKey| field.
  */
 #define rsa_pki_priv_to_der             rsa_type_specific_priv_to_der
+#define rsa_epki_priv_to_der            rsa_type_specific_priv_to_der
 #define rsa_spki_pub_to_der             rsa_type_specific_pub_to_der
 #define rsa_type_specific_priv_to_der   (i2d_of_void *)i2d_RSAPrivateKey
 #define rsa_type_specific_pub_to_der    (i2d_of_void *)i2d_RSAPublicKey
@@ -1116,6 +1128,10 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
 #define DO_PrivateKeyInfo(impl, type, output)                               \
     DO_PRIVATE_KEY(impl, type, pki, output)
 
+#define DO_EncryptedPrivateKeyInfo_selection_mask DO_PRIVATE_KEY_selection_mask
+#define DO_EncryptedPrivateKeyInfo(impl, type, output)                      \
+    DO_PRIVATE_KEY(impl, type, epki, output)
+
 /* SubjectPublicKeyInfo is a structure for public keys only */
 #define DO_SubjectPublicKeyInfo_selection_mask DO_PUBLIC_KEY_selection_mask
 #define DO_SubjectPublicKeyInfo(impl, type, output)                         \
@@ -1174,11 +1190,11 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
 #define DO_DSA_selection_mask DO_type_specific_selection_mask
 #define DO_DSA(impl, type, output) DO_type_specific(impl, type, output)
 
-#define DO_EC_selection_mask DO_type_specific_selection_mask
-#define DO_EC(impl, type, output) DO_type_specific(impl, type, output)
+#define DO_EC_selection_mask DO_type_specific_no_pub_selection_mask
+#define DO_EC(impl, type, output) DO_type_specific_no_pub(impl, type, output)
 
-#define DO_SM2_selection_mask DO_type_specific_selection_mask
-#define DO_SM2(impl, type, output) DO_type_specific(impl, type, output)
+#define DO_SM2_selection_mask DO_type_specific_no_pub_selection_mask
+#define DO_SM2(impl, type, output) DO_type_specific_no_pub(impl, type, output)
 
 /* PKCS#1 defines a structure for RSA private and public keys */
 #define DO_PKCS1_selection_mask DO_RSA_selection_mask
@@ -1328,53 +1344,75 @@ MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, type_specific_no_pub, pem);
  * For PEM, these are expected to be used by PEM_write_bio_PrivateKey(),
  * PEM_write_bio_PUBKEY() and PEM_write_bio_Parameters().
  */
+MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, PrivateKeyInfo, der);
 MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, PrivateKeyInfo, pem);
 MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, PrivateKeyInfo, der);
 MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, PrivateKeyInfo, pem);
 MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA_PSS, SubjectPublicKeyInfo, pem);
 #ifndef OPENSSL_NO_DH
+MAKE_ENCODER(dh, dh, EVP_PKEY_DH, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(dh, dh, EVP_PKEY_DH, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(dh, dh, EVP_PKEY_DH, PrivateKeyInfo, der);
 MAKE_ENCODER(dh, dh, EVP_PKEY_DH, PrivateKeyInfo, pem);
 MAKE_ENCODER(dh, dh, EVP_PKEY_DH, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(dh, dh, EVP_PKEY_DH, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, PrivateKeyInfo, der);
 MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, PrivateKeyInfo, pem);
 MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, SubjectPublicKeyInfo, pem);
 #endif
 #ifndef OPENSSL_NO_DSA
+MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, PrivateKeyInfo, der);
 MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, PrivateKeyInfo, pem);
 MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, SubjectPublicKeyInfo, pem);
 #endif
 #ifndef OPENSSL_NO_EC
+MAKE_ENCODER(ec, ec, EVP_PKEY_EC, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ec, ec, EVP_PKEY_EC, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, PrivateKeyInfo, der);
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, PrivateKeyInfo, pem);
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, pem);
 # ifndef OPENSSL_NO_SM2
+MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, PrivateKeyInfo, der);
 MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, PrivateKeyInfo, pem);
 MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, pem);
 # endif
+MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, PrivateKeyInfo, der);
 MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, PrivateKeyInfo, pem);
 MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, PrivateKeyInfo, der);
 MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, PrivateKeyInfo, pem);
 MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, PrivateKeyInfo, der);
 MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, PrivateKeyInfo, pem);
 MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, PrivateKeyInfo, der);
 MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, PrivateKeyInfo, pem);
 MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, SubjectPublicKeyInfo, der);

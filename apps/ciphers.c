@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -174,19 +174,19 @@ int ciphers_main(int argc, char **argv)
 
     /* Optional arg is cipher name. */
     argv = opt_rest();
-    argc = opt_num_rest();
-    if (argc == 1)
+    if (opt_num_rest() == 1)
         ciphers = argv[0];
-    else if (argc != 0)
+    else if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     if (convert != NULL) {
         BIO_printf(bio_out, "OpenSSL cipher name: %s\n",
                    OPENSSL_cipher_name(convert));
+        ret = 0;
         goto end;
     }
 
-    ctx = SSL_CTX_new(meth);
+    ctx = SSL_CTX_new_ex(app_get0_libctx(), app_get0_propq(), meth);
     if (ctx == NULL)
         goto err;
     if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)

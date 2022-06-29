@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,7 +23,7 @@ static EVP_PKEY *get_dh_from_pg_bn(OSSL_LIB_CTX *libctx, const char *type,
     OSSL_PARAM *params = NULL;
     EVP_PKEY *dhpkey = NULL;
 
-    if (pctx == NULL || !EVP_PKEY_fromdata_init(pctx))
+    if (pctx == NULL || EVP_PKEY_fromdata_init(pctx) <= 0)
         goto err;
 
     if ((tmpl = OSSL_PARAM_BLD_new()) == NULL
@@ -35,7 +35,7 @@ static EVP_PKEY *get_dh_from_pg_bn(OSSL_LIB_CTX *libctx, const char *type,
 
     params = OSSL_PARAM_BLD_to_param(tmpl);
     if (params == NULL
-        || !EVP_PKEY_fromdata(pctx, &dhpkey, EVP_PKEY_KEY_PARAMETERS, params))
+        || EVP_PKEY_fromdata(pctx, &dhpkey, EVP_PKEY_KEY_PARAMETERS, params) <= 0)
         goto err;
 
  err:
@@ -159,6 +159,27 @@ EVP_PKEY *get_dh2048(OSSL_LIB_CTX *libctx)
         goto err;
 
     p = BN_get_rfc3526_prime_2048(NULL);
+    if (p == NULL)
+        goto err;
+
+    dhpkey = get_dh_from_pg_bn(libctx, "DH", p, g, NULL);
+
+ err:
+    BN_free(p);
+    BN_free(g);
+    return dhpkey;
+}
+
+EVP_PKEY *get_dh4096(OSSL_LIB_CTX *libctx)
+{
+    BIGNUM *p = NULL, *g = NULL;
+    EVP_PKEY *dhpkey = NULL;
+
+    g = BN_new();
+    if (g == NULL || !BN_set_word(g, 2))
+        goto err;
+
+    p = BN_get_rfc3526_prime_4096(NULL);
     if (p == NULL)
         goto err;
 

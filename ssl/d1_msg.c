@@ -49,7 +49,7 @@ int dtls1_dispatch_alert(SSL *s)
     i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), 0, &written);
     if (i <= 0) {
         s->s3.alert_dispatch = 1;
-        /* fprintf( stderr, "not done with alert\n" ); */
+        /* fprintf(stderr, "not done with alert\n"); */
     } else {
         (void)BIO_flush(s->wbio);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,7 @@
 
 #include "bio_local.h"
 #include "internal/ktls.h"
+#include "internal/bio_tfo.h"
 
 #include <openssl/err.h>
 
@@ -52,17 +53,6 @@ int BIO_socket(int domain, int socktype, int protocol, int options)
         ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_CREATE_SOCKET);
         return INVALID_SOCKET;
     }
-# ifndef OPENSSL_NO_KTLS
-    {
-        /*
-         * The new socket is created successfully regardless of ktls_enable.
-         * ktls_enable doesn't change any functionality of the socket, except
-         * changing the setsockopt to enable the processing of ktls_start.
-         * Thus, it is not a problem to call it for non-TLS sockets.
-         */
-        ktls_enable(sock);
-    }
-# endif
 
     return sock;
 }
@@ -79,6 +69,7 @@ int BIO_socket(int domain, int socktype, int protocol, int options)
  * - BIO_SOCK_KEEPALIVE: enable regularly sending keep-alive messages.
  * - BIO_SOCK_NONBLOCK: Make the socket non-blocking.
  * - BIO_SOCK_NODELAY: don't delay small messages.
+ * - BIO_SOCK_TFO: use TCP Fast Open
  *
  * options holds BIO socket options that can be used
  * You should call this for every address returned by BIO_lookup
@@ -118,6 +109,68 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options)
             return 0;
         }
     }
+    if (options & BIO_SOCK_TFO) {
+# if defined(OSSL_TFO_CLIENT_FLAG)
+#  if defined(OSSL_TFO_SYSCTL_CLIENT)
+        int enabled = 0;
+        size_t enabledlen = sizeof(enabled);
+
+        /* Later FreeBSD */
+        if (sysctlbyname(OSSL_TFO_SYSCTL_CLIENT, &enabled, &enabledlen, NULL, 0) < 0) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_NO_KERNEL_SUPPORT);
+            return 0;
+        }
+        /* Need to check for client flag */
+        if (!(enabled & OSSL_TFO_CLIENT_FLAG)) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_DISABLED);
+            return 0;
+        }
+#  elif defined(OSSL_TFO_SYSCTL)
+        int enabled = 0;
+        size_t enabledlen = sizeof(enabled);
+
+        /* macOS */
+        if (sysctlbyname(OSSL_TFO_SYSCTL, &enabled, &enabledlen, NULL, 0) < 0) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_NO_KERNEL_SUPPORT);
+            return 0;
+        }
+        /* Need to check for client flag */
+        if (!(enabled & OSSL_TFO_CLIENT_FLAG)) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_DISABLED);
+            return 0;
+        }
+#  endif
+# endif
+# if defined(OSSL_TFO_CONNECTX)
+        sa_endpoints_t sae;
+
+        memset(&sae, 0, sizeof(sae));
+        sae.sae_dstaddr = BIO_ADDR_sockaddr(addr);
+        sae.sae_dstaddrlen = BIO_ADDR_sockaddr_size(addr);
+        if (connectx(sock, &sae, SAE_ASSOCID_ANY,
+                     CONNECT_DATA_IDEMPOTENT | CONNECT_RESUME_ON_READ_WRITE,
+                     NULL, 0, NULL, NULL) == -1) {
+            if (!BIO_sock_should_retry(-1)) {
+                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                               "calling connectx()");
+                ERR_raise(ERR_LIB_BIO, BIO_R_CONNECT_ERROR);
+            }
+            return 0;
+        }
+# endif
+# if defined(OSSL_TFO_CLIENT_SOCKOPT)
+        if (setsockopt(sock, IPPROTO_TCP, OSSL_TFO_CLIENT_SOCKOPT,
+                       (const void *)&on, sizeof(on)) != 0) {
+            ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                           "calling setsockopt()");
+            ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_TFO);
+            return 0;
+        }
+# endif
+# if defined(OSSL_TFO_DO_NOT_CONNECT)
+        return 1;
+# endif
+    }
 
     if (connect(sock, BIO_ADDR_sockaddr(addr),
                 BIO_ADDR_sockaddr_size(addr)) == -1) {
@@ -128,6 +181,15 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options)
         }
         return 0;
     }
+# ifndef OPENSSL_NO_KTLS
+    /*
+     * The new socket is created successfully regardless of ktls_enable.
+     * ktls_enable doesn't change any functionality of the socket, except
+     * changing the setsockopt to enable the processing of ktls_start.
+     * Thus, it is not a problem to call it for non-TLS sockets.
+     */
+    ktls_enable(sock);
+# endif
     return 1;
 }
 
@@ -201,6 +263,7 @@ int BIO_bind(int sock, const BIO_ADDR *addr, int options)
  *   for a recently closed port.
  * - BIO_SOCK_V6_ONLY: When creating an IPv6 socket, make it listen only
  *   for IPv6 addresses and not IPv4 addresses mapped to IPv6.
+ * - BIO_SOCK_TFO: accept TCP fast open (set TCP_FASTOPEN)
  *
  * It's recommended that you set up both an IPv6 and IPv4 listen socket, and
  * then check both for new clients that connect to it.  You want to set up
@@ -292,6 +355,54 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
         return 0;
     }
 
+# if defined(OSSL_TFO_SERVER_SOCKOPT)
+    /*
+     * Must do it explicitly after listen() for macOS, still
+     * works fine on other OS's
+     */
+    if ((options & BIO_SOCK_TFO) && socktype != SOCK_DGRAM) {
+        int q = OSSL_TFO_SERVER_SOCKOPT_VALUE;
+#  if defined(OSSL_TFO_CLIENT_FLAG)
+#   if defined(OSSL_TFO_SYSCTL_SERVER)
+        int enabled = 0;
+        size_t enabledlen = sizeof(enabled);
+
+        /* Later FreeBSD */
+        if (sysctlbyname(OSSL_TFO_SYSCTL_SERVER, &enabled, &enabledlen, NULL, 0) < 0) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_NO_KERNEL_SUPPORT);
+            return 0;
+        }
+        /* Need to check for server flag */
+        if (!(enabled & OSSL_TFO_SERVER_FLAG)) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_DISABLED);
+            return 0;
+        }
+#   elif defined(OSSL_TFO_SYSCTL)
+        int enabled = 0;
+        size_t enabledlen = sizeof(enabled);
+
+        /* Early FreeBSD, macOS */
+        if (sysctlbyname(OSSL_TFO_SYSCTL, &enabled, &enabledlen, NULL, 0) < 0) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_NO_KERNEL_SUPPORT);
+            return 0;
+        }
+        /* Need to check for server flag */
+        if (!(enabled & OSSL_TFO_SERVER_FLAG)) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_TFO_DISABLED);
+            return 0;
+        }
+#   endif
+#  endif
+        if (setsockopt(sock, IPPROTO_TCP, OSSL_TFO_SERVER_SOCKOPT,
+                       (void *)&q, sizeof(q)) < 0) {
+            ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                           "calling setsockopt()");
+            ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_TFO);
+            return 0;
+        }
+    }
+# endif
+
     return 1;
 }
 
@@ -335,7 +446,7 @@ int BIO_accept_ex(int accept_sock, BIO_ADDR *addr_, int options)
  */
 int BIO_closesocket(int sock)
 {
-    if (closesocket(sock) < 0)
+    if (sock < 0 || closesocket(sock) < 0)
         return 0;
     return 1;
 }

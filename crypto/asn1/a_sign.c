@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -247,16 +247,14 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
             goto err;
         }
 
-        if (pkey->ameth->pkey_flags & ASN1_PKEY_SIGPARAM_NULL)
-            paramtype = V_ASN1_NULL;
-        else
-            paramtype = V_ASN1_UNDEF;
-
-        if (algor1)
-            X509_ALGOR_set0(algor1, OBJ_nid2obj(signid), paramtype, NULL);
-        if (algor2)
-            X509_ALGOR_set0(algor2, OBJ_nid2obj(signid), paramtype, NULL);
-
+        paramtype = pkey->ameth->pkey_flags & ASN1_PKEY_SIGPARAM_NULL ?
+            V_ASN1_NULL : V_ASN1_UNDEF;
+        if (algor1 != NULL
+            && !X509_ALGOR_set0(algor1, OBJ_nid2obj(signid), paramtype, NULL))
+            goto err;
+        if (algor2 != NULL
+            && !X509_ALGOR_set0(algor2, OBJ_nid2obj(signid), paramtype, NULL))
+            goto err;
     }
 
     buf_len = ASN1_item_i2d(data, &buf_in, it);

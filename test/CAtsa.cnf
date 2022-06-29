@@ -3,6 +3,9 @@
 # This config is used by the Time Stamp Authority tests.
 #
 
+# Comment out the next line to ignore configuration errors
+config_diagnostics = 1
+
 # Extra OBJECT IDENTIFIER info:
 oid_section		= new_oids
 

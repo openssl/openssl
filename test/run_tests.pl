@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -38,6 +38,11 @@ $ENV{OPENSSL_CONF_INCLUDE} = rel2abs(catdir($bldtop, "test"));
 $ENV{OPENSSL_MODULES} = rel2abs(catdir($bldtop, "providers"));
 $ENV{OPENSSL_ENGINES} = rel2abs(catdir($bldtop, "engines"));
 $ENV{CTLOG_FILE} = rel2abs(catfile($srctop, "test", "ct", "log_list.cnf"));
+
+# On platforms that support this, this will ensure malloc returns data that is
+# set to a non-zero value. Can be helpful for detecting uninitialized reads in
+# some situations.
+$ENV{'MALLOC_PERTURB_'} = '128' if !defined $ENV{'MALLOC_PERTURB_'};
 
 my %tapargs =
     ( verbosity         => $ENV{HARNESS_VERBOSE} ? 1 : 0,
@@ -309,10 +314,12 @@ my $harness = $package->new(\%tapargs);
 my $ret =
     $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
                        @preps);
-die if $ret->has_errors;
-$ret =
-    $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
-                       sort { reorder($a) cmp reorder($b) } keys %tests);
+
+if (ref($ret) ne "TAP::Parser::Aggregator" || !$ret->has_errors) {
+    $ret =
+        $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
+                           sort { reorder($a) cmp reorder($b) } keys %tests);
+}
 
 # If this is a TAP::Parser::Aggregator, $ret->has_errors is the count of
 # tests that failed.  We don't bother with that exact number, just exit

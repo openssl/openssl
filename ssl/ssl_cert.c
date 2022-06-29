@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -212,7 +212,7 @@ void ssl_cert_clear_certs(CERT *c)
         cpk->x509 = NULL;
         EVP_PKEY_free(cpk->privatekey);
         cpk->privatekey = NULL;
-        sk_X509_pop_free(cpk->chain, X509_free);
+        OSSL_STACK_OF_X509_free(cpk->chain);
         cpk->chain = NULL;
         OPENSSL_free(cpk->serverinfo);
         cpk->serverinfo = NULL;
@@ -264,7 +264,7 @@ int ssl_cert_set0_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
             return 0;
         }
     }
-    sk_X509_pop_free(cpk->chain, X509_free);
+    OSSL_STACK_OF_X509_free(cpk->chain);
     cpk->chain = chain;
     return 1;
 }
@@ -278,7 +278,7 @@ int ssl_cert_set1_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
     if (!dchain)
         return 0;
     if (!ssl_cert_set0_chain(s, ctx, dchain)) {
-        sk_X509_pop_free(dchain, X509_free);
+        OSSL_STACK_OF_X509_free(dchain);
         return 0;
     }
     return 1;
@@ -362,6 +362,13 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg)
     c->cert_cb_arg = arg;
 }
 
+/*
+ * Verify a certificate chain
+ * Return codes:
+ *  1: Verify success
+ *  0: Verify failure or error
+ * -1: Retry required
+ */
 int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 {
     X509 *x;
@@ -423,13 +430,17 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
     if (s->verify_callback)
         X509_STORE_CTX_set_verify_cb(ctx, s->verify_callback);
 
-    if (s->ctx->app_verify_callback != NULL)
+    if (s->ctx->app_verify_callback != NULL) {
         i = s->ctx->app_verify_callback(ctx, s->ctx->app_verify_arg);
-    else
+    } else {
         i = X509_verify_cert(ctx);
+        /* We treat an error in the same way as a failure to verify */
+        if (i < 0)
+            i = 0;
+    }
 
     s->verify_result = X509_STORE_CTX_get_error(ctx);
-    sk_X509_pop_free(s->verified_chain, X509_free);
+    OSSL_STACK_OF_X509_free(s->verified_chain);
     s->verified_chain = NULL;
     if (X509_STORE_CTX_get0_chain(ctx) != NULL) {
         s->verified_chain = X509_STORE_CTX_get1_chain(ctx);
@@ -625,7 +636,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
         ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    if (!BIO_read_filename(in, file))
+    if (BIO_read_filename(in, file) <= 0)
         goto err;
 
     /* Internally lh_X509_NAME_retrieve() needs the libctx to retrieve SHA1 */
@@ -696,7 +707,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
         goto err;
     }
 
-    if (!BIO_read_filename(in, file))
+    if (BIO_read_filename(in, file) <= 0)
         goto err;
 
     for (;;) {
@@ -929,12 +940,12 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
         rv = ssl_security_cert(s, ctx, x, 0, 0);
         if (rv != 1) {
             ERR_raise(ERR_LIB_SSL, rv);
-            sk_X509_pop_free(chain, X509_free);
+            OSSL_STACK_OF_X509_free(chain);
             rv = 0;
             goto err;
         }
     }
-    sk_X509_pop_free(cpk->chain, X509_free);
+    OSSL_STACK_OF_X509_free(cpk->chain);
     cpk->chain = chain;
     if (rv == 0)
         rv = 1;
@@ -960,9 +971,20 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
     return 1;
 }
 
+int ssl_cert_get_cert_store(CERT *c, X509_STORE **pstore, int chain)
+{
+    *pstore = (chain ? c->chain_store : c->verify_store);
+    return 1;
+}
+
 int ssl_get_security_level_bits(const SSL *s, const SSL_CTX *ctx, int *levelp)
 {
     int level;
+    /*
+     * note that there's a corresponding minbits_table
+     * in crypto/x509/x509_vfy.c that's used for checking the security level
+     * of RSA and DSA keys
+     */
     static const int minbits_table[5 + 1] = { 0, 80, 112, 128, 192, 256 };
 
     if (ctx != NULL)
@@ -985,7 +1007,7 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
                                          int op, int bits, int nid, void *other,
                                          void *ex)
 {
-    int level, minbits;
+    int level, minbits, pfs_mask;
 
     minbits = ssl_get_security_level_bits(s, ctx, &level);
 
@@ -1016,29 +1038,21 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
             /* SHA1 HMAC is 160 bits of security */
             if (minbits > 160 && c->algorithm_mac & SSL_SHA1)
                 return 0;
-            /* Level 2: no RC4 */
-            if (level >= 2 && c->algorithm_enc == SSL_RC4)
-                return 0;
             /* Level 3: forward secure ciphersuites only */
+            pfs_mask = SSL_kDHE | SSL_kECDHE | SSL_kDHEPSK | SSL_kECDHEPSK;
             if (level >= 3 && c->min_tls != TLS1_3_VERSION &&
-                               !(c->algorithm_mkey & (SSL_kEDH | SSL_kEECDH)))
+                               !(c->algorithm_mkey & pfs_mask))
                 return 0;
             break;
         }
     case SSL_SECOP_VERSION:
         if (!SSL_IS_DTLS(s)) {
-            /* SSLv3 not allowed at level 2 */
-            if (nid <= SSL3_VERSION && level >= 2)
-                return 0;
-            /* TLS v1.1 and above only for level 3 */
-            if (nid <= TLS1_VERSION && level >= 3)
-                return 0;
-            /* TLS v1.2 only for level 4 and above */
-            if (nid <= TLS1_1_VERSION && level >= 4)
+            /* SSLv3, TLS v1.0 and TLS v1.1 only allowed at level 0 */
+            if (nid <= TLS1_1_VERSION && level > 0)
                 return 0;
         } else {
-            /* DTLS v1.2 only for level 4 and above */
-            if (DTLS_VERSION_LT(nid, DTLS1_2_VERSION) && level >= 4)
+            /* DTLS v1.0 only allowed at level 0 */
+            if (DTLS_VERSION_LT(nid, DTLS1_2_VERSION) && level > 0)
                 return 0;
         }
         break;

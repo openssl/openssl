@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -28,7 +28,6 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLSv1.2 enabled"
     if disabled("tls1_2");
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     \&add_empty_recs_filter,
     cmdstr(app(["openssl"]), display => 1),
@@ -88,7 +87,7 @@ use constant {
 };
 
 # The TLSv1.2 in SSLv2 ClientHello need to run at security level 0
-# because in a SSLv2 ClientHello we can't send extentions to indicate
+# because in a SSLv2 ClientHello we can't send extensions to indicate
 # which signature algorithm we want to use, and the default is SHA1.
 
 #Test 5: Inject an SSLv2 style record format for a TLSv1.2 ClientHello

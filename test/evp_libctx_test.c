@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,7 +33,6 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "crypto/bn_dh.h"   /* _bignum_ffdhe2048_p */
-#include "../e_os.h"        /* strcasecmp */
 
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
@@ -478,7 +477,7 @@ err:
 
 static int name_cmp(const char * const *a, const char * const *b)
 {
-    return strcasecmp(*a, *b);
+    return OPENSSL_strcasecmp(*a, *b);
 }
 
 static void collect_cipher_names(EVP_CIPHER *cipher, void *cipher_names_list)
@@ -525,7 +524,7 @@ static int kem_rsa_gen_recover(void)
     int ret = 0;
     EVP_PKEY *pub = NULL;
     EVP_PKEY *priv = NULL;
-    EVP_PKEY_CTX *sctx = NULL, *rctx = NULL;
+    EVP_PKEY_CTX *sctx = NULL, *rctx = NULL, *dctx = NULL;
     unsigned char secret[256] = { 0, };
     unsigned char ct[256] = { 0, };
     unsigned char unwrap[256] = { 0, };
@@ -536,11 +535,12 @@ static int kem_rsa_gen_recover(void)
           && TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pub, NULL))
           && TEST_int_eq(EVP_PKEY_encapsulate_init(sctx, NULL), 1)
           && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(sctx, "RSASVE"), 1)
-          && TEST_int_eq(EVP_PKEY_encapsulate(sctx, NULL, &ctlen, NULL,
+          && TEST_ptr(dctx = EVP_PKEY_CTX_dup(sctx))
+          && TEST_int_eq(EVP_PKEY_encapsulate(dctx, NULL, &ctlen, NULL,
                                               &secretlen), 1)
           && TEST_int_eq(ctlen, secretlen)
           && TEST_int_eq(ctlen, bits / 8)
-          && TEST_int_eq(EVP_PKEY_encapsulate(sctx, ct, &ctlen, secret,
+          && TEST_int_eq(EVP_PKEY_encapsulate(dctx, ct, &ctlen, secret,
                                               &secretlen), 1)
           && TEST_ptr(rctx = EVP_PKEY_CTX_new_from_pkey(libctx, priv, NULL))
           && TEST_int_eq(EVP_PKEY_decapsulate_init(rctx, NULL), 1)
@@ -553,6 +553,7 @@ static int kem_rsa_gen_recover(void)
     EVP_PKEY_free(pub);
     EVP_PKEY_free(priv);
     EVP_PKEY_CTX_free(rctx);
+    EVP_PKEY_CTX_free(dctx);
     EVP_PKEY_CTX_free(sctx);
     return ret;
 }
@@ -575,7 +576,7 @@ static int test_cipher_tdes_randkey(void)
           && TEST_int_ne(EVP_CIPHER_get_flags(tdes_cipher) & EVP_CIPH_RAND_KEY, 0)
           && TEST_ptr(ctx = EVP_CIPHER_CTX_new())
           && TEST_true(EVP_CipherInit_ex(ctx, tdes_cipher, NULL, NULL, NULL, 1))
-          && TEST_true(EVP_CIPHER_CTX_rand_key(ctx, key));
+          && TEST_int_gt(EVP_CIPHER_CTX_rand_key(ctx, key), 0);
 
     EVP_CIPHER_CTX_free(ctx);
     EVP_CIPHER_free(tdes_cipher);
@@ -667,7 +668,7 @@ static EVP_PKEY *gen_dh_key(void)
     params[1] = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(gctx = EVP_PKEY_CTX_new_from_name(libctx, "DH", NULL))
-        || !TEST_true(EVP_PKEY_keygen_init(gctx))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(gctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_params(gctx, params))
         || !TEST_true(EVP_PKEY_keygen(gctx, &pkey)))
         goto err;

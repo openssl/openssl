@@ -75,19 +75,13 @@ context. If L<EVP_set_default_properties(3)> is called directly on a child
 library context then the new properties will override anything from the parent
 library context and mirroring of the properties will stop.
 
-OSSL_LIB_CTX_new_child() must only be called from within the scope of a
-provider's B<OSSL_provider_init> function (see L<provider-base(7)>). Calling it
-outside of that function may succeed but may not correctly mirror all providers
-and is considered undefined behaviour. When called from within the scope of a
-provider's B<OSSL_provider_init> function the currently initialising provider is
-not yet available in the application's library context and therefore will
-similarly not yet be available in the newly constructed child library context.
-As soon as the B<OSSL_provider_init> function returns then the new provider is
-available in the application's library context and will be similarly mirrored in
-the child library context. Since the current provider is still initialising
-the provider should not attempt to perform fetches, or call any function that
-performs a fetch using the child library context until after the initialisation
-function has completed.
+When OSSL_LIB_CTX_new_child() is called from within the scope of a provider's
+B<OSSL_provider_init> function the currently initialising provider is not yet
+available in the application's library context and therefore will similarly not
+yet be available in the newly constructed child library context. As soon as the
+B<OSSL_provider_init> function returns then the new provider is available in the
+application's library context and will be similarly mirrored in the child
+library context.
 
 OSSL_LIB_CTX_load_config() loads a configuration file using the given C<ctx>.
 This can be used to associate a library context with providers that are loaded

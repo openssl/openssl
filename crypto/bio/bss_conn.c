@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #include <errno.h>
 
 #include "bio_local.h"
+#include "internal/bio_tfo.h"
 #include "internal/ktls.h"
 
 #ifndef OPENSSL_NO_SOCK
@@ -24,6 +25,7 @@ typedef struct bio_connect_st {
 # ifndef OPENSSL_NO_KTLS
     unsigned char record_type;
 # endif
+    int tfo_first;
 
     BIO_ADDRINFO *addr_first;
     const BIO_ADDRINFO *addr_iter;
@@ -42,6 +44,7 @@ typedef struct bio_connect_st {
 static int conn_write(BIO *h, const char *buf, int num);
 static int conn_read(BIO *h, char *buf, int size);
 static int conn_puts(BIO *h, const char *str);
+static int conn_gets(BIO *h, char *buf, int size);
 static long conn_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int conn_new(BIO *h);
 static int conn_free(BIO *data);
@@ -68,7 +71,7 @@ static const BIO_METHOD methods_connectp = {
     bread_conv,
     conn_read,
     conn_puts,
-    NULL,                       /* conn_gets, */
+    conn_gets,
     conn_ctrl,
     conn_new,
     conn_free,
@@ -105,7 +108,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                               * at least the "else" part will always be
                               * compiled.
                               */
-#ifdef AF_INET6
+#if OPENSSL_USE_IPV6
                         family = AF_INET6;
                     } else {
 #endif
@@ -188,6 +191,9 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
             break;
 
         case BIO_CONN_S_BLOCKED_CONNECT:
+            /* wait for socket being writable, before querying BIO_sock_error */
+            if (BIO_socket_wait(b->num, 0, time(NULL)) == 0)
+                break;
             i = BIO_sock_error(b->num);
             if (i != 0) {
                 BIO_clear_retry_flags(b);
@@ -205,8 +211,18 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                 ERR_raise(ERR_LIB_BIO, BIO_R_NBIO_CONNECT_ERROR);
                 ret = 0;
                 goto exit_loop;
-            } else
+            } else {
                 c->state = BIO_CONN_S_OK;
+# ifndef OPENSSL_NO_KTLS
+                /*
+                 * The new socket is created successfully regardless of ktls_enable.
+                 * ktls_enable doesn't change any functionality of the socket, except
+                 * changing the setsockopt to enable the processing of ktls_start.
+                 * Thus, it is not a problem to call it for non-TLS sockets.
+                 */
+                ktls_enable(b->num);
+# endif
+            }
             break;
 
         case BIO_CONN_S_CONNECT_ERROR:
@@ -360,6 +376,15 @@ static int conn_write(BIO *b, const char *in, int inl)
         }
     } else
 # endif
+# if defined(OSSL_TFO_SENDTO)
+    if (data->tfo_first) {
+        int peerlen = BIO_ADDRINFO_sockaddr_size(data->addr_iter);
+
+        ret = sendto(b->num, in, inl, OSSL_TFO_SENDTO,
+                     BIO_ADDRINFO_sockaddr(data->addr_iter), peerlen);
+        data->tfo_first = 0;
+    } else
+# endif
         ret = writesocket(b->num, in, inl);
     BIO_clear_retry_flags(b);
     if (ret <= 0) {
@@ -409,7 +434,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
                 *pptr = (const char *)BIO_ADDRINFO_address(data->addr_iter);
             } else if (num == 3) {
                 switch (BIO_ADDRINFO_family(data->addr_iter)) {
-# ifdef AF_INET6
+# if OPENSSL_USE_IPV6
                 case AF_INET6:
                     ret = BIO_FAMILY_IPV6;
                     break;
@@ -424,6 +449,8 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
                     ret = -1;
                     break;
                 }
+            } else if (num == 4) {
+                ret = data->connect_mode;
             } else {
                 ret = 0;
             }
@@ -484,8 +511,23 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
         else
             data->connect_mode &= ~BIO_SOCK_NONBLOCK;
         break;
+#if defined(TCP_FASTOPEN) && !defined(OPENSSL_NO_TFO)
+    case BIO_C_SET_TFO:
+        if (num != 0) {
+            data->connect_mode |= BIO_SOCK_TFO;
+            data->tfo_first = 1;
+        } else {
+            data->connect_mode &= ~BIO_SOCK_TFO;
+            data->tfo_first = 0;
+        }
+        break;
+#endif
     case BIO_C_SET_CONNECT_MODE:
         data->connect_mode = (int)num;
+        if (num & BIO_SOCK_TFO)
+            data->tfo_first = 1;
+        else
+            data->tfo_first = 0;
         break;
     case BIO_C_GET_FD:
         if (b->init) {
@@ -593,6 +635,56 @@ static int conn_puts(BIO *bp, const char *str)
     n = strlen(str);
     ret = conn_write(bp, str, n);
     return ret;
+}
+
+int conn_gets(BIO *bio, char *buf, int size)
+{
+    BIO_CONNECT *data;
+    char *ptr = buf;
+    int ret = 0;
+
+    if (buf == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+    if (size <= 0) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_INVALID_ARGUMENT);
+        return -1;
+    }
+    *buf = '\0';
+
+    if (bio == NULL || bio->ptr == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+    data = (BIO_CONNECT *)bio->ptr;
+    if (data->state != BIO_CONN_S_OK) {
+        ret = conn_state(bio, data);
+        if (ret <= 0)
+            return ret;
+    }
+
+    clear_socket_error();
+    while (size-- > 1) {
+# ifndef OPENSSL_NO_KTLS
+        if (BIO_get_ktls_recv(bio))
+            ret = ktls_read_record(bio->num, ptr, 1);
+        else
+# endif
+            ret = readsocket(bio->num, ptr, 1);
+        BIO_clear_retry_flags(bio);
+        if (ret <= 0) {
+            if (BIO_sock_should_retry(ret))
+                BIO_set_retry_read(bio);
+            else if (ret == 0)
+                bio->flags |= BIO_FLAGS_IN_EOF;
+            break;
+        }
+        if (*ptr++ == '\n')
+            break;
+    }
+    *ptr = '\0';
+    return ret > 0 || (bio->flags & BIO_FLAGS_IN_EOF) != 0 ? ptr - buf : ret;
 }
 
 BIO *BIO_new_connect(const char *str)

@@ -11,13 +11,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
-#include <openssl/engine.h>
 #include <openssl/evp.h>
-#include <openssl/x509v3.h>
 #include <openssl/kdf.h>
 #include <openssl/core.h>
 #include <openssl/core_names.h>
-#include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "internal/numbers.h"
 #include "internal/provider.h"

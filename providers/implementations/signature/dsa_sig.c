@@ -22,7 +22,6 @@
 #include <openssl/dsa.h>
 #include <openssl/params.h>
 #include <openssl/evp.h>
-#include <openssl/err.h>
 #include <openssl/proverr.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
@@ -145,6 +144,17 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
             return 0;
         }
 
+        if (!ctx->flag_allow_md) {
+            if (ctx->mdname[0] != '\0' && !EVP_MD_is_a(md, ctx->mdname)) {
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
+                               "digest %s != %s", mdname, ctx->mdname);
+                EVP_MD_free(md);
+                return 0;
+            }
+            EVP_MD_free(md);
+            return 1;
+        }
+
         EVP_MD_CTX_free(ctx->mdctx);
         EVP_MD_free(ctx->md);
 
@@ -178,22 +188,31 @@ static int dsa_signverify_init(void *vpdsactx, void *vdsa,
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
     if (!ossl_prov_is_running()
-            || pdsactx == NULL
-            || vdsa == NULL
-            || !DSA_up_ref(vdsa))
+            || pdsactx == NULL)
         return 0;
-    DSA_free(pdsactx->dsa);
-    pdsactx->dsa = vdsa;
+
+    if (vdsa == NULL && pdsactx->dsa == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+        return 0;
+    }
+
+    if (vdsa != NULL) {
+        if (!ossl_dsa_check_key(pdsactx->libctx, vdsa,
+                                operation == EVP_PKEY_OP_SIGN)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+        if (!DSA_up_ref(vdsa))
+            return 0;
+        DSA_free(pdsactx->dsa);
+        pdsactx->dsa = vdsa;
+    }
+
     pdsactx->operation = operation;
 
     if (!dsa_set_ctx_params(pdsactx, params))
         return 0;
 
-    if (!ossl_dsa_check_key(pdsactx->libctx, vdsa,
-                            operation == EVP_PKEY_OP_SIGN)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
-        return 0;
-    }
     return 1;
 }
 
@@ -260,16 +279,19 @@ static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
     if (!ossl_prov_is_running())
         return 0;
 
-    pdsactx->flag_allow_md = 0;
     if (!dsa_signverify_init(vpdsactx, vdsa, params, operation))
         return 0;
 
     if (!dsa_setup_md(pdsactx, mdname, NULL))
         return 0;
 
-    pdsactx->mdctx = EVP_MD_CTX_new();
-    if (pdsactx->mdctx == NULL)
-        goto error;
+    pdsactx->flag_allow_md = 0;
+
+    if (pdsactx->mdctx == NULL) {
+        pdsactx->mdctx = EVP_MD_CTX_new();
+        if (pdsactx->mdctx == NULL)
+            goto error;
+    }
 
     if (!EVP_DigestInit_ex2(pdsactx->mdctx, pdsactx->md, params))
         goto error;
@@ -278,9 +300,7 @@ static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
 
  error:
     EVP_MD_CTX_free(pdsactx->mdctx);
-    EVP_MD_free(pdsactx->md);
     pdsactx->mdctx = NULL;
-    pdsactx->md = NULL;
     return 0;
 }
 
@@ -463,9 +483,6 @@ static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
         return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
-    /* Not allowed during certain operations */
-    if (p != NULL && !pdsactx->flag_allow_md)
-        return 0;
     if (p != NULL) {
         char mdname[OSSL_MAX_NAME_SIZE] = "", *pmdname = mdname;
         char mdprops[OSSL_MAX_PROPQUERY_SIZE] = "", *pmdprops = mdprops;

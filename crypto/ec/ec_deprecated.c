@@ -52,7 +52,7 @@ EC_POINT *EC_POINT_bn2point(const EC_GROUP *group,
         return NULL;
     }
 
-    if (!BN_bn2binpad(bn, buf, buf_len)) {
+    if (BN_bn2binpad(bn, buf, buf_len) < 0) {
         OPENSSL_free(buf);
         return NULL;
     }

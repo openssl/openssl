@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1998-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1998-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -22,8 +22,8 @@ use Carp;
 # These control our behavior.
 my $DRYRUN;
 my $VERBOSE;
-my $WAIT = 1;
 my $WHERE = dirname($0);
+my $WAIT = 1;
 
 # Machine type, etc., used to determine the platform
 my $MACHINE;
@@ -452,7 +452,7 @@ EOF
       [ 'ppc-apple-rhapsody',     { target => "rhapsody-ppc" } ],
       [ 'ppc-apple-darwin.*',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             my $ISA64 = `sysctl -n hw.optional.64bitops 2>/dev/null`;
             if ( $ISA64 == 1 && $KERNEL_BITS eq '' ) {
                 print <<EOF;
@@ -468,12 +468,12 @@ EOF
       ],
       [ 'i.86-apple-darwin.*',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             my $ISA64 = `sysctl -n hw.optional.x86_64 2>/dev/null`;
             if ( $ISA64 == 1 && $KERNEL_BITS eq '' ) {
                 print <<EOF;
 WARNING! To build 64-bit package, do this:
-         KERNEL_BITS=64 $WHERE/Configure \[\[ options \]\]
+         KERNEL_BITS=64 $WHERE/Configure [options...]
 EOF
                 maybe_abort();
             }
@@ -484,12 +484,20 @@ EOF
       ],
       [ 'x86_64-apple-darwin.*',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
+            # macOS >= 10.15 is 64-bit only
+            my $SW_VERS = `sw_vers -productVersion 2>/dev/null`;
+            if ($SW_VERS =~ /^(\d+)\.(\d+)\.(\d+)$/) {
+                if ($1 > 10 || ($1 == 10 && $2 >= 15)) {
+                    die "32-bit applications not supported on macOS 10.15 or later\n" if $KERNEL_BITS eq '32';
+                    return { target => "darwin64-x86_64" };
+                }
+            }
             return { target => "darwin-i386" } if $KERNEL_BITS eq '32';
 
             print <<EOF;
 WARNING! To build 32-bit package, do this:
-         KERNEL_BITS=32 $WHERE/Configure \[\[ options \]\]
+         KERNEL_BITS=32 $WHERE/Configure [options...]
 EOF
             maybe_abort();
             return { target => "darwin64-x86_64" };
@@ -532,7 +540,7 @@ EOF
       ],
       [ 'ppc64-.*-linux2',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             if ( $KERNEL_BITS eq '' ) {
                 print <<EOF;
 WARNING! To build 64-bit package, do this:
@@ -739,12 +747,15 @@ EOF
                                     disable => [ 'sse2' ] } ],
       [ 'alpha.*-.*-.*bsd.*',     { target => "BSD-generic64",
                                     defines => [ 'L_ENDIAN' ] } ],
-      [ 'powerpc64-.*-.*bsd.*',   { target => "BSD-generic64",
-                                    defines => [ 'B_ENDIAN' ] } ],
+      [ 'powerpc-.*-.*bsd.*',     { target => "BSD-ppc" } ],
+      [ 'powerpc64-.*-.*bsd.*',   { target => "BSD-ppc64" } ],
+      [ 'powerpc64le-.*-.*bsd.*', { target => "BSD-ppc64le" } ],
+      [ 'riscv64-.*-.*bsd.*',     { target => "BSD-riscv64" } ],
       [ 'sparc64-.*-.*bsd.*',     { target => "BSD-sparc64" } ],
       [ 'ia64-.*-.*bsd.*',        { target => "BSD-ia64" } ],
       [ 'x86_64-.*-dragonfly.*',  { target => "BSD-x86_64" } ],
       [ 'amd64-.*-.*bsd.*',       { target => "BSD-x86_64" } ],
+      [ 'arm64-.*-.*bsd.*',       { target => "BSD-aarch64" } ],
       [ '.*86.*-.*-.*bsd.*',
         sub {
             # mimic ld behaviour when it's looking for libc...
@@ -859,7 +870,7 @@ EOF
                 }
             }
             if ( okrun(
-                       "lsattr -E -O -l `lsdev -c processor|awk '{print \$1;exit}'`",
+                       "(lsattr -E -O -l `lsdev -c processor|awk '{print \$1;exit}'`",
                        'grep -i powerpc) >/dev/null 2>&1') ) {
                 # this applies even to Power3 and later, as they return
                 # PowerPC_POWER[345]

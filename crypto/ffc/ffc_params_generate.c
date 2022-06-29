@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -324,7 +324,7 @@ static int generate_q_fips186_4(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
 
     /* find q */
     for (;;) {
-        if(!BN_GENCB_call(cb, 0, m++))
+        if (!BN_GENCB_call(cb, 0, m++))
             goto err;
 
         /* A.1.1.2 Step (5) : generate seed with size seed_len */
@@ -435,7 +435,7 @@ static int generate_q_fips186_2(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
         }
         if (r != 0)
             goto err; /* Exit if error */
-        /* Try another iteration if it wasnt prime - was in old code.. */
+        /* Try another iteration if it wasn't prime - was in old code.. */
         generate_seed = 1;
     }
 err:
@@ -673,7 +673,7 @@ int ossl_ffc_params_FIPS186_4_gen_verify(OSSL_LIB_CTX *libctx,
      * A.1.1.3 Step (10)
      * n = floor(L / hash_outlen) - 1
      */
-    n = (L - 1 ) / (mdsize << 3);
+    n = (L - 1) / (mdsize << 3);
 
     /* Calculate 2^(L-1): Used in step A.1.1.2 Step (11.3) */
     if (!BN_lshift(test, BN_value_one(), L - 1))
@@ -688,9 +688,9 @@ int ossl_ffc_params_FIPS186_4_gen_verify(OSSL_LIB_CTX *libctx,
             *res = FFC_CHECK_Q_MISMATCH;
             goto err;
         }
-        if(!BN_GENCB_call(cb, 2, 0))
+        if (!BN_GENCB_call(cb, 2, 0))
             goto err;
-        if(!BN_GENCB_call(cb, 3, 0))
+        if (!BN_GENCB_call(cb, 3, 0))
             goto err;
 
         memcpy(seed_tmp, seed, seedlen);
@@ -1047,7 +1047,11 @@ int ossl_ffc_params_FIPS186_2_generate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
                                        int type, size_t L, size_t N,
                                        int *res, BN_GENCB *cb)
 {
-    return ossl_ffc_params_FIPS186_2_gen_verify(libctx, params,
-                                                FFC_PARAM_MODE_GENERATE,
-                                                type, L, N, res, cb);
+    if (!ossl_ffc_params_FIPS186_2_gen_verify(libctx, params,
+                                              FFC_PARAM_MODE_GENERATE,
+                                              type, L, N, res, cb))
+        return 0;
+
+    ossl_ffc_params_enable_flags(params, FFC_PARAM_FLAG_VALIDATE_LEGACY, 1);
+    return 1;
 }

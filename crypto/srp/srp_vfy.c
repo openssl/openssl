@@ -628,7 +628,7 @@ char *SRP_create_verifier_ex(const char *user, const char *pass, char **salt,
         if (N_bn_alloc == NULL)
             goto err;
         N_bn = N_bn_alloc;
-        if ((len = t_fromb64(tmp, sizeof(tmp) ,g)) <= 0)
+        if ((len = t_fromb64(tmp, sizeof(tmp), g)) <= 0)
             goto err;
         g_bn_alloc = BN_bin2bn(tmp, len, NULL);
         if (g_bn_alloc == NULL)

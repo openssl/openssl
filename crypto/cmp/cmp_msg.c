@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -93,7 +93,7 @@ int ossl_cmp_msg_set_bodytype(OSSL_CMP_MSG *msg, int type)
     return 1;
 }
 
-int ossl_cmp_msg_get_bodytype(const OSSL_CMP_MSG *msg)
+int OSSL_CMP_MSG_get_bodytype(const OSSL_CMP_MSG *msg)
 {
     if (!ossl_assert(msg != NULL && msg->body != NULL))
         return -1;
@@ -260,7 +260,7 @@ static const X509_NAME *determine_subj(OSSL_CMP_CTX *ctx,
     if (ctx->subjectName != NULL)
         return IS_NULL_DN(ctx->subjectName) ? NULL : ctx->subjectName;
 
-    if (ref_subj != NULL && (for_KUR || !HAS_SAN(ctx)))
+    if (ref_subj != NULL && (ctx->p10CSR != NULL || for_KUR || !HAS_SAN(ctx)))
         /*
          * For KUR, copy subject from the reference.
          * For IR or CR, do the same only if there is no subjectAltName.
@@ -289,6 +289,8 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
 
     if (rkey == NULL && ctx->p10CSR != NULL)
         rkey = X509_REQ_get0_pubkey(ctx->p10CSR);
+    if (rkey == NULL && refcert != NULL)
+        rkey = X509_get0_pubkey(refcert);
     if (rkey == NULL)
         rkey = ctx->pkey; /* default is independent of ctx->oldCert */
     if (rkey == NULL) {
@@ -327,11 +329,14 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
     }
 
     /* extensions */
-    if (refcert != NULL && !ctx->SubjectAltName_nodefault)
-        default_sans = X509V3_get_d2i(X509_get0_extensions(refcert),
-                                      NID_subject_alt_name, NULL, NULL);
     if (ctx->p10CSR != NULL
             && (exts = X509_REQ_get_extensions(ctx->p10CSR)) == NULL)
+        goto err;
+    if (!ctx->SubjectAltName_nodefault && !HAS_SAN(ctx) && refcert != NULL
+            && (default_sans = X509V3_get_d2i(X509_get0_extensions(refcert),
+                                              NID_subject_alt_name, NULL, NULL))
+            != NULL
+            && !add1_extension(&exts, NID_subject_alt_name, crit, default_sans))
         goto err;
     if (ctx->reqExtensions != NULL /* augment/override existing ones */
             && !add_extensions(&exts, ctx->reqExtensions))
@@ -339,9 +344,6 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
     if (sk_GENERAL_NAME_num(ctx->subjectAltNames) > 0
             && !add1_extension(&exts, NID_subject_alt_name,
                                crit, ctx->subjectAltNames))
-        goto err;
-    if (!HAS_SAN(ctx) && default_sans != NULL
-            && !add1_extension(&exts, NID_subject_alt_name, crit, default_sans))
         goto err;
     if (ctx->policies != NULL
             && !add1_extension(&exts, NID_certificate_policies,
@@ -454,9 +456,9 @@ OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int type,
 }
 
 OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
-                                   int certReqId, OSSL_CMP_PKISI *si,
-                                   X509 *cert, STACK_OF(X509) *chain,
-                                   STACK_OF(X509) *caPubs, int encrypted,
+                                   int certReqId, const OSSL_CMP_PKISI *si,
+                                   X509 *cert, const X509 *encryption_recip,
+                                   STACK_OF(X509) *chain, STACK_OF(X509) *caPubs,
                                    int unprotectedErrors)
 {
     OSSL_CMP_MSG *msg = NULL;
@@ -486,8 +488,8 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
     status = ossl_cmp_pkisi_get_status(resp->status);
     if (status != OSSL_CMP_PKISTATUS_rejection
             && status != OSSL_CMP_PKISTATUS_waiting && cert != NULL) {
-        if (encrypted) {
-            ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
+        if (encryption_recip != NULL) {
+            ERR_raise(ERR_LIB_CMP, ERR_R_UNSUPPORTED);
             goto err;
         }
 
@@ -566,6 +568,7 @@ OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx)
     if (!sk_OSSL_CMP_REVDETAILS_push(msg->body->value.rr, rd))
         goto err;
     rd = NULL;
+    /* Revocation Passphrase according to section 5.3.19.9 could be set here */
 
     if (!ossl_cmp_msg_protect(ctx, msg))
         goto err;
@@ -579,8 +582,8 @@ OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx)
     return NULL;
 }
 
-OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
-                              OSSL_CRMF_CERTID *cid, int unprot_err)
+OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
+                              const OSSL_CRMF_CERTID *cid, int unprotectedErrors)
 {
     OSSL_CMP_REVREPCONTENT *rep = NULL;
     OSSL_CMP_PKISI *si1 = NULL;
@@ -613,7 +616,7 @@ OSSL_CMP_MSG *ossl_cmp_rp_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
         }
     }
 
-    if (!unprot_err
+    if (!unprotectedErrors
             || ossl_cmp_pkisi_get_status(si) != OSSL_CMP_PKISTATUS_rejection)
         if (!ossl_cmp_msg_protect(ctx, msg))
             goto err;
@@ -651,7 +654,7 @@ int ossl_cmp_msg_gen_push0_ITAV(OSSL_CMP_MSG *msg, OSSL_CMP_ITAV *itav)
     if (!ossl_assert(msg != NULL && itav != NULL))
         return 0;
 
-    bodytype = ossl_cmp_msg_get_bodytype(msg);
+    bodytype = OSSL_CMP_MSG_get_bodytype(msg);
     if (bodytype != OSSL_CMP_PKIBODY_GENM
             && bodytype != OSSL_CMP_PKIBODY_GENP) {
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
@@ -726,11 +729,12 @@ OSSL_CMP_MSG *ossl_cmp_genp_new(OSSL_CMP_CTX *ctx,
                    OSSL_CMP_PKIBODY_GENP, CMP_R_ERROR_CREATING_GENP);
 }
 
-OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
-                                 int errorCode,
-                                 const char *details, int unprotected)
+OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
+                                 int64_t errorCode, const char *details,
+                                 int unprotected)
 {
     OSSL_CMP_MSG *msg = NULL;
+    const char *lib = NULL, *reason = NULL;
     OSSL_CMP_PKIFREETEXT *ft;
 
     if (!ossl_assert(ctx != NULL && si != NULL))
@@ -743,17 +747,27 @@ OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
     if ((msg->body->value.error->pKIStatusInfo = OSSL_CMP_PKISI_dup(si))
         == NULL)
         goto err;
-    if (errorCode >= 0) {
-        if ((msg->body->value.error->errorCode = ASN1_INTEGER_new()) == NULL)
-            goto err;
-        if (!ASN1_INTEGER_set(msg->body->value.error->errorCode, errorCode))
-            goto err;
+    if ((msg->body->value.error->errorCode = ASN1_INTEGER_new()) == NULL)
+        goto err;
+    if (!ASN1_INTEGER_set_int64(msg->body->value.error->errorCode, errorCode))
+        goto err;
+    if (errorCode > 0
+            && (uint64_t)errorCode < ((uint64_t)ERR_SYSTEM_FLAG << 1)) {
+        lib = ERR_lib_error_string((unsigned long)errorCode);
+        reason = ERR_reason_error_string((unsigned long)errorCode);
     }
-    if (details != NULL) {
+    if (lib != NULL || reason != NULL || details != NULL) {
         if ((ft = sk_ASN1_UTF8STRING_new_null()) == NULL)
             goto err;
         msg->body->value.error->errorDetails = ft;
-        if (!ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, details))
+        if (lib != NULL && *lib != '\0'
+                && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, lib, -1))
+            goto err;
+        if (reason != NULL && *reason != '\0'
+                && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, reason, -1))
+            goto err;
+        if (details != NULL
+                && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, details, -1))
             goto err;
     }
 
@@ -1084,14 +1098,13 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_read(const char *file, OSSL_LIB_CTX *libctx,
     }
 
     msg = OSSL_CMP_MSG_new(libctx, propq);
-    if (msg == NULL){
+    if (msg == NULL) {
         ERR_raise(ERR_LIB_CMP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
-    if ((bio = BIO_new_file(file, "rb")) == NULL)
-        return NULL;
-    if (d2i_OSSL_CMP_MSG_bio(bio, &msg) == NULL) {
+    if ((bio = BIO_new_file(file, "rb")) == NULL
+            || d2i_OSSL_CMP_MSG_bio(bio, &msg) == NULL) {
         OSSL_CMP_MSG_free(msg);
         msg = NULL;
     }

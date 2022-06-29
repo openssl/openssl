@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -52,7 +52,9 @@ int rand_main(int argc, char **argv)
     BIO *out = NULL;
     char *outfile = NULL, *prog;
     OPTION_CHOICE o;
-    int format = FORMAT_BINARY, i, num = -1, r, ret = 1;
+    int format = FORMAT_BINARY, r, i, ret = 1, buflen = 131072;
+    long num = -1;
+    uint8_t *buf = NULL;
 
     prog = opt_init(argc, argv, rand_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -93,9 +95,9 @@ int rand_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
     if (argc == 1) {
-        if (!opt_int(argv[0], &num) || num <= 0)
+        if (!opt_long(argv[0], &num) || num <= 0)
             goto opthelp;
-    } else if (argc != 0) {
+    } else if (!opt_check_rest_arg(NULL)) {
         goto opthelp;
     }
 
@@ -113,13 +115,11 @@ int rand_main(int argc, char **argv)
         out = BIO_push(b64, out);
     }
 
+    buf = app_malloc(buflen, "buffer for output file");
     while (num > 0) {
-        unsigned char buf[4096];
-        int chunk;
+        long chunk;
 
-        chunk = num;
-        if (chunk > (int)sizeof(buf))
-            chunk = sizeof(buf);
+        chunk = (num > buflen) ? buflen : num;
         r = RAND_bytes(buf, chunk);
         if (r <= 0)
             goto end;
@@ -143,6 +143,7 @@ int rand_main(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
+    OPENSSL_free(buf);
     release_engine(e);
     BIO_free_all(out);
     return ret;

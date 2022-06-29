@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -8,7 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 #include <openssl/core_names.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/err.h>
@@ -26,6 +26,7 @@
 #define X942KDF_MAX_INLEN (1 << 30)
 
 static OSSL_FUNC_kdf_newctx_fn x942kdf_new;
+static OSSL_FUNC_kdf_dupctx_fn x942kdf_dup;
 static OSSL_FUNC_kdf_freectx_fn x942kdf_free;
 static OSSL_FUNC_kdf_reset_fn x942kdf_reset;
 static OSSL_FUNC_kdf_derive_fn x942kdf_derive;
@@ -169,7 +170,7 @@ static int der_encode_sharedinfo(WPACKET *pkt, unsigned char *buf, size_t buflen
  * |cek_oidlen| The length (in bytes) of the key wrapping algorithm oid,
  * |acvp| is the optional blob of DER data representing one or more of the
  *   OtherInfo fields related to |partyu|, |partyv|, |supp_pub| and |supp_priv|.
- *   This field should noramlly be NULL. If |acvp| is non NULL then |partyu|,
+ *   This field should normally be NULL. If |acvp| is non NULL then |partyu|,
  *   |partyv|, |supp_pub| and |supp_priv| should all be NULL.
  * |acvp_len| is the |acvp| length (in bytes).
  * |partyu| is the optional public info contributed by the initiator.
@@ -332,10 +333,12 @@ static void *x942kdf_new(void *provctx)
     KDF_X942 *ctx;
 
     if (!ossl_prov_is_running())
-        return 0;
+        return NULL;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
     ctx->provctx = provctx;
     ctx->use_keybits = 1;
     return ctx;
@@ -366,6 +369,41 @@ static void x942kdf_free(void *vctx)
         x942kdf_reset(ctx);
         OPENSSL_free(ctx);
     }
+}
+
+static void *x942kdf_dup(void *vctx)
+{
+    const KDF_X942 *src = (const KDF_X942 *)vctx;
+    KDF_X942 *dest;
+
+    dest = x942kdf_new(src->provctx);
+    if (dest != NULL) {
+        if (!ossl_prov_memdup(src->secret, src->secret_len,
+                              &dest->secret , &dest->secret_len)
+                || !ossl_prov_memdup(src->acvpinfo, src->acvpinfo_len,
+                                     &dest->acvpinfo , &dest->acvpinfo_len)
+                || !ossl_prov_memdup(src->partyuinfo, src->partyuinfo_len,
+                                     &dest->partyuinfo , &dest->partyuinfo_len)
+                || !ossl_prov_memdup(src->partyvinfo, src->partyvinfo_len,
+                                     &dest->partyvinfo , &dest->partyvinfo_len)
+                || !ossl_prov_memdup(src->supp_pubinfo, src->supp_pubinfo_len,
+                                     &dest->supp_pubinfo,
+                                     &dest->supp_pubinfo_len)
+                || !ossl_prov_memdup(src->supp_privinfo, src->supp_privinfo_len,
+                                     &dest->supp_privinfo,
+                                     &dest->supp_privinfo_len)
+                || !ossl_prov_digest_copy(&dest->digest, &src->digest))
+            goto err;
+        dest->cek_oid = src->cek_oid;
+        dest->cek_oid_len = src->cek_oid_len;
+        dest->dkm_len = src->dkm_len;
+        dest->use_keybits = src->use_keybits;
+    }
+    return dest;
+
+ err:
+    x942kdf_free(dest);
+    return NULL;
 }
 
 static int x942kdf_set_buffer(unsigned char **out, size_t *out_len,
@@ -579,6 +617,7 @@ static const OSSL_PARAM *x942kdf_gettable_ctx_params(ossl_unused void *ctx,
 
 const OSSL_DISPATCH ossl_kdf_x942_kdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))x942kdf_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))x942kdf_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))x942kdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))x942kdf_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))x942kdf_derive },

@@ -46,8 +46,8 @@ int main(int argc, char **argv)
         goto err;
 
     /*
-     * sk_X509_pop_free will free up recipient STACK and its contents so set
-     * rcert to NULL so it isn't freed up twice.
+     * OSSL_STACK_OF_X509_free() free up recipient STACK and its contents
+     * so set rcert to NULL so it isn't freed up twice.
      */
     rcert = NULL;
 
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 
     CMS_ContentInfo_free(cms);
     X509_free(rcert);
-    sk_X509_pop_free(recips, X509_free);
+    OSSL_STACK_OF_X509_free(recips);
     BIO_free(in);
     BIO_free(out);
     BIO_free(dout);

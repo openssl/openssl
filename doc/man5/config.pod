@@ -169,10 +169,14 @@ different name by calling CONF_modules_load_file(), for example, directly.
 OpenSSL also looks up the value of B<config_diagnostics>.
 If this exists and has a nonzero numeric value, any error suppressing flags
 passed to CONF_modules_load() will be ignored.
-This is useful for diagnosing misconfigurations and should not be used in
-production.
+This is useful for diagnosing misconfigurations but its use in
+production requires additional consideration.  With this option enabled,
+a configuration error will completely prevent access to a service.
+Without this option and in the presence of a configuration error, access
+will be allowed but the desired configuration will B<not> be used.
 
- # This must be in the default section
+ # These must be in the default section
+ config_diagnostics = 1
  openssl_conf = openssl_init
 
  [openssl_init]
@@ -268,6 +272,15 @@ significant.
 
 All parameters in the section as well as sub-sections are made
 available to the provider.
+
+=head3 Default provider and its activation
+
+If no providers are activated explicitly, the default one is activated implicitly.
+See L<OSSL_PROVIDER-default(7)> for more details.
+
+If you add a section explicitly activating any other provider(s),
+you most probably need to explicitly activate the default provider,
+otherwise it becomes unavailable in openssl. It may make the system remotely unavailable.
 
 =head2 EVP Configuration
 
@@ -402,7 +415,7 @@ For example:
 =head2 Random Configuration
 
 The name B<random> in the initialization section names the section
-containing the random number generater settings.
+containing the random number generator settings.
 
 Within the random section, the following names have meaning:
 
@@ -562,7 +575,7 @@ L<x509v3_config(5)>.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

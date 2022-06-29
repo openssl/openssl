@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,7 +12,7 @@
 #include "crypto/dso_conf.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "buildinf.h"
 
 #if defined(__arm__) || defined(__arm) || defined(__aarch64__)
@@ -135,7 +135,11 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
         add_seeds_string("stdsc");
 #endif
 #ifdef OPENSSL_RAND_SEED_RDCPU
+# ifdef __aarch64__
+        add_seeds_string("rndr ( rndrrs rndr )");
+# else
         add_seeds_string("rdrand ( rdseed rdrand )");
+# endif
 #endif
 #ifdef OPENSSL_RAND_SEED_LIBRANDOM
         add_seeds_string("C-library-random");

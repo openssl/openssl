@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -48,7 +48,7 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
         i = BIO_read(in, buf, sizeof(buf));
         if (i <= 0) {
             if (BIO_method_type(in) == BIO_TYPE_CIPHER) {
-                if (!BIO_get_cipher_status(in))
+                if (BIO_get_cipher_status(in) <= 0)
                     goto err;
             }
             if (i < 0)
@@ -478,10 +478,10 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
  err2:
     if (si_chains != NULL) {
         for (i = 0; i < scount; ++i)
-            sk_X509_pop_free(si_chains[i], X509_free);
+            OSSL_STACK_OF_X509_free(si_chains[i]);
         OPENSSL_free(si_chains);
     }
-    sk_X509_pop_free(cms_certs, X509_free);
+    OSSL_STACK_OF_X509_free(cms_certs);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
 
     return ret;
@@ -608,6 +608,8 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
 
     /* Set embedded content */
     pos = CMS_get0_content(cms);
+    if (pos == NULL)
+        goto err;
     *pos = os;
 
     r = 1;
@@ -893,6 +895,31 @@ err:
 
     return ret;
 
+}
+
+int CMS_final_digest(CMS_ContentInfo *cms,
+                     const unsigned char *md, unsigned int mdlen,
+                     BIO *dcont, unsigned int flags)
+{
+    BIO *cmsbio;
+    int ret = 0;
+
+    if ((cmsbio = CMS_dataInit(cms, dcont)) == NULL) {
+        ERR_raise(ERR_LIB_CMS, CMS_R_CMS_LIB);
+        return 0;
+    }
+
+    (void)BIO_flush(cmsbio);
+
+    if (!ossl_cms_DataFinal(cms, cmsbio, md, mdlen)) {
+        ERR_raise(ERR_LIB_CMS, CMS_R_CMS_DATAFINAL_ERROR);
+        goto err;
+    }
+    ret = 1;
+
+err:
+    do_free_upto(cmsbio, dcont);
+    return ret;
 }
 
 #ifdef ZLIB

@@ -14,7 +14,9 @@
 #include "internal/deprecated.h"
 
 #include <openssl/bn.h>
-#include <openssl/engine.h>
+#ifndef FIPS_MODULE
+# include <openssl/engine.h>
+#endif
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 #include "crypto/dsa.h"

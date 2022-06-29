@@ -46,8 +46,8 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
              * fips_mode is deprecated and should not be used in new
              * configurations.
              */
-            if (!EVP_default_properties_enable_fips(NCONF_get0_libctx((CONF *)cnf),
-                        m > 0)) {
+            if (!evp_default_properties_enable_fips_int(
+                    NCONF_get0_libctx((CONF *)cnf), m > 0, 0)) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
                 return 0;
             }

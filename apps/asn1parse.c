@@ -159,8 +159,7 @@ int asn1parse_main(int argc, char **argv)
     }
 
     /* No extra args. */
-    argc = opt_num_rest();
-    if (argc != 0)
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     if (oidfile != NULL) {

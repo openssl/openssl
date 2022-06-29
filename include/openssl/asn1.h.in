@@ -22,6 +22,9 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #  define HEADER_ASN1_H
 # endif
 
+# ifndef OPENSSL_NO_STDIO
+#  include <stdio.h>
+# endif
 # include <time.h>
 # include <openssl/e_os2.h>
 # include <openssl/opensslconf.h>

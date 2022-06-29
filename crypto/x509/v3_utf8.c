@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,7 @@
 
 /*
  * Subject Sign Tool (1.2.643.100.111) The name of the tool used to signs the subject (UTF8String)
- * This extention is required to obtain the status of a qualified certificate at Russian Federation.
+ * This extension is required to obtain the status of a qualified certificate at Russian Federation.
  * RFC-style description is available here: https://tools.ietf.org/html/draft-deremin-rfc4491-bis-04#section-5
  * Russian Federal Law 63 "Digital Sign" is available here:  http://www.consultant.ru/document/cons_doc_LAW_112701/
  */

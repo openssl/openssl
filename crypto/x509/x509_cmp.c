@@ -39,7 +39,7 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
     unsigned long ret = 0;
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     unsigned char md[16];
-    char *f;
+    char *f = NULL;
     EVP_MD *digest = NULL;
 
     if (ctx == NULL)
@@ -55,7 +55,6 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
         goto err;
     if (!EVP_DigestUpdate(ctx, (unsigned char *)f, strlen(f)))
         goto err;
-    OPENSSL_free(f);
     if (!EVP_DigestUpdate
         (ctx, (unsigned char *)a->cert_info.serialNumber.data,
          (unsigned long)a->cert_info.serialNumber.length))
@@ -66,6 +65,7 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
            ((unsigned long)md[2] << 16L) | ((unsigned long)md[3] << 24L)
         ) & 0xffffffffL;
  err:
+    OPENSSL_free(f);
     EVP_MD_free(digest);
     EVP_MD_CTX_free(ctx);
     return ret;
@@ -208,8 +208,12 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
                 return 1;
         }
     }
-    if ((flags & X509_ADD_FLAG_NO_SS) != 0 && X509_self_signed(cert, 0))
-        return 1;
+    if ((flags & X509_ADD_FLAG_NO_SS) != 0) {
+        int ret = X509_self_signed(cert, 0);
+
+        if (ret != 0)
+            return ret > 0 ? 1 : 0;
+    }
     if (!sk_X509_insert(sk, cert,
                         (flags & X509_ADD_FLAG_PREPEND) != 0 ? 0 : -1)) {
         ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
@@ -391,15 +395,12 @@ int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
     int ret;
 
     xk = X509_get0_pubkey(x);
+    if (xk == NULL) {
+        ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
+        return 0;
+    }
 
-    if (xk)
-        ret = EVP_PKEY_eq(xk, k);
-    else
-        ret = -2;
-
-    switch (ret) {
-    case 1:
-        break;
+    switch (ret = EVP_PKEY_eq(xk, k)) {
     case 0:
         ERR_raise(ERR_LIB_X509, X509_R_KEY_VALUES_MISMATCH);
         break;
@@ -408,10 +409,10 @@ int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
         break;
     case -2:
         ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_KEY_TYPE);
+        break;
     }
-    if (ret > 0)
-        return 1;
-    return 0;
+
+    return ret > 0;
 }
 
 /*

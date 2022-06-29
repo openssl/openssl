@@ -22,7 +22,6 @@
 #include <openssl/asn1t.h>
 #include <openssl/crmf.h>
 #include <openssl/err.h>
-#include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 
@@ -140,7 +139,6 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
     unsigned int bklen = EVP_MAX_MD_SIZE;
     int64_t iterations;
     unsigned char *mac_res = 0;
-    unsigned int maclen;
     int ok = 0;
 
     if (out == NULL || pbmp == NULL || pbmp->mac == NULL
@@ -201,16 +199,15 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
     mac_nid = OBJ_obj2nid(pbmp->mac->algorithm);
 
     if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, mac_nid, NULL, &hmac_md_nid, NULL)
-        || !OBJ_obj2txt(hmac_mdname, sizeof(hmac_mdname),
-                        OBJ_nid2obj(hmac_md_nid), 0)) {
+        || OBJ_obj2txt(hmac_mdname, sizeof(hmac_mdname),
+                        OBJ_nid2obj(hmac_md_nid), 0) <= 0) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
     }
     if (EVP_Q_mac(libctx, "HMAC", propq, hmac_mdname, NULL, basekey, bklen,
-                  msg, msglen, mac_res, EVP_MAX_MD_SIZE, &maclen) == NULL)
+                  msg, msglen, mac_res, EVP_MAX_MD_SIZE, outlen) == NULL)
         goto err;
 
-    *outlen = (size_t)maclen;
     ok = 1;
 
  err:

@@ -36,10 +36,11 @@ sub generate_tests() {
             name => "curve-${curve}",
             server => {
                 "Curves" => $curve,
+                "CipherString" => 'DEFAULT@SECLEVEL=1',
                 "MaxProtocol" => "TLSv1.3"
             },
             client => {
-                "CipherString" => "ECDHE",
+                "CipherString" => 'ECDHE@SECLEVEL=1',
                 "MaxProtocol" => "TLSv1.3",
                 "Curves" => $curve
             },
@@ -56,10 +57,11 @@ sub generate_tests() {
             name => "curve-${curve}",
             server => {
                 "Curves" => $curve,
+                "CipherString" => 'DEFAULT@SECLEVEL=1',
                 "MaxProtocol" => "TLSv1.3"
             },
             client => {
-                "CipherString" => "ECDHE",
+                "CipherString" => 'ECDHE@SECLEVEL=1',
                 "MaxProtocol" => "TLSv1.2",
                 "Curves" => $curve
             },
@@ -76,10 +78,11 @@ sub generate_tests() {
             name => "curve-${curve}-tls13",
             server => {
                 "Curves" => $curve,
+                "CipherString" => 'DEFAULT@SECLEVEL=1',
                 "MaxProtocol" => "TLSv1.3"
             },
             client => {
-                "CipherString" => "ECDHE",
+                "CipherString" => 'ECDHE@SECLEVEL=1',
                 "MinProtocol" => "TLSv1.3",
                 "Curves" => $curve
             },

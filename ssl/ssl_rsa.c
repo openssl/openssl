@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,9 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
                              | SSL_EXT_CLIENT_HELLO \
                              | SSL_EXT_TLS1_2_SERVER_HELLO \
                              | SSL_EXT_IGNORE_ON_RESUMPTION)
+
+#define NAME_PREFIX1 "SERVERINFO FOR "
+#define NAME_PREFIX2 "SERVERINFOV2 FOR "
 
 int SSL_use_certificate(SSL *ssl, X509 *x)
 {
@@ -249,6 +252,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
         /*
          * The return code from EVP_PKEY_copy_parameters is deliberately
          * ignored. Some EVP_PKEY types cannot do this.
+         * coverity[check_return]
          */
         EVP_PKEY_copy_parameters(pkey, c->pkeys[i].privatekey);
         ERR_clear_error();
@@ -570,7 +574,7 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 
         if (type == extension_type) {
             *extension_data = PACKET_data(&data);
-            *extension_length = PACKET_remaining(&data);;
+            *extension_length = PACKET_remaining(&data);
             return 1;           /* Success */
         }
     }
@@ -760,8 +764,6 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     long extension_length = 0;
     char *name = NULL;
     char *header = NULL;
-    static const char namePrefix1[] = "SERVERINFO FOR ";
-    static const char namePrefix2[] = "SERVERINFOV2 FOR ";
     unsigned int name_len;
     int ret = 0;
     BIO *bin = NULL;
@@ -798,18 +800,18 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
         }
         /* Check that PEM name starts with "BEGIN SERVERINFO FOR " */
         name_len = strlen(name);
-        if (name_len < sizeof(namePrefix1) - 1) {
+        if (name_len < sizeof(NAME_PREFIX1) - 1) {
             ERR_raise(ERR_LIB_SSL, SSL_R_PEM_NAME_TOO_SHORT);
             goto end;
         }
-        if (strncmp(name, namePrefix1, sizeof(namePrefix1) - 1) == 0) {
+        if (HAS_PREFIX(name, NAME_PREFIX1)) {
             version = SSL_SERVERINFOV1;
         } else {
-            if (name_len < sizeof(namePrefix2) - 1) {
+            if (name_len < sizeof(NAME_PREFIX2) - 1) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_PEM_NAME_TOO_SHORT);
                 goto end;
             }
-            if (strncmp(name, namePrefix2, sizeof(namePrefix2) - 1) != 0) {
+            if (!HAS_PREFIX(name, NAME_PREFIX2)) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_PEM_NAME_BAD_PREFIX);
                 goto end;
             }
@@ -920,11 +922,17 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
                 goto out;
             } else {
                 /* copy to privatekey from pubkey */
-                EVP_PKEY_copy_parameters(privatekey, pubkey);
+                if (!EVP_PKEY_copy_parameters(privatekey, pubkey)) {
+                    ERR_raise(ERR_LIB_SSL, SSL_R_COPY_PARAMETERS_FAILED);
+                    goto out;
+                }
             }
         } else if (EVP_PKEY_missing_parameters(pubkey)) {
             /* copy to pubkey from privatekey */
-            EVP_PKEY_copy_parameters(pubkey, privatekey);
+            if (!EVP_PKEY_copy_parameters(pubkey, privatekey)) {
+                ERR_raise(ERR_LIB_SSL, SSL_R_COPY_PARAMETERS_FAILED);
+                goto out;
+            }
         } /* else both have parameters */
 
         /* check that key <-> cert match */
@@ -954,7 +962,7 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
         }
     }
 
-    sk_X509_pop_free(c->pkeys[i].chain, X509_free);
+    OSSL_STACK_OF_X509_free(c->pkeys[i].chain);
     c->pkeys[i].chain = dup_chain;
 
     X509_free(c->pkeys[i].x509);

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,9 @@
 
 #include <openssl/crypto.h>
 #include <openssl/core_names.h>
-#include <openssl/engine.h>
+#ifndef FIPS_MODULE
+# include <openssl/engine.h>
+#endif
 #include <openssl/evp.h>
 #include <openssl/param_build.h>
 #include "internal/cryptlib.h"
@@ -1082,6 +1084,7 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
 {
     OSSL_PARAM rsa_params[2], *p = rsa_params;
+    int ret;
 
     if (ctx == NULL || !EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
@@ -1098,10 +1101,11 @@ int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
                                              (void *)label, (size_t)llen);
     *p++ = OSSL_PARAM_construct_end();
 
-    if (!evp_pkey_ctx_set_params_strict(ctx, rsa_params))
-        return 0;
+    ret = evp_pkey_ctx_set_params_strict(ctx, rsa_params);
+    if (ret <= 0)
+        return ret;
 
-    /* Ownership is supposed to be transfered to the callee. */
+    /* Ownership is supposed to be transferred to the callee. */
     OPENSSL_free(label);
     return 1;
 }
@@ -1242,8 +1246,11 @@ int EVP_PKEY_CTX_set1_rsa_keygen_pubexp(EVP_PKEY_CTX *ctx, BIGNUM *pubexp)
      * When we're dealing with a provider, there's no need to duplicate
      * pubexp, as it gets copied when transforming to an OSSL_PARAM anyway.
      */
-    if (evp_pkey_ctx_is_legacy(ctx))
+    if (evp_pkey_ctx_is_legacy(ctx)) {
         pubexp = BN_dup(pubexp);
+        if (pubexp == NULL)
+            return 0;
+    }
     ret = EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN,
                             EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, 0, pubexp);
     if (evp_pkey_ctx_is_legacy(ctx) && ret <= 0)

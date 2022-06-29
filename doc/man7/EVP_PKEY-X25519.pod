@@ -13,8 +13,6 @@ implemented in OpenSSL's default and FIPS providers.  These implementations
 support the associated key, containing the public key I<pub> and the
 private key I<priv>.
 
-In the FIPS provider they are non-approved algorithms and do not have the
-"fips=yes" property set.
 No additional parameters can be set during key generation.
 
 

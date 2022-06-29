@@ -15,9 +15,9 @@ SSL_CTX_set_tlsext_ticket_key_cb
                unsigned char iv[EVP_MAX_IV_LENGTH],
                EVP_CIPHER_CTX *ctx, EVP_MAC_CTX *hctx, int enc));
 
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following function has been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  int SSL_CTX_set_tlsext_ticket_key_cb(SSL_CTX sslctx,
      int (*cb)(SSL *s, unsigned char key_name[16],
@@ -145,7 +145,7 @@ enable an attacker to obtain the session keys.
 
 =head1 RETURN VALUES
 
-returns 0 to indicate the callback function was set.
+Returns 1 to indicate the callback function was set and 0 otherwise.
 
 =head1 EXAMPLES
 
@@ -179,14 +179,17 @@ Reference Implementation:
          }
          memcpy(key_name, key->name, 16);
 
-         EVP_EncryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key->aes_key, iv);
+         if (EVP_EncryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key->aes_key,
+                                iv) == 0)
+            return -1; /* error in cipher initialisation */
 
          params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                                        key->hmac_key, 32);
          params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                       "sha256", 0);
          params[2] = OSSL_PARAM_construct_end();
-         EVP_MAC_CTX_set_params(hctx, params);
+         if (EVP_MAC_CTX_set_params(hctx, params) == 0)
+            return -1; /* error in mac initialisation */
 
          return 1;
 
@@ -202,9 +205,12 @@ Reference Implementation:
          params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                       "sha256", 0);
          params[2] = OSSL_PARAM_construct_end();
-         EVP_MAC_CTX_set_params(hctx, params);
+         if (EVP_MAC_CTX_set_params(hctx, params) == 0)
+            return -1; /* error in mac initialisation */
 
-         EVP_DecryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key->aes_key, iv);
+         if (EVP_DecryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key->aes_key,
+                                iv) == 0)
+            return -1; /* error in cipher initialisation */
 
          if (key->expire < t - RENEW_TIME) { /* RENEW_TIME: implement */
              /*

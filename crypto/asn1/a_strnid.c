@@ -50,10 +50,10 @@ int ASN1_STRING_set_default_mask_asc(const char *p)
     unsigned long mask;
     char *end;
 
-    if (strncmp(p, "MASK:", 5) == 0) {
-        if (p[5] == '\0')
+    if (CHECK_AND_SKIP_PREFIX(p, "MASK:")) {
+        if (*p == '\0')
             return 0;
-        mask = strtoul(p + 5, &end, 0);
+        mask = strtoul(p, &end, 0);
         if (*end)
             return 0;
     } else if (strcmp(p, "nombstr") == 0)

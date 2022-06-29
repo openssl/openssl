@@ -18,7 +18,7 @@ displayed.
 This is specified by using the B<-nameopt> option, which takes a
 comma-separated list of options from the following set.
 An option may be preceded by a minus sign, C<->, to turn it off.
-The default value is C<oneline>.
+The default value is C<utf8,sep_comma_plus_space>.
 The first four are the most commonly used.
 
 =head1 OPTIONS

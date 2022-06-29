@@ -17,8 +17,12 @@ setup("test_dane");
 plan skip_all => "test_dane uses ec which is not supported by this OpenSSL build"
     if disabled("ec");
 
-plan tests => 1;                # The number of tests being performed
+plan tests => 2;                # The number of tests being performed
 
 ok(run(test(["danetest", "example.com",
              srctop_file("test", "danetest.pem"),
              srctop_file("test", "danetest.in")])), "dane tests");
+
+ok(run(test(["danetest", "server.example",
+             srctop_file("test", "certs", "cross-root.pem"),
+             srctop_file("test", "dane-cross.in")])), "dane cross CA test");

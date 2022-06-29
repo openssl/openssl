@@ -340,7 +340,7 @@ static int execute_cmp_build_cert_chain_test(CMP_PROTECT_TEST_FIXTURE *fixture)
     if (TEST_ptr(chain)) {
         /* Check whether chain built is equal to the expected one */
         ret = TEST_int_eq(0, STACK_OF_X509_cmp(chain, fixture->chain));
-        sk_X509_pop_free(chain, X509_free);
+        OSSL_STACK_OF_X509_free(chain);
     }
     if (!ret)
         return 0;
@@ -355,7 +355,7 @@ static int execute_cmp_build_cert_chain_test(CMP_PROTECT_TEST_FIXTURE *fixture)
         if (ret && chain != NULL) {
             /* Check whether chain built is equal to the expected one */
             ret = TEST_int_eq(0, STACK_OF_X509_cmp(chain, fixture->chain));
-            sk_X509_pop_free(chain, X509_free);
+            OSSL_STACK_OF_X509_free(chain);
         }
     }
     X509_STORE_free(store);
@@ -475,7 +475,7 @@ static int execute_X509_STORE_test(CMP_PROTECT_TEST_FIXTURE *fixture)
     res = 1;
  err:
     X509_STORE_free(store);
-    sk_X509_pop_free(sk, X509_free);
+    OSSL_STACK_OF_X509_free(sk);
     return res;
 
 }

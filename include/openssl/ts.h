@@ -30,12 +30,14 @@
 # include <openssl/dh.h>
 # include <openssl/tserr.h>
 # include <openssl/ess.h>
+# include <openssl/x509.h>
+# include <openssl/x509v3.h>
+# ifndef OPENSSL_NO_STDIO
+#  include <stdio.h>
+# endif
 # ifdef  __cplusplus
 extern "C" {
 # endif
-
-# include <openssl/x509.h>
-# include <openssl/x509v3.h>
 
 typedef struct TS_msg_imprint_st TS_MSG_IMPRINT;
 typedef struct TS_req_st TS_REQ;

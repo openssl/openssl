@@ -217,7 +217,7 @@ static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
                                 const ASN1_TEMPLATE *tt, int tag, int iclass)
 {
     const int flags = tt->flags;
-    int i, ret, ttag, tclass, ndef;
+    int i, ret, ttag, tclass, ndef, len;
     const ASN1_VALUE *tval;
 
     /*
@@ -303,13 +303,16 @@ static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         /* Determine total length of items */
         skcontlen = 0;
         for (i = 0; i < sk_const_ASN1_VALUE_num(sk); i++) {
-            int tmplen;
             skitem = sk_const_ASN1_VALUE_value(sk, i);
-            tmplen = ASN1_item_ex_i2d(&skitem, NULL, ASN1_ITEM_ptr(tt->item),
-                                      -1, iclass);
-            if (tmplen == -1 || (skcontlen > INT_MAX - tmplen))
+            len = ASN1_item_ex_i2d(&skitem, NULL, ASN1_ITEM_ptr(tt->item),
+                                   -1, iclass);
+            if (len == -1 || (skcontlen > INT_MAX - len))
                 return -1;
-            skcontlen += tmplen;
+            if (len == 0 && (tt->flags & ASN1_TFLG_OPTIONAL) == 0) {
+                ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_ZERO_CONTENT);
+                return -1;
+            }
+            skcontlen += len;
         }
         sklen = ASN1_object_size(ndef, skcontlen, sktag);
         if (sklen == -1)
@@ -345,8 +348,13 @@ static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         /* EXPLICIT tagging */
         /* Find length of tagged item */
         i = ASN1_item_ex_i2d(pval, NULL, ASN1_ITEM_ptr(tt->item), -1, iclass);
-        if (!i)
+        if (i == 0) {
+            if ((tt->flags & ASN1_TFLG_OPTIONAL) == 0) {
+                ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_ZERO_CONTENT);
+                return -1;
+            }
             return 0;
+        }
         /* Find length of EXPLICIT tag */
         ret = ASN1_object_size(ndef, i, ttag);
         if (out && ret != -1) {
@@ -360,9 +368,13 @@ static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
     }
 
     /* Either normal or IMPLICIT tagging: combine class and flags */
-    return ASN1_item_ex_i2d(pval, out, ASN1_ITEM_ptr(tt->item),
-                            ttag, tclass | iclass);
-
+    len = ASN1_item_ex_i2d(pval, out, ASN1_ITEM_ptr(tt->item),
+                              ttag, tclass | iclass);
+    if (len == 0 && (tt->flags & ASN1_TFLG_OPTIONAL) == 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_ZERO_CONTENT);
+        return -1;
+    }
+    return len;
 }
 
 /* Temporary structure used to hold DER encoding of items for SET OF */

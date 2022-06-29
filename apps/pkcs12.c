@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -155,7 +155,7 @@ const OPTIONS pkcs12_options[] = {
 int pkcs12_main(int argc, char **argv)
 {
     char *infile = NULL, *outfile = NULL, *keyname = NULL, *certfile = NULL;
-    char *untrusted = NULL, *ciphername = NULL, *enc_flag = NULL;
+    char *untrusted = NULL, *ciphername = NULL, *enc_name = NULL;
     char *passcertsarg = NULL, *passcerts = NULL;
     char *name = NULL, *csp_name = NULL;
     char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
@@ -182,6 +182,7 @@ int pkcs12_main(int argc, char **argv)
     EVP_CIPHER *enc = (EVP_CIPHER *)default_enc;
     OPTION_CHOICE o;
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, pkcs12_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -238,16 +239,15 @@ int pkcs12_main(int argc, char **argv)
         case OPT_NODES:
         case OPT_NOENC:
             /*
-             * |enc_flag| stores the name of the option used so it
+             * |enc_name| stores the name of the option used so it
              * can be printed if an error message is output.
              */
-            enc_flag = opt_flag() + 1;
+            enc_name = opt_flag() + 1;
             enc = NULL;
             ciphername = NULL;
             break;
         case OPT_CIPHER:
-            ciphername = opt_unknown();
-            enc_flag = opt_unknown();
+            enc_name = ciphername = opt_unknown();
             break;
         case OPT_ITER:
             maciter = iter = opt_int_arg();
@@ -356,17 +356,14 @@ int pkcs12_main(int argc, char **argv)
     }
 
     /* No extra arguments. */
-    argc = opt_num_rest();
-    if (argc != 0)
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     if (!app_RAND_load())
         goto end;
 
-    if (ciphername != NULL) {
-        if (!opt_cipher_any(ciphername, &enc))
-            goto opthelp;
-    }
+    if (!opt_cipher_any(ciphername, &enc))
+        goto opthelp;
     if (export_pkcs12) {
         if ((options & INFO) != 0)
             WARN_EXPORT("info");
@@ -378,7 +375,7 @@ int pkcs12_main(int argc, char **argv)
             WARN_EXPORT("cacerts");
         if (enc != default_enc)
             BIO_printf(bio_err,
-                       "Warning: output encryption option -%s ignored with -export\n", enc_flag);
+                       "Warning: output encryption option -%s ignored with -export\n", enc_name);
     } else {
         if (keyname != NULL)
             WARN_NO_EXPORT("inkey");
@@ -555,7 +552,7 @@ int pkcs12_main(int argc, char **argv)
                 /* Look for matching private key */
                 for (i = 0; i < sk_X509_num(certs); i++) {
                     x = sk_X509_value(certs, i);
-                    if (X509_check_private_key(x, key)) {
+                    if (cert_matches_key(x, key)) {
                         ee_cert = x;
                         /* Zero keyid and alias */
                         X509_keyid_set1(ee_cert, NULL, 0);
@@ -571,8 +568,6 @@ int pkcs12_main(int argc, char **argv)
                                infile);
                     goto export_end;
                 }
-            } else {
-                ee_cert = X509_dup(sk_X509_value(certs, 0)); /* take 1st cert */
             }
         }
 
@@ -588,8 +583,13 @@ int pkcs12_main(int argc, char **argv)
             int vret;
             STACK_OF(X509) *chain2;
             X509_STORE *store;
+            X509 *ee_cert_tmp = ee_cert;
 
-            if (ee_cert == NULL) {
+            /* Assume the first cert if we haven't got anything else */
+            if (ee_cert_tmp == NULL && certs != NULL)
+                ee_cert_tmp = sk_X509_value(certs, 0);
+
+            if (ee_cert_tmp == NULL) {
                 BIO_printf(bio_err,
                            "No end entity certificate to check with -chain\n");
                 goto export_end;
@@ -600,7 +600,7 @@ int pkcs12_main(int argc, char **argv)
                     == NULL)
                 goto export_end;
 
-            vret = get_cert_chain(ee_cert, store, untrusted_certs, &chain2);
+            vret = get_cert_chain(ee_cert_tmp, store, untrusted_certs, &chain2);
             X509_STORE_free(store);
 
             if (vret == X509_V_OK) {
@@ -610,7 +610,7 @@ int pkcs12_main(int argc, char **argv)
                 /* Add the remaining certs (except for duplicates) */
                 add_certs = X509_add_certs(certs, chain2, X509_ADD_FLAG_UP_REF
                                            | X509_ADD_FLAG_NO_DUP);
-                sk_X509_pop_free(chain2, X509_free);
+                OSSL_STACK_OF_X509_free(chain2);
                 if (!add_certs)
                     goto export_end;
             } else {
@@ -697,8 +697,8 @@ int pkcs12_main(int argc, char **argv)
 
         EVP_PKEY_free(key);
         EVP_MD_free(macmd);
-        sk_X509_pop_free(certs, X509_free);
-        sk_X509_pop_free(untrusted_certs, X509_free);
+        OSSL_STACK_OF_X509_free(certs);
+        OSSL_STACK_OF_X509_free(untrusted_certs);
         X509_free(ee_cert);
 
         ERR_print_errors(bio_err);
@@ -1139,7 +1139,8 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
         break;
 
     case V_ASN1_UTF8STRING:
-        BIO_printf(out, "%s\n", av->value.utf8string->data);
+        BIO_printf(out, "%.*s\n", av->value.utf8string->length,
+                   av->value.utf8string->data);
         break;
 
     case V_ASN1_OCTET_STRING:

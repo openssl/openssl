@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"                /* strcasecmp on Windows */
 #include <openssl/core_names.h>
 #include <openssl/bio.h>
 #include <openssl/encoder.h>
@@ -92,7 +91,7 @@ int OSSL_ENCODER_to_fp(OSSL_ENCODER_CTX *ctx, FILE *fp)
 int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
                          size_t *pdata_len)
 {
-    BIO *out = BIO_new(BIO_s_mem());
+    BIO *out;
     BUF_MEM *buf = NULL;
     int ret = 0;
 
@@ -101,7 +100,10 @@ int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
         return 0;
     }
 
-    if (OSSL_ENCODER_to_bio(ctx, out)
+    out = BIO_new(BIO_s_mem());
+
+    if (out != NULL
+        && OSSL_ENCODER_to_bio(ctx, out)
         && BIO_get_mem_ptr(out, &buf) > 0) {
         ret = 1; /* Hope for the best. A too small buffer will clear this */
 
@@ -450,8 +452,8 @@ static int encoder_process(struct encoder_process_data_st *data)
          */
         if (top) {
             if (data->ctx->output_type != NULL
-                && strcasecmp(current_output_type,
-                              data->ctx->output_type) != 0) {
+                && OPENSSL_strcasecmp(current_output_type,
+                                      data->ctx->output_type) != 0) {
                 OSSL_TRACE_BEGIN(ENCODER) {
                     BIO_printf(trc_out,
                                "[%d]    Skipping because current encoder output type (%s) != desired output type (%s)\n",
@@ -479,8 +481,8 @@ static int encoder_process(struct encoder_process_data_st *data)
          */
         if (data->ctx->output_structure != NULL
             && current_output_structure != NULL) {
-            if (strcasecmp(data->ctx->output_structure,
-                           current_output_structure) != 0) {
+            if (OPENSSL_strcasecmp(data->ctx->output_structure,
+                                   current_output_structure) != 0) {
                 OSSL_TRACE_BEGIN(ENCODER) {
                     BIO_printf(trc_out,
                                "[%d]    Skipping because current encoder output structure (%s) != ctx output structure (%s)\n",
@@ -520,7 +522,7 @@ static int encoder_process(struct encoder_process_data_st *data)
 
         OSSL_TRACE_BEGIN(ENCODER) {
             BIO_printf(trc_out,
-                       "[%d]    Skipping because recusion level %d failed\n",
+                       "[%d]    Skipping because recursion level %d failed\n",
                        data->level, new_data.level);
         } OSSL_TRACE_END(ENCODER);
     }

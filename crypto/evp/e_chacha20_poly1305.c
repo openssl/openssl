@@ -498,7 +498,7 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
 {
     EVP_CHACHA_AEAD_CTX *actx = aead_data(ctx);
 
-    switch(type) {
+    switch (type) {
     case EVP_CTRL_INIT:
         if (actx == NULL)
             actx = ctx->cipher_data

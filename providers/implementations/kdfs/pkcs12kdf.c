@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,7 @@
 #include "prov/provider_util.h"
 
 static OSSL_FUNC_kdf_newctx_fn kdf_pkcs12_new;
+static OSSL_FUNC_kdf_dupctx_fn kdf_pkcs12_dup;
 static OSSL_FUNC_kdf_freectx_fn kdf_pkcs12_free;
 static OSSL_FUNC_kdf_reset_fn kdf_pkcs12_reset;
 static OSSL_FUNC_kdf_derive_fn kdf_pkcs12_derive;
@@ -64,7 +65,7 @@ static int pkcs12kdf_derive(const unsigned char *pass, size_t passlen,
     }
     vi = EVP_MD_get_block_size(md_type);
     ui = EVP_MD_get_size(md_type);
-    if (ui < 0 || vi <= 0) {
+    if (ui <= 0 || vi <= 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_SIZE);
         goto end;
     }
@@ -178,17 +179,42 @@ static void kdf_pkcs12_reset(void *vctx)
     ctx->provctx = provctx;
 }
 
+static void *kdf_pkcs12_dup(void *vctx)
+{
+    const KDF_PKCS12 *src = (const KDF_PKCS12 *)vctx;
+    KDF_PKCS12 *dest;
+
+    dest = kdf_pkcs12_new(src->provctx);
+    if (dest != NULL) {
+        if (!ossl_prov_memdup(src->salt, src->salt_len,
+                              &dest->salt, &dest->salt_len)
+                || !ossl_prov_memdup(src->pass, src->pass_len,
+                                     &dest->pass , &dest->pass_len)
+                || !ossl_prov_digest_copy(&dest->digest, &src->digest))
+            goto err;
+        dest->iter = src->iter;
+        dest->id = src->id;
+    }
+    return dest;
+
+ err:
+    kdf_pkcs12_free(dest);
+    return NULL;
+}
+
 static int pkcs12kdf_set_membuf(unsigned char **buffer, size_t *buflen,
                              const OSSL_PARAM *p)
 {
     OPENSSL_clear_free(*buffer, *buflen);
+    *buffer = NULL;
+    *buflen = 0;
+
     if (p->data_size == 0) {
         if ((*buffer = OPENSSL_malloc(1)) == NULL) {
             ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             return 0;
         }
     } else if (p->data != NULL) {
-        *buffer = NULL;
         if (!OSSL_PARAM_get_octet_string(p, (void **)buffer, 0, buflen))
             return 0;
     }
@@ -236,7 +262,7 @@ static int kdf_pkcs12_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SALT)) != NULL)
-        if (!pkcs12kdf_set_membuf(&ctx->salt, &ctx->salt_len,p))
+        if (!pkcs12kdf_set_membuf(&ctx->salt, &ctx->salt_len, p))
             return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PKCS12_ID)) != NULL)
@@ -285,6 +311,7 @@ static const OSSL_PARAM *kdf_pkcs12_gettable_ctx_params(
 
 const OSSL_DISPATCH ossl_kdf_pkcs12_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_pkcs12_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kdf_pkcs12_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_pkcs12_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_pkcs12_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_pkcs12_derive },

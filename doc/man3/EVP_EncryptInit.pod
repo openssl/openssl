@@ -8,6 +8,8 @@ EVP_CIPHER_free,
 EVP_CIPHER_CTX_new,
 EVP_CIPHER_CTX_reset,
 EVP_CIPHER_CTX_free,
+EVP_CIPHER_CTX_dup,
+EVP_CIPHER_CTX_copy,
 EVP_EncryptInit_ex,
 EVP_EncryptInit_ex2,
 EVP_EncryptUpdate,
@@ -109,6 +111,8 @@ EVP_CIPHER_CTX_mode
  EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void);
  int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx);
  void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx);
+ EVP_CIPHER_CTX *EVP_CIPHER_CTX_dup(const EVP_CIPHER_CTX *in);
+ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in);
 
  int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                         ENGINE *impl, const unsigned char *key, const unsigned char *iv);
@@ -229,15 +233,15 @@ EVP_CIPHER_CTX_mode
  #define EVP_CIPHER_CTX_type EVP_CIPHER_CTX_get_type
  #define EVP_CIPHER_CTX_mode EVP_CIPHER_CTX_get_mode
 
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following function has been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
 
-Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following function has been deprecated since OpenSSL 1.1.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  int EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx);
 
@@ -279,6 +283,16 @@ Clears all information from a cipher context and frees any allocated memory
 associated with it, including I<ctx> itself. This function should be called after
 all operations using a cipher are complete so sensitive information does not
 remain in memory.
+
+=item EVP_CIPHER_CTX_dup()
+
+Can be used to duplicate the cipher state from I<in>.  This is useful
+to avoid multiple EVP_MD_fetch() calls or if large amounts of data are to be
+hashed which only differ in the last few bytes.
+
+=item EVP_CIPHER_CTX_copy()
+
+Can be used to copy the cipher state from I<in> to I<out>.
 
 =item EVP_CIPHER_CTX_ctrl()
 
@@ -444,8 +458,30 @@ EVP_CipherFinal_ex() instead.
 
 =item EVP_get_cipherbyname(), EVP_get_cipherbynid() and EVP_get_cipherbyobj()
 
-Return an EVP_CIPHER structure when passed a cipher name, a NID or an
-ASN1_OBJECT structure.
+Returns an B<EVP_CIPHER> structure when passed a cipher name, a cipher B<NID> or
+an B<ASN1_OBJECT> structure respectively.
+
+EVP_get_cipherbyname() will return NULL for algorithms such as "AES-128-SIV",
+"AES-128-CBC-CTS" and "CAMELLIA-128-CBC-CTS" which were previously only
+accessible via low level interfaces.
+
+The EVP_get_cipherbyname() function is present for backwards compatibility with
+OpenSSL prior to version 3 and is different to the EVP_CIPHER_fetch() function
+since it does not attempt to "fetch" an implementation of the cipher.
+Additionally, it only knows about ciphers that are built-in to OpenSSL and have
+an associated NID. Similarly EVP_get_cipherbynid() and EVP_get_cipherbyobj()
+also return objects without an associated implementation.
+
+When the cipher objects returned by these functions are used (such as in a call
+to EVP_EncryptInit_ex()) an implementation of the cipher will be implicitly
+fetched from the loaded providers. This fetch could fail if no suitable
+implementation is available. Use EVP_CIPHER_fetch() instead to explicitly fetch
+the algorithm and an associated implementation from a provider.
+
+See L<crypto(7)/ALGORITHM FETCHING> for more information about fetching.
+
+The cipher objects returned from these functions do not need to be freed with
+EVP_CIPHER_free().
 
 =item EVP_CIPHER_get_nid() and EVP_CIPHER_CTX_get_nid()
 
@@ -646,7 +682,7 @@ Note that the block size for a cipher may be different to the block size for
 the underlying encryption/decryption primitive.
 For example AES in CTR mode has a block size of 1 (because it operates like a
 stream cipher), even though AES has a block size of 16.
-Use EVP_CIPHER_get_block_size() to retreive the cached value.
+Use EVP_CIPHER_get_block_size() to retrieve the cached value.
 
 =item "aead" (B<OSSL_CIPHER_PARAM_AEAD>) <integer>
 
@@ -738,7 +774,8 @@ that has the flag B<EVP_CIPH_FLAG_CUSTOM_ASN1> set.
 =item "cts_mode" (B<OSSL_CIPHER_PARAM_CTS_MODE>) <UTF8 string>
 
 Gets or sets the cipher text stealing mode. For all modes the output size is the
-same as the input size.
+same as the input size. The input length must be greater than or equal to the
+block size. (The block size for AES and CAMELLIA is 16 bytes).
 
 Valid values for the mode are:
 
@@ -747,25 +784,28 @@ Valid values for the mode are:
 =item "CS1"
 
 The NIST variant of cipher text stealing.
-For message lengths that are multiples of the block size it is equivalent to
-using a "AES-CBC" cipher otherwise the second last cipher text block is a
-partial block.
+For input lengths that are multiples of the block size it is equivalent to
+using a "AES-XXX-CBC" or "CAMELLIA-XXX-CBC" cipher otherwise the second last
+cipher text block is a partial block.
 
 =item "CS2"
 
-For message lengths that are multiples of the block size it is equivalent to
-using a "AES-CBC" cipher, otherwise it is the same as "CS3".
+For input lengths that are multiples of the block size it is equivalent to
+using a "AES-XXX-CBC" or "CAMELLIA-XXX-CBC" cipher, otherwise it is the same as
+"CS3" mode.
 
 =item "CS3"
 
 The Kerberos5 variant of cipher text stealing which always swaps the last
 cipher text block with the previous block (which may be a partial or full block
-depending on the input length).
+depending on the input length). If the input length is exactly one full block
+then this is equivalent to using a "AES-XXX-CBC" or "CAMELLIA-XXX-CBC" cipher.
 
 =back
 
 The default is "CS1".
-This is only supported for "AES-128-CBC-CTS", "AES-192-CBC-CTS" and "AES-256-CBC-CTS".
+This is only supported for "AES-128-CBC-CTS", "AES-192-CBC-CTS", "AES-256-CBC-CTS",
+"CAMELLIA-128-CBC-CTS", "CAMELLIA-192-CBC-CTS" and "CAMELLIA-256-CBC-CTS".
 
 =item "tls1multi_interleave" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE>) <unsigned integer>
 
@@ -1160,6 +1200,10 @@ EVP_CIPHER_up_ref() returns 1 for success or 0 otherwise.
 EVP_CIPHER_CTX_new() returns a pointer to a newly created
 B<EVP_CIPHER_CTX> for success and B<NULL> for failure.
 
+EVP_CIPHER_CTX_dup() returns a new EVP_MD_CTX if successful or NULL on failure.
+
+EVP_CIPHER_CTX_copy() returns 1 if successful or 0 for failure.
+
 EVP_EncryptInit_ex2(), EVP_EncryptUpdate() and EVP_EncryptFinal_ex()
 return 1 for success and 0 for failure.
 
@@ -1274,18 +1318,20 @@ B<EVP_CTRL_AEAD_SET_TAG>.
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag)
 
-Sets the expected tag to C<taglen> bytes from C<tag>.
-The tag length can only be set before specifying an IV.
+When decrypting, this call sets the expected tag to C<taglen> bytes from C<tag>.
 C<taglen> must be between 1 and 16 inclusive.
+The tag must be set prior to any call to EVP_DecryptFinal() or
+EVP_DecryptFinal_ex().
 
 For GCM, this call is only valid when decrypting data.
 
 For OCB, this call is valid when decrypting data to set the expected tag,
-and before encryption to set the desired tag length.
+and when encrypting to set the desired tag length.
 
-In OCB mode, calling this before encryption with C<tag> set to C<NULL> sets the
-tag length.  If this is not called prior to encryption, a default tag length is
-used.
+In OCB mode, calling this when encrypting with C<tag> set to C<NULL> sets the
+tag length. The tag length can only be set before specifying an IV. If this is
+not called prior to setting the IV during encryption, then a default tag length
+is used.
 
 For OCB AES, the default tag length is 16 (i.e. 128 bits).  It is also the
 maximum tag length for OCB.
@@ -1321,7 +1367,7 @@ Sets the CCM B<L> value. If not set a default is used (8 for AES).
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
 
-Sets the CCM nonce (IV) length. This call can only be made before specifying a 
+Sets the CCM nonce (IV) length. This call can only be made before specifying a
 nonce value. The nonce length is given by B<15 - L> so it is 7 by default for
 AES.
 
@@ -1345,28 +1391,39 @@ indicates if the operation was successful. If it does not indicate success
 the authentication operation has failed and any output data B<MUST NOT>
 be used as it is corrupted.
 
-The following ctrls are supported in both SIV modes.
+The API does not store the the SIV (Synthetic Initialization Vector) in
+the cipher text. Instead, it is stored as the tag within the EVP_CIPHER_CTX.
+The SIV must be retrieved from the context after encryption, and set into
+the context before decryption.
+
+This differs from RFC5297 in that the cipher output from encryption, and
+the cipher input to decryption, does not contain the SIV. This also means
+that the plain text and cipher text lengths are identical.
+
+The following ctrls are supported in SIV mode, and are used to get and set
+the Synthetic Initialization Vector:
 
 =over 4
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag);
 
-Writes I<taglen> bytes of the tag value to the buffer indicated by I<tag>.
-This call can only be made when encrypting data and B<after> all data has been
-processed (e.g. after an EVP_EncryptFinal() call). For SIV mode the taglen must
-be 16.
+Writes I<taglen> bytes of the tag value (the Synthetic Initialization Vector)
+to the buffer indicated by I<tag>. This call can only be made when encrypting
+data and B<after> all data has been processed (e.g. after an EVP_EncryptFinal()
+call). For SIV mode the taglen must be 16.
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
 
-Sets the expected tag to I<taglen> bytes from I<tag>. This call is only legal
-when decrypting data and must be made B<before> any data is processed (e.g.
-before any EVP_DecryptUpdate() call). For SIV mode the taglen must be 16.
+Sets the expected tag (the Synthetic Initialization Vector) to I<taglen>
+bytes from I<tag>. This call is only legal when decrypting data and must be
+made B<before> any data is processed (e.g. before any EVP_DecryptUpdate()
+calls). For SIV mode the taglen must be 16.
 
 =back
 
 SIV mode makes two passes over the input data, thus, only one call to
 EVP_CipherUpdate(), EVP_EncryptUpdate() or EVP_DecryptUpdate() should be made
-with I<out> set to a non-B<NULL> value. A call to EVP_Decrypt_Final() or
+with I<out> set to a non-B<NULL> value. A call to EVP_DecryptFinal() or
 EVP_CipherFinal() is not required, but will indicate if the update
 operation succeeded.
 
@@ -1671,9 +1728,11 @@ non-deprecated alias macro.
 
 The EVP_CIPHER_CTX_flags() macro was deprecated in OpenSSL 1.1.0.
 
+EVP_CIPHER_CTX_dup() was added in OpenSSL 3.1.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

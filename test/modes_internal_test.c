@@ -869,7 +869,7 @@ static int test_gcm128(int idx)
     if (A.data != NULL)
         CRYPTO_gcm128_aad(&ctx, A.data, A.size);
     if (P.data != NULL)
-        if (!TEST_int_ge(CRYPTO_gcm128_encrypt( &ctx, P.data, out, P.size), 0))
+        if (!TEST_int_ge(CRYPTO_gcm128_encrypt(&ctx, P.data, out, P.size), 0))
             return 0;
     if (!TEST_false(CRYPTO_gcm128_finish(&ctx, T.data, 16))
             || (C.data != NULL

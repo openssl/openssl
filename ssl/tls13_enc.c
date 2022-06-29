@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,8 +18,11 @@
 
 #define TLS13_MAX_LABEL_LEN     249
 
-/* Always filled with zeros */
-static const unsigned char default_zeros[EVP_MAX_MD_SIZE];
+#ifdef CHARSET_EBCDIC
+static const unsigned char label_prefix[] = { 0x74, 0x6C, 0x73, 0x31, 0x33, 0x20, 0x00 };
+#else
+static const unsigned char label_prefix[] = "tls13 ";
+#endif
 
 /*
  * Given a |secret|; a |label| of length |labellen|; and |data| of length
@@ -29,33 +32,18 @@ static const unsigned char default_zeros[EVP_MAX_MD_SIZE];
  * |fatal| is set. Returns 1 on success  0 on failure.
  */
 int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
-                             const unsigned char *label, size_t labellen,
-                             const unsigned char *data, size_t datalen,
-                             unsigned char *out, size_t outlen, int fatal)
+                      const unsigned char *label, size_t labellen,
+                      const unsigned char *data, size_t datalen,
+                      unsigned char *out, size_t outlen, int fatal)
 {
-#ifdef CHARSET_EBCDIC
-    static const unsigned char label_prefix[] = { 0x74, 0x6C, 0x73, 0x31, 0x33, 0x20, 0x00 };
-#else
-    static const unsigned char label_prefix[] = "tls13 ";
-#endif
-    EVP_KDF *kdf = EVP_KDF_fetch(s->ctx->libctx, OSSL_KDF_NAME_HKDF,
+    EVP_KDF *kdf = EVP_KDF_fetch(s->ctx->libctx, OSSL_KDF_NAME_TLS1_3_KDF,
                                  s->ctx->propq);
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[5], *p = params;
+    OSSL_PARAM params[7], *p = params;
     int mode = EVP_PKEY_HKDEF_MODE_EXPAND_ONLY;
     const char *mdname = EVP_MD_get0_name(md);
     int ret;
-    size_t hkdflabellen;
     size_t hashlen;
-    /*
-     * 2 bytes for length of derived secret + 1 byte for length of combined
-     * prefix and label + bytes for the label itself + 1 byte length of hash
-     * + bytes for the hash itself
-     */
-    unsigned char hkdflabel[sizeof(uint16_t) + sizeof(uint8_t)
-                            + (sizeof(label_prefix) - 1) + TLS13_MAX_LABEL_LEN
-                            + 1 + EVP_MAX_MD_SIZE];
-    WPACKET pkt;
 
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
@@ -76,37 +64,33 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
         return 0;
     }
 
-    hashlen = EVP_MD_get_size(md);
-
-    if (!WPACKET_init_static_len(&pkt, hkdflabel, sizeof(hkdflabel), 0)
-            || !WPACKET_put_bytes_u16(&pkt, outlen)
-            || !WPACKET_start_sub_packet_u8(&pkt)
-            || !WPACKET_memcpy(&pkt, label_prefix, sizeof(label_prefix) - 1)
-            || !WPACKET_memcpy(&pkt, label, labellen)
-            || !WPACKET_close(&pkt)
-            || !WPACKET_sub_memcpy_u8(&pkt, data, (data == NULL) ? 0 : datalen)
-            || !WPACKET_get_total_written(&pkt, &hkdflabellen)
-            || !WPACKET_finish(&pkt)) {
+    if ((ret = EVP_MD_get_size(md)) <= 0) {
         EVP_KDF_CTX_free(kctx);
-        WPACKET_cleanup(&pkt);
         if (fatal)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         else
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+    hashlen = (size_t)ret;
 
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                             (char *)mdname, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                              (unsigned char *)secret, hashlen);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
-                                             hkdflabel, hkdflabellen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+                                             (unsigned char *)label_prefix,
+                                             sizeof(label_prefix) - 1);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_LABEL,
+                                             (unsigned char *)label, labellen);
+    if (data != NULL)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_DATA,
+                                                 (unsigned char *)data,
+                                                 datalen);
     *p++ = OSSL_PARAM_construct_end();
 
     ret = EVP_KDF_derive(kctx, out, outlen, params) <= 0;
-
     EVP_KDF_CTX_free(kctx);
 
     if (ret != 0) {
@@ -178,12 +162,12 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
                           size_t insecretlen,
                           unsigned char *outsecret)
 {
-    size_t mdlen, prevsecretlen;
+    size_t mdlen;
     int mdleni;
     int ret;
     EVP_KDF *kdf;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[5], *p = params;
+    OSSL_PARAM params[7], *p = params;
     int mode = EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY;
     const char *mdname = EVP_MD_get0_name(md);
 #ifdef CHARSET_EBCDIC
@@ -191,9 +175,8 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
 #else
     static const char derived_secret_label[] = "derived";
 #endif
-    unsigned char preextractsec[EVP_MAX_MD_SIZE];
 
-    kdf = EVP_KDF_fetch(s->ctx->libctx, OSSL_KDF_NAME_HKDF, s->ctx->propq);
+    kdf = EVP_KDF_fetch(s->ctx->libctx, OSSL_KDF_NAME_TLS1_3_KDF, s->ctx->propq);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL) {
@@ -210,51 +193,22 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     }
     mdlen = (size_t)mdleni;
 
-    if (insecret == NULL) {
-        insecret = default_zeros;
-        insecretlen = mdlen;
-    }
-    if (prevsecret == NULL) {
-        prevsecret = default_zeros;
-        prevsecretlen = 0;
-    } else {
-        EVP_MD_CTX *mctx = EVP_MD_CTX_new();
-        unsigned char hash[EVP_MAX_MD_SIZE];
-
-        /* The pre-extract derive step uses a hash of no messages */
-        if (mctx == NULL
-                || EVP_DigestInit_ex(mctx, md, NULL) <= 0
-                || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            EVP_MD_CTX_free(mctx);
-            EVP_KDF_CTX_free(kctx);
-            return 0;
-        }
-        EVP_MD_CTX_free(mctx);
-
-        /* Generate the pre-extract secret */
-        if (!tls13_hkdf_expand(s, md, prevsecret,
-                               (unsigned char *)derived_secret_label,
-                               sizeof(derived_secret_label) - 1, hash, mdlen,
-                               preextractsec, mdlen, 1)) {
-            /* SSLfatal() already called */
-            EVP_KDF_CTX_free(kctx);
-            return 0;
-        }
-
-        prevsecret = preextractsec;
-        prevsecretlen = mdlen;
-    }
-
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                             (char *)mdname, 0);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                             (unsigned char *)insecret,
-                                             insecretlen);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-                                             (unsigned char *)prevsecret,
-                                             prevsecretlen);
+    if (insecret != NULL)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+                                                 (unsigned char *)insecret,
+                                                 insecretlen);
+    if (prevsecret != NULL)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                                 (unsigned char *)prevsecret, mdlen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
+                                             (unsigned char *)label_prefix,
+                                             sizeof(label_prefix) - 1);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_LABEL,
+                                             (unsigned char *)derived_secret_label,
+                                             sizeof(derived_secret_label) - 1);
     *p++ = OSSL_PARAM_construct_end();
 
     ret = EVP_KDF_derive(kctx, outsecret, mdlen, params) <= 0;
@@ -263,8 +217,6 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
 
     EVP_KDF_CTX_free(kctx);
-    if (prevsecret == preextractsec)
-        OPENSSL_cleanse(preextractsec, mdlen);
     return ret == 0;
 }
 
@@ -309,8 +261,7 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned char finsecret[EVP_MAX_MD_SIZE];
     unsigned char *key = NULL;
-    unsigned int len = 0;
-    size_t hashlen, ret = 0;
+    size_t len = 0, hashlen;
     OSSL_PARAM params[2], *p = params;
 
     /* Safe to cast away const here since we're not "getting" any data */
@@ -345,10 +296,9 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
         goto err;
     }
 
-    ret = len;
  err:
     OPENSSL_cleanse(finsecret, sizeof(finsecret));
-    return ret;
+    return len;
 }
 
 /*
@@ -435,9 +385,9 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
     }
 
     if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL, sending) <= 0
-        || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
-        || (taglen != 0 && !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG,
-                                                taglen, NULL))
+        || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL) <= 0
+        || (taglen != 0 && EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG,
+                                                taglen, NULL) <= 0)
         || EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, -1) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         return 0;
@@ -484,6 +434,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     const EVP_CIPHER *cipher = NULL;
 #if !defined(OPENSSL_NO_KTLS) && defined(OPENSSL_KTLS_TLS13)
     ktls_crypto_info_t crypto_info;
+    void *rl_sequence;
     BIO *bio;
 #endif
 
@@ -690,7 +641,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     }
 
     /* check whether cipher is known */
-    if(!ossl_assert(cipher != NULL))
+    if (!ossl_assert(cipher != NULL))
         goto err;
 
     if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, md, cipher,
@@ -738,8 +689,7 @@ int tls13_change_cipher_state(SSL *s, int which)
         s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
 #ifndef OPENSSL_NO_KTLS
 # if defined(OPENSSL_KTLS_TLS13)
-    if (!(which & SSL3_CC_WRITE)
-            || !(which & SSL3_CC_APPLICATION)
+    if (!(which & SSL3_CC_APPLICATION)
             || (s->options & SSL_OP_ENABLE_KTLS) == 0)
         goto skip_ktls;
 
@@ -755,7 +705,10 @@ int tls13_change_cipher_state(SSL *s, int which)
     if (!ktls_check_supported_cipher(s, cipher, ciph_ctx))
         goto skip_ktls;
 
-    bio = s->wbio;
+    if (which & SSL3_CC_WRITE)
+        bio = s->wbio;
+    else
+        bio = s->rbio;
 
     if (!ossl_assert(bio != NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -763,18 +716,26 @@ int tls13_change_cipher_state(SSL *s, int which)
     }
 
     /* All future data will get encrypted by ktls. Flush the BIO or skip ktls */
-    if (BIO_flush(bio) <= 0)
-        goto skip_ktls;
+    if (which & SSL3_CC_WRITE) {
+        if (BIO_flush(bio) <= 0)
+            goto skip_ktls;
+    }
 
     /* configure kernel crypto structure */
-    if (!ktls_configure_crypto(s, cipher, ciph_ctx,
-                               RECORD_LAYER_get_write_sequence(&s->rlayer),
-                               &crypto_info, NULL, iv, key, NULL, 0))
+    if (which & SSL3_CC_WRITE)
+        rl_sequence = RECORD_LAYER_get_write_sequence(&s->rlayer);
+    else
+        rl_sequence = RECORD_LAYER_get_read_sequence(&s->rlayer);
+
+    if (!ktls_configure_crypto(s, cipher, ciph_ctx, rl_sequence, &crypto_info,
+                               which & SSL3_CC_WRITE, iv, key, NULL, 0))
         goto skip_ktls;
 
     /* ktls works with user provided buffers directly */
-    if (BIO_set_ktls(bio, &crypto_info, which & SSL3_CC_WRITE))
-        ssl3_release_write_buffer(s);
+    if (BIO_set_ktls(bio, &crypto_info, which & SSL3_CC_WRITE)) {
+        if (which & SSL3_CC_WRITE)
+            ssl3_release_write_buffer(s);
+    }
 skip_ktls:
 # endif
 #endif

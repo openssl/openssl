@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -145,5 +145,8 @@ int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm, unsigned long flags);
 EVP_PKEY * ossl_d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a,
                                       const unsigned char **pp, long length,
                                       OSSL_LIB_CTX *libctx, const char *propq);
+X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval);
+
+time_t asn1_string_to_time_t(const char *asn1_string);
 
 #endif /* ndef OSSL_CRYPTO_ASN1_H */

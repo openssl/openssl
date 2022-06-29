@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -36,8 +36,6 @@
 #include "crypto/evp.h"
 #include "crypto/dh.h"
 #include "crypto/ec.h"
-
-#include "e_os.h"                /* strcasecmp() for Windows */
 
 struct translation_ctx_st;       /* Forwarding */
 struct translation_st;           /* Forwarding */
@@ -465,8 +463,8 @@ static int default_fixup_args(enum state state,
                         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
                         return 0;
                     }
-                    if (!BN_bn2nativepad(ctx->p2,
-                                         ctx->allocated_buf, ctx->buflen)) {
+                    if (BN_bn2nativepad(ctx->p2,
+                                         ctx->allocated_buf, ctx->buflen) < 0) {
                         OPENSSL_free(ctx->allocated_buf);
                         ctx->allocated_buf = NULL;
                         return 0;
@@ -654,9 +652,21 @@ static int default_fixup_args(enum state state,
             } else if ((state == POST_PARAMS_TO_CTRL || state == PKEY)
                        && ctx->action_type == GET) {
                 /* For the POST state, only getting needs some work to be done */
+                unsigned int param_data_type = translation->param_data_type;
+                size_t size = (size_t)ctx->p1;
 
+                if (state == PKEY)
+                    size = ctx->sz;
+                if (param_data_type == 0) {
+                    /* we must have a fixup_args function to work */
+                    if (!ossl_assert(translation->fixup_args != NULL)) {
+                        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+                        return 0;
+                    }
+                    param_data_type = ctx->params->data_type;
+                }
                 /* When getting, we populate |*params| from |p1| and |p2| */
-                switch (translation->param_data_type) {
+                switch (param_data_type) {
                 case OSSL_PARAM_INTEGER:
                     return OSSL_PARAM_set_int(ctx->params, ctx->p1);
                 case OSSL_PARAM_UNSIGNED_INTEGER:
@@ -673,10 +683,10 @@ static int default_fixup_args(enum state state,
                     return OSSL_PARAM_set_utf8_string(ctx->params, ctx->p2);
                 case OSSL_PARAM_OCTET_STRING:
                     return OSSL_PARAM_set_octet_string(ctx->params, ctx->p2,
-                                                       (size_t)ctx->p1);
+                                                       size);
                 case OSSL_PARAM_OCTET_PTR:
                     return OSSL_PARAM_set_octet_ptr(ctx->params, ctx->p2,
-                                                    (size_t)ctx->p1);
+                                                    size);
                 default:
                     ERR_raise_data(ERR_LIB_EVP, ERR_R_UNSUPPORTED,
                                    "[action:%d, state:%d] "
@@ -893,7 +903,7 @@ static int fix_kdf_type(enum state state,
 
         /* Convert KDF type strings to numbers */
         for (; kdf_type_map->kdf_type_str != NULL; kdf_type_map++)
-            if (strcasecmp(ctx->p2, kdf_type_map->kdf_type_str) == 0) {
+            if (OPENSSL_strcasecmp(ctx->p2, kdf_type_map->kdf_type_str) == 0) {
                 ctx->p1 = kdf_type_map->kdf_type_num;
                 ret = 1;
                 break;
@@ -992,8 +1002,11 @@ static int fix_dh_nid(enum state state,
         return 0;
 
     if (state == PRE_CTRL_TO_PARAMS) {
-        ctx->p2 = (char *)ossl_ffc_named_group_get_name
-            (ossl_ffc_uid_to_dh_named_group(ctx->p1));
+        if ((ctx->p2 = (char *)ossl_ffc_named_group_get_name
+             (ossl_ffc_uid_to_dh_named_group(ctx->p1))) == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
+            return 0;
+        }
         ctx->p1 = 0;
     }
 
@@ -1014,10 +1027,31 @@ static int fix_dh_nid5114(enum state state,
     if (ctx->action_type != SET)
         return 0;
 
-    if (state == PRE_CTRL_STR_TO_PARAMS) {
-        ctx->p2 = (char *)ossl_ffc_named_group_get_name
-            (ossl_ffc_uid_to_dh_named_group(atoi(ctx->p2)));
+    switch (state) {
+    case PRE_CTRL_TO_PARAMS:
+        if ((ctx->p2 = (char *)ossl_ffc_named_group_get_name
+             (ossl_ffc_uid_to_dh_named_group(ctx->p1))) == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
+            return 0;
+        }
+
         ctx->p1 = 0;
+        break;
+
+    case PRE_CTRL_STR_TO_PARAMS:
+        if (ctx->p2 == NULL)
+            return 0;
+        if ((ctx->p2 = (char *)ossl_ffc_named_group_get_name
+             (ossl_ffc_uid_to_dh_named_group(atoi(ctx->p2)))) == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
+            return 0;
+        }
+
+        ctx->p1 = 0;
+        break;
+
+    default:
+        break;
     }
 
     return default_fixup_args(state, translation, ctx);
@@ -1038,7 +1072,11 @@ static int fix_dh_paramgen_type(enum state state,
         return 0;
 
     if (state == PRE_CTRL_STR_TO_PARAMS) {
-        ctx->p2 = (char *)ossl_dh_gen_type_id2name(atoi(ctx->p2));
+        if ((ctx->p2 = (char *)ossl_dh_gen_type_id2name(atoi(ctx->p2)))
+             == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
+            return 0;
+        }
         ctx->p1 = strlen(ctx->p2);
     }
 
@@ -1353,7 +1391,9 @@ static int fix_rsa_pss_saltlen(enum state state,
         if (i == OSSL_NELEM(str_value_map)) {
             BIO_snprintf(ctx->name_buf, sizeof(ctx->name_buf), "%d", ctx->p1);
         } else {
-            strcpy(ctx->name_buf, str_value_map[i].ptr);
+            /* This won't truncate but it will quiet static analysers */
+            strncpy(ctx->name_buf, str_value_map[i].ptr, sizeof(ctx->name_buf) - 1);
+            ctx->name_buf[sizeof(ctx->name_buf) - 1] = '\0';
         }
         ctx->p2 = ctx->name_buf;
         ctx->p1 = strlen(ctx->p2);
@@ -1365,21 +1405,23 @@ static int fix_rsa_pss_saltlen(enum state state,
     if ((ctx->action_type == SET && state == PRE_PARAMS_TO_CTRL)
         || (ctx->action_type == GET && state == POST_CTRL_TO_PARAMS)) {
         size_t i;
+        int val;
 
         for (i = 0; i < OSSL_NELEM(str_value_map); i++) {
             if (strcmp(ctx->p2, str_value_map[i].ptr) == 0)
                 break;
         }
-        if (i == OSSL_NELEM(str_value_map)) {
-            ctx->p1 = atoi(ctx->p2);
-        } else if (state == POST_CTRL_TO_PARAMS) {
+
+        val = i == OSSL_NELEM(str_value_map) ? atoi(ctx->p2)
+                                             : (int)str_value_map[i].id;
+        if (state == POST_CTRL_TO_PARAMS) {
             /*
              * EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN weirdness explained further
              * up
              */
-            *(int *)ctx->orig_p2 = str_value_map[i].id;
+            *(int *)ctx->orig_p2 = val;
         } else {
-            ctx->p1 = (int)str_value_map[i].id;
+            ctx->p1 = val;
         }
         ctx->p2 = NULL;
     }
@@ -1550,6 +1592,7 @@ static int get_payload_public_key(enum state state,
     ctx->p2 = NULL;
     switch (EVP_PKEY_get_base_id(pkey)) {
 #ifndef OPENSSL_NO_DH
+    case EVP_PKEY_DHX:
     case EVP_PKEY_DH:
         switch (ctx->params->data_type) {
         case OSSL_PARAM_OCTET_STRING:
@@ -1580,10 +1623,13 @@ static int get_payload_public_key(enum state state,
             const EC_GROUP *ecg = EC_KEY_get0_group(eckey);
             const EC_POINT *point = EC_KEY_get0_public_key(eckey);
 
+            if (bnctx == NULL)
+                return 0;
             ctx->sz = EC_POINT_point2buf(ecg, point,
                                          POINT_CONVERSION_COMPRESSED,
                                          &buf, bnctx);
             ctx->p2 = buf;
+            BN_CTX_free(bnctx);
             break;
         }
         return 0;
@@ -2120,7 +2166,7 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
       OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST, OSSL_PARAM_UTF8_STRING, fix_md },
     /*
      * The "rsa_oaep_label" ctrl_str expects the value to always be hex.
-     * This is accomodated by default_fixup_args() above, which mimics that
+     * This is accommodated by default_fixup_args() above, which mimics that
      * expectation for any translation item where |ctrl_str| is NULL and
      * |ctrl_hexstr| is non-NULL.
      */
@@ -2219,7 +2265,7 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
       EVP_PKEY_CTRL_CIPHER, NULL, NULL,
       OSSL_PKEY_PARAM_CIPHER, OSSL_PARAM_UTF8_STRING, fix_cipher },
     { SET, -1, -1, EVP_PKEY_OP_KEYGEN,
-      EVP_PKEY_CTRL_SET_MAC_KEY, NULL, NULL,
+      EVP_PKEY_CTRL_SET_MAC_KEY, "key", "hexkey",
       OSSL_PKEY_PARAM_PRIV_KEY, OSSL_PARAM_OCTET_STRING, NULL },
 
     { SET, -1, -1, EVP_PKEY_OP_TYPE_SIG,
@@ -2247,7 +2293,7 @@ static const struct translation_st evp_pkey_translations[] = {
       get_payload_private_key },
     { GET, -1, -1, -1, 0, NULL, NULL,
       OSSL_PKEY_PARAM_PUB_KEY,
-      0 /* no data type, let get_payload_pub_key() handle that */,
+      0 /* no data type, let get_payload_public_key() handle that */,
       get_payload_public_key },
 
     /* DH and DSA */
@@ -2425,10 +2471,11 @@ lookup_translation(struct translation_st *tmpl,
              * cmd name in the template.
              */
             if (item->ctrl_str != NULL
-                && strcasecmp(tmpl->ctrl_str, item->ctrl_str) == 0)
+                && OPENSSL_strcasecmp(tmpl->ctrl_str, item->ctrl_str) == 0)
                 ctrl_str = tmpl->ctrl_str;
             else if (item->ctrl_hexstr != NULL
-                     && strcasecmp(tmpl->ctrl_hexstr, item->ctrl_hexstr) == 0)
+                     && OPENSSL_strcasecmp(tmpl->ctrl_hexstr,
+                                           item->ctrl_hexstr) == 0)
                 ctrl_hexstr = tmpl->ctrl_hexstr;
             else
                 continue;
@@ -2456,7 +2503,8 @@ lookup_translation(struct translation_st *tmpl,
             if ((item->action_type != NONE
                  && tmpl->action_type != item->action_type)
                 || (item->param_key != NULL
-                    && strcasecmp(tmpl->param_key, item->param_key) != 0))
+                    && OPENSSL_strcasecmp(tmpl->param_key,
+                                          item->param_key) != 0))
                 continue;
         } else {
             return NULL;
@@ -2723,4 +2771,3 @@ int evp_pkey_get_params_to_ctrl(const EVP_PKEY *pkey, OSSL_PARAM *params)
 {
     return evp_pkey_setget_params_to_ctrl(pkey, GET, params);
 }
-

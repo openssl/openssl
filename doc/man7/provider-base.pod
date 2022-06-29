@@ -42,11 +42,6 @@ provider-base
   */
  void *CRYPTO_malloc(size_t num, const char *file, int line);
  void *CRYPTO_zalloc(size_t num, const char *file, int line);
- void *CRYPTO_memdup(const void *str, size_t siz,
-                     const char *file, int line);
- char *CRYPTO_strdup(const char *str, const char *file, int line);
- char *CRYPTO_strndup(const char *str, size_t s,
-                      const char *file, int line);
  void CRYPTO_free(void *ptr, const char *file, int line);
  void CRYPTO_clear_free(void *ptr, size_t num,
                         const char *file, int line);
@@ -123,7 +118,7 @@ provider-base
 All "functions" mentioned here are passed as function pointers between
 F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays, in the call
 of the provider initialization function.  See L<provider(7)/Provider>
-for a description of the initialization function.
+for a description of the initialization function. They are known as "upcalls".
 
 All these "functions" have a corresponding function type definition
 named B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the
@@ -153,9 +148,6 @@ provider):
  core_obj_create                OSSL_FUNC_CORE_OBJ_CREATE
  CRYPTO_malloc                  OSSL_FUNC_CRYPTO_MALLOC
  CRYPTO_zalloc                  OSSL_FUNC_CRYPTO_ZALLOC
- CRYPTO_memdup                  OSSL_FUNC_CRYPTO_MEMDUP
- CRYPTO_strdup                  OSSL_FUNC_CRYPTO_STRDUP
- CRYPTO_strndup                 OSSL_FUNC_CRYPTO_STRNDUP
  CRYPTO_free                    OSSL_FUNC_CRYPTO_FREE
  CRYPTO_clear_free              OSSL_FUNC_CRYPTO_CLEAR_FREE
  CRYPTO_realloc                 OSSL_FUNC_CRYPTO_REALLOC
@@ -168,9 +160,14 @@ provider):
  BIO_new_file                   OSSL_FUNC_BIO_NEW_FILE
  BIO_new_mem_buf                OSSL_FUNC_BIO_NEW_MEMBUF
  BIO_read_ex                    OSSL_FUNC_BIO_READ_EX
+ BIO_write_ex                   OSSL_FUNC_BIO_WRITE_EX
  BIO_up_ref                     OSSL_FUNC_BIO_UP_REF
  BIO_free                       OSSL_FUNC_BIO_FREE
  BIO_vprintf                    OSSL_FUNC_BIO_VPRINTF
+ BIO_vsnprintf                  OSSL_FUNC_BIO_VSNPRINTF
+ BIO_puts                       OSSL_FUNC_BIO_PUTS
+ BIO_gets                       OSSL_FUNC_BIO_GETS
+ BIO_ctrl                       OSSL_FUNC_BIO_CTRL
  OPENSSL_cleanse                OSSL_FUNC_OPENSSL_CLEANSE
  OSSL_SELF_TEST_set_callback    OSSL_FUNC_SELF_TEST_CB
  ossl_rand_get_entropy          OSSL_FUNC_GET_ENTROPY
@@ -215,10 +212,14 @@ the thread that is stopping and gets passed the provider context as an
 argument. This may be useful to perform thread specific clean up such as
 freeing thread local variables.
 
-core_get_libctx() retrieves the library context in which the library
+core_get_libctx() retrieves the core context in which the library
 object for the current provider is stored, accessible through the I<handle>.
-This may sometimes be useful if the provider wishes to store a
-reference to its context in the same library context.
+This function is useful only for built-in providers such as the default
+provider. Never cast this to OSSL_LIB_CTX in a provider that is not
+built-in as the OSSL_LIB_CTX of the library loading the provider might be
+a completely different structure than the OSSL_LIB_CTX of the library the
+provider is linked to. Use  L<OSSL_LIB_CTX_new_child(3)> instead to obtain
+a proper library context that is linked to the application library context.
 
 core_new_error(), core_set_error_debug() and core_vset_error() are
 building blocks for reporting an error back to the core, with
@@ -275,16 +276,17 @@ function L<OBJ_add_sigid(3)>, except that the objects are identified by name
 rather than a numeric NID. Any name (OID, short name or long name) can be used
 to identify the object. It will treat as success the case where the composite
 signature algorithm already exists (even if registered against a different
-underlying signature or digest algorithm). It returns 1 on success or 0 on
-failure.
+underlying signature or digest algorithm). For I<digest_name>, NULL or an
+empty string is permissible for signature algorithms that do not need a digest
+to operate correctly. The function returns 1 on success or 0 on failure.
 
-CRYPTO_malloc(), CRYPTO_zalloc(), CRYPTO_memdup(), CRYPTO_strdup(),
-CRYPTO_strndup(), CRYPTO_free(), CRYPTO_clear_free(),
+CRYPTO_malloc(), CRYPTO_zalloc(), CRYPTO_free(), CRYPTO_clear_free(),
 CRYPTO_realloc(), CRYPTO_clear_realloc(), CRYPTO_secure_malloc(),
 CRYPTO_secure_zalloc(), CRYPTO_secure_free(),
 CRYPTO_secure_clear_free(), CRYPTO_secure_allocated(),
 BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_write_ex(), BIO_up_ref(),
-BIO_free(), BIO_vprintf(), BIO_vsnprintf(), OPENSSL_cleanse() and
+BIO_free(), BIO_vprintf(), BIO_vsnprintf(), BIO_gets(), BIO_puts(),
+BIO_ctrl(), OPENSSL_cleanse() and
 OPENSSL_hexstr2buf() correspond exactly to the public functions with
 the same name.  As a matter of fact, the pointers in the B<OSSL_DISPATCH>
 array are typically direct pointers to those public functions. Note that the BIO
@@ -320,7 +322,9 @@ provider_register_child_cb() registers callbacks for being informed about the
 loading and unloading of providers in the application's library context.
 I<handle> is this provider's handle and I<cbdata> is this provider's data
 that will be passed back to the callbacks. It returns 1 on success or 0
-otherwise.
+otherwise. These callbacks may be called while holding locks in libcrypto. In
+order to avoid deadlocks the callback implementation must not be long running
+and must not call other OpenSSL API functions or upcalls.
 
 I<create_cb> is a callback that will be called when a new provider is loaded
 into the application's library context. It is also called for any providers that
@@ -412,17 +416,17 @@ provider_get_params() can return the following provider parameters to the core:
 
 =over 4
 
-=item "name" (B<OSSL_PROV_PARAM_NAME>) <UTF8 string ptr>
+=item "name" (B<OSSL_PROV_PARAM_NAME>) <UTF8 ptr>
 
 This points to a string that should give a unique name for the provider.
 
-=item "version" (B<OSSL_PROV_PARAM_VERSION>) <UTF8 string ptr>
+=item "version" (B<OSSL_PROV_PARAM_VERSION>) <UTF8 ptr>
 
 This points to a string that is a version number associated with this provider.
 OpenSSL in-built providers use OPENSSL_VERSION_STR, but this may be different
 for any third party provider. This string is for informational purposes only.
 
-=item "buildinfo" (B<OSSL_PROV_PARAM_BUILDINFO>) <UTF8 string ptr>
+=item "buildinfo" (B<OSSL_PROV_PARAM_BUILDINFO>) <UTF8 ptr>
 
 This points to a string that is a build information associated with this provider.
 OpenSSL in-built providers use OPENSSL_FULL_VERSION_STR, but this may be
@@ -433,7 +437,7 @@ different for any third party provider.
 This returns 0 if the provider has entered an error state, otherwise it returns
 1.
 
-=back 
+=back
 
 provider_gettable_params() should return the above parameters.
 
@@ -467,6 +471,7 @@ config command name separated by periods.
 
 For example, let's say we have the following config example:
 
+ config_diagnostics = 1
  openssl_conf = openssl_init
 
  [openssl_init]
@@ -601,6 +606,11 @@ TLSv1.2 is 0x0303 (771 decimal). A 0 indicates that there is no defined minimum
 or maximum. A -1 indicates that the group should not be used in that protocol.
 
 =back
+
+=head1 NOTES
+
+The core_obj_create() and core_obj_add_sigid() functions were not thread safe
+in OpenSSL 3.0.
 
 =head1 EXAMPLES
 

@@ -35,6 +35,7 @@ expected,description, -section,val, -recipient,val, -expect_sender,val, -srvcert
 0,trusted file does not exist, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,idontexist,BLANK,,BLANK, -unprotected_errors,BLANK,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,
 0,untrusted missing arg, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt, -untrusted,,BLANK, -unprotected_errors,BLANK,,,,,,,,
+1,untrusted not matching cert, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt, -untrusted,root.crt,BLANK, -unprotected_errors,BLANK,,,,,,,,
 0,untrusted empty file, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt, -untrusted,empty.txt,BLANK, -unprotected_errors,BLANK,,,,,,,,
 0,untrusted random file, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt, -untrusted,random.bin,BLANK, -unprotected_errors,BLANK,,,,,,,,
 0,untrusted file does not exist, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt, -untrusted,idontexist,BLANK, -unprotected_errors,BLANK,,,,,,,,

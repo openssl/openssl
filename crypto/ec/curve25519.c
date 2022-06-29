@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1868,7 +1868,7 @@ static int ge_frombytes_vartime(ge_p3 *h, const uint8_t *s)
 {
     fe u;
     fe v;
-    fe v3;
+    fe w;
     fe vxx;
     fe check;
 
@@ -1879,15 +1879,10 @@ static int ge_frombytes_vartime(ge_p3 *h, const uint8_t *s)
     fe_sub(u, u, h->Z); /* u = y^2-1 */
     fe_add(v, v, h->Z); /* v = dy^2+1 */
 
-    fe_sq(v3, v);
-    fe_mul(v3, v3, v); /* v3 = v^3 */
-    fe_sq(h->X, v3);
-    fe_mul(h->X, h->X, v);
-    fe_mul(h->X, h->X, u); /* x = uv^7 */
+    fe_mul(w, u, v); /* w = u*v */
 
-    fe_pow22523(h->X, h->X); /* x = (uv^7)^((q-5)/8) */
-    fe_mul(h->X, h->X, v3);
-    fe_mul(h->X, h->X, u); /* x = uv^3(uv^7)^((q-5)/8) */
+    fe_pow22523(h->X, w); /* x = w^((q-5)/8) */
+    fe_mul(h->X, h->X, u); /* x = u * w^((q-5)/8) */
 
     fe_sq(vxx, h->X);
     fe_mul(vxx, vxx, v);

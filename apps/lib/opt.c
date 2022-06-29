@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,7 @@
 #include "fmt.h"
 #include "app_libctx.h"
 #include "internal/nelem.h"
+#include "internal/numbers.h"
 #include <string.h>
 #if !defined(OPENSSL_SYS_MSDOS)
 # include <unistd.h>
@@ -40,6 +41,7 @@ static int opt_index;
 static char *arg;
 static char *flag;
 static char *dunno;
+static const char *unknown_name;
 static const OPTIONS *unknown;
 static const OPTIONS *opts;
 static char prog[40];
@@ -165,7 +167,6 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
     opt_begin();
     opts = o;
     unknown = NULL;
-
     /* Make sure prog name is set for usage output */
     (void)opt_progname(argv[0]);
 
@@ -214,6 +215,7 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         }
 #endif
         if (o->name[0] == '\0') {
+            OPENSSL_assert(unknown_name != NULL);
             OPENSSL_assert(unknown == NULL);
             unknown = o;
             OPENSSL_assert(unknown->valtype == 0 || unknown->valtype == '-');
@@ -234,6 +236,11 @@ static OPT_PAIR formats[] = {
     {"pvk", OPT_FMT_PVK},
     {NULL}
 };
+
+void opt_set_unknown_name(const char *name)
+{
+    unknown_name = name;
+}
 
 /* Print an error message about a failed format parse. */
 static int opt_format_error(const char *s, unsigned long flags)
@@ -377,8 +384,10 @@ int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp)
     EVP_CIPHER *c;
 
     ERR_set_mark();
-    if ((c = EVP_CIPHER_fetch(NULL, name, NULL)) != NULL
-        || (c = (EVP_CIPHER *)EVP_get_cipherbyname(name)) != NULL) {
+    if ((c = EVP_CIPHER_fetch(app_get0_libctx(), name,
+                              app_get0_propq())) != NULL
+        || (opt_legacy_okay()
+            && (c = (EVP_CIPHER *)EVP_get_cipherbyname(name)) != NULL)) {
         ERR_pop_to_mark();
         if (cipherp != NULL) {
             EVP_CIPHER_free(*cipherp);
@@ -396,8 +405,10 @@ int opt_cipher_any(const char *name, EVP_CIPHER **cipherp)
 {
     int ret;
 
+    if (name == NULL)
+         return 1;
     if ((ret = opt_cipher_silent(name, cipherp)) == 0)
-        opt_printf_stderr("%s: Unknown cipher: %s\n", prog, name);
+        opt_printf_stderr("%s: Unknown option or cipher: %s\n", prog, name);
     return ret;
 }
 
@@ -407,6 +418,8 @@ int opt_cipher(const char *name, EVP_CIPHER **cipherp)
      unsigned long int flags;
      EVP_CIPHER *c = NULL;
 
+    if (name == NULL)
+         return 1;
      if (opt_cipher_any(name, &c)) {
         mode = EVP_CIPHER_get_mode(c);
         flags = EVP_CIPHER_get_flags(c);
@@ -428,12 +441,19 @@ int opt_cipher(const char *name, EVP_CIPHER **cipherp)
  */
 int opt_md_silent(const char *name, EVP_MD **mdp)
 {
-    EVP_MD_free(*mdp);
+    EVP_MD *md;
 
     ERR_set_mark();
-    if ((*mdp = EVP_MD_fetch(NULL, name, NULL)) != NULL
-        || (*mdp = (EVP_MD *)EVP_get_digestbyname(name)) != NULL) {
+    if ((md = EVP_MD_fetch(app_get0_libctx(), name, app_get0_propq())) != NULL
+        || (opt_legacy_okay()
+            && (md = (EVP_MD *)EVP_get_digestbyname(name)) != NULL)) {
         ERR_pop_to_mark();
+        if (mdp != NULL) {
+            EVP_MD_free(*mdp);
+            *mdp = md;
+        } else {
+            EVP_MD_free(md);
+        }
         return 1;
     }
     ERR_clear_last_mark();
@@ -444,10 +464,20 @@ int opt_md(const char *name, EVP_MD **mdp)
 {
     int ret;
 
+    if (name == NULL)
+        return 1;
     if ((ret = opt_md_silent(name, mdp)) == 0)
-        opt_printf_stderr("%s: Unknown option or message digest: %s\n", prog,
-                          name != NULL ? name : "\"\"");
+        opt_printf_stderr("%s: Unknown option or message digest: %s\n",
+                          prog, name);
     return ret;
+}
+
+int opt_check_md(const char *name)
+{
+    if (opt_md(name, NULL))
+        return 1;
+    ERR_clear_error();
+    return 0;
 }
 
 /* Look through a list of name/value pairs. */
@@ -555,7 +585,7 @@ int opt_long(const char *value, long *result)
     !defined(OPENSSL_NO_INTTYPES_H)
 
 /* Parse an intmax_t, put it into *result; return 0 on failure, else 1. */
-int opt_intmax(const char *value, intmax_t *result)
+int opt_intmax(const char *value, ossl_intmax_t *result)
 {
     int oerrno = errno;
     intmax_t m;
@@ -565,19 +595,26 @@ int opt_intmax(const char *value, intmax_t *result)
     m = strtoimax(value, &endp, 0);
     if (*endp
             || endp == value
-            || ((m == INTMAX_MAX || m == INTMAX_MIN) && errno == ERANGE)
+            || ((m == INTMAX_MAX || m == INTMAX_MIN)
+                && errno == ERANGE)
             || (m == 0 && errno != 0)) {
         opt_number_error(value);
         errno = oerrno;
         return 0;
     }
-    *result = m;
+    /* Ensure that the value in |m| is never too big for |*result| */
+    if (sizeof(m) > sizeof(*result)
+        && (m < OSSL_INTMAX_MIN || m > OSSL_INTMAX_MAX)) {
+        opt_number_error(value);
+        return 0;
+    }
+    *result = (ossl_intmax_t)m;
     errno = oerrno;
     return 1;
 }
 
 /* Parse a uintmax_t, put it into *result; return 0 on failure, else 1. */
-int opt_uintmax(const char *value, uintmax_t *result)
+int opt_uintmax(const char *value, ossl_uintmax_t *result)
 {
     int oerrno = errno;
     uintmax_t m;
@@ -593,9 +630,36 @@ int opt_uintmax(const char *value, uintmax_t *result)
         errno = oerrno;
         return 0;
     }
-    *result = m;
+    /* Ensure that the value in |m| is never too big for |*result| */
+    if (sizeof(m) > sizeof(*result)
+        && m > OSSL_UINTMAX_MAX) {
+        opt_number_error(value);
+        return 0;
+    }
+    *result = (ossl_intmax_t)m;
     errno = oerrno;
     return 1;
+}
+#else
+/* Fallback implementations based on long */
+int opt_intmax(const char *value, ossl_intmax_t *result)
+{
+    long m;
+    int ret;
+
+    if ((ret = opt_long(value, &m)))
+        *result = m;
+    return ret;
+}
+
+int opt_uintmax(const char *value, ossl_uintmax_t *result)
+{
+    unsigned long m;
+    int ret;
+
+    if ((ret = opt_ulong(value, &m)))
+        *result = m;
+    return ret;
 }
 #endif
 
@@ -927,6 +991,11 @@ int opt_next(void)
         return o->retval;
     }
     if (unknown != NULL) {
+        if (dunno != NULL) {
+            opt_printf_stderr("%s: Multiple %s or unknown options: -%s and -%s\n",
+                              prog, unknown_name, dunno, p);
+            return -1;
+        }
         dunno = p;
         return unknown->retval;
     }
@@ -952,6 +1021,12 @@ char *opt_unknown(void)
     return dunno;
 }
 
+/* Reset the unknown option; needed by ocsp to allow multiple digest options. */
+void reset_unknown(void)
+{
+    dunno = NULL;
+}
+
 /* Return the rest of the arguments after parsing flags. */
 char **opt_rest(void)
 {
@@ -967,6 +1042,26 @@ int opt_num_rest(void)
     for (pp = opt_rest(); *pp; pp++, i++)
         continue;
     return i;
+}
+
+int opt_check_rest_arg(const char *expected)
+{
+    char *opt = *opt_rest();
+
+    if (opt == NULL || *opt == '\0') {
+        if (expected == NULL)
+            return 1;
+        opt_printf_stderr("%s: Missing argument: %s\n", prog, expected);
+        return 0;
+    }
+    if (expected != NULL)
+        return 1;
+    if (opt_unknown() == NULL)
+        opt_printf_stderr("%s: Extra option: \"%s\"\n", prog, opt);
+    else
+        opt_printf_stderr("%s: Extra (unknown) options: \"%s\" \"%s\"\n",
+                          prog, opt_unknown(), opt);
+    return 0;
 }
 
 /* Return a string describing the parameter type. */
@@ -1014,55 +1109,60 @@ static void opt_print(const OPTIONS *o, int doingparams, int width)
 {
     const char* help;
     char start[80 + 1];
-    char *p;
+    int linelen, printlen;
 
-        help = o->helpstr ? o->helpstr : "(No additional info)";
-        if (o->name == OPT_HELP_STR) {
-            opt_printf_stderr(help, prog);
-            return;
-        }
-        if (o->name == OPT_SECTION_STR) {
-            opt_printf_stderr("\n");
-            opt_printf_stderr(help, prog);
-            return;
-        }
-        if (o->name == OPT_PARAM_STR) {
-            opt_printf_stderr("\nParameters:\n");
-            return;
-        }
+    /* Avoid OOB if width is beyond the buffer size of start */
+    if (width >= (int)sizeof(start))
+        width = (int)sizeof(start) - 1;
 
-        /* Pad out prefix */
-        memset(start, ' ', sizeof(start) - 1);
-        start[sizeof(start) - 1] = '\0';
+    help = o->helpstr ? o->helpstr : "(No additional info)";
+    if (o->name == OPT_HELP_STR) {
+        opt_printf_stderr(help, prog);
+        return;
+    } else if (o->name == OPT_SECTION_STR) {
+        opt_printf_stderr("\n");
+        opt_printf_stderr(help, prog);
+        return;
+    } else if (o->name == OPT_PARAM_STR) {
+        opt_printf_stderr("\nParameters:\n");
+        return;
+    }
 
-        if (o->name == OPT_MORE_STR) {
-            /* Continuation of previous line; pad and print. */
-            start[width] = '\0';
-            opt_printf_stderr("%s  %s\n", start, help);
-            return;
-        }
+    /* Pad out prefix */
+    memset(start, ' ', sizeof(start) - 1);
+    start[sizeof(start) - 1] = '\0';
 
-        /* Build up the "-flag [param]" part. */
-        p = start;
-        *p++ = ' ';
-        if (!doingparams)
-            *p++ = '-';
-        if (o->name[0])
-            p += strlen(strcpy(p, o->name));
-        else
-            *p++ = '*';
-        if (o->valtype != '-') {
-            *p++ = ' ';
-            p += strlen(strcpy(p, valtype2param(o)));
-        }
-        *p = ' ';
-        if ((int)(p - start) >= MAX_OPT_HELP_WIDTH) {
-            *p = '\0';
-            opt_printf_stderr("%s\n", start);
-            memset(start, ' ', sizeof(start));
-        }
+    if (o->name == OPT_MORE_STR) {
+        /* Continuation of previous line; pad and print. */
         start[width] = '\0';
         opt_printf_stderr("%s  %s\n", start, help);
+        return;
+    }
+
+    /* Build up the "-flag [param]" part. */
+    linelen = 0;
+
+    printlen = opt_printf_stderr(" %s", !doingparams ? "-" : "");
+    linelen += (printlen > 0) ? printlen : MAX_OPT_HELP_WIDTH;
+
+    printlen = opt_printf_stderr("%s" , o->name[0] ? o->name : "*");
+    linelen += (printlen > 0) ? printlen : MAX_OPT_HELP_WIDTH;
+
+    if (o->valtype != '-') {
+        printlen = opt_printf_stderr(" %s" , valtype2param(o));
+        linelen += (printlen > 0) ? printlen : MAX_OPT_HELP_WIDTH;
+    }
+
+    if (linelen >= MAX_OPT_HELP_WIDTH || linelen > width) {
+        opt_printf_stderr("%s", "\n");
+        memset(start, ' ', sizeof(start));
+        linelen = 0;
+    }
+
+    width -= linelen;
+
+    start[width] = '\0';
+    opt_printf_stderr("%s  %s\n", start, help);
 }
 
 void opt_help(const OPTIONS *list)
@@ -1070,7 +1170,6 @@ void opt_help(const OPTIONS *list)
     const OPTIONS *o;
     int i, sawparams = 0, width = 5;
     int standard_prolog;
-    char start[80 + 1];
 
     /* Starts with its own help message? */
     standard_prolog = list[0].name != OPT_HELP_STR;
@@ -1079,13 +1178,17 @@ void opt_help(const OPTIONS *list)
     for (o = list; o->name; o++) {
         if (o->name == OPT_MORE_STR)
             continue;
+
         i = 2 + (int)strlen(o->name);
         if (o->valtype != '-')
             i += 1 + strlen(valtype2param(o));
-        if (i < MAX_OPT_HELP_WIDTH && i > width)
+
+        if (i > width)
             width = i;
-        OPENSSL_assert(i < (int)sizeof(start));
     }
+
+    if (width > MAX_OPT_HELP_WIDTH)
+        width = MAX_OPT_HELP_WIDTH;
 
     if (standard_prolog) {
         opt_printf_stderr("Usage: %s [options]\n", prog);

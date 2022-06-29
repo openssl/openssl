@@ -1,7 +1,7 @@
 <!--
 NOTE:
 
-    If you're asking about how to use OpenSSL, this isn't the right 
+    If you're asking about how to use OpenSSL, this isn't the right
     forum.  Please see our User Support resources:
     https://github.com/openssl/openssl/blob/master/SUPPORT.md
 
@@ -18,7 +18,7 @@ output and code, like this:
 
     ```
     #include <stdio.h>
-    
+
     int main() {
         int foo = 1;
         printf("%d\n", foo);

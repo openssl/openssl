@@ -972,13 +972,8 @@ static int mime_bound_check(char *line, int linelen, const char *bound, int blen
     if (blen + 2 > linelen)
         return 0;
     /* Check for part boundary */
-    if ((strncmp(line, "--", 2) == 0)
-        && strncmp(line + 2, bound, blen) == 0) {
-        if (strncmp(line + blen + 2, "--", 2) == 0)
-            return 2;
-        else
-            return 1;
-    }
+    if ((CHECK_AND_SKIP_PREFIX(line, "--")) && strncmp(line, bound, blen) == 0)
+        return HAS_PREFIX(line + blen, "--") ? 2 : 1;
     return 0;
 }
 

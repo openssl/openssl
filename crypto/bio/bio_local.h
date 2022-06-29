@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "internal/sockets.h"
 
 /* BEGIN BIO_ADDRINFO/BIO_ADDR stuff. */
@@ -73,7 +73,7 @@ struct bio_addrinfo_st {
 
 union bio_addr_st {
     struct sockaddr sa;
-# ifdef AF_INET6
+# if OPENSSL_USE_IPV6
     struct sockaddr_in6 s_in6;
 # endif
     struct sockaddr_in s_in;

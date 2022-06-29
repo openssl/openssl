@@ -13,6 +13,21 @@
 [submodule "wycheproof"]
 	path = wycheproof
 	url = https://github.com/google/wycheproof
+<<<<<<< HEAD
 [submodule "openssl"]
 	path = openssl
 	url = git@github.com:ed738/openssl.git
+=======
+[submodule "tlsfuzzer"]
+	path = tlsfuzzer
+	url = https://github.com/tlsfuzzer/tlsfuzzer
+[submodule "python-ecdsa"]
+	path = python-ecdsa
+	url = https://github.com/tlsfuzzer/python-ecdsa
+[submodule "tlslite-ng"]
+	path = tlslite-ng
+	url = https://github.com/tlsfuzzer/tlslite-ng
+[submodule "oqs-provider"]
+	path = oqs-provider
+	url = https://github.com/open-quantum-safe/oqs-provider.git
+>>>>>>> 05e51bc79bac45e194dd6f0bf73c99ed5ca06272

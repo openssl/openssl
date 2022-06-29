@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -175,18 +175,19 @@ int tls_setup_handshake(SSL *s)
         }
         if (SSL_IS_FIRST_HANDSHAKE(s)) {
             /* N.B. s->session_ctx == s->ctx here */
-            tsan_counter(&s->session_ctx->stats.sess_accept);
+            ssl_tsan_counter(s->session_ctx, &s->session_ctx->stats.sess_accept);
         } else {
             /* N.B. s->ctx may not equal s->session_ctx */
-            tsan_counter(&s->ctx->stats.sess_accept_renegotiate);
+            ssl_tsan_counter(s->ctx, &s->ctx->stats.sess_accept_renegotiate);
 
             s->s3.tmp.cert_request = 0;
         }
     } else {
         if (SSL_IS_FIRST_HANDSHAKE(s))
-            tsan_counter(&s->session_ctx->stats.sess_connect);
+            ssl_tsan_counter(s->session_ctx, &s->session_ctx->stats.sess_connect);
         else
-            tsan_counter(&s->session_ctx->stats.sess_connect_renegotiate);
+            ssl_tsan_counter(s->session_ctx,
+                         &s->session_ctx->stats.sess_connect_renegotiate);
 
         /* mark client_random uninitialized */
         memset(s->s3.client_random, 0, sizeof(s->s3.client_random));
@@ -1096,7 +1097,7 @@ WORK_STATE tls_finish_handshake(SSL *s, ossl_unused WORK_STATE wst,
                 ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
 
             /* N.B. s->ctx may not equal s->session_ctx */
-            tsan_counter(&s->ctx->stats.sess_accept_good);
+            ssl_tsan_counter(s->ctx, &s->ctx->stats.sess_accept_good);
             s->handshake_func = ossl_statem_accept;
         } else {
             if (SSL_IS_TLS13(s)) {
@@ -1115,10 +1116,12 @@ WORK_STATE tls_finish_handshake(SSL *s, ossl_unused WORK_STATE wst,
                 ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
             }
             if (s->hit)
-                tsan_counter(&s->session_ctx->stats.sess_hit);
+                ssl_tsan_counter(s->session_ctx,
+                                 &s->session_ctx->stats.sess_hit);
 
             s->handshake_func = ossl_statem_connect;
-            tsan_counter(&s->session_ctx->stats.sess_connect_good);
+            ssl_tsan_counter(s->session_ctx,
+                             &s->session_ctx->stats.sess_connect_good);
         }
 
         if (SSL_IS_DTLS(s)) {
@@ -2165,8 +2168,14 @@ int check_in_list(SSL *s, uint16_t group_id, const uint16_t *groups,
     if (groups == NULL || num_groups == 0)
         return 0;
 
+    if (checkallow == 1)
+        group_id = ssl_group_id_tls13_to_internal(group_id);
+
     for (i = 0; i < num_groups; i++) {
         uint16_t group = groups[i];
+
+        if (checkallow == 2)
+            group = ssl_group_id_tls13_to_internal(group);
 
         if (group_id == group
                 && (!checkallow
@@ -2293,7 +2302,7 @@ int parse_ca_names(SSL *s, PACKET *pkt)
 
 const STACK_OF(X509_NAME) *get_ca_names(SSL *s)
 {
-    const STACK_OF(X509_NAME) *ca_sk = NULL;;
+    const STACK_OF(X509_NAME) *ca_sk = NULL;
 
     if (s->server) {
         ca_sk = SSL_get_client_CA_list(s);
@@ -2381,6 +2390,8 @@ int tls13_save_handshake_digest_for_pha(SSL *s)
         if (!EVP_MD_CTX_copy_ex(s->pha_dgst,
                                 s->s3.handshake_dgst)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            EVP_MD_CTX_free(s->pha_dgst);
+            s->pha_dgst = NULL;
             return 0;
         }
     }

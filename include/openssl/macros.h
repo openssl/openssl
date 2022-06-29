@@ -20,7 +20,7 @@
 # define OPENSSL_MSTR(x) OPENSSL_MSTR_HELPER(x)
 
 /*
- * Sometimes OPENSSSL_NO_xxx ends up with an empty file and some compilers
+ * Sometimes OPENSSL_NO_xxx ends up with an empty file and some compilers
  * don't like that.  This will hopefully silence them.
  */
 # define NON_EMPTY_TRANSLATION_UNIT static void *dummy = &dummy;
@@ -177,6 +177,17 @@
 # undef OPENSSL_NO_DEPRECATED_1_0_0
 # undef OPENSSL_NO_DEPRECATED_0_9_8
 
+# if OPENSSL_API_LEVEL >= 30100
+#  ifndef OPENSSL_NO_DEPRECATED
+#   define OSSL_DEPRECATEDIN_3_1                OSSL_DEPRECATED(3.1)
+#   define OSSL_DEPRECATEDIN_3_1_FOR(msg)       OSSL_DEPRECATED_FOR(3.1, msg)
+#  else
+#   define OPENSSL_NO_DEPRECATED_3_1
+#  endif
+# else
+#  define OSSL_DEPRECATEDIN_3_1
+#  define OSSL_DEPRECATEDIN_3_1_FOR(msg)
+# endif
 # if OPENSSL_API_LEVEL >= 30000
 #  ifndef OPENSSL_NO_DEPRECATED
 #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)

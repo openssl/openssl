@@ -132,6 +132,7 @@ static int evp_mac_final(EVP_MAC_CTX *ctx, int xof,
     size_t l;
     int res;
     OSSL_PARAM params[2];
+    size_t macsize;
 
     if (ctx == NULL || ctx->meth == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
@@ -142,13 +143,18 @@ static int evp_mac_final(EVP_MAC_CTX *ctx, int xof,
         return 0;
     }
 
+    macsize = EVP_MAC_CTX_get_mac_size(ctx);
     if (out == NULL) {
         if (outl == NULL) {
             ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
             return 0;
         }
-        *outl = EVP_MAC_CTX_get_mac_size(ctx);
+        *outl = macsize;
         return 1;
+    }
+    if (outsize < macsize) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_BUFFER_TOO_SMALL);
+        return 0;
     }
     if (xof) {
         params[0] = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_XOF, &xof);
@@ -233,16 +239,17 @@ int EVP_MAC_names_do_all(const EVP_MAC *mac,
     return 1;
 }
 
-unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx, const char *name, const char *propq,
+unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx,
+                         const char *name, const char *propq,
                          const char *subalg, const OSSL_PARAM *params,
                          const void *key, size_t keylen,
                          const unsigned char *data, size_t datalen,
-                         unsigned char *out, size_t outsize, unsigned int *outlen)
+                         unsigned char *out, size_t outsize, size_t *outlen)
 {
     EVP_MAC *mac = EVP_MAC_fetch(libctx, name, propq);
     OSSL_PARAM subalg_param[] = { OSSL_PARAM_END, OSSL_PARAM_END };
     EVP_MAC_CTX *ctx  = NULL;
-    size_t len;
+    size_t len = 0;
     unsigned char *res = NULL;
 
     if (outlen != NULL)
@@ -286,7 +293,7 @@ unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx, const char *name, const char *pro
         }
         res = out;
         if (res != NULL && outlen != NULL)
-            *outlen = (unsigned int)len;
+            *outlen = len;
     }
 
  err:

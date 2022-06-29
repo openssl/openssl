@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_PKEY_encrypt_init_ex, 
+EVP_PKEY_encrypt_init_ex,
 EVP_PKEY_encrypt_init, EVP_PKEY_encrypt - encrypt using a public key algorithm
 
 =head1 SYNOPSIS
@@ -74,7 +74,7 @@ set 'eng = NULL;' to start with the default OpenSSL RSA implementation:
      /* Error occurred */
  if (EVP_PKEY_encrypt_init(ctx) <= 0)
      /* Error */
- if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_OAEP_PADDING) <= 0)
+ if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0)
      /* Error */
 
  /* Determine buffer length */

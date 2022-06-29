@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -12,11 +12,11 @@
 #ifndef OSSL_SSL_LOCAL_H
 # define OSSL_SSL_LOCAL_H
 
-# include "e_os.h"              /* struct timeval for DTLS */
+# include "internal/e_os.h"              /* struct timeval for DTLS */
 # include <stdlib.h>
 # include <time.h>
-# include <string.h>
 # include <errno.h>
+# include "internal/common.h" /* for HAS_PREFIX */
 
 # include <openssl/buffer.h>
 # include <openssl/comp.h>
@@ -772,9 +772,9 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_num_builtins
 } TLSEXT_INDEX;
 
-DEFINE_LHASH_OF(SSL_SESSION);
+DEFINE_LHASH_OF_EX(SSL_SESSION);
 /* Needed in ssl_cert.c */
-DEFINE_LHASH_OF(X509_NAME);
+DEFINE_LHASH_OF_EX(X509_NAME);
 
 # define TLSEXT_KEYNAME_LENGTH  16
 # define TLSEXT_TICK_KEY_LENGTH 32
@@ -811,6 +811,9 @@ int ssl_hmac_final(SSL_HMAC *ctx, unsigned char *md, size_t *len,
 size_t ssl_hmac_size(const SSL_HMAC *ctx);
 
 int ssl_get_EC_curve_nid(const EVP_PKEY *pkey);
+__owur int tls13_set_encoded_pub_key(EVP_PKEY *pkey,
+                                     const unsigned char *enckey,
+                                     size_t enckeylen);
 
 typedef struct tls_group_info_st {
     char *tlsname;           /* Curve Name as in TLS specs */
@@ -898,6 +901,9 @@ struct ssl_ctx_st {
                                                 * other processes - spooky
                                                 * :-) */
     } stats;
+#ifdef TSAN_REQUIRES_LOCKING
+    CRYPTO_RWLOCK *tsan_lock;
+#endif
 
     CRYPTO_REF_COUNT references;
 
@@ -1862,15 +1868,6 @@ struct hm_header_st {
     struct dtls1_retransmit_state saved_retransmit_state;
 };
 
-struct dtls1_timeout_st {
-    /* Number of read timeouts so far */
-    unsigned int read_timeouts;
-    /* Number of write timeouts so far */
-    unsigned int write_timeouts;
-    /* Number of alerts received so far */
-    unsigned int num_alerts;
-};
-
 typedef struct hm_fragment_st {
     struct hm_header_st msg_header;
     unsigned char *fragment;
@@ -1916,7 +1913,8 @@ typedef struct dtls1_state_st {
     size_t mtu;           /* max DTLS packet size */
     struct hm_header_st w_msg_hdr;
     struct hm_header_st r_msg_hdr;
-    struct dtls1_timeout_st timeout;
+    /* Number of alerts received so far */
+    unsigned int timeout_num_alerts;
     /*
      * Indicates when the last handshake msg sent will timeout
      */
@@ -2177,6 +2175,9 @@ typedef enum downgrade_en {
 
 #define TLSEXT_SIGALG_ed25519                                   0x0807
 #define TLSEXT_SIGALG_ed448                                     0x0808
+#define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256              0x081a
+#define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384              0x081b
+#define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512              0x081c
 
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE                                      0x00
@@ -2432,6 +2433,7 @@ __owur int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk);
 __owur int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
                                    int ref);
+__owur int ssl_cert_get_cert_store(CERT *c, X509_STORE **pstore, int chain);
 
 __owur int ssl_security(const SSL *s, int op, int bits, int nid, void *other);
 __owur int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid,
@@ -2650,6 +2652,8 @@ __owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
+__owur uint16_t ssl_group_id_internal_to_tls13(uint16_t curve_id);
+__owur uint16_t ssl_group_id_tls13_to_internal(uint16_t curve_id);
 __owur const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t curve_id);
 __owur int tls1_group_id2nid(uint16_t group_id, int include_unknown);
 __owur uint16_t tls1_nid2group_id(int nid);
@@ -2761,9 +2765,9 @@ __owur int ssl_log_secret(SSL *ssl, const char *label,
 /* ktls.c */
 int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
                                 const EVP_CIPHER_CTX *dd);
-int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
+int ktls_configure_crypto(SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
                           void *rl_sequence, ktls_crypto_info_t *crypto_info,
-                          unsigned char **rec_seq, unsigned char *iv,
+                          int is_tx, unsigned char *iv,
                           unsigned char *key, unsigned char *mac_key,
                           size_t mac_secret_size);
 #  endif
@@ -2855,4 +2859,31 @@ void ssl_session_calculate_timeout(SSL_SESSION* ss);
 #  define ssl3_setup_buffers SSL_test_functions()->p_ssl3_setup_buffers
 
 # endif
+
+/* Some helper routines to support TSAN operations safely */
+static ossl_unused ossl_inline int ssl_tsan_lock(const SSL_CTX *ctx)
+{
+#ifdef TSAN_REQUIRES_LOCKING
+    if (!CRYPTO_THREAD_write_lock(ctx->tsan_lock))
+        return 0;
+#endif
+    return 1;
+}
+
+static ossl_unused ossl_inline void ssl_tsan_unlock(const SSL_CTX *ctx)
+{
+#ifdef TSAN_REQUIRES_LOCKING
+    CRYPTO_THREAD_unlock(ctx->tsan_lock);
+#endif
+}
+
+static ossl_unused ossl_inline void ssl_tsan_counter(const SSL_CTX *ctx,
+                                                     TSAN_QUALIFIER int *stat)
+{
+    if (ssl_tsan_lock(ctx)) {
+        tsan_counter(stat);
+        ssl_tsan_unlock(ctx);
+    }
+}
+
 #endif

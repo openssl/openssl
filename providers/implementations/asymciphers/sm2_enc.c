@@ -110,7 +110,7 @@ static int sm2_asym_decrypt(void *vpsm2ctx, unsigned char *out, size_t *outlen,
         return 0;
 
     if (out == NULL) {
-        if (!ossl_sm2_plaintext_size(psm2ctx->key, md, inlen, outlen))
+        if (!ossl_sm2_plaintext_size(in, inlen, outlen))
             return 0;
         return 1;
     }
@@ -138,6 +138,8 @@ static void *sm2_dupctx(void *vpsm2ctx)
         return NULL;
 
     *dstctx = *srcctx;
+    memset(&dstctx->md, 0, sizeof(dstctx->md));
+
     if (dstctx->key != NULL && !EC_KEY_up_ref(dstctx->key)) {
         OPENSSL_free(dstctx);
         return NULL;

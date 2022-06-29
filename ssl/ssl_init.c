@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 
 #include "internal/err.h"
 #include <openssl/crypto.h>
@@ -35,7 +35,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
     SSL_COMP_get_compression_methods();
 #endif
     ssl_sort_cipher_list();
-    OSSL_TRACE(INIT,"ossl_init_ssl_base: SSL_add_ssl_module()\n");
+    OSSL_TRACE(INIT, "ossl_init_ssl_base: SSL_add_ssl_module()\n");
     /*
      * We ignore an error return here. Not much we can do - but not that bad
      * either. We can still safely continue.
@@ -46,7 +46,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
 }
 
 static CRYPTO_ONCE ssl_strings = CRYPTO_ONCE_STATIC_INIT;
-static int ssl_strings_inited = 0;
+
 DEFINE_RUN_ONCE_STATIC(ossl_init_load_ssl_strings)
 {
     /*
@@ -56,7 +56,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_ssl_strings)
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
     OSSL_TRACE(INIT, "ossl_init_load_ssl_strings: ossl_err_load_SSL_strings()\n");
     ossl_err_load_SSL_strings();
-    ssl_strings_inited = 1;
 #endif
     return 1;
 }
@@ -81,17 +80,6 @@ static void ssl_library_stop(void)
                    "ssl_comp_free_compression_methods_int()\n");
         ssl_comp_free_compression_methods_int();
 #endif
-    }
-
-    if (ssl_strings_inited) {
-        OSSL_TRACE(INIT, "ssl_library_stop: err_free_strings_int()\n");
-        /*
-         * If both crypto and ssl error strings are inited we will end up
-         * calling err_free_strings_int() twice - but that's ok. The second
-         * time will be a no-op. It's easier to do that than to try and track
-         * between the two libraries whether they have both been inited.
-         */
-        err_free_strings_int();
     }
 }
 

@@ -20,9 +20,9 @@ static int X509_REVOKED_cmp(const X509_REVOKED *const *a,
 static int setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp);
 
 ASN1_SEQUENCE(X509_REVOKED) = {
-        ASN1_EMBED(X509_REVOKED,serialNumber, ASN1_INTEGER),
-        ASN1_SIMPLE(X509_REVOKED,revocationDate, ASN1_TIME),
-        ASN1_SEQUENCE_OF_OPT(X509_REVOKED,extensions, X509_EXTENSION)
+        ASN1_EMBED(X509_REVOKED, serialNumber, ASN1_INTEGER),
+        ASN1_SIMPLE(X509_REVOKED, revocationDate, ASN1_TIME),
+        ASN1_SEQUENCE_OF_OPT(X509_REVOKED, extensions, X509_EXTENSION)
 } ASN1_SEQUENCE_END(X509_REVOKED)
 
 static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r);
@@ -94,32 +94,37 @@ static int crl_set_issuers(X509_CRL *crl)
         STACK_OF(X509_EXTENSION) *exts;
         ASN1_ENUMERATED *reason;
         X509_EXTENSION *ext;
+
         gtmp = X509_REVOKED_get_ext_d2i(rev,
                                         NID_certificate_issuer, &j, NULL);
-        if (!gtmp && (j != -1)) {
+        if (gtmp == NULL && j != -1) {
             crl->flags |= EXFLAG_INVALID;
             return 1;
         }
 
-        if (gtmp) {
-            gens = gtmp;
-            if (!crl->issuers) {
+        if (gtmp != NULL) {
+            if (crl->issuers == NULL) {
                 crl->issuers = sk_GENERAL_NAMES_new_null();
-                if (!crl->issuers)
+                if (crl->issuers == NULL) {
+                    GENERAL_NAMES_free(gtmp);
                     return 0;
+                }
             }
-            if (!sk_GENERAL_NAMES_push(crl->issuers, gtmp))
+            if (!sk_GENERAL_NAMES_push(crl->issuers, gtmp)) {
+                GENERAL_NAMES_free(gtmp);
                 return 0;
+            }
+            gens = gtmp;
         }
         rev->issuer = gens;
 
         reason = X509_REVOKED_get_ext_d2i(rev, NID_crl_reason, &j, NULL);
-        if (!reason && (j != -1)) {
+        if (reason == NULL && j != -1) {
             crl->flags |= EXFLAG_INVALID;
             return 1;
         }
 
-        if (reason) {
+        if (reason != NULL) {
             rev->reason = ASN1_ENUMERATED_get(reason);
             ASN1_ENUMERATED_free(reason);
         } else
@@ -132,7 +137,8 @@ static int crl_set_issuers(X509_CRL *crl)
         for (j = 0; j < sk_X509_EXTENSION_num(exts); j++) {
             ext = sk_X509_EXTENSION_value(exts, j);
             if (X509_EXTENSION_get_critical(ext)) {
-                if (OBJ_obj2nid(X509_EXTENSION_get_object(ext)) == NID_certificate_issuer)
+                if (OBJ_obj2nid(X509_EXTENSION_get_object(ext))
+                    == NID_certificate_issuer)
                     continue;
                 crl->flags |= EXFLAG_CRITICAL;
                 break;
@@ -255,7 +261,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         break;
 
     case ASN1_OP_FREE_POST:
-        if (crl->meth->crl_free) {
+        if (crl->meth != NULL && crl->meth->crl_free != NULL) {
             if (!crl->meth->crl_free(crl))
                 return 0;
         }

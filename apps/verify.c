@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -234,8 +234,8 @@ int verify_main(int argc, char **argv)
  end:
     X509_VERIFY_PARAM_free(vpm);
     X509_STORE_free(store);
-    sk_X509_pop_free(untrusted, X509_free);
-    sk_X509_pop_free(trusted, X509_free);
+    OSSL_STACK_OF_X509_free(untrusted);
+    OSSL_STACK_OF_X509_free(trusted);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
     sk_OPENSSL_STRING_free(vfyopts);
     release_engine(e);
@@ -263,6 +263,7 @@ static int check(X509_STORE *ctx, const char *file,
             if (x509_ctrl_string(x, opt) <= 0) {
                 BIO_printf(bio_err, "parameter error \"%s\"\n", opt);
                 ERR_print_errors(bio_err);
+                X509_free(x);
                 return 0;
             }
         }
@@ -307,7 +308,7 @@ static int check(X509_STORE *ctx, const char *file,
                     BIO_printf(bio_out, " (untrusted)");
                 BIO_printf(bio_out, "\n");
             }
-            sk_X509_pop_free(chain, X509_free);
+            OSSL_STACK_OF_X509_free(chain);
         }
     } else {
         BIO_printf(bio_err,

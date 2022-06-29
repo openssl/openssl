@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -253,8 +253,7 @@ int pkeyutl_main(int argc, char **argv)
     }
 
     /* No extra arguments. */
-    argc = opt_num_rest();
-    if (argc != 0)
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     if (!app_RAND_load())
@@ -307,12 +306,10 @@ int pkeyutl_main(int argc, char **argv)
                    mctx, digestname, libctx, app_get0_propq());
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
-        ERR_print_errors(bio_err);
         goto end;
     }
     if (peerkey != NULL && !setup_peer(ctx, peerform, peerkey, e)) {
         BIO_printf(bio_err, "%s: Error setting up peer key\n", prog);
-        ERR_print_errors(bio_err);
         goto end;
     }
     if (pkeyopts != NULL) {
@@ -325,7 +322,6 @@ int pkeyutl_main(int argc, char **argv)
             if (pkey_ctrl_string(ctx, opt) <= 0) {
                 BIO_printf(bio_err, "%s: Can't set parameter \"%s\":\n",
                            prog, opt);
-                ERR_print_errors(bio_err);
                 goto end;
             }
         }
@@ -467,23 +463,23 @@ int pkeyutl_main(int argc, char **argv)
         }
         goto end;
     }
-    if (kdflen != 0) {
-        buf_outlen = kdflen;
-        rv = 1;
+    if (rawin) {
+        /* rawin allocates the buffer in do_raw_keyop() */
+        rv = do_raw_keyop(pkey_op, mctx, pkey, in, filesize, NULL, 0,
+                          &buf_out, (size_t *)&buf_outlen);
     } else {
-        if (rawin) {
-            /* rawin allocates the buffer in do_raw_keyop() */
-            rv = do_raw_keyop(pkey_op, mctx, pkey, in, filesize, NULL, 0,
-                              &buf_out, (size_t *)&buf_outlen);
+        if (kdflen != 0) {
+            buf_outlen = kdflen;
+            rv = 1;
         } else {
             rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
                           buf_in, (size_t)buf_inlen);
-            if (rv > 0 && buf_outlen != 0) {
-                buf_out = app_malloc(buf_outlen, "buffer output");
-                rv = do_keyop(ctx, pkey_op,
-                              buf_out, (size_t *)&buf_outlen,
-                              buf_in, (size_t)buf_inlen);
-            }
+        }
+        if (rv > 0 && buf_outlen != 0) {
+            buf_out = app_malloc(buf_outlen, "buffer output");
+            rv = do_keyop(ctx, pkey_op,
+                          buf_out, (size_t *)&buf_outlen,
+                          buf_in, (size_t)buf_inlen);
         }
     }
     if (rv <= 0) {
@@ -492,14 +488,13 @@ int pkeyutl_main(int argc, char **argv)
         } else {
             BIO_puts(bio_err, "Key derivation failed\n");
         }
-        ERR_print_errors(bio_err);
         goto end;
     }
     ret = 0;
 
     if (asn1parse) {
         if (!ASN1_parse_dump(out, buf_out, buf_outlen, 1, -1))
-            ERR_print_errors(bio_err);
+            ERR_print_errors(bio_err); /* but still return success */
     } else if (hexdump) {
         BIO_dump(out, (char *)buf_out, buf_outlen);
     } else {
@@ -507,6 +502,8 @@ int pkeyutl_main(int argc, char **argv)
     }
 
  end:
+    if (ret != 0)
+        ERR_print_errors(bio_err);
     EVP_MD_CTX_free(mctx);
     EVP_PKEY_CTX_free(ctx);
     EVP_MD_free(md);
@@ -671,15 +668,12 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
     peer = load_pubkey(file, peerform, 0, NULL, engine, "peer key");
     if (peer == NULL) {
         BIO_printf(bio_err, "Error reading peer key %s\n", file);
-        ERR_print_errors(bio_err);
         return 0;
     }
 
-    ret = EVP_PKEY_derive_set_peer(ctx, peer);
+    ret = EVP_PKEY_derive_set_peer(ctx, peer) > 0;
 
     EVP_PKEY_free(peer);
-    if (ret <= 0)
-        ERR_print_errors(bio_err);
     return ret;
 }
 
@@ -734,7 +728,7 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
             goto end;
         }
         mbuf = app_malloc(filesize, "oneshot sign/verify buffer");
-        switch(pkey_op) {
+        switch (pkey_op) {
         case EVP_PKEY_OP_VERIFY:
             buf_len = BIO_read(in, mbuf, filesize);
             if (buf_len != filesize) {
@@ -759,7 +753,7 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
         goto end;
     }
 
-    switch(pkey_op) {
+    switch (pkey_op) {
     case EVP_PKEY_OP_VERIFY:
         for (;;) {
             buf_len = BIO_read(in, tbuf, TBUF_MAXSIZE);

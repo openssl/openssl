@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,11 @@
 #include <openssl/x509v3.h>
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
+
+void OSSL_STACK_OF_X509_free(STACK_OF(X509) *certs)
+{
+    sk_X509_pop_free(certs, X509_free);
+}
 
 #ifndef OPENSSL_NO_STDIO
 int X509_print_fp(FILE *fp, X509 *x)
@@ -50,8 +55,8 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
 {
     long l;
     int ret = 0, i;
-    char *m = NULL, mlch = ' ';
-    int nmindent = 0;
+    char mlch = ' ';
+    int nmindent = 0, printok = 0;
     EVP_PKEY *pkey = NULL;
     const char *neg;
 
@@ -60,8 +65,10 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
         nmindent = 12;
     }
 
-    if (nmflags == X509_FLAG_COMPAT)
+    if (nmflags == X509_FLAG_COMPAT) {
         nmindent = 16;
+        printok = 1;
+    }
 
     if (!(cflag & X509_FLAG_NO_HEADER)) {
         if (BIO_write(bp, "Certificate:\n", 13) <= 0)
@@ -130,7 +137,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
         if (BIO_printf(bp, "        Issuer:%c", mlch) <= 0)
             goto err;
         if (X509_NAME_print_ex(bp, X509_get_issuer_name(x), nmindent, nmflags)
-            < 0)
+            < printok)
             goto err;
         if (BIO_write(bp, "\n", 1) <= 0)
             goto err;
@@ -153,7 +160,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
         if (BIO_printf(bp, "        Subject:%c", mlch) <= 0)
             goto err;
         if (X509_NAME_print_ex
-            (bp, X509_get_subject_name(x), nmindent, nmflags) < 0)
+            (bp, X509_get_subject_name(x), nmindent, nmflags) < printok)
             goto err;
         if (BIO_write(bp, "\n", 1) <= 0)
             goto err;
@@ -215,7 +222,6 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
     ret = 1;
  err:
-    OPENSSL_free(m);
     return ret;
 }
 
@@ -378,9 +384,9 @@ int X509_aux_print(BIO *out, X509 *x, int indent)
         BIO_puts(out, "\n");
     } else
         BIO_printf(out, "%*sNo Rejected Uses.\n", indent, "");
-    alias = X509_alias_get0(x, NULL);
+    alias = X509_alias_get0(x, &i);
     if (alias)
-        BIO_printf(out, "%*sAlias: %s\n", indent, "", alias);
+        BIO_printf(out, "%*sAlias: %.*s\n", indent, "", i, alias);
     keyid = X509_keyid_get0(x, &keyidlen);
     if (keyid) {
         BIO_printf(out, "%*sKey Id: ", indent, "");
@@ -454,7 +460,7 @@ static int print_store_certs(BIO *bio, X509_STORE *store)
         STACK_OF(X509) *certs = X509_STORE_get1_all_certs(store);
         int ret = print_certs(bio, certs);
 
-        sk_X509_pop_free(certs, X509_free);
+        OSSL_STACK_OF_X509_free(certs);
         return ret;
     } else {
         return BIO_printf(bio, "    (no trusted store)\n") >= 0;
@@ -468,6 +474,8 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
         int cert_error = X509_STORE_CTX_get_error(ctx);
         BIO *bio = BIO_new(BIO_s_mem()); /* may be NULL */
 
+        if (bio == NULL)
+            return 0;
         BIO_printf(bio, "%s at depth = %d error = %d (%s)\n",
                    X509_STORE_CTX_get0_parent_ctx(ctx) != NULL
                    ? "CRL path validation"

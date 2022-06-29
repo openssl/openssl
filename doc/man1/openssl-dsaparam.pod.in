@@ -17,6 +17,7 @@ B<openssl dsaparam>
 [B<-text>]
 [B<-genkey>]
 [B<-verbose>]
+[B<-quiet>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<numbits>]
@@ -79,6 +80,11 @@ parameters.
 
 Print extra details about the operations being performed.
 
+=item B<-quiet>
+
+Print fewer details about the operations being performed, which may
+be handy during batch scripts and pipelines.
+
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
@@ -110,7 +116,7 @@ The B<-C> option was removed in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

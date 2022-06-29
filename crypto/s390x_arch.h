@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -72,6 +72,9 @@ struct OPENSSL_s390xcap_st {
     unsigned long long kdsa[2];
 };
 
+#if defined(__GNUC__) && defined(__linux)
+__attribute__ ((visibility("hidden")))
+#endif
 extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 
 /* Max number of 64-bit words currently returned by STFLE */
@@ -122,6 +125,10 @@ extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 # define S390X_SHA3_256         33
 # define S390X_SHA3_384         34
 # define S390X_SHA3_512         35
+# define S390X_KECCAK_224       32
+# define S390X_KECCAK_256       33
+# define S390X_KECCAK_384       34
+# define S390X_KECCAK_512       35
 # define S390X_SHAKE_128        36
 # define S390X_SHAKE_256        37
 # define S390X_GHASH            65

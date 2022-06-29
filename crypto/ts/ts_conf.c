@@ -78,7 +78,7 @@ STACK_OF(X509) *TS_CONF_load_certs(const char *file)
 
         if (xi->x509 != NULL) {
             if (!X509_add_cert(othercerts, xi->x509, X509_ADD_FLAG_DEFAULT)) {
-                sk_X509_pop_free(othercerts, X509_free);
+                OSSL_STACK_OF_X509_free(othercerts);
                 othercerts = NULL;
                 goto end;
             }
@@ -233,7 +233,7 @@ int TS_CONF_set_certs(CONF *conf, const char *section, const char *certs,
  end:
     ret = 1;
  err:
-    sk_X509_pop_free(certs_obj, X509_free);
+    OSSL_STACK_OF_X509_free(certs_obj);
     return ret;
 }
 

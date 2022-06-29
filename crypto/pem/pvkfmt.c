@@ -23,6 +23,8 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
+#include <openssl/kdf.h>
+#include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "crypto/pem.h"
 #include "crypto/evp.h"
@@ -790,29 +792,34 @@ int ossl_do_PVK_header(const unsigned char **in, unsigned int length,
 }
 
 #ifndef OPENSSL_NO_RC4
-static int derive_pvk_key(unsigned char *key,
+static int derive_pvk_key(unsigned char *key, size_t keylen,
                           const unsigned char *salt, unsigned int saltlen,
                           const unsigned char *pass, int passlen,
                           OSSL_LIB_CTX *libctx, const char *propq)
 {
-    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
-    int rv = 0;
-    EVP_MD *sha1 = NULL;
+    EVP_KDF *kdf;
+    EVP_KDF_CTX *ctx;
+    OSSL_PARAM params[5], *p = params;
+    int rv;
 
-    if ((sha1 = EVP_MD_fetch(libctx, SN_sha1, propq)) == NULL)
-        goto err;
+    if ((kdf = EVP_KDF_fetch(libctx, "PVKKDF", propq)) == NULL)
+        return 0;
+    ctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
+    if (ctx == NULL)
+        return 0;
 
-    if (mctx == NULL
-        || !EVP_DigestInit_ex(mctx, sha1, NULL)
-        || !EVP_DigestUpdate(mctx, salt, saltlen)
-        || !EVP_DigestUpdate(mctx, pass, passlen)
-        || !EVP_DigestFinal_ex(mctx, key, NULL))
-        goto err;
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                             (void *)salt, saltlen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+                                             (void *)pass, passlen);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, SN_sha1, 0);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
+                                            (char *)propq, 0);
+    *p = OSSL_PARAM_construct_end();
 
-    rv = 1;
-err:
-    EVP_MD_CTX_free(mctx);
-    EVP_MD_free(sha1);
+    rv = EVP_KDF_derive(ctx, key, keylen, params);
+    EVP_KDF_CTX_free(ctx);
     return rv;
 }
 #endif
@@ -831,6 +838,11 @@ static void *do_PVK_body_key(const unsigned char **in,
     EVP_CIPHER *rc4 = NULL;
 #endif
     EVP_CIPHER_CTX *cctx = EVP_CIPHER_CTX_new();
+
+    if (cctx == NULL) {
+        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
 
     if (saltlen) {
 #ifndef OPENSSL_NO_RC4
@@ -852,7 +864,7 @@ static void *do_PVK_body_key(const unsigned char **in,
             ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        if (!derive_pvk_key(keybuf, p, saltlen,
+        if (!derive_pvk_key(keybuf, sizeof(keybuf), p, saltlen,
                             (unsigned char *)psbuf, inlen, libctx, propq))
             goto err;
         p += saltlen;
@@ -1058,7 +1070,7 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
             ERR_raise(ERR_LIB_PEM, PEM_R_BAD_PASSWORD_READ);
             goto error;
         }
-        if (!derive_pvk_key(keybuf, salt, PVK_SALTLEN,
+        if (!derive_pvk_key(keybuf, sizeof(keybuf), salt, PVK_SALTLEN,
                             (unsigned char *)psbuf, inlen, libctx, propq))
             goto error;
         if ((rc4 = EVP_CIPHER_fetch(libctx, "RC4", propq)) == NULL)

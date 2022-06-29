@@ -18,22 +18,22 @@
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
-#include <openssl/x509.h>
-#include "crypto/x509.h"
-#ifndef OPENSSL_NO_MD2
-# include <openssl/md2.h> /* uses MD2_DIGEST_LENGTH */
-#endif
-#ifndef OPENSSL_NO_MD4
-# include <openssl/md4.h> /* uses MD4_DIGEST_LENGTH */
-#endif
-#ifndef OPENSSL_NO_MD5
-# include <openssl/md5.h> /* uses MD5_DIGEST_LENGTH */
-#endif
-#ifndef OPENSSL_NO_MDC2
-# include <openssl/mdc2.h> /* uses MDC2_DIGEST_LENGTH */
-#endif
-#ifndef OPENSSL_NO_RMD160
-# include <openssl/ripemd.h> /* uses RIPEMD160_DIGEST_LENGTH */
+#ifndef FIPS_MODULE
+# ifndef OPENSSL_NO_MD2
+#  include <openssl/md2.h> /* uses MD2_DIGEST_LENGTH */
+# endif
+# ifndef OPENSSL_NO_MD4
+#  include <openssl/md4.h> /* uses MD4_DIGEST_LENGTH */
+# endif
+# ifndef OPENSSL_NO_MD5
+#  include <openssl/md5.h> /* uses MD5_DIGEST_LENGTH */
+# endif
+# ifndef OPENSSL_NO_MDC2
+#  include <openssl/mdc2.h> /* uses MDC2_DIGEST_LENGTH */
+# endif
+# ifndef OPENSSL_NO_RMD160
+#  include <openssl/ripemd.h> /* uses RIPEMD160_DIGEST_LENGTH */
+# endif
 #endif
 #include <openssl/sha.h> /* uses SHA???_DIGEST_LENGTH */
 #include "crypto/rsa.h"

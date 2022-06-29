@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 # -*- mode: perl; -*-
-# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,7 @@ use lib "$FindBin::Bin/util/perl";
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs splitdir/;
 use File::Path qw/mkpath/;
+use File::Compare qw(compare_text);
 use OpenSSL::fallback "$FindBin::Bin/external/perl/MODULES.txt";
 use OpenSSL::Glob;
 use OpenSSL::Template;
@@ -63,6 +64,8 @@ EOF
 #               (Default: PREFIX/ssl)
 # --banner=".." Output specified text instead of default completion banner
 #
+# -w            Don't wait after showing a Configure warning
+#
 # --cross-compile-prefix Add specified prefix to binutils components.
 #
 # --api         One of 0.9.8, 1.0.0, 1.0.1, 1.0.2, 1.1.0, 1.1.1, or 3.0
@@ -88,6 +91,8 @@ EOF
 # zlib-dynamic  Like "zlib", but the zlib library is expected to be a shared
 #               library and will be loaded in run-time by the OpenSSL library.
 # sctp          include SCTP support
+# enable-quic   include QUIC support (currently just for developers as the
+#               implementation is by no means complete and usable)
 # no-uplink     Don't build support for UPLINK interface.
 # enable-weak-ssl-ciphers
 #               Enable weak ciphers that are disabled by default.
@@ -465,6 +470,7 @@ my @disablables = (
     "poly1305",
     "posix-io",
     "psk",
+    "quic",
     "rc2",
     "rc4",
     "rc5",
@@ -490,6 +496,7 @@ my @disablables = (
     "static-engine",
     "stdio",
     "tests",
+    "tfo",
     "threads",
     "tls",
     "trace",
@@ -532,7 +539,6 @@ my %deprecated_disablables = (
 
 our %disabled = ( # "what"         => "comment"
                   "fips"                => "default",
-                  "acvp-tests"          => "default",
                   "asan"                => "default",
                   "buildtest-c++"       => "default",
                   "crypto-mdebug"       => "default",
@@ -546,10 +552,12 @@ our %disabled = ( # "what"         => "comment"
                   "ktls"                => "default",
                   "md2"                 => "default",
                   "msan"                => "default",
+                  "quic"                => "default",
                   "rc5"                 => "default",
                   "sctp"                => "default",
                   "ssl3"                => "default",
                   "ssl3-method"         => "default",
+                  "tfo"                 => "default",
                   "trace"               => "default",
                   "ubsan"               => "default",
                   "unit-test"           => "default",
@@ -575,6 +583,7 @@ my @disable_cascades = (
                              "seed", "siphash", "siv",
                              "sm3", "sm4", "srp",
                              "srtp", "ssl3-method", "ssl-trace",
+                             "tfo",
                              "ts", "ui-console", "whirlpool",
                              "fips-securitychecks" ],
     sub { $config{processor} eq "386" }
@@ -584,8 +593,8 @@ my @disable_cascades = (
     "zlib"              => [ "zlib-dynamic" ],
     "des"               => [ "mdc2" ],
     "ec"                => [ "ec2m", "ecdsa", "ecdh", "sm2", "gost" ],
-    "dgram"             => [ "dtls", "sctp" ],
-    "sock"              => [ "dgram" ],
+    "dgram"             => [ "dtls", "quic", "sctp" ],
+    "sock"              => [ "dgram", "tfo" ],
     "dtls"              => [ @dtls ],
     sub { 0 == scalar grep { !$disabled{$_} } @dtls }
                         => [ "dtls" ],
@@ -602,7 +611,7 @@ my @disable_cascades = (
     # Without shared libraries, dynamic engines aren't possible.
     # This is due to them having to link with libcrypto and register features
     # using the ENGINE functionality, and since that relies on global tables,
-    # those *have* to be exacty the same as the ones accessed from the app,
+    # those *have* to be exactly the same as the ones accessed from the app,
     # which cannot be guaranteed if shared libraries aren't present.
     # (note that even with shared libraries, both the app and dynamic engines
     # must be linked with the same library)
@@ -618,6 +627,7 @@ my @disable_cascades = (
     "module"            => [ "fips", "dso" ],
 
     "engine"            => [ "dynamic-engine", grep(/eng$/, @disablables) ],
+    "dynamic-engine"    => [ "loadereng" ],
     "hw"                => [ "padlockeng" ],
 
     # no-autoalginit is only useful when building non-shared
@@ -637,7 +647,7 @@ my @disable_cascades = (
 
     "cmp"               => [ "crmf" ],
 
-    "fips"              => [ "fips-securitychecks" ],
+    "fips"              => [ "fips-securitychecks", "acvp-tests" ],
 
     "deprecated-3.0"    => [ "engine", "srp" ]
     );
@@ -898,7 +908,7 @@ while (@argvcopy)
                 {
                 $guess_opts{verbose} = 1;
                 }
-        elsif (/^-w$/)          # From older 'config'
+        elsif (/^-w$/)
                 {
                 $guess_opts{nowait} = 1;
                 }
@@ -1547,7 +1557,7 @@ my %predefined_CXX = $config{CXX}
 
 unless ($disabled{asm}) {
     # big endian systems can use ELFv2 ABI
-    if ($target eq "linux-ppc64") {
+    if ($target eq "linux-ppc64" || $target eq "BSD-ppc64") {
         $target{perlasm_scheme} = "linux64v2" if ($predefined_C{_CALL_ELF} == 2);
     }
 }
@@ -1678,20 +1688,7 @@ $config{CFLAGS} = [ map { $_ eq '--ossl-strict-warnings'
 unless ($disabled{afalgeng}) {
     $config{afalgeng}="";
     if (grep { $_ eq 'afalgeng' } @{$target{enable}}) {
-        my $minver = 4*10000 + 1*100 + 0;
-        if ($config{CROSS_COMPILE} eq "") {
-            my $verstr = `uname -r`;
-            my ($ma, $mi1, $mi2) = split("\\.", $verstr);
-            ($mi2) = $mi2 =~ /(\d+)/;
-            my $ver = $ma*10000 + $mi1*100 + $mi2;
-            if ($ver < $minver) {
-                disable('too-old-kernel', 'afalgeng');
-            } else {
-                push @{$config{engdirs}}, "afalg";
-            }
-        } else {
-            disable('cross-compiling', 'afalgeng');
-        }
+        push @{$config{engdirs}}, "afalg";
     } else {
         disable('not-linux', 'afalgeng');
     }
@@ -1798,7 +1795,7 @@ my %skipdir = ();
 my %disabled_info = ();         # For configdata.pm
 foreach my $what (sort keys %disabled) {
     # There are deprecated disablables that translate to themselves.
-    # They cause disabling cascades, but should otherwise not regiter.
+    # They cause disabling cascades, but should otherwise not register.
     next if $deprecated_disablables{$what};
     # The generated $disabled{"deprecated-x.y"} entries are special
     # and treated properly elsewhere
@@ -2209,9 +2206,10 @@ if ($builder eq "unified") {
                                 \$attributes{depends}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* GENERATE ${index_re} \s* = \s* ${value_re} \s* $/x
+            qr/^\s* GENERATE ${index_re} ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%generate, $expand_variables->($+{INDEX}),
-                                undef, undef, $expand_variables->($+{VALUE}))
+                                \$attributes{generate}, $+{ATTRIBS},
+                                $expand_variables->($+{VALUE}))
                          if !@skip || $skip[$#skip] > 0; },
             qr/^\s* (?:\#.*)? $/x => sub { },
             "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" },
@@ -2379,6 +2377,10 @@ EOF
             $check_generate{$ddest}->{$generator[0]}++;
 
             $unified_info{generate}->{$ddest} = [ @generator ];
+            # Fix up associated attributes
+            $unified_info{attributes}->{generate}->{$ddest} =
+                $attributes{generate}->{$dest}->{$gen}
+                if defined $attributes{generate}->{$dest}->{$gen};
         }
 
         foreach (keys %depends) {
@@ -2769,7 +2771,7 @@ EOF
                                   keys %{$unified_info{htmldocs} // {}}),
                                  (map { @{$unified_info{mandocs}->{$_} // []} }
                                   keys %{$unified_info{mandocs} // {}}) ] );
-    foreach my $type (keys %loopinfo) {
+    foreach my $type (sort keys %loopinfo) {
         foreach my $product (@{$loopinfo{$type}}) {
             my %dirs = ();
             my $pd = dirname($product);
@@ -2790,7 +2792,7 @@ EOF
                 push @{$unified_info{dirinfo}->{$d}->{deps}}, $_
                     if $d ne $pd;
             }
-            foreach (keys %dirs) {
+            foreach (sort keys %dirs) {
                 push @{$unified_info{dirinfo}->{$_}->{products}->{$type}},
                     $product;
             }
@@ -2825,7 +2827,6 @@ my %template_vars = (
     user_crossable => \@user_crossable,
 );
 my $configdata_outname = 'configdata.pm';
-print "Creating $configdata_outname\n";
 open CONFIGDATA, ">$configdata_outname.new"
     or die "Trying to create $configdata_outname.new: $!";
 my $configdata_tmplname = cleanfile($srcdir, "configdata.pm.in", $blddir);
@@ -2841,19 +2842,60 @@ $configdata_tmpl->fill_in(
               ] }
 ) or die $Text::Template::ERROR;
 close CONFIGDATA;
-rename "$configdata_outname.new", $configdata_outname;
-if ($builder_platform eq 'unix') {
-    my $mode = (0755 & ~umask);
-    chmod $mode, 'configdata.pm'
-        or warn sprintf("WARNING: Couldn't change mode for 'configdata.pm' to 0%03o: %s\n",$mode,$!);
+
+# When using stat() on Windows, we can get it to perform better by avoid some
+# data.  This doesn't affect the mtime field, so we're not losing anything...
+${^WIN32_SLOPPY_STAT} = 1;
+
+my $update_configdata = 0;
+my $run_configdata = 0;
+if (-f $configdata_outname) {
+    my $Configure_mtime = (stat($0))[9];
+    my $configdata_mtime = (stat($configdata_outname))[9];
+
+    # If this script was updated after the last configdata.pm, or if
+    # configdata.pm.new differs from configdata.pm, we update configdata.pm
+    if ($configdata_mtime < $Configure_mtime
+        || compare_text("$configdata_outname.new", $configdata_outname) != 0) {
+        $update_configdata = 1;
+    } else {
+        # If nothing has changed, let's just drop the new one and pretend
+        # like nothing happened
+        unlink "$configdata_outname.new";
+
+        # We still run configdata.pm if one of the build file (Makefile) or
+        # the configuration header file are missing
+        $run_configdata =
+            !( -f $target{build_file} )
+            || !( -f catfile('include', 'openssl', 'configuration.h') );
+    }
+} else {
+    $update_configdata = 1;
 }
 
-print "Running $configdata_outname\n";
-my $perlcmd = (quotify("maybeshell", $config{PERL}))[0];
-my $cmd = "$perlcmd $configdata_outname";
-#print STDERR "DEBUG[run_dofile]: \$cmd = $cmd\n";
-system($cmd);
-exit 1 if $? != 0;
+if ($update_configdata) {
+    # If something did change, or there was no previous configdata.pm, we
+    # rename the new one, set permissions as needed, and run it.
+    rename "$configdata_outname.new", $configdata_outname;
+    if ($builder_platform eq 'unix') {
+        my $mode = (0755 & ~umask);
+        chmod $mode, 'configdata.pm'
+            or warn sprintf("WARNING: Couldn't change mode for 'configdata.pm' to 0%03o: %s\n",$mode,$!);
+    }
+    $run_configdata = 1;
+    print "Created $configdata_outname\n";
+}
+
+if ($run_configdata) {
+    print "Running $configdata_outname\n";
+    my $perlcmd = (quotify("maybeshell", $config{PERL}))[0];
+    my $cmd = "$perlcmd $configdata_outname";
+    #print STDERR "DEBUG[run_dofile]: \$cmd = $cmd\n";
+    system($cmd);
+    exit 1 if $? != 0;
+} else {
+    print "No changes in $configdata_outname, no need to run it\n";
+}
 
 $SIG{__DIE__} = $orig_death_handler;
 
@@ -3167,25 +3209,25 @@ sub resolve_config {
         }
     }
 
-    foreach (sort keys %all_keys) {
-        my $previous = $combined_inheritance{$_};
+    foreach my $key (sort keys %all_keys) {
+        my $previous = $combined_inheritance{$key};
 
         # Current target doesn't have a value for the current key?
         # Assign it the default combiner, the rest of this loop body
         # will handle it just like any other coderef.
-        if (!exists $table{$target}->{$_}) {
-            $table{$target}->{$_} = $default_combiner;
+        if (!exists $table{$target}->{$key}) {
+            $table{$target}->{$key} = $default_combiner;
         }
 
-        $table{$target}->{$_} = process_values($table{$target}->{$_},
-                                               $combined_inheritance{$_},
-                                               $target, $_);
-        unless(defined($table{$target}->{$_})) {
-            delete $table{$target}->{$_};
+        $table{$target}->{$key} = process_values($table{$target}->{$key},
+                                               $combined_inheritance{$key},
+                                               $target, $key);
+        unless(defined($table{$target}->{$key})) {
+            delete $table{$target}->{$key};
         }
 #        if ($extra_checks &&
-#            $previous && !($add_called ||  $previous ~~ $table{$target}->{$_})) {
-#            warn "$_ got replaced in $target\n";
+#            $previous && !($add_called ||  $previous ~~ $table{$target}->{$key})) {
+#            warn "$key got replaced in $target\n";
 #        }
     }
 

@@ -4,7 +4,8 @@
 
 ASYNC_get_wait_ctx,
 ASYNC_init_thread, ASYNC_cleanup_thread, ASYNC_start_job, ASYNC_pause_job,
-ASYNC_get_current_job, ASYNC_block_pause, ASYNC_unblock_pause, ASYNC_is_capable
+ASYNC_get_current_job, ASYNC_block_pause, ASYNC_unblock_pause, ASYNC_is_capable,
+ASYNC_stack_alloc_fn, ASYNC_stack_free_fn, ASYNC_set_mem_functions, ASYNC_get_mem_functions
 - asynchronous job management functions
 
 =head1 SYNOPSIS
@@ -24,6 +25,13 @@ ASYNC_get_current_job, ASYNC_block_pause, ASYNC_unblock_pause, ASYNC_is_capable
  void ASYNC_unblock_pause(void);
 
  int ASYNC_is_capable(void);
+
+ typedef void *(*ASYNC_stack_alloc_fn)(size_t *num);
+ typedef void (*ASYNC_stack_free_fn)(void *addr);
+ int ASYNC_set_mem_functions(ASYNC_stack_alloc_fn alloc_fn,
+                             ASYNC_stack_free_fn free_fn);
+ void ASYNC_get_mem_functions(ASYNC_stack_alloc_fn *alloc_fn,
+                              ASYNC_stack_free_fn *free_fn);
 
 =head1 DESCRIPTION
 
@@ -146,6 +154,15 @@ occur.
 Some platforms cannot support async operations. The ASYNC_is_capable() function
 can be used to detect whether the current platform is async capable or not.
 
+Custom memory allocation functions are supported for the POSIX platform.
+Custom memory allocation functions allow alternative methods of allocating
+stack memory such as mmap, or using stack memory from the current thread.
+Using an ASYNC_stack_alloc_fn callback also allows manipulation of the stack
+size, which defaults to 32k.
+The stack size can be altered by allocating a stack of a size different to
+the requested size, and passing back the new stack size in the callback's I<*num>
+parameter.
+
 =head1 RETURN VALUES
 
 ASYNC_init_thread returns 1 on success or 0 otherwise.
@@ -164,6 +181,9 @@ ASYNC_get_wait_ctx() returns a pointer to the B<ASYNC_WAIT_CTX> for the job.
 
 ASYNC_is_capable() returns 1 if the current platform is async capable or 0
 otherwise.
+
+ASYNC_set_mem_functions returns 1 if custom stack allocators are supported by
+the current platform and no allocations have already occurred or 0 otherwise.
 
 =head1 NOTES
 
@@ -325,7 +345,7 @@ added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

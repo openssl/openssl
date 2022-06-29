@@ -142,15 +142,15 @@ Examples:
 =head2 Extended Key Usage
 
 This extension consists of a list of values indicating purposes for which
-the certificate public key can be used for, Each value can be either a
-short text name or an OID.
+the certificate public key can be used.
+Each value can be either a short text name or an OID.
 The following text names, and their intended meaning, are known:
 
- Value                  Meaning
- -----                  -------
- serverAuth             SSL/TLS Web Server Authentication
- clientAuth             SSL/TLS Web Client Authentication
- codeSigning            Code signing
+ Value                  Meaning according to RFC 5280 etc.
+ -----                  ----------------------------------
+ serverAuth             SSL/TLS WWW Server Authentication
+ clientAuth             SSL/TLS WWW Client Authentication
+ codeSigning            Code Signing
  emailProtection        E-mail Protection (S/MIME)
  timeStamping           Trusted Timestamping
  OCSPSigning            OCSP Signing
@@ -159,6 +159,10 @@ The following text names, and their intended meaning, are known:
  msCodeCom              Microsoft Commercial Code Signing (authenticode)
  msCTLSign              Microsoft Trust List Signing
  msEFS                  Microsoft Encrypted File System
+
+While IETF RFC 5280 says that B<id-kp-serverAuth> and B<id-kp-clientAuth>
+are only for WWW use, in practice they are used for all kinds of TLS clients
+and servers, and this is what OpenSSL assumes as well.
 
 Examples:
 
@@ -190,17 +194,21 @@ Otherwise it may have the value B<keyid> or B<issuer>
 or both of them, separated by C<,>.
 Either or both can have the option B<always>,
 indicated by putting a colon C<:> between the value and this option.
-By default the B<x509>, B<req>, and B<ca> apps behave as if
-"none" was given for self-signed certificates and "keyid, issuer" otherwise.
+For self-signed certificates the AKID is suppressed unless B<always> is present.
+By default the B<x509>, B<req>, and B<ca> apps behave as if B<none> was given
+for self-signed certificates and B<keyid>C<,> B<issuer> otherwise.
 
-If B<keyid> is present, an attempt is made to compute the hash of the public key
-corresponding to the signing key in case the certificate is self-signed,
-or else to copy the subject key identifier (SKID) from the issuer certificate.
-If this fails and the option B<always> is present, an error is returned.
+If B<keyid> is present, an attempt is made to
+copy the subject key identifier (SKID) from the issuer certificate except if
+the issuer certificate is the same as the current one and it is not self-signed.
+The hash of the public key related to the signing key is taken as fallback
+if the issuer certificate is the same as the current certificate.
+If B<always> is present but no value can be obtained, an error is returned.
 
 If B<issuer> is present, and in addition it has the option B<always> specified
 or B<keyid> is not present,
 then the issuer DN and serial number are copied from the issuer certificate.
+If this fails, an error is returned.
 
 Examples:
 
@@ -221,9 +229,11 @@ B<dirName> (a distinguished name),
 and B<otherName>.
 The syntax of each is described in the following paragraphs.
 
-The B<email> option has a special C<copy> value, which will automatically
-include any email addresses contained in the certificate subject name in
-the extension.
+The B<email> option has two special values.
+C<copy> will automatically include any email addresses
+contained in the certificate subject name in the extension.
+C<move> will automatically move any email addresses
+from the certificate subject name to the extension.
 
 The IP address used in the B<IP> option can be in either IPv4 or IPv6 format.
 
@@ -285,8 +295,8 @@ B<access_id;location>, where B<access_id> is an object identifier
 syntax as subject alternative name (except that B<email:copy> is not supported).
 
 Possible values for access_id include B<OCSP> (OCSP responder),
-B<caIssuers> (CA Issuers), 
-B<ad_timestamping> (AD Time Stamping), 
+B<caIssuers> (CA Issuers),
+B<ad_timestamping> (AD Time Stamping),
 B<AD_DVCS> (ad dvcs),
 B<caRepository> (CA Repository).
 
@@ -581,7 +591,7 @@ L<ASN1_generate_nconf(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

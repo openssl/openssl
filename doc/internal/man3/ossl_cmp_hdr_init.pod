@@ -17,8 +17,9 @@ ossl_cmp_hdr_generalinfo_item_push0,
 ossl_cmp_hdr_generalinfo_items_push1,
 ossl_cmp_hdr_set_implicitConfirm,
 ossl_cmp_hdr_has_implicitConfirm,
+ossl_cmp_hdr_set_transactionID,
 ossl_cmp_hdr_init
-- functions manipulating CMP message headers
+- functions handling CMP message headers
 
 =head1 SYNOPSIS
 
@@ -46,6 +47,7 @@ ossl_cmp_hdr_init
                                   ASN1_UTF8STRING *text);
   int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
   int ossl_cmp_hdr_has_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
+  int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
   int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 
 =head1 DESCRIPTION
@@ -98,6 +100,10 @@ of the PKIMessage header.
 ossl_cmp_hdr_has_implicitConfirm() returns 1 if implicitConfirm is
 set int generalInfo field of the given PKIMessage header, 0 if not.
 
+ossl_cmp_hdr_set_transactionID() sets the B<transactionID> field in C<hdr>.
+In case ctx->transactionID is NULL, it starts a new transaction
+by creating and storing a new random valuee with 128 bits length.
+
 ossl_cmp_hdr_init() initializes a PKIHeader structure based on the
 values in the given OSSL_CMP_CTX structure.
 This starts a new transaction in case ctx->transactionID is NULL.
@@ -125,13 +131,17 @@ All other functions return 1 on success, 0 on error.
 
 See the individual functions above.
 
+=head1 SEE ALSO
+
+L<ossl_cmp_msg_create(3)>
+
 =head1 HISTORY
 
 The OpenSSL CMP support was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

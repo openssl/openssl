@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2014 Cryptography Research, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -10,7 +10,7 @@
  * Originally written by Mike Hamburg
  */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 #include <openssl/macros.h>
 #include "internal/numbers.h"
 

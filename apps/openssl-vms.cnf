@@ -16,8 +16,7 @@ HOME			= .
  # Use this in order to automatically load providers.
 openssl_conf = openssl_init
 
-# Comment this out if you deliberately want to ignore
-# configuration errors
+# Comment out the next line to ignore configuration errors
 config_diagnostics = 1
 
 # Extra OBJECT IDENTIFIER info:
@@ -61,6 +60,14 @@ default = default_sect
 # included fipsmodule.cnf.
 # fips = fips_sect
 
+# If no providers are activated explicitly, the default one is activated implicitly.
+# See man 7 OSSL_PROVIDER-default for more details.
+#
+# If you add a section explicitly activating any other provider(s), you most
+# probably need to explicitly activate the default provider, otherwise it
+# becomes unavailable in openssl.  As a consequence applications depending on
+# OpenSSL may not work correctly which could lead to significant system
+# problems including inability to remotely access the system.
 [default_sect]
 # activate = 1
 

@@ -18,7 +18,7 @@ provider-signature - The signature library E<lt>-E<gt> provider functions
   */
 
  /* Context management */
- void *OSSL_FUNC_signature_newctx(void *provctx);
+ void *OSSL_FUNC_signature_newctx(void *provctx, const char *propq);
  void OSSL_FUNC_signature_freectx(void *ctx);
  void *OSSL_FUNC_signature_dupctx(void *ctx);
 
@@ -43,7 +43,7 @@ provider-signature - The signature library E<lt>-E<gt> provider functions
 
  /* Digest Sign */
  int OSSL_FUNC_signature_digest_sign_init(void *ctx, const char *mdname,
-                                          const char *props, void *provkey,
+                                          void *provkey,
                                           const OSSL_PARAM params[]);
  int OSSL_FUNC_signature_digest_sign_update(void *ctx, const unsigned char *data,
                                      size_t datalen);
@@ -56,7 +56,7 @@ provider-signature - The signature library E<lt>-E<gt> provider functions
 
  /* Digest Verify */
  int OSSL_FUNC_signature_digest_verify_init(void *ctx, const char *mdname,
-                                            const char *props, void *provkey,
+                                            void *provkey,
                                             const OSSL_PARAM params[]);
  int OSSL_FUNC_signature_digest_verify_update(void *ctx,
                                               const unsigned char *data,
@@ -104,7 +104,7 @@ function pointer from an B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" OSSL_FUNC_signature_newctx() has these:
 
- typedef void *(OSSL_FUNC_signature_newctx_fn)(void *provctx);
+ typedef void *(OSSL_FUNC_signature_newctx_fn)(void *provctx, const char *propq);
  static ossl_inline OSSL_FUNC_signature_newctx_fn
      OSSL_FUNC_signature_newctx(const OSSL_DISPATCH *opf);
 
@@ -183,7 +183,9 @@ structure for holding context information during a signature operation.
 A pointer to this context will be passed back in a number of the other signature
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
-initialisation (see L<provider(7)>).
+initialisation (see L<provider(7)>). The I<propq> parameter is a property query
+string that may be (optionally) used by the provider during any "fetches" that
+it may perform (if it performs any).
 
 OSSL_FUNC_signature_freectx() is passed a pointer to the provider side signature
 context in the I<ctx> parameter.
@@ -264,9 +266,7 @@ OSSL_FUNC_signature_set_ctx_md_params().
 The key object should have been
 previously generated, loaded or imported into the provider using the
 key management (OSSL_OP_KEYMGMT) operation (see provider-keymgmt(7)>.
-The name of the digest to be used will be in the I<mdname> parameter. There may
-also be properties to be used in fetching the digest in the I<props> parameter,
-although this may be ignored by providers.
+The name of the digest to be used will be in the I<mdname> parameter.
 
 OSSL_FUNC_signature_digest_sign_update() provides data to be signed in the I<data>
 parameter which should be of length I<datalen>. A previously initialised
@@ -303,9 +303,7 @@ OSSL_FUNC_signature_set_ctx_md_params().
 The key object should have been
 previously generated, loaded or imported into the provider using the
 key management (OSSL_OP_KEYMGMT) operation (see provider-keymgmt(7)>.
-The name of the digest to be used will be in the I<mdname> parameter. There may
-also be properties to be used in fetching the digest in the I<props> parameter,
-although this may be ignored by providers.
+The name of the digest to be used will be in the I<mdname> parameter.
 
 OSSL_FUNC_signature_digest_verify_update() provides data to be verified in the I<data>
 parameter which should be of length I<datalen>. A previously initialised
@@ -371,7 +369,7 @@ Sets a flag to modify the sign operation to return an error if the initial
 calculated signature is invalid.
 In the normal mode of operation - new random values are chosen until the
 signature operation succeeds.
-By default it retries until a signature is calculated. 
+By default it retries until a signature is calculated.
 Setting the value to 0 causes the sign operation to retry,
 otherwise the sign operation is only tried once and returns whether or not it
 was successful.
@@ -433,7 +431,7 @@ The provider SIGNATURE interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -85,7 +85,9 @@ protocol level.
 It is safe to call SSL_read() or SSL_read_ex() when more data is available
 even when the call that set this error was an SSL_write() or SSL_write_ex().
 However, if the call was an SSL_write() or SSL_write_ex(), it should be called
-again to continue sending the application data.
+again to continue sending the application data. If you get B<SSL_ERROR_WANT_WRITE>
+from SSL_write() or SSL_write_ex() then you should not do any other operation
+that could trigger B<IO> other than to repeat the previous SSL_write() call.
 
 For socket B<BIO>s (e.g. when SSL_set_fd() was used), select() or
 poll() on the underlying socket can be used to find out when the
@@ -178,7 +180,7 @@ The SSL_ERROR_WANT_CLIENT_HELLO_CB error code was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

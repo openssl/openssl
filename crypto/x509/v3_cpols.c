@@ -261,17 +261,17 @@ static int displaytext_str2tag(const char *tagstr, unsigned int *tag_len)
     if (len == -1)
         return V_ASN1_VISIBLESTRING;
     *tag_len = len;
-    if (len == sizeof("UTF8") - 1 && strncmp(tagstr, "UTF8", len) == 0)
+    if (len == sizeof("UTF8") - 1 && HAS_PREFIX(tagstr, "UTF8"))
         return V_ASN1_UTF8STRING;
-    if (len == sizeof("UTF8String") - 1 && strncmp(tagstr, "UTF8String", len) == 0)
+    if (len == sizeof("UTF8String") - 1 && HAS_PREFIX(tagstr, "UTF8String"))
         return V_ASN1_UTF8STRING;
-    if (len == sizeof("BMP") - 1 && strncmp(tagstr, "BMP", len) == 0)
+    if (len == sizeof("BMP") - 1 && HAS_PREFIX(tagstr, "BMP"))
         return V_ASN1_BMPSTRING;
-    if (len == sizeof("BMPSTRING") - 1 && strncmp(tagstr, "BMPSTRING", len) == 0)
+    if (len == sizeof("BMPSTRING") - 1 && HAS_PREFIX(tagstr, "BMPSTRING"))
         return V_ASN1_BMPSTRING;
-    if (len == sizeof("VISIBLE") - 1 && strncmp(tagstr, "VISIBLE", len) == 0)
+    if (len == sizeof("VISIBLE") - 1 && HAS_PREFIX(tagstr, "VISIBLE"))
         return V_ASN1_VISIBLESTRING;
-    if (len == sizeof("VISIBLESTRING") - 1 && strncmp(tagstr, "VISIBLESTRING", len) == 0)
+    if (len == sizeof("VISIBLESTRING") - 1 && HAS_PREFIX(tagstr, "VISIBLESTRING"))
         return V_ASN1_VISIBLESTRING;
     *tag_len = 0;
     return V_ASN1_VISIBLESTRING;
@@ -426,7 +426,8 @@ static void print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals,
         qualinfo = sk_POLICYQUALINFO_value(quals, i);
         switch (OBJ_obj2nid(qualinfo->pqualid)) {
         case NID_id_qt_cps:
-            BIO_printf(out, "%*sCPS: %s", indent, "",
+            BIO_printf(out, "%*sCPS: %.*s", indent, "",
+                       qualinfo->d.cpsuri->length,
                        qualinfo->d.cpsuri->data);
             break;
 
@@ -450,7 +451,8 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
     if (notice->noticeref) {
         NOTICEREF *ref;
         ref = notice->noticeref;
-        BIO_printf(out, "%*sOrganization: %s\n", indent, "",
+        BIO_printf(out, "%*sOrganization: %.*s\n", indent, "",
+                   ref->organization->length,
                    ref->organization->data);
         BIO_printf(out, "%*sNumber%s: ", indent, "",
                    sk_ASN1_INTEGER_num(ref->noticenos) > 1 ? "s" : "");
@@ -474,7 +476,8 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
             BIO_puts(out, "\n");
     }
     if (notice->exptext)
-        BIO_printf(out, "%*sExplicit Text: %s", indent, "",
+        BIO_printf(out, "%*sExplicit Text: %.*s", indent, "",
+                   notice->exptext->length,
                    notice->exptext->data);
 }
 

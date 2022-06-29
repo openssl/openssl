@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,8 @@
 
 static int ctr = 0;
 static ASYNC_JOB *currjob = NULL;
+static int custom_alloc_used = 0;
+static int custom_free_used = 0;
 
 static int only_pause(void *args)
 {
@@ -413,6 +415,51 @@ static int test_ASYNC_start_job_ex(void)
     return ret;
 }
 
+static void *test_alloc_stack(size_t *num)
+{
+    custom_alloc_used = 1;
+    return OPENSSL_malloc(*num);
+}
+
+static void test_free_stack(void *addr)
+{
+    custom_free_used = 1;
+    OPENSSL_free(addr);
+}
+
+static int test_ASYNC_set_mem_functions(void)
+{
+    ASYNC_stack_alloc_fn alloc_fn;
+    ASYNC_stack_free_fn free_fn;
+
+    /* Not all platforms support this */
+    if (ASYNC_set_mem_functions(test_alloc_stack, test_free_stack) == 0) return 1;
+
+    ASYNC_get_mem_functions(&alloc_fn, &free_fn);
+
+    if ((alloc_fn != test_alloc_stack) || (free_fn != test_free_stack)) {
+        fprintf(stderr,
+                "test_ASYNC_set_mem_functions() - setting and retrieving custom allocators failed\n");
+        return 0;
+    }
+
+    if (!ASYNC_init_thread(1, 1)) {
+        fprintf(stderr,
+                "test_ASYNC_set_mem_functions() - failed initialising ctx pool\n");
+        return 0;
+    }
+    ASYNC_cleanup_thread();
+
+    if (!custom_alloc_used || !custom_free_used) {
+         fprintf(stderr,
+                "test_ASYNC_set_mem_functions() - custom allocation functions not used\n");
+
+        return 0;
+    }
+
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     if (!ASYNC_is_capable()) {
@@ -425,7 +472,8 @@ int main(int argc, char **argv)
                 || !test_ASYNC_get_current_job()
                 || !test_ASYNC_WAIT_CTX_get_all_fds()
                 || !test_ASYNC_block_pause()
-                || !test_ASYNC_start_job_ex()) {
+                || !test_ASYNC_start_job_ex()
+                || !test_ASYNC_set_mem_functions()) {
             return 1;
         }
     }

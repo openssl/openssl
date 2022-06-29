@@ -1,4 +1,4 @@
-# Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -150,6 +150,8 @@ BIO_R_NO_ACCEPT_ADDR_OR_SERVICE_SPECIFIED:143:\
 BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED:144:no hostname or service specified
 BIO_R_NO_PORT_DEFINED:113:no port defined
 BIO_R_NO_SUCH_FILE:128:no such file
+BIO_R_TFO_DISABLED:106:tfo disabled
+BIO_R_TFO_NO_KERNEL_SUPPORT:108:tfo no kernel support
 BIO_R_TRANSFER_ERROR:104:transfer error
 BIO_R_TRANSFER_TIMEOUT:105:transfer timeout
 BIO_R_UNABLE_TO_BIND_SOCKET:117:unable to bind socket
@@ -158,6 +160,7 @@ BIO_R_UNABLE_TO_KEEPALIVE:137:unable to keepalive
 BIO_R_UNABLE_TO_LISTEN_SOCKET:119:unable to listen socket
 BIO_R_UNABLE_TO_NODELAY:138:unable to nodelay
 BIO_R_UNABLE_TO_REUSEADDR:139:unable to reuseaddr
+BIO_R_UNABLE_TO_TFO:109:unable to tfo
 BIO_R_UNAVAILABLE_IP_FAMILY:145:unavailable ip family
 BIO_R_UNINITIALIZED:120:uninitialized
 BIO_R_UNKNOWN_INFO_TYPE:140:unknown info type
@@ -181,6 +184,7 @@ BN_R_INVALID_SHIFT:119:invalid shift
 BN_R_NOT_A_SQUARE:111:not a square
 BN_R_NOT_INITIALIZED:107:not initialized
 BN_R_NO_INVERSE:108:no inverse
+BN_R_NO_PRIME_CANDIDATE:121:no prime candidate
 BN_R_NO_SOLUTION:116:no solution
 BN_R_NO_SUITABLE_DIGEST:120:no suitable digest
 BN_R_PRIVATE_KEY_TOO_LARGE:117:private key too large
@@ -225,6 +229,7 @@ CMP_R_FAILURE_OBTAINING_RANDOM:110:failure obtaining random
 CMP_R_FAIL_INFO_OUT_OF_RANGE:129:fail info out of range
 CMP_R_INVALID_ARGS:100:invalid args
 CMP_R_INVALID_OPTION:174:invalid option
+CMP_R_MISSING_CERTID:165:missing certid
 CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION:130:\
 	missing key input for creating protection
 CMP_R_MISSING_KEY_USAGE_DIGITALSIGNATURE:142:missing key usage digitalsignature
@@ -268,6 +273,7 @@ CMP_R_UNSUPPORTED_PROTECTION_ALG_DHBASEDMAC:154:\
 CMP_R_VALUE_TOO_LARGE:175:value too large
 CMP_R_VALUE_TOO_SMALL:177:value too small
 CMP_R_WRONG_ALGORITHM_OID:138:wrong algorithm oid
+CMP_R_WRONG_CERTID:189:wrong certid
 CMP_R_WRONG_CERTID_IN_RP:187:wrong certid in rp
 CMP_R_WRONG_PBM_VALUE:155:wrong pbm value
 CMP_R_WRONG_RP_COMPONENT_COUNT:188:wrong rp component count
@@ -338,6 +344,7 @@ CMS_R_NO_PRIVATE_KEY:133:no private key
 CMS_R_NO_PUBLIC_KEY:134:no public key
 CMS_R_NO_RECEIPT_REQUEST:168:no receipt request
 CMS_R_NO_SIGNERS:135:no signers
+CMS_R_OPERATION_UNSUPPORTED:182:operation unsupported
 CMS_R_PEER_KEY_ERROR:188:peer key error
 CMS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE:136:\
 	private key does not match certificate
@@ -432,9 +439,23 @@ CRYPTO_R_ILLEGAL_HEX_DIGIT:102:illegal hex digit
 CRYPTO_R_INSUFFICIENT_DATA_SPACE:106:insufficient data space
 CRYPTO_R_INSUFFICIENT_PARAM_SIZE:107:insufficient param size
 CRYPTO_R_INSUFFICIENT_SECURE_DATA_SPACE:108:insufficient secure data space
+CRYPTO_R_INTEGER_OVERFLOW:127:integer overflow
+CRYPTO_R_INVALID_NEGATIVE_VALUE:122:invalid negative value
 CRYPTO_R_INVALID_NULL_ARGUMENT:109:invalid null argument
 CRYPTO_R_INVALID_OSSL_PARAM_TYPE:110:invalid ossl param type
+CRYPTO_R_NO_PARAMS_TO_MERGE:131:no params to merge
+CRYPTO_R_NO_SPACE_FOR_TERMINATING_NULL:128:no space for terminating null
 CRYPTO_R_ODD_NUMBER_OF_DIGITS:103:odd number of digits
+CRYPTO_R_PARAM_CANNOT_BE_REPRESENTED_EXACTLY:123:\
+	param cannot be represented exactly
+CRYPTO_R_PARAM_NOT_INTEGER_TYPE:124:param not integer type
+CRYPTO_R_PARAM_OF_INCOMPATIBLE_TYPE:129:param of incompatible type
+CRYPTO_R_PARAM_UNSIGNED_INTEGER_NEGATIVE_VALUE_UNSUPPORTED:125:\
+	param unsigned integer negative value unsupported
+CRYPTO_R_PARAM_UNSUPPORTED_FLOATING_POINT_FORMAT:130:\
+	param unsupported floating point format
+CRYPTO_R_PARAM_VALUE_TOO_LARGE_FOR_DESTINATION:126:\
+	param value too large for destination
 CRYPTO_R_PROVIDER_ALREADY_EXISTS:104:provider already exists
 CRYPTO_R_PROVIDER_SECTION_ERROR:105:provider section error
 CRYPTO_R_RANDOM_SECTION_ERROR:119:random section error
@@ -534,6 +555,7 @@ EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING:159:curve does not support signing
 EC_R_DECODE_ERROR:142:decode error
 EC_R_DISCRIMINANT_IS_ZERO:118:discriminant is zero
 EC_R_EC_GROUP_NEW_BY_NAME_FAILURE:119:ec group new by name failure
+EC_R_EXPLICIT_PARAMS_NOT_SUPPORTED:127:explicit params not supported
 EC_R_FAILED_MAKING_PUBLIC_KEY:166:failed making public key
 EC_R_FIELD_TOO_LARGE:143:field too large
 EC_R_GF2M_NOT_SUPPORTED:147:gf2m not supported
@@ -776,6 +798,7 @@ HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP:112:redirection from https to http
 HTTP_R_REDIRECTION_NOT_ENABLED:116:redirection not enabled
 HTTP_R_RESPONSE_LINE_TOO_LONG:113:response line too long
 HTTP_R_RESPONSE_PARSE_ERROR:104:response parse error
+HTTP_R_RETRY_TIMEOUT:129:retry timeout
 HTTP_R_SERVER_CANCELED_CONNECTION:127:server canceled connection
 HTTP_R_SOCK_NOT_SUPPORTED:122:sock not supported
 HTTP_R_STATUS_CODE_UNSUPPORTED:114:status code unsupported
@@ -990,6 +1013,7 @@ PROV_R_INVALID_DATA:115:invalid data
 PROV_R_INVALID_DIGEST:122:invalid digest
 PROV_R_INVALID_DIGEST_LENGTH:166:invalid digest length
 PROV_R_INVALID_DIGEST_SIZE:218:invalid digest size
+PROV_R_INVALID_INPUT_LENGTH:230:invalid input length
 PROV_R_INVALID_ITERATION_COUNT:123:invalid iteration count
 PROV_R_INVALID_IV_LENGTH:109:invalid iv length
 PROV_R_INVALID_KEY:158:invalid key
@@ -1082,8 +1106,6 @@ RAND_R_ADDITIONAL_INPUT_TOO_LONG:102:additional input too long
 RAND_R_ALREADY_INSTANTIATED:103:already instantiated
 RAND_R_ARGUMENT_OUT_OF_RANGE:105:argument out of range
 RAND_R_CANNOT_OPEN_FILE:121:Cannot open file
-RAND_R_DERIVATION_FUNCTION_MANDATORY_FOR_FIPS:137:\
-	derivation function mandatory for fips
 RAND_R_DRBG_ALREADY_INITIALIZED:129:drbg already initialized
 RAND_R_DRBG_NOT_INITIALISED:104:drbg not initialised
 RAND_R_ENTROPY_INPUT_TOO_LONG:106:entropy input too long
@@ -1582,6 +1604,8 @@ UI_R_UNKNOWN_TTYGET_ERRNO_VALUE:108:unknown ttyget errno value
 UI_R_USER_DATA_DUPLICATION_UNSUPPORTED:112:user data duplication unsupported
 X509V3_R_BAD_IP_ADDRESS:118:bad ip address
 X509V3_R_BAD_OBJECT:119:bad object
+X509V3_R_BAD_OPTION:170:bad option
+X509V3_R_BAD_VALUE:171:bad value
 X509V3_R_BN_DEC2BN_ERROR:100:bn dec2bn error
 X509V3_R_BN_TO_ASN1_INTEGER_ERROR:101:bn to asn1 integer error
 X509V3_R_DIRNAME_ERROR:149:dirname error
@@ -1648,6 +1672,7 @@ X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT:111:unknown bit string argument
 X509V3_R_UNKNOWN_EXTENSION:129:unknown extension
 X509V3_R_UNKNOWN_EXTENSION_NAME:130:unknown extension name
 X509V3_R_UNKNOWN_OPTION:120:unknown option
+X509V3_R_UNKNOWN_VALUE:172:unknown value
 X509V3_R_UNSUPPORTED_OPTION:117:unsupported option
 X509V3_R_UNSUPPORTED_TYPE:167:unsupported type
 X509V3_R_USER_TOO_LONG:132:user too long

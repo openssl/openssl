@@ -104,8 +104,7 @@ int crl2pkcs7_main(int argc, char **argv)
     }
 
     /* No remaining args. */
-    argc = opt_num_rest();
-    if (argc != 0)
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     if (!nocrl) {

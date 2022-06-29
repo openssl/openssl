@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,6 @@
 #include <openssl/pem.h>
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
-#include <openssl/cms.h>
 #include <openssl/cms.h>
 #include "internal/sizes.h"
 #include "crypto/x509.h"
@@ -208,6 +207,13 @@ err:
 /* unfortunately cannot constify SMIME_write_ASN1() due to this function */
 int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
 {
+    return ossl_cms_DataFinal(cms, cmsbio, NULL, 0);
+}
+
+int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio,
+                       const unsigned char *precomp_md,
+                       unsigned int precomp_mdlen)
+{
     ASN1_OCTET_STRING **pos = CMS_get0_content(cms);
 
     if (pos == NULL)
@@ -245,7 +251,7 @@ int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
         return ossl_cms_AuthEnvelopedData_final(cms, cmsbio);
 
     case NID_pkcs7_signed:
-        return ossl_cms_SignedData_final(cms, cmsbio);
+        return ossl_cms_SignedData_final(cms, cmsbio, precomp_md, precomp_mdlen);
 
     case NID_pkcs7_digest:
         return ossl_cms_DigestedData_do_final(cms, cmsbio, 0);
@@ -634,7 +640,7 @@ STACK_OF(X509) *CMS_get1_certs(CMS_ContentInfo *cms)
         if (cch->type == 0) {
             if (!ossl_x509_add_cert_new(&certs, cch->d.certificate,
                                         X509_ADD_FLAG_UP_REF)) {
-                sk_X509_pop_free(certs, X509_free);
+                OSSL_STACK_OF_X509_free(certs);
                 return NULL;
             }
         }

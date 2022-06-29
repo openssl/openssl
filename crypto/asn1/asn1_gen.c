@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,7 +10,6 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/x509v3.h>
-#include "e_os.h" /* strncasecmp() */
 
 #define ASN1_GEN_FLAG           0x10000
 #define ASN1_GEN_FLAG_IMP       (ASN1_GEN_FLAG|1)
@@ -325,13 +324,13 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
             ERR_raise(ERR_LIB_ASN1, ASN1_R_UNKNOWN_FORMAT);
             return -1;
         }
-        if (strncmp(vstart, "ASCII", 5) == 0)
+        if (HAS_PREFIX(vstart, "ASCII"))
             arg->format = ASN1_GEN_FORMAT_ASCII;
-        else if (strncmp(vstart, "UTF8", 4) == 0)
+        else if (HAS_PREFIX(vstart, "UTF8"))
             arg->format = ASN1_GEN_FORMAT_UTF8;
-        else if (strncmp(vstart, "HEX", 3) == 0)
+        else if (HAS_PREFIX(vstart, "HEX"))
             arg->format = ASN1_GEN_FORMAT_HEX;
-        else if (strncmp(vstart, "BITLIST", 7) == 0)
+        else if (HAS_PREFIX(vstart, "BITLIST"))
             arg->format = ASN1_GEN_FORMAT_BITLIST;
         else {
             ERR_raise(ERR_LIB_ASN1, ASN1_R_UNKNOWN_FORMAT);
@@ -565,7 +564,8 @@ static int asn1_str2tag(const char *tagstr, int len)
 
     tntmp = tnst;
     for (i = 0; i < OSSL_NELEM(tnst); i++, tntmp++) {
-        if ((len == tntmp->len) && (strncasecmp(tntmp->strnam, tagstr, len) == 0))
+        if ((len == tntmp->len)
+            && (OPENSSL_strncasecmp(tntmp->strnam, tagstr, len) == 0))
             return tntmp->tag;
     }
 
@@ -765,7 +765,7 @@ static int mask_cb(const char *elem, int len, void *arg)
     int tag;
     if (elem == NULL)
         return 0;
-    if ((len == 3) && (strncmp(elem, "DIR", 3) == 0)) {
+    if (len == 3 && HAS_PREFIX(elem, "DIR")) {
         *pmask |= B_ASN1_DIRECTORYSTRING;
         return 1;
     }

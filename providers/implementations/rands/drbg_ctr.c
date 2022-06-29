@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,6 @@
 #include <openssl/rand.h>
 #include <openssl/aes.h>
 #include <openssl/proverr.h>
-#include "e_os.h" /* strcasecmp */
 #include "crypto/modes.h"
 #include "internal/thread_once.h"
 #include "prov/implementations.h"
@@ -496,13 +495,6 @@ static int drbg_ctr_init_lengths(PROV_DRBG *drbg)
     PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)drbg->data;
     int res = 1;
 
-#ifdef FIPS_MODULE
-    if (!ctr->use_df) {
-        ERR_raise(ERR_LIB_PROV, RAND_R_DERIVATION_FUNCTION_MANDATORY_FOR_FIPS);
-        ctr->use_df = 1;
-        res = 0;
-    }
-#endif
     /* Maximum number of bits per request = 2^19  = 2^16 bytes */
     drbg->max_request = 1 << 16;
     if (ctr->use_df) {
@@ -697,7 +689,7 @@ static int drbg_ctr_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (p->data_type != OSSL_PARAM_UTF8_STRING
                 || p->data_size < ctr_str_len)
             return 0;
-        if (strcasecmp("CTR", base + p->data_size - ctr_str_len) != 0) {
+        if (OPENSSL_strcasecmp("CTR", base + p->data_size - ctr_str_len) != 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_REQUIRE_CTR_MODE_CIPHER);
             return 0;
         }
@@ -730,14 +722,7 @@ static const OSSL_PARAM *drbg_ctr_settable_ctx_params(ossl_unused void *vctx,
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_PROPERTIES, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_CIPHER, NULL, 0),
-#ifndef FIPS_MODULE
-        /*
-         * Don't advertise this for FIPS, it isn't allowed to change.
-         * The parameter can still be passed and will be processed but errors
-         * out.
-         */
         OSSL_PARAM_int(OSSL_DRBG_PARAM_USE_DF, NULL),
-#endif
         OSSL_PARAM_DRBG_SETTABLE_CTX_COMMON,
         OSSL_PARAM_END
     };

@@ -8,7 +8,7 @@ opt_begin, opt_next, opt_flag, opt_arg, opt_unknown, opt_cipher,
 opt_cipher_any, opt_cipher_silent, opt_md,
 opt_int, opt_int_arg, opt_long, opt_ulong, opt_intmax, opt_uintmax,
 opt_format, opt_isdir, opt_string, opt_pair,
-opt_num_rest, opt_rest
+opt_num_rest, opt_rest, opt_legacy_okay
 - Option parsing for commands and tests
 
 =head1 SYNOPSIS
@@ -52,6 +52,8 @@ opt_num_rest, opt_rest
 
  int opt_num_rest(void);
  char **opt_rest(void);
+
+ int opt_legacy_okay(void);
 
 =head1 DESCRIPTION
 
@@ -153,7 +155,7 @@ on multiple lines; each entry should use B<OPT_MORE_STR>, like this:
         {OPT_MORE_STR, 0, 0,
          "This flag is not really needed on Unix systems"},
         {OPT_MORE_STR, 0, 0,
-         "(Unix and descendents for ths win!)"}
+         "(Unix and descendents for the win!)"}
 
 Each subsequent line will be indented the correct amount.
 
@@ -187,7 +189,7 @@ B<OPT_PARAMETERS> macro:
     OPT_PARAMETERS()
     {OPT_PARAM_STR, 1, '-', "Parameters:\n"}
 
-Every "option" after after this should contain the parameter and 
+Every "option" after after this should contain the parameter and
 the help string:
 
     {"text", 0, 0, "Words to display (optional)"},
@@ -290,6 +292,12 @@ The opt_rest() function returns a pointer to the first non-option.
 If there were no parameters, it will point to the NULL that is
 at the end of the standard I<argv> array.
 
+The opt_legacy_okay() function returns true if no options have been
+specified that would preclude using legacy code paths.  Currently,
+the various provider options preclude legacy operation.  This means,
+for example, that specifying both B<-provider> and B<-engine> in the
+same command line will not work as expected.
+
 =head2 Common Options
 
 There are a few groups of options that are common to many OpenSSL programs.
@@ -325,7 +333,7 @@ things very differently.
 
 =head1 COPYRIGHT
 
-Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use this
 file except in compliance with the License.  You can obtain a copy in the file

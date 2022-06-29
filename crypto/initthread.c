@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 #include "crypto/cryptlib.h"
 #include "prov/providercommon.h"
 #include "internal/thread_once.h"
+#include "crypto/context.h"
 
 #ifdef FIPS_MODULE
 #include "prov/provider_ctx.h"
@@ -248,7 +249,7 @@ void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
 
 #else
 
-static void *thread_event_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+void *ossl_thread_event_ctx_new(OSSL_LIB_CTX *libctx)
 {
     THREAD_EVENT_HANDLER **hands = NULL;
     CRYPTO_THREAD_LOCAL *tlocal = OPENSSL_zalloc(sizeof(*tlocal));
@@ -274,16 +275,10 @@ static void *thread_event_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     return NULL;
 }
 
-static void thread_event_ossl_ctx_free(void *tlocal)
+void ossl_thread_event_ctx_free(void *tlocal)
 {
     OPENSSL_free(tlocal);
 }
-
-static const OSSL_LIB_CTX_METHOD thread_event_ossl_ctx_method = {
-    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    thread_event_ossl_ctx_new,
-    thread_event_ossl_ctx_free,
-};
 
 static void ossl_arg_thread_stop(void *arg)
 {
@@ -294,8 +289,7 @@ void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
 {
     THREAD_EVENT_HANDLER **hands;
     CRYPTO_THREAD_LOCAL *local
-        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX,
-                                &thread_event_ossl_ctx_method);
+        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX);
 
     if (local == NULL)
         return;
@@ -309,10 +303,22 @@ void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
 static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
 {
     THREAD_EVENT_HANDLER *curr, *prev = NULL, *tmp;
+#ifndef FIPS_MODULE
+    GLOBAL_TEVENT_REGISTER *gtr;
+#endif
 
     /* Can't do much about this */
     if (hands == NULL)
         return;
+
+#ifndef FIPS_MODULE
+    gtr = get_global_tevent_register();
+    if (gtr == NULL)
+        return;
+
+    if (!CRYPTO_THREAD_write_lock(gtr->lock))
+        return;
+#endif
 
     curr = *hands;
     while (curr != NULL) {
@@ -332,6 +338,9 @@ static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
 
         OPENSSL_free(tmp);
     }
+#ifndef FIPS_MODULE
+    CRYPTO_THREAD_unlock(gtr->lock);
+#endif
 }
 
 int ossl_init_thread_start(const void *index, void *arg,
@@ -348,8 +357,7 @@ int ossl_init_thread_start(const void *index, void *arg,
      * OSSL_LIB_CTX gets informed about thread stop events individually.
      */
     CRYPTO_THREAD_LOCAL *local
-        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX,
-                                &thread_event_ossl_ctx_method);
+        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX);
 #else
     /*
      * Outside of FIPS mode the list of THREAD_EVENT_HANDLERs is unique per

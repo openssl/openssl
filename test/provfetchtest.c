@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -204,9 +204,17 @@ static int dummy_provider_init(const OSSL_CORE_HANDLE *handle,
                                void **provctx)
 {
     OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new_child(handle, in);
+    unsigned char buf[32];
 
     *provctx = (void *)libctx;
     *out = dummy_dispatch_table;
+
+    /*
+     * Do some work using the child libctx, to make sure this is possible from
+     * inside the init function.
+     */
+    if (RAND_bytes_ex(libctx, buf, sizeof(buf), 0) <= 0)
+        return 0;
 
     return 1;
 }
@@ -217,43 +225,52 @@ static int dummy_provider_init(const OSSL_CORE_HANDLE *handle,
  * Test 1: Encoder
  * Test 2: Store loader
  * Test 3: EVP_RAND
+ * Test 4-7: As above, but additionally with a query string
  */
 static int fetch_test(int tst)
 {
     OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new();
     OSSL_PROVIDER *dummyprov = NULL;
+    OSSL_PROVIDER *nullprov = NULL;
     OSSL_DECODER *decoder = NULL;
     OSSL_ENCODER *encoder = NULL;
     OSSL_STORE_LOADER *loader = NULL;
     int testresult = 0;
     unsigned char buf[32];
+    int query = tst > 3;
 
     if (!TEST_ptr(libctx))
         goto err;
 
     if (!TEST_true(OSSL_PROVIDER_add_builtin(libctx, "dummy-prov",
                                              dummy_provider_init))
+            || !TEST_ptr(nullprov = OSSL_PROVIDER_load(libctx, "default"))
             || !TEST_ptr(dummyprov = OSSL_PROVIDER_load(libctx, "dummy-prov")))
         goto err;
 
-    switch(tst) {
+    switch (tst % 4) {
     case 0:
-        decoder = OSSL_DECODER_fetch(libctx, "DUMMY", NULL);
+        decoder = OSSL_DECODER_fetch(libctx, "DUMMY",
+                                     query ? "provider=dummy" : NULL);
         if (!TEST_ptr(decoder))
             goto err;
         break;
     case 1:
-        encoder = OSSL_ENCODER_fetch(libctx, "DUMMY", NULL);
+        encoder = OSSL_ENCODER_fetch(libctx, "DUMMY",
+                                     query ? "provider=dummy" : NULL);
         if (!TEST_ptr(encoder))
             goto err;
         break;
     case 2:
-        loader = OSSL_STORE_LOADER_fetch(libctx, "DUMMY", NULL);
+        loader = OSSL_STORE_LOADER_fetch(libctx, "DUMMY",
+                                         query ? "provider=dummy" : NULL);
         if (!TEST_ptr(loader))
             goto err;
         break;
     case 3:
-        if (!TEST_true(RAND_set_DRBG_type(libctx, "DUMMY", NULL, NULL, NULL))
+        if (!TEST_true(RAND_set_DRBG_type(libctx, "DUMMY",
+                                          query ? "provider=dummy" : NULL,
+                                          NULL, NULL))
                 || !TEST_int_ge(RAND_bytes_ex(libctx, buf, sizeof(buf), 0), 1))
             goto err;
         break;
@@ -267,13 +284,14 @@ static int fetch_test(int tst)
     OSSL_ENCODER_free(encoder);
     OSSL_STORE_LOADER_free(loader);
     OSSL_PROVIDER_unload(dummyprov);
+    OSSL_PROVIDER_unload(nullprov);
     OSSL_LIB_CTX_free(libctx);
     return testresult;
 }
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(fetch_test, 4);
+    ADD_ALL_TESTS(fetch_test, 8);
 
     return 1;
 }

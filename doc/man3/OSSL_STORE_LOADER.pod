@@ -45,16 +45,16 @@ unregister STORE loaders for different URI schemes
  int OSSL_STORE_LOADER_is_a(const OSSL_STORE_LOADER *loader,
                             const char *scheme);
  void OSSL_STORE_LOADER_do_all_provided(OSSL_LIB_CTX *libctx,
-                                        void (*fn)(OSSL_STORE_LOADER *loader,
+                                        void (*user_fn)(OSSL_STORE_LOADER *loader,
                                                    void *arg),
-                                        void *arg);
+                                        void *user_arg);
  int OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
                                     void (*fn)(const char *name, void *data),
                                     void *data);
 
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following functions have been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme);
  const ENGINE *OSSL_STORE_LOADER_get0_engine(const OSSL_STORE_LOADER
@@ -142,8 +142,8 @@ I<loader> implementation.
 
 OSSL_STORE_LOADER_do_all_provided() traverses all store implementations
 by all activated providers in the library context I<libctx>, and for each
-of the implementations, calls I<fn> with the implementation method and
-I<data> as arguments.
+of the implementations, calls I<user_fn> with the implementation method and
+I<user_arg> as arguments.
 
 OSSL_STORE_LOADER_names_do_all() traverses all names for the given
 I<loader>, and calls I<fn> with each name and I<data>.
@@ -327,7 +327,7 @@ definition string, or NULL on error.
 OSSL_STORE_LOADER_is_a() returns 1 if I<loader> was identifiable,
 otherwise 0.
 
-OSSL_STORE_LOADER_get0_description() returns a pointer to a decription, or NULL if
+OSSL_STORE_LOADER_get0_description() returns a pointer to a description, or NULL if
 there isn't one.
 
 The functions with the types B<OSSL_STORE_open_fn>,
@@ -380,7 +380,7 @@ were added in OpenSSL 1.1.1, and became deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

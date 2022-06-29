@@ -14,7 +14,6 @@
 
 #include <openssl/asn1t.h>
 #include <openssl/http.h>
-#include "internal/sockets.h"
 
 #include <openssl/cmp.h>
 #include "cmp_local.h"
@@ -25,7 +24,6 @@
 #include <stdlib.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
-#include <openssl/cmp.h>
 #include <openssl/err.h>
 
 static int keep_alive(int keep_alive, int body_type)

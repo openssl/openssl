@@ -124,7 +124,7 @@ cleanup:
 int main(void)
 {
     int result = 1;
-    BIO *input = BIO_new_fd( fileno(stdin), 1 );
+    BIO *input = BIO_new_fd(fileno(stdin), 1);
 
     if (input != NULL) {
         result = demonstrate_digest(input);

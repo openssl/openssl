@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -31,13 +31,14 @@
 #define DEFBITS 2048
 
 static EVP_PKEY *dsa_to_dh(EVP_PKEY *dh);
-static int gendh_cb(EVP_PKEY_CTX *ctx);
+
+static int verbose = 1;
 
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_CHECK, OPT_TEXT, OPT_NOOUT,
-    OPT_DSAPARAM, OPT_2, OPT_3, OPT_5,
+    OPT_DSAPARAM, OPT_2, OPT_3, OPT_5, OPT_VERBOSE, OPT_QUIET,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -67,6 +68,8 @@ const OPTIONS dhparam_options[] = {
     {"2", OPT_2, '-', "Generate parameters using 2 as the generator value"},
     {"3", OPT_3, '-', "Generate parameters using 3 as the generator value"},
     {"5", OPT_5, '-', "Generate parameters using 5 as the generator value"},
+    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+    {"quiet", OPT_QUIET, '-', "Terse output"},
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
@@ -138,6 +141,12 @@ int dhparam_main(int argc, char **argv)
         case OPT_NOOUT:
             noout = 1;
             break;
+        case OPT_VERBOSE:
+            verbose = 1;
+            break;
+        case OPT_QUIET:
+            verbose = 0;
+            break;
         case OPT_R_CASES:
             if (!opt_rand(o))
                 goto end;
@@ -155,7 +164,7 @@ int dhparam_main(int argc, char **argv)
     if (argc == 1) {
         if (!opt_int(argv[0], &num) || num <= 0)
             goto opthelp;
-    } else if (argc != 0) {
+    } else if (!opt_check_rest_arg(NULL)) {
         goto opthelp;
     }
     if (!app_RAND_load())
@@ -181,6 +190,10 @@ int dhparam_main(int argc, char **argv)
     if (num) {
         const char *alg = dsaparam ? "DSA" : "DH";
 
+        if (infile != NULL) {
+            BIO_printf(bio_err, "Warning, input file %s ignored\n", infile);
+        }
+
         ctx = EVP_PKEY_CTX_new_from_name(NULL, alg, NULL);
         if (ctx == NULL) {
             BIO_printf(bio_err,
@@ -188,13 +201,15 @@ int dhparam_main(int argc, char **argv)
                         alg);
             goto end;
         }
-        EVP_PKEY_CTX_set_cb(ctx, gendh_cb);
         EVP_PKEY_CTX_set_app_data(ctx, bio_err);
-        BIO_printf(bio_err,
-                    "Generating %s parameters, %d bit long %sprime\n",
-                    alg, num, dsaparam ? "" : "safe ");
+        if (verbose) {
+            EVP_PKEY_CTX_set_cb(ctx, progress_cb);
+            BIO_printf(bio_err,
+                        "Generating %s parameters, %d bit long %sprime\n",
+                        alg, num, dsaparam ? "" : "safe ");
+        }
 
-        if (!EVP_PKEY_paramgen_init(ctx)) {
+        if (EVP_PKEY_paramgen_init(ctx) <= 0) {
             BIO_printf(bio_err,
                         "Error, unable to initialise %s parameters\n",
                         alg);
@@ -202,16 +217,16 @@ int dhparam_main(int argc, char **argv)
         }
 
         if (dsaparam) {
-            if (!EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, num)) {
+            if (EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, num) <= 0) {
                 BIO_printf(bio_err, "Error, unable to set DSA prime length\n");
                 goto end;
             }
         } else {
-            if (!EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, num)) {
+            if (EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, num) <= 0) {
                 BIO_printf(bio_err, "Error, unable to set DH prime length\n");
                 goto end;
             }
-            if (!EVP_PKEY_CTX_set_dh_paramgen_generator(ctx, g)) {
+            if (EVP_PKEY_CTX_set_dh_paramgen_generator(ctx, g) <= 0) {
                 BIO_printf(bio_err, "Error, unable to set generator\n");
                 goto end;
             }
@@ -314,7 +329,7 @@ int dhparam_main(int argc, char **argv)
             BIO_printf(bio_err, "Error, failed to check DH parameters\n");
             goto end;
         }
-        if (!EVP_PKEY_param_check(ctx)) {
+        if (EVP_PKEY_param_check(ctx) <= 0) {
             BIO_printf(bio_err, "Error, invalid parameters generated\n");
             goto end;
         }
@@ -383,8 +398,8 @@ static EVP_PKEY *dsa_to_dh(EVP_PKEY *dh)
 
     ctx = EVP_PKEY_CTX_new_from_name(NULL, "DHX", NULL);
     if (ctx == NULL
-            || !EVP_PKEY_fromdata_init(ctx)
-            || !EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEY_PARAMETERS, params)) {
+            || EVP_PKEY_fromdata_init(ctx) <= 0
+            || EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEY_PARAMETERS, params) <= 0) {
         BIO_printf(bio_err, "Error, failed to set DH parameters\n");
         goto err;
     }
@@ -399,14 +414,3 @@ static EVP_PKEY *dsa_to_dh(EVP_PKEY *dh)
     return pkey;
 }
 
-static int gendh_cb(EVP_PKEY_CTX *ctx)
-{
-    int p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
-    BIO *b = EVP_PKEY_CTX_get_app_data(ctx);
-    static const char symbols[] = ".+*\n";
-    char c = (p >= 0 && (size_t)p < sizeof(symbols) - 1) ? symbols[p] : '?';
-
-    BIO_write(b, &c, 1);
-    (void)BIO_flush(b);
-    return 1;
-}

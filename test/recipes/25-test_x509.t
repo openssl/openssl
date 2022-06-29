@@ -16,7 +16,11 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 18;
+plan tests => 21;
+
+# Prevent MSys2 filename munging for arguments that look like file paths but
+# aren't
+$ENV{MSYS2_ARG_CONV_EXCL} = "/CN=";
 
 require_ok(srctop_file("test", "recipes", "tconversion.pl"));
 
@@ -40,6 +44,7 @@ is(cmp_text($out_utf8, $utf),
 
 SKIP: {
     skip "DES disabled", 1 if disabled("des");
+    skip "Platform doesn't support command line UTF-8", 1 if $^O =~ /^(VMS|msys)$/;
 
     my $p12 = srctop_file("test", "shibboleth.pfx");
     my $p12pass = "σύνθημα γνώρισμα";
@@ -130,3 +135,14 @@ SKIP: {
     ok(test_errors("Unable to load Public Key", "sm2.pem", '-text'),
        "error loading unsupported sm2 cert");
 }
+
+# 3 tests for -dateopts formats
+ok(run(app(["openssl", "x509", "-noout", "-dates", "-dateopt", "rfc_822",
+	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
+   "Run with rfc_8222 -dateopt format");
+ok(run(app(["openssl", "x509", "-noout", "-dates", "-dateopt", "iso_8601",
+	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
+   "Run with iso_8601 -dateopt format");
+ok(!run(app(["openssl", "x509", "-noout", "-dates", "-dateopt", "invalid_format",
+	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
+   "Run with invalid -dateopt format");

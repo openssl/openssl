@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -240,6 +240,43 @@ CMS_ContentInfo *CMS_EnvelopedData_create_ex(const EVP_CIPHER *cipher,
 CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher)
 {
     return CMS_EnvelopedData_create_ex(cipher, NULL, NULL);
+}
+
+BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
+                               EVP_PKEY *pkey, X509 *cert,
+                               ASN1_OCTET_STRING *secret, unsigned int flags,
+                               OSSL_LIB_CTX *libctx, const char *propq)
+{
+    CMS_ContentInfo *ci;
+    BIO *bio = NULL;
+    int res = 0;
+
+    if (env == NULL) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if ((ci = CMS_ContentInfo_new_ex(libctx, propq)) == NULL
+            || (bio = BIO_new(BIO_s_mem())) == NULL)
+        goto end;
+    ci->contentType = OBJ_nid2obj(NID_pkcs7_enveloped);
+    ci->d.envelopedData = env;
+    if (secret != NULL
+        && CMS_decrypt_set1_password(ci, (unsigned char *)
+                                     ASN1_STRING_get0_data(secret),
+                                     ASN1_STRING_length(secret)) != 1)
+        goto end;
+    res = CMS_decrypt(ci, pkey, cert, detached_data, bio, flags);
+
+ end:
+    if (ci != NULL)
+        ci->d.envelopedData = NULL;
+    CMS_ContentInfo_free(ci);
+    if (!res) {
+        BIO_free(bio);
+        bio = NULL;
+    }
+    return bio;
 }
 
 CMS_ContentInfo *
@@ -730,8 +767,8 @@ CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
         kekri->kekid->other->keyAttr = otherType;
     }
 
-    X509_ALGOR_set0(kekri->keyEncryptionAlgorithm,
-                    OBJ_nid2obj(nid), V_ASN1_UNDEF, NULL);
+    (void)X509_ALGOR_set0(kekri->keyEncryptionAlgorithm, OBJ_nid2obj(nid),
+                          V_ASN1_UNDEF, NULL); /* cannot fail */
 
     return ri;
 
@@ -795,7 +832,7 @@ static EVP_CIPHER *cms_get_key_wrap_cipher(size_t keylen, const CMS_CTX *ctx)
 {
     const char *alg = NULL;
 
-    switch(keylen) {
+    switch (keylen) {
     case 16:
         alg = "AES-128-WRAP";
         break;
@@ -951,6 +988,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
     }
     ukeylen += outlen;
 
+    OPENSSL_clear_free(ec->key, ec->keylen);
     ec->key = ukey;
     ec->keylen = ukeylen;
 

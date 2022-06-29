@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -171,13 +171,13 @@ static struct {
     {NID_brainpoolP512r1, OSSL_TLS_GROUP_ID_brainpoolP512r1},
     {EVP_PKEY_X25519, OSSL_TLS_GROUP_ID_x25519},
     {EVP_PKEY_X448, OSSL_TLS_GROUP_ID_x448},
-    {NID_id_tc26_gost_3410_2012_256_paramSetA, 0x0022},
-    {NID_id_tc26_gost_3410_2012_256_paramSetB, 0x0023},
-    {NID_id_tc26_gost_3410_2012_256_paramSetC, 0x0024},
-    {NID_id_tc26_gost_3410_2012_256_paramSetD, 0x0025},
-    {NID_id_tc26_gost_3410_2012_512_paramSetA, 0x0026},
-    {NID_id_tc26_gost_3410_2012_512_paramSetB, 0x0027},
-    {NID_id_tc26_gost_3410_2012_512_paramSetC, 0x0028},
+    {NID_id_tc26_gost_3410_2012_256_paramSetA, OSSL_TLS_GROUP_ID_gc256A},
+    {NID_id_tc26_gost_3410_2012_256_paramSetB, OSSL_TLS_GROUP_ID_gc256B},
+    {NID_id_tc26_gost_3410_2012_256_paramSetC, OSSL_TLS_GROUP_ID_gc256C},
+    {NID_id_tc26_gost_3410_2012_256_paramSetD, OSSL_TLS_GROUP_ID_gc256D},
+    {NID_id_tc26_gost_3410_2012_512_paramSetA, OSSL_TLS_GROUP_ID_gc512A},
+    {NID_id_tc26_gost_3410_2012_512_paramSetB, OSSL_TLS_GROUP_ID_gc512B},
+    {NID_id_tc26_gost_3410_2012_512_paramSetC, OSSL_TLS_GROUP_ID_gc512C},
     {NID_ffdhe2048, OSSL_TLS_GROUP_ID_ffdhe2048},
     {NID_ffdhe3072, OSSL_TLS_GROUP_ID_ffdhe3072},
     {NID_ffdhe4096, OSSL_TLS_GROUP_ID_ffdhe4096},
@@ -193,28 +193,28 @@ static const unsigned char ecformats_default[] = {
 
 /* The default curves */
 static const uint16_t supported_groups_default[] = {
-    29,                      /* X25519 (29) */
-    23,                      /* secp256r1 (23) */
-    30,                      /* X448 (30) */
-    25,                      /* secp521r1 (25) */
-    24,                      /* secp384r1 (24) */
-    34,                      /* GC256A (34) */
-    35,                      /* GC256B (35) */
-    36,                      /* GC256C (36) */
-    37,                      /* GC256D (37) */
-    38,                      /* GC512A (38) */
-    39,                      /* GC512B (39) */
-    40,                      /* GC512C (40) */
-    0x100,                   /* ffdhe2048 (0x100) */
-    0x101,                   /* ffdhe3072 (0x101) */
-    0x102,                   /* ffdhe4096 (0x102) */
-    0x103,                   /* ffdhe6144 (0x103) */
-    0x104,                   /* ffdhe8192 (0x104) */
+    OSSL_TLS_GROUP_ID_x25519,        /* X25519 (29) */
+    OSSL_TLS_GROUP_ID_secp256r1,     /* secp256r1 (23) */
+    OSSL_TLS_GROUP_ID_x448,          /* X448 (30) */
+    OSSL_TLS_GROUP_ID_secp521r1,     /* secp521r1 (25) */
+    OSSL_TLS_GROUP_ID_secp384r1,     /* secp384r1 (24) */
+    OSSL_TLS_GROUP_ID_gc256A,        /* GC256A (34) */
+    OSSL_TLS_GROUP_ID_gc256B,        /* GC256B (35) */
+    OSSL_TLS_GROUP_ID_gc256C,        /* GC256C (36) */
+    OSSL_TLS_GROUP_ID_gc256D,        /* GC256D (37) */
+    OSSL_TLS_GROUP_ID_gc512A,        /* GC512A (38) */
+    OSSL_TLS_GROUP_ID_gc512B,        /* GC512B (39) */
+    OSSL_TLS_GROUP_ID_gc512C,        /* GC512C (40) */
+    OSSL_TLS_GROUP_ID_ffdhe2048,     /* ffdhe2048 (0x100) */
+    OSSL_TLS_GROUP_ID_ffdhe3072,     /* ffdhe3072 (0x101) */
+    OSSL_TLS_GROUP_ID_ffdhe4096,     /* ffdhe4096 (0x102) */
+    OSSL_TLS_GROUP_ID_ffdhe6144,     /* ffdhe6144 (0x103) */
+    OSSL_TLS_GROUP_ID_ffdhe8192,     /* ffdhe8192 (0x104) */
 };
 
 static const uint16_t suiteb_curves[] = {
-    TLSEXT_curve_P_256,
-    TLSEXT_curve_P_384
+    OSSL_TLS_GROUP_ID_secp256r1,
+    OSSL_TLS_GROUP_ID_secp384r1,
 };
 
 struct provider_group_data_st {
@@ -343,6 +343,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
      * it.
      */
     ret = 1;
+    ERR_set_mark();
     keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, ginf->algorithm, ctx->propq);
     if (keymgmt != NULL) {
         /*
@@ -364,12 +365,13 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
         }
         EVP_KEYMGMT_free(keymgmt);
     }
+    ERR_pop_to_mark();
  err:
     if (ginf != NULL) {
         OPENSSL_free(ginf->tlsname);
         OPENSSL_free(ginf->realname);
         OPENSSL_free(ginf->algorithm);
-        ginf->tlsname = ginf->realname = NULL;
+        ginf->algorithm = ginf->tlsname = ginf->realname = NULL;
     }
     return ret;
 }
@@ -431,6 +433,42 @@ static uint16_t tls1_group_name2id(SSL_CTX *ctx, const char *name)
     }
 
     return 0;
+}
+
+uint16_t ssl_group_id_internal_to_tls13(uint16_t curve_id)
+{
+    switch(curve_id) {
+    case OSSL_TLS_GROUP_ID_brainpoolP256r1:
+        return OSSL_TLS_GROUP_ID_brainpoolP256r1_tls13;
+    case OSSL_TLS_GROUP_ID_brainpoolP384r1:
+        return OSSL_TLS_GROUP_ID_brainpoolP384r1_tls13;
+    case OSSL_TLS_GROUP_ID_brainpoolP512r1:
+        return OSSL_TLS_GROUP_ID_brainpoolP512r1_tls13;
+    case OSSL_TLS_GROUP_ID_brainpoolP256r1_tls13:
+    case OSSL_TLS_GROUP_ID_brainpoolP384r1_tls13:
+    case OSSL_TLS_GROUP_ID_brainpoolP512r1_tls13:
+        return 0;
+    default:
+        return curve_id;
+    }
+}
+
+uint16_t ssl_group_id_tls13_to_internal(uint16_t curve_id)
+{
+    switch(curve_id) {
+    case OSSL_TLS_GROUP_ID_brainpoolP256r1:
+    case OSSL_TLS_GROUP_ID_brainpoolP384r1:
+    case OSSL_TLS_GROUP_ID_brainpoolP512r1:
+        return 0;
+    case OSSL_TLS_GROUP_ID_brainpoolP256r1_tls13:
+        return OSSL_TLS_GROUP_ID_brainpoolP256r1;
+    case OSSL_TLS_GROUP_ID_brainpoolP384r1_tls13:
+        return OSSL_TLS_GROUP_ID_brainpoolP384r1;
+    case OSSL_TLS_GROUP_ID_brainpoolP512r1_tls13:
+        return OSSL_TLS_GROUP_ID_brainpoolP512r1;
+    default:
+        return curve_id;
+    }
 }
 
 const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t group_id)
@@ -611,9 +649,9 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
             unsigned long cid = s->s3.tmp.new_cipher->id;
 
             if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
-                return TLSEXT_curve_P_256;
+                return OSSL_TLS_GROUP_ID_secp256r1;
             if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
-                return TLSEXT_curve_P_384;
+                return OSSL_TLS_GROUP_ID_secp384r1;
             /* Should never happen */
             return 0;
         }
@@ -634,10 +672,17 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
 
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
+        uint16_t cid = id;
 
-        if (!tls1_in_list(id, supp, num_supp)
-            || !tls_group_allowed(s, id, SSL_SECOP_CURVE_SHARED))
-                    continue;
+        if (SSL_IS_TLS13(s)) {
+            if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE)
+                cid = ssl_group_id_internal_to_tls13(id);
+            else
+                cid = id = ssl_group_id_tls13_to_internal(id);
+        }
+        if (!tls1_in_list(cid, supp, num_supp)
+                || !tls_group_allowed(s, id, SSL_SECOP_CURVE_SHARED))
+            continue;
         if (nmatch == k)
             return id;
          k++;
@@ -723,8 +768,11 @@ static int gid_cb(const char *elem, int len, void *arg)
     etmp[len] = 0;
 
     gid = tls1_group_name2id(garg->ctx, etmp);
-    if (gid == 0)
+    if (gid == 0) {
+        ERR_raise_data(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "group '%s' cannot be set", etmp);
         return 0;
+    }
     for (i = 0; i < garg->gidcnt; i++)
         if (garg->gid_arr[i] == gid)
             return 0;
@@ -782,10 +830,10 @@ int tls1_check_group_id(SSL *s, uint16_t group_id, int check_own_groups)
         unsigned long cid = s->s3.tmp.new_cipher->id;
 
         if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256) {
-            if (group_id != TLSEXT_curve_P_256)
+            if (group_id != OSSL_TLS_GROUP_ID_secp256r1)
                 return 0;
         } else if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384) {
-            if (group_id != TLSEXT_curve_P_384)
+            if (group_id != OSSL_TLS_GROUP_ID_secp384r1)
                 return 0;
         } else {
             /* Should never happen */
@@ -931,15 +979,15 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
         size_t i;
 
         /* Check to see we have necessary signing algorithm */
-        if (group_id == TLSEXT_curve_P_256)
+        if (group_id == OSSL_TLS_GROUP_ID_secp256r1)
             check_md = NID_ecdsa_with_SHA256;
-        else if (group_id == TLSEXT_curve_P_384)
+        else if (group_id == OSSL_TLS_GROUP_ID_secp384r1)
             check_md = NID_ecdsa_with_SHA384;
         else
             return 0;           /* Should never happen */
         for (i = 0; i < s->shared_sigalgslen; i++) {
             if (check_md == s->shared_sigalgs[i]->sigandhash)
-                return 1;;
+                return 1;
         }
         return 0;
     }
@@ -966,9 +1014,9 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
      * curves permitted.
      */
     if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
-        return tls1_check_group_id(s, TLSEXT_curve_P_256, 1);
+        return tls1_check_group_id(s, OSSL_TLS_GROUP_ID_secp256r1, 1);
     if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
-        return tls1_check_group_id(s, TLSEXT_curve_P_384, 1);
+        return tls1_check_group_id(s, OSSL_TLS_GROUP_ID_secp384r1, 1);
 
     return 0;
 }
@@ -980,6 +1028,9 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_ecdsa_secp521r1_sha512,
     TLSEXT_SIGALG_ed25519,
     TLSEXT_SIGALG_ed448,
+    TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256,
+    TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384,
+    TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512,
 
     TLSEXT_SIGALG_rsa_pss_pss_sha256,
     TLSEXT_SIGALG_rsa_pss_pss_sha384,
@@ -1042,6 +1093,15 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {NULL, TLSEXT_SIGALG_ecdsa_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA1, NID_undef, 1},
+    {"ecdsa_brainpoolP256r1_sha256", TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256,
+     NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
+     NID_ecdsa_with_SHA256, NID_brainpoolP256r1, 1},
+    {"ecdsa_brainpoolP384r1_sha384", TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384,
+     NID_sha384, SSL_MD_SHA384_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
+     NID_ecdsa_with_SHA384, NID_brainpoolP384r1, 1},
+    {"ecdsa_brainpoolP512r1_sha512", TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512,
+     NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
+     NID_ecdsa_with_SHA512, NID_brainpoolP512r1, 1},
     {"rsa_pss_rsae_sha256", TLSEXT_SIGALG_rsa_pss_rsae_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_RSA_PSS, SSL_PKEY_RSA,
      NID_undef, NID_undef, 1},
@@ -1267,6 +1327,8 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
             for (i = 0; i < SSL_PKEY_NUM; i++) {
                 const SSL_CERT_LOOKUP *clu = ssl_cert_lookup_by_idx(i);
 
+                if (clu == NULL)
+                    continue;
                 if (clu->amask & s->s3.tmp.new_cipher->algorithm_auth) {
                     idx = i;
                     break;
@@ -2813,22 +2875,20 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 
         ca_dn = s->s3.tmp.peer_ca_names;
 
-        if (!sk_X509_NAME_num(ca_dn))
+        if (ca_dn == NULL
+            || sk_X509_NAME_num(ca_dn) == 0
+            || ssl_check_ca_name(ca_dn, x))
             rv |= CERT_PKEY_ISSUER_NAME;
-
-        if (!(rv & CERT_PKEY_ISSUER_NAME)) {
-            if (ssl_check_ca_name(ca_dn, x))
-                rv |= CERT_PKEY_ISSUER_NAME;
-        }
-        if (!(rv & CERT_PKEY_ISSUER_NAME)) {
+        else
             for (i = 0; i < sk_X509_num(chain); i++) {
                 X509 *xtmp = sk_X509_value(chain, i);
+
                 if (ssl_check_ca_name(ca_dn, xtmp)) {
                     rv |= CERT_PKEY_ISSUER_NAME;
                     break;
                 }
             }
-        }
+
         if (!check_flags && !(rv & CERT_PKEY_ISSUER_NAME))
             goto end;
     } else
@@ -3008,6 +3068,8 @@ int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *x, int vfy)
     int rv, start_idx, i;
     if (x == NULL) {
         x = sk_X509_value(sk, 0);
+        if (x == NULL)
+            return ERR_R_INTERNAL_ERROR;
         start_idx = 1;
     } else
         start_idx = 0;
@@ -3302,7 +3364,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                 if ((lu = tls1_get_legacy_sigalg(s, -1)) == NULL) {
                     if (!fatalerrs)
                         return 1;
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                              SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
                     return 0;
                 }
@@ -3317,7 +3379,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                 if (i == sent_sigslen) {
                     if (!fatalerrs)
                         return 1;
-                    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                              SSL_R_WRONG_SIGNATURE_TYPE);
                     return 0;
                 }
@@ -3474,4 +3536,23 @@ int ssl_get_EC_curve_nid(const EVP_PKEY *pkey)
         return OBJ_txt2nid(gname);
 
     return NID_undef;
+}
+
+__owur int tls13_set_encoded_pub_key(EVP_PKEY *pkey,
+                                     const unsigned char *enckey,
+                                     size_t enckeylen)
+{
+    if (EVP_PKEY_is_a(pkey, "DH")) {
+        int bits = EVP_PKEY_get_bits(pkey);
+
+        if (bits <= 0 || enckeylen != (size_t)bits / 8)
+            /* the encoded key must be padded to the length of the p */
+            return 0;
+    } else if (EVP_PKEY_is_a(pkey, "EC")) {
+        if (enckeylen < 3 /* point format and at least 1 byte for x and y */
+            || enckey[0] != 0x04)
+            return 0;
+    }
+
+    return EVP_PKEY_set1_encoded_public_key(pkey, enckey, enckeylen);
 }

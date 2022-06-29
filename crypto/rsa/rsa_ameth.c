@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -160,6 +160,7 @@ static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
                          strtype, str, rk, rklen)) {
         ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         ASN1_STRING_free(str);
+        OPENSSL_clear_free(rk, rklen);
         return 0;
     }
 
@@ -216,7 +217,7 @@ static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
                 return 0;
         }
     } else if (pss == NULL) {
-        if (BIO_puts(bp,"(INVALID PSS PARAMETERS)\n") <= 0)
+        if (BIO_puts(bp, "(INVALID PSS PARAMETERS)\n") <= 0)
             return 0;
         return 1;
     }
@@ -454,7 +455,7 @@ static RSA_PSS_PARAMS *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
         return NULL;
     if (EVP_PKEY_CTX_get_rsa_mgf1_md(pkctx, &mgf1md) <= 0)
         return NULL;
-    if (!EVP_PKEY_CTX_get_rsa_pss_saltlen(pkctx, &saltlen))
+    if (EVP_PKEY_CTX_get_rsa_pss_saltlen(pkctx, &saltlen) <= 0)
         return NULL;
     if (saltlen == -1) {
         saltlen = EVP_MD_get_size(sigmd);
@@ -636,23 +637,29 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, const void *asn,
     if (pad_mode == RSA_PKCS1_PADDING)
         return 2;
     if (pad_mode == RSA_PKCS1_PSS_PADDING) {
-        ASN1_STRING *os1 = NULL;
-        os1 = ossl_rsa_ctx_to_pss_string(pkctx);
-        if (!os1)
+        ASN1_STRING *os1 = ossl_rsa_ctx_to_pss_string(pkctx);
+
+        if (os1 == NULL)
             return 0;
         /* Duplicate parameters if we have to */
-        if (alg2) {
+        if (alg2 != NULL) {
             ASN1_STRING *os2 = ASN1_STRING_dup(os1);
-            if (!os2) {
-                ASN1_STRING_free(os1);
-                return 0;
+
+            if (os2 == NULL)
+                goto err;
+            if (!X509_ALGOR_set0(alg2, OBJ_nid2obj(EVP_PKEY_RSA_PSS),
+                                 V_ASN1_SEQUENCE, os2)) {
+                ASN1_STRING_free(os2);
+                goto err;
             }
-            X509_ALGOR_set0(alg2, OBJ_nid2obj(EVP_PKEY_RSA_PSS),
-                            V_ASN1_SEQUENCE, os2);
         }
-        X509_ALGOR_set0(alg1, OBJ_nid2obj(EVP_PKEY_RSA_PSS),
-                        V_ASN1_SEQUENCE, os1);
+        if (!X509_ALGOR_set0(alg1, OBJ_nid2obj(EVP_PKEY_RSA_PSS),
+                             V_ASN1_SEQUENCE, os1))
+            goto err;
         return 3;
+    err:
+        ASN1_STRING_free(os1);
+        return 0;
     }
     return 2;
 }
@@ -738,18 +745,11 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
 
     if (tmpl == NULL)
         return 0;
-    /*
-     * If the RSA method is foreign, then we can't be sure of anything, and
-     * can therefore not export or pretend to export.
-     */
-    if (RSA_get_method(rsa) != RSA_PKCS1_OpenSSL())
-        goto err;
-
     /* Public parameters must always be present */
     if (RSA_get0_n(rsa) == NULL || RSA_get0_e(rsa) == NULL)
         goto err;
 
-    if (!ossl_rsa_todata(rsa, tmpl, NULL))
+    if (!ossl_rsa_todata(rsa, tmpl, NULL, 1))
         goto err;
 
     selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
@@ -842,7 +842,7 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
         goto err;
     }
 
-    if (!ossl_rsa_fromdata(rsa, params))
+    if (!ossl_rsa_fromdata(rsa, params, 1))
         goto err;
 
     switch (rsa_type) {

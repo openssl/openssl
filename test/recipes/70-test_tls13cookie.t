@@ -26,8 +26,6 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLS1.3 enabled"
     if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
-
 use constant {
     COOKIE_ONLY => 0,
     COOKIE_AND_KEY_SHARE => 1

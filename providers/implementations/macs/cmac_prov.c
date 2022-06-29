@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,6 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
-#include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/cmac.h>
 
@@ -111,7 +110,7 @@ static int cmac_setkey(struct cmac_data_st *macctx,
                        ossl_prov_cipher_cipher(&macctx->cipher),
                        ossl_prov_cipher_engine(&macctx->cipher));
     ossl_prov_cipher_reset(&macctx->cipher);
-    return rv;    
+    return rv;
 }
 
 static int cmac_init(void *vmacctx, const unsigned char *key,
@@ -123,7 +122,8 @@ static int cmac_init(void *vmacctx, const unsigned char *key,
         return 0;
     if (key != NULL)
         return cmac_setkey(macctx, key, keylen);
-    return 1;
+    /* Reinitialize the CMAC context */
+    return CMAC_Init(macctx->ctx, NULL, 0, NULL, NULL);
 }
 
 static int cmac_update(void *vmacctx, const unsigned char *data,

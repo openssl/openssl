@@ -8,8 +8,8 @@
  */
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include "internal/common.h"
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/trace.h>
@@ -168,14 +168,17 @@ static void setup_trace_category(int category)
 {
     BIO *channel;
     tracedata *trace_data;
+    BIO *bio = NULL;
 
     if (OSSL_trace_enabled(category))
         return;
 
-    channel = BIO_push(BIO_new(BIO_f_prefix()), dup_bio_err(FORMAT_TEXT));
+    bio = BIO_new(BIO_f_prefix());
+    channel = BIO_push(bio, dup_bio_err(FORMAT_TEXT));
     trace_data = OPENSSL_zalloc(sizeof(*trace_data));
 
     if (trace_data == NULL
+        || bio == NULL
         || (trace_data->bio = channel) == NULL
         || OSSL_trace_set_callback(category, internal_trace_cb,
                                    trace_data) == 0
@@ -354,7 +357,7 @@ int help_main(int argc, char **argv)
         new_argv[2] = NULL;
         return do_cmd(prog_init(), 2, new_argv);
     }
-    if (opt_num_rest() != 0) {
+    if (!opt_check_rest_arg(NULL)) {
         BIO_printf(bio_err, "Usage: %s\n", prog);
         return 1;
     }
@@ -395,6 +398,7 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
 
     if (argc <= 0 || argv[0] == NULL)
         return 0;
+    memset(&f, 0, sizeof(f));
     f.name = argv[0];
     fp = lh_FUNCTION_retrieve(prog, &f);
     if (fp == NULL) {
@@ -413,12 +417,12 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
             warn_deprecated(fp);
         return fp->func(argc, argv);
     }
-    if ((strncmp(argv[0], "no-", 3)) == 0) {
+    f.name = argv[0];
+    if (CHECK_AND_SKIP_PREFIX(f.name, "no-")) {
         /*
          * User is asking if foo is unsupported, by trying to "run" the
          * no-foo command.  Strange.
          */
-        f.name = argv[0] + 3;
         if (lh_FUNCTION_retrieve(prog, &f) == NULL) {
             BIO_printf(bio_out, "%s\n", argv[0]);
             return 0;

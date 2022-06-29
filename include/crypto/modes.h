@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -74,6 +74,13 @@ typedef unsigned char u8;
                         asm ("rev %0,%1"                \
                         : "=r"(ret_) : "r"((u32)(x)));  \
                         ret_;                           })
+#  elif defined(__riscv_zbb) && __riscv_xlen == 64
+#   define BSWAP8(x) ({ u64 ret_=(x);                   \
+                        asm ("rev8 %0,%0"               \
+                        : "+r"(ret_));   ret_;          })
+#   define BSWAP4(x) ({ u32 ret_=(x);                   \
+                        asm ("rev8 %0,%0; srli %0,%0,32"\
+                        : "+r"(ret_));   ret_;          })
 #  endif
 # elif defined(_MSC_VER)
 #  if _MSC_VER>=1300
@@ -118,8 +125,8 @@ struct gcm128_context {
         size_t t[16 / sizeof(size_t)];
     } Yi, EKi, EK0, len, Xi, H;
     /*
-     * Relative position of Xi, H and pre-computed Htable is used in some
-     * assembler modules, i.e. don't change the order!
+     * Relative position of Yi, EKi, EK0, len, Xi, H and pre-computed Htable is
+     * used in some assembler modules, i.e. don't change the order!
      */
 #if TABLE_BITS==8
     u128 Htable[256];

@@ -11,7 +11,7 @@ i2d_re_X509_tbs, i2d_re_X509_CRL_tbs, i2d_re_X509_REQ_tbs
  #include <openssl/x509.h>
 
  X509 *d2i_X509_AUX(X509 **px, const unsigned char **in, long len);
- int i2d_X509_AUX(X509 *x, unsigned char **out);
+ int i2d_X509_AUX(const X509 *x, unsigned char **out);
  int i2d_re_X509_tbs(X509 *x, unsigned char **out);
  int i2d_re_X509_CRL_tbs(X509_CRL *crl, unsigned char **pp);
  int i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp);

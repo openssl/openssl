@@ -144,21 +144,21 @@ static int test_mod_exp(int round)
         || !TEST_ptr(m = BN_new()))
         goto err;
 
-    if (!TEST_true(RAND_bytes(&c, 1)))
+    if (!TEST_int_gt(RAND_bytes(&c, 1), 0))
         goto err;
     c = (c % BN_BITS) - BN_BITS2;
     if (!TEST_true(BN_rand(a, NUM_BITS + c, BN_RAND_TOP_ONE,
                            BN_RAND_BOTTOM_ANY)))
         goto err;
 
-    if (!TEST_true(RAND_bytes(&c, 1)))
+    if (!TEST_int_gt(RAND_bytes(&c, 1), 0))
         goto err;
     c = (c % BN_BITS) - BN_BITS2;
     if (!TEST_true(BN_rand(b, NUM_BITS + c, BN_RAND_TOP_ONE,
                            BN_RAND_BOTTOM_ANY)))
         goto err;
 
-    if (!TEST_true(RAND_bytes(&c, 1)))
+    if (!TEST_int_gt(RAND_bytes(&c, 1), 0))
         goto err;
     c = (c % BN_BITS) - BN_BITS2;
     if (!TEST_true(BN_rand(m, NUM_BITS + c, BN_RAND_TOP_ONE,
@@ -223,11 +223,12 @@ static int test_mod_exp_x2(int idx)
     BIGNUM *m2 = NULL;
     int factor_size = 0;
 
-    /*
-     * Currently only 1024-bit factor size is supported.
-     */
     if (idx <= 100)
         factor_size = 1024;
+    else if (idx <= 200)
+        factor_size = 1536;
+    else if (idx <= 300)
+        factor_size = 2048;
 
     if (!TEST_ptr(ctx = BN_CTX_new()))
         goto err;
@@ -303,6 +304,6 @@ int setup_tests(void)
 {
     ADD_TEST(test_mod_exp_zero);
     ADD_ALL_TESTS(test_mod_exp, 200);
-    ADD_ALL_TESTS(test_mod_exp_x2, 100);
+    ADD_ALL_TESTS(test_mod_exp_x2, 300);
     return 1;
 }

@@ -71,6 +71,7 @@ B<openssl> B<s_server>
 [B<-ign_eof>]
 [B<-no_ign_eof>]
 [B<-no_etm>]
+[B<-no_ems>]
 [B<-status>]
 [B<-status_verbose>]
 [B<-status_timeout> I<int>]
@@ -98,7 +99,6 @@ B<openssl> B<s_server>
 [B<-legacy_renegotiation>]
 [B<-no_renegotiation>]
 [B<-no_resumption_on_reneg>]
-[B<-no_legacy_server_connect>]
 [B<-allow_no_dhe_kex>]
 [B<-prioritize_chacha>]
 [B<-strict>]
@@ -128,6 +128,7 @@ B<openssl> B<s_server>
 [B<-no_dhe>]
 [B<-nextprotoneg> I<val>]
 [B<-alpn> I<val>]
+[B<-ktls>]
 [B<-sendfile>]
 [B<-keylogfile> I<outfile>]
 [B<-recv_max_early_data> I<int>]
@@ -137,6 +138,7 @@ B<openssl> B<s_server>
 [B<-anti_replay>]
 [B<-no_anti_replay>]
 [B<-num_tickets>]
+[B<-tfo>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
@@ -492,6 +494,10 @@ Do not ignore input EOF.
 
 Disable Encrypt-then-MAC negotiation.
 
+=item B<-no_ems>
+
+Disable Extended master secret negotiation.
+
 =item B<-status>
 
 Enables certificate status request support (aka OCSP stapling).
@@ -762,11 +768,18 @@ Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
 The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
 
+=item B<-ktls>
+
+Enable Kernel TLS for sending and receiving.
+This option was introduced in OpenSSL 3.1.0.
+Kernel TLS is off by default as of OpenSSL 3.1.0.
+
 =item B<-sendfile>
 
 If this option is set and KTLS is enabled, SSL_sendfile() will be used
 instead of BIO_write() to send the HTTP response requested by a client.
-This option is only valid if B<-WWW> or B<-HTTP> is specified.
+This option is only valid when B<-ktls> along with B<-WWW> or B<-HTTP>
+are specified.
 
 =item B<-keylogfile> I<outfile>
 
@@ -802,6 +815,11 @@ automatically detect if a session ticket has been used more than once, TLSv1.3
 has been negotiated, and early data is enabled on the server. A full handshake
 is forced if a session ticket is used a second or subsequent time. Any early
 data that was sent will be rejected.
+
+=item B<-tfo>
+
+Enable acceptance of TCP Fast Open (RFC7413) connections.
+
 
 {- $OpenSSL::safe::opt_name_item -}
 
@@ -929,9 +947,11 @@ The
 The B<-srpvfile>, B<-srpuserseed>, and B<-engine>
 option were deprecated in OpenSSL 3.0.
 
+The -tfo option was added in OpenSSL 3.1.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

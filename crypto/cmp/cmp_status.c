@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -220,7 +220,8 @@ char *snprint_PKIStatusInfo_parts(int status, int fail_info,
         ADVANCE_BUFFER;
         for (i = 0; i < n_status_strings; i++) {
             text = sk_ASN1_UTF8STRING_value(status_strings, i);
-            printed_chars = BIO_snprintf(write_ptr, bufsize, "\"%s\"%s",
+            printed_chars = BIO_snprintf(write_ptr, bufsize, "\"%.*s\"%s",
+                                         ASN1_STRING_length(text),
                                          ASN1_STRING_get0_data(text),
                                          i < n_status_strings - 1 ? ", " : "");
             ADVANCE_BUFFER;

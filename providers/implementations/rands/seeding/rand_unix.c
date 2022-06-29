@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,14 +10,13 @@
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE
 #endif
-#include "../e_os.h"
+#include "internal/e_os.h"
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
 #include "crypto/rand_pool.h"
 #include "crypto/rand.h"
-#include <stdio.h>
 #include "internal/dso.h"
 #include "prov/seeding.h"
 
@@ -176,7 +175,7 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
         /* Get wall clock time, take 8 bits. */
         clock_gettime(CLOCK_REALTIME, &ts);
         v = (unsigned char)(ts.tv_nsec & 0xFF);
-        ossl_rand_pool_add(pool, arg, &v, sizeof(v) , 2);
+        ossl_rand_pool_add(pool, arg, &v, sizeof(v), 2);
     }
     return ossl_rand_pool_entropy_available(pool);
 }
@@ -366,6 +365,12 @@ static ssize_t syscall_random(void *buf, size_t buflen)
         if (errno != ENOSYS)
             return -1;
     }
+#    elif defined(OPENSSL_APPLE_CRYPTO_RANDOM)
+
+    if (CCRandomGenerateBytes(buf, buflen) == kCCSuccess)
+	    return (ssize_t)buflen;
+
+    return -1;
 #    else
     union {
         void *p;

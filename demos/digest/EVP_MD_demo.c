@@ -1,5 +1,5 @@
 /*-
- * Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -62,7 +62,7 @@ const char * hamlet_2 =
     "And lose the name of Action. Soft you now,\n"
     "The fair Ophelia? Nymph in thy Orisons\n"
     "Be all my sins remember'd.\n"
-; 
+;
 
 /* The known value of the SHA3-512 digest of the above soliloqy */
 const unsigned char known_answer[] = {

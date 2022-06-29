@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -511,7 +511,7 @@ OSSL_CORE_MAKE_FUNC(void,rand_clear_seed,
  * and key material, etc, essentially everything that manipulates the keys
  * themselves and their parameters.
  *
- * The key objects are commonly refered to as |keydata|, and it MUST be able
+ * The key objects are commonly referred to as |keydata|, and it MUST be able
  * to contain parameters if the key has any, the public key and the private
  * key.  All parts are optional, but their presence determines what can be
  * done with the key object in terms of encryption, signature, and so on.

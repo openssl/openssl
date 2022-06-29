@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,19 +22,8 @@
  */
 #define EVP_MD_CTX_FLAG_KEEP_PKEY_CTX   0x0400
 
-/*
- * An EVP_PKEY_CTX can have the following support states:
- *
- * Supports legacy implementations only:
- *
- *      engine != NULL || keytype == NULL
- *
- * Supports provided implementations:
- *
- *      engine == NULL && keytype != NULL
- */
 #define evp_pkey_ctx_is_legacy(ctx)                             \
-    ((ctx)->engine != NULL || (ctx)->keytype == NULL)
+    ((ctx)->keymgmt == NULL)
 #define evp_pkey_ctx_is_provided(ctx)                           \
     (!evp_pkey_ctx_is_legacy(ctx))
 
@@ -49,6 +38,7 @@ struct evp_pkey_ctx_st {
     OSSL_LIB_CTX *libctx;
     char *propquery;
     const char *keytype;
+    /* If |pkey| below is set, this field is always a reference to its keymgmt */
     EVP_KEYMGMT *keymgmt;
 
     union {
@@ -686,7 +676,7 @@ struct evp_pkey_st {
 #ifndef FIPS_MODULE
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
     int save_parameters;
-    int foreign:1; /* the low-level key is using an engine or an app-method */
+    unsigned int foreign:1; /* the low-level key is using an engine or an app-method */
     CRYPTO_EX_DATA ex_data;
 #endif
 
@@ -805,6 +795,8 @@ void *evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
 int evp_keymgmt_util_get_deflt_digest_name(EVP_KEYMGMT *keymgmt,
                                            void *keydata,
                                            char *mdname, size_t mdname_sz);
+const char *evp_keymgmt_util_query_operation_name(EVP_KEYMGMT *keymgmt,
+                                                  int op_id);
 
 /*
  * KEYMGMT provider interface functions
@@ -825,6 +817,7 @@ void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
                       OSSL_CALLBACK *cb, void *cbarg);
 void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx);
 
+int evp_keymgmt_has_load(const EVP_KEYMGMT *keymgmt);
 void *evp_keymgmt_load(const EVP_KEYMGMT *keymgmt,
                        const void *objref, size_t objref_sz);
 
@@ -845,6 +838,9 @@ const OSSL_PARAM *evp_keymgmt_export_types(const EVP_KEYMGMT *keymgmt,
                                            int selection);
 void *evp_keymgmt_dup(const EVP_KEYMGMT *keymgmt,
                       const void *keydata_from, int selection);
+EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
+                                         const char *name,
+                                         const char *properties);
 
 /* Pulling defines out of C source files */
 
@@ -900,12 +896,18 @@ int evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len);
 int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
 # endif /* !defined(FIPS_MODULE) */
 
-int evp_method_store_flush(OSSL_LIB_CTX *libctx);
+int evp_method_store_cache_flush(OSSL_LIB_CTX *libctx);
+int evp_method_store_remove_all_provided(const OSSL_PROVIDER *prov);
+
+int evp_default_properties_enable_fips_int(OSSL_LIB_CTX *libctx, int enable,
+                                           int loadconfig);
 int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
                                    int loadconfig, int mirrored);
 char *evp_get_global_properties_str(OSSL_LIB_CTX *libctx, int loadconfig);
 
-void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);
+void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force, int keep_digest);
+/* just free the algctx if set, returns 0 on inconsistent state of ctx */
+int evp_md_ctx_free_algctx(EVP_MD_CTX *ctx);
 
 /* Three possible states: */
 # define EVP_PKEY_STATE_UNKNOWN         0

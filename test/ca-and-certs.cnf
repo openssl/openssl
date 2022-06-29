@@ -1,4 +1,7 @@
 
+# Comment out the next line to ignore configuration errors
+config_diagnostics = 1
+
 CN2 = Brother 2
 
 ####################################################################

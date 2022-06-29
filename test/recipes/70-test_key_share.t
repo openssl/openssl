@@ -63,8 +63,6 @@ plan skip_all => "$test_name needs TLS1.3 enabled"
 plan skip_all => "$test_name needs EC or DH enabled"
     if disabled("ec") && disabled("dh");
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
-
 my $proxy = TLSProxy::Proxy->new(
     undef,
     cmdstr(app(["openssl"]), display => 1),

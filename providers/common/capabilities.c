@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,7 @@
 #include "internal/nelem.h"
 #include "internal/tlsgroups.h"
 #include "prov/providercommon.h"
-#include "e_os.h"
+#include "internal/e_os.h"
 
 /* If neither ec or dh is available then we have no TLS-GROUP capabilities */
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
@@ -217,7 +217,7 @@ static int tls_group_capability(OSSL_CALLBACK *cb, void *arg)
 int ossl_prov_get_capabilities(void *provctx, const char *capability,
                                OSSL_CALLBACK *cb, void *arg)
 {
-    if (strcasecmp(capability, "TLS-GROUP") == 0)
+    if (OPENSSL_strcasecmp(capability, "TLS-GROUP") == 0)
         return tls_group_capability(cb, arg);
 
     /* We don't support this capability */

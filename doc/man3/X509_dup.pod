@@ -31,6 +31,7 @@ CMS_ContentInfo_free,
 CMS_ContentInfo_new,
 CMS_ContentInfo_new_ex,
 CMS_ContentInfo_print_ctx,
+CMS_EnvelopedData_it,
 CMS_ReceiptRequest_free,
 CMS_ReceiptRequest_new,
 CRL_DIST_POINTS_free,
@@ -320,9 +321,9 @@ X509_dup,
  void TYPE_free(TYPE *a);
  int TYPE_print_ctx(BIO *out, TYPE *a, int indent, const ASN1_PCTX *pctx);
 
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following functions have been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  DSA *DSAparams_dup(const DSA *dsa);
  RSA *RSAPrivateKey_dup(const RSA *rsa);
@@ -350,7 +351,7 @@ to generate the function bodies.
 B<I<TYPE>_new>() allocates an empty object of the indicated type.
 The object returned must be released by calling B<I<TYPE>_free>().
 
-B<I<TYPE>_new_ex>() is similiar to B<I<TYPE>_new>() but also passes the
+B<I<TYPE>_new_ex>() is similar to B<I<TYPE>_new>() but also passes the
 library context I<libctx> and the property query I<propq> to use when retrieving
 algorithms from providers. This created object can then be used when loading
 binary data using B<d2i_I<TYPE>>().
@@ -383,7 +384,7 @@ deprecated in 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

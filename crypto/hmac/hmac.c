@@ -224,12 +224,17 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
 {
     static unsigned char static_md[EVP_MAX_MD_SIZE];
     int size = EVP_MD_get_size(evp_md);
+    size_t temp_md_len = 0;
+    unsigned char *ret = NULL;
 
-    if (size < 0)
-        return NULL;
-    return EVP_Q_mac(NULL, "HMAC", NULL, EVP_MD_get0_name(evp_md), NULL,
-                     key, key_len, data, data_len,
-                     md == NULL ? static_md : md, size, md_len);
+    if (size >= 0) {
+        ret = EVP_Q_mac(NULL, "HMAC", NULL, EVP_MD_get0_name(evp_md), NULL,
+                        key, key_len, data, data_len,
+                        md == NULL ? static_md : md, size, &temp_md_len);
+        if (md_len != NULL)
+            *md_len = (unsigned int)temp_md_len;
+    }
+    return ret;
 }
 
 void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags)

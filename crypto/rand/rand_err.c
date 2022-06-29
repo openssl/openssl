@@ -22,8 +22,6 @@ static const ERR_STRING_DATA RAND_str_reasons[] = {
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_ARGUMENT_OUT_OF_RANGE),
     "argument out of range"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_CANNOT_OPEN_FILE), "Cannot open file"},
-    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_DERIVATION_FUNCTION_MANDATORY_FOR_FIPS),
-    "derivation function mandatory for fips"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_DRBG_ALREADY_INITIALIZED),
     "drbg already initialized"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_DRBG_NOT_INITIALISED),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -56,6 +56,8 @@ static OSSL_FUNC_decoder_export_object_fn pvk2key_export_object;
 struct pvk2key_ctx_st {
     PROV_CTX *provctx;
     const struct keytype_desc_st *desc;
+    /* The selection that is passed to der2key_decode() */
+    int selection;
 };
 
 static struct pvk2key_ctx_st *
@@ -86,6 +88,11 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     void *key = NULL;
     int ok = 0;
 
+    if (in == NULL)
+        return 0;
+
+    ctx->selection = selection;
+
     if ((selection == 0
          || (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         && ctx->desc->read_private_key != NULL) {
@@ -96,7 +103,7 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         if (!ossl_pw_set_ossl_passphrase_cb(&pwdata, pw_cb, pw_cbarg))
             goto end;
 
-        key = ctx->desc->read_private_key(in, ossl_pw_pem_password, &pwdata,
+        key = ctx->desc->read_private_key(in, ossl_pw_pvk_password, &pwdata,
                                           PROV_LIBCTX_OF(ctx->provctx), NULL);
 
         /*
@@ -175,8 +182,7 @@ static int pvk2key_export_object(void *vctx,
         /* The contents of the reference is the address to our object */
         keydata = *(void **)reference;
 
-        return export(keydata, OSSL_KEYMGMT_SELECT_ALL,
-                      export_cb, export_cbarg);
+        return export(keydata, ctx->selection, export_cb, export_cbarg);
     }
     return 0;
 }

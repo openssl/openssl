@@ -203,11 +203,12 @@ static void *keymgmt_from_algorithm(int name_id,
     return keymgmt;
 }
 
-EVP_KEYMGMT *evp_keymgmt_fetch_by_number(OSSL_LIB_CTX *ctx, int name_id,
+EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
+                                         const char *name,
                                          const char *properties)
 {
-    return evp_generic_fetch_by_number(ctx,
-                                       OSSL_OP_KEYMGMT, name_id, properties,
+    return evp_generic_fetch_from_prov(prov, OSSL_OP_KEYMGMT,
+                                       name, properties,
                                        keymgmt_from_algorithm,
                                        (int (*)(void *))EVP_KEYMGMT_up_ref,
                                        (void (*)(void *))EVP_KEYMGMT_free);
@@ -370,10 +371,15 @@ void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx)
         keymgmt->gen_cleanup(genctx);
 }
 
+int evp_keymgmt_has_load(const EVP_KEYMGMT *keymgmt)
+{
+    return keymgmt != NULL && keymgmt->load != NULL;
+}
+
 void *evp_keymgmt_load(const EVP_KEYMGMT *keymgmt,
                        const void *objref, size_t objref_sz)
 {
-    if (keymgmt->load != NULL)
+    if (evp_keymgmt_has_load(keymgmt))
         return keymgmt->load(objref, objref_sz);
     return NULL;
 }

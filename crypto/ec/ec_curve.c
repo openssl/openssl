@@ -3223,6 +3223,43 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
             goto err;
         }
     }
+
+#ifndef FIPS_MODULE
+    if (EC_GROUP_get_asn1_flag(group) == OPENSSL_EC_NAMED_CURVE) {
+        /*
+         * Some curves don't have an associated OID: for those we should not
+         * default to `OPENSSL_EC_NAMED_CURVE` encoding of parameters and
+         * instead set the ASN1 flag to `OPENSSL_EC_EXPLICIT_CURVE`.
+         *
+         * Note that `OPENSSL_EC_NAMED_CURVE` is set as the default ASN1 flag on
+         * `EC_GROUP_new()`, when we don't have enough elements to determine if
+         * an OID for the curve name actually exists.
+         * We could implement this check on `EC_GROUP_set_curve_name()` but
+         * overloading the simple setter with this lookup could have a negative
+         * performance impact and unexpected consequences.
+         */
+        ASN1_OBJECT *asn1obj = OBJ_nid2obj(curve.nid);
+
+        if (asn1obj == NULL) {
+            ERR_raise(ERR_LIB_EC, ERR_R_OBJ_LIB);
+            goto err;
+        }
+        if (OBJ_length(asn1obj) == 0)
+            EC_GROUP_set_asn1_flag(group, OPENSSL_EC_EXPLICIT_CURVE);
+
+        ASN1_OBJECT_free(asn1obj);
+    }
+#else
+    /*
+     * Inside the FIPS module we do not support explicit curves anyway
+     * so the above check is not necessary.
+     *
+     * Skipping it is also necessary because `OBJ_length()` and
+     * `ASN1_OBJECT_free()` are not available within the FIPS module
+     * boundaries.
+     */
+#endif
+
     ok = 1;
  err:
     if (!ok) {

@@ -1,5 +1,5 @@
 #! /bin/sh
-# Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -64,7 +64,7 @@ next_release_state () {
 
         case "$before+$next" in
             # MAKING ALPHA RELEASES ##################################
-            
+
             # Alpha releases can't be made from beta versions or real versions
             beta*+alpha | +alpha )
                 echo >&2 "Invalid state for an alpha release"
@@ -199,4 +199,3 @@ next_release_state () {
         $DEBUG >&2 "DEBUG[next_release_state]: END: \$RELEASE_DATE=$RELEASE_DATE"
     done
 }
-

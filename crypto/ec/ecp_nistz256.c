@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2014, Intel Corporation. All Rights Reserved.
  * Copyright (c) 2015, CloudFlare, Inc.
  *
@@ -978,6 +978,7 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
         return 0;
     }
 
+    memset(&p, 0, sizeof(p));
     BN_CTX_start(ctx);
 
     if (scalar) {
@@ -1377,7 +1378,7 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
     /*
      * The bottom 128 bit of the exponent are processed with fixed 4-bit window
      */
-    for(i = 0; i < 32; i++) {
+    for (i = 0; i < 32; i++) {
         /* expLo - the low 128 bits of the exponent we use (ord(p256) - 2),
          * split into nibbles */
         static const unsigned char expLo[32]  = {

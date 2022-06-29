@@ -72,10 +72,10 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         in_tag = (unsigned char *)t->tag;
 
     return EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc)
-           && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, t->iv_len, NULL)
+           && (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, t->iv_len, NULL) > 0)
            && (in_tag == NULL
                || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, t->tag_len,
-                                      in_tag))
+                                      in_tag) > 0)
            && EVP_CipherInit_ex(ctx, NULL, NULL, t->key, t->iv, enc)
            && EVP_CIPHER_CTX_set_padding(ctx, pad)
            && EVP_CipherUpdate(ctx, NULL, &tmp, t->aad, t->aad_len);
@@ -117,8 +117,8 @@ static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
         if (t->tag != NULL) {
             unsigned char tag[16] = { 0 };
 
-            if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, t->tag_len,
-                                     tag)
+            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, t->tag_len,
+                                     tag) <= 0
                 || memcmp(tag, t->tag, t->tag_len) != 0)
                 goto err;
         }
@@ -446,14 +446,18 @@ static int self_test_sign(const ST_KAT_SIGN *t,
     EVP_PKEY *pkey = NULL;
     unsigned char sig[256];
     BN_CTX *bnctx = NULL;
-    size_t siglen = 0;
+    size_t siglen = sizeof(sig);
     static const unsigned char dgst[] = {
         0x7f, 0x83, 0xb1, 0x65, 0x7f, 0xf1, 0xfc, 0x53, 0xb9, 0x2d, 0xc1, 0x81,
         0x48, 0xa1, 0xd6, 0x5d, 0xfc, 0x2d, 0x4b, 0x1f, 0xa3, 0xd6, 0x77, 0x28,
         0x4a, 0xdd, 0xd2, 0x00, 0x12, 0x6d, 0x90, 0x69
     };
+    const char *typ = OSSL_SELF_TEST_TYPE_KAT_SIGNATURE;
 
-    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_SIGNATURE, t->desc);
+    if (t->sig_expected == NULL)
+        typ = OSSL_SELF_TEST_TYPE_PCT_SIGNATURE;
+
+    OSSL_SELF_TEST_onbegin(st, typ, t->desc);
 
     bnctx = BN_CTX_new_ex(libctx);
     if (bnctx == NULL)

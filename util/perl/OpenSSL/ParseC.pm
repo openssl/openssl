@@ -292,7 +292,7 @@ EOF
     { regexp   => qr/(.*)\bLHASH_OF<<<\((.*?)\)>>>(.*)/,
       massager => sub { return ("$1struct lhash_st_$2$3"); }
     },
-    { regexp   => qr/DEFINE_LHASH_OF(?:_INTERNAL)?<<<\((.*)\)>>>/,
+    { regexp   => qr/DEFINE_LHASH_OF(?:_INTERNAL|_EX)?<<<\((.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
 static ossl_inline LHASH_OF($1) * lh_$1_new(unsigned long (*hfn)(const $1 *),
@@ -608,6 +608,12 @@ EOF
 DECLARE_PEM$1($3)
 EOF
       },
+    },
+
+    # OpenSSL's declaration of externs with possible export linkage
+    # (really only relevant on Windows)
+    { regexp   => qr/OPENSSL_(?:EXPORT|EXTERN)/,
+      massager => sub { return ("extern"); }
     },
 
     # Spurious stuff found in the OpenSSL headers

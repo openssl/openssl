@@ -50,6 +50,7 @@ EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher)
 
         memcpy(to, cipher, sizeof(*to));
         to->lock = lock;
+        to->origin = EVP_ORIG_METH;
     }
     return to;
 }

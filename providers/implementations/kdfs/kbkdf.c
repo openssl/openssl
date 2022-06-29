@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2019 Red Hat, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -44,9 +44,9 @@
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
 
-#include "e_os.h"
+#include "internal/e_os.h"
 
-#define MIN(a, b) ((a) < (b)) ? (a) : (b)
+#define ossl_min(a, b) ((a) < (b)) ? (a) : (b)
 
 typedef enum {
     COUNTER = 0,
@@ -60,6 +60,7 @@ typedef struct {
     EVP_MAC_CTX *ctx_init;
 
     /* Names are lowercased versions of those found in SP800-108. */
+    int r;
     unsigned char *ki;
     size_t ki_len;
     unsigned char *label;
@@ -74,6 +75,7 @@ typedef struct {
 
 /* Definitions needed for typechecking. */
 static OSSL_FUNC_kdf_newctx_fn kbkdf_new;
+static OSSL_FUNC_kdf_newctx_fn kbkdf_dup;
 static OSSL_FUNC_kdf_freectx_fn kbkdf_free;
 static OSSL_FUNC_kdf_reset_fn kbkdf_reset;
 static OSSL_FUNC_kdf_derive_fn kbkdf_derive;
@@ -100,6 +102,7 @@ static uint32_t be32(uint32_t host)
 
 static void init(KBKDF *ctx)
 {
+    ctx->r = 32;
     ctx->use_l = 1;
     ctx->use_separator = 1;
 }
@@ -147,12 +150,42 @@ static void kbkdf_reset(void *vctx)
     init(ctx);
 }
 
+static void *kbkdf_dup(void *vctx)
+{
+    const KBKDF *src = (const KBKDF *)vctx;
+    KBKDF *dest;
+
+    dest = kbkdf_new(src->provctx);
+    if (dest != NULL) {
+        dest->ctx_init = EVP_MAC_CTX_dup(src->ctx_init);
+        if (dest->ctx_init == NULL
+                || !ossl_prov_memdup(src->ki, src->ki_len,
+                                     &dest->ki, &dest->ki_len)
+                || !ossl_prov_memdup(src->label, src->label_len,
+                                     &dest->label, &dest->label_len)
+                || !ossl_prov_memdup(src->context, src->context_len,
+                                     &dest->context, &dest->context_len)
+                || !ossl_prov_memdup(src->iv, src->iv_len,
+                                     &dest->iv, &dest->iv_len))
+            goto err;
+        dest->mode = src->mode;
+        dest->r = src->r;
+        dest->use_l = src->use_l;
+        dest->use_separator = src->use_separator;
+    }
+    return dest;
+
+ err:
+    kbkdf_free(dest);
+    return NULL;
+}
+
 /* SP800-108 section 5.1 or section 5.2 depending on mode. */
 static int derive(EVP_MAC_CTX *ctx_init, kbkdf_mode mode, unsigned char *iv,
                   size_t iv_len, unsigned char *label, size_t label_len,
                   unsigned char *context, size_t context_len,
                   unsigned char *k_i, size_t h, uint32_t l, int has_separator,
-                  unsigned char *ko, size_t ko_len)
+                  unsigned char *ko, size_t ko_len, int r)
 {
     int ret = 0;
     EVP_MAC_CTX *ctx = NULL;
@@ -186,7 +219,7 @@ static int derive(EVP_MAC_CTX *ctx_init, kbkdf_mode mode, unsigned char *iv,
         if (mode == FEEDBACK && !EVP_MAC_update(ctx, k_i, k_i_len))
             goto done;
 
-        if (!EVP_MAC_update(ctx, (unsigned char *)&i, 4)
+        if (!EVP_MAC_update(ctx, 4 - (r / 8) + (unsigned char *)&i, r / 8)
             || !EVP_MAC_update(ctx, label, label_len)
             || (has_separator && !EVP_MAC_update(ctx, &zero, 1))
             || !EVP_MAC_update(ctx, context, context_len)
@@ -195,7 +228,7 @@ static int derive(EVP_MAC_CTX *ctx_init, kbkdf_mode mode, unsigned char *iv,
             goto done;
 
         to_write = ko_len - written;
-        memcpy(ko + written, k_i, MIN(to_write, h));
+        memcpy(ko + written, k_i, ossl_min(to_write, h));
         written += h;
 
         k_i_len = h;
@@ -217,6 +250,7 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
     unsigned char *k_i = NULL;
     uint32_t l = 0;
     size_t h = 0;
+    uint64_t counter_max;
 
     if (!ossl_prov_is_running() || !kbkdf_set_ctx_params(ctx, params))
         return 0;
@@ -248,6 +282,15 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         goto done;
     }
 
+    if (ctx->mode == COUNTER) {
+        /* Fail if keylen is too large for r */
+        counter_max = (uint64_t)1 << (uint64_t)ctx->r;
+        if ((uint64_t)(keylen / h) >= counter_max) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            goto done;
+        }
+    }
+
     if (ctx->use_l != 0)
         l = be32(keylen * 8);
 
@@ -257,7 +300,7 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
 
     ret = derive(ctx->ctx_init, ctx->mode, ctx->iv, ctx->iv_len, ctx->label,
                  ctx->label_len, ctx->context, ctx->context_len, k_i, h, l,
-                 ctx->use_separator, key, keylen);
+                 ctx->use_separator, key, keylen, ctx->r);
 done:
     if (ret != 1)
         OPENSSL_cleanse(key, keylen);
@@ -298,10 +341,11 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_MODE);
-    if (p != NULL && strncasecmp("counter", p->data, p->data_size) == 0) {
+    if (p != NULL
+        && OPENSSL_strncasecmp("counter", p->data, p->data_size) == 0) {
         ctx->mode = COUNTER;
     } else if (p != NULL
-               && strncasecmp("feedback", p->data, p->data_size) == 0) {
+               && OPENSSL_strncasecmp("feedback", p->data, p->data_size) == 0) {
         ctx->mode = FEEDBACK;
     } else if (p != NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);
@@ -327,6 +371,17 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KBKDF_USE_L);
     if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->use_l))
         return 0;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KBKDF_R);
+    if (p != NULL) {
+        int new_r = 0;
+
+        if (!OSSL_PARAM_get_int(p, &new_r))
+            return 0;
+        if (new_r != 8 && new_r != 16 && new_r != 24 && new_r != 32)
+            return 0;
+        ctx->r = new_r;
+    }
 
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR);
     if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->use_separator))
@@ -354,6 +409,7 @@ static const OSSL_PARAM *kbkdf_settable_ctx_params(ossl_unused void *ctx,
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
         OSSL_PARAM_int(OSSL_KDF_PARAM_KBKDF_USE_L, NULL),
         OSSL_PARAM_int(OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR, NULL),
+        OSSL_PARAM_int(OSSL_KDF_PARAM_KBKDF_R, NULL),
         OSSL_PARAM_END,
     };
     return known_settable_ctx_params;
@@ -381,6 +437,7 @@ static const OSSL_PARAM *kbkdf_gettable_ctx_params(ossl_unused void *ctx,
 
 const OSSL_DISPATCH ossl_kdf_kbkdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kbkdf_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kbkdf_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kbkdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kbkdf_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kbkdf_derive },

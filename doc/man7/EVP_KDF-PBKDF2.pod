@@ -56,7 +56,7 @@ The checks performed are:
 =back
 
 The default provider uses a default mode of 1 for backwards compatibility,
-and the fips provider uses a default mode of 0.
+and the FIPS provider uses a default mode of 0.
 
 The value string is expected to be a decimal number 0 or 1.
 

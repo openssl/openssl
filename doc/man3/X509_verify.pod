@@ -25,7 +25,7 @@ X509_verify() verifies the signature of certificate I<x> using public key
 I<pkey>. Only the signature is checked: no other checks (such as certificate
 chain validity) are performed.
 
-X509_self_signed() checks whether a certificate is self-signed.
+X509_self_signed() checks whether certificate I<cert> is self-signed.
 For success the issuer and subject names must match, the components of the
 authority key identifier (if present) must match the subject key identifier etc.
 The signature itself is actually verified only if B<verify_signature> is 1, as
@@ -39,8 +39,9 @@ verify the signatures of certificate requests and CRLs, respectively.
 X509_verify(),
 X509_REQ_verify_ex(), X509_REQ_verify() and X509_CRL_verify()
 return 1 if the signature is valid and 0 if the signature check fails.
-If the signature could not be checked at all because it was ill-formed
-or some other error occurred then -1 is returned.
+If the signature could not be checked at all because it was ill-formed,
+the certificate or the request was not complete or some other error occurred
+then -1 is returned.
 
 X509_self_signed() returns the same values but also returns 1
 if all respective fields match and B<verify_signature> is 0.
@@ -72,7 +73,7 @@ X509_REQ_verify_ex(), and X509_self_signed() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

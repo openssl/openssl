@@ -46,7 +46,7 @@ static int fbytes(unsigned char *buf, size_t num, ossl_unused const char *name,
         || !TEST_true(BN_hex2bn(&tmp, numbers[fbytes_counter]))
         /* tmp might need leading zeros so pad it out */
         || !TEST_int_le(BN_num_bytes(tmp), num)
-        || !TEST_true(BN_bn2binpad(tmp, buf, num)))
+        || !TEST_int_gt(BN_bn2binpad(tmp, buf, num), 0))
         goto err;
 
     fbytes_counter = (fbytes_counter + 1) % OSSL_NELEM(numbers);
@@ -223,7 +223,7 @@ static int test_builtin(int n, int as)
 
     if (!TEST_ptr(mctx = EVP_MD_CTX_new())
         /* get some random message data */
-        || !TEST_true(RAND_bytes(tbs, sizeof(tbs)))
+        || !TEST_int_gt(RAND_bytes(tbs, sizeof(tbs)), 0)
         /* real key */
         || !TEST_ptr(eckey = EC_KEY_new_by_curve_name(nid))
         || !TEST_true(EC_KEY_generate_key(eckey))

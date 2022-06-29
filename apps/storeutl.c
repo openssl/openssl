@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -74,7 +74,7 @@ int storeutl_main(int argc, char *argv[])
     BIO *out = NULL;
     ENGINE *e = NULL;
     OPTION_CHOICE o;
-    char *prog = opt_init(argc, argv, storeutl_options);
+    char *prog;
     PW_CB_DATA pw_cb_data;
     int expected = 0;
     int criterion = 0;
@@ -87,6 +87,8 @@ int storeutl_main(int argc, char *argv[])
     EVP_MD *digest = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
 
+    opt_set_unknown_name("digest");
+    prog = opt_init(argc, argv, storeutl_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
         case OPT_EOF:
@@ -258,15 +260,12 @@ int storeutl_main(int argc, char *argv[])
     }
 
     /* One argument, the URI */
-    argc = opt_num_rest();
-    argv = opt_rest();
-    if (argc != 1)
+    if (!opt_check_rest_arg("URI"))
         goto opthelp;
+    argv = opt_rest();
 
-    if (digestname != NULL) {
-        if (!opt_md(digestname, &digest))
-            goto opthelp;
-    }
+    if (!opt_md(digestname, &digest))
+        goto opthelp;
 
     if (criterion != 0) {
         switch (criterion) {

@@ -7,6 +7,9 @@
 ./mkcert.sh genroot "Root CA" root-key2 root-cert2
 ./mkcert.sh genroot "Root Cert 2" root-key root-name2
 DAYS=-1 ./mkcert.sh genroot "Root CA" root-key root-expired
+# cross root and root cross cert
+./mkcert.sh genroot "Cross Root" cross-key cross-root
+./mkcert.sh genca "Root CA" root-key root-cross-cert cross-key cross-root
 # trust variants: +serverAuth -serverAuth +clientAuth -clientAuth,
 openssl x509 -in root-cert.pem -trustout \
     -addtrust serverAuth -out root+serverAuth.pem
@@ -171,6 +174,17 @@ openssl x509 -in ee-client.pem -trustout \
 openssl x509 -in ee-client.pem -trustout \
     -addreject clientAuth -out ee-clientAuth.pem
 
+# time stamping certificates
+./mkcert.sh genee -p critical,timeStamping -k critical,digitalSignature server.example ee-key ee-timestampsign-CABforum ca-key ca-cert
+./mkcert.sh genee -p timeStamping -k critical,digitalSignature server.example ee-key ee-timestampsign-CABforum-noncritxku ca-key ca-cert
+./mkcert.sh genee -p critical,timeStamping,serverAuth -k critical,digitalSignature server.example ee-key ee-timestampsign-CABforum-serverauth ca-key ca-cert
+./mkcert.sh genee -p critical,timeStamping,2.5.29.37.0 -k critical,digitalSignature server.example ee-key ee-timestampsign-CABforum-anyextkeyusage ca-key ca-cert
+./mkcert.sh genee -p critical,timeStamping -k critical,digitalSignature,cRLSign server.example ee-key ee-timestampsign-CABforum-crlsign ca-key ca-cert
+./mkcert.sh genee -p critical,timeStamping -k critical,digitalSignature,keyCertSign server.example ee-key ee-timestampsign-CABforum-keycertsign ca-key ca-cert
+./mkcert.sh genee -p critical,timeStamping server.example ee-key ee-timestampsign-rfc3161 ca-key ca-cert
+./mkcert.sh genee -p timeStamping server.example ee-key ee-timestampsign-rfc3161-noncritxku ca-key ca-cert
+./mkcert.sh genee -p critical,timeStamping -k digitalSignature server.example ee-key ee-timestampsign-rfc3161-digsig ca-key ca-cert
+
 # Leaf cert security level variants
 # MD5 issuer signature
 OPENSSL_SIGALG=md5 \
@@ -278,6 +292,12 @@ NC=$NC ./mkcert.sh genca "Test NC sub CA" ncca3-key ncca3-cert \
     "3.CN=not..dns" "4.CN=not@dns" "5.CN=not-.dns" "6.CN=not.dns." | \
     ./mkcert.sh geneealt goodcn1-key goodcn1-cert ncca1-key ncca1-cert \
     "IP = 127.0.0.1" "IP = 192.168.0.1"
+
+# all DNS-like CNs allowed by CA1, no SANs
+
+./mkcert.sh req goodcn2-key "O = Good NC Test Certificate 1" \
+    "CN=www.good.org" | \
+    ./mkcert.sh geneeconfig goodcn2-key goodcn2-cert ncca1-key ncca1-cert
 
 # Some DNS-like CNs not permitted by CA1, no DNS SANs.
 
@@ -403,6 +423,12 @@ openssl req -new -noenc -subj "/CN=localhost" \
     -pkeyopt rsa_pss_keygen_md:sha256 -pkeyopt rsa_pss_keygen_saltlen:32 | \
     ./mkcert.sh geneenocsr "Server RSA-PSS restricted cert" \
     server-pss-restrict-cert rootkey rootcert
+
+openssl req -new -noenc -subj "/CN=Client-RSA-PSS" \
+    -newkey rsa-pss -keyout client-pss-restrict-key.pem \
+    -pkeyopt rsa_pss_keygen_md:sha256 -pkeyopt rsa_pss_keygen_saltlen:32 | \
+    ./mkcert.sh geneenocsr -p clientAuth "Client RSA-PSS restricted cert" \
+    client-pss-restrict-cert rootkey rootcert
 
 # CT entry
 ./mkcert.sh genct server.example embeddedSCTs1-key embeddedSCTs1 embeddedSCTs1_issuer-key embeddedSCTs1_issuer ct-server-key

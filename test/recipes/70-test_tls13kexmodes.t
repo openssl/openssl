@@ -31,9 +31,6 @@ plan skip_all => "$test_name needs TLSv1.3 enabled"
 plan skip_all => "$test_name needs EC enabled"
     if disabled("ec");
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
-
-
 @handmessages = (
     [TLSProxy::Message::MT_CLIENT_HELLO,
         checkhandshake::ALL_HANDSHAKES],

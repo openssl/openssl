@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -158,6 +158,31 @@ static const PROV_CIPHER_HW aes_xts_t4 = {                                     \
 # define PROV_CIPHER_HW_select_xts()                                           \
 if (SPARC_AES_CAPABLE)                                                         \
     return &aes_xts_t4;
+#elif defined(RV64I_ZKND_ZKNE_CAPABLE)
+
+static int cipher_hw_aes_xts_rv64i_zknd_zkne_initkey(PROV_CIPHER_CTX *ctx,
+                                                     const unsigned char *key,
+                                                     size_t keylen)
+{
+    PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
+    OSSL_xts_stream_fn stream_enc = NULL;
+    OSSL_xts_stream_fn stream_dec = NULL;
+
+    XTS_SET_KEY_FN(rv64i_zkne_set_encrypt_key, rv64i_zknd_set_decrypt_key,
+                   rv64i_zkne_encrypt, rv64i_zknd_decrypt,
+                   stream_enc, stream_dec);
+    return 1;
+}
+
+# define PROV_CIPHER_HW_declare_xts()                                          \
+static const PROV_CIPHER_HW aes_xts_rv64i_zknd_zkne = {                        \
+    cipher_hw_aes_xts_rv64i_zknd_zkne_initkey,                                 \
+    NULL,                                                                      \
+    cipher_hw_aes_xts_copyctx                                                  \
+};
+# define PROV_CIPHER_HW_select_xts()                                           \
+if (RV64I_ZKND_ZKNE_CAPABLE)                                                   \
+    return &aes_xts_rv64i_zknd_zkne;
 # else
 /* The generic case */
 # define PROV_CIPHER_HW_declare_xts()

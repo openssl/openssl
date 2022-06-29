@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -83,6 +83,7 @@ int pkey_main(int argc, char **argv)
     char *point_format = NULL;
 #endif
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, pkey_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -171,8 +172,7 @@ int pkey_main(int argc, char **argv)
     }
 
     /* No extra arguments. */
-    argc = opt_num_rest();
-    if (argc != 0)
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     if (text && text_pub)
@@ -190,10 +190,8 @@ int pkey_main(int argc, char **argv)
 
     private = (!noout && !pubout) || (text && !text_pub);
 
-    if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher))
-            goto opthelp;
-    }
+    if (!opt_cipher(ciphername, &cipher))
+        goto opthelp;
     if (cipher == NULL) {
         if (passoutarg != NULL)
             BIO_printf(bio_err,

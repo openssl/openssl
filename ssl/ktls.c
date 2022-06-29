@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,67 @@
 
 #include "ssl_local.h"
 #include "internal/ktls.h"
+
+#ifndef OPENSSL_NO_KTLS_RX
+ /*
+  * Count the number of records that were not processed yet from record boundary.
+  *
+  * This function assumes that there are only fully formed records read in the
+  * record layer. If read_ahead is enabled, then this might be false and this
+  * function will fail.
+  */
+static int count_unprocessed_records(SSL *s)
+{
+    SSL3_BUFFER *rbuf = RECORD_LAYER_get_rbuf(&s->rlayer);
+    PACKET pkt, subpkt;
+    int count = 0;
+
+    if (!PACKET_buf_init(&pkt, rbuf->buf + rbuf->offset, rbuf->left))
+        return -1;
+
+    while (PACKET_remaining(&pkt) > 0) {
+        /* Skip record type and version */
+        if (!PACKET_forward(&pkt, 3))
+            return -1;
+
+        /* Read until next record */
+        if (!PACKET_get_length_prefixed_2(&pkt, &subpkt))
+            return -1;
+
+        count += 1;
+    }
+
+    return count;
+}
+
+/*
+ * The kernel cannot offload receive if a partial TLS record has been read.
+ * Check the read buffer for unprocessed records.  If the buffer contains a
+ * partial record, fail and return 0.  Otherwise, update the sequence
+ * number at *rec_seq for the count of unprocessed records and return 1.
+ */
+static int check_rx_read_ahead(SSL *s, unsigned char *rec_seq)
+{
+    int bit, count_unprocessed;
+
+    count_unprocessed = count_unprocessed_records(s);
+    if (count_unprocessed < 0)
+        return 0;
+
+    /* increment the crypto_info record sequence */
+    while (count_unprocessed) {
+        for (bit = 7; bit >= 0; bit--) { /* increment */
+            ++rec_seq[bit];
+            if (rec_seq[bit] != 0)
+                break;
+        }
+        count_unprocessed--;
+
+    }
+
+    return 1;
+}
+#endif
 
 #if defined(__FreeBSD__)
 # include "crypto/cryptodev.h"
@@ -37,6 +98,10 @@ int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
     case SSL_AES128GCM:
     case SSL_AES256GCM:
         return 1;
+# ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+    case SSL_CHACHA20POLY1305:
+        return 1;
+# endif
     case SSL_AES128:
     case SSL_AES256:
         if (s->ext.use_etm)
@@ -55,9 +120,9 @@ int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
 }
 
 /* Function to configure kernel TLS structure */
-int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
+int ktls_configure_crypto(SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
                           void *rl_sequence, ktls_crypto_info_t *crypto_info,
-                          unsigned char **rec_seq, unsigned char *iv,
+                          int is_tx, unsigned char *iv,
                           unsigned char *key, unsigned char *mac_key,
                           size_t mac_secret_size)
 {
@@ -71,6 +136,12 @@ int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
         else
             crypto_info->iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
         break;
+# ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+    case SSL_CHACHA20POLY1305:
+        crypto_info->cipher_algorithm = CRYPTO_CHACHA20_POLY1305;
+        crypto_info->iv_len = EVP_CIPHER_CTX_get_iv_length(dd);
+        break;
+# endif
     case SSL_AES128:
     case SSL_AES256:
         switch (s->s3.tmp.new_cipher->algorithm_mac) {
@@ -101,11 +172,11 @@ int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
     crypto_info->tls_vminor = (s->version & 0x000000ff);
 # ifdef TCP_RXTLS_ENABLE
     memcpy(crypto_info->rec_seq, rl_sequence, sizeof(crypto_info->rec_seq));
-    if (rec_seq != NULL)
-        *rec_seq = crypto_info->rec_seq;
+    if (!is_tx && !check_rx_read_ahead(s, crypto_info->rec_seq))
+        return 0;
 # else
-    if (rec_seq != NULL)
-        *rec_seq = NULL;
+    if (!is_tx)
+        return 0;
 # endif
     return 1;
 };
@@ -129,38 +200,44 @@ int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
     /* check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128 
      * or Chacha20-Poly1305
      */
-    switch (EVP_CIPHER_get_nid(c))
-    {
 # ifdef OPENSSL_KTLS_AES_CCM_128
-    case NID_aes_128_ccm:
-        if (EVP_CIPHER_CTX_get_tag_length(dd) != EVP_CCM_TLS_TAG_LEN)
-          return 0;
+    if (EVP_CIPHER_is_a(c, "AES-128-CCM")) {
+        if (s->version == TLS_1_3_VERSION /* broken on 5.x kernels */
+            || EVP_CIPHER_CTX_get_tag_length(dd) != EVP_CCM_TLS_TAG_LEN)
+            return 0;
+        return 1;
+    } else
 # endif
+    if (0
 # ifdef OPENSSL_KTLS_AES_GCM_128
-        /* Fall through */
-    case NID_aes_128_gcm:
+        || EVP_CIPHER_is_a(c, "AES-128-GCM")
 # endif
 # ifdef OPENSSL_KTLS_AES_GCM_256
-    case NID_aes_256_gcm:
+        || EVP_CIPHER_is_a(c, "AES-256-GCM")
 # endif
 # ifdef OPENSSL_KTLS_CHACHA20_POLY1305
-    case NID_chacha20_poly1305:
+        || EVP_CIPHER_is_a(c, "ChaCha20-Poly1305")
 # endif
+        ) {
         return 1;
-    default:
-        return 0;
     }
+    return 0;
 }
 
 /* Function to configure kernel TLS structure */
-int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
+int ktls_configure_crypto(SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
                           void *rl_sequence, ktls_crypto_info_t *crypto_info,
-                          unsigned char **rec_seq, unsigned char *iv,
+                          int is_tx, unsigned char *iv,
                           unsigned char *key, unsigned char *mac_key,
                           size_t mac_secret_size)
 {
     unsigned char geniv[12];
     unsigned char *iiv = iv;
+
+# ifdef OPENSSL_NO_KTLS_RX
+    if (!is_tx)
+        return 0;
+# endif
 
     if (s->version == TLS1_2_VERSION &&
         EVP_CIPHER_get_mode(c) == EVP_CIPH_GCM_MODE) {
@@ -185,8 +262,8 @@ int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
         memcpy(crypto_info->gcm128.key, key, EVP_CIPHER_get_key_length(c));
         memcpy(crypto_info->gcm128.rec_seq, rl_sequence,
                TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-        if (rec_seq != NULL)
-            *rec_seq = crypto_info->gcm128.rec_seq;
+        if (!is_tx && !check_rx_read_ahead(s, crypto_info->gcm128.rec_seq))
+            return 0;
         return 1;
 # endif
 # ifdef OPENSSL_KTLS_AES_GCM_256
@@ -200,8 +277,8 @@ int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
         memcpy(crypto_info->gcm256.key, key, EVP_CIPHER_get_key_length(c));
         memcpy(crypto_info->gcm256.rec_seq, rl_sequence,
                TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-        if (rec_seq != NULL)
-            *rec_seq = crypto_info->gcm256.rec_seq;
+        if (!is_tx && !check_rx_read_ahead(s, crypto_info->gcm256.rec_seq))
+            return 0;
         return 1;
 # endif
 # ifdef OPENSSL_KTLS_AES_CCM_128
@@ -215,8 +292,8 @@ int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
         memcpy(crypto_info->ccm128.key, key, EVP_CIPHER_get_key_length(c));
         memcpy(crypto_info->ccm128.rec_seq, rl_sequence,
                TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-        if (rec_seq != NULL)
-            *rec_seq = crypto_info->ccm128.rec_seq;
+        if (!is_tx && !check_rx_read_ahead(s, crypto_info->ccm128.rec_seq))
+            return 0;
         return 1;
 # endif
 # ifdef OPENSSL_KTLS_CHACHA20_POLY1305
@@ -230,8 +307,10 @@ int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
                EVP_CIPHER_get_key_length(c));
         memcpy(crypto_info->chacha20poly1305.rec_seq, rl_sequence,
                TLS_CIPHER_CHACHA20_POLY1305_REC_SEQ_SIZE);
-        if (rec_seq != NULL)
-            *rec_seq = crypto_info->chacha20poly1305.rec_seq;
+        if (!is_tx
+                && !check_rx_read_ahead(s,
+                                        crypto_info->chacha20poly1305.rec_seq))
+            return 0;
         return 1;
 # endif
     default:

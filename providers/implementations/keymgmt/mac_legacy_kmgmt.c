@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,12 +18,14 @@
 #include <openssl/evp.h>
 #include <openssl/proverr.h>
 #include <openssl/param_build.h>
+#ifndef FIPS_MODULE
+# include <openssl/engine.h>
+#endif
 #include "internal/param_build_set.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/macsignature.h"
-#include "e_os.h" /* strcasecmp */
 
 static OSSL_FUNC_keymgmt_new_fn mac_new;
 static OSSL_FUNC_keymgmt_free_fn mac_free;
@@ -106,7 +108,7 @@ int ossl_mac_key_up_ref(MAC_KEY *mackey)
 
     /* This is effectively doing a new operation on the MAC_KEY and should be
      * adequately guarded again modules' error states.  However, both current
-     * calls here are guarded propery in signature/mac_legacy.c.  Thus, it
+     * calls here are guarded properly in signature/mac_legacy.c.  Thus, it
      * could be removed here.  The concern is that something in the future
      * might call this function without adequate guards.  It's a cheap call,
      * it seems best to leave it even though it is currently redundant.
@@ -505,6 +507,7 @@ static void *mac_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
      * of this can be removed and we will only support the EVP_KDF APIs.
      */
     if (!ossl_prov_cipher_copy(&key->cipher, &gctx->cipher)) {
+        ossl_mac_key_free(key);
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return NULL;
     }

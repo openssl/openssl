@@ -1,6 +1,9 @@
 
 ## Config file for proxy certificate testing.
 
+# Comment out the next line to ignore configuration errors
+config_diagnostics = 1
+
 [ req ]
 distinguished_name	= req_distinguished_name_p1
 encrypt_rsa_key		= no

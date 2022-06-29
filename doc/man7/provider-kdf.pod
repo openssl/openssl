@@ -58,8 +58,8 @@ function pointer from an B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" OSSL_FUNC_kdf_newctx() has these:
 
- typedef void *(OSSL_OSSL_FUNC_kdf_newctx_fn)(void *provctx);
- static ossl_inline OSSL_OSSL_FUNC_kdf_newctx_fn
+ typedef void *(OSSL_FUNC_kdf_newctx_fn)(void *provctx);
+ static ossl_inline OSSL_FUNC_kdf_newctx_fn
      OSSL_FUNC_kdf_newctx(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> array entries are identified by numbers that are provided as
@@ -198,7 +198,7 @@ Sets the mode in the associated KDF ctx.
 
 =item "pkcs5" (B<OSSL_KDF_PARAM_PKCS5>) <integer>
 
-Enables or diables the SP800-132 compliance checks.
+Enables or disables the SP800-132 compliance checks.
 A mode of 0 enables the compliance checks.
 
 The checks performed are:
@@ -238,6 +238,21 @@ Sets the scrypt work factor parameter p in the associated KDF ctx.
 =item "maxmem_bytes" (B<OSSL_KDF_PARAM_SCRYPT_MAXMEM>) <unsigned integer>
 
 Sets the scrypt work factor parameter maxmem in the associated KDF ctx.
+
+=item "prefix" (B<OSSL_KDF_PARAM_PREFIX>) <octet string>
+
+Sets the prefix string using by the TLS 1.3 version of HKDF in the
+associated KDF ctx.
+
+=item "label" (B<OSSL_KDF_PARAM_LABEL>) <octet string>
+
+Sets the label string using by the TLS 1.3 version of HKDF in the
+associated KDF ctx.
+
+=item "data" (B<OSSL_KDF_PARAM_DATA>) <octet string>
+
+Sets the context string using by the TLS 1.3 version of HKDF in the
+associated KDF ctx.
 
 =item "info" (B<OSSL_KDF_PARAM_INFO>) <octet string>
 
@@ -334,7 +349,7 @@ The provider KDF interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,11 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/rand.h>
 #include "ssl_local.h"
+#include "internal/time.h"
 
 static void get_current_time(struct timeval *t);
 static int dtls1_handshake_write(SSL *s);
@@ -352,7 +353,7 @@ static void dtls1_double_timeout(SSL *s)
 void dtls1_stop_timer(SSL *s)
 {
     /* Reset everything */
-    memset(&s->d1->timeout, 0, sizeof(s->d1->timeout));
+    s->d1->timeout_num_alerts = 0;
     memset(&s->d1->next_timeout, 0, sizeof(s->d1->next_timeout));
     s->d1->timeout_duration_us = 1000000;
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
@@ -365,10 +366,10 @@ int dtls1_check_timeout_num(SSL *s)
 {
     size_t mtu;
 
-    s->d1->timeout.num_alerts++;
+    s->d1->timeout_num_alerts++;
 
     /* Reduce MTU after 2 unsuccessful retransmissions */
-    if (s->d1->timeout.num_alerts > 2
+    if (s->d1->timeout_num_alerts > 2
         && !(SSL_get_options(s) & SSL_OP_NO_QUERY_MTU)) {
         mtu =
             BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_GET_FALLBACK_MTU, 0, NULL);
@@ -376,7 +377,7 @@ int dtls1_check_timeout_num(SSL *s)
             s->d1->mtu = mtu;
     }
 
-    if (s->d1->timeout.num_alerts > DTLS1_TMO_ALERT_COUNT) {
+    if (s->d1->timeout_num_alerts > DTLS1_TMO_ALERT_COUNT) {
         /* fail the connection, enough alerts have been sent */
         SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_READ_TIMEOUT_EXPIRED);
         return -1;
@@ -402,11 +403,6 @@ int dtls1_handle_timeout(SSL *s)
         return -1;
     }
 
-    s->d1->timeout.read_timeouts++;
-    if (s->d1->timeout.read_timeouts > DTLS1_TMO_READ_COUNT) {
-        s->d1->timeout.read_timeouts = 1;
-    }
-
     dtls1_start_timer(s);
     /* Calls SSLfatal() if required */
     return dtls1_retransmit_buffered_messages(s);
@@ -414,28 +410,7 @@ int dtls1_handle_timeout(SSL *s)
 
 static void get_current_time(struct timeval *t)
 {
-#if defined(_WIN32)
-    SYSTEMTIME st;
-    union {
-        unsigned __int64 ul;
-        FILETIME ft;
-    } now;
-
-    GetSystemTime(&st);
-    SystemTimeToFileTime(&st, &now.ft);
-    /* re-bias to 1/1/1970 */
-# ifdef  __MINGW32__
-    now.ul -= 116444736000000000ULL;
-# else
-    /* *INDENT-OFF* */
-    now.ul -= 116444736000000000UI64;
-    /* *INDENT-ON* */
-# endif
-    t->tv_sec = (long)(now.ul / 10000000);
-    t->tv_usec = ((int)(now.ul % 10000000)) / 10;
-#else
-    gettimeofday(t, NULL);
-#endif
+    ossl_time_time_to_timeval(ossl_time_now(), t);
 }
 
 #define LISTEN_SUCCESS              2

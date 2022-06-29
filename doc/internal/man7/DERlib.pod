@@ -81,7 +81,7 @@ As a reminder, the AlgorithmIdentifier is specified like this:
     -- From RFC 3280, section 4.1.1.2
     AlgorithmIdentifier  ::=  SEQUENCE  {
          algorithm               OBJECT IDENTIFIER,
-         parameters              ANY DEFINED BY algorithm OPTIONAL  }    
+         parameters              ANY DEFINED BY algorithm OPTIONAL  }
 
 And the RSASSA-PSS OID and parameters are specified like this:
 
@@ -118,7 +118,7 @@ value:
     {
         return ossl_DER_w_begin_sequence(pkt, tag)
             && (ossl_DER_w_begin_sequence(pkt, DER_NO_CONTEXT)
-                && ossl_DER_w_ulong(pkt, 2, 20)
+                && ossl_DER_w_uint32(pkt, 2, 20)
                 && ossl_DER_w_precompiled(pkt, 1,
                                           der_mgf1SHA256Identifier,
                                           sizeof(der_mgf1SHA256Identifier))

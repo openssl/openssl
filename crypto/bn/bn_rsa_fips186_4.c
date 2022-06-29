@@ -106,18 +106,22 @@ static int bn_rsa_fips186_4_find_aux_prob_prime(const BIGNUM *Xp1,
 {
     int ret = 0;
     int i = 0;
+    int tmp = 0;
 
     if (BN_copy(p1, Xp1) == NULL)
         return 0;
     BN_set_flags(p1, BN_FLG_CONSTTIME);
 
     /* Find the first odd number >= Xp1 that is probably prime */
-    for(;;) {
+    for (;;) {
         i++;
         BN_GENCB_call(cb, 0, i);
         /* MR test with trial division */
-        if (BN_check_prime(p1, ctx, cb))
+        tmp = BN_check_prime(p1, ctx, cb);
+        if (tmp > 0)
             break;
+        if (tmp < 0)
+            goto err;
         /* Get next odd number */
         if (!BN_add_word(p1, 2))
             goto err;
@@ -299,7 +303,14 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
     if (BN_is_negative(R) && !BN_add(R, R, r1r2x2))
         goto err;
 
-    imax = 5 * bits; /* max = 5/2 * nbits */
+    /*
+     * In FIPS 186-4 imax was set to 5 * nlen/2.
+     * Analysis by Allen Roginsky (See https://csrc.nist.gov/CSRC/media/Publications/fips/186/4/final/documents/comments-received-fips186-4-december-2015.pdf
+     * page 68) indicates this has a 1 in 2 million chance of failure.
+     * The number has been updated to 20 * nlen/2 as used in
+     * FIPS186-5 Appendix B.9 Step 9.
+     */
+    imax = 20 * bits; /* max = 20/2 * nbits */
     for (;;) {
         if (Xin == NULL) {
             /*
@@ -329,10 +340,20 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
                     || !BN_sub_word(y1, 1)
                     || !BN_gcd(tmp, y1, e, ctx))
                 goto err;
-            if (BN_is_one(tmp) && BN_check_prime(Y, ctx, cb))
-                goto end;
+            if (BN_is_one(tmp)) {
+                int rv = BN_check_prime(Y, ctx, cb);
+
+                if (rv > 0)
+                    goto end;
+                if (rv < 0)
+                    goto err;
+            }
             /* (Step 8-10) */
-            if (++i >= imax || !BN_add(Y, Y, r1r2x2))
+            if (++i >= imax) {
+                ERR_raise(ERR_LIB_BN, BN_R_NO_PRIME_CANDIDATE);
+                goto err;
+            }
+            if (!BN_add(Y, Y, r1r2x2))
                 goto err;
         }
     }

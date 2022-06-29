@@ -199,14 +199,19 @@ static OSSL_PARAM *construct_hkdf_params(char *digest, char *key,
     if (params == NULL)
         return NULL;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            digest, 0);
+    if (digest != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                                digest, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
                                              salt, strlen(salt));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                              (unsigned char *)key, keylen);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
-                                             info, strlen(info));
+    if (info != NULL)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+                                                 info, strlen(info));
+    else
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MODE,
+                                                "EXTRACT_ONLY", 0);
     *p = OSSL_PARAM_construct_end();
 
     return params;
@@ -234,6 +239,66 @@ static int test_kdf_hkdf(void)
     return ret;
 }
 
+static int do_kdf_hkdf_gettables(int expand_only, int has_digest)
+{
+    int ret = 0;
+    size_t sz = 0;
+    OSSL_PARAM *params;
+    OSSL_PARAM params_get[2];
+    const OSSL_PARAM *gettables, *p;
+    EVP_KDF_CTX *kctx = NULL;
+
+    if (!TEST_ptr(params = construct_hkdf_params(
+                                                 has_digest ? "sha256" : NULL,
+                                                 "secret", 6, "salt",
+                                                 expand_only ? NULL : "label"))
+        || !TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_HKDF))
+        || !TEST_true(EVP_KDF_CTX_set_params(kctx, params)))
+        goto err;
+
+    /* Check OSSL_KDF_PARAM_SIZE is gettable */
+    if (!TEST_ptr(gettables = EVP_KDF_CTX_gettable_params(kctx))
+        || !TEST_ptr(p = OSSL_PARAM_locate_const(gettables, OSSL_KDF_PARAM_SIZE)))
+        goto err;
+
+    /* Get OSSL_KDF_PARAM_SIZE as a size_t */
+    params_get[0] = OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_SIZE, &sz);
+    params_get[1] = OSSL_PARAM_construct_end();
+    if (has_digest) {
+        if (!TEST_int_eq(EVP_KDF_CTX_get_params(kctx, params_get), 1)
+            || !TEST_size_t_eq(sz, expand_only ? SHA256_DIGEST_LENGTH : SIZE_MAX))
+            goto err;
+    } else {
+        if (!TEST_int_eq(EVP_KDF_CTX_get_params(kctx, params_get), 0))
+            goto err;
+    }
+
+    /* Get params returns -2 if an unsupported parameter is requested */
+    params_get[0] = OSSL_PARAM_construct_end();
+    if (!TEST_int_eq(EVP_KDF_CTX_get_params(kctx, params_get), -2))
+        goto err;
+    ret = 1;
+err:
+    EVP_KDF_CTX_free(kctx);
+    OPENSSL_free(params);
+    return ret;
+}
+
+static int test_kdf_hkdf_gettables(void)
+{
+    return do_kdf_hkdf_gettables(0, 1);
+}
+
+static int test_kdf_hkdf_gettables_expandonly(void)
+{
+    return do_kdf_hkdf_gettables(1, 1);
+}
+
+static int test_kdf_hkdf_gettables_no_digest(void)
+{
+    return do_kdf_hkdf_gettables(1, 0);
+}
+
 static int test_kdf_hkdf_invalid_digest(void)
 {
     int ret;
@@ -249,6 +314,89 @@ static int test_kdf_hkdf_invalid_digest(void)
     EVP_KDF_CTX_free(kctx);
     OPENSSL_free(params);
     return ret;
+}
+
+static int test_kdf_hkdf_derive_set_params_fail(void)
+{
+    int ret = 0, i = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[2];
+    unsigned char out[10];
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_HKDF)))
+        goto end;
+    /*
+     * Set the wrong type for the digest so that it causes a failure
+     * inside kdf_hkdf_derive() when kdf_hkdf_set_ctx_params() is called
+     */
+    params[0] = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_DIGEST, &i);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_int_eq(EVP_KDF_derive(kctx, out, sizeof(out), params), 0))
+        goto end;
+    ret = 1;
+end:
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+static int test_kdf_hkdf_set_invalid_mode(void)
+{
+    int ret = 0, bad_mode = 100;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[2];
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_HKDF)))
+        goto end;
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MODE,
+                                                 "BADMODE", 0);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_int_eq(EVP_KDF_CTX_set_params(kctx, params), 0))
+        goto end;
+
+    params[0] = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &bad_mode);
+    if (!TEST_int_eq(EVP_KDF_CTX_set_params(kctx, params), 0))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+static int do_kdf_hkdf_set_invalid_param(const char *key, int type)
+{
+    int ret = 0;
+    EVP_KDF_CTX *kctx = NULL;
+    OSSL_PARAM params[2];
+    unsigned char buf[2];
+
+    if (!TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_HKDF)))
+        goto end;
+    /* Set the wrong type for the key so that it causes a failure */
+    if (type == OSSL_PARAM_UTF8_STRING)
+        params[0] = OSSL_PARAM_construct_utf8_string(key, "BAD", 0);
+    else
+        params[0] = OSSL_PARAM_construct_octet_string(key, buf, sizeof(buf));
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_int_eq(EVP_KDF_CTX_set_params(kctx, params), 0))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+
+static int test_kdf_hkdf_set_ctx_param_fail(void)
+{
+    return do_kdf_hkdf_set_invalid_param(OSSL_KDF_PARAM_MODE,
+                                         OSSL_PARAM_OCTET_STRING)
+           && do_kdf_hkdf_set_invalid_param(OSSL_KDF_PARAM_KEY,
+                                            OSSL_PARAM_UTF8_STRING)
+           && do_kdf_hkdf_set_invalid_param(OSSL_KDF_PARAM_SALT,
+                                            OSSL_PARAM_UTF8_STRING)
+           && do_kdf_hkdf_set_invalid_param(OSSL_KDF_PARAM_INFO,
+                                            OSSL_PARAM_UTF8_STRING);
 }
 
 static int test_kdf_hkdf_zero_output_size(void)
@@ -354,7 +502,8 @@ static int test_kdf_pbkdf1(void)
     unsigned int iterations = 4096;
     OSSL_LIB_CTX *libctx = NULL;
     OSSL_PARAM *params = NULL;
-    OSSL_PROVIDER *prov = NULL;
+    OSSL_PROVIDER *legacyprov = NULL;
+    OSSL_PROVIDER *defprov = NULL;
     const unsigned char expected[sizeof(out)] = {
         0xfb, 0x83, 0x4d, 0x36, 0x6d, 0xbc, 0x53, 0x87, 0x35, 0x1b, 0x34, 0x75,
         0x95, 0x88, 0x32, 0x4f, 0x3e, 0x82, 0x81, 0x01, 0x21, 0x93, 0x64, 0x00,
@@ -365,9 +514,14 @@ static int test_kdf_pbkdf1(void)
         goto err;
 
     /* PBKDF1 only available in the legacy provider */
-    prov = OSSL_PROVIDER_load(libctx, "legacy");
-    if (prov == NULL)
+    legacyprov = OSSL_PROVIDER_load(libctx, "legacy");
+    if (legacyprov == NULL) {
+        OSSL_LIB_CTX_free(libctx);
         return TEST_skip("PBKDF1 only available in legacy provider");
+    }
+
+    if (!TEST_ptr(defprov = OSSL_PROVIDER_load(libctx, "default")))
+        goto err;
 
     params = construct_pbkdf1_params("passwordPASSWORDpassword", "sha256",
                                      "saltSALTsaltSALTsaltSALTsaltSALTsalt",
@@ -384,7 +538,8 @@ static int test_kdf_pbkdf1(void)
 err:
     EVP_KDF_CTX_free(kctx);
     OPENSSL_free(params);
-    OSSL_PROVIDER_unload(prov);
+    OSSL_PROVIDER_unload(defprov);
+    OSSL_PROVIDER_unload(legacyprov);
     OSSL_LIB_CTX_free(libctx);
     return ret;
 }
@@ -913,9 +1068,9 @@ static int test_kdf_kbkdf_6803_256(void)
 #endif
 
 static OSSL_PARAM *construct_kbkdf_params(char *digest, char *mac, unsigned char *key,
-    size_t keylen, char *salt, char *info)
+    size_t keylen, char *salt, char *info, int *r)
 {
-    OSSL_PARAM *params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 7);
+    OSSL_PARAM *params = OPENSSL_malloc(sizeof(OSSL_PARAM) * 8);
     OSSL_PARAM *p = params;
 
     if (params == NULL)
@@ -933,6 +1088,8 @@ static OSSL_PARAM *construct_kbkdf_params(char *digest, char *mac, unsigned char
         OSSL_KDF_PARAM_SALT, salt, strlen(salt));
     *p++ = OSSL_PARAM_construct_octet_string(
         OSSL_KDF_PARAM_INFO, info, strlen(info));
+    *p++ = OSSL_PARAM_construct_int(
+        OSSL_KDF_PARAM_KBKDF_R, r);
     *p = OSSL_PARAM_construct_end();
 
     return params;
@@ -945,8 +1102,9 @@ static int test_kdf_kbkdf_invalid_digest(void)
     OSSL_PARAM *params;
 
     static unsigned char key[] = {0x01};
+    int r = 32;
 
-    params = construct_kbkdf_params("blah", "HMAC", key, 1, "prf", "test");
+    params = construct_kbkdf_params("blah", "HMAC", key, 1, "prf", "test", &r);
     if (!TEST_ptr(params))
         return 0;
 
@@ -967,8 +1125,9 @@ static int test_kdf_kbkdf_invalid_mac(void)
     OSSL_PARAM *params;
 
     static unsigned char key[] = {0x01};
+    int r = 32;
 
-    params = construct_kbkdf_params("sha256", "blah", key, 1, "prf", "test");
+    params = construct_kbkdf_params("sha256", "blah", key, 1, "prf", "test", &r);
     if (!TEST_ptr(params))
         return 0;
 
@@ -982,6 +1141,30 @@ static int test_kdf_kbkdf_invalid_mac(void)
     return ret;
 }
 
+static int test_kdf_kbkdf_invalid_r(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx;
+    OSSL_PARAM *params;
+
+    static unsigned char key[] = {0x01};
+    int r = 31;
+
+    params = construct_kbkdf_params("sha256", "HMAC", key, 1, "prf", "test", &r);
+    if (!TEST_ptr(params))
+        return 0;
+
+    /* Negative test case - derive should fail */
+    kctx = get_kdfbyname("KBKDF");
+    ret = TEST_ptr(kctx)
+        && TEST_false(EVP_KDF_CTX_set_params(kctx, params));
+
+    EVP_KDF_CTX_free(kctx);
+    OPENSSL_free(params);
+    return ret;
+}
+
+
 static int test_kdf_kbkdf_empty_key(void)
 {
     int ret;
@@ -990,8 +1173,9 @@ static int test_kdf_kbkdf_empty_key(void)
 
     static unsigned char key[] = {0x01};
     unsigned char result[32] = { 0 };
+    int r = 32;
 
-    params = construct_kbkdf_params("sha256", "HMAC", key, 0, "prf", "test");
+    params = construct_kbkdf_params("sha256", "HMAC", key, 0, "prf", "test", &r);
     if (!TEST_ptr(params))
         return 0;
 
@@ -1014,8 +1198,9 @@ static int test_kdf_kbkdf_1byte_key(void)
 
     static unsigned char key[] = {0x01};
     unsigned char result[32] = { 0 };
+    int r = 32;
 
-    params = construct_kbkdf_params("sha256", "HMAC", key, 1, "prf", "test");
+    params = construct_kbkdf_params("sha256", "HMAC", key, 1, "prf", "test", &r);
     if (!TEST_ptr(params))
         return 0;
 
@@ -1036,8 +1221,9 @@ static int test_kdf_kbkdf_zero_output_size(void)
 
     static unsigned char key[] = {0x01};
     unsigned char result[32] = { 0 };
+    int r = 32;
 
-    params = construct_kbkdf_params("sha256", "HMAC", key, 1, "prf", "test");
+    params = construct_kbkdf_params("sha256", "HMAC", key, 1, "prf", "test", &r);
     if (!TEST_ptr(params))
         return 0;
 
@@ -1143,7 +1329,6 @@ static int test_kdf_kbkdf_8009_prf2(void)
  * Test vector taken from
  * https://csrc.nist.gov/CSRC/media/Projects/
  *    Cryptographic-Algorithm-Validation-Program/documents/KBKDF800-108/CounterMode.zip
- *    Note: Only 32 bit counter is supported ([RLEN=32_BITS])
  */
 static int test_kdf_kbkdf_fixedinfo(void)
 {
@@ -1341,7 +1526,7 @@ static int test_kdf_sshkdf(void)
     return ret;
 }
 
-static int test_kdfs_same( EVP_KDF *kdf1, EVP_KDF *kdf2)
+static int test_kdfs_same(EVP_KDF *kdf1, EVP_KDF *kdf2)
 {
     /* Fast path in case the two are the same algorithm pointer */
     if (kdf1 == kdf2)
@@ -1473,6 +1658,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_kdf_kbkdf_invalid_digest);
     ADD_TEST(test_kdf_kbkdf_invalid_mac);
+    ADD_TEST(test_kdf_kbkdf_invalid_r);
     ADD_TEST(test_kdf_kbkdf_zero_output_size);
     ADD_TEST(test_kdf_kbkdf_empty_key);
     ADD_TEST(test_kdf_kbkdf_1byte_key);
@@ -1495,6 +1681,12 @@ int setup_tests(void)
     ADD_TEST(test_kdf_hkdf_empty_key);
     ADD_TEST(test_kdf_hkdf_1byte_key);
     ADD_TEST(test_kdf_hkdf_empty_salt);
+    ADD_TEST(test_kdf_hkdf_gettables);
+    ADD_TEST(test_kdf_hkdf_gettables_expandonly);
+    ADD_TEST(test_kdf_hkdf_gettables_no_digest);
+    ADD_TEST(test_kdf_hkdf_derive_set_params_fail);
+    ADD_TEST(test_kdf_hkdf_set_invalid_mode);
+    ADD_TEST(test_kdf_hkdf_set_ctx_param_fail);
     ADD_TEST(test_kdf_pbkdf2);
     ADD_TEST(test_kdf_pbkdf2_small_output);
     ADD_TEST(test_kdf_pbkdf2_large_output);

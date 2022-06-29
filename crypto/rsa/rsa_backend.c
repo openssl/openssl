@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,13 +18,14 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#ifndef FIPS_MODULE
+# include <openssl/x509.h>
+# include "crypto/asn1.h"
+#endif
 #include "internal/sizes.h"
 #include "internal/param_build_set.h"
-#include "crypto/asn1.h"
 #include "crypto/rsa.h"
 #include "rsa_local.h"
-
-#include "e_os.h"                /* strcasecmp for Windows() */
 
 /*
  * The intention with the "backend" source file is to offer backend support
@@ -43,23 +44,26 @@ static int collect_numbers(STACK_OF(BIGNUM) *numbers,
     if (numbers == NULL)
         return 0;
 
-    for (i = 0; names[i] != NULL; i++){
+    for (i = 0; names[i] != NULL; i++) {
         p = OSSL_PARAM_locate_const(params, names[i]);
         if (p != NULL) {
             BIGNUM *tmp = NULL;
 
-            if (!OSSL_PARAM_get_BN(p, &tmp)
-                || sk_BIGNUM_push(numbers, tmp) == 0)
+            if (!OSSL_PARAM_get_BN(p, &tmp))
                 return 0;
+            if (sk_BIGNUM_push(numbers, tmp) == 0) {
+                BN_clear_free(tmp);
+                return 0;
+            }
         }
     }
 
     return 1;
 }
 
-int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[])
+int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
 {
-    const OSSL_PARAM *param_n, *param_e,  *param_d;
+    const OSSL_PARAM *param_n, *param_e,  *param_d = NULL;
     BIGNUM *n = NULL, *e = NULL, *d = NULL;
     STACK_OF(BIGNUM) *factors = NULL, *exps = NULL, *coeffs = NULL;
     int is_private = 0;
@@ -69,7 +73,8 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[])
 
     param_n = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_N);
     param_e = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_E);
-    param_d = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_D);
+    if (include_private)
+        param_d = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_D);
 
     if ((param_n != NULL && !OSSL_PARAM_get_BN(param_n, &n))
         || (param_e != NULL && !OSSL_PARAM_get_BN(param_e, &e))
@@ -115,7 +120,8 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[])
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
-int ossl_rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
+int ossl_rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[],
+                    int include_private)
 {
     int ret = 0;
     const BIGNUM *rsa_d = NULL, *rsa_n = NULL, *rsa_e = NULL;
@@ -134,7 +140,7 @@ int ossl_rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
         goto err;
 
     /* Check private key data integrity */
-    if (rsa_d != NULL) {
+    if (include_private && rsa_d != NULL) {
         int numprimes = sk_BIGNUM_const_num(factors);
         int numexps = sk_BIGNUM_const_num(exps);
         int numcoeffs = sk_BIGNUM_const_num(coeffs);
@@ -270,8 +276,8 @@ int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
         else if (!OSSL_PARAM_get_utf8_ptr(param_mgf, &mgfname))
             return 0;
 
-        if (strcasecmp(param_mgf->data,
-                       ossl_rsa_mgf_nid2name(default_maskgenalg_nid)) != 0)
+        if (OPENSSL_strcasecmp(param_mgf->data,
+                               ossl_rsa_mgf_nid2name(default_maskgenalg_nid)) != 0)
             return 0;
     }
 
@@ -389,6 +395,8 @@ RSA *ossl_rsa_dup(const RSA *rsa, int selection)
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
         && (pnum = sk_RSA_PRIME_INFO_num(rsa->prime_infos)) > 0) {
         dupkey->prime_infos = sk_RSA_PRIME_INFO_new_reserve(NULL, pnum);
+        if (dupkey->prime_infos == NULL)
+            goto err;
         for (i = 0; i < pnum; i++) {
             const RSA_PRIME_INFO *pinfo = NULL;
             RSA_PRIME_INFO *duppinfo = NULL;
@@ -518,7 +526,7 @@ int ossl_rsa_pss_get_param_unverified(const RSA_PSS_PARAMS *pss,
     if (pss->trailerField)
         *ptrailerField = ASN1_INTEGER_get(pss->trailerField);
     else
-        *ptrailerField = ossl_rsa_pss_params_30_trailerfield(&pss_params);;
+        *ptrailerField = ossl_rsa_pss_params_30_trailerfield(&pss_params);
 
     return 1;
 }

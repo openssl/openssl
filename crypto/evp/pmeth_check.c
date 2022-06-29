@@ -13,7 +13,9 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "crypto/bn.h"
-#include "crypto/asn1.h"
+#ifndef FIPS_MODULE
+# include "crypto/asn1.h"
+#endif
 #include "crypto/evp.h"
 #include "evp_local.h"
 
@@ -150,26 +152,12 @@ int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx)
     return -2;
 }
 
-int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx)
+int EVP_PKEY_check(EVP_PKEY_CTX *ctx)
 {
-    EVP_PKEY *pkey = ctx->pkey;
-    int ok;
-
-    if (pkey == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
-        return 0;
-    }
-
-    if ((ok = try_provided_check(ctx, OSSL_KEYMGMT_SELECT_KEYPAIR,
-                                 OSSL_KEYMGMT_VALIDATE_FULL_CHECK)) != -1)
-        return ok;
-
-    /* not supported for legacy keys */
-    ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-    return -2;
+    return EVP_PKEY_pairwise_check(ctx);
 }
 
-int EVP_PKEY_check(EVP_PKEY_CTX *ctx)
+int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx)
 {
     EVP_PKEY *pkey = ctx->pkey;
     int ok;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,7 @@
 /* We need to use some STORE deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include "e_os.h"
+#include "internal/e_os.h"
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>
@@ -72,7 +72,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     OSSL_STORE_CTX *ctx = NULL;
     char *propq_copy = NULL;
     int no_loader_found = 1;
-    char scheme_copy[256], *p, *schemes[2];
+    char scheme_copy[256], *p, *schemes[2], *scheme = NULL;
     size_t schemes_n = 0;
     size_t i;
 
@@ -93,8 +93,8 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     OPENSSL_strlcpy(scheme_copy, uri, sizeof(scheme_copy));
     if ((p = strchr(scheme_copy, ':')) != NULL) {
         *p++ = '\0';
-        if (strcasecmp(scheme_copy, "file") != 0) {
-            if (strncmp(p, "//", 2) == 0)
+        if (OPENSSL_strcasecmp(scheme_copy, "file") != 0) {
+            if (HAS_PREFIX(p, "//"))
                 schemes_n--;         /* Invalidate the file scheme */
             schemes[schemes_n++] = scheme_copy;
         }
@@ -111,20 +111,25 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
      * elsewhere.
      */
     for (i = 0; loader_ctx == NULL && i < schemes_n; i++) {
-        OSSL_TRACE1(STORE, "Looking up scheme %s\n", schemes[i]);
+        scheme = schemes[i];
+        OSSL_TRACE1(STORE, "Looking up scheme %s\n", scheme);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-        if ((loader = ossl_store_get0_loader_int(schemes[i])) != NULL) {
+        ERR_set_mark();
+        if ((loader = ossl_store_get0_loader_int(scheme)) != NULL) {
+            ERR_clear_last_mark();
             no_loader_found = 0;
             if (loader->open_ex != NULL)
                 loader_ctx = loader->open_ex(loader, uri, libctx, propq,
                                              ui_method, ui_data);
             else
                 loader_ctx = loader->open(loader, uri, ui_method, ui_data);
+        } else {
+            ERR_pop_to_mark();
         }
 #endif
         if (loader == NULL
             && (fetched_loader =
-                OSSL_STORE_LOADER_fetch(libctx, schemes[i], propq)) != NULL) {
+                OSSL_STORE_LOADER_fetch(libctx, scheme, propq)) != NULL) {
             const OSSL_PROVIDER *provider =
                 OSSL_STORE_LOADER_get0_provider(fetched_loader);
             void *provctx = OSSL_PROVIDER_get0_provider_ctx(provider);
@@ -134,8 +139,8 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
             if (loader_ctx == NULL) {
                 OSSL_STORE_LOADER_free(fetched_loader);
                 fetched_loader = NULL;
-            } else if(!loader_set_params(fetched_loader, loader_ctx,
-                                         params, propq)) {
+            } else if (!loader_set_params(fetched_loader, loader_ctx,
+                                          params, propq)) {
                 (void)fetched_loader->p_close(loader_ctx);
                 OSSL_STORE_LOADER_free(fetched_loader);
                 fetched_loader = NULL;
@@ -151,7 +156,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
          */
         goto err;
 
-    OSSL_TRACE1(STORE, "Found loader for scheme %s\n", schemes[i]);
+    OSSL_TRACE1(STORE, "Found loader for scheme %s\n", scheme);
 
     if (loader_ctx == NULL)
         /*
@@ -210,6 +215,8 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
          */
         (void)ossl_store_close_it(&tmpctx);
     }
+    /* Coverity false positive, the reference counting is confusing it */
+    /* coverity[pass_freed_arg] */
     OSSL_STORE_LOADER_free(fetched_loader);
     OPENSSL_free(propq_copy);
     OPENSSL_free(ctx);
@@ -513,7 +520,7 @@ static int ossl_store_close_it(OSSL_STORE_CTX *ctx)
         ret = ctx->loader->p_close(ctx->loader_ctx);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     if (ctx->fetched_loader == NULL)
-        ret = ctx->loader->close(ctx->loader_ctx);
+        ret = ctx->loader->closefn(ctx->loader_ctx);
 #endif
 
     sk_OSSL_STORE_INFO_pop_free(ctx->cached_info, OSSL_STORE_INFO_free);

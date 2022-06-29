@@ -3,7 +3,7 @@
 =head1 NAME
 
 BIO_s_accept, BIO_set_accept_name, BIO_set_accept_port, BIO_get_accept_name,
-BIO_get_accept_port, BIO_new_accept, BIO_set_nbio_accept, BIO_set_accept_bios,
+BIO_get_accept_port, BIO_new_accept, BIO_set_nbio_accept, BIO_set_tfo_accept, BIO_set_accept_bios,
 BIO_get_peer_name, BIO_get_peer_port,
 BIO_get_accept_ip_family, BIO_set_accept_ip_family,
 BIO_set_bind_mode, BIO_get_bind_mode, BIO_do_accept - accept BIO
@@ -23,6 +23,7 @@ BIO_set_bind_mode, BIO_get_bind_mode, BIO_do_accept - accept BIO
  BIO *BIO_new_accept(char *host_port);
 
  long BIO_set_nbio_accept(BIO *b, int n);
+ long BIO_set_tfo_accept(BIO *b, int n);
  long BIO_set_accept_bios(BIO *b, char *bio);
 
  char *BIO_get_peer_name(BIO *b);
@@ -87,6 +88,11 @@ B<host_port>.
 BIO_set_nbio_accept() sets the accept socket to blocking mode
 (the default) if B<n> is 0 or non blocking mode if B<n> is 1.
 
+BIO_set_tfo_accept() enables TCP Fast Open on the accept socket
+if B<n> is 1 or disables TCP Fast Open if B<n> is 0 (the default).
+Setting the value to 1 is equivalent to setting B<BIO_SOCK_TFO>
+in BIO_set_bind_mode().
+
 BIO_set_accept_bios() can be used to set a chain of BIOs which
 will be duplicated and prepended to the chain when an incoming
 connection is received. This is useful if, for example, a
@@ -107,7 +113,9 @@ B<BIO_BIND_REUSEADDR> is set then other sockets can bind to the
 same port. If B<BIO_BIND_REUSEADDR_IF_UNUSED> is set then and
 attempt is first made to use BIO_BIN_NORMAL, if this fails
 and the port is not in use then a second attempt is made
-using B<BIO_BIND_REUSEADDR>.
+using B<BIO_BIND_REUSEADDR>. If B<BIO_SOCK_TFO> is set, then
+the socket will be configured to accept TCP Fast Open
+connections.
 
 BIO_do_accept() serves two functions. When it is first
 called, after the accept BIO has been setup, it will attempt
@@ -169,16 +177,16 @@ BIO_set_bind_mode(), BIO_get_bind_mode() and BIO_do_accept() are macros.
 BIO_do_accept(),
 BIO_set_accept_name(), BIO_set_accept_port(), BIO_set_nbio_accept(),
 BIO_set_accept_bios(), BIO_set_accept_ip_family(), and BIO_set_bind_mode()
-return 1 for success and 0 or -1 for failure.
+return 1 for success and <=0 for failure.
 
 BIO_get_accept_name() returns the accept name or NULL on error.
 BIO_get_peer_name() returns the peer name or NULL on error.
 
 BIO_get_accept_port() returns the accept port as a string or NULL on error.
 BIO_get_peer_port() returns the peer port as a string or NULL on error.
-BIO_get_accept_ip_family() returns the IP family or -1 on error.
+BIO_get_accept_ip_family() returns the IP family or <=0 on error.
 
-BIO_get_bind_mode() returns the set of B<BIO_BIND> flags, or -1 on failure.
+BIO_get_bind_mode() returns the set of B<BIO_BIND> flags, or <=0 on failure.
 
 BIO_new_accept() returns a BIO or NULL on error.
 
@@ -230,9 +238,13 @@ down each and finally closes both down.
  BIO_free(cbio);
  BIO_free(cbio2);
 
+=head1 HISTORY
+
+BIO_set_tfo_accept() was added in OpenSSL 3.1.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

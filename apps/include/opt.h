@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -163,7 +163,8 @@
         OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, OPT_S_CIPHERSUITES, \
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
         OPT_S_MINPROTO, OPT_S_MAXPROTO, \
-        OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S_NO_ETM, OPT_S__LAST
+        OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S_NO_ETM, \
+        OPT_S_NO_EMS, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
         OPT_SECTION("TLS/SSL"), \
@@ -218,7 +219,9 @@
         {"no_middlebox", OPT_S_NO_MIDDLEBOX, '-', \
             "Disable TLSv1.3 middlebox compat mode" }, \
         {"no_etm", OPT_S_NO_ETM, '-', \
-            "Disable Encrypt-then-Mac extension"}
+            "Disable Encrypt-then-Mac extension"}, \
+        {"no_ems", OPT_S_NO_EMS, '-', \
+            "Disable Extended master secret extension"}
 
 # define OPT_S_CASES \
         OPT_S__FIRST: case OPT_S__LAST: break; \
@@ -253,7 +256,8 @@
         case OPT_S_MAXPROTO: \
         case OPT_S_DEBUGBROKE: \
         case OPT_S_NO_MIDDLEBOX: \
-        case OPT_S_NO_ETM
+        case OPT_S_NO_ETM: \
+        case OPT_S_NO_EMS
 
 #define IS_NO_PROT_FLAG(o) \
  (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
@@ -365,27 +369,21 @@ int opt_next(void);
 char *opt_flag(void);
 char *opt_arg(void);
 char *opt_unknown(void);
+void reset_unknown(void);
 int opt_cipher(const char *name, EVP_CIPHER **cipherp);
 int opt_cipher_any(const char *name, EVP_CIPHER **cipherp);
 int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp);
+int opt_check_md(const char *name);
 int opt_md(const char *name, EVP_MD **mdp);
 int opt_md_silent(const char *name, EVP_MD **mdp);
 
 int opt_int(const char *arg, int *result);
+void opt_set_unknown_name(const char *name);
 int opt_int_arg(void);
 int opt_long(const char *arg, long *result);
 int opt_ulong(const char *arg, unsigned long *result);
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
-    defined(INTMAX_MAX) && defined(UINTMAX_MAX) && \
-    !defined(OPENSSL_NO_INTTYPES_H)
-int opt_intmax(const char *arg, intmax_t *result);
-int opt_uintmax(const char *arg, uintmax_t *result);
-#else
-# define opt_intmax opt_long
-# define opt_uintmax opt_ulong
-# define intmax_t long
-# define uintmax_t unsigned long
-#endif
+int opt_intmax(const char *arg, ossl_intmax_t *result);
+int opt_uintmax(const char *arg, ossl_uintmax_t *result);
 
 int opt_isdir(const char *name);
 int opt_format(const char *s, unsigned long flags, int *result);
@@ -397,8 +395,14 @@ int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
 int opt_provider(int i);
+int opt_provider_option_given(void);
 
 char **opt_rest(void);
 int opt_num_rest(void);
+int opt_check_rest_arg(const char *expected);
+
+/* Returns non-zero if legacy paths are still available */
+int opt_legacy_okay(void);
+
 
 #endif /* OSSL_APPS_OPT_H */

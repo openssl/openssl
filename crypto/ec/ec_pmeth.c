@@ -109,7 +109,12 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     int ret, type;
     unsigned int sltmp;
     EC_PKEY_CTX *dctx = ctx->data;
-    EC_KEY *ec = ctx->pkey->pkey.ec;
+    /*
+     * Discard const. Its marked as const because this may be a cached copy of
+     * the "real" key. These calls don't make any modifications that need to
+     * be reflected back in the "original" key.
+     */
+    EC_KEY *ec = (EC_KEY *)EVP_PKEY_get0_EC_KEY(ctx->pkey);
     const int sig_sz = ECDSA_size(ec);
 
     /* ensure cast to size_t is safe */
@@ -142,7 +147,12 @@ static int pkey_ec_verify(EVP_PKEY_CTX *ctx,
 {
     int ret, type;
     EC_PKEY_CTX *dctx = ctx->data;
-    EC_KEY *ec = ctx->pkey->pkey.ec;
+    /*
+     * Discard const. Its marked as const because this may be a cached copy of
+     * the "real" key. These calls don't make any modifications that need to
+     * be reflected back in the "original" key.
+     */
+    EC_KEY *ec = (EC_KEY *)EVP_PKEY_get0_EC_KEY(ctx->pkey);
 
     if (dctx->md)
         type = EVP_MD_get_type(dctx->md);
@@ -174,7 +184,8 @@ static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
         return 0;
     }
 
-    eckey = dctx->co_key ? dctx->co_key : ctx->pkey->pkey.ec;
+    eckey = dctx->co_key ? dctx->co_key
+                         : (EC_KEY *)EVP_PKEY_get0_EC_KEY(ctx->pkey);
 
     if (!key) {
         const EC_GROUP *group;
@@ -266,14 +277,23 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             if (dctx->cofactor_mode != -1)
                 return dctx->cofactor_mode;
             else {
-                EC_KEY *ec_key = ctx->pkey->pkey.ec;
+                const EC_KEY *ec_key = EVP_PKEY_get0_EC_KEY(ctx->pkey);
                 return EC_KEY_get_flags(ec_key) & EC_FLAG_COFACTOR_ECDH ? 1 : 0;
             }
         } else if (p1 < -1 || p1 > 1)
             return -2;
         dctx->cofactor_mode = p1;
         if (p1 != -1) {
-            EC_KEY *ec_key = ctx->pkey->pkey.ec;
+            EC_KEY *ec_key = (EC_KEY *)EVP_PKEY_get0_EC_KEY(ctx->pkey);
+
+            /*
+             * We discarded the "const" above. This will only work if the key is
+             * a "real" legacy key, and not a cached copy of a provided key
+             */
+            if (evp_pkey_is_provided(ctx->pkey)) {
+                ERR_raise(ERR_LIB_EC, ERR_R_UNSUPPORTED);
+                return 0;
+            }
             if (!ec_key->group)
                 return -2;
             /* If cofactor is 1 cofactor mode does nothing */

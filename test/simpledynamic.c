@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,12 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <stdlib.h>              /* For NULL */
 #include <openssl/macros.h>      /* For NON_EMPTY_TRANSLATION_UNIT */
 #include <openssl/e_os2.h>
 #include "simpledynamic.h"
 
-#if defined(DSO_DLFCN)
+#if defined(DSO_DLFCN) || defined(DSO_VMS)
 
 int sd_load(const char *filename, SD *lib, int type)
 {

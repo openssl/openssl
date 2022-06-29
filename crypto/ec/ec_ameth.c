@@ -165,7 +165,7 @@ static int eckey_priv_decode_ex(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8,
 static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 {
     EC_KEY ec_key = *(pkey->pkey.ec);
-    unsigned char *ep, *p;
+    unsigned char *ep = NULL;
     int eplen, ptype;
     void *pval;
     unsigned int old_flags;
@@ -184,26 +184,18 @@ static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     old_flags = EC_KEY_get_enc_flags(&ec_key);
     EC_KEY_set_enc_flags(&ec_key, old_flags | EC_PKEY_NO_PARAMETERS);
 
-    eplen = i2d_ECPrivateKey(&ec_key, NULL);
-    if (!eplen) {
+    eplen = i2d_ECPrivateKey(&ec_key, &ep);
+    if (eplen <= 0) {
         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
-        return 0;
-    }
-    ep = OPENSSL_malloc(eplen);
-    if (ep == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-    p = ep;
-    if (!i2d_ECPrivateKey(&ec_key, &p)) {
-        OPENSSL_free(ep);
-        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+        ASN1_STRING_free(pval);
         return 0;
     }
 
     if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_X9_62_id_ecPublicKey), 0,
                          ptype, pval, ep, eplen)) {
-        OPENSSL_free(ep);
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+        ASN1_STRING_free(pval);
+        OPENSSL_clear_free(ep, eplen);
         return 0;
     }
 
@@ -498,13 +490,6 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
             || (ecg = EC_KEY_get0_group(eckey)) == NULL)
         return 0;
 
-    /*
-     * If the EC_KEY method is foreign, then we can't be sure of anything,
-     * and can therefore not export or pretend to export.
-     */
-    if (EC_KEY_get_method(eckey) != EC_KEY_OpenSSL())
-        return 0;
-
     tmpl = OSSL_PARAM_BLD_new();
     if (tmpl == NULL)
         return 0;
@@ -581,7 +566,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         if (ecbits <= 0)
             goto err;
 
-        sz = (ecbits + 7 ) / 8;
+        sz = (ecbits + 7) / 8;
         if (!OSSL_PARAM_BLD_push_BN_pad(tmpl,
                                         OSSL_PKEY_PARAM_PRIV_KEY,
                                         priv_key, sz))

@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "crypto/cryptlib.h"
 
 #if     defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
@@ -71,7 +71,7 @@ static uint64_t ossl_strtouint64(const variant_char *str)
             base = 16, str++;
     }
 
-    while((digit = todigit(*str++)) < base)
+    while ((digit = todigit(*str++)) < base)
         ret = ret * base + digit;
 
     return ret;
@@ -80,7 +80,7 @@ static uint64_t ossl_strtouint64(const variant_char *str)
 static variant_char *ossl_strchr(const variant_char *str, char srch)
 {   variant_char c;
 
-    while((c = *str)) {
+    while ((c = *str)) {
         if (c == srch)
             return (variant_char *)str;
         str++;

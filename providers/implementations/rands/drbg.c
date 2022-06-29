@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,6 +21,7 @@
 #include "crypto/rand_pool.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "crypto/context.h"
 
 /*
  * Support framework for NIST SP 800-90A DRBG
@@ -274,7 +275,7 @@ typedef struct prov_drbg_nonce_global_st {
  * to be in a different global data object. Otherwise we will go into an
  * infinite recursion loop.
  */
-static void *prov_drbg_nonce_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+void *ossl_prov_drbg_nonce_ctx_new(OSSL_LIB_CTX *libctx)
 {
     PROV_DRBG_NONCE_GLOBAL *dngbl = OPENSSL_zalloc(sizeof(*dngbl));
 
@@ -290,7 +291,7 @@ static void *prov_drbg_nonce_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     return dngbl;
 }
 
-static void prov_drbg_nonce_ossl_ctx_free(void *vdngbl)
+void ossl_prov_drbg_nonce_ctx_free(void *vdngbl)
 {
     PROV_DRBG_NONCE_GLOBAL *dngbl = vdngbl;
 
@@ -302,12 +303,6 @@ static void prov_drbg_nonce_ossl_ctx_free(void *vdngbl)
     OPENSSL_free(dngbl);
 }
 
-static const OSSL_LIB_CTX_METHOD drbg_nonce_ossl_ctx_method = {
-    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    prov_drbg_nonce_ossl_ctx_new,
-    prov_drbg_nonce_ossl_ctx_free,
-};
-
 /* Get a nonce from the operating system */
 static size_t prov_drbg_get_nonce(PROV_DRBG *drbg, unsigned char **pout,
                                   size_t min_len, size_t max_len)
@@ -316,8 +311,7 @@ static size_t prov_drbg_get_nonce(PROV_DRBG *drbg, unsigned char **pout,
     unsigned char *buf = NULL;
     OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_libctx(drbg->provctx);
     PROV_DRBG_NONCE_GLOBAL *dngbl
-        = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DRBG_NONCE_INDEX,
-                                &drbg_nonce_ossl_ctx_method);
+        = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DRBG_NONCE_INDEX);
     struct {
         void *drbg;
         int count;
@@ -459,9 +453,11 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
 
     if (!drbg->instantiate(drbg, entropy, entropylen, nonce, noncelen,
                            pers, perslen)) {
+        cleanup_entropy(drbg, entropy, entropylen);
         ERR_raise(ERR_LIB_PROV, PROV_R_ERROR_INSTANTIATING_DRBG);
         goto end;
     }
+    cleanup_entropy(drbg, entropy, entropylen);
 
     drbg->state = EVP_RAND_STATE_READY;
     drbg->generate_counter = 1;
@@ -469,8 +465,6 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
     tsan_store(&drbg->reseed_counter, drbg->reseed_next_counter);
 
  end:
-    if (entropy != NULL)
-        cleanup_entropy(drbg, entropy, entropylen);
     if (nonce != NULL)
         ossl_prov_cleanup_nonce(drbg->provctx, nonce, noncelen);
     if (drbg->state == EVP_RAND_STATE_READY)
@@ -837,6 +831,10 @@ PROV_DRBG *ossl_rand_drbg_new
             goto err;
         }
     }
+#ifdef TSAN_REQUIRES_LOCKING
+    if (!ossl_drbg_enable_locking(drbg))
+        goto err;
+#endif
     return drbg;
 
  err:

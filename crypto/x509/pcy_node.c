@@ -93,7 +93,7 @@ X509_POLICY_NODE *ossl_policy_level_add_node(X509_POLICY_LEVEL *level,
     if (tree) {
         if (tree->extra_data == NULL)
             tree->extra_data = sk_X509_POLICY_DATA_new_null();
-        if (tree->extra_data == NULL){
+        if (tree->extra_data == NULL) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto node_error;
         }

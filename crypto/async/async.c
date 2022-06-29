@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -138,6 +138,10 @@ static void async_release_job(ASYNC_JOB *job) {
     async_pool *pool;
 
     pool = (async_pool *)CRYPTO_THREAD_get_local(&poolkey);
+    if (pool == NULL) {
+        ERR_raise(ERR_LIB_ASYNC, ERR_R_INTERNAL_ERROR);
+        return;
+    }
     OPENSSL_free(job->funcargs);
     job->funcargs = NULL;
     sk_ASYNC_JOB_push(pool->jobs, job);
@@ -148,6 +152,10 @@ void async_start_func(void)
     ASYNC_JOB *job;
     async_ctx *ctx = async_get_ctx();
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_ASYNC, ERR_R_INTERNAL_ERROR);
+        return;
+    }
     while (1) {
         /* Run the job */
         job = ctx->currjob;
@@ -332,13 +340,14 @@ int async_init(void)
         return 0;
     }
 
-    return 1;
+    return async_local_init();
 }
 
 void async_deinit(void)
 {
     CRYPTO_THREAD_cleanup_local(&ctxkey);
     CRYPTO_THREAD_cleanup_local(&poolkey);
+    async_local_deinit();
 }
 
 int ASYNC_init_thread(size_t max_size, size_t init_size)

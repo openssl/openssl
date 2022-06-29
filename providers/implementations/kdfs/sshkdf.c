@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,7 @@
 
 /* See RFC 4253, Section 7.2 */
 static OSSL_FUNC_kdf_newctx_fn kdf_sshkdf_new;
+static OSSL_FUNC_kdf_dupctx_fn kdf_sshkdf_dup;
 static OSSL_FUNC_kdf_freectx_fn kdf_sshkdf_free;
 static OSSL_FUNC_kdf_reset_fn kdf_sshkdf_reset;
 static OSSL_FUNC_kdf_derive_fn kdf_sshkdf_derive;
@@ -59,7 +60,8 @@ static void *kdf_sshkdf_new(void *provctx)
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
-    ctx->provctx = provctx;
+    else
+        ctx->provctx = provctx;
     return ctx;
 }
 
@@ -86,11 +88,36 @@ static void kdf_sshkdf_reset(void *vctx)
     ctx->provctx = provctx;
 }
 
+static void *kdf_sshkdf_dup(void *vctx)
+{
+    const KDF_SSHKDF *src = (const KDF_SSHKDF *)vctx;
+    KDF_SSHKDF *dest;
+
+    dest = kdf_sshkdf_new(src->provctx);
+    if (dest != NULL) {
+        if (!ossl_prov_memdup(src->key, src->key_len,
+                              &dest->key, &dest->key_len)
+                || !ossl_prov_memdup(src->xcghash, src->xcghash_len,
+                                     &dest->xcghash , &dest->xcghash_len)
+                || !ossl_prov_memdup(src->session_id, src->session_id_len,
+                                     &dest->session_id , &dest->session_id_len)
+                || !ossl_prov_digest_copy(&dest->digest, &src->digest))
+            goto err;
+        dest->type = src->type;
+    }
+    return dest;
+
+ err:
+    kdf_sshkdf_free(dest);
+    return NULL;
+}
+
 static int sshkdf_set_membuf(unsigned char **dst, size_t *dst_len,
                              const OSSL_PARAM *p)
 {
     OPENSSL_clear_free(*dst, *dst_len);
     *dst = NULL;
+    *dst_len = 0;
     return OSSL_PARAM_get_octet_string(p, (void **)dst, 0, dst_len);
 }
 
@@ -210,6 +237,7 @@ static const OSSL_PARAM *kdf_sshkdf_gettable_ctx_params(ossl_unused void *ctx,
 
 const OSSL_DISPATCH ossl_kdf_sshkdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_sshkdf_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kdf_sshkdf_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_sshkdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_sshkdf_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_sshkdf_derive },

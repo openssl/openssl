@@ -479,12 +479,15 @@ static int check_asn1_string(const ASN1_TYPE *av, const char *txt)
         break;
 
     case V_ASN1_UTF8STRING:
-        if (!TEST_str_eq(txt, (char *)av->value.utf8string->data))
+        if (!TEST_mem_eq(txt, strlen(txt), (char *)av->value.utf8string->data,
+                         av->value.utf8string->length))
             goto err;
         break;
 
     case V_ASN1_OCTET_STRING:
-        if (!TEST_str_eq(txt, (char *)av->value.octet_string->data))
+        if (!TEST_mem_eq(txt, strlen(txt),
+                         (char *)av->value.octet_string->data,
+                         av->value.octet_string->length))
             goto err;
         break;
 
@@ -514,7 +517,7 @@ static int check_attrs(const STACK_OF(X509_ATTRIBUTE) *bag_attrs, const PKCS12_A
         attr_obj = X509_ATTRIBUTE_get0_object(attr);
         OBJ_obj2txt(attr_txt, 100, attr_obj, 0);
 
-        while(p_attr->oid != NULL) {
+        while (p_attr->oid != NULL) {
             /* Find a matching attribute type */
             if (strcmp(p_attr->oid, attr_txt) == 0) {
                 if (!TEST_int_eq(X509_ATTRIBUTE_count(attr), 1))

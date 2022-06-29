@@ -21,7 +21,7 @@ It is a complicated process consisting of a number of steps
 and depending on numerous options.
 The most important of them are detailed in the following sections.
 
-In a nutshell, a valid chain of certifciates needs to be built up and verified
+In a nutshell, a valid chain of certificates needs to be built up and verified
 starting from the I<target certificate> that is to be verified
 and ending in a certificate that due to some policy is trusted.
 Verification is done relative to the given I<purpose>, which is the intended use
@@ -92,7 +92,7 @@ It does not have a negative trust attribute rejecting the given use.
 =item *
 
 It has a positive trust attribute accepting the given use
-or (by default) one of the following compatibilty conditions apply:
+or (by default) one of the following compatibility conditions apply:
 It is self-signed or the B<-partial_chain> option is given
 (which corresponds to the B<X509_V_FLAG_PARTIAL_CHAIN> flag being set).
 
@@ -130,7 +130,7 @@ each of its sub-fields equals the corresponding subject key identifier, serial
 number, and issuer field of the candidate issuer certificate,
 as far as the respective fields are present in both certificates.
 
-item *
+=item *
 
 The certificate signature algorithm used to sign the subject certificate
 is supported and
@@ -151,10 +151,13 @@ The first step is to check that each certificate is well-formed.
 Part of these checks are enabled only if the B<-x509_strict> option is given.
 
 The second step is to check the extensions of every untrusted certificate
-for consistency with the given purpose.
-If the B<-purpose> option is not included then no such checks are done.
-The target certificate must not have an EKU extension that is incompatible with
-the given purpose, and all other certificates must be valid CA certificates.
+for consistency with the supplied purpose.
+If the B<-purpose> option is not given then no such checks are done
+except for SSL/TLS connection setup,
+where by default C<sslserver> or C<sslclient>, are checked.
+The target or "leaf" certificate, as well as any other untrusted certificates,
+must have extensions compatible with the specified purpose.
+All certificates except the target or "leaf" must also be valid CA certificates.
 The precise extensions required are described in more detail in
 L<openssl-x509(1)/CERTIFICATE EXTENSIONS>.
 
@@ -271,50 +274,50 @@ among others, the following certificate well-formedness conditions are checked:
 
 =over 4
 
-=item -
+=item *
 
 The basicConstraints of CA certificates must be marked critical.
 
-=item -
+=item *
 
 CA certificates must explicitly include the keyUsage extension.
 
-=item -
+=item *
 
 If a pathlenConstraint is given the key usage keyCertSign must be allowed.
 
-=item -
+=item *
 
 The pathlenConstraint must not be given for non-CA certificates.
 
-=item -
+=item *
 
 The issuer name of any certificate must not be empty.
 
-=item -
+=item *
 
 The subject name of CA certs, certs with keyUsage crlSign, and certs
 without subjectAlternativeName must not be empty.
 
-=item -
+=item *
 
 If a subjectAlternativeName extension is given it must not be empty.
 
-=item -
+=item *
 
 The signatureAlgorithm field and the cert signature must be consistent.
 
-=item -
+=item *
 
 Any given authorityKeyIdentifier and any given subjectKeyIdentifier
 must not be marked critical.
 
-=item -
+=item *
 
 The authorityKeyIdentifier must be given for X.509v3 certs unless they
 are self-signed.
 
-=item -
+=item *
 
 The subjectKeyIdentifier must be given for all X.509v3 CA certs.
 
@@ -452,11 +455,17 @@ Set policy variable inhibit-policy-mapping (see RFC5280).
 
 =item B<-purpose> I<purpose>
 
-The intended use for the certificate. If this option is not specified, this
-command will not consider certificate purpose during chain verification.
-Currently accepted uses are B<sslclient>, B<sslserver>, B<nssslserver>,
-B<smimesign>, B<smimeencrypt>, B<crlsign>, B<ocsphelper>, B<timestampsign>,
-and <any>.
+The intended use for the certificate.
+Currently defined purposes are C<sslclient>, C<sslserver>, C<nssslserver>,
+C<smimesign>, C<smimeencrypt>, C<crlsign>, C<ocsphelper>, C<timestampsign>,
+and C<any>.
+If peer certificate verification is enabled, by default the TLS implementation
+as well as the commands B<s_client> and B<s_server> check for consistency
+with TLS server or TLS client use, respectively.
+
+While IETF RFC 5280 says that B<id-kp-serverAuth> and B<id-kp-clientAuth>
+are only for WWW use, in practice they are used for all kinds of TLS clients
+and servers, and this is what OpenSSL assumes as well.
 
 =item B<-verify_depth> I<num>
 
@@ -677,7 +686,7 @@ The checks enabled by B<-x509_strict> have been extended in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

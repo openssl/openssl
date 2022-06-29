@@ -62,7 +62,7 @@ mask_t gf_eq(const gf x, const gf y);
 mask_t gf_lobit(const gf x);
 mask_t gf_hibit(const gf x);
 
-void gf_serialize(uint8_t *serial, const gf x, int with_highbit);
+void gf_serialize(uint8_t serial[SER_BYTES], const gf x, int with_highbit);
 mask_t gf_deserialize(gf x, const uint8_t serial[SER_BYTES], int with_hibit,
                       uint8_t hi_nmask);
 

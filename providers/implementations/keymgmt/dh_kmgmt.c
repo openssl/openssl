@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -154,10 +154,30 @@ static int dh_match(const void *keydata1, const void *keydata2, int selection)
     if (!ossl_prov_is_running())
         return 0;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = ok && BN_cmp(DH_get0_pub_key(dh1), DH_get0_pub_key(dh2)) == 0;
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-        ok = ok && BN_cmp(DH_get0_priv_key(dh1), DH_get0_priv_key(dh2)) == 0;
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        int key_checked = 0;
+
+        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+            const BIGNUM *pa = DH_get0_pub_key(dh1);
+            const BIGNUM *pb = DH_get0_pub_key(dh2);
+
+            if (pa != NULL && pb != NULL) {
+                ok = ok && BN_cmp(pa, pb) == 0;
+                key_checked = 1;
+            }
+        }
+        if (!key_checked
+            && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+            const BIGNUM *pa = DH_get0_priv_key(dh1);
+            const BIGNUM *pb = DH_get0_priv_key(dh2);
+
+            if (pa != NULL && pb != NULL) {
+                ok = ok && BN_cmp(pa, pb) == 0;
+                key_checked = 1;
+            }
+        }
+        ok = ok && key_checked;
+    }
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
         FFC_PARAMS *dhparams1 = ossl_dh_get0_params((DH *)dh1);
         FFC_PARAMS *dhparams2 = ossl_dh_get0_params((DH *)dh2);
@@ -181,8 +201,12 @@ static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         ok = ok && ossl_dh_params_fromdata(dh, params);
 
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && ossl_dh_key_fromdata(dh, params);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        int include_private =
+            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+
+        ok = ok && ossl_dh_key_fromdata(dh, params, include_private);
+    }
 
     return ok;
 }
@@ -204,14 +228,19 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
         ok = ok && ossl_dh_params_todata(dh, tmpl, NULL);
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && ossl_dh_key_todata(dh, tmpl, NULL);
 
-    if (!ok
-        || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL) {
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        int include_private =
+            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+
+        ok = ok && ossl_dh_key_todata(dh, tmpl, NULL, include_private);
+    }
+
+    if (!ok || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL) {
         ok = 0;
         goto err;
     }
+
     ok = param_cb(params, cbarg);
     OSSL_PARAM_free(params);
 err:
@@ -303,7 +332,7 @@ static ossl_inline int dh_get_params(void *key, OSSL_PARAM params[])
     }
 
     return ossl_dh_params_todata(dh, NULL, params)
-        && ossl_dh_key_todata(dh, NULL, params);
+        && ossl_dh_key_todata(dh, NULL, params, 1);
 }
 
 static const OSSL_PARAM dh_params[] = {
@@ -371,7 +400,7 @@ static int dh_validate_private(const DH *dh)
     DH_get0_key(dh, NULL, &priv_key);
     if (priv_key == NULL)
         return 0;
-    return ossl_dh_check_priv_key(dh, priv_key, &status);;
+    return ossl_dh_check_priv_key(dh, priv_key, &status);
 }
 
 static int dh_validate(const void *keydata, int selection, int checktype)
@@ -512,6 +541,7 @@ static int dh_gen_common_set_params(void *genctx, const OSSL_PARAM params[])
         const DH_NAMED_GROUP *group = NULL;
 
         if (p->data_type != OSSL_PARAM_UTF8_STRING
+            || p->data == NULL
             || (group = ossl_ffc_name_to_dh_named_group(p->data)) == NULL
             || ((gctx->group_nid =
                  ossl_ffc_named_group_get_uid(group)) == NID_undef)) {

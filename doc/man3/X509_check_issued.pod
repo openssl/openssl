@@ -21,7 +21,8 @@ but also compares all sub-fields of the B<authorityKeyIdentifier> extension of
 I<subject>, as far as present, with the respective B<subjectKeyIdentifier>,
 serial number, and issuer fields of I<issuer>, as far as present. It also checks
 if the B<keyUsage> field (if present) of I<issuer> allows certificate signing.
-It does not actually check the certificate signature.
+It does not actually check the certificate signature. An error is returned
+if the I<issuer> or the I<subject> are incomplete certificates.
 
 =head1 RETURN VALUES
 
@@ -35,7 +36,7 @@ L<openssl-verify(1)>, L<X509_self_signed(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

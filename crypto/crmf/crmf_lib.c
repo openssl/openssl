@@ -42,13 +42,29 @@
  * valt = Value Type
  * ctrlinf = "regCtrl" or "regInfo"
  */
-#define IMPLEMENT_CRMF_CTRL_FUNC(atyp, valt, ctrlinf)                     \
-int OSSL_CRMF_MSG_set1_##ctrlinf##_##atyp(OSSL_CRMF_MSG *msg,             \
-                                          const valt *in)                 \
+#define IMPLEMENT_CRMF_CTRL_FUNC(atyp, valt, ctrlinf)                        \
+valt *OSSL_CRMF_MSG_get0_##ctrlinf##_##atyp(const OSSL_CRMF_MSG *msg)        \
+{                                                                            \
+    int i;                                                                   \
+    STACK_OF(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) *controls;                     \
+    OSSL_CRMF_ATTRIBUTETYPEANDVALUE *atav = NULL;                            \
+                                                                             \
+    if (msg == NULL || msg->certReq == NULL)                                 \
+        return NULL;                                                         \
+    controls = msg->certReq->controls;                                       \
+    for (i = 0; i < sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_num(controls); i++) { \
+        atav = sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_value(controls, i);        \
+        if (OBJ_obj2nid(atav->type) == NID_id_##ctrlinf##_##atyp)            \
+            return atav->value.atyp;                                         \
+    }                                                                        \
+    return NULL;                                                             \
+}                                                                            \
+ \
+int OSSL_CRMF_MSG_set1_##ctrlinf##_##atyp(OSSL_CRMF_MSG *msg, const valt *in) \
 {                                                                         \
     OSSL_CRMF_ATTRIBUTETYPEANDVALUE *atav = NULL;                         \
                                                                           \
-    if (msg == NULL || in == NULL)                                       \
+    if (msg == NULL || in == NULL)                                        \
         goto err;                                                         \
     if ((atav = OSSL_CRMF_ATTRIBUTETYPEANDVALUE_new()) == NULL)           \
         goto err;                                                         \
@@ -353,6 +369,8 @@ static int create_popo_signature(OSSL_CRMF_POPOSIGNINGKEY *ps,
                                  EVP_PKEY *pkey, const EVP_MD *digest,
                                  OSSL_LIB_CTX *libctx, const char *propq)
 {
+    char name[80] = "";
+
     if (ps == NULL || cr == NULL || pkey == NULL) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
@@ -362,6 +380,10 @@ static int create_popo_signature(OSSL_CRMF_POPOSIGNINGKEY *ps,
         ERR_raise(ERR_LIB_CRMF, CRMF_R_POPOSKINPUT_NOT_SUPPORTED);
         return 0;
     }
+
+    if (EVP_PKEY_get_default_digest_name(pkey, name, sizeof(name)) > 0
+            && strcmp(name, "UNDEF") == 0) /* at least for Ed25519, Ed448 */
+        digest = NULL;
 
     return ASN1_item_sign_ex(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
                              ps->algorithmIdentifier, NULL, ps->signature, cr,
@@ -509,10 +531,16 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
 }
 
 /* retrieves the serialNumber of the given cert template or NULL on error */
-ASN1_INTEGER
+const ASN1_INTEGER
 *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->serialNumber : NULL;
+}
+
+const X509_NAME
+    *OSSL_CRMF_CERTTEMPLATE_get0_subject(const OSSL_CRMF_CERTTEMPLATE *tmpl)
+{
+    return tmpl != NULL ? tmpl->subject : NULL;
 }
 
 /* retrieves the issuer name of the given cert template or NULL on error */
@@ -520,6 +548,12 @@ const X509_NAME
     *OSSL_CRMF_CERTTEMPLATE_get0_issuer(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->issuer : NULL;
+}
+
+X509_EXTENSIONS
+    *OSSL_CRMF_CERTTEMPLATE_get0_extensions(const OSSL_CRMF_CERTTEMPLATE *tmpl)
+{
+    return tmpl != NULL ? tmpl->extensions : NULL;
 }
 
 /* retrieves the issuer name of the given CertId or NULL on error */
@@ -530,7 +564,7 @@ const X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid)
 }
 
 /* retrieves the serialNumber of the given CertId or NULL on error */
-ASN1_INTEGER *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID *cid)
+const ASN1_INTEGER *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID *cid)
 {
     return cid != NULL ? cid->serialNumber : NULL;
 }

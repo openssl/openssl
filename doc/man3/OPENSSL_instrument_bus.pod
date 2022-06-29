@@ -7,8 +7,8 @@ OPENSSL_instrument_bus, OPENSSL_instrument_bus2 - instrument references to memor
 =head1 SYNOPSIS
 
  #ifdef OPENSSL_CPUID_OBJ
- size_t OPENSSL_instrument_bus(int *vector, size_t num);
- size_t OPENSSL_instrument_bus2(int *vector, size_t num, size_t max);
+ size_t OPENSSL_instrument_bus(unsigned int *vector, size_t num);
+ size_t OPENSSL_instrument_bus2(unsigned int *vector, size_t num, size_t max);
  #endif
 
 =head1 DESCRIPTION

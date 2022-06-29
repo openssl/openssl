@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -127,6 +127,8 @@ int enc_main(int argc, char **argv)
     int pbkdf2 = 0;
     int iter = 0;
     long n;
+    int streamable = 1;
+    int wrap = 0;
     struct doall_enc_ciphers dec;
 #ifdef ZLIB
     int do_zlib = 0;
@@ -143,6 +145,7 @@ int enc_main(int argc, char **argv)
     else if (strcmp(argv[0], "enc") != 0)
         ciphername = argv[0];
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, enc_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -289,16 +292,17 @@ int enc_main(int argc, char **argv)
     }
 
     /* No extra arguments. */
-    argc = opt_num_rest();
-    if (argc != 0)
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
     if (!app_RAND_load())
         goto end;
 
     /* Get the cipher name, either from progname (if set) or flag. */
-    if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher))
-            goto opthelp;
+    if (!opt_cipher(ciphername, &cipher))
+        goto opthelp;
+    if (cipher && (EVP_CIPHER_mode(cipher) == EVP_CIPH_WRAP_MODE)) {
+        wrap = 1;
+        streamable = 0;
     }
     if (digestname != NULL) {
         if (!opt_md(digestname, &dgst))
@@ -330,6 +334,10 @@ int enc_main(int argc, char **argv)
     buff = app_malloc(EVP_ENCODE_LENGTH(bsize), "evp buffer");
 
     if (infile == NULL) {
+        if (!streamable && printkey != 2) {  /* if just print key and exit, it's ok */
+            BIO_printf(bio_err, "Unstreamable cipher mode\n");
+            goto end;
+        }
         in = dup_bio_in(informat);
     } else {
         in = bio_open_default(infile, 'r', informat);
@@ -526,7 +534,8 @@ int enc_main(int argc, char **argv)
             }
         }
         if ((hiv == NULL) && (str == NULL)
-            && EVP_CIPHER_get_iv_length(cipher) != 0) {
+            && EVP_CIPHER_get_iv_length(cipher) != 0
+            && wrap == 0) {
             /*
              * No IV was explicitly set and no IV was generated.
              * Hence the IV is undefined, making correct decryption impossible.
@@ -553,6 +562,9 @@ int enc_main(int argc, char **argv)
 
         BIO_get_cipher_ctx(benc, &ctx);
 
+        if (wrap == 1)
+            EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
+
         if (!EVP_CipherInit_ex(ctx, cipher, e, NULL, NULL, enc)) {
             BIO_printf(bio_err, "Error setting cipher %s\n",
                        EVP_CIPHER_get0_name(cipher));
@@ -563,7 +575,8 @@ int enc_main(int argc, char **argv)
         if (nopad)
             EVP_CIPHER_CTX_set_padding(ctx, 0);
 
-        if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, enc)) {
+        if (!EVP_CipherInit_ex(ctx, NULL, NULL, key,
+                               (hiv == NULL && wrap == 1 ? NULL : iv), enc)) {
             BIO_printf(bio_err, "Error setting cipher %s\n",
                        EVP_CIPHER_get0_name(cipher));
             ERR_print_errors(bio_err);
@@ -609,10 +622,16 @@ int enc_main(int argc, char **argv)
         inl = BIO_read(rbio, (char *)buff, bsize);
         if (inl <= 0)
             break;
+        if (!streamable && !BIO_eof(rbio)) {    /* do not output data */
+            BIO_printf(bio_err, "Unstreamable cipher mode\n");
+            goto end;
+        }
         if (BIO_write(wbio, (char *)buff, inl) != inl) {
             BIO_printf(bio_err, "error writing output file\n");
             goto end;
         }
+        if (!streamable)
+            break;
     }
     if (!BIO_flush(wbio)) {
         BIO_printf(bio_err, "bad decrypt\n");

@@ -154,7 +154,7 @@ sub fixup_cmd_elements {
     if ( $^O eq "VMS") {        # VMS setup
         $arg_formatter = sub {
             $_ = shift;
-            if ($_ eq '' || /\s|["[:upper:]]/) {
+            if ($_ eq '' || /\s|[!"[:upper:]]/) {
                 s/"/""/g;
                 '"'.$_.'"';
             } else {

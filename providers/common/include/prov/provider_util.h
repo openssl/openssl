@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,7 +8,7 @@
  */
 
 #include <openssl/provider.h>
-#include <openssl/engine.h>
+#include <openssl/types.h>
 
 typedef struct {
     /*
@@ -136,3 +136,7 @@ typedef struct ag_capable_st {
  */
 void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,
                                          OSSL_ALGORITHM *out);
+
+/* Duplicate a lump of memory safely */
+int ossl_prov_memdup(const void *src, size_t src_len,
+                     unsigned char **dest, size_t *dest_len);

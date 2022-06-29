@@ -114,6 +114,11 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { PROV_NAMES_SHA3_384, "provider=default", ossl_sha3_384_functions },
     { PROV_NAMES_SHA3_512, "provider=default", ossl_sha3_512_functions },
 
+    { PROV_NAMES_KECCAK_224, "provider=default", ossl_keccak_224_functions },
+    { PROV_NAMES_KECCAK_256, "provider=default", ossl_keccak_256_functions },
+    { PROV_NAMES_KECCAK_384, "provider=default", ossl_keccak_384_functions },
+    { PROV_NAMES_KECCAK_512, "provider=default", ossl_keccak_512_functions },
+
     /*
      * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
      * the KMAC-128 and KMAC-256.
@@ -148,6 +153,7 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { PROV_NAMES_MD5_SHA1, "provider=default", ossl_md5_sha1_functions },
 #endif /* OPENSSL_NO_MD5 */
 
+    { PROV_NAMES_NULL, "provider=default", ossl_nullmd_functions },
     { NULL, NULL, NULL }
 };
 
@@ -251,6 +257,9 @@ static const OSSL_ALGORITHM_CAPABLE deflt_ciphers[] = {
     ALG(PROV_NAMES_CAMELLIA_256_CBC, ossl_camellia256cbc_functions),
     ALG(PROV_NAMES_CAMELLIA_192_CBC, ossl_camellia192cbc_functions),
     ALG(PROV_NAMES_CAMELLIA_128_CBC, ossl_camellia128cbc_functions),
+    ALG(PROV_NAMES_CAMELLIA_128_CBC_CTS, ossl_camellia128cbc_cts_functions),
+    ALG(PROV_NAMES_CAMELLIA_192_CBC_CTS, ossl_camellia192cbc_cts_functions),
+    ALG(PROV_NAMES_CAMELLIA_256_CBC_CTS, ossl_camellia256cbc_cts_functions),
     ALG(PROV_NAMES_CAMELLIA_256_OFB, ossl_camellia256ofb_functions),
     ALG(PROV_NAMES_CAMELLIA_192_OFB, ossl_camellia192ofb_functions),
     ALG(PROV_NAMES_CAMELLIA_128_OFB, ossl_camellia128ofb_functions),
@@ -281,6 +290,8 @@ static const OSSL_ALGORITHM_CAPABLE deflt_ciphers[] = {
     ALG(PROV_NAMES_DES_EDE_CFB, ossl_tdes_ede2_cfb_functions),
 #endif /* OPENSSL_NO_DES */
 #ifndef OPENSSL_NO_SM4
+    ALG(PROV_NAMES_SM4_GCM, ossl_sm4128gcm_functions),
+    ALG(PROV_NAMES_SM4_CCM, ossl_sm4128ccm_functions),
     ALG(PROV_NAMES_SM4_ECB, ossl_sm4128ecb_functions),
     ALG(PROV_NAMES_SM4_CBC, ossl_sm4128cbc_functions),
     ALG(PROV_NAMES_SM4_CTR, ossl_sm4128ctr_functions),
@@ -320,6 +331,8 @@ static const OSSL_ALGORITHM deflt_macs[] = {
 
 static const OSSL_ALGORITHM deflt_kdfs[] = {
     { PROV_NAMES_HKDF, "provider=default", ossl_kdf_hkdf_functions },
+    { PROV_NAMES_TLS1_3_KDF, "provider=default",
+      ossl_kdf_tls1_3_kdf_functions },
     { PROV_NAMES_SSKDF, "provider=default", ossl_kdf_sskdf_functions },
     { PROV_NAMES_PBKDF2, "provider=default", ossl_kdf_pbkdf2_functions },
     { PROV_NAMES_PKCS12KDF, "provider=default", ossl_kdf_pkcs12_functions },

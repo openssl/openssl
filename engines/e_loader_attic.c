@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,10 +9,12 @@
 
 /* THIS ENGINE IS FOR TESTING PURPOSES ONLY. */
 
+/* This file has quite some overlap with providers/implementations/storemgmt/file_store.c */
+
 /* We need to use some engine deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-/* #include "e_os.h" */
+#include "internal/e_os.h" /* for stat */
 #include <string.h>
 #include <sys/stat.h>
 #include <ctype.h>
@@ -39,11 +41,6 @@
 #include "e_loader_attic_err.c"
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)
-
-#ifdef _WIN32
-# define stat _stat
-# define strncasecmp _strnicmp
-#endif
 
 #ifndef S_ISDIR
 # define S_ISDIR(a) (((a) & S_IFMT) == S_IFDIR)
@@ -73,8 +70,8 @@ static char *file_get_pass(const UI_METHOD *ui_method, char *pass,
     if ((prompt = UI_construct_prompt(ui, desc, info)) == NULL) {
         ATTICerr(0, ERR_R_MALLOC_FAILURE);
         pass = NULL;
-    } else if (!UI_add_input_string(ui, prompt, UI_INPUT_FLAG_DEFAULT_PWD,
-                                    pass, 0, maxsize - 1)) {
+    } else if (UI_add_input_string(ui, prompt, UI_INPUT_FLAG_DEFAULT_PWD,
+                                    pass, 0, maxsize - 1) <= 0) {
         ATTICerr(0, ERR_R_UI_LIB);
         pass = NULL;
     } else {
@@ -378,7 +375,7 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
                 }
                 EVP_PKEY_free(pkey);
                 X509_free(cert);
-                sk_X509_pop_free(chain, X509_free);
+                OSSL_STACK_OF_X509_free(chain);
                 store_info_free(osi_pkey);
                 store_info_free(osi_cert);
                 store_info_free(osi_ca);
@@ -955,7 +952,7 @@ static OSSL_STORE_LOADER_CTX *file_open_ex
         unsigned int check_absolute:1;
     } path_data[2];
     size_t path_data_n = 0, i;
-    const char *path;
+    const char *path, *p = uri, *q;
 
     /*
      * First step, just take the URI as is.
@@ -964,20 +961,18 @@ static OSSL_STORE_LOADER_CTX *file_open_ex
     path_data[path_data_n++].path = uri;
 
     /*
-     * Second step, if the URI appears to start with the 'file' scheme,
+     * Second step, if the URI appears to start with the "file" scheme,
      * extract the path and make that the second path to check.
      * There's a special case if the URI also contains an authority, then
      * the full URI shouldn't be used as a path anywhere.
      */
-    if (strncasecmp(uri, "file:", 5) == 0) {
-        const char *p = &uri[5];
-
-        if (strncmp(&uri[5], "//", 2) == 0) {
+    if (CHECK_AND_SKIP_CASE_PREFIX(p, "file:")) {
+        q = p;
+        if (CHECK_AND_SKIP_PREFIX(q, "//")) {
             path_data_n--;           /* Invalidate using the full URI */
-            if (strncasecmp(&uri[7], "localhost/", 10) == 0) {
-                p = &uri[16];
-            } else if (uri[7] == '/') {
-                p = &uri[7];
+            if (CHECK_AND_SKIP_CASE_PREFIX(q, "localhost/")
+                    || CHECK_AND_SKIP_PREFIX(q, "/")) {
+                p = q - 1;
             } else {
                 ATTICerr(0, ATTIC_R_URI_AUTHORITY_UNSUPPORTED);
                 return NULL;
@@ -986,7 +981,7 @@ static OSSL_STORE_LOADER_CTX *file_open_ex
 
         path_data[path_data_n].check_absolute = 1;
 #ifdef _WIN32
-        /* Windows file: URIs with a drive letter start with a / */
+        /* Windows "file:" URIs with a drive letter start with a '/' */
         if (p[0] == '/' && p[2] == ':' && p[3] == '/') {
             char c = tolower(p[1]);
 
@@ -1352,8 +1347,8 @@ static OSSL_STORE_INFO *file_try_read_msblob(BIO *bp, int *matchcount)
 
         if (BIO_buffer_peek(bp, peekbuf, sizeof(peekbuf)) <= 0)
             return 0;
-        if (!ossl_do_blob_header(&p, sizeof(peekbuf), &magic, &bitlen,
-                                 &isdss, &ispub))
+        if (ossl_do_blob_header(&p, sizeof(peekbuf), &magic, &bitlen,
+                                 &isdss, &ispub) <= 0)
             return 0;
     }
 
@@ -1449,6 +1444,7 @@ static int file_name_to_uri(OSSL_STORE_LOADER_CTX *ctx, const char *name,
 static int file_name_check(OSSL_STORE_LOADER_CTX *ctx, const char *name)
 {
     const char *p = NULL;
+    size_t len = strlen(ctx->_.dir.search_name);
 
     /* If there are no search criteria, all names are accepted */
     if (ctx->_.dir.search_name[0] == '\0')
@@ -1463,11 +1459,10 @@ static int file_name_check(OSSL_STORE_LOADER_CTX *ctx, const char *name)
     /*
      * First, check the basename
      */
-    if (strncasecmp(name, ctx->_.dir.search_name,
-                    sizeof(ctx->_.dir.search_name) - 1) != 0
-        || name[sizeof(ctx->_.dir.search_name) - 1] != '.')
+    if (OPENSSL_strncasecmp(name, ctx->_.dir.search_name, len) != 0
+        || name[len] != '.')
         return 0;
-    p = &name[sizeof(ctx->_.dir.search_name)];
+    p = &name[len + 1];
 
     /*
      * Then, if the expected type is a CRL, check that the extension starts

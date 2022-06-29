@@ -24,7 +24,9 @@ OSSL_CMP_CTX_set_transfer_cb_arg,
 OSSL_CMP_CTX_get_transfer_cb_arg,
 OSSL_CMP_CTX_set1_srvCert,
 OSSL_CMP_CTX_set1_expected_sender,
+OSSL_CMP_CTX_set0_trusted,
 OSSL_CMP_CTX_set0_trustedStore,
+OSSL_CMP_CTX_get0_trusted,
 OSSL_CMP_CTX_get0_trustedStore,
 OSSL_CMP_CTX_set1_untrusted,
 OSSL_CMP_CTX_get0_untrusted,
@@ -98,7 +100,9 @@ OSSL_CMP_CTX_set1_senderNonce
  int OSSL_CMP_CTX_set1_srvCert(OSSL_CMP_CTX *ctx, X509 *cert);
  int OSSL_CMP_CTX_set1_expected_sender(OSSL_CMP_CTX *ctx,
                                       const X509_NAME *name);
+ #define OSSL_CMP_CTX_set0_trusted OSSL_CMP_CTX_set0_trustedStore
  int OSSL_CMP_CTX_set0_trustedStore(OSSL_CMP_CTX *ctx, X509_STORE *store);
+ #define OSSL_CMP_CTX_get0_trusted OSSL_CMP_CTX_get0_trustedStore
  X509_STORE *OSSL_CMP_CTX_get0_trustedStore(const OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_set1_untrusted(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs);
  STACK_OF(X509) *OSSL_CMP_CTX_get0_untrusted(const OSSL_CMP_CTX *ctx);
@@ -244,7 +248,7 @@ The following options can be set:
                                         ("indirect method")
 
         Note that a signature-based POPO can only be produced if a private key
-        is provided as the newPkey or client pkey component of the CMP context.
+        is provided as the newPkey or client's pkey component of the CMP context.
 
 =item B<OSSL_CMP_OPT_DIGEST_ALGNID>
 
@@ -404,7 +408,7 @@ OSSL_CMP_CTX_set_transfer_cb_arg() or NULL if unset.
 
 OSSL_CMP_CTX_set1_srvCert() sets the expected server cert in I<ctx> and trusts
 it directly (even if it is expired) when verifying signed response messages.
-May be used alternatively to OSSL_CMP_CTX_set0_trustedStore()
+May be used alternatively to OSSL_CMP_CTX_set0_trusted()
 to pin the accepted server.
 Any previously set value is freed.
 The I<cert> argument may be NULL to clear the entry.
@@ -422,14 +426,18 @@ Note that this gives slightly more freedom than OSSL_CMP_CTX_set1_srvCert(),
 which pins the server to the holder of a particular certificate, while the
 expected sender name will continue to match after updates of the server cert.
 
-OSSL_CMP_CTX_set0_trustedStore() sets the certificate store of type X509_STORE
+OSSL_CMP_CTX_set0_trusted() is an alias of the original
+OSSL_CMP_CTX_set0_trustedStore().
+It sets in the CMP context I<ctx> the certificate store of type X509_STORE
 containing trusted (root) CA certificates.
 The store may also hold CRLs and
 a certificate verification callback function used for CMP server authentication.
 Any store entry already set before is freed.
 When given a NULL parameter the entry is cleared.
 
-OSSL_CMP_CTX_get0_trustedStore() returns a pointer to the currently set
+OSSL_CMP_CTX_get0_trusted() is an alias of the original
+OSSL_CMP_CTX_get0_trustedStore().
+It extracts from the CMP context I<ctx> the pointer to the currently set
 certificate store containing trusted cert etc., or an empty store if unset.
 
 OSSL_CMP_CTX_set1_untrusted() sets up a list of non-trusted certificates
@@ -441,7 +449,7 @@ The reference counts of those certificates handled successfully are increased.
 OSSL_CMP_CTX_get0_untrusted(OSSL_CMP_CTX *ctx) returns a pointer to the
 list of untrusted certs, which may be empty if unset.
 
-OSSL_CMP_CTX_set1_cert() sets the certificate related to the private key
+OSSL_CMP_CTX_set1_cert() sets the certificate related to the client's private key
 used for CMP message protection.
 Therefore the public key of this I<cert> must correspond to
 the private key set before or thereafter via OSSL_CMP_CTX_set1_pkey().
@@ -449,7 +457,8 @@ When using signature-based protection of CMP request messages
 this CMP signer certificate will be included first in the extraCerts field.
 It serves as fallback reference certificate, see OSSL_CMP_CTX_set1_oldCert().
 The subject of this I<cert> will be used as the sender field of outgoing
-messages, while the subject of any cert set via OSSL_CMP_CTX_set1_oldCert()
+messages, while the subject of any cert set via OSSL_CMP_CTX_set1_oldCert(),
+the subject of any PKCS#10 CSR set via OSSL_CMP_CTX_set1_p10CSR(),
 and any value set via OSSL_CMP_CTX_set1_subjectName() are used as fallback.
 
 The I<cert> argument may be NULL to clear the entry.
@@ -468,7 +477,7 @@ Calling this function is optional; by default a chain construction
 is performed on demand that is equivalent to calling this function
 with the I<candidates> and I<own_trusted> arguments being NULL.
 
-OSSL_CMP_CTX_set1_pkey() sets the private key corresponding to the
+OSSL_CMP_CTX_set1_pkey() sets the client's private key corresponding to the
 CMP signer certificate set via OSSL_CMP_CTX_set1_cert().
 This key is used create signature-based protection (protectionAlg = MSG_SIG_ALG)
 of outgoing messages
@@ -519,7 +528,7 @@ The I<priv> parameter must be 0 if and only if the given key is a public key.
 OSSL_CMP_CTX_get0_newPkey() gives the key to use for certificate enrollment
 dependent on fields of the CMP context structure:
 the newPkey (which may be a private or public key) if present,
-else the public key in the p10CSR if present, else the client private key.
+else the public key in the p10CSR if present, else the client's private key.
 If the I<priv> parameter is not 0 and the selected key does not have a
 private component then NULL is returned.
 
@@ -538,7 +547,7 @@ OSSL_CMP_CTX_push1_subjectAltName() adds the given X509 name to the list of
 alternate names on the certificate template request. This cannot be used if
 any Subject Alternative Name extension is set via
 OSSL_CMP_CTX_set0_reqExtensions().
-By default, unless OSSL_CMP_OPT_SUBJECTALTNAME_NODEFAULT has been set,
+By default, unless B<OSSL_CMP_OPT_SUBJECTALTNAME_NODEFAULT> has been set,
 the Subject Alternative Names are copied from the reference certificate,
 see OSSL_CMP_CTX_set1_oldCert().
 If set and the subject DN is not set with OSSL_CMP_CTX_set1_subjectName() then
@@ -559,14 +568,16 @@ to the X509_EXTENSIONS of the requested certificate template.
 OSSL_CMP_CTX_set1_oldCert() sets the old certificate to be updated in
 Key Update Requests (KUR) or to be revoked in Revocation Requests (RR).
 It must be given for RR, else it defaults to the CMP signer certificate.
-The reference certificate determined in this way, if any, is also used for
-deriving default subject DN and Subject Alternative Names and the
+The I<reference certificate> determined in this way, if any, is also used for
+deriving default subject DN, public key, Subject Alternative Names, and the
 default issuer entry in the requested certificate template of IR/CR/KUR.
 The subject of the reference certificate is used as the sender field value
 in CMP message headers.
 Its issuer is used as default recipient in CMP message headers.
 
-OSSL_CMP_CTX_set1_p10CSR() sets the PKCS#10 CSR to be used in P10CR.
+OSSL_CMP_CTX_set1_p10CSR() sets the PKCS#10 CSR to use in P10CR messages.
+If such a CSR is provided, its subject, public key, and extension fields are
+also used as fallback values for the certificate template of IR/CR/KUR messages.
 
 OSSL_CMP_CTX_push0_genm_ITAV() adds I<itav> to the stack in the I<ctx> which
 will be the body of a General Message sent with this context.
@@ -658,7 +669,7 @@ OSSL_CMP_CTX_free() and OSSL_CMP_CTX_print_errors() do not return anything.
 OSSL_CMP_CTX_new(),
 OSSL_CMP_CTX_get_http_cb_arg(),
 OSSL_CMP_CTX_get_transfer_cb_arg(),
-OSSL_CMP_CTX_get0_trustedStore(),
+OSSL_CMP_CTX_get0_trusted(),
 OSSL_CMP_CTX_get0_untrusted(),
 OSSL_CMP_CTX_get0_newPkey(),
 OSSL_CMP_CTX_get_certConf_cb_arg(),
@@ -691,7 +702,7 @@ Set up a CMP client context for sending requests and verifying responses:
     OSSL_CMP_CTX_set1_server(cmp_ctx, name_or_address);
     OSSL_CMP_CTX_set1_serverPort(cmp_ctx, port_string);
     OSSL_CMP_CTX_set1_serverPath(cmp_ctx, path_or_alias);
-    OSSL_CMP_CTX_set0_trustedStore(cmp_ctx, ts);
+    OSSL_CMP_CTX_set0_trusted(cmp_ctx, ts);
 
 Set up client credentials for password-based protection (PBM):
 
@@ -754,9 +765,14 @@ L<ERR_print_errors_cb(3)>
 
 The OpenSSL CMP support was added in OpenSSL 3.0.
 
+OSSL_CMP_CTX_get0_trustedStore() was renamed to OSSL_CMP_CTX_get0_trusted() and
+OSSL_CMP_CTX_set0_trustedStore() was renamed to OSSL_CMP_CTX_set0_trusted(),
+using macros, while keeping the old names for backward compatibility,
+in OpenSSL 3.1.
+
 =head1 COPYRIGHT
 
-Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2007-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

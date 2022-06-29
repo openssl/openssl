@@ -1,5 +1,5 @@
 #! /bin/bash -e
-# Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,10 @@
 
 # This is the most shell agnostic way to specify that POSIX rules.
 POSIXLY_CORRECT=1
+
+# Force C locale because some commands (like date +%b) relies
+# on the current locale.
+export LC_ALL=C
 
 usage () {
     cat <<EOF
@@ -20,7 +24,7 @@ Usage: release.sh [ options ... ]
 --final         Get out of "alpha" or "beta" and make a final release.
                 Implies --branch.
 
---branch        Create a release branch 'openssl-{major}.{minor}.x',
+--branch        Create a release branch 'openssl-{major}.{minor}',
                 where '{major}' and '{minor}' are the major and minor
                 version numbers.
 
@@ -218,13 +222,13 @@ if (echo "$orig_branch" \
         | grep -E -q \
                -e '^master$' \
                -e '^OpenSSL_[0-9]+_[0-9]+_[0-9]+[a-z]*-stable$' \
-               -e '^openssl-[0-9]+\.[0-9]+\.x$'); then
+               -e '^openssl-[0-9]+\.[0-9]+$'); then
     :
 elif $force; then
     :
 else
     echo >&2 "Not in master or any recognised release branch"
-    echo >&2 "Please 'git checkout' an approprite branch"
+    echo >&2 "Please 'git checkout' an appropriate branch"
     exit 1
 fi
 orig_HEAD=$(git rev-parse HEAD)
@@ -253,7 +257,7 @@ get_version
 # changes for the release, the update branch is where we make the post-
 # release changes
 update_branch="$orig_branch"
-release_branch="openssl-$SERIES.x"
+release_branch="openssl-$SERIES"
 
 # among others, we only create a release branch if the patch number is zero
 if [ "$update_branch" = "$release_branch" ] || [ $PATCH -ne 0 ]; then
@@ -322,15 +326,20 @@ echo "== Configuring OpenSSL for update and release.  This may take a bit of tim
 $VERBOSE "== Checking source file updates and fips checksums"
 
 make update >&42
-
+# As long as we're doing an alpha release, we can have symbols without specific
+# numbers assigned. In a beta or final release, all symbols MUST have an
+# assigned number.
+if [ "$next_method" != 'alpha' ]; then
+    make renumber >&42
+fi
 make update-fips-checksums >&42
 
 if [ -n "$(git status --porcelain)" ]; then
     $VERBOSE "== Committing updates"
     git add -u
-    git commit $git_quiet -m 'make update'
+    git commit $git_quiet -m $'make update\n\nRelease: yes'
     if [ -n "$reviewers" ]; then
-        addrev --nopr $reviewers
+        addrev --release --nopr $reviewers
     fi
 fi
 
@@ -364,11 +373,11 @@ for fixup in "$HERE/dev/release-aux"/fixup-*-release.pl; do
         perl -pi $fixup $file
 done
 
-$VERBOSE "== Comitting updates and tagging"
+$VERBOSE "== Committing updates and tagging"
 git add -u
-git commit $git_quiet -m "Prepare for release of $release_text"
+git commit $git_quiet -m "Prepare for release of $release_text"$'\n\nRelease: yes'
 if [ -n "$reviewers" ]; then
-    addrev --nopr $reviewers
+    addrev --release --nopr $reviewers
 fi
 echo "Tagging release with tag $tag.  You may need to enter a pass phrase"
 git tag$tagkey "$tag" -m "OpenSSL $release release tag"
@@ -466,11 +475,11 @@ for fixup in "$HERE/dev/release-aux"/fixup-*-postrelease.pl; do
         perl -pi $fixup $file
 done
 
-$VERBOSE "== Comitting updates"
+$VERBOSE "== Committing updates"
 git add -u
-git commit $git_quiet -m "Prepare for $release_text"
+git commit $git_quiet -m "Prepare for $release_text"$'\n\nRelease: yes'
 if [ -n "$reviewers" ]; then
-    addrev --nopr $reviewers
+    addrev --release --nopr $reviewers
 fi
 
 # Push everything to the parent repo
@@ -497,11 +506,11 @@ if $do_branch; then
             perl -pi $fixup $file
     done
 
-    $VERBOSE "== Comitting updates"
+    $VERBOSE "== Committing updates"
     git add -u
-    git commit $git_quiet -m "Prepare for $release_text"
+    git commit $git_quiet -m "Prepare for $release_text"$'\n\nRelease: yes'
     if [ -n "$reviewers" ]; then
-        addrev --nopr $reviewers
+        addrev --release --nopr $reviewers
     fi
 fi
 
@@ -558,11 +567,11 @@ Push them to github, make PRs from them and have them approved:
 
 When merging them into the main repository, do it like this:
 
-    git push openssl-git@git.openssl.org:openssl.git \\
+    git push git@github.openssl.org:openssl/openssl.git \\
         $tmp_release_branch:$release_branch
-    git push openssl-git@git.openssl.org:openssl.git \\
+    git push git@github.openssl.org:openssl/openssl.git \\
         $tmp_update_branch:$update_branch
-    git push openssl-git@git.openssl.org:openssl.git \\
+    git push git@github.openssl.org:openssl/openssl.git \\
         $tag
 EOF
 else
@@ -574,9 +583,9 @@ Push it to github, make a PR from it and have it approved:
 
 When merging it into the main repository, do it like this:
 
-    git push openssl-git@git.openssl.org:openssl.git \\
+    git push git@github.openssl.org:openssl/openssl.git \\
         $tmp_release_branch:$release_branch
-    git push openssl-git@git.openssl.org:openssl.git \\
+    git push git@github.openssl.org:openssl/openssl.git \\
         $tag
 EOF
 fi
@@ -689,9 +698,9 @@ This implies B<--branch>.
 
 =item B<--branch>
 
-Create a branch specific for the I<SERIES>.x release series, if it doesn't
+Create a branch specific for the I<SERIES> release series, if it doesn't
 already exist, and switch to it.  The exact branch name will be
-C<< openssl-I<SERIES>.x >>.
+C<< openssl-I<SERIES> >>.
 
 =item B<--no-upload>
 
@@ -746,7 +755,7 @@ C<< OpenSSL_I<VERSION> >> for regular releases, or
 C<< OpenSSL_I<VERSION>-preI<n> >> for pre-releases.
 
 From OpenSSL 3.0 ongoing, the release branches are named
-C<< openssl-I<SERIES>.x >>, and the release tags are named
+C<< openssl-I<SERIES> >>, and the release tags are named
 C<< openssl-I<VERSION> >> for regular releases, or
 C<< openssl-I<VERSION>-alphaI<n> >> for alpha releases
 and C<< openssl-I<VERSION>-betaI<n> >> for beta releases.
@@ -803,7 +812,7 @@ release date in the tar file of any release.
 
 =head1 COPYRIGHT
 
-Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -95,6 +95,13 @@ For example:
  install-mac = FE:10:13:5A:D3:B4:C7:82:1B:1E:17:4C:AC:84:0C
  install-status = INSTALL_SELF_TEST_KATS_RUN
 
+=head1 NOTES
+
+When using the FIPS provider, it is recommended that the
+B<config_diagnostics> option is enabled to prevent accidental use of
+non-FIPS validated algorithms via broken or mistaken configuration.
+See L<config(5)>.
+
 =head1 SEE ALSO
 
 L<config(5)>

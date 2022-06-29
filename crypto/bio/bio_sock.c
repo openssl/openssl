@@ -35,6 +35,8 @@ static int wsa_init_done = 0;
 #  include <unistd.h>
 #  if defined __VMS
 #   include <sys/socket.h>
+#  elif defined _HPUX_SOURCE
+#   include <sys/time.h>
 #  else
 #   include <sys/select.h>
 #  endif
@@ -400,7 +402,7 @@ int BIO_socket_wait(int fd, int for_read, time_t max_time)
         return 1;
 
     now = time(NULL);
-    if (max_time <= now)
+    if (max_time < now)
         return 0;
 
     FD_ZERO(&confds);

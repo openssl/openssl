@@ -18,8 +18,6 @@ void ossl_namemap_free(OSSL_NAMEMAP *namemap);
 int ossl_namemap_empty(OSSL_NAMEMAP *namemap);
 
 int ossl_namemap_add_name(OSSL_NAMEMAP *namemap, int number, const char *name);
-int ossl_namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
-                            const char *name, size_t name_len);
 
 /*
  * The number<->name relationship is 1<->many

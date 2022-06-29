@@ -282,6 +282,7 @@ id-smime-ct 35		: id-ct-rpkiGhostbusters
 id-smime-ct 36		: id-ct-resourceTaggedAttest
 id-smime-ct 47		: id-ct-geofeedCSVwithCRLF
 id-smime-ct 48		: id-ct-signedChecklist
+id-smime-ct 49		: id-ct-ASPA
 
 # S/MIME Attributes
 id-smime-aa 1		: id-smime-aa-receiptRequest
@@ -315,7 +316,10 @@ id-smime-aa 26		: id-smime-aa-ets-certCRLTimestamp
 id-smime-aa 27		: id-smime-aa-ets-archiveTimeStamp
 id-smime-aa 28		: id-smime-aa-signatureType
 id-smime-aa 29		: id-smime-aa-dvcs-dvc
+id-smime-aa 44		: id-aa-ets-attrCertificateRefs
+id-smime-aa 45		: id-aa-ets-attrRevocationRefs
 id-smime-aa 47		: id-smime-aa-signingCertificateV2
+id-smime-aa 48		: id-aa-ets-archiveTimestampV2
 
 # S/MIME Algorithm Identifiers
 # obsolete
@@ -356,6 +360,8 @@ certTypes 1		:			: x509Certificate
 certTypes 2		:			: sdsiCertificate
 !Alias crlTypes pkcs9 23
 crlTypes 1		:			: x509Crl
+
+pkcs9 52		: id-aa-CMSAlgorithmProtection
 
 !Alias pkcs12 pkcs 12
 !Alias pkcs12-pbeids pkcs12 1
@@ -493,6 +499,9 @@ id-pkix-mod 13		: id-mod-timestamp-protocol
 id-pkix-mod 14		: id-mod-ocsp
 id-pkix-mod 15		: id-mod-dvcs
 id-pkix-mod 16		: id-mod-cmp2000
+id-pkix-mod 50		: id-mod-cmp2000-02
+id-pkix-mod 99		: id-mod-cmp2021-88
+id-pkix-mod 100		: id-mod-cmp2021-02
 
 # PKIX Private Extensions
 !Cname info-access
@@ -565,9 +574,9 @@ id-it 4			: id-it-preferredSymmAlg
 id-it 5			: id-it-caKeyUpdateInfo
 id-it 6			: id-it-currentCRL
 id-it 7			: id-it-unsupportedOIDs
-# obsolete
+# [Reserved and Obsolete]:
 id-it 8			: id-it-subscriptionRequest
-# obsolete
+# [Reserved and Obsolete]:
 id-it 9			: id-it-subscriptionResponse
 id-it 10		: id-it-keyPairParamReq
 id-it 11		: id-it-keyPairParamRep
@@ -579,6 +588,10 @@ id-it 16		: id-it-suppLangTags
 id-it 17		: id-it-caCerts
 id-it 18		: id-it-rootCaKeyUpdate
 id-it 19		: id-it-certReqTemplate
+id-it 20		: id-it-rootCaCert
+id-it 21		: id-it-certProfile
+id-it 22		: id-it-crlStatusList
+id-it 23		: id-it-crls
 
 # CRMF registration
 id-pkip 1		: id-regCtrl
@@ -591,6 +604,12 @@ id-regCtrl 3		: id-regCtrl-pkiPublicationInfo
 id-regCtrl 4		: id-regCtrl-pkiArchiveOptions
 id-regCtrl 5		: id-regCtrl-oldCertID
 id-regCtrl 6		: id-regCtrl-protocolEncrKey
+id-regCtrl 7		: id-regCtrl-altCertTemplate
+# id-regCtrl 8		: id-regCtrl-wtlsTemplate	[Reserved and Obsolete]
+# id-regCtrl 9		: id-regCtrl-regTokenUTF8	[Reserved and Obsolete]
+# id-regCtrl 10		: id-regCtrl-authenticatorUTF8	[Reserved and Obsolete]
+id-regCtrl 11		: id-regCtrl-algId
+id-regCtrl 12		: id-regCtrl-rsaKeyLen
 
 # CRMF registration information
 id-regInfo 1		: id-regInfo-utf8Pairs
@@ -1050,6 +1069,27 @@ holdInstruction 3	: holdInstructionReject	: Hold Instruction Reject
 
 # OID's from ITU-T.  Most of this is defined in RFC 1274.  A couple of
 # them are also mentioned in RFC 2247
+# OIDs specific to Electronic Signature Standard/CAdES are as specified in
+# ETSI EN 319 122-1 V1.2.1 (2021-10):
+# Electronic Signatures and Infrastructures (ESI); CAdES digital signatures; 
+# Part 1: Building blocks and CAdES baseline signatures
+itu-t 4			: itu-t-identified-organization
+itu-t-identified-organization 0: etsi
+etsi 1733		: electronic-signature-standard
+electronic-signature-standard 2: ess-attributes
+ess-attributes 1	: id-aa-ets-mimeType
+ess-attributes 2	: id-aa-ets-longTermValidation
+ess-attributes 3	: id-aa-ets-SignaturePolicyDocument
+ess-attributes 4	: id-aa-ets-archiveTimestampV3
+ess-attributes 5	: id-aa-ATSHashIndex
+etsi 19122		: cades
+cades 1			: cades-attributes
+cades-attributes 1	: id-aa-ets-signerAttrV2
+cades-attributes 3	: id-aa-ets-sigPolicyStore
+cades-attributes 4	: id-aa-ATSHashIndex-v2
+cades-attributes 5	: id-aa-ATSHashIndex-v3
+cades-attributes 6	: signedAssertion
+
 itu-t 9			: data
 data 2342		: pss
 pss 19200300		: ucl
@@ -1565,6 +1605,8 @@ sm-scheme 104 4         : SM4-CFB             : sm4-cfb
 sm-scheme 104 5         : SM4-CFB1            : sm4-cfb1
 sm-scheme 104 6         : SM4-CFB8            : sm4-cfb8
 sm-scheme 104 7         : SM4-CTR             : sm4-ctr
+sm-scheme 104 8         : SM4-GCM             : sm4-gcm
+sm-scheme 104 9         : SM4-CCM             : sm4-ccm
 
 # There is no OID that just denotes "HMAC" oddly enough...
 

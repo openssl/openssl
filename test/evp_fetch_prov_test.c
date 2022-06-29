@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -212,7 +212,7 @@ static int test_explicit_EVP_MD_fetch_by_X509_ALGOR(int idx)
     int ret = 0;
     X509_ALGOR *algor = make_algor(NID_sha256);
     const ASN1_OBJECT *obj;
-    char id[OSSL_MAX_NAME_SIZE];
+    char id[OSSL_MAX_NAME_SIZE] = { 0 };
 
     if (algor == NULL)
         return 0;
@@ -220,11 +220,11 @@ static int test_explicit_EVP_MD_fetch_by_X509_ALGOR(int idx)
     X509_ALGOR_get0(&obj, NULL, NULL, algor);
     switch (idx) {
     case 0:
-        if (!TEST_true(OBJ_obj2txt(id, sizeof(id), obj, 0)))
+        if (!TEST_int_gt(OBJ_obj2txt(id, sizeof(id), obj, 0), 0))
             goto end;
         break;
     case 1:
-        if (!TEST_true(OBJ_obj2txt(id, sizeof(id), obj, 1)))
+        if (!TEST_int_gt(OBJ_obj2txt(id, sizeof(id), obj, 1), 0))
             goto end;
         break;
     }
@@ -328,7 +328,7 @@ static int test_explicit_EVP_CIPHER_fetch_by_X509_ALGOR(int idx)
     int ret = 0;
     X509_ALGOR *algor = make_algor(NID_aes_128_cbc);
     const ASN1_OBJECT *obj;
-    char id[OSSL_MAX_NAME_SIZE];
+    char id[OSSL_MAX_NAME_SIZE] = { 0 };
 
     if (algor == NULL)
         return 0;
@@ -336,11 +336,11 @@ static int test_explicit_EVP_CIPHER_fetch_by_X509_ALGOR(int idx)
     X509_ALGOR_get0(&obj, NULL, NULL, algor);
     switch (idx) {
     case 0:
-        if (!TEST_true(OBJ_obj2txt(id, sizeof(id), obj, 0)))
+        if (!TEST_int_gt(OBJ_obj2txt(id, sizeof(id), obj, 0), 0))
             goto end;
         break;
     case 1:
-        if (!TEST_true(OBJ_obj2txt(id, sizeof(id), obj, 1)))
+        if (!TEST_int_gt(OBJ_obj2txt(id, sizeof(id), obj, 1), 0))
             goto end;
         break;
     }

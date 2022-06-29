@@ -40,9 +40,7 @@ typedef struct {
 # if defined(AES_ASM) && (defined(__sparc) || defined(__sparc__))
 /* ---------^^^ this is not a typo, just a way to detect that
  * assembler support was in general requested... */
-#  include "sparc_arch.h"
-
-extern unsigned int OPENSSL_sparcv9cap_P[];
+#  include "crypto/sparc_arch.h"
 
 #  define SPARC_DES_CAPABLE       (OPENSSL_sparcv9cap_P[1] & CFR_DES)
 
@@ -167,7 +165,8 @@ static int des_ede3_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                 const unsigned char *in, size_t inl)
 {
     size_t n;
-    unsigned char c[1], d[1];
+    unsigned char c[1];
+    unsigned char d[1] = { 0 }; /* Appease Coverity */
 
     if (!EVP_CIPHER_CTX_test_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS))
             inl *= 8;
