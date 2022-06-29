@@ -4,6 +4,6 @@
 $STORE_GOAL=../../libdefault.a
 
 SOURCE[$STORE_GOAL]=file_store.c file_store_any2obj.c
-IF[{- !$disabled{capistore} -}]
-    SOURCE[$STORE_GOAL]=capi_store.c
+IF[{- !$disabled{winstore} -}]
+    SOURCE[$STORE_GOAL]=winstore_store.c
 ENDIF

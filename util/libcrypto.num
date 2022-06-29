@@ -5458,3 +5458,4 @@ BIO_meth_get_recvmmsg                   ?	3_1_0	EXIST::FUNCTION:
 BIO_err_is_non_fatal                    ?	3_1_0	EXIST::FUNCTION:SOCK
 X509_get_default_cert_uri               ?	3_1_0	EXIST::FUNCTION:
 X509_get_default_cert_uri_env           ?	3_1_0	EXIST::FUNCTION:
+X509_get_default_cert_path_env          ?	3_1_0	EXIST::FUNCTION:

@@ -249,7 +249,7 @@ FILE *__iob_func();
 /***********************************************/
 
 # if defined(OPENSSL_SYS_WINDOWS)
-#  if (_MSC_VER >= 1310) && !defined(_WIN32_WCE)
+#  if defined(_MSC_VER) && (_MSC_VER >= 1310) && !defined(_WIN32_WCE)
 #   define open _open
 #   define fdopen _fdopen
 #   define close _close

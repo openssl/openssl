@@ -32,20 +32,20 @@ enum {
     STATE_EOF,
 };
 
-struct capi_ctx_st {
-    void           *provctx;
-    char           *propq;
-    unsigned char  *subject;
-    size_t          subject_len;
+struct winstore_ctx_st {
+    void                   *provctx;
+    char                   *propq;
+    unsigned char          *subject;
+    size_t                  subject_len;
 
-    HCERTSTORE      win_store;
-    const CERT_CONTEXT   *win_ctx;
-    int             state;
+    HCERTSTORE              win_store;
+    const CERT_CONTEXT     *win_ctx;
+    int                     state;
 
-    OSSL_DECODER_CTX *dctx;
+    OSSL_DECODER_CTX       *dctx;
 };
 
-static void capi_win_reset(struct capi_ctx_st *ctx)
+static void winstore_win_reset(struct winstore_ctx_st *ctx)
 {
     if (ctx->win_ctx != NULL) {
         CertFreeCertificateContext(ctx->win_ctx);
@@ -55,7 +55,7 @@ static void capi_win_reset(struct capi_ctx_st *ctx)
     ctx->state = STATE_IDLE;
 }
 
-static void capi_win_advance(struct capi_ctx_st *ctx)
+static void winstore_win_advance(struct winstore_ctx_st *ctx)
 {
     CERT_NAME_BLOB name = {0};
 
@@ -74,11 +74,11 @@ static void capi_win_advance(struct capi_ctx_st *ctx)
     ctx->state = (ctx->win_ctx == NULL) ? STATE_EOF : STATE_READ;
 }
 
-static void *capi_open(void *provctx, const char *uri)
+static void *winstore_open(void *provctx, const char *uri)
 {
-    struct capi_ctx_st *ctx = NULL;
+    struct winstore_ctx_st *ctx = NULL;
 
-    if (!HAS_CASE_PREFIX(uri, "capi:"))
+    if (!HAS_CASE_PREFIX(uri, "winstore:"))
         return NULL;
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
@@ -92,16 +92,16 @@ static void *capi_open(void *provctx, const char *uri)
         return NULL;
     }
 
-    capi_win_reset(ctx);
+    winstore_win_reset(ctx);
     return ctx;
 }
 
-static void *capi_attach(void *provctx, OSSL_CORE_BIO *cin)
+static void *winstore_attach(void *provctx, OSSL_CORE_BIO *cin)
 {
     return NULL; /* not supported */
 }
 
-static const OSSL_PARAM *capi_settable_ctx_params(void *loaderctx, const OSSL_PARAM params[])
+static const OSSL_PARAM *winstore_settable_ctx_params(void *loaderctx, const OSSL_PARAM params[])
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_STORE_PARAM_SUBJECT, NULL, 0),
@@ -111,9 +111,9 @@ static const OSSL_PARAM *capi_settable_ctx_params(void *loaderctx, const OSSL_PA
     return known_settable_ctx_params;
 }
 
-static int capi_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
+static int winstore_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
 {
-    struct capi_ctx_st *ctx = loaderctx;
+    struct winstore_ctx_st *ctx = loaderctx;
     const OSSL_PARAM *p;
     int do_reset = 0;
 
@@ -142,17 +142,17 @@ static int capi_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
         if (ctx->subject != NULL)
             OPENSSL_free(ctx->subject);
 
-        ctx->subject        = OPENSSL_malloc(der_len);
+        ctx->subject = OPENSSL_malloc(der_len);
         if (ctx->subject == NULL)
             return 0;
 
-        ctx->subject_len    = der_len;
+        ctx->subject_len = der_len;
         memcpy(ctx->subject, der, der_len);
     }
 
     if (do_reset) {
-        capi_win_reset(ctx);
-        capi_win_advance(ctx);
+        winstore_win_reset(ctx);
+        winstore_win_advance(ctx);
     }
 
     return 1;
@@ -175,7 +175,7 @@ static void load_cleanup(void *construct_data)
     /* No-op. */
 }
 
-static int setup_decoder(struct capi_ctx_st *ctx)
+static int setup_decoder(struct winstore_ctx_st *ctx)
 {
     OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_libctx(ctx->provctx);
     const OSSL_ALGORITHM *to_algo = NULL;
@@ -214,6 +214,7 @@ static int setup_decoder(struct capi_ctx_st *ctx)
         to_obj = ossl_decoder_from_algorithm(0, to_algo, NULL);
         if (to_obj != NULL)
             to_obj_inst = ossl_decoder_instance_new(to_obj, ctx->provctx);
+
         OSSL_DECODER_free(to_obj);
         if (to_obj_inst == NULL)
             goto err;
@@ -249,8 +250,10 @@ err:
     return 0;
 }
 
-static int capi_load_using(struct capi_ctx_st *ctx, OSSL_CALLBACK *object_cb, void *object_cbarg, OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg,
-    const void *der, size_t der_len)
+static int winstore_load_using(struct winstore_ctx_st *ctx,
+                               OSSL_CALLBACK *object_cb, void *object_cbarg,
+                               OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg,
+                               const void *der, size_t der_len)
 {
     struct load_data_st data;
     const unsigned char *der_ = der;
@@ -271,35 +274,38 @@ static int capi_load_using(struct capi_ctx_st *ctx, OSSL_CALLBACK *object_cb, vo
     return 1;
 }
 
-static int capi_load(void *loaderctx, OSSL_CALLBACK *object_cb, void *object_cbarg, OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
+static int winstore_load(void *loaderctx,
+                         OSSL_CALLBACK *object_cb, void *object_cbarg,
+                         OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     int ret = 0;
-    struct capi_ctx_st *ctx = loaderctx;
+    struct winstore_ctx_st *ctx = loaderctx;
 
     if (ctx->state != STATE_READ)
         return 0;
 
-    ret = capi_load_using(ctx, object_cb, object_cbarg, pw_cb, pw_cbarg,
-                          ctx->win_ctx->pbCertEncoded, ctx->win_ctx->cbCertEncoded);
+    ret = winstore_load_using(ctx, object_cb, object_cbarg, pw_cb, pw_cbarg,
+                              ctx->win_ctx->pbCertEncoded,
+                              ctx->win_ctx->cbCertEncoded);
 
     if (ret == 1)
-        capi_win_advance(ctx);
+        winstore_win_advance(ctx);
 
     return ret;
 }
 
-static int capi_eof(void *loaderctx)
+static int winstore_eof(void *loaderctx)
 {
-    struct capi_ctx_st *ctx = loaderctx;
+    struct winstore_ctx_st *ctx = loaderctx;
 
     return ctx->state != STATE_READ;
 }
 
-static int capi_close(void *loaderctx)
+static int winstore_close(void *loaderctx)
 {
-    struct capi_ctx_st *ctx = loaderctx;
+    struct winstore_ctx_st *ctx = loaderctx;
 
-    capi_win_reset(ctx);
+    winstore_win_reset(ctx);
     CertCloseStore(ctx->win_store, 0);
     OSSL_DECODER_CTX_free(ctx->dctx);
     OPENSSL_free(ctx->propq);
@@ -308,13 +314,13 @@ static int capi_close(void *loaderctx)
     return 1;
 }
 
-const OSSL_DISPATCH ossl_capi_store_functions[] = {
-    { OSSL_FUNC_STORE_OPEN, (void (*)(void))capi_open },
-    { OSSL_FUNC_STORE_ATTACH, (void (*)(void))capi_attach },
-    { OSSL_FUNC_STORE_SETTABLE_CTX_PARAMS, (void (*)(void))capi_settable_ctx_params },
-    { OSSL_FUNC_STORE_SET_CTX_PARAMS, (void (*)(void))capi_set_ctx_params },
-    { OSSL_FUNC_STORE_LOAD, (void (*)(void))capi_load },
-    { OSSL_FUNC_STORE_EOF, (void (*)(void))capi_eof },
-    { OSSL_FUNC_STORE_CLOSE, (void (*)(void))capi_close },
+const OSSL_DISPATCH ossl_winstore_store_functions[] = {
+    { OSSL_FUNC_STORE_OPEN, (void (*)(void))winstore_open },
+    { OSSL_FUNC_STORE_ATTACH, (void (*)(void))winstore_attach },
+    { OSSL_FUNC_STORE_SETTABLE_CTX_PARAMS, (void (*)(void))winstore_settable_ctx_params },
+    { OSSL_FUNC_STORE_SET_CTX_PARAMS, (void (*)(void))winstore_set_ctx_params },
+    { OSSL_FUNC_STORE_LOAD, (void (*)(void))winstore_load },
+    { OSSL_FUNC_STORE_EOF, (void (*)(void))winstore_eof },
+    { OSSL_FUNC_STORE_CLOSE, (void (*)(void))winstore_close },
     { 0, NULL },
 };
