@@ -497,11 +497,13 @@ static int test_bio_dgram_pair(void)
     size_t i, num_dgram;
     BIO_MSG msgs[2] = {0}, rmsgs[2] = {0};
     BIO_ADDR *addr1 = NULL, *addr2 = NULL, *addr3 = NULL, *addr4 = NULL;
-    struct in_addr in_local = {ntohl(0x7f000001)};
+    struct in_addr in_local;
     const uint32_t ref_caps = BIO_DGRAM_CAP_HANDLES_SRC_ADDR
                             | BIO_DGRAM_CAP_HANDLES_DST_ADDR
                             | BIO_DGRAM_CAP_PROVIDES_SRC_ADDR
                             | BIO_DGRAM_CAP_PROVIDES_DST_ADDR;
+
+    in_local.s_addr = ntohl(0x7f000001);
 
     for (i = 0; i < OSSL_NELEM(key); ++i)
         key[i] = test_random();

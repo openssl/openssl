@@ -48,11 +48,11 @@ L<BIO_make_bio_pair(3)> and L<BIO_set_write_buf_size(3)> to create a connected
 pair of BIOs B<bio1>, B<bio2> with write buffer sizes B<writebuf1> and
 B<writebuf2>. If either size is zero then the default size is used.
 
-L<BIO_make_pair(3)> may be used to join two datagram pair BIOs into a pair. The
-two BIOs must both use the method returned by BIO_s_dgram_pair() and neither of
-the BIOs may currently be associated in a pair.
+L<BIO_make_bio_pair(3)> may be used to join two datagram pair BIOs into a pair.
+The two BIOs must both use the method returned by BIO_s_dgram_pair() and neither
+of the BIOs may currently be associated in a pair.
 
-L<BIO_destroy_pair(3)> destroys the association between two connected BIOs.
+L<BIO_destroy_bio_pair(3)> destroys the association between two connected BIOs.
 Freeing either half of the pair will automatically destroy the association.
 
 L<BIO_reset(3)> clears any data in the write buffer of the given BIO. This means
@@ -166,7 +166,7 @@ available.
 =back
 
 If a caller attempts to specify a destination address (for example, using
-L<BIO_writemmsg(3)>) and the peer has not advertised the
+L<BIO_sendmmsg(3)>) and the peer has not advertised the
 B<BIO_DGRAM_CAP_HANDLES_DST_ADDR> capability, the operation fails. Thus,
 capability negotiation is mandatory.
 

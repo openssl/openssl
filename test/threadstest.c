@@ -45,6 +45,8 @@ static const char *default_provider[] = { "default", NULL };
 static const char *fips_provider[] = { "fips", NULL };
 static const char *fips_and_default_providers[] = { "default", "fips", NULL };
 
+static CRYPTO_RWLOCK *global_lock;
+
 #ifdef TSAN_REQUIRES_LOCKING
 static CRYPTO_RWLOCK *tsan_lock;
 #endif
@@ -267,6 +269,19 @@ static void multi_intialise(void)
     memset(multi_provider, 0, sizeof(multi_provider));
 }
 
+static void multi_set_success(int ok)
+{
+    if (CRYPTO_THREAD_write_lock(global_lock) == 0) {
+        /* not synchronized, but better than not reporting failure */
+        multi_success = ok;
+        return;
+    }
+
+    multi_success = ok;
+
+    CRYPTO_THREAD_unlock(global_lock);
+}
+
 static void thead_teardown_libctx(void)
 {
     OSSL_PROVIDER **p;
@@ -408,7 +423,7 @@ static void thread_general_worker(void)
     EVP_CIPHER_free(ciph);
     EVP_PKEY_free(pkey);
     if (!testresult)
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static void thread_multi_simple_fetch(void)
@@ -418,7 +433,7 @@ static void thread_multi_simple_fetch(void)
     if (md != NULL)
         EVP_MD_free(md);
     else
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static EVP_PKEY *shared_evp_pkey = NULL;
@@ -467,7 +482,7 @@ static void thread_shared_evp_pkey(void)
  err:
     EVP_PKEY_CTX_free(ctx);
     if (!success)
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static void thread_provider_load_unload(void)
@@ -476,7 +491,7 @@ static void thread_provider_load_unload(void)
 
     if (!TEST_ptr(deflt)
             || !TEST_true(OSSL_PROVIDER_available(multi_libctx, "default")))
-        multi_success = 0;
+        multi_set_success(0);
 
     OSSL_PROVIDER_unload(deflt);
 }
@@ -533,7 +548,7 @@ static void thread_downgrade_shared_evp_pkey(void)
      * downgrading
      */
     if (EVP_PKEY_get0_RSA(shared_evp_pkey) == NULL)
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static int test_multi_downgrade_shared_pkey(void)
@@ -589,7 +604,7 @@ static void test_multi_load_worker(void)
 
     if (!TEST_ptr(prov = OSSL_PROVIDER_load(multi_libctx, multi_load_provider))
             || !TEST_true(OSSL_PROVIDER_unload(prov)))
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static int test_multi_default(void)
@@ -645,7 +660,7 @@ static void test_obj_create_one(void)
     if (!TEST_int_ne(id, 0)
             || !TEST_true(id = OBJ_create(oid, sn, ln))
             || !TEST_true(OBJ_add_sigid(id, NID_sha3_256, NID_rsa)))
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static int test_obj_add(void)
@@ -658,7 +673,7 @@ static int test_obj_add(void)
 static void test_lib_ctx_load_config_worker(void)
 {
     if (!TEST_int_eq(OSSL_LIB_CTX_load_config(multi_libctx, config_file), 1))
-        multi_success = 0;
+        multi_set_success(0);
 }
 
 static int test_lib_ctx_load_config(void)
@@ -696,7 +711,8 @@ static void test_bio_dgram_pair_worker(void)
 
     ok = 1;
 err:
-    multi_success = ok;
+    if (ok == 0)
+        multi_set_success(0);
 }
 
 static int test_bio_dgram_pair(void)
@@ -768,6 +784,9 @@ int setup_tests(void)
     if (!TEST_ptr(privkey))
         return 0;
 
+    if (!TEST_ptr(global_lock = CRYPTO_THREAD_lock_new()))
+        return 0;
+
 #ifdef TSAN_REQUIRES_LOCKING
     if (!TEST_ptr(tsan_lock = CRYPTO_THREAD_lock_new()))
         return 0;
@@ -803,4 +822,5 @@ void cleanup_tests(void)
 #ifdef TSAN_REQUIRES_LOCKING
     CRYPTO_THREAD_lock_free(tsan_lock);
 #endif
+    CRYPTO_THREAD_lock_free(global_lock);
 }
