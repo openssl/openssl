@@ -457,7 +457,9 @@ static int random_data(const uint32_t *key, uint8_t *data, size_t data_len, size
     EVP_CIPHER_CTX *ctx = NULL;
     EVP_CIPHER *cipher = NULL;
     static const uint8_t zeroes[2048];
-    uint32_t counter[4] = { (uint32_t)offset };
+    uint32_t counter[4] = {0};
+
+    counter[0] = (uint32_t)offset;
 
     ctx = EVP_CIPHER_CTX_new();
     if (ctx == NULL)
@@ -490,7 +492,7 @@ static int test_bio_dgram_pair(void)
 {
     int testresult = 0, blen, mtu1, mtu2, r;
     BIO *bio1 = NULL, *bio2 = NULL;
-    uint8_t scratch[2048+4], scratch2[2048];
+    uint8_t scratch[2048 + 4], scratch2[2048];
     uint32_t key[8];
     size_t i, num_dgram;
     BIO_MSG msgs[2] = {0}, rmsgs[2] = {0};
@@ -521,12 +523,12 @@ static int test_bio_dgram_pair(void)
     if (!TEST_int_le(mtu1, sizeof(scratch)-4))
         goto err;
 
-    for (i=0;; ++i) {
+    for (i = 0;; ++i) {
         if (!TEST_int_eq(random_data(key, scratch, sizeof(scratch), i), 1))
             goto err;
 
         blen = (*(uint32_t*)scratch) % mtu1;
-        r = BIO_write(bio1, scratch+4, blen);
+        r = BIO_write(bio1, scratch + 4, blen);
         if (r == -1)
             break;
 
@@ -543,7 +545,7 @@ static int test_bio_dgram_pair(void)
 
     /* Check we read back the same data */
     num_dgram = i;
-    for (i=0; i<num_dgram; ++i) {
+    for (i = 0; i < num_dgram; ++i) {
         if (!TEST_int_eq(random_data(key, scratch, sizeof(scratch), i), 1))
             goto err;
 
@@ -552,7 +554,7 @@ static int test_bio_dgram_pair(void)
         if (!TEST_int_eq(r, blen))
             goto err;
 
-        if (!TEST_mem_eq(scratch+4, blen, scratch2, blen))
+        if (!TEST_mem_eq(scratch + 4, blen, scratch2, blen))
             goto err;
     }
 

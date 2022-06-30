@@ -391,7 +391,7 @@ static size_t dgram_pair_ctrl_pending(BIO *bio)
 
     peerb = b->peer->ptr;
 
-    if (CRYPTO_THREAD_read_lock(peerb->lock) == 0)
+    if (CRYPTO_THREAD_write_lock(peerb->lock) == 0)
         return 0;
 
     saved_idx   = peerb->rbuf.idx[1];
@@ -670,13 +670,13 @@ int BIO_new_bio_dgram_pair(BIO **pbio1, size_t writebuf1,
     if (bio2 == NULL)
         goto err;
 
-    if (writebuf1) {
+    if (writebuf1 > 0) {
         r = BIO_set_write_buf_size(bio1, writebuf1);
         if (r == 0)
             goto err;
     }
 
-    if (writebuf2) {
+    if (writebuf2 > 0) {
         r = BIO_set_write_buf_size(bio2, writebuf2);
         if (r == 0)
             goto err;
@@ -786,9 +786,9 @@ static ossl_ssize_t dgram_pair_read_actual(BIO *bio, char *buf, size_t sz,
          */
         return -1;
 
-    if (sz > hdr.len)
+    if (sz > hdr.len) {
         sz = hdr.len;
-    else if (sz < hdr.len) {
+    } else if (sz < hdr.len) {
         /* Truncation is occurring. */
         trunc = hdr.len - sz;
         if (b->no_trunc) {
@@ -808,10 +808,9 @@ static ossl_ssize_t dgram_pair_read_actual(BIO *bio, char *buf, size_t sz,
      * If the datagram was truncated due to an inadequate buffer, discard the
      * remainder.
      */
-    if (trunc > 0)
-        if (!ossl_assert(dgram_pair_read_inner(peerb, NULL, trunc) == trunc))
-            /* We were somehow not able to read/skip the entire datagram. */
-            return -1;
+    if (trunc > 0 && !ossl_assert(dgram_pair_read_inner(peerb, NULL, trunc) == trunc))
+        /* We were somehow not able to read/skip the entire datagram. */
+        return -1;
 
     if (local != NULL)
         *local = hdr.dst_addr;
@@ -870,7 +869,7 @@ static ossl_ssize_t dgram_pair_recvmmsg(BIO *bio, BIO_MSG *msg,
     if (CRYPTO_THREAD_write_lock(peerb->lock) == 0)
         return -1;
 
-    for (i=0; i<num_msg; ++i) {
+    for (i = 0; i < num_msg; ++i) {
         m = &BIO_MSG_N(msg, i);
         l = dgram_pair_read_actual(bio, m->data, m->data_len,
                                    m->local, m->peer, 1);
@@ -1009,7 +1008,7 @@ static ossl_ssize_t dgram_pair_sendmmsg(BIO *bio, BIO_MSG *msg,
     if (CRYPTO_THREAD_write_lock(b->lock) == 0)
         return -1;
 
-    for (i=0; i<num_msg; ++i) {
+    for (i = 0; i < num_msg; ++i) {
         m = &BIO_MSG_N(msg, i);
         l = dgram_pair_write_actual(bio, m->data, m->data_len, 
                                     m->local, m->peer, 1);
