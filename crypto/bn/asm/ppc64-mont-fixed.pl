@@ -63,6 +63,7 @@ my $SIZE_T= 8;
 # Registers are global so the code is remotely readable
 
 # Parameters for Montgomery multiplication
+my $ze	= "r0";
 my $sp	= "r1";
 my $toc	= "r2";
 my $rp	= "r3";
@@ -192,6 +193,7 @@ ___
 	$self->save_registers();
 
 	$self->add_code(<<___);
+	li		$ze,0
 	ld		$n0,0($n0)
 
 	ld		$bp0,0($bp)
@@ -242,7 +244,7 @@ ___
 
 	$self->add_code(<<___);
 	addc		$tp[$n],$tp[$n],$c0
-	addze		$tp[$n+1],$tp[$n+1]
+	addze		$tp[$n+1],$ze
 ___
 
 	$self->add_code(<<___);
@@ -272,7 +274,7 @@ ___
 	and.		$tp[$n],$tp[$n],$tp[$n]
 	bne		$label->{"sub"}
 
-	cmpld	$tp[$n-1],$npj
+	cmpld		$tp[$n-1],$npj
 	blt		$label->{"copy"}
 
 $label->{"sub"}:
