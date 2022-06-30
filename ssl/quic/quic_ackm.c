@@ -997,7 +997,7 @@ static uint64_t ackm_ack_eliciting_bytes_in_flight(OSSL_ACKM *ackm)
     int i;
     uint64_t total = 0;
 
-    for (i=0; i<QUIC_PN_SPACE_NUM; ++i)
+    for (i = 0; i < QUIC_PN_SPACE_NUM; ++i)
         total += ackm->ack_eliciting_bytes_in_flight[i];
 
     return total;
@@ -1400,7 +1400,7 @@ void ossl_ackm_delete(OSSL_ACKM *ackm)
     if (ackm == NULL)
         return;
 
-    for (i=0; i<OSSL_NELEM(ackm->tx_history); ++i)
+    for (i = 0; i < OSSL_NELEM(ackm->tx_history); ++i)
         if (!ackm->discarded[i]) {
             tx_pkt_history_destroy(&ackm->tx_history[i]);
             rx_pkt_history_destroy(&ackm->rx_history[i]);
