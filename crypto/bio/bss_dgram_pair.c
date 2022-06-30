@@ -198,6 +198,7 @@ struct bio_dgram_pair_st {
     CRYPTO_RWLOCK *lock;
     unsigned int no_trunc          : 1; /* Reads fail if they would truncate */
     unsigned int local_addr_enable : 1; /* Can use BIO_MSG->local? */
+    unsigned int role              : 1; /* Determines lock order */
 };
 
 #define MIN_BUF_LEN (1024)
@@ -286,6 +287,8 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
 
     b1->peer    = bio2;
     b2->peer    = bio1;
+    b1->role    = 0;
+    b2->role    = 1;
     bio1->init  = 1;
     bio2->init  = 1;
     return 1;
@@ -335,7 +338,7 @@ static int dgram_pair_ctrl_eof(BIO *bio)
     if (!ossl_assert(peerb != NULL))
         return -1;
 
-    /* 
+    /*
      * Since we are emulating datagram semantics, never indicate EOF so long as
      * we have a peer.
      */
@@ -639,7 +642,7 @@ static long dgram_pair_ctrl(BIO *bio, int cmd, long num, void *ptr)
         ret = (long)dgram_pair_ctrl_set_mtu(bio, (uint32_t)num);
         break;
 
-    /* 
+    /*
      * BIO_eof: Returns whether this half of the BIO pair is empty of data to
      * read.
      */
@@ -821,6 +824,41 @@ static ossl_ssize_t dgram_pair_read_actual(BIO *bio, char *buf, size_t sz,
 }
 
 /* Threadsafe */
+static int dgram_pair_lock_both_write(struct bio_dgram_pair_st *a,
+                                      struct bio_dgram_pair_st *b)
+{
+    struct bio_dgram_pair_st *x, *y;
+
+    x = (a->role == 1) ? a : b;
+    y = (a->role == 1) ? b : a;
+
+    OPENSSL_assert(a->role != b->role);
+    OPENSSL_assert(a != b && x != y);
+
+    if (CRYPTO_THREAD_write_lock(x->lock) == 0)
+        return 0;
+
+    if (CRYPTO_THREAD_write_lock(y->lock) == 0) {
+        CRYPTO_THREAD_unlock(x->lock);
+        return 0;
+    }
+
+    return 1;
+}
+
+static void dgram_pair_unlock_both(struct bio_dgram_pair_st *a,
+                                   struct bio_dgram_pair_st *b)
+{
+    struct bio_dgram_pair_st *x, *y;
+
+    x = (a->role == 1) ? a : b;
+    y = (a->role == 1) ? b : a;
+
+    CRYPTO_THREAD_unlock(y->lock);
+    CRYPTO_THREAD_unlock(x->lock);
+}
+
+/* Threadsafe */
 static int dgram_pair_read(BIO *bio, char *buf, int sz_)
 {
     int ret;
@@ -839,12 +877,12 @@ static int dgram_pair_read(BIO *bio, char *buf, int sz_)
      * flags on the local bio. (This is avoided in the recvmmsg case as it does
      * not touch the retry flags.)
      */
-    if (CRYPTO_THREAD_lock_dual(peerb->lock, 1, b->lock, 1) == 0)
+    if (dgram_pair_lock_both_write(peerb, b) == 0)
         return -1;
 
     ret = dgram_pair_read_actual(bio, buf, (size_t)sz_, NULL, NULL, 0);
-    CRYPTO_THREAD_unlock(b->lock);
-    CRYPTO_THREAD_unlock(peerb->lock);
+
+    dgram_pair_unlock_both(peerb, b);
     return ret;
 }
 
@@ -902,7 +940,7 @@ static size_t dgram_pair_write_inner(struct bio_dgram_pair_st *b, const uint8_t 
         size_t dst_len;
         uint8_t *dst_buf;
 
-        /* 
+        /*
          * There are two BIO instances, each with a ringbuf. We write to our own
          * ringbuf and read from the peer ringbuf.
          */
@@ -1010,7 +1048,7 @@ static ossl_ssize_t dgram_pair_sendmmsg(BIO *bio, BIO_MSG *msg,
 
     for (i = 0; i < num_msg; ++i) {
         m = &BIO_MSG_N(msg, i);
-        l = dgram_pair_write_actual(bio, m->data, m->data_len, 
+        l = dgram_pair_write_actual(bio, m->data, m->data_len,
                                     m->local, m->peer, 1);
         if (l < 0) {
             ret = i ? (ossl_ssize_t)i : -1;

@@ -5461,6 +5461,3 @@ X509_get_default_cert_uri_env           ?	3_1_0	EXIST::FUNCTION:
 X509_get_default_cert_path_env          ?	3_1_0	EXIST::FUNCTION:
 BIO_s_dgram_pair                        ?	3_1_0	EXIST::FUNCTION:
 BIO_new_bio_dgram_pair                  ?	3_1_0	EXIST::FUNCTION:
-CRYPTO_THREAD_try_read_lock             ?	3_1_0	EXIST::FUNCTION:
-CRYPTO_THREAD_try_write_lock            ?	3_1_0	EXIST::FUNCTION:
-CRYPTO_THREAD_lock_dual                 ?	3_1_0	EXIST::FUNCTION:

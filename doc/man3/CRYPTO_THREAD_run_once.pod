@@ -4,8 +4,6 @@
 
 CRYPTO_THREAD_run_once,
 CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock,
-CRYPTO_THREAD_try_read_lock, CRYPTO_THREAD_try_write_lock,
-CRYPTO_THREAD_lock_dual,
 CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free,
 CRYPTO_atomic_add, CRYPTO_atomic_or, CRYPTO_atomic_load - OpenSSL thread support
 
@@ -18,11 +16,7 @@ CRYPTO_atomic_add, CRYPTO_atomic_or, CRYPTO_atomic_load - OpenSSL thread support
 
  CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void);
  int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock);
- int CRYPTO_THREAD_try_read_lock(CRYPTO_RWLOCK *lock);
  int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock);
- int CRYPTO_THREAD_try_write_lock(CRYPTO_RWLOCK *lock);
- int CRYPTO_THREAD_lock_dual(CRYPTO_RWLOCK *lock1, int lock1_write,
-                             CRYPTO_RWLOCK *lock2, int lock2_write);
  int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock);
  void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
 
@@ -67,18 +61,6 @@ CRYPTO_THREAD_read_lock() locks the provided I<lock> for reading.
 =item *
 
 CRYPTO_THREAD_write_lock() locks the provided I<lock> for writing.
-
-=item *
-
-CRYPTO_THREAD_try_read_lock() and CRYPTO_THREAD_try_write_lock() lock the
-provided I<lock> for reading or writing respectively if the lock is not locked,
-and otherwise returns 0.
-
-=item *
-
-CRYPTO_THREAD_lock_dual() locks two locks using a deadlock avoidance algorithm.
-If B<lock1_write> or B<lock2_write> is nonzero, the respective lock is locked
-for writing; otherwise, the respective lock is locked for reading.
 
 =item *
 

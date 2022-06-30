@@ -80,41 +80,12 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
     return 1;
 }
 
-__owur int CRYPTO_THREAD_try_read_lock(CRYPTO_RWLOCK *lock)
-{
-# ifdef USE_RWLOCK
-    CRYPTO_win_rwlock *rwlock = lock;
-
-    if (TryAcquireSRWLockShared(&rwlock->lock) == 0)
-        return 0;
-
-# else
-    EnterCriticalSection(lock);
-# endif
-    return 1;
-}
-
 __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
     CRYPTO_win_rwlock *rwlock = lock;
 
     AcquireSRWLockExclusive(&rwlock->lock);
-    rwlock->exclusive = 1;
-# else
-    EnterCriticalSection(lock);
-# endif
-    return 1;
-}
-
-__owur int CRYPTO_THREAD_try_write_lock(CRYPTO_RWLOCK *lock)
-{
-# ifdef USE_RWLOCK
-    CRYPTO_win_rwlock *rwlock = lock;
-
-    if (TryAcquireSRWLockExclusive(&rwlock->lock) == 0)
-        return 0;
-
     rwlock->exclusive = 1;
 # else
     EnterCriticalSection(lock);

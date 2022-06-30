@@ -38,22 +38,7 @@ __owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
     return 1;
 }
 
-__owur int CRYPTO_THREAD_try_read_lock(CRYPTO_RWLOCK *lock)
-{
-    if (!ossl_assert(*(unsigned int *)lock == 1))
-        return 0;
-
-    return 1;
-}
-
 __owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
-{
-    if (!ossl_assert(*(unsigned int *)lock == 1))
-        return 0;
-    return 1;
-}
-
-__owur int CRYPTO_THREAD_try_write_lock(CRYPTO_RWLOCK *lock)
 {
     if (!ossl_assert(*(unsigned int *)lock == 1))
         return 0;

@@ -100,7 +100,7 @@ which is currently part of a BIO datagram pair, the MTU value is set on both
 halves of the pair. The value does not affect the operation of the BIO datagram
 pair (except for BIO_get_write_guarantee(); see above) but may be used by other
 code to determine a requested MTU. When a BIO datagram pair BIO is created, the
-MTU is set to an unspecified but valid value. 
+MTU is set to an unspecified but valid value.
 
 L<BIO_flush(3)> is a no-op.
 

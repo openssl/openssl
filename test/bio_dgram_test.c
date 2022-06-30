@@ -503,8 +503,8 @@ static int test_bio_dgram_pair(void)
                             | BIO_DGRAM_CAP_PROVIDES_SRC_ADDR
                             | BIO_DGRAM_CAP_PROVIDES_DST_ADDR;
 
-    if (!TEST_int_eq(RAND_bytes((uint8_t *)key, sizeof(key)), 1))
-        goto err;
+    for (i = 0; i < OSSL_NELEM(key); ++i)
+        key[i] = test_random();
 
     if (!TEST_int_eq(BIO_new_bio_dgram_pair(&bio1, 0, &bio2, 0), 1))
         goto err;
