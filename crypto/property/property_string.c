@@ -32,7 +32,7 @@ typedef struct {
     char body[1];
 } PROPERTY_STRING;
 
-DEFINE_LHASH_OF(PROPERTY_STRING);
+DEFINE_LHASH_OF_EX(PROPERTY_STRING);
 typedef LHASH_OF(PROPERTY_STRING) PROP_TABLE;
 
 typedef struct {

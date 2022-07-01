@@ -29,7 +29,7 @@ typedef struct {
     char body[1];
 } PROPERTY_DEFN_ELEM;
 
-DEFINE_LHASH_OF(PROPERTY_DEFN_ELEM);
+DEFINE_LHASH_OF_EX(PROPERTY_DEFN_ELEM);
 
 static unsigned long property_defn_hash(const PROPERTY_DEFN_ELEM *a)
 {

@@ -174,6 +174,17 @@ openssl x509 -in ee-client.pem -trustout \
 openssl x509 -in ee-client.pem -trustout \
     -addreject clientAuth -out ee-clientAuth.pem
 
+# time stamping certificates
+./mkcert.sh genee -p critical,timeStamping -k critical,digitalSignature server.example ee-key ee-timestampsign-CABforum ca-key ca-cert
+./mkcert.sh genee -p timeStamping -k critical,digitalSignature server.example ee-key ee-timestampsign-CABforum-noncritxku ca-key ca-cert
+./mkcert.sh genee -p critical,timeStamping,serverAuth -k critical,digitalSignature server.example ee-key ee-timestampsign-CABforum-serverauth ca-key ca-cert
+./mkcert.sh genee -p critical,timeStamping,2.5.29.37.0 -k critical,digitalSignature server.example ee-key ee-timestampsign-CABforum-anyextkeyusage ca-key ca-cert
+./mkcert.sh genee -p critical,timeStamping -k critical,digitalSignature,cRLSign server.example ee-key ee-timestampsign-CABforum-crlsign ca-key ca-cert
+./mkcert.sh genee -p critical,timeStamping -k critical,digitalSignature,keyCertSign server.example ee-key ee-timestampsign-CABforum-keycertsign ca-key ca-cert
+./mkcert.sh genee -p critical,timeStamping server.example ee-key ee-timestampsign-rfc3161 ca-key ca-cert
+./mkcert.sh genee -p timeStamping server.example ee-key ee-timestampsign-rfc3161-noncritxku ca-key ca-cert
+./mkcert.sh genee -p critical,timeStamping -k digitalSignature server.example ee-key ee-timestampsign-rfc3161-digsig ca-key ca-cert
+
 # Leaf cert security level variants
 # MD5 issuer signature
 OPENSSL_SIGALG=md5 \

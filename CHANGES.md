@@ -24,6 +24,10 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * Add a mac salt length option for the pkcs12 command.
+
+   *Xinping Chen*
+
  * Add more SRTP protection profiles from RFC8723 and RFC8269.
 
    *Kijin Kim*
@@ -112,6 +116,23 @@ OpenSSL 3.1
 
    *Sergey Kirillov, Andrey Matyukov (Intel Corp)*
 
+ * The functions `OPENSSL_LH_stats`, `OPENSSL_LH_node_stats`,
+   `OPENSSL_LH_node_usage_stats`, `OPENSSL_LH_stats_bio`,
+   `OPENSSL_LH_node_stats_bio` and `OPENSSL_LH_node_usage_stats_bio` are now
+   marked deprecated from OpenSSL 3.1 onwards and can be disabled by defining
+   `OPENSSL_NO_DEPRECATED_3_1`.
+
+   The macro `DEFINE_LHASH_OF` is now deprecated in favour of the macro
+   `DEFINE_LHASH_OF_EX`, which omits the corresponding type-specific function
+   definitions for these functions regardless of whether
+   `OPENSSL_NO_DEPRECATED_3_1` is defined.
+
+   Users of `DEFINE_LHASH_OF` may start receiving deprecation warnings for these
+   functions regardless of whether they are using them. It is recommended that
+   users transition to the new macro, `DEFINE_LHASH_OF_EX`.
+
+   *Hugo Landau*
+
 OpenSSL 3.0
 -----------
 
@@ -122,14 +143,33 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
-### Changes between 3.0.3 and 3.0.4
+### Changes between 3.0.3 and 3.0.4 [21 June 2022]
+
+ * In addition to the c_rehash shell command injection identified in
+   CVE-2022-1292, further bugs where the c_rehash script does not
+   properly sanitise shell metacharacters to prevent command injection have been
+   fixed.
+
+   When the CVE-2022-1292 was fixed it was not discovered that there
+   are other places in the script where the file names of certificates
+   being hashed were possibly passed to a command executed through the shell.
+
+   This script is distributed by some operating systems in a manner where
+   it is automatically executed.  On such operating systems, an attacker
+   could execute arbitrary commands with the privileges of the script.
+
+   Use of the c_rehash script is considered obsolete and should be replaced
+   by the OpenSSL rehash command line tool.
+   (CVE-2022-2068)
+
+   *Daniel Fiala, Tomáš Mráz*
 
  * Case insensitive string comparison no longer uses locales.  It has instead
    been directly implemented.
 
    *Paul Dale*
 
-### Changes between 3.0.2 and 3.0.3
+### Changes between 3.0.2 and 3.0.3 [3 May 2022]
 
  * Case insensitive string comparison is reimplemented via new locale-agnostic
    comparison functions OPENSSL_str[n]casecmp always using the POSIX locale for
@@ -244,7 +284,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Hugo Landau*
 
-### Changes between 3.0.1 and 3.0.2 [15 mar 2022]
+### Changes between 3.0.1 and 3.0.2 [15 Mar 2022]
 
  * Fixed a bug in the BN_mod_sqrt() function that can cause it to loop forever
    for non-prime moduli.
@@ -300,7 +340,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Tomáš Mráz*
 
-### Changes between 3.0.0 and 3.0.1 [14 dec 2021]
+### Changes between 3.0.0 and 3.0.1 [14 Dec 2021]
 
  * Fixed invalid handling of X509_verify_cert() internal errors in libssl
    Internally libssl in OpenSSL calls X509_verify_cert() on the client side to
@@ -374,7 +414,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Richard Levitte*
 
-### Changes between 1.1.1 and 3.0.0 [7 sep 2021]
+### Changes between 1.1.1 and 3.0.0 [7 Sep 2021]
 
  * TLS_MAX_VERSION, DTLS_MAX_VERSION and DTLS_MIN_VERSION constants are now
    deprecated.

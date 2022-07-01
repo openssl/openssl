@@ -204,7 +204,7 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
             goto err;
     }
 
-    if ((pbe_tmp = OPENSSL_malloc(sizeof(*pbe_tmp))) == NULL)
+    if ((pbe_tmp = OPENSSL_zalloc(sizeof(*pbe_tmp))) == NULL)
         goto err;
 
     pbe_tmp->pbe_type = pbe_type;

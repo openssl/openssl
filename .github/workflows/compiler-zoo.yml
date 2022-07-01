@@ -1,4 +1,4 @@
-# Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -16,30 +16,56 @@ jobs:
       matrix:
         zoo: [
           {
-            cc: gcc-7
+            cc: gcc-7,
+            distro: ubuntu-20.04
           }, {
-            cc: gcc-8
+            cc: gcc-8,
+            distro: ubuntu-20.04
           }, {
-            cc: gcc-9
+            cc: gcc-9,
+            distro: ubuntu-20.04
           }, {
-            cc: gcc-10
+            cc: gcc-10,
+            distro: ubuntu-20.04
           }, {
-            cc: clang-6.0
+            cc: gcc-11,
+            distro: ubuntu-22.04
           }, {
-            cc: clang-7
+            cc: gcc-12,
+            distro: ubuntu-22.04
           }, {
-            cc: clang-8
+            cc: clang-6.0,
+            distro: ubuntu-20.04
           }, {
-            cc: clang-9
+            cc: clang-7,
+            distro: ubuntu-20.04
           }, {
-            cc: clang-10
+            cc: clang-8,
+            distro: ubuntu-20.04
           }, {
-            cc: clang-11
+            cc: clang-9,
+            distro: ubuntu-20.04
           }, {
-            cc: clang-12
+            cc: clang-10,
+            distro: ubuntu-20.04
+          }, {
+            cc: clang-11,
+            distro: ubuntu-20.04
+          }, {
+            cc: clang-12,
+            distro: ubuntu-20.04
+          }, {
+            cc: clang-13,
+            distro: ubuntu-22.04
+          }, {
+            cc: clang-14,
+            distro: ubuntu-22.04
           }
         ]
-    runs-on: ubuntu-latest
+    # We set per-compiler now to allow testing with both older and newer sets
+    # Often, the full range of oldest->newest compilers we want aren't available
+    # in a single version of Ubuntu.
+    runs-on: ${{ matrix.zoo.distro }}
     steps:
     - name: install packages
       run: |

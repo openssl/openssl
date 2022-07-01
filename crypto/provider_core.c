@@ -15,10 +15,12 @@
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
 #include "crypto/cryptlib.h"
+#ifndef FIPS_MODULE
 #include "crypto/decoder.h" /* ossl_decoder_store_cache_flush */
 #include "crypto/encoder.h" /* ossl_encoder_store_cache_flush */
-#include "crypto/evp.h" /* evp_method_store_cache_flush */
 #include "crypto/store.h" /* ossl_store_loader_store_cache_flush */
+#endif
+#include "crypto/evp.h" /* evp_method_store_cache_flush */
 #include "crypto/rand.h"
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
@@ -639,7 +641,7 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
         if (!ossl_provider_up_ref(actualtmp)) {
             ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
             actualtmp = NULL;
-            goto err;
+            return 0;
         }
         *actualprov = actualtmp;
     }
@@ -663,8 +665,6 @@ int ossl_provider_add_to_store(OSSL_PROVIDER *prov, OSSL_PROVIDER **actualprov,
 
  err:
     CRYPTO_THREAD_unlock(store->lock);
-    if (actualprov != NULL)
-        ossl_provider_free(*actualprov);
     return 0;
 }
 

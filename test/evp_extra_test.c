@@ -244,6 +244,16 @@ static const unsigned char kExampleBadRSAKeyDER[] = {
     0x8c, 0x95, 0xba, 0xf6, 0x04, 0xb3, 0x0a, 0xf4, 0xcb, 0xf0, 0xce,
 };
 
+/*
+ * kExampleBad2RSAKeyDER is an RSA private key in ASN.1, DER format. All
+ * values are 0.
+ */
+static const unsigned char kExampleBad2RSAKeyDER[] = {
+    0x30, 0x1b, 0x02, 0x01, 0x00, 0x02, 0x01, 0x00, 0x02, 0x01, 0x00, 0x02,
+    0x01, 0x00, 0x02, 0x01, 0x00, 0x02, 0x01, 0x00, 0x02, 0x01, 0x00, 0x02,
+    0x01, 0x00, 0x02, 0x01, 0x00
+};
+
 static const unsigned char kMsg[] = { 1, 2, 3, 4 };
 
 static const unsigned char kSignature[] = {
@@ -556,6 +566,8 @@ static APK_DATA keycheckdata[] = {
      0},
     {kExampleBadRSAKeyDER, sizeof(kExampleBadRSAKeyDER), "RSA", EVP_PKEY_RSA,
      0, 1, 1, 0},
+    {kExampleBad2RSAKeyDER, sizeof(kExampleBad2RSAKeyDER), "RSA", EVP_PKEY_RSA,
+     0, 0, 1 /* Since there are no "params" in an RSA key this passes */, 0},
 #ifndef OPENSSL_NO_EC
     {kExampleECKeyDER, sizeof(kExampleECKeyDER), "EC", EVP_PKEY_EC, 1, 1, 1, 0},
     /* group is also associated in our pub key */

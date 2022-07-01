@@ -525,7 +525,8 @@ end:
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_GENERATOR, NULL, 0),            \
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_EC_ORDER, NULL, 0),                          \
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_EC_COFACTOR, NULL, 0),                       \
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_SEED, NULL, 0)
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_SEED, NULL, 0),                 \
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_EC_DECODED_FROM_EXPLICIT_PARAMS, NULL)
 
 # define EC_IMEXPORTABLE_PUBLIC_KEY                                            \
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0)

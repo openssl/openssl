@@ -730,7 +730,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
     }
 
     /* extract the order */
-    if ((a = ASN1_INTEGER_to_BN(params->order, a)) == NULL) {
+    if (ASN1_INTEGER_to_BN(params->order, a) == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_ASN1_LIB);
         goto err;
     }
@@ -747,7 +747,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
     if (params->cofactor == NULL) {
         BN_free(b);
         b = NULL;
-    } else if ((b = ASN1_INTEGER_to_BN(params->cofactor, b)) == NULL) {
+    } else if (ASN1_INTEGER_to_BN(params->cofactor, b) == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_ASN1_LIB);
         goto err;
     }
