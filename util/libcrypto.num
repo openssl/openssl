@@ -5433,6 +5433,7 @@ RAND_set0_private                       ?	3_1_0	EXIST::FUNCTION:
 BN_are_coprime                          ?	3_1_0	EXIST::FUNCTION:
 X509_PUBKEY_set0_public_key             ?	3_2_0	EXIST::FUNCTION:
 OSSL_STACK_OF_X509_free                 ?	3_2_0	EXIST::FUNCTION:
+OSSL_trace_string                       ?	3_2_0	EXIST::FUNCTION:
 EVP_MD_CTX_dup                          ?	3_2_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_dup                      ?	3_2_0	EXIST::FUNCTION:
 BN_signed_bin2bn                        ?	3_2_0	EXIST::FUNCTION:

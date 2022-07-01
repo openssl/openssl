@@ -305,6 +305,14 @@ void OSSL_trace_end(int category, BIO *channel);
 # define OSSL_TRACE9(category, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) \
     OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9))
 
+#define OSSL_TRACE_STRING_MAX 80
+int OSSL_trace_string(BIO *out, int text, int full,
+                      const unsigned char *data, size_t size);
+#define OSSL_TRACE_STRING(category, text, full, data, len) \
+    OSSL_TRACE_BEGIN(category) { \
+        OSSL_trace_string(trc_out, text, full, data, len);  \
+    } OSSL_TRACE_END(category)
+
 # ifdef  __cplusplus
 }
 # endif
