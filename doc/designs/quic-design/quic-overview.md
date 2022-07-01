@@ -4,7 +4,7 @@ QUIC Design Overview
 The QUIC implementation in OpenSSL is roughly described by the following
 picture.
 
-![alt_text](images/quic-overview.svg "QUIC Implementation Building Blocks")
+![alt_text](images/overview.png "QUIC Implementation Building Blocks")
 
 SSL API
 -------
