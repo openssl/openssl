@@ -430,6 +430,7 @@ static int tlsa_import_rrset(SSL *con, STACK_OF(OPENSSL_STRING) *rrset)
 
 typedef enum OPTION_choice {
     OPT_COMMON,
+    OPT_GET, OPT_POST, OPT_CONTENT_TYPE, OPT_EXPECT_CONTENT_TYPE, OPT_OUT,
     OPT_4, OPT_6, OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_BIND, OPT_UNIX,
     OPT_XMPPHOST, OPT_VERIFY, OPT_NAMEOPT,
     OPT_CERT, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
@@ -460,7 +461,8 @@ typedef enum OPTION_choice {
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM, OPT_IGNORE_UNEXPECTED_EOF,
-    OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY, OPT_PROXY_USER, OPT_PROXY_PASS,
+    OPT_FALLBACKSCSV, OPT_NOCMDS,
+    OPT_PROXY, OPT_NO_PROXY, OPT_PROXY_USER, OPT_PROXY_PASS,
     OPT_DANE_TLSA_DOMAIN,
 #ifndef OPENSSL_NO_CT
     OPT_CT, OPT_NOCT, OPT_CTLOG_FILE,
@@ -483,6 +485,13 @@ const OPTIONS s_client_options[] = {
      "Specify engine to be used for client certificate operations"},
 #endif
     {"ssl_config", OPT_SSL_CONFIG, 's', "Use specified section for SSL_CTX configuration"},
+    {"get", OPT_GET, '-', "use HTTP GET after connecting over TLS"},
+    {"post", OPT_POST, '<',
+     "use HTTP POST with given request after connecting over TLS"},
+    {"content_type", OPT_CONTENT_TYPE, 's',
+     "Content type to use for HTTP POST request"},
+    {"expect_content_type", OPT_EXPECT_CONTENT_TYPE, 's',
+     "Expected content type in HTTP server response"},
 #ifndef OPENSSL_NO_CT
     {"ct", OPT_CT, '-', "Request and parse SCTs (also enables OCSP stapling)"},
     {"noct", OPT_NOCT, '-', "Do not request or parse SCTs (default)"},
@@ -490,13 +499,15 @@ const OPTIONS s_client_options[] = {
 #endif
 
     OPT_SECTION("Network"),
-    {"host", OPT_HOST, 's', "Use -connect instead"},
-    {"port", OPT_PORT, 'p', "Use -connect instead"},
     {"connect", OPT_CONNECT, 's',
      "TCP/IP where to connect; default: " PORT ")"},
+    {"host", OPT_HOST, 's', "Use -connect instead"},
+    {"port", OPT_PORT, 'p', "Use -connect instead"},
     {"bind", OPT_BIND, 's', "bind local address for connection"},
     {"proxy", OPT_PROXY, 's',
      "Connect to via specified proxy to the real server"},
+    {"no_proxy", OPT_NO_PROXY, 's',
+     "List of servers not to use HTTP(S) proxy for, with -get or -post"},
     {"proxy_user", OPT_PROXY_USER, 's', "UserID for proxy authentication"},
     {"proxy_pass", OPT_PROXY_PASS, 's', "Proxy authentication password source"},
 #ifdef AF_UNIX
@@ -575,6 +586,7 @@ const OPTIONS s_client_options[] = {
      "Print session information when the program exits"},
     {"no-interactive", OPT_NO_INTERACTIVE, '-',
      "Don't run the client in the interactive mode"},
+    {"out", OPT_OUT, '>', "File to save server response content to"},
 
     OPT_SECTION("Debug"),
     {"showcerts", OPT_SHOWCERTS, '-',
@@ -808,8 +820,12 @@ int s_client_main(int argc, char **argv)
     const SSL_METHOD *meth = TLS_client_method();
     const char *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
     char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL;
-    char *proxystr = NULL, *proxyuser = NULL;
+    char *proxystr = NULL, *opt_no_proxy = NULL, *proxyuser = NULL;
     char *proxypassarg = NULL, *proxypass = NULL;
+    int opt_get = 0;
+    const char *opt_post_file = NULL;
+    const char *opt_content_type = NULL;
+    const char *opt_expect_content_type = NULL;
     char *connectstr = NULL, *bindstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *chCAstore = NULL, *host = NULL;
@@ -828,6 +844,7 @@ int s_client_main(int argc, char **argv)
     int key_format = FORMAT_UNDEF, crlf = 0, full_log = 1, mbuf_len = 0;
     int prexit = 0;
     int nointeractive = 0;
+    BIO *opt_bio_out = NULL;
     int sdebug = 0;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
     int ret = 1, in_init = 1, i, nbio_test = 0, sock = -1, k, width, state = 0;
@@ -1002,6 +1019,9 @@ int s_client_main(int argc, char **argv)
         case OPT_PROXY:
             proxystr = opt_arg();
             break;
+        case OPT_NO_PROXY:
+            opt_no_proxy = opt_arg();
+            break;
         case OPT_PROXY_USER:
             proxyuser = opt_arg();
             break;
@@ -1090,6 +1110,12 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_NO_INTERACTIVE:
             nointeractive = 1;
+            break;
+        case OPT_OUT:
+            if ((opt_bio_out = BIO_new_file(opt_arg(), "wb")) == NULL) {
+                BIO_printf(bio_err, "Error opening output file %s\n", opt_arg());
+                goto end;
+            }
             break;
         case OPT_CRLF:
             crlf = 1;
@@ -1417,6 +1443,18 @@ int s_client_main(int argc, char **argv)
             if (!opt_pair(opt_arg(), services, &starttls_proto))
                 goto end;
             break;
+        case OPT_GET:
+            opt_get = 1;
+            break;
+        case OPT_POST:
+            opt_post_file = opt_arg();
+            break;
+        case OPT_CONTENT_TYPE:
+            opt_content_type = opt_arg();
+            break;
+        case OPT_EXPECT_CONTENT_TYPE:
+            opt_expect_content_type = opt_arg();
+            break;
         case OPT_TFO:
             tfo = 1;
             break;
@@ -1505,6 +1543,35 @@ int s_client_main(int argc, char **argv)
     } else if (!opt_check_rest_arg(NULL)) {
         goto opthelp;
     }
+
+    if (opt_get || opt_post_file != NULL) {
+#define OPT_HTTP_error(cond, opt) if (cond) { \
+            BIO_printf(bio_err, "%s: Cannot use %s along with %s option\n", \
+                       prog, opt, opt_get ? "-get" : "-post"); \
+            goto end; \
+        }
+        OPT_HTTP_error(opt_get && opt_post_file != NULL, "-post");
+        OPT_HTTP_error(fallback_scsv, "-fallback_scsv");
+        OPT_HTTP_error(tfo, "-tfo");
+        OPT_HTTP_error(dane_tlsa_domain != NULL || dane_tlsa_rrset != NULL
+                  || dane_ee_no_name, "-dane_*")
+        OPT_HTTP_error(sess_in || sess_out, "-sess_in or -sess_out");
+        OPT_HTTP_error(starttls_proto != PROTO_OFF, "-starttls");
+#ifndef OPENSSL_NO_DTLS
+        OPT_HTTP_error(isdtls, "-dtls, -dtls1, or -dtls1_2");
+#endif
+        OPT_HTTP_error(enable_pha, "-enable_pha");
+    } else {
+#define OPT_HTTP_warn(cond, opt) if (cond) \
+            BIO_printf(bio_err, "%s: Warning: ignoring %s since -get or -post option not given\n", \
+                       prog, opt);
+        OPT_HTTP_warn(opt_expect_content_type != NULL, " -expect_content_type");
+        OPT_HTTP_warn(opt_no_proxy != NULL, " -no_proxy");
+    }
+    if (opt_post_file == NULL && opt_content_type != NULL)
+            BIO_printf(bio_err, "%s: Warning: ignoring -content_type since -post option not given\n",
+                       prog);
+
     if (!app_RAND_load())
         goto end;
 
@@ -1534,7 +1601,7 @@ int s_client_main(int argc, char **argv)
     }
 #endif
 
-    if (connectstr != NULL) {
+    if (connectstr != NULL && !opt_get && opt_post_file == NULL) {
         int res;
         char *tmp_host = host, *tmp_port = port;
 
@@ -1705,6 +1772,7 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
     }
+
 #ifndef OPENSSL_NO_SRP
     if (!app_passwd(srppass, NULL, &srp_arg.srppassin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
@@ -1713,10 +1781,8 @@ int s_client_main(int argc, char **argv)
 #endif
 
     ctx = SSL_CTX_new_ex(app_get0_libctx(), app_get0_propq(), meth);
-    if (ctx == NULL) {
-        ERR_print_errors(bio_err);
+    if (ctx == NULL)
         goto end;
-    }
 
     SSL_CTX_clear_mode(ctx, SSL_MODE_AUTO_RETRY);
 
@@ -1730,7 +1796,6 @@ int s_client_main(int argc, char **argv)
         if (SSL_CTX_config(ctx, ssl_config) == 0) {
             BIO_printf(bio_err, "Error using configuration \"%s\"\n",
                        ssl_config);
-            ERR_print_errors(bio_err);
             goto end;
         }
     }
@@ -1756,7 +1821,6 @@ int s_client_main(int argc, char **argv)
 
     if (vpmtouched && !SSL_CTX_set1_param(ctx, vpm)) {
         BIO_printf(bio_err, "Error setting verify params\n");
-        ERR_print_errors(bio_err);
         goto end;
     }
 
@@ -1802,7 +1866,6 @@ int s_client_main(int argc, char **argv)
                          chCApath, chCAfile, chCAstore,
                          crls, crl_download)) {
         BIO_printf(bio_err, "Error loading store locations\n");
-        ERR_print_errors(bio_err);
         goto end;
     }
     if (ReqCAfile != NULL) {
@@ -1811,7 +1874,6 @@ int s_client_main(int argc, char **argv)
         if (nm == NULL || !SSL_add_file_cert_subjects_to_stack(nm, ReqCAfile)) {
             sk_X509_NAME_pop_free(nm, X509_NAME_free);
             BIO_printf(bio_err, "Error loading CA names\n");
-            ERR_print_errors(bio_err);
             goto end;
         }
         SSL_CTX_set0_CA_list(ctx, nm);
@@ -1820,7 +1882,6 @@ int s_client_main(int argc, char **argv)
     if (ssl_client_engine) {
         if (!SSL_CTX_set_client_cert_engine(ctx, ssl_client_engine)) {
             BIO_puts(bio_err, "Error setting client auth engine\n");
-            ERR_print_errors(bio_err);
             release_engine(ssl_client_engine);
             goto end;
         }
@@ -1840,14 +1901,12 @@ int s_client_main(int argc, char **argv)
 
         if (stmp == NULL) {
             BIO_printf(bio_err, "Can't open PSK session file %s\n", psksessf);
-            ERR_print_errors(bio_err);
             goto end;
         }
         psksess = PEM_read_bio_SSL_SESSION(stmp, NULL, 0, NULL);
         BIO_free(stmp);
         if (psksess == NULL) {
             BIO_printf(bio_err, "Can't read PSK session file %s\n", psksessf);
-            ERR_print_errors(bio_err);
             goto end;
         }
     }
@@ -1859,7 +1918,6 @@ int s_client_main(int argc, char **argv)
         /* Returns 0 on success! */
         if (SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles) != 0) {
             BIO_printf(bio_err, "Error setting SRTP profile\n");
-            ERR_print_errors(bio_err);
             goto end;
         }
     }
@@ -1904,17 +1962,12 @@ int s_client_main(int argc, char **argv)
 
 #ifndef OPENSSL_NO_CT
     /* Enable SCT processing, without early connection termination */
-    if (ct_validation &&
-        !SSL_CTX_enable_ct(ctx, SSL_CT_VALIDATION_PERMISSIVE)) {
-        ERR_print_errors(bio_err);
+    if (ct_validation && !SSL_CTX_enable_ct(ctx, SSL_CT_VALIDATION_PERMISSIVE))
         goto end;
-    }
 
     if (!ctx_set_ctlog_list_file(ctx, ctlog_file)) {
-        if (ct_validation) {
-            ERR_print_errors(bio_err);
+        if (ct_validation)
             goto end;
-        }
 
         /*
          * If CT validation is not enabled, the log list isn't needed so don't
@@ -1929,10 +1982,8 @@ int s_client_main(int argc, char **argv)
     SSL_CTX_set_verify(ctx, verify, verify_callback);
 
     if (!ctx_set_verify_locations(ctx, CAfile, noCAfile, CApath, noCApath,
-                                  CAstore, noCAstore)) {
-        ERR_print_errors(bio_err);
+                                  CAstore, noCAstore))
         goto end;
-    }
 
     ssl_ctx_add_crls(ctx, crls, crl_download);
 
@@ -1955,7 +2006,6 @@ int s_client_main(int argc, char **argv)
             BIO_printf(bio_err,
                        "%s: Error enabling DANE TLSA authentication.\n",
                        prog);
-            ERR_print_errors(bio_err);
             goto end;
         }
     }
@@ -1972,6 +2022,44 @@ int s_client_main(int argc, char **argv)
     if (set_keylog_file(ctx, keylog_file))
         goto end;
 
+    if (opt_get || opt_post_file != NULL) {
+        BIO *bio = NULL;
+        char buf[1000];
+
+        if (opt_get) {
+            bio = app_http_get(connectstr, proxystr, opt_no_proxy,
+                               proxyuser, proxypass, ctx, NULL /* headers */,
+                               opt_expect_content_type, 0 /* expect_asn1 */,
+                               0 /* no timeout */);
+        } else {
+            BIO *req = BIO_new_file(opt_post_file, "rb");
+
+            if (req == NULL) {
+                BIO_printf(bio_err, "Can't open POST request file %s\n",
+                           opt_post_file);
+                goto end;
+            }
+            bio = app_http_post(connectstr, NULL /* port */, NULL /* path */,
+                                proxystr, opt_no_proxy, proxyuser, proxypass,
+                                ctx, NULL /* headers */, opt_content_type, req,
+                                opt_expect_content_type, 0 /* expect_asn1 */,
+                                0 /* no timeout */);
+            BIO_free(req);
+        }
+        if (bio != NULL) {
+            ret = 0;
+            while ((len = BIO_read(bio, buf, sizeof(buf))) > 0
+                   || (ossl_sleep(100), BIO_should_retry(bio)))
+                if (BIO_write(opt_bio_out == NULL ? bio_c_out : opt_bio_out,
+                              buf, len) != len) {
+                    ret = 1;
+                    break;
+                }
+            app_http_close(bio);
+        }
+        goto end;
+    }
+
     con = SSL_new(ctx);
     if (con == NULL)
         goto end;
@@ -1984,19 +2072,16 @@ int s_client_main(int argc, char **argv)
         BIO *stmp = BIO_new_file(sess_in, "r");
         if (stmp == NULL) {
             BIO_printf(bio_err, "Can't open session file %s\n", sess_in);
-            ERR_print_errors(bio_err);
             goto end;
         }
         sess = PEM_read_bio_SSL_SESSION(stmp, NULL, 0, NULL);
         BIO_free(stmp);
         if (sess == NULL) {
             BIO_printf(bio_err, "Can't open session file %s\n", sess_in);
-            ERR_print_errors(bio_err);
             goto end;
         }
         if (!SSL_set_session(con, sess)) {
             BIO_printf(bio_err, "Can't set session\n");
-            ERR_print_errors(bio_err);
             goto end;
         }
 
@@ -2013,7 +2098,6 @@ int s_client_main(int argc, char **argv)
         }
         if (servername != NULL && !SSL_set_tlsext_host_name(con, servername)) {
             BIO_printf(bio_err, "Unable to set TLS servername extension.\n");
-            ERR_print_errors(bio_err);
             goto end;
         }
     }
@@ -2022,7 +2106,6 @@ int s_client_main(int argc, char **argv)
         if (SSL_dane_enable(con, dane_tlsa_domain) <= 0) {
             BIO_printf(bio_err, "%s: Error enabling DANE TLSA "
                        "authentication.\n", prog);
-            ERR_print_errors(bio_err);
             goto end;
         }
         if (dane_tlsa_rrset == NULL) {
@@ -2061,10 +2144,8 @@ int s_client_main(int argc, char **argv)
     BIO_printf(bio_c_out, "CONNECTED(%08X)\n", sock);
 
     if (c_nbio) {
-        if (!BIO_socket_nbio(sock, 1)) {
-            ERR_print_errors(bio_err);
+        if (!BIO_socket_nbio(sock, 1))
             goto end;
-        }
         BIO_printf(bio_c_out, "Turned on non blocking io\n");
     }
 #ifndef OPENSSL_NO_DTLS
@@ -2130,7 +2211,6 @@ int s_client_main(int argc, char **argv)
 
     if (sbio == NULL) {
         BIO_printf(bio_err, "Unable to create BIO\n");
-        ERR_print_errors(bio_err);
         BIO_closesocket(sock);
         goto end;
     }
@@ -2754,7 +2834,6 @@ int s_client_main(int argc, char **argv)
                 default:
                     BIO_printf(bio_err, "Error writing early data\n");
                     BIO_free(edfile);
-                    ERR_print_errors(bio_err);
                     goto shut;
                 }
             }
@@ -2945,7 +3024,6 @@ int s_client_main(int argc, char **argv)
             case SSL_ERROR_WANT_ASYNC_JOB:
                 /* This shouldn't ever happen in s_client - treat as an error */
             case SSL_ERROR_SSL:
-                ERR_print_errors(bio_err);
                 goto shut;
             }
         }
@@ -2959,8 +3037,9 @@ int s_client_main(int argc, char **argv)
 #ifdef CHARSET_EBCDIC
             ascii2ebcdic(&(sbuf[sbuf_off]), &(sbuf[sbuf_off]), sbuf_len);
 #endif
-            i = raw_write_stdout(&(sbuf[sbuf_off]), sbuf_len);
-
+            i = opt_bio_out == NULL
+                ? raw_write_stdout(&(sbuf[sbuf_off]), sbuf_len)
+                : BIO_write(opt_bio_out, &(sbuf[sbuf_off]), sbuf_len);
             if (i <= 0) {
                 BIO_printf(bio_c_out, "DONE\n");
                 ret = 0;
@@ -3032,7 +3111,6 @@ int s_client_main(int argc, char **argv)
             case SSL_ERROR_WANT_ASYNC_JOB:
                 /* This shouldn't ever happen in s_client. Treat as an error */
             case SSL_ERROR_SSL:
-                ERR_print_errors(bio_err);
                 goto shut;
             }
         }
@@ -3141,6 +3219,8 @@ int s_client_main(int argc, char **argv)
             print_stuff(bio_c_out, con, 1);
         SSL_free(con);
     }
+    if (ret != 0)
+        ERR_print_errors(bio_err);
     SSL_SESSION_free(psksess);
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(next_proto.data);
@@ -3175,6 +3255,7 @@ int s_client_main(int argc, char **argv)
     OPENSSL_clear_free(mbuf, BUFSIZZ);
     clear_free(proxypass);
     release_engine(e);
+    BIO_free(opt_bio_out);
     BIO_free(bio_c_out);
     bio_c_out = NULL;
     BIO_free(bio_c_msg);
