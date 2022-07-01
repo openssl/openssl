@@ -1926,7 +1926,10 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 
 #ifndef OPENSSL_NO_SOCK
     if (opt_tls_used) {
+        /* cannot use app_http_post() because of multiple round trips */
         APP_HTTP_TLS_INFO *info;
+        SSL_CTX *ssl_ctx;
+        int timeout = OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_MSG_TIMEOUT);
 
         if (opt_tls_cert != NULL
             || opt_tls_key != NULL || opt_tls_keypass != NULL) {
@@ -1939,20 +1942,20 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             }
         }
 
-        if ((info = OPENSSL_zalloc(sizeof(*info))) == NULL)
+        if ((ssl_ctx = setup_ssl_ctx(ctx, host, engine)) == NULL)
             goto err;
-        (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, info);
-        /* info will be freed along with CMP ctx */
-        info->server = opt_server;
-        info->port = server_port;
+        info = APP_HTTP_TLS_INFO_new(opt_server, server_port,
         /* workaround for callback design flaw, see #17088: */
-        info->use_proxy = proxy_host != NULL;
-        info->timeout = OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_MSG_TIMEOUT);
-        info->ssl_ctx = setup_ssl_ctx(ctx, host, engine);
-
-        if (info->ssl_ctx == NULL)
+                                     proxy_host != NULL,
+                                     NULL /* proxy_user */, NULL /* pass */,
+                                     1 /* expect_asn1 */,
+                                     timeout, ssl_ctx);
+        if (info == NULL) {
+            SSL_CTX_free(ssl_ctx);
             goto err;
+        }
         (void)OSSL_CMP_CTX_set_http_cb(ctx, app_http_tls_cb);
+        (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, info);
     }
 #endif
 
@@ -3035,12 +3038,19 @@ int cmp_main(int argc, char **argv)
     if (ret != 1)
         OSSL_CMP_CTX_print_errors(cmp_ctx);
 
-    ossl_cmp_mock_srv_free(OSSL_CMP_CTX_get_transfer_cb_arg(cmp_ctx));
+    if (cmp_ctx != NULL) {
 #ifndef OPENSSL_NO_SOCK
-    APP_HTTP_TLS_INFO_free(OSSL_CMP_CTX_get_http_cb_arg(cmp_ctx));
+        APP_HTTP_TLS_INFO *info = OSSL_CMP_CTX_get_http_cb_arg(cmp_ctx);
+
 #endif
-    X509_STORE_free(OSSL_CMP_CTX_get_certConf_cb_arg(cmp_ctx));
-    OSSL_CMP_CTX_free(cmp_ctx);
+        ossl_cmp_mock_srv_free(OSSL_CMP_CTX_get_transfer_cb_arg(cmp_ctx));
+        X509_STORE_free(OSSL_CMP_CTX_get_certConf_cb_arg(cmp_ctx));
+        /* cannot free info already here, as it may be used indirectly by: */
+        OSSL_CMP_CTX_free(cmp_ctx);
+#ifndef OPENSSL_NO_SOCK
+        APP_HTTP_TLS_INFO_free(info);
+#endif
+    }
     X509_VERIFY_PARAM_free(vpm);
     release_engine(engine);
 
