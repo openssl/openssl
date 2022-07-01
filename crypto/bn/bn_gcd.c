@@ -47,7 +47,8 @@ BIGNUM *bn_mod_inverse_no_branch(BIGNUM *in,
     if (R == NULL)
         goto err;
 
-    BN_one(X);
+    if (!BN_one(X))
+        goto err;
     BN_zero(Y);
     if (BN_copy(B, a) == NULL)
         goto err;
@@ -235,7 +236,8 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
     if (R == NULL)
         goto err;
 
-    BN_one(X);
+    if (!BN_one(X))
+        goto err;
     BN_zero(Y);
     if (BN_copy(B, a) == NULL)
         goto err;
