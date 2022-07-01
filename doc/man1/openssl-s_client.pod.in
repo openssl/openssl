@@ -10,11 +10,16 @@ openssl-s_client - SSL/TLS client program
 B<openssl> B<s_client>
 [B<-help>]
 [B<-ssl_config> I<section>]
+[B<-get>]
+[B<-post> I<filename>]
+[B<-content_type> I<string>]
+[B<-expect_content_type> I<string>]
 [B<-connect> I<host>:I<port>]
 [B<-host> I<hostname>]
 [B<-port> I<port>]
 [B<-bind> I<host>:I<port>]
 [B<-proxy> I<host>:I<port>]
+[B<-no_proxy> I<addresses>]
 [B<-proxy_user> I<userid>]
 [B<-proxy_pass> I<arg>]
 [B<-unix> I<path>]
@@ -50,6 +55,7 @@ B<openssl> B<s_client>
 [B<-showcerts>]
 [B<-prexit>]
 [B<-no-interactive>]
+[B<-out> I<filename>]
 [B<-debug>]
 [B<-trace>]
 [B<-nocommands>]
@@ -147,6 +153,26 @@ Print out a usage message.
 
 Use the specified section of the configuration file to configure the B<SSL_CTX> object.
 
+=item B<-get>
+
+Use HTTP GET after connecting over TLS.
+
+=item B<-post> I<filename>
+
+Use HTTP POST with the given request content after connecting over TLS.
+
+=item B<-content_type> I<string>
+
+The content type to use for an HTTP POST request.
+
+=item B<-expect_content_type> I<string>
+
+The expected content type in HTTP server response.
+If the string does not include a C<;> character and the content type returned
+by the HTTP(S) server includes a C<;> then it is sufficient that the returned
+content type string up to the C<;> matches the expected content type.
+For instance, C<text/html; charset=UTF-8> and the like matches C<text/html>.
+
 =item B<-connect> I<host>:I<port>
 
 This specifies the host and optional port to connect to. It is possible to
@@ -176,6 +202,14 @@ When used with the B<-connect> flag, the program uses the host and port
 specified with this flag and issues an HTTP CONNECT command to connect
 to the desired server.
 If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
+
+=item B<-no_proxy> I<addresses>
+
+List of IP addresses and/or DNS names of servers
+not to use an HTTP(S) proxy for, separated by commas and/or whitespace
+(where in the latter case the whole argument must be enclosed in "...").
+Default is from the environment variable C<no_proxy> if set, else C<NO_PROXY>.
+This option is used only with the I<-get> or I<-post> option.
 
 =item B<-proxy_user> I<userid>
 
@@ -433,6 +467,10 @@ established.
 =item B<-no-interactive>
 
 This flag can be used to run the client in a non-interactive mode.
+
+=item B<-out> I<filename>
+
+File to save server response content to.
 
 =item B<-state>
 
@@ -944,6 +982,15 @@ option: any verify errors are then returned aborting the handshake.
 
 The B<-bind> option may be useful if the server or a firewall requires
 connections to come from some particular address and or port.
+
+There is special support for querying and debugging HTTPS servers
+using the B<-get> and B<-post> options, for instance:
+
+OPENSSL_TRACE=HTTP openssl s_client -connect https://httpbin.org/get -get
+
+If OpenSSL was built with trace support enabled (e.g., C<./config enable-trace>)
+and the environment variable B<OPENSSL_TRACE> includes B<HTTP>,
+the HTTP request and response headers are printed.
 
 =head2 Note on Non-Interactive Use
 
