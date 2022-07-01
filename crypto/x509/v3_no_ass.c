@@ -16,10 +16,6 @@
 
 static int i2r_NO_ASSERTION(X509V3_EXT_METHOD *method,
                             void *su, BIO *out,
-                            int indent);
-
-static int i2r_NO_ASSERTION(X509V3_EXT_METHOD *method,
-                            void *su, BIO *out,
                             int indent)
 {
     return 1;
