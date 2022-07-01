@@ -1,8 +1,9 @@
 strict digraph overview {
     node [style=filled, fillcolor="#009e73", shape=rectangle, color=black];
-    //bgcolor="transparent";    will switch to this before merging
+    bgcolor="transparent";
     bgcolor=white;
     layout=dot;
+    outputorder="edgesfirst"
 
     ssl [label="SSL API", shape=rectangle, pos="0,0!", fillcolor="#cc79a7"];
     subgraph cluster1 {
@@ -52,11 +53,10 @@ strict digraph overview {
         demux [label="Path and Connection\nDemultiplexer", fillcolor="#d55e00"];
     }
 
-    ssl -> ssb;
+    ssl -> ssb -> txp -> wrl;
+    demux -> rrl -> rxfh -> srb -> ssl;
     ssl -> csm [dir=both];
     ssl -> tlshs [dir=both];
-    ssb -> txp;
-    txp -> wrl;
     txp -> cc [dir=both];
     txp -> flow [dir=both];
     txp -> ackm;
@@ -68,25 +68,20 @@ strict digraph overview {
     tlshs -> txp;
     csm -> idc;
     idc -> demux;
-    demux -> rrl;
-    rrl -> rxfh;
     rxfh -> ackm;
-    rxfh -> srb;
     rxfh -> tlshs;
-    srb -> ssl;
 
-    wrl -> dgbio1;
-    wrl -> dgbio2;
-    wrl -> dgbio3;
     dgbio1 -> udp1 [dir=both];
     dgbio2 -> udp2 [dir=both];
     dgbio3 -> udp3 [dir=both];
-    dgbio1 -> demux;
-    dgbio2 -> demux;
-    dgbio3 -> demux;
     udp1 -> hw [dir=both];
     udp2 -> hw [dir=both];
     udp3 -> hw [dir=both];
+
+    edge[samehead=h1, sametail=t1];
+    wrl -> dgbio1 -> demux [samehead="bioh"];
+    wrl -> dgbio2 -> demux [samehead="bioh"];
+    wrl -> dgbio3 -> demux [samehead="bioh"];
 
     subgraph cluster_key {
         shape=rectangle
