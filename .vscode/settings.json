@@ -1,0 +1,18 @@
+{
+    "files.associations": {
+        "*.in": "cpp",
+        "functional": "c",
+        "x509v3.h": "c",
+        "*.inc": "cpp",
+        "array": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp",
+        "x509_local.h": "c",
+        "asn1.h": "c",
+        "system_error": "c",
+        "typeinfo": "c"
+    }
+}
