@@ -580,10 +580,6 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 #ifndef OPENSSL_NO_EC
     /* ECDSA */
     bio_buf = BIO_new(BIO_s_mem());
-    if (bio_buf == NULL) {
-        SSL_CTX_free(ctx);
-        return 0;
-    }
     if ((size_t)BIO_write(bio_buf, ECDSAPrivateKeyPEM, sizeof(ECDSAPrivateKeyPEM)) != sizeof(ECDSAPrivateKeyPEM)) {
         BIO_free(bio_buf);
         SSL_CTX_free(ctx);
@@ -610,10 +606,6 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     EVP_PKEY_free(pkey);
 
     bio_buf = BIO_new(BIO_s_mem());
-    if (bio_buf == NULL) {
-        SSL_CTX_free(ctx);
-        return 0;
-    }
     if ((size_t)BIO_write(bio_buf, ECDSACertPEM, sizeof(ECDSACertPEM)) != sizeof(ECDSACertPEM)) {
         BIO_free(bio_buf);
         SSL_CTX_free(ctx);
@@ -638,10 +630,6 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 #ifndef OPENSSL_NO_DSA
     /* DSA */
     bio_buf = BIO_new(BIO_s_mem());
-    if (bio_buf == NULL) {
-        SSL_CTX_free(ctx);
-        return 0;
-    }
     if ((size_t)BIO_write(bio_buf, DSAPrivateKeyPEM, sizeof(DSAPrivateKeyPEM)) != sizeof(DSAPrivateKeyPEM)) {
         BIO_free(bio_buf);
         SSL_CTX_free(ctx);
@@ -668,10 +656,6 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     EVP_PKEY_free(pkey);
 
     bio_buf = BIO_new(BIO_s_mem());
-    if (bio_buf == NULL) {
-        SSL_CTX_free(ctx);
-        return 0;
-    }
     if ((size_t)BIO_write(bio_buf, DSACertPEM, sizeof(DSACertPEM)) != sizeof(DSACertPEM)) {
         BIO_free(bio_buf);
         SSL_CTX_free(ctx);
@@ -701,18 +685,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         return 0;
     }
     in = BIO_new(BIO_s_mem());
-    if (in == NULL) {
-        SSL_free(server);
-        SSL_CTX_free(ctx);
-        return 0;
-    }
     out = BIO_new(BIO_s_mem());
-    if (in == NULL) {
-        BIO_free(in);
-        SSL_free(server);
-        SSL_CTX_free(ctx);
-        return 0;
-    }
     SSL_set_bio(server, in, out);
     SSL_set_accept_state(server);
 

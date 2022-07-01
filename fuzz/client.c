@@ -87,18 +87,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     }
     SSL_set_tlsext_host_name(client, "localhost");
     in = BIO_new(BIO_s_mem());
-    if (in == NULL) {
-        SSL_free(client);
-        SSL_CTX_free(ctx);
-        return 0;
-    }
     out = BIO_new(BIO_s_mem());
-    if (out == NULL) {
-        BIO_free(in);
-        SSL_free(client);
-        SSL_CTX_free(ctx);
-        return 0;
-    }
     SSL_set_bio(client, in, out);
     SSL_set_connect_state(client);
     if ((size_t)BIO_write(in, buf, len) != len) {
