@@ -119,12 +119,16 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
 
         {
             STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
+            char *data = OPENSSL_strdup(argp);
 
+            if (data == NULL) {
+                return 0;
+            }
             if (uris == NULL) {
                 uris = sk_OPENSSL_STRING_new_null();
                 X509_LOOKUP_set_method_data(ctx, uris);
             }
-            return sk_OPENSSL_STRING_push(uris, OPENSSL_strdup(argp)) > 0;
+            return sk_OPENSSL_STRING_push(uris, data) > 0;
         }
     case X509_L_LOAD_STORE:
         /* This is a shortcut for quick loading of specific containers */

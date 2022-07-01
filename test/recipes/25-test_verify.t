@@ -12,7 +12,7 @@ use warnings;
 
 use File::Spec::Functions qw/canonpath/;
 use File::Copy;
-use OpenSSL::Test qw/:DEFAULT srctop_file ok_nofips with/;
+use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir ok_nofips with/;
 use OpenSSL::Test::Utils;
 
 setup("test_verify");
@@ -29,7 +29,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 160;
+plan tests => 172;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -242,6 +242,26 @@ ok(verify("ee-pathlen", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
 ok(!verify("ee-pathlen", "sslserver", [qw(root-cert)], [qw(ca-cert)], "-x509_strict"),
    "reject non-ca with pathlen:0 with strict flag");
 
+# EE veaiants wrt timestamp signing
+ok(verify("ee-timestampsign-CABforum", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "accept timestampsign according to CAB forum");
+ok(!verify("ee-timestampsign-CABforum-noncritxku", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to CAB forum with extendedKeyUsage not critical");
+ok(!verify("ee-timestampsign-CABforum-serverauth", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to CAB forum with serverAuth");
+ok(!verify("ee-timestampsign-CABforum-anyextkeyusage", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to CAB forum with anyExtendedKeyUsage");
+ok(!verify("ee-timestampsign-CABforum-crlsign", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to CAB forum with cRLSign");
+ok(!verify("ee-timestampsign-CABforum-keycertsign", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to CAB forum with keyCertSign");
+ok(verify("ee-timestampsign-rfc3161", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "accept timestampsign according to RFC 3161");
+ok(!verify("ee-timestampsign-rfc3161-noncritxku", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "fail timestampsign according to RFC 3161 with extendedKeyUsage not critical");
+ok(verify("ee-timestampsign-rfc3161-digsig", "timestampsign", [qw(root-cert)], [qw(ca-cert)]),
+   "accept timestampsign according to RFC 3161 with digitalSignature");
+
 # Proxy certificates
 ok(!verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)]),
    "fail to accept proxy cert without -allow_proxy_certs");
@@ -308,6 +328,29 @@ SKIP: {
     ok(verify("ee-cert-ec-named-named", "", ["root-cert"],
               ["ca-cert-ec-named"]),
         "accept named curve leaf with named curve intermediate");
+}
+# Same as above but with base provider used for decoding
+SKIP: {
+    my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+    skip "EC is not supported or FIPS is disabled", 3
+        if disabled("ec") || $no_fips;
+
+    my $provconf = srctop_file("test", "fips-and-base.cnf");
+    my $provpath = bldtop_dir("providers");
+    my @prov = ("-provider-path", $provpath);
+    $ENV{OPENSSL_CONF} = $provconf;
+
+    ok(!verify("ee-cert-ec-explicit", "", ["root-cert"],
+               ["ca-cert-ec-named"], @prov),
+        "reject explicit curve leaf with named curve intermediate w/fips");
+    ok(!verify("ee-cert-ec-named-explicit", "", ["root-cert"],
+               ["ca-cert-ec-explicit"], @prov),
+        "reject named curve leaf with explicit curve intermediate w/fips");
+    ok(verify("ee-cert-ec-named-named", "", ["root-cert"],
+              ["ca-cert-ec-named"], @prov),
+        "accept named curve leaf with named curve intermediate w/fips");
+
+    delete $ENV{OPENSSL_CONF};
 }
 
 # Depth tests, note the depth limit bounds the number of CA certificates

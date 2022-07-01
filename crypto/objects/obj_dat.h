@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[8240] = {
+static const unsigned char so[8370] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1146,9 +1146,29 @@ static const unsigned char so[8240] = {
     0x55,0x1D,0x43,                                /* [ 8230] OBJ_allowed_attribute_assignments */
     0x55,0x1D,0x44,                                /* [ 8233] OBJ_attribute_mappings */
     0x55,0x1D,0x45,                                /* [ 8236] OBJ_holder_name_constraints */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x02,0x2C,  /* [ 8239] OBJ_id_aa_ets_attrCertificateRefs */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x02,0x2D,  /* [ 8250] OBJ_id_aa_ets_attrRevocationRefs */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x02,0x30,  /* [ 8261] OBJ_id_aa_ets_archiveTimestampV2 */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x34,  /* [ 8272] OBJ_id_aa_CMSAlgorithmProtection */
+    0x04,                                          /* [ 8281] OBJ_itu_t_identified_organization */
+    0x04,0x00,                                     /* [ 8282] OBJ_etsi */
+    0x04,0x00,0x8D,0x45,                           /* [ 8284] OBJ_electronic_signature_standard */
+    0x04,0x00,0x8D,0x45,0x02,                      /* [ 8288] OBJ_ess_attributes */
+    0x04,0x00,0x8D,0x45,0x02,0x01,                 /* [ 8293] OBJ_id_aa_ets_mimeType */
+    0x04,0x00,0x8D,0x45,0x02,0x02,                 /* [ 8299] OBJ_id_aa_ets_longTermValidation */
+    0x04,0x00,0x8D,0x45,0x02,0x03,                 /* [ 8305] OBJ_id_aa_ets_SignaturePolicyDocument */
+    0x04,0x00,0x8D,0x45,0x02,0x04,                 /* [ 8311] OBJ_id_aa_ets_archiveTimestampV3 */
+    0x04,0x00,0x8D,0x45,0x02,0x05,                 /* [ 8317] OBJ_id_aa_ATSHashIndex */
+    0x04,0x00,0x81,0x95,0x32,                      /* [ 8323] OBJ_cades */
+    0x04,0x00,0x81,0x95,0x32,0x01,                 /* [ 8328] OBJ_cades_attributes */
+    0x04,0x00,0x81,0x95,0x32,0x01,0x01,            /* [ 8334] OBJ_id_aa_ets_signerAttrV2 */
+    0x04,0x00,0x81,0x95,0x32,0x01,0x03,            /* [ 8341] OBJ_id_aa_ets_sigPolicyStore */
+    0x04,0x00,0x81,0x95,0x32,0x01,0x04,            /* [ 8348] OBJ_id_aa_ATSHashIndex_v2 */
+    0x04,0x00,0x81,0x95,0x32,0x01,0x05,            /* [ 8355] OBJ_id_aa_ATSHashIndex_v3 */
+    0x04,0x00,0x81,0x95,0x32,0x01,0x06,            /* [ 8362] OBJ_signedAssertion */
 };
 
-#define NUM_NID 1279
+#define NUM_NID 1299
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2429,9 +2449,29 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"allowedAttributeAssignments", "X509v3 Allowed Attribute Assignments", NID_allowed_attribute_assignments, 3, &so[8230]},
     {"attributeMappings", "X509v3 Attribute Mappings", NID_attribute_mappings, 3, &so[8233]},
     {"holderNameConstraints", "X509v3 Holder Name Constraints", NID_holder_name_constraints, 3, &so[8236]},
+    {"id-aa-ets-attrCertificateRefs", "id-aa-ets-attrCertificateRefs", NID_id_aa_ets_attrCertificateRefs, 11, &so[8239]},
+    {"id-aa-ets-attrRevocationRefs", "id-aa-ets-attrRevocationRefs", NID_id_aa_ets_attrRevocationRefs, 11, &so[8250]},
+    {"id-aa-ets-archiveTimestampV2", "id-aa-ets-archiveTimestampV2", NID_id_aa_ets_archiveTimestampV2, 11, &so[8261]},
+    {"id-aa-CMSAlgorithmProtection", "id-aa-CMSAlgorithmProtection", NID_id_aa_CMSAlgorithmProtection, 9, &so[8272]},
+    {"itu-t-identified-organization", "itu-t-identified-organization", NID_itu_t_identified_organization, 1, &so[8281]},
+    {"etsi", "etsi", NID_etsi, 2, &so[8282]},
+    {"electronic-signature-standard", "electronic-signature-standard", NID_electronic_signature_standard, 4, &so[8284]},
+    {"ess-attributes", "ess-attributes", NID_ess_attributes, 5, &so[8288]},
+    {"id-aa-ets-mimeType", "id-aa-ets-mimeType", NID_id_aa_ets_mimeType, 6, &so[8293]},
+    {"id-aa-ets-longTermValidation", "id-aa-ets-longTermValidation", NID_id_aa_ets_longTermValidation, 6, &so[8299]},
+    {"id-aa-ets-SignaturePolicyDocument", "id-aa-ets-SignaturePolicyDocument", NID_id_aa_ets_SignaturePolicyDocument, 6, &so[8305]},
+    {"id-aa-ets-archiveTimestampV3", "id-aa-ets-archiveTimestampV3", NID_id_aa_ets_archiveTimestampV3, 6, &so[8311]},
+    {"id-aa-ATSHashIndex", "id-aa-ATSHashIndex", NID_id_aa_ATSHashIndex, 6, &so[8317]},
+    {"cades", "cades", NID_cades, 5, &so[8323]},
+    {"cades-attributes", "cades-attributes", NID_cades_attributes, 6, &so[8328]},
+    {"id-aa-ets-signerAttrV2", "id-aa-ets-signerAttrV2", NID_id_aa_ets_signerAttrV2, 7, &so[8334]},
+    {"id-aa-ets-sigPolicyStore", "id-aa-ets-sigPolicyStore", NID_id_aa_ets_sigPolicyStore, 7, &so[8341]},
+    {"id-aa-ATSHashIndex-v2", "id-aa-ATSHashIndex-v2", NID_id_aa_ATSHashIndex_v2, 7, &so[8348]},
+    {"id-aa-ATSHashIndex-v3", "id-aa-ATSHashIndex-v3", NID_id_aa_ATSHashIndex_v3, 7, &so[8355]},
+    {"signedAssertion", "signedAssertion", NID_signedAssertion, 7, &so[8362]},
 };
 
-#define NUM_SN 1270
+#define NUM_SN 1290
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2810,6 +2850,8 @@ static const unsigned int sn_objs[NUM_SN] = {
      483,    /* "cNAMERecord" */
      179,    /* "caIssuers" */
      785,    /* "caRepository" */
+    1292,    /* "cades" */
+    1293,    /* "cades-attributes" */
     1023,    /* "capwapAC" */
     1024,    /* "capwapWTP" */
      443,    /* "caseIgnoreIA5StringSyntax" */
@@ -2901,10 +2943,13 @@ static const unsigned int sn_objs[NUM_SN] = {
      795,    /* "ecdsa-with-SHA384" */
      796,    /* "ecdsa-with-SHA512" */
      792,    /* "ecdsa-with-Specified" */
+    1285,    /* "electronic-signature-standard" */
       48,    /* "emailAddress" */
      132,    /* "emailProtection" */
      885,    /* "enhancedSearchGuide" */
      389,    /* "enterprises" */
+    1286,    /* "ess-attributes" */
+    1284,    /* "etsi" */
      384,    /* "experimental" */
      172,    /* "extReq" */
       56,    /* "extendedCertificateAttributes" */
@@ -2997,6 +3042,19 @@ static const unsigned int sn_objs[NUM_SN] = {
      852,    /* "id-GostR3411-94-with-GostR3410-94-cc" */
      810,    /* "id-HMACGostR3411-94" */
      782,    /* "id-PasswordBasedMAC" */
+    1291,    /* "id-aa-ATSHashIndex" */
+    1296,    /* "id-aa-ATSHashIndex-v2" */
+    1297,    /* "id-aa-ATSHashIndex-v3" */
+    1282,    /* "id-aa-CMSAlgorithmProtection" */
+    1289,    /* "id-aa-ets-SignaturePolicyDocument" */
+    1281,    /* "id-aa-ets-archiveTimestampV2" */
+    1290,    /* "id-aa-ets-archiveTimestampV3" */
+    1279,    /* "id-aa-ets-attrCertificateRefs" */
+    1280,    /* "id-aa-ets-attrRevocationRefs" */
+    1288,    /* "id-aa-ets-longTermValidation" */
+    1287,    /* "id-aa-ets-mimeType" */
+    1295,    /* "id-aa-ets-sigPolicyStore" */
+    1294,    /* "id-aa-ets-signerAttrV2" */
      266,    /* "id-aca" */
      355,    /* "id-aca-accessIdentity" */
      354,    /* "id-aca-authenticationInfo" */
@@ -3298,6 +3356,7 @@ static const unsigned int sn_objs[NUM_SN] = {
       86,    /* "issuerAltName" */
     1008,    /* "issuerSignTool" */
      770,    /* "issuingDistributionPoint" */
+    1283,    /* "itu-t-identified-organization" */
      492,    /* "janetMailbox" */
      957,    /* "jurisdictionC" */
      955,    /* "jurisdictionL" */
@@ -3634,6 +3693,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      604,    /* "setext-pinAny" */
      603,    /* "setext-pinSecure" */
      605,    /* "setext-track2" */
+    1298,    /* "signedAssertion" */
     1244,    /* "signedObject" */
       52,    /* "signingTime" */
      454,    /* "simpleSecurityObject" */
@@ -3705,7 +3765,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1270
+#define NUM_LN 1290
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4086,6 +4146,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      703,    /* "c2tnb431r1" */
      881,    /* "cACertificate" */
      483,    /* "cNAMERecord" */
+    1292,    /* "cades" */
+    1293,    /* "cades-attributes" */
      751,    /* "camellia-128-cbc" */
      962,    /* "camellia-128-ccm" */
      757,    /* "camellia-128-cfb" */
@@ -4224,9 +4286,12 @@ static const unsigned int ln_objs[NUM_LN] = {
     1113,    /* "ecdsa_with_SHA3-256" */
     1114,    /* "ecdsa_with_SHA3-384" */
     1115,    /* "ecdsa_with_SHA3-512" */
+    1285,    /* "electronic-signature-standard" */
       48,    /* "emailAddress" */
      632,    /* "encrypted track 2" */
      885,    /* "enhancedSearchGuide" */
+    1286,    /* "ess-attributes" */
+    1284,    /* "etsi" */
       56,    /* "extendedCertificateAttributes" */
      867,    /* "facsimileTelephoneNumber" */
      462,    /* "favouriteDrink" */
@@ -4301,6 +4366,19 @@ static const unsigned int ln_objs[NUM_LN] = {
      848,    /* "id-GostR3410-94-bBis" */
      822,    /* "id-GostR3411-94-CryptoProParamSet" */
      821,    /* "id-GostR3411-94-TestParamSet" */
+    1291,    /* "id-aa-ATSHashIndex" */
+    1296,    /* "id-aa-ATSHashIndex-v2" */
+    1297,    /* "id-aa-ATSHashIndex-v3" */
+    1282,    /* "id-aa-CMSAlgorithmProtection" */
+    1289,    /* "id-aa-ets-SignaturePolicyDocument" */
+    1281,    /* "id-aa-ets-archiveTimestampV2" */
+    1290,    /* "id-aa-ets-archiveTimestampV3" */
+    1279,    /* "id-aa-ets-attrCertificateRefs" */
+    1280,    /* "id-aa-ets-attrRevocationRefs" */
+    1288,    /* "id-aa-ets-longTermValidation" */
+    1287,    /* "id-aa-ets-mimeType" */
+    1295,    /* "id-aa-ets-sigPolicyStore" */
+    1294,    /* "id-aa-ets-signerAttrV2" */
      266,    /* "id-aca" */
      355,    /* "id-aca-accessIdentity" */
      354,    /* "id-aca-authenticationInfo" */
@@ -4548,6 +4626,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      181,    /* "iso" */
      623,    /* "issuer capabilities" */
      645,    /* "itu-t" */
+    1283,    /* "itu-t-identified-organization" */
      492,    /* "janetMailbox" */
      646,    /* "joint-iso-itu-t" */
      957,    /* "jurisdictionCountryName" */
@@ -4910,6 +4989,7 @@ static const unsigned int ln_objs[NUM_LN] = {
       42,    /* "shaWithRSAEncryption" */
     1100,    /* "shake128" */
     1101,    /* "shake256" */
+    1298,    /* "signedAssertion" */
       52,    /* "signingTime" */
      454,    /* "simpleSecurityObject" */
      496,    /* "singleLevelQuality" */
@@ -4979,7 +5059,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1141
+#define NUM_OBJ 1161
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -4987,12 +5067,14 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      404,    /* OBJ_ccitt                        OBJ_itu_t */
      645,    /* OBJ_itu_t                        0 */
      646,    /* OBJ_joint_iso_itu_t              2 */
+    1283,    /* OBJ_itu_t_identified_organization 0 4 */
      434,    /* OBJ_data                         0 9 */
      182,    /* OBJ_member_body                  1 2 */
      379,    /* OBJ_org                          1 3 */
      676,    /* OBJ_identified_organization      1 3 */
       11,    /* OBJ_X500                         2 5 */
      647,    /* OBJ_international_organizations  2 23 */
+    1284,    /* OBJ_etsi                         0 4 0 */
      380,    /* OBJ_dod                          1 3 6 */
     1170,    /* OBJ_ieee                         1 3 111 */
       12,    /* OBJ_X509                         2 5 4 */
@@ -5119,6 +5201,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      517,    /* OBJ_set_certExt                  2 23 42 7 */
      518,    /* OBJ_set_brand                    2 23 42 8 */
      679,    /* OBJ_wap_wsg                      2 23 43 1 */
+    1285,    /* OBJ_electronic_signature_standard 0 4 0 1733 */
      382,    /* OBJ_Directory                    1 3 6 1 1 */
      383,    /* OBJ_Management                   1 3 6 1 2 */
      384,    /* OBJ_Experimental                 1 3 6 1 3 */
@@ -5244,6 +5327,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      637,    /* OBJ_set_brand_Diners             2 23 42 8 30 */
      638,    /* OBJ_set_brand_AmericanExpress    2 23 42 8 34 */
      639,    /* OBJ_set_brand_JCB                2 23 42 8 35 */
+    1292,    /* OBJ_cades                        0 4 0 19122 */
+    1286,    /* OBJ_ess_attributes               0 4 0 1733 2 */
     1195,    /* OBJ_gmac                         1 0 9797 3 4 */
     1141,    /* OBJ_oscca                        1 2 156 10197 */
      805,    /* OBJ_cryptopro                    1 2 643 2 2 */
@@ -5327,6 +5412,12 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      743,    /* OBJ_wap_wsg_idm_ecid_wtls10      2 23 43 1 4 10 */
      744,    /* OBJ_wap_wsg_idm_ecid_wtls11      2 23 43 1 4 11 */
      745,    /* OBJ_wap_wsg_idm_ecid_wtls12      2 23 43 1 4 12 */
+    1293,    /* OBJ_cades_attributes             0 4 0 19122 1 */
+    1287,    /* OBJ_id_aa_ets_mimeType           0 4 0 1733 2 1 */
+    1288,    /* OBJ_id_aa_ets_longTermValidation 0 4 0 1733 2 2 */
+    1289,    /* OBJ_id_aa_ets_SignaturePolicyDocument 0 4 0 1733 2 3 */
+    1290,    /* OBJ_id_aa_ets_archiveTimestampV3 0 4 0 1733 2 4 */
+    1291,    /* OBJ_id_aa_ATSHashIndex           0 4 0 1733 2 5 */
      804,    /* OBJ_whirlpool                    1 0 10118 3 0 55 */
     1142,    /* OBJ_sm_scheme                    1 2 156 10197 1 */
      773,    /* OBJ_kisa                         1 2 410 200004 */
@@ -5369,6 +5460,11 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      633,    /* OBJ_setAttr_T2cleartxt           2 23 42 3 3 4 2 */
      634,    /* OBJ_setAttr_TokICCsig            2 23 42 3 3 5 1 */
      635,    /* OBJ_setAttr_SecDevSig            2 23 42 3 3 5 2 */
+    1294,    /* OBJ_id_aa_ets_signerAttrV2       0 4 0 19122 1 1 */
+    1295,    /* OBJ_id_aa_ets_sigPolicyStore     0 4 0 19122 1 3 */
+    1296,    /* OBJ_id_aa_ATSHashIndex_v2        0 4 0 19122 1 4 */
+    1297,    /* OBJ_id_aa_ATSHashIndex_v3        0 4 0 19122 1 5 */
+    1298,    /* OBJ_signedAssertion              0 4 0 19122 1 6 */
      436,    /* OBJ_ucl                          0 9 2342 19200300 */
      820,    /* OBJ_id_Gost28147_89_None_KeyMeshing 1 2 643 2 2 14 0 */
      819,    /* OBJ_id_Gost28147_89_CryptoPro_KeyMeshing 1 2 643 2 2 14 1 */
@@ -5802,6 +5898,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      188,    /* OBJ_SMIME                        1 2 840 113549 1 9 16 */
      156,    /* OBJ_friendlyName                 1 2 840 113549 1 9 20 */
      157,    /* OBJ_localKeyID                   1 2 840 113549 1 9 21 */
+    1282,    /* OBJ_id_aa_CMSAlgorithmProtection 1 2 840 113549 1 9 52 */
      681,    /* OBJ_X9_62_onBasis                1 2 840 10045 1 2 3 1 */
      682,    /* OBJ_X9_62_tpBasis                1 2 840 10045 1 2 3 2 */
      683,    /* OBJ_X9_62_ppBasis                1 2 840 10045 1 2 3 3 */
@@ -6080,7 +6177,10 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      238,    /* OBJ_id_smime_aa_ets_archiveTimeStamp 1 2 840 113549 1 9 16 2 27 */
      239,    /* OBJ_id_smime_aa_signatureType    1 2 840 113549 1 9 16 2 28 */
      240,    /* OBJ_id_smime_aa_dvcs_dvc         1 2 840 113549 1 9 16 2 29 */
+    1279,    /* OBJ_id_aa_ets_attrCertificateRefs 1 2 840 113549 1 9 16 2 44 */
+    1280,    /* OBJ_id_aa_ets_attrRevocationRefs 1 2 840 113549 1 9 16 2 45 */
     1086,    /* OBJ_id_smime_aa_signingCertificateV2 1 2 840 113549 1 9 16 2 47 */
+    1281,    /* OBJ_id_aa_ets_archiveTimestampV2 1 2 840 113549 1 9 16 2 48 */
      241,    /* OBJ_id_smime_alg_ESDHwith3DES    1 2 840 113549 1 9 16 3 1 */
      242,    /* OBJ_id_smime_alg_ESDHwithRC2     1 2 840 113549 1 9 16 3 2 */
      243,    /* OBJ_id_smime_alg_3DESwrap        1 2 840 113549 1 9 16 3 3 */

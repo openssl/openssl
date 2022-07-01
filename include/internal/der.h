@@ -78,7 +78,7 @@ int ossl_DER_w_precompiled(WPACKET *pkt, int tag,
                            size_t precompiled_n);
 
 int ossl_DER_w_boolean(WPACKET *pkt, int tag, int b);
-int ossl_DER_w_ulong(WPACKET *pkt, int tag, unsigned long v);
+int ossl_DER_w_uint32(WPACKET *pkt, int tag, uint32_t v);
 int ossl_DER_w_bn(WPACKET *pkt, int tag, const BIGNUM *v);
 int ossl_DER_w_null(WPACKET *pkt, int tag);
 int ossl_DER_w_octet_string(WPACKET *pkt, int tag,
