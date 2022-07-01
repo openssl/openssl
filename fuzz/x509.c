@@ -32,7 +32,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     if (x509 != NULL) {
         BIO *bio = BIO_new(BIO_s_null());
         /* This will load and print the public key as well as extensions */
-        X509_print(bio, x509);
+        if (bio != NULL)
+            X509_print(bio, x509);
         BIO_free(bio);
 
         X509_issuer_and_serial_hash(x509);
