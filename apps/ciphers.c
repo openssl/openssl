@@ -104,6 +104,7 @@ int ciphers_main(int argc, char **argv)
     char buf[512];
     OPTION_CHOICE o;
     int min_version = 0, max_version = 0;
+    OSSL_LIB_CTX *libctx;
 
     prog = opt_init(argc, argv, ciphers_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -186,7 +187,7 @@ int ciphers_main(int argc, char **argv)
         goto end;
     }
 
-    OSSL_LIB_CTX *libctx = app_get0_libctx();
+    libctx = app_get0_libctx();
     if (libctx == NULL)
         goto err;
     ctx = SSL_CTX_new_ex(libctx, app_get0_propq(), meth);
