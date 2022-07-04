@@ -22,9 +22,9 @@ Represented by an SSL object.
 
 Represented by the `OSSL_QUIC_PACKET` structure.
 
-*This structure is inspired from the structure with the same presented with
-the [TX packetizer], but takes into account the needs of the RX depacketizer
-as well.*
+*This structure is inspired from the structure with the same name presented
+with the [TX packetizer], but takes into account the needs of the RX
+depacketizer as well.*
 
 It's expected that the QUIC Read Record Layer decrypts the packet and
 parses its packet header, and creates the `OSSL_QUIC_PACKET` structure with
@@ -47,10 +47,10 @@ struct ossl_quic_packet_st {
      * and |packet_payload_offset| if the offset to the packet payload if
      * there is any.
      *
-     * When passing this structure from the TX packetizer to the QUIC Read
+     * When passing this structure from the TX packetizer to the QUIC Write
      * Record Layer, |packet_data| is expected to only hold the packet
      * header, and |frames| holds the rest of the data.  It's up to the QUIC
-     * Read Record Layer to encrypt and send all those chunks of data in a
+     * Write Record Layer to encrypt and send all those chunks of data in a
      * manner fitting for the network medium with as little copying as
      * possible.
      *
@@ -89,14 +89,11 @@ typedef struct ossl_quic_packet_st OSSL_QUIC_PACKET;
 Interactions
 ------------
 
-The RX depacketizer receives a packet from an QUIC Read Record Layer, and
-the processes frames in two phases:
+The RX depacketizer receives a packet from the QUIC Read Record Layer, and
+then processes frames in two phases:
 
 1.  [Collect information for the ACK Manager](#collect-information-for-the-ack-manager)
 2.  [Pass frame data](#pass-frame-data)
-
-then loops a second time through the frames to sends the data from each
-frame to diverse other components, depending on the frame type.
 
 ### Other components
 
@@ -104,9 +101,9 @@ There are a number of other components that the RX depacketizer wants to
 interact with:
 
 -   [ACK manager]
--   Handshake manager, which is currently unspecified.  In the [overview],
-    it's called the "TLS Handshake Record Layer", but that may need some
-    wrapping to fit the purpose of a Handshake manager.
+-   Handshake manager, which is currently unspecified.  It's assumed that
+    this will wrap around what is called the "TLS Handshake Record Layer",
+    in the [overview]
 -   Session manager, which is currently unspecified for QUIC, but may very
     well be the existing `SSL_SESSION` functionality, extended to fit QUIC
     purposes.
@@ -118,14 +115,28 @@ interact with:
     turn out to be the Handshake manager.
 -   Stream SSL objects, to pass the stream data to.
 
-### Receiving data
+### Receiving or pulling data
 
-To pass a packet to the RX depacketizer, use this functions:
+The RX depacketizer could be implemented in two ways:
 
-``` C
-__owur int ossl_quic_depacketise(const OSSL_QUIC_PACKET *packet,
-                                 OSSL_TIME received);
-```
+1.  As a receiver, called "from below" from the QUIC Read Record Layer,
+    which passes a decrypted packet to the RX depacketizer using this
+    function:
+
+    ``` C
+    __owur int ossl_quic_depacketise(const OSSL_QUIC_PACKET *packet,
+                                     OSSL_TIME received);
+    ```
+
+2.  As a data puller, called "from above" using the following function:
+
+    ``` C
+    __owur int ossl_quic_depacketise(SSL *connection);
+    ```
+
+    This function would create an `OSSL_QUIC_PACKET` and call the QUIC Read
+    Record Layer with a pointer to it, leaving it to the QUIC Read Record
+    Layer to fill in the data.
 
 ### Collect information for the [ACK manager]
 
