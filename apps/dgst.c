@@ -321,8 +321,10 @@ int dgst_main(int argc, char **argv)
     }
 
     if (hmac_key != NULL) {
-        if (md == NULL)
+        if (md == NULL) {
             md = (EVP_MD *)EVP_sha256();
+            digestname = SN_sha256;
+        }
         sigkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, impl,
                                               (unsigned char *)hmac_key,
                                               strlen(hmac_key));
@@ -340,9 +342,19 @@ int dgst_main(int argc, char **argv)
             goto end;
         }
         if (do_verify)
-            res = EVP_DigestVerifyInit(mctx, &pctx, md, impl, sigkey);
+            if (impl == NULL)
+                res = EVP_DigestVerifyInit_ex(mctx, &pctx, digestname,
+                                              app_get0_libctx(),
+                                              app_get0_propq(), sigkey, NULL);
+            else
+                res = EVP_DigestVerifyInit(mctx, &pctx, md, impl, sigkey);
         else
-            res = EVP_DigestSignInit(mctx, &pctx, md, impl, sigkey);
+            if (impl == NULL)
+                res = EVP_DigestSignInit_ex(mctx, &pctx, digestname,
+                                            app_get0_libctx(),
+                                            app_get0_propq(), sigkey, NULL);
+            else
+                res = EVP_DigestSignInit(mctx, &pctx, md, impl, sigkey);
         if (res == 0) {
             BIO_printf(bio_err, "Error setting context\n");
             goto end;
@@ -467,7 +479,7 @@ static void show_digests(const OBJ_NAME *name, void *arg)
         return;
 
     /* Filter out message digests that we cannot use */
-    md = EVP_get_digestbyname(name->name);
+    md = EVP_MD_fetch(app_get0_libctx(), name->name, app_get0_propq());
     if (md == NULL)
         return;
 
