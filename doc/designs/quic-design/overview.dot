@@ -4,14 +4,70 @@ strict digraph overview {
     bgcolor=white;
     layout=dot;
     outputorder="edgesfirst"
+    rankdir=TB
 
-    ssl [label="SSL API", shape=rectangle, pos="0,0!", fillcolor="#cc79a7"];
-    subgraph cluster1 {
+    subgraph cluster_ssl {
+        node [style=filled, fillcolor="#cc79a7"];
+        label="SSL";
+        style=filled;
+        fillcolor="grey95:grey60";
+        shape=rectangle
+        rank=source
+
+        ssl [label="SSL API", shape=rectangle, fillcolor="#cc79a7"];
+    }
+    subgraph cluster_bios {
+        node [style=filled, fillcolor="#cc79a7"];
+        label="BIOs";
+        style=filled;
+        fillcolor="/blues8/1:/blues8/4";
+        shape=rectangle
+
+        node [label="Datagram BIO", fillcolor="#f0e442"];
+        color=transparent;
+
+        dgbio1;
+        dgbio2;
+        dgbio3;
+    }
+    subgraph cluster_write {
+        node [style=filled, fillcolor="#cc79a7"];
+        label="Writing";
+        style=filled;
+        fillcolor="/blues8/1:/blues8/4";
+        shape=rectangle
+
+        ssb [label="Stream\nSend Buffers", fillcolor="#d55e00"];
+        txp [label="TX Packetiser", fillcolor="#d55e00"];
+        wrl [label="QUIC Write\nRecord Layer", fillcolor="#d55e00"];
+    }
+    subgraph cluster_read {
+        node [style=filled, fillcolor="#cc79a7"];
+        label="Reading";
+        style=filled;
+        fillcolor="/blues8/1:/blues8/4";
+        shape=rectangle
+
+        srb [label="Stream\nRead Buffers", fillcolor="#d55e00"];
+        rxfh [label="RX Frame\nHandler", fillcolor="#d55e00"];
+        rrl [label="QUIC Read\nRecord Layer", fillcolor="#d55e00"];
+        demux [label="Path and Connection\nDemultiplexer", fillcolor="#d55e00"];
+    }
+    cc [label="Congestion\nController", fillcolor="#f0e442"];
+    csm [label="Connection\nState Machine", fillcolor="#d55e00"];
+    event [label="Timer and\nEvent Queue"];
+    flow [label="Flow Controller and\nStatistics Collector", fillcolor="#d55e00"];
+    tlshs [label="TLS Handshake\nRecord Layer", fillcolor="#d55e00"];
+    ackm [label="ACK Handling and\nLoss Detector", fillcolor="#f0e442"];
+    idc [label="Connection\nID Cache", fillcolor="#d55e00"];
+
+    subgraph cluster_kernel {
         node [style=filled, fillcolor="#cc79a7", label="UDP"];
         label="       Kernel";
         style=filled;
         fillcolor="grey95:grey60";
         shape=rectangle
+        rank=sink
 
         udp1;
         udp2;
@@ -21,36 +77,6 @@ strict digraph overview {
         udp1 -> hw;
         udp2 -> hw;
         udp3 -> hw;
-    }
-    subgraph cluster2 {
-        node [label="Datagram BIO", fillcolor="#f0e442"];
-        color=transparent;
-
-        dgbio1;
-        dgbio2;
-        dgbio3;
-    }
-    subgraph cluster3 {
-        color=transparent;
-
-        ssb [label="Stream\nSend Buffers", fillcolor="#d55e00"];
-        txp [label="TX Packetiser", fillcolor="#d55e00"];
-        wrl [label="QUIC Write\nRecord Layer", fillcolor="#d55e00"];
-    }
-    cc [label="Congestion\nController", fillcolor="#f0e442"];
-    csm [label="Connection\nState Machine", fillcolor="#d55e00"];
-    event [label="Timer and\nEvent Queue"];
-    flow [label="Flow Controller and\nStatistics Collector", fillcolor="#d55e00"];
-    tlshs [label="TLS Handshake\nRecord Layer", fillcolor="#d55e00"];
-    ackm [label="ACK Handling and\nLoss Detector", fillcolor="#f0e442"];
-    idc [label="Connection\nID Cache", fillcolor="#d55e00"];
-    subgraph cluster4 {
-        color=transparent;
-
-        srb [label="Stream\nRead Buffers", fillcolor="#d55e00"];
-        rxfh [label="RX Frame\nHandler", fillcolor="#d55e00"];
-        rrl [label="QUIC Read\nRecord Layer", fillcolor="#d55e00"];
-        demux [label="Path and Connection\nDemultiplexer", fillcolor="#d55e00"];
     }
 
     ssl -> ssb -> txp -> wrl;
@@ -89,6 +115,7 @@ strict digraph overview {
         label="Key";
         style=filled;
         fillcolor="grey80";
+        rankdir=LR
 
         External [fillcolor="#cc79a7"];
         Done [fillcolor="#009e73"];
