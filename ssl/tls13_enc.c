@@ -190,6 +190,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     if (!ossl_assert(mdleni >= 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                  ERR_R_INTERNAL_ERROR);
+        EVP_PKEY_CTX_free(pctx);
         return 0;
     }
     mdlen = (size_t)mdleni;
