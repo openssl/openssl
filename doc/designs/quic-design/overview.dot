@@ -4,7 +4,27 @@ strict digraph overview {
     bgcolor=white;
     layout=dot;
     outputorder="edgesfirst"
-    rankdir=TB
+    rankdir=TB;
+    //ranksep=.75;
+
+{
+    node [style=invis];
+    10 -> 20 -> 30 -> 40 -> 50 -> 60 -> 70 -> 80 -> 90 -> 100 [ style = invis ];
+}
+    subgraph cluster_key {
+        shape=rectangle
+        node [style=filled];
+        label="Key";
+        style=filled;
+        fillcolor="grey80";
+        rankdir=LR
+        labeljust=l
+
+        External [fillcolor="#cc79a7"];
+        Done [fillcolor="#009e73"];
+        Implementing [fillcolor="#f0e442"];
+        Designing [fillcolor="#d55e00"];
+    }
 
     subgraph cluster_ssl {
         node [style=filled, fillcolor="#cc79a7"];
@@ -12,7 +32,8 @@ strict digraph overview {
         style=filled;
         fillcolor="grey95:grey60";
         shape=rectangle
-        rank=source
+        rank=same; 10;
+        labeljust=l
 
         ssl [label="SSL API", shape=rectangle, fillcolor="#cc79a7"];
     }
@@ -22,6 +43,8 @@ strict digraph overview {
         style=filled;
         fillcolor="/blues8/1:/blues8/4";
         shape=rectangle
+        rank=same; 80;
+        labeljust=l
 
         node [label="Datagram BIO", fillcolor="#f0e442"];
         color=transparent;
@@ -30,49 +53,68 @@ strict digraph overview {
         dgbio2;
         dgbio3;
     }
+    
     subgraph cluster_write {
-        node [style=filled, fillcolor="#cc79a7"];
+        node [style=filled];
         label="Writing";
         style=filled;
         fillcolor="/blues8/1:/blues8/4";
         shape=rectangle
+        labeljust=l
 
-        ssb [label="Stream\nSend Buffers", fillcolor="#d55e00"];
-        txp [label="TX Packetiser", fillcolor="#d55e00"];
-        wrl [label="QUIC Write\nRecord Layer", fillcolor="#d55e00"];
+        node [ fillcolor="#d55e00", label="Stream\nSend Buffers"; ];
+            { rank=same; 30; ssb }
+        node [ fillcolor="#d55e00", label="TX Packetiser"; ];
+            { rank=same; 40; txp }
+        node [ fillcolor="#d55e00", label="QUIC Write\nRecord Layer"; ];
+            { rank=same; 50; wrl }
     }
+    
     subgraph cluster_read {
-        node [style=filled, fillcolor="#cc79a7"];
+        node [style=filled];
         label="Reading";
         style=filled;
         fillcolor="/blues8/1:/blues8/4";
         shape=rectangle
+        labeljust=l
 
-        srb [label="Stream\nRead Buffers", fillcolor="#d55e00"];
-        rxfh [label="RX Frame\nHandler", fillcolor="#d55e00"];
-        rrl [label="QUIC Read\nRecord Layer", fillcolor="#d55e00"];
-        demux [label="Path and Connection\nDemultiplexer", fillcolor="#d55e00"];
+        node [ fillcolor="#d55e00", label="Stream\nRead Buffers"; ];
+            { rank=same; 30; srb }
+        node [ fillcolor="#d55e00", label="RX Frame\nHandler"; ];
+            { rank=same; 40; rxfh }
+        node [ fillcolor="#d55e00", label="QUIC Read\nRecord Layer"; ];
+            { rank=same; 50; rrl }
+        node [ fillcolor="#d55e00", label="Path and Connection\nDemultiplexer" ];
+            { rank=same; 60; demux }
     }
-    cc [label="Congestion\nController", fillcolor="#f0e442"];
-    csm [label="Connection\nState Machine", fillcolor="#d55e00"];
-    event [label="Timer and\nEvent Queue"];
-    flow [label="Flow Controller and\nStatistics Collector", fillcolor="#d55e00"];
-    tlshs [label="TLS Handshake\nRecord Layer", fillcolor="#d55e00"];
-    ackm [label="ACK Handling and\nLoss Detector", fillcolor="#f0e442"];
-    idc [label="Connection\nID Cache", fillcolor="#d55e00"];
+
+    node [label="Congestion\nController", fillcolor="#f0e442"];
+        { rank=same; 50; cc }
+    node [label="Connection\nState Machine", fillcolor="#d55e00"];
+        { rank=same; 20; csm }
+    node [label="Timer and\nEvent Queue"];
+        { rank=same; 30; event }
+    node [label="Flow Controller and\nStatistics Collector", fillcolor="#d55e00"];
+        { rank=same; 40; flow }
+    node [label="TLS Handshake\nRecord Layer", fillcolor="#d55e00"];
+        { rank=same; 20; tlshs }
+    node [label="ACK Handling and\nLoss Detector", fillcolor="#f0e442"];
+        { rank=same; 40; ackm }
+    node [label="Connection\nID Cache", fillcolor="#d55e00"];
+        { rank=same; 20; idc }
 
     subgraph cluster_kernel {
-        node [style=filled, fillcolor="#cc79a7", label="UDP"];
-        label="       Kernel";
+        label="Kernel";
         style=filled;
         fillcolor="grey95:grey60";
         shape=rectangle
         rank=sink
+        labeljust=l
 
-        udp1;
-        udp2;
-        udp3;
-        hw [label="Hardware Interfaces"];
+        node [style=filled, fillcolor="#cc79a7", label="UDP"];
+        { rank=same; 90; udp1; udp2; udp3; }
+        node [style=filled, fillcolor="#cc79a7", label="Hardware Interfaces"];
+        { rank=same; 100; hw }
 
         udp1 -> hw;
         udp2 -> hw;
@@ -109,17 +151,4 @@ strict digraph overview {
     wrl -> dgbio2 -> demux [samehead="bioh"];
     wrl -> dgbio3 -> demux [samehead="bioh"];
 
-    subgraph cluster_key {
-        shape=rectangle
-        node [style=filled];
-        label="Key";
-        style=filled;
-        fillcolor="grey80";
-        rankdir=LR
-
-        External [fillcolor="#cc79a7"];
-        Done [fillcolor="#009e73"];
-        Implementing [fillcolor="#f0e442"];
-        Designing [fillcolor="#d55e00"];
-    }
 }
