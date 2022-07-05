@@ -24,6 +24,10 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * Add a mac salt length option for the pkcs12 command.
+
+   *Xinping Chen*
+
  * Add more SRTP protection profiles from RFC8723 and RFC8269.
 
    *Kijin Kim*

@@ -521,7 +521,9 @@ static int conf_modules_finish_int(void)
     if (!RUN_ONCE(&init_module_list_lock, do_init_module_list_lock))
         return 0;
 
-    if (!CRYPTO_THREAD_write_lock(module_list_lock))
+    /* If module_list_lock is NULL here it means we were already unloaded */
+    if (module_list_lock == NULL
+        || !CRYPTO_THREAD_write_lock(module_list_lock))
         return 0;
 
     while (sk_CONF_IMODULE_num(initialized_modules) > 0) {

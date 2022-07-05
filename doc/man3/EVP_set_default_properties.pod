@@ -36,6 +36,12 @@ existing query strings that have been set via EVP_set_default_properties().
 EVP_default_properties_is_fips_enabled() indicates if 'fips=yes' is a default
 property for the given I<libctx>.
 
+=head1 NOTES
+
+EVP_set_default_properties() and  EVP_default_properties_enable_fips() are not
+thread safe. They are intended to be called only during the initialisation
+phase of a I<libctx>.
+
 =head1 RETURN VALUES
 
 EVP_set_default_properties() and  EVP_default_properties_enable_fips() return 1

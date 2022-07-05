@@ -801,6 +801,8 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
 {
     OSSL_CMP_MSG *msg = NULL;
     OSSL_CMP_CERTSTATUS *certStatus = NULL;
+    EVP_MD *md;
+    int is_fallback;
     ASN1_OCTET_STRING *certHash = NULL;
     OSSL_CMP_PKISI *sinfo;
 
@@ -823,13 +825,22 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
     /* set the ID of the certReq */
     if (!ASN1_INTEGER_set(certStatus->certReqId, OSSL_CMP_CERTREQID))
         goto err;
+    certStatus->hashAlg = NULL;
     /*
      * The hash of the certificate, using the same hash algorithm
      * as is used to create and verify the certificate signature.
-     * If not available, a default hash algorithm is used.
+     * If not available, a fallback hash algorithm is used.
      */
-    if ((certHash = X509_digest_sig(ctx->newCert, NULL, NULL)) == NULL)
+    if ((certHash = X509_digest_sig(ctx->newCert, &md, &is_fallback)) == NULL)
         goto err;
+    if (is_fallback) {
+        if (!ossl_cmp_hdr_set_pvno(msg->header, OSSL_CMP_PVNO_3))
+            goto err;
+        if ((certStatus->hashAlg = X509_ALGOR_new()) == NULL)
+            goto err;
+        X509_ALGOR_set_md(certStatus->hashAlg, md);
+    }
+    EVP_MD_free(md);
 
     if (!ossl_cmp_certstatus_set0_certHash(certStatus, certHash))
         goto err;

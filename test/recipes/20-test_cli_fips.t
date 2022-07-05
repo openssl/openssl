@@ -273,8 +273,9 @@ SKIP : {
         my $testtext = '';
         my $fips_param = $testtext_prefix.'.fips.param.pem';
         my $nonfips_param = $testtext_prefix.'.nonfips.param.pem';
+        my $shortnonfips_param = $testtext_prefix.'.shortnonfips.param.pem';
 
-        plan tests => 8 + $tsignverify_count;
+        plan tests => 13 + $tsignverify_count;
 
         $ENV{OPENSSL_CONF} = $defaultconf;
 
@@ -305,6 +306,23 @@ SKIP : {
                     '-pkeyopt', 'dsa_paramgen_bits:512',
                      '-out', $testtext_prefix.'.fail.param.pem'])),
            $testtext);
+
+        $testtext = $testtext_prefix.': '.
+            'Generate non-FIPS params using non-FIPS property query'.
+            ' (dsaparam)';
+        ok(run(app(['openssl', 'dsaparam', '-provider', 'default',
+                    '-propquery', '?fips!=yes',
+                    '-out', $shortnonfips_param, '1024'])),
+            $testtext);
+
+        $testtext = $testtext_prefix.': '.
+            'Generate non-FIPS params using non-FIPS property query'.
+            ' (genpkey)';
+        ok(run(app(['openssl', 'genpkey', '-provider', 'default',
+                    '-propquery', '?fips!=yes',
+                    '-genparam', '-algorithm', 'DSA',
+                    '-pkeyopt', 'dsa_paramgen_bits:512'])),
+            $testtext);
 
         $ENV{OPENSSL_CONF} = $defaultconf;
 
@@ -338,6 +356,32 @@ SKIP : {
                      '-pkeyopt', 'type:fips186_2',
                      '-out', $testtext_prefix.'.fail.priv.pem'])),
            $testtext);
+
+        $testtext = $testtext_prefix.': '.
+            'Generate a key with non-FIPS parameters using non-FIPS property'.
+            ' query (dsaparam)';
+        ok(run(app(['openssl', 'dsaparam', '-provider', 'default',
+                    '-propquery', '?fips!=yes',
+                    '-noout', '-genkey', '1024'])),
+            $testtext);
+
+        $testtext = $testtext_prefix.': '.
+            'Generate a key with non-FIPS parameters using non-FIPS property'.
+            ' query (gendsa)';
+        ok(run(app(['openssl', 'gendsa', '-provider', 'default',
+                    '-propquery', '?fips!=yes',
+                    $shortnonfips_param])),
+            $testtext);
+
+        $testtext = $testtext_prefix.': '.
+            'Generate a key with non-FIPS parameters using non-FIPS property'.
+            ' query (genpkey)';
+        ok(run(app(['openssl', 'genpkey', '-provider', 'default',
+                    '-propquery', '?fips!=yes',
+                    '-paramfile', $nonfips_param,
+                    '-pkeyopt', 'type:fips186_2',
+                    '-out', $testtext_prefix.'.fail.priv.pem'])),
+            $testtext);
 
         tsignverify($testtext_prefix, $fips_key, $fips_pub_key, $nonfips_key,
                     $nonfips_pub_key);

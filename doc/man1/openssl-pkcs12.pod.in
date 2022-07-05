@@ -66,6 +66,7 @@ PKCS#12 output (export) options:
 [B<-noiter>]
 [B<-nomaciter>]
 [B<-maciter>]
+[B<-macsaltlen>]
 [B<-nomac>]
 
 =head1 DESCRIPTION
@@ -367,6 +368,12 @@ option.
 
 This option is included for compatibility with previous versions, it used
 to be needed to use MAC iterations counts but they are now used by default.
+
+=item B<-macsaltlen>
+
+This option specifies the salt length in bytes for the MAC. The salt length 
+should be at least 16 bytes as per NIST SP 800-132. The default value 
+is 8 bytes for backwards compatibility.
 
 =item B<-nomac>
 
