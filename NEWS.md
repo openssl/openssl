@@ -18,7 +18,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Major changes between OpenSSL 3.0.4 and OpenSSL 3.0.5 [under development]
+### Major changes between OpenSSL 3.0.4 and OpenSSL 3.0.5 [5 Jul 2022]
 
   * Fixed heap memory corruption with RSA private key operation
     ([CVE-2022-2274])
