@@ -20,7 +20,11 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 3.0.4 and OpenSSL 3.0.5 [under development]
 
-  * none
+  * Fixed heap memory corruption with RSA private key operation
+    ([CVE-2022-2274])
+  * Fixed AES OCB failure to encrypt some bytes on 32-bit x86 platforms
+    ([CVE-2022-2097])
+
 
 ### Major changes between OpenSSL 3.0.3 and OpenSSL 3.0.4 [21 Jun 2022]
 
@@ -1404,6 +1408,8 @@ OpenSSL 0.9.x
 
 <!-- Links -->
 
+[CVE-2022-2274]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2274
+[CVE-2022-2097]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2274
 [CVE-2020-1971]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1971
 [CVE-2020-1967]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1967
 [CVE-2019-1563]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1563

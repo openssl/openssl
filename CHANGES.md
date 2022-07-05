@@ -30,7 +30,32 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.4 and 3.0.5 [xx XXX xxxx]
 
- * none yet
+ * The OpenSSL 3.0.4 release introduced a serious bug in the RSA
+   implementation for X86_64 CPUs supporting the AVX512IFMA instructions.
+   This issue makes the RSA implementation with 2048 bit private keys
+   incorrect on such machines and memory corruption will happen during
+   the computation. As a consequence of the memory corruption an attacker
+   may be able to trigger a remote code execution on the machine performing
+   the computation.
+
+   SSL/TLS servers or other servers using 2048 bit RSA private keys running
+   on machines supporting AVX512IFMA instructions of the X86_64 architecture
+   are affected by this issue.
+   ([CVE-2022-2274])
+
+   *Xi Ruoyao*
+
+ * AES OCB mode for 32-bit x86 platforms using the AES-NI assembly optimised
+   implementation would not encrypt the entirety of the data under some
+   circumstances.  This could reveal sixteen bytes of data that was
+   preexisting in the memory that wasn't written.  In the special case of
+   "in place" encryption, sixteen bytes of the plaintext would be revealed.
+
+   Since OpenSSL does not support OCB based cipher suites for TLS and DTLS,
+   they are both unaffected.
+   ([CVE-2022-2097])
+
+   *Alex Chernyakhovsky, David Benjamin, Alejandro Sedeño*
 
 ### Changes between 3.0.3 and 3.0.4 [21 Jun 2022]
 
@@ -19233,6 +19258,8 @@ ndif
 
 <!-- Links -->
 
+[CVE-2022-2274]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2274
+[CVE-2022-2097]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2274
 [CVE-2020-1971]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1971
 [CVE-2020-1967]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1967
 [CVE-2019-1563]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1563
