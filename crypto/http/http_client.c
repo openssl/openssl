@@ -53,7 +53,7 @@ struct ossl_http_req_ctx_st {
     char *proxy;                /* Optional proxy name or URI */
     char *server;               /* Optional server host name */
     char *port;                 /* Optional server port */
-    BIO *mem;                   /* Memory BIO holding request/response header */
+    BIO *mem;                   /* Mem BIO holding request header or response */
     BIO *req;                   /* BIO holding the request provided by caller */
     int method_POST;            /* HTTP method is POST (else GET) */
     char *expected_ct;          /* Optional expected Content-Type */
@@ -574,7 +574,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         if (rctx->req != NULL && !BIO_eof(rctx->req)) {
             n = BIO_read(rctx->req, rctx->buf, rctx->buf_size);
             if (n <= 0) {
-                if (BIO_should_retry(rctx->rbio))
+                if (BIO_should_retry(rctx->req))
                     return -1;
                 ERR_raise(ERR_LIB_HTTP, HTTP_R_FAILED_READING_DATA);
                 return 0;
@@ -975,7 +975,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
     if (bio_update_fn != NULL) {
         BIO *orig_bio = cbio;
 
-        cbio = (*bio_update_fn)(cbio, arg, 1 /* connect */, use_ssl);
+        cbio = (*bio_update_fn)(cbio, arg, 1 /* connect */, use_ssl != 0);
         if (cbio == NULL) {
             if (bio == NULL) /* cbio was not provided by caller */
                 BIO_free_all(orig_bio);

@@ -2450,7 +2450,9 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
     APP_HTTP_TLS_INFO *info = (APP_HTTP_TLS_INFO *)arg;
     SSL_CTX *ssl_ctx = info->ssl_ctx;
 
-    if (connect && detail) { /* connecting with TLS */
+    if (ssl_ctx == NULL) /* not using TLS */
+        return bio;
+    if (connect) {
         SSL *ssl;
         BIO *sbio = NULL;
 
@@ -2528,6 +2530,11 @@ ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
     if (use_ssl && ssl_ctx == NULL) {
         ERR_raise_data(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER,
                        "missing SSL_CTX");
+        goto end;
+    }
+    if (!use_ssl && ssl_ctx != NULL) {
+        ERR_raise_data(ERR_LIB_HTTP, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "SSL_CTX given but use_ssl == 0");
         goto end;
     }
 
