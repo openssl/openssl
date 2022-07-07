@@ -1444,6 +1444,8 @@ static int mac_test_run_mac(EVP_TEST *t)
                   expected->mac_name, expected->alg);
 
     if (expected->alg != NULL) {
+        int skip = 0;
+
         /*
          * The underlying algorithm may be a cipher or a digest.
          * We don't know which it is, but we can ask the MAC what it
@@ -1451,16 +1453,28 @@ static int mac_test_run_mac(EVP_TEST *t)
          */
         if (OSSL_PARAM_locate_const(defined_params,
                                     OSSL_MAC_PARAM_CIPHER) != NULL) {
-            params[params_n++] =
-                OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
-                                                 expected->alg, 0);
+            if (is_cipher_disabled(expected->alg))
+                skip = 1;
+            else
+                params[params_n++] =
+                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
+                                                     expected->alg, 0);
         } else if (OSSL_PARAM_locate_const(defined_params,
                                            OSSL_MAC_PARAM_DIGEST) != NULL) {
-            params[params_n++] =
-                OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                 expected->alg, 0);
+            if (is_digest_disabled(expected->alg))
+                skip = 1;
+            else
+                params[params_n++] =
+                    OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                                                     expected->alg, 0);
         } else {
             t->err = "MAC_BAD_PARAMS";
+            goto err;
+        }
+        if (skip) {
+            TEST_info("skipping, algorithm '%s' is disabled", expected->alg);
+            t->skip = 1;
+            t->err = NULL;
             goto err;
         }
     }
