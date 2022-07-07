@@ -14,10 +14,11 @@ LDFLAGS = $(OPENSSL_LIBS_LOCATION) -lssl -lcrypto
 all: gmac poly1305
 
 gmac: gmac.o
+hmac-sha512: hmac-sha512.o
 poly1305: poly1305.o
 
-gmac poly1305:
+gmac hmac-sha512 poly1305:
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 clean:
-	$(RM) gmac poly1305 *.o
+	$(RM) gmac hmac-sha512 poly1305 *.o
