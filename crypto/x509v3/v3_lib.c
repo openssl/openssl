@@ -242,8 +242,10 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
         }
         /* If delete, just delete it */
         if (ext_op == X509V3_ADD_DELETE) {
-            if (!sk_X509_EXTENSION_delete(*x, extidx))
+            extmp = sk_X509_EXTENSION_delete(*x, extidx);
+            if (extmp == NULL)
                 return -1;
+            X509_EXTENSION_free(extmp);
             return 1;
         }
     } else {
