@@ -29,7 +29,6 @@ OpenSSL 3.0
   * Fixed AES OCB failure to encrypt some bytes on 32-bit x86 platforms
     ([CVE-2022-2097])
 
-
 ### Major changes between OpenSSL 3.0.3 and OpenSSL 3.0.4 [21 Jun 2022]
 
   * Fixed additional bugs in the c_rehash script which was not properly
