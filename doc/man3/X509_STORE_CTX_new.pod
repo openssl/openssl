@@ -3,7 +3,8 @@
 =head1 NAME
 
 X509_STORE_CTX_new_ex, X509_STORE_CTX_new, X509_STORE_CTX_cleanup,
-X509_STORE_CTX_free, X509_STORE_CTX_init, X509_STORE_CTX_set0_trusted_stack,
+X509_STORE_CTX_free, X509_STORE_CTX_init, X509_STORE_CTX_set0_trace_output,
+X509_STORE_CTX_set0_trusted_stack,
 X509_STORE_CTX_set_cert, X509_STORE_CTX_set0_crls,
 X509_STORE_CTX_get0_param, X509_STORE_CTX_set0_param,
 X509_STORE_CTX_get0_untrusted, X509_STORE_CTX_set0_untrusted,
@@ -28,6 +29,7 @@ X509_STORE_CTX_purpose_inherit
 
  int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *trust_store,
                          X509 *target, STACK_OF(X509) *untrusted);
+ void X509_STORE_CTX_set0_trace_output(X509_STORE_CTX *ctx, BIO *out);
 
  void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 
@@ -92,6 +94,14 @@ This can also be set using X509_STORE_CTX_set_cert().
 For L<X509_STORE_CTX_verify(3)>, which takes by default the first element of the
 list of untrusted certificates as its verification target,
 this can be also set indirectly using X509_STORE_CTX_set0_untrusted().
+
+X509_STORE_CTX_set0_trace_output() can be used to enable reporting certificate
+verification activity, in particular the checks done on candidate certificates
+during chain building.
+Output is sent to the BIO given as the I<out> parameter.
+If it is NULL, this reporting disabled, which is the default.
+Note that essentially the same output can also be achieved by enabling
+the trace API with B<OSSL_TRACE_CATEGORY_X509_VERIFY>.
 
 X509_STORE_CTX_set0_trusted_stack() sets the set of trusted certificates of
 I<ctx> to I<sk>. This is an alternative way of specifying trusted certificates
@@ -249,7 +259,7 @@ X509_STORE_CTX_get0_param() returns a pointer to an B<X509_VERIFY_PARAM>
 structure or NULL if an error occurred.
 
 X509_STORE_CTX_cleanup(), X509_STORE_CTX_free(),
-X509_STORE_CTX_set0_trusted_stack(),
+X509_STORE_CTX_set0_trace_output, X509_STORE_CTX_set0_trusted_stack(),
 X509_STORE_CTX_set_cert(),
 X509_STORE_CTX_set0_crls() and X509_STORE_CTX_set0_param() do not return
 values.

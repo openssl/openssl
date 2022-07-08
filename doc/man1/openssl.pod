@@ -766,6 +766,10 @@ Traces PKCS#12 decryption.
 Generates the complete policy tree at various points during X.509 v3
 policy evaluation.
 
+=item B<X509_VERIFY>
+
+Reports details on certificate validation, in particular on chain building.
+
 =item B<BN_CTX>
 
 Traces BIGNUM context operations.

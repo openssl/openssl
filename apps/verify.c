@@ -276,6 +276,8 @@ static int check(X509_STORE *ctx, const char *file,
         goto end;
     }
 
+    if (v_verbose)
+        X509_STORE_CTX_set0_trace_output(csc, bio_out);
     X509_STORE_set_flags(ctx, vflags);
     if (!X509_STORE_CTX_init(csc, ctx, x, uchain)) {
         X509_STORE_CTX_free(csc);

@@ -401,17 +401,19 @@ int X509_aux_print(BIO *out, X509 *x, int indent)
  * Helper functions for improving certificate verification error diagnostics
  */
 
-int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
+int ossl_x509_print_ex_brief(BIO *bio, const char *header,
+                             X509 *cert, unsigned long neg_cflags)
 {
     unsigned long flags = ASN1_STRFLGS_RFC2253 | ASN1_STRFLGS_ESC_QUOTE |
         XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN;
 
     if (cert == NULL)
         return BIO_printf(bio, "    (no certificate)\n") > 0;
-    if (BIO_printf(bio, "    certificate\n") <= 0
+    if (BIO_printf(bio, "%s\n", header) <= 0
             || !X509_print_ex(bio, cert, flags, ~X509_FLAG_NO_SUBJECT))
         return 0;
-    if (X509_check_issued((X509 *)cert, cert) == X509_V_OK) {
+    if (X509_NAME_cmp(X509_get_subject_name(cert),
+                      X509_get_issuer_name(cert)) == 0) {
         if (BIO_printf(bio, "        self-issued\n") <= 0)
             return 0;
     } else {
@@ -422,6 +424,7 @@ int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
     if (!X509_print_ex(bio, cert, flags,
                        ~(X509_FLAG_NO_SERIAL | X509_FLAG_NO_VALIDITY)))
         return 0;
+    /* compare with actual system time, not w/ ref time in X509_VERIFY_PARAM */
     if (X509_cmp_current_time(X509_get0_notBefore(cert)) > 0)
         if (BIO_printf(bio, "        not yet valid\n") <= 0)
             return 0;
@@ -443,7 +446,7 @@ static int print_certs(BIO *bio, const STACK_OF(X509) *certs)
         X509 *cert = sk_X509_value(certs, i);
 
         if (cert != NULL) {
-            if (!ossl_x509_print_ex_brief(bio, cert, 0))
+            if (!ossl_x509_print_ex_brief(bio, "    certificate", cert, 0))
                 return 0;
             if (!X509V3_extensions_print(bio, NULL,
                                          X509_get0_extensions(cert),
@@ -512,7 +515,8 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
         }
 
         BIO_printf(bio, "Failure for:\n");
-        ossl_x509_print_ex_brief(bio, X509_STORE_CTX_get_current_cert(ctx),
+        ossl_x509_print_ex_brief(bio, "    certificate",
+                                 X509_STORE_CTX_get_current_cert(ctx),
                                  X509_FLAG_NO_EXTENSIONS);
         if (cert_error == X509_V_ERR_CERT_UNTRUSTED
                 || cert_error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT

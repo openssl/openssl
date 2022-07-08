@@ -55,6 +55,7 @@ flagged as "untrusted".
 =item B<-verbose>
 
 Print extra information about the operations being performed.
+In particular, report on checking candidate certificates during chain building.
 
 =item B<-trusted> I<filename>|I<uri>
 
@@ -105,6 +106,11 @@ input.
 =back
 
 =head1 DIAGNOSTICS
+
+If OpenSSL was built with trace support enabled (e.g., C<./config enable-trace>)
+and the environment variable B<OPENSSL_TRACE> includes B<X509_VERIFY>,
+certificate chain building will report on checking candidate certificates.
+This is also done when the B<-verbose> option is given.
 
 When a verify operation fails the output messages can be somewhat cryptic. The
 general form of the error message is:

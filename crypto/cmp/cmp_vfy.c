@@ -61,7 +61,8 @@ static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
     }
 
  sig_err:
-    res = ossl_x509_print_ex_brief(bio, cert, X509_FLAG_NO_EXTENSIONS);
+    res = ossl_x509_print_ex_brief(bio, "certificate",
+                                   cert, X509_FLAG_NO_EXTENSIONS);
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_VALIDATING_SIGNATURE);
     if (res)
         ERR_add_error_mem_bio("\n", bio);

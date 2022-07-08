@@ -178,7 +178,11 @@ Traces PKCS#12 decryption.
 Traces X509v3 policy processing.
 
 More precisely, this generates the complete policy tree at various
-point during evaluation.
+points during X.509 v3 policy evaluation.
+
+=item B<OSSL_TRACE_CATEGORY_X509_VERIFY>
+
+Reports details on certificate validation, in particular on chain building.
 
 =item B<OSSL_TRACE_CATEGORY_BN_CTX>
 

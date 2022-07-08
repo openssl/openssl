@@ -78,6 +78,13 @@ examining I<ctx> using, for example, L<X509_STORE_CTX_get_error(3)>.  Even if
 verification indicated success, the stored error code may be different from
 X509_V_OK, likely because a verification callback function has waived the error.
 
+=head1 NOTES
+
+If OpenSSL was built with trace support enabled (e.g., C<./config enable-trace>)
+and the environment variable B<OPENSSL_TRACE> includes B<X509_VERIFY>,
+certificate chain building will report on checking candidate certificates.
+This is also done when the I<-verbose> option is given.
+
 =head1 SEE ALSO
 
 L<X509_STORE_CTX_new(3)>, L<X509_STORE_CTX_init(3)>,
