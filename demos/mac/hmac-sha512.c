@@ -107,7 +107,7 @@ int main(void)
 
     /* The underlying digest to be used */
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, digest_name,
-                                            sizeof digest_name);
+                                            sizeof(digest_name));
     *p = OSSL_PARAM_construct_end();
 
     /* Initialise the HMAC operation */
