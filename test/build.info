@@ -183,7 +183,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[evp_extra_test]=../include ../apps/include
   DEPEND[evp_extra_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[evp_extra_test2]=evp_extra_test2.c
+  SOURCE[evp_extra_test2]=evp_extra_test2.c $INITSRC
   INCLUDE[evp_extra_test2]=../include ../apps/include
   DEPEND[evp_extra_test2]=../libcrypto libtestutil.a
 
