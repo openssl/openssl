@@ -1401,7 +1401,7 @@ size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub)
         if (return_size == OSSL_PARAM_UNMODIFIED)
             return 0;
 
-        *ppub = 0;
+        *ppub = NULL;
         buf = OPENSSL_malloc(return_size);
         if (buf == NULL)
             return 0;
