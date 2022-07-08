@@ -1459,7 +1459,7 @@ static int mac_test_run_mac(EVP_TEST *t)
                 params[params_n++] =
                     OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
                                                      expected->alg, 0);
-            } else if (OSSL_PARAM_locate_const(defined_params,
+        } else if (OSSL_PARAM_locate_const(defined_params,
                                            OSSL_MAC_PARAM_DIGEST) != NULL) {
             if (is_digest_disabled(expected->alg))
                 skip = 1;
