@@ -88,16 +88,19 @@ d2i_PUBKEY_bio(), d2i_PUBKEY_fp(), i2d_PUBKEY_bio() and i2d_PUBKEY_fp() are
 similar to d2i_PUBKEY() and i2d_PUBKEY() except they decode or encode using a
 B<BIO> or B<FILE> pointer.
 
-X509_PUBKEY_set0_public_key() sets the public key encoding of I<pub>
+X509_PUBKEY_set0_public_key() sets the public-key encoding of I<pub>
 to the I<penclen> bytes contained in buffer I<penc>.
+Any earlier public-key encoding in I<pub> is freed.
 I<penc> may be NULL to indicate that there is no actual public key data.
+Ownership of the I<penc> argument is passed to I<pub>.
 
-X509_PUBKEY_set0_param() sets the public key parameters of I<pub>. The
-OID associated with the algorithm is set to I<aobj>. The type of the
+X509_PUBKEY_set0_param() sets the public-key parameters of I<pub>.
+The OID associated with the algorithm is set to I<aobj>. The type of the
 algorithm parameters is set to I<type> using the structure I<pval>.
-The encoding of the public key itself is set to the I<penclen>
-bytes contained in buffer I<penc>, which may not be NULL.
-On success ownership of all the supplied parameters is passed to I<pub>
+If I<penc> is not NULL the encoding of the public key itself is set
+to the I<penclen> bytes contained in buffer I<penc> and
+any earlier public-key encoding in I<pub> is freed.
+On success ownership of all the supplied arguments is passed to I<pub>
 so they must not be freed after the call.
 
 X509_PUBKEY_get0_param() retrieves the public key parameters from I<pub>,
