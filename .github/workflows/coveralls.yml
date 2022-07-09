@@ -12,8 +12,14 @@ on:
   schedule:
     - cron:  '49 0 * * *'
 
+permissions:
+  contents: read
+
 jobs:
   coverage:
+    permissions:
+      checks: write  # for coverallsapp/github-action to create new checks
+      contents: read  # for actions/checkout to fetch code
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2

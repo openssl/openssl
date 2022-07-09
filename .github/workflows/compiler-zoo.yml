@@ -9,6 +9,9 @@ name: Compiler Zoo CI
 
 on: [push]
 
+permissions:
+  contents: read
+
 jobs:
   compiler:
     strategy:

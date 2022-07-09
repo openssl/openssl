@@ -11,6 +11,9 @@ name: Run-checker daily
 on:
   schedule:
     - cron: '0 6 * * *'
+permissions:
+  contents: read
+
 jobs:
   run-checker:
     strategy:

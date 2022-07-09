@@ -8,6 +8,9 @@
 name: FIPS Checksums
 on: [pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   compute-checksums:
     runs-on: ubuntu-latest
