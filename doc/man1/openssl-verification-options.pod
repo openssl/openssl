@@ -36,18 +36,18 @@ L<X509_VERIFY_PARAM_set_flags(3)>, and L<X509_check_host(3)>.
 
 =head2 Trust Anchors
 
-In general, according to RFC 4158 and RFC 5280, a I<trust anchor> is
-any public key and related subject distinguished name (DN) that
-for some reason is considered trusted
+In general, according to RFC 4158 and RFC 5280, a I<trust anchor> is just
+a public key (with algorithm and any parameters) and an associated subject name
+that for some reason is considered trusted
 and thus is acceptable as the root of a chain of certificates.
 
-In practice, trust anchors are given in the form of certificates,
-where their essential fields are the public key and the subject DN.
-In addition to the requirements in RFC 5280,
-OpenSSL checks the validity period of such certificates
-and makes use of some further fields.
-In particular, the subject key identifier extension, if present,
-is used for matching trust anchors during chain building.
+In practice, trust anchors are given in the form of (typically self-signed)
+certificates, where their essential fields are the subjectPublicKeyInfo and the
+subject distinguished name (DN), while the subject key identifier is optional.
+In addition to the requirements given in RFC 5280,
+OpenSSL checks the validity period of such certificates and takes the extended
+key usage (EKU) extension, if present, as a source of usage constraints.
+Any restrictions given by the (regular) key usage extension are ignored.
 
 In the most simple and common case, trust anchors are by default
 all self-signed "root" CA certificates that are placed in the I<trust store>,
@@ -102,13 +102,18 @@ It is self-signed or the B<-partial_chain> option is given
 First, a certificate chain is built up starting from the target certificate
 and ending in a trust anchor.
 
-The chain is built up iteratively, looking up in turn
-a certificate with suitable key usage that
+The chain is built up iteratively, looking up in turn a certificate that
 matches as an issuer of the current "subject" certificate as described below.
-If there is such a certificate, the first one found that is currently valid
-is taken, otherwise the one that expired most recently of all such certificates.
+If there is such a certificate, the first one found that has a suitable validity
+period or otherwise has the latest expiration date of all matching certificates.
 For efficiency, no backtracking is performed, thus
 any further candidate issuer certificates that would match equally are ignored.
+
+Certificate extensions are available since X.509 v3 and are mostly optional.
+For certificate chain building
+the subjectKeyIdentifier and authorityKeyIdentifier extensions are very useful,
+while subject alternative names (SAN) and issuer alternative names given
+in subjectAltName or issuerAltName extensions do not play a role.
 
 When a self-signed certificate has been added, chain construction stops.
 In this case it must fully match a trust anchor, otherwise chain building fails.
@@ -120,7 +125,8 @@ if all of the following conditions hold:
 
 =item *
 
-Its subject name matches the issuer name of the subject certificate.
+Its subject Distinguished Name (DN)
+matches the issuer DN of the subject certificate.
 
 =item *
 
@@ -134,6 +140,11 @@ as far as the respective fields are present in both certificates.
 The certificate signature algorithm used to sign the subject certificate
 is supported and
 equals the public key algorithm of the candidate issuer certificate.
+
+item *
+
+If the issuer certificate includes a key usage restriction,
+it must allow for certificate signing (keyCertSign).
 
 =back
 
@@ -379,7 +390,7 @@ keys shorter than 1024 bits.
 
 Allow verification to succeed if an incomplete chain can be built.
 That is, a chain ending in a certificate that normally would not be trusted
-(because it has no matching positive trust attributes and is not self-signed)
+(because it is not self-signed and has no matching positive trust attributes)
 but is an element of the trust store.
 This certificate may be self-issued or belong to an intermediate CA.
 
