@@ -9,6 +9,9 @@ name: Fuzz-checker CI
 
 on: [push]
 
+permissions:
+  contents: read
+
 jobs:
   fuzz-checker:
     strategy:

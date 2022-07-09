@@ -12,8 +12,14 @@ on:
     types:
       - completed
 
+permissions:
+  contents: read
+
 jobs:
   apply-label:
+    permissions:
+      actions: read
+      pull-requests: write
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.event == 'pull_request' }}
     steps:
