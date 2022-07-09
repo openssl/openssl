@@ -359,8 +359,6 @@ static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
      * SUBJECT_ISSUER_MISMATCH just means 'x' is clearly not issued by 'issuer'.
      * Every other error code likely indicates a real error.
      */
-    if (err != X509_V_ERR_SUBJECT_ISSUER_MISMATCH)
-        ctx->error = err;
     return 0;
 }
 
@@ -3014,7 +3012,6 @@ static int build_chain(X509_STORE_CTX *ctx)
     int alt_untrusted = 0;
     int max_depth;
     int ok = 0;
-    int prev_error = ctx->error;
     int i;
 
     /* Our chain starts with a single untrusted element. */
@@ -3296,8 +3293,6 @@ static int build_chain(X509_STORE_CTX *ctx)
 
     switch (trust) {
     case X509_TRUST_TRUSTED:
-        /* Must restore any previous error value for backward compatibility */
-        ctx->error = prev_error;
         return 1;
     case X509_TRUST_REJECTED:
         /* Callback already issued */
