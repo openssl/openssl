@@ -147,7 +147,7 @@ static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
  * The error code is set to |err| if |err| is not X509_V_OK, else
  * |ctx->error| is left unchanged (under the assumption it is set elsewhere).
  * The error depth is |depth| if >= 0, else it defaults to |ctx->error_depth|.
- * The error cert is |x| if not NULL, else defaults to the chain cert at depth.
+ * The error cert is |x| if not NULL, else the cert in |ctx->chain| at |depth|.
  *
  * Returns 0 to abort verification with an error, non-zero to continue.
  */
@@ -157,7 +157,7 @@ static int verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
         depth = ctx->error_depth;
     else
         ctx->error_depth = depth;
-    ctx->current_cert = (x != NULL) ? x : sk_X509_value(ctx->chain, depth);
+    ctx->current_cert = x != NULL ? x : sk_X509_value(ctx->chain, depth);
     if (err != X509_V_OK)
         ctx->error = err;
     return ctx->verify_cb(0, ctx);
@@ -2027,8 +2027,8 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
 {
     X509_CRL *crl = NULL;
     int i;
-
     STACK_OF(X509_REVOKED) *revs = NULL;
+
     /* CRLs can't be delta already */
     if (base->base_crl_number != NULL || newer->base_crl_number != NULL) {
         ERR_raise(ERR_LIB_X509, X509_R_CRL_ALREADY_DELTA);
@@ -3304,7 +3304,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         case X509_V_ERR_CERT_NOT_YET_VALID:
         case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
         case X509_V_ERR_CERT_HAS_EXPIRED:
-            return 0; /* Callback already issued by ossl_x509_check_cert_time() */
+            return 0; /* Callback already done by ossl_x509_check_cert_time() */
         default: /* A preliminary error has become final */
             return verify_cb_cert(ctx, NULL, num - 1, ctx->error);
         case X509_V_OK:
@@ -3425,21 +3425,19 @@ static int check_key_level(X509_STORE_CTX *ctx, X509 *cert)
 static int check_curve(X509 *cert)
 {
     EVP_PKEY *pkey = X509_get0_pubkey(cert);
+    int ret, val;
 
     /* Unsupported or malformed key */
     if (pkey == NULL)
         return -1;
+    if (EVP_PKEY_get_id(pkey) != EVP_PKEY_EC)
+        return 1;
 
-    if (EVP_PKEY_get_id(pkey) == EVP_PKEY_EC) {
-        int ret, val;
-
-        ret = EVP_PKEY_get_int_param(pkey,
-                                     OSSL_PKEY_PARAM_EC_DECODED_FROM_EXPLICIT_PARAMS,
-                                     &val);
-        return ret < 0 ? ret : !val;
-    }
-
-    return 1;
+    ret =
+        EVP_PKEY_get_int_param(pkey,
+                               OSSL_PKEY_PARAM_EC_DECODED_FROM_EXPLICIT_PARAMS,
+                               &val);
+    return ret < 0 ? ret : !val;
 }
 
 /*-
