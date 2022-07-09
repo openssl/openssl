@@ -367,11 +367,13 @@ static int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx,
         if (tmp == NULL)
             return 0;
     }
-    if (!X509_OBJECT_up_ref_count(tmp))
-        return -1;
 
-    ret->type = tmp->type;
-    ret->data = tmp->data;
+    if (ret != NULL) {
+        if (!X509_OBJECT_up_ref_count(tmp))
+            return -1;
+        ret->type = tmp->type;
+        ret->data = tmp->data;
+    }
     return 1;
 }
 
@@ -647,9 +649,14 @@ STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store)
     return NULL;
 }
 
-/* Returns NULL on internal/fatal error, empty stack if not found */
-STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
-                                          const X509_NAME *nm)
+/*-
+ * Collect from |ctx->store| all certs with subject matching |nm|.
+ * Caller must free on ret == 1 the resulting list |*certs|.
+ * Caller must also free its entries if up_refs != 0.
+ * Returns NULL on internal/fatal error, empty stack if not found.
+ */
+STACK_OF(X509) *ossl_x509_store_ctx_get_certs(X509_STORE_CTX *ctx,
+                                              const X509_NAME *nm, int up_refs)
 {
     int i, idx, cnt;
     STACK_OF(X509) *sk = NULL;
@@ -670,36 +677,28 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
          * Nothing found in cache: do lookup to possibly add new objects to
          * cache
          */
-        X509_OBJECT *xobj = X509_OBJECT_new();
-
         X509_STORE_unlock(store);
-        if (xobj == NULL)
-            return NULL;
-        i = ossl_x509_store_ctx_get_by_subject(ctx, X509_LU_X509, nm, xobj);
-        if (i <= 0) {
-            X509_OBJECT_free(xobj);
+        i = ossl_x509_store_ctx_get_by_subject(ctx, X509_LU_X509, nm, NULL);
+        if (i <= 0)
             return i < 0 ? NULL : sk_X509_new_null();
-        }
-        X509_OBJECT_free(xobj);
         if (!X509_STORE_lock(store))
             return NULL;
         sk_X509_OBJECT_sort(store->objs);
         idx = x509_object_idx_cnt(store->objs, X509_LU_X509, nm, &cnt);
-        if (idx < 0) {
-            sk = sk_X509_new_null();
-            goto end;
-        }
     }
 
     sk = sk_X509_new_null();
-    if (sk == NULL)
+    if (idx < 0 || sk == NULL)
         goto end;
     for (i = 0; i < cnt; i++, idx++) {
         obj = sk_X509_OBJECT_value(store->objs, idx);
         x = obj->data.x509;
-        if (!X509_add_cert(sk, x, X509_ADD_FLAG_UP_REF)) {
+        if (!X509_add_cert(sk, x, up_refs ? X509_ADD_FLAG_UP_REF : 0)) {
             X509_STORE_unlock(store);
-            OSSL_STACK_OF_X509_free(sk);
+            if (up_refs)
+                OSSL_STACK_OF_X509_free(sk);
+            else
+                sk_X509_free(sk);
             return NULL;
         }
     }
@@ -709,25 +708,27 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
 }
 
 /* Returns NULL on internal/fatal error, empty stack if not found */
+STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
+                                          const X509_NAME *nm)
+{
+    return ossl_x509_store_ctx_get_certs(ctx, nm, 1 /* up_refs */);
+}
+
+/* Returns NULL on internal/fatal error, empty stack if not found */
 STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
                                              const X509_NAME *nm)
 {
     int i = 1, idx, cnt;
-    STACK_OF(X509_CRL) *sk = sk_X509_CRL_new_null();
+    STACK_OF(X509_CRL) *sk;
     X509_CRL *x;
-    X509_OBJECT *obj, *xobj = X509_OBJECT_new();
+    X509_OBJECT *obj;
     X509_STORE *store = ctx->store;
 
     /* Always do lookup to possibly add new CRLs to cache */
-    if (sk == NULL
-        || xobj == NULL
-        || (i = ossl_x509_store_ctx_get_by_subject(ctx, X509_LU_CRL,
-                                                   nm, xobj)) < 0) {
-        X509_OBJECT_free(xobj);
-        sk_X509_CRL_free(sk);
+    i = ossl_x509_store_ctx_get_by_subject(ctx, X509_LU_CRL, nm, NULL);
+    if (i < 0)
         return NULL;
-    }
-    X509_OBJECT_free(xobj);
+    sk = sk_X509_CRL_new_null();
     if (i == 0)
         return sk;
     if (!X509_STORE_lock(store)) {
@@ -787,91 +788,6 @@ X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
         }
     }
     return NULL;
-}
-
-/*-
- * Try to get issuer cert from |ctx->store| matching the subject name of |x|.
- * Prefer the first non-expired one, else take the most recently expired one.
- *
- * Return values are:
- *  1 lookup successful.
- *  0 certificate not found.
- * -1 some other error.
- */
-int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
-{
-    const X509_NAME *xn;
-    X509_OBJECT *obj = X509_OBJECT_new(), *pobj = NULL;
-    X509_STORE *store = ctx->store;
-    int i, ok, idx, ret, nmatch = 0;
-
-    if (obj == NULL)
-        return -1;
-    *issuer = NULL;
-    xn = X509_get_issuer_name(x);
-    ok = ossl_x509_store_ctx_get_by_subject(ctx, X509_LU_X509, xn, obj);
-    if (ok != 1) {
-        X509_OBJECT_free(obj);
-        return ok;
-    }
-    /* If certificate matches and is currently valid all OK */
-    if (ctx->check_issued(ctx, x, obj->data.x509)) {
-        if (ossl_x509_check_cert_time(ctx, obj->data.x509, -1)) {
-            *issuer = obj->data.x509;
-            /* |*issuer| has taken over the cert reference from |obj| */
-            obj->type = X509_LU_NONE;
-            X509_OBJECT_free(obj);
-            return 1;
-        }
-    }
-    X509_OBJECT_free(obj);
-
-    /*
-     * Due to limitations of the API this can only retrieve a single cert.
-     * However it will fill the cache with all matching certificates,
-     * so we can examine the cache for all matches.
-     */
-    if (store == NULL)
-        return 0;
-
-    /* Find index of first currently valid cert accepted by 'check_issued' */
-    ret = 0;
-    if (!X509_STORE_lock(store))
-        return 0;
-
-    sk_X509_OBJECT_sort(store->objs);
-    idx = x509_object_idx_cnt(store->objs, X509_LU_X509, xn, &nmatch);
-    if (idx != -1) { /* should be true as we've had at least one match */
-        /* Look through all matching certs for suitable issuer */
-        for (i = idx; i < idx + nmatch; i++) {
-            pobj = sk_X509_OBJECT_value(store->objs, i);
-            /* See if we've run past the matches */
-            if (pobj->type != X509_LU_X509)
-                break;
-            if (ctx->check_issued(ctx, x, pobj->data.x509)) {
-                ret = 1;
-                /* If times check fine, exit with match, else keep looking. */
-                if (ossl_x509_check_cert_time(ctx, pobj->data.x509, -1)) {
-                    *issuer = pobj->data.x509;
-                    break;
-                }
-                /*
-                 * Leave the so far most recently expired match in *issuer
-                 * so we return nearest match if no certificate time is OK.
-                 */
-                if (*issuer == NULL
-                    || ASN1_TIME_compare(X509_get0_notAfter(pobj->data.x509),
-                                         X509_get0_notAfter(*issuer)) > 0)
-                    *issuer = pobj->data.x509;
-            }
-        }
-    }
-    if (*issuer != NULL && !X509_up_ref(*issuer)) {
-        *issuer = NULL;
-        ret = -1;
-    }
-    X509_STORE_unlock(store);
-    return ret;
 }
 
 int X509_STORE_set_flags(X509_STORE *xs, unsigned long flags)
