@@ -4,7 +4,10 @@ name: Run-checker daily for 1.1.1
 
 on:
   schedule:
-  - cron: '42 6 * * *'
+    - cron: '42 6 * * *'
+permissions:
+  contents: read
+
 jobs:
   run-checker:
     strategy:

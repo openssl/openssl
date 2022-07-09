@@ -3,6 +3,9 @@ name: Cross Compile for 1.1.1
 
 on: [pull_request, push]
 
+permissions:
+  contents: read
+
 jobs:
   cross-compilation:
     strategy:

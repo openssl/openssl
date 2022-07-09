@@ -3,6 +3,9 @@ name: Run-checker merge for 1.1.1
 # Jobs run per merge to 1.1.1
 
 on: [push]
+permissions:
+  contents: read
+
 jobs:
   run-checker:
     strategy:
