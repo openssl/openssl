@@ -9,6 +9,9 @@ name: Run-checker merge
 # Jobs run per merge to master
 
 on: [push]
+permissions:
+  contents: read
+
 jobs:
   run-checker:
     strategy:

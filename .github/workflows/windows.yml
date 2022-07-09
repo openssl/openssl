@@ -9,6 +9,9 @@ name: Windows GitHub CI
 
 on: [pull_request, push]
 
+permissions:
+  contents: read
+
 jobs:
   shared:
     # Run a job for each of the specified target architectures:

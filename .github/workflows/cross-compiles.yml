@@ -9,6 +9,9 @@ name: Cross Compile
 
 on: [pull_request, push]
 
+permissions:
+  contents: read
+
 jobs:
   cross-compilation:
     strategy:

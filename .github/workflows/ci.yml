@@ -18,6 +18,9 @@ on: [pull_request, push]
 # before_script:
 #     - make="make -s"
 
+permissions:
+  contents: read
+
 jobs:
   check_update:
     runs-on: ubuntu-latest
