@@ -302,6 +302,8 @@ static int set1_content(OSSL_HTTP_REQ_CTX *rctx,
         if (BIO_get_fp(req, &fp) == 1 && fseek(fp, 0, SEEK_END) == 0) {
             req_len = ftell(fp);
             (void)fseek(fp, 0, SEEK_SET);
+        } else {
+            fp = NULL;
         }
 #endif
     } else {
