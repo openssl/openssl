@@ -266,8 +266,10 @@ int OSSL_HTTP_REQ_CTX_set_expected(OSSL_HTTP_REQ_CTX *rctx,
 static int set1_content(OSSL_HTTP_REQ_CTX *rctx,
                         const char *content_type, BIO *req)
 {
-    long req_len;
+    long req_len = 0;
+#ifndef OPENSSL_NO_STDIO
     FILE *fp = NULL;
+#endif
 
     if (rctx == NULL || (req == NULL && content_type != NULL)) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
@@ -295,10 +297,15 @@ static int set1_content(OSSL_HTTP_REQ_CTX *rctx,
      * BIO_CTRL_INFO yields the data length at least for memory BIOs, but for
      * file-based BIOs it gives the current position, which is not what we need.
      */
-    if (BIO_get_fp(req, &fp) == 1) {
-        fseek(fp, 0, SEEK_END);
-        req_len = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
+    if (BIO_method_type(req) == BIO_TYPE_FILE) {
+#ifndef OPENSSL_NO_STDIO
+        if (BIO_get_fp(req, &fp) == 1 && fseek(fp, 0, SEEK_END) == 0) {
+            req_len = ftell(fp);
+            (void)fseek(fp, 0, SEEK_SET);
+        } else {
+            fp = NULL;
+        }
+#endif
     } else {
         req_len = BIO_ctrl(req, BIO_CTRL_INFO, 0, NULL);
         /*
@@ -306,7 +313,11 @@ static int set1_content(OSSL_HTTP_REQ_CTX *rctx,
          * and we assume we got a correct value if req_len > 0.
          */
     }
-    if ((fp != NULL /* definitely correct req_len */ || req_len > 0)
+    if ((
+#ifndef OPENSSL_NO_STDIO
+         fp != NULL /* definitely correct req_len */ ||
+#endif
+         req_len > 0)
             && BIO_printf(rctx->mem, "Content-Length: %ld\r\n", req_len) < 0)
         return 0;
 
