@@ -819,7 +819,7 @@ static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
 
         return ca_ret == 2 ? 0 : ca_ret;
     }
-    return ku_reject(x, KU_CRL_SIGN) ? 0 : 1;
+    return !ku_reject(x, KU_CRL_SIGN);
 }
 
 /*
