@@ -58,7 +58,6 @@ static const BIO_METHOD methods_b64 = {
     b64_callback_ctrl,
 };
 
-
 const BIO_METHOD *BIO_f_base64(void)
 {
     return &methods_b64;
@@ -90,6 +89,7 @@ static int b64_new(BIO *bi)
 static int b64_free(BIO *a)
 {
     BIO_B64_CTX *ctx;
+
     if (a == NULL)
         return 0;
 
@@ -117,7 +117,7 @@ static int b64_read(BIO *b, char *out, int outl)
     ctx = (BIO_B64_CTX *)BIO_get_data(b);
 
     next = BIO_next(b);
-    if ((ctx == NULL) || (next == NULL))
+    if (ctx == NULL || next == NULL)
         return 0;
 
     BIO_clear_retry_flags(b);
@@ -185,8 +185,7 @@ static int b64_read(BIO *b, char *out, int outl)
          * We need to scan, a line at a time until we have a valid line if we
          * are starting.
          */
-        if (ctx->start && (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL)) {
-            /* ctx->start=1; */
+        if (ctx->start && (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL) != 0) {
             ctx->tmp_len = 0;
         } else if (ctx->start) {
             q = p = (unsigned char *)ctx->tmp;
@@ -209,13 +208,11 @@ static int b64_read(BIO *b, char *out, int outl)
                 k = EVP_DecodeUpdate(ctx->base64,
                                      (unsigned char *)ctx->buf,
                                      &num, p, q - p);
-                if ((k <= 0) && (num == 0) && (ctx->start))
+                if (k <= 0 && num == 0 && ctx->start) {
                     EVP_DecodeInit(ctx->base64);
-                else {
-                    if (p != (unsigned char *)
-                        &(ctx->tmp[0])) {
-                        i -= (p - (unsigned char *)
-                              &(ctx->tmp[0]));
+                } else {
+                    if (p != (unsigned char *)&(ctx->tmp[0])) {
+                        i -= (p - (unsigned char *)&(ctx->tmp[0]));
                         for (x = 0; x < i; x++)
                             ctx->tmp[x] = p[x];
                     }
@@ -227,7 +224,7 @@ static int b64_read(BIO *b, char *out, int outl)
             }
 
             /* we fell off the end without starting */
-            if ((j == i) && (num == 0)) {
+            if (j == i && num == 0) {
                 /*
                  * Is this is one long chunk?, if so, keep on reading until a
                  * new line.
@@ -249,7 +246,7 @@ static int b64_read(BIO *b, char *out, int outl)
             } else {
                 ctx->tmp_len = 0;
             }
-        } else if ((i < B64_BLOCK_SIZE) && (ctx->cont > 0)) {
+        } else if (i < B64_BLOCK_SIZE && ctx->cont > 0) {
             /*
              * If buffer isn't full and we can retry then restart to read in
              * more data.
@@ -257,7 +254,7 @@ static int b64_read(BIO *b, char *out, int outl)
             continue;
         }
 
-        if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL) {
+        if ((BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL) != 0) {
             int z, jj;
 
             jj = i & ~3;        /* process per 4 */
@@ -320,7 +317,7 @@ static int b64_read(BIO *b, char *out, int outl)
     }
     /* BIO_clear_retry_flags(b); */
     BIO_copy_next_retry(b);
-    return ((ret == 0) ? ret_code : ret);
+    return (ret == 0 ? ret_code : ret);
 }
 
 static int b64_write(BIO *b, const char *in, int inl)
@@ -333,7 +330,7 @@ static int b64_write(BIO *b, const char *in, int inl)
 
     ctx = (BIO_B64_CTX *)BIO_get_data(b);
     next = BIO_next(b);
-    if ((ctx == NULL) || (next == NULL))
+    if (ctx == NULL || next == NULL)
         return 0;
 
     BIO_clear_retry_flags(b);
@@ -366,13 +363,13 @@ static int b64_write(BIO *b, const char *in, int inl)
     ctx->buf_off = 0;
     ctx->buf_len = 0;
 
-    if ((in == NULL) || (inl <= 0))
+    if (in == NULL || inl <= 0)
         return 0;
 
     while (inl > 0) {
-        n = (inl > B64_BLOCK_SIZE) ? B64_BLOCK_SIZE : inl;
+        n = inl > B64_BLOCK_SIZE ? B64_BLOCK_SIZE : inl;
 
-        if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL) {
+        if ((BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL) != 0) {
             if (ctx->tmp_len > 0) {
                 OPENSSL_assert(ctx->tmp_len <= 3);
                 n = 3 - ctx->tmp_len;
@@ -413,9 +410,9 @@ static int b64_write(BIO *b, const char *in, int inl)
             }
         } else {
             if (!EVP_EncodeUpdate(ctx->base64,
-                                 (unsigned char *)ctx->buf, &ctx->buf_len,
-                                 (unsigned char *)in, n))
-                return ((ret == 0) ? -1 : ret);
+                                  (unsigned char *)ctx->buf, &ctx->buf_len,
+                                  (unsigned char *)in, n))
+                return (ret == 0 ? -1 : ret);
             OPENSSL_assert(ctx->buf_len <= (int)sizeof(ctx->buf));
             OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
             ret += n;
@@ -429,7 +426,7 @@ static int b64_write(BIO *b, const char *in, int inl)
             i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
             if (i <= 0) {
                 BIO_copy_next_retry(b);
-                return ((ret == 0) ? i : ret);
+                return (ret == 0 ? i : ret);
             }
             OPENSSL_assert(i <= n);
             n -= i;
@@ -452,7 +449,7 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
 
     ctx = (BIO_B64_CTX *)BIO_get_data(b);
     next = BIO_next(b);
-    if ((ctx == NULL) || (next == NULL))
+    if (ctx == NULL || next == NULL)
         return 0;
 
     switch (cmd) {
@@ -471,8 +468,8 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_WPENDING:    /* More to write in buffer */
         OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
         ret = ctx->buf_len - ctx->buf_off;
-        if ((ret == 0) && (ctx->encode != B64_NONE)
-            && (EVP_ENCODE_CTX_num(ctx->base64) != 0))
+        if (ret == 0 && ctx->encode != B64_NONE
+            && EVP_ENCODE_CTX_num(ctx->base64) != 0)
             ret = 1;
         else if (ret <= 0)
             ret = BIO_ctrl(next, cmd, num, ptr);
