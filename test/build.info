@@ -278,6 +278,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[packettest]=../include ../apps/include
   DEPEND[packettest]=../libcrypto libtestutil.a
 
+  SOURCE[quic_wire_test]=quic_wire_test.c
+  INCLUDE[quic_wire_test]=../include ../apps/include
+  DEPEND[quic_wire_test]=../libcrypto.a ../libssl.a libtestutil.a
+
   SOURCE[asynctest]=asynctest.c
   INCLUDE[asynctest]=../include ../apps/include
   DEPEND[asynctest]=../libcrypto
@@ -949,7 +953,7 @@ ENDIF
   DEPEND[build_wincrypt_test]=../libssl ../libcrypto
 
   IF[{- !$disabled{'quic'} -}]
-    PROGRAMS{noinst}=quicapitest
+    PROGRAMS{noinst}=quicapitest quic_wire_test
   ENDIF
 
   SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c
