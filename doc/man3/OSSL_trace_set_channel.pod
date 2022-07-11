@@ -200,7 +200,7 @@ Traces decoder operations.
 
 Traces encoder operations.
 
-=item B<OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT>
+=item B<OSSL_TRACE_CATEGORY_REF_COUNT>
 
 Traces decrementing certain ASN.1 structure references.
 
