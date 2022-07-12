@@ -29,7 +29,7 @@ static unsigned char key[] = {
     0x6c, 0xde, 0x14, 0xf5, 0xd5, 0x2a, 0x4a, 0xdf,
     0x12, 0x39, 0x1e, 0xbf, 0x36, 0xf9, 0x6a, 0x46,
     0x48, 0xd0, 0xb6, 0x51, 0x89, 0xfc, 0x24, 0x85,
-    0xa8, 0x8d, 0xdf, 0x7e, 0x80, 0x14, 0xc8, 0xce, 
+    0xa8, 0x8d, 0xdf, 0x7e, 0x80, 0x14, 0xc8, 0xce,
 };
 
 static const unsigned char data[] =
@@ -66,6 +66,7 @@ static const char *propq = NULL;
 int main(void)
 {
     int rv = EXIT_FAILURE;
+    OSSL_LIB_CTX *library_context = NULL;
     EVP_MAC *mac = NULL;
     EVP_MAC_CTX *mctx = NULL;
     unsigned char *out = NULL;
@@ -73,8 +74,14 @@ int main(void)
     OSSL_PARAM params[4], *p = params;
     char cipher_name[] = "aes256";
 
+    library_context = OSSL_LIB_CTX_new();
+    if (library_context == NULL) {
+        fprintf(stderr, "OSSL_LIB_CTX_new() returned NULL\n");
+        goto end;
+    }
+
     /* Fetch the CMAC implementation */
-    mac = EVP_MAC_fetch(NULL, "CMAC", propq);
+    mac = EVP_MAC_fetch(library_context, "CMAC", propq);
     if (mac == NULL) {
         fprintf(stderr, "EVP_MAC_fetch() returned NULL\n");
         goto end;
@@ -142,5 +149,6 @@ end:
     OPENSSL_free(out);
     EVP_MAC_CTX_free(mctx);
     EVP_MAC_free(mac);
+    OSSL_LIB_CTX_free(library_context);
     return rv;
 }
