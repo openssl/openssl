@@ -882,7 +882,7 @@ static int FFDH_derive_key_loop(void *args)
     int count;
 
     for (count = 0; COND(ffdh_c[testnum][0]); count++) {
-        /* outlen can be overwritten with too small value (no padding used) */
+        /* outlen can be overwritten with a too small value (no padding used) */
         size_t outlen = MAX_FFDH_SIZE;
 
         EVP_PKEY_derive(ffdh_ctx, derived_secret, &outlen);
