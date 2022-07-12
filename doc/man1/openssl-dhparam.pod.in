@@ -60,14 +60,13 @@ as the input filename.
 =item B<-dsaparam>
 
 If this option is used, DSA rather than DH parameters are read or created;
-they are converted to DH format.  Otherwise, "strong" primes (such
+they are converted to DH format.  Otherwise, safe primes (such
 that (p-1)/2 is also prime) will be used for DH parameter generation.
 
-DH parameter generation with the B<-dsaparam> option is much faster,
-and the recommended exponent length is shorter, which makes DH key
-exchange more efficient.  Beware that with such DSA-style DH
-parameters, a fresh DH key should be created for each use to
-avoid small-subgroup attacks that may be possible otherwise.
+DH parameter generation with the B<-dsaparam> option is much faster.
+Beware that with such DSA-style DH parameters, a fresh DH key should be
+created for each use to avoid small-subgroup attacks that may be possible
+otherwise.
 
 =item B<-check>
 
