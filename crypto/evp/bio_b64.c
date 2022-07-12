@@ -211,8 +211,8 @@ static int b64_read(BIO *b, char *out, int outl)
                 if (k <= 0 && num == 0 && ctx->start) {
                     EVP_DecodeInit(ctx->base64);
                 } else {
-                    if (p != (unsigned char *)&(ctx->tmp[0])) {
-                        i -= (p - (unsigned char *)&(ctx->tmp[0]));
+                    if (p != (unsigned char *)ctx->tmp) {
+                        i -= (p - (unsigned char *)ctx->tmp);
                         for (x = 0; x < i; x++)
                             ctx->tmp[x] = p[x];
                     }
@@ -229,7 +229,7 @@ static int b64_read(BIO *b, char *out, int outl)
                  * Is this is one long chunk?, if so, keep on reading until a
                  * new line.
                  */
-                if (p == (unsigned char *)&(ctx->tmp[0])) {
+                if (p == (unsigned char *)ctx->tmp) {
                     /* Check buffer full */
                     if (i == B64_BLOCK_SIZE) {
                         ctx->tmp_nl = 1;
@@ -317,7 +317,7 @@ static int b64_read(BIO *b, char *out, int outl)
     }
     /* BIO_clear_retry_flags(b); */
     BIO_copy_next_retry(b);
-    return (ret == 0 ? ret_code : ret);
+    return ret == 0 ? ret_code : ret;
 }
 
 static int b64_write(BIO *b, const char *in, int inl)
@@ -412,7 +412,7 @@ static int b64_write(BIO *b, const char *in, int inl)
             if (!EVP_EncodeUpdate(ctx->base64,
                                   (unsigned char *)ctx->buf, &ctx->buf_len,
                                   (unsigned char *)in, n))
-                return (ret == 0 ? -1 : ret);
+                return ret == 0 ? -1 : ret;
             OPENSSL_assert(ctx->buf_len <= (int)sizeof(ctx->buf));
             OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
             ret += n;
@@ -426,7 +426,7 @@ static int b64_write(BIO *b, const char *in, int inl)
             i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
             if (i <= 0) {
                 BIO_copy_next_retry(b);
-                return (ret == 0 ? i : ret);
+                return ret == 0 ? i : ret;
             }
             OPENSSL_assert(i <= n);
             n -= i;
