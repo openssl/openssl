@@ -677,6 +677,7 @@ while (<>) { # loop over all lines of all input files
         $intra_line =~ s/\s+$//;                     # strip any (resulting) space at EOL
         $intra_line =~ s/(for\s*\([^;]*);;(\))/"$1$2"/eg; # strip trailing ';;' in for (;;)
         $intra_line =~ s/(for\s*\([^;]+;[^;]+);(\))/"$1$2"/eg; # strip trailing ';' in for (;;)
+        $intra_line =~ s/(for\s*\();(;)/"$1$2"/eg;   # replace leading ';;' in for (;;) by ';'
         $intra_line =~ s/(=\s*)\{ /"$1@ "/eg;        # do not report {SPC in initializers such as ' = { 0, };'
         $intra_line =~ s/, \};/, @;/g;               # do not report SPC} in initializers such as ' = { 0, };'
         report("space before '$1'") if $intra_line =~ m/[\w)\]]\s+(\+\+|--)/;  # postfix ++/-- with preceding space
