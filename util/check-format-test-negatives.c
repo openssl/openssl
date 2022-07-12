@@ -70,6 +70,10 @@ int f(void) /*
         ;
     for (i = 0; i < 1;)
         ;
+    for (;;)
+        for (; i < n; i++)
+            for (;; p++)
+                ;
     for (;;) ; /* should not trigger: space before ';' */
  lab: ;  /* should not trigger: space before ';' */
 
