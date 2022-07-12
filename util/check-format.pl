@@ -169,7 +169,7 @@ my @nested_symbols;        # stack of hanging symbols '(', '{', '[', or '?', in 
 my @nested_conds_indents;  # stack of hanging indents due to conditionals ('?' ... ':')
 my $expr_indent;           # resulting hanging indent within (multi-line) expressions including type exprs, else 0
 my $hanging_symbol;        # character ('(', '{', '[', not: '?') responsible for $expr_indent, if $expr_indent != 0
-my $in_block_decls;        # number of local declaration lines after block opening before normal statements
+my $in_block_decls;        # number of local declaration lines after block opening before normal statements, or -1 if no block opening
 my $in_expr;               # in expression after if/while/for/switch/return/enum/LHS of assignment
 my $in_paren_expr;         # in parenthesized if/while/for condition and switch expression, if $expr_indent != 0
 my $in_typedecl;           # nesting level of typedef/struct/union/enum
@@ -845,19 +845,21 @@ while (<>) { # loop over all lines of all input files
     # check for blank lines within/after local decls @@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     if ($in_block_decls >= 0 &&
-        $in_comment == 0 && !m/^\s*\*?@/ && # not multi-line or intra-line comment
-        !$in_expr && $in_typedecl == 0) {
-        my $blank_line_before = $line > 1 && $code_contents_before =~ m/^\s*(\\\s*)?$/;
-        # essentially blank line: just whitespace (and maybe a trailing '\')
-        if (m/^\s*(void|char|signed|unsigned|int|short|long|float|double|typedef|enum|struct|union|auto|extern|static|const|volatile|register)(\W|$)/ ||
-            (m/[\w)]\s+[*]*\w/ &&
-             !m/^\s*(\}|sizeof|if|else|while|do|for|switch|case|default|break|continue|goto|return)(\W|$)/)) {
-            report_flexibly($line - 1, "blank line within local decls, before", $contents) if $blank_line_before;
+        $in_comment == 0 && !m/^\s*\*?@/ && # not in multi-line comment nor an intra-line comment
+        !$in_expr && $expr_indent == 0 && $in_typedecl == 0) {
+        my $blank_line_before = $line > 1
+            && $code_contents_before =~ m/^\s*(\\\s*)?$/; # essentially blank line: just whitespace (and maybe a trailing '\')
+        if (m/^[\s(]*(char|signed|unsigned|int|short|long|float|double|enum|struct|union|auto|extern|static|const|volatile|register)(\W|$)/ # clear start of local decl
+            || (m/^(\s*(\w+|\[\]|[\*()]))+?\s+[\*\(]*\w+(\s*(\)|\[[^\]]*\]))*\s*[;,=]/ # weak check for decl involving user-defined type
+                && !m/^\s*(\}|sizeof|if|else|while|do|for|switch|case|default|break|continue|goto|return)(\W|$)/)) {
             $in_block_decls++;
-        } elsif ($in_block_decls > 0) {
+            report_flexibly($line - 1, "blank line within local decls, before", $contents) if $blank_line_before;
+        } else {
             report_flexibly($line, "missing blank line after local decls", "\n$contents_before$contents")
-                unless $blank_line_before;
-            $in_block_decls = -1;
+                if $in_block_decls > 0 && !$blank_line_before;
+            $in_block_decls = -1 unless
+                m/^\s*(\\\s*)?$/ # essentially blank line: just whitespace (and maybe a trailing '\')
+            || $in_comment != 0 || m/^\s*\*?@/; # in multi-line comment or an intra-line comment
         }
     }
 
@@ -1114,7 +1116,7 @@ while (<>) { # loop over all lines of all input files
   LINE_FINISHED:
     $code_contents_before = $contents if
         !m/^\s*#(\s*)(\w+)/ && # not single-line directive
-        $in_comment == 0 && !m/^\s*\*?@/; # not multi-line or intra-line comment
+        $in_comment == 0 && !m/^\s*\*?@/; # not in multi-line comment nor an intra-line comment
 
     # on end of multi-line preprocessor directive, adapt indent
     if ($in_directive > 0 &&
