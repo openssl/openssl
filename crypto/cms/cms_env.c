@@ -270,7 +270,7 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
 
  end:
     if (ci != NULL)
-        ci->d.envelopedData = NULL;
+        ci->d.envelopedData = NULL; /* do not indirectly free |env| */
     CMS_ContentInfo_free(ci);
     if (!res) {
         BIO_free(bio);

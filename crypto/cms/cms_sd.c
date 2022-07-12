@@ -1079,6 +1079,8 @@ BIO *CMS_SignedData_verify(CMS_SignedData *sd, BIO *detached_data,
     res = CMS_verify(ci, scerts, store, detached_data, bio, flags);
 
  end:
+    if (ci != NULL)
+        ci->d.signedData = NULL; /* do not indirectly free |sd| */
     CMS_ContentInfo_free(ci);
     if (!res) {
         BIO_free(bio);
