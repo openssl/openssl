@@ -11,7 +11,7 @@
 CFLAGS = $(OPENSSL_INCS_LOCATION) -Wall
 LDFLAGS = $(OPENSSL_LIBS_LOCATION) -lssl -lcrypto
 
-all: gmac poly1305
+all: gmac hmac-sha512 cmac-aes256 poly1305
 
 gmac: gmac.o
 hmac-sha512: hmac-sha512.o

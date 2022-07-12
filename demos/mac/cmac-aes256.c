@@ -66,7 +66,6 @@ static const char *propq = NULL;
 int main(void)
 {
     int rv = EXIT_FAILURE;
-    OSSL_LIB_CTX *library_context = NULL;
     EVP_MAC *mac = NULL;
     EVP_MAC_CTX *mctx = NULL;
     unsigned char *out = NULL;
@@ -74,15 +73,8 @@ int main(void)
     OSSL_PARAM params[4], *p = params;
     char cipher_name[] = "aes256";
 
-    library_context = OSSL_LIB_CTX_new();
-    if (library_context == NULL) {
-        fprintf(stderr, "OSSL_LIB_CTX_new() returned NULL\n");
-        goto end;
-    }
-    OSSL_LIB_CTX_set0_default(library_context);
-
     /* Fetch the CMAC implementation */
-    mac = EVP_MAC_fetch(library_context, "CMAC", propq);
+    mac = EVP_MAC_fetch(NULL, "CMAC", propq);
     if (mac == NULL) {
         fprintf(stderr, "EVP_MAC_fetch() returned NULL\n");
         goto end;
@@ -150,6 +142,5 @@ end:
     OPENSSL_free(out);
     EVP_MAC_CTX_free(mctx);
     EVP_MAC_free(mac);
-    OSSL_LIB_CTX_free(library_context);
     return rv;
 }
