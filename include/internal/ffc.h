@@ -206,8 +206,8 @@ const DH_NAMED_GROUP *ossl_ffc_numbers_to_dh_named_group(const BIGNUM *p,
 #endif
 int ossl_ffc_named_group_get_uid(const DH_NAMED_GROUP *group);
 const char *ossl_ffc_named_group_get_name(const DH_NAMED_GROUP *);
-int ossl_ffc_named_group_get_keylength(const DH_NAMED_GROUP *group);
 #ifndef OPENSSL_NO_DH
+int ossl_ffc_named_group_get_keylength(const DH_NAMED_GROUP *group);
 const BIGNUM *ossl_ffc_named_group_get_q(const DH_NAMED_GROUP *group);
 int ossl_ffc_named_group_set(FFC_PARAMS *ffc, const DH_NAMED_GROUP *group);
 #endif
