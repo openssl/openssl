@@ -142,13 +142,15 @@ my $comment_indent;        # comment indent, if $in_comment != 0
 my $ifdef__cplusplus;      # line before contained '#ifdef __cplusplus' (used in header files)
 my $preproc_if_nesting;    # currently required indentation of preprocessor directive according to #if(n)(def)
 my $in_preproc;            # 0 or number of lines so far within preprocessor directive, e.g., macro definition
-my $preproc_offset;        # offset to $block_indent within multi-line preprocessor directive, if $in_preproc != 0
+my $preproc_directive;     # name of current preprocessor directive, if $in_preproc != 0
+my $preproc_offset;        # offset to $block_indent within multi-line preprocessor directive, else 0
 my $in_macro_header;       # number of open parentheses + 1 in (multi-line) header of #define, if $in_preproc != 0
 
 my $line;                  # current line number
-
 my $line_before;           # number of previous not essentially blank line (containing at most whitespace and '\')
 my $line_before2;          # number of not essentially blank line before previous not essentially blank line
+
+# indentation state
 my $contents;              # contents of current line (without blinding)
 #  $_                      # current line, where comments etc. get blinded
 my $code_contents_before;  # contents of previous non-comment non-preprocessor-directive line (without blinding), initially ""
@@ -200,9 +202,11 @@ sub reset_file_state {
     $preproc_if_nesting = 0;
     $in_preproc = 0;
     $line = 0;
-
     $line_before = 0;
     $line_before2 = 0;
+    reset_indentation_state();
+}
+sub reset_indentation_state {
     $code_contents_before = "";
     @nested_block_indents = ();
     @nested_hanging_offsets = ();
@@ -223,6 +227,72 @@ sub reset_file_state {
     $line_body_start = 0;
     $line_opening_brace = 0;
     $in_typedecl = 0;
+}
+my $bak_line_before;
+my $bak_line_before2;
+my $bak_code_contents_before;
+my @bak_nested_block_indents;
+my @bak_nested_hanging_offsets;
+my @bak_nested_in_typedecl;
+my @bak_nested_symbols;
+my @bak_nested_indents;
+my @bak_nested_conds_indents;
+my $bak_expr_indent;
+my $bak_in_block_decls;
+my $bak_in_expr;
+my $bak_in_paren_expr;
+my $bak_hanging_offset;
+my @bak_in_do_hanging_offsets;
+my @bak_in_if_hanging_offsets;
+my $bak_if_maybe_terminated;
+my $bak_block_indent;
+my $bak_in_multiline_string;
+my $bak_line_body_start;
+my $bak_line_opening_brace;
+my $bak_in_typedecl;
+sub backup_indentation_state {
+    $bak_code_contents_before = $code_contents_before;
+    @bak_nested_block_indents = @nested_block_indents;
+    @bak_nested_hanging_offsets = @nested_hanging_offsets;
+    @bak_nested_in_typedecl = @nested_in_typedecl;
+    @bak_nested_symbols = @nested_symbols;
+    @bak_nested_indents = @nested_indents;
+    @bak_nested_conds_indents = @nested_conds_indents;
+    $bak_expr_indent = $expr_indent;
+    $bak_in_block_decls = $in_block_decls;
+    $bak_in_expr = $in_expr;
+    $bak_in_paren_expr = $in_paren_expr;
+    $bak_hanging_offset = $hanging_offset;
+    @bak_in_do_hanging_offsets = @in_do_hanging_offsets;
+    @bak_in_if_hanging_offsets = @in_if_hanging_offsets;
+    $bak_if_maybe_terminated = $if_maybe_terminated;
+    $bak_block_indent = $block_indent;
+    $bak_in_multiline_string = $in_multiline_string;
+    $bak_line_body_start = $line_body_start;
+    $bak_line_opening_brace = $line_opening_brace;
+    $bak_in_typedecl = $in_typedecl;
+}
+sub restore_indentation_state {
+    $code_contents_before = $bak_code_contents_before;
+    @nested_block_indents = @bak_nested_block_indents;
+    @nested_hanging_offsets = @bak_nested_hanging_offsets;
+    @nested_in_typedecl = @bak_nested_in_typedecl;
+    @nested_symbols = @bak_nested_symbols;
+    @nested_indents = @bak_nested_indents;
+    @nested_conds_indents = @bak_nested_conds_indents;
+    $expr_indent = $bak_expr_indent;
+    $in_block_decls = $bak_in_block_decls;
+    $in_expr = $bak_in_expr;
+    $in_paren_expr = $bak_in_paren_expr;
+    $hanging_offset = $bak_hanging_offset;
+    @in_do_hanging_offsets = @bak_in_do_hanging_offsets;
+    @in_if_hanging_offsets = @bak_in_if_hanging_offsets;
+    $if_maybe_terminated = $bak_if_maybe_terminated;
+    $block_indent = $bak_block_indent;
+    $in_multiline_string = $bak_in_multiline_string;
+    $line_body_start = $bak_line_body_start;
+    $line_opening_brace = $bak_line_opening_brace;
+    $in_typedecl = $bak_in_typedecl;
 }
 
 # auxiliary submodules @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -266,6 +336,7 @@ sub blind_nonspace { # blind non-space text of comment as @, preserving length a
 
 sub check_indent { # used for lines outside multi-line string literals
     my $stmt_indent = $block_indent + $hanging_offset + $local_offset;
+    # print "DEBUG: expr_indent $expr_indent; stmt_indent $stmt_indent = block_indent $block_indent + hanging_offset $hanging_offset + local_offset $local_offset\n";
     $stmt_indent = 0 if $stmt_indent < 0; # TODO maybe give warning/error
     my $stmt_desc = $contents =~
         m/^\s*\/\*/ ? "intra-line comment" :
@@ -323,7 +394,7 @@ sub check_indent { # used for lines outside multi-line string literals
         && $line_before > 0 # there is a line before
         && $contents_before_ =~ m/^(\s*)@[\s@]*$/) { # line before begins with '@', no code follows (except '\')
         report_flexibly($line_before, "entire-line comment indent = $count_before != $count (of following line)",
-            $contents_before) if !$sloppy_cmt && $count_before != $count;
+            $contents_before) if !$sloppy_cmt && $count_before != -1 && $count_before != $count;
     }
     # ... but allow normal indentation for the current line, else above check will be done for the line before
     if (($in_comment == 0 || $in_comment < 0) # (no comment,) intra-line comment or end of multi-line comment
@@ -515,9 +586,9 @@ while (<>) { # loop over all lines of all input files
         s#^(([^"]*"[^"]*")*[^"]*)("[^"]*)\\(\s*)$#$1.($3 =~ tr/"/@/cr).'"'.$4#e;
         # its contents have been blinded and the trailing '\' replaced by '"'
 
-    # strip any other trailing '\' along with any whitespace around it such that it does not interfere with various
-    # matching below; the later handling of multi-line macro definitions uses $contents where it is not stripped
-    s#^(.*?)\s*\\\s*$#$1#; # trailing '\' possibly preceded and/or followed by whitespace
+    # strip any other trailing '\' along with any whitespace around it such that it does not interfere with various matching below
+    my $trailing_backslash = s#^(.*?)\s*\\\s*$#$1#; # trailing '\' possibly preceded or followed by whitespace
+    my $essentially_blank_line = m/^\s*$/; # just whitespace and maybe a '\'
 
     # comments @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -618,7 +689,37 @@ while (<>) { # loop over all lines of all input files
 
     # at this point all non-space portions of any types of comments have been blinded as @
 
-    goto LINE_FINISHED if m/^\s*$/; # essentially blank line: just whitespace (and maybe a trailing '\')
+    goto LINE_FINISHED if $essentially_blank_line;
+
+    # handle preprocessor directives @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+    if (s/^(\s*#)(\s*)(\w+)//) { # line beginning with '#' and directive name;
+        # blank these portions to prevent confusion with C-level 'if', 'else', etc.
+        my ($lead, $space) = ($1, $2);
+        $preproc_directive = $3;
+        $_ = "$lead$space$preproc_directive$_" if $preproc_directive =~ m/^(define|include)$/; # yet do not blank #define or #include to prevent confusing the indentation or whitespace checks, resp.
+        $_ =  blind_nonspace($_) if $preproc_directive eq "error"; # blind error message
+        if ($in_preproc != 0) {
+            report("preprocessor directive within multi-line directive");
+            reset_indentation_state();
+        }
+        $in_preproc++;
+        report("indent = $count != 0 for '#'") if $count != 0;
+        $preproc_if_nesting-- if $preproc_directive =~ m/^(else|elif|endif)$/;
+        if ($preproc_if_nesting < 0) {
+            $preproc_if_nesting = 0;
+            report("unexpected '#$preproc_directive' according to '#if' nesting");
+        }
+        my $space_count = length($space); # maybe could also use indentation before '#'
+        report("'#if' nesting indent = $space_count != $preproc_if_nesting") if $space_count != $preproc_if_nesting;
+        $preproc_if_nesting++ if $preproc_directive =~ m/^(if|ifdef|ifndef|else|elif)$/;
+        $ifdef__cplusplus = $preproc_directive eq "ifdef2" && m/\s+__cplusplus\s*$/;
+
+        # handle indentation of preprocessor directive independently of surrounding normal code
+        $count = -1; # do not check indentation of first line of preprocessor directive
+        backup_indentation_state();
+        reset_indentation_state();
+    }
 
     # intra-line whitespace nits @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -671,7 +772,7 @@ while (<>) { # loop over all lines of all input files
         # treat op= and comparison operators as simple '=', simplifying matching below
         $intra_line =~ s/([\+\-\*\/\/%\&\|\^\!<>=]|<<|>>)=/=/g;
         # treat (type) variables within macro, indicated by trailing '\', as 'int' simplifying matching below
-        $intra_line =~ s/[A-Z_]+/int/g if $contents =~ m/^(.*?)\s*\\\s*$/;
+        $intra_line =~ s/[A-Z_]+/int/g if $trailing_backslash;
         # treat double &&, ||, <<, and >> as single ones, simplifying matching below
         $intra_line =~ s/(&&|\|\||<<|>>)/substr($1, 0, 1)/eg;
         # remove blinded comments etc. directly after [{(
@@ -716,32 +817,9 @@ while (<>) { # loop over all lines of all input files
         report("space after function/macro name")
                                       if $intra_line =~ m/(\w+)\s+\(/        # fn/macro name with space before '('
        && !($1 =~ m/^(sizeof|if|else|while|do|for|switch|case|default|break|continue|goto|return|void|char|signed|unsigned|int|short|long|float|double|typedef|enum|struct|union|auto|extern|static|const|volatile|register)$/) # not keyword
-                                    && !(m/^\s*#\s*define\s/); # we skip macro definitions here because macros
-                                    # without parameters but with body beginning with '(', e.g., '#define X (1)',
-                                    # would lead to false positives - TODO also check for macros with parameters
+                                    && !(m/^\s*#\s*define\s+\w+\s+\(/); # not a macro without parameters having a body that starts with '('
         report("missing space before '{'")   if $intra_line =~ m/[^\s{(\[]\{/;      # '{' without preceding space or {([
         report("missing space after '}'")    if $intra_line =~ m/\}[^\s,;\])}]/;    # '}' without following space or ,;])}
-    }
-
-    # preprocessor directives @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-    # handle preprocessor directives
-    if (m/^\s*#(\s*)(\w+)/) { # line beginning with '#'
-        report("preprocessor directive within other multi-line directive") if $in_preproc != 0;
-        my $space_count = length($1); # maybe could also use indentation before '#'
-        my $preproc_directive = $2;
-        report("indent = $count != 0 for '#'") if $count != 0;
-        $preproc_if_nesting-- if $preproc_directive =~ m/^(else|elif|endif)$/;
-        if ($preproc_if_nesting < 0) {
-            $preproc_if_nesting = 0;
-            report("unexpected '#$preproc_directive'");
-        }
-        report("'#if' nesting indent = $space_count != $preproc_if_nesting") if $space_count != $preproc_if_nesting;
-        $preproc_if_nesting++ if $preproc_directive =~ m/^if|ifdef|ifndef|else|elif$/;
-        $ifdef__cplusplus = m/^\s*#\s*ifdef\s+__cplusplus\s*$/;
-        goto POSTPROCESS_DIRECTIVE unless $preproc_directive =~ m/^define$/; # skip normal code handling except for #define
-        # TODO improve handling of indents of preprocessor directives ('\', $in_preproc != 0) vs. normal C code
-        $count = -1; # do not check indentation of #define
     }
 
     # adapt required indentation @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -847,15 +925,15 @@ while (<>) { # loop over all lines of all input files
 
     # check required indentation @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    check_indent() if $count >= 0; # not for #define and not if multi-line string literal is continued
+    check_indent() if $count >= 0; # not for start of preprocessor directive and not if multi-line string literal is continued
 
     # check for blank lines within/after local decls @@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     if ($in_block_decls >= 0 &&
-        $in_comment == 0 && !m/^\s*\*?@/ && # not in multi-line comment nor an intra-line comment
+        $in_comment == 0 && !m/^\s*\*?@/ && # not in a multi-line or intra-line comment
         !$in_expr && $expr_indent == 0 && $in_typedecl == 0) {
-        my $blank_line_before = $line > 1
-            && $code_contents_before =~ m/^\s*(\\\s*)?$/; # essentially blank line: just whitespace (and maybe a trailing '\')
+        my $blank_line_before = $line > 1 && $code_contents_before =~ m/^\s*(\\\s*)?$/;
+        # essentially blank line before: just whitespace and maybe a '\'
         if (m/^[\s(]*(char|signed|unsigned|int|short|long|float|double|enum|struct|union|auto|extern|static|const|volatile|register)(\W|$)/ # clear start of local decl
             || (m/^(\s*(\w+|\[\]|[\*()]))+?\s+[\*\(]*\w+(\s*(\)|\[[^\]]*\]))*\s*[;,=]/ # weak check for decl involving user-defined type
                 && !m/^\s*(\}|sizeof|if|else|while|do|for|switch|case|default|break|continue|goto|return)(\W|$)/)) {
@@ -874,7 +952,7 @@ while (<>) { # loop over all lines of all input files
 
     # do some further checks @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-    my $outermost_level = $block_indent == 0 + ($in_preproc != 0 ? $preproc_offset : 0);
+    my $outermost_level = $block_indent - $preproc_offset == 0;
 
     report("more than one stmt") if !m/(^|\W)for(\W.*|$)/ && # no 'for' - TODO improve matching
         m/;.*;/; # two or more terminators ';', so more than one statement
@@ -943,7 +1021,7 @@ while (<>) { # loop over all lines of all input files
     }
 
     # set $hanging_offset and $keyword_opening_brace for do/else
-    if (my ($head, $mid, $tail) = m/(^|^.*\W)(else|do)(\W.*|$)$/) { # last else/do, where 'do' is preferred
+    if (my ($head, $mid, $tail) = m/(^|^.*\W)(else|do)(\W.*|$)$/) { # last else/do, where 'do' is preferred, but not #else
         my $code_before = $head =~ m/[^\s\@}]/; # leading non-whitespace non-comment non-'}'
         report("code before '$mid'") if $code_before;
         report("code after '$mid'" ) if $tail =~ m/[^\s\@{]/# trailing non-whitespace non-comment non-'{' (non-'\')
@@ -978,10 +1056,10 @@ while (<>) { # loop over all lines of all input files
         $hanging_offset += INDENT_LEVEL if m/\*.*\(/; # '*' followed by '(' - seems consistent with Emacs C mode
     }
 
-    my $bak_in_expr = $in_expr;
+    my $local_in_expr = $in_expr;
     my $terminator_position = update_nested_indents($_, $nested_indents_position);
 
-    if ($bak_in_expr) {
+    if ($local_in_expr) {
         # on end of non-if/while/for/switch (multi-line) expression (i.e., return/enum/assignment) and
         # on end of statement/type declaration/variable definition/function header
         if ($terminator_position >= 0 && ($in_typedecl == 0 || @nested_indents == 0)) {
@@ -1029,18 +1107,18 @@ while (<>) { # loop over all lines of all input files
     }
 
     # remember line number and header containing name of last function defined for reports w.r.t. MAX_BODY_LENGTH
-    if ($outermost_level && m/(\w+)\s*\(/ && $1 ne "STACK_OF") {
+    if ($in_preproc == 0 && $outermost_level && m/(\w+)\s*\(/ && $1 ne "STACK_OF") {
         $line_function_start = $line;
         $last_function_header = $contents;
     }
 
     # special checks for last, typically trailing opening brace '{' in line
     if (my ($head, $tail) = m/^(.*)\{(.*)$/) { # match last ... '{'
-        if ($in_preproc == 0 && !$in_expr && $in_typedecl == 0) {
+        if (!$in_expr && $in_typedecl == 0) {
             if ($outermost_level) {
-                if (!$assignment_start && !$bak_in_expr) {
+                if (!$assignment_start && !$local_in_expr) {
                     # at end of function definition header (or stmt or var definition)
-                    report("'{' not at beginning") if $head ne "";
+                    report("'{' not at line start") if length($head) != $preproc_offset && $head =~ m/\)\s*/; # at end of function definition header
                     $line_body_start = $contents =~ m/LONG BODY/ ? 0 : $line;
                 }
             } else {
@@ -1105,15 +1183,14 @@ while (<>) { # loop over all lines of all input files
         }
     }
 
-  POSTPROCESS_DIRECTIVE:
     # on begin of multi-line preprocessor directive, adapt indent
-    # need to use original line contents because trailing '\' may have been stripped above
-    if ($contents =~ m/^(.*?)[\s@]*\\[\s@]*$/) { # trailing '\' (which is not stripped from $contents),
-        # typically used in macro definition (or other preprocessor directive)
-        if ($in_preproc == 0) {
+    if ($in_comment == 0 && $trailing_backslash) {
+        # trailing '\'typically used in preprocessor directive like '#define'
+        if ($in_preproc == 1) { # start of multi-line preprocessor directive
+            # note that backup+reset_indentation_state() has already been called
             $in_macro_header = m/^\s*#\s*define(\W|$)?(.*)/ ? 1 + parens_balance($2) : 0; # '#define' is beginning
             $preproc_offset = INDENT_LEVEL;
-            $block_indent += $preproc_offset;
+            $block_indent = $preproc_offset;
         }
         $in_preproc += 1;
     }
@@ -1125,17 +1202,14 @@ while (<>) { # loop over all lines of all input files
         !m/^\s*#(\s*)(\w+)/ && # not single-line preprocessor directive
         $in_comment == 0 && !m/^\s*\*?@/; # not in a multi-line comment nor in an intra-line comment
 
-    # on end of multi-line preprocessor directive, adapt indent
-    if ($in_preproc != 0 &&
-        # need to use original line contents because trailing \ may have been stripped
-        !($contents =~ m/^(.*?)[\s@]*\\[\s@]*$/)) { # no trailing '\'
-        $block_indent -= $preproc_offset;
+    # on end of (possibly multi-line) preprocessor directive, adapt indent
+    if ($in_preproc != 0 && !$trailing_backslash) { # no trailing '\'
         $in_preproc = 0;
-        # macro body typically does not include terminating ';'
-        $hanging_offset = 0; # compensate for this in case macro ends, e.g., as 'while (0)'
+        $preproc_offset = 0;
+        restore_indentation_state();
     }
 
-    if (m/^\s*$/) { # at begin of file essentially blank line: just whitespace (and maybe a '\')
+    if ($essentially_blank_line) {
             report("leading ".($1 eq "" ? "blank" :"whitespace")." line") if $line == 1 && !$sloppy_SPC;
     } else {
         if ($line_before > 0) {

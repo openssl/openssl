@@ -13,6 +13,7 @@
  * There are some known false positives, though, which are marked below.
  */
 
+#include <errno.h> /* should not report whitespace nits within <...> */
 #define F                                       \
     void f()                                    \
     {                                           \
@@ -22,8 +23,12 @@
         return;                                 \
     }
 
+/* allow extra  SPC in single-line comment */
+/*
+ * allow extra  SPC in regular multi-line comment
+ */
 /*-
- * allow extra SPC in format-tagged multi-line comment
+ * allow extra  SPC in format-tagged multi-line comment
  */
 int f(void) /*
              * trailing multi-line comment
@@ -236,6 +241,9 @@ int g(void)
             && expr_line3)
         hanging_stmt;
 }
+#define m \
+    do { /* should not be confused with function header followed by '{' */ \
+    } while (0)
 
 /* should not trigger: constant on LHS of comparison or assignment operator */
 X509 *x509 = NULL;
@@ -268,6 +276,47 @@ x;
 typedef OSSL_CMP_MSG *(*cmp_srv_process_cb_t)
     (OSSL_CMP_SRV_CTX *ctx, OSSL_CMP_MSG *msg)
     xx;
+
+#define IF(cond) if (cond)
+
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic pop")
+
+#define CB_ERR_IF(cond, ctx, cert, depth, err) \
+    if ((cond) && ((depth) < 0 || verify_cb_cert(ctx, cert, depth, err) == 0)) \
+        return err
+static int verify_cb_crl(X509_STORE_CTX *ctx, int err)
+{
+    ctx->error = err;
+    return ctx->verify_cb(0, ctx);
+}
+
+#ifdef CMP_FALLBACK_EST
+# define CMP_FALLBACK_CERT_FILE "cert.pem"
+#endif
+
+#define X509_OBJECT_get0_X509(obj)                                      \
+    ((obj) == NULL || (obj)->type != X509_LU_X509 ? NULL : (obj)->data.x509)
+#define X509_STORE_CTX_set_current_cert(ctx, x) { (ctx)->current_cert = (x); }
+#define X509_STORE_set_ex_data(ctx, idx, data) \
+    CRYPTO_set_ex_data(&(ctx)->ex_data, (idx), (data))
+
+typedef int (*X509_STORE_CTX_check_revocation_fn)(X509_STORE_CTX *ctx);
+#define X509_STORE_CTX_set_error_depth(ctx, depth) \
+    { (ctx)->error_depth = (depth); }
+#define EVP_PKEY_up_ref(x) ((x)->references++)
+/* should not report missing blank line: */
+DECLARE_STACK_OF(OPENSSL_CSTRING)
+bool UTIL_iterate_dir(int (*fn)(const char *file, void *arg), void *arg,
+                      const char *path, bool recursive);
+size_t UTIL_url_encode(
+                       size_t *size_needed
+                       );
+size_t UTIL_url_encode(const char  *source,
+                       char        *destination,
+                       size_t      destination_len,
+                       size_t      *size_needed);
+#error well. oops.
 
 int f()
 {
