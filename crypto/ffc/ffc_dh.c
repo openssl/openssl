@@ -150,7 +150,7 @@ const BIGNUM *ossl_ffc_named_group_get_q(const DH_NAMED_GROUP *group)
     return group->q;
 }
 
-int ossl_ffc_named_group_set_pqg(FFC_PARAMS *ffc, const DH_NAMED_GROUP *group)
+int ossl_ffc_named_group_set(FFC_PARAMS *ffc, const DH_NAMED_GROUP *group)
 {
     if (ffc == NULL || group == NULL)
         return 0;
