@@ -13,5 +13,5 @@
 
 STORE("file", "yes", ossl_file_store_functions)
 #ifndef OPENSSL_NO_WINSTORE
-STORE("winstore", "no", ossl_winstore_store_functions)
+STORE("winstore", "yes", ossl_winstore_store_functions)
 #endif

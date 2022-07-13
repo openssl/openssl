@@ -139,12 +139,13 @@ static int winstore_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
 
         do_reset = 1;
 
-        if (ctx->subject != NULL)
-            OPENSSL_free(ctx->subject);
+        OPENSSL_free(ctx->subject);
 
         ctx->subject = OPENSSL_malloc(der_len);
-        if (ctx->subject == NULL)
+        if (ctx->subject == NULL) {
+            ctx->subject_len = 0;
             return 0;
+        }
 
         ctx->subject_len = der_len;
         memcpy(ctx->subject, der, der_len);
