@@ -177,6 +177,23 @@ static int s390x_shake_final(unsigned char *md, void *vctx)
     return 1;
 }
 
+static int s390x_keccak_final(unsigned char *md, void *vctx) {
+    KECCAK1600_CTX *ctx = vctx;
+    size_t bsz = ctx->block_size;
+    size_t num = ctx->bufsz;
+
+    if (!ossl_prov_is_running())
+        return 0;
+    if (ctx->md_size == 0)
+        return 1;
+    memset(ctx->buf + num, 0, bsz - num);
+    ctx->buf[num] = 0x01;
+    ctx->buf[bsz - 1] |= 0x80;
+    s390x_kimd(ctx->buf, bsz, ctx->pad, ctx->A);
+    memcpy(md, ctx->A, ctx->md_size);
+    return 1;
+}
+
 static PROV_SHA3_METHOD sha3_s390x_md =
 {
     s390x_sha3_absorb,
@@ -186,7 +203,7 @@ static PROV_SHA3_METHOD sha3_s390x_md =
 static PROV_SHA3_METHOD keccak_s390x_md =
 {
     s390x_sha3_absorb,
-    s390x_sha3_final
+    s390x_keccak_final
 };
 
 static PROV_SHA3_METHOD shake_s390x_md =
