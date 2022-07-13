@@ -142,6 +142,13 @@ const char *ossl_ffc_named_group_get_name(const DH_NAMED_GROUP *group)
     return group->name;
 }
 
+int ossl_ffc_named_group_get_keylength(const DH_NAMED_GROUP *group)
+{
+    if (group == NULL)
+        return 0;
+    return group->keylength;
+}
+
 #ifndef OPENSSL_NO_DH
 const BIGNUM *ossl_ffc_named_group_get_q(const DH_NAMED_GROUP *group)
 {
