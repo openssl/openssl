@@ -47,10 +47,12 @@
 */ /*@ unexpected comment ending delimiter outside comment */
 /*@ comment line is 4 columns tooooooooooooooooo wide, reported unless sloppy-len */
 /*@ comment line is 5 columns toooooooooooooooooooooooooooooooooooooooooooooo wide */
-#define X   1       /*@0 extra space false negative due to coincidence */
- #define Y  2       /*@ indent of preprocessor directive off by 1 (must be 0) */
+#define X (1 +  1)  /*@0 extra space in body, reported unless sloppy-spc */
+#define X   1       /*@ extra space before body, reported unless sloppy-spc */
+ #define Y 2        /*@2 indent of preproc. directive off by 1 (must be 0) */ \
+#define Z           /*@ preprocessor directive within multi-line directive */
 typedef struct  {   /*@0 extra space in code, reported unless sloppy-spc */
-    enum {          /*@1 extra space  in comment, reported unless sloppy-spc */
+    enum {          /*@1 extra space  in comment, no more reported */
            w = 0 /*@ hanging expr indent off by 1, or 3 for lines after '{' */
              && 1,  /*@ hanging expr indent off by 3, or -1 for leading '&&' */
          x = 1,     /*@ hanging expr indent off by -1 */
