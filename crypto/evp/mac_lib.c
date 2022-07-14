@@ -226,7 +226,7 @@ const char *EVP_MAC_get0_description(const EVP_MAC *mac)
 
 int EVP_MAC_is_a(const EVP_MAC *mac, const char *name)
 {
-    return evp_is_a(mac->prov, mac->name_id, NULL, name);
+    return mac != NULL && evp_is_a(mac->prov, mac->name_id, NULL, name);
 }
 
 int EVP_MAC_names_do_all(const EVP_MAC *mac,
