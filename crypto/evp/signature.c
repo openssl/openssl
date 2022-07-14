@@ -327,7 +327,8 @@ EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,
 
 int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
 {
-    return evp_is_a(signature->prov, signature->name_id, NULL, name);
+    return signature != NULL
+           && evp_is_a(signature->prov, signature->name_id, NULL, name);
 }
 
 int evp_signature_get_number(const EVP_SIGNATURE *signature)
