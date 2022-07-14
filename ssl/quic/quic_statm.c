@@ -43,7 +43,7 @@ void ossl_statm_update_rtt(OSSL_STATM *statm,
         adjusted_rtt = ossl_time_subtract(latest_rtt, ack_delay);
 
     statm->rtt_variance = ossl_time_divide(ossl_time_add(ossl_time_multiply(3, statm->rtt_variance),
-                                                         ossl_time_difference(statm->smoothed_rtt,
+                                                         ossl_time_abs_difference(statm->smoothed_rtt,
                                                                               adjusted_rtt)), 4);
     statm->smoothed_rtt = ossl_time_divide(ossl_time_add(ossl_time_multiply(7, statm->smoothed_rtt),
                                                          adjusted_rtt), 8);
