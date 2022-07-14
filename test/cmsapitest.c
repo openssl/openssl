@@ -13,7 +13,7 @@
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#include "../crypto/cms/cms_local.h" /* for access to cms->d.signedData */
+#include "../crypto/cms/cms_local.h" /* for d.signedData and d.envelopedData */
 
 #include "testutil.h"
 
@@ -29,6 +29,7 @@ static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
     BIO *msgbio = BIO_new_mem_buf(msg, strlen(msg));
     BIO *outmsgbio = BIO_new(BIO_s_mem());
     CMS_ContentInfo* content = NULL;
+    BIO *contentbio = NULL;
     char buf[80];
 
     if (!TEST_ptr(certstack) || !TEST_ptr(msgbio) || !TEST_ptr(outmsgbio))
@@ -45,6 +46,12 @@ static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
                                CMS_TEXT)))
         goto end;
 
+    if (!TEST_ptr(contentbio =
+                  CMS_EnvelopedData_decrypt(content->d.envelopedData,
+                                            NULL, privkey, cert, NULL,
+                                            CMS_TEXT, NULL, NULL)))
+        goto end;
+
     /* Check we got the message we first started with */
     if (!TEST_int_eq(BIO_gets(outmsgbio, buf, sizeof(buf)), strlen(msg))
             || !TEST_int_eq(strcmp(buf, msg), 0))
@@ -52,6 +59,7 @@ static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
 
     testresult = 1;
  end:
+    BIO_free(contentbio);
     sk_X509_free(certstack);
     BIO_free(msgbio);
     BIO_free(outmsgbio);
