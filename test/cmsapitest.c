@@ -13,6 +13,7 @@
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include "../crypto/cms/cms_local.h" /* for access to cms->d.signedData */
 
 #include "testutil.h"
 
@@ -81,8 +82,9 @@ static int test_encrypt_decrypt_aes_256_gcm(void)
 
 static int test_d2i_CMS_bio_NULL(void)
 {
-    BIO *bio;
+    BIO *bio, *content = NULL;
     CMS_ContentInfo *cms = NULL;
+    unsigned int flags = CMS_NO_SIGNER_CERT_VERIFY;
     int ret = 0;
 
     /*
@@ -281,9 +283,12 @@ static int test_d2i_CMS_bio_NULL(void)
     };
 
     ret = TEST_ptr(bio = BIO_new_mem_buf(cms_data, sizeof(cms_data)))
-          && TEST_ptr(cms = d2i_CMS_bio(bio, NULL))
-          && TEST_true(CMS_verify(cms, NULL, NULL, NULL, NULL,
-                                  CMS_NO_SIGNER_CERT_VERIFY));
+        && TEST_ptr(cms = d2i_CMS_bio(bio, NULL))
+        && TEST_true(CMS_verify(cms, NULL, NULL, NULL, NULL, flags))
+        && TEST_ptr(content =
+                    CMS_SignedData_verify(cms->d.signedData, NULL, NULL, NULL,
+                                          NULL, NULL, flags, NULL, NULL));
+    BIO_free(content);
     CMS_ContentInfo_free(cms);
     BIO_free(bio);
     return ret;
