@@ -2251,7 +2251,6 @@ static int test_session_wo_ca_names(void)
 #endif
 }
 
-
 #ifndef OSSL_NO_USABLE_TLS1_3
 static SSL_SESSION *sesscache[6];
 static int do_cache;
@@ -8649,6 +8648,121 @@ static int test_session_timeout(int test)
 }
 
 /*
+ * Test that a session cache overflow works as expected
+ * Test 0: TLSv1.3, timeout on new session later than old session
+ * Test 1: TLSv1.2, timeout on new session later than old session
+ * Test 2: TLSv1.3, timeout on new session earlier than old session
+ * Test 3: TLSv1.2, timeout on new session earlier than old session
+ */
+static int test_session_cache_overflow(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+    SSL_SESSION *sess = NULL;
+
+#ifdef OPENSSL_NO_TLS1_3
+    /* If no TLSv1.3 available then do nothing in this case */
+    if (idx % 2 == 0)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_TLS1_2
+    /* If no TLSv1.2 available then do nothing in this case */
+    if (idx % 2 == 1)
+        return 1;
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), TLS1_VERSION,
+                                       (idx % 2 == 0) ? TLS1_3_VERSION
+                                                      : TLS1_2_VERSION,
+                                       &sctx, &cctx, cert, privkey))
+            || !TEST_true(SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET)))
+        goto end;
+
+    SSL_CTX_sess_set_get_cb(sctx, get_session_cb);
+    get_sess_val = NULL;
+
+    SSL_CTX_sess_set_cache_size(sctx, 1);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (idx > 1) {
+        sess = SSL_get_session(serverssl);
+        if (!TEST_ptr(sess))
+            goto end;
+
+        /*
+         * Cause this session to have a longer timeout than the next session to
+         * be added.
+         */
+        if (!TEST_true(SSL_SESSION_set_timeout(sess, LONG_MAX)))
+            goto end;
+    }
+
+    SSL_shutdown(serverssl);
+    SSL_shutdown(clientssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    /*
+     * Session cache size is 1 and we already populated the cache with a session
+     * so the next connection should cause an overflow.
+     */
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * The session we just negotiated may have been already removed from the
+     * internal cache - but we will return it anyway from our external cache.
+     */
+    get_sess_val = SSL_get_session(serverssl);
+    if (!TEST_ptr(get_sess_val))
+        goto end;
+    sess = SSL_get1_session(clientssl);
+    if (!TEST_ptr(sess))
+        goto end;
+
+    SSL_shutdown(serverssl);
+    SSL_shutdown(clientssl);
+    serverssl = clientssl = NULL;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set_session(clientssl, sess)))
+        goto end;
+    sess = NULL;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    SSL_SESSION_free(sess);
+
+    return testresult;
+}
+
+/*
  * Test 0: Client sets servername and server acknowledges it (TLSv1.2)
  * Test 1: Client sets servername and server does not acknowledge it (TLSv1.2)
  * Test 2: Client sets inconsistent servername on resumption (TLSv1.2)
@@ -10095,6 +10209,7 @@ int setup_tests(void)
     ADD_TEST(test_set_verify_cert_store_ssl_ctx);
     ADD_TEST(test_set_verify_cert_store_ssl);
     ADD_ALL_TESTS(test_session_timeout, 1);
+    ADD_ALL_TESTS(test_session_cache_overflow, 4);
     ADD_TEST(test_load_dhfile);
     return 1;
 
