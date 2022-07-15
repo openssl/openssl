@@ -8654,6 +8654,7 @@ static int test_session_timeout(int test)
  * Test 2: TLSv1.3, timeout on new session earlier than old session
  * Test 3: TLSv1.2, timeout on new session earlier than old session
  */
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
 static int test_session_cache_overflow(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -8761,6 +8762,7 @@ static int test_session_cache_overflow(int idx)
 
     return testresult;
 }
+#endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) */
 
 /*
  * Test 0: Client sets servername and server acknowledges it (TLSv1.2)
@@ -10209,7 +10211,9 @@ int setup_tests(void)
     ADD_TEST(test_set_verify_cert_store_ssl_ctx);
     ADD_TEST(test_set_verify_cert_store_ssl);
     ADD_ALL_TESTS(test_session_timeout, 1);
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
     ADD_ALL_TESTS(test_session_cache_overflow, 4);
+#endif
     ADD_TEST(test_load_dhfile);
     return 1;
 
