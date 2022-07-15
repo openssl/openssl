@@ -606,8 +606,8 @@ while (<>) { # loop over all lines of all input files
 
     # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
     if ((my ($head, $tail) = m|^(.*?)\*/(.*)$|) && $1 ne '/') { # ending comment: '*/'
-        report("neither space nor '*' before '*/'") if $head =~ m/[^*\s]$/;
-        report("missing space after '*/'") if $tail =~ m/^[^\s,;)}\]]/; # no space or ,;)}] after '*/'
+        report("missing space or '*' before '*/'") if $head =~ m/[^*\s]$/;
+        report("missing space (or ',', ';', ')', '}', ']') after '*/'") if $tail =~ m/^[^\s,;)}\]]/; # no space or ,;)}] after '*/'
         if (!($head =~ m|/\*|)) { # not begin of comment '/*', which is is handled below
             if ($in_comment == 0) {
                 report("unexpected '*/' outside comment");
@@ -632,7 +632,7 @@ while (<>) { # loop over all lines of all input files
     if (my ($head, $opt_minus, $tail) = m|^(.*?)/\*(-?)(.*)$|) { # begin of comment: '/*'
         report("missing space before '/*'")
             if $head =~ m/[^\s(\*]$/; # not space, '(', or or '*' (needed to allow '*/') before comment delimiter
-        report("missing space, '*' or '!' after '/*' or '/*-'") if $tail =~ m/^[^*\s!$self_test_exception]/;
+        report("missing space, '*', or '!' after '/*$opt_minus'") if $tail =~ m/^[^\s*!$self_test_exception]/;
         my $cmt_text = $opt_minus.$tail; # preliminary
         if ($in_comment > 0) {
             report("unexpected '/*' inside multi-line comment");
@@ -705,6 +705,8 @@ while (<>) { # loop over all lines of all input files
         }
         $in_preproc++;
         report("indent = $count != 0 for '#'") if $count != 0;
+        report("'#$preproc_directive' with constant condition")
+            if $preproc_directive =~ m/^(if|elif)$/ && m/^[\W0-9]+$/ && !$trailing_backslash;
         $preproc_if_nesting-- if $preproc_directive =~ m/^(else|elif|endif)$/;
         if ($preproc_if_nesting < 0) {
             $preproc_if_nesting = 0;
@@ -977,8 +979,6 @@ while (<>) { # loop over all lines of all input files
     report("constant on LHS of '$3'")
         if (m/(['"]|([\+\-\*\/\/%\&\|\^<>]\s*)?\W[0-9]+L?|\WNULL)\s*([\!<>=]=|[<=>])([<>]?)/ &&
             $2 eq "" && (($3 ne "<" && $3 ne "='" && $3 ne ">") || $4 eq ""));
-
-    # TODO report #if 0 and #if 1
 
     # TODO report needless use of parentheses, while
     #      macro parameters should always be in parens (except when passed on), e.g., '#define ID(x) (x)'
