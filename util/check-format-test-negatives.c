@@ -30,6 +30,9 @@
 /*-
  * allow extra  SPC in format-tagged multi-line comment
  */
+/** allow extra '*' in comment opening */
+/*! allow extra '!' in comment opening */
+
 int f(void) /*
              * trailing multi-line comment
              */
