@@ -74,6 +74,9 @@ typedef struct {
      */
     unsigned int flag_allow_md : 1;
 
+    /* If this is set to 1 then the generated k is not random */
+    unsigned int nonce_type;
+
     char mdname[OSSL_MAX_NAME_SIZE];
 
     /* The Algorithm Identifier of the combined signature algorithm */
@@ -249,7 +252,9 @@ static int dsa_sign(void *vpdsactx, unsigned char *sig, size_t *siglen,
     if (mdsize != 0 && tbslen != mdsize)
         return 0;
 
-    ret = ossl_dsa_sign_int(0, tbs, tbslen, sig, &sltmp, pdsactx->dsa);
+    ret = ossl_dsa_sign_int(0, tbs, tbslen, sig, &sltmp, pdsactx->dsa,
+                            pdsactx->nonce_type, pdsactx->mdname,
+                            pdsactx->libctx, pdsactx->propq);
     if (ret <= 0)
         return 0;
 
@@ -497,6 +502,10 @@ static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
         if (!dsa_setup_md(pdsactx, mdname, mdprops))
             return 0;
     }
+    p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_NONCE_TYPE);
+    if (p != NULL
+        && !OSSL_PARAM_get_uint(p, &pdsactx->nonce_type))
+        return 0;
 
     return 1;
 }
@@ -504,6 +513,7 @@ static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
 static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PROPERTIES, NULL, 0),
+    OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_NONCE_TYPE, NULL),
     OSSL_PARAM_END
 };
 

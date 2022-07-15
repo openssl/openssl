@@ -3234,6 +3234,7 @@ typedef struct {
     size_t osin_len; /* Input length data if one shot */
     unsigned char *output; /* Expected output */
     size_t output_len; /* Expected output length */
+    const char *nonce_type;
 } DIGESTSIGN_DATA;
 
 static int digestsigver_test_init(EVP_TEST *t, const char *alg, int is_verify,
@@ -3329,6 +3330,20 @@ static int digestsigver_test_parse(EVP_TEST *t,
         if (mdata->pctx == NULL)
             return -1;
         return pkey_test_ctrl(t, mdata->pctx, value);
+    }
+    if (strcmp(keyword, "NonceType") == 0) {
+        if (strcmp(value, "deterministic") == 0) {
+            OSSL_PARAM params[2];
+            unsigned int nonce_type = 1;
+
+            params[0] =
+                OSSL_PARAM_construct_uint(OSSL_SIGNATURE_PARAM_NONCE_TYPE,
+                                          &nonce_type);
+            params[1] = OSSL_PARAM_construct_end();
+            if (!EVP_PKEY_CTX_set_params(mdata->pctx, params))
+                t->err = "EVP_PKEY_CTX_set_params_ERROR";
+        }
+        return 1;
     }
     return 0;
 }

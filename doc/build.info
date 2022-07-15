@@ -4193,6 +4193,10 @@ DEPEND[html/man7/EVP_KDF-HKDF.html]=man7/EVP_KDF-HKDF.pod
 GENERATE[html/man7/EVP_KDF-HKDF.html]=man7/EVP_KDF-HKDF.pod
 DEPEND[man/man7/EVP_KDF-HKDF.7]=man7/EVP_KDF-HKDF.pod
 GENERATE[man/man7/EVP_KDF-HKDF.7]=man7/EVP_KDF-HKDF.pod
+DEPEND[html/man7/EVP_KDF-HMAC-DRBG.html]=man7/EVP_KDF-HMAC-DRBG.pod
+GENERATE[html/man7/EVP_KDF-HMAC-DRBG.html]=man7/EVP_KDF-HMAC-DRBG.pod
+DEPEND[man/man7/EVP_KDF-HMAC-DRBG.7]=man7/EVP_KDF-HMAC-DRBG.pod
+GENERATE[man/man7/EVP_KDF-HMAC-DRBG.7]=man7/EVP_KDF-HMAC-DRBG.pod
 DEPEND[html/man7/EVP_KDF-KB.html]=man7/EVP_KDF-KB.pod
 GENERATE[html/man7/EVP_KDF-KB.html]=man7/EVP_KDF-KB.pod
 DEPEND[man/man7/EVP_KDF-KB.7]=man7/EVP_KDF-KB.pod
@@ -4665,6 +4669,7 @@ html/man7/EVP_CIPHER-RC5.html \
 html/man7/EVP_CIPHER-SEED.html \
 html/man7/EVP_CIPHER-SM4.html \
 html/man7/EVP_KDF-HKDF.html \
+html/man7/EVP_KDF-HMAC-DRBG.html \
 html/man7/EVP_KDF-KB.html \
 html/man7/EVP_KDF-KRB5KDF.html \
 html/man7/EVP_KDF-PBKDF1.html \
@@ -4793,6 +4798,7 @@ man/man7/EVP_CIPHER-RC5.7 \
 man/man7/EVP_CIPHER-SEED.7 \
 man/man7/EVP_CIPHER-SM4.7 \
 man/man7/EVP_KDF-HKDF.7 \
+man/man7/EVP_KDF-HMAC-DRBG.7 \
 man/man7/EVP_KDF-KB.7 \
 man/man7/EVP_KDF-KRB5KDF.7 \
 man/man7/EVP_KDF-PBKDF1.7 \

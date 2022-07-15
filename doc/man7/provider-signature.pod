@@ -363,6 +363,15 @@ The length of the "digest-size" parameter should not exceed that of a B<size_t>.
 Gets the DER encoded AlgorithmIdentifier that corresponds to the combination of
 signature algorithm and digest algorithm for the signature operation.
 
+=item "nonce-type" (B<OSSL_SIGNATURE_PARAM_NONCE_TYPE>) <unsigned integer>
+
+Set this to 1 to use a deterministic ECDSA or DSA digital signature as
+defined in RFC #6979 (See Section 3.2 "Generation of k").
+The default value of 0 uses a random value for the nonce B<k> as defined in
+FIPS 186-4 Section 6.3 "Secret Number Generation".
+Before using deterministic digital signature please read
+RFC #6979 Section 4 "Security Considerations".
+
 =item "kat" (B<OSSL_SIGNATURE_PARAM_KAT>) <unsigned integer>
 
 Sets a flag to modify the sign operation to return an error if the initial
