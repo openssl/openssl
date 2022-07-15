@@ -25,6 +25,7 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
+#include "internal/deterministic_nonce.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
@@ -102,6 +103,8 @@ typedef struct {
      */
     unsigned int kattest;
 #endif
+    /* If this is set then the generated k is not random */
+    unsigned int nonce_type;
 } PROV_ECDSA_CTX;
 
 static void *ecdsa_newctx(void *provctx, const char *propq)
@@ -192,7 +195,15 @@ static int ecdsa_sign(void *vctx, unsigned char *sig, size_t *siglen,
     if (ctx->mdsize != 0 && tbslen != ctx->mdsize)
         return 0;
 
-    ret = ECDSA_sign_ex(0, tbs, tbslen, sig, &sltmp, ctx->kinv, ctx->r, ctx->ec);
+    if (ctx->nonce_type != 0) {
+        ret = ossl_ecdsa_deterministic_sign(tbs, tbslen, sig, &sltmp,
+                                            ctx->ec, ctx->nonce_type,
+                                            ctx->mdname,
+                                            ctx->libctx, ctx->propq);
+    } else {
+        ret = ECDSA_sign_ex(0, tbs, tbslen, sig, &sltmp, ctx->kinv, ctx->r,
+                            ctx->ec);
+    }
     if (ret <= 0)
         return 0;
 
@@ -513,6 +524,10 @@ static int ecdsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         ctx->mdsize = mdsize;
     }
+    p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_NONCE_TYPE);
+    if (p != NULL
+        && !OSSL_PARAM_get_uint(p, &ctx->nonce_type))
+        return 0;
 
     return 1;
 }
@@ -522,6 +537,7 @@ static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PROPERTIES, NULL, 0),
     OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_KAT, NULL),
+    OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_NONCE_TYPE, NULL),
     OSSL_PARAM_END
 };
 

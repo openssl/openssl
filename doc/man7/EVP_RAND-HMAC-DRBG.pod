@@ -59,7 +59,7 @@ These parameters work as described in L<EVP_RAND(3)/PARAMETERS>.
 A context for HMAC DRBG can be obtained by calling:
 
  EVP_RAND *rand = EVP_RAND_fetch(NULL, "HMAC-DRBG", NULL);
- EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand);
+ EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand, NULL);
 
 =head1 EXAMPLES
 

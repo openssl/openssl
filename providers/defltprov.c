@@ -375,6 +375,8 @@ static const OSSL_ALGORITHM deflt_rands[] = {
     { PROV_NAMES_CTR_DRBG, "provider=default", ossl_drbg_ctr_functions },
     { PROV_NAMES_HASH_DRBG, "provider=default", ossl_drbg_hash_functions },
     { PROV_NAMES_HMAC_DRBG, "provider=default", ossl_drbg_ossl_hmac_functions },
+    { PROV_NAMES_HMAC_DRBG_DETERMINISTIC, "provider=default",
+      ossl_drbg_ossl_hmac_deterministic_functions },
     { PROV_NAMES_SEED_SRC, "provider=default", ossl_seed_src_functions },
     { PROV_NAMES_TEST_RAND, "provider=default", ossl_test_rng_functions },
     { NULL, NULL, NULL }

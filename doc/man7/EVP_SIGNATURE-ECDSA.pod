@@ -21,6 +21,8 @@ and before calling EVP_PKEY_sign() or EVP_PKEY_verify().
 
 =item "properties" (B<OSSL_SIGNATURE_PARAM_PROPERTIES>) <UTF8 string>
 
+=item "nonce-type" (B<OSSL_SIGNATURE_PARAM_NONCE_TYPE>) <unsigned integer>
+
 These parameters are described in L<provider-signature(7)>.
 
 =back

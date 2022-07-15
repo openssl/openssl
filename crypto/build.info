@@ -108,7 +108,7 @@ SOURCE[../libcrypto]=$UTIL_COMMON \
         mem.c mem_sec.c \
         cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c o_dir.c \
         o_fopen.c getenv.c o_init.c init.c trace.c provider.c provider_child.c \
-        punycode.c passphrase.c sleep.c
+        punycode.c passphrase.c sleep.c deterministic_nonce.c
 SOURCE[../providers/libfips.a]=$UTIL_COMMON
 
 SOURCE[../libcrypto]=$UPLINKSRC

@@ -284,6 +284,7 @@ extern const OSSL_DISPATCH ossl_test_rng_functions[];
 extern const OSSL_DISPATCH ossl_seed_src_functions[];
 extern const OSSL_DISPATCH ossl_drbg_hash_functions[];
 extern const OSSL_DISPATCH ossl_drbg_ossl_hmac_functions[];
+extern const OSSL_DISPATCH ossl_drbg_ossl_hmac_deterministic_functions[];
 extern const OSSL_DISPATCH ossl_drbg_ctr_functions[];
 extern const OSSL_DISPATCH crngt_functions[];
 

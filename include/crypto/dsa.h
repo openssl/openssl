@@ -26,7 +26,9 @@ int ossl_dsa_generate_ffc_parameters(DSA *dsa, int type, int pbits, int qbits,
                                      BN_GENCB *cb);
 
 int ossl_dsa_sign_int(int type, const unsigned char *dgst, int dlen,
-                      unsigned char *sig, unsigned int *siglen, DSA *dsa);
+                      unsigned char *sig, unsigned int *siglen, DSA *dsa,
+                      unsigned int nonce_type, const char *digestname,
+                      OSSL_LIB_CTX *libctx, const char *propq);
 
 FFC_PARAMS *ossl_dsa_get0_params(DSA *dsa);
 int ossl_dsa_ffc_params_fromdata(DSA *dsa, const OSSL_PARAM params[]);
