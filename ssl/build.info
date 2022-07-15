@@ -43,7 +43,7 @@ IF[{- !$disabled{'deprecated-3.0'} -}]
 ENDIF
 
 IF[{- !$disabled{quic} -}]
-  SOURCE[../libssl]=priority_queue.c
+  SOURCE[../libssl]=priority_queue.c event_queue.c
 ENDIF
 
 DEFINE[../libssl]=$AESDEF

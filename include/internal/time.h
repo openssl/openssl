@@ -21,6 +21,9 @@
 /* Macro representing the most distant future time */
 # define OSSL_TIME_INFINITY (~(OSSL_TIME)0)
 
+/* Macro that's guaranteed to be now or before */
+# define OSSL_TIME_IMMEDIATE    0
+
 /*
  * Internal type defining a time.
  * The time datum is Unix's 1970 and at nanosecond precision, this gives

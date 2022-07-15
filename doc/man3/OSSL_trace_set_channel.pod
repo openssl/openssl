@@ -141,6 +141,10 @@ Traces the TLS/SSL protocol.
 
 Traces the ciphers used by the TLS/SSL protocol.
 
+=item B<OSSL_TRACE_CATEGORY_CONF>
+
+Traces details about the provider and engine configuration.
+
 =item B<OSSL_TRACE_CATEGORY_ENGINE_TABLE>
 
 Traces the ENGINE algorithm table selection.
@@ -180,9 +184,29 @@ point during evaluation.
 
 Traces BIGNUM context operations.
 
-=item B<OSSL_TRACE_CATEGORY_CONF>
+=item B<OSSL_TRACE_CATEGORY_CMP>
 
-Traces details about the provider and engine configuration.
+Traces CMP client and server activity.
+
+=item B<OSSL_TRACE_CATEGORY_STORE>
+
+Traces STORE operations.
+
+=item B<OSSL_TRACE_CATEGORY_DECODER>
+
+Traces decoder operations.
+
+=item B<OSSL_TRACE_CATEGORY_ENCODER>
+
+Traces encoder operations.
+
+=item B<OSSL_TRACE_CATEGORY_REF_COUNT>
+
+Traces decrementing certain ASN.1 structure references.
+
+=item B<OSSL_TRACE_CATEGORY_HTTP>
+
+Traces the HTTP client, such as message headers being sent and received.
 
 =back
 

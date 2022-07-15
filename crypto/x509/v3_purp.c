@@ -125,6 +125,7 @@ int X509_PURPOSE_get_by_sname(const char *sname)
 {
     int i;
     X509_PURPOSE *xptmp;
+
     for (i = 0; i < X509_PURPOSE_get_count(); i++) {
         xptmp = X509_PURPOSE_get0(i);
         if (strcmp(xptmp->sname, sname) == 0)
@@ -170,18 +171,19 @@ int X509_PURPOSE_add(int id, int trust, int flags,
             return 0;
         }
         ptmp->flags = X509_PURPOSE_DYNAMIC;
-    } else
+    } else {
         ptmp = X509_PURPOSE_get0(idx);
+    }
 
     /* OPENSSL_free existing name if dynamic */
-    if (ptmp->flags & X509_PURPOSE_DYNAMIC_NAME) {
+    if ((ptmp->flags & X509_PURPOSE_DYNAMIC_NAME) != 0) {
         OPENSSL_free(ptmp->name);
         OPENSSL_free(ptmp->sname);
     }
     /* Dup supplied name */
     ptmp->name = OPENSSL_strdup(name);
     ptmp->sname = OPENSSL_strdup(sname);
-    if (ptmp->name == NULL|| ptmp->sname == NULL) {
+    if (ptmp->name == NULL || ptmp->sname == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -221,8 +223,8 @@ static void xptable_free(X509_PURPOSE *p)
 {
     if (p == NULL)
         return;
-    if (p->flags & X509_PURPOSE_DYNAMIC) {
-        if (p->flags & X509_PURPOSE_DYNAMIC_NAME) {
+    if ((p->flags & X509_PURPOSE_DYNAMIC) != 0) {
+        if ((p->flags & X509_PURPOSE_DYNAMIC_NAME) != 0) {
             OPENSSL_free(p->name);
             OPENSSL_free(p->sname);
         }
@@ -372,14 +374,14 @@ static int check_sig_alg_match(const EVP_PKEY *issuer_key, const X509 *subject)
         return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
     if (OBJ_find_sigid_algs(OBJ_obj2nid(subject->cert_info.signature.algorithm),
                             NULL, &subj_sig_nid) == 0)
-         return X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM;
+        return X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM;
     if (EVP_PKEY_is_a(issuer_key, OBJ_nid2sn(subj_sig_nid))
         || (EVP_PKEY_is_a(issuer_key, "RSA") && subj_sig_nid == NID_rsassaPss))
         return X509_V_OK;
     return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
 }
 
-#define V1_ROOT (EXFLAG_V1|EXFLAG_SS)
+#define V1_ROOT (EXFLAG_V1 | EXFLAG_SS)
 #define ku_reject(x, usage) \
     (((x)->ex_flags & EXFLAG_KUSAGE) != 0 && ((x)->ex_kusage & (usage)) == 0)
 #define xku_reject(x, usage) \
@@ -412,7 +414,7 @@ int ossl_x509v3_cache_extensions(X509 *x)
 
     if (!CRYPTO_THREAD_write_lock(x->lock))
         return 0;
-    if (x->ex_flags & EXFLAG_SET) { /* Cert has already been processed */
+    if ((x->ex_flags & EXFLAG_SET) != 0) { /* Cert has already been processed */
         CRYPTO_THREAD_unlock(x->lock);
         return (x->ex_flags & EXFLAG_INVALID) == 0;
     }
@@ -452,7 +454,7 @@ int ossl_x509v3_cache_extensions(X509 *x)
 
     /* Handle proxy certificates */
     if ((pci = X509_get_ext_d2i(x, NID_proxyCertInfo, &i, NULL)) != NULL) {
-        if (x->ex_flags & EXFLAG_CA
+        if ((x->ex_flags & EXFLAG_CA) != 0
             || X509_get_ext_by_NID(x, NID_subject_alt_name, -1) >= 0
             || X509_get_ext_by_NID(x, NID_issuer_alt_name, -1) >= 0) {
             x->ex_flags |= EXFLAG_INVALID;
@@ -668,10 +670,11 @@ static int check_ca(const X509 *x)
         /*
          * If key usage present it must have certSign so tolerate it
          */
-        else if (x->ex_flags & EXFLAG_KUSAGE)
+        else if ((x->ex_flags & EXFLAG_KUSAGE) != 0)
             return 4;
         /* Older certificates could have Netscape-specific CA types */
-        else if (x->ex_flags & EXFLAG_NSCERT && x->ex_nscert & NS_ANY_CA)
+        else if ((x->ex_flags & EXFLAG_NSCERT) != 0
+                 && (x->ex_nscert & NS_ANY_CA) != 0)
             return 5;
         /* Can this still be regarded a CA certificate?  I doubt it. */
         return 0;
@@ -733,7 +736,7 @@ static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
  * key types.
  */
 #define KU_TLS \
-        KU_DIGITAL_SIGNATURE|KU_KEY_ENCIPHERMENT|KU_KEY_AGREEMENT
+    KU_DIGITAL_SIGNATURE | KU_KEY_ENCIPHERMENT | KU_KEY_AGREEMENT
 
 static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
                                     int require_ca)
@@ -755,14 +758,12 @@ static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
 static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x,
                                        int require_ca)
 {
-    int ret;
-    ret = check_purpose_ssl_server(xp, x, require_ca);
+    int ret = check_purpose_ssl_server(xp, x, require_ca);
+
     if (!ret || require_ca)
         return ret;
     /* We need to encipher or Netscape complains */
-    if (ku_reject(x, KU_KEY_ENCIPHERMENT))
-        return 0;
-    return ret;
+    return ku_reject(x, KU_KEY_ENCIPHERMENT) ? 0 : ret;
 }
 
 /* common S/MIME checks */
@@ -771,23 +772,21 @@ static int purpose_smime(const X509 *x, int require_ca)
     if (xku_reject(x, XKU_SMIME))
         return 0;
     if (require_ca) {
-        int ca_ret;
-        ca_ret = check_ca(x);
+        int ca_ret = check_ca(x);
+
         if (ca_ret == 0)
             return 0;
         /* Check nsCertType if present */
-        if (ca_ret != 5 || x->ex_nscert & NS_SMIME_CA)
+        if (ca_ret != 5 || (x->ex_nscert & NS_SMIME_CA) != 0)
             return ca_ret;
         else
             return 0;
     }
-    if (x->ex_flags & EXFLAG_NSCERT) {
-        if (x->ex_nscert & NS_SMIME)
+    if ((x->ex_flags & EXFLAG_NSCERT) != 0) {
+        if ((x->ex_nscert & NS_SMIME) != 0)
             return 1;
         /* Workaround for some buggy certificates */
-        if (x->ex_nscert & NS_SSL_CLIENT)
-            return 2;
-        return 0;
+        return (x->ex_nscert & NS_SSL_CLIENT) != 0 ? 2 : 0;
     }
     return 1;
 }
@@ -795,40 +794,32 @@ static int purpose_smime(const X509 *x, int require_ca)
 static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
                                     int require_ca)
 {
-    int ret;
-    ret = purpose_smime(x, require_ca);
+    int ret = purpose_smime(x, require_ca);
+
     if (!ret || require_ca)
         return ret;
-    if (ku_reject(x, KU_DIGITAL_SIGNATURE | KU_NON_REPUDIATION))
-        return 0;
-    return ret;
+    return ku_reject(x, KU_DIGITAL_SIGNATURE | KU_NON_REPUDIATION) ? 0 : ret;
 }
 
 static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
                                        int require_ca)
 {
-    int ret;
-    ret = purpose_smime(x, require_ca);
+    int ret = purpose_smime(x, require_ca);
+
     if (!ret || require_ca)
         return ret;
-    if (ku_reject(x, KU_KEY_ENCIPHERMENT))
-        return 0;
-    return ret;
+    return ku_reject(x, KU_KEY_ENCIPHERMENT) ? 0 : ret;
 }
 
 static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
                                   int require_ca)
 {
     if (require_ca) {
-        int ca_ret;
-        if ((ca_ret = check_ca(x)) != 2)
-            return ca_ret;
-        else
-            return 0;
+        int ca_ret = check_ca(x);
+
+        return ca_ret == 2 ? 0 : ca_ret;
     }
-    if (ku_reject(x, KU_CRL_SIGN))
-        return 0;
-    return 1;
+    return !ku_reject(x, KU_CRL_SIGN);
 }
 
 /*
@@ -863,23 +854,20 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
      * and/or nonRepudiation (other values are not consistent and shall
      * be rejected).
      */
-    if ((x->ex_flags & EXFLAG_KUSAGE)
+    if ((x->ex_flags & EXFLAG_KUSAGE) != 0
         && ((x->ex_kusage & ~(KU_NON_REPUDIATION | KU_DIGITAL_SIGNATURE)) ||
             !(x->ex_kusage & (KU_NON_REPUDIATION | KU_DIGITAL_SIGNATURE))))
         return 0;
 
     /* Only time stamp key usage is permitted and it's required. */
-    if (!(x->ex_flags & EXFLAG_XKUSAGE) || x->ex_xkusage != XKU_TIMESTAMP)
+    if ((x->ex_flags & EXFLAG_XKUSAGE) == 0 || x->ex_xkusage != XKU_TIMESTAMP)
         return 0;
 
     /* Extended Key Usage MUST be critical */
     i_ext = X509_get_ext_by_NID(x, NID_ext_key_usage, -1);
-    if (i_ext >= 0) {
-        X509_EXTENSION *ext = X509_get_ext((X509 *)x, i_ext);
-        if (!X509_EXTENSION_get_critical(ext))
-            return 0;
-    }
-
+    if (i_ext >= 0
+            && !X509_EXTENSION_get_critical(X509_get_ext((X509 *)x, i_ext)))
+        return 0;
     return 1;
 }
 
@@ -942,11 +930,12 @@ int ossl_x509_likely_issued(X509 *issuer, X509 *subject)
  */
 int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject)
 {
-    if (subject->ex_flags & EXFLAG_PROXY) {
+    if ((subject->ex_flags & EXFLAG_PROXY) != 0) {
         if (ku_reject(issuer, KU_DIGITAL_SIGNATURE))
             return X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE;
-    } else if (ku_reject(issuer, KU_KEY_CERT_SIGN))
+    } else if (ku_reject(issuer, KU_KEY_CERT_SIGN)) {
         return X509_V_ERR_KEYUSAGE_NO_CERTSIGN;
+    }
     return X509_V_OK;
 }
 
@@ -970,11 +959,11 @@ int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
          * GeneralName. So look for a DirName. There may be more than one but
          * we only take any notice of the first.
          */
-        GENERAL_NAMES *gens;
+        GENERAL_NAMES *gens = akid->issuer;
         GENERAL_NAME *gen;
         X509_NAME *nm = NULL;
         int i;
-        gens = akid->issuer;
+
         for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
             gen = sk_GENERAL_NAME_value(gens, i);
             if (gen->type == GEN_DIRNAME) {
@@ -1000,9 +989,7 @@ uint32_t X509_get_key_usage(X509 *x)
     /* Call for side-effect of computing hash and caching extensions */
     if (X509_check_purpose(x, -1, 0) != 1)
         return 0;
-    if (x->ex_flags & EXFLAG_KUSAGE)
-        return x->ex_kusage;
-    return UINT32_MAX;
+    return (x->ex_flags & EXFLAG_KUSAGE) != 0 ? x->ex_kusage : UINT32_MAX;
 }
 
 uint32_t X509_get_extended_key_usage(X509 *x)
@@ -1010,9 +997,7 @@ uint32_t X509_get_extended_key_usage(X509 *x)
     /* Call for side-effect of computing hash and caching extensions */
     if (X509_check_purpose(x, -1, 0) != 1)
         return 0;
-    if (x->ex_flags & EXFLAG_XKUSAGE)
-        return x->ex_xkusage;
-    return UINT32_MAX;
+    return (x->ex_flags & EXFLAG_XKUSAGE) != 0 ? x->ex_xkusage : UINT32_MAX;
 }
 
 const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x)

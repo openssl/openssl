@@ -210,7 +210,7 @@ static int opt_found(const char *name, unsigned int *result,
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_ELAPSED, OPT_EVP, OPT_HMAC, OPT_DECRYPT, OPT_ENGINE, OPT_MULTI,
-    OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM, OPT_PROV_ENUM,
+    OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM, OPT_PROV_ENUM, OPT_CONFIG,
     OPT_PRIMES, OPT_SECONDS, OPT_BYTES, OPT_AEAD, OPT_CMAC
 } OPTION_CHOICE;
 
@@ -237,6 +237,7 @@ const OPTIONS speed_options[] = {
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"primes", OPT_PRIMES, 'p', "Specify number of primes (for RSA only)"},
+    OPT_CONFIG_OPTION,
 
     OPT_SECTION("Selection"),
     {"evp", OPT_EVP, 's', "Use EVP-named cipher or digest"},
@@ -879,11 +880,14 @@ static int FFDH_derive_key_loop(void *args)
     loopargs_t *tempargs = *(loopargs_t **) args;
     EVP_PKEY_CTX *ffdh_ctx = tempargs->ffdh_ctx[testnum];
     unsigned char *derived_secret = tempargs->secret_ff_a;
-    size_t outlen = MAX_FFDH_SIZE;
     int count;
 
-    for (count = 0; COND(ffdh_c[testnum][0]); count++)
+    for (count = 0; COND(ffdh_c[testnum][0]); count++) {
+        /* outlen can be overwritten with a too small value (no padding used) */
+        size_t outlen = MAX_FFDH_SIZE;
+
         EVP_PKEY_derive(ffdh_ctx, derived_secret, &outlen);
+    }
     return count;
 }
 #endif /* OPENSSL_NO_DH */
@@ -1342,6 +1346,7 @@ static EVP_PKEY *get_ecdsa(const EC_CURVE *curve)
 
 int speed_main(int argc, char **argv)
 {
+    CONF *conf = NULL;
     ENGINE *e = NULL;
     loopargs_t *loopargs = NULL;
     const char *prog;
@@ -1596,6 +1601,11 @@ int speed_main(int argc, char **argv)
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
+                goto end;
+            break;
+        case OPT_CONFIG:
+            conf = app_load_config_modules(opt_arg());
+            if (conf == NULL)
                 goto end;
             break;
         case OPT_PRIMES:
@@ -3350,6 +3360,7 @@ int speed_main(int argc, char **argv)
     release_engine(e);
     EVP_CIPHER_free(evp_cipher);
     EVP_MAC_free(mac);
+    NCONF_free(conf);
     return ret;
 }
 
