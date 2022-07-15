@@ -40,19 +40,21 @@
  *@ comment starting delimiter: /* inside multi-line comment
 *@ multi-line comment indent off by -1
  *X*@ no spc after leading '*' in multi-line comment, reported unless sloppy-spc
- *@0 more than two spaces after .   in comment, reported unless sloppy-spc
- *@0 more than two spaces after ?   in comment, reported unless sloppy-spc
- *@0 more than two spaces after !   in comment, reported unless sloppy-spc
+ *@0 more than two spaces after .   in comment, no more reported
+ *@0 more than two spaces after ?   in comment, no more reported
+ *@0 more than two spaces after !   in comment, no more reported
 */ /*@ multi-line comment end indent off by -1 (relative to comment start) */
 */ /*@ unexpected comment ending delimiter outside comment */
+/*- '-' for formatted comment not allowed in intra-line comment */
 /*@ comment line is 4 columns tooooooooooooooooo wide, reported unless sloppy-len */
 /*@ comment line is 5 columns toooooooooooooooooooooooooooooooooooooooooooooo wide */
+#if ~0              /*@ '#if' with constant condition */
+ #endif             /*@ indent of preproc. directive off by 1 (must be 0) */
 #define X (1 +  1)  /*@0 extra space in body, reported unless sloppy-spc */
-#define X   1       /*@ extra space before body, reported unless sloppy-spc */
- #define Y 2        /*@2 indent of preproc. directive off by 1 (must be 0) */ \
-#define Z           /*@ preprocessor directive within multi-line directive */
+#define Y   1       /*@ extra space before body, reported unless sloppy-spc */ \
+#define Z           /*@2 preprocessor directive within multi-line directive */
 typedef struct  {   /*@0 extra space in code, reported unless sloppy-spc */
-    enum {          /*@1 extra space  in comment, no more reported */
+    enum {          /*@1 extra space  in intra-line comment, no more reported */
            w = 0 /*@ hanging expr indent off by 1, or 3 for lines after '{' */
              && 1,  /*@ hanging expr indent off by 3, or -1 for leading '&&' */
          x = 1,     /*@ hanging expr indent off by -1 */
@@ -344,7 +346,7 @@ void f_looong_body()
 
     ;               /*@ 2 essentially blank lines before, if !sloppy-spc */
 }                   /*@ function body length > 200 lines */
-#if 0               /*@0 unclosed #if */
+#if X               /*@0 unclosed #if */
 struct t {          /*@0 unclosed brace at decl/block level */
     enum {          /*@0 unclosed brace at enum/expression level */
           v = (1    /*@0 unclosed parenthesis */
