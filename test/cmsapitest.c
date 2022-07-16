@@ -13,6 +13,7 @@
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include "../crypto/cms/cms_local.h" /* for d.signedData and d.envelopedData */
 
 #include "testutil.h"
 
@@ -28,6 +29,7 @@ static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
     BIO *msgbio = BIO_new_mem_buf(msg, strlen(msg));
     BIO *outmsgbio = BIO_new(BIO_s_mem());
     CMS_ContentInfo* content = NULL;
+    BIO *contentbio = NULL;
     char buf[80];
 
     if (!TEST_ptr(certstack) || !TEST_ptr(msgbio) || !TEST_ptr(outmsgbio))
@@ -44,6 +46,12 @@ static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
                                CMS_TEXT)))
         goto end;
 
+    if (!TEST_ptr(contentbio =
+                  CMS_EnvelopedData_decrypt(content->d.envelopedData,
+                                            NULL, privkey, cert, NULL,
+                                            CMS_TEXT, NULL, NULL)))
+        goto end;
+
     /* Check we got the message we first started with */
     if (!TEST_int_eq(BIO_gets(outmsgbio, buf, sizeof(buf)), strlen(msg))
             || !TEST_int_eq(strcmp(buf, msg), 0))
@@ -51,6 +59,7 @@ static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
 
     testresult = 1;
  end:
+    BIO_free(contentbio);
     sk_X509_free(certstack);
     BIO_free(msgbio);
     BIO_free(outmsgbio);
@@ -81,8 +90,9 @@ static int test_encrypt_decrypt_aes_256_gcm(void)
 
 static int test_d2i_CMS_bio_NULL(void)
 {
-    BIO *bio;
+    BIO *bio, *content = NULL;
     CMS_ContentInfo *cms = NULL;
+    unsigned int flags = CMS_NO_SIGNER_CERT_VERIFY;
     int ret = 0;
 
     /*
@@ -281,9 +291,12 @@ static int test_d2i_CMS_bio_NULL(void)
     };
 
     ret = TEST_ptr(bio = BIO_new_mem_buf(cms_data, sizeof(cms_data)))
-          && TEST_ptr(cms = d2i_CMS_bio(bio, NULL))
-          && TEST_true(CMS_verify(cms, NULL, NULL, NULL, NULL,
-                                  CMS_NO_SIGNER_CERT_VERIFY));
+        && TEST_ptr(cms = d2i_CMS_bio(bio, NULL))
+        && TEST_true(CMS_verify(cms, NULL, NULL, NULL, NULL, flags))
+        && TEST_ptr(content =
+                    CMS_SignedData_verify(cms->d.signedData, NULL, NULL, NULL,
+                                          NULL, NULL, flags, NULL, NULL));
+    BIO_free(content);
     CMS_ContentInfo_free(cms);
     BIO_free(bio);
     return ret;

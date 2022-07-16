@@ -35,6 +35,7 @@ extern "C" {
 typedef struct CMS_EnvelopedData_st CMS_EnvelopedData;
 typedef struct CMS_ContentInfo_st CMS_ContentInfo;
 typedef struct CMS_SignerInfo_st CMS_SignerInfo;
+typedef struct CMS_SignedData_st CMS_SignedData;
 typedef struct CMS_CertificateChoices CMS_CertificateChoices;
 typedef struct CMS_RevocationInfoChoice_st CMS_RevocationInfoChoice;
 typedef struct CMS_RecipientInfo_st CMS_RecipientInfo;
@@ -51,6 +52,7 @@ typedef struct CMS_OtherKeyAttribute_st CMS_OtherKeyAttribute;
 -}
 
 DECLARE_ASN1_ITEM(CMS_EnvelopedData)
+DECLARE_ASN1_ALLOC_FUNCTIONS(CMS_SignedData)
 DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
 DECLARE_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
@@ -295,6 +297,11 @@ ASN1_OCTET_STRING *CMS_SignerInfo_get0_signature(CMS_SignerInfo *si);
 int CMS_SignerInfo_sign(CMS_SignerInfo *si);
 int CMS_SignerInfo_verify(CMS_SignerInfo *si);
 int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain);
+BIO *CMS_SignedData_verify(CMS_SignedData *sd, BIO *detached_data,
+                           STACK_OF(X509) *scerts, X509_STORE *store,
+                           STACK_OF(X509) *extra, STACK_OF(X509_CRL) *crls,
+                           unsigned int flags,
+                           OSSL_LIB_CTX *libctx, const char *propq);
 
 int CMS_add_smimecap(CMS_SignerInfo *si, STACK_OF(X509_ALGOR) *algs);
 int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,

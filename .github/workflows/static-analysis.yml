@@ -12,6 +12,9 @@ on:
   schedule:
     - cron:  '20 0 * * *'
 
+permissions:
+  contents: read
+
 jobs:
   coverity:
     runs-on: ubuntu-latest

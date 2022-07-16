@@ -1389,6 +1389,7 @@ size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub)
 
     if (pkey != NULL && evp_pkey_is_provided(pkey)) {
         size_t return_size = OSSL_PARAM_UNMODIFIED;
+        unsigned char *buf;
 
         /*
          * We know that this is going to fail, but it will give us a size
@@ -1400,14 +1401,18 @@ size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub)
         if (return_size == OSSL_PARAM_UNMODIFIED)
             return 0;
 
-        *ppub = OPENSSL_malloc(return_size);
-        if (*ppub == NULL)
+        *ppub = NULL;
+        buf = OPENSSL_malloc(return_size);
+        if (buf == NULL)
             return 0;
 
         if (!EVP_PKEY_get_octet_string_param(pkey,
                                              OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
-                                             *ppub, return_size, NULL))
+                                             buf, return_size, NULL)) {
+            OPENSSL_free(buf);
             return 0;
+        }
+        *ppub = buf;
         return return_size;
     }
 

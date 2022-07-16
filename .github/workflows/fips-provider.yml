@@ -8,6 +8,9 @@
 name: Provider compat
 on: [push]
 
+permissions:
+  contents: read
+
 jobs:
   fips-provider-30:
     runs-on: ubuntu-latest
