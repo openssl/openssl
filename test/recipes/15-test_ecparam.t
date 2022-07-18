@@ -25,6 +25,10 @@ my @valid = glob(data_file("valid", "*.pem"));
 my @noncanon = glob(data_file("noncanon", "*.pem"));
 my @invalid = glob(data_file("invalid", "*.pem"));
 
+if (disabled("sm2")) {
+    @valid = grep { !/sm2-.*\.pem/} @valid;
+}
+
 plan tests => 12;
 
 sub checkload {
