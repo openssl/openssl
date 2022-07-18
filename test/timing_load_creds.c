@@ -5,9 +5,6 @@
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
- *
- * I compiled this in the source tree this way:
- *      gcc -g -Iinclude a.c libcrypto.a -ldl -lpthread
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +17,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-static char *prog = "./a.out";
+static char *prog;
 
 static void readx509(const char *contents, int size)
 {
