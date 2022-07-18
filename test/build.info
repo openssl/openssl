@@ -37,7 +37,7 @@ IF[{- !$disabled{tests} -}]
           sanitytest rsa_complex exdatatest bntest \
           ecstresstest gmdifftest pbelutest \
           destest mdc2test sha_test \
-          exptest pbetest localetest evp_pkey_ctx_new_from_name\
+          exptest pbetest localetest evp_pkey_ctx_new_from_name \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test evp_libctx_test ossl_store_test \
           v3nametest v3ext punycode_test \
@@ -922,6 +922,13 @@ ENDIF
   SOURCE[build_wincrypt_test]=build_wincrypt_test.c
   INCLUDE[build_wincrypt_test]=../include
   DEPEND[build_wincrypt_test]=../libssl ../libcrypto
+
+  IF[{- !$disabled{shared} -}]
+    PROGRAMS{noinst}=timing_load_creds
+    SOURCE[timing_load_creds]=timing_load_creds.c
+    INCLUDE[timing_load_creds]=../include
+    DEPEND[timing_load_creds]=../libcrypto.a
+  ENDIF
 
 {-
    use File::Spec::Functions;
