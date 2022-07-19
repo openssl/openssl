@@ -292,10 +292,4 @@ int tls_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 void tls_set_plain_alerts(OSSL_RECORD_LAYER *rl, int allow);
 void tls_set_first_handshake(OSSL_RECORD_LAYER *rl, int first);
 void tls_set_max_pipelines(OSSL_RECORD_LAYER *rl, size_t max_pipelines);
-SSL3_BUFFER *tls_get0_rbuf(OSSL_RECORD_LAYER *rl);
-unsigned char *tls_get0_packet(OSSL_RECORD_LAYER *rl);
-void tls_set0_packet(OSSL_RECORD_LAYER *rl, unsigned char *packet,
-                     size_t packetlen);
-size_t tls_get_packet_length(OSSL_RECORD_LAYER *rl);
-void tls_reset_packet_length(OSSL_RECORD_LAYER *rl);
 int rlayer_setup_read_buffer(OSSL_RECORD_LAYER *rl);

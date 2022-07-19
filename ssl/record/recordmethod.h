@@ -315,20 +315,6 @@ struct ossl_record_method_st {
      * not. Default at creation of the record layer is "yes".
      */
     void (*set_in_init)(OSSL_RECORD_LAYER *rl, int in_init);
-
-    /*
-     * TODO(RECLAYER): Remove these. These function pointers are temporary hacks
-     * during the record layer refactoring. They need to be removed before the
-     * refactor is complete.
-     */
-    int (*read_n)(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
-                  int clearold, size_t *readbytes);
-    SSL3_BUFFER *(*get0_rbuf)(OSSL_RECORD_LAYER *rl);
-    unsigned char *(*get0_packet)(OSSL_RECORD_LAYER *rl);
-    void (*set0_packet)(OSSL_RECORD_LAYER *rl, unsigned char *packet,
-                        size_t packetlen);
-    size_t (*get_packet_length)(OSSL_RECORD_LAYER *rl);
-    void (*reset_packet_length)(OSSL_RECORD_LAYER *rl);
 };
 
 

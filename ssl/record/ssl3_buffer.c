@@ -34,50 +34,7 @@ void SSL3_BUFFER_release(SSL3_BUFFER *b)
     b->buf = NULL;
 }
 
-int ssl3_setup_read_buffer(SSL_CONNECTION *s)
-{
-    unsigned char *p;
-    size_t len, align = 0, headerlen;
-    SSL3_BUFFER *b;
-
-    b = s->rrlmethod->get0_rbuf(s->rrl);
-
-    if (SSL_CONNECTION_IS_DTLS(s))
-        headerlen = DTLS1_RT_HEADER_LENGTH;
-    else
-        headerlen = SSL3_RT_HEADER_LENGTH;
-
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-    align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
-#endif
-
-    if (b->buf == NULL) {
-        len = SSL3_RT_MAX_PLAIN_LENGTH
-            + SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
-#ifndef OPENSSL_NO_COMP
-        if (ssl_allow_compression(s))
-            len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
-#endif
-        if (b->default_len > len)
-            len = b->default_len;
-        if ((p = OPENSSL_malloc(len)) == NULL) {
-            /*
-             * We've got a malloc failure, and we're still initialising buffers.
-             * We assume we're so doomed that we won't even be able to send an
-             * alert.
-             */
-            SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_MALLOC_FAILURE);
-            return 0;
-        }
-        b->buf = p;
-        b->len = len;
-    }
-
-    return 1;
-}
-
-int ssl3_setup_write_buffer(SSL_CONNECTION *s, size_t numwpipes,
-                            size_t len)
+int ssl3_setup_write_buffer(SSL_CONNECTION *s, size_t numwpipes, size_t len)
 {
     unsigned char *p;
     size_t align = 0, headerlen;
@@ -142,10 +99,6 @@ int ssl3_setup_write_buffer(SSL_CONNECTION *s, size_t numwpipes,
 
 int ssl3_setup_buffers(SSL_CONNECTION *s)
 {
-    if (!ssl3_setup_read_buffer(s)) {
-        /* SSLfatal() already called */
-        return 0;
-    }
     if (!ssl3_setup_write_buffer(s, 1, 0)) {
         /* SSLfatal() already called */
         return 0;
@@ -170,17 +123,5 @@ int ssl3_release_write_buffer(SSL_CONNECTION *s)
         pipes--;
     }
     s->rlayer.numwpipes = 0;
-    return 1;
-}
-
-int ssl3_release_read_buffer(SSL_CONNECTION *s)
-{
-    SSL3_BUFFER *b;
-
-    b = s->rrlmethod->get0_rbuf(s->rrl);
-    if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
-        OPENSSL_cleanse(b->buf, b->len);
-    OPENSSL_free(b->buf);
-    b->buf = NULL;
     return 1;
 }

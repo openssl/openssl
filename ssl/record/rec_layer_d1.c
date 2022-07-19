@@ -233,14 +233,6 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     if (sc == NULL)
         return -1;
 
-    if (!SSL3_BUFFER_is_initialised(sc->rrlmethod->get0_rbuf(sc->rrl))) {
-        /* Not initialized yet */
-        if (!ssl3_setup_buffers(sc)) {
-            /* SSLfatal() already called */
-            return -1;
-        }
-    }
-
     if ((type && (type != SSL3_RT_APPLICATION_DATA) &&
          (type != SSL3_RT_HANDSHAKE)) ||
         (peek && (type != SSL3_RT_APPLICATION_DATA))) {
@@ -542,7 +534,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             }
             ssl_release_record(sc, rr);
             if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
-                if (SSL3_BUFFER_get_left(sc->rrlmethod->get0_rbuf(sc->rrl)) == 0) {
+                if (!sc->rrlmethod->unprocessed_read_pending(sc->rrl)) {
                     /* no read-ahead left? */
                     BIO *bio;
 
@@ -578,7 +570,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             return -1;
 
         if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
-            if (SSL3_BUFFER_get_left(sc->rrlmethod->get0_rbuf(sc->rrl)) == 0) {
+            if (!sc->rrlmethod->unprocessed_read_pending(sc->rrl)) {
                 /* no read-ahead left? */
                 BIO *bio;
                 /*

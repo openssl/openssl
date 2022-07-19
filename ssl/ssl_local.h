@@ -1773,6 +1773,8 @@ struct ssl_connection_st {
     OSSL_RECORD_LAYER *rrl;
     /* BIO to store data destined for the next record layer epoch */
     BIO *rrlnext;
+    /* Default read buffer length to be passed to the record layer */
+    size_t default_read_buf_len;
 
     /* Default password callback. */
     pem_password_cb *default_passwd_callback;

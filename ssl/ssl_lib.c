@@ -812,8 +812,7 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
     s->max_send_fragment = ctx->max_send_fragment;
     s->split_send_fragment = ctx->split_send_fragment;
     s->max_pipelines = ctx->max_pipelines;
-    if (ctx->default_read_buf_len > 0)
-        SSL_set_default_read_buffer_len(ssl, ctx->default_read_buf_len);
+    s->default_read_buf_len = ctx->default_read_buf_len;
 
     s->ext.debug_cb = 0;
     s->ext.debug_arg = NULL;
