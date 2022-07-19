@@ -67,7 +67,7 @@ Each nonce request will return all of the bytes.
 A context for a test generator can be obtained by calling:
 
  EVP_RAND *rand = EVP_RAND_fetch(NULL, "TEST-RAND", NULL);
- EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand);
+ EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand, NULL);
 
 =head1 EXAMPLES
 
