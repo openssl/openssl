@@ -1252,7 +1252,7 @@ int ossl_provider_deactivate(OSSL_PROVIDER *prov, int removechildren)
 
 void *ossl_provider_ctx(const OSSL_PROVIDER *prov)
 {
-    return prov->provctx != NULL ? prov->provctx : NULL;
+    return prov != NULL ? prov->provctx : NULL;
 }
 
 /*
