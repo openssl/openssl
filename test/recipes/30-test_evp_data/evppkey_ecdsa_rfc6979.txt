@@ -1,3 +1,17 @@
+#
+# Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Tests start with one of these keywords
+#       Cipher Decrypt Derive Digest Encoding KDF MAC PBE
+#       PrivPubKeyPair Sign Verify VerifyRecover
+# and continue until a blank line. Lines starting with a pound sign are ignored.
+
+
 Title = RFC 6979 P-192 deterministic ECDSA tests
 
 PrivateKey=P-192_PRIV
@@ -2791,5 +2805,3 @@ Key = B-571_PUB
 Input = "test"
 Output = 308194024802AA1888EAB05F7B00B6A784C4F7081D2C833D50794D9FEAF6E22B8BE728A2A90BFCABDC803162020AA629718295A1489EE7ED0ECB8AAA197B9BDFC49D18DDD78FC85A48F9715544024800AA5371FE5CA671D6ED9665849C37F394FED85D51FEF72DA2B5F28EDFB2C6479CA63320C19596F5E1101988E2C619E302DD05112F47E8823040CE540CD3E90DCF41DBC461744EE8
 Result = VERIFY_ERROR
-
-# tests: 465

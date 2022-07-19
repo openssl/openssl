@@ -26,6 +26,7 @@ my $no_des = disabled("des");
 my $no_dh = disabled("dh");
 my $no_dsa = disabled("dsa");
 my $no_ec = disabled("ec");
+my $no_ec2m = disabled("ec2m");
 my $no_sm2 = disabled("sm2");
 my $no_siv = disabled("siv");
 
@@ -117,10 +118,11 @@ my @defltfiles = qw(
                      evppbe_pkcs12.txt
                      evppkey_kdf_scrypt.txt
                      evppkey_kdf_tls1_prf.txt
-                     evppkey_rfc6979.txt
                      evppkey_rsa.txt
                     );
 push @defltfiles, qw(evppkey_brainpool.txt) unless $no_ec;
+push @defltfiles, qw(evppkey_ecdsa_rfc6979.txt) unless $no_ec;
+push @defltfiles, qw(evppkey_dsa_rfc6979.txt) unless $no_dsa;
 push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;
 
