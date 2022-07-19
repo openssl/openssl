@@ -63,7 +63,7 @@ does not.
 A context for CTR DRBG can be obtained by calling:
 
  EVP_RAND *rand = EVP_RAND_fetch(NULL, "CTR-DRBG", NULL);
- EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand);
+ EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand, NULL);
 
 =head1 EXAMPLES
 
