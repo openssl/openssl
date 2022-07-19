@@ -714,11 +714,8 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
             goto bad_form;
         }
 
-        if ((utype == V_ASN1_BIT_STRING) && no_unused) {
-            atmp->value.asn1_string->flags
-                &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
-            atmp->value.asn1_string->flags |= ASN1_STRING_FLAG_BITS_LEFT;
-        }
+        if ((utype == V_ASN1_BIT_STRING) && no_unused)
+            ossl_asn1_string_set_bits_left(atmp->value.asn1_string, 0);
 
         break;
 

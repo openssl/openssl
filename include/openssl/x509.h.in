@@ -1072,6 +1072,8 @@ int PKCS8_pkey_add1_attr_by_OBJ(PKCS8_PRIV_KEY_INFO *p8, const ASN1_OBJECT *obj,
                                 int type, const unsigned char *bytes, int len);
 
 
+void X509_PUBKEY_set0_public_key(X509_PUBKEY *pub,
+                                 unsigned char *penc, int penclen);
 int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj,
                            int ptype, void *pval,
                            unsigned char *penc, int penclen);

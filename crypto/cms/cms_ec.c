@@ -12,6 +12,7 @@
 #include <openssl/err.h>
 #include <openssl/decoder.h>
 #include "internal/sizes.h"
+#include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "cms_local.h"
 
@@ -277,8 +278,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 
         penclen = EVP_PKEY_get1_encoded_public_key(pkey, &penc);
         ASN1_STRING_set0(pubkey, penc, penclen);
-        pubkey->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
-        pubkey->flags |= ASN1_STRING_FLAG_BITS_LEFT;
+        ossl_asn1_string_set_bits_left(pubkey, 0);
 
         penc = NULL;
         (void)X509_ALGOR_set0(talg, OBJ_nid2obj(NID_X9_62_id_ecPublicKey),
