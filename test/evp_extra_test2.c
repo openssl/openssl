@@ -346,12 +346,9 @@ static int test_dh_tofrom_data_select(void)
           && TEST_int_gt(EVP_PKEY_generate(gctx, &key), 0)
           && TEST_true(do_pkey_tofrom_data_select(key, "DHX"));
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-    if (key != NULL) {
-        dhkey = EVP_PKEY_get0_DH(key);
-        ret = ret && TEST_ptr(dhkey)
-                  && TEST_ptr(privkey = DH_get0_priv_key(dhkey))
-                  && TEST_int_le(BN_num_bits(privkey), 225);
-    }
+    ret = ret && TEST_ptr(dhkey = EVP_PKEY_get0_DH(key))
+              && TEST_ptr(privkey = DH_get0_priv_key(dhkey))
+              && TEST_int_le(BN_num_bits(privkey), 225);
 # endif
     EVP_PKEY_free(key);
     EVP_PKEY_CTX_free(gctx);
