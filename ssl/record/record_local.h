@@ -59,10 +59,8 @@ void ssl3_record_sequence_update(unsigned char *seq);
 void SSL3_BUFFER_clear(SSL3_BUFFER *b);
 void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, size_t n);
 void SSL3_BUFFER_release(SSL3_BUFFER *b);
-__owur int ssl3_setup_read_buffer(SSL_CONNECTION *s);
 __owur int ssl3_setup_write_buffer(SSL_CONNECTION *s, size_t numwpipes,
                                    size_t len);
-int ssl3_release_read_buffer(SSL_CONNECTION *s);
 int ssl3_release_write_buffer(SSL_CONNECTION *s);
 
 /* Macros/functions provided by the SSL3_RECORD component */

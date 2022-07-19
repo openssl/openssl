@@ -545,17 +545,5 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_set_plain_alerts,
     tls_set_first_handshake,
     tls_set_max_pipelines,
-    NULL,
-
-    /*
-     * TODO(RECLAYER): Remove these. These function pointers are temporary hacks
-     * during the record layer refactoring. They need to be removed before the
-     * refactor is complete.
-     */
-    tls_default_read_n,
-    tls_get0_rbuf,
-    tls_get0_packet,
-    tls_set0_packet,
-    tls_get_packet_length,
-    tls_reset_packet_length
+    NULL
 };

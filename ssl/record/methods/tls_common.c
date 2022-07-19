@@ -149,11 +149,6 @@ static int rlayer_release_read_buffer(OSSL_RECORD_LAYER *rl)
     return 1;
 }
 
-void tls_reset_packet_length(OSSL_RECORD_LAYER *rl)
-{
-    rl->packet_length = 0;
-}
-
 /*
  * Return values are as per SSL_read()
  */
@@ -611,7 +606,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
         num_recs++;
 
         /* we have pulled in a full packet so zero things */
-        tls_reset_packet_length(rl);
+        rl->packet_length = 0;
         rl->is_first_record = 0;
     } while (num_recs < max_recs
              && thisrr->type == SSL3_RT_APPLICATION_DATA
@@ -1055,6 +1050,12 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         goto err;
     }
 
+    p = OSSL_PARAM_locate_const(options, OSSL_LIBSSL_RECORD_LAYER_READ_BUFFER_LEN);
+    if (p != NULL && !OSSL_PARAM_get_size_t(p, &rl->rbuf.default_len)) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
+        goto err;
+    }
+
     /* Loop through all the settings since they must all be understood */
     for (p = settings; p->key != NULL; p++) {
         if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM) == 0) {
@@ -1347,28 +1348,6 @@ void tls_set_max_pipelines(OSSL_RECORD_LAYER *rl, size_t max_pipelines)
         rl->read_ahead = 1;
 }
 
-SSL3_BUFFER *tls_get0_rbuf(OSSL_RECORD_LAYER *rl)
-{
-    return &rl->rbuf;
-}
-
-unsigned char *tls_get0_packet(OSSL_RECORD_LAYER *rl)
-{
-    return rl->packet;
-}
-
-void tls_set0_packet(OSSL_RECORD_LAYER *rl, unsigned char *packet,
-                     size_t packetlen)
-{
-    rl->packet = packet;
-    rl->packet_length = packetlen;
-}
-
-size_t tls_get_packet_length(OSSL_RECORD_LAYER *rl)
-{
-    return rl->packet_length;
-}
-
 const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_new_record_layer,
     tls_free,
@@ -1389,17 +1368,5 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_set_plain_alerts,
     tls_set_first_handshake,
     tls_set_max_pipelines,
-    NULL,
-
-    /*
-     * TODO(RECLAYER): Remove these. These function pointers are temporary hacks
-     * during the record layer refactoring. They need to be removed before the
-     * refactor is complete.
-     */
-    tls_default_read_n,
-    tls_get0_rbuf,
-    tls_get0_packet,
-    tls_set0_packet,
-    tls_get_packet_length,
-    tls_reset_packet_length
+    NULL
 };

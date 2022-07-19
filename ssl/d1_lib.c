@@ -444,8 +444,8 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned char seq[SEQ_NUM_SIZE];
     const unsigned char *data;
-    unsigned char *buf, *wbuf;
-    size_t fragoff, fraglen, msglen, reclen, align = 0;
+    unsigned char *buf = NULL, *wbuf;
+    size_t fragoff, fraglen, msglen;
     unsigned int rectype, versmajor, msgseq, msgtype, clientvers, cookielen;
     BIO *rbio, *wbio;
     BIO_ADDR *tmpclient = NULL;
@@ -490,21 +490,12 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
         /* ERR_raise() already called */
         return -1;
     }
-    buf = s->rrlmethod->get0_rbuf(s->rrl)->buf;
+    buf = OPENSSL_malloc(DTLS1_RT_HEADER_LENGTH + SSL3_RT_MAX_PLAIN_LENGTH);
+    if (buf == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
     wbuf = RECORD_LAYER_get_wbuf(&s->rlayer)[0].buf;
-#if defined(SSL3_ALIGN_PAYLOAD)
-# if SSL3_ALIGN_PAYLOAD != 0
-    /*
-     * Using SSL3_RT_HEADER_LENGTH here instead of DTLS1_RT_HEADER_LENGTH for
-     * consistency with read_n. In practice it should make no difference
-     * for sensible values of SSL3_ALIGN_PAYLOAD because the difference between
-     * SSL3_RT_HEADER_LENGTH and DTLS1_RT_HEADER_LENGTH is exactly 8
-     */
-    align = (size_t)buf + SSL3_RT_HEADER_LENGTH;
-    align = SSL3_ALIGN_PAYLOAD - 1 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
-# endif
-#endif
-    buf += align;
 
     do {
         /* Get a packet */
@@ -517,12 +508,14 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
                 /* Non-blocking IO */
                 goto end;
             }
-            return -1;
+            ret = -1;
+            goto end;
         }
 
         if (!PACKET_buf_init(&pkt, buf, n)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-            return -1;
+            ret = -1;
+            goto end;
         }
 
         /*
@@ -572,7 +565,6 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             ERR_raise(ERR_LIB_SSL, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
-        reclen = PACKET_remaining(&msgpkt);
         /*
          * We allow data remaining at the end of the packet because there could
          * be a second record (but we ignore it)
@@ -666,7 +658,8 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             if (ssl->ctx->app_verify_cookie_cb == NULL) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_NO_VERIFY_COOKIE_CALLBACK);
                 /* This is fatal */
-                return -1;
+                ret = -1;
+                goto end;
             }
             if (ssl->ctx->app_verify_cookie_cb(ssl, PACKET_data(&cookiepkt),
                     (unsigned int)PACKET_remaining(&cookiepkt)) == 0) {
@@ -698,7 +691,8 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
                 cookielen > 255) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
                 /* This is fatal */
-                return -1;
+                ret = -1;
+                goto end;
             }
 
             /*
@@ -762,7 +756,8 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
                 ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
                 WPACKET_cleanup(&wpkt);
                 /* This is fatal */
-                return -1;
+                ret = -1;
+                goto end;
             }
 
             /*
@@ -805,7 +800,8 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
                      */
                     goto end;
                 }
-                return -1;
+                ret = -1;
+                goto end;
             }
 
             if (BIO_flush(wbio) <= 0) {
@@ -816,7 +812,8 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
                      */
                     goto end;
                 }
-                return -1;
+                ret = -1;
+                goto end;
             }
         }
     } while (next != LISTEN_SUCCESS);
@@ -847,14 +844,32 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     if (BIO_dgram_get_peer(rbio, client) <= 0)
         BIO_ADDR_clear(client);
 
-    /* Buffer the record in the processed_rcds queue */
-    /* TODO(RECLAYER): This is nasty and reaches inside the record layer. FIXME */
-    if (!dtls_buffer_listen_record(s->rrl, reclen, seq, align))
-        return -1;
+    /* Buffer the record for use by the record layer */
+    if (BIO_write(s->rrlnext, buf, n) != n) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ret = -1;
+        goto end;
+    }
+
+    /*
+     * Reset the record layer - but this time we can use the record we just
+     * buffered in s->rrlnext
+     */
+    if (!ssl_set_new_record_layer(s,
+                                  DTLS_ANY_VERSION,
+                                  OSSL_RECORD_DIRECTION_READ,
+                                  OSSL_RECORD_PROTECTION_LEVEL_NONE,
+                                  NULL, 0, NULL, 0, NULL,  0, NULL, 0,
+                                  NID_undef, NULL, NULL)) {
+        /* SSLfatal already called */
+        ret = -1;
+        goto end;
+    }
 
     ret = 1;
  end:
     BIO_ADDR_free(tmpclient);
+    OPENSSL_free(buf);
     return ret;
 }
 #endif

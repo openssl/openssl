@@ -221,7 +221,6 @@ typedef struct ssl_mac_buf_st SSL_MAC_BUF;
 #define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
 #define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
 #define RECORD_LAYER_get_packet(rl)             ((rl)->packet)
-#define RECORD_LAYER_get_packet_length(rl)      ((rl)->packet_length)
 #define RECORD_LAYER_add_packet_length(rl, inc) ((rl)->packet_length += (inc))
 #define DTLS_RECORD_LAYER_get_w_epoch(rl)       ((rl)->d->w_epoch)
 #define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
@@ -274,8 +273,6 @@ __owur int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
 int do_dtls1_write(SSL_CONNECTION *s, int type, const unsigned char *buf,
                    size_t len, int create_empty_fragment, size_t *written);
 void dtls1_reset_seq_numbers(SSL_CONNECTION *s, int rw);
-int dtls_buffer_listen_record(OSSL_RECORD_LAYER *rl, size_t len,
-                              unsigned char *seq, size_t off);
 void ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr);
 
 # define HANDLE_RLAYER_RETURN(s, ret) \

@@ -68,8 +68,6 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
 
 void RECORD_LAYER_release(RECORD_LAYER *rl)
 {
-    if (SSL3_BUFFER_is_initialised(&rl->rbuf))
-        ssl3_release_read_buffer(rl->s);
     if (rl->numwpipes > 0)
         ssl3_release_write_buffer(rl->s);
     SSL3_RECORD_release(rl->rrec, SSL_MAX_PIPELINES);
@@ -112,9 +110,6 @@ size_t ssl3_pending(const SSL *s)
     if (sc == NULL)
         return 0;
 
-    if (sc->rlayer.rstate == SSL_ST_READ_BODY)
-        return 0;
-
     if (SSL_CONNECTION_IS_DTLS(sc)) {
         TLS_RECORD *rdata;
         pitem *item, *iter;
@@ -132,6 +127,8 @@ size_t ssl3_pending(const SSL *s)
         num += sc->rlayer.tlsrecs[i].length;
     }
 
+    num += sc->rrlmethod->app_data_pending(sc->rrl);
+
     return num;
 }
 
@@ -146,7 +143,7 @@ void SSL_set_default_read_buffer_len(SSL *s, size_t len)
 
     if (sc == NULL)
         return;
-    SSL3_BUFFER_set_default_len(sc->rrlmethod->get0_rbuf(sc->rrl), len);
+    sc->default_read_buf_len = len;
 }
 
 const char *SSL_rstate_string_long(const SSL *s)
@@ -1797,7 +1794,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                              int mactype, const EVP_MD *md,
                              const SSL_COMP *comp)
 {
-    OSSL_PARAM options[4], *opts = options;
+    OSSL_PARAM options[5], *opts = options;
     OSSL_PARAM settings[6], *set =  settings;
     const OSSL_RECORD_METHOD *origmeth = s->rrlmethod;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
@@ -1827,6 +1824,8 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                                           &s->options);
     *opts++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE,
                                           &s->mode);
+    *opts++ = OSSL_PARAM_construct_size_t(OSSL_LIBSSL_RECORD_LAYER_READ_BUFFER_LEN,
+                                          &s->default_read_buf_len);
     *opts++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD,
                                        &s->rlayer.read_ahead);
     *opts = OSSL_PARAM_construct_end();

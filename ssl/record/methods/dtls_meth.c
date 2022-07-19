@@ -370,33 +370,6 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
     return 0;
 }
 
-/* TODO(RECLAYER): FIXME. This is called directly from d1_lib.c. It should not be */
-int dtls_buffer_listen_record(OSSL_RECORD_LAYER *rl, size_t len,
-                              unsigned char *seq, size_t off)
-{
-    SSL3_RECORD *rr;
-
-    rr = &rl->rrec[0];
-    memset(rr, 0, sizeof(SSL3_RECORD));
-
-    rr->length = len;
-    rr->type = SSL3_RT_HANDSHAKE;
-    memcpy(rr->seq_num, seq, sizeof(rr->seq_num));
-    rr->off = off;
-
-    rl->packet = rl->rbuf.buf;
-    rl->packet_length = DTLS1_RT_HEADER_LENGTH + len;
-    rr->data = rl->packet + DTLS1_RT_HEADER_LENGTH;
-
-    if (dtls_rlayer_buffer_record(rl, &(rl->processed_rcds),
-                                  SSL3_RECORD_get_seq_num(rr)) <= 0) {
-        /* SSLfatal() already called */
-        return 0;
-    }
-
-    return 1;
-}
-
 /*-
  * Call this to get a new input record.
  * It will return <= 0 if more data is needed, normally due to an error
@@ -422,6 +395,13 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     rl->num_released = 0;
 
     rr = rl->rrec;
+
+    if (rl->rbuf.buf == NULL) {
+        if (!rlayer_setup_read_buffer(rl)) {
+            /* RLAYERfatal() already called */
+            return OSSL_RECORD_RETURN_FATAL;
+        }
+    }
 
  again:
     /* if we're renegotiating, then there may be buffered records */
@@ -749,17 +729,5 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     NULL,
     tls_set_first_handshake,
     tls_set_max_pipelines,
-    dtls_set_in_init,
-
-    /*
-     * TODO(RECLAYER): Remove these. These function pointers are temporary hacks
-     * during the record layer refactoring. They need to be removed before the
-     * refactor is complete.
-     */
-    tls_default_read_n,
-    tls_get0_rbuf,
-    tls_get0_packet,
-    tls_set0_packet,
-    tls_get_packet_length,
-    tls_reset_packet_length
+    dtls_set_in_init
 };
