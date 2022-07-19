@@ -31,25 +31,26 @@ sub AUTOLOAD()		# thunk [simplified] x86-style perlasm
 }
 
 my ($outp,$inp,$len,$key,$ctr) = map("x$_",(0..4));
-my ($veclen_w,$veclen,$blocks) = ("w5","x5","x6");
-my ($sve2flag) = ("x7");
-my ($wctr, $xctr) = ("w8", "x8");
-my ($tmpw0,$tmp0,$tmpw1,$tmp1) = ("w9","x9", "w10","x10");
-my ($tmp,$tmpw) = ("x10", "w10");
-my ($counter) = ("x11");
-my @K=map("x$_",(12..15,19..22));
-my @KL=map("w$_",(12..15,19..22));
-my @mx=map("z$_",(0..15));
+my ($veclen) = ("x5");
+my ($counter) = ("x6");
+my ($counter_w) = ("w6");
+my @xx=(7..22);
+my @sxx=map("x$_",@xx);
+my @sx=map("w$_",@xx);
+my @K=map("x$_",(23..30));
+my @elem=(0,4,8,12,1,5,9,13,2,6,10,14,3,7,11,15);
+my @KL=map("w$_",(23..30));
+my @mx=map("z$_",@elem);
+my @vx=map("v$_",@elem);
 my ($xa0,$xa1,$xa2,$xa3, $xb0,$xb1,$xb2,$xb3,
     $xc0,$xc1,$xc2,$xc3, $xd0,$xd1,$xd2,$xd3) = @mx;
 my ($zctr) = ("z16");
-my @xt=map("z$_",(17..24));
+my @tt=(17..24);
+my @xt=map("z$_",@tt);
+my @vt=map("v$_",@tt);
 my @perm=map("z$_",(25..30));
 my ($rot8) = ("z31");
-my ($xt0,$xt1,$xt2,$xt3,$xt4,$xt5,$xt6,$xt7)=@xt;
-# in SVE mode we can only use bak0 ~ bak9 (the rest used as scratch register)
-# in SVE2 we use all 15 backup register
-my ($bak0,$bak1,$bak2,$bak3,$bak4,$bak5,$bak6,$bak7,$bak8,$bak9,$bak10,$bak11,$bak13,$bak14,$bak15)=(@perm[0],@perm[1],@perm[2],@perm[3],@perm[4],@perm[5],$xt4,$xt5,$xt6,$xt7,$xt0,$xt1,$xt2,$xt3,$rot8);
+my @bak=(@perm[0],@perm[1],@perm[2],@perm[3],@perm[4],@perm[5],@xt[4],@xt[5],@xt[6],@xt[7],@xt[0],@xt[1],$zctr,@xt[2],@xt[3],$rot8);
 my $debug_encoder=0;
 
 sub SVE_ADD() {
@@ -58,6 +59,9 @@ sub SVE_ADD() {
 
 $code.=<<___;
 	add	@mx[$x].s,@mx[$x].s,@mx[$y].s
+	.if mixin == 1
+		add	@sx[$x],@sx[$x],@sx[$y]
+	.endif
 ___
 	if (@_) {
 		&SVE_ADD(@_);
@@ -70,6 +74,9 @@ sub SVE_EOR() {
 
 $code.=<<___;
 	eor	@mx[$x].d,@mx[$x].d,@mx[$y].d
+	.if mixin == 1
+		eor	@sx[$x],@sx[$x],@sx[$y]
+	.endif
 ___
 	if (@_) {
 		&SVE_EOR(@_);
@@ -96,6 +103,9 @@ sub SVE_LSR() {
 
 $code.=<<___;
 	lsr	@mx[$x].s,@mx[$x].s,$bits
+	.if mixin == 1
+		ror	@sx[$x],@sx[$x],$bits
+	.endif
 ___
 	if (@_) {
 		&SVE_LSR($bits,@_);
@@ -120,6 +130,9 @@ sub SVE_REV16() {
 
 $code.=<<___;
 	revh	@mx[$x].s,p0/m,@mx[$x].s
+	.if mixin == 1
+		ror	@sx[$x],@sx[$x],#16
+	.endif
 ___
 	if (@_) {
 		&SVE_REV16(@_);
@@ -131,6 +144,9 @@ sub SVE_ROT8() {
 
 $code.=<<___;
 	tbl	@mx[$x].b,{@mx[$x].b},$rot8.b
+	.if mixin == 1
+		ror	@sx[$x],@sx[$x],#24
+	.endif
 ___
 	if (@_) {
 		&SVE_ROT8(@_);
@@ -144,126 +160,129 @@ sub SVE2_XAR() {
 	my $rbits = 32-$bits;
 
 $code.=<<___;
+	.if mixin == 1
+		eor	@sx[$x],@sx[$x],@sx[$y]
+	.endif
 	xar	@mx[$x].s,@mx[$x].s,@mx[$y].s,$rbits
+	.if mixin == 1
+		ror	@sx[$x],@sx[$x],$rbits
+	.endif
 ___
 	if (@_) {
 		&SVE2_XAR($bits,@_);
 	}
 }
 
-sub SVE_QR_GROUP() {
-	my $have_sve2 = shift;
+sub SVE2_QR_GROUP() {
 	my ($a0,$b0,$c0,$d0,$a1,$b1,$c1,$d1,$a2,$b2,$c2,$d2,$a3,$b3,$c3,$d3) = @_;
 
 	&SVE_ADD($a0,$b0,$a1,$b1,$a2,$b2,$a3,$b3);
-	if ($have_sve2 == 0) {
-		&SVE_EOR($d0,$a0,$d1,$a1,$d2,$a2,$d3,$a3);
-		&SVE_REV16($d0,$d1,$d2,$d3);
-	} else {
-		&SVE2_XAR(16,$d0,$a0,$d1,$a1,$d2,$a2,$d3,$a3);
-	}
+	&SVE2_XAR(16,$d0,$a0,$d1,$a1,$d2,$a2,$d3,$a3);
 
 	&SVE_ADD($c0,$d0,$c1,$d1,$c2,$d2,$c3,$d3);
-	if ($have_sve2 == 0) {
-		&SVE_EOR($b0,$c0,$b1,$c1,$b2,$c2,$b3,$c3);
-		&SVE_LSL(12,0,$b0,$b1,$b2,$b3);
-		&SVE_LSR(20,$b0,$b1,$b2,$b3);
-		&SVE_ORR(0,$b0,$b1,$b2,$b3,);
-	} else {
-		&SVE2_XAR(12,$b0,$c0,$b1,$c1,$b2,$c2,$b3,$c3);
-	}
+	&SVE2_XAR(12,$b0,$c0,$b1,$c1,$b2,$c2,$b3,$c3);
 
 	&SVE_ADD($a0,$b0,$a1,$b1,$a2,$b2,$a3,$b3);
-	if ($have_sve2 == 0) {
-		&SVE_EOR($d0,$a0,$d1,$a1,$d2,$a2,$d3,$a3);
-		&SVE_ROT8($d0,$d1,$d2,$d3);
-	} else {
-		&SVE2_XAR(8,$d0,$a0,$d1,$a1,$d2,$a2,$d3,$a3);
-	}
+	&SVE2_XAR(8,$d0,$a0,$d1,$a1,$d2,$a2,$d3,$a3);
 
 	&SVE_ADD($c0,$d0,$c1,$d1,$c2,$d2,$c3,$d3);
-	if ($have_sve2 == 0) {
-		&SVE_EOR($b0,$c0,$b1,$c1,$b2,$c2,$b3,$c3);
-		&SVE_LSL(7,0,$b0,$b1,$b2,$b3);
-		&SVE_LSR(25,$b0,$b1,$b2,$b3);
-		&SVE_ORR(0,$b0,$b1,$b2,$b3);
-	} else {
-		&SVE2_XAR(7,$b0,$c0,$b1,$c1,$b2,$c2,$b3,$c3);
-	}
+	&SVE2_XAR(7,$b0,$c0,$b1,$c1,$b2,$c2,$b3,$c3);
+}
+
+sub SVE_QR_GROUP() {
+	my ($a0,$b0,$c0,$d0,$a1,$b1,$c1,$d1,$a2,$b2,$c2,$d2,$a3,$b3,$c3,$d3) = @_;
+
+	&SVE_ADD($a0,$b0,$a1,$b1,$a2,$b2,$a3,$b3);
+	&SVE_EOR($d0,$a0,$d1,$a1,$d2,$a2,$d3,$a3);
+	&SVE_REV16($d0,$d1,$d2,$d3);
+
+	&SVE_ADD($c0,$d0,$c1,$d1,$c2,$d2,$c3,$d3);
+	&SVE_EOR($b0,$c0,$b1,$c1,$b2,$c2,$b3,$c3);
+	&SVE_LSL(12,0,$b0,$b1,$b2,$b3);
+	&SVE_LSR(20,$b0,$b1,$b2,$b3);
+	&SVE_ORR(0,$b0,$b1,$b2,$b3);
+
+	&SVE_ADD($a0,$b0,$a1,$b1,$a2,$b2,$a3,$b3);
+	&SVE_EOR($d0,$a0,$d1,$a1,$d2,$a2,$d3,$a3);
+	&SVE_ROT8($d0,$d1,$d2,$d3);
+
+	&SVE_ADD($c0,$d0,$c1,$d1,$c2,$d2,$c3,$d3);
+	&SVE_EOR($b0,$c0,$b1,$c1,$b2,$c2,$b3,$c3);
+	&SVE_LSL(7,0,$b0,$b1,$b2,$b3);
+	&SVE_LSR(25,$b0,$b1,$b2,$b3);
+	&SVE_ORR(0,$b0,$b1,$b2,$b3);
 }
 
 sub SVE_INNER_BLOCK() {
 $code.=<<___;
 	mov	$counter,#10
-1:
+10:
 .align	5
 ___
-	&SVE_QR_GROUP(0,0,4,8,12,1,5,9,13,2,6,10,14,3,7,11,15);
-	&SVE_QR_GROUP(0,0,5,10,15,1,6,11,12,2,7,8,13,3,4,9,14);
+	&SVE_QR_GROUP(0,4,8,12,1,5,9,13,2,6,10,14,3,7,11,15);
+	&SVE_QR_GROUP(0,5,10,15,1,6,11,12,2,7,8,13,3,4,9,14);
 $code.=<<___;
-	subs	$counter,$counter,1
-	b.ne	1b
+	sub	$counter,$counter,1
+	cbnz	$counter,10b
 ___
 }
 
 sub SVE2_INNER_BLOCK() {
 $code.=<<___;
 	mov	$counter,#10
-1:
+10:
 .align	5
 ___
-	&SVE_QR_GROUP(1,0,4,8,12,1,5,9,13,2,6,10,14,3,7,11,15);
-	&SVE_QR_GROUP(1,0,5,10,15,1,6,11,12,2,7,8,13,3,4,9,14);
+	&SVE2_QR_GROUP(0,4,8,12,1,5,9,13,2,6,10,14,3,7,11,15);
+	&SVE2_QR_GROUP(0,5,10,15,1,6,11,12,2,7,8,13,3,4,9,14);
 $code.=<<___;
-	subs	$counter,$counter,1
-	b.ne	1b
+	sub	$counter,$counter,1
+	cbnz	$counter,10b
 ___
+}
+
+sub load_regs() {
+	my $offset = shift;
+	my $reg = shift;
+	my $next_offset = $offset + 1;
+$code.=<<___;
+	ld1w	{$reg.s},p0/z,[$inp,#$offset,MUL VL]
+___
+	if (@_) {
+		&load_regs($next_offset, @_);
+	} else {
+$code.=<<___;
+	addvl	$inp,$inp,$next_offset
+___
+	}
 }
 
 sub load() {
-	my $x0 = shift;
-	my $x1 = shift;
-	my $x2 = shift;
-	my $x3 = shift;
-	my $x4 = shift;
-	my $x5 = shift;
-	my $x6 = shift;
-	my $x7 = shift;
+	if (@_) {
+		&load_regs(0, @_);
+	}
+}
 
+sub store_regs() {
+	my $offset = shift;
+	my $reg = shift;
+	my $next_offset = $offset + 1;
 $code.=<<___;
-	ld1w	{$x0.s},p0/z,[$inp]
-	ld1w	{$x1.s},p0/z,[$inp, #1, MUL VL]
-	ld1w	{$x2.s},p0/z,[$inp, #2, MUL VL]
-	ld1w	{$x3.s},p0/z,[$inp, #3, MUL VL]
-	ld1w	{$x4.s},p0/z,[$inp, #4, MUL VL]
-	ld1w	{$x5.s},p0/z,[$inp, #5, MUL VL]
-	ld1w	{$x6.s},p0/z,[$inp, #6, MUL VL]
-	ld1w	{$x7.s},p0/z,[$inp, #7, MUL VL]
-	addvl	$inp,$inp,#8
+	st1w	{$reg.s},p0,[$outp,#$offset,MUL VL]
 ___
+	if (@_) {
+		&store_regs($next_offset, @_);
+	} else {
+$code.=<<___;
+	addvl	$outp,$outp,$next_offset
+___
+	}
 }
 
 sub store() {
-	my $x0 = shift;
-	my $x1 = shift;
-	my $x2 = shift;
-	my $x3 = shift;
-	my $x4 = shift;
-	my $x5 = shift;
-	my $x6 = shift;
-	my $x7 = shift;
-
-$code.=<<___;
-	st1w	{$x0.s},p0,[$outp]
-	st1w	{$x1.s},p0,[$outp, #1, MUL VL]
-	st1w	{$x2.s},p0,[$outp, #2, MUL VL]
-	st1w	{$x3.s},p0,[$outp, #3, MUL VL]
-	st1w	{$x4.s},p0,[$outp, #4, MUL VL]
-	st1w	{$x5.s},p0,[$outp, #5, MUL VL]
-	st1w	{$x6.s},p0,[$outp, #6, MUL VL]
-	st1w	{$x7.s},p0,[$outp, #7, MUL VL]
-	addvl	$outp,$outp,#8
-___
+	if (@_) {
+		&store_regs(0, @_);
+	}
 }
 
 sub transpose() {
@@ -271,227 +290,422 @@ sub transpose() {
 	my $xb = shift;
 	my $xc = shift;
 	my $xd = shift;
-
+	my $xa1 = shift;
+	my $xb1 = shift;
+	my $xc1 = shift;
+	my $xd1 = shift;
 $code.=<<___;
-	zip1	$xt0.s,$xa.s,$xb.s
-	zip2	$xt1.s,$xa.s,$xb.s
-	zip1	$xt2.s,$xc.s,$xd.s
-	zip2	$xt3.s,$xc.s,$xd.s
-	zip1	$xa.d,$xt0.d,$xt2.d
-	zip2	$xb.d,$xt0.d,$xt2.d
-	zip1	$xc.d,$xt1.d,$xt3.d
-	zip2	$xd.d,$xt1.d,$xt3.d
+	zip1	@xt[0].s,$xa.s,$xb.s
+	zip2	@xt[1].s,$xa.s,$xb.s
+	zip1	@xt[2].s,$xc.s,$xd.s
+	zip2	@xt[3].s,$xc.s,$xd.s
+
+	zip1	@xt[4].s,$xa1.s,$xb1.s
+	zip2	@xt[5].s,$xa1.s,$xb1.s
+	zip1	@xt[6].s,$xc1.s,$xd1.s
+	zip2	@xt[7].s,$xc1.s,$xd1.s
+
+	zip1	$xa.d,@xt[0].d,@xt[2].d
+	zip2	$xb.d,@xt[0].d,@xt[2].d
+	zip1	$xc.d,@xt[1].d,@xt[3].d
+	zip2	$xd.d,@xt[1].d,@xt[3].d
+
+	zip1	$xa1.d,@xt[4].d,@xt[6].d
+	zip2	$xb1.d,@xt[4].d,@xt[6].d
+	zip1	$xc1.d,@xt[5].d,@xt[7].d
+	zip2	$xd1.d,@xt[5].d,@xt[7].d
 ___
 }
 
-sub SVE_ADD_STATES() {
+sub ACCUM() {
+	my $idx0 = shift;
+	my $idx1 = $idx0 + 1;
+	my $x0 = @sx[$idx0];
+	my $xx0 = @sxx[$idx0];
+	my $x1 = @sx[$idx1];
+	my $xx1 = @sxx[$idx1];
+	my $d = $idx0/2;
+	my ($tmp,$tmpw) = ($counter,$counter_w);
+	my $bk0 = @_ ? shift : @bak[$idx0];
+	my $bk1 = @_ ? shift : @bak[$idx1];
+
 $code.=<<___;
-	lsr	$tmp1,@K[5],#32
-	dup	$xt0.s,@KL[5]
-	dup	$xt1.s,$tmpw1
-	add	@mx[0].s,@mx[0].s,$bak0.s
-	add	@mx[1].s,@mx[1].s,$bak1.s
-	add	@mx[2].s,@mx[2].s,$bak2.s
-	add	@mx[3].s,@mx[3].s,$bak3.s
-	add	@mx[4].s,@mx[4].s,$bak4.s
-	add	@mx[5].s,@mx[5].s,$bak5.s
-	add	@mx[6].s,@mx[6].s,$bak6.s
-	add	@mx[7].s,@mx[7].s,$bak7.s
-	add	@mx[8].s,@mx[8].s,$bak8.s
-	add	@mx[9].s,@mx[9].s,$bak9.s
-	lsr	$tmp0,@K[6],#32
-	dup	$xt4.s,$tmpw0
-	lsr	$tmp1,@K[7],#32
-	dup	$xt5.s,@KL[7]
-	dup	$xt6.s,$tmpw1
-	add	@mx[10].s,@mx[10].s,$xt0.s
-	add	@mx[11].s,@mx[11].s,$xt1.s
-	add	@mx[12].s,@mx[12].s,$zctr.s
-	add	@mx[13].s,@mx[13].s,$xt4.s
-	add	@mx[14].s,@mx[14].s,$xt5.s
-	add	@mx[15].s,@mx[15].s,$xt6.s
+	.if mixin == 1
+		add	@sx[$idx0],@sx[$idx0],@KL[$d]
+	.endif
+	add	@mx[$idx0].s,@mx[$idx0].s,$bk0.s
+	.if mixin == 1
+		add	@sxx[$idx1],@sxx[$idx1],@K[$d],lsr #32
+	.endif
+	add	@mx[$idx1].s,@mx[$idx1].s,$bk1.s
+	.if mixin == 1
+		add	@sxx[$idx0],@sxx[$idx0],$sxx[$idx1],lsl #32  // pack
+	.endif
 ___
 }
 
-sub SVE2_ADD_STATES() {
+sub SCA_INP() {
+	my $idx0 = shift;
+	my $idx1 = $idx0 + 2;
 $code.=<<___;
-	add	@mx[0].s,@mx[0].s,$bak0.s
-	add	@mx[1].s,@mx[1].s,$bak1.s
-	add	@mx[2].s,@mx[2].s,$bak2.s
-	add	@mx[3].s,@mx[3].s,$bak3.s
-	add	@mx[4].s,@mx[4].s,$bak4.s
-	add	@mx[5].s,@mx[5].s,$bak5.s
-	add	@mx[6].s,@mx[6].s,$bak6.s
-	add	@mx[7].s,@mx[7].s,$bak7.s
-	add	@mx[8].s,@mx[8].s,$bak8.s
-	add	@mx[9].s,@mx[9].s,$bak9.s
-	add	@mx[10].s,@mx[10].s,$bak10.s
-	add	@mx[11].s,@mx[11].s,$bak11.s
-	add	@mx[12].s,@mx[12].s,$zctr.s
-	add	@mx[13].s,@mx[13].s,$bak13.s
-	add	@mx[14].s,@mx[14].s,$bak14.s
-	add	@mx[15].s,@mx[15].s,$bak15.s
+	.if mixin == 1
+		ldp	@sxx[$idx0],@sxx[$idx1],[$inp],#16
+	.endif
+___
+}
+
+sub SVE_ACCUM_STATES() {
+	my ($tmp,$tmpw) = ($counter,$counter_w);
+
+$code.=<<___;
+	lsr	$tmp,@K[5],#32
+	dup	@bak[10].s,@KL[5]
+	dup	@bak[11].s,$tmpw
+	lsr	$tmp,@K[6],#32
+	dup	@bak[13].s,$tmpw
+	lsr	$tmp,@K[7],#32
+___
+	&ACCUM(0);
+	&ACCUM(2);
+	&SCA_INP(1);
+	&ACCUM(4);
+	&ACCUM(6);
+	&SCA_INP(5);
+	&ACCUM(8);
+	&ACCUM(10);
+	&SCA_INP(9);
+$code.=<<___;
+	dup	@bak[14].s,@KL[7]
+	dup	@bak[0].s,$tmpw	// bak[15] not available for SVE
+___
+	&ACCUM(12);
+	&ACCUM(14, @bak[14],@bak[0]);
+	&SCA_INP(13);
+}
+
+sub SVE2_ACCUM_STATES() {
+	&ACCUM(0);
+	&ACCUM(2);
+	&SCA_INP(1);
+	&ACCUM(4);
+	&ACCUM(6);
+	&SCA_INP(5);
+	&ACCUM(8);
+	&ACCUM(10);
+	&SCA_INP(9);
+	&ACCUM(12);
+	&ACCUM(14);
+	&SCA_INP(13);
+}
+
+sub SCA_EOR() {
+	my $idx0 = shift;
+	my $idx1 = $idx0 + 1;
+$code.=<<___;
+	.if mixin == 1
+		eor	@sxx[$idx0],@sxx[$idx0],@sxx[$idx1]
+	.endif
+___
+}
+
+sub SCA_SAVE() {
+	my $idx0 = shift;
+	my $idx1 = shift;
+$code.=<<___;
+	.if mixin == 1
+		stp	@sxx[$idx0],@sxx[$idx1],[$outp],#16
+	.endif
+___
+}
+
+sub SVE_VL128_TRANSFORMS() {
+	&SCA_EOR(0);
+	&SCA_EOR(2);
+	&SCA_EOR(4);
+	&transpose($xa0,$xa1,$xa2,$xa3,$xb0,$xb1,$xb2,$xb3);
+	&SCA_EOR(6);
+	&SCA_EOR(8);
+	&SCA_EOR(10);
+	&transpose($xc0,$xc1,$xc2,$xc3,$xd0,$xd1,$xd2,$xd3);
+	&SCA_EOR(12);
+	&SCA_EOR(14);
+$code.=<<___;
+	ld1	{@vt[0].4s-@vt[3].4s},[$inp],#64
+	ld1	{@vt[4].4s-@vt[7].4s},[$inp],#64
+	eor	$xa0.d,$xa0.d,@xt[0].d
+	eor	$xb0.d,$xb0.d,@xt[1].d
+	eor	$xc0.d,$xc0.d,@xt[2].d
+	eor	$xd0.d,$xd0.d,@xt[3].d
+	eor	$xa1.d,$xa1.d,@xt[4].d
+	eor	$xb1.d,$xb1.d,@xt[5].d
+	eor	$xc1.d,$xc1.d,@xt[6].d
+	eor	$xd1.d,$xd1.d,@xt[7].d
+	ld1	{@vt[0].4s-@vt[3].4s},[$inp],#64
+	ld1	{@vt[4].4s-@vt[7].4s},[$inp],#64
+___
+	&SCA_SAVE(0,2);
+$code.=<<___;
+	eor	$xa2.d,$xa2.d,@xt[0].d
+	eor	$xb2.d,$xb2.d,@xt[1].d
+___
+	&SCA_SAVE(4,6);
+$code.=<<___;
+	eor	$xc2.d,$xc2.d,@xt[2].d
+	eor	$xd2.d,$xd2.d,@xt[3].d
+___
+	&SCA_SAVE(8,10);
+$code.=<<___;
+	eor	$xa3.d,$xa3.d,@xt[4].d
+	eor	$xb3.d,$xb3.d,@xt[5].d
+___
+	&SCA_SAVE(12,14);
+$code.=<<___;
+	eor	$xc3.d,$xc3.d,@xt[6].d
+	eor	$xd3.d,$xd3.d,@xt[7].d
+	st1	{@vx[0].4s-@vx[12].4s},[$outp],#64
+	st1	{@vx[1].4s-@vx[13].4s},[$outp],#64
+	st1	{@vx[2].4s-@vx[14].4s},[$outp],#64
+	st1	{@vx[3].4s-@vx[15].4s},[$outp],#64
 ___
 }
 
 sub SVE_TRANSFORMS() {
-	&transpose($xa0,$xb0,$xc0,$xd0);
-	&transpose($xa1,$xb1,$xc1,$xd1);
-	&transpose($xa2,$xb2,$xc2,$xd2);
-	&transpose($xa3,$xb3,$xc3,$xd3);
-	&transpose($xa0,$xa1,$xa2,$xa3);
-	&transpose($xb0,$xb1,$xb2,$xb3);
-	&load($xt0,$xt1,$xt2,$xt3,$xt4,$xt5,$xt6,$xt7);
 $code.=<<___;
-	eor	$xa0.d,$xa0.d,$xt0.d
-	eor	$xa1.d,$xa1.d,$xt1.d
-	eor	$xa2.d,$xa2.d,$xt2.d
-	eor	$xa3.d,$xa3.d,$xt3.d
-	eor	$xb0.d,$xb0.d,$xt4.d
-	eor	$xb1.d,$xb1.d,$xt5.d
-	eor	$xb2.d,$xb2.d,$xt6.d
-	eor	$xb3.d,$xb3.d,$xt7.d
+#ifdef	__AARCH64EB__
+	rev	@x[0],@x[0]
+	rev	@x[2],@x[2]
+	rev	@x[4],@x[4]
+	rev	@x[6],@x[6]
+	rev	@x[8],@x[8]
+	rev	@x[10],@x[10]
+	rev	@x[12],@x[12]
+	rev	@x[14],@x[14]
+#endif
+	.if mixin == 1
+		add	@K[6],@K[6],#1
+	.endif
+	cmp	$veclen,4
+	b.ne	200f
 ___
-	&transpose($xc0,$xc1,$xc2,$xc3);
+	&SVE_VL128_TRANSFORMS();
+$code.=<<___;
+	b	210f
+200:
+___
+	&transpose($xa0,$xb0,$xc0,$xd0,$xa1,$xb1,$xc1,$xd1);
+	&SCA_EOR(0);
+	&SCA_EOR(2);
+	&transpose($xa2,$xb2,$xc2,$xd2,$xa3,$xb3,$xc3,$xd3);
+	&SCA_EOR(4);
+	&SCA_EOR(6);
+	&transpose($xa0,$xa1,$xa2,$xa3,$xb0,$xb1,$xb2,$xb3);
+	&SCA_EOR(8);
+	&SCA_EOR(10);
+	&transpose($xc0,$xc1,$xc2,$xc3,$xd0,$xd1,$xd2,$xd3);
+	&SCA_EOR(12);
+	&SCA_EOR(14);
+	&load(@xt[0],@xt[1],@xt[2],@xt[3],@xt[4],@xt[5],@xt[6],@xt[7]);
+$code.=<<___;
+	eor	$xa0.d,$xa0.d,@xt[0].d
+	eor	$xa1.d,$xa1.d,@xt[1].d
+	eor	$xa2.d,$xa2.d,@xt[2].d
+	eor	$xa3.d,$xa3.d,@xt[3].d
+	eor	$xb0.d,$xb0.d,@xt[4].d
+	eor	$xb1.d,$xb1.d,@xt[5].d
+	eor	$xb2.d,$xb2.d,@xt[6].d
+	eor	$xb3.d,$xb3.d,@xt[7].d
+___
+	&load(@xt[0],@xt[1],@xt[2],@xt[3],@xt[4],@xt[5],@xt[6],@xt[7]);
+	&SCA_SAVE(0,2);
+$code.=<<___;
+	eor	$xc0.d,$xc0.d,@xt[0].d
+	eor	$xc1.d,$xc1.d,@xt[1].d
+___
+	&SCA_SAVE(4,6);
+$code.=<<___;
+	eor	$xc2.d,$xc2.d,@xt[2].d
+	eor	$xc3.d,$xc3.d,@xt[3].d
+___
+	&SCA_SAVE(8,10);
+$code.=<<___;
+	eor	$xd0.d,$xd0.d,@xt[4].d
+	eor	$xd1.d,$xd1.d,@xt[5].d
+___
+	&SCA_SAVE(12,14);
+$code.=<<___;
+	eor	$xd2.d,$xd2.d,@xt[6].d
+	eor	$xd3.d,$xd3.d,@xt[7].d
+___
 	&store($xa0,$xa1,$xa2,$xa3,$xb0,$xb1,$xb2,$xb3);
-	&transpose($xd0,$xd1,$xd2,$xd3);
-	&load($xt0,$xt1,$xt2,$xt3,$xt4,$xt5,$xt6,$xt7);
-$code.=<<___;
-	eor	$xc0.d,$xc0.d,$xt0.d
-	eor	$xc1.d,$xc1.d,$xt1.d
-	eor	$xc2.d,$xc2.d,$xt2.d
-	eor	$xc3.d,$xc3.d,$xt3.d
-	eor	$xd0.d,$xd0.d,$xt4.d
-	eor	$xd1.d,$xd1.d,$xt5.d
-	eor	$xd2.d,$xd2.d,$xt6.d
-	eor	$xd3.d,$xd3.d,$xt7.d
-___
 	&store($xc0,$xc1,$xc2,$xc3,$xd0,$xd1,$xd2,$xd3);
 $code.=<<___;
-	incw	$xctr, ALL, MUL #1
-	incw	$zctr.s, ALL, MUL #1
+210:
+	incw	@K[6], ALL, MUL #1
+___
+}
+
+sub SET_STATE_BAK() {
+	my $idx0 = shift;
+	my $idx1 = $idx0 + 1;
+	my $x0 = @sx[$idx0];
+	my $xx0 = @sxx[$idx0];
+	my $x1 = @sx[$idx1];
+	my $xx1 = @sxx[$idx1];
+	my $d = $idx0/2;
+
+$code.=<<___;
+	lsr	$xx1,@K[$d],#32
+	dup	@mx[$idx0].s,@KL[$d]
+	dup	@bak[$idx0].s,@KL[$d]
+	.if mixin == 1
+		mov	$x0,@KL[$d]
+	.endif
+	dup	@mx[$idx1].s,$x1
+	dup	@bak[$idx1].s,$x1
+___
+}
+
+sub SET_STATE() {
+	my $idx0 = shift;
+	my $idx1 = $idx0 + 1;
+	my $x0 = @sx[$idx0];
+	my $xx0 = @sxx[$idx0];
+	my $x1 = @sx[$idx1];
+	my $xx1 = @sxx[$idx1];
+	my $d = $idx0/2;
+
+$code.=<<___;
+	lsr	$xx1,@K[$d],#32
+	dup	@mx[$idx0].s,@KL[$d]
+	.if mixin == 1
+		mov	$x0,@KL[$d]
+	.endif
+	dup	@mx[$idx1].s,$x1
 ___
 }
 
 sub SVE_LOAD_STATES() {
+	&SET_STATE_BAK(0);
+	&SET_STATE_BAK(2);
+	&SET_STATE_BAK(4);
+	&SET_STATE_BAK(6);
+	&SET_STATE_BAK(8);
+	&SET_STATE(10);
+	&SET_STATE(14);
 $code.=<<___;
-	lsr	$tmp0,@K[0],#32
-	dup	@mx[0].s,@KL[0]
-	dup	$bak0.s,@KL[0]
-	dup	@mx[1].s,$tmpw0
-	dup	$bak1.s,$tmpw0
-	lsr	$tmp1,@K[1],#32
-	dup	@mx[2].s,@KL[1]
-	dup	$bak2.s,@KL[1]
-	dup	@mx[3].s,$tmpw1
-	dup	$bak3.s,$tmpw1
-	lsr	$tmp0,@K[2],#32
-	dup	@mx[4].s,@KL[2]
-	dup	$bak4.s,@KL[2]
-	dup	@mx[5].s,$tmpw0
-	dup	$bak5.s,$tmpw0
-	lsr	$tmp1,@K[3],#32
-	dup	@mx[6].s,@KL[3]
-	dup	$bak6.s,@KL[3]
-	dup	@mx[7].s,$tmpw1
-	dup	$bak7.s,$tmpw1
-	lsr	$tmp0,@K[4],#32
-	dup	@mx[8].s,@KL[4]
-	dup	$bak8.s,@KL[4]
-	dup	@mx[9].s,$tmpw0
-	dup	$bak9.s,$tmpw0
-	lsr	$tmp1,@K[5],#32
-	dup	@mx[10].s,@KL[5]
-	dup	@mx[11].s,$tmpw1
-	orr	@mx[12].d,$zctr.d,$zctr.d
-	lsr	$tmp0,@K[6],#32
-	dup	@mx[13].s,$tmpw0
-	lsr	$tmp1,@K[7],#32
-	dup	@mx[14].s,@KL[7]
-	dup	@mx[15].s,$tmpw1
+	.if mixin == 1
+		add	@sx[13],@KL[6],#1
+		mov	@sx[12],@KL[6]
+		index	$zctr.s,@sx[13],1
+		index	@mx[12].s,@sx[13],1
+	.else
+		index	$zctr.s,@KL[6],1
+		index	@mx[12].s,@KL[6],1
+	.endif
+	lsr	@sxx[13],@K[6],#32
+	dup	@mx[13].s,@sx[13]
 ___
 }
 
 sub SVE2_LOAD_STATES() {
+	&SET_STATE_BAK(0);
+	&SET_STATE_BAK(2);
+	&SET_STATE_BAK(4);
+	&SET_STATE_BAK(6);
+	&SET_STATE_BAK(8);
+	&SET_STATE_BAK(10);
+	&SET_STATE_BAK(14);
+
 $code.=<<___;
-	lsr	$tmp0,@K[0],#32
-	dup	@mx[0].s,@KL[0]
-	dup	$bak0.s,@KL[0]
-	dup	@mx[1].s,$tmpw0
-	dup	$bak1.s,$tmpw0
-	lsr	$tmp1,@K[1],#32
-	dup	@mx[2].s,@KL[1]
-	dup	$bak2.s,@KL[1]
-	dup	@mx[3].s,$tmpw1
-	dup	$bak3.s,$tmpw1
-	lsr	$tmp0,@K[2],#32
-	dup	@mx[4].s,@KL[2]
-	dup	$bak4.s,@KL[2]
-	dup	@mx[5].s,$tmpw0
-	dup	$bak5.s,$tmpw0
-	lsr	$tmp1,@K[3],#32
-	dup	@mx[6].s,@KL[3]
-	dup	$bak6.s,@KL[3]
-	dup	@mx[7].s,$tmpw1
-	dup	$bak7.s,$tmpw1
-	lsr	$tmp0,@K[4],#32
-	dup	@mx[8].s,@KL[4]
-	dup	$bak8.s,@KL[4]
-	dup	@mx[9].s,$tmpw0
-	dup	$bak9.s,$tmpw0
-	lsr	$tmp1,@K[5],#32
-	dup	@mx[10].s,@KL[5]
-	dup	$bak10.s,@KL[5]
-	dup	@mx[11].s,$tmpw1
-	dup	$bak11.s,$tmpw1
-	orr	@mx[12].d,$zctr.d,$zctr.d
-	lsr	$tmp0,@K[6],#32
-	dup	@mx[13].s,$tmpw0
-	dup	$bak13.s,$tmpw0
-	lsr	$tmp1,@K[7],#32
-	dup	@mx[14].s,@KL[7]
-	dup	$bak14.s,@KL[7]
-	dup	@mx[15].s,$tmpw1
-	dup	$bak15.s,$tmpw1
+	.if mixin == 1
+		add	@sx[13],@KL[6],#1
+		mov	@sx[12],@KL[6]
+		index	$zctr.s,@sx[13],1
+		index	@mx[12].s,@sx[13],1
+	.else
+		index	$zctr.s,@KL[6],1
+		index	@mx[12].s,@KL[6],1
+	.endif
+	lsr	@sxx[13],@K[6],#32
+	dup	@mx[13].s,@sx[13]
+	dup	@bak[13].s,@sx[13]
 ___
 }
 
-sub sve_handle_blocks() {
+sub chacha20_sve() {
+	my ($tmp) = (@sxx[0]);
+
 $code.=<<___;
-	cbz	$sve2flag,.sve_inner
-___
-	&SVE2_LOAD_STATES();
-	&SVE2_INNER_BLOCK();
-	&SVE2_ADD_STATES();
-$code.=<<___;
-	b	.fini_inner
-.sve_inner:
+.align	5
+100:
+	subs	$tmp,$len,$veclen,lsl #6
+	b.lt	110f
+	mov	$len,$tmp
+	b.eq	101f
+	cmp	$len,64
+	b.lt	101f
+	mixin=1
 ___
 	&SVE_LOAD_STATES();
 	&SVE_INNER_BLOCK();
-	&SVE_ADD_STATES();
-$code.=<<___;
-.fini_inner:
-___
+	&SVE_ACCUM_STATES();
 	&SVE_TRANSFORMS();
+$code.=<<___;
+	subs	$len,$len,64
+	b.gt	100b
+	b	110f
+101:
+	mixin=0
+___
+	&SVE_LOAD_STATES();
+	&SVE_INNER_BLOCK();
+	&SVE_ACCUM_STATES();
+	&SVE_TRANSFORMS();
+$code.=<<___;
+110:
+___
 }
 
-sub chacha20_process() {
+sub chacha20_sve2() {
+	my ($tmp) = (@sxx[0]);
+
 $code.=<<___;
 .align	5
-.Loop:
-	cmp	$blocks,$veclen
-	b.lt	.Lexit
+100:
+	subs	$tmp,$len,$veclen,lsl #6
+	b.lt	110f
+	mov	$len,$tmp
+	b.eq	101f
+	cmp	$len,64
+	b.lt	101f
+	mixin=1
 ___
-	&sve_handle_blocks();
+	&SVE2_LOAD_STATES();
+	&SVE2_INNER_BLOCK();
+	&SVE2_ACCUM_STATES();
+	&SVE_TRANSFORMS();
 $code.=<<___;
-	subs	$blocks,$blocks,$veclen
-	b.gt	.Loop
-.Lexit:
+	subs	$len,$len,64
+	b.gt	100b
+	b	110f
+101:
+	mixin=0
+___
+	&SVE2_LOAD_STATES();
+	&SVE2_INNER_BLOCK();
+	&SVE2_ACCUM_STATES();
+	&SVE_TRANSFORMS();
+$code.=<<___;
+110:
 ___
 }
 
+
 {{{
+	my ($tmp,$tmpw) = ("x6", "w6");
+	my ($tmpw0,$tmp0,$tmpw1,$tmp1) = ("w9","x9", "w10","x10");
+	my ($sve2flag) = ("x7");
+
 $code.=<<___;
 #include "arm_arch.h"
 
@@ -512,8 +726,7 @@ $code.=<<___;
 ChaCha20_ctr32_sve:
 	AARCH64_VALID_CALL_TARGET
 	cntw	$veclen, ALL, MUL #1
-	lsr	$blocks,$len,#6
-	cmp	$blocks,$veclen
+	cmp	$len,$veclen,lsl #6
 	b.lt	.Lreturn
 	mov	$sve2flag,0
 	adrp	$tmp,OPENSSL_armcap_P
@@ -529,19 +742,25 @@ ChaCha20_ctr32_sve:
 	ldp	$tmpw0,$tmpw1,[$tmp]
 	index	$rot8.s,$tmpw0,$tmpw1
 2:
-	stp	d8,d9,[sp,-96]!
+	AARCH64_SIGN_LINK_REGISTER
+	stp	d8,d9,[sp,-192]!
 	stp	d10,d11,[sp,16]
 	stp	d12,d13,[sp,32]
 	stp	d14,d15,[sp,48]
-	stp	x19,x20,[sp,64]
-	stp	x21,x22,[sp,80]
+	stp	x16,x17,[sp,64]
+	stp	x18,x19,[sp,80]
+	stp	x20,x21,[sp,96]
+	stp	x22,x23,[sp,112]
+	stp	x24,x25,[sp,128]
+	stp	x26,x27,[sp,144]
+	stp	x28,x29,[sp,160]
+	str	x30,[sp,176]
+
 	adr	$tmp,.Lchacha20_consts
 	ldp	@K[0],@K[1],[$tmp]
 	ldp	@K[2],@K[3],[$key]
 	ldp	@K[4],@K[5],[$key, 16]
 	ldp	@K[6],@K[7],[$ctr]
-	ldr	$wctr,[$ctr]
-	index	$zctr.s,$wctr,1
 	ptrues	p0.s,ALL
 #ifdef	__AARCH64EB__
 	ror	@K[2],@K[2],#32
@@ -551,18 +770,30 @@ ChaCha20_ctr32_sve:
 	ror	@K[6],@K[6],#32
 	ror	@K[7],@K[7],#32
 #endif
+	cbz	$sve2flag, 1f
 ___
-	&chacha20_process();
+	&chacha20_sve2();
 $code.=<<___;
+	b	2f
+1:
+___
+	&chacha20_sve();
+$code.=<<___;
+2:
+	str	@KL[6],[$ctr]
 	ldp	d10,d11,[sp,16]
 	ldp	d12,d13,[sp,32]
 	ldp	d14,d15,[sp,48]
-	ldp	x19,x20,[sp,64]
-	ldp	x21,x22,[sp,80]
-	ldp	d8,d9,[sp],96
-	str	$wctr,[$ctr]
-	and	$len,$len,#63
-	add	$len,$len,$blocks,lsl #6
+	ldp	x16,x17,[sp,64]
+	ldp	x18,x19,[sp,80]
+	ldp	x20,x21,[sp,96]
+	ldp	x22,x23,[sp,112]
+	ldp	x24,x25,[sp,128]
+	ldp	x26,x27,[sp,144]
+	ldp	x28,x29,[sp,160]
+	ldr	x30,[sp,176]
+	ldp	d8,d9,[sp],192
+	AARCH64_VALIDATE_LINK_REGISTER
 .Lreturn:
 	ret
 .size	ChaCha20_ctr32_sve,.-ChaCha20_ctr32_sve
@@ -579,7 +810,7 @@ my  %opcode_unpred = (
 	"orr"          => 0x04603000,
 	"lsl"          => 0x04209C00,
 	"lsr"          => 0x04209400,
-	"incw"         => 0x04B0C000,
+	"incw"         => 0x04B00000,
 	"xar"          => 0x04203400,
 	"zip1"         => 0x05206000,
 	"zip2"         => 0x05206400,
@@ -626,6 +857,7 @@ my  %opcode_pred = (
 	"st1w"         => 0xE500E000,
 	"ld1w"         => 0xA540A000,
 	"ld1rw"        => 0x8540C000,
+	"lasta"        => 0x0520A000,
 	"revh"         => 0x05258000);
 
 my  %tsize = (
@@ -868,13 +1100,15 @@ sub sve_other {
 
 	if ($arg =~ m/x([0-9]+)[^,]*,\s*p([0-9]+)[^,]*,\s*p([0-9]+)\.([bhsd])/o) {
 		return &verify_inst($opcode_pred{$mnemonic}|($tsize{$4}<<22)|$1|($2<<10)|($3<<5), $inst);
-	} elsif ($mnemonic =~ /inc[bhdw]/) {
+	} elsif ($arg =~ m/(x|w)([0-9]+)[^,]*,\s*p([0-9]+)[^,]*,\s*z([0-9]+)\.([bhsd])/o) {
+		return &verify_inst($opcode_pred{$mnemonic}|($tsize{$5}<<22)|$1|($3<<10)|($4<<5)|$2, $inst);
+	}elsif ($mnemonic =~ /inc[bhdw]/) {
 		if ($arg =~ m/x([0-9]+)[^,]*,\s*(\w+)[^,]*,\s*MUL\s*#?([0-9]+)/o) {
-			return &verify_inst($opcode_unpred{$mnemonic}|$1|($pattern{$2}<<5)|(2<<12)|(($3 - 1)<<16), $inst);
+			return &verify_inst($opcode_unpred{$mnemonic}|$1|($pattern{$2}<<5)|(2<<12)|(($3 - 1)<<16)|0xE000, $inst);
 		} elsif ($arg =~ m/z([0-9]+)[^,]*,\s*(\w+)[^,]*,\s*MUL\s*#?([0-9]+)/o) {
-			return &verify_inst($opcode_unpred{$mnemonic}|$1|($pattern{$2}<<5)|(($3 - 1)<<16), $inst);
+			return &verify_inst($opcode_unpred{$mnemonic}|$1|($pattern{$2}<<5)|(($3 - 1)<<16)|0xC000, $inst);
 		} elsif ($arg =~ m/x([0-9]+)/o) {
-			return &verify_inst($opcode_unpred{$mnemonic}|$1|(31<<5)|(0<<16), $inst);
+			return &verify_inst($opcode_unpred{$mnemonic}|$1|(31<<5)|(0<<16)|0xE000, $inst);
 		}
 	} elsif ($mnemonic =~ /cnt[bhdw]/) {
 		if ($arg =~ m/x([0-9]+)[^,]*,\s*(\w+)[^,]*,\s*MUL\s*#?([0-9]+)/o) {
@@ -909,7 +1143,7 @@ foreach(split("\n",$code)) {
 	s/\b(\w+[1-4]r[bhwd])\s+(\{\s*z[0-9]+.*\},\s*p[0-9]+.*)/sve_pred($1,$2)/ge;
 	s/\b(\w+[1-4][bhwd])\s+(\{\s*z[0-9]+.*\},\s*p[0-9]+.*)/sve_pred($1,$2)/ge;
 	s/\b(\w+)\s+(p[0-9]+\.[bhsd].*)/sve_pred($1,$2)/ge;
-	s/\b(movprfx|cntp|cnt[bhdw]|addvl|inc[bhdw])\s+((x|z).*)/sve_other($1,$2)/ge;
+	s/\b(movprfx|lasta|cntp|cnt[bhdw]|addvl|inc[bhdw])\s+((x|z|w).*)/sve_other($1,$2)/ge;
 	print $_,"\n";
 }
 
