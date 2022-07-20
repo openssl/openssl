@@ -322,7 +322,7 @@ void gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 
 # define GCM_MUL(ctx)      gcm_gmult_4bit(ctx->Xi.u,ctx->Htable)
 # if defined(GHASH_ASM) || !defined(OPENSSL_SMALL_FOOTPRINT)
-#  define GHASH(ctx,in,len) gcm_ghash_4bit((ctx)->Xi.u,(ctx)->Htable,in,len)
+#  define GHASH(ctx,in,len) ctx->funcs.ghash((ctx)->Xi.u,(ctx)->Htable,in,len)
 /*
  * GHASH_CHUNK is "stride parameter" missioned to mitigate cache trashing
  * effect. In other words idea is to hash data while it's still in L1 cache
@@ -412,10 +412,6 @@ void gcm_gmult_clmul_rv64i_zbb_zbc(u64 Xi[2], const u128 Htable[16]);
 #ifdef GCM_FUNCREF_4BIT
 # undef  GCM_MUL
 # define GCM_MUL(ctx)           (*gcm_gmult_p)(ctx->Xi.u,ctx->Htable)
-# ifdef GHASH
-#  undef  GHASH
-#  define GHASH(ctx,in,len)     (*gcm_ghash_p)(ctx->Xi.u,ctx->Htable,in,len)
-# endif
 #endif
 
 static void gcm_get_funcs(struct gcm_funcs_st *ctx)
@@ -638,9 +634,6 @@ int CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx, const unsigned char *aad,
     u64 alen = ctx->len.u[0];
 #ifdef GCM_FUNCREF_4BIT
     gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
-# ifdef GHASH
-    gcm_ghash_fn gcm_ghash_p = ctx->funcs.ghash;
-# endif
 #endif
 
     if (ctx->len.u[1])
@@ -702,9 +695,6 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
     void *key = ctx->key;
 #ifdef GCM_FUNCREF_4BIT
     gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
-# if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
-    gcm_ghash_fn gcm_ghash_p = ctx->funcs.ghash;
-# endif
 #endif
 
     mlen += len;
@@ -933,9 +923,6 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
     void *key = ctx->key;
 #ifdef GCM_FUNCREF_4BIT
     gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
-# if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
-    gcm_ghash_fn gcm_ghash_p = ctx->funcs.ghash;
-# endif
 #endif
 
     mlen += len;
@@ -1174,9 +1161,6 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
     void *key = ctx->key;
 # ifdef GCM_FUNCREF_4BIT
     gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
-#  ifdef GHASH
-    gcm_ghash_fn gcm_ghash_p = ctx->funcs.ghash;
-#  endif
 # endif
 
     mlen += len;
@@ -1334,9 +1318,6 @@ int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
     void *key = ctx->key;
 # ifdef GCM_FUNCREF_4BIT
     gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
-#  ifdef GHASH
-    gcm_ghash_fn gcm_ghash_p = ctx->funcs.ghash;
-#  endif
 # endif
 
     mlen += len;
@@ -1495,9 +1476,6 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
     u64 clen = ctx->len.u[1] << 3;
 #ifdef GCM_FUNCREF_4BIT
     gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
-# if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
-    gcm_ghash_fn gcm_ghash_p = ctx->funcs.ghash;
-# endif
 #endif
 
 #if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
