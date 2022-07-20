@@ -274,7 +274,6 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         do {
             rr = &sc->rlayer.tlsrecs[sc->rlayer.num_recs];
 
-            /* TODO(RECLAYER): Check HANDLE_RLAYER_RETURN for DTLS */
             ret = HANDLE_RLAYER_RETURN(sc,
                     sc->rrlmethod->read_record(sc->rrl, &rr->rechandle,
                                               &rr->version, &rr->type,

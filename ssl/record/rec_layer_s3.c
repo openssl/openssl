@@ -1121,10 +1121,6 @@ int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int ret, char *file,
          * If we got a retry or success then *ret is already correct,
          * otherwise we need to convert the return value.
          */
-        /*
-         * TODO(RECLAYER): What does a non fatal err that isn't a retry even
-         * mean???
-         */
         if (ret == OSSL_RECORD_RETURN_NON_FATAL_ERR || ret == OSSL_RECORD_RETURN_EOF)
             ret = 0;
         else if (ret < OSSL_RECORD_RETURN_NON_FATAL_ERR)
