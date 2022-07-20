@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include "../ssl_local.h"
 #include <openssl/trace.h>
 #include <openssl/rand.h>
@@ -611,21 +612,6 @@ int tls1_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs, int sending,
     return 1;
 }
 
-/*
- * TODO(RECLAYER): Remove me: now declared in
- * ssl/record/methods/recmethod_local.h
- */
-char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
-int ssl3_cbc_digest_record(const EVP_MD *md,
-                           unsigned char *md_out,
-                           size_t *md_out_size,
-                           const unsigned char *header,
-                           const unsigned char *data,
-                           size_t data_size,
-                           size_t data_plus_mac_plus_padding_size,
-                           const unsigned char *mac_secret,
-                           size_t mac_secret_length, char is_sslv3);
-
 int n_ssl3_mac(SSL_CONNECTION *sc, SSL3_RECORD *rec, unsigned char *md,
                int sending)
 {
@@ -635,16 +621,18 @@ int n_ssl3_mac(SSL_CONNECTION *sc, SSL3_RECORD *rec, unsigned char *md,
     size_t md_size;
     size_t npad;
     int t;
+    unsigned int md_size_u;
+    EVP_MD_CTX *md_ctx;
 
-    if (sending) {
-        mac_sec = &(sc->s3.write_mac_secret[0]);
-        seq = RECORD_LAYER_get_write_sequence(&sc->rlayer);
-        hash = sc->write_hash;
-    } else {
-        mac_sec = &(sc->s3.read_mac_secret[0]);
-        seq = RECORD_LAYER_get_read_sequence(&sc->rlayer);
-        hash = sc->read_hash;
-    }
+    /*
+     * All read record layer operations should have been moved to the new
+     * record layer code
+     */
+    assert(sending);
+
+    mac_sec = &(sc->s3.write_mac_secret[0]);
+    seq = RECORD_LAYER_get_write_sequence(&sc->rlayer);
+    hash = sc->write_hash;
 
     t = EVP_MD_CTX_get_size(hash);
     if (t < 0)
@@ -652,76 +640,33 @@ int n_ssl3_mac(SSL_CONNECTION *sc, SSL3_RECORD *rec, unsigned char *md,
     md_size = t;
     npad = (48 / md_size) * md_size;
 
-    if (!sending
-        && EVP_CIPHER_CTX_get_mode(sc->enc_read_ctx) == EVP_CIPH_CBC_MODE
-        && ssl3_cbc_record_digest_supported(hash)) {
-#ifdef OPENSSL_NO_DEPRECATED_3_0
+    /* Chop the digest off the end :-) */
+    md_ctx = EVP_MD_CTX_new();
+
+    if (md_ctx == NULL)
         return 0;
-#else
-        /*
-         * This is a CBC-encrypted record. We must avoid leaking any
-         * timing-side channel information about how many blocks of data we
-         * are hashing because that gives an attacker a timing-oracle.
-         */
 
-        /*-
-         * npad is, at most, 48 bytes and that's with MD5:
-         *   16 + 48 + 8 (sequence bytes) + 1 + 2 = 75.
-         *
-         * With SHA-1 (the largest hash speced for SSLv3) the hash size
-         * goes up 4, but npad goes down by 8, resulting in a smaller
-         * total size.
-         */
-        unsigned char header[75];
-        size_t j = 0;
-        memcpy(header + j, mac_sec, md_size);
-        j += md_size;
-        memcpy(header + j, ssl3_pad_1, npad);
-        j += npad;
-        memcpy(header + j, seq, 8);
-        j += 8;
-        header[j++] = rec->type;
-        header[j++] = (unsigned char)(rec->length >> 8);
-        header[j++] = (unsigned char)(rec->length & 0xff);
-
-        /* Final param == is SSLv3 */
-        if (ssl3_cbc_digest_record(EVP_MD_CTX_get0_md(hash),
-                                   md, &md_size,
-                                   header, rec->input,
-                                   rec->length, rec->orig_len,
-                                   mac_sec, md_size, 1) <= 0)
-            return 0;
-#endif
-    } else {
-        unsigned int md_size_u;
-        /* Chop the digest off the end :-) */
-        EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
-
-        if (md_ctx == NULL)
-            return 0;
-
-        rec_char = rec->type;
-        p = md;
-        s2n(rec->length, p);
-        if (EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
-            || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
-            || EVP_DigestUpdate(md_ctx, ssl3_pad_1, npad) <= 0
-            || EVP_DigestUpdate(md_ctx, seq, 8) <= 0
-            || EVP_DigestUpdate(md_ctx, &rec_char, 1) <= 0
-            || EVP_DigestUpdate(md_ctx, md, 2) <= 0
-            || EVP_DigestUpdate(md_ctx, rec->input, rec->length) <= 0
-            || EVP_DigestFinal_ex(md_ctx, md, NULL) <= 0
-            || EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
-            || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
-            || EVP_DigestUpdate(md_ctx, ssl3_pad_2, npad) <= 0
-            || EVP_DigestUpdate(md_ctx, md, md_size) <= 0
-            || EVP_DigestFinal_ex(md_ctx, md, &md_size_u) <= 0) {
-            EVP_MD_CTX_free(md_ctx);
-            return 0;
-        }
-
+    rec_char = rec->type;
+    p = md;
+    s2n(rec->length, p);
+    if (EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
+        || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
+        || EVP_DigestUpdate(md_ctx, ssl3_pad_1, npad) <= 0
+        || EVP_DigestUpdate(md_ctx, seq, 8) <= 0
+        || EVP_DigestUpdate(md_ctx, &rec_char, 1) <= 0
+        || EVP_DigestUpdate(md_ctx, md, 2) <= 0
+        || EVP_DigestUpdate(md_ctx, rec->input, rec->length) <= 0
+        || EVP_DigestFinal_ex(md_ctx, md, NULL) <= 0
+        || EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
+        || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
+        || EVP_DigestUpdate(md_ctx, ssl3_pad_2, npad) <= 0
+        || EVP_DigestUpdate(md_ctx, md, md_size) <= 0
+        || EVP_DigestFinal_ex(md_ctx, md, &md_size_u) <= 0) {
         EVP_MD_CTX_free(md_ctx);
+        return 0;
     }
+
+    EVP_MD_CTX_free(md_ctx);
 
     ssl3_record_sequence_update(seq);
     return 1;
@@ -743,13 +688,14 @@ int tls1_mac_old(SSL_CONNECTION *sc, SSL3_RECORD *rec, unsigned char *md,
     int t;
     int ret = 0;
 
-    if (sending) {
-        seq = RECORD_LAYER_get_write_sequence(&sc->rlayer);
-        hash = sc->write_hash;
-    } else {
-        seq = RECORD_LAYER_get_read_sequence(&sc->rlayer);
-        hash = sc->read_hash;
-    }
+    /*
+     * All read record layer calls should have been moved to the new record
+     * layer.
+     */
+    assert(sending);
+
+    seq = RECORD_LAYER_get_write_sequence(&sc->rlayer);
+    hash = sc->write_hash;
 
     t = EVP_MD_CTX_get_size(hash);
     if (!ossl_assert(t >= 0))
@@ -788,21 +734,6 @@ int tls1_mac_old(SSL_CONNECTION *sc, SSL3_RECORD *rec, unsigned char *md,
     header[10] = (unsigned char)(sc->version);
     header[11] = (unsigned char)(rec->length >> 8);
     header[12] = (unsigned char)(rec->length & 0xff);
-
-    if (!sending && !SSL_READ_ETM(sc)
-        && EVP_CIPHER_CTX_get_mode(sc->enc_read_ctx) == EVP_CIPH_CBC_MODE
-        && ssl3_cbc_record_digest_supported(mac_ctx)) {
-        OSSL_PARAM tls_hmac_params[2], *p = tls_hmac_params;
-
-        *p++ = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_TLS_DATA_SIZE,
-                                           &rec->orig_len);
-        *p++ = OSSL_PARAM_construct_end();
-
-        if (!EVP_PKEY_CTX_set_params(EVP_MD_CTX_get_pkey_ctx(mac_ctx),
-                                     tls_hmac_params)) {
-            goto end;
-        }
-    }
 
     if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
         || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
