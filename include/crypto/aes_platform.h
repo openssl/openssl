@@ -92,7 +92,7 @@ size_t ppc_aes_gcm_decrypt_wrap(const unsigned char *in, unsigned char *out,
 #   define AES_gcm_encrypt ppc_aes_gcm_encrypt_wrap
 #   define AES_gcm_decrypt ppc_aes_gcm_decrypt_wrap
 #   define AES_GCM_ASM(gctx) ((gctx)->ctr==aes_p8_ctr32_encrypt_blocks && \
-                              (gctx)->gcm.ghash==gcm_ghash_p8)
+                              (gctx)->gcm.funcs.ghash==gcm_ghash_p8)
 void gcm_ghash_p8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
 #  endif /* PPC */
 
@@ -124,7 +124,7 @@ void gcm_ghash_p8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
 #     define AES_gcm_encrypt armv8_aes_gcm_encrypt
 #     define AES_gcm_decrypt armv8_aes_gcm_decrypt
 #     define AES_GCM_ASM(gctx) ((gctx)->ctr==aes_v8_ctr32_encrypt_blocks && \
-                                (gctx)->gcm.ghash==gcm_ghash_v8)
+                                (gctx)->gcm.funcs.ghash==gcm_ghash_v8)
 size_t aes_gcm_enc_128_kernel(const uint8_t * plaintext, uint64_t plaintext_length, uint8_t * ciphertext,
                               uint64_t *Xi, unsigned char ivec[16], const void *key);
 size_t aes_gcm_enc_192_kernel(const uint8_t * plaintext, uint64_t plaintext_length, uint8_t * ciphertext,
@@ -258,7 +258,7 @@ void gcm_ghash_avx(u64 Xi[2], const u128 Htable[16], const u8 *in, size_t len);
 #   define AES_gcm_encrypt aesni_gcm_encrypt
 #   define AES_gcm_decrypt aesni_gcm_decrypt
 #   define AES_GCM_ASM(ctx)    (ctx->ctr == aesni_ctr32_encrypt_blocks && \
-                                ctx->gcm.ghash == gcm_ghash_avx)
+                                ctx->gcm.funcs.ghash == gcm_ghash_avx)
 #  endif
 
 
