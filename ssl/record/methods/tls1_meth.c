@@ -96,10 +96,6 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                        (int)taglen, NULL) <= 0
                 || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_CCM_SET_IV_FIXED,
                                        (int)ivlen, iv) <= 0
-                   /*
-                    * TODO(RECLAYER): Why do we defer setting the key until here?
-                    * why not in the initial EVP_DecryptInit_ex() call?
-                    */
                 || !EVP_DecryptInit_ex(ciph_ctx, NULL, NULL, key, NULL)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
@@ -224,8 +220,6 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
             seq = rl->sequence;
 
             if (rl->isdtls) {
-                /* TODO(RECLAYER): FIXME */
-                /* DTLS does not support pipelining */
                 unsigned char dtlsseq[8], *p = dtlsseq;
 
                 s2n(rl->epoch, p);
@@ -472,7 +466,6 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
     }
 
     if (rl->isdtls) {
-        /* TODO(RECLAYER): FIX ME */
         unsigned char dtlsseq[8], *p = dtlsseq;
 
         s2n(rl->epoch, p);
