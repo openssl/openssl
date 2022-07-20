@@ -128,14 +128,10 @@ struct gcm128_context {
      * Relative position of Yi, EKi, EK0, len, Xi, H and pre-computed Htable is
      * used in some assembler modules, i.e. don't change the order!
      */
-#if TABLE_BITS==8
-    u128 Htable[256];
-#else
     u128 Htable[16];
     void (*gmult) (u64 Xi[2], const u128 Htable[16]);
     void (*ghash) (u64 Xi[2], const u128 Htable[16], const u8 *inp,
                    size_t len);
-#endif
     unsigned int mres, ares;
     block128_f block;
     void *key;
