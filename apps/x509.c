@@ -590,7 +590,7 @@ int x509_main(int argc, char **argv)
         xca = load_cert(CAfile, CAformat, "CA Certificate");
         if (xca == NULL)
             goto end;
-        if (!X509_set_issuer_name(x, X509_get_subject_name(xca)))
+        if (reqfile && !X509_set_issuer_name(x, X509_get_subject_name(xca)))
             goto end;
     }
 
@@ -993,6 +993,8 @@ static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *diges
         goto end;
     }
 
+    if (!X509_set_issuer_name(x, X509_get_subject_name(xca)))
+        goto end;
     if (!X509_set_serialNumber(x, bs))
         goto end;
 
