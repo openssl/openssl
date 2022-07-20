@@ -80,148 +80,8 @@ typedef size_t size_t_aX;
  *
  * Value of 1 is not appropriate for performance reasons.
  */
-#if     TABLE_BITS==8
 
-static void gcm_init_8bit(u128 Htable[256], u64 H[2])
-{
-    int i, j;
-    u128 V;
-
-    Htable[0].hi = 0;
-    Htable[0].lo = 0;
-    V.hi = H[0];
-    V.lo = H[1];
-
-    for (Htable[128] = V, i = 64; i > 0; i >>= 1) {
-        REDUCE1BIT(V);
-        Htable[i] = V;
-    }
-
-    for (i = 2; i < 256; i <<= 1) {
-        u128 *Hi = Htable + i, H0 = *Hi;
-        for (j = 1; j < i; ++j) {
-            Hi[j].hi = H0.hi ^ Htable[j].hi;
-            Hi[j].lo = H0.lo ^ Htable[j].lo;
-        }
-    }
-}
-
-static void gcm_gmult_8bit(u64 Xi[2], const u128 Htable[256])
-{
-    u128 Z = { 0, 0 };
-    const u8 *xi = (const u8 *)Xi + 15;
-    size_t rem, n = *xi;
-    DECLARE_IS_ENDIAN;
-    static const size_t rem_8bit[256] = {
-        PACK(0x0000), PACK(0x01C2), PACK(0x0384), PACK(0x0246),
-        PACK(0x0708), PACK(0x06CA), PACK(0x048C), PACK(0x054E),
-        PACK(0x0E10), PACK(0x0FD2), PACK(0x0D94), PACK(0x0C56),
-        PACK(0x0918), PACK(0x08DA), PACK(0x0A9C), PACK(0x0B5E),
-        PACK(0x1C20), PACK(0x1DE2), PACK(0x1FA4), PACK(0x1E66),
-        PACK(0x1B28), PACK(0x1AEA), PACK(0x18AC), PACK(0x196E),
-        PACK(0x1230), PACK(0x13F2), PACK(0x11B4), PACK(0x1076),
-        PACK(0x1538), PACK(0x14FA), PACK(0x16BC), PACK(0x177E),
-        PACK(0x3840), PACK(0x3982), PACK(0x3BC4), PACK(0x3A06),
-        PACK(0x3F48), PACK(0x3E8A), PACK(0x3CCC), PACK(0x3D0E),
-        PACK(0x3650), PACK(0x3792), PACK(0x35D4), PACK(0x3416),
-        PACK(0x3158), PACK(0x309A), PACK(0x32DC), PACK(0x331E),
-        PACK(0x2460), PACK(0x25A2), PACK(0x27E4), PACK(0x2626),
-        PACK(0x2368), PACK(0x22AA), PACK(0x20EC), PACK(0x212E),
-        PACK(0x2A70), PACK(0x2BB2), PACK(0x29F4), PACK(0x2836),
-        PACK(0x2D78), PACK(0x2CBA), PACK(0x2EFC), PACK(0x2F3E),
-        PACK(0x7080), PACK(0x7142), PACK(0x7304), PACK(0x72C6),
-        PACK(0x7788), PACK(0x764A), PACK(0x740C), PACK(0x75CE),
-        PACK(0x7E90), PACK(0x7F52), PACK(0x7D14), PACK(0x7CD6),
-        PACK(0x7998), PACK(0x785A), PACK(0x7A1C), PACK(0x7BDE),
-        PACK(0x6CA0), PACK(0x6D62), PACK(0x6F24), PACK(0x6EE6),
-        PACK(0x6BA8), PACK(0x6A6A), PACK(0x682C), PACK(0x69EE),
-        PACK(0x62B0), PACK(0x6372), PACK(0x6134), PACK(0x60F6),
-        PACK(0x65B8), PACK(0x647A), PACK(0x663C), PACK(0x67FE),
-        PACK(0x48C0), PACK(0x4902), PACK(0x4B44), PACK(0x4A86),
-        PACK(0x4FC8), PACK(0x4E0A), PACK(0x4C4C), PACK(0x4D8E),
-        PACK(0x46D0), PACK(0x4712), PACK(0x4554), PACK(0x4496),
-        PACK(0x41D8), PACK(0x401A), PACK(0x425C), PACK(0x439E),
-        PACK(0x54E0), PACK(0x5522), PACK(0x5764), PACK(0x56A6),
-        PACK(0x53E8), PACK(0x522A), PACK(0x506C), PACK(0x51AE),
-        PACK(0x5AF0), PACK(0x5B32), PACK(0x5974), PACK(0x58B6),
-        PACK(0x5DF8), PACK(0x5C3A), PACK(0x5E7C), PACK(0x5FBE),
-        PACK(0xE100), PACK(0xE0C2), PACK(0xE284), PACK(0xE346),
-        PACK(0xE608), PACK(0xE7CA), PACK(0xE58C), PACK(0xE44E),
-        PACK(0xEF10), PACK(0xEED2), PACK(0xEC94), PACK(0xED56),
-        PACK(0xE818), PACK(0xE9DA), PACK(0xEB9C), PACK(0xEA5E),
-        PACK(0xFD20), PACK(0xFCE2), PACK(0xFEA4), PACK(0xFF66),
-        PACK(0xFA28), PACK(0xFBEA), PACK(0xF9AC), PACK(0xF86E),
-        PACK(0xF330), PACK(0xF2F2), PACK(0xF0B4), PACK(0xF176),
-        PACK(0xF438), PACK(0xF5FA), PACK(0xF7BC), PACK(0xF67E),
-        PACK(0xD940), PACK(0xD882), PACK(0xDAC4), PACK(0xDB06),
-        PACK(0xDE48), PACK(0xDF8A), PACK(0xDDCC), PACK(0xDC0E),
-        PACK(0xD750), PACK(0xD692), PACK(0xD4D4), PACK(0xD516),
-        PACK(0xD058), PACK(0xD19A), PACK(0xD3DC), PACK(0xD21E),
-        PACK(0xC560), PACK(0xC4A2), PACK(0xC6E4), PACK(0xC726),
-        PACK(0xC268), PACK(0xC3AA), PACK(0xC1EC), PACK(0xC02E),
-        PACK(0xCB70), PACK(0xCAB2), PACK(0xC8F4), PACK(0xC936),
-        PACK(0xCC78), PACK(0xCDBA), PACK(0xCFFC), PACK(0xCE3E),
-        PACK(0x9180), PACK(0x9042), PACK(0x9204), PACK(0x93C6),
-        PACK(0x9688), PACK(0x974A), PACK(0x950C), PACK(0x94CE),
-        PACK(0x9F90), PACK(0x9E52), PACK(0x9C14), PACK(0x9DD6),
-        PACK(0x9898), PACK(0x995A), PACK(0x9B1C), PACK(0x9ADE),
-        PACK(0x8DA0), PACK(0x8C62), PACK(0x8E24), PACK(0x8FE6),
-        PACK(0x8AA8), PACK(0x8B6A), PACK(0x892C), PACK(0x88EE),
-        PACK(0x83B0), PACK(0x8272), PACK(0x8034), PACK(0x81F6),
-        PACK(0x84B8), PACK(0x857A), PACK(0x873C), PACK(0x86FE),
-        PACK(0xA9C0), PACK(0xA802), PACK(0xAA44), PACK(0xAB86),
-        PACK(0xAEC8), PACK(0xAF0A), PACK(0xAD4C), PACK(0xAC8E),
-        PACK(0xA7D0), PACK(0xA612), PACK(0xA454), PACK(0xA596),
-        PACK(0xA0D8), PACK(0xA11A), PACK(0xA35C), PACK(0xA29E),
-        PACK(0xB5E0), PACK(0xB422), PACK(0xB664), PACK(0xB7A6),
-        PACK(0xB2E8), PACK(0xB32A), PACK(0xB16C), PACK(0xB0AE),
-        PACK(0xBBF0), PACK(0xBA32), PACK(0xB874), PACK(0xB9B6),
-        PACK(0xBCF8), PACK(0xBD3A), PACK(0xBF7C), PACK(0xBEBE)
-    };
-
-    while (1) {
-        Z.hi ^= Htable[n].hi;
-        Z.lo ^= Htable[n].lo;
-
-        if ((u8 *)Xi == xi)
-            break;
-
-        n = *(--xi);
-
-        rem = (size_t)Z.lo & 0xff;
-        Z.lo = (Z.hi << 56) | (Z.lo >> 8);
-        Z.hi = (Z.hi >> 8);
-        if (sizeof(size_t) == 8)
-            Z.hi ^= rem_8bit[rem];
-        else
-            Z.hi ^= (u64)rem_8bit[rem] << 32;
-    }
-
-    if (IS_LITTLE_ENDIAN) {
-# ifdef BSWAP8
-        Xi[0] = BSWAP8(Z.hi);
-        Xi[1] = BSWAP8(Z.lo);
-# else
-        u8 *p = (u8 *)Xi;
-        u32 v;
-        v = (u32)(Z.hi >> 32);
-        PUTU32(p, v);
-        v = (u32)(Z.hi);
-        PUTU32(p + 4, v);
-        v = (u32)(Z.lo >> 32);
-        PUTU32(p + 8, v);
-        v = (u32)(Z.lo);
-        PUTU32(p + 12, v);
-# endif
-    } else {
-        Xi[0] = Z.hi;
-        Xi[1] = Z.lo;
-    }
-}
-
-# define GCM_MUL(ctx)      gcm_gmult_8bit(ctx->Xi.u,ctx->Htable)
-
-#elif   TABLE_BITS==4
+#if   TABLE_BITS==4
 
 static void gcm_init_4bit(u128 Htable[16], u64 H[2])
 {
@@ -740,9 +600,7 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
         ctx->H.u[1] = lo;
 #endif
     }
-#if     TABLE_BITS==8
-    gcm_init_8bit(ctx->Htable, ctx->H.u);
-#elif   TABLE_BITS==4
+#if   TABLE_BITS==4
 # if    defined(GHASH)
 #  define CTX__GHASH(f) (ctx->ghash = (f))
 # else
