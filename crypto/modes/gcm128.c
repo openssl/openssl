@@ -320,7 +320,7 @@ void gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16], const u8 *inp,
                     size_t len);
 # endif
 
-# define GCM_MUL(ctx)      gcm_gmult_4bit(ctx->Xi.u,ctx->Htable)
+# define GCM_MUL(ctx)      ctx->funcs.gmult(ctx->Xi.u,ctx->Htable)
 # if defined(GHASH_ASM) || !defined(OPENSSL_SMALL_FOOTPRINT)
 #  define GHASH(ctx,in,len) ctx->funcs.ghash((ctx)->Xi.u,(ctx)->Htable,in,len)
 /*
@@ -337,7 +337,6 @@ void gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16], const u8 *inp,
          defined(__x86_64)      || defined(__x86_64__)  || \
          defined(_M_IX86)       || defined(_M_AMD64)    || defined(_M_X64))
 #  define GHASH_ASM_X86_OR_64
-#  define GCM_FUNCREF_4BIT
 
 void gcm_init_clmul(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_clmul(u64 Xi[2], const u128 Htable[16]);
@@ -369,7 +368,6 @@ void gcm_ghash_4bit_x86(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 #  include "arm_arch.h"
 #  if __ARM_MAX_ARCH__>=7
 #   define GHASH_ASM_ARM
-#   define GCM_FUNCREF_4BIT
 #   define PMULL_CAPABLE        (OPENSSL_armcap_P & ARMV8_PMULL)
 #   if defined(__arm__) || defined(__arm)
 #    define NEON_CAPABLE        (OPENSSL_armcap_P & ARMV7_NEON)
@@ -386,7 +384,6 @@ void gcm_ghash_v8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 # elif defined(__sparc__) || defined(__sparc)
 #  include "crypto/sparc_arch.h"
 #  define GHASH_ASM_SPARC
-#  define GCM_FUNCREF_4BIT
 void gcm_init_vis3(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_vis3(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_vis3(u64 Xi[2], const u128 Htable[16], const u8 *inp,
@@ -394,7 +391,6 @@ void gcm_ghash_vis3(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 # elif defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
 #  include "crypto/ppc_arch.h"
 #  define GHASH_ASM_PPC
-#  define GCM_FUNCREF_4BIT
 void gcm_init_p8(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_p8(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_p8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
@@ -402,16 +398,10 @@ void gcm_ghash_p8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 # elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 #  include "crypto/riscv_arch.h"
 #  define GHASH_ASM_RISCV
-#  define GCM_FUNCREF_4BIT
 #  undef  GHASH
 void gcm_init_clmul_rv64i_zbb_zbc(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_clmul_rv64i_zbb_zbc(u64 Xi[2], const u128 Htable[16]);
 # endif
-#endif
-
-#ifdef GCM_FUNCREF_4BIT
-# undef  GCM_MUL
-# define GCM_MUL(ctx)           (*gcm_gmult_p)(ctx->Xi.u,ctx->Htable)
 #endif
 
 static void gcm_get_funcs(struct gcm_funcs_st *ctx)
@@ -541,9 +531,6 @@ void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const unsigned char *iv,
 {
     DECLARE_IS_ENDIAN;
     unsigned int ctr;
-#ifdef GCM_FUNCREF_4BIT
-    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
-#endif
 
     ctx->len.u[0] = 0;          /* AAD length */
     ctx->len.u[1] = 0;          /* message length */
@@ -632,9 +619,6 @@ int CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx, const unsigned char *aad,
     size_t i;
     unsigned int n;
     u64 alen = ctx->len.u[0];
-#ifdef GCM_FUNCREF_4BIT
-    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
-#endif
 
     if (ctx->len.u[1])
         return -2;
@@ -693,9 +677,6 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
     u64 mlen = ctx->len.u[1];
     block128_f block = ctx->block;
     void *key = ctx->key;
-#ifdef GCM_FUNCREF_4BIT
-    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
-#endif
 
     mlen += len;
     if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
@@ -921,9 +902,6 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
     u64 mlen = ctx->len.u[1];
     block128_f block = ctx->block;
     void *key = ctx->key;
-#ifdef GCM_FUNCREF_4BIT
-    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
-#endif
 
     mlen += len;
     if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
@@ -1159,9 +1137,6 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
     size_t i;
     u64 mlen = ctx->len.u[1];
     void *key = ctx->key;
-# ifdef GCM_FUNCREF_4BIT
-    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
-# endif
 
     mlen += len;
     if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
@@ -1316,9 +1291,6 @@ int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
     size_t i;
     u64 mlen = ctx->len.u[1];
     void *key = ctx->key;
-# ifdef GCM_FUNCREF_4BIT
-    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
-# endif
 
     mlen += len;
     if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
@@ -1474,9 +1446,6 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
     DECLARE_IS_ENDIAN;
     u64 alen = ctx->len.u[0] << 3;
     u64 clen = ctx->len.u[1] << 3;
-#ifdef GCM_FUNCREF_4BIT
-    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
-#endif
 
 #if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
     u128 bitlen;
