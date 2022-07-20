@@ -10,18 +10,17 @@ X509_STORE_get0_objects, X509_STORE_get1_all_certs
 
  #include <openssl/x509_vfy.h>
 
- X509_VERIFY_PARAM *X509_STORE_get0_param(const X509_STORE *ctx);
- int X509_STORE_set1_param(X509_STORE *ctx, const X509_VERIFY_PARAM *pm);
- STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *ctx);
- STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *st);
+ X509_VERIFY_PARAM *X509_STORE_get0_param(const X509_STORE *xs);
+ int X509_STORE_set1_param(X509_STORE *xs, const X509_VERIFY_PARAM *pm);
+ STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs);
+ STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *xs);
 
 =head1 DESCRIPTION
 
-X509_STORE_set1_param() sets the verification parameters
-to B<pm> for B<ctx>.
+X509_STORE_set1_param() sets the verification parameters to I<pm> for I<xs>.
 
 X509_STORE_get0_param() retrieves an internal pointer to the verification
-parameters for B<ctx>. The returned pointer must not be freed by the
+parameters for I<xs>. The returned pointer must not be freed by the
 calling application
 
 X509_STORE_get0_objects() retrieves an internal pointer to the store's
