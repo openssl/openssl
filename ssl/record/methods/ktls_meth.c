@@ -21,7 +21,7 @@
 /*
  * TODO(RECLAYER): This is essentially a copy of ktls_int_check_supported_cipher
  * but using an SSL object instead of an OSSL_RECORD_LAYER object. Once
- * everything has been moved to the reocrd layer this can be deleted
+ * the write side has been moved to the record layer this can be deleted
  */
 int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
                                 const EVP_MD *md, size_t taglen)
@@ -163,7 +163,7 @@ int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c
 /*
  * TODO(RECLAYER): This is essentially a copy of ktls_int_check_supported_cipher
  * but using an SSL object instead of an OSSL_RECORD_LAYER object. Once
- * everything has been moved to the reocrd layer this can be deleted
+ * the write side has been moved to the record layer this can be deleted
  */
 int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
                                 const EVP_MD *md, size_t taglen)
@@ -355,14 +355,12 @@ int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c
 
 #endif /* OPENSSL_SYS_LINUX */
 
-/* TODO(RECLAYER): Handle OPENSSL_NO_COMP */
 static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                  unsigned char *key, size_t keylen,
                                  unsigned char *iv, size_t ivlen,
                                  unsigned char *mackey, size_t mackeylen,
                                  const EVP_CIPHER *ciph,
                                  size_t taglen,
-                                 /* TODO(RECLAYER): This probably should not be an int */
                                  int mactype,
                                  const EVP_MD *md,
                                  const SSL_COMP *comp)
@@ -487,7 +485,6 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       unsigned char *key, size_t keylen, unsigned char *iv,
                       size_t ivlen, unsigned char *mackey, size_t mackeylen,
                       const EVP_CIPHER *ciph, size_t taglen,
-                      /* TODO(RECLAYER): This probably should not be an int */
                       int mactype,
                       const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
                       BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,

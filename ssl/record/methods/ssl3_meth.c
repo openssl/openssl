@@ -13,14 +13,12 @@
 #include "../record_local.h"
 #include "recmethod_local.h"
 
-/* TODO(RECLAYER): Handle OPENSSL_NO_COMP */
 static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                  unsigned char *key, size_t keylen,
                                  unsigned char *iv, size_t ivlen,
                                  unsigned char *mackey, size_t mackeylen,
                                  const EVP_CIPHER *ciph,
                                  size_t taglen,
-                                 /* TODO(RECLAYER): This probably should not be an int */
                                  int mactype,
                                  const EVP_MD *md,
                                  const SSL_COMP *comp)

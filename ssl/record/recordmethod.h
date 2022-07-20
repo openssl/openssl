@@ -139,9 +139,9 @@ struct ossl_record_method_st {
      */
 
     /*
-     * TODO(RECLAYER): Will have to be something other than EVP_CIPHER if we
-     * make this fetchable
-     * TODO(RECLAYER): mactype should not be an int
+     * If we eventually make this fetchable then we will need to use something
+     * other than EVP_CIPHER. Also mactype would not be a NID, but a string. For
+     * now though, this works.
      */
     int (*new_record_layer)(OSSL_LIB_CTX *libctx,
                             const char *propq, int vers,
@@ -156,7 +156,6 @@ struct ossl_record_method_st {
                             size_t mackeylen,
                             const EVP_CIPHER *ciph,
                             size_t taglen,
-                            /* TODO(RECLAYER): This probably should not be an int */
                             int mactype,
                             const EVP_MD *md,
                             const SSL_COMP *comp,

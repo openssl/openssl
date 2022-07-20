@@ -724,7 +724,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             /* SSLfatal already called */
             goto err;
         }
-        /* TODO(RECLAYER): Remove me */
+        /* TODO(RECLAYER): Remove me when write rlayer done */
         goto skip_ktls;
     }
 
