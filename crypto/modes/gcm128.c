@@ -84,7 +84,7 @@ typedef size_t size_t_aX;
  * Value of 1 is not appropriate for performance reasons.
  */
 
-static void gcm_init_4bit(u128 Htable[16], u64 H[2])
+static void gcm_init_4bit(u128 Htable[16], const u64 H[2])
 {
     u128 V;
 # if defined(OPENSSL_SMALL_FOOTPRINT)
@@ -418,6 +418,99 @@ void gcm_gmult_clmul_rv64i_zbb_zbc(u64 Xi[2], const u128 Htable[16]);
 # endif
 #endif
 
+static void gcm_get_funcs(struct gcm_funcs_st *ctx)
+{
+    /* set defaults -- overridden below as needed */
+    ctx->ginit = gcm_init_4bit;
+#if !defined(GHASH_ASM) || defined(INCLUDE_C_GMULT_4BIT)
+    ctx->gmult = gcm_gmult_4bit;
+#else
+    ctx->gmult = NULL;
+#endif
+#if !defined(GHASH_ASM) && !defined(OPENSSL_SMALL_FOOTPRINT)
+    ctx->ghash = gcm_ghash_4bit;
+#else
+    ctx->ghash = NULL;
+#endif
+
+#if defined(GHASH_ASM_X86_OR_64)
+# if !defined(GHASH_ASM_X86) || defined(OPENSSL_IA32_SSE2)
+    /* x86_64 */
+    if (OPENSSL_ia32cap_P[1] & (1 << 1)) { /* check PCLMULQDQ bit */
+        if (((OPENSSL_ia32cap_P[1] >> 22) & 0x41) == 0x41) { /* AVX+MOVBE */
+            ctx->ginit = gcm_init_avx;
+            ctx->gmult = gcm_gmult_avx;
+            ctx->ghash = gcm_ghash_avx;
+        } else {
+            ctx->ginit = gcm_init_clmul;
+            ctx->gmult = gcm_gmult_clmul;
+            ctx->ghash = gcm_ghash_clmul;
+        }
+        return;
+    }
+# endif
+# if defined(GHASH_ASM_X86)
+    /* x86 only */
+#  if defined(OPENSSL_IA32_SSE2)
+    if (OPENSSL_ia32cap_P[0] & (1 << 25)) { /* check SSE bit */
+        ctx->gmult = gcm_gmult_4bit_mmx;
+        ctx->ghash = gcm_ghash_4bit_mmx;
+        return;
+    }
+#  else
+    if (OPENSSL_ia32cap_P[0] & (1 << 23)) { /* check MMX bit */
+        ctx->gmult = gcm_gmult_4bit_mmx;
+        ctx->ghash = gcm_ghash_4bit_mmx;
+        return;
+    }
+#  endif
+    ctx->gmult = gcm_gmult_4bit_x86;
+    ctx->ghash = gcm_ghash_4bit_x86;
+    return;
+# endif
+#elif defined(GHASH_ASM_ARM)
+    /* ARM */
+# ifdef PMULL_CAPABLE
+    if (PMULL_CAPABLE) {
+        ctx->ginit = (gcm_init_fn)gcm_init_v8;
+        ctx->gmult = gcm_gmult_v8;
+        ctx->ghash = gcm_ghash_v8;
+    }
+# elif defined(NEON_CAPABLE)
+    if (NEON_CAPABLE) {
+        ctx->ginit = gcm_init_neon;
+        ctx->gmult = gcm_gmult_neon;
+        ctx->ghash = gcm_ghash_neon;
+    }
+# endif
+    return;
+#elif defined(GHASH_ASM_SPARC)
+    /* SPARC */
+    if (OPENSSL_sparcv9cap_P[0] & SPARCV9_VIS3) {
+        ctx->ginit = gcm_init_vis3;
+        ctx->gmult = gcm_gmult_vis3;
+        ctx->ghash = gcm_ghash_vis3;
+    }
+    return;
+#elif defined(GHASH_ASM_PPC)
+    /* PowerPC */
+    if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
+        ctx->ginit = gcm_init_p8;
+        ctx->gmult = gcm_gmult_p8;
+        ctx->ghash = gcm_ghash_p8;
+    }
+    return;
+#elif defined(GHASH_ASM_RISCV) && __riscv_xlen == 64
+    /* RISCV */
+    ctx->ghash = NULL;
+    if (RISCV_HAS_ZBB() && RISCV_HAS_ZBC()) {
+        ctx->ginit = gcm_init_clmul_rv64i_zbb_zbc;
+        ctx->gmult = gcm_gmult_clmul_rv64i_zbb_zbc;
+    }
+    return;
+#endif
+}
+
 void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 {
     DECLARE_IS_ENDIAN;
@@ -443,95 +536,8 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 #endif
     }
 
-#if    defined(GHASH)
-# define CTX__GHASH(f) (ctx->ghash = (f))
-#else
-# define CTX__GHASH(f) (ctx->ghash = NULL)
-#endif
-#if    defined(GHASH_ASM_X86_OR_64)
-# if   !defined(GHASH_ASM_X86) || defined(OPENSSL_IA32_SSE2)
-    if (OPENSSL_ia32cap_P[1] & (1 << 1)) { /* check PCLMULQDQ bit */
-        if (((OPENSSL_ia32cap_P[1] >> 22) & 0x41) == 0x41) { /* AVX+MOVBE */
-            gcm_init_avx(ctx->Htable, ctx->H.u);
-            ctx->gmult = gcm_gmult_avx;
-            CTX__GHASH(gcm_ghash_avx);
-        } else {
-            gcm_init_clmul(ctx->Htable, ctx->H.u);
-            ctx->gmult = gcm_gmult_clmul;
-            CTX__GHASH(gcm_ghash_clmul);
-        }
-        return;
-    }
-# endif
-    gcm_init_4bit(ctx->Htable, ctx->H.u);
-# if   defined(GHASH_ASM_X86)  /* x86 only */
-#  if  defined(OPENSSL_IA32_SSE2)
-    if (OPENSSL_ia32cap_P[0] & (1 << 25)) { /* check SSE bit */
-#  else
-    if (OPENSSL_ia32cap_P[0] & (1 << 23)) { /* check MMX bit */
-#  endif
-        ctx->gmult = gcm_gmult_4bit_mmx;
-        CTX__GHASH(gcm_ghash_4bit_mmx);
-    } else {
-        ctx->gmult = gcm_gmult_4bit_x86;
-        CTX__GHASH(gcm_ghash_4bit_x86);
-    }
-# else
-    ctx->gmult = gcm_gmult_4bit;
-    CTX__GHASH(gcm_ghash_4bit);
-# endif
-#elif  defined(GHASH_ASM_ARM)
-# ifdef PMULL_CAPABLE
-    if (PMULL_CAPABLE) {
-        gcm_init_v8(ctx->Htable, ctx->H.u);
-        ctx->gmult = gcm_gmult_v8;
-        CTX__GHASH(gcm_ghash_v8);
-    } else
-# endif
-# ifdef NEON_CAPABLE
-    if (NEON_CAPABLE) {
-        gcm_init_neon(ctx->Htable, ctx->H.u);
-        ctx->gmult = gcm_gmult_neon;
-        CTX__GHASH(gcm_ghash_neon);
-    } else
-# endif
-    {
-        gcm_init_4bit(ctx->Htable, ctx->H.u);
-        ctx->gmult = gcm_gmult_4bit;
-        CTX__GHASH(gcm_ghash_4bit);
-    }
-#elif  defined(GHASH_ASM_SPARC)
-    if (OPENSSL_sparcv9cap_P[0] & SPARCV9_VIS3) {
-        gcm_init_vis3(ctx->Htable, ctx->H.u);
-        ctx->gmult = gcm_gmult_vis3;
-        CTX__GHASH(gcm_ghash_vis3);
-    } else {
-        gcm_init_4bit(ctx->Htable, ctx->H.u);
-        ctx->gmult = gcm_gmult_4bit;
-        CTX__GHASH(gcm_ghash_4bit);
-    }
-#elif  defined(GHASH_ASM_PPC)
-    if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
-        gcm_init_p8(ctx->Htable, ctx->H.u);
-        ctx->gmult = gcm_gmult_p8;
-        CTX__GHASH(gcm_ghash_p8);
-    } else {
-        gcm_init_4bit(ctx->Htable, ctx->H.u);
-        ctx->gmult = gcm_gmult_4bit;
-        CTX__GHASH(gcm_ghash_4bit);
-    }
-#elif  defined(GHASH_ASM_RISCV) && __riscv_xlen == 64
-    if (RISCV_HAS_ZBB() && RISCV_HAS_ZBC()) {
-        gcm_init_clmul_rv64i_zbb_zbc(ctx->Htable, ctx->H.u);
-        ctx->gmult = gcm_gmult_clmul_rv64i_zbb_zbc;
-    } else {
-        gcm_init_4bit(ctx->Htable, ctx->H.u);
-        ctx->gmult = gcm_gmult_4bit;
-    }
-#else
-    gcm_init_4bit(ctx->Htable, ctx->H.u);
-#endif
-#undef CTX__GHASH
+    gcm_get_funcs(&ctx->funcs);
+    ctx->funcs.ginit(ctx->Htable, ctx->H.u);
 }
 
 void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const unsigned char *iv,
@@ -540,7 +546,7 @@ void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const unsigned char *iv,
     DECLARE_IS_ENDIAN;
     unsigned int ctr;
 #ifdef GCM_FUNCREF_4BIT
-    void (*gcm_gmult_p) (u64 Xi[2], const u128 Htable[16]) = ctx->gmult;
+    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
 #endif
 
     ctx->len.u[0] = 0;          /* AAD length */
@@ -631,10 +637,9 @@ int CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx, const unsigned char *aad,
     unsigned int n;
     u64 alen = ctx->len.u[0];
 #ifdef GCM_FUNCREF_4BIT
-    void (*gcm_gmult_p) (u64 Xi[2], const u128 Htable[16]) = ctx->gmult;
+    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
 # ifdef GHASH
-    void (*gcm_ghash_p) (u64 Xi[2], const u128 Htable[16],
-                         const u8 *inp, size_t len) = ctx->ghash;
+    gcm_ghash_fn gcm_ghash_p = ctx->funcs.ghash;
 # endif
 #endif
 
@@ -696,10 +701,9 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
     block128_f block = ctx->block;
     void *key = ctx->key;
 #ifdef GCM_FUNCREF_4BIT
-    void (*gcm_gmult_p) (u64 Xi[2], const u128 Htable[16]) = ctx->gmult;
+    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
 # if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
-    void (*gcm_ghash_p) (u64 Xi[2], const u128 Htable[16],
-                         const u8 *inp, size_t len) = ctx->ghash;
+    gcm_ghash_fn gcm_ghash_p = ctx->funcs.ghash;
 # endif
 #endif
 
@@ -928,10 +932,9 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
     block128_f block = ctx->block;
     void *key = ctx->key;
 #ifdef GCM_FUNCREF_4BIT
-    void (*gcm_gmult_p) (u64 Xi[2], const u128 Htable[16]) = ctx->gmult;
+    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
 # if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
-    void (*gcm_ghash_p) (u64 Xi[2], const u128 Htable[16],
-                         const u8 *inp, size_t len) = ctx->ghash;
+    gcm_ghash_fn gcm_ghash_p = ctx->funcs.ghash;
 # endif
 #endif
 
@@ -1170,10 +1173,9 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
     u64 mlen = ctx->len.u[1];
     void *key = ctx->key;
 # ifdef GCM_FUNCREF_4BIT
-    void (*gcm_gmult_p) (u64 Xi[2], const u128 Htable[16]) = ctx->gmult;
+    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
 #  ifdef GHASH
-    void (*gcm_ghash_p) (u64 Xi[2], const u128 Htable[16],
-                         const u8 *inp, size_t len) = ctx->ghash;
+    gcm_ghash_fn gcm_ghash_p = ctx->funcs.ghash;
 #  endif
 # endif
 
@@ -1331,10 +1333,9 @@ int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
     u64 mlen = ctx->len.u[1];
     void *key = ctx->key;
 # ifdef GCM_FUNCREF_4BIT
-    void (*gcm_gmult_p) (u64 Xi[2], const u128 Htable[16]) = ctx->gmult;
+    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
 #  ifdef GHASH
-    void (*gcm_ghash_p) (u64 Xi[2], const u128 Htable[16],
-                         const u8 *inp, size_t len) = ctx->ghash;
+    gcm_ghash_fn gcm_ghash_p = ctx->funcs.ghash;
 #  endif
 # endif
 
@@ -1493,10 +1494,9 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
     u64 alen = ctx->len.u[0] << 3;
     u64 clen = ctx->len.u[1] << 3;
 #ifdef GCM_FUNCREF_4BIT
-    void (*gcm_gmult_p) (u64 Xi[2], const u128 Htable[16]) = ctx->gmult;
+    gcm_gmult_fn gcm_gmult_p = ctx->funcs.gmult;
 # if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
-    void (*gcm_ghash_p) (u64 Xi[2], const u128 Htable[16],
-                         const u8 *inp, size_t len) = ctx->ghash;
+    gcm_ghash_fn gcm_ghash_p = ctx->funcs.ghash;
 # endif
 #endif
 
