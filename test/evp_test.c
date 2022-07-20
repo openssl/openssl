@@ -22,6 +22,7 @@
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include <openssl/fips_names.h>
+#include <openssl/thread.h>
 #include "internal/numbers.h"
 #include "internal/nelem.h"
 #include "crypto/evp.h"
@@ -3570,6 +3571,10 @@ static void clear_test(EVP_TEST *t)
     t->err = NULL;
     t->skip = 0;
     t->meth = NULL;
+
+#if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
+    OSSL_set_max_threads(libctx, 0);
+#endif
 }
 
 /* Check for errors in the test structure; return 1 if okay, else 0. */
@@ -3955,6 +3960,12 @@ start:
                 return 0;
             }
             t->reason = take_value(pp);
+        } else if (strcmp(pp->key, "Threads") == 0) {
+            if (OSSL_set_max_threads(libctx, atoi(pp->value)) == 0) {
+                TEST_info("skipping, '%s' threads not available: %s:%d",
+                          pp->value, t->s.test_file, t->s.start);
+                t->skip = 1;
+            }
         } else {
             /* Must be test specific line: try to parse it */
             int rv = t->meth->parse(t, pp->key, pp->value);
