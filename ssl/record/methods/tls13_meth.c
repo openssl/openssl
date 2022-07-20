@@ -19,7 +19,6 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                   unsigned char *mackey, size_t mackeylen,
                                   const EVP_CIPHER *ciph,
                                   size_t taglen,
-                                  /* TODO(RECLAYER): This probably should not be an int */
                                   int mactype,
                                   const EVP_MD *md,
                                   const SSL_COMP *comp)

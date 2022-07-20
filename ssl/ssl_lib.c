@@ -659,11 +659,6 @@ int ossl_ssl_connection_reset(SSL *s)
     BIO_free(sc->rrlnext);
     sc->rrlnext = NULL;
 
-    /*
-     * TODO(RECLAYER): The record method should probably initialy come from the
-     * SSL_METHOD, and potentially be updated later. For now though we just
-     * assign it.
-     */
     if (!ssl_set_new_record_layer(sc,
                                   SSL_CONNECTION_IS_DTLS(sc) ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
                                   OSSL_RECORD_DIRECTION_READ,

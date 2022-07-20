@@ -252,7 +252,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
             goto err;
         }
 
-        /* TODO(RECLAYER): Temporary - remove me */
+        /* TODO(RECLAYER): Temporary - remove me when write rlayer done*/
         goto skip_ktls;
     } else {
         s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;

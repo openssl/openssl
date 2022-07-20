@@ -27,7 +27,6 @@ struct record_functions_st
                             unsigned char *mackey, size_t mackeylen,
                             const EVP_CIPHER *ciph,
                             size_t taglen,
-                            /* TODO(RECLAYER): This probably should not be an int */
                             int mactype,
                             const EVP_MD *md,
                             const SSL_COMP *comp);
@@ -261,7 +260,6 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                          size_t keylen, unsigned char *iv, size_t ivlen,
                          unsigned char *mackey, size_t mackeylen,
                          const EVP_CIPHER *ciph, size_t taglen,
-                         /* TODO(RECLAYER): This probably should not be an int */
                          int mactype,
                          const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
                          BIO *transport, BIO *next,
