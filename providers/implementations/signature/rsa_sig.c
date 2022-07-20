@@ -31,6 +31,12 @@
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"
 #include "prov/securitycheck.h"
+#ifdef FIPS_MODULE
+# include <openssl/kdf.h>
+# include <openssl/param_build.h>
+# include <openssl/self_test.h>
+# include "../../fips/self_test_data.inc"
+#endif
 
 #define RSA_DEFAULT_DIGEST_NAME OSSL_DIGEST_NAME_SHA1
 
@@ -108,6 +114,10 @@ typedef struct {
     unsigned char *tbuf;
 
 } PROV_RSA_CTX;
+
+#ifdef FIPS_MODULE
+static int rsa_digest_signverify_selftest(OSSL_LIB_CTX *libctx);
+#endif
 
 /* True if PSS parameters are restricted */
 #define rsa_pss_restricted(prsactx) (prsactx->min_saltlen != -1)
@@ -395,6 +405,13 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa,
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;
     }
+
+#ifdef FIPS_MODULE
+    if (!rsa_digest_signverify_selftest(prsactx->libctx)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
+        return 0;
+    }
+#endif
 
     if (vrsa != NULL) {
         if (!ossl_rsa_check_key(prsactx->libctx, vrsa, operation))
@@ -1431,6 +1448,174 @@ static const OSSL_PARAM *rsa_settable_ctx_md_params(void *vprsactx)
 
     return EVP_MD_settable_ctx_params(prsactx->md);
 }
+
+#ifdef FIPS_MODULE
+
+static CRYPTO_RWLOCK *selftest_lock;
+
+static void selftest_lock_init(void)
+{
+    selftest_lock = CRYPTO_THREAD_lock_new();
+}
+
+static int rsa_digest_signverify_selftest(OSSL_LIB_CTX *libctx)
+{
+    static int selftest_status = -1;
+    static CRYPTO_ONCE selftest_once = CRYPTO_ONCE_STATIC_INIT;
+    static CRYPTO_THREAD_ID selftest_thread = {0};
+    int success = 0;
+    size_t i;
+    const char *msg = "Hello World!";
+    unsigned char sig[256];
+    size_t siglen = 0;
+    /* rsa_newctx() and rsa_newdata() both need a provctx, but only use libctx
+     * from it. We don't have a provctx here, but libctx is easy to obtain.
+     * Create a test PROV_CTX that just has the libctx field set. */
+    PROV_CTX test_provider = {0};
+    PROV_RSA_CTX *prsactx = NULL;
+    RSA *provkey = NULL;
+
+    const OSSL_DISPATCH *fns = NULL;
+    OSSL_FUNC_keymgmt_new_fn *rsa_newdata = NULL;
+    OSSL_FUNC_keymgmt_free_fn *rsa_freedata = NULL;
+    OSSL_FUNC_keymgmt_import_fn *rsa_import = NULL;
+
+    OSSL_PARAM_BLD *bld = NULL;
+    const ST_KAT_PARAM *p = NULL;
+    BN_CTX *bnctx = NULL;
+    OSSL_PARAM *key = NULL;
+
+    if (selftest_status != -1)
+        return selftest_status;
+
+    /* If this is the thread that is currently running the selftest, don't
+     * attempt to lock again, just succeed. */
+    if (CRYPTO_THREAD_compare_id(selftest_thread,
+                                 CRYPTO_THREAD_get_current_id()))
+        return 1;
+
+    if (!CRYPTO_THREAD_run_once(&selftest_once, selftest_lock_init)
+        || selftest_lock == NULL)
+        return 0;
+
+    if (!CRYPTO_THREAD_write_lock(selftest_lock))
+        return 0;
+
+    selftest_thread = CRYPTO_THREAD_get_current_id();
+
+    test_provider.libctx = libctx;
+
+    for (fns = ossl_rsa_keymgmt_functions; fns->function_id != 0; fns++) {
+        switch (fns->function_id) {
+        case OSSL_FUNC_KEYMGMT_NEW:
+            rsa_newdata = OSSL_FUNC_keymgmt_new(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_FREE:
+            rsa_freedata = OSSL_FUNC_keymgmt_free(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_IMPORT:
+            rsa_import = OSSL_FUNC_keymgmt_import(fns);
+            break;
+        }
+    }
+
+    if (rsa_newdata == NULL || rsa_freedata == NULL || rsa_import == NULL)
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(st_kat_sign_tests); ++i) {
+        const ST_KAT_SIGN *t = &st_kat_sign_tests[i];
+
+        if (OPENSSL_strcasecmp("RSA", t->algorithm) != 0)
+            continue;
+
+        bld = OSSL_PARAM_BLD_new();
+        if (bld == NULL)
+            goto err;
+
+        bnctx = BN_CTX_new_ex(libctx);
+        if (bnctx == NULL)
+            goto err;
+
+        for (p = t->key; p->data != NULL; p++) {
+            switch (p->type) {
+            case OSSL_PARAM_UNSIGNED_INTEGER:
+                {
+                    BIGNUM *bn = BN_CTX_get(bnctx);
+                    if (bn == NULL
+                        || BN_bin2bn(p->data, p->data_len, bn) == NULL
+                        || !OSSL_PARAM_BLD_push_BN(bld, p->name, bn))
+                        goto err;
+                    break;
+                }
+            }
+        }
+
+        key = OSSL_PARAM_BLD_to_param(bld);
+        if (key == NULL)
+            goto err;
+
+        OSSL_PARAM_BLD_free(bld);
+        bld = NULL;
+
+        BN_CTX_free(bnctx);
+        bnctx = NULL;
+
+        prsactx = rsa_newctx(&test_provider, NULL);
+        if (prsactx == NULL)
+            goto err;
+
+        provkey = rsa_newdata(&test_provider);
+        if (provkey == NULL)
+            goto err;
+
+        if (!rsa_import(provkey, OSSL_KEYMGMT_SELECT_KEYPAIR, key))
+            goto err;
+
+        OSSL_PARAM_free(key);
+        key = NULL;
+
+        if (!rsa_digest_sign_init(prsactx, t->mdalgorithm, provkey, NULL))
+            goto err;
+        if (!rsa_digest_signverify_update(prsactx, (const unsigned char *)msg,
+                                          strlen(msg)))
+            goto err;
+        siglen = sizeof(sig) / sizeof(*sig);
+        if (!rsa_digest_sign_final(prsactx, sig, &siglen, siglen))
+            goto err;
+        if (!rsa_digest_verify_init(prsactx, t->mdalgorithm, provkey, NULL))
+            goto err;
+        if (!rsa_digest_signverify_update(prsactx, (const unsigned char *)msg,
+                                          strlen(msg)))
+            goto err;
+        if (t->sig_expected != NULL
+            && (siglen != t->sig_expected_len
+                || memcmp(sig, t->sig_expected, t->sig_expected_len) != 0))
+            goto err;
+        if (!rsa_digest_verify_final(prsactx, sig, siglen))
+            goto err;
+
+        rsa_freedata(provkey);
+        provkey = NULL;
+        rsa_freectx(prsactx);
+        prsactx = NULL;
+    }
+
+    success = 1;
+err:
+    /* cache result for next invocation */
+    memset(&selftest_thread, 0, sizeof(selftest_thread));
+    selftest_status = success;
+    CRYPTO_THREAD_unlock(selftest_lock);
+
+    BN_CTX_free(bnctx);
+    OSSL_PARAM_BLD_free(bld);
+    OSSL_PARAM_free(key);
+    rsa_freedata(provkey);
+    rsa_freectx(prsactx);
+
+    return success;
+}
+#endif
 
 const OSSL_DISPATCH ossl_rsa_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))rsa_newctx },

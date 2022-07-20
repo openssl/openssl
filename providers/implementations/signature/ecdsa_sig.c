@@ -31,6 +31,12 @@
 #include "prov/securitycheck.h"
 #include "crypto/ec.h"
 #include "prov/der_ec.h"
+#ifdef FIPS_MODULE
+# include <openssl/kdf.h>
+# include <openssl/param_build.h>
+# include <openssl/self_test.h>
+# include "../../fips/self_test_data.inc"
+#endif
 
 static OSSL_FUNC_signature_newctx_fn ecdsa_newctx;
 static OSSL_FUNC_signature_sign_init_fn ecdsa_sign_init;
@@ -104,6 +110,10 @@ typedef struct {
 #endif
 } PROV_ECDSA_CTX;
 
+#ifdef FIPS_MODULE
+static int ecdsa_digest_signverify_selftest(OSSL_LIB_CTX *libctx);
+#endif
+
 static void *ecdsa_newctx(void *provctx, const char *propq)
 {
     PROV_ECDSA_CTX *ctx;
@@ -138,6 +148,13 @@ static int ecdsa_signverify_init(void *vctx, void *ec,
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;
     }
+
+#ifdef FIPS_MODULE
+    if (!ecdsa_digest_signverify_selftest(ctx->libctx)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
+        return 0;
+    }
+#endif
 
     if (ec != NULL) {
         if (!ossl_ec_check_key(ctx->libctx, ec, operation == EVP_PKEY_OP_SIGN))
@@ -374,6 +391,9 @@ static void ecdsa_freectx(void *vctx)
 {
     PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
 
+    if (vctx == NULL)
+        return;
+
     OPENSSL_free(ctx->propq);
     EVP_MD_CTX_free(ctx->mdctx);
     EVP_MD_free(ctx->md);
@@ -580,6 +600,185 @@ static const OSSL_PARAM *ecdsa_settable_ctx_md_params(void *vctx)
 
     return EVP_MD_settable_ctx_params(ctx->md);
 }
+
+#ifdef FIPS_MODULE
+
+static CRYPTO_RWLOCK *selftest_lock;
+
+static void selftest_lock_init(void)
+{
+    selftest_lock = CRYPTO_THREAD_lock_new();
+}
+
+static int ecdsa_digest_signverify_selftest(OSSL_LIB_CTX *libctx)
+{
+    static int selftest_status = -1;
+    static CRYPTO_ONCE selftest_once = CRYPTO_ONCE_STATIC_INIT;
+    static CRYPTO_THREAD_ID selftest_thread = {0};
+    int success = 0;
+    size_t i;
+    const char *msg = "Hello World!";
+    unsigned char sig[256];
+    size_t siglen = 0;
+    /* ecdsa_newctx() and ecdsa_newdata() both need a provctx, but only use
+     * libctx from it. We don't have a provctx here, but libctx is easy to
+     * obtain. Create a test PROV_CTX that just has the libctx field set. */
+    PROV_CTX test_provider = {0};
+    PROV_ECDSA_CTX *ctx = NULL;
+    EC_KEY *provkey = NULL;
+
+    const OSSL_DISPATCH *fns = NULL;
+    OSSL_FUNC_keymgmt_new_fn *ec_newdata = NULL;
+    OSSL_FUNC_keymgmt_free_fn *ec_freedata = NULL;
+    OSSL_FUNC_keymgmt_import_fn *ec_import = NULL;
+
+    OSSL_PARAM_BLD *bld = NULL;
+    const ST_KAT_PARAM *p = NULL;
+    BN_CTX *bnctx = NULL;
+    OSSL_PARAM *key = NULL;
+
+    if (selftest_status != -1)
+        return selftest_status;
+
+    /* If this is the thread that is currently running the selftest, don't
+     * attempt to lock again, just succeed. */
+    if (CRYPTO_THREAD_compare_id(selftest_thread,
+                                 CRYPTO_THREAD_get_current_id()))
+        return 1;
+
+    if (!CRYPTO_THREAD_run_once(&selftest_once, selftest_lock_init)
+        || selftest_lock == NULL)
+        return 0;
+
+    if (!CRYPTO_THREAD_write_lock(selftest_lock))
+        return 0;
+
+    selftest_thread = CRYPTO_THREAD_get_current_id();
+
+    test_provider.libctx = libctx;
+
+    for (fns = ossl_ec_keymgmt_functions; fns->function_id != 0; fns++) {
+        switch (fns->function_id) {
+        case OSSL_FUNC_KEYMGMT_NEW:
+            ec_newdata = OSSL_FUNC_keymgmt_new(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_FREE:
+            ec_freedata = OSSL_FUNC_keymgmt_free(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_IMPORT:
+            ec_import = OSSL_FUNC_keymgmt_import(fns);
+            break;
+        }
+    }
+
+    if (ec_newdata == NULL || ec_freedata == NULL || ec_import == NULL)
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(st_kat_sign_tests); ++i) {
+        const ST_KAT_SIGN *t = &st_kat_sign_tests[i];
+
+        if (OPENSSL_strcasecmp("EC", t->algorithm) != 0)
+            continue;
+
+        bld = OSSL_PARAM_BLD_new();
+        if (bld == NULL)
+            goto err;
+
+        bnctx = BN_CTX_new_ex(libctx);
+        if (bnctx == NULL)
+            goto err;
+
+        for (p = t->key; p->data != NULL; p++) {
+            switch (p->type) {
+            case OSSL_PARAM_UNSIGNED_INTEGER:
+                {
+                    BIGNUM *bn = BN_CTX_get(bnctx);
+                    if (bn == NULL
+                        || BN_bin2bn(p->data, p->data_len, bn) == NULL
+                        || !OSSL_PARAM_BLD_push_BN(bld, p->name, bn))
+                        goto err;
+                    break;
+                }
+            case OSSL_PARAM_OCTET_STRING:
+                if (!OSSL_PARAM_BLD_push_octet_string(bld, p->name, p->data,
+                                                      p->data_len))
+                    goto err;
+                break;
+            case OSSL_PARAM_UTF8_STRING:
+                if (!OSSL_PARAM_BLD_push_utf8_string(bld, p->name, p->data,
+                                                     p->data_len))
+                    goto err;
+                break;
+            }
+        }
+
+        key = OSSL_PARAM_BLD_to_param(bld);
+        if (key == NULL)
+            goto err;
+
+        OSSL_PARAM_BLD_free(bld);
+        bld = NULL;
+
+        BN_CTX_free(bnctx);
+        bnctx = NULL;
+
+        ctx = ecdsa_newctx(&test_provider, NULL);
+        if (ctx == NULL)
+            goto err;
+
+        provkey = ec_newdata(&test_provider);
+        if (provkey == NULL)
+            goto err;
+
+        if (!ec_import(provkey, OSSL_KEYMGMT_SELECT_KEYPAIR
+                       | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS, key))
+            goto err;
+
+        OSSL_PARAM_free(key);
+        key = NULL;
+
+        if (!ecdsa_digest_sign_init(ctx, t->mdalgorithm, provkey, NULL))
+            goto err;
+        if (!ecdsa_digest_signverify_update(ctx, (const unsigned char *)msg,
+                                            strlen(msg)))
+            goto err;
+        siglen = sizeof(sig) / sizeof(*sig);
+        if (!ecdsa_digest_sign_final(ctx, sig, &siglen, siglen))
+            goto err;
+        if (!ecdsa_digest_verify_init(ctx, t->mdalgorithm, provkey, NULL))
+            goto err;
+        if (!ecdsa_digest_signverify_update(ctx, (const unsigned char *)msg,
+                                            strlen(msg)))
+            goto err;
+        if (t->sig_expected != NULL
+            && (siglen != t->sig_expected_len
+                || memcmp(sig, t->sig_expected, t->sig_expected_len) != 0))
+            goto err;
+        if (!ecdsa_digest_verify_final(ctx, sig, siglen))
+            goto err;
+
+        ec_freedata(provkey);
+        provkey = NULL;
+        ecdsa_freectx(ctx);
+        ctx = NULL;
+    }
+
+    success = 1;
+err:
+    /* cache result for next invocation */
+    memset(&selftest_thread, 0, sizeof(selftest_thread));
+    selftest_status = success;
+    CRYPTO_THREAD_unlock(selftest_lock);
+
+    BN_CTX_free(bnctx);
+    OSSL_PARAM_BLD_free(bld);
+    OSSL_PARAM_free(key);
+    ec_freedata(provkey);
+    ecdsa_freectx(ctx);
+
+    return success;
+}
+#endif
 
 const OSSL_DISPATCH ossl_ecdsa_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))ecdsa_newctx },
