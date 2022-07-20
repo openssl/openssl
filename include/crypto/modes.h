@@ -107,6 +107,15 @@ _asm mov eax, val _asm bswap eax}
     u64 hi, lo;
 } u128;
 
+typedef void (*gcm_init_fn)(u128 Htable[16], const u64 H[2]);
+typedef void (*gcm_ghash_fn)(u64 Xi[2], const u128 Htable[16], const u8 *inp, size_t len);
+typedef void (*gcm_gmult_fn)(u64 Xi[2], const u128 Htable[16]);
+struct gcm_funcs_st {
+    gcm_init_fn ginit;
+    gcm_ghash_fn ghash;
+    gcm_gmult_fn gmult;
+};
+
 struct gcm128_context {
     /* Following 6 names follow names in GCM specification */
     union {
@@ -120,9 +129,7 @@ struct gcm128_context {
      * used in some assembler modules, i.e. don't change the order!
      */
     u128 Htable[16];
-    void (*gmult) (u64 Xi[2], const u128 Htable[16]);
-    void (*ghash) (u64 Xi[2], const u128 Htable[16], const u8 *inp,
-                   size_t len);
+    struct gcm_funcs_st funcs;
     unsigned int mres, ares;
     block128_f block;
     void *key;
