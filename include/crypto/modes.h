@@ -107,15 +107,6 @@ _asm mov eax, val _asm bswap eax}
     u64 hi, lo;
 } u128;
 
-#ifdef  TABLE_BITS
-# undef  TABLE_BITS
-#endif
-/*
- * Even though permitted values for TABLE_BITS are 8, 4 and 1, it should
- * never be set to 8 [or 1]. For further information see gcm128.c.
- */
-#define TABLE_BITS 4
-
 struct gcm128_context {
     /* Following 6 names follow names in GCM specification */
     union {
