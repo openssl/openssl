@@ -47,12 +47,13 @@ OpenSSL 3.1
 
    *Dmitry Belyavskiy, Nicola Tuveri*
 
- * Add new SSL APIs to aid in efficiently implementing TLS/SSL fingerprinting.  The
-   SSL_CTRL_GET_IANA_GROUPS control code, exposed as the SSL_get0_iana_groups()
-   function-like macro, retrieves the list of supported groups sent by the peer,
-   and the function SSL_client_hello_get_extension_order() populates a caller-supplied
-   array with the list of extension types present in the ClientHello, in order of
-   appearance.
+ * Add new SSL APIs to aid in efficiently implementing TLS/SSL fingerprinting.
+   The SSL_CTRL_GET_IANA_GROUPS control code, exposed as the
+   SSL_get0_iana_groups() function-like macro, retrieves the list of
+   supported groups sent by the peer.
+   The function SSL_client_hello_get_extension_order() populates
+   a caller-supplied array with the list of extension types present in the
+   ClientHello, in order of appearance.
 
    *Phus Lu*
 
@@ -137,6 +138,34 @@ OpenSSL 3.1
    length equivalent to minimum key lengths as in RFC 7919.
 
    *Tomáš Mráz*
+
+ * Various fixes and extensions to certificate handling and the `x509` etc. apps
+
+   *David von Oheimb*
+
+ * Various fixes and extensions to the CMP+CRMF implementation and the `cmp` app
+
+   *David von Oheimb*
+
+ * Fixes and extensions to the HTTP client and to the HTTP server in `apps/`
+
+   *David von Oheimb*
+
+ * Extended the CMS API for handling `CMS_SignedData` and `CMS_EnvelopedData`
+
+   *David von Oheimb*
+
+ * Moved coding style <https://www.openssl.org/policies/codingstyle.html>
+   to <https://www.openssl.org/policies/technical/coding-style.html>,
+   cleaned up the text, made some clarifications, and added various details.
+
+   *David von Oheimb et al.*
+
+ * Fixed and extended `util/check-format.pl` for checking adherence to the
+   coding style <https://www.openssl.org/policies/technical/coding-style.html>.
+   The checks are meanwhile more complete and yield fewer false positives.
+
+   *David von Oheimb*
 
 OpenSSL 3.0
 -----------
