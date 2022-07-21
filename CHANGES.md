@@ -139,27 +139,25 @@ OpenSSL 3.1
 
    *Tomáš Mráz*
 
- * Various fixes and extensions to certificate handling and the `x509` etc. apps
+ * Fix and extend certificate handling and the apps `x509`, `verify` etc.
+   such as adding a trace facility for debugging certificate chain building.
 
    *David von Oheimb*
 
  * Various fixes and extensions to the CMP+CRMF implementation and the `cmp` app
+   in particular supporting requests for central key generation, generalized
+   polling, and various types of genm/genp exchanges defined in CMP Updates.
 
    *David von Oheimb*
 
  * Fixes and extensions to the HTTP client and to the HTTP server in `apps/`
+   like correcting the TLS and proxy support and adding tracing for debugging.
 
    *David von Oheimb*
 
- * Extended the CMS API for handling `CMS_SignedData` and `CMS_EnvelopedData`
+ * Extended the CMS API for handling `CMS_SignedData` and `CMS_EnvelopedData`.
 
    *David von Oheimb*
-
- * Moved coding style <https://www.openssl.org/policies/codingstyle.html>
-   to <https://www.openssl.org/policies/technical/coding-style.html>,
-   cleaned up the text, made some clarifications, and added various details.
-
-   *David von Oheimb et al.*
 
  * Fixed and extended `util/check-format.pl` for checking adherence to the
    coding style <https://www.openssl.org/policies/technical/coding-style.html>.
