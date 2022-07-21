@@ -172,18 +172,6 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     rb = &rl->rbuf;
-    /*
-     * TODO(RECLAYER): Once this function is only called from inside the rlayer
-     * directly, we can probably remove this since it is initialised in
-     * tls_get_more_records
-     */
-    if (rb->buf == NULL) {
-        if (!rlayer_setup_read_buffer(rl)) {
-            /* RLAYERfatal() already called */
-            return OSSL_RECORD_RETURN_FATAL;
-        }
-    }
-
     left = rb->left;
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
     align = (size_t)rb->buf + SSL3_RT_HEADER_LENGTH;
