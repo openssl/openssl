@@ -1357,13 +1357,8 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
                     OPENSSL_cleanse(&(rr->data[rr->off]), n);
                 rr->length -= n;
                 rr->off += n;
-                if (rr->length == 0) {
-                    /* TODO(RECLAYER): What to do with this? Is it needed? */
-                    #if 0
-                    s->rlayer.rstate = SSL_ST_READ_HEADER;
-                    #endif
+                if (rr->length == 0)
                     ssl_release_record(s, rr);
-                }
             }
             if (rr->length == 0
                 || (peek && n == rr->length)) {

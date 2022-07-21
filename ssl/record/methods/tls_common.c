@@ -1265,7 +1265,15 @@ int tls_processed_read_pending(OSSL_RECORD_LAYER *rl)
 
 size_t tls_app_data_pending(OSSL_RECORD_LAYER *rl)
 {
-    return 0;
+    size_t i;
+    size_t num = 0;
+
+    for (i = rl->curr_rec; i <rl->num_recs; i++) {
+        if (rl->rrec[i].type != SSL3_RT_APPLICATION_DATA)
+            return num;
+        num += rl->rrec[i].length;
+    }
+    return num;
 }
 
 int tls_write_pending(OSSL_RECORD_LAYER *rl)
