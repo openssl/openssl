@@ -115,28 +115,27 @@ interact with:
     turn out to be the Handshake manager.
 -   Stream SSL objects, to pass the stream data to.
 
-### Receiving or pulling data
+### Read and process a packet
 
-The RX depacketizer could be implemented in two ways:
+Following how things are designed elsewhere, the depacketizer is assumed to
+be called "from above" using the following function:
 
-1.  As a receiver, called "from below" from the QUIC Read Record Layer,
-    which passes a decrypted packet to the RX depacketizer using this
-    function:
+``` C
+__owur int ossl_quic_depacketise(SSL *connection);
+```
 
-    ``` C
-    __owur int ossl_quic_depacketise(const OSSL_QUIC_PACKET *packet,
-                                     OSSL_TIME received);
-    ```
+This function would create an `OSSL_QUIC_PACKET` and call the QUIC Read
+Record Layer with a pointer to it, leaving it to the QUIC Read Record Layer
+to fill in the data.
 
-2.  As a data puller, called "from above" using the following function:
+This assumes that the QUIC Read Record Layer will present a wrapper function
+that can fill an `OSSL_QUIC_PACKET` and an `OSSL_TIME`.  Such a function
+would presumably have this interface:
 
-    ``` C
-    __owur int ossl_quic_depacketise(SSL *connection);
-    ```
-
-    This function would create an `OSSL_QUIC_PACKET` and call the QUIC Read
-    Record Layer with a pointer to it, leaving it to the QUIC Read Record
-    Layer to fill in the data.
+``` C
+__owur int ossl_quic_read_packet(OSSL_QUIC_PACKET *packet,
+OSSL_TIME *received);
+```
 
 ### Collect information for the [ACK manager]
 
@@ -196,8 +195,6 @@ Taken from [RFC 9000 12.4 Frames and Frame Types]
 | 0x1D | [connection_close 0x1D]  | Connection manager        |               |
 | 0x1E | [handshake_done]         | Handshake manager         | &#10004;      |
 | ???? | *[Extension Frames]*     | - [^8]                    | &#10004;      |
-
-[ the table used here is shamelessly copied from #18570 ]
 
 Notes:
 
