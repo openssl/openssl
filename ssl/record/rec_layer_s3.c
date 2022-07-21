@@ -30,22 +30,12 @@
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL_CONNECTION *s)
 {
     rl->s = s;
-    RECORD_LAYER_set_first_record(&s->rlayer);
-    SSL3_RECORD_clear(rl->rrec, SSL_MAX_PIPELINES);
 }
 
 void RECORD_LAYER_clear(RECORD_LAYER *rl)
 {
     rl->rstate = SSL_ST_READ_HEADER;
 
-    /*
-     * Do I need to clear read_ahead? As far as I can tell read_ahead did not
-     * previously get reset by SSL_clear...so I'll keep it that way..but is
-     * that right?
-     */
-
-    rl->packet = NULL;
-    rl->packet_length = 0;
     rl->wnum = 0;
     memset(rl->handshake_fragment, 0, sizeof(rl->handshake_fragment));
     rl->handshake_fragment_len = 0;
@@ -54,10 +44,7 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     rl->wpend_ret = 0;
     rl->wpend_buf = NULL;
 
-    SSL3_BUFFER_clear(&rl->rbuf);
     ssl3_release_write_buffer(rl->s);
-    rl->numrpipes = 0;
-    SSL3_RECORD_clear(rl->rrec, SSL_MAX_PIPELINES);
 
     RECORD_LAYER_reset_read_sequence(rl);
     RECORD_LAYER_reset_write_sequence(rl);
@@ -70,7 +57,6 @@ void RECORD_LAYER_release(RECORD_LAYER *rl)
 {
     if (rl->numwpipes > 0)
         ssl3_release_write_buffer(rl->s);
-    SSL3_RECORD_release(rl->rrec, SSL_MAX_PIPELINES);
 }
 
 /* Checks if we have unprocessed read ahead data pending */
@@ -153,6 +139,7 @@ const char *SSL_rstate_string_long(const SSL *s)
     if (sc == NULL)
         return NULL;
 
+    /* TODO(RECLAYER): Fix me */
     switch (sc->rlayer.rstate) {
     case SSL_ST_READ_HEADER:
         return "read header";
@@ -172,6 +159,7 @@ const char *SSL_rstate_string(const SSL *s)
     if (sc == NULL)
         return NULL;
 
+    /* TODO(RECLAYER): Fix me */
     switch (sc->rlayer.rstate) {
     case SSL_ST_READ_HEADER:
         return "RH";
@@ -1263,7 +1251,7 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
     rr = &s->rlayer.tlsrecs[s->rlayer.curr_rec];
 
     if (s->rlayer.handshake_fragment_len > 0
-            && SSL3_RECORD_get_type(rr) != SSL3_RT_HANDSHAKE
+            && rr->type != SSL3_RT_HANDSHAKE
             && SSL_CONNECTION_IS_TLS13(s)) {
         SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
                  SSL_R_MIXED_HANDSHAKE_AND_NON_HANDSHAKE_DATA);
@@ -1695,14 +1683,6 @@ int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl)
     if (SSL_CONNECTION_IS_DTLS(rl->s))
         return 0;
     return rl->tlsrecs[0].version == SSL2_VERSION;
-}
-
-/*
- * Returns the length in bytes of the current rrec
- */
-size_t RECORD_LAYER_get_rrec_length(RECORD_LAYER *rl)
-{
-    return SSL3_RECORD_get_length(&rl->rrec[0]);
 }
 
 static OSSL_FUNC_rlayer_msg_callback_fn rlayer_msg_callback_wrapper;
