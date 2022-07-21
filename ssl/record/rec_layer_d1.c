@@ -379,11 +379,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 OPENSSL_cleanse(&(rr->data[rr->off]), n);
             rr->length -= n;
             rr->off += n;
-            if (rr->length == 0) {
-                /* TODO(RECLAYER): Do something with this? */
-                sc->rlayer.rstate = SSL_ST_READ_HEADER;
+            if (rr->length == 0)
                 ssl_release_record(sc, rr);
-            }
         }
 #ifndef OPENSSL_NO_SCTP
         /*
