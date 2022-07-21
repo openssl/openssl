@@ -93,7 +93,7 @@ nonzero the function must be used before calling OSSL_HTTP_REQ_CTX_set1_req().
 If the I<content_type> argument is not NULL,
 the client will check that the specified content-type string
 is included in the HTTP header of the response and return an error if not.
-In the content-type header line the specified string shouldb be present either
+In the content-type header line the specified string should be present either
 as a whole, or in case the specified string does not include a C<;> character,
 it is sufficient that the specified string appears as a prefix
 in the header line, followed by a C<;> character and any further text.

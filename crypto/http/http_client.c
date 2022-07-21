@@ -693,8 +693,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                         /* ignore past ';' unless expected_ct contains ';' */
                         && (strchr(rctx->expected_ct, ';') != NULL
                             || (semicolon = strchr(value, ';')) == NULL
-                            || (size_t)(semicolon - value) !=
-                            strlen(rctx->expected_ct)
+                            || (size_t)(semicolon - value) != strlen(rctx->expected_ct)
                             || OPENSSL_strncasecmp(rctx->expected_ct, value,
                                                    semicolon - value) != 0)) {
                         ERR_raise_data(ERR_LIB_HTTP,
