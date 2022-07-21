@@ -158,11 +158,11 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
     /*
      * If extend == 0, obtain new n-byte packet; if extend == 1, increase
      * packet by another n bytes. The packet will be in the sub-array of
-     * s->rlayer.rbuf.buf specified by s->rlayer.packet and
-     * s->rlayer.packet_length. (If s->rlayer.read_ahead is set, 'max' bytes may
-     * be stored in rbuf [plus s->rlayer.packet_length bytes if extend == 1].)
-     * if clearold == 1, move the packet to the start of the buffer; if
-     * clearold == 0 then leave any old packets where they were
+     * rl->rbuf.buf specified by rl->packet and rl->packet_length. (If
+     * rl->read_ahead is set, 'max' bytes may be stored in rbuf [plus
+     * rl->packet_length bytes if extend == 1].) if clearold == 1, move the
+     * packet to the start of the buffer; if clearold == 0 then leave any old
+     * packets where they were
      */
     size_t len, left, align = 0;
     unsigned char *pkt;

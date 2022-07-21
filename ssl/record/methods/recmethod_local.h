@@ -85,12 +85,8 @@ struct ossl_record_layer_st
      */
     BIO *next;
 
-    /* Types match the equivalent structures in the SSL object */
+    /* Types match the equivalent fields in the SSL object */
     uint64_t options;
-    /*
-     * TODO(RECLAYER): Should we take the opportunity to make this uint64_t
-     * even though upper layer continue to use uint32_t?
-     */
     uint32_t mode;
 
     /* read IO goes into here */
@@ -120,9 +116,7 @@ struct ossl_record_layer_st
     int alert;
 
     /*
-     * Read as many input bytes as possible (for
-     * non-blocking reads)
-     * TODO(RECLAYER): Why isn't this just an option?
+     * Read as many input bytes as possible (for non-blocking reads)
      */
     int read_ahead;
 

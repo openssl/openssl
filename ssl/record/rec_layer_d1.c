@@ -858,9 +858,6 @@ void dtls1_reset_seq_numbers(SSL_CONNECTION *s, int rw)
     if (rw & SSL3_CC_READ) {
         seq = s->rlayer.read_sequence;
         s->rlayer.d->r_epoch++;
-        memcpy(&s->rlayer.d->bitmap, &s->rlayer.d->next_bitmap,
-               sizeof(s->rlayer.d->bitmap));
-        memset(&s->rlayer.d->next_bitmap, 0, sizeof(s->rlayer.d->next_bitmap));
 
         /*
          * We must not use any buffered messages received from the previous

@@ -18,22 +18,12 @@
 
 /* Functions/macros provided by the RECORD_LAYER component */
 
-#define RECORD_LAYER_get_rrec(rl)               ((rl)->rrec)
-#define RECORD_LAYER_set_packet(rl, p)          ((rl)->packet = (p))
-#define RECORD_LAYER_reset_packet_length(rl)    ((rl)->packet_length = 0)
-#define RECORD_LAYER_get_rstate(rl)             ((rl)->rstate)
-#define RECORD_LAYER_set_rstate(rl, st)         ((rl)->rstate = (st))
 #define RECORD_LAYER_get_read_sequence(rl)      ((rl)->read_sequence)
 #define RECORD_LAYER_get_write_sequence(rl)     ((rl)->write_sequence)
-#define RECORD_LAYER_get_numrpipes(rl)          ((rl)->numrpipes)
-#define RECORD_LAYER_set_numrpipes(rl, n)       ((rl)->numrpipes = (n))
 #define RECORD_LAYER_inc_empty_record_count(rl) ((rl)->empty_record_count++)
 #define RECORD_LAYER_reset_empty_record_count(rl) \
                                                 ((rl)->empty_record_count = 0)
 #define RECORD_LAYER_get_empty_record_count(rl) ((rl)->empty_record_count)
-#define RECORD_LAYER_is_first_record(rl)        ((rl)->is_first_record)
-#define RECORD_LAYER_set_first_record(rl)       ((rl)->is_first_record = 1)
-#define RECORD_LAYER_clear_first_record(rl)     ((rl)->is_first_record = 0)
 #define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
 
 int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec);
@@ -83,10 +73,6 @@ int ssl3_release_write_buffer(SSL_CONNECTION *s);
 #define SSL3_RECORD_set_off(r, o)               ((r)->off = (o))
 #define SSL3_RECORD_add_off(r, o)               ((r)->off += (o))
 #define SSL3_RECORD_get_epoch(r)                ((r)->epoch)
-#define SSL3_RECORD_is_sslv2_record(r) \
-            ((r)->rec_version == SSL2_VERSION)
-#define SSL3_RECORD_is_read(r)                  ((r)->read)
-#define SSL3_RECORD_set_read(r)                 ((r)->read = 1)
 
 void SSL3_RECORD_clear(SSL3_RECORD *r, size_t);
 void SSL3_RECORD_release(SSL3_RECORD *r, size_t num_recs);

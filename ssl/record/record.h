@@ -125,10 +125,7 @@ typedef struct dtls_record_layer_st {
      */
     unsigned short r_epoch;
     unsigned short w_epoch;
-    /* records being received in the current epoch */
-    DTLS1_BITMAP bitmap;
-    /* renegotiation starts a new set of sequence numbers */
-    DTLS1_BITMAP next_bitmap;
+
     /*
      * Buffered application records. Only for records between CCS and
      * Finished to prevent either protocol violation or unnecessary message
@@ -158,25 +155,14 @@ typedef struct record_layer_st {
     int read_ahead;
     /* where we are when reading */
     int rstate;
-    /* How many pipelines can be used to read data */
-    size_t numrpipes;
     /* How many pipelines can be used to write data */
     size_t numwpipes;
-    /* read IO goes into here */
-    SSL3_BUFFER rbuf;
     /* write IO goes into here */
     SSL3_BUFFER wbuf[SSL_MAX_PIPELINES];
-    /* each decoded record goes in here */
-    SSL3_RECORD rrec[SSL_MAX_PIPELINES];
-    /* used internally to point at a raw packet */
-    unsigned char *packet;
-    size_t packet_length;
     /* number of bytes sent so far */
     size_t wnum;
     unsigned char handshake_fragment[4];
     size_t handshake_fragment_len;
-    /* The number of consecutive empty records we have received */
-    size_t empty_record_count;
     /* partial write - check the numbers match */
     /* number bytes written */
     size_t wpend_tot;
@@ -184,15 +170,12 @@ typedef struct record_layer_st {
     /* number of bytes submitted */
     size_t wpend_ret;
     const unsigned char *wpend_buf;
+    /* TODO(RECLAYER): Why do we need this */
     unsigned char read_sequence[SEQ_NUM_SIZE];
     unsigned char write_sequence[SEQ_NUM_SIZE];
-    /* Set to true if this is the first record in a connection */
-    unsigned int is_first_record;
     /* Count of the number of consecutive warning alerts received */
     unsigned int alert_count;
     DTLS_RECORD_LAYER *d;
-
-    /* TODO(RECLAYER): Tidy me up. New fields for record management */
 
     /* How many records we have read from the record layer */
     size_t num_recs;
@@ -235,7 +218,6 @@ int RECORD_LAYER_write_pending(const RECORD_LAYER *rl);
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl);
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl);
 int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl);
-size_t RECORD_LAYER_get_rrec_length(RECORD_LAYER *rl);
 __owur size_t ssl3_pending(const SSL *s);
 __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, size_t len,
                             size_t *written);
