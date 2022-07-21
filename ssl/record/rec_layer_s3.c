@@ -1893,7 +1893,10 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                 && level != OSSL_RECORD_PROTECTION_LEVEL_NONE)
             epoch =  DTLS_RECORD_LAYER_get_r_epoch(&s->rlayer) + 1; /* new epoch */
 
-        s->rrlnext = BIO_new(BIO_s_mem());
+        if (SSL_CONNECTION_IS_DTLS(s))
+            s->rrlnext = BIO_new(BIO_s_dgram_mem());
+        else
+            s->rrlnext = BIO_new(BIO_s_mem());
 
         if (s->rrlnext == NULL) {
             BIO_free(prev);
