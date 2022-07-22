@@ -9,6 +9,7 @@
 
 #include "internal/packet.h"
 #include "internal/quic_wire.h"
+#include "internal/quic_wire_pkt.h"
 #include "testutil.h"
 
 struct encode_test_case {
@@ -1357,9 +1358,71 @@ err:
     return testresult;
 }
 
+/* Packet Header PN Encoding Tests */
+struct pn_test {
+    QUIC_PN         pn, tx_largest_acked, rx_largest_pn;
+    char            expected_len;
+    unsigned char   expected_bytes[4];
+};
+
+static const struct pn_test pn_tests[] = {
+    /* RFC 9000 Section A.2 */
+    { 0xac5c02, 0xabe8b3, 0xabe8b3, 2, {0x5c,0x02} },
+    { 0xace8fe, 0xabe8b3, 0xabe8b3, 3, {0xac,0xe8,0xfe} },
+    /* RFC 9000 Section A.3 */
+    { 0xa82f9b32, 0xa82f30ea, 0xa82f30ea, 2, {0x9b,0x32} },
+    /* Boundary Cases */
+    { 1, 0, 0, 1, {0x01} },
+    { 256, 255, 255, 1, {0x00} },
+    { 257, 255, 255, 1, {0x01} },
+    { 256, 128, 128, 1, {0x00} },
+    { 256, 127, 127, 2, {0x01,0x00} },
+    { 65536, 32768, 32768, 2, {0x00,0x00} },
+    { 65537, 32769, 32769, 2, {0x00,0x01} },
+    { 65536, 32767, 32767, 3, {0x01,0x00,0x00} },
+    { 65537, 32768, 32768, 3, {0x01,0x00,0x01} },
+    { 16777216, 8388608, 8388608, 3, {0x00,0x00,0x00} },
+    { 16777217, 8388609, 8388609, 3, {0x00,0x00,0x01} },
+    { 16777216, 8388607, 8388607, 4, {0x01,0x00,0x00,0x00} },
+    { 16777217, 8388608, 8388608, 4, {0x01,0x00,0x00,0x01} },
+    { 4294967296, 2147483648, 2147483648, 4, {0x00,0x00,0x00,0x00} },
+    { 4294967297, 2147483648, 2147483648, 4, {0x00,0x00,0x00,0x01} },
+};
+
+static int test_wire_pkt_hdr_pn(int tidx)
+{
+    int testresult = 0;
+    const struct pn_test *t = &pn_tests[tidx];
+    unsigned char buf[4];
+    int pn_len;
+    QUIC_PN res_pn;
+
+    pn_len = ossl_quic_wire_determine_pn_len(t->pn, t->tx_largest_acked);
+    if (!TEST_int_eq(pn_len, (int)t->expected_len))
+        goto err;
+
+    if (!TEST_true(ossl_quic_wire_encode_pkt_hdr_pn(t->pn, buf, pn_len)))
+        goto err;
+
+    if (!TEST_mem_eq(t->expected_bytes, t->expected_len, buf, pn_len))
+        goto err;
+
+    if (!TEST_true(ossl_quic_wire_decode_pkt_hdr_pn(buf, pn_len,
+                                                    t->rx_largest_pn, &res_pn)))
+        goto err;
+
+    if (!TEST_uint64_t_eq(res_pn, t->pn))
+        goto err;
+
+    testresult = 1;
+err:
+    return testresult;
+}
+
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(test_wire_encode, OSSL_NELEM(encode_cases));
-    ADD_ALL_TESTS(test_wire_ack,    OSSL_NELEM(ack_cases));
+    ADD_ALL_TESTS(test_wire_encode,     OSSL_NELEM(encode_cases));
+    ADD_ALL_TESTS(test_wire_ack,        OSSL_NELEM(ack_cases));
+    ADD_ALL_TESTS(test_wire_pkt_hdr_pn, OSSL_NELEM(pn_tests));
     return 1;
 }

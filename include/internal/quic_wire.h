@@ -166,16 +166,10 @@ typedef struct ossl_quic_frame_stop_sending_st {
 } OSSL_QUIC_FRAME_STOP_SENDING;
 
 /* QUIC Frame: NEW_CONNECTION_ID */
-#define OSSL_QUIC_MAX_CONN_ID_LEN       20
-typedef struct ossl_quic_conn_id_st {
-    unsigned char   id_len; /* length of id in bytes */
-    unsigned char   id[OSSL_QUIC_MAX_CONN_ID_LEN];
-} OSSL_QUIC_CONN_ID;
-
 typedef struct ossl_quic_frame_new_conn_id_st {
     uint64_t              seq_num;
     uint64_t              retire_prior_to;
-    OSSL_QUIC_CONN_ID     conn_id;
+    QUIC_CONN_ID          conn_id;
     unsigned char         stateless_reset_token[16];
 } OSSL_QUIC_FRAME_NEW_CONN_ID;
 
