@@ -575,6 +575,8 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_PUSH:
     case BIO_CTRL_POP:
+    case BIO_CTRL_GET_KTLS_SEND:
+    case BIO_CTRL_GET_KTLS_RECV:
         ret = 0;
         break;
 
