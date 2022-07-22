@@ -30,16 +30,16 @@ static const unsigned char label_prefix[] = "tls13 ";
  * secret |outlen| bytes long and store it in the location pointed to be |out|.
  * The |data| value may be zero length. Any errors will be treated as fatal if
  * |fatal| is set. Returns 1 on success  0 on failure.
+ * If |raise_error| is set, ERR_raise is called on failure.
  */
-int tls13_hkdf_expand(SSL_CONNECTION *s, const EVP_MD *md,
-                      const unsigned char *secret,
-                      const unsigned char *label, size_t labellen,
-                      const unsigned char *data, size_t datalen,
-                      unsigned char *out, size_t outlen, int fatal)
+int tls13_hkdf_expand_ex(OSSL_LIB_CTX *libctx, const char *propq,
+                         const EVP_MD *md,
+                         const unsigned char *secret,
+                         const unsigned char *label, size_t labellen,
+                         const unsigned char *data, size_t datalen,
+                         unsigned char *out, size_t outlen, int raise_error)
 {
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-    EVP_KDF *kdf = EVP_KDF_fetch(sctx->libctx, OSSL_KDF_NAME_TLS1_3_KDF,
-                                 sctx->propq);
+    EVP_KDF *kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_TLS1_3_KDF, propq);
     EVP_KDF_CTX *kctx;
     OSSL_PARAM params[7], *p = params;
     int mode = EVP_PKEY_HKDEF_MODE_EXPAND_ONLY;
@@ -53,24 +53,20 @@ int tls13_hkdf_expand(SSL_CONNECTION *s, const EVP_MD *md,
         return 0;
 
     if (labellen > TLS13_MAX_LABEL_LEN) {
-        if (fatal) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        } else {
+        if (raise_error)
             /*
              * Probably we have been called from SSL_export_keying_material(),
              * or SSL_export_keying_material_early().
              */
             ERR_raise(ERR_LIB_SSL, SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
-        }
+
         EVP_KDF_CTX_free(kctx);
         return 0;
     }
 
     if ((ret = EVP_MD_get_size(md)) <= 0) {
         EVP_KDF_CTX_free(kctx);
-        if (fatal)
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        else
+        if (raise_error)
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -96,13 +92,29 @@ int tls13_hkdf_expand(SSL_CONNECTION *s, const EVP_MD *md,
     EVP_KDF_CTX_free(kctx);
 
     if (ret != 0) {
-        if (fatal)
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        else
+        if (raise_error)
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
     }
 
     return ret == 0;
+}
+
+int tls13_hkdf_expand(SSL_CONNECTION *s, const EVP_MD *md,
+                      const unsigned char *secret,
+                      const unsigned char *label, size_t labellen,
+                      const unsigned char *data, size_t datalen,
+                      unsigned char *out, size_t outlen, int fatal)
+{
+    int ret;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+
+    ret = tls13_hkdf_expand_ex(sctx->libctx, sctx->propq, md,
+                               secret, label, labellen, data, datalen,
+                               out, outlen, !fatal);
+    if (ret == 0 && fatal)
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+
+    return ret;
 }
 
 /*

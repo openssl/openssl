@@ -263,7 +263,7 @@ int ossl_quic_wire_encode_frame_streams_blocked(WPACKET *pkt,
 int ossl_quic_wire_encode_frame_new_conn_id(WPACKET *pkt,
                                             const OSSL_QUIC_FRAME_NEW_CONN_ID *f)
 {
-    if (f->conn_id.id_len > OSSL_QUIC_MAX_CONN_ID_LEN)
+    if (f->conn_id.id_len > QUIC_MAX_CONN_ID_LEN)
         return 0;
 
     if (!encode_frame_hdr(pkt, OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID)
@@ -680,7 +680,7 @@ int ossl_quic_wire_decode_frame_new_conn_id(PACKET *pkt,
             || !PACKET_get_quic_vlint(pkt, &f->seq_num)
             || !PACKET_get_quic_vlint(pkt, &f->retire_prior_to)
             || !PACKET_get_1(pkt, &len)
-            || len > OSSL_QUIC_MAX_CONN_ID_LEN)
+            || len > QUIC_MAX_CONN_ID_LEN)
         return 0;
 
     f->conn_id.id_len = (unsigned char)len;
@@ -688,8 +688,8 @@ int ossl_quic_wire_decode_frame_new_conn_id(PACKET *pkt,
         return 0;
 
     /* Clear unused bytes to allow consistent memcmp. */
-    if (len < OSSL_QUIC_MAX_CONN_ID_LEN)
-        memset(f->conn_id.id + len, 0, OSSL_QUIC_MAX_CONN_ID_LEN - len);
+    if (len < QUIC_MAX_CONN_ID_LEN)
+        memset(f->conn_id.id + len, 0, QUIC_MAX_CONN_ID_LEN - len);
 
     if (!PACKET_copy_bytes(pkt, f->stateless_reset_token,
                            sizeof(f->stateless_reset_token)))

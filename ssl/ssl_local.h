@@ -2688,11 +2688,19 @@ __owur size_t tls13_final_finish_mac(SSL_CONNECTION *s, const char *str, size_t 
                                      unsigned char *p);
 __owur int tls13_change_cipher_state(SSL_CONNECTION *s, int which);
 __owur int tls13_update_key(SSL_CONNECTION *s, int send);
-__owur int tls13_hkdf_expand(SSL_CONNECTION *s, const EVP_MD *md,
+__owur int tls13_hkdf_expand(SSL_CONNECTION *s,
+                             const EVP_MD *md,
                              const unsigned char *secret,
                              const unsigned char *label, size_t labellen,
                              const unsigned char *data, size_t datalen,
                              unsigned char *out, size_t outlen, int fatal);
+__owur int tls13_hkdf_expand_ex(OSSL_LIB_CTX *libctx, const char *propq,
+                                const EVP_MD *md,
+                                const unsigned char *secret,
+                                const unsigned char *label, size_t labellen,
+                                const unsigned char *data, size_t datalen,
+                                unsigned char *out, size_t outlen,
+                                int raise_error);
 __owur int tls13_derive_key(SSL_CONNECTION *s, const EVP_MD *md,
                             const unsigned char *secret, unsigned char *key,
                             size_t keylen);
