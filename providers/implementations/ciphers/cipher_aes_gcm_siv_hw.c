@@ -331,7 +331,7 @@ const PROV_CIPHER_HW_AES_GCM_SIV *ossl_prov_cipher_hw_aes_gcm_siv(size_t keybits
     return &aes_gcm_siv_hw;
 }
 
-/* NEED AES-CTR32... which is a 32bit counter version of AES-CTR which is 128? */
+/* AES-GCM-SIV needs AES-CTR32, which is different than the AES-CTR implementation */
 static int aes_gcm_siv_ctr32(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *init_counter,
                              unsigned char *out, const unsigned char *in, size_t len)
 {

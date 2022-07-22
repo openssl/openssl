@@ -15,7 +15,7 @@
 #define NONCE_SIZE 12
 #define TAG_SIZE   16
 
-/* AAD manupilation macros */
+/* AAD manipulation macros */
 #define UP16(x) (((x) + 15) & ~0x0F)
 #define DOWN16(x) ((x) & ~0x0F)
 #define REMAINDER16(x) ((x) & 0x0F)
