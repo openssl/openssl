@@ -59,6 +59,8 @@ static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_FLUSH:
     case BIO_CTRL_DUP:
         break;
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
     case BIO_CTRL_GET_CLOSE:
     case BIO_CTRL_INFO:
     case BIO_CTRL_GET:

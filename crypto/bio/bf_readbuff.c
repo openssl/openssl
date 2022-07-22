@@ -197,6 +197,8 @@ static long readbuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
         }
         break;
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
     case BIO_CTRL_DUP:
     case BIO_CTRL_FLUSH:
         break;

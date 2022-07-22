@@ -332,11 +332,12 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_PENDING:
         ret = (long)bm->length;
         break;
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
     case BIO_CTRL_DUP:
     case BIO_CTRL_FLUSH:
         break;
-    case BIO_CTRL_PUSH:
-    case BIO_CTRL_POP:
+
     default:
         ret = 0;
         break;

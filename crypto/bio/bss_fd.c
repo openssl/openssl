@@ -183,6 +183,8 @@ static long fd_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_WPENDING:
         ret = 0;
         break;
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
     case BIO_CTRL_DUP:
     case BIO_CTRL_FLUSH:
         break;
