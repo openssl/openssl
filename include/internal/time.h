@@ -30,6 +30,9 @@
 /* Macro that's guaranteed to be now or before */
 # define OSSL_TIME_IMMEDIATE    0
 
+/* Macro representing the zero value */
+# define OSSL_TIME_ZERO         0
+
 /*
  * Internal type defining a time.
  * The time datum is Unix's 1970 and at nanosecond precision, this gives
@@ -88,6 +91,47 @@ OSSL_TIME ossl_time_subtract(OSSL_TIME a, OSSL_TIME b)
 
     r = safe_sub_time(a, b, &err);
     return err ? 0 : r;
+}
+
+/* Returns |a - b|. */
+static ossl_unused ossl_inline
+OSSL_TIME ossl_time_abs_difference(OSSL_TIME a, OSSL_TIME b)
+{
+    return a > b ? ossl_time_subtract(a, b) : ossl_time_subtract(b, a);
+}
+
+static ossl_unused ossl_inline
+OSSL_TIME ossl_time_multiply(OSSL_TIME a, uint64_t b)
+{
+    OSSL_TIME r;
+    int err = 0;
+
+    r = safe_mul_time(a, b, &err);
+    return err ? OSSL_TIME_INFINITY : r;
+}
+
+static ossl_unused ossl_inline
+OSSL_TIME ossl_time_divide(OSSL_TIME a, uint64_t b)
+{
+    OSSL_TIME r;
+    int err = 0;
+
+    r = safe_div_time(a, b, &err);
+    return err ? 0 : r;
+}
+
+/* Return higher of the two given time values. */
+static ossl_unused ossl_inline
+OSSL_TIME ossl_time_max(OSSL_TIME a, OSSL_TIME b)
+{
+    return a > b ? a : b;
+}
+
+/* Return the lower of the two given time values. */
+static ossl_unused ossl_inline
+OSSL_TIME ossl_time_min(OSSL_TIME a, OSSL_TIME b)
+{
+    return a < b ? a : b;
 }
 
 #endif
