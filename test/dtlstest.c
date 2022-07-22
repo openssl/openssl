@@ -425,6 +425,12 @@ static int test_just_finished(void)
                                        &sctx, NULL, cert, privkey)))
         return 0;
 
+#ifdef OPENSSL_NO_DTLS1_2
+    /* DTLSv1 is not allowed at the default security level */
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
+
     serverssl = SSL_new(sctx);
     rbio = BIO_new(BIO_s_mem());
     wbio = BIO_new(BIO_s_mem());
