@@ -1080,10 +1080,6 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
          * that is destined for a higher protection level. To simplify the logic
          * we don't support that at this stage.
          */
-        /*
-         * TODO(RECLAYER): Handle the case of read_ahead at the application
-         * level and a key update/reneg occurs.
-         */
         p = OSSL_PARAM_locate_const(options, OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD);
         if (p != NULL && !OSSL_PARAM_get_int(p, &rl->read_ahead)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
