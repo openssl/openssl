@@ -314,6 +314,12 @@ struct ossl_record_method_st {
      * not. Default at creation of the record layer is "yes".
      */
     void (*set_in_init)(OSSL_RECORD_LAYER *rl, int in_init);
+
+    /*
+     * Get a short or long human readable description of the record layer state
+     */
+    void (*get_state)(OSSL_RECORD_LAYER *rl, const char **shortstr,
+                      const char **longstr);
 };
 
 

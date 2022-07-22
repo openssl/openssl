@@ -728,5 +728,6 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     NULL,
     tls_set_first_handshake,
     tls_set_max_pipelines,
-    dtls_set_in_init
+    dtls_set_in_init,
+    tls_get_state
 };

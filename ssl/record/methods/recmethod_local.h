@@ -284,4 +284,6 @@ int tls_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 void tls_set_plain_alerts(OSSL_RECORD_LAYER *rl, int allow);
 void tls_set_first_handshake(OSSL_RECORD_LAYER *rl, int first);
 void tls_set_max_pipelines(OSSL_RECORD_LAYER *rl, size_t max_pipelines);
+void tls_get_state(OSSL_RECORD_LAYER *rl, const char **shortstr,
+                   const char **longstr);
 int rlayer_setup_read_buffer(OSSL_RECORD_LAYER *rl);

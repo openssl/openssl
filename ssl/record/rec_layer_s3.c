@@ -34,8 +34,6 @@ void RECORD_LAYER_init(RECORD_LAYER *rl, SSL_CONNECTION *s)
 
 void RECORD_LAYER_clear(RECORD_LAYER *rl)
 {
-    rl->rstate = SSL_ST_READ_HEADER;
-
     rl->wnum = 0;
     memset(rl->handshake_fragment, 0, sizeof(rl->handshake_fragment));
     rl->handshake_fragment_len = 0;
@@ -141,43 +139,34 @@ void SSL_set_default_read_buffer_len(SSL *s, size_t len)
 const char *SSL_rstate_string_long(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const char *lng;
 
     if (sc == NULL)
         return NULL;
 
-    /* TODO(RECLAYER): Fix me */
-    switch (sc->rlayer.rstate) {
-    case SSL_ST_READ_HEADER:
-        return "read header";
-    case SSL_ST_READ_BODY:
-        return "read body";
-    case SSL_ST_READ_DONE:
-        return "read done";
-    default:
+    if (sc->rlayer.rrlmethod == NULL || sc->rlayer.rrl == NULL)
         return "unknown";
-    }
+
+    sc->rlayer.rrlmethod->get_state(sc->rlayer.rrl, NULL, &lng);
+
+    return lng;
 }
 
 const char *SSL_rstate_string(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const char *shrt;
 
     if (sc == NULL)
         return NULL;
 
-    /* TODO(RECLAYER): Fix me */
-    switch (sc->rlayer.rstate) {
-    case SSL_ST_READ_HEADER:
-        return "RH";
-    case SSL_ST_READ_BODY:
-        return "RB";
-    case SSL_ST_READ_DONE:
-        return "RD";
-    default:
+    if (sc->rlayer.rrlmethod == NULL || sc->rlayer.rrl == NULL)
         return "unknown";
-    }
-}
 
+    sc->rlayer.rrlmethod->get_state(sc->rlayer.rrl, &shrt, NULL);
+
+    return shrt;
+}
 
 /*
  * Call this to write data in records of type 'type' It will return <= 0 if
