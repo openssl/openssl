@@ -124,20 +124,31 @@ typedef struct ossl_quic_frame_ack_st {
 
 /* QUIC Frame: STREAM */
 typedef struct ossl_quic_frame_stream_st {
-    uint64_t        stream_id;  /* Stream ID */
-    uint64_t        offset;     /* Logical offset in stream */
-    uint64_t        len;        /* Length of data in bytes */
-    const uint8_t  *data;
+    uint64_t                stream_id;  /* Stream ID */
+    uint64_t                offset;     /* Logical offset in stream */
+    uint64_t                len;        /* Length of data in bytes */
+    const unsigned char    *data;
 
-    char            has_len;    /* 1 if len field is valid */
-    char            is_fin;     /* 1 if this is the end of the stream */
+    /*
+     * On encode, this determines whether the len field should be encoded or
+     * not. If zero, the len field is not encoded and it is assumed the frame
+     * runs to the end of the packet.
+     *
+     * On decode, this determines whether the frame had an explicitly encoded
+     * length. If not set, the frame runs to the end of the packet and len has
+     * been set accordingly.
+     */
+    char                    has_explicit_len;
+
+    /* 1 if this is the end of the stream */
+    char                    is_fin;
 } OSSL_QUIC_FRAME_STREAM;
 
 /* QUIC Frame: CRYPTO */
 typedef struct ossl_quic_frame_crypto_st {
-    uint64_t        offset; /* Logical offset in stream */
-    uint64_t        len;    /* Length of the data in bytes */
-    const uint8_t  *data;
+    uint64_t                offset; /* Logical offset in stream */
+    uint64_t                len;    /* Length of the data in bytes */
+    const unsigned char    *data;
 } OSSL_QUIC_FRAME_CRYPTO;
 
 /* QUIC Frame: RESET_STREAM */
@@ -155,11 +166,11 @@ typedef struct ossl_quic_frame_stop_sending_st {
 
 /* QUIC Frame: NEW_CONNECTION_ID */
 typedef struct ossl_quic_frame_new_conn_id_st {
-    uint64_t            seq_num;
-    uint64_t            retire_prior_to;
-    const uint8_t      *conn_id;
-    size_t              conn_id_len; /* length of conn_id in bytes (1..20) */
-    uint8_t             stateless_reset_token[16];
+    uint64_t              seq_num;
+    uint64_t              retire_prior_to;
+    const unsigned char  *conn_id;
+    size_t                conn_id_len; /* length of conn_id in bytes (1..20) */
+    unsigned char         stateless_reset_token[16];
 } OSSL_QUIC_FRAME_NEW_CONN_ID;
 
 /* QUIC Frame: CONNECTION_CLOSE */
@@ -183,7 +194,7 @@ typedef struct ossl_quic_frame_conn_close_st {
  * frame consumes one byte; num_bytes specifies the number of bytes of padding
  * to write.
  */
-int ossl_quic_wire_encode_frame_padding(WPACKET *pkt, size_t num_bytes);
+int ossl_quic_wire_encode_padding(WPACKET *pkt, size_t num_bytes);
 
 /*
  * Encodes a QUIC PING frame to the packet writer. This frame type takes
@@ -224,9 +235,18 @@ int ossl_quic_wire_encode_frame_stop_sending(WPACKET *pkt,
                                              const OSSL_QUIC_FRAME_STOP_SENDING *f);
 
 /*
+ * Encodes a QUIC CRYPTO frame header to the packet writer.
+ *
+ * To create a well-formed frame, the caller should immediately write f->len
+ * bytes to the WPACKET after the call to this function succeeds.
+ */
+int ossl_quic_wire_encode_frame_crypto_hdr(WPACKET *hdr,
+                                           const OSSL_QUIC_FRAME_CRYPTO *f);
+
+/*
  * Encodes a QUIC CRYPTO frame to the packet writer.
  *
- * This function returns a pointer to a buffer of len bytes which the caller
+ * This function returns a pointer to a buffer of f->len bytes which the caller
  * should fill however it wishes. If f->data is non-NULL, it is automatically
  * copied to the target buffer, otherwise the caller must fill the returned
  * buffer. Returns NULL on failure.
@@ -238,25 +258,36 @@ void *ossl_quic_wire_encode_frame_crypto(WPACKET *pkt,
  * Encodes a QUIC NEW_TOKEN frame to the packet writer.
  */
 int ossl_quic_wire_encode_frame_new_token(WPACKET *pkt,
-                                          const uint8_t *token,
+                                          const unsigned char *token,
                                           size_t token_len);
 
 /*
- * Encodes a QUIC STREAM frame to the packet writer. The stream_id, offset and
- * len fields are the values for the respective Stream ID, Offset and Length
- * fields.
+ * Encodes a QUIC STREAM frame's header to the packet writer. The f->stream_id,
+ * f->offset and f->len fields are the values for the respective Stream ID,
+ * Offset and Length fields.
  *
- * If f->is_fin is non-zero, the frame is marked as the final frame in the
+ * If f->is_fin is non-zero, the framme is marked as the final frame in the
  * stream.
  *
- * If f->has_len is zero, the frame is assumed to be the final frame in the
- * packet, which the caller is responsible for ensuring; the Length field is
- * then omitted.
+ * If f->has_explicit_len is zerro, the frame is assumed to be the final frame
+ * in the packet, which the caller is responsible for ensuring; the Length
+ * field is then omitted.
  *
- * A pointer to the bytes allocated for the frame payload is returned, which the
- * caller can fill however it wishes. If f->data is non-NULL, it is
- * automatically copied to the target buffer, otherwise the caller must fill the
- * returned buffer. Returns NULL on failure.
+ * To create a well-formed frame, the caller should immediately write f->len
+ * bytes to the WPACKET after the call to this function succeeds.
+ */
+int ossl_quic_wire_encode_frame_stream_hdr(WPACKET *pkt,
+                                           const OSSL_QUIC_FRAME_STREAM *f);
+
+/*
+ * Functions similarly to ossl_quic_wire_encode_frame_stream_hdr, but it also
+ * allocates space for f->len bytes of data after the header, creating a
+ * well-formed QUIC STREAM frame in one call.
+ *
+ * A pointer to the bytes allocated for the framme payload is returned,
+ * which the caller can fill however it wishes. If f->data is non-NULL,
+ * it is automatically copied to the target buffer, otherwise the caller
+ * must fill the returned buffer. Returns NULL on failure.
  */
 void *ossl_quic_wire_encode_frame_stream(WPACKET *pkt,
                                          const OSSL_QUIC_FRAME_STREAM *f);
@@ -364,10 +395,10 @@ int ossl_quic_wire_encode_frame_handshake_done(WPACKET *pkt);
  *
  * Returns a pointer to the start of the payload on success, or NULL on failure.
  */
-uint8_t *ossl_quic_wire_encode_transport_param_bytes(WPACKET *pkt,
-                                                     uint64_t id,
-                                                     const uint8_t *value,
-                                                     size_t value_len);
+unsigned char *ossl_quic_wire_encode_transport_param_bytes(WPACKET *pkt,
+                                                           uint64_t id,
+                                                           const unsigned char *value,
+                                                           size_t value_len);
 
 /*
  * Encodes a QUIC transport parameter TLV with the given ID into the WPACKET.
@@ -390,6 +421,10 @@ int ossl_quic_wire_encode_transport_param_int(WPACKET *pkt,
  *   - A variable-length field in the encoded frame appears to exceed the bounds
  *     of the PACKET's buffer.
  *
+ * These functions should be called with the PACKET pointing to the start of the
+ * frame (including the initial type field), and consume an entire frame
+ * including its type field. The expectation is that the caller will have
+ * already discerned the frame type using ossl_quic_wire_peek_frame_header().
  */
 
 /*
@@ -406,20 +441,34 @@ int ossl_quic_wire_peek_frame_header(PACKET *pkt, uint64_t *type);
 int ossl_quic_wire_skip_frame_header(PACKET *pkt, uint64_t *type);
 
 /*
+ * Determines how many ranges are needed to decode a QUIC ACK frame.
+ *
+ * The number of ranges which must be allocated before the call to
+ * ossl_quic_wire_decode_frame_ack is written to *total_ranges.
+ *
+ * The PACKET is not advanced.
+ */
+int ossl_quic_wire_peek_frame_ack_num_ranges(const PACKET *pkt,
+                                             uint64_t *total_ranges);
+
+/*
  * Decodes a QUIC ACK frame. The ack_ranges field of the passed structure should
- * point to a preallocated array of ACK ranges and the num_ranges field should
- * specify the length of allocation.
+ * point to a preallocated array of ACK ranges and the num_ack_ranges field
+ * should specify the length of allocation.
  *
- * *total_ranges is written with the number of ranges in the decoded frame.
+ * *total_ranges is written with the number of ranges in the decoded frame,
+ * which may be greater than the number of ranges which were decoded (i.e. if
+ * num_ack_ranges was too small to decode all ranges).
  *
- * On success, this function modifies the num_ranges field to indicate the
- * number of ranges in the decoded frame. This is the number of entries
- * in the ACK ranges array written by this function; any additional
- * entries are not modified.
+ * On success, this function modifies the num_ack_ranges field to indicate the
+ * number of ranges in the decoded frame. This is the number of entries in the
+ * ACK ranges array written by this function; any additional entries are not
+ * modified.
  *
- * If the number of ACK ranges in the decoded frame exceeds that in num_ranges,
- * as many ACK ranges as possible are decoded into the range array. The caller
- * can use the value written to *total_ranges to detect this condition.
+ * If the number of ACK ranges in the decoded frame exceeds that in
+ * num_ack_ranges, as many ACK ranges as possible are decoded into the range
+ * array. The caller can use the value written to *total_ranges to detect this
+ * condition, as *total_ranges will exceed num_ack_ranges.
  *
  * If ack is NULL, the frame is still decoded, but only *total_ranges is
  * written. This can be used to determine the number of ranges which must be
@@ -459,9 +508,9 @@ int ossl_quic_wire_decode_frame_crypto(PACKET *pkt,
  * Decodes a QUIC NEW_TOKEN frame. * *token is written with a pointer to the
  * token bytes and *token_len is written with the length of the token in bytes.
  */
-int ossl_quic_wire_decode_frame_new_token(PACKET         *pkt,
-                                          const uint8_t **token,
-                                          size_t         *token_len);
+int ossl_quic_wire_decode_frame_new_token(PACKET               *pkt,
+                                          const unsigned char **token,
+                                          size_t               *token_len);
 
 /*
  * Decodes a QUIC STREAM frame.
@@ -469,18 +518,18 @@ int ossl_quic_wire_decode_frame_new_token(PACKET         *pkt,
  * If the frame did not contain an offset field, f->offset is set to 0, as the
  * absence of an offset field is equivalent to an offset of 0.
  *
- * If the frame contained a length field, f->has_len is set to 1 and the length
- * of the data is placed in f->len. This function ensures that the length does
- * not exceed the packet buffer, thus it is safe to access f->data.
+ * If the frame contained a length field, f->has_explicit_len is set to 1 and
+ * the length of the data is placed in f->len. This function ensures that the
+ * length does not exceed the packet buffer, thus it is safe to access f->data.
  *
  * If the frame did not contain a length field, this means that the frame runs
- * until the end of the packet. This function sets f->has_len to zero, and
- * f->len to the amount of data remaining in the input buffer. Therefore, this
- * function should be used with a PACKET representing a single packet (and not
- * e.g. multiple packets).
+ * until the end of the packet. This function sets f->has_explicit_len to zero,
+ * and f->len to the amount of data remaining in the input buffer. Therefore,
+ * this function should be used with a PACKET representing a single packet (and
+ * not e.g. multiple packets).
  *
  * Note also that this means f->len is always valid after this function returns
- * successfully, regardless of the value of f->has_len.
+ * successfully, regardless of the value of f->has_explicit_len.
  *
  * f->data points inside the packet buffer inside the PACKET, therefore it is
  * safe to access for as long as the packet buffer exists.
@@ -595,7 +644,7 @@ int ossl_quic_wire_decode_frame_conn_close(PACKET *pkt,
  *
  * Returns the number of PADDING frames decoded or 0 on error.
  */
-size_t ossl_quic_wire_decode_frame_padding(PACKET *pkt);
+size_t ossl_quic_wire_decode_padding(PACKET *pkt);
 
 /*
  * Decodes a PING frame. The frame has no arguments.
@@ -623,9 +672,9 @@ int ossl_quic_wire_peek_transport_param(PACKET *pkt, uint64_t *id);
  *
  * Returns NULL on failure.
  */
-const uint8_t *ossl_quic_wire_decode_transport_param_bytes(PACKET *pkt,
-                                                           uint64_t *id,
-                                                           size_t *len);
+const unsigned char *ossl_quic_wire_decode_transport_param_bytes(PACKET *pkt,
+                                                                 uint64_t *id,
+                                                                 size_t *len);
 
 /*
  * Decodes a QUIC transport parameter TLV containing a variable-length integer.

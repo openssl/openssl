@@ -18,7 +18,7 @@
  * =========================
  */
 
-int ossl_quic_wire_encode_frame_padding(WPACKET *pkt, size_t num_bytes)
+int ossl_quic_wire_encode_padding(WPACKET *pkt, size_t num_bytes)
 {
     /*
      * PADDING is frame type zero, which as a variable-length integer is
@@ -106,14 +106,23 @@ int ossl_quic_wire_encode_frame_stop_sending(WPACKET *pkt,
     return 1;
 }
 
+int ossl_quic_wire_encode_frame_crypto_hdr(WPACKET *pkt,
+                                           const OSSL_QUIC_FRAME_CRYPTO *f)
+{
+    if (!encode_frame_hdr(pkt, OSSL_QUIC_FRAME_TYPE_CRYPTO)
+            || !WPACKET_quic_write_vlint(pkt, f->offset)
+            || !WPACKET_quic_write_vlint(pkt, f->len))
+        return 0;
+
+    return 1;
+}
+
 void *ossl_quic_wire_encode_frame_crypto(WPACKET *pkt,
                                          const OSSL_QUIC_FRAME_CRYPTO *f)
 {
     unsigned char *p = NULL;
 
-    if (!encode_frame_hdr(pkt, OSSL_QUIC_FRAME_TYPE_CRYPTO)
-            || !WPACKET_quic_write_vlint(pkt, f->offset)
-            || !WPACKET_quic_write_vlint(pkt, f->len)
+    if (!ossl_quic_wire_encode_frame_crypto_hdr(pkt, f)
             || !WPACKET_allocate_bytes(pkt, f->len, &p))
         return NULL;
 
@@ -124,7 +133,7 @@ void *ossl_quic_wire_encode_frame_crypto(WPACKET *pkt,
 }
 
 int ossl_quic_wire_encode_frame_new_token(WPACKET *pkt,
-                                          const uint8_t *token,
+                                          const unsigned char *token,
                                           size_t token_len)
 {
     if (!encode_frame_hdr(pkt, OSSL_QUIC_FRAME_TYPE_NEW_TOKEN)
@@ -135,27 +144,38 @@ int ossl_quic_wire_encode_frame_new_token(WPACKET *pkt,
     return 1;
 }
 
-void *ossl_quic_wire_encode_frame_stream(WPACKET *pkt,
-                                         const OSSL_QUIC_FRAME_STREAM *f)
+int ossl_quic_wire_encode_frame_stream_hdr(WPACKET *pkt,
+                                           const OSSL_QUIC_FRAME_STREAM *f)
 {
-    unsigned char *p = NULL;
     uint64_t frame_type = OSSL_QUIC_FRAME_TYPE_STREAM;
 
     if (f->offset != 0)
         frame_type |= OSSL_QUIC_FRAME_FLAG_STREAM_OFF;
-    if (f->has_len)
+    if (f->has_explicit_len)
         frame_type |= OSSL_QUIC_FRAME_FLAG_STREAM_LEN;
     if (f->is_fin)
         frame_type |= OSSL_QUIC_FRAME_FLAG_STREAM_FIN;
 
     if (!encode_frame_hdr(pkt, frame_type)
             || !WPACKET_quic_write_vlint(pkt, f->stream_id))
-        return NULL;
+        return 0;
 
     if (f->offset != 0 && !WPACKET_quic_write_vlint(pkt, f->offset))
-        return NULL;
+        return 0;
 
-    if (f->has_len && !WPACKET_quic_write_vlint(pkt, f->len))
+    if (f->has_explicit_len && !WPACKET_quic_write_vlint(pkt, f->len))
+        return 0;
+
+    return 1;
+}
+
+void *ossl_quic_wire_encode_frame_stream(WPACKET *pkt,
+                                         const OSSL_QUIC_FRAME_STREAM *f)
+{
+
+    unsigned char *p = NULL;
+
+    if (!ossl_quic_wire_encode_frame_stream_hdr(pkt, f))
         return NULL;
 
     if (!WPACKET_allocate_bytes(pkt, f->len, &p))
@@ -307,12 +327,12 @@ int ossl_quic_wire_encode_frame_handshake_done(WPACKET *pkt)
     return encode_frame_hdr(pkt, OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE);
 }
 
-uint8_t *ossl_quic_wire_encode_transport_param_bytes(WPACKET *pkt,
-                                                     uint64_t id,
-                                                     const uint8_t *value,
-                                                     size_t value_len)
+unsigned char *ossl_quic_wire_encode_transport_param_bytes(WPACKET *pkt,
+                                                           uint64_t id,
+                                                           const unsigned char *value,
+                                                           size_t value_len)
 {
-    uint8_t *b = NULL;
+    unsigned char *b = NULL;
 
     if (!WPACKET_quic_write_vlint(pkt, id)
             || !WPACKET_quic_write_vlint(pkt, value_len)
@@ -379,13 +399,32 @@ static int expect_frame_header(PACKET *pkt, uint64_t expected_frame_type)
     return 1;
 }
 
+int ossl_quic_wire_peek_frame_ack_num_ranges(const PACKET *orig_pkt,
+                                             uint64_t *total_ranges)
+{
+    PACKET pkt = *orig_pkt;
+    uint64_t ack_range_count;
+
+    if (!expect_frame_header_mask(&pkt, OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN,
+                                  1, NULL)
+            || !PACKET_skip_quic_vlint(&pkt)
+            || !PACKET_skip_quic_vlint(&pkt)
+            || !PACKET_get_quic_vlint(&pkt, &ack_range_count))
+        return 0;
+
+    /* (cannot overflow because QUIC vlints can only encode up to 2**62-1) */
+    *total_ranges = ack_range_count + 1;
+    return 1;
+}
+
 int ossl_quic_wire_decode_frame_ack(PACKET *pkt,
                                     uint32_t ack_delay_exponent,
                                     OSSL_QUIC_FRAME_ACK *ack,
                                     uint64_t *total_ranges) {
-    uint64_t frame_type, largest_ackd, ack_delay_raw,
-             ack_range_count, first_ack_range, start, end, i;
+    uint64_t frame_type, largest_ackd, ack_delay_raw;
+    uint64_t ack_range_count, first_ack_range, start, end, i;
 
+    /* This call matches both ACK_WITHOUT_ECN and ACK_WITH_ECN. */
     if (!expect_frame_header_mask(pkt, OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN,
                                   1, &frame_type)
             || !PACKET_get_quic_vlint(pkt, &largest_ackd)
@@ -497,9 +536,9 @@ int ossl_quic_wire_decode_frame_crypto(PACKET *pkt,
     return 1;
 }
 
-int ossl_quic_wire_decode_frame_new_token(PACKET         *pkt,
-                                          const uint8_t **token,
-                                          size_t         *token_len)
+int ossl_quic_wire_decode_frame_new_token(PACKET               *pkt,
+                                          const unsigned char **token,
+                                          size_t               *token_len)
 {
     uint64_t token_len_;
 
@@ -524,6 +563,7 @@ int ossl_quic_wire_decode_frame_stream(PACKET *pkt,
 {
     uint64_t frame_type;
 
+    /* This call matches all STREAM values (low 3 bits are masked). */
     if (!expect_frame_header_mask(pkt, OSSL_QUIC_FRAME_TYPE_STREAM,
                                   OSSL_QUIC_FRAME_FLAG_STREAM_MASK,
                                   &frame_type)
@@ -537,10 +577,10 @@ int ossl_quic_wire_decode_frame_stream(PACKET *pkt,
         f->offset = 0;
     }
 
-    f->has_len = ((frame_type & OSSL_QUIC_FRAME_FLAG_STREAM_LEN) != 0);
-    f->is_fin  = ((frame_type & OSSL_QUIC_FRAME_FLAG_STREAM_FIN) != 0);
+    f->has_explicit_len = ((frame_type & OSSL_QUIC_FRAME_FLAG_STREAM_LEN) != 0);
+    f->is_fin           = ((frame_type & OSSL_QUIC_FRAME_FLAG_STREAM_FIN) != 0);
 
-    if (f->has_len) {
+    if (f->has_explicit_len) {
         if (!PACKET_get_quic_vlint(pkt, &f->len))
             return 0;
     } else {
@@ -580,6 +620,7 @@ int ossl_quic_wire_decode_frame_max_stream_data(PACKET *pkt,
 int ossl_quic_wire_decode_frame_max_streams(PACKET *pkt,
                                             uint64_t *max_streams)
 {
+    /* This call matches both MAX_STREAMS_BIDI and MAX_STREAMS_UNI. */
     if (!expect_frame_header_mask(pkt, OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI,
                                   1, NULL)
             || !PACKET_get_quic_vlint(pkt, max_streams))
@@ -613,6 +654,7 @@ int ossl_quic_wire_decode_frame_stream_data_blocked(PACKET *pkt,
 int ossl_quic_wire_decode_frame_streams_blocked(PACKET *pkt,
                                                 uint64_t *max_streams)
 {
+    /* This call matches both STREAMS_BLOCKED_BIDI and STREAMS_BLOCKED_UNI. */
     if (!expect_frame_header_mask(pkt, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI,
                                   1, NULL)
             || !PACKET_get_quic_vlint(pkt, max_streams))
@@ -681,6 +723,7 @@ int ossl_quic_wire_decode_frame_conn_close(PACKET *pkt,
 {
     uint64_t frame_type, reason_len;
 
+    /* This call matches both CONN_CLOSE_TRANSPORT and CONN_CLOSE_APP. */
     if (!expect_frame_header_mask(pkt, OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT,
                                   1, &frame_type)
             || !PACKET_get_quic_vlint(pkt, &f->error_code))
@@ -706,7 +749,7 @@ int ossl_quic_wire_decode_frame_conn_close(PACKET *pkt,
     return 1;
 }
 
-size_t ossl_quic_wire_decode_frame_padding(PACKET *pkt)
+size_t ossl_quic_wire_decode_padding(PACKET *pkt)
 {
     const unsigned char *start = PACKET_data(pkt), *end = PACKET_end(pkt),
                         *p = start;
@@ -736,12 +779,12 @@ int ossl_quic_wire_peek_transport_param(PACKET *pkt, uint64_t *id)
     return PACKET_peek_quic_vlint(pkt, id);
 }
 
-const uint8_t *ossl_quic_wire_decode_transport_param_bytes(PACKET *pkt,
-                                                           uint64_t *id,
-                                                           size_t *len)
+const unsigned char *ossl_quic_wire_decode_transport_param_bytes(PACKET *pkt,
+                                                                 uint64_t *id,
+                                                                 size_t *len)
 {
     uint64_t len_;
-    const uint8_t *b = NULL;
+    const unsigned char *b = NULL;
 
     if (!PACKET_get_quic_vlint(pkt, id)
             || !PACKET_get_quic_vlint(pkt, &len_))
