@@ -288,7 +288,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = -1;
         break;
     case BIO_CTRL_EOF:
-        ret = (long)(bm->length == 0);
+        ret = bm->length == 0;
         break;
     case BIO_C_SET_BUF_MEM_EOF_RETURN:
         b->num = (int)num;
@@ -329,7 +329,6 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DUP:
     case BIO_CTRL_FLUSH:
-        ret = 1;
         break;
     case BIO_CTRL_PUSH:
     case BIO_CTRL_POP:
