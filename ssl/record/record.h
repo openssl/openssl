@@ -163,8 +163,6 @@ typedef struct record_layer_st {
      * non-blocking reads)
      */
     int read_ahead;
-    /* where we are when reading */
-    int rstate;
     /* How many pipelines can be used to write data */
     size_t numwpipes;
     /* write IO goes into here */
