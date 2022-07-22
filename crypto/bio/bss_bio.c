@@ -564,6 +564,8 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
         break;
 
     case BIO_CTRL_FLUSH:
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
         break;
 
     case BIO_CTRL_EOF:
