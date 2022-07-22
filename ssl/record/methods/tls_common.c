@@ -298,7 +298,7 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
 
         if (ret <= OSSL_RECORD_RETURN_RETRY) {
             rb->left = left;
-            if (rl->mode & SSL_MODE_RELEASE_BUFFERS && !rl->isdtls)
+            if ((rl->mode & SSL_MODE_RELEASE_BUFFERS) != 0 && !rl->isdtls)
                 if (len + left == 0)
                     rlayer_release_read_buffer(rl);
             return ret;
@@ -989,6 +989,11 @@ int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle)
     }
 
     rl->num_released++;
+
+    if (rl->curr_rec == rl->num_released
+            && (rl->mode & SSL_MODE_RELEASE_BUFFERS) != 0
+            && SSL3_BUFFER_get_left(&rl->rbuf) == 0)
+        rlayer_release_read_buffer(rl);
 
     return OSSL_RECORD_RETURN_SUCCESS;
 }

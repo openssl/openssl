@@ -1368,13 +1368,6 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
             /* We must have read empty records. Get more data */
             goto start;
         }
-        /* TODO(RECLAYER): FIX ME */
-#if 0
-        if (!peek && curr_rec == s->rlayer.num_recs
-            && (s->mode & SSL_MODE_RELEASE_BUFFERS)
-            && SSL3_BUFFER_get_left(rbuf) == 0)
-            ssl3_release_read_buffer(s);
-#endif
         *readbytes = totalbytes;
         return 1;
     }
