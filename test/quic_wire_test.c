@@ -63,13 +63,13 @@ static const uint8_t encode_case_2_expect[] = {
 };
 
 /* 3. ACK */
-static const OSSL_ACKM_ACK_RANGE encode_case_3_ranges[] = {
+static const OSSL_QUIC_ACK_RANGE encode_case_3_ranges[] = {
     { 20, 30 },
     {  0, 10 }
 };
 
-static const OSSL_ACKM_ACK encode_case_3_f = {
-    (OSSL_ACKM_ACK_RANGE *)encode_case_3_ranges,
+static const OSSL_QUIC_FRAME_ACK encode_case_3_f = {
+    (OSSL_QUIC_ACK_RANGE *)encode_case_3_ranges,
     OSSL_NELEM(encode_case_3_ranges),
     OSSL_TIME_MS,
     60, 70, 80, 1
@@ -85,8 +85,8 @@ static int encode_case_3_enc(WPACKET *pkt)
 
 static int encode_case_3_dec(PACKET *pkt)
 {
-    OSSL_ACKM_ACK_RANGE ranges[4] = {0};
-    OSSL_ACKM_ACK f = {0};
+    OSSL_QUIC_ACK_RANGE ranges[4] = {0};
+    OSSL_QUIC_FRAME_ACK f = {0};
     uint64_t total_ranges = 0;
 
     f.ack_ranges        = ranges;
@@ -98,9 +98,9 @@ static int encode_case_3_dec(PACKET *pkt)
     if (!TEST_uint64_t_eq(total_ranges, 2))
         return 0;
 
-    if (!TEST_mem_eq(f.ack_ranges, f.num_ack_ranges * sizeof(OSSL_ACKM_ACK_RANGE),
+    if (!TEST_mem_eq(f.ack_ranges, f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE),
                      encode_case_3_f.ack_ranges,
-                     encode_case_3_f.num_ack_ranges * sizeof(OSSL_ACKM_ACK_RANGE)))
+                     encode_case_3_f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE)))
         return 0;
 
     if (!TEST_uint64_t_eq(f.delay_time, encode_case_3_f.delay_time))
@@ -1043,7 +1043,7 @@ static int test_wire_encode(int idx)
     if (!TEST_int_eq(c->deserializer(&pkt), 1))
         goto err;
 
-    if (!TEST_false(pkt.remaining))
+    if (!TEST_false(PACKET_remaining(&pkt)))
         goto err;
 
     testresult = 1;
@@ -1147,8 +1147,8 @@ static const uint8_t ack_case_7_input[] = {
 
 static int ack_generic_decode(PACKET *pkt)
 {
-    OSSL_ACKM_ACK_RANGE ranges[8] = {0};
-    OSSL_ACKM_ACK f = {0};
+    OSSL_QUIC_ACK_RANGE ranges[8] = {0};
+    OSSL_QUIC_FRAME_ACK f = {0};
     uint64_t total_ranges = 0;
     int r;
     size_t i;
@@ -1207,7 +1207,7 @@ static int test_wire_ack(int idx)
         if (!TEST_int_eq(r, 1))
             goto err;
 
-        if (!TEST_false(pkt.remaining))
+        if (!TEST_false(PACKET_remaining(&pkt)))
             goto err;
     }
 

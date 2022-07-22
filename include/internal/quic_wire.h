@@ -88,6 +88,39 @@
  * ==================================
  */
 
+/* QUIC Frame: ACK */
+typedef struct ossl_quic_ack_range_st {
+    /*
+     * Represents an inclusive range of packet numbers [start, end].
+     * start must be <= end.
+     */
+    QUIC_PN start, end;
+} OSSL_QUIC_ACK_RANGE;
+
+typedef struct ossl_quic_frame_ack_st {
+    /*
+     * A sequence of packet number ranges [[start, end]...].
+     *
+     * The ranges must be sorted in descending order, for example:
+     *      [ 95, 100]
+     *      [ 90,  92]
+     *      etc.
+     *
+     * As such, ack_ranges[0].end is always the highest packet number
+     * being acknowledged and ack_ranges[num_ack_ranges-1].start is
+     * aalways the lowest packet number being acknowledged.
+     *
+     * num_ack_ranges must be greater than zero, as an ACK frame must
+     * acknowledge at least one packet number.
+     */
+    OSSL_QUIC_ACK_RANGE        *ack_ranges;
+    size_t                      num_ack_ranges;
+
+    OSSL_TIME                   delay_time;
+    uint64_t                    ect0, ect1, ecnce;
+    char                        ecn_present;
+} OSSL_QUIC_FRAME_ACK;
+
 /* QUIC Frame: STREAM */
 typedef struct ossl_quic_frame_stream_st {
     uint64_t        stream_id;  /* Stream ID */
@@ -173,7 +206,7 @@ int ossl_quic_wire_encode_frame_ping(WPACKET *pkt);
  */
 int ossl_quic_wire_encode_frame_ack(WPACKET *pkt,
                                     uint32_t ack_delay_exponent,
-                                    const OSSL_ACKM_ACK *ack);
+                                    const OSSL_QUIC_FRAME_ACK *ack);
 
 /*
  * Encodes a QUIC RESET_STREAM frame to the packet writer, given a logical
@@ -243,12 +276,12 @@ int ossl_quic_wire_encode_frame_max_stream_data(WPACKET *pkt,
 /*
  * Encodes a QUIC MAX_STREAMS frame to the packet writer.
  *
- * If is_unidirectional is 0, the count specifies the maximum number of
+ * If is_uni is 0, the count specifies the maximum number of
  * bidirectional streams; else it specifies the maximum number of unidirectional
  * streams.
  */
 int ossl_quic_wire_encode_frame_max_streams(WPACKET *pkt,
-                                            char     is_unidirectional,
+                                            char     is_uni,
                                             uint64_t max_streams);
 
 /*
@@ -266,12 +299,12 @@ int ossl_quic_wire_encode_frame_stream_data_blocked(WPACKET *pkt,
 /*
  * Encodes a QUIC STREAMS_BLOCKED frame to the packet writer.
  *
- * If is_unidirectional is 0, the count specifies the maximum number of
+ * If is_uni is 0, the count specifies the maximum number of
  * bidirectional streams; else it specifies the maximum number of unidirectional
  * streams.
  */
 int ossl_quic_wire_encode_frame_streams_blocked(WPACKET *pkt,
-                                                char is_unidirectional,
+                                                char is_uni,
                                                 uint64_t max_streams);
 
 /*
@@ -397,7 +430,7 @@ int ossl_quic_wire_skip_frame_header(PACKET *pkt, uint64_t *type);
  */
 int ossl_quic_wire_decode_frame_ack(PACKET *pkt,
                                     uint32_t ack_delay_exponent,
-                                    OSSL_ACKM_ACK *ack,
+                                    OSSL_QUIC_FRAME_ACK *ack,
                                     uint64_t *total_ranges);
 
 /*
@@ -545,7 +578,7 @@ int ossl_quic_wire_decode_frame_path_response(PACKET *pkt,
  * of the frame is written to *f.
  *
  * The reason field is set to point to the UTF-8 reason string inside
- * the packet buffer; iit is therefore valid for as long as the PACKET's
+ * the packet buffer; it is therefore valid for as long as the PACKET's
  * buffer is valid. The reason_len field is set to the length of the
  * reason string in bytes.
  *

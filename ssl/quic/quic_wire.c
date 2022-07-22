@@ -39,7 +39,7 @@ int ossl_quic_wire_encode_frame_ping(WPACKET *pkt)
 
 int ossl_quic_wire_encode_frame_ack(WPACKET *pkt,
                                     uint32_t ack_delay_exponent,
-                                    const OSSL_ACKM_ACK *ack)
+                                    const OSSL_QUIC_FRAME_ACK *ack)
 {
     uint64_t frame_type = ack->ecn_present ? OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN
                                            : OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN;
@@ -190,11 +190,11 @@ int ossl_quic_wire_encode_frame_max_stream_data(WPACKET *pkt,
 }
 
 int ossl_quic_wire_encode_frame_max_streams(WPACKET *pkt,
-                                            char     is_unidirectional,
+                                            char     is_uni,
                                             uint64_t max_streams)
 {
-    if (!encode_frame_hdr(pkt, is_unidirectional ? OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI
-                                                 : OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI)
+    if (!encode_frame_hdr(pkt, is_uni ? OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI
+                                      : OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI)
             || !WPACKET_quic_write_vlint(pkt, max_streams))
         return 0;
 
@@ -225,11 +225,11 @@ int ossl_quic_wire_encode_frame_stream_data_blocked(WPACKET *pkt,
 }
 
 int ossl_quic_wire_encode_frame_streams_blocked(WPACKET *pkt,
-                                                char is_unidirectional,
+                                                char is_uni,
                                                 uint64_t max_streams)
 {
-    if (!encode_frame_hdr(pkt, is_unidirectional ? OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI
-                                                 : OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI)
+    if (!encode_frame_hdr(pkt, is_uni ? OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI
+                                      : OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI)
             || !WPACKET_quic_write_vlint(pkt, max_streams))
         return 0;
 
@@ -381,7 +381,7 @@ static int expect_frame_header(PACKET *pkt, uint64_t expected_frame_type)
 
 int ossl_quic_wire_decode_frame_ack(PACKET *pkt,
                                     uint32_t ack_delay_exponent,
-                                    OSSL_ACKM_ACK *ack,
+                                    OSSL_QUIC_FRAME_ACK *ack,
                                     uint64_t *total_ranges) {
     uint64_t frame_type, largest_ackd, ack_delay_raw,
              ack_range_count, first_ack_range, start, end, i;
@@ -542,9 +542,6 @@ int ossl_quic_wire_decode_frame_stream(PACKET *pkt,
 
     if (f->has_len) {
         if (!PACKET_get_quic_vlint(pkt, &f->len))
-            return 0;
-
-        if (f->len > PACKET_remaining(pkt))
             return 0;
     } else {
         f->len = PACKET_remaining(pkt);
