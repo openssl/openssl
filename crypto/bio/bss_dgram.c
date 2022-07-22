@@ -627,7 +627,6 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DUP:
     case BIO_CTRL_FLUSH:
-        ret = 1;
         break;
     case BIO_CTRL_DGRAM_CONNECT:
         BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
@@ -907,7 +906,6 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         d_errno = (data->_errno == EAGAIN);
 #endif
         if (d_errno) {
-            ret = 1;
             data->_errno = 0;
         } else
             ret = 0;
@@ -915,7 +913,6 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 #ifdef EMSGSIZE
     case BIO_CTRL_DGRAM_MTU_EXCEEDED:
         if (data->_errno == EMSGSIZE) {
-            ret = 1;
             data->_errno = 0;
         } else
             ret = 0;

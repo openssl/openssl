@@ -522,6 +522,7 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
         } else
             ret = -1;
         break;
+
     case BIO_CTRL_GET_CLOSE:
         ret = b->shutdown;
         break;

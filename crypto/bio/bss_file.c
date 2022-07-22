@@ -322,7 +322,6 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         break;
     case BIO_CTRL_DUP:
-        ret = 1;
         break;
 
     case BIO_CTRL_WPENDING:
