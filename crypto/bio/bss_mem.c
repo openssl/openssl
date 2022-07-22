@@ -328,6 +328,10 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_PUSH:
     case BIO_CTRL_POP:
+    case BIO_CTRL_DGRAM_QUERY_MTU:
+    case BIO_CTRL_DGRAM_SET_MTU:
+    case BIO_CTRL_DGRAM_GET_MTU_OVERHEAD:
+    case BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT:
     case BIO_CTRL_WPENDING:
     case BIO_CTRL_GET_INDENT:
     case BIO_CTRL_SET_INDENT:
