@@ -1088,9 +1088,9 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl)
 
     cbuf[0] = count++;
     memcpy(crec_wseq_before, &clientsc->rlayer.write_sequence, SEQ_NUM_SIZE);
-    memcpy(crec_rseq_before, &clientsc->rrl->sequence, SEQ_NUM_SIZE);
+    memcpy(crec_rseq_before, &clientsc->rlayer.rrl->sequence, SEQ_NUM_SIZE);
     memcpy(srec_wseq_before, &serversc->rlayer.write_sequence, SEQ_NUM_SIZE);
-    memcpy(srec_rseq_before, &serversc->rrl->sequence, SEQ_NUM_SIZE);
+    memcpy(srec_rseq_before, &serversc->rlayer.rrl->sequence, SEQ_NUM_SIZE);
 
     if (!TEST_true(SSL_write(clientssl, cbuf, sizeof(cbuf)) == sizeof(cbuf)))
         goto end;
@@ -1111,9 +1111,9 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl)
     }
 
     memcpy(crec_wseq_after, &clientsc->rlayer.write_sequence, SEQ_NUM_SIZE);
-    memcpy(crec_rseq_after, &clientsc->rrl->sequence, SEQ_NUM_SIZE);
+    memcpy(crec_rseq_after, &clientsc->rlayer.rrl->sequence, SEQ_NUM_SIZE);
     memcpy(srec_wseq_after, &serversc->rlayer.write_sequence, SEQ_NUM_SIZE);
-    memcpy(srec_rseq_after, &serversc->rrl->sequence, SEQ_NUM_SIZE);
+    memcpy(srec_rseq_after, &serversc->rlayer.rrl->sequence, SEQ_NUM_SIZE);
 
     /* verify the payload */
     if (!TEST_mem_eq(cbuf, sizeof(cbuf), sbuf, sizeof(sbuf)))

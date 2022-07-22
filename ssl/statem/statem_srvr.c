@@ -914,8 +914,8 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
              * is an unencrypted alert, an encrypted alert, or an encrypted
              * handshake message. We temporarily tolerate unencrypted alerts.
              */
-            if (s->rrlmethod->set_plain_alerts != NULL)
-                s->rrlmethod->set_plain_alerts(s->rrl, 1);
+            if (s->rlayer.rrlmethod->set_plain_alerts != NULL)
+                s->rlayer.rrlmethod->set_plain_alerts(s->rlayer.rrl, 1);
             break;
         }
 
@@ -3458,8 +3458,8 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
      * To get this far we must have read encrypted data from the client. We no
      * longer tolerate unencrypted alerts. This is ignored if less than TLSv1.3
      */
-    if (s->rrlmethod->set_plain_alerts != NULL)
-        s->rrlmethod->set_plain_alerts(s->rrl, 0);
+    if (s->rlayer.rrlmethod->set_plain_alerts != NULL)
+        s->rlayer.rrlmethod->set_plain_alerts(s->rlayer.rrl, 0);
 
     if ((sk = sk_X509_new_null()) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);

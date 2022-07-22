@@ -49,6 +49,12 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     RECORD_LAYER_reset_read_sequence(rl);
     RECORD_LAYER_reset_write_sequence(rl);
 
+    if (rl->rrlmethod != NULL)
+        rl->rrlmethod->free(rl->rrl); /* Ignore return value */
+    BIO_free(rl->rrlnext);
+    rl->rrlmethod = NULL;
+    rl->rrlnext = NULL;
+
     if (rl->d)
         DTLS_RECORD_LAYER_clear(rl);
 }
@@ -62,14 +68,14 @@ void RECORD_LAYER_release(RECORD_LAYER *rl)
 /* Checks if we have unprocessed read ahead data pending */
 int RECORD_LAYER_read_pending(const RECORD_LAYER *rl)
 {
-    return rl->s->rrlmethod->unprocessed_read_pending(rl->s->rrl);
+    return rl->rrlmethod->unprocessed_read_pending(rl->rrl);
 }
 
 /* Checks if we have decrypted unread record data pending */
 int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl)
 {
     return (rl->curr_rec < rl->num_recs)
-           || rl->s->rrlmethod->processed_read_pending(rl->s->rrl);
+           || rl->rrlmethod->processed_read_pending(rl->rrl);
 }
 
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl)
@@ -113,7 +119,7 @@ size_t ssl3_pending(const SSL *s)
         num += sc->rlayer.tlsrecs[i].length;
     }
 
-    num += sc->rrlmethod->app_data_pending(sc->rrl);
+    num += sc->rlayer.rrlmethod->app_data_pending(sc->rlayer.rrl);
 
     return num;
 }
@@ -129,7 +135,7 @@ void SSL_set_default_read_buffer_len(SSL *s, size_t len)
 
     if (sc == NULL)
         return;
-    sc->default_read_buf_len = len;
+    sc->rlayer.default_read_buf_len = len;
 }
 
 const char *SSL_rstate_string_long(const SSL *s)
@@ -1100,7 +1106,7 @@ int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int ret, char *file,
         } else if (ret == OSSL_RECORD_RETURN_FATAL) {
             ERR_new();
             ERR_set_debug(file, line, 0);
-            ossl_statem_fatal(s, s->rrlmethod->get_alert_code(s->rrl),
+            ossl_statem_fatal(s, s->rlayer.rrlmethod->get_alert_code(s->rlayer.rrl),
                               SSL_R_RECORD_LAYER_FAILURE, NULL);
         }
         /*
@@ -1122,7 +1128,7 @@ void ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr)
 {
     if (rr->rechandle != NULL) {
         /* The record layer allocated the buffers for this record */
-        s->rrlmethod->release_record(s->rrl, rr->rechandle);
+        s->rlayer.rrlmethod->release_record(s->rlayer.rrl, rr->rechandle);
     } else {
         /* We allocated the buffers for this record (only happens with DTLS) */
         OPENSSL_free(rr->data);
@@ -1235,17 +1241,18 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
             rr = &s->rlayer.tlsrecs[s->rlayer.num_recs];
 
             ret = HANDLE_RLAYER_RETURN(s,
-                    s->rrlmethod->read_record(s->rrl, &rr->rechandle,
-                                              &rr->version, &rr->type,
-                                              &rr->data, &rr->length,
-                                              NULL, NULL));
+                    s->rlayer.rrlmethod->read_record(s->rlayer.rrl,
+                                                     &rr->rechandle,
+                                                     &rr->version, &rr->type,
+                                                     &rr->data, &rr->length,
+                                                     NULL, NULL));
             if (ret <= 0) {
                 /* SSLfatal() already called if appropriate */
                 return ret;
             }
             rr->off = 0;
             s->rlayer.num_recs++;
-        } while (s->rrlmethod->processed_read_pending(s->rrl)
+        } while (s->rlayer.rrlmethod->processed_read_pending(s->rlayer.rrl)
                  && s->rlayer.num_recs < SSL_MAX_PIPELINES);
     }
     rr = &s->rlayer.tlsrecs[s->rlayer.curr_rec];
@@ -1734,7 +1741,7 @@ static const OSSL_RECORD_METHOD *ssl_select_next_record_layer(SSL_CONNECTION *s,
 #endif
 
     /* Default to the current OSSL_RECORD_METHOD */
-    return s->rrlmethod;
+    return s->rlayer.rrlmethod;
 }
 
 static int ssl_post_record_layer_select(SSL_CONNECTION *s)
@@ -1742,16 +1749,16 @@ static int ssl_post_record_layer_select(SSL_CONNECTION *s)
 #ifndef OPENSSL_NO_KTLS
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
-    if (s->rrlmethod == &ossl_ktls_record_method) {
+    if (s->rlayer.rrlmethod == &ossl_ktls_record_method) {
         /* KTLS does not support renegotiation so disallow it */
         SSL_set_options(ssl, SSL_OP_NO_RENEGOTIATION);
     }
 #endif
-    if (SSL_IS_FIRST_HANDSHAKE(s) && s->rrlmethod->set_first_handshake != NULL)
-        s->rrlmethod->set_first_handshake(s->rrl, 1);
+    if (SSL_IS_FIRST_HANDSHAKE(s) && s->rlayer.rrlmethod->set_first_handshake != NULL)
+        s->rlayer.rrlmethod->set_first_handshake(s->rlayer.rrl, 1);
 
-    if (s->max_pipelines != 0 && s->rrlmethod->set_max_pipelines != NULL)
-        s->rrlmethod->set_max_pipelines(s->rrl, s->max_pipelines);
+    if (s->max_pipelines != 0 && s->rlayer.rrlmethod->set_max_pipelines != NULL)
+        s->rlayer.rrlmethod->set_max_pipelines(s->rlayer.rrl, s->max_pipelines);
 
     return 1;
 }
@@ -1767,7 +1774,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 {
     OSSL_PARAM options[5], *opts = options;
     OSSL_PARAM settings[6], *set =  settings;
-    const OSSL_RECORD_METHOD *origmeth = s->rrlmethod;
+    const OSSL_RECORD_METHOD *origmeth = s->rlayer.rrlmethod;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const OSSL_RECORD_METHOD *meth;
     int use_etm, stream_mac = 0, tlstree = 0;
@@ -1777,15 +1784,15 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 
     meth = ssl_select_next_record_layer(s, level);
 
-    if (s->rrlmethod != NULL && !s->rrlmethod->free(s->rrl)) {
+    if (s->rlayer.rrlmethod != NULL && !s->rlayer.rrlmethod->free(s->rlayer.rrl)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     if (meth != NULL)
-        s->rrlmethod = meth;
+        s->rlayer.rrlmethod = meth;
 
-    if (!ossl_assert(s->rrlmethod != NULL)) {
+    if (!ossl_assert(s->rlayer.rrlmethod != NULL)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -1796,7 +1803,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     *opts++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE,
                                           &s->mode);
     *opts++ = OSSL_PARAM_construct_size_t(OSSL_LIBSSL_RECORD_LAYER_READ_BUFFER_LEN,
-                                          &s->default_read_buf_len);
+                                          &s->rlayer.default_read_buf_len);
     *opts++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD,
                                        &s->rlayer.read_ahead);
     *opts = OSSL_PARAM_construct_end();
@@ -1861,7 +1868,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 
     for (;;) {
         int rlret;
-        BIO *prev = s->rrlnext;
+        BIO *prev = s->rlayer.rrlnext;
         unsigned int epoch = 0;;
 
         if (SSL_CONNECTION_IS_DTLS(s)
@@ -1869,24 +1876,28 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
             epoch =  DTLS_RECORD_LAYER_get_r_epoch(&s->rlayer) + 1; /* new epoch */
 
         if (SSL_CONNECTION_IS_DTLS(s))
-            s->rrlnext = BIO_new(BIO_s_dgram_mem());
+            s->rlayer.rrlnext = BIO_new(BIO_s_dgram_mem());
         else
-            s->rrlnext = BIO_new(BIO_s_mem());
+            s->rlayer.rrlnext = BIO_new(BIO_s_mem());
 
-        if (s->rrlnext == NULL) {
+        if (s->rlayer.rrlnext == NULL) {
             BIO_free(prev);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
 
-        rlret = s->rrlmethod->new_record_layer(sctx->libctx, sctx->propq,
-                                               version, s->server, direction,
-                                               level, epoch, key, keylen, iv,
-                                               ivlen, mackey, mackeylen, ciph,
-                                               taglen, mactype, md, comp, prev,
-                                               s->rbio, s->rrlnext, NULL, NULL,
-                                               settings, options,
-                                               rlayer_dispatch, s, &s->rrl);
+        rlret = s->rlayer.rrlmethod->new_record_layer(sctx->libctx,
+                                                      sctx->propq,
+                                                      version, s->server,
+                                                      direction, level, epoch,
+                                                      key, keylen, iv, ivlen,
+                                                      mackey, mackeylen, ciph,
+                                                      taglen, mactype, md, comp,
+                                                      prev, s->rbio,
+                                                      s->rlayer.rrlnext, NULL,
+                                                      NULL, settings, options,
+                                                      rlayer_dispatch, s,
+                                                      &s->rlayer.rrl);
         BIO_free(prev);
         switch (rlret) {
         case OSSL_RECORD_RETURN_FATAL:
@@ -1894,12 +1905,12 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
             return 0;
 
         case OSSL_RECORD_RETURN_NON_FATAL_ERR:
-            if (s->rrlmethod != origmeth && origmeth != NULL) {
+            if (s->rlayer.rrlmethod != origmeth && origmeth != NULL) {
                 /*
                  * We tried a new record layer method, but it didn't work out,
                  * so we fallback to the original method and try again
                  */
-                s->rrlmethod = origmeth;
+                s->rlayer.rrlmethod = origmeth;
                 continue;
             }
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_RECORD_LAYER);
