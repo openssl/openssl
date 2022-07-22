@@ -275,10 +275,11 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             rr = &sc->rlayer.tlsrecs[sc->rlayer.num_recs];
 
             ret = HANDLE_RLAYER_RETURN(sc,
-                    sc->rrlmethod->read_record(sc->rrl, &rr->rechandle,
-                                              &rr->version, &rr->type,
-                                              &rr->data, &rr->length,
-                                              &rr->epoch, rr->seq_num));
+                    sc->rlayer.rrlmethod->read_record(sc->rlayer.rrl,
+                                                      &rr->rechandle,
+                                                      &rr->version, &rr->type,
+                                                      &rr->data, &rr->length,
+                                                      &rr->epoch, rr->seq_num));
             if (ret <= 0) {
                 ret = dtls1_read_failed(sc, ret);
                 /*
@@ -292,7 +293,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             }
             rr->off = 0;
             sc->rlayer.num_recs++;
-        } while (sc->rrlmethod->processed_read_pending(sc->rrl)
+        } while (sc->rlayer.rrlmethod->processed_read_pending(sc->rlayer.rrl)
                  && sc->rlayer.num_recs < SSL_MAX_PIPELINES);
     }
     rr = &sc->rlayer.tlsrecs[sc->rlayer.curr_rec];
@@ -530,7 +531,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             }
             ssl_release_record(sc, rr);
             if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
-                if (!sc->rrlmethod->unprocessed_read_pending(sc->rrl)) {
+                if (!sc->rlayer.rrlmethod->unprocessed_read_pending(sc->rlayer.rrl)) {
                     /* no read-ahead left? */
                     BIO *bio;
 
@@ -566,7 +567,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             return -1;
 
         if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
-            if (!sc->rrlmethod->unprocessed_read_pending(sc->rrl)) {
+            if (!sc->rlayer.rrlmethod->unprocessed_read_pending(sc->rlayer.rrl)) {
                 /* no read-ahead left? */
                 BIO *bio;
                 /*

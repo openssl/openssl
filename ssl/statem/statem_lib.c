@@ -804,8 +804,8 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
         * no longer tolerate unencrypted alerts. This is ignored if less than
         * TLSv1.3
         */
-        if (s->rrlmethod->set_plain_alerts != NULL)
-            s->rrlmethod->set_plain_alerts(s->rrl, 0);
+        if (s->rlayer.rrlmethod->set_plain_alerts != NULL)
+            s->rlayer.rrlmethod->set_plain_alerts(s->rlayer.rrl, 0);
         if (s->post_handshake_auth != SSL_PHA_REQUESTED)
             s->statem.cleanuphand = 1;
         if (SSL_CONNECTION_IS_TLS13(s)
@@ -897,8 +897,8 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
 
     if (was_first
             && !SSL_IS_FIRST_HANDSHAKE(s)
-            && s->rrlmethod->set_first_handshake != NULL)
-        s->rrlmethod->set_first_handshake(s->rrl, 0);
+            && s->rlayer.rrlmethod->set_first_handshake != NULL)
+        s->rlayer.rrlmethod->set_first_handshake(s->rlayer.rrl, 0);
 
     return MSG_PROCESS_FINISHED_READING;
 }
@@ -1880,7 +1880,8 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             check_for_downgrade(s, best_vers, dgrd);
             s->version = best_vers;
             ssl->method = best_method;
-            if (!s->rrlmethod->set_protocol_version(s->rrl, best_vers))
+            if (!s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl,
+                                                           best_vers))
                 return ERR_R_INTERNAL_ERROR;
 
             return 0;
@@ -1910,7 +1911,8 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             check_for_downgrade(s, vent->version, dgrd);
             s->version = vent->version;
             ssl->method = method;
-            if (!s->rrlmethod->set_protocol_version(s->rrl, s->version))
+            if (!s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl,
+                                                           s->version))
                 return ERR_R_INTERNAL_ERROR;
 
             return 0;
@@ -1972,7 +1974,8 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
          * versions they don't want.  If not, then easy to fix, just return
          * ssl_method_error(s, s->method)
          */
-        if (!s->rrlmethod->set_protocol_version(s->rrl, s->version)) {
+        if (!s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl,
+                                                       s->version)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -2036,7 +2039,8 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
             continue;
 
         ssl->method = vent->cmeth();
-        if (!s->rrlmethod->set_protocol_version(s->rrl, s->version)) {
+        if (!s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl,
+                                                       s->version)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -2205,7 +2209,7 @@ int ssl_set_client_hello_version(SSL_CONNECTION *s)
              * we read the ServerHello. So we need to tell the record layer
              * about this immediately.
              */
-            s->rrlmethod->set_protocol_version(s->rrl, ver_max);
+            s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl, ver_max);
         }
     } else if (ver_max > TLS1_2_VERSION) {
         /* TLS1.3 always uses TLS1.2 in the legacy_version field */

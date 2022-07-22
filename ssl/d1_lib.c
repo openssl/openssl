@@ -845,7 +845,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
         BIO_ADDR_clear(client);
 
     /* Buffer the record for use by the record layer */
-    if (BIO_write(s->rrlnext, buf, n) != n) {
+    if (BIO_write(s->rlayer.rrlnext, buf, n) != n) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         ret = -1;
         goto end;
@@ -853,7 +853,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
 
     /*
      * Reset the record layer - but this time we can use the record we just
-     * buffered in s->rrlnext
+     * buffered in s->rlayer.rrlnext
      */
     if (!ssl_set_new_record_layer(s,
                                   DTLS_ANY_VERSION,

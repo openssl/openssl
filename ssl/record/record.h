@@ -148,6 +148,16 @@ typedef struct dtls_record_layer_st {
 typedef struct record_layer_st {
     /* The parent SSL_CONNECTION structure */
     SSL_CONNECTION *s;
+
+    /* Method to use for the read record layer*/
+    const OSSL_RECORD_METHOD *rrlmethod;
+    /* The read record layer object itself */
+    OSSL_RECORD_LAYER *rrl;
+    /* BIO to store data destined for the next read record layer epoch */
+    BIO *rrlnext;
+    /* Default read buffer length to be passed to the record layer */
+    size_t default_read_buf_len;
+
     /*
      * Read as many input bytes as possible (for
      * non-blocking reads)

@@ -656,8 +656,8 @@ int ossl_ssl_connection_reset(SSL *s)
     }
 
     RECORD_LAYER_clear(&sc->rlayer);
-    BIO_free(sc->rrlnext);
-    sc->rrlnext = NULL;
+    BIO_free(sc->rlayer.rrlnext);
+    sc->rlayer.rrlnext = NULL;
 
     if (!ssl_set_new_record_layer(sc,
                                   SSL_CONNECTION_IS_DTLS(sc) ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
@@ -807,7 +807,7 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
     s->max_send_fragment = ctx->max_send_fragment;
     s->split_send_fragment = ctx->split_send_fragment;
     s->max_pipelines = ctx->max_pipelines;
-    s->default_read_buf_len = ctx->default_read_buf_len;
+    s->rlayer.default_read_buf_len = ctx->default_read_buf_len;
 
     s->ext.debug_cb = 0;
     s->ext.debug_arg = NULL;
@@ -1345,14 +1345,10 @@ void ossl_ssl_connection_free(SSL *ssl)
     if (s == NULL)
         return;
 
-    if (s->rrlmethod != NULL)
-        s->rrlmethod->free(s->rrl); /* Ignore return value */
-    BIO_free(s->rrlnext);
-
     X509_VERIFY_PARAM_free(s->param);
     dane_final(&s->dane);
 
-    RECORD_LAYER_release(&s->rlayer);
+    RECORD_LAYER_clear(&s->rlayer);
 
     /* Ignore return value */
     ssl_free_wbio_buffer(s);
@@ -1435,7 +1431,7 @@ void SSL_set0_rbio(SSL *s, BIO *rbio)
 
     BIO_free_all(sc->rbio);
     sc->rbio = rbio;
-    sc->rrlmethod->set1_bio(sc->rrl, sc->rbio);
+    sc->rlayer.rrlmethod->set1_bio(sc->rlayer.rrl, sc->rbio);
 }
 
 void SSL_set0_wbio(SSL *s, BIO *wbio)
@@ -2771,8 +2767,8 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         if (larg < 1 || larg > SSL_MAX_PIPELINES)
             return 0;
         sc->max_pipelines = larg;
-        if (sc->rrlmethod->set_max_pipelines != NULL)
-            sc->rrlmethod->set_max_pipelines(sc->rrl, (size_t)larg);
+        if (sc->rlayer.rrlmethod->set_max_pipelines != NULL)
+            sc->rlayer.rrlmethod->set_max_pipelines(sc->rlayer.rrl, (size_t)larg);
         return 1;
     case SSL_CTRL_GET_RI_SUPPORT:
         return sc->s3.send_connection_binding;

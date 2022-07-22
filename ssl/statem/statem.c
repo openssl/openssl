@@ -196,8 +196,8 @@ int ossl_statem_in_error(const SSL_CONNECTION *s)
 void ossl_statem_set_in_init(SSL_CONNECTION *s, int init)
 {
     s->statem.in_init = init;
-    if (s->rrlmethod != NULL && s->rrlmethod->set_in_init != NULL)
-        s->rrlmethod->set_in_init(s->rrl, init);
+    if (s->rlayer.rrlmethod != NULL && s->rlayer.rrlmethod->set_in_init != NULL)
+        s->rlayer.rrlmethod->set_in_init(s->rlayer.rrl, init);
 }
 
 int ossl_statem_get_in_handshake(SSL_CONNECTION *s)

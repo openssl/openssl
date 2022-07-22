@@ -1764,17 +1764,8 @@ struct ssl_connection_st {
      */
     int (*not_resumable_session_cb) (SSL *ssl, int is_forward_secure);
 
-    /* Old RECORD_LAYER structure  - to be removed eventually */
+    /* Record layer data */
     RECORD_LAYER rlayer;
-
-    /* New read direciton OSSL_RECORD_LAYER - to replace rlayer above */
-    const OSSL_RECORD_METHOD *rrlmethod;
-    /* The read direction record layer */
-    OSSL_RECORD_LAYER *rrl;
-    /* BIO to store data destined for the next record layer epoch */
-    BIO *rrlnext;
-    /* Default read buffer length to be passed to the record layer */
-    size_t default_read_buf_len;
 
     /* Default password callback. */
     pem_password_cb *default_passwd_callback;
