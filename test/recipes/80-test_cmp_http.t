@@ -171,7 +171,7 @@ sub test_cmp_http_aspect {
 
 indir data_dir() => sub {
     plan tests => 1 + @server_configurations * @all_aspects
-        + (grep(/^Mock$/, @server_configurations)
+        - (grep(/^Mock$/, @server_configurations)
            && grep(/^certstatus$/, @all_aspects));
 
     foreach my $server_name (@server_configurations) {
