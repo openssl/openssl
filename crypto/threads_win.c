@@ -207,14 +207,42 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
                      CRYPTO_RWLOCK *lock)
 {
-    *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, (LONG64)op) | op;
-    return 1;
+#if (defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER <= 1500)
+    // VC++ 2008 or earlier x86 compilers do not have an inline implementation of InterlockedOr64 for 32bit and will fail to run on Windows XP 32bit.
+    // See: https://docs.microsoft.com/en-us/cpp/intrinsics/interlockedor-intrinsic-functions#requirements
+    // To work around this problem, we implement a manual locking mechanism for only VC++ 2008 or earlier x86 compilers.
+	if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
+		return 0;
+	*val |= op;
+	*ret = *val;
+
+	if (!CRYPTO_THREAD_unlock(lock))
+		return 0;
+
+	return 1;
+#else
+	*ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, (LONG64)op) | op;
+	return 1;
+#endif
 }
 
 int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
 {
-    *ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, 0);
-    return 1;
+#if (defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER <= 1500)
+	// VC++ 2008 or earlier x86 compilers do not have an inline implementation of InterlockedOr64 for 32bit and will fail to run on Windows XP 32bit.
+	// See: https://docs.microsoft.com/en-us/cpp/intrinsics/interlockedor-intrinsic-functions#requirements
+	// To work around this problem, we implement a manual locking mechanism for only VC++ 2008 or earlier x86 compilers.
+	if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
+		return 0;
+	*ret = *val;
+	if (!CRYPTO_THREAD_unlock(lock))
+		return 0;
+
+	return 1;
+#else
+	*ret = (uint64_t)InterlockedOr64((LONG64 volatile *)val, 0);
+	return 1;
+#endif
 }
 
 int openssl_init_fork_handlers(void)
