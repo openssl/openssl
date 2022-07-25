@@ -177,6 +177,29 @@ static int s390x_shake_final(unsigned char *md, void *vctx)
     return 1;
 }
 
+static int s390x_keccakc_final(unsigned char *md, void *vctx, int padding)
+{
+    KECCAK1600_CTX *ctx = vctx;
+    size_t bsz = ctx->block_size;
+    size_t num = ctx->bufsz;
+
+    if (!ossl_prov_is_running())
+        return 0;
+    if (ctx->md_size == 0)
+        return 1;
+    memset(ctx->buf + num, 0, bsz - num);
+    ctx->buf[num] = padding;
+    ctx->buf[bsz - 1] |= 0x80;
+    s390x_kimd(ctx->buf, bsz, ctx->pad, ctx->A);
+    memcpy(md, ctx->A, ctx->md_size);
+    return 1;
+}
+
+static int s390x_kmac_final(unsigned char *md, void *vctx)
+{
+    return s390x_keccakc_final(md, vctx, 0x04);
+}
+
 static PROV_SHA3_METHOD sha3_s390x_md =
 {
     s390x_sha3_absorb,
@@ -189,6 +212,12 @@ static PROV_SHA3_METHOD shake_s390x_md =
     s390x_shake_final
 };
 
+static PROV_SHA3_METHOD kmac_s390x_md =
+{
+    s390x_sha3_absorb,
+    s390x_kmac_final
+};
+
 # define SHA3_SET_MD(uname, typ)                                               \
     if (S390_SHA3_CAPABLE(uname)) {                                            \
         ctx->pad = S390X_##uname;                                              \
@@ -196,8 +225,16 @@ static PROV_SHA3_METHOD shake_s390x_md =
     } else {                                                                   \
         ctx->meth = sha3_generic_md;                                           \
     }
+# define KMAC_SET_MD(bitlen)                                                   \
+    if (S390_SHA3_CAPABLE(SHAKE_##bitlen)) {                                   \
+        ctx->pad = S390X_SHAKE_##bitlen;                                       \
+        ctx->meth = kmac_s390x_md;                                             \
+    } else {                                                                   \
+        ctx->meth = sha3_generic_md;                                           \
+    }
 #else
 # define SHA3_SET_MD(uname, typ) ctx->meth = sha3_generic_md;
+# define KMAC_SET_MD(bitlen) ctx->meth = sha3_generic_md;
 #endif /* S390_SHA3 */
 
 #define SHA3_newctx(typ, uname, name, bitlen, pad)                             \
@@ -224,7 +261,7 @@ static void *uname##_newctx(void *provctx)                                     \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
     ossl_keccak_kmac_init(ctx, pad, bitlen);                                   \
-    ctx->meth = sha3_generic_md;                                               \
+    KMAC_SET_MD(bitlen)                                                        \
     return ctx;                                                                \
 }
 
