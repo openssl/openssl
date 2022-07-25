@@ -304,22 +304,16 @@ static void *drbg_hmac_new_wrapper(void *provctx, void *parent,
                               &drbg_hmac_reseed, &drbg_hmac_generate);
 }
 
-void ossl_drbg_hmac_reset(PROV_DRBG_HMAC *hmac)
-{
-    if (hmac != NULL) {
-        EVP_MAC_CTX_free(hmac->ctx);
-        ossl_prov_digest_reset(&hmac->digest);
-        OPENSSL_secure_clear_free(hmac, sizeof(*hmac));
-    }
-}
-
 static void drbg_hmac_free(void *vdrbg)
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
     PROV_DRBG_HMAC *hmac;
 
-    if (drbg != NULL && (hmac = (PROV_DRBG_HMAC *)drbg->data) != NULL)
-    ossl_drbg_hmac_reset(hmac);
+    if (drbg != NULL && (hmac = (PROV_DRBG_HMAC *)drbg->data) != NULL) {
+        EVP_MAC_CTX_free(hmac->ctx);
+        ossl_prov_digest_reset(&hmac->digest);
+        OPENSSL_secure_clear_free(hmac, sizeof(*hmac));
+    }
     ossl_rand_drbg_free(drbg);
 }
 

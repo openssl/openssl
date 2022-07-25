@@ -29,6 +29,5 @@ int ossl_drbg_hmac_init(PROV_DRBG_HMAC *drbg,
 int ossl_drbg_hmac_generate(PROV_DRBG_HMAC *hmac,
                             unsigned char *out, size_t outlen,
                             const unsigned char *adin, size_t adin_len);
-void ossl_drbg_hmac_reset(PROV_DRBG_HMAC *hmac);
 
 #endif /* OSSL_PROV_HMAC_DRBG_H */
