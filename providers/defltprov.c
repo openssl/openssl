@@ -352,6 +352,8 @@ static const OSSL_ALGORITHM deflt_kdfs[] = {
     { PROV_NAMES_SCRYPT, "provider=default", ossl_kdf_scrypt_functions },
 #endif
     { PROV_NAMES_KRB5KDF, "provider=default", ossl_kdf_krb5kdf_functions },
+    { PROV_NAMES_HMAC_DRBG_KDF, "provider=default",
+      ossl_kdf_hmac_drbg_functions },
     { NULL, NULL, NULL }
 };
 
@@ -375,8 +377,6 @@ static const OSSL_ALGORITHM deflt_rands[] = {
     { PROV_NAMES_CTR_DRBG, "provider=default", ossl_drbg_ctr_functions },
     { PROV_NAMES_HASH_DRBG, "provider=default", ossl_drbg_hash_functions },
     { PROV_NAMES_HMAC_DRBG, "provider=default", ossl_drbg_ossl_hmac_functions },
-    { PROV_NAMES_HMAC_DRBG_DETERMINISTIC, "provider=default",
-      ossl_drbg_ossl_hmac_deterministic_functions },
     { PROV_NAMES_SEED_SRC, "provider=default", ossl_seed_src_functions },
     { PROV_NAMES_TEST_RAND, "provider=default", ossl_test_rng_functions },
     { NULL, NULL, NULL }

@@ -229,6 +229,8 @@ extern "C" {
 #define OSSL_KDF_PARAM_X942_SUPP_PUBINFO    "supp-pubinfo"
 #define OSSL_KDF_PARAM_X942_SUPP_PRIVINFO   "supp-privinfo"
 #define OSSL_KDF_PARAM_X942_USE_KEYBITS     "use-keybits"
+#define OSSL_KDF_PARAM_HMACDRBG_ENTROPY     "entropy"
+#define OSSL_KDF_PARAM_HMACDRBG_NONCE       "nonce"
 
 /* Known KDF names */
 #define OSSL_KDF_NAME_HKDF           "HKDF"

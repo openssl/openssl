@@ -10,60 +10,8 @@
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
+#include <openssl/kdf.h>
 #include "internal/deterministic_nonce.h"
-
-/*
- * Setup a HMAC_DRBG_DETERMINISTIC object that has fixed entropy and nonce data.
- *
- * Params:
- *     digestname The digest name for the HMAC
- *     entropy, entropylen A fixed input entropy buffer
- *     nonce, noncelen A fixed input nonce buffer
- *     libctx, propq Are used for fetching algorithms
- *
- * Returns: The created HMAC_DRBG object if successful, or NULL otherwise.
- */
-static EVP_RAND_CTX *rand_setup(const char *digestname,
-                                const unsigned char *entropy, size_t entropylen,
-                                const unsigned char *nonce, size_t noncelen,
-                                OSSL_LIB_CTX *libctx, const char *propq)
-{
-    OSSL_PARAM params[5], *p;
-    EVP_RAND_CTX *drbg = NULL;
-    EVP_RAND *rand = NULL;
-
-    rand = EVP_RAND_fetch(libctx, "HMAC-DRBG-DETERMINISTIC", propq);
-    if (rand == NULL)
-        goto err;
-    drbg = EVP_RAND_CTX_new(rand, NULL);
-    EVP_RAND_free(rand);
-    if (drbg == NULL)
-        goto err;
-
-    p = params;
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_DIGEST,
-                                            (char *)digestname, 0);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_MAC, "HMAC", 0);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
-                                             (void *)entropy, entropylen);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
-                                             (void *)nonce, noncelen);
-    *p = OSSL_PARAM_construct_end();
-    if (!EVP_RAND_instantiate(drbg, 0, 0, NULL, 0, params))
-        goto err;
-    return drbg;
-err:
-    EVP_RAND_CTX_free(drbg);
-    return NULL;
-}
-
-static void rand_teardown(EVP_RAND_CTX *drbg)
-{
-    if (drbg != NULL) {
-        EVP_RAND_uninstantiate(drbg);
-        EVP_RAND_CTX_free(drbg);
-    }
-}
 
 /*
  * Convert a Bit String to an Integer (See RFC 6979 Section 2.3.2)
@@ -138,6 +86,53 @@ err:
 }
 
 /*
+ * Setup a KDF HMAC_DRBG object using fixed entropy and nonce data.
+ *
+ * Params:
+ *     digestname The digest name for the HMAC
+ *     entropy, entropylen A fixed input entropy buffer
+ *     nonce, noncelen A fixed input nonce buffer
+ *     libctx, propq Are used for fetching algorithms
+ *
+ * Returns: The created KDF HMAC_DRBG object if successful, or NULL otherwise.
+ */
+static EVP_KDF_CTX *kdf_setup(const char *digestname,
+                              const unsigned char *entropy, size_t entropylen,
+                              const unsigned char *nonce, size_t noncelen,
+                              OSSL_LIB_CTX *libctx, const char *propq)
+{
+    EVP_KDF_CTX *ctx = NULL;
+    EVP_KDF *kdf = NULL;
+    OSSL_PARAM params[5], *p;
+
+    kdf = EVP_KDF_fetch(libctx, "HMAC-DRBG-KDF", propq);
+    ctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
+    if (ctx == NULL)
+        goto err;
+
+    p = params;
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                            (char *)digestname, 0);
+    if (propq != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
+                                                (char *)propq, 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_HMACDRBG_ENTROPY,
+                                             (void *)entropy, entropylen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_HMACDRBG_NONCE,
+                                             (void *)nonce, noncelen);
+    *p = OSSL_PARAM_construct_end();
+
+    if (EVP_KDF_CTX_set_params(ctx, params) <= 0)
+        goto err;
+
+    return ctx;
+err:
+    EVP_KDF_CTX_free(ctx);
+    return NULL;
+}
+
+/*
  * Generate a Deterministic nonce 'k' for DSA/ECDSA as defined in
  * RFC 6979 Section 3.3.  "Alternate Description of the Generation of k"
  *
@@ -158,7 +153,7 @@ int ossl_gen_deterministic_nonce_rfc6979(BIGNUM *out, const BIGNUM *q,
                                          OSSL_LIB_CTX *libctx,
                                          const char *propq)
 {
-    EVP_RAND_CTX *drbg = NULL;
+    EVP_KDF_CTX *kdfctx = NULL;
     int ret = 0, rlen = 0, qlen_bits = 0;
     unsigned char *entropyx = NULL, *nonceh = NULL, *T = NULL;
     size_t allocsz = 0;
@@ -182,23 +177,19 @@ int ossl_gen_deterministic_nonce_rfc6979(BIGNUM *out, const BIGNUM *q,
             || !bits2octets(nonceh, q, qlen_bits, rlen, hm, hmlen))
         goto end;
 
-    drbg = rand_setup(digestname, entropyx, rlen, nonceh, rlen, libctx, propq);
-    if (drbg == NULL)
+    kdfctx = kdf_setup(digestname, entropyx, rlen, nonceh, rlen, libctx, propq);
+    if (kdfctx == NULL)
         goto end;
 
     do {
-        if (!EVP_RAND_generate(drbg, T, rlen, 0, 0, NULL, 0)
+        if (!EVP_KDF_derive(kdfctx, T, rlen, NULL)
                 || !bits2int(out, qlen_bits, T, rlen))
             goto end;
-        if (!BN_is_zero(out)
-                && !BN_is_one(out)
-                && BN_cmp(out, q) < 0)
-            break;
     } while (BN_is_zero(out) || BN_is_one(out) || BN_cmp(out, q) >= 0);
     ret = 1;
 
 end:
-    rand_teardown(drbg);
+    EVP_KDF_CTX_free(kdfctx);
     OPENSSL_clear_free(T, allocsz);
     return ret;
 }
