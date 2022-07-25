@@ -117,17 +117,24 @@ int g(void)
         /* leading comment has same indentation as normal code */ stmt;
         /* entire-line comment may have same indent as normal code */
     }
-
-    for (;;)
-        ;
-    for (i = 0;;)
-        ;
-    for (i = 0; i < 1;)
-        ;
-    for (;;)
+    for (i = 0; i < n; i++)
         for (; i < n; i++)
-            for (;; p++)
-                ;
+            for (i = 0; ; i++)
+                for (i = 0;; i++)
+                    for (i = 0; i < n; )
+                        for (i = 0; i < n;)
+                            ;
+    for (i = 0; ; )
+        for (i = 0; ;)
+            for (i = 0;; )
+                for (i = 0;;)
+                    for (; i < n; )
+                        for (; j < n;)
+                            for (; ; i++)
+                                for (;; i++)
+                                    ;
+    for (;;) /* the only variant allowed in case of "empty" for (...) */
+        ;
     for (;;) ; /* should not trigger: space before ';' */
  lab: ;  /* should not trigger: space before ';' */
 
