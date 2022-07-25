@@ -55,7 +55,6 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
         return 0;
 
     ctx->enc = enc;
-    ctx->tls_enc_records = 0;
 
     if (iv != NULL) {
         if (ivlen == 0 || ivlen > sizeof(ctx->iv)) {
@@ -74,6 +73,7 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
         }
         if (!ctx->hw->setkey(ctx, key, ctx->keylen))
             return 0;
+        ctx->tls_enc_records = 0;
     }
     return ossl_gcm_set_ctx_params(ctx, params);
 }
