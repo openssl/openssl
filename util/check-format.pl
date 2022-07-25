@@ -452,7 +452,7 @@ sub update_nested_indents { # may reset $in_paren_expr and in this case also res
         my ($head, $tail) = (substr($str, 0, $i).$1, $3);
         $i += length($1) + length($2) - 1;
 
-        # stop at terminator outside 'for(..;..;..)', assuming that 'for' is followed by '('
+        # stop at terminator outside 'for (..;..;..)', assuming that 'for' is followed by '('
         return $i if $c eq ";" && (!$in_paren_expr || @nested_indents == 0);
 
         my $in_stmt = $in_expr || @nested_symbols != 0; # not: || $in_typedecl != 0
@@ -784,9 +784,12 @@ while (<>) { # loop over all lines of all input files
         # treat remaining blinded comments and string literal contents as (single) space during matching below
         $intra_line =~ s/@+/ /g;                     # note that extra SPC has already been handled above
         $intra_line =~ s/\s+$//;                     # strip any (resulting) space at EOL
-        $intra_line =~ s/(for\s*\([^;]*);;(\))/"$1$2"/eg; # strip trailing ';;' in for (;;)
-        $intra_line =~ s/(for\s*\([^;]+;[^;]+);(\))/"$1$2"/eg; # strip trailing ';' in for (;;)
-        $intra_line =~ s/(for\s*\();(;)/"$1$2"/eg;   # replace leading ';;' in for (;;) by ';'
+        # replace ';;' or '; ;' by ';' in "for(;;)" and in "for (...)" unless "..." contains just SPC and ';' characters:
+        $intra_line =~ s/((^|\W)for\s*\()([^;]*?)(\s*)(;\s?);(\s*)([^;]*)(\))/
+          "$1$3$4".("$3$4$5$6$7" eq ";" || $3 ne "" || $7 ne "" ? "" : $5).";$6$7$8"/eg;
+        # strip trailing ';' or '; ' in "for (...)" except in "for (;;)" or "for (;; )":
+        $intra_line =~ s/((^|\W)for\s*\()([^;]*(;[^;]*)?)(;\s?)(\))/
+          "$1$3".($3 eq ";" ? $5 : "")."$6"/eg;
         $intra_line =~ s/(=\s*)\{ /"$1@ "/eg;        # do not report {SPC in initializers such as ' = { 0, };'
         $intra_line =~ s/, \};/, @;/g;               # do not report SPC} in initializers such as ' = { 0, };'
         report("space before '$1'") if $intra_line =~ m/[\w)\]]\s+(\+\+|--)/;  # postfix ++/-- with preceding space
@@ -795,7 +798,8 @@ while (<>) { # loop over all lines of all input files
         report("space before '$1'") if $intra_line =~ m/\s(\.|->)/;            # '.' or '->' with preceding space
         report("space after '$1'")  if $intra_line =~ m/(\.|->)\s/;            # '.' or '->' with following space
         $intra_line =~ s/\-\>|\+\+|\-\-/@/g;         # blind '->,', '++', and '--'
-        report("space before '$1'")     if $intra_line =~ m/[^:)]\s+(;)/;      # space before ';' but not after ':' or ')'
+        report("space before '$1'")     if $intra_line =~ m/[^:)]\s+(;)/;      # space before ';' but not after ':' or ')' # note that
+        # exceptions for "for (;; )" are handled above
         report("space before '$1'")     if $intra_line =~ m/\s([,)\]])/;       # space before ,)]
         report("space after '$1'")      if $intra_line =~ m/([(\[~!])\s/;      # space after ([~!
         report("space after '$1'")      if $intra_line =~ m/(defined)\s/;      # space after 'defined'
