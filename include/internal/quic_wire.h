@@ -14,6 +14,7 @@
 #include "internal/e_os.h"
 #include "internal/time.h"
 #include "internal/quic_types.h"
+#include "internal/packet.h"
 
 #define OSSL_QUIC_FRAME_TYPE_PADDING                0x00
 #define OSSL_QUIC_FRAME_TYPE_PING                   0x01
