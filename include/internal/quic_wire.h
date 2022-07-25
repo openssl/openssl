@@ -237,8 +237,8 @@ int ossl_quic_wire_encode_frame_stop_sending(WPACKET *pkt,
 /*
  * Encodes a QUIC CRYPTO frame header to the packet writer.
  *
- * To create a well-formed frame, the caller should immediately write f->len
- * bytes to the WPACKET after the call to this function succeeds.
+ * To create a well-formed frame, the data written using this function must be
+ * immediately followed by f->len bytes of data.
  */
 int ossl_quic_wire_encode_frame_crypto_hdr(WPACKET *hdr,
                                            const OSSL_QUIC_FRAME_CRYPTO *f);
@@ -273,8 +273,8 @@ int ossl_quic_wire_encode_frame_new_token(WPACKET *pkt,
  * in the packet, which the caller is responsible for ensuring; the Length
  * field is then omitted.
  *
- * To create a well-formed frame, the caller should immediately write f->len
- * bytes to the WPACKET after the call to this function succeeds.
+ * To create a well-formed frame, the data written using this function must be
+ * immediately followed by f->len bytes of stream data.
  */
 int ossl_quic_wire_encode_frame_stream_hdr(WPACKET *pkt,
                                            const OSSL_QUIC_FRAME_STREAM *f);
