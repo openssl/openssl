@@ -387,7 +387,6 @@ L<RAND_bytes(3)>,
 L<EVP_RAND-CTR-DRBG(7)>,
 L<EVP_RAND-HASH-DRBG(7)>,
 L<EVP_RAND-HMAC-DRBG(7)>,
-L<EVP_RAND-HMAC-DRBG-DETERMINISTIC(7)>,
 L<EVP_RAND-TEST-RAND(7)>,
 L<provider-rand(7)>,
 L<life_cycle-rand(7)>
