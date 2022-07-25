@@ -115,10 +115,22 @@ size_t ssl3_pending(const SSL *s)
     if (s->rlayer.rstate == SSL_ST_READ_BODY)
         return 0;
 
+    /* Take into account DTLS buffered app data */
+    if (SSL_IS_DTLS(s)) {
+        DTLS1_RECORD_DATA *rdata;
+        pitem *item, *iter;
+
+        iter = pqueue_iterator(s->rlayer.d->buffered_app_data.q);
+        while ((item = pqueue_next(&iter)) != NULL) {
+            rdata = item->data;
+            num += rdata->rrec.length;
+        }
+    }
+
     for (i = 0; i < RECORD_LAYER_get_numrpipes(&s->rlayer); i++) {
         if (SSL3_RECORD_get_type(&s->rlayer.rrec[i])
             != SSL3_RT_APPLICATION_DATA)
-            return 0;
+            return num;
         num += SSL3_RECORD_get_length(&s->rlayer.rrec[i]);
     }
 
