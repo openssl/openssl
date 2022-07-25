@@ -436,7 +436,7 @@ tx_pkt_history_remove(struct tx_pkt_history_st *h, uint64_t pkt_num)
  */
 struct pn_set_item_st {
     struct pn_set_item_st *prev, *next;
-    OSSL_ACKM_ACK_RANGE    range;
+    OSSL_QUIC_ACK_RANGE    range;
 };
 
 struct pn_set_st {
@@ -486,8 +486,8 @@ static void pn_set_merge_adjacent(struct pn_set_st *s, struct pn_set_item_st *x)
 }
 
 /* Returns 1 if there exists a PN x which falls within both ranges a and b. */
-static int pn_range_overlaps(const OSSL_ACKM_ACK_RANGE *a,
-                             const OSSL_ACKM_ACK_RANGE *b)
+static int pn_range_overlaps(const OSSL_QUIC_ACK_RANGE *a,
+                             const OSSL_QUIC_ACK_RANGE *b)
 {
     return ossl_quic_pn_min(a->end, b->end)
         >= ossl_quic_pn_max(a->start, b->start);
@@ -499,7 +499,7 @@ static int pn_range_overlaps(const OSSL_ACKM_ACK_RANGE *a,
  * can overlap existing ranges without limitation. If a range is a subset of
  * an existing range in the set, this is a no-op and returns 1.
  */
-static int pn_set_insert(struct pn_set_st *s, const OSSL_ACKM_ACK_RANGE *range)
+static int pn_set_insert(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
 {
     struct pn_set_item_st *x, *z, *xnext, *f, *fnext;
     QUIC_PN start = range->start, end = range->end;
@@ -585,7 +585,7 @@ static int pn_set_insert(struct pn_set_st *s, const OSSL_ACKM_ACK_RANGE *range)
              * existing ranges.
              */
             struct pn_set_item_st *ovend = z;
-            OSSL_ACKM_ACK_RANGE t;
+            OSSL_QUIC_ACK_RANGE t;
             size_t n = 0;
 
             t.end = ossl_quic_pn_max(end, z->range.end);
@@ -667,7 +667,7 @@ static int pn_set_insert(struct pn_set_st *s, const OSSL_ACKM_ACK_RANGE *range)
  * in the set can be removed without issue. If a passed range is not in the PN
  * set at all, this is a no-op and returns 1.
  */
-static int pn_set_remove(struct pn_set_st *s, const OSSL_ACKM_ACK_RANGE *range)
+static int pn_set_remove(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
 {
     struct pn_set_item_st *z, *zprev, *y;
     QUIC_PN start = range->start, end = range->end;
@@ -798,7 +798,7 @@ static void rx_pkt_history_destroy(struct rx_pkt_history_st *h)
 static void rx_pkt_history_trim_range_count(struct rx_pkt_history_st *h)
 {
     while (h->set.num_ranges > MAX_RX_ACK_RANGES) {
-        OSSL_ACKM_ACK_RANGE r = h->set.head->range;
+        OSSL_QUIC_ACK_RANGE r = h->set.head->range;
         pn_set_remove(&h->set, &r);
     }
 }
@@ -806,7 +806,7 @@ static void rx_pkt_history_trim_range_count(struct rx_pkt_history_st *h)
 static int rx_pkt_history_add_pn(struct rx_pkt_history_st *h,
                                  QUIC_PN pn)
 {
-    OSSL_ACKM_ACK_RANGE r;
+    OSSL_QUIC_ACK_RANGE r;
 
     r.start = pn;
     r.end   = pn;
@@ -824,7 +824,7 @@ static int rx_pkt_history_add_pn(struct rx_pkt_history_st *h,
 static int rx_pkt_history_bump_watermark(struct rx_pkt_history_st *h,
                                          QUIC_PN watermark)
 {
-    OSSL_ACKM_ACK_RANGE r;
+    OSSL_QUIC_ACK_RANGE r;
 
     if (watermark <= h->watermark)
         return 1;
@@ -912,11 +912,11 @@ struct ossl_ackm_st {
     char            rx_ack_generated[QUIC_PN_SPACE_NUM];
 
     /* Probe request counts for reporting to the user. */
-    OSSL_ACKM_PROBE_INFO pending_probe;
+    OSSL_ACKM_PROBE_INFO    pending_probe;
 
     /* Generated ACK frames for each PN space. */
-    OSSL_ACKM_ACK           ack[QUIC_PN_SPACE_NUM];
-    OSSL_ACKM_ACK_RANGE     ack_ranges[QUIC_PN_SPACE_NUM][MAX_RX_ACK_RANGES];
+    OSSL_QUIC_FRAME_ACK     ack[QUIC_PN_SPACE_NUM];
+    OSSL_QUIC_ACK_RANGE     ack_ranges[QUIC_PN_SPACE_NUM][MAX_RX_ACK_RANGES];
 
     /* Other RX state. */
     /* Largest PN we have RX'd. */
@@ -1004,7 +1004,7 @@ static uint64_t ackm_ack_eliciting_bytes_in_flight(OSSL_ACKM *ackm)
 }
 
 /* Return 1 if the range contains the given PN. */
-static int range_contains(const OSSL_ACKM_ACK_RANGE *range, QUIC_PN pn)
+static int range_contains(const OSSL_QUIC_ACK_RANGE *range, QUIC_PN pn)
 {
     return pn >= range->start && pn <= range->end;
 }
@@ -1017,7 +1017,7 @@ static int range_contains(const OSSL_ACKM_ACK_RANGE *range, QUIC_PN pn)
  * list head (or NULL) if empty.
  */
 static OSSL_ACKM_TX_PKT *ackm_detect_and_remove_newly_acked_pkts(OSSL_ACKM *ackm,
-                                                                 const OSSL_ACKM_ACK *ack,
+                                                                 const OSSL_QUIC_FRAME_ACK *ack,
                                                                  int pkt_space)
 {
     OSSL_ACKM_TX_PKT *acked_pkts = NULL, **fixup = &acked_pkts, *pkt, *pprev;
@@ -1451,7 +1451,7 @@ static void ackm_on_congestion(OSSL_ACKM *ackm, OSSL_TIME send_time)
     /* Not currently implemented. */
 }
 
-static void ackm_process_ecn(OSSL_ACKM *ackm, const OSSL_ACKM_ACK *ack,
+static void ackm_process_ecn(OSSL_ACKM *ackm, const OSSL_QUIC_FRAME_ACK *ack,
                              int pkt_space)
 {
     struct tx_pkt_history_st *h;
@@ -1473,7 +1473,7 @@ static void ackm_process_ecn(OSSL_ACKM *ackm, const OSSL_ACKM_ACK *ack,
     }
 }
 
-int ossl_ackm_on_rx_ack_frame(OSSL_ACKM *ackm, const OSSL_ACKM_ACK *ack,
+int ossl_ackm_on_rx_ack_frame(OSSL_ACKM *ackm, const OSSL_QUIC_FRAME_ACK *ack,
                               int pkt_space, OSSL_TIME rx_time)
 {
     OSSL_ACKM_TX_PKT *na_pkts, *lost_pkts;
@@ -1717,7 +1717,7 @@ int ossl_ackm_is_ack_desired(OSSL_ACKM *ackm, int pkt_space)
 /*
  * Returns 1 if an ACK frame matches a given packet number.
  */
-static int ack_contains(const OSSL_ACKM_ACK *ack, QUIC_PN pkt_num)
+static int ack_contains(const OSSL_QUIC_FRAME_ACK *ack, QUIC_PN pkt_num)
 {
     size_t i;
 
@@ -1926,9 +1926,10 @@ static size_t ackm_fill_rx_ack_ranges(OSSL_ACKM *ackm, int pkt_space)
     return i;
 }
 
-const OSSL_ACKM_ACK *ossl_ackm_get_ack_frame(OSSL_ACKM *ackm, int pkt_space)
+const OSSL_QUIC_FRAME_ACK *ossl_ackm_get_ack_frame(OSSL_ACKM *ackm,
+                                                   int pkt_space)
 {
-    OSSL_ACKM_ACK *ack = &ackm->ack[pkt_space];
+    OSSL_QUIC_FRAME_ACK *ack = &ackm->ack[pkt_space];
     OSSL_TIME now = ackm->now(ackm->now_arg);
 
     ack->ack_ranges        = ackm->ack_ranges[pkt_space];

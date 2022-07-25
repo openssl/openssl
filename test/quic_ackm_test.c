@@ -136,14 +136,14 @@ static const QUIC_PN high_linear_20[] = {
     1018, 1019
 };
 
-/* 
+/*
  * TX ACK (Packet Threshold) Test Cases
  * ******************************************************************
  */
 struct tx_ack_test_case {
     const QUIC_PN              *pn_table;
     size_t                      pn_table_len;
-    const OSSL_ACKM_ACK_RANGE  *ack_ranges;
+    const OSSL_QUIC_ACK_RANGE  *ack_ranges;
     size_t                      num_ack_ranges;
     const char                 *expect_ack; /* 1=ack, 2=lost, 4=discarded */
 };
@@ -156,7 +156,7 @@ struct tx_ack_test_case {
     }
 
 /* One range, partial coverage of space */
-static const OSSL_ACKM_ACK_RANGE tx_ack_range_1[] = {
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_1[] = {
     { 0, 10 },
 };
 static const char tx_ack_expect_1[] = {
@@ -165,7 +165,7 @@ static const char tx_ack_expect_1[] = {
 DEFINE_TX_ACK_CASE(1, linear_20);
 
 /* Two ranges, partial coverage of space, overlapping by 1 */
-static const OSSL_ACKM_ACK_RANGE tx_ack_range_2[] = {
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_2[] = {
     { 5, 10 }, { 0, 5 }
 };
 static const char tx_ack_expect_2[] = {
@@ -174,7 +174,7 @@ static const char tx_ack_expect_2[] = {
 DEFINE_TX_ACK_CASE(2, linear_20);
 
 /* Two ranges, partial coverage of space, together contiguous */
-static const OSSL_ACKM_ACK_RANGE tx_ack_range_3[] = {
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_3[] = {
     { 6, 10 }, { 0, 5 }
 };
 static const char tx_ack_expect_3[] = {
@@ -182,11 +182,11 @@ static const char tx_ack_expect_3[] = {
 };
 DEFINE_TX_ACK_CASE(3, linear_20);
 
-/* 
+/*
  * Two ranges, partial coverage of space, non-contiguous by 1
  * Causes inferred loss due to packet threshold being exceeded.
  */
-static const OSSL_ACKM_ACK_RANGE tx_ack_range_4[] = {
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_4[] = {
     { 7, 10 }, { 0, 5 }
 };
 static const char tx_ack_expect_4[] = {
@@ -198,7 +198,7 @@ DEFINE_TX_ACK_CASE(4, linear_20);
  * Two ranges, partial coverage of space, non-contiguous by 2
  * Causes inferred loss due to packet threshold being exceeded.
  */
-static const OSSL_ACKM_ACK_RANGE tx_ack_range_5[] = {
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_5[] = {
     { 7, 10 }, { 0, 4 }
 };
 static const char tx_ack_expect_5[] = {
@@ -207,7 +207,7 @@ static const char tx_ack_expect_5[] = {
 DEFINE_TX_ACK_CASE(5, linear_20);
 
 /* One range, covering entire space */
-static const OSSL_ACKM_ACK_RANGE tx_ack_range_6[] = {
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_6[] = {
     { 0, 20 },
 };
 static const char tx_ack_expect_6[] = {
@@ -216,7 +216,7 @@ static const char tx_ack_expect_6[] = {
 DEFINE_TX_ACK_CASE(6, linear_20);
 
 /* One range, covering more space than exists */
-static const OSSL_ACKM_ACK_RANGE tx_ack_range_7[] = {
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_7[] = {
     { 0, 30 },
 };
 static const char tx_ack_expect_7[] = {
@@ -225,7 +225,7 @@ static const char tx_ack_expect_7[] = {
 DEFINE_TX_ACK_CASE(7, linear_20);
 
 /* One range, covering nothing (too high) */
-static const OSSL_ACKM_ACK_RANGE tx_ack_range_8[] = {
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_8[] = {
     { 21, 30 },
 };
 static const char tx_ack_expect_8[] = {
@@ -234,7 +234,7 @@ static const char tx_ack_expect_8[] = {
 DEFINE_TX_ACK_CASE(8, linear_20);
 
 /* One range, covering nothing (too low) */
-static const OSSL_ACKM_ACK_RANGE tx_ack_range_9[] = {
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_9[] = {
     { 0, 999 },
 };
 static const char tx_ack_expect_9[] = {
@@ -243,7 +243,7 @@ static const char tx_ack_expect_9[] = {
 DEFINE_TX_ACK_CASE(9, high_linear_20);
 
 /* One single packet at start of PN set */
-static const OSSL_ACKM_ACK_RANGE tx_ack_range_10[] = {
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_10[] = {
     { 0, 0 },
 };
 static const char tx_ack_expect_10[] = {
@@ -256,7 +256,7 @@ DEFINE_TX_ACK_CASE(10, linear_20);
  * Causes inferred loss of one packet due to packet threshold being exceeded,
  * but several other previous packets survive as they are under the threshold.
  */
-static const OSSL_ACKM_ACK_RANGE tx_ack_range_11[] = {
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_11[] = {
     { 3, 3 },
 };
 static const char tx_ack_expect_11[] = {
@@ -264,11 +264,11 @@ static const char tx_ack_expect_11[] = {
 };
 DEFINE_TX_ACK_CASE(11, linear_20);
 
-/* 
+/*
  * One single packet at end of PN set
  * Causes inferred loss due to packet threshold being exceeded.
  */
-static const OSSL_ACKM_ACK_RANGE tx_ack_range_12[] = {
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_12[] = {
     { 19, 19 },
 };
 static const char tx_ack_expect_12[] = {
@@ -280,7 +280,7 @@ DEFINE_TX_ACK_CASE(12, linear_20);
  * Mixed straddling
  * Causes inferred loss due to packet threshold being exceeded.
  */
-static const OSSL_ACKM_ACK_RANGE tx_ack_range_13[] = {
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_13[] = {
     { 1008, 1008 }, { 1004, 1005 }, { 1001, 1002 }
 };
 static const char tx_ack_expect_13[] = {
@@ -340,7 +340,7 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
     size_t i;
     OSSL_ACKM_TX_PKT *tx;
     const struct tx_ack_test_case *c = tx_ack_cases[tidx];
-    OSSL_ACKM_ACK ack = {0};
+    OSSL_QUIC_FRAME_ACK ack = {0};
     OSSL_TIME loss_detection_deadline = OSSL_TIME_ZERO;
 
     /* Cannot discard app space, so skip this */
@@ -394,7 +394,7 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
         }
     } else if (mode == MODE_ACK) {
         /* Try acknowledging. */
-        ack.ack_ranges      = c->ack_ranges;
+        ack.ack_ranges      = (OSSL_QUIC_ACK_RANGE *)c->ack_ranges;
         ack.num_ack_ranges  = c->num_ack_ranges;
         if (!TEST_int_eq(ossl_ackm_on_rx_ack_frame(h.ackm, &ack, space, fake_time), 1))
             goto err;
@@ -429,7 +429,7 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
         if (!TEST_int_eq(test_probe_counts(&probe, 0, 0, 0, 0, 0), 1))
             goto err;
 
-        /* 
+        /*
          * If in app space, confirm handshake, as this is necessary to enable
          * app space PTO probe requests.
          */
@@ -469,7 +469,7 @@ err:
     return testresult;
 }
 
-/* 
+/*
  * TX ACK (Time Threshold) Test
  * ******************************************************************
  */
@@ -481,7 +481,7 @@ enum {
 };
 
 struct tx_ack_time_op {
-    int       kind; 
+    int       kind;
     OSSL_TIME time_advance; /* all ops */
     QUIC_PN   pn;           /* PKT, ACK */
     size_t    num_pn;       /* PKT, ACK */
@@ -516,8 +516,8 @@ static int test_tx_ack_time_script(int tidx)
     int testresult = 0;
     struct helper h;
     OSSL_ACKM_TX_PKT *tx = NULL;
-    OSSL_ACKM_ACK ack = {0};
-    OSSL_ACKM_ACK_RANGE ack_range = {0};
+    OSSL_QUIC_FRAME_ACK ack = {0};
+    OSSL_QUIC_ACK_RANGE ack_range = {0};
     size_t i, num_pkts = 0, pkt_idx = 0;
     const struct tx_ack_time_op *script = tx_ack_time_scripts[tidx], *s;
 
@@ -602,7 +602,7 @@ err:
     return testresult;
 }
 
-/* 
+/*
  * RX ACK Test
  * ******************************************************************
  */
@@ -627,7 +627,7 @@ struct rx_test_op {
     char                        expect_desired;     /* CHECK_STATE */
     char                        expect_deadline;    /* CHECK_STATE */
 
-    const OSSL_ACKM_ACK_RANGE  *ack_ranges;         /* CHECK_ACKS */
+    const OSSL_QUIC_ACK_RANGE  *ack_ranges;         /* CHECK_ACKS */
     size_t                      num_ack_ranges;     /* CHECK_ACKS */
 
     QUIC_PN                     largest_acked;      /* TX */
@@ -682,7 +682,7 @@ struct rx_test_op {
     },
 
 /* RX 1. Simple Test with ACK Desired (Packet Threshold, Exactly) */
-static const OSSL_ACKM_ACK_RANGE rx_ack_ranges_1a[] = {
+static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_1a[] = {
     { 0, 1 }
 };
 
@@ -709,11 +709,11 @@ static const struct rx_test_op rx_script_1[] = {
 };
 
 /* RX 2. Simple Test with ACK Not Yet Desired (Packet Threshold) */
-static const OSSL_ACKM_ACK_RANGE rx_ack_ranges_2a[] = {
+static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_2a[] = {
     { 0, 0 }
 };
 
-static const OSSL_ACKM_ACK_RANGE rx_ack_ranges_2b[] = {
+static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_2b[] = {
     { 0, 2 }
 };
 
@@ -756,15 +756,15 @@ static const struct rx_test_op rx_script_2[] = {
 };
 
 /* RX 3. Simple Test with ACK Desired (Packet Threshold, Multiple Watermarks) */
-static const OSSL_ACKM_ACK_RANGE rx_ack_ranges_3a[] = {
+static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_3a[] = {
     { 0, 0 }
 };
 
-static const OSSL_ACKM_ACK_RANGE rx_ack_ranges_3b[] = {
+static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_3b[] = {
     { 0, 10 }
 };
 
-static const OSSL_ACKM_ACK_RANGE rx_ack_ranges_3c[] = {
+static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_3c[] = {
     { 6, 10 }
 };
 
@@ -837,9 +837,9 @@ static int test_rx_ack_actual(int tidx, int space)
     struct helper h;
     const struct rx_test_op *script = rx_test_scripts[tidx], *s;
     size_t i, num_tx = 0, txi = 0;
-    const OSSL_ACKM_ACK *ack;
-    OSSL_ACKM_ACK rx_ack = {0};
-    OSSL_ACKM_ACK_RANGE rx_ack_range = {0};
+    const OSSL_QUIC_FRAME_ACK *ack;
+    OSSL_QUIC_FRAME_ACK rx_ack = {0};
+    OSSL_QUIC_ACK_RANGE rx_ack_range = {0};
     struct pkt_info *pkts = NULL;
     OSSL_ACKM_TX_PKT *txs = NULL, *tx;
     OSSL_TIME ack_deadline[QUIC_PN_SPACE_NUM] = {0};
@@ -852,7 +852,7 @@ static int test_rx_ack_actual(int tidx, int space)
     ossl_ackm_set_ack_deadline_callback(h.ackm, on_ack_deadline_callback,
                                         ack_deadline);
 
-    /* 
+    /*
      * Determine how many packets we are TXing, and therefore how many packet
      * structures we need.
      */
