@@ -495,6 +495,11 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
     }
     return;
 #endif
+#if defined(__s390__) || defined(__s390x__)
+    ctx->gmult = gcm_gmult_4bit;
+    ctx->ghash = gcm_ghash_4bit;
+    return;
+#endif
 }
 
 void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
