@@ -32,9 +32,10 @@ Connection ID Cache
 A table matching Connection IDs with Connection objects represented
 via SSL objects.
 
-_In MVP there is basically 1-to-1 matching of Connection IDs to Connection
-objects. This will be changed with Path migration support and QUIC
-server support._
+_In MVP there is a many-to-1 matching of Connection IDs to Connection
+objects.  Refer third paragraph in [5.1]_
+
+[5.1]: (https://datatracker.ietf.org/doc/html/rfc9000#section-5.1)
 
 Timer And Event Queue
 ---------------------
