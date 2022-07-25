@@ -225,7 +225,7 @@ provide some early guidance of what to expect.
  *     Retry
  *
  *   Short Packets, which comprises only a single packet type (1-RTT).
- * 
+ *
  * The packet formats vary and common fields are found in some packets but
  * not others. The below table indicates which fields are present in which
  * kinds of packet. * indicates header protection is applied.
@@ -277,7 +277,7 @@ typedef struct ossl_quic_pkt_hdr_st {
      */
     unsigned int    key_phase   :1;
 
-    /* 
+    /*
      * [1i0h] Length of packet number in bytes. This is the decoded value.
      * Valid if ((!is_long || (version && long_type != RETRY)) && !partial).
      */
