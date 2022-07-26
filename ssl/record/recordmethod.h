@@ -320,6 +320,12 @@ struct ossl_record_method_st {
      */
     void (*get_state)(OSSL_RECORD_LAYER *rl, const char **shortstr,
                       const char **longstr);
+
+    /*
+     * Set new options or modify ones that were originaly specified in the
+     * new_record_layer call.
+     */
+    int (*set_options)(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options);
 };
 
 
