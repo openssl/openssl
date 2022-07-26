@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include "../ssl_local.h"
 #include "record_local.h"
 #include "internal/cryptlib.h"
@@ -40,15 +41,10 @@ int tls13_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs, int sending,
         return 0;
     }
 
-    if (sending) {
-        ctx = s->enc_write_ctx;
-        staticiv = s->write_iv;
-        seq = RECORD_LAYER_get_write_sequence(&s->rlayer);
-    } else {
-        ctx = s->enc_read_ctx;
-        staticiv = s->read_iv;
-        seq = RECORD_LAYER_get_read_sequence(&s->rlayer);
-    }
+    assert(sending);
+    ctx = s->enc_write_ctx;
+    staticiv = s->write_iv;
+    seq = RECORD_LAYER_get_write_sequence(&s->rlayer);
 
     /*
      * If we're sending an alert and ctx != NULL then we must be forcing
@@ -97,8 +93,7 @@ int tls13_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             taglen = EVP_CCM8_TLS_TAG_LEN;
          else
             taglen = EVP_CCM_TLS_TAG_LEN;
-         if (sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen,
-                                         NULL) <= 0) {
+         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen,  NULL) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -109,16 +104,6 @@ int tls13_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs, int sending,
     } else {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
-    }
-
-    if (!sending) {
-        /*
-         * Take off tag. There must be at least one byte of content type as
-         * well as the tag
-         */
-        if (rec->length < taglen + 1)
-            return 0;
-        rec->length -= taglen;
     }
 
     /* Set up IV */
@@ -143,10 +128,7 @@ int tls13_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs, int sending,
         return 0;
     }
 
-    if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, sending) <= 0
-            || (!sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                                taglen,
-                                                rec->data + rec->length) <= 0)) {
+    if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, sending) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -179,15 +161,14 @@ int tls13_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             || (size_t)(lenu + lenf) != rec->length) {
         return 0;
     }
-    if (sending) {
-        /* Add the tag */
-        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen,
-                                rec->data + rec->length) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-        rec->length += taglen;
+
+    /* Add the tag */
+    if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen,
+                            rec->data + rec->length) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
+    rec->length += taglen;
 
     return 1;
 }
