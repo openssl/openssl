@@ -37,6 +37,9 @@ def gen_sig_table(oqslibdocdir):
         if sig['family'].startswith('SPHINCS'):
             sig['family'] = 'SPHINCS+'
 
+        if variant['name'].startswith('dilithium2'):
+            claimed_nist_level = 2
+
         table.append([variant['name'], liboqs_sigs[sig['family']]['spec-version'],
                       liboqs_sigs[sig['family']]['nist-round'], claimed_nist_level, variant['code_point'],
                       variant['oid']])

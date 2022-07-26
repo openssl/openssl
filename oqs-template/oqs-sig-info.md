@@ -1,15 +1,15 @@
 | Algorithm                                         | Implementation Version   |   NIST round |   Claimed NIST Level | Code Point   | OID                       |
 |:--------------------------------------------------|:-------------------------|-------------:|---------------------:|:-------------|:--------------------------|
-| dilithium2                                        | 3.1                      |            3 |                    1 | 0xfea0       | 1.3.6.1.4.1.2.267.7.4.4   |
-| dilithium2 **hybrid with** p256                   | 3.1                      |            3 |                    1 | 0xfea1       | 1.3.9999.2.7.1            |
-| dilithium2 **hybrid with** rsa3072                | 3.1                      |            3 |                    1 | 0xfea2       | 1.3.9999.2.7.2            |
+| dilithium2                                        | 3.1                      |            3 |                    2 | 0xfea0       | 1.3.6.1.4.1.2.267.7.4.4   |
+| dilithium2 **hybrid with** p256                   | 3.1                      |            3 |                    2 | 0xfea1       | 1.3.9999.2.7.1            |
+| dilithium2 **hybrid with** rsa3072                | 3.1                      |            3 |                    2 | 0xfea2       | 1.3.9999.2.7.2            |
 | dilithium3                                        | 3.1                      |            3 |                    3 | 0xfea3       | 1.3.6.1.4.1.2.267.7.6.5   |
 | dilithium3 **hybrid with** p384                   | 3.1                      |            3 |                    3 | 0xfea4       | 1.3.9999.2.7.3            |
 | dilithium5                                        | 3.1                      |            3 |                    5 | 0xfea5       | 1.3.6.1.4.1.2.267.7.8.7   |
 | dilithium5 **hybrid with** p521                   | 3.1                      |            3 |                    5 | 0xfea6       | 1.3.9999.2.7.4            |
-| dilithium2_aes                                    | 3.1                      |            3 |                    1 | 0xfea7       | 1.3.6.1.4.1.2.267.11.4.4  |
-| dilithium2_aes **hybrid with** p256               | 3.1                      |            3 |                    1 | 0xfea8       | 1.3.9999.2.11.1           |
-| dilithium2_aes **hybrid with** rsa3072            | 3.1                      |            3 |                    1 | 0xfea9       | 1.3.9999.2.11.2           |
+| dilithium2_aes                                    | 3.1                      |            3 |                    2 | 0xfea7       | 1.3.6.1.4.1.2.267.11.4.4  |
+| dilithium2_aes **hybrid with** p256               | 3.1                      |            3 |                    2 | 0xfea8       | 1.3.9999.2.11.1           |
+| dilithium2_aes **hybrid with** rsa3072            | 3.1                      |            3 |                    2 | 0xfea9       | 1.3.9999.2.11.2           |
 | dilithium3_aes                                    | 3.1                      |            3 |                    3 | 0xfeaa       | 1.3.6.1.4.1.2.267.11.6.5  |
 | dilithium3_aes **hybrid with** p384               | 3.1                      |            3 |                    3 | 0xfeab       | 1.3.9999.2.11.3           |
 | dilithium5_aes                                    | 3.1                      |            3 |                    5 | 0xfeac       | 1.3.6.1.4.1.2.267.11.8.7  |
@@ -19,22 +19,22 @@
 | falcon512 **hybrid with** rsa3072                 | v1.2                     |            3 |                    1 | 0xfe0d       | 1.3.9999.3.3              |
 | falcon1024                                        | v1.2                     |            3 |                    5 | 0xfe0e       | 1.3.9999.3.4              |
 | falcon1024 **hybrid with** p521                   | v1.2                     |            3 |                    5 | 0xfe0f       | 1.3.9999.3.5              |
-| picnicl1fs                                        | 3.0.5                    |            3 |                    1 | 0xfe15       | 1.3.6.1.4.1.311.89.2.1.1  |
-| picnicl1fs **hybrid with** p256                   | 3.0.5                    |            3 |                    1 | 0xfe16       | 1.3.6.1.4.1.311.89.2.1.2  |
-| picnicl1fs **hybrid with** rsa3072                | 3.0.5                    |            3 |                    1 | 0xfe17       | 1.3.6.1.4.1.311.89.2.1.3  |
-| picnicl1ur                                        | 3.0.5                    |            3 |                    1 | 0xfe18       | 1.3.6.1.4.1.311.89.2.1.4  |
-| picnicl1ur **hybrid with** p256                   | 3.0.5                    |            3 |                    1 | 0xfe19       | 1.3.6.1.4.1.311.89.2.1.5  |
-| picnicl1ur **hybrid with** rsa3072                | 3.0.5                    |            3 |                    1 | 0xfe1a       | 1.3.6.1.4.1.311.89.2.1.6  |
-| picnicl1full                                      | 3.0.5                    |            3 |                    1 | 0xfe96       | 1.3.6.1.4.1.311.89.2.1.7  |
-| picnicl1full **hybrid with** p256                 | 3.0.5                    |            3 |                    1 | 0xfe97       | 1.3.6.1.4.1.311.89.2.1.8  |
-| picnicl1full **hybrid with** rsa3072              | 3.0.5                    |            3 |                    1 | 0xfe98       | 1.3.6.1.4.1.311.89.2.1.9  |
-| picnic3l1                                         | 3.0.5                    |            3 |                    1 | 0xfe1b       | 1.3.6.1.4.1.311.89.2.1.21 |
-| picnic3l1 **hybrid with** p256                    | 3.0.5                    |            3 |                    1 | 0xfe1c       | 1.3.6.1.4.1.311.89.2.1.22 |
-| picnic3l1 **hybrid with** rsa3072                 | 3.0.5                    |            3 |                    1 | 0xfe1d       | 1.3.6.1.4.1.311.89.2.1.23 |
-| picnic3l3                                         | 3.0.5                    |            3 |                    3 | 0xfe1e       | 1.3.6.1.4.1.311.89.2.1.24 |
-| picnic3l3 **hybrid with** p384                    | 3.0.5                    |            3 |                    3 | 0xfe1f       | 1.3.6.1.4.1.311.89.2.1.25 |
-| picnic3l5                                         | 3.0.5                    |            3 |                    5 | 0xfe20       | 1.3.6.1.4.1.311.89.2.1.26 |
-| picnic3l5 **hybrid with** p521                    | 3.0.5                    |            3 |                    5 | 0xfe21       | 1.3.6.1.4.1.311.89.2.1.27 |
+| picnicl1fs                                        | 3.0.15                   |            3 |                    1 | 0xfe15       | 1.3.6.1.4.1.311.89.2.1.1  |
+| picnicl1fs **hybrid with** p256                   | 3.0.15                   |            3 |                    1 | 0xfe16       | 1.3.6.1.4.1.311.89.2.1.2  |
+| picnicl1fs **hybrid with** rsa3072                | 3.0.15                   |            3 |                    1 | 0xfe17       | 1.3.6.1.4.1.311.89.2.1.3  |
+| picnicl1ur                                        | 3.0.15                   |            3 |                    1 | 0xfe18       | 1.3.6.1.4.1.311.89.2.1.4  |
+| picnicl1ur **hybrid with** p256                   | 3.0.15                   |            3 |                    1 | 0xfe19       | 1.3.6.1.4.1.311.89.2.1.5  |
+| picnicl1ur **hybrid with** rsa3072                | 3.0.15                   |            3 |                    1 | 0xfe1a       | 1.3.6.1.4.1.311.89.2.1.6  |
+| picnicl1full                                      | 3.0.15                   |            3 |                    1 | 0xfe96       | 1.3.6.1.4.1.311.89.2.1.7  |
+| picnicl1full **hybrid with** p256                 | 3.0.15                   |            3 |                    1 | 0xfe97       | 1.3.6.1.4.1.311.89.2.1.8  |
+| picnicl1full **hybrid with** rsa3072              | 3.0.15                   |            3 |                    1 | 0xfe98       | 1.3.6.1.4.1.311.89.2.1.9  |
+| picnic3l1                                         | 3.0.15                   |            3 |                    1 | 0xfe1b       | 1.3.6.1.4.1.311.89.2.1.21 |
+| picnic3l1 **hybrid with** p256                    | 3.0.15                   |            3 |                    1 | 0xfe1c       | 1.3.6.1.4.1.311.89.2.1.22 |
+| picnic3l1 **hybrid with** rsa3072                 | 3.0.15                   |            3 |                    1 | 0xfe1d       | 1.3.6.1.4.1.311.89.2.1.23 |
+| picnic3l3                                         | 3.0.15                   |            3 |                    3 | 0xfe1e       | 1.3.6.1.4.1.311.89.2.1.24 |
+| picnic3l3 **hybrid with** p384                    | 3.0.15                   |            3 |                    3 | 0xfe1f       | 1.3.6.1.4.1.311.89.2.1.25 |
+| picnic3l5                                         | 3.0.15                   |            3 |                    5 | 0xfe20       | 1.3.6.1.4.1.311.89.2.1.26 |
+| picnic3l5 **hybrid with** p521                    | 3.0.15                   |            3 |                    5 | 0xfe21       | 1.3.6.1.4.1.311.89.2.1.27 |
 | rainbowIclassic                                   | NIST Round 3 submission  |            3 |                    1 | 0xfe27       | 1.3.9999.5.1.1.1          |
 | rainbowIclassic **hybrid with** p256              | NIST Round 3 submission  |            3 |                    1 | 0xfe28       | 1.3.9999.5.1.2.1          |
 | rainbowIclassic **hybrid with** rsa3072           | NIST Round 3 submission  |            3 |                    1 | 0xfe29       | 1.3.9999.5.1.3.1          |
