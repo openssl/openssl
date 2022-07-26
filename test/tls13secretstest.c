@@ -157,10 +157,6 @@ const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s)
     return EVP_sha256();
 }
 
-void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl)
-{
-}
-
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
 {
 }

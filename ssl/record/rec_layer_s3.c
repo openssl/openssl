@@ -44,7 +44,6 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
 
     ssl3_release_write_buffer(rl->s);
 
-    RECORD_LAYER_reset_read_sequence(rl);
     RECORD_LAYER_reset_write_sequence(rl);
 
     if (rl->rrlmethod != NULL)
@@ -80,11 +79,6 @@ int RECORD_LAYER_write_pending(const RECORD_LAYER *rl)
 {
     return (rl->numwpipes > 0)
         && SSL3_BUFFER_get_left(&rl->wbuf[rl->numwpipes - 1]) != 0;
-}
-
-void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl)
-{
-    memset(rl->read_sequence, 0, sizeof(rl->read_sequence));
 }
 
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)

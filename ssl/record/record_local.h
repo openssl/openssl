@@ -18,7 +18,6 @@
 
 /* Functions/macros provided by the RECORD_LAYER component */
 
-#define RECORD_LAYER_get_read_sequence(rl)      ((rl)->read_sequence)
 #define RECORD_LAYER_get_write_sequence(rl)     ((rl)->write_sequence)
 #define RECORD_LAYER_inc_empty_record_count(rl) ((rl)->empty_record_count++)
 #define RECORD_LAYER_reset_empty_record_count(rl) \

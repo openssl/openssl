@@ -178,8 +178,7 @@ typedef struct record_layer_st {
     /* number of bytes submitted */
     size_t wpend_ret;
     const unsigned char *wpend_buf;
-    /* TODO(RECLAYER): Why do we need this */
-    unsigned char read_sequence[SEQ_NUM_SIZE];
+
     unsigned char write_sequence[SEQ_NUM_SIZE];
     /* Count of the number of consecutive warning alerts received */
     unsigned int alert_count;
@@ -223,7 +222,6 @@ void RECORD_LAYER_release(RECORD_LAYER *rl);
 int RECORD_LAYER_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl);
-void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl);
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl);
 int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl);
 __owur size_t ssl3_pending(const SSL *s);

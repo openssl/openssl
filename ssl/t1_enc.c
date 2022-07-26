@@ -414,10 +414,11 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
-    if (which & SSL3_CC_WRITE)
-        rl_sequence = RECORD_LAYER_get_write_sequence(&s->rlayer);
-    else
-        rl_sequence = RECORD_LAYER_get_read_sequence(&s->rlayer);
+    /*
+     * If we get here we are only doing the write side. The read side goes
+     * through the new record layer code.
+     */
+    rl_sequence = RECORD_LAYER_get_write_sequence(&s->rlayer);
 
     if (!ktls_configure_crypto(sctx->libctx, s->version, c, m, rl_sequence,
                                &crypto_info, which & SSL3_CC_WRITE, iv,
