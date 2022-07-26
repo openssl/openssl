@@ -882,7 +882,7 @@ int CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont, unsigned int flags)
         return 0;
     }
 
-    ret = SMIME_crlf_copy(data, cmsbio, flags);
+    SMIME_crlf_copy(data, cmsbio, flags);
 
     (void)BIO_flush(cmsbio);
 
@@ -890,6 +890,9 @@ int CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont, unsigned int flags)
         ERR_raise(ERR_LIB_CMS, CMS_R_CMS_DATAFINAL_ERROR);
         goto err;
     }
+
+    ret = 1;
+
 err:
     do_free_upto(cmsbio, dcont);
 
