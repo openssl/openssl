@@ -11,6 +11,8 @@
 #include <openssl/evp.h>
 #include "../ssl/ssl_local.h"
 #include "../ssl/record/record_local.h"
+#include "../ssl/record/recordmethod.h"
+#include "../ssl/record/methods/recmethod_local.h"
 #include "internal/nelem.h"
 #include "testutil.h"
 
@@ -306,11 +308,14 @@ static int test_tls13_encryption(void)
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
     SSL3_RECORD rec;
-    unsigned char *key = NULL, *iv = NULL, *seq = NULL;
+    unsigned char *key = NULL;
     const EVP_CIPHER *ciph = EVP_aes_128_gcm();
     int ret = 0;
     size_t ivlen, ctr;
     SSL_CONNECTION *s;
+    unsigned char seqbuf[SEQ_NUM_SIZE];
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+    OSSL_RECORD_LAYER *rl;
 
     /*
      * Encrypted TLSv1.3 records always have an outer content type of
@@ -349,16 +354,14 @@ static int test_tls13_encryption(void)
     for (ctr = 0; ctr < OSSL_NELEM(refdata); ctr++) {
         /* Load the record */
         ivlen = EVP_CIPHER_get_iv_length(ciph);
-        if (!load_record(&rec, &refdata[ctr], &key, s->read_iv, ivlen,
-                         RECORD_LAYER_get_read_sequence(&s->rlayer))) {
+        if (!load_record(&rec, &refdata[ctr], &key, iv, ivlen, seqbuf)) {
             TEST_error("Failed loading key into EVP_CIPHER_CTX");
             goto err;
         }
 
         /* Set up the read/write sequences */
-        memcpy(RECORD_LAYER_get_write_sequence(&s->rlayer),
-               RECORD_LAYER_get_read_sequence(&s->rlayer), SEQ_NUM_SIZE);
-        memcpy(s->write_iv, s->read_iv, ivlen);
+        memcpy(RECORD_LAYER_get_write_sequence(&s->rlayer), seqbuf, sizeof(seqbuf));
+        memcpy(s->write_iv, iv, ivlen);
 
         /* Load the key into the EVP_CIPHER_CTXs */
         if (EVP_CipherInit_ex(s->enc_write_ctx, ciph, NULL, key, NULL, 1) <= 0
@@ -378,8 +381,18 @@ static int test_tls13_encryption(void)
             goto err;
         }
 
+        if (!TEST_true(ossl_tls_record_method.new_record_layer(
+                          NULL, NULL, TLS1_3_VERSION, OSSL_RECORD_ROLE_SERVER,
+                          OSSL_RECORD_DIRECTION_READ,
+                          OSSL_RECORD_PROTECTION_LEVEL_APPLICATION, 0, key, 16,
+                          iv, ivlen, NULL, 0, EVP_aes_128_gcm(),
+                          EVP_GCM_TLS_TAG_LEN, 0, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, &rl))) {
+            goto err;
+        }
+        memcpy(rl->sequence, seqbuf, sizeof(seqbuf));
         /* Decrypt it */
-        if (!TEST_int_eq(tls13_enc(s, &rec, 1, 0, NULL, 0), 1)) {
+        if (!TEST_int_eq(rl->funcs->cipher(rl, &rec, 1, 0, NULL, 0), 1)) {
             TEST_info("Failed to decrypt record %zu", ctr);
             goto err;
         }
@@ -388,14 +401,11 @@ static int test_tls13_encryption(void)
             goto err;
         }
 
+        ossl_tls_record_method.free(rl);
         OPENSSL_free(rec.data);
         OPENSSL_free(key);
-        OPENSSL_free(iv);
-        OPENSSL_free(seq);
         rec.data = NULL;
         key = NULL;
-        iv = NULL;
-        seq = NULL;
     }
 
     TEST_note("PASS: %zu records tested", ctr);
@@ -404,8 +414,6 @@ static int test_tls13_encryption(void)
  err:
     OPENSSL_free(rec.data);
     OPENSSL_free(key);
-    OPENSSL_free(iv);
-    OPENSSL_free(seq);
     SSL_free(ssl);
     SSL_CTX_free(ctx);
     return ret;
