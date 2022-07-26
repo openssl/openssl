@@ -14,7 +14,7 @@
 
 /* QUIC packet number representation. */
 typedef uint64_t QUIC_PN;
-#define QUIC_PN_INVALID             UINT64_MAX
+# define QUIC_PN_INVALID            UINT64_MAX
 
 static ossl_unused ossl_inline QUIC_PN ossl_quic_pn_max(QUIC_PN a, QUIC_PN b)
 {

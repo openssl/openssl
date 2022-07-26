@@ -110,7 +110,7 @@ typedef struct ossl_quic_frame_ack_st {
      *
      * As such, ack_ranges[0].end is always the highest packet number
      * being acknowledged and ack_ranges[num_ack_ranges-1].start is
-     * aalways the lowest packet number being acknowledged.
+     * always the lowest packet number being acknowledged.
      *
      * num_ack_ranges must be greater than zero, as an ACK frame must
      * acknowledge at least one packet number.
@@ -120,7 +120,7 @@ typedef struct ossl_quic_frame_ack_st {
 
     OSSL_TIME                   delay_time;
     uint64_t                    ect0, ect1, ecnce;
-    char                        ecn_present;
+    unsigned int                ecn_present : 1;
 } OSSL_QUIC_FRAME_ACK;
 
 /* QUIC Frame: STREAM */
@@ -139,10 +139,10 @@ typedef struct ossl_quic_frame_stream_st {
      * length. If not set, the frame runs to the end of the packet and len has
      * been set accordingly.
      */
-    char                    has_explicit_len;
+    unsigned int            has_explicit_len : 1;
 
     /* 1 if this is the end of the stream */
-    char                    is_fin;
+    unsigned int            is_fin : 1;
 } OSSL_QUIC_FRAME_STREAM;
 
 /* QUIC Frame: CRYPTO */
@@ -176,11 +176,11 @@ typedef struct ossl_quic_frame_new_conn_id_st {
 
 /* QUIC Frame: CONNECTION_CLOSE */
 typedef struct ossl_quic_frame_conn_close_st {
-    char        is_app;     /* 0: transport error, 1: app error */
-    uint64_t    error_code; /* 62-bit transport or app error code */
-    uint64_t    frame_type; /* transport errors only */
-    const char *reason;     /* UTF-8 string, not necessarily zero-terminated */
-    size_t      reason_len; /* Length of reason in bytes */
+    unsigned int    is_app : 1; /* 0: transport error, 1: app error */
+    uint64_t        error_code; /* 62-bit transport or app error code */
+    uint64_t        frame_type; /* transport errors only */
+    const char     *reason;     /* UTF-8 string, not necessarily zero-terminated */
+    size_t          reason_len; /* Length of reason in bytes */
 } OSSL_QUIC_FRAME_CONN_CLOSE;
 
 /*
@@ -267,7 +267,7 @@ int ossl_quic_wire_encode_frame_new_token(WPACKET *pkt,
  * f->offset and f->len fields are the values for the respective Stream ID,
  * Offset and Length fields.
  *
- * If f->is_fin is non-zero, the framme is marked as the final frame in the
+ * If f->is_fin is non-zero, the frame is marked as the final frame in the
  * stream.
  *
  * If f->has_explicit_len is zerro, the frame is assumed to be the final frame
@@ -506,8 +506,8 @@ int ossl_quic_wire_decode_frame_crypto(PACKET *pkt,
                                        OSSL_QUIC_FRAME_CRYPTO *f);
 
 /*
- * Decodes a QUIC NEW_TOKEN frame. * *token is written with a pointer to the
- * token bytes and *token_len is written with the length of the token in bytes.
+ * Decodes a QUIC NEW_TOKEN frame. *token is written with a pointer to the token
+ * bytes and *token_len is written with the length of the token in bytes.
  */
 int ossl_quic_wire_decode_frame_new_token(PACKET               *pkt,
                                           const unsigned char **token,

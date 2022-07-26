@@ -13,6 +13,8 @@
 #include "internal/quic_vlint.h"
 #include "internal/quic_wire.h"
 
+OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
+
 /*
  * QUIC Wire Format Encoding
  * =========================
@@ -439,10 +441,14 @@ int ossl_quic_wire_decode_frame_ack(PACKET *pkt,
     start = largest_ackd - first_ack_range;
 
     if (ack != NULL) {
+        int err = 0;
         ack->delay_time
             = ossl_time_multiply(OSSL_TIME_US,
-                                 ossl_time_multiply(ack_delay_raw,
-                                                    1UL << ack_delay_exponent));
+                                 safe_mul_uint64_t(ack_delay_raw,
+                                                   1UL << ack_delay_exponent,
+                                                   &err));
+        if (err)
+            ack->delay_time = OSSL_TIME_INFINITY;
 
         if (ack->num_ack_ranges > 0) {
             ack->ack_ranges[0].end   = largest_ackd;
@@ -754,9 +760,8 @@ size_t ossl_quic_wire_decode_padding(PACKET *pkt)
     const unsigned char *start = PACKET_data(pkt), *end = PACKET_end(pkt),
                         *p = start;
 
-    for (; p < end; ++p)
-        if (*p != 0)
-            break;
+    while (p < end && *p == 0)
+        ++p;
 
     if (!PACKET_forward(pkt, p - start))
         return 0;

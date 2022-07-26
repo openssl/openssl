@@ -16,7 +16,7 @@
 # include "internal/safe_math.h"
 
 /* The precision of times allows this many values per second */
-# define OSSL_TIME_SECOND ((OSSL_TIME)1000000000)
+# define OSSL_TIME_SECOND ((uint64_t)1000000000)
 
 /* One millisecond. */
 # define OSSL_TIME_MS     (OSSL_TIME_SECOND / 1000)
