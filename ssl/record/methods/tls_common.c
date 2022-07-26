@@ -1045,35 +1045,46 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     }
 
     /* Loop through all the settings since they must all be understood */
-    for (p = settings; p->key != NULL; p++) {
-        if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM) == 0) {
-            if (!OSSL_PARAM_get_int(p, &rl->use_etm)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
+    if (settings != NULL) {
+        for (p = settings; p->key != NULL; p++) {
+            if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM) == 0) {
+                if (!OSSL_PARAM_get_int(p, &rl->use_etm)) {
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
+                                SSL_R_FAILED_TO_GET_PARAMETER);
+                    goto err;
+                }
+            } else if (strcmp(p->key,
+                              OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_FRAG_LEN) == 0) {
+                if (!OSSL_PARAM_get_uint(p, &rl->max_frag_len)) {
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
+                                SSL_R_FAILED_TO_GET_PARAMETER);
+                    goto err;
+                }
+            } else if (strcmp(p->key,
+                              OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_EARLY_DATA) == 0) {
+                if (!OSSL_PARAM_get_uint32(p, &rl->max_early_data)) {
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
+                                SSL_R_FAILED_TO_GET_PARAMETER);
+                    goto err;
+                }
+            } else if (strcmp(p->key,
+                              OSSL_LIBSSL_RECORD_LAYER_PARAM_STREAM_MAC) == 0) {
+                if (!OSSL_PARAM_get_int(p, &rl->stream_mac)) {
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
+                                SSL_R_FAILED_TO_GET_PARAMETER);
+                    goto err;
+                }
+            } else if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_TLSTREE) == 0) {
+                if (!OSSL_PARAM_get_int(p, &rl->tlstree)) {
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
+                                SSL_R_FAILED_TO_GET_PARAMETER);
+                    goto err;
+                }
+            } else {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
+                            SSL_R_UNKNOWN_MANDATORY_PARAMETER);
                 goto err;
             }
-        } else if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_FRAG_LEN) == 0) {
-            if (!OSSL_PARAM_get_uint(p, &rl->max_frag_len)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
-                goto err;
-            }
-        } else if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_EARLY_DATA) == 0) {
-            if (!OSSL_PARAM_get_uint32(p, &rl->max_early_data)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
-                goto err;
-            }
-        } else if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_STREAM_MAC) == 0) {
-            if (!OSSL_PARAM_get_int(p, &rl->stream_mac)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
-                goto err;
-            }
-        } else if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_TLSTREE) == 0) {
-            if (!OSSL_PARAM_get_int(p, &rl->tlstree)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
-                goto err;
-            }
-        } else {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_UNKNOWN_MANDATORY_PARAMETER);
-            goto err;
         }
     }
 
@@ -1115,20 +1126,22 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     rl->next = next;
 
     rl->cbarg = cbarg;
-    for (; fns->function_id != 0; fns++) {
-        switch (fns->function_id) {
-        case OSSL_FUNC_RLAYER_SKIP_EARLY_DATA:
-            rl->skip_early_data = OSSL_FUNC_rlayer_skip_early_data(fns);
-            break;
-        case OSSL_FUNC_RLAYER_MSG_CALLBACK:
-            rl->msg_callback = OSSL_FUNC_rlayer_msg_callback(fns);
-            break;
-        case OSSL_FUNC_RLAYER_SECURITY:
-            rl->security = OSSL_FUNC_rlayer_security(fns);
-            break;
-        default:
-            /* Just ignore anything we don't understand */
-            break;
+    if (fns != NULL) {
+        for (; fns->function_id != 0; fns++) {
+            switch (fns->function_id) {
+            case OSSL_FUNC_RLAYER_SKIP_EARLY_DATA:
+                rl->skip_early_data = OSSL_FUNC_rlayer_skip_early_data(fns);
+                break;
+            case OSSL_FUNC_RLAYER_MSG_CALLBACK:
+                rl->msg_callback = OSSL_FUNC_rlayer_msg_callback(fns);
+                break;
+            case OSSL_FUNC_RLAYER_SECURITY:
+                rl->security = OSSL_FUNC_rlayer_security(fns);
+                break;
+            default:
+                /* Just ignore anything we don't understand */
+                break;
+            }
         }
     }
 
