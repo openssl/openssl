@@ -543,5 +543,6 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_set_first_handshake,
     tls_set_max_pipelines,
     NULL,
-    tls_get_state
+    tls_get_state,
+    tls_set_options
 };

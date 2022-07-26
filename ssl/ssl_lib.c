@@ -21,6 +21,7 @@
 #include <openssl/async.h>
 #include <openssl/ct.h>
 #include <openssl/trace.h>
+#include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 #include "internal/ktls.h"
@@ -1733,11 +1734,19 @@ void SSL_set_verify_depth(SSL *s, int depth)
 void SSL_set_read_ahead(SSL *s, int yes)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    OSSL_PARAM options[2], *opts = options;
 
     if (sc == NULL)
         return;
 
     RECORD_LAYER_set_read_ahead(&sc->rlayer, yes);
+
+    *opts++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD,
+                                       &sc->rlayer.read_ahead);
+    *opts = OSSL_PARAM_construct_end();
+
+    /* Ignore return value */
+    sc->rlayer.rrlmethod->set_options(sc->rlayer.rrl, options);
 }
 
 int SSL_get_read_ahead(const SSL *s)
@@ -2736,7 +2745,20 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         return 1;
 
     case SSL_CTRL_MODE:
-        return (sc->mode |= larg);
+    {
+        OSSL_PARAM options[2], *opts = options;
+
+        sc->mode |= larg;
+
+        *opts++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE,
+                                              &sc->mode);
+        *opts = OSSL_PARAM_construct_end();
+
+        /* Ignore return value */
+        sc->rlayer.rrlmethod->set_options(sc->rlayer.rrl, options);
+
+        return sc->mode;
+    }
     case SSL_CTRL_CLEAR_MODE:
         return (sc->mode &= ~larg);
     case SSL_CTRL_GET_MAX_CERT_LIST:
@@ -5652,11 +5674,21 @@ uint64_t SSL_CTX_set_options(SSL_CTX *ctx, uint64_t op)
 uint64_t SSL_set_options(SSL *s, uint64_t op)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    OSSL_PARAM options[2], *opts = options;
 
     if (sc == NULL)
         return 0;
 
-    return sc->options |= op;
+    sc->options |= op;
+
+    *opts++ = OSSL_PARAM_construct_uint64(OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS,
+                                          &sc->options);
+    *opts = OSSL_PARAM_construct_end();
+
+    /* Ignore return value */
+    sc->rlayer.rrlmethod->set_options(sc->rlayer.rrl, options);
+
+    return sc->options;
 }
 
 uint64_t SSL_CTX_clear_options(SSL_CTX *ctx, uint64_t op)

@@ -998,6 +998,47 @@ int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle)
     return OSSL_RECORD_RETURN_SUCCESS;
 }
 
+int tls_set_options(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options)
+{
+    const OSSL_PARAM *p;
+
+    p = OSSL_PARAM_locate_const(options, OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS);
+    if (p != NULL && !OSSL_PARAM_get_uint64(p, &rl->options)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
+        return 0;
+    }
+
+    p = OSSL_PARAM_locate_const(options, OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE);
+    if (p != NULL && !OSSL_PARAM_get_uint32(p, &rl->mode)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
+        return 0;
+    }
+
+    p = OSSL_PARAM_locate_const(options,
+                                OSSL_LIBSSL_RECORD_LAYER_READ_BUFFER_LEN);
+    if (p != NULL && !OSSL_PARAM_get_size_t(p, &rl->rbuf.default_len)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
+        return 0;
+    }
+
+    if (rl->level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION) {
+        /*
+         * We ignore any read_ahead setting prior to the application protection
+         * level. Otherwise we may read ahead data in a lower protection level
+         * that is destined for a higher protection level. To simplify the logic
+         * we don't support that at this stage.
+         */
+        p = OSSL_PARAM_locate_const(options,
+                                    OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD);
+        if (p != NULL && !OSSL_PARAM_get_int(p, &rl->read_ahead)) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 int
 tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                          int role, int direction, int level, unsigned char *key,
@@ -1020,28 +1061,6 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     if (rl == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
         return OSSL_RECORD_RETURN_FATAL;
-    }
-
-    /*
-     * TODO(RECLAYER): Need to handle the case where the params are updated
-     * after the record layer has been created.
-     */
-    p = OSSL_PARAM_locate_const(options, OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS);
-    if (p != NULL && !OSSL_PARAM_get_uint64(p, &rl->options)) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
-        goto err;
-    }
-
-    p = OSSL_PARAM_locate_const(options, OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE);
-    if (p != NULL && !OSSL_PARAM_get_uint32(p, &rl->mode)) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
-        goto err;
-    }
-
-    p = OSSL_PARAM_locate_const(options, OSSL_LIBSSL_RECORD_LAYER_READ_BUFFER_LEN);
-    if (p != NULL && !OSSL_PARAM_get_size_t(p, &rl->rbuf.default_len)) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
-        goto err;
     }
 
     /* Loop through all the settings since they must all be understood */
@@ -1088,21 +1107,6 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         }
     }
 
-
-    if (level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION) {
-        /*
-         * We ignore any read_ahead setting prior to the application protection
-         * level. Otherwise we may read ahead data in a lower protection level
-         * that is destined for a higher protection level. To simplify the logic
-         * we don't support that at this stage.
-         */
-        p = OSSL_PARAM_locate_const(options, OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD);
-        if (p != NULL && !OSSL_PARAM_get_int(p, &rl->read_ahead)) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
-            goto err;
-        }
-    }
-
     rl->libctx = libctx;
     rl->propq = propq;
 
@@ -1143,6 +1147,11 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                 break;
             }
         }
+    }
+
+    if (!tls_set_options(rl, options)) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
+        goto err;
     }
 
     *retrl = rl;
@@ -1398,5 +1407,6 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_set_first_handshake,
     tls_set_max_pipelines,
     NULL,
-    tls_get_state
+    tls_get_state,
+    tls_set_options
 };
