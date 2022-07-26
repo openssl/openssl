@@ -71,7 +71,6 @@ This uses the `ossl_qrl_read_pkt()` packet reading function from
 (that interface or the `OSSL_QRL_RX_PKT` structure / sub-structure
 needs to be extended to take an `OSSL_TIME`, possibly by reference,
 which should be filled in with the packet reception time)
-```
 
 ### Collect information for the [ACK manager]
 
