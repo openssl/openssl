@@ -200,8 +200,8 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap)
      */
     if (enc_err == 0) {
         ERR_pop_to_mark();
-        if (rl->alert != 0) {
-            /* SSLfatal() got called */
+        if (rl->alert != SSL_AD_NO_ALERT) {
+            /* RLAYERfatal() already called */
             goto end;
         }
         /* For DTLS we simply ignore bad packets. */
@@ -510,7 +510,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         rret = rl->funcs->read_n(rl, more, more, 1, 1, &n);
         /* this packet contained a partial record, dump it */
         if (rret < OSSL_RECORD_RETURN_SUCCESS || n != more) {
-            if (rl->alert != 0) {
+            if (rl->alert != SSL_AD_NO_ALERT) {
                 /* read_n() called RLAYERfatal() */
                 return OSSL_RECORD_RETURN_FATAL;
             }
@@ -577,7 +577,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     }
 
     if (!dtls_process_record(rl, bitmap)) {
-        if (rl->alert != 0) {
+        if (rl->alert != SSL_AD_NO_ALERT) {
             /* dtls_process_record() called RLAYERfatal */
             return OSSL_RECORD_RETURN_FATAL;
         }
@@ -616,7 +616,6 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
         while ((item = pqueue_pop(rl->unprocessed_rcds.q)) != NULL) {
             rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
             /* Push to the next record layer */
-            /* TODO(RECLAYER): Handle SCTP meta data */
             ret &= BIO_write_ex(rl->next, rdata->packet, rdata->packet_length,
                                 &written);
             OPENSSL_free(rdata->rbuf.buf);

@@ -695,7 +695,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
      *    1: Success or MTE decryption failed (MAC will be randomised)
      */
     if (enc_err == 0) {
-        if (rl->alert != 0) {
+        if (rl->alert != SSL_AD_NO_ALERT) {
             /* RLAYERfatal() already got called */
             goto end;
         }
@@ -752,7 +752,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     }
 
     if (enc_err == 0) {
-        if (rl->alert != 0) {
+        if (rl->alert != SSL_AD_NO_ALERT) {
             /* We already called RLAYERfatal() */
             goto end;
         }
@@ -1114,6 +1114,8 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     rl->role = role;
     rl->direction = direction;
     rl->level = level;
+
+    rl->alert = SSL_AD_NO_ALERT;
 
     if (level == OSSL_RECORD_PROTECTION_LEVEL_NONE)
         rl->is_first_record = 1;
