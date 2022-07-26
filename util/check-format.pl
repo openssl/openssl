@@ -771,8 +771,15 @@ while (<>) { # loop over all lines of all input files
         }
         # ignore paths in #include
         $intra_line =~ s/^(include\s*)(".*?"|<.*?>)/$1/e if $head =~ m/#/;
+        report("missing space before '$2'")
+            if $intra_line =~ m/(\S)((<<|>>)=)/ # '<<=' or >>=' without preceding space
+            || ($intra_line =~ m/(\S)([\+\-\*\/\/%\&\|\^\!<>=]=)/
+                && "$1$2" ne "<<=" && "$1$2" ne ">>=") # other <op>= or (in)equality without preceding space
+            || ($intra_line =~ m/(\S)=/
+                && !($1 =~ m/[\+\-\*\/\/%\&\|\^\!<>=]/)
+                && $intra_line =~ m/(\S)(=)/); # otherwise, '=' without preceding space
         # treat op= and comparison operators as simple '=', simplifying matching below
-        $intra_line =~ s/([\+\-\*\/\/%\&\|\^\!<>=]|<<|>>)=/=/g;
+        $intra_line =~ s/(<<|>>|[\+\-\*\/\/%\&\|\^\!<>=])=/=/g;
         # treat (type) variables within macro, indicated by trailing '\', as 'int' simplifying matching below
         $intra_line =~ s/[A-Z_]+/int/g if $trailing_backslash;
         # treat double &&, ||, <<, and >> as single ones, simplifying matching below
@@ -803,7 +810,6 @@ while (<>) { # loop over all lines of all input files
         report("space before '$1'")     if $intra_line =~ m/\s([,)\]])/;       # space before ,)]
         report("space after '$1'")      if $intra_line =~ m/([(\[~!])\s/;      # space after ([~!
         report("space after '$1'")      if $intra_line =~ m/(defined)\s/;      # space after 'defined'
-        report("missing space before '=' or '<op>='") if $intra_line =~ m/\S(=)/;   # '=' etc. without preceding space
         report("missing space before '$1'")  if $intra_line =~ m/\S([|\/%<>^\?])/;  # |/%<>^? without preceding space
         # TODO ternary ':' without preceding SPC, while allowing no SPC before ':' after 'case'
         report("missing space before binary '$2'")  if $intra_line =~ m/([^\s{()\[e])([+\-])/; # '+'/'-' without preceding space or {()[e

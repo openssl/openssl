@@ -32,6 +32,9 @@
  */
 /** allow extra '*' in comment opening */
 /*! allow extra '!' in comment opening */
+/*
+ ** allow "**" as first non-space chars of a line within multi-line comment
+ */
 
 int f(void) /*
              * trailing multi-line comment
@@ -260,10 +263,11 @@ X509 *x509 = NULL;
 int y = a + 1 < b;
 int ret, was_NULL = *certs == NULL;
 
-/* should not trigger: no space before binary ... operator */
+/* should not trigger: missing space before ... */
 float z = 1e-6 * (-1) * b[+6] * 1e+1 * (a)->f * (long)+1
     - (tmstart.tv_sec + tmstart.tv_nsec * 1e-9);
 struct st = {-1, 0};
+int x = (y <<= 1) + (z <= 5.0);
 
 const OPTIONS passwd_options[] = {
     {"aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm"},
