@@ -66,7 +66,7 @@ This function would create an `OSSL_QRL_RX_PKT` and call the QUIC Read
 Record Layer with a pointer to it, leaving it to the QUIC Read Record Layer
 to fill in the data.
 
-This uses the ``ossl_qrl_read_pkt()` packet reading function from
+This uses the `ossl_qrl_read_pkt()` packet reading function from
 [Add prototype QUIC Record Layer API design].
 (that interface or the `OSSL_QRL_RX_PKT` structure / sub-structure
 needs to be extended to take an `OSSL_TIME`, possibly by reference,
