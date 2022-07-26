@@ -12,7 +12,8 @@ Structures
 
 ### Connection
 
-Represented by an SSL object.
+Represented by an `QUIC_CONNECTION` object, defined in
+[SSL object refactoring using SSL_CONNECTION object].
 
 ### Stream
 
@@ -20,71 +21,8 @@ Represented by an SSL object.
 
 ### Packets
 
-Represented by the `OSSL_QUIC_PACKET` structure.
-
-*This structure is inspired from the structure with the same name presented
-with the [TX packetizer], but takes into account the needs of the RX
-depacketizer as well.*
-
-It's expected that the QUIC Read Record Layer decrypts the packet and
-parses its packet header, and creates the `OSSL_QUIC_PACKET` structure with
-appropriately populated fields.
-
-The RX depacketizer depends on `packet_data`, `packet_data_length` and
-`packet_payload_offset` to find the packet payload and parse frames out of
-it.  Additionally, it uses `connection`, `packet_number` and `packet_type`.
-
-It's assume that `packet->connection` can be used to find the appropriate
-stream SSL objects attached to the connection.
-
-```c
-struct ossl_quic_packet_st {
-    SSL *connection;
-
-    /*
-     * |packet_data| is the header directly followed by the payload if there
-     * is any.  |packet_header_length| is the length of the packet header,
-     * and |packet_payload_offset| if the offset to the packet payload if
-     * there is any.
-     *
-     * When passing this structure from the TX packetizer to the QUIC Write
-     * Record Layer, |packet_data| is expected to only hold the packet
-     * header, and |frames| holds the rest of the data.  It's up to the QUIC
-     * Write Record Layer to encrypt and send all those chunks of data in a
-     * manner fitting for the network medium with as little copying as
-     * possible.
-     *
-     * When passing this structure to the RX depacketizer from the QUIC Read
-     * Record Layer, |packet_data| is expected to contain the whole packet,
-     * and |frames| to be NULL.
-     */
-    unsigned char *packet_data;
-    size_t packet_data_length;              /* Only used for RX purposes */
-    size_t packet_header_length;
-    size_t packet_payload_offset;           /* Only used for RX purposes */
-
-    STACK_OF(OSSL_QUIC_FRAME) *frames;      /* Only used for TX purposes */
-
-    QUIC_PN packet_number; /* RFC 9000 12.3 */
-
-    /* Packet types */
-    enum {
-        pkt_initial,
-        pkt_handshake,
-        pkt_rtt0,
-        pkt_rtt1,
-        pkt_retry
-    } packet_type;
-
-    /* Spec */
-    unsigned int no_ack : 1;
-    unsigned int no_congestion_control : 1;
-    unsigned int probing : 1;
-    unsigned int flow_controlled : 1;
-};
-
-typedef struct ossl_quic_packet_st OSSL_QUIC_PACKET;
-```
+Represented by the `OSSL_QRL_RX_PKT` structure, defined in
+[Add prototype QUIC Record Layer API design].
 
 Interactions
 ------------
@@ -121,20 +59,18 @@ Following how things are designed elsewhere, the depacketizer is assumed to
 be called "from above" using the following function:
 
 ``` C
-__owur int ossl_quic_depacketise(SSL *connection);
+__owur int ossl_quic_depacketise(QUIC_CONNECTION *connection);
 ```
 
-This function would create an `OSSL_QUIC_PACKET` and call the QUIC Read
+This function would create an `OSSL_QRL_RX_PKT` and call the QUIC Read
 Record Layer with a pointer to it, leaving it to the QUIC Read Record Layer
 to fill in the data.
 
-This assumes that the QUIC Read Record Layer will present a wrapper function
-that can fill an `OSSL_QUIC_PACKET` and an `OSSL_TIME`.  Such a function
-would presumably have this interface:
-
-``` C
-__owur int ossl_quic_read_packet(OSSL_QUIC_PACKET *packet,
-OSSL_TIME *received);
+This uses the ``ossl_qrl_read_pkt()` packet reading function from
+[Add prototype QUIC Record Layer API design].
+(that interface or the `OSSL_QRL_RX_PKT` structure / sub-structure
+needs to be extended to take an `OSSL_TIME`, possibly by reference,
+which should be filled in with the packet reception time)
 ```
 
 ### Collect information for the [ACK manager]
@@ -222,6 +158,8 @@ Notes:
 
 [overview]: https://github.com/openssl/openssl/blob/master/doc/designs/quic-design/quic-overview.md
 [TX packetizer]: https://github.com/openssl/openssl/pull/18570
+[SSL object refactoring using SSL_CONNECTION object]: https://github.com/openssl/openssl/pull/18612
+[Add prototype QUIC Record Layer API design]: https://github.com/openssl/openssl/pull/18870
 [ACK manager]: https://github.com/openssl/openssl/pull/18564
 [padding]: https://datatracker.ietf.org/doc/html/rfc9000#section-19.1
 [ping]: https://datatracker.ietf.org/doc/html/rfc9000#section-19.2
