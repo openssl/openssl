@@ -108,8 +108,10 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
           /*@0 intra-line comment indent off by -1 (not: by 3 due to '&&') */
            && ! 0   /*@2 space after '!', reported unless sloppy-spc */
          || b ==    /*@ hanging expr indent off by 2, or -2 for leading '||' */
+       (x<<= 1) +   /*@ missing space before '<<=' reported unless sloppy-spc */
        (xx+= 2) +   /*@ missing space before '+=', reported unless sloppy-spc */
        (a^ 1) +     /*@ missing space before '^', reported unless sloppy-spc */
+       (y *=z) +    /*@ missing space after '*=' reported unless sloppy-spc */
        a %2 /       /*@ missing space after '%', reported unless sloppy-spc */
        1 +/* */     /*@ no space before comment, reported unless sloppy-spc */
        /* */+       /*@ no space after comment, reported unless sloppy-spc */
