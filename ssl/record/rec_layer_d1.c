@@ -178,7 +178,6 @@ static void dtls_unbuffer_record(SSL_CONNECTION *s)
 #ifndef OPENSSL_NO_SCTP
         /* Restore bio_dgram_sctp_rcvinfo struct */
         if (BIO_dgram_is_sctp(SSL_get_rbio(s))) {
-            DTLS1_RECORD_DATA *rdata = (DTLS1_RECORD_DATA *)item->data;
             BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SCTP_SET_RCVINFO,
                         sizeof(rdata->recordinfo), &rdata->recordinfo);
         }

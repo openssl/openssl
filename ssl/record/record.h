@@ -107,16 +107,6 @@ typedef struct record_pqueue_st {
     struct pqueue_st *q;
 } record_pqueue;
 
-typedef struct dtls1_record_data_st {
-    unsigned char *packet;
-    size_t packet_length;
-    SSL3_BUFFER rbuf;
-    SSL3_RECORD rrec;
-#ifndef OPENSSL_NO_SCTP
-    struct bio_dgram_sctp_rcvinfo recordinfo;
-#endif
-} DTLS1_RECORD_DATA;
-
 typedef struct dtls_record_layer_st {
     /*
      * The current data and handshake epoch.  This is initially
