@@ -81,7 +81,8 @@ int PKCS7_final(PKCS7 *p7, BIO *data, int flags)
         return 0;
     }
 
-    SMIME_crlf_copy(data, p7bio, flags);
+    if (!SMIME_crlf_copy(data, p7bio, flags))
+        goto err;
 
     (void)BIO_flush(p7bio);
 
