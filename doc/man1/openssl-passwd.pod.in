@@ -14,6 +14,7 @@ B<openssl passwd>
 [B<-aixmd5>]
 [B<-5>]
 [B<-6>]
+[B<-8>]
 [B<-salt> I<string>]
 [B<-in> I<file>]
 [B<-stdin>]
@@ -56,7 +57,9 @@ Use the B<AIX MD5> algorithm (AIX variant of the BSD algorithm).
 
 =item B<-6>
 
-Use the B<SHA256> / B<SHA512> based algorithms defined by Ulrich Drepper.
+=item B<-8>
+
+Use the B<SHA256> / B<SHA512> / B<SM3> based algorithms defined by Ulrich Drepper.
 See L<https://www.akkadia.org/drepper/SHA-crypt.txt>.
 
 =item B<-salt> I<string>

@@ -22,6 +22,10 @@
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 
+#ifndef OPENSSL_NO_SM3
+# include "internal/sm3.h"
+#endif
+
 static const unsigned char cov_2char[64] = {
     /* from crypto/des/fcrypt.c */
     0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35,
@@ -42,6 +46,7 @@ typedef enum {
     passwd_apr1,
     passwd_sha256,
     passwd_sha512,
+    passwd_sm3,
     passwd_aixmd5
 } passwd_modes;
 
@@ -53,7 +58,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_IN,
     OPT_NOVERIFY, OPT_QUIET, OPT_TABLE, OPT_REVERSE, OPT_APR1,
-    OPT_1, OPT_5, OPT_6, OPT_AIXMD5, OPT_SALT, OPT_STDIN,
+    OPT_1, OPT_5, OPT_6, OPT_8, OPT_AIXMD5, OPT_SALT, OPT_STDIN,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -76,6 +81,9 @@ const OPTIONS passwd_options[] = {
 
     OPT_SECTION("Cryptographic"),
     {"salt", OPT_SALT, 's', "Use provided salt"},
+#ifndef OPENSSL_NO_SM3
+    {"8", OPT_8, '-', "SM3-based password algorithm"},
+#endif
     {"6", OPT_6, '-', "SHA512-based password algorithm"},
     {"5", OPT_5, '-', "SHA256-based password algorithm"},
     {"apr1", OPT_APR1, '-', "MD5-based password algorithm, Apache variant"},
@@ -153,6 +161,13 @@ int passwd_main(int argc, char **argv)
             if (mode != passwd_unset)
                 goto opthelp;
             mode = passwd_sha512;
+            break;
+        case OPT_8:
+#ifndef OPENSSL_NO_SM3
+            if (mode != passwd_unset)
+                goto opthelp;
+            mode = passwd_sm3;
+#endif
             break;
         case OPT_APR1:
             if (mode != passwd_unset)
@@ -774,6 +789,261 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     return NULL;
 }
 
+#ifndef OPENSSL_NO_SM3
+static char *sm3crypt(const char *passwd, const char *magic, const char *salt)
+{
+    /* Prefix for optional rounds specification.  */
+    static const char rounds_prefix[] = "rounds=";
+    /* Maximum salt string length.  */
+# define SALT_LEN_MAX 16
+    /* Default number of rounds if not explicitly specified.  */
+# define ROUNDS_DEFAULT 5000
+    /* Minimum number of rounds.  */
+# define ROUNDS_MIN 1000
+    /* Maximum number of rounds.  */
+# define ROUNDS_MAX 999999999
+
+    /* "$8$rounds=<N>$......salt......$...sm3hash(up to 86 chars)...\0" */
+    static char out_buf[3 + 17 + 17 + 86 + 1];
+    unsigned char buf[SM3_DIGEST_LENGTH];
+    unsigned char temp_buf[SM3_DIGEST_LENGTH];
+    size_t buf_size = 0;
+    char ascii_magic[2];
+    char ascii_salt[17];          /* Max 16 chars plus '\0' */
+    char *ascii_passwd = NULL;
+    size_t n;
+    EVP_MD_CTX *md = NULL, *md2 = NULL;
+    const EVP_MD *sm3 = NULL;
+    size_t passwd_len, salt_len, magic_len;
+    unsigned int rounds = ROUNDS_DEFAULT;        /* Default */
+    char rounds_custom = 0;
+    char *p_bytes = NULL;
+    char *s_bytes = NULL;
+    char *cp = NULL;
+
+    passwd_len = strlen(passwd);
+    magic_len = strlen(magic);
+
+    /* assert it's "8" */
+    if (magic_len != 1)
+        return NULL;
+
+    switch (magic[0]) {
+    case '8':
+        sm3 = EVP_sm3();
+        buf_size = 32;
+        break;
+    default:
+        return NULL;
+    }
+
+    if (strncmp(salt, rounds_prefix, sizeof(rounds_prefix) - 1) == 0) {
+        const char *num = salt + sizeof(rounds_prefix) - 1;
+        char *endp;
+        unsigned long int srounds = strtoul (num, &endp, 10);
+        if (*endp == '$') {
+            salt = endp + 1;
+            if (srounds > ROUNDS_MAX)
+                rounds = ROUNDS_MAX;
+            else if (srounds < ROUNDS_MIN)
+                rounds = ROUNDS_MIN;
+            else
+                rounds = (unsigned int)srounds;
+            rounds_custom = 1;
+        } else {
+            return NULL;
+        }
+    }
+
+    OPENSSL_strlcpy(ascii_magic, magic, sizeof(ascii_magic));
+#ifdef CHARSET_EBCDIC
+    if ((magic[0] & 0x80) != 0)    /* High bit is 1 in EBCDIC alnums */
+        ebcdic2ascii(ascii_magic, ascii_magic, magic_len);
+#endif
+
+    /* The salt gets truncated to 16 chars */
+    OPENSSL_strlcpy(ascii_salt, salt, sizeof(ascii_salt));
+    salt_len = strlen(ascii_salt);
+#ifdef CHARSET_EBCDIC
+    ebcdic2ascii(ascii_salt, ascii_salt, salt_len);
+#endif
+
+#ifdef CHARSET_EBCDIC
+    ascii_passwd = OPENSSL_strdup(passwd);
+    if (ascii_passwd == NULL)
+        return NULL;
+    ebcdic2ascii(ascii_passwd, ascii_passwd, passwd_len);
+    passwd = ascii_passwd;
+#endif
+
+    out_buf[0] = 0;
+    OPENSSL_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
+    OPENSSL_strlcat(out_buf, ascii_magic, sizeof(out_buf));
+    OPENSSL_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
+    if (rounds_custom) {
+        char tmp_buf[80]; /* "rounds=999999999" */
+        sprintf(tmp_buf, "rounds=%u", rounds);
+#ifdef CHARSET_EBCDIC
+        /* In case we're really on a ASCII based platform and just pretend */
+        if (tmp_buf[0] != 0x72)  /* ASCII 'r' */
+            ebcdic2ascii(tmp_buf, tmp_buf, strlen(tmp_buf));
+#endif
+        OPENSSL_strlcat(out_buf, tmp_buf, sizeof(out_buf));
+        OPENSSL_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
+    }
+    OPENSSL_strlcat(out_buf, ascii_salt, sizeof(out_buf));
+
+    /* assert "$5$rounds=999999999$......salt......" */
+    if (strlen(out_buf) > 3 + 17 * rounds_custom + salt_len)
+        goto err;
+
+    md = EVP_MD_CTX_new();
+    if (md == NULL
+        || !EVP_DigestInit_ex(md, sm3, NULL)
+        || !EVP_DigestUpdate(md, passwd, passwd_len)
+        || !EVP_DigestUpdate(md, ascii_salt, salt_len))
+        goto err;
+
+    md2 = EVP_MD_CTX_new();
+    if (md2 == NULL
+        || !EVP_DigestInit_ex(md2, sm3, NULL)
+        || !EVP_DigestUpdate(md2, passwd, passwd_len)
+        || !EVP_DigestUpdate(md2, ascii_salt, salt_len)
+        || !EVP_DigestUpdate(md2, passwd, passwd_len)
+        || !EVP_DigestFinal_ex(md2, buf, NULL))
+        goto err;
+
+    for (n = passwd_len; n > buf_size; n -= buf_size) {
+        if (!EVP_DigestUpdate(md, buf, buf_size))
+            goto err;
+    }
+    if (!EVP_DigestUpdate(md, buf, n))
+        goto err;
+
+    n = passwd_len;
+    while (n) {
+        if (!EVP_DigestUpdate(md,
+                              (n & 1) ? buf : (const unsigned char *)passwd,
+                              (n & 1) ? buf_size : passwd_len))
+            goto err;
+        n >>= 1;
+    }
+    if (!EVP_DigestFinal_ex(md, buf, NULL))
+        goto err;
+
+    /* P sequence */
+    if (!EVP_DigestInit_ex(md2, sm3, NULL))
+        goto err;
+
+    for (n = passwd_len; n > 0; n--)
+        if (!EVP_DigestUpdate(md2, passwd, passwd_len))
+            goto err;
+
+    if (!EVP_DigestFinal_ex(md2, temp_buf, NULL))
+        goto err;
+
+    if ((p_bytes = OPENSSL_zalloc(passwd_len)) == NULL)
+        goto err;
+    for (cp = p_bytes, n = passwd_len; n > buf_size; n -= buf_size, cp += buf_size)
+        memcpy(cp, temp_buf, buf_size);
+    memcpy(cp, temp_buf, n);
+
+    /* S sequence */
+    if (!EVP_DigestInit_ex(md2, sm3, NULL))
+        goto err;
+
+    for (n = 16 + buf[0]; n > 0; n--)
+        if (!EVP_DigestUpdate(md2, ascii_salt, salt_len))
+            goto err;
+
+    if (!EVP_DigestFinal_ex(md2, temp_buf, NULL))
+        goto err;
+
+    if ((s_bytes = OPENSSL_zalloc(salt_len)) == NULL)
+        goto err;
+    for (cp = s_bytes, n = salt_len; n > buf_size; n -= buf_size, cp += buf_size)
+        memcpy(cp, temp_buf, buf_size);
+    memcpy(cp, temp_buf, n);
+
+    for (n = 0; n < rounds; n++) {
+        if (!EVP_DigestInit_ex(md2, sm3, NULL))
+            goto err;
+        if (!EVP_DigestUpdate(md2,
+                              (n & 1) ? (const unsigned char *)p_bytes : buf,
+                              (n & 1) ? passwd_len : buf_size))
+            goto err;
+        if (n % 3) {
+            if (!EVP_DigestUpdate(md2, s_bytes, salt_len))
+                goto err;
+        }
+        if (n % 7) {
+            if (!EVP_DigestUpdate(md2, p_bytes, passwd_len))
+                goto err;
+        }
+        if (!EVP_DigestUpdate(md2,
+                              (n & 1) ? buf : (const unsigned char *)p_bytes,
+                              (n & 1) ? buf_size : passwd_len))
+                goto err;
+        if (!EVP_DigestFinal_ex(md2, buf, NULL))
+                goto err;
+    }
+    EVP_MD_CTX_free(md2);
+    EVP_MD_CTX_free(md);
+    md2 = NULL;
+    md = NULL;
+    OPENSSL_free(p_bytes);
+    OPENSSL_free(s_bytes);
+    p_bytes = NULL;
+    s_bytes = NULL;
+
+    cp = out_buf + strlen(out_buf);
+    *cp++ = ascii_dollar[0];
+
+# define b64_from_24bit(B2, B1, B0, N)                                   \
+    do {                                                                \
+        unsigned int w = ((B2) << 16) | ((B1) << 8) | (B0);             \
+        int i = (N);                                                    \
+        while (i-- > 0)                                                 \
+            {                                                           \
+                *cp++ = cov_2char[w & 0x3f];                            \
+                w >>= 6;                                                \
+            }                                                           \
+    } while (0)
+
+    switch (magic[0]) {
+    case '8':
+        b64_from_24bit (buf[0], buf[10], buf[20], 4);
+        b64_from_24bit (buf[21], buf[1], buf[11], 4);
+        b64_from_24bit (buf[12], buf[22], buf[2], 4);
+        b64_from_24bit (buf[3], buf[13], buf[23], 4);
+        b64_from_24bit (buf[24], buf[4], buf[14], 4);
+        b64_from_24bit (buf[15], buf[25], buf[5], 4);
+        b64_from_24bit (buf[6], buf[16], buf[26], 4);
+        b64_from_24bit (buf[27], buf[7], buf[17], 4);
+        b64_from_24bit (buf[18], buf[28], buf[8], 4);
+        b64_from_24bit (buf[9], buf[19], buf[29], 4);
+        b64_from_24bit (0, buf[31], buf[30], 3);
+        break;
+    default:
+        goto err;
+    }
+    *cp = '\0';
+#ifdef CHARSET_EBCDIC
+    ascii2ebcdic(out_buf, out_buf, strlen(out_buf));
+#endif
+
+    return out_buf;
+
+ err:
+    EVP_MD_CTX_free(md2);
+    EVP_MD_CTX_free(md);
+    OPENSSL_free(p_bytes);
+    OPENSSL_free(s_bytes);
+    OPENSSL_free(ascii_passwd);
+    return NULL;
+}
+#endif
+
 static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
                      char *passwd, BIO *out, int quiet, int table,
                      int reverse, size_t pw_maxlen, passwd_modes mode)
@@ -791,7 +1061,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
         if (mode == passwd_md5 || mode == passwd_apr1 || mode == passwd_aixmd5)
             saltlen = 8;
 
-        if (mode == passwd_sha256 || mode == passwd_sha512)
+        if (mode == passwd_sha256 || mode == passwd_sha512 || mode == passwd_sm3)
             saltlen = 16;
 
         assert(saltlen != 0);
@@ -832,6 +1102,10 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
         hash = md5crypt(passwd, "", *salt_p);
     if (mode == passwd_sha256 || mode == passwd_sha512)
         hash = shacrypt(passwd, (mode == passwd_sha256 ? "5" : "6"), *salt_p);
+#ifndef OPENSSL_NO_SM3
+    if (mode == passwd_sm3)
+        hash = sm3crypt(passwd, "8", *salt_p);
+#endif
     assert(hash != NULL);
 
     if (table && !reverse)
