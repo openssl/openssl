@@ -313,9 +313,8 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, record_pqueue *queue
     memset(&rl->rbuf, 0, sizeof(SSL3_BUFFER));
     memset(&rl->rrec[0], 0, sizeof(rl->rrec[0]));
 
-
-    if (!rlayer_setup_read_buffer(rl)) {
-        /* SSLfatal() already called */
+    if (!tls_setup_read_buffer(rl)) {
+        /* RLAYERfatal() already called */
         OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(rdata);
         pitem_free(item);
@@ -397,7 +396,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     rr = rl->rrec;
 
     if (rl->rbuf.buf == NULL) {
-        if (!rlayer_setup_read_buffer(rl)) {
+        if (!tls_setup_read_buffer(rl)) {
             /* RLAYERfatal() already called */
             return OSSL_RECORD_RETURN_FATAL;
         }
