@@ -65,9 +65,6 @@ typedef struct ssl3_record_st {
     /* only used with decompression - malloc()ed */
     /* r */
     unsigned char *comp;
-    /* Whether the data from this record has already been read or not */
-    /* r */
-    unsigned int read;
     /* epoch number, needed by DTLS1 */
     /* r */
     unsigned long epoch;

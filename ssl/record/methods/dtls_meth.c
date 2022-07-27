@@ -449,7 +449,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         p += 6;
 
         n2s(p, rr->length);
-        rr->read = 0;
 
         /*
          * Lets check the version. We tolerate alerts that don't have the exact
@@ -459,7 +458,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
             if (version != rl->version) {
                 /* unexpected version, silently discard */
                 rr->length = 0;
-                rr->read = 1;
                 rl->packet_length = 0;
                 goto again;
             }
@@ -471,7 +469,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
                                                    : rl->version >> 8)) {
             /* wrong version, silently discard record */
             rr->length = 0;
-            rr->read = 1;
             rl->packet_length = 0;
             goto again;
         }
@@ -479,7 +476,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
             /* record too long, silently discard it */
             rr->length = 0;
-            rr->read = 1;
             rl->packet_length = 0;
             goto again;
         }
@@ -493,7 +489,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
                 && rr->length > rl->max_frag_len + SSL3_RT_MAX_ENCRYPTED_OVERHEAD) {
             /* record too long, silently discard it */
             rr->length = 0;
-            rr->read = 1;
             rl->packet_length = 0;
             goto again;
         }
@@ -515,7 +510,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
                 return OSSL_RECORD_RETURN_FATAL;
             }
             rr->length = 0;
-            rr->read = 1;
             rl->packet_length = 0;
             goto again;
         }
@@ -542,7 +536,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
         /* Check whether this is a repeat, or aged record. */
         if (!dtls_record_replay_check(rl, bitmap)) {
             rr->length = 0;
-            rr->read = 1;
             rl->packet_length = 0; /* dump this record */
             goto again;         /* get another record */
         }
@@ -551,10 +544,8 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 #endif
 
     /* just read a 0 length packet */
-    if (rr->length == 0) {
-        rr->read = 1;
+    if (rr->length == 0)
         goto again;
-    }
 
     /*
      * If this record is from the next epoch (either HM or ALERT), and a
@@ -571,7 +562,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
             }
         }
         rr->length = 0;
-        rr->read = 1;
         rl->packet_length = 0;
         goto again;
     }
@@ -582,7 +572,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
             return OSSL_RECORD_RETURN_FATAL;
         }
         rr->length = 0;
-        rr->read = 1;
         rl->packet_length = 0; /* dump this record */
         goto again;             /* get another record */
     }
