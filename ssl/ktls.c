@@ -66,8 +66,11 @@ int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
     case SSL_AES128GCM:
     case SSL_AES256GCM:
         crypto_info->cipher_algorithm = CRYPTO_AES_NIST_GCM_16;
-        if (s->version == TLS1_3_VERSION)
+        if (s->version == TLS1_3_VERSION) {
             crypto_info->iv_len = EVP_CIPHER_CTX_get_iv_length(dd);
+            if (crypto_info->iv_len < 0)
+                return 0;
+        }
         else
             crypto_info->iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
         break;
