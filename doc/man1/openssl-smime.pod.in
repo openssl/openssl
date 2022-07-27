@@ -59,7 +59,9 @@ and verify S/MIME messages.
 
 =head1 OPTIONS
 
-There are six operation options that set the type of operation to be performed.
+There are six operation options that set the type of operation to be performed:
+B<-encrypt>, B<-decrypt>, B<-sign>, B<-resign>, B<-verify>, and B<-pk7out>.
+These are mutually exclusive.
 The meaning of the other options varies according to the operation type.
 
 =over 4
@@ -88,6 +90,10 @@ Sign mail using the supplied certificate and private key. Input file is
 the message to be signed. The signed message in MIME format is written
 to the output file.
 
+=item B<-resign>
+
+Resign a message: take an existing message and one or more new signers.
+
 =item B<-verify>
 
 Verify signed mail. Expects a signed mail message on input and outputs
@@ -96,10 +102,6 @@ the signed data. Both clear text and opaque signing is supported.
 =item B<-pk7out>
 
 Takes an input message and writes out a PEM encoded PKCS#7 structure.
-
-=item B<-resign>
-
-Resign a message: take an existing message and one or more new signers.
 
 =item B<-in> I<filename>
 

@@ -28,9 +28,9 @@ static int smime_cb(int ok, X509_STORE_CTX *ctx);
 #define SMIME_ENCRYPT   (1 | SMIME_OP)
 #define SMIME_DECRYPT   (2 | SMIME_IP)
 #define SMIME_SIGN      (3 | SMIME_OP | SMIME_SIGNERS)
+#define SMIME_RESIGN    (6 | SMIME_IP | SMIME_OP | SMIME_SIGNERS)
 #define SMIME_VERIFY    (4 | SMIME_IP)
 #define SMIME_PK7OUT    (5 | SMIME_IP | SMIME_OP)
-#define SMIME_RESIGN    (6 | SMIME_IP | SMIME_OP | SMIME_SIGNERS)
 
 typedef enum OPTION_choice {
     OPT_COMMON,
@@ -75,12 +75,12 @@ const OPTIONS smime_options[] = {
     {"sign", OPT_SIGN, '-', "Sign message"},
     {"resign", OPT_RESIGN, '-', "Resign a signed message"},
     {"verify", OPT_VERIFY, '-', "Verify signed message"},
+    {"pk7out", OPT_PK7OUT, '-', "Output PKCS#7 structure"},
 
     OPT_SECTION("Signing/Encryption"),
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"md", OPT_MD, 's', "Digest algorithm to use when signing or resigning"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
-    {"pk7out", OPT_PK7OUT, '-', "Output PKCS#7 structure"},
     {"nointern", OPT_NOINTERN, '-',
      "Don't search certificates in message for signer"},
     {"nodetach", OPT_NODETACH, '-', "Use opaque signing"},
@@ -128,6 +128,32 @@ const OPTIONS smime_options[] = {
     {"cert", 0, 0, "Recipient certs, used when encrypting"},
     {NULL}
 };
+
+static const char *operation_name(int operation)
+{
+    switch (operation) {
+    case SMIME_ENCRYPT:
+        return "encrypt";
+    case SMIME_DECRYPT:
+        return "decrypt";
+    case SMIME_SIGN:
+        return "sign";
+    case SMIME_RESIGN:
+        return "resign";
+    case SMIME_VERIFY:
+        return "verify";
+    case SMIME_PK7OUT:
+        return "pk7out";
+    default:
+        return "(invalid operation)";
+    }
+}
+
+#define SET_OPERATION(op) \
+    ((operation != 0 && (operation != (op))) \
+     ? 0 * BIO_printf(bio_err, "%s: Cannot use -%s together with -%s\n", \
+                      prog, operation_name(op), operation_name(operation)) \
+     : (operation = (op)))
 
 int smime_main(int argc, char **argv)
 {
@@ -188,22 +214,28 @@ int smime_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_ENCRYPT:
-            operation = SMIME_ENCRYPT;
+            if (!SET_OPERATION(SMIME_ENCRYPT))
+                goto end;
             break;
         case OPT_DECRYPT:
-            operation = SMIME_DECRYPT;
+            if (!SET_OPERATION(SMIME_DECRYPT))
+                goto end;
             break;
         case OPT_SIGN:
-            operation = SMIME_SIGN;
+            if (!SET_OPERATION(SMIME_SIGN))
+                goto end;
             break;
         case OPT_RESIGN:
-            operation = SMIME_RESIGN;
+            if (!SET_OPERATION(SMIME_RESIGN))
+                goto end;
             break;
         case OPT_VERIFY:
-            operation = SMIME_VERIFY;
+            if (!SET_OPERATION(SMIME_VERIFY))
+                goto end;
             break;
         case OPT_PK7OUT:
-            operation = SMIME_PK7OUT;
+            if (!SET_OPERATION(SMIME_PK7OUT))
+                goto end;
             break;
         case OPT_TEXT:
             flags |= PKCS7_TEXT;
