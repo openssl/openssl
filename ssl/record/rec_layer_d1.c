@@ -883,6 +883,10 @@ int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
         int mode = EVP_CIPHER_CTX_get_mode(sc->enc_write_ctx);
         if (mode == EVP_CIPH_CBC_MODE) {
             eivlen = EVP_CIPHER_CTX_get_iv_length(sc->enc_write_ctx);
+            if (eivlen < 0) {
+                SSLfatal(sc, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
+                return -1;
+            }
             if (eivlen <= 1)
                 eivlen = 0;
         }

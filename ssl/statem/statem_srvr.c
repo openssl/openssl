@@ -3809,6 +3809,10 @@ static int construct_stateless_ticket(SSL_CONNECTION *s, WPACKET *pkt,
             goto err;
         }
         iv_len = EVP_CIPHER_CTX_get_iv_length(ctx);
+        if (iv_len < 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
     } else {
         EVP_CIPHER *cipher = EVP_CIPHER_fetch(sctx->libctx, "AES-256-CBC",
                                               sctx->propq);
