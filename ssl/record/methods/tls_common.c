@@ -967,7 +967,7 @@ int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,  int *rversion,
     *data = rec->data + rec->off;
     *datalen = rec->length;
     if (rl->isdtls) {
-        *epoch = (uint16_t)rec->epoch;
+        *epoch = rec->epoch;
         memcpy(seq_num, rec->seq_num, sizeof(rec->seq_num));
     }
 
@@ -1160,7 +1160,7 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
 static int
 tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
-                     int role, int direction, int level, unsigned int epoch,
+                     int role, int direction, int level, uint16_t epoch,
                      unsigned char *key, size_t keylen, unsigned char *iv,
                      size_t ivlen, unsigned char *mackey, size_t mackeylen,
                      const EVP_CIPHER *ciph, size_t taglen,

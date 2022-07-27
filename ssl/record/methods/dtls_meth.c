@@ -629,7 +629,7 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
 
 static int
 dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
-                      int role, int direction, int level, unsigned int epoch,
+                      int role, int direction, int level, uint16_t epoch,
                       unsigned char *key, size_t keylen, unsigned char *iv,
                       size_t ivlen, unsigned char *mackey, size_t mackeylen,
                       const EVP_CIPHER *ciph, size_t taglen,

@@ -263,7 +263,7 @@ static void mempacket_free(MEMPACKET *pkt)
 
 typedef struct mempacket_test_ctx_st {
     STACK_OF(MEMPACKET) *pkts;
-    unsigned int epoch;
+    uint16_t epoch;
     unsigned int currrec;
     unsigned int currpkt;
     unsigned int lastpkt;
