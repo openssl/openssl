@@ -68,7 +68,7 @@ struct ossl_record_layer_st
     int direction;
     int level;
     /* DTLS only */
-    unsigned int epoch;
+    uint16_t epoch;
 
     /*
      * A BIO containing any data read in the previous epoch that was destined

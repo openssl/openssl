@@ -67,7 +67,7 @@ typedef struct ssl3_record_st {
     unsigned char *comp;
     /* epoch number, needed by DTLS1 */
     /* r */
-    unsigned long epoch;
+    uint16_t epoch;
     /* sequence number, needed by DTLS1 */
     /* r */
     unsigned char seq_num[SEQ_NUM_SIZE];
@@ -100,7 +100,7 @@ typedef struct dtls1_bitmap_st {
 } DTLS1_BITMAP;
 
 typedef struct record_pqueue_st {
-    unsigned short epoch;
+    uint16_t epoch;
     struct pqueue_st *q;
 } record_pqueue;
 
@@ -110,8 +110,8 @@ typedef struct dtls_record_layer_st {
      * undefined, and starts at zero once the initial handshake is
      * completed
      */
-    unsigned short r_epoch;
-    unsigned short w_epoch;
+    uint16_t r_epoch;
+    uint16_t w_epoch;
 
     /*
      * Buffered application records. Only for records between CCS and

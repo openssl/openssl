@@ -1909,7 +1909,7 @@ struct dtls1_retransmit_state {
     EVP_MD_CTX *write_hash;     /* used for mac generation */
     COMP_CTX *compress;         /* compression */
     SSL_SESSION *session;
-    unsigned short epoch;
+    uint16_t epoch;
 };
 
 struct hm_header_st {
