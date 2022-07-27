@@ -23,27 +23,6 @@
  * refer to both contexts.
  */
 
-
-/*
- * Types of QUIC record layer;
- *
- * QUIC reuses the TLS handshake for agreeing secrets. An SSL object representing
- * a QUIC connection will have an additional SSL object internally representing
- * the TLS state of the QUIC handshake. This internal TLS is referred to as
- * QUIC-TLS in this file.
- * "Records" output from QUIC-TLS contains standard TLS handshake messages and
- * are *not* encrypted directly but are instead wrapped up in plaintext
- * CRYPTO frames. These CRYPTO frames could be collected together with other
- * QUIC frames into a single QUIC packet. The QUIC record layer will then
- * encrypt the whole packet.
- *
- * So we have:
- * QUIC-TLS record layer: outputs plaintext CRYPTO frames containing TLS
- *                        handshake messages only.
- * QUIC record layer: outputs encrypted packets which may contain CRYPTO frames
- *                    or any other type of QUIC frame.
- */
-
 /*
  * An OSSL_RECORD_METHOD is a protcol specific method which provides the
  * functions for reading and writing records for that protocol. Which
@@ -71,7 +50,6 @@ typedef struct ossl_record_layer_st OSSL_RECORD_LAYER;
 # define OSSL_RECORD_PROTECTION_LEVEL_EARLY       1
 # define OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE   2
 # define OSSL_RECORD_PROTECTION_LEVEL_APPLICATION 3
-
 
 # define OSSL_RECORD_RETURN_SUCCESS           1
 # define OSSL_RECORD_RETURN_RETRY             0
@@ -175,6 +153,7 @@ struct ossl_record_method_st {
 
     /* Returns 1 if we have unprocessed data buffered or 0 otherwise */
     int (*unprocessed_read_pending)(OSSL_RECORD_LAYER *rl);
+
     /*
      * Returns 1 if we have processed data buffered that can be read or 0 otherwise
      * - not necessarily app data
@@ -188,7 +167,6 @@ struct ossl_record_method_st {
     size_t (*app_data_pending)(OSSL_RECORD_LAYER *rl);
 
     int (*write_pending)(OSSL_RECORD_LAYER *rl);
-
 
     /*
      * Find out the maximum amount of plaintext data that the record layer is

@@ -58,6 +58,7 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 
     if (EVP_CIPHER_get0_provider(ciph) != NULL
             && !ossl_set_tls_provider_parameters(rl, ciph_ctx, ciph, md)) {
+        /* ERR_raise already called */
         return OSSL_RECORD_RETURN_FATAL;
     }
 
@@ -111,17 +112,17 @@ static int ssl3_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs
 
     if ((bs != 1) && sending && !provided) {
         /*
-            * We only do this for legacy ciphers. Provided ciphers add the
-            * padding on the provider side.
-            */
+         * We only do this for legacy ciphers. Provided ciphers add the
+         * padding on the provider side.
+         */
         i = bs - (l % bs);
 
         /* we need to add 'i-1' padding bytes */
         l += i;
         /*
-            * the last of these zero bytes will be overwritten with the
-            * padding length.
-            */
+         * the last of these zero bytes will be overwritten with the
+         * padding length.
+         */
         memset(&rec->input[rec->length], 0, i);
         rec->length += i;
         rec->input[l - 1] = (unsigned char)(i - 1);
@@ -139,7 +140,7 @@ static int ssl3_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs
         int outlen;
 
         if (!EVP_CipherUpdate(ds, rec->data, &outlen, rec->input,
-                                (unsigned int)l))
+                              (unsigned int)l))
             return 0;
         rec->length = outlen;
 
@@ -151,8 +152,8 @@ static int ssl3_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs
             mac->alloced = 0;
 
             *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_TLS_MAC,
-                                                    (void **)&mac->mac,
-                                                    macsize);
+                                                  (void **)&mac->mac,
+                                                  macsize);
             *p = OSSL_PARAM_construct_end();
 
             if (!EVP_CIPHER_CTX_get_params(ds, params)) {
