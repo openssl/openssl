@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-OSSL_TIME, OSSL_TIME_SECOND, OSSL_TIME_INFINITY,
+OSSL_TIME, OSSL_TIME_SECOND, ossl_time_infinite, ossl_time_zero,
+ossl_ticks2time, ossl_time2ticks,
 ossl_time_now, ossl_time_time_to_timeval, ossl_time_compare,
 ossl_time_add, ossl_time_subtract
 - times and durations
@@ -11,12 +12,17 @@ ossl_time_add, ossl_time_subtract
 
  #include "internal/time.h"
 
- typedef uint64_t OSSL_TIME;
+ typedef struct OSSL_TIME;
 
- #define OSSL_TIME_SECOND
- #define OSSL_TIME_INFINITY
+ #define OSSL_TIME_SECOND   /* Ticks per second */
 
+ OSSL_TIME ossl_ticks2time(uint64_t);
+ uint64_t ossl_time2ticks(OSSL_TIME t);
+
+ OSSL_TIME ossl_time_zero(void);
+ OSSL_TIME ossl_time_infinite(void);
  OSSL_TIME ossl_time_now(void);
+
  void ossl_time_time_to_timeval(OSSL_TIME t, struct timeval *out);
 
  int ossl_time_compare(OSSL_TIME a, OSSL_TIME b);
@@ -40,8 +46,16 @@ B<OSSL_TIME>.  Specifically, it is the number of counts per second that
 a time can represent.  The accuracy is independent of this and is system
 dependent.
 
-B<OSSL_TIME_INFINITY> is the largest representable B<OSSL_TIME>.  This value
-is returned when an overflow would otherwise occur.
+B<ossl_ticks2time> converts an integral number of counts to a time.
+
+B<ossl_time2ticks> converts a time to an integral number of counts.
+
+B<ossl_time_zero> returns the smallest representable B<OSSL_TIME>.
+This value represents the time Epoch and it is returned when an underflow
+would otherwise occur.
+
+B<ossl_time_infinite> returns the largest representable B<OSSL_TIME>.
+This value is returned when an overflow would otherwise occur.
 
 B<ossl_time_now> returns the current time relative to an Epoch which
 is undefined but unchanging for at least the duration of program
@@ -70,15 +84,23 @@ The largest representable duration is guaranteed to be at least 500 years.
 
 =head1 RETURN VALUES
 
-B<ossl_time_now> returns the current time, or 0 on error.
+B<ossl_time_now> returns the current time, or the time of the Epoch on error.
+
+B<ossl_time_zero> returns the time of the Epoch.
+
+B<ossl_time_infinite> returns the last representable time.
+
+B<ossl_ticks2time> return the duration specified.
+
+B<ossl_time2ticks> returns the ticks since Epoch.
 
 B<ossl_time_compare> returns -1, 0 or 1 depending on the comparison.
 
 B<ossl_time_add> returns the summation of the two times or
-B<OSSL_TIME_INFINITY> on overflow.
+the last representable time on overflow.
 
 B<ossl_time_subtract> returns the difference of the two times or the
-0 on underflow.
+time of the Epoch on underflow.
 
 =head1 HISTORY
 

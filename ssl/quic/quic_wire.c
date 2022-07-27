@@ -48,13 +48,15 @@ int ossl_quic_wire_encode_frame_ack(WPACKET *pkt,
 
     uint64_t largest_ackd, first_ack_range, ack_delay_enc;
     size_t i, num_ack_ranges = ack->num_ack_ranges;
+    OSSL_TIME delay;
 
     if (num_ack_ranges == 0)
         return 0;
 
-    ack_delay_enc   = ossl_time_divide(ossl_time_divide(ack->delay_time,
-                                                        OSSL_TIME_US),
-                                       1UL << ack_delay_exponent);
+    delay = ossl_time_divide(ossl_time_divide(ack->delay_time, OSSL_TIME_US),
+                             1UL << ack_delay_exponent);
+    ack_delay_enc   = ossl_time2ticks(delay);
+
     largest_ackd    = ack->ack_ranges[0].end;
     first_ack_range = ack->ack_ranges[0].end - ack->ack_ranges[0].start;
 
@@ -443,12 +445,12 @@ int ossl_quic_wire_decode_frame_ack(PACKET *pkt,
     if (ack != NULL) {
         int err = 0;
         ack->delay_time
-            = ossl_time_multiply(OSSL_TIME_US,
+            = ossl_time_multiply(ossl_ticks2time(OSSL_TIME_US),
                                  safe_mul_uint64_t(ack_delay_raw,
                                                    1UL << ack_delay_exponent,
                                                    &err));
         if (err)
-            ack->delay_time = OSSL_TIME_INFINITY;
+            ack->delay_time = ossl_time_infinite();
 
         if (ack->num_ack_ranges > 0) {
             ack->ack_ranges[0].end   = largest_ackd;
