@@ -38,12 +38,12 @@ int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
     }
 
     if (EVP_CIPHER_is_a(c, "AES-128-GCM")
-        || EVP_CIPHER_is_a(c, "AES-256-GCM")
+            || EVP_CIPHER_is_a(c, "AES-256-GCM")
 # ifdef OPENSSL_KTLS_CHACHA20_POLY1305
-        || EVP_CIPHER_is_a(c, "CHACHA20-POLY1305")
+            || EVP_CIPHER_is_a(c, "CHACHA20-POLY1305")
 # endif
        )
-       return 1;
+        return 1;
 
     if (!EVP_CIPHER_is_a(c, "AES-128-CBC")
             && !EVP_CIPHER_is_a(c, "AES-256-CBC"))
@@ -83,12 +83,12 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
     }
 
     if (EVP_CIPHER_is_a(c, "AES-128-GCM")
-        || EVP_CIPHER_is_a(c, "AES-256-GCM")
+            || EVP_CIPHER_is_a(c, "AES-256-GCM")
 # ifdef OPENSSL_KTLS_CHACHA20_POLY1305
-        || EVP_CIPHER_is_a(c, "CHACHA20-POLY1305")
+            || EVP_CIPHER_is_a(c, "CHACHA20-POLY1305")
 # endif
        )
-       return 1;
+        return 1;
 
     if (!EVP_CIPHER_is_a(c, "AES-128-CBC")
             && !EVP_CIPHER_is_a(c, "AES-256-CBC"))
@@ -97,8 +97,10 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
     if (rl->use_etm)
         return 0;
 
-    if (md == NULL
-            || EVP_MD_is_a(md, "SHA1")
+    if (md == NULL)
+        return 0;
+
+    if (EVP_MD_is_a(md, "SHA1")
             || EVP_MD_is_a(md, "SHA2-256")
             || EVP_MD_is_a(md, "SHA2-384"))
         return 1;
@@ -127,6 +129,8 @@ int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c
     } else
 # endif
     if (EVP_CIPHER_is_a(c, "AES-128-CBC") || EVP_CIPHER_is_a(c, "AES-256-CBC")) {
+        if (md == NULL)
+            return 0;
         if (EVP_MD_is_a(md, "SHA1"))
             crypto_info->auth_algorithm = CRYPTO_SHA1_HMAC;
         else if (EVP_MD_is_a(md, "SHA2-256")) {
@@ -176,7 +180,8 @@ int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
         return 0;
     }
 
-    /* check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128
+    /*
+     * Check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128
      * or Chacha20-Poly1305
      */
 # ifdef OPENSSL_KTLS_AES_CCM_128
@@ -217,7 +222,8 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
         return 0;
     }
 
-    /* check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128
+    /*
+     * Check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128
      * or Chacha20-Poly1305
      */
 # ifdef OPENSSL_KTLS_AES_CCM_128
@@ -286,12 +292,13 @@ int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c
     }
 
     memset(crypto_info, 0, sizeof(*crypto_info));
-    switch (EVP_CIPHER_get_nid(c))
-    {
+    switch (EVP_CIPHER_get_nid(c)) {
 # ifdef OPENSSL_KTLS_AES_GCM_128
     case NID_aes_128_gcm:
-        if (!ossl_assert(TLS_CIPHER_AES_GCM_128_SALT_SIZE == EVP_GCM_TLS_FIXED_IV_LEN)
-                || !ossl_assert(TLS_CIPHER_AES_GCM_128_IV_SIZE == EVP_GCM_TLS_EXPLICIT_IV_LEN))
+        if (!ossl_assert(TLS_CIPHER_AES_GCM_128_SALT_SIZE
+                         == EVP_GCM_TLS_FIXED_IV_LEN)
+                || !ossl_assert(TLS_CIPHER_AES_GCM_128_IV_SIZE
+                                == EVP_GCM_TLS_EXPLICIT_IV_LEN))
             return 0;
         crypto_info->gcm128.info.cipher_type = TLS_CIPHER_AES_GCM_128;
         crypto_info->gcm128.info.version = version;
@@ -305,8 +312,10 @@ int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c
 # endif
 # ifdef OPENSSL_KTLS_AES_GCM_256
     case NID_aes_256_gcm:
-        if (!ossl_assert(TLS_CIPHER_AES_GCM_256_SALT_SIZE == EVP_GCM_TLS_FIXED_IV_LEN)
-                || !ossl_assert(TLS_CIPHER_AES_GCM_256_IV_SIZE == EVP_GCM_TLS_EXPLICIT_IV_LEN))
+        if (!ossl_assert(TLS_CIPHER_AES_GCM_256_SALT_SIZE
+                         == EVP_GCM_TLS_FIXED_IV_LEN)
+                || !ossl_assert(TLS_CIPHER_AES_GCM_256_IV_SIZE
+                                == EVP_GCM_TLS_EXPLICIT_IV_LEN))
             return 0;
         crypto_info->gcm256.info.cipher_type = TLS_CIPHER_AES_GCM_256;
         crypto_info->gcm256.info.version = version;
@@ -321,8 +330,10 @@ int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c
 # endif
 # ifdef OPENSSL_KTLS_AES_CCM_128
     case NID_aes_128_ccm:
-        if (!ossl_assert(TLS_CIPHER_AES_CCM_128_SALT_SIZE == EVP_CCM_TLS_FIXED_IV_LEN)
-                || !ossl_assert(TLS_CIPHER_AES_CCM_128_IV_SIZE == EVP_CCM_TLS_EXPLICIT_IV_LEN))
+        if (!ossl_assert(TLS_CIPHER_AES_CCM_128_SALT_SIZE
+                         == EVP_CCM_TLS_FIXED_IV_LEN)
+                || !ossl_assert(TLS_CIPHER_AES_CCM_128_IV_SIZE
+                                == EVP_CCM_TLS_EXPLICIT_IV_LEN))
             return 0;
         crypto_info->ccm128.info.cipher_type = TLS_CIPHER_AES_CCM_128;
         crypto_info->ccm128.info.version = version;
@@ -338,7 +349,8 @@ int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c
     case NID_chacha20_poly1305:
         if (!ossl_assert(ivlen == TLS_CIPHER_CHACHA20_POLY1305_IV_SIZE))
             return 0;
-        crypto_info->chacha20poly1305.info.cipher_type = TLS_CIPHER_CHACHA20_POLY1305;
+        crypto_info->chacha20poly1305.info.cipher_type
+            = TLS_CIPHER_CHACHA20_POLY1305;
         crypto_info->chacha20poly1305.info.version = version;
         crypto_info->tls_crypto_info_len = sizeof(crypto_info->chacha20poly1305);
         memcpy(crypto_info->chacha20poly1305.iv, iv, ivlen);

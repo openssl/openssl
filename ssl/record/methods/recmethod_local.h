@@ -217,15 +217,15 @@ extern struct record_functions_st dtls_any_funcs;
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
                        const char *fmt, ...);
 
-# define RLAYERfatal(rl, al, r) RLAYERfatal_data((rl), (al), (r), NULL)
-# define RLAYERfatal_data                                          \
+#define RLAYERfatal(rl, al, r) RLAYERfatal_data((rl), (al), (r), NULL)
+#define RLAYERfatal_data                                           \
     (ERR_new(),                                                    \
      ERR_set_debug(OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC),      \
      ossl_rlayer_fatal)
 
-# define RLAYER_USE_EXPLICIT_IV(rl) ((rl)->version == TLS1_1_VERSION \
-                                     || (rl)->version == TLS1_2_VERSION \
-                                     || (rl)->isdtls)
+#define RLAYER_USE_EXPLICIT_IV(rl) ((rl)->version == TLS1_1_VERSION \
+                                    || (rl)->version == TLS1_2_VERSION \
+                                    || (rl)->isdtls)
 
 int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
                                      EVP_CIPHER_CTX *ctx,
@@ -281,7 +281,7 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl, size_t allowance,
                             size_t *sent);
 int tls_get_alert_code(OSSL_RECORD_LAYER *rl);
 int tls_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio);
-int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,  int *rversion,
+int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
                     int *type, unsigned char **data, size_t *datalen,
                     uint16_t *epoch, unsigned char *seq_num);
 int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle);
