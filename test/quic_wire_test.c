@@ -80,7 +80,7 @@ static const OSSL_QUIC_ACK_RANGE encode_case_3_ranges[] = {
 static const OSSL_QUIC_FRAME_ACK encode_case_3_f = {
     (OSSL_QUIC_ACK_RANGE *)encode_case_3_ranges,
     OSSL_NELEM(encode_case_3_ranges),
-    OSSL_TIME_MS,
+    { OSSL_TIME_MS },
     60, 70, 80, 1
 };
 
@@ -123,7 +123,8 @@ static int encode_case_3_dec(PACKET *pkt, ossl_ssize_t fail)
                      encode_case_3_f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE)))
         return 0;
 
-    if (!TEST_uint64_t_eq(f.delay_time, encode_case_3_f.delay_time))
+    if (!TEST_uint64_t_eq(ossl_time2ticks(f.delay_time),
+                          ossl_time2ticks(encode_case_3_f.delay_time)))
         return 0;
 
     if (!TEST_true(f.ecn_present))

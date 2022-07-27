@@ -145,16 +145,16 @@ int ossl_event_queue_remove(OSSL_EVENT_QUEUE *queue, OSSL_EVENT *event)
 OSSL_TIME ossl_event_time_until(const OSSL_EVENT *event)
 {
     if (event == NULL)
-        return OSSL_TIME_INFINITY;
+        return ossl_time_infinite();
     return ossl_time_subtract(event->when, ossl_time_now());
 }
 
 OSSL_TIME ossl_event_queue_time_until_next(const OSSL_EVENT_QUEUE *queue)
 {
     if (queue == NULL)
-        return OSSL_TIME_INFINITY;
+        return ossl_time_infinite();
     if (ossl_pqueue_OSSL_EVENT_num(queue->now_events) > 0)
-        return OSSL_TIME_IMMEDIATE;
+        return ossl_time_zero();
     return ossl_event_time_until(ossl_pqueue_OSSL_EVENT_peek(queue->timed_events));
 }
 

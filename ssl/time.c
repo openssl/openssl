@@ -13,6 +13,8 @@
 
 OSSL_TIME ossl_time_now(void)
 {
+    OSSL_TIME r;
+
 #if defined(_WIN32)
     SYSTEMTIME st;
     union {
@@ -28,19 +30,20 @@ OSSL_TIME ossl_time_now(void)
 # else
     now.ul -= 116444736000000000UI64;
 # endif
-    return ((uint64_t)now.ul) * (OSSL_TIME_SECOND / 10000000);
+    r.t = ((uint64_t)now.ul) * (OSSL_TIME_SECOND / 10000000);
 #else
     struct timeval t;
 
     if (gettimeofday(&t, NULL) < 0) {
         ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
                        "calling gettimeofday()");
-        return 0;
+        return ossl_time_zero();
     }
     if (t.tv_sec <= 0)
-        return t.tv_usec <= 0 ? 0 : t.tv_usec * (OSSL_TIME_SECOND / 1000000);
-    return ((uint64_t)t.tv_sec * 1000000 + t.tv_usec)
-           * (OSSL_TIME_SECOND / 1000000);
+        r.t = t.tv_usec <= 0 ? 0 : t.tv_usec * (OSSL_TIME_SECOND / 1000000);
+    else
+        r.t = ((uint64_t)t.tv_sec * 1000000 + t.tv_usec)
+              * (OSSL_TIME_SECOND / 1000000);
 #endif
+    return r;
 }
-
