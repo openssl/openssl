@@ -86,7 +86,7 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
 }
 
 #ifndef OPENSSL_NO_COMP
-static int rlayer_allow_compression(OSSL_RECORD_LAYER *rl)
+static int tls_allow_compression(OSSL_RECORD_LAYER *rl)
 {
     if (rl->options & SSL_OP_NO_COMPRESSION)
         return 0;
@@ -95,7 +95,7 @@ static int rlayer_allow_compression(OSSL_RECORD_LAYER *rl)
 }
 #endif
 
-int rlayer_setup_read_buffer(OSSL_RECORD_LAYER *rl)
+int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
 {
     unsigned char *p;
     size_t len, align = 0, headerlen;
@@ -116,7 +116,7 @@ int rlayer_setup_read_buffer(OSSL_RECORD_LAYER *rl)
         len = SSL3_RT_MAX_PLAIN_LENGTH
             + SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 #ifndef OPENSSL_NO_COMP
-        if (rlayer_allow_compression(rl))
+        if (tls_allow_compression(rl))
             len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
         if (b->default_len > len)
@@ -137,7 +137,7 @@ int rlayer_setup_read_buffer(OSSL_RECORD_LAYER *rl)
     return 1;
 }
 
-static int rlayer_release_read_buffer(OSSL_RECORD_LAYER *rl)
+static int tls_release_read_buffer(OSSL_RECORD_LAYER *rl)
 {
     SSL3_BUFFER *b;
 
@@ -300,7 +300,7 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
             rb->left = left;
             if ((rl->mode & SSL_MODE_RELEASE_BUFFERS) != 0 && !rl->isdtls)
                 if (len + left == 0)
-                    rlayer_release_read_buffer(rl);
+                    tls_release_read_buffer(rl);
             return ret;
         }
         left += bioread;
@@ -428,7 +428,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     rr = rl->rrec;
     rbuf = &rl->rbuf;
     if (rbuf->buf == NULL) {
-        if (!rlayer_setup_read_buffer(rl)) {
+        if (!tls_setup_read_buffer(rl)) {
             /* RLAYERfatal() already called */
             return OSSL_RECORD_RETURN_FATAL;
         }
@@ -988,7 +988,7 @@ int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle)
     if (rl->curr_rec == rl->num_released
             && (rl->mode & SSL_MODE_RELEASE_BUFFERS) != 0
             && SSL3_BUFFER_get_left(&rl->rbuf) == 0)
-        rlayer_release_read_buffer(rl);
+        tls_release_read_buffer(rl);
 
     return OSSL_RECORD_RETURN_SUCCESS;
 }

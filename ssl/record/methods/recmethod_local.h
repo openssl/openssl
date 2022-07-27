@@ -293,4 +293,4 @@ void tls_set_max_pipelines(OSSL_RECORD_LAYER *rl, size_t max_pipelines);
 void tls_get_state(OSSL_RECORD_LAYER *rl, const char **shortstr,
                    const char **longstr);
 int tls_set_options(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options);
-int rlayer_setup_read_buffer(OSSL_RECORD_LAYER *rl);
+int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl);
