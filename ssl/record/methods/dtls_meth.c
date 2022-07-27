@@ -36,7 +36,7 @@ static int satsub64be(const unsigned char *v1, const unsigned char *v2)
         return (int)ret;
 }
 
-static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap)
+static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 {
     int cmp;
     unsigned int shift;
@@ -50,7 +50,7 @@ static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap)
     shift = -cmp;
     if (shift >= sizeof(bitmap->map) * 8)
         return 0;               /* stale, outside the window */
-    else if (bitmap->map & (1UL << shift))
+    else if (bitmap->map & ((uint64_t)1 << shift))
         return 0;               /* record previously received */
 
     SSL3_RECORD_set_seq_num(&rl->rrec[0], seq);
@@ -58,7 +58,7 @@ static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap)
 }
 
 static void dtls_record_bitmap_update(OSSL_RECORD_LAYER *rl,
-                                      DTLS1_BITMAP *bitmap)
+                                      DTLS_BITMAP *bitmap)
 {
     int cmp;
     unsigned int shift;
@@ -75,12 +75,12 @@ static void dtls_record_bitmap_update(OSSL_RECORD_LAYER *rl,
     } else {
         shift = -cmp;
         if (shift < sizeof(bitmap->map) * 8)
-            bitmap->map |= 1UL << shift;
+            bitmap->map |= (uint64_t)1 << shift;
     }
 }
 
-static DTLS1_BITMAP *dtls_get_bitmap(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rr,
-                                     unsigned int *is_next_epoch)
+static DTLS_BITMAP *dtls_get_bitmap(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rr,
+                                    unsigned int *is_next_epoch)
 {
     *is_next_epoch = 0;
 
@@ -108,7 +108,7 @@ static void dtls_set_in_init(OSSL_RECORD_LAYER *rl, int in_init)
     rl->in_init = in_init;
 }
 
-static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS1_BITMAP *bitmap)
+static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 {
     int i;
     int enc_err;
@@ -387,7 +387,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     SSL3_RECORD *rr;
     unsigned char *p = NULL;
     unsigned short version;
-    DTLS1_BITMAP *bitmap;
+    DTLS_BITMAP *bitmap;
     unsigned int is_next_epoch;
 
     rl->num_recs = 0;

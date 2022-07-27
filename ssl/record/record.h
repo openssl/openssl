@@ -92,13 +92,6 @@ typedef struct tls_record_st {
 #endif
 } TLS_RECORD;
 
-typedef struct dtls1_bitmap_st {
-    /* Track 32 packets on 32-bit systems and 64 - on 64-bit systems */
-    unsigned long map;
-    /* Max record number seen so far, 64-bit value in big-endian encoding */
-    unsigned char max_seq_num[SEQ_NUM_SIZE];
-} DTLS1_BITMAP;
-
 typedef struct record_pqueue_st {
     uint16_t epoch;
     struct pqueue_st *q;

@@ -13,6 +13,13 @@
 #include "../../ssl_local.h"
 #include "../record_local.h"
 
+typedef struct dtls_bitmap_st {
+    /* Track 64 packets */
+    uint64_t map;
+    /* Max record number seen so far, 64-bit value in big-endian encoding */
+    unsigned char max_seq_num[SEQ_NUM_SIZE];
+} DTLS_BITMAP;
+
 /* Protocol version specific function pointers */
 struct record_functions_st
 {
@@ -172,9 +179,9 @@ struct ossl_record_layer_st
     record_pqueue processed_rcds;
 
     /* records being received in the current epoch */
-    DTLS1_BITMAP bitmap;
+    DTLS_BITMAP bitmap;
     /* renegotiation starts a new set of sequence numbers */
-    DTLS1_BITMAP next_bitmap;
+    DTLS_BITMAP next_bitmap;
 
     /*
      * Whether we are currently in a hanshake or not. Only maintained for DTLS
