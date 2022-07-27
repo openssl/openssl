@@ -145,6 +145,7 @@
 # define DTLS_VERSION_LT(v1, v2) (dtls_ver_ordinal(v1) > dtls_ver_ordinal(v2))
 # define DTLS_VERSION_LE(v1, v2) (dtls_ver_ordinal(v1) >= dtls_ver_ordinal(v2))
 
+# define SSL_AD_NO_ALERT    -1
 
 /*
  * Define the Bitmasks for SSL_CIPHER.algorithms.

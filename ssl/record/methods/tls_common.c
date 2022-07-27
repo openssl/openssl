@@ -17,8 +17,6 @@
 #include "../record_local.h"
 #include "recmethod_local.h"
 
-# define SSL_AD_NO_ALERT    -1
-
 static void tls_int_free(OSSL_RECORD_LAYER *rl);
 
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
