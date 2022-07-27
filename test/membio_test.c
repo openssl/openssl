@@ -10,8 +10,6 @@
 #include <openssl/bio.h>
 #include "testutil.h"
 
-
-
 static int test_dgram(void)
 {
     BIO *bio = BIO_new(BIO_s_dgram_mem()), *rbio = NULL;
