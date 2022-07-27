@@ -197,7 +197,6 @@ static void clear_all_dgrams(BIO_BUF_MEM *bbm)
     bbm->dgrams = NULL;
 }
 
-
 static int mem_free(BIO *a)
 {
     BIO_BUF_MEM *bb;
