@@ -696,8 +696,10 @@ static const unsigned char encode_case_16_conn_id[] = {
 static const OSSL_QUIC_FRAME_NEW_CONN_ID encode_case_16_f = {
     0x1234,
     0x9781,
-    encode_case_16_conn_id,
-    sizeof(encode_case_16_conn_id),
+    {
+        0x4,
+        {0x33, 0x44, 0x55, 0x66}
+    },
     {
         0xde, 0x06, 0xcb, 0x76, 0x5d, 0xb1, 0xa7, 0x71,
         0x78, 0x09, 0xbb, 0xe8, 0x50, 0x19, 0x12, 0x9a
@@ -729,10 +731,10 @@ static int encode_case_16_dec(PACKET *pkt, ossl_ssize_t fail)
     if (!TEST_uint64_t_eq(f.retire_prior_to, 0x9781))
         return 0;
 
-    if (!TEST_uint64_t_eq(f.conn_id_len, sizeof(encode_case_16_conn_id)))
+    if (!TEST_uint64_t_eq(f.conn_id.id_len, sizeof(encode_case_16_conn_id)))
         return 0;
 
-    if (!TEST_mem_eq(f.conn_id, f.conn_id_len,
+    if (!TEST_mem_eq(f.conn_id.id, f.conn_id.id_len,
                      encode_case_16_conn_id, sizeof(encode_case_16_conn_id)))
         return 0;
 
