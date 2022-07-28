@@ -1234,7 +1234,7 @@ length.
 EVP_CIPHER_CTX_set_padding() always returns 1.
 
 EVP_CIPHER_get_iv_length() and EVP_CIPHER_CTX_get_iv_length() return the IV
-length or zero if the cipher does not use an IV.
+length, zero if the cipher does not use an IV and a negative value on error.
 
 EVP_CIPHER_CTX_get_tag_length() return the tag length or zero if the cipher
 does not use a tag.
