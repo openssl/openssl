@@ -897,6 +897,7 @@ static int test_EC_priv_pub(void)
     EVP_PKEY *params_and_keypair = NULL;
     BIGNUM *priv = NULL;
     int ret = 0;
+    unsigned char *encoded = NULL;
 
     /*
      * Setup the parameters for our pkey object. For our purposes they don't
@@ -1004,6 +1005,17 @@ static int test_EC_priv_pub(void)
         || !TEST_int_gt(EVP_PKEY_eq(params_and_keypair, params_and_pub), 0)
         || !TEST_int_gt(EVP_PKEY_eq(params_and_keypair, params_and_priv), 0))
         goto err;
+
+    /* Positive and negative testcase for EVP_PKEY_get1_encoded_public_key */
+    if (!TEST_int_gt(EVP_PKEY_get1_encoded_public_key(params_and_pub, &encoded), 0))
+        goto err;
+    OPENSSL_free(encoded);
+    encoded = NULL;
+    if (!TEST_int_eq(EVP_PKEY_get1_encoded_public_key(just_params, &encoded), 0)) {
+        OPENSSL_free(encoded);
+        encoded = NULL;
+        goto err;
+    }
 
     ret = 1;
  err:
