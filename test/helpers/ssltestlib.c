@@ -504,7 +504,7 @@ int mempacket_swap_recent(BIO *bio)
     if (numpkts <= 1)
         return 0;
 
-    /* Get the penulmitate packet */
+    /* Get the penultimate packet */
     thispkt = sk_MEMPACKET_value(ctx->pkts, numpkts - 2);
     if (thispkt == NULL)
         return 0;
