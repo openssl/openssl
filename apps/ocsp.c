@@ -136,7 +136,7 @@ const OPTIONS ocsp_options[] = {
      "Don't include any certificates in signed request"},
     {"badsig", OPT_BADSIG, '-',
         "Corrupt last byte of loaded OCSP response signature (for test)"},
-    {"CA", OPT_CA, '<', "CA certificate"},
+    {"CA", OPT_CA, '<', "CA certificates"},
     {"nmin", OPT_NMIN, 'p', "Number of minutes before next update"},
     {"nrequest", OPT_REQUEST, 'p',
      "Number of requests to accept (default unlimited)"},
@@ -230,7 +230,7 @@ int ocsp_main(int argc, char **argv)
     STACK_OF(X509) *sign_other = NULL, *verify_other = NULL, *rother = NULL;
     STACK_OF(X509) *issuers = NULL;
     X509 *issuer = NULL, *cert = NULL;
-    STACK_OF(X509) *rca_cert = NULL;
+    STACK_OF(X509) *rca_certs = NULL;
     EVP_MD *resp_certid_md = NULL;
     X509 *signer = NULL, *rsigner = NULL;
     X509_STORE *store = NULL;
@@ -597,7 +597,7 @@ int ocsp_main(int argc, char **argv)
             BIO_printf(bio_err, "Error loading responder certificate\n");
             goto end;
         }
-        if (!load_certs(rca_filename, 0, &rca_cert, NULL, "CA certificates"))
+        if (!load_certs(rca_filename, 0, &rca_certs, NULL, "CA certificates"))
             goto end;
         if (rcertfile != NULL) {
             if (!load_certs(rcertfile, 0, &rother, NULL,
@@ -615,7 +615,7 @@ int ocsp_main(int argc, char **argv)
     }
 
     if (ridx_filename != NULL
-        && (rkey == NULL || rsigner == NULL || rca_cert == NULL)) {
+        && (rkey == NULL || rsigner == NULL || rca_certs == NULL)) {
         BIO_printf(bio_err,
                    "Responder mode requires certificate, key, and CA.\n");
         goto end;
@@ -727,7 +727,7 @@ redo_accept:
     }
 
     if (rdb != NULL) {
-        make_ocsp_response(bio_err, &resp, req, rdb, rca_cert, rsigner, rkey,
+        make_ocsp_response(bio_err, &resp, req, rdb, rca_certs, rsigner, rkey,
                            rsign_md, rsign_sigopts, rother, rflags, nmin, ndays,
                            badsig, resp_certid_md);
         if (resp == NULL)
@@ -866,7 +866,7 @@ redo_accept:
     X509_free(cert);
     OSSL_STACK_OF_X509_free(issuers);
     X509_free(rsigner);
-    OSSL_STACK_OF_X509_free(rca_cert);
+    OSSL_STACK_OF_X509_free(rca_certs);
     free_index(rdb);
     BIO_free_all(cbio);
     BIO_free_all(acbio);
