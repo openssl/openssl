@@ -49,9 +49,6 @@ rsa3072_picnicl1full	sha512	rsa3072_picnicl1full
 picnic3l1	sha512	picnic3l1
 p256_picnic3l1	sha512	p256_picnic3l1
 rsa3072_picnic3l1	sha512	rsa3072_picnic3l1
-rainbowIclassic	sha512	rainbowIclassic
-p256_rainbowIclassic	sha512	p256_rainbowIclassic
-rsa3072_rainbowIclassic	sha512	rsa3072_rainbowIclassic
 rainbowVclassic	sha512	rainbowVclassic
 p521_rainbowVclassic	sha512	p521_rainbowVclassic
 sphincsharaka128frobust	sha512	sphincsharaka128frobust

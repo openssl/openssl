@@ -35,15 +35,6 @@
 | picnic3l3 **hybrid with** p384                    | 3.0.15                   |            3 |                    3 | 0xfe1f       | 1.3.6.1.4.1.311.89.2.1.25 |
 | picnic3l5                                         | 3.0.15                   |            3 |                    5 | 0xfe20       | 1.3.6.1.4.1.311.89.2.1.26 |
 | picnic3l5 **hybrid with** p521                    | 3.0.15                   |            3 |                    5 | 0xfe21       | 1.3.6.1.4.1.311.89.2.1.27 |
-| rainbowIclassic                                   | NIST Round 3 submission  |            3 |                    1 | 0xfe27       | 1.3.9999.5.1.1.1          |
-| rainbowIclassic **hybrid with** p256              | NIST Round 3 submission  |            3 |                    1 | 0xfe28       | 1.3.9999.5.1.2.1          |
-| rainbowIclassic **hybrid with** rsa3072           | NIST Round 3 submission  |            3 |                    1 | 0xfe29       | 1.3.9999.5.1.3.1          |
-| rainbowIcircumzenithal                            | NIST Round 3 submission  |            3 |                    1 | 0xfe30       | 1.3.9999.5.1.4.1          |
-| rainbowIcircumzenithal **hybrid with** p256       | NIST Round 3 submission  |            3 |                    1 | 0xfe31       | 1.3.9999.5.1.5.1          |
-| rainbowIcircumzenithal **hybrid with** rsa3072    | NIST Round 3 submission  |            3 |                    1 | 0xfe32       | 1.3.9999.5.1.6.1          |
-| rainbowIcompressed                                | NIST Round 3 submission  |            3 |                    1 | 0xfe33       | 1.3.9999.5.1.7.1          |
-| rainbowIcompressed **hybrid with** p256           | NIST Round 3 submission  |            3 |                    1 | 0xfe34       | 1.3.9999.5.1.8.1          |
-| rainbowIcompressed **hybrid with** rsa3072        | NIST Round 3 submission  |            3 |                    1 | 0xfe35       | 1.3.9999.5.1.9.1          |
 | rainbowIIIclassic                                 | NIST Round 3 submission  |            3 |                    3 | 0xfe36       | 1.3.9999.5.2.1.1          |
 | rainbowIIIclassic **hybrid with** p384            | NIST Round 3 submission  |            3 |                    3 | 0xfe37       | 1.3.9999.5.2.2.1          |
 | rainbowIIIcircumzenithal                          | NIST Round 3 submission  |            3 |                    3 | 0xfe38       | 1.3.9999.5.2.3.1          |

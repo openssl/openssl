@@ -622,53 +622,18 @@ sigs:
                     'oid': '1.3.6.1.4.1.311.89.2.1.27',
                     'code_point': '0xfe21'}]
   -
+    # NB: OIDs/code points used for Rainbow & not to be reused:
+    # 1.3.9999.5.1.1.1/0xfe27
+    # 1.3.9999.5.1.2.1/0xfe28
+    # 1.3.9999.5.1.3.1/0xfe29
+    # 1.3.9999.5.1.4.1/0xfe30
+    # 1.3.9999.5.1.5.1/0xfe31
+    # 1.3.9999.5.1.6.1/0xfe32
+    # 1.3.9999.5.1.7.1/0xfe33
+    # 1.3.9999.5.1.8.1/0xfe34
+    # 1.3.9999.5.1.9.1/0xfe35 
     family: 'Rainbow'
     variants:
-      -
-        name: 'rainbowIclassic'
-        pretty_name: 'Rainbow-I-Classic'
-        oqs_meth: 'OQS_SIG_alg_rainbow_I_classic'
-        oid: '1.3.9999.5.1.1.1'
-        code_point: '0xfe27'
-        enable: true
-        mix_with: [{'name': 'p256',
-                    'pretty_name': 'ECDSA p256',
-                    'oid': '1.3.9999.5.1.2.1',
-                    'code_point': '0xfe28'},
-                   {'name': 'rsa3072',
-                    'pretty_name': 'RSA3072',
-                    'oid': '1.3.9999.5.1.3.1',
-                    'code_point': '0xfe29'}]
-      -
-        name: 'rainbowIcircumzenithal'
-        pretty_name: 'Rainbow-I-Circumzenithal'
-        oqs_meth: 'OQS_SIG_alg_rainbow_I_circumzenithal'
-        oid: '1.3.9999.5.1.4.1'
-        code_point: '0xfe30'
-        enable: false
-        mix_with: [{'name': 'p256',
-                    'pretty_name': 'ECDSA p256',
-                    'oid': '1.3.9999.5.1.5.1',
-                    'code_point': '0xfe31'},
-                   {'name': 'rsa3072',
-                    'pretty_name': 'RSA3072',
-                    'oid': '1.3.9999.5.1.6.1',
-                    'code_point': '0xfe32'}]
-      -
-        name: 'rainbowIcompressed'
-        pretty_name: 'Rainbow-I-Compressed'
-        oqs_meth: 'OQS_SIG_alg_rainbow_I_compressed'
-        oid: '1.3.9999.5.1.7.1'
-        code_point: '0xfe33'
-        enable: false
-        mix_with: [{'name': 'p256',
-                    'pretty_name': 'ECDSA p256',
-                    'oid': '1.3.9999.5.1.8.1',
-                    'code_point': '0xfe34'},
-                   {'name': 'rsa3072',
-                    'pretty_name': 'RSA3072',
-                    'oid': '1.3.9999.5.1.9.1',
-                    'code_point': '0xfe35'}]
       -
         name: 'rainbowIIIclassic'
         pretty_name: 'Rainbow-III-Classic'

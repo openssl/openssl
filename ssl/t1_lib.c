@@ -983,9 +983,6 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_picnic3l1,
     TLSEXT_SIGALG_p256_picnic3l1,
     TLSEXT_SIGALG_rsa3072_picnic3l1,
-    TLSEXT_SIGALG_rainbowIclassic,
-    TLSEXT_SIGALG_p256_rainbowIclassic,
-    TLSEXT_SIGALG_rsa3072_rainbowIclassic,
     TLSEXT_SIGALG_rainbowVclassic,
     TLSEXT_SIGALG_p521_rainbowVclassic,
     TLSEXT_SIGALG_sphincsharaka128frobust,
@@ -1201,15 +1198,6 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_undef, NID_undef},
     {"rsa3072_picnic3l1", TLSEXT_SIGALG_rsa3072_picnic3l1,
      NID_undef, -1, EVP_PKEY_RSA3072_PICNIC3L1, SSL_PKEY_RSA3072_PICNIC3L1,
-     NID_undef, NID_undef},
-    {"rainbowIclassic", TLSEXT_SIGALG_rainbowIclassic,
-     NID_undef, -1, EVP_PKEY_RAINBOWICLASSIC, SSL_PKEY_RAINBOWICLASSIC,
-     NID_undef, NID_undef},
-    {"p256_rainbowIclassic", TLSEXT_SIGALG_p256_rainbowIclassic,
-     NID_undef, -1, EVP_PKEY_P256_RAINBOWICLASSIC, SSL_PKEY_P256_RAINBOWICLASSIC,
-     NID_undef, NID_undef},
-    {"rsa3072_rainbowIclassic", TLSEXT_SIGALG_rsa3072_rainbowIclassic,
-     NID_undef, -1, EVP_PKEY_RSA3072_RAINBOWICLASSIC, SSL_PKEY_RSA3072_RAINBOWICLASSIC,
      NID_undef, NID_undef},
     {"rainbowVclassic", TLSEXT_SIGALG_rainbowVclassic,
      NID_undef, -1, EVP_PKEY_RAINBOWVCLASSIC, SSL_PKEY_RAINBOWVCLASSIC,
@@ -1536,12 +1524,6 @@ static int sigalg_security_bits(const SIGALG_LOOKUP *lu)
         else if(lu->sigalg == TLSEXT_SIGALG_p256_picnic3l1)
             secbits = 128;
         else if(lu->sigalg == TLSEXT_SIGALG_rsa3072_picnic3l1)
-            secbits = 128;
-        else if(lu->sigalg == TLSEXT_SIGALG_rainbowIclassic)
-            secbits = 128;
-        else if(lu->sigalg == TLSEXT_SIGALG_p256_rainbowIclassic)
-            secbits = 128;
-        else if(lu->sigalg == TLSEXT_SIGALG_rsa3072_rainbowIclassic)
             secbits = 128;
         else if(lu->sigalg == TLSEXT_SIGALG_rainbowVclassic)
             secbits = 256;
@@ -3006,9 +2988,6 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_PICNIC3L1);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_PICNIC3L1);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_PICNIC3L1);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RAINBOWICLASSIC);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_RAINBOWICLASSIC);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_RAINBOWICLASSIC);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RAINBOWVCLASSIC);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P521_RAINBOWVCLASSIC);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_SPHINCSHARAKA128FROBUST);

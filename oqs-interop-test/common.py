@@ -34,7 +34,6 @@ signatures = [
     'falcon1024',
     'picnicl1full',
     'picnic3l1',
-    'rainbowIclassic',
     'rainbowVclassic',
     'sphincsharaka128frobust',
     'sphincssha256128frobust',

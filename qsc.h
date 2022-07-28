@@ -115,9 +115,6 @@
 	oid_add_from_string("picnic3l1", "1.3.6.1.4.1.311.89.2.1.21"); \
 	oid_add_from_string("p256_picnic3l1", "1.3.6.1.4.1.311.89.2.1.22"); \
 	oid_add_from_string("rsa3072_picnic3l1", "1.3.6.1.4.1.311.89.2.1.23"); \
-	oid_add_from_string("rainbowIclassic", "1.3.9999.5.1.1.1"); \
-	oid_add_from_string("p256_rainbowIclassic", "1.3.9999.5.1.2.1"); \
-	oid_add_from_string("rsa3072_rainbowIclassic", "1.3.9999.5.1.3.1"); \
 	oid_add_from_string("rainbowVclassic", "1.3.9999.5.3.1.1"); \
 	oid_add_from_string("p521_rainbowVclassic", "1.3.9999.5.3.2.1"); \
 	oid_add_from_string("sphincsharaka128frobust", "1.3.9999.6.1.1"); \
