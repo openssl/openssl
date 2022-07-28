@@ -455,7 +455,9 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
     return;
 # endif
 #elif defined(GHASH_ASM_ARM)
-    /* ARM */
+    /* ARM defaults */
+    ctx->gmult = gcm_gmult_4bit;
+    ctx->ghash = gcm_ghash_4bit;
 # ifdef PMULL_CAPABLE
     if (PMULL_CAPABLE) {
         ctx->ginit = (gcm_init_fn)gcm_init_v8;
@@ -471,7 +473,9 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
 # endif
     return;
 #elif defined(GHASH_ASM_SPARC)
-    /* SPARC */
+    /* SPARC defaults */
+    ctx->gmult = gcm_gmult_4bit;
+    ctx->ghash = gcm_ghash_4bit;
     if (OPENSSL_sparcv9cap_P[0] & SPARCV9_VIS3) {
         ctx->ginit = gcm_init_vis3;
         ctx->gmult = gcm_gmult_vis3;
@@ -479,7 +483,7 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
     }
     return;
 #elif defined(GHASH_ASM_PPC)
-    /* PowerPC */
+    /* PowerPC does not define GHASH_ASM; defaults set above */
     if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
         ctx->ginit = gcm_init_p8;
         ctx->gmult = gcm_gmult_p8;
@@ -487,15 +491,15 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
     }
     return;
 #elif defined(GHASH_ASM_RISCV) && __riscv_xlen == 64
-    /* RISCV */
+    /* RISCV defaults; gmult already set above */
     ctx->ghash = NULL;
     if (RISCV_HAS_ZBB() && RISCV_HAS_ZBC()) {
         ctx->ginit = gcm_init_clmul_rv64i_zbb_zbc;
         ctx->gmult = gcm_gmult_clmul_rv64i_zbb_zbc;
     }
     return;
-#endif
-#if defined(__s390__) || defined(__s390x__)
+#elif defined(GHASH_ASM)
+    /* all other architectures use the generic names */
     ctx->gmult = gcm_gmult_4bit;
     ctx->ghash = gcm_ghash_4bit;
     return;
