@@ -1379,8 +1379,12 @@ X509_STORE *setup_verify(const char *CAfile, int noCAfile,
         if (CAfile != NULL) {
             if (X509_LOOKUP_load_file_ex(lookup, CAfile, X509_FILETYPE_PEM,
                                          libctx, propq) <= 0) {
-                BIO_printf(bio_err, "Error loading file %s\n", CAfile);
-                goto end;
+                ERR_clear_error();
+                if (X509_LOOKUP_load_file_ex(lookup, CAfile, X509_FILETYPE_ASN1,
+                                             libctx, propq) <= 0) {
+                    BIO_printf(bio_err, "Error loading file %s\n", CAfile);
+                    goto end;
+                }
             }
         } else {
             X509_LOOKUP_load_file_ex(lookup, NULL, X509_FILETYPE_DEFAULT,
