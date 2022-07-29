@@ -32,8 +32,8 @@ CMS_SignerInfo_verify_content, CMS_SignerInfo_verify_ex
 CMS_verify() is very similar to L<PKCS7_verify(3)>. It verifies a
 B<CMS SignedData> structure contained in a structure of type B<CMS_ContentInfo>.
 I<cms> points to the B<CMS_ContentInfo> structure to verify.
-The optional I<certs> parameter refers to a set of certificates
-in which to search for signing certificates.
+The optional I<certs> parameter can provide a list of certificates,
+in which to search first for signer's certificates.
 It is also used
 as a source of untrusted intermediate CA certificates for chain building.
 I<cms> may contain extra untrusted CA certificates that may be used for
@@ -84,7 +84,7 @@ be SignedData. There must be at least one signature on the data and if
 the content is detached I<detached_data> cannot be NULL.
 
 An attempt is made to locate all the signing certificate(s), first looking in
-the I<certs> parameter (if it is not NULL) and then looking in any
+the I<certs> parameter (if it is not NULL). Then they are looked up in any
 certificates contained in the I<cms> structure unless B<CMS_NOINTERN> is set.
 If any signing certificate cannot be located the operation fails.
 

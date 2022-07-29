@@ -127,10 +127,6 @@ const OPTIONS smime_options[] = {
     { "nosigs", OPT_NOSIGS, '-', "Don't verify message signature" },
     { "noverify", OPT_NOVERIFY, '-', "Don't verify signers certificate" },
 
-    { "certfile", OPT_CERTFILE, '<',
-        "Extra signer and intermediate CA certificates to include when signing" },
-    { OPT_MORE_STR, 0, 0,
-        "or to use as preferred signer certs and for chain building when verifying" },
     { "recip", OPT_RECIP, '<', "Recipient certificate file for decryption" },
 
     OPT_SECTION("Email"),
@@ -141,6 +137,12 @@ const OPTIONS smime_options[] = {
     { "nosmimecap", OPT_NOSMIMECAP, '-', "Omit the SMIMECapabilities attribute" },
 
     OPT_SECTION("Certificate chain"),
+    { "certfile", OPT_CERTFILE, '<',
+        "Extra signer and intermediate CA certificates to include when signing" },
+    { OPT_MORE_STR, 0, 0,
+        "or to use as preferred signer certs and for chain building when verifying" },
+    { OPT_MORE_STR, 0, 0,
+        "or to use as preferred signer certificates when verifying" },
     { "CAfile", OPT_CAFILE, '<', "File in PEM format with trusted CA certs" },
     { "CApath", OPT_CAPATH, '/', "Dir with trusted CA cert files in PEM format" },
     { "CAstore", OPT_CASTORE, ':', "URI of store with trusted CA certs" },
@@ -151,8 +153,8 @@ const OPTIONS smime_options[] = {
     { "no-CAstore", OPT_NOCASTORE, '-',
         "Do not load certificates from the default certificates store" },
     { "nochain", OPT_NOCHAIN, '-',
-        "set PKCS7_NOCHAIN so certificates contained in the message are not used as untrusted CAs" },
-    { "crlfeol", OPT_CRLFEOL, '-', "Use CRLF as EOL termination instead of LF only" },
+        "Do not use certs contained in the message as untrusted CAs for chain building" },
+    { "crlfeol", OPT_CRLFEOL, '-', "Use CRLF as EOL termination (instead of LF only)" },
 
     OPT_R_OPTIONS,
     OPT_V_OPTIONS,
@@ -520,7 +522,7 @@ int smime_main(int argc, char **argv)
     }
 
     if (certfile != NULL) {
-        if (!load_certs(certfile, 0, &other, NULL, "certificates")) {
+        if (!load_certs(certfile, 0, &other, NULL, "extra certificates")) {
             ERR_print_errors(bio_err);
             goto end;
         }
