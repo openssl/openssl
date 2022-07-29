@@ -22,14 +22,17 @@ CMS_add0_crl, CMS_add1_crl, CMS_get1_crls
 
 CMS_add0_cert() and CMS_add1_cert() add certificate I<cert> to I<cms>.
 I<cms> must be of type signed data or (authenticated) enveloped data.
-For signed data, such a certificate can be used to fill in the signer
-certificate and may also be helpful for chain building in certificate validation.
+For signed data, such a certificate can be used when signing or verifying
+to fill in the signer certificate or to provide an extra CA certificate
+that may be needed for chain building in certificate validation.
 
 CMS_get1_certs() returns all certificates in I<cms>.
 
 CMS_add0_crl() and CMS_add1_crl() add CRL I<crl> to I<cms>.
 I<cms> must be of type signed data or (authenticated) enveloped data.
 For signed data, such a CRL may be used in certificate validation.
+It may be given both for inclusion when signing a CMS message
+and when verifying a signed CMS message.
 
 CMS_get1_crls() returns all CRLs in I<cms>.
 
