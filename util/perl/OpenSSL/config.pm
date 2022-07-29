@@ -784,6 +784,8 @@ EOF
       [ 'x86_64-.*-dragonfly.*',  { target => "BSD-x86_64" } ],
       [ 'amd64-.*-.*bsd.*',       { target => "BSD-x86_64" } ],
       [ 'arm64-.*-.*bsd.*',       { target => "BSD-aarch64" } ],
+      [ 'armv6-.*-.*bsd.*',       { target => "BSD-armv4" } ],
+      [ 'armv7-.*-.*bsd.*',       { target => "BSD-armv4" } ],
       [ '.*86.*-.*-.*bsd.*',
         sub {
             # mimic ld behaviour when it's looking for libc...
