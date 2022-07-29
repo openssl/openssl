@@ -202,8 +202,8 @@ can be specified using following options.
 
 =item B<-CAfile> I<file>
 
-Load the specified file which contains a certificate
-or several of them in case the input is in PEM or PKCS#12 format.
+Load the specified file which contains a trusted certificate in DER format
+or potentially several of them in case the input is in PEM format.
 PEM-encoded certificates may also have trust attributes set.
 
 =item B<-no-CAfile>
