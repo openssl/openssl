@@ -2148,6 +2148,32 @@ static int execute_test_session(int maxprot, int use_int_cache,
                 goto end;
         }
     }
+    /*
+     * Make a small cache, force out all other sessions but
+     * sess2, try to add sess1, which should succeed. Then
+     * make sure it's there by checking the owners. Despite
+     * the timeouts, sess1 should have kicked out sess2
+     */
+
+    /* Make sess1 expire before sess2 */
+    if (!TEST_long_gt(SSL_SESSION_set_time(sess1, 1000), 0)
+            || !TEST_long_gt(SSL_SESSION_set_timeout(sess1, 1000), 0)
+            || !TEST_long_gt(SSL_SESSION_set_time(sess2, 2000), 0)
+            || !TEST_long_gt(SSL_SESSION_set_timeout(sess2, 2000), 0))
+        goto end;
+
+    if (!TEST_long_ne(SSL_CTX_sess_set_cache_size(sctx, 1), 0))
+        goto end;
+
+    /* Don't care about results - cache should only be sess2 at end */
+    SSL_CTX_add_session(sctx, sess1);
+    SSL_CTX_add_session(sctx, sess2);
+
+    /* Now add sess1, and make sure it remains, despite timeout */
+    if (!TEST_true(SSL_CTX_add_session(sctx, sess1))
+            || !TEST_ptr(sess1->owner)
+            || !TEST_ptr_null(sess2->owner))
+        goto end;
 
     testresult = 1;
 
