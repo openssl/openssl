@@ -15,6 +15,7 @@
 #include "internal/core.h"
 #include "internal/property.h"
 #include "internal/provider.h"
+#include "internal/tsan_assist.h"
 #include "crypto/ctype.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
@@ -90,6 +91,7 @@ typedef struct {
     LHASH_OF(QUERY) *cache;
     size_t nelem;
     uint32_t seed;
+    unsigned char using_global_seed;
 } IMPL_CACHE_FLUSH;
 
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
@@ -649,13 +651,21 @@ static void impl_cache_flush_one_alg(ossl_uintmax_t idx, ALGORITHM *alg,
 static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
 {
     IMPL_CACHE_FLUSH state;
+    static TSAN_QUALIFIER uint32_t global_seed = 1;
 
     state.nelem = 0;
-    if ((state.seed = OPENSSL_rdtsc()) == 0)
-        state.seed = 1;
+    state.using_global_seed = 0;
+    if ((state.seed = OPENSSL_rdtsc()) == 0) {
+        /* If there is no timer available, seed another way */
+        state.using_global_seed = 1;
+        state.seed = tsan_load(&global_seed);
+    }
     store->cache_need_flush = 0;
     ossl_sa_ALGORITHM_doall_arg(store->algs, &impl_cache_flush_one_alg, &state);
     store->cache_nelem = state.nelem;
+    /* Without a timer, update the global seed */
+    if (state.using_global_seed)
+        tsan_add(&global_seed, state.seed);
 }
 
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
