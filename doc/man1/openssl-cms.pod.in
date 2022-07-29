@@ -483,9 +483,11 @@ used multiple times if more than one signer is required.
 
 =item B<-certfile> I<file>
 
-Allows additional certificates to be specified. When signing these will
-be included with the message. When verifying, these will be searched for
-signer certificates and will be used for chain building.
+Provide additional certificates.
+When signing, these will be included with the message
+to help chain building and to provide extra signer certificates.
+When verifying, these will be searched first for signer certificates
+and will be used for chain building.
 
 The input can be in PEM, DER, or PKCS#12 format.
 
@@ -505,9 +507,9 @@ the MIME type multipart/signed is used.
 
 =item B<-nocerts>
 
-When signing a message the signer's certificate is normally included
-with this option it is excluded. This will reduce the size of the
-signed message but the verifier must have a copy of the signers certificate
+When signing a message, the signer's certificate it normally
+included, but this option disables its inclusion. This will reduce the size of
+the signed message but the verifier must have a copy of the signers certificate
 available locally (passed using the B<-certfile> option for example).
 
 =item B<-noattr>
@@ -579,10 +581,11 @@ Do not verify the signers certificate of a signed message.
 
 =item B<-nointern>
 
-When verifying a message normally certificates (if any) included in
-the message are searched for the signing certificate. With this option
-only the certificates specified in the B<-certfile> option are used.
-The supplied certificates can still be used as untrusted CAs however.
+When verifying a message, normally certificates (if any) included in
+the message are searched for the signing certificate. With this option,
+only the certificates given with the B<-certfile> option are used.
+However, the certificates included in
+the message are still used for chain building as certificates of untrusted CAs.
 
 =item B<-cades>
 

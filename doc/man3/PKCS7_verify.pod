@@ -17,8 +17,8 @@ PKCS7_verify, PKCS7_get0_signers - verify a PKCS#7 signedData structure
 
 PKCS7_verify() is very similar to L<CMS_verify(3)>.
 It verifies a PKCS#7 signedData structure given in I<p7>.
-The optional I<certs> parameter refers to a set of certificates
-in which to search for signer's certificates.
+The optional I<certs> parameter can provide a list of certificates,
+in which to searched first for signer's certificates.
 It is also used
 as a source of untrusted intermediate CA certificates for chain building.
 I<p7> may contain extra untrusted CA certificates that may be used for
@@ -85,8 +85,7 @@ returned.
 If B<PKCS7_NOVERIFY> is set the signer's certificates are not chain verified.
 
 If B<PKCS7_NOCHAIN> is set then the certificates contained in the message are
-not used as untrusted CAs. This means that the whole verify chain (apart from
-the signer's certificates) must be contained in the trusted store.
+not used as untrusted CA certificates for chain building.
 
 If B<PKCS7_NOSIGS> is set then the signatures on the data are not checked.
 
