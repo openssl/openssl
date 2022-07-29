@@ -9,6 +9,7 @@
 
 #include "internal/quic_ackm.h"
 #include "internal/common.h"
+#include <assert.h>
 
 /*
  * TX Packet History
@@ -309,7 +310,7 @@ tx_pkt_history_remove(struct tx_pkt_history_st *h, uint64_t pkt_num)
  * the watermark must be immediately increased to exceed it (otherwise we would
  * keep reporting it in future ACK frames).
  *
- * The is in line with RFC 9000 s. 13.2.4's suggested strategy on when
+ * This is in line with RFC 9000 s. 13.2.4's suggested strategy on when
  * to advance the watermark:
  *
  *   "When a packet containing an ACK frame is sent, the Largest Acknowledged
@@ -504,7 +505,8 @@ static int pn_set_insert(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
     struct pn_set_item_st *x, *z, *xnext, *f, *fnext;
     QUIC_PN start = range->start, end = range->end;
 
-    OPENSSL_assert(start <= end);
+    if (!ossl_assert(start <= end))
+        return 0;
 
     if (s->head == NULL) {
         /* Nothing in the set yet, so just add this range. */
@@ -520,7 +522,8 @@ static int pn_set_insert(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
     }
 
     if (start > s->tail->range.end) {
-        /* Range is after the latest range in the set, so append.
+        /*
+         * Range is after the latest range in the set, so append.
          *
          * Note: The case where the range is before the earliest range in the
          * set is handled as a degenerate case of the final case below. See
@@ -672,7 +675,8 @@ static int pn_set_remove(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
     struct pn_set_item_st *z, *zprev, *y;
     QUIC_PN start = range->start, end = range->end;
 
-    OPENSSL_assert(start <= end);
+    if (!ossl_assert(start <= end))
+        return 0;
 
     /* Walk backwards since we will most often be removing at the end. */
     for (z = s->tail; z != NULL; z = zprev) {
@@ -704,7 +708,7 @@ static int pn_set_remove(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
              * not cover the entire range (as this would be caught by the case
              * above). Shorten the range.
              */
-            OPENSSL_assert(end < z->range.end);
+            assert(end < z->range.end);
             z->range.start = end + 1;
         } else if (z->range.end <= end) {
             /*
@@ -712,8 +716,8 @@ static int pn_set_remove(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
              * not cover the entire range (as this would be caught by the case
              * above). Shorten the range. We can also stop iterating.
              */
-            OPENSSL_assert(start > z->range.start);
-            OPENSSL_assert(start > 0);
+            assert(start > z->range.start);
+            assert(start > 0);
             z->range.end = start - 1;
             break;
         } else if (z->range.start <= start && z->range.end >= end) {
@@ -722,8 +726,8 @@ static int pn_set_remove(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
              * into two. Cases where a zero-length range would be created are
              * handled by the above cases.
              */
-            OPENSSL_assert(z->range.start < start);
-            OPENSSL_assert(z->range.end   > end);
+            assert(z->range.start < start);
+            assert(z->range.end   > end);
 
             y = OPENSSL_zalloc(sizeof(struct pn_set_item_st));
             if (y == NULL)
@@ -746,7 +750,7 @@ static int pn_set_remove(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
             break;
         } else if (pn_range_overlaps(&z->range, range)) {
             /* Partial overlap. All cases should be covered above. */
-            OPENSSL_assert(0);
+            assert(0);
         }
     }
 
@@ -954,7 +958,7 @@ struct ossl_ackm_st {
     void *ack_deadline_cb_arg;
 };
 
-static uint32_t min_u32(uint32_t x, uint32_t y)
+static ossl_inline uint32_t min_u32(uint32_t x, uint32_t y)
 {
     return x < y ? x : y;
 }
@@ -965,7 +969,7 @@ static uint32_t min_u32(uint32_t x, uint32_t y)
  */
 static struct tx_pkt_history_st *get_tx_history(OSSL_ACKM *ackm, int pkt_space)
 {
-    OPENSSL_assert(!ackm->discarded[pkt_space]);
+    assert(!ackm->discarded[pkt_space]);
 
     return &ackm->tx_history[pkt_space];
 }
@@ -976,7 +980,7 @@ static struct tx_pkt_history_st *get_tx_history(OSSL_ACKM *ackm, int pkt_space)
  */
 static struct rx_pkt_history_st *get_rx_history(OSSL_ACKM *ackm, int pkt_space)
 {
-    OPENSSL_assert(!ackm->discarded[pkt_space]);
+    assert(!ackm->discarded[pkt_space]);
 
     return &ackm->rx_history[pkt_space];
 }
@@ -984,7 +988,7 @@ static struct rx_pkt_history_st *get_rx_history(OSSL_ACKM *ackm, int pkt_space)
 /* Does the newly-acknowledged list contain any ack-eliciting packet? */
 static int ack_includes_ack_eliciting(OSSL_ACKM_TX_PKT *pkt)
 {
-    for (; pkt; pkt = pkt->anext)
+    for (; pkt != NULL; pkt = pkt->anext)
         if (pkt->is_ack_eliciting)
             return 1;
 
@@ -1024,7 +1028,7 @@ static OSSL_ACKM_TX_PKT *ackm_detect_and_remove_newly_acked_pkts(OSSL_ACKM *ackm
     struct tx_pkt_history_st *h;
     size_t ridx = 0;
 
-    OPENSSL_assert(ack->num_ack_ranges > 0);
+    assert(ack->num_ack_ranges > 0);
 
     /*
      * Our history list is a list of packets sorted in ascending order
@@ -1078,7 +1082,7 @@ static OSSL_ACKM_TX_PKT *ackm_detect_and_remove_newly_acked_pkts(OSSL_ACKM *ackm
                  * We have moved beyond this range, so advance to the next range
                  * and try matching again.
                  */
-                OPENSSL_assert(pkt->pkt_num < ack->ack_ranges[ridx].start);
+                assert(pkt->pkt_num < ack->ack_ranges[ridx].start);
                 continue;
             }
         }
@@ -1101,7 +1105,7 @@ static OSSL_ACKM_TX_PKT *ackm_detect_and_remove_lost_pkts(OSSL_ACKM *ackm,
     OSSL_RTT_INFO rtt;
     struct tx_pkt_history_st *h;
 
-    OPENSSL_assert(ackm->largest_acked_pkt[pkt_space] != QUIC_PN_INVALID);
+    assert(ackm->largest_acked_pkt[pkt_space] != QUIC_PN_INVALID);
 
     ossl_statm_get_rtt_info(ackm->statm, &rtt);
 
@@ -1123,7 +1127,7 @@ static OSSL_ACKM_TX_PKT *ackm_detect_and_remove_lost_pkts(OSSL_ACKM *ackm,
     pkt = h->head;
 
     for (; pkt != NULL; pkt = pnext) {
-        OPENSSL_assert(pkt_space == pkt->pkt_space);
+        assert(pkt_space == pkt->pkt_space);
 
         /*
          * Save prev value as it will be zeroed if we remove the packet from the
@@ -1194,7 +1198,7 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
 
     /* Anti-deadlock PTO starts from the current time. */
     if (ackm_ack_eliciting_bytes_in_flight(ackm) == 0) {
-        OPENSSL_assert(!ackm->peer_completed_addr_validation);
+        assert(!ackm->peer_completed_addr_validation);
 
         *space = ackm->discarded[QUIC_PN_SPACE_INITIAL]
                     ? QUIC_PN_SPACE_HANDSHAKE
@@ -1558,7 +1562,7 @@ int ossl_ackm_on_pkt_space_discarded(OSSL_ACKM *ackm, int pkt_space)
     OSSL_ACKM_TX_PKT *pkt, *pnext;
     uint64_t num_bytes_invalidated = 0;
 
-    OPENSSL_assert(pkt_space < QUIC_PN_SPACE_APP);
+    assert(pkt_space < QUIC_PN_SPACE_APP);
 
     if (ackm->discarded[pkt_space])
         return 0;
@@ -1625,14 +1629,14 @@ int ossl_ackm_on_timeout(OSSL_ACKM *ackm)
     if (earliest_loss_time != 0) {
         /* Time threshold loss detection. */
         lost_pkts = ackm_detect_and_remove_lost_pkts(ackm, pkt_space);
-        OPENSSL_assert(lost_pkts != NULL);
+        assert(lost_pkts != NULL);
         ackm_on_pkts_lost(ackm, pkt_space, lost_pkts);
         ackm_set_loss_detection_timer(ackm);
         return 1;
     }
 
     if (ackm_ack_eliciting_bytes_in_flight(ackm) == 0) {
-        OPENSSL_assert(!ackm->peer_completed_addr_validation);
+        assert(!ackm->peer_completed_addr_validation);
         /*
          * Client sends an anti-deadlock packet: Initial is padded to earn more
          * anti-amplification credit. A handshake packet proves address
