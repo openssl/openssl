@@ -90,9 +90,9 @@ int SSL_SRP_CTX_free(SSL *s)
  */
 int ssl_srp_ctx_init_intern(SSL_CONNECTION *s)
 {
-    SSL_CTX *ctx = SSL_CONNECTION_GET_CTX(s);
+    SSL_CTX *ctx;
 
-    if (s == NULL || ctx == NULL)
+    if (s == NULL || (ctx = SSL_CONNECTION_GET_CTX(s)) == NULL)
         return 0;
 
     memset(&s->srp_ctx, 0, sizeof(s->srp_ctx));
