@@ -43,13 +43,13 @@ during its initialisation:
  * current platform, or because OpenSSL is not built with the necessary
  * support).
  */
-int OSSL_set_max_threads(uint32_t max_threads);
+int OSSL_set_max_threads(uint64_t max_threads);
 
 /*
  * Get the maximum number of threads currently allowed to be used by the
  * thread pool. If thread pooling is disabled or not available, returns 0.
  */
-uint32_t OSSL_get_max_threads(void);
+uint64_t OSSL_get_max_threads(void);
 ```
 
 The maximum thread count is a limit, not a target. Threads will not be spawned
@@ -83,7 +83,8 @@ typedef struct ossl_thread_method_st {
 /*
  * Call OSSL_set_thread_method(&method, sizeof(method)) to set a new thread
  * method. This must be called before OpenSSL creates any threads (e.g. before
- * the call to `OSSL_set_max_threads`), else it fails.
+ * the call to `OSSL_set_max_threads`), else it fails. The application is
+ * responsible for synchronizing calls to this function.
  *
  * The length argument allows ABI compatibility to be preserved if methods are
  * added to the OSSL_THREAD_METHOD structure in future.
