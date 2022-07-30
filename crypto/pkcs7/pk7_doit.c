@@ -949,13 +949,15 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
     return 0;
 }
 
+/* This partly overlaps with PKCS7_verify(). It does not support flags. */
 int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
                      PKCS7 *p7, PKCS7_SIGNER_INFO *si)
 {
     PKCS7_ISSUER_AND_SERIAL *ias;
     int ret = 0, i;
-    STACK_OF(X509) *cert;
-    X509 *x509;
+    STACK_OF(X509) *untrusted;
+    STACK_OF(X509_CRL) *crls;
+    X509 *signer;
 
     if (p7 == NULL) {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_INVALID_NULL_POINTER);
@@ -968,26 +970,30 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
     }
 
     if (PKCS7_type_is_signed(p7)) {
-        cert = p7->d.sign->cert;
+        untrusted = p7->d.sign->cert;
+        crls = p7->d.sign->crl;
     } else if (PKCS7_type_is_signedAndEnveloped(p7)) {
-        cert = p7->d.signed_and_enveloped->cert;
+        untrusted = p7->d.signed_and_enveloped->cert;
+        crls = p7->d.signed_and_enveloped->crl;
     } else {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_WRONG_PKCS7_TYPE);
         goto err;
     }
+    X509_STORE_CTX_set0_crls(ctx, crls);
+
     /* XXXXXXXXXXXXXXXXXXXXXXX */
     ias = si->issuer_and_serial;
 
-    x509 = X509_find_by_issuer_and_serial(cert, ias->issuer, ias->serial);
+    signer = X509_find_by_issuer_and_serial(untrusted, ias->issuer, ias->serial);
 
-    /* were we able to find the cert in passed to us */
-    if (x509 == NULL) {
+    /* Were we able to find the signer certificate in passed to us? */
+    if (signer == NULL) {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNABLE_TO_FIND_CERTIFICATE);
         goto err;
     }
 
     /* Lets verify */
-    if (!X509_STORE_CTX_init(ctx, cert_store, x509, cert)) {
+    if (!X509_STORE_CTX_init(ctx, cert_store, signer, untrusted)) {
         ERR_raise(ERR_LIB_PKCS7, ERR_R_X509_LIB);
         goto err;
     }
@@ -998,13 +1004,13 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
         goto err;
     }
 
-    return PKCS7_signatureVerify(bio, p7, si, x509);
+    return PKCS7_signatureVerify(bio, p7, si, signer);
  err:
     return ret;
 }
 
 int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
-                          X509 *x509)
+                          X509 *signer)
 {
     ASN1_OCTET_STRING *os;
     EVP_MD_CTX *mdc_tmp, *mdc;
@@ -1111,7 +1117,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
     }
 
     os = si->enc_digest;
-    pkey = X509_get0_pubkey(x509);
+    pkey = X509_get0_pubkey(signer);
     if (pkey == NULL) {
         ret = -1;
         goto err;
