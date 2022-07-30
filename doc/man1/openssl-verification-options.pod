@@ -537,7 +537,7 @@ the subject certificate.
 
 Use a set of verification parameters, also known as verification method,
 identified by I<name>. The currently predefined methods are named C<ssl_client>,
-C<ssl_server>, C<smime_sign> with alias C<pkcs7>, C<code_sign>, and C<default>.
+C<ssl_server>, C<smime_sign> with alias C<pkcs7>, B<smime_encrypt>, C<code_sign>, and C<default>.
 These mimic the combinations of purpose and trust settings used in SSL/(D)TLS,
 CMS/PKCS7 (including S/MIME), and code signing.
 
