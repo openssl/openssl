@@ -60,7 +60,7 @@ static void readpkey(const char *contents, int size)
     BIO_free(b);
 }
 
-static void print(const char *what, struct timeval *tp)
+static void print_timeval(const char *what, struct timeval *tp)
 {
     printf("%s %d sec %d microsec\n", what, (int)tp->tv_sec, (int)tp->tv_usec);
 }
@@ -68,11 +68,11 @@ static void print(const char *what, struct timeval *tp)
 static void usage(void)
 {
     fprintf(stderr, "Usage: %s [flags] pem-file\n", prog);
-    fprintf(stderr, "Flags:\n");
+    fprintf(stderr, "Flags, with the default being '-wc':\n");
     fprintf(stderr, "  -c #  Repeat count\n");
     fprintf(stderr, "  -d    Debugging output (minimal)\n");
     fprintf(stderr, "  -w<T> What to load T is a single character:\n");
-    fprintf(stderr, "          c for cert (default)\n");
+    fprintf(stderr, "          c for cert\n");
     fprintf(stderr, "          p for private key\n");
     exit(EXIT_FAILURE);
 }
@@ -127,7 +127,7 @@ int main(int ac, char **av)
         perror(av[0]);
         exit(EXIT_FAILURE);
     }
-    contents = malloc(sb.st_size + 1);
+    contents = OPENSSL_malloc(sb.st_size + 1);
     if (contents == NULL) {
         perror("malloc");
         exit(EXIT_FAILURE);
@@ -143,7 +143,7 @@ int main(int ac, char **av)
         printf(">%s<\n", contents);
 
     /* Try to prep system cache, etc. */
-    for (i = 10; --i >= 0; ) {
+    for (i = 10; i > 0; i--) {
         switch (what) {
         case 'c':
             readx509(contents, (int)sb.st_size);
@@ -162,7 +162,7 @@ int main(int ac, char **av)
         perror("start");
         exit(EXIT_FAILURE);
     }
-    for (i = count; --i >= 0; ) {
+    for (i = count; i > 0; i--) {
         switch (what) {
         case 'c':
             readx509(contents, (int)sb.st_size);
@@ -173,21 +173,23 @@ int main(int ac, char **av)
         }
     }
     if (getrusage(RUSAGE_SELF, &end) < 0) {
-        perror("end");
+        perror("getrusage");
         exit(EXIT_FAILURE);
     }
     if (gettimeofday(&e_end, NULL) < 0) {
-        perror("end");
+        perror("gettimeofday");
         exit(EXIT_FAILURE);
     }
 
     timersub(&end.ru_utime, &start.ru_stime, &elapsed.ru_stime);
     timersub(&end.ru_utime, &start.ru_utime, &elapsed.ru_utime);
     timersub(&e_end, &e_start, &e_elapsed);
-    print("user     ", &elapsed.ru_utime);
-    print("sys      ", &elapsed.ru_stime);
+    print_timeval("user     ", &elapsed.ru_utime);
+    print_timeval("sys      ", &elapsed.ru_stime);
     if (debug)
-        print("elapsed??", &e_elapsed);
+        print_timeval("elapsed??", &e_elapsed);
+
+    OPENSSL_free(contents);
     return EXIT_SUCCESS;
 #else
     fprintf(stderr, "This tool is not supported on Windows\n");
