@@ -30,12 +30,12 @@ static void readx509(const char *contents, int size)
 
     if (b == NULL) {
         ERR_print_errors_fp(stderr);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     PEM_read_bio_X509(b, &x, 0, NULL);
     if (x == NULL) {
         ERR_print_errors_fp(stderr);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     X509_free(x);
     BIO_free(b);
@@ -48,12 +48,12 @@ static void readpkey(const char *contents, int size)
 
     if (b == NULL) {
         ERR_print_errors_fp(stderr);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     pkey = PEM_read_bio_PrivateKey(b, NULL, NULL, NULL);
     if (pkey == NULL) {
         ERR_print_errors_fp(stderr);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     EVP_PKEY_free(pkey);
@@ -74,7 +74,7 @@ static void usage(void)
     fprintf(stderr, "  -w<T> What to load T is a single character:\n");
     fprintf(stderr, "          c for cert (default)\n");
     fprintf(stderr, "          p for private key\n");
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 #endif
 
@@ -125,17 +125,17 @@ int main(int ac, char **av)
         usage();
     if (stat(av[0], &sb) < 0) {
         perror(av[0]);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     contents = malloc(sb.st_size + 1);
     if (contents == NULL) {
         perror("malloc");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     fp = fopen(av[0], "r");
     if ((long)fread(contents, 1, sb.st_size, fp) != sb.st_size) {
         perror("fread");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     contents[sb.st_size] = '\0';
     fclose(fp);
@@ -156,11 +156,11 @@ int main(int ac, char **av)
 
     if (gettimeofday(&e_start, NULL) < 0) {
         perror("elapsed start");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     if (getrusage(RUSAGE_SELF, &start) < 0) {
         perror("start");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     for (i = count; --i >= 0; ) {
         switch (what) {
@@ -174,11 +174,11 @@ int main(int ac, char **av)
     }
     if (getrusage(RUSAGE_SELF, &end) < 0) {
         perror("end");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     if (gettimeofday(&e_end, NULL) < 0) {
         perror("end");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     timersub(&end.ru_utime, &start.ru_stime, &elapsed.ru_stime);
@@ -188,9 +188,9 @@ int main(int ac, char **av)
     print("sys      ", &elapsed.ru_stime);
     if (debug)
         print("elapsed??", &e_elapsed);
-    return 0;
+    return EXIT_SUCCESS;
 #else
     fprintf(stderr, "This tool is not supported on Windows\n");
-    exit(1);
+    exit(EXIT_FAILURE);
 #endif
 }
