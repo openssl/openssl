@@ -2327,8 +2327,6 @@ void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
 int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
                         STACK_OF(X509) *chain)
 {
-    int ret = 1;
-
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
@@ -2426,19 +2424,13 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     }
 
     /* Inherit callbacks and flags from X509_STORE if not set use defaults. */
-    if (store != NULL)
-        ret = X509_VERIFY_PARAM_inherit(ctx->param, store->param);
-    else
+    if (store == NULL)
         ctx->param->inh_flags |= X509_VP_FLAG_DEFAULT | X509_VP_FLAG_ONCE;
-
-    if (ret)
-        ret = X509_VERIFY_PARAM_inherit(ctx->param,
-                                        X509_VERIFY_PARAM_lookup("default"));
-
-    if (ret == 0) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    else if (X509_VERIFY_PARAM_inherit(ctx->param, store->param) == 0)
         goto err;
-    }
+
+    if (!X509_STORE_CTX_set_default(ctx, "default"))
+        goto err;
 
     /*
      * XXX: For now, continue to inherit trust from VPM, but infer from the
@@ -2640,8 +2632,10 @@ int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name)
     const X509_VERIFY_PARAM *param;
 
     param = X509_VERIFY_PARAM_lookup(name);
-    if (param == NULL)
+    if (param == NULL) {
+        ERR_raise_data(ERR_LIB_X509, X509_R_UNKNOWN_PURPOSE_ID, "name=%s", name);
         return 0;
+    }
     return X509_VERIFY_PARAM_inherit(ctx->param, param);
 }
 
