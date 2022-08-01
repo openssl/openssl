@@ -51,7 +51,7 @@ static size_t dummy_get_send_allowance(OSSL_CC_DATA *cc,
 
 static size_t dummy_get_bytes_in_flight_max(OSSL_CC_DATA *cc)
 {
-    return INT_MAX;
+    return SIZE_MAX;
 }
 
 static int dummy_on_data_sent(OSSL_CC_DATA *cc, size_t num_retransmittable_bytes)

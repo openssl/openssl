@@ -58,7 +58,7 @@ static void helper_destroy(struct helper *h)
     size_t i;
 
     if (h->ackm != NULL) {
-        ossl_ackm_delete(h->ackm);
+        ossl_ackm_free(h->ackm);
         h->ackm = NULL;
     }
 
@@ -842,7 +842,9 @@ static int test_rx_ack_actual(int tidx, int space)
     OSSL_QUIC_ACK_RANGE rx_ack_range = {0};
     struct pkt_info *pkts = NULL;
     OSSL_ACKM_TX_PKT *txs = NULL, *tx;
-    OSSL_TIME ack_deadline[QUIC_PN_SPACE_NUM] = {0};
+    OSSL_TIME ack_deadline[QUIC_PN_SPACE_NUM] = {
+        OSSL_TIME_INFINITY, OSSL_TIME_INFINITY, OSSL_TIME_INFINITY
+    };
 
     /* Initialise ACK manager. */
     if (!TEST_int_eq(helper_init(&h, 0), 1))
@@ -872,7 +874,6 @@ static int test_rx_ack_actual(int tidx, int space)
     /* Run script. */
     for (s = script; s->kind != RX_OPK_END; ++s) {
         fake_time += s->time_advance;
-
         switch (s->kind) {
         case RX_OPK_PKT:
             for (i = 0; i < s->num_pn; ++i) {
@@ -910,18 +911,19 @@ static int test_rx_ack_actual(int tidx, int space)
                              s->expect_desired))
                 goto err;
 
-            if (!TEST_int_eq(ossl_ackm_get_ack_deadline(h.ackm, space)
-                                != OSSL_TIME_ZERO, s->expect_deadline))
+            if (!TEST_int_eq(!ossl_time_is_infinity(ossl_ackm_get_ack_deadline(h.ackm, space))
+                             && !ossl_time_is_zero(ossl_ackm_get_ack_deadline(h.ackm, space)),
+                             s->expect_deadline))
                 goto err;
 
             for (i = 0; i < QUIC_PN_SPACE_NUM; ++i) {
                 if (i != (size_t)space
                         && !TEST_true(ossl_ackm_get_ack_deadline(h.ackm, i)
-                                          == OSSL_TIME_ZERO))
+                                          == OSSL_TIME_INFINITY))
                     goto err;
 
                 if (!TEST_true(ossl_ackm_get_ack_deadline(h.ackm, i)
-                                    == ack_deadline[i]))
+                               == ack_deadline[i]))
                     goto err;
             }
 

@@ -134,7 +134,7 @@ typedef struct ossl_ackm_tx_pkt_st {
     /* The packet number of the transmitted packet. */
     QUIC_PN pkt_num;
 
-    /* THe number of bytes in the packet which was sent. */
+    /* The number of bytes in the packet which was sent. */
     size_t num_bytes;
 
     /* The time at which the packet was sent. */
@@ -340,7 +340,7 @@ obtained.
 
 This returns a deadline after which `ossl_ackm_on_timeout` should be called.
 
-If it is `OSSL_TIME_NEVER`, no timeout is currently active.
+If it is `OSSL_TIME_INFINITY`, no timeout is currently active.
 
 The value returned by this function may change after any call to any of the
 event functions above is made.
@@ -378,7 +378,7 @@ const OSSL_ACKM_ACK *ossl_ackm_get_ack_frame(OSSL_ACKM *ackm, int pkt_space);
 ### Is ACK Desired
 
 This returns 1 if the ACK manager thinks an ACK frame ought to be generated and
-sent at this time. `ossl_ackm_get_ack_frrame` will always provide an ACK frame
+sent at this time. `ossl_ackm_get_ack_frame` will always provide an ACK frame
 whether or not this returns 1, so it is suggested that you call this function
 first to determine whether you need to generate an ACK frame.
 
@@ -400,8 +400,9 @@ packets do not arrive, an ACK frame must be generated anyway within a certain
 amount of time.
 
 This function returns the deadline at which the return value of
-`ossl_ackm_is_ack_desired` will change to 1, or `OSSL_TIME_ZERO`, which means
-that no deadline is currently applicable.
+`ossl_ackm_is_ack_desired` will change to 1, or `OSSL_TIME_INFINITY`, which
+means that no deadline is currently applicable. If the deadline has already
+passed, it may either return that deadline or `OSSL_TIME_ZERO`.
 
 ```c
 OSSL_TIME ossl_ackm_get_ack_deadline(OSSL_ACKM *ackm, int pkt_space);
@@ -426,6 +427,10 @@ of the RFC.
 The returrn value of this function transitions from 1 to 0 for a given PN once
 that PN is passed to ossl_ackm_on_rx_packet, thus this functiion must be used
 before calling `ossl_ackm_on_rx_packet`.
+
+```
+int ossl_ackm_is_rx_pn_processable(OSSL_ACKM *ackm, QUIC_PN pn, int pkt_space);
+```
 
 ### Get Probe Packet
 

@@ -98,7 +98,7 @@ tx_pkt_history_destroy(struct tx_pkt_history_st *h)
 
 static int
 tx_pkt_history_add_actual(struct tx_pkt_history_st *h,
-                             OSSL_ACKM_TX_PKT *pkt)
+                          OSSL_ACKM_TX_PKT *pkt)
 {
     OSSL_ACKM_TX_PKT *existing;
 
@@ -131,7 +131,7 @@ tx_pkt_history_add_actual(struct tx_pkt_history_st *h,
 /* Adds a packet information structure to the history list. */
 static int
 tx_pkt_history_add(struct tx_pkt_history_st *h,
-                      OSSL_ACKM_TX_PKT *pkt)
+                   OSSL_ACKM_TX_PKT *pkt)
 {
     if (!ossl_assert(pkt->pkt_num >= h->watermark))
         return 0;
@@ -238,7 +238,7 @@ tx_pkt_history_remove(struct tx_pkt_history_st *h, uint64_t pkt_num)
  *     (so if we receive such a PN, it can be processed)
  *
  *   - We have processed this PN but it has not yet been provably ACKed
- *     (and should therefore be any future ACK frame generated;
+ *     (and should therefore be in any future ACK frame generated;
  *      if we receive such a PN again, it must be ignored)
  *
  *   - We have processed this PN and it has been provably ACKed
@@ -682,7 +682,7 @@ static int pn_set_remove(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
     for (z = s->tail; z != NULL; z = zprev) {
         zprev = z->prev;
 
-        if (z->range.end < start)
+        if (start > z->range.end)
             /* No overlapping ranges can exist beyond this point, so stop. */
             break;
 
@@ -702,7 +702,7 @@ static int pn_set_remove(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
 
             OPENSSL_free(z);
             --s->num_ranges;
-        } else if (z->range.start >= start) {
+        } else if (start <= z->range.start) {
             /*
              * The range being removed includes start of this range, but does
              * not cover the entire range (as this would be caught by the case
@@ -710,7 +710,7 @@ static int pn_set_remove(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
              */
             assert(end < z->range.end);
             z->range.start = end + 1;
-        } else if (z->range.end <= end) {
+        } else if (end >= z->range.end) {
             /*
              * The range being removed includes the end of this range, but does
              * not cover the entire range (as this would be caught by the case
@@ -720,15 +720,12 @@ static int pn_set_remove(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
             assert(start > 0);
             z->range.end = start - 1;
             break;
-        } else if (z->range.start <= start && z->range.end >= end) {
+        } else if (start > z->range.start && end < z->range.end) {
             /*
              * The range being removed falls entirely in this range, so cut it
              * into two. Cases where a zero-length range would be created are
              * handled by the above cases.
              */
-            assert(z->range.start < start);
-            assert(z->range.end   > end);
-
             y = OPENSSL_zalloc(sizeof(struct pn_set_item_st));
             if (y == NULL)
                 return 0;
@@ -748,9 +745,9 @@ static int pn_set_remove(struct pn_set_st *s, const OSSL_QUIC_ACK_RANGE *range)
 
             ++s->num_ranges;
             break;
-        } else if (pn_range_overlaps(&z->range, range)) {
-            /* Partial overlap. All cases should be covered above. */
-            assert(0);
+        } else {
+            /* Assert no partial overlap; all cases should be covered above. */
+            assert(!pn_range_overlaps(&z->range, range));
         }
     }
 
@@ -1141,7 +1138,7 @@ static OSSL_ACKM_TX_PKT *ackm_detect_and_remove_lost_pkts(OSSL_ACKM *ackm,
         /*
          * Mark packet as lost, or set time when it should be marked.
          */
-        if (pkt->time <= lost_send_time
+        if (ossl_time_compare(pkt->time, lost_send_time) <= 0
                 || ackm->largest_acked_pkt[pkt_space]
                 >= pkt->pkt_num + K_PKT_THRESHOLD) {
             tx_pkt_history_remove(h, pkt->pkt_num);
@@ -1150,7 +1147,7 @@ static OSSL_ACKM_TX_PKT *ackm_detect_and_remove_lost_pkts(OSSL_ACKM *ackm,
             fixup = &pkt->lnext;
             *fixup = NULL;
         } else {
-            if (ackm->loss_time[pkt_space] == 0)
+            if (ossl_time_is_zero(ackm->loss_time[pkt_space]))
                 ackm->loss_time[pkt_space] =
                     ossl_time_add(pkt->time, loss_delay);
             else
@@ -1169,7 +1166,8 @@ static OSSL_TIME ackm_get_loss_time_and_space(OSSL_ACKM *ackm, int *pspace)
     int i, space = QUIC_PN_SPACE_INITIAL;
 
     for (i = space + 1; i < QUIC_PN_SPACE_NUM; ++i)
-        if (time == OSSL_TIME_ZERO || ackm->loss_time[i] < time) {
+        if (ossl_time_is_zero(time)
+            || ossl_time_compare(ackm->loss_time[i], time) == -1) {
             time    = ackm->loss_time[i];
             space   = i;
         }
@@ -1216,7 +1214,7 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
                 break;
 
             /* Include max_ack_delay and backoff for app data. */
-            if (rtt.max_ack_delay != OSSL_TIME_INFINITY)
+            if (!ossl_time_is_infinity(rtt.max_ack_delay))
                 duration
                     = ossl_time_add(duration,
                                     ossl_time_multiply(rtt.max_ack_delay,
@@ -1251,7 +1249,7 @@ static int ackm_set_loss_detection_timer(OSSL_ACKM *ackm)
     OSSL_TIME earliest_loss_time, timeout;
 
     earliest_loss_time = ackm_get_loss_time_and_space(ackm, &space);
-    if (earliest_loss_time != OSSL_TIME_ZERO) {
+    if (!ossl_time_is_zero(earliest_loss_time)) {
         /* Time threshold loss detection. */
         ackm_set_loss_detection_timer_actual(ackm, earliest_loss_time);
         return 1;
@@ -1375,6 +1373,7 @@ OSSL_ACKM *ossl_ackm_new(OSSL_TIME (*now)(void *arg),
 
     for (i = 0; i < (int)OSSL_NELEM(ackm->tx_history); ++i) {
         ackm->largest_acked_pkt[i] = QUIC_PN_INVALID;
+        ackm->rx_ack_flush_deadline[i] = OSSL_TIME_INFINITY;
         if (tx_pkt_history_init(&ackm->tx_history[i]) < 1)
             goto err;
     }
@@ -1397,7 +1396,7 @@ err:
     return NULL;
 }
 
-void ossl_ackm_delete(OSSL_ACKM *ackm)
+void ossl_ackm_free(OSSL_ACKM *ackm)
 {
     size_t i;
 
@@ -1418,7 +1417,7 @@ int ossl_ackm_on_tx_packet(OSSL_ACKM *ackm, OSSL_ACKM_TX_PKT *pkt)
     struct tx_pkt_history_st *h = get_tx_history(ackm, pkt->pkt_space);
 
     /* Time must be set. */
-    if (pkt->time == OSSL_TIME_ZERO)
+    if (ossl_time_is_zero(pkt->time))
         return 0;
 
     /* Must have non-zero number of bytes. */
@@ -1520,7 +1519,7 @@ int ossl_ackm_on_rx_ack_frame(OSSL_ACKM *ackm, const OSSL_QUIC_FRAME_ACK *ack,
     if (na_pkts->pkt_num == ack->ack_ranges[0].end &&
         ack_includes_ack_eliciting(na_pkts)) {
         OSSL_TIME now = ackm->now(ackm->now_arg), ack_delay;
-        if (ackm->first_rtt_sample == OSSL_TIME_ZERO)
+        if (ossl_time_is_zero(ackm->first_rtt_sample))
             ackm->first_rtt_sample = now;
 
         /* Enforce maximum ACK delay. */
@@ -1713,9 +1712,9 @@ int ossl_ackm_get_largest_unacked(OSSL_ACKM *ackm, int pkt_space, QUIC_PN *pn)
 int ossl_ackm_is_ack_desired(OSSL_ACKM *ackm, int pkt_space)
 {
     return ackm->rx_ack_desired[pkt_space]
-        || (ackm->rx_ack_flush_deadline[pkt_space] != OSSL_TIME_ZERO
-            && ackm->now(ackm->now_arg)
-               >= ackm->rx_ack_flush_deadline[pkt_space]);
+        || (!ossl_time_is_infinity(ackm->rx_ack_flush_deadline[pkt_space])
+            && ossl_time_compare(ackm->now(ackm->now_arg),
+                                 ackm->rx_ack_flush_deadline[pkt_space]) >= 0);
 }
 
 /*
@@ -1794,7 +1793,7 @@ static void ackm_queue_ack(OSSL_ACKM *ackm, int pkt_space)
     ackm->rx_ack_desired[pkt_space] = 1;
 
     /* Cancel deadline. */
-    ackm_set_flush_deadline(ackm, pkt_space, OSSL_TIME_ZERO);
+    ackm_set_flush_deadline(ackm, pkt_space, OSSL_TIME_INFINITY);
 }
 
 static void ackm_on_rx_ack_eliciting(OSSL_ACKM *ackm,
@@ -1843,7 +1842,7 @@ static void ackm_on_rx_ack_eliciting(OSSL_ACKM *ackm,
      *
      * Update the ACK flush deadline.
      */
-    if (ackm->rx_ack_flush_deadline[pkt_space] == OSSL_TIME_ZERO)
+    if (ossl_time_is_infinity(ackm->rx_ack_flush_deadline[pkt_space]))
         ackm_set_flush_deadline(ackm, pkt_space,
                                 ossl_time_add(rx_time, MAX_ACK_DELAY));
     else
@@ -1939,7 +1938,7 @@ const OSSL_QUIC_FRAME_ACK *ossl_ackm_get_ack_frame(OSSL_ACKM *ackm,
     ack->ack_ranges        = ackm->ack_ranges[pkt_space];
     ack->num_ack_ranges    = ackm_fill_rx_ack_ranges(ackm, pkt_space);
 
-    if (ackm->rx_largest_time[pkt_space] != OSSL_TIME_ZERO
+    if (!ossl_time_is_zero(ackm->rx_largest_time[pkt_space])
             && now > ackm->rx_largest_time[pkt_space]
             && pkt_space == QUIC_PN_SPACE_APP)
         ack->delay_time =
@@ -1956,7 +1955,7 @@ const OSSL_QUIC_FRAME_ACK *ossl_ackm_get_ack_frame(OSSL_ACKM *ackm,
 
     ackm->rx_ack_generated[pkt_space]       = 1;
     ackm->rx_ack_desired[pkt_space]         = 0;
-    ackm_set_flush_deadline(ackm, pkt_space, OSSL_TIME_ZERO);
+    ackm_set_flush_deadline(ackm, pkt_space, OSSL_TIME_INFINITY);
     return ack;
 }
 
@@ -1964,7 +1963,7 @@ const OSSL_QUIC_FRAME_ACK *ossl_ackm_get_ack_frame(OSSL_ACKM *ackm,
 OSSL_TIME ossl_ackm_get_ack_deadline(OSSL_ACKM *ackm, int pkt_space)
 {
     if (ackm->rx_ack_desired[pkt_space])
-        /* Already desired, deadline is moot. */
+        /* Already desired, deadline is now. */
         return OSSL_TIME_ZERO;
 
     return ackm->rx_ack_flush_deadline[pkt_space];
