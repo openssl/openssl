@@ -2715,6 +2715,10 @@ DEPEND[html/man3/X509_REQ_get_attr.html]=man3/X509_REQ_get_attr.pod
 GENERATE[html/man3/X509_REQ_get_attr.html]=man3/X509_REQ_get_attr.pod
 DEPEND[man/man3/X509_REQ_get_attr.3]=man3/X509_REQ_get_attr.pod
 GENERATE[man/man3/X509_REQ_get_attr.3]=man3/X509_REQ_get_attr.pod
+DEPEND[html/man3/X509_REQ_get_extensions.html]=man3/X509_REQ_get_extensions.pod
+GENERATE[html/man3/X509_REQ_get_extensions.html]=man3/X509_REQ_get_extensions.pod
+DEPEND[man/man3/X509_REQ_get_extensions.3]=man3/X509_REQ_get_extensions.pod
+GENERATE[man/man3/X509_REQ_get_extensions.3]=man3/X509_REQ_get_extensions.pod
 DEPEND[html/man3/X509_SIG_get0.html]=man3/X509_SIG_get0.pod
 GENERATE[html/man3/X509_SIG_get0.html]=man3/X509_SIG_get0.pod
 DEPEND[man/man3/X509_SIG_get0.3]=man3/X509_SIG_get0.pod
@@ -3458,6 +3462,7 @@ html/man3/X509_NAME_get_index_by_NID.html \
 html/man3/X509_NAME_print_ex.html \
 html/man3/X509_PUBKEY_new.html \
 html/man3/X509_REQ_get_attr.html \
+html/man3/X509_REQ_get_extensions.html \
 html/man3/X509_SIG_get0.html \
 html/man3/X509_STORE_CTX_get_error.html \
 html/man3/X509_STORE_CTX_new.html \
@@ -4065,6 +4070,7 @@ man/man3/X509_NAME_get_index_by_NID.3 \
 man/man3/X509_NAME_print_ex.3 \
 man/man3/X509_PUBKEY_new.3 \
 man/man3/X509_REQ_get_attr.3 \
+man/man3/X509_REQ_get_extensions.3 \
 man/man3/X509_SIG_get0.3 \
 man/man3/X509_STORE_CTX_get_error.3 \
 man/man3/X509_STORE_CTX_new.3 \
