@@ -31,6 +31,7 @@
 #include "crmf_local.h"
 #include "internal/constant_time.h"
 #include "internal/sizes.h"
+#include "crypto/x509.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/crmf.h>
@@ -370,11 +371,16 @@ static int create_popo_signature(OSSL_CRMF_POPOSIGNINGKEY *ps,
                                  OSSL_LIB_CTX *libctx, const char *propq)
 {
     char name[80] = "";
+    EVP_PKEY *pub;
 
     if (ps == NULL || cr == NULL || pkey == NULL) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
+    pub = X509_PUBKEY_get0(cr->certTemplate->publicKey);
+    if (!ossl_x509_check_private_key(pub, pkey))
+        return 0;
+
     if (ps->poposkInput != NULL) {
         /* We do not support cases 1+2 defined in RFC 4211, section 4.1 */
         ERR_raise(ERR_LIB_CRMF, CRMF_R_POPOSKINPUT_NOT_SUPPORTED);
