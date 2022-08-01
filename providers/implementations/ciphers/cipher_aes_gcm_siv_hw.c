@@ -64,7 +64,7 @@ static int aes_gcm_siv_initkey(void *vctx)
         if (IS_LITTLE_ENDIAN) {
             data.counter = counter;
         } else {
-            data.counter = BSWAP4(counter);
+            data.counter = GSWAP4(counter);
         }
         /* Block size is 16 (128 bits), but only 8 bytes are used */
         out_len = BLOCK_SIZE;
@@ -79,7 +79,7 @@ static int aes_gcm_siv_initkey(void *vctx)
         if (IS_LITTLE_ENDIAN) {
             data.counter = counter;
         } else {
-            data.counter = BSWAP4(counter);
+            data.counter = GSWAP4(counter);
         }
         /* Block size is 16 bytes (128 bits), but only 8 bytes are used */
         out_len = BLOCK_SIZE;
@@ -169,8 +169,8 @@ static int aes_gcm_siv_encrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
         len_blk[0] = (uint64_t)ctx->aad_len * 8;
         len_blk[1] = (uint64_t)len * 8;
     } else {
-        len_blk[0] = BSWAP8((uint64_t)ctx->aad_len * 8);
-        len_blk[1] = BSWAP8((uint64_t)len * 8);
+        len_blk[0] = GSWAP8((uint64_t)ctx->aad_len * 8);
+        len_blk[1] = GSWAP8((uint64_t)len * 8);
     }
     memset(S_s, 0, TAG_SIZE);
     ossl_polyval_ghash_init(ctx->Htable, (const uint64_t*)ctx->msg_auth_key);
@@ -235,8 +235,8 @@ static int aes_gcm_siv_decrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
         len_blk[0] = (uint64_t)ctx->aad_len * 8;
         len_blk[1] = (uint64_t)len * 8;
     } else {
-        len_blk[0] = BSWAP8((uint64_t)ctx->aad_len * 8);
-        len_blk[1] = BSWAP8((uint64_t)len * 8);
+        len_blk[0] = GSWAP8((uint64_t)ctx->aad_len * 8);
+        len_blk[1] = GSWAP8((uint64_t)len * 8);
     }
     memset(S_s, 0, TAG_SIZE);
     ossl_polyval_ghash_init(ctx->Htable, (const uint64_t*)ctx->msg_auth_key);
@@ -350,7 +350,7 @@ static int aes_gcm_siv_ctr32(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *ini
 
     memcpy(&block, init_counter, sizeof(block));
     if (IS_BIG_ENDIAN) {
-        counter = BSWAP4(block.x32[0]);
+        counter = GSWAP4(block.x32[0]);
     }
 
     for (i = 0; i < len; i += sizeof(block)) {
@@ -360,7 +360,7 @@ static int aes_gcm_siv_ctr32(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *ini
             block.x32[0]++;
         } else {
             counter++;
-            block.x32[0] = BSWAP4(counter);
+            block.x32[0] = GSWAP4(counter);
         }
         todo = len - i;
         if (todo > sizeof(keystream))
