@@ -154,8 +154,10 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
     }
     if (ext == NULL) /* no extensions is not an error */
         return sk_X509_EXTENSION_new_null();
-    if (ext->type != V_ASN1_SEQUENCE)
+    if (ext->type != V_ASN1_SEQUENCE) {
+        ERR_raise(ERR_LIB_X509, X509_R_WRONG_TYPE);
         return NULL;
+    }
     p = ext->value.sequence->data;
     return (STACK_OF(X509_EXTENSION) *)
         ASN1_item_d2i(NULL, &p, ext->value.sequence->length,
