@@ -389,30 +389,38 @@ EVP_PKEY *X509_get_pubkey(X509 *x)
     return X509_PUBKEY_get(x->cert_info.key);
 }
 
-int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
+int X509_check_private_key(const X509 *cert, const EVP_PKEY *pkey)
 {
-    const EVP_PKEY *xk;
-    int ret;
+    const EVP_PKEY *xk = X509_get0_pubkey(cert);
 
-    xk = X509_get0_pubkey(x);
     if (xk == NULL) {
         ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
         return 0;
     }
+    return ossl_x509_check_private_key(xk, pkey);
+}
 
-    switch (ret = EVP_PKEY_eq(xk, k)) {
+int ossl_x509_check_private_key(const EVP_PKEY *x, const EVP_PKEY *pkey)
+{
+    if (x == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    switch (EVP_PKEY_eq(x, pkey)) {
+    case 1:
+        return 1;
     case 0:
         ERR_raise(ERR_LIB_X509, X509_R_KEY_VALUES_MISMATCH);
-        break;
+        return 0;
     case -1:
         ERR_raise(ERR_LIB_X509, X509_R_KEY_TYPE_MISMATCH);
-        break;
+        return 0;
     case -2:
         ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_KEY_TYPE);
-        break;
+        /* fall thru */
+    default:
+        return 0;
     }
-
-    return ret > 0;
 }
 
 /*
