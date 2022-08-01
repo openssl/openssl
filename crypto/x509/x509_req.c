@@ -146,7 +146,7 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
         return NULL;
     for (pnid = ext_nids; *pnid != NID_undef; pnid++) {
         idx = X509_REQ_get_attr_by_NID(req, *pnid, -1);
-        if (idx == -1)
+        if (idx < 0)
             continue;
         attr = X509_REQ_get_attr(req, idx);
         ext = X509_ATTRIBUTE_get0_type(attr, 0);

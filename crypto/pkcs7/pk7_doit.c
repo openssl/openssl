@@ -1162,11 +1162,11 @@ ASN1_TYPE *PKCS7_get_attribute(const PKCS7_SIGNER_INFO *si, int nid)
 
 static ASN1_TYPE *get_attribute(const STACK_OF(X509_ATTRIBUTE) *sk, int nid)
 {
-    int idx;
-    X509_ATTRIBUTE *xa;
-    idx = X509at_get_attr_by_NID(sk, nid, -1);
-    xa = X509at_get_attr(sk, idx);
-    return X509_ATTRIBUTE_get0_type(xa, 0);
+    int idx = X509at_get_attr_by_NID(sk, nid, -1);
+
+    if (idx < 0)
+        return NULL;
+    return X509_ATTRIBUTE_get0_type(X509at_get_attr(sk, idx), 0);
 }
 
 ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK_OF(X509_ATTRIBUTE) *sk)
