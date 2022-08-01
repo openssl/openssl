@@ -29,6 +29,18 @@ typedef struct prov_cipher_hw_aes_gcm_siv_st {
     void (*clean_ctx)(void *vctx);
 } PROV_CIPHER_HW_AES_GCM_SIV;
 
+/*
+ * This emulates the beginning of the GCM128_CONTEXT structure where
+ * some assembly routines (e.g. s390x) expect the |Xi| and |H| argument
+ * to immediately preceed the Htable argument.
+ * This is used instead of the GCM128_CONTEXT to save space.
+ */
+typedef struct prov_aes_gcm_siv_htable_st {
+    uint64_t Xi[2];
+    uint64_t H[2];
+    u128 Htable[16];
+} PROV_AES_GCM_SIV_HTABLE;
+
 /* Arranged for alignment purposes */
 typedef struct prov_aes_gcm_siv_ctx_st {
     EVP_CIPHER_CTX *ecb_ctx;
@@ -38,13 +50,13 @@ typedef struct prov_aes_gcm_siv_ctx_st {
     OSSL_PROVIDER *provctx;
     size_t aad_len;          /* actual AAD length */
     size_t key_len;
+    PROV_AES_GCM_SIV_HTABLE args;
     uint8_t key_gen_key[32]; /* from user */
     uint8_t msg_enc_key[32]; /* depends on key size */
     uint8_t msg_auth_key[BLOCK_SIZE];
     uint8_t tag[TAG_SIZE];          /* generated tag, given to user or compared to user */
     uint8_t user_tag[TAG_SIZE];     /* from user */
-    uint8_t nonce[NONCE_SIZE];       /* from user */
-    u128 Htable[16];         /* Polyval calculations via ghash */
+    uint8_t nonce[NONCE_SIZE];      /* from user */
     unsigned int enc : 1;    /* Set to 1 if we are encrypting or 0 otherwise */
     unsigned int have_user_tag : 1;
     unsigned int generated_tag : 1;
@@ -55,8 +67,8 @@ typedef struct prov_aes_gcm_siv_ctx_st {
 
 const PROV_CIPHER_HW_AES_GCM_SIV *ossl_prov_cipher_hw_aes_gcm_siv(size_t keybits);
 
-void ossl_polyval_ghash_init(u128 Htable[16], const uint64_t H[2]);
-void ossl_polyval_ghash_hash(const u128 Htable[16], uint8_t *tag,  const uint8_t *inp, size_t len);
+void ossl_polyval_ghash_init(PROV_AES_GCM_SIV_HTABLE *args, const uint64_t H[2]);
+void ossl_polyval_ghash_hash(PROV_AES_GCM_SIV_HTABLE *args, uint8_t *tag, const uint8_t *inp, size_t len);
 
 /* Define GSWAP8/GSWAP4 - used for BOTH little and big endian architectures */
 static ossl_inline uint32_t GSWAP4(uint32_t n)

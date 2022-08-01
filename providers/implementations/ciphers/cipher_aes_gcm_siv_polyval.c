@@ -58,30 +58,30 @@ static ossl_inline void byte_reverse16(uint8_t *out, const uint8_t *in)
 }
 
 /* Initialization of POLYVAL via existing GHASH implementation */
-void ossl_polyval_ghash_init(u128 Htable[16], const uint64_t H[2])
+void ossl_polyval_ghash_init(PROV_AES_GCM_SIV_HTABLE *args, const uint64_t H[2])
 {
-    uint64_t tmp[2];
     DECLARE_IS_ENDIAN;
 
-    byte_reverse16((uint8_t *)tmp, (const uint8_t *)H);
-    mulx_ghash(tmp);
+    /* Use args->H to make assembly code happy */
+    byte_reverse16((uint8_t *)args->H, (const uint8_t *)H);
+    mulx_ghash(args->H);
     if (IS_LITTLE_ENDIAN) {
         /* "H is stored in host byte order" */
-        tmp[0] = GSWAP8(tmp[0]);
-        tmp[1] = GSWAP8(tmp[1]);
+        args->H[0] = GSWAP8(args->H[0]);
+        args->H[1] = GSWAP8(args->H[1]);
     }
 
-    ossl_gcm_init_4bit(Htable, (u64*)tmp);
+    ossl_gcm_init_4bit(args->Htable, (u64*)args->H);
 }
 
 /* Implmentation of POLYVAL via existing GHASH implementation */
-void ossl_polyval_ghash_hash(const u128 Htable[16], uint8_t *tag, const uint8_t *inp, size_t len)
+void ossl_polyval_ghash_hash(PROV_AES_GCM_SIV_HTABLE *args, uint8_t *tag, const uint8_t *inp, size_t len)
 {
-    uint64_t out[2];
     uint64_t tmp[2];
     size_t i;
 
-    byte_reverse16((uint8_t *)out, (uint8_t *)tag);
+    /* Use args->Xi for the tag to make assembly code happy */
+    byte_reverse16((uint8_t *)args->Xi, (uint8_t *)tag);
 
     /*
      * This implementation doesn't deal with partials, callers do,
@@ -89,7 +89,7 @@ void ossl_polyval_ghash_hash(const u128 Htable[16], uint8_t *tag, const uint8_t 
      */
     for (i = 0; i < len; i += 16) {
         byte_reverse16((uint8_t *)tmp, &inp[i]);
-        ossl_gcm_ghash_4bit((u64*)out, Htable, (uint8_t *)tmp, 16);
+        ossl_gcm_ghash_4bit((u64*)args->Xi, args->Htable, (uint8_t *)tmp, 16);
     }
-    byte_reverse16(tag, (uint8_t *)out);
+    byte_reverse16(tag, (uint8_t *)args->Xi);
 }

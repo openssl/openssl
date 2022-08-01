@@ -173,21 +173,21 @@ static int aes_gcm_siv_encrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
         len_blk[1] = GSWAP8((uint64_t)len * 8);
     }
     memset(S_s, 0, TAG_SIZE);
-    ossl_polyval_ghash_init(ctx->Htable, (const uint64_t*)ctx->msg_auth_key);
+    ossl_polyval_ghash_init(&ctx->args, (const uint64_t*)ctx->msg_auth_key);
 
     if (ctx->aad != NULL) {
         /* AAD is allocated with padding, but need to adjust length */
-        ossl_polyval_ghash_hash(ctx->Htable, S_s, ctx->aad, UP16(ctx->aad_len));
+        ossl_polyval_ghash_hash(&ctx->args, S_s, ctx->aad, UP16(ctx->aad_len));
     }
     if (DOWN16(len) > 0)
-        ossl_polyval_ghash_hash(ctx->Htable, S_s, (uint8_t *) in, DOWN16(len));
+        ossl_polyval_ghash_hash(&ctx->args, S_s, (uint8_t *) in, DOWN16(len));
     if (!IS16(len)) {
         /* deal with padding - probably easier to memset the padding first rather than calculate */
         memset(padding, 0, sizeof(padding));
         memcpy(padding, &in[DOWN16(len)], REMAINDER16(len));
-        ossl_polyval_ghash_hash(ctx->Htable, S_s, padding, sizeof(padding));
+        ossl_polyval_ghash_hash(&ctx->args, S_s, padding, sizeof(padding));
     }
-    ossl_polyval_ghash_hash(ctx->Htable, S_s, (uint8_t *) len_blk, sizeof(len_blk));
+    ossl_polyval_ghash_hash(&ctx->args, S_s, (uint8_t *) len_blk, sizeof(len_blk));
 
     for (i = 0; i < NONCE_SIZE; i++)
         S_s[i] ^= ctx->nonce[i];
@@ -239,20 +239,20 @@ static int aes_gcm_siv_decrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
         len_blk[1] = GSWAP8((uint64_t)len * 8);
     }
     memset(S_s, 0, TAG_SIZE);
-    ossl_polyval_ghash_init(ctx->Htable, (const uint64_t*)ctx->msg_auth_key);
+    ossl_polyval_ghash_init(&ctx->args, (const uint64_t*)ctx->msg_auth_key);
     if (ctx->aad != NULL) {
         /* AAD allocated with padding, but need to adjust length */
-        ossl_polyval_ghash_hash(ctx->Htable, S_s, ctx->aad, UP16(ctx->aad_len));
+        ossl_polyval_ghash_hash(&ctx->args, S_s, ctx->aad, UP16(ctx->aad_len));
     }
     if (DOWN16(len) > 0)
-        ossl_polyval_ghash_hash(ctx->Htable, S_s, out, DOWN16(len));
+        ossl_polyval_ghash_hash(&ctx->args, S_s, out, DOWN16(len));
     if (!IS16(len)) {
         /* deal with padding - probably easier to "memset" the padding first rather than calculate */
         padding[0] = padding[1] = 0;
         memcpy(padding, &out[DOWN16(len)], REMAINDER16(len));
-        ossl_polyval_ghash_hash(ctx->Htable, S_s, (uint8_t *)padding, sizeof(padding));
+        ossl_polyval_ghash_hash(&ctx->args, S_s, (uint8_t *)padding, sizeof(padding));
     }
-    ossl_polyval_ghash_hash(ctx->Htable, S_s, (uint8_t *)len_blk, TAG_SIZE);
+    ossl_polyval_ghash_hash(&ctx->args, S_s, (uint8_t *)len_blk, TAG_SIZE);
 
     for (i = 0; i < NONCE_SIZE; i++)
         S_s[i] ^= ctx->nonce[i];
