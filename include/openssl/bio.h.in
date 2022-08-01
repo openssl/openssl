@@ -172,6 +172,10 @@ extern "C" {
 # define BIO_CTRL_SET_INDENT                    80
 # define BIO_CTRL_GET_INDENT                    81
 
+# define BIO_CTRL_DGRAM_GET_LOCAL_ADDR_CAP      82
+# define BIO_CTRL_DGRAM_GET_LOCAL_ADDR_ENABLE   83
+# define BIO_CTRL_DGRAM_SET_LOCAL_ADDR_ENABLE   84
+
 # ifndef OPENSSL_NO_KTLS
 #  define BIO_get_ktls_send(b)         \
      (BIO_ctrl(b, BIO_CTRL_GET_KTLS_SEND, 0, NULL) > 0)
@@ -257,12 +261,14 @@ void BIO_clear_flags(BIO *b, int flags);
 # define BIO_RR_ACCEPT                   0x03
 
 /* These are passed by the BIO callback */
-# define BIO_CB_FREE     0x01
-# define BIO_CB_READ     0x02
-# define BIO_CB_WRITE    0x03
-# define BIO_CB_PUTS     0x04
-# define BIO_CB_GETS     0x05
-# define BIO_CB_CTRL     0x06
+# define BIO_CB_FREE        0x01
+# define BIO_CB_READ        0x02
+# define BIO_CB_WRITE       0x03
+# define BIO_CB_PUTS        0x04
+# define BIO_CB_GETS        0x05
+# define BIO_CB_CTRL        0x06
+# define BIO_CB_RECVMMSG    0x07
+# define BIO_CB_SENDMMSG    0x08
 
 /*
  * The callback is called before and after the underling operation, The
@@ -338,6 +344,21 @@ struct bio_dgram_sctp_prinfo {
     uint32_t pr_value;
 };
 # endif
+
+/* BIO_sendmmsg/BIO_recvmmsg-related definitions */
+typedef struct bio_msg_st {
+    void *data;
+    size_t data_len;
+    BIO_ADDR *peer, *local;
+    uint64_t flags;
+} BIO_MSG;
+
+typedef struct bio_mmsg_cb_args_st {
+    BIO_MSG    *msg;
+    size_t      stride, num_msg;
+    uint64_t    flags;
+    size_t     *msgs_processed;
+} BIO_MMSG_CB_ARGS;
 
 /*
  * #define BIO_CONN_get_param_hostname BIO_ctrl
@@ -580,6 +601,12 @@ int BIO_ctrl_reset_read_request(BIO *b);
          (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, (char *)(peer))
 # define BIO_dgram_get_mtu_overhead(b) \
          (unsigned int)BIO_ctrl((b), BIO_CTRL_DGRAM_GET_MTU_OVERHEAD, 0, NULL)
+# define BIO_dgram_get_local_addr_cap(b) \
+         (int)BIO_ctrl((b), BIO_CTRL_DGRAM_GET_LOCAL_ADDR_CAP, 0, NULL)
+# define BIO_dgram_get_local_addr_enable(b, penable) \
+         (int)BIO_ctrl((b), BIO_CTRL_DGRAM_GET_LOCAL_ADDR_ENABLE, 0, (char *)(penable))
+# define BIO_dgram_set_local_addr_enable(b, enable) \
+         (int)BIO_ctrl((b), BIO_CTRL_DGRAM_SET_LOCAL_ADDR_ENABLE, (enable), NULL)
 
 /* ctrl macros for BIO_f_prefix */
 # define BIO_set_prefix(b,p) BIO_ctrl((b), BIO_CTRL_SET_PREFIX, 0, (void *)(p))
@@ -622,10 +649,16 @@ void BIO_vfree(BIO *a);
 int BIO_up_ref(BIO *a);
 int BIO_read(BIO *b, void *data, int dlen);
 int BIO_read_ex(BIO *b, void *data, size_t dlen, size_t *readbytes);
+__owur int BIO_recvmmsg(BIO *b, BIO_MSG *msg,
+                        size_t stride, size_t num_msg, uint64_t flags,
+                        size_t *msgs_processed);
 int BIO_gets(BIO *bp, char *buf, int size);
 int BIO_get_line(BIO *bio, char *buf, int size);
 int BIO_write(BIO *b, const void *data, int dlen);
 int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written);
+__owur int BIO_sendmmsg(BIO *b, BIO_MSG *msg,
+                        size_t stride, size_t num_msg, uint64_t flags,
+                        size_t *msgs_processed);
 int BIO_puts(BIO *bp, const char *buf);
 int BIO_indent(BIO *b, int indent, int max);
 long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
@@ -687,6 +720,7 @@ int BIO_dgram_sctp_msg_waiting(BIO *b);
 # ifndef OPENSSL_NO_SOCK
 int BIO_sock_should_retry(int i);
 int BIO_sock_non_fatal_error(int error);
+int BIO_err_is_non_fatal(unsigned int errcode);
 int BIO_socket_wait(int fd, int for_read, time_t max_time);
 # endif
 int BIO_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds);
@@ -840,12 +874,24 @@ int BIO_meth_set_write(BIO_METHOD *biom,
                        int (*write) (BIO *, const char *, int));
 int BIO_meth_set_write_ex(BIO_METHOD *biom,
                        int (*bwrite) (BIO *, const char *, size_t, size_t *));
+int BIO_meth_set_sendmmsg(BIO_METHOD *biom,
+                          int (*f) (BIO *, BIO_MSG *, size_t, size_t,
+                                    uint64_t, size_t *));
+int (*BIO_meth_get_sendmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *,
+                                                     size_t, size_t,
+                                                     uint64_t, size_t *);
 int (*BIO_meth_get_read(const BIO_METHOD *biom)) (BIO *, char *, int);
 int (*BIO_meth_get_read_ex(const BIO_METHOD *biom)) (BIO *, char *, size_t, size_t *);
 int BIO_meth_set_read(BIO_METHOD *biom,
                       int (*read) (BIO *, char *, int));
 int BIO_meth_set_read_ex(BIO_METHOD *biom,
                          int (*bread) (BIO *, char *, size_t, size_t *));
+int BIO_meth_set_recvmmsg(BIO_METHOD *biom,
+                          int (*f) (BIO *, BIO_MSG *, size_t, size_t,
+                                    uint64_t, size_t *));
+int (*BIO_meth_get_recvmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *,
+                                                     size_t, size_t,
+                                                     uint64_t, size_t *);
 int (*BIO_meth_get_puts(const BIO_METHOD *biom)) (BIO *, const char *);
 int BIO_meth_set_puts(BIO_METHOD *biom,
                       int (*puts) (BIO *, const char *));

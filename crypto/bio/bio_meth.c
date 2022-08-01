@@ -218,3 +218,25 @@ int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
     biom->callback_ctrl = callback_ctrl;
     return 1;
 }
+
+int BIO_meth_set_sendmmsg(BIO_METHOD *biom,
+                          int (*bsendmmsg) (BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *))
+{
+    biom->bsendmmsg = bsendmmsg;
+    return 1;
+}
+
+int (*BIO_meth_get_sendmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *) {
+    return biom->bsendmmsg;
+}
+
+int BIO_meth_set_recvmmsg(BIO_METHOD *biom,
+                          int (*brecvmmsg) (BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *))
+{
+    biom->brecvmmsg = brecvmmsg;
+    return 1;
+}
+
+int (*BIO_meth_get_recvmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *) {
+    return biom->brecvmmsg;
+}

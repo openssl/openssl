@@ -671,6 +671,10 @@ DEPEND[html/man3/BIO_s_socket.html]=man3/BIO_s_socket.pod
 GENERATE[html/man3/BIO_s_socket.html]=man3/BIO_s_socket.pod
 DEPEND[man/man3/BIO_s_socket.3]=man3/BIO_s_socket.pod
 GENERATE[man/man3/BIO_s_socket.3]=man3/BIO_s_socket.pod
+DEPEND[html/man3/BIO_sendmmsg.html]=man3/BIO_sendmmsg.pod
+GENERATE[html/man3/BIO_sendmmsg.html]=man3/BIO_sendmmsg.pod
+DEPEND[man/man3/BIO_sendmmsg.3]=man3/BIO_sendmmsg.pod
+GENERATE[man/man3/BIO_sendmmsg.3]=man3/BIO_sendmmsg.pod
 DEPEND[html/man3/BIO_set_callback.html]=man3/BIO_set_callback.pod
 GENERATE[html/man3/BIO_set_callback.html]=man3/BIO_set_callback.pod
 DEPEND[man/man3/BIO_set_callback.3]=man3/BIO_set_callback.pod
@@ -2907,6 +2911,7 @@ html/man3/BIO_s_file.html \
 html/man3/BIO_s_mem.html \
 html/man3/BIO_s_null.html \
 html/man3/BIO_s_socket.html \
+html/man3/BIO_sendmmsg.html \
 html/man3/BIO_set_callback.html \
 html/man3/BIO_should_retry.html \
 html/man3/BIO_socket_wait.html \
@@ -3504,6 +3509,7 @@ man/man3/BIO_s_file.3 \
 man/man3/BIO_s_mem.3 \
 man/man3/BIO_s_null.3 \
 man/man3/BIO_s_socket.3 \
+man/man3/BIO_sendmmsg.3 \
 man/man3/BIO_set_callback.3 \
 man/man3/BIO_should_retry.3 \
 man/man3/BIO_socket_wait.3 \

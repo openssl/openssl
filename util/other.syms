@@ -141,8 +141,13 @@ ASYNC_stack_alloc_fn                    datatype
 ASYNC_stack_free_fn                     datatype
 #
 ASN1_BIT_STRING_digest                  define
+BIO_IS_ERRNO                            define
+BIO_UNPACK_ERRNO                        define
 BIO_append_filename                     define
 BIO_destroy_bio_pair                    define
+BIO_dgram_get_local_addr_cap            define
+BIO_dgram_get_local_addr_enable         define
+BIO_dgram_set_local_addr_enable         define
 BIO_do_accept                           define
 BIO_do_connect                          define
 BIO_do_handshake                        define

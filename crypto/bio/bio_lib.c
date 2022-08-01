@@ -397,6 +397,100 @@ int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written)
         || (b != NULL && dlen == 0); /* order is important for *written */
 }
 
+int BIO_sendmmsg(BIO *b, BIO_MSG *msg,
+                 size_t stride, size_t num_msg, uint64_t flags,
+                 size_t *msgs_processed)
+{
+    size_t ret;
+    BIO_MMSG_CB_ARGS args;
+
+    if (b == NULL) {
+        *msgs_processed = 0;
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (b->method == NULL || b->method->bsendmmsg == NULL) {
+        *msgs_processed = 0;
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
+        return 0;
+    }
+
+    if (HAS_CALLBACK(b)) {
+        args.msg            = msg;
+        args.stride         = stride;
+        args.num_msg        = num_msg;
+        args.flags          = flags;
+        args.msgs_processed = msgs_processed;
+
+        ret = (size_t)bio_call_callback(b, BIO_CB_SENDMMSG, (void *)&args,
+                                        0, 0, 0, 0, NULL);
+        if (ret == 0)
+            return 0;
+    }
+
+    if (!b->init) {
+        *msgs_processed = 0;
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
+        return 0;
+    }
+
+    ret = b->method->bsendmmsg(b, msg, stride, num_msg, flags, msgs_processed);
+
+    if (HAS_CALLBACK(b))
+        ret = (size_t)bio_call_callback(b, BIO_CB_SENDMMSG | BIO_CB_RETURN,
+                                        (void *)&args, ret, 0, 0, 0, NULL);
+
+    return ret;
+}
+
+int BIO_recvmmsg(BIO *b, BIO_MSG *msg,
+                 size_t stride, size_t num_msg, uint64_t flags,
+                 size_t *msgs_processed)
+{
+    size_t ret;
+    BIO_MMSG_CB_ARGS args;
+
+    if (b == NULL) {
+        *msgs_processed = 0;
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (b->method == NULL || b->method->brecvmmsg == NULL) {
+        *msgs_processed = 0;
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
+        return 0;
+    }
+
+    if (HAS_CALLBACK(b)) {
+        args.msg            = msg;
+        args.stride         = stride;
+        args.num_msg        = num_msg;
+        args.flags          = flags;
+        args.msgs_processed = msgs_processed;
+
+        ret = bio_call_callback(b, BIO_CB_RECVMMSG, (void *)&args,
+                                0, 0, 0, 0, NULL);
+        if (ret == 0)
+            return 0;
+    }
+
+    if (!b->init) {
+        *msgs_processed = 0;
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
+        return 0;
+    }
+
+    ret = b->method->brecvmmsg(b, msg, stride, num_msg, flags, msgs_processed);
+
+    if (HAS_CALLBACK(b))
+        ret = (size_t)bio_call_callback(b, BIO_CB_RECVMMSG | BIO_CB_RETURN,
+                                        (void *)&args, ret, 0, 0, 0, NULL);
+
+    return ret;
+}
+
 int BIO_puts(BIO *b, const char *buf)
 {
     int ret;
