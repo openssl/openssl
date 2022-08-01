@@ -645,11 +645,11 @@ static int check_transactionID_or_nonce(ASN1_OCTET_STRING *expected,
         char *expected_str, *actual_str;
 
         expected_str = i2s_ASN1_OCTET_STRING(NULL, expected);
-        actual_str = actual == NULL ? "(none)"
-            : i2s_ASN1_OCTET_STRING(NULL, actual);
+        actual_str = actual == NULL ? NULL: i2s_ASN1_OCTET_STRING(NULL, actual);
         ERR_raise_data(ERR_LIB_CMP, CMP_R_TRANSACTIONID_UNMATCHED,
                        "expected = %s, actual = %s",
                        expected_str == NULL ? "?" : expected_str,
+                       actual == NULL ? "(none)" :
                        actual_str == NULL ? "?" : actual_str);
         OPENSSL_free(expected_str);
         OPENSSL_free(actual_str);
