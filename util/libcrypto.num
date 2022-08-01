@@ -5439,6 +5439,7 @@ ASYNC_set_mem_functions                 ?	3_1_0	EXIST::FUNCTION:
 ASYNC_get_mem_functions                 ?	3_1_0	EXIST::FUNCTION:
 BIO_ADDR_dup                            ?	3_1_0	EXIST::FUNCTION:SOCK
 OSSL_CMP_CTX_get0_validatedSrvCert      ?	3_1_0	EXIST::FUNCTION:CMP
+OSSL_CRMF_CERTTEMPLATE_get0_publicKey   ?	3_1_0	EXIST::FUNCTION:CRMF
 CMS_final_digest                        ?	3_1_0	EXIST::FUNCTION:CMS
 CMS_EnvelopedData_it                    ?	3_1_0	EXIST::FUNCTION:CMS
 CMS_EnvelopedData_decrypt               ?	3_1_0	EXIST::FUNCTION:CMS

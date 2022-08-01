@@ -3,9 +3,10 @@
 =head1 NAME
 
 OSSL_CRMF_MSG_get0_tmpl,
-OSSL_CRMF_CERTTEMPLATE_get0_serialNumber,
+OSSL_CRMF_CERTTEMPLATE_get0_publicKey,
 OSSL_CRMF_CERTTEMPLATE_get0_subject,
 OSSL_CRMF_CERTTEMPLATE_get0_issuer,
+OSSL_CRMF_CERTTEMPLATE_get0_serialNumber,
 OSSL_CRMF_CERTTEMPLATE_get0_extensions,
 OSSL_CRMF_CERTID_get0_serialNumber,
 OSSL_CRMF_CERTID_get0_issuer,
@@ -18,12 +19,14 @@ OSSL_CRMF_MSG_get_certReqId
  #include <openssl/crmf.h>
 
  OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm);
- const ASN1_INTEGER
- *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(const OSSL_CRMF_CERTTEMPLATE *tmpl);
+ const X509_PUBKEY
+ *OSSL_CRMF_CERTTEMPLATE_get0_publicKey(const OSSL_CRMF_CERTTEMPLATE *tmpl);
  const X509_NAME
  *OSSL_CRMF_CERTTEMPLATE_get0_subject(const OSSL_CRMF_CERTTEMPLATE *tmpl);
  const X509_NAME
  *OSSL_CRMF_CERTTEMPLATE_get0_issuer(const OSSL_CRMF_CERTTEMPLATE *tmpl);
+ const ASN1_INTEGER
+ *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(const OSSL_CRMF_CERTTEMPLATE *tmpl);
  X509_EXTENSIONS
  *OSSL_CRMF_CERTTEMPLATE_get0_extensions(const OSSL_CRMF_CERTTEMPLATE *tmpl);
 
@@ -43,13 +46,16 @@ OSSL_CRMF_MSG_get_certReqId
 
 OSSL_CRMF_MSG_get0_tmpl() retrieves the certificate template of I<crm>.
 
-OSSL_CRMF_CERTTEMPLATE_get0_serialNumber() retrieves the serialNumber of the
+OSSL_CRMF_CERTTEMPLATE_get0_publicKey() retrieves the public key of the
 given certificate template I<tmpl>.
 
 OSSL_CRMF_CERTTEMPLATE_get0_subject() retrieves the subject name of the
 given certificate template I<tmpl>.
 
 OSSL_CRMF_CERTTEMPLATE_get0_issuer() retrieves the issuer name of the
+given certificate template I<tmpl>.
+
+OSSL_CRMF_CERTTEMPLATE_get0_serialNumber() retrieves the serialNumber of the
 given certificate template I<tmpl>.
 
 OSSL_CRMF_CERTTEMPLATE_get0_extensions() retrieves the X.509 extensions
@@ -69,7 +75,6 @@ The function returns the decrypted certificate as a copy, leaving its ownership
 with the caller, who is responsible for freeing it.
 
 OSSL_CRMF_MSG_get_certReqId() retrieves the certReqId of I<crm>.
-
 
 =head1 RETURN VALUES
 

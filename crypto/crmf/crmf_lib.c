@@ -530,6 +530,12 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
     return 1;
 }
 
+const X509_PUBKEY
+    *OSSL_CRMF_CERTTEMPLATE_get0_publicKey(const OSSL_CRMF_CERTTEMPLATE *tmpl)
+{
+    return tmpl != NULL ? tmpl->publicKey : NULL;
+}
+
 /* retrieves the serialNumber of the given cert template or NULL on error */
 const ASN1_INTEGER
 *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(const OSSL_CRMF_CERTTEMPLATE *tmpl)
