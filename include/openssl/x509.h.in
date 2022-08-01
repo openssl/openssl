@@ -693,7 +693,7 @@ int X509_REQ_get_signature_nid(const X509_REQ *req);
 int i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp);
 int X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey);
 EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req);
-EVP_PKEY *X509_REQ_get0_pubkey(X509_REQ *req);
+EVP_PKEY *X509_REQ_get0_pubkey(const X509_REQ *req);
 X509_PUBKEY *X509_REQ_get_X509_PUBKEY(X509_REQ *req);
 int X509_REQ_extension_nid(int nid);
 int *X509_REQ_get_extension_nids(void);
@@ -759,9 +759,9 @@ X509_REVOKED_get0_extensions(const X509_REVOKED *r);
 X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
                         EVP_PKEY *skey, const EVP_MD *md, unsigned int flags);
 
-int X509_REQ_check_private_key(X509_REQ *x509, EVP_PKEY *pkey);
+int X509_REQ_check_private_key(const X509_REQ *req, EVP_PKEY *pkey);
 
-int X509_check_private_key(const X509 *x509, const EVP_PKEY *pkey);
+int X509_check_private_key(const X509 *cert, const EVP_PKEY *pkey);
 int X509_chain_check_suiteb(int *perror_depth,
                             X509 *x, STACK_OF(X509) *chain,
                             unsigned long flags);

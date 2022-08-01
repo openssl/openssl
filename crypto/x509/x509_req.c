@@ -67,7 +67,7 @@ EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req)
     return X509_PUBKEY_get(req->req_info.pubkey);
 }
 
-EVP_PKEY *X509_REQ_get0_pubkey(X509_REQ *req)
+EVP_PKEY *X509_REQ_get0_pubkey(const X509_REQ *req)
 {
     if (req == NULL)
         return NULL;
@@ -79,28 +79,9 @@ X509_PUBKEY *X509_REQ_get_X509_PUBKEY(X509_REQ *req)
     return req->req_info.pubkey;
 }
 
-int X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
+int X509_REQ_check_private_key(const X509_REQ *req, EVP_PKEY *pkey)
 {
-    EVP_PKEY *xk = NULL;
-    int ok = 0;
-
-    xk = X509_REQ_get_pubkey(x);
-    switch (EVP_PKEY_eq(xk, k)) {
-    case 1:
-        ok = 1;
-        break;
-    case 0:
-        ERR_raise(ERR_LIB_X509, X509_R_KEY_VALUES_MISMATCH);
-        break;
-    case -1:
-        ERR_raise(ERR_LIB_X509, X509_R_KEY_TYPE_MISMATCH);
-        break;
-    case -2:
-        ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_KEY_TYPE);
-    }
-
-    EVP_PKEY_free(xk);
-    return ok;
+    return ossl_x509_check_private_key(X509_REQ_get0_pubkey(req), pkey);
 }
 
 /*
