@@ -397,6 +397,85 @@ int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written)
         || (b != NULL && dlen == 0); /* order is important for *written */
 }
 
+ossl_ssize_t BIO_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t num_msg, uint64_t flags)
+{
+    long ret_;
+    ossl_ssize_t ret;
+
+    if (b == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (b->method == NULL || b->method->bsendmmsg == NULL) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
+        return -2;
+    }
+
+    if (HAS_CALLBACK(b)) {
+        ret_ = bio_call_callback(b, BIO_CB_SENDMMSG,
+                                 (void *)msg, num_msg,
+                                 (int)flags, (long)stride, 1L, NULL);
+        if (ret_ <= 0)
+            return ret_;
+    }
+
+    if (!b->init) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
+        return -1;
+    }
+
+    ret = b->method->bsendmmsg(b, msg, stride, num_msg, flags);
+
+    if (HAS_CALLBACK(b)) {
+        ret_ = bio_call_callback(b, BIO_CB_SENDMMSG | BIO_CB_RETURN,
+                                 (void *)msg, num_msg, (int)flags, (long)stride, ret, NULL);
+        if (ret_ <= 0)
+            return ret_;
+    }
+
+    return ret;
+}
+
+ossl_ssize_t BIO_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t num_msg, uint64_t flags)
+{
+    long ret_;
+    ossl_ssize_t ret;
+
+    if (b == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (b->method == NULL || b->method->brecvmmsg == NULL) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
+        return -2;
+    }
+
+    if (HAS_CALLBACK(b)) {
+        ret_ = bio_call_callback(b, BIO_CB_RECVMMSG,
+                                (void *)msg, num_msg, (int)flags, (long)stride, 1L, NULL);
+        if (ret_ <= 0)
+            return ret_;
+    }
+
+    if (!b->init) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
+        return -1;
+    }
+
+    ret = b->method->brecvmmsg(b, msg, stride, num_msg, flags);
+
+    if (HAS_CALLBACK(b)) {
+        ret_ = bio_call_callback(b, BIO_CB_RECVMMSG | BIO_CB_RETURN,
+                                 (void *)msg, num_msg, (int)flags, (long)stride, ret, NULL);
+        if (ret_ <= 0)
+            return ret_;
+    }
+
+    return ret;
+}
+
 int BIO_puts(BIO *b, const char *buf)
 {
     int ret;

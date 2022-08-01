@@ -9,7 +9,8 @@ BIO_meth_set_write, BIO_meth_get_read, BIO_meth_set_read, BIO_meth_get_puts,
 BIO_meth_set_puts, BIO_meth_get_gets, BIO_meth_set_gets, BIO_meth_get_ctrl,
 BIO_meth_set_ctrl, BIO_meth_get_create, BIO_meth_set_create,
 BIO_meth_get_destroy, BIO_meth_set_destroy, BIO_meth_get_callback_ctrl,
-BIO_meth_set_callback_ctrl - Routines to build up BIO methods
+BIO_meth_set_callback_ctrl, BIO_meth_set_sendmmsg, BIO_meth_get_sendmmsg,
+BIO_meth_set_recvmmsg, BIO_meth_get_recvmmsg - Routines to build up BIO methods
 
 =head1 SYNOPSIS
 
@@ -55,6 +56,25 @@ BIO_meth_set_callback_ctrl - Routines to build up BIO methods
  long (*BIO_meth_get_callback_ctrl(const BIO_METHOD *biom))(BIO *, int, BIO_info_cb *);
  int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
                                 long (*callback_ctrl)(BIO *, int, BIO_info_cb *));
+
+ ossl_ssize_t (*BIO_meth_get_sendmmsg(const BIO_METHOD *biom))(BIO *,
+                                                               BIO_MSG *,
+                                                               size_t,
+                                                               size_t,
+                                                               uint64_t);
+ int BIO_meth_set_sendmmsg(BIO_METHOD *biom,
+                           ossl_ssize_t (*f) (BIO *, BIO_MSG *, size_t,
+                                              size_t, uint64_t));
+
+ ossl_ssize_t (*BIO_meth_get_recvmmsg(const BIO_METHOD *biom))(BIO *,
+                                                               BIO_MSG *,
+                                                               size_t,
+                                                               size_t,
+                                                               uint64_t);
+ int BIO_meth_set_recvmmsg(BIO_METHOD *biom,
+                           ossl_ssize_t (*f) (BIO *, BIO_MSG *, size_t,
+                                              size_t, uint64_t));
+
 
 =head1 DESCRIPTION
 
@@ -135,6 +155,11 @@ function used for processing callback ctrl messages in the BIO respectively. See
 the L<BIO_callback_ctrl(3)> page for more information. This function will be called
 in response to the application calling BIO_callback_ctrl(). The parameters for
 the function have the same meaning as for BIO_callback_ctrl().
+
+BIO_meth_get_sendmmsg(), BIO_meth_set_sendmmsg(), BIO_meth_get_recvmmsg() and
+BIO_meth_set_recvmmsg() get and set the functions used for handling
+BIO_sendmmsg() and BIO_recvmmsg() calls respectively. See L<BIO_sendmmsg(3)> for
+more information.
 
 =head1 RETURN VALUES
 

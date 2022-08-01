@@ -27,6 +27,8 @@ struct bio_method_st {
     int (*create) (BIO *);
     int (*destroy) (BIO *);
     long (*callback_ctrl) (BIO *, int, BIO_info_cb *);
+    ossl_ssize_t (*bsendmmsg) (BIO *, BIO_MSG *, size_t, size_t, uint64_t);
+    ossl_ssize_t (*brecvmmsg) (BIO *, BIO_MSG *, size_t, size_t, uint64_t);
 };
 
 void bio_free_ex_data(BIO *bio);
