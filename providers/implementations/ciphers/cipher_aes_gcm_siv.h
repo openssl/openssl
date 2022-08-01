@@ -58,21 +58,19 @@ const PROV_CIPHER_HW_AES_GCM_SIV *ossl_prov_cipher_hw_aes_gcm_siv(size_t keybits
 void ossl_polyval_ghash_init(u128 Htable[16], const uint64_t H[2]);
 void ossl_polyval_ghash_hash(const u128 Htable[16], uint8_t *tag,  const uint8_t *inp, size_t len);
 
-/* Define our own BSWAP8/BSWAP4, if not already defined */
-#ifndef BSWAP8
-static ossl_inline uint64_t BSWAP8(uint64_t n)
+/* Define GSWAP8/GSWAP4 - used for BOTH little and big endian architectures */
+static ossl_inline uint32_t GSWAP4(uint32_t n)
 {
-    uint8_t *p = (uint8_t *)&n;
-
-    return (uint64_t)GETU32(p) << 32 | GETU32(p + 4);
+    return (((n & 0x000000FF) << 24)
+            | ((n & 0x0000FF00) << 8)
+            | ((n & 0x00FF0000) >> 8)
+            | ((n & 0xFF000000) >> 24));
 }
-#endif
-
-#ifndef BSWAP4
-static ossl_inline uint32_t BSWAP4(uint32_t n)
+static ossl_inline uint64_t GSWAP8(uint64_t n)
 {
-    uint8_t *p = (uint8_t *)&n;
+    uint64_t result;
 
-    return GETU32(p);
+    result = GSWAP4(n & 0x0FFFFFFFF);
+    result <<= 32;
+    return result | GSWAP4(n >> 32);
 }
-#endif
