@@ -18,7 +18,7 @@ EVP_DigestVerifyFinal, EVP_DigestVerify - EVP signature verification functions
  int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
  int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
                            size_t siglen);
- int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
+ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sig,
                       size_t siglen, const unsigned char *tbs, size_t tbslen);
 
 =head1 DESCRIPTION
