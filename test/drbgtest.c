@@ -211,9 +211,9 @@ static int test_drbg_reseed(int expect_success,
 
     /* Generate random output from the public and private DRBG */
     before_reseed = expect_primary_reseed == 1 ? reseed_when : 0;
-    if (!TEST_int_eq(rand_bytes((unsigned char*)public_random,
+    if (!TEST_int_eq(rand_bytes(public_random,
                                 RANDOM_SIZE), expect_success)
-        || !TEST_int_eq(rand_priv_bytes((unsigned char*) private_random,
+        || !TEST_int_eq(rand_priv_bytes(private_random,
                                         RANDOM_SIZE), expect_success))
         return 0;
     after_reseed = time(NULL);
