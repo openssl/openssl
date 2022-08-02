@@ -89,7 +89,7 @@ static void exnew2(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
 static int exdup2(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
           void **from_d, int idx, long argl, void *argp)
 {
-    MYOBJ_EX_DATA **update_ex_data = (MYOBJ_EX_DATA**)from_d;
+    MYOBJ_EX_DATA **update_ex_data = from_d;
     MYOBJ_EX_DATA *ex_data = NULL;
 
     if (!TEST_true(idx == saved_idx2 || idx == saved_idx3)
