@@ -50,7 +50,7 @@ provider-signature - The signature library E<lt>-E<gt> provider functions
  int OSSL_FUNC_signature_digest_sign_final(void *ctx, unsigned char *sig,
                                            size_t *siglen, size_t sigsize);
  int OSSL_FUNC_signature_digest_sign(void *ctx,
-                              unsigned char *sigret, size_t *siglen,
+                              unsigned char *sig, size_t *siglen,
                               size_t sigsize, const unsigned char *tbs,
                               size_t tbslen);
 
