@@ -2100,7 +2100,7 @@ static const struct pkt_hdr_test pkt_hdr_test_16 = {
     19, 23
 };
 
-const struct pkt_hdr_test *const pkt_hdr_tests[] = {
+static const struct pkt_hdr_test *const pkt_hdr_tests[] = {
     &pkt_hdr_test_1,
     &pkt_hdr_test_2,
     &pkt_hdr_test_3,
@@ -2342,7 +2342,7 @@ static int test_hdr_prot_stats(void)
      * was changed in at least one test of applying header protection, and b)
      * was unchanged in at least one test of applying header protection.
      */
-    for (cipher = 0; i < HPR_CIPHER_COUNT; ++i)
+    for (cipher = 0; cipher < HPR_CIPHER_COUNT; ++cipher)
         for (i = 0; i < OSSL_NELEM(counts_u[0]); ++i) {
             if (!TEST_true(counts_u[cipher][i]))
                 goto err;

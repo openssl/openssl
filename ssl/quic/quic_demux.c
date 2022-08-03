@@ -272,8 +272,10 @@ void ossl_quic_demux_unregister_by_cb(QUIC_DEMUX *demux,
                                       ossl_quic_demux_cb_fn *cb,
                                       void *cb_arg)
 {
-    struct unreg_arg arg = {cb, cb_arg, NULL};
     QUIC_DEMUX_CONN *conn, *cnext;
+    struct unreg_arg arg = {0};
+    arg.cb      = cb;
+    arg.cb_arg  = cb_arg;
 
     lh_QUIC_DEMUX_CONN_doall_arg(demux->conns_by_id,
                                  demux_unregister_by_cb, &arg);

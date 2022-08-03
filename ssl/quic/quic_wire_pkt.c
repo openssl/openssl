@@ -536,6 +536,7 @@ int ossl_quic_wire_get_pkt_hdr_dst_conn_id(const unsigned char *buf,
                                            QUIC_CONN_ID *dst_conn_id)
 {
     unsigned char b0;
+    size_t blen;
 
     if (buf_len < QUIC_MIN_VALID_PKT_LEN
         || short_conn_id_len > QUIC_MAX_CONN_ID_LEN)
@@ -556,7 +557,7 @@ int ossl_quic_wire_get_pkt_hdr_dst_conn_id(const unsigned char *buf,
         if ((buf[1] || buf[2] || buf[3] || buf[4]) && (b0 & 0x40) == 0)
             return 0;
 
-        size_t blen = (size_t)buf[5]; /* DCID Length */
+        blen = (size_t)buf[5]; /* DCID Length */
         if (blen > QUIC_MAX_CONN_ID_LEN
             || buf_len < QUIC_MIN_VALID_PKT_LEN + blen)
             return 0;
