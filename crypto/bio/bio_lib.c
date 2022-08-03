@@ -415,7 +415,7 @@ ossl_ssize_t BIO_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t num_msg, u
     if (HAS_CALLBACK(b)) {
         ret_ = bio_call_callback(b, BIO_CB_SENDMMSG,
                                  (void *)msg, num_msg,
-                                 (int)flags, (long)stride, 1L, NULL);
+                                 (int)stride, (long)flags, 1L, NULL);
         if (ret_ <= 0)
             return ret_;
     }
@@ -429,9 +429,11 @@ ossl_ssize_t BIO_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t num_msg, u
 
     if (HAS_CALLBACK(b)) {
         ret_ = bio_call_callback(b, BIO_CB_SENDMMSG | BIO_CB_RETURN,
-                                 (void *)msg, num_msg, (int)flags, (long)stride, ret, NULL);
+                                 (void *)msg, num_msg, (int)stride, (long)flags, ret, NULL);
         if (ret_ <= 0)
             return ret_;
+
+        ret = (ossl_ssize_t)ret_;
     }
 
     return ret;
@@ -454,7 +456,7 @@ ossl_ssize_t BIO_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t num_msg, u
 
     if (HAS_CALLBACK(b)) {
         ret_ = bio_call_callback(b, BIO_CB_RECVMMSG,
-                                (void *)msg, num_msg, (int)flags, (long)stride, 1L, NULL);
+                                (void *)msg, num_msg, (int)stride, (long)flags, 1L, NULL);
         if (ret_ <= 0)
             return ret_;
     }
@@ -468,9 +470,11 @@ ossl_ssize_t BIO_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t num_msg, u
 
     if (HAS_CALLBACK(b)) {
         ret_ = bio_call_callback(b, BIO_CB_RECVMMSG | BIO_CB_RETURN,
-                                 (void *)msg, num_msg, (int)flags, (long)stride, ret, NULL);
+                                 (void *)msg, num_msg, (int)stride, (long)flags, ret, NULL);
         if (ret_ <= 0)
             return ret_;
+
+        ret = (ossl_ssize_t)ret_;
     }
 
     return ret;

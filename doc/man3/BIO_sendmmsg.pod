@@ -69,7 +69,7 @@ datagrams, and written by BIO_recvmmsg() with the source address of received
 datagrams.
 
 Similarly, the I<local> field of a B<BIO_MSG> allows the source address of sent
-datagrams to be specified on a per-datagram basiis, and the destination address
+datagrams to be specified on a per-datagram basis, and the destination address
 of received datagrams to be determined. Unlike I<peer>, support for I<local>
 must be explicitly enabled on a B<BIO> before it can be used; see
 BIO_dgram_set_local_addr_enable(). If I<local> is non-NULL in a B<BIO_MSG> and
@@ -79,12 +79,17 @@ I<peer> and I<local> should be set to NULL if they are not required. Support for
 I<local> may not be available on all platforms; on these platforms, these
 functions always fail if I<local> is non-NULL.
 
-On Windows, if I<local> is specified, the B<BIO_ADDR> it points to will be
-zeroed (address family set to zero) if a local address was not reported by the
-operating system. This occurs when a packet is received which was sent by the
-local system. This occurs regardless of whether the packet's destination address
-was the loopback address or the IP address of a local non-loopback interface.
-This is an OS-specific limitation.
+If I<local> is specified and local address support is enabled, but the operating
+system does not report a local address for a specific received message, the
+B<BIO_ADDR> it points to will be cleared (address family set to C<AF_UNSPEC>).
+This is known to happen on Windows when a packet is received which was sent by
+the local system, regardless of whether the packet's destination address was the
+loopback address or the IP address of a local non-loopback interface. This is
+also known to happen on macOS in some circumstances, such as for packets sent
+before local address support was enabled for a receiving socket. These are
+OS-specific limitations. As such, users of this API using local address support
+should expect to sometimes receive a cleared local B<BIO_ADDR> instead of the
+correct value.
 
 The I<stride> argument must be set to C<sizeof(BIO_MSG)>. This argument
 facilitates backwards compatibility if fields are added to B<BIO_MSG>. Callers
@@ -94,10 +99,14 @@ I<num_msg> should be sent to the maximum number of messages to send or receive,
 which is also the length of the array pointed to by I<msg>.
 
 Unlike most BIO functions, these functions explicitly support multi-threaded
-use. Multiple concurrent writers and multiple concurrent readers are permitted
-in any combination. As such, these functions do not clear, set, or otherwise
-modify BIO retry flags. The return value must be used to determine whether an
-operation should be retried; see below.
+use. Multiple concurrent writers and multiple concurrent readers of the same BIO
+are permitted in any combination. As such, these functions do not clear, set, or
+otherwise modify BIO retry flags. The return value must be used to determine
+whether an operation should be retried; see below.
+
+The support for concurrent use extends to BIO_sendmmsg() and BIO_recvmmsg()
+only, and no other function may be called on a given BIO while any call to
+BIO_sendmmsg() or BIO_recvmmsg() is in progress, or vice versa.
 
 BIO_dgram_set_local_addr_enable() and BIO_dgram_get_local_addr_enable() control
 whether local address support is enabled. To enable local address support, call
