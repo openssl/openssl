@@ -35,10 +35,11 @@ ossl_quic_enc_level_to_pn_space(uint32_t enc_level)
             return QUIC_PN_SPACE_INITIAL;
         case QUIC_ENC_LEVEL_HANDSHAKE:
             return QUIC_PN_SPACE_HANDSHAKE;
-        default:
-            assert(0);
         case QUIC_ENC_LEVEL_0RTT:
         case QUIC_ENC_LEVEL_1RTT:
+            return QUIC_PN_SPACE_APP;
+        default:
+            assert(0);
             return QUIC_PN_SPACE_APP;
     }
 }
@@ -75,7 +76,7 @@ static ossl_unused ossl_inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
 {
     if (a->id_len != b->id_len || a->id_len > QUIC_MAX_CONN_ID_LEN)
         return 0;
-    return !memcmp(a->id, b->id, a->id_len);
+    return memcmp(a->id, b->id, a->id_len) == 0;
 }
 
 #endif

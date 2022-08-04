@@ -2123,7 +2123,7 @@ static const struct pkt_hdr_test *const pkt_hdr_tests[] = {
 #define HPR_CIPHER_COUNT 3
 
 /*
- * Count of number of times we observed an unchanged (u) or changed (c) bitt in
+ * Count of number of times we observed an unchanged (u) or changed (c) bit in
  * each header-protectable bit over all test suites.
  */
 static unsigned int counts_u[HPR_CIPHER_COUNT][37] = {0};
@@ -2276,7 +2276,7 @@ static int test_wire_pkt_hdr_actual(int tidx, int repeat, int cipher,
                     goto err;
             }
 
-            /* Decrypt and check matches originnal. */
+            /* Decrypt and check matches original. */
             if (!TEST_true(ossl_quic_hdr_protector_decrypt(&hpr, &ptrs)))
                 goto err;
 

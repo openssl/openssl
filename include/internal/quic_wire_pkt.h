@@ -128,7 +128,7 @@ int ossl_quic_hdr_protector_encrypt(QUIC_HDR_PROTECTOR *hpr,
  *   needed. If not enough sample bytes are provided, this function fails.
  *
  * first_byte:
- *   The initial byte of the QUIC packet to be decrypted.
+ *   The first byte of the QUIC packet header to be decrypted.
  *
  * pn:
  *   Pointer to the start of the PN field. The caller is responsible

@@ -112,13 +112,13 @@ struct quic_urxe_st {
 };
 
 /* Accessors for URXE buffer. */
-static ossl_unused ossl_inline uint8_t *
+static ossl_unused ossl_inline unsigned char *
 ossl_quic_urxe_data(const QUIC_URXE *e)
 {
-    return (uint8_t *)&e[1];
+    return (unsigned char *)&e[1];
 }
 
-static ossl_unused ossl_inline uint8_t *
+static ossl_unused ossl_inline unsigned char *
 ossl_quic_urxe_data_end(const QUIC_URXE *e)
 {
     return ossl_quic_urxe_data(e) + e->data_len;
