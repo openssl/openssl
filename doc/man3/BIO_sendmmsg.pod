@@ -3,8 +3,8 @@
 =head1 NAME
 
 BIO_sendmmsg, BIO_recvmmsg, BIO_dgram_set_local_addr_enable,
-BIO_dgram_get_local_addr_enable, BIO_dgram_get_local_addr_cap, BIO_UNPACK_ERRNO,
-BIO_IS_ERRNO - send and receive multiple datagrams in a single call
+BIO_dgram_get_local_addr_enable, BIO_dgram_get_local_addr_cap
+- send and receive multiple datagrams in a single call
 
 =head1 SYNOPSIS
 
@@ -17,17 +17,16 @@ BIO_IS_ERRNO - send and receive multiple datagrams in a single call
      uint64_t flags;
  } BIO_MSG;
 
- ossl_ssize_t BIO_sendmmsg(BIO *b, BIO_MSG *msg,
-                           size_t stride, size_t num_msg, uint64_t flags);
- ossl_ssize_t BIO_recvmmsg(BIO *b, BIO_MSG *msg,
-                           size_t stride, size_t num_msg, uint64_t flags);
+ size_t BIO_sendmmsg(BIO *b, BIO_MSG *msg,
+                     size_t stride, size_t num_msg, uint64_t flags,
+                     int *err);
+ size_t BIO_recvmmsg(BIO *b, BIO_MSG *msg,
+                     size_t stride, size_t num_msg, uint64_t flags,
+                     int *err);
 
  int BIO_dgram_set_local_addr_enable(BIO *b, int enable);
  int BIO_dgram_get_local_addr_enable(BIO *b, int *enable);
  int BIO_dgram_get_local_addr_cap(BIO *b);
-
- int BIO_UNPACK_ERRNO(ossl_ssize_t eno);
- int BIO_IS_ERRNO(ossl_ssize_t eno);
 
 =head1 DESCRIPTION
 
@@ -39,7 +38,7 @@ The B<BIO_MSG> structure provides a subset of the functionality of the B<struct
 msghdr> structure defined by POSIX. These functions accept an array of
 B<BIO_MSG> structures. On any particular invocation, these functions may process
 all of the passed structures, some of them, or none of them. This is indicated
-by the return value, which (if nonnegative) expresses the number of messages
+by the return value, which expresses the number of messages
 processed.
 
 The caller should set the I<data> member of a B<BIO_MSG> to a buffer containing
@@ -118,8 +117,8 @@ BIO_dgram_set_local_addr_enable().
 BIO_dgram_get_local_addr_cap() determines if the B<BIO> is capable of supporting
 local addresses.
 
-BIO_IS_ERRNO() and BIO_UNPACK_ERRNO() are used with the return values of
-BIO_sendmmsg() and BIO_recvmmsg(); see below.
+I<err> must be non-NULL and points to an integer written with an error code; see
+the RETURN VALUES section for further discussion.
 
 =head1 NOTES
 
@@ -137,19 +136,46 @@ updated with the results of the operation on that message. If the call was to
 BIO_recvmmsg() and the I<peer> or I<local> fields of that message are non-NULL,
 the B<BIO_ADDR> structures they point to are written with the relevant address.
 
-If an error occurs before any message has been sent or received, a negative
-value is returned. -2 is returned if the BIO_sendmmsg() or BIO_recvmmsg() method
-is not supported by the BIO; -1 is returned if a local has been specified or
-requested and local address support is not available or not enabled; otherwise,
-a packed system error code is returned. The macro BIO_IS_ERRNO() evaluates to 1
-if a BIO_sendmmsg() or BIO_recvmmsg() return value represents a system error
-code. BIO_UNPACK_ERRNO() should then be used to obtain the system error code
-(EWOULDBLOCK, etc.) from the return value.
+BIO_sendmmsg() and BIO_recvmmsg() always write a value to I<err> regardless of
+their outcome, and regardless of whether any messages were sent or received. The
+possible values of I<err> after a call to BIO_sendmmsg() or BIO_recvmmsg()
+returns are as follows:
 
-If an error occurs after one or more messages have been sent or received that
-prevents sending or receiving further messages, the number of messages
-successfully sent or received is returned; the caller must learn of the error
-via a subsequent call to the same function.
+=over 2
+
+=item *
+
+Zero, indicating that no error occurred. This outcome typically occurs when
+I<num_msg> is zero, or when all I<num_msg> B<BIO_MSG> structures were
+successfully processed. It may also occur if the operating system chose to
+return less than I<num_msg> messages, but did not indicate an error.
+
+=item *
+
+A system-specific error code (EWOULDBLOCK, etc.). If at least one message was
+returned (that is, if the function returned a positive value), this error code
+is the error code that occurred when trying to send or receive the next message
+after that message. If the function did not successfully send or receive any
+message (returned 0), this error code is the error code that occurred while
+trying to send or receive the first message.
+
+=item *
+
+The value B<BIO_NO_LOCAL>, indicating that a local address was specified
+or requested but local address support is not available or nott enabled.
+
+=item *
+
+The value B<BIO_NO_SUPPORT>, indicating that the BIO_sendmmsg() or
+BIO_recvmmsg() method is not supported by the BIO.
+
+=item *
+
+The value B<BIO_UNSPEC_ERR>, indicating that BIO_sendmmsg() or BIO_recvmmsg()
+failed for any other reason (for example, if the function was called with an
+invalid argument).
+
+=back
 
 BIO_dgram_set_local_addr_enable() returns 1 if local address support was
 successfully enabled or disabled and 0 otherwise.

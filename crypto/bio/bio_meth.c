@@ -220,23 +220,23 @@ int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
 }
 
 int BIO_meth_set_sendmmsg(BIO_METHOD *biom,
-                          ossl_ssize_t (*bsendmmsg) (BIO *, BIO_MSG *, size_t, size_t, uint64_t))
+                          size_t (*bsendmmsg) (BIO *, BIO_MSG *, size_t, size_t, uint64_t, int *))
 {
     biom->bsendmmsg = bsendmmsg;
     return 1;
 }
 
-ossl_ssize_t (*BIO_meth_get_sendmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *, size_t, size_t, uint64_t) {
+size_t (*BIO_meth_get_sendmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *, size_t, size_t, uint64_t, int *) {
     return biom->bsendmmsg;
 }
 
 int BIO_meth_set_recvmmsg(BIO_METHOD *biom,
-                          ossl_ssize_t (*brecvmmsg) (BIO *, BIO_MSG *, size_t, size_t, uint64_t))
+                          size_t (*brecvmmsg) (BIO *, BIO_MSG *, size_t, size_t, uint64_t, int *))
 {
     biom->brecvmmsg = brecvmmsg;
     return 1;
 }
 
-ossl_ssize_t (*BIO_meth_get_recvmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *, size_t, size_t, uint64_t) {
+size_t (*BIO_meth_get_recvmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *, size_t, size_t, uint64_t, int *) {
     return biom->brecvmmsg;
 }

@@ -397,85 +397,96 @@ int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written)
         || (b != NULL && dlen == 0); /* order is important for *written */
 }
 
-ossl_ssize_t BIO_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t num_msg, uint64_t flags)
+size_t BIO_sendmmsg(BIO *b, BIO_MSG *msg,
+                    size_t stride, size_t num_msg, uint64_t flags,
+                    int *err)
 {
-    long ret_;
-    ossl_ssize_t ret;
+    size_t ret;
+    BIO_MMSG_CB_ARGS args;
 
     if (b == NULL) {
+        *err = BIO_UNSPEC_ERR;
         ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
-        return -1;
+        return 0;
     }
 
     if (b->method == NULL || b->method->bsendmmsg == NULL) {
+        *err = BIO_UNSPEC_ERR;
         ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
-        return -2;
+        return 0;
     }
 
     if (HAS_CALLBACK(b)) {
-        ret_ = bio_call_callback(b, BIO_CB_SENDMMSG,
-                                 (void *)msg, num_msg,
-                                 (int)stride, (long)flags, 1L, NULL);
-        if (ret_ <= 0)
-            return ret_;
+        args.msg        = msg;
+        args.stride     = stride;
+        args.num_msg    = num_msg;
+        args.flags      = flags;
+        args.err        = err;
+
+        *err = 0;
+        ret = (size_t)bio_call_callback(b, BIO_CB_SENDMMSG, (void *)&args,
+                                        0, 0, 0, 0, NULL);
+        if (*err != 0)
+            return ret;
     }
 
     if (!b->init) {
+        *err = BIO_UNSPEC_ERR;
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
-        return -1;
+        return 0;
     }
 
-    ret = b->method->bsendmmsg(b, msg, stride, num_msg, flags);
+    ret = b->method->bsendmmsg(b, msg, stride, num_msg, flags, err);
 
-    if (HAS_CALLBACK(b)) {
-        ret_ = bio_call_callback(b, BIO_CB_SENDMMSG | BIO_CB_RETURN,
-                                 (void *)msg, num_msg, (int)stride, (long)flags, ret, NULL);
-        if (ret_ <= 0)
-            return ret_;
-
-        ret = (ossl_ssize_t)ret_;
-    }
+    if (HAS_CALLBACK(b))
+        ret = (size_t)bio_call_callback(b, BIO_CB_SENDMMSG | BIO_CB_RETURN,
+                                        (void *)&args, ret, 0, 0, 0, NULL);
 
     return ret;
 }
 
-ossl_ssize_t BIO_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t num_msg, uint64_t flags)
+size_t BIO_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride, size_t num_msg,
+                          uint64_t flags, int *err)
 {
-    long ret_;
-    ossl_ssize_t ret;
+    size_t ret;
+    BIO_MMSG_CB_ARGS args;
 
     if (b == NULL) {
+        *err = BIO_UNSPEC_ERR;
         ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
-        return -1;
+        return 0;
     }
 
     if (b->method == NULL || b->method->brecvmmsg == NULL) {
+        *err = BIO_UNSPEC_ERR;
         ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
-        return -2;
+        return 0;
     }
 
     if (HAS_CALLBACK(b)) {
-        ret_ = bio_call_callback(b, BIO_CB_RECVMMSG,
-                                (void *)msg, num_msg, (int)stride, (long)flags, 1L, NULL);
-        if (ret_ <= 0)
-            return ret_;
+        args.msg        = msg;
+        args.stride     = stride;
+        args.num_msg    = num_msg;
+        args.flags      = flags;
+        args.err        = err;
+
+        ret = bio_call_callback(b, BIO_CB_RECVMMSG, (void *)&args,
+                                0, 0, 0, 0, NULL);
+        if (*err != 0)
+            return ret;
     }
 
     if (!b->init) {
+        *err = BIO_UNSPEC_ERR;
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
-        return -1;
+        return 0;
     }
 
-    ret = b->method->brecvmmsg(b, msg, stride, num_msg, flags);
+    ret = b->method->brecvmmsg(b, msg, stride, num_msg, flags, err);
 
-    if (HAS_CALLBACK(b)) {
-        ret_ = bio_call_callback(b, BIO_CB_RECVMMSG | BIO_CB_RETURN,
-                                 (void *)msg, num_msg, (int)stride, (long)flags, ret, NULL);
-        if (ret_ <= 0)
-            return ret_;
-
-        ret = (ossl_ssize_t)ret_;
-    }
+    if (HAS_CALLBACK(b))
+        ret = (size_t)bio_call_callback(b, BIO_CB_RECVMMSG | BIO_CB_RETURN,
+                                        (void *)&args, ret, 0, 0, 0, NULL);
 
     return ret;
 }
