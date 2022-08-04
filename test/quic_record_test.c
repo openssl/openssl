@@ -2316,21 +2316,6 @@ err:
     return testresult;
 }
 
-static int test_wire_pkt_hdr(int idx)
-{
-    int tidx, repeat, cipher;
-
-    cipher = idx % HPR_CIPHER_COUNT;
-    idx /= HPR_CIPHER_COUNT;
-
-    repeat = idx % HPR_REPEAT_COUNT;
-    idx /= HPR_REPEAT_COUNT;
-
-    tidx = idx;
-
-    return test_wire_pkt_hdr_inner(tidx, repeat, cipher);
-}
-
 static int test_hdr_prot_stats(void)
 {
     int testresult = 0;
@@ -2355,16 +2340,39 @@ err:
     return testresult;
 }
 
+#define NUM_WIRE_PKT_HDR_TESTS \
+    (OSSL_NELEM(pkt_hdr_tests) * HPR_REPEAT_COUNT * HPR_CIPHER_COUNT)
+
+static int test_wire_pkt_hdr(int idx)
+{
+    int tidx, repeat, cipher;
+
+    if (idx == NUM_WIRE_PKT_HDR_TESTS)
+        return test_hdr_prot_stats();
+
+    cipher = idx % HPR_CIPHER_COUNT;
+    idx /= HPR_CIPHER_COUNT;
+
+    repeat = idx % HPR_REPEAT_COUNT;
+    idx /= HPR_REPEAT_COUNT;
+
+    tidx = idx;
+
+    return test_wire_pkt_hdr_inner(tidx, repeat, cipher);
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_script, OSSL_NELEM(scripts));
     /*
      * Each instance of this test is executed multiple times to get enough
-     * statistical coverage for our statistical test below, as well as for each
+     * statistical coverage for our statistical test, as well as for each
      * supported key type.
+     *
+     * We call the statistical test as the last index in the wire_pkt_hdr
+     * test rather than as a separate case, as it needs to execute last
+     * and otherwise random test ordering will cause itt to randomly fail.
      */
-    ADD_ALL_TESTS(test_wire_pkt_hdr, OSSL_NELEM(pkt_hdr_tests)
-                  * HPR_REPEAT_COUNT * HPR_CIPHER_COUNT);
-    ADD_TEST(test_hdr_prot_stats);
+    ADD_ALL_TESTS(test_wire_pkt_hdr, NUM_WIRE_PKT_HDR_TESTS + 1);
     return 1;
 }
