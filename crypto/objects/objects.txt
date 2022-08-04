@@ -1713,22 +1713,6 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
  : p384_saber : p384_saber
  : firesaber : firesaber
  : p521_firesaber : p521_firesaber
- : sidhp434 : sidhp434
- : p256_sidhp434 : p256_sidhp434
- : sidhp503 : sidhp503
- : p256_sidhp503 : p256_sidhp503
- : sidhp610 : sidhp610
- : p384_sidhp610 : p384_sidhp610
- : sidhp751 : sidhp751
- : p521_sidhp751 : p521_sidhp751
- : sikep434 : sikep434
- : p256_sikep434 : p256_sikep434
- : sikep503 : sikep503
- : p256_sikep503 : p256_sikep503
- : sikep610 : sikep610
- : p384_sikep610 : p384_sikep610
- : sikep751 : sikep751
- : p521_sikep751 : p521_sikep751
  : bikel1 : bikel1
  : p256_bikel1 : p256_bikel1
  : bikel3 : bikel3

@@ -58,7 +58,7 @@ jobs:
   macOS:
     description: A template for running OQS-OpenSSL tests on macOS
     macos:
-      xcode: "12.4.0"
+      xcode: "13.2.1"
     parameters:
       LIBOQS_SHARED:
         description: "Build liboqs as a shared library."

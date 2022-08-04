@@ -205,14 +205,6 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_lightsaber, 128, TLS_CURVE_CUSTOM}, /* lightsaber (0x0218) */
     {NID_saber, 192, TLS_CURVE_CUSTOM}, /* saber (0x0219) */
     {NID_firesaber, 256, TLS_CURVE_CUSTOM}, /* firesaber (0x021A) */
-    {NID_sidhp434, 128, TLS_CURVE_CUSTOM}, /* sidhp434 (0x021B) */
-    {NID_sidhp503, 128, TLS_CURVE_CUSTOM}, /* sidhp503 (0x021C) */
-    {NID_sidhp610, 192, TLS_CURVE_CUSTOM}, /* sidhp610 (0x021D) */
-    {NID_sidhp751, 256, TLS_CURVE_CUSTOM}, /* sidhp751 (0x021E) */
-    {NID_sikep434, 128, TLS_CURVE_CUSTOM}, /* sikep434 (0x021F) */
-    {NID_sikep503, 128, TLS_CURVE_CUSTOM}, /* sikep503 (0x0220) */
-    {NID_sikep610, 192, TLS_CURVE_CUSTOM}, /* sikep610 (0x0221) */
-    {NID_sikep751, 256, TLS_CURVE_CUSTOM}, /* sikep751 (0x0222) */
     {NID_bikel1, 128, TLS_CURVE_CUSTOM}, /* bikel1 (0x0238) */
     {NID_bikel3, 192, TLS_CURVE_CUSTOM}, /* bikel3 (0x023B) */
     {NID_kyber90s512, 128, TLS_CURVE_CUSTOM}, /* kyber90s512 (0x023E) */
@@ -252,14 +244,6 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
  {NID_p256_lightsaber, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + lightsaber hybrid (0x0218) */
  {NID_p384_saber, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + saber hybrid (0x0219) */
  {NID_p521_firesaber, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + firesaber hybrid (0x021A) */
- {NID_p256_sidhp434, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + sidhp434 hybrid (0x021B) */
- {NID_p256_sidhp503, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + sidhp503 hybrid (0x021C) */
- {NID_p384_sidhp610, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + sidhp610 hybrid (0x021D) */
- {NID_p521_sidhp751, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + sidhp751 hybrid (0x021E) */
- {NID_p256_sikep434, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + sikep434 hybrid (0x021F) */
- {NID_p256_sikep503, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + sikep503 hybrid (0x0220) */
- {NID_p384_sikep610, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + sikep610 hybrid (0x0221) */
- {NID_p521_sikep751, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + sikep751 hybrid (0x0222) */
  {NID_p256_bikel1, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + bikel1 hybrid (0x0238) */
  {NID_p384_bikel3, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + bikel3 hybrid (0x023B) */
  {NID_p256_kyber90s512, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + kyber90s512 hybrid (0x023E) */
@@ -298,10 +282,6 @@ static const uint16_t eccurves_default[] = {
     0x2F3A, /* OQS kyber512 hybrid */
     0x2F14, /* OQS ntru_hps2048509 hybrid */
     0x2F18, /* OQS lightsaber hybrid */
-    0x2F1B, /* OQS sidhp434 hybrid */
-    0x2F1C, /* OQS sidhp503 hybrid */
-    0x2F1F, /* OQS sikep434 hybrid */
-    0x2F20, /* OQS sikep503 hybrid */
     0x2F38, /* OQS bikel1 hybrid */
     0x2F3E, /* OQS kyber90s512 hybrid */
     0x2F2C, /* OQS hqc128 hybrid */
@@ -363,22 +343,6 @@ static const uint16_t oqs_all_tls13_server_groups[] = {
     0x2F19, /* OQS saber hybrid */
     0x021A, /* firesaber */
     0x2F1A, /* OQS firesaber hybrid */
-    0x021B, /* sidhp434 */
-    0x2F1B, /* OQS sidhp434 hybrid */
-    0x021C, /* sidhp503 */
-    0x2F1C, /* OQS sidhp503 hybrid */
-    0x021D, /* sidhp610 */
-    0x2F1D, /* OQS sidhp610 hybrid */
-    0x021E, /* sidhp751 */
-    0x2F1E, /* OQS sidhp751 hybrid */
-    0x021F, /* sikep434 */
-    0x2F1F, /* OQS sikep434 hybrid */
-    0x0220, /* sikep503 */
-    0x2F20, /* OQS sikep503 hybrid */
-    0x0221, /* sikep610 */
-    0x2F21, /* OQS sikep610 hybrid */
-    0x0222, /* sikep751 */
-    0x2F22, /* OQS sikep751 hybrid */
     0x0238, /* bikel1 */
     0x2F38, /* OQS bikel1 hybrid */
     0x023B, /* bikel3 */

@@ -54,6 +54,14 @@ def load_config(include_disabled_sigs=False):
            newkems.append(kem)
     config['kems']=newkems
 
+    # remove SIGs without OID (old stuff)
+    for sig in config['sigs']:
+        newvars = []
+        for variant in sig['variants']:
+            if 'oid' in variant:
+                newvars.append(variant)
+        sig['variants']=newvars
+
     if include_disabled_sigs:
         return config
     for sig in config['sigs']:

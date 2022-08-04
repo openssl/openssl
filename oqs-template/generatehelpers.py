@@ -26,8 +26,13 @@ def get_kem_nistlevel(alg, docsdir):
     elif alg['family'] == 'NTRU-Prime': datasheetname = 'ntruprime'
     else: datasheetname = alg['family'].lower()
     # load datasheet
-    algymlfilename = os.path.join(docsdir, 'algorithms', 'kem', '{:s}.yml'.format(datasheetname))
-    algyml = yaml.safe_load(file_get_contents(algymlfilename, encoding='utf-8'))
+    try:
+        algymlfilename = os.path.join(docsdir, 'algorithms', 'kem', '{:s}.yml'.format(datasheetname))
+        algyml = yaml.safe_load(file_get_contents(algymlfilename, encoding='utf-8'))
+    except: # check alternate location in "oldalgs" folder
+        algymlfilename = os.path.join("oqs-template", 'oldalgdocs', 'kem', '{:s}.yml'.format(datasheetname))
+        algyml = yaml.safe_load(file_get_contents(algymlfilename, encoding='utf-8'))
+
     # hacks to match names
     def matches(name, alg):
         def simplify(s):
@@ -93,8 +98,11 @@ def complete_config(config, oqsdocsdir = None):
          if not "security" in sig.keys():
             bits_level = nist_to_bits(get_sig_nistlevel(famsig, sig, oqsdocsdir))
             if bits_level == None: 
-                print("Cannot find security level for {:s} {:s}".format(famsig['family'], sig['name']))
-                exit(1)
+                if sig['name'].startswith("rainbowI"):
+                    bits_level=128
+                else:
+                    print("Cannot find security level for {:s} {:s}".format(famsig['family'], sig['name']))
+                    exit(1)
             sig['security'] = bits_level
    return config
 

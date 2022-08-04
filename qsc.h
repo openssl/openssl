@@ -36,22 +36,6 @@
     { 0x2F19, "p384_saber" }, \
     { 0x021A, "firesaber" }, \
     { 0x2F1A, "p521_firesaber" }, \
-    { 0x021B, "sidhp434" }, \
-    { 0x2F1B, "p256_sidhp434" }, \
-    { 0x021C, "sidhp503" }, \
-    { 0x2F1C, "p256_sidhp503" }, \
-    { 0x021D, "sidhp610" }, \
-    { 0x2F1D, "p384_sidhp610" }, \
-    { 0x021E, "sidhp751" }, \
-    { 0x2F1E, "p521_sidhp751" }, \
-    { 0x021F, "sikep434" }, \
-    { 0x2F1F, "p256_sikep434" }, \
-    { 0x0220, "sikep503" }, \
-    { 0x2F20, "p256_sikep503" }, \
-    { 0x0221, "sikep610" }, \
-    { 0x2F21, "p384_sikep610" }, \
-    { 0x0222, "sikep751" }, \
-    { 0x2F22, "p521_sikep751" }, \
     { 0x0238, "bikel1" }, \
     { 0x2F38, "p256_bikel1" }, \
     { 0x023B, "bikel3" }, \

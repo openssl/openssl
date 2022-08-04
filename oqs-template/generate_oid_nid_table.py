@@ -40,17 +40,32 @@ def gen_sig_table(oqslibdocdir):
         if variant['name'].startswith('dilithium2'):
             claimed_nist_level = 2
 
-        table.append([variant['name'], liboqs_sigs[sig['family']]['spec-version'],
-                      liboqs_sigs[sig['family']]['nist-round'], claimed_nist_level, variant['code_point'],
-                      variant['oid']])
+        try: 
+            table.append([variant['name'], liboqs_sigs[sig['family']]['spec-version'],
+                          liboqs_sigs[sig['family']]['nist-round'], claimed_nist_level, variant['code_point'],
+                          variant['oid']])
+            for hybrid in variant['mix_with']:
+                table.append([variant['name'] + ' **hybrid with** ' + hybrid['name'],
+                              liboqs_sigs[sig['family']]['spec-version'],
+                              liboqs_sigs[sig['family']]['nist-round'],
+                              claimed_nist_level,
+                              hybrid['code_point'],
+                              hybrid['oid']])
+        except KeyError as ke:
+            # Non-existant NIDs mean this alg is not supported any more
+            pass
 
-        for hybrid in variant['mix_with']:
-            table.append([variant['name'] + ' **hybrid with** ' + hybrid['name'],
-                          liboqs_sigs[sig['family']]['spec-version'],
-                          liboqs_sigs[sig['family']]['nist-round'],
-                          claimed_nist_level,
-                          hybrid['code_point'],
-                          hybrid['oid']])
+        if 'extra_oids' in variant:
+            table.append([variant['name'], liboqs_sigs[sig['family']]['spec-version'],
+                          variant['extra_oids']['nist-round'], claimed_nist_level, variant['extra_oids']['code_point'],
+                          variant['extra_oids']['oid']])
+            for hybrid in variant['extra_oids']['mix_with']:
+                table.append([variant['name'] + ' **hybrid with** ' + hybrid['name'],
+                              liboqs_sigs[sig['family']]['spec-version'],
+                              variant['extra_oids']['nist-round'],
+                              claimed_nist_level,
+                              hybrid['code_point'],
+                              hybrid['oid']])
 
   with open(os.path.join('oqs-template', 'oqs-sig-info.md'), mode='w', encoding='utf-8') as f:
     f.write(tabulate(table, tablefmt="pipe", headers="firstrow"))
@@ -91,6 +106,9 @@ def gen_kem_table(oqslibdocdir):
     else:
         implementation_version = liboqs_kems[kem['family']]['spec-version']
 
+    if kem['name_group'].startswith('sidhp503') or kem['name_group'].startswith('sikep503'):
+        claimed_nist_level = 2
+
     try: 
        table.append([kem['family'], implementation_version,
                      kem['name_group'], liboqs_kems[kem['family']]['nist-round'], claimed_nist_level,
@@ -109,10 +127,10 @@ def gen_kem_table(oqslibdocdir):
                               kem['name_group'], liboqs_kems[kem['family']]['nist-round'], claimed_nist_level,
                               entry['nid'], 
                               entry['hybrid_group'] if 'hybrid_group' in entry else ""])
-        if 'old' in kem['extra_nids']: # assume "old" submissions to mean NIST round 2:
+        if 'old' in kem['extra_nids']:
             for entry in kem['extra_nids']['old']:
                 table.append([kem['family'], entry['implementation_version'],
-                              kem['name_group'], 2, claimed_nist_level,
+                              kem['name_group'], entry['nist-round'], claimed_nist_level,
                               entry['nid'],
                               entry['hybrid_group'] if 'hybrid_group' in entry else ""])
 

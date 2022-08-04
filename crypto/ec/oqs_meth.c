@@ -135,14 +135,6 @@ int oqssl_kem_nids_list[] = {
         NID_lightsaber,
         NID_saber,
         NID_firesaber,
-        NID_sidhp434,
-        NID_sidhp503,
-        NID_sidhp610,
-        NID_sidhp751,
-        NID_sikep434,
-        NID_sikep503,
-        NID_sikep610,
-        NID_sikep751,
         NID_bikel1,
         NID_bikel3,
         NID_kyber90s512,
@@ -293,30 +285,6 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_firesaber:
     case NID_p521_firesaber:
       return OQS_KEM_alg_saber_firesaber;
-    case NID_sidhp434:
-    case NID_p256_sidhp434:
-      return OQS_KEM_alg_sidh_p434;
-    case NID_sidhp503:
-    case NID_p256_sidhp503:
-      return OQS_KEM_alg_sidh_p503;
-    case NID_sidhp610:
-    case NID_p384_sidhp610:
-      return OQS_KEM_alg_sidh_p610;
-    case NID_sidhp751:
-    case NID_p521_sidhp751:
-      return OQS_KEM_alg_sidh_p751;
-    case NID_sikep434:
-    case NID_p256_sikep434:
-      return OQS_KEM_alg_sike_p434;
-    case NID_sikep503:
-    case NID_p256_sikep503:
-      return OQS_KEM_alg_sike_p503;
-    case NID_sikep610:
-    case NID_p384_sikep610:
-      return OQS_KEM_alg_sike_p610;
-    case NID_sikep751:
-    case NID_p521_sikep751:
-      return OQS_KEM_alg_sike_p751;
     case NID_bikel1:
     case NID_p256_bikel1:
       return OQS_KEM_alg_bike_l1;
