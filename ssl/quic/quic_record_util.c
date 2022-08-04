@@ -16,12 +16,6 @@
  * QUIC Key Derivation Utilities
  * =============================
  */
-#define MAX_LABEL_LEN     249
-
-static const unsigned char label_prefix[] = {
-    0x74, 0x6C, 0x73, 0x31, 0x33, 0x20 /* "tls13 " */
-};
-
 int ossl_quic_hkdf_extract(OSSL_LIB_CTX *libctx,
                            const char *propq,
                            const EVP_MD *md,
@@ -48,53 +42,6 @@ int ossl_quic_hkdf_extract(OSSL_LIB_CTX *libctx,
                                              (unsigned char *)salt, salt_len);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                              (unsigned char *)ikm, ikm_len);
-    *p++ = OSSL_PARAM_construct_end();
-
-    ret = EVP_KDF_derive(kctx, out, out_len, params);
-
-err:
-    EVP_KDF_CTX_free(kctx);
-    EVP_KDF_free(kdf);
-    return ret;
-}
-
-int ossl_quic_hkdf_expand_label(OSSL_LIB_CTX *libctx,
-                                const char *propq,
-                                const EVP_MD *md,
-                                const unsigned char *secret, size_t secret_len,
-                                const unsigned char *label, size_t label_len,
-                                const unsigned char *ctx, size_t ctx_len,
-                                unsigned char *out, size_t out_len)
-{
-    int ret = 0, md_len;
-    EVP_KDF *kdf = NULL;
-    EVP_KDF_CTX *kctx = NULL;
-    OSSL_PARAM params[7], *p = params;
-    int mode = EVP_PKEY_HKDEF_MODE_EXPAND_ONLY;
-    const char *md_name;
-
-    if (label_len > MAX_LABEL_LEN
-        || (md_name = EVP_MD_get0_name(md)) == NULL
-        || (md_len = EVP_MD_get_size(md)) <= 0
-        || (size_t)md_len != secret_len
-        || (kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_TLS1_3_KDF, propq)) == NULL
-        || (kctx = EVP_KDF_CTX_new(kdf)) == NULL)
-        goto err;
-
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)md_name, 0);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                             (unsigned char *)secret, secret_len);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
-                                             (unsigned char *)label_prefix,
-                                             sizeof(label_prefix));
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_LABEL,
-                                             (unsigned char *)label, label_len);
-    if (ctx != NULL)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_DATA,
-                                                 (unsigned char *)ctx, ctx_len);
-
     *p++ = OSSL_PARAM_construct_end();
 
     ret = EVP_KDF_derive(kctx, out, out_len, params);

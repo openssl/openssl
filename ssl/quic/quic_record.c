@@ -9,6 +9,7 @@
 
 #include "internal/quic_record.h"
 #include "internal/common.h"
+#include "../ssl_local.h"
 
 /*
  * Mark a packet in a bitfield.
@@ -293,33 +294,33 @@ static int qrl_el_set_secret(OSSL_QRL *qrl, uint32_t enc_level,
     }
 
     /* Derive "quic iv" key. */
-    if (!ossl_quic_hkdf_expand_label(qrl->libctx, qrl->propq,
-                                     md,
-                                     secret, secret_len,
-                                     quic_v1_iv_label,
-                                     sizeof(quic_v1_iv_label),
-                                     NULL, 0,
-                                     el->iv, iv_len))
+    if (!tls13_hkdf_expand_ex(qrl->libctx, qrl->propq,
+                              md,
+                              secret,
+                              quic_v1_iv_label,
+                              sizeof(quic_v1_iv_label),
+                              NULL, 0,
+                              el->iv, iv_len, 0))
         goto err;
 
     /* Derive "quic key" key. */
-    if (!ossl_quic_hkdf_expand_label(qrl->libctx, qrl->propq,
-                                     md,
-                                     secret, secret_len,
-                                     quic_v1_key_label,
-                                     sizeof(quic_v1_key_label),
-                                     NULL, 0,
-                                     key, key_len))
+    if (!tls13_hkdf_expand_ex(qrl->libctx, qrl->propq,
+                              md,
+                              secret,
+                              quic_v1_key_label,
+                              sizeof(quic_v1_key_label),
+                              NULL, 0,
+                              key, key_len, 0))
         goto err;
 
     /* Derive "quic hp" key. */
-    if (!ossl_quic_hkdf_expand_label(qrl->libctx, qrl->propq,
-                                     md,
-                                     secret, secret_len,
-                                     quic_v1_hp_label,
-                                     sizeof(quic_v1_hp_label),
-                                     NULL, 0,
-                                     hpr_key, hpr_key_len))
+    if (!tls13_hkdf_expand_ex(qrl->libctx, qrl->propq,
+                              md,
+                              secret,
+                              quic_v1_hp_label,
+                              sizeof(quic_v1_hp_label),
+                              NULL, 0,
+                              hpr_key, hpr_key_len, 0))
         goto err;
 
     /* Free any old context which is using old keying material. */
@@ -522,27 +523,25 @@ int ossl_qrl_provide_rx_secret_initial(OSSL_QRL *qrl,
         goto err;
 
     /* Derive "client in" secret. */
-    if (!ossl_quic_hkdf_expand_label(qrl->libctx, qrl->propq,
-                                     sha256,
-                                     initial_secret,
-                                     sizeof(initial_secret),
-                                     quic_client_in_label,
-                                     sizeof(quic_client_in_label),
-                                     NULL, 0,
-                                     client_initial_secret,
-                                     sizeof(client_initial_secret)))
+    if (!tls13_hkdf_expand_ex(qrl->libctx, qrl->propq,
+                              sha256,
+                              initial_secret,
+                              quic_client_in_label,
+                              sizeof(quic_client_in_label),
+                              NULL, 0,
+                              client_initial_secret,
+                              sizeof(client_initial_secret), 0))
         goto err;
 
     /* Derive "server in" secret. */
-    if (!ossl_quic_hkdf_expand_label(qrl->libctx, qrl->propq,
-                                     sha256,
-                                     initial_secret,
-                                     sizeof(initial_secret),
-                                     quic_server_in_label,
-                                     sizeof(quic_server_in_label),
-                                     NULL, 0,
-                                     server_initial_secret,
-                                     sizeof(server_initial_secret)))
+    if (!tls13_hkdf_expand_ex(qrl->libctx, qrl->propq,
+                              sha256,
+                              initial_secret,
+                              quic_server_in_label,
+                              sizeof(quic_server_in_label),
+                              NULL, 0,
+                              server_initial_secret,
+                              sizeof(server_initial_secret), 0))
         goto err;
 
     /* Setup RX cipher. Initial encryption always uses AES-128-GCM. */

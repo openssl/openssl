@@ -25,23 +25,6 @@ int ossl_quic_hkdf_extract(OSSL_LIB_CTX *libctx,
                            const unsigned char *ikm, size_t ikm_len,
                            unsigned char *out, size_t out_len);
 
-/* HKDF-Expand(PRK, info, L) (RFC 5869) */
-int ossl_quic_hkdf_expand(OSSL_LIB_CTX *libctx,
-                          const char *propq,
-                          const EVP_MD *md,
-                          const unsigned char *secret,
-                          const unsigned char *info, size_t info_len,
-                          unsigned char *out, size_t out_len);
-
-/* HKDF-Expand-Label(Secret, Label, Context, Length) (RFC 8446 - TLS 1.3) */
-int ossl_quic_hkdf_expand_label(OSSL_LIB_CTX *libctx,
-                                const char *propq,
-                                const EVP_MD *md,
-                                const unsigned char *secret, size_t secret_len,
-                                const unsigned char *label, size_t label_len,
-                                const unsigned char *ctx, size_t ctx_len,
-                                unsigned char *out, size_t out_len);
-
 /*
  * QUIC Record Layer Ciphersuite Info
  * ==================================
