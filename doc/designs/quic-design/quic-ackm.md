@@ -59,7 +59,7 @@ The ACK manager provides the following outputs:
   - It may communicate with a RTT statistics tracker, causing it
     to update its state.
 
-In this document, “the user” refers to the system which makes use of the ACK
+In this document, “the caller” refers to the system which makes use of the ACK
 manager.
 
 Utility Definitions
@@ -104,14 +104,14 @@ void ossl_ackm_delete(OSSL_ACKM *ackm);
 
 The function pointer `now` is invoked by the ACK manager to obtain the current
 time. `now_arg` is passed as the argument. The congestion controller method and
-instance passed are used by the ACK manager instance. `rtt` points to an RTT
-tracker instance (discussed below).
+instance passed are used by the ACK manager instance. `statm` points to a
+[Statistics Manager tracker instance](quic-statm.md).
 
 Events
 ------
 
 The ACK manager state is evolved in response to events provided to the ACK
-manager by the user.
+manager by the caller.
 
 ### On TX Packet
 
@@ -122,7 +122,7 @@ to the loss detection and acknowledgement process.
 The caller is responsible for the allocation of the structure and the structure
 must remain allocated until one of the callbacks is called or the ACK manager is
 freed. It is expected this structure will usually be freed (or returned to a
-pool) in the implementation of either callback passed by the user.
+pool) in the implementation of either callback passed by the caller.
 
 Only exactly one of the callbacks in the structure will be called over the
 lifetime of a `OSSL_ACKM_TX_PKT`, and only once.
@@ -312,7 +312,7 @@ int ossl_ackm_on_pkt_space_discarded(OSSL_ACKM *ackm, int pkt_space);
 
 ### On Handshake Confirmed
 
-This should be called by the user when the QUIC handshake is confirmed. The
+This should be called by the caller when the QUIC handshake is confirmed. The
 Probe Timeout (PTO) algorithm behaves differently depending on whether the QUIC
 handshake is confirmed yet.
 
@@ -428,7 +428,7 @@ The returrn value of this function transitions from 1 to 0 for a given PN once
 that PN is passed to ossl_ackm_on_rx_packet, thus this functiion must be used
 before calling `ossl_ackm_on_rx_packet`.
 
-```
+```c
 int ossl_ackm_is_rx_pn_processable(OSSL_ACKM *ackm, QUIC_PN pn, int pkt_space);
 ```
 
@@ -455,7 +455,7 @@ of each type which are outstanding. In short:
     corresponding to each packet number space. This is equivalent to
     `SendOneOrTwoAckElicitingPackets(pn_space)` in RFC 9002.
 
-Once the user has processed these requests, the user must clear these
+Once the caller has processed these requests, the caller must clear these
 outstanding requests by calling `ossl_ackm_get_probe_request` with `clear` set
 to 1. If `clear` is non-zero, the current values are returned and then zeroed,
 so that the next call to `ossl_ackm_get_probe_request` (if made immediately)

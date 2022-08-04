@@ -1351,7 +1351,7 @@ static void ackm_on_pkts_acked(OSSL_ACKM *ackm, const OSSL_ACKM_TX_PKT *apkt)
         }
 
         anext = apkt->anext;
-        apkt->on_acked(apkt->cb_arg);
+        apkt->on_acked(apkt->cb_arg); /* may free apkt */
     }
 
     ackm->cc_method->on_data_acked(ackm->cc_data, now,
@@ -1416,8 +1416,10 @@ int ossl_ackm_on_tx_packet(OSSL_ACKM *ackm, OSSL_ACKM_TX_PKT *pkt)
 {
     struct tx_pkt_history_st *h = get_tx_history(ackm, pkt->pkt_space);
 
-    /* Time must be set. */
-    if (ossl_time_is_zero(pkt->time))
+    /* Time must be set and not move backwards. */
+    if (ossl_time_is_zero(pkt->time)
+        || ossl_time_compare(ackm->time_of_last_ack_eliciting_pkt[pkt->pkt_space],
+                             pkt->time) > 0)
         return 0;
 
     /* Must have non-zero number of bytes. */
@@ -1576,7 +1578,7 @@ int ossl_ackm_on_pkt_space_discarded(OSSL_ACKM *ackm, int pkt_space)
             num_bytes_invalidated += pkt->num_bytes;
         }
 
-        pkt->on_discarded(pkt->cb_arg);
+        pkt->on_discarded(pkt->cb_arg); /* may free pkt */
     }
 
     tx_pkt_history_destroy(&ackm->tx_history[pkt_space]);
@@ -1586,8 +1588,8 @@ int ossl_ackm_on_pkt_space_discarded(OSSL_ACKM *ackm, int pkt_space)
         ackm->cc_method->on_data_invalidated(ackm->cc_data,
                                              num_bytes_invalidated);
 
-    ackm->time_of_last_ack_eliciting_pkt[pkt_space] = 0;
-    ackm->loss_time[pkt_space] = 0;
+    ackm->time_of_last_ack_eliciting_pkt[pkt_space] = OSSL_TIME_ZERO;
+    ackm->loss_time[pkt_space] = OSSL_TIME_ZERO;
     ackm->pto_count = 0;
     ackm->discarded[pkt_space] = 1;
     ackm->ack_eliciting_bytes_in_flight[pkt_space] = 0;
@@ -1625,7 +1627,7 @@ int ossl_ackm_on_timeout(OSSL_ACKM *ackm)
     OSSL_ACKM_TX_PKT *lost_pkts;
 
     earliest_loss_time = ackm_get_loss_time_and_space(ackm, &pkt_space);
-    if (earliest_loss_time != 0) {
+    if (!ossl_time_is_zero(earliest_loss_time)) {
         /* Time threshold loss detection. */
         lost_pkts = ackm_detect_and_remove_lost_pkts(ackm, pkt_space);
         assert(lost_pkts != NULL);
@@ -1911,7 +1913,8 @@ int ossl_ackm_on_rx_packet(OSSL_ACKM *ackm, const OSSL_ACKM_RX_PKT *pkt)
     return 1;
 }
 
-static size_t ackm_fill_rx_ack_ranges(OSSL_ACKM *ackm, int pkt_space)
+static void ackm_fill_rx_ack_ranges(OSSL_ACKM *ackm, int pkt_space,
+                                    OSSL_QUIC_FRAME_ACK *ack)
 {
     struct rx_pkt_history_st *h = get_rx_history(ackm, pkt_space);
     struct pn_set_item_st *x;
@@ -1926,7 +1929,8 @@ static size_t ackm_fill_rx_ack_ranges(OSSL_ACKM *ackm, int pkt_space)
          x = x->prev, ++i)
         ackm->ack_ranges[pkt_space][i] = x->range;
 
-    return i;
+    ack->ack_ranges     = ackm->ack_ranges[pkt_space];
+    ack->num_ack_ranges = i;
 }
 
 const OSSL_QUIC_FRAME_ACK *ossl_ackm_get_ack_frame(OSSL_ACKM *ackm,
@@ -1935,11 +1939,10 @@ const OSSL_QUIC_FRAME_ACK *ossl_ackm_get_ack_frame(OSSL_ACKM *ackm,
     OSSL_QUIC_FRAME_ACK *ack = &ackm->ack[pkt_space];
     OSSL_TIME now = ackm->now(ackm->now_arg);
 
-    ack->ack_ranges        = ackm->ack_ranges[pkt_space];
-    ack->num_ack_ranges    = ackm_fill_rx_ack_ranges(ackm, pkt_space);
+    ackm_fill_rx_ack_ranges(ackm, pkt_space, ack);
 
     if (!ossl_time_is_zero(ackm->rx_largest_time[pkt_space])
-            && now > ackm->rx_largest_time[pkt_space]
+            && ossl_time_compare(now, ackm->rx_largest_time[pkt_space]) > 0
             && pkt_space == QUIC_PN_SPACE_APP)
         ack->delay_time =
             ossl_time_subtract(now, ackm->rx_largest_time[pkt_space]);

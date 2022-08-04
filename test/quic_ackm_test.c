@@ -127,7 +127,7 @@ err:
 }
 
 static const QUIC_PN linear_20[] = {
-    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
 };
 
 static const QUIC_PN high_linear_20[] = {
@@ -160,7 +160,7 @@ static const OSSL_QUIC_ACK_RANGE tx_ack_range_1[] = {
     { 0, 10 },
 };
 static const char tx_ack_expect_1[] = {
-    1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 DEFINE_TX_ACK_CASE(1, linear_20);
 
@@ -169,7 +169,7 @@ static const OSSL_QUIC_ACK_RANGE tx_ack_range_2[] = {
     { 5, 10 }, { 0, 5 }
 };
 static const char tx_ack_expect_2[] = {
-    1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 DEFINE_TX_ACK_CASE(2, linear_20);
 
@@ -178,7 +178,7 @@ static const OSSL_QUIC_ACK_RANGE tx_ack_range_3[] = {
     { 6, 10 }, { 0, 5 }
 };
 static const char tx_ack_expect_3[] = {
-    1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 DEFINE_TX_ACK_CASE(3, linear_20);
 
@@ -190,7 +190,7 @@ static const OSSL_QUIC_ACK_RANGE tx_ack_range_4[] = {
     { 7, 10 }, { 0, 5 }
 };
 static const char tx_ack_expect_4[] = {
-    1,1,1,1,1,1,2,1,1,1,1,0,0,0,0,0,0,0,0,0
+    1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 DEFINE_TX_ACK_CASE(4, linear_20);
 
@@ -202,7 +202,7 @@ static const OSSL_QUIC_ACK_RANGE tx_ack_range_5[] = {
     { 7, 10 }, { 0, 4 }
 };
 static const char tx_ack_expect_5[] = {
-    1,1,1,1,1,2,2,1,1,1,1,0,0,0,0,0,0,0,0,0
+    1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 DEFINE_TX_ACK_CASE(5, linear_20);
 
@@ -211,7 +211,7 @@ static const OSSL_QUIC_ACK_RANGE tx_ack_range_6[] = {
     { 0, 20 },
 };
 static const char tx_ack_expect_6[] = {
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 DEFINE_TX_ACK_CASE(6, linear_20);
 
@@ -220,7 +220,7 @@ static const OSSL_QUIC_ACK_RANGE tx_ack_range_7[] = {
     { 0, 30 },
 };
 static const char tx_ack_expect_7[] = {
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 DEFINE_TX_ACK_CASE(7, linear_20);
 
@@ -229,7 +229,7 @@ static const OSSL_QUIC_ACK_RANGE tx_ack_range_8[] = {
     { 21, 30 },
 };
 static const char tx_ack_expect_8[] = {
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 DEFINE_TX_ACK_CASE(8, linear_20);
 
@@ -238,7 +238,7 @@ static const OSSL_QUIC_ACK_RANGE tx_ack_range_9[] = {
     { 0, 999 },
 };
 static const char tx_ack_expect_9[] = {
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 DEFINE_TX_ACK_CASE(9, high_linear_20);
 
@@ -247,7 +247,7 @@ static const OSSL_QUIC_ACK_RANGE tx_ack_range_10[] = {
     { 0, 0 },
 };
 static const char tx_ack_expect_10[] = {
-    1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 DEFINE_TX_ACK_CASE(10, linear_20);
 
@@ -260,7 +260,7 @@ static const OSSL_QUIC_ACK_RANGE tx_ack_range_11[] = {
     { 3, 3 },
 };
 static const char tx_ack_expect_11[] = {
-    2,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 DEFINE_TX_ACK_CASE(11, linear_20);
 
@@ -272,7 +272,7 @@ static const OSSL_QUIC_ACK_RANGE tx_ack_range_12[] = {
     { 19, 19 },
 };
 static const char tx_ack_expect_12[] = {
-    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,1
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 1
 };
 DEFINE_TX_ACK_CASE(12, linear_20);
 
@@ -284,7 +284,7 @@ static const OSSL_QUIC_ACK_RANGE tx_ack_range_13[] = {
     { 1008, 1008 }, { 1004, 1005 }, { 1001, 1002 }
 };
 static const char tx_ack_expect_13[] = {
-    2,1,1,2,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0
+    2, 1, 1, 2, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 DEFINE_TX_ACK_CASE(13, high_linear_20);
 
@@ -344,8 +344,10 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
     OSSL_TIME loss_detection_deadline = OSSL_TIME_ZERO;
 
     /* Cannot discard app space, so skip this */
-    if (mode == MODE_DISCARD && space == QUIC_PN_SPACE_APP)
+    if (mode == MODE_DISCARD && space == QUIC_PN_SPACE_APP) {
+        TEST_skip("skipping test for app space");
         return 1;
+    }
 
     if (!TEST_int_eq(helper_init(&h, c->pn_table_len), 1))
         goto err;
@@ -357,7 +359,7 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
 
     /* Allocate TX packet structures. */
     for (i = 0; i < c->pn_table_len; ++i) {
-        h.pkts[i].pkt = tx = OPENSSL_zalloc(sizeof(OSSL_ACKM_TX_PKT));
+        h.pkts[i].pkt = tx = OPENSSL_zalloc(sizeof(*tx));
         if (!TEST_ptr(tx))
             goto err;
 
@@ -494,9 +496,10 @@ struct tx_ack_time_op {
     { TX_ACK_TIME_OP_ACK, (advance) * OSSL_TIME_MS, (pn), (num_pn), NULL },
 #define TX_OP_EXPECT(expect) \
     { TX_ACK_TIME_OP_EXPECT, 0, 0, 0, (expect) },
+#define TX_OP_END { TX_ACK_TIME_OP_END }
 
 static const char tx_ack_time_script_1_expect[] = {
-    2,1
+    2, 1
 };
 
 static const struct tx_ack_time_op tx_ack_time_script_1[] = {
@@ -504,7 +507,7 @@ static const struct tx_ack_time_op tx_ack_time_script_1[] = {
     TX_OP_PKT   (3600000, 1, 1)
     TX_OP_ACK   (   1000, 1, 1)
     TX_OP_EXPECT(tx_ack_time_script_1_expect)
-    {0}
+    TX_OP_END
 };
 
 static const struct tx_ack_time_op *const tx_ack_time_scripts[] = {
@@ -531,7 +534,7 @@ static int test_tx_ack_time_script(int tidx)
         goto err;
 
     for (i = 0; i < num_pkts; ++i) {
-        h.pkts[i].pkt = tx = OPENSSL_zalloc(sizeof(OSSL_ACKM_TX_PKT));
+        h.pkts[i].pkt = tx = OPENSSL_zalloc(sizeof(*tx));
         if (!TEST_ptr(tx))
             goto err;
     }
@@ -681,6 +684,9 @@ struct rx_test_op {
       0, 0, NULL, 0, 0                                              \
     },
 
+#define RX_OP_END                                                   \
+    { RX_OPK_END }
+
 /* RX 1. Simple Test with ACK Desired (Packet Threshold, Exactly) */
 static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_1a[] = {
     { 0, 1 }
@@ -698,14 +704,14 @@ static const struct rx_test_op rx_script_1[] = {
 
     /* At this point we would generate e.g. a packet with an ACK. */
     RX_OP_TX            (0, 0, 1)   /* ACKs both */
-    RX_OP_CHECK_ACKS    (0, rx_ack_ranges_1a) /* nnot provably ACKed yet */
+    RX_OP_CHECK_ACKS    (0, rx_ack_ranges_1a) /* not provably ACKed yet */
     RX_OP_RX_ACK        (0, 0, 1)   /* TX'd packet is ACK'd */
 
     RX_OP_CHECK_NO_ACKS (0)         /* nothing more to ACK */
     RX_OP_CHECK_UNPROC  (0, 0, 2)   /* still unprocessable */
     RX_OP_CHECK_PROC    (0, 2, 1)   /* still processable */
 
-    {0}
+    RX_OP_END
 };
 
 /* RX 2. Simple Test with ACK Not Yet Desired (Packet Threshold) */
@@ -752,7 +758,7 @@ static const struct rx_test_op rx_script_2[] = {
     RX_OP_CHECK_UNPROC  (0, 0, 3)   /* still unprocessable */
     RX_OP_CHECK_PROC    (0, 3, 1)   /* still processable */
 
-    {0}
+    RX_OP_END
 };
 
 /* RX 3. Simple Test with ACK Desired (Packet Threshold, Multiple Watermarks) */
@@ -816,7 +822,7 @@ static const struct rx_test_op rx_script_3[] = {
     RX_OP_CHECK_UNPROC  (0, 0, 11)  /* still unprocessable */
     RX_OP_CHECK_PROC    (0, 11, 1)  /* still processable */
 
-    {0}
+    RX_OP_END
 };
 
 static const struct rx_test_op *const rx_test_scripts[] = {
@@ -863,11 +869,11 @@ static int test_rx_ack_actual(int tidx, int space)
             num_tx += s->num_pn;
 
     /* Allocate packet information structures. */
-    txs = OPENSSL_zalloc(sizeof(OSSL_ACKM_TX_PKT) * num_tx);
+    txs = OPENSSL_zalloc(sizeof(*txs) * num_tx);
     if (!TEST_ptr(txs))
         goto err;
 
-    pkts = OPENSSL_zalloc(sizeof(struct pkt_info) * num_tx);
+    pkts = OPENSSL_zalloc(sizeof(*pkts) * num_tx);
     if (!TEST_ptr(pkts))
         goto err;
 
@@ -1003,7 +1009,7 @@ err:
  */
 static int test_tx_ack_case(int idx)
 {
-    int tidx, space, mode;
+    int tidx, space;
 
     tidx = idx % OSSL_NELEM(tx_ack_cases);
     idx /= OSSL_NELEM(tx_ack_cases);
@@ -1011,23 +1017,17 @@ static int test_tx_ack_case(int idx)
     space = idx % QUIC_PN_SPACE_NUM;
     idx /= QUIC_PN_SPACE_NUM;
 
-    mode = idx % MODE_NUM;
-    idx /= MODE_NUM;
-
-    return test_tx_ack_case_actual(tidx, space, mode);
+    return test_tx_ack_case_actual(tidx, space, idx);
 }
 
 static int test_rx_ack(int idx)
 {
-    int tidx, space;
+    int tidx;
 
     tidx = idx % OSSL_NELEM(rx_test_scripts);
     idx /= OSSL_NELEM(rx_test_scripts);
 
-    space = idx % QUIC_PN_SPACE_NUM;
-    idx /= QUIC_PN_SPACE_NUM;
-
-    return test_rx_ack_actual(tidx, space);
+    return test_rx_ack_actual(tidx, idx);
 }
 
 int setup_tests(void)

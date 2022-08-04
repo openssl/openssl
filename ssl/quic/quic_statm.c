@@ -16,7 +16,7 @@ void ossl_statm_update_rtt(OSSL_STATM *statm,
     OSSL_TIME adjusted_rtt, latest_rtt = override_latest_rtt;
 
     /* Use provided RTT value, or else last RTT value. */
-    if (latest_rtt == 0)
+    if (ossl_time_is_zero(latest_rtt))
         latest_rtt = statm->latest_rtt;
     else
         statm->latest_rtt = latest_rtt;
@@ -30,7 +30,7 @@ void ossl_statm_update_rtt(OSSL_STATM *statm,
     }
 
     /* Update minimum RTT. */
-    if (latest_rtt < statm->min_rtt)
+    if (ossl_time_compare(latest_rtt, statm->min_rtt) < 0)
         statm->min_rtt = latest_rtt;
 
     /*
@@ -39,7 +39,7 @@ void ossl_statm_update_rtt(OSSL_STATM *statm,
      */
 
     adjusted_rtt = latest_rtt;
-    if (latest_rtt >= ossl_time_add(statm->min_rtt, ack_delay))
+    if (ossl_time_compare(latest_rtt, ossl_time_add(statm->min_rtt, ack_delay)) >= 0)
         adjusted_rtt = ossl_time_subtract(latest_rtt, ack_delay);
 
     statm->rtt_variance = ossl_time_divide(ossl_time_add(ossl_time_multiply(3, statm->rtt_variance),
@@ -55,8 +55,8 @@ void ossl_statm_update_rtt(OSSL_STATM *statm,
 int ossl_statm_init(OSSL_STATM *statm)
 {
     statm->smoothed_rtt             = K_INITIAL_RTT;
-    statm->latest_rtt               = 0;
-    statm->min_rtt                  = UINT32_MAX;
+    statm->latest_rtt               = OSSL_TIME_ZERO;
+    statm->min_rtt                  = OSSL_TIME_INFINITY;
     statm->rtt_variance             = ossl_time_divide(K_INITIAL_RTT, 2);
     statm->have_first_sample        = 0;
     statm->max_ack_delay            = OSSL_TIME_INFINITY;
