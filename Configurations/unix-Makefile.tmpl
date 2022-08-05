@@ -790,10 +790,11 @@ endif
 ifneq (,$(wildcard $(OQSLIBDIR)/liboqs.so.0*))
 	@set -e; for i in $(OQSLIBDIR)/liboqs.so.0.*; do \
 		fn=`basename $$i`; \
+		sn=`basename $(OQSLIBDIR)/liboqs.so.?`; \
 		$(ECHO) "install $(OQSLIBDIR)/$$fn $(DESTDIR)$(libdir)"; \
-		$(ECHO) "cd $(DESTDIR)$(libdir) && ln -sf $$fn liboqs.so && ln -sf $$fn liboqs.so.0 && cd -"; \
+		$(ECHO) "cd $(DESTDIR)$(libdir) && ln -sf $$fn liboqs.so && ln -sf $$fn $$sn && cd -"; \
 		install $(OQSLIBDIR)/$$fn $(DESTDIR)$(libdir); \
-		cd $(DESTDIR)$(libdir) && ln -sf $$fn liboqs.so && ln -sf $$fn liboqs.so.0 && cd -; \
+		cd $(DESTDIR)$(libdir) && ln -sf $$fn liboqs.so && ln -sf $$fn $$sn && cd -; \
 	done
 endif
 
