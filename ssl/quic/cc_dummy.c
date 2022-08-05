@@ -13,7 +13,8 @@ typedef struct ossl_cc_dummy_st {
     char dummy;
 } OSSL_CC_DUMMY;
 
-static OSSL_CC_DATA *dummy_new(OSSL_PARAM *settings, OSSL_PARAM *options, OSSL_PARAM *changeables)
+static OSSL_CC_DATA *dummy_new(OSSL_PARAM *settings, OSSL_PARAM *options,
+                               OSSL_PARAM *changeables)
 {
     return OPENSSL_zalloc(sizeof(OSSL_CC_DUMMY));
 }
@@ -44,7 +45,8 @@ static int dummy_can_send(OSSL_CC_DATA *cc)
 }
 
 static size_t dummy_get_send_allowance(OSSL_CC_DATA *cc,
-                                       uint64_t time_since_last_send, int time_valid)
+                                       OSSL_TIME time_since_last_send,
+                                       int time_valid)
 {
     return SIZE_MAX;
 }
@@ -65,7 +67,7 @@ static int dummy_on_data_invalidated(OSSL_CC_DATA *cc,
     return 1;
 }
 
-static int dummy_on_data_acked(OSSL_CC_DATA *cc, uint64_t time_now,
+static int dummy_on_data_acked(OSSL_CC_DATA *cc, OSSL_TIME time_now,
                                uint64_t last_pn_acked,
                                size_t num_retransmittable_bytes)
 {

@@ -50,7 +50,7 @@ void ossl_statm_update_rtt(OSSL_STATM *statm,
 }
 
 /* RFC 9002 kInitialRtt value. RFC recommended value. */
-#define K_INITIAL_RTT               (333 * OSSL_TIME_MS)
+#define K_INITIAL_RTT               (ossl_time_multiply(OSSL_TIME_MS, 333))
 
 int ossl_statm_init(OSSL_STATM *statm)
 {

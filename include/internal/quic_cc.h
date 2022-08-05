@@ -10,6 +10,7 @@
 # define OSSL_QUIC_CC_H
 
 #include "openssl/params.h"
+#include "internal/time.h"
 
 typedef struct ossl_cc_data_st *OSSL_CC_DATA;
 
@@ -72,7 +73,7 @@ typedef struct ossl_cc_method_st {
      * a meaningful value, 0 otherwise.
      */
     size_t (*get_send_allowance)(OSSL_CC_DATA *ccdata,
-                                 uint64_t time_since_last_send,
+                                 OSSL_TIME time_since_last_send,
                                  int time_valid);
 
     /*
@@ -113,7 +114,7 @@ typedef struct ossl_cc_method_st {
      * otherwise.
      */
     int (*on_data_acked)(OSSL_CC_DATA *ccdata,
-                         uint64_t time_now,
+                         OSSL_TIME time_now,
                          uint64_t last_pn_acked,
                          size_t num_retransmittable_bytes);
 

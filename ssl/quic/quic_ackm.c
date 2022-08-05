@@ -765,6 +765,8 @@ static int pn_set_query(const struct pn_set_st *s, QUIC_PN pn)
     for (x = s->tail; x != NULL; x = x->prev)
         if (x->range.start <= pn && x->range.end >= pn)
             return 1;
+        else if (x->range.end < pn)
+            return 0;
 
     return 0;
 }
@@ -778,6 +780,9 @@ struct rx_pkt_history_st {
      */
     QUIC_PN watermark;
 };
+
+static int rx_pkt_history_bump_watermark(struct rx_pkt_history_st *h,
+                                         QUIC_PN watermark);
 
 static void rx_pkt_history_init(struct rx_pkt_history_st *h)
 {
@@ -798,10 +803,23 @@ static void rx_pkt_history_destroy(struct rx_pkt_history_st *h)
 
 static void rx_pkt_history_trim_range_count(struct rx_pkt_history_st *h)
 {
+    QUIC_PN highest = QUIC_PN_INVALID;
+
     while (h->set.num_ranges > MAX_RX_ACK_RANGES) {
         OSSL_QUIC_ACK_RANGE r = h->set.head->range;
+
+        highest = (highest == QUIC_PN_INVALID)
+            ? r.end : ossl_quic_pn_max(highest, r.end);
+
         pn_set_remove(&h->set, &r);
     }
+
+    /*
+     * Bump watermark to cover all PNs we removed to avoid accidential
+     * reprocessing of packets.
+     */
+    if (highest != QUIC_PN_INVALID)
+        rx_pkt_history_bump_watermark(h, highest + 1);
 }
 
 static int rx_pkt_history_add_pn(struct rx_pkt_history_st *h,
@@ -1528,6 +1546,7 @@ int ossl_ackm_on_rx_ack_frame(OSSL_ACKM *ackm, const OSSL_QUIC_FRAME_ACK *ack,
         ack_delay = ack->delay_time;
         if (ackm->handshake_confirmed) {
             OSSL_RTT_INFO rtt;
+
             ossl_statm_get_rtt_info(ackm->statm, &rtt);
             ack_delay = ossl_time_min(ack_delay, rtt.max_ack_delay);
         }
@@ -1694,7 +1713,7 @@ int ossl_ackm_get_largest_unacked(OSSL_ACKM *ackm, int pkt_space, QUIC_PN *pn)
 /* Number of ACK-eliciting packets RX'd before we always emit an ACK. */
 #define PKTS_BEFORE_ACK     2
 /* Maximum amount of time to leave an ACK-eliciting packet un-ACK'd. */
-#define MAX_ACK_DELAY       (25 * OSSL_TIME_MS)
+#define MAX_ACK_DELAY       (ossl_time_multiply(OSSL_TIME_MS, 25))
 
 /*
  * Return 1 if emission of an ACK frame is currently desired.
