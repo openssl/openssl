@@ -357,12 +357,8 @@ typedef struct bio_mmsg_cb_args_st {
     BIO_MSG    *msg;
     size_t      stride, num_msg;
     uint64_t    flags;
-    int         *err;
+    size_t     *msgs_processed;
 } BIO_MMSG_CB_ARGS;
-
-#define BIO_NO_LOCAL            (-1)
-#define BIO_NO_SUPPORT          (-2)
-#define BIO_UNSPEC_ERR          (-3)
 
 /*
  * #define BIO_CONN_get_param_hostname BIO_ctrl
@@ -653,16 +649,16 @@ void BIO_vfree(BIO *a);
 int BIO_up_ref(BIO *a);
 int BIO_read(BIO *b, void *data, int dlen);
 int BIO_read_ex(BIO *b, void *data, size_t dlen, size_t *readbytes);
-__owur size_t BIO_recvmmsg(BIO *b, BIO_MSG *msg,
-                           size_t stride, size_t num_msg, uint64_t flags,
-                           int *err);
+__owur int BIO_recvmmsg(BIO *b, BIO_MSG *msg,
+                        size_t stride, size_t num_msg, uint64_t flags,
+                        size_t *msgs_processed);
 int BIO_gets(BIO *bp, char *buf, int size);
 int BIO_get_line(BIO *bio, char *buf, int size);
 int BIO_write(BIO *b, const void *data, int dlen);
 int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written);
-__owur size_t BIO_sendmmsg(BIO *b, BIO_MSG *msg,
-                           size_t stride, size_t num_msg, uint64_t flags,
-                           int *err);
+__owur int BIO_sendmmsg(BIO *b, BIO_MSG *msg,
+                        size_t stride, size_t num_msg, uint64_t flags,
+                        size_t *msgs_processed);
 int BIO_puts(BIO *bp, const char *buf);
 int BIO_indent(BIO *b, int indent, int max);
 long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
@@ -724,6 +720,7 @@ int BIO_dgram_sctp_msg_waiting(BIO *b);
 # ifndef OPENSSL_NO_SOCK
 int BIO_sock_should_retry(int i);
 int BIO_sock_non_fatal_error(int error);
+int BIO_err_is_non_fatal(unsigned int errcode);
 int BIO_socket_wait(int fd, int for_read, time_t max_time);
 # endif
 int BIO_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds);
@@ -878,11 +875,11 @@ int BIO_meth_set_write(BIO_METHOD *biom,
 int BIO_meth_set_write_ex(BIO_METHOD *biom,
                        int (*bwrite) (BIO *, const char *, size_t, size_t *));
 int BIO_meth_set_sendmmsg(BIO_METHOD *biom,
-                          size_t (*f) (BIO *, BIO_MSG *, size_t, size_t,
-                                       uint64_t, int *));
-size_t (*BIO_meth_get_sendmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *,
-                                                        size_t, size_t,
-                                                        uint64_t, int *);
+                          int (*f) (BIO *, BIO_MSG *, size_t, size_t,
+                                    uint64_t, size_t *));
+int (*BIO_meth_get_sendmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *,
+                                                     size_t, size_t,
+                                                     uint64_t, size_t *);
 int (*BIO_meth_get_read(const BIO_METHOD *biom)) (BIO *, char *, int);
 int (*BIO_meth_get_read_ex(const BIO_METHOD *biom)) (BIO *, char *, size_t, size_t *);
 int BIO_meth_set_read(BIO_METHOD *biom,
@@ -890,11 +887,11 @@ int BIO_meth_set_read(BIO_METHOD *biom,
 int BIO_meth_set_read_ex(BIO_METHOD *biom,
                          int (*bread) (BIO *, char *, size_t, size_t *));
 int BIO_meth_set_recvmmsg(BIO_METHOD *biom,
-                          size_t (*f) (BIO *, BIO_MSG *, size_t, size_t,
-                                       uint64_t, int *));
-size_t (*BIO_meth_get_recvmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *,
-                                                        size_t, size_t,
-                                                        uint64_t, int *);
+                          int (*f) (BIO *, BIO_MSG *, size_t, size_t,
+                                    uint64_t, size_t *));
+int (*BIO_meth_get_recvmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *,
+                                                     size_t, size_t,
+                                                     uint64_t, size_t *);
 int (*BIO_meth_get_puts(const BIO_METHOD *biom)) (BIO *, const char *);
 int BIO_meth_set_puts(BIO_METHOD *biom,
                       int (*puts) (BIO *, const char *));

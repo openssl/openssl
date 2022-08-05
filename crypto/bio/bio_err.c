@@ -75,6 +75,8 @@ static const ERR_STRING_DATA BIO_str_reasons[] = {
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_WRITE_TO_READ_ONLY_BIO),
     "write to read only BIO"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_WSASTARTUP), "WSAStartup"},
+    {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_LOCAL_ADDR_NOT_AVAILABLE),
+     "local address not available"},
     {0, NULL}
 };
 
@@ -87,4 +89,12 @@ int ossl_err_load_BIO_strings(void)
         ERR_load_strings_const(BIO_str_reasons);
 #endif
     return 1;
+}
+
+int BIO_err_is_non_fatal(unsigned int errcode)
+{
+    if (ERR_SYSTEM_ERROR(errcode))
+        return BIO_sock_non_fatal_error(ERR_GET_REASON(errcode));
+    else
+        return 0;
 }

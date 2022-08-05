@@ -64,5 +64,6 @@
 # define BIO_R_UNSUPPORTED_PROTOCOL_FAMILY                131
 # define BIO_R_WRITE_TO_READ_ONLY_BIO                     126
 # define BIO_R_WSASTARTUP                                 122
+# define BIO_R_LOCAL_ADDR_NOT_AVAILABLE                   148
 
 #endif

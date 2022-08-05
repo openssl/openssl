@@ -5454,3 +5454,4 @@ BIO_meth_set_sendmmsg                   ?	3_1_0	EXIST::FUNCTION:
 BIO_meth_get_sendmmsg                   ?	3_1_0	EXIST::FUNCTION:
 BIO_meth_set_recvmmsg                   ?	3_1_0	EXIST::FUNCTION:
 BIO_meth_get_recvmmsg                   ?	3_1_0	EXIST::FUNCTION:
+BIO_err_is_non_fatal                    ?	3_1_0	EXIST::FUNCTION:SOCK

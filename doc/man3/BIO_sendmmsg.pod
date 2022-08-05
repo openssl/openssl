@@ -3,8 +3,8 @@
 =head1 NAME
 
 BIO_sendmmsg, BIO_recvmmsg, BIO_dgram_set_local_addr_enable,
-BIO_dgram_get_local_addr_enable, BIO_dgram_get_local_addr_cap
-- send and receive multiple datagrams in a single call
+BIO_dgram_get_local_addr_enable, BIO_dgram_get_local_addr_cap,
+BIO_err_is_non_fatal - send and receive multiple datagrams in a single call
 
 =head1 SYNOPSIS
 
@@ -17,16 +17,17 @@ BIO_dgram_get_local_addr_enable, BIO_dgram_get_local_addr_cap
      uint64_t flags;
  } BIO_MSG;
 
- size_t BIO_sendmmsg(BIO *b, BIO_MSG *msg,
-                     size_t stride, size_t num_msg, uint64_t flags,
-                     int *err);
- size_t BIO_recvmmsg(BIO *b, BIO_MSG *msg,
-                     size_t stride, size_t num_msg, uint64_t flags,
-                     int *err);
+ int BIO_sendmmsg(BIO *b, BIO_MSG *msg,
+                  size_t stride, size_t num_msg, uint64_t flags,
+                  size_t *msgs_processed);
+ int BIO_recvmmsg(BIO *b, BIO_MSG *msg,
+                  size_t stride, size_t num_msg, uint64_t flags,
+                  size_t *msgs_processed);
 
  int BIO_dgram_set_local_addr_enable(BIO *b, int enable);
  int BIO_dgram_get_local_addr_enable(BIO *b, int *enable);
  int BIO_dgram_get_local_addr_cap(BIO *b);
+ int BIO_err_is_non_fatal(unsigned int errcode);
 
 =head1 DESCRIPTION
 
@@ -97,6 +98,10 @@ must zero-initialize B<BIO_MSG>.
 I<num_msg> should be sent to the maximum number of messages to send or receive,
 which is also the length of the array pointed to by I<msg>.
 
+I<msgs_processed> must be non-NULL and points to an integer written with the
+number of messages successfully processed; see the RETURN VALUES section for
+further discussion.
+
 Unlike most BIO functions, these functions explicitly support multi-threaded
 use. Multiple concurrent writers and multiple concurrent readers of the same BIO
 are permitted in any combination. As such, these functions do not clear, set, or
@@ -117,8 +122,8 @@ BIO_dgram_set_local_addr_enable().
 BIO_dgram_get_local_addr_cap() determines if the B<BIO> is capable of supporting
 local addresses.
 
-I<err> must be non-NULL and points to an integer written with an error code; see
-the RETURN VALUES section for further discussion.
+BIO_err_is_non_fatal() determines if a packed error code represents an error
+which is transient in nature.
 
 =head1 NOTES
 
@@ -129,51 +134,43 @@ available.
 
 =head1 RETURN VALUES
 
-BIO_sendmmsg() and BIO_recvmmsg() return the number of messages sent or
-received. Where a positive value n is returned, all entries in the B<BIO_MSG>
-array from 0 through n-1 inclusive have their I<data_len> and I<flags> fields
-updated with the results of the operation on that message. If the call was to
-BIO_recvmmsg() and the I<peer> or I<local> fields of that message are non-NULL,
-the B<BIO_ADDR> structures they point to are written with the relevant address.
+On success, the functions BIO_sendmmsg() and BIO_recvmmsg() return 1 and write
+the nummber of messages successfully processed (which need not be nonzero) to
+I<msgs_processed>. Where a positive value n is written to I<msgs_processed>, all
+entries in the B<BIO_MSG> array from 0 through n-1 inclusive have their
+I<data_len> and I<flags> fields updated with the results of the operation on
+that message. If the call was to BIO_recvmmsg() and the I<peer> or I<local>
+fields of that message are non-NULL, the B<BIO_ADDR> structures they point to
+are written with the relevant address.
 
-BIO_sendmmsg() and BIO_recvmmsg() always write a value to I<err> regardless of
-their outcome, and regardless of whether any messages were sent or received. The
-possible values of I<err> after a call to BIO_sendmmsg() or BIO_recvmmsg()
-returns are as follows:
+On failure, the functions BIO_sendmmsg() and BIO_recvmmsg() return 0 and write
+zero to I<msgs_processed>. Thus I<msgs_processed> is always written regardless
+of the outcome of the function call.
+
+If BIO_sendmmsg() and BIO_recvmmsg() fail, they always raise an error using
+L<ERR_raise(3)>. Any error may be raised, but the following in particular may be
+noted:
 
 =over 2
 
-=item *
+=item B<BIO_R_LOCAL_ADDR_NOT_AVAILABLE>
 
-Zero, indicating that no error occurred. This outcome typically occurs when
-I<num_msg> is zero, or when all I<num_msg> B<BIO_MSG> structures were
-successfully processed. It may also occur if the operating system chose to
-return less than I<num_msg> messages, but did not indicate an error.
+The I<local> field was set to a non-NULL value, but local address support is not
+available or not enabled on the BIO.
 
-=item *
+=item B<BIO_R_UNSUPPORTED_METHOD>
 
-A system-specific error code (EWOULDBLOCK, etc.). If at least one message was
-returned (that is, if the function returned a positive value), this error code
-is the error code that occurred when trying to send or receive the next message
-after that message. If the function did not successfully send or receive any
-message (returned 0), this error code is the error code that occurred while
-trying to send or receive the first message.
+The BIO_sendmmsg() or BIO_recvmmsg() method is not supported on the BIO.
 
-=item *
+=item Socket errors
 
-The value B<BIO_NO_LOCAL>, indicating that a local address was specified
-or requested but local address support is not available or nott enabled.
-
-=item *
-
-The value B<BIO_NO_SUPPORT>, indicating that the BIO_sendmmsg() or
-BIO_recvmmsg() method is not supported by the BIO.
-
-=item *
-
-The value B<BIO_UNSPEC_ERR>, indicating that BIO_sendmmsg() or BIO_recvmmsg()
-failed for any other reason (for example, if the function was called with an
-invalid argument).
+OS-level socket errors are reported using an error with library code
+B<ERR_LIB_SYS>; for a packed error code B<errcode> where
+C<ERR_SYSTEM_ERROR(errcode) == 1>, the OS-level socket error code can be
+retrieved using C<ERR_GET_REASON(errcode)>. The packed error code can be
+retrieved by calling L<ERR_peek_last_error(3)> after the call to BIO_sendmmsg()
+or BIO_recvmmsg() returns 0. Whether the error is transient can be determined by
+passing the packed error code to BIO_err_is_non_fatal().
 
 =back
 
@@ -185,6 +182,9 @@ flag was successfully retrieved.
 
 BIO_dgram_get_local_addr_cap() returns 1 if the B<BIO> can support local
 addresses.
+
+BIO_err_is_non_fatal() returns 1 if the passed packed error code represents an
+error which is transient in nature.
 
 =head1 HISTORY
 
