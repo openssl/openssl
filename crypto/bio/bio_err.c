@@ -91,6 +91,8 @@ int ossl_err_load_BIO_strings(void)
     return 1;
 }
 
+#ifndef OPENSSL_NO_SOCK
+
 int BIO_err_is_non_fatal(unsigned int errcode)
 {
     if (ERR_SYSTEM_ERROR(errcode))
@@ -98,3 +100,5 @@ int BIO_err_is_non_fatal(unsigned int errcode)
     else
         return 0;
 }
+
+#endif
