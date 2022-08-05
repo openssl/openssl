@@ -145,9 +145,19 @@ const char *OSSL_trace_get_category_name(int num)
 {
     size_t i;
 
+    /*
+     * Partial check that OSSL_TRACE_CATEGORY_... macros
+     * are synced with trace_categories array
+     */
+#ifndef OPENSSL_NO_ENGINE
+    if (!ossl_assert(OSSL_TRACE_CATEGORY_NUM == OSSL_NELEM(trace_categories)))
+        return NULL;
+#endif
+
     for (i = 0; i < OSSL_NELEM(trace_categories); i++)
         if (trace_categories[i].num == num)
             return trace_categories[i].name;
+
     return NULL; /* not found */
 }
 
@@ -155,9 +165,13 @@ int OSSL_trace_get_category_num(const char *name)
 {
     size_t i;
 
+    if (name == NULL)
+        return -1;
+
     for (i = 0; i < OSSL_NELEM(trace_categories); i++)
         if (OPENSSL_strcasecmp(name, trace_categories[i].name) == 0)
             return trace_categories[i].num;
+
     return -1; /* not found */
 }
 
