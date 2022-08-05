@@ -99,7 +99,7 @@ OSSL_ACKM *ossl_ackm_new(OSSL_TIME (*now)(void *arg),
                          OSSL_CC_METHOD *cc_method,
                          OSSL_CC_DATA *cc_data);
 
-void ossl_ackm_delete(OSSL_ACKM *ackm);
+void ossl_ackm_free(OSSL_ACKM *ackm);
 ```
 
 The function pointer `now` is invoked by the ACK manager to obtain the current
