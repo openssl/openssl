@@ -92,7 +92,7 @@ B<ossl_time_infinite> returns the last representable time.
 
 B<ossl_ticks2time> return the duration specified.
 
-B<ossl_time2ticks> returns the ticks since epoch.
+B<ossl_time2ticks> returns the ticks since Epoch.
 
 B<ossl_time_compare> returns -1, 0 or 1 depending on the comparison.
 
