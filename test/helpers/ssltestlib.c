@@ -350,8 +350,9 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
     unsigned int seq, offset, len, epoch;
 
     BIO_clear_retry_flags(bio);
-    thispkt = sk_MEMPACKET_value(ctx->pkts, 0);
-    if (thispkt == NULL || thispkt->num != ctx->currpkt) {
+    if (sk_MEMPACKET_num(ctx->pkts) <= 0
+        || (thispkt = sk_MEMPACKET_value(ctx->pkts, 0)) == NULL
+        || thispkt->num != ctx->currpkt) {
         /* Probably run out of data */
         BIO_set_retry_read(bio);
         return -1;
@@ -585,7 +586,8 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
         thispkt->type = type;
     }
 
-    for (i = 0; (looppkt = sk_MEMPACKET_value(ctx->pkts, i)) != NULL; i++) {
+    for (i = 0; i < sk_MEMPACKET_num(ctx->pkts); i++) {
+        looppkt = sk_MEMPACKET_value(ctx->pkts, i);
         /* Check if we found the right place to insert this packet */
         if (looppkt->num > thispkt->num) {
             if (sk_MEMPACKET_insert(ctx->pkts, thispkt, i) == 0)
@@ -601,8 +603,9 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
             ctx->lastpkt++;
             do {
                 i++;
-                nextpkt = sk_MEMPACKET_value(ctx->pkts, i);
-                if (nextpkt != NULL && nextpkt->num == ctx->lastpkt)
+                if (i < sk_MEMPACKET_num(ctx->pkts)
+                        && (nextpkt = sk_MEMPACKET_value(ctx->pkts, i)) != NULL
+                        && nextpkt->num == ctx->lastpkt)
                     ctx->lastpkt++;
                 else
                     return inl;

@@ -532,7 +532,8 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
         ctmp.id = s->compress_meth;
         if (ssl_comp_methods != NULL) {
             i = sk_SSL_COMP_find(ssl_comp_methods, &ctmp);
-            *comp = sk_SSL_COMP_value(ssl_comp_methods, i);
+            if (i >= 0)
+                *comp = sk_SSL_COMP_value(ssl_comp_methods, i);
         }
         /* If were only interested in comp then return success */
         if ((enc == NULL) && (md == NULL))

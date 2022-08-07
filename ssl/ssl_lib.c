@@ -5699,7 +5699,8 @@ static int ct_move_scts(STACK_OF(SCT) **dst, STACK_OF(SCT) *src,
         }
     }
 
-    while ((sct = sk_SCT_pop(src)) != NULL) {
+    while (sk_SCT_num(src) > 0) {
+        sct = sk_SCT_pop(src);
         if (SCT_set_source(sct, origin) != 1)
             goto err;
 
