@@ -18,7 +18,7 @@
   * record layer. If read_ahead is enabled, then this might be false and this
   * function will fail.
   */
-static int count_unprocessed_records(SSL *s)
+static int count_unprocessed_records(SSL_CONNECTION *s)
 {
     SSL3_BUFFER *rbuf = RECORD_LAYER_get_rbuf(&s->rlayer);
     PACKET pkt, subpkt;
@@ -48,7 +48,7 @@ static int count_unprocessed_records(SSL *s)
  * partial record, fail and return 0.  Otherwise, update the sequence
  * number at *rec_seq for the count of unprocessed records and return 1.
  */
-static int check_rx_read_ahead(SSL *s, unsigned char *rec_seq)
+static int check_rx_read_ahead(SSL_CONNECTION *s, unsigned char *rec_seq)
 {
     int bit, count_unprocessed;
 
@@ -80,7 +80,7 @@ static int check_rx_read_ahead(SSL *s, unsigned char *rec_seq)
  * provider is found, but this checks if the socket option
  * supports the cipher suite used at all.
  */
-int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
+int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
                                 const EVP_CIPHER_CTX *dd)
 {
 
@@ -120,7 +120,8 @@ int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
 }
 
 /* Function to configure kernel TLS structure */
-int ktls_configure_crypto(SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
+int ktls_configure_crypto(SSL_CONNECTION *s, const EVP_CIPHER *c,
+                          EVP_CIPHER_CTX *dd,
                           void *rl_sequence, ktls_crypto_info_t *crypto_info,
                           int is_tx, unsigned char *iv,
                           unsigned char *key, unsigned char *mac_key,
@@ -131,8 +132,11 @@ int ktls_configure_crypto(SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
     case SSL_AES128GCM:
     case SSL_AES256GCM:
         crypto_info->cipher_algorithm = CRYPTO_AES_NIST_GCM_16;
-        if (s->version == TLS1_3_VERSION)
+        if (s->version == TLS1_3_VERSION) {
             crypto_info->iv_len = EVP_CIPHER_CTX_get_iv_length(dd);
+            if (crypto_info->iv_len < 0)
+                return 0;
+        }
         else
             crypto_info->iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
         break;
@@ -140,6 +144,8 @@ int ktls_configure_crypto(SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
     case SSL_CHACHA20POLY1305:
         crypto_info->cipher_algorithm = CRYPTO_CHACHA20_POLY1305;
         crypto_info->iv_len = EVP_CIPHER_CTX_get_iv_length(dd);
+        if (crypto_info->iv_len < 0)
+            return 0;
         break;
 # endif
     case SSL_AES128:
@@ -186,7 +192,7 @@ int ktls_configure_crypto(SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
 #if defined(OPENSSL_SYS_LINUX)
 
 /* Function to check supported ciphers in Linux */
-int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
+int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
                                 const EVP_CIPHER_CTX *dd)
 {
     switch (s->version) {
@@ -225,7 +231,8 @@ int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
 }
 
 /* Function to configure kernel TLS structure */
-int ktls_configure_crypto(SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
+int ktls_configure_crypto(SSL_CONNECTION *s, const EVP_CIPHER *c,
+                          EVP_CIPHER_CTX *dd,
                           void *rl_sequence, ktls_crypto_info_t *crypto_info,
                           int is_tx, unsigned char *iv,
                           unsigned char *key, unsigned char *mac_key,

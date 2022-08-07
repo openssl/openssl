@@ -248,6 +248,12 @@ int ASN1_object_size(int constructed, int length, int tag)
     return ret + length;
 }
 
+void ossl_asn1_string_set_bits_left(ASN1_STRING *str, unsigned int num)
+{
+    str->flags &= ~0x07;
+    str->flags |= ASN1_STRING_FLAG_BITS_LEFT | (num & 0x07);
+}
+
 int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
 {
     if (str == NULL)

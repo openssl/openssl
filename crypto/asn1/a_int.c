@@ -444,9 +444,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
         p += len;
     }
 
-    OPENSSL_free(ret->data);
-    ret->data = s;
-    ret->length = (int)len;
+    ASN1_STRING_set0(ret, s, (int)len);
     if (a != NULL)
         (*a) = ret;
     *pp = p;

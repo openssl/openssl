@@ -78,7 +78,7 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
             || !ossl_cmp_ctx_set1_newChain(ctx, certs)
             || !ossl_cmp_ctx_set1_caPubs(ctx, certs)
             || !ossl_cmp_ctx_set1_extraCertsIn(ctx, certs)
-            || !ossl_cmp_ctx_set0_validatedSrvCert(ctx, X509_dup(test_cert))
+            || !ossl_cmp_ctx_set1_validatedSrvCert(ctx, test_cert)
             || !TEST_ptr(bytes = ASN1_OCTET_STRING_new())
             || !OSSL_CMP_CTX_set1_transactionID(ctx, bytes)
             || !OSSL_CMP_CTX_set1_senderNonce(ctx, bytes)
@@ -740,7 +740,7 @@ DEFINE_SET_CB_TEST(transfer_cb)
 DEFINE_SET_GET_P_VOID_TEST(transfer_cb_arg)
 
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, srvCert, X509)
-DEFINE_SET_TEST(ossl_cmp, ctx, 0, 0, validatedSrvCert, X509)
+DEFINE_SET_GET_TEST(ossl_cmp, ctx, 1, 0, 0, validatedSrvCert, X509)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, expected_sender, X509_NAME)
 DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set0, get0, 0, trusted,
                          X509_STORE *, NULL,
@@ -837,7 +837,7 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set_get_transfer_cb_arg);
     /* server authentication: */
     ADD_TEST(test_CTX_set1_get0_srvCert);
-    ADD_TEST(test_CTX_set0_get0_validatedSrvCert);
+    ADD_TEST(test_CTX_set1_get0_validatedSrvCert);
     ADD_TEST(test_CTX_set1_get0_expected_sender);
     ADD_TEST(test_CTX_set0_get0_trusted);
     ADD_TEST(test_CTX_set1_get0_untrusted);

@@ -2259,8 +2259,9 @@ int speed_main(int argc, char **argv)
                     }
                     OPENSSL_clear_free(loopargs[k].key, keylen);
 
-                    /* SIV mode only allows for a single Update operation */
-                    if (EVP_CIPHER_get_mode(evp_cipher) == EVP_CIPH_SIV_MODE)
+                    /* GCM-SIV/SIV mode only allows for a single Update operation */
+                    if (EVP_CIPHER_get_mode(evp_cipher) == EVP_CIPH_SIV_MODE
+                            || EVP_CIPHER_get_mode(evp_cipher) == EVP_CIPH_GCM_SIV_MODE)
                         (void)EVP_CIPHER_CTX_ctrl(loopargs[k].ctx,
                                                   EVP_CTRL_SET_SPEED, 1, NULL);
                 }

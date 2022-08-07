@@ -86,6 +86,7 @@ static char *opt_srvcert = NULL;
 static char *opt_expect_sender = NULL;
 static int opt_ignore_keyusage = 0;
 static int opt_unprotected_errors = 0;
+static char *opt_srvcertout = NULL;
 static char *opt_extracertsout = NULL;
 static char *opt_cacertsout = NULL;
 
@@ -220,7 +221,7 @@ typedef enum OPTION_choice {
     OPT_TRUSTED, OPT_UNTRUSTED, OPT_SRVCERT,
     OPT_EXPECT_SENDER,
     OPT_IGNORE_KEYUSAGE, OPT_UNPROTECTED_ERRORS,
-    OPT_EXTRACERTSOUT, OPT_CACERTSOUT,
+    OPT_SRVCERTOUT, OPT_EXTRACERTSOUT, OPT_CACERTSOUT,
 
     OPT_REF, OPT_SECRET, OPT_CERT, OPT_OWN_TRUSTED, OPT_KEY, OPT_KEYPASS,
     OPT_DIGEST, OPT_MAC, OPT_EXTRACERTS,
@@ -388,6 +389,8 @@ const OPTIONS cmp_options[] = {
      "certificate responses (ip/cp/kup), revocation responses (rp), and PKIConf"},
     {OPT_MORE_STR, 0, 0,
      "WARNING: This setting leads to behavior allowing violation of RFC 4210"},
+    { "srvcertout", OPT_SRVCERTOUT, 's',
+      "File to save the server cert used and validated for CMP response protection"},
     {"extracertsout", OPT_EXTRACERTSOUT, 's',
      "File to save extra certificates received in the extraCerts field"},
     {"cacertsout", OPT_CACERTSOUT, 's',
@@ -573,7 +576,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {&opt_trusted}, {&opt_untrusted}, {&opt_srvcert},
     {&opt_expect_sender},
     {(char **)&opt_ignore_keyusage}, {(char **)&opt_unprotected_errors},
-    {&opt_extracertsout}, {&opt_cacertsout},
+    {&opt_srvcertout}, {&opt_extracertsout}, {&opt_cacertsout},
 
     {&opt_ref}, {&opt_secret},
     {&opt_cert}, {&opt_own_trusted}, {&opt_key}, {&opt_keypass},
@@ -1493,6 +1496,7 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 
     if (opt_mac != NULL) {
         int mac = OBJ_ln2nid(opt_mac);
+
         if (mac == NID_undef) {
             CMP_err1("MAC algorithm name not recognized: '%s'", opt_mac);
             return 0;
@@ -2005,36 +2009,41 @@ static int write_cert(BIO *bio, X509 *cert)
 }
 
 /*
- * If destFile != NULL writes out a stack of certs to the given file.
- * In any case frees the certs.
+ * If file != NULL writes out a stack of certs to the given file.
+ * If certs is NULL, the file is emptied.
+ * Frees the certs if present.
  * Depending on options use either PEM or DER format,
  * where DER does not make much sense for writing more than one cert!
  * Returns number of written certificates on success, -1 on error.
  */
-static int save_free_certs(OSSL_CMP_CTX *ctx,
-                           STACK_OF(X509) *certs, char *destFile, char *desc)
+static int save_free_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs,
+                           const char *file, const char *desc)
 {
     BIO *bio = NULL;
     int i;
-    int n = sk_X509_num(certs);
+    int n = sk_X509_num(certs /* may be NULL */);
 
-    if (destFile == NULL)
+    if (n < 0)
+        n = 0;
+    if (file == NULL)
         goto end;
-    CMP_info3("received %d %s certificate(s), saving to file '%s'",
-              n, desc, destFile);
+    if (certs != NULL)
+        CMP_info3("received %d %s certificate(s), saving to file '%s'",
+                  n, desc, file);
     if (n > 1 && opt_certform != FORMAT_PEM)
         CMP_warn("saving more than one certificate in non-PEM format");
 
-    if (destFile == NULL || (bio = BIO_new(BIO_s_file())) == NULL
-            || !BIO_write_filename(bio, (char *)destFile)) {
-        CMP_err1("could not open file '%s' for writing", destFile);
+    if ((bio = BIO_new(BIO_s_file())) == NULL
+            || !BIO_write_filename(bio, (char *)file)) {
+        CMP_err3("could not open file '%s' for %s %s certificate(s)",
+                 file, certs == NULL ? "deleting" : "writing", desc);
         n = -1;
         goto end;
     }
 
     for (i = 0; i < n; i++) {
         if (!write_cert(bio, sk_X509_value(certs, i))) {
-            CMP_err1("cannot write certificate to file '%s'", destFile);
+            CMP_err2("cannot write %s certificate to file '%s'", desc, file);
             n = -1;
             goto end;
         }
@@ -2044,6 +2053,35 @@ static int save_free_certs(OSSL_CMP_CTX *ctx,
     BIO_free(bio);
     OSSL_STACK_OF_X509_free(certs);
     return n;
+}
+
+static int delete_certfile(const char *file, const char *desc)
+{
+    if (file == NULL)
+        return 1;
+
+    if (unlink(file) != 0 && errno != ENOENT) {
+        CMP_err2("Failed to delete %s, which should be done to indicate there is no %s cert",
+                 file, desc);
+        return 0;
+    }
+    return 1;
+}
+
+static int save_cert(OSSL_CMP_CTX *ctx, X509 *cert,
+                     const char *file, const char *desc)
+{
+    if (file == NULL || cert == NULL) {
+        return 1;
+    } else {
+        STACK_OF(X509) *certs = sk_X509_new_null();
+
+        if (!X509_add_cert(certs, cert, X509_ADD_FLAG_UP_REF)) {
+            sk_X509_free(certs);
+            return 0;
+        }
+        return save_free_certs(ctx, certs, file, desc) >= 0;
+    }
 }
 
 static int print_itavs(const STACK_OF(OSSL_CMP_ITAV) *itavs)
@@ -2422,6 +2460,9 @@ static int get_opts(int argc, char **argv)
         case OPT_UNPROTECTED_ERRORS:
             opt_unprotected_errors = 1;
             break;
+        case OPT_SRVCERTOUT:
+            opt_srvcertout = opt_str();
+            break;
         case OPT_EXTRACERTSOUT:
             opt_extracertsout = opt_str();
             break;
@@ -2789,6 +2830,7 @@ int cmp_main(int argc, char **argv)
                               opt_section, configfile);
             } else {
                 const char *end = opt_section + strlen(opt_section);
+
                 while ((end = prev_item(opt_section, end)) != NULL) {
                     if (!NCONF_get_section(conf, opt_item)) {
                         CMP_err2("no [%s] section found in config file '%s'",
@@ -2812,7 +2854,15 @@ int cmp_main(int argc, char **argv)
     ret = get_opts(argc, argv);
     if (ret <= 0)
         goto err;
+
     ret = 0;
+    if (!delete_certfile(opt_srvcertout, "validated server")
+        || !delete_certfile(opt_certout, "enrolled")
+        || save_free_certs(NULL, NULL, opt_extracertsout, "extra") < 0
+        || save_free_certs(NULL, NULL, opt_cacertsout, "CA") < 0
+        || save_free_certs(NULL, NULL, opt_chainout, "chain") < 0)
+        goto err;
+
     if (!app_RAND_load())
         goto err;
 
@@ -2942,6 +2992,7 @@ int cmp_main(int argc, char **argv)
                 if (opt_infotype != NID_undef) {
                     OSSL_CMP_ITAV *itav =
                         OSSL_CMP_ITAV_create(OBJ_nid2obj(opt_infotype), NULL);
+
                     if (itav == NULL)
                         goto err;
                     OSSL_CMP_CTX_push0_genm_ITAV(cmp_ctx, itav);
@@ -2997,19 +3048,14 @@ int cmp_main(int argc, char **argv)
         if (!ret)
             goto err;
         ret = 0;
+        if (!save_cert(cmp_ctx, OSSL_CMP_CTX_get0_validatedSrvCert(cmp_ctx),
+                       opt_srvcertout, "validated server"))
+            goto err;
         if (save_free_certs(cmp_ctx, OSSL_CMP_CTX_get1_caPubs(cmp_ctx),
                             opt_cacertsout, "CA") < 0)
             goto err;
-        if (newcert != NULL) {
-            STACK_OF(X509) *certs = sk_X509_new_null();
-
-            if (!X509_add_cert(certs, newcert, X509_ADD_FLAG_UP_REF)) {
-                sk_X509_free(certs);
-                goto err;
-            }
-            if (save_free_certs(cmp_ctx, certs, opt_certout, "enrolled") < 0)
-                goto err;
-        }
+        if (!save_cert(cmp_ctx, newcert, opt_certout, "enrolled"))
+            goto err;
         if (save_free_certs(cmp_ctx, OSSL_CMP_CTX_get1_newChain(cmp_ctx),
                             opt_chainout, "chain") < 0)
             goto err;

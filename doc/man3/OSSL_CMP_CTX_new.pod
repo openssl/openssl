@@ -57,6 +57,7 @@ OSSL_CMP_CTX_get_certConf_cb_arg,
 OSSL_CMP_CTX_get_status,
 OSSL_CMP_CTX_get0_statusString,
 OSSL_CMP_CTX_get_failInfoCode,
+OSSL_CMP_CTX_get0_validatedSrvCert,
 OSSL_CMP_CTX_get0_newCert,
 OSSL_CMP_CTX_get1_newChain,
 OSSL_CMP_CTX_get1_caPubs,
@@ -153,6 +154,7 @@ OSSL_CMP_CTX_set1_senderNonce
  OSSL_CMP_PKIFREETEXT *OSSL_CMP_CTX_get0_statusString(const OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_get_failInfoCode(const OSSL_CMP_CTX *ctx);
 
+ X509 *OSSL_CMP_CTX_get0_validatedSrvCert(const OSSL_CMP_CTX *ctx);
  X509 *OSSL_CMP_CTX_get0_newCert(const OSSL_CMP_CTX *ctx);
  STACK_OF(X509) *OSSL_CMP_CTX_get1_newChain(const OSSL_CMP_CTX *ctx);
  STACK_OF(X509) *OSSL_CMP_CTX_get1_caPubs(const OSSL_CMP_CTX *ctx);
@@ -635,6 +637,13 @@ F<< <openssl/cmp.h> >>.
 The flags start with OSSL_CMP_CTX_FAILINFO, for example:
 OSSL_CMP_CTX_FAILINFO_badAlg. Returns -1 if the failInfoCode field is unset.
 
+OSSL_CMP_CTX_get0_validatedSrvCert() returns
+the successfully validated certificate, if any, that the CMP server used
+in the current transaction for signature-based response message protection,
+or NULL if the server used MAC-based protection.
+The value is relevant only at the end of a successful transaction.
+It may be used to check the authorization of the server based on its cert.
+
 OSSL_CMP_CTX_get0_newCert() returns the pointer to the newly obtained
 certificate in case it is available, else NULL.
 
@@ -674,6 +683,7 @@ OSSL_CMP_CTX_get0_untrusted(),
 OSSL_CMP_CTX_get0_newPkey(),
 OSSL_CMP_CTX_get_certConf_cb_arg(),
 OSSL_CMP_CTX_get0_statusString(),
+OSSL_CMP_CTX_get0_validatedSrvCert(),
 OSSL_CMP_CTX_get0_newCert(),
 OSSL_CMP_CTX_get0_newChain(),
 OSSL_CMP_CTX_get1_caPubs(), and
@@ -769,6 +779,8 @@ OSSL_CMP_CTX_get0_trustedStore() was renamed to OSSL_CMP_CTX_get0_trusted() and
 OSSL_CMP_CTX_set0_trustedStore() was renamed to OSSL_CMP_CTX_set0_trusted(),
 using macros, while keeping the old names for backward compatibility,
 in OpenSSL 3.1.
+
+OSSL_CMP_CTX_get0_validatedSrvCert() was added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 
