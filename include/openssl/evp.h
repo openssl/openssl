@@ -306,6 +306,7 @@ OSSL_DEPRECATEDIN_3_0 int
 # define         EVP_CIPH_WRAP_MODE              0x10002
 # define         EVP_CIPH_OCB_MODE               0x10003
 # define         EVP_CIPH_SIV_MODE               0x10004
+# define         EVP_CIPH_GCM_SIV_MODE           0x10005
 # define         EVP_CIPH_MODE                   0xF0007
 /* Set if variable length cipher */
 # define         EVP_CIPH_VARIABLE_LENGTH        0x8

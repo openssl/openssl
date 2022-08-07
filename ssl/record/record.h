@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+typedef struct ssl_connection_st SSL_CONNECTION;
+
 /*****************************************************************************
  *                                                                           *
  * These structures should be considered PRIVATE to the record layer. No     *
@@ -127,8 +129,8 @@ typedef struct dtls_record_layer_st {
  *****************************************************************************/
 
 typedef struct record_layer_st {
-    /* The parent SSL structure */
-    SSL *s;
+    /* The parent SSL_CONNECTION structure */
+    SSL_CONNECTION *s;
     /*
      * Read as many input bytes as possible (for
      * non-blocking reads)
@@ -199,7 +201,7 @@ typedef struct ssl_mac_buf_st SSL_MAC_BUF;
 #define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
 #define RECORD_LAYER_get_wbuf(rl)               ((rl)->wbuf)
 
-void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s);
+void RECORD_LAYER_init(RECORD_LAYER *rl, SSL_CONNECTION *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);
 void RECORD_LAYER_release(RECORD_LAYER *rl);
 int RECORD_LAYER_read_pending(const RECORD_LAYER *rl);
@@ -212,23 +214,26 @@ size_t RECORD_LAYER_get_rrec_length(RECORD_LAYER *rl);
 __owur size_t ssl3_pending(const SSL *s);
 __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, size_t len,
                             size_t *written);
-int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
+int do_ssl3_write(SSL_CONNECTION *s, int type, const unsigned char *buf,
                   size_t *pipelens, size_t numpipes,
                   int create_empty_fragment, size_t *written);
 __owur int ssl3_read_bytes(SSL *s, int type, int *recvd_type,
                            unsigned char *buf, size_t len, int peek,
                            size_t *readbytes);
-__owur int ssl3_setup_buffers(SSL *s);
-__owur int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int send,
-                    SSL_MAC_BUF *mac, size_t macsize);
-__owur int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send);
-__owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
+__owur int ssl3_setup_buffers(SSL_CONNECTION *s);
+__owur int ssl3_enc(SSL_CONNECTION *s, SSL3_RECORD *inrecs, size_t n_recs,
+                    int send, SSL_MAC_BUF *mac, size_t macsize);
+__owur int n_ssl3_mac(SSL_CONNECTION *s, SSL3_RECORD *rec, unsigned char *md,
+                      int send);
+__owur int ssl3_write_pending(SSL_CONNECTION *s, int type,
+                              const unsigned char *buf, size_t len,
                               size_t *written);
-__owur int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
-                    SSL_MAC_BUF *mac, size_t macsize);
-__owur int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send);
-__owur int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send,
-                     SSL_MAC_BUF *mac, size_t macsize);
+__owur int tls1_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs,
+                    int sending, SSL_MAC_BUF *mac, size_t macsize);
+__owur int tls1_mac(SSL_CONNECTION *s, SSL3_RECORD *rec, unsigned char *md,
+                    int send);
+__owur int tls13_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs,
+                     int send, SSL_MAC_BUF *mac, size_t macsize);
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
@@ -238,10 +243,10 @@ void DTLS_RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, unsigned char *seq);
 __owur int dtls1_read_bytes(SSL *s, int type, int *recvd_type,
                             unsigned char *buf, size_t len, int peek,
                             size_t *readbytes);
-__owur int dtls1_write_bytes(SSL *s, int type, const void *buf, size_t len,
-                             size_t *written);
-int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
+__owur int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
+                             size_t len, size_t *written);
+int do_dtls1_write(SSL_CONNECTION *s, int type, const unsigned char *buf,
                    size_t len, int create_empty_fragment, size_t *written);
-void dtls1_reset_seq_numbers(SSL *s, int rw);
-int dtls_buffer_listen_record(SSL *s, size_t len, unsigned char *seq,
+void dtls1_reset_seq_numbers(SSL_CONNECTION *s, int rw);
+int dtls_buffer_listen_record(SSL_CONNECTION *s, size_t len, unsigned char *seq,
                               size_t off);

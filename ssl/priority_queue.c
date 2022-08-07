@@ -356,7 +356,7 @@ void ossl_pqueue_free(OSSL_PQUEUE *pq)
         OPENSSL_free(pq->heap);
         OPENSSL_free(pq->elements);
         OPENSSL_free(pq);
-    }    
+    }
 }
 
 void ossl_pqueue_pop_free(OSSL_PQUEUE *pq, void (*freefunc)(void *))

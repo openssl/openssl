@@ -166,7 +166,7 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
         && ossl_cmp_ctx_set1_newChain(ctx, NULL)
         && ossl_cmp_ctx_set1_caPubs(ctx, NULL)
         && ossl_cmp_ctx_set1_extraCertsIn(ctx, NULL)
-        && ossl_cmp_ctx_set0_validatedSrvCert(ctx, NULL)
+        && ossl_cmp_ctx_set1_validatedSrvCert(ctx, NULL)
         && OSSL_CMP_CTX_set1_transactionID(ctx, NULL)
         && OSSL_CMP_CTX_set1_senderNonce(ctx, NULL)
         && ossl_cmp_ctx_set1_recipNonce(ctx, NULL);
@@ -274,15 +274,6 @@ DEFINE_OSSL_get(OSSL_CMP_CTX, status, int, -1)
 DEFINE_OSSL_CMP_CTX_get0(statusString, OSSL_CMP_PKIFREETEXT)
 
 DEFINE_OSSL_set0(ossl_cmp_ctx, statusString, OSSL_CMP_PKIFREETEXT)
-
-int ossl_cmp_ctx_set0_validatedSrvCert(OSSL_CMP_CTX *ctx, X509 *cert)
-{
-    if (!ossl_assert(ctx != NULL))
-        return 0;
-    X509_free(ctx->validatedSrvCert);
-    ctx->validatedSrvCert = cert;
-    return 1;
-}
 
 /* Set callback function for checking if the cert is ok or should be rejected */
 DEFINE_OSSL_set(OSSL_CMP_CTX, certConf_cb, OSSL_CMP_certConf_cb_t)
@@ -585,6 +576,8 @@ int PREFIX##_set1_##FIELD(OSSL_CMP_CTX *ctx, TYPE *val) \
     return 1; \
 }
 
+DEFINE_OSSL_set1_up_ref(ossl_cmp_ctx, validatedSrvCert, X509)
+
 /*
  * Pins the server certificate to be directly trusted (even if it is expired)
  * for verifying response messages.
@@ -717,6 +710,9 @@ DEFINE_OSSL_CMP_CTX_set1(p10CSR, X509_REQ)
  * This only permits for one cert to be enrolled at a time.
  */
 DEFINE_OSSL_set0(ossl_cmp_ctx, newCert, X509)
+
+/* Get successfully validated server cert, if any, of current transaction */
+DEFINE_OSSL_CMP_CTX_get0(validatedSrvCert, X509)
 
 /*
  * Get the (newly received in IP/KUP/CP) client certificate from the context

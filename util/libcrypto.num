@@ -5425,6 +5425,7 @@ ASN1_item_d2i_ex                        5552	3_0_0	EXIST::FUNCTION:
 ASN1_TIME_print_ex                      5553	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get0_provider                  5554	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get0_provider              5555	3_0_0	EXIST::FUNCTION:
+X509_PUBKEY_set0_public_key             ?	3_1_0	EXIST::FUNCTION:
 OSSL_STACK_OF_X509_free                 ?	3_1_0	EXIST::FUNCTION:
 EVP_MD_CTX_dup                          ?	3_1_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_dup                      ?	3_1_0	EXIST::FUNCTION:
@@ -5437,8 +5438,13 @@ BN_signed_bn2native                     ?	3_1_0	EXIST::FUNCTION:
 ASYNC_set_mem_functions                 ?	3_1_0	EXIST::FUNCTION:
 ASYNC_get_mem_functions                 ?	3_1_0	EXIST::FUNCTION:
 BIO_ADDR_dup                            ?	3_1_0	EXIST::FUNCTION:SOCK
+OSSL_CMP_CTX_get0_validatedSrvCert      ?	3_1_0	EXIST::FUNCTION:CMP
 CMS_final_digest                        ?	3_1_0	EXIST::FUNCTION:CMS
 CMS_EnvelopedData_it                    ?	3_1_0	EXIST::FUNCTION:CMS
 CMS_EnvelopedData_decrypt               ?	3_1_0	EXIST::FUNCTION:CMS
+CMS_SignedData_free                     ?	3_1_0	EXIST::FUNCTION:CMS
+CMS_SignedData_new                      ?	3_1_0	EXIST::FUNCTION:CMS
+CMS_SignedData_verify                   ?	3_1_0	EXIST::FUNCTION:CMS
 OPENSSL_strcasecmp                      ?	3_0_3	EXIST::FUNCTION:
 OPENSSL_strncasecmp                     ?	3_0_3	EXIST::FUNCTION:
+BIO_s_dgram_mem                         ?	3_1_0	EXIST::FUNCTION:

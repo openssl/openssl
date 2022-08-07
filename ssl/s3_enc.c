@@ -15,7 +15,7 @@
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 
-static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
+static int ssl3_generate_key_block(SSL_CONNECTION *s, unsigned char *km, int num)
 {
     const EVP_MD *md5 = NULL, *sha1 = NULL;
     EVP_MD_CTX *m5;
@@ -24,13 +24,14 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
     unsigned char c = 'A';
     unsigned int i, k;
     int ret = 0;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
 #ifdef CHARSET_EBCDIC
     c = os_toascii[c];          /* 'A' in ASCII */
 #endif
     k = 0;
-    md5 = ssl_evp_md_fetch(s->ctx->libctx, NID_md5, s->ctx->propq);
-    sha1 = ssl_evp_md_fetch(s->ctx->libctx, NID_sha1, s->ctx->propq);
+    md5 = ssl_evp_md_fetch(sctx->libctx, NID_md5, sctx->propq);
+    sha1 = ssl_evp_md_fetch(sctx->libctx, NID_sha1, sctx->propq);
     m5 = EVP_MD_CTX_new();
     s1 = EVP_MD_CTX_new();
     if (md5 == NULL || sha1 == NULL || m5 == NULL || s1 == NULL) {
@@ -86,7 +87,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
     return ret;
 }
 
-int ssl3_change_cipher_state(SSL *s, int which)
+int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
 {
     unsigned char *p, *mac_secret;
     unsigned char *ms, *key, *iv;
@@ -237,7 +238,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
     return 0;
 }
 
-int ssl3_setup_key_block(SSL *s)
+int ssl3_setup_key_block(SSL_CONNECTION *s)
 {
     unsigned char *p;
     const EVP_CIPHER *c;
@@ -249,8 +250,8 @@ int ssl3_setup_key_block(SSL *s)
     if (s->s3.tmp.key_block_length != 0)
         return 1;
 
-    if (!ssl_cipher_get_evp(s->ctx, s->session, &c, &hash, NULL, NULL, &comp,
-                            0)) {
+    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, &c, &hash,
+                            NULL, NULL, &comp, 0)) {
         /* Error is already recorded */
         SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
         return 0;
@@ -305,14 +306,14 @@ int ssl3_setup_key_block(SSL *s)
     return ret;
 }
 
-void ssl3_cleanup_key_block(SSL *s)
+void ssl3_cleanup_key_block(SSL_CONNECTION *s)
 {
     OPENSSL_clear_free(s->s3.tmp.key_block, s->s3.tmp.key_block_length);
     s->s3.tmp.key_block = NULL;
     s->s3.tmp.key_block_length = 0;
 }
 
-int ssl3_init_finished_mac(SSL *s)
+int ssl3_init_finished_mac(SSL_CONNECTION *s)
 {
     BIO *buf = BIO_new(BIO_s_mem());
 
@@ -331,7 +332,7 @@ int ssl3_init_finished_mac(SSL *s)
  * together.
  */
 
-void ssl3_free_digest_list(SSL *s)
+void ssl3_free_digest_list(SSL_CONNECTION *s)
 {
     BIO_free(s->s3.handshake_buffer);
     s->s3.handshake_buffer = NULL;
@@ -339,7 +340,7 @@ void ssl3_free_digest_list(SSL *s)
     s->s3.handshake_dgst = NULL;
 }
 
-int ssl3_finish_mac(SSL *s, const unsigned char *buf, size_t len)
+int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len)
 {
     int ret;
 
@@ -364,7 +365,7 @@ int ssl3_finish_mac(SSL *s, const unsigned char *buf, size_t len)
     return 1;
 }
 
-int ssl3_digest_cached_records(SSL *s, int keep)
+int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
 {
     const EVP_MD *md;
     long hdatalen;
@@ -413,7 +414,7 @@ void ssl3_digest_master_key_set_params(const SSL_SESSION *session,
     params[n++] = OSSL_PARAM_construct_end();
 }
 
-size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
+size_t ssl3_final_finish_mac(SSL_CONNECTION *s, const char *sender, size_t len,
                              unsigned char *p)
 {
     int ret;
@@ -466,7 +467,8 @@ size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
     return ret;
 }
 
-int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
+int ssl3_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
+                                unsigned char *p,
                                 size_t len, size_t *secret_size)
 {
     static const unsigned char *salt[3] = {
@@ -491,7 +493,7 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
         return 0;
     }
     for (i = 0; i < 3; i++) {
-        if (EVP_DigestInit_ex(ctx, s->ctx->sha1, NULL) <= 0
+        if (EVP_DigestInit_ex(ctx, SSL_CONNECTION_GET_CTX(s)->sha1, NULL) <= 0
             || EVP_DigestUpdate(ctx, salt[i],
                                 strlen((const char *)salt[i])) <= 0
             || EVP_DigestUpdate(ctx, p, len) <= 0
@@ -500,7 +502,7 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
             || EVP_DigestUpdate(ctx, &(s->s3.server_random[0]),
                                 SSL3_RANDOM_SIZE) <= 0
             || EVP_DigestFinal_ex(ctx, buf, &n) <= 0
-            || EVP_DigestInit_ex(ctx, s->ctx->md5, NULL) <= 0
+            || EVP_DigestInit_ex(ctx, SSL_CONNECTION_GET_CTX(s)->md5, NULL) <= 0
             || EVP_DigestUpdate(ctx, p, len) <= 0
             || EVP_DigestUpdate(ctx, buf, n) <= 0
             || EVP_DigestFinal_ex(ctx, out, &n) <= 0) {

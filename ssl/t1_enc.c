@@ -22,7 +22,7 @@
 #include <openssl/trace.h>
 
 /* seed1 through seed5 are concatenated */
-static int tls1_PRF(SSL *s,
+static int tls1_PRF(SSL_CONNECTION *s,
                     const void *seed1, size_t seed1_len,
                     const void *seed2, size_t seed2_len,
                     const void *seed3, size_t seed3_len,
@@ -45,7 +45,9 @@ static int tls1_PRF(SSL *s,
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    kdf = EVP_KDF_fetch(s->ctx->libctx, OSSL_KDF_NAME_TLS1_PRF, s->ctx->propq);
+    kdf = EVP_KDF_fetch(SSL_CONNECTION_GET_CTX(s)->libctx,
+                        OSSL_KDF_NAME_TLS1_PRF,
+                        SSL_CONNECTION_GET_CTX(s)->propq);
     if (kdf == NULL)
         goto err;
     kctx = EVP_KDF_CTX_new(kdf);
@@ -83,7 +85,8 @@ static int tls1_PRF(SSL *s,
     return 0;
 }
 
-static int tls1_generate_key_block(SSL *s, unsigned char *km, size_t num)
+static int tls1_generate_key_block(SSL_CONNECTION *s, unsigned char *km,
+                                   size_t num)
 {
     int ret;
 
@@ -98,7 +101,7 @@ static int tls1_generate_key_block(SSL *s, unsigned char *km, size_t num)
     return ret;
 }
 
-int tls_provider_set_tls_params(SSL *s, EVP_CIPHER_CTX *ctx,
+int tls_provider_set_tls_params(SSL_CONNECTION *s, EVP_CIPHER_CTX *ctx,
                                 const EVP_CIPHER *ciph,
                                 const EVP_MD *md)
 {
@@ -147,7 +150,7 @@ static int tls_iv_length_within_key_block(const EVP_CIPHER *c)
         return EVP_CIPHER_get_iv_length(c);
 }
 
-int tls1_change_cipher_state(SSL *s, int which)
+int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
 {
     unsigned char *p, *mac_secret;
     unsigned char *ms, *key, *iv;
@@ -224,7 +227,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         /*
          * this is done by dtls1_reset_seq_numbers for DTLS
          */
-        if (!SSL_IS_DTLS(s))
+        if (!SSL_CONNECTION_IS_DTLS(s))
             RECORD_LAYER_reset_read_sequence(&s->rlayer);
         mac_secret = &(s->s3.read_mac_secret[0]);
         mac_secret_size = &(s->s3.read_mac_secret_size);
@@ -244,14 +247,14 @@ int tls1_change_cipher_state(SSL *s, int which)
             s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_TLSTREE;
         else
             s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_TLSTREE;
-        if (s->enc_write_ctx != NULL && !SSL_IS_DTLS(s)) {
+        if (s->enc_write_ctx != NULL && !SSL_CONNECTION_IS_DTLS(s)) {
             reuse_dd = 1;
         } else if ((s->enc_write_ctx = EVP_CIPHER_CTX_new()) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         dd = s->enc_write_ctx;
-        if (SSL_IS_DTLS(s)) {
+        if (SSL_CONNECTION_IS_DTLS(s)) {
             mac_ctx = EVP_MD_CTX_new();
             if (mac_ctx == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
@@ -280,7 +283,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         /*
          * this is done by dtls1_reset_seq_numbers for DTLS
          */
-        if (!SSL_IS_DTLS(s))
+        if (!SSL_CONNECTION_IS_DTLS(s))
             RECORD_LAYER_reset_write_sequence(&s->rlayer);
         mac_secret = &(s->s3.write_mac_secret[0]);
         mac_secret_size = &(s->s3.write_mac_secret_size);
@@ -321,9 +324,11 @@ int tls1_change_cipher_state(SSL *s, int which)
     memcpy(mac_secret, ms, i);
 
     if (!(EVP_CIPHER_get_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
+        SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+
         if (mac_type == EVP_PKEY_HMAC) {
-            mac_key = EVP_PKEY_new_raw_private_key_ex(s->ctx->libctx, "HMAC",
-                                                      s->ctx->propq, mac_secret,
+            mac_key = EVP_PKEY_new_raw_private_key_ex(sctx->libctx, "HMAC",
+                                                      sctx->propq, mac_secret,
                                                       *mac_secret_size);
         } else {
             /*
@@ -336,7 +341,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         }
         if (mac_key == NULL
             || EVP_DigestSignInit_ex(mac_ctx, NULL, EVP_MD_get0_name(m),
-                                     s->ctx->libctx, s->ctx->propq, mac_key,
+                                     sctx->libctx, sctx->propq, mac_key,
                                      NULL) <= 0) {
             EVP_PKEY_free(mac_key);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -441,7 +446,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     if (BIO_set_ktls(bio, &crypto_info, which & SSL3_CC_WRITE)) {
         if (which & SSL3_CC_WRITE)
             ssl3_release_write_buffer(s);
-        SSL_set_options(s, SSL_OP_NO_RENEGOTIATION);
+        SSL_set_options(SSL_CONNECTION_GET_SSL(s), SSL_OP_NO_RENEGOTIATION);
     }
 
  skip_ktls:
@@ -460,7 +465,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     return 0;
 }
 
-int tls1_setup_key_block(SSL *s)
+int tls1_setup_key_block(SSL_CONNECTION *s)
 {
     unsigned char *p;
     const EVP_CIPHER *c;
@@ -473,8 +478,9 @@ int tls1_setup_key_block(SSL *s)
     if (s->s3.tmp.key_block_length != 0)
         return 1;
 
-    if (!ssl_cipher_get_evp(s->ctx, s->session, &c, &hash, &mac_type,
-                            &mac_secret_size, &comp, s->ext.use_etm)) {
+    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, &c, &hash,
+                            &mac_type, &mac_secret_size, &comp,
+                            s->ext.use_etm)) {
         /* Error is already recorded */
         SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
         return 0;
@@ -523,7 +529,7 @@ int tls1_setup_key_block(SSL *s)
     } OSSL_TRACE_END(TLS);
 
     if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS)
-        && s->method->version <= TLS1_VERSION) {
+        && SSL_CONNECTION_GET_SSL(s)->method->version <= TLS1_VERSION) {
         /*
          * enable vulnerability countermeasure for CBC ciphers with known-IV
          * problem (http://www.openssl.org/~bodo/tls-cbc.txt)
@@ -544,8 +550,8 @@ int tls1_setup_key_block(SSL *s)
     return ret;
 }
 
-size_t tls1_final_finish_mac(SSL *s, const char *str, size_t slen,
-                             unsigned char *out)
+size_t tls1_final_finish_mac(SSL_CONNECTION *s, const char *str,
+                             size_t slen, unsigned char *out)
 {
     size_t hashlen;
     unsigned char hash[EVP_MAX_MD_SIZE];
@@ -574,8 +580,9 @@ size_t tls1_final_finish_mac(SSL *s, const char *str, size_t slen,
     return finished_size;
 }
 
-int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
-                                size_t len, size_t *secret_size)
+int tls1_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
+                                unsigned char *p, size_t len,
+                                size_t *secret_size)
 {
     if (s->session->flags & SSL_SESS_FLAG_EXTMS) {
         unsigned char hash[EVP_MAX_MD_SIZE * 2];
@@ -637,8 +644,8 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
     return 1;
 }
 
-int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
-                                const char *label, size_t llen,
+int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
+                                size_t olen, const char *label, size_t llen,
                                 const unsigned char *context,
                                 size_t contextlen, int use_context)
 {

@@ -63,7 +63,7 @@ IF[{- !$disabled{tests} -}]
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
           provfetchtest prov_config_test rand_test ca_internals_test \
-          bio_tfo_test
+          bio_tfo_test membio_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -278,6 +278,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[packettest]=../include ../apps/include
   DEPEND[packettest]=../libcrypto libtestutil.a
 
+  SOURCE[quic_wire_test]=quic_wire_test.c
+  INCLUDE[quic_wire_test]=../include ../apps/include
+  DEPEND[quic_wire_test]=../libcrypto.a ../libssl.a libtestutil.a
+
   SOURCE[asynctest]=asynctest.c
   INCLUDE[asynctest]=../include ../apps/include
   DEPEND[asynctest]=../libcrypto
@@ -390,6 +394,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[bio_tfo_test]=bio_tfo_test.c
   INCLUDE[bio_tfo_test]=../include ../apps/include ..
   DEPEND[bio_tfo_test]=../libcrypto libtestutil.a
+
+  SOURCE[membio_test]=membio_test.c
+  INCLUDE[membio_test]=../include ../apps/include ..
+  DEPEND[membio_test]=../libcrypto libtestutil.a
 
   SOURCE[params_api_test]=params_api_test.c
   INCLUDE[params_api_test]=../include ../apps/include
@@ -949,7 +957,7 @@ ENDIF
   DEPEND[build_wincrypt_test]=../libssl ../libcrypto
 
   IF[{- !$disabled{'quic'} -}]
-    PROGRAMS{noinst}=quicapitest
+    PROGRAMS{noinst}=quicapitest quic_wire_test
   ENDIF
 
   SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c

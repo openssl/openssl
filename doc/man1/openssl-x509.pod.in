@@ -496,8 +496,9 @@ See L<openssl-format-options(1)> for details.
 
 Sets the CA serial number file to use.
 
-When creating a certificate with this option, the certificate serial number
-is stored in the given file. This file consists of one line containing
+When creating a certificate with this option and with the B<-CA> option,
+the certificate serial number is stored in the given file.
+This file consists of one line containing
 an even number of hex digits with the serial number used last time.
 After reading this number, it is incremented and used, and the file is updated.
 
@@ -512,9 +513,10 @@ a random number is generated; this is the recommended practice.
 
 =item B<-CAcreateserial>
 
-With this option the CA serial number file is created if it does not exist.
-A random number is generated, used for the certificate, and saved into the
-serial number file in that case.
+With this option and the B<-CA> option
+the CA serial number file is created if it does not exist.
+A random number is generated, used for the certificate,
+and saved into the serial number file determined as described above.
 
 =back
 

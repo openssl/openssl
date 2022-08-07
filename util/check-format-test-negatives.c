@@ -48,6 +48,10 @@ int f(void) /*
     const int con;
     volatile int vola;
     register int reg;
+    OSSL_x y, *p = params;
+    int params[];
+    OSSL_PARAM * (* params []) [MAX + 1];
+    XY *(* fn)(int a, char b);
     /*
      * multi-line comment should not disturb detection of local decls
      */
@@ -56,6 +60,48 @@ int f(void) /*
     unsigned k;
 
     /* intra-line comment should not disturb detection of end of local decls */
+
+    {
+        int x; /* just decls in block */
+    }
+    if (p != (unsigned char *)
+        &(ctx->tmp[0])) {
+        i -= (p - (unsigned char *) /* do not confuse with var decl */
+              &(ctx->tmp[0]));
+    }
+    {
+        ctx->buf_off = 0; /* do not confuse with var decl */
+        return 0;
+    }
+    {
+        ctx->buf_len = EVP_EncodeBlock((unsigned char *)ctx->buf,
+                                       (unsigned char *)ctx->tmp, /* no decl */
+                                       ctx->tmp_len);
+    }
+    {
+        EVP_EncodeFinal(ctx->base64,
+                        (unsigned char *)ctx->buf, &(ctx->len)); /* no decl */
+        /* push out the bytes */
+        goto again;
+    }
+    {
+        f(1, (unsigned long)2); /* no decl */
+        x;
+    }
+    {
+        char *pass_str = get_passwd(opt_srv_secret, "x");
+
+        if (pass_str != NULL) {
+            cleanse(opt_srv_secret);
+            res = OSSL_CMP_CTX_set1_secretValue(ctx, (unsigned char *)pass_str,
+                                                strlen(pass_str));
+            clear_free(pass_str);
+        }
+    }
+}
+
+int g(void)
+{
     if (ctx == NULL) {    /* non-leading end-of-line comment */
         if (/* comment after '(' */ pem_name != NULL /* comment before ')' */)
             /* entire-line comment indent usually like for the following line */
@@ -70,6 +116,10 @@ int f(void) /*
         ;
     for (i = 0; i < 1;)
         ;
+    for (;;)
+        for (; i < n; i++)
+            for (;; p++)
+                ;
     for (;;) ; /* should not trigger: space before ';' */
  lab: ;  /* should not trigger: space before ';' */
 
@@ -218,6 +268,7 @@ x;
 typedef OSSL_CMP_MSG *(*cmp_srv_process_cb_t)
     (OSSL_CMP_SRV_CTX *ctx, OSSL_CMP_MSG *msg)
     xx;
+
 int f()
 {
     c;

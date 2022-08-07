@@ -1099,6 +1099,7 @@ static int cipher_test_run(EVP_TEST *t)
                     && EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_STREAM_CIPHER)
                 || ((EVP_CIPHER_get_flags(cdat->cipher) & EVP_CIPH_FLAG_CTS) != 0)
                 || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
+                || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_GCM_SIV_MODE
                 || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
                 || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE)
                 break;
@@ -3334,6 +3335,7 @@ static int digestsign_test_run(EVP_TEST *t)
         t->err = "MALLOC_FAILURE";
         goto err;
     }
+    got_len *= 2;
     if (!EVP_DigestSignFinal(expected->ctx, got, &got_len)) {
         t->err = "DIGESTSIGNFINAL_ERROR";
         goto err;
@@ -3411,6 +3413,7 @@ static int oneshot_digestsign_test_run(EVP_TEST *t)
         t->err = "MALLOC_FAILURE";
         goto err;
     }
+    got_len *= 2;
     if (!EVP_DigestSign(expected->ctx, got, &got_len,
                         expected->osin, expected->osin_len)) {
         t->err = "DIGESTSIGN_ERROR";

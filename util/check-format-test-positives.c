@@ -72,8 +72,8 @@ void main(int n) {  /*@ opening brace at end of function definition header */
 int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
       int b,        /*@ hanging expr indent off by -1 */
        long I)      /*@ single-letter name 'I' */
-{ int               /*@ code after '{' opening a block */
-    xx = 1) +       /*@ unexpected closing parenthesis */
+{ int x;            /*@ code after '{' opening a block */
+    int xx = 1) +   /*@ unexpected closing parenthesis */
         0L <        /*@ constant on LHS of comparison operator */
         a] -        /*@ unexpected closing bracket */
         3: *        /*@ unexpected ':' (without preceding '?') within expr */

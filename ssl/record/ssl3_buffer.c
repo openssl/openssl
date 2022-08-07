@@ -34,7 +34,7 @@ void SSL3_BUFFER_release(SSL3_BUFFER *b)
     b->buf = NULL;
 }
 
-int ssl3_setup_read_buffer(SSL *s)
+int ssl3_setup_read_buffer(SSL_CONNECTION *s)
 {
     unsigned char *p;
     size_t len, align = 0, headerlen;
@@ -42,7 +42,7 @@ int ssl3_setup_read_buffer(SSL *s)
 
     b = RECORD_LAYER_get_rbuf(&s->rlayer);
 
-    if (SSL_IS_DTLS(s))
+    if (SSL_CONNECTION_IS_DTLS(s))
         headerlen = DTLS1_RT_HEADER_LENGTH;
     else
         headerlen = SSL3_RT_HEADER_LENGTH;
@@ -76,7 +76,8 @@ int ssl3_setup_read_buffer(SSL *s)
     return 1;
 }
 
-int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
+int ssl3_setup_write_buffer(SSL_CONNECTION *s, size_t numwpipes,
+                            size_t len)
 {
     unsigned char *p;
     size_t align = 0, headerlen;
@@ -86,7 +87,7 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
     s->rlayer.numwpipes = numwpipes;
 
     if (len == 0) {
-        if (SSL_IS_DTLS(s))
+        if (SSL_CONNECTION_IS_DTLS(s))
             headerlen = DTLS1_RT_HEADER_LENGTH + 1;
         else
             headerlen = SSL3_RT_HEADER_LENGTH;
@@ -139,7 +140,7 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
     return 1;
 }
 
-int ssl3_setup_buffers(SSL *s)
+int ssl3_setup_buffers(SSL_CONNECTION *s)
 {
     if (!ssl3_setup_read_buffer(s)) {
         /* SSLfatal() already called */
@@ -152,7 +153,7 @@ int ssl3_setup_buffers(SSL *s)
     return 1;
 }
 
-int ssl3_release_write_buffer(SSL *s)
+int ssl3_release_write_buffer(SSL_CONNECTION *s)
 {
     SSL3_BUFFER *wb;
     size_t pipes;
@@ -172,7 +173,7 @@ int ssl3_release_write_buffer(SSL *s)
     return 1;
 }
 
-int ssl3_release_read_buffer(SSL *s)
+int ssl3_release_read_buffer(SSL_CONNECTION *s)
 {
     SSL3_BUFFER *b;
 

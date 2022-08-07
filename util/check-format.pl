@@ -169,7 +169,7 @@ my @nested_symbols;        # stack of hanging symbols '(', '{', '[', or '?', in 
 my @nested_conds_indents;  # stack of hanging indents due to conditionals ('?' ... ':')
 my $expr_indent;           # resulting hanging indent within (multi-line) expressions including type exprs, else 0
 my $hanging_symbol;        # character ('(', '{', '[', not: '?') responsible for $expr_indent, if $expr_indent != 0
-my $in_block_decls;        # number of local declaration lines after block opening before normal statements
+my $in_block_decls;        # number of local declaration lines after block opening before normal statements, or -1 if no block opening
 my $in_expr;               # in expression after if/while/for/switch/return/enum/LHS of assignment
 my $in_paren_expr;         # in parenthesized if/while/for condition and switch expression, if $expr_indent != 0
 my $in_typedecl;           # nesting level of typedef/struct/union/enum
@@ -520,9 +520,9 @@ while (<>) { # loop over all lines of all input files
     if ($in_comment > 0) { # this still includes the last line of multi-line comment
         my ($head, $any_symbol, $cmt_text) = m/^(\s*)(.?)(.*)$/;
         if ($any_symbol eq "*") {
-            report("no space after leading '*' in multi-line comment") if $cmt_text =~ m|^[^/\s$self_test_exception]|;
+            report("missing space or '*' after leading '*' in multi-line comment") if $cmt_text =~ m|^[^*\s/$self_test_exception]|;
         } else {
-            report("no leading '*' in multi-line comment");
+            report("missing leading '*' in multi-line comment");
         }
         $in_comment++;
     }
@@ -530,13 +530,13 @@ while (<>) { # loop over all lines of all input files
     # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
     if ((my ($head, $tail) = m|^(.*?)\*/(.*)$|) && $1 ne '/') { # ending comment: '*/'
         report("neither space nor '*' before '*/'") if $head =~ m/[^*\s]$/;
-        report("no space after '*/'") if $tail =~ m/^[^\s,;)}\]]/; # no space or ,;)}] after '*/'
+        report("missing space after '*/'") if $tail =~ m/^[^\s,;)}\]]/; # no space or ,;)}] after '*/'
         if (!($head =~ m|/\*|)) { # not begin of comment '/*', which is is handled below
             if ($in_comment == 0) {
                 report("unexpected '*/' outside comment");
                 $_ = "$head@@".$tail; # blind the "*/"
             } else {
-                report("text before '*/' in multi-line comment") if ($head =~ m/\S/); # non-SPC before '*/'
+                report("text before '*/' in multi-line comment") if ($head =~ m/[^*\s]/); # non-SPC before '*/'
                 $in_comment = -1; # indicate that multi-line comment ends on current line
                 if ($count > 0) {
                     # make indentation of end of multi-line comment appear like of leading intra-line comment
@@ -553,9 +553,9 @@ while (<>) { # loop over all lines of all input files
     # detect begin of comment, check if it is followed by non-space text
   MATCH_COMMENT:
     if (my ($head, $opt_minus, $tail) = m|^(.*?)/\*(-?)(.*)$|) { # begin of comment: '/*'
-        report("no space before '/*'")
+        report("missing space before '/*'")
             if $head =~ m/[^\s(\*]$/; # not space, '(', or or '*' (needed to allow '*/') before comment delimiter
-        report("neither space nor '*' after '/*' or '/*-'") if $tail =~ m/^[^\s*$self_test_exception]/;
+        report("missing space, '*' or '!' after '/*' or '/*-'") if $tail =~ m/^[^*\s!$self_test_exception]/;
         my $cmt_text = $opt_minus.$tail; # preliminary
         if ($in_comment > 0) {
             report("unexpected '/*' inside multi-line comment");
@@ -568,7 +568,7 @@ while (<>) { # loop over all lines of all input files
         } else { # begin of multi-line comment
             my $self_test_exception = $self_test ? "(@\d?)?" : "";
             report("text after '/*' in multi-line comment")
-                unless $tail =~ m/^$self_test_exception.?\s*$/;
+                unless $tail =~ m/^$self_test_exception.?[*\s]*$/;
             # tail not essentially blank, first char already checked
             # adapt to actual indentation of first line
             $comment_indent = length($head) + 1;
@@ -577,6 +577,7 @@ while (<>) { # loop over all lines of all input files
             $leading_comment = $head =~ m/^\s*$/; # there is code before beginning delimiter
             $formatted_comment = $opt_minus eq "-";
         }
+    } elsif (($head, $tail) = m|^\{-(.*)$|) { # begin of Perl pragma: '{-'
     }
 
     if ($in_comment > 1) { # still inside multi-line comment (not at its begin or end)
@@ -676,6 +677,7 @@ while (<>) { # loop over all lines of all input files
         $intra_line =~ s/\s+$//;                     # strip any (resulting) space at EOL
         $intra_line =~ s/(for\s*\([^;]*);;(\))/"$1$2"/eg; # strip trailing ';;' in for (;;)
         $intra_line =~ s/(for\s*\([^;]+;[^;]+);(\))/"$1$2"/eg; # strip trailing ';' in for (;;)
+        $intra_line =~ s/(for\s*\();(;)/"$1$2"/eg;   # replace leading ';;' in for (;;) by ';'
         $intra_line =~ s/(=\s*)\{ /"$1@ "/eg;        # do not report {SPC in initializers such as ' = { 0, };'
         $intra_line =~ s/, \};/, @;/g;               # do not report SPC} in initializers such as ' = { 0, };'
         report("space before '$1'") if $intra_line =~ m/[\w)\]]\s+(\+\+|--)/;  # postfix ++/-- with preceding space
@@ -688,31 +690,31 @@ while (<>) { # loop over all lines of all input files
         report("space before '$1'")     if $intra_line =~ m/\s([,)\]])/;       # space before ,)]
         report("space after '$1'")      if $intra_line =~ m/([(\[~!])\s/;      # space after ([~!
         report("space after '$1'")      if $intra_line =~ m/(defined)\s/;      # space after 'defined'
-        report("no space before '=' or '<op>='") if $intra_line =~ m/\S(=)/;   # '=' etc. without preceding space
-        report("no space before '$1'")  if $intra_line =~ m/\S([|\/%<>^\?])/;  # |/%<>^? without preceding space
+        report("missing space before '=' or '<op>='") if $intra_line =~ m/\S(=)/;   # '=' etc. without preceding space
+        report("missing space before '$1'")  if $intra_line =~ m/\S([|\/%<>^\?])/;  # |/%<>^? without preceding space
         # TODO ternary ':' without preceding SPC, while allowing no SPC before ':' after 'case'
-        report("no space before binary '$2'")  if $intra_line =~ m/([^\s{()\[e])([+\-])/; # '+'/'-' without preceding space or {()[e
+        report("missing space before binary '$2'")  if $intra_line =~ m/([^\s{()\[e])([+\-])/; # '+'/'-' without preceding space or {()[e
         # ')' may be used for type casts or before "->", 'e' may be used for numerical literals such as "1e-6"
-        report("no space before binary '$1'")  if $intra_line =~ m/[^\s{()\[*!]([*])/; # '*' without preceding space or {()[*!
-        report("no space before binary '$1'")  if $intra_line =~ m/[^\s{()\[]([&])/;  # '&' without preceding space or {()[
-        report("no space after ternary '$1'") if $intra_line =~ m/(:)[^\s\d]/; # ':' without following space or digit
-        report("no space after '$1'")   if $intra_line =~ m/([,;=|\/%<>^\?])\S/; # ,;=|/%<>^? without following space
-        report("no space after binary '$1'") if $intra_line=~m/[^{(\[]([*])[^\sa-zA-Z_(),*]/;# '*' w/o space or \w(),* after
+        report("missing space before binary '$1'")  if $intra_line =~ m/[^\s{()\[*!]([*])/; # '*' without preceding space or {()[*!
+        report("missing space before binary '$1'")  if $intra_line =~ m/[^\s{()\[]([&])/;  # '&' without preceding space or {()[
+        report("missing space after ternary '$1'") if $intra_line =~ m/(:)[^\s\d]/; # ':' without following space or digit
+        report("missing space after '$1'")   if $intra_line =~ m/([,;=|\/%<>^\?])\S/; # ,;=|/%<>^? without following space
+        report("missing space after binary '$1'") if $intra_line=~m/[^{(\[]([*])[^\sa-zA-Z_(),*]/;# '*' w/o space or \w(),* after
         # TODO unary '*' must not be followed by SPC
-        report("no space after binary '$1'") if $intra_line=~m/([&])[^\sa-zA-Z_(]/;  # '&' w/o following space or \w(
+        report("missing space after binary '$1'") if $intra_line=~m/([&])[^\sa-zA-Z_(]/;  # '&' w/o following space or \w(
         # TODO unary '&' must not be followed by SPC
-        report("no space after binary '$1'") if $intra_line=~m/[^{(\[]([+\-])[^\s\d(]/;  # +/- w/o following space or \d(
+        report("missing space after binary '$1'") if $intra_line=~m/[^{(\[]([+\-])[^\s\d(]/;  # +/- w/o following space or \d(
         # TODO unary '+' and '-' must not be followed by SPC
-        report("no space after '$2'")   if $intra_line =~ m/(^|\W)(if|while|for|switch|case)[^\w\s]/; # kw w/o SPC
-        report("no space after '$2'")   if $intra_line =~ m/(^|\W)(return)[^\w\s;]/;  # return w/o SPC or ';'
+        report("missing space after '$2'")   if $intra_line =~ m/(^|\W)(if|while|for|switch|case)[^\w\s]/; # kw w/o SPC
+        report("missing space after '$2'")   if $intra_line =~ m/(^|\W)(return)[^\w\s;]/;  # return w/o SPC or ';'
         report("space after function/macro name")
                                       if $intra_line =~ m/(\w+)\s+\(/        # fn/macro name with space before '('
        && !($1 =~ m/^(sizeof|if|else|while|do|for|switch|case|default|break|continue|goto|return|void|char|signed|unsigned|int|short|long|float|double|typedef|enum|struct|union|auto|extern|static|const|volatile|register)$/) # not keyword
                                     && !(m/^\s*#\s*define\s/); # we skip macro definitions here because macros
                                     # without parameters but with body beginning with '(', e.g., '#define X (1)',
                                     # would lead to false positives - TODO also check for macros with parameters
-        report("no space before '{'")   if $intra_line =~ m/[^\s{(\[]\{/;      # '{' without preceding space or {([
-        report("no space after '}'")    if $intra_line =~ m/\}[^\s,;\])}]/;    # '}' without following space or ,;])}
+        report("missing space before '{'")   if $intra_line =~ m/[^\s{(\[]\{/;      # '{' without preceding space or {([
+        report("missing space after '}'")    if $intra_line =~ m/\}[^\s,;\])}]/;    # '}' without following space or ,;])}
     }
 
     # preprocessor directives @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -843,19 +845,21 @@ while (<>) { # loop over all lines of all input files
     # check for blank lines within/after local decls @@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     if ($in_block_decls >= 0 &&
-        $in_comment == 0 && !m/^\s*\*?@/ && # not multi-line or intra-line comment
-        !$in_expr && $in_typedecl == 0) {
-        my $blank_line_before = $line > 1 && $code_contents_before =~ m/^\s*(\\\s*)?$/;
-        # essentially blank line: just whitespace (and maybe a trailing '\')
-        if (m/^\s*(void|char|signed|unsigned|int|short|long|float|double|typedef|enum|struct|union|auto|extern|static|const|volatile|register)(\W|$)/ ||
-            (m/[\w)]\s+[*]*\w/ &&
-             !m/^\s*(\}|sizeof|if|else|while|do|for|switch|case|default|break|continue|goto|return)(\W|$)/)) {
-            report_flexibly($line - 1, "blank line within local decls, before", $contents) if $blank_line_before;
+        $in_comment == 0 && !m/^\s*\*?@/ && # not in multi-line comment nor an intra-line comment
+        !$in_expr && $expr_indent == 0 && $in_typedecl == 0) {
+        my $blank_line_before = $line > 1
+            && $code_contents_before =~ m/^\s*(\\\s*)?$/; # essentially blank line: just whitespace (and maybe a trailing '\')
+        if (m/^[\s(]*(char|signed|unsigned|int|short|long|float|double|enum|struct|union|auto|extern|static|const|volatile|register)(\W|$)/ # clear start of local decl
+            || (m/^(\s*(\w+|\[\]|[\*()]))+?\s+[\*\(]*\w+(\s*(\)|\[[^\]]*\]))*\s*[;,=]/ # weak check for decl involving user-defined type
+                && !m/^\s*(\}|sizeof|if|else|while|do|for|switch|case|default|break|continue|goto|return)(\W|$)/)) {
             $in_block_decls++;
-        } elsif ($in_block_decls > 0) {
+            report_flexibly($line - 1, "blank line within local decls, before", $contents) if $blank_line_before;
+        } else {
             report_flexibly($line, "missing blank line after local decls", "\n$contents_before$contents")
-                unless $blank_line_before;
-            $in_block_decls = -1;
+                if $in_block_decls > 0 && !$blank_line_before;
+            $in_block_decls = -1 unless
+                m/^\s*(\\\s*)?$/ # essentially blank line: just whitespace (and maybe a trailing '\')
+            || $in_comment != 0 || m/^\s*\*?@/; # in multi-line comment or an intra-line comment
         }
     }
 
@@ -1042,12 +1046,12 @@ while (<>) { # loop over all lines of all input files
                     !($keyword_opening_brace eq "else" && $line_opening_brace < $line_before2);
             }
             report("code after '{'") if $tail=~ m/[^\s\@]/ && # trailing non-whitespace non-comment (non-'\')
-                                      !($tail=~ m/\}/);  # no '}' after last '{'
+                                      !($tail=~ m/\}/);  # missing '}' after last '{'
         }
     }
 
     # check for opening brace after if/while/for/switch/do not on same line
-    # note that "no '{' on same line after '} else'" is handled further below
+    # note that "missing '{' on same line after '} else'" is handled further below
     if (/^[\s@]*{/ && # leading '{'
         $line_before > 0 && !($contents_before_ =~ m/^\s*#/) && # not preprocessor directive '#if
         (my ($head, $mid, $tail) = ($contents_before_ =~ m/(^|^.*\W)(if|while|for|switch|do)(\W.*$|$)/))) {
@@ -1057,10 +1061,10 @@ while (<>) { # loop over all lines of all input files
     # check for closing brace on line before 'else' not followed by leading '{'
     elsif (my ($head, $tail) = m/(^|^.*\W)else(\W.*$|$)/) {
         if (parens_balance($tail) == 0 &&  # avoid false positive due to unfinished expr on current line
-            !($tail =~ m/{/) && # after 'else' no '{' on same line
+            !($tail =~ m/{/) && # after 'else' missing '{' on same line
             !($head =~ m/}[\s@]*$/) && # not: '}' then any whitespace or comments before 'else'
             $line_before > 0 && $contents_before_ =~ /}[\s@]*$/) { # trailing '}' on line before
-            report("no '{' after '} else'");
+            report("missing '{' on same line after '} else'");
         }
     }
 
@@ -1087,10 +1091,10 @@ while (<>) { # loop over all lines of all input files
             if ($line_before > 0 && $contents_before_ =~ /}[\s@]*$/) {
                 report("'else' not on same line as preceding '}'");
             } elsif (parens_balance($tail) == 0) { # avoid false positive due to unfinished expr on current line
-                report("no '}' on same line before 'else ... {'") if $brace_after;
+                report("missing '}' on same line before 'else ... {'") if $brace_after;
             }
         } elsif (parens_balance($tail) == 0) { # avoid false positive due to unfinished expr on current line
-            report("no '{' on same line after '} else'") if $brace_before && !$brace_after;
+            report("missing '{' on same line after '} else'") if $brace_before && !$brace_after;
         }
     }
 
@@ -1112,7 +1116,7 @@ while (<>) { # loop over all lines of all input files
   LINE_FINISHED:
     $code_contents_before = $contents if
         !m/^\s*#(\s*)(\w+)/ && # not single-line directive
-        $in_comment == 0 && !m/^\s*\*?@/; # not multi-line or intra-line comment
+        $in_comment == 0 && !m/^\s*\*?@/; # not in multi-line comment nor an intra-line comment
 
     # on end of multi-line preprocessor directive, adapt indent
     if ($in_directive > 0 &&

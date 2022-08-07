@@ -269,7 +269,8 @@ const char *EVP_KEYMGMT_get0_name(const EVP_KEYMGMT *keymgmt)
 
 int EVP_KEYMGMT_is_a(const EVP_KEYMGMT *keymgmt, const char *name)
 {
-    return evp_is_a(keymgmt->prov, keymgmt->name_id, NULL, name);
+    return keymgmt != NULL
+           && evp_is_a(keymgmt->prov, keymgmt->name_id, NULL, name);
 }
 
 void EVP_KEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,

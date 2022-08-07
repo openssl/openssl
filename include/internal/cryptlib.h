@@ -19,6 +19,7 @@
 # endif
 
 # include "internal/common.h"
+# include "crypto/asn1.h"
 
 # include <openssl/crypto.h>
 # include <openssl/buffer.h>

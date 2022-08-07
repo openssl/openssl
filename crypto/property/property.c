@@ -63,7 +63,19 @@ typedef struct {
 struct ossl_method_store_st {
     OSSL_LIB_CTX *ctx;
     SPARSE_ARRAY_OF(ALGORITHM) *algs;
+    /*
+     * Lock to protect the |algs| array from concurrent writing, when
+     * individual implementations or queries are inserted.  This is used
+     * by the appropriate functions here.
+     */
     CRYPTO_RWLOCK *lock;
+    /*
+     * Lock to reserve the whole store.  This is used when fetching a set
+     * of algorithms, via these functions, found in crypto/core_fetch.c:
+     * ossl_method_construct_reserve_store()
+     * ossl_method_construct_unreserve_store()
+     */
+    CRYPTO_RWLOCK *biglock;
 
     /* query cache specific values */
 
@@ -230,13 +242,10 @@ OSSL_METHOD_STORE *ossl_method_store_new(OSSL_LIB_CTX *ctx)
     res = OPENSSL_zalloc(sizeof(*res));
     if (res != NULL) {
         res->ctx = ctx;
-        if ((res->algs = ossl_sa_ALGORITHM_new()) == NULL) {
-            OPENSSL_free(res);
-            return NULL;
-        }
-        if ((res->lock = CRYPTO_THREAD_lock_new()) == NULL) {
-            ossl_sa_ALGORITHM_free(res->algs);
-            OPENSSL_free(res);
+        if ((res->algs = ossl_sa_ALGORITHM_new()) == NULL
+            || (res->lock = CRYPTO_THREAD_lock_new()) == NULL
+            || (res->biglock = CRYPTO_THREAD_lock_new()) == NULL) {
+            ossl_method_store_free(res);
             return NULL;
         }
     }
@@ -246,11 +255,23 @@ OSSL_METHOD_STORE *ossl_method_store_new(OSSL_LIB_CTX *ctx)
 void ossl_method_store_free(OSSL_METHOD_STORE *store)
 {
     if (store != NULL) {
-        ossl_sa_ALGORITHM_doall_arg(store->algs, &alg_cleanup, store);
+        if (store->algs != NULL)
+            ossl_sa_ALGORITHM_doall_arg(store->algs, &alg_cleanup, store);
         ossl_sa_ALGORITHM_free(store->algs);
         CRYPTO_THREAD_lock_free(store->lock);
+        CRYPTO_THREAD_lock_free(store->biglock);
         OPENSSL_free(store);
     }
+}
+
+int ossl_method_lock_store(OSSL_METHOD_STORE *store)
+{
+    return store != NULL ? CRYPTO_THREAD_write_lock(store->biglock) : 0;
+}
+
+int ossl_method_unlock_store(OSSL_METHOD_STORE *store)
+{
+    return store != NULL ? CRYPTO_THREAD_unlock(store->biglock) : 0;
 }
 
 static ALGORITHM *ossl_method_store_retrieve(OSSL_METHOD_STORE *store, int nid)
@@ -260,7 +281,7 @@ static ALGORITHM *ossl_method_store_retrieve(OSSL_METHOD_STORE *store, int nid)
 
 static int ossl_method_store_insert(OSSL_METHOD_STORE *store, ALGORITHM *alg)
 {
-        return ossl_sa_ALGORITHM_set(store->algs, alg->nid, alg);
+    return ossl_sa_ALGORITHM_set(store->algs, alg->nid, alg);
 }
 
 int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,

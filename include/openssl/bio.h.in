@@ -649,6 +649,7 @@ int BIO_nwrite0(BIO *bio, char **buf);
 int BIO_nwrite(BIO *bio, char **buf, int num);
 
 const BIO_METHOD *BIO_s_mem(void);
+const BIO_METHOD *BIO_s_dgram_mem(void);
 const BIO_METHOD *BIO_s_secmem(void);
 BIO *BIO_new_mem_buf(const void *buf, int len);
 # ifndef OPENSSL_NO_SOCK

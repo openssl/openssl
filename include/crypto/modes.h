@@ -74,13 +74,13 @@ typedef unsigned char u8;
                         asm ("rev %0,%1"                \
                         : "=r"(ret_) : "r"((u32)(x)));  \
                         ret_;                           })
-#  elif defined(__riscv_zbb) && __riscv_xlen == 64
+#  elif (defined(__riscv_zbb) || defined(__riscv_zbkb)) && __riscv_xlen == 64
 #   define BSWAP8(x) ({ u64 ret_=(x);                   \
                         asm ("rev8 %0,%0"               \
                         : "+r"(ret_));   ret_;          })
 #   define BSWAP4(x) ({ u32 ret_=(x);                   \
                         asm ("rev8 %0,%0; srli %0,%0,32"\
-                        : "+r"(ret_));   ret_;          })
+                        : "+&r"(ret_));  ret_;          })
 #  endif
 # elif defined(_MSC_VER)
 #  if _MSC_VER>=1300
@@ -107,14 +107,14 @@ _asm mov eax, val _asm bswap eax}
     u64 hi, lo;
 } u128;
 
-#ifdef  TABLE_BITS
-# undef  TABLE_BITS
-#endif
-/*
- * Even though permitted values for TABLE_BITS are 8, 4 and 1, it should
- * never be set to 8 [or 1]. For further information see gcm128.c.
- */
-#define TABLE_BITS 4
+typedef void (*gcm_init_fn)(u128 Htable[16], const u64 H[2]);
+typedef void (*gcm_ghash_fn)(u64 Xi[2], const u128 Htable[16], const u8 *inp, size_t len);
+typedef void (*gcm_gmult_fn)(u64 Xi[2], const u128 Htable[16]);
+struct gcm_funcs_st {
+    gcm_init_fn ginit;
+    gcm_ghash_fn ghash;
+    gcm_gmult_fn gmult;
+};
 
 struct gcm128_context {
     /* Following 6 names follow names in GCM specification */
@@ -128,14 +128,8 @@ struct gcm128_context {
      * Relative position of Yi, EKi, EK0, len, Xi, H and pre-computed Htable is
      * used in some assembler modules, i.e. don't change the order!
      */
-#if TABLE_BITS==8
-    u128 Htable[256];
-#else
     u128 Htable[16];
-    void (*gmult) (u64 Xi[2], const u128 Htable[16]);
-    void (*ghash) (u64 Xi[2], const u128 Htable[16], const u8 *inp,
-                   size_t len);
-#endif
+    struct gcm_funcs_st funcs;
     unsigned int mres, ares;
     block128_f block;
     void *key;
@@ -143,6 +137,12 @@ struct gcm128_context {
     unsigned char Xn[48];
 #endif
 };
+
+/* GHASH functions */
+void ossl_gcm_init_4bit(u128 Htable[16], const u64 H[2]);
+void ossl_gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16],
+                         const u8 *inp, size_t len);
+void ossl_gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16]);
 
 /*
  * The maximum permitted number of cipher blocks per data unit in XTS mode.

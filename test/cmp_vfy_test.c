@@ -124,11 +124,15 @@ static int test_verify_popo_bad(void)
 }
 #endif
 
+/* indirectly checks also OSSL_CMP_validate_msg() */
 static int execute_validate_msg_test(CMP_VFY_TEST_FIXTURE *fixture)
 {
-    return TEST_int_eq(fixture->expected,
-                       ossl_cmp_msg_check_update(fixture->cmp_ctx, fixture->msg,
-                                                 NULL, 0));
+    int res = TEST_int_eq(fixture->expected,
+                          ossl_cmp_msg_check_update(fixture->cmp_ctx,
+                                                    fixture->msg, NULL, 0));
+    X509 *validated = OSSL_CMP_CTX_get0_validatedSrvCert(fixture->cmp_ctx);
+
+    return res && (!fixture->expected || TEST_ptr_eq(validated, fixture->cert));
 }
 
 static int execute_validate_cert_path_test(CMP_VFY_TEST_FIXTURE *fixture)
@@ -151,6 +155,7 @@ static int test_validate_msg_mac_alg_protection(void)
     };
 
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    fixture->cert = NULL;
 
     fixture->expected = 1;
     if (!TEST_true(OSSL_CMP_CTX_set1_secretValue(fixture->cmp_ctx, sec_1,
@@ -172,6 +177,7 @@ static int test_validate_msg_mac_alg_protection_bad(void)
     };
 
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    fixture->cert = NULL;
     fixture->expected = 0;
 
     if (!TEST_true(OSSL_CMP_CTX_set1_secretValue(fixture->cmp_ctx, sec_bad,
@@ -201,6 +207,7 @@ static int test_validate_msg_signature_partial_chain(int expired)
     X509_STORE *ts;
 
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    fixture->cert = srvcert;
 
     ts = OSSL_CMP_CTX_get0_trusted(fixture->cmp_ctx);
     fixture->expected = !expired;
@@ -247,6 +254,7 @@ static int test_validate_msg_signature_srvcert_wrong(void)
 static int test_validate_msg_signature_srvcert(int bad_sig)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    fixture->cert = srvcert;
     fixture->expected = !bad_sig;
     if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
         || !TEST_true(OSSL_CMP_CTX_set1_srvCert(fixture->cmp_ctx, srvcert))
@@ -273,6 +281,7 @@ static int test_validate_msg_signature_sender_cert_srvcert(void)
 static int test_validate_msg_signature_sender_cert_untrusted(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    fixture->cert = insta_cert;
     fixture->expected = 1;
     if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_0_extracerts, libctx))
             || !add_trusted(fixture->cmp_ctx, instaca_cert)
@@ -287,6 +296,7 @@ static int test_validate_msg_signature_sender_cert_untrusted(void)
 static int test_validate_msg_signature_sender_cert_trusted(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    fixture->cert = insta_cert;
     fixture->expected = 1;
     if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_0_extracerts, libctx))
             || !add_trusted(fixture->cmp_ctx, instaca_cert)
@@ -307,6 +317,7 @@ static int test_validate_msg_signature_sender_cert_extracert(void)
         tear_down(fixture);
         fixture = NULL;
     }
+    fixture->cert = sk_X509_value(fixture->msg->extraCerts, 1); /* Insta CA */
     EXECUTE_TEST(execute_validate_msg_test, tear_down);
     return result;
 }
@@ -329,6 +340,7 @@ static int test_validate_msg_signature_sender_cert_absent(void)
 static int test_validate_with_sender(const X509_NAME *name, int expected)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    fixture->cert = srvcert;
     fixture->expected = expected;
     if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
         || !TEST_true(OSSL_CMP_CTX_set1_expected_sender(fixture->cmp_ctx, name))

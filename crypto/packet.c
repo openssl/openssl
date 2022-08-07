@@ -207,7 +207,7 @@ int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
 }
 
 /* Store the |value| of length |len| at location |data| */
-static int put_value(unsigned char *data, size_t value, size_t len)
+static int put_value(unsigned char *data, uint64_t value, size_t len)
 {
     if (data == NULL)
         return 1;
@@ -396,12 +396,12 @@ int WPACKET_start_sub_packet(WPACKET *pkt)
     return WPACKET_start_sub_packet_len__(pkt, 0);
 }
 
-int WPACKET_put_bytes__(WPACKET *pkt, unsigned int val, size_t size)
+int WPACKET_put_bytes__(WPACKET *pkt, uint64_t val, size_t size)
 {
     unsigned char *data;
 
     /* Internal API, so should not fail */
-    if (!ossl_assert(size <= sizeof(unsigned int))
+    if (!ossl_assert(size <= sizeof(uint64_t))
             || !WPACKET_allocate_bytes(pkt, size, &data)
             || !put_value(data, val, size))
         return 0;

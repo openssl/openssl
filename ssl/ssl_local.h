@@ -338,45 +338,47 @@
 # define SSL3_CK_CIPHERSUITE_FLAG                0x03000000
 
 /* Check if an SSL structure is using DTLS */
-# define SSL_IS_DTLS(s)  (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
+# define SSL_CONNECTION_IS_DTLS(s) \
+    (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
 
 /* Check if we are using TLSv1.3 */
-# define SSL_IS_TLS13(s) (!SSL_IS_DTLS(s) \
-                          && (s)->method->version >= TLS1_3_VERSION \
-                          && (s)->method->version != TLS_ANY_VERSION)
+# define SSL_CONNECTION_IS_TLS13(s) (!SSL_CONNECTION_IS_DTLS(s) \
+    && SSL_CONNECTION_GET_SSL(s)->method->version >= TLS1_3_VERSION \
+    && SSL_CONNECTION_GET_SSL(s)->method->version != TLS_ANY_VERSION)
 
-# define SSL_TREAT_AS_TLS13(s) \
-    (SSL_IS_TLS13(s) || (s)->early_data_state == SSL_EARLY_DATA_CONNECTING \
+# define SSL_CONNECTION_TREAT_AS_TLS13(s) \
+    (SSL_CONNECTION_IS_TLS13(s) \
+     || (s)->early_data_state == SSL_EARLY_DATA_CONNECTING \
      || (s)->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY \
      || (s)->early_data_state == SSL_EARLY_DATA_WRITING \
      || (s)->early_data_state == SSL_EARLY_DATA_WRITE_RETRY \
      || (s)->hello_retry_request == SSL_HRR_PENDING)
 
-# define SSL_IS_FIRST_HANDSHAKE(S) ((s)->s3.tmp.finish_md_len == 0 \
+# define SSL_IS_FIRST_HANDSHAKE(s) ((s)->s3.tmp.finish_md_len == 0 \
                                     || (s)->s3.tmp.peer_finish_md_len == 0)
 
 /* See if we need explicit IV */
 # define SSL_USE_EXPLICIT_IV(s)  \
-                (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_EXPLICIT_IV)
+    (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_EXPLICIT_IV)
 /*
  * See if we use signature algorithms extension and signature algorithm
  * before signatures.
  */
 # define SSL_USE_SIGALGS(s)      \
-                        (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SIGALGS)
+    (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SIGALGS)
 /*
  * Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2: may
  * apply to others in future.
  */
 # define SSL_USE_TLS1_2_CIPHERS(s)       \
-                (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
+    (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
 /*
  * Determine if a client can use TLS 1.2 ciphersuites: can't rely on method
  * flags because it may not be set to correct version yet.
  */
 # define SSL_CLIENT_USE_TLS1_2_CIPHERS(s)        \
-    ((!SSL_IS_DTLS(s) && s->client_version >= TLS1_2_VERSION) || \
-     (SSL_IS_DTLS(s) && DTLS_VERSION_GE(s->client_version, DTLS1_2_VERSION)))
+    ((!SSL_CONNECTION_IS_DTLS(s) && s->client_version >= TLS1_2_VERSION) || \
+     (SSL_CONNECTION_IS_DTLS(s) && DTLS_VERSION_GE(s->client_version, DTLS1_2_VERSION)))
 /*
  * Determine if a client should send signature algorithms extension:
  * as with TLS1.2 cipher we can't rely on method flags.
@@ -487,9 +489,12 @@ struct ssl_method_st {
     int version;
     unsigned flags;
     unsigned long mask;
-    int (*ssl_new) (SSL *s);
-    int (*ssl_clear) (SSL *s);
+    SSL *(*ssl_new) (SSL_CTX *ctx);
     void (*ssl_free) (SSL *s);
+    int (*ssl_reset) (SSL *s);
+    int (*ssl_init) (SSL *s);
+    int (*ssl_clear) (SSL *s);
+    void (*ssl_deinit) (SSL *s);
     int (*ssl_accept) (SSL *s);
     int (*ssl_connect) (SSL *s);
     int (*ssl_read) (SSL *s, void *buf, size_t len, size_t *readbytes);
@@ -1209,14 +1214,32 @@ struct ssl_ctx_st {
 
 typedef struct cert_pkey_st CERT_PKEY;
 
+#define SSL_TYPE_SSL_CONNECTION  0
+#define SSL_TYPE_QUIC_CONNECTION 1
+#define SSL_TYPE_QUIC_STREAM     2
+
 struct ssl_st {
+    int type;
+    SSL_CTX *ctx;
+    const SSL_METHOD *method;
+    CRYPTO_REF_COUNT references;
+    CRYPTO_RWLOCK *lock;
+    /* extra application data */
+    CRYPTO_EX_DATA ex_data;
+};
+
+struct ssl_connection_st {
+    /* type identifier and common data */
+    struct ssl_st ssl;
+#ifndef OPENSSL_NO_QUIC
+    /* pointer to parent SSL of QUIC_CONNECTION or self */
+    struct ssl_st *user_ssl;
+#endif
     /*
      * protocol version (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION,
      * DTLS1_VERSION)
      */
     int version;
-    /* SSLv3 */
-    const SSL_METHOD *method;
     /*
      * There are 2 BIO's even though they are normally both the same.  This
      * is so data can be read and written to different handlers
@@ -1535,12 +1558,9 @@ struct ssl_st {
     SSL_psk_find_session_cb_func psk_find_session_cb;
     SSL_psk_use_session_cb_func psk_use_session_cb;
 
-    SSL_CTX *ctx;
     /* Verified chain of peer */
     STACK_OF(X509) *verified_chain;
     long verify_result;
-    /* extra application data */
-    CRYPTO_EX_DATA ex_data;
     /*
      * What we put in certificate_authorities extension for TLS 1.3
      * (ClientHello and CertificateRequest) or just client cert requests for
@@ -1549,7 +1569,6 @@ struct ssl_st {
      */
     STACK_OF(X509_NAME) *ca_names;
     STACK_OF(X509_NAME) *client_ca_names;
-    CRYPTO_REF_COUNT references;
     /* protocol behaviour */
     uint64_t options;
     /* API behaviour */
@@ -1776,8 +1795,6 @@ struct ssl_st {
     void *record_padding_arg;
     size_t block_padding;
 
-    CRYPTO_RWLOCK *lock;
-
     /* The number of TLS1.3 tickets to automatically send */
     size_t num_tickets;
     /* The number of TLS1.3 tickets actually sent so far */
@@ -1800,6 +1817,39 @@ struct ssl_st {
     const struct sigalg_lookup_st **shared_sigalgs;
     size_t shared_sigalgslen;
 };
+
+# define SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, c) \
+    ((ssl) == NULL ? NULL                         \
+     : ((ssl)->type == SSL_TYPE_SSL_CONNECTION    \
+       ? (c SSL_CONNECTION *)(ssl)                \
+       : NULL))
+# define SSL_CONNECTION_NO_CONST
+# define SSL_CONNECTION_FROM_SSL_ONLY(ssl) \
+    SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, SSL_CONNECTION_NO_CONST)
+# define SSL_CONNECTION_FROM_CONST_SSL_ONLY(ssl) \
+    SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
+# define SSL_CONNECTION_GET_CTX(sc) ((sc)->ssl.ctx)
+# ifndef OPENSSL_NO_QUIC
+#  include "quic/quic_local.h"
+#  define SSL_CONNECTION_FROM_SSL_int(ssl, c)                      \
+    ((ssl) == NULL ? NULL                                          \
+     : ((ssl)->type == SSL_TYPE_SSL_CONNECTION                     \
+        ? (c SSL_CONNECTION *)(ssl)                                \
+        : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                 \
+           ? (c SSL_CONNECTION *)((c QUIC_CONNECTION *)(ssl))->tls \
+           : NULL)))
+#  define SSL_CONNECTION_FROM_SSL(ssl) \
+    SSL_CONNECTION_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
+#  define SSL_CONNECTION_FROM_CONST_SSL(ssl) \
+    SSL_CONNECTION_FROM_SSL_int(ssl, const)
+#  define SSL_CONNECTION_GET_SSL(sc) ((sc)->user_ssl)
+# else
+#  define SSL_CONNECTION_FROM_SSL(ssl) \
+    SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, SSL_CONNECTION_NO_CONST)
+#  define SSL_CONNECTION_FROM_CONST_SSL(ssl) \
+    SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
+#  define SSL_CONNECTION_GET_SSL(sc) (&(sc)->ssl)
+# endif
 
 /*
  * Structure containing table entry of values associated with the signature
@@ -2075,37 +2125,39 @@ typedef struct cert_st {
  * of a mess of functions, but hell, think of it as an opaque structure :-)
  */
 typedef struct ssl3_enc_method {
-    int (*enc) (SSL *, SSL3_RECORD *, size_t, int, SSL_MAC_BUF *, size_t);
-    int (*mac) (SSL *, SSL3_RECORD *, unsigned char *, int);
-    int (*setup_key_block) (SSL *);
-    int (*generate_master_secret) (SSL *, unsigned char *, unsigned char *,
-                                   size_t, size_t *);
-    int (*change_cipher_state) (SSL *, int);
-    size_t (*final_finish_mac) (SSL *, const char *, size_t, unsigned char *);
+    int (*enc) (SSL_CONNECTION *, SSL3_RECORD *, size_t, int,
+                SSL_MAC_BUF *, size_t);
+    int (*mac) (SSL_CONNECTION *, SSL3_RECORD *, unsigned char *, int);
+    int (*setup_key_block) (SSL_CONNECTION *);
+    int (*generate_master_secret) (SSL_CONNECTION *, unsigned char *,
+                                   unsigned char *, size_t, size_t *);
+    int (*change_cipher_state) (SSL_CONNECTION *, int);
+    size_t (*final_finish_mac) (SSL_CONNECTION *, const char *, size_t,
+                                unsigned char *);
     const char *client_finished_label;
     size_t client_finished_label_len;
     const char *server_finished_label;
     size_t server_finished_label_len;
     int (*alert_value) (int);
-    int (*export_keying_material) (SSL *, unsigned char *, size_t,
+    int (*export_keying_material) (SSL_CONNECTION *, unsigned char *, size_t,
                                    const char *, size_t,
                                    const unsigned char *, size_t,
                                    int use_context);
     /* Various flags indicating protocol version requirements */
     uint32_t enc_flags;
     /* Set the handshake header */
-    int (*set_handshake_header) (SSL *s, WPACKET *pkt, int type);
+    int (*set_handshake_header) (SSL_CONNECTION *s, WPACKET *pkt, int type);
     /* Close construction of the handshake message */
-    int (*close_construct_packet) (SSL *s, WPACKET *pkt, int htype);
+    int (*close_construct_packet) (SSL_CONNECTION *s, WPACKET *pkt, int htype);
     /* Write out handshake message */
-    int (*do_write) (SSL *s);
+    int (*do_write) (SSL_CONNECTION *s);
 } SSL3_ENC_METHOD;
 
 # define ssl_set_handshake_header(s, pkt, htype) \
-        s->method->ssl3_enc->set_handshake_header((s), (pkt), (htype))
+    SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->set_handshake_header((s), (pkt), (htype))
 # define ssl_close_construct_packet(s, pkt, htype) \
-        s->method->ssl3_enc->close_construct_packet((s), (pkt), (htype))
-# define ssl_do_write(s)  s->method->ssl3_enc->do_write(s)
+    SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->close_construct_packet((s), (pkt), (htype))
+# define ssl_do_write(s)  SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->do_write(s)
 
 /* Values for enc_flags */
 
@@ -2248,6 +2300,9 @@ const SSL_METHOD *func_name(void)  \
                 version, \
                 flags, \
                 mask, \
+                ossl_ssl_connection_new, \
+                ossl_ssl_connection_free, \
+                ossl_ssl_connection_reset, \
                 tls1_new, \
                 tls1_clear, \
                 tls1_free, \
@@ -2285,6 +2340,9 @@ const SSL_METHOD *func_name(void)  \
                 SSL3_VERSION, \
                 SSL_METHOD_NO_FIPS | SSL_METHOD_NO_SUITEB, \
                 SSL_OP_NO_SSLv3, \
+                ossl_ssl_connection_new, \
+                ossl_ssl_connection_free, \
+                ossl_ssl_connection_reset, \
                 ssl3_new, \
                 ssl3_clear, \
                 ssl3_free, \
@@ -2323,6 +2381,9 @@ const SSL_METHOD *func_name(void)  \
                 version, \
                 flags, \
                 mask, \
+                ossl_ssl_connection_new, \
+                ossl_ssl_connection_free, \
+                ossl_ssl_connection_reset, \
                 dtls1_new, \
                 dtls1_clear, \
                 dtls1_free, \
@@ -2354,14 +2415,14 @@ const SSL_METHOD *func_name(void)  \
         }
 
 struct openssl_ssl_test_functions {
-    int (*p_ssl_init_wbio_buffer) (SSL *s);
-    int (*p_ssl3_setup_buffers) (SSL *s);
+    int (*p_ssl_init_wbio_buffer) (SSL_CONNECTION *s);
+    int (*p_ssl3_setup_buffers) (SSL_CONNECTION *s);
 };
 
 const char *ssl_protocol_to_string(int version);
 
 /* Returns true if certificate and private key for 'idx' are present */
-static ossl_inline int ssl_has_cert(const SSL *s, int idx)
+static ossl_inline int ssl_has_cert(const SSL_CONNECTION *s, int idx)
 {
     if (idx < 0 || idx >= SSL_PKEY_NUM)
         return 0;
@@ -2369,7 +2430,8 @@ static ossl_inline int ssl_has_cert(const SSL *s, int idx)
         && s->cert->pkeys[idx].privatekey != NULL;
 }
 
-static ossl_inline void tls1_get_peer_groups(SSL *s, const uint16_t **pgroups,
+static ossl_inline void tls1_get_peer_groups(SSL_CONNECTION *s,
+                                             const uint16_t **pgroups,
                                              size_t *pgroupslen)
 {
     *pgroups = s->ext.peer_supportedgroups;
@@ -2378,19 +2440,25 @@ static ossl_inline void tls1_get_peer_groups(SSL *s, const uint16_t **pgroups,
 
 # ifndef OPENSSL_UNIT_TEST
 
+__owur int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, int type);
+__owur SSL *ossl_ssl_connection_new(SSL_CTX *ctx);
+void ossl_ssl_connection_free(SSL *ssl);
+__owur int ossl_ssl_connection_reset(SSL *ssl);
+
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
 __owur int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written);
-void ssl_clear_cipher_ctx(SSL *s);
-int ssl_clear_bad_session(SSL *s);
+void ssl_clear_cipher_ctx(SSL_CONNECTION *s);
+int ssl_clear_bad_session(SSL_CONNECTION *s);
 __owur CERT *ssl_cert_new(void);
 __owur CERT *ssl_cert_dup(CERT *cert);
 void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
-__owur int ssl_generate_session_id(SSL *s, SSL_SESSION *ss);
-__owur int ssl_get_new_session(SSL *s, int session);
-__owur SSL_SESSION *lookup_sess_in_cache(SSL *s, const unsigned char *sess_id,
+__owur int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss);
+__owur int ssl_get_new_session(SSL_CONNECTION *s, int session);
+__owur SSL_SESSION *lookup_sess_in_cache(SSL_CONNECTION *s,
+                                         const unsigned char *sess_id,
                                          size_t sess_id_len);
-__owur int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello);
+__owur int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello);
 __owur SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket);
 __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
@@ -2402,12 +2470,13 @@ __owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
                                                     STACK_OF(SSL_CIPHER) **cipher_list_by_id,
                                                     const char *rule_str,
                                                     CERT *c);
-__owur int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format);
-__owur int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
-                                STACK_OF(SSL_CIPHER) **skp,
-                                STACK_OF(SSL_CIPHER) **scsvs, int sslv2format,
-                                int fatal);
-void ssl_update_cache(SSL *s, int mode);
+__owur int ssl_cache_cipherlist(SSL_CONNECTION *s, PACKET *cipher_suites,
+                                int sslv2format);
+__owur int ossl_bytes_to_cipher_list(SSL_CONNECTION *s, PACKET *cipher_suites,
+                                     STACK_OF(SSL_CIPHER) **skp,
+                                     STACK_OF(SSL_CIPHER) **scsvs, int sslv2format,
+                                     int fatal);
+void ssl_update_cache(SSL_CONNECTION *s, int mode);
 __owur int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                                      const EVP_CIPHER **enc);
 __owur int ssl_cipher_get_evp(SSL_CTX *ctxc, const SSL_SESSION *s,
@@ -2418,24 +2487,27 @@ __owur int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
                                    size_t *int_overhead, size_t *blocksize,
                                    size_t *ext_overhead);
 __owur int ssl_cert_is_disabled(SSL_CTX *ctx, size_t idx);
-__owur const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl,
+__owur const SSL_CIPHER *ssl_get_cipher_by_char(SSL_CONNECTION *ssl,
                                                 const unsigned char *ptr,
                                                 int all);
-__owur int ssl_cert_set0_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain);
-__owur int ssl_cert_set1_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain);
-__owur int ssl_cert_add0_chain_cert(SSL *s, SSL_CTX *ctx, X509 *x);
-__owur int ssl_cert_add1_chain_cert(SSL *s, SSL_CTX *ctx, X509 *x);
+__owur int ssl_cert_set0_chain(SSL_CONNECTION *s, SSL_CTX *ctx,
+                               STACK_OF(X509) *chain);
+__owur int ssl_cert_set1_chain(SSL_CONNECTION *s, SSL_CTX *ctx,
+                               STACK_OF(X509) *chain);
+__owur int ssl_cert_add0_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x);
+__owur int ssl_cert_add1_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x);
 __owur int ssl_cert_select_current(CERT *c, X509 *x);
 __owur int ssl_cert_set_current(CERT *c, long arg);
 void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg);
 
-__owur int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk);
-__owur int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags);
+__owur int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk);
+__owur int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
                                    int ref);
 __owur int ssl_cert_get_cert_store(CERT *c, X509_STORE **pstore, int chain);
 
-__owur int ssl_security(const SSL *s, int op, int bits, int nid, void *other);
+__owur int ssl_security(const SSL_CONNECTION *s, int op, int bits, int nid,
+                        void *other);
 __owur int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid,
                             void *other);
 int ssl_get_security_level_bits(const SSL *s, const SSL_CTX *ctx, int *levelp);
@@ -2448,51 +2520,52 @@ __owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx);
 int ssl_undefined_function(SSL *s);
 __owur int ssl_undefined_void_function(void);
 __owur int ssl_undefined_const_function(const SSL *s);
-__owur int ssl_get_server_cert_serverinfo(SSL *s,
+__owur int ssl_get_server_cert_serverinfo(SSL_CONNECTION *s,
                                           const unsigned char **serverinfo,
                                           size_t *serverinfo_length);
-void ssl_set_masks(SSL *s);
-__owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
+void ssl_set_masks(SSL_CONNECTION *s);
+__owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL_CONNECTION *sc);
 __owur int ssl_x509err2alert(int type);
 void ssl_sort_cipher_list(void);
 int ssl_load_ciphers(SSL_CTX *ctx);
 __owur int ssl_setup_sig_algs(SSL_CTX *ctx);
 int ssl_load_groups(SSL_CTX *ctx);
-__owur int ssl_fill_hello_random(SSL *s, int server, unsigned char *field,
-                                 size_t len, DOWNGRADE dgrd);
-__owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
-                                      int free_pms);
-__owur EVP_PKEY *ssl_generate_pkey(SSL *s, EVP_PKEY *pm);
-__owur int ssl_gensecret(SSL *s, unsigned char *pms, size_t pmslen);
-__owur int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey,
+__owur int ssl_fill_hello_random(SSL_CONNECTION *s, int server,
+                                 unsigned char *field, size_t len,
+                                 DOWNGRADE dgrd);
+__owur int ssl_generate_master_secret(SSL_CONNECTION *s, unsigned char *pms,
+                                      size_t pmslen, int free_pms);
+__owur EVP_PKEY *ssl_generate_pkey(SSL_CONNECTION *s, EVP_PKEY *pm);
+__owur int ssl_gensecret(SSL_CONNECTION *s, unsigned char *pms, size_t pmslen);
+__owur int ssl_derive(SSL_CONNECTION *s, EVP_PKEY *privkey, EVP_PKEY *pubkey,
                       int genmaster);
-__owur int ssl_decapsulate(SSL *s, EVP_PKEY *privkey,
+__owur int ssl_decapsulate(SSL_CONNECTION *s, EVP_PKEY *privkey,
                            const unsigned char *ct, size_t ctlen,
                            int gensecret);
-__owur int ssl_encapsulate(SSL *s, EVP_PKEY *pubkey,
+__owur int ssl_encapsulate(SSL_CONNECTION *s, EVP_PKEY *pubkey,
                            unsigned char **ctp, size_t *ctlenp,
                            int gensecret);
 __owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);
 __owur int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
                                    void *key);
-__owur unsigned int ssl_get_max_send_fragment(const SSL *ssl);
-__owur unsigned int ssl_get_split_send_fragment(const SSL *ssl);
+__owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc);
+__owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc);
 
 __owur const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 __owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt,
                                    size_t *len);
-int ssl3_init_finished_mac(SSL *s);
-__owur int ssl3_setup_key_block(SSL *s);
-__owur int ssl3_change_cipher_state(SSL *s, int which);
-void ssl3_cleanup_key_block(SSL *s);
-__owur int ssl3_do_write(SSL *s, int type);
-int ssl3_send_alert(SSL *s, int level, int desc);
-__owur int ssl3_generate_master_secret(SSL *s, unsigned char *out,
+int ssl3_init_finished_mac(SSL_CONNECTION *s);
+__owur int ssl3_setup_key_block(SSL_CONNECTION *s);
+__owur int ssl3_change_cipher_state(SSL_CONNECTION *s, int which);
+void ssl3_cleanup_key_block(SSL_CONNECTION *s);
+__owur int ssl3_do_write(SSL_CONNECTION *s, int type);
+int ssl3_send_alert(SSL_CONNECTION *s, int level, int desc);
+__owur int ssl3_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
                                        unsigned char *p, size_t len,
                                        size_t *secret_size);
-__owur int ssl3_get_req_cert_type(SSL *s, WPACKET *pkt);
+__owur int ssl3_get_req_cert_type(SSL_CONNECTION *s, WPACKET *pkt);
 __owur int ssl3_num_ciphers(void);
 __owur const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 int ssl3_renegotiate(SSL *ssl);
@@ -2500,16 +2573,17 @@ int ssl3_renegotiate_check(SSL *ssl, int initok);
 void ssl3_digest_master_key_set_params(const SSL_SESSION *session,
                                        OSSL_PARAM params[]);
 __owur int ssl3_dispatch_alert(SSL *s);
-__owur size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t slen,
-                                    unsigned char *p);
-__owur int ssl3_finish_mac(SSL *s, const unsigned char *buf, size_t len);
-void ssl3_free_digest_list(SSL *s);
-__owur unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt,
+__owur size_t ssl3_final_finish_mac(SSL_CONNECTION *s, const char *sender,
+                                    size_t slen, unsigned char *p);
+__owur int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf,
+                           size_t len);
+void ssl3_free_digest_list(SSL_CONNECTION *s);
+__owur unsigned long ssl3_output_cert_chain(SSL_CONNECTION *s, WPACKET *pkt,
                                             CERT_PKEY *cpk);
-__owur const SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,
+__owur const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s,
                                             STACK_OF(SSL_CIPHER) *clnt,
                                             STACK_OF(SSL_CIPHER) *srvr);
-__owur int ssl3_digest_cached_records(SSL *s, int keep);
+__owur int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep);
 __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
 __owur int ssl3_read(SSL *s, void *buf, size_t len, size_t *readbytes);
@@ -2522,34 +2596,35 @@ __owur long ssl3_ctx_ctrl(SSL_CTX *s, int cmd, long larg, void *parg);
 __owur long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
 __owur long ssl3_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp) (void));
 
-__owur int ssl3_do_change_cipher_spec(SSL *ssl);
+__owur int ssl3_do_change_cipher_spec(SSL_CONNECTION *s);
 __owur long ssl3_default_timeout(void);
 
-__owur int ssl3_set_handshake_header(SSL *s, WPACKET *pkt, int htype);
-__owur int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype);
-__owur int tls_setup_handshake(SSL *s);
-__owur int dtls1_set_handshake_header(SSL *s, WPACKET *pkt, int htype);
-__owur int dtls1_close_construct_packet(SSL *s, WPACKET *pkt, int htype);
-__owur int ssl3_handshake_write(SSL *s);
+__owur int ssl3_set_handshake_header(SSL_CONNECTION *s, WPACKET *pkt,
+                                     int htype);
+__owur int tls_close_construct_packet(SSL_CONNECTION *s, WPACKET *pkt, int htype);
+__owur int tls_setup_handshake(SSL_CONNECTION *s);
+__owur int dtls1_set_handshake_header(SSL_CONNECTION *s, WPACKET *pkt, int htype);
+__owur int dtls1_close_construct_packet(SSL_CONNECTION *s, WPACKET *pkt, int htype);
+__owur int ssl3_handshake_write(SSL_CONNECTION *s);
 
-__owur int ssl_allow_compression(SSL *s);
+__owur int ssl_allow_compression(SSL_CONNECTION *s);
 
-__owur int ssl_version_supported(const SSL *s, int version,
+__owur int ssl_version_supported(const SSL_CONNECTION *s, int version,
                                  const SSL_METHOD **meth);
 
-__owur int ssl_set_client_hello_version(SSL *s);
-__owur int ssl_check_version_downgrade(SSL *s);
+__owur int ssl_set_client_hello_version(SSL_CONNECTION *s);
+__owur int ssl_check_version_downgrade(SSL_CONNECTION *s);
 __owur int ssl_set_version_bound(int method_version, int version, int *bound);
-__owur int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello,
+__owur int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
                                      DOWNGRADE *dgrd);
-__owur int ssl_choose_client_version(SSL *s, int version,
+__owur int ssl_choose_client_version(SSL_CONNECTION *s, int version,
                                      RAW_EXTENSION *extensions);
-__owur int ssl_get_min_max_version(const SSL *s, int *min_version,
+__owur int ssl_get_min_max_version(const SSL_CONNECTION *s, int *min_version,
                                    int *max_version, int *real_max);
 
 __owur long tls1_default_timeout(void);
-__owur int dtls1_do_write(SSL *s, int type);
-void dtls1_set_message_header(SSL *s,
+__owur int dtls1_do_write(SSL_CONNECTION *s, int type);
+void dtls1_set_message_header(SSL_CONNECTION *s,
                               unsigned char mt,
                               size_t len,
                               size_t frag_off, size_t frag_len);
@@ -2557,27 +2632,29 @@ void dtls1_set_message_header(SSL *s,
 int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
                                size_t *written);
 
-__owur int dtls1_read_failed(SSL *s, int code);
-__owur int dtls1_buffer_message(SSL *s, int ccs);
-__owur int dtls1_retransmit_message(SSL *s, unsigned short seq, int *found);
+__owur int dtls1_read_failed(SSL_CONNECTION *s, int code);
+__owur int dtls1_buffer_message(SSL_CONNECTION *s, int ccs);
+__owur int dtls1_retransmit_message(SSL_CONNECTION *s, unsigned short seq,
+                                    int *found);
 __owur int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
-int dtls1_retransmit_buffered_messages(SSL *s);
-void dtls1_clear_received_buffer(SSL *s);
-void dtls1_clear_sent_buffer(SSL *s);
+int dtls1_retransmit_buffered_messages(SSL_CONNECTION *s);
+void dtls1_clear_received_buffer(SSL_CONNECTION *s);
+void dtls1_clear_sent_buffer(SSL_CONNECTION *s);
 void dtls1_get_message_header(unsigned char *data,
                               struct hm_header_st *msg_hdr);
 __owur long dtls1_default_timeout(void);
-__owur struct timeval *dtls1_get_timeout(SSL *s, struct timeval *timeleft);
-__owur int dtls1_check_timeout_num(SSL *s);
-__owur int dtls1_handle_timeout(SSL *s);
-void dtls1_start_timer(SSL *s);
-void dtls1_stop_timer(SSL *s);
-__owur int dtls1_is_timer_expired(SSL *s);
+__owur struct timeval *dtls1_get_timeout(SSL_CONNECTION *s,
+                                         struct timeval *timeleft);
+__owur int dtls1_check_timeout_num(SSL_CONNECTION *s);
+__owur int dtls1_handle_timeout(SSL_CONNECTION *s);
+void dtls1_start_timer(SSL_CONNECTION *s);
+void dtls1_stop_timer(SSL_CONNECTION *s);
+__owur int dtls1_is_timer_expired(SSL_CONNECTION *s);
 __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
                                          size_t cookie_len);
-__owur size_t dtls1_min_mtu(SSL *s);
+__owur size_t dtls1_min_mtu(SSL_CONNECTION *s);
 void dtls1_hm_fragment_free(hm_fragment *frag);
-__owur int dtls1_query_mtu(SSL *s);
+__owur int dtls1_query_mtu(SSL_CONNECTION *s);
 
 __owur int tls1_new(SSL *s);
 void tls1_free(SSL *s);
@@ -2591,64 +2668,66 @@ __owur int dtls1_shutdown(SSL *s);
 
 __owur int dtls1_dispatch_alert(SSL *s);
 
-__owur int ssl_init_wbio_buffer(SSL *s);
-int ssl_free_wbio_buffer(SSL *s);
+__owur int ssl_init_wbio_buffer(SSL_CONNECTION *s);
+int ssl_free_wbio_buffer(SSL_CONNECTION *s);
 
-__owur int tls1_change_cipher_state(SSL *s, int which);
-__owur int tls1_setup_key_block(SSL *s);
-__owur size_t tls1_final_finish_mac(SSL *s, const char *str, size_t slen,
-                                    unsigned char *p);
-__owur int tls1_generate_master_secret(SSL *s, unsigned char *out,
+__owur int tls1_change_cipher_state(SSL_CONNECTION *s, int which);
+__owur int tls1_setup_key_block(SSL_CONNECTION *s);
+__owur size_t tls1_final_finish_mac(SSL_CONNECTION *s, const char *str,
+                                    size_t slen, unsigned char *p);
+__owur int tls1_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
                                        unsigned char *p, size_t len,
                                        size_t *secret_size);
-__owur int tls13_setup_key_block(SSL *s);
-__owur size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
+__owur int tls13_setup_key_block(SSL_CONNECTION *s);
+__owur size_t tls13_final_finish_mac(SSL_CONNECTION *s, const char *str, size_t slen,
                                      unsigned char *p);
-__owur int tls13_change_cipher_state(SSL *s, int which);
-__owur int tls13_update_key(SSL *s, int send);
-__owur int tls13_hkdf_expand(SSL *s, const EVP_MD *md,
+__owur int tls13_change_cipher_state(SSL_CONNECTION *s, int which);
+__owur int tls13_update_key(SSL_CONNECTION *s, int send);
+__owur int tls13_hkdf_expand(SSL_CONNECTION *s, const EVP_MD *md,
                              const unsigned char *secret,
                              const unsigned char *label, size_t labellen,
                              const unsigned char *data, size_t datalen,
                              unsigned char *out, size_t outlen, int fatal);
-__owur int tls13_derive_key(SSL *s, const EVP_MD *md,
+__owur int tls13_derive_key(SSL_CONNECTION *s, const EVP_MD *md,
                             const unsigned char *secret, unsigned char *key,
                             size_t keylen);
-__owur int tls13_derive_iv(SSL *s, const EVP_MD *md,
+__owur int tls13_derive_iv(SSL_CONNECTION *s, const EVP_MD *md,
                            const unsigned char *secret, unsigned char *iv,
                            size_t ivlen);
-__owur int tls13_derive_finishedkey(SSL *s, const EVP_MD *md,
+__owur int tls13_derive_finishedkey(SSL_CONNECTION *s, const EVP_MD *md,
                                     const unsigned char *secret,
                                     unsigned char *fin, size_t finlen);
-int tls13_generate_secret(SSL *s, const EVP_MD *md,
+int tls13_generate_secret(SSL_CONNECTION *s, const EVP_MD *md,
                           const unsigned char *prevsecret,
                           const unsigned char *insecret,
                           size_t insecretlen,
                           unsigned char *outsecret);
-__owur int tls13_generate_handshake_secret(SSL *s,
+__owur int tls13_generate_handshake_secret(SSL_CONNECTION *s,
                                            const unsigned char *insecret,
                                            size_t insecretlen);
-__owur int tls13_generate_master_secret(SSL *s, unsigned char *out,
+__owur int tls13_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
                                         unsigned char *prev, size_t prevlen,
                                         size_t *secret_size);
-__owur int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
+__owur int tls1_export_keying_material(SSL_CONNECTION *s,
+                                       unsigned char *out, size_t olen,
                                        const char *label, size_t llen,
                                        const unsigned char *p, size_t plen,
                                        int use_context);
-__owur int tls13_export_keying_material(SSL *s, unsigned char *out, size_t olen,
+__owur int tls13_export_keying_material(SSL_CONNECTION *s,
+                                        unsigned char *out, size_t olen,
                                         const char *label, size_t llen,
                                         const unsigned char *context,
                                         size_t contextlen, int use_context);
-__owur int tls13_export_keying_material_early(SSL *s, unsigned char *out,
-                                              size_t olen, const char *label,
-                                              size_t llen,
+__owur int tls13_export_keying_material_early(SSL_CONNECTION *s,
+                                              unsigned char *out, size_t olen,
+                                              const char *label, size_t llen,
                                               const unsigned char *context,
                                               size_t contextlen);
 __owur int tls1_alert_code(int code);
 __owur int tls13_alert_code(int code);
 __owur int ssl3_alert_code(int code);
 
-__owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
+__owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CONNECTION *s);
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
@@ -2657,80 +2736,87 @@ __owur uint16_t ssl_group_id_tls13_to_internal(uint16_t curve_id);
 __owur const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t curve_id);
 __owur int tls1_group_id2nid(uint16_t group_id, int include_unknown);
 __owur uint16_t tls1_nid2group_id(int nid);
-__owur int tls1_check_group_id(SSL *s, uint16_t group_id, int check_own_curves);
-__owur uint16_t tls1_shared_group(SSL *s, int nmatch);
+__owur int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
+                               int check_own_curves);
+__owur uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch);
 __owur int tls1_set_groups(uint16_t **pext, size_t *pextlen,
                            int *curves, size_t ncurves);
 __owur int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
                                 const char *str);
-__owur EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id);
-__owur int tls_valid_group(SSL *s, uint16_t group_id, int minversion,
+__owur EVP_PKEY *ssl_generate_pkey_group(SSL_CONNECTION *s, uint16_t id);
+__owur int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id, int minversion,
                            int maxversion, int isec, int *okfortls13);
-__owur EVP_PKEY *ssl_generate_param_group(SSL *s, uint16_t id);
-void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
+__owur EVP_PKEY *ssl_generate_param_group(SSL_CONNECTION *s, uint16_t id);
+void tls1_get_formatlist(SSL_CONNECTION *s, const unsigned char **pformats,
                          size_t *num_formats);
-__owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
+__owur int tls1_check_ec_tmp_key(SSL_CONNECTION *s, unsigned long id);
 
-__owur int tls_group_allowed(SSL *s, uint16_t curve, int op);
-void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
+__owur int tls_group_allowed(SSL_CONNECTION *s, uint16_t curve, int op);
+void tls1_get_supported_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
                                size_t *pgroupslen);
 
-__owur int tls1_set_server_sigalgs(SSL *s);
+__owur int tls1_set_server_sigalgs(SSL_CONNECTION *s);
 
-__owur SSL_TICKET_STATUS tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
+__owur SSL_TICKET_STATUS tls_get_ticket_from_client(SSL_CONNECTION *s,
+                                                    CLIENTHELLO_MSG *hello,
                                                     SSL_SESSION **ret);
-__owur SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
+__owur SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
+                                            const unsigned char *etick,
                                             size_t eticklen,
                                             const unsigned char *sess_id,
                                             size_t sesslen, SSL_SESSION **psess);
 
-__owur int tls_use_ticket(SSL *s);
+__owur int tls_use_ticket(SSL_CONNECTION *s);
 
-void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op);
+void ssl_set_sig_mask(uint32_t *pmask_a, SSL_CONNECTION *s, int op);
 
 __owur int tls1_set_sigalgs_list(CERT *c, const char *str, int client);
 __owur int tls1_set_raw_sigalgs(CERT *c, const uint16_t *psigs, size_t salglen,
                                 int client);
 __owur int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen,
                             int client);
-int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
-                     int idx);
-void tls1_set_cert_validity(SSL *s);
+int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
+                     STACK_OF(X509) *chain, int idx);
+void tls1_set_cert_validity(SSL_CONNECTION *s);
 
 #  ifndef OPENSSL_NO_CT
-__owur int ssl_validate_ct(SSL *s);
+__owur int ssl_validate_ct(SSL_CONNECTION *s);
 #  endif
 
-__owur EVP_PKEY *ssl_get_auto_dh(SSL *s);
+__owur EVP_PKEY *ssl_get_auto_dh(SSL_CONNECTION *s);
 
-__owur int ssl_security_cert(SSL *s, SSL_CTX *ctx, X509 *x, int vfy, int is_ee);
-__owur int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *ex,
-                                   int vfy);
+__owur int ssl_security_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x, int vfy,
+                             int is_ee);
+__owur int ssl_security_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk,
+                                   X509 *ex, int vfy);
 
-int tls_choose_sigalg(SSL *s, int fatalerrs);
+int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs);
 
 __owur EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
-__owur long ssl_get_algorithm2(SSL *s);
-__owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
+__owur long ssl_get_algorithm2(SSL_CONNECTION *s);
+__owur int tls12_copy_sigalgs(SSL_CONNECTION *s, WPACKET *pkt,
                               const uint16_t *psig, size_t psiglen);
 __owur int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen);
-__owur int tls1_save_sigalgs(SSL *s, PACKET *pkt, int cert);
-__owur int tls1_process_sigalgs(SSL *s);
-__owur int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey);
+__owur int tls1_save_sigalgs(SSL_CONNECTION *s, PACKET *pkt, int cert);
+__owur int tls1_process_sigalgs(SSL_CONNECTION *s);
+__owur int tls1_set_peer_legacy_sigalg(SSL_CONNECTION *s, const EVP_PKEY *pkey);
 __owur int tls1_lookup_md(SSL_CTX *ctx, const SIGALG_LOOKUP *lu,
                           const EVP_MD **pmd);
-__owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs);
-__owur int tls_check_sigalg_curve(const SSL *s, int curve);
-__owur int tls12_check_peer_sigalg(SSL *s, uint16_t, EVP_PKEY *pkey);
-__owur int ssl_set_client_disabled(SSL *s);
-__owur int ssl_cipher_disabled(const SSL *s, const SSL_CIPHER *c, int op, int echde);
+__owur size_t tls12_get_psigalgs(SSL_CONNECTION *s, int sent,
+                                 const uint16_t **psigs);
+__owur int tls_check_sigalg_curve(const SSL_CONNECTION *s, int curve);
+__owur int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t, EVP_PKEY *pkey);
+__owur int ssl_set_client_disabled(SSL_CONNECTION *s);
+__owur int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
+                               int op, int echde);
 
-__owur int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
-                                 size_t *hashlen);
+__owur int ssl_handshake_hash(SSL_CONNECTION *s,
+                              unsigned char *out, size_t outlen,
+                              size_t *hashlen);
 __owur const EVP_MD *ssl_md(SSL_CTX *ctx, int idx);
-__owur const EVP_MD *ssl_handshake_md(SSL *s);
-__owur const EVP_MD *ssl_prf_md(SSL *s);
+__owur const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s);
+__owur const EVP_MD *ssl_prf_md(SSL_CONNECTION *s);
 
 /*
  * ssl_log_rsa_client_key_exchange logs |premaster| to the SSL_CTX associated
@@ -2738,7 +2824,7 @@ __owur const EVP_MD *ssl_prf_md(SSL *s);
  * failure. The entry is identified by the first 8 bytes of
  * |encrypted_premaster|.
  */
-__owur int ssl_log_rsa_client_key_exchange(SSL *ssl,
+__owur int ssl_log_rsa_client_key_exchange(SSL_CONNECTION *s,
                                            const uint8_t *encrypted_premaster,
                                            size_t encrypted_premaster_len,
                                            const uint8_t *premaster,
@@ -2749,7 +2835,7 @@ __owur int ssl_log_rsa_client_key_exchange(SSL *ssl,
  * logging is available. It returns one on success and zero on failure. It tags
  * the entry with |label|.
  */
-__owur int ssl_log_secret(SSL *ssl, const char *label,
+__owur int ssl_log_secret(SSL_CONNECTION *s, const char *label,
                           const uint8_t *secret, size_t secret_len);
 
 #define MASTER_SECRET_LABEL "CLIENT_RANDOM"
@@ -2763,9 +2849,10 @@ __owur int ssl_log_secret(SSL *ssl, const char *label,
 
 #  ifndef OPENSSL_NO_KTLS
 /* ktls.c */
-int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
+int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
                                 const EVP_CIPHER_CTX *dd);
-int ktls_configure_crypto(SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
+int ktls_configure_crypto(SSL_CONNECTION *s, const EVP_CIPHER *c,
+                          EVP_CIPHER_CTX *dd,
                           void *rl_sequence, ktls_crypto_info_t *crypto_info,
                           int is_tx, unsigned char *iv,
                           unsigned char *key, unsigned char *mac_key,
@@ -2784,13 +2871,13 @@ __owur int ssl3_cbc_digest_record(const EVP_MD *md,
                                   const unsigned char *mac_secret,
                                   size_t mac_secret_length, char is_sslv3);
 
-__owur int srp_generate_server_master_secret(SSL *s);
-__owur int srp_generate_client_master_secret(SSL *s);
-__owur int srp_verify_server_param(SSL *s);
+__owur int srp_generate_server_master_secret(SSL_CONNECTION *s);
+__owur int srp_generate_client_master_secret(SSL_CONNECTION *s);
+__owur int srp_verify_server_param(SSL_CONNECTION *s);
 
 /* statem/statem_srvr.c */
 
-__owur int send_certificate_request(SSL *s);
+__owur int send_certificate_request(SSL_CONNECTION *s);
 
 /* statem/extensions_cust.c */
 
@@ -2800,10 +2887,11 @@ custom_ext_method *custom_ext_find(const custom_ext_methods *exts,
 
 void custom_ext_init(custom_ext_methods *meths);
 
-__owur int custom_ext_parse(SSL *s, unsigned int context, unsigned int ext_type,
+__owur int custom_ext_parse(SSL_CONNECTION *s, unsigned int context,
+                            unsigned int ext_type,
                             const unsigned char *ext_data, size_t ext_size,
                             X509 *x, size_t chainidx);
-__owur int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x,
+__owur int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                           size_t chainidx, int maxversion);
 
 __owur int custom_exts_copy(custom_ext_methods *dst,
@@ -2828,14 +2916,15 @@ const EVP_MD *ssl_evp_md_fetch(OSSL_LIB_CTX *libctx,
 int ssl_evp_md_up_ref(const EVP_MD *md);
 void ssl_evp_md_free(const EVP_MD *md);
 
-int tls_provider_set_tls_params(SSL *s, EVP_CIPHER_CTX *ctx,
+int tls_provider_set_tls_params(SSL_CONNECTION *s, EVP_CIPHER_CTX *ctx,
                                 const EVP_CIPHER *ciph,
                                 const EVP_MD *md);
 
 void tls_engine_finish(ENGINE *e);
 const EVP_CIPHER *tls_get_cipher_from_engine(int nid);
 const EVP_MD *tls_get_digest_from_engine(int nid);
-int tls_engine_load_ssl_client_cert(SSL *s, X509 **px509, EVP_PKEY **ppkey);
+int tls_engine_load_ssl_client_cert(SSL_CONNECTION *s, X509 **px509,
+                                    EVP_PKEY **ppkey);
 int ssl_hmac_old_new(SSL_HMAC *ret);
 void ssl_hmac_old_free(SSL_HMAC *ctx);
 int ssl_hmac_old_init(SSL_HMAC *ctx, void *key, size_t len, char *md);
@@ -2845,13 +2934,13 @@ size_t ssl_hmac_old_size(const SSL_HMAC *ctx);
 
 int ssl_ctx_srp_ctx_free_intern(SSL_CTX *ctx);
 int ssl_ctx_srp_ctx_init_intern(SSL_CTX *ctx);
-int ssl_srp_ctx_free_intern(SSL *s);
-int ssl_srp_ctx_init_intern(SSL *s);
+int ssl_srp_ctx_free_intern(SSL_CONNECTION *s);
+int ssl_srp_ctx_init_intern(SSL_CONNECTION *s);
 
-int ssl_srp_calc_a_param_intern(SSL *s);
-int ssl_srp_server_param_with_username_intern(SSL *s, int *ad);
+int ssl_srp_calc_a_param_intern(SSL_CONNECTION *s);
+int ssl_srp_server_param_with_username_intern(SSL_CONNECTION *s, int *ad);
 
-void ssl_session_calculate_timeout(SSL_SESSION* ss);
+void ssl_session_calculate_timeout(SSL_SESSION *ss);
 
 # else /* OPENSSL_UNIT_TEST */
 
