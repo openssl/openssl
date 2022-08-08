@@ -9423,7 +9423,7 @@ static int test_sni_tls13(void)
         goto end;
     /* Require TLSv1.3 as a minimum */
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), 0, 0,
+                                       TLS_client_method(), TLS1_3_VERSION, 0,
                                        &sctx2, &cctx, cert, privkey)))
         goto end;
 
