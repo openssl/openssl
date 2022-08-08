@@ -271,6 +271,7 @@ int tls1_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs, int sending,
     assert(sending);
     if (EVP_MD_CTX_get0_md(s->write_hash)) {
         int n = EVP_MD_CTX_get_size(s->write_hash);
+
         if (!ossl_assert(n >= 0)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
