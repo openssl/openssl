@@ -431,8 +431,9 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 
         p = rl->packet;
 
-        rl->msg_callback(0, 0, SSL3_RT_HEADER, p, DTLS1_RT_HEADER_LENGTH,
-                         rl->cbarg);
+        if (rl->msg_callback != NULL)
+            rl->msg_callback(0, 0, SSL3_RT_HEADER, p, DTLS1_RT_HEADER_LENGTH,
+                            rl->cbarg);
 
         /* Pull apart the header into the DTLS1_RECORD */
         rr->type = *(p++);

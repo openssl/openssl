@@ -89,7 +89,8 @@ static int tls_allow_compression(OSSL_RECORD_LAYER *rl)
     if (rl->options & SSL_OP_NO_COMPRESSION)
         return 0;
 
-    return rl->security(rl->cbarg, SSL_SECOP_COMPRESSION, 0, 0, NULL);
+    return rl->security == NULL
+           || rl->security(rl->cbarg, SSL_SECOP_COMPRESSION, 0, 0, NULL);
 }
 #endif
 
@@ -500,7 +501,8 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
                 if (!PACKET_get_1(&pkt, &type)
                         || !PACKET_get_net_2(&pkt, &version)
                         || !PACKET_get_net_2_len(&pkt, &thisrr->length)) {
-                    rl->msg_callback(0, 0, SSL3_RT_HEADER, p, 5, rl->cbarg);
+                    if (rl->msg_callback != NULL)
+                        rl->msg_callback(0, 0, SSL3_RT_HEADER, p, 5, rl->cbarg);
                     RLAYERfatal(rl, SSL_AD_DECODE_ERROR, ERR_R_INTERNAL_ERROR);
                     return OSSL_RECORD_RETURN_FATAL;
                 }
@@ -519,7 +521,8 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
                     return OSSL_RECORD_RETURN_FATAL;
                 }
 
-                rl->msg_callback(0, version, SSL3_RT_HEADER, p, 5, rl->cbarg);
+                if (rl->msg_callback != NULL)
+                    rl->msg_callback(0, version, SSL3_RT_HEADER, p, 5, rl->cbarg);
 
                 if (thisrr->length >
                     SSL3_BUFFER_get_len(rbuf) - SSL3_RT_HEADER_LENGTH) {
@@ -693,7 +696,9 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
             /* RLAYERfatal() already got called */
             goto end;
         }
-        if (num_recs == 1 && rl->skip_early_data(rl->cbarg)) {
+        if (num_recs == 1
+                && rl->skip_early_data != NULL
+                && rl->skip_early_data(rl->cbarg)) {
             /*
              * Valid early_data that we cannot decrypt will fail here. We treat
              * it like an empty record.
@@ -912,8 +917,9 @@ int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
         return 0;
     }
 
-    rl->msg_callback(0, rl->version, SSL3_RT_INNER_CONTENT_TYPE, &rec->type,
-                     1, rl->cbarg);
+    if (rl->msg_callback != NULL)
+        rl->msg_callback(0, rl->version, SSL3_RT_INNER_CONTENT_TYPE, &rec->type,
+                        1, rl->cbarg);
 
     /*
      * TLSv1.3 alert and handshake records are required to be non-zero in
