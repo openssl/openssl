@@ -171,11 +171,14 @@ countryName_max			= 2
 
 stateOrProvinceName		= State or Province Name (full name)
 stateOrProvinceName_default	= Some-State
+stateOrProvinceName_max         = 256
 
 localityName			= Locality Name (eg, city)
+localityName_max		= 256
 
 0.organizationName		= Organization Name (eg, company)
 0.organizationName_default	= Internet Widgits Pty Ltd
+0.organizationName_max	        = 256
 
 # we can do this but it is not needed normally :-)
 #1.organizationName		= Second Organization Name (eg, company)
@@ -183,12 +186,13 @@ localityName			= Locality Name (eg, city)
 
 organizationalUnitName		= Organizational Unit Name (eg, section)
 #organizationalUnitName_default	=
+organizationalUnitName_max	= 256
 
 commonName			= Common Name (e.g. server FQDN or YOUR name)
-commonName_max			= 64
+commonName_max			= 256
 
 emailAddress			= Email Address
-emailAddress_max		= 64
+emailAddress_max		= 320
 
 # SET-ex3			= SET extension number 3
 

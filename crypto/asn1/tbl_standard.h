@@ -7,17 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* size limits: this stuff is taken straight from RFC3280 */
+/* size limits */
 
 #define ub_name                         32768
-#define ub_common_name                  64
-#define ub_locality_name                128
-#define ub_state_name                   128
-#define ub_organization_name            64
-#define ub_organization_unit_name       64
-#define ub_title                        64
-#define ub_email_address                128
-#define ub_serial_number                64
+#define ub_common_name                  256
+#define ub_locality_name                256
+#define ub_state_name                   256
+#define ub_organization_name            256
+#define ub_organization_unit_name       256
+#define ub_title                        256
+#define ub_email_address                320
+#define ub_serial_number                256
 
 /* From RFC4524 */
 

@@ -24,6 +24,10 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1 [xx XXX xxxx]
 
+ * Increase size limits of data entries used for certificate generation
+
+   *Dimitris Soumis*
+
  * Added a new BIO_s_dgram_mem() to read/write datagrams to memory
 
    *Matt Caswell*
