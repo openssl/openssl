@@ -3,7 +3,7 @@
 =head1 NAME
 
 X509_cmp_time, X509_cmp_current_time, X509_cmp_timeframe,
-X509_time_adj, X509_time_adj_ex
+X509_time_adj, X509_time_adj_ex, X509_gmtime_adj
 - X509 time functions
 
 =head1 SYNOPSIS
