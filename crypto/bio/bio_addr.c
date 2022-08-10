@@ -74,7 +74,7 @@ BIO_ADDR *BIO_ADDR_dup(const BIO_ADDR *ap)
     if (ap != NULL) {
         ret = BIO_ADDR_new();
         if (ret != NULL)
-            memcpy(ret, ap, sizeof(BIO_ADDR));
+            BIO_ADDR_make(ret, &ap->sa);
     }
     return ret;
 }
