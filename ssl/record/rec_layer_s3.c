@@ -1279,6 +1279,22 @@ int ssl3_write_pending(SSL_CONNECTION *s, int type, const unsigned char *buf,
     }
 }
 
+int ssl_auto_retry(SSL *s)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    BIO *rbio;
+
+    if ((sc->mode & SSL_MODE_AUTO_RETRY) != 0
+            || SSL3_BUFFER_get_left(&sc->rlayer.rbuf) != 0)
+        return 1;
+
+    sc->rwstate = SSL_READING;
+    rbio = SSL_get_rbio(s);
+    BIO_clear_retry_flags(rbio);
+    BIO_set_retry_read(rbio);
+    return 0;
+}
+
 /*-
  * Return up to 'len' payload bytes received in 'type' records.
  * 'type' is one of the following:
@@ -1659,8 +1675,6 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
 
     if ((s->shutdown & SSL_SENT_SHUTDOWN) != 0) {
         if (SSL3_RECORD_get_type(rr) == SSL3_RT_HANDSHAKE) {
-            BIO *rbio;
-
             /*
              * We ignore any handshake messages sent to us unless they are
              * TLSv1.3 in which case we want to process them. For all other
@@ -1672,13 +1686,9 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
                 SSL3_RECORD_set_length(rr, 0);
                 SSL3_RECORD_set_read(rr);
 
-                if ((s->mode & SSL_MODE_AUTO_RETRY) != 0)
+                if (ssl_auto_retry(ssl))
                     goto start;
 
-                s->rwstate = SSL_READING;
-                rbio = SSL_get_rbio(ssl);
-                BIO_clear_retry_flags(rbio);
-                BIO_set_retry_read(rbio);
                 return -1;
             }
         } else {
@@ -1757,24 +1767,10 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
         if (ined)
             return -1;
 
-        if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
-            if (SSL3_BUFFER_get_left(rbuf) == 0) {
-                /* no read-ahead left? */
-                BIO *bio;
-                /*
-                 * In the case where we try to read application data, but we
-                 * trigger an SSL handshake, we return -1 with the retry
-                 * option set.  Otherwise renegotiation may cause nasty
-                 * problems in the blocking world
-                 */
-                s->rwstate = SSL_READING;
-                bio = SSL_get_rbio(ssl);
-                BIO_clear_retry_flags(bio);
-                BIO_set_retry_read(bio);
-                return -1;
-            }
-        }
-        goto start;
+        if (ssl_auto_retry(ssl))
+            goto start;
+
+        return -1;
     }
 
     switch (SSL3_RECORD_get_type(rr)) {

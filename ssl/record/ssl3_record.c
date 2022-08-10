@@ -1763,7 +1763,9 @@ int dtls1_get_record(SSL_CONNECTION *s)
         if (RECORD_LAYER_get_packet_length(&s->rlayer) !=
             DTLS1_RT_HEADER_LENGTH) {
             RECORD_LAYER_reset_packet_length(&s->rlayer);
-            goto again;
+            if (ssl_auto_retry(ssl))
+                goto again;
+            return -1;
         }
 
         RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_BODY);
@@ -1799,7 +1801,9 @@ int dtls1_get_record(SSL_CONNECTION *s)
                 rr->length = 0;
                 rr->read = 1;
                 RECORD_LAYER_reset_packet_length(&s->rlayer);
-                goto again;
+                if (ssl_auto_retry(ssl))
+                    goto again;
+                return -1;
             }
         }
 
@@ -1808,7 +1812,9 @@ int dtls1_get_record(SSL_CONNECTION *s)
             rr->length = 0;
             rr->read = 1;
             RECORD_LAYER_reset_packet_length(&s->rlayer);
-            goto again;
+            if (ssl_auto_retry(ssl))
+                goto again;
+            return -1;
         }
 
         if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
@@ -1816,7 +1822,9 @@ int dtls1_get_record(SSL_CONNECTION *s)
             rr->length = 0;
             rr->read = 1;
             RECORD_LAYER_reset_packet_length(&s->rlayer);
-            goto again;
+            if (ssl_auto_retry(ssl))
+                goto again;
+            return -1;
         }
 
         /* If received packet overflows own-client Max Fragment Length setting */
@@ -1826,7 +1834,9 @@ int dtls1_get_record(SSL_CONNECTION *s)
             rr->length = 0;
             rr->read = 1;
             RECORD_LAYER_reset_packet_length(&s->rlayer);
-            goto again;
+            if (ssl_auto_retry(ssl))
+                goto again;
+            return -1;
         }
 
         /* now s->rlayer.rstate == SSL_ST_READ_BODY */
@@ -1848,7 +1858,9 @@ int dtls1_get_record(SSL_CONNECTION *s)
             rr->length = 0;
             rr->read = 1;
             RECORD_LAYER_reset_packet_length(&s->rlayer);
-            goto again;
+            if (ssl_auto_retry(ssl))
+                goto again;
+            return -1;
         }
 
         /*
@@ -1864,7 +1876,9 @@ int dtls1_get_record(SSL_CONNECTION *s)
     if (bitmap == NULL) {
         rr->length = 0;
         RECORD_LAYER_reset_packet_length(&s->rlayer); /* dump this record */
-        goto again;             /* get another record */
+        if (ssl_auto_retry(ssl))
+            goto again;
+        return -1;
     }
 #ifndef OPENSSL_NO_SCTP
     /* Only do replay check if no SCTP bio */
@@ -1875,7 +1889,9 @@ int dtls1_get_record(SSL_CONNECTION *s)
             rr->length = 0;
             rr->read = 1;
             RECORD_LAYER_reset_packet_length(&s->rlayer); /* dump this record */
-            goto again;         /* get another record */
+            if (ssl_auto_retry(ssl))
+                goto again;
+            return -1;
         }
 #ifndef OPENSSL_NO_SCTP
     }
@@ -1884,7 +1900,9 @@ int dtls1_get_record(SSL_CONNECTION *s)
     /* just read a 0 length packet */
     if (rr->length == 0) {
         rr->read = 1;
-        goto again;
+        if (ssl_auto_retry(ssl))
+            goto again;
+        return -1;
     }
 
     /*
@@ -1904,7 +1922,9 @@ int dtls1_get_record(SSL_CONNECTION *s)
         rr->length = 0;
         rr->read = 1;
         RECORD_LAYER_reset_packet_length(&s->rlayer);
-        goto again;
+        if (ssl_auto_retry(ssl))
+            goto again;
+        return -1;
     }
 
     if (!dtls1_process_record(s, bitmap)) {
@@ -1915,7 +1935,9 @@ int dtls1_get_record(SSL_CONNECTION *s)
         rr->length = 0;
         rr->read = 1;
         RECORD_LAYER_reset_packet_length(&s->rlayer); /* dump this record */
-        goto again;             /* get another record */
+        if (ssl_auto_retry(ssl))
+            goto again;
+        return -1;
     }
 
     return 1;
