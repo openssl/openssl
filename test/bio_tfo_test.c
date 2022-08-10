@@ -400,6 +400,8 @@ err:
         if (errstr != NULL)
             BIO_printf(bio_err, "last errno: %d=%s\n", sockerr, errstr);
     }
+    if (ai != NULL)
+        freeaddrinfo(ai);
     BIO_ADDR_free(baddr);
     BIO_closesocket(cfd);
     BIO_closesocket(sfd);
