@@ -136,6 +136,11 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
     int n;
     int count = 100;
 
+    if (r == NULL) {
+        ERR_raise(ERR_LIB_BN, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     if (range->neg || BN_is_zero(range)) {
         ERR_raise(ERR_LIB_BN, BN_R_INVALID_RANGE);
         return 0;
