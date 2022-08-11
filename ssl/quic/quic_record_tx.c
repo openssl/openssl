@@ -1,0 +1,903 @@
+/*
+ * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#include "internal/quic_record_tx.h"
+#include "internal/bio_addr.h"
+#include "internal/common.h"
+#include "quic_record_shared.h"
+#include "../ssl_local.h"
+
+/*
+ * TXE
+ * ===
+ * Encrypted packets awaiting transmission are kept in TX Entries (TXEs), which
+ * are queued in linked lists just like TXEs.
+ */
+typedef struct txe_st TXE;
+
+struct txe_st {
+    TXE                *prev, *next;
+    size_t              data_len, alloc_len;
+
+    /*
+     * Destination and local addresses, as applicable. Both of these are only
+     * used if the family is not AF_UNSPEC.
+     */
+    BIO_ADDR            peer, local;
+
+    /*
+     * alloc_len allocated bytes (of which data_len bytes are valid) follow this
+     * structure.
+     */
+};
+
+static ossl_inline unsigned char *txe_data(const TXE *e)
+{
+    return (unsigned char *)(e + 1);
+}
+
+typedef struct txe_list_st {
+    TXE *head, *tail;
+} TXE_LIST;
+
+static void txe_remove(TXE_LIST *l, TXE *e)
+{
+    if (e->prev != NULL)
+        e->prev->next = e->next;
+    if (e->next != NULL)
+        e->next->prev = e->prev;
+
+    if (e == l->head)
+        l->head = e->next;
+    if (e == l->tail)
+        l->tail = e->prev;
+
+    e->next = e->prev = NULL;
+}
+
+static void txe_insert_tail(TXE_LIST *l, TXE *e)
+{
+    if (l->tail == NULL) {
+        l->head = l->tail = e;
+        e->next = e->prev = NULL;
+        return;
+    }
+
+    l->tail->next = e;
+    e->prev = l->tail;
+    e->next = NULL;
+    l->tail = e;
+}
+
+/*
+ * QTX
+ * ===
+ */
+
+/* (Encryption level, direction)-specific state. */
+typedef struct ossl_qtx_enc_level_st {
+    /* Hash function used for key derivation. */
+    EVP_MD                     *md;
+    /* Context used for packet body ciphering. */
+    EVP_CIPHER_CTX             *cctx;
+    /* IV used to construct nonces used for AEAD packet body ciphering. */
+    unsigned char               iv[EVP_MAX_IV_LENGTH];
+    /* Have we permanently discarded this encryption level? */
+    unsigned char               discarded;
+    /* QTX_SUITE_* value. */
+    uint32_t                    suite_id;
+    /* Length of authentication tag. */
+    uint32_t                    tag_len;
+    /*
+     * Cryptographic context used to apply and remove header protection from
+     * packet headers.
+     */
+    QUIC_HDR_PROTECTOR          hpr;
+} OSSL_QTX_ENC_LEVEL;
+
+struct ossl_qtx_st {
+    OSSL_LIB_CTX               *libctx;
+    const char                 *propq;
+
+    /* Per encryption-level state. */
+    OSSL_QRL_ENC_LEVEL_SET      el_set;
+
+    /* TX BIO. */
+    BIO                        *bio;
+
+    /* TX maximum datagram payload length. */
+    size_t                      mdpl;
+
+    /*
+     * List of TXEs which are not currently in use. These are moved to the
+     * pending list (possibly via tx_cons first) as they are filled.
+     */
+    TXE_LIST                    free;
+
+    /*
+     * List of TXEs which are filled with completed datagrams ready to be
+     * transmitted.
+     */
+    TXE_LIST                    pending;
+    size_t                      pending_count; /* items in list */
+    size_t                      pending_bytes; /* sum(txe->data_len) in pending */
+
+    /*
+     * TXE which is under construction for coalescing purposes, if any.
+     * This TXE is neither on the free nor pending list. Once the datagram
+     * is completed, it is moved to the pending list.
+     */
+    TXE                        *cons;
+    size_t                      cons_count; /* num packets */
+};
+
+/* Instantiates a new QTX. */
+OSSL_QTX *ossl_qtx_new(const OSSL_QTX_ARGS *args)
+{
+    OSSL_QTX *qtx;
+
+    qtx = OPENSSL_zalloc(sizeof(OSSL_QTX));
+    if (qtx == NULL)
+        return 0;
+
+    if (args->bio != NULL && !BIO_up_ref(args->bio)) {
+        OPENSSL_free(qtx);
+        return 0;
+    }
+
+    qtx->libctx             = args->libctx;
+    qtx->propq              = args->propq;
+    qtx->bio                = args->bio;
+    qtx->mdpl               = args->mdpl;
+    return qtx;
+}
+
+static void qtx_cleanup_txl(TXE_LIST *l)
+{
+    TXE *e, *enext;
+    for (e = l->head; e != NULL; e = enext) {
+        enext = e->next;
+        OPENSSL_free(e);
+    }
+    l->head = l->tail = NULL;
+}
+
+/* Frees the QTX. */
+void ossl_qtx_free(OSSL_QTX *qtx)
+{
+    uint32_t i;
+
+    /* Free TXE queue data. */
+    qtx_cleanup_txl(&qtx->pending);
+    qtx_cleanup_txl(&qtx->free);
+
+    /* Drop keying material and crypto resources. */
+    for (i = 0; i < QUIC_ENC_LEVEL_NUM; ++i)
+        ossl_qrl_enc_level_set_discard(&qtx->el_set, i, 1);
+
+    OPENSSL_free(qtx);
+}
+
+int ossl_qtx_provide_secret(OSSL_QTX              *qtx,
+                            uint32_t               enc_level,
+                            uint32_t               suite_id,
+                            EVP_MD                *md,
+                            const unsigned char   *secret,
+                            size_t                 secret_len)
+{
+    if (enc_level >= QUIC_ENC_LEVEL_NUM)
+        return 0;
+
+    return ossl_qrl_enc_level_set_provide_secret(&qtx->el_set,
+                                                 qtx->libctx,
+                                                 qtx->propq,
+                                                 enc_level,
+                                                 suite_id,
+                                                 md,
+                                                 secret,
+                                                 secret_len);
+}
+
+int ossl_qtx_discard_enc_level(OSSL_QTX *qtx, uint32_t enc_level)
+{
+    if (enc_level >= QUIC_ENC_LEVEL_NUM)
+        return 0;
+
+    ossl_qrl_enc_level_set_discard(&qtx->el_set, enc_level, 1);
+    return 1;
+}
+
+/* Allocate a new TXE. */
+static TXE *qtx_alloc_txe(size_t alloc_len)
+{
+    TXE *txe;
+
+    if (alloc_len >= SIZE_MAX - sizeof(TXE))
+        return NULL;
+
+    txe = OPENSSL_malloc(sizeof(TXE) + alloc_len);
+    if (txe == NULL)
+        return NULL;
+
+    txe->prev = txe->next = NULL;
+    txe->alloc_len = alloc_len;
+    txe->data_len  = 0;
+    return txe;
+}
+
+/*
+ * Ensures there is at least one TXE in the free list, allocating a new entry
+ * if necessary. The returned TXE is in the free list; it is not popped.
+ *
+ * alloc_len is a hint which may be used to determine the TXE size if allocation
+ * is necessary. Returns NULL on allocation failure.
+ */
+static TXE *qtx_ensure_free_txe(OSSL_QTX *qtx, size_t alloc_len)
+{
+    TXE *txe;
+
+    if (qtx->free.head != NULL)
+        return qtx->free.head;
+
+    txe = qtx_alloc_txe(alloc_len);
+    if (txe == NULL)
+        return NULL;
+
+    txe_insert_tail(&qtx->free, txe);
+    return txe;
+}
+
+/*
+ * Resize the data buffer attached to an TXE to be n bytes in size. The address
+ * of the TXE might change; the new address is returned, or NULL on failure, in
+ * which case the original TXE remains valid.
+ */
+static TXE *qtx_resize_txe(OSSL_QTX *qtx, TXE_LIST *txl, TXE *txe, size_t n)
+{
+    TXE *txe2;
+
+    /* Should never happen. */
+    if (txe == NULL)
+        return NULL;
+
+    if (n >= SIZE_MAX - sizeof(TXE))
+        return NULL;
+
+    /*
+     * NOTE: We do not clear old memory, although it does contain decrypted
+     * data.
+     */
+    txe2 = OPENSSL_realloc(txe, sizeof(TXE) + n);
+    if (txe2 == NULL)
+        /* original TXE is still in tact unchanged */
+        return NULL;
+
+    if (txl != NULL && txe != txe2) {
+        if (txl->head == txe)
+            txl->head = txe2;
+        if (txl->tail == txe)
+            txl->tail = txe2;
+        if (txe->prev != NULL)
+            txe->prev->next = txe2;
+        if (txe->next != NULL)
+            txe->next->prev = txe2;
+    }
+
+    if (qtx->cons == txe)
+        qtx->cons = txe2;
+
+    txe2->alloc_len = n;
+    return txe2;
+}
+
+/*
+ * Ensure the data buffer attached to an TXE is at least n bytes in size.
+ * Returns NULL on failure.
+ */
+static TXE *qtx_reserve_txe(OSSL_QTX *qtx, TXE_LIST *txl,
+                            TXE *txe, size_t n)
+{
+    if (txe->alloc_len >= n)
+        return txe;
+
+    return qtx_resize_txe(qtx, txl, txe, n);
+}
+
+/* Move a TXE from pending to free. */
+static void qtx_pending_to_free(OSSL_QTX *qtx)
+{
+    TXE *txe = qtx->pending.head;
+
+    assert(txe != NULL);
+    txe_remove(&qtx->pending, txe);
+    --qtx->pending_count;
+    qtx->pending_bytes -= txe->data_len;
+    txe_insert_tail(&qtx->free, txe);
+}
+
+/* Add a TXE not currently in any list to the pending list. */
+static void qtx_add_to_pending(OSSL_QTX *qtx, TXE *txe)
+{
+    txe_insert_tail(&qtx->pending, txe);
+    ++qtx->pending_count;
+    qtx->pending_bytes += txe->data_len;
+}
+
+struct iovec_cur {
+    const OSSL_QTX_IOVEC *iovec;
+    size_t                num_iovec, idx, byte_off, bytes_remaining;
+};
+
+static size_t iovec_total_bytes(const OSSL_QTX_IOVEC *iovec,
+                                size_t num_iovec)
+{
+    size_t i, l = 0;
+
+    for (i = 0; i < num_iovec; ++i)
+        l += iovec[i].buf_len;
+
+    return l;
+}
+
+static void iovec_cur_init(struct iovec_cur *cur,
+                           const OSSL_QTX_IOVEC *iovec,
+                           size_t num_iovec)
+{
+    cur->iovec              = iovec;
+    cur->num_iovec          = num_iovec;
+    cur->idx                = 0;
+    cur->byte_off           = 0;
+    cur->bytes_remaining    = iovec_total_bytes(iovec, num_iovec);
+}
+
+/*
+ * Get an extent of bytes from the iovec cursor. *buf is set to point to the
+ * buffer and the number of bytes in length of the buffer is returned. This
+ * value may be less than the max_buf_len argument. If no more data is
+ * available, returns 0.
+ */
+static size_t iovec_cur_get_buffer(struct iovec_cur *cur,
+                                   const unsigned char **buf,
+                                   size_t max_buf_len)
+{
+    size_t l;
+
+    if (max_buf_len == 0) {
+        *buf = NULL;
+        return 0;
+    }
+
+    for (;;) {
+        if (cur->idx >= cur->num_iovec)
+            return 0;
+
+        l = cur->iovec[cur->idx].buf_len - cur->byte_off;
+        if (l > max_buf_len)
+            l = max_buf_len;
+
+        if (l > 0) {
+            *buf = cur->iovec[cur->idx].buf + cur->byte_off;
+            cur->byte_off += l;
+            cur->bytes_remaining -= l;
+            return l;
+        }
+
+        /*
+         * Zero-length iovec entry or we already consumed all of it, try the
+         * next iovec.
+         */
+        ++cur->idx;
+        cur->byte_off = 0;
+    }
+}
+
+/* Determines the size of the AEAD output given the input size. */
+static size_t qtx_inflate_payload_len(OSSL_QTX *qtx, uint32_t enc_level,
+                                      size_t plaintext_len)
+{
+    OSSL_QRL_ENC_LEVEL *el
+        = ossl_qrl_enc_level_set_get(&qtx->el_set, enc_level, 1);
+
+    assert(el != NULL); /* Already checked by caller. */
+
+    /*
+     * We currently only support ciphers with a 1:1 mapping between plaintext
+     * and ciphertext size, save for authentication tag.
+     */
+    return plaintext_len + ossl_qrl_get_suite_cipher_tag_len(el->suite_id);
+}
+
+/* Any other error (including packet being too big for MDPL). */
+#define QTX_FAIL_GENERIC            (-1)
+
+/*
+ * Returned where there is insufficient room in the datagram to write the
+ * packet.
+ */
+#define QTX_FAIL_INSUFFICIENT_LEN   (-2)
+
+static int qtx_write_hdr(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
+                         QUIC_PKT_HDR_PTRS *ptrs)
+{
+    WPACKET wpkt;
+    size_t l = 0;
+
+    if (!WPACKET_init_static_len(&wpkt, txe_data(txe) + txe->data_len,
+                                 txe->alloc_len - txe->data_len, 0))
+        return 0;
+
+    if (!ossl_quic_wire_encode_pkt_hdr(&wpkt, pkt->hdr->src_conn_id.id_len,
+                                       pkt->hdr, ptrs)
+        || !WPACKET_get_total_written(&wpkt, &l)) {
+        WPACKET_finish(&wpkt);
+        return 0;
+    }
+
+    txe->data_len += l;
+    WPACKET_finish(&wpkt);
+    return 1;
+}
+
+static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
+                                uint32_t enc_level, QUIC_PN pn,
+                                const unsigned char *hdr, size_t hdr_len,
+                                QUIC_PKT_HDR_PTRS *ptrs)
+{
+    int l = 0, l2 = 0;
+    OSSL_QRL_ENC_LEVEL *el
+        = ossl_qrl_enc_level_set_get(&qtx->el_set, enc_level, 1);
+    unsigned char nonce[EVP_MAX_IV_LENGTH];
+    size_t nonce_len, i;
+
+    /* We should not have been called if we do not have key material. */
+    if (!ossl_assert(el != NULL))
+        return 0;
+
+    /*
+     * Have we already encrypted the maximum number of packets using the current
+     * key?
+     */
+    if (el->op_count >= ossl_qrl_get_suite_max_pkt(el->suite_id))
+        return 0;
+
+    /* Construct nonce (nonce=IV ^ PN). */
+    nonce_len = EVP_CIPHER_CTX_get_iv_length(el->cctx);
+    if (!ossl_assert(nonce_len >= sizeof(QUIC_PN)))
+        return 0;
+
+    memcpy(nonce, el->iv, nonce_len);
+    for (i = 0; i < sizeof(QUIC_PN); ++i)
+        nonce[nonce_len - i - 1] ^= (unsigned char)(pn >> (i * 8));
+
+    /* type and key will already have been setup; feed the IV. */
+    if (EVP_CipherInit_ex(el->cctx, NULL, NULL, NULL, nonce, /*enc=*/1) != 1)
+        return 0;
+
+    /* Feed AAD data. */
+    if (EVP_CipherUpdate(el->cctx, NULL, &l, hdr, hdr_len) != 1)
+        return 0;
+
+    /* Encrypt plaintext directly into TXE. */
+    for (;;) {
+        const unsigned char *src;
+        size_t src_len;
+
+        src_len = iovec_cur_get_buffer(cur, &src, SIZE_MAX);
+        if (src_len == 0)
+            break;
+
+        if (EVP_CipherUpdate(el->cctx, txe_data(txe) + txe->data_len,
+                             &l, src, src_len) != 1)
+            return 0;
+
+        assert(l > 0 && src_len == (size_t)l);
+        txe->data_len += src_len;
+    }
+
+    /* Finalise and get tag. */
+    if (EVP_CipherFinal_ex(el->cctx, NULL, &l2) != 1)
+        return 0;
+
+    if (EVP_CIPHER_CTX_ctrl(el->cctx, EVP_CTRL_AEAD_GET_TAG,
+                            el->tag_len, txe_data(txe) + txe->data_len) != 1)
+        return 0;
+
+    txe->data_len += el->tag_len;
+
+    /* Apply header protection. */
+    if (!ossl_quic_hdr_protector_encrypt(&el->hpr, ptrs))
+        return 0;
+
+    ++el->op_count;
+    return 1;
+}
+
+/*
+ * Append a packet to the TXE buffer, serializing and encrypting it in the
+ * process.
+ */
+static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
+                     uint32_t enc_level)
+{
+    int ret, needs_encrypt;
+    size_t hdr_len, payload_len, pkt_len, space_left, min_len, orig_data_len;
+    struct iovec_cur cur;
+    QUIC_PKT_HDR_PTRS ptrs;
+    unsigned char *hdr_start;
+
+    /*
+     * Determine if the packet needs encryption and the minimum conceivable
+     * serialization length.
+     */
+    if (pkt->hdr->type == QUIC_PKT_TYPE_RETRY
+        || pkt->hdr->type == QUIC_PKT_TYPE_VERSION_NEG) {
+        needs_encrypt = 0;
+        min_len = QUIC_MIN_VALID_PKT_LEN;
+    } else {
+        needs_encrypt = 1;
+        min_len = QUIC_MIN_VALID_PKT_LEN_CRYPTO;
+    }
+
+    orig_data_len = txe->data_len;
+    space_left = txe->alloc_len - txe->data_len;
+    if (space_left < min_len) {
+        /* Not even a possibility of it fitting. */
+        ret = QTX_FAIL_INSUFFICIENT_LEN;
+        goto err;
+    }
+
+    /* Walk the iovecs to determine actual input payload length. */
+    iovec_cur_init(&cur, pkt->iovec, pkt->num_iovec);
+
+    /* Determine encrypted payload length. */
+    payload_len = needs_encrypt ? qtx_inflate_payload_len(qtx, enc_level,
+                                                          cur.bytes_remaining)
+                                : cur.bytes_remaining;
+
+    /* Determine header length. */
+    pkt->hdr->data  = NULL;
+    pkt->hdr->len   = payload_len;
+    hdr_len = ossl_quic_wire_get_encoded_pkt_hdr_len(pkt->hdr->src_conn_id.id_len,
+                                                     pkt->hdr);
+    if (hdr_len == 0) {
+        ret = QTX_FAIL_GENERIC;
+        goto err;
+    }
+
+    /* We now definitively know our packet length. */
+    pkt_len = hdr_len + payload_len;
+
+    if (pkt_len > space_left) {
+        ret = QTX_FAIL_INSUFFICIENT_LEN;
+        goto err;
+    }
+
+    /* Set some fields in the header we are responsible for. */
+    pkt->hdr->key_phase = 0; /* TODO */
+    if (!ossl_quic_wire_encode_pkt_hdr_pn(pkt->pn,
+                                          pkt->hdr->pn,
+                                          pkt->hdr->pn_len)) {
+        ret = QTX_FAIL_GENERIC;
+        goto err;
+    }
+
+    /* Append the header to the TXE. */
+    hdr_start = txe_data(txe) + txe->data_len;
+    if (!qtx_write_hdr(qtx, pkt, txe, &ptrs)) {
+        ret = QTX_FAIL_GENERIC;
+        goto err;
+    }
+
+    hdr_len = (txe_data(txe) + txe->data_len) - hdr_start;
+    if (!needs_encrypt) {
+        /* Just copy the payload across. */
+        const unsigned char *src;
+        size_t src_len;
+
+        for (;;) {
+            /* Buffer length has already been checked above. */
+            src_len = iovec_cur_get_buffer(&cur, &src, SIZE_MAX);
+            if (src_len == 0)
+                break;
+
+            memcpy(txe_data(txe) + txe->data_len, src, src_len);
+            txe->data_len += src_len;
+        }
+    } else {
+        /* Encrypt into TXE. */
+        if (!qtx_encrypt_into_txe(qtx, &cur, txe, enc_level, pkt->pn,
+                                  hdr_start, hdr_len, &ptrs)) {
+            ret = QTX_FAIL_GENERIC;
+            goto err;
+        }
+
+        assert(txe->data_len - orig_data_len == pkt_len);
+    }
+
+    return 1;
+
+err:
+    /*
+     * Restore original length so we don't leave a half-written packet in the
+     * TXE.
+     */
+    txe->data_len = orig_data_len;
+    return ret;
+}
+
+static TXE *qtx_ensure_cons(OSSL_QTX *qtx)
+{
+    TXE *txe = qtx->cons;
+
+    if (txe != NULL)
+        return txe;
+
+    txe = qtx_ensure_free_txe(qtx, qtx->mdpl);
+    if (txe == NULL)
+        return NULL;
+
+    txe_remove(&qtx->free, txe);
+    qtx->cons = txe;
+    qtx->cons_count = 0;
+    txe->data_len = 0;
+    return txe;
+}
+
+static int addr_eq(const BIO_ADDR *a, const BIO_ADDR *b)
+{
+    return ((a == NULL || BIO_ADDR_family(a) == AF_UNSPEC)
+            && (b == NULL || BIO_ADDR_family(b) == AF_UNSPEC))
+        || (a != NULL && b != NULL && memcmp(a, b, sizeof(*a)) == 0);
+}
+
+int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt)
+{
+    int ret;
+    int coalescing = (pkt->flags & OSSL_QTX_PKT_FLAG_COALESCE) != 0;
+    int was_coalescing;
+    TXE *txe;
+    uint32_t enc_level;
+
+    /* Must have EL configured, must have header. */
+    if (pkt->hdr == NULL)
+        return 0;
+
+    enc_level = ossl_quic_pkt_type_to_enc_level(pkt->hdr->type);
+
+    /* Some packet types must be in a packet all by themselves. */
+    if (pkt->hdr->type == QUIC_PKT_TYPE_RETRY
+        || pkt->hdr->type == QUIC_PKT_TYPE_VERSION_NEG)
+        ossl_qtx_finish_dgram(qtx);
+    else if (enc_level >= QUIC_ENC_LEVEL_NUM
+               || ossl_qrl_enc_level_set_have_el(&qtx->el_set, enc_level) != 1)
+        /* All other packet types are encrypted. */
+        return 0;
+
+    was_coalescing = (qtx->cons != NULL && qtx->cons->data_len > 0);
+    if (was_coalescing)
+        if (!addr_eq(&qtx->cons->peer, pkt->peer)
+            || !addr_eq(&qtx->cons->local, pkt->local)) {
+            /* Must stop coalescing if addresses have changed */
+            ossl_qtx_finish_dgram(qtx);
+            was_coalescing = 0;
+        }
+
+    for (;;) {
+        /*
+         * Start a new coalescing session or continue using the existing one and
+         * serialize/encrypt the packet. We always encrypt packets as soon as
+         * our caller gives them to us, which relieves the caller of any need to
+         * keep the plaintext around.
+         */
+        txe = qtx_ensure_cons(qtx);
+        if (txe == NULL)
+            return 0; /* allocation failure */
+
+        /*
+         * Ensure TXE has at least MDPL bytes allocated. This should only be
+         * possible if the MDPL has increased.
+         */
+        if (!qtx_reserve_txe(qtx, NULL, txe, qtx->mdpl))
+            return 0;
+
+        if (!was_coalescing) {
+            /* Set addresses in TXE. */
+            if (pkt->peer != NULL)
+                txe->peer = *pkt->peer;
+            else
+                BIO_ADDR_clear(&txe->peer);
+
+            if (pkt->local != NULL)
+                txe->local = *pkt->local;
+            else
+                BIO_ADDR_clear(&txe->local);
+        }
+
+        ret = qtx_write(qtx, pkt, txe, enc_level);
+        if (ret == 1) {
+            break;
+        } else if (ret == QTX_FAIL_INSUFFICIENT_LEN) {
+            if (was_coalescing) {
+                /*
+                 * We failed due to insufficient length, so end the current
+                 * datagram and try again.
+                 */
+                ossl_qtx_finish_dgram(qtx);
+                was_coalescing = 0;
+            } else {
+                /*
+                 * We failed due to insufficient length, but we were not
+                 * coalescing/started with an empty datagram, so any future
+                 * attempt to write this packet must also fail.
+                 */
+                return 0;
+            }
+        } else {
+            return 0; /* other error */
+        }
+    }
+
+    ++qtx->cons_count;
+
+    /*
+     * Some packet types cannot have another packet come after them.
+     */
+    if (pkt->hdr->type == QUIC_PKT_TYPE_RETRY
+        || pkt->hdr->type == QUIC_PKT_TYPE_VERSION_NEG
+        || pkt->hdr->type == QUIC_PKT_TYPE_1RTT)
+        coalescing = 0;
+
+    if (!coalescing)
+        ossl_qtx_finish_dgram(qtx);
+
+    return 1;
+}
+
+/*
+ * Finish any incomplete datagrams for transmission which were flagged for
+ * coalescing. If there is no current coalescing datagram, this is a no-op.
+ */
+void ossl_qtx_finish_dgram(OSSL_QTX *qtx)
+{
+    TXE *txe = qtx->cons;
+
+    if (txe == NULL)
+        return;
+
+    if (txe->data_len == 0)
+        /*
+         * If we did not put anything in the datagram, just move it back to the
+         * free list.
+         */
+        txe_insert_tail(&qtx->free, txe);
+    else
+        qtx_add_to_pending(qtx, txe);
+
+    qtx->cons       = NULL;
+    qtx->cons_count = 0;
+}
+
+static void txe_to_msg(TXE *txe, BIO_MSG *msg)
+{
+    msg->data       = txe_data(txe);
+    msg->data_len   = txe->data_len;
+    msg->flags      = 0;
+    msg->peer
+        = BIO_ADDR_family(&txe->peer) != AF_UNSPEC ? &txe->peer : NULL;
+    msg->local
+        = BIO_ADDR_family(&txe->local) != AF_UNSPEC ? &txe->local : NULL;
+}
+
+#define MAX_MSGS_PER_SEND   32
+
+void ossl_qtx_flush_net(OSSL_QTX *qtx)
+{
+    BIO_MSG msg[MAX_MSGS_PER_SEND];
+    size_t i;
+    TXE *txe;
+    ossl_ssize_t wr;
+
+    if (qtx->bio == NULL)
+        return;
+
+    for (;;) {
+        for (txe = qtx->pending.head, i = 0;
+             txe != NULL && i < OSSL_NELEM(msg);
+             txe = txe->next, ++i)
+            txe_to_msg(txe, &msg[i]);
+
+        if (!i)
+            /* Nothing to send. */
+            return;
+
+        wr = BIO_sendmmsg(qtx->bio, msg, sizeof(BIO_MSG), i, 0);
+        if (wr <= 0)
+            /*
+             * We did not get anything, so further calls will probably not
+             * succeed either.
+             */
+            break;
+
+        /*
+         * Remove everything which was successfully sent from the pending queue.
+         */
+        for (i = 0; i < (size_t)wr; ++i)
+            qtx_pending_to_free(qtx);
+    }
+}
+
+int ossl_qtx_pop_net(OSSL_QTX *qtx, BIO_MSG *msg)
+{
+    TXE *txe = qtx->pending.head;
+
+    if (txe == NULL)
+        return 0;
+
+    txe_to_msg(txe, msg);
+    qtx_pending_to_free(qtx);
+    return 1;
+}
+
+int ossl_qtx_set1_bio(OSSL_QTX *qtx, BIO *bio)
+{
+    if (bio != NULL && !BIO_up_ref(bio))
+        return 0;
+
+    BIO_free(qtx->bio);
+    qtx->bio = bio;
+    return 1;
+}
+
+int ossl_qtx_set_mdpl(OSSL_QTX *qtx, size_t mdpl)
+{
+    qtx->mdpl = mdpl;
+    return 1;
+}
+
+size_t ossl_qtx_get_queue_len_datagrams(OSSL_QTX *qtx)
+{
+    return qtx->pending_count;
+}
+
+size_t ossl_qtx_get_queue_len_bytes(OSSL_QTX *qtx)
+{
+    return qtx->pending_bytes;
+}
+
+size_t ossl_qtx_get_cur_dgram_len_bytes(OSSL_QTX *qtx)
+{
+    return qtx->cons != NULL ? qtx->cons->data_len : 0;
+}
+
+size_t ossl_qtx_get_unflushed_pkt_count(OSSL_QTX *qtx)
+{
+    return qtx->cons_count;
+}
+
+uint64_t ossl_qtx_get_cur_epoch_pkt_count(OSSL_QTX *qtx, uint32_t enc_level)
+{
+    OSSL_QRL_ENC_LEVEL *el;
+
+    el = ossl_qrl_enc_level_set_get(&qtx->el_set, enc_level, 1);
+    if (el == NULL)
+        return UINT64_MAX;
+
+    return el->op_count;
+}
+
+uint64_t ossl_qtx_get_max_epoch_pkt_count(OSSL_QTX *qtx, uint32_t enc_level)
+{
+    OSSL_QRL_ENC_LEVEL *el;
+
+    el = ossl_qrl_enc_level_set_get(&qtx->el_set, enc_level, 1);
+    if (el == NULL)
+        return UINT64_MAX;
+
+    return ossl_qrl_get_suite_max_pkt(el->suite_id);
+}

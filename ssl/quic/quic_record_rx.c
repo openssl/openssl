@@ -7,7 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/quic_record.h"
+#include "internal/quic_record_rx.h"
+#include "quic_record_shared.h"
 #include "internal/common.h"
 #include "../ssl_local.h"
 
@@ -53,9 +54,14 @@ struct rxe_st {
 
     /* Total length of the datagram which contained this packet. */
     size_t              datagram_len;
+
+    /*
+     * alloc_len allocated bytes (of which data_len bytes are valid) follow this
+     * structure.
+     */
 };
 
-typedef struct ossl_qrl_rxe_list_st {
+typedef struct ossl_qrx_rxe_list_st {
     RXE *head, *tail;
 } RXE_LIST;
 
@@ -97,34 +103,12 @@ static void rxe_insert_tail(RXE_LIST *l, RXE *e)
  * QRL
  * ===
  */
-
-/* (Encryption level, direction)-specific state. */
-typedef struct ossl_qrl_enc_level_st {
-    /* Hash function used for key derivation. */
-    EVP_MD                     *md;
-    /* Context used for packet body ciphering. */
-    EVP_CIPHER_CTX             *cctx;
-    /* IV used to construct nonces used for AEAD packet body ciphering. */
-    unsigned char               iv[EVP_MAX_IV_LENGTH];
-    /* Have we permanently discarded this encryption level? */
-    unsigned char               discarded;
-    /* QRL_SUITE_* value. */
-    uint32_t                    suite_id;
-    /* Length of authentication tag. */
-    uint32_t                    tag_len;
-    /*
-     * Cryptographic context used to apply and remove header protection from
-     * packet headers.
-     */
-    QUIC_HDR_PROTECTOR          hpr;
-} OSSL_QRL_ENC_LEVEL;
-
-struct ossl_qrl_st {
+struct ossl_qrx_st {
     OSSL_LIB_CTX               *libctx;
     const char                 *propq;
 
     /* Demux to receive datagrams from. */
-    QUIC_DEMUX                 *rx_demux;
+    QUIC_DEMUX                 *demux;
 
     /* Length of connection IDs used in short-header packets in bytes. */
     size_t                      short_conn_id_len;
@@ -155,252 +139,44 @@ struct ossl_qrl_st {
     RXE_LIST                    rx_pending;
 
     /* Largest PN we have received and processed in a given PN space. */
-    QUIC_PN                     rx_largest_pn[QUIC_PN_SPACE_NUM];
+    QUIC_PN                     largest_pn[QUIC_PN_SPACE_NUM];
 
     /* Per encryption-level state. */
-    OSSL_QRL_ENC_LEVEL          rx_el[QUIC_ENC_LEVEL_NUM];
-    OSSL_QRL_ENC_LEVEL          tx_el[QUIC_ENC_LEVEL_NUM];
+    OSSL_QRL_ENC_LEVEL_SET      el_set;
 
     /* Bytes we have received since this counter was last cleared. */
     uint64_t                    bytes_received;
 
     /* Validation callback. */
-    ossl_qrl_early_rx_validation_cb    *rx_validation_cb;
-    void                               *rx_validation_cb_arg;
+    ossl_qrx_early_validation_cb    *validation_cb;
+    void                            *validation_cb_arg;
 };
 
-static void qrl_on_rx(QUIC_URXE *urxe, void *arg);
+static void qrx_on_rx(QUIC_URXE *urxe, void *arg);
 
-/* Constants used for key derivation in QUIC v1. */
-static const unsigned char quic_client_in_label[] = {
-    0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x20, 0x69, 0x6e /* "client in" */
-};
-static const unsigned char quic_server_in_label[] = {
-    0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x20, 0x69, 0x6e /* "server in" */
-};
-static const unsigned char quic_v1_iv_label[] = {
-    0x71, 0x75, 0x69, 0x63, 0x20, 0x69, 0x76 /* "quic iv" */
-};
-static const unsigned char quic_v1_key_label[] = {
-    0x71, 0x75, 0x69, 0x63, 0x20, 0x6b, 0x65, 0x79 /* "quic key" */
-};
-static const unsigned char quic_v1_hp_label[] = {
-    0x71, 0x75, 0x69, 0x63, 0x20, 0x68, 0x70 /* "quic hp" */
-};
-/* Salt used to derive Initial packet protection keys (RFC 9001 Section 5.2). */
-static const unsigned char quic_v1_initial_salt[] = {
-    0x38, 0x76, 0x2c, 0xf7, 0xf5, 0x59, 0x34, 0xb3, 0x4d, 0x17,
-    0x9a, 0xe6, 0xa4, 0xc8, 0x0c, 0xad, 0xcc, 0xbb, 0x7f, 0x0a
-};
-
-static ossl_inline OSSL_QRL_ENC_LEVEL *qrl_get_el(OSSL_QRL *qrl,
-                                                  uint32_t enc_level,
-                                                  int is_tx)
+OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
 {
-    if (!ossl_assert(enc_level < QUIC_ENC_LEVEL_NUM))
-        return NULL;
-    return is_tx ? &qrl->tx_el[enc_level] : &qrl->rx_el[enc_level];
-}
-
-/*
- * Returns 1 if we have key material for a given encryption level, 0 if we do
- * not yet have material and -1 if the EL is discarded.
- */
-static int qrl_have_el(OSSL_QRL *qrl, uint32_t enc_level, int is_tx)
-{
-    OSSL_QRL_ENC_LEVEL *el = qrl_get_el(qrl, enc_level, is_tx);
-
-    if (el->cctx != NULL)
-        return 1;
-    if (el->discarded)
-        return -1;
-    return 0;
-}
-
-/* Drops keying material for a given encryption level. */
-static void qrl_el_discard(OSSL_QRL *qrl, uint32_t enc_level,
-                           int is_tx, int final)
-{
-    OSSL_QRL_ENC_LEVEL *el = qrl_get_el(qrl, enc_level, is_tx);
-
-    if (el->discarded)
-        return;
-
-    if (el->cctx != NULL) {
-        ossl_quic_hdr_protector_destroy(&el->hpr);
-
-        EVP_CIPHER_CTX_free(el->cctx);
-        el->cctx    = NULL;
-
-        EVP_MD_free(el->md);
-        el->md      = NULL;
-    }
-
-    /* Zeroise IV. */
-    OPENSSL_cleanse(el->iv, sizeof(el->iv));
-
-    if (final)
-        el->discarded = 1;
-}
-
-/*
- * Sets up cryptographic state for a given encryption level and direction by
- * deriving "quic iv", "quic key" and "quic hp" values from a given secret.
- *
- * md is a hash function used for key derivation. If it is NULL, this function
- * fetches the necessary hash function itself. If it is non-NULL, this function
- * can reuse the caller's reference to a suitable EVP_MD; the EVP_MD provided
- * must match the suite.
- *
- * On success where md is non-NULL, takes ownership of the caller's reference to
- * md.
- */
-static int qrl_el_set_secret(OSSL_QRL *qrl, uint32_t enc_level,
-                             uint32_t suite_id, EVP_MD *md,
-                             int is_tx,
-                             const unsigned char *secret,
-                             size_t secret_len)
-{
-    OSSL_QRL_ENC_LEVEL *el = qrl_get_el(qrl, enc_level, is_tx);
-    unsigned char key[EVP_MAX_KEY_LENGTH], hpr_key[EVP_MAX_KEY_LENGTH];
-    size_t key_len = 0, hpr_key_len = 0, iv_len = 0;
-    const char *cipher_name = NULL, *md_name = NULL;
-    EVP_CIPHER *cipher = NULL;
-    EVP_CIPHER_CTX *cctx = NULL;
-    int own_md = 0, have_hpr = 0;
-
-    if (el->discarded)
-        /* Should not be trying to reinitialise an EL which was discarded. */
-        return 0;
-
-    cipher_name = ossl_qrl_get_suite_cipher_name(suite_id);
-    iv_len      = ossl_qrl_get_suite_cipher_iv_len(suite_id);
-    key_len     = ossl_qrl_get_suite_cipher_key_len(suite_id);
-    hpr_key_len = ossl_qrl_get_suite_hdr_prot_key_len(suite_id);
-    if (cipher_name == NULL)
-        return 0;
-
-    if (secret_len != ossl_qrl_get_suite_secret_len(suite_id))
-        return 0;
-
-    if (md == NULL) {
-        md_name = ossl_qrl_get_suite_md_name(suite_id);
-
-        if ((md = EVP_MD_fetch(qrl->libctx,
-                                   md_name, qrl->propq)) == NULL)
-            return 0;
-
-        own_md = 1;
-    }
-
-    /* Derive "quic iv" key. */
-    if (!tls13_hkdf_expand_ex(qrl->libctx, qrl->propq,
-                              md,
-                              secret,
-                              quic_v1_iv_label,
-                              sizeof(quic_v1_iv_label),
-                              NULL, 0,
-                              el->iv, iv_len, 0))
-        goto err;
-
-    /* Derive "quic key" key. */
-    if (!tls13_hkdf_expand_ex(qrl->libctx, qrl->propq,
-                              md,
-                              secret,
-                              quic_v1_key_label,
-                              sizeof(quic_v1_key_label),
-                              NULL, 0,
-                              key, key_len, 0))
-        goto err;
-
-    /* Derive "quic hp" key. */
-    if (!tls13_hkdf_expand_ex(qrl->libctx, qrl->propq,
-                              md,
-                              secret,
-                              quic_v1_hp_label,
-                              sizeof(quic_v1_hp_label),
-                              NULL, 0,
-                              hpr_key, hpr_key_len, 0))
-        goto err;
-
-    /* Free any old context which is using old keying material. */
-    if (el->cctx != NULL) {
-        ossl_quic_hdr_protector_destroy(&el->hpr);
-        EVP_CIPHER_CTX_free(el->cctx);
-        el->cctx = NULL;
-    }
-
-    /* Setup header protection context. */
-    if (!ossl_quic_hdr_protector_init(&el->hpr,
-                                      qrl->libctx,
-                                      qrl->propq,
-                                      ossl_qrl_get_suite_hdr_prot_cipher_id(suite_id),
-                                      hpr_key,
-                                      hpr_key_len))
-        goto err;
-
-    have_hpr = 1;
-
-    /* Create and initialise cipher context. */
-    if ((cipher = EVP_CIPHER_fetch(qrl->libctx, cipher_name,
-                                   qrl->propq)) == NULL)
-        goto err;
-
-    if (!ossl_assert(iv_len  == (size_t)EVP_CIPHER_get_iv_length(cipher))
-        || !ossl_assert(key_len == (size_t)EVP_CIPHER_get_key_length(cipher)))
-        goto err;
-
-    if ((cctx = EVP_CIPHER_CTX_new()) == NULL)
-        goto err;
-
-    /* IV will be changed on RX so we don't need to use a real value here. */
-    if (!EVP_CipherInit_ex(cctx, cipher, NULL, key, el->iv, 0))
-        goto err;
-
-    el->suite_id    = suite_id;
-    el->cctx        = cctx;
-    el->md          = md;
-    el->tag_len     = ossl_qrl_get_suite_cipher_tag_len(suite_id);
-
-    /* Zeroize intermediate keys. */
-    OPENSSL_cleanse(key, sizeof(key));
-    OPENSSL_cleanse(hpr_key, sizeof(hpr_key));
-    EVP_CIPHER_free(cipher);
-    return 1;
-
-err:
-    if (have_hpr)
-        ossl_quic_hdr_protector_destroy(&el->hpr);
-    EVP_CIPHER_CTX_free(cctx);
-    EVP_CIPHER_free(cipher);
-    if (own_md)
-        EVP_MD_free(md);
-    return 0;
-}
-
-OSSL_QRL *ossl_qrl_new(const OSSL_QRL_ARGS *args)
-{
-    OSSL_QRL *qrl;
+    OSSL_QRX *qrx;
     size_t i;
 
-    if (args->rx_demux == NULL)
+    if (args->demux == NULL)
         return 0;
 
-    qrl = OPENSSL_zalloc(sizeof(OSSL_QRL));
-    if (qrl == NULL)
+    qrx = OPENSSL_zalloc(sizeof(OSSL_QRX));
+    if (qrx == NULL)
         return 0;
 
-    for (i = 0; i < OSSL_NELEM(qrl->rx_largest_pn); ++i)
-        qrl->rx_largest_pn[i] = args->rx_init_largest_pn[i];
+    for (i = 0; i < OSSL_NELEM(qrx->largest_pn); ++i)
+        qrx->largest_pn[i] = args->init_largest_pn[i];
 
-    qrl->libctx             = args->libctx;
-    qrl->propq              = args->propq;
-    qrl->rx_demux           = args->rx_demux;
-    qrl->short_conn_id_len  = args->short_conn_id_len;
-    return qrl;
+    qrx->libctx                 = args->libctx;
+    qrx->propq                  = args->propq;
+    qrx->demux                  = args->demux;
+    qrx->short_conn_id_len      = args->short_conn_id_len;
+    return qrx;
 }
 
-static void qrl_cleanup_rxl(RXE_LIST *l)
+static void qrx_cleanup_rxl(RXE_LIST *l)
 {
     RXE *e, *enext;
     for (e = l->head; e != NULL; e = enext) {
@@ -410,220 +186,132 @@ static void qrl_cleanup_rxl(RXE_LIST *l)
     l->head = l->tail = NULL;
 }
 
-static void qrl_cleanup_urxl(OSSL_QRL *qrl, QUIC_URXE_LIST *l)
+static void qrx_cleanup_urxl(OSSL_QRX *qrx, QUIC_URXE_LIST *l)
 {
     QUIC_URXE *e, *enext;
     for (e = l->head; e != NULL; e = enext) {
         enext = e->next;
-        ossl_quic_demux_release_urxe(qrl->rx_demux, e);
+        ossl_quic_demux_release_urxe(qrx->demux, e);
     }
     l->head = l->tail = NULL;
 }
 
-void ossl_qrl_free(OSSL_QRL *qrl)
+void ossl_qrx_free(OSSL_QRX *qrx)
 {
     uint32_t i;
 
     /* Unregister from the RX DEMUX. */
-    ossl_quic_demux_unregister_by_cb(qrl->rx_demux, qrl_on_rx, qrl);
+    ossl_quic_demux_unregister_by_cb(qrx->demux, qrx_on_rx, qrx);
 
     /* Free RXE queue data. */
-    qrl_cleanup_rxl(&qrl->rx_free);
-    qrl_cleanup_rxl(&qrl->rx_pending);
-    qrl_cleanup_urxl(qrl, &qrl->urx_pending);
-    qrl_cleanup_urxl(qrl, &qrl->urx_deferred);
+    qrx_cleanup_rxl(&qrx->rx_free);
+    qrx_cleanup_rxl(&qrx->rx_pending);
+    qrx_cleanup_urxl(qrx, &qrx->urx_pending);
+    qrx_cleanup_urxl(qrx, &qrx->urx_deferred);
 
     /* Drop keying material and crypto resources. */
-    for (i = 0; i < QUIC_ENC_LEVEL_NUM; ++i) {
-        qrl_el_discard(qrl, i, 0, 1);
-        qrl_el_discard(qrl, i, 1, 1);
-    }
+    for (i = 0; i < QUIC_ENC_LEVEL_NUM; ++i)
+        ossl_qrl_enc_level_set_discard(&qrx->el_set, i, 1);
 
-    OPENSSL_free(qrl);
+    OPENSSL_free(qrx);
 }
 
-static void qrl_on_rx(QUIC_URXE *urxe, void *arg)
+static void qrx_on_rx(QUIC_URXE *urxe, void *arg)
 {
-    OSSL_QRL *qrl = arg;
+    OSSL_QRX *qrx = arg;
 
     /* Initialize our own fields inside the URXE and add to the pending list. */
     urxe->processed     = 0;
     urxe->hpr_removed   = 0;
-    ossl_quic_urxe_insert_tail(&qrl->urx_pending, urxe);
+    ossl_quic_urxe_insert_tail(&qrx->urx_pending, urxe);
 }
 
-int ossl_qrl_add_dst_conn_id(OSSL_QRL *qrl,
+int ossl_qrx_add_dst_conn_id(OSSL_QRX *qrx,
                              const QUIC_CONN_ID *dst_conn_id)
 {
-    return ossl_quic_demux_register(qrl->rx_demux,
+    return ossl_quic_demux_register(qrx->demux,
                                     dst_conn_id,
-                                    qrl_on_rx,
-                                    qrl);
+                                    qrx_on_rx,
+                                    qrx);
 }
 
-int ossl_qrl_remove_dst_conn_id(OSSL_QRL *qrl,
+int ossl_qrx_remove_dst_conn_id(OSSL_QRX *qrx,
                                 const QUIC_CONN_ID *dst_conn_id)
 {
-    return ossl_quic_demux_unregister(qrl->rx_demux, dst_conn_id);
+    return ossl_quic_demux_unregister(qrx->demux, dst_conn_id);
 }
 
-static void qrl_requeue_deferred(OSSL_QRL *qrl)
+static void qrx_requeue_deferred(OSSL_QRX *qrx)
 {
     QUIC_URXE *e;
 
-    while ((e = qrl->urx_deferred.head) != NULL) {
-        ossl_quic_urxe_remove(&qrl->urx_deferred, e);
-        ossl_quic_urxe_insert_head(&qrl->urx_pending, e);
+    while ((e = qrx->urx_deferred.head) != NULL) {
+        ossl_quic_urxe_remove(&qrx->urx_deferred, e);
+        ossl_quic_urxe_insert_head(&qrx->urx_pending, e);
     }
 }
 
-int ossl_qrl_provide_rx_secret(OSSL_QRL *qrl, uint32_t enc_level,
-                               uint32_t suite_id,
-                               const unsigned char *secret, size_t secret_len)
-{
-    if (enc_level == QUIC_ENC_LEVEL_INITIAL || enc_level >= QUIC_ENC_LEVEL_NUM)
-        return 0;
-
-    if (!qrl_el_set_secret(qrl, enc_level, suite_id, NULL,
-                           /*is_tx=*/0, secret, secret_len))
-        return 0;
-
-    /*
-     * Any packets we previously could not decrypt, we may now be able to
-     * decrypt, so move any datagrams containing deferred packets from the
-     * deferred to the pending queue.
-     */
-    qrl_requeue_deferred(qrl);
-    return 1;
-}
-
-/* Initialise key material for the INITIAL encryption level. */
-int ossl_qrl_provide_rx_secret_initial(OSSL_QRL *qrl,
-                                       const QUIC_CONN_ID *dst_conn_id)
-{
-    unsigned char initial_secret[32];
-    unsigned char client_initial_secret[32], server_initial_secret[32];
-    EVP_MD *sha256;
-    int have_rx = 0;
-
-    /* Initial encryption always uses SHA-256. */
-    if ((sha256 = EVP_MD_fetch(qrl->libctx,
-                               "SHA256", qrl->propq)) == NULL)
-        return 0;
-
-    /* Derive initial secret from destination connection ID. */
-    if (!ossl_quic_hkdf_extract(qrl->libctx, qrl->propq,
-                                sha256,
-                                quic_v1_initial_salt,
-                                sizeof(quic_v1_initial_salt),
-                                dst_conn_id->id,
-                                dst_conn_id->id_len,
-                                initial_secret,
-                                sizeof(initial_secret)))
-        goto err;
-
-    /* Derive "client in" secret. */
-    if (!tls13_hkdf_expand_ex(qrl->libctx, qrl->propq,
-                              sha256,
-                              initial_secret,
-                              quic_client_in_label,
-                              sizeof(quic_client_in_label),
-                              NULL, 0,
-                              client_initial_secret,
-                              sizeof(client_initial_secret), 0))
-        goto err;
-
-    /* Derive "server in" secret. */
-    if (!tls13_hkdf_expand_ex(qrl->libctx, qrl->propq,
-                              sha256,
-                              initial_secret,
-                              quic_server_in_label,
-                              sizeof(quic_server_in_label),
-                              NULL, 0,
-                              server_initial_secret,
-                              sizeof(server_initial_secret), 0))
-        goto err;
-
-    /* Setup RX cipher. Initial encryption always uses AES-128-GCM. */
-    if (!qrl_el_set_secret(qrl, QUIC_ENC_LEVEL_INITIAL,
-                           QRL_SUITE_AES128GCM,
-                           sha256,
-                           /*is_tx=*/0,
-                           server_initial_secret,
-                           sizeof(server_initial_secret)))
-        goto err;
-
-    have_rx = 1;
-
-    /*
-     * qrl_el_set_secret takes ownership of our ref to SHA256, so get a new ref
-     * for the following call for the TX side.
-     */
-    if (!EVP_MD_up_ref(sha256)) {
-        sha256 = NULL;
-        goto err;
-    }
-
-    /* Setup TX cipher. */
-    if (!qrl_el_set_secret(qrl, QUIC_ENC_LEVEL_INITIAL,
-                            QRL_SUITE_AES128GCM,
-                            sha256,
-                            /*is_tx=*/1,
-                            client_initial_secret,
-                            sizeof(client_initial_secret)))
-        goto err;
-
-    /*
-     * Any packets we previously could not decrypt, we may now be able to
-     * decrypt, so move any datagrams containing deferred packets from the
-     * deferred to the pending queue.
-     */
-    qrl_requeue_deferred(qrl);
-    return 1;
-
-err:
-    if (have_rx)
-        qrl_el_discard(qrl, QUIC_ENC_LEVEL_INITIAL, /*is_tx=*/0, 0);
-
-    EVP_MD_free(sha256);
-    return 0;
-}
-
-int ossl_qrl_discard_enc_level(OSSL_QRL *qrl, uint32_t enc_level)
+int ossl_qrx_provide_secret(OSSL_QRX *qrx, uint32_t enc_level,
+                            uint32_t suite_id, EVP_MD *md,
+                            const unsigned char *secret, size_t secret_len)
 {
     if (enc_level >= QUIC_ENC_LEVEL_NUM)
         return 0;
 
-    qrl_el_discard(qrl, enc_level, 0, 1);
+    if (!ossl_qrl_enc_level_set_provide_secret(&qrx->el_set,
+                                               qrx->libctx,
+                                               qrx->propq,
+                                               enc_level,
+                                               suite_id,
+                                               md,
+                                               secret,
+                                               secret_len))
+        return 0;
+
+    /*
+     * Any packets we previously could not decrypt, we may now be able to
+     * decrypt, so move any datagrams containing deferred packets from the
+     * deferred to the pending queue.
+     */
+    qrx_requeue_deferred(qrx);
+    return 1;
+}
+
+int ossl_qrx_discard_enc_level(OSSL_QRX *qrx, uint32_t enc_level)
+{
+    if (enc_level >= QUIC_ENC_LEVEL_NUM)
+        return 0;
+
+    ossl_qrl_enc_level_set_discard(&qrx->el_set, enc_level, 1);
     return 1;
 }
 
 /* Returns 1 if there are one or more pending RXEs. */
-int ossl_qrl_processed_read_pending(OSSL_QRL *qrl)
+int ossl_qrx_processed_read_pending(OSSL_QRX *qrx)
 {
-    return qrl->rx_pending.head != NULL;
+    return qrx->rx_pending.head != NULL;
 }
 
 /* Returns 1 if there are yet-unprocessed packets. */
-int ossl_qrl_unprocessed_read_pending(OSSL_QRL *qrl)
+int ossl_qrx_unprocessed_read_pending(OSSL_QRX *qrx)
 {
-    return qrl->urx_pending.head != NULL || qrl->urx_deferred.head != NULL;
+    return qrx->urx_pending.head != NULL || qrx->urx_deferred.head != NULL;
 }
 
 /* Pop the next pending RXE. Returns NULL if no RXE is pending. */
-static RXE *qrl_pop_pending_rxe(OSSL_QRL *qrl)
+static RXE *qrx_pop_pending_rxe(OSSL_QRX *qrx)
 {
-    RXE *rxe = qrl->rx_pending.head;
+    RXE *rxe = qrx->rx_pending.head;
 
     if (rxe == NULL)
         return NULL;
 
-    rxe_remove(&qrl->rx_pending, rxe);
+    rxe_remove(&qrx->rx_pending, rxe);
     return rxe;
 }
 
 /* Allocate a new RXE. */
-static RXE *qrl_alloc_rxe(size_t alloc_len)
+static RXE *qrx_alloc_rxe(size_t alloc_len)
 {
     RXE *rxe;
 
@@ -647,18 +335,18 @@ static RXE *qrl_alloc_rxe(size_t alloc_len)
  * alloc_len is a hint which may be used to determine the RXE size if allocation
  * is necessary. Returns NULL on allocation failure.
  */
-static RXE *qrl_ensure_free_rxe(OSSL_QRL *qrl, size_t alloc_len)
+static RXE *qrx_ensure_free_rxe(OSSL_QRX *qrx, size_t alloc_len)
 {
     RXE *rxe;
 
-    if (qrl->rx_free.head != NULL)
-        return qrl->rx_free.head;
+    if (qrx->rx_free.head != NULL)
+        return qrx->rx_free.head;
 
-    rxe = qrl_alloc_rxe(alloc_len);
+    rxe = qrx_alloc_rxe(alloc_len);
     if (rxe == NULL)
         return NULL;
 
-    rxe_insert_tail(&qrl->rx_free, rxe);
+    rxe_insert_tail(&qrx->rx_free, rxe);
     return rxe;
 }
 
@@ -667,7 +355,7 @@ static RXE *qrl_ensure_free_rxe(OSSL_QRL *qrl, size_t alloc_len)
  * of the RXE might change; the new address is returned, or NULL on failure, in
  * which case the original RXE remains valid.
  */
-static RXE *qrl_resize_rxe(RXE_LIST *rxl, RXE *rxe, size_t n)
+static RXE *qrx_resize_rxe(RXE_LIST *rxl, RXE *rxe, size_t n)
 {
     RXE *rxe2;
 
@@ -706,21 +394,21 @@ static RXE *qrl_resize_rxe(RXE_LIST *rxl, RXE *rxe, size_t n)
  * Ensure the data buffer attached to an RXE is at least n bytes in size.
  * Returns NULL on failure.
  */
-static RXE *qrl_reserve_rxe(RXE_LIST *rxl,
+static RXE *qrx_reserve_rxe(RXE_LIST *rxl,
                             RXE *rxe, size_t n)
 {
     if (rxe->alloc_len >= n)
         return rxe;
 
-    return qrl_resize_rxe(rxl, rxe, n);
+    return qrx_resize_rxe(rxl, rxe, n);
 }
 
 /* Return a RXE handed out to the user back to our freelist. */
-static void qrl_recycle_rxe(OSSL_QRL *qrl, RXE *rxe)
+static void qrx_recycle_rxe(OSSL_QRX *qrx, RXE *rxe)
 {
     /* RXE should not be in any list */
     assert(rxe->prev == NULL && rxe->next == NULL);
-    rxe_insert_tail(&qrl->rx_free, rxe);
+    rxe_insert_tail(&qrx->rx_free, rxe);
 }
 
 /*
@@ -730,7 +418,7 @@ static void qrl_recycle_rxe(OSSL_QRL *qrl, RXE *rxe)
  * buffer to, and on success is updated to be the offset pointing after the
  * copied buffer. *pptr is updated to point to the new location of the buffer.
  */
-static int qrl_relocate_buffer(OSSL_QRL *qrl, RXE **prxe, size_t *pi,
+static int qrx_relocate_buffer(OSSL_QRX *qrx, RXE **prxe, size_t *pi,
                                const unsigned char **pptr, size_t buf_len)
 {
     RXE *rxe;
@@ -739,7 +427,7 @@ static int qrl_relocate_buffer(OSSL_QRL *qrl, RXE **prxe, size_t *pi,
     if (!buf_len)
         return 1;
 
-    if ((rxe = qrl_reserve_rxe(&qrl->rx_free, *prxe, *pi + buf_len)) == NULL)
+    if ((rxe = qrx_reserve_rxe(&qrx->rx_free, *prxe, *pi + buf_len)) == NULL)
         return 0;
 
     *prxe = rxe;
@@ -751,7 +439,7 @@ static int qrl_relocate_buffer(OSSL_QRL *qrl, RXE **prxe, size_t *pi,
     return 1;
 }
 
-static uint32_t qrl_determine_enc_level(const QUIC_PKT_HDR *hdr)
+static uint32_t qrx_determine_enc_level(const QUIC_PKT_HDR *hdr)
 {
     switch (hdr->type) {
         case QUIC_PKT_TYPE_INITIAL:
@@ -775,11 +463,11 @@ static uint32_t rxe_determine_pn_space(RXE *rxe)
 {
     uint32_t enc_level;
 
-    enc_level = qrl_determine_enc_level(&rxe->hdr);
+    enc_level = qrx_determine_enc_level(&rxe->hdr);
     return ossl_quic_enc_level_to_pn_space(enc_level);
 }
 
-static int qrl_validate_hdr_early(OSSL_QRL *qrl, RXE *rxe,
+static int qrx_validate_hdr_early(OSSL_QRX *qrx, RXE *rxe,
                                   RXE *first_rxe)
 {
     /* Ensure version is what we want. */
@@ -809,12 +497,12 @@ static int qrl_validate_hdr_early(OSSL_QRL *qrl, RXE *rxe,
 }
 
 /* Validate header and decode PN. */
-static int qrl_validate_hdr(OSSL_QRL *qrl, RXE *rxe)
+static int qrx_validate_hdr(OSSL_QRX *qrx, RXE *rxe)
 {
     int pn_space = rxe_determine_pn_space(rxe);
 
     if (!ossl_quic_wire_decode_pkt_hdr_pn(rxe->hdr.pn, rxe->hdr.pn_len,
-                                          qrl->rx_largest_pn[pn_space],
+                                          qrx->largest_pn[pn_space],
                                           &rxe->pn))
         return 0;
 
@@ -822,8 +510,8 @@ static int qrl_validate_hdr(OSSL_QRL *qrl, RXE *rxe)
      * Allow our user to decide whether to discard the packet before we try and
      * decrypt it.
      */
-    if (qrl->rx_validation_cb != NULL
-        && !qrl->rx_validation_cb(rxe->pn, pn_space, qrl->rx_validation_cb_arg))
+    if (qrx->validation_cb != NULL
+        && !qrx->validation_cb(rxe->pn, pn_space, qrx->validation_cb_arg))
         return 0;
 
     return 1;
@@ -838,7 +526,7 @@ static int qrl_validate_hdr(OSSL_QRL *qrl, RXE *rxe)
  * to *dec_len on success, which will always be equal to or less than (usually
  * less than) src_len.
  */
-static int qrl_decrypt_pkt_body(OSSL_QRL *qrl, unsigned char *dst,
+static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
                                 const unsigned char *src,
                                 size_t src_len, size_t *dec_len,
                                 const unsigned char *aad, size_t aad_len,
@@ -847,13 +535,24 @@ static int qrl_decrypt_pkt_body(OSSL_QRL *qrl, unsigned char *dst,
     int l = 0, l2 = 0;
     unsigned char nonce[EVP_MAX_IV_LENGTH];
     size_t nonce_len, i;
-    OSSL_QRL_ENC_LEVEL *el = &qrl->rx_el[enc_level];
+    OSSL_QRL_ENC_LEVEL *el = ossl_qrl_enc_level_set_get(&qrx->el_set,
+                                                        enc_level, 1);
 
-    if (src_len > INT_MAX || aad_len > INT_MAX || el->tag_len >= src_len)
+    if (src_len > INT_MAX || aad_len > INT_MAX)
         return 0;
 
     /* We should not have been called if we do not have key material. */
-    if (!ossl_assert(qrl_have_el(qrl, enc_level, /*is_tx=*/0) == 1))
+    if (!ossl_assert(el != NULL))
+        return 0;
+
+    if (el->tag_len >= src_len)
+        return 0;
+
+    /* 
+     * If we have failed to authenticate a certain number of ciphertexts, refuse
+     * to decrypt any more ciphertexts.
+     */
+    if (el->op_count >= ossl_qrl_get_suite_max_forged_pkt(el->suite_id))
         return 0;
 
     /* Construct nonce (nonce=IV ^ PN). */
@@ -885,8 +584,11 @@ static int qrl_decrypt_pkt_body(OSSL_QRL *qrl, unsigned char *dst,
         return 0;
 
     /* Ensure authentication succeeded. */
-    if (EVP_CipherFinal_ex(el->cctx, NULL, &l2) != 1)
+    if (EVP_CipherFinal_ex(el->cctx, NULL, &l2) != 1) {
+        /* Authentication failed, increment failed auth counter. */
+        ++el->op_count;
         return 0;
+    }
 
     *dec_len = l;
     return 1;
@@ -898,7 +600,7 @@ static ossl_inline void ignore_res(int x)
 }
 
 /* Process a single packet in a datagram. */
-static int qrl_process_pkt(OSSL_QRL *qrl, QUIC_URXE *urxe,
+static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
                            PACKET *pkt, size_t pkt_idx,
                            RXE **first_rxe,
                            size_t datagram_len)
@@ -917,7 +619,7 @@ static int qrl_process_pkt(OSSL_QRL *qrl, QUIC_URXE *urxe,
      * Get a free RXE. If we need to allocate a new one, use the packet length
      * as a good ballpark figure.
      */
-    rxe = qrl_ensure_free_rxe(qrl, PACKET_remaining(pkt));
+    rxe = qrx_ensure_free_rxe(qrx, PACKET_remaining(pkt));
     if (rxe == NULL)
         return 0;
 
@@ -932,7 +634,7 @@ static int qrl_process_pkt(OSSL_QRL *qrl, QUIC_URXE *urxe,
      */
     need_second_decode = !pkt_is_marked(&urxe->hpr_removed, pkt_idx);
     if (!ossl_quic_wire_decode_pkt_hdr(pkt,
-                                      qrl->short_conn_id_len,
+                                      qrx->short_conn_id_len,
                                       need_second_decode, &rxe->hdr, &ptrs))
         goto malformed;
 
@@ -954,7 +656,7 @@ static int qrl_process_pkt(OSSL_QRL *qrl, QUIC_URXE *urxe,
      * now skip over it if we already processed it.
      */
     if (already_processed
-        || !qrl_validate_hdr_early(qrl, rxe, pkt_idx == 0 ? NULL : *first_rxe))
+        || !qrx_validate_hdr_early(qrx, rxe, pkt_idx == 0 ? NULL : *first_rxe))
         goto malformed;
 
     if (rxe->hdr.type == QUIC_PKT_TYPE_VERSION_NEG
@@ -966,7 +668,7 @@ static int qrl_process_pkt(OSSL_QRL *qrl, QUIC_URXE *urxe,
          */
 
         /* Just copy the payload from the URXE to the RXE. */
-        if ((rxe = qrl_reserve_rxe(&qrl->rx_free, rxe, rxe->hdr.len)) == NULL)
+        if ((rxe = qrx_reserve_rxe(&qrx->rx_free, rxe, rxe->hdr.len)) == NULL)
             /*
              * Allocation failure. EOP will be pointing to the end of the
              * datagram so processing of this datagram will end here.
@@ -980,16 +682,16 @@ static int qrl_process_pkt(OSSL_QRL *qrl, QUIC_URXE *urxe,
         rxe->hdr.data = rxe_data(rxe);
 
         /* Move RXE to pending. */
-        rxe_remove(&qrl->rx_free, rxe);
-        rxe_insert_tail(&qrl->rx_pending, rxe);
+        rxe_remove(&qrx->rx_free, rxe);
+        rxe_insert_tail(&qrx->rx_pending, rxe);
         return 0; /* success, did not defer */
     }
 
     /* Determine encryption level of packet. */
-    enc_level = qrl_determine_enc_level(&rxe->hdr);
+    enc_level = qrx_determine_enc_level(&rxe->hdr);
 
     /* If we do not have keying material for this encryption level yet, defer. */
-    switch (qrl_have_el(qrl, enc_level, /*is_tx=*/0)) {
+    switch (ossl_qrl_enc_level_set_have_el(&qrx->el_set, enc_level)) {
         case 1:
             /* We have keys. */
             break;
@@ -1019,7 +721,7 @@ static int qrl_process_pkt(OSSL_QRL *qrl, QUIC_URXE *urxe,
      * Relocate token buffer and fix pointer.
      */
     if (rxe->hdr.type == QUIC_PKT_TYPE_INITIAL
-        && !qrl_relocate_buffer(qrl, &rxe, &i, &rxe->hdr.token,
+        && !qrx_relocate_buffer(qrx, &rxe, &i, &rxe->hdr.token,
                                 rxe->hdr.token_len))
         goto malformed;
 
@@ -1027,7 +729,11 @@ static int qrl_process_pkt(OSSL_QRL *qrl, QUIC_URXE *urxe,
     *pkt = orig_pkt;
 
     if (need_second_decode) {
-        if (!ossl_quic_hdr_protector_decrypt(&qrl->rx_el[enc_level].hpr, &ptrs))
+        OSSL_QRL_ENC_LEVEL *el
+            = ossl_qrl_enc_level_set_get(&qrx->el_set, enc_level, 1);
+
+        assert(el != NULL); /* Already checked above */
+        if (!ossl_quic_hdr_protector_decrypt(&el->hpr, &ptrs))
             goto malformed;
 
         /*
@@ -1037,13 +743,13 @@ static int qrl_process_pkt(OSSL_QRL *qrl, QUIC_URXE *urxe,
         pkt_mark(&urxe->hpr_removed, pkt_idx);
 
         /* Decode the now unprotected header. */
-        if (ossl_quic_wire_decode_pkt_hdr(pkt, qrl->short_conn_id_len,
+        if (ossl_quic_wire_decode_pkt_hdr(pkt, qrx->short_conn_id_len,
                                           0, &rxe->hdr, NULL) != 1)
             goto malformed;
     }
 
     /* Validate header and decode PN. */
-    if (!qrl_validate_hdr(qrl, rxe))
+    if (!qrx_validate_hdr(qrx, rxe))
         goto malformed;
 
     /*
@@ -1051,7 +757,7 @@ static int qrl_process_pkt(OSSL_QRL *qrl, QUIC_URXE *urxe,
      * HANDSHAKE packet.
      */
     if (enc_level == QUIC_ENC_LEVEL_HANDSHAKE)
-        qrl_el_discard(qrl, QUIC_ENC_LEVEL_INITIAL, 0, 1);
+        ossl_qrl_enc_level_set_discard(&qrx->el_set, QUIC_ENC_LEVEL_INITIAL, 1);
 
     /*
      * The AAD data is the entire (unprotected) packet header including the PN.
@@ -1061,7 +767,7 @@ static int qrl_process_pkt(OSSL_QRL *qrl, QUIC_URXE *urxe,
     aad_len = rxe->hdr.data - sop;
 
     /* Ensure the RXE buffer size is adequate for our payload. */
-    if ((rxe = qrl_reserve_rxe(&qrl->rx_free, rxe, rxe->hdr.len + i)) == NULL) {
+    if ((rxe = qrx_reserve_rxe(&qrx->rx_free, rxe, rxe->hdr.len + i)) == NULL) {
         /*
          * Allocation failure, treat as malformed and do not bother processing
          * any further packets in the datagram as they are likely to also
@@ -1085,7 +791,7 @@ static int qrl_process_pkt(OSSL_QRL *qrl, QUIC_URXE *urxe,
      * corrupted.
      */
     dst = (unsigned char *)rxe_data(rxe) + i;
-    if (!qrl_decrypt_pkt_body(qrl, dst, rxe->hdr.data, rxe->hdr.len,
+    if (!qrx_decrypt_pkt_body(qrx, dst, rxe->hdr.data, rxe->hdr.len,
                               &dec_len, sop, aad_len, rxe->pn, enc_level))
         goto malformed;
 
@@ -1117,16 +823,16 @@ static int qrl_process_pkt(OSSL_QRL *qrl, QUIC_URXE *urxe,
 
     /* We processed the PN successfully, so update largest processed PN. */
     pn_space = rxe_determine_pn_space(rxe);
-    if (rxe->pn > qrl->rx_largest_pn[pn_space])
-        qrl->rx_largest_pn[pn_space] = rxe->pn;
+    if (rxe->pn > qrx->largest_pn[pn_space])
+        qrx->largest_pn[pn_space] = rxe->pn;
 
     /* Copy across network addresses from URXE to RXE. */
     rxe->peer   = urxe->peer;
     rxe->local  = urxe->local;
 
     /* Move RXE to pending. */
-    rxe_remove(&qrl->rx_free, rxe);
-    rxe_insert_tail(&qrl->rx_pending, rxe);
+    rxe_remove(&qrx->rx_free, rxe);
+    rxe_insert_tail(&qrx->rx_pending, rxe);
     return 0; /* success, did not defer; not distinguished from failure */
 
 cannot_decrypt:
@@ -1175,7 +881,7 @@ malformed:
 }
 
 /* Process a datagram which was received. */
-static int qrl_process_datagram(OSSL_QRL *qrl, QUIC_URXE *e,
+static int qrx_process_datagram(OSSL_QRX *qrx, QUIC_URXE *e,
                                 const unsigned char *data,
                                 size_t data_len)
 {
@@ -1184,7 +890,7 @@ static int qrl_process_datagram(OSSL_QRL *qrl, QUIC_URXE *e,
     size_t pkt_idx = 0;
     RXE *first_rxe = NULL;
 
-    qrl->bytes_received += data_len;
+    qrx->bytes_received += data_len;
 
     if (!PACKET_buf_init(&pkt, data, data_len))
         return 0;
@@ -1209,10 +915,10 @@ static int qrl_process_datagram(OSSL_QRL *qrl, QUIC_URXE *e,
          * we should still try to process any packets following it.
          *
          * In the case where the packet is so malformed we can't determine its
-         * lenngth, qrl_process_pkt will take care of advancing to the end of
+         * lenngth, qrx_process_pkt will take care of advancing to the end of
          * the packet, so we will exit the loop automatically in this case.
          */
-        if (qrl_process_pkt(qrl, e, &pkt, pkt_idx, &first_rxe, data_len))
+        if (qrx_process_pkt(qrx, e, &pkt, pkt_idx, &first_rxe, data_len))
             have_deferred = 1;
     }
 
@@ -1221,12 +927,12 @@ static int qrl_process_datagram(OSSL_QRL *qrl, QUIC_URXE *e,
 }
 
 /* Process a single pending URXE. */
-static int qrl_process_one_urxl(OSSL_QRL *qrl, QUIC_URXE *e)
+static int qrx_process_one_urxl(OSSL_QRX *qrx, QUIC_URXE *e)
 {
     int was_deferred;
 
     /* The next URXE we process should be at the head of the pending list. */
-    if (!ossl_assert(e == qrl->urx_pending.head))
+    if (!ossl_assert(e == qrx->urx_pending.head))
         return 0;
 
     /*
@@ -1235,47 +941,47 @@ static int qrl_process_one_urxl(OSSL_QRL *qrl, QUIC_URXE *e)
      * datagram, we do not attempt to process it again and silently eat the
      * error.
      */
-    was_deferred = qrl_process_datagram(qrl, e, ossl_quic_urxe_data(e),
+    was_deferred = qrx_process_datagram(qrx, e, ossl_quic_urxe_data(e),
                                         e->data_len);
 
     /*
      * Remove the URXE from the pending list and return it to
      * either the free or deferred list.
      */
-    ossl_quic_urxe_remove(&qrl->urx_pending, e);
+    ossl_quic_urxe_remove(&qrx->urx_pending, e);
     if (was_deferred > 0)
-        ossl_quic_urxe_insert_tail(&qrl->urx_deferred, e);
+        ossl_quic_urxe_insert_tail(&qrx->urx_deferred, e);
     else
-        ossl_quic_demux_release_urxe(qrl->rx_demux, e);
+        ossl_quic_demux_release_urxe(qrx->demux, e);
 
     return 1;
 }
 
 /* Process any pending URXEs to generate pending RXEs. */
-static int qrl_process_urxl(OSSL_QRL *qrl)
+static int qrx_process_urxl(OSSL_QRX *qrx)
 {
     QUIC_URXE *e;
 
-    while ((e = qrl->urx_pending.head) != NULL)
-        if (!qrl_process_one_urxl(qrl, e))
+    while ((e = qrx->urx_pending.head) != NULL)
+        if (!qrx_process_one_urxl(qrx, e))
             return 0;
 
     return 1;
 }
 
-int ossl_qrl_read_pkt(OSSL_QRL *qrl, OSSL_QRL_RX_PKT *pkt)
+int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt)
 {
     RXE *rxe;
 
-    if (!ossl_qrl_processed_read_pending(qrl)) {
-        if (!qrl_process_urxl(qrl))
+    if (!ossl_qrx_processed_read_pending(qrx)) {
+        if (!qrx_process_urxl(qrx))
             return 0;
 
-        if (!ossl_qrl_processed_read_pending(qrl))
+        if (!ossl_qrx_processed_read_pending(qrx))
             return 0;
     }
 
-    rxe = qrl_pop_pending_rxe(qrl);
+    rxe = qrx_pop_pending_rxe(qrx);
     if (!ossl_assert(rxe != NULL))
         return 0;
 
@@ -1288,28 +994,47 @@ int ossl_qrl_read_pkt(OSSL_QRL *qrl, OSSL_QRL_RX_PKT *pkt)
     return 1;
 }
 
-void ossl_qrl_release_pkt(OSSL_QRL *qrl, void *handle)
+void ossl_qrx_release_pkt(OSSL_QRX *qrx, void *handle)
 {
     RXE *rxe = handle;
 
-    qrl_recycle_rxe(qrl, rxe);
+    qrx_recycle_rxe(qrx, rxe);
 }
 
-uint64_t ossl_qrl_get_bytes_received(OSSL_QRL *qrl, int clear)
+uint64_t ossl_qrx_get_bytes_received(OSSL_QRX *qrx, int clear)
 {
-    uint64_t v = qrl->bytes_received;
+    uint64_t v = qrx->bytes_received;
 
     if (clear)
-        qrl->bytes_received = 0;
+        qrx->bytes_received = 0;
 
     return v;
 }
 
-int ossl_qrl_set_early_rx_validation_cb(OSSL_QRL *qrl,
-                                        ossl_qrl_early_rx_validation_cb *cb,
-                                        void *cb_arg)
+int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
+                                     ossl_qrx_early_validation_cb *cb,
+                                     void *cb_arg)
 {
-    qrl->rx_validation_cb       = cb;
-    qrl->rx_validation_cb_arg   = cb_arg;
+    qrx->validation_cb       = cb;
+    qrx->validation_cb_arg   = cb_arg;
     return 1;
+}
+
+uint64_t ossl_qrx_get_cur_epoch_forged_pkt_count(OSSL_QRX *qrx,
+                                                 uint32_t enc_level)
+{
+    OSSL_QRL_ENC_LEVEL *el = ossl_qrl_enc_level_set_get(&qrx->el_set,
+                                                        enc_level, 1);
+
+    return el == NULL ? UINT64_MAX : el->op_count;
+}
+
+uint64_t ossl_qrx_get_max_epoch_forged_pkt_count(OSSL_QRX *qrx,
+                                                 uint32_t enc_level)
+{
+    OSSL_QRL_ENC_LEVEL *el = ossl_qrl_enc_level_set_get(&qrx->el_set,
+                                                        enc_level, 1);
+
+    return el == NULL ? UINT64_MAX
+        : ossl_qrl_get_suite_max_forged_pkt(el->suite_id);
 }

@@ -26,6 +26,27 @@
 # define QUIC_PKT_TYPE_VERSION_NEG    6
 
 /*
+ * Determine encryption level from packet type. Returns QUIC_ENC_LEVEL_NUM if
+ * the packet is not of a type which is encrypted.
+ */
+static ossl_inline ossl_unused uint32_t
+ossl_quic_pkt_type_to_enc_level(uint32_t pkt_type)
+{
+    switch (pkt_type) {
+        case QUIC_PKT_TYPE_INITIAL:
+            return QUIC_ENC_LEVEL_INITIAL;
+        case QUIC_PKT_TYPE_HANDSHAKE:
+            return QUIC_ENC_LEVEL_HANDSHAKE;
+        case QUIC_PKT_TYPE_0RTT:
+            return QUIC_ENC_LEVEL_0RTT;
+        case QUIC_PKT_TYPE_1RTT:
+            return QUIC_ENC_LEVEL_1RTT;
+        default:
+            return QUIC_ENC_LEVEL_NUM;
+    }
+}
+
+/*
  * Smallest possible QUIC packet size as per RFC (aside from version negotiation
  * packets).
  */
@@ -393,6 +414,16 @@ int ossl_quic_wire_get_pkt_hdr_dst_conn_id(const unsigned char *buf,
                                            size_t buf_len,
                                            size_t short_conn_id_len,
                                            QUIC_CONN_ID *dst_conn_id);
+
+/*
+ * Precisely predicts the encoded length of a packet header structure.
+ *
+ * May return 0 if the packet header is not valid, but the fact that this
+ * function returns non-zero does not guarantee that
+ * ossl_quic_wire_encode_pkt_hdr() will succeed.
+ */
+int ossl_quic_wire_get_encoded_pkt_hdr_len(size_t short_conn_id_len,
+                                           const QUIC_PKT_HDR *hdr);
 
 /*
  * Packet Number Encoding

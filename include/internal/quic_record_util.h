@@ -11,6 +11,10 @@
 # define OSSL_QUIC_RECORD_UTIL_H
 
 # include <openssl/ssl.h>
+# include "internal/quic_types.h"
+
+struct ossl_qrx_st;
+struct ossl_qtx_st;
 
 /*
  * QUIC Key Derivation Utilities
@@ -24,6 +28,40 @@ int ossl_quic_hkdf_extract(OSSL_LIB_CTX *libctx,
                            const unsigned char *salt, size_t salt_len,
                            const unsigned char *ikm, size_t ikm_len,
                            unsigned char *out, size_t out_len);
+
+/*
+ * A QUIC client sends its first INITIAL packet with a random DCID, which
+ * is used to compute the secrets used for INITIAL packet encryption in both
+ * directions (both client-to-server and server-to-client).
+ *
+ * This function performs the necessary DCID-based key derivation, and then
+ * provides the derived key material for the INITIAL encryption level to a QRX
+ * instance, a QTX instance, or both.
+ *
+ * This function derives the necessary key material and then:
+ *   - if qrx is non-NULL, provides the appropriate secret to it;
+ *   - if qtx is non-NULL, provides the appropriate secret to it.
+ *
+ * If both qrx and qtx are NULL, this is a no-op. This function is equivalent to
+ * making the appropriate calls to ossl_qrx_provide_secret() and
+ * ossl_qtx_provide_secret().
+ *
+ * It is possible to use a QRX or QTX without ever calling this, for example if
+ * there is no desire to handle INITIAL packets (e.g. if a QRX/QTX is
+ * instantiated to succeed a previous QRX/QTX and handle a connection which is
+ * already established). However in this case you should make sure you call
+ * ossl_qrx_discard_enc_level(); see the header for that function for more
+ * details. Calling ossl_qtx_discard_enc_level() is not essential but could
+ * protect against programming errors.
+ *
+ * Returns 1 on success or 0 on error.
+ */
+int ossl_quic_provide_initial_secret(OSSL_LIB_CTX *libctx,
+                                     const char *propq,
+                                     const QUIC_CONN_ID *dst_conn_id,
+                                     int is_server,
+                                     struct ossl_qrx_st *qrx,
+                                     struct ossl_qtx_st *qtx);
 
 /*
  * QUIC Record Layer Ciphersuite Info
@@ -58,5 +96,17 @@ uint32_t ossl_qrl_get_suite_hdr_prot_cipher_id(uint32_t suite_id);
 
 /* Returns header protection key length in bytes or 0 if suite ID is invalid. */
 uint32_t ossl_qrl_get_suite_hdr_prot_key_len(uint32_t suite_id);
+
+/*
+ * Returns maximum number of packets which may be safely encrypted with a suite
+ * or 0 if suite ID is invalid.
+ */
+uint64_t ossl_qrl_get_suite_max_pkt(uint32_t suite_id);
+
+/*
+ * Returns maximum number of RX'd packets which may safely fail AEAD decryption
+ * for a given suite or 0 if suite ID is invalid.
+ */
+uint64_t ossl_qrl_get_suite_max_forged_pkt(uint32_t suite_id);
 
 #endif

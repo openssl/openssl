@@ -21,15 +21,16 @@
  * The QUIC connection demuxer is the entity responsible for receiving datagrams
  * from the network via a datagram BIO. It parses packet headers to determine
  * each packet's destination connection ID (DCID) and hands off processing of
- * the packet to the correct QUIC Record Layer (QRL)'s RX side.
+ * the packet to the correct QUIC Record Layer (QRL)'s RX side (known as the
+ * QRX).
  *
- * A QRL is instantiated per QUIC connection and contains the cryptographic
+ * A QRX is instantiated per QUIC connection and contains the cryptographic
  * resources needed to decrypt QUIC packets for that connection. Received
- * datagrams are passed from the demuxer to the QRL via a callback registered
- * for a specific DCID by the QRL; thus the demuxer has no specific knowledge of
- * the QRL and is not coupled to it.
+ * datagrams are passed from the demuxer to the QRX via a callback registered
+ * for a specific DCID by the QRX; thus the demuxer has no specific knowledge of
+ * the QRX and is not coupled to it.
  *
- * A connection may have multiple connection IDs associated with it; a QRL
+ * A connection may have multiple connection IDs associated with it; a QRX
  * handles this simply by registering multiple connection IDs with the demuxer
  * via multiple register calls.
  *
@@ -49,12 +50,12 @@
  * packets, however, this is not the demuxer's concern. QUIC prohibits different
  * packets in the same datagram from containing different DCIDs; the demuxer
  * only considers the DCID of the first packet in a datagram when deciding how
- * to route a received datagram, and it is the responsibility of the QRL to
+ * to route a received datagram, and it is the responsibility of the QRX to
  * enforce this rule. Packets other than the first packet in a datagram are not
  * examined by the demuxer, and the demuxer does not perform validation of
  * packet headers other than to the minimum extent necessary to extract the
  * DCID; further parsing and validation of packet headers is the responsibility
- * of the QRL.
+ * of the QRX.
  *
  * Rather than defining an opaque interface, the URXE structure internals
  * are exposed. Since the demuxer is only exposed to other parts of the QUIC
@@ -62,10 +63,10 @@
  * advantages:
  *
  *   - Fields in the URXE can be allocated to support requirements in other
- *     components, like the QRL, which would otherwise have to allocate extra
+ *     components, like the QRX, which would otherwise have to allocate extra
  *     memory corresponding to each URXE.
  *
- *   - Other components, like the QRL, can keep the URXE in queues of its own
+ *   - Other components, like the QRX, can keep the URXE in queues of its own
  *     when it is not being managed by the demuxer.
  *
  * URX Queue Structure
@@ -99,7 +100,7 @@ struct quic_urxe_st {
     /*
      * Bitfields per packet. processed indicates the packet has been processed
      * and must not be processed again, hpr_removed indicates header protection
-     * has already been removed. Used by QRL only; not used by the demuxer.
+     * has already been removed. Used by QRX only; not used by the demuxer.
      */
     uint64_t        processed, hpr_removed;
 
