@@ -35,6 +35,7 @@
 # include "internal/tsan_assist.h"
 # include "internal/bio.h"
 # include "internal/ktls.h"
+# include "internal/time.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
@@ -600,8 +601,7 @@ struct ssl_session_st {
     CRYPTO_REF_COUNT references;
     time_t timeout;
     time_t time;
-    time_t calc_timeout;
-    int timeout_ovf;
+    OSSL_TIME calc_timeout;
     unsigned int compress_meth; /* Need to lookup the method */
     const SSL_CIPHER *cipher;
     unsigned long cipher_id;    /* when ASN.1 loaded, this needs to be used to

@@ -77,6 +77,16 @@ void ossl_time_time_to_timeval(OSSL_TIME t, struct timeval *out)
     out->tv_usec = (t.t % OSSL_TIME_SECOND) / (OSSL_TIME_SECOND / 1000000);
 }
 
+/* Convert time_t to OSSL_TIME */
+static ossl_inline OSSL_TIME ossl_time_from_time_t(time_t t)
+{
+    OSSL_TIME ot;
+
+    ot.t = t;
+    ot.t *= OSSL_TIME_SECOND;
+    return ot;
+}
+
 /* Compare two time values, return -1 if less, 1 if greater and 0 if equal */
 static ossl_unused ossl_inline
 int ossl_time_compare(OSSL_TIME a, OSSL_TIME b)

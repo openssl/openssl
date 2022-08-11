@@ -26,35 +26,22 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
 
 DEFINE_STACK_OF(SSL_SESSION)
 
-__owur static int sess_timedout(time_t t, SSL_SESSION *ss)
+__owur static ossl_inline int sess_timedout(time_t t, SSL_SESSION *ss)
 {
-    /* if timeout overflowed, it can never timeout! */
-    if (ss->timeout_ovf)
-        return 0;
-    return t > ss->calc_timeout;
+    return ossl_time_compare(ossl_time_from_time_t(t), ss->calc_timeout) > 0;
 }
 
 /*
  * Returns -1/0/+1 as other XXXcmp-type functions
- * Takes overflow of calculated timeout into consideration
+ * Takes calculated timeout into consideration
  */
-__owur static int timeoutcmp(SSL_SESSION *a, SSL_SESSION *b)
+__owur static ossl_inline int timeoutcmp(SSL_SESSION *a, SSL_SESSION *b)
 {
-    /* if only one overflowed, then it is greater */
-    if (a->timeout_ovf && !b->timeout_ovf)
-        return 1;
-    if (!a->timeout_ovf && b->timeout_ovf)
-        return -1;
-    /* No overflow, or both overflowed, so straight compare is safe */
-    if (a->calc_timeout < b->calc_timeout)
-        return -1;
-    if (a->calc_timeout > b->calc_timeout)
-        return 1;
-    return 0;
+    return ossl_time_compare(a->calc_timeout, b->calc_timeout);
 }
 
 /*
- * Calculates effective timeout, saving overflow state
+ * Calculates effective timeout
  * Locking must be done by the caller of this function
  */
 void ssl_session_calculate_timeout(SSL_SESSION *ss)
@@ -62,18 +49,9 @@ void ssl_session_calculate_timeout(SSL_SESSION *ss)
     /* Force positive timeout */
     if (ss->timeout < 0)
         ss->timeout = 0;
-    ss->calc_timeout = ss->time + ss->timeout;
-    /*
-     * |timeout| is always zero or positive, so the check for
-     * overflow only needs to consider if |time| is positive
-     */
-    ss->timeout_ovf = ss->time > 0 && ss->calc_timeout < ss->time;
-    /*
-     * N.B. Realistic overflow can only occur in our lifetimes on a
-     *      32-bit machine in January 2038.
-     *      However, There are no controls to limit the |timeout|
-     *      value, except to keep it positive.
-     */
+
+    ss->calc_timeout = ossl_time_add(ossl_time_from_time_t(ss->time),
+                                     ossl_time_from_time_t(ss->timeout));
 }
 
 /*
