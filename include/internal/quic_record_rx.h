@@ -338,34 +338,40 @@ int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
  *
  * We therefore model the following state machine:
  *
- *                          NORMAL  <----------\
- *                             |               |
- *                             |               |
- *                             v               |
- *                      UPDATE_CONFIRMED       |
- *                             |               |
- *                             |               |
- *                             v               |
- *                          COOLDOWN           |
- *                             |               |
- *                             |               |
- *                             \---------------|
  *
- * The RX starts in the NORMAL state. In the NORMAL state, the current expected
- * value of the Key Phase bit is recorded. When a flipped Key Phase bit is
- * detected, the RX attempts to decrypt and authenticate the received packet
- * with the 'next' keys rather than the 'current' keys. If (and only if) this
- * authentication is successful, we move to the UPDATE_CONFIRMED state. (An
- * attacker in the network could flip the Key Phase bit randomly, so it is
- * essential we do nothing until AEAD authentication is complete.)
+ *                               PROVISIONED
+ *                     _______________________________
+ *                    |                               |
+ *   UNPROVISIONED  --|---->  NORMAL  <----------\    |------>  DROPPED
+ *                    |          |               |    |
+ *                    |          |               |    |
+ *                    |          v               |    |
+ *                    |   UPDATE_CONFIRMED       |    |
+ *                    |          |               |    |
+ *                    |          |               |    |
+ *                    |          v               |    |
+ *                    |       COOLDOWN           |    |
+ *                    |          |               |    |
+ *                    |          |               |    |
+ *                    |          \---------------|    |
+ *                    |_______________________________|
+ *
+ *
+ * The RX starts (once a secret has been provisioned) in the NORMAL state. In
+ * the NORMAL state, the current expected value of the Key Phase bit is
+ * recorded. When a flipped Key Phase bit is detected, the RX attempts to
+ * decrypt and authenticate the received packet with the 'next' keys rather than
+ * the 'current' keys. If (and only if) this authentication is successful, we
+ * move to the UPDATE_CONFIRMED state. (An attacker in the network could flip
+ * the Key Phase bit randomly, so it is essential we do nothing until AEAD
+ * authentication is complete.)
  *
  * In the UPDATE_CONFIRMED state, we know a key update is occurring and record
- * that the new Key Phase bit value is the newly current value, but we still
- * keep the old keys around so that we can still process any packets which were
- * still in flight when the key update was initiated. In the UPDATE_CONFIRMED
- * state, a Key Phase bit value different to the current expected value is
- * treated not as the initiation of another key update, but a reference to our
- * old keys.
+ * the new Key Phase bit value as the newly current value, but we still keep the
+ * old keys around so that we can still process any packets which were still in
+ * flight when the key update was initiated. In the UPDATE_CONFIRMED state, a
+ * Key Phase bit value different to the current expected value is treated not as
+* the initiation of another key update, but a reference to our old keys.
  *
  * Eventually we will be reasonably sure we are not going to receive any more
  * packets with the old keys. At this point, we can transition to the COOLDOWN
@@ -405,6 +411,15 @@ int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
  * and making the necessary calls to the TX side by detecting changes to the
  * return value of ossl_qrx_get_key_epoch().
  *
+ * The above states (NORMAL, UPDATE_CONFIRMED, COOLDOWN) can themselves be
+ * considered substates of the PROVISIONED state. Providing a secret to the QRX
+ * for an EL transitions from UNPROVISIONED, the initial state, to PROVISIONED
+ * (NORMAL). Dropping key material for an EL transitions from whatever the
+ * current substate of the PROVISIONED state is to the DROPPED state, which is
+ * the terminal state.
+ *
+ * Note that non-1RTT ELs cannot undergo key update, therefore a non-1RT EL is
+ * always in the NORMAL substate if it is in the PROVISIONED state.
  */
 
 /*

@@ -553,7 +553,7 @@ int ossl_quic_wire_get_encoded_pkt_hdr_len(size_t short_conn_id_len,
             || hdr->pn_len < 1 || hdr->pn_len > 4)
             return 0;
 
-        return 1 + short_conn_id_len;
+        return 1 + short_conn_id_len + hdr->pn_len;
     } else {
         /* Long header. */
         if (hdr->dst_conn_id.id_len > QUIC_MAX_CONN_ID_LEN

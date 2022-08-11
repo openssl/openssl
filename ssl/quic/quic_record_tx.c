@@ -526,7 +526,8 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
                      uint32_t enc_level)
 {
     int ret, needs_encrypt;
-    size_t hdr_len, payload_len, pkt_len, space_left, min_len, orig_data_len;
+    size_t hdr_len, pred_hdr_len, payload_len, pkt_len, space_left;
+    size_t min_len, orig_data_len;
     struct iovec_cur cur;
     QUIC_PKT_HDR_PTRS ptrs;
     unsigned char *hdr_start;
@@ -563,15 +564,15 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
     /* Determine header length. */
     pkt->hdr->data  = NULL;
     pkt->hdr->len   = payload_len;
-    hdr_len = ossl_quic_wire_get_encoded_pkt_hdr_len(pkt->hdr->src_conn_id.id_len,
-                                                     pkt->hdr);
-    if (hdr_len == 0) {
+    pred_hdr_len = ossl_quic_wire_get_encoded_pkt_hdr_len(pkt->hdr->src_conn_id.id_len,
+                                                          pkt->hdr);
+    if (pred_hdr_len == 0) {
         ret = QTX_FAIL_GENERIC;
         goto err;
     }
 
     /* We now definitively know our packet length. */
-    pkt_len = hdr_len + payload_len;
+    pkt_len = pred_hdr_len + payload_len;
 
     if (pkt_len > space_left) {
         ret = QTX_FAIL_INSUFFICIENT_LEN;
@@ -595,6 +596,8 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
     }
 
     hdr_len = (txe_data(txe) + txe->data_len) - hdr_start;
+    assert(hdr_len == pred_hdr_len);
+
     if (!needs_encrypt) {
         /* Just copy the payload across. */
         const unsigned char *src;
