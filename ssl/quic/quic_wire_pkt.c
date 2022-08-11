@@ -406,7 +406,8 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
                                   QUIC_PKT_HDR_PTRS *ptrs)
 {
     unsigned char b0;
-    size_t off_start, off_sample, off_sample_end, off_pn;
+    size_t off_start, off_sample, off_pn;
+    unsigned char *start = WPACKET_get_curr(pkt);
 
     if (!WPACKET_get_total_written(pkt, &off_start))
         return 0;
@@ -517,17 +518,72 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
         return 0;
 
     off_sample = off_pn + 4;
-    if (!WPACKET_get_total_written(pkt, &off_sample_end))
-        return 0;
 
     if (ptrs != NULL) {
-        ptrs->raw_start         = (unsigned char *)pkt->buf->data + off_start;
-        ptrs->raw_sample        = (unsigned char *)pkt->buf->data + off_sample;
-        ptrs->raw_sample_len    = off_sample_end - off_sample;
-        ptrs->raw_pn            = (unsigned char *)pkt->buf->data + off_pn;
+        ptrs->raw_start         = start;
+        ptrs->raw_sample        = start + (off_sample - off_start);
+        ptrs->raw_sample_len
+            = WPACKET_get_curr(pkt) + hdr->len - ptrs->raw_sample;
+        ptrs->raw_pn            = start + (off_pn - off_start);
     }
 
     return 1;
+}
+
+int ossl_quic_wire_get_encoded_pkt_hdr_len(size_t short_conn_id_len,
+                                           const QUIC_PKT_HDR *hdr)
+{
+    size_t len = 0, enclen;
+
+    /* Cannot serialize a partial header, or one whose DCID length is wrong. */
+    if (hdr->partial
+        || (hdr->type == QUIC_PKT_TYPE_1RTT
+            && hdr->dst_conn_id.id_len != short_conn_id_len))
+        return 0;
+
+    if (hdr->type == QUIC_PKT_TYPE_1RTT) {
+        /* Short header. */
+
+        /*
+         * Cannot serialize a header whose DCID length is wrong, or with an
+         * invalid PN length.
+         */
+        if (hdr->dst_conn_id.id_len != short_conn_id_len
+            || short_conn_id_len > QUIC_MAX_CONN_ID_LEN
+            || hdr->pn_len < 1 || hdr->pn_len > 4)
+            return 0;
+
+        return 1 + short_conn_id_len + hdr->pn_len;
+    } else {
+        /* Long header. */
+        if (hdr->dst_conn_id.id_len > QUIC_MAX_CONN_ID_LEN
+            || hdr->src_conn_id.id_len > QUIC_MAX_CONN_ID_LEN)
+            return 0;
+
+        if (hdr->type != QUIC_PKT_TYPE_VERSION_NEG
+            && hdr->type != QUIC_PKT_TYPE_RETRY
+            && (hdr->pn_len < 1 || hdr->pn_len > 4))
+            return 0;
+
+        len += 1 /* Initial byte */ + 4 /* Version */
+            + 1 + hdr->dst_conn_id.id_len /* DCID Len, DCID */
+            + 1 + hdr->src_conn_id.id_len /* SCID Len, SCID */
+            + hdr->pn_len; /* PN */
+
+        if (hdr->type == QUIC_PKT_TYPE_INITIAL) {
+            enclen = ossl_quic_vlint_encode_len(hdr->token_len);
+            if (!enclen)
+                return 0;
+            len += enclen;
+        }
+
+        enclen = ossl_quic_vlint_encode_len(hdr->len);
+        if (!enclen)
+            return 0;
+
+        len += enclen;
+        return len;
+    }
 }
 
 int ossl_quic_wire_get_pkt_hdr_dst_conn_id(const unsigned char *buf,
