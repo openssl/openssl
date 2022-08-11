@@ -140,13 +140,14 @@ int ossl_quic_provide_initial_secret(OSSL_LIB_CTX *libctx,
                                     sha256,
                                     rx_secret,
                                     sizeof(server_initial_secret)))
-        return 0;
+        goto err;
 
     /*
-     * ossl_qrx_provide_secret takes ownership of our ref to SHA256, so get a
-     * new ref for the following call for the TX side.
+     * ossl_qrx_provide_secret takes ownership of our ref to SHA256, so if we
+     * are initialising both sides, get a new ref for the following call for the
+     * TX side.
      */
-    if (!EVP_MD_up_ref(sha256)) {
+    if (qrx != NULL && qtx != NULL && !EVP_MD_up_ref(sha256)) {
         sha256 = NULL;
         goto err;
     }
