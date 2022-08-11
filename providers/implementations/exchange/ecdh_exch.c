@@ -27,6 +27,7 @@
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
 #include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63() */
+#include "prov/ec.h"
 
 static OSSL_FUNC_keyexch_newctx_fn ecdh_newctx;
 static OSSL_FUNC_keyexch_init_fn ecdh_init;
@@ -117,28 +118,6 @@ int ecdh_init(void *vpecdhctx, void *vecdh, const OSSL_PARAM params[])
 }
 
 static
-int ecdh_match_params(const EC_KEY *priv, const EC_KEY *peer)
-{
-    int ret;
-    BN_CTX *ctx = NULL;
-    const EC_GROUP *group_priv = EC_KEY_get0_group(priv);
-    const EC_GROUP *group_peer = EC_KEY_get0_group(peer);
-
-    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(priv));
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-    ret = group_priv != NULL
-          && group_peer != NULL
-          && EC_GROUP_cmp(group_priv, group_peer, ctx) == 0;
-    if (!ret)
-        ERR_raise(ERR_LIB_PROV, PROV_R_MISMATCHING_DOMAIN_PARAMETERS);
-    BN_CTX_free(ctx);
-    return ret;
-}
-
-static
 int ecdh_set_peer(void *vpecdhctx, void *vecdh)
 {
     PROV_ECDH_CTX *pecdhctx = (PROV_ECDH_CTX *)vpecdhctx;
@@ -146,7 +125,7 @@ int ecdh_set_peer(void *vpecdhctx, void *vecdh)
     if (!ossl_prov_is_running()
             || pecdhctx == NULL
             || vecdh == NULL
-            || !ecdh_match_params(pecdhctx->k, vecdh)
+            || !ossl_ec_match_params(pecdhctx->k, vecdh)
             || !ossl_ec_check_key(pecdhctx->libctx, vecdh, 1)
             || !EC_KEY_up_ref(vecdh))
         return 0;

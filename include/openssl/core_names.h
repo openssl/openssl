@@ -502,9 +502,12 @@ extern "C" {
 
 /* KEM parameters */
 #define OSSL_KEM_PARAM_OPERATION            "operation"
+#define OSSL_KEM_PARAM_ID                   "id"
+#define OSSL_KEM_PARAM_IKME                 "ikme"
 
 /* OSSL_KEM_PARAM_OPERATION values */
 #define OSSL_KEM_PARAM_OPERATION_RSASVE     "RSASVE"
+#define OSSL_KEM_PARAM_OPERATION_HPKE       "HPKE"
 
 /* Capabilities */
 

@@ -626,7 +626,6 @@ size_t ossl_ec_key_simple_priv2oct(const EC_KEY *eckey,
 int ossl_ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf,
                                 size_t len);
 int ossl_ec_key_simple_generate_key(EC_KEY *eckey);
-int ossl_ec_key_simple_generate_public_key(EC_KEY *eckey);
 int ossl_ec_key_simple_check_key(const EC_KEY *eckey);
 
 int ossl_ec_curve_nid_from_params(const EC_GROUP *group, BN_CTX *ctx);

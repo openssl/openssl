@@ -2,7 +2,7 @@ SUBDIRS=der
 
 SOURCE[../libcommon.a]=provider_err.c provider_ctx.c
 $FIPSCOMMON=provider_util.c capabilities.c bio_prov.c digest_to_nid.c\
-            securitycheck.c provider_seeding.c
+            securitycheck.c provider_seeding.c ec.c
 SOURCE[../libdefault.a]=$FIPSCOMMON securitycheck_default.c
 IF[{- !$disabled{module} && !$disabled{shared} -}]
   SOURCE[../liblegacy.a]=provider_util.c

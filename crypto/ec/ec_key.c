@@ -236,6 +236,34 @@ int ossl_ec_key_gen(EC_KEY *eckey)
     return ret;
 }
 
+int ossl_ec_set_public_key(EC_KEY *eckey, BIGNUM *priv_key, BN_CTX *ctx)
+{
+    int ok = 0;
+    EC_POINT *pub_key = NULL;
+    const EC_GROUP *group = eckey->group;
+
+    if (eckey->pub_key == NULL) {
+        pub_key = EC_POINT_new(group);
+        if (pub_key == NULL)
+            goto err;
+    } else {
+        pub_key = eckey->pub_key;
+    }
+
+    /* pub_key = priv_key * G (where G is a point on the curve) */
+    if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, ctx))
+        goto err;
+
+    eckey->pub_key = pub_key;
+    ok = 1;
+err:
+    if (!ok) {
+        if (eckey->pub_key != NULL)
+            EC_POINT_set_to_infinity(group, eckey->pub_key);
+    }
+    return ok;
+}
+
 /*
  * ECC Key generation.
  * See SP800-56AR3 5.6.1.2.2 "Key Pair Generation by Testing Candidates"
@@ -304,19 +332,9 @@ static int ec_generate_key(EC_KEY *eckey, int pairwise_test)
             goto err;
     while (BN_is_zero(priv_key)) ;
 
-    if (eckey->pub_key == NULL) {
-        pub_key = EC_POINT_new(group);
-        if (pub_key == NULL)
-            goto err;
-    } else
-        pub_key = eckey->pub_key;
-
-    /* Step (8) : pub_key = priv_key * G (where G is a point on the curve) */
-    if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, ctx))
+    if (!ossl_ec_set_public_key(eckey, priv_key, ctx))
         goto err;
-
     eckey->priv_key = priv_key;
-    eckey->pub_key = pub_key;
     priv_key = NULL;
     pub_key = NULL;
 
@@ -339,8 +357,6 @@ err:
     if (!ok) {
         ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
         BN_clear(eckey->priv_key);
-        if (eckey->pub_key != NULL)
-            EC_POINT_set_to_infinity(group, eckey->pub_key);
     }
 
     EC_POINT_free(pub_key);

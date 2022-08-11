@@ -143,6 +143,14 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
     }
 
     switch (operation) {
+    case EVP_PKEY_OP_KEMDERIVE:
+        if (kem->derivekey_init == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ret = -2;
+            goto err;
+        }
+        ret = kem->derivekey_init(ctx->op.encap.algctx, provkey, params);
+        break;
     case EVP_PKEY_OP_ENCAPSULATE:
         if (kem->encapsulate_init == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -178,6 +186,35 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
     return ret;
 }
 
+int EVP_PKEY_KEM_derivekey_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
+{
+    return evp_kem_init(ctx, EVP_PKEY_OP_KEMDERIVE, params);
+}
+
+int EVP_PKEY_KEM_derivekey(EVP_PKEY_CTX *ctx,
+                           unsigned char *pub, size_t *publen,
+                           unsigned char *priv, size_t *privlen,
+                           const unsigned char *ikm, size_t ikmlen)
+{
+    if (ctx == NULL)
+        return 0;
+
+    if (ctx->operation != EVP_PKEY_OP_KEMDERIVE) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
+        return -1;
+    }
+    if (ctx->op.encap.algctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
+    if (pub == NULL || priv == NULL)
+        return 0;
+
+    return ctx->op.encap.kem->derivekey(ctx->op.encap.algctx,
+                                        pub, publen, priv, privlen, ikm, ikmlen);
+}
+
 int EVP_PKEY_encapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 {
     return evp_kem_init(ctx, EVP_PKEY_OP_ENCAPSULATE, params);
@@ -205,6 +242,36 @@ int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
 
     return ctx->op.encap.kem->encapsulate(ctx->op.encap.algctx,
                                           out, outlen, secret, secretlen);
+}
+
+int EVP_PKEY_KEM_set_auth(EVP_PKEY_CTX *ctx, EVP_PKEY *auth)
+{
+    void *provkey = NULL;
+    EVP_KEYMGMT *tmp_keymgmt = NULL, *tmp_keymgmt_tofree = NULL;
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (!EVP_PKEY_CTX_IS_KEM_OP(ctx) || ctx->op.encap.kem == NULL)
+        return -1;
+
+    if (ctx->op.encap.kem->set_auth == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -2;
+    }
+
+    tmp_keymgmt_tofree = tmp_keymgmt =
+        evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)
+                                    EVP_KEM_get0_provider(ctx->op.encap.kem),
+                                    EVP_KEYMGMT_get0_name(ctx->keymgmt),
+                                    ctx->propquery);
+    if (tmp_keymgmt != NULL && auth != NULL)
+        provkey = evp_pkey_export_to_provider(auth, ctx->libctx,
+                                              &tmp_keymgmt, ctx->propquery);
+    EVP_KEYMGMT_free(tmp_keymgmt_tofree);
+    return ctx->op.encap.kem->set_auth(ctx->op.encap.algctx, provkey);
 }
 
 int EVP_PKEY_decapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
@@ -344,6 +411,21 @@ static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
             kem->settable_ctx_params
                 = OSSL_FUNC_kem_settable_ctx_params(fns);
             sparamfncnt++;
+            break;
+        case OSSL_FUNC_KEM_SET_AUTH:
+            if (kem->set_auth != NULL)
+                break;
+            kem->set_auth = OSSL_FUNC_kem_set_auth(fns);
+            break;
+        case OSSL_FUNC_KEM_DERIVEKEY_INIT:
+            if (kem->derivekey_init != NULL)
+                break;
+            kem->derivekey_init = OSSL_FUNC_kem_derivekey_init(fns);
+            break;
+        case OSSL_FUNC_KEM_DERIVEKEY:
+            if (kem->derivekey != NULL)
+                break;
+            kem->derivekey = OSSL_FUNC_kem_derivekey(fns);
             break;
         }
     }

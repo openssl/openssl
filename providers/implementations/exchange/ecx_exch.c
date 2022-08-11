@@ -17,9 +17,6 @@
 #include "crypto/ecx.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#ifdef S390X_EC_ASM
-# include "s390x_arch.h"
-#endif
 
 static OSSL_FUNC_keyexch_newctx_fn x25519_newctx;
 static OSSL_FUNC_keyexch_newctx_fn x448_newctx;
@@ -120,65 +117,8 @@ static int ecx_derive(void *vecxctx, unsigned char *secret, size_t *secretlen,
 
     if (!ossl_prov_is_running())
         return 0;
-
-    if (ecxctx->key == NULL
-            || ecxctx->key->privkey == NULL
-            || ecxctx->peerkey == NULL) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
-        return 0;
-    }
-
-    if (!ossl_assert(ecxctx->keylen == X25519_KEYLEN
-            || ecxctx->keylen == X448_KEYLEN)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
-        return 0;
-    }
-
-    if (secret == NULL) {
-        *secretlen = ecxctx->keylen;
-        return 1;
-    }
-    if (outlen < ecxctx->keylen) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
-        return 0;
-    }
-
-    if (ecxctx->keylen == X25519_KEYLEN) {
-#ifdef S390X_EC_ASM
-        if (OPENSSL_s390xcap_P.pcc[1]
-                & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X25519)) {
-            if (s390x_x25519_mul(secret, ecxctx->peerkey->pubkey,
-                                 ecxctx->key->privkey) == 0) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
-                return 0;
-            }
-        } else
-#endif
-        if (ossl_x25519(secret, ecxctx->key->privkey,
-                        ecxctx->peerkey->pubkey) == 0) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
-            return 0;
-        }
-    } else {
-#ifdef S390X_EC_ASM
-        if (OPENSSL_s390xcap_P.pcc[1]
-                & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X448)) {
-            if (s390x_x448_mul(secret, ecxctx->peerkey->pubkey,
-                               ecxctx->key->privkey) == 0) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
-                return 0;
-            }
-        } else
-#endif
-        if (ossl_x448(secret, ecxctx->key->privkey,
-                      ecxctx->peerkey->pubkey) == 0) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
-            return 0;
-        }
-    }
-
-    *secretlen = ecxctx->keylen;
-    return 1;
+    return ossl_ecx_compute_key(ecxctx->peerkey, ecxctx->key, ecxctx->keylen,
+                                secret, secretlen, outlen);
 }
 
 static void ecx_freectx(void *vecxctx)

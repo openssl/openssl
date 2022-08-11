@@ -1695,6 +1695,7 @@ const char *EVP_PKEY_get0_type_name(const EVP_PKEY *key);
 # define EVP_PKEY_OP_DERIVE              (1<<11)
 # define EVP_PKEY_OP_ENCAPSULATE         (1<<12)
 # define EVP_PKEY_OP_DECAPSULATE         (1<<13)
+# define EVP_PKEY_OP_KEMDERIVE           (1<<14)
 
 # define EVP_PKEY_OP_TYPE_SIG    \
         (EVP_PKEY_OP_SIGN | EVP_PKEY_OP_VERIFY | EVP_PKEY_OP_VERIFYRECOVER \
@@ -1931,7 +1932,12 @@ int EVP_PKEY_decapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[]);
 int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
                          unsigned char *unwrapped, size_t *unwrappedlen,
                          const unsigned char *wrapped, size_t wrappedlen);
-
+int EVP_PKEY_KEM_set_auth(EVP_PKEY_CTX *ctx, EVP_PKEY *auth);
+int EVP_PKEY_KEM_derivekey_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[]);
+int EVP_PKEY_KEM_derivekey(EVP_PKEY_CTX *ctx,
+                           unsigned char *pub, size_t *publen,
+                           unsigned char *priv, size_t *privlen,
+                           const unsigned char *ikm, size_t ikmlen);
 typedef int EVP_PKEY_gen_cb(EVP_PKEY_CTX *ctx);
 
 int EVP_PKEY_fromdata_init(EVP_PKEY_CTX *ctx);

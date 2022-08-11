@@ -815,6 +815,9 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, asym_cipher_settable_ctx_params,
 # define OSSL_FUNC_KEM_GETTABLE_CTX_PARAMS     9
 # define OSSL_FUNC_KEM_SET_CTX_PARAMS         10
 # define OSSL_FUNC_KEM_SETTABLE_CTX_PARAMS    11
+# define OSSL_FUNC_KEM_SET_AUTH               12
+# define OSSL_FUNC_KEM_DERIVEKEY_INIT         13
+# define OSSL_FUNC_KEM_DERIVEKEY              14
 
 OSSL_CORE_MAKE_FUNC(void *, kem_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, kem_encapsulate_init, (void *ctx, void *provkey,
@@ -837,6 +840,14 @@ OSSL_CORE_MAKE_FUNC(int, kem_set_ctx_params,
                     (void *ctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, kem_settable_ctx_params,
                     (void *ctx, void *provctx))
+OSSL_CORE_MAKE_FUNC(int, kem_derivekey_init, (void *ctx, void *provkey,
+                                              const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, kem_derivekey,
+                   (void *ctx,
+                    unsigned char *pub, size_t *publen,
+                    unsigned char *priv, size_t *privlen,
+                    const unsigned char *ikm, size_t ikmlen))
+OSSL_CORE_MAKE_FUNC(int, kem_set_auth, (void *ctx, void *provkey))
 
 /* Encoders and decoders */
 # define OSSL_FUNC_ENCODER_NEWCTX                      1

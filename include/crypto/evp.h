@@ -741,7 +741,8 @@ struct evp_pkey_st {
 
 #define EVP_PKEY_CTX_IS_KEM_OP(ctx) \
     ((ctx)->operation == EVP_PKEY_OP_ENCAPSULATE \
-     || (ctx)->operation == EVP_PKEY_OP_DECAPSULATE)
+     || (ctx)->operation == EVP_PKEY_OP_DECAPSULATE \
+     || (ctx)->operation == EVP_PKEY_OP_KEMDERIVE)
 
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
