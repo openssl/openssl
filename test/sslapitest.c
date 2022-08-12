@@ -7645,11 +7645,24 @@ static int tick_key_cb(SSL *s, unsigned char key_name[16],
 {
     const unsigned char tick_aes_key[16] = "0123456789abcdef";
     const unsigned char tick_hmac_key[16] = "0123456789abcdef";
-    EVP_CIPHER *aes128cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", NULL);
-    EVP_MD *sha256 = EVP_MD_fetch(libctx, "SHA-256", NULL);
+    EVP_CIPHER *aes128cbc;
+    EVP_MD *sha256;
     int ret;
 
     tick_key_cb_called = 1;
+
+    if (tick_key_renew == -1)
+        return 0;
+
+    aes128cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", NULL);
+    if (!TEST_ptr(aes128cbc))
+        return 0;
+    sha256 = EVP_MD_fetch(libctx, "SHA-256", NULL);
+    if (!TEST_ptr(sha256)) {
+        EVP_CIPHER_free(aes128cbc);
+        return 0;
+    }
+
     memset(iv, 0, AES_BLOCK_SIZE);
     memset(key_name, 0, 16);
     if (aes128cbc == NULL
@@ -7675,10 +7688,18 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
     const unsigned char tick_aes_key[16] = "0123456789abcdef";
     unsigned char tick_hmac_key[16] = "0123456789abcdef";
     OSSL_PARAM params[2];
-    EVP_CIPHER *aes128cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", NULL);
+    EVP_CIPHER *aes128cbc;
     int ret;
 
     tick_key_cb_called = 1;
+
+    if (tick_key_renew == -1)
+        return 0;
+
+    aes128cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", NULL);
+    if (!TEST_ptr(aes128cbc))
+        return 0;
+
     memset(iv, 0, AES_BLOCK_SIZE);
     memset(key_name, 0, 16);
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
@@ -7711,10 +7732,14 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
  * Test 9: TLSv1.3, old ticket key callback, ticket, no renewal
  * Test 10: TLSv1.2, old ticket key callback, ticket, renewal
  * Test 11: TLSv1.3, old ticket key callback, ticket, renewal
- * Test 12: TLSv1.2, ticket key callback, ticket, no renewal
- * Test 13: TLSv1.3, ticket key callback, ticket, no renewal
- * Test 14: TLSv1.2, ticket key callback, ticket, renewal
- * Test 15: TLSv1.3, ticket key callback, ticket, renewal
+ * Test 12: TLSv1.2, old ticket key callback, no ticket
+ * Test 13: TLSv1.3, old ticket key callback, no ticket
+ * Test 14: TLSv1.2, ticket key callback, ticket, no renewal
+ * Test 15: TLSv1.3, ticket key callback, ticket, no renewal
+ * Test 16: TLSv1.2, ticket key callback, ticket, renewal
+ * Test 17: TLSv1.3, ticket key callback, ticket, renewal
+ * Test 18: TLSv1.2, ticket key callback, no ticket
+ * Test 19: TLSv1.3, ticket key callback, no ticket
  */
 static int test_ticket_callbacks(int tst)
 {
@@ -7732,15 +7757,18 @@ static int test_ticket_callbacks(int tst)
         return 1;
 #endif
 #ifdef OPENSSL_NO_DEPRECATED_3_0
-    if (tst >= 8 && tst <= 11)
+    if (tst >= 8 && tst <= 13)
         return 1;
 #endif
 
     gen_tick_called = dec_tick_called = tick_key_cb_called = 0;
 
     /* Which tests the ticket key callback should request renewal for */
-    if (tst == 10 || tst == 11 || tst == 14 || tst == 15)
+    
+    if (tst == 10 || tst == 11 || tst == 16 || tst == 17)
         tick_key_renew = 1;
+    else if (tst == 12 || tst == 13 || tst == 18 || tst == 19)
+        tick_key_renew = -1; /* abort sending the ticket/0-length ticket */
     else
         tick_key_renew = 0;
 
@@ -7789,7 +7817,7 @@ static int test_ticket_callbacks(int tst)
                                                  NULL)))
         goto end;
 
-    if (tst >= 12) {
+    if (tst >= 14) {
         if (!TEST_true(SSL_CTX_set_tlsext_ticket_key_evp_cb(sctx, tick_key_evp_cb)))
             goto end;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -7834,7 +7862,8 @@ static int test_ticket_callbacks(int tst)
         goto end;
 
     if (tick_dec_ret == SSL_TICKET_RETURN_IGNORE
-            || tick_dec_ret == SSL_TICKET_RETURN_IGNORE_RENEW) {
+            || tick_dec_ret == SSL_TICKET_RETURN_IGNORE_RENEW
+            || tick_key_renew == -1) {
         if (!TEST_false(SSL_session_reused(clientssl)))
             goto end;
     } else {
@@ -7847,7 +7876,8 @@ static int test_ticket_callbacks(int tst)
                       || tick_dec_ret == SSL_TICKET_RETURN_IGNORE_RENEW
                       || tick_dec_ret == SSL_TICKET_RETURN_USE_RENEW)
                      ? 1 : 0)
-            || !TEST_int_eq(dec_tick_called, 1))
+               /* There is no ticket to decrypt in tests 13 and 19 */
+            || !TEST_int_eq(dec_tick_called, (tst == 13 || tst == 19) ? 0 : 1))
         goto end;
 
     testresult = 1;
@@ -10312,7 +10342,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_info_callback, 6);
     ADD_ALL_TESTS(test_ssl_pending, 2);
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
-    ADD_ALL_TESTS(test_ticket_callbacks, 16);
+    ADD_ALL_TESTS(test_ticket_callbacks, 20);
     ADD_ALL_TESTS(test_shutdown, 7);
     ADD_ALL_TESTS(test_incorrect_shutdown, 2);
     ADD_ALL_TESTS(test_cert_cb, 6);
