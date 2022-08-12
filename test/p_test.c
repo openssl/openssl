@@ -309,7 +309,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
 
 static void p_teardown(void *provctx)
 {
-    P_TEST_CTX *ctx = (P_TEST_CTX *)provctx;
+    P_TEST_CTX *ctx = provctx;
 
 #ifdef PROVIDER_INIT_FUNCTION_NAME
     OSSL_LIB_CTX_free(ctx->libctx);
