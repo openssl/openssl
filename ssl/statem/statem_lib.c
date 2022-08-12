@@ -268,7 +268,7 @@ static int get_cert_verify_tbs_data(SSL_CONNECTION *s, unsigned char *tls13tbs,
     return 1;
 }
 
-int tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
+CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
 {
     EVP_PKEY *pkey = NULL;
     const EVP_MD *md = NULL;
@@ -386,11 +386,11 @@ int tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
 
     OPENSSL_free(sig);
     EVP_MD_CTX_free(mctx);
-    return 1;
+    return CON_FUNC_SUCCESS;
  err:
     OPENSSL_free(sig);
     EVP_MD_CTX_free(mctx);
-    return 0;
+    return CON_FUNC_ERROR;
 }
 
 MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
@@ -561,7 +561,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     return ret;
 }
 
-int tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
+CON_FUNC_RETURN tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
 {
     size_t finish_md_len;
     const char *sender;
@@ -582,7 +582,7 @@ int tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
             && (!ssl->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {;
         /* SSLfatal() already called */
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     if (s->server) {
@@ -598,14 +598,14 @@ int tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
                                                             s->s3.tmp.finish_md);
     if (finish_md_len == 0) {
         /* SSLfatal() already called */
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     s->s3.tmp.finish_md_len = finish_md_len;
 
     if (!WPACKET_memcpy(pkt, s->s3.tmp.finish_md, finish_md_len)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     /*
@@ -616,7 +616,7 @@ int tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
         && !ssl_log_secret(s, MASTER_SECRET_LABEL, s->session->master_key,
                            s->session->master_key_length)) {
         /* SSLfatal() already called */
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     /*
@@ -624,7 +624,7 @@ int tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
      */
     if (!ossl_assert(finish_md_len <= EVP_MAX_MD_SIZE)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return CON_FUNC_ERROR;
     }
     if (!s->server) {
         memcpy(s->s3.previous_client_finished, s->s3.tmp.finish_md,
@@ -636,18 +636,18 @@ int tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt)
         s->s3.previous_server_finished_len = finish_md_len;
     }
 
-    return 1;
+    return CON_FUNC_SUCCESS;
 }
 
-int tls_construct_key_update(SSL_CONNECTION *s, WPACKET *pkt)
+CON_FUNC_RETURN tls_construct_key_update(SSL_CONNECTION *s, WPACKET *pkt)
 {
     if (!WPACKET_put_bytes_u8(pkt, s->key_update)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     s->key_update = SSL_KEY_UPDATE_NONE;
-    return 1;
+    return CON_FUNC_SUCCESS;
 }
 
 MSG_PROCESS_RETURN tls_process_key_update(SSL_CONNECTION *s, PACKET *pkt)
@@ -896,14 +896,14 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
     return MSG_PROCESS_FINISHED_READING;
 }
 
-int tls_construct_change_cipher_spec(SSL_CONNECTION *s, WPACKET *pkt)
+CON_FUNC_RETURN tls_construct_change_cipher_spec(SSL_CONNECTION *s, WPACKET *pkt)
 {
     if (!WPACKET_put_bytes_u8(pkt, SSL3_MT_CCS)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
-    return 1;
+    return CON_FUNC_SUCCESS;
 }
 
 /* Add a certificate to the WPACKET */
