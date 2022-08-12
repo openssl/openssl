@@ -80,6 +80,12 @@ typedef enum {
     ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
 } ENC_WRITE_STATES;
 
+typedef enum {
+    CON_FUNC_ERROR = 0,
+    CON_FUNC_SUCCESS,
+    CON_FUNC_DONT_SEND
+} CON_FUNC_RETURN;
+
 /*****************************************************************************
  *                                                                           *
  * This structure should be considered "opaque" to anything outside of the   *

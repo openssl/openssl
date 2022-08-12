@@ -1098,7 +1098,7 @@ WORK_STATE ossl_statem_client_post_process_message(SSL_CONNECTION *s,
     }
 }
 
-int tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
+CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
 {
     unsigned char *p;
     size_t sess_id_len;
@@ -1114,7 +1114,7 @@ int tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
     protverr = ssl_set_client_hello_version(s);
     if (protverr != 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, protverr);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     if (sess == NULL
@@ -1123,7 +1123,7 @@ int tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
         if (s->hello_retry_request == SSL_HRR_NONE
                 && !ssl_get_new_session(s, 0)) {
             /* SSLfatal() already called */
-            return 0;
+            return CON_FUNC_ERROR;
         }
     }
     /* else use the pre-loaded session */
@@ -1150,7 +1150,7 @@ int tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
     if (i && ssl_fill_hello_random(s, 0, p, sizeof(s->s3.client_random),
                                    DOWNGRADE_NONE) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     /*-
@@ -1189,7 +1189,7 @@ int tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
     if (!WPACKET_put_bytes_u16(pkt, s->client_version)
             || !WPACKET_memcpy(pkt, s->s3.client_random, SSL3_RANDOM_SIZE)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     /* Session ID */
@@ -1204,7 +1204,7 @@ int tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
                     && RAND_bytes_ex(sctx->libctx, s->tmp_session_id,
                                      sess_id_len, 0) <= 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return 0;
+                return CON_FUNC_ERROR;
             }
         } else {
             sess_id_len = 0;
@@ -1222,7 +1222,7 @@ int tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
                                                     sess_id_len))
             || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     /* cookie stuff for DTLS */
@@ -1231,30 +1231,30 @@ int tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
                 || !WPACKET_sub_memcpy_u8(pkt, s->d1->cookie,
                                           s->d1->cookie_len)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
+            return CON_FUNC_ERROR;
         }
     }
 
     /* Ciphers supported */
     if (!WPACKET_start_sub_packet_u16(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     if (!ssl_cipher_list_to_bytes(s, SSL_get_ciphers(SSL_CONNECTION_GET_SSL(s)),
                                   pkt)) {
         /* SSLfatal() already called */
-        return 0;
+        return CON_FUNC_ERROR;
     }
     if (!WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     /* COMPRESSION */
     if (!WPACKET_start_sub_packet_u8(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 #ifndef OPENSSL_NO_COMP
     if (ssl_allow_compression(s)
@@ -1266,7 +1266,7 @@ int tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
             comp = sk_SSL_COMP_value(sctx->comp_methods, i);
             if (!WPACKET_put_bytes_u8(pkt, comp->id)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return 0;
+                return CON_FUNC_ERROR;
             }
         }
     }
@@ -1274,16 +1274,16 @@ int tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pkt)
     /* Add the NULL method */
     if (!WPACKET_put_bytes_u8(pkt, 0) || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     /* TLS extensions */
     if (!tls_construct_extensions(s, pkt, SSL_EXT_CLIENT_HELLO, NULL, 0)) {
         /* SSLfatal() already called */
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
-    return 1;
+    return CON_FUNC_SUCCESS;
 }
 
 MSG_PROCESS_RETURN dtls_process_hello_verify(SSL_CONNECTION *s, PACKET *pkt)
@@ -3315,7 +3315,8 @@ static int tls_construct_cke_srp(SSL_CONNECTION *s, WPACKET *pkt)
 #endif
 }
 
-int tls_construct_client_key_exchange(SSL_CONNECTION *s, WPACKET *pkt)
+CON_FUNC_RETURN tls_construct_client_key_exchange(SSL_CONNECTION *s,
+                                                  WPACKET *pkt)
 {
     unsigned long alg_k;
 
@@ -3352,7 +3353,7 @@ int tls_construct_client_key_exchange(SSL_CONNECTION *s, WPACKET *pkt)
         goto err;
     }
 
-    return 1;
+    return CON_FUNC_SUCCESS;
  err:
     OPENSSL_clear_free(s->s3.tmp.pms, s->s3.tmp.pmslen);
     s->s3.tmp.pms = NULL;
@@ -3362,7 +3363,7 @@ int tls_construct_client_key_exchange(SSL_CONNECTION *s, WPACKET *pkt)
     s->s3.tmp.psk = NULL;
     s->s3.tmp.psklen = 0;
 #endif
-    return 0;
+    return CON_FUNC_ERROR;
 }
 
 int tls_client_key_exchange_post_work(SSL_CONNECTION *s)
@@ -3538,7 +3539,8 @@ WORK_STATE tls_prepare_client_certificate(SSL_CONNECTION *s, WORK_STATE wst)
     return WORK_ERROR;
 }
 
-int tls_construct_client_certificate(SSL_CONNECTION *s, WPACKET *pkt)
+CON_FUNC_RETURN tls_construct_client_certificate(SSL_CONNECTION *s,
+                                                 WPACKET *pkt)
 {
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
@@ -3547,18 +3549,18 @@ int tls_construct_client_certificate(SSL_CONNECTION *s, WPACKET *pkt)
             /* no context available, add 0-length context */
             if (!WPACKET_put_bytes_u8(pkt, 0)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return 0;
+                return CON_FUNC_ERROR;
             }
         } else if (!WPACKET_sub_memcpy_u8(pkt, s->pha_context, s->pha_context_len)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
+            return CON_FUNC_ERROR;
         }
     }
     if (!ssl3_output_cert_chain(s, pkt,
                                 (s->s3.tmp.cert_req == 2) ? NULL
                                                            : s->cert->key)) {
         /* SSLfatal() already called */
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     if (SSL_CONNECTION_IS_TLS13(s)
@@ -3570,10 +3572,10 @@ int tls_construct_client_certificate(SSL_CONNECTION *s, WPACKET *pkt)
          * state and thus ssl3_send_alert may crash.
          */
         SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_CANNOT_CHANGE_CIPHER);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
-    return 1;
+    return CON_FUNC_SUCCESS;
 }
 
 int ssl3_check_cert_and_algorithm(SSL_CONNECTION *s)
@@ -3620,7 +3622,7 @@ int ssl3_check_cert_and_algorithm(SSL_CONNECTION *s)
 }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-int tls_construct_next_proto(SSL_CONNECTION *s, WPACKET *pkt)
+CON_FUNC_RETURN tls_construct_next_proto(SSL_CONNECTION *s, WPACKET *pkt)
 {
     size_t len, padding_len;
     unsigned char *padding = NULL;
@@ -3631,12 +3633,12 @@ int tls_construct_next_proto(SSL_CONNECTION *s, WPACKET *pkt)
     if (!WPACKET_sub_memcpy_u8(pkt, s->ext.npn, len)
             || !WPACKET_sub_allocate_bytes_u8(pkt, padding_len, &padding)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     memset(padding, 0, padding_len);
 
-    return 1;
+    return CON_FUNC_SUCCESS;
 }
 #endif
 
@@ -3820,14 +3822,14 @@ int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
     return 1;
 }
 
-int tls_construct_end_of_early_data(SSL_CONNECTION *s, WPACKET *pkt)
+CON_FUNC_RETURN tls_construct_end_of_early_data(SSL_CONNECTION *s, WPACKET *pkt)
 {
     if (s->early_data_state != SSL_EARLY_DATA_WRITE_RETRY
             && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-        return 0;
+        return CON_FUNC_ERROR;
     }
 
     s->early_data_state = SSL_EARLY_DATA_FINISHED_WRITING;
-    return 1;
+    return CON_FUNC_SUCCESS;
 }
