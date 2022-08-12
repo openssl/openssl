@@ -592,7 +592,7 @@ static void *xor_gen_init(void *provctx, int selection,
         gctx->selection = selection;
 
     /* Our provctx is really just an OSSL_LIB_CTX */
-    gctx->libctx = (OSSL_LIB_CTX *)provctx;
+    gctx->libctx = provctx;
 
     if (!xor_gen_set_params(gctx, params)) {
         OPENSSL_free(gctx);
