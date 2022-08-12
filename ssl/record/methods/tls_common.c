@@ -1302,14 +1302,14 @@ size_t tls_get_max_records(OSSL_RECORD_LAYER *rl)
     return 0;
 }
 
-int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE **templates,
-                      size_t numtempl, size_t allowance, size_t *sent)
+int tls_write_records_tmp(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE **templates,
+                          size_t numtempl, size_t allowance, size_t *sent)
 {
     return 0;
 }
 
-int tls_retry_write_records(OSSL_RECORD_LAYER *rl, size_t allowance,
-                            size_t *sent)
+int tls_retry_write_records_tmp(OSSL_RECORD_LAYER *rl, size_t allowance,
+                                size_t *sent)
 {
     return 0;
 }
@@ -1394,8 +1394,8 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_write_pending,
     tls_get_max_record_len,
     tls_get_max_records,
-    tls_write_records,
-    tls_retry_write_records,
+    tls_write_records_tmp,
+    tls_retry_write_records_tmp,
     tls_read_record,
     tls_release_record,
     tls_get_alert_code,

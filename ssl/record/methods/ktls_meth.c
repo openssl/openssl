@@ -545,7 +545,7 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_get_max_record_len,
     tls_get_max_records,
     tls_write_records,
-    tls_retry_write_records,
+    tls_retry_write_records_tmp,
     tls_read_record,
     tls_release_record,
     tls_get_alert_code,

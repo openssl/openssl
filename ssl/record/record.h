@@ -33,6 +33,8 @@ struct ssl3_buffer_st {
     size_t left;
     /* 'buf' is from application for KTLS */
     int app_buffer;
+    /* The type of data stored in this buffer. Only used for writing */
+    int type;
 };
 
 #define SEQ_NUM_SIZE                            8
@@ -146,7 +148,7 @@ typedef struct record_layer_st {
     /* How many pipelines can be used to write data */
     size_t numwpipes;
     /* write IO goes into here */
-    SSL3_BUFFER wbuf[SSL_MAX_PIPELINES];
+    SSL3_BUFFER wbuf[SSL_MAX_PIPELINES + 1];
     /* number of bytes sent so far */
     size_t wnum;
     unsigned char handshake_fragment[4];
@@ -207,9 +209,6 @@ int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl);
 __owur size_t ssl3_pending(const SSL *s);
 __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, size_t len,
                             size_t *written);
-int do_ssl3_write(SSL_CONNECTION *s, int type, const unsigned char *buf,
-                  size_t *pipelens, size_t numpipes,
-                  int create_empty_fragment, size_t *written);
 __owur int ssl3_read_bytes(SSL *s, int type, int *recvd_type,
                            unsigned char *buf, size_t len, int peek,
                            size_t *readbytes);
@@ -218,9 +217,7 @@ __owur int ssl3_enc(SSL_CONNECTION *s, SSL3_RECORD *inrecs, size_t n_recs,
                     int send, SSL_MAC_BUF *mac, size_t macsize);
 __owur int n_ssl3_mac(SSL_CONNECTION *s, SSL3_RECORD *rec, unsigned char *md,
                       int send);
-__owur int ssl3_write_pending(SSL_CONNECTION *s, int type,
-                              const unsigned char *buf, size_t len,
-                              size_t *written);
+__owur int tls_retry_write_records(SSL_CONNECTION *s);
 __owur int tls1_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs,
                     int sending, SSL_MAC_BUF *mac, size_t macsize);
 __owur int tls1_mac_old(SSL_CONNECTION *s, SSL3_RECORD *rec, unsigned char *md,
@@ -267,3 +264,6 @@ OSSL_CORE_MAKE_FUNC(void, rlayer_msg_callback, (int write_p, int version,
 # define OSSL_FUNC_RLAYER_SECURITY               3
 OSSL_CORE_MAKE_FUNC(int, rlayer_security, (void *cbarg, int op, int bits,
                                            int nid, void *other))
+
+int tls_write_records(SSL_CONNECTION *s, OSSL_RECORD_TEMPLATE *templates,
+                      size_t numtempl);

@@ -635,6 +635,94 @@ int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
     return i;
 }
 
+/*
+ * TODO(RECLAYER): Temporary copy of the old ssl3_write_pending() function now
+ * replaced by tls_retry_write_records(). Needs to be removed when the DTLS code
+ * is converted
+ */
+/* if SSL3_BUFFER_get_left() != 0, we need to call this
+ *
+ * Return values are as per SSL_write()
+ */
+static int ssl3_write_pending(SSL_CONNECTION *s, int type,
+                              const unsigned char *buf, size_t len,
+                              size_t *written)
+{
+    int i;
+    SSL3_BUFFER *wb = s->rlayer.wbuf;
+    size_t currbuf = 0;
+    size_t tmpwrit = 0;
+
+    if ((s->rlayer.wpend_tot > len)
+        || (!(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)
+            && (s->rlayer.wpend_buf != buf))
+        || (s->rlayer.wpend_type != type)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_WRITE_RETRY);
+        return -1;
+    }
+
+    for (;;) {
+        /* Loop until we find a buffer we haven't written out yet */
+        if (SSL3_BUFFER_get_left(&wb[currbuf]) == 0
+            && currbuf < s->rlayer.numwpipes - 1) {
+            currbuf++;
+            continue;
+        }
+        clear_sys_error();
+        if (s->wbio != NULL) {
+            s->rwstate = SSL_WRITING;
+
+            /*
+             * To prevent coalescing of control and data messages,
+             * such as in buffer_write, we flush the BIO
+             */
+            if (BIO_get_ktls_send(s->wbio) && type != SSL3_RT_APPLICATION_DATA) {
+                i = BIO_flush(s->wbio);
+                if (i <= 0)
+                    return i;
+                BIO_set_ktls_ctrl_msg(s->wbio, type);
+            }
+            i = BIO_write(s->wbio, (char *)
+                          &(SSL3_BUFFER_get_buf(&wb[currbuf])
+                            [SSL3_BUFFER_get_offset(&wb[currbuf])]),
+                          (unsigned int)SSL3_BUFFER_get_left(&wb[currbuf]));
+            if (i >= 0)
+                tmpwrit = i;
+        } else {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BIO_NOT_SET);
+            i = -1;
+        }
+
+        /*
+         * When an empty fragment is sent on a connection using KTLS,
+         * it is sent as a write of zero bytes.  If this zero byte
+         * write succeeds, i will be 0 rather than a non-zero value.
+         * Treat i == 0 as success rather than an error for zero byte
+         * writes to permit this case.
+         */
+        if (i >= 0 && tmpwrit == SSL3_BUFFER_get_left(&wb[currbuf])) {
+            SSL3_BUFFER_set_left(&wb[currbuf], 0);
+            SSL3_BUFFER_add_offset(&wb[currbuf], tmpwrit);
+            if (currbuf + 1 < s->rlayer.numwpipes)
+                continue;
+            s->rwstate = SSL_NOTHING;
+            *written = s->rlayer.wpend_ret;
+            return 1;
+        } else if (i <= 0) {
+            if (SSL_CONNECTION_IS_DTLS(s)) {
+                /*
+                 * For DTLS, just drop it. That's kind of the whole point in
+                 * using a datagram service
+                 */
+                SSL3_BUFFER_set_left(&wb[currbuf], 0);
+            }
+            return i;
+        }
+        SSL3_BUFFER_add_offset(&wb[currbuf], tmpwrit);
+        SSL3_BUFFER_sub_left(&wb[currbuf], tmpwrit);
+    }
+}
+
 int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
                    size_t len, int create_empty_fragment, size_t *written)
 {
