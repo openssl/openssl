@@ -78,18 +78,24 @@ int ssl3_send_alert(SSL_CONNECTION *s, int level, int desc)
 int ssl3_dispatch_alert(SSL *s)
 {
     int i, j;
-    size_t alertlen;
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
-    size_t written;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    OSSL_RECORD_TEMPLATE templ;
 
     if (sc == NULL)
         return -1;
 
     sc->s3.alert_dispatch = 0;
-    alertlen = 2;
-    i = do_ssl3_write(sc, SSL3_RT_ALERT, &sc->s3.send_alert[0], &alertlen, 1, 0,
-                      &written);
+
+    templ.type = SSL3_RT_ALERT;
+    templ.buf = &sc->s3.send_alert[0];
+    templ.buflen = 2;
+
+    /* TODO(RECLAYER): What happens if there is already a write pending? */
+    if (RECORD_LAYER_write_pending(&sc->rlayer))
+        return -1;
+
+    i = tls_write_records(sc, &templ, 1);
     if (i <= 0) {
         sc->s3.alert_dispatch = 1;
     } else {

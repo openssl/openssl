@@ -59,16 +59,13 @@ typedef struct ossl_record_layer_st OSSL_RECORD_LAYER;
 
 /*
  * Template for creating a record. A record consists of the |type| of data it
- * will contain (e.g. alert, handshake, application data, etc) along with an
- * array of buffers in |bufs| of size |numbufs|. There is a corresponding array
- * of buffer lengths in |buflens|. Concatenating all of the buffer data together
- * would give you the complete plaintext payload to be sent in a single record.
+ * will contain (e.g. alert, handshake, application data, etc) along with a
+ * buffer of payload data in |buf| of length |buflen|.
  */
 struct ossl_record_template_st {
     int type;
-    void **bufs;
-    size_t *buflens;
-    size_t numbufs;
+    const unsigned char *buf;
+    size_t buflen;
 };
 
 typedef struct ossl_record_template_st OSSL_RECORD_TEMPLATE;

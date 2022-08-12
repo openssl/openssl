@@ -275,10 +275,10 @@ size_t tls_app_data_pending(OSSL_RECORD_LAYER *rl);
 int tls_write_pending(OSSL_RECORD_LAYER *rl);
 size_t tls_get_max_record_len(OSSL_RECORD_LAYER *rl);
 size_t tls_get_max_records(OSSL_RECORD_LAYER *rl);
-int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE **templates,
-                      size_t numtempl,  size_t allowance, size_t *sent);
-int tls_retry_write_records(OSSL_RECORD_LAYER *rl, size_t allowance,
-                            size_t *sent);
+int tls_write_records_tmp(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE **templates,
+                          size_t numtempl,  size_t allowance, size_t *sent);
+int tls_retry_write_records_tmp(OSSL_RECORD_LAYER *rl, size_t allowance,
+                                size_t *sent);
 int tls_get_alert_code(OSSL_RECORD_LAYER *rl);
 int tls_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio);
 int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
