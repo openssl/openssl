@@ -7,22 +7,22 @@ to be forwarded to appropriate other components for further processing.
 In the [overview], this is called the "RX Frame Handler".  The name "RX
 depacketizer" was chosen to reflect the kinship with the [TX packetizer].
 
-Structures
-----------
+Main structures
+---------------
 
 ### Connection
 
 Represented by an `QUIC_CONNECTION` object, defined in
-[SSL object refactoring using SSL_CONNECTION object].
+[`ssl/quic/quic_local.h`](../../../ssl/quic/quic_local.h).
 
 ### Stream
 
-Represented by an SSL object.
+Represented by an `QUIC_STREAM` object (yet to be defined).
 
 ### Packets
 
-Represented by the `OSSL_QRL_RX_PKT` structure, defined in
-[Add prototype QUIC Record Layer API design].
+Represented by the `OSSL_QRX_PKT` structure, defined in
+`include/internal/quic_record_rx.h` in [QUIC Demuxer and Record Layer (RX+TX)].
 
 Interactions
 ------------
@@ -59,18 +59,18 @@ Following how things are designed elsewhere, the depacketizer is assumed to
 be called "from above" using the following function:
 
 ``` C
-__owur int ossl_quic_depacketise(QUIC_CONNECTION *connection);
+__owur int ossl_quic_depacketize(QUIC_CONNECTION *connection);
 ```
 
-This function would create an `OSSL_QRL_RX_PKT` and call the QUIC Read
-Record Layer with a pointer to it, leaving it to the QUIC Read Record Layer
-to fill in the data.
+This function would create an `OSSL_QRX_PKT` and call the QUIC Read Record
+Layer with a pointer to it, leaving it to the QUIC Read Record Layer to fill
+in the data.
 
-This uses the `ossl_qrl_read_pkt()` packet reading function from
-[Add prototype QUIC Record Layer API design].
-(that interface or the `OSSL_QRL_RX_PKT` structure / sub-structure
-needs to be extended to take an `OSSL_TIME`, possibly by reference,
-which should be filled in with the packet reception time)
+This uses the `ossl_qrx_read_pkt()` packet reading function from
+[QUIC Demuxer and Record Layer (RX+TX)].
+(the `OSSL_QRX_PKT` structure / sub-structure needs to be extended to take
+an `OSSL_TIME`, possibly by reference, which should be filled in with the
+packet reception time)
 
 ### Collect information for the [ACK manager]
 
@@ -136,15 +136,16 @@ Notes:
 [^1]: This creates and populates an `QUIC_ACKM_ACK` structure, then calls
     `QUIC_ACKM_on_rx_ack_frame()`, with the appropriate context
     (`QUIC_ACKM`, the created `QUIC_ACKM_ACK`, `pkt_space` and `rx_time`)
-[^2]: Immediately terminates the appropriate receiving stream SSL object.
+[^2]: Immediately terminates the appropriate receiving stream `QUIC_STREAM`
+    object.
     This includes discarding any buffered application data.
     For a stream that's send-only, the error `STREAM_STATE_ERROR` is raised,
-    and the connection SSL object is terminated.
-[^3]: Immediately terminates the appropriate sending stream SSL object.
-    For a stream that don't have a sending stream SSL object, the error
-    `STREAM_STATE_ERROR` is raised.
-    For a stream that's receive-only, the connection SSL object is terminated.
-[^4]: The frame payload (Stream Data) is passed as is to the stream SSL
+    and the `QUIC_CONNECTION` object is terminated.
+[^3]: Immediately terminates the appropriate sending stream `QUIC_STREAM`
+    object.
+    For a stream that's receive-only, the error `STREAM_STATE_ERROR` is
+    raised, and the `QUIC_CONNECTION` object is terminated.
+[^4]: The frame payload (Stream Data) is passed as is to the `QUIC_STREAM`
     object, along with available metadata (offset and length, as determined
     to be available from the lower 3 bits of the frame type).
 [^5]: The details of what flow control will need are yet to be determined
@@ -158,7 +159,7 @@ Notes:
 [overview]: https://github.com/openssl/openssl/blob/master/doc/designs/quic-design/quic-overview.md
 [TX packetizer]: https://github.com/openssl/openssl/pull/18570
 [SSL object refactoring using SSL_CONNECTION object]: https://github.com/openssl/openssl/pull/18612
-[Add prototype QUIC Record Layer API design]: https://github.com/openssl/openssl/pull/18870
+[QUIC Demuxer and Record Layer (RX+TX)]: https://github.com/openssl/openssl/pull/18949
 [ACK manager]: https://github.com/openssl/openssl/pull/18564
 [padding]: https://datatracker.ietf.org/doc/html/rfc9000#section-19.1
 [ping]: https://datatracker.ietf.org/doc/html/rfc9000#section-19.2

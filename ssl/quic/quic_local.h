@@ -108,4 +108,6 @@ __owur int ossl_quic_num_ciphers(void);
 __owur const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u);
 int ossl_quic_renegotiate_check(SSL *ssl, int initok);
 
+__owur int ossl_quic_depacketize(QUIC_CONNECTION *connection);
+
 #endif
