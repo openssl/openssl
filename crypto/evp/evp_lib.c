@@ -508,17 +508,24 @@ int EVP_CIPHER_CTX_get_iv_length(const EVP_CIPHER_CTX *ctx)
     size_t v = len;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &v);
-    rv = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
-    if (rv == EVP_CTRL_RET_UNSUPPORTED)
-        goto legacy;
-    return rv != 0 ? (int)v : -1;
+    if (ctx->cipher->get_ctx_params != NULL) {
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &v);
+        rv = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
+        if (rv > 0) {
+            if (OSSL_PARAM_modified(params)
+                    && !OSSL_PARAM_get_int(params, &len))
+                return -1;
+        } else if (rv != EVP_CTRL_RET_UNSUPPORTED) {
+            return -1;
+        }
+    }
     /* Code below to be removed when legacy support is dropped. */
-legacy:
-    if ((EVP_CIPHER_get_flags(ctx->cipher) & EVP_CIPH_CUSTOM_IV_LENGTH) != 0) {
+    else if ((EVP_CIPHER_get_flags(ctx->cipher)
+              & EVP_CIPH_CUSTOM_IV_LENGTH) != 0) {
         rv = EVP_CIPHER_CTX_ctrl((EVP_CIPHER_CTX *)ctx, EVP_CTRL_GET_IVLEN,
                                  0, &len);
-        return (rv == 1) ? len : -1;
+        if (rv <= 0)
+            return -1;
     }
     return len;
 }
