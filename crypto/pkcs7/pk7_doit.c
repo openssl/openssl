@@ -1015,6 +1015,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
     STACK_OF(X509_ATTRIBUTE) *sk;
     BIO *btmp;
     EVP_PKEY *pkey;
+    EVP_PKEY_CTX *pctx = NULL;
     const PKCS7_CTX *ctx = ossl_pkcs7_get0_ctx(p7);
     OSSL_LIB_CTX *libctx = ossl_pkcs7_ctx_get0_libctx(ctx);
     const char *propq = ossl_pkcs7_ctx_get0_propq(ctx);
@@ -1083,6 +1084,12 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
             goto err;
         }
 
+        pkey = X509_get0_pubkey(x509);
+        if (pkey == NULL) {
+            ret = -1;
+            goto err;
+        }
+
         (void)ERR_set_mark();
         fetched_md = EVP_MD_fetch(libctx, OBJ_nid2sn(md_type), propq);
 
@@ -1091,7 +1098,8 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
         else
             md = EVP_get_digestbynid(md_type);
 
-        if (md == NULL || !EVP_VerifyInit_ex(mdc_tmp, md, NULL)) {
+        if (md == NULL || !EVP_DigestVerifyInit_ex(mdc_tmp, &pctx, EVP_MD_get0_name(md),
+			                           libctx, propq, pkey, NULL)) {
             (void)ERR_clear_last_mark();
             goto err;
         }
@@ -1104,20 +1112,15 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
             ret = -1;
             goto err;
         }
-        if (!EVP_VerifyUpdate(mdc_tmp, abuf, alen))
+        if (!EVP_DigestVerifyUpdate(mdc_tmp, abuf, alen))
             goto err;
 
         OPENSSL_free(abuf);
     }
 
     os = si->enc_digest;
-    pkey = X509_get0_pubkey(x509);
-    if (pkey == NULL) {
-        ret = -1;
-        goto err;
-    }
 
-    i = EVP_VerifyFinal_ex(mdc_tmp, os->data, os->length, pkey, libctx, propq);
+    i = EVP_DigestVerifyFinal(mdc_tmp, os->data, os->length);
     if (i <= 0) {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNATURE_FAILURE);
         ret = -1;
