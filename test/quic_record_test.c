@@ -23,6 +23,9 @@ static const QUIC_CONN_ID empty_conn_id = {0, {0}};
 #define RX_TEST_OP_DISCARD_EL              7 /* discard an encryption level */
 #define RX_TEST_OP_CHECK_PKT               8 /* read packet, compare to expected */
 #define RX_TEST_OP_CHECK_NO_PKT            9 /* check no packet is available to read */
+#define RX_TEST_OP_CHECK_KEY_EPOCH        10 /* check key epoch value matches */
+#define RX_TEST_OP_KEY_UPDATE_TIMEOUT     11 /* complete key update process */
+#define RX_TEST_OP_SET_INIT_KEY_PHASE     12 /* initial Key Phase bit value */
 
 struct rx_test_op {
     unsigned char op;
@@ -61,6 +64,12 @@ struct rx_test_op {
     },
 #define RX_OP_CHECK_NO_PKT() \
     { RX_TEST_OP_CHECK_NO_PKT, NULL, 0, NULL, 0, 0, 0, NULL, NULL },
+#define RX_OP_CHECK_KEY_EPOCH(expected) \
+    { RX_TEST_OP_CHECK_KEY_EPOCH, NULL, 0, NULL, 0, 0, (expected), NULL },
+#define RX_OP_KEY_UPDATE_TIMEOUT(normal) \
+    { RX_TEST_OP_KEY_UPDATE_TIMEOUT, NULL, 0, NULL, (normal), 0, 0, NULL },
+#define RX_OP_SET_INIT_KEY_PHASE(kp_bit) \
+    { RX_TEST_OP_SET_INIT_KEY_PHASE, NULL, 0, NULL, (kp_bit), 0, 0, NULL },
 
 #define RX_OP_INJECT_N(n)                                          \
     RX_OP_INJECT(rx_script_##n##_in)
@@ -1327,6 +1336,279 @@ static const struct rx_test_op rx_script_7[] = {
     RX_OP_END
 };
 
+/*
+ * 8. Real World - S2C Multiple Packets with Peer Initiated Key Phase Update
+ */
+static const unsigned char rx_script_8_1rtt_secret[32] = {
+    0x5f, 0x1f, 0x47, 0xea, 0xc3, 0xb2, 0xce, 0x73, 0xfb, 0xa2, 0x9f, 0xac,
+    0xc3, 0xa0, 0xfe, 0x9b, 0xf3, 0xc0, 0xde, 0x5d, 0x33, 0x11, 0x1c, 0x70,
+    0xdd, 0xb4, 0x06, 0xcc, 0xdf, 0x7d, 0xe9, 0x9a
+};
+
+static const unsigned char rx_script_8a_in[] = {
+    0x51,                           /* Short, 1-RTT, PN Length=2 bytes, KP=0 */
+    0xcb, 0xf4,                     /* PN (4) */
+    0x3f, 0x68, 0x7b, 0xa8, 0x2b, 0xb9, 0xfa, 0x7d, 0xe4, 0x6b, 0x20, 0x48,
+    0xd1, 0x3c, 0xcb, 0x4b, 0xef, 0xb1, 0xfd, 0x5e, 0x1b, 0x19, 0x83, 0xa9,
+    0x47, 0x62, 0xc1, 0x6e, 0xef, 0x27, 0xc3, 0x9b, 0x8f, 0x3f, 0xce, 0x11,
+    0x68, 0xf5, 0x73, 0x0d, 0xf2, 0xdc, 0xe0, 0x28, 0x28, 0x79, 0xa6, 0x39,
+    0xc3, 0xb9, 0xd3,
+};
+
+static const QUIC_PKT_HDR rx_script_8a_expect_hdr = {
+    QUIC_PKT_TYPE_1RTT,
+    0,          /* Spin Bit */
+    0,          /* Key Phase */
+    2,          /* PN Length */
+    0,          /* Partial */
+    1,          /* Fixed */
+    0,          /* Version */
+    {0, {0}},   /* DCID */
+    {0, {0}},   /* SCID */
+    {0, 4},     /* PN */
+    NULL, 0,    /* Token/Token Len */
+    35, NULL
+};
+
+static const unsigned char rx_script_8a_body[] = {
+    0x02, 0x03, 0x06, 0x00, 0x03, 0x0c, 0x00, 0x1b, 0x49, 0x27, 0x6d, 0x20,
+    0x68, 0x61, 0x76, 0x69, 0x6e, 0x67, 0x20, 0x61, 0x20, 0x77, 0x6f, 0x6e,
+    0x64, 0x65, 0x72, 0x66, 0x75, 0x6c, 0x20, 0x74, 0x69, 0x6d, 0x65
+};
+
+static const unsigned char rx_script_8b_in[] = {
+    0x52,                           /* Short, 1-RTT, PN Length=2 bytes, KP=1 */
+    0x21, 0x8e,                     /* PN (5) */
+    0xa2, 0x6a, 0x9c, 0x83, 0x24, 0x48, 0xae, 0x60, 0x1e, 0xc2, 0xa5, 0x91,
+    0xfa, 0xe5, 0xf2, 0x05, 0x14, 0x37, 0x04, 0x6a, 0xa8, 0xae, 0x06, 0x58,
+    0xd7, 0x85, 0x48, 0xd7, 0x3b, 0x85, 0x9e, 0x5a, 0xb3, 0x46, 0x89, 0x1b,
+    0x4b, 0x6e, 0x1d, 0xd1, 0xfc, 0xb7, 0x47, 0xda, 0x6a, 0x64, 0x4b, 0x8e,
+    0xf2, 0x69, 0x16,
+};
+
+static const QUIC_PKT_HDR rx_script_8b_expect_hdr = {
+    QUIC_PKT_TYPE_1RTT,
+    0,          /* Spin Bit */
+    1,          /* Key Phase */
+    2,          /* PN Length */
+    0,          /* Partial */
+    1,          /* Fixed */
+    0,          /* Version */
+    {0, {0}},   /* DCID */
+    {0, {0}},   /* SCID */
+    {0, 5},     /* PN */
+    NULL, 0,    /* Token/Token Len */
+    35, NULL
+};
+
+static const unsigned char rx_script_8b_body[] = {
+    0x02, 0x04, 0x03, 0x00, 0x00, 0x0c, 0x00, 0x36, 0x49, 0x27, 0x6d, 0x20,
+    0x68, 0x61, 0x76, 0x69, 0x6e, 0x67, 0x20, 0x61, 0x20, 0x77, 0x6f, 0x6e,
+    0x64, 0x65, 0x72, 0x66, 0x75, 0x6c, 0x20, 0x74, 0x69, 0x6d, 0x65,
+};
+
+static const unsigned char rx_script_8c_in[] = {
+    0x5b,                           /* Short, 1-RTT, PN Length=2 bytes, KP=0 */
+    0x98, 0xd6,                     /* PN (3) */
+    0x3c, 0x6f, 0x94, 0x20, 0x5e, 0xfc, 0x5b, 0x3a, 0x4a, 0x65, 0x1a, 0x9a,
+    0x6c, 0x00, 0x52, 0xb6, 0x0c, 0x9b, 0x07, 0xf9, 0x6f, 0xbc, 0x3d, 0xb4,
+    0x57, 0xe0, 0x15, 0x74, 0xfe, 0x76, 0xea, 0x1f, 0x23, 0xae, 0x22, 0x62,
+    0xb7, 0x90, 0x94, 0x89, 0x38, 0x9b, 0x5b, 0x47, 0xed,
+};
+
+static const QUIC_PKT_HDR rx_script_8c_expect_hdr = {
+    QUIC_PKT_TYPE_1RTT,
+    0,          /* Spin Bit */
+    0,          /* Key Phase */
+    2,          /* PN Length */
+    0,          /* Partial */
+    1,          /* Fixed */
+    0,          /* Version */
+    {0, {0}},   /* DCID */
+    {0, {0}},   /* SCID */
+    {0, 3},     /* PN */
+    NULL, 0,    /* Token/Token Len */
+    29, NULL
+};
+
+static const unsigned char rx_script_8c_body[] = {
+    0x08, 0x00, 0x49, 0x27, 0x6d, 0x20, 0x68, 0x61, 0x76, 0x69, 0x6e, 0x67,
+    0x20, 0x61, 0x20, 0x77, 0x6f, 0x6e, 0x64, 0x65, 0x72, 0x66, 0x75, 0x6c,
+    0x20, 0x74, 0x69, 0x6d, 0x65,
+};
+
+static const unsigned char rx_script_8d_in[] = {
+    0x55,                           /* Short, 1-RTT, PN Length=2 bytes, KP=1 */
+    0x98, 0x20,                     /* PN (6) */
+    0x45, 0x53, 0x05, 0x29, 0x30, 0x42, 0x29, 0x02, 0xf2, 0xa7, 0x27, 0xd6,
+    0xb0, 0xb7, 0x30, 0xad, 0x45, 0xd8, 0x73, 0xd7, 0xe3, 0x65, 0xee, 0xd9,
+    0x35, 0x33, 0x03, 0x3a, 0x35, 0x0b, 0x59, 0xa7, 0xbc, 0x23, 0x37, 0xc2,
+    0x5e, 0x13, 0x88, 0x18, 0x79, 0x94, 0x6c, 0x15, 0xe3, 0x1f, 0x0d, 0xd1,
+    0xc3, 0xfa, 0x40, 0xff,
+};
+
+static const QUIC_PKT_HDR rx_script_8d_expect_hdr = {
+    QUIC_PKT_TYPE_1RTT,
+    0,          /* Spin Bit */
+    1,          /* Key Phase */
+    2,          /* PN Length */
+    0,          /* Partial */
+    1,          /* Fixed */
+    0,          /* Version */
+    {0, {0}},   /* DCID */
+    {0, {0}},   /* SCID */
+    {0, 6},     /* PN */
+    NULL, 0,    /* Token/Token Len */
+    36, NULL
+};
+
+static const unsigned char rx_script_8d_body[] = {
+    0x02, 0x05, 0x03, 0x00, 0x00, 0x0c, 0x00, 0x40, 0x51, 0x49, 0x27, 0x6d,
+    0x20, 0x68, 0x61, 0x76, 0x69, 0x6e, 0x67, 0x20, 0x61, 0x20, 0x77, 0x6f,
+    0x6e, 0x64, 0x65, 0x72, 0x66, 0x75, 0x6c, 0x20, 0x74, 0x69, 0x6d, 0x65,
+};
+
+static const unsigned char rx_script_8e_in[] = {
+    0x55,                           /* Short, 1-RTTT, PN Length=2 bytes, KP=0 */
+    0x76, 0x25,                     /* PN (10) */
+    0x1c, 0x0d, 0x70, 0x4c, 0x2b, 0xc5, 0x7d, 0x7b, 0x77, 0x64, 0x03, 0x27,
+    0xb3, 0x5d, 0x83, 0x9e, 0x35, 0x05, 0x10, 0xd2, 0xa4, 0x5c, 0x83, 0xd6,
+    0x94, 0x12, 0x18, 0xc5, 0xb3, 0x0f, 0x0a, 0xb1, 0x8a, 0x82, 0x9f, 0xd6,
+    0xa9, 0xab, 0x40, 0xc1, 0x05, 0xe8, 0x1b, 0x74, 0xaa, 0x8e, 0xd6, 0x8b,
+    0xa5, 0xa3, 0x77, 0x79,
+};
+
+static const QUIC_PKT_HDR rx_script_8e_expect_hdr = {
+    QUIC_PKT_TYPE_1RTT,
+    0,          /* Spin Bit */
+    0,          /* Key Phase */
+    2,          /* PN Length */
+    0,          /* Partial */
+    1,          /* Fixed */
+    0,          /* Version */
+    {0, {0}},   /* DCID */
+    {0, {0}},   /* SCID */
+    {0, 10},    /* PN */
+    NULL, 0,    /* Token/Token Len */
+    36, NULL
+};
+
+static const unsigned char rx_script_8e_body[] = {
+    0x02, 0x09, 0x04, 0x00, 0x00, 0x0c, 0x00, 0x40, 0xbd, 0x49, 0x27, 0x6d,
+    0x20, 0x68, 0x61, 0x76, 0x69, 0x6e, 0x67, 0x20, 0x61, 0x20, 0x77, 0x6f,
+    0x6e, 0x64, 0x65, 0x72, 0x66, 0x75, 0x6c, 0x20, 0x74, 0x69, 0x6d, 0x65,
+};
+
+static const unsigned char rx_script_8f_in[] = {
+    0x48,                           /* Short, 1-RTT, PN Length=2 Bytes, KP=1 */
+    0x4d, 0xf6,                     /* PN (15) */
+    0x42, 0x86, 0xa1, 0xfa, 0x69, 0x6b, 0x1a, 0x45, 0xf2, 0xcd, 0xf6, 0x92,
+    0xe1, 0xe6, 0x1a, 0x49, 0x37, 0xd7, 0x10, 0xae, 0x09, 0xbd
+};
+
+static const QUIC_PKT_HDR rx_script_8f_expect_hdr = {
+    QUIC_PKT_TYPE_1RTT,
+    0,          /* Spin Bit */
+    1,          /* Key Phase */
+    2,          /* PN Length */
+    0,          /* Partial */
+    1,          /* Fixed */
+    0,          /* Version */
+    {0, {0}},   /* DCID */
+    {0, {0}},   /* SCID */
+    {0, 15},    /* PN */
+    NULL, 0,    /* Token/Token Len */
+    6, NULL
+};
+
+static const unsigned char rx_script_8f_body[] = {
+    0x02, 0x0e, 0x4c, 0x54, 0x00, 0x02
+};
+
+static const struct rx_test_op rx_script_8[] = {
+    RX_OP_ADD_RX_DCID(empty_conn_id)
+    /* Inject before we get the keys */
+    RX_OP_INJECT_N(8a)
+    /* Nothing yet */
+    RX_OP_CHECK_NO_PKT()
+    /* Provide keys */
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
+                         QRL_SUITE_AES128GCM, rx_script_8_1rtt_secret)
+    /* Now the injected packet is successfully returned */
+    RX_OP_CHECK_PKT_N(8a)
+    RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_KEY_EPOCH(0)
+
+    /* Packet with new key phase */
+    RX_OP_INJECT_N(8b)
+    /* Packet is successfully decrypted and returned */
+    RX_OP_CHECK_PKT_N(8b)
+    RX_OP_CHECK_NO_PKT()
+    /* Key epoch has increased */
+    RX_OP_CHECK_KEY_EPOCH(1)
+
+    /*
+     * Now inject an old packet with the old keys (perhaps reordered in
+     * network).
+     */
+    RX_OP_INJECT_N(8c)
+    /* Should still be decrypted OK */
+    RX_OP_CHECK_PKT_N(8c)
+    RX_OP_CHECK_NO_PKT()
+    /* Epoch has not changed */
+    RX_OP_CHECK_KEY_EPOCH(1)
+
+    /* Another packet with the new keys. */
+    RX_OP_INJECT_N(8d)
+    RX_OP_CHECK_PKT_N(8d)
+    RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_KEY_EPOCH(1)
+
+    /* We can inject the old packet multiple times and it still works */
+    RX_OP_INJECT_N(8c)
+    RX_OP_CHECK_PKT_N(8c)
+    RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_KEY_EPOCH(1)
+
+    /* Until we move from UPDATING to COOLDOWN */
+    RX_OP_KEY_UPDATE_TIMEOUT(0)
+    RX_OP_INJECT_N(8c)
+    RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_KEY_EPOCH(1)
+
+    /*
+     * Injecting a packet from the next epoch (epoch 2) while in COOLDOWN
+     * doesn't work
+     */
+    RX_OP_INJECT_N(8e)
+    RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_KEY_EPOCH(1)
+
+    /* Move from COOLDOWN to NORMAL and try again */
+    RX_OP_KEY_UPDATE_TIMEOUT(1)
+    RX_OP_INJECT_N(8e)
+    RX_OP_CHECK_PKT_N(8e)
+    RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_KEY_EPOCH(2)
+
+    /* Can still receive old packet */
+    RX_OP_INJECT_N(8d)
+    RX_OP_CHECK_PKT_N(8d)
+    RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_KEY_EPOCH(2)
+
+    /* Move straight from UPDATING to NORMAL */
+    RX_OP_KEY_UPDATE_TIMEOUT(1)
+
+    /* Try a packet from epoch 3 */
+    RX_OP_INJECT_N(8f)
+    RX_OP_CHECK_PKT_N(8f)
+    RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_KEY_EPOCH(3)
+
+    RX_OP_END
+};
+
 static const struct rx_test_op *rx_scripts[] = {
     rx_script_1,
     rx_script_2,
@@ -1334,7 +1616,8 @@ static const struct rx_test_op *rx_scripts[] = {
     rx_script_4,
     rx_script_5,
     rx_script_6,
-    rx_script_7
+    rx_script_7,
+    rx_script_8
 };
 
 static int cmp_pkt_hdr(const QUIC_PKT_HDR *a, const QUIC_PKT_HDR *b,
@@ -1395,12 +1678,26 @@ static void rx_state_teardown(struct rx_state *s)
     }
 }
 
+static uint64_t time_counter = 0;
+
+static OSSL_TIME expected_time(uint64_t counter)
+{
+    return ossl_time_multiply(ossl_ticks2time(OSSL_TIME_MS), counter);
+}
+
+static OSSL_TIME fake_time(void *arg)
+{
+    return expected_time(++time_counter);
+}
+
 static int rx_state_ensure(struct rx_state *s)
 {
     if (s->demux == NULL
         && !TEST_ptr(s->demux = ossl_quic_demux_new(NULL,
                                                     s->args.short_conn_id_len,
-                                                    1500)))
+                                                    1500,
+                                                    fake_time,
+                                                    NULL)))
         return 0;
 
     s->args.demux = s->demux;
@@ -1497,6 +1794,28 @@ static int rx_run_script(const struct rx_test_op *script)
                 if (!TEST_false(ossl_qrx_read_pkt(s.qrx, &pkt)))
                     goto err;
 
+                break;
+            case RX_TEST_OP_CHECK_KEY_EPOCH:
+                if (!TEST_true(rx_state_ensure(&s)))
+                    goto err;
+
+                if (!TEST_uint64_t_eq(ossl_qrx_get_key_epoch(s.qrx),
+                                      op->largest_pn))
+                    goto err;
+
+                break;
+            case RX_TEST_OP_KEY_UPDATE_TIMEOUT:
+                if (!TEST_true(rx_state_ensure(&s)))
+                    goto err;
+
+                if (!TEST_true(ossl_qrx_key_update_timeout(s.qrx,
+                                                           op->enc_level)))
+                    goto err;
+
+                break;
+            case RX_TEST_OP_SET_INIT_KEY_PHASE:
+                rx_state_teardown(&s);
+                s.args.init_key_phase_bit = (unsigned char)op->enc_level;
                 break;
             default:
                 OPENSSL_assert(0);
@@ -2285,7 +2604,7 @@ static int test_wire_pkt_hdr_actual(int tidx, int repeat, int cipher,
     testresult = 1;
 err:
     if (have_hpr)
-        ossl_quic_hdr_protector_destroy(&hpr);
+        ossl_quic_hdr_protector_cleanup(&hpr);
     WPACKET_finish(&wpkt);
     BUF_MEM_free(buf);
     OPENSSL_free(hbuf);
@@ -2366,6 +2685,7 @@ static int test_wire_pkt_hdr(int idx)
 #define TX_TEST_OP_DISCARD_EL              4 /* discard an encryption level */
 #define TX_TEST_OP_CHECK_DGRAM             5 /* read datagram, compare to expected */
 #define TX_TEST_OP_CHECK_NO_DGRAM          6 /* check no datagram is in queue */
+#define TX_TEST_OP_KEY_UPDATE              7 /* perform key update for 1-RTT */
 
 struct tx_test_op {
     unsigned char op;
@@ -2406,6 +2726,9 @@ struct tx_test_op {
 #define TX_OP_WRITE_CHECK(n)                                            \
     TX_OP_WRITE_N(n)                                                    \
     TX_OP_CHECK_DGRAM_N(n)
+
+#define TX_OP_KEY_UPDATE()                                              \
+    { TX_TEST_OP_KEY_UPDATE, NULL, 0, NULL, 0, 0, NULL },
 
 /* 1. RFC 9001 - A.2 Client Initial */
 static const unsigned char tx_script_1_body[1162] = {
@@ -2681,10 +3004,271 @@ static const struct tx_test_op tx_script_3[] = {
     TX_OP_END
 };
 
+/* 4. Real World - AES-128-GCM Key Update */
+static const unsigned char tx_script_4_secret[] = {
+    0x70, 0x82, 0xc0, 0x45, 0x61, 0x4d, 0xfe, 0x04, 0x76, 0xa6, 0x4e, 0xf0,
+    0x38, 0xe6, 0x63, 0xd9, 0xdd, 0x4a, 0x75, 0x16, 0xa8, 0xa0, 0x06, 0x5a,
+    0xf2, 0x56, 0xfd, 0x84, 0x78, 0xfd, 0xf6, 0x5e
+};
+
+static const unsigned char tx_script_4a_body[] = {
+    0x02, 0x03, 0x09, 0x00, 0x03, 0x0c, 0x00, 0x36, 0x49, 0x27, 0x6d, 0x20,
+    0x68, 0x61, 0x76, 0x69, 0x6e, 0x67, 0x20, 0x61, 0x20, 0x77, 0x6f, 0x6e,
+    0x64, 0x65, 0x72, 0x66, 0x75, 0x6c, 0x20, 0x74, 0x69, 0x6d, 0x65,
+};
+
+static const unsigned char tx_script_4a_dgram[] = {
+    0x47, 0x6e, 0x4e, 0xbd, 0x49, 0x7e, 0xbd, 0x15, 0x1c, 0xd1, 0x3e, 0xc8,
+    0xcd, 0x43, 0x87, 0x6b, 0x84, 0xdb, 0xeb, 0x06, 0x8b, 0x8a, 0xae, 0x37,
+    0xed, 0x9c, 0xeb, 0xbc, 0xcf, 0x0d, 0x3c, 0xf0, 0xa1, 0x6f, 0xee, 0xd2,
+    0x7c, 0x07, 0x6e, 0xd1, 0xbe, 0x40, 0x6a, 0xd4, 0x53, 0x38, 0x9e, 0x63,
+    0xb5, 0xde, 0x35, 0x09, 0xb2, 0x78, 0x94, 0xe4, 0x2b, 0x37
+};
+
+static QUIC_PKT_HDR tx_script_4a_hdr = {
+    QUIC_PKT_TYPE_1RTT,         /* type */
+    0,                          /* spin bit */
+    0,                          /* key phase */
+    2,                          /* PN length */
+    0,                          /* partial */
+    0,                          /* fixed */
+    0,                          /* version */
+    { 4, {0x6e, 0x4e, 0xbd, 0x49} }, /* DCID */
+    { 0, {0} },                 /* SCID */
+    { 0 },                      /* PN */
+    NULL, 0,                    /* Token */
+    5555, NULL                  /* Len/Data */
+};
+
+static const OSSL_QTX_IOVEC tx_script_4a_iovec[] = {
+    { tx_script_4a_body, sizeof(tx_script_4a_body) }
+};
+
+static const OSSL_QTX_PKT tx_script_4a_pkt = {
+    &tx_script_4a_hdr,
+    tx_script_4a_iovec,
+    OSSL_NELEM(tx_script_4a_iovec),
+    NULL, NULL,
+    4,
+    0
+};
+
+static const unsigned char tx_script_4b_body[] = {
+    0x02, 0x04, 0x07, 0x00, 0x00, 0x0c, 0x00, 0x40, 0x51, 0x49, 0x27, 0x6d,
+    0x20, 0x68, 0x61, 0x76, 0x69, 0x6e, 0x67, 0x20, 0x61, 0x20, 0x77, 0x6f,
+    0x6e, 0x64, 0x65, 0x72, 0x66, 0x75, 0x6c, 0x20, 0x74, 0x69, 0x6d, 0x65,
+};
+
+static const unsigned char tx_script_4b_dgram[] = {
+    0x58, 0x6e, 0x4e, 0xbd, 0x49, 0xa4, 0x43, 0x33, 0xea, 0x11, 0x3a, 0x6c,
+    0xf5, 0x20, 0xef, 0x55, 0x8d, 0x25, 0xe2, 0x3b, 0x0e, 0x8c, 0xea, 0x17,
+    0xfc, 0x2b, 0x7a, 0xab, 0xfa, 0x3d, 0x07, 0xda, 0xa7, 0x7c, 0xc7, 0x47,
+    0x82, 0x02, 0x46, 0x40, 0x4f, 0x01, 0xad, 0xb2, 0x9d, 0x97, 0xdb, 0xfc,
+    0x9c, 0x4b, 0x46, 0xb1, 0x5a, 0x7f, 0x0b, 0x12, 0xaf, 0x49, 0xdf,
+};
+
+static QUIC_PKT_HDR tx_script_4b_hdr = {
+    QUIC_PKT_TYPE_1RTT,         /* type */
+    0,                          /* spin bit */
+    1,                          /* key phase */
+    2,                          /* PN length */
+    0,                          /* partial */
+    0,                          /* fixed */
+    0,                          /* version */
+    { 4, {0x6e, 0x4e, 0xbd, 0x49} }, /* DCID */
+    { 0, {0} },                 /* SCID */
+    { 0 },                      /* PN */
+    NULL, 0,                    /* Token */
+    5555, NULL                  /* Len/Data */
+};
+
+static const OSSL_QTX_IOVEC tx_script_4b_iovec[] = {
+    { tx_script_4b_body, sizeof(tx_script_4b_body) }
+};
+
+static const OSSL_QTX_PKT tx_script_4b_pkt = {
+    &tx_script_4b_hdr,
+    tx_script_4b_iovec,
+    OSSL_NELEM(tx_script_4b_iovec),
+    NULL, NULL,
+    5,
+    0
+};
+
+static const unsigned char tx_script_4c_body[] = {
+    0x02, 0x09, 0x0e, 0x00, 0x00, 0x0c, 0x00, 0x40, 0xd8, 0x49, 0x27, 0x6d,
+    0x20, 0x68, 0x61, 0x76, 0x69, 0x6e, 0x67, 0x20, 0x61, 0x20, 0x77, 0x6f,
+    0x6e, 0x64, 0x65, 0x72, 0x66, 0x75, 0x6c, 0x20, 0x74, 0x69, 0x6d, 0x65,
+};
+
+static const unsigned char tx_script_4c_dgram[] = {
+    0x49, 0x6e, 0x4e, 0xbd, 0x49, 0x4d, 0xd9, 0x85, 0xba, 0x26, 0xfb, 0x68,
+    0x83, 0x9b, 0x94, 0x34, 0x7d, 0xc1, 0x7a, 0x05, 0xb7, 0x38, 0x43, 0x21,
+    0xe2, 0xec, 0x2b, 0xc1, 0x81, 0x74, 0x2d, 0xda, 0x24, 0xba, 0xbd, 0x99,
+    0x69, 0xd2, 0x56, 0xfa, 0xae, 0x29, 0x24, 0xb2, 0xaa, 0xda, 0xbd, 0x82,
+    0x80, 0xf1, 0xbb, 0x6a, 0xfd, 0xae, 0xda, 0x0e, 0x09, 0xcf, 0x09,
+};
+
+static QUIC_PKT_HDR tx_script_4c_hdr = {
+    QUIC_PKT_TYPE_1RTT,         /* type */
+    0,                          /* spin bit */
+    0,                          /* key phase */
+    2,                          /* PN length */
+    0,                          /* partial */
+    0,                          /* fixed */
+    0,                          /* version */
+    { 4, {0x6e, 0x4e, 0xbd, 0x49} }, /* DCID */
+    { 0, {0} },                 /* SCID */
+    { 0 },                      /* PN */
+    NULL, 0,                    /* Token */
+    5555, NULL                  /* Len/Data */
+};
+
+static const OSSL_QTX_IOVEC tx_script_4c_iovec[] = {
+    { tx_script_4c_body, sizeof(tx_script_4c_body) }
+};
+
+static const OSSL_QTX_PKT tx_script_4c_pkt = {
+    &tx_script_4c_hdr,
+    tx_script_4c_iovec,
+    OSSL_NELEM(tx_script_4c_iovec),
+    NULL, NULL,
+    10,
+    0
+};
+
+static const struct tx_test_op tx_script_4[] = {
+    TX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, tx_script_4_secret)
+    TX_OP_WRITE_CHECK(4a)
+    TX_OP_KEY_UPDATE()
+    TX_OP_WRITE_CHECK(4b)
+    TX_OP_KEY_UPDATE()
+    TX_OP_WRITE_CHECK(4c)
+    TX_OP_END
+};
+
+/* 5. Real World - Retry Packet */
+static const unsigned char tx_script_5_body[] = {
+    /* Retry Token */
+    0x92, 0xe7, 0xc6, 0xd8, 0x09, 0x65, 0x72, 0x55, 0xe5, 0xe2, 0x73, 0x04,
+    0xf3, 0x07, 0x5b, 0x21, 0x9f, 0x50, 0xcb, 0xbc, 0x79, 0xc5, 0x77, 0x5a,
+    0x29, 0x43, 0x65, 0x49, 0xf0, 0x6e, 0xc1, 0xc0, 0x3a, 0xe8, 0xca, 0xd2,
+    0x44, 0x69, 0xdd, 0x23, 0x31, 0x93, 0x52, 0x02, 0xf7, 0x42, 0x07, 0x78,
+    0xa1, 0x81, 0x61, 0x9c, 0x39, 0x07, 0x18, 0x69, 0x6e, 0x4f, 0xdc, 0xa0,
+    0xbe, 0x4b, 0xe5, 0xf2, 0xe9, 0xd2, 0xa4, 0xa7, 0x34, 0x55, 0x5e, 0xf3,
+    0xf8, 0x9c, 0x49, 0x8f, 0x0c, 0xc8, 0xb2, 0x75, 0x4b, 0x4d, 0x2f, 0xfe,
+    0x05, 0x5a, 0xdd, 0x4b, 0xe6, 0x14, 0xb4, 0xd2, 0xc0, 0x93, 0x6e, 0x0e,
+    0x84, 0x41, 0x4d, 0x31,
+    /* Retry Integrity Tag */
+    0x43, 0x8e, 0xab, 0xcd, 0xce, 0x24, 0x44, 0xc2, 0x20, 0xe1, 0xe2, 0xc8,
+    0xae, 0xa3, 0x8d, 0x4e, 
+};
+
+static const unsigned char tx_script_5_dgram[] = {
+    0xf0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x04, 0xa9, 0x20, 0xcc, 0xc2, 0x92,
+    0xe7, 0xc6, 0xd8, 0x09, 0x65, 0x72, 0x55, 0xe5, 0xe2, 0x73, 0x04, 0xf3,
+    0x07, 0x5b, 0x21, 0x9f, 0x50, 0xcb, 0xbc, 0x79, 0xc5, 0x77, 0x5a, 0x29,
+    0x43, 0x65, 0x49, 0xf0, 0x6e, 0xc1, 0xc0, 0x3a, 0xe8, 0xca, 0xd2, 0x44,
+    0x69, 0xdd, 0x23, 0x31, 0x93, 0x52, 0x02, 0xf7, 0x42, 0x07, 0x78, 0xa1,
+    0x81, 0x61, 0x9c, 0x39, 0x07, 0x18, 0x69, 0x6e, 0x4f, 0xdc, 0xa0, 0xbe,
+    0x4b, 0xe5, 0xf2, 0xe9, 0xd2, 0xa4, 0xa7, 0x34, 0x55, 0x5e, 0xf3, 0xf8,
+    0x9c, 0x49, 0x8f, 0x0c, 0xc8, 0xb2, 0x75, 0x4b, 0x4d, 0x2f, 0xfe, 0x05,
+    0x5a, 0xdd, 0x4b, 0xe6, 0x14, 0xb4, 0xd2, 0xc0, 0x93, 0x6e, 0x0e, 0x84,
+    0x41, 0x4d, 0x31, 0x43, 0x8e, 0xab, 0xcd, 0xce, 0x24, 0x44, 0xc2, 0x20,
+    0xe1, 0xe2, 0xc8, 0xae, 0xa3, 0x8d, 0x4e, 
+};
+
+static QUIC_PKT_HDR tx_script_5_hdr = {
+    QUIC_PKT_TYPE_RETRY,        /* type */
+    0,                          /* spin bit */
+    0,                          /* key phase */
+    0,                          /* PN length */
+    0,                          /* partial */
+    0,                          /* fixed */
+    1,                          /* version */
+    { 0, {0} },                 /* DCID */
+    { 4, {0xa9, 0x20, 0xcc, 0xc2} },   /* SCID */
+    { 0 },                      /* PN */
+    NULL, 0,                    /* Token */
+    5555, NULL                  /* Len/Data */
+};
+
+static const OSSL_QTX_IOVEC tx_script_5_iovec[] = {
+    { tx_script_5_body, sizeof(tx_script_5_body) }
+};
+
+static const OSSL_QTX_PKT tx_script_5_pkt = {
+    &tx_script_5_hdr,
+    tx_script_5_iovec,
+    OSSL_NELEM(tx_script_5_iovec),
+    NULL, NULL,
+    0,
+    0
+};
+
+static const struct tx_test_op tx_script_5[] = {
+    TX_OP_WRITE_CHECK(5)
+    TX_OP_END
+};
+
+/* 6. Real World - Version Negotiation Packet */
+static const unsigned char tx_script_6_body[] = {
+    0x00, 0x00, 0x00, 0x01,             /* Supported Version: 1 */
+    0xaa, 0x9a, 0x3a, 0x9a              /* Supported Version: Random (GREASE) */
+};
+
+static const unsigned char tx_script_6_dgram[] = {
+    0x80,                               /* Long */
+    0x00, 0x00, 0x00, 0x00,             /* Version 0 (Version Negotiation) */
+    0x00,                               /* DCID */
+    0x0c, 0x35, 0x3c, 0x1b, 0x97, 0xca, /* SCID */
+    0xf8, 0x99, 0x11, 0x39, 0xad, 0x79,
+    0x1f,
+    0x00, 0x00, 0x00, 0x01,             /* Supported Version: 1 */
+    0xaa, 0x9a, 0x3a, 0x9a              /* Supported Version: Random (GREASE) */
+};
+
+static QUIC_PKT_HDR tx_script_6_hdr = {
+    QUIC_PKT_TYPE_VERSION_NEG,  /* type */
+    0,                          /* spin bit */
+    0,                          /* key phase */
+    0,                          /* PN length */
+    0,                          /* partial */
+    0,                          /* fixed */
+    0,                          /* version */
+    { 0, {0} },                 /* DCID */
+    { 12, {0x35, 0x3c, 0x1b, 0x97, 0xca, 0xf8, 0x99,
+           0x11, 0x39, 0xad, 0x79, 0x1f} }, /* SCID */
+    { 0 },                      /* PN */
+    NULL, 0,                    /* Token */
+    5555, NULL                  /* Len/Data */
+};
+
+static const OSSL_QTX_IOVEC tx_script_6_iovec[] = {
+    { tx_script_6_body, sizeof(tx_script_6_body) }
+};
+
+static const OSSL_QTX_PKT tx_script_6_pkt = {
+    &tx_script_6_hdr,
+    tx_script_6_iovec,
+    OSSL_NELEM(tx_script_6_iovec),
+    NULL, NULL,
+    0,
+    0
+};
+
+static const struct tx_test_op tx_script_6[] = {
+    TX_OP_WRITE_CHECK(6)
+    TX_OP_END
+};
+
 static const struct tx_test_op *const tx_scripts[] = {
     tx_script_1,
     tx_script_2,
-    tx_script_3
+    tx_script_3,
+    tx_script_4,
+    tx_script_5,
+    tx_script_6
 };
 
 static int tx_run_script(const struct tx_test_op *script)
@@ -2756,6 +3340,10 @@ static int tx_run_script(const struct tx_test_op *script)
                 break;
             case TX_TEST_OP_CHECK_NO_DGRAM:
                 if (!TEST_false(ossl_qtx_pop_net(qtx, &msg)))
+                    goto err;
+                break;
+            case TX_TEST_OP_KEY_UPDATE:
+                if (!TEST_true(ossl_qtx_trigger_key_update(qtx)))
                     goto err;
                 break;
             default:

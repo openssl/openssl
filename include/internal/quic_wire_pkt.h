@@ -46,6 +46,59 @@ ossl_quic_pkt_type_to_enc_level(uint32_t pkt_type)
     }
 }
 
+/* Determine if a packet type contains an encrypted payload. */
+static ossl_inline ossl_unused int
+ossl_quic_pkt_type_is_encrypted(uint32_t pkt_type)
+{
+    switch (pkt_type) {
+        case QUIC_PKT_TYPE_RETRY:
+        case QUIC_PKT_TYPE_VERSION_NEG:
+            return 0;
+        default:
+            return 1;
+    }
+}
+
+/* Determine if a packet type contains a PN field. */
+static ossl_inline ossl_unused int
+ossl_quic_pkt_type_has_pn(uint32_t pkt_type)
+{
+    /*
+     * Currently a packet has a PN iff it is encrypted. This could change
+     * someday.
+     */
+    return ossl_quic_pkt_type_is_encrypted(pkt_type);
+}
+
+/*
+ * Determine if a packet type can appear with other packets in a datagram. Some
+ * packet types must be the sole packet in a datagram.
+ */
+static ossl_inline ossl_unused int
+ossl_quic_pkt_type_can_share_dgram(uint32_t pkt_type)
+{
+    /*
+     * Currently only the encrypted packet types can share a datagram. This
+     * could change someday.
+     */
+    return ossl_quic_pkt_type_is_encrypted(pkt_type);
+}
+
+/*
+ * Determine if the packet type must come at the end of the datagram (due to the
+ * lack of a length field).
+ */
+static ossl_inline ossl_unused int
+ossl_quic_pkt_type_must_be_last(uint32_t pkt_type)
+{
+    /*
+     * Any packet type which cannot share a datagram obviously must come last.
+     * 1-RTT also must come last as it lacks a length field.
+     */
+    return !ossl_quic_pkt_type_can_share_dgram(pkt_type)
+        || pkt_type == QUIC_PKT_TYPE_1RTT;
+}
+
 /*
  * Smallest possible QUIC packet size as per RFC (aside from version negotiation
  * packets).
@@ -62,7 +115,7 @@ typedef struct quic_pkt_hdr_ptrs_st QUIC_PKT_HDR_PTRS;
  *
  * Functions to apply and remove QUIC packet header protection. A header
  * protector is initialised using ossl_quic_hdr_protector_init and must be
- * destroyed using ossl_quic_hdr_protector_destroy when no longer needed.
+ * destroyed using ossl_quic_hdr_protector_cleanup when no longer needed.
  */
 typedef struct quic_hdr_protector_st {
     OSSL_LIB_CTX       *libctx;
@@ -107,7 +160,7 @@ int ossl_quic_hdr_protector_init(QUIC_HDR_PROTECTOR *hpr,
  * OSSL_QUIC_HDR_PROTECTOR structure which has not been initialized, or which
  * has already been destroyed.
  */
-void ossl_quic_hdr_protector_destroy(QUIC_HDR_PROTECTOR *hpr);
+void ossl_quic_hdr_protector_cleanup(QUIC_HDR_PROTECTOR *hpr);
 
 /*
  * Removes header protection from a packet. The packet payload must currently be
@@ -255,11 +308,11 @@ typedef struct quic_pkt_hdr_st {
     /* [L] Version field. Valid if (type != 1RTT). */
     uint32_t        version;
 
-    /* [ALL] Number of bytes in the connection ID (max 20). Always valid. */
+    /* [ALL] The destination connection ID. Always valid. */
     QUIC_CONN_ID    dst_conn_id;
 
     /*
-     * [L] Number of bytes in the connection ID (max 20).
+     * [L] The source connection ID.
      * Valid if (type != 1RTT).
      */
     QUIC_CONN_ID    src_conn_id;
@@ -285,9 +338,13 @@ typedef struct quic_pkt_hdr_st {
     size_t                  token_len;
 
     /*
-     * [i0h] Payload length in bytes.
+     * [ALL] Payload length in bytes.
      *
-     * Valid if (type != 1RTT && type != RETRY && version).
+     * Though 1-RTT, Retry and Version Negotiation packets do not contain an
+     * explicit length field, this field is always valid and is used by the
+     * packet header encoding and decoding routines to describe the payload
+     * length, regardless of whether the packet type encoded or decoded uses an
+     * explicit length indication.
      */
     size_t                  len;
 

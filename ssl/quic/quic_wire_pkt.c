@@ -51,11 +51,11 @@ int ossl_quic_hdr_protector_init(QUIC_HDR_PROTECTOR *hpr,
     return 1;
 
 err:
-    ossl_quic_hdr_protector_destroy(hpr);
+    ossl_quic_hdr_protector_cleanup(hpr);
     return 0;
 }
 
-void ossl_quic_hdr_protector_destroy(QUIC_HDR_PROTECTOR *hpr)
+void ossl_quic_hdr_protector_cleanup(QUIC_HDR_PROTECTOR *hpr)
 {
     EVP_CIPHER_CTX_free(hpr->cipher_ctx);
     hpr->cipher_ctx = NULL;
@@ -238,8 +238,9 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
         hdr->data               = PACKET_data(pkt);
 
         /*
-         * Skip over payload so we are pointing at the start of the next packet,
-         * if any.
+         * Skip over payload. Since this is a short header packet, which cannot
+         * be followed by any other kind of packet, this advances us to the end
+         * of the datagram.
          */
         if (!PACKET_forward(pkt, hdr->len))
             return 0;
@@ -306,10 +307,18 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
             raw_type = ((b0 >> 4) & 0x3);
 
             switch (raw_type) {
-                case 0: hdr->type = QUIC_PKT_TYPE_INITIAL; break;
-                case 1: hdr->type = QUIC_PKT_TYPE_0RTT; break;
-                case 2: hdr->type = QUIC_PKT_TYPE_HANDSHAKE; break;
-                case 3: hdr->type = QUIC_PKT_TYPE_RETRY; break;
+            case 0:
+                hdr->type = QUIC_PKT_TYPE_INITIAL;
+                break;
+            case 1:
+                hdr->type = QUIC_PKT_TYPE_0RTT;
+                break;
+            case 2:
+                hdr->type = QUIC_PKT_TYPE_HANDSHAKE;
+                break;
+            case 3:
+                hdr->type = QUIC_PKT_TYPE_RETRY;
+                break;
             }
 
             hdr->pn_len     = 0;
@@ -455,8 +464,7 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
             || hdr->src_conn_id.id_len > QUIC_MAX_CONN_ID_LEN)
             return 0;
 
-        if (hdr->type != QUIC_PKT_TYPE_VERSION_NEG
-            && hdr->type != QUIC_PKT_TYPE_RETRY
+        if (ossl_quic_pkt_type_has_pn(hdr->type)
             && (hdr->pn_len < 1 || hdr->pn_len > 4))
             return 0;
 
@@ -480,8 +488,7 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
         b0 = (raw_type << 4) | 0x80; /* long */
         if (hdr->type != QUIC_PKT_TYPE_VERSION_NEG || hdr->fixed)
             b0 |= 0x40; /* fixed */
-        if (hdr->type != QUIC_PKT_TYPE_RETRY
-            && hdr->type != QUIC_PKT_TYPE_VERSION_NEG)
+        if (ossl_quic_pkt_type_has_pn(hdr->type))
             b0 |= hdr->pn_len - 1;
 
         if (!WPACKET_put_bytes_u8(pkt, b0)
@@ -560,15 +567,17 @@ int ossl_quic_wire_get_encoded_pkt_hdr_len(size_t short_conn_id_len,
             || hdr->src_conn_id.id_len > QUIC_MAX_CONN_ID_LEN)
             return 0;
 
-        if (hdr->type != QUIC_PKT_TYPE_VERSION_NEG
-            && hdr->type != QUIC_PKT_TYPE_RETRY
-            && (hdr->pn_len < 1 || hdr->pn_len > 4))
-            return 0;
-
         len += 1 /* Initial byte */ + 4 /* Version */
             + 1 + hdr->dst_conn_id.id_len /* DCID Len, DCID */
             + 1 + hdr->src_conn_id.id_len /* SCID Len, SCID */
-            + hdr->pn_len; /* PN */
+            ;
+
+        if (ossl_quic_pkt_type_has_pn(hdr->type)) {
+            if (hdr->pn_len < 1 || hdr->pn_len > 4)
+                return 0;
+
+            len += hdr->pn_len;
+        }
 
         if (hdr->type == QUIC_PKT_TYPE_INITIAL) {
             enclen = ossl_quic_vlint_encode_len(hdr->token_len);
@@ -577,11 +586,14 @@ int ossl_quic_wire_get_encoded_pkt_hdr_len(size_t short_conn_id_len,
             len += enclen;
         }
 
-        enclen = ossl_quic_vlint_encode_len(hdr->len);
-        if (!enclen)
-            return 0;
+        if (!ossl_quic_pkt_type_must_be_last(hdr->type)) {
+            enclen = ossl_quic_vlint_encode_len(hdr->len);
+            if (!enclen)
+                return 0;
 
-        len += enclen;
+            len += enclen;
+        }
+
         return len;
     }
 }

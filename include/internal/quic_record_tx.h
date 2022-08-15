@@ -163,7 +163,18 @@ typedef struct ossl_qtx_pkt_st {
  * encoded packet should be by setting pkt->hdr->pn_len. This function takes
  * care of the PN encoding. Set pkt->pn to the desired PN.
  *
+ * Note that 1-RTT packets do not have a DCID Length field, therefore the DCID
+ * length must be understood contextually. This function assumes the caller
+ * knows what it is doing and will serialize a DCID of whatever length is given.
+ * It is the caller's responsibility to ensure it uses a consistent DCID length
+ * for communication with any given set of remote peers.
+ *
  * The packet is queued regardless of whether it is able to be sent immediately.
+ * This enables packets to be batched and sent at once on systems which support
+ * system calls to send multiple datagrams in a single system call (see
+ * BIO_sendmmsg). To flush queued datagrams to the network, see
+ * ossl_qtx_flush_net().
+ *
  * Returns 1 on success or 0 on failure.
  */
 int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt);
