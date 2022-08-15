@@ -66,6 +66,7 @@ struct err_state_st {
     int err_line[ERR_NUM_ERRORS];
     char *err_func[ERR_NUM_ERRORS];
     int top, bottom;
+    int malloc_failure_reported;
 };
 # endif
 
