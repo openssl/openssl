@@ -850,9 +850,10 @@ static int test_rx_ack_actual(int tidx, int space)
     OSSL_QUIC_ACK_RANGE rx_ack_range = {0};
     struct pkt_info *pkts = NULL;
     OSSL_ACKM_TX_PKT *txs = NULL, *tx;
-    OSSL_TIME ack_deadline[QUIC_PN_SPACE_NUM] = {
-        ossl_time_infinite(), ossl_time_infinite(), ossl_time_infinite()
-    };
+    OSSL_TIME ack_deadline[QUIC_PN_SPACE_NUM];
+
+    for (i = 0; i < QUIC_PN_SPACE_NUM; ++i)
+        ack_deadline[i] = ossl_time_infinite();
 
     /* Initialise ACK manager. */
     if (!TEST_int_eq(helper_init(&h, 0), 1))
