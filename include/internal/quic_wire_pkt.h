@@ -46,6 +46,59 @@ ossl_quic_pkt_type_to_enc_level(uint32_t pkt_type)
     }
 }
 
+/* Determine if a packet type contains an encrypted payload. */
+static ossl_inline ossl_unused int
+ossl_quic_pkt_type_is_encrypted(uint32_t pkt_type)
+{
+    switch (pkt_type) {
+        case QUIC_PKT_TYPE_RETRY:
+        case QUIC_PKT_TYPE_VERSION_NEG:
+            return 0;
+        default:
+            return 1;
+    }
+}
+
+/* Determine if a packet type contains a PN field. */
+static ossl_inline ossl_unused int
+ossl_quic_pkt_type_has_pn(uint32_t pkt_type)
+{
+    /*
+     * Currently a packet has a PN iff it is encrypted. This could change
+     * someday.
+     */
+    return ossl_quic_pkt_type_is_encrypted(pkt_type);
+}
+
+/*
+ * Determine if a packet type can appear with other packets in a datagram. Some
+ * packet types must be the sole packet in a datagram.
+ */
+static ossl_inline ossl_unused int
+ossl_quic_pkt_type_can_share_dgram(uint32_t pkt_type)
+{
+    /*
+     * Currently only the non-encrypted packet types can share a datagram. This
+     * could change someday.
+     */
+    return ossl_quic_pkt_type_is_encrypted(pkt_type);
+}
+
+/*
+ * Determine if the packet type must come at the end of the datagram (due to the
+ * lack of a length field).
+ */
+static ossl_inline ossl_unused int
+ossl_quic_pkt_type_must_be_last(uint32_t pkt_type)
+{
+    /*
+     * Any packet type which cannot share a datagram obviously must come last.
+     * 1-RTT also must come last as it lacks a length field.
+     */
+    return !ossl_quic_pkt_type_can_share_dgram(pkt_type)
+        || pkt_type == QUIC_PKT_TYPE_1RTT;
+}
+
 /*
  * Smallest possible QUIC packet size as per RFC (aside from version negotiation
  * packets).

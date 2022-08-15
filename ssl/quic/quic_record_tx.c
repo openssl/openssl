@@ -79,28 +79,6 @@ static void txe_insert_tail(TXE_LIST *l, TXE *e)
  * QTX
  * ===
  */
-
-/* (Encryption level, direction)-specific state. */
-typedef struct ossl_qtx_enc_level_st {
-    /* Hash function used for key derivation. */
-    EVP_MD                     *md;
-    /* Context used for packet body ciphering. */
-    EVP_CIPHER_CTX             *cctx;
-    /* IV used to construct nonces used for AEAD packet body ciphering. */
-    unsigned char               iv[EVP_MAX_IV_LENGTH];
-    /* Have we permanently discarded this encryption level? */
-    unsigned char               discarded;
-    /* QTX_SUITE_* value. */
-    uint32_t                    suite_id;
-    /* Length of authentication tag. */
-    uint32_t                    tag_len;
-    /*
-     * Cryptographic context used to apply and remove header protection from
-     * packet headers.
-     */
-    QUIC_HDR_PROTECTOR          hpr;
-} OSSL_QTX_ENC_LEVEL;
-
 struct ossl_qtx_st {
     OSSL_LIB_CTX               *libctx;
     const char                 *propq;
@@ -176,10 +154,11 @@ void ossl_qtx_free(OSSL_QTX *qtx)
     /* Free TXE queue data. */
     qtx_cleanup_txl(&qtx->pending);
     qtx_cleanup_txl(&qtx->free);
+    OPENSSL_free(qtx->cons);
 
     /* Drop keying material and crypto resources. */
     for (i = 0; i < QUIC_ENC_LEVEL_NUM; ++i)
-        ossl_qrl_enc_level_set_discard(&qtx->el_set, i, 1);
+        ossl_qrl_enc_level_set_discard(&qtx->el_set, i);
 
     OPENSSL_free(qtx);
 }
@@ -201,7 +180,9 @@ int ossl_qtx_provide_secret(OSSL_QTX              *qtx,
                                                  suite_id,
                                                  md,
                                                  secret,
-                                                 secret_len);
+                                                 secret_len,
+                                                 0,
+                                                 /*is_tx=*/1);
 }
 
 int ossl_qtx_discard_enc_level(OSSL_QTX *qtx, uint32_t enc_level)
@@ -209,7 +190,7 @@ int ossl_qtx_discard_enc_level(OSSL_QTX *qtx, uint32_t enc_level)
     if (enc_level >= QUIC_ENC_LEVEL_NUM)
         return 0;
 
-    ossl_qrl_enc_level_set_discard(&qtx->el_set, enc_level, 1);
+    ossl_qrl_enc_level_set_discard(&qtx->el_set, enc_level);
     return 1;
 }
 
@@ -432,7 +413,7 @@ static int qtx_write_hdr(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
                                  txe->alloc_len - txe->data_len, 0))
         return 0;
 
-    if (!ossl_quic_wire_encode_pkt_hdr(&wpkt, pkt->hdr->src_conn_id.id_len,
+    if (!ossl_quic_wire_encode_pkt_hdr(&wpkt, pkt->hdr->dst_conn_id.id_len,
                                        pkt->hdr, ptrs)
         || !WPACKET_get_total_written(&wpkt, &l)) {
         WPACKET_finish(&wpkt);
@@ -454,6 +435,7 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
         = ossl_qrl_enc_level_set_get(&qtx->el_set, enc_level, 1);
     unsigned char nonce[EVP_MAX_IV_LENGTH];
     size_t nonce_len, i;
+    EVP_CIPHER_CTX *cctx = NULL;
 
     /* We should not have been called if we do not have key material. */
     if (!ossl_assert(el != NULL))
@@ -466,21 +448,30 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
     if (el->op_count >= ossl_qrl_get_suite_max_pkt(el->suite_id))
         return 0;
 
+    /*
+     * TX key update is simpler than for RX; once we initiate a key update, we
+     * never need the old keys, as we never deliberately send a packet with old
+     * keys. Thus the EL always uses keyslot 0 for the TX side.
+     */
+    cctx = el->cctx[0];
+    if (!ossl_assert(cctx != NULL))
+        return 0;
+
     /* Construct nonce (nonce=IV ^ PN). */
-    nonce_len = EVP_CIPHER_CTX_get_iv_length(el->cctx);
+    nonce_len = EVP_CIPHER_CTX_get_iv_length(cctx);
     if (!ossl_assert(nonce_len >= sizeof(QUIC_PN)))
         return 0;
 
-    memcpy(nonce, el->iv, nonce_len);
+    memcpy(nonce, el->iv[0], nonce_len);
     for (i = 0; i < sizeof(QUIC_PN); ++i)
         nonce[nonce_len - i - 1] ^= (unsigned char)(pn >> (i * 8));
 
     /* type and key will already have been setup; feed the IV. */
-    if (EVP_CipherInit_ex(el->cctx, NULL, NULL, NULL, nonce, /*enc=*/1) != 1)
+    if (EVP_CipherInit_ex(cctx, NULL, NULL, NULL, nonce, /*enc=*/1) != 1)
         return 0;
 
     /* Feed AAD data. */
-    if (EVP_CipherUpdate(el->cctx, NULL, &l, hdr, hdr_len) != 1)
+    if (EVP_CipherUpdate(cctx, NULL, &l, hdr, hdr_len) != 1)
         return 0;
 
     /* Encrypt plaintext directly into TXE. */
@@ -492,7 +483,7 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
         if (src_len == 0)
             break;
 
-        if (EVP_CipherUpdate(el->cctx, txe_data(txe) + txe->data_len,
+        if (EVP_CipherUpdate(cctx, txe_data(txe) + txe->data_len,
                              &l, src, src_len) != 1)
             return 0;
 
@@ -501,10 +492,10 @@ static int qtx_encrypt_into_txe(OSSL_QTX *qtx, struct iovec_cur *cur, TXE *txe,
     }
 
     /* Finalise and get tag. */
-    if (EVP_CipherFinal_ex(el->cctx, NULL, &l2) != 1)
+    if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1)
         return 0;
 
-    if (EVP_CIPHER_CTX_ctrl(el->cctx, EVP_CTRL_AEAD_GET_TAG,
+    if (EVP_CIPHER_CTX_ctrl(cctx, EVP_CTRL_AEAD_GET_TAG,
                             el->tag_len, txe_data(txe) + txe->data_len) != 1)
         return 0;
 
@@ -531,18 +522,21 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
     struct iovec_cur cur;
     QUIC_PKT_HDR_PTRS ptrs;
     unsigned char *hdr_start;
+    OSSL_QRL_ENC_LEVEL *el = NULL;
 
     /*
      * Determine if the packet needs encryption and the minimum conceivable
      * serialization length.
      */
-    if (pkt->hdr->type == QUIC_PKT_TYPE_RETRY
-        || pkt->hdr->type == QUIC_PKT_TYPE_VERSION_NEG) {
+    if (!ossl_quic_pkt_type_is_encrypted(pkt->hdr->type)) {
         needs_encrypt = 0;
         min_len = QUIC_MIN_VALID_PKT_LEN;
     } else {
         needs_encrypt = 1;
         min_len = QUIC_MIN_VALID_PKT_LEN_CRYPTO;
+        el = ossl_qrl_enc_level_set_get(&qtx->el_set, enc_level, 1);
+        if (!ossl_assert(el != NULL)) /* should already have been checked */
+            return 0;
     }
 
     orig_data_len = txe->data_len;
@@ -564,7 +558,7 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
     /* Determine header length. */
     pkt->hdr->data  = NULL;
     pkt->hdr->len   = payload_len;
-    pred_hdr_len = ossl_quic_wire_get_encoded_pkt_hdr_len(pkt->hdr->src_conn_id.id_len,
+    pred_hdr_len = ossl_quic_wire_get_encoded_pkt_hdr_len(pkt->hdr->dst_conn_id.id_len,
                                                           pkt->hdr);
     if (pred_hdr_len == 0) {
         ret = QTX_FAIL_GENERIC;
@@ -580,12 +574,16 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
     }
 
     /* Set some fields in the header we are responsible for. */
-    pkt->hdr->key_phase = 0; /* TODO */
-    if (!ossl_quic_wire_encode_pkt_hdr_pn(pkt->pn,
-                                          pkt->hdr->pn,
-                                          pkt->hdr->pn_len)) {
-        ret = QTX_FAIL_GENERIC;
-        goto err;
+    if (pkt->hdr->type == QUIC_PKT_TYPE_1RTT)
+        pkt->hdr->key_phase = (unsigned char)(el->key_epoch & 1);
+
+    if (ossl_quic_pkt_type_has_pn(pkt->hdr->type)) {
+        if (!ossl_quic_wire_encode_pkt_hdr_pn(pkt->pn,
+                                              pkt->hdr->pn,
+                                              pkt->hdr->pn_len)) {
+            ret = QTX_FAIL_GENERIC;
+            goto err;
+        }
     }
 
     /* Append the header to the TXE. */
@@ -674,13 +672,13 @@ int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt)
     enc_level = ossl_quic_pkt_type_to_enc_level(pkt->hdr->type);
 
     /* Some packet types must be in a packet all by themselves. */
-    if (pkt->hdr->type == QUIC_PKT_TYPE_RETRY
-        || pkt->hdr->type == QUIC_PKT_TYPE_VERSION_NEG)
+    if (!ossl_quic_pkt_type_can_share_dgram(pkt->hdr->type))
         ossl_qtx_finish_dgram(qtx);
     else if (enc_level >= QUIC_ENC_LEVEL_NUM
-               || ossl_qrl_enc_level_set_have_el(&qtx->el_set, enc_level) != 1)
+               || ossl_qrl_enc_level_set_have_el(&qtx->el_set, enc_level) != 1) {
         /* All other packet types are encrypted. */
         return 0;
+    }
 
     was_coalescing = (qtx->cons != NULL && qtx->cons->data_len > 0);
     if (was_coalescing)
@@ -751,9 +749,7 @@ int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt)
     /*
      * Some packet types cannot have another packet come after them.
      */
-    if (pkt->hdr->type == QUIC_PKT_TYPE_RETRY
-        || pkt->hdr->type == QUIC_PKT_TYPE_VERSION_NEG
-        || pkt->hdr->type == QUIC_PKT_TYPE_1RTT)
+    if (ossl_quic_pkt_type_must_be_last(pkt->hdr->type))
         coalescing = 0;
 
     if (!coalescing)
@@ -881,6 +877,12 @@ size_t ossl_qtx_get_cur_dgram_len_bytes(OSSL_QTX *qtx)
 size_t ossl_qtx_get_unflushed_pkt_count(OSSL_QTX *qtx)
 {
     return qtx->cons_count;
+}
+
+int ossl_qtx_trigger_key_update(OSSL_QTX *qtx)
+{
+    return ossl_qrl_enc_level_set_key_update(&qtx->el_set,
+                                             QUIC_ENC_LEVEL_1RTT);
 }
 
 uint64_t ossl_qtx_get_cur_epoch_pkt_count(OSSL_QTX *qtx, uint32_t enc_level)

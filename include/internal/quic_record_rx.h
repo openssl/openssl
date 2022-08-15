@@ -34,6 +34,9 @@ typedef struct ossl_qrx_args_st {
 
     /* Initial reference PN used for RX. */
     QUIC_PN         init_largest_pn[QUIC_PN_SPACE_NUM];
+
+    /* Initial key phase. For debugging use only; always 0 in real use. */
+    unsigned char   init_key_phase_bit;
 } OSSL_QRX_ARGS;
 
 /* Instantiates a new QRX. */
@@ -218,6 +221,15 @@ typedef struct ossl_qrx_pkt_st {
      * datagrams containing INITIAL packets), as required by RFC 9000.
      */
     size_t              datagram_len;
+
+    /* The PN which was decoded for the packet, if the packet has a PN field. */
+    QUIC_PN             pn;
+
+    /*
+     * Time the packet was received, or ossl_time_zero() if the demuxer is not
+     * using a now() function.
+     */
+    OSSL_TIME           time;
 } OSSL_QRX_PKT;
 
 /*
@@ -226,9 +238,9 @@ typedef struct ossl_qrx_pkt_st {
  * On success, all fields of *pkt are filled and 1 is returned.
  * Else, returns 0.
  *
- * The resources referenced by pkt->hdr, pkt->data and pkt->peer will remain
- * allocated at least until the user frees them by calling ossl_qrx_release_pkt,
- * which must be called once you are done with the packet.
+ * The resources referenced by pkt->hdr, pkt->hdr->data and pkt->peer will
+ * remain allocated at least until the user frees them by calling
+ * ossl_qrx_release_pkt, which must be called once you are done with the packet.
  */
 int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt);
 
@@ -342,11 +354,11 @@ int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
  *                               PROVISIONED
  *                     _______________________________
  *                    |                               |
- *   UNPROVISIONED  --|---->  NORMAL  <----------\    |------>  DROPPED
+ *   UNPROVISIONED  --|---->  NORMAL  <----------\    |------>  DISCARDED
  *                    |          |               |    |
  *                    |          |               |    |
  *                    |          v               |    |
- *                    |   UPDATE_CONFIRMED       |    |
+ *                    |      UPDATING            |    |
  *                    |          |               |    |
  *                    |          |               |    |
  *                    |          v               |    |
@@ -362,16 +374,16 @@ int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
  * recorded. When a flipped Key Phase bit is detected, the RX attempts to
  * decrypt and authenticate the received packet with the 'next' keys rather than
  * the 'current' keys. If (and only if) this authentication is successful, we
- * move to the UPDATE_CONFIRMED state. (An attacker in the network could flip
+ * move to the UPDATING state. (An attacker in the network could flip
  * the Key Phase bit randomly, so it is essential we do nothing until AEAD
  * authentication is complete.)
  *
- * In the UPDATE_CONFIRMED state, we know a key update is occurring and record
+ * In the UPDATING state, we know a key update is occurring and record
  * the new Key Phase bit value as the newly current value, but we still keep the
  * old keys around so that we can still process any packets which were still in
- * flight when the key update was initiated. In the UPDATE_CONFIRMED state, a
+ * flight when the key update was initiated. In the UPDATING state, a
  * Key Phase bit value different to the current expected value is treated not as
-* the initiation of another key update, but a reference to our old keys.
+ * the initiation of another key update, but a reference to our old keys.
  *
  * Eventually we will be reasonably sure we are not going to receive any more
  * packets with the old keys. At this point, we can transition to the COOLDOWN
@@ -386,21 +398,25 @@ int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
  * as a request for a Key Update, but this request is ignored and the packet is
  * treated as malformed. We do this to allow mitigation against malicious peers
  * trying to initiate an excessive number of Key Updates. The timeout for the
- * transition from UPDATE_CONFIRMED to COOLDOWN is recommended as adequate for
+ * transition from UPDATING to COOLDOWN is recommended as adequate for
  * this purpose in itself by the RFC, so the normal additional timeout value for
  * the transition from COOLDOWN to normal is zero (immediate transition).
  *
  * A summary of each state:
  *
- *                        Exp KP  Uses Keys KS0    KS1    If Non-Expected KP Bit
- *                        ------  --------- ------ -----  ----------------------
- *      NORMAL            0       Keyset 0  Gen 0  Gen 1  → UPDATE_CONFIRMED
- *      UPDATE_CONFIRMED  1       Keyset 1  Gen 0  Gen 1  Use Keyset 0
- *      COOLDOWN          1       Keyset 1  Erased Gen 1  Ignore Packet
+ *                 Epoch  Exp KP  Uses Keys KS0    KS1    If Non-Expected KP Bit
+ *                 -----  ------  --------- ------ -----  ----------------------
+ *      NORMAL         0  0       Keyset 0  Gen 0  Gen 1  → UPDATING
+ *      UPDATING       1  1       Keyset 1  Gen 0  Gen 1  Use Keyset 0
+ *      COOLDOWN       1  1       Keyset 1  Erased Gen 1  Ignore Packet (*)
  *
- *      NORMAL            1       Keyset 1  Gen 2  Gen 1  → UPDATE_CONFIRMED
- *      UPDATE_CONFIRMED  0       Keyset 0  Gen 2  Gen 1  Use Keyset 1
- *      COOLDOWN          0       Keyset 0  Gen 2  Erased Ignore Packet
+ *      NORMAL         1  1       Keyset 1  Gen 2  Gen 1  → UPDATING
+ *      UPDATING       2  0       Keyset 0  Gen 2  Gen 1  Use Keyset 1
+ *      COOLDOWN       2  0       Keyset 0  Gen 2  Erased Ignore Packet (*)
+ *
+ * (*) Actually implemented by attempting to decrypt the packet with the
+ *     wrong keys (which ultimately has the same outcome), as recommended
+ *     by RFC 9001 to avoid creating timing channels.
  *
  * Note that the key material for the next key generation ("key epoch") is
  * always kept in the NORMAL state (necessary to avoid side-channel attacks).
@@ -411,11 +427,11 @@ int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
  * and making the necessary calls to the TX side by detecting changes to the
  * return value of ossl_qrx_get_key_epoch().
  *
- * The above states (NORMAL, UPDATE_CONFIRMED, COOLDOWN) can themselves be
+ * The above states (NORMAL, UPDATING, COOLDOWN) can themselves be
  * considered substates of the PROVISIONED state. Providing a secret to the QRX
  * for an EL transitions from UNPROVISIONED, the initial state, to PROVISIONED
  * (NORMAL). Dropping key material for an EL transitions from whatever the
- * current substate of the PROVISIONED state is to the DROPPED state, which is
+ * current substate of the PROVISIONED state is to the DISCARDED state, which is
  * the terminal state.
  *
  * Note that non-1RTT ELs cannot undergo key update, therefore a non-1RT EL is
@@ -423,8 +439,10 @@ int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
  */
 
 /*
- * Return the current RX key epoch. This is initially zero and is incremented by
- * one for every Key Update successfully signalled by the peer.
+ * Return the current RX key epoch for the 1-RTT encryption level. This is
+ * initially zero and is incremented by one for every Key Update successfully
+ * signalled by the peer. If the 1-RTT EL has not yet been provisioned or has
+ * been discarded, returns UINT64_MAX.
  *
  * A necessary implication of this API is that the least significant bit of the
  * returned value corresponds to the currently expected Key Phase bit, though
@@ -438,21 +456,22 @@ int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
  * and use it to initiate a key update on the TX side.
  *
  * The value returned by this function increments specifically at the transition
- * from the NORMAL to the UPDATE_CONFIRMED state discussed above.
+ * from the NORMAL to the UPDATING state discussed above.
  */
 uint64_t ossl_qrx_get_key_epoch(OSSL_QRX *qrx);
 
 /*
- * The caller should call this after the UPDATE_CONFIRMED state is reached,
- * after a timeout to be determined by the caller.
+ * Relates to the 1-RTT encryption level. The caller should call this after the
+ * UPDATING state is reached, after a timeout to be determined by the caller.
  *
- * This transitions from the UPDATE_CONFIRMED state to the COOLDOWN state (if
- * still in the UPDATE_CONFIRMED state). If normal is 1, then transitions from
+ * This transitions from the UPDATING state to the COOLDOWN state (if
+ * still in the UPDATING state). If normal is 1, then transitions from
  * the COOLDOWN state to the NORMAL state. Both transitions can be performed at
  * once if desired.
  *
  * If in the normal state, or if in the COOLDOWN state and normal is 0, this is
- * a no-op and returns 1.
+ * a no-op and returns 1. Returns 0 if the 1-RTT EL has not been provisioned or
+ * has been dropped.
  *
  * It is essential that the caller call this within a few PTO intervals of a key
  * update occurring (as detected by the caller in a call to

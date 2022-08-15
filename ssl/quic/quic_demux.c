@@ -103,6 +103,10 @@ struct quic_demux_st {
     /* Default URXE buffer size in bytes. */
     size_t                      default_urxe_alloc_len;
 
+    /* Time retrieval callback. */
+    OSSL_TIME                 (*now)(void *arg);
+    void                       *now_arg;
+
     /* Hashtable mapping connection IDs to QUIC_DEMUX_CONN structures. */
     LHASH_OF(QUIC_DEMUX_CONN)  *conns_by_id;
 
@@ -128,7 +132,9 @@ struct quic_demux_st {
 
 QUIC_DEMUX *ossl_quic_demux_new(BIO *net_bio,
                                 size_t short_conn_id_len,
-                                size_t default_urxe_alloc_len)
+                                size_t default_urxe_alloc_len,
+                                OSSL_TIME (*now)(void *arg),
+                                void *now_arg)
 {
     QUIC_DEMUX *demux;
 
@@ -139,6 +145,8 @@ QUIC_DEMUX *ossl_quic_demux_new(BIO *net_bio,
     demux->net_bio                  = net_bio;
     demux->short_conn_id_len        = short_conn_id_len;
     demux->default_urxe_alloc_len   = default_urxe_alloc_len;
+    demux->now                      = now;
+    demux->now_arg                  = now_arg;
 
     demux->conns_by_id
         = lh_QUIC_DEMUX_CONN_new(demux_conn_hash, demux_conn_cmp);
@@ -332,6 +340,7 @@ static int demux_recv(QUIC_DEMUX *demux)
     BIO_MSG msg[OSSL_QUIC_DEMUX_MAX_MSGS_PER_CALL];
     ossl_ssize_t rd, i;
     QUIC_URXE *urxe = demux->urx_free.head, *unext;
+    OSSL_TIME now;
 
     /* This should never be called when we have any pending URXE. */
     assert(demux->urx_pending.head == NULL);
@@ -367,11 +376,15 @@ static int demux_recv(QUIC_DEMUX *demux)
     if (rd <= 0)
         return 0;
 
+    now = demux->now != NULL ? demux->now(demux->now_arg) : ossl_time_zero();
+
     urxe = demux->urx_free.head;
     for (i = 0; i < rd; ++i, urxe = unext) {
         unext = urxe->next;
         /* Set URXE with actual length of received datagram. */
         urxe->data_len      = msg[i].data_len;
+        /* Time we received datagram. */
+        urxe->time          = now;
         /* Move from free list to pending list. */
         ossl_quic_urxe_remove(&demux->urx_free, urxe);
         --demux->num_urx_free;

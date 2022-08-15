@@ -13,6 +13,7 @@
 # include <openssl/ssl.h>
 # include "internal/quic_types.h"
 # include "internal/bio_addr.h"
+# include "internal/time.h"
 
 /*
  * QUIC Demuxer
@@ -110,6 +111,12 @@ struct quic_urxe_st {
      * is zeroed.
      */
     BIO_ADDR        peer, local;
+
+    /*
+     * Time at which datagram was received (or ossl_time_zero()) if a now
+     * function was not provided).
+     */
+    OSSL_TIME       time;
 };
 
 /* Accessors for URXE buffer. */
@@ -163,10 +170,16 @@ typedef void (ossl_quic_demux_cb_fn)(QUIC_URXE *e, void *arg);
  * connections used on a socket. default_urxe_alloc_len is the buffer size to
  * receive datagrams into; it should be a value large enough to contain any
  * received datagram according to local MTUs, etc.
+ *
+ * now is an optional function used to determine the time a datagram was
+ * received. now_arg is an opaque argument passed to the function. If now is
+ * NULL, ossl_time_zero() is used as the datagram reception time.
  */
 QUIC_DEMUX *ossl_quic_demux_new(BIO *net_bio,
                                 size_t short_conn_id_len,
-                                size_t default_urxe_alloc_len);
+                                size_t default_urxe_alloc_len,
+                                OSSL_TIME (*now)(void *arg),
+                                void *now_arg);
 
 /*
  * Destroy a demuxer. All URXEs must have been released back to the demuxer
