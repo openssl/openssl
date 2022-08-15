@@ -18,7 +18,7 @@
 # include "internal/cryptlib.h"
 # include "crypto/modes.h"
 
-# define MAXCHUNK    ((size_t)1 << (sizeof(long) * 8 - 2))
+# define MAXCHUNK    ((size_t)1 << 30)
 # define MAXBITCHUNK ((size_t)1 << (sizeof(size_t) * 8 - 4))
 
 # define GENERIC_BLOCK_SIZE 16
