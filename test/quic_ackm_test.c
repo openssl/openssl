@@ -12,9 +12,9 @@
 #include "internal/quic_ackm.h"
 #include "internal/quic_cc.h"
 
-static OSSL_TIME fake_time = 0;
+static OSSL_TIME fake_time = {0};
 
-#define TIME_BASE (123 * OSSL_TIME_SECOND)
+#define TIME_BASE (ossl_ticks2time(123 * OSSL_TIME_SECOND))
 
 static OSSL_TIME fake_now(void *arg)
 {
@@ -341,7 +341,7 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
     OSSL_ACKM_TX_PKT *tx;
     const struct tx_ack_test_case *c = tx_ack_cases[tidx];
     OSSL_QUIC_FRAME_ACK ack = {0};
-    OSSL_TIME loss_detection_deadline = OSSL_TIME_ZERO;
+    OSSL_TIME loss_detection_deadline = ossl_time_zero();
 
     /* Cannot discard app space, so skip this */
     if (mode == MODE_DISCARD && space == QUIC_PN_SPACE_APP) {
@@ -417,11 +417,11 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
         OSSL_TIME deadline = ossl_ackm_get_loss_detection_deadline(h.ackm);
         OSSL_ACKM_PROBE_INFO probe = {0};
 
-        if (!TEST_true(deadline == loss_detection_deadline))
+        if (!TEST_int_eq(ossl_time_compare(deadline, loss_detection_deadline), 0))
             goto err;
 
         /* We should have a PTO deadline. */
-        if (!TEST_true(deadline > fake_time))
+        if (!TEST_int_gt(ossl_time_compare(deadline, fake_time), 0))
             goto err;
 
         /* Should not have any probe requests yet. */
@@ -440,7 +440,7 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
                 goto err;
 
         /* Advance to the PTO deadline. */
-        fake_time = deadline + 1;
+        fake_time = ossl_time_add(deadline, ossl_ticks2time(1));
 
         if (!TEST_int_eq(ossl_ackm_on_timeout(h.ackm), 1))
             goto err;
@@ -484,7 +484,7 @@ enum {
 
 struct tx_ack_time_op {
     int       kind;
-    OSSL_TIME time_advance; /* all ops */
+    uint64_t  time_advance; /* all ops */
     QUIC_PN   pn;           /* PKT, ACK */
     size_t    num_pn;       /* PKT, ACK */
     const char *expect;     /* 1=ack, 2=lost, 4=discarded */
@@ -557,7 +557,8 @@ static int test_tx_ack_time_script(int tidx)
                     tx->on_discarded        = on_discarded;
                     tx->cb_arg              = &h.pkts[pkt_idx + i];
 
-                    fake_time += s->time_advance;
+                    fake_time = ossl_time_add(fake_time,
+                                              ossl_ticks2time(s->time_advance));
                     tx->time   = fake_time;
 
                     if (!TEST_int_eq(ossl_ackm_on_tx_packet(h.ackm, tx), 1))
@@ -574,7 +575,8 @@ static int test_tx_ack_time_script(int tidx)
                 ack_range.start     = s->pn;
                 ack_range.end       = s->pn + s->num_pn;
 
-                fake_time += s->time_advance;
+                fake_time = ossl_time_add(fake_time,
+                                          ossl_ticks2time(s->time_advance));
 
                 if (!TEST_int_eq(ossl_ackm_on_rx_ack_frame(h.ackm, &ack,
                                                            QUIC_PN_SPACE_INITIAL,
@@ -622,7 +624,7 @@ enum {
 
 struct rx_test_op {
     int                         kind;
-    OSSL_TIME                   time_advance;
+    uint64_t                    time_advance;
 
     QUIC_PN                     pn;     /* PKT, CHECK_(UN)PROC, TX, RX_ACK */
     size_t                      num_pn; /* PKT, CHECK_(UN)PROC, TX, RX_ACK */
@@ -848,9 +850,10 @@ static int test_rx_ack_actual(int tidx, int space)
     OSSL_QUIC_ACK_RANGE rx_ack_range = {0};
     struct pkt_info *pkts = NULL;
     OSSL_ACKM_TX_PKT *txs = NULL, *tx;
-    OSSL_TIME ack_deadline[QUIC_PN_SPACE_NUM] = {
-        OSSL_TIME_INFINITY, OSSL_TIME_INFINITY, OSSL_TIME_INFINITY
-    };
+    OSSL_TIME ack_deadline[QUIC_PN_SPACE_NUM];
+
+    for (i = 0; i < QUIC_PN_SPACE_NUM; ++i)
+        ack_deadline[i] = ossl_time_infinite();
 
     /* Initialise ACK manager. */
     if (!TEST_int_eq(helper_init(&h, 0), 1))
@@ -879,7 +882,8 @@ static int test_rx_ack_actual(int tidx, int space)
 
     /* Run script. */
     for (s = script; s->kind != RX_OPK_END; ++s) {
-        fake_time += s->time_advance;
+        fake_time = ossl_time_add(fake_time,
+                                  ossl_ticks2time(s->time_advance));
         switch (s->kind) {
         case RX_OPK_PKT:
             for (i = 0; i < s->num_pn; ++i) {
@@ -917,19 +921,18 @@ static int test_rx_ack_actual(int tidx, int space)
                              s->expect_desired))
                 goto err;
 
-            if (!TEST_int_eq(!ossl_time_is_infinity(ossl_ackm_get_ack_deadline(h.ackm, space))
+            if (!TEST_int_eq(!ossl_time_is_infinite(ossl_ackm_get_ack_deadline(h.ackm, space))
                              && !ossl_time_is_zero(ossl_ackm_get_ack_deadline(h.ackm, space)),
                              s->expect_deadline))
                 goto err;
 
             for (i = 0; i < QUIC_PN_SPACE_NUM; ++i) {
                 if (i != (size_t)space
-                        && !TEST_true(ossl_ackm_get_ack_deadline(h.ackm, i)
-                                          == OSSL_TIME_INFINITY))
+                        && !TEST_true(ossl_time_is_infinite(ossl_ackm_get_ack_deadline(h.ackm, i))))
                     goto err;
 
-                if (!TEST_true(ossl_ackm_get_ack_deadline(h.ackm, i)
-                               == ack_deadline[i]))
+                if (!TEST_int_eq(ossl_time_compare(ossl_ackm_get_ack_deadline(h.ackm, i),
+                                                   ack_deadline[i]), 0))
                     goto err;
             }
 

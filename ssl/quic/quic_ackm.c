@@ -1124,15 +1124,15 @@ static OSSL_ACKM_TX_PKT *ackm_detect_and_remove_lost_pkts(OSSL_ACKM *ackm,
 
     ossl_statm_get_rtt_info(ackm->statm, &rtt);
 
-    ackm->loss_time[pkt_space] = 0;
+    ackm->loss_time[pkt_space] = ossl_time_zero();
 
-    loss_delay = ossl_time_multiply(K_TIME_THRESHOLD_NUM,
-                                    ossl_time_max(rtt.latest_rtt,
-                                                  rtt.smoothed_rtt));
+    loss_delay = ossl_time_multiply(ossl_time_max(rtt.latest_rtt,
+                                                  rtt.smoothed_rtt),
+                                    K_TIME_THRESHOLD_NUM);
     loss_delay = ossl_time_divide(loss_delay, K_TIME_THRESHOLD_DEN);
 
     /* Minimum time of K_GRANULARITY before packets are deemed lost. */
-    loss_delay = ossl_time_max(loss_delay, K_GRANULARITY);
+    loss_delay = ossl_time_max(loss_delay, ossl_ticks2time(K_GRANULARITY));
 
     /* Packets sent before this time are deemed lost. */
     now = ackm->now(ackm->now_arg);
@@ -1198,15 +1198,15 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
 {
     OSSL_RTT_INFO rtt;
     OSSL_TIME duration;
-    OSSL_TIME pto_timeout = OSSL_TIME_INFINITY, t;
+    OSSL_TIME pto_timeout = ossl_time_infinite(), t;
     int pto_space = QUIC_PN_SPACE_INITIAL, i;
 
     ossl_statm_get_rtt_info(ackm->statm, &rtt);
 
     duration
         = ossl_time_add(rtt.smoothed_rtt,
-                        ossl_time_max(ossl_time_multiply(4, rtt.rtt_variance),
-                                      K_GRANULARITY));
+                        ossl_time_max(ossl_time_multiply(rtt.rtt_variance, 4),
+                                      ossl_ticks2time(K_GRANULARITY)));
 
     duration
         = ossl_time_multiply(duration, 1U << min_u32(ackm->pto_count,
@@ -1232,7 +1232,7 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
                 break;
 
             /* Include max_ack_delay and backoff for app data. */
-            if (!ossl_time_is_infinity(rtt.max_ack_delay))
+            if (!ossl_time_is_infinite(rtt.max_ack_delay))
                 duration
                     = ossl_time_add(duration,
                                     ossl_time_multiply(rtt.max_ack_delay,
@@ -1241,7 +1241,7 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
         }
 
         t = ossl_time_add(ackm->time_of_last_ack_eliciting_pkt[i], duration);
-        if (t < pto_timeout) {
+        if (ossl_time_compare(t, pto_timeout) < 0) {
             pto_timeout = t;
             pto_space   = i;
         }
@@ -1280,7 +1280,7 @@ static int ackm_set_loss_detection_timer(OSSL_ACKM *ackm)
          * needs to arm the timer if the server might be blocked by the
          * anti-amplification limit.
          */
-        ackm_set_loss_detection_timer_actual(ackm, OSSL_TIME_ZERO);
+        ackm_set_loss_detection_timer_actual(ackm, ossl_time_zero());
         return 1;
     }
 
@@ -1328,7 +1328,7 @@ static void ackm_on_pkts_lost(OSSL_ACKM *ackm, int pkt_space,
      */
     ossl_statm_get_rtt_info(ackm->statm, &rtt);
 
-    if (ackm->first_rtt_sample == 0)
+    if (ossl_time_is_zero(ackm->first_rtt_sample))
         return;
 
     ackm->cc_method->on_data_lost(ackm->cc_data,
@@ -1391,7 +1391,7 @@ OSSL_ACKM *ossl_ackm_new(OSSL_TIME (*now)(void *arg),
 
     for (i = 0; i < (int)OSSL_NELEM(ackm->tx_history); ++i) {
         ackm->largest_acked_pkt[i] = QUIC_PN_INVALID;
-        ackm->rx_ack_flush_deadline[i] = OSSL_TIME_INFINITY;
+        ackm->rx_ack_flush_deadline[i] = ossl_time_infinite();
         if (tx_pkt_history_init(&ackm->tx_history[i]) < 1)
             goto err;
     }
@@ -1607,8 +1607,8 @@ int ossl_ackm_on_pkt_space_discarded(OSSL_ACKM *ackm, int pkt_space)
         ackm->cc_method->on_data_invalidated(ackm->cc_data,
                                              num_bytes_invalidated);
 
-    ackm->time_of_last_ack_eliciting_pkt[pkt_space] = OSSL_TIME_ZERO;
-    ackm->loss_time[pkt_space] = OSSL_TIME_ZERO;
+    ackm->time_of_last_ack_eliciting_pkt[pkt_space] = ossl_time_zero();
+    ackm->loss_time[pkt_space] = ossl_time_zero();
     ackm->pto_count = 0;
     ackm->discarded[pkt_space] = 1;
     ackm->ack_eliciting_bytes_in_flight[pkt_space] = 0;
@@ -1713,7 +1713,7 @@ int ossl_ackm_get_largest_unacked(OSSL_ACKM *ackm, int pkt_space, QUIC_PN *pn)
 /* Number of ACK-eliciting packets RX'd before we always emit an ACK. */
 #define PKTS_BEFORE_ACK     2
 /* Maximum amount of time to leave an ACK-eliciting packet un-ACK'd. */
-#define MAX_ACK_DELAY       (ossl_time_multiply(OSSL_TIME_MS, 25))
+#define MAX_ACK_DELAY       (OSSL_TIME_MS * 25)
 
 /*
  * Return 1 if emission of an ACK frame is currently desired.
@@ -1733,7 +1733,7 @@ int ossl_ackm_get_largest_unacked(OSSL_ACKM *ackm, int pkt_space, QUIC_PN *pn)
 int ossl_ackm_is_ack_desired(OSSL_ACKM *ackm, int pkt_space)
 {
     return ackm->rx_ack_desired[pkt_space]
-        || (!ossl_time_is_infinity(ackm->rx_ack_flush_deadline[pkt_space])
+        || (!ossl_time_is_infinite(ackm->rx_ack_flush_deadline[pkt_space])
             && ossl_time_compare(ackm->now(ackm->now_arg),
                                  ackm->rx_ack_flush_deadline[pkt_space]) >= 0);
 }
@@ -1814,7 +1814,7 @@ static void ackm_queue_ack(OSSL_ACKM *ackm, int pkt_space)
     ackm->rx_ack_desired[pkt_space] = 1;
 
     /* Cancel deadline. */
-    ackm_set_flush_deadline(ackm, pkt_space, OSSL_TIME_INFINITY);
+    ackm_set_flush_deadline(ackm, pkt_space, ossl_time_infinite());
 }
 
 static void ackm_on_rx_ack_eliciting(OSSL_ACKM *ackm,
@@ -1863,14 +1863,15 @@ static void ackm_on_rx_ack_eliciting(OSSL_ACKM *ackm,
      *
      * Update the ACK flush deadline.
      */
-    if (ossl_time_is_infinity(ackm->rx_ack_flush_deadline[pkt_space]))
+    if (ossl_time_is_infinite(ackm->rx_ack_flush_deadline[pkt_space]))
         ackm_set_flush_deadline(ackm, pkt_space,
-                                ossl_time_add(rx_time, MAX_ACK_DELAY));
+                                ossl_time_add(rx_time,
+                                              ossl_ticks2time(MAX_ACK_DELAY)));
     else
         ackm_set_flush_deadline(ackm, pkt_space,
                                 ossl_time_min(ackm->rx_ack_flush_deadline[pkt_space],
                                               ossl_time_add(rx_time,
-                                                            MAX_ACK_DELAY)));
+                                                            ossl_ticks2time(MAX_ACK_DELAY))));
 }
 
 int ossl_ackm_on_rx_packet(OSSL_ACKM *ackm, const OSSL_ACKM_RX_PKT *pkt)
@@ -1966,7 +1967,7 @@ const OSSL_QUIC_FRAME_ACK *ossl_ackm_get_ack_frame(OSSL_ACKM *ackm,
         ack->delay_time =
             ossl_time_subtract(now, ackm->rx_largest_time[pkt_space]);
     else
-        ack->delay_time = OSSL_TIME_ZERO;
+        ack->delay_time = ossl_time_zero();
 
     ack->ect0              = ackm->rx_ect0[pkt_space];
     ack->ect1              = ackm->rx_ect1[pkt_space];
@@ -1977,7 +1978,7 @@ const OSSL_QUIC_FRAME_ACK *ossl_ackm_get_ack_frame(OSSL_ACKM *ackm,
 
     ackm->rx_ack_generated[pkt_space]       = 1;
     ackm->rx_ack_desired[pkt_space]         = 0;
-    ackm_set_flush_deadline(ackm, pkt_space, OSSL_TIME_INFINITY);
+    ackm_set_flush_deadline(ackm, pkt_space, ossl_time_infinite());
     return ack;
 }
 
@@ -1986,7 +1987,7 @@ OSSL_TIME ossl_ackm_get_ack_deadline(OSSL_ACKM *ackm, int pkt_space)
 {
     if (ackm->rx_ack_desired[pkt_space])
         /* Already desired, deadline is now. */
-        return OSSL_TIME_ZERO;
+        return ossl_time_zero();
 
     return ackm->rx_ack_flush_deadline[pkt_space];
 }

@@ -42,24 +42,24 @@ void ossl_statm_update_rtt(OSSL_STATM *statm,
     if (ossl_time_compare(latest_rtt, ossl_time_add(statm->min_rtt, ack_delay)) >= 0)
         adjusted_rtt = ossl_time_subtract(latest_rtt, ack_delay);
 
-    statm->rtt_variance = ossl_time_divide(ossl_time_add(ossl_time_multiply(3, statm->rtt_variance),
+    statm->rtt_variance = ossl_time_divide(ossl_time_add(ossl_time_multiply(statm->rtt_variance, 3),
                                                          ossl_time_abs_difference(statm->smoothed_rtt,
                                                                               adjusted_rtt)), 4);
-    statm->smoothed_rtt = ossl_time_divide(ossl_time_add(ossl_time_multiply(7, statm->smoothed_rtt),
+    statm->smoothed_rtt = ossl_time_divide(ossl_time_add(ossl_time_multiply(statm->smoothed_rtt, 7),
                                                          adjusted_rtt), 8);
 }
 
 /* RFC 9002 kInitialRtt value. RFC recommended value. */
-#define K_INITIAL_RTT               (ossl_time_multiply(OSSL_TIME_MS, 333))
+#define K_INITIAL_RTT               (ossl_ticks2time(333 * OSSL_TIME_MS))
 
 int ossl_statm_init(OSSL_STATM *statm)
 {
     statm->smoothed_rtt             = K_INITIAL_RTT;
-    statm->latest_rtt               = OSSL_TIME_ZERO;
-    statm->min_rtt                  = OSSL_TIME_INFINITY;
+    statm->latest_rtt               = ossl_time_zero();
+    statm->min_rtt                  = ossl_time_infinite();
     statm->rtt_variance             = ossl_time_divide(K_INITIAL_RTT, 2);
     statm->have_first_sample        = 0;
-    statm->max_ack_delay            = OSSL_TIME_INFINITY;
+    statm->max_ack_delay            = ossl_time_infinite();
     return 1;
 }
 
