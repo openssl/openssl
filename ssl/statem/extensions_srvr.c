@@ -1102,7 +1102,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 s->ext.early_data_ok = 1;
             s->ext.ticket_expected = 1;
         } else {
-            uint32_t ticket_age = 0, now, agesec, agems;
+            uint32_t ticket_age = 0, agesec, agems;
             int ret;
 
             /*
@@ -1142,8 +1142,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             }
 
             ticket_age = (uint32_t)ticket_agel;
-            now = (uint32_t)time(NULL);
-            agesec = now - (uint32_t)sess->time;
+            agesec = (uint32_t)(time(NULL) - sess->time);
             agems = agesec * (uint32_t)1000;
             ticket_age -= sess->ext.tick_age_add;
 
