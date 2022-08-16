@@ -12,16 +12,16 @@
 #include "statem_local.h"
 #include "internal/cryptlib.h"
 
-#define COOKIE_STATE_FORMAT_VERSION     0
+#define COOKIE_STATE_FORMAT_VERSION     1
 
 /*
  * 2 bytes for packet length, 2 bytes for format version, 2 bytes for
  * protocol version, 2 bytes for group id, 2 bytes for cipher id, 1 byte for
- * key_share present flag, 4 bytes for timestamp, 2 bytes for the hashlen,
+ * key_share present flag, 8 bytes for timestamp, 2 bytes for the hashlen,
  * EVP_MAX_MD_SIZE for transcript hash, 1 byte for app cookie length, app cookie
  * length bytes, SHA256_DIGEST_LENGTH bytes for the HMAC of the whole thing.
  */
-#define MAX_COOKIE_SIZE (2 + 2 + 2 + 2 + 2 + 1 + 4 + 2 + EVP_MAX_MD_SIZE + 1 \
+#define MAX_COOKIE_SIZE (2 + 2 + 2 + 2 + 2 + 1 + 8 + 2 + EVP_MAX_MD_SIZE + 1 \
                          + SSL_COOKIE_LENGTH + SHA256_DIGEST_LENGTH)
 
 /*
