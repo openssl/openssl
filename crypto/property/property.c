@@ -673,7 +673,7 @@ static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
     store->cache_nelem = state.nelem;
     /* Without a timer, update the global seed */
     if (state.using_global_seed)
-        tsan_add(&global_seed, state.seed);
+        tsan_store(&global_seed, state.seed);
 }
 
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
