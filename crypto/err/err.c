@@ -906,6 +906,12 @@ void ossl_err_raise_malloc_failure(const char *file, int line)
     es = CRYPTO_THREAD_get_local(&err_thread_local);
     if (es == (ERR_STATE*)-1 || es == NULL)
         return;
+    /*
+     * Well, the malloc failure might already have been raised via this function
+     * before the error stack allocation has happened in the current thread,
+     * which entails that this is the first error that has been raised.
+     * In this - unlikely - scenario, the malloc failure cannot be reported.
+     */
     if (es->malloc_failure_reported > 0)
         return;
 

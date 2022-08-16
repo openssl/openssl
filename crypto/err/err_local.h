@@ -83,6 +83,10 @@ static ossl_inline void err_clear(ERR_STATE *es, int i, int deall)
 {
     if (es->err_buffer[i] == ERR_PACK(ERR_LIB_CRYPTO, 0, ERR_R_MALLOC_FAILURE))
         es->malloc_failure_reported--;
+    /*
+     * Note that any malloc call within assert() is harmless since in this
+     * function no malloc error is reported but an error queue entry is removed.
+     */
     assert(es->malloc_failure_reported >= 0);
     err_clear_data(es, i, (deall));
     es->err_marks[i] = 0;
