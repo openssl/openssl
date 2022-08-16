@@ -26,18 +26,9 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
 
 DEFINE_STACK_OF(SSL_SESSION)
 
-__owur static ossl_inline OSSL_TIME time_t_to_ossl_time(time_t t)
-{
-    OSSL_TIME ot;
-
-    ot.t = t;
-    ot.t *= OSSL_TIME_SECOND;
-    return ot;
-}
-
 __owur static ossl_inline int sess_timedout(time_t t, SSL_SESSION *ss)
 {
-    return ossl_time_compare(time_t_to_ossl_time(t), ss->calc_timeout) > 0;
+    return ossl_time_compare(ossl_time_from_time_t(t), ss->calc_timeout) > 0;
 }
 
 /*
@@ -59,8 +50,8 @@ void ssl_session_calculate_timeout(SSL_SESSION *ss)
     if (ss->timeout < 0)
         ss->timeout = 0;
 
-    ss->calc_timeout = ossl_time_add(time_t_to_ossl_time(ss->time),
-                                     time_t_to_ossl_time(ss->timeout));
+    ss->calc_timeout = ossl_time_add(ossl_time_from_time_t(ss->time),
+                                     ossl_time_from_time_t(ss->timeout));
 }
 
 /*
