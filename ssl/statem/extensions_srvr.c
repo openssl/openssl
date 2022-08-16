@@ -699,7 +699,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     unsigned char hmac[SHA256_DIGEST_LENGTH];
     unsigned char hrr[MAX_HRR_SIZE];
     size_t rawlen, hmaclen, hrrlen, ciphlen;
-    unsigned long tm, now;
+    uint64_t tm, now;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
@@ -802,7 +802,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     if (!PACKET_get_1(&cookie, &key_share)
-            || !PACKET_get_net_4(&cookie, &tm)
+            || !PACKET_get_net_8(&cookie, &tm)
             || !PACKET_get_length_prefixed_2(&cookie, &chhash)
             || !PACKET_get_length_prefixed_1(&cookie, &appcookie)
             || PACKET_remaining(&cookie) != SHA256_DIGEST_LENGTH) {
@@ -811,7 +811,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     /* We tolerate a cookie age of up to 10 minutes (= 60 * 10 seconds) */
-    now = (unsigned long)time(NULL);
+    now = time(NULL);
     if (tm > now || (now - tm) > 600) {
         /* Cookie is stale. Ignore it */
         return 1;
@@ -1764,7 +1764,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
                                                 &ciphlen)
                /* Is there a key_share extension present in this HRR? */
             || !WPACKET_put_bytes_u8(pkt, s->s3.peer_tmp == NULL)
-            || !WPACKET_put_bytes_u32(pkt, (unsigned int)time(NULL))
+            || !WPACKET_put_bytes_u64(pkt, time(NULL))
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_reserve_bytes(pkt, EVP_MAX_MD_SIZE, &hashval1)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
