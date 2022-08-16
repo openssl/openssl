@@ -2405,7 +2405,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
                                           : SSL_EXT_TLS1_2_SERVER_HELLO),
                                   NULL, 0)) {
         /* SSLfatal() already called */
-        return CON_FUNC_SUCCESS;
+        return CON_FUNC_ERROR;
     }
 
     if (s->hello_retry_request == SSL_HRR_PENDING) {
@@ -3701,13 +3701,10 @@ static int create_ticket_prequel(SSL_CONNECTION *s, WPACKET *pkt,
     return 1;
 }
 
-/*
- * Returns 1 on success, 0 to abort construction of the ticket (non-fatal), or
- * -1 on fatal error
- */
-static int construct_stateless_ticket(SSL_CONNECTION *s, WPACKET *pkt,
-                                      uint32_t age_add,
-                                      unsigned char *tick_nonce)
+static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
+                                                  WPACKET *pkt,
+                                                  uint32_t age_add,
+                                                  unsigned char *tick_nonce)
 {
     unsigned char *senc = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
@@ -3720,7 +3717,8 @@ static int construct_stateless_ticket(SSL_CONNECTION *s, WPACKET *pkt,
     SSL_CTX *tctx = s->session_ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char key_name[TLSEXT_KEYNAME_LENGTH];
-    int iv_len, ok = -1;
+    int iv_len;
+    CON_FUNC_RETURN ok = CON_FUNC_ERROR;
     size_t macoffset, macendoffset;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
@@ -3809,7 +3807,7 @@ static int construct_stateless_ticket(SSL_CONNECTION *s, WPACKET *pkt,
              * ticket
              */
             if (SSL_CONNECTION_IS_TLS13(s)) {
-                ok = 0;
+                ok = CON_FUNC_DONT_SEND;
                 goto err;
             }
             /* Put timeout and length */
@@ -3821,7 +3819,7 @@ static int construct_stateless_ticket(SSL_CONNECTION *s, WPACKET *pkt,
             OPENSSL_free(senc);
             EVP_CIPHER_CTX_free(ctx);
             ssl_hmac_free(hctx);
-            return 1;
+            return CON_FUNC_SUCCESS;
         }
         if (ret < 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CALLBACK_FAILED);
@@ -3898,7 +3896,7 @@ static int construct_stateless_ticket(SSL_CONNECTION *s, WPACKET *pkt,
         goto err;
     }
 
-    ok = 1;
+    ok = CON_FUNC_SUCCESS;
  err:
     OPENSSL_free(senc);
     EVP_CIPHER_CTX_free(ctx);
@@ -4047,12 +4045,12 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
             goto err;
         }
     } else {
-        int tmpret;
+        CON_FUNC_RETURN tmpret;
 
         tmpret = construct_stateless_ticket(s, pkt, age_add_u.age_add,
                                             tick_nonce);
-        if (tmpret != 1) {
-            if (tmpret == 0) {
+        if (tmpret != CON_FUNC_SUCCESS) {
+            if (tmpret == CON_FUNC_DONT_SEND) {
                 /* Non-fatal. Abort construction but continue */
                 ret = CON_FUNC_DONT_SEND;
                 /* We count this as a success so update the counts anwyay */
