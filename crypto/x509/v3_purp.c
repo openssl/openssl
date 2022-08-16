@@ -898,20 +898,18 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
         return check_ca(x);
 
     /*
-     * Check the key usage field:
-     * Key Usage must be present, marked as critical and have the
-     * digitalSignature bit set.
-     * keyCertSign and cRLSign must not be set.
+     * Check the key usage and extended key usage fields:
      *
-     * Reference: CA Browser Forum
-     * Baseline Requirements for the Issuance and Management of Code Signing version 2.8
-     * Appendix B: Certificate Extensions (Normative)
-     * (3) Code Signing Certificates
-     * keyUsage (required)
-     * This extension MUST be present and MUST be marked critical. The bit positions for 
-     * digitalSignature MUST be set. Bit positions for keyCertSign and cRLSign MUST NOT be set. 
-     * All other bit positions SHOULD NOT be set
+     * Reference: CA Browser Forum,
+     * Baseline Requirements for the Issuance and Management of 
+     * Publicly‐Trusted Code Signing Certificates, Version 3.0.0,
+     * Section 7.1.2.3: Code signing and Timestamp Certificate
+     *
+     * Checking covers Key Usage and Extended Key Usage attributes.
+     * Other properties like CRL Distribution Points and Authoriy
+     * Information Access (AIA) are not checked.
      */
+    /* Key Usage */
     if ((x->ex_flags & EXFLAG_KUSAGE) == 0)
         return 0;
     if ((x->ex_kusage & KU_DIGITAL_SIGNATURE) == 0)
@@ -929,23 +927,7 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
             return 0;
     }
 
-    /*
-     * From the same reference (CA Browser Forum):
-     *
-     * extKeyUsage (EKU) (required)
-     *
-     * The value id-kp-codeSigning [RFC5280] MUST be present.
-     *
-     * The following EKUs MAY be present: documentSigning, lifetimeSigning, and 
-     * emailProtection.
-     *
-     * The value anyExtendedKeyUsage (2.5.29.37.0) or serverAuth (1.3.6.1.5.5.7.3.1) MUST NOT 
-     * be present.
-     *
-     * Other values SHOULD NOT be present. If any other value is present, the CA MUST have a 
-     * business agreement with a Platform vendor requiring that EKU in order to issue a Platform
-     * specific code signing certificate with that EKU.
-     */
+    /* Extended Key Usage */
     if ((x->ex_flags & EXFLAG_XKUSAGE) == 0)
         return 0;
     if ((x->ex_xkusage & XKU_CODE_SIGN) == 0)
