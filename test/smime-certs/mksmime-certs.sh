@@ -84,10 +84,11 @@ $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 36500 \
 
 # EE RSA code signing certificates: create request first
 CN="Test CodeSign EE RSA #1" $OPENSSL req -config ca.cnf -noenc \
-	-keyout csrsa1.pem -out req.pem -newkey rsa:2048
+	-new -out req.pem -key ../certs/ee-key.pem
+cat ../certs/ee-key.pem > csrsa1.pem
 # Sign request: end entity extensions
-$OPENSSL x509 -req -in req.pem -CA smroot.pem -days 36500 \
-	-extfile ca.cnf -extensions codesign_cert -CAcreateserial >>csrsa1.pem
+$OPENSSL x509 -req -in req.pem -CA smroot.pem -days 36524 -extfile ca.cnf \
+	-extensions codesign_cert >>csrsa1.pem
 
 # Remove temp files.
 rm -f req.pem ecp.pem ecp2.pem dsap.pem dhp.pem dhpub.pem smtmp.pem smroot.srl
