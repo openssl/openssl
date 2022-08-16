@@ -468,7 +468,9 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         }
         SSL3_RECORD_set_length(rr, 0);
         SSL3_RECORD_set_read(rr);
-        goto start;
+        if (ssl_auto_retry(s))
+            goto start;
+        return -1;
     }
 
     /*
@@ -630,7 +632,9 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             return -1;
         }
 
-        goto start;
+        if (ssl_auto_retry(s))
+            goto start;
+        return -1;
     }
 
     if (sc->shutdown & SSL_SENT_SHUTDOWN) { /* but we have not received a
@@ -648,7 +652,9 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          */
         SSL3_RECORD_set_length(rr, 0);
         SSL3_RECORD_set_read(rr);
-        goto start;
+        if (ssl_auto_retry(s))
+            goto start;
+        return -1;
     }
 
     /*
@@ -666,7 +672,9 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 || SSL3_RECORD_get_length(rr) < DTLS1_HM_HEADER_LENGTH) {
             SSL3_RECORD_set_length(rr, 0);
             SSL3_RECORD_set_read(rr);
-            goto start;
+            if (ssl_auto_retry(s))
+                goto start;
+            return -1;
         }
 
         dtls1_get_message_header(rr->data, &msg_hdr);
@@ -688,19 +696,9 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             }
             SSL3_RECORD_set_length(rr, 0);
             SSL3_RECORD_set_read(rr);
-            if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
-                if (SSL3_BUFFER_get_left(&sc->rlayer.rbuf) == 0) {
-                    /* no read-ahead left? */
-                    BIO *bio;
-
-                    sc->rwstate = SSL_READING;
-                    bio = SSL_get_rbio(s);
-                    BIO_clear_retry_flags(bio);
-                    BIO_set_retry_read(bio);
-                    return -1;
-                }
-            }
-            goto start;
+            if (ssl_auto_retry(s))
+                goto start;
+            return -1;
         }
 
         /*
@@ -724,24 +722,10 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         if (i == 0)
             return -1;
 
-        if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
-            if (SSL3_BUFFER_get_left(&sc->rlayer.rbuf) == 0) {
-                /* no read-ahead left? */
-                BIO *bio;
-                /*
-                 * In the case where we try to read application data, but we
-                 * trigger an SSL handshake, we return -1 with the retry
-                 * option set.  Otherwise renegotiation may cause nasty
-                 * problems in the blocking world
-                 */
-                sc->rwstate = SSL_READING;
-                bio = SSL_get_rbio(s);
-                BIO_clear_retry_flags(bio);
-                BIO_set_retry_read(bio);
-                return -1;
-            }
-        }
-        goto start;
+        if (ssl_auto_retry(s))
+            goto start;
+
+        return -1;
     }
 
     switch (SSL3_RECORD_get_type(rr)) {
