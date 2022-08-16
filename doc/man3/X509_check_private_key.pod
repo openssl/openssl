@@ -36,7 +36,7 @@ The X509_check_private_key() and X509_REQ_check_private_key() functions
 do not check if I<pkey> itself is indeed a private key or not.
 They merely compare the public materials (e.g., exponent and modulus of an RSA
 key) and/or key parameters (e.g. EC params of an EC key) of a key pair.
-So they also return success if if I<pkey> is a matching public key.
+So they also return success if I<pkey> is a matching public key.
 
 =head1 SEE ALSO
 
