@@ -627,9 +627,12 @@ int ossl_x509v3_cache_extensions(X509 *x)
      */
 #endif
     ERR_pop_to_mark();
-    CRYPTO_THREAD_unlock(x->lock);
-    if ((x->ex_flags & EXFLAG_INVALID) == 0)
+
+    if ((x->ex_flags & EXFLAG_INVALID) == 0) {
+        CRYPTO_THREAD_unlock(x->lock);
         return 1;
+    }
+    CRYPTO_THREAD_unlock(x->lock);
     ERR_raise(ERR_LIB_X509, X509V3_R_INVALID_CERTIFICATE);
     return 0;
 }
