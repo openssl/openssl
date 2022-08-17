@@ -91,7 +91,7 @@ const OPTIONS enc_options[] = {
     {"iter", OPT_ITER, 'p', "Specify the iteration count and force use of PBKDF2"},
     {"pbkdf2", OPT_PBKDF2, '-', "Use password-based key derivation function 2"},
     {"none", OPT_NONE, '-', "Don't encrypt"},
-#ifdef ZLIB
+#ifndef OPENSSL_NO_ZLIB
     {"z", OPT_Z, '-', "Compress or decompress encrypted data using zlib"},
 #endif
     {"", OPT_CIPHER, '-', "Any supported cipher"},
@@ -130,7 +130,7 @@ int enc_main(int argc, char **argv)
     int streamable = 1;
     int wrap = 0;
     struct doall_enc_ciphers dec;
-#ifdef ZLIB
+#ifndef OPENSSL_NO_ZLIB
     int do_zlib = 0;
     BIO *bzl = NULL;
 #endif
@@ -142,7 +142,7 @@ int enc_main(int argc, char **argv)
     /* first check the command name */
     if (strcmp(argv[0], "base64") == 0)
         base64 = 1;
-#ifdef ZLIB
+#ifndef OPENSSL_NO_ZLIB
     else if (strcmp(argv[0], "zlib") == 0)
         do_zlib = 1;
 #endif
@@ -225,7 +225,7 @@ int enc_main(int argc, char **argv)
             base64 = 1;
             break;
         case OPT_Z:
-#ifdef ZLIB
+#ifndef OPENSSL_NO_ZLIB
             do_zlib = 1;
 #endif
             break;
@@ -332,7 +332,7 @@ int enc_main(int argc, char **argv)
     if (verbose)
         BIO_printf(bio_err, "bufsize=%d\n", bsize);
 
-#ifdef ZLIB
+#ifndef OPENSSL_NO_ZLIB
     if (do_zlib)
         base64 = 0;
 #endif
@@ -417,7 +417,7 @@ int enc_main(int argc, char **argv)
     wbio = out;
 
 #ifndef OPENSSL_NO_COMP
-# ifdef ZLIB
+# ifndef OPENSSL_NO_ZLIB
     if (do_zlib) {
         if ((bzl = BIO_new(BIO_f_zlib())) == NULL)
             goto end;
@@ -699,7 +699,7 @@ int enc_main(int argc, char **argv)
     BIO_free(b64);
     EVP_MD_free(dgst);
     EVP_CIPHER_free(cipher);
-#ifdef ZLIB
+#ifndef OPENSSL_NO_ZLIB
     BIO_free(bzl);
 #endif
     BIO_free(bbrot);

@@ -205,9 +205,7 @@ EOF
     ) {
         my $str = "    {FT_cipher, \"$cmd\", enc_main, enc_options, NULL},\n";
         (my $algo = $cmd) =~ s/-.*//g;
-        if ($cmd eq "zlib") {
-            print "#ifdef ZLIB\n${str}#endif\n";
-        } elsif (grep { $algo eq $_ } @disablables) {
+        if (grep { $algo eq $_ } @disablables) {
             print "#ifndef OPENSSL_NO_" . uc($algo) . "\n${str}#endif\n";
         } elsif (my $disabler = $cipher_disabler{$algo}) {
             print "#ifndef OPENSSL_NO_" . uc($disabler) . "\n${str}#endif\n";

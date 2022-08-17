@@ -129,7 +129,7 @@ static int test_brotli(int n)
     return do_bio_comp(BIO_f_brotli(), n);
 }
 #endif
-#ifdef ZLIB
+#ifndef OPENSSL_NO_ZLIB
 static int test_zlib(int n)
 {
     return do_bio_comp(BIO_f_zlib(), n);
@@ -138,7 +138,7 @@ static int test_zlib(int n)
 
 int setup_tests(void)
 {
-#ifdef ZLIB
+#ifndef OPENSSL_NO_ZLIB
     ADD_ALL_TESTS(test_zlib, NUM_SIZES * 4);
 #endif
 #ifndef OPENSSL_NO_BROTLI

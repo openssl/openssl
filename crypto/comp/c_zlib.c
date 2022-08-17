@@ -29,7 +29,7 @@ static COMP_METHOD zlib_method_nozlib = {
     NULL,
 };
 
-#ifndef ZLIB
+#ifdef OPENSSL_NO_ZLIB
 # undef ZLIB_SHARED
 #else
 
@@ -247,7 +247,7 @@ COMP_METHOD *COMP_zlib(void)
 {
     COMP_METHOD *meth = &zlib_method_nozlib;
 
-#ifdef ZLIB
+#ifndef OPENSSL_NO_ZLIB
     if (RUN_ONCE(&zlib_once, ossl_comp_zlib_init))
         meth = &zlib_stateful_method;
 #endif
@@ -264,7 +264,7 @@ void ossl_comp_zlib_cleanup(void)
 #endif
 }
 
-#ifdef ZLIB
+#ifndef OPENSSL_NO_ZLIB
 
 /* Zlib based compression/decompression filter BIO */
 
@@ -304,12 +304,18 @@ static const BIO_METHOD bio_meth_zlib = {
     bio_zlib_free,
     bio_zlib_callback_ctrl
 };
+#endif
 
 const BIO_METHOD *BIO_f_zlib(void)
 {
-    return &bio_meth_zlib;
+#ifndef OPENSSL_NO_ZLIB
+    if (RUN_ONCE(&zlib_once, ossl_comp_zlib_init))
+        return &bio_meth_zlib;
+#endif
+    return NULL;
 }
 
+#ifndef OPENSSL_NO_ZLIB
 static int bio_zlib_new(BIO *bi)
 {
     BIO_ZLIB_CTX *ctx;
