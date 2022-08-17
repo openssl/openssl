@@ -77,6 +77,8 @@ static const ERR_STRING_DATA BIO_str_reasons[] = {
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_WSASTARTUP), "WSAStartup"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_LOCAL_ADDR_NOT_AVAILABLE),
      "local address not available"},
+    {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_NON_FATAL),
+     "non-fatal or transient error"},
     {0, NULL}
 };
 
@@ -97,6 +99,9 @@ int BIO_err_is_non_fatal(unsigned int errcode)
 {
     if (ERR_SYSTEM_ERROR(errcode))
         return BIO_sock_non_fatal_error(ERR_GET_REASON(errcode));
+    else if (ERR_GET_LIB(errcode) == ERR_LIB_BIO
+             && ERR_GET_REASON(errcode) == BIO_R_NON_FATAL)
+        return 1;
     else
         return 0;
 }

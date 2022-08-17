@@ -147,9 +147,9 @@ On failure, the functions BIO_sendmmsg() and BIO_recvmmsg() return 0 and write
 zero to I<msgs_processed>. Thus I<msgs_processed> is always written regardless
 of the outcome of the function call.
 
-If BIO_sendmmsg() and BIO_recvmmsg() fail, they always raise an error using
-L<ERR_raise(3)>. Any error may be raised, but the following in particular may be
-noted:
+If BIO_sendmmsg() and BIO_recvmmsg() fail, they always raise an B<ERR_LIB_BIO>
+error using L<ERR_raise(3)>. Any error may be raised, but the following in
+particular may be noted:
 
 =over 2
 
@@ -162,6 +162,18 @@ available or not enabled on the BIO.
 
 The BIO_sendmmsg() or BIO_recvmmsg() method is not supported on the BIO.
 
+=item B<BIO_R_NON_FATAL>
+
+The call failed due to a transient, non-fatal error (for example, because the
+BIO is in nonblocking mode and the call would otherwise have blocked).
+
+Implementations of this interface which do not make system calls and thereby
+pass through system error codes using B<ERR_LIB_SYS> (for example, memory-based
+implementations) should issue this reason code to indicate a transient failure.
+However, users of this interface should not test for this reason code directly,
+as there are multiple possible packed error codes representing a transient
+failure; use BIO_err_is_non_fatal() instead (discussed below).
+
 =item Socket errors
 
 OS-level socket errors are reported using an error with library code
@@ -169,8 +181,14 @@ B<ERR_LIB_SYS>; for a packed error code B<errcode> where
 C<ERR_SYSTEM_ERROR(errcode) == 1>, the OS-level socket error code can be
 retrieved using C<ERR_GET_REASON(errcode)>. The packed error code can be
 retrieved by calling L<ERR_peek_last_error(3)> after the call to BIO_sendmmsg()
-or BIO_recvmmsg() returns 0. Whether the error is transient can be determined by
-passing the packed error code to BIO_err_is_non_fatal().
+or BIO_recvmmsg() returns 0.
+
+=item Non-fatal errors
+
+Whether an error is transient can be determined by passing the packed error code
+to BIO_err_is_non_fatal(). Callers should do this instead of testing the reason
+code directly, as there are many possible error codes which can indicate a
+transient error, many of which are system specific.
 
 =back
 
