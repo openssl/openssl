@@ -1421,7 +1421,7 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_WHIRLPOOL
     BIO_puts(bio_out, "WHIRLPOOL\n");
 #endif
-#ifndef ZLIB
+#ifdef OPENSSL_NO_ZLIB
     BIO_puts(bio_out, "ZLIB\n");
 #endif
 #ifdef OPENSSL_NO_BROTLI

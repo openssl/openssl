@@ -174,7 +174,7 @@ BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
     case NID_pkcs7_digest:
         cmsbio = ossl_cms_DigestedData_init_bio(cms);
         break;
-#ifdef ZLIB
+#ifndef OPENSSL_NO_ZLIB
     case NID_id_smime_ct_compressedData:
         cmsbio = ossl_cms_CompressedData_init_bio(cms);
         break;

@@ -50,9 +50,7 @@ COMP_METHOD *COMP_zstd_oneshot(void);
 #endif
 
 # ifdef OPENSSL_BIO_H
-#  ifdef ZLIB
 const BIO_METHOD *BIO_f_zlib(void);
-#  endif
 const BIO_METHOD *BIO_f_brotli(void);
 const BIO_METHOD *BIO_f_zstd(void);
 # endif

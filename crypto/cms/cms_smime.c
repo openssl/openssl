@@ -930,7 +930,7 @@ err:
     return ret;
 }
 
-#ifdef ZLIB
+#ifndef OPENSSL_NO_ZLIB
 
 int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
                    unsigned int flags)
