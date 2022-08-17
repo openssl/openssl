@@ -731,9 +731,8 @@ static int ossltest_aes128_gcm_init_key(EVP_CIPHER_CTX *ctx,
 static int ossltest_aes128_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                       const unsigned char *in, size_t inl)
 {
-    unsigned char *tmpbuf = OPENSSL_malloc(inl);
+    unsigned char *tmpbuf = inl == 0 ? NULL : OPENSSL_malloc(inl);
 
-    /* OPENSSL_malloc will return NULL if inl == 0 */
     if (tmpbuf == NULL && inl > 0)
         return -1;
 

@@ -896,16 +896,20 @@ void err_clear_last_constant_time(int clear)
     es->err_flags[top] |= clear;
 }
 
-void ossl_err_raise_malloc_failure(const char *file, int line)
+void *ERR_raise_malloc_failure(void *ptr,
+                               const char *file, int line, const char *func)
 {
     ERR_STATE *es;
 
+    if (ptr != NULL)
+        return ptr; /* all good */
+
     /* prevent potential malloc error loop while reporting malloc eror */
     if (!RUN_ONCE(&err_init, err_do_init))
-        return;
+        return NULL;
     es = CRYPTO_THREAD_get_local(&err_thread_local);
     if (es == (ERR_STATE*)-1 || es == NULL)
-        return;
+        return NULL;
     /*
      * Well, the malloc failure might already have been raised via this function
      * before the error stack allocation has happened in the current thread,
@@ -913,9 +917,10 @@ void ossl_err_raise_malloc_failure(const char *file, int line)
      * In this - unlikely - scenario, the malloc failure cannot be reported.
      */
     if (es->malloc_failure_reported > 0)
-        return;
+        return NULL;
 
     ERR_new();
-    ERR_set_debug(file, line, NULL);
+    ERR_set_debug(file, line, func);
     ERR_set_error(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, NULL);
+    return NULL;
 }
