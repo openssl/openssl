@@ -39,8 +39,8 @@ The B<BIO_MSG> structure provides a subset of the functionality of the B<struct
 msghdr> structure defined by POSIX. These functions accept an array of
 B<BIO_MSG> structures. On any particular invocation, these functions may process
 all of the passed structures, some of them, or none of them. This is indicated
-by the return value, which expresses the number of messages
-processed.
+by the value stored in I<*msgs_processed>, which expresses the number of
+messages processed.
 
 The caller should set the I<data> member of a B<BIO_MSG> to a buffer containing
 the data to send, or to be filled with a received message. I<data_len> should be
@@ -135,7 +135,7 @@ available.
 =head1 RETURN VALUES
 
 On success, the functions BIO_sendmmsg() and BIO_recvmmsg() return 1 and write
-the nummber of messages successfully processed (which need not be nonzero) to
+the number of messages successfully processed (which need not be nonzero) to
 I<msgs_processed>. Where a positive value n is written to I<msgs_processed>, all
 entries in the B<BIO_MSG> array from 0 through n-1 inclusive have their
 I<data_len> and I<flags> fields updated with the results of the operation on
