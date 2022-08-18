@@ -31,16 +31,16 @@ static ossl_unused ossl_inline uint32_t
 ossl_quic_enc_level_to_pn_space(uint32_t enc_level)
 {
     switch (enc_level) {
-        case QUIC_ENC_LEVEL_INITIAL:
-            return QUIC_PN_SPACE_INITIAL;
-        case QUIC_ENC_LEVEL_HANDSHAKE:
-            return QUIC_PN_SPACE_HANDSHAKE;
-        case QUIC_ENC_LEVEL_0RTT:
-        case QUIC_ENC_LEVEL_1RTT:
-            return QUIC_PN_SPACE_APP;
-        default:
-            assert(0);
-            return QUIC_PN_SPACE_APP;
+    case QUIC_ENC_LEVEL_INITIAL:
+        return QUIC_PN_SPACE_INITIAL;
+    case QUIC_ENC_LEVEL_HANDSHAKE:
+        return QUIC_PN_SPACE_HANDSHAKE;
+    case QUIC_ENC_LEVEL_0RTT:
+    case QUIC_ENC_LEVEL_1RTT:
+        return QUIC_PN_SPACE_APP;
+    default:
+        assert(0);
+        return QUIC_PN_SPACE_APP;
     }
 }
 
