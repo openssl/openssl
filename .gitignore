@@ -102,6 +102,7 @@ providers/common/include/prov/der_sm2.h
 /test/evp_extra_test2
 /test/evp_pkey_ctx_new_from_name
 /test/threadstest_fips
+/test/timing_load_creds
 
 # Certain files that get created by tests on the fly
 /test-runs
