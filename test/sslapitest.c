@@ -8665,12 +8665,12 @@ static int test_session_cache_overflow(int idx)
 #ifdef OPENSSL_NO_TLS1_3
     /* If no TLSv1.3 available then do nothing in this case */
     if (idx % 2 == 0)
-        return 1;
+        return TEST_skip("No TLSv1.3 available");
 #endif
 #ifdef OPENSSL_NO_TLS1_2
     /* If no TLSv1.2 available then do nothing in this case */
     if (idx % 2 == 1)
-        return 1;
+        return TEST_skip("No TLSv1.2 available");
 #endif
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
