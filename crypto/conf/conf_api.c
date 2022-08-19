@@ -68,7 +68,6 @@ char *_CONF_get_string(const CONF *conf, const char *section,
 {
     CONF_VALUE *v, vv;
     char *p;
-
     if (name == NULL)
         return NULL;
     if (conf == NULL)

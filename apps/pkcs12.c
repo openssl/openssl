@@ -14,6 +14,8 @@
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
+#include <openssl/conf.h>
+#include <openssl/asn1.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
@@ -522,9 +524,12 @@ int pkcs12_main(int argc, char **argv)
         X509 *ee_cert = NULL, *x = NULL;
         STACK_OF(X509) *certs = NULL;
         STACK_OF(X509) *untrusted_certs = NULL;
+        CONF *conf = NULL;
+        STACK_OF(CONF_VALUE) *cb_sk = NULL;
         EVP_MD *macmd = NULL;
         unsigned char *catmp = NULL;
-        int i;
+        const char *cb_attr = NULL;
+        int i, j;
 
         if ((options & (NOCERTS | NOKEYS)) == (NOCERTS | NOKEYS)) {
             BIO_printf(bio_err, "Nothing to export due to -noout or -nocerts and -nokeys\n");
@@ -642,6 +647,35 @@ int pkcs12_main(int argc, char **argv)
             X509_alias_set1(sk_X509_value(certs, i), catmp, -1);
         }
 
+        /* Load the config file */
+        if ((conf = app_load_config(default_config_file)) == NULL)
+            goto export_end;
+        if (!app_load_modules(conf))
+            goto export_end;
+
+        /* Lets get the config section we are using */
+        if ((cb_attr = NCONF_get_string(conf, "pkcs12", "certBagAttr")) != NULL) {
+            if ((cb_sk = NCONF_get_section(conf, cb_attr)) != NULL) {
+
+                /* Loop over each attribute */
+                for (i = 0; i < sk_CONF_VALUE_num(cb_sk); i++) {
+                    CONF_VALUE *val;
+                    ASN1_OBJECT *obj;
+                    val = sk_CONF_VALUE_value(cb_sk, i);
+                    obj = OBJ_txt2obj(val->value, 0);
+                    for (j = 0; j < sk_X509_num(certs); j++) {
+                        /* Add a single trust value on every certificate, which will be set on the bag later */
+                        X509_add1_trust_object(sk_X509_value(certs, j), obj);
+                    }
+                    ASN1_OBJECT_free(obj);
+                }
+            } else {
+                ERR_clear_error();
+            }
+        } else {
+            ERR_clear_error();
+        }
+
         if (csp_name != NULL && key != NULL)
             EVP_PKEY_add1_attr_by_NID(key, NID_ms_csp_name,
                                       MBSTRING_ASC, (unsigned char *)csp_name,
@@ -708,8 +742,8 @@ int pkcs12_main(int argc, char **argv)
         OSSL_STACK_OF_X509_free(certs);
         OSSL_STACK_OF_X509_free(untrusted_certs);
         X509_free(ee_cert);
-
         ERR_print_errors(bio_err);
+        NCONF_free(conf);
         goto end;
 
     }
@@ -1137,6 +1171,8 @@ int cert_load(BIO *in, STACK_OF(X509) *sk)
 void print_attribute(BIO *out, const ASN1_TYPE *av)
 {
     char *value;
+    const char *ln;
+    char objbuf[80];
 
     switch (av->type) {
     case V_ASN1_BMPSTRING:
@@ -1160,6 +1196,15 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
     case V_ASN1_BIT_STRING:
         hex_prin(out, av->value.bit_string->data,
                  av->value.bit_string->length);
+        BIO_printf(out, "\n");
+        break;
+
+    case V_ASN1_OBJECT:
+        ln = OBJ_nid2ln(OBJ_obj2nid(av->value.object));
+        if (!ln)
+            ln = "";
+        OBJ_obj2txt(objbuf, sizeof(objbuf), av->value.object, 1);
+        BIO_printf(out, "%s (%s)", ln, objbuf);
         BIO_printf(out, "\n");
         break;
 

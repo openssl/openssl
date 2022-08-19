@@ -142,6 +142,9 @@ PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert)
     int namelen = -1;
     unsigned char *keyid;
     int keyidlen = -1;
+    ASN1_OBJECT *trust;
+    STACK_OF(ASN1_OBJECT) *trusts;
+    X509_ATTRIBUTE *attr;
 
     /* Add user certificate */
     if ((bag = PKCS12_SAFEBAG_create_cert(cert)) == NULL)
@@ -160,6 +163,20 @@ PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert)
 
     if (keyid && !PKCS12_add_localkeyid(bag, keyid, keyidlen))
         goto err;
+
+    /*
+     * Use trust set on certificate, if present, to set the Oracle trust bag attribute
+     */
+    trusts = X509_get0_trust_objects(cert);
+    if (trusts && sk_ASN1_OBJECT_num(trusts) > 0) {
+        if (sk_ASN1_OBJECT_num(trusts) > 1)
+            goto err;
+
+        trust = sk_ASN1_OBJECT_value(trusts, 0);
+        attr = X509_ATTRIBUTE_create(NID_oracle_jdk_trustedkeyusage, V_ASN1_OBJECT, trust);
+        X509at_add1_attr(&bag->attrib, attr);
+        X509_ATTRIBUTE_free(attr);
+    }
 
     if (!pkcs12_add_bag(pbags, bag))
         goto err;
