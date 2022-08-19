@@ -207,7 +207,7 @@ int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
 }
 
 /* Store the |value| of length |len| at location |data| */
-static int put_value(unsigned char *data, size_t value, size_t len)
+static int put_value(unsigned char *data, uint64_t value, size_t len)
 {
     if (data == NULL)
         return 1;
