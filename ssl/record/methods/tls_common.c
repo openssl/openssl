@@ -1059,7 +1059,7 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     *retrl = NULL;
 
     if (rl == NULL) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return OSSL_RECORD_RETURN_FATAL;
     }
 
@@ -1068,41 +1068,35 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         for (p = settings; p->key != NULL; p++) {
             if (strcmp(p->key, OSSL_LIBSSL_RECORD_LAYER_PARAM_USE_ETM) == 0) {
                 if (!OSSL_PARAM_get_int(p, &rl->use_etm)) {
-                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
-                                SSL_R_FAILED_TO_GET_PARAMETER);
+                    ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
                     goto err;
                 }
             } else if (strcmp(p->key,
                               OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_FRAG_LEN) == 0) {
                 if (!OSSL_PARAM_get_uint(p, &rl->max_frag_len)) {
-                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
-                                SSL_R_FAILED_TO_GET_PARAMETER);
+                    ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
                     goto err;
                 }
             } else if (strcmp(p->key,
                               OSSL_LIBSSL_RECORD_LAYER_PARAM_MAX_EARLY_DATA) == 0) {
                 if (!OSSL_PARAM_get_uint32(p, &rl->max_early_data)) {
-                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
-                                SSL_R_FAILED_TO_GET_PARAMETER);
+                    ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
                     goto err;
                 }
             } else if (strcmp(p->key,
                               OSSL_LIBSSL_RECORD_LAYER_PARAM_STREAM_MAC) == 0) {
                 if (!OSSL_PARAM_get_int(p, &rl->stream_mac)) {
-                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
-                                SSL_R_FAILED_TO_GET_PARAMETER);
+                    ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
                     goto err;
                 }
             } else if (strcmp(p->key,
                               OSSL_LIBSSL_RECORD_LAYER_PARAM_TLSTREE) == 0) {
                 if (!OSSL_PARAM_get_int(p, &rl->tlstree)) {
-                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
-                                SSL_R_FAILED_TO_GET_PARAMETER);
+                    ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
                     goto err;
                 }
             } else {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
-                            SSL_R_UNKNOWN_MANDATORY_PARAMETER);
+                ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_MANDATORY_PARAMETER);
                 goto err;
             }
         }
@@ -1153,7 +1147,7 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     }
 
     if (!tls_set_options(rl, options)) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_FAILED_TO_GET_PARAMETER);
+        ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
         goto err;
     }
 

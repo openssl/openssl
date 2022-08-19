@@ -651,7 +651,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
             || (*retrl)->processed_rcds.q == NULL) {
         dtls_free(*retrl);
         *retrl = NULL;
-        RLAYERfatal(*retrl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return OSSL_RECORD_RETURN_FATAL;
     }
 
