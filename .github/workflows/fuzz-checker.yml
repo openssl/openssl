@@ -25,7 +25,7 @@ jobs:
             cc: afl-clang-fast
           }, {
             name: libFuzzer,
-            config: enable-fuzz-libfuzzer -DPEDANTIC enable-asan enable-ubsan,
+            config: enable-fuzz-libfuzzer enable-asan enable-ubsan,
             libs: --with-fuzzer-lib=/usr/lib/llvm-12/lib/libFuzzer.a --with-fuzzer-include=/usr/lib/llvm-12/build/lib/clang/12.0.0/include/fuzzer,
             install: libfuzzer-12-dev,
             cc: clang-12,
@@ -33,7 +33,7 @@ jobs:
             tests: -test_memleak
           }, {
             name: libFuzzer+,
-            config: enable-fuzz-libfuzzer -DPEDANTIC enable-asan enable-ubsan -fsanitize-coverage=trace-cmp -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION,
+            config: enable-fuzz-libfuzzer enable-asan enable-ubsan -fsanitize-coverage=trace-cmp -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION,
             libs: --with-fuzzer-lib=/usr/lib/llvm-12/lib/libFuzzer.a --with-fuzzer-include=/usr/lib/llvm-12/build/lib/clang/12.0.0/include/fuzzer,
             extra: enable-fips enable-ec_nistp_64_gcc_128 -fno-sanitize=alignment enable-tls1_3 enable-weak-ssl-ciphers enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg,
             install: libfuzzer-12-dev,
