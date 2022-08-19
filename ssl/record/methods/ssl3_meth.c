@@ -98,10 +98,8 @@ static int ssl3_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs
         return 0;
 
     ds = rl->enc_ctx;
-    if (rl->enc_ctx == NULL)
-        enc = NULL;
-    else
-        enc = EVP_CIPHER_CTX_get0_cipher(rl->enc_ctx);
+    if (ds == NULL || (enc = EVP_CIPHER_CTX_get0_cipher(ds)) == NULL)
+        return 0;
 
     provided = (EVP_CIPHER_get0_provider(enc) != NULL);
 
