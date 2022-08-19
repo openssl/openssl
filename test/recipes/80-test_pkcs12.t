@@ -54,7 +54,7 @@ if (eval { require Win32::API; 1; }) {
 }
 $ENV{OPENSSL_WIN32_UTF8}=1;
 
-plan tests => 21;
+plan tests => 24;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -81,6 +81,7 @@ my $outfile3 = "out3.p12";
 my $outfile4 = "out4.p12";
 my $outfile5 = "out5.p12";
 my $outfile6 = "out6.p12";
+my $outfile7 = "out7.p12";
 
 # Test the -chain option with -untrusted
 ok(run(app(["openssl", "pkcs12", "-export", "-chain",
@@ -146,8 +147,13 @@ my @pkcs12info = run(app(["openssl", "pkcs12", "-info", "-in", $outfile5,
 # Test that with one input certificate, we get one output certificate
 ok(grep(/subject=CN\s*=\s*server.example/, @pkcs12info) == 1,
    "test one cert in output");
+
 # Test that the expected friendly name is present in the output
 ok(grep(/testname/, @pkcs12info) == 1, "test friendly name in output");
+
+# Test there's no Oracle Trusted Key Usage bag attribute
+ok(grep(/Trusted key usage (Oracle)/, @pkcs12info) == 0,
+    "test no oracle trusted key usage");
 
 # Test export of PEM file with both cert and key, without password.
 # -nomac necessary to avoid legacy provider requirement
@@ -162,6 +168,22 @@ ok(grep(/testname/, @pkcs12info) == 1, "test friendly name in output");
     my @match = grep /:error:/, <DATA>;
     close DATA;
     ok(scalar @match > 0 ? 0 : 1, "test_export_pkcs12_outerr6_empty");
+}
+
+# Test with Oracle Trusted Key Usage specified in openssl.cnf
+{
+    $ENV{OPENSSL_CONF} = srctop_file("test", "recipes", "80-test_pkcs12_data", "jdk_trusted.cnf");
+    ok(run(app(["openssl", "pkcs12", "-export", "-out", $outfile7,
+                "-in", srctop_file(@path, "ee-cert.pem"),
+                "-nokeys", "-passout", "pass:", "-certpbe", "NONE"])),
+       "test nokeys single cert");
+
+    my @pkcs12info = run(app(["openssl", "pkcs12", "-info", "-in", $outfile7,
+                          "-passin", "pass:"]), capture => 1);
+    ok(grep(/Trusted key usage \(Oracle\): Any Extended Key Usage \(2.5.29.37.0\)/, @pkcs12info) == 1,
+        "test oracle trusted key usage is set");
+
+    delete $ENV{OPENSSL_CONF}
 }
 
 # Tests for pkcs12_parse

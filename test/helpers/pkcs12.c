@@ -338,13 +338,15 @@ err:
  * PKCS12 safeBag/attribute builder
  */
 
-static int add_attributes(PKCS12_SAFEBAG *bag, const PKCS12_ATTR *attrs)
+static int add_attributes(PKCS12_SAFEBAG *bag, const PKCS12_ATTR *attr)
 {
     int ret = 0;
     int attr_nid;
-    const PKCS12_ATTR *p_attr = attrs;
+    const PKCS12_ATTR *p_attr = attr;
+    STACK_OF(X509_ATTRIBUTE)* attrs = NULL;
+    X509_ATTRIBUTE *x509_attr = NULL;
 
-    if (attrs == NULL)
+    if (attr == NULL)
         return 1;
 
     while (p_attr->oid != NULL) {
@@ -358,6 +360,12 @@ static int add_attributes(PKCS12_SAFEBAG *bag, const PKCS12_ATTR *attrs)
             if (!TEST_true(PKCS12_add_localkeyid(bag, (unsigned char *)p_attr->value,
                                                  strlen(p_attr->value))))
                 goto err;
+        } else if (attr_nid == NID_oracle_jdk_trustedkeyusage) {
+            attrs = (STACK_OF(X509_ATTRIBUTE)*)PKCS12_SAFEBAG_get0_attrs(bag);
+            x509_attr = X509_ATTRIBUTE_create(attr_nid, V_ASN1_OBJECT, OBJ_txt2obj(p_attr->value, 0));
+            X509at_add1_attr(&attrs, x509_attr);
+            PKCS12_SAFEBAG_set0_attrs(bag, attrs);
+            X509_ATTRIBUTE_free(x509_attr);
         } else {
             /* Custom attribute values limited to ASCII in these tests */
             if (!TEST_true(PKCS12_add1_attr_by_txt(bag, p_attr->oid, MBSTRING_ASC,

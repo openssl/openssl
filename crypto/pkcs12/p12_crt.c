@@ -14,6 +14,8 @@
 
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
                           PKCS12_SAFEBAG *bag);
+static int pkcs12_remove_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
+                             PKCS12_SAFEBAG *bag);
 
 static int copy_bag_attr(PKCS12_SAFEBAG *bag, EVP_PKEY *pkey, int nid)
 {
@@ -24,16 +26,17 @@ static int copy_bag_attr(PKCS12_SAFEBAG *bag, EVP_PKEY *pkey, int nid)
     return X509at_add1_attr(&bag->attrib, EVP_PKEY_get_attr(pkey, idx)) != NULL;
 }
 
-PKCS12 *PKCS12_create_ex(const char *pass, const char *name, EVP_PKEY *pkey,
-                         X509 *cert, STACK_OF(X509) *ca, int nid_key, int nid_cert,
-                         int iter, int mac_iter, int keytype,
-                         OSSL_LIB_CTX *ctx, const char *propq)
+PKCS12 *PKCS12_create_ex2(const char *pass, const char *name, EVP_PKEY *pkey,
+                          X509 *cert, STACK_OF(X509) *ca, int nid_key, int nid_cert,
+                          int iter, int mac_iter, int keytype,
+                          OSSL_LIB_CTX *ctx, const char *propq,
+                          PKCS12_create_cb *cb, void *cbarg)
 {
     PKCS12 *p12 = NULL;
     STACK_OF(PKCS7) *safes = NULL;
     STACK_OF(PKCS12_SAFEBAG) *bags = NULL;
     PKCS12_SAFEBAG *bag = NULL;
-    int i;
+    int i, cbret;
     unsigned char keyid[EVP_MAX_MD_SIZE];
     unsigned int keyidlen = 0;
 
@@ -65,12 +68,30 @@ PKCS12 *PKCS12_create_ex(const char *pass, const char *name, EVP_PKEY *pkey,
             goto err;
         if (keyidlen && !PKCS12_add_localkeyid(bag, keyid, keyidlen))
             goto err;
+        if (cb != NULL) {
+            cbret = cb(bag, cbarg);
+            if (cbret  == -1) {
+                ERR_raise(ERR_LIB_PKCS12, PKCS12_R_CALLBACK_FAILED);
+                goto err;
+            } else if (cbret == 0) {
+                pkcs12_remove_bag(&bags, bag);
+            }
+        }
     }
 
     /* Add all other certificates */
     for (i = 0; i < sk_X509_num(ca); i++) {
-        if (!PKCS12_add_cert(&bags, sk_X509_value(ca, i)))
+        if ((bag = PKCS12_add_cert(&bags, sk_X509_value(ca, i))) == NULL)
             goto err;
+        if (cb != NULL) {
+            cbret = cb(bag, cbarg);
+            if (cbret  == -1) {
+                ERR_raise(ERR_LIB_PKCS12, PKCS12_R_CALLBACK_FAILED);
+                goto err;
+            } else if (cbret == 0) {
+                pkcs12_remove_bag(&bags, bag);
+            }
+        }
     }
 
     if (bags && !PKCS12_add_safe_ex(&safes, bags, nid_cert, iter, pass,
@@ -96,6 +117,15 @@ PKCS12 *PKCS12_create_ex(const char *pass, const char *name, EVP_PKEY *pkey,
             goto err;
         if (keyidlen && !PKCS12_add_localkeyid(bag, keyid, keyidlen))
             goto err;
+        if (cb != NULL) {
+            cbret = cb(bag, cbarg);
+            if (cbret  == -1) {
+                ERR_raise(ERR_LIB_PKCS12, PKCS12_R_CALLBACK_FAILED);
+                goto err;
+            } else if (cbret == 0) {
+                pkcs12_remove_bag(&bags, bag);
+            }
+        }
     }
 
     if (bags && !PKCS12_add_safe(&safes, bags, -1, 0, NULL))
@@ -125,6 +155,16 @@ PKCS12 *PKCS12_create_ex(const char *pass, const char *name, EVP_PKEY *pkey,
     sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
     return NULL;
 
+}
+
+PKCS12 *PKCS12_create_ex(const char *pass, const char *name, EVP_PKEY *pkey, X509 *cert,
+                        STACK_OF(X509) *ca, int nid_key, int nid_cert, int iter,
+                        int mac_iter, int keytype,
+                        OSSL_LIB_CTX *ctx, const char *propq)
+{
+    return PKCS12_create_ex2(pass, name, pkey, cert, ca, nid_key, nid_cert,
+                             iter, mac_iter, keytype, ctx, propq,
+                             NULL, NULL);
 }
 
 PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *cert,
@@ -279,6 +319,22 @@ int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
                     int nid_safe, int iter, const char *pass)
 {
     return PKCS12_add_safe_ex(psafes, bags, nid_safe, iter, pass, NULL, NULL);
+}
+
+
+static int pkcs12_remove_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
+                             PKCS12_SAFEBAG *bag)
+{
+    PKCS12_SAFEBAG *tmp;
+
+    if (pbags == NULL || bag == NULL)
+        return 1;
+
+    if ((tmp = sk_PKCS12_SAFEBAG_delete_ptr(*pbags, bag)) == NULL)
+        return 0;
+
+    PKCS12_SAFEBAG_free(tmp);
+    return 1;
 }
 
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,

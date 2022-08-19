@@ -94,6 +94,98 @@ err:
     return TEST_true(ret);
 }
 
+static int pkcs12_create_cb(PKCS12_SAFEBAG *bag, void *cbarg)
+{
+    int cb_ret = *((int*)cbarg);
+    return cb_ret;
+}
+
+static PKCS12 *pkcs12_create_ex2_setup(EVP_PKEY **key, X509 **cert, STACK_OF(X509) **ca)
+{
+    PKCS12 *p12 = NULL;
+    p12 = PKCS12_load("out6.p12");
+    if (!TEST_ptr(p12))
+        goto err;
+
+    if (!TEST_true(PKCS12_parse(p12, "", key, cert, ca)))
+        goto err;
+
+    return p12;
+err:
+    PKCS12_free(p12);
+    return NULL;
+}
+
+static int pkcs12_create_ex2_test(int test)
+{
+    int ret = 0, cb_ret = 0;
+    PKCS12 *ptr = NULL, *p12 = NULL;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL;
+    STACK_OF(X509) *ca = NULL;
+
+    p12 = pkcs12_create_ex2_setup(&key, &cert, &ca);
+    if (!TEST_ptr(p12))
+        goto err;
+
+    if (test == 0) {
+        /* Confirm PKCS12_create_ex2 returns NULL */
+        ptr = PKCS12_create_ex2(NULL, NULL, NULL,
+                                NULL, NULL, NID_undef, NID_undef,
+                                0, 0, 0,
+                                NULL, NULL,
+                                NULL, NULL);
+        if (TEST_ptr(ptr))
+            goto err;
+
+        /* Can't proceed without a valid cert at least */
+        if (!TEST_ptr(cert))
+            goto err;
+
+        /* Specified call back called - return success */
+        cb_ret = 1;
+        ptr = PKCS12_create_ex2(NULL, NULL, NULL,
+                                cert, NULL, NID_undef, NID_undef,
+                                0, 0, 0,
+                                NULL, NULL,
+                                pkcs12_create_cb, (void*)&cb_ret);
+        /* PKCS12 successfully created */
+        if (!TEST_ptr(ptr))
+            goto err;
+    } else if (test == 1) {
+        /* Specified call back called - return error*/
+        cb_ret = -1;
+        ptr = PKCS12_create_ex2(NULL, NULL, NULL,
+                                cert, NULL, NID_undef, NID_undef,
+                                0, 0, 0,
+                                NULL, NULL,
+                                pkcs12_create_cb, (void*)&cb_ret);
+        /* PKCS12 not created */
+       if (TEST_ptr(ptr))
+            goto err;
+    } else if (test == 2) {
+        /* Specified call back called - return failure */
+        cb_ret = 0;
+        ptr = PKCS12_create_ex2(NULL, NULL, NULL,
+                                cert, NULL, NID_undef, NID_undef,
+                                0, 0, 0,
+                                NULL, NULL,
+                                pkcs12_create_cb, (void*)&cb_ret);
+        /* PKCS12 successfully created */
+        if (!TEST_ptr(ptr))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    PKCS12_free(p12);
+    PKCS12_free(ptr);
+    EVP_PKEY_free(key);
+    X509_free(cert);
+    OSSL_STACK_OF_X509_free(ca);
+    return TEST_true(ret);
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -157,7 +249,7 @@ int setup_tests(void)
 
     ADD_TEST(test_null_args);
     ADD_TEST(pkcs12_parse_test);
-
+    ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);
     return 1;
 }
 

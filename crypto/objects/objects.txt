@@ -1789,3 +1789,9 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
                             : AES-128-SIV  : aes-128-siv
                             : AES-192-SIV  : aes-192-siv
                             : AES-256-SIV  : aes-256-siv
+
+
+!Cname oracle
+joint-iso-itu-t 16 840 1 113894 : oracle-organization : Oracle organization
+# Jdk trustedKeyUsage attribute
+oracle 746875 1 1 : oracle-jdk-trustedkeyusage : Trusted key usage (Oracle)

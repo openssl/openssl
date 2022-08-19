@@ -5570,6 +5570,16 @@
 #define LN_aes_256_siv          "aes-256-siv"
 #define NID_aes_256_siv         1200
 
+#define SN_oracle               "oracle-organization"
+#define LN_oracle               "Oracle organization"
+#define NID_oracle              1282
+#define OBJ_oracle              OBJ_joint_iso_itu_t,16L,840L,1L,113894L
+
+#define SN_oracle_jdk_trustedkeyusage           "oracle-jdk-trustedkeyusage"
+#define LN_oracle_jdk_trustedkeyusage           "Trusted key usage (Oracle)"
+#define NID_oracle_jdk_trustedkeyusage          1283
+#define OBJ_oracle_jdk_trustedkeyusage          OBJ_oracle,746875L,1L,1L
+
 #endif /* OPENSSL_OBJ_MAC_H */
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
