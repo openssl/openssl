@@ -42,10 +42,9 @@ caller specify additional information as a format string B<fmt> and an
 arbitrary number of values, which are processed with L<BIO_snprintf(3)>.
 
 ERR_raise_malloc_failure() is meant to be used only internally.
-If I<ptr> is NULL, it behaves basically like
-I<ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE)> with the I<file>, I<line>,
-and I<func> parameters being passed in as the error location, but only if
-no such error is already in the queue, to prevent a memory allocation loop.
+If I<ptr> is not NULL, it simply returns this value,
+otherwise it behaves like I<ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE)>
+with the I<file>, I<line>, and I<func> parameters taken as the error location.
 
 ERR_put_error() adds an error code to the thread's error queue. It
 signals that the error of reason code B<reason> occurred in function

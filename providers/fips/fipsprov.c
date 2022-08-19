@@ -779,6 +779,18 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
     c_vset_error(NULL, ERR_PACK(lib, 0, reason), fmt, args);
 }
 
+void *ERR_raise_malloc_failure(void *ptr,
+                               const char *file, int line, const char *func)
+{
+    if (ptr != NULL)
+        return ptr; /* all good */
+
+    ERR_new();
+    ERR_set_debug(file, line, func);
+    ERR_set_error(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, NULL);
+    return NULL;
+}
+
 int ERR_set_mark(void)
 {
     return c_set_error_mark(NULL);

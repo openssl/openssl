@@ -199,16 +199,16 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 }
 #endif
 
-static void ERR_STATE_free(ERR_STATE *s)
+static void ERR_STATE_free(ERR_STATE *state)
 {
     int i;
 
-    if (s == NULL)
+    if (state == NULL)
         return;
     for (i = 0; i < ERR_NUM_ERRORS; i++) {
-        err_clear(s, i, 1);
+        err_clear(state, i, 1);
     }
-    OPENSSL_free(s);
+    CRYPTO_free(state, OPENSSL_FILE, OPENSSL_LINE);
 }
 
 DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
@@ -689,7 +689,8 @@ ERR_STATE *ossl_err_get_state_int(void)
         if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
             return NULL;
 
-        if ((state = OPENSSL_zalloc(sizeof(*state))) == NULL) {
+        state = CRYPTO_zalloc(sizeof(*state), OPENSSL_FILE, OPENSSL_LINE);
+        if (state == NULL) {
             CRYPTO_THREAD_set_local(&err_thread_local, NULL);
             return NULL;
         }
@@ -899,26 +900,13 @@ void err_clear_last_constant_time(int clear)
 void *ERR_raise_malloc_failure(void *ptr,
                                const char *file, int line, const char *func)
 {
-    ERR_STATE *es;
-
     if (ptr != NULL)
         return ptr; /* all good */
 
-    /* prevent potential malloc error loop while reporting malloc eror */
-    if (!RUN_ONCE(&err_init, err_do_init))
-        return NULL;
-    es = CRYPTO_THREAD_get_local(&err_thread_local);
-    if (es == (ERR_STATE*)-1 || es == NULL)
-        return NULL;
     /*
-     * Well, the malloc failure might already have been raised via this function
-     * before the error stack allocation has happened in the current thread,
-     * which entails that this is the first error that has been raised.
-     * In this - unlikely - scenario, the malloc failure cannot be reported.
+     * Mem alloc error loop while reporting malloc error is prevented by using
+     * CRYPTO_zalloc() rather than OPENSSL_zalloc for ERR_STATE allocation-
      */
-    if (es->malloc_failure_reported > 0)
-        return NULL;
-
     ERR_new();
     ERR_set_debug(file, line, func);
     ERR_set_error(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, NULL);

@@ -10,7 +10,6 @@
 #include "internal/e_os.h"
 #include "internal/cryptlib.h"
 #include "crypto/cryptlib.h"
-#include "crypto/err.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -173,8 +172,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
     INCREMENT(malloc_count);
     if (malloc_impl != CRYPTO_malloc)
-        return ERR_raise_malloc_failure(malloc_impl(num, file, line),
-                                        file, line, NULL);
+        return malloc_impl(num, file, line);
 
     if (num == 0)
         return NULL;
@@ -189,7 +187,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         allow_customize = 0;
     }
 
-    return ERR_raise_malloc_failure(malloc(num), file, line, NULL);
+    return malloc(num);
 }
 
 void *CRYPTO_zalloc(size_t num, const char *file, int line)
@@ -208,8 +206,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
 {
     INCREMENT(realloc_count);
     if (realloc_impl != CRYPTO_realloc)
-        return ERR_raise_malloc_failure(realloc_impl(str, num, file, line),
-                                        file, line, NULL);
+        return realloc_impl(str, num, file, line);
 
     FAILTEST();
     if (str == NULL)
@@ -220,7 +217,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return NULL;
     }
 
-    return ERR_raise_malloc_failure(realloc(str, num), file, line, NULL);
+    return realloc(str, num);
 }
 
 void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
