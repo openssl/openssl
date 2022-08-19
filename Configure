@@ -1509,9 +1509,7 @@ unless ($disabled{asan} || defined $detected_sanitizers{asan}) {
 }
 
 unless ($disabled{ubsan} || defined $detected_sanitizers{ubsan}) {
-    # -DPEDANTIC or -fnosanitize=alignment may also be required on some
-    # platforms.
-    push @{$config{cflags}}, "-fsanitize=undefined", "-fno-sanitize-recover=all";
+    push @{$config{cflags}}, "-fsanitize=undefined", "-fno-sanitize-recover=all", "-DPEDANTIC";
 }
 
 unless ($disabled{msan} || defined $detected_sanitizers{msan}) {

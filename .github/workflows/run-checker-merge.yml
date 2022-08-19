@@ -25,7 +25,7 @@ jobs:
           no-engine no-shared,
           no-err,
           no-filenames,
-          enable-ubsan no-asm -DPEDANTIC -DOPENSSL_SMALL_FOOTPRINT -fno-sanitize=alignment,
+          enable-ubsan no-asm -DOPENSSL_SMALL_FOOTPRINT -fno-sanitize=alignment,
           no-unit-test,
           enable-weak-ssl-ciphers,
           enable-zlib,
