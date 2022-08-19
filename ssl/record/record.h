@@ -133,8 +133,12 @@ typedef struct record_layer_st {
 
     /* Method to use for the read record layer*/
     const OSSL_RECORD_METHOD *rrlmethod;
+    /* Method to use for the write record layer*/
+    const OSSL_RECORD_METHOD *wrlmethod;
     /* The read record layer object itself */
     OSSL_RECORD_LAYER *rrl;
+    /* The write record layer object itself */
+    OSSL_RECORD_LAYER *wrl;
     /* BIO to store data destined for the next read record layer epoch */
     BIO *rrlnext;
     /* Default read buffer length to be passed to the record layer */
@@ -217,7 +221,6 @@ __owur int ssl3_enc(SSL_CONNECTION *s, SSL3_RECORD *inrecs, size_t n_recs,
                     int send, SSL_MAC_BUF *mac, size_t macsize);
 __owur int n_ssl3_mac(SSL_CONNECTION *s, SSL3_RECORD *rec, unsigned char *md,
                       int send);
-__owur int tls_retry_write_records(SSL_CONNECTION *s);
 __owur int tls1_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs,
                     int sending, SSL_MAC_BUF *mac, size_t macsize);
 __owur int tls1_mac_old(SSL_CONNECTION *s, SSL3_RECORD *rec, unsigned char *md,
@@ -264,6 +267,3 @@ OSSL_CORE_MAKE_FUNC(void, rlayer_msg_callback, (int write_p, int version,
 # define OSSL_FUNC_RLAYER_SECURITY               3
 OSSL_CORE_MAKE_FUNC(int, rlayer_security, (void *cbarg, int op, int bits,
                                            int nid, void *other))
-
-int tls_write_records(SSL_CONNECTION *s, OSSL_RECORD_TEMPLATE *templates,
-                      size_t numtempl);

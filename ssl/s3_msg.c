@@ -95,7 +95,7 @@ int ssl3_dispatch_alert(SSL *s)
     if (RECORD_LAYER_write_pending(&sc->rlayer))
         return -1;
 
-    i = tls_write_records(sc, &templ, 1);
+    i = sc->rlayer.wrlmethod->write_records(sc->rlayer.wrl, &templ, 1);
     if (i <= 0) {
         sc->s3.alert_dispatch = 1;
     } else {
