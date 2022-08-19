@@ -99,6 +99,8 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
     int mdi;
     size_t n, iv_len, key_len;
     int reuse_dd = 0;
+    int direction = (which & SSL3_CC_READ) != 0 ? OSSL_RECORD_DIRECTION_READ
+                                                : OSSL_RECORD_DIRECTION_WRITE;
 
     ciph = s->s3.tmp.new_sym_enc;
     md = s->s3.tmp.new_hash;
@@ -143,16 +145,16 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
-    if (which & SSL3_CC_READ) {
-        if (!ssl_set_new_record_layer(s, SSL3_VERSION,
-                                      OSSL_RECORD_DIRECTION_READ,
-                                      OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                      key, key_len, iv, iv_len, mac_secret,
-                                      md_len, ciph, 0, NID_undef, md, comp)) {
-            /* SSLfatal already called */
-            goto err;
-        }
+    if (!ssl_set_new_record_layer(s, SSL3_VERSION,
+                                  direction,
+                                  OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
+                                  key, key_len, iv, iv_len, mac_secret,
+                                  md_len, ciph, 0, NID_undef, md, comp)) {
+        /* SSLfatal already called */
+        goto err;
+    }
 
+    if (which & SSL3_CC_READ) {
         s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
         return 1;
     }

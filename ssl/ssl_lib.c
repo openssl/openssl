@@ -669,6 +669,15 @@ int ossl_ssl_connection_reset(SSL *s)
         /* SSLfatal already called */
         return 0;
     }
+    if (!ssl_set_new_record_layer(sc,
+                                  SSL_CONNECTION_IS_DTLS(sc) ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
+                                  OSSL_RECORD_DIRECTION_WRITE,
+                                  OSSL_RECORD_PROTECTION_LEVEL_NONE,
+                                  NULL, 0, NULL, 0, NULL,  0, NULL, 0,
+                                  NID_undef, NULL, NULL)) {
+        /* SSLfatal already called */
+        return 0;
+    }
 
     return 1;
 }

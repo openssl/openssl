@@ -186,11 +186,6 @@ struct ossl_record_method_st {
      * by |templates|. Each record should be no longer than the value returned
      * by get_max_record_len(), and there should be no more records than the
      * value returned by get_max_records().
-     * |allowance| is the maximum amount of "on-the-wire" data that is allowed
-     * to be sent at the moment (including all QUIC headers, but excluding any
-     * UDP/IP headers). After a successful or retry return |*sent| will
-     * be updated with the amount of data that has been sent so far. In the case
-     * of a retry this could be 0.
      * Where possible the caller will attempt to ensure that all records are the
      * same length, except the last record. This may not always be possible so
      * the record method implementation should not rely on this being the case.
@@ -206,24 +201,19 @@ struct ossl_record_method_st {
      *  0 on retry
      * -1 on failure
      */
-    int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE **templates,
-                         size_t numtempl, size_t allowance, size_t *sent);
+    int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
+                         size_t numtempl);
 
     /*
      * Retry a previous call to write_records. The caller should continue to
      * call this until the function returns with success or failure. After
-     * each retry more of the data may have been incrementally sent. |allowance|
-     * is the amount of "on-the-wire" data that is allowed to be sent at the
-     * moment. After a successful or retry return |*sent| will
-     * be updated with the amount of data that has been sent by this call to
-     * retry_write_records().
+     * each retry more of the data may have been incrementally sent.
      * Returns:
      *  1 on success
      *  0 on retry
      * -1 on failure
      */
-    int (*retry_write_records)(OSSL_RECORD_LAYER *rl, size_t allowance,
-                               size_t *sent);
+    int (*retry_write_records)(OSSL_RECORD_LAYER *rl);
 
     /*
      * Read a record and return the record layer version and record type in
