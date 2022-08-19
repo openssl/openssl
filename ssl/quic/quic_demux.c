@@ -338,7 +338,7 @@ static int demux_ensure_free_urxe(QUIC_DEMUX *demux, size_t min_num_free)
 static int demux_recv(QUIC_DEMUX *demux)
 {
     BIO_MSG msg[OSSL_QUIC_DEMUX_MAX_MSGS_PER_CALL];
-    ossl_ssize_t rd, i;
+    size_t rd, i;
     QUIC_URXE *urxe = demux->urx_free.head, *unext;
     OSSL_TIME now;
 
@@ -372,8 +372,7 @@ static int demux_recv(QUIC_DEMUX *demux)
             BIO_ADDR_clear(&urxe->local);
     }
 
-    rd = BIO_recvmmsg(demux->net_bio, msg, sizeof(BIO_MSG), i, 0);
-    if (rd <= 0)
+    if (!BIO_recvmmsg(demux->net_bio, msg, sizeof(BIO_MSG), i, 0, &rd))
         return 0;
 
     now = demux->now != NULL ? demux->now(demux->now_arg) : ossl_time_zero();

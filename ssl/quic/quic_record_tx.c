@@ -798,9 +798,8 @@ static void txe_to_msg(TXE *txe, BIO_MSG *msg)
 void ossl_qtx_flush_net(OSSL_QTX *qtx)
 {
     BIO_MSG msg[MAX_MSGS_PER_SEND];
-    size_t i;
+    size_t wr, i;
     TXE *txe;
-    ossl_ssize_t wr;
 
     if (qtx->bio == NULL)
         return;
@@ -815,8 +814,7 @@ void ossl_qtx_flush_net(OSSL_QTX *qtx)
             /* Nothing to send. */
             return;
 
-        wr = BIO_sendmmsg(qtx->bio, msg, sizeof(BIO_MSG), i, 0);
-        if (wr <= 0)
+        if (!BIO_sendmmsg(qtx->bio, msg, sizeof(BIO_MSG), i, 0, &wr) || wr == 0)
             /*
              * We did not get anything, so further calls will probably not
              * succeed either.
@@ -826,7 +824,7 @@ void ossl_qtx_flush_net(OSSL_QTX *qtx)
         /*
          * Remove everything which was successfully sent from the pending queue.
          */
-        for (i = 0; i < (size_t)wr; ++i)
+        for (i = 0; i < wr; ++i)
             qtx_pending_to_free(qtx);
     }
 }
