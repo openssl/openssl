@@ -494,7 +494,7 @@ static int test_bio_dgram_pair(void)
     BIO *bio1 = NULL, *bio2 = NULL;
     uint8_t scratch[2048 + 4], scratch2[2048];
     uint32_t key[8];
-    size_t i, num_dgram;
+    size_t i, num_dgram, num_processed = 0;
     BIO_MSG msgs[2] = {0}, rmsgs[2] = {0};
     BIO_ADDR *addr1 = NULL, *addr2 = NULL, *addr3 = NULL, *addr4 = NULL;
     struct in_addr in_local;
@@ -573,16 +573,18 @@ static int test_bio_dgram_pair(void)
     msgs[1].data     = scratch + 19;
     msgs[1].data_len = 46;
 
-    r = BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG), OSSL_NELEM(msgs), 0);
-    if (!TEST_int_eq(r, 2))
+    if (!TEST_true(BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG), OSSL_NELEM(msgs), 0,
+                                &num_processed))
+        || !TEST_size_t_eq(num_processed, 2))
         goto err;
 
     rmsgs[0].data       = scratch2;
     rmsgs[0].data_len   = 64;
     rmsgs[1].data       = scratch2 + 64;
     rmsgs[1].data_len   = 64;
-    r = BIO_recvmmsg(bio2, rmsgs, sizeof(BIO_MSG), OSSL_NELEM(rmsgs), 0);
-    if (!TEST_int_eq(r, 2))
+    if (!TEST_true(BIO_recvmmsg(bio2, rmsgs, sizeof(BIO_MSG), OSSL_NELEM(rmsgs), 0,
+                                &num_processed))
+        || !TEST_size_t_eq(num_processed, 2))
         goto err;
 
     if (!TEST_int_eq(rmsgs[0].data_len, 19))
@@ -619,8 +621,9 @@ static int test_bio_dgram_pair(void)
     msgs[0].peer = addr1;
 
     /* fails due to lack of caps on peer */
-    r = BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG), OSSL_NELEM(msgs), 0);
-    if (!TEST_int_eq(r, -1))
+    if (!TEST_false(BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG), OSSL_NELEM(msgs),
+                                 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 0))
         goto err;
 
     if (!TEST_int_eq(BIO_dgram_set_caps(bio2, ref_caps), 1))
@@ -639,8 +642,8 @@ static int test_bio_dgram_pair(void)
         goto err;
 
     /* succeeds with cap now available */
-    r = BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG), 1, 0);
-    if (!TEST_int_eq(r, 1))
+    if (!TEST_true(BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG), 1, 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 1))
         goto err;
 
     /* enable local addr support */
@@ -651,8 +654,9 @@ static int test_bio_dgram_pair(void)
     rmsgs[0].data_len   = 64;
     rmsgs[0].peer       = addr3;
     rmsgs[0].local      = addr4;
-    r = BIO_recvmmsg(bio2, rmsgs, sizeof(BIO_MSG), OSSL_NELEM(rmsgs), 0);
-    if (!TEST_int_eq(r, 1))
+    if (!TEST_true(BIO_recvmmsg(bio2, rmsgs, sizeof(BIO_MSG), OSSL_NELEM(rmsgs), 0,
+                                &num_processed))
+        || !TEST_size_t_eq(num_processed, 1))
         goto err;
 
     if (!TEST_int_eq(rmsgs[0].data_len, 19))
@@ -674,14 +678,14 @@ static int test_bio_dgram_pair(void)
     if (!TEST_int_eq(BIO_dgram_set_local_addr_enable(bio1, 1), 1))
         goto err;
 
-    r = BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG), 1, 0);
-    if (!TEST_int_eq(r, 1))
+    if (!TEST_true(BIO_sendmmsg(bio1, msgs, sizeof(BIO_MSG), 1, 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 1))
         goto err;
 
     rmsgs[0].data       = scratch2;
     rmsgs[0].data_len   = 64;
-    r = BIO_recvmmsg(bio2, rmsgs, sizeof(BIO_MSG), OSSL_NELEM(rmsgs), 0);
-    if (!TEST_int_eq(r, 1))
+    if (!TEST_true(BIO_recvmmsg(bio2, rmsgs, sizeof(BIO_MSG), OSSL_NELEM(rmsgs), 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 1))
         goto err;
 
     if (!TEST_int_eq(BIO_ADDR_family(addr3), AF_INET))
@@ -730,7 +734,6 @@ err:
     BIO_ADDR_free(addr4);
     return testresult;
 }
-#endif
 
 #endif /* !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK) */
 

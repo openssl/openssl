@@ -693,6 +693,7 @@ static void test_bio_dgram_pair_worker(void)
     uint8_t ch = 0;
     uint8_t scratch[64];
     BIO_MSG msg = {0};
+    size_t num_processed = 0;
 
     if (!TEST_int_eq(RAND_bytes_ex(multi_libctx, &ch, 1, 64), 1))
         goto err;
@@ -705,9 +706,11 @@ static void test_bio_dgram_pair_worker(void)
      * has been called yet. The purpose of this code is to exercise tsan.
      */
     if (ch & 2)
-        r = BIO_sendmmsg(ch & 1 ? multi_bio2 : multi_bio1, &msg, sizeof(BIO_MSG), 1, 0);
+        r = BIO_sendmmsg(ch & 1 ? multi_bio2 : multi_bio1, &msg,
+                         sizeof(BIO_MSG), 1, 0, &num_processed);
     else
-        r = BIO_recvmmsg(ch & 1 ? multi_bio2 : multi_bio1, &msg, sizeof(BIO_MSG), 1, 0);
+        r = BIO_recvmmsg(ch & 1 ? multi_bio2 : multi_bio1, &msg,
+                         sizeof(BIO_MSG), 1, 0, &num_processed);
 
     ok = 1;
 err:
