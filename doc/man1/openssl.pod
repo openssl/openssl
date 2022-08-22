@@ -688,6 +688,18 @@ See L<property(7)> for a more detailed description.
 
 =back
 
+=head2 List Options
+
+=over 4
+
+=item B<-standard-commands>, B<-digest-commands>, B<-cipher-commands>,
+B<-digest-algorithms>, B<-kdf-algorithms>, B<-mac-algorithms>,
+B<-cipher-algorithms>, B<-public-key-algorithms>
+
+Display various lists. See L<openssl-list(1)> for details.
+
+=back
+
 =head1 ENVIRONMENT
 
 The OpenSSL library can be take some configuration parameters from the
