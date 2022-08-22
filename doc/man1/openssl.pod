@@ -11,16 +11,6 @@ I<command>
 [ I<options> ... ]
 [ I<parameters> ... ]
 
-B<openssl>
-B<list>
-B<-standard-commands> |
-B<-digest-commands> |
-B<-cipher-commands> |
-B<-cipher-algorithms> |
-B<-digest-algorithms> |
-B<-mac-algorithms> |
-B<-public-key-algorithms>
-
 B<openssl> B<no->I<XXX> [ I<options> ]
 
 =head1 DESCRIPTION
@@ -50,21 +40,8 @@ Each command can have many options and argument parameters, shown above as
 I<options> and I<parameters>.
 
 Detailed documentation and use cases for most standard subcommands are available
-(e.g., L<openssl-x509(1)>).
-
-The list options B<-standard-commands>, B<-digest-commands>,
-and B<-cipher-commands> output a list (one entry per line) of the names
-of all standard commands, message digest commands, or cipher commands,
-respectively, that are available.
-
-The list parameters B<-cipher-algorithms>, B<-digest-algorithms>,
-and B<-mac-algorithms> list all cipher, message digest, and message
-authentication code names, one entry per line. Aliases are listed as:
-
- from => to
-
-The list parameter B<-public-key-algorithms> lists all supported public
-key algorithms.
+(e.g., L<openssl-x509(1)>). The subcommand L<openssl-list(1)> may be used to list
+subcommands.
 
 The command B<no->I<XXX> tests whether a command of the
 specified name is available.  If no command named I<XXX> exists, it
@@ -819,6 +796,7 @@ L<openssl-gendsa(1)>,
 L<openssl-genpkey(1)>,
 L<openssl-genrsa(1)>,
 L<openssl-kdf(1)>,
+L<openssl-list(1)>,
 L<openssl-mac(1)>,
 L<openssl-nseq(1)>,
 L<openssl-ocsp(1)>,
