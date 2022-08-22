@@ -19,6 +19,10 @@
 #  error SM4 is disabled.
 # endif
 
+# ifdef  __cplusplus
+extern "C" {
+# endif
+
 # define SM4_ENCRYPT     1
 # define SM4_DECRYPT     0
 
@@ -35,4 +39,7 @@ void ossl_sm4_encrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *ks);
 
 void ossl_sm4_decrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *ks);
 
+# ifdef  __cplusplus
+}
+# endif
 #endif
