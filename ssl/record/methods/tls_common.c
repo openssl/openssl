@@ -1718,18 +1718,17 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
             goto err;
         }
 
-        if (s->msg_callback) {
+        if (rl->msg_callback) {
             recordstart = WPACKET_get_curr(thispkt) - len
                           - SSL3_RT_HEADER_LENGTH;
-            s->msg_callback(1, thiswr->rec_version, SSL3_RT_HEADER, recordstart,
-                            SSL3_RT_HEADER_LENGTH, ssl,
-                            s->msg_callback_arg);
+            rl->msg_callback(1, thiswr->rec_version, SSL3_RT_HEADER, recordstart,
+                             SSL3_RT_HEADER_LENGTH, rl->cbarg);
 
             if (SSL_CONNECTION_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL) {
                 unsigned char ctype = thistempl->type;
 
-                s->msg_callback(1, thiswr->rec_version, SSL3_RT_INNER_CONTENT_TYPE,
-                                &ctype, 1, ssl, s->msg_callback_arg);
+                rl->msg_callback(1, thiswr->rec_version, SSL3_RT_INNER_CONTENT_TYPE,
+                                 &ctype, 1, rl->cbarg);
             }
         }
 
