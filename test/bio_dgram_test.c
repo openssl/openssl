@@ -17,7 +17,9 @@
 static int compare_addr(const BIO_ADDR *a, const BIO_ADDR *b)
 {
     struct in_addr xa, xb;
+#if defined(OPENSSL_USE_IPV6)
     struct in6_addr xa6, xb6;
+#endif
     void *pa, *pb;
     size_t slen, tmplen;
 
@@ -36,8 +38,9 @@ static int compare_addr(const BIO_ADDR *a, const BIO_ADDR *b)
         slen = sizeof(xa6);
     }
 #endif
-    else
+    else {
         return 0;
+    }
 
     tmplen = slen;
     if (BIO_ADDR_rawaddress(a, pa, &tmplen) < 1)
@@ -100,7 +103,9 @@ static int test_bio_dgram_impl(int af, int use_local)
     BIO_ADDR *addr1 = NULL, *addr2 = NULL, *addr3 = NULL, *addr4 = NULL,
              *addr5 = NULL, *addr6 = NULL;
     struct in_addr ina = {0};
+#if defined(OPENSSL_USE_IPV6)
     struct in6_addr ina6 = {0};
+#endif
     void *pina;
     size_t inal, i;
     union BIO_sock_info_u info1 = {0}, info2 = {0};
@@ -124,8 +129,9 @@ static int test_bio_dgram_impl(int af, int use_local)
         inal = sizeof(ina6);
     }
 #endif
-    else
+    else {
         goto err;
+    }
 
     addr1 = BIO_ADDR_new();
     if (!TEST_ptr(addr1))
@@ -370,7 +376,7 @@ static int test_bio_dgram_impl(int af, int use_local)
      * Try sending more than can be handled in one sendmmsg call (when using the
      * sendmmsg implementation)
      */
-    for (i=0; i<OSSL_NELEM(tx_msg); ++i) {
+    for (i = 0; i < OSSL_NELEM(tx_msg); ++i) {
         tx_buf[i] = (char)i;
         tx_msg[i].data      = tx_buf + i;
         tx_msg[i].data_len  = 1;
@@ -386,7 +392,7 @@ static int test_bio_dgram_impl(int af, int use_local)
      * Try receiving more than can be handled in one recvmmsg call (when using
      * the recvmmsg implementation)
      */
-    for (i=0; i<OSSL_NELEM(rx_msg); ++i) {
+    for (i = 0; i < OSSL_NELEM(rx_msg); ++i) {
         rx_buf[i] = '\0';
         rx_msg[i].data      = rx_buf + i;
         rx_msg[i].data_len  = 1;

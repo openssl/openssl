@@ -142,6 +142,7 @@ BIO_R_INVALID_SOCKET:135:invalid socket
 BIO_R_IN_USE:123:in use
 BIO_R_LENGTH_TOO_LONG:102:length too long
 BIO_R_LISTEN_V6_ONLY:136:listen v6 only
+BIO_R_LOCAL_ADDR_NOT_AVAILABLE:111:local addr not available
 BIO_R_LOOKUP_RETURNED_NOTHING:142:lookup returned nothing
 BIO_R_MALFORMED_HOST_OR_SERVICE:130:malformed host or service
 BIO_R_NBIO_CONNECT_ERROR:110:nbio connect error

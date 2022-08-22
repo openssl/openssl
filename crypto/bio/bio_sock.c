@@ -130,10 +130,10 @@ struct hostent *BIO_gethostbyname(const char *name)
 }
 # endif
 
-#ifdef BIO_HAVE_WSAMSG
+# ifdef BIO_HAVE_WSAMSG
 LPFN_WSARECVMSG bio_WSARecvMsg;
 LPFN_WSASENDMSG bio_WSASendMsg;
-#endif
+# endif
 
 int BIO_sock_init(void)
 {
