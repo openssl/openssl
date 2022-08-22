@@ -87,6 +87,11 @@ int ssl3_dispatch_alert(SSL *s)
 
     sc->s3.alert_dispatch = 0;
 
+    if (sc->rlayer.wrlmethod == NULL) {
+        /* No write record layer so we can't sent and alert. We just ignore it */
+        return 1;
+    }
+
     templ.type = SSL3_RT_ALERT;
     templ.buf = &sc->s3.send_alert[0];
     templ.buflen = 2;

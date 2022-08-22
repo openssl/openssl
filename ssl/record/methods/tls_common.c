@@ -1365,7 +1365,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         }
     }
 
-    using_ktls = BIO_get_ktls_send(s->wbio);
+    using_ktls = BIO_get_ktls_send(rl->bio);
     if (!ossl_assert(!using_ktls || !prefix)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -1781,21 +1781,21 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
             continue;
         }
         clear_sys_error();
-        if (s->wbio != NULL) {
+        if (rl->bio != NULL) {
             s->rwstate = SSL_WRITING;
 
             /*
              * To prevent coalescing of control and data messages,
              * such as in buffer_write, we flush the BIO
              */
-            if (BIO_get_ktls_send(s->wbio)
+            if (BIO_get_ktls_send(rl->bio)
                     && thiswb->type != SSL3_RT_APPLICATION_DATA) {
-                i = BIO_flush(s->wbio);
+                i = BIO_flush(rl->bio);
                 if (i <= 0)
                     return i;
-                BIO_set_ktls_ctrl_msg(s->wbio, thiswb->type);
+                BIO_set_ktls_ctrl_msg(rl->bio, thiswb->type);
             }
-            i = BIO_write(s->wbio, (char *)
+            i = BIO_write(rl->bio, (char *)
                           &(SSL3_BUFFER_get_buf(thiswb)
                             [SSL3_BUFFER_get_offset(thiswb)]),
                           (unsigned int)SSL3_BUFFER_get_left(thiswb));

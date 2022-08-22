@@ -517,6 +517,12 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     (*retrl)->funcs = &ossl_ktls_funcs;
 
+    /*
+     * TODO(RECLAYER): We're not ready to set the crypto state for the write
+     * record layer. Fix this once we are
+     */
+    if (direction == OSSL_RECORD_DIRECTION_WRITE)
+        return 1;
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, key, keylen, iv,
                                             ivlen, mackey, mackeylen, ciph,
                                             taglen, mactype, md, comp);
