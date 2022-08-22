@@ -561,6 +561,8 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
                                  OSSL_QRX_PKT_WRAP *parent_pkt, int packet_space,
                                  OSSL_TIME received, OSSL_ACKM_RX_PKT *ackm_data)
 {
+    uint32_t pkt_type = parent_pkt->pkt->hdr->type;
+
     while (PACKET_remaining(pkt) > 0) {
         uint64_t frame_type;
 
@@ -569,33 +571,52 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
 
         switch (frame_type) {
         case OSSL_QUIC_FRAME_TYPE_PING:
+            /* Allowed in all packet types */
             if (!depack_do_frame_ping(pkt, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_PADDING:
+            /* Allowed in all packet types */
             if (!depack_do_frame_padding(pkt))
                 return 0;
             break;
 
         case OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN:
         case OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN:
+            /* ACK frames are valid everywhere except in 0RTT packets */
+            if (pkt_type == QUIC_PKT_TYPE_0RTT)
+                return 0;
             if (!depack_do_frame_ack(pkt, connection, packet_space, received))
                 return 0;
             break;
 
         case OSSL_QUIC_FRAME_TYPE_RESET_STREAM:
+            /* RESET_STREAM frames are valid in 0RTT and 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_0RTT
+                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_reset_stream(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_STOP_SENDING:
+            /* STOP_SENDING frames are valid in 0RTT and 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_0RTT
+                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_stop_sending(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_CRYPTO:
+            /* CRYPTO frames are valid everywhere except in 0RTT packets */
+            if (pkt_type == QUIC_PKT_TYPE_0RTT)
+                return 0;
             if (!depack_do_frame_crypto(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
+            /* NEW_TOKEN frames are valid in 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_new_token(pkt, connection, ackm_data))
                 return 0;
             break;
@@ -608,64 +629,116 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
         case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_FIN:
         case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN:
         case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN_FIN:
+            /* STREAM frames are valid in 0RTT and 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_0RTT
+                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_stream(pkt, connection, parent_pkt, ackm_data))
                 return 0;
             break;
 
         case OSSL_QUIC_FRAME_TYPE_MAX_DATA:
+            /* MAX_DATA frames are valid in 0RTT and 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_0RTT
+                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_max_data(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA:
+            /* MAX_STREAM_DATA frames are valid in 0RTT and 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_0RTT
+                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_max_stream_data(pkt, connection, ackm_data))
                 return 0;
             break;
 
         case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI:
         case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI:
+            /* MAX_STREAMS frames are valid in 0RTT and 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_0RTT
+                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_max_streams(pkt, connection, ackm_data))
                 return 0;
             break;
 
         case OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED:
+            /* DATA_BLOCKED frames are valid in 0RTT and 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_0RTT
+                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_data_blocked(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED:
+            /* STREAM_DATA_BLOCKED frames are valid in 0RTT and 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_0RTT
+                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_stream_data_blocked(pkt, connection, ackm_data))
                 return 0;
             break;
 
         case OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI:
         case OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI:
+            /* STREAMS_BLOCKED frames are valid in 0RTT and 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_0RTT
+                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_streams_blocked(pkt, connection, ackm_data))
                 return 0;
             break;
 
         case OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID:
+            /* NEW_CONN_ID frames are valid in 0RTT and 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_0RTT
+                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_new_conn_id(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID:
+            /* RETIRE_CONN_ID frames are valid in 0RTT and 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_0RTT
+                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_retire_conn_id(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE:
+            /* PATH_CHALLENGE frames are valid in 0RTT and 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_0RTT
+                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_path_challenge(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE:
+            /* PATH_RESPONSE frames are valid in 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_path_response(pkt, connection, ackm_data))
                 return 0;
             break;
 
-        case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT:
         case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP:
+            /* CONN_CLOSE_APP frames are valid in 0RTT and 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_0RTT
+                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
+            /* FALLTHRU */
+        case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT:
+            /* CONN_CLOSE_TRANSPORT frames are valid in all packets */
             if (!depack_do_frame_conn_close(pkt, connection))
                 return 0;
             break;
 
         case OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE:
+            /* HANDSHAKE_DONE frames are valid in 1RTT packets */
+            if (pkt_type != QUIC_PKT_TYPE_1RTT)
+                return 0;
             if (!depack_do_frame_handshake_done(pkt, connection, ackm_data))
                 return 0;
             break;
