@@ -1256,9 +1256,8 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 {
     OSSL_PARAM options[5], *opts = options;
     OSSL_PARAM settings[6], *set =  settings;
-    const OSSL_RECORD_METHOD *origmeth = s->rlayer.rrlmethod;
     const OSSL_RECORD_METHOD **thismethod;
-    OSSL_RECORD_LAYER **thisrl;
+    OSSL_RECORD_LAYER **thisrl, *newrl = NULL;
     BIO *thisbio;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const OSSL_RECORD_METHOD *meth;
@@ -1279,16 +1278,10 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         thisbio = s->wbio;
     }
 
-    if (*thismethod != NULL && !(*thismethod)->free(*thisrl)) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
+    if (meth == NULL)
+        meth = *thismethod;
 
-    *thisrl = NULL;
-    if (meth != NULL)
-        *thismethod = meth;
-
-    if (!ossl_assert(*thismethod != NULL)) {
+    if (!ossl_assert(meth != NULL)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -1370,7 +1363,6 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         BIO *next = NULL;
         unsigned int epoch = 0;;
 
-
         if (direction == OSSL_RECORD_DIRECTION_READ) {
             prev = s->rlayer.rrlnext;
             if (SSL_CONNECTION_IS_DTLS(s)
@@ -1390,18 +1382,13 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
             s->rlayer.rrlnext = next;
         }
 
-        rlret = (*thismethod)->new_record_layer(sctx->libctx,
-                                                sctx->propq,
-                                                version, s->server,
-                                                direction, level, epoch,
-                                                key, keylen, iv, ivlen,
-                                                mackey, mackeylen, ciph,
-                                                taglen, mactype, md, comp,
-                                                prev, thisbio,
-                                                next, NULL,
-                                                NULL, settings, options,
-                                                rlayer_dispatch, s,
-                                                thisrl);
+        rlret = meth->new_record_layer(sctx->libctx, sctx->propq, version,
+                                       s->server, direction, level, epoch,
+                                       key, keylen, iv, ivlen, mackey,
+                                       mackeylen, ciph, taglen, mactype, md,
+                                       comp, prev, thisbio, next, NULL, NULL,
+                                       settings, options, rlayer_dispatch, s,
+                                       &newrl);
         BIO_free(prev);
         switch (rlret) {
         case OSSL_RECORD_RETURN_FATAL:
@@ -1409,12 +1396,12 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
             return 0;
 
         case OSSL_RECORD_RETURN_NON_FATAL_ERR:
-            if (*thismethod != origmeth && origmeth != NULL) {
+            if (*thismethod != meth && *thismethod != NULL) {
                 /*
                  * We tried a new record layer method, but it didn't work out,
                  * so we fallback to the original method and try again
                  */
-                *thismethod = origmeth;
+                meth = *thismethod;
                 continue;
             }
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_RECORD_LAYER);
@@ -1430,6 +1417,14 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         }
         break;
     }
+
+    if (*thismethod != NULL && !(*thismethod)->free(*thisrl)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    *thisrl = newrl;
+    *thismethod = meth;
 
     return ssl_post_record_layer_select(s, direction);
 }
