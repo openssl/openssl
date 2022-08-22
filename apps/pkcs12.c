@@ -56,6 +56,7 @@ void hex_prin(BIO *out, unsigned char *buf, int len);
 static int alg_print(const X509_ALGOR *alg);
 int cert_load(BIO *in, STACK_OF(X509) *sk);
 static int set_pbe(int *ppbe, const char *str);
+static int jdk_trust(PKCS12_SAFEBAG *bag, void *cbarg);
 
 typedef enum OPTION_choice {
     OPT_COMMON,
@@ -524,12 +525,14 @@ int pkcs12_main(int argc, char **argv)
         X509 *ee_cert = NULL, *x = NULL;
         STACK_OF(X509) *certs = NULL;
         STACK_OF(X509) *untrusted_certs = NULL;
-        CONF *conf = NULL;
-        STACK_OF(CONF_VALUE) *cb_sk = NULL;
         EVP_MD *macmd = NULL;
         unsigned char *catmp = NULL;
+        int i;
+        CONF *conf = NULL;
+        ASN1_OBJECT *obj = NULL;
+        STACK_OF(CONF_VALUE) *cb_sk = NULL;
         const char *cb_attr = NULL;
-        int i, j;
+        const CONF_VALUE *val = NULL;
 
         if ((options & (NOCERTS | NOKEYS)) == (NOCERTS | NOKEYS)) {
             BIO_printf(bio_err, "Nothing to export due to -noout or -nocerts and -nokeys\n");
@@ -647,35 +650,6 @@ int pkcs12_main(int argc, char **argv)
             X509_alias_set1(sk_X509_value(certs, i), catmp, -1);
         }
 
-        /* Load the config file */
-        if ((conf = app_load_config(default_config_file)) == NULL)
-            goto export_end;
-        if (!app_load_modules(conf))
-            goto export_end;
-
-        /* Lets get the config section we are using */
-        if ((cb_attr = NCONF_get_string(conf, "pkcs12", "certBagAttr")) != NULL) {
-            if ((cb_sk = NCONF_get_section(conf, cb_attr)) != NULL) {
-
-                /* Loop over each attribute */
-                for (i = 0; i < sk_CONF_VALUE_num(cb_sk); i++) {
-                    CONF_VALUE *val;
-                    ASN1_OBJECT *obj;
-                    val = sk_CONF_VALUE_value(cb_sk, i);
-                    obj = OBJ_txt2obj(val->value, 0);
-                    for (j = 0; j < sk_X509_num(certs); j++) {
-                        /* Add a single trust value on every certificate, which will be set on the bag later */
-                        X509_add1_trust_object(sk_X509_value(certs, j), obj);
-                    }
-                    ASN1_OBJECT_free(obj);
-                }
-            } else {
-                ERR_clear_error();
-            }
-        } else {
-            ERR_clear_error();
-        }
-
         if (csp_name != NULL && key != NULL)
             EVP_PKEY_add1_attr_by_NID(key, NID_ms_csp_name,
                                       MBSTRING_ASC, (unsigned char *)csp_name,
@@ -703,9 +677,30 @@ int pkcs12_main(int argc, char **argv)
         if (!twopass)
             OPENSSL_strlcpy(macpass, pass, sizeof(macpass));
 
-        p12 = PKCS12_create_ex(cpass, name, key, ee_cert, certs,
-                               key_pbe, cert_pbe, iter, -1, keytype,
-                               app_get0_libctx(), app_get0_propq());
+        /* Load the config file */
+        if ((conf = app_load_config(default_config_file)) == NULL)
+            goto export_end;
+        if (!app_load_modules(conf))
+            goto export_end;
+        /* Find the cert bag section */
+        if ((cb_attr = NCONF_get_string(conf, "pkcs12", "certBagAttr")) != NULL) {
+            if ((cb_sk = NCONF_get_section(conf, cb_attr)) != NULL) {
+                for (i = 0; i < sk_CONF_VALUE_num(cb_sk); i++) {
+                    val = sk_CONF_VALUE_value(cb_sk, i);
+                    if (strcmp(val->name, "jdkTrustedKeyUsage") == 0)
+                        obj = OBJ_txt2obj(val->value, 0);
+                }
+            } else {
+                ERR_clear_error();
+            }
+        } else {
+            ERR_clear_error();
+        }
+
+        p12 = PKCS12_create_ex2(cpass, name, key, ee_cert, certs,
+                                key_pbe, cert_pbe, iter, -1, keytype,
+                                app_get0_libctx(), app_get0_propq(),
+                                jdk_trust, (void*)obj);
 
         if (p12 == NULL) {
             BIO_printf(bio_err, "Error creating PKCS12 structure for %s\n",
@@ -742,8 +737,9 @@ int pkcs12_main(int argc, char **argv)
         OSSL_STACK_OF_X509_free(certs);
         OSSL_STACK_OF_X509_free(untrusted_certs);
         X509_free(ee_cert);
-        ERR_print_errors(bio_err);
         NCONF_free(conf);
+        ASN1_OBJECT_free(obj);
+        ERR_print_errors(bio_err);
         goto end;
 
     }
@@ -870,6 +866,31 @@ int pkcs12_main(int argc, char **argv)
     OPENSSL_free(passin);
     OPENSSL_free(passout);
     return ret;
+}
+
+static int jdk_trust(PKCS12_SAFEBAG *bag, void *cbarg)
+{
+    STACK_OF(X509_ATTRIBUTE) *attrs = NULL;
+    X509_ATTRIBUTE *attr = NULL;
+
+    /* Nothing to do */
+    if (cbarg == NULL)
+        return 1;
+
+    /* Get the current attrs */
+    attrs = PKCS12_SAFEBAG_get0_attrs(bag);
+
+    /* Create a new attr for the JDK Trusted Usage and add it */
+    attr = X509_ATTRIBUTE_create(NID_oracle_jdk_trustedkeyusage, V_ASN1_OBJECT, (ASN1_OBJECT*)cbarg);
+
+    /* Add the new attr, if attrs is NULL, it'll be initialised */
+    X509at_add1_attr(&attrs, attr);
+
+    /* Set the bag attrs */
+    PKCS12_SAFEBAG_set0_attrs(bag, attrs);
+
+    X509_ATTRIBUTE_free(attr);
+    return 1;
 }
 
 int dump_certs_keys_p12(BIO *out, const PKCS12 *p12, const char *pass,
