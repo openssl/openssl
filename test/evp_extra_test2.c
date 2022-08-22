@@ -1073,6 +1073,34 @@ static int test_evp_md_ctx_copy(void)
     return ret;
 }
 
+#if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
+static int test_evp_pbe_alg_add(void)
+{
+    int ret = 0;
+    int cipher_nid = 0, md_nid = 0;
+    EVP_PBE_KEYGEN_EX *keygen_ex = NULL;
+    EVP_PBE_KEYGEN *keygen = NULL;
+
+    if (!TEST_true(EVP_PBE_alg_add(NID_pbeWithMD5AndDES_CBC, EVP_des_cbc(), EVP_md5(),
+                                   PKCS5_PBE_keyivgen)))
+        goto err;
+
+    if (!TEST_true(EVP_PBE_find_ex(EVP_PBE_TYPE_OUTER, NID_pbeWithMD5AndDES_CBC,
+                                   &cipher_nid, &md_nid, &keygen, &keygen_ex)))
+        goto err;
+
+    if (!TEST_true(keygen != NULL))
+        goto err;
+    if (!TEST_true(keygen_ex == NULL))
+        goto err;
+
+    ret = 1;
+
+err:
+    return ret;
+}
+#endif
+
 int setup_tests(void)
 {
     if (!test_get_libctx(&mainctx, &nullprov, NULL, NULL, NULL)) {
@@ -1110,6 +1138,9 @@ int setup_tests(void)
     ADD_TEST(test_evp_md_ctx_dup);
     ADD_TEST(test_evp_md_ctx_copy);
     ADD_ALL_TESTS(test_provider_unload_effective, 2);
+#if !defined OPENSSL_NO_DES && !defined OPENSSL_NO_MD5
+    ADD_TEST(test_evp_pbe_alg_add);
+#endif
     return 1;
 }
 
