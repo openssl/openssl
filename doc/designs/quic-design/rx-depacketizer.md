@@ -96,40 +96,49 @@ and calls diverse other components as shown in the Passed to column in
 
 Taken from [RFC 9000 12.4 Frames and Frame Types]
 
-| Type |           Name           |         Passed to         | ACK eliciting |
-| ---- | ------------------------ | ------------------------- | ------------- |
-| 0x00 | [padding]                | -                         |               |
-| 0x01 | [ping]                   | -                         | &#10004;      |
-| 0x02 | [ack 0x02]               | [ACK manager] [^1]        |               |
-| 0x03 | [ack 0x03]               | [ACK manager] [^1]        |               |
-| 0x04 | [reset_stream]           | - [^2]                    | &#10004;      |
-| 0x05 | [stop_sending]           | - [^3]                    | &#10004;      |
-| 0x06 | [crypto]                 | Handshake manager         | &#10004;      |
-| 0x07 | [new_token]              | Session manager           | &#10004;      |
-| 0x08 | [stream 0x08]            | Apprioriate stream [^4]   | &#10004;      |
-| 0x09 | [stream 0x09]            | Apprioriate stream [^4]   | &#10004;      |
-| 0x0A | [stream 0x0A]            | Apprioriate stream [^4]   | &#10004;      |
-| 0x0B | [stream 0x0B]            | Apprioriate stream [^4]   | &#10004;      |
-| 0x0C | [stream 0x0C]            | Apprioriate stream [^4]   | &#10004;      |
-| 0x0D | [stream 0x0D]            | Apprioriate stream [^4]   | &#10004;      |
-| 0x0E | [stream 0x0E]            | Apprioriate stream [^4]   | &#10004;      |
-| 0x0F | [stream 0x0F]            | Apprioriate stream [^4]   | &#10004;      |
-| 0x10 | [max_data]               | Flow control [^5]         | &#10004;      |
-| 0x11 | [max_stream_data]        | Flow control [^5]         | &#10004;      |
-| 0x12 | [max_streams 0x12]       | Connection manager? [^6]  | &#10004;      |
-| 0x13 | [max_streams 0x13]       | Connection manager? [^6]  | &#10004;      |
-| 0x14 | [data_blocked]           | Flow control [^5]         | &#10004;      |
-| 0x15 | [stream_data_blocked]    | Flow control [^5]         | &#10004;      |
-| 0x16 | [streams_blocked 0x16]   | Connection manager? [^6]  | &#10004;      |
-| 0x17 | [streams_blocked 0x17]   | Connection manager? [^6]  | &#10004;      |
-| 0x18 | [new_connection_id]      | Connection manager        | &#10004;      |
-| 0x19 | [retire_connection_id]   | Connection manager        | &#10004;      |
-| 0x1A | [path_challenge]         | Connection manager? [^7]  | &#10004;      |
-| 0x1B | [path_response]          | Connection manager? [^7]  | &#10004;      |
-| 0x1C | [connection_close 0x1C]  | Connection manager        |               |
-| 0x1D | [connection_close 0x1D]  | Connection manager        |               |
-| 0x1E | [handshake_done]         | Handshake manager         | &#10004;      |
-| ???? | *[Extension Frames]*     | - [^8]                    | &#10004;      |
+| Type | Name                    | Passed to                | ACK eliciting | I        | H        | 0        | 1        |
+|------|-------------------------|--------------------------|---------------|----------|----------|----------|----------|
+| 0x00 | [padding]               | -                        |               | &#10004; | &#10004; | &#10004; | &#10004; |
+| 0x01 | [ping]                  | -                        | &#10004;      | &#10004; | &#10004; | &#10004; | &#10004; |
+| 0x02 | [ack 0x02]              | [ACK manager] [^1]       |               | &#10004; | &#10004; |          | &#10004; |
+| 0x03 | [ack 0x03]              | [ACK manager] [^1]       |               | &#10004; | &#10004; |          | &#10004; |
+| 0x04 | [reset_stream]          | - [^2]                   | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x05 | [stop_sending]          | - [^3]                   | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x06 | [crypto]                | Handshake manager        | &#10004;      | &#10004; | &#10004; |          | &#10004; |
+| 0x07 | [new_token]             | Session manager          | &#10004;      |          |          |          | &#10004; |
+| 0x08 | [stream 0x08]           | Apprioriate stream [^4]  | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x09 | [stream 0x09]           | Apprioriate stream [^4]  | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x0A | [stream 0x0A]           | Apprioriate stream [^4]  | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x0B | [stream 0x0B]           | Apprioriate stream [^4]  | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x0C | [stream 0x0C]           | Apprioriate stream [^4]  | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x0D | [stream 0x0D]           | Apprioriate stream [^4]  | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x0E | [stream 0x0E]           | Apprioriate stream [^4]  | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x0F | [stream 0x0F]           | Apprioriate stream [^4]  | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x10 | [max_data]              | Flow control [^5]        | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x11 | [max_stream_data]       | Flow control [^5]        | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x12 | [max_streams 0x12]      | Connection manager? [^6] | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x13 | [max_streams 0x13]      | Connection manager? [^6] | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x14 | [data_blocked]          | Flow control [^5]        | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x15 | [stream_data_blocked]   | Flow control [^5]        | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x16 | [streams_blocked 0x16]  | Connection manager? [^6] | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x17 | [streams_blocked 0x17]  | Connection manager? [^6] | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x18 | [new_connection_id]     | Connection manager       | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x19 | [retire_connection_id]  | Connection manager       | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x1A | [path_challenge]        | Connection manager? [^7] | &#10004;      |          |          | &#10004; | &#10004; |
+| 0x1B | [path_response]         | Connection manager? [^7] | &#10004;      |          |          |          | &#10004; |
+| 0x1C | [connection_close 0x1C] | Connection manager       |               | &#10004; | &#10004; | &#10004; | &#10004; |
+| 0x1D | [connection_close 0x1D] | Connection manager       |               |          |          | &#10004; | &#10004; |
+| 0x1E | [handshake_done]        | Handshake manager        | &#10004;      |          |          |          | &#10004; |
+| ???? | *[Extension Frames]*    | - [^8]                   | &#10004;      |          |          |          |          |
+
+The I, H, 0, and 1 columns are validity in different packet types, with this meaning:
+
+| Pkts | Description                |
+|:----:|----------------------------|
+| I    | Valid in Initial packets   |
+| H    | Valid in Handshake packets |
+| 0    | Valid in 0-RTT packets     |
+| 1    | Valid in 1-RTT packets     |
 
 Notes:
 
@@ -161,6 +170,7 @@ Notes:
 [SSL object refactoring using SSL_CONNECTION object]: https://github.com/openssl/openssl/pull/18612
 [QUIC Demuxer and Record Layer (RX+TX)]: https://github.com/openssl/openssl/pull/18949
 [ACK manager]: https://github.com/openssl/openssl/pull/18564
+[RFC 9000 12.4 Frames and Frame Types]: https://datatracker.ietf.org/doc/html/rfc9000#section-12.4
 [padding]: https://datatracker.ietf.org/doc/html/rfc9000#section-19.1
 [ping]: https://datatracker.ietf.org/doc/html/rfc9000#section-19.2
 [ack 0x02]: https://datatracker.ietf.org/doc/html/rfc9000#section-19.3
