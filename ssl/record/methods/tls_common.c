@@ -1310,7 +1310,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
     WPACKET *thispkt;
     SSL3_RECORD *thiswr;
     unsigned char *recordstart;
-    int i, mac_size, clear = 0;
+    int mac_size, clear = 0;
     int eivlen = 0;
     size_t align = 0;
     SSL3_BUFFER *wb;
@@ -1327,16 +1327,6 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
     if (!ossl_assert(!RECORD_LAYER_write_pending(&s->rlayer))) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         goto err;
-    }
-
-    /* If we have an alert to send, lets send it */
-    if (s->s3.alert_dispatch) {
-        i = ssl->method->ssl_dispatch_alert(ssl);
-        if (i <= 0) {
-            /* SSLfatal() already called if appropriate */
-            return i;
-        }
-        /* if it went, fall through and send more stuff */
     }
 
     sess = s->session;

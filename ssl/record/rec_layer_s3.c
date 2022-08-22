@@ -424,6 +424,16 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
         return 1;
     }
 
+    /* If we have an alert to send, lets send it */
+    if (s->s3.alert_dispatch) {
+        i = ssl->method->ssl_dispatch_alert(ssl);
+        if (i <= 0) {
+            /* SSLfatal() already called if appropriate */
+            return i;
+        }
+        /* if it went, fall through and send more stuff */
+    }
+
     n = (len - tot);
 
     max_send_fragment = ssl_get_max_send_fragment(s);
