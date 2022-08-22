@@ -127,12 +127,12 @@ static long dgram_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int dgram_new(BIO *h);
 static int dgram_free(BIO *data);
 static int dgram_clear(BIO *bio);
-static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg,
-                                   size_t stride, size_t num_msg,
-                                   uint64_t flags);
-static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg,
-                                   size_t stride, size_t num_msg,
-                                   uint64_t flags);
+static int dgram_sendmmsg(BIO *b, BIO_MSG *msg,
+                          size_t stride, size_t num_msg,
+                          uint64_t flags, size_t *num_processed);
+static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
+                          size_t stride, size_t num_msg,
+                          uint64_t flags, size_t *num_processed);
 
 # ifndef OPENSSL_NO_SCTP
 static int dgram_sctp_write(BIO *h, const char *buf, int num);
@@ -1232,8 +1232,8 @@ static int translate_flags(uint64_t flags) {
 }
 #endif
 
-static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
-                                   size_t num_msg, uint64_t flags)
+static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
+                          size_t num_msg, uint64_t flags, size_t *num_processed)
 {
 #if M_METHOD != M_METHOD_NONE && M_METHOD != M_METHOD_RECVMSG
     int ret;
@@ -1267,8 +1267,10 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     int sysflags;
 #endif
 
-    if (num_msg == 0)
-        return 0;
+    if (num_msg == 0) {
+        *num_processed = 0;
+        return 1;
+    }
 
     if (num_msg > OSSL_SSIZE_MAX)
         num_msg = OSSL_SSIZE_MAX;
@@ -1294,27 +1296,36 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
 
         /* If local address was requested, it must have been enabled */
         if (BIO_MSG_N(msg, i).local != NULL) {
-            if (!have_local_enabled)
-                return -1;
+            if (!have_local_enabled) {
+                ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+                *num_processed = 0;
+                return 0;
+            }
 
             if (pack_local(b, &mh[i].msg_hdr,
-                           BIO_MSG_N(msg, i).local) < 1)
-                return -1;
+                           BIO_MSG_N(msg, i).local) < 1) {
+                ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+                *num_processed = 0;
+                return 0;
+            }
         }
     }
 
     /* Do the batch */
     ret = sendmmsg(b->num, mh, num_msg, sysflags);
-    if (ret > 0) {
-        for (i = 0; i < (size_t)ret; ++i) {
-            BIO_MSG_N(msg, i).data_len = mh[i].msg_len;
-            BIO_MSG_N(msg, i).flags    = 0;
-        }
-    } else if (ret < 0) {
-        return PACK_ERRNO(get_last_socket_error());
+    if (ret < 0) {
+        ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+        *num_processed = 0;
+        return 0;
     }
 
-    return ret;
+    for (i = 0; i < (size_t)ret; ++i) {
+        BIO_MSG_N(msg, i).data_len = mh[i].msg_len;
+        BIO_MSG_N(msg, i).flags    = 0;
+    }
+
+    *num_processed = (size_t)ret;
+    return 1;
 
 #elif M_METHOD == M_METHOD_RECVMSG
     /*
@@ -1323,20 +1334,29 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     translate_msg(b, &mh, &iov, control, msg);
 
     if (msg->local != NULL) {
-        if (!have_local_enabled)
-            return -1;
+        if (!have_local_enabled) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+            *num_processed = 0;
+            return 0;
+        }
 
-        if (pack_local(b, &mh, msg->local) < 1)
-            return -1;
+        if (pack_local(b, &mh, msg->local) < 1) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+            *num_processed = 0;
+            return 0;
+        }
     }
 
     l = sendmsg(b->num, &mh, sysflags);
-    if (l < 0)
-        return PACK_ERRNO(get_last_socket_error());
+    if (l < 0) {
+        ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+        *num_processed = 0;
+        return 0;
+    }
 
     msg->data_len   = (size_t)l;
     msg->flags      = 0;
-
+    *num_processed  = 1;
     return 1;
 
 #elif M_METHOD == M_METHOD_WSARECVMSG || M_METHOD == M_METHOD_RECVFROM
@@ -1346,19 +1366,29 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
         translate_msg_win(b, &wmsg, &wbuf, control, msg);
 
         if (msg[0].local != NULL) {
-            if (!have_local_enabled)
-                return -1;
+            if (!have_local_enabled) {
+                ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+                *num_processed = 0;
+                return 0;
+            }
 
-            if (pack_local(b, &wmsg, msg[0].local) < 1)
-                return -1;
+            if (pack_local(b, &wmsg, msg[0].local) < 1) {
+                ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+                *num_processed = 0;
+                return 0;
+            }
         }
 
         ret = WSASendMsg((SOCKET)b->num, &wmsg, 0, &num_bytes_sent, NULL, NULL);
-        if (ret < 0)
-            return PACK_ERRNO(get_last_socket_error());
+        if (ret < 0) {
+            ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+            *num_processed = 0;
+            return 0;
+        }
 
         msg[0].data_len = num_bytes_sent;
         msg[0].flags    = 0;
+        *num_processed  = 1;
         return 1;
     }
 # endif
@@ -1366,12 +1396,15 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     /*
      * Fallback to sendto and send a single message.
      */
-    if (msg[0].local != NULL)
+    if (msg[0].local != NULL) {
         /*
          * We cannot set the local address if using sendto
          * so fail in this case
          */
-        return -1;
+        ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+        *num_processed = 0;
+        return 0;
+    }
 
     ret = sendto(b->num, msg[0].data,
 # if defined(OPENSSL_SYS_WINDOWS)
@@ -1382,22 +1415,27 @@ static ossl_ssize_t dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                  sysflags,
                  msg[0].peer != NULL ? &msg[0].peer->sa : NULL,
                  msg[0].peer != NULL ? sizeof(*msg[0].peer) : 0);
-    if (ret <= 0)
-        return PACK_ERRNO(get_last_socket_error());
+    if (ret <= 0) {
+        ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+        *num_processed = 0;
+        return 0;
+    }
 
     msg[0].data_len = ret;
     msg[0].flags    = 0;
+    *num_processed  = 1;
     return 1;
 
 #else
     ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
-    return -2;
+    *num_processed = 0;
+    return 0;
 #endif
 }
 
-static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg,
-                                   size_t stride, size_t num_msg,
-                                   uint64_t flags)
+static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
+                          size_t stride, size_t num_msg,
+                          uint64_t flags, size_t *num_processed)
 {
 #if M_METHOD != M_METHOD_NONE && M_METHOD != M_METHOD_RECVMSG
     int ret;
@@ -1431,8 +1469,10 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg,
     socklen_t slen;
 #endif
 
-    if (num_msg == 0)
-        return 0;
+    if (num_msg == 0) {
+        *num_processed = 0;
+        return 1;
+    }
 
     if (num_msg > OSSL_SSIZE_MAX)
         num_msg = OSSL_SSIZE_MAX;
@@ -1457,30 +1497,44 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg,
                       control[i], &BIO_MSG_N(msg, i));
 
         /* If local address was requested, it must have been enabled */
-        if (BIO_MSG_N(msg, i).local != NULL && !have_local_enabled)
-            return -1;
+        if (BIO_MSG_N(msg, i).local != NULL && !have_local_enabled) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+            *num_processed = 0;
+            return 0;
+        }
     }
 
     /* Do the batch */
     ret = recvmmsg(b->num, mh, num_msg, sysflags, NULL);
-    if (ret > 0) {
-        for (i = 0; i < (size_t)ret; ++i) {
-            BIO_MSG_N(msg, i).data_len = mh[i].msg_len;
-            BIO_MSG_N(msg, i).flags    = 0;
-            /*
-             * *(msg->peer) will have been filled in by recvmmsg;
-             * for msg->local we parse the control data returned
-             */
-            if (BIO_MSG_N(msg, i).local != NULL)
-                if (extract_local(b, &mh[i].msg_hdr,
-                                  BIO_MSG_N(msg, i).local) < 1)
-                    return i > 0 ? (ossl_ssize_t)i : -1;
-        }
-    } else if (ret < 0) {
-        return PACK_ERRNO(get_last_socket_error());
+    if (ret < 0) {
+        ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+        *num_processed = 0;
+        return 0;
     }
 
-    return ret;
+    for (i = 0; i < (size_t)ret; ++i) {
+        BIO_MSG_N(msg, i).data_len = mh[i].msg_len;
+        BIO_MSG_N(msg, i).flags    = 0;
+        /*
+         * *(msg->peer) will have been filled in by recvmmsg;
+         * for msg->local we parse the control data returned
+         */
+        if (BIO_MSG_N(msg, i).local != NULL)
+            if (extract_local(b, &mh[i].msg_hdr,
+                              BIO_MSG_N(msg, i).local) < 1) {
+                if (i > 0) {
+                    *num_processed = i;
+                    return 1;
+                } else {
+                    *num_processed = 0;
+                    ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+                    return 0;
+                }
+            }
+    }
+
+    *num_processed = (size_t)ret;
+    return 1;
 
 #elif M_METHOD == M_METHOD_RECVMSG
     /*
@@ -1489,16 +1543,22 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg,
     translate_msg(b, &mh, &iov, control, msg);
 
     /* If local address was requested, it must have been enabled */
-    if (msg->local != NULL && !have_local_enabled)
+    if (msg->local != NULL && !have_local_enabled) {
         /*
          * If we have done at least one message, we must return the
          * count; if we haven't done any, we can give an error code
          */
-        return -1;
+        ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+        *num_processed = 0;
+        return 0;
+    }
 
     l = recvmsg(b->num, &mh, sysflags);
-    if (l < 0)
-        return PACK_ERRNO(get_last_socket_error());
+    if (l < 0) {
+        ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+        *num_processed = 0;
+        return 0;
+    }
 
     msg->data_len   = (size_t)l;
     msg->flags      = 0;
@@ -1528,10 +1588,13 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg,
 #if defined(__APPLE__)
             memset(msg->local, 0, sizeof(*msg->local));
 #else
-            return -1;
+            ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+            *num_processed = 0;
+            return 0;
 #endif
         }
 
+    *num_processed = 1;
     return 1;
 
 #elif M_METHOD == M_METHOD_RECVFROM || M_METHOD == M_METHOD_WSARECVMSG
@@ -1541,12 +1604,18 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg,
         translate_msg_win(b, &wmsg, &wbuf, control, msg);
 
         /* If local address was requested, it must have been enabled */
-        if (msg[0].local != NULL && !have_local_enabled)
-            return -1;
+        if (msg[0].local != NULL && !have_local_enabled) {
+            ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+            *num_processed = 0;
+            return 0;
+        }
 
         ret = WSARecvMsg((SOCKET)b->num, &wmsg, &num_bytes_received, NULL, NULL);
-        if (ret < 0)
-            return PACK_ERRNO(get_last_socket_error());
+        if (ret < 0) {
+            ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+            *num_processed = 0;
+            return 0;
+        }
 
         msg[0].data_len = num_bytes_received;
         msg[0].flags    = 0;
@@ -1570,6 +1639,7 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg,
                  */
                 BIO_ADDR_clear(msg[0].local);
 
+        *num_processed = 1;
         return 1;
     }
 # endif
@@ -1577,12 +1647,15 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg,
     /*
      * Fallback to recvfrom and receive a single message.
      */
-    if (msg[0].local != NULL)
+    if (msg[0].local != NULL) {
         /*
          * We cannot determine the local address if using recvfrom
          * so fail in this case
          */
-        return -1;
+        ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
+        *num_processed = 0;
+        return 0;
+    }
 
     slen = sizeof(*msg[0].peer);
     ret = recvfrom(b->num, msg[0].data,
@@ -1594,16 +1667,20 @@ static ossl_ssize_t dgram_recvmmsg(BIO *b, BIO_MSG *msg,
                    sysflags,
                    msg[0].peer != NULL ? &msg[0].peer->sa : NULL,
                    msg[0].peer != NULL ? &slen : NULL);
-    if (ret <= 0)
-        return PACK_ERRNO(get_last_socket_error());
+    if (ret <= 0) {
+        ERR_raise(ERR_LIB_SYS, get_last_socket_error());
+        return 0;
+    }
 
     msg[0].data_len = ret;
     msg[0].flags    = 0;
+    *num_processed = 1;
     return 1;
 
 #else
     ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
-    return -2;
+    *num_processed = 0;
+    return 0;
 #endif
 }
 

@@ -56,44 +56,45 @@ static int compare_addr(const BIO_ADDR *a, const BIO_ADDR *b)
     return 1;
 }
 
-static ossl_ssize_t do_sendmmsg(BIO *b, BIO_MSG *msg,
-                                size_t num_msg, uint64_t flags)
+static int do_sendmmsg(BIO *b, BIO_MSG *msg,
+                       size_t num_msg, uint64_t flags,
+                       size_t *num_processed)
 {
-    ossl_ssize_t done, ret;
+    size_t done;
 
-    for (done = 0; done < (ossl_ssize_t)num_msg; ) {
-        ret = BIO_sendmmsg(b, msg + done, sizeof(BIO_MSG),
-                           num_msg - done, flags);
-        if (ret <= 0)
-            return done > 0 ? done : ret;
+    for (done = 0; done < num_msg; ) {
+        if (!BIO_sendmmsg(b, msg + done, sizeof(BIO_MSG),
+                          num_msg - done, flags, num_processed))
+            return 0;
 
-        done += ret;
+        done += *num_processed;
     }
 
-    return done;
+    *num_processed = done;
+    return 1;
 }
 
-static ossl_ssize_t do_recvmmsg(BIO *b, BIO_MSG *msg,
-                                size_t num_msg, uint64_t flags)
+static int do_recvmmsg(BIO *b, BIO_MSG *msg,
+                       size_t num_msg, uint64_t flags,
+                       size_t *num_processed)
 {
-    ossl_ssize_t done, ret;
+    size_t done;
 
-    for (done = 0; done < (ossl_ssize_t)num_msg; ) {
-        ret = BIO_recvmmsg(b, msg + done, sizeof(BIO_MSG),
-                           num_msg - done, flags);
-        if (ret <= 0)
-            return done > 0 ? done : ret;
+    for (done = 0; done < num_msg; ) {
+        if (!BIO_recvmmsg(b, msg + done, sizeof(BIO_MSG),
+                          num_msg - done, flags, num_processed))
+            return 0;
 
-        done += ret;
+        done += *num_processed;
     }
 
-    return done;
+    *num_processed = done;
+    return 1;
 }
 
 static int test_bio_dgram_impl(int af, int use_local)
 {
     int testresult = 0;
-    ossl_ssize_t ret;
     BIO *b1 = NULL, *b2 = NULL;
     int fd1 = -1, fd2 = -1;
     BIO_ADDR *addr1 = NULL, *addr2 = NULL, *addr3 = NULL, *addr4 = NULL,
@@ -106,6 +107,7 @@ static int test_bio_dgram_impl(int af, int use_local)
     char rx_buf[128], rx_buf2[128];
     BIO_MSG tx_msg[128], rx_msg[128];
     char tx_buf[128];
+    size_t num_processed = 0;
 
     ina.s_addr = htonl(0x7f000001UL);
     ina6.s6_addr[15] = 1;
@@ -234,8 +236,8 @@ static int test_bio_dgram_impl(int af, int use_local)
     tx_msg[1].flags     = 0;
 
     /* First effort should fail due to missing destination address */
-    ret = do_sendmmsg(b1, tx_msg, 2, 0);
-    if (!TEST_int_eq(BIO_IS_ERRNO(ret), 1))
+    if (!TEST_false(do_sendmmsg(b1, tx_msg, 2, 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 0))
         goto err;
 
     /*
@@ -246,8 +248,8 @@ static int test_bio_dgram_impl(int af, int use_local)
     tx_msg[0].local = addr1;
     tx_msg[1].peer  = addr2;
     tx_msg[1].local = addr1;
-    ret = do_sendmmsg(b1, tx_msg, 2, 0);
-    if (!TEST_int_eq((int)ret, -1))
+    if (!TEST_false(do_sendmmsg(b1, tx_msg, 2, 0, &num_processed)
+        || !TEST_size_t_eq(num_processed, 0)))
         goto err;
 
     /* Enable local if we are using it */
@@ -261,8 +263,8 @@ static int test_bio_dgram_impl(int af, int use_local)
     }
 
     /* Third effort should succeed */
-    ret = do_sendmmsg(b1, tx_msg, 2, 0);
-    if (!TEST_int_eq((int)ret, 2))
+    if (!TEST_true(do_sendmmsg(b1, tx_msg, 2, 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 2))
         goto err;
 
     /* Now try receiving */
@@ -284,8 +286,8 @@ static int test_bio_dgram_impl(int af, int use_local)
      * Should fail at first due to local being requested when not
      * enabled
      */
-    ret = do_recvmmsg(b2, rx_msg, 2, 0);
-    if (!TEST_int_eq((int)ret, -1))
+    if (!TEST_false(do_recvmmsg(b2, rx_msg, 2, 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 0))
         goto err;
 
     /* Fields have not been modified */
@@ -312,8 +314,8 @@ static int test_bio_dgram_impl(int af, int use_local)
     }
 
     /* Do the receive. */
-    ret = do_recvmmsg(b2, rx_msg, 2, 0);
-    if (!TEST_int_eq((int)ret, 2))
+    if (!TEST_true(do_recvmmsg(b2, rx_msg, 2, 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 2))
         goto err;
 
     /* data_len should have been updated correctly */
@@ -343,16 +345,16 @@ static int test_bio_dgram_impl(int af, int use_local)
      * was enabled. Instead, send some new messages and test they're received
      * with the correct local addresses.
      */
-    ret = do_sendmmsg(b1, tx_msg, 2, 0);
-    if (!TEST_int_eq((int)ret, 2))
+    if (!TEST_true(do_sendmmsg(b1, tx_msg, 2, 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 2))
         goto err;
 
     /* Receive the messages. */
     rx_msg[0].data_len = sizeof(rx_buf);
     rx_msg[1].data_len = sizeof(rx_buf2);
 
-    ret = do_recvmmsg(b2, rx_msg, 2, 0);
-    if (!TEST_int_eq((int)ret, 2))
+    if (!TEST_true(do_recvmmsg(b2, rx_msg, 2, 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 2))
         goto err;
 
     if (rx_msg[0].local != NULL) {
@@ -376,8 +378,8 @@ static int test_bio_dgram_impl(int af, int use_local)
         tx_msg[i].local     = use_local ? addr1 : NULL;
         tx_msg[i].flags     = 0;
     }
-    ret = do_sendmmsg(b1, tx_msg, OSSL_NELEM(tx_msg), 0);
-    if (!TEST_int_eq((int)ret, OSSL_NELEM(tx_msg)))
+    if (!TEST_true(do_sendmmsg(b1, tx_msg, OSSL_NELEM(tx_msg), 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, OSSL_NELEM(tx_msg)))
         goto err;
 
     /*
@@ -392,8 +394,8 @@ static int test_bio_dgram_impl(int af, int use_local)
         rx_msg[i].local     = NULL;
         rx_msg[i].flags     = 0;
     }
-    ret = do_recvmmsg(b2, rx_msg, OSSL_NELEM(rx_msg), 0);
-    if (!TEST_int_eq((int)ret, OSSL_NELEM(rx_msg)))
+    if (!TEST_true(do_recvmmsg(b2, rx_msg, OSSL_NELEM(rx_msg), 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, OSSL_NELEM(rx_msg)))
         goto err;
 
     if (!TEST_mem_eq(tx_buf, OSSL_NELEM(tx_msg), rx_buf, OSSL_NELEM(tx_msg)))
