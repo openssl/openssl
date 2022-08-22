@@ -1099,6 +1099,7 @@ sub checkflags {
     while ( <CFH> ) {
         chop;
         last if /DESCRIPTION/;
+        last if $cmd eq 'openssl' && /^B<list/;
         my $opt;
         if ( /\[B<-([^ >]+)/ ) {
             $opt = $1;
