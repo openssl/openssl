@@ -621,7 +621,7 @@ int ossl_ffc_params_FIPS186_4_gen_verify(OSSL_LIB_CTX *libctx,
         p = params->p;
         q = params->q;
         goto g_only;
-        /* otherwise fall thru to validate p & q */
+        /* otherwise fall through to validate p & q */
     }
 
     /* p & q will be used for generation and validation */
@@ -922,7 +922,7 @@ int ossl_ffc_params_FIPS186_2_gen_verify(OSSL_LIB_CTX *libctx,
         p = params->p;
         q = params->q;
         goto g_only;
-        /* otherwise fall thru to validate p and q */
+        /* otherwise fall through to validate p and q */
     }
 
     use_random_seed = (seed_in == NULL);

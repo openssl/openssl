@@ -278,7 +278,7 @@ int TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token)
 }
 
 /*-
- * Verifies whether the 'token' contains a valid time stamp token
+ * Verifies whether the 'token' contains a valid timestamp token
  * with regards to the settings of the context. Only those checks are
  * carried out that are specified in the context:
  *      - Verifies the signature of the TS_TST_INFO.

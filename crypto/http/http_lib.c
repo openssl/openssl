@@ -83,9 +83,9 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
     else
         host = p;
 
-    /* parse host name/address as far as needed here */
+    /* parse hostname/address as far as needed here */
     if (host[0] == '[') {
-        /* ipv6 literal, which may include ':' */
+        /* IPv6 literal, which may include ':' */
         host_end = strchr(host + 1, ']');
         if (host_end == NULL)
             goto parse_err;
