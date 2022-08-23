@@ -9,7 +9,7 @@
  */
 
 /*
- * ECDSA low level APIs are deprecated for public use, but still ok for
+ * ECDSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -923,7 +923,7 @@ int ec_GF2m_simple_points_mul(const EC_GROUP *group, EC_POINT *r,
 
 /*-
  * Computes the multiplicative inverse of a in GF(2^m), storing the result in r.
- * If a is zero (or equivalent), you'll get a EC_R_CANNOT_INVERT error.
+ * If a is zero (or equivalent), you'll get an EC_R_CANNOT_INVERT error.
  * SCA hardening is with blinding: BN_GF2m_mod_inv does that.
  */
 static int ec_GF2m_simple_field_inv(const EC_GROUP *group, BIGNUM *r,

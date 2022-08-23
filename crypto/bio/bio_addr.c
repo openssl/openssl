@@ -193,7 +193,7 @@ unsigned short BIO_ADDR_rawport(const BIO_ADDR *ap)
  * @numeric: 0 if actual names should be returned, 1 if the numeric
  * representation should be returned.
  * @hostname: a pointer to a pointer to a memory area to store the
- * host name or numeric representation.  Unused if NULL.
+ * hostname or numeric representation.  Unused if NULL.
  * @service: a pointer to a pointer to a memory area to store the
  * service name or numeric representation.  Unused if NULL.
  *

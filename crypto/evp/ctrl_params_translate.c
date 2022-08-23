@@ -2520,7 +2520,7 @@ lookup_translation(struct translation_st *tmpl,
             tmpl->ctrl_hexstr = ctrl_hexstr;
         } else if (tmpl->param_key != NULL) {
             /*
-             * Search criteria that originates from a OSSL_PARAM setter or
+             * Search criteria that originates from an OSSL_PARAM setter or
              * getter.
              *
              * Ctrls were fundamentally bidirectional, with only the ctrl
