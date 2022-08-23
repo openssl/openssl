@@ -1490,7 +1490,7 @@ breaking changes, and mappings for the large list of deprecated functions.
    used and the recipient will not notice the attack.
    As a work around for this potential attack the length of the decrypted
    key must be equal to the cipher default key length, in case the
-   certifiate is not given and all recipientInfo are tried out.
+   certificate is not given and all recipientInfo are tried out.
    The old behaviour can be re-enabled in the CMS code by setting the
    CMS_DEBUG_DECRYPT flag.
 
@@ -1510,7 +1510,7 @@ breaking changes, and mappings for the large list of deprecated functions.
    when primes for RSA keys are computed.
    Since we previously always generated primes == 2 (mod 3) for RSA keys,
    the 2-prime and 3-prime RSA modules were easy to distinguish, since
-   `N = p*q = 1 (mod 3)`, but `N = p*q*r = 2 (mod 3)`. Therefore fingerprinting
+   `N = p*q = 1 (mod 3)`, but `N = p*q*r = 2 (mod 3)`. Therefore, fingerprinting
    2-prime vs. 3-prime RSA keys was possible by computing N mod 3.
    This avoids possible fingerprinting of newly generated RSA modules.
 
@@ -1931,7 +1931,7 @@ OpenSSL 1.1.1
    ASN.1 strings are represented internally within OpenSSL as an ASN1_STRING
    structure which contains a buffer holding the string data and a field
    holding the buffer length. This contrasts with normal C strings which
-   are repesented as a buffer for the string data which is terminated
+   are represented as a buffer for the string data which is terminated
    with a NUL (0) byte.
 
    Although not a strict requirement, ASN.1 strings that are parsed using
@@ -2019,7 +2019,7 @@ OpenSSL 1.1.1
 
  * Fixed the X509_issuer_and_serial_hash() function. It attempts to
    create a unique hash value based on the issuer and serial number data
-   contained within an X509 certificate. However it was failing to correctly
+   contained within an X509 certificate. However, it was failing to correctly
    handle any errors that may occur while parsing the issuer field (which might
    occur if the issuer field is maliciously constructed). This may subsequently
    result in a NULL pointer deref and a crash leading to a potential denial of
@@ -2037,7 +2037,7 @@ OpenSSL 1.1.1
 
    Fixed the EVP_CipherUpdate, EVP_EncryptUpdate and EVP_DecryptUpdate
    functions. Previously they could overflow the output length argument in some
-   cases where the input length is close to the maximum permissable length for
+   cases where the input length is close to the maximum permissible length for
    an integer on the platform. In such cases the return value from the function
    call would be 1 (indicating success), but the output length value would be
    negative. This could cause applications to behave incorrectly or crash.
@@ -2139,7 +2139,7 @@ OpenSSL 1.1.1
    when primes for RSA keys are computed.
    Since we previously always generated primes == 2 (mod 3) for RSA keys,
    the 2-prime and 3-prime RSA modules were easy to distinguish, since
-   N = p*q = 1 (mod 3), but N = p*q*r = 2 (mod 3). Therefore fingerprinting
+   N = p*q = 1 (mod 3), but N = p*q*r = 2 (mod 3). Therefore, fingerprinting
    2-prime vs. 3-prime RSA keys was possible by computing N mod 3.
    This avoids possible fingerprinting of newly generated RSA modules.
 
@@ -2198,7 +2198,7 @@ OpenSSL 1.1.1
  * Fixed a fork protection issue. OpenSSL 1.1.1 introduced a rewritten random
    number generator (RNG). This was intended to include protection in the
    event of a fork() system call in order to ensure that the parent and child
-   processes did not share the same RNG state. However this protection was not
+   processes did not share the same RNG state. However, this protection was not
    being used in the default case.
 
    A partial mitigation for this issue is that the output from a high
@@ -2240,7 +2240,7 @@ OpenSSL 1.1.1
    used and the recipient will not notice the attack.
    As a work around for this potential attack the length of the decrypted
    key must be equal to the cipher default key length, in case the
-   certifiate is not given and all recipientInfo are tried out.
+   certificate is not given and all recipientInfo are tried out.
    The old behaviour can be re-enabled in the CMS code by setting the
    CMS_DEBUG_DECRYPT flag.
    ([CVE-2019-1563])
@@ -3010,7 +3010,7 @@ OpenSSL 1.1.0
    used and the recipient will not notice the attack.
    As a work around for this potential attack the length of the decrypted
    key must be equal to the cipher default key length, in case the
-   certifiate is not given and all recipientInfo are tried out.
+   certificate is not given and all recipientInfo are tried out.
    The old behaviour can be re-enabled in the CMS code by setting the
    CMS_DEBUG_DECRYPT flag.
    ([CVE-2019-1563])
@@ -3245,7 +3245,7 @@ OpenSSL 1.1.0
 
    OpenSSL 1.0.2 and below had the ability to disable renegotiation using the
    (undocumented) SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS flag. Due to the opacity
-   changes this is no longer possible in 1.1.0. Therefore the new
+   changes this is no longer possible in 1.1.0. Therefore, the new
    SSL_OP_NO_RENEGOTIATION option from 1.1.1-dev has been backported to
    1.1.0 to provide equivalent functionality.
 
@@ -3336,7 +3336,7 @@ OpenSSL 1.1.0
 
    During a renegotiation handshake if the Encrypt-Then-Mac extension is
    negotiated where it was not in the original handshake (or vice-versa) then
-   this can cause OpenSSL to crash (dependant on ciphersuite). Both clients
+   this can cause OpenSSL to crash (dependent on ciphersuite). Both clients
    and servers are affected.
 
    This issue was reported to OpenSSL by Joe Orton (Red Hat).
@@ -3508,7 +3508,7 @@ OpenSSL 1.1.0
    place, and this would cause the connection to immediately fail. Assuming
    that the application calls SSL_free() on the failed connection in a timely
    manner then the 21Mb of allocated memory will then be immediately freed
-   again. Therefore the excessive memory allocation will be transitory in
+   again. Therefore, the excessive memory allocation will be transitory in
    nature. This then means that there is only a security impact if:
 
    1) The application does not call SSL_free() in a timely manner in the event
@@ -4275,7 +4275,7 @@ OpenSSL 1.1.0
  * Given the pervasive nature of TLS extensions it is inadvisable to run
    OpenSSL without support for them. It also means that maintaining
    the OPENSSL_NO_TLSEXT option within the code is very invasive (and probably
-   not well tested). Therefore the OPENSSL_NO_TLSEXT option has been removed.
+   not well tested). Therefore, the OPENSSL_NO_TLSEXT option has been removed.
 
    *Matt Caswell*
 
@@ -4353,7 +4353,7 @@ OpenSSL 1.1.0
 
    *Matt Caswell*
 
- * SSLv2 support has been removed.  It still supports receiving a SSLv2
+ * SSLv2 support has been removed.  It still supports receiving an SSLv2
    compatible client hello.
 
    *Kurt Roeckx*
@@ -4807,7 +4807,7 @@ OpenSSL 1.0.2
    used and the recipient will not notice the attack.
    As a work around for this potential attack the length of the decrypted
    key must be equal to the cipher default key length, in case the
-   certifiate is not given and all recipientInfo are tried out.
+   certificate is not given and all recipientInfo are tried out.
    The old behaviour can be re-enabled in the CMS code by setting the
    CMS_DEBUG_DECRYPT flag.
    ([CVE-2019-1563])
@@ -5283,8 +5283,8 @@ OpenSSL 1.0.2
    has been completed. An attacker could force up to approx. 15 messages to
    remain in the buffer when they are no longer required. These messages will
    be cleared when the DTLS connection is closed. The default maximum size for
-   a message is 100k. Therefore the attacker could force an additional 1500k
-   to be consumed per connection. By opening many simulataneous connections an
+   a message is 100k. Therefore, the attacker could force an additional 1500k
+   to be consumed per connection. By opening many simultaneous connections an
    attacker could cause a DoS attack through memory exhaustion.
 
    This issue was reported to OpenSSL by Quan Luo.
@@ -6448,7 +6448,7 @@ OpenSSL 1.0.1
    message).
 
    The rules of C pointer arithmetic are such that "p + len" is only well
-   defined where len <= SIZE. Therefore the above idiom is actually
+   defined where len <= SIZE. Therefore, the above idiom is actually
    undefined behaviour.
 
    For example this could cause problems if some malloc implementation
@@ -6484,8 +6484,8 @@ OpenSSL 1.0.1
    has been completed. An attacker could force up to approx. 15 messages to
    remain in the buffer when they are no longer required. These messages will
    be cleared when the DTLS connection is closed. The default maximum size for
-   a message is 100k. Therefore the attacker could force an additional 1500k
-   to be consumed per connection. By opening many simulataneous connections an
+   a message is 100k. Therefore, the attacker could force an additional 1500k
+   to be consumed per connection. By opening many simultaneous connections an
    attacker could cause a DoS attack through memory exhaustion.
 
    This issue was reported to OpenSSL by Quan Luo.
@@ -6551,7 +6551,7 @@ OpenSSL 1.0.1
    amounts of input data then a length check can overflow resulting in a heap
    corruption.
 
-   Internally to OpenSSL the EVP_EncodeUpdate() function is primarly used by
+   Internally to OpenSSL the EVP_EncodeUpdate() function is primarily used by
    the `PEM_write_bio*` family of functions. These are mainly used within the
    OpenSSL command line applications, so any application which processes data
    from an untrusted source and outputs it as a PEM file should be considered
@@ -7217,7 +7217,7 @@ OpenSSL 1.0.1
  * Build option no-ssl3 is incomplete.
 
    When OpenSSL is configured with "no-ssl3" as a build option, servers
-   could accept and complete a SSL 3.0 handshake, and clients could be
+   could accept and complete an SSL 3.0 handshake, and clients could be
    configured to send them.
    ([CVE-2014-3568])
 
@@ -8234,7 +8234,7 @@ OpenSSL 1.0.0
  * Build option no-ssl3 is incomplete.
 
    When OpenSSL is configured with "no-ssl3" as a build option, servers
-   could accept and complete a SSL 3.0 handshake, and clients could be
+   could accept and complete an SSL 3.0 handshake, and clients could be
    configured to send them.
    ([CVE-2014-3568])
 
@@ -9483,7 +9483,7 @@ OpenSSL 1.0.1.]
 
  * Add initial support for TLS extensions, specifically for the server_name
    extension so far.  The SSL_SESSION, SSL_CTX, and SSL data structures now
-   have new members for a host name.  The SSL data structure has an
+   have new members for a hostname.  The SSL data structure has an
    additional member `SSL_CTX *initial_ctx` so that new sessions can be
    stored in that context to allow for session resumption, even after the
    SSL has been switched to a new SSL_CTX in reaction to a client's
@@ -9507,7 +9507,7 @@ OpenSSL 1.0.1.]
 
    openssl s_server has new options '-servername_host ...', '-cert2 ...',
    '-key2 ...', '-servername_fatal' (subject to change).  This allows
-   testing the HostName extension for a specific single host name ('-cert'
+   testing the HostName extension for a specific single hostname ('-cert'
    and '-key' remain fallbacks for handshakes without HostName
    negotiation).  If the unrecognized_name alert has to be sent, this by
    default is a warning; it becomes fatal with the '-servername_fatal'
@@ -10010,7 +10010,7 @@ OpenSSL 0.9.x
 
    The OpenSSL project does not recommend any specific CA and does not
    have any policy with respect to including or excluding any CA.
-   Therefore it does not make any sense to ship an arbitrary selection
+   Therefore, it does not make any sense to ship an arbitrary selection
    of root CA certificates with the OpenSSL software.
 
    *Lutz Jaenicke*
@@ -10190,7 +10190,7 @@ OpenSSL 0.9.x
 
  * Add initial support for TLS extensions, specifically for the server_name
    extension so far.  The SSL_SESSION, SSL_CTX, and SSL data structures now
-   have new members for a host name.  The SSL data structure has an
+   have new members for a hostname.  The SSL data structure has an
    additional member `SSL_CTX *initial_ctx` so that new sessions can be
    stored in that context to allow for session resumption, even after the
    SSL has been switched to a new SSL_CTX in reaction to a client's
@@ -10214,7 +10214,7 @@ OpenSSL 0.9.x
 
    openssl s_server has new options '-servername_host ...', '-cert2 ...',
    '-key2 ...', '-servername_fatal' (subject to change).  This allows
-   testing the HostName extension for a specific single host name ('-cert'
+   testing the HostName extension for a specific single hostname ('-cert'
    and '-key' remain fallbacks for handshakes without HostName
    negotiation).  If the unrecognized_name alert has to be sent, this by
    default is a warning; it becomes fatal with the '-servername_fatal'

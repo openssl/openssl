@@ -1,4 +1,4 @@
-Acknowlegements
+Acknowledgements
 ===============
 
 Please see our [Thanks!][] page for the current acknowledgements.
