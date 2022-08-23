@@ -5,7 +5,9 @@
 OPENSSL_malloc_init,
 OPENSSL_malloc, OPENSSL_zalloc, OPENSSL_realloc, OPENSSL_free,
 OPENSSL_clear_realloc, OPENSSL_clear_free, OPENSSL_cleanse,
-CRYPTO_malloc, CRYPTO_zalloc, CRYPTO_realloc, CRYPTO_free,
+CRYPTO_malloc, CRYPTO_zalloc, CRYPTO_realloc,
+CRYPTO_malloc_with_err, CRYPTO_realloc_with_err, CRYPTO_clear_realloc_with_err,
+CRYPTO_free,
 OPENSSL_strdup, OPENSSL_strndup,
 OPENSSL_memdup, OPENSSL_strlcpy, OPENSSL_strlcat,
 CRYPTO_strdup, CRYPTO_strndup,
@@ -43,6 +45,13 @@ OPENSSL_MALLOC_FD
  void *CRYPTO_malloc(size_t num, const char *file, int line);
  void *CRYPTO_zalloc(size_t num, const char *file, int line);
  void *CRYPTO_realloc(void *p, size_t num, const char *file, int line);
+ void *CRYPTO_malloc_with_err(void *(*fn)(size_t, const char *, int), size_t num,
+                              const char *file, int line, const char *func);
+ void *CRYPTO_realloc_with_err(void *addr, size_t num,
+                               const char *file, int line, const char *func);
+ void *CRYPTO_clear_realloc_with_err(void *addr, size_t old_num, size_t num,
+                                     const char *file, int line,
+                                     const char *func);
  void CRYPTO_free(void *str, const char *, int);
  char *CRYPTO_strdup(const char *p, const char *file, int line);
  char *CRYPTO_strndup(const char *p, size_t num, const char *file, int line);
@@ -108,6 +117,20 @@ that sensitive tail bytes will survive zeroization because the block of
 zeros will be compressed. If the storage controller uses wear leveling,
 then the old sensitive data will not be overwritten; rather, a block of
 0's will be written at a new physical location.
+
+CRYPTO_malloc_with_err(), CRYPTO_realloc_with_err(), and
+CRYPTO_clear_realloc_with_err() are meant to be used only internally.
+
+CRYPTO_malloc_with_err() calls I<(*fn)(num, file, line)>
+and returns its result if I<num> is zero or the result is not NULL.
+Otherwise it acts like I<ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE)>
+with the I<file>, I<line>, and I<func> parameters taken as the error location.
+
+CRYPTO_realloc_with_err() is like CRYPTO_malloc_with_err()
+but calls I<CRYPTO_realloc(addr, num, file, line)>.
+
+CRYPTO_clear_realloc_with_err() is like CRYPTO_malloc_with_err()
+but calls I<CRYPTO_clear_realloc(addr, old_num, num, file, line)>.
 
 OPENSSL_strdup(), OPENSSL_strndup() and OPENSSL_memdup() are like the
 equivalent C functions, except that memory is allocated by calling the
@@ -175,6 +198,10 @@ CRYPTO_clear_realloc(),
 OPENSSL_strdup(), and OPENSSL_strndup()
 return a pointer to allocated memory or NULL on error.
 
+CRYPTO_malloc_with_err(), CRYPTO_realloc_with_err(), and
+CRYPTO_clear_realloc_with_err() return whatever the underlying
+memory (re-)allocation function returns.
+
 CRYPTO_set_mem_functions() returns 1 on success or 0 on failure (almost
 always because allocations have already happened).
 
@@ -194,6 +221,8 @@ were deprecated in OpenSSL 3.0.
 The memory-leak checking has been deprecated in OpenSSL 3.0 in favor of
 clang's memory and leak sanitizer.
 
+CRYPTO_malloc_with_err(), CRYPTO_realloc_with_err(), and
+CRYPTO_clear_realloc_with_err() were added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 
