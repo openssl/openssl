@@ -618,7 +618,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
             }
             if (check_msg_find_cert(ctx, msg)) {
                 ossl_cmp_debug(ctx,
-                               "sucessfully validated signature-based CMP message protection using trust store");
+                               "successfully validated signature-based CMP message protection using trust store");
                 return 1;
             }
         } else { /* use pinned sender cert */

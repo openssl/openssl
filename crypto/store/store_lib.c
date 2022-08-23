@@ -627,7 +627,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_CRL(X509_CRL *crl)
 }
 
 /*
- * Functions to try to extract data from a OSSL_STORE_INFO.
+ * Functions to try to extract data from an OSSL_STORE_INFO.
  */
 int OSSL_STORE_INFO_get_type(const OSSL_STORE_INFO *info)
 {
