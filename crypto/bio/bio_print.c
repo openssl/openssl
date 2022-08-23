@@ -276,7 +276,7 @@ _dopr(char **sbuffer,
                 break;
             case 'E':
                 flags |= DP_F_UP;
-                /* fall thru */
+                /* fall through */
             case 'e':
                 if (cflags == DP_C_LDOUBLE)
                     fvalue = va_arg(args, LDOUBLE);
@@ -288,7 +288,7 @@ _dopr(char **sbuffer,
                 break;
             case 'G':
                 flags |= DP_F_UP;
-                /* fall thru */
+                /* fall through */
             case 'g':
                 if (cflags == DP_C_LDOUBLE)
                     fvalue = va_arg(args, LDOUBLE);

@@ -774,7 +774,7 @@ DEFINE_set1_ASN1_OCTET_STRING(OSSL_CMP_CTX, senderNonce)
 /* Set the proxy server to use for HTTP(S) connections */
 DEFINE_OSSL_CMP_CTX_set1(proxy, char)
 
-/* Set the (HTTP) host name of the CMP server */
+/* Set the (HTTP) hostname of the CMP server */
 DEFINE_OSSL_CMP_CTX_set1(server, char)
 
 /* Set the server exclusion list of the HTTP proxy server */
