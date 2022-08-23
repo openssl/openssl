@@ -72,7 +72,7 @@ static TESTDATA_FORMAT x509_format_tests[] = {
         "20170217180105.001Z", 0, 0, -1, NULL,
     },
     {
-        /* time zone, check only */
+        /* timezone, check only */
         "20170217180105+0800", 0, 0, -1, NULL,
     },
     {
@@ -84,7 +84,7 @@ static TESTDATA_FORMAT x509_format_tests[] = {
         "20170217180105.001Z", 1, 0, -1, NULL,
     },
     {
-        /* time zone, set string */
+        /* timezone, set string */
         "20170217180105+0800", 1, 0, -1, NULL,
     },
     {
@@ -113,7 +113,7 @@ static TESTDATA_FORMAT x509_format_tests[] = {
         "040229180101Z", 0, 1, -1, NULL,
     },
     {
-        /* time zone, check only */
+        /* timezone, check only */
         "170217180154+0800", 0, 0, -1, NULL,
     },
     {
@@ -121,7 +121,7 @@ static TESTDATA_FORMAT x509_format_tests[] = {
         "1702171801Z", 1, 0, -1, NULL,
     },
     {
-        /* time zone, set string */
+        /* timezone, set string */
         "170217180154+0800", 1, 0, -1, NULL,
     },
     {

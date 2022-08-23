@@ -1046,7 +1046,7 @@ int SSL_dane_enable(SSL *s, const char *basedomain)
 
     /*
      * Default SNI name.  This rejects empty names, while set1_host below
-     * accepts them and disables host name checks.  To avoid side-effects with
+     * accepts them and disables hostname checks.  To avoid side-effects with
      * invalid input, set the SNI name first.
      */
     if (s->ext.hostname == NULL) {
