@@ -1012,7 +1012,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
              * so if the caller asked for a public key, and we got a private
              * key, we can still pass it back.
              */
-            /* fall thru */
+            /* fall through */
         case OSSL_STORE_INFO_PUBKEY:
             if (ppubkey != NULL) {
                 ok = (*ppubkey = OSSL_STORE_INFO_get1_PUBKEY(info)) != NULL;
