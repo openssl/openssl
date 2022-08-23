@@ -258,7 +258,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version, int direction,
                              const SSL_COMP *comp);
 
 # define OSSL_FUNC_RLAYER_SKIP_EARLY_DATA        1
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, rlayer_skip_early_data, (void *cbarg))
+OSSL_CORE_MAKE_FUNC(int, rlayer_skip_early_data, (void *cbarg))
 # define OSSL_FUNC_RLAYER_MSG_CALLBACK           2
 OSSL_CORE_MAKE_FUNC(void, rlayer_msg_callback, (int write_p, int version,
                                                 int content_type,
