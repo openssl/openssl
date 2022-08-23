@@ -89,7 +89,7 @@ die "--type argument must be equal to 'lib' or 'dso'"
 #  0x0000000000000001 (NEEDED)             Shared library: [libcrypto-opt.so.1.1]
 #  0x000000000000000e (SONAME)             Library soname: [libssl-opt.so.1.1]
 #
-# We case-fold the variant tag to upper case and replace all non-alnum
+# We case-fold the variant tag to uppercase and replace all non-alnum
 # characters with "_".  This yields the following symbol versions:
 #
 # $ nm libcrypto.so | grep -w A

@@ -76,7 +76,7 @@ OpenSSL 3.0
   * Enhanced 'openssl list' with many new options.
   * Added migration guide to man7.
   * Implemented support for fully "pluggable" TLSv1.3 groups.
-  * Added suport for Kernel TLS (KTLS).
+  * Added support for Kernel TLS (KTLS).
   * Changed the license to the Apache License v2.0.
   * Moved all variations of the EVP ciphers CAST5, BF, IDEA, SEED, RC2,
     RC4, RC5, and DES to the legacy provider.
@@ -119,7 +119,7 @@ OpenSSL 3.0
   * Deprecated ERR_put_error(), ERR_get_error_line(), ERR_get_error_line_data(),
     ERR_peek_error_line_data(), ERR_peek_last_error_line_data() and
     ERR_func_error_string().
-  * Added OSSL_PROVIDER_available(), to check provider availibility.
+  * Added OSSL_PROVIDER_available(), to check provider availability.
   * Added 'openssl mac' that uses the EVP_MAC API.
   * Added 'openssl kdf' that uses the EVP_KDF API.
   * Add OPENSSL_info() and 'openssl info' to get built-in data.
