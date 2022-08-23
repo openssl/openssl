@@ -19,8 +19,8 @@ ossl_punycode_decode, ossl_a2ulabel, ossl_a2ucompare
 =head1 DESCRIPTION
 
 PUNYCODE encoding introduced in RFCs 3490-3492 is widely used for
-representation of host names in ASCII-only format. Some specifications,
-such as RFC 8398, require comparison of host names encoded in UTF-8 charset.
+representation of hostnames in ASCII-only format. Some specifications,
+such as RFC 8398, require comparison of hostnames encoded in UTF-8 charset.
 
 ossl_a2ulabel() decodes NUL-terminated hostname from PUNYCODE to UTF-8,
 using a provided buffer for output.  The output buffer is NUL-terminated.

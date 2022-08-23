@@ -52,7 +52,7 @@ my @app = qw(openssl cmp);
 # the CMP server configuration consists of:
 my $ca_dn;      # The CA's Distinguished Name
 my $server_dn;  # The server's Distinguished Name
-my $server_host;# The server's host name or IP address
+my $server_host;# The server's hostname or IP address
 my $server_port;# The server's port
 my $server_tls; # The server's TLS port, if any, or 0
 my $server_path;# The server's CMP alias

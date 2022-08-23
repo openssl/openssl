@@ -56,7 +56,7 @@ BIO_ADDR *ourpeer = NULL;
 /*
  * init_client - helper routine to set up socket communication
  * @sock: pointer to storage of resulting socket.
- * @host: the host name or path (for AF_UNIX) to connect to.
+ * @host: the hostname or path (for AF_UNIX) to connect to.
  * @port: the port to connect to (ignored for AF_UNIX).
  * @bindhost: source host or path (for AF_UNIX).
  * @bindport: source port (ignored for AF_UNIX).
@@ -239,7 +239,7 @@ int report_server_accept(BIO *out, int asock, int with_address, int with_pid)
 /*
  * do_server - helper routine to perform a server operation
  * @accept_sock: pointer to storage of resulting socket.
- * @host: the host name or path (for AF_UNIX) to connect to.
+ * @host: the hostname or path (for AF_UNIX) to connect to.
  * @port: the port to connect to (ignored for AF_UNIX).
  * @family: desired socket family, may be AF_INET, AF_INET6, AF_UNIX or
  *  AF_UNSPEC
