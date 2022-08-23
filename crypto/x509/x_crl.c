@@ -172,7 +172,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASN1_INTEGER_free(crl->crl_number);
         ASN1_INTEGER_free(crl->base_crl_number);
         sk_GENERAL_NAMES_pop_free(crl->issuers, GENERAL_NAMES_free);
-        /* fall thru */
+        /* fall through */
 
     case ASN1_OP_NEW_POST:
         crl->idp = NULL;

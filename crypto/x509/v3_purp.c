@@ -868,7 +868,7 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
             !(x->ex_kusage & (KU_NON_REPUDIATION | KU_DIGITAL_SIGNATURE))))
         return 0;
 
-    /* Only time stamp key usage is permitted and it's required. */
+    /* Only timestamp key usage is permitted and it's required. */
     if (!(x->ex_flags & EXFLAG_XKUSAGE) || x->ex_xkusage != XKU_TIMESTAMP)
         return 0;
 

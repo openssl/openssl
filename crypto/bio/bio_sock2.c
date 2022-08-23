@@ -262,7 +262,7 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
         }
     }
 
-  /* On OpenBSD it is always ipv6 only with ipv6 sockets thus read-only */
+  /* On OpenBSD it is always IPv6 only with IPv6 sockets thus read-only */
 # if defined(IPV6_V6ONLY) && !defined(__OpenBSD__)
     if (BIO_ADDR_family(addr) == AF_INET6) {
         /*
