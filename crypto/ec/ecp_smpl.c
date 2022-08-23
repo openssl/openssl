@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -171,7 +171,7 @@ int ossl_ec_GFp_simple_group_set_curve(EC_GROUP *group,
     /* group->a */
     if (!BN_nnmod(tmp_a, a, p, ctx))
         goto err;
-    if (group->meth->field_encode) {
+    if (group->meth->field_encode != NULL) {
         if (!group->meth->field_encode(group, group->a, tmp_a, ctx))
             goto err;
     } else if (!BN_copy(group->a, tmp_a))
@@ -180,7 +180,7 @@ int ossl_ec_GFp_simple_group_set_curve(EC_GROUP *group,
     /* group->b */
     if (!BN_nnmod(group->b, b, p, ctx))
         goto err;
-    if (group->meth->field_encode)
+    if (group->meth->field_encode != NULL)
         if (!group->meth->field_encode(group, group->b, group->b, ctx))
             goto err;
 
@@ -209,7 +209,7 @@ int ossl_ec_GFp_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p,
     }
 
     if (a != NULL || b != NULL) {
-        if (group->meth->field_decode) {
+        if (group->meth->field_decode != NULL) {
             if (ctx == NULL) {
                 ctx = new_ctx = BN_CTX_new_ex(group->libctx);
                 if (ctx == NULL)
@@ -271,7 +271,7 @@ int ossl_ec_GFp_simple_group_check_discriminant(const EC_GROUP *group,
     if (order == NULL)
         goto err;
 
-    if (group->meth->field_decode) {
+    if (group->meth->field_decode != NULL) {
         if (!group->meth->field_decode(group, a, group->a, ctx))
             goto err;
         if (!group->meth->field_decode(group, b, group->b, ctx))
@@ -440,7 +440,7 @@ int ossl_ec_GFp_simple_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
-    if (group->meth->field_decode != 0) {
+    if (group->meth->field_decode != NULL) {
         if (ctx == NULL) {
             ctx = new_ctx = BN_CTX_new_ex(group->libctx);
             if (ctx == NULL)
@@ -529,7 +529,7 @@ int ossl_ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
 
     /* transform  (X, Y, Z)  into  (x, y) := (X/Z^2, Y/Z^3) */
 
-    if (group->meth->field_decode) {
+    if (group->meth->field_decode != NULL) {
         if (!group->meth->field_decode(group, Z, point->Z, ctx))
             goto err;
         Z_ = Z;
@@ -538,7 +538,7 @@ int ossl_ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
     }
 
     if (BN_is_one(Z_)) {
-        if (group->meth->field_decode) {
+        if (group->meth->field_decode != NULL) {
             if (x != NULL) {
                 if (!group->meth->field_decode(group, x, point->X, ctx))
                     goto err;
@@ -563,7 +563,7 @@ int ossl_ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
             goto err;
         }
 
-        if (group->meth->field_encode == 0) {
+        if (group->meth->field_encode == NULL) {
             /* field_sqr works on standard representation */
             if (!group->meth->field_sqr(group, Z_2, Z_1, ctx))
                 goto err;
@@ -582,7 +582,7 @@ int ossl_ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
         }
 
         if (y != NULL) {
-            if (group->meth->field_encode == 0) {
+            if (group->meth->field_encode == NULL) {
                 /*
                  * field_mul works on standard representation
                  */
@@ -1275,7 +1275,7 @@ int ossl_ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num,
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
-    if (group->meth->field_encode != 0) {
+    if (group->meth->field_encode != NULL) {
         /*
          * In the Montgomery case, we just turned R*H (representing H) into
          * 1/(R*H), but we need R*(1/H) (representing 1/H); i.e. we need to
