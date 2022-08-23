@@ -95,7 +95,7 @@ int ossl_qrx_remove_dst_conn_id(OSSL_QRX *qrx,
  *
  * To transition the RX side of an EL from WAITING_FOR_KEYS to HAVE_KEYS, call
  * ossl_qrx_provide_secret (for the INITIAL EL, use of
- * ossl_qrl_provide_initial_secret is recommended).
+ * ossl_quic_provide_initial_secret is recommended).
  *
  * Once keys have been provisioned for an EL, you call
  * ossl_qrx_discard_enc_level to transition the EL to the DISCARDED state. You
@@ -132,14 +132,14 @@ int ossl_qrx_remove_dst_conn_id(OSSL_QRX *qrx,
  * the QRX if it is not needed, for example if the QRX is being instantiated to
  * take over handling of an existing connection which has already passed the
  * INITIAL phase. This avoids the unnecessary derivation of INITIAL keys where
- * they are not needed. In the ordinary case, ossl_qrx_provide_secret_initial
+ * they are not needed. In the ordinary case, ossl_quic_provide_initial_secret
  * should be called immediately after instantiation.
  */
 
 /*
  * Provides a secret to the QRX, which arises due to an encryption level change.
  * enc_level is a QUIC_ENC_LEVEL_* value. To initialise the INITIAL encryption
- * level, it is recommended to use ossl_qrl_provide_initial_secret instead.
+ * level, it is recommended to use ossl_quic_provide_initial_secret instead.
  *
  * You should seek to call this function for a given EL before packets of that
  * EL arrive and are processed by the QRX. However, if packets have already
@@ -147,7 +147,7 @@ int ossl_qrx_remove_dst_conn_id(OSSL_QRX *qrx,
  * processing of them when this function is eventually called for the EL in
  * question.
  *
- * suite_id is a QRX_SUITE_* value which determines the AEAD function used for
+ * suite_id is a QRL_SUITE_* value which determines the AEAD function used for
  * the QRX.
  *
  * The secret passed is used directly to derive the "quic key", "quic iv" and
@@ -338,7 +338,7 @@ int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
  *      Two keys and a timer
  *
  *      "Alternatively, endpoints can retain only two sets of packet protection
- *       neys, swapping previous keys for next after enough time has passed to
+ *       keys, swapping previous keys for next after enough time has passed to
  *       allow for reordering in the network. In this case, the KP bit alone can
  *       be used to select keys."
  *
@@ -461,6 +461,17 @@ int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
 uint64_t ossl_qrx_get_key_epoch(OSSL_QRX *qrx);
 
 /*
+ * Sets an optional callback which will be called when the key epoch changes.
+ *
+ * The callback is optional and can be unset by passing NULL for cb.
+ * cb_arg is an opaque value passed to cb.
+*/
+typedef void (ossl_qrx_key_update_cb)(void *arg);
+
+int ossl_qrx_set_key_update_cb(OSSL_QRX *qrx,
+                               ossl_qrx_key_update_cb *cb, void *cb_arg);
+
+/*
  * Relates to the 1-RTT encryption level. The caller should call this after the
  * UPDATING state is reached, after a timeout to be determined by the caller.
  *
@@ -489,13 +500,16 @@ int ossl_qrx_key_update_timeout(OSSL_QRX *qrx, int normal);
 /*
  * Returns the number of seemingly forged packets which have been received by
  * the QRX. If this value reaches the value returned by
- * ossl_qrx_get_max_epoch_forged_pkt_count(), all further received encrypted
- * packets will be discarded without processing; thus, callers should trigger a
- * key update on the TX side (which will cause the peer to trigger a key update
- * on our RX side) well before this occurs.
+ * ossl_qrx_get_max_epoch_forged_pkt_count() for a given EL, all further
+ * received encrypted packets for that EL will be discarded without processing.
+ *
+ * Note that the forged packet limit is for the connection lifetime, thus it is
+ * not reset by a key update. It is suggested that the caller terminate the
+ * connection a reasonable margin before the limit is reached. However, the
+ * exact limit imposed does vary by EL due to the possibility that different ELs
+ * use different AEADs.
  */
-uint64_t ossl_qrx_get_cur_epoch_forged_pkt_count(OSSL_QRX *qrx,
-                                                 uint32_t enc_level);
+uint64_t ossl_qrx_get_cur_epoch_forged_pkt_count(OSSL_QRX *qrx);
 
 /*
  * Returns the maximum number of forged packets which the record layer

@@ -150,9 +150,20 @@ struct ossl_qrx_st {
     /* Bytes we have received since this counter was last cleared. */
     uint64_t                    bytes_received;
 
+    /*
+     * Number of forged packets we have received since the QRX was instantiated.
+     * Note that as per RFC 9001, this is connection-level state; it is not per
+     * EL and is not reset by a key update.
+     */
+    uint64_t                    forged_pkt_count;
+
     /* Validation callback. */
     ossl_qrx_early_validation_cb   *validation_cb;
     void                           *validation_cb_arg;
+
+    /* Key update callback. */
+    ossl_qrx_key_update_cb         *key_update_cb;
+    void                           *key_update_cb_arg;
 
     /* Initial key phase. For debugging use only; always 0 in real use. */
     unsigned char                   init_key_phase_bit;
@@ -600,7 +611,7 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
      * If we have failed to authenticate a certain number of ciphertexts, refuse
      * to decrypt any more ciphertexts.
      */
-    if (el->op_count >= ossl_qrl_get_suite_max_forged_pkt(el->suite_id))
+    if (qrx->forged_pkt_count >= ossl_qrl_get_suite_max_forged_pkt(el->suite_id))
         return 0;
 
     cctx_idx = qrx_get_cipher_ctx_idx(qrx, el, enc_level, key_phase_bit);
@@ -640,7 +651,7 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
     /* Ensure authentication succeeded. */
     if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1) {
         /* Authentication failed, increment failed auth counter. */
-        ++el->op_count;
+        ++qrx->forged_pkt_count;
         return 0;
     }
 
@@ -655,7 +666,11 @@ static ossl_inline void ignore_res(int x)
 
 static void qrx_key_update_initiated(OSSL_QRX *qrx)
 {
-    ossl_qrl_enc_level_set_key_update(&qrx->el_set, QUIC_ENC_LEVEL_1RTT);
+    if (!ossl_qrl_enc_level_set_key_update(&qrx->el_set, QUIC_ENC_LEVEL_1RTT))
+        return;
+
+    if (qrx->key_update_cb != NULL)
+        qrx->key_update_cb(qrx->key_update_cb_arg);
 }
 
 /* Process a single packet in a datagram. */
@@ -1092,6 +1107,15 @@ int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
     return 1;
 }
 
+int ossl_qrx_set_key_update_cb(OSSL_QRX *qrx,
+                               ossl_qrx_key_update_cb *cb,
+                               void *cb_arg)
+{
+    qrx->key_update_cb      = cb;
+    qrx->key_update_cb_arg  = cb_arg;
+    return 1;
+}
+
 uint64_t ossl_qrx_get_key_epoch(OSSL_QRX *qrx)
 {
     OSSL_QRL_ENC_LEVEL *el = ossl_qrl_enc_level_set_get(&qrx->el_set,
@@ -1120,13 +1144,9 @@ int ossl_qrx_key_update_timeout(OSSL_QRX *qrx, int normal)
     return 1;
 }
 
-uint64_t ossl_qrx_get_cur_epoch_forged_pkt_count(OSSL_QRX *qrx,
-                                                 uint32_t enc_level)
+uint64_t ossl_qrx_get_cur_epoch_forged_pkt_count(OSSL_QRX *qrx)
 {
-    OSSL_QRL_ENC_LEVEL *el = ossl_qrl_enc_level_set_get(&qrx->el_set,
-                                                        enc_level, 1);
-
-    return el == NULL ? UINT64_MAX : el->op_count;
+    return qrx->forged_pkt_count;
 }
 
 uint64_t ossl_qrx_get_max_epoch_forged_pkt_count(OSSL_QRX *qrx,

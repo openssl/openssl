@@ -59,7 +59,7 @@ typedef struct ossl_qrl_enc_level_st {
      */
     uint64_t                    key_epoch;
 
-    /* Usage counter. The caller maintains this. */
+    /* Usage counter. The caller maintains this. Used by TX side only. */
     uint64_t                    op_count;
 
     /* QRL_SUITE_* value. */

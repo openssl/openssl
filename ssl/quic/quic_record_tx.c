@@ -113,6 +113,12 @@ struct ossl_qtx_st {
      */
     TXE                        *cons;
     size_t                      cons_count; /* num packets */
+
+    /*
+     * Number of packets transmitted in this key epoch. Used to enforce AEAD
+     * confidentiality limit.
+     */
+    uint64_t                    epoch_pkt_count;
 };
 
 /* Instantiates a new QTX. */

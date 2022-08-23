@@ -339,7 +339,6 @@ int ossl_qrl_enc_level_set_key_update(OSSL_QRL_ENC_LEVEL_SET *els,
                               new_ku, secret_len, 0))
         return 0;
 
-    ++el->key_epoch;
     el_teardown_keyslot(els, enc_level, 0);
 
     /* Setup keyslot for CURRENT "quic ku" key. */
@@ -347,6 +346,8 @@ int ossl_qrl_enc_level_set_key_update(OSSL_QRL_ENC_LEVEL_SET *els,
                           0, el->ku, secret_len))
         return 0;
 
+    ++el->key_epoch;
+    el->op_count = 0;
     memcpy(el->ku, new_ku, secret_len);
     /* Remain in PROV_NORMAL state */
     return 1;
