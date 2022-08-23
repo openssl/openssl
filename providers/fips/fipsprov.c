@@ -779,16 +779,47 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
     c_vset_error(NULL, ERR_PACK(lib, 0, reason), fmt, args);
 }
 
-void *ERR_raise_malloc_failure(void *ptr,
-                               const char *file, int line, const char *func)
+static void *raise_malloc_failure(const char *file, int line, const char *func)
 {
-    if (ptr != NULL)
-        return ptr; /* all good */
-
     ERR_new();
     ERR_set_debug(file, line, func);
     ERR_set_error(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, NULL);
     return NULL;
+}
+
+void *ERR_raise_malloc_failure(void *(*alloc_fn)(size_t, const char *, int),
+                               size_t num,
+                               const char *file, int line, const char *func)
+{
+    void *ptr = (*alloc_fn)(num, file, line);
+
+    if (num == 0 || ptr != NULL)
+        return ptr; /* all good */
+
+    return raise_malloc_failure(file, line, func);
+}
+
+void *ERR_raise_realloc_failure(void *addr, size_t num,
+                                const char *file, int line, const char *func)
+{
+    void *ptr = CRYPTO_realloc(addr, num, file, line);
+
+    if (num == 0 || ptr != NULL)
+        return ptr; /* all good */
+
+    return raise_malloc_failure(file, line, func);
+}
+
+void *ERR_raise_clear_realloc_failure(void *addr, size_t old_num, size_t num,
+                                      const char *file, int line,
+                                      const char *func)
+{
+    void *ptr = CRYPTO_clear_realloc(addr, old_num, num, file, line);
+
+    if (num == 0 || ptr != NULL)
+        return ptr; /* all good */
+
+    return raise_malloc_failure(file, line, func);
 }
 
 int ERR_set_mark(void)

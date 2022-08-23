@@ -5,6 +5,7 @@
 =head1 NAME
 
 ERR_raise, ERR_raise_data, ERR_raise_malloc_failure,
+ERR_raise_realloc_failure, ERR_raise_clear_realloc_failure,
 ERR_put_error, ERR_add_error_data, ERR_add_error_vdata,
 ERR_add_error_txt, ERR_add_error_mem_bio
 - record an error
@@ -15,8 +16,14 @@ ERR_add_error_txt, ERR_add_error_mem_bio
 
  void ERR_raise(int lib, int reason);
  void ERR_raise_data(int lib, int reason, const char *fmt, ...);
- void *ERR_raise_malloc_failure(void *ptr,
+ void *ERR_raise_malloc_failure(void *(*alloc_fn)(size_t, const char *, int),
+                                size_t num,
                                 const char *file, int line, const char *func);
+ void *ERR_raise_realloc_failure(void *addr, size_t num,
+                                 const char *file, int line, const char *func);
+ void *ERR_raise_clear_realloc_failure(void *addr, size_t old_num, size_t num,
+                                       const char *file, int line,
+                                       const char *func);
 
  void ERR_add_error_data(int num, ...);
  void ERR_add_error_vdata(int num, va_list arg);
@@ -41,10 +48,19 @@ ERR_raise_data() does the same thing as ERR_raise(), but also lets the
 caller specify additional information as a format string B<fmt> and an
 arbitrary number of values, which are processed with L<BIO_snprintf(3)>.
 
-ERR_raise_malloc_failure() is meant to be used only internally.
-If I<ptr> is not NULL, it simply returns this value,
-otherwise it behaves like I<ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE)>
+ERR_raise_malloc_failure(), ERR_raise_realloc_failure(), and
+ERR_raise_clear_realloc_failure() are meant to be used only internally.
+
+ERR_raise_malloc_failure() calls I<(*alloc_fn)(num, file, line)>
+and returns its result if I<num> is zero or the result is not NULL.
+Otherwise it acts like I<ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE)>
 with the I<file>, I<line>, and I<func> parameters taken as the error location.
+
+ERR_raise_realloc_failure() is like ERR_raise_malloc_failure()
+but calls I<CRYPTO_realloc(addr, num, file, line)>.
+
+ERR_raise_clear_realloc_failure() is like ERR_raise_malloc_failure()
+but calls I<CRYPTO_clear_realloc(addr, old_num, num, file, line)>.
 
 ERR_put_error() adds an error code to the thread's error queue. It
 signals that the error of reason code B<reason> occurred in function
@@ -171,7 +187,9 @@ ERR_add_error_data(), ERR_add_error_vdata()
 ERR_add_error_txt(), and ERR_add_error_mem_bio()
 return no values.
 
-ERR_raise_malloc_failure() returns the value of its first argument.
+ERR_raise_malloc_failure(), ERR_raise_realloc_failure(), and
+ERR_raise_clear_realloc_failure() return whatever the underlying
+memory (re-)allocation function returns.
 
 =head1 NOTES
 
@@ -185,7 +203,9 @@ L<ERR_load_strings(3)>, L<ERR_get_next_error_library(3)>
 
 ERR_raise, ERR_raise_data, ERR_add_error_txt() and ERR_add_error_mem_bio()
 were added in OpenSSL 3.0.
-ERR_raise_malloc_failure() was added in OpenSSL 3.1.
+
+ERR_raise_malloc_failure(), ERR_raise_realloc_failure(), and
+ERR_raise_clear_realloc_failure() were added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 

@@ -5446,6 +5446,8 @@ CMS_SignedData_free                     ?	3_1_0	EXIST::FUNCTION:CMS
 CMS_SignedData_new                      ?	3_1_0	EXIST::FUNCTION:CMS
 CMS_SignedData_verify                   ?	3_1_0	EXIST::FUNCTION:CMS
 ERR_raise_malloc_failure                ?	3_1_0	EXIST::FUNCTION:
+ERR_raise_realloc_failure               ?	3_1_0	EXIST::FUNCTION:
+ERR_raise_clear_realloc_failure         ?	3_1_0	EXIST::FUNCTION:
 OPENSSL_strcasecmp                      ?	3_0_3	EXIST::FUNCTION:
 OPENSSL_strncasecmp                     ?	3_0_3	EXIST::FUNCTION:
 BIO_s_dgram_mem                         ?	3_1_0	EXIST::FUNCTION:
