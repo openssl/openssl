@@ -787,11 +787,10 @@ static void *raise_malloc_failure(const char *file, int line, const char *func)
     return NULL;
 }
 
-void *ERR_raise_malloc_failure(void *(*alloc_fn)(size_t, const char *, int),
-                               size_t num,
-                               const char *file, int line, const char *func)
+void *CRYPTO_malloc_with_err(void *(*fn)(size_t, const char *, int), size_t num,
+                             const char *file, int line, const char *func)
 {
-    void *ptr = (*alloc_fn)(num, file, line);
+    void *ptr = (*fn)(num, file, line);
 
     if (num == 0 || ptr != NULL)
         return ptr; /* all good */
@@ -799,8 +798,8 @@ void *ERR_raise_malloc_failure(void *(*alloc_fn)(size_t, const char *, int),
     return raise_malloc_failure(file, line, func);
 }
 
-void *ERR_raise_realloc_failure(void *addr, size_t num,
-                                const char *file, int line, const char *func)
+void *CRYPTO_realloc_with_err(void *addr, size_t num,
+                              const char *file, int line, const char *func)
 {
     void *ptr = CRYPTO_realloc(addr, num, file, line);
 
@@ -810,9 +809,9 @@ void *ERR_raise_realloc_failure(void *addr, size_t num,
     return raise_malloc_failure(file, line, func);
 }
 
-void *ERR_raise_clear_realloc_failure(void *addr, size_t old_num, size_t num,
-                                      const char *file, int line,
-                                      const char *func)
+void *CRYPTO_clear_realloc_with_err(void *addr, size_t old_num, size_t num,
+                                    const char *file, int line,
+                                    const char *func)
 {
     void *ptr = CRYPTO_clear_realloc(addr, old_num, num, file, line);
 
