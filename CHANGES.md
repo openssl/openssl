@@ -303,7 +303,7 @@ breaking changes, and mappings for the large list of deprecated functions.
    *Matt Caswell*
 
  * Fix a bug in the OPENSSL_LH_flush() function that breaks reuse of the memory
-   occuppied by the removed hash table entries.
+   occupied by the removed hash table entries.
 
    This function is used when decoding certificates or keys. If a long lived
    process periodically decodes certificates or keys its memory usage will
@@ -500,7 +500,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
  * The EVP_get_cipherbyname() function will return NULL for algorithms such as
    "AES-128-SIV", "AES-128-CBC-CTS" and "CAMELLIA-128-CBC-CTS" which were
-   previously only accessible via low level interfaces. Use EVP_CIPHER_fetch()
+   previously only accessible via low-level interfaces. Use EVP_CIPHER_fetch()
    instead to retrieve these algorithms from a provider.
 
    *Shane Lontis*
@@ -847,7 +847,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *David von Oheimb*
 
- * All of the low level EC_KEY functions have been deprecated.
+ * All of the low-level EC_KEY functions have been deprecated.
 
    *Shane Lontis, Paul Dale, Richard Levitte, and Tomáš Mráz*
 
@@ -1128,7 +1128,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *David von Oheimb*
 
- * All of the low level RSA functions have been deprecated.
+ * All of the low-level RSA functions have been deprecated.
 
    *Paul Dale*
 
@@ -1153,11 +1153,11 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Paul Dale*
 
- * All of the low level DH functions have been deprecated.
+ * All of the low-level DH functions have been deprecated.
 
    *Paul Dale and Matt Caswell*
 
- * All of the low level DSA functions have been deprecated.
+ * All of the low-level DSA functions have been deprecated.
 
    *Paul Dale*
 
@@ -1166,7 +1166,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Richard Levitte*
 
- * Deprecated low level ECDH and ECDSA functions.
+ * Deprecated low-level ECDH and ECDSA functions.
 
    *Paul Dale*
 
@@ -1185,7 +1185,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Paul Dale*
 
- * All of the low level HMAC functions have been deprecated.
+ * All of the low-level HMAC functions have been deprecated.
 
    *Paul Dale and David von Oheimb*
 
@@ -1201,7 +1201,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Rich Salz*
 
- * All of the low level CMAC functions have been deprecated.
+ * All of the low-level CMAC functions have been deprecated.
 
    *Paul Dale*
 
@@ -1220,7 +1220,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Richard Levitte*
 
- * All of the low level cipher functions have been deprecated.
+ * All of the low-level cipher functions have been deprecated.
 
    *Matt Caswell and Paul Dale*
 
