@@ -33,7 +33,7 @@ This function must not be called more than once with the same I<req> and I<nid>.
 =head1 RETURN VALUES
 
 X509_REQ_get_extensions() returns a pointer to B<STACK_OF(X509_EXTENSION)>
-or NULL no error.
+or NULL on error.
 
 X509_REQ_add_extensions() and X509_REQ_add_extensions_nid()
 return 1 on success, 0 on error.
