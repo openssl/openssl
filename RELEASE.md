@@ -1,4 +1,4 @@
-OQS-OpenSSL_1\_1\_1-stable snapshot 2022-01
+OQS-OpenSSL_1\_1\_1-stable snapshot 2022-08
 ===========================================
 
 About
@@ -13,19 +13,21 @@ The **Open Quantum Safe (OQS) project** has the goal of developing and prototypi
 Release notes
 =============
 
-This is the 2022-01 snapshot release of OQS-OpenSSL. The release candidate was released on January 6, 2022.  This release is intended to be used with liboqs version 0.7.1.
+This is the 2022-08 snapshot release of OQS-OpenSSL, which was released on August 23, 2022.  This release is intended to be used with liboqs version 0.7.2.
 
 What's New
 ----------
 
-This is the eighth snapshot release of OQS-OpenSSL_1\_1\_1-stable.  It is based on OpenSSL 1.1.1m.
+This is the ninth snapshot release of OQS-OpenSSL_1\_1\_1-stable.  It is based on OpenSSL 1.1.1q.
 
-- Update OpenSSL to version 1.1.1m.
-- Add support for NTRU and NTRU Prime level 5 KEMs.
+- Update OpenSSL to version 1.1.1q.
+- Remove support for Rainbow level 1 and SIKE/SIDH.
+- Adding support for setting default client KEM algorithms via TLS_DEFAULT_GROUPS environment variable.
 
 Previous release notes
 ----------------------
 
+- [OQS-OpenSSL 1.1.1 snapshot 2022-01](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2022-01), based on OpenSSL 1.1.1m, aligned with liboqs 0.7.1 (January 6, 2022)
 - [OQS-OpenSSL 1.1.1 snapshot 2021-08](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2021-08), based on OpenSSL 1.1.1k, aligned with liboqs 0.7.0 (August 11, 2021)
 - [OQS-OpenSSL 1.1.1 snapshot 2021-03](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2021-03), based on OpenSSL 1.1.1k, aligned with liboqs 0.5.0 (March 26, 2021)
 - [OQS-OpenSSL 1.1.1 snapshot 2020-08](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2020-08), based on OpenSSL 1.1.1g, aligned with liboqs 0.4.0 (August 11, 2020)
@@ -38,12 +40,20 @@ Previous release notes
 Detailed changelog
 ------------------
 
-* Update to OpenSSL 1.1.1l by @dstebila in https://github.com/open-quantum-safe/openssl/pull/330
-* adding ntrup1277 by @baentsch in https://github.com/open-quantum-safe/openssl/pull/334
-* ntru1229 by @baentsch in https://github.com/open-quantum-safe/openssl/pull/336
-* OSSL ID registry by @baentsch in https://github.com/open-quantum-safe/openssl/pull/340
-* adding M1 build instruction [skip ci] by @baentsch in https://github.com/open-quantum-safe/openssl/pull/342
-* simplify documentation [skip ci] by @baentsch in https://github.com/open-quantum-safe/openssl/pull/345
-* Merging OpenSSL 1.1.1m by @baentsch in https://github.com/open-quantum-safe/openssl/pull/346
+* more explanation pointers for NIST levels [skip ci] by @baentsch in https://github.com/open-quantum-safe/openssl/pull/350
+* adding TLS_DEFAULT_GROUPS env var by @baentsch in https://github.com/open-quantum-safe/openssl/pull/354
+* Updating interop test suite for BoringSSL update. by @xvzcf in https://github.com/open-quantum-safe/openssl/pull/355
+* generalize openssl install regarding liboqs lib location by @baentsch in https://github.com/open-quantum-safe/openssl/pull/358
+* fix out of source build by @baentsch in https://github.com/open-quantum-safe/openssl/pull/359
+* 1.1.1n merge by @baentsch in https://github.com/open-quantum-safe/openssl/pull/361
+* merge with upstream 1.1.1o by @baentsch in https://github.com/open-quantum-safe/openssl/pull/370
+* openssl test cert update by @baentsch in https://github.com/open-quantum-safe/openssl/pull/373
+* Upstream 111p merge by @baentsch in https://github.com/open-quantum-safe/openssl/pull/375
+* upstream 111q merge by @baentsch in https://github.com/open-quantum-safe/openssl/pull/377
+* re-run generator for corrected dilithium2 level by @baentsch in https://github.com/open-quantum-safe/openssl/pull/381
+* remove RainbowI by @baentsch in https://github.com/open-quantum-safe/openssl/pull/382
+* remove SIDH/SIKE by @baentsch in https://github.com/open-quantum-safe/openssl/pull/383
+* trigger CI also on main branch by @baentsch in https://github.com/open-quantum-safe/openssl/pull/386
+* fix liboqs.so.version install by @baentsch in https://github.com/open-quantum-safe/openssl/pull/387
 
-**Full Changelog**: https://github.com/open-quantum-safe/openssl/compare/OQS-OpenSSL_1_1_1-stable-snapshot-2021-08...OQS-OpenSSL-1_1_1-stable-snapshot-2022-01
+**Full Changelog**: https://github.com/open-quantum-safe/openssl/compare/OQS-OpenSSL_1_1_1-stable-snapshot-2022-01...OQS-OpenSSL-1_1_1-stable-snapshot-2022-08
