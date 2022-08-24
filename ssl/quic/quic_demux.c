@@ -3,13 +3,13 @@
 #include "internal/common.h"
 #include <openssl/lhash.h>
 
-#define OSSL_QUIC_DEMUX_MAX_MSGS_PER_CALL    32
+#define DEMUX_MAX_MSGS_PER_CALL    32
 
 void ossl_quic_urxe_remove(QUIC_URXE_LIST *l, QUIC_URXE *e)
 {
     /* Must be in list currently. */
-    OPENSSL_assert((e->prev != NULL || l->head == e)
-                   && (e->next != NULL || l->tail == e));
+    assert((e->prev != NULL || l->head == e)
+           && (e->next != NULL || l->tail == e));
 
     if (e->prev != NULL)
         e->prev->next = e->next;
@@ -27,7 +27,7 @@ void ossl_quic_urxe_remove(QUIC_URXE_LIST *l, QUIC_URXE *e)
 void ossl_quic_urxe_insert_head(QUIC_URXE_LIST *l, QUIC_URXE *e)
 {
     /* Must not be in list. */
-    OPENSSL_assert(e->prev == NULL && e->next == NULL);
+    assert(e->prev == NULL && e->next == NULL);
 
     if (l->head == NULL) {
         l->head = l->tail = e;
@@ -44,7 +44,7 @@ void ossl_quic_urxe_insert_head(QUIC_URXE_LIST *l, QUIC_URXE *e)
 void ossl_quic_urxe_insert_tail(QUIC_URXE_LIST *l, QUIC_URXE *e)
 {
     /* Must not be in list. */
-    OPENSSL_assert(e->prev == NULL && e->next == NULL);
+    assert(e->prev == NULL && e->next == NULL);
 
     if (l->tail == NULL) {
         l->head = l->tail = e;
@@ -202,7 +202,7 @@ static QUIC_DEMUX_CONN *demux_get_by_conn_id(QUIC_DEMUX *demux,
     QUIC_DEMUX_CONN key;
 
     if (dst_conn_id->id_len > QUIC_MAX_CONN_ID_LEN)
-        return 0;
+        return NULL;
 
     key.dst_conn_id = *dst_conn_id;
     return lh_QUIC_DEMUX_CONN_retrieve(demux->conns_by_id, &key);
@@ -337,7 +337,7 @@ static int demux_ensure_free_urxe(QUIC_DEMUX *demux, size_t min_num_free)
  */
 static int demux_recv(QUIC_DEMUX *demux)
 {
-    BIO_MSG msg[OSSL_QUIC_DEMUX_MAX_MSGS_PER_CALL];
+    BIO_MSG msg[DEMUX_MAX_MSGS_PER_CALL];
     size_t rd, i;
     QUIC_URXE *urxe = demux->urx_free.head, *unext;
     OSSL_TIME now;
@@ -425,7 +425,8 @@ static int demux_process_pending_urxe(QUIC_DEMUX *demux, QUIC_URXE *e)
     QUIC_DEMUX_CONN *conn;
 
     /* The next URXE we process should be at the head of the pending list. */
-    OPENSSL_assert(e == demux->urx_pending.head);
+    if (!ossl_assert(e == demux->urx_pending.head))
+        return 0;
 
     conn = demux_identify_conn(demux, e);
     if (conn == NULL) {
@@ -469,7 +470,7 @@ int ossl_quic_demux_pump(QUIC_DEMUX *demux)
     int ret;
 
     if (demux->urx_pending.head == NULL) {
-        ret = demux_ensure_free_urxe(demux, OSSL_QUIC_DEMUX_MAX_MSGS_PER_CALL);
+        ret = demux_ensure_free_urxe(demux, DEMUX_MAX_MSGS_PER_CALL);
         if (ret != 1)
             return 0;
 
@@ -529,7 +530,7 @@ int ossl_quic_demux_inject(QUIC_DEMUX *demux,
 void ossl_quic_demux_release_urxe(QUIC_DEMUX *demux,
                                   QUIC_URXE *e)
 {
-    OPENSSL_assert(e->prev == NULL && e->next == NULL);
+    assert(e->prev == NULL && e->next == NULL);
     ossl_quic_urxe_insert_tail(&demux->urx_free, e);
     ++demux->num_urx_free;
 }

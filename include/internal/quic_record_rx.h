@@ -509,13 +509,13 @@ int ossl_qrx_key_update_timeout(OSSL_QRX *qrx, int normal);
  * exact limit imposed does vary by EL due to the possibility that different ELs
  * use different AEADs.
  */
-uint64_t ossl_qrx_get_cur_epoch_forged_pkt_count(OSSL_QRX *qrx);
+uint64_t ossl_qrx_get_cur_forged_pkt_count(OSSL_QRX *qrx);
 
 /*
- * Returns the maximum number of forged packets which the record layer
- * will permit to be verified using the current set of RX keys.
+ * Returns the maximum number of forged packets which the record layer will
+ * permit to be verified using this QRX instance.
  */
-uint64_t ossl_qrx_get_max_epoch_forged_pkt_count(OSSL_QRX *qrx,
-                                                 uint32_t enc_level);
+uint64_t ossl_qrx_get_max_forged_pkt_count(OSSL_QRX *qrx,
+                                           uint32_t enc_level);
 
 #endif

@@ -425,7 +425,7 @@ void ossl_qrl_enc_level_set_discard(OSSL_QRL_ENC_LEVEL_SET *els,
         return;
 
     if (ossl_qrl_enc_level_set_have_el(els, enc_level) == 1) {
-        ossl_quic_hdr_protector_destroy(&el->hpr);
+        ossl_quic_hdr_protector_cleanup(&el->hpr);
 
         el_teardown_keyslot(els, enc_level, 0);
         el_teardown_keyslot(els, enc_level, 1);

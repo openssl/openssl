@@ -2604,7 +2604,7 @@ static int test_wire_pkt_hdr_actual(int tidx, int repeat, int cipher,
     testresult = 1;
 err:
     if (have_hpr)
-        ossl_quic_hdr_protector_destroy(&hpr);
+        ossl_quic_hdr_protector_cleanup(&hpr);
     WPACKET_finish(&wpkt);
     BUF_MEM_free(buf);
     OPENSSL_free(hbuf);

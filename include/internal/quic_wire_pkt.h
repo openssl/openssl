@@ -78,7 +78,7 @@ static ossl_inline ossl_unused int
 ossl_quic_pkt_type_can_share_dgram(uint32_t pkt_type)
 {
     /*
-     * Currently only the non-encrypted packet types can share a datagram. This
+     * Currently only the encrypted packet types can share a datagram. This
      * could change someday.
      */
     return ossl_quic_pkt_type_is_encrypted(pkt_type);
@@ -115,7 +115,7 @@ typedef struct quic_pkt_hdr_ptrs_st QUIC_PKT_HDR_PTRS;
  *
  * Functions to apply and remove QUIC packet header protection. A header
  * protector is initialised using ossl_quic_hdr_protector_init and must be
- * destroyed using ossl_quic_hdr_protector_destroy when no longer needed.
+ * destroyed using ossl_quic_hdr_protector_cleanup when no longer needed.
  */
 typedef struct quic_hdr_protector_st {
     OSSL_LIB_CTX       *libctx;
@@ -160,7 +160,7 @@ int ossl_quic_hdr_protector_init(QUIC_HDR_PROTECTOR *hpr,
  * OSSL_QUIC_HDR_PROTECTOR structure which has not been initialized, or which
  * has already been destroyed.
  */
-void ossl_quic_hdr_protector_destroy(QUIC_HDR_PROTECTOR *hpr);
+void ossl_quic_hdr_protector_cleanup(QUIC_HDR_PROTECTOR *hpr);
 
 /*
  * Removes header protection from a packet. The packet payload must currently be
@@ -308,11 +308,11 @@ typedef struct quic_pkt_hdr_st {
     /* [L] Version field. Valid if (type != 1RTT). */
     uint32_t        version;
 
-    /* [ALL] Number of bytes in the connection ID (max 20). Always valid. */
+    /* [ALL] The destination connection ID. Always valid. */
     QUIC_CONN_ID    dst_conn_id;
 
     /*
-     * [L] Number of bytes in the connection ID (max 20).
+     * [L] The source connection ID.
      * Valid if (type != 1RTT).
      */
     QUIC_CONN_ID    src_conn_id;
@@ -338,9 +338,13 @@ typedef struct quic_pkt_hdr_st {
     size_t                  token_len;
 
     /*
-     * [i0h] Payload length in bytes.
+     * [ALL] Payload length in bytes.
      *
-     * Valid if (type != 1RTT && type != RETRY && version).
+     * Though 1-RTT, Retry and Version Negotiation packets do not contain an
+     * explicit length field, this field is always valid and is used by the
+     * packet header encoding and decoding routines to describe the payload
+     * length, regardless of whether the packet type encoded or decoded uses an
+     * explicit length indication.
      */
     size_t                  len;
 

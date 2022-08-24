@@ -1144,13 +1144,13 @@ int ossl_qrx_key_update_timeout(OSSL_QRX *qrx, int normal)
     return 1;
 }
 
-uint64_t ossl_qrx_get_cur_epoch_forged_pkt_count(OSSL_QRX *qrx)
+uint64_t ossl_qrx_get_cur_forged_pkt_count(OSSL_QRX *qrx)
 {
     return qrx->forged_pkt_count;
 }
 
-uint64_t ossl_qrx_get_max_epoch_forged_pkt_count(OSSL_QRX *qrx,
-                                                 uint32_t enc_level)
+uint64_t ossl_qrx_get_max_forged_pkt_count(OSSL_QRX *qrx,
+                                           uint32_t enc_level)
 {
     OSSL_QRL_ENC_LEVEL *el = ossl_qrl_enc_level_set_get(&qrx->el_set,
                                                         enc_level, 1);

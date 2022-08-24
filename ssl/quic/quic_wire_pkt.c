@@ -51,11 +51,11 @@ int ossl_quic_hdr_protector_init(QUIC_HDR_PROTECTOR *hpr,
     return 1;
 
 err:
-    ossl_quic_hdr_protector_destroy(hpr);
+    ossl_quic_hdr_protector_cleanup(hpr);
     return 0;
 }
 
-void ossl_quic_hdr_protector_destroy(QUIC_HDR_PROTECTOR *hpr)
+void ossl_quic_hdr_protector_cleanup(QUIC_HDR_PROTECTOR *hpr)
 {
     EVP_CIPHER_CTX_free(hpr->cipher_ctx);
     hpr->cipher_ctx = NULL;
