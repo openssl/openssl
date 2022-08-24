@@ -87,15 +87,9 @@ static int tls_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
         } else if (rl->version == TLS1_3_VERSION) {
             /*
              * In this case we know we are going to negotiate TLSv1.3, but we've
-             * had an HRR, so we haven't actually done so yet. Nonetheless we
-             * still expect the record version to be TLSv1.2 as per a normal
-             * TLSv1.3 record
+             * had an HRR, so we haven't actually done so yet. In TLSv1.3 we
+             * must ignore the legacy record version in plaintext records.
              */
-            if (rec->rec_version != TLS1_2_VERSION) {
-                RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
-                            SSL_R_WRONG_VERSION_NUMBER);
-                return 0;
-            }
         } else if (rec->rec_version != rl->version) {
             if ((rl->version & 0xFF00) == (rec->rec_version & 0xFF00)) {
                 if (rec->type == SSL3_RT_ALERT) {
