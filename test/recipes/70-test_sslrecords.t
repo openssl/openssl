@@ -248,17 +248,21 @@ SKIP: {
     $proxy->start();
     ok(TLSProxy::Message->success(), "No data between KeyUpdate");
 
-    #Test 21: Force an HRR and change the "real" ServerHello to have a protocol
-    #         record version of 0x0301 (TLSv1.0). At this point we have already
-    #         decided that we are doing TLSv1.3 but are still using plaintext
-    #         records. The server should be sending a record version of 0x303
-    #         (TLSv1.2), but the RFC requires us to ignore this field so we
-    #         should tolerate the incorrect version.
-    $proxy->clear();
-    $proxy->filter(\&change_server_hello_version);
-    $proxy->serverflags("-groups P-256"); # Force an HRR
-    $proxy->start();
-    ok(TLSProxy::Message->success(), "Bad ServerHello record version after HRR");
+    SKIP: {
+        skip "EC disabled", 1 if disabled("ec");
+
+        #Test 21: Force an HRR and change the "real" ServerHello to have a protocol
+        #         record version of 0x0301 (TLSv1.0). At this point we have already
+        #         decided that we are doing TLSv1.3 but are still using plaintext
+        #         records. The server should be sending a record version of 0x303
+        #         (TLSv1.2), but the RFC requires us to ignore this field so we
+        #         should tolerate the incorrect version.
+        $proxy->clear();
+        $proxy->filter(\&change_server_hello_version);
+        $proxy->serverflags("-groups P-256"); # Force an HRR
+        $proxy->start();
+        ok(TLSProxy::Message->success(), "Bad ServerHello record version after HRR");
+    }
  }
 
 
