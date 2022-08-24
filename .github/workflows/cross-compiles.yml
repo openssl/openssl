@@ -80,7 +80,10 @@ jobs:
           }, {
             arch: powerpc64le-linux-gnu,
             libs: libc6-dev-ppc64el-cross,
-            target: linux-ppc64le
+            # The default compiler for this platform on Ubuntu 20.04 seems
+            # buggy and causes test failures. Dropping the optimisation level
+            # resolves it.
+            target: -O2 linux-ppc64le
           }, {
             arch: riscv64-linux-gnu,
             libs: libc6-dev-riscv64-cross,
