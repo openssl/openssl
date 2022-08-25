@@ -662,12 +662,6 @@ static int ssl3_write_pending(SSL_CONNECTION *s, int type,
     }
 
     for (;;) {
-        /* Loop until we find a buffer we haven't written out yet */
-        if (SSL3_BUFFER_get_left(&wb[currbuf]) == 0
-            && currbuf < s->rlayer.numwpipes - 1) {
-            currbuf++;
-            continue;
-        }
         clear_sys_error();
         if (s->wbio != NULL) {
             s->rwstate = SSL_WRITING;
@@ -703,8 +697,6 @@ static int ssl3_write_pending(SSL_CONNECTION *s, int type,
         if (i >= 0 && tmpwrit == SSL3_BUFFER_get_left(&wb[currbuf])) {
             SSL3_BUFFER_set_left(&wb[currbuf], 0);
             SSL3_BUFFER_add_offset(&wb[currbuf], tmpwrit);
-            if (currbuf + 1 < s->rlayer.numwpipes)
-                continue;
             s->rwstate = SSL_NOTHING;
             *written = s->rlayer.wpend_ret;
             return 1;
