@@ -769,12 +769,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                                rl_sequence, &crypto_info, which & SSL3_CC_WRITE,
                                iv, ivlen, key, keylen, NULL, 0))
         goto skip_ktls;
-
-    /* ktls works with user provided buffers directly */
-    if (BIO_set_ktls(bio, &crypto_info, which & SSL3_CC_WRITE)) {
-        if (which & SSL3_CC_WRITE)
-            ssl3_release_write_buffer(s);
-    }
 # endif
 #endif
 skip_ktls:

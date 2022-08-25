@@ -94,6 +94,94 @@ static int tls_allow_compression(OSSL_RECORD_LAYER *rl)
 }
 #endif
 
+static int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
+                                  size_t len)
+{
+    unsigned char *p;
+    size_t align = 0, headerlen;
+    SSL3_BUFFER *wb;
+    size_t currpipe;
+    SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
+
+    s->rlayer.numwpipes = numwpipes;
+
+    if (len == 0) {
+        if (SSL_CONNECTION_IS_DTLS(s))
+            headerlen = DTLS1_RT_HEADER_LENGTH + 1;
+        else
+            headerlen = SSL3_RT_HEADER_LENGTH;
+
+#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
+        align = SSL3_ALIGN_PAYLOAD - 1;
+#endif
+
+        len = ssl_get_max_send_fragment(s)
+            + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
+#ifndef OPENSSL_NO_COMP
+        if (ssl_allow_compression(s))
+            len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+#endif
+        if (!(rl->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
+            len += headerlen + align + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
+    }
+
+    wb = rl->wbuf;
+    for (currpipe = 0; currpipe < numwpipes; currpipe++) {
+        SSL3_BUFFER *thiswb = &wb[currpipe];
+
+        if (thiswb->len != len) {
+            OPENSSL_free(thiswb->buf);
+            thiswb->buf = NULL;         /* force reallocation */
+        }
+
+        if (thiswb->buf == NULL) {
+            if (s->wbio == NULL || !BIO_get_ktls_send(s->wbio)) {
+                p = OPENSSL_malloc(len);
+                if (p == NULL) {
+                    s->rlayer.numwpipes = currpipe;
+                    /*
+                     * We've got a malloc failure, and we're still initialising
+                     * buffers. We assume we're so doomed that we won't even be able
+                     * to send an alert.
+                     */
+                    SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_MALLOC_FAILURE);
+                    return 0;
+                }
+            } else {
+                p = NULL;
+            }
+            memset(thiswb, 0, sizeof(SSL3_BUFFER));
+            thiswb->buf = p;
+            thiswb->len = len;
+        }
+    }
+
+    return 1;
+}
+
+static void tls_release_write_buffer(OSSL_RECORD_LAYER *rl)
+{
+    SSL3_BUFFER *wb;
+    size_t pipes;
+    SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
+
+    pipes = (s == NULL) ? 0 : s->rlayer.numwpipes;
+
+    while (pipes > 0) {
+        wb = &rl->wbuf[pipes - 1];
+
+        if (SSL3_BUFFER_is_app_buffer(wb))
+            SSL3_BUFFER_set_app_buffer(wb, 0);
+        else
+            OPENSSL_free(wb->buf);
+        wb->buf = NULL;
+        pipes--;
+    }
+    /* TODO(RECLAYER): REMOVE ME */
+    if (rl->direction == OSSL_RECORD_DIRECTION_WRITE)
+        s->rlayer.numwpipes = 0;
+}
+
 int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
 {
     unsigned char *p;
@@ -1223,6 +1311,8 @@ static void tls_int_free(OSSL_RECORD_LAYER *rl)
     BIO_free(rl->next);
     SSL3_BUFFER_release(&rl->rbuf);
 
+    tls_release_write_buffer(rl);
+
     EVP_CIPHER_CTX_free(rl->enc_ctx);
     EVP_MD_CTX_free(rl->md_ctx);
 #ifndef OPENSSL_NO_COMP
@@ -1324,7 +1414,9 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
     OSSL_RECORD_TEMPLATE prefixtempl;
     OSSL_RECORD_TEMPLATE *thistempl;
 
-    if (!ossl_assert(!RECORD_LAYER_write_pending(&s->rlayer))) {
+    /* Check we don't have pending data waiting to write */
+    if (!ossl_assert(rl->nextwbuf >= s->rlayer.numwpipes
+                     || SSL3_BUFFER_get_left(&rl->wbuf[rl->nextwbuf]) == 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         goto err;
     }
@@ -1359,7 +1451,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
          * TODO(RECLAYER): In the prefix case the first buffer can be a lot
          * smaller. It is wasteful to allocate a full sized buffer here
          */
-        if (!ssl3_setup_write_buffer(s, numtempl + prefix, 0)) {
+        if (!tls_setup_write_buffer(rl, numtempl + prefix, 0)) {
             /* SSLfatal() already called */
             return -1;
         }
@@ -1384,7 +1476,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         /* TODO(RECLAYER): Do we actually need this? */
         s->s3.empty_fragment_done = 1;
 
-        wb = &s->rlayer.wbuf[0];
+        wb = &rl->wbuf[0];
         /* TODO(RECLAYER): This alignment calculation no longer seems right */
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
         /*
@@ -1407,7 +1499,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
     for (j = 0; j < numtempl; j++) {
         thispkt = &pkt[prefix + j];
 
-        wb = &s->rlayer.wbuf[prefix + j];
+        wb = &rl->wbuf[prefix + j];
         wb->type = templates[j].type;
 
         if (using_ktls) {
@@ -1749,9 +1841,10 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         SSL3_RECORD_set_type(thiswr, thistempl->type);
 
         /* now let's set up wb */
-        SSL3_BUFFER_set_left(&s->rlayer.wbuf[j], SSL3_RECORD_get_length(thiswr));
+        SSL3_BUFFER_set_left(&rl->wbuf[j], SSL3_RECORD_get_length(thiswr));
     }
 
+    rl->nextwbuf = 0;
     /* we now just need to write the buffers */
     return tls_retry_write_records(rl);
  err:
@@ -1768,18 +1861,15 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
 {
     int i;
     SSL3_BUFFER *thiswb;
-    size_t currbuf = 0;
     size_t tmpwrit = 0;
     SSL_CONNECTION *s = rl->cbarg;
 
+    if (rl->nextwbuf >= s->rlayer.numwpipes)
+        return 1;
+
     for (;;) {
-        thiswb = &s->rlayer.wbuf[currbuf];
-        /* Loop until we find a buffer we haven't written out yet */
-        if (SSL3_BUFFER_get_left(thiswb) == 0
-            && currbuf < s->rlayer.numwpipes - 1) {
-            currbuf++;
-            continue;
-        }
+        thiswb = &rl->wbuf[rl->nextwbuf];
+
         clear_sys_error();
         if (rl->bio != NULL) {
             s->rwstate = SSL_WRITING;
@@ -1816,7 +1906,7 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
         if (i >= 0 && tmpwrit == SSL3_BUFFER_get_left(thiswb)) {
             SSL3_BUFFER_set_left(thiswb, 0);
             SSL3_BUFFER_add_offset(thiswb, tmpwrit);
-            if (currbuf + 1 < s->rlayer.numwpipes)
+            if (++(rl->nextwbuf) < s->rlayer.numwpipes)
                 continue;
             s->rwstate = SSL_NOTHING;
             /*
@@ -1824,6 +1914,11 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
              * in ciphersuites with known-IV weakness:
              */
             s->s3.empty_fragment_done = 0;
+
+            if (rl->nextwbuf == s->rlayer.numwpipes
+                    && (rl->mode & SSL_MODE_RELEASE_BUFFERS) != 0)
+                tls_release_write_buffer(rl);
+
             return 1;
         } else if (i <= 0) {
             if (SSL_CONNECTION_IS_DTLS(s)) {
@@ -1832,6 +1927,10 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
                  * using a datagram service
                  */
                 SSL3_BUFFER_set_left(thiswb, 0);
+                if (++(rl->nextwbuf) == s->rlayer.numwpipes
+                        && (rl->mode & SSL_MODE_RELEASE_BUFFERS) != 0)
+                    tls_release_write_buffer(rl);
+
             }
             return i;
         }

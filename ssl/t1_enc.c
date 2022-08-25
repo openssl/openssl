@@ -437,12 +437,8 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         goto skip_ktls;
 
     /* ktls works with user provided buffers directly */
-    if (BIO_set_ktls(bio, &crypto_info, which & SSL3_CC_WRITE)) {
-        if (which & SSL3_CC_WRITE)
-            ssl3_release_write_buffer(s);
+    if (BIO_set_ktls(bio, &crypto_info, which & SSL3_CC_WRITE))
         SSL_set_options(SSL_CONNECTION_GET_SSL(s), SSL_OP_NO_RENEGOTIATION);
-    }
-
 #endif                          /* OPENSSL_NO_KTLS */
  skip_ktls:
     s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
