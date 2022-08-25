@@ -149,6 +149,10 @@ typedef struct record_layer_st {
      * non-blocking reads)
      */
     int read_ahead;
+    /*
+     * TODO(RECLAYER): These next 2 fields can be removed when DTLS is moved to
+     * the new write record layer architecture.
+     */
     /* How many pipelines can be used to write data */
     size_t numwpipes;
     /* write IO goes into here */

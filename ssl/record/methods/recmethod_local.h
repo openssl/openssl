@@ -102,6 +102,9 @@ struct ossl_record_layer_st
     /* Next wbuf with pending data still to write */
     size_t nextwbuf;
 
+    /* How many pipelines can be used to write data */
+    size_t numwpipes;
+
     /* read IO goes into here */
     SSL3_BUFFER rbuf;
     /* each decoded record goes in here */

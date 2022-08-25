@@ -103,7 +103,7 @@ static int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
     size_t currpipe;
     SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
 
-    s->rlayer.numwpipes = numwpipes;
+    rl->numwpipes = numwpipes;
 
     if (len == 0) {
         if (SSL_CONNECTION_IS_DTLS(s))
@@ -138,7 +138,7 @@ static int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
             if (s->wbio == NULL || !BIO_get_ktls_send(s->wbio)) {
                 p = OPENSSL_malloc(len);
                 if (p == NULL) {
-                    s->rlayer.numwpipes = currpipe;
+                    rl->numwpipes = currpipe;
                     /*
                      * We've got a malloc failure, and we're still initialising
                      * buffers. We assume we're so doomed that we won't even be able
@@ -163,9 +163,8 @@ static void tls_release_write_buffer(OSSL_RECORD_LAYER *rl)
 {
     SSL3_BUFFER *wb;
     size_t pipes;
-    SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
 
-    pipes = (s == NULL) ? 0 : s->rlayer.numwpipes;
+    pipes = rl->numwpipes;
 
     while (pipes > 0) {
         wb = &rl->wbuf[pipes - 1];
@@ -177,9 +176,8 @@ static void tls_release_write_buffer(OSSL_RECORD_LAYER *rl)
         wb->buf = NULL;
         pipes--;
     }
-    /* TODO(RECLAYER): REMOVE ME */
-    if (rl->direction == OSSL_RECORD_DIRECTION_WRITE)
-        s->rlayer.numwpipes = 0;
+
+    rl->numwpipes = 0;
 }
 
 int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
@@ -1415,7 +1413,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
     OSSL_RECORD_TEMPLATE *thistempl;
 
     /* Check we don't have pending data waiting to write */
-    if (!ossl_assert(rl->nextwbuf >= s->rlayer.numwpipes
+    if (!ossl_assert(rl->nextwbuf >= rl->numwpipes
                      || SSL3_BUFFER_get_left(&rl->wbuf[rl->nextwbuf]) == 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         goto err;
@@ -1446,7 +1444,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
              && !s->s3.empty_fragment_done
              && templates[0].type == SSL3_RT_APPLICATION_DATA;
 
-    if (s->rlayer.numwpipes < numtempl + prefix) {
+    if (rl->numwpipes < numtempl + prefix) {
         /*
          * TODO(RECLAYER): In the prefix case the first buffer can be a lot
          * smaller. It is wasteful to allocate a full sized buffer here
@@ -1864,7 +1862,7 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
     size_t tmpwrit = 0;
     SSL_CONNECTION *s = rl->cbarg;
 
-    if (rl->nextwbuf >= s->rlayer.numwpipes)
+    if (rl->nextwbuf >= rl->numwpipes)
         return 1;
 
     for (;;) {
@@ -1906,7 +1904,7 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
         if (i >= 0 && tmpwrit == SSL3_BUFFER_get_left(thiswb)) {
             SSL3_BUFFER_set_left(thiswb, 0);
             SSL3_BUFFER_add_offset(thiswb, tmpwrit);
-            if (++(rl->nextwbuf) < s->rlayer.numwpipes)
+            if (++(rl->nextwbuf) < rl->numwpipes)
                 continue;
             s->rwstate = SSL_NOTHING;
             /*
@@ -1915,7 +1913,7 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
              */
             s->s3.empty_fragment_done = 0;
 
-            if (rl->nextwbuf == s->rlayer.numwpipes
+            if (rl->nextwbuf == rl->numwpipes
                     && (rl->mode & SSL_MODE_RELEASE_BUFFERS) != 0)
                 tls_release_write_buffer(rl);
 
@@ -1927,7 +1925,7 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
                  * using a datagram service
                  */
                 SSL3_BUFFER_set_left(thiswb, 0);
-                if (++(rl->nextwbuf) == s->rlayer.numwpipes
+                if (++(rl->nextwbuf) == rl->numwpipes
                         && (rl->mode & SSL_MODE_RELEASE_BUFFERS) != 0)
                     tls_release_write_buffer(rl);
 
