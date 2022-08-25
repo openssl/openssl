@@ -189,13 +189,16 @@ B<X509_PURPOSE_NS_SSL_SERVER>, B<X509_PURPOSE_SMIME_SIGN>,
 B<X509_PURPOSE_SMIME_ENCRYPT>, B<X509_PURPOSE_CRL_SIGN>, B<X509_PURPOSE_ANY>,
 B<X509_PURPOSE_OCSP_HELPER>, B<X509_PURPOSE_TIMESTAMP_SIGN> and
 B<X509_PURPOSE_CODE_SIGN>.  It is also
-possible to create a custom purpose value. Setting a purpose will ensure that
-the key usage declared within certificates in the chain being verified is
-consistent with that purpose as well as, potentially, other checks. Every
-purpose also has an associated default trust value which will also be set at the
-same time. During verification this trust setting will be verified to check it
-is consistent with the trust set by the system administrator for certificates in
-the chain.
+possible to create a custom purpose value. Setting a purpose requests that
+the key usage and extended key usage (EKU) extensions optionally declared within
+the certificate and its chain are verified to be consistent with that purpose.
+For SSL client, SSL server, and S/MIME purposes, the EKU is checked also for the
+CA certificates along the chain, including any given trust anchor certificate.
+Potentially also further checks are done (depending on the purpose given).
+Every purpose also has an associated default trust value, which will also be set
+at the same time. During verification, this trust setting will be verified
+to check whether it is consistent with the trust set by the system administrator
+for certificates in the chain.
 
 X509_STORE_CTX_set_trust() sets the trust value for the target certificate
 being verified in the I<ctx>. Built-in available values for the I<trust>
