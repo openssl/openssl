@@ -839,10 +839,21 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
 {
     int i_ext;
 
-    /* If ca is true we must return if this is a valid CA certificate. */
+    /*
+     * If require_ca is true we must check if this is a valid CA certificate.
+     * The extra requirements by the CA/Browser Forum are not checked.
+     */
     if (require_ca)
         return check_ca(x);
 
+    /*
+     * Key Usage is checked according to RFC 5280 and
+     * Extended Key Usage attributes is checked according to RFC 3161.
+     * The extra (and somewhat conflicting) CA/Browser Forum
+     * Baseline Requirements for the Issuance and Management of
+     * Publicly‐Trusted Code Signing Certificates, Version 3.0.0,
+     * Section 7.1.2.3: Code signing and Timestamp Certificate are not checked.
+     */
     /*
      * Check the optional key usage field:
      * if Key Usage is present, it must be one of digitalSignature
@@ -871,21 +882,24 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
 {
     int i_ext;
 
-    /* If ca is true we must return if this is a valid CA certificate. */
+    /*
+     * If require_ca is true we must check if this is a valid CA certificate.
+     * The extra requirements by the CA/Browser Forum are not checked.
+     */
     if (require_ca)
         return check_ca(x);
 
     /*
      * Check the key usage and extended key usage fields:
      *
-     * Reference: CA Browser Forum,
-     * Baseline Requirements for the Issuance and Management of 
+     * Reference: CA/Browser Forum,
+     * Baseline Requirements for the Issuance and Management of
      * Publicly‐Trusted Code Signing Certificates, Version 3.0.0,
      * Section 7.1.2.3: Code signing and Timestamp Certificate
      *
      * Checking covers Key Usage and Extended Key Usage attributes.
-     * Other properties like CRL Distribution Points and Authoriy
-     * Information Access (AIA) are not checked.
+     * The certificatePolicies, cRLDistributionPoints (CDP), and
+     * authorityInformationAccess (AIA) extensions are so far not checked.
      */
     /* Key Usage */
     if ((x->ex_flags & EXFLAG_KUSAGE) == 0)

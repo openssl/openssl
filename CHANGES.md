@@ -170,6 +170,11 @@ OpenSSL 3.2
 
    *Tomáš Mráz*
 
+ * Add X.509 certificate codeSigning purpose and related checks on key usage and
+   extended key usage of the leaf certificate according to the CA/Browser Forum.
+
+   * Lutz Jänicke*
+
  * Fix and extend certificate handling and the apps `x509`, `verify` etc.
    such as adding a trace facility for debugging certificate chain building.
 
