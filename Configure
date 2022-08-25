@@ -27,7 +27,7 @@ use OpenSSL::config;
 my $orig_death_handler = $SIG{__DIE__};
 $SIG{__DIE__} = \&death_handler;
 
-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]thread-pool] [[no-]default-thread-pool] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
 
 my $banner = <<"EOF";
 
@@ -81,6 +81,10 @@ EOF
 # [no-]threads  [don't] try to create a library that is suitable for
 #               multithreaded applications (default is "threads" if we
 #               know how to do it)
+# [no-]thread-pool
+#               [don't] allow thread pool functionality
+# [no-]default-thread-pool
+#               [don't] allow default thread pool functionality
 # [no-]shared   [don't] try to create shared libraries when supported.
 # [no-]pic      [don't] try to build position independent code when supported.
 #               If disabled, it also disables shared and dynamic-engine.
@@ -426,6 +430,7 @@ my @disablables = (
     "comp",
     "crypto-mdebug",
     "ct",
+    "default-thread-pool",
     "deprecated",
     "des",
     "devcryptoeng",
@@ -497,6 +502,7 @@ my @disablables = (
     "stdio",
     "tests",
     "tfo",
+    "thread-pool",
     "threads",
     "tls",
     "trace",
@@ -806,6 +812,8 @@ while (@argvcopy)
         s /^-?-?shared$/enable-shared/;
         s /^sctp$/enable-sctp/;
         s /^threads$/enable-threads/;
+        s /^thread-pool$/enable-thread-pool/;
+        s /^default-thread-pool$/enable-default-thread-pool/;
         s /^zlib$/enable-zlib/;
         s /^zlib-dynamic$/enable-zlib-dynamic/;
         s /^fips$/enable-fips/;
@@ -1392,6 +1400,14 @@ if (grep { $_ =~ /(?:^|\s)-static(?:\s|$)/ } @{$config{LDFLAGS}}) {
     disable('static', 'pic', 'threads');
 }
 
+if ($disabled{threads}) {
+    disable('unavailable', 'thread-pool');
+}
+
+if ($disabled{"thread-pool"}) {
+    disable('unavailable', 'default-thread-pool');
+}
+
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
@@ -1489,6 +1505,12 @@ foreach (grep /^-fsanitize=/, @{$config{CFLAGS} || []}) {
 # code knows about it.  Any other flag is taken care of by the configs.
 unless($disabled{threads}) {
     push @{$config{openssl_feature_defines}}, "OPENSSL_THREADS";
+}
+unless($disabled{"thread-pool"}) {
+    push @{$config{openssl_feature_defines}}, "OPENSSL_THREAD_POOL";
+}
+unless($disabled{"default-thread-pool"}) {
+    push @{$config{openssl_feature_defines}}, "OPENSSL_DEFAULT_THREAD_POOL";
 }
 
 my $no_shared_warn=0;
