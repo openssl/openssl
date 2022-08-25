@@ -5445,9 +5445,6 @@ CMS_EnvelopedData_decrypt               ?	3_1_0	EXIST::FUNCTION:CMS
 CMS_SignedData_free                     ?	3_1_0	EXIST::FUNCTION:CMS
 CMS_SignedData_new                      ?	3_1_0	EXIST::FUNCTION:CMS
 CMS_SignedData_verify                   ?	3_1_0	EXIST::FUNCTION:CMS
-CRYPTO_malloc_with_err                  ?	3_1_0	EXIST::FUNCTION:
-CRYPTO_realloc_with_err                 ?	3_1_0	EXIST::FUNCTION:
-CRYPTO_clear_realloc_with_err           ?	3_1_0	EXIST::FUNCTION:
 OPENSSL_strcasecmp                      ?	3_0_3	EXIST::FUNCTION:
 OPENSSL_strncasecmp                     ?	3_0_3	EXIST::FUNCTION:
 BIO_s_dgram_mem                         ?	3_1_0	EXIST::FUNCTION:

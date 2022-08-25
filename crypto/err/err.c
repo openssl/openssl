@@ -689,7 +689,8 @@ ERR_STATE *ossl_err_get_state_int(void)
         if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
             return NULL;
 
-        state = CRYPTO_zalloc(sizeof(*state), OPENSSL_FILE, OPENSSL_LINE);
+        /* calling CRYPTO_zalloc(.., NULL, 0) prevents mem alloc error loop */
+        state = CRYPTO_zalloc(sizeof(*state), NULL, 0);
         if (state == NULL) {
             CRYPTO_THREAD_set_local(&err_thread_local, NULL);
             return NULL;
@@ -895,49 +896,4 @@ void err_clear_last_constant_time(int clear)
     clear = constant_time_select_int(constant_time_eq_int(clear, 0),
                                      0, ERR_FLAG_CLEAR);
     es->err_flags[top] |= clear;
-}
-
-static void *raise_malloc_failure(const char *file, int line, const char *func)
-{
-    /*
-     * Mem alloc error loop while reporting malloc error is prevented by using
-     * CRYPTO_zalloc() rather than OPENSSL_zalloc for ERR_STATE allocation-
-     */
-    ERR_new();
-    ERR_set_debug(file, line, func);
-    ERR_set_error(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, NULL);
-    return NULL;
-}
-
-void *CRYPTO_malloc_with_err(void *(*fn)(size_t, const char *, int), size_t num,
-                             const char *file, int line, const char *func)
-{
-    void *ptr = (*fn)(num, file, line);
-
-    if (num == 0 || ptr != NULL)
-        return ptr; /* all good */
-
-    return raise_malloc_failure(file, line, func);
-}
-
-void *CRYPTO_realloc_with_err(void *addr, size_t num,
-                             const char *file, int line, const char *func)
-{
-    void *ptr = CRYPTO_realloc(addr, num, file, line);
-
-    if (num == 0 || ptr != NULL)
-        return ptr; /* all good */
-
-    return raise_malloc_failure(file, line, func);
-}
-
-void *CRYPTO_clear_realloc_with_err(void *addr, size_t old_num, size_t num,
-                                    const char *file, int line, const char *func)
-{
-    void *ptr = CRYPTO_clear_realloc(addr, old_num, num, file, line);
-
-    if (num == 0 || ptr != NULL)
-        return ptr; /* all good */
-
-    return raise_malloc_failure(file, line, func);
 }

@@ -93,25 +93,14 @@ int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock);
 /* No longer needed, so this is a no-op */
 #define OPENSSL_malloc_init() while(0) continue
 
-void *CRYPTO_malloc_with_err(void *(*fn)(size_t, const char *, int), size_t num,
-                             const char *file, int line, const char *func);
-void *CRYPTO_realloc_with_err(void *addr, size_t num,
-                              const char *file, int line, const char *func);
-void *CRYPTO_clear_realloc_with_err(void *addr, size_t old_num, size_t num,
-                                    const char *file, int line,
-                                      const char *func);
 # define OPENSSL_malloc(num) \
-    CRYPTO_malloc_with_err(CRYPTO_malloc, num, \
-                           OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC)
+        CRYPTO_malloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_zalloc(num) \
-    CRYPTO_malloc_with_err(CRYPTO_zalloc, num, \
-                           OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC)
+        CRYPTO_zalloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_realloc(addr, num) \
-    CRYPTO_realloc_with_err(addr, num, \
-                            OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC)
+        CRYPTO_realloc(addr, num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_clear_realloc(addr, old_num, num) \
-    CRYPTO_clear_realloc_with_err(addr, old_num, num, \
-                                  OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC)
+        CRYPTO_clear_realloc(addr, old_num, num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_clear_free(addr, num) \
         CRYPTO_clear_free(addr, num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_free(addr) \
@@ -123,11 +112,9 @@ void *CRYPTO_clear_realloc_with_err(void *addr, size_t old_num, size_t num,
 # define OPENSSL_strndup(str, n) \
         CRYPTO_strndup(str, n, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_malloc(num) \
-    CRYPTO_malloc_with_err(CRYPTO_secure_malloc, num, \
-                           OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC)
+        CRYPTO_secure_malloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_zalloc(num) \
-    CRYPTO_malloc_with_err(CRYPTO_secure_zalloc, num, \
-                           OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC)
+        CRYPTO_secure_zalloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_free(addr) \
         CRYPTO_secure_free(addr, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_clear_free(addr, num) \
