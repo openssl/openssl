@@ -41,6 +41,13 @@ int ssl3_setup_write_buffer(SSL_CONNECTION *s, size_t numwpipes, size_t len)
     SSL3_BUFFER *wb;
     size_t currpipe;
 
+    /*
+     * TODO(RECLAYER): Eventually this function can be removed once everything
+     * is moved to the write record layer.
+     */
+    if (!SSL_CONNECTION_IS_DTLS(s))
+        return 1;
+
     s->rlayer.numwpipes = numwpipes;
 
     if (len == 0) {

@@ -96,6 +96,12 @@ struct ossl_record_layer_st
     uint64_t options;
     uint32_t mode;
 
+    /* write IO goes into here */
+    SSL3_BUFFER wbuf[SSL_MAX_PIPELINES + 1];
+
+    /* Next wbuf with pending data still to write */
+    size_t nextwbuf;
+
     /* read IO goes into here */
     SSL3_BUFFER rbuf;
     /* each decoded record goes in here */

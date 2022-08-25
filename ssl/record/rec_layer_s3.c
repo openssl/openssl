@@ -82,8 +82,11 @@ int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl)
 
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl)
 {
-    return (rl->numwpipes > 0)
-        && SSL3_BUFFER_get_left(&rl->wbuf[rl->numwpipes - 1]) != 0;
+    /* TODO(RECLAYER): Remove me when DTLS is moved to the write record layer */
+    if (SSL_CONNECTION_IS_DTLS(rl->s))
+        return (rl->numwpipes > 0)
+            && SSL3_BUFFER_get_left(&rl->wbuf[rl->numwpipes - 1]) != 0;
+    return rl->wpend_tot > 0;
 }
 
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
@@ -198,7 +201,6 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
 #if 0 && !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
     size_t nw;
 #endif
-    SSL3_BUFFER *wb;
     int i;
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
     OSSL_RECORD_TEMPLATE tmpls[SSL_MAX_PIPELINES];
@@ -206,7 +208,6 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
     if (s == NULL)
         return -1;
 
-    wb = &s->rlayer.wbuf[0];
     s->rwstate = SSL_NOTHING;
     tot = s->rlayer.wnum;
     /*
@@ -219,7 +220,8 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
      * report the error in a way the user will notice
      */
     if ((len < s->rlayer.wnum)
-        || ((wb->left != 0) && (len < (s->rlayer.wnum + s->rlayer.wpend_tot)))) {
+        || ((s->rlayer.wpend_tot != 0)
+            && (len < (s->rlayer.wnum + s->rlayer.wpend_tot)))) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_LENGTH);
         return -1;
     }
@@ -237,8 +239,8 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
      * into init unless we have writes pending - in which case we should finish
      * doing that first.
      */
-    if (wb->left == 0 && (s->key_update != SSL_KEY_UPDATE_NONE
-                          || s->ext.extra_tickets_expected > 0))
+    if (s->rlayer.wpend_tot == 0 && (s->key_update != SSL_KEY_UPDATE_NONE
+                                     || s->ext.extra_tickets_expected > 0))
         ossl_statem_set_in_init(s, 1);
 
     /*
@@ -417,9 +419,6 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
     } else
 #endif  /* !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK */
     if (tot == len) {           /* done? */
-        if (s->mode & SSL_MODE_RELEASE_BUFFERS && !SSL_CONNECTION_IS_DTLS(s))
-            ssl3_release_write_buffer(s);
-
         *written = tot;
         return 1;
     }
@@ -532,14 +531,9 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
             return i;
         }
 
-        if (s->rlayer.wpend_tot == n ||
-            (type == SSL3_RT_APPLICATION_DATA &&
-             (s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE))) {
-            if (s->rlayer.wpend_tot == n
-                    && (s->mode & SSL_MODE_RELEASE_BUFFERS) != 0
-                    && !SSL_CONNECTION_IS_DTLS(s))
-                ssl3_release_write_buffer(s);
-
+        if (s->rlayer.wpend_tot == n
+                || (type == SSL3_RT_APPLICATION_DATA
+                    && (s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE) != 0)) {
             *written = tot + s->rlayer.wpend_tot;
             s->rlayer.wpend_tot = 0;
             return 1;
