@@ -1970,6 +1970,18 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
         return 0;
     }
     /*
+     * Check whether the signature algorithm's digest is OK for us. This code
+     * path is only used when verifying, so checking for the verification use
+     * case is sufficient here.
+     */
+    if (md != NULL &&
+            EVP_signature_md_algorithm_allowed(
+                SSL_CONNECTION_GET_CTX(s)->libctx,
+                EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION, md, NULL) <= 0) {
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_WRONG_SIGNATURE_TYPE);
+        return 0;
+    }
+    /*
      * Make sure security callback allows algorithm. For historical
      * reasons we have to pass the sigalg as a two byte char array.
      */
@@ -2495,6 +2507,8 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
 {
     unsigned char sigalgstr[2];
     int secbits;
+    const EVP_MD *md = NULL;
+    int usecase = EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION;
 
     if (lu == NULL || !lu->enabled)
         return 0;
@@ -2510,6 +2524,27 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
         && (lu->sig == EVP_PKEY_DSA || lu->hash_idx == SSL_MD_SHA1_IDX
             || lu->hash_idx == SSL_MD_MD5_IDX
             || lu->hash_idx == SSL_MD_SHA224_IDX))
+        return 0;
+
+    /*
+     * Check whether the signature algorithm's digest is acceptable.
+     *
+     * When invoked with SSL_SECOP_SIGALG_MASK, SSL_SECOP_SIGALG_SUPPORTED, or
+     * SSL_SECOP_SIGALG_CHECK, the returned list is used to indicate to the
+     * peer which signature algorithms the implementation would be willing to
+     * verify, so check for that by default.
+     *
+     * When invoked with SSL_SECOP_SIGALG_SHARED, we are trying to find
+     * a signature algorithm to use to sign a message, so set the usecase to
+     * EVP_SIGNATURE_MD_ALGORITHMS_SIGNING.
+     */
+    if (op == SSL_SECOP_SIGALG_SHARED)
+        usecase = EVP_SIGNATURE_MD_ALGORITHMS_SIGNING;
+    if (!tls1_lookup_md(SSL_CONNECTION_GET_CTX(s), lu, &md))
+        return 0;
+    if (md != NULL &&
+            EVP_signature_md_algorithm_allowed(
+                SSL_CONNECTION_GET_CTX(s)->libctx, usecase, md, NULL) <= 0)
         return 0;
 
     /* See if public key algorithm allowed */

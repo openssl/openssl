@@ -1,0 +1,141 @@
+=pod
+
+=head1 NAME
+
+EVP_signature_md_algorithm_allowed, EVP_signature_md_algorithms_get,
+EVP_signature_md_algorithm_set, EVP_signature_md_algorithms_set,
+EVP_SIGNATURE_MD_ALGORITHMS_SIGNING, EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION
+- EVP signature digest algorithm filter routines
+
+=head1 SYNOPSIS
+
+ #include <openssl/evp.h>
+
+ #define EVP_SIGNATURE_MD_ALGORITHMS_SIGNING (0)
+ #define EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION (1)
+
+ int EVP_signature_md_algorithm_allowed(OSSL_LIB_CTX *libctx, int usecase,
+                                        const EVP_MD *md, EVP_PKEY_CTX *ctx);
+ int EVP_signature_md_algorithm_set(OSSL_LIB_CTX *libctx, int usecase,
+                                    EVP_MD *md, int allow);
+ int EVP_signature_md_algorithms_set(OSSL_LIB_CTX *libctx, int usecase,
+                                     const char *value);
+ char *EVP_signature_md_algorithms_get(OSSL_LIB_CTX *libctx, int usecase);
+
+=head1 DESCRIPTION
+
+The EVP signature digest algorithm filter routines provide a way for system
+administrators and applications to configure which digest algorithms they
+consider secure enough for use in signatures.
+
+=over 4
+
+=item EVP_signature_md_algorithm_allowed()
+
+Check whether the given B<EVP_MD> is allowed.
+
+When B<ctx> is not B<NULL> and the provider associated with the B<EVP_PKEY_CTX>
+supports limiting the allowed digest algorithms, check whether this
+B<EVP_PKEY_CTX> allows the given B<md> for signature creation or signature
+verification, depending on the given B<usecase>.
+
+When B<ctx> is B<NULL> or the provider associated with a non-B<NULL>
+B<EVP_PKEY_CTX> does not support limiting the allowed digest algorithms, check
+whether the given digest algorithm is supported in the given B<OSSL_LIB_CTX>.
+
+Possible values for B<usecase> are B<EVP_SIGNATURE_MD_ALGORITHMS_SIGNING> to
+check for signing, andB<EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION> for
+verification.
+
+As a rule of thumb, pass a specific B<EVP_PKEY_CTX> if you want to check
+whether a specific operation will succeed.  Pass B<NULL> if you want to check
+what will happen in TLS and to check the system administrator's intentions.
+
+Returns a negative value on error, 0 if the given digest algorithm is not
+accepted for the given use case, and a positive value otherwise.
+
+=item EVP_signature_md_algorithm_set()
+
+Allow or disallow the given B<EVP_MD> in the given B<OSSL_LIB_CTX> for
+signature creation or verification depending on the value of B<usecase>.  Pass
+0 for B<allow> to deny use of the given digest algorithm, pass any other value
+to allow it.
+
+Libraries and applications authors should take care to not call this on the
+root B<OSSL_LIB_CTX> because doing so will modify the behavior or all other
+code running in the same address space that uses OpenSSL.  Instead, authors
+should create their own B<OSSL_LIB_CTX>.
+
+=item EVP_signature_md_algorithms_set()
+
+Replace the list of allowed digest algorithms for signature creation
+(B<EVP_SIGNATURE_MD_ALGORITHMS_SIGNING>) or signature verification
+(B<EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION>) in the given B<OSSL_LIB_CTX> with
+the given colon-separated string B<value>. See the the
+B<signature_md_algorithms_signing> option in L<config(5)> for a detailed
+description of the expected format.
+
+Libraries and applications authors should take care to not call this on the
+root B<OSSL_LIB_CTX> because doing so will modify the behavior or all other
+code running in the same address space that uses OpenSSL.  Instead, authors
+should create their own B<OSSL_LIB_CTX>.
+
+=item EVP_signature_md_algorithms_get()
+
+Get a copy of the current algorithm allow- or denylist for the use case
+specified in B<usecase>.  Returns a copy that must be freed with
+L<OPENSSL_free(3)> on success, and B<NULL> when no restrictions are set.
+
+=back
+
+=head1 RETURN VALUES
+
+=over 4
+
+=item EVP_signature_md_algorithm_allowed()
+
+Returns a negative value on error, 0 if the given digest algorithm is not
+accepted for the given use case, and a positive value otherwise.
+
+=item EVP_signature_md_algorithm_set(), EVP_signature_md_algorithms_set()
+
+Returns 1 for success or 0 for failure.
+
+=item EVP_signature_md_algorithms_get()
+
+Returns an allocated string on success, which must be freed using
+L<OPENSSL_free(3)>.  When no restrictions are set, returns B<NULL>.
+
+=back
+
+=head1 NOTES
+
+These functions are intended to provide a way for system administrators to
+indicate that they no longer consider a certain digest algorithm secure enough
+for use in signatures (for example, due to the discovery of chosen-prefix
+collision attacks).
+
+Applications and libraries should consider carefully whether overriding the
+system administrator's configuration is in the user's best interest before
+doing so.
+
+=head1 SEE ALSO
+
+L<config(5)>
+
+=head1 HISTORY
+
+The EVP_signature_md_algorithm_allowed(), EVP_signature_md_algorithm_set(),
+EVP_signature_md_algorithms_set(), and EVP_signature_md_algorithms_get()
+functions were added in OpenSSL 3.2.
+
+=head1 COPYRIGHT
+
+Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

@@ -118,7 +118,8 @@ typedef struct ossl_ex_data_global_st {
 # define OSSL_LIB_CTX_CHILD_PROVIDER_INDEX          18
 # define OSSL_LIB_CTX_THREAD_INDEX                  19
 # define OSSL_LIB_CTX_DECODER_CACHE_INDEX           20
-# define OSSL_LIB_CTX_MAX_INDEXES                   20
+# define OSSL_LIB_CTX_SIGNATURE_MD_ALGORITHMS_INDEX 21
+# define OSSL_LIB_CTX_MAX_INDEXES                   21
 
 OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx);
@@ -160,5 +161,7 @@ char *ossl_ipaddr_to_asc(unsigned char *p, int len);
 char *ossl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);
 unsigned char *ossl_hexstr2buf_sep(const char *str, long *buflen,
                                    const char sep);
+
+int ossl_digest_in_allowlist(const EVP_MD *md, const char *digest_algorithms);
 
 #endif

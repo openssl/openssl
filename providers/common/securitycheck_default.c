@@ -13,6 +13,7 @@
 #include <openssl/core.h>
 #include <openssl/core_names.h>
 #include <openssl/obj_mac.h>
+#include <openssl/evp.h>
 #include "prov/securitycheck.h"
 #include "internal/nelem.h"
 
@@ -29,7 +30,8 @@ int ossl_tls1_prf_ems_check_enabled(OSSL_LIB_CTX *libctx)
 }
 
 int ossl_digest_rsa_sign_get_md_nid(OSSL_LIB_CTX *ctx, const EVP_MD *md,
-                                    ossl_unused int sha1_allowed)
+                                    const char *digest_algorithms,
+                                    int operation)
 {
     int mdnid;
 
@@ -42,8 +44,12 @@ int ossl_digest_rsa_sign_get_md_nid(OSSL_LIB_CTX *ctx, const EVP_MD *md,
         { NID_ripemd160, OSSL_DIGEST_NAME_RIPEMD160 },
     };
 
-    mdnid = ossl_digest_get_approved_nid_with_sha1(ctx, md, 1);
+    mdnid = ossl_digest_get_approved_nid(md);
     if (mdnid == NID_undef)
         mdnid = ossl_digest_md_to_nid(md, name_to_nid, OSSL_NELEM(name_to_nid));
+
+    if (!ossl_digest_securitycheck(ctx, md, digest_algorithms, operation))
+        return -1; /* digest not allowed */
+
     return mdnid;
 }

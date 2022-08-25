@@ -12,10 +12,12 @@
  * internal use.
  */
 #include "internal/deprecated.h"
+#include "internal/sizes.h"
 
 #include <stdio.h>
 #include <string.h>
 #include "internal/cryptlib.h"
+#include <openssl/conf.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/params.h>
@@ -24,6 +26,7 @@
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include "crypto/evp.h"
+#include "crypto/context.h"
 #include "crypto/cryptlib.h"
 #include "internal/provider.h"
 #include "evp_local.h"
@@ -1228,3 +1231,501 @@ EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
 }
 
 #endif /* !defined(FIPS_MODULE) */
+
+typedef struct ossl_signature_md_algorithms_st {
+    CRYPTO_RWLOCK *lock;
+    char *signing;
+    char *verification;
+} OSSL_SIGNATURE_MD_ALGORITHMS;
+
+void ossl_ctx_signature_md_algorithms_free(void *vsmdalgs)
+{
+    OSSL_SIGNATURE_MD_ALGORITHMS *smdalgs = vsmdalgs;
+
+    if (smdalgs != NULL) {
+        CRYPTO_THREAD_lock_free(smdalgs->lock);
+        OPENSSL_free(smdalgs->signing);
+        OPENSSL_free(smdalgs->verification);
+        OPENSSL_free(smdalgs);
+    }
+}
+
+void *ossl_ctx_signature_md_algorithms_new(OSSL_LIB_CTX *ctx)
+{
+    OSSL_SIGNATURE_MD_ALGORITHMS *smdalgs = OPENSSL_zalloc(sizeof(OSSL_SIGNATURE_MD_ALGORITHMS));
+    if (smdalgs == NULL)
+        return NULL;
+
+    smdalgs->lock = CRYPTO_THREAD_lock_new();
+    if (smdalgs->lock == NULL)
+        goto err;
+
+    return smdalgs;
+
+err:
+    CRYPTO_THREAD_lock_free(smdalgs->lock);
+    OPENSSL_free(smdalgs);
+    return NULL;
+}
+
+#ifndef FIPS_MODULE
+
+int EVP_signature_md_algorithms_set(OSSL_LIB_CTX *libctx, int usecase,
+                                    const char *value)
+{
+    char *copy = NULL;
+    OSSL_SIGNATURE_MD_ALGORITHMS *smdalgs = ossl_lib_ctx_get_data(
+        libctx, OSSL_LIB_CTX_SIGNATURE_MD_ALGORITHMS_INDEX);
+    if (smdalgs == NULL)
+        return 0;
+
+    copy = OPENSSL_strdup(value);
+    if (copy == NULL)
+        goto err;
+
+    if (!CRYPTO_THREAD_write_lock(smdalgs->lock))
+        goto err;
+
+    switch (usecase) {
+    case EVP_SIGNATURE_MD_ALGORITHMS_SIGNING:
+        OPENSSL_free(smdalgs->signing);
+        smdalgs->signing = copy;
+        break;
+    case EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION:
+        OPENSSL_free(smdalgs->verification);
+        smdalgs->verification = copy;
+        break;
+    default:
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto unlock_err;
+    }
+    CRYPTO_THREAD_unlock(smdalgs->lock);
+
+    return 1;
+
+unlock_err:
+    CRYPTO_THREAD_unlock(smdalgs->lock);
+
+err:
+    OPENSSL_free(copy);
+    return 0;
+}
+
+int EVP_signature_md_algorithm_set(OSSL_LIB_CTX *libctx, int usecase,
+                                   const EVP_MD *md, int allow)
+{
+    const char *digest_algorithms = NULL;
+    const char *p;
+    char *w;
+
+    char **parts = NULL;
+    size_t parts_capacity = 0;
+    size_t parts_size = 0;
+
+    char *new_digest_algorithms = NULL;
+    size_t new_digest_algorithms_size = 0;
+
+    char *buf = NULL;
+
+    int already_present = 0;
+    int allowlist = 1;
+    size_t idx;
+
+    OSSL_SIGNATURE_MD_ALGORITHMS *smdalgs = ossl_lib_ctx_get_data(
+        libctx, OSSL_LIB_CTX_SIGNATURE_MD_ALGORITHMS_INDEX);
+    if (smdalgs == NULL)
+        return 0;
+
+    if (!CRYPTO_THREAD_write_lock(smdalgs->lock))
+        goto err;
+
+    switch (usecase) {
+    case EVP_SIGNATURE_MD_ALGORITHMS_SIGNING:
+        digest_algorithms = smdalgs->signing;
+        break;
+    case EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION:
+        digest_algorithms = smdalgs->verification;
+        break;
+    default:
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto unlock_err;
+    }
+
+    if (digest_algorithms == NULL || *digest_algorithms == '\0' || strcmp("ALL", digest_algorithms) == 0) {
+        /* If digest_algorithms is "ALL", NULL or empty, everything is allowed. */
+        parts_capacity++;
+        parts = OPENSSL_realloc(parts, parts_capacity * sizeof(*parts));
+        if (parts == NULL)
+            goto unlock_err;
+
+        parts[0] = OPENSSL_strdup("ALL");
+        if (parts[0] == NULL)
+            goto unlock_err;
+        parts_size++;
+
+        allowlist = 0;
+    } else {
+        /* Otherwise, split into entries and assign them to parts for easier
+         * processing. */
+
+        char **new_parts = NULL;
+        parts_capacity += 16;
+        new_parts = OPENSSL_realloc(parts, parts_capacity * sizeof(*parts));
+        if (new_parts == NULL)
+            goto unlock_err;
+        parts = new_parts;
+
+        p = digest_algorithms;
+
+        while (p && *p != '\0') {
+            size_t len;
+            char *end = strchr(p, ':');
+            const char *next = NULL;
+
+            if (end == NULL) {
+                len = strlen(p);
+                next = p + len;
+            } else {
+                len = end - p;
+                next = end + 1;
+            }
+
+            /* Skip empty entries or entries that are too long to be valid
+             * names. */
+            if (len > 0 && len < OSSL_MAX_NAME_SIZE) {
+                char candidate[OSSL_MAX_NAME_SIZE + 1];
+
+                strncpy(candidate, p, len);
+                candidate[len] = '\0';
+
+                if (parts_size == 0 && strcmp(candidate, "ALL") == 0) {
+                    /* If the first element is "ALL", all other entries should
+                     * be deny entries. */
+                    allowlist = 0;
+                } else if ((allowlist && *candidate == '!') || (!allowlist && *candidate != '!')) {
+                    /* If no entries are allowed by default, ignore explicit
+                     * deny entries. If everything is allowed by default,
+                     * ignore everything that doesn't explicitly deny an
+                     * algorithm. */
+                    p = next;
+                    continue;
+                }
+
+                if (allowlist && EVP_MD_is_a(md, candidate)) {
+                    if (!allow || already_present) {
+                        /* This entry is on the allowed list, but the user does
+                         * not want to allow it. It needs to be removed, so
+                         * skip it.
+                         *
+                         * OR
+                         * 
+                         * There was a previous entry for this algorithm
+                         * already, remove the duplicate by skipping it. */
+                        p = next;
+                        continue;
+                    }
+
+                    /* The entry that the user wanted to add is already
+                     * present; remember this so we don't add it twice. */
+                    already_present = 1;
+                } else if (!allowlist && EVP_MD_is_a(md, candidate + 1)) {
+                    if (allow || already_present) {
+                        /* This entry denies the algorithm the user wants to
+                         * allow. Skip it.
+                         *
+                         * OR
+                         *
+                         * There was a previous entry that denies this
+                         * algorithm already, remove the duplicate by skipping
+                         * it. */
+                        p = next;
+                        continue;
+                    }
+
+                    /* The algorithm the user wants to deny is already denied;
+                     * remember this so that we don't add another deny
+                     * statement. */
+                    already_present = 1;
+                }
+
+                /* If we haven't hit a continue statement yet, the entry is
+                 * either exactly what we want (and not a duplicate), or it
+                 * doesn't match the algorithm specified in md, so just copy it
+                 * unmodified. */
+                if (parts_size >= parts_capacity) {
+                    parts_capacity += 16;
+                    new_parts = OPENSSL_realloc(parts, parts_capacity * sizeof(*parts));
+                    if (new_parts != NULL)
+                        goto unlock_err;
+                    parts = new_parts;
+                }
+
+                parts[parts_size] = OPENSSL_strdup(candidate);
+                if (parts[parts_size] == NULL)
+                    goto unlock_err;
+                parts_size++;
+            }
+
+            p = next;
+        }
+    }
+
+    /* If an entry was not already present and the requested behavior does
+     * not match the defualt, we have to add one. */
+    if (!already_present && ((allowlist && allow) || (!allowlist && !allow))) {
+        const char *digest_name = EVP_MD_get0_name(md);
+        size_t digest_namelen = strlen(digest_name);
+
+        buf = OPENSSL_zalloc(digest_namelen + 2);
+        if (buf == NULL)
+            goto unlock_err;
+
+        BIO_snprintf(buf, digest_namelen + 2, "%s%s", allow ? "" : "!", digest_name);
+
+        if (parts_size >= parts_capacity) {
+            char **new_parts = NULL;
+            parts_capacity++;
+            new_parts = OPENSSL_realloc(parts, parts_capacity * sizeof(*parts));
+            if (new_parts == NULL)
+                goto unlock_err;
+            parts = new_parts;
+        }
+
+        parts[parts_size] = OPENSSL_strdup(buf);
+        if (parts[parts_size] == NULL)
+            goto unlock_err;
+        parts_size++;
+
+        OPENSSL_free(buf);
+        buf = NULL;
+    }
+
+    for (idx = 0; idx < parts_size; ++idx) {
+        /* We need the length of the string plus one byte for either the
+         * separating colon, or the trailing \0. */
+        new_digest_algorithms_size += strlen(parts[idx]) + 1;
+    }
+    new_digest_algorithms = OPENSSL_zalloc(new_digest_algorithms_size);
+    if (new_digest_algorithms == NULL)
+        goto unlock_err;
+
+    w = new_digest_algorithms;
+    for (idx = 0; idx < parts_size; ++idx) {
+        size_t len = strlen(parts[idx]);
+        strcpy(w, parts[idx]);
+        w += len;
+        *w = (idx + 1 == parts_size) ? '\0' : ':';
+        w++;
+    }
+
+    switch (usecase) {
+    case EVP_SIGNATURE_MD_ALGORITHMS_SIGNING:
+        OPENSSL_free(smdalgs->signing);
+        smdalgs->signing = new_digest_algorithms;
+        new_digest_algorithms = NULL;
+        break;
+    case EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION:
+        OPENSSL_free(smdalgs->verification);
+        smdalgs->verification = new_digest_algorithms;
+        new_digest_algorithms = NULL;
+        break;
+    }
+
+    CRYPTO_THREAD_unlock(smdalgs->lock);
+
+    OPENSSL_free(new_digest_algorithms);
+    for (idx = 0; idx < parts_size; ++idx) {
+        OPENSSL_free(parts[idx]);
+    }
+    OPENSSL_free(parts);
+
+    return 1;
+
+unlock_err:
+    CRYPTO_THREAD_unlock(smdalgs->lock);
+
+err:
+    OPENSSL_free(new_digest_algorithms);
+    for (idx = 0; idx < parts_size; ++idx) {
+        OPENSSL_free(parts[idx]);
+    }
+    OPENSSL_free(parts);
+    OPENSSL_free(buf);
+    return 0;
+}
+
+char *EVP_signature_md_algorithms_get(OSSL_LIB_CTX *libctx, int usecase)
+{
+    char *digests = NULL;
+    OSSL_SIGNATURE_MD_ALGORITHMS *smdalgs = ossl_lib_ctx_get_data(
+        libctx, OSSL_LIB_CTX_SIGNATURE_MD_ALGORITHMS_INDEX);
+    if (smdalgs == NULL)
+        goto err;
+
+    if (!CRYPTO_THREAD_read_lock(smdalgs->lock))
+        goto err;
+
+    switch (usecase) {
+    case EVP_SIGNATURE_MD_ALGORITHMS_SIGNING:
+        digests = OPENSSL_strdup(smdalgs->signing);
+        break;
+    case EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION:
+        digests = OPENSSL_strdup(smdalgs->verification);
+        break;
+    default:
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto unlock_err;
+    }
+
+unlock_err:
+    CRYPTO_THREAD_unlock(smdalgs->lock);
+
+err:
+    return digests;
+}
+
+int EVP_signature_md_algorithm_allowed(
+        OSSL_LIB_CTX *libctx, int usecase, const EVP_MD *md, EVP_PKEY_CTX *ctx)
+{
+    const char *param_name;
+
+    switch (usecase) {
+        case EVP_SIGNATURE_MD_ALGORITHMS_SIGNING:
+            param_name = OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_SIGNING;
+            break;
+        case EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION:
+            param_name = OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_VERIFICATION;
+            break;
+        default:
+            ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
+            return -1;
+    }
+
+    if (ctx != NULL) {
+        /* Check the given EVP_PKEY_CTX if the provider supports it. */
+        OSSL_PARAM params_size[2];
+        char *buf = NULL;
+        OSSL_PARAM *p = NULL;
+        const OSSL_PARAM *gettable_params = EVP_PKEY_CTX_gettable_params(ctx);
+
+        params_size[0] = OSSL_PARAM_construct_utf8_string(param_name, NULL, 0);
+        params_size[1] = OSSL_PARAM_construct_end();
+
+        if (gettable_params == NULL || OSSL_PARAM_locate_const(gettable_params, param_name) == NULL)
+            /* The provider either does not support checking, or no
+             * restrictions are defined. Assume every digest is permitted. */
+            return 1;
+
+        if (!EVP_PKEY_CTX_get_params(ctx, params_size))
+            return -1;
+        if ((p = OSSL_PARAM_locate(params_size, param_name)) == NULL
+                || p->return_size == 0
+                || p->return_size == OSSL_PARAM_UNMODIFIED)
+            /* The provider did not return a digest list, or it is empty;
+             * assume everything is allowed. */
+            return 1;
+
+        buf = OPENSSL_zalloc(p->return_size + 1);
+        if (buf == NULL)
+            return -1;
+        else {
+            int result = 1;
+            OSSL_PARAM params[2];
+
+            params[0] = OSSL_PARAM_construct_utf8_string(param_name, buf, p->return_size + 1);
+            params[1] = OSSL_PARAM_construct_end();
+
+            if (!EVP_PKEY_CTX_get_params(ctx, params)) {
+                OPENSSL_free(buf);
+                return -1;
+            }
+
+            result = ossl_digest_in_allowlist(md, buf);
+            OPENSSL_free(buf);
+            return result;
+        }
+    } else {
+        /* No EVP_PKEY_CTX available, check the given libctx */
+        int result = 0;
+        char *digest_algorithms = EVP_signature_md_algorithms_get(libctx, usecase);
+        if (digest_algorithms == NULL)
+            /* No restrictions configured, assume everything is allowed. */
+            return 1;
+
+        result = ossl_digest_in_allowlist(md, digest_algorithms);
+        OPENSSL_free(digest_algorithms);
+        return result;
+    }
+}
+
+#endif /* !defined(FIPS_MODULE) */
+
+int ossl_digest_in_allowlist(const EVP_MD *md, const char *digest_algorithms)
+{
+    const char *p = digest_algorithms;
+    int allowlist = 1;
+    int found = 0;
+
+    if (digest_algorithms == NULL || *digest_algorithms == '\0') {
+        /* If digest_algorithms is NULL or empty, allow everything. */
+        allowlist = 0;
+    } else if (strcmp("ALL", digest_algorithms) == 0) {
+        /* Explicitly allowed all algorithms with no restrictions */
+        return 1;
+    } else if (strncmp("ALL:", digest_algorithms, 4) == 0) {
+        /* If digest_algorithms starts with "ALL:" it is a denylist, otherwise
+         * an allowlist. */
+        allowlist = 0;
+        p = p + 4;
+    }
+
+    while (p && *p != '\0') {
+        size_t len;
+        char *end = strchr(p, ':');
+        const char *next = NULL;
+        if (end == NULL) {
+            len = strlen(p);
+            next = p + len;
+        } else {
+            len = end - p;
+            next = end + 1;
+        }
+
+        if ((*p != '!' && !allowlist) || (*p == '!' && allowlist) || len == 0) {
+            /* Allowed algorithm, but the list started with "ALL:", so no need
+             * to check, or denied algorithm, but none are implicitly allowed,
+             * so skip the explicit deny. */
+            p = next;
+            continue;
+        } else {
+            char candidate[OSSL_MAX_NAME_SIZE];
+
+            if (!allowlist) {
+                /* skip the leading '!' */
+                p++;
+                len--;
+            }
+
+            if (len == 0 || len >= OSSL_MAX_NAME_SIZE - 1) {
+                p = next;
+                continue;
+            }
+            strncpy(candidate, p, len);
+            candidate[len] = '\0';
+
+            if (EVP_MD_is_a(md, candidate)) {
+                found = 1;
+                break;
+            }
+        }
+
+        p = next;
+    }
+
+    if (allowlist != found)
+        /* If the list is an allowlist, but the algorithm was not found, or the
+         * list is a deny list and the algorithm was found, return false. */
+        return 0;
+
+    return 1;
+}

@@ -35,11 +35,10 @@ int ossl_tls1_prf_ems_check_enabled(OSSL_LIB_CTX *libctx)
 }
 
 int ossl_digest_rsa_sign_get_md_nid(OSSL_LIB_CTX *ctx, const EVP_MD *md,
-                                    int sha1_allowed)
+                                    const char *digest_algorithms, int operation)
 {
-#if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (ossl_securitycheck_enabled(ctx))
-        return ossl_digest_get_approved_nid_with_sha1(ctx, md, sha1_allowed);
-#endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
+    if (!ossl_digest_securitycheck(ctx, md, digest_algorithms, operation))
+        return -1; /* digest not allowed */
+
     return ossl_digest_get_approved_nid(md);
 }

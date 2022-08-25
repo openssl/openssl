@@ -18,6 +18,7 @@
 #include <openssl/proverr.h>
 #include <openssl/core_names.h>
 #include <openssl/obj_mac.h>
+#include "internal/cryptlib.h"
 #include "prov/securitycheck.h"
 
 /*
@@ -232,18 +233,41 @@ int ossl_dh_check_key(OSSL_LIB_CTX *ctx, const DH *dh)
 }
 #endif /* OPENSSL_NO_DH */
 
-int ossl_digest_get_approved_nid_with_sha1(OSSL_LIB_CTX *ctx, const EVP_MD *md,
-                                           int sha1_allowed)
+int ossl_digest_get_approved_nid_with_securitycheck(
+        OSSL_LIB_CTX *ctx, const EVP_MD *md, const char *digest_algorithms,
+        int operation)
 {
     int mdnid = ossl_digest_get_approved_nid(md);
 
+    if (!ossl_digest_securitycheck(ctx, md, digest_algorithms, operation))
+        return -1; /* disallowed by security checks */
+
 # if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
+    /* ossl_digest_securitycheck() already checks for SHA-1, but NID_undef is
+     * not yet refused. */
     if (ossl_securitycheck_enabled(ctx)) {
-        if (mdnid == NID_undef || (mdnid == NID_sha1 && !sha1_allowed))
-            mdnid = -1; /* disallowed by security checks */
+        if (mdnid == NID_undef)
+            return -1; /* disallowed by security checks */
     }
 # endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
+
     return mdnid;
+}
+
+int ossl_digest_securitycheck(
+        OSSL_LIB_CTX *ctx, const EVP_MD *md, const char *digest_algorithms,
+        int operation)
+{
+#if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
+    if (ossl_securitycheck_enabled(ctx)
+            && EVP_MD_is_a(md, "SHA-1")
+            && operation == EVP_PKEY_OP_SIGN) {
+        /* deny sha1 for signing only */
+        return 0;
+    }
+#endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
+
+    return ossl_digest_in_allowlist(md, digest_algorithms);
 }
 
 int ossl_digest_is_allowed(OSSL_LIB_CTX *ctx, const EVP_MD *md)

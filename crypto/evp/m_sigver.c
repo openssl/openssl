@@ -9,6 +9,8 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/sizes.h"
+#include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include "crypto/evp.h"
@@ -250,6 +252,81 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                 }
             }
             (void)ERR_pop_to_mark();
+        }
+    }
+
+    /* If this provider supports limiting the supported digest algorithms for
+     * signature creation and verification, set the parameter lists of allowed
+     * digest algorithms. Do not set these lists if the specified params
+     * contain a different algorithm list.
+     *
+     * Additionally, if the provider supports querying the list of supported
+     * digest algorithms and a list is already set, do not override it. This
+     * allows users to set their own list before calling EVP_DigestSignInit or
+     * other related functions. */
+    if (signature->settable_ctx_params != NULL
+            && signature->set_ctx_params != NULL) {
+        const char *param_key;
+        void *provctx = ossl_provider_ctx(signature->prov);
+        int usecase;
+        int already_set = 0;
+
+        const OSSL_PARAM *settable_params
+            = signature->settable_ctx_params(NULL, provctx);
+
+        if (ver) {
+            param_key = OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_VERIFICATION;
+            usecase = EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION;
+        } else {
+            param_key = OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_SIGNING;
+            usecase = EVP_SIGNATURE_MD_ALGORITHMS_SIGNING;
+        }
+
+        /* If the provider supports querying the currently set digest algorithm
+         * list, check its length. If the list is not empty, assume the user
+         * did already set a list and do not pass the libctx's default into the
+         * provider. This means that setting the list to an explicit empty
+         * string will still get overwritten, but that's not a big issue
+         * beacuse users can: (a) use "ALL" to allow all algorithms, or (b)
+         * generally include at least one allowed algorithm, since the function
+         * would otherwise be useless. */
+        if (signature->gettable_ctx_params != NULL
+                && signature->get_ctx_params != NULL) {
+            const OSSL_PARAM *gettable_params = signature->gettable_ctx_params(NULL, provctx);
+            if (gettable_params != NULL
+                    && OSSL_PARAM_locate_const(gettable_params, param_key) != NULL) {
+                OSSL_PARAM params_buf[2];
+                OSSL_PARAM *current_params = params_buf;
+
+                params_buf[0] = OSSL_PARAM_construct_utf8_string(param_key, NULL, 0);
+                params_buf[1] = OSSL_PARAM_construct_end();
+
+                if (signature->get_ctx_params(locpctx->op.sig.algctx, current_params) > 0) {
+                    const OSSL_PARAM *p = OSSL_PARAM_locate_const(current_params, param_key);
+                    if (p != NULL && p->return_size != OSSL_PARAM_UNMODIFIED && p->return_size > 0)
+                        already_set = 1;
+                }
+            }
+        }
+
+        if (settable_params != NULL
+                && OSSL_PARAM_locate_const(settable_params, param_key) != NULL
+                && OSSL_PARAM_locate_const(params, param_key) == NULL
+                && !already_set) {
+            char *digest_algs = EVP_signature_md_algorithms_get(locpctx->libctx, usecase);
+
+            if (digest_algs != NULL) {
+                OSSL_PARAM digest_algs_params[2];
+
+                digest_algs_params[0] = OSSL_PARAM_construct_utf8_string(param_key, digest_algs, 0);
+                digest_algs_params[1] = OSSL_PARAM_construct_end();
+
+                /* If this fails, the provider probably doesn't support it
+                 * despite claiming to do so. The default should be to accept
+                 * everything, so that's what we do here. */
+                signature->set_ctx_params(locpctx->op.sig.algctx, digest_algs_params);
+                OPENSSL_free(digest_algs);
+            }
         }
     }
 

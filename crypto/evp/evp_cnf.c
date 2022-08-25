@@ -57,6 +57,20 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
                 ERR_raise(ERR_LIB_EVP, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
                 return 0;
             }
+        } else if (strcmp(oval->name, "signature_md_algorithms_signing") == 0) {
+            if (!EVP_signature_md_algorithms_set(
+                    NCONF_get0_libctx((CONF *)cnf),
+                    EVP_SIGNATURE_MD_ALGORITHMS_SIGNING, oval->value)) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
+                return 0;
+            }
+        } else if (strcmp(oval->name, "signature_md_algorithms_verification") == 0) {
+            if (!EVP_signature_md_algorithms_set(
+                    NCONF_get0_libctx((CONF *)cnf),
+                    EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION, oval->value)) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
+                return 0;
+            }
         } else {
             ERR_raise_data(ERR_LIB_EVP, EVP_R_UNKNOWN_OPTION,
                            "name=%s, value=%s", oval->name, oval->value);

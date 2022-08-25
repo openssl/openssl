@@ -17,15 +17,20 @@ int ossl_dh_check_key(OSSL_LIB_CTX *ctx, const DH *dh);
 
 int ossl_digest_is_allowed(OSSL_LIB_CTX *ctx, const EVP_MD *md);
 /* With security check enabled it can return -1 to indicate disallowed md */
-int ossl_digest_get_approved_nid_with_sha1(OSSL_LIB_CTX *ctx, const EVP_MD *md,
-                                           int sha1_allowed);
+int ossl_digest_get_approved_nid_with_securitycheck(
+        OSSL_LIB_CTX *ctx, const EVP_MD *md, const char *digest_algorithms,
+        int operation);
 
 /* Functions that are common */
 int ossl_digest_md_to_nid(const EVP_MD *md, const OSSL_ITEM *it, size_t it_len);
 int ossl_digest_get_approved_nid(const EVP_MD *md);
+int ossl_digest_securitycheck(
+        OSSL_LIB_CTX *ctx, const EVP_MD *md, const char *digest_algorithms,
+        int operation);
 
 /* Functions that have different implementations for the FIPS_MODULE */
-int ossl_digest_rsa_sign_get_md_nid(OSSL_LIB_CTX *ctx, const EVP_MD *md,
-                                    int sha1_allowed);
+int ossl_digest_rsa_sign_get_md_nid(
+        OSSL_LIB_CTX *ctx, const EVP_MD *md, const char *digest_algorithms,
+        int operation);
 int ossl_securitycheck_enabled(OSSL_LIB_CTX *libctx);
 int ossl_tls1_prf_ems_check_enabled(OSSL_LIB_CTX *libctx);

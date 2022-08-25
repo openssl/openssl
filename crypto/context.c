@@ -47,6 +47,7 @@ struct ossl_lib_ctx_st {
     void *thread_event_handler;
     void *fips_prov;
 #endif
+    void *signature_md_algorithms;
 
     unsigned int ischild:1;
 };
@@ -187,6 +188,10 @@ static int context_init(OSSL_LIB_CTX *ctx)
     if (ctx->threads == NULL)
         goto err;
 #endif
+
+    ctx->signature_md_algorithms = ossl_ctx_signature_md_algorithms_new(ctx);
+    if (ctx->signature_md_algorithms == NULL)
+        goto err;
 
     /* Low priority. */
 #ifndef FIPS_MODULE
@@ -330,6 +335,11 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
         ctx->threads = NULL;
     }
 #endif
+
+    if (ctx->signature_md_algorithms != NULL) {
+        ossl_ctx_signature_md_algorithms_free(ctx->signature_md_algorithms);
+        ctx->signature_md_algorithms = NULL;
+    }
 
     /* Low priority. */
 #ifndef FIPS_MODULE
@@ -626,6 +636,9 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
     case OSSL_LIB_CTX_FIPS_PROV_INDEX:
         return ctx->fips_prov;
 #endif
+
+    case OSSL_LIB_CTX_SIGNATURE_MD_ALGORITHMS_INDEX:
+        return ctx->signature_md_algorithms;
 
     default:
         return NULL;

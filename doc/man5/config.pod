@@ -306,6 +306,58 @@ B<yes>, this is exactly equivalent to:
 If the value is B<no>, nothing happens. Using this name is deprecated, and
 if used, it must be the only name in the section.
 
+=item B<signature_md_algorithms_signing> / B<signature_md_algorithms_verification>
+
+The value is a colon-separated list of digest algorithm names that are
+acceptable when creating or verifying signatures, respectively.
+
+If the first entry is B<ALL>, all digest algorithms are allowed by default.
+The other entries must start with B<!> and specify which diegst algorithms
+should not be allowed, i.e., the list is a deny list.
+
+If the first entry is not B<ALL>, entries are names of digest algorithms that
+should be allowed.  Algorithms that are not listed will be rejected, i.e., the
+list is an allow list.
+
+Operations that attempt to use digests that are not permitted will receive an
+"invalid digest" or "digest not allowed" error.
+
+Mixing the allow and deny styles is not supported.  The default is to allow all
+digests for both signing and verification.
+
+For example, to disable signature creation with the MD4, MD5, SHA1, MD5-SHA1,
+and SM3 algorithms but allow all other supported algorithms, set
+
+ signature_md_algorithms_signing = ALL:!MD4:!MD5:!SHA1:!MD5-SHA1:!SM3
+
+Note that this setting also affects TLS connections, in addition to the
+B<SECLEVEL> option.  Because of its use of signatures when using client
+certificates, digest algorithms must be in both the signing and verification
+allowed list to be advertised in the TLS handshake by OpenSSL.  Furthermore,
+disallowing MD5-SHA1 breaks TLS versions earlier than 1.2 and should thus be
+set together with a minimum TLS version of 1.2 or higher.
+
+Applications can check whether a digest is allowed in a L<OSSL_LIB_CTX(3)> or
+L<EVP_PKEY_CTX(3)> using L<EVP_signature_md_algorithm_allowed(3)>.
+Applications that want to modify the list of acceptable algorithms can do so
+either in a B<OSSL_LIB_CTX> or in a specific B<EVP_PKEY_CTX>.
+
+To modify the default that will be used for new signature or verification
+operations, use L<EVP_signature_md_algorithms_set(3)> to adjust the full list,
+or L<EVP_signature_md_algorithm_set(3)> to change whether a single algorithm is
+supported.  These functions modify a B<OSSL_LIB_CTX>.  Libraries should take
+care to avoid modifying the default B<OSSL_LIB_CTX>, since the effects would be
+process-wide, and instead create a new B<OSSL_LIB_CTX>.  Use this method to
+change the settings used for TLS connections.
+
+Alternatively, the list of acceptable digest algorithms for signing and
+verification can be changed by setting the
+B<OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_SIGNING> and
+B<OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_VERIFICATION> parameters in an
+B<EVP_PKEY_CTX>, either explicitly using L<EVP_PKEY_CTX_set_params(3)> or using
+a parameter that will be passed to an B<EVP_PKEY_CTX> such as the B<params>
+argument of L<EVP_DigestSignInit_ex(3)>.
+
 =back
 
 =head2 SSL Configuration

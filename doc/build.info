@@ -1451,6 +1451,10 @@ DEPEND[html/man3/EVP_sha3_224.html]=man3/EVP_sha3_224.pod
 GENERATE[html/man3/EVP_sha3_224.html]=man3/EVP_sha3_224.pod
 DEPEND[man/man3/EVP_sha3_224.3]=man3/EVP_sha3_224.pod
 GENERATE[man/man3/EVP_sha3_224.3]=man3/EVP_sha3_224.pod
+DEPEND[html/man3/EVP_signature_md_algorithm_allowed.html]=man3/EVP_signature_md_algorithm_allowed.pod
+GENERATE[html/man3/EVP_signature_md_algorithm_allowed.html]=man3/EVP_signature_md_algorithm_allowed.pod
+DEPEND[man/man3/EVP_signature_md_algorithm_allowed.3]=man3/EVP_signature_md_algorithm_allowed.pod
+GENERATE[man/man3/EVP_signature_md_algorithm_allowed.3]=man3/EVP_signature_md_algorithm_allowed.pod
 DEPEND[html/man3/EVP_sm3.html]=man3/EVP_sm3.pod
 GENERATE[html/man3/EVP_sm3.html]=man3/EVP_sm3.pod
 DEPEND[man/man3/EVP_sm3.3]=man3/EVP_sm3.pod
@@ -3270,6 +3274,7 @@ html/man3/EVP_set_default_properties.html \
 html/man3/EVP_sha1.html \
 html/man3/EVP_sha224.html \
 html/man3/EVP_sha3_224.html \
+html/man3/EVP_signature_md_algorithm_allowed.html \
 html/man3/EVP_sm3.html \
 html/man3/EVP_sm4_cbc.html \
 html/man3/EVP_whirlpool.html \
@@ -3909,6 +3914,7 @@ man/man3/EVP_set_default_properties.3 \
 man/man3/EVP_sha1.3 \
 man/man3/EVP_sha224.3 \
 man/man3/EVP_sha3_224.3 \
+man/man3/EVP_signature_md_algorithm_allowed.3 \
 man/man3/EVP_sm3.3 \
 man/man3/EVP_sm4_cbc.3 \
 man/man3/EVP_whirlpool.3 \

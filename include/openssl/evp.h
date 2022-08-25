@@ -2172,6 +2172,19 @@ OSSL_LIB_CTX *EVP_PKEY_CTX_get0_libctx(EVP_PKEY_CTX *ctx);
 const char *EVP_PKEY_CTX_get0_propq(const EVP_PKEY_CTX *ctx);
 const OSSL_PROVIDER *EVP_PKEY_CTX_get0_provider(const EVP_PKEY_CTX *ctx);
 
+
+#define EVP_SIGNATURE_MD_ALGORITHMS_SIGNING (0)
+#define EVP_SIGNATURE_MD_ALGORITHMS_VERIFICATION (1)
+
+char *EVP_signature_md_algorithms_get(OSSL_LIB_CTX *libctx, int usecase);
+int EVP_signature_md_algorithms_set(OSSL_LIB_CTX *libctx, int usecase,
+                                    const char *value);
+int EVP_signature_md_algorithm_set(OSSL_LIB_CTX *libctx, int usecase,
+                                   const EVP_MD *md, int allow);
+int EVP_signature_md_algorithm_allowed(OSSL_LIB_CTX *libctx, int usecase,
+                                       const EVP_MD *md, EVP_PKEY_CTX *ctx);
+
+
 # ifdef  __cplusplus
 }
 # endif

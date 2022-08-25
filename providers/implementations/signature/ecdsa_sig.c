@@ -105,6 +105,9 @@ typedef struct {
 #endif
     /* If this is set then the generated k is not random */
     unsigned int nonce_type;
+
+    char *digest_algorithms_signing;
+    char *digest_algorithms_verification;
 } PROV_ECDSA_CTX;
 
 static void *ecdsa_newctx(void *provctx, const char *propq)
@@ -227,8 +230,9 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx, const char *mdname,
 {
     EVP_MD *md = NULL;
     size_t mdname_len;
-    int md_nid, sha1_allowed;
+    int md_nid;
     WPACKET pkt;
+    const char *digest_algorithms = NULL;
 
     if (mdname == NULL)
         return 1;
@@ -247,9 +251,11 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx, const char *mdname,
                        "%s could not be fetched", mdname);
         return 0;
     }
-    sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
-    md_nid = ossl_digest_get_approved_nid_with_sha1(ctx->libctx, md,
-                                                    sha1_allowed);
+    digest_algorithms = (ctx->operation != EVP_PKEY_OP_SIGN)
+        ? ctx->digest_algorithms_verification
+        : ctx->digest_algorithms_signing;
+    md_nid = ossl_digest_get_approved_nid_with_securitycheck(
+            ctx->libctx, md, digest_algorithms, ctx->operation);
     if (md_nid < 0) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                        "digest=%s", mdname);
@@ -394,6 +400,8 @@ static void ecdsa_freectx(void *vctx)
     EC_KEY_free(ctx->ec);
     BN_clear_free(ctx->kinv);
     BN_clear_free(ctx->r);
+    OPENSSL_free(ctx->digest_algorithms_signing);
+    OPENSSL_free(ctx->digest_algorithms_verification);
     OPENSSL_free(ctx);
 }
 
@@ -439,6 +447,18 @@ static void *ecdsa_dupctx(void *vctx)
             goto err;
     }
 
+    if (srcctx->digest_algorithms_signing != NULL) {
+        dstctx->digest_algorithms_signing = OPENSSL_strdup(srcctx->digest_algorithms_signing);
+        if (dstctx->digest_algorithms_signing == NULL)
+            goto err;
+    }
+
+    if (srcctx->digest_algorithms_verification != NULL) {
+        dstctx->digest_algorithms_verification = OPENSSL_strdup(srcctx->digest_algorithms_verification);
+        if (dstctx->digest_algorithms_verification == NULL)
+            goto err;
+    }
+
     return dstctx;
  err:
     ecdsa_freectx(dstctx);
@@ -471,6 +491,20 @@ static int ecdsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
     if (p != NULL && !OSSL_PARAM_set_uint(p, ctx->nonce_type))
         return 0;
 
+    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_SIGNING);
+    if (p != NULL) {
+        if (ctx->digest_algorithms_signing != NULL
+                && !OSSL_PARAM_set_utf8_string(p, ctx->digest_algorithms_signing))
+            return 0;
+    }
+
+    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_VERIFICATION);
+    if (p != NULL) {
+        if (ctx->digest_algorithms_verification != NULL
+                && !OSSL_PARAM_set_utf8_string(p, ctx->digest_algorithms_verification))
+            return 0;
+    }
+
     return 1;
 }
 
@@ -479,6 +513,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
     OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_NONCE_TYPE, NULL),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_SIGNING, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_VERIFICATION, NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -534,6 +570,24 @@ static int ecdsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         && !OSSL_PARAM_get_uint(p, &ctx->nonce_type))
         return 0;
 
+    p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_SIGNING);
+    if (p != NULL) {
+        OPENSSL_free(ctx->digest_algorithms_signing);
+        ctx->digest_algorithms_signing = NULL;
+
+        if (!OSSL_PARAM_get_utf8_string(p, &ctx->digest_algorithms_signing, 0))
+            return 0;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_VERIFICATION);
+    if (p != NULL) {
+        OPENSSL_free(ctx->digest_algorithms_verification);
+        ctx->digest_algorithms_verification = NULL;
+
+        if (!OSSL_PARAM_get_utf8_string(p, &ctx->digest_algorithms_verification, 0))
+            return 0;
+    }
+
     return 1;
 }
 
@@ -543,11 +597,15 @@ static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PROPERTIES, NULL, 0),
     OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_KAT, NULL),
     OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_NONCE_TYPE, NULL),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_SIGNING, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_VERIFICATION, NULL, 0),
     OSSL_PARAM_END
 };
 
 static const OSSL_PARAM settable_ctx_params_no_digest[] = {
     OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_KAT, NULL),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_SIGNING, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_VERIFICATION, NULL, 0),
     OSSL_PARAM_END
 };
 

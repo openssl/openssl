@@ -385,6 +385,21 @@ was successful.
 Known answer tests can be performed if the random generator is overridden to
 supply known values that either pass or fail.
 
+=item "digest-algorithms-signing" (B<OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_SIGNING>) <UTF8 string>
+
+=item "digest-algorithms-verification" (B<OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_VERIFICATION>) <UTF8 string>
+
+Gets or sets a allow- or denylist of digest algorithms that are permitted in
+the signature operation.  See the documentation for the
+B<signature_md_algorithms_signing> and B<signature_md_algorithms_verification>
+options in L<config(5)> for a description of the expected format.
+
+Providers do not have to implement this parameter.  Support for this parameter
+will be indicated using the B<gettable_params> and B<settable_params>
+interfaces.
+
+See also L<EVP_signature_md_algorithm_allowed(3)>.
+
 =back
 
 OSSL_FUNC_signature_gettable_ctx_params() and OSSL_FUNC_signature_settable_ctx_params() get a

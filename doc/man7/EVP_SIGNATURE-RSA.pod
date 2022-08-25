@@ -75,6 +75,12 @@ digest size when signing to comply with FIPS 186-4 section 5.5.
 
 =back
 
+=item "digest-algorithms-signing" (B<OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_SIGNING>) <UTF8 string>
+
+=item "digest-algorithms-verification" (B<OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_VERIFICATION>) <UTF8 string>
+
+This common parameter is described in L<provider-signature(7)>.
+
 =back
 
 The following signature parameters can be retrieved using
@@ -95,6 +101,12 @@ This common parameter is described in L<provider-signature(7)>.
 =item "saltlen" (B<OSSL_SIGNATURE_PARAM_PSS_SALTLEN>) <integer> or <UTF8 string>
 
 These parameters are as described above.
+
+=item "digest-algorithms-signing" (B<OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_SIGNING>) <UTF8 string>
+
+=item "digest-algorithms-verification" (B<OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_VERIFICATION>) <UTF8 string>
+
+This common parameter is described in L<provider-signature(7)>.
 
 =back
 

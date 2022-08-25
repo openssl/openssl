@@ -23,6 +23,10 @@ and before calling EVP_PKEY_sign() or EVP_PKEY_verify().
 
 =item "nonce-type" (B<OSSL_SIGNATURE_PARAM_NONCE_TYPE>) <unsigned integer>
 
+=item "digest-algorithms-signing" (B<OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_SIGNING>) <UTF8 string>
+
+=item "digest-algorithms-verification" (B<OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_VERIFICATION>) <UTF8 string>
+
 These parameters are described in L<provider-signature(7)>.
 
 =back
@@ -37,6 +41,10 @@ EVP_PKEY_CTX_get_params().
 =item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <UTF8 string>
 
 =item "nonce-type" (B<OSSL_SIGNATURE_PARAM_NONCE_TYPE>) <unsigned integer>
+
+=item "digest-algorithms-signing" (B<OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_SIGNING>) <UTF8 string>
+
+=item "digest-algorithms-verification" (B<OSSL_SIGNATURE_PARAM_DIGEST_ALGORITHMS_VERIFICATION>) <UTF8 string>
 
 The parameters are described in L<provider-signature(7)>.
 

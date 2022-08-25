@@ -5534,3 +5534,7 @@ OSSL_PROVIDER_try_load_ex               ?	3_2_0	EXIST::FUNCTION:
 OSSL_ERR_STATE_save_to_mark             ?	3_2_0	EXIST::FUNCTION:
 X509_STORE_CTX_set_get_crl              ?	3_2_0	EXIST::FUNCTION:
 X509_STORE_CTX_set_current_reasons      ?	3_2_0	EXIST::FUNCTION:
+EVP_signature_md_algorithms_set         ?	3_2_0	EXIST::FUNCTION:
+EVP_signature_md_algorithms_get         ?	3_2_0	EXIST::FUNCTION:
+EVP_signature_md_algorithm_allowed      ?	3_2_0	EXIST::FUNCTION:
+EVP_signature_md_algorithm_set          ?	3_2_0	EXIST::FUNCTION:
