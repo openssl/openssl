@@ -64,6 +64,7 @@ typedef struct ossl_record_layer_st OSSL_RECORD_LAYER;
  */
 struct ossl_record_template_st {
     int type;
+    unsigned int version;
     const unsigned char *buf;
     size_t buflen;
 };

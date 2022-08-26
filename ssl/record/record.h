@@ -260,6 +260,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version, int direction,
                              const EVP_CIPHER *ciph, size_t taglen,
                              int mactype, const EVP_MD *md,
                              const SSL_COMP *comp);
+int ssl_set_record_protocol_version(SSL_CONNECTION *s, int vers);
 
 # define OSSL_FUNC_RLAYER_SKIP_EARLY_DATA        1
 OSSL_CORE_MAKE_FUNC(int, rlayer_skip_early_data, (void *cbarg))

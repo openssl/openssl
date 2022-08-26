@@ -1770,7 +1770,10 @@ int tls_parse_stoc_supported_versions(SSL_CONNECTION *s, PACKET *pkt,
 
     /* We just set it here. We validate it in ssl_choose_client_version */
     s->version = version;
-    s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl, version);
+    if (!ssl_set_record_protocol_version(s, version)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
 
     return 1;
 }

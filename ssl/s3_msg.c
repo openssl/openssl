@@ -93,6 +93,14 @@ int ssl3_dispatch_alert(SSL *s)
     }
 
     templ.type = SSL3_RT_ALERT;
+    templ.version = (sc->version == TLS1_3_VERSION) ? TLS1_2_VERSION
+                                                    : sc->version;
+    if (SSL_get_state(s) == TLS_ST_CW_CLNT_HELLO
+            && !sc->renegotiate
+            && TLS1_get_version(s) > TLS1_VERSION
+            && sc->hello_retry_request == SSL_HRR_NONE) {
+        templ.version = TLS1_VERSION;
+    }
     templ.buf = &sc->s3.send_alert[0];
     templ.buflen = 2;
 
