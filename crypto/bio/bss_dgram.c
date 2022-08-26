@@ -984,7 +984,7 @@ static void translate_msg_win(BIO *b, WSAMSG *mh, WSABUF *iov,
     iov->buf = msg->data;
 
     /* Windows requires namelen to be set exactly */
-    mh->name = msg->peer != NULL ? &msg[0].peer->sa : NULL;
+    mh->name = msg->peer != NULL ? &msg->peer->sa : NULL;
     if (msg->peer != NULL && dgram_get_sock_family(b) == AF_INET)
         mh->namelen = sizeof(struct sockaddr_in);
 #  if OPENSSL_USE_IPV6
@@ -1001,7 +1001,6 @@ static void translate_msg_win(BIO *b, WSAMSG *mh, WSABUF *iov,
      * the control buffer even if we aren't actually going to examine the
      * result.
      */
-    mh->namelen         = msg->peer != NULL ? (ULONG)sizeof(*msg[0].peer) : 0;
     mh->lpBuffers       = iov;
     mh->dwBufferCount   = 1;
     mh->Control.len     = BIO_CMSG_ALLOC_LEN;
@@ -1136,7 +1135,7 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
          */
         if (local->s_in.sin_port != 0
             && data->local_addr.s_in.sin_port != local->s_in.sin_port) {
-            ERR_raise(ERR_LIB_BIO, ERR_R_UNSUPPORTED);
+            ERR_raise(ERR_LIB_BIO, BIO_R_PORT_MISMATCH);
             return 0;
         }
 
@@ -1164,7 +1163,7 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
         /* See comment above. */
         if (local->s_in.sin_port != 0
             && data->local_addr.s_in.sin_port != local->s_in.sin_port) {
-            ERR_raise(ERR_LIB_BIO, ERR_R_UNSUPPORTED);
+            ERR_raise(ERR_LIB_BIO, BIO_R_PORT_MISMATCH);
             return 0;
         }
 
@@ -1198,13 +1197,13 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
          */
         if (local->s_in6.sin6_port != 0
             && data->local_addr.s_in6.sin6_port != local->s_in6.sin6_port) {
-            ERR_raise(ERR_LIB_BIO, ERR_R_UNSUPPORTED);
+            ERR_raise(ERR_LIB_BIO, BIO_R_PORT_MISMATCH);
             return 0;
         }
 
         if (local->s_in6.sin6_scope_id != 0
             && data->local_addr.s_in6.sin6_scope_id != local->s_in6.sin6_scope_id) {
-            ERR_raise(ERR_LIB_BIO, ERR_R_UNSUPPORTED);
+            ERR_raise(ERR_LIB_BIO, BIO_R_PORT_MISMATCH);
             return 0;
         }
 

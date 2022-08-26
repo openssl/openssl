@@ -46,6 +46,7 @@ static const ERR_STRING_DATA BIO_str_reasons[] = {
     "no hostname or service specified"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_NO_PORT_DEFINED), "no port defined"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_NO_SUCH_FILE), "no such file"},
+    {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_PORT_MISMATCH), "port mismatch"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_TFO_DISABLED), "tfo disabled"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_TFO_NO_KERNEL_SUPPORT),
     "tfo no kernel support"},
@@ -79,6 +80,8 @@ static const ERR_STRING_DATA BIO_str_reasons[] = {
      "local address not available"},
     {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_NON_FATAL),
      "non-fatal or transient error"},
+    {ERR_PACK(ERR_LIB_BIO, 0, BIO_R_PORT_MISMATCH),
+     "port mismatch"},
     {0, NULL}
 };
 
