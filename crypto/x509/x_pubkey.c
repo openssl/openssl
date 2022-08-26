@@ -117,7 +117,7 @@ static int x509_pubkey_ex_new_ex(ASN1_VALUE **pval, const ASN1_ITEM *it,
         || !x509_pubkey_set0_libctx(ret, libctx, propq)) {
         x509_pubkey_ex_free((ASN1_VALUE **)&ret, NULL);
         ret = NULL;
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
     } else {
         *pval = (ASN1_VALUE *)ret;
     }
@@ -141,7 +141,7 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
     if (*pval == NULL && !x509_pubkey_ex_new_ex(pval, it, libctx, propq))
         return 0;
     if (!x509_pubkey_ex_populate(pval, NULL)) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -191,7 +191,7 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
         if (aclass != V_ASN1_UNIVERSAL) {
             tmpbuf = OPENSSL_memdup(in_saved, publen);
             if (tmpbuf == NULL) {
-                ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
                 return 0;
             }
             in_saved = tmpbuf;
@@ -293,7 +293,7 @@ X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a)
                                     a->public_key->length)) {
         x509_pubkey_ex_free((ASN1_VALUE **)&pubkey,
                             ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL));
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -325,7 +325,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 
     if (pkey->ameth != NULL) {
         if ((pk = X509_PUBKEY_new()) == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             goto error;
         }
         if (pkey->ameth->pub_encode != NULL) {
@@ -416,7 +416,7 @@ static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
 
     pkey = EVP_PKEY_new();
     if (pkey == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return -1;
     }
 
@@ -500,7 +500,7 @@ static EVP_PKEY *d2i_PUBKEY_int(EVP_PKEY **a,
     if (libctx != NULL || propq != NULL || force_legacy) {
         xpk2 = OPENSSL_zalloc(sizeof(*xpk2));
         if (xpk2 == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             return NULL;
         }
         if (!x509_pubkey_set0_libctx(xpk2, libctx, propq))
@@ -628,7 +628,7 @@ int i2d_RSA_PUBKEY(const RSA *a, unsigned char **pp)
         return 0;
     pktmp = EVP_PKEY_new();
     if (pktmp == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return -1;
     }
     (void)EVP_PKEY_assign_RSA(pktmp, (RSA *)a);
@@ -670,7 +670,7 @@ int ossl_i2d_DH_PUBKEY(const DH *a, unsigned char **pp)
         return 0;
     pktmp = EVP_PKEY_new();
     if (pktmp == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return -1;
     }
     (void)EVP_PKEY_assign_DH(pktmp, (DH *)a);
@@ -711,7 +711,7 @@ int ossl_i2d_DHx_PUBKEY(const DH *a, unsigned char **pp)
         return 0;
     pktmp = EVP_PKEY_new();
     if (pktmp == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return -1;
     }
     (void)EVP_PKEY_assign(pktmp, EVP_PKEY_DHX, (DH *)a);
@@ -753,7 +753,7 @@ int i2d_DSA_PUBKEY(const DSA *a, unsigned char **pp)
         return 0;
     pktmp = EVP_PKEY_new();
     if (pktmp == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return -1;
     }
     (void)EVP_PKEY_assign_DSA(pktmp, (DSA *)a);
@@ -798,7 +798,7 @@ int i2d_EC_PUBKEY(const EC_KEY *a, unsigned char **pp)
     if (a == NULL)
         return 0;
     if ((pktmp = EVP_PKEY_new()) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return -1;
     }
     (void)EVP_PKEY_assign_EC_KEY(pktmp, (EC_KEY *)a);
@@ -839,7 +839,7 @@ int ossl_i2d_ED25519_PUBKEY(const ECX_KEY *a, unsigned char **pp)
     if (a == NULL)
         return 0;
     if ((pktmp = EVP_PKEY_new()) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return -1;
     }
     (void)EVP_PKEY_assign(pktmp, EVP_PKEY_ED25519, (ECX_KEY *)a);
@@ -881,7 +881,7 @@ int ossl_i2d_ED448_PUBKEY(const ECX_KEY *a, unsigned char **pp)
     if (a == NULL)
         return 0;
     if ((pktmp = EVP_PKEY_new()) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return -1;
     }
     (void)EVP_PKEY_assign(pktmp, EVP_PKEY_ED448, (ECX_KEY *)a);
@@ -923,7 +923,7 @@ int ossl_i2d_X25519_PUBKEY(const ECX_KEY *a, unsigned char **pp)
     if (a == NULL)
         return 0;
     if ((pktmp = EVP_PKEY_new()) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return -1;
     }
     (void)EVP_PKEY_assign(pktmp, EVP_PKEY_X25519, (ECX_KEY *)a);
@@ -965,7 +965,7 @@ int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp)
     if (a == NULL)
         return 0;
     if ((pktmp = EVP_PKEY_new()) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return -1;
     }
     (void)EVP_PKEY_assign(pktmp, EVP_PKEY_X448, (ECX_KEY *)a);

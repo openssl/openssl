@@ -110,7 +110,7 @@ EVP_MD_CTX *evp_md_ctx_new_ex(EVP_PKEY *pkey, const ASN1_OCTET_STRING *id,
 
     if ((ctx = EVP_MD_CTX_new()) == NULL
         || (pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq)) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -342,7 +342,7 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
             ctx->update = type->update;
             ctx->md_data = OPENSSL_zalloc(type->ctx_size);
             if (ctx->md_data == NULL) {
-                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
                 return 0;
             }
         }
@@ -640,7 +640,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         else {
             out->md_data = OPENSSL_malloc(out->digest->ctx_size);
             if (out->md_data == NULL) {
-                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
                 return 0;
             }
         }
@@ -963,7 +963,7 @@ static void *evp_md_from_algorithm(int name_id,
 
     /* EVP_MD_fetch() will set the legacy NID if available */
     if ((md = evp_md_new()) == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 

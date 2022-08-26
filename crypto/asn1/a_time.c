@@ -421,7 +421,7 @@ int ASN1_TIME_set_string_X509(ASN1_TIME *s, const char *str)
              */
             t.data = OPENSSL_zalloc(t.length + 1);
             if (t.data == NULL) {
-                ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
                 goto out;
             }
             memcpy(t.data, str + 2, t.length);

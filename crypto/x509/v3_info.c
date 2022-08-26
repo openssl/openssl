@@ -91,7 +91,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
 
     return tret;
  err:
-    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
     if (ret == NULL && tret != NULL)
         sk_CONF_VALUE_pop_free(tret, X509V3_conf_free);
     return NULL;
@@ -111,13 +111,13 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
     char *objtmp, *ptmp;
 
     if ((ainfo = sk_ACCESS_DESCRIPTION_new_reserve(NULL, num)) == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     for (i = 0; i < num; i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
         if ((acc = ACCESS_DESCRIPTION_new()) == NULL) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto err;
         }
         sk_ACCESS_DESCRIPTION_push(ainfo, acc); /* Cannot fail due to reserve */
@@ -131,7 +131,7 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
         if (!v2i_GENERAL_NAME_ex(acc->location, method, ctx, &ctmp, 0))
             goto err;
         if ((objtmp = OPENSSL_strndup(cnf->name, ptmp - cnf->name)) == NULL) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto err;
         }
         acc->method = OBJ_txt2obj(objtmp, 0);

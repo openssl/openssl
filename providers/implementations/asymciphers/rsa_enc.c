@@ -157,7 +157,7 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         unsigned char *tbuf;
 
         if ((tbuf = OPENSSL_malloc(rsasize)) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             return 0;
         }
         if (prsactx->oaep_md == NULL) {
@@ -232,7 +232,7 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         unsigned char *tbuf;
 
         if ((tbuf = OPENSSL_malloc(len)) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             return 0;
         }
         ret = RSA_private_decrypt(inlen, in, tbuf, prsactx->rsa,

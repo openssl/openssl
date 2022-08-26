@@ -273,7 +273,7 @@ int i2d_X509_AUX(const X509 *a, unsigned char **pp)
     /* Allocate requisite combined storage */
     *pp = tmp = OPENSSL_malloc(length);
     if (tmp == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return -1;
     }
 

@@ -77,14 +77,14 @@ static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     RSA *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -788,7 +788,7 @@ int ossl_rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
 
             /* Using ossl_rsa_multip_info_new() is wasteful, so allocate directly */
             if ((pinfo = OPENSSL_zalloc(sizeof(*pinfo))) == NULL) {
-                ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
                 goto err;
             }
 

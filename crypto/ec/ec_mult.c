@@ -57,7 +57,7 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         return ret;
     }
 
@@ -68,7 +68,7 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -171,7 +171,7 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
 
     if (((p = EC_POINT_new(group)) == NULL)
         || ((s = EC_POINT_new(group)) == NULL)) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -195,7 +195,7 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     lambda = BN_CTX_get(ctx);
     k = BN_CTX_get(ctx);
     if (k == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -521,7 +521,7 @@ int ossl_ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
         wNAF[0] = NULL;         /* preliminary pivot */
 
     if (wsize == NULL || wNAF_len == NULL || wNAF == NULL || val_sub == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -633,7 +633,7 @@ int ossl_ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                     wNAF[i + 1] = NULL;
                     wNAF[i] = OPENSSL_malloc(wNAF_len[i]);
                     if (wNAF[i] == NULL) {
-                        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+                        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
                         OPENSSL_free(tmp_wNAF);
                         goto err;
                     }
@@ -662,7 +662,7 @@ int ossl_ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
      */
     val = OPENSSL_malloc((num_val + 1) * sizeof(val[0]));
     if (val == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         goto err;
     }
     val[num_val] = NULL;        /* pivot element */
@@ -894,7 +894,7 @@ int ossl_ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 
     points = OPENSSL_malloc(sizeof(*points) * (num + 1));
     if (points == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -902,14 +902,14 @@ int ossl_ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     var[num] = NULL;            /* pivot */
     for (i = 0; i < num; i++) {
         if ((var[i] = EC_POINT_new(group)) == NULL) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
 
     if ((tmp_point = EC_POINT_new(group)) == NULL
         || (base = EC_POINT_new(group)) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         goto err;
     }
 

@@ -198,7 +198,7 @@ static int slg_write(BIO *b, const char *in, int inl)
     if (inl < 0)
         return 0;
     if ((buf = OPENSSL_malloc(inl + 1)) == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
         return 0;
     }
     memcpy(buf, in, inl);

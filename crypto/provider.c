@@ -124,7 +124,7 @@ int OSSL_PROVIDER_add_builtin(OSSL_LIB_CTX *libctx, const char *name,
     memset(&entry, 0, sizeof(entry));
     entry.name = OPENSSL_strdup(name);
     if (entry.name == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         return 0;
     }
     entry.init = init_fn;

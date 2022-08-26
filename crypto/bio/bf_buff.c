@@ -406,7 +406,7 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
     }
     return ret;
  malloc_error:
-    ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
     return 0;
 }
 

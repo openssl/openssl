@@ -66,7 +66,7 @@ static void *siv_dupctx(void *vctx)
 
     ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     if (!in->hw->dupctx(in, ret)) {

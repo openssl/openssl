@@ -111,7 +111,7 @@ ECX_KEY *ossl_ecx_key_dup(const ECX_KEY *key, int selection)
     ECX_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -147,7 +147,7 @@ ECX_KEY *ossl_ecx_key_dup(const ECX_KEY *key, int selection)
 
 err:
     ossl_ecx_key_free(ret);
-    ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
     return NULL;
 }
 
@@ -186,7 +186,7 @@ ECX_KEY *ossl_ecx_key_op(const X509_ALGOR *palg,
 
     key = ossl_ecx_key_new(libctx, KEYNID2TYPE(id), 1, propq);
     if (key == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         return 0;
     }
     pubkey = key->pubkey;
@@ -196,7 +196,7 @@ ECX_KEY *ossl_ecx_key_op(const X509_ALGOR *palg,
     } else {
         privkey = ossl_ecx_key_allocate_privkey(key);
         if (privkey == NULL) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
             goto err;
         }
         if (op == KEY_OP_KEYGEN) {

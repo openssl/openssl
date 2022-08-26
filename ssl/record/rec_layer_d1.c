@@ -21,7 +21,7 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
     DTLS_RECORD_LAYER *d;
 
     if ((d = OPENSSL_malloc(sizeof(*d))) == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -126,7 +126,7 @@ int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
     if (rdata->data == NULL) {
         OPENSSL_free(rdata);
         pitem_free(item);
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         return -1;
     }
     /*

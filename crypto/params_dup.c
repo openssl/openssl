@@ -186,7 +186,7 @@ OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2)
    /* Allocate enough space to store the merged parameters */
     params = OPENSSL_zalloc((list1_sz + list2_sz + 1) * sizeof(*p1));
     if (params == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     dst = params;

@@ -125,7 +125,7 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
         *x = sk;
     return sk;
  err:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
  err2:
     X509_EXTENSION_free(new_ex);
     if (x != NULL && *x == NULL)
@@ -159,7 +159,7 @@ X509_EXTENSION *X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex,
 
     if ((ex == NULL) || (*ex == NULL)) {
         if ((ret = X509_EXTENSION_new()) == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             return NULL;
         }
     } else

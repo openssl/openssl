@@ -57,7 +57,7 @@ void *CRYPTO_memdup(const void *data, size_t siz, const char* file, int line)
 
     ret = CRYPTO_malloc(siz, file, line);
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     return memcpy(ret, data, siz);
@@ -197,7 +197,7 @@ unsigned char *ossl_hexstr2buf_sep(const char *str, long *buflen,
     }
     buf_n /= 2;
     if ((buf = OPENSSL_malloc(buf_n)) == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -273,7 +273,7 @@ char *ossl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep)
 
     tmp_n = (sep != CH_ZERO) ? buflen * 3 : 1 + buflen * 2;
     if ((tmp = OPENSSL_malloc(tmp_n)) == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 

@@ -63,7 +63,7 @@ static CTLOG_STORE_LOAD_CTX *ctlog_store_load_ctx_new(void)
     CTLOG_STORE_LOAD_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
-        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CT, ERR_R_CRYPTO_LIB);
 
     return ctx;
 }
@@ -105,7 +105,7 @@ CTLOG_STORE *CTLOG_STORE_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
     CTLOG_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CT, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -113,14 +113,14 @@ CTLOG_STORE *CTLOG_STORE_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
         if (ret->propq == NULL) {
-            ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CT, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
 
     ret->logs = sk_CTLOG_new_null();
     if (ret->logs == NULL) {
-        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CT, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -218,7 +218,7 @@ static int ctlog_store_load_log(const char *log_name, int log_name_len,
 
 mem_err:
     CTLOG_free(ct_log);
-    ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_CT, ERR_R_CRYPTO_LIB);
     return -1;
 }
 
@@ -270,7 +270,7 @@ CTLOG *CTLOG_new_ex(EVP_PKEY *public_key, const char *name, OSSL_LIB_CTX *libctx
     CTLOG *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CT, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -278,14 +278,14 @@ CTLOG *CTLOG_new_ex(EVP_PKEY *public_key, const char *name, OSSL_LIB_CTX *libctx
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
         if (ret->propq == NULL) {
-            ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CT, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
 
     ret->name = OPENSSL_strdup(name);
     if (ret->name == NULL) {
-        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CT, ERR_R_CRYPTO_LIB);
         goto err;
     }
 

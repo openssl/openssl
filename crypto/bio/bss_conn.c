@@ -257,7 +257,7 @@ BIO_CONNECT *BIO_CONNECT_new(void)
     BIO_CONNECT *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ret->state = BIO_CONN_S_BEFORE;

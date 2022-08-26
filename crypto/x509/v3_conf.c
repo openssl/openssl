@@ -175,7 +175,7 @@ static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method,
     return ext;
 
  merr:
-    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
     OPENSSL_free(ext_der);
     ASN1_OCTET_STRING_free(ext_oct);
     return NULL;
@@ -256,7 +256,7 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, const char *value,
     }
 
     if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         goto err;
     }
 

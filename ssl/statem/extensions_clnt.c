@@ -1489,7 +1489,7 @@ int tls_parse_stoc_sct(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             s->ext.scts = OPENSSL_malloc(size);
             if (s->ext.scts == NULL) {
                 s->ext.scts_len = 0;
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
                 return 0;
             }
             if (!PACKET_copy_bytes(pkt, s->ext.scts, size)) {
@@ -1859,7 +1859,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         SSL_SESSION *new_sess;
 
         if ((new_sess = ssl_session_dup(s->session, 0)) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             return 0;
         }
         SSL_SESSION_free(s->session);

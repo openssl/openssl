@@ -117,7 +117,7 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     if (derlen < 0)
         return 0;
     if ((p = OPENSSL_malloc(derlen)) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -192,7 +192,7 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     if (derlen < 0)
         return 0;
     if ((p = OPENSSL_malloc(derlen)) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return 0;
     }
 

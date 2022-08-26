@@ -31,7 +31,7 @@ RSA_METHOD *RSA_meth_new(const char *name, int flags)
         OPENSSL_free(meth);
     }
 
-    ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
     return NULL;
 }
 
@@ -57,7 +57,7 @@ RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth)
         OPENSSL_free(ret);
     }
 
-    ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
     return NULL;
 }
 
@@ -71,7 +71,7 @@ int RSA_meth_set1_name(RSA_METHOD *meth, const char *name)
     char *tmpname = OPENSSL_strdup(name);
 
     if (tmpname == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
         return 0;
     }
 

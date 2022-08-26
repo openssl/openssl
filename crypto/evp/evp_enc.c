@@ -309,7 +309,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
             ctx->cipher_data = OPENSSL_zalloc(ctx->cipher->ctx_size);
             if (ctx->cipher_data == NULL) {
                 ctx->cipher = NULL;
-                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
                 return 0;
             }
         } else {
@@ -1454,7 +1454,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
         out->cipher_data = OPENSSL_malloc(in->cipher->ctx_size);
         if (out->cipher_data == NULL) {
             out->cipher = NULL;
-            ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
             return 0;
         }
         memcpy(out->cipher_data, in->cipher_data, in->cipher->ctx_size);
@@ -1524,7 +1524,7 @@ static void *evp_cipher_from_algorithm(const int name_id,
     int fnciphcnt = 0, fnctxcnt = 0;
 
     if ((cipher = evp_cipher_new()) == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 

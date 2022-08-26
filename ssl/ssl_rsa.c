@@ -74,7 +74,7 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
     }
     x = X509_new_ex(ssl->ctx->libctx, ssl->ctx->propq);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto end;
     }
     if (type == SSL_FILETYPE_ASN1) {
@@ -113,7 +113,7 @@ int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
 
     x = X509_new_ex(ssl->ctx->libctx, ssl->ctx->propq);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -320,7 +320,7 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
     }
     x = X509_new_ex(ctx->libctx, ctx->propq);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto end;
     }
     if (type == SSL_FILETYPE_ASN1) {
@@ -350,7 +350,7 @@ int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, const unsigned char *d)
 
     x = X509_new_ex(ctx->libctx, ctx->propq);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -479,7 +479,7 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
 
     x = X509_new_ex(real_ctx->libctx, real_ctx->propq);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto end;
     }
     if (PEM_read_bio_X509_AUX(in, &x, passwd_callback,
@@ -518,7 +518,7 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
         while (1) {
             ca = X509_new_ex(real_ctx->libctx, real_ctx->propq);
             if (ca == NULL) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
                 goto end;
             }
             if (PEM_read_bio_X509(in, &ca, passwd_callback,
@@ -787,7 +787,7 @@ int SSL_CTX_use_serverinfo_ex(SSL_CTX *ctx, unsigned int version,
 
         sinfo = OPENSSL_malloc(sinfo_length);
         if (sinfo == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
             return 0;
         }
 
@@ -811,7 +811,7 @@ int SSL_CTX_use_serverinfo_ex(SSL_CTX *ctx, unsigned int version,
     new_serverinfo = OPENSSL_realloc(ctx->cert->key->serverinfo,
                                      serverinfo_length);
     if (new_serverinfo == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 0;
     }
     ctx->cert->key->serverinfo = new_serverinfo;
@@ -924,7 +924,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
         append_length = extension_append_length(version, extension_length);
         tmp = OPENSSL_realloc(serverinfo, serverinfo_length + append_length);
         if (tmp == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
             goto end;
         }
         serverinfo = tmp;
@@ -1032,7 +1032,7 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
     if (chain != NULL) {
         dup_chain = X509_chain_up_ref(chain);
         if  (dup_chain == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
             goto out;
         }
     }

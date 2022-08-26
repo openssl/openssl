@@ -163,14 +163,14 @@ int ossl_crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index,
          * "app_data" routines use ex_data index zero.  See RT 3710. */
         if (ip->meth == NULL
             || !sk_EX_CALLBACK_push(ip->meth, NULL)) {
-            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
 
     a = (EX_CALLBACK *)OPENSSL_malloc(sizeof(*a));
     if (a == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         goto err;
     }
     a->argl = argl;
@@ -181,7 +181,7 @@ int ossl_crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index,
     a->priority = priority;
 
     if (!sk_EX_CALLBACK_push(ip->meth, NULL)) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         OPENSSL_free(a);
         goto err;
     }
@@ -240,7 +240,7 @@ int ossl_crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
     CRYPTO_THREAD_unlock(global->ex_data_lock);
 
     if (mx > 0 && storage == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         return 0;
     }
     for (i = 0; i < mx; i++) {
@@ -306,7 +306,7 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
     if (mx == 0)
         return 1;
     if (storage == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         return 0;
     }
     /*
@@ -468,14 +468,14 @@ int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val)
 
     if (ad->sk == NULL) {
         if ((ad->sk = sk_void_new_null()) == NULL) {
-            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
             return 0;
         }
     }
 
     for (i = sk_void_num(ad->sk); i <= idx; ++i) {
         if (!sk_void_push(ad->sk, NULL)) {
-            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
             return 0;
         }
     }

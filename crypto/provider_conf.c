@@ -257,14 +257,14 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         if (name != NULL) {
             entry.name = OPENSSL_strdup(name);
             if (entry.name == NULL) {
-                ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
                 ok = 0;
             }
         }
         if (ok && path != NULL) {
             entry.path = OPENSSL_strdup(path);
             if (entry.path == NULL) {
-                ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
                 ok = 0;
             }
         }

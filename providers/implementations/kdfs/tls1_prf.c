@@ -104,7 +104,7 @@ static void *kdf_tls1_prf_new(void *provctx)
         return NULL;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ctx->provctx = provctx;
@@ -415,7 +415,7 @@ static int tls1_prf_alg(EVP_MAC_CTX *mdctx, EVP_MAC_CTX *sha1ctx,
             return 0;
 
         if ((tmp = OPENSSL_malloc(olen)) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             return 0;
         }
 

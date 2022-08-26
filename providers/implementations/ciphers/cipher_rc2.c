@@ -51,7 +51,7 @@ static void *rc2_dupctx(void *ctx)
 
     ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     *ret = *in;
@@ -130,7 +130,7 @@ static int rc2_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
         if ((type = ASN1_TYPE_new()) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             return 0;
         }
 
@@ -139,7 +139,7 @@ static int rc2_get_ctx_params(void *vctx, OSSL_PARAM params[])
         if (!ASN1_TYPE_set_int_octetstring(type, num,
                                            ctx->base.iv, ctx->base.ivlen)) {
             ASN1_TYPE_free(type);
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             return 0;
         }
         /*

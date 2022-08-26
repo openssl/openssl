@@ -189,7 +189,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
 
     em = OPENSSL_malloc(num);
     if (em == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
         return -1;
     }
     /*

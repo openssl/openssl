@@ -32,7 +32,7 @@ int i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 
     if (*pp == NULL) {
         if ((p = allocated = OPENSSL_malloc(objsize)) == NULL) {
-            ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
             return 0;
         }
     } else {
@@ -136,7 +136,7 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
                 tmpsize = blsize + 32;
                 tmp = OPENSSL_malloc(tmpsize);
                 if (tmp == NULL) {
-                    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
                     goto err;
                 }
             }
@@ -197,7 +197,7 @@ int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a)
             return -1;
         }
         if ((p = OPENSSL_malloc(i + 1)) == NULL) {
-            ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
             return -1;
         }
         i2t_ASN1_OBJECT(p, i + 1, a);
@@ -346,7 +346,7 @@ ASN1_OBJECT *ASN1_OBJECT_new(void)
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ret->flags = ASN1_OBJECT_FLAG_DYNAMIC;

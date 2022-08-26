@@ -322,7 +322,7 @@ static int bio_zlib_new(BIO *bi)
 # endif
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_COMP, ERR_R_CRYPTO_LIB);
         return 0;
     }
     ctx->ibufsize = ZLIB_DEFAULT_BUFSIZE;
@@ -377,7 +377,7 @@ static int bio_zlib_read(BIO *b, char *out, int outl)
     if (!ctx->ibuf) {
         ctx->ibuf = OPENSSL_malloc(ctx->ibufsize);
         if (ctx->ibuf == NULL) {
-            ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_COMP, ERR_R_CRYPTO_LIB);
             return 0;
         }
         if ((ret = inflateInit(zin)) != Z_OK) {
@@ -442,7 +442,7 @@ static int bio_zlib_write(BIO *b, const char *in, int inl)
         ctx->obuf = OPENSSL_malloc(ctx->obufsize);
         /* Need error here */
         if (ctx->obuf == NULL) {
-            ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_COMP, ERR_R_CRYPTO_LIB);
             return 0;
         }
         ctx->optr = ctx->obuf;

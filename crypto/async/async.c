@@ -41,7 +41,7 @@ static async_ctx *async_ctx_new(void)
 
     nctx = OPENSSL_malloc(sizeof(*nctx));
     if (nctx == NULL) {
-        ERR_raise(ERR_LIB_ASYNC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASYNC, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -83,7 +83,7 @@ static ASYNC_JOB *async_job_new(void)
 
     job = OPENSSL_zalloc(sizeof(*job));
     if (job == NULL) {
-        ERR_raise(ERR_LIB_ASYNC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASYNC, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -256,7 +256,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
         if (args != NULL) {
             ctx->currjob->funcargs = OPENSSL_malloc(size);
             if (ctx->currjob->funcargs == NULL) {
-                ERR_raise(ERR_LIB_ASYNC, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_ASYNC, ERR_R_CRYPTO_LIB);
                 async_release_job(ctx->currjob);
                 ctx->currjob = NULL;
                 return ASYNC_ERR;
@@ -368,13 +368,13 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
 
     pool = OPENSSL_zalloc(sizeof(*pool));
     if (pool == NULL) {
-        ERR_raise(ERR_LIB_ASYNC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASYNC, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
     pool->jobs = sk_ASYNC_JOB_new_reserve(NULL, init_size);
     if (pool->jobs == NULL) {
-        ERR_raise(ERR_LIB_ASYNC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASYNC, ERR_R_CRYPTO_LIB);
         OPENSSL_free(pool);
         return 0;
     }

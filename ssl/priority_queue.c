@@ -306,14 +306,14 @@ int ossl_pqueue_reserve(OSSL_PQUEUE *pq, size_t n)
 
     h = OPENSSL_realloc(pq->heap, new_max * sizeof(*pq->heap));
     if (h == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 0;
     }
     pq->heap = h;
 
     e = OPENSSL_realloc(pq->elements, new_max * sizeof(*pq->elements));
     if (e == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 0;
     }
     pq->elements = e;
@@ -332,7 +332,7 @@ OSSL_PQUEUE *ossl_pqueue_new(int (*compare)(const void *, const void *))
 
     pq = OPENSSL_malloc(sizeof(*pq));
     if (pq == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     pq->compare = compare;
@@ -343,7 +343,7 @@ OSSL_PQUEUE *ossl_pqueue_new(int (*compare)(const void *, const void *))
     pq->elements = OPENSSL_malloc(sizeof(*pq->elements) * min_nodes);
     if (pq->heap == NULL || pq->elements == NULL) {
         ossl_pqueue_free(pq);
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     pqueue_add_freelist(pq, 0);

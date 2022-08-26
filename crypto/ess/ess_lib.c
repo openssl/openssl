@@ -50,7 +50,7 @@ ESS_SIGNING_CERT *OSSL_ESS_signing_cert_new_init(const X509 *signcert,
  err:
     ESS_SIGNING_CERT_free(sc);
     ESS_CERT_ID_free(cid);
-    ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ESS, ERR_R_CRYPTO_LIB);
     return NULL;
 }
 
@@ -92,7 +92,7 @@ static ESS_CERT_ID *ESS_CERT_ID_new_init(const X509 *cert,
  err:
     GENERAL_NAME_free(name);
     ESS_CERT_ID_free(cid);
-    ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ESS, ERR_R_CRYPTO_LIB);
     return NULL;
 }
 
@@ -129,7 +129,7 @@ ESS_SIGNING_CERT_V2 *OSSL_ESS_signing_cert_v2_new_init(const EVP_MD *hash_alg,
  err:
     ESS_SIGNING_CERT_V2_free(sc);
     ESS_CERT_ID_V2_free(cid);
-    ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ESS, ERR_R_CRYPTO_LIB);
     return NULL;
 }
 
@@ -190,7 +190,7 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
     X509_ALGOR_free(alg);
     GENERAL_NAME_free(name);
     ESS_CERT_ID_V2_free(cid);
-    ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ESS, ERR_R_CRYPTO_LIB);
     return NULL;
 }
 

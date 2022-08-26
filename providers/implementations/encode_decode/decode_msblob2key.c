@@ -121,7 +121,7 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     }
     buf = OPENSSL_malloc(length);
     if (buf == NULL) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
         goto end;
     }
     p = buf;

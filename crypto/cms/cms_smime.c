@@ -39,7 +39,7 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
     tmpout = cms_get_text_bio(out, flags);
 
     if (tmpout == NULL) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -271,7 +271,7 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
     ctx = X509_STORE_CTX_new_ex(ossl_cms_ctx_get0_libctx(cms_ctx),
                                 ossl_cms_ctx_get0_propq(cms_ctx));
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
         goto err;
     }
     CMS_SignerInfo_get0_algs(si, NULL, &signer, NULL, NULL);
@@ -357,7 +357,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             /* Certificate trust chain is required to check CAdES signature */
             si_chains = OPENSSL_zalloc(scount * sizeof(si_chains[0]));
             if (si_chains == NULL) {
-                ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
                 goto err;
             }
         }
@@ -406,7 +406,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
         len = BIO_get_mem_data(dcont, &ptr);
         tmpin = (len == 0) ? dcont : BIO_new_mem_buf(ptr, len);
         if (tmpin == NULL) {
-            ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
             goto err2;
         }
     } else {
@@ -423,7 +423,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
          */
         tmpout = cms_get_text_bio(out, flags);
         if (tmpout == NULL) {
-            ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
             goto err;
         }
         cmsbio = CMS_dataInit(cms, tmpout);
@@ -540,7 +540,7 @@ CMS_ContentInfo *CMS_sign_ex(X509 *signcert, EVP_PKEY *pkey,
         goto err;
 
  merr:
-    ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
 
  err:
     CMS_ContentInfo_free(cms);
@@ -657,7 +657,7 @@ CMS_ContentInfo *CMS_encrypt_ex(STACK_OF(X509) *certs, BIO *data,
         goto err;
 
  merr:
-    ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
  err:
     CMS_ContentInfo_free(cms);
     return NULL;

@@ -100,7 +100,7 @@ DEFINE_RUN_ONCE_STATIC(do_init_module_list_lock)
 {
     module_list_lock = CRYPTO_THREAD_lock_new();
     if (module_list_lock == NULL) {
-        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CONF, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -333,7 +333,7 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
     if (supported_modules == NULL)
         goto err;
     if ((tmod = OPENSSL_zalloc(sizeof(*tmod))) == NULL) {
-        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CONF, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -435,14 +435,14 @@ static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
         initialized_modules = sk_CONF_IMODULE_new_null();
         if (initialized_modules == NULL) {
             CRYPTO_THREAD_unlock(module_list_lock);
-            ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CONF, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
 
     if (!sk_CONF_IMODULE_push(initialized_modules, imod)) {
         CRYPTO_THREAD_unlock(module_list_lock);
-        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CONF, ERR_R_CRYPTO_LIB);
         goto err;
     }
 

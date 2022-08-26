@@ -16,13 +16,13 @@ static DSO *DSO_new_method(DSO_METHOD *meth)
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ret->meth_data = sk_void_new_null();
     if (ret->meth_data == NULL) {
         /* sk_new doesn't generate any errors so we do */
-        ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -30,7 +30,7 @@ static DSO *DSO_new_method(DSO_METHOD *meth)
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
         sk_void_free(ret->meth_data);
         OPENSSL_free(ret);
         return NULL;
@@ -114,7 +114,7 @@ DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
     if (dso == NULL) {
         ret = DSO_new_method(meth);
         if (ret == NULL) {
-            ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
             goto err;
         }
         allocated = 1;
@@ -242,7 +242,7 @@ int DSO_set_filename(DSO *dso, const char *filename)
     /* We'll duplicate filename */
     copied = OPENSSL_strdup(filename);
     if (copied == NULL) {
-        ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
         return 0;
     }
     OPENSSL_free(dso->filename);
@@ -290,7 +290,7 @@ char *DSO_convert_filename(DSO *dso, const char *filename)
     if (result == NULL) {
         result = OPENSSL_strdup(filename);
         if (result == NULL) {
-            ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
             return NULL;
         }
     }

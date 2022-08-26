@@ -49,7 +49,7 @@ static int pkey_ec_init(EVP_PKEY_CTX *ctx)
     EC_PKEY_CTX *dctx;
 
     if ((dctx = OPENSSL_zalloc(sizeof(*dctx))) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -230,7 +230,7 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
     if (!pkey_ec_derive(ctx, NULL, &ktmplen))
         return 0;
     if ((ktmp = OPENSSL_malloc(ktmplen)) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         return 0;
     }
     if (!pkey_ec_derive(ctx, ktmp, &ktmplen))

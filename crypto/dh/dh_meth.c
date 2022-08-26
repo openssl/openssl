@@ -31,7 +31,7 @@ DH_METHOD *DH_meth_new(const char *name, int flags)
         OPENSSL_free(dhm);
     }
 
-    ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_DH, ERR_R_CRYPTO_LIB);
     return NULL;
 }
 
@@ -57,7 +57,7 @@ DH_METHOD *DH_meth_dup(const DH_METHOD *dhm)
         OPENSSL_free(ret);
     }
 
-    ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_DH, ERR_R_CRYPTO_LIB);
     return NULL;
 }
 
@@ -71,7 +71,7 @@ int DH_meth_set1_name(DH_METHOD *dhm, const char *name)
     char *tmpname = OPENSSL_strdup(name);
 
     if (tmpname == NULL) {
-        ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DH, ERR_R_CRYPTO_LIB);
         return 0;
     }
 

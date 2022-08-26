@@ -52,7 +52,7 @@ static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *ctx, void *data)
     return serial;
 
  err:
-    ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_TS, ERR_R_CRYPTO_LIB);
     TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                 "Error during serial number generation.");
     ASN1_INTEGER_free(serial);
@@ -96,7 +96,7 @@ TS_RESP_CTX *TS_RESP_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
     TS_RESP_CTX *ctx;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -104,7 +104,7 @@ TS_RESP_CTX *TS_RESP_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
         ctx->propq = OPENSSL_strdup(propq);
         if (ctx->propq == NULL) {
             OPENSSL_free(ctx);
-            ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_TS, ERR_R_CRYPTO_LIB);
             return NULL;
         }
     }
@@ -173,7 +173,7 @@ int TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *def_policy)
         goto err;
     return 1;
  err:
-    ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_TS, ERR_R_CRYPTO_LIB);
     return 0;
 }
 
@@ -199,7 +199,7 @@ int TS_RESP_CTX_add_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *policy)
 
     return 1;
  err:
-    ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_TS, ERR_R_CRYPTO_LIB);
     ASN1_OBJECT_free(copy);
     return 0;
 }
@@ -214,7 +214,7 @@ int TS_RESP_CTX_add_md(TS_RESP_CTX *ctx, const EVP_MD *md)
 
     return 1;
  err:
-    ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_TS, ERR_R_CRYPTO_LIB);
     return 0;
 }
 
@@ -247,7 +247,7 @@ int TS_RESP_CTX_set_accuracy(TS_RESP_CTX *ctx,
     return 1;
  err:
     TS_RESP_CTX_accuracy_free(ctx);
-    ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_TS, ERR_R_CRYPTO_LIB);
     return 0;
 }
 
@@ -302,7 +302,7 @@ int TS_RESP_CTX_set_status_info(TS_RESP_CTX *ctx,
     ret = 1;
  err:
     if (!ret)
-        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_CRYPTO_LIB);
     TS_STATUS_INFO_free(si);
     ASN1_UTF8STRING_free(utf8_text);
     return ret;
@@ -330,7 +330,7 @@ int TS_RESP_CTX_add_failure_info(TS_RESP_CTX *ctx, int failure)
         goto err;
     return 1;
  err:
-    ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_TS, ERR_R_CRYPTO_LIB);
     return 0;
 }
 
@@ -363,7 +363,7 @@ TS_RESP *TS_RESP_create_response(TS_RESP_CTX *ctx, BIO *req_bio)
     ts_RESP_CTX_init(ctx);
 
     if ((ctx->response = TS_RESP_new()) == NULL) {
-        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_CRYPTO_LIB);
         goto end;
     }
     if ((ctx->request = d2i_TS_REQ_bio(req_bio, NULL)) == NULL) {
@@ -673,7 +673,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     }
 
     if ((p7 = PKCS7_new_ex(ctx->libctx, ctx->propq)) == NULL) {
-        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_CRYPTO_LIB);
         goto err;
     }
     if (!PKCS7_set_type(p7, NID_pkcs7_signed))
@@ -738,7 +738,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     if (!ts_TST_INFO_content_new(p7))
         goto err;
     if ((p7bio = PKCS7_dataInit(p7, NULL)) == NULL) {
-        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_CRYPTO_LIB);
         goto err;
     }
     if (!i2d_TS_TST_INFO_bio(p7bio, ctx->tst_info)) {

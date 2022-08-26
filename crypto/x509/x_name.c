@@ -102,7 +102,7 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
     return 1;
 
  memerr:
-    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
     if (ret) {
         sk_X509_NAME_ENTRY_free(ret->entries);
         OPENSSL_free(ret);
@@ -276,7 +276,7 @@ static int x509_name_encode(X509_NAME *a)
  memerr:
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
                                          local_sk_X509_NAME_ENTRY_free);
-    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
     return -1;
 }
 
@@ -318,7 +318,7 @@ static int x509_name_canon(X509_NAME *a)
     }
     intname = sk_STACK_OF_X509_NAME_ENTRY_new_null();
     if (intname == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
     for (i = 0; i < sk_X509_NAME_ENTRY_num(a->entries); i++) {
@@ -329,25 +329,25 @@ static int x509_name_canon(X509_NAME *a)
                 goto err;
             if (!sk_STACK_OF_X509_NAME_ENTRY_push(intname, entries)) {
                 sk_X509_NAME_ENTRY_free(entries);
-                ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
                 goto err;
             }
             set = entry->set;
         }
         tmpentry = X509_NAME_ENTRY_new();
         if (tmpentry == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             goto err;
         }
         tmpentry->object = OBJ_dup(entry->object);
         if (tmpentry->object == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             goto err;
         }
         if (!asn1_string_canon(tmpentry->value, entry->value))
             goto err;
         if (!sk_X509_NAME_ENTRY_push(entries, tmpentry)) {
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             goto err;
         }
         tmpentry = NULL;
@@ -361,7 +361,7 @@ static int x509_name_canon(X509_NAME *a)
 
     p = OPENSSL_malloc(a->canon_enclen);
     if (p == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
 

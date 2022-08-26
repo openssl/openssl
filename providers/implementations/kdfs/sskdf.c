@@ -291,7 +291,7 @@ static void *sskdf_new(void *provctx)
         return NULL;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
     ctx->provctx = provctx;
     return ctx;
 }
@@ -420,7 +420,7 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen,
         if (ctx->salt == NULL || ctx->salt_len <= 0) {
             ctx->salt = OPENSSL_zalloc(default_salt_len);
             if (ctx->salt == NULL) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
                 return 0;
             }
             ctx->salt_len = default_salt_len;

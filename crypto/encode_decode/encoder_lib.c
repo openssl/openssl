@@ -194,7 +194,7 @@ static OSSL_ENCODER_INSTANCE *ossl_encoder_instance_new(OSSL_ENCODER *encoder,
     }
 
     if ((encoder_inst = OPENSSL_zalloc(sizeof(*encoder_inst))) == NULL) {
-        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -259,7 +259,7 @@ static int ossl_encoder_ctx_add_encoder_inst(OSSL_ENCODER_CTX *ctx,
     if (ctx->encoder_insts == NULL
         && (ctx->encoder_insts =
             sk_OSSL_ENCODER_INSTANCE_new_null()) == NULL) {
-        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_CRYPTO_LIB);
         return 0;
     }
 

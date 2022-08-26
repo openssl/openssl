@@ -111,7 +111,7 @@ static int win32_load(DSO *dso)
     }
     p = OPENSSL_malloc(sizeof(*p));
     if (p == NULL) {
-        ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
         goto err;
     }
     *p = h;
@@ -215,7 +215,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 
     result = OPENSSL_zalloc(sizeof(*result));
     if (result == NULL) {
-        ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -334,7 +334,7 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
 
     result = OPENSSL_malloc(len + 1);
     if (result == NULL) {
-        ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -400,24 +400,24 @@ static char *win32_merger(DSO *dso, const char *filespec1,
     if (!filespec2) {
         merged = OPENSSL_strdup(filespec1);
         if (merged == NULL) {
-            ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
             return NULL;
         }
     } else if (!filespec1) {
         merged = OPENSSL_strdup(filespec2);
         if (merged == NULL) {
-            ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
             return NULL;
         }
     } else {
         filespec1_split = win32_splitter(dso, filespec1, 0);
         if (!filespec1_split) {
-            ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
             return NULL;
         }
         filespec2_split = win32_splitter(dso, filespec2, 1);
         if (!filespec2_split) {
-            ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
             OPENSSL_free(filespec1_split);
             return NULL;
         }

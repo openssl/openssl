@@ -54,7 +54,7 @@ CMAC_CTX *CMAC_CTX_new(void)
     CMAC_CTX *ctx;
 
     if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ctx->cctx = EVP_CIPHER_CTX_new();

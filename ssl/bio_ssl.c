@@ -58,7 +58,7 @@ static int ssl_new(BIO *bi)
     BIO_SSL *bs = OPENSSL_zalloc(sizeof(*bs));
 
     if (bs == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
         return 0;
     }
     BIO_set_init(bi, 0);

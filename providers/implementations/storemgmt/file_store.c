@@ -155,7 +155,7 @@ static struct file_ctx_st *file_open_stream(BIO *source, const char *uri,
     struct file_ctx_st *ctx;
 
     if ((ctx = new_file_ctx(IS_FILE, uri, provctx)) == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -172,7 +172,7 @@ static void *file_open_dir(const char *path, const char *uri, void *provctx)
     struct file_ctx_st *ctx;
 
     if ((ctx = new_file_ctx(IS_DIR, uri, provctx)) == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -422,7 +422,7 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
     /* Setup for this session, so only if not already done */
     if (ctx->_.file.decoderctx == NULL) {
         if ((ctx->_.file.decoderctx = OSSL_DECODER_CTX_new()) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             goto err;
         }
 
@@ -559,7 +559,7 @@ static char *file_name_to_uri(struct file_ctx_st *ctx, const char *name)
 
         data = OPENSSL_zalloc(calculated_length);
         if (data == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             return NULL;
         }
 

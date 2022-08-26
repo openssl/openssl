@@ -105,7 +105,7 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
 
     pols = sk_POLICYINFO_new_reserve(NULL, num);
     if (pols == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -144,14 +144,14 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
             pol = POLICYINFO_new();
             if (pol == NULL) {
                 ASN1_OBJECT_free(pobj);
-                ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
                 goto err;
             }
             pol->policyid = pobj;
         }
         if (!sk_POLICYINFO_push(pols, pol)) {
             POLICYINFO_free(pol);
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
@@ -237,7 +237,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
     return pol;
 
  merr:
-    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
 
  err:
     POLICYINFO_free(pol);
@@ -362,7 +362,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
     return qual;
 
  merr:
-    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
 
  err:
     POLICYQUALINFO_free(qual);
@@ -389,7 +389,7 @@ static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos)
 
  merr:
     ASN1_INTEGER_free(aint);
-    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
 
  err:
     return 0;

@@ -1821,7 +1821,7 @@ static int dgram_sctp_new(BIO *bi)
     bi->init = 0;
     bi->num = 0;
     if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
         return 0;
     }
 #  ifdef SCTP_PR_SCTP_NONE
@@ -2059,7 +2059,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
                 (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
             authchunks = OPENSSL_malloc(optlen);
             if (authchunks == NULL) {
-                ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
                 return -1;
             }
             memset(authchunks, 0, optlen);

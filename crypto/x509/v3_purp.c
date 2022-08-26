@@ -172,7 +172,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     /* Need a new entry */
     if (idx == -1) {
         if ((ptmp = OPENSSL_malloc(sizeof(*ptmp))) == NULL) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             return 0;
         }
         ptmp->flags = X509_PURPOSE_DYNAMIC;
@@ -189,7 +189,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     ptmp->name = OPENSSL_strdup(name);
     ptmp->sname = OPENSSL_strdup(sname);
     if (ptmp->name == NULL || ptmp->sname == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         goto err;
     }
     /* Keep the dynamic flag of existing entry */
@@ -206,11 +206,11 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     if (idx == -1) {
         if (xptable == NULL
             && (xptable = sk_X509_PURPOSE_new(xp_cmp)) == NULL) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto err;
         }
         if (!sk_X509_PURPOSE_push(xptable, ptmp)) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }

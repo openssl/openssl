@@ -43,7 +43,7 @@ int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const void *x)
 
     b = OPENSSL_malloc(n);
     if (b == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -91,7 +91,7 @@ int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, const void *x)
 
     n = ASN1_item_i2d(x, &b, it);
     if (b == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return 0;
     }
 

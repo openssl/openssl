@@ -116,7 +116,7 @@ static EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type)
     }
 
     if (pkey == NULL)
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
     return pkey;
 }
 
@@ -344,7 +344,7 @@ EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub)
     }
     buf = OPENSSL_malloc(length);
     if (buf == NULL) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
         goto err;
     }
     p = buf;
@@ -428,7 +428,7 @@ DSA *ossl_b2i_DSA_after_header(const unsigned char **in, unsigned int bitlen,
     return dsa;
 
  memerr:
-    ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
     DSA_free(dsa);
     BN_free(pbn);
     BN_free(qbn);
@@ -487,7 +487,7 @@ RSA *ossl_b2i_RSA_after_header(const unsigned char **in, unsigned int bitlen,
     *in = pin;
     return rsa;
  memerr:
-    ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
     BN_free(e);
     BN_free(n);
     BN_free(p);
@@ -579,7 +579,7 @@ static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
         p = *out;
     else {
         if ((p = OPENSSL_malloc(outlen)) == NULL) {
-            ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
             outlen = -1;
             goto end;
         }
@@ -840,7 +840,7 @@ static void *do_PVK_body_key(const unsigned char **in,
     EVP_CIPHER_CTX *cctx = EVP_CIPHER_CTX_new();
 
     if (cctx == NULL) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -861,7 +861,7 @@ static void *do_PVK_body_key(const unsigned char **in,
         }
         enctmp = OPENSSL_malloc(keylen + 8);
         if (enctmp == NULL) {
-            ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
             goto err;
         }
         if (!derive_pvk_key(keybuf, sizeof(keybuf), p, saltlen,
@@ -942,7 +942,7 @@ static void *do_PVK_key_bio(BIO *in, pem_password_cb *cb, void *u,
     buflen = (int)keylen + saltlen;
     buf = OPENSSL_malloc(buflen);
     if (buf == NULL) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
         return 0;
     }
     p = buf;
@@ -1028,7 +1028,7 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
     } else {
         start = p = OPENSSL_malloc(outlen);
         if (p == NULL) {
-            ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
             return -1;
         }
     }

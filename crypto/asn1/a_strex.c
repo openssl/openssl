@@ -283,7 +283,7 @@ static int do_dump(unsigned long lflags, char_io *io_ch, void *arg,
     if (der_len <= 0)
         return -1;
     if ((der_buf = OPENSSL_malloc(der_len)) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return -1;
     }
     p = der_buf;

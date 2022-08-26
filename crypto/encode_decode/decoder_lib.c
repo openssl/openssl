@@ -225,7 +225,7 @@ OSSL_DECODER_INSTANCE *ossl_decoder_instance_new(OSSL_DECODER *decoder,
     }
 
     if ((decoder_inst = OPENSSL_zalloc(sizeof(*decoder_inst))) == NULL) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -291,7 +291,7 @@ int ossl_decoder_ctx_add_decoder_inst(OSSL_DECODER_CTX *ctx,
     if (ctx->decoder_insts == NULL
         && (ctx->decoder_insts =
             sk_OSSL_DECODER_INSTANCE_new_null()) == NULL) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -508,7 +508,7 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
 
     skdecoders = sk_OSSL_DECODER_new_null();
     if (skdecoders == NULL) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
         return 0;
     }
     OSSL_DECODER_do_all_provided(libctx, collect_all_decoders, skdecoders);
@@ -824,7 +824,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     }
 
     if ((cbio = ossl_core_bio_new_from_bio(bio)) == NULL) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
         goto end;
     }
 

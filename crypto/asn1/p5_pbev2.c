@@ -135,7 +135,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
     return ret;
 
  merr:
-    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
 
  err:
     EVP_CIPHER_CTX_free(ctx);
@@ -232,7 +232,7 @@ X509_ALGOR *PKCS5_pbkdf2_set_ex(int iter, unsigned char *salt, int saltlen,
     return keyfunc;
 
  merr:
-    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
     PBKDF2PARAM_free(kdf);
     X509_ALGOR_free(keyfunc);
     return NULL;

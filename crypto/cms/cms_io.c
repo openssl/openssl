@@ -29,7 +29,7 @@ int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
         *boundary = &(*pos)->data;
         return 1;
     }
-    ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
     return 0;
 }
 

@@ -223,7 +223,7 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
     return 1;
 
  err:
-    ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
     return 0;
 }
 

@@ -135,7 +135,7 @@ int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
 
     if ((izone = ASN1_INTEGER_new()) == NULL
         || !ASN1_INTEGER_set(izone, lzone)) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         ASN1_INTEGER_free(izone);
         return 0;
     }
@@ -190,7 +190,7 @@ int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, const char *user,
     return 1;
 
  err:
-    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
     SXNETID_free(id);
     if (*psx == NULL)
         SXNET_free(sx);
@@ -218,7 +218,7 @@ ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone)
 
     if ((izone = ASN1_INTEGER_new()) == NULL
         || !ASN1_INTEGER_set(izone, lzone)) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         ASN1_INTEGER_free(izone);
         return NULL;
     }

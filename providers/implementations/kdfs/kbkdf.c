@@ -116,7 +116,7 @@ static void *kbkdf_new(void *provctx)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 

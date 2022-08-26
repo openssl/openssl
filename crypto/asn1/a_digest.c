@@ -37,7 +37,7 @@ int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,
         return 0;
     }
     if ((str = OPENSSL_malloc(inl)) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return 0;
     }
     p = str;

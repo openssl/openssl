@@ -385,7 +385,7 @@ static int set_property_query(ECX_KEY *ecxkey, const char *propq)
     if (propq != NULL) {
         ecxkey->propq = OPENSSL_strdup(propq);
         if (ecxkey->propq == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             return 0;
         }
     }
@@ -596,7 +596,7 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
         return NULL;
     if ((key = ossl_ecx_key_new(gctx->libctx, gctx->type, 0,
                                 gctx->propq)) == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -605,7 +605,7 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
         return key;
 
     if ((privkey = ossl_ecx_key_allocate_privkey(key)) == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         goto err;
     }
 #ifndef FIPS_MODULE
@@ -865,7 +865,7 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -877,7 +877,7 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
 
     privkey = ossl_ecx_key_allocate_privkey(key);
     if (privkey == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -922,7 +922,7 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -934,7 +934,7 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
 
     privkey = ossl_ecx_key_allocate_privkey(key);
     if (privkey == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -985,7 +985,7 @@ static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx)
     int j;
 
     if (key == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -997,7 +997,7 @@ static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx)
 
     privkey = ossl_ecx_key_allocate_privkey(key);
     if (privkey == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -1052,7 +1052,7 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx)
     EVP_MD *shake = NULL;
 
     if (key == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -1064,7 +1064,7 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx)
 
     privkey = ossl_ecx_key_allocate_privkey(key);
     if (privkey == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         goto err;
     }
 

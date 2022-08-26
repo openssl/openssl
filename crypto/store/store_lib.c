@@ -169,7 +169,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
 
     if ((propq != NULL && (propq_copy = OPENSSL_strdup(propq)) == NULL)
         || (ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -338,7 +338,7 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
         }
 
         if ((bld = OSSL_PARAM_BLD_new()) == NULL) {
-            ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
             return 0;
         }
 
@@ -562,7 +562,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_NAME(char *name)
     OSSL_STORE_INFO *info = OSSL_STORE_INFO_new(OSSL_STORE_INFO_NAME, NULL);
 
     if (info == NULL) {
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -588,7 +588,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_PARAMS(EVP_PKEY *params)
     OSSL_STORE_INFO *info = OSSL_STORE_INFO_new(OSSL_STORE_INFO_PARAMS, params);
 
     if (info == NULL)
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
     return info;
 }
 
@@ -597,7 +597,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_PUBKEY(EVP_PKEY *pkey)
     OSSL_STORE_INFO *info = OSSL_STORE_INFO_new(OSSL_STORE_INFO_PUBKEY, pkey);
 
     if (info == NULL)
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
     return info;
 }
 
@@ -606,7 +606,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_PKEY(EVP_PKEY *pkey)
     OSSL_STORE_INFO *info = OSSL_STORE_INFO_new(OSSL_STORE_INFO_PKEY, pkey);
 
     if (info == NULL)
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
     return info;
 }
 
@@ -615,7 +615,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_CERT(X509 *x509)
     OSSL_STORE_INFO *info = OSSL_STORE_INFO_new(OSSL_STORE_INFO_CERT, x509);
 
     if (info == NULL)
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
     return info;
 }
 
@@ -624,7 +624,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_CRL(X509_CRL *crl)
     OSSL_STORE_INFO *info = OSSL_STORE_INFO_new(OSSL_STORE_INFO_CRL, crl);
 
     if (info == NULL)
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
     return info;
 }
 
@@ -656,7 +656,7 @@ char *OSSL_STORE_INFO_get1_NAME(const OSSL_STORE_INFO *info)
         char *ret = OPENSSL_strdup(info->_.name.name);
 
         if (ret == NULL)
-            ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
         return ret;
     }
     ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NOT_A_NAME);
@@ -677,7 +677,7 @@ char *OSSL_STORE_INFO_get1_NAME_description(const OSSL_STORE_INFO *info)
                                    ? info->_.name.desc : "");
 
         if (ret == NULL)
-            ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
         return ret;
     }
     ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NOT_A_NAME);
@@ -859,7 +859,7 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_name(X509_NAME *name)
     OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
 
     if (search == NULL) {
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -874,7 +874,7 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_issuer_serial(X509_NAME *name,
     OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
 
     if (search == NULL) {
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -891,7 +891,7 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_key_fingerprint(const EVP_MD *digest,
     OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
 
     if (search == NULL) {
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -916,7 +916,7 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_alias(const char *alias)
     OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
 
     if (search == NULL) {
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -1017,7 +1017,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
         ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 

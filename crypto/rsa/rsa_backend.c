@@ -402,7 +402,7 @@ RSA *ossl_rsa_dup(const RSA *rsa, int selection)
             RSA_PRIME_INFO *duppinfo = NULL;
 
             if ((duppinfo = OPENSSL_zalloc(sizeof(*duppinfo))) == NULL) {
-                ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
                 goto err;
             }
             /* push first so cleanup in error case works */

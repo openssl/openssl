@@ -129,7 +129,7 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
 
     pmeth = OPENSSL_zalloc(sizeof(*pmeth));
     if (pmeth == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -317,7 +317,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     } else {
         ret = OPENSSL_zalloc(sizeof(*ret));
         if (ret == NULL)
-            ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
     }
 
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
@@ -482,7 +482,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
 # endif
     rctx = OPENSSL_zalloc(sizeof(*rctx));
     if (rctx == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -615,12 +615,12 @@ int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
     if (app_pkey_methods == NULL) {
         app_pkey_methods = sk_EVP_PKEY_METHOD_new(pmeth_cmp);
         if (app_pkey_methods == NULL) {
-            ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
             return 0;
         }
     }
     if (!sk_EVP_PKEY_METHOD_push(app_pkey_methods, pmeth)) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         return 0;
     }
     sk_EVP_PKEY_METHOD_sort(app_pkey_methods);
@@ -1486,14 +1486,14 @@ static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
         if (name != NULL) {
             ctx->cached_parameters.dist_id_name = OPENSSL_strdup(name);
             if (ctx->cached_parameters.dist_id_name == NULL) {
-                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
                 return 0;
             }
         }
         if (data_len > 0) {
             ctx->cached_parameters.dist_id = OPENSSL_memdup(data, data_len);
             if (ctx->cached_parameters.dist_id == NULL) {
-                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
                 return 0;
             }
         }

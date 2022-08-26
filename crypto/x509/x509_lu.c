@@ -20,7 +20,7 @@ X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
     X509_LOOKUP *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -181,31 +181,31 @@ X509_STORE *X509_STORE_new(void)
     X509_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     if ((ret->objs = sk_X509_OBJECT_new(x509_object_cmp)) == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
     ret->cache = 1;
     if ((ret->get_cert_methods = sk_X509_LOOKUP_new_null()) == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
     if ((ret->param = X509_VERIFY_PARAM_new()) == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data)) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
     ret->references = 1;
@@ -276,7 +276,7 @@ X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *xs, X509_LOOKUP_METHOD *m)
     /* a new one */
     lu = X509_LOOKUP_new(m);
     if (lu == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -284,7 +284,7 @@ X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *xs, X509_LOOKUP_METHOD *m)
     if (sk_X509_LOOKUP_push(xs->get_cert_methods, lu))
         return lu;
     /* malloc failed */
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
     X509_LOOKUP_free(lu);
     return NULL;
 }
@@ -413,7 +413,7 @@ static int x509_store_add(X509_STORE *store, void *x, int crl)
 int X509_STORE_add_cert(X509_STORE *xs, X509 *x)
 {
     if (!x509_store_add(xs, x, 0)) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return 0;
     }
     return 1;
@@ -422,7 +422,7 @@ int X509_STORE_add_cert(X509_STORE *xs, X509 *x)
 int X509_STORE_add_crl(X509_STORE *xs, X509_CRL *x)
 {
     if (!x509_store_add(xs, x, 1)) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return 0;
     }
     return 1;
@@ -465,7 +465,7 @@ X509_OBJECT *X509_OBJECT_new(void)
     X509_OBJECT *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ret->type = X509_LU_NONE;

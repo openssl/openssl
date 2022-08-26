@@ -35,7 +35,7 @@ DSA_SIG *DSA_SIG_new(void)
 {
     DSA_SIG *sig = OPENSSL_zalloc(sizeof(*sig));
     if (sig == NULL)
-        ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSA, ERR_R_CRYPTO_LIB);
     return sig;
 }
 

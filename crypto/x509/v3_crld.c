@@ -281,7 +281,7 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
     return crld;
 
  merr:
-    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
  err:
     GENERAL_NAME_free(gen);
     GENERAL_NAMES_free(gens);
@@ -399,7 +399,7 @@ static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
     return idp;
 
  merr:
-    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
  err:
     ISSUING_DIST_POINT_free(idp);
     return NULL;

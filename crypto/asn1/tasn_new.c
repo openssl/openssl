@@ -160,7 +160,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed,
  memerr2:
     ossl_asn1_item_embed_free(pval, it, embed);
  memerr:
-    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
     return 0;
 
  auxerr2:
@@ -230,7 +230,7 @@ static int asn1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt,
         STACK_OF(ASN1_VALUE) *skval;
         skval = sk_ASN1_VALUE_new_null();
         if (!skval) {
-            ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
             ret = 0;
             goto done;
         }
@@ -299,7 +299,7 @@ static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case V_ASN1_ANY:
         if ((typ = OPENSSL_malloc(sizeof(*typ))) == NULL) {
-            ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
             return 0;
         }
         typ->value.ptr = NULL;

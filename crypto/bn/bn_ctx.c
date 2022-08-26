@@ -120,7 +120,7 @@ BN_CTX *BN_CTX_new_ex(OSSL_LIB_CTX *ctx)
     BN_CTX *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     /* Initialise the structure */
@@ -269,7 +269,7 @@ static int BN_STACK_push(BN_STACK *st, unsigned int idx)
         unsigned int *newitems;
 
         if ((newitems = OPENSSL_malloc(sizeof(*newitems) * newsize)) == NULL) {
-            ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BN, ERR_R_CRYPTO_LIB);
             return 0;
         }
         if (st->depth)
@@ -323,7 +323,7 @@ static BIGNUM *BN_POOL_get(BN_POOL *p, int flag)
         BN_POOL_ITEM *item;
 
         if ((item = OPENSSL_malloc(sizeof(*item))) == NULL) {
-            ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BN, ERR_R_CRYPTO_LIB);
             return NULL;
         }
         for (loop = 0, bn = item->vals; loop++ < BN_CTX_POOL_SIZE; bn++) {

@@ -318,7 +318,7 @@ ASN1_INTEGER *ossl_c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
         (*a) = ret;
     return ret;
  err:
-    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
     if (a == NULL || *a != ret)
         ASN1_INTEGER_free(ret);
     return NULL;
@@ -483,7 +483,7 @@ static ASN1_STRING *bn_to_asn1_string(const BIGNUM *bn, ASN1_STRING *ai,
         len = 1;
 
     if (ASN1_STRING_set(ret, NULL, len) == 0) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         goto err;
     }
 

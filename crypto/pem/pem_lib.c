@@ -346,7 +346,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
     /* actually it needs the cipher block size extra... */
     data = OPENSSL_malloc((unsigned int)dsize + 20);
     if (data == NULL) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
         goto err;
     }
     p = data;
@@ -749,7 +749,7 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
      */
     linebuf = pem_malloc(LINESIZE + 1, flags);
     if (linebuf == NULL) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -773,7 +773,7 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
     len = len - BEGINLEN - TAILLEN + 1;
     *name = pem_malloc(len, flags);
     if (*name == NULL) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
         goto err;
     }
     memcpy(*name, linebuf + BEGINLEN, len);
@@ -817,7 +817,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
      * that will be added by sanitize_line() (the extra '1'). */
     linebuf = pem_malloc(LINESIZE + 1, flags);
     if (linebuf == NULL) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -935,7 +935,7 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     headerB = BIO_new(bmeth);
     dataB = BIO_new(bmeth);
     if (headerB == NULL || dataB == NULL) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
         goto end;
     }
 
@@ -953,7 +953,7 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
 
     ctx = EVP_ENCODE_CTX_new();
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_CRYPTO_LIB);
         goto end;
     }
 

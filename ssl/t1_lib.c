@@ -258,7 +258,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
                                    + TLS_GROUP_LIST_MALLOC_BLOCK_SIZE)
                                   * sizeof(TLS_GROUP_INFO));
         if (tmp == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
             return 0;
         }
         ctx->group_list = tmp;
@@ -277,7 +277,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
     }
     ginf->tlsname = OPENSSL_strdup(p->data);
     if (ginf->tlsname == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -288,7 +288,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
     }
     ginf->realname = OPENSSL_strdup(p->data);
     if (ginf->realname == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -306,7 +306,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
     }
     ginf->algorithm = OPENSSL_strdup(p->data);
     if (ginf->algorithm == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -420,7 +420,7 @@ int ssl_load_groups(SSL_CTX *ctx)
         = OPENSSL_malloc(sizeof(uint16_t) * num_deflt_grps);
 
     if (ctx->ext.supported_groups_default == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -726,7 +726,7 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
         return 0;
     }
     if ((glist = OPENSSL_malloc(ngroups * sizeof(*glist))) == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 0;
     }
     for (i = 0; i < ngroups; i++) {
@@ -2336,7 +2336,7 @@ static int tls1_set_shared_sigalgs(SSL_CONNECTION *s)
     nmatch = tls12_shared_sigalgs(s, NULL, pref, preflen, allow, allowlen);
     if (nmatch) {
         if ((salgs = OPENSSL_malloc(nmatch * sizeof(*salgs))) == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
             return 0;
         }
         nmatch = tls12_shared_sigalgs(s, salgs, pref, preflen, allow, allowlen);
@@ -2363,7 +2363,7 @@ int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen)
     size >>= 1;
 
     if ((buf = OPENSSL_malloc(size * sizeof(*buf))) == NULL)  {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 0;
     }
     for (i = 0; i < size && PACKET_get_net_2(pkt, &stmp); i++)
@@ -2607,7 +2607,7 @@ int tls1_set_raw_sigalgs(CERT *c, const uint16_t *psigs, size_t salglen,
     uint16_t *sigalgs;
 
     if ((sigalgs = OPENSSL_malloc(salglen * sizeof(*sigalgs))) == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 0;
     }
     memcpy(sigalgs, psigs, salglen * sizeof(*sigalgs));
@@ -2633,7 +2633,7 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
     if (salglen & 1)
         return 0;
     if ((sigalgs = OPENSSL_malloc((salglen / 2) * sizeof(*sigalgs))) == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 0;
     }
     for (i = 0, sptr = sigalgs; i < salglen; i += 2) {

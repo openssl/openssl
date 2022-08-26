@@ -65,7 +65,7 @@ static void *krb5kdf_new(void *provctx)
         return NULL;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ctx->provctx = provctx;

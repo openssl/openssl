@@ -707,7 +707,7 @@ int OPENSSL_atexit(void (*handler)(void))
 #endif
 
     if ((newhand = OPENSSL_malloc(sizeof(*newhand))) == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         return 0;
     }
 

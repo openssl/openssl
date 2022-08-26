@@ -423,7 +423,7 @@ size_t ossl_dh_key2buf(const DH *dh, unsigned char **pbuf_out, size_t size,
         }
 
         if (pbuf == NULL) {
-            ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_DH, ERR_R_CRYPTO_LIB);
             return 0;
         }
         /*

@@ -327,7 +327,7 @@ static int mem_write(BIO *b, const char *in, int inl)
         struct buf_mem_dgram_st *dgram = OPENSSL_malloc(sizeof(*dgram));
 
         if (dgram == NULL) {
-            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
             goto end;
         }
 

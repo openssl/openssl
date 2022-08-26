@@ -54,7 +54,7 @@ BIO_ADDR *BIO_ADDR_new(void)
     BIO_ADDR *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -279,7 +279,7 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
             OPENSSL_free(*service);
             *service = NULL;
         }
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -572,7 +572,7 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
     ERR_raise(ERR_LIB_BIO, BIO_R_MALFORMED_HOST_OR_SERVICE);
     return 0;
  memerr:
-    ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
     return 0;
 }
 
@@ -591,7 +591,7 @@ static int addrinfo_wrap(int family, int socktype,
                          BIO_ADDRINFO **bai)
 {
     if ((*bai = OPENSSL_zalloc(sizeof(**bai))) == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -688,7 +688,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         if (addrinfo_wrap(family, socktype, host, strlen(host), 0, res))
             return 1;
         else
-            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
         return 0;
     }
 #endif
@@ -732,7 +732,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 # endif
 # ifdef EAI_MEMORY
         case EAI_MEMORY:
-            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
             break;
 # endif
         case 0:
@@ -789,7 +789,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 #endif
 
         if (!RUN_ONCE(&bio_lookup_init, do_bio_lookup_init)) {
-            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
             ret = 0;
             goto err;
         }
@@ -934,7 +934,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
              addrinfo_malloc_err:
                 BIO_ADDRINFO_free(*res);
                 *res = NULL;
-                ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
                 ret = 0;
                 goto err;
             }

@@ -26,7 +26,7 @@ RAND_POOL *ossl_rand_pool_new(int entropy_requested, int secure,
     size_t min_alloc_size = RAND_POOL_MIN_ALLOCATION(secure);
 
     if (pool == NULL) {
-        ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RAND, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -43,7 +43,7 @@ RAND_POOL *ossl_rand_pool_new(int entropy_requested, int secure,
         pool->buffer = OPENSSL_zalloc(pool->alloc_len);
 
     if (pool->buffer == NULL) {
-        ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RAND, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -68,7 +68,7 @@ RAND_POOL *ossl_rand_pool_attach(const unsigned char *buffer, size_t len,
     RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
 
     if (pool == NULL) {
-        ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RAND, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -223,7 +223,7 @@ static int rand_pool_grow(RAND_POOL *pool, size_t len)
         else
             p = OPENSSL_zalloc(newlen);
         if (p == NULL) {
-            ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_RAND, ERR_R_CRYPTO_LIB);
             return 0;
         }
         memcpy(p, pool->buffer, pool->len);

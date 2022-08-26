@@ -17,7 +17,7 @@ TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)
     TS_VERIFY_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
-        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_CRYPTO_LIB);
     return ctx;
 }
 

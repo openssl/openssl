@@ -29,7 +29,7 @@ X509_PKEY *X509_PKEY_new(void)
     return ret;
 err:
     X509_PKEY_free(ret);
-    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
     return NULL;
 }
 

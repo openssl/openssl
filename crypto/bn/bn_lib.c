@@ -245,7 +245,7 @@ BIGNUM *BN_new(void)
     BIGNUM *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ret->flags = BN_FLG_MALLOCED;
@@ -280,7 +280,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
     else
         a = OPENSSL_zalloc(words * sizeof(*a));
     if (a == NULL) {
-        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -1045,7 +1045,7 @@ BN_GENCB *BN_GENCB_new(void)
     BN_GENCB *ret;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
-        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 

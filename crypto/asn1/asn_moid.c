@@ -84,7 +84,7 @@ static int do_create(const char *value, const char *name)
         }
         p++;
         if ((lntmp = OPENSSL_malloc((p - ln) + 1)) == NULL) {
-            ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
             return 0;
         }
         memcpy(lntmp, ln, p - ln);

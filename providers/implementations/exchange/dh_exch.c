@@ -195,7 +195,7 @@ static int dh_X9_42_kdf_derive(void *vpdhctx, unsigned char *secret,
     if (!dh_plain_derive(pdhctx, NULL, &stmplen, 0, 1))
         return 0;
     if ((stmp = OPENSSL_secure_malloc(stmplen)) == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return 0;
     }
     if (!dh_plain_derive(pdhctx, stmp, &stmplen, stmplen, 1))

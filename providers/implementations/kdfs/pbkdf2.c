@@ -73,7 +73,7 @@ static void *kdf_pbkdf2_new_no_init(void *provctx)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ctx->provctx = provctx;
@@ -164,7 +164,7 @@ static int pbkdf2_set_membuf(unsigned char **buffer, size_t *buflen,
 
     if (p->data_size == 0) {
         if ((*buffer = OPENSSL_malloc(1)) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             return 0;
         }
     } else if (p->data != NULL) {

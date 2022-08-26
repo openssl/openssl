@@ -28,7 +28,7 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
     int max_out_len, mac_len = 0;
 
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -68,7 +68,7 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
     }
 
     if ((out = OPENSSL_malloc(max_out_len)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -180,7 +180,7 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt_ex(X509_ALGOR *algor,
     int inlen;
 
     if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_CRYPTO_LIB);
         goto err;
     }
     inlen = ASN1_item_i2d(obj, &in, it);

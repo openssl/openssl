@@ -107,7 +107,7 @@ SSL_SESSION *SSL_SESSION_new(void)
 
     ss = OPENSSL_zalloc(sizeof(*ss));
     if (ss == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -119,7 +119,7 @@ SSL_SESSION *SSL_SESSION_new(void)
     ssl_session_calculate_timeout(ss);
     ss->lock = CRYPTO_THREAD_lock_new();
     if (ss->lock == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         OPENSSL_free(ss);
         return NULL;
     }
@@ -256,7 +256,7 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 
     return dest;
  err:
-    ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
     SSL_SESSION_free(dest);
     return NULL;
 }
@@ -409,7 +409,7 @@ int ssl_get_new_session(SSL_CONNECTION *s, int session)
     SSL_SESSION *ss = NULL;
 
     if ((ss = SSL_SESSION_new()) == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -1117,7 +1117,7 @@ int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
         sc->ext.session_ticket =
             OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT) + ext_len);
         if (sc->ext.session_ticket == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
             return 0;
         }
 

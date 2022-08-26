@@ -24,7 +24,7 @@ X509_LOOKUP_METHOD *X509_LOOKUP_meth_new(const char *name)
     if (method != NULL) {
         method->name = OPENSSL_strdup(name);
         if (method->name == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }

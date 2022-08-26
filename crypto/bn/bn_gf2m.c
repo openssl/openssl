@@ -475,7 +475,7 @@ int BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 
     arr = OPENSSL_malloc(sizeof(*arr) * max);
     if (arr == NULL) {
-        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_CRYPTO_LIB);
         return 0;
     }
     ret = BN_GF2m_poly2arr(p, arr, max);
@@ -537,7 +537,7 @@ int BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
     arr = OPENSSL_malloc(sizeof(*arr) * max);
     if (arr == NULL) {
-        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_CRYPTO_LIB);
         return 0;
     }
     ret = BN_GF2m_poly2arr(p, arr, max);
@@ -916,7 +916,7 @@ int BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 
     arr = OPENSSL_malloc(sizeof(*arr) * max);
     if (arr == NULL) {
-        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_CRYPTO_LIB);
         return 0;
     }
     ret = BN_GF2m_poly2arr(p, arr, max);
@@ -980,7 +980,7 @@ int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
     arr = OPENSSL_malloc(sizeof(*arr) * max);
     if (arr == NULL) {
-        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_CRYPTO_LIB);
         return 0;
     }
     ret = BN_GF2m_poly2arr(p, arr, max);
@@ -1116,7 +1116,7 @@ int BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
     arr = OPENSSL_malloc(sizeof(*arr) * max);
     if (arr == NULL) {
-        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_CRYPTO_LIB);
         goto err;
     }
     ret = BN_GF2m_poly2arr(p, arr, max);

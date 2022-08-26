@@ -113,7 +113,7 @@ static int setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk)
         return 1;
     if ((ctx->tbuf =
             OPENSSL_malloc(RSA_size(EVP_PKEY_get0_RSA(pk->pkey)))) == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
         return 0;
     }
     return 1;
@@ -164,7 +164,7 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
                 return -1;
             }
             if (!setup_tbuf(rctx, ctx)) {
-                ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
                 return -1;
             }
             memcpy(rctx->tbuf, tbs, tbslen);

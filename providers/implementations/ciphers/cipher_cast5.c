@@ -43,7 +43,7 @@ static void *cast5_dupctx(void *ctx)
 
     ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     *ret = *in;

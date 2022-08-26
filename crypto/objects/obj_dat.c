@@ -255,7 +255,7 @@ static int ossl_obj_add_object(const ASN1_OBJECT *obj, int lock)
                 && (ao[ADDED_SNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
             || (o->ln != NULL
                 && (ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)) {
-        ERR_raise(ERR_LIB_OBJ, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OBJ, ERR_R_CRYPTO_LIB);
         goto err2;
     }
 
@@ -266,7 +266,7 @@ static int ossl_obj_add_object(const ASN1_OBJECT *obj, int lock)
     if (added == NULL) {
         added = lh_ADDED_OBJ_new(added_obj_hash, added_obj_cmp);
         if (added == NULL) {
-            ERR_raise(ERR_LIB_OBJ, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_OBJ, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
@@ -421,7 +421,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
         return NULL;
 
     if ((buf = OPENSSL_malloc(j)) == NULL) {
-        ERR_raise(ERR_LIB_OBJ, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OBJ, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 

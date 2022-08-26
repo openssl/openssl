@@ -31,7 +31,7 @@ EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf)
     if (ctx == NULL
         || (ctx->algctx = kdf->newctx(ossl_provider_ctx(kdf->prov))) == NULL
         || !EVP_KDF_up_ref(kdf)) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         if (ctx != NULL)
             kdf->freectx(ctx->algctx);
         OPENSSL_free(ctx);
@@ -61,13 +61,13 @@ EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src)
 
     dst = OPENSSL_malloc(sizeof(*dst));
     if (dst == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
     memcpy(dst, src, sizeof(*dst));
     if (!EVP_KDF_up_ref(dst->meth)) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         OPENSSL_free(dst);
         return NULL;
     }

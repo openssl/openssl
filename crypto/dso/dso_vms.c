@@ -175,7 +175,7 @@ static int vms_load(DSO *dso)
 
     p = DSO_MALLOC(sizeof(*p));
     if (p == NULL) {
-        ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -448,7 +448,7 @@ static char *vms_merger(DSO *dso, const char *filespec1,
     merged[nam.NAMX_ESL] = '\0';
     return merged;
  malloc_err:
-    ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_DSO, ERR_R_CRYPTO_LIB);
 }
 
 static char *vms_name_converter(DSO *dso, const char *filename)

@@ -64,7 +64,7 @@ static void *kdf_scrypt_new_inner(OSSL_LIB_CTX *libctx)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ctx->libctx = libctx;
@@ -151,7 +151,7 @@ static int scrypt_set_membuf(unsigned char **buffer, size_t *buflen,
 
     if (p->data_size == 0) {
         if ((*buffer = OPENSSL_malloc(1)) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             return 0;
         }
     } else if (p->data != NULL) {
@@ -180,7 +180,7 @@ static int set_property_query(KDF_SCRYPT *ctx, const char *propq)
     if (propq != NULL) {
         ctx->propq = OPENSSL_strdup(propq);
         if (ctx->propq == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             return 0;
         }
     }
@@ -528,7 +528,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
 
     B = OPENSSL_malloc((size_t)(Blen + Vlen));
     if (B == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         return 0;
     }
     X = (uint32_t *)(B + Blen);

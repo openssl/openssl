@@ -1038,7 +1038,7 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, BIGNUM **val)
     }
 
     if (b == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -1285,7 +1285,7 @@ static int get_string_internal(const OSSL_PARAM *p, void **val,
         char *const q = OPENSSL_malloc(alloc_sz);
 
         if (q == NULL) {
-            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
             return 0;
         }
         *val = q;

@@ -1743,7 +1743,7 @@ static NISTP521_PRE_COMP *nistp521_pre_comp_new(void)
     NISTP521_PRE_COMP *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         return ret;
     }
 
@@ -1751,7 +1751,7 @@ static NISTP521_PRE_COMP *nistp521_pre_comp_new(void)
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -1993,7 +1993,7 @@ int ossl_ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
                 OPENSSL_malloc(sizeof(*tmp_felems) * (num_points * 17 + 1));
         if ((secrets == NULL) || (pre_comp == NULL)
             || (mixed && (tmp_felems == NULL))) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
             goto err;
         }
 

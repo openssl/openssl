@@ -59,7 +59,7 @@ static char *file_get_pass(const UI_METHOD *ui_method, char *pass,
     char *prompt = NULL;
 
     if (ui == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        ATTICerr(0, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -68,7 +68,7 @@ static char *file_get_pass(const UI_METHOD *ui_method, char *pass,
     UI_add_user_data(ui, data);
 
     if ((prompt = UI_construct_prompt(ui, desc, info)) == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        ATTICerr(0, ERR_R_CRYPTO_LIB);
         pass = NULL;
     } else if (UI_add_input_string(ui, prompt, UI_INPUT_FLAG_DEFAULT_PWD,
                                     pass, 0, maxsize - 1) <= 0) {
@@ -192,7 +192,7 @@ static OSSL_STORE_INFO *new_EMBEDDED(const char *new_pem_name,
 
     if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL
         || (info = OSSL_STORE_INFO_new(STORE_INFO_EMBEDDED, data)) == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        ATTICerr(0, ERR_R_CRYPTO_LIB);
         OPENSSL_free(data);
         return NULL;
     }
@@ -202,7 +202,7 @@ static OSSL_STORE_INFO *new_EMBEDDED(const char *new_pem_name,
         new_pem_name == NULL ? NULL : OPENSSL_strdup(new_pem_name);
 
     if (new_pem_name != NULL && data->pem_name == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        ATTICerr(0, ERR_R_CRYPTO_LIB);
         store_info_free(info);
         info = NULL;
     }
@@ -458,7 +458,7 @@ static OSSL_STORE_INFO *try_decode_PKCS8Encrypted(const char *pem_name,
     *matchcount = 1;
 
     if ((mem = BUF_MEM_new()) == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        ATTICerr(0, ERR_R_CRYPTO_LIB);
         goto nop8;
     }
 
@@ -481,7 +481,7 @@ static OSSL_STORE_INFO *try_decode_PKCS8Encrypted(const char *pem_name,
 
     store_info = new_EMBEDDED(PEM_STRING_PKCS8INF, mem);
     if (store_info == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        ATTICerr(0, ERR_R_CRYPTO_LIB);
         goto nop8;
     }
 
@@ -1023,12 +1023,12 @@ static OSSL_STORE_LOADER_CTX *file_open_ex
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        ATTICerr(0, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ctx->uri = OPENSSL_strdup(uri);
     if (ctx->uri == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        ATTICerr(0, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -1051,7 +1051,7 @@ static OSSL_STORE_LOADER_CTX *file_open_ex
     if (propq != NULL) {
         ctx->propq = OPENSSL_strdup(propq);
         if (ctx->propq == NULL) {
-            ATTICerr(0, ERR_R_MALLOC_FAILURE);
+            ATTICerr(0, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
@@ -1079,7 +1079,7 @@ static OSSL_STORE_LOADER_CTX *file_attach
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL
         || (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL)) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        ATTICerr(0, ERR_R_CRYPTO_LIB);
         OSSL_STORE_LOADER_CTX_free(ctx);
         return NULL;
     }
@@ -1185,7 +1185,7 @@ static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
                            * OSSL_NELEM(file_handlers));
 
         if (matching_handlers == NULL) {
-            ATTICerr(0, ERR_R_MALLOC_FAILURE);
+            ATTICerr(0, ERR_R_CRYPTO_LIB);
             goto err;
         }
 
@@ -1430,7 +1430,7 @@ static int file_name_to_uri(OSSL_STORE_LOADER_CTX *ctx, const char *name,
 
         *data = OPENSSL_zalloc(calculated_length);
         if (*data == NULL) {
-            ATTICerr(0, ERR_R_MALLOC_FAILURE);
+            ATTICerr(0, ERR_R_CRYPTO_LIB);
             return 0;
         }
 

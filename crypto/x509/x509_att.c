@@ -109,7 +109,7 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
         *x = sk;
     return sk;
  err:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
  err2:
     X509_ATTRIBUTE_free(new_attr);
     if (*x == NULL)
@@ -223,7 +223,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
 
     if (attr == NULL || *attr == NULL) {
         if ((ret = X509_ATTRIBUTE_new()) == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             return NULL;
         }
     } else {
@@ -321,7 +321,7 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
         goto err;
     return 1;
  err:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
     ASN1_TYPE_free(ttmp);
     ASN1_STRING_free(stmp);
     return 0;

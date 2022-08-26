@@ -714,7 +714,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
              */
             tmpsubject = X509_NAME_dup(tmpsubject);
             if (tmpsubject == NULL) {
-                ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
                 ctx->error = X509_V_ERR_OUT_OF_MEM;
                 return -1;
             }
@@ -1702,7 +1702,7 @@ static int check_policy(X509_STORE_CTX *ctx)
     return 1;
 
  memerr:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
     ctx->error = X509_V_ERR_OUT_OF_MEM;
     return -1;
 }
@@ -2123,7 +2123,7 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
     return crl;
 
  memerr:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
     X509_CRL_free(crl);
     return NULL;
 }
@@ -2290,7 +2290,7 @@ X509_STORE_CTX *X509_STORE_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
     X509_STORE_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -2299,7 +2299,7 @@ X509_STORE_CTX *X509_STORE_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
         ctx->propq = OPENSSL_strdup(propq);
         if (ctx->propq == NULL) {
             OPENSSL_free(ctx);
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             return NULL;
         }
     }
@@ -2419,7 +2419,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 
     ctx->param = X509_VERIFY_PARAM_new();
     if (ctx->param == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -2447,7 +2447,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     if (CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx,
                            &ctx->ex_data))
         return 1;
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
 
  err:
     /*
@@ -2677,7 +2677,7 @@ static unsigned char *dane_i2d(X509 *cert, uint8_t selector,
     }
 
     if (len < 0 || buf == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -3330,7 +3330,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     return -1;
 
  memerr:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
     ctx->error = X509_V_ERR_OUT_OF_MEM;
     sk_X509_free(sk_untrusted);
     return -1;

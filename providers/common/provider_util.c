@@ -358,7 +358,7 @@ int ossl_prov_memdup(const void *src, size_t src_len,
 {
     if (src != NULL) {
         if ((*dest = OPENSSL_memdup(src, src_len)) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             return 0;
         }
         *dest_len = src_len;

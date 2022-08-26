@@ -66,7 +66,7 @@ static void *ossl_aes_gcm_siv_dupctx(void *vctx)
 
     ret = OPENSSL_memdup(in, sizeof(*in));
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     /* NULL-out these things we create later */
@@ -75,7 +75,7 @@ static void *ossl_aes_gcm_siv_dupctx(void *vctx)
 
     if (in->aad == NULL) {
         if ((ret->aad = OPENSSL_memdup(in->aad, UP16(ret->aad_len))) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }

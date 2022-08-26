@@ -65,7 +65,7 @@ static int x509v3_add_len_value(const char *name, const char *value,
         goto err;
     return 1;
  err:
-    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
     if (sk_allocated) {
         sk_CONF_VALUE_free(*extlist);
         *extlist = NULL;
@@ -146,7 +146,7 @@ static char *bignum_to_string(const BIGNUM *bn)
     len = strlen(tmp) + 3;
     ret = OPENSSL_malloc(len);
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         OPENSSL_free(tmp);
         return NULL;
     }
@@ -172,7 +172,7 @@ char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
         return NULL;
     if ((bntmp = ASN1_ENUMERATED_to_BN(a, NULL)) == NULL
         || (strtmp = bignum_to_string(bntmp)) == NULL)
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
     BN_free(bntmp);
     return strtmp;
 }
@@ -186,7 +186,7 @@ char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
         return NULL;
     if ((bntmp = ASN1_INTEGER_to_BN(a, NULL)) == NULL
         || (strtmp = bignum_to_string(bntmp)) == NULL)
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
     BN_free(bntmp);
     return strtmp;
 }
@@ -204,7 +204,7 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
     }
     bn = BN_new();
     if (bn == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     if (value[0] == '-') {
@@ -321,7 +321,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
     /* We are going to modify the line so copy it first */
     linebuf = OPENSSL_strdup(line);
     if (linebuf == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         goto err;
     }
     state = HDR_NAME;

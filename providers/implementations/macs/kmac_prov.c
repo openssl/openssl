@@ -311,7 +311,7 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
     }
     out = OPENSSL_malloc(out_len);
     if (out == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return 0;
     }
     res = bytepad(out, NULL, kmac_string, sizeof(kmac_string),

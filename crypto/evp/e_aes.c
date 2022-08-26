@@ -1476,7 +1476,7 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                     OPENSSL_free(gctx->iv);
 
                 if ((gctx->iv = OPENSSL_malloc(len)) == NULL) {
-                    ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
                     return 0;
                 }
             }
@@ -1595,7 +1595,7 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             len = S390X_gcm_ivpadlen(gctx->ivlen);
 
             if ((gctx_out->iv = OPENSSL_malloc(len)) == NULL) {
-                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
                 return 0;
             }
 
@@ -2683,7 +2683,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             if (gctx->iv != c->iv)
                 OPENSSL_free(gctx->iv);
             if ((gctx->iv = OPENSSL_malloc(arg)) == NULL) {
-                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
                 return 0;
             }
         }
@@ -2785,7 +2785,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                 gctx_out->iv = out->iv;
             else {
                 if ((gctx_out->iv = OPENSSL_malloc(gctx->ivlen)) == NULL) {
-                    ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
                     return 0;
                 }
                 memcpy(gctx_out->iv, gctx->iv, gctx->ivlen);

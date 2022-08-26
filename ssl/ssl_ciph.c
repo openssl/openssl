@@ -966,7 +966,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
 
     number_uses = OPENSSL_zalloc(sizeof(int) * (max_strength_bits + 1));
     if (number_uses == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -1496,7 +1496,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
 
     co_list = OPENSSL_malloc(sizeof(*co_list) * num_of_ciphers);
     if (co_list == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return NULL;          /* Failure */
     }
 
@@ -1609,7 +1609,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
     ca_list = OPENSSL_malloc(sizeof(*ca_list) * num_of_alias_max);
     if (ca_list == NULL) {
         OPENSSL_free(co_list);
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return NULL;          /* Failure */
     }
     ssl_cipher_collect_aliases(ca_list, num_of_group_aliases,
@@ -1712,7 +1712,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     if (buf == NULL) {
         len = 128;
         if ((buf = OPENSSL_malloc(len)) == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
             return NULL;
         }
     } else if (len < 128) {
@@ -2057,7 +2057,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 
     comp = OPENSSL_malloc(sizeof(*comp));
     if (comp == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 1;
     }
 
@@ -2071,7 +2071,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
     }
     if (ssl_comp_methods == NULL || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
         OPENSSL_free(comp);
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 1;
     }
     return 0;

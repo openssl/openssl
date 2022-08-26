@@ -41,7 +41,7 @@ EC_GROUP *ossl_ec_group_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -49,7 +49,7 @@ EC_GROUP *ossl_ec_group_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
         if (ret->propq == NULL) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
@@ -247,7 +247,7 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
     if (src->seed) {
         OPENSSL_free(dest->seed);
         if ((dest->seed = OPENSSL_malloc(src->seed_len)) == NULL) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
             return 0;
         }
         if (!memcpy(dest->seed, src->seed, src->seed_len))
@@ -533,7 +533,7 @@ size_t EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *p, size_t len)
         return 1;
 
     if ((group->seed = OPENSSL_malloc(len)) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         return 0;
     }
     memcpy(group->seed, p, len);
@@ -727,7 +727,7 @@ EC_POINT *EC_POINT_new(const EC_GROUP *group)
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -1582,7 +1582,7 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
     /* If it gets here then we are trying explicit parameters */
     bnctx = BN_CTX_new_ex(libctx);
     if (bnctx == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         return 0;
     }
     BN_CTX_start(bnctx);
@@ -1592,7 +1592,7 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
     b = BN_CTX_get(bnctx);
     order = BN_CTX_get(bnctx);
     if (order == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         goto err;
     }
 

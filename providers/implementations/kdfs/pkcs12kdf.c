@@ -60,7 +60,7 @@ static int pkcs12kdf_derive(const unsigned char *pass, size_t passlen,
 
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         goto end;
     }
     vi = EVP_MD_get_block_size(md_type);
@@ -82,7 +82,7 @@ static int pkcs12kdf_derive(const unsigned char *pass, size_t passlen,
     Ilen = Slen + Plen;
     I = OPENSSL_malloc(Ilen);
     if (D == NULL || Ai == NULL || B == NULL || I == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         goto end;
     }
     for (i = 0; i < v; i++)
@@ -145,7 +145,7 @@ static void *kdf_pkcs12_new(void *provctx)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ctx->provctx = provctx;
@@ -211,7 +211,7 @@ static int pkcs12kdf_set_membuf(unsigned char **buffer, size_t *buflen,
 
     if (p->data_size == 0) {
         if ((*buffer = OPENSSL_malloc(1)) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
             return 0;
         }
     } else if (p->data != NULL) {

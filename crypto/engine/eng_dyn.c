@@ -160,12 +160,12 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
     int ret = 0;
 
     if (c == NULL) {
-        ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
         return 0;
     }
     c->dirs = sk_OPENSSL_STRING_new_null();
     if (c->dirs == NULL) {
-        ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
         goto end;
     }
     c->DYNAMIC_F1 = "v_check";
@@ -358,12 +358,12 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         {
             char *tmp_str = OPENSSL_strdup(p);
             if (tmp_str == NULL) {
-                ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
                 return 0;
             }
             if (!sk_OPENSSL_STRING_push(ctx->dirs, tmp_str)) {
                 OPENSSL_free(tmp_str);
-                ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
                 return 0;
             }
         }

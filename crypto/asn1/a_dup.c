@@ -29,7 +29,7 @@ void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, const void *x)
 
     b = OPENSSL_malloc(i + 10);
     if (b == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     p = b;
@@ -78,7 +78,7 @@ void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
 
     i = ASN1_item_i2d(x, &b, it);
     if (b == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     p = b;

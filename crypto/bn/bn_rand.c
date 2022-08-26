@@ -42,7 +42,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
 
     buf = OPENSSL_malloc(bytes);
     if (buf == NULL) {
-        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_CRYPTO_LIB);
         goto err;
     }
 

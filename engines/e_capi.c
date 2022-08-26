@@ -323,7 +323,7 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             ctx->storename = tmpstr;
             CAPI_trace(ctx, "Setting store name to %s\n", p);
         } else {
-            CAPIerr(CAPI_F_CAPI_CTRL, ERR_R_MALLOC_FAILURE);
+            CAPIerr(CAPI_F_CAPI_CTRL, ERR_R_CRYPTO_LIB);
             ret = 0;
         }
         break;
@@ -350,7 +350,7 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             ctx->debug_file = tmpstr;
             CAPI_trace(ctx, "Setting debug file to %s\n", ctx->debug_file);
         } else {
-            CAPIerr(CAPI_F_CAPI_CTRL, ERR_R_MALLOC_FAILURE);
+            CAPIerr(CAPI_F_CAPI_CTRL, ERR_R_CRYPTO_LIB);
             ret = 0;
         }
         break;
@@ -489,7 +489,7 @@ static int capi_init(ENGINE *e)
     return 1;
 
  memerr:
-    CAPIerr(CAPI_F_CAPI_INIT, ERR_R_MALLOC_FAILURE);
+    CAPIerr(CAPI_F_CAPI_INIT, ERR_R_CRYPTO_LIB);
     return 0;
 
     return 1;
@@ -788,7 +788,7 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY *key)
     return ret;
 
  memerr:
-    CAPIerr(CAPI_F_CAPI_GET_PKEY, ERR_R_MALLOC_FAILURE);
+    CAPIerr(CAPI_F_CAPI_GET_PKEY, ERR_R_CRYPTO_LIB);
     goto err;
 
 }
@@ -967,7 +967,7 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
 
     /* Create temp reverse order version of input */
     if ((tmpbuf = OPENSSL_malloc(flen)) == NULL) {
-        CAPIerr(CAPI_F_CAPI_RSA_PRIV_DEC, ERR_R_MALLOC_FAILURE);
+        CAPIerr(CAPI_F_CAPI_RSA_PRIV_DEC, ERR_R_CRYPTO_LIB);
         return -1;
     }
     for (i = 0; i < flen; i++)
@@ -1140,7 +1140,7 @@ static char *wide_to_asc(LPCWSTR wstr)
     }
     str = OPENSSL_malloc(sz);
     if (str == NULL) {
-        CAPIerr(CAPI_F_WIDE_TO_ASC, ERR_R_MALLOC_FAILURE);
+        CAPIerr(CAPI_F_WIDE_TO_ASC, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     if (!WideCharToMultiByte(CP_ACP, 0, wstr, len_0, str, sz, NULL, NULL)) {
@@ -1167,7 +1167,7 @@ static int capi_get_provname(CAPI_CTX *ctx, LPSTR *pname, DWORD *ptype,
     }
     name = OPENSSL_malloc(len);
     if (name == NULL) {
-        CAPIerr(CAPI_F_CAPI_GET_PROVNAME, ERR_R_MALLOC_FAILURE);
+        CAPIerr(CAPI_F_CAPI_GET_PROVNAME, ERR_R_CRYPTO_LIB);
         return 0;
     }
     if (!CryptEnumProviders(idx, NULL, 0, ptype, name, &len)) {
@@ -1230,7 +1230,7 @@ static int capi_list_containers(CAPI_CTX *ctx, BIO *out)
                                 clen);
         }
         if (cspname == NULL) {
-            CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, ERR_R_MALLOC_FAILURE);
+            CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, ERR_R_CRYPTO_LIB);
             capi_addlasterror();
             return 0;
         }
@@ -1254,7 +1254,7 @@ static int capi_list_containers(CAPI_CTX *ctx, BIO *out)
         buflen = 1024;
     cname = OPENSSL_malloc(buflen);
     if (cname == NULL) {
-        CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, ERR_R_MALLOC_FAILURE);
+        CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -1305,7 +1305,7 @@ static CRYPT_KEY_PROV_INFO *capi_get_prov_info(CAPI_CTX *ctx,
         return NULL;
     pinfo = OPENSSL_malloc(len);
     if (pinfo == NULL) {
-        CAPIerr(CAPI_F_CAPI_GET_PROV_INFO, ERR_R_MALLOC_FAILURE);
+        CAPIerr(CAPI_F_CAPI_GET_PROV_INFO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     if (!CertGetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID,
@@ -1624,7 +1624,7 @@ static CAPI_CTX *capi_ctx_new(void)
     CAPI_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL) {
-        CAPIerr(CAPI_F_CAPI_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        CAPIerr(CAPI_F_CAPI_CTX_NEW, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ctx->csptype = PROV_RSA_FULL;
@@ -1675,7 +1675,7 @@ static int capi_ctx_set_provname(CAPI_CTX *ctx, LPSTR pname, DWORD type,
     }
     tmpcspname = OPENSSL_strdup(pname);
     if (tmpcspname == NULL) {
-        CAPIerr(CAPI_F_CAPI_CTX_SET_PROVNAME, ERR_R_MALLOC_FAILURE);
+        CAPIerr(CAPI_F_CAPI_CTX_SET_PROVNAME, ERR_R_CRYPTO_LIB);
         return 0;
     }
     OPENSSL_free(ctx->cspname);

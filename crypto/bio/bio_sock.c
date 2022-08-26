@@ -311,7 +311,7 @@ int BIO_accept(int sock, char **ip_port)
             *ip_port = NULL;
 
         if (*ip_port == NULL) {
-            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
             BIO_closesocket(ret);
             ret = (int)INVALID_SOCKET;
         } else {

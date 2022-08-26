@@ -93,7 +93,7 @@ static BIO_ACCEPT *BIO_ACCEPT_new(void)
     BIO_ACCEPT *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     ret->accept_family = BIO_FAMILY_IPANY;

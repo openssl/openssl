@@ -460,7 +460,7 @@ static int default_fixup_args(enum state state,
                     ctx->buflen = BN_num_bytes(ctx->p2);
                     if ((ctx->allocated_buf =
                          OPENSSL_malloc(ctx->buflen)) == NULL) {
-                        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
                         return 0;
                     }
                     if (BN_bn2nativepad(ctx->p2,

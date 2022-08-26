@@ -180,7 +180,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         *p = '\0';
     return p;
  err:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
  end:
     BUF_MEM_free(b);
     return NULL;

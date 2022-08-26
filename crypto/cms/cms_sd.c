@@ -38,7 +38,7 @@ static CMS_SignedData *cms_signed_data_init(CMS_ContentInfo *cms)
     if (cms->d.other == NULL) {
         cms->d.signedData = M_ASN1_new_of(CMS_SignedData);
         if (!cms->d.signedData) {
-            ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
             return NULL;
         }
         cms->d.signedData->version = 1;
@@ -364,7 +364,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     si->pctx = NULL;
 
     if (si->mctx == NULL) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -511,7 +511,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     return si;
 
  merr:
-    ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
  err:
     M_ASN1_free_of(si, CMS_SignerInfo);
     return NULL;
@@ -559,7 +559,7 @@ static int cms_add1_signingTime(CMS_SignerInfo *si, ASN1_TIME *t)
         ASN1_TIME_free(tt);
 
     if (!r)
-        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
 
     return r;
 
@@ -703,7 +703,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms);
 
     if (mctx == NULL) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -752,7 +752,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
         siglen = EVP_PKEY_get_size(si->pkey);
         sig = OPENSSL_malloc(siglen);
         if (sig == NULL) {
-            ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
             goto err;
         }
         if (EVP_PKEY_sign(pctx, sig, &siglen, md, mdlen) <= 0) {
@@ -770,7 +770,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
         }
         sig = OPENSSL_malloc(EVP_PKEY_get_size(si->pkey));
         if (sig == NULL) {
-            ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
             goto err;
         }
         if (!EVP_SignFinal_ex(mctx, sig, &siglen, si->pkey,
@@ -909,7 +909,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     (void)ERR_pop_to_mark();
 
     if (si->mctx == NULL && (si->mctx = EVP_MD_CTX_new()) == NULL) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
         goto err;
     }
     mctx = si->mctx;
@@ -982,7 +982,7 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
     unsigned int mlen;
 
     if (mctx == NULL) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
         goto err;
     }
     /* If we have any signed attributes look for messageDigest value */

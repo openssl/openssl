@@ -55,7 +55,7 @@ ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey
         goto err;
     return ret;
 err:
-    ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
     OPENSSL_free(ret);
     return NULL;
 }

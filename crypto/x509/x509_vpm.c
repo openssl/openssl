@@ -85,7 +85,7 @@ X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
 
     param = OPENSSL_zalloc(sizeof(*param));
     if (param == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     param->trust = X509_TRUST_DEFAULT;
