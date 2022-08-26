@@ -197,20 +197,24 @@ OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
 static void qrx_cleanup_rxl(RXE_LIST *l)
 {
     RXE *e, *enext;
+
     for (e = l->head; e != NULL; e = enext) {
         enext = e->next;
         OPENSSL_free(e);
     }
+
     l->head = l->tail = NULL;
 }
 
 static void qrx_cleanup_urxl(OSSL_QRX *qrx, QUIC_URXE_LIST *l)
 {
     QUIC_URXE *e, *enext;
+
     for (e = l->head; e != NULL; e = enext) {
         enext = e->next;
         ossl_quic_demux_release_urxe(qrx->demux, e);
     }
+
     l->head = l->tail = NULL;
 }
 
@@ -392,7 +396,7 @@ static RXE *qrx_resize_rxe(RXE_LIST *rxl, RXE *rxe, size_t n)
      */
     rxe2 = OPENSSL_realloc(rxe, sizeof(RXE) + n);
     if (rxe2 == NULL)
-        /* original RXE is still in tact unchanged */
+        /* original RXE is still intact unchanged */
         return NULL;
 
     if (rxe != rxe2) {
@@ -709,8 +713,8 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
      */
     need_second_decode = !pkt_is_marked(&urxe->hpr_removed, pkt_idx);
     if (!ossl_quic_wire_decode_pkt_hdr(pkt,
-                                      qrx->short_conn_id_len,
-                                      need_second_decode, &rxe->hdr, &ptrs))
+                                       qrx->short_conn_id_len,
+                                       need_second_decode, &rxe->hdr, &ptrs))
         goto malformed;
 
     /*
