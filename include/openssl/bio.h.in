@@ -183,10 +183,10 @@ extern "C" {
 # define BIO_CTRL_DGRAM_SET_NO_TRUNC            89
 
 # define BIO_DGRAM_CAP_NONE                 0U
-# define BIO_DGRAM_CAP_HANDLES_SRC_ADDR     (1U<<0)
-# define BIO_DGRAM_CAP_HANDLES_DST_ADDR     (1U<<1)
-# define BIO_DGRAM_CAP_PROVIDES_SRC_ADDR    (1U<<2)
-# define BIO_DGRAM_CAP_PROVIDES_DST_ADDR    (1U<<3)
+# define BIO_DGRAM_CAP_HANDLES_SRC_ADDR     (1U << 0)
+# define BIO_DGRAM_CAP_HANDLES_DST_ADDR     (1U << 1)
+# define BIO_DGRAM_CAP_PROVIDES_SRC_ADDR    (1U << 2)
+# define BIO_DGRAM_CAP_PROVIDES_DST_ADDR    (1U << 3)
 
 # ifndef OPENSSL_NO_KTLS
 #  define BIO_get_ktls_send(b)         \

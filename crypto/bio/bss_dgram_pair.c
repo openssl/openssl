@@ -59,6 +59,7 @@ static void ring_buf_destroy(struct ring_buf *r)
 static void ring_buf_head_tail(struct ring_buf *r, int idx, uint8_t **buf, size_t *len)
 {
     size_t max_len = r->len - r->idx[idx];
+
     if (!idx && max_len > r->len - r->count)
         max_len = r->len - r->count;
     if (idx && max_len > r->count)
@@ -89,8 +90,8 @@ static void ring_buf_push_pop(struct ring_buf *r, int idx, size_t num_bytes)
     /*
      * Must not overfill the buffer, or pop more than is in the buffer either.
      */
-    if (!ossl_assert(idx ? num_bytes <= r->count
-                         : num_bytes + r->count <= r->len))
+    if (!ossl_assert(idx != 0 ? num_bytes <= r->count
+                              : num_bytes + r->count <= r->len))
         return;
 
     /* Update the index. */
@@ -99,7 +100,7 @@ static void ring_buf_push_pop(struct ring_buf *r, int idx, size_t num_bytes)
         new_idx = 0;
 
     r->idx[idx] = new_idx;
-    if (idx)
+    if (idx != 0)
         r->count -= num_bytes;
     else
         r->count += num_bytes;
@@ -253,29 +254,41 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
     struct bio_dgram_pair_st *b1, *b2;
 
     /* peer must be non-NULL. */
-    if (bio1 == NULL || bio2 == NULL)
+    if (bio1 == NULL || bio2 == NULL) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_INVALID_ARGUMENT);
         return 0;
+    }
 
     /* Ensure the BIO we have been passed is actually a dgram pair BIO. */
-    if (bio1->method != &dgram_pair_method || bio2->method != &dgram_pair_method)
+    if (bio1->method != &dgram_pair_method || bio2->method != &dgram_pair_method) {
+        ERR_raise_data(ERR_LIB_BIO, BIO_R_INVALID_ARGUMENT,
+                       "both BIOs must be BIO_dgram_pair");
         return 0;
+    }
 
     b1 = bio1->ptr;
     b2 = bio2->ptr;
 
-    if (!ossl_assert(b1 != NULL && b2 != NULL))
+    if (!ossl_assert(b1 != NULL && b2 != NULL)) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return 0;
+    }
 
     /*
      * This ctrl cannot be used to associate a BIO pair half which is already
      * associated.
      */
-    if (b1->peer != NULL || b2->peer != NULL)
+    if (b1->peer != NULL || b2->peer != NULL) {
+        ERR_raise_data(ERR_LIB_BIO, BIO_R_IN_USE,
+                       "cannot associate a BIO_dgram_pair which is already in use");
         return 0;
+    }
 
     if (!ossl_assert(b1->req_buf_len >= MIN_BUF_LEN
-                        && b2->req_buf_len >= MIN_BUF_LEN))
+                        && b2->req_buf_len >= MIN_BUF_LEN)) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return 0;
+    }
 
     if (b1->rbuf.len != b1->req_buf_len)
         if (ring_buf_init(&b1->rbuf, b1->req_buf_len) == 0) {
@@ -454,7 +467,7 @@ static int dgram_pair_ctrl_get_local_addr_cap(BIO *bio)
     peerb = b->peer->ptr;
 
     return (~peerb->cap & (BIO_DGRAM_CAP_HANDLES_SRC_ADDR
-                          |BIO_DGRAM_CAP_PROVIDES_DST_ADDR)) == 0;
+                          | BIO_DGRAM_CAP_PROVIDES_DST_ADDR)) == 0;
 }
 
 /* BIO_dgram_get_effective_caps (BIO_CTRL_DGRAM_GET_EFFECTIVE_CAPS) */
@@ -491,6 +504,7 @@ static int dgram_pair_ctrl_set_caps(BIO *bio, uint32_t caps)
 static int dgram_pair_ctrl_get_local_addr_enable(BIO *bio)
 {
     struct bio_dgram_pair_st *b = bio->ptr;
+
     return b->local_addr_enable;
 }
 
@@ -857,13 +871,8 @@ static int dgram_pair_lock_both_write(struct bio_dgram_pair_st *a,
 static void dgram_pair_unlock_both(struct bio_dgram_pair_st *a,
                                    struct bio_dgram_pair_st *b)
 {
-    struct bio_dgram_pair_st *x, *y;
-
-    x = (a->role == 1) ? a : b;
-    y = (a->role == 1) ? b : a;
-
-    CRYPTO_THREAD_unlock(y->lock);
-    CRYPTO_THREAD_unlock(x->lock);
+    CRYPTO_THREAD_unlock(a->lock);
+    CRYPTO_THREAD_unlock(b->lock);
 }
 
 /* Threadsafe */

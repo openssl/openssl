@@ -113,10 +113,12 @@ separately freed.
 
 L<BIO_recvmmsg(3)>, L<BIO_sendmmsg(3)>, L<BIO_read(3)>, L<BIO_write(3)>,
 L<BIO_pending(3)>, L<BIO_get_write_guarantee(3)> and L<BIO_flush(3)> may be used
-by multiple threads simultaneously on the same BIO datagram pair. Making any
-other BIO call, or any other L<BIO_ctrl(3)> operation, on either half of a BIO
-datagram pair while any other BIO call is also in progress to either half of the
-same BIO datagram pair results in undefined behaviour.
+by multiple threads simultaneously on the same BIO datagram pair. Specific
+L<BIO_ctrl(3)> operations (namely BIO_CTRL_PENDING, BIO_CTRL_FLUSH and
+BIO_C_GET_WRITE_GUARANTEE) may also be used. Invoking any other BIO call, or any
+other L<BIO_ctrl(3)> operation, on either half of a BIO datagram pair while any
+other BIO call is also in progress to either half of the same BIO datagram pair
+results in undefined behaviour.
 
 =head1 CAPABILITY INDICATION
 
@@ -210,7 +212,7 @@ L<BIO_s_bio(3)>, L<bio(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

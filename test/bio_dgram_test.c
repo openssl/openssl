@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -498,6 +498,7 @@ static int test_bio_dgram_pair(void)
     BIO_MSG msgs[2] = {0}, rmsgs[2] = {0};
     BIO_ADDR *addr1 = NULL, *addr2 = NULL, *addr3 = NULL, *addr4 = NULL;
     struct in_addr in_local;
+    size_t total = 0;
     const uint32_t ref_caps = BIO_DGRAM_CAP_HANDLES_SRC_ADDR
                             | BIO_DGRAM_CAP_HANDLES_DST_ADDR
                             | BIO_DGRAM_CAP_PROVIDES_SRC_ADDR
@@ -522,7 +523,7 @@ static int test_bio_dgram_pair(void)
     if (!TEST_int_eq(mtu1, mtu2))
         goto err;
 
-    if (!TEST_int_le(mtu1, sizeof(scratch)-4))
+    if (!TEST_int_le(mtu1, sizeof(scratch) - 4))
         goto err;
 
     for (i = 0;; ++i) {
@@ -535,6 +536,10 @@ static int test_bio_dgram_pair(void)
             break;
 
         if (!TEST_int_eq(r, blen))
+            goto err;
+
+        total += blen;
+        if (!TEST_size_t_lt(total, 1 * 1024 * 1024))
             goto err;
     }
 
@@ -587,10 +592,10 @@ static int test_bio_dgram_pair(void)
         || !TEST_size_t_eq(num_processed, 2))
         goto err;
 
-    if (!TEST_int_eq(rmsgs[0].data_len, 19))
+    if (!TEST_mem_eq(rmsgs[0].data, rmsgs[0].data_len, scratch, 19))
         goto err;
 
-    if (!TEST_int_eq(rmsgs[1].data_len, 46))
+    if (!TEST_mem_eq(rmsgs[1].data, rmsgs[1].data_len, scratch + 19, 46))
         goto err;
 
     /* sendmmsg/recvmmsg with peer */
@@ -659,7 +664,7 @@ static int test_bio_dgram_pair(void)
         || !TEST_size_t_eq(num_processed, 1))
         goto err;
 
-    if (!TEST_int_eq(rmsgs[0].data_len, 19))
+    if (!TEST_mem_eq(rmsgs[0].data, rmsgs[0].data_len, msgs[0].data, 19))
         goto err;
 
     /* We didn't set the source address so this should be zero */
@@ -686,6 +691,10 @@ static int test_bio_dgram_pair(void)
     rmsgs[0].data_len   = 64;
     if (!TEST_true(BIO_recvmmsg(bio2, rmsgs, sizeof(BIO_MSG), OSSL_NELEM(rmsgs), 0, &num_processed))
         || !TEST_size_t_eq(num_processed, 1))
+        goto err;
+
+    if (!TEST_mem_eq(rmsgs[0].data, rmsgs[0].data_len,
+                     msgs[0].data, msgs[0].data_len))
         goto err;
 
     if (!TEST_int_eq(BIO_ADDR_family(addr3), AF_INET))
