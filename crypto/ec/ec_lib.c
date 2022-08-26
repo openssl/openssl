@@ -1507,7 +1507,7 @@ int ossl_ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT);
     if (p != NULL) {
         if (!ossl_ec_pt_format_param2id(p, &format)) {
-            ECerr(0, EC_R_INVALID_FORM);
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_FORM);
             return 0;
         }
         EC_GROUP_set_point_conversion_form(group, format);
@@ -1516,7 +1516,7 @@ int ossl_ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_ENCODING);
     if (p != NULL) {
         if (!ossl_ec_encoding_param2id(p, &encoding_flag)) {
-            ECerr(0, EC_R_INVALID_FORM);
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_FORM);
             return 0;
         }
         EC_GROUP_set_asn1_flag(group, encoding_flag);
@@ -1527,7 +1527,7 @@ int ossl_ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[])
         /* The seed is allowed to be NULL */
         if (p->data_type != OSSL_PARAM_OCTET_STRING
             || !EC_GROUP_set_seed(group, p->data, p->data_size)) {
-            ECerr(0, EC_R_INVALID_SEED);
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_SEED);
             return 0;
         }
     }
