@@ -24,6 +24,7 @@
 #endif
 #include <openssl/self_test.h>
 #include "prov/providercommon.h"
+#include "prov/ecx.h"
 #include "crypto/bn.h"
 
 static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
@@ -349,6 +350,43 @@ err:
     BN_free(order);
     return ok;
 }
+
+#ifndef FIPS_MODULE
+/*
+ * This is similar to ec_generate_key(), except it uses an ikm to
+ * derive the private key.
+ */
+int ossl_ec_generate_key_dhkem(EC_KEY *eckey,
+                               const unsigned char *ikm, size_t ikmlen)
+{
+    int ok = 0;
+
+    if (eckey->priv_key == NULL) {
+        eckey->priv_key = BN_secure_new();
+        if (eckey->priv_key == NULL)
+            goto err;
+    }
+    if (ossl_ec_dhkem_derive_private(eckey, eckey->priv_key, ikm, ikmlen) <= 0)
+        goto err;
+    if (eckey->pub_key == NULL) {
+        eckey->pub_key = EC_POINT_new(eckey->group);
+        if (eckey->pub_key == NULL)
+            goto err;
+    }
+    if (!ossl_ec_key_simple_generate_public_key(eckey))
+        goto err;
+
+    ok = 1;
+err:
+    if (!ok) {
+        BN_clear_free(eckey->priv_key);
+        eckey->priv_key = NULL;
+        if (eckey->pub_key != NULL)
+            EC_POINT_set_to_infinity(eckey->group, eckey->pub_key);
+    }
+    return ok;
+}
+#endif
 
 int ossl_ec_key_simple_generate_key(EC_KEY *eckey)
 {

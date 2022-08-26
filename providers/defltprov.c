@@ -412,6 +412,11 @@ static const OSSL_ALGORITHM deflt_asym_cipher[] = {
 
 static const OSSL_ALGORITHM deflt_asym_kem[] = {
     { PROV_NAMES_RSA, "provider=default", ossl_rsa_asym_kem_functions },
+#ifndef OPENSSL_NO_EC
+    { PROV_NAMES_X25519, "provider=default", ossl_ecx_asym_kem_functions },
+    { PROV_NAMES_X448, "provider=default", ossl_ecx_asym_kem_functions },
+    { PROV_NAMES_EC, "provider=default", ossl_ec_asym_kem_functions },
+#endif
     { NULL, NULL, NULL }
 };
 

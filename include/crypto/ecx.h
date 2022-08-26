@@ -83,6 +83,9 @@ unsigned char *ossl_ecx_key_allocate_privkey(ECX_KEY *key);
 void ossl_ecx_key_free(ECX_KEY *key);
 int ossl_ecx_key_up_ref(ECX_KEY *key);
 ECX_KEY *ossl_ecx_key_dup(const ECX_KEY *key, int selection);
+int ossl_ecx_compute_key(ECX_KEY *peer, ECX_KEY *priv, size_t keylen,
+                         unsigned char *secret, size_t *secretlen,
+                         size_t outlen);
 
 int ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
                 const uint8_t peer_public_value[32]);

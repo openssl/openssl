@@ -5461,3 +5461,5 @@ X509_get_default_cert_uri_env           ?	3_1_0	EXIST::FUNCTION:
 X509_get_default_cert_path_env          ?	3_1_0	EXIST::FUNCTION:
 BIO_s_dgram_pair                        ?	3_1_0	EXIST::FUNCTION:DGRAM
 BIO_new_bio_dgram_pair                  ?	3_1_0	EXIST::FUNCTION:DGRAM
+EVP_PKEY_auth_encapsulate_init          ?	3_1_0	EXIST::FUNCTION:
+EVP_PKEY_auth_decapsulate_init          ?	3_1_0	EXIST::FUNCTION:

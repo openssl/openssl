@@ -9,7 +9,13 @@
 
 #include <string.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "crypto/ecx.h"
+#include "internal/common.h" /* for ossl_assert() */
+
+#ifdef S390X_EC_ASM
+# include "s390x_arch.h"
+#endif
 
 ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey,
                           const char *propq)
@@ -95,4 +101,62 @@ unsigned char *ossl_ecx_key_allocate_privkey(ECX_KEY *key)
     key->privkey = OPENSSL_secure_zalloc(key->keylen);
 
     return key->privkey;
+}
+
+int ossl_ecx_compute_key(ECX_KEY *peer, ECX_KEY *priv, size_t keylen,
+                         unsigned char *secret, size_t *secretlen, size_t outlen)
+{
+    if (priv == NULL
+            || priv->privkey == NULL
+            || peer == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
+        return 0;
+    }
+
+    if (!ossl_assert(keylen == X25519_KEYLEN
+            || keylen == X448_KEYLEN)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
+
+    if (secret == NULL) {
+        *secretlen = keylen;
+        return 1;
+    }
+    if (outlen < keylen) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        return 0;
+    }
+
+    if (keylen == X25519_KEYLEN) {
+#ifdef S390X_EC_ASM
+        if (OPENSSL_s390xcap_P.pcc[1]
+                & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X25519)) {
+            if (s390x_x25519_mul(secret, peer->pubkey, priv->privkey) == 0) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
+                return 0;
+            }
+        } else
+#endif
+        if (ossl_x25519(secret, priv->privkey, peer->pubkey) == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
+            return 0;
+        }
+    } else {
+#ifdef S390X_EC_ASM
+        if (OPENSSL_s390xcap_P.pcc[1]
+                & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X448)) {
+            if (s390x_x448_mul(secret, peer->pubkey, priv->privkey) == 0) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
+                return 0;
+            }
+        } else
+#endif
+        if (ossl_x448(secret, priv->privkey, peer->pubkey) == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
+            return 0;
+        }
+    }
+    *secretlen = keylen;
+    return 1;
 }

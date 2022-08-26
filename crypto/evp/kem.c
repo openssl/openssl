@@ -18,13 +18,13 @@
 #include "evp_local.h"
 
 static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
-                        const OSSL_PARAM params[])
+                        const OSSL_PARAM params[], EVP_PKEY *authkey)
 {
     int ret = 0;
     EVP_KEM *kem = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
     const OSSL_PROVIDER *tmp_prov = NULL;
-    void *provkey = NULL;
+    void *provkey = NULL, *provauthkey = NULL;
     const char *supported_kem = NULL;
     int iter;
 
@@ -40,7 +40,10 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         goto err;
     }
-
+    if (authkey != NULL && authkey->type != ctx->pkey->type) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
+        return 0;
+    }
     /*
      * Try to derive the supported kem from |ctx->keymgmt|.
      */
@@ -114,16 +117,26 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
          * same property query as when fetching the kem method.
          * With the keymgmt we found (if we did), we try to export |ctx->pkey|
          * to it (evp_pkey_export_to_provider() is smart enough to only actually
-
          * export it if |tmp_keymgmt| is different from |ctx->pkey|'s keymgmt)
          */
         tmp_keymgmt_tofree = tmp_keymgmt =
             evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
                                         EVP_KEYMGMT_get0_name(ctx->keymgmt),
                                         ctx->propquery);
-        if (tmp_keymgmt != NULL)
+        if (tmp_keymgmt != NULL) {
             provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
                                                   &tmp_keymgmt, ctx->propquery);
+            if (provkey != NULL && authkey != NULL) {
+                provauthkey = evp_pkey_export_to_provider(authkey, ctx->libctx,
+                                                          &tmp_keymgmt,
+                                                          ctx->propquery);
+                if (provauthkey == NULL) {
+                    EVP_KEM_free(kem);
+                    ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+                    goto err;
+                }
+            }
+        }
         if (tmp_keymgmt == NULL)
             EVP_KEYMGMT_free(tmp_keymgmt_tofree);
     }
@@ -144,20 +157,28 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
 
     switch (operation) {
     case EVP_PKEY_OP_ENCAPSULATE:
-        if (kem->encapsulate_init == NULL) {
+        if (provauthkey != NULL && kem->auth_encapsulate_init != NULL) {
+            ret = kem->auth_encapsulate_init(ctx->op.encap.algctx, provkey,
+                                             provauthkey, params);
+        } else if (provauthkey == NULL && kem->encapsulate_init != NULL) {
+            ret = kem->encapsulate_init(ctx->op.encap.algctx, provkey, params);
+        } else {
             ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
             ret = -2;
             goto err;
         }
-        ret = kem->encapsulate_init(ctx->op.encap.algctx, provkey, params);
         break;
     case EVP_PKEY_OP_DECAPSULATE:
-        if (kem->decapsulate_init == NULL) {
+        if (provauthkey != NULL && kem->auth_decapsulate_init != NULL) {
+            ret = kem->auth_decapsulate_init(ctx->op.encap.algctx, provkey,
+                                             provauthkey, params);
+        } else if (provauthkey == NULL && kem->encapsulate_init != NULL) {
+            ret = kem->decapsulate_init(ctx->op.encap.algctx, provkey, params);
+        } else {
             ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
             ret = -2;
             goto err;
         }
-        ret = kem->decapsulate_init(ctx->op.encap.algctx, provkey, params);
         break;
     default:
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
@@ -178,9 +199,17 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
     return ret;
 }
 
+int EVP_PKEY_auth_encapsulate_init(EVP_PKEY_CTX *ctx, EVP_PKEY *authpriv,
+                                   const OSSL_PARAM params[])
+{
+    if (authpriv == NULL)
+        return 0;
+    return evp_kem_init(ctx, EVP_PKEY_OP_ENCAPSULATE, params, authpriv);
+}
+
 int EVP_PKEY_encapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 {
-    return evp_kem_init(ctx, EVP_PKEY_OP_ENCAPSULATE, params);
+    return evp_kem_init(ctx, EVP_PKEY_OP_ENCAPSULATE, params, NULL);
 }
 
 int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
@@ -209,7 +238,15 @@ int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
 
 int EVP_PKEY_decapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 {
-    return evp_kem_init(ctx, EVP_PKEY_OP_DECAPSULATE, params);
+    return evp_kem_init(ctx, EVP_PKEY_OP_DECAPSULATE, params, NULL);
+}
+
+int EVP_PKEY_auth_decapsulate_init(EVP_PKEY_CTX *ctx, EVP_PKEY *authpub,
+                                   const OSSL_PARAM params[])
+{
+    if (authpub == NULL)
+        return 0;
+    return evp_kem_init(ctx, EVP_PKEY_OP_DECAPSULATE, params, authpub);
 }
 
 int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
@@ -288,6 +325,12 @@ static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
             kem->encapsulate_init = OSSL_FUNC_kem_encapsulate_init(fns);
             encfncnt++;
             break;
+        case OSSL_FUNC_KEM_AUTH_ENCAPSULATE_INIT:
+            if (kem->auth_encapsulate_init != NULL)
+                break;
+            kem->auth_encapsulate_init = OSSL_FUNC_kem_auth_encapsulate_init(fns);
+            encfncnt++;
+            break;
         case OSSL_FUNC_KEM_ENCAPSULATE:
             if (kem->encapsulate != NULL)
                 break;
@@ -298,6 +341,12 @@ static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
             if (kem->decapsulate_init != NULL)
                 break;
             kem->decapsulate_init = OSSL_FUNC_kem_decapsulate_init(fns);
+            decfncnt++;
+            break;
+        case OSSL_FUNC_KEM_AUTH_DECAPSULATE_INIT:
+            if (kem->auth_decapsulate_init != NULL)
+                break;
+            kem->auth_decapsulate_init = OSSL_FUNC_kem_auth_decapsulate_init(fns);
             decfncnt++;
             break;
         case OSSL_FUNC_KEM_DECAPSULATE:
@@ -348,19 +397,21 @@ static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
         }
     }
     if (ctxfncnt != 2
-        || (encfncnt != 0 && encfncnt != 2)
-        || (decfncnt != 0 && decfncnt != 2)
-        || (encfncnt != 2 && decfncnt != 2)
+        || (encfncnt != 0 && encfncnt != 2 && encfncnt != 3)
+        || (decfncnt != 0 && decfncnt != 2 && decfncnt != 3)
+        || (encfncnt != decfncnt)
         || (gparamfncnt != 0 && gparamfncnt != 2)
         || (sparamfncnt != 0 && sparamfncnt != 2)) {
         /*
          * In order to be a consistent set of functions we must have at least
-         * a set of context functions (newctx and freectx) as well as a pair of
-         * "kem" functions: (encapsulate_init, encapsulate) or
-         * (decapsulate_init, decapsulate). set_ctx_params and settable_ctx_params are
-         * optional, but if one of them is present then the other one must also
-         * be present. The same applies to get_ctx_params and
-         * gettable_ctx_params. The dupctx function is optional.
+         * a set of context functions (newctx and freectx) as well as a pair
+         * (or triplet) of "kem" functions:
+         * (encapsulate_init, (and/or auth_encapsulate_init), encapsulate) or
+         * (decapsulate_init, (and/or auth_decapsulate_init), decapsulate).
+         * set_ctx_params and settable_ctx_params are optional, but if one of
+         * them is present then the other one must also be present. The same
+         * applies to get_ctx_params and gettable_ctx_params.
+         * The dupctx function is optional.
          */
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         goto err;
