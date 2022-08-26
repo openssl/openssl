@@ -447,7 +447,7 @@ static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
     }
 
     if (!pkey_set_type(pkey, e, nidtype, strtype, -1, NULL)) {
-        /* EVPerr already called */
+        /* ERR_raise(ERR_LIB_EVP, ...) already called */
         goto err;
     }
 
@@ -1448,7 +1448,7 @@ EVP_PKEY *EVP_PKEY_new(void)
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        EVPerr(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
