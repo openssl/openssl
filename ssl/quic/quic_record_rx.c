@@ -736,6 +736,10 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
      */
     if (already_processed
         || !qrx_validate_hdr_early(qrx, rxe, pkt_idx == 0 ? NULL : *first_rxe))
+        /*
+         * Already processed packets are handled identically to malformed
+         * packets; i.e., they are ignored.
+         */
         goto malformed;
 
     if (!ossl_quic_pkt_type_is_encrypted(rxe->hdr.type)) {
