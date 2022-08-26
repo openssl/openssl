@@ -112,6 +112,7 @@ document.
  * [Notes for the OpenVMS platform](NOTES-VMS.md)
  * [Notes on Perl](NOTES-PERL.md)
  * [Notes on Valgrind](NOTES-VALGRIND.md)
+ * [Notes on vcpkg](NOTES-VCPKG.md)
 
 Specific notes on upgrading to OpenSSL 3.0 from previous versions can be found
 in the [migration_guide(7ossl)] manual page.
