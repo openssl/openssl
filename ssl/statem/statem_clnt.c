@@ -1417,7 +1417,10 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         }
         s->hello_retry_request = SSL_HRR_PENDING;
         /* Tell the record layer that we know we're going to get TLSv1.3 */
-        s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl, s->version);
+        if (!ssl_set_record_protocol_version(s, s->version)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
         hrr = 1;
         if (!PACKET_forward(pkt, SSL3_RANDOM_SIZE)) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);

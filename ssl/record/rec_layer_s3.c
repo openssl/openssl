@@ -204,6 +204,7 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
     int i;
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
     OSSL_RECORD_TEMPLATE tmpls[SSL_MAX_PIPELINES];
+    unsigned int recversion;
 
     if (s == NULL)
         return -1;
@@ -479,6 +480,18 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
         return -1;
     }
 
+    /*
+     * Some servers hang if initial client hello is larger than 256 bytes
+     * and record version number > TLS 1.0
+     */
+    /* TODO(RECLAYER): Does this also need to be in the DTLS equivalent code? */
+    recversion = (s->version == TLS1_3_VERSION) ? TLS1_2_VERSION : s->version;
+    if (SSL_get_state(ssl) == TLS_ST_CW_CLNT_HELLO
+            && !s->renegotiate
+            && TLS1_get_version(ssl) > TLS1_VERSION
+            && s->hello_retry_request == SSL_HRR_NONE)
+        recversion = TLS1_VERSION;
+
     for (;;) {
         size_t tmppipelen, remain;
         size_t numpipes, j, lensofar = 0;
@@ -497,6 +510,7 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
              */
             for (j = 0; j < numpipes; j++) {
                 tmpls[j].type = type;
+                tmpls[j].version = recversion;
                 tmpls[j].buf = &(buf[tot]) + (j * max_send_fragment);
                 tmpls[j].buflen = max_send_fragment;
             }
@@ -514,6 +528,7 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
                 tmppipelen++;
             for (j = 0; j < numpipes; j++) {
                 tmpls[j].type = type;
+                tmpls[j].version = recversion;
                 tmpls[j].buf = &(buf[tot]) + lensofar;
                 tmpls[j].buflen = tmppipelen;
                 lensofar += tmppipelen;
@@ -1421,4 +1436,15 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     *thismethod = meth;
 
     return ssl_post_record_layer_select(s, direction);
+}
+
+int ssl_set_record_protocol_version(SSL_CONNECTION *s, int vers)
+{
+    if (!ossl_assert(s->rlayer.rrlmethod != NULL)
+            || !ossl_assert(s->rlayer.wrlmethod != NULL))
+        return 0;
+    s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl, s->version);
+    s->rlayer.wrlmethod->set_protocol_version(s->rlayer.wrl, s->version);
+
+    return 1;
 }

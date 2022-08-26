@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -1467,6 +1468,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
          * http://www.openssl.org/~bodo/tls-cbc.txt)
          */
         prefixtempl.buf = NULL;
+        prefixtempl.version = templates[0].version;
         prefixtempl.buflen = 0;
         prefixtempl.type = SSL3_RT_APPLICATION_DATA;
         wpinited = 1;
@@ -1554,8 +1556,6 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
     /* Clear our SSL3_RECORD structures */
     memset(wr, 0, sizeof(wr));
     for (j = 0; j < numtempl + prefix; j++) {
-        unsigned int version = (s->version == TLS1_3_VERSION) ? TLS1_2_VERSION
-                                                              : s->version;
         unsigned char *compressdata = NULL;
         size_t maxcomplen;
         unsigned int rectype;
@@ -1578,17 +1578,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
             rectype = thistempl->type;
 
         SSL3_RECORD_set_type(thiswr, rectype);
-
-        /*
-         * Some servers hang if initial client hello is larger than 256 bytes
-         * and record version number > TLS 1.0
-         */
-        if (SSL_get_state(ssl) == TLS_ST_CW_CLNT_HELLO
-                && !s->renegotiate
-                && TLS1_get_version(ssl) > TLS1_VERSION
-                && s->hello_retry_request == SSL_HRR_NONE)
-            version = TLS1_VERSION;
-        SSL3_RECORD_set_rec_version(thiswr, version);
+        SSL3_RECORD_set_rec_version(thiswr, thistempl->version);
 
         maxcomplen = thistempl->buflen;
         if (s->compress != NULL)
@@ -1600,7 +1590,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
          */
         if (!using_ktls
                 && (!WPACKET_put_bytes_u8(thispkt, rectype)
-                || !WPACKET_put_bytes_u16(thispkt, version)
+                || !WPACKET_put_bytes_u16(thispkt, thistempl->version)
                 || !WPACKET_start_sub_packet_u16(thispkt)
                 || (eivlen > 0
                     && !WPACKET_allocate_bytes(thispkt, eivlen, NULL))
@@ -1916,7 +1906,6 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
             if (rl->nextwbuf == rl->numwpipes
                     && (rl->mode & SSL_MODE_RELEASE_BUFFERS) != 0)
                 tls_release_write_buffer(rl);
-
             return 1;
         } else if (i <= 0) {
             if (SSL_CONNECTION_IS_DTLS(s)) {

@@ -1873,8 +1873,7 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             check_for_downgrade(s, best_vers, dgrd);
             s->version = best_vers;
             ssl->method = best_method;
-            if (!s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl,
-                                                           best_vers))
+            if (!ssl_set_record_protocol_version(s, best_vers))
                 return ERR_R_INTERNAL_ERROR;
 
             return 0;
@@ -1904,8 +1903,7 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             check_for_downgrade(s, vent->version, dgrd);
             s->version = vent->version;
             ssl->method = method;
-            if (!s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl,
-                                                           s->version))
+            if (!ssl_set_record_protocol_version(s, s->version))
                 return ERR_R_INTERNAL_ERROR;
 
             return 0;
@@ -1967,8 +1965,7 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
          * versions they don't want.  If not, then easy to fix, just return
          * ssl_method_error(s, s->method)
          */
-        if (!s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl,
-                                                       s->version)) {
+        if (!ssl_set_record_protocol_version(s, s->version)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -2032,8 +2029,7 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
             continue;
 
         ssl->method = vent->cmeth();
-        if (!s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl,
-                                                       s->version)) {
+        if (!ssl_set_record_protocol_version(s, s->version)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -2202,7 +2198,8 @@ int ssl_set_client_hello_version(SSL_CONNECTION *s)
              * we read the ServerHello. So we need to tell the record layer
              * about this immediately.
              */
-            s->rlayer.rrlmethod->set_protocol_version(s->rlayer.rrl, ver_max);
+            if (!ssl_set_record_protocol_version(s, ver_max))
+                return 0;
         }
     } else if (ver_max > TLS1_2_VERSION) {
         /* TLS1.3 always uses TLS1.2 in the legacy_version field */
