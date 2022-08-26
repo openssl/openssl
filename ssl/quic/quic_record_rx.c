@@ -619,7 +619,7 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
         return 0;
 
     cctx_idx = qrx_get_cipher_ctx_idx(qrx, el, enc_level, key_phase_bit);
-    if (!ossl_assert(cctx_idx != SIZE_MAX))
+    if (!ossl_assert(cctx_idx < OSSL_NELEM(el->cctx)))
         return 0;
 
     cctx = el->cctx[cctx_idx];
@@ -725,7 +725,7 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
 
     /*
      * Make a note of the first RXE so we can later ensure the destination
-     * connection IDs of all packets in a datagram mater.
+     * connection IDs of all packets in a datagram match.
      */
     if (pkt_idx == 0)
         *first_rxe = rxe;
@@ -1004,7 +1004,7 @@ static int qrx_process_datagram(OSSL_QRX *qrx, QUIC_URXE *e,
          * we should still try to process any packets following it.
          *
          * In the case where the packet is so malformed we can't determine its
-         * lenngth, qrx_process_pkt will take care of advancing to the end of
+         * length, qrx_process_pkt will take care of advancing to the end of
          * the packet, so we will exit the loop automatically in this case.
          */
         if (qrx_process_pkt(qrx, e, &pkt, pkt_idx, &first_rxe, data_len))
@@ -1016,7 +1016,7 @@ static int qrx_process_datagram(OSSL_QRX *qrx, QUIC_URXE *e,
 }
 
 /* Process a single pending URXE. */
-static int qrx_process_one_urxl(OSSL_QRX *qrx, QUIC_URXE *e)
+static int qrx_process_one_urxe(OSSL_QRX *qrx, QUIC_URXE *e)
 {
     int was_deferred;
 
@@ -1047,12 +1047,12 @@ static int qrx_process_one_urxl(OSSL_QRX *qrx, QUIC_URXE *e)
 }
 
 /* Process any pending URXEs to generate pending RXEs. */
-static int qrx_process_urxl(OSSL_QRX *qrx)
+static int qrx_process_pending_urxl(OSSL_QRX *qrx)
 {
     QUIC_URXE *e;
 
     while ((e = qrx->urx_pending.head) != NULL)
-        if (!qrx_process_one_urxl(qrx, e))
+        if (!qrx_process_one_urxe(qrx, e))
             return 0;
 
     return 1;
@@ -1063,7 +1063,7 @@ int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt)
     RXE *rxe;
 
     if (!ossl_qrx_processed_read_pending(qrx)) {
-        if (!qrx_process_urxl(qrx))
+        if (!qrx_process_pending_urxl(qrx))
             return 0;
 
         if (!ossl_qrx_processed_read_pending(qrx))
@@ -1124,6 +1124,7 @@ uint64_t ossl_qrx_get_key_epoch(OSSL_QRX *qrx)
 {
     OSSL_QRL_ENC_LEVEL *el = ossl_qrl_enc_level_set_get(&qrx->el_set,
                                                         QUIC_ENC_LEVEL_1RTT, 1);
+
     return el == NULL ? UINT64_MAX : el->key_epoch;
 }
 

@@ -238,8 +238,9 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
         hdr->data               = PACKET_data(pkt);
 
         /*
-         * Skip over payload so we are pointing at the start of the next packet,
-         * if any.
+         * Skip over payload. Since this is a short header packet, which cannot
+         * be followed by any other kind of packet, this advances us to the end
+         * of the datagram.
          */
         if (!PACKET_forward(pkt, hdr->len))
             return 0;
@@ -306,10 +307,18 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
             raw_type = ((b0 >> 4) & 0x3);
 
             switch (raw_type) {
-                case 0: hdr->type = QUIC_PKT_TYPE_INITIAL; break;
-                case 1: hdr->type = QUIC_PKT_TYPE_0RTT; break;
-                case 2: hdr->type = QUIC_PKT_TYPE_HANDSHAKE; break;
-                case 3: hdr->type = QUIC_PKT_TYPE_RETRY; break;
+            case 0:
+                hdr->type = QUIC_PKT_TYPE_INITIAL;
+                break;
+            case 1:
+                hdr->type = QUIC_PKT_TYPE_0RTT;
+                break;
+            case 2:
+                hdr->type = QUIC_PKT_TYPE_HANDSHAKE;
+                break;
+            case 3:
+                hdr->type = QUIC_PKT_TYPE_RETRY;
+                break;
             }
 
             hdr->pn_len     = 0;
