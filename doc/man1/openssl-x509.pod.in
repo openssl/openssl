@@ -84,7 +84,7 @@ B<openssl> B<x509>
 This command is a multi-purposes certificate handling command.
 It can be used to print certificate information,
 convert certificates to various forms, edit certificate trust settings,
-generate certificates from scratch or from certificating requests
+generate certificates from scratch or from certification requests
 and then self-signing them or signing them like a "micro CA".
 
 Generated certificates bear X.509 version 3.
@@ -121,7 +121,8 @@ see L<openssl-passphrase-options(1)>.
 =item B<-new>
 
 Generate a certificate from scratch, not using an input certificate
-or certificate request. So the B<-in> option must not be used in this case.
+or certificate request.
+So this excludes the B<-in> and B<-req> options.
 Instead, the B<-subj> option needs to be given.
 The public key to include can be given with the B<-force_pubkey> option
 and defaults to the key given with the B<-key> (or B<-signkey>) option,
@@ -176,9 +177,7 @@ the new certificate or certificate request, resulting in a self-signature.
 
 This option cannot be used in conjunction with the B<-CA> option.
 
-It sets the issuer name to the subject name (i.e., makes it self-issued)
-and changes the public key to the supplied value (unless overridden
-by B<-force_pubkey>).
+It sets the issuer name to the subject name (i.e., makes it self-issued).
 Unless the B<-preserve_dates> option is supplied,
 it sets the validity start date to the current time
 and the end date to a value determined by the B<-days> option.
@@ -403,20 +402,22 @@ Example:
 
 C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
-This option can be used in conjunction with the B<-force_pubkey> option
-to create a certificate even without providing an input certificate
-or certificate request.
+This option can be used with the B<-new> and B<-force_pubkey> options to create
+a new certificate without providing an input certificate or certificate request.
 
 =item B<-force_pubkey> I<filename>
 
-When a certificate is created set its public key to the key in I<filename>
+When a new certificate or certificate request is created
+set its public key to the given key
 instead of the key contained in the input
 or given with the B<-key> (or B<-signkey>) option.
+If the input contains no public key but a private key, its public part is used.
 
-This option is useful for creating self-issued certificates that are not
+This option can be used in conjunction with b<-new> and B<-subj>
+to directly generate a certificate containing any desired public key.
+
+This option is also useful for creating self-issued certificates that are not
 self-signed, for instance when the key cannot be used for signing, such as DH.
-It can also be used in conjunction with B<-new> and B<-subj> to directly
-generate a certificate containing any desired public key.
 
 =item B<-clrext>
 
