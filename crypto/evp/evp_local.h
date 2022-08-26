@@ -228,6 +228,8 @@ struct evp_kem_st {
     OSSL_FUNC_kem_gettable_ctx_params_fn *gettable_ctx_params;
     OSSL_FUNC_kem_set_ctx_params_fn *set_ctx_params;
     OSSL_FUNC_kem_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_FUNC_kem_auth_encapsulate_init_fn *auth_encapsulate_init;
+    OSSL_FUNC_kem_auth_decapsulate_init_fn *auth_decapsulate_init;
 } /* EVP_KEM */;
 
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,

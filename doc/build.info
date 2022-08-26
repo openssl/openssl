@@ -4203,10 +4203,18 @@ DEPEND[html/man7/EVP_KDF-X963.html]=man7/EVP_KDF-X963.pod
 GENERATE[html/man7/EVP_KDF-X963.html]=man7/EVP_KDF-X963.pod
 DEPEND[man/man7/EVP_KDF-X963.7]=man7/EVP_KDF-X963.pod
 GENERATE[man/man7/EVP_KDF-X963.7]=man7/EVP_KDF-X963.pod
+DEPEND[html/man7/EVP_KEM-EC.html]=man7/EVP_KEM-EC.pod
+GENERATE[html/man7/EVP_KEM-EC.html]=man7/EVP_KEM-EC.pod
+DEPEND[man/man7/EVP_KEM-EC.7]=man7/EVP_KEM-EC.pod
+GENERATE[man/man7/EVP_KEM-EC.7]=man7/EVP_KEM-EC.pod
 DEPEND[html/man7/EVP_KEM-RSA.html]=man7/EVP_KEM-RSA.pod
 GENERATE[html/man7/EVP_KEM-RSA.html]=man7/EVP_KEM-RSA.pod
 DEPEND[man/man7/EVP_KEM-RSA.7]=man7/EVP_KEM-RSA.pod
 GENERATE[man/man7/EVP_KEM-RSA.7]=man7/EVP_KEM-RSA.pod
+DEPEND[html/man7/EVP_KEM-X25519.html]=man7/EVP_KEM-X25519.pod
+GENERATE[html/man7/EVP_KEM-X25519.html]=man7/EVP_KEM-X25519.pod
+DEPEND[man/man7/EVP_KEM-X25519.7]=man7/EVP_KEM-X25519.pod
+GENERATE[man/man7/EVP_KEM-X25519.7]=man7/EVP_KEM-X25519.pod
 DEPEND[html/man7/EVP_KEYEXCH-DH.html]=man7/EVP_KEYEXCH-DH.pod
 GENERATE[html/man7/EVP_KEYEXCH-DH.html]=man7/EVP_KEYEXCH-DH.pod
 DEPEND[man/man7/EVP_KEYEXCH-DH.7]=man7/EVP_KEYEXCH-DH.pod
@@ -4624,7 +4632,9 @@ html/man7/EVP_KDF-TLS1_PRF.html \
 html/man7/EVP_KDF-X942-ASN1.html \
 html/man7/EVP_KDF-X942-CONCAT.html \
 html/man7/EVP_KDF-X963.html \
+html/man7/EVP_KEM-EC.html \
 html/man7/EVP_KEM-RSA.html \
+html/man7/EVP_KEM-X25519.html \
 html/man7/EVP_KEYEXCH-DH.html \
 html/man7/EVP_KEYEXCH-ECDH.html \
 html/man7/EVP_KEYEXCH-X25519.html \
@@ -4749,7 +4759,9 @@ man/man7/EVP_KDF-TLS1_PRF.7 \
 man/man7/EVP_KDF-X942-ASN1.7 \
 man/man7/EVP_KDF-X942-CONCAT.7 \
 man/man7/EVP_KDF-X963.7 \
+man/man7/EVP_KEM-EC.7 \
 man/man7/EVP_KEM-RSA.7 \
+man/man7/EVP_KEM-X25519.7 \
 man/man7/EVP_KEYEXCH-DH.7 \
 man/man7/EVP_KEYEXCH-ECDH.7 \
 man/man7/EVP_KEYEXCH-X25519.7 \

@@ -24,6 +24,7 @@
 #endif
 #include <openssl/self_test.h>
 #include "prov/providercommon.h"
+#include "prov/ecx.h"
 #include "crypto/bn.h"
 
 static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
@@ -349,6 +350,76 @@ err:
     BN_free(order);
     return ok;
 }
+
+#ifndef FIPS_MODULE
+int ossl_ec_public_from_private(EC_KEY *eckey, BIGNUM *priv_key, BN_CTX *ctx)
+{
+    int ok = 0;
+    EC_POINT *pub_key = NULL;
+    const EC_GROUP *group = eckey->group;
+
+    if (eckey->pub_key == NULL) {
+        pub_key = EC_POINT_new(group);
+        if (pub_key == NULL)
+            goto err;
+    } else {
+        pub_key = eckey->pub_key;
+    }
+
+    /* pub_key = priv_key * G (where G is a point on the curve) */
+    if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, ctx))
+        goto err;
+
+    eckey->pub_key = pub_key;
+    ok = 1;
+err:
+    if (!ok) {
+        if (eckey->pub_key != NULL)
+            EC_POINT_set_to_infinity(group, eckey->pub_key);
+    }
+    return ok;
+}
+
+/*
+ * This is a modified version of ec_generate_key() that uses an ikm to
+ * derive the private key.
+ */
+int ossl_ec_generate_key_dhkem(EC_KEY *eckey,
+                               const unsigned char *ikm, size_t ikmlen)
+{
+    int ok = 0;
+    BIGNUM *priv_key = NULL;
+    EC_POINT *pub_key = NULL;
+    BN_CTX *ctx = BN_CTX_secure_new_ex(eckey->libctx);
+
+    if (ctx == NULL)
+        goto err;
+
+    if (eckey->priv_key == NULL) {
+        priv_key = BN_secure_new();
+        if (priv_key == NULL)
+            goto err;
+    } else {
+        priv_key = eckey->priv_key;
+    }
+
+    if (ossl_ec_dhkem_derive_private(eckey, priv_key, ikm, ikmlen) <= 0)
+        goto err;
+    if (!ossl_ec_public_from_private(eckey, priv_key, ctx))
+        goto err;
+    eckey->priv_key = priv_key;
+    priv_key = NULL;
+
+
+    eckey->dirty_cnt++;
+    ok = 1;
+err:
+    EC_POINT_free(pub_key);
+    BN_clear_free(priv_key);
+    BN_CTX_free(ctx);
+    return ok;
+}
+#endif
 
 int ossl_ec_key_simple_generate_key(EC_KEY *eckey)
 {

@@ -815,16 +815,24 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, asym_cipher_settable_ctx_params,
 # define OSSL_FUNC_KEM_GETTABLE_CTX_PARAMS     9
 # define OSSL_FUNC_KEM_SET_CTX_PARAMS         10
 # define OSSL_FUNC_KEM_SETTABLE_CTX_PARAMS    11
+# define OSSL_FUNC_KEM_AUTH_ENCAPSULATE_INIT  12
+# define OSSL_FUNC_KEM_AUTH_DECAPSULATE_INIT  13
 
 OSSL_CORE_MAKE_FUNC(void *, kem_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, kem_encapsulate_init, (void *ctx, void *provkey,
                                                 const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, kem_auth_encapsulate_init, (void *ctx, void *provkey,
+                                                     void *authprivkey,
+                                                     const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, kem_encapsulate, (void *ctx,
                                            unsigned char *out, size_t *outlen,
                                            unsigned char *secret,
                                            size_t *secretlen))
 OSSL_CORE_MAKE_FUNC(int, kem_decapsulate_init, (void *ctx, void *provkey,
                                                 const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, kem_auth_decapsulate_init, (void *ctx, void *provkey,
+                                                     void *authpubkey,
+                                                     const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, kem_decapsulate, (void *ctx,
                                            unsigned char *out, size_t *outlen,
                                            const unsigned char *in, size_t inlen))

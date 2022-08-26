@@ -13,8 +13,22 @@ implemented in OpenSSL's default and FIPS providers.  These implementations
 support the associated key, containing the public key I<pub> and the
 private key I<priv>.
 
-No additional parameters can be set during key generation.
+=head2 Keygen Parameters
 
+=over 4
+
+=item "dhkem-ikm" (B<OSSL_PKEY_PARAM_DHKEM_IKM>) <octet string>
+
+DHKEM requires the generation of a keypair using an input key material (seed).
+Use this to specify the key material used for generation of the private key.
+This value should not be reused for other purposes.
+It should have a length of at least 32 for X25519, and 56 for X448.
+
+This is only supported by X25519 and X448.
+
+=back
+
+Use EVP_PKEY_CTX_set_params() after calling EVP_PKEY_keygen_init().
 
 =head2 Common X25519, X448, ED25519 and ED448 parameters
 
