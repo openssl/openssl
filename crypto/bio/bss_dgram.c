@@ -942,7 +942,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 
     case BIO_CTRL_DGRAM_SET_LOCAL_ADDR_ENABLE:
 # if defined(SUPPORT_LOCAL_ADDR)
-        num = (num > 0);
+        num = num > 0;
         if (num != data->local_addr_enabled) {
             if (enable_local_addr(b, num) < 1) {
                 ret = 0;
@@ -1085,6 +1085,7 @@ static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
 
             {
                 bio_dgram_data *data = b->ptr;
+
                 local->s_in6.sin6_addr     =
                     ((struct in6_pktinfo *)BIO_CMSG_DATA(cmsg))->ipi6_addr;
                 local->s_in6.sin6_family   = AF_INET6;

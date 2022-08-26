@@ -144,7 +144,7 @@ socklen_t BIO_ADDRINFO_sockaddr_size(const BIO_ADDRINFO *bai);
 const struct sockaddr *BIO_ADDRINFO_sockaddr(const BIO_ADDRINFO *bai);
 
 # if defined(OPENSSL_SYS_WINDOWS) && defined(WSAID_WSARECVMSG)
-#   define BIO_HAVE_WSAMSG
+#  define BIO_HAVE_WSAMSG
 extern LPFN_WSARECVMSG bio_WSARecvMsg;
 extern LPFN_WSASENDMSG bio_WSASendMsg;
 # endif

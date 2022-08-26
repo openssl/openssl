@@ -43,17 +43,17 @@ static int compare_addr(const BIO_ADDR *a, const BIO_ADDR *b)
     }
 
     tmplen = slen;
-    if (BIO_ADDR_rawaddress(a, pa, &tmplen) < 1)
+    if (!TEST_int_eq(BIO_ADDR_rawaddress(a, pa, &tmplen), 1))
         return 0;
 
     tmplen = slen;
-    if (BIO_ADDR_rawaddress(b, pb, &tmplen) < 1)
+    if (!TEST_int_eq(BIO_ADDR_rawaddress(b, pb, &tmplen), 1))
         return 0;
 
-    if (memcmp(pa, pb, slen))
+    if (!TEST_mem_eq(pa, slen, pb, slen))
         return 0;
 
-    if (BIO_ADDR_rawport(a) != BIO_ADDR_rawport(b))
+    if (!TEST_int_eq(BIO_ADDR_rawport(a), BIO_ADDR_rawport(b)))
         return 0;
 
     return 1;
@@ -157,10 +157,10 @@ static int test_bio_dgram_impl(int af, int use_local)
     if (!TEST_ptr(addr6))
         goto err;
 
-    if (BIO_ADDR_rawmake(addr1, af, pina, inal, 0) < 1)
+    if (!TEST_int_eq(BIO_ADDR_rawmake(addr1, af, pina, inal, 0), 1))
         goto err;
 
-    if (BIO_ADDR_rawmake(addr2, af, pina, inal, 0) < 1)
+    if (!TEST_int_eq(BIO_ADDR_rawmake(addr2, af, pina, inal, 0), 1))
         goto err;
 
     fd1 = BIO_socket(af, SOCK_DGRAM, IPPROTO_UDP, 0);
