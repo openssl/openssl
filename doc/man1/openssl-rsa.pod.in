@@ -121,8 +121,9 @@ This option checks the consistency of an RSA private key.
 
 =item B<-pubin>
 
-By default a private key is read from the input file: with this
-option a public key is read instead.
+By default a private key is read from the input.
+With this option a public key is read instead.
+If the input contains no public key but a private key, its public part is used.
 
 =item B<-pubout>
 

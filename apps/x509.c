@@ -87,7 +87,8 @@ const OPTIONS x509_options[] = {
 
     OPT_SECTION("Certificate printing"),
     {"text", OPT_TEXT, '-', "Print the certificate in text form"},
-    {"dateopt", OPT_DATEOPT, 's', "Datetime format used for printing. (rfc_822/iso_8601). Default is rfc_822."},
+    {"dateopt", OPT_DATEOPT, 's',
+     "Datetime format used for printing. (rfc_822/iso_8601). Default is rfc_822."},
     {"certopt", OPT_CERTOPT, 's', "Various certificate text printing options"},
     {"fingerprint", OPT_FINGERPRINT, '-', "Print the certificate fingerprint"},
     {"alias", OPT_ALIAS, '-', "Print certificate alias"},
@@ -139,7 +140,7 @@ const OPTIONS x509_options[] = {
      "Preserve existing validity dates"},
     {"subj", OPT_SUBJ, 's', "Set or override certificate subject (and issuer)"},
     {"force_pubkey", OPT_FORCE_PUBKEY, '<',
-     "Place the given key in new certificate"},
+     "Key to be placed in new certificate or certificate request"},
     {"clrext", OPT_CLREXT, '-',
      "Do not take over any extensions from the source certificate or request"},
     {"extfile", OPT_EXTFILE, '<', "Config file with X509V3 extensions to add"},
@@ -624,8 +625,7 @@ int x509_main(int argc, char **argv)
         goto err;
     }
     if (newcert && reqfile) {
-        BIO_printf(bio_err,
-                   "The -req option cannot be used with -new\n");
+        BIO_printf(bio_err, "The -req option cannot be used with -new\n");
         goto err;
     }
     if (privkeyfile != NULL) {
@@ -757,7 +757,7 @@ int x509_main(int argc, char **argv)
     } else {
         if (infile == NULL)
             BIO_printf(bio_err,
-                       "Warning: Reading certificate from stdin since no -in option is given\n");
+                       "Warning: Reading certificate from stdin since no -in or -new option is given\n");
         x = load_cert_pass(infile, informat, 1, passin, "certificate");
         if (x == NULL)
             goto end;
@@ -893,9 +893,6 @@ int x509_main(int argc, char **argv)
             }
         }
         noout = 1;
-    } else if (privkey != NULL) {
-        if (!do_X509_sign(x, 0, privkey, digest, sigopts, &ext_ctx))
-            goto end;
     } else if (CAfile != NULL) {
         if ((CAkey = load_key(CAkeyfile, CAkeyformat,
                               0, passin, e, "CA private key")) == NULL)
@@ -907,6 +904,9 @@ int x509_main(int argc, char **argv)
         }
 
         if (!do_X509_sign(x, 0, CAkey, digest, sigopts, &ext_ctx))
+            goto end;
+    } else if (privkey != NULL) {
+        if (!do_X509_sign(x, 0, privkey, digest, sigopts, &ext_ctx))
             goto end;
     }
     if (badsig) {
