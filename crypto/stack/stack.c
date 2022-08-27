@@ -51,8 +51,11 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
         return NULL;
     }
 
-    /* direct structure assignment */
-    *ret = *sk;
+    /*
+     * Fix direct structure assignment not work, see:
+     * https://github.com/openssl/openssl/issues/19074
+     */
+    memcpy(ret, sk, sizeof(OPENSSL_STACK));
 
     if (sk->num == 0) {
         /* postpone |ret->data| allocation */
@@ -82,8 +85,11 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
         return NULL;
     }
 
-    /* direct structure assignment */
-    *ret = *sk;
+    /*
+     * Fix direct structure assignment not work, see:
+     * https://github.com/openssl/openssl/issues/19074
+     */
+    memcpy(ret, sk, sizeof(OPENSSL_STACK));
 
     if (sk->num == 0) {
         /* postpone |ret| data allocation */
