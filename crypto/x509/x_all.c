@@ -95,6 +95,7 @@ X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
+    x->req_info.enc.modified = 1;
     return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_REQ_INFO), &x->sig_alg, NULL,
                              x->signature, &x->req_info, NULL,
                              pkey, md, x->libctx, x->propq);
@@ -102,6 +103,7 @@ int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
 {
+    x->req_info.enc.modified = 1;
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
                               &x->sig_alg, NULL, x->signature, &x->req_info,
                               ctx);
