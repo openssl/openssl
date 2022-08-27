@@ -59,18 +59,26 @@ int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
-    x->cert_info.enc.modified = 1;
-    return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
-                             &x->sig_alg, &x->signature, &x->cert_info, NULL,
-                             pkey, md, x->libctx, x->propq);
+    int ret = 0;
+
+    ret = ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
+                            &x->sig_alg, &x->signature, &x->cert_info, NULL,
+                            pkey, md, x->libctx, x->propq);
+    if (ret > 0)
+        x->cert_info.enc.modified = 1;
+    return ret;
 }
 
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
 {
-    x->cert_info.enc.modified = 1;
-    return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
-                              &x->cert_info.signature,
-                              &x->sig_alg, &x->signature, &x->cert_info, ctx);
+    int ret = 0;
+
+    ret = ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
+                             &x->cert_info.signature,
+                             &x->sig_alg, &x->signature, &x->cert_info, ctx);
+    if (ret > 0)
+        x->cert_info.enc.modified = 1;
+    return ret;
 }
 
 static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,
@@ -95,34 +103,50 @@ X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
-    x->req_info.enc.modified = 1;
-    return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_REQ_INFO), &x->sig_alg, NULL,
-                             x->signature, &x->req_info, NULL,
-                             pkey, md, x->libctx, x->propq);
+    int ret = 0;
+
+    ret = ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_REQ_INFO), &x->sig_alg, NULL,
+                            x->signature, &x->req_info, NULL,
+                            pkey, md, x->libctx, x->propq);
+    if (ret > 0)
+        x->req_info.enc.modified = 1;
+    return ret;
 }
 
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
 {
-    x->req_info.enc.modified = 1;
-    return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
-                              &x->sig_alg, NULL, x->signature, &x->req_info,
-                              ctx);
+    int ret = 0;
+
+    ret = ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
+                             &x->sig_alg, NULL, x->signature, &x->req_info,
+                             ctx);
+    if (ret > 0)
+        x->req_info.enc.modified = 1;
+    return ret;
 }
 
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
-    x->crl.enc.modified = 1;
-    return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CRL_INFO), &x->crl.sig_alg,
-                             &x->sig_alg, &x->signature, &x->crl, NULL,
-                             pkey, md, x->libctx, x->propq);
+    int ret = 0;
+
+    ret = ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CRL_INFO), &x->crl.sig_alg,
+                            &x->sig_alg, &x->signature, &x->crl, NULL,
+                            pkey, md, x->libctx, x->propq);
+    if (ret > 0)
+        x->crl.enc.modified = 1;
+    return ret;
 }
 
 int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx)
 {
-    x->crl.enc.modified = 1;
-    return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CRL_INFO),
-                              &x->crl.sig_alg, &x->sig_alg, &x->signature,
-                              &x->crl, ctx);
+    int ret = 0;
+
+    ret = ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CRL_INFO),
+                             &x->crl.sig_alg, &x->sig_alg, &x->signature,
+                             &x->crl, ctx);
+    if (ret > 0)
+        x->crl.enc.modified = 1;
+    return ret;
 }
 
 X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
