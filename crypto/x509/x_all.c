@@ -65,12 +65,14 @@ int X509_http_nbio(OCSP_REQ_CTX *rctx, X509 **pcert)
 
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
+    x->req_info.enc.modified = 1;
     return (ASN1_item_sign(ASN1_ITEM_rptr(X509_REQ_INFO), &x->sig_alg, NULL,
                            x->signature, &x->req_info, pkey, md));
 }
 
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
 {
+    x->req_info.enc.modified = 1;
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
                               &x->sig_alg, NULL, x->signature, &x->req_info,
                               ctx);
