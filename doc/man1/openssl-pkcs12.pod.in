@@ -342,7 +342,7 @@ then both, the private key and the certificates are encrypted using triple DES.
 
 =item B<-macalg> I<digest>
 
-Specify the MAC digest algorithm. If not included SHA1 will be used.
+Specify the MAC digest algorithm. If not included SHA256 will be used.
 
 =item B<-iter> I<count>
 
