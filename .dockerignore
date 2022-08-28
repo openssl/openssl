@@ -1,0 +1,27 @@
+# build ignore build directory
+build/
+# ignore build script
+install-docker.ps1
+
+#ignore binaries and other stuff
+/*.pc
+/out.*
+/tmp.*
+/inc.*
+*.a
+*.so
+*.so.*
+*.dylib
+*.dylib.*
+*.dll
+*.dll.*
+*.exe
+*.pyc
+*.exp
+*.lib
+*.pdb
+*.tds
+*.ilk
+*.def
+*.rc
+*.res
