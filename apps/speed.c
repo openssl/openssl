@@ -49,6 +49,21 @@
 
 #if defined(_WIN32)
 # include <windows.h>
+/*
+ * While VirtualLock is available under the app partition (e.g. UWP),
+ * the headers do not define the API. Define it ourselves instead.
+ */
+WINBASEAPI
+BOOL
+WINAPI
+VirtualLock(
+    _In_ LPVOID lpAddress,
+    _In_ SIZE_T dwSize
+    );
+#endif
+
+# if defined(OPENSSL_SYS_UNIX)
+#  include <sys/mman.h>
 #endif
 
 #include <openssl/bn.h>
@@ -110,6 +125,8 @@ static void print_result(int alg, int run_no, int count, double time_used);
 #ifndef NO_FORK
 static int do_multi(int multi, int size_num);
 #endif
+
+static int domlock = 0;
 
 static const int lengths_list[] = {
     16, 64, 256, 1024, 8 * 1024, 16 * 1024
@@ -212,7 +229,7 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_ELAPSED, OPT_EVP, OPT_HMAC, OPT_DECRYPT, OPT_ENGINE, OPT_MULTI,
     OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM, OPT_PROV_ENUM, OPT_CONFIG,
-    OPT_PRIMES, OPT_SECONDS, OPT_BYTES, OPT_AEAD, OPT_CMAC
+    OPT_PRIMES, OPT_SECONDS, OPT_BYTES, OPT_AEAD, OPT_CMAC, OPT_MLOCK
 } OPTION_CHOICE;
 
 const OPTIONS speed_options[] = {
@@ -234,6 +251,7 @@ const OPTIONS speed_options[] = {
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"primes", OPT_PRIMES, 'p', "Specify number of primes (for RSA only)"},
+    {"mlock", OPT_MLOCK, '-', "Lock memory for better result determinism"},
     OPT_CONFIG_OPTION,
 
     OPT_SECTION("Selection"),
@@ -1621,6 +1639,15 @@ int speed_main(int argc, char **argv)
         case OPT_AEAD:
             aead = 1;
             break;
+        case OPT_MLOCK:
+            domlock = 1;
+#if !defined(_WIN32) && !defined(OPENSSL_SYS_LINUX)
+            BIO_printf(bio_err,
+                       "%s: -mlock not supported on this platform\n",
+                       prog);
+            goto end;
+#endif
+            break;
         }
     }
 
@@ -1774,6 +1801,14 @@ int speed_main(int argc, char **argv)
         app_malloc(loopargs_len * sizeof(loopargs_t), "array of loopargs");
     memset(loopargs, 0, loopargs_len * sizeof(loopargs_t));
 
+    buflen = lengths[size_num - 1];
+    if (buflen < 36)    /* size of random vector in RSA benchmark */
+        buflen = 36;
+    if (INT_MAX - (MAX_MISALIGNMENT + 1) < buflen) {
+        BIO_printf(bio_err, "Error: buffer size too large\n");
+        goto end;
+    }
+    buflen += MAX_MISALIGNMENT + 1;
     for (i = 0; i < loopargs_len; i++) {
         if (async_jobs > 0) {
             loopargs[i].wait_ctx = ASYNC_WAIT_CTX_new();
@@ -1783,18 +1818,8 @@ int speed_main(int argc, char **argv)
             }
         }
 
-        buflen = lengths[size_num - 1];
-        if (buflen < 36)    /* size of random vector in RSA benchmark */
-            buflen = 36;
-        if (INT_MAX - (MAX_MISALIGNMENT + 1) < buflen) {
-            BIO_printf(bio_err, "Error: buffer size too large\n");
-            goto end;
-        }
-        buflen += MAX_MISALIGNMENT + 1;
         loopargs[i].buf_malloc = app_malloc(buflen, "input buffer");
         loopargs[i].buf2_malloc = app_malloc(buflen, "input buffer");
-        memset(loopargs[i].buf_malloc, 0, buflen);
-        memset(loopargs[i].buf2_malloc, 0, buflen);
 
         /* Align the start of buffers on a 64 byte boundary */
         loopargs[i].buf = loopargs[i].buf_malloc + misalign;
@@ -1813,6 +1838,20 @@ int speed_main(int argc, char **argv)
     if (multi && do_multi(multi, size_num))
         goto show_res;
 #endif
+
+    for (i = 0; i < loopargs_len; ++i) {
+        if (domlock) {
+#if defined(_WIN32)
+            (void)VirtualLock(loopargs[i].buf_malloc, buflen);
+            (void)VirtualLock(loopargs[i].buf2_malloc, buflen);
+#elif defined(OPENSSL_SYS_LINUX)
+            (void)mlock(loopargs[i].buf_malloc, buflen);
+            (void)mlock(loopargs[i].buf_malloc, buflen);
+#endif
+        }
+        memset(loopargs[i].buf_malloc, 0, buflen);
+        memset(loopargs[i].buf2_malloc, 0, buflen);
+    }
 
     /* Initialize the engine after the fork */
     e = setup_engine(engine_id, 0);
