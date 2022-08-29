@@ -15,6 +15,7 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
+#include "internal/time.h"
 #include "crypto/ess.h"
 #include "ts_local.h"
 
@@ -58,45 +59,26 @@ static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *ctx, void *data)
     return NULL;
 }
 
-#if defined(OPENSSL_SYS_UNIX)
-
 static int def_time_cb(struct TS_resp_ctx *ctx, void *data,
                        long *sec, long *usec)
 {
+    OSSL_TIME t;
     struct timeval tv;
-    if (gettimeofday(&tv, NULL) != 0) {
+
+    t = ossl_time_now();
+    if (ossl_time_is_zero(t)) {
         ERR_raise(ERR_LIB_TS, TS_R_TIME_SYSCALL_ERROR);
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Time is not available.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_TIME_NOT_AVAILABLE);
         return 0;
     }
-    *sec = tv.tv_sec;
-    *usec = tv.tv_usec;
+    tv = ossl_time_to_timeval(t);
+    *sec = (long int)tv.tv_sec;
+    *usec = (long int)tv.tv_usec;
 
     return 1;
 }
-
-#else
-
-static int def_time_cb(struct TS_resp_ctx *ctx, void *data,
-                       long *sec, long *usec)
-{
-    time_t t;
-    if (time(&t) == (time_t)-1) {
-        ERR_raise(ERR_LIB_TS, TS_R_TIME_SYSCALL_ERROR);
-        TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
-                                    "Time is not available.");
-        TS_RESP_CTX_add_failure_info(ctx, TS_INFO_TIME_NOT_AVAILABLE);
-        return 0;
-    }
-    *sec = (long)t;
-    *usec = 0;
-
-    return 1;
-}
-
-#endif
 
 static int def_extension_cb(struct TS_resp_ctx *ctx, X509_EXTENSION *ext,
                             void *data)

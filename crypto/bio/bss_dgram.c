@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include "internal/time.h"
 #include "bio_local.h"
 #ifndef OPENSSL_NO_DGRAM
 
@@ -149,8 +150,6 @@ static void dgram_sctp_handle_auth_free_key_event(BIO *b, union sctp_notificatio
 
 static int BIO_dgram_should_retry(int s);
 
-static void get_current_time(struct timeval *t);
-
 static const BIO_METHOD methods_dgramp = {
     BIO_TYPE_DGRAM,
     "datagram socket",
@@ -193,8 +192,8 @@ typedef struct bio_dgram_data_st {
     unsigned int connected;
     unsigned int _errno;
     unsigned int mtu;
-    struct timeval next_timeout;
-    struct timeval socket_timeout;
+    OSSL_TIME next_timeout;
+    OSSL_TIME socket_timeout;
     unsigned int peekmode;
     char local_addr_enabled;
 } bio_dgram_data;
@@ -283,70 +282,53 @@ static void dgram_adjust_rcv_timeout(BIO *b)
 {
 # if defined(SO_RCVTIMEO)
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+    OSSL_TIME timeleft;
 
     /* Is a timer active? */
-    if (data->next_timeout.tv_sec > 0 || data->next_timeout.tv_usec > 0) {
-        struct timeval timenow, timeleft;
-
+    if (!ossl_time_is_zero(data->next_timeout)) {
         /* Read current socket timeout */
 #  ifdef OPENSSL_SYS_WINDOWS
         int timeout;
-
         int sz = sizeof(timeout);
+
         if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
-                       (void *)&timeout, &sz) < 0) {
-            ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
-                           "calling getsockopt()");
-        } else {
-            data->socket_timeout.tv_sec = timeout / 1000;
-            data->socket_timeout.tv_usec = (timeout % 1000) * 1000;
-        }
-#  else
-        socklen_t sz = sizeof(data->socket_timeout);
-        if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
-                       &(data->socket_timeout), &sz) < 0)
+                       (void *)&timeout, &sz) < 0)
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling getsockopt()");
         else
-            OPENSSL_assert(sz <= sizeof(data->socket_timeout));
+            data->socket_timeout = ossl_ms2time(timeout);
+#  else
+        struct timeval tv;
+        socklen_t sz = sizeof(tv);
+
+        if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO, &tv, &sz) < 0)
+            ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                           "calling getsockopt()");
+        else
+            data->socket_timeout = ossl_time_from_timeval(tv);
 #  endif
 
-        /* Get current time */
-        get_current_time(&timenow);
-
         /* Calculate time left until timer expires */
-        memcpy(&timeleft, &(data->next_timeout), sizeof(struct timeval));
-        if (timeleft.tv_usec < timenow.tv_usec) {
-            timeleft.tv_usec = 1000000 - timenow.tv_usec + timeleft.tv_usec;
-            timeleft.tv_sec--;
-        } else {
-            timeleft.tv_usec -= timenow.tv_usec;
-        }
-        if (timeleft.tv_sec < timenow.tv_sec) {
-            timeleft.tv_sec = 0;
-            timeleft.tv_usec = 1;
-        } else {
-            timeleft.tv_sec -= timenow.tv_sec;
-        }
+        timeleft = ossl_time_subtract(data->next_timeout, ossl_time_now());
+        if (ossl_time_compare(timeleft, ossl_ticks2time(OSSL_TIME_US)) < 0)
+            timeleft = ossl_ticks2time(OSSL_TIME_US);
 
         /*
          * Adjust socket timeout if next handshake message timer will expire
          * earlier.
          */
-        if ((data->socket_timeout.tv_sec == 0
-             && data->socket_timeout.tv_usec == 0)
-            || (data->socket_timeout.tv_sec > timeleft.tv_sec)
-            || (data->socket_timeout.tv_sec == timeleft.tv_sec
-                && data->socket_timeout.tv_usec >= timeleft.tv_usec)) {
+        if (ossl_time_is_zero(data->socket_timeout)
+            || ossl_time_compare(data->socket_timeout, timeleft) >= 0) {
 #  ifdef OPENSSL_SYS_WINDOWS
-            timeout = timeleft.tv_sec * 1000 + timeleft.tv_usec / 1000;
+            timeout = (int)ossl_time2ms(timeleft);
             if (setsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
                            (void *)&timeout, sizeof(timeout)) < 0)
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling setsockopt()");
 #  else
-            if (setsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO, &timeleft,
-                           sizeof(struct timeval)) < 0)
+            tv = ossl_time_to_timeval(timeleft);
+            if (setsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO, &tv,
+                           sizeof(tv)) < 0)
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling setsockopt()");
 #  endif
@@ -382,17 +364,18 @@ static void dgram_reset_rcv_timeout(BIO *b)
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
 
     /* Is a timer active? */
-    if (data->next_timeout.tv_sec > 0 || data->next_timeout.tv_usec > 0) {
+    if (!ossl_time_is_zero(data->next_timeout)) {
 #  ifdef OPENSSL_SYS_WINDOWS
-        int timeout = data->socket_timeout.tv_sec * 1000 +
-            data->socket_timeout.tv_usec / 1000;
+        int timeout = (int)ossl_time2ms(data->socket_timeout);
+
         if (setsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
                        (void *)&timeout, sizeof(timeout)) < 0)
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling setsockopt()");
 #  else
-        if (setsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
-                       &(data->socket_timeout), sizeof(struct timeval)) < 0)
+        struct timeval tv = ossl_time_to_timeval(data->socket_timeout);
+
+        if (setsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling setsockopt()");
 #  endif
@@ -737,7 +720,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         break;
     case BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT:
-        memcpy(&(data->next_timeout), ptr, sizeof(struct timeval));
+        data->next_timeout = ossl_time_from_timeval(*(struct timeval *)ptr);
         break;
 # if defined(SO_RCVTIMEO)
     case BIO_CTRL_DGRAM_SET_RECV_TIMEOUT:
@@ -745,6 +728,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         {
             struct timeval *tv = (struct timeval *)ptr;
             int timeout = tv->tv_sec * 1000 + tv->tv_usec / 1000;
+
             if ((ret = setsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
                                   (void *)&timeout, sizeof(timeout))) < 0)
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
@@ -2792,31 +2776,6 @@ int BIO_dgram_non_fatal_error(int err)
         break;
     }
     return 0;
-}
-
-static void get_current_time(struct timeval *t)
-{
-# if defined(_WIN32)
-    SYSTEMTIME st;
-    unsigned __int64 now_ul;
-    FILETIME now_ft;
-
-    GetSystemTime(&st);
-    SystemTimeToFileTime(&st, &now_ft);
-    now_ul = ((unsigned __int64)now_ft.dwHighDateTime << 32) | now_ft.dwLowDateTime;
-#  ifdef  __MINGW32__
-    now_ul -= 116444736000000000ULL;
-#  else
-    now_ul -= 116444736000000000UI64; /* re-bias to 1/1/1970 */
-#  endif
-    t->tv_sec = (long)(now_ul / 10000000);
-    t->tv_usec = ((int)(now_ul % 10000000)) / 10;
-# else
-    if (gettimeofday(t, NULL) < 0)
-        ERR_raise_data(ERR_LIB_SYS, errno,
-                       "calling gettimeofday");
-
-# endif
 }
 
 #endif
