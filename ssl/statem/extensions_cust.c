@@ -176,8 +176,11 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
 {
     custom_ext_methods *exts = &s->cert->custext;
     custom_ext_method *meth;
+    int error = ERR_R_INTERNAL_ERROR;
+    int ad = SSL_AD_INTERNAL_ERROR;
     size_t i;
     int al;
+    int for_comp = (context & SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION) != 0;
 
     for (i = 0; i < exts->meths_count; i++) {
         const unsigned char *out = NULL;
@@ -211,8 +214,9 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                                          meth->add_arg);
 
             if (cb_retval < 0) {
-                SSLfatal(s, al, SSL_R_CALLBACK_FAILED);
-                return 0;       /* error */
+                ad = al;
+                error = SSL_R_CALLBACK_FAILED;
+                goto err;
             }
             if (cb_retval == 0)
                 continue;       /* skip this extension */
@@ -221,18 +225,14 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
         if (!WPACKET_put_bytes_u16(pkt, meth->ext_type)
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || (outlen > 0 && !WPACKET_memcpy(pkt, out, outlen))
-                || !WPACKET_close(pkt)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
+                || !WPACKET_close(pkt))
+            goto err;
         if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
             /*
              * We can't send duplicates: code logic should prevent this.
              */
-            if (!ossl_assert((meth->ext_flags & SSL_EXT_FLAG_SENT) == 0)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
+            if (!ossl_assert((meth->ext_flags & SSL_EXT_FLAG_SENT) == 0))
+                goto err;
             /*
              * Indicate extension has been sent: this is both a sanity check to
              * ensure we don't send duplicate extensions and indicates that it
@@ -245,6 +245,10 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                           out, meth->add_arg);
     }
     return 1;
+ err:
+    if (!for_comp)
+        SSLfatal(s, ad, error);
+    return 0;
 }
 
 /* Copy the flags from src to dst for any extensions that exist in both */

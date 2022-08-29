@@ -3621,7 +3621,7 @@ CON_FUNC_RETURN tls_construct_client_certificate(SSL_CONNECTION *s,
     }
     if (!ssl3_output_cert_chain(s, pkt,
                                 (s->s3.tmp.cert_req == 2) ? NULL
-                                                           : s->cert->key)) {
+                                                           : s->cert->key, 0)) {
         /* SSLfatal() already called */
         return CON_FUNC_ERROR;
     }
@@ -3669,7 +3669,7 @@ CON_FUNC_RETURN tls_construct_client_compressed_certificate(SSL_CONNECTION *sc,
     } else if (!WPACKET_sub_memcpy_u8(&tmppkt, sc->pha_context, sc->pha_context_len))
         goto err;
 
-    if (!ssl3_output_cert_chain(sc, &tmppkt, sc->cert->key)) {
+    if (!ssl3_output_cert_chain(sc, &tmppkt, sc->cert->key, 0)) {
         /* SSLfatal() already called */
         goto out;
     }

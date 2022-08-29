@@ -3735,7 +3735,7 @@ CON_FUNC_RETURN tls_construct_server_certificate(SSL_CONNECTION *s, WPACKET *pkt
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return CON_FUNC_ERROR;
     }
-    if (!ssl3_output_cert_chain(s, pkt, cpk)) {
+    if (!ssl3_output_cert_chain(s, pkt, cpk, 0)) {
         /* SSLfatal() already called */
         return CON_FUNC_ERROR;
     }

@@ -2613,7 +2613,7 @@ __owur int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf,
                            size_t len);
 void ssl3_free_digest_list(SSL_CONNECTION *s);
 __owur unsigned long ssl3_output_cert_chain(SSL_CONNECTION *s, WPACKET *pkt,
-                                            CERT_PKEY *cpk);
+                                            CERT_PKEY *cpk, int for_comp);
 __owur const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s,
                                             STACK_OF(SSL_CIPHER) *clnt,
                                             STACK_OF(SSL_CIPHER) *srvr);
