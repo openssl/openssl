@@ -25,15 +25,6 @@
 
 COMP_METHOD *COMP_zstd(void);
 
-static COMP_METHOD zstd_method_nozstd = {
-    NID_undef,
-    "(undef)",
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-};
-
 #ifdef OPENSSL_NO_ZSTD
 # undef ZSTD_SHARED
 #else
@@ -191,13 +182,14 @@ static void zstd_stateful_finish(COMP_CTX *ctx)
     }
 }
 
-static int zstd_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
-                                        unsigned int olen, unsigned char *in,
-                                        unsigned int ilen)
+static ossl_ssize_t zstd_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
+                                                 size_t olen, unsigned char *in,
+                                                 size_t ilen)
 {
     ZSTD_inBuffer inbuf;
     ZSTD_outBuffer outbuf;
     size_t ret;
+    ossl_ssize_t fret;
     struct zstd_state *state = ctx->data;
 
     inbuf.src = in;
@@ -215,7 +207,7 @@ static int zstd_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
         ret = ZSTD_endStream(state->compressor, &outbuf);
         if (ZSTD_isError(ret))
             return -1;
-        return outbuf.pos;
+        goto end;
     }
 
     /*
@@ -240,16 +232,21 @@ static int zstd_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
     if (ZSTD_isError(ret))
         return -1;
 
-    return outbuf.pos;
+ end:
+    fret = (ossl_ssize_t)outbuf.pos;
+    if (fret < 0)
+        return -1;
+    return fret;
 }
 
-static int zstd_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
-                                      unsigned int olen, unsigned char *in,
-                                      unsigned int ilen)
+static ossl_ssize_t zstd_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
+                                               size_t olen, unsigned char *in,
+                                               size_t ilen)
 {
     ZSTD_inBuffer inbuf;
     ZSTD_outBuffer outbuf;
     size_t ret;
+    ossl_ssize_t fret;
     struct zstd_state *state = ctx->data;
 
     inbuf.src = in;
@@ -276,7 +273,10 @@ static int zstd_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
     if (inbuf.pos < inbuf.size)
         return -1;
 
-    return outbuf.pos;
+    fret = (ossl_ssize_t)outbuf.pos;
+    if (fret < 0)
+        return -1;
+    return fret;
 }
 
 
@@ -298,11 +298,12 @@ static void zstd_oneshot_finish(COMP_CTX *ctx)
 {
 }
 
-static int zstd_oneshot_compress_block(COMP_CTX *ctx, unsigned char *out,
-                                       unsigned int olen, unsigned char *in,
-                                       unsigned int ilen)
+static ossl_ssize_t zstd_oneshot_compress_block(COMP_CTX *ctx, unsigned char *out,
+                                               size_t olen, unsigned char *in,
+                                               size_t ilen)
 {
     size_t out_size;
+    ossl_ssize_t ret;
 
     if (ilen == 0)
         return 0;
@@ -312,14 +313,18 @@ static int zstd_oneshot_compress_block(COMP_CTX *ctx, unsigned char *out,
     if (ZSTD_isError(out_size))
         return -1;
 
-    return out_size;
+    ret = (ossl_ssize_t)out_size;
+    if (ret < 0)
+        return -1;
+    return ret;
 }
 
-static int zstd_oneshot_expand_block(COMP_CTX *ctx, unsigned char *out,
-                                     unsigned int olen, unsigned char *in,
-                                     unsigned int ilen)
+static ossl_ssize_t zstd_oneshot_expand_block(COMP_CTX *ctx, unsigned char *out,
+                                              size_t olen, unsigned char *in,
+                                              size_t ilen)
 {
     size_t out_size;
+    ossl_ssize_t ret;
 
     if (ilen == 0)
         return 0;
@@ -329,7 +334,10 @@ static int zstd_oneshot_expand_block(COMP_CTX *ctx, unsigned char *out,
     if (ZSTD_isError(out_size))
         return -1;
 
-    return out_size;
+    ret = (ossl_ssize_t)out_size;
+    if (ret < 0)
+        return -1;
+    return ret;
 }
 
 static COMP_METHOD zstd_oneshot_method = {
@@ -387,7 +395,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_comp_zstd_init)
 
 COMP_METHOD *COMP_zstd(void)
 {
-    COMP_METHOD *meth = &zstd_method_nozstd;
+    COMP_METHOD *meth = NULL;
 
 #ifndef OPENSSL_NO_ZSTD
     if (RUN_ONCE(&zstd_once, ossl_comp_zstd_init))
@@ -398,7 +406,7 @@ COMP_METHOD *COMP_zstd(void)
 
 COMP_METHOD *COMP_zstd_oneshot(void)
 {
-    COMP_METHOD *meth = &zstd_method_nozstd;
+    COMP_METHOD *meth = NULL;
 
 #ifndef OPENSSL_NO_ZSTD
     if (RUN_ONCE(&zstd_once, ossl_comp_zstd_init))
