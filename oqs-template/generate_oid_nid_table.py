@@ -80,7 +80,8 @@ def gen_kem_table(oqslibdocdir):
         with open(os.path.join(root, fil), mode='r', encoding='utf-8') as f:
            algyml = yaml.safe_load(f.read())
         liboqs_kems[algyml['name']]=algyml
-  liboqs_kems['SIDH']=liboqs_kems['SIKE']
+  if 'SIKE' in liboqs_kems:
+      liboqs_kems['SIDH']=liboqs_kems['SIKE']
   # TODO: Workaround for wrong upstream name for Kyber:
   liboqs_kems['CRYSTALS-Kyber']=liboqs_kems['Kyber']
 
@@ -104,7 +105,8 @@ def gen_kem_table(oqslibdocdir):
     if 'implementation_version' in kem:
         implementation_version = kem['implementation_version']
     else:
-        implementation_version = liboqs_kems[kem['family']]['spec-version']
+        if kem['family'] in liboqs_kems:
+            implementation_version = liboqs_kems[kem['family']]['spec-version']
 
     if kem['name_group'].startswith('sidhp503') or kem['name_group'].startswith('sikep503'):
         claimed_nist_level = 2
