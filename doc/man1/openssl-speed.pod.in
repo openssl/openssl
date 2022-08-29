@@ -24,6 +24,7 @@ B<openssl speed>
 [B<-seconds> I<num>]
 [B<-bytes> I<num>]
 [B<-mr>]
+[B<-mlock>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<algorithm> ...]
@@ -114,6 +115,10 @@ int would be 2147483583 bytes.
 =item B<-mr>
 
 Produce the summary in a mechanical, machine-readable, format.
+
+=item B<-mlock>
+
+Lock memory into RAM for more deterministic measurements.
 
 {- $OpenSSL::safe::opt_r_item -}
 
