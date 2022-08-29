@@ -35,8 +35,16 @@ typedef struct {
 /* One microsecond. */
 # define OSSL_TIME_US     (OSSL_TIME_MS     / 1000)
 
+#define ossl_seconds2time(s) ossl_ticks2time((s) * OSSL_TIME_SECOND)
+#define ossl_time2seconds(t) (ossl_time2ticks(t) / OSSL_TIME_SECOND)
+#define ossl_ms2time(ms) ossl_ticks2time((ms) * OSSL_TIME_MS)
+#define ossl_time2ms(t) (ossl_time2ticks(t) / OSSL_TIME_MS)
+#define ossl_us2time(us) ossl_ticks2time((us) * OSSL_TIME_US)
+#define ossl_time2us(t) (ossl_time2ticks(t) / OSSL_TIME_US)
+
 /* Convert a tick count into a time */
-static ossl_unused ossl_inline OSSL_TIME ossl_ticks2time(uint64_t ticks)
+static ossl_unused ossl_inline
+OSSL_TIME ossl_ticks2time(uint64_t ticks)
 {
     OSSL_TIME r;
 
@@ -45,7 +53,8 @@ static ossl_unused ossl_inline OSSL_TIME ossl_ticks2time(uint64_t ticks)
 }
 
 /* Convert a time to a tick count */
-static ossl_unused ossl_inline uint64_t ossl_time2ticks(OSSL_TIME t)
+static ossl_unused ossl_inline
+uint64_t ossl_time2ticks(OSSL_TIME t)
 {
     return t.t;
 }
@@ -54,12 +63,14 @@ static ossl_unused ossl_inline uint64_t ossl_time2ticks(OSSL_TIME t)
 OSSL_TIME ossl_time_now(void);
 
 /* The beginning and end of the time range */
-static ossl_unused ossl_inline OSSL_TIME ossl_time_zero(void)
+static ossl_unused ossl_inline
+OSSL_TIME ossl_time_zero(void)
 {
     return ossl_ticks2time(0);
 }
 
-static ossl_unused ossl_inline OSSL_TIME ossl_time_infinite(void)
+static ossl_unused ossl_inline
+OSSL_TIME ossl_time_infinite(void)
 {
     return ossl_ticks2time(~(uint64_t)0);
 }
@@ -67,18 +78,41 @@ static ossl_unused ossl_inline OSSL_TIME ossl_time_infinite(void)
 
 /* Convert time to timeval */
 static ossl_unused ossl_inline
-void ossl_time_time_to_timeval(OSSL_TIME t, struct timeval *out)
+struct timeval ossl_time_to_timeval(OSSL_TIME t)
 {
+    struct timeval tv;
+
 #ifdef _WIN32
-    out->tv_sec = (long int)(t.t / OSSL_TIME_SECOND);
+    tv.tv_sec = (long int)(t.t / OSSL_TIME_SECOND);
 #else
-    out->tv_sec = (time_t)(t.t / OSSL_TIME_SECOND);
+    tv.tv_sec = (time_t)(t.t / OSSL_TIME_SECOND);
 #endif
-    out->tv_usec = (t.t % OSSL_TIME_SECOND) / (OSSL_TIME_SECOND / 1000000);
+    tv.tv_usec = (t.t % OSSL_TIME_SECOND) / OSSL_TIME_US;
+    return tv;
+}
+
+/* Convert timeval to time */
+static ossl_unused ossl_inline
+OSSL_TIME ossl_time_from_timeval(struct timeval tv)
+{
+    OSSL_TIME t;
+
+    if (tv.tv_sec < 0)
+        return ossl_time_zero();
+    t.t = tv.tv_sec * OSSL_TIME_SECOND + tv.tv_usec * OSSL_TIME_US;
+    return t;
+}
+
+/* Convert OSSL_TIME to time_t */
+static ossl_unused ossl_inline
+time_t ossl_time_to_time_t(OSSL_TIME t)
+{
+    return (time_t)(t.t / OSSL_TIME_SECOND);
 }
 
 /* Convert time_t to OSSL_TIME */
-static ossl_inline OSSL_TIME ossl_time_from_time_t(time_t t)
+static ossl_unused ossl_inline
+OSSL_TIME ossl_time_from_time_t(time_t t)
 {
     OSSL_TIME ot;
 
@@ -164,6 +198,16 @@ OSSL_TIME ossl_time_divide(OSSL_TIME a, uint64_t b)
     int err = 0;
 
     r.t = safe_div_time(a.t, b, &err);
+    return err ? ossl_time_zero() : r;
+}
+
+static ossl_unused ossl_inline
+OSSL_TIME ossl_time_muldiv(OSSL_TIME a, uint64_t b, uint64_t c)
+{
+    OSSL_TIME r;
+    int err = 0;
+
+    r.t = safe_muldiv_time(a.t, b, c, &err);
     return err ? ossl_time_zero() : r;
 }
 

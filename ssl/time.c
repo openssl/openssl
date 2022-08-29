@@ -40,10 +40,9 @@ OSSL_TIME ossl_time_now(void)
         return ossl_time_zero();
     }
     if (t.tv_sec <= 0)
-        r.t = t.tv_usec <= 0 ? 0 : t.tv_usec * (OSSL_TIME_SECOND / 1000000);
+        r.t = t.tv_usec <= 0 ? 0 : t.tv_usec * OSSL_TIME_US;
     else
-        r.t = ((uint64_t)t.tv_sec * 1000000 + t.tv_usec)
-              * (OSSL_TIME_SECOND / 1000000);
+        r.t = ((uint64_t)t.tv_sec * 1000000 + t.tv_usec) * OSSL_TIME_US;
 #endif
     return r;
 }
