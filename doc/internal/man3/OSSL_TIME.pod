@@ -2,11 +2,16 @@
 
 =head1 NAME
 
-OSSL_TIME, OSSL_TIME_SECOND, ossl_time_infinite, ossl_time_zero,
-ossl_ticks2time, ossl_time2ticks,
-ossl_time_now, ossl_time_time_to_timeval, ossl_time_compare,
-ossl_time_add, ossl_time_subtract, ossl_time_multiply,
-ossl_time_divide, ossl_time_abs_difference, ossl_time_max,
+OSSL_TIME, OSSL_TIME_SECOND, OSSL_TIME_MS, OSSL_TIME_US,
+ossl_time_infinite, ossl_time_zero, ossl_time_now,
+ossl_ticks2time, ossl_time2ticks, ossl_seconds2time, ossl_time2seconds,
+ossl_ms2time, ossl_us2time, ossl_time2ms, ossl_time2us,
+ossl_time_to_timeval, ossl_time_from_timeval,
+ossl_time_to_time_t, ossl_time_from_time_t,
+ossl_time_compare, ossl_time_is_zero, ossl_time_is_infinite,
+ossl_time_add, ossl_time_subtract,
+ossl_time_multiply, ossl_time_divide, ossl_time_muldiv,
+ossl_time_abs_difference, ossl_time_max,
 ossl_time_min - times and durations
 
 =head1 SYNOPSIS
@@ -16,21 +21,36 @@ ossl_time_min - times and durations
  typedef struct OSSL_TIME;
 
  #define OSSL_TIME_SECOND   /* Ticks per second */
+ #define OSSL_TIME_MS       /* Ticks per millisecond */
+ #define OSSL_TIME_US       /* Ticks per microsecond */
 
  OSSL_TIME ossl_ticks2time(uint64_t);
  uint64_t ossl_time2ticks(OSSL_TIME t);
+ OSSL_TIME ossl_seconds2time(uint64_t);
+ uint64_t ossl_time2seconds(OSSL_TIME t);
+ OSSL_TIME ossl_ms2time(uint64_t);
+ uint64_t ossl_time2ms(OSSL_TIME t);
+ OSSL_TIME ossl_us2time(uint64_t);
+ uint64_t ossl_time2us(OSSL_TIME t);
 
  OSSL_TIME ossl_time_zero(void);
  OSSL_TIME ossl_time_infinite(void);
  OSSL_TIME ossl_time_now(void);
 
- void ossl_time_time_to_timeval(OSSL_TIME t, struct timeval *out);
+ struct timeval ossl_time_to_timeval(OSSL_TIME t);
+ OSSL_TIME ossl_time_from_timeval(struct timeval tv);
+ time_t ossl_time_to_time_t(OSSL_TIME t);
+ OSSL_TIME ossl_time_from_time_t(time_t t);
 
  int ossl_time_compare(OSSL_TIME a, OSSL_TIME b);
+ int ossl_time_is_zero(OSSL_TIME t);
+ int ossl_time_is_infinite(OSSL_TIME t);
+
  OSSL_TIME ossl_time_add(OSSL_TIME a, OSSL_TIME b);
  OSSL_TIME ossl_time_subtract(OSSL_TIME a, OSSL_TIME b);
  OSSL_TIME ossl_time_multiply(OSSL_TIME a, uint64_t b);
  OSSL_TIME ossl_time_divide(OSSL_TIME a, uint64_t b);
+ OSSL_TIME ossl_time_muldiv(OSSL_TIME a, uint64_t b, uint64_t c);
  OSSL_TIME ossl_time_abs_difference(OSSL_TIME a, OSSL_TIME b);
  OSSL_TIME ossl_time_max(OSSL_TIME a, OSSL_TIME b);
  OSSL_TIME ossl_time_min(OSSL_TIME a, OSSL_TIME b);
@@ -56,6 +76,15 @@ B<ossl_ticks2time> converts an integral number of counts to a time.
 
 B<ossl_time2ticks> converts a time to an integral number of counts.
 
+B<ossl_seconds2time>, B<ossl_ms2time> and B<ossl_us2time> convert an
+integral number of seconds, milliseconds and microseconds respectively
+to a time.  These functions are implemented as macros.
+
+B<ossl_time2seconds>, B<ossl_time2ms> and B<ossl_time2us> convert a
+time to an integral number of second, milliseconds and microseconds
+respectively.  These functions truncates any fractional seconds and are
+implemented as macros.
+
 B<ossl_time_zero> returns the smallest representable B<OSSL_TIME>.
 This value represents the time Epoch and it is returned when an underflow
 would otherwise occur.
@@ -70,11 +99,21 @@ wall-clock time.  The time returned by this function is useful for
 scheduling timeouts, deadlines and recurring events, but due to its
 undefined Epoch and monotonic nature, is not suitable for other uses.
 
-B<ossl_time_time_to_timeval> converts a time to a I<struct timeval>.
+B<ossl_time_to_timeval> converts a time to a I<struct timeval>.
+
+B<ossl_time_from_timeval> converts a I<struct timeval> to a time.
+
+B<ossl_time_to_time_t> converts a time to a I<time_t>.
+
+B<ossl_time_from_time_t> converts a I<time_t> to a time.
 
 B<ossl_time_compare> compares I<a> with I<b> and returns -1 if I<a>
 is smaller than I<b>, 0 if they are equal and +1 if I<a> is
 larger than I<b>.
+
+B<ossl_time_is_zero> returns 1 if the time I<t> is zero and 0 otherwise.
+
+B<ossl_time_is_infinite> returns 1 if the time I<t> is infinite and 0 otherwise.
 
 B<ossl_time_add> performs a saturating addition of the two times,
 returning I<a> + I<b>.
@@ -85,10 +124,13 @@ returning I<a> - I<b>.
 If the difference would be negative,  B<0> is returned.
 
 B<ossl_time_multiply> performs a saturating multiplication of a time value by a
-given integer multiplier.
+given integer multiplier returning I<a> &#xD7; I<b>.
 
-B<ossl_time_divide> performs floor division of a time value by a given integer
-divisor.
+B<ossl_time_divide> performs division of a time value by a given integer
+divisor returning &#x230A;I<a> &#xF7; I<b>&#x230B;.
+
+B<ossl_time_muldiv> performs a fused multiplication and division operation.
+The result is equal to &#x230A;I<a> &#xD7; I<b> &#xF7; I<c>&#x230B;.
 
 B<ossl_time_abs_difference> returns the magnitude of the difference between two
 time values.
@@ -109,11 +151,21 @@ B<ossl_time_zero> returns the time of the Epoch.
 
 B<ossl_time_infinite> returns the last representable time.
 
-B<ossl_ticks2time> return the duration specified.
+B<ossl_ticks2time>, B<ossl_seconds2time>, B<ossl_ms2time> and B<ossl_us2time>
+return the duration specified in ticks, seconds, milliseconds and microseconds
+respectively.
 
-B<ossl_time2ticks> returns the ticks since Epoch.
+B<ossl_time2ticks>, B<ossl_time2seconds>, B<ossl_time2ms> and B<ossl_time2us>
+return the number of ticks, seconds, microseconds and microseconds respectively
+that the time object represents.
+
+B<ossl_time_to_timeval>, B<ossl_time_from_timeval>, B<ossl_time_to_time_t> and
+B<ossl_time_from_time_t> all return the converted time.
 
 B<ossl_time_compare> returns -1, 0 or 1 depending on the comparison.
+
+B<ossl_time_is_zero> and B<ossl_time_is_infinite> return 1 if the condition
+is true and 0 otherwise.
 
 B<ossl_time_add> returns the summation of the two times or
 the last representable time on overflow.
@@ -126,6 +178,9 @@ given integral multiplier, or B<OSSL_TIME_INFINITY> on overflow.
 
 B<ossl_time_divide> returns the result of dividing the given time by the given
 integral divisor.
+
+B<ossl_time_muldiv> returns the fused multiplication and division of the given
+time and the two integral values.
 
 B<ossl_time_abs_difference> returns the magnitude of the difference between the
 input time values.
