@@ -1605,7 +1605,7 @@ static const SIGALG_LOOKUP *tls1_lookup_sigalg(const SSL_CONNECTION *s,
     return NULL;
 }
 /* Lookup hash: return 0 if invalid or not enabled */
-int tls1_lookup_md(SSL_CTX *ctx, const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
+int tls1_lookup_md(const SSL_CTX *ctx, const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
 {
     const EVP_MD *md;
 

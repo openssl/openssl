@@ -618,7 +618,7 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     return 0;
 }
 
-const EVP_MD *ssl_md(SSL_CTX *ctx, int idx)
+const EVP_MD *ssl_md(const SSL_CTX *ctx, int idx)
 {
     idx &= SSL_HANDSHAKE_MAC_MASK;
     if (idx < 0 || idx >= SSL_MD_NUM_IDX)

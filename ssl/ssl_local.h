@@ -2825,7 +2825,7 @@ __owur int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen);
 __owur int tls1_save_sigalgs(SSL_CONNECTION *s, PACKET *pkt, int cert);
 __owur int tls1_process_sigalgs(SSL_CONNECTION *s);
 __owur int tls1_set_peer_legacy_sigalg(SSL_CONNECTION *s, const EVP_PKEY *pkey);
-__owur int tls1_lookup_md(SSL_CTX *ctx, const SIGALG_LOOKUP *lu,
+__owur int tls1_lookup_md(const SSL_CTX *ctx, const SIGALG_LOOKUP *lu,
                           const EVP_MD **pmd);
 __owur size_t tls12_get_psigalgs(SSL_CONNECTION *s, int sent,
                                  const uint16_t **psigs);
@@ -2838,7 +2838,7 @@ __owur int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
 __owur int ssl_handshake_hash(SSL_CONNECTION *s,
                               unsigned char *out, size_t outlen,
                               size_t *hashlen);
-__owur const EVP_MD *ssl_md(SSL_CTX *ctx, int idx);
+__owur const EVP_MD *ssl_md(const SSL_CTX *ctx, int idx);
 int ssl_get_md_idx(int md_nid);
 __owur const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s);
 __owur const EVP_MD *ssl_prf_md(SSL_CONNECTION *s);

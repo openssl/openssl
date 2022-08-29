@@ -185,7 +185,7 @@ int ssl_log_secret(SSL_CONNECTION *sc,
     return 1;
 }
 
-const EVP_MD *ssl_md(SSL_CTX *ctx, int idx)
+const EVP_MD *ssl_md(const SSL_CTX *ctx, int idx)
 {
     return EVP_sha256();
 }
