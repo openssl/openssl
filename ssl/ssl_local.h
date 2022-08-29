@@ -520,7 +520,7 @@ struct ssl_method_st {
     size_t (*ssl_pending) (const SSL *s);
     int (*num_ciphers) (void);
     const SSL_CIPHER *(*get_cipher) (unsigned ncipher);
-    long (*get_timeout) (void);
+    OSSL_TIME (*get_timeout) (void);
     const struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
     int (*ssl_version) (void);
     long (*ssl_callback_ctrl) (SSL *s, int cb_id, void (*fp) (void));
@@ -601,8 +601,8 @@ struct ssl_session_st {
      */
     long verify_result;         /* only for servers */
     CRYPTO_REF_COUNT references;
-    time_t timeout;
-    time_t time;
+    OSSL_TIME timeout;
+    OSSL_TIME time;
     OSSL_TIME calc_timeout;
     unsigned int compress_meth; /* Need to lookup the method */
     const SSL_CIPHER *cipher;
@@ -701,11 +701,11 @@ typedef enum {
 
 /*
  * The allowance we have between the client's calculated ticket age and our own.
- * We allow for 10 seconds (units are in ms). If a ticket is presented and the
+ * We allow for 10 seconds. If a ticket is presented and the
  * client's age calculation is different by more than this than our own then we
  * do not allow that ticket for early_data.
  */
-# define TICKET_AGE_ALLOWANCE   (10 * 1000)
+# define TICKET_AGE_ALLOWANCE   ossl_seconds2time(10)
 
 #define MAX_COMPRESSIONS_SIZE   255
 
@@ -874,7 +874,7 @@ struct ssl_ctx_st {
      * SSL_new() is called.  This has been put in to make life easier to set
      * things up
      */
-    long session_timeout;
+    OSSL_TIME session_timeout;
     /*
      * If this callback is not null, it will be called each time a session id
      * is added to the cache.  If this function returns 1, it means that the
@@ -1973,7 +1973,7 @@ typedef struct dtls1_state_st {
     /*
      * Indicates when the last handshake msg sent will timeout
      */
-    struct timeval next_timeout;
+    OSSL_TIME next_timeout;
     /* Timeout duration */
     unsigned int timeout_duration_us;
 
@@ -2602,7 +2602,7 @@ __owur long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
 __owur long ssl3_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp) (void));
 
 __owur int ssl3_do_change_cipher_spec(SSL_CONNECTION *s);
-__owur long ssl3_default_timeout(void);
+__owur OSSL_TIME ssl3_default_timeout(void);
 
 __owur int ssl3_set_handshake_header(SSL_CONNECTION *s, WPACKET *pkt,
                                      int htype);
@@ -2627,7 +2627,7 @@ __owur int ssl_choose_client_version(SSL_CONNECTION *s, int version,
 __owur int ssl_get_min_max_version(const SSL_CONNECTION *s, int *min_version,
                                    int *max_version, int *real_max);
 
-__owur long tls1_default_timeout(void);
+__owur OSSL_TIME tls1_default_timeout(void);
 __owur int dtls1_do_write(SSL_CONNECTION *s, int type);
 void dtls1_set_message_header(SSL_CONNECTION *s,
                               unsigned char mt,
@@ -2647,9 +2647,8 @@ void dtls1_clear_received_buffer(SSL_CONNECTION *s);
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s);
 void dtls1_get_message_header(unsigned char *data,
                               struct hm_header_st *msg_hdr);
-__owur long dtls1_default_timeout(void);
-__owur struct timeval *dtls1_get_timeout(SSL_CONNECTION *s,
-                                         struct timeval *timeleft);
+__owur OSSL_TIME dtls1_default_timeout(void);
+__owur OSSL_TIME *dtls1_get_timeout(SSL_CONNECTION *s, OSSL_TIME *timeleft);
 __owur int dtls1_check_timeout_num(SSL_CONNECTION *s);
 __owur int dtls1_handle_timeout(SSL_CONNECTION *s);
 void dtls1_start_timer(SSL_CONNECTION *s);

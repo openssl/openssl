@@ -2047,7 +2047,7 @@ int SSL_connect(SSL *s)
 
 long SSL_get_default_timeout(const SSL *s)
 {
-    return s->method->get_timeout();
+    return (long int)ossl_time2seconds(s->method->get_timeout());
 }
 
 static int ssl_async_wait_ctx_cb(void *arg)
