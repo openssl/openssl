@@ -3286,13 +3286,13 @@ const SSL3_ENC_METHOD SSLv3_enc_data = {
     ssl3_handshake_write
 };
 
-long ssl3_default_timeout(void)
+OSSL_TIME ssl3_default_timeout(void)
 {
     /*
      * 2 hours, the 24 hours mentioned in the SSLv3 spec is way too long for
      * http, the cache would over fill
      */
-    return (60 * 60 * 2);
+    return ossl_seconds2time(60 * 60 * 2);
 }
 
 int ssl3_num_ciphers(void)

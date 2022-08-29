@@ -14,7 +14,6 @@
 #include "ssl_local.h"
 #include "internal/time.h"
 
-static void get_current_time(struct timeval *t);
 static int dtls1_handshake_write(SSL_CONNECTION *s);
 static size_t dtls1_link_min_mtu(void);
 
@@ -56,13 +55,13 @@ const SSL3_ENC_METHOD DTLSv1_2_enc_data = {
     dtls1_handshake_write
 };
 
-long dtls1_default_timeout(void)
+OSSL_TIME dtls1_default_timeout(void)
 {
     /*
      * 2 hours, the 24 hours mentioned in the DTLSv1 spec is way too long for
      * http, the cache would over fill
      */
-    return (60 * 60 * 2);
+    return ossl_seconds2time(60 * 60 * 2);
 }
 
 int dtls1_new(SSL *ssl)
@@ -222,6 +221,7 @@ int dtls1_clear(SSL *ssl)
 long dtls1_ctrl(SSL *ssl, int cmd, long larg, void *parg)
 {
     int ret = 0;
+    OSSL_TIME t;
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
     if (s == NULL)
@@ -229,7 +229,8 @@ long dtls1_ctrl(SSL *ssl, int cmd, long larg, void *parg)
 
     switch (cmd) {
     case DTLS_CTRL_GET_TIMEOUT:
-        if (dtls1_get_timeout(s, (struct timeval *)parg) != NULL) {
+        if (dtls1_get_timeout(s, &t) != NULL) {
+            *(struct timeval *)parg = ossl_time_to_timeval(t);
             ret = 1;
         }
         break;
@@ -261,13 +262,14 @@ long dtls1_ctrl(SSL *ssl, int cmd, long larg, void *parg)
 
 void dtls1_start_timer(SSL_CONNECTION *s)
 {
-    unsigned int sec, usec;
+    struct timeval tv;
+    OSSL_TIME duration;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
 #ifndef OPENSSL_NO_SCTP
     /* Disable timer for SCTP */
     if (BIO_dgram_is_sctp(SSL_get_wbio(ssl))) {
-        memset(&s->d1->next_timeout, 0, sizeof(s->d1->next_timeout));
+        s->d1->next_timeout = ossl_time_zero();
         return;
     }
 #endif
@@ -276,77 +278,46 @@ void dtls1_start_timer(SSL_CONNECTION *s)
      * If timer is not set, initialize duration with 1 second or
      * a user-specified value if the timer callback is installed.
      */
-    if (s->d1->next_timeout.tv_sec == 0 && s->d1->next_timeout.tv_usec == 0) {
-
+    if (ossl_time_is_zero(s->d1->next_timeout)) {
         if (s->d1->timer_cb != NULL)
             s->d1->timeout_duration_us = s->d1->timer_cb(ssl, 0);
         else
             s->d1->timeout_duration_us = 1000000;
     }
 
-    /* Set timeout to current time */
-    get_current_time(&(s->d1->next_timeout));
+    /* Set timeout to current time plus duration */
+    duration = ossl_us2time(s->d1->timeout_duration_us);
+    s->d1->next_timeout = ossl_time_add(ossl_time_now(), duration);
 
-    /* Add duration to current time */
-
-    sec  = s->d1->timeout_duration_us / 1000000;
-    usec = s->d1->timeout_duration_us - (sec * 1000000);
-
-    s->d1->next_timeout.tv_sec  += sec;
-    s->d1->next_timeout.tv_usec += usec;
-
-    if (s->d1->next_timeout.tv_usec >= 1000000) {
-        s->d1->next_timeout.tv_sec++;
-        s->d1->next_timeout.tv_usec -= 1000000;
-    }
-
-    BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
-             &(s->d1->next_timeout));
+    tv = ossl_time_to_timeval(s->d1->next_timeout);
+    BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0, &tv);
 }
 
-struct timeval *dtls1_get_timeout(SSL_CONNECTION *s, struct timeval *timeleft)
+OSSL_TIME *dtls1_get_timeout(SSL_CONNECTION *s, OSSL_TIME *timeleft)
 {
-    struct timeval timenow;
+    OSSL_TIME timenow;
 
     /* If no timeout is set, just return NULL */
-    if (s->d1->next_timeout.tv_sec == 0 && s->d1->next_timeout.tv_usec == 0) {
+    if (ossl_time_is_zero(s->d1->next_timeout))
         return NULL;
-    }
 
     /* Get current time */
-    get_current_time(&timenow);
-
-    /* If timer already expired, set remaining time to 0 */
-    if (s->d1->next_timeout.tv_sec < timenow.tv_sec ||
-        (s->d1->next_timeout.tv_sec == timenow.tv_sec &&
-         s->d1->next_timeout.tv_usec <= timenow.tv_usec)) {
-        memset(timeleft, 0, sizeof(*timeleft));
-        return timeleft;
-    }
-
-    /* Calculate time left until timer expires */
-    memcpy(timeleft, &(s->d1->next_timeout), sizeof(struct timeval));
-    timeleft->tv_sec -= timenow.tv_sec;
-    timeleft->tv_usec -= timenow.tv_usec;
-    if (timeleft->tv_usec < 0) {
-        timeleft->tv_sec--;
-        timeleft->tv_usec += 1000000;
-    }
+    timenow = ossl_time_now();
 
     /*
-     * If remaining time is less than 15 ms, set it to 0 to prevent issues
-     * because of small divergences with socket timeouts.
+     * If timer already expired or if remaining time is less than 15 ms,
+     * set it to 0 to prevent issues because of small divergences with
+     * socket timeouts.
      */
-    if (timeleft->tv_sec == 0 && timeleft->tv_usec < 15000) {
-        memset(timeleft, 0, sizeof(*timeleft));
-    }
-
+    *timeleft = ossl_time_subtract(s->d1->next_timeout, timenow);
+    if (ossl_time_compare(*timeleft, ossl_ms2time(15)) <= 0)
+        *timeleft = ossl_time_zero();
     return timeleft;
 }
 
 int dtls1_is_timer_expired(SSL_CONNECTION *s)
 {
-    struct timeval timeleft;
+    OSSL_TIME timeleft;
 
     /* Get time left until timeout, return false if no timer running */
     if (dtls1_get_timeout(s, &timeleft) == NULL) {
@@ -354,7 +325,7 @@ int dtls1_is_timer_expired(SSL_CONNECTION *s)
     }
 
     /* Return false if timer is not expired yet */
-    if (timeleft.tv_sec > 0 || timeleft.tv_usec > 0) {
+    if (!ossl_time_is_zero(timeleft)) {
         return 0;
     }
 
@@ -371,12 +342,14 @@ static void dtls1_double_timeout(SSL_CONNECTION *s)
 
 void dtls1_stop_timer(SSL_CONNECTION *s)
 {
+    struct timeval tv;
+
     /* Reset everything */
     s->d1->timeout_num_alerts = 0;
-    memset(&s->d1->next_timeout, 0, sizeof(s->d1->next_timeout));
+    s->d1->next_timeout = ossl_time_zero();
     s->d1->timeout_duration_us = 1000000;
-    BIO_ctrl(s->rbio, BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
-             &(s->d1->next_timeout));
+    tv = ossl_time_to_timeval(s->d1->next_timeout);
+    BIO_ctrl(s->rbio, BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0, &tv);
     /* Clear retransmission buffer */
     dtls1_clear_sent_buffer(s);
 }
@@ -427,11 +400,6 @@ int dtls1_handle_timeout(SSL_CONNECTION *s)
     dtls1_start_timer(s);
     /* Calls SSLfatal() if required */
     return dtls1_retransmit_buffered_messages(s);
-}
-
-static void get_current_time(struct timeval *t)
-{
-    ossl_time_time_to_timeval(ossl_time_now(), t);
 }
 
 #define LISTEN_SUCCESS              2

@@ -98,13 +98,13 @@ SSL3_ENC_METHOD const TLSv1_3_enc_data = {
     ssl3_handshake_write
 };
 
-long tls1_default_timeout(void)
+OSSL_TIME tls1_default_timeout(void)
 {
     /*
      * 2 hours, the 24 hours mentioned in the TLSv1 spec is way too long for
      * http, the cache would over fill
      */
-    return (60 * 60 * 2);
+    return ossl_seconds2time(60 * 60 * 2);
 }
 
 int tls1_new(SSL *s)

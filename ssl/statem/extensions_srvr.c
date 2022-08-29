@@ -1102,7 +1102,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 s->ext.early_data_ok = 1;
             s->ext.ticket_expected = 1;
         } else {
-            uint32_t ticket_age = 0, agesec, agems;
+            OSSL_TIME t, age, expire;
             int ret;
 
             /*
@@ -1141,24 +1141,24 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 continue;
             }
 
-            ticket_age = (uint32_t)ticket_agel;
-            agesec = (uint32_t)(time(NULL) - sess->time);
-            agems = agesec * (uint32_t)1000;
-            ticket_age -= sess->ext.tick_age_add;
+            age = ossl_time_subtract(ossl_seconds2time(ticket_agel),
+                                     ossl_seconds2time(sess->ext.tick_age_add));
+            t = ossl_time_subtract(ossl_time_now(), sess->time);
 
             /*
-             * For simplicity we do our age calculations in seconds. If the
-             * client does it in ms then it could appear that their ticket age
-             * is longer than ours (our ticket age calculation should always be
-             * slightly longer than the client's due to the network latency).
-             * Therefore we add 1000ms to our age calculation to adjust for
-             * rounding errors.
+             * Beause we use second granuality, it could appear that
+             * the client's ticket age is longer than ours (our ticket
+             * age calculation should always be slightly longer than the
+             * client's due to the network latency).  Therefore we add
+             * 1000ms to our age calculation to adjust for rounding errors.
              */
+            expire = ossl_time_add(t, ossl_ms2time(1000));
+
             if (id == 0
-                    && sess->timeout >= (long)agesec
-                    && agems / (uint32_t)1000 == agesec
-                    && ticket_age <= agems + 1000
-                    && ticket_age + TICKET_AGE_ALLOWANCE >= agems + 1000) {
+                    && ossl_time_compare(sess->timeout, t) >= 0
+                    && ossl_time_compare(age, expire) <= 0
+                    && ossl_time_compare(ossl_time_add(age, TICKET_AGE_ALLOWANCE),
+                                         expire) >= 0) {
                 /*
                  * Ticket age is within tolerance and not expired. We allow it
                  * for early data

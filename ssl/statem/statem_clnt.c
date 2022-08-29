@@ -2542,7 +2542,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
         s->session = new_sess;
     }
 
-    s->session->time = time(NULL);
+    s->session->time = ossl_time_now();
     ssl_session_calculate_timeout(s->session);
 
     OPENSSL_free(s->session->ext.tick);

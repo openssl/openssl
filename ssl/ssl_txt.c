@@ -128,12 +128,14 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         }
     }
 #endif
-    if (x->time != 0L) {
-        if (BIO_printf(bp, "\n    Start Time: %lld", (long long)x->time) <= 0)
+    if (!ossl_time_is_zero(x->time)) {
+        if (BIO_printf(bp, "\n    Start Time: %lld",
+                       (long long)ossl_time_to_time_t(x->time)) <= 0)
             goto err;
     }
-    if (x->timeout != 0L) {
-        if (BIO_printf(bp, "\n    Timeout   : %lld (sec)", (long long)x->timeout) <= 0)
+    if (!ossl_time_is_zero(x->timeout)) {
+        if (BIO_printf(bp, "\n    Timeout   : %lld (sec)",
+                       (long long)ossl_time2seconds(x->timeout)) <= 0)
             goto err;
     }
     if (BIO_puts(bp, "\n") <= 0)
