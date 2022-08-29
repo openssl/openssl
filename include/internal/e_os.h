@@ -322,15 +322,10 @@ static ossl_inline void ossl_sleep(unsigned long millis)
 /* Fallback to a busy wait */
 static ossl_inline void ossl_sleep(unsigned long millis)
 {
-    struct timeval start, now;
-    unsigned long elapsedms;
+    const OSSL_TIME finish = ossl_time_add(ossl_time_now(), ossl_ms2time(millis));
 
-    gettimeofday(&start, NULL);
-    do {
-        gettimeofday(&now, NULL);
-        elapsedms = (((now.tv_sec - start.tv_sec) * 1000000)
-                     + now.tv_usec - start.tv_usec) / 1000;
-    } while (elapsedms < millis);
+    while (ossl_time_compare(ossl_time_now(), finish) < 0)
+        /* busy wait */ ;
 }
 #endif /* defined OPENSSL_SYS_UNIX */
 
