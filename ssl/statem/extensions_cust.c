@@ -178,6 +178,7 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
     custom_ext_method *meth;
     size_t i;
     int al;
+    int for_comp = (context & SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION) != 0;
 
     for (i = 0; i < exts->meths_count; i++) {
         const unsigned char *out = NULL;
@@ -211,7 +212,8 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                                          meth->add_arg);
 
             if (cb_retval < 0) {
-                SSLfatal(s, al, SSL_R_CALLBACK_FAILED);
+                if (!for_comp)
+                    SSLfatal(s, al, SSL_R_CALLBACK_FAILED);
                 return 0;       /* error */
             }
             if (cb_retval == 0)
@@ -222,7 +224,8 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || (outlen > 0 && !WPACKET_memcpy(pkt, out, outlen))
                 || !WPACKET_close(pkt)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
@@ -230,7 +233,8 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
              * We can't send duplicates: code logic should prevent this.
              */
             if (!ossl_assert((meth->ext_flags & SSL_EXT_FLAG_SENT) == 0)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                if (!for_comp)
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
             /*

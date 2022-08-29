@@ -96,7 +96,6 @@ struct ossl_statem_st {
     OSSL_HANDSHAKE_STATE request_state;
     int in_init;
     int read_state_first_init;
-    int ignore_fatal;
     /* true when we are actually in SSL_accept() or SSL_connect() */
     int in_handshake;
     /*

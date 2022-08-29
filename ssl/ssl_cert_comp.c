@@ -198,7 +198,6 @@ static size_t ssl_get_cert_to_compress(SSL *ssl, CERT_PKEY *cpk, unsigned char *
     WPACKET tmppkt;
     BUF_MEM buf = { 0 };
     size_t ret = 0;
-    const SSL_METHOD *method = NULL;
 
     if (sc == NULL
             || cpk == NULL
@@ -215,26 +214,14 @@ static size_t ssl_get_cert_to_compress(SSL *ssl, CERT_PKEY *cpk, unsigned char *
         goto out;
 
     /*
-     * ssl3_output_cert_chain() may generate an SSLfata() error,
-     * for this case, we want to ignore it
+     * ssl3_output_cert_chain() may generate an SSLfatal() error,
+     * for this case, we want to ignore it, argument for_comp = 1
      */
-    sc->statem.ignore_fatal = 1;
-    ERR_set_mark();
-    /* Must get the certificate as TLSv1.3, restore before returning */
-    method = SSL_get_ssl_method(ssl);
-    if (!SSL_set_ssl_method(ssl, tlsv1_3_server_method()))
-        goto out;
-
-    if (!ssl3_output_cert_chain(sc, &tmppkt, cpk))
+    if (!ssl3_output_cert_chain(sc, &tmppkt, cpk, 1))
         goto out;
     WPACKET_get_total_written(&tmppkt, &ret);
 
  out:
-    /* Don't leave errors in the queue */
-    ERR_pop_to_mark();
-    sc->statem.ignore_fatal = 0;
-    if (method != NULL && !SSL_set_ssl_method(ssl, method))
-        ret = 0;
     WPACKET_cleanup(&tmppkt);
     if (ret != 0 && data != NULL)
         *data = (unsigned char *)buf.data;

@@ -832,6 +832,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     size_t i;
     int min_version, max_version = 0, reason;
     const EXTENSION_DEFINITION *thisexd;
+    int for_comp = (context & SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION) != 0;
 
     if (!WPACKET_start_sub_packet_u16(pkt)
                /*
@@ -842,15 +843,17 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
             || ((context &
                  (SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO)) != 0
                 && !WPACKET_set_flags(pkt,
-                                     WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH))) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                                      WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH))) {
+        if (!for_comp)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
         reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
         if (reason != 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, reason);
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, reason);
             return 0;
         }
     }
@@ -894,7 +897,8 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     if (!WPACKET_close(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        if (!for_comp)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 

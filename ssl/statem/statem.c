@@ -130,7 +130,6 @@ void ossl_statem_clear(SSL_CONNECTION *s)
     s->statem.hand_state = TLS_ST_BEFORE;
     ossl_statem_set_in_init(s, 1);
     s->statem.no_cert_verify = 0;
-    s->statem.ignore_fatal = 0;
 }
 
 /*
@@ -144,15 +143,6 @@ void ossl_statem_set_renegotiate(SSL_CONNECTION *s)
 
 void ossl_statem_send_fatal(SSL_CONNECTION *s, int al)
 {
-    /*
-     * Some public APIs may call internal functions that fatal error,
-     * which doesn't make sense outside the state machine. Those APIs
-     * that can handle a failure set this flag to avoid errors sending
-     * alerts. Example: getting a wire-formatted certificate for
-     * compression.
-     */
-    if (s->statem.ignore_fatal)
-        return;
     /* We shouldn't call SSLfatal() twice. Once is enough */
     if (s->statem.in_init && s->statem.state == MSG_FLOW_ERROR)
       return;
