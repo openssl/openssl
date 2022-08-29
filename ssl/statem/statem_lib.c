@@ -2522,12 +2522,12 @@ MSG_PROCESS_RETURN tls13_process_compressed_certificate(SSL_CONNECTION *sc,
         goto err;
     }
 
-    if (!PACKET_get_net_3_len(pkt, &expected_length)
+    if ((comp = COMP_CTX_new(method)) == NULL
+        || !PACKET_get_net_3_len(pkt, &expected_length)
         || !PACKET_get_net_3_len(pkt, &comp_length)
         || PACKET_remaining(pkt) != comp_length
         || !BUF_MEM_grow(buf, expected_length)
         || !PACKET_buf_init(tmppkt, (unsigned char *)buf->data, expected_length)
-        || (comp = COMP_CTX_new(method)) == NULL
         || COMP_expand_block(comp, (unsigned char *)buf->data, expected_length,
                              (unsigned char*)PACKET_data(pkt), comp_length) != (int)expected_length) {
         SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, SSL_R_BAD_DECOMPRESSION);

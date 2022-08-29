@@ -68,8 +68,7 @@ buffer I<out> of size I<olen> using the lgorithm specified by I<ctx>.
 
 Methods (B<COMP_METHOD>) may be specified by one of these functions. These functions
 will be available even if their corresponding compression algorithm is not configured
-into the OpenSSL library. In such a case, a non-operative method will be returned.
-Any compression operations using a non-operative method will fail.
+into the OpenSSL library. In such a case, NULL will be returned.
 
 =over 4
 

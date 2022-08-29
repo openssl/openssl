@@ -3702,9 +3702,9 @@ CON_FUNC_RETURN tls_construct_client_compressed_certificate(SSL_CONNECTION *sc,
     }
     max_length = ossl_calculate_comp_expansion(alg, length);
 
-    if (!WPACKET_start_sub_packet_u24(pkt)
-            || !WPACKET_reserve_bytes(pkt, max_length, NULL)
-            || (comp = COMP_CTX_new(method)) == NULL)
+    if ((comp = COMP_CTX_new(method)) == NULL
+            || !WPACKET_start_sub_packet_u24(pkt)
+            || !WPACKET_reserve_bytes(pkt, max_length, NULL))
         goto err;
 
     comp_len = COMP_compress_block(comp, WPACKET_get_curr(pkt), max_length,

@@ -22,15 +22,6 @@
 
 COMP_METHOD *COMP_brotli(void);
 
-static COMP_METHOD brotli_method_nobrotli = {
-    NID_undef,
-    "(undef)",
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-};
-
 #ifdef OPENSSL_NO_BROTLI
 # undef BROTLI_SHARED
 #else
@@ -155,16 +146,16 @@ static void brotli_stateful_finish(COMP_CTX *ctx)
     }
 }
 
-static int brotli_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
-                                          unsigned int olen, unsigned char *in,
-                                          unsigned int ilen)
+static ossl_ssize_t brotli_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
+                                                   size_t olen, unsigned char *in,
+                                                   size_t ilen)
 {
     BROTLI_BOOL done;
     struct brotli_state *state = ctx->data;
     size_t in_avail = ilen;
     size_t out_avail = olen;
 
-    if (state == NULL)
+    if (state == NULL || olen > OSSL_SSIZE_MAX)
         return -1;
 
     if (ilen == 0)
@@ -178,35 +169,44 @@ static int brotli_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
      * output buffer space
      */
     done = BrotliEncoderCompressStream(state->encoder, BROTLI_OPERATION_FLUSH,
-                                       &in_avail, (const uint8_t**)&in, &out_avail, &out, NULL);
-    if (done == BROTLI_FALSE || in_avail != 0
-        || BrotliEncoderHasMoreOutput(state->encoder))
+                                       &in_avail, (const uint8_t**)&in,
+                                       &out_avail, &out, NULL);
+    if (done == BROTLI_FALSE
+            || in_avail != 0
+            || BrotliEncoderHasMoreOutput(state->encoder))
         return -1;
 
-    return (int)(olen - out_avail);
+    if (out_avail > olen)
+        return -1;
+    return (ossl_ssize_t)(olen - out_avail);
 }
 
-static int brotli_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
-                                        unsigned int olen, unsigned char *in,
-                                        unsigned int ilen)
+static ossl_ssize_t brotli_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
+                                                 size_t olen, unsigned char *in,
+                                                 size_t ilen)
 {
     BrotliDecoderResult result;
     struct brotli_state *state = ctx->data;
     size_t in_avail = ilen;
     size_t out_avail = olen;
 
-    if (state == NULL)
+    if (state == NULL || olen > OSSL_SSIZE_MAX)
         return -1;
 
     if (ilen == 0)
         return 0;
 
-    result = BrotliDecoderDecompressStream(state->decoder, &in_avail, (const uint8_t**)&in, &out_avail, &out, NULL);
-    if (result == BROTLI_DECODER_RESULT_ERROR || in_avail != 0
-        || BrotliDecoderHasMoreOutput(state->decoder))
+    result = BrotliDecoderDecompressStream(state->decoder, &in_avail,
+                                           (const uint8_t**)&in, &out_avail,
+                                           &out, NULL);
+    if (result == BROTLI_DECODER_RESULT_ERROR
+            || in_avail != 0
+            || BrotliDecoderHasMoreOutput(state->decoder))
         return -1;
 
-    return (int)(olen - out_avail);
+    if (out_avail > olen)
+        return -1;
+    return (ossl_ssize_t)(olen - out_avail);
 }
 
 static COMP_METHOD brotli_stateful_method = {
@@ -227,11 +227,12 @@ static void brotli_oneshot_finish(COMP_CTX *ctx)
 {
 }
 
-static int brotli_oneshot_compress_block(COMP_CTX *ctx, unsigned char *out,
-                                         unsigned int olen, unsigned char *in,
-                                         unsigned int ilen)
+static ossl_ssize_t brotli_oneshot_compress_block(COMP_CTX *ctx, unsigned char *out,
+                                                  size_t olen, unsigned char *in,
+                                                  size_t ilen)
 {
     size_t out_size = olen;
+    ossl_ssize_t ret;
 
     if (ilen == 0)
         return 0;
@@ -241,14 +242,20 @@ static int brotli_oneshot_compress_block(COMP_CTX *ctx, unsigned char *out,
                               &out_size, out) == BROTLI_FALSE)
         return -1;
 
-    return (int)out_size;
+    if (out_size > OSSL_SSIZE_MAX)
+        return -1;
+    ret = (ossl_ssize_t)out_size;
+    if (ret < 0)
+        return -1;
+    return ret;
 }
 
-static int brotli_oneshot_expand_block(COMP_CTX *ctx, unsigned char *out,
-                                       unsigned int olen, unsigned char *in,
-                                       unsigned int ilen)
+static ossl_ssize_t brotli_oneshot_expand_block(COMP_CTX *ctx, unsigned char *out,
+                                                size_t olen, unsigned char *in,
+                                                size_t ilen)
 {
     size_t out_size = olen;
+    ossl_ssize_t ret;
 
     if (ilen == 0)
         return 0;
@@ -256,7 +263,12 @@ static int brotli_oneshot_expand_block(COMP_CTX *ctx, unsigned char *out,
     if (BrotliDecoderDecompress(ilen, in, &out_size, out) != BROTLI_DECODER_RESULT_SUCCESS)
         return -1;
 
-    return (int)out_size;
+    if (out_size > OSSL_SSIZE_MAX)
+        return -1;
+    ret = (ossl_ssize_t)out_size;
+    if (ret < 0)
+        return -1;
+    return ret;
 }
 
 static COMP_METHOD brotli_oneshot_method = {
@@ -316,7 +328,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_comp_brotli_init)
 
 COMP_METHOD *COMP_brotli(void)
 {
-    COMP_METHOD *meth = &brotli_method_nobrotli;
+    COMP_METHOD *meth = NULL;
 
 #ifndef OPENSSL_NO_BROTLI
     if (RUN_ONCE(&brotli_once, ossl_comp_brotli_init))
@@ -327,7 +339,7 @@ COMP_METHOD *COMP_brotli(void)
 
 COMP_METHOD *COMP_brotli_oneshot(void)
 {
-    COMP_METHOD *meth = &brotli_method_nobrotli;
+    COMP_METHOD *meth = NULL;
 
 #ifndef OPENSSL_NO_BROTLI
     if (RUN_ONCE(&brotli_once, ossl_comp_brotli_init))
@@ -492,8 +504,16 @@ static int bio_brotli_read(BIO *b, char *out, int outl)
     int ret;
     BIO *next = BIO_next(b);
 
-    if (out == NULL || outl <= 0)
+    if (out == NULL || outl <= 0) {
+        ERR_raise(ERR_LIB_COMP, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
+    }
+#if INT_MAX > SIZE_MAX
+    if ((unsigned int)outl > SIZE_MAX) {
+        ERR_raise(ERR_LIB_COMP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+#endif
 
     ctx = BIO_get_data(b);
     BIO_clear_retry_flags(b);
@@ -555,8 +575,16 @@ static int bio_brotli_write(BIO *b, const char *in, int inl)
     int ret;
     BIO *next = BIO_next(b);
 
-    if (in == NULL || inl <= 0)
+    if (in == NULL || inl <= 0) {
+        ERR_raise(ERR_LIB_COMP, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
+    }
+#if INT_MAX > SIZE_MAX
+    if ((unsigned int)inl > SIZE_MAX) {
+        ERR_raise(ERR_LIB_COMP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+#endif
 
     ctx = BIO_get_data(b);
     if (ctx->encode.done)
@@ -576,7 +604,7 @@ static int bio_brotli_write(BIO *b, const char *in, int inl)
     }
     /* Obtain input data directly from supplied buffer */
     ctx->encode.next_in = (unsigned char *)in;
-    ctx->encode.avail_in = inl;
+    ctx->encode.avail_in = (size_t)inl;
     for (;;) {
         /* If data in output buffer write it first */
         while (ctx->encode.count > 0) {
