@@ -94,7 +94,7 @@ static int test_trace_channel()
     if (!TEST_int_eq(OSSL_trace_set_suffix(OSSL_TRACE_CATEGORY_TLS, "-abc"), 1))
         goto end;
 
-    put_trace_output(OSSL_TRACE_CATEGORY_TLS);
+    put_trace_output();
     len = BIO_get_mem_data(bio, &p_buf);
     if (!TEST_strn2_eq(p_buf, len, expected, expected_len))
         goto end;
