@@ -1296,8 +1296,7 @@ struct ssl_connection_st {
         unsigned char write_mac_secret[EVP_MAX_MD_SIZE];
         unsigned char server_random[SSL3_RANDOM_SIZE];
         unsigned char client_random[SSL3_RANDOM_SIZE];
-        /* flags for countermeasure against known-IV weakness */
-        int need_empty_fragments;
+
         /* used during startup, digest all incoming/outgoing packets */
         BIO *handshake_buffer;
         /*
