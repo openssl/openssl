@@ -1539,8 +1539,8 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
 
     if (!using_ktls) {
         /* Explicit IV length, block ciphers appropriate version flag */
-        if (s->enc_write_ctx && SSL_USE_EXPLICIT_IV(s)
-            && !SSL_CONNECTION_TREAT_AS_TLS13(s)) {
+        if (s->enc_write_ctx != NULL && RLAYER_USE_EXPLICIT_IV(rl)
+            && rl->version != TLS1_3_VERSION) {
             int mode = EVP_CIPHER_CTX_get_mode(s->enc_write_ctx);
             if (mode == EVP_CIPH_CBC_MODE) {
                 eivlen = EVP_CIPHER_CTX_get_iv_length(s->enc_write_ctx);
@@ -1576,7 +1576,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
          * In TLSv1.3, once encrypting, we always use application data for the
          * record type
          */
-        if (SSL_CONNECTION_TREAT_AS_TLS13(s)
+        if (rl->version == TLS1_3_VERSION
                 && s->enc_write_ctx != NULL
                 && (s->statem.enc_write_state != ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
                     || thistempl->type != SSL3_RT_ALERT))
@@ -1642,7 +1642,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
             }
         }
 
-        if (SSL_CONNECTION_TREAT_AS_TLS13(s)
+        if (rl->version == TLS1_3_VERSION
                 && !using_ktls
                 && s->enc_write_ctx != NULL
                 && (s->statem.enc_write_state != ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
@@ -1811,7 +1811,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
             rl->msg_callback(1, thiswr->rec_version, SSL3_RT_HEADER, recordstart,
                              SSL3_RT_HEADER_LENGTH, rl->cbarg);
 
-            if (SSL_CONNECTION_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL) {
+            if (rl->version == TLS1_3_VERSION && s->enc_write_ctx != NULL) {
                 unsigned char ctype = thistempl->type;
 
                 rl->msg_callback(1, thiswr->rec_version, SSL3_RT_INNER_CONTENT_TYPE,
