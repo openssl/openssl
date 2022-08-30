@@ -150,9 +150,11 @@ const char *OSSL_trace_get_category_name(int num)
      * Partial check that OSSL_TRACE_CATEGORY_... macros
      * are synced with trace_categories array
      */
+#ifndef OPENSSL_NO_ENGINE
     static const size_t trace_categories_len = OSSL_NELEM(trace_categories);
     if (!ossl_assert(OSSL_TRACE_CATEGORY_NUM == trace_categories_len))
         return NULL;
+#endif
 
     for (i = 0; i < OSSL_NELEM(trace_categories); i++)
         if (trace_categories[i].num == num)

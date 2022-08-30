@@ -18,9 +18,9 @@ static int test_trace_categories(void)
         int is_cat_name_eq = 0;
 
         switch (cat_num) {
-#define CASE(NAME) \
-        case OSSL_TRACE_CATEGORY_##NAME: \
-            is_cat_name_eq = TEST_str_eq(cat_name, #NAME); \
+#define CASE(name) \
+        case OSSL_TRACE_CATEGORY_##name: \
+            is_cat_name_eq = TEST_str_eq(cat_name, #name); \
             break;
 
         CASE(ALL)
@@ -29,8 +29,10 @@ static int test_trace_categories(void)
         CASE(TLS)
         CASE(TLS_CIPHER)
         CASE(CONF)
+#ifndef OPENSSL_NO_ENGINE
         CASE(ENGINE_TABLE)
         CASE(ENGINE_REF_COUNT)
+#endif
         CASE(PKCS5V2)
         CASE(PKCS12_KEYGEN)
         CASE(PKCS12_DECRYPT)
