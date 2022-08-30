@@ -523,23 +523,6 @@ int tls1_setup_key_block(SSL_CONNECTION *s)
         BIO_dump_indent(trc_out, p, num, 4);
     } OSSL_TRACE_END(TLS);
 
-    if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS)
-        && SSL_CONNECTION_GET_SSL(s)->method->version <= TLS1_VERSION) {
-        /*
-         * enable vulnerability countermeasure for CBC ciphers with known-IV
-         * problem (http://www.openssl.org/~bodo/tls-cbc.txt)
-         */
-        s->s3.need_empty_fragments = 1;
-
-        if (s->session->cipher != NULL) {
-            if (s->session->cipher->algorithm_enc == SSL_eNULL)
-                s->s3.need_empty_fragments = 0;
-
-            if (s->session->cipher->algorithm_enc == SSL_RC4)
-                s->s3.need_empty_fragments = 0;
-        }
-    }
-
     ret = 1;
  err:
     return ret;

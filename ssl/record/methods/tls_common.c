@@ -1238,6 +1238,17 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         goto err;
     }
 
+    if ((rl->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS) == 0
+            && rl->version <= TLS1_VERSION
+            && !EVP_CIPHER_is_a(ciph, "NULL")
+            && !EVP_CIPHER_is_a(ciph, "RC4")) {
+        /*
+         * Enable vulnerability countermeasure for CBC ciphers with known-IV
+         * problem (http://www.openssl.org/~bodo/tls-cbc.txt)
+         */
+        rl->need_empty_fragments = 1;
+    }
+
     *retrl = rl;
     return OSSL_RECORD_RETURN_SUCCESS;
  err:
@@ -1440,7 +1451,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
      * ourselves.
      * Do we need to do that recursion in order to add an empty record prefix?
      */
-    prefix = s->s3.need_empty_fragments
+    prefix = rl->need_empty_fragments
              && !clear
              && templates[0].type == SSL3_RT_APPLICATION_DATA;
 

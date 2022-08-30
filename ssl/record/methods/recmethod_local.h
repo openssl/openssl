@@ -139,6 +139,13 @@ struct ossl_record_layer_st
     /* The number of consecutive empty records we have received */
     size_t empty_record_count;
 
+    /*
+     * Do we need to send a prefix empty record before application data as a
+     * countermeasure against known-IV weakness (necessary for SSLv3 and
+     * TLSv1.0)
+     */
+    int need_empty_fragments;
+
     /* cryptographic state */
     EVP_CIPHER_CTX *enc_ctx;
 
