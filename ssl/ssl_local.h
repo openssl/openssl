@@ -1298,7 +1298,6 @@ struct ssl_connection_st {
         unsigned char client_random[SSL3_RANDOM_SIZE];
         /* flags for countermeasure against known-IV weakness */
         int need_empty_fragments;
-        int empty_fragment_done;
         /* used during startup, digest all incoming/outgoing packets */
         BIO *handshake_buffer;
         /*

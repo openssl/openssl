@@ -1442,7 +1442,6 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
      */
     prefix = s->s3.need_empty_fragments
              && !clear
-             && !s->s3.empty_fragment_done
              && templates[0].type == SSL3_RT_APPLICATION_DATA;
 
     if (rl->numwpipes < numtempl + prefix) {
@@ -1472,9 +1471,6 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         prefixtempl.buflen = 0;
         prefixtempl.type = SSL3_RT_APPLICATION_DATA;
         wpinited = 1;
-
-        /* TODO(RECLAYER): Do we actually need this? */
-        s->s3.empty_fragment_done = 1;
 
         wb = &rl->wbuf[0];
         /* TODO(RECLAYER): This alignment calculation no longer seems right */
@@ -1897,11 +1893,6 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
             if (++(rl->nextwbuf) < rl->numwpipes)
                 continue;
             s->rwstate = SSL_NOTHING;
-            /*
-             * Next chunk of data should get another prepended empty fragment
-             * in ciphersuites with known-IV weakness:
-             */
-            s->s3.empty_fragment_done = 0;
 
             if (rl->nextwbuf == rl->numwpipes
                     && (rl->mode & SSL_MODE_RELEASE_BUFFERS) != 0)
