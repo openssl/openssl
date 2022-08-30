@@ -151,8 +151,7 @@ const char *OSSL_trace_get_category_name(int num)
      * are synced with trace_categories array
      */
 #ifndef OPENSSL_NO_ENGINE
-    static const size_t trace_categories_len = OSSL_NELEM(trace_categories);
-    if (!ossl_assert(OSSL_TRACE_CATEGORY_NUM == trace_categories_len))
+    if (!ossl_assert(OSSL_TRACE_CATEGORY_NUM == OSSL_NELEM(trace_categories)))
         return NULL;
 #endif
 
@@ -534,3 +533,4 @@ void OSSL_trace_end(int category, BIO * channel)
     }
 #endif
 }
+

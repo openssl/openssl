@@ -13,9 +13,12 @@
 
 static int test_trace_categories(void)
 {
-    for (int cat_num = -1; cat_num <= OSSL_TRACE_CATEGORY_NUM + 1; ++cat_num) {
+    int cat_num;
+    for (cat_num = -1; cat_num <= OSSL_TRACE_CATEGORY_NUM + 1; ++cat_num) {
         const char *cat_name = OSSL_trace_get_category_name(cat_num);
         int is_cat_name_eq = 0;
+        int ret_cat_num;
+        int expected_ret;
 
         switch (cat_num) {
 #define CASE(name) \
@@ -52,9 +55,9 @@ static int test_trace_categories(void)
 
         if (!TEST_true(is_cat_name_eq))
             return 0;
-        const int ret_cat_num =
+        ret_cat_num =
             OSSL_trace_get_category_num(cat_name);
-        const int expected_ret = cat_name != NULL ? cat_num : -1;
+        expected_ret = cat_name != NULL ? cat_num : -1;
         if (!TEST_int_eq(expected_ret, ret_cat_num))
             return 0;
 
@@ -74,12 +77,12 @@ static void put_trace_output()
 
 static int test_trace_channel()
 {
-    int ret = 0;
+    static const char expected[] = "xyz-\nHello World\nGood Bye Universe\n-abc\n";
+    static const char expected_len = sizeof(expected) - 1;
     BIO *bio = NULL;
     char *p_buf = NULL;
     long len = 0;
-    static const char expected[] = "xyz-\nHello World\nGood Bye Universe\n-abc\n";
-    static const char expected_len = sizeof(expected) - 1;
+    int ret = 0;
 
     bio = BIO_new(BIO_s_mem());
     if (!TEST_ptr(bio))
