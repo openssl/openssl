@@ -83,7 +83,7 @@ B<OSSL_provider_init> function returns then the new provider is available in the
 application's library context and will be similarly mirrored in the child
 library context.
 
-OSSL_LIB_CTX_load_config() loads a configuration file using the given C<ctx>.
+OSSL_LIB_CTX_load_config() loads a configuration file using the given I<ctx>.
 This can be used to associate a library context with providers that are loaded
 from a configuration.
 
@@ -117,6 +117,8 @@ OSSL_LIB_CTX_set0_default() return a library context pointer on success, or NULL
 on error.
 
 OSSL_LIB_CTX_free() doesn't return any value.
+
+OSSL_LIB_CTX_load_config() returns 1 on success, 0 on error.
 
 =head1 HISTORY
 
