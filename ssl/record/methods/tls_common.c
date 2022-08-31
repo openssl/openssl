@@ -1101,11 +1101,20 @@ int tls_set_options(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options)
         return 0;
     }
 
-    p = OSSL_PARAM_locate_const(options,
-                                OSSL_LIBSSL_RECORD_LAYER_READ_BUFFER_LEN);
-    if (p != NULL && !OSSL_PARAM_get_size_t(p, &rl->rbuf.default_len)) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
-        return 0;
+    if (rl->direction == OSSL_RECORD_DIRECTION_READ) {
+        p = OSSL_PARAM_locate_const(options,
+                                    OSSL_LIBSSL_RECORD_LAYER_READ_BUFFER_LEN);
+        if (p != NULL && !OSSL_PARAM_get_size_t(p, &rl->rbuf.default_len)) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+    } else {
+        p = OSSL_PARAM_locate_const(options,
+                                    OSSL_LIBSSL_RECORD_LAYER_PARAM_BLOCK_PADDING);
+        if (p != NULL && !OSSL_PARAM_get_size_t(p, &rl->block_padding)) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
     }
 
     if (rl->level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION) {
@@ -1122,6 +1131,8 @@ int tls_set_options(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options)
             return 0;
         }
     }
+
+
 
     return 1;
 }
@@ -1666,20 +1677,20 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
 
                 if (rl->padding != NULL) {
                     padding = rl->padding(rl->cbarg, thistempl->type, rlen);
-                } else if (s->block_padding > 0) {
-                    size_t mask = s->block_padding - 1;
+                } else if (rl->block_padding > 0) {
+                    size_t mask = rl->block_padding - 1;
                     size_t remainder;
 
                     /* optimize for power of 2 */
-                    if ((s->block_padding & mask) == 0)
+                    if ((rl->block_padding & mask) == 0)
                         remainder = rlen & mask;
                     else
-                        remainder = rlen % s->block_padding;
+                        remainder = rlen % rl->block_padding;
                     /* don't want to add a block of padding if we don't have to */
                     if (remainder == 0)
                         padding = 0;
                     else
-                        padding = s->block_padding - remainder;
+                        padding = rl->block_padding - remainder;
                 }
                 if (padding > 0) {
                     /* do not allow the record to exceed max plaintext length */

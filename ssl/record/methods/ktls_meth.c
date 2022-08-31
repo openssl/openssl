@@ -404,15 +404,14 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     if (!ktls_int_check_supported_cipher(rl, ciph, md, taglen))
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
-    /*
-     * TODO(RECLAYER): For the write side we need to add a check for
-     * use of s->record_padding_cb
-     */
-
     /* All future data will get encrypted by ktls. Flush the BIO or skip ktls */
     if (rl->direction == OSSL_RECORD_DIRECTION_WRITE) {
-       if (BIO_flush(rl->bio) <= 0)
+        if (BIO_flush(rl->bio) <= 0)
            return OSSL_RECORD_RETURN_NON_FATAL_ERR;
+
+        /* KTLS does not support record padding */
+        if (rl->padding != NULL || rl->block_padding > 0)
+            return OSSL_RECORD_RETURN_NON_FATAL_ERR;
     }
 
     if (!ktls_configure_crypto(rl->libctx, rl->version, ciph, md, rl->sequence,

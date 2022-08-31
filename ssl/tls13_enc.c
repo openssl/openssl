@@ -735,7 +735,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         goto skip_ktls;
 
     /* ktls does not support record padding */
-    if (s->record_padding_cb != NULL)
+    if (s->rlayer.record_padding_cb != NULL || s->rlayer.block_padding > 0)
         goto skip_ktls;
 
     /* check that cipher is supported */

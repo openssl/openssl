@@ -1198,7 +1198,8 @@ static size_t rlayer_padding_wrapper(void *cbarg, int type, size_t len)
     SSL_CONNECTION *s = cbarg;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
-    return s->record_padding_cb(ssl, type, len, s->record_padding_arg);
+    return s->rlayer.record_padding_cb(ssl, type, len,
+                                       s->rlayer.record_padding_arg);
 }
 
 static const OSSL_DISPATCH rlayer_dispatch[] = {
@@ -1315,6 +1316,9 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                                               &s->rlayer.default_read_buf_len);
         *opts++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD,
                                            &s->rlayer.read_ahead);
+    } else {
+        *opts++ = OSSL_PARAM_construct_size_t(OSSL_LIBSSL_RECORD_LAYER_PARAM_BLOCK_PADDING,
+                                              &s->rlayer.block_padding);
     }
     *opts = OSSL_PARAM_construct_end();
 
@@ -1414,7 +1418,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                     continue;
                 break;
             case OSSL_FUNC_RLAYER_PADDING:
-                if (s->record_padding_cb == NULL)
+                if (s->rlayer.record_padding_cb == NULL)
                     continue;
                 break;
             default:

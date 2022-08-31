@@ -174,6 +174,11 @@ typedef struct record_layer_st {
     unsigned int alert_count;
     DTLS_RECORD_LAYER *d;
 
+    /* TLS1.3 padding callback */
+    size_t (*record_padding_cb)(SSL *s, int type, size_t len, void *arg);
+    void *record_padding_arg;
+    size_t block_padding;
+
     /* How many records we have read from the record layer */
     size_t num_recs;
     /* The next record from the record layer that we need to process */

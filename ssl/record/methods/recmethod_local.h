@@ -167,6 +167,9 @@ struct ossl_record_layer_st
     /* The amount of early data that we have sent/received */
     size_t early_data_count;
 
+    /* TLSv1.3 record padding */
+    size_t block_padding;
+
     /* Only used by SSLv3 */
     unsigned char mac_secret[EVP_MAX_MD_SIZE];
 
