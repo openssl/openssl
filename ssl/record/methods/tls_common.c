@@ -1226,6 +1226,8 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
             case OSSL_FUNC_RLAYER_SECURITY:
                 rl->security = OSSL_FUNC_rlayer_security(fns);
                 break;
+            case OSSL_FUNC_RLAYER_PADDING:
+                rl->padding = OSSL_FUNC_rlayer_padding(fns);
             default:
                 /* Just ignore anything we don't understand */
                 break;
@@ -1661,9 +1663,9 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
             if (rlen < max_send_fragment) {
                 size_t padding = 0;
                 size_t max_padding = max_send_fragment - rlen;
-                if (s->record_padding_cb != NULL) {
-                    padding = s->record_padding_cb(ssl, thistempl->type, rlen,
-                                                   s->record_padding_arg);
+
+                if (rl->padding != NULL) {
+                    padding = rl->padding(rl->cbarg, thistempl->type, rlen);
                 } else if (s->block_padding > 0) {
                     size_t mask = s->block_padding - 1;
                     size_t remainder;

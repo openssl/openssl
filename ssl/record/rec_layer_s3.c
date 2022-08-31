@@ -1192,10 +1192,20 @@ static int rlayer_security_wrapper(void *cbarg, int op, int bits, int nid,
     return ssl_security(s, op, bits, nid, other);
 }
 
+static OSSL_FUNC_rlayer_padding_fn rlayer_padding_wrapper;
+static size_t rlayer_padding_wrapper(void *cbarg, int type, size_t len)
+{
+    SSL_CONNECTION *s = cbarg;
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
+    return s->record_padding_cb(ssl, type, len, s->record_padding_arg);
+}
+
 static const OSSL_DISPATCH rlayer_dispatch[] = {
     { OSSL_FUNC_RLAYER_SKIP_EARLY_DATA, (void (*)(void))ossl_statem_skip_early_data },
     { OSSL_FUNC_RLAYER_MSG_CALLBACK, (void (*)(void))rlayer_msg_callback_wrapper },
     { OSSL_FUNC_RLAYER_SECURITY, (void (*)(void))rlayer_security_wrapper },
+    { OSSL_FUNC_RLAYER_PADDING, (void (*)(void))rlayer_padding_wrapper },
     { 0, NULL }
 };
 
@@ -1370,7 +1380,9 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         int rlret;
         BIO *prev = NULL;
         BIO *next = NULL;
-        unsigned int epoch = 0;;
+        unsigned int epoch = 0;
+        OSSL_DISPATCH rlayer_dispatch_tmp[OSSL_NELEM(rlayer_dispatch)];
+        size_t i, j;
 
         if (direction == OSSL_RECORD_DIRECTION_READ) {
             prev = s->rlayer.rrlnext;
@@ -1391,13 +1403,33 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
             s->rlayer.rrlnext = next;
         }
 
+        /*
+         * Create a copy of the dispatch array, missing out wrappers for
+         * callbacks that we don't need.
+         */
+        for (i = 0, j = 0; i < OSSL_NELEM(rlayer_dispatch); i++) {
+            switch (rlayer_dispatch[i].function_id) {
+            case OSSL_FUNC_RLAYER_MSG_CALLBACK:
+                if (s->msg_callback == NULL)
+                    continue;
+                break;
+            case OSSL_FUNC_RLAYER_PADDING:
+                if (s->record_padding_cb == NULL)
+                    continue;
+                break;
+            default:
+                break;
+            }
+            rlayer_dispatch_tmp[j++] = rlayer_dispatch[i];
+        }
+
         rlret = meth->new_record_layer(sctx->libctx, sctx->propq, version,
                                        s->server, direction, level, epoch,
                                        key, keylen, iv, ivlen, mackey,
                                        mackeylen, ciph, taglen, mactype, md,
                                        comp, prev, thisbio, next, NULL, NULL,
-                                       settings, options, rlayer_dispatch, s,
-                                       &newrl);
+                                       settings, options, rlayer_dispatch_tmp,
+                                       s, &newrl);
         BIO_free(prev);
         switch (rlret) {
         case OSSL_RECORD_RETURN_FATAL:
