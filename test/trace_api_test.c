@@ -14,6 +14,7 @@
 static int test_trace_categories(void)
 {
     int cat_num;
+
     for (cat_num = -1; cat_num <= OSSL_TRACE_CATEGORY_NUM + 1; ++cat_num) {
         const char *cat_name = OSSL_trace_get_category_name(cat_num);
         int is_cat_name_eq = 0;
