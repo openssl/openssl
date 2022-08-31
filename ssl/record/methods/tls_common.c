@@ -107,7 +107,7 @@ static int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
     rl->numwpipes = numwpipes;
 
     if (len == 0) {
-        if (SSL_CONNECTION_IS_DTLS(s))
+        if (rl->isdtls)
             headerlen = DTLS1_RT_HEADER_LENGTH + 1;
         else
             headerlen = SSL3_RT_HEADER_LENGTH;
@@ -145,7 +145,7 @@ static int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
                      * buffers. We assume we're so doomed that we won't even be able
                      * to send an alert.
                      */
-                    SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_MALLOC_FAILURE);
+                    RLAYERfatal(rl, SSL_AD_NO_ALERT, ERR_R_MALLOC_FAILURE);
                     return 0;
                 }
             } else {
@@ -1440,7 +1440,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
     /* Check we don't have pending data waiting to write */
     if (!ossl_assert(rl->nextwbuf >= rl->numwpipes
                      || SSL3_BUFFER_get_left(&rl->wbuf[rl->nextwbuf]) == 0)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         goto err;
     }
 
@@ -1454,7 +1454,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
     } else {
         mac_size = EVP_MD_CTX_get_size(s->write_hash);
         if (mac_size < 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
     }
@@ -1474,14 +1474,14 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
          * smaller. It is wasteful to allocate a full sized buffer here
          */
         if (!tls_setup_write_buffer(rl, numtempl + prefix, 0)) {
-            /* SSLfatal() already called */
-            return -1;
+            /* RLAYERfatal() already called */
+            goto err;
         }
     }
 
     using_ktls = BIO_get_ktls_send(rl->bio);
     if (!ossl_assert(!using_ktls || !prefix)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -1511,7 +1511,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         if (!WPACKET_init_static_len(&pkt[0], SSL3_BUFFER_get_buf(wb),
                                      SSL3_BUFFER_get_len(wb), 0)
                 || !WPACKET_allocate_bytes(&pkt[0], align, NULL)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
         wpinited = 1;
@@ -1543,7 +1543,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
             if (!WPACKET_init_static_len(thispkt, SSL3_BUFFER_get_buf(wb),
                                         SSL3_BUFFER_get_len(wb), 0)
                     || !WPACKET_allocate_bytes(thispkt, align, NULL)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             wpinited++;
@@ -1558,7 +1558,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
             if (mode == EVP_CIPH_CBC_MODE) {
                 eivlen = EVP_CIPHER_CTX_get_iv_length(s->enc_write_ctx);
                 if (eivlen < 0) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
                     goto err;
             }
                 if (eivlen <= 1)
@@ -1617,7 +1617,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                 || (maxcomplen > 0
                     && !WPACKET_reserve_bytes(thispkt, maxcomplen,
                                               &compressdata)))) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
@@ -1640,7 +1640,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         if (s->compress != NULL) {
             if (!ssl3_do_compress(s, thiswr)
                     || !WPACKET_allocate_bytes(thispkt, thiswr->length, NULL)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
                 goto err;
             }
         } else {
@@ -1648,7 +1648,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                 SSL3_RECORD_reset_data(&wr[j]);
             } else {
                 if (!WPACKET_memcpy(thispkt, thiswr->input, thiswr->length)) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
                 SSL3_RECORD_reset_input(&wr[j]);
@@ -1663,7 +1663,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
             size_t rlen, max_send_fragment;
 
             if (!WPACKET_put_bytes_u8(thispkt, thistempl->type)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             SSL3_RECORD_add_length(thiswr, 1);
@@ -1697,8 +1697,8 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                     if (padding > max_padding)
                         padding = max_padding;
                     if (!WPACKET_memset(thispkt, 0, padding)) {
-                        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                                 ERR_R_INTERNAL_ERROR);
+                        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
+                                    ERR_R_INTERNAL_ERROR);
                         goto err;
                     }
                     SSL3_RECORD_add_length(thiswr, padding);
@@ -1717,7 +1717,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
 
             if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
                     || !ssl->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
         }
@@ -1736,7 +1736,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                  * sub-packet
                  */
                 || !WPACKET_get_length(thispkt, &len)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
             }
 
@@ -1755,7 +1755,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
          */
         if (tls13_enc(s, wr, numtempl, 1, NULL, mac_size) < 1) {
             if (!ossl_statem_in_error(s)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             }
             goto err;
         }
@@ -1764,7 +1764,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
             if (prefix) {
                 if (ssl->method->ssl3_enc->enc(s, wr, 1, 1, NULL, mac_size) < 1) {
                     if (!ossl_statem_in_error(s)) {
-                        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     }
                     goto err;
                 }
@@ -1772,7 +1772,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
             if (ssl->method->ssl3_enc->enc(s, wr + prefix, numtempl, 1, NULL,
                                            mac_size) < 1) {
                 if (!ossl_statem_in_error(s)) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 }
                 goto err;
             }
@@ -1798,7 +1798,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                     && !WPACKET_allocate_bytes(thispkt,
                                                thiswr->length - origlen,
                                                NULL))) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
         if (rl->use_etm && mac_size != 0) {
@@ -1806,7 +1806,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
 
             if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
                     || !ssl->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             SSL3_RECORD_add_length(thiswr, mac_size);
@@ -1814,7 +1814,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
 
         if (!WPACKET_get_length(thispkt, &len)
                 || !WPACKET_close(thispkt)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
@@ -1833,7 +1833,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         }
 
         if (!WPACKET_finish(thispkt)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
@@ -1858,30 +1858,23 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
  err:
     for (j = 0; j < wpinited; j++)
         WPACKET_cleanup(&pkt[j]);
-    return -1;
+    return OSSL_RECORD_RETURN_FATAL;
 }
 
-/* if SSL3_BUFFER_get_left() != 0, we need to call this
- *
- * Return values are as per SSL_write()
- */
 int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
 {
-    int i;
+    int i, ret;
     SSL3_BUFFER *thiswb;
     size_t tmpwrit = 0;
-    SSL_CONNECTION *s = rl->cbarg;
 
     if (rl->nextwbuf >= rl->numwpipes)
-        return 1;
+        return OSSL_RECORD_RETURN_SUCCESS;
 
     for (;;) {
         thiswb = &rl->wbuf[rl->nextwbuf];
 
         clear_sys_error();
         if (rl->bio != NULL) {
-            s->rwstate = SSL_WRITING;
-
             /*
              * To prevent coalescing of control and data messages,
              * such as in buffer_write, we flush the BIO
@@ -1889,18 +1882,34 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
             if (BIO_get_ktls_send(rl->bio)
                     && thiswb->type != SSL3_RT_APPLICATION_DATA) {
                 i = BIO_flush(rl->bio);
-                if (i <= 0)
-                    return i;
+                if (i <= 0) {
+                    if (BIO_should_retry(rl->bio))
+                        ret = OSSL_RECORD_RETURN_RETRY;
+                    else
+                        ret = OSSL_RECORD_RETURN_FATAL;
+                    return ret;
+                }
                 BIO_set_ktls_ctrl_msg(rl->bio, thiswb->type);
             }
             i = BIO_write(rl->bio, (char *)
                           &(SSL3_BUFFER_get_buf(thiswb)
                             [SSL3_BUFFER_get_offset(thiswb)]),
                           (unsigned int)SSL3_BUFFER_get_left(thiswb));
-            if (i >= 0)
+            if (i >= 0) {
                 tmpwrit = i;
+                if (i == 0 && BIO_should_retry(rl->bio))
+                    ret = OSSL_RECORD_RETURN_RETRY;
+                else
+                    ret = OSSL_RECORD_RETURN_SUCCESS;
+            } else {
+                if (BIO_should_retry(rl->bio))
+                    ret = OSSL_RECORD_RETURN_RETRY;
+                else
+                    ret = OSSL_RECORD_RETURN_FATAL;
+            }
         } else {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BIO_NOT_SET);
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_BIO_NOT_SET);
+            ret = OSSL_RECORD_RETURN_FATAL;
             i = -1;
         }
 
@@ -1916,12 +1925,11 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
             SSL3_BUFFER_add_offset(thiswb, tmpwrit);
             if (++(rl->nextwbuf) < rl->numwpipes)
                 continue;
-            s->rwstate = SSL_NOTHING;
 
             if (rl->nextwbuf == rl->numwpipes
                     && (rl->mode & SSL_MODE_RELEASE_BUFFERS) != 0)
                 tls_release_write_buffer(rl);
-            return 1;
+            return OSSL_RECORD_RETURN_SUCCESS;
         } else if (i <= 0) {
             if (rl->isdtls) {
                 /*
@@ -1934,7 +1942,7 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
                     tls_release_write_buffer(rl);
 
             }
-            return i;
+            return ret;
         }
         SSL3_BUFFER_add_offset(thiswb, tmpwrit);
         SSL3_BUFFER_sub_left(thiswb, tmpwrit);
