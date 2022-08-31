@@ -266,7 +266,8 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
         return i;
     } else if (i > 0) {
         /* Retry needed */
-        i = s->rlayer.wrlmethod->retry_write_records(s->rlayer.wrl);
+        i = HANDLE_RLAYER_WRITE_RETURN(s,
+                s->rlayer.wrlmethod->retry_write_records(s->rlayer.wrl));
         if (i <= 0)
             return i;
         tot += s->rlayer.wpend_tot;
@@ -539,7 +540,8 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
             s->rlayer.wpend_tot = n;
         }
 
-        i = s->rlayer.wrlmethod->write_records(s->rlayer.wrl, tmpls, numpipes);
+        i = HANDLE_RLAYER_WRITE_RETURN(s,
+            s->rlayer.wrlmethod->write_records(s->rlayer.wrl, tmpls, numpipes));
         if (i <= 0) {
             /* SSLfatal() already called if appropriate */
             s->rlayer.wnum = tot;
@@ -559,18 +561,28 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
     }
 }
 
-int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int ret, char *file,
-                                  int line)
+int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
+                                  char *file, int line)
 {
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     if (ret == OSSL_RECORD_RETURN_RETRY) {
-        s->rwstate = SSL_READING;
+        s->rwstate = writing ? SSL_WRITING : SSL_READING;
         ret = -1;
     } else {
         s->rwstate = SSL_NOTHING;
         if (ret == OSSL_RECORD_RETURN_EOF) {
-            if (s->options & SSL_OP_IGNORE_UNEXPECTED_EOF) {
+            if (writing) {
+                /*
+                 * This shouldn't happen with a writing operation. We treat it
+                 * as fatal.
+                 */
+                ERR_new();
+                ERR_set_debug(file, line, 0);
+                ossl_statem_fatal(s, SSL_AD_INTERNAL_ERROR,
+                                  ERR_R_INTERNAL_ERROR, NULL);
+                ret = OSSL_RECORD_RETURN_FATAL;
+            } else if ((s->options & SSL_OP_IGNORE_UNEXPECTED_EOF) != 0) {
                 SSL_set_shutdown(ssl, SSL_RECEIVED_SHUTDOWN);
                 s->s3.warn_alert = SSL_AD_CLOSE_NOTIFY;
             } else {
@@ -725,7 +737,7 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
         do {
             rr = &s->rlayer.tlsrecs[s->rlayer.num_recs];
 
-            ret = HANDLE_RLAYER_RETURN(s,
+            ret = HANDLE_RLAYER_READ_RETURN(s,
                     s->rlayer.rrlmethod->read_record(s->rlayer.rrl,
                                                      &rr->rechandle,
                                                      &rr->version, &rr->type,

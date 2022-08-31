@@ -252,11 +252,14 @@ int do_dtls1_write(SSL_CONNECTION *s, int type, const unsigned char *buf,
 void dtls1_reset_seq_numbers(SSL_CONNECTION *s, int rw);
 void ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr);
 
-# define HANDLE_RLAYER_RETURN(s, ret) \
-    ossl_tls_handle_rlayer_return(s, ret, OPENSSL_FILE, OPENSSL_LINE)
+# define HANDLE_RLAYER_READ_RETURN(s, ret) \
+    ossl_tls_handle_rlayer_return(s, 0, ret, OPENSSL_FILE, OPENSSL_LINE)
 
-int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int ret, char *file,
-                                  int line);
+# define HANDLE_RLAYER_WRITE_RETURN(s, ret) \
+    ossl_tls_handle_rlayer_return(s, 1, ret, OPENSSL_FILE, OPENSSL_LINE)
+
+int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
+                                  char *file, int line);
 
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version, int direction,
                              int level, unsigned char *key, size_t keylen,
