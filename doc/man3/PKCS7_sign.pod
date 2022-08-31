@@ -98,9 +98,6 @@ PKCS7_sign() is like PKCS7_sign_ex() except that it uses default values of
 NULL for the library context I<libctx> and the property query I<propq>.
 This is retained for API backward compatibiliy.
 
- int PKCS7_add_certificate(PKCS7 *p7, X509 *x509);
- int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl);
-
 =head1 BUGS
 
 Some advanced attributes such as counter signatures are not supported.

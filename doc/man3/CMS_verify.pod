@@ -31,7 +31,7 @@ chain building as well as CRLs that may be used for certificate validation.
 I<store> may be NULL or point to
 the trusted certificate store to use for chain verification.
 I<detached_data> refers to the signed data if the content is detached from I<cms>.
-Otherwise I<detached_ata> should be NULL and the signed data must be in I<cms>.
+Otherwise I<detached_data> should be NULL and the signed data must be in I<cms>.
 The content is written to the BIO I<out> unless it is NULL.
 I<flags> is an optional set of flags, which can be used to modify the operation.
 

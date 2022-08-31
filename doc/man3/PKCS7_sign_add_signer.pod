@@ -72,7 +72,7 @@ structure just added, which can be used to set additional attributes
 before it is finalized.
 
 PKCS7_add_certificate() adds to the B<PKCS7> structure I<p7> the certificate
-I<cert>, which may be an end-entiry (signer) certificate
+I<cert>, which may be an end-entity (signer) certificate
 or a CA certificate useful for chain building.
 This is done internally by L<PKCS7_sign_ex(3)> and similar signing functions.
 It may have to be used before calling L<PKCS7_verify(3)>

@@ -53,7 +53,8 @@ If any signer's certificates cannot be located the operation fails.
 Each signer's certificate is chain verified using the B<smimesign> purpose and
 using the trusted certificate store I<store> if supplied.
 Any internal certificates in the message, which may have been added using
-L<PKCS7_add_certificate(3)>, are used as untrusted CAs unless B<PKCS7_NOCHAIN>.
+L<PKCS7_add_certificate(3)>, are used as untrusted CAs unless B<PKCS7_NOCHAIN>
+is set.
 If CRL checking is enabled in I<store> and B<PKCS7_NOCRL> is not set,
 any internal CRLs, which may have been added using L<PKCS7_add_crl(3)>,
 are used in addition to attempting to look them up in I<store>.
