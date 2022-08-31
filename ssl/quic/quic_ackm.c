@@ -1713,7 +1713,7 @@ int ossl_ackm_get_largest_unacked(OSSL_ACKM *ackm, int pkt_space, QUIC_PN *pn)
 /* Number of ACK-eliciting packets RX'd before we always emit an ACK. */
 #define PKTS_BEFORE_ACK     2
 /* Maximum amount of time to leave an ACK-eliciting packet un-ACK'd. */
-#define MAX_ACK_DELAY       (OSSL_TIME_MS * 25)
+#define MAX_ACK_DELAY       ossl_ms2time(25)
 
 /*
  * Return 1 if emission of an ACK frame is currently desired.
@@ -1865,13 +1865,12 @@ static void ackm_on_rx_ack_eliciting(OSSL_ACKM *ackm,
      */
     if (ossl_time_is_infinite(ackm->rx_ack_flush_deadline[pkt_space]))
         ackm_set_flush_deadline(ackm, pkt_space,
-                                ossl_time_add(rx_time,
-                                              ossl_ticks2time(MAX_ACK_DELAY)));
+                                ossl_time_add(rx_time, MAX_ACK_DELAY));
     else
         ackm_set_flush_deadline(ackm, pkt_space,
                                 ossl_time_min(ackm->rx_ack_flush_deadline[pkt_space],
                                               ossl_time_add(rx_time,
-                                                            ossl_ticks2time(MAX_ACK_DELAY))));
+                                                            MAX_ACK_DELAY)));
 }
 
 int ossl_ackm_on_rx_packet(OSSL_ACKM *ackm, const OSSL_ACKM_RX_PKT *pkt)
