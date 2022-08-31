@@ -60,7 +60,6 @@ static int test_trace_categories(void)
         expected_ret = cat_name != NULL ? cat_num : -1;
         if (!TEST_int_eq(expected_ret, ret_cat_num))
             return 0;
-
     }
 
     return 1;
@@ -108,7 +107,6 @@ static int test_trace_channel()
     bio = NULL;
 
     ret = 1;
-
 end:
     BIO_free(bio);
     return ret;
