@@ -1712,7 +1712,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
          * in the wb->buf
          */
 
-        if (!using_ktls && !SSL_WRITE_ETM(s) && mac_size != 0) {
+        if (!using_ktls && !rl->use_etm && mac_size != 0) {
             unsigned char *mac;
 
             if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
@@ -1801,7 +1801,7 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        if (SSL_WRITE_ETM(s) && mac_size != 0) {
+        if (rl->use_etm && mac_size != 0) {
             unsigned char *mac;
 
             if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
@@ -1923,7 +1923,7 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
                 tls_release_write_buffer(rl);
             return 1;
         } else if (i <= 0) {
-            if (SSL_CONNECTION_IS_DTLS(s)) {
+            if (rl->isdtls) {
                 /*
                  * For DTLS, just drop it. That's kind of the whole point in
                  * using a datagram service
