@@ -197,9 +197,9 @@ size_t ossl_quic_pending(const SSL *s)
     return 0;
 }
 
-long ossl_quic_default_timeout(void)
+OSSL_TIME ossl_quic_default_timeout(void)
 {
-    return 0;
+    return ossl_time_from_sec(0);
 }
 
 int ossl_quic_num_ciphers(void)
