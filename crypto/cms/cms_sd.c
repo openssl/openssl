@@ -660,7 +660,7 @@ int CMS_set1_signers_certs(CMS_ContentInfo *cms, STACK_OF(X509) *scerts,
 
         for (j = 0; j < sk_CMS_CertificateChoices_num(certs); j++) {
             cch = sk_CMS_CertificateChoices_value(certs, j);
-            if (cch->type != 0)
+            if (cch->type != CMS_CERTCHOICE_CERT)
                 continue;
             x = cch->d.certificate;
             if (CMS_SignerInfo_cert_cmp(si, x) == 0) {
