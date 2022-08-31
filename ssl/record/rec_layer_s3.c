@@ -448,19 +448,17 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
      * processing then we also only use 1 pipeline, or if we're not using
      * explicit IVs
      */
-    maxpipes = s->max_pipelines;
-    if (maxpipes > SSL_MAX_PIPELINES) {
-        /*
-         * We should have prevented this when we set max_pipelines so we
-         * shouldn't get here
-         */
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return -1;
-    }
-    /* If no explicit maxpipes configuration - default to 1 */
-    /* TODO(RECLAYER): Should we ask the record layer how many pipes it supports? */
-    if (maxpipes <= 0)
-        maxpipes = 1;
+
+    maxpipes = s->rlayer.wrlmethod->get_max_records(s->rlayer.wrl, type, n,
+                                                    max_send_fragment,
+                                                    &split_send_fragment);
+    if (s->max_pipelines > 0 && maxpipes > s->max_pipelines)
+        maxpipes = s->max_pipelines;
+
+    if (maxpipes > SSL_MAX_PIPELINES)
+        maxpipes = SSL_MAX_PIPELINES;
+
+
 #if 0
     /* TODO(RECLAYER): FIX ME */
     if (maxpipes == 0
@@ -504,7 +502,7 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
         if (numpipes > maxpipes)
             numpipes = maxpipes;
 
-        if (n / numpipes >= max_send_fragment) {
+        if (n / numpipes >= split_send_fragment) {
             /*
              * We have enough data to completely fill all available
              * pipelines
@@ -512,11 +510,11 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
             for (j = 0; j < numpipes; j++) {
                 tmpls[j].type = type;
                 tmpls[j].version = recversion;
-                tmpls[j].buf = &(buf[tot]) + (j * max_send_fragment);
-                tmpls[j].buflen = max_send_fragment;
+                tmpls[j].buf = &(buf[tot]) + (j * split_send_fragment);
+                tmpls[j].buflen = split_send_fragment;
             }
             /* Remember how much data we are going to be sending */
-            s->rlayer.wpend_tot = numpipes * max_send_fragment;
+            s->rlayer.wpend_tot = numpipes * split_send_fragment;
         } else {
             /* We can partially fill all available pipelines */
             tmppipelen = n / numpipes;

@@ -1410,9 +1410,10 @@ size_t tls_get_max_record_len(OSSL_RECORD_LAYER *rl)
     return 0;
 }
 
-size_t tls_get_max_records(OSSL_RECORD_LAYER *rl)
+size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, int type, size_t buflen,
+                           size_t maxfrag, size_t *preffrag)
 {
-    return 0;
+    return 1;
 }
 
 int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
