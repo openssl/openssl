@@ -321,7 +321,7 @@
                                                                   int *err)  \
     {                                                                        \
         int e2 = 0;                                                          \
-        type q, r, x, y;                                                           \
+        type q, r, x, y;                                                     \
                                                                              \
         if (c == 0) {                                                        \
             *err |= 1;                                                       \
