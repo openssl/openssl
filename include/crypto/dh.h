@@ -58,5 +58,6 @@ int ossl_dh_kdf_X9_42_asn1(unsigned char *out, size_t outlen,
                            OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_dh_is_foreign(const DH *dh);
 DH *ossl_dh_dup(const DH *dh, int selection);
+void ossl_dh_clear_private_key(DH *dh);
 
 #endif  /* OSSL_CRYPTO_DH_H */

@@ -74,6 +74,8 @@ struct dh_gen_ctx {
     OSSL_CALLBACK *cb;
     void *cbarg;
     int dh_type;
+    DH *priv_key;
+    int keep_private;  /* keep the private key component on pubkey generation */
 };
 
 static int dh_gen_type_name2id_w_default(const char *name, int type)
@@ -491,6 +493,22 @@ static void *dhx_gen_init(void *provctx, int selection,
    return dh_gen_init_base(provctx, selection, params, DH_FLAG_TYPE_DHX);
 }
 
+static int dh_gen_set_private_key(struct dh_gen_ctx *gctx, DH *dh)
+{
+     DH_free(gctx->priv_key);
+     gctx->priv_key = NULL;
+
+     if ((gctx->selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0
+         || (gctx->selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) == 1)
+         return 1;
+
+     if (DH_get0_priv_key(dh) == NULL || !DH_up_ref(dh))
+         return 0;
+
+     gctx->priv_key = dh;
+     return 1;
+}
+
 static int dh_gen_set_template(void *genctx, void *templ)
 {
     struct dh_gen_ctx *gctx = genctx;
@@ -499,7 +517,7 @@ static int dh_gen_set_template(void *genctx, void *templ)
     if (!ossl_prov_is_running() || gctx == NULL || dh == NULL)
         return 0;
     gctx->ffc_params = ossl_dh_get0_params(dh);
-    return 1;
+    return dh_gen_set_private_key(gctx, dh);
 }
 
 static int dh_set_gen_seed(struct dh_gen_ctx *gctx, unsigned char *seed,
@@ -555,6 +573,9 @@ static int dh_gen_common_set_params(void *genctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_PRIV_LEN);
     if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->priv_len))
         return 0;
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_KEEP_PRIVATE);
+    if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->keep_private))
+        return 0;
     return 1;
 }
 
@@ -567,6 +588,7 @@ static const OSSL_PARAM *dh_gen_settable_params(ossl_unused void *genctx,
         OSSL_PARAM_int(OSSL_PKEY_PARAM_DH_PRIV_LEN, NULL),
         OSSL_PARAM_size_t(OSSL_PKEY_PARAM_FFC_PBITS, NULL),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_DH_GENERATOR, NULL),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_KEEP_PRIVATE, NULL),
         OSSL_PARAM_END
     };
     return dh_gen_settable;
@@ -587,6 +609,7 @@ static const OSSL_PARAM *dhx_gen_settable_params(ossl_unused void *genctx,
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_FFC_SEED, NULL, 0),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_PCOUNTER, NULL),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_H, NULL),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_KEEP_PRIVATE, NULL),
         OSSL_PARAM_END
     };
     return dhx_gen_settable;
@@ -695,6 +718,18 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (!ossl_prov_is_running() || gctx == NULL)
         return NULL;
 
+    if (gctx->priv_key != NULL) {
+        /* Generating just the public key */
+        if ((dh = ossl_dh_dup(gctx->priv_key, OSSL_KEYMGMT_SELECT_ALL)) == NULL)
+            return NULL;
+        /* Just computes the public key if private is already set. */
+        if (DH_generate_key(dh) <= 0)
+            goto end;
+        if (!gctx->keep_private)
+            ossl_dh_clear_private_key(dh);
+        return dh;
+    }
+
     /*
      * If a group name is selected then the type is group regardless of what the
      * the user selected. This overrides rather than errors for backwards
@@ -793,6 +828,7 @@ static void dh_gen_cleanup(void *genctx)
     if (gctx == NULL)
         return;
 
+    DH_free(gctx->priv_key);
     OPENSSL_free(gctx->mdname);
     OPENSSL_free(gctx->mdprops);
     OPENSSL_clear_free(gctx->seed, gctx->seedlen);

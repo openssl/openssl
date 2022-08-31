@@ -981,6 +981,8 @@ struct ec_gen_ctx {
     int selection;
     int ecdh_mode;
     EC_GROUP *gen_group;
+    EC_KEY *priv_key;
+    int keep_private;
 };
 
 static void *ec_gen_init(void *provctx, int selection,
@@ -1039,6 +1041,22 @@ static int ec_gen_set_group(void *genctx, const EC_GROUP *src)
     return 1;
 }
 
+static int ec_gen_set_private_key(struct ec_gen_ctx *gctx, EC_KEY *ec)
+{
+     EC_KEY_free(gctx->priv_key);
+     gctx->priv_key = NULL;
+
+     if ((gctx->selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0
+         || (gctx->selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) == 1)
+         return 1;
+
+     if (EC_KEY_get0_private_key(ec) == NULL || !EC_KEY_up_ref(ec))
+         return 0;
+
+     gctx->priv_key = ec;
+     return 1;
+}
+
 static int ec_gen_set_template(void *genctx, void *templ)
 {
     struct ec_gen_ctx *gctx = genctx;
@@ -1049,7 +1067,9 @@ static int ec_gen_set_template(void *genctx, void *templ)
         return 0;
     if ((ec_group = EC_KEY_get0_group(ec)) == NULL)
         return 0;
-    return ec_gen_set_group(gctx, ec_group);
+    if (!ec_gen_set_group(gctx, ec_group))
+        return 0;
+    return ec_gen_set_private_key(gctx, ec);
 }
 
 #define COPY_INT_PARAM(params, key, val)                                       \
@@ -1113,6 +1133,8 @@ static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
     COPY_OCTET_PARAM(params, OSSL_PKEY_PARAM_EC_SEED, gctx->seed, gctx->seed_len);
     COPY_OCTET_PARAM(params, OSSL_PKEY_PARAM_EC_GENERATOR, gctx->gen,
                      gctx->gen_len);
+
+    COPY_INT_PARAM(params, OSSL_PKEY_PARAM_KEEP_PRIVATE, gctx->keep_private);
 
     ret = 1;
 err:
@@ -1213,6 +1235,7 @@ static const OSSL_PARAM *ec_gen_settable_params(ossl_unused void *genctx,
         OSSL_PARAM_BN(OSSL_PKEY_PARAM_EC_ORDER, NULL, 0),
         OSSL_PARAM_BN(OSSL_PKEY_PARAM_EC_COFACTOR, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_SEED, NULL, 0),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_KEEP_PRIVATE, NULL),
         OSSL_PARAM_END
     };
 
@@ -1266,8 +1289,19 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     ret = ec_gen_assign_group(ec, gctx->gen_group);
 
     /* Whether you want it or not, you get a keypair, not just one half */
-    if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ret = ret && EC_KEY_generate_key(ec);
+    if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        /* Generate just the public key, if we have a private already */
+        if (gctx->priv_key == NULL) {
+            ret = ret && EC_KEY_generate_key(ec);
+        } else {
+            ret = ret
+                && EC_KEY_set_private_key(ec,
+                                          EC_KEY_get0_private_key(gctx->priv_key))
+                && ossl_ec_key_generate_public_key(ec);
+            if (!gctx->keep_private)
+                (void)EC_KEY_set_private_key(ec, NULL);
+        }
+    }
 
     if (gctx->ecdh_mode != -1)
         ret = ret && ossl_ec_set_ecdh_cofactor_mode(ec, gctx->ecdh_mode);
@@ -1341,6 +1375,7 @@ static void ec_gen_cleanup(void *genctx)
     if (gctx == NULL)
         return;
 
+    EC_KEY_free(gctx->priv_key);
     EC_GROUP_free(gctx->gen_group);
     BN_free(gctx->p);
     BN_free(gctx->a);

@@ -183,6 +183,12 @@ DH *ossl_dh_dup(const DH *dh, int selection)
     return NULL;
 }
 
+void ossl_dh_clear_private_key(DH *dh)
+{
+    BN_clear_free(dh->priv_key);
+    dh->priv_key = NULL;
+}
+
 #ifndef FIPS_MODULE
 DH *ossl_dh_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
                            OSSL_LIB_CTX *libctx, const char *propq)

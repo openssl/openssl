@@ -58,6 +58,13 @@ Used for getting and setting the encoding of the DH public key used in a key
 exchange message for the TLS protocol.
 See EVP_PKEY_set1_encoded_public_key() and EVP_PKEY_get1_encoded_public_key().
 
+=item "keep-private" (B<OSSL_PKEY_PARAM_KEEP_PRIVATE>) <int>
+
+A parameter settable on key generation. If set to nonzero it makes the key
+resulting from the public key generation from a supplied private key to keep
+the private key component.
+(The default value is 0.)
+
 =back
 
 =head2 DH additional domain parameters

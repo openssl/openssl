@@ -1226,4 +1226,56 @@ EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
     return ret;
 }
 
+EVP_PKEY *EVP_PKEY_generate_public_key(OSSL_LIB_CTX *libctx, const char *propq,
+                                       EVP_PKEY *private_key, int keep_private)
+{
+    EVP_PKEY *key = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+
+    if (private_key == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    if (!evp_pkey_is_provided(private_key)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEY_TYPE);
+        return NULL;
+    }
+
+    /* If the key already has a public key, just duplicate it */
+    if (evp_keymgmt_util_has(private_key, OSSL_KEYMGMT_SELECT_PUBLIC_KEY)) {
+        int selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
+                        | OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
+
+        if (keep_private)
+            selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
+        key = EVP_PKEY_new();
+        if (key != NULL
+            && !evp_keymgmt_util_copy(key, private_key, selection)) {
+            EVP_PKEY_free(key);
+            key = NULL;
+        }
+        return key;
+    }
+
+    ctx = EVP_PKEY_CTX_new_from_pkey(libctx, private_key, propq);
+
+    if (ctx != NULL
+        && evp_pkey_ctx_gen_init(ctx, EVP_PKEY_OP_KEYGEN,
+                                 OSSL_KEYMGMT_SELECT_PUBLIC_KEY) > 0) {
+        OSSL_PARAM params[2];
+
+        params[0] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_KEEP_PRIVATE,
+                                             &keep_private);
+        params[1] = OSSL_PARAM_construct_end();
+
+        if (EVP_PKEY_CTX_set_params(ctx, params) <= 0)
+            goto err;
+        (void)EVP_PKEY_generate(ctx, &key);
+    }
+
+ err:
+    EVP_PKEY_CTX_free(ctx);
+    return key;
+}
+
 #endif /* !defined(FIPS_MODULE) */

@@ -8,7 +8,8 @@ EVP_PKEY_CTX_set_cb, EVP_PKEY_CTX_get_cb,
 EVP_PKEY_CTX_get_keygen_info, EVP_PKEY_CTX_set_app_data,
 EVP_PKEY_CTX_get_app_data,
 EVP_PKEY_gen_cb,
-EVP_PKEY_paramgen, EVP_PKEY_keygen
+EVP_PKEY_paramgen, EVP_PKEY_keygen,
+EVP_PKEY_generate_public_key
 - key and parameter generation and check functions
 
 =head1 SYNOPSIS
@@ -33,6 +34,11 @@ EVP_PKEY_paramgen, EVP_PKEY_keygen
 
  void EVP_PKEY_CTX_set_app_data(EVP_PKEY_CTX *ctx, void *data);
  void *EVP_PKEY_CTX_get_app_data(EVP_PKEY_CTX *ctx);
+
+ EVP_PKEY *EVP_PKEY_generate_public_key(OSSL_LIB_CTX *libctx,
+                                        const char *propq,
+                                        EVP_PKEY *private_key,
+                                        int keep_private);
 
 =head1 DESCRIPTION
 
@@ -103,6 +109,15 @@ a string parameter must be given to specify the name of the EC curve.
 If I<type> is C<X25519>, C<X448>, C<ED25519>, or C<ED448>
 no further parameter is needed.
 
+EVP_PKEY_generate_public_key() generates an B<EVP_PKEY> with public key
+components from I<private_key> that contains just private key components
+if the provider and the algorithm of the key supports the operation.
+If I<private_key> already contains the public key components the function
+duplicates I<private_key>.
+If I<keep_private> is set to nonzero the returned B<EVP_PKEY> will also
+contain the private key components otherwise they will be dropped from
+the resulting key.
+
 =head1 RETURN VALUES
 
 EVP_PKEY_keygen_init(), EVP_PKEY_paramgen_init(), EVP_PKEY_keygen() and
@@ -110,7 +125,8 @@ EVP_PKEY_paramgen() return 1 for success and 0 or a negative value for failure.
 In particular a return value of -2 indicates the operation is not supported by
 the public key algorithm.
 
-EVP_PKEY_Q_keygen() returns an B<EVP_PKEY>, or NULL on failure.
+EVP_PKEY_Q_keygen() and EVP_PKEY_generate_public_key() return an B<EVP_PKEY>,
+or NULL on failure.
 
 =head1 NOTES
 
@@ -223,6 +239,8 @@ EVP_PKEY_CTX_set_app_data() and EVP_PKEY_CTX_get_app_data() were added in
 OpenSSL 1.0.0.
 
 EVP_PKEY_Q_keygen() and EVP_PKEY_generate() were added in OpenSSL 3.0.
+
+EVP_PKEY_generate_public_key() was added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 

@@ -681,6 +681,19 @@ EC_KEY *ossl_ec_key_dup(const EC_KEY *src, int selection)
     return NULL;
 }
 
+int ossl_ec_key_generate_public_key(EC_KEY *ec)
+{
+    if (ec == NULL || ec->group == NULL || ec->group->meth == NULL
+        || ec->group->meth->keygenpub == NULL)
+        return 0;
+    if (ec->priv_key == NULL) {
+        ERR_raise(ERR_LIB_EC, EC_R_MISSING_PRIVATE_KEY);
+        return 0;
+    }
+    return ec->group->meth->keygenpub(ec);
+}
+
+
 int ossl_ec_encoding_param2id(const OSSL_PARAM *p, int *id)
 {
     const char *name = NULL;
