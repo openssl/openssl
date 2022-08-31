@@ -9944,6 +9944,127 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+static size_t record_pad_cb(SSL *s, int type, size_t len, void *arg)
+{
+    int *called = arg;
+
+    switch ((*called)++) {
+    case 0:
+        /* Add some padding to first record */
+        return 512;
+    case 1:
+        /* Maximally pad the second record */
+        return SSL3_RT_MAX_PLAIN_LENGTH - len;
+    case 2:
+        /*
+         * Exceeding the maximum padding should be fine. It should just pad to
+         * the maximum anyway
+         */
+        return SSL3_RT_MAX_PLAIN_LENGTH + 1 - len;
+    case 3:
+        /*
+         * Very large padding should also be ok. Should just pad to the maximum
+         * allowed
+         */
+        return SIZE_MAX;
+    default:
+        return 0;
+    }
+}
+
+/*
+ * Test that setting record padding in TLSv1.3 works as expected
+ * Test 0: Record padding callback on the SSL_CTX
+ * Test 1: Record padding callback on the SSL
+ * Test 2: Record block padding on the SSL_CTX
+ * Test 3: Record block padding on the SSL
+ */
+static int test_tls13_record_padding(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char *msg = "Hello World";
+    size_t written, readbytes;
+    char buf[80];
+    int i;
+    int called = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), TLS1_3_VERSION, 0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (idx == 0) {
+        SSL_CTX_set_record_padding_callback(cctx, record_pad_cb);
+        SSL_CTX_set_record_padding_callback_arg(cctx, &called);
+        if (!TEST_ptr_eq(SSL_CTX_get_record_padding_callback_arg(cctx), &called))
+            goto end;
+    } else if (idx == 2) {
+        /* Exceeding the max plain length should fail */
+        if (!TEST_false(SSL_CTX_set_block_padding(cctx,
+                                                  SSL3_RT_MAX_PLAIN_LENGTH + 1)))
+            goto end;
+        if (!TEST_true(SSL_CTX_set_block_padding(cctx, 512)))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL)))
+        goto end;
+
+    if (idx == 1) {
+        SSL_set_record_padding_callback(clientssl, record_pad_cb);
+        SSL_set_record_padding_callback_arg(clientssl, &called);
+        if (!TEST_ptr_eq(SSL_get_record_padding_callback_arg(clientssl), &called))
+            goto end;
+    } else if (idx == 3) {
+        /* Exceeding the max plain length should fail */
+        if (!TEST_false(SSL_set_block_padding(clientssl,
+                                              SSL3_RT_MAX_PLAIN_LENGTH + 1)))
+            goto end;
+        if (!TEST_true(SSL_set_block_padding(clientssl, 512)))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    called = 0;
+    /*
+     * Write some data, then check we can read it. Do this four times to check
+     * we can continue to write and read padded data after the initial record
+     * padding has been added. We don't actually check that the padding has
+     * been applied to the record - just that we can continue to communicate
+     * normally and that the callback has been called (if appropriate).
+     */
+    for (i = 0; i < 4; i++) {
+        if (!TEST_true(SSL_write_ex(clientssl, msg, strlen(msg), &written))
+            || !TEST_size_t_eq(written, strlen(msg)))
+            goto end;
+
+        if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf) - 1,
+                                    &readbytes))
+                || !TEST_size_t_eq(written, readbytes))
+            goto end;
+
+        buf[readbytes] = '\0';
+        if (!TEST_str_eq(buf, msg))
+            goto end;
+    }
+
+    if ((idx == 0 || idx == 1) && !TEST_int_eq(called, 4))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
@@ -10212,6 +10333,7 @@ int setup_tests(void)
     ADD_TEST(test_load_dhfile);
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_TEST(test_read_ahead_key_change);
+    ADD_ALL_TESTS(test_tls13_record_padding, 4);
 #endif
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_serverinfo_custom, 4);
