@@ -797,9 +797,9 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
     s->msg_callback_arg = ctx->msg_callback_arg;
     s->verify_mode = ctx->verify_mode;
     s->not_resumable_session_cb = ctx->not_resumable_session_cb;
-    s->record_padding_cb = ctx->record_padding_cb;
-    s->record_padding_arg = ctx->record_padding_arg;
-    s->block_padding = ctx->block_padding;
+    s->rlayer.record_padding_cb = ctx->record_padding_cb;
+    s->rlayer.record_padding_arg = ctx->record_padding_arg;
+    s->rlayer.block_padding = ctx->block_padding;
     s->sid_ctx_length = ctx->sid_ctx_length;
     if (!ossl_assert(s->sid_ctx_length <= sizeof(s->sid_ctx)))
         goto err;
@@ -5397,7 +5397,7 @@ int SSL_set_record_padding_callback(SSL *ssl,
 
     b = SSL_get_wbio(ssl);
     if (b == NULL || !BIO_get_ktls_send(b)) {
-        sc->record_padding_cb = cb;
+        sc->rlayer.record_padding_cb = cb;
         return 1;
     }
     return 0;
@@ -5410,7 +5410,7 @@ void SSL_set_record_padding_callback_arg(SSL *ssl, void *arg)
     if (sc == NULL)
         return;
 
-    sc->record_padding_arg = arg;
+    sc->rlayer.record_padding_arg = arg;
 }
 
 void *SSL_get_record_padding_callback_arg(const SSL *ssl)
@@ -5420,7 +5420,7 @@ void *SSL_get_record_padding_callback_arg(const SSL *ssl)
     if (sc == NULL)
         return NULL;
 
-    return sc->record_padding_arg;
+    return sc->rlayer.record_padding_arg;
 }
 
 int SSL_set_block_padding(SSL *ssl, size_t block_size)
@@ -5432,9 +5432,9 @@ int SSL_set_block_padding(SSL *ssl, size_t block_size)
 
     /* block size of 0 or 1 is basically no padding */
     if (block_size == 1)
-        sc->block_padding = 0;
+        sc->rlayer.block_padding = 0;
     else if (block_size <= SSL3_RT_MAX_PLAIN_LENGTH)
-        sc->block_padding = block_size;
+        sc->rlayer.block_padding = block_size;
     else
         return 0;
     return 1;
