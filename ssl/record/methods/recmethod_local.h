@@ -209,6 +209,7 @@ struct ossl_record_layer_st
     OSSL_FUNC_rlayer_skip_early_data_fn *skip_early_data;
     OSSL_FUNC_rlayer_msg_callback_fn *msg_callback;
     OSSL_FUNC_rlayer_security_fn *security;
+    OSSL_FUNC_rlayer_padding_fn *padding;
 
     size_t max_pipelines;
 
