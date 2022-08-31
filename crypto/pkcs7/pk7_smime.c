@@ -210,6 +210,7 @@ static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
     return 0;
 }
 
+/* This strongly overlaps with CMS_verify(), partly with PKCS7_dataVerify() */
 int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
                  BIO *indata, BIO *out, int flags)
 {
@@ -235,7 +236,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
     }
 
     /* Check for no data and no content: no data to verify signature */
-    if (PKCS7_get_detached(p7) && !indata) {
+    if (PKCS7_get_detached(p7) && indata == NULL) {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
         return 0;
     }
@@ -248,7 +249,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
          * tools like osslsigncode need it.  In Authenticode the verification
          * process is different, but the existing PKCs7 verification works.
          */
-        if (!PKCS7_get_detached(p7) && indata) {
+        if (!PKCS7_get_detached(p7) && indata != NULL) {
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_CONTENT_AND_DATA_PRESENT);
             return 0;
         }
@@ -350,7 +351,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
  err:
     X509_STORE_CTX_free(cert_ctx);
     OPENSSL_free(buf);
-    if (indata)
+    if (indata != NULL)
         BIO_pop(p7bio);
     BIO_free_all(p7bio);
     sk_X509_free(signers);
@@ -396,15 +397,15 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
         ias = si->issuer_and_serial;
         signer = NULL;
         /* If any certificates passed they take priority */
-        if (certs)
+        if (certs != NULL)
             signer = X509_find_by_issuer_and_serial(certs,
                                                     ias->issuer, ias->serial);
-        if (!signer && !(flags & PKCS7_NOINTERN)
+        if (signer == NULL && !(flags & PKCS7_NOINTERN)
             && p7->d.sign->cert)
             signer =
                 X509_find_by_issuer_and_serial(p7->d.sign->cert,
                                                ias->issuer, ias->serial);
-        if (!signer) {
+        if (signer == NULL) {
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNER_CERTIFICATE_NOT_FOUND);
             sk_X509_free(signers);
             return 0;

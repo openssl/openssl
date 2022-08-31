@@ -259,7 +259,7 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in, const EVP_CIPHER *cipher,
 
 static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
                                       X509_STORE *store,
-                                      STACK_OF(X509) *certs,
+                                      STACK_OF(X509) *untrusted,
                                       STACK_OF(X509_CRL) *crls,
                                       STACK_OF(X509) **chain,
                                       const CMS_CTX *cms_ctx)
@@ -275,7 +275,7 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
         goto err;
     }
     CMS_SignerInfo_get0_algs(si, NULL, &signer, NULL, NULL);
-    if (!X509_STORE_CTX_init(ctx, store, signer, certs)) {
+    if (!X509_STORE_CTX_init(ctx, store, signer, untrusted)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_STORE_INIT_ERROR);
         goto err;
     }
@@ -301,6 +301,7 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
 
 }
 
+/* This strongly overlaps with PKCS7_verify() */
 int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
                X509_STORE *store, BIO *dcont, BIO *out, unsigned int flags)
 {
@@ -336,7 +337,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
         si = sk_CMS_SignerInfo_value(sinfos, i);
         CMS_SignerInfo_get0_algs(si, NULL, &signer, NULL, NULL);
-        if (signer)
+        if (signer != NULL)
             scount++;
     }
 
