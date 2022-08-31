@@ -10051,7 +10051,7 @@ static int test_tls13_record_padding(int idx)
      * Write some data, then check we can read it. Do this four times to check
      * we can continue to write and read padded data after the initial record
      * padding has been added. We don't actually check that the padding has
-     * been applied to the record - just that we can continue to communicte
+     * been applied to the record - just that we can continue to communicate
      * normally and that the callback has been called (if appropriate).
      */
     for (i = 0; i < 4; i++) {
