@@ -10004,7 +10004,7 @@ static int test_tls13_record_padding(int idx)
     size_t written, readbytes;
     char buf[80];
     int i;
-    int called;
+    int called = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(), TLS1_3_VERSION, 0,
