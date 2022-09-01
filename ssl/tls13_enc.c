@@ -18,11 +18,8 @@
 
 #define TLS13_MAX_LABEL_LEN     249
 
-#ifdef CHARSET_EBCDIC
-static const unsigned char label_prefix[] = { 0x74, 0x6C, 0x73, 0x31, 0x33, 0x20, 0x00 };
-#else
-static const unsigned char label_prefix[] = "tls13 ";
-#endif
+/* ASCII: "tls13 ", in hex for EBCDIC compatibility */
+static const unsigned char label_prefix[] = "\x74\x6C\x73\x31\x33\x20";
 
 /*
  * Given a |secret|; a |label| of length |labellen|; and |data| of length
@@ -110,11 +107,8 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
 int tls13_derive_key(SSL *s, const EVP_MD *md, const unsigned char *secret,
                      unsigned char *key, size_t keylen)
 {
-#ifdef CHARSET_EBCDIC
-  static const unsigned char keylabel[] ={ 0x6B, 0x65, 0x79, 0x00 };
-#else
-  static const unsigned char keylabel[] = "key";
-#endif
+    /* ASCII: "key", in hex for EBCDIC compatibility */
+    static const unsigned char keylabel[] = "\x6B\x65\x79";
 
     return tls13_hkdf_expand(s, md, secret, keylabel, sizeof(keylabel) - 1,
                              NULL, 0, key, keylen, 1);
@@ -127,11 +121,8 @@ int tls13_derive_key(SSL *s, const EVP_MD *md, const unsigned char *secret,
 int tls13_derive_iv(SSL *s, const EVP_MD *md, const unsigned char *secret,
                     unsigned char *iv, size_t ivlen)
 {
-#ifdef CHARSET_EBCDIC
-  static const unsigned char ivlabel[] = { 0x69, 0x76, 0x00 };
-#else
-  static const unsigned char ivlabel[] = "iv";
-#endif
+    /* ASCII: "iv", in hex for EBCDIC compatibility */
+    static const unsigned char ivlabel[] = "\x69\x76";
 
     return tls13_hkdf_expand(s, md, secret, ivlabel, sizeof(ivlabel) - 1,
                              NULL, 0, iv, ivlen, 1);
@@ -141,11 +132,8 @@ int tls13_derive_finishedkey(SSL *s, const EVP_MD *md,
                              const unsigned char *secret,
                              unsigned char *fin, size_t finlen)
 {
-#ifdef CHARSET_EBCDIC
-  static const unsigned char finishedlabel[] = { 0x66, 0x69, 0x6E, 0x69, 0x73, 0x68, 0x65, 0x64, 0x00 };
-#else
-  static const unsigned char finishedlabel[] = "finished";
-#endif
+    /* ASCII: "finished", in hex for EBCDIC compatibility */
+    static const unsigned char finishedlabel[] = "\x66\x69\x6E\x69\x73\x68\x65\x64";
 
     return tls13_hkdf_expand(s, md, secret, finishedlabel,
                              sizeof(finishedlabel) - 1, NULL, 0, fin, finlen, 1);
@@ -170,11 +158,8 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     OSSL_PARAM params[7], *p = params;
     int mode = EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY;
     const char *mdname = EVP_MD_get0_name(md);
-#ifdef CHARSET_EBCDIC
-    static const char derived_secret_label[] = { 0x64, 0x65, 0x72, 0x69, 0x76, 0x65, 0x64, 0x00 };
-#else
-    static const char derived_secret_label[] = "derived";
-#endif
+    /* ASCII: "derived", in hex for EBCDIC compatibility */
+    static const char derived_secret_label[] = "\x64\x65\x72\x69\x76\x65\x64";
 
     kdf = EVP_KDF_fetch(s->ctx->libctx, OSSL_KDF_NAME_TLS1_3_KDF, s->ctx->propq);
     kctx = EVP_KDF_CTX_new(kdf);
@@ -402,25 +387,22 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
 
 int tls13_change_cipher_state(SSL *s, int which)
 {
-#ifdef CHARSET_EBCDIC
-  static const unsigned char client_early_traffic[]       = {0x63, 0x20, 0x65, 0x20,       /*traffic*/0x74, 0x72, 0x61, 0x66, 0x66, 0x69, 0x63, 0x00};
-  static const unsigned char client_handshake_traffic[]   = {0x63, 0x20, 0x68, 0x73, 0x20, /*traffic*/0x74, 0x72, 0x61, 0x66, 0x66, 0x69, 0x63, 0x00};
-  static const unsigned char client_application_traffic[] = {0x63, 0x20, 0x61, 0x70, 0x20, /*traffic*/0x74, 0x72, 0x61, 0x66, 0x66, 0x69, 0x63, 0x00};
-  static const unsigned char server_handshake_traffic[]   = {0x73, 0x20, 0x68, 0x73, 0x20, /*traffic*/0x74, 0x72, 0x61, 0x66, 0x66, 0x69, 0x63, 0x00};
-  static const unsigned char server_application_traffic[] = {0x73, 0x20, 0x61, 0x70, 0x20, /*traffic*/0x74, 0x72, 0x61, 0x66, 0x66, 0x69, 0x63, 0x00};
-  static const unsigned char exporter_master_secret[] = {0x65, 0x78, 0x70, 0x20,                    /* master*/  0x6D, 0x61, 0x73, 0x74, 0x65, 0x72, 0x00};
-  static const unsigned char resumption_master_secret[] = {0x72, 0x65, 0x73, 0x20,                  /* master*/  0x6D, 0x61, 0x73, 0x74, 0x65, 0x72, 0x00};
-  static const unsigned char early_exporter_master_secret[] = {0x65, 0x20, 0x65, 0x78, 0x70, 0x20,  /* master*/  0x6D, 0x61, 0x73, 0x74, 0x65, 0x72, 0x00};
-#else
-    static const unsigned char client_early_traffic[] = "c e traffic";
-    static const unsigned char client_handshake_traffic[] = "c hs traffic";
-    static const unsigned char client_application_traffic[] = "c ap traffic";
-    static const unsigned char server_handshake_traffic[] = "s hs traffic";
-    static const unsigned char server_application_traffic[] = "s ap traffic";
-    static const unsigned char exporter_master_secret[] = "exp master";
-    static const unsigned char resumption_master_secret[] = "res master";
-    static const unsigned char early_exporter_master_secret[] = "e exp master";
-#endif
+    /* ASCII: "c e traffic", in hex for EBCDIC compatibility */
+    static const unsigned char client_early_traffic[] = "\x63\x20\x65\x20\x74\x72\x61\x66\x66\x69\x63";
+    /* ASCII: "c hs traffic", in hex for EBCDIC compatibility */
+    static const unsigned char client_handshake_traffic[] = "\x63\x20\x68\x73\x20\x74\x72\x61\x66\x66\x69\x63";
+    /* ASCII: "c ap traffic", in hex for EBCDIC compatibility */
+    static const unsigned char client_application_traffic[] = "\x63\x20\x61\x70\x20\x74\x72\x61\x66\x66\x69\x63";
+    /* ASCII: "s hs traffic", in hex for EBCDIC compatibility */
+    static const unsigned char server_handshake_traffic[] = "\x73\x20\x68\x73\x20\x74\x72\x61\x66\x66\x69\x63";
+    /* ASCII: "s ap traffic", in hex for EBCDIC compatibility */
+    static const unsigned char server_application_traffic[] = "\x73\x20\x61\x70\x20\x74\x72\x61\x66\x66\x69\x63";
+    /* ASCII: "exp master", in hex for EBCDIC compatibility */
+    static const unsigned char exporter_master_secret[] = "\x65\x78\x70\x20\x6D\x61\x73\x74\x65\x72";
+    /* ASCII: "res master", in hex for EBCDIC compatibility */
+    static const unsigned char resumption_master_secret[] = "\x72\x65\x73\x20\x6D\x61\x73\x74\x65\x72";
+    /* ASCII: "e exp master", in hex for EBCDIC compatibility */
+    static const unsigned char early_exporter_master_secret[] = "\x65\x20\x65\x78\x70\x20\x6D\x61\x73\x74\x65\x72";
     unsigned char *iv;
     unsigned char key[EVP_MAX_KEY_LENGTH];
     unsigned char secret[EVP_MAX_MD_SIZE];
@@ -745,11 +727,8 @@ skip_ktls:
 
 int tls13_update_key(SSL *s, int sending)
 {
-#ifdef CHARSET_EBCDIC
-  static const unsigned char application_traffic[] = { 0x74, 0x72 ,0x61 ,0x66 ,0x66 ,0x69 ,0x63 ,0x20 ,0x75 ,0x70 ,0x64, 0x00};
-#else
-  static const unsigned char application_traffic[] = "traffic upd";
-#endif
+    /* ASCII: "traffic upd", in hex for EBCDIC compatibility */
+    static const unsigned char application_traffic[] = "\x74\x72\x61\x66\x66\x69\x63\x20\x75\x70\x64";
     const EVP_MD *md = ssl_handshake_md(s);
     size_t hashlen;
     unsigned char key[EVP_MAX_KEY_LENGTH];
@@ -822,11 +801,8 @@ int tls13_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                  size_t contextlen, int use_context)
 {
     unsigned char exportsecret[EVP_MAX_MD_SIZE];
-#ifdef CHARSET_EBCDIC
-    static const unsigned char exporterlabel[] = {0x65, 0x78, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x72, 0x00};
-#else
-    static const unsigned char exporterlabel[] = "exporter";
-#endif
+    /* ASCII: "exporter", in hex for EBCDIC compatibility */
+    static const unsigned char exporterlabel[] = "\x65\x78\x70\x6F\x72\x74\x65\x72";
     unsigned char hash[EVP_MAX_MD_SIZE], data[EVP_MAX_MD_SIZE];
     const EVP_MD *md = ssl_handshake_md(s);
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
@@ -863,11 +839,8 @@ int tls13_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
                                        const unsigned char *context,
                                        size_t contextlen)
 {
-#ifdef CHARSET_EBCDIC
-  static const unsigned char exporterlabel[] = {0x65, 0x78, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x72, 0x00};
-#else
-  static const unsigned char exporterlabel[] = "exporter";
-#endif
+    /* ASCII: "exporter", in hex for EBCDIC compatibility */
+    static const unsigned char exporterlabel[] = "\x65\x78\x70\x6F\x72\x74\x65\x72";
     unsigned char exportsecret[EVP_MAX_MD_SIZE];
     unsigned char hash[EVP_MAX_MD_SIZE], data[EVP_MAX_MD_SIZE];
     const EVP_MD *md;

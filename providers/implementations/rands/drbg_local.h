@@ -50,13 +50,8 @@
 # define DRBG_MAX_LENGTH                         INT32_MAX
 
 /* The default nonce */
-#ifdef CHARSET_EBCDIC
-# define DRBG_DEFAULT_PERS_STRING      { 0x4f, 0x70, 0x65, 0x6e, 0x53, 0x53, \
-     0x4c, 0x20, 0x4e, 0x49, 0x53, 0x54, 0x20, 0x53, 0x50, 0x20, 0x38, 0x30, \
-     0x30, 0x2d, 0x39, 0x30, 0x41, 0x20, 0x44, 0x52, 0x42, 0x47, 0x00};
-#else
-# define DRBG_DEFAULT_PERS_STRING                "OpenSSL NIST SP 800-90A DRBG"
-#endif
+/* ASCII: "OpenSSL NIST SP 800-90A DRBG", in hex for EBCDIC compatibility */
+#define DRBG_DEFAULT_PERS_STRING "\x4f\x70\x65\x6e\x53\x53\x4c\x20\x4e\x49\x53\x54\x20\x53\x50\x20\x38\x30\x30\x2d\x39\x30\x41\x20\x44\x52\x42\x47"
 
 typedef struct prov_drbg_st PROV_DRBG;
 
