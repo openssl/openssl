@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 102;
+plan tests => 106;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -399,14 +399,23 @@ sub has_keyUsage {
     my $expect = shift @_;
     cert_contains($cert, "Key Usage", $expect);
 }
-sub strict_verify {
+sub verify {
+    my $strict = shift @_;
     my $cert = shift @_;
     my $expect = shift @_;
     my $trusted = shift @_;
     $trusted = $cert unless $trusted;
-    ok(run(app(["openssl", "verify", "-x509_strict", "-trusted", $trusted,
+    my @cmd = ("openssl", "verify");
+    push(@cmd, "-x509_strict") if $strict;
+    ok(run(app([@cmd, "-trusted", $trusted,
                 "-partial_chain", $cert])) == $expect,
-       "strict verify allow $cert");
+       ($strict ? "strict " : "")." verify ".
+       ($expect ? "accept" : "reject")." $cert");
+}
+
+sub strict_verify {
+    unshift @_, 1;
+    return verify(@_);
 }
 
 my @v3_ca = ("-addext", "basicConstraints = critical,CA:true",
@@ -554,7 +563,7 @@ generate_cert($cert, "-addext", "authorityKeyIdentifier = keyid:always, issuer:a
     "-in", srctop_file(@certs, "x509-check.csr"));
 cert_ext_has_n_different_lines($cert, 6, $SKID_AKID); # SKID != AKID, both forced
 
-# AKID of not self-issued certs
+# AKID of not self-issued end-entity certs
 
 $cert = "regular_v3_EE_default_KIDs_no_other_exts.pem";
 generate_cert($cert, "-key", srctop_file(@certs, "ee-key.pem"));
@@ -580,6 +589,15 @@ has_SKID($cert, 1);
 has_AKID($cert, 0);
 strict_verify($cert, 0, $ca_cert);
 
+# weird self-issued end-entity cert without SKID/AKID signed by CA, as in #19095
+
+$cert = "self-issued_v1_EE_no_KIDs_signed_by_CA.pem";
+generate_cert($cert, "-addext", "subjectKeyIdentifier = none",
+              "-addext", "authorityKeyIdentifier = none",
+              "-key", srctop_file(@certs, "ee-key.pem"));
+has_SKID($cert, 0);
+has_AKID($cert, 0);
+verify(0, $cert, 1, $ca_cert);
 
 # Key Usage
 
