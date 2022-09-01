@@ -352,7 +352,7 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 /* Check that the given certificate |x| is issued by the certificate |issuer| */
 static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 {
-    int err = ossl_x509_likely_issued(issuer, x);
+    int err = ossl_x509_likely_issued(issuer, x, 1);
 
     if (err == X509_V_OK)
         return 1;
@@ -1762,7 +1762,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
          * We report the issuer as NULL because all we have is a bare key.
          */
         xi = NULL;
-    } else if (ossl_x509_likely_issued(xi, xi) != X509_V_OK
+    } else if (ossl_x509_likely_issued(xi, xi, 1) != X509_V_OK
                /* exceptional case: last cert in the chain is not self-issued */
                && ((ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) == 0)) {
         if (n > 0) {

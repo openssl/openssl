@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 106;
+plan tests => 110;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -526,6 +526,14 @@ has_version($cert, 3);
 has_SKID($cert, 1); # SKID added, though no explicit extensions given
 has_AKID($cert, 0);
 strict_verify($cert, 1);
+
+$cert = "self-issued_v1_CA_no_KIDs.pem";
+generate_cert($cert, "-addext", "subjectKeyIdentifier = none",
+              "-addext", "authorityKeyIdentifier = none",
+              "-in", srctop_file(@certs, "x509-check.csr"));
+has_SKID($cert, 0);
+has_AKID($cert, 0);
+verify($cert, 1);
 
 $cert = "self-issued_v3_CA_explicit_AKID.pem";
 generate_cert($cert, "-addext", "authorityKeyIdentifier = keyid",

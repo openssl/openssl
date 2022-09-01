@@ -155,5 +155,5 @@ DEFINE_STACK_OF(BY_DIR_ENTRY)
 typedef STACK_OF(X509_NAME_ENTRY) STACK_OF_X509_NAME_ENTRY;
 DEFINE_STACK_OF(STACK_OF_X509_NAME_ENTRY)
 
-int ossl_x509_likely_issued(X509 *issuer, X509 *subject);
+int ossl_x509_likely_issued(X509 *issuer, X509 *subject, int use_ss);
 int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject);
