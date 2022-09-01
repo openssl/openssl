@@ -615,7 +615,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     if (tmp_akid == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
 
-    /* This is very similar to ossl_x509_likely_issued(const_x, const_x) == X509_V_OK */
+    /* Setting EXFLAG_SS is equivalent to ossl_x509_likely_issued(const_x, const_x) == X509_V_OK */
     if (X509_NAME_cmp(X509_get_subject_name(const_x), X509_get_issuer_name(const_x)) == 0) {
         tmp_ex_flags |= EXFLAG_SI; /* Certificate is self-issued: subject == issuer */
         /*
@@ -1049,7 +1049,12 @@ int X509_check_issued(const X509 *issuer, const X509 *subject)
     return ossl_x509_signing_allowed(issuer, subject);
 }
 
-/* do the checks 1., 2., and 3. as described above for X509_check_issued() */
+/*
+ * Do the checks 1., 2., and 3. as described above for X509_check_issued().
+ * These are very similar to a section of ossl_x509v3_cache_extensions().
+ * If |issuer| equals |subject| (such that self-signature should be checked),
+ * use the EXFLAG_SS result of ossl_x509v3_cache_extensions().
+ */
 int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject)
 {
     int ret;
@@ -1059,10 +1064,28 @@ int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject)
         != 0)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
-    /* set issuer->skid and subject->akid */
+    /* set issuer->skid, subject->akid, and subject->ex_flags */
     if (!ossl_x509v3_cache_extensions(issuer)
         || !ossl_x509v3_cache_extensions(subject))
         return X509_V_ERR_UNSPECIFIED;
+
+    if (issuer == subject
+        || (X509_NAME_cmp(X509_get_issuer_name(issuer), X509_get_issuer_name(subject)) == 0
+            && ASN1_INTEGER_cmp(X509_get0_serialNumber(issuer), X509_get0_serialNumber(subject)) == 0))
+        /*
+         * At this point, we can assume that issuer and subject
+         * are semantically the same cert because they are identical
+         * or at least have the same issuer and serial number,
+         * which (for any sane cert issuer) implies equality of the two certs.
+         * In this case, for consistency with chain building and validation,
+         * we make our issuance judgment depend on the presence of EXFLAG_SS.
+         * This is used for corrected chain building in the corner case of
+         * a self-issued but not actually self-signed trust anchor cert
+         * without subject and issuer key identifiers (i.e., no SKID and AKID).
+         */
+        return (issuer->ex_flags & EXFLAG_SS) != 0
+            ? X509_V_OK
+            : X509_V_ERR_CERT_SIGNATURE_FAILURE;
 
     ret = X509_check_akid(issuer, subject->akid);
     if (ret != X509_V_OK)
