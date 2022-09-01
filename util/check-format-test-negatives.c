@@ -24,7 +24,7 @@
     }
 
 /* allow extra  SPC in single-line comment */
-/*-
+/*
  * allow extra  SPC in regular multi-line comment
  */
 /*-
