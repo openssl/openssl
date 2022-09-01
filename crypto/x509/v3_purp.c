@@ -615,7 +615,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     if (tmp_akid == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
 
-    /* This is very similar to ossl_x509_likely_issued(const_x, const_x) == X509_V_OK */
+    /* This is very similar to ossl_x509_likely_issued(const_x, const_x, 1) == X509_V_OK */
     if (X509_NAME_cmp(X509_get_subject_name(const_x), X509_get_issuer_name(const_x)) == 0) {
         tmp_ex_flags |= EXFLAG_SI; /* Certificate is self-issued: subject == issuer */
         /*
@@ -1060,13 +1060,18 @@ int X509_check_issued(const X509 *issuer, const X509 *subject)
 {
     int ret;
 
-    if ((ret = ossl_x509_likely_issued(issuer, subject)) != X509_V_OK)
+    if ((ret = ossl_x509_likely_issued(issuer, subject, 0)) != X509_V_OK)
         return ret;
     return ossl_x509_signing_allowed(issuer, subject);
 }
 
-/* do the checks 1., 2., and 3. as described above for X509_check_issued() */
-int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject)
+/*
+ * Do the checks 1., 2., and 3. as described above for X509_check_issued().
+ * These are very similar to a section of ossl_x509v3_cache_extensions().
+ * If use_ss is set and issuer equals subject (such that self-signature
+ * should be checked), use EXFLAG_SS result of ossl_x509v3_cache_extensions().
+ */
+int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject, int use_ss)
 {
     int ret;
 
@@ -1075,10 +1080,23 @@ int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject)
         != 0)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
-    /* set issuer->skid and subject->akid */
+    /* set issuer->skid, subject->akid, and subject->ex_flags */
     if (!ossl_x509v3_cache_extensions(issuer)
         || !ossl_x509v3_cache_extensions(subject))
         return X509_V_ERR_UNSPECIFIED;
+
+    if (use_ss
+        && (issuer == subject
+            || (X509_NAME_cmp(X509_get_issuer_name(issuer),
+                    X509_get_issuer_name(subject))
+                    == 0
+                && ASN1_INTEGER_cmp(X509_get0_serialNumber(issuer),
+                       X509_get0_serialNumber(subject))
+                    == 0)))
+        /* issuer and subject are semantically the same cert */
+        return (issuer->ex_flags & EXFLAG_SS) != 0
+            ? X509_V_OK
+            : X509_V_ERR_CERT_SIGNATURE_FAILURE;
 
     ret = X509_check_akid(issuer, subject->akid);
     if (ret != X509_V_OK)
