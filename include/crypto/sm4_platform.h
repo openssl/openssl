@@ -35,6 +35,13 @@ static inline int vpsm4_capable(void)
 #    define HWSM4_ctr32_encrypt_blocks sm4_v8_ctr32_encrypt_blocks
 #   endif
 #  endif
+#  if     !defined(_WIN64) && defined(AES_ASM) && !defined(I386_ONLY) &&      (  \
+         ((defined(__i386)       || defined(__i386__)    || \
+           defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \
+         defined(__x86_64)       || defined(__x86_64__)  || \
+         defined(_M_AMD64)       || defined(_M_X64)      )
+#       define AESNI_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(57-32)))
+#  endif
 # endif /* OPENSSL_CPUID_OBJ */
 
 # if defined(HWSM4_CAPABLE)
@@ -73,5 +80,21 @@ void vpsm4_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
                                 const unsigned char ivec[16]);
 # endif /* VPSM4_CAPABLE */
 
+#ifdef AESNI_CAPABLE
+void aesni_sm4_encrypt(const unsigned char *in, unsigned char *out,
+                   const SM4_KEY *key);
+void aesni_sm4_decrypt(const unsigned char *in, unsigned char *out,
+                   const SM4_KEY *key);
+void aesni_sm4_ecb_encrypt(const unsigned char *in, unsigned char *out,
+                       size_t length, const SM4_KEY *key,
+                       const int enc);
+void aesni_sm4_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                       size_t length, const SM4_KEY *key,
+                       unsigned char *ivec, const int enc) ;
+void aesni_sm4_ctr_encrypt(const unsigned char *in, unsigned char *out,
+                                size_t len, const SM4_KEY *key,
+                                const unsigned char ivec[16]);
+
+#endif/* AESNI_CAPABLE */
 
 #endif /* OSSL_SM4_PLATFORM_H */

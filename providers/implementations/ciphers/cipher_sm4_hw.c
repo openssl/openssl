@@ -9,6 +9,14 @@
 
 #include "cipher_sm4.h"
 
+#  if     !defined(_WIN64) && defined(AES_ASM) && !defined(I386_ONLY) &&      (  \
+         ((defined(__i386)       || defined(__i386__)    || \
+           defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \
+         defined(__x86_64)       || defined(__x86_64__)  || \
+         defined(_M_AMD64)       || defined(_M_X64)      )
+#       define AESNI_CAPABLE   (OPENSSL_ia32cap_P[1]&(1<<(57-32)))
+#  endif
+
 static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
                                  const unsigned char *key, size_t keylen)
 {
@@ -55,6 +63,19 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
                 ctx->stream.ctr = (ctr128_f)vpsm4_ctr32_encrypt_blocks;
         } else
 #endif
+#ifdef AESNI_CAPABLE
+        if(AESNI_CAPABLE){
+            ossl_sm4_set_key(key, ks);
+            ctx->block = (block128_f)aesni_sm4_encrypt;
+            ctx->stream.cbc = NULL;
+            if(ctx->mode == EVP_CIPH_ECB_MODE)
+                ctx->stream.ecb = (ecb128_f)aesni_sm4_ecb_encrypt;
+            else if (ctx->mode == EVP_CIPH_CBC_MODE)
+                ctx->stream.cbc = (cbc128_f) aesni_sm4_cbc_encrypt;
+            else if (ctx->mode == EVP_CIPH_CTR_MODE)
+                ctx->stream.ctr = (ctr128_f) aesni_sm4_ctr_encrypt;
+        } else
+#endif
         {
             ossl_sm4_set_key(key, ks);
             ctx->block = (block128_f)ossl_sm4_encrypt;
@@ -85,6 +106,19 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
         else if (ctx->mode == EVP_CIPH_ECB_MODE)
                 ctx->stream.ecb = (ecb128_f)vpsm4_ecb_encrypt;
         } else
+#endif
+#ifdef AESNI_CAPABLE
+        if(AESNI_CAPABLE){
+            ossl_sm4_set_key(key, ks);
+            ctx->block = (block128_f)aesni_sm4_decrypt;
+            ctx->stream.cbc = NULL;
+            if(ctx->mode == EVP_CIPH_ECB_MODE)
+                ctx->stream.ecb = (ecb128_f)aesni_sm4_ecb_encrypt;
+            else if (ctx->mode == EVP_CIPH_CBC_MODE)
+                ctx->stream.cbc = (cbc128_f) aesni_sm4_cbc_encrypt;
+            // else if (ctx->mode == EVP_CIPH_CTR_MODE)
+            //     ctx->stream.ctr = (ctr128_f) aesni_sm4_ctr_encrypt;
+        }else
 #endif
         {
             ossl_sm4_set_key(key, ks);
