@@ -338,9 +338,9 @@ disallowing MD5-SHA1 breaks TLS versions earlier than 1.2 and should thus be
 set together with a minimum TLS version of 1.2 or higher.
 
 Applications can check whether a digest is allowed in a L<OSSL_LIB_CTX(3)> or
-L<EVP_PKEY_CTX(3)> using L<EVP_signature_md_algorithm_allowed(3)>.
-Applications that want to modify the list of acceptable algorithms can do so
-either in a B<OSSL_LIB_CTX> or in a specific B<EVP_PKEY_CTX>.
+B<EVP_PKEY_CTX> using L<EVP_signature_md_algorithm_allowed(3)>.  Applications
+that want to modify the list of acceptable algorithms can do so either in
+a B<OSSL_LIB_CTX> or in a specific B<EVP_PKEY_CTX>.
 
 To modify the default that will be used for new signature or verification
 operations, use L<EVP_signature_md_algorithms_set(3)> to adjust the full list,

@@ -62,7 +62,7 @@ IF[{- !$disabled{tests} -}]
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
           provfetchtest prov_config_test rand_test ca_internals_test \
           bio_tfo_test membio_test bio_dgram_test list_test fips_version_test \
-          x509_test hpke_test pairwise_fail_test nodefltctxtest
+          x509_test hpke_test pairwise_fail_test nodefltctxtest sig_md_alg_test
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -1127,6 +1127,10 @@ ENDIF
   SOURCE[cert_comp_test]=cert_comp_test.c helpers/ssltestlib.c
   INCLUDE[cert_comp_test]=../include ../apps/include ..
   DEPEND[cert_comp_test]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[sig_md_alg_test]=sig_md_alg_test.c
+  INCLUDE[sig_md_alg_test]=../include ../apps/include ..
+  DEPEND[sig_md_alg_test]=../libcrypto libtestutil.a
 
 {-
    use File::Spec::Functions;
