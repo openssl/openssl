@@ -683,6 +683,8 @@ EC_KEY *ossl_ec_key_dup(const EC_KEY *src, int selection)
 
 int ossl_ec_key_generate_public_key(EC_KEY *ec)
 {
+    EC_POINT *pub_key = NULL;
+
     if (ec == NULL || ec->group == NULL || ec->group->meth == NULL
         || ec->group->meth->keygenpub == NULL)
         return 0;
@@ -690,7 +692,21 @@ int ossl_ec_key_generate_public_key(EC_KEY *ec)
         ERR_raise(ERR_LIB_EC, EC_R_MISSING_PRIVATE_KEY);
         return 0;
     }
-    return ec->group->meth->keygenpub(ec);
+    if (ec->pub_key == NULL) {
+        pub_key = EC_POINT_new(ec->group);
+        if (pub_key == NULL)
+            return 0;
+        ec->pub_key = pub_key;
+    }
+
+    if (ec->group->meth->keygenpub(ec) <= 0) {
+        if (pub_key != NULL) {
+            ec->pub_key = NULL;
+            EC_POINT_free(pub_key);
+        }
+        return 0;
+    }
+    return 1;
 }
 
 
