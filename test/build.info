@@ -70,7 +70,7 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   IF[{- !$disabled{quic} -}]
-    PROGRAMS{noinst}=priority_queue_test event_queue_test
+    PROGRAMS{noinst}=priority_queue_test event_queue_test list_test
   ENDIF
 
   SOURCE[confdump]=confdump.c
@@ -727,6 +727,10 @@ IF[{- !$disabled{tests} -}]
       SOURCE[event_queue_test]=event_queue_test.c
       INCLUDE[event_queue_test]=../include ../apps/include
       DEPEND[event_queue_test]=../libcrypto ../libssl.a libtestutil.a
+
+      SOURCE[list_test]=list_test.c
+      INCLUDE[list_test]=../include ../apps/include
+      DEPEND[list_test]=libtestutil.a
     ENDIF
 
     SOURCE[dhtest]=dhtest.c
