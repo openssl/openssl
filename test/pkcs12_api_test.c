@@ -35,7 +35,7 @@ static PKCS12 *PKCS12_load(const char *fpath)
     BIO *bio = NULL;
     PKCS12 *p12 = NULL;
 
-    bio = BIO_new_file(fpath, "r");
+    bio = BIO_new_file(fpath, "rb");
     if (!TEST_ptr(bio))
         goto err;
 
