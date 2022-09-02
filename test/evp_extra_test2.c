@@ -326,6 +326,7 @@ end:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_EC)
 static int test_gen_pub_key(EVP_PKEY *keypair, const char *priv_name,
                             const char *pub_name)
 {
@@ -393,6 +394,7 @@ err:
     OSSL_PARAM_free(priv_params);
     return ret;
 }
+#endif
 
 #ifndef OPENSSL_NO_DH
 static int test_dh_tofrom_data_select(void)
