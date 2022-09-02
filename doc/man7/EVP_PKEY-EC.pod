@@ -140,7 +140,7 @@ Getter that returns the default digest name.
 =item "keep-private" (B<OSSL_PKEY_PARAM_KEEP_PRIVATE>) <int>
 
 Parameter settable on key generation. If set to nonzero it makes the key
-resulting from the public key generation from a supplied private key to keep
+resulting from the public key generation from a supplied private key keep
 the private key component.
 (The default value is 0.)
 

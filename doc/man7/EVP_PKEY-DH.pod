@@ -61,7 +61,7 @@ See EVP_PKEY_set1_encoded_public_key() and EVP_PKEY_get1_encoded_public_key().
 =item "keep-private" (B<OSSL_PKEY_PARAM_KEEP_PRIVATE>) <int>
 
 A parameter settable on key generation. If set to nonzero it makes the key
-resulting from the public key generation from a supplied private key to keep
+resulting from the public key generation from a supplied private key keep
 the private key component.
 (The default value is 0.)
 
