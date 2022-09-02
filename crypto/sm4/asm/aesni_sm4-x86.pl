@@ -7,10 +7,14 @@
 # https://www.openssl.org/source/license.html
 
 #
+<<<<<<< HEAD
 # This module implements support for SM4 hw aesni support on x86
 # Implement the ECB, CBC and CTR modes in Unix X86, because the ways
 # to passing parameters between caller and callee are different in 
 # Unix and Win64, here just implement the Unix version.
+=======
+# This module implements support for SM4 hw support on aarch64
+>>>>>>> 203cc7fe937d0c28d8660609563e67e27807129b
 # Aug. 2022
 #
 
