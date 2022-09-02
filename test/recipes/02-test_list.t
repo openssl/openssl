@@ -11,9 +11,6 @@ use OpenSSL::Test::Utils;
 
 setup("test_list");
 
-plan skip_all => "No list tests without QUIC"
-    if disabled("quic");
-
 plan tests => 1;
 
 ok(run(test(["list_test"])));

@@ -63,14 +63,14 @@ IF[{- !$disabled{tests} -}]
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
           provfetchtest prov_config_test rand_test ca_internals_test \
-          bio_tfo_test membio_test
+          bio_tfo_test membio_test list_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
   ENDIF
 
   IF[{- !$disabled{quic} -}]
-    PROGRAMS{noinst}=priority_queue_test event_queue_test list_test
+    PROGRAMS{noinst}=priority_queue_test event_queue_test
   ENDIF
 
   SOURCE[confdump]=confdump.c
@@ -727,15 +727,15 @@ IF[{- !$disabled{tests} -}]
       SOURCE[event_queue_test]=event_queue_test.c
       INCLUDE[event_queue_test]=../include ../apps/include
       DEPEND[event_queue_test]=../libcrypto ../libssl.a libtestutil.a
-
-      SOURCE[list_test]=list_test.c
-      INCLUDE[list_test]=../include ../apps/include
-      DEPEND[list_test]=libtestutil.a
     ENDIF
 
     SOURCE[dhtest]=dhtest.c
     INCLUDE[dhtest]=../include ../apps/include
     DEPEND[dhtest]=../libcrypto.a libtestutil.a
+
+    SOURCE[list_test]=list_test.c
+    INCLUDE[list_test]=../include ../apps/include
+    DEPEND[list_test]=libtestutil.a
 
     SOURCE[hmactest]=hmactest.c
     INCLUDE[hmactest]=../include ../apps/include

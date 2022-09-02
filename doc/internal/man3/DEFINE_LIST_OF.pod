@@ -14,7 +14,7 @@ ossl_list_TYPE_insert_before, ossl_list_TYPE_after
 
 =for openssl generic
 
- #include "internal/priority_queue.h"
+ #include "internal/list.h"
 
  OSSL_LIST(name);
  OSSL_LIST_MEMBER(NAME, TYPE);
@@ -44,14 +44,13 @@ here, B<I<TYPE>> is used as a placeholder for any datatype.  Lists are intended 
 be incorporated into other structures and rather than being a standalone data
 structure.
 
-The OSSL_LIST() macro returns the name for a priority queue
-of the specified B<I<TYPE>>.  This is a structure which should be treated as
-opaque.
+The OSSL_LIST() macro returns the name for a list of the specified
+B<I<TYPE>>.  This is a structure which should be treated as opaque.
 
-DEFINE_LIST_OF() creates a set of functions for a priority queue
-of B<I<TYPE>> elements with the name B<I<NAME>>.  The type is
-represented by B<OSSL_LIST>(B<I<NAME>>) and each function name begins
-with B<ossl_list_I<NAME>_>.  The list's linkages are stored in the
+DEFINE_LIST_OF() creates a set of functions for a list of B<I<TYPE>>
+elements with the name B<I<NAME>>.  The type is represented
+by B<OSSL_LIST>(B<I<NAME>>) and each function name begins with
+B<ossl_list_I<NAME>_>.  The list's linkages are stored in the
 B<OSSL_LIST_MEMBER>(B<I<NAME>>, B<I<TYPE>>) field.
 
 B<ossl_list_I<NAME>_init>() initialises the memory pointed to by I<list>
@@ -84,11 +83,11 @@ I<existing> element.
 
 =head1 RETURN VALUES
 
-B<ossl_pqueue_I<NAME>_num>() returns the number of elements in the
+B<ossl_list_I<NAME>_num>() returns the number of elements in the
 list.
 
-B<ossl_pqueue_I<NAME>_head>(), B<ossl_pqueue_I<NAME>_tail>(),
-B<ossl_pqueue_I<NAME>_next>() and B<ossl_pqueue_I<NAME>_prev>() return
+B<ossl_list_I<NAME>_head>(), B<ossl_list_I<NAME>_tail>(),
+B<ossl_list_I<NAME>_next>() and B<ossl_list_I<NAME>_prev>() return
 the specified element in the list.
 
 =head1 EXAMPLES
