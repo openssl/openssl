@@ -811,13 +811,19 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
   static const unsigned char application_traffic[] = "traffic upd";
 #endif
     const EVP_MD *md = ssl_handshake_md(s);
-    size_t hashlen = EVP_MD_get_size(md);
+    size_t hashlen;
     unsigned char key[EVP_MAX_KEY_LENGTH];
     unsigned char *insecret, *iv;
     unsigned char secret[EVP_MAX_MD_SIZE];
     EVP_CIPHER_CTX *ciph_ctx;
     size_t keylen, ivlen, taglen;
-    int ret = 0;
+    int ret = 0, l;
+
+    if ((l = EVP_MD_get_size(md)) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    hashlen = (size_t)l;
 
     if (s->server == sending)
         insecret = s->server_app_traffic_secret;
