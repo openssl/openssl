@@ -101,7 +101,6 @@ the specified element in the list.
  };
 
  DEFINE_LIST_OF(new_items, ITEM);
- DEFINE_LIST_OF(failed_items, ITEM);
 
  OSSL_LIST(new_items) new;
 
