@@ -97,19 +97,13 @@ the specified element in the list.
  struct item_st {
      ...
      OSSL_LIST_MEMBER(new_items, ITEM);
-     OSSL_LIST_MEMBER(failed_items, ITEM);
      ...
  };
 
- DEFINE_LIST_OF(new_items, TESTL);
- DEFINE_LIST_OF(failed_items, TESTL);
+ DEFINE_LIST_OF(new_items, ITEM);
+ DEFINE_LIST_OF(failed_items, ITEM);
 
- struct {
-     ...
-     OSSL_LIST(new_items) new;
-     OSSL_LIST(failed_items) failed;
-     ...
- } *st;
+ OSSL_LIST(new_items) new;
 
  ITEM *p;
 

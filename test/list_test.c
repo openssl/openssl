@@ -18,8 +18,6 @@
 #include "internal/nelem.h"
 #include "testutil.h"
 
-#define MAX_SAMPLES 500000
-
 typedef struct testl_st TESTL;
 struct testl_st {
     int n;
@@ -131,7 +129,7 @@ static int test_insert(void)
     if (!TEST_ptr_null(c) || !TEST_ptr_null(d))
         return 0;
 
-    /* Check the removing the head of a two element list works */
+    /* Check removing the head of a two element list works */
     ossl_list_int_remove(&l, elem + 2);                     /* 3 4 5 */
     ossl_list_int_remove(&l, elem + 4);                     /* 3 5 */
     ossl_list_int_remove(&l, elem + 3);                     /* 5 */
@@ -139,7 +137,7 @@ static int test_insert(void)
             || !TEST_int_eq(ossl_list_int_tail(&l)->n, 5))
         return 0;
 
-    /* Check the removing the tail of a two element list works */
+    /* Check removing the tail of a two element list works */
     ossl_list_int_insert_head(&l, elem);                    /* 0 5 */
     ossl_list_int_remove(&l, elem + 5);                     /* 0 */
     if (!TEST_int_eq(ossl_list_int_head(&l)->n, 0)
