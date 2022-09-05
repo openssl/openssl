@@ -10,7 +10,10 @@
 #include "internal/quic_fc.h"
 #include "internal/quic_error.h"
 #include "internal/common.h"
+#include "internal/safe_math.h"
 #include <assert.h>
+
+OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
 
 /*
  * TX Flow Controller (TXFC)
@@ -183,9 +186,18 @@ int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
 
 static int rxfc_cwm_bump_desired(QUIC_RXFC *rxfc)
 {
+    int err = 0;
     uint64_t window_rem = rxfc->cwm - rxfc->rwm;
     uint64_t threshold
-        = (rxfc->cur_window_size * WINDOW_THRESHOLD_NUM) / WINDOW_THRESHOLD_DEN;
+        = safe_mul_uint64_t(rxfc->cur_window_size,
+                            WINDOW_THRESHOLD_NUM, &err) / WINDOW_THRESHOLD_DEN;
+
+    if (err)
+        /*
+         * Extremely large window should never occur, but if it does, just use
+         * 1/2 as the threshold.
+         */
+        threshold = rxfc->cur_window_size / 2;
 
     return window_rem <= threshold;
 }

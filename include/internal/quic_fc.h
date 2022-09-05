@@ -56,7 +56,7 @@ uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc);
 
 /*
  * Consume num_bytes of credit. This is the 'On TX' operation. This should be
- * called when we transmit any controlled bytes. Calliing this with an argument
+ * called when we transmit any controlled bytes. Calling this with an argument
  * of 0 is a no-op.
  *
  * We must never transmit more controlled bytes than we are in credit for (see
@@ -178,7 +178,7 @@ int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
  * time a MAX_DATA or MAX_STREAM_DATA frame must be generated. Use
  * ossl_quic_rxfc_has_cwm_changed() to detect this condition.
  *
- * This value increases monotonically and never decreases.
+ * This value increases monotonically.
  */
 uint64_t ossl_quic_rxfc_get_cwm(QUIC_RXFC *rxfc);
 
