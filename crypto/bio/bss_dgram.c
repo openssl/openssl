@@ -1105,12 +1105,14 @@ static int extract_local(BIO *b, MSGHDR_TYPE *mh, BIO_ADDR *local) {
 
 static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
     int af = dgram_get_sock_family(b);
+#  if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) || defined(IPV6_PKTINFO)
+    CMSGHDR_TYPE *cmsg;
+    bio_dgram_data *data = b->ptr;
+#  endif
 
     if (af == AF_INET) {
 #  if defined(IP_PKTINFO)
-        CMSGHDR_TYPE *cmsg;
         struct in_pktinfo *info;
-        bio_dgram_data *data = b->ptr;
 
 #   if defined(OPENSSL_SYS_WINDOWS)
         cmsg = (CMSGHDR_TYPE *)mh->Control.buf;
@@ -1147,18 +1149,15 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
         return 1;
 
 #  elif defined(IP_SENDSRCADDR)
-        {
-            struct cmsghdr *cmsg;
-            struct in_addr *info;
+        struct in_addr *info;
 
-            cmsg = (struct cmsghdr *)mh->msg_control;
-            cmsg->cmsg_len   = BIO_CMSG_LEN(sizeof(struct in_addr));
-            cmsg->cmsg_level = IPPROTO_IP;
-            cmsg->cmsg_type  = IP_SENDSRCADDR;
+        cmsg = (struct cmsghdr *)mh->msg_control;
+        cmsg->cmsg_len   = BIO_CMSG_LEN(sizeof(struct in_addr));
+        cmsg->cmsg_level = IPPROTO_IP;
+        cmsg->cmsg_type  = IP_SENDSRCADDR;
 
-            info = (struct in_addr *)BIO_CMSG_DATA(cmsg);
-            *info = local->s_in.sin_addr;
-        }
+        info = (struct in_addr *)BIO_CMSG_DATA(cmsg);
+        *info = local->s_in.sin_addr;
 
         /* See comment above. */
         if (local->s_in.sin_port != 0
@@ -1174,9 +1173,7 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
 #  if OPENSSL_USE_IPV6
     else if (af == AF_INET6) {
 #   if defined(IPV6_PKTINFO)
-        CMSGHDR_TYPE *cmsg;
         struct in6_pktinfo *info;
-        bio_dgram_data *data = b->ptr;
 
 #    if defined(OPENSSL_SYS_WINDOWS)
         cmsg = (CMSGHDR_TYPE *)mh->Control.buf;
