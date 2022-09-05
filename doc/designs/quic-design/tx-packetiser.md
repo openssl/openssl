@@ -167,11 +167,12 @@ struct ossl_quic_packet_st {
     QUIC_PN packet_number; /* RFC 9000 12.3 */
     size_t packet_length;
 
-    /* Pkts - might be better as one field as per ACK Manager */
-    unsigned int initial : 1;
-    unsigned int handshake : 1;
-    unsigned int rtt0 : 1;
-    unsigned int rtt1 : 1;
+    /*
+     * One of the QUIC_PN_SPACE_* values. This qualifies the pkt_num field
+     * into a packet number space.
+     */
+    unsigned int pkt_space : 2;
+
     /* Pkts options */
     PACKET_VALIDITY validity;
 
@@ -209,7 +210,7 @@ sending by the record layer.
 
 ```c
 int ossl_quic_packetiser_buffer_frame(OSSL_QUIC_TX_PACKETISER *tx,
-                                      QUIC_STREAM *stream,
+                                      QUIC_CONNECTION *stream,
                                       const OSSL_QUIC_FRAME *frame,
                                       size_t frame_length);
 ```
