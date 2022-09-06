@@ -7,14 +7,14 @@ CFLAGS = -I../../include -g -Wall
 LDFLAGS = -L../..
 LDLIBS = -lcrypto
 
-all: rsa_encode
+all: ec_encode rsa_encode
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
-rsa_encode: rsa_encode.o
+%_encode: %_encode.o
 
 test: ;
 
 clean:
-	$(RM) *.o rsa_encode
+	$(RM) *.o rsa_encode ec_encode
