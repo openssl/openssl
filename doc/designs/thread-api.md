@@ -214,6 +214,12 @@ int OSSL_thread_pool_enter(OSSL_THREAD_POOL_COOKIE *cookie);
  * Causes any in progress calls to OSSL_thread_pool_enter, or any future such
  * call made using the given cookie, to return.
  *
+ * This function returns immediately, but calls to OSSL_thread_pool_enter may
+ * not return until some arbitrary later time (for example, so that they can
+ * finish processing a work item they are currently processing before
+ * returning). For a guarantee that OSSL_thread_pool_enter has returned, see
+ * OSSL_thread_pool_exit_wait.
+ *
  * Returns 0 if the cookie is invalid. Otherwise returns 1. There is no
  * indication of whether the call caused any OSSL_thread_pool_enter call to
  * return.
