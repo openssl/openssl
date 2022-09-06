@@ -13,7 +13,7 @@ Main structures
 ### Connection
 
 Represented by an `QUIC_CONNECTION` object, defined in
-[`ssl/quic/quic_local.h`](../../../ssl/quic/quic_local.h).
+[`include/internal/quic_ssl.h`](../../../include/internal/quic_ssl.h).
 
 ### Stream
 

@@ -9,7 +9,7 @@
 
 #include <openssl/macros.h>
 #include <openssl/objects.h>
-#include "quic_local.h"
+#include "internal/quic_ssl.h"
 #include "internal/quic_vlint.h"
 #include "internal/quic_wire.h"
 

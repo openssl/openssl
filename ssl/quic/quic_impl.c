@@ -239,3 +239,39 @@ int ossl_quic_renegotiate_check(SSL *ssl, int initok)
 {
     return 1;
 }
+
+QUIC_CONNECTION *ossl_quic_conn_from_ssl(SSL *ssl)
+{
+    return QUIC_CONNECTION_FROM_SSL(ssl);
+}
+
+/*
+ * The following are getters and setters of pointers, but they don't affect
+ * the objects being pointed at.  They are CURRENTLY to be freed separately
+ * by the caller the set them in the first place.
+ */
+int ossl_quic_conn_set_qrx(QUIC_CONNECTION *qc, OSSL_QRX *qrx)
+{
+    if (qc == NULL)
+        return 0;
+    qc->qrx = qrx;
+    return 1;
+}
+
+OSSL_QRX *ossl_quic_conn_get_qrx(QUIC_CONNECTION *qc)
+{
+    return qc != NULL ? qc->qrx : NULL;
+}
+
+int ossl_quic_conn_set_ackm(QUIC_CONNECTION *qc, OSSL_ACKM *ackm)
+{
+    if (qc == NULL)
+        return 0;
+    qc->ackm = ackm;
+    return 1;
+}
+
+OSSL_ACKM *ossl_quic_conn_set_akcm(QUIC_CONNECTION *qc)
+{
+    return qc != NULL ? qc->ackm : NULL;
+}
