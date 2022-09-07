@@ -1153,6 +1153,19 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
 #  elif defined(IP_SENDSRCADDR)
         struct in_addr *info;
 
+        /*
+         * At least FreeBSD is very pedantic about using IP_SENDSRCADDR when we
+         * are not bound to 0.0.0.0 or ::, even if the address matches what we
+         * bound to. Support this by not packing the structure if the address
+         * matches our understanding of our local address. IP_SENDSRCADDR is a
+         * BSD thing, so we don't need an explicit test for BSD here.
+         */
+        if (local->s_in.sin_addr.s_addr == data->local_addr.s_in.sin_addr.s_addr) {
+            mh->msg_control    = NULL;
+            mh->msg_controllen = 0;
+            return 1;
+        }
+
         cmsg = (struct cmsghdr *)mh->msg_control;
         cmsg->cmsg_len   = BIO_CMSG_LEN(sizeof(struct in_addr));
         cmsg->cmsg_level = IPPROTO_IP;
@@ -1492,7 +1505,7 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
         num_msg = BIO_MAX_MSGS_PER_CALL;
 
     for (i = 0; i < num_msg; ++i) {
-        translate_msg(b, &mh[i].msg_hdr, &iov[i], 
+        translate_msg(b, &mh[i].msg_hdr, &iov[i],
                       control[i], &BIO_MSG_N(msg, stride, i));
 
         /* If local address was requested, it must have been enabled */
@@ -1520,16 +1533,14 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
          */
         if (BIO_MSG_N(msg, stride, i).local != NULL)
             if (extract_local(b, &mh[i].msg_hdr,
-                              BIO_MSG_N(msg, stride, i).local) < 1) {
-                if (i > 0) {
-                    *num_processed = i;
-                    return 1;
-                } else {
-                    *num_processed = 0;
-                    ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
-                    return 0;
-                }
-            }
+                              BIO_MSG_N(msg, stride, i).local) < 1)
+                /*
+                 * It appears BSDs do not support local addresses for
+                 * loopback sockets. In this case, just clear the local
+                 * address, as for OS X and Windows in some circumstances
+                 * (see below).
+                 */
+                BIO_ADDR_clear(msg->local);
     }
 
     *num_processed = (size_t)ret;
@@ -1563,7 +1574,7 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
     msg->flags      = 0;
 
     if (msg->local != NULL)
-        if (extract_local(b, &mh, msg->local) < 1) {
+        if (extract_local(b, &mh, msg->local) < 1)
             /*
              * OS X exhibits odd behaviour where it appears that if a packet is
              * sent before the receiving interface enables IP_PKTINFO, it will
@@ -1579,19 +1590,13 @@ static int dgram_recvmmsg(BIO *b, BIO_MSG *msg,
              *
              * We cannot return the local address if we do not have it, but this
              * is not a caller error either, so just return a zero address
-             * structure.
-             *
-             * We enable this workaround for Apple only as it should not
-             * be necessary otherwise.
+             * structure. This is similar to how we handle Windows loopback
+             * interfaces (see below). We enable this workaround for all
+             * platforms, not just Apple, as this kind of quirk in OS networking
+             * stacks seems to be common enough that failing hard if a local
+             * address is not provided appears to be too brittle.
              */
-#  if defined(__APPLE__)
             BIO_ADDR_clear(msg->local);
-#  else
-            ERR_raise(ERR_LIB_BIO, BIO_R_LOCAL_ADDR_NOT_AVAILABLE);
-            *num_processed = 0;
-            return 0;
-#  endif
-        }
 
     *num_processed = 1;
     return 1;
