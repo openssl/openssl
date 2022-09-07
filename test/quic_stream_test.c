@@ -239,7 +239,7 @@ static int test_bulk(int idx)
     /* Append bytes into the buffer in chunks of random length. */
     ref_src_cur = ref_src_buf;
     do {
-        l = test_random() % init_size;
+        l = (test_random() % init_size) + 1;
         if (!TEST_true(ossl_qss_append(qss, src_buf, l, &consumed)))
             goto err;
 
