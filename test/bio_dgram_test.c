@@ -102,9 +102,9 @@ static int test_bio_dgram_impl(int af, int use_local)
     int fd1 = -1, fd2 = -1;
     BIO_ADDR *addr1 = NULL, *addr2 = NULL, *addr3 = NULL, *addr4 = NULL,
              *addr5 = NULL, *addr6 = NULL;
-    struct in_addr ina = {0};
+    struct in_addr ina;
 #if defined(OPENSSL_USE_IPV6)
-    struct in6_addr ina6 = {0};
+    struct in6_addr ina6;
 #endif
     void *pina;
     size_t inal, i;
@@ -133,6 +133,7 @@ static int test_bio_dgram_impl(int af, int use_local)
         goto err;
     }
 
+    memset(pina, 0, inal);
     addr1 = BIO_ADDR_new();
     if (!TEST_ptr(addr1))
         goto err;
