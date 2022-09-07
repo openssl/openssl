@@ -141,8 +141,11 @@ static int store_key(EVP_PKEY *pkey, FILE *f, const char *passphrase)
      * key to be encrypted. You must set both a cipher and a passphrase.
      */
     if (passphrase != NULL) {
-        /* Set cipher. AES-128-CBC is a reasonable default. */
-        if (OSSL_ENCODER_CTX_set_cipher(ectx, "AES-128-CBC", propq) == 0) {
+        /*
+         * Set cipher. Let's use AES-256-CBC, because it is
+         * more quantum resistant.
+         */
+        if (OSSL_ENCODER_CTX_set_cipher(ectx, "AES-256-CBC", propq) == 0) {
             fprintf(stderr, "OSSL_ENCODER_CTX_set_cipher() failed\n");
             goto cleanup;
         }
