@@ -1161,12 +1161,10 @@ static int s390x_pkey_ecx_derive25519(EVP_PKEY_CTX *ctx, unsigned char *key,
 {
     const unsigned char *privkey, *pubkey;
 
-    if (!validate_ecx_derive(ctx, key, keylen, &privkey, &pubkey))
+    if (!validate_ecx_derive(ctx, key, keylen, &privkey, &pubkey)
+        || (key != NULL
+            && s390x_x25519_mul(key, privkey, pubkey) == 0))
         return 0;
-
-    if (key != NULL)
-        return s390x_x25519_mul(key, pubkey, privkey);
-
     *keylen = X25519_KEYLEN;
     return 1;
 }
@@ -1176,12 +1174,10 @@ static int s390x_pkey_ecx_derive448(EVP_PKEY_CTX *ctx, unsigned char *key,
 {
     const unsigned char *privkey, *pubkey;
 
-    if (!validate_ecx_derive(ctx, key, keylen, &privkey, &pubkey))
+    if (!validate_ecx_derive(ctx, key, keylen, &privkey, &pubkey)
+        || (key != NULL
+            && s390x_x448_mul(key, pubkey, privkey) == 0))
         return 0;
-
-    if (key != NULL)
-        return s390x_x448_mul(key, pubkey, privkey);
-
     *keylen = X448_KEYLEN;
     return 1;
 }
