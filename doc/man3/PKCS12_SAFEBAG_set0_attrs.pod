@@ -20,8 +20,6 @@ PKCS#12 safeBag. I<bag> is the B<PKCS12_SAFEBAG> to assign the attributes to.
 
 PKCS12_SAFEBAG_set0_attrs() does not return a value. 
 
-=head1 SEE ALSO
-
 =head1 COPYRIGHT
 
 Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
