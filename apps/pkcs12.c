@@ -878,7 +878,7 @@ static int jdk_trust(PKCS12_SAFEBAG *bag, void *cbarg)
         return 1;
 
     /* Get the current attrs */
-    attrs = PKCS12_SAFEBAG_get0_attrs(bag);
+    attrs = (STACK_OF(X509_ATTRIBUTE)*)PKCS12_SAFEBAG_get0_attrs(bag);
 
     /* Create a new attr for the JDK Trusted Usage and add it */
     attr = X509_ATTRIBUTE_create(NID_oracle_jdk_trustedkeyusage, V_ASN1_OBJECT, (ASN1_OBJECT*)cbarg);
