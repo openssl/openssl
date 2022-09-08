@@ -19,16 +19,34 @@
  *
  * For discussion, see doc/designs/quic-design/quic-fc.md.
  */
-typedef struct quic_txfc_st {
-    uint64_t swm, cwm;
-    char     is_stream, has_become_blocked;
-} QUIC_TXFC;
+typedef struct quic_txfc_st QUIC_TXFC;
+
+struct quic_txfc_st {
+    QUIC_TXFC  *parent; /* stream-level iff non-NULL */
+    uint64_t    swm, cwm;
+    char        has_become_blocked;
+};
 
 /*
- * Initialises a TX flow controller. is_stream should be 1 if the TXFC is for
- * stream-level flow control, and 0 otherwise.
+ * Initialises a TX flow controller. conn_txfc should be non-NULL and point to
+ * the connection-level flow controller if the TXFC is for stream-level flow
+ * control, and NULL otherwise.
  */
-int ossl_quic_txfc_init(QUIC_TXFC *txfc, int is_stream);
+int ossl_quic_txfc_init(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc);
+
+/*
+ * Gets the parent (i.e., connection-level) TX flow controller. Returns NULL if
+ * called on a connection-level TX flow controller.
+ */
+QUIC_TXFC *ossl_quic_txfc_get_parent(QUIC_TXFC *txfc);
+
+/*
+ * Sets the parent (i.e., connection-level) TX flow controller. Not normally
+ * needed. Can only be used on a stream-level TX flow controller. This function
+ * cannot be used to change a flow controller from a stream to a
+ * connection-level flow controller or vice versa. Returns 1 on success.
+ */
+int ossl_quic_txfc_set_parent(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc);
 
 /*
  * Bump the credit watermark (CWM) value. This is the 'On TX Window Updated'
@@ -47,12 +65,18 @@ int ossl_quic_txfc_bump_cwm(QUIC_TXFC *txfc, uint64_t cwm);
  * controlled bytes we are allowed to send. (Thus if this function returns 0, we
  * are currently blocked.)
  *
- * As a convenience, if called on a stream-level TXFC and conn_txfc is non-NULL,
- * ossl_quic_txfc_get_credit() is called on that TXFC as well, and the lesser of
- * the two values are returned. conn_txfc must be NULL on a connection-level
- * TXFC.
+ * If called on a stream-level TXFC, ossl_quic_txfc_get_credit is called on
+ * the connection-level TXFC as well, and the lesser of the two values is
+ * returned.
  */
-uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc);
+uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc);
+
+/*
+ * Like ossl_quic_txfc_get_credit(), but when called on a stream-level TXFC,
+ * retrieves only the stream-level credit value and does not clamp it based on
+ * connection-level flow control.
+ */
+uint64_t ossl_quic_txfc_get_credit_local(QUIC_TXFC *txfc);
 
 /*
  * Consume num_bytes of credit. This is the 'On TX' operation. This should be
@@ -65,13 +89,18 @@ uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc);
  * remainder of the credit and returns 0. This indicates a serious programming
  * error on the caller's part. Otherwise, the function returns 1.
  *
- * As a convenience, if called on a stream-level TXFC and conn_txfc is non-NULL,
- * ossl_quic_txfc_consume_credit() is called on that TXFC also. If that call
- * returns zero, this function will also return zero. conn_txfc must be NULL
- * on a connection-level TXFC.
+ * If called on a stream-level TXFC, ossl_quic_txfc_consume_credit() is called
+ * on the connection-level TXFC also. If the call to that function on the
+ * connection-level TXFC returns zero, this function will also return zero.
  */
-int ossl_quic_txfc_consume_credit(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc,
-                                  uint64_t num_bytes);
+int ossl_quic_txfc_consume_credit(QUIC_TXFC *txfc, uint64_t num_bytes);
+
+/*
+ * Like ossl_quic_txfc_consume_credit(), but when called on a stream-level TXFC,
+ * consumes only from the stream-level credit and does not inform the
+ * connection-level TXFC.
+ */
+int ossl_quic_txfc_consume_credit_local(QUIC_TXFC *txfc, uint64_t num_bytes);
 
 /*
  * This flag is provided for convenience. A caller is not required to use it. It
@@ -98,7 +127,9 @@ uint64_t ossl_quic_txfc_get_swm(QUIC_TXFC *txfc);
  * RX Flow Controller (RXFC)
  * =========================
  */
-typedef struct quic_rxfc_st {
+typedef struct quic_rxfc_st QUIC_RXFC;
+
+struct quic_rxfc_st {
     /*
      * swm is the sent/received watermark, which tracks how much we have
      * received from the peer. rwm is the retired watermark, which tracks how
@@ -111,21 +142,37 @@ typedef struct quic_rxfc_st {
     OSSL_TIME       epoch_start;
     OSSL_TIME     (*now)(void *arg);
     void           *now_arg;
-    unsigned char   is_stream, error_code, has_cwm_changed, is_fin;
-} QUIC_RXFC;
+    QUIC_RXFC      *parent;
+    unsigned char   error_code, has_cwm_changed, is_fin;
+};
 
 /*
- * Initialises an RX flow controller. is_stream should be 1 if the RXFC is for
- * stream-level flow control, and 0 otherwise. initial_window_size and
- * max_window_size specify the initial and absolute maximum window sizes,
- * respectively. Window size values are expressed in bytes and determine how
- * much credit the RXFC extends to the peer to transmit more data at a time.
+ * Initialises an RX flow controller. conn_rxfc should be non-NULL and point to
+ * a connection-level RXFC if the RXFC is for stream-level flow control, and
+ * NULL otherwise. initial_window_size and max_window_size specify the initial
+ * and absolute maximum window sizes, respectively. Window size values are
+ * expressed in bytes and determine how much credit the RXFC extends to the peer
+ * to transmit more data at a time.
  */
-int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, int is_stream,
+int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
                         uint64_t initial_window_size,
                         uint64_t max_window_size,
                         OSSL_TIME (*now)(void *arg),
                         void *now_arg);
+
+/*
+ * Gets the parent (i.e., connection-level) RXFC. Returns NULL if called on a
+ * connection-level RXFC.
+ */
+QUIC_RXFC *ossl_quic_rxfc_get_parent(QUIC_RXFC *rxfc);
+
+/*
+ * Sets the parent (i.e., connection-level) RXFC. Not normally needed. Can only
+ * be used on a stream-level RXFC. This function cannot be used to change a flow
+ * controller from a stream to a connection-level flow controller or vice versa.
+ * Returns 1 on success.
+ */
+int ossl_quic_rxfc_set_parent(QUIC_RXFC *rxfc, QUIC_RXFC *conn_txfc);
 
 /*
  * To be called whenever a STREAM frame is received.
@@ -147,7 +194,7 @@ int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, int is_stream,
  *
  * Returns 1 on success or 0 on failure.
  */
-int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
+int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc,
                                       uint64_t end, int is_fin);
 
 /*
@@ -167,7 +214,7 @@ int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
  *
  * Returns 1 on success and 0 on failure.
  */
-int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
+int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc,
                              uint64_t num_bytes,
                              OSSL_TIME rtt);
 

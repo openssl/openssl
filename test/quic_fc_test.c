@@ -19,7 +19,7 @@ static int test_txfc(int is_stream)
     if (!TEST_true(ossl_quic_txfc_init(&conn_txfc, 0)))
         goto err;
 
-    if (is_stream && !TEST_true(ossl_quic_txfc_init(&stream_txfc, 1)))
+    if (is_stream && !TEST_true(ossl_quic_txfc_init(&stream_txfc, &conn_txfc)))
         goto err;
 
     txfc = is_stream ? &stream_txfc : &conn_txfc;
@@ -37,25 +37,23 @@ static int test_txfc(int is_stream)
     if (!TEST_uint64_t_eq(ossl_quic_txfc_get_cwm(txfc), 2000))
         goto err;
 
-    if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc, NULL), 2000))
+    if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit_local(txfc), 2000))
         goto err;
 
-    if (is_stream && !TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc,
-                                                                 parent_txfc),
+    if (is_stream && !TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc),
                                        2000))
         goto err;
 
     if (!TEST_false(ossl_quic_txfc_has_become_blocked(txfc, 0)))
         goto err;
 
-    if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, parent_txfc, 500)))
+    if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, 500)))
         goto err;
 
-    if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc, NULL), 1500))
+    if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit_local(txfc), 1500))
         goto err;
 
-    if (is_stream && !TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc,
-                                                                 parent_txfc),
+    if (is_stream && !TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc),
                                        1500))
         goto err;
 
@@ -65,31 +63,29 @@ static int test_txfc(int is_stream)
     if (!TEST_uint64_t_eq(ossl_quic_txfc_get_swm(txfc), 500))
         goto err;
 
-    if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, parent_txfc, 100)))
+    if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, 100)))
         goto err;
 
     if (!TEST_uint64_t_eq(ossl_quic_txfc_get_swm(txfc), 600))
         goto err;
 
-    if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc, NULL), 1400))
+    if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit_local(txfc), 1400))
         goto err;
 
-    if (is_stream && !TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc,
-                                                                 parent_txfc),
+    if (is_stream && !TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc),
                                        1400))
         goto err;
 
     if (!TEST_false(ossl_quic_txfc_has_become_blocked(txfc, 0)))
         goto err;
 
-    if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, parent_txfc, 1400)))
+    if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, 1400)))
         goto err;
 
-    if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc, NULL), 0))
+    if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit_local(txfc), 0))
         goto err;
 
-    if (is_stream && !TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc,
-                                                                 parent_txfc),
+    if (is_stream && !TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc),
                                        0))
         goto err;
 
@@ -111,7 +107,7 @@ static int test_txfc(int is_stream)
     if (!TEST_false(ossl_quic_txfc_has_become_blocked(txfc, 0)))
         goto err;
 
-    if (!TEST_false(ossl_quic_txfc_consume_credit(txfc, parent_txfc, 1)))
+    if (!TEST_false(ossl_quic_txfc_consume_credit(txfc, 1)))
         goto err;
 
     if (!TEST_uint64_t_eq(ossl_quic_txfc_get_cwm(txfc), 2000))
@@ -135,23 +131,23 @@ static int test_txfc(int is_stream)
     if (!TEST_uint64_t_eq(ossl_quic_txfc_get_swm(txfc), 2000))
         goto err;
 
-    if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc, NULL), 500))
+    if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit_local(txfc), 500))
         goto err;
 
     if (is_stream)
         ossl_quic_txfc_has_become_blocked(parent_txfc, 1);
 
     if (is_stream) {
-        if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, parent_txfc, 399)))
+        if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, 399)))
             goto err;
 
         if (!TEST_false(ossl_quic_txfc_has_become_blocked(txfc, 0)))
             goto err;
 
-        if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc, parent_txfc), 1))
+        if (!TEST_uint64_t_eq(ossl_quic_txfc_get_credit(txfc), 1))
             goto err;
 
-        if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, parent_txfc, 1)))
+        if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, 1)))
             goto err;
 
         if (!TEST_true(ossl_quic_txfc_has_become_blocked(parent_txfc, 0)))
@@ -163,7 +159,7 @@ static int test_txfc(int is_stream)
         if (!TEST_false(ossl_quic_txfc_has_become_blocked(parent_txfc, 0)))
             goto err;
     } else {
-        if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, parent_txfc, 499)))
+        if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, 499)))
             goto err;
 
         if (!TEST_false(ossl_quic_txfc_has_become_blocked(txfc, 0)))
@@ -172,7 +168,7 @@ static int test_txfc(int is_stream)
         if (is_stream && !TEST_false(ossl_quic_txfc_has_become_blocked(parent_txfc, 0)))
             goto err;
 
-        if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, parent_txfc, 1)))
+        if (!TEST_true(ossl_quic_txfc_consume_credit(txfc, 1)))
             goto err;
 
         if (!TEST_true(ossl_quic_txfc_has_become_blocked(txfc, 0)))
@@ -495,7 +491,8 @@ static int run_rxfc_script(const struct rx_test_op *script)
                 if (!TEST_size_t_lt(op->stream_idx, OSSL_NELEM(stream_rxfc)))
                     goto err;
 
-                if (!TEST_true(ossl_quic_rxfc_init(&stream_rxfc[op->stream_idx], 1,
+                if (!TEST_true(ossl_quic_rxfc_init(&stream_rxfc[op->stream_idx],
+                                                   &conn_rxfc,
                                                    op->arg0, op->arg1,
                                                    fake_now, NULL)))
                     goto err;
@@ -509,7 +506,6 @@ static int run_rxfc_script(const struct rx_test_op *script)
                     goto err;
 
                 if (!TEST_true(ossl_quic_rxfc_on_rx_stream_frame(&stream_rxfc[op->stream_idx],
-                                                                 &conn_rxfc,
                                                                  op->arg0,
                                                                  (int)op->arg1)))
                     goto err;
@@ -522,7 +518,6 @@ static int run_rxfc_script(const struct rx_test_op *script)
                     goto err;
 
                 if (!TEST_int_eq(ossl_quic_rxfc_on_retire(&stream_rxfc[op->stream_idx],
-                                                          &conn_rxfc,
                                                           op->arg0,
                                                           ossl_ticks2time(op->arg1)),
                                  !op->expect_fail))

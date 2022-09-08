@@ -20,12 +20,29 @@ OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
  * =========================
  */
 
-int ossl_quic_txfc_init(QUIC_TXFC *txfc, int is_stream)
+int ossl_quic_txfc_init(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc)
 {
+    if (conn_txfc != NULL && conn_txfc->parent != NULL)
+        return 0;
+
     txfc->swm                   = 0;
     txfc->cwm                   = 0;
-    txfc->is_stream             = is_stream;
+    txfc->parent                = conn_txfc;
     txfc->has_become_blocked    = 0;
+    return 1;
+}
+
+QUIC_TXFC *ossl_quic_txfc_get_parent(QUIC_TXFC *txfc)
+{
+    return txfc->parent;
+}
+
+int ossl_quic_txfc_set_parent(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc)
+{
+    if (txfc->parent == NULL || conn_txfc == NULL)
+        return 0;
+
+    txfc->parent = conn_txfc;
     return 1;
 }
 
@@ -38,16 +55,21 @@ int ossl_quic_txfc_bump_cwm(QUIC_TXFC *txfc, uint64_t cwm)
     return 1;
 }
 
-uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc)
+uint64_t ossl_quic_txfc_get_credit_local(QUIC_TXFC *txfc)
+{
+    assert(txfc->swm <= txfc->cwm);
+    return txfc->cwm - txfc->swm;
+}
+
+uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc)
 {
     uint64_t r, conn_r;
 
-    assert(txfc->swm <= txfc->cwm);
-    r = txfc->cwm - txfc->swm;
+    r = ossl_quic_txfc_get_credit_local(txfc);
 
-    if (conn_txfc != NULL) {
-        assert(txfc->is_stream && !conn_txfc->is_stream);
-        conn_r = ossl_quic_txfc_get_credit(conn_txfc, NULL);
+    if (txfc->parent != NULL) {
+        assert(txfc->parent->parent == NULL);
+        conn_r = ossl_quic_txfc_get_credit_local(txfc->parent);
         if (conn_r < r)
             r = conn_r;
     }
@@ -55,11 +77,10 @@ uint64_t ossl_quic_txfc_get_credit(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc)
     return r;
 }
 
-int ossl_quic_txfc_consume_credit(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc,
-                                  uint64_t num_bytes)
+int ossl_quic_txfc_consume_credit_local(QUIC_TXFC *txfc, uint64_t num_bytes)
 {
     int ok = 1;
-    uint64_t credit = ossl_quic_txfc_get_credit(txfc, NULL);
+    uint64_t credit = ossl_quic_txfc_get_credit_local(txfc);
 
     if (num_bytes > credit) {
         ok = 0;
@@ -70,12 +91,18 @@ int ossl_quic_txfc_consume_credit(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc,
         txfc->has_become_blocked = 1;
 
     txfc->swm += num_bytes;
+    return ok;
+}
 
-    assert(conn_txfc == NULL || (txfc->is_stream && !conn_txfc->is_stream));
+int ossl_quic_txfc_consume_credit(QUIC_TXFC *txfc, uint64_t num_bytes)
+{
+    int ok = ossl_quic_txfc_consume_credit_local(txfc, num_bytes);
 
-    if (conn_txfc != NULL
-        && !ossl_quic_txfc_consume_credit(conn_txfc, NULL, num_bytes))
-        return 0;
+    if (txfc->parent != NULL) {
+        assert(txfc->parent->parent == NULL);
+        if (!ossl_quic_txfc_consume_credit_local(txfc->parent, num_bytes))
+            return 0;
+    }
 
     return ok;
 }
@@ -105,12 +132,15 @@ uint64_t ossl_quic_txfc_get_swm(QUIC_TXFC *txfc)
  * =========================
  */
 
-int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, int is_stream,
+int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
                         uint64_t initial_window_size,
                         uint64_t max_window_size,
                         OSSL_TIME (*now)(void *now_arg),
                         void *now_arg)
 {
+    if (conn_rxfc != NULL && conn_rxfc->parent != NULL)
+        return 0;
+
     rxfc->swm               = 0;
     rxfc->cwm               = initial_window_size;
     rxfc->rwm               = 0;
@@ -118,13 +148,27 @@ int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, int is_stream,
     rxfc->hwm               = 0;
     rxfc->cur_window_size   = initial_window_size;
     rxfc->max_window_size   = max_window_size;
-    rxfc->is_stream         = is_stream;
+    rxfc->parent            = conn_rxfc;
     rxfc->error_code        = 0;
     rxfc->has_cwm_changed   = 0;
     rxfc->epoch_start       = ossl_time_zero();
     rxfc->now               = now;
     rxfc->now_arg           = now_arg;
     rxfc->is_fin            = 0;
+    return 1;
+}
+
+QUIC_RXFC *ossl_quic_rxfc_get_parent(QUIC_RXFC *rxfc)
+{
+    return rxfc->parent;
+}
+
+int ossl_quic_rxfc_set_parent(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc)
+{
+    if (rxfc->parent == NULL || conn_rxfc == NULL)
+        return 0;
+
+    rxfc->parent = conn_rxfc;
     return 1;
 }
 
@@ -149,12 +193,11 @@ static int on_rx_controlled_bytes(QUIC_RXFC *rxfc, uint64_t num_bytes)
     return ok;
 }
 
-int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
-                                      uint64_t end, int is_fin)
+int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc, uint64_t end, int is_fin)
 {
     uint64_t delta;
 
-    if (!rxfc->is_stream || conn_rxfc == NULL || conn_rxfc->is_stream)
+    if (rxfc->parent == NULL)
         return 0;
 
     if (rxfc->is_fin && ((is_fin && rxfc->hwm != end) || end > rxfc->hwm)) {
@@ -170,8 +213,8 @@ int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
         delta = end - rxfc->hwm;
         rxfc->hwm = end;
 
-        on_rx_controlled_bytes(rxfc, delta);        /* result ignored */
-        on_rx_controlled_bytes(conn_rxfc, delta);   /* result ignored */
+        on_rx_controlled_bytes(rxfc, delta);           /* result ignored */
+        on_rx_controlled_bytes(rxfc->parent, delta);   /* result ignored */
     } else if (end < rxfc->hwm && is_fin) {
         rxfc->error_code = QUIC_ERR_FINAL_SIZE_ERROR;
         return 1; /* not a caller error */
@@ -286,11 +329,11 @@ static int rxfc_on_retire(QUIC_RXFC *rxfc, uint64_t num_bytes,
     return 1;
 }
 
-int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
+int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc,
                              uint64_t num_bytes,
                              OSSL_TIME rtt)
 {
-    if (!rxfc->is_stream || conn_rxfc == NULL || conn_rxfc->is_stream)
+    if (rxfc->parent == NULL)
         return 0;
 
     if (num_bytes == 0)
@@ -301,7 +344,7 @@ int ossl_quic_rxfc_on_retire(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
         return 0;
 
     rxfc_on_retire(rxfc, num_bytes, 0, rtt);
-    rxfc_on_retire(conn_rxfc, num_bytes, rxfc->cur_window_size, rtt);
+    rxfc_on_retire(rxfc->parent, num_bytes, rxfc->cur_window_size, rtt);
     return 1;
 }
 
