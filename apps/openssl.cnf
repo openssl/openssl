@@ -13,7 +13,7 @@
 # defined.
 HOME			= .
 
- # Use this in order to automatically load providers.
+# Use this in order to automatically load providers.
 openssl_conf = openssl_init
 
 # Comment out the next line to ignore configuration errors
