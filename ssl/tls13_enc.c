@@ -149,7 +149,7 @@ int tls13_derive_finishedkey(SSL_CONNECTION *s, const EVP_MD *md,
                              unsigned char *fin, size_t finlen)
 {
     /* ASCII: "finished", in hex for EBCDIC compatibility */
-    static const unsigned char finishedlabel[] = "\0x66\x69\x6E\x69\x73\x68\x65\x64";
+    static const unsigned char finishedlabel[] = "\x66\x69\x6E\x69\x73\x68\x65\x64";
 
     return tls13_hkdf_expand(s, md, secret, finishedlabel,
                              sizeof(finishedlabel) - 1, NULL, 0, fin, finlen, 1);
@@ -428,7 +428,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     /* ASCII: "c e traffic", in hex for EBCDIC compatibility */
     static const unsigned char client_early_traffic[] = "\x63\x20\x65\x20\x74\x72\x61\x66\x66\x69\x63";
     /* ASCII: "c hs traffic", in hex for EBCDIC compatibility */
-    static const unsigned char client_handshake_traffic[] = "\x63\x20\x68\x73\x20\x74x72\x61\x66\x66\x69\x63";
+    static const unsigned char client_handshake_traffic[] = "\x63\x20\x68\x73\x20\x74\x72\x61\x66\x66\x69\x63";
     /* ASCII: "c ap traffic", in hex for EBCDIC compatibility */
     static const unsigned char client_application_traffic[] = "\x63\x20\x61\x70\x20\x74\x72\x61\x66\x66\x69\x63";
     /* ASCII: "s hs traffic", in hex for EBCDIC compatibility */
