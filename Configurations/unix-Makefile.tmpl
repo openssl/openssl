@@ -1141,34 +1141,27 @@ $(SRCDIR)/crypto/bn/bn_prime.h: $(SRCDIR)/crypto/bn/bn_prime.pl
 .PHONY: generate_crypto_bn
 generate_crypto_bn: $(SRCDIR)/crypto/bn/bn_prime.h
 
-$(SRCDIR)/crypto/objects/obj_mac.num: $(SRCDIR)/crypto/objects/objects.pl \
-                                      $(SRCDIR)/crypto/objects/objects.txt
-	( cd $(SRCDIR); $(PERL) crypto/objects/objects.pl -n \
-				crypto/objects/objects.txt \
-				crypto/objects/obj_mac.num \
-				> crypto/objects/obj_mac.new && \
-	    mv crypto/objects/obj_mac.new crypto/objects/obj_mac.num )
-$(SRCDIR)/include/openssl/obj_mac.h: $(SRCDIR)/crypto/objects/objects.pl \
-                                     $(SRCDIR)/crypto/objects/obj_dat.pl \
-                                     $(SRCDIR)/crypto/objects/obj_mac.num \
-                                     $(SRCDIR)/crypto/objects/obj_compat.h
-	( cd $(SRCDIR); $(PERL) crypto/objects/objects.pl \
-				crypto/objects/objects.txt \
-				crypto/objects/obj_mac.num \
-				> include/openssl/obj_mac.h && \
-			$(PERL) crypto/objects/obj_dat.pl \
-				include/openssl/obj_mac.h \
-				> crypto/objects/obj_dat.h && \
-			sed -e '1,8d' crypto/objects/obj_compat.h \
-				>> include/openssl/obj_mac.h )
-$(SRCDIR)/crypto/objects/obj_dat.h: $(SRCDIR)/include/openssl/obj_mac.h
-$(SRCDIR)/crypto/objects/obj_xref.h: $(SRCDIR)/crypto/objects/objxref.pl \
-                                     $(SRCDIR)/crypto/objects/obj_mac.num \
-                                     $(SRCDIR)/crypto/objects/obj_xref.txt
-	( cd $(SRCDIR); $(PERL) crypto/objects/objxref.pl \
-				crypto/objects/obj_mac.num \
-				crypto/objects/obj_xref.txt \
-				> crypto/objects/obj_xref.h )
+crypto/objects/obj_mac.num: crypto/objects/objects.pl \
+                            crypto/objects/objects.txt
+	( $(PERL) crypto/objects/objects.pl -n crypto/objects/objects.txt \
+	          crypto/objects/obj_mac.num > crypto/objects/obj_mac.new && \
+	  mv crypto/objects/obj_mac.new crypto/objects/obj_mac.num )
+include/openssl/obj_mac.h: crypto/objects/objects.pl \
+                           crypto/objects/obj_dat.pl \
+                           crypto/objects/obj_mac.num \
+                           crypto/objects/obj_compat.h
+	( $(PERL) crypto/objects/objects.pl crypto/objects/objects.txt \
+	          crypto/objects/obj_mac.num > include/openssl/obj_mac.h && \
+	  $(PERL) crypto/objects/obj_dat.pl include/openssl/obj_mac.h \
+	        > crypto/objects/obj_dat.h && \
+	  sed -e '1,8d' crypto/objects/obj_compat.h \
+                     >> include/openssl/obj_mac.h )
+crypto/objects/obj_dat.h: include/openssl/obj_mac.h
+crypto/objects/obj_xref.h: crypto/objects/objxref.pl \
+                           crypto/objects/obj_mac.num \
+                           crypto/objects/obj_xref.txt
+	(  $(PERL) crypto/objects/objxref.pl crypto/objects/obj_mac.num \
+	           crypto/objects/obj_xref.txt > crypto/objects/obj_xref.h )
 
 $(SRCDIR)/crypto/conf/conf_def.h: $(SRCDIR)/crypto/conf/keysets.pl
 	( cd $(SRCDIR); $(PERL) crypto/conf/keysets.pl \
