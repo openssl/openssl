@@ -1105,7 +1105,7 @@ uninstall_image_docs:
 # is sensitive to build.info changes.
 update: generate errors ordinals generate_buildinfo
 
-generate: generate_apps generate_crypto_bn generate_crypto_objects \
+generate: generate_apps generate_crypto_bn \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
 
 generate_buildinfo: generate_doc_buildinfo
@@ -1169,9 +1169,6 @@ $(SRCDIR)/crypto/objects/obj_xref.h: $(SRCDIR)/crypto/objects/objxref.pl \
 				crypto/objects/obj_mac.num \
 				crypto/objects/obj_xref.txt \
 				> crypto/objects/obj_xref.h )
-.PHONY: generate_crypto_objects
-generate_crypto_objects: $(SRCDIR)/crypto/objects/obj_dat.h \
-                         $(SRCDIR)/crypto/objects/obj_xref.h
 
 $(SRCDIR)/crypto/conf/conf_def.h: $(SRCDIR)/crypto/conf/keysets.pl
 	( cd $(SRCDIR); $(PERL) crypto/conf/keysets.pl \

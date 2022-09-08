@@ -40,6 +40,8 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/x509.h \
          include/openssl/x509v3.h \
          include/openssl/x509_vfy.h \
+         crypto/objects/obj_mac.num include/openssl/obj_mac.h \
+         crypto/objects/obj_dat.h crypto/objects/obj_xref.h \
          include/crypto/bn_conf.h include/crypto/dso_conf.h
 
 GENERATE[include/openssl/asn1.h]=include/openssl/asn1.h.in
