@@ -3,7 +3,8 @@
 =head1 NAME
 
 EVP_PBE_CipherInit, EVP_PBE_CipherInit_ex,
-EVP_PBE_find, EVP_PBE_find_ex - Password based encryption routines
+EVP_PBE_find, EVP_PBE_find_ex,
+EVP_PBE_alg_add_type, EVP_PBE_alg_add - Password based encryption routines
 
 =head1 SYNOPSIS
 
