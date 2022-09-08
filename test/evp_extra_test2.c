@@ -1091,9 +1091,9 @@ static int test_evp_pbe_alg_add(void)
 
         goto err;
 
-    if (!TEST_true(keygen != NULL))
+    if (!TEST_ptr((void*)keygen))
         goto err;
-    if (!TEST_true(keygen_ex == NULL))
+    if (!TEST_ptr_null((void*)keygen_ex))
         goto err;
 
     ret = 1;
