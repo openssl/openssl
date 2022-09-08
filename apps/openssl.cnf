@@ -13,7 +13,7 @@
 # defined.
 HOME			= .
 
- # Use this in order to automatically load providers.
+# Use this in order to automatically load providers.
 openssl_conf = openssl_init
 
 # Comment out the next line to ignore configuration errors
@@ -92,7 +92,7 @@ serial		= $dir/serial 		# The current serial number
 crlnumber	= $dir/crlnumber	# the current crl number
 					# must be commented out to leave a V1 CRL
 crl		= $dir/crl.pem 		# The current CRL
-private_key	= $dir/private/cakey.pem# The private key
+private_key	= $dir/private/cakey.pem # The private key
 
 x509_extensions	= usr_cert		# The extensions to add to the cert
 
