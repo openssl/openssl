@@ -835,13 +835,6 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
         goto malformed;
 
     /*
-     * We automatically discard INITIAL keys when successfully decrypting a
-     * HANDSHAKE packet.
-     */
-    if (enc_level == QUIC_ENC_LEVEL_HANDSHAKE)
-        ossl_qrl_enc_level_set_discard(&qrx->el_set, QUIC_ENC_LEVEL_INITIAL);
-
-    /*
      * The AAD data is the entire (unprotected) packet header including the PN.
      * The packet header has been unprotected in place, so we can just reuse the
      * PACKET buffer. The header ends where the payload begins.
@@ -877,6 +870,13 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
                               &dec_len, sop, aad_len, rxe->pn, enc_level,
                               rxe->hdr.key_phase))
         goto malformed;
+
+    /*
+     * We automatically discard INITIAL keys when successfully decrypting a
+     * HANDSHAKE packet.
+     */
+    if (enc_level == QUIC_ENC_LEVEL_HANDSHAKE)
+        ossl_qrl_enc_level_set_discard(&qrx->el_set, QUIC_ENC_LEVEL_INITIAL);
 
     /*
      * At this point, we have successfully authenticated the AEAD tag and no
