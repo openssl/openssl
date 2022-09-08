@@ -338,13 +338,13 @@ err:
  * PKCS12 safeBag/attribute builder
  */
 
-static int add_attributes(PKCS12_SAFEBAG *bag, const PKCS12_ATTR *attrs)
+static int add_attributes(PKCS12_SAFEBAG *bag, const PKCS12_ATTR *attr)
 {
     int ret = 0;
     int attr_nid;
-    const PKCS12_ATTR *p_attr = attrs;
+    const PKCS12_ATTR *p_attr = attr;
 
-    if (attrs == NULL)
+    if (attr == NULL)
         return 1;
 
     while (p_attr->oid != NULL) {
