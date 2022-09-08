@@ -56,16 +56,18 @@ static size_t ring_buf_avail(struct ring_buf *r)
 static size_t ring_buf_push(struct ring_buf *r,
                             const unsigned char *buf, size_t buf_len)
 {
-    size_t pushed = 0, avail, idx, l;
+    size_t pushed = 0, avail, idx, l, i;
     unsigned char *start = r->start;
 
-    for (;;) {
+    for (i = 0;; ++i) {
         avail = ring_buf_avail(r);
         if (buf_len > avail)
             buf_len = avail;
 
         if (buf_len == 0)
             break;
+
+        assert(i < 2);
 
         idx = r->head_offset % r->alloc;
         l = r->alloc - idx;
@@ -325,6 +327,7 @@ int ossl_qss_mark_transmitted(OSSL_QSS *qss,
                               uint64_t end)
 {
     UINT_RANGE r;
+
     r.start = start;
     r.end   = end;
 
@@ -424,6 +427,17 @@ int ossl_qss_append(OSSL_QSS *qss,
         return 0;
     }
 
+    /*
+     * Note: It is assumed that ossl_qss_append will be called during a call to
+     * e.g. SSL_write and this function is function is therefore designed to
+     * support such semantics. In particular, the buffer pointed to by buf is
+     * only assumed to be valid for the duration of this call, therefore we must
+     * copy the data here. We will later copy-and-encrypt the data during packet
+     * encryption, so this is a two-copy design. Supporting a one-copy design in
+     * the future will require applications to use a different kind of API.
+     * Supporting such changes in future will require corresponding enhancements
+     * to this code.
+     */
     while (buf_len > 0) {
         l = ring_buf_push(&qss->ring_buf, buf, buf_len);
         if (l == 0)
