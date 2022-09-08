@@ -76,7 +76,7 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
 # endif
 
 #ifndef OPENSSL_NO_WINSTORE
-# define X509_CERT_URI            "winstore://"
+# define X509_CERT_URI            "org.openssl.winstore://"
 #else
 # define X509_CERT_URI            ""
 #endif
