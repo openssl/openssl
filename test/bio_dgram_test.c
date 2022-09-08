@@ -114,9 +114,6 @@ static int test_bio_dgram_impl(int af, int use_local)
     char tx_buf[128];
     size_t num_processed = 0;
 
-    ina.s_addr = htonl(0x7f000001UL);
-    ina6.s6_addr[15] = 1;
-
     if (af == AF_INET) {
         TEST_info("# Testing with AF_INET, local=%d\n", use_local);
         pina = &ina;
@@ -134,6 +131,9 @@ static int test_bio_dgram_impl(int af, int use_local)
     }
 
     memset(pina, 0, inal);
+    ina.s_addr = htonl(0x7f000001UL);
+    ina6.s6_addr[15] = 1;
+
     addr1 = BIO_ADDR_new();
     if (!TEST_ptr(addr1))
         goto err;
