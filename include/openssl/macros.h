@@ -312,4 +312,14 @@
 #  endif
 # endif
 
+# ifndef OSSL_CRYPTO_ALLOC
+#  if defined(__GNUC__)
+#   define OSSL_CRYPTO_ALLOC __attribute__((malloc))
+#  elif defined(_MSC_VER)
+#   define OSSL_CRYPTO_ALLOC __declspec(restrict)
+#  else
+#   define OSSL_CRYPTO_ALLOC
+#  endif
+# endif
+
 #endif  /* OPENSSL_MACROS_H */
