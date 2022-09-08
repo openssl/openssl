@@ -366,6 +366,12 @@ IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_SERVER_CONF, server, srp_password)
 IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, expected_session_ticket_app_data)
 IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_SERVER_CONF, server, session_ticket_app_data)
 
+/* Signature MD algorithms for signing and verification */
+IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, server_signature_md_algorithms_signing)
+IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, server_signature_md_algorithms_verification)
+IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, client_signature_md_algorithms_signing)
+IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, client_signature_md_algorithms_verification)
+
 /* Handshake mode */
 
 static const test_enum ssl_handshake_modes[] = {
@@ -696,6 +702,10 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ExpectedCipher", &parse_test_expected_cipher },
     { "ExpectedSessionTicketAppData", &parse_test_expected_session_ticket_app_data },
     { "FIPSversion", &parse_test_fips_version },
+    { "ServerSignatureMDAlgorithmsSigning", &parse_test_server_signature_md_algorithms_signing },
+    { "ServerSignatureMDAlgorithmsVerification", &parse_test_server_signature_md_algorithms_verification },
+    { "ClientSignatureMDAlgorithmsSigning", &parse_test_client_signature_md_algorithms_signing },
+    { "ClientSignatureMDAlgorithmsVerification", &parse_test_client_signature_md_algorithms_verification },
 };
 
 /* Nested client options. */
@@ -786,6 +796,10 @@ void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx)
     sk_X509_NAME_pop_free(ctx->expected_client_ca_names, X509_NAME_free);
     OPENSSL_free(ctx->expected_cipher);
     OPENSSL_free(ctx->fips_version);
+    OPENSSL_free(ctx->server_signature_md_algorithms_signing);
+    OPENSSL_free(ctx->server_signature_md_algorithms_verification);
+    OPENSSL_free(ctx->client_signature_md_algorithms_signing);
+    OPENSSL_free(ctx->client_signature_md_algorithms_verification);
     OPENSSL_free(ctx);
 }
 

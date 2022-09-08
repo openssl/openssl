@@ -229,6 +229,11 @@ typedef struct {
     char *expected_cipher;
     /* Expected Session Ticket Application Data */
     char *expected_session_ticket_app_data;
+    /* allowed signature digest algorithms */
+    char *server_signature_md_algorithms_signing;
+    char *server_signature_md_algorithms_verification;
+    char *client_signature_md_algorithms_signing;
+    char *client_signature_md_algorithms_verification;
 
     OSSL_LIB_CTX *libctx;
 

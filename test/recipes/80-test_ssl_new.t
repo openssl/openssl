@@ -42,7 +42,7 @@ if (defined $ENV{SSL_TESTS}) {
     @conf_srcs = glob(srctop_file("test", "ssl-tests", "*.cnf.in"));
     # We hard-code the number of tests to double-check that the globbing above
     # finds all files as expected.
-    plan tests => 31;
+    plan tests => 32;
 }
 map { s/;.*// } @conf_srcs if $^O eq "VMS";
 my @conf_files = map { basename($_, ".in") } @conf_srcs;
@@ -94,6 +94,7 @@ my %conf_dependent_tests = (
   "28-seclevel.cnf" => disabled("tls1_2") || $no_ecx,
   "30-extended-master-secret.cnf" => disabled("tls1_2"),
   "32-compressed-certificate.cnf" => disabled("comp") || disabled("tls1_3"),
+  "33-signature-md-algorithms.cnf" => disabled("tls1_1") || disabled("ecdh"),
 );
 
 # Add your test here if it should be skipped for some compile-time
@@ -129,6 +130,7 @@ my %skip = (
   "26-tls13_client_auth.cnf" => disabled("tls1_3") || ($no_ec && $no_dh),
   "29-dtls-sctp-label-bug.cnf" => disabled("sctp") || disabled("sock"),
   "32-compressed-certificate.cnf" => disabled("comp") || disabled("tls1_3"),
+  "33-signature-md-algorithms.cnf" => $no_tls || ($no_dh && disabled("ecdh")),
 );
 
 foreach my $conf (@conf_files) {

@@ -1,0 +1,161 @@
+# -*- mode: perl; -*-
+# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+
+## SSL test configurations
+
+package ssltests;
+use OpenSSL::Test::Utils;
+
+our $fips_mode;
+
+# !kRSA requires either DH or ECDH. Without !kRSA, these tests would not test
+# what we want them to test.
+our @tests = (
+    {
+        name => "Server Signature MD algorithm SHA384 only",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0:!kRSA",
+        },
+        client => {},
+        test => {
+            "ExpectedResult" => "Success",
+            "ExpectedServerSignHash" => "SHA384",
+            "ServerSignatureMDAlgorithmsSigning" => "SHA384"
+        },
+    },
+    {
+        name => "Client Signature MD algorithm SHA256 and higher only",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0:!kRSA",
+        },
+        client => {},
+        test => {
+            "ExpectedResult" => "Success",
+            "ExpectedServerSignHash" => "SHA256",
+            "ClientSignatureMDAlgorithmsVerification" => "SHA256:SHA384:SHA512"
+            # SHA256 is required because the server certificate uses that
+        },
+    },
+    {
+        name => "Signature MD algorithms affects chosen server and client sign hash",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0:!kRSA",
+            "VerifyCAFile" => test_pem("root-cert.pem"),
+            "VerifyMode" => "Require",
+        },
+        client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            "Certificate" => test_pem("ee-client-chain.pem"),
+            "PrivateKey" => test_pem("ee-key.pem"),
+        },
+        test => {
+            "ExpectedResult" => "Success",
+            # The client will verify everything but SHA512, the server signs
+            # only SHA384, so we should expect SHA384 here
+            "ExpectedServerCertType" => "RSA",
+            "ExpectedServerSignHash" => "SHA384",
+            # The server verifies SHA256 and SHA512, but the client will not
+            # sign SHA256, so the client must choose SHA512 for its signature
+            "ExpectedClientCertType" => "RSA",
+            "ExpectedClientSignHash" => "SHA512",
+            "ServerSignatureMDAlgorithmsSigning" => "SHA384",
+            "ServerSignatureMDAlgorithmsVerification" => "SHA256:SHA512",
+            "ClientSignatureMDAlgorithmsSigning" => "ALL:!SHA256:!SHA384",
+            "ClientSignatureMDAlgorithmsVerification" => "ALL:!SHA512",
+        },
+    },
+    {
+        name => "Clients that do not sign MD5-SHA1 can connect to TLS 1.2 or newer servers with client certificates",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0:!kRSA",
+            "VerifyCAFile" => test_pem("root-cert.pem"),
+            "MinProtocol" => "TLSv1.2",
+            "VerifyMode" => "Require",
+        },
+        client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            "Certificate" => test_pem("ee-client-chain.pem"),
+            "PrivateKey" => test_pem("ee-key.pem"),
+        },
+        test => {
+            "ExpectedResult" => "Success",
+            "ClientSignatureMDAlgorithmsSigning" => "ALL:!MD5-SHA1",
+            "ExpectedClientCertType" => "RSA",
+            "ExpectedClientSignHash" => "SHA256",
+        },
+    },
+);
+
+# These tests require ECDH for key exchange (TLS 1.1 can otherwise use the
+# Kx=RSA cipher suites, which do not require an MD5-SHA1 signature).
+my @tests_tls1_1_ec = (
+    {
+        name => "Clients that verify but not sign MD5-SHA1 can connect to TLS 1.1 servers",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0:!kRSA",
+            "MaxProtocol" => "TLSv1.1",
+        },
+        client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+        },
+        test => {
+            "ExpectedResult" => "Success",
+            "ClientSignatureMDAlgorithmsSigning" => "ALL:!MD5-SHA1",
+        },
+    },
+    {
+        name => "Clients that do not sign MD5-SHA1 can not connect to TLS 1.1 servers with client certificates",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0:!kRSA",
+            "MaxProtocol" => "TLSv1.1",
+            "VerifyCAFile" => test_pem("root-cert.pem"),
+            "VerifyMode" => "Require",
+        },
+        client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            "Certificate" => test_pem("ee-client-chain.pem"),
+            "PrivateKey" => test_pem("ee-key.pem"),
+        },
+        test => {
+            "ExpectedResult" => "ClientFail",
+            "ClientSignatureMDAlgorithmsSigning" => "ALL:!MD5-SHA1",
+        },
+    },
+    {
+        name => "TLS 1.1 or lower fails if the client does not verify MD5-SHA1",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0:!kRSA",
+            "MaxProtocol" => "TLSv1.1",
+        },
+        client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+        },
+        test => {
+            "ExpectedResult" => "ClientFail",
+            "ClientSignatureMDAlgorithmsVerification" => "ALL:!MD5-SHA1",
+        },
+    },
+    {
+        name => "TLS 1.1 or lower fails if the server does not sign MD5-SHA1",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0"
+        },
+        client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0:!kRSA",
+            "MaxProtocol" => "TLSv1.1",
+        },
+        test => {
+            "ExpectedResult" => "ServerFail",
+            "ServerSignatureMDAlgorithmsSigning" => "ALL:!MD5-SHA1",
+        },
+    },
+);
+
+push @tests, @tests_tls1_1_ec
+    unless disabled("tls1_1") || disabled("ecdh") || $fips_mode;

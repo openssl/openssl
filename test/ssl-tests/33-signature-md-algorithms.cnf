@@ -1,0 +1,232 @@
+# Generated with generate_ssl_tests.pl
+
+num_tests = 8
+
+test-0 = 0-Server Signature MD algorithm SHA384 only
+test-1 = 1-Client Signature MD algorithm SHA256 and higher only
+test-2 = 2-Signature MD algorithms affects chosen server and client sign hash
+test-3 = 3-Clients that do not sign MD5-SHA1 can connect to TLS 1.2 or newer servers with client certificates
+test-4 = 4-Clients that verify but not sign MD5-SHA1 can connect to TLS 1.1 servers
+test-5 = 5-Clients that do not sign MD5-SHA1 can not connect to TLS 1.1 servers with client certificates
+test-6 = 6-TLS 1.1 or lower fails if the client does not verify MD5-SHA1
+test-7 = 7-TLS 1.1 or lower fails if the server does not sign MD5-SHA1
+# ===========================================================
+
+[0-Server Signature MD algorithm SHA384 only]
+ssl_conf = 0-Server Signature MD algorithm SHA384 only-ssl
+
+[0-Server Signature MD algorithm SHA384 only-ssl]
+server = 0-Server Signature MD algorithm SHA384 only-server
+client = 0-Server Signature MD algorithm SHA384 only-client
+
+[0-Server Signature MD algorithm SHA384 only-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0:!kRSA
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[0-Server Signature MD algorithm SHA384 only-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-0]
+ExpectedResult = Success
+ExpectedServerSignHash = SHA384
+ServerSignatureMDAlgorithmsSigning = SHA384
+
+
+# ===========================================================
+
+[1-Client Signature MD algorithm SHA256 and higher only]
+ssl_conf = 1-Client Signature MD algorithm SHA256 and higher only-ssl
+
+[1-Client Signature MD algorithm SHA256 and higher only-ssl]
+server = 1-Client Signature MD algorithm SHA256 and higher only-server
+client = 1-Client Signature MD algorithm SHA256 and higher only-client
+
+[1-Client Signature MD algorithm SHA256 and higher only-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0:!kRSA
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[1-Client Signature MD algorithm SHA256 and higher only-client]
+CipherString = DEFAULT
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-1]
+ClientSignatureMDAlgorithmsVerification = SHA256:SHA384:SHA512
+ExpectedResult = Success
+ExpectedServerSignHash = SHA256
+
+
+# ===========================================================
+
+[2-Signature MD algorithms affects chosen server and client sign hash]
+ssl_conf = 2-Signature MD algorithms affects chosen server and client sign hash-ssl
+
+[2-Signature MD algorithms affects chosen server and client sign hash-ssl]
+server = 2-Signature MD algorithms affects chosen server and client sign hash-server
+client = 2-Signature MD algorithms affects chosen server and client sign hash-client
+
+[2-Signature MD algorithms affects chosen server and client sign hash-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0:!kRSA
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
+VerifyMode = Require
+
+[2-Signature MD algorithms affects chosen server and client sign hash-client]
+Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
+CipherString = DEFAULT:@SECLEVEL=0
+PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-2]
+ClientSignatureMDAlgorithmsSigning = ALL:!SHA256:!SHA384
+ClientSignatureMDAlgorithmsVerification = ALL:!SHA512
+ExpectedClientCertType = RSA
+ExpectedClientSignHash = SHA512
+ExpectedResult = Success
+ExpectedServerCertType = RSA
+ExpectedServerSignHash = SHA384
+ServerSignatureMDAlgorithmsSigning = SHA384
+ServerSignatureMDAlgorithmsVerification = SHA256:SHA512
+
+
+# ===========================================================
+
+[3-Clients that do not sign MD5-SHA1 can connect to TLS 1.2 or newer servers with client certificates]
+ssl_conf = 3-Clients that do not sign MD5-SHA1 can connect to TLS 1.2 or newer servers with client certificates-ssl
+
+[3-Clients that do not sign MD5-SHA1 can connect to TLS 1.2 or newer servers with client certificates-ssl]
+server = 3-Clients that do not sign MD5-SHA1 can connect to TLS 1.2 or newer servers with client certificates-server
+client = 3-Clients that do not sign MD5-SHA1 can connect to TLS 1.2 or newer servers with client certificates-client
+
+[3-Clients that do not sign MD5-SHA1 can connect to TLS 1.2 or newer servers with client certificates-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0:!kRSA
+MinProtocol = TLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
+VerifyMode = Require
+
+[3-Clients that do not sign MD5-SHA1 can connect to TLS 1.2 or newer servers with client certificates-client]
+Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
+CipherString = DEFAULT:@SECLEVEL=0
+PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-3]
+ClientSignatureMDAlgorithmsSigning = ALL:!MD5-SHA1
+ExpectedClientCertType = RSA
+ExpectedClientSignHash = SHA256
+ExpectedResult = Success
+
+
+# ===========================================================
+
+[4-Clients that verify but not sign MD5-SHA1 can connect to TLS 1.1 servers]
+ssl_conf = 4-Clients that verify but not sign MD5-SHA1 can connect to TLS 1.1 servers-ssl
+
+[4-Clients that verify but not sign MD5-SHA1 can connect to TLS 1.1 servers-ssl]
+server = 4-Clients that verify but not sign MD5-SHA1 can connect to TLS 1.1 servers-server
+client = 4-Clients that verify but not sign MD5-SHA1 can connect to TLS 1.1 servers-client
+
+[4-Clients that verify but not sign MD5-SHA1 can connect to TLS 1.1 servers-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0:!kRSA
+MaxProtocol = TLSv1.1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[4-Clients that verify but not sign MD5-SHA1 can connect to TLS 1.1 servers-client]
+CipherString = DEFAULT:@SECLEVEL=0
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-4]
+ClientSignatureMDAlgorithmsSigning = ALL:!MD5-SHA1
+ExpectedResult = Success
+
+
+# ===========================================================
+
+[5-Clients that do not sign MD5-SHA1 can not connect to TLS 1.1 servers with client certificates]
+ssl_conf = 5-Clients that do not sign MD5-SHA1 can not connect to TLS 1.1 servers with client certificates-ssl
+
+[5-Clients that do not sign MD5-SHA1 can not connect to TLS 1.1 servers with client certificates-ssl]
+server = 5-Clients that do not sign MD5-SHA1 can not connect to TLS 1.1 servers with client certificates-server
+client = 5-Clients that do not sign MD5-SHA1 can not connect to TLS 1.1 servers with client certificates-client
+
+[5-Clients that do not sign MD5-SHA1 can not connect to TLS 1.1 servers with client certificates-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0:!kRSA
+MaxProtocol = TLSv1.1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
+VerifyMode = Require
+
+[5-Clients that do not sign MD5-SHA1 can not connect to TLS 1.1 servers with client certificates-client]
+Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
+CipherString = DEFAULT:@SECLEVEL=0
+PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-5]
+ClientSignatureMDAlgorithmsSigning = ALL:!MD5-SHA1
+ExpectedResult = ClientFail
+
+
+# ===========================================================
+
+[6-TLS 1.1 or lower fails if the client does not verify MD5-SHA1]
+ssl_conf = 6-TLS 1.1 or lower fails if the client does not verify MD5-SHA1-ssl
+
+[6-TLS 1.1 or lower fails if the client does not verify MD5-SHA1-ssl]
+server = 6-TLS 1.1 or lower fails if the client does not verify MD5-SHA1-server
+client = 6-TLS 1.1 or lower fails if the client does not verify MD5-SHA1-client
+
+[6-TLS 1.1 or lower fails if the client does not verify MD5-SHA1-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0:!kRSA
+MaxProtocol = TLSv1.1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[6-TLS 1.1 or lower fails if the client does not verify MD5-SHA1-client]
+CipherString = DEFAULT:@SECLEVEL=0
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-6]
+ClientSignatureMDAlgorithmsVerification = ALL:!MD5-SHA1
+ExpectedResult = ClientFail
+
+
+# ===========================================================
+
+[7-TLS 1.1 or lower fails if the server does not sign MD5-SHA1]
+ssl_conf = 7-TLS 1.1 or lower fails if the server does not sign MD5-SHA1-ssl
+
+[7-TLS 1.1 or lower fails if the server does not sign MD5-SHA1-ssl]
+server = 7-TLS 1.1 or lower fails if the server does not sign MD5-SHA1-server
+client = 7-TLS 1.1 or lower fails if the server does not sign MD5-SHA1-client
+
+[7-TLS 1.1 or lower fails if the server does not sign MD5-SHA1-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[7-TLS 1.1 or lower fails if the server does not sign MD5-SHA1-client]
+CipherString = DEFAULT:@SECLEVEL=0:!kRSA
+MaxProtocol = TLSv1.1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-7]
+ExpectedResult = ServerFail
+ServerSignatureMDAlgorithmsSigning = ALL:!MD5-SHA1
+
+
