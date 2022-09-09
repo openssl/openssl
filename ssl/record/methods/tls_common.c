@@ -123,38 +123,65 @@ static void tls_release_write_buffer_int(OSSL_RECORD_LAYER *rl, size_t start)
     }
 }
 
+#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
+# ifndef OPENSSL_NO_COMP
+#  define MAX_PREFIX_LEN ((SSL3_ALIGN_PAYLOAD - 1) \
+                          + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
+                          + SSL3_RT_HEADER_LENGTH \
+                          + SSL3_RT_MAX_COMPRESSED_OVERHEAD)
+# else
+#  define MAX_PREFIX_LEN ((SSL3_ALIGN_PAYLOAD - 1) \
+                          + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
+                          + SSL3_RT_HEADER_LENGTH)
+# endif /* OPENSSL_NO_COMP */
+#else
+# ifndef OPENSSL_NO_COMP
+#  define MAX_PREFIX_LEN (SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
+                          + SSL3_RT_HEADER_LENGTH \
+                          + SSL3_RT_MAX_COMPRESSED_OVERHEAD)
+# else
+#  define MAX_PREFIX_LEN (SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
+                          + SSL3_RT_HEADER_LENGTH)
+# endif /* OPENSSL_NO_COMP */
+#endif
+
 static int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
-                                  size_t len)
+                                  size_t firstlen, size_t nextlen)
 {
     unsigned char *p;
     size_t align = 0, headerlen;
     SSL3_BUFFER *wb;
     size_t currpipe;
     SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
+    size_t defltlen = 0;
 
-    if (len == 0) {
+    if (firstlen == 0 || (numwpipes > 1 && nextlen == 0)) {
         if (rl->isdtls)
             headerlen = DTLS1_RT_HEADER_LENGTH + 1;
         else
             headerlen = SSL3_RT_HEADER_LENGTH;
 
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
+#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
         align = SSL3_ALIGN_PAYLOAD - 1;
 #endif
 
-        len = ssl_get_max_send_fragment(s)
+        defltlen = ssl_get_max_send_fragment(s)
             + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 #ifndef OPENSSL_NO_COMP
         if (ssl_allow_compression(s))
-            len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+            defltlen += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
         if (!(rl->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
-            len += headerlen + align + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
+            defltlen += headerlen + align + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
     }
 
     wb = rl->wbuf;
     for (currpipe = 0; currpipe < numwpipes; currpipe++) {
         SSL3_BUFFER *thiswb = &wb[currpipe];
+        size_t len = (currpipe == 0) ? firstlen : nextlen;
+
+        if (len == 0)
+            len = defltlen;
 
         if (thiswb->len != len) {
             OPENSSL_free(thiswb->buf);
@@ -1542,7 +1569,7 @@ static int tls_write_records_multiblock(OSSL_RECORD_LAYER *rl,
                                     EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE,
                                     (int)templates[0].buflen, NULL);
     packlen *= numtempl;
-    if (!tls_setup_write_buffer(rl, 1, packlen)) {
+    if (!tls_setup_write_buffer(rl, 1, packlen, packlen)) {
         /* RLAYERfatal() already called */
         return -1;
     }
@@ -1642,10 +1669,11 @@ static int tls_write_records_standard(OSSL_RECORD_LAYER *rl,
              && templates[0].type == SSL3_RT_APPLICATION_DATA;
 
     /*
-     * TODO(RECLAYER): In the prefix case the first buffer can be a lot
-     * smaller. It is wasteful to allocate a full sized buffer here
+     * In the prefix case we can allocate a much smaller buffer. Otherwise we
+     * just allocate the default buffer size
      */
-    if (!tls_setup_write_buffer(rl, numtempl + prefix, 0)) {
+    if (!tls_setup_write_buffer(rl, numtempl + prefix,
+                                prefix ? MAX_PREFIX_LEN : 0, 0)) {
         /* RLAYERfatal() already called */
         goto err;
     }
