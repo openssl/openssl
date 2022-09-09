@@ -1450,6 +1450,9 @@ static int tls_is_multiblock_capable(OSSL_RECORD_LAYER *rl, int type,
 size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, int type, size_t len,
                            size_t maxfrag, size_t *preffrag)
 {
+    /* TODO(RECLAYER): Remove me */
+    SSL_CONNECTION *s = rl->cbarg;
+
     if (tls_is_multiblock_capable(rl, type, len, *preffrag)) {
         /* minimize address aliasing conflicts */
         if ((*preffrag & 0xfff) == 0)
@@ -1460,6 +1463,29 @@ size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, int type, size_t len,
 
         return 4;
     }
+
+    /*
+     * TODO(RECLYAER): There is no test for the pipelining code. We should add
+     *                 one.
+     */
+    /*
+     * If we have a pipeline capable cipher, and we have been configured to use
+     * it, then return the preferred number of pipelines.
+     */
+    if (rl->max_pipelines > 0
+            && s->enc_write_ctx != NULL
+            && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx))
+                & EVP_CIPH_FLAG_PIPELINE) != 0
+            && RLAYER_USE_EXPLICIT_IV(rl)) {
+        size_t pipes;
+
+        if (len == 0)
+            return 1;
+        pipes = ((len - 1) / *preffrag) + 1;
+
+        return (pipes < rl->max_pipelines) ? pipes : rl->max_pipelines;
+    }
+
     return 1;
 }
 

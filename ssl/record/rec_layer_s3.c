@@ -292,35 +292,6 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
     max_send_fragment = ssl_get_max_send_fragment(s);
     split_send_fragment = ssl_get_split_send_fragment(s);
 
-    /*
-     * Ask the record layer how it would like to split the amount of data that
-     * we have, and how many of those records it would like in one go.
-     */
-    maxpipes = s->rlayer.wrlmethod->get_max_records(s->rlayer.wrl, type, n,
-                                                    max_send_fragment,
-                                                    &split_send_fragment);
-    /*
-     * If max_pipelines is 0 then this means "undefined" and we default to
-     * whatever the record layer wants to do. Otherwise we use the smallest
-     * value from the number requested by the record layer, and max number
-     * configured by the user.
-     */
-    if (s->max_pipelines > 0 && maxpipes > s->max_pipelines)
-        maxpipes = s->max_pipelines;
-
-    if (maxpipes > SSL_MAX_PIPELINES)
-        maxpipes = SSL_MAX_PIPELINES;
-
-
-#if 0
-    /* TODO(RECLAYER): FIX ME */
-    if (maxpipes == 0
-        || s->enc_write_ctx == NULL
-        || (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx))
-            & EVP_CIPH_FLAG_PIPELINE) == 0
-        || !SSL_USE_EXPLICIT_IV(s))
-        maxpipes = 1;
-#endif
     if (max_send_fragment == 0
             || split_send_fragment == 0
             || split_send_fragment > max_send_fragment) {
@@ -346,39 +317,56 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
 
     for (;;) {
         size_t tmppipelen, remain;
-        size_t numpipes, j, lensofar = 0;
+        size_t j, lensofar = 0;
 
-        if (n == 0)
-            numpipes = 1;
-        else
-            numpipes = ((n - 1) / split_send_fragment) + 1;
-        if (numpipes > maxpipes)
-            numpipes = maxpipes;
+        /*
+        * Ask the record layer how it would like to split the amount of data
+        * that we have, and how many of those records it would like in one go.
+        */
+        maxpipes = s->rlayer.wrlmethod->get_max_records(s->rlayer.wrl, type, n,
+                                                        max_send_fragment,
+                                                        &split_send_fragment);
+        /*
+        * If max_pipelines is 0 then this means "undefined" and we default to
+        * whatever the record layer wants to do. Otherwise we use the smallest
+        * value from the number requested by the record layer, and max number
+        * configured by the user.
+        */
+        if (s->max_pipelines > 0 && maxpipes > s->max_pipelines)
+            maxpipes = s->max_pipelines;
 
-        if (n / numpipes >= split_send_fragment) {
+        if (maxpipes > SSL_MAX_PIPELINES)
+            maxpipes = SSL_MAX_PIPELINES;
+
+        if (split_send_fragment > max_send_fragment) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
+
+        if (n / maxpipes >= split_send_fragment) {
             /*
              * We have enough data to completely fill all available
              * pipelines
              */
-            for (j = 0; j < numpipes; j++) {
+            for (j = 0; j < maxpipes; j++) {
                 tmpls[j].type = type;
                 tmpls[j].version = recversion;
                 tmpls[j].buf = &(buf[tot]) + (j * split_send_fragment);
                 tmpls[j].buflen = split_send_fragment;
             }
             /* Remember how much data we are going to be sending */
-            s->rlayer.wpend_tot = numpipes * split_send_fragment;
+            s->rlayer.wpend_tot = maxpipes * split_send_fragment;
         } else {
             /* We can partially fill all available pipelines */
-            tmppipelen = n / numpipes;
-            remain = n % numpipes;
+            tmppipelen = n / maxpipes;
+            remain = n % maxpipes;
             /*
              * If there is a remainder we add an extra byte to the first few
              * pipelines
              */
             if (remain > 0)
                 tmppipelen++;
-            for (j = 0; j < numpipes; j++) {
+            for (j = 0; j < maxpipes; j++) {
                 tmpls[j].type = type;
                 tmpls[j].version = recversion;
                 tmpls[j].buf = &(buf[tot]) + lensofar;
@@ -392,7 +380,7 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
         }
 
         i = HANDLE_RLAYER_WRITE_RETURN(s,
-            s->rlayer.wrlmethod->write_records(s->rlayer.wrl, tmpls, numpipes));
+            s->rlayer.wrlmethod->write_records(s->rlayer.wrl, tmpls, maxpipes));
         if (i <= 0) {
             /* SSLfatal() already called if appropriate */
             s->rlayer.wnum = tot;
