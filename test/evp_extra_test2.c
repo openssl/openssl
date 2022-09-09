@@ -1089,9 +1089,9 @@ static int test_evp_pbe_alg_add(void)
                          &cipher_nid, &md_nid, &keygen, &keygen_ex)))
         goto err;
 
-    if (!TEST_ptr((void*)keygen))
+    if (!TEST_true(keygen != NULL))
         goto err;
-    if (!TEST_ptr_null((void*)keygen_ex))
+    if (!TEST_true(keygen_ex == NULL))
         goto err;
 
     ret = 1;
