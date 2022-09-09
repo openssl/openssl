@@ -452,6 +452,18 @@ OpenSSL 3.2
 
    *Čestmír Kalina*
 
+ * The functions `EVP_signature_md_algorithms_set()` and
+   `EVP_signature_md_algorithm_set()` and their equivalent settings
+   `signature_md_algorithms_signing` and `signature_md_algorithms_verification`
+   in the alg section allow restricting which digest algorithms are considered
+   acceptable for signature creation and signature verification. Applications
+   can use `EVP_signature_md_algorithm_allowed()` to check whether a specific
+   operation will succeed or fail. The default is to continue allowing all
+   message digests. For further details, see
+   EVP_signature_md_algorithm_allowed(3).
+
+   *Clemens Lang*
+
 OpenSSL 3.1
 -----------
 
