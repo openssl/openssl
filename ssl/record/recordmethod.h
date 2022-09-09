@@ -179,7 +179,7 @@ struct ossl_record_method_st {
      * to process in a single call to write_records. It is the caller's
      * responsibility to ensure that no call to write_records exceeds this
      * number of records. |type| is the type of the records that the caller
-     * wants to write, and |buflen| is the total amount of data that it wants
+     * wants to write, and |len| is the total amount of data that it wants
      * to send. |maxfrag| is the maximum allowed fragment size based on user
      * configuration, or TLS parameter negotiation. |*preffrag| contains on
      * entry the default fragment size that will actually be used based on user
@@ -187,7 +187,7 @@ struct ossl_record_method_st {
      * exit the record layer may update this to an alternative fragment size to
      * be used. This must always be less than or equal to |maxfrag|.
      */
-    size_t (*get_max_records)(OSSL_RECORD_LAYER *rl, int type, size_t buflen,
+    size_t (*get_max_records)(OSSL_RECORD_LAYER *rl, int type, size_t len,
                               size_t maxfrag, size_t *preffrag);
 
     /*
