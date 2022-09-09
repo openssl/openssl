@@ -23,12 +23,6 @@ static int aes_ppc_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
-
-extern size_t ppc_aes_gcm_encrypt(const unsigned char *in, unsigned char *out, size_t len,
-                                  const void *key, unsigned char ivec[16], u64 *Xi);
-extern size_t ppc_aes_gcm_decrypt(const unsigned char *in, unsigned char *out, size_t len,
-                                  const void *key, unsigned char ivec[16], u64 *Xi);
-
 static inline u32 UTO32(unsigned char *buf)
 {
     return ((u32) buf[0] << 24) | ((u32) buf[1] << 16) | ((u32) buf[2] << 8) | ((u32) buf[3]);
@@ -47,7 +41,7 @@ static inline u32 add32TOU(unsigned char buf[4], u32 n)
     return r;
 }
 
-static size_t aes_p10_gcm_crypt(const unsigned char *in, unsigned char *out, size_t len,
+static size_t ppc_aes_gcm_crypt(const unsigned char *in, unsigned char *out, size_t len,
                                 const void *key, unsigned char ivec[16], u64 *Xi, int encrypt)
 {
     int s = 0;
@@ -90,24 +84,66 @@ static size_t aes_p10_gcm_crypt(const unsigned char *in, unsigned char *out, siz
     return ndone;
 }
 
-size_t ppc_aes_gcm_encrypt_wrap(const unsigned char *in, unsigned char *out, size_t len,
-                                const void *key, unsigned char ivec[16], u64 *Xi)
+static int ppc_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
+                                     size_t len, unsigned char *out)
 {
-    return aes_p10_gcm_crypt(in, out, len, key, ivec, Xi, 1);
-}
+    if (ctx->enc) {
+        if (ctx->ctr != NULL) {
+            size_t bulk = 0;
 
-size_t ppc_aes_gcm_decrypt_wrap(const unsigned char *in, unsigned char *out, size_t len,
-                                const void *key, unsigned char ivec[16], u64 *Xi)
-{
-    return aes_p10_gcm_crypt(in, out, len, key, ivec, Xi, 0);
-}
+            if (len >= AES_GCM_ENC_BYTES && AES_GCM_ASM_PPC(ctx)) {
+                size_t res = (16 - ctx->gcm.mres) % 16;
 
+                if (CRYPTO_gcm128_encrypt(&ctx->gcm, in, out, res))
+                    return 0;
+
+                bulk = ppc_aes_gcm_crypt(in + res, out + res, len - res,
+                                         ctx->gcm.key,
+                                         ctx->gcm.Yi.c, ctx->gcm.Xi.u, 1);
+
+                ctx->gcm.len.u[1] += bulk;
+                bulk += res;
+            }
+            if (CRYPTO_gcm128_encrypt_ctr32(&ctx->gcm, in + bulk, out + bulk,
+                                            len - bulk, ctx->ctr))
+                return 0;
+        } else {
+            if (CRYPTO_gcm128_encrypt(&ctx->gcm, in, out, len))
+                return 0;
+        }
+    } else {
+        if (ctx->ctr != NULL) {
+            size_t bulk = 0;
+
+            if (len >= AES_GCM_DEC_BYTES && AES_GCM_ASM_PPC(ctx)) {
+                size_t res = (16 - ctx->gcm.mres) % 16;
+
+                if (CRYPTO_gcm128_decrypt(&ctx->gcm, in, out, res))
+                    return -1;
+
+                bulk = ppc_aes_gcm_crypt(in + res, out + res, len - res,
+                                         ctx->gcm.key,
+                                         ctx->gcm.Yi.c, ctx->gcm.Xi.u, 0);
+
+                ctx->gcm.len.u[1] += bulk;
+                bulk += res;
+            }
+            if (CRYPTO_gcm128_decrypt_ctr32(&ctx->gcm, in + bulk, out + bulk,
+                                            len - bulk, ctx->ctr))
+                return 0;
+        } else {
+            if (CRYPTO_gcm128_decrypt(&ctx->gcm, in, out, len))
+                return 0;
+        }
+    }
+    return 1;
+}
 
 static const PROV_GCM_HW aes_ppc_gcm = {
     aes_ppc_gcm_initkey,
     ossl_gcm_setiv,
     ossl_gcm_aad_update,
-    generic_aes_gcm_cipher_update,
+    ppc_aes_gcm_cipher_update,
     ossl_gcm_cipher_final,
     ossl_gcm_one_shot
 };
