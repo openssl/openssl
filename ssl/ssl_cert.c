@@ -377,6 +377,7 @@ int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk)
     X509_STORE_CTX *ctx = NULL;
     X509_VERIFY_PARAM *param;
     SSL_CTX *sctx;
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     if ((sk == NULL) || (sk_X509_num(sk) == 0))
         return 0;
@@ -417,6 +418,20 @@ int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk)
     /* Verify via DANE if enabled */
     if (DANETLS_ENABLED(&s->dane))
         X509_STORE_CTX_set0_dane(ctx, &s->dane);
+
+    /*
+     * Set OCSP Responses for verification:
+     * This function is called in the SERVER_CERTIFICATE message, in TLS 1.2
+     * the OCSP responses are sent in the CERT_STATUS message after that.
+     * Therefore the verification code currently only works in TLS 1.3.
+     */
+    if (SSL_CONNECTION_IS_TLS13(s)) {
+        /* ignore status_request_v2 if TLS 1.3 */
+        int status = SSL_get_tlsext_status_type(ssl);
+        if (status == TLSEXT_STATUSTYPE_ocsp) {
+            X509_STORE_CTX_set_ocsp_resp(ctx, s->ext.ocsp.resp);
+        }
+    }
 
     /*
      * We need to inherit the verify parameters. These can be determined by

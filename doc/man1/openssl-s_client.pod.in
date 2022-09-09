@@ -105,6 +105,8 @@ B<openssl> B<s_client>
 [B<-sess_in> I<filename>]
 [B<-serverinfo> I<types>]
 [B<-status>]
+[B<-ocsp_check>]
+[B<-ocsp_check_all>]
 [B<-alpn> I<protocols>]
 [B<-nextprotoneg> I<protocols>]
 [B<-ct>]

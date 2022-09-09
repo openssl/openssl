@@ -13,6 +13,8 @@ B<openssl> B<verify>
 [B<-crl_download>]
 [B<-show_chain>]
 [B<-verbose>]
+[B<-ocsp_check>]
+[B<-ocsp_check_all>]
 [B<-trusted> I<filename>|I<uri>]
 [B<-untrusted> I<filename>|I<uri>]
 [B<-vfyopt> I<nm>:I<v>]
@@ -45,6 +47,17 @@ sources.
 =item B<-crl_download>
 
 Attempt to download CRL information for certificates via their CDP entries.
+
+=item B<-ocsp_check>
+
+Checks end entity certificate validity with a OCSP response provided in the
+TLS handshake (OCSP stapling). If no valid OCSP response can be found no error
+occurs and the client should attempt to check to validity with a CRL.
+
+=item B<-ocsp_check_all>
+
+Checks the validity of B<all> certificates in the chain by attempting
+to look up valid OCSP responses.
 
 =item B<-show_chain>
 
