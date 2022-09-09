@@ -188,10 +188,6 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
     const unsigned char *buf = buf_;
     size_t tot;
     size_t n, max_send_fragment, split_send_fragment, maxpipes;
-    /* TODO(RECLAYER): Re-enable multiblock code */
-#if 0 && !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
-    size_t nw;
-#endif
     int i;
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
     OSSL_RECORD_TEMPLATE tmpls[SSL_MAX_PIPELINES];
@@ -276,7 +272,6 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
         s->rlayer.wpend_ret = len;
     }
 
-    /* TODO(RECLAYER): Is this needed any more? */
     if (tot == len) {           /* done? */
         *written = tot;
         return 1;
@@ -296,19 +291,20 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
 
     max_send_fragment = ssl_get_max_send_fragment(s);
     split_send_fragment = ssl_get_split_send_fragment(s);
-    /*
-     * TODO(RECLAYER): This comment is now out-of-date and probably needs to
-     * move somewhere else
-     *
-     * If max_pipelines is 0 then this means "undefined" and we default to
-     * 1 pipeline. Similarly if the cipher does not support pipelined
-     * processing then we also only use 1 pipeline, or if we're not using
-     * explicit IVs
-     */
 
+    /*
+     * Ask the record layer how it would like to split the amount of data that
+     * we have, and how many of those records it would like in one go.
+     */
     maxpipes = s->rlayer.wrlmethod->get_max_records(s->rlayer.wrl, type, n,
                                                     max_send_fragment,
                                                     &split_send_fragment);
+    /*
+     * If max_pipelines is 0 then this means "undefined" and we default to
+     * whatever the record layer wants to do. Otherwise we use the smallest
+     * value from the number requested by the record layer, and max number
+     * configured by the user.
+     */
     if (s->max_pipelines > 0 && maxpipes > s->max_pipelines)
         maxpipes = s->max_pipelines;
 
