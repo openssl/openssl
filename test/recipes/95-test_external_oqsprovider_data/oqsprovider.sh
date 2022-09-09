@@ -50,9 +50,8 @@ if [ ! -d $SRCTOP/oqs-provider/oqs ]; then
 # https://github.com/open-quantum-safe/liboqs/wiki/Customizing-liboqs
 (
        cd $SRCTOP/oqs-provider \
-           && git clone --shallow-since=2022-07-01 --branch main https://github.com/open-quantum-safe/liboqs.git \
+           && git clone --depth 1 --branch 0.7.2 https://github.com/open-quantum-safe/liboqs.git \
            && cd liboqs \
-           && git checkout 2c687b122084902ab287bb4a5497872e06cf2bf4 \
            && mkdir build \
            && cd build \
            && cmake -DOQS_ENABLE_SIG_RAINBOW=OFF -DCMAKE_INSTALL_PREFIX=$SRCTOP/oqs-provider/oqs .. \
