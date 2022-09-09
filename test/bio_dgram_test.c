@@ -17,7 +17,7 @@
 static int compare_addr(const BIO_ADDR *a, const BIO_ADDR *b)
 {
     struct in_addr xa, xb;
-#if defined(OPENSSL_USE_IPV6)
+#if OPENSSL_USE_IPV6
     struct in6_addr xa6, xb6;
 #endif
     void *pa, *pb;
@@ -31,7 +31,7 @@ static int compare_addr(const BIO_ADDR *a, const BIO_ADDR *b)
         pb = &xb;
         slen = sizeof(xa);
     }
-#if defined(OPENSSL_USE_IPV6)
+#if OPENSSL_USE_IPV6
     else if (BIO_ADDR_family(a) == AF_INET6) {
         pa = &xa6;
         pb = &xb6;
@@ -103,7 +103,7 @@ static int test_bio_dgram_impl(int af, int use_local)
     BIO_ADDR *addr1 = NULL, *addr2 = NULL, *addr3 = NULL, *addr4 = NULL,
              *addr5 = NULL, *addr6 = NULL;
     struct in_addr ina;
-#if defined(OPENSSL_USE_IPV6)
+#if OPENSSL_USE_IPV6
     struct in6_addr ina6;
 #endif
     void *pina;
@@ -119,7 +119,7 @@ static int test_bio_dgram_impl(int af, int use_local)
         pina = &ina;
         inal = sizeof(ina);
     }
-#if defined(OPENSSL_USE_IPV6)
+#if OPENSSL_USE_IPV6
     else if (af == AF_INET6) {
         TEST_info("# Testing with AF_INET6, local=%d\n", use_local);
         pina = &ina6;
@@ -132,7 +132,9 @@ static int test_bio_dgram_impl(int af, int use_local)
 
     memset(pina, 0, inal);
     ina.s_addr = htonl(0x7f000001UL);
+#if OPENSSL_USE_IPV6
     ina6.s6_addr[15] = 1;
+#endif
 
     addr1 = BIO_ADDR_new();
     if (!TEST_ptr(addr1))
@@ -432,12 +434,12 @@ struct bio_dgram_case {
 static const struct bio_dgram_case bio_dgram_cases[] = {
     /* Test without local */
     { AF_INET,  0 },
-#if defined(OPENSSL_USE_IPV6)
+#if OPENSSL_USE_IPV6
     { AF_INET6, 0 },
 #endif
     /* Test with local */
     { AF_INET,  1 },
-#if defined(OPENSSL_USE_IPV6)
+#if OPENSSL_USE_IPV6
     { AF_INET6, 1 }
 #endif
 };
