@@ -25,29 +25,29 @@ static int test_trace_categories(void)
 #define CASE(name) \
         case OSSL_TRACE_CATEGORY_##name: \
             is_cat_name_eq = TEST_str_eq(cat_name, #name); \
-            break;
+            break
 
-        CASE(ALL)
-        CASE(TRACE)
-        CASE(INIT)
-        CASE(TLS)
-        CASE(TLS_CIPHER)
-        CASE(CONF)
+        CASE(ALL);
+        CASE(TRACE);
+        CASE(INIT);
+        CASE(TLS);
+        CASE(TLS_CIPHER);
+        CASE(CONF);
 #ifndef OPENSSL_NO_ENGINE
-        CASE(ENGINE_TABLE)
-        CASE(ENGINE_REF_COUNT)
+        CASE(ENGINE_TABLE);
+        CASE(ENGINE_REF_COUNT);
 #endif
-        CASE(PKCS5V2)
-        CASE(PKCS12_KEYGEN)
-        CASE(PKCS12_DECRYPT)
-        CASE(X509V3_POLICY)
-        CASE(BN_CTX)
-        CASE(CMP)
-        CASE(STORE)
-        CASE(DECODER)
-        CASE(ENCODER)
-        CASE(REF_COUNT)
-        CASE(HTTP)
+        CASE(PKCS5V2);
+        CASE(PKCS12_KEYGEN);
+        CASE(PKCS12_DECRYPT);
+        CASE(X509V3_POLICY);
+        CASE(BN_CTX);
+        CASE(CMP);
+        CASE(STORE);
+        CASE(DECODER);
+        CASE(ENCODER);
+        CASE(REF_COUNT);
+        CASE(HTTP);
 #undef CASE
         default:
             is_cat_name_eq = TEST_ptr_null(cat_name);
