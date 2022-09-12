@@ -1698,15 +1698,10 @@ static int tls_write_records_standard(OSSL_RECORD_LAYER *rl,
         wpinited = 1;
 
         wb = &rl->wbuf[0];
-        /* TODO(RECLAYER): This alignment calculation no longer seems right */
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-        /*
-         * extra fragment would be couple of cipher blocks, which would be
-         * multiple of SSL3_ALIGN_PAYLOAD, so if we want to align the real
-         * payload, then we can just pretend we simply have two headers.
-         */
-        align = (size_t)SSL3_BUFFER_get_buf(wb) + 2 * SSL3_RT_HEADER_LENGTH;
-        align = SSL3_ALIGN_PAYLOAD - 1 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
+#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
+            align = (size_t)SSL3_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
+            align = SSL3_ALIGN_PAYLOAD - 1
+                    - ((align - 1) % SSL3_ALIGN_PAYLOAD);
 #endif
         SSL3_BUFFER_set_offset(wb, align);
         if (!WPACKET_init_static_len(&pkt[0], SSL3_BUFFER_get_buf(wb),
@@ -1739,7 +1734,6 @@ static int tls_write_records_standard(OSSL_RECORD_LAYER *rl,
             align = SSL3_ALIGN_PAYLOAD - 1
                     - ((align - 1) % SSL3_ALIGN_PAYLOAD);
 #endif
-            /* TODO(RECLAYER): Is this alignment actually used somewhere? */
             SSL3_BUFFER_set_offset(wb, align);
             if (!WPACKET_init_static_len(thispkt, SSL3_BUFFER_get_buf(wb),
                                         SSL3_BUFFER_get_len(wb), 0)
@@ -1825,10 +1819,7 @@ static int tls_write_records_standard(OSSL_RECORD_LAYER *rl,
         /* lets setup the record stuff. */
         SSL3_RECORD_set_data(thiswr, compressdata);
         SSL3_RECORD_set_length(thiswr, thistempl->buflen);
-        /*
-         * TODO(RECLAYER): Cast away the const. Should be safe - by why is this
-         * necessary?
-         */
+
         SSL3_RECORD_set_input(thiswr, (unsigned char *)thistempl->buf);
         totlen += thistempl->buflen;
 
