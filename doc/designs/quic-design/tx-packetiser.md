@@ -188,14 +188,10 @@ typedef struct ossl_quic_packet_st OSSL_QUIC_PACKET;
 
 #### Notes
 
-- `QUIC_PN` defined as uint64_t in ACK Manager.
-- The `QUIC_ACKM_TX_PKT` structure from the ACK Manager overlaps this
-  significantly and the two could be merged.
 - Do we need the distinction between 0-rtt and 1-rtt when both are in
   the Application Data number space?
 - 0-RTT packets can morph into 1-RTT packets and this needs to be handled by
   the packetiser.
-- the `packet_header` will become a structure / union most likely.
 
 Interactions
 ------------
@@ -248,11 +244,10 @@ int ossl_quic_free_app_data(QUIC_STREAM *stream, void *data, size_t data_len);
   requested app data because it needs to be retransmitted and the
   boundaries could change.  Any record of the indicated data having being
   transmitted should be removed and the data is made eligible to be sent
-  again.  The offset argument is the offset into the QUIC data stream, it is
-  not yet clear if this argument is required.
+  again.
 
 ```c
-int ossl_quic_retransmitting_app_data(QUIC_STREAM *stream, size_t offset,
+int ossl_quic_retransmitting_app_data(QUIC_STREAM *stream,
                                       void *data, size_t data_len);
 ```
 
