@@ -292,22 +292,20 @@ static void dgram_adjust_rcv_timeout(BIO *b)
         int sz = sizeof(timeout);
 
         if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
-                       (void *)&timeout, &sz) < 0) {
+                       (void *)&timeout, &sz) < 0)
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling getsockopt()");
-        } else {
+        else
             data->socket_timeout = ossl_ms2time(timeout);
-        }
 #  else
         struct timeval tv;
         socklen_t sz = sizeof(tv);
 
-        if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO, &tv, &sz) < 0) {
+        if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO, &tv, &sz) < 0)
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling getsockopt()");
-        } else {
+        else
             data->socket_timeout = ossl_time_from_timeval(tv);
-        }
 #  endif
 
         /* Calculate time left until timer expires */
