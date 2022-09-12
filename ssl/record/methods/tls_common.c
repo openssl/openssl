@@ -18,15 +18,6 @@
 #include "../record_local.h"
 #include "recmethod_local.h"
 
-#if     defined(OPENSSL_SMALL_FOOTPRINT) || \
-        !(      defined(AES_ASM) &&     ( \
-                defined(__x86_64)       || defined(__x86_64__)  || \
-                defined(_M_AMD64)       || defined(_M_X64)      ) \
-        )
-# undef EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
-# define EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0
-#endif
-
 static void tls_int_free(OSSL_RECORD_LAYER *rl);
 
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
@@ -145,8 +136,8 @@ static void tls_release_write_buffer_int(OSSL_RECORD_LAYER *rl, size_t start)
 # endif /* OPENSSL_NO_COMP */
 #endif
 
-static int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
-                                  size_t firstlen, size_t nextlen)
+int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
+                           size_t firstlen, size_t nextlen)
 {
     unsigned char *p;
     size_t align = 0, headerlen;
@@ -1455,43 +1446,11 @@ size_t tls_get_max_record_len(OSSL_RECORD_LAYER *rl)
     return 0;
 }
 
-static int tls_is_multiblock_capable(OSSL_RECORD_LAYER *rl, int type,
-                                     size_t len, size_t fraglen)
-{
-#if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
-    /* TODO(RECLAYER): REMOVE ME */
-    SSL_CONNECTION *s = rl->cbarg;
-
-    if (type == SSL3_RT_APPLICATION_DATA
-            && len >= 4 * fraglen
-            && s->compress == NULL
-            && rl->msg_callback == NULL
-            && !rl->use_etm
-            && RLAYER_USE_EXPLICIT_IV(rl)
-            && !BIO_get_ktls_send(s->wbio)
-            && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx))
-                & EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) != 0)
-        return 1;
-#endif
-    return 0;
-}
-
-size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, int type, size_t len,
-                           size_t maxfrag, size_t *preffrag)
+size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, int type, size_t len,
+                                   size_t maxfrag, size_t *preffrag)
 {
     /* TODO(RECLAYER): Remove me */
     SSL_CONNECTION *s = rl->cbarg;
-
-    if (tls_is_multiblock_capable(rl, type, len, *preffrag)) {
-        /* minimize address aliasing conflicts */
-        if ((*preffrag & 0xfff) == 0)
-            *preffrag -= 512;
-
-        if (len >= 8 * (*preffrag))
-            return 8;
-
-        return 4;
-    }
 
     /*
      * TODO(RECLYAER): There is no test for the pipelining code. We should add
@@ -1518,114 +1477,15 @@ size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, int type, size_t len,
     return 1;
 }
 
-static int tls_write_records_multiblock(OSSL_RECORD_LAYER *rl,
-                                        OSSL_RECORD_TEMPLATE *templates,
-                                        size_t numtempl)
+size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, int type, size_t len,
+                           size_t maxfrag, size_t *preffrag)
 {
-#if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
-    size_t i;
-    size_t totlen;
-    SSL3_BUFFER *wb;
-    /* TODO(RECLAYER): Remove me */
-    SSL_CONNECTION *s = rl->cbarg;
-
-    if (numtempl != 4 && numtempl != 8)
-        return 0;
-
-    /*
-     * Check templates have contiguous buffers and are all the same type and
-     * length
-     */
-    for (i = 1; i < numtempl; i++) {
-        if (templates[i - 1].type != templates[i].type
-                || templates[i - 1].buflen != templates[i].buflen
-                || templates[i - 1].buf + templates[i - 1].buflen
-                   != templates[i].buf)
-            return 0;
-    }
-
-    totlen = templates[0].buflen * numtempl;
-    if (!tls_is_multiblock_capable(rl, templates[0].type, totlen,
-                                   templates[0].buflen))
-        return 0;
-
-    /*
-     * If we get this far, then multiblock is suitable
-     * Depending on platform multi-block can deliver several *times*
-     * better performance. Downside is that it has to allocate
-     * jumbo buffer to accommodate up to 8 records, but the
-     * compromise is considered worthy.
-     */
-
-    unsigned char aad[13];
-    EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
-    size_t packlen;
-    int packleni;
-
-    /*
-     * Allocate jumbo buffer. This will get freed next time we do a non
-     * multiblock write in the call to tls_setup_write_buffer() - the different
-     * buffer sizes will be spotted and the buffer reallocated.
-     */
-    packlen = EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
-                                    EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE,
-                                    (int)templates[0].buflen, NULL);
-    packlen *= numtempl;
-    if (!tls_setup_write_buffer(rl, 1, packlen, packlen)) {
-        /* RLAYERfatal() already called */
-        return -1;
-    }
-    wb = &rl->wbuf[0];
-
-    mb_param.interleave = numtempl;
-    memcpy(aad, s->rlayer.write_sequence, 8);
-    aad[8] = templates[0].type;
-    aad[9] = (unsigned char)(templates[0].version >> 8);
-    aad[10] = (unsigned char)(templates[0].version);
-    aad[11] = 0;
-    aad[12] = 0;
-    mb_param.out = NULL;
-    mb_param.inp = aad;
-    mb_param.len = totlen;
-
-    packleni = EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
-                                    EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
-                                    sizeof(mb_param), &mb_param);
-    packlen = (size_t)packleni;
-    if (packleni <= 0 || packlen > wb->len) { /* never happens */
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return -1;
-    }
-
-    mb_param.out = wb->buf;
-    mb_param.inp = templates[0].buf;
-    mb_param.len = totlen;
-
-    if (EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
-                            EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
-                            sizeof(mb_param), &mb_param) <= 0) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return -1;
-    }
-
-    s->rlayer.write_sequence[7] += mb_param.interleave;
-    if (s->rlayer.write_sequence[7] < mb_param.interleave) {
-        int j = 6;
-        while (j >= 0 && (++s->rlayer.write_sequence[j--]) == 0) ;
-    }
-
-    wb->offset = 0;
-    wb->left = packlen;
-
-    return 1;
-#else  /* !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK */
-    return 0;
-#endif
+    return rl->funcs->get_max_records(rl, type, len, maxfrag, preffrag);
 }
 
-static int tls_write_records_standard(OSSL_RECORD_LAYER *rl,
-                                      OSSL_RECORD_TEMPLATE *templates,
-                                      size_t numtempl)
+int tls_write_records_default(OSSL_RECORD_LAYER *rl,
+                              OSSL_RECORD_TEMPLATE *templates,
+                              size_t numtempl)
 {
     WPACKET pkt[SSL_MAX_PIPELINES + 1];
     SSL3_RECORD wr[SSL_MAX_PIPELINES + 1];
@@ -2054,8 +1914,6 @@ static int tls_write_records_standard(OSSL_RECORD_LAYER *rl,
 int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                       size_t numtempl)
 {
-    int ret;
-
     /* Check we don't have pending data waiting to write */
     if (!ossl_assert(rl->nextwbuf >= rl->numwpipes
                      || SSL3_BUFFER_get_left(&rl->wbuf[rl->nextwbuf]) == 0)) {
@@ -2063,17 +1921,9 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    ret = tls_write_records_multiblock(rl, templates, numtempl);
-    if (ret < 0) {
+    if (!rl->funcs->write_records(rl, templates, numtempl)) {
         /* RLAYERfatal already called */
         return OSSL_RECORD_RETURN_FATAL;
-    }
-    if (ret == 0) {
-        /* Multiblock wasn't suitable so just do a standard write */
-        if (!tls_write_records_standard(rl, templates, numtempl)) {
-            /* RLAYERfatal already called */
-            return OSSL_RECORD_RETURN_FATAL;
-        }
     }
 
     rl->nextwbuf = 0;

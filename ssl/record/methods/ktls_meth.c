@@ -481,13 +481,15 @@ static int ktls_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
 
 static struct record_functions_st ossl_ktls_funcs = {
     ktls_set_crypto_state,
-    ktls_read_n,
-    tls_get_more_records,
     ktls_cipher,
     NULL,
     tls_default_set_protocol_version,
+    ktls_read_n,
+    tls_get_more_records,
     ktls_validate_record_header,
-    ktls_post_process_record
+    ktls_post_process_record,
+    tls_get_max_records_default,
+    tls_write_records_default
 };
 
 static int
