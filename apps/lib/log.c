@@ -56,18 +56,31 @@ static void log_with_prefix(const char *prog, const char *fmt, va_list ap)
     BIO_free(pre);
 }
 
+/*
+ * Unfortunately, C before C99 does not define va_copy, so we must
+ * check if it can be assumed to be present.  We do that with an internal
+ * antifeature macro.
+ * C versions since C94 define __STDC_VERSION__, so it's enough to
+ * check its existence and value.
+ */
+#undef OSSL_NO_C99
+#if !defined(__STDC_VERSION__) || __STDC_VERSION__ + 0 < 199900L
+# define OSSL_NO_C99
+#endif
+
 void trace_log_message(int category,
                        const char *prog, int level, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-#ifdef __STRICT_ANSI__ /* unfortuantely, ANSI does not define va_copy */
+
+#ifdef OSSL_NO_C99
     if (verbosity >= level)
         category = -1; /* disabling trace output in addition to logging */
 #endif
     if (category >= 0 && OSSL_trace_enabled(category)) {
         BIO *out = OSSL_trace_begin(category);
-#ifndef __STRICT_ANSI__
+#ifndef OSSL_NO_C99
         va_list ap_copy;
 
         va_copy(ap_copy, ap);
