@@ -168,6 +168,13 @@ OpenSSL 3.2
 
    *David von Oheimb*
 
+ * `CMS_add0_cert()` and `CMS_add1_cert()` no more throw an error
+   if a certificate to be added is already present.
+ * `CMS_sign_ex()` and `CMS_sign()` now ignore any duplicate certificates
+   in their `certs` argument and no longer throw an error for them.
+
+   *David von Oheimb*
+
  * Fixed and extended `util/check-format.pl` for checking adherence to the
    coding style <https://www.openssl.org/policies/technical/coding-style.html>.
    The checks are meanwhile more complete and yield fewer false positives.

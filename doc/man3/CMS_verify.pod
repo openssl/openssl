@@ -40,7 +40,7 @@ it operates on B<CMS SignedData> input in the I<sd> argument,
 it has some additional parameters described next,
 and on success it returns the verfied content as a memory BIO.
 The optional I<extra> parameter may be used to provide untrusted CA
-certificates that may be helpful for chain building in certificate valiation.
+certificates that may be helpful for chain building in certificate validation.
 This list of certificates must not contain duplicates.
 The optional I<crls> parameter may be used to provide extra CRLs.
 Also the list of CRLs must not contain duplicates.

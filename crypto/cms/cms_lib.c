@@ -537,9 +537,9 @@ int CMS_add0_cert(CMS_ContentInfo *cms, X509 *cert)
     for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
         cch = sk_CMS_CertificateChoices_value(*pcerts, i);
         if (cch->type == CMS_CERTCHOICE_CERT) {
-            if (!X509_cmp(cch->d.certificate, cert)) {
-                ERR_raise(ERR_LIB_CMS, CMS_R_CERTIFICATE_ALREADY_PRESENT);
-                return 0;
+            if (X509_cmp(cch->d.certificate, cert) == 0) {
+                X509_free(cert);
+                return 1; /* cert already present */
             }
         }
     }
@@ -553,11 +553,12 @@ int CMS_add0_cert(CMS_ContentInfo *cms, X509 *cert)
 
 int CMS_add1_cert(CMS_ContentInfo *cms, X509 *cert)
 {
-    int r;
-    r = CMS_add0_cert(cms, cert);
-    if (r > 0)
-        X509_up_ref(cert);
-    return r;
+    if (!X509_up_ref(cert))
+        return 0;
+    if (CMS_add0_cert(cms, cert))
+        return 1;
+    X509_free(cert);
+    return 0;
 }
 
 static STACK_OF(CMS_RevocationInfoChoice)
@@ -609,9 +610,9 @@ CMS_RevocationInfoChoice *CMS_add0_RevocationInfoChoice(CMS_ContentInfo *cms)
 
 int CMS_add0_crl(CMS_ContentInfo *cms, X509_CRL *crl)
 {
-    CMS_RevocationInfoChoice *rch;
-    rch = CMS_add0_RevocationInfoChoice(cms);
-    if (!rch)
+    CMS_RevocationInfoChoice *rch = CMS_add0_RevocationInfoChoice(cms);
+
+    if (rch == NULL)
         return 0;
     rch->type = CMS_REVCHOICE_CRL;
     rch->d.crl = crl;
@@ -665,16 +666,15 @@ STACK_OF(X509_CRL) *CMS_get1_crls(CMS_ContentInfo *cms)
     for (i = 0; i < sk_CMS_RevocationInfoChoice_num(*pcrls); i++) {
         rch = sk_CMS_RevocationInfoChoice_value(*pcrls, i);
         if (rch->type == 0) {
-            if (!crls) {
-                crls = sk_X509_CRL_new_null();
-                if (!crls)
+            if (crls == NULL) {
+                if ((crls = sk_X509_CRL_new_null()) == NULL)
                     return NULL;
             }
-            if (!sk_X509_CRL_push(crls, rch->d.crl)) {
+            if (!sk_X509_CRL_push(crls, rch->d.crl)
+                    || !X509_CRL_up_ref(rch->d.crl)) {
                 sk_X509_CRL_pop_free(crls, X509_CRL_free);
                 return NULL;
             }
-            X509_CRL_up_ref(rch->d.crl);
         }
     }
     return crls;
