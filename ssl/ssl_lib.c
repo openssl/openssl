@@ -28,6 +28,10 @@
 #include "internal/ktls.h"
 #include "quic/quic_local.h"
 
+#ifndef OPENSSL_NO_QUIC
+DEFINE_LHASH_OF_EX(QUIC_ROUTE);
+#endif
+
 static int ssl_undefined_function_3(SSL_CONNECTION *sc, unsigned char *r,
                                     unsigned char *s, size_t t, size_t *u)
 {
@@ -4090,6 +4094,9 @@ void SSL_CTX_free(SSL_CTX *a)
     X509_STORE_free(a->cert_store);
 #ifndef OPENSSL_NO_CT
     CTLOG_STORE_free(a->ctlog_store);
+#endif
+#ifndef OPENSSL_NO_QUIC
+    lh_QUIC_ROUTE_free(a->quic_route_table);
 #endif
     sk_SSL_CIPHER_free(a->cipher_list);
     sk_SSL_CIPHER_free(a->cipher_list_by_id);

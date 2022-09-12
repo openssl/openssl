@@ -38,6 +38,11 @@
 # include "internal/time.h"
 # include "record/record.h"
 
+# ifndef OPENSSL_NO_QUIC
+#  include <openssl/lhash.h>
+#  include "internal/quic_types.h"
+# endif
+
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
 #  define OPENSSL_EXTERN OPENSSL_EXPORT
@@ -1174,6 +1179,11 @@ struct ssl_ctx_st {
     uint32_t disabled_mac_mask;
     uint32_t disabled_mkey_mask;
     uint32_t disabled_auth_mask;
+
+#ifndef OPENSSL_NO_QUIC
+    /* mapping from local IDs to QUIC packets to direct incoming packets correctly */
+    LHASH_OF(QUIC_ROUTE) *quic_route_table;
+#endif
 
 #ifndef OPENSSL_NO_COMP_ALG
     /* certificate compression preferences */

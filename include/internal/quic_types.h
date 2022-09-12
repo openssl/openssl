@@ -67,7 +67,8 @@ static ossl_unused ossl_inline QUIC_PN ossl_quic_pn_min(QUIC_PN a, QUIC_PN b)
 }
 
 /* QUIC connection ID representation. */
-#  define QUIC_MAX_CONN_ID_LEN   20
+#  define QUIC_MAX_CONN_ID_LEN   20     /* Maximum ID length from standard */
+#  define QUIC_CONN_ID_LEN        8     /* Our ID length */
 
 typedef struct quic_conn_id_st {
     unsigned char id_len, id[QUIC_MAX_CONN_ID_LEN];
@@ -96,5 +97,9 @@ static ossl_unused ossl_inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
 #  define QUIC_STATELESS_RESET_TOKEN_LEN    16
 
 # endif
+
+/* QUIC routes */
+typedef struct quic_route_st QUIC_ROUTE;
+typedef struct quic_route_table QUIC_ROUTE_TABLE;
 
 #endif
