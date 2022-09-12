@@ -20,7 +20,8 @@ CMS_add0_crl, CMS_add1_crl, CMS_get1_crls
 
 =head1 DESCRIPTION
 
-CMS_add0_cert() and CMS_add1_cert() add certificate I<cert> to I<cms>.
+CMS_add0_cert() and CMS_add1_cert() add certificate I<cert> to I<cms>
+unless it is already present.
 I<cms> must be of type signed data or (authenticated) enveloped data.
 For signed data, such a certificate can be used when signing or verifying
 to fill in the signer certificate or to provide an extra CA certificate
@@ -48,9 +49,6 @@ For enveloped data they are added to B<OriginatorInfo>.
 As the 0 implies, CMS_add0_cert() adds I<cert> internally to I<cms> and it
 must not be freed up after the call as opposed to CMS_add1_cert() where I<cert>
 must be freed up.
-
-The same certificate or CRL must not be added to the same cms structure more
-than once.
 
 =head1 RETURN VALUES
 
