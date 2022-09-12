@@ -38,11 +38,6 @@ struct record_functions_st
                             const EVP_MD *md,
                             const SSL_COMP *comp);
 
-    int (*read_n)(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
-                  int clearold, size_t *readbytes);
-
-    int (*get_more_records)(OSSL_RECORD_LAYER *rl);
-
     /*
      * Returns:
      *    0: if the record is publicly invalid, or an internal error, or AEAD
@@ -58,11 +53,27 @@ struct record_functions_st
     /* Return 1 for success or 0 for error */
     int (*set_protocol_version)(OSSL_RECORD_LAYER *rl, int version);
 
+    /* Read related functions */
+
+    int (*read_n)(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
+                  int clearold, size_t *readbytes);
+
+    int (*get_more_records)(OSSL_RECORD_LAYER *rl);
+
     /* Return 1 for success or 0 for error */
     int (*validate_record_header)(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
 
     /* Return 1 for success or 0 for error */
     int (*post_process_record)(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
+
+    /* Write related functions */
+
+    size_t (*get_max_records)(OSSL_RECORD_LAYER *rl, int type, size_t len,
+                              size_t maxfrag, size_t *preffrag);
+
+    /* Return 1 for success or 0 for error */
+    int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
+                         size_t numtempl);
 };
 
 struct ossl_record_layer_st
@@ -314,3 +325,18 @@ void tls_get_state(OSSL_RECORD_LAYER *rl, const char **shortstr,
                    const char **longstr);
 int tls_set_options(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options);
 int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl);
+int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
+                           size_t firstlen, size_t nextlen);
+
+int tls_write_records_multiblock(OSSL_RECORD_LAYER *rl,
+                                 OSSL_RECORD_TEMPLATE *templates,
+                                 size_t numtempl);
+
+size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, int type, size_t len,
+                                   size_t maxfrag, size_t *preffrag);
+size_t tls_get_max_records_multiblock(OSSL_RECORD_LAYER *rl, int type,
+                                      size_t len, size_t maxfrag,
+                                      size_t *preffrag);
+int tls_write_records_default(OSSL_RECORD_LAYER *rl,
+                              OSSL_RECORD_TEMPLATE *templates,
+                              size_t numtempl);

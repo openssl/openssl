@@ -136,13 +136,15 @@ static int tls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
 
 struct record_functions_st tls_any_funcs = {
     tls_any_set_crypto_state,
-    tls_default_read_n,
-    tls_get_more_records,
     tls_any_cipher,
     NULL,
     tls_any_set_protocol_version,
+    tls_default_read_n,
+    tls_get_more_records,
     tls_validate_record_header,
-    tls_default_post_process_record
+    tls_default_post_process_record,
+    tls_get_max_records_default,
+    tls_write_records_default
 };
 
 static int dtls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
@@ -156,11 +158,13 @@ static int dtls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
 
 struct record_functions_st dtls_any_funcs = {
     tls_any_set_crypto_state,
-    tls_default_read_n,
-    dtls_get_more_records,
     tls_any_cipher,
     NULL,
     dtls_any_set_protocol_version,
+    tls_default_read_n,
+    dtls_get_more_records,
+    NULL,
+    NULL,
     NULL,
     NULL
 };
