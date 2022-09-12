@@ -236,6 +236,29 @@ void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num,
 int global_init(void);
 int setup_tests(void);
 void cleanup_tests(void);
+
+/*
+ * Helper functions to detect specific versions of the FIPS provider being in use.
+ * Because of FIPS rules, code changes after a module has been validated are
+ * difficult and because we provide an hard guarantee of ABI and behavioural
+ * stability going forwards, it is a requirement to have tests be conditional
+ * on specific FIPS provider versions.  Without this, bug fixes cannot be tested
+ * in later releases.
+ *
+ * The reason for not including e.g. a less than test is to help avoid any
+ * temptation to use FIPS provider version numbers that don't exist.  Until the
+ * `new' provider is validated, its version isn't set in stone.  Thus a change
+ * in test behaviour must depend on already validated module versions only.
+ *
+ * In all cases, the function returns true if:
+ *      1. the FIPS provider version matches the criteria specified or
+ *      2. the FIPS provider isn't being used.
+ */
+int fips_provider_version_eq(OSSL_LIB_CTX *libctx, int major, int minor, int patch);
+int fips_provider_version_ne(OSSL_LIB_CTX *libctx, int major, int minor, int patch);
+int fips_provider_version_le(OSSL_LIB_CTX *libctx, int major, int minor, int patch);
+int fips_provider_version_gt(OSSL_LIB_CTX *libctx, int major, int minor, int patch);
+
 /*
  * Used to supply test specific command line options,
  * If non optional parameters are used, then the first entry in the OPTIONS[]
