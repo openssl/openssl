@@ -1361,12 +1361,12 @@ void ossl_ssl_connection_free(SSL *ssl)
     /* Ignore return value */
     ssl_free_wbio_buffer(s);
 
+    RECORD_LAYER_clear(&s->rlayer);
+
     BIO_free_all(s->wbio);
     s->wbio = NULL;
     BIO_free_all(s->rbio);
     s->rbio = NULL;
-
-    RECORD_LAYER_clear(&s->rlayer);
 
     BUF_MEM_free(s->init_buf);
 
