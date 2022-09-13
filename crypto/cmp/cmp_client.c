@@ -97,13 +97,7 @@ static int save_statusInfo(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si)
     if (ctx->status < OSSL_CMP_PKISTATUS_accepted)
         return 0;
 
-    ctx->failInfoCode = 0;
-    if (si->failInfo != NULL) {
-        for (i = 0; i <= OSSL_CMP_PKIFAILUREINFO_MAX; i++) {
-            if (ASN1_BIT_STRING_get_bit(si->failInfo, i))
-                ctx->failInfoCode |= (1 << i);
-        }
-    }
+    ctx->failInfoCode = ossl_cmp_pkisi_get_pkifailureinfo(si);
 
     if (!ossl_cmp_ctx_set0_statusString(ctx, sk_ASN1_UTF8STRING_new_null())
             || (ctx->statusString == NULL))
