@@ -1596,7 +1596,7 @@ static int mac_test_run_mac(EVP_TEST *t)
             goto err;
         }
     }
-    /* FIPS 3.0.0 can't reinitialise MAC contexts #18100 */
+    /* FIPS(3.0.0): can't reinitialise MAC contexts #18100 */
     if (reinit-- && fips_provider_version_gt(libctx, 3, 0, 0)) {
         OSSL_PARAM ivparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
         int ret;
@@ -2823,7 +2823,7 @@ static int kdf_test_run(EVP_TEST *t)
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    /* FIPS 3.0.0 can't dup KDF contexts #17572 */
+    /* FIPS(3.0.0): can't dup KDF contexts #17572 */
     if (fips_provider_version_gt(libctx, 3, 0, 0)
             && (ctx = EVP_KDF_CTX_dup(expected->ctx)) != NULL) {
         EVP_KDF_CTX_free(expected->ctx);
@@ -2922,7 +2922,7 @@ static int pkey_kdf_test_run(EVP_TEST *t)
     size_t got_len = 0;
 
     if (fips_provider_version_eq(libctx, 3, 0, 0)) {
-        /* FIPS 3.0.0 can't deal with oversized output buffers #18533 */
+        /* FIPS(3.0.0): can't deal with oversized output buffers #18533 */
         got_len = expected->output_len;
     } else {
         /* Find out the KDF output size */
@@ -3737,72 +3737,6 @@ static int prov_available(char *providers)
     return 0;
 }
 
-static int check_fips_versions(char *versions, const EVP_TEST *t)
-{
-    char *p;
-    int major, minor, patch, r;
-    enum {
-        MODE_EQ, MODE_NE, MODE_LE, MODE_GT
-    } mode;
-
-    while (*versions != '\0') {
-        for (; isspace(*versions); versions++)
-            continue;
-        if (*versions == '\0')
-            break;
-        for (p = versions; *versions != '\0' && !isspace(*versions); versions++)
-            continue;
-        if (*versions != '\0')
-            *versions++ = '\0';
-        if (*p == '!') {
-            mode = MODE_NE;
-            p++;
-        } else if (*p == '=') {
-            mode = MODE_EQ;
-            p++;
-        } else if (*p == '<' && p[1] == '=') {
-            mode = MODE_LE;
-            p += 2;
-        } else if (*p == '>') {
-            mode = MODE_GT;
-            p++;
-        } else if (isdigit(*p)) {
-            mode = MODE_EQ;
-        } else {
-            TEST_info("Line %d: error matching FIPS version: mode %s\n",
-                      t->s.curr, p);
-            return -1;
-        }
-        if (sscanf(p, "%d.%d.%d", &major, &minor, &patch) != 3) {
-            TEST_info("Line %d: error matching FIPS version: version %s\n",
-                      t->s.curr, p);
-            return -1;
-        }
-        switch (mode) {
-        case MODE_EQ:
-            r = fips_provider_version_eq(libctx, major, minor, patch);
-            break;
-        case MODE_NE:
-            r = fips_provider_version_ne(libctx, major, minor, patch);
-            break;
-        case MODE_LE:
-            r = fips_provider_version_le(libctx, major, minor, patch);
-            break;
-        case MODE_GT:
-            r = fips_provider_version_gt(libctx, major, minor, patch);
-            break;
-        }
-        if (r < 0) {
-            TEST_info("Line %d: error matching FIPS version: internal error\n",
-                      t->s.curr);
-            return -1;
-        }
-        if (r == 0)
-            return 0;
-    }
-    return 1;
-}
-
 /* Read and parse one test.  Return 0 if failure, 1 if okay. */
 static int parse(EVP_TEST *t)
 {
@@ -3901,7 +3835,7 @@ start:
         goto start;
     } else if (strcmp(pp->key, "FIPSversion") == 0) {
         if (prov_available("fips")) {
-            j = check_fips_versions(pp->value, t);
+            j = fips_provider_version_match(libctx, pp->value);
             if (j < 0) {
                 TEST_info("Line %d: error matching FIPS versions\n", t->s.curr);
                 return 0;

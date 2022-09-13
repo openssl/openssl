@@ -8,6 +8,7 @@
  */
 
 #include "../testutil.h"
+#include <ctype.h>
 #include <openssl/provider.h>
 #include <openssl/core_names.h>
 #include <string.h>
@@ -88,7 +89,7 @@ static int fips_provider_version(OSSL_LIB_CTX *libctx, FIPS_VERSION *vers)
             || sscanf(vs, "%d.%d.%d", &vers->major, &vers->minor, &vers->patch) != 3)
         goto err;
     if (!OSSL_PROVIDER_unload(fips_prov))
-        return -1;  /* WTF do we do here??? */
+        return -1;
     return 1;
  err:
     OSSL_PROVIDER_unload(fips_prov);
@@ -139,4 +140,65 @@ int fips_provider_version_gt(OSSL_LIB_CTX *libctx, int major, int minor, int pat
            || (prov.major == major
                && (prov.minor > minor
                    || (prov.minor == minor && prov.patch > patch)));
+}
+
+int fips_provider_version_match(OSSL_LIB_CTX *libctx, const char *versions)
+{
+    const char *p;
+    int major, minor, patch, r;
+    enum {
+        MODE_EQ, MODE_NE, MODE_LE, MODE_GT
+    } mode;
+
+    while (*versions != '\0') {
+        for (; isspace(*versions); versions++)
+            continue;
+        if (*versions == '\0')
+            break;
+        for (p = versions; *versions != '\0' && !isspace(*versions); versions++)
+            continue;
+        if (*p == '!') {
+            mode = MODE_NE;
+            p++;
+        } else if (*p == '=') {
+            mode = MODE_EQ;
+            p++;
+        } else if (*p == '<' && p[1] == '=') {
+            mode = MODE_LE;
+            p += 2;
+        } else if (*p == '>') {
+            mode = MODE_GT;
+            p++;
+        } else if (isdigit(*p)) {
+            mode = MODE_EQ;
+        } else {
+            TEST_info("Error matching FIPS version: mode %s\n", p);
+            return -1;
+        }
+        if (sscanf(p, "%d.%d.%d", &major, &minor, &patch) != 3) {
+            TEST_info("Error matching FIPS version: version %s\n", p);
+            return -1;
+        }
+        switch (mode) {
+        case MODE_EQ:
+            r = fips_provider_version_eq(libctx, major, minor, patch);
+            break;
+        case MODE_NE:
+            r = fips_provider_version_ne(libctx, major, minor, patch);
+            break;
+        case MODE_LE:
+            r = fips_provider_version_le(libctx, major, minor, patch);
+            break;
+        case MODE_GT:
+            r = fips_provider_version_gt(libctx, major, minor, patch);
+            break;
+        }
+        if (r < 0) {
+            TEST_info("Error matching FIPS version: internal error\n");
+            return -1;
+        }
+        if (r == 0)
+            return 0;
+    }
+    return 1;
 }
