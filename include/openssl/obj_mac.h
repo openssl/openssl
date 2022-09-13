@@ -1237,6 +1237,10 @@
 #define NID_SM2_with_SM3                1204
 #define OBJ_SM2_with_SM3                OBJ_sm_scheme,501L
 
+#define LN_hmacWithSM3          "hmacWithSM3"
+#define NID_hmacWithSM3         1281
+#define OBJ_hmacWithSM3         OBJ_sm3,3L,1L
+
 #define LN_hmacWithSHA224               "hmacWithSHA224"
 #define NID_hmacWithSHA224              798
 #define OBJ_hmacWithSHA224              OBJ_rsadsi,2L,8L
