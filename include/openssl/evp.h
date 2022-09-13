@@ -1974,6 +1974,8 @@ int EVP_PKEY_get_field_type(const EVP_PKEY *pkey);
 
 EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
                             const char *type, ...);
+EVP_PKEY *EVP_PKEY_generate_public_key(OSSL_LIB_CTX *libctx, const char *propq,
+                                       EVP_PKEY *private_key, int keep_private);
 int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
 int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx);

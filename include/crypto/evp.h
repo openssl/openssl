@@ -929,6 +929,9 @@ int evp_pkey_ctx_get_params_to_ctrl(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 /* This must ONLY be called for legacy EVP_PKEYs */
 int evp_pkey_get_params_to_ctrl(const EVP_PKEY *pkey, OSSL_PARAM *params);
 
+/* initialize keygen for specific selection (ignored for legacy contexts) */
+int evp_pkey_ctx_gen_init(EVP_PKEY_CTX *ctx, int operation, int selection);
+
 /* Same as the public get0 functions but are not const */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 DH *evp_pkey_get0_DH_int(const EVP_PKEY *pkey);

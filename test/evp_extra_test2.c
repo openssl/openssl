@@ -255,20 +255,20 @@ static APK_DATA keydata[] = {
 #endif
 };
 
-static int pkey_has_private(EVP_PKEY *key, const char *privtag,
-                            int use_octstring)
+static int pkey_has_param(EVP_PKEY *key, const char *param,
+                          int use_octstring)
 {
     int ret = 0;
 
     if (use_octstring) {
         unsigned char buf[64];
 
-        ret = EVP_PKEY_get_octet_string_param(key, privtag, buf, sizeof(buf),
+        ret = EVP_PKEY_get_octet_string_param(key, param, buf, sizeof(buf),
                                               NULL);
     } else {
         BIGNUM *bn = NULL;
 
-        ret = EVP_PKEY_get_bn_param(key, privtag, &bn);
+        ret = EVP_PKEY_get_bn_param(key, param, &bn);
         BN_free(bn);
     }
     return ret;
@@ -306,7 +306,7 @@ static int do_pkey_tofrom_data_select(EVP_PKEY *key, const char *keytype)
         || !TEST_int_eq(EVP_PKEY_fromdata_init(fromctx), 1)
         || !TEST_int_eq(EVP_PKEY_fromdata(fromctx, &fromkey, EVP_PKEY_PUBLIC_KEY,
                                           keypair_params), 1)
-        || !TEST_false(pkey_has_private(fromkey, privtag, use_octstring)))
+        || !TEST_false(pkey_has_param(fromkey, privtag, use_octstring)))
         goto end;
     /*
      * Select the keypair when using EVP_PKEY_fromdata() and check that
@@ -314,7 +314,7 @@ static int do_pkey_tofrom_data_select(EVP_PKEY *key, const char *keytype)
      */
     if (!TEST_int_eq(EVP_PKEY_fromdata(fromctx, &fromkeypair,
                                        EVP_PKEY_KEYPAIR, keypair_params), 1)
-        || !TEST_true(pkey_has_private(fromkeypair, privtag, use_octstring)))
+        || !TEST_true(pkey_has_param(fromkeypair, privtag, use_octstring)))
         goto end;
     ret = 1;
 end:
@@ -325,6 +325,76 @@ end:
     OSSL_PARAM_free(pub_params);
     return ret;
 }
+
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+static int test_gen_pub_key(EVP_PKEY *keypair, const char *priv_name,
+                            const char *pub_name)
+{
+    int ret = 0;
+    const char *type_name;
+    OSSL_PARAM *priv_params = NULL;
+    OSSL_PARAM *p;
+    EVP_PKEY *genkey = NULL;
+    EVP_PKEY *priv_key = NULL;
+    EVP_PKEY_CTX *fromctx = NULL;
+    int priv_octstring = EVP_PKEY_is_a(keypair, "X25519");
+    int pub_octstring = !EVP_PKEY_is_a(keypair, "DHX")
+                        && !EVP_PKEY_is_a(keypair, "DH");
+    static char not_a_pub_name[] = "not-a-pub-key";
+
+    if (!TEST_ptr(type_name = EVP_PKEY_get0_type_name(keypair)))
+        goto err;
+
+    if (!TEST_int_eq(EVP_PKEY_todata(keypair, EVP_PKEY_KEYPAIR,
+                                     &priv_params), 1))
+        goto err;
+
+    if (!TEST_ptr(p = OSSL_PARAM_locate(priv_params, pub_name)))
+        goto err;
+    /* overwrite the pub key param so it won't be imported */
+    p->key = not_a_pub_name;
+
+    if (!TEST_ptr(fromctx = EVP_PKEY_CTX_new_from_name(mainctx, type_name, NULL))
+        || !TEST_int_eq(EVP_PKEY_fromdata_init(fromctx), 1)
+        || !TEST_int_eq(EVP_PKEY_fromdata(fromctx, &priv_key,
+                                          OSSL_KEYMGMT_SELECT_PRIVATE_KEY
+                                          | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS,
+                                          priv_params), 1)
+        || !TEST_true(pkey_has_param(priv_key, priv_name, priv_octstring)))
+        goto err;
+
+    if (!TEST_ptr(genkey = EVP_PKEY_generate_public_key(mainctx, NULL, priv_key,
+                                                        0)))
+        goto err;
+
+    if (!TEST_true(pkey_has_param(genkey, pub_name, pub_octstring))
+        || !TEST_false(pkey_has_param(genkey, priv_name, priv_octstring))
+        || !TEST_ptr_ne(genkey, priv_key)
+        || !TEST_int_eq(EVP_PKEY_eq(genkey, keypair), 1))
+        goto err;
+
+    EVP_PKEY_free(genkey);
+
+    if (!TEST_ptr(genkey = EVP_PKEY_generate_public_key(mainctx, NULL, priv_key,
+                                                        1)))
+        goto err;
+
+    if (!TEST_true(pkey_has_param(genkey, pub_name, pub_octstring))
+        || !TEST_true(pkey_has_param(genkey, priv_name, priv_octstring))
+        || !TEST_ptr_ne(genkey, priv_key)
+        || !TEST_int_eq(EVP_PKEY_eq(genkey, priv_key), 1))
+        goto err;
+
+    ret = 1;
+
+err:
+    EVP_PKEY_free(genkey);
+    EVP_PKEY_free(priv_key);
+    EVP_PKEY_CTX_free(fromctx);
+    OSSL_PARAM_free(priv_params);
+    return ret;
+}
+#endif
 
 #ifndef OPENSSL_NO_DH
 static int test_dh_tofrom_data_select(void)
@@ -350,6 +420,8 @@ static int test_dh_tofrom_data_select(void)
               && TEST_ptr(privkey = DH_get0_priv_key(dhkey))
               && TEST_int_le(BN_num_bits(privkey), 225);
 # endif
+    ret = ret && TEST_true(test_gen_pub_key(key, "priv", "pub"));
+
     EVP_PKEY_free(key);
     EVP_PKEY_CTX_free(gctx);
     return ret;
@@ -363,7 +435,9 @@ static int test_ec_tofrom_data_select(void)
     EVP_PKEY *key = NULL;
 
     ret = TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "EC", "P-256"))
-          && TEST_true(do_pkey_tofrom_data_select(key, "EC"));
+          && TEST_true(do_pkey_tofrom_data_select(key, "EC"))
+          && TEST_true(test_gen_pub_key(key, "priv", "pub"));
+
     EVP_PKEY_free(key);
     return ret;
 }
@@ -374,7 +448,12 @@ static int test_ecx_tofrom_data_select(void)
     EVP_PKEY *key = NULL;
 
     ret = TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "X25519"))
-          && TEST_true(do_pkey_tofrom_data_select(key, "X25519"));
+          && TEST_true(do_pkey_tofrom_data_select(key, "X25519"))
+          /*
+           * Although there is no pubkey generation for ecx keys implemented
+           * this will still work because ecx keys always have the public part.
+           */
+          && TEST_true(test_gen_pub_key(key, "priv", "pub"));
     EVP_PKEY_free(key);
     return ret;
 }
