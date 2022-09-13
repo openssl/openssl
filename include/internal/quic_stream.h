@@ -21,7 +21,7 @@
  * QUIC Send Stream
  * ================
  *
- * The QUIC Send Stream Manager (QSS) is responsible for:
+ * The QUIC Send Stream Manager (QUIC_SSTREAM) is responsible for:
  *
  *   - accepting octet strings of stream data;
  *
@@ -46,21 +46,21 @@
  * datagrams. The terms 'send' and 'receive' are used when referring to the
  * stream abstraction. Applications send; we transmit.
  */
-typedef struct ossl_qss_st OSSL_QSS;
+typedef struct quic_sstream_st QUIC_SSTREAM;
 
 /*
  * Instantiates a new QSS. init_buf_size specifies the initial size of the
  * stream data buffer in bytes, which must be positive.
  */
-OSSL_QSS *ossl_qss_new(size_t init_buf_size);
+QUIC_SSTREAM *ossl_quic_sstream_new(size_t init_buf_size);
 
 /*
  * Frees a QSS and associated stream data storage.
  *
- * Any iovecs returned by ossl_qss_get_stream_frame cease to be valid after
+ * Any iovecs returned by ossl_quic_sstream_get_stream_frame cease to be valid after
  * calling this function.
  */
-void ossl_qss_free(OSSL_QSS *qss);
+void ossl_quic_sstream_free(QUIC_SSTREAM *qss);
 
 /*
  * (For TX packetizer use.) Retrieves information about application stream data
@@ -89,13 +89,13 @@ void ossl_qss_free(OSSL_QSS *qss);
  * to hdr->len will always match. If the caller decides to send less than
  * hdr->len of stream data, it must adjust the IOVs accordingly. This may be
  * done by updating hdr->len and then calling the utility function
- * ossl_qss_adjust_iov().
+ * ossl_quic_sstream_adjust_iov().
  *
- * After committing one or more bytes returned by ossl_qss_get_stream_frame to a
- * packet, call ossl_qss_mark_transmitted with the inclusive range of logical
+ * After committing one or more bytes returned by ossl_quic_sstream_get_stream_frame to a
+ * packet, call ossl_quic_sstream_mark_transmitted with the inclusive range of logical
  * byte numbers of the transmitted bytes (i.e., hdr->offset, hdr->offset +
- * hdr->len - 1). If you do not call ossl_qss_mark_transmitted, the next call to
- * ossl_qss_get_stream_frame will return the same data (or potentially the same
+ * hdr->len - 1). If you do not call ossl_quic_sstream_mark_transmitted, the next call to
+ * ossl_quic_sstream_get_stream_frame will return the same data (or potentially the same
  * and more, if more data has been appended by the application).
  *
  * It is the caller's responsibility to clamp the length of data which this
@@ -105,9 +105,9 @@ void ossl_qss_free(OSSL_QSS *qss);
  *
  * The skip argument can usually be given as zero. If it is non-zero, this
  * function outputs a range which would be output if it were called again after
- * calling ossl_qss_mark_transmitted() with the returned range, repeated 'skip'
+ * calling ossl_quic_sstream_mark_transmitted() with the returned range, repeated 'skip'
  * times, and so on. This may be useful for callers which wish to enumerate
- * available stream frames and batch their calls to ossl_qss_mark_transmitted at
+ * available stream frames and batch their calls to ossl_quic_sstream_mark_transmitted at
  * a later time.
  *
  * On success, this function will never write *num_iov with a value other than
@@ -120,11 +120,11 @@ void ossl_qss_free(OSSL_QSS *qss);
  * transmission, or on other error (such as if the caller provides fewer
  * than two IOVs.)
  */
-int ossl_qss_get_stream_frame(OSSL_QSS *qss,
-                              size_t skip,
-                              OSSL_QUIC_FRAME_STREAM *hdr,
-                              OSSL_QTX_IOVEC *iov,
-                              size_t *num_iov);
+int ossl_quic_sstream_get_stream_frame(QUIC_SSTREAM *qss,
+                                       size_t skip,
+                                       OSSL_QUIC_FRAME_STREAM *hdr,
+                                       OSSL_QTX_IOVEC *iov,
+                                       size_t *num_iov);
 
 /*
  * (For TX packetizer use.) Marks a logical range of the send stream as having
@@ -136,43 +136,43 @@ int ossl_qss_get_stream_frame(OSSL_QSS *qss,
  * this function.
  *
  * If the STREAM frame sent had the FIN bit set, you must also call
- * ossl_qss_mark_transmitted_fin() after calling this function.
+ * ossl_quic_sstream_mark_transmitted_fin() after calling this function.
  *
  * If you sent a zero-length STREAM frame with the FIN bit set, you need only
- * call ossl_qss_mark_transmitted_fin() and must not call this function.
+ * call ossl_quic_sstream_mark_transmitted_fin() and must not call this function.
  *
  * Returns 1 on success and 0 on error (e.g. if end < start).
  */
-int ossl_qss_mark_transmitted(OSSL_QSS *qss,
-                              uint64_t start,
-                              uint64_t end);
+int ossl_quic_sstream_mark_transmitted(QUIC_SSTREAM *qss,
+                                       uint64_t start,
+                                       uint64_t end);
 
 /*
  * (For TX packetizer use.) Marks a STREAM frame with the FIN bit set as having
  * been transmitted. final_size is the final size of the stream (i.e., the value
  * offset + len of the transmitted STREAM frame).
  *
- * This function fails returning 0 if ossl_qss_fin() has not been called or if
+ * This function fails returning 0 if ossl_quic_sstream_fin() has not been called or if
  * final_size is not correct. The final_size argument is not strictly needed by
  * the QSS but is required as a sanity check.
  */
-int ossl_qss_mark_transmitted_fin(OSSL_QSS *qss,
-                                  uint64_t final_size);
+int ossl_quic_sstream_mark_transmitted_fin(QUIC_SSTREAM *qss,
+                                           uint64_t final_size);
 
 /*
  * (RX/ACKM use.) Marks a logical range of the send stream as having been lost.
  * The send stream will return the lost data for retransmission on a future call
- * to ossl_qss_get_stream_frame. The start and end values denote logical byte
+ * to ossl_quic_sstream_get_stream_frame. The start and end values denote logical byte
  * numbers and are inclusive.
  *
  * If the lost frame had the FIN bit set, you must also call
- * ossl_qss_mark_lost_fin() after calling this function.
+ * ossl_quic_sstream_mark_lost_fin() after calling this function.
  *
  * Returns 1 on success and 0 on error (e.g. if end < start).
  */
-int ossl_qss_mark_lost(OSSL_QSS *qss,
-                       uint64_t start,
-                       uint64_t end);
+int ossl_quic_sstream_mark_lost(QUIC_SSTREAM *qss,
+                                uint64_t start,
+                                uint64_t end);
 
 /*
  * (RX/ACKM use.) Informs the QSS that a STREAM frame with the FIN bit set was
@@ -180,7 +180,7 @@ int ossl_qss_mark_lost(OSSL_QSS *qss,
  *
  * Returns 1 on success and 0 on error.
  */
-int ossl_qss_mark_lost_fin(OSSL_QSS *qss);
+int ossl_quic_sstream_mark_lost_fin(QUIC_SSTREAM *qss);
 
 /*
  * (RX/ACKM use.) Marks a logical range of the send stream as having been
@@ -190,13 +190,13 @@ int ossl_qss_mark_lost_fin(OSSL_QSS *qss);
  * inclusive.
  *
  * If the acknowledged frame had the FIN bit set, you must also call
- * ossl_qss_mark_acked_fin() after calling this function.
+ * ossl_quic_sstream_mark_acked_fin() after calling this function.
  *
  * Returns 1 on success and 0 on error (e.g. if end < start).
  */
-int ossl_qss_mark_acked(OSSL_QSS *qss,
-                        uint64_t start,
-                        uint64_t end);
+int ossl_quic_sstream_mark_acked(QUIC_SSTREAM *qss,
+                                 uint64_t start,
+                                 uint64_t end);
 
 /*
  * (RX/ACKM use.) Informs the QSS that a STREAM frame with the FIN bit set
@@ -204,13 +204,13 @@ int ossl_qss_mark_acked(OSSL_QSS *qss,
  *
  * Returns 1 on success and 0 on error.
  */
-int ossl_qss_mark_acked_fin(OSSL_QSS *qss);
+int ossl_quic_sstream_mark_acked_fin(QUIC_SSTREAM *qss);
 
 /*
  * (Front end use.) Appends user data to the stream. The data is copied into the
  * stream. The amount of data consumed from buf is written to *consumed on
  * success (short writes are possible). The amount of data which can be written
- * can be determined in advance by calling the ossl_qss_get_buffer_avail()
+ * can be determined in advance by calling the ossl_quic_sstream_get_buffer_avail()
  * function; data is copied into an internal ring buffer of finite size.
  *
  * If the buffer is full, this should be materialised as a backpressure
@@ -219,16 +219,16 @@ int ossl_qss_mark_acked_fin(OSSL_QSS *qss);
  *
  * Returns 1 on success or 0 on failure.
  */
-int ossl_qss_append(OSSL_QSS *qss,
-                    const unsigned char *buf,
-                    size_t buf_len,
-                    size_t *consumed);
+int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
+                             const unsigned char *buf,
+                             size_t buf_len,
+                             size_t *consumed);
 
 /*
- * Marks a stream as finished. ossl_qss_append() may not be called anymore
+ * Marks a stream as finished. ossl_quic_sstream_append() may not be called anymore
  * after calling this.
  */
-void ossl_qss_fin(OSSL_QSS *qss);
+void ossl_quic_sstream_fin(QUIC_SSTREAM *qss);
 
 /*
  * Resizes the internal ring buffer. All stream data is preserved safely.
@@ -238,33 +238,33 @@ void ossl_qss_fin(OSSL_QSS *qss);
  * Returns 1 on success and 0 on failure.
  *
  * IMPORTANT: Any buffers referenced by iovecs output by
- * ossl_qss_get_stream_frame() cease to be valid after calling this function.
+ * ossl_quic_sstream_get_stream_frame() cease to be valid after calling this function.
  */
-int ossl_qss_set_buffer_size(OSSL_QSS *qss, size_t num_bytes);
+int ossl_quic_sstream_set_buffer_size(QUIC_SSTREAM *qss, size_t num_bytes);
 
 /*
  * Gets the internal ring buffer size in bytes.
  */
-size_t ossl_qss_get_buffer_size(OSSL_QSS *qss);
+size_t ossl_quic_sstream_get_buffer_size(QUIC_SSTREAM *qss);
 
 /*
  * Gets the number of bytes used in the internal ring buffer.
  */
-size_t ossl_qss_get_buffer_used(OSSL_QSS *qss);
+size_t ossl_quic_sstream_get_buffer_used(QUIC_SSTREAM *qss);
 
 /*
  * Gets the number of bytes free in the internal ring buffer.
  */
-size_t ossl_qss_get_buffer_avail(OSSL_QSS *qss);
+size_t ossl_quic_sstream_get_buffer_avail(QUIC_SSTREAM *qss);
 
 /*
  * Utility function to ensure the length of an array of iovecs matches the
  * length given as len. Trailing iovecs have their length values reduced or set
  * to 0 as necessary.
  */
-void ossl_qss_adjust_iov(size_t len,
-                         OSSL_QTX_IOVEC *iov,
-                         size_t num_iov);
+void ossl_quic_sstream_adjust_iov(size_t len,
+                                  OSSL_QTX_IOVEC *iov,
+                                  size_t num_iov);
 
 
 #endif

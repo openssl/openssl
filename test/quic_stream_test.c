@@ -42,27 +42,30 @@ static const unsigned char data_1[] = {
 static int test_simple(void)
 {
     int testresult = 0;
-    OSSL_QSS *qss = NULL;
+    QUIC_SSTREAM *sstream = NULL;
     OSSL_QUIC_FRAME_STREAM hdr;
     OSSL_QTX_IOVEC iov[2];
     size_t num_iov = 0, wr = 0, i, init_size = 8192;
 
-    if (!TEST_ptr(qss = ossl_qss_new(init_size)))
+    if (!TEST_ptr(sstream = ossl_quic_sstream_new(init_size)))
         goto err;
 
     /* Should not have any data yet */
     num_iov = OSSL_NELEM(iov);
-    if (!TEST_false(ossl_qss_get_stream_frame(qss, 0, &hdr, iov, &num_iov)))
+    if (!TEST_false(ossl_quic_sstream_get_stream_frame(sstream, 0, &hdr, iov,
+                                                       &num_iov)))
         goto err;
 
     /* Append data */
-    if (!TEST_true(ossl_qss_append(qss, data_1, sizeof(data_1), &wr))
+    if (!TEST_true(ossl_quic_sstream_append(sstream, data_1, sizeof(data_1),
+                                            &wr))
         || !TEST_size_t_eq(wr, sizeof(data_1)))
         goto err;
 
     /* Read data */
     num_iov = OSSL_NELEM(iov);
-    if (!TEST_true(ossl_qss_get_stream_frame(qss, 0, &hdr, iov, &num_iov))
+    if (!TEST_true(ossl_quic_sstream_get_stream_frame(sstream, 0, &hdr, iov,
+                                                      &num_iov))
         || !TEST_size_t_gt(num_iov, 0)
         || !TEST_uint64_t_eq(hdr.offset, 0)
         || !TEST_uint64_t_eq(hdr.len, sizeof(data_1))
@@ -73,12 +76,13 @@ static int test_simple(void)
         goto err;
 
     /* Mark data as half transmitted */
-    if (!TEST_true(ossl_qss_mark_transmitted(qss, 0, 7)))
+    if (!TEST_true(ossl_quic_sstream_mark_transmitted(sstream, 0, 7)))
         goto err;
 
     /* Read data */
     num_iov = OSSL_NELEM(iov);
-    if (!TEST_true(ossl_qss_get_stream_frame(qss, 0, &hdr, iov, &num_iov))
+    if (!TEST_true(ossl_quic_sstream_get_stream_frame(sstream, 0, &hdr, iov,
+                                                      &num_iov))
         || !TEST_size_t_gt(num_iov, 0)
         || !TEST_uint64_t_eq(hdr.offset, 8)
         || !TEST_uint64_t_eq(hdr.len, sizeof(data_1) - 8)
@@ -88,21 +92,23 @@ static int test_simple(void)
     if (!TEST_true(compare_iov(data_1 + 8, sizeof(data_1) - 8, iov, num_iov)))
         goto err;
 
-    if (!TEST_true(ossl_qss_mark_transmitted(qss, 8, 15)))
+    if (!TEST_true(ossl_quic_sstream_mark_transmitted(sstream, 8, 15)))
         goto err;
 
     /* Read more data; should not be any more */
     num_iov = OSSL_NELEM(iov);
-    if (!TEST_false(ossl_qss_get_stream_frame(qss, 0, &hdr, iov, &num_iov)))
+    if (!TEST_false(ossl_quic_sstream_get_stream_frame(sstream, 0, &hdr, iov,
+                                                       &num_iov)))
         goto err;
 
     /* Now we have lost bytes 4-6 */
-    if (!TEST_true(ossl_qss_mark_lost(qss, 4, 6)))
+    if (!TEST_true(ossl_quic_sstream_mark_lost(sstream, 4, 6)))
         goto err;
 
     /* Should be able to read them */
     num_iov = OSSL_NELEM(iov);
-    if (!TEST_true(ossl_qss_get_stream_frame(qss, 0, &hdr, iov, &num_iov))
+    if (!TEST_true(ossl_quic_sstream_get_stream_frame(sstream, 0, &hdr, iov,
+                                                      &num_iov))
         || !TEST_size_t_gt(num_iov, 0)
         || !TEST_uint64_t_eq(hdr.offset, 4)
         || !TEST_uint64_t_eq(hdr.len, 3)
@@ -113,38 +119,40 @@ static int test_simple(void)
         goto err;
 
     /* Retransmit */
-    if (!TEST_true(ossl_qss_mark_transmitted(qss, 4, 6)))
+    if (!TEST_true(ossl_quic_sstream_mark_transmitted(sstream, 4, 6)))
         goto err;
 
     /* Read more data; should not be any more */
     num_iov = OSSL_NELEM(iov);
-    if (!TEST_false(ossl_qss_get_stream_frame(qss, 0, &hdr, iov, &num_iov)))
+    if (!TEST_false(ossl_quic_sstream_get_stream_frame(sstream, 0, &hdr, iov,
+                                                       &num_iov)))
         goto err;
 
-    if (!TEST_size_t_eq(ossl_qss_get_buffer_used(qss), 16))
+    if (!TEST_size_t_eq(ossl_quic_sstream_get_buffer_used(sstream), 16))
         goto err;
 
     /* Data has been acknowledged, space should be not be freed yet */
-    if (!TEST_true(ossl_qss_mark_acked(qss, 1, 7))
-        || !TEST_size_t_eq(ossl_qss_get_buffer_used(qss), 16))
+    if (!TEST_true(ossl_quic_sstream_mark_acked(sstream, 1, 7))
+        || !TEST_size_t_eq(ossl_quic_sstream_get_buffer_used(sstream), 16))
         goto err;
 
     /* Now data should be freed */
-    if (!TEST_true(ossl_qss_mark_acked(qss, 0, 0))
-        || !TEST_size_t_eq(ossl_qss_get_buffer_used(qss), 8))
+    if (!TEST_true(ossl_quic_sstream_mark_acked(sstream, 0, 0))
+        || !TEST_size_t_eq(ossl_quic_sstream_get_buffer_used(sstream), 8))
         goto err;
 
-    if (!TEST_true(ossl_qss_mark_acked(qss, 0, 15))
-        || !TEST_size_t_eq(ossl_qss_get_buffer_used(qss), 0))
+    if (!TEST_true(ossl_quic_sstream_mark_acked(sstream, 0, 15))
+        || !TEST_size_t_eq(ossl_quic_sstream_get_buffer_used(sstream), 0))
         goto err;
 
     /* Now FIN */
-    ossl_qss_fin(qss);
+    ossl_quic_sstream_fin(sstream);
 
     /* Get FIN frame */
     for (i = 0; i < 2; ++i) {
         num_iov = OSSL_NELEM(iov);
-        if (!TEST_true(ossl_qss_get_stream_frame(qss, 0, &hdr, iov, &num_iov))
+        if (!TEST_true(ossl_quic_sstream_get_stream_frame(sstream, 0, &hdr, iov,
+                                                          &num_iov))
             || !TEST_uint64_t_eq(hdr.offset, 16)
             || !TEST_uint64_t_eq(hdr.len, 0)
             || !TEST_true(hdr.is_fin)
@@ -152,22 +160,24 @@ static int test_simple(void)
             goto err;
     }
 
-    if (!TEST_true(ossl_qss_mark_transmitted_fin(qss, 16)))
+    if (!TEST_true(ossl_quic_sstream_mark_transmitted_fin(sstream, 16)))
         goto err;
 
     /* Read more data; FIN should not be returned any more */
     num_iov = OSSL_NELEM(iov);
-    if (!TEST_false(ossl_qss_get_stream_frame(qss, 0, &hdr, iov, &num_iov)))
+    if (!TEST_false(ossl_quic_sstream_get_stream_frame(sstream, 0, &hdr, iov,
+                                                       &num_iov)))
         goto err;
 
     /* Lose FIN frame */
-    if (!TEST_true(ossl_qss_mark_lost_fin(qss)))
+    if (!TEST_true(ossl_quic_sstream_mark_lost_fin(sstream)))
         goto err;
 
     /* Get FIN frame */
     for (i = 0; i < 2; ++i) {
         num_iov = OSSL_NELEM(iov);
-        if (!TEST_true(ossl_qss_get_stream_frame(qss, 0, &hdr, iov, &num_iov))
+        if (!TEST_true(ossl_quic_sstream_get_stream_frame(sstream, 0, &hdr, iov,
+                                                          &num_iov))
             || !TEST_uint64_t_eq(hdr.offset, 16)
             || !TEST_uint64_t_eq(hdr.len, 0)
             || !TEST_true(hdr.is_fin)
@@ -175,28 +185,29 @@ static int test_simple(void)
             goto err;
     }
 
-    if (!TEST_true(ossl_qss_mark_transmitted_fin(qss, 16)))
+    if (!TEST_true(ossl_quic_sstream_mark_transmitted_fin(sstream, 16)))
         goto err;
 
     /* Read more data; FIN should not be returned any more */
     num_iov = OSSL_NELEM(iov);
-    if (!TEST_false(ossl_qss_get_stream_frame(qss, 0, &hdr, iov, &num_iov)))
+    if (!TEST_false(ossl_quic_sstream_get_stream_frame(sstream, 0, &hdr, iov,
+                                                       &num_iov)))
         goto err;
 
     /* Acknowledge fin. */
-    if (!TEST_true(ossl_qss_mark_acked_fin(qss)))
+    if (!TEST_true(ossl_quic_sstream_mark_acked_fin(sstream)))
         goto err;
 
     testresult = 1;
 err:
-    ossl_qss_free(qss);
+    ossl_quic_sstream_free(sstream);
     return testresult;
 }
 
 static int test_bulk(int idx)
 {
     int testresult = 0;
-    OSSL_QSS *qss = NULL;
+    QUIC_SSTREAM *sstream = NULL;
     OSSL_QUIC_FRAME_STREAM hdr;
     OSSL_QTX_IOVEC iov[2];
     size_t i, num_iov = 0, init_size = 8192, total_written = 0, l;
@@ -205,10 +216,10 @@ static int test_bulk(int idx)
     unsigned char *ref_src_buf = NULL, *ref_dst_buf = NULL;
     unsigned char *ref_dst_cur, *ref_src_cur, *dst_cur;
 
-    if (!TEST_ptr(qss = ossl_qss_new(init_size)))
+    if (!TEST_ptr(sstream = ossl_quic_sstream_new(init_size)))
         goto err;
 
-    if (!TEST_size_t_eq(ossl_qss_get_buffer_size(qss), init_size))
+    if (!TEST_size_t_eq(ossl_quic_sstream_get_buffer_size(sstream), init_size))
         goto err;
 
     if (!TEST_ptr(src_buf = OPENSSL_zalloc(init_size)))
@@ -226,10 +237,13 @@ static int test_bulk(int idx)
     /*
      * Append a preliminary buffer to allow later code to exercise wraparound.
      */
-    if (!TEST_true(ossl_qss_append(qss, src_buf, init_size / 2, &consumed))
+    if (!TEST_true(ossl_quic_sstream_append(sstream, src_buf, init_size / 2,
+                                            &consumed))
         || !TEST_size_t_eq(consumed, init_size / 2)
-        || !TEST_true(ossl_qss_mark_transmitted(qss, 0, init_size / 2 - 1))
-        || !TEST_true(ossl_qss_mark_acked(qss, 0, init_size / 2 - 1)))
+        || !TEST_true(ossl_quic_sstream_mark_transmitted(sstream, 0,
+                                                         init_size / 2 - 1))
+        || !TEST_true(ossl_quic_sstream_mark_acked(sstream, 0,
+                                                   init_size / 2 - 1)))
         goto err;
 
     /* Generate a random buffer. */
@@ -240,7 +254,7 @@ static int test_bulk(int idx)
     ref_src_cur = ref_src_buf;
     do {
         l = (test_random() % init_size) + 1;
-        if (!TEST_true(ossl_qss_append(qss, src_buf, l, &consumed)))
+        if (!TEST_true(ossl_quic_sstream_append(sstream, src_buf, l, &consumed)))
             goto err;
 
         memcpy(ref_src_cur, src_buf, consumed);
@@ -248,8 +262,8 @@ static int test_bulk(int idx)
         total_written   += consumed;
     } while (consumed > 0);
 
-    if (!TEST_size_t_eq(ossl_qss_get_buffer_used(qss), init_size)
-        || !TEST_size_t_eq(ossl_qss_get_buffer_avail(qss), 0))
+    if (!TEST_size_t_eq(ossl_quic_sstream_get_buffer_used(sstream), init_size)
+        || !TEST_size_t_eq(ossl_quic_sstream_get_buffer_avail(sstream), 0))
         goto err;
 
     /*
@@ -263,22 +277,23 @@ static int test_bulk(int idx)
         if ((test_random() & 1) != 0) {
             *ref_dst_cur++ = *ref_src_cur;
             ++expected;
-        } else if (!TEST_true(ossl_qss_mark_transmitted(qss, i, i)))
+        } else if (!TEST_true(ossl_quic_sstream_mark_transmitted(sstream, i, i)))
             goto err;
 
         ++ref_src_cur;
     }
 
     /* Exercise resize. */
-    if (!TEST_true(ossl_qss_set_buffer_size(qss, init_size * 2))
-        || !TEST_true(ossl_qss_set_buffer_size(qss, init_size)))
+    if (!TEST_true(ossl_quic_sstream_set_buffer_size(sstream, init_size * 2))
+        || !TEST_true(ossl_quic_sstream_set_buffer_size(sstream, init_size)))
         goto err;
 
     /* Readout and verification. */
     dst_cur = dst_buf;
     for (i = 0, rd = 0; rd < expected; ++i) {
         num_iov = OSSL_NELEM(iov);
-        if (!TEST_true(ossl_qss_get_stream_frame(qss, i, &hdr, iov, &num_iov)))
+        if (!TEST_true(ossl_quic_sstream_get_stream_frame(sstream, i, &hdr, iov,
+                                                          &num_iov)))
             goto err;
 
         for (i = 0; i < num_iov; ++i) {
@@ -303,7 +318,7 @@ err:
     OPENSSL_free(dst_buf);
     OPENSSL_free(ref_src_buf);
     OPENSSL_free(ref_dst_buf);
-    ossl_qss_free(qss);
+    ossl_quic_sstream_free(sstream);
     return testresult;
 }
 

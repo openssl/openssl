@@ -180,7 +180,7 @@ static int ring_buf_resize(struct ring_buf *r, size_t num_bytes)
  * ==================================================================
  * QSS
  */
-struct ossl_qss_st {
+struct quic_sstream_st {
     struct ring_buf ring_buf;
 
     /*
@@ -218,13 +218,13 @@ struct ossl_qss_st {
     unsigned int    acked_final_size    : 1;
 };
 
-static void qss_cull(OSSL_QSS *qss);
+static void qss_cull(QUIC_SSTREAM *qss);
 
-OSSL_QSS *ossl_qss_new(size_t init_buf_size)
+QUIC_SSTREAM *ossl_quic_sstream_new(size_t init_buf_size)
 {
-    OSSL_QSS *qss;
+    QUIC_SSTREAM *qss;
 
-    qss = OPENSSL_zalloc(sizeof(OSSL_QSS));
+    qss = OPENSSL_zalloc(sizeof(QUIC_SSTREAM));
     if (qss == NULL)
         return NULL;
 
@@ -240,7 +240,7 @@ OSSL_QSS *ossl_qss_new(size_t init_buf_size)
     return qss;
 }
 
-void ossl_qss_free(OSSL_QSS *qss)
+void ossl_quic_sstream_free(QUIC_SSTREAM *qss)
 {
     if (qss == NULL)
         return;
@@ -251,11 +251,11 @@ void ossl_qss_free(OSSL_QSS *qss)
     OPENSSL_free(qss);
 }
 
-int ossl_qss_get_stream_frame(OSSL_QSS *qss,
-                              size_t skip,
-                              OSSL_QUIC_FRAME_STREAM *hdr,
-                              OSSL_QTX_IOVEC *iov,
-                              size_t *num_iov)
+int ossl_quic_sstream_get_stream_frame(QUIC_SSTREAM *qss,
+                                       size_t skip,
+                                       OSSL_QUIC_FRAME_STREAM *hdr,
+                                       OSSL_QTX_IOVEC *iov,
+                                       size_t *num_iov)
 {
     size_t num_iov_ = 0, src_len = 0, total_len = 0, i;
     uint64_t max_len;
@@ -322,9 +322,9 @@ int ossl_qss_get_stream_frame(OSSL_QSS *qss,
     return 1;
 }
 
-int ossl_qss_mark_transmitted(OSSL_QSS *qss,
-                              uint64_t start,
-                              uint64_t end)
+int ossl_quic_sstream_mark_transmitted(QUIC_SSTREAM *qss,
+                                       uint64_t start,
+                                       uint64_t end)
 {
     UINT_RANGE r;
 
@@ -337,8 +337,8 @@ int ossl_qss_mark_transmitted(OSSL_QSS *qss,
     return 1;
 }
 
-int ossl_qss_mark_transmitted_fin(OSSL_QSS *qss,
-                                  uint64_t final_size)
+int ossl_quic_sstream_mark_transmitted_fin(QUIC_SSTREAM *qss,
+                                           uint64_t final_size)
 {
     /*
      * We do not really need final_size since we already know the size of the
@@ -351,9 +351,9 @@ int ossl_qss_mark_transmitted_fin(OSSL_QSS *qss,
     return 1;
 }
 
-int ossl_qss_mark_lost(OSSL_QSS *qss,
-                       uint64_t start,
-                       uint64_t end)
+int ossl_quic_sstream_mark_lost(QUIC_SSTREAM *qss,
+                                uint64_t start,
+                                uint64_t end)
 {
     UINT_RANGE r;
     r.start = start;
@@ -361,7 +361,7 @@ int ossl_qss_mark_lost(OSSL_QSS *qss,
 
     /*
      * We lost a range of stream data bytes, so reinsert them into the new set,
-     * so that they are returned once more by ossl_qss_get_stream_frame.
+     * so that they are returned once more by ossl_quic_sstream_get_stream_frame.
      */
     if (!ossl_uint_set_insert(&qss->new_set, &r))
         return 0;
@@ -369,7 +369,7 @@ int ossl_qss_mark_lost(OSSL_QSS *qss,
     return 1;
 }
 
-int ossl_qss_mark_lost_fin(OSSL_QSS *qss)
+int ossl_quic_sstream_mark_lost_fin(QUIC_SSTREAM *qss)
 {
     if (qss->acked_final_size)
         /* Does not make sense to lose a FIN after it has been ACKed */
@@ -380,9 +380,9 @@ int ossl_qss_mark_lost_fin(OSSL_QSS *qss)
     return 1;
 }
 
-int ossl_qss_mark_acked(OSSL_QSS *qss,
-                        uint64_t start,
-                        uint64_t end)
+int ossl_quic_sstream_mark_acked(QUIC_SSTREAM *qss,
+                                 uint64_t start,
+                                 uint64_t end)
 {
     UINT_RANGE r;
     r.start = start;
@@ -395,7 +395,7 @@ int ossl_qss_mark_acked(OSSL_QSS *qss,
     return 1;
 }
 
-int ossl_qss_mark_acked_fin(OSSL_QSS *qss)
+int ossl_quic_sstream_mark_acked_fin(QUIC_SSTREAM *qss)
 {
     if (!qss->have_final_size)
         /* Cannot ack final size before we have a final size */
@@ -405,7 +405,7 @@ int ossl_qss_mark_acked_fin(OSSL_QSS *qss)
     return 1;
 }
 
-void ossl_qss_fin(OSSL_QSS *qss)
+void ossl_quic_sstream_fin(QUIC_SSTREAM *qss)
 {
     if (qss->have_final_size)
         return;
@@ -413,10 +413,10 @@ void ossl_qss_fin(OSSL_QSS *qss)
     qss->have_final_size = 1;
 }
 
-int ossl_qss_append(OSSL_QSS *qss,
-                    const unsigned char *buf,
-                    size_t buf_len,
-                    size_t *consumed)
+int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
+                             const unsigned char *buf,
+                             size_t buf_len,
+                             size_t *consumed)
 {
     size_t l, consumed_ = 0;
     UINT_RANGE r;
@@ -428,7 +428,7 @@ int ossl_qss_append(OSSL_QSS *qss,
     }
 
     /*
-     * Note: It is assumed that ossl_qss_append will be called during a call to
+     * Note: It is assumed that ossl_quic_sstream_append will be called during a call to
      * e.g. SSL_write and this function is function is therefore designed to
      * support such semantics. In particular, the buffer pointed to by buf is
      * only assumed to be valid for the duration of this call, therefore we must
@@ -463,7 +463,7 @@ int ossl_qss_append(OSSL_QSS *qss,
     return 1;
 }
 
-static void qss_cull(OSSL_QSS *qss)
+static void qss_cull(QUIC_SSTREAM *qss)
 {
     /*
      * Potentially cull data from our ring buffer. This can happen once data has
@@ -487,29 +487,29 @@ static void qss_cull(OSSL_QSS *qss)
                             qss->acked_set.head->range.end);
 }
 
-int ossl_qss_set_buffer_size(OSSL_QSS *qss, size_t num_bytes)
+int ossl_quic_sstream_set_buffer_size(QUIC_SSTREAM *qss, size_t num_bytes)
 {
     return ring_buf_resize(&qss->ring_buf, num_bytes);
 }
 
-size_t ossl_qss_get_buffer_size(OSSL_QSS *qss)
+size_t ossl_quic_sstream_get_buffer_size(QUIC_SSTREAM *qss)
 {
     return qss->ring_buf.alloc;
 }
 
-size_t ossl_qss_get_buffer_used(OSSL_QSS *qss)
+size_t ossl_quic_sstream_get_buffer_used(QUIC_SSTREAM *qss)
 {
     return ring_buf_used(&qss->ring_buf);
 }
 
-size_t ossl_qss_get_buffer_avail(OSSL_QSS *qss)
+size_t ossl_quic_sstream_get_buffer_avail(QUIC_SSTREAM *qss)
 {
     return ring_buf_avail(&qss->ring_buf);
 }
 
-void ossl_qss_adjust_iov(size_t len,
-                         OSSL_QTX_IOVEC *iov,
-                         size_t num_iov)
+void ossl_quic_sstream_adjust_iov(size_t len,
+                                  OSSL_QTX_IOVEC *iov,
+                                  size_t num_iov)
 {
     size_t running = 0, i, iovlen;
 
