@@ -7,14 +7,14 @@ EVP_KDF-HMAC-DRBG
 
 =head1 DESCRIPTION
 
-Support for a determinstic HMAC DRBG using the B<EVP_KDF> API. This is similiar
-to L<EVP_RAND-HMAC-DRBG(7)>, that uses fixed values for its entropy and nonce
+Support for a deterministic HMAC DRBG using the B<EVP_KDF> API. This is similiar
+to L<EVP_RAND-HMAC-DRBG(7)>, but uses fixed values for its entropy and nonce
 values. This is used to generate deterministic nonce value required by ECDSA
 and DSA (as defined in RFC 6979).
 
 =head2 Identity
 
-"HMAC-DRBG" is the name for this implementation; it can be used
+"HMAC-DRBG-KDF" is the name for this implementation; it can be used
 with the EVP_KDF_fetch() function.
 
 =head2 Supported parameters
@@ -43,7 +43,7 @@ Sets the nonce bytes supplied to the HMAC-DRBG.
 
 A context for KDF HMAC DRBG can be obtained by calling:
 
- EVP_KDF *kdf = EVP_KDF_fetch(NULL, "HMAC-DRBG", NULL);
+ EVP_KDF *kdf = EVP_KDF_fetch(NULL, "HMAC-DRBG-KDF", NULL);
  EVP_KDF_CTX *kdf_ctx = EVP_KDF_CTX_new(kdf, NULL);
 
 =head1 CONFORMING TO
