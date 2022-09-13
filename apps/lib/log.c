@@ -57,8 +57,8 @@ static void log_with_prefix(const char *prog, const char *fmt, va_list ap)
 }
 
 /*
- * Unfortuantely, C before C99 does not define va_copy, so we must
- * check if it can be assume to be present.  We do that with an internal
+ * Unfortunately, C before C99 does not define va_copy, so we must
+ * check if it can be assumed to be present.  We do that with an internal
  * antifeature macro.
  * C versions since C94 define __STDC_VERSION__, so it's enough to
  * check its existence and value.
