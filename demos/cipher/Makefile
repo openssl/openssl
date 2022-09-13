@@ -7,6 +7,8 @@
 #
 #    LD_LIBRARY_PATH=../.. ./aesccm
 #    LD_LIBRARY_PATH=../.. ./aesgcm
+#    LD_LIBRARY_PATH=../.. ./aeskeywrap
+#    LD_LIBRARY_PATH=../.. ./ariacbc
 
 CFLAGS = $(OPENSSL_INCS_LOCATION)
 LDFLAGS = $(OPENSSL_LIBS_LOCATION) -lssl -lcrypto

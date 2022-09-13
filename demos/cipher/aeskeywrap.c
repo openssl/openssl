@@ -60,7 +60,6 @@ int aes_wrap_encrypt(void)
     EVP_CIPHER *cipher = NULL;
     int outlen, tmplen;
     unsigned char outbuf[1024];
-    unsigned char outtag[16];
 
     printf("aes wrap Encrypt:\n");
     printf("Plaintext:\n");
@@ -69,6 +68,8 @@ int aes_wrap_encrypt(void)
     /* Create a context for the encrypt operation */
     if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
         goto err;
+
+    EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
 
     /* Fetch the cipher implementation */
     if ((cipher = EVP_CIPHER_fetch(libctx, "AES-256-WRAP", propq)) == NULL)
@@ -115,7 +116,7 @@ int aes_wrap_decrypt(void)
     int ret = 0;
     EVP_CIPHER_CTX *ctx;
     EVP_CIPHER *cipher = NULL;
-    int outlen, tmplen, rv;
+    int outlen, tmplen;
     unsigned char outbuf[1024];
 
     printf("aes wrap Decrypt:\n");
@@ -124,6 +125,8 @@ int aes_wrap_decrypt(void)
 
     if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
         goto err;
+
+    EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
 
     /* Fetch the cipher implementation */
     if ((cipher = EVP_CIPHER_fetch(libctx, "aes-256-wrap", propq)) == NULL)
