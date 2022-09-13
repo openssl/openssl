@@ -21,7 +21,6 @@
 
 static OSSL_FUNC_kdf_newctx_fn hmac_drbg_kdf_new;
 static OSSL_FUNC_kdf_freectx_fn hmac_drbg_kdf_free;
-static OSSL_FUNC_kdf_dupctx_fn hmac_drbg_kdf_dup;
 static OSSL_FUNC_kdf_reset_fn hmac_drbg_kdf_reset;
 static OSSL_FUNC_kdf_derive_fn hmac_drbg_kdf_derive;
 static OSSL_FUNC_kdf_settable_ctx_params_fn hmac_drbg_kdf_settable_ctx_params;
@@ -75,12 +74,6 @@ static void hmac_drbg_kdf_free(void *vctx)
         hmac_drbg_kdf_reset(ctx);
         OPENSSL_free(ctx);
     }
-}
-
-static void *hmac_drbg_kdf_dup(void *vctx)
-{
-    /* Not supported */
-    return NULL;
 }
 
 static int hmac_drbg_kdf_derive(void *vctx, unsigned char *out, size_t outlen,
@@ -213,7 +206,6 @@ static const OSSL_PARAM *hmac_drbg_kdf_settable_ctx_params(
 
 const OSSL_DISPATCH ossl_kdf_hmac_drbg_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))hmac_drbg_kdf_new },
-    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))hmac_drbg_kdf_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))hmac_drbg_kdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))hmac_drbg_kdf_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))hmac_drbg_kdf_derive },

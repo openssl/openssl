@@ -246,6 +246,7 @@ extern "C" {
 #define OSSL_KDF_NAME_X963KDF        "X963KDF"
 #define OSSL_KDF_NAME_KBKDF          "KBKDF"
 #define OSSL_KDF_NAME_KRB5KDF        "KRB5KDF"
+#define OSSL_KDF_NAME_HMACDRBGKDF    "HMAC-DRBG-KDF"
 
 /* Known RAND names */
 #define OSSL_RAND_PARAM_STATE                   "state"
