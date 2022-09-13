@@ -537,8 +537,10 @@ int CMS_add0_cert(CMS_ContentInfo *cms, X509 *cert)
     for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
         cch = sk_CMS_CertificateChoices_value(*pcerts, i);
         if (cch->type == CMS_CERTCHOICE_CERT) {
-            if (X509_cmp(cch->d.certificate, cert) == 0)
+            if (X509_cmp(cch->d.certificate, cert) == 0) {
+                X509_free(cert);
                 return 1; /* cert already present */
+            }
         }
     }
     cch = CMS_add0_CertificateChoices(cms);
@@ -551,9 +553,12 @@ int CMS_add0_cert(CMS_ContentInfo *cms, X509 *cert)
 
 int CMS_add1_cert(CMS_ContentInfo *cms, X509 *cert)
 {
-    int r = CMS_add0_cert(cms, cert);
-
-    return r > 0 ? X509_up_ref(cert) : r;
+    if (!X509_up_ref(cert))
+        return 0;
+    if (CMS_add0_cert(cms, cert))
+        return 1;
+    X509_free(cert);
+    return 0;
 }
 
 static STACK_OF(CMS_RevocationInfoChoice)
