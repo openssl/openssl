@@ -2758,7 +2758,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx)
             (void)OSSL_CMP_CTX_set1_senderNonce(srv_cmp_ctx, NULL);
         }
         if (!ret || !keep_alive
-            || OSSL_CMP_CTX_get_status(srv_cmp_ctx) == -1
+            || OSSL_CMP_CTX_get_status(srv_cmp_ctx) != OSSL_CMP_PKISTATUS_trans
             /* transaction closed by OSSL_CMP_CTX_server_perform() */) {
             BIO_free_all(cbio);
             cbio = NULL;
@@ -3009,7 +3009,7 @@ int cmp_main(int argc, char **argv)
         default:
             break;
         }
-        if (OSSL_CMP_CTX_get_status(cmp_ctx) < 0)
+        if (OSSL_CMP_CTX_get_status(cmp_ctx) < OSSL_CMP_PKISTATUS_accepted)
             goto err; /* we got no response, maybe even did not send request */
 
         {
