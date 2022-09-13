@@ -612,9 +612,29 @@ OSSL_CMP_CTX_get_certConf_cb_arg() gets the argument, respectively the pointer
 to a structure containing arguments, previously set by
 OSSL_CMP_CTX_set_certConf_cb_arg(), or NULL if unset.
 
-OSSL_CMP_CTX_get_status() returns the PKIstatus from the last received
-CertRepMessage or Revocation Response or error message, or -1 if unset.
-For server contexts it returns -2 if a transaction is open, else -1.
+OSSL_CMP_CTX_get_status() returns for client contexts the PKIstatus from
+the last received CertRepMessage or Revocation Response or error message:
+=item B<OSSL_CMP_PKISTATUS_accepted> on sucessful receipt of a GENP message:
+
+=over 4
+
+=item B<OSSL_CMP_PKISTATUS_request>
+
+if an IR/CR/KUR/RR/GENM request message could not be produced,
+
+=item B<OSSL_CMP_PKISTATUS_trans>
+
+on a transmission error or transaction error for this type of request, and
+
+=item B<OSSL_CMP_PKISTATUS_unspecified>
+
+if no such request was attempted or OSSL_CMP_CTX_reinit() has been called.
+
+=back
+
+For server contexts it returns
+B<OSSL_CMP_PKISTATUS_trans> if a transaction is open,
+otherwise B<OSSL_CMP_PKISTATUS_unspecified>.
 
 OSSL_CMP_CTX_get0_statusString() returns the statusString from the last received
 CertRepMessage or Revocation Response or error message, or NULL if unset.

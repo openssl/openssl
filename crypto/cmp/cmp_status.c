@@ -189,7 +189,10 @@ char *snprint_PKIStatusInfo_parts(int status, int fail_info,
     printed_chars = BIO_snprintf(write_ptr, bufsize, "%s", status_string);
     ADVANCE_BUFFER;
 
-    /* failInfo is optional and may be empty */
+    /*
+     * failInfo is optional and may be empty;
+     * if present, print failInfo before statusString because it is more concise
+     */
     if (fail_info != 0) {
         printed_chars = BIO_snprintf(write_ptr, bufsize, "; PKIFailureInfo: ");
         ADVANCE_BUFFER;
