@@ -462,7 +462,7 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
     OSSL_CMP_MSG *msg = NULL;
     OSSL_CMP_CERTREPMESSAGE *repMsg = NULL;
     OSSL_CMP_CERTRESPONSE *resp = NULL;
-    int status = -1;
+    int status = OSSL_CMP_PKISTATUS_unspecified;
 
     if (!ossl_assert(ctx != NULL && si != NULL))
         return NULL;
