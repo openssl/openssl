@@ -43,8 +43,8 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     }
 #ifndef OPENSSL_NO_COMP
     if (comp != NULL) {
-        rl->expand = COMP_CTX_new(comp->method);
-        if (rl->expand == NULL) {
+        rl->compctx = COMP_CTX_new(comp->method);
+        if (rl->compctx == NULL) {
             ERR_raise(ERR_LIB_SSL, SSL_R_COMPRESSION_LIBRARY_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }

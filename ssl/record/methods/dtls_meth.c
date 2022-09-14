@@ -237,7 +237,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     }
 
     /* r->length is now just compressed */
-    if (rl->expand != NULL) {
+    if (rl->compctx != NULL) {
         if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
             RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW,
                         SSL_R_COMPRESSED_LENGTH_TOO_LONG);

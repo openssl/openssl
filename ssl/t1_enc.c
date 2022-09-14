@@ -252,7 +252,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
             goto err;
         }
 
-        /* TODO(RECLAYER): Temporary - remove me when write rlayer done*/
+        /* TODO(RECLAYER): Temporary - remove me when DTLS write rlayer done*/
         goto skip_ktls;
     } else {
         s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
@@ -280,6 +280,10 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
             /* SSLfatal already called */
             goto err;
         }
+
+        /* TODO(RECLAYER): Temporary - remove me when DTLS write rlayer done*/
+        if (!SSL_CONNECTION_IS_DTLS(s))
+            goto skip_ktls;
 
         if (s->enc_write_ctx != NULL && !SSL_CONNECTION_IS_DTLS(s)) {
             reuse_dd = 1;

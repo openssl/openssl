@@ -160,11 +160,14 @@ struct ossl_record_layer_st
     /* cryptographic state */
     EVP_CIPHER_CTX *enc_ctx;
 
+    /* Explicit IV length */
+    size_t eivlen;
+
     /* used for mac generation */
     EVP_MD_CTX *md_ctx;
 
-    /* uncompress */
-    COMP_CTX *expand;
+    /* compress/uncompress */
+    COMP_CTX *compctx;
 
     /* Set to 1 if this is the first handshake. 0 otherwise */
     int is_first_handshake;
