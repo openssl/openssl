@@ -22,6 +22,17 @@
 #include <openssl/trace.h>
 #include <openssl/engine.h>
 #include "conf_local.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <libgen.h>
+
+#define __USE_GNU
+#define _GNU_SOURCE
+#include <link.h>
+#include <dlfcn.h>
 
 DEFINE_STACK_OF(CONF_MODULE)
 DEFINE_STACK_OF(CONF_IMODULE)
@@ -626,10 +637,19 @@ char *CONF_get1_default_config_file(void)
 {
     const char *t;
     char *file, *sep = "";
-    size_t size;
+    size_t size = 0;
+    char *f = NULL;
+    static char *ssl3 = "ssl-3";
+    struct stat s;
+    Dl_info info;
 
-    if ((file = ossl_safe_getenv("OPENSSL_CONF")) != NULL)
-        return OPENSSL_strdup(file);
+    memset(&s, 0, sizeof(struct stat));
+    memset(&info, 0, sizeof(Dl_info));
+
+    if ((file = ossl_safe_getenv("OPENSSL_CONF")) != NULL) {
+        if (stat(file, &s) == 0)
+            return OPENSSL_strdup(file);
+    }
 
     t = X509_get_default_cert_area();
 #ifndef OPENSSL_SYS_VMS
@@ -642,6 +662,24 @@ char *CONF_get1_default_config_file(void)
         return NULL;
     BIO_snprintf(file, size, "%s%s%s", t, sep, OPENSSL_CONF);
 
+    /* if file not found, create path based on shared library with our symbol */
+    if (stat(file, &s) == -1) {
+        if (dladdr(OpenSSL_version, &info)) {
+            f = OPENSSL_strdup(info.dli_fname);
+            if (f == NULL) {
+                return NULL;
+            }
+            char *dir = dirname(f);
+            size = strlen(dir) + strlen(sep) + strlen(ssl3) + strlen(sep) + strlen(OPENSSL_CONF) + 1;
+            file = OPENSSL_realloc(file, size);
+            if (file == NULL) {
+                OPENSSL_free(f);
+                return NULL;
+            }
+            BIO_snprintf(file, size, "%s%s%s%s%s", dir, sep, ssl3, sep, OPENSSL_CONF);
+            OPENSSL_free(f);
+        }
+    }
     return file;
 }
 
