@@ -24,12 +24,12 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 ENDIF
 
-SOURCE[../../libcrypto]= $SM4ASM sm4.c
+SOURCE[../../libcrypto]= $SM4ASM sm4.c $AESASM_x86_64
 
 
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.
-DEFINE[../../libcrypto]=$SM4DEF
+DEFINE[../../libcrypto]=$SM4DEF $AESDEF
 DEFINE[../../providers/libfips.a]=$SM4DEF
 DEFINE[../../providers/libdefault.a]=$SM4DEF
 # We only need to include the SM4DEF stuff in the legacy provider when it's a
@@ -45,3 +45,4 @@ GENERATE[vpsm4-armv8.S]=asm/vpsm4-armv8.pl
 GENERATE[aesni_sm4-x86.S]=asm/aesni_sm4-x86.pl
 INCLUDE[sm4-armv8.o]=..
 INCLUDE[vpsm4-armv8.o]=..
+INCLUDE[aesni_sm4-x86.o]=..

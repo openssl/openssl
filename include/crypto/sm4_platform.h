@@ -35,7 +35,8 @@ static inline int vpsm4_capable(void)
 #    define HWSM4_ctr32_encrypt_blocks sm4_v8_ctr32_encrypt_blocks
 #   endif
 #  endif
-#  if     !defined(_WIN64) && defined(AES_ASM) && !defined(I386_ONLY) &&      (  \
+#  if     !defined(_WIN32) && !defined(_WIN64) &&\
+         defined(AES_ASM) && !defined(I386_ONLY) &&      (  \
          ((defined(__i386)       || defined(__i386__)    || \
            defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \
          defined(__x86_64)       || defined(__x86_64__)  || \

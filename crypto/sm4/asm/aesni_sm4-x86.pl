@@ -36,6 +36,7 @@ $win64=0;
 @_4args=$win64?	("%rcx","%rdx","%r8", "%r9") :	# Win64 order
 		("%rdi","%rsi","%rdx","%rcx");	# Unix order
 
+# $PREFIX = "_sm4_aesni";
 $PREFIX = "aesni_sm4";
 
 {{{
@@ -818,7 +819,8 @@ my $pc = "%rip";
 $code.=<<___;
 	.globl	${PREFIX}_ctr_encrypt      
 	.p2align	4, 0x90
-${PREFIX}_ctr_encrypt:                
+${PREFIX}_ctr_encrypt:   
+	.cfi_startproc             
 	pushq	%rbp
 	movq	%rsp, %rbp
 	pushq	%r15
@@ -896,6 +898,9 @@ Lctr_ret:
 	popq	%r15
 	popq	%rbp
 	retq
+
+	.cfi_endproc
+	
 ___
 
 }}}
@@ -973,80 +978,13 @@ ___
 
 
 {{{
-my ($in, $key) = ("%xmm0", "%rdi");
-my ($r0, $r1, $r2, $r3) = ("%r12d", "%r13d", "%r14d", "%ebx");
-my ($x, $y) = ("%r15d", "%r15d");
 
-$code.=<<___;
-	.globl	${PREFIX}_cbc_decrypt1        
-	.p2align	4, 0x90
-${PREFIX}_cbc_decrypt1:             
-	.cfi_startproc
-	
-    pushq	%rbp
-	movq	%rsp, %rbp
-	pushq	%r15
-	pushq	%r14
-	pushq	%r13
-	pushq	%r12
-	pushq	%rbx
-	subq	\$40, %rsp
-
-    pextrd \$0, $in, $r0
-    pextrd \$1, $in, $r1
-    pextrd \$2, $in, $r2
-    pextrd \$3, $in, $r3
-
-    movl \$31, %eax
-Lcbc_de1:
-    xorl    $x, $x
-    xorl    $r1, $x
-    xorl    $r2, $x
-    xorl    $r3, $x
-    xorl    ($key, %rax, 4), $x
-
-    vmovd	$x, %xmm0
-	vpbroadcastd	%xmm0, %xmm0
-___
-
-    &aesni_F();
-
-$code.=<<___;
-    pextrd \$0, %xmm0, $y
-    xorl    $r0, $y
-
-    movl    $r1, $r0
-    movl    $r2, $r1
-    movl    $r3, $r2
-    movl    $y, $r3
-
-    addq    \$-1, %rax
-    jb	Lcbc_de1
-
-    vmovd	$r3, %xmm0
-	vpinsrd	\$1, $r2, %xmm0, %xmm0
-	vpinsrd	\$2, $r1, %xmm0, %xmm0
-	vpinsrd	\$3, $r0, %xmm0, %xmm0
-
-	addq	\$40, %rsp
-	popq	%rbx
-	popq	%r12
-	popq	%r13
-	popq	%r14
-	popq	%r15
-	popq	%rbp
-	retq
-
-	.cfi_endproc
-___
-
-}}}
-
-{{{
-
-my ($r, $c, $p, $c_pre, $ivx) = map("%xmm$_",(2,3,4,5,6));
+my ($r, $c, $p, $c_pre, $ivx, $flp) = map("%xmm$_",(2,3,4,5,6,7));
 my ($in, $out, $len, $key, $ivec, $enc) = ("%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9");
 my $pc = "%rip";
+
+my ($in_org, $out_org, $len_org, $key_org, $ivec_org) = ("%rbx", "%r14", "%r15", "%r13", "%r12");
+
 
 $code.=<<___;
 .globl	${PREFIX}_cbc_encrypt      
@@ -1061,24 +999,26 @@ ${PREFIX}_cbc_encrypt:
 	pushq	%r12
 	pushq	%rbx
 	subq	\$40, %rsp
-
-    movq    $in, %rbx
-    movq    $out, %r14
-    movq    $key, %r13
+    
+    movq    $in, $in_org
+    movq    $out, $out_org
+    movq    $len, $len_org
+    movq    $key, $key_org
+    movq    $ivec, $ivec_org
 
     vmovdqu	($ivec), $ivx
-    vpshufb	Lflp($pc), $ivx, $ivx
-
-    shrq	\$4, $len
-    testl   %edx, %edx
-    jle  Lcbc_ret
-    movl	%edx, %r12d
 
     testl   ${enc}d, ${enc}d
     je  Lcbc_dec
 ___
 
 $code.=<<___;
+    vpshufb	Lflp($pc), $ivx, $ivx
+    shrq	\$4, $len
+    testl   %edx, %edx
+    jle  Lcbc_ret
+
+    movl	%edx, %r12d
 Lcbc_enc:
     shlq	\$4, %r12
     movl    \$0, %r15d
@@ -1116,41 +1056,34 @@ Lcbc_enc_L:
 ___
 
 $code.=<<___;
+    # parallelism for CBC decrypt
 Lcbc_dec:
-    shlq	\$4, %r12
-    movl    \$0, %r15d
-    # decrypt the first block C_0
-    vmovdqu	(%rbx), $c
-    vpshufb	Lflp($pc), $c, $c
-    vmovdqa $c, %xmm0
-    movq    $key, %rdi
-    callq ${PREFIX}_cbc_decrypt1
-    vpxor   $ivx, %xmm0, %xmm0
-    vpshufb	Lflp($pc), %xmm0, $r
-    vmovdqa	$r, (%r14)
-    vmovdqa $c, $c_pre
-    
-    addq	\$16, %r15
-	cmpq	%r12, %r15
-	jne	Lcbc_dec_L
-    jmp Lcbc_ret
 
-    # decrypt the rest blocks
-Lcbc_dec_L:
-    vmovdqu	(%rbx,%r15), $c
-    vpshufb	Lflp($pc), $c, $c
-    vmovdqa $c, %xmm0
-    movq    $key, %rdi
-    callq ${PREFIX}_cbc_decrypt1
-    vpxor   $c_pre, %xmm0, %xmm0
-    vpshufb	Lflp($pc), %xmm0, $r
-    vmovdqa	$r, (%r14, %r15)
-    vmovdqa $c, $c_pre
+    movq    \$0, %r8
+    callq   ${PREFIX}_ecb_encrypt
 
-    addq	\$16, %r15
-	cmpq	%r12, %r15
-	jne	Lcbc_dec_L
+    # vmovdqa	Lflp($pc), $flp
+    movl    \$0, %eax
+    vmovdqu     ($out_org, %rax), $r
+    vpxor       $r, $ivx, $r
+    vmovdqu     $r, ($out_org, %rax)
+    addq    \$16, %rax
+    cmpq    $len_org, %rax
+    je      Lcbc_ret
 
+    movl    \$0, %r13d
+Lcbc_xor:
+    vmovdqu     ($out_org, %rax), $r
+    vmovdqu     ($in_org, %r13), $c
+    vpxor       $r, $c, $r
+    vmovdqu     $r, ($out_org, %rax)
+    addq    \$16, %rax
+    addq    \$16, %r13
+    cmpq    $len_org, %rax
+    jne     Lcbc_xor
+___
+
+$code.=<<___;
 Lcbc_ret:
     addq	\$40, %rsp
 	popq	%rbx

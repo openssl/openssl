@@ -9,7 +9,8 @@
 
 #include "cipher_sm4.h"
 
-#  if     !defined(_WIN64) && defined(AES_ASM) && !defined(I386_ONLY) &&      (  \
+#  if     !defined(_WIN32) && !defined(_WIN64) &&\
+         defined(AES_ASM) && !defined(I386_ONLY) &&      (  \
          ((defined(__i386)       || defined(__i386__)    || \
            defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \
          defined(__x86_64)       || defined(__x86_64__)  || \
@@ -66,12 +67,10 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
 #ifdef AESNI_CAPABLE
         if(AESNI_CAPABLE){
             ossl_sm4_set_key(key, ks);
-            ctx->block = (block128_f)aesni_sm4_encrypt;
+            ctx->block = (block128_f)ossl_sm4_encrypt;
             ctx->stream.cbc = NULL;
             if(ctx->mode == EVP_CIPH_ECB_MODE)
                 ctx->stream.ecb = (ecb128_f)aesni_sm4_ecb_encrypt;
-            else if (ctx->mode == EVP_CIPH_CBC_MODE)
-                ctx->stream.cbc = (cbc128_f) aesni_sm4_cbc_encrypt;
             else if (ctx->mode == EVP_CIPH_CTR_MODE)
                 ctx->stream.ctr = (ctr128_f) aesni_sm4_ctr_encrypt;
         } else
@@ -110,14 +109,12 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
 #ifdef AESNI_CAPABLE
         if(AESNI_CAPABLE){
             ossl_sm4_set_key(key, ks);
-            ctx->block = (block128_f)aesni_sm4_decrypt;
+            ctx->block = (block128_f)ossl_sm4_decrypt;
             ctx->stream.cbc = NULL;
             if(ctx->mode == EVP_CIPH_ECB_MODE)
                 ctx->stream.ecb = (ecb128_f)aesni_sm4_ecb_encrypt;
             else if (ctx->mode == EVP_CIPH_CBC_MODE)
                 ctx->stream.cbc = (cbc128_f) aesni_sm4_cbc_encrypt;
-            // else if (ctx->mode == EVP_CIPH_CTR_MODE)
-            //     ctx->stream.ctr = (ctr128_f) aesni_sm4_ctr_encrypt;
         }else
 #endif
         {
