@@ -41,22 +41,23 @@ Proposed new public API calls
 -----------------------------
 
 ```C
-int SSL_set_max_stored_quic_stream_data(SSL *quic_stream, size_t length);
+int SSL_set_max_stored_stream_data(SSL *stream, size_t length);
 ```
 
-This function adjusts the current `quic_stream` data flow control limit to
-allow storing `length` bytes of stream data before it is read by the
-application.
+This function adjusts the current data flow control limit on the `stream`
+to allow storing `length` bytes of quic stream data before it is read by
+the application.
+
 OpenSSL handles sending MAX_STREAM_DATA frames appropriately when the
 application reads the stored data.
 
 ```C
-int SSL_set_max_unprocessed_quic_packet_data(SSL *quic_connection,
-                                             size_t length);
+int SSL_set_max_unprocessed_packet_data(SSL *connection,
+                                        size_t length);
 ```
 
 This sets the limit on unprocessed quic packet data `length` in bytes that
-is allowed to be allocated for the `quic_connection`.
+is allowed to be allocated for the `connection`.
 See the [Other considerations](#other-considerations) section below.
 
 Interfaces to other QUIC implementation modules
@@ -68,7 +69,7 @@ SSL_read() copies data out of the stored buffers if available and
 eventually triggers release of stored unprocessed packet(s).
 
 SSL_peek(), SSL_pending(), SSL_has_pending() peek into the stored
-buffers for an information about the stored data.
+buffers for any information about the stored data.
 
 ### RX Depacketizer
 
