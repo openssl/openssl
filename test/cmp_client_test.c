@@ -94,14 +94,25 @@ static int execute_exec_RR_ses_test(CMP_SES_TEST_FIXTURE *fixture)
                        OSSL_CMP_exec_RR_ses(fixture->cmp_ctx) == 1);
 }
 
-static int execute_exec_GENM_ses_test(CMP_SES_TEST_FIXTURE *fixture)
+static int execute_exec_GENM_ses_test_single(CMP_SES_TEST_FIXTURE *fixture)
 {
-    STACK_OF(OSSL_CMP_ITAV) *itavs = NULL;
+    ASN1_OBJECT *type = OBJ_txt2obj("1.3.6.1.5.5.7.4.2", 1);
+    OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_create(type, NULL);
+    STACK_OF(OSSL_CMP_ITAV) *itavs;
+
+    OSSL_CMP_CTX_push0_genm_ITAV(fixture->cmp_ctx, itav);
 
     if (!TEST_ptr(itavs = OSSL_CMP_exec_GENM_ses(fixture->cmp_ctx)))
         return 0;
     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
     return 1;
+}
+
+static int execute_exec_GENM_ses_test(CMP_SES_TEST_FIXTURE *fixture)
+{
+    return execute_exec_GENM_ses_test_single(fixture)
+        && OSSL_CMP_CTX_reinit(fixture->cmp_ctx)
+        && execute_exec_GENM_ses_test_single(fixture);
 }
 
 static int execute_exec_certrequest_ses_test(CMP_SES_TEST_FIXTURE *fixture)

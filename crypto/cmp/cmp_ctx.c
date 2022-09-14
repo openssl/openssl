@@ -148,6 +148,13 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
     return NULL;
 }
 
+#define OSSL_CMP_ITAVs_free(itavs) \
+    sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
+#define X509_EXTENSIONS_free(exts) \
+    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free)
+#define OSSL_CMP_PKIFREETEXT_free(text) \
+    sk_ASN1_UTF8STRING_pop_free(text, ASN1_UTF8STRING_free)
+
 /* Prepare the OSSL_CMP_CTX for next use, partly re-initializing OSSL_CMP_CTX */
 int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
 {
@@ -164,6 +171,9 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
     ctx->status = OSSL_CMP_PKISTATUS_unspecified;
     ctx->failInfoCode = -1;
 
+    OSSL_CMP_ITAVs_free(ctx->genm_ITAVs);
+    ctx->genm_ITAVs = NULL;
+
     return ossl_cmp_ctx_set0_statusString(ctx, NULL)
         && ossl_cmp_ctx_set0_newCert(ctx, NULL)
         && ossl_cmp_ctx_set1_newChain(ctx, NULL)
@@ -174,13 +184,6 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
         && OSSL_CMP_CTX_set1_senderNonce(ctx, NULL)
         && ossl_cmp_ctx_set1_recipNonce(ctx, NULL);
 }
-
-#define OSSL_CMP_ITAVs_free(itavs) \
-    sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
-#define X509_EXTENSIONS_free(exts) \
-    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free)
-#define OSSL_CMP_PKIFREETEXT_free(text) \
-    sk_ASN1_UTF8STRING_pop_free(text, ASN1_UTF8STRING_free)
 
 /* Frees OSSL_CMP_CTX variables allocated in OSSL_CMP_CTX_new() */
 void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
