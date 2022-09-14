@@ -69,7 +69,7 @@ die "wrap.pl: Failed to execute '", join(' ', @cmd), "': $!\n"
     if $waitcode == -1;
 
 # When the subprocess aborted on a signal, we simply raise the same signal.
-kill ($? & 255) => $$ if ($? & 255) != 0;
+kill(($? & 255) => $$) if ($? & 255) != 0;
 
 # If that didn't stop this script, mimic what Unix shells do, by
 # converting the signal code to an exit code by setting the high bit.
