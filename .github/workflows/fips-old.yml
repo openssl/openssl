@@ -5,7 +5,7 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-name: Provider old versions compat
+name: Validated FIPS provider compatibility
 on: [pull_request, push]
 
 permissions:
