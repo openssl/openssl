@@ -1,7 +1,7 @@
 Stream Receive Buffers
 ======================
 
-This is a QUIC specific module that handles the received stream data
+This is a QUIC specific module that retains the received stream data
 until the application reads it with SSL_read() or any future stream read
 calls.
 
@@ -16,7 +16,7 @@ These are the requirements that were identified for MVP:
 - As packets can be received before application calls SSL_read() to read
   the data the data must be stored.
 - The application should be able to set the limit on how much data should
-  be stored. The flow control should be used to limit the peer to not send
+  be stored. The flow controller should be used to limit the peer to not send
   more data. Without the flow control limit a rogue peer could trigger
   a DoS via unlimited flow of incoming stream data frames.
 - After the data is passed via SSL_read() to the application the stored
@@ -31,7 +31,7 @@ Optional Receive Buffers requirements
 These are optional features of the stream receive buffers implementation.
 They are not required for MVP but they are otherwise desirable:
 
-- To support a single copy operation with a future stream read calls
+- To support a single copy operation with a future stream read call
   the received data should not be copied out of the decrypted packets to
   store the data. The only information actually stored would be a list
   of offset, length, and pointers to data, along with a pointer to the
@@ -45,7 +45,8 @@ int SSL_set_max_stored_quic_stream_data(SSL *quic_stream, size_t length);
 ```
 
 This function adjusts the current `quic_stream` data flow control limit to
-allow storing `length` of stream data before it is read by the application.
+allow storing `length` bytes of stream data before it is read by the
+application.
 OpenSSL handles sending MAX_STREAM_DATA frames appropriately when the
 application reads the stored data.
 
@@ -54,9 +55,9 @@ int SSL_set_max_unprocessed_quic_packet_data(SSL *quic_connection,
                                              size_t length);
 ```
 
-This sets the limit on unprocessed quic packet data `length` that is
-allowed to be allocated for the `quic_connection`. See
-the [Other considerations](#other-considerations) section below.
+This sets the limit on unprocessed quic packet data `length` in bytes that
+is allowed to be allocated for the `quic_connection`.
+See the [Other considerations](#other-considerations) section below.
 
 Interfaces to other QUIC implementation modules
 -----------------------------------------------
@@ -105,19 +106,25 @@ data limits by sending duplicate frames with only slight changes in the
 offset. For example: 1st frame - offset 0 length 1000, 2nd frame -
 offset 1 length 1000, 3rd frame - offset 2 length 1000, and so on. We
 would have to keep the packet data for all these frames which would
-effectively raise the stream data flow control limit by second power.
+effectively raise the stream data flow control limit quadratically.
 
 And this is not the only way how a rogue peer could make us occupy much
 more data than what is allowed by the stream data flow control limit
 in the single-copy scenario.
 
-To resolve this problem, we fall back to copying the data off the
-decrypted packet buffer once we reach a limit on unprocessed decrypted
-packets.
-
 Although intuitively the MAX_DATA flow control limit might be used to
 somehow limit the allocated packet buffer size, it is defined as sum
 of allowed data to be sent across all the streams in the connection instead.
-That means we might just send MAX_DATA frames with a value that is equal
-to the MAX_STREAM_DATA in MVP as we will receive data only via the first
-client-initiated bidirectional stream in the MVP.
+The packet buffer will contain much more data than just the stream frames
+especially with a rogue peer, that means MAX_DATA limit cannot be used
+to limit the memory occupied by packet buffers.
+
+To resolve this problem, we fall back to copying the data off the
+decrypted packet buffer once we reach a limit on unprocessed decrypted
+packets. We might also consider falling back to copying the data in case
+we receive stream data frames that are partially overlapping and one frame
+not being a subrange of the other.
+
+Because in MVP only a single bidirectional stream to receive
+any data will be supported, the MAX_DATA flow control limit should be equal
+to MAX_STREAM_DATA limit for that stream.
