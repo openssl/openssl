@@ -54,7 +54,7 @@ if (eval { require Win32::API; 1; }) {
 }
 $ENV{OPENSSL_WIN32_UTF8}=1;
 
-plan tests => 24;
+plan tests => 25;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -232,5 +232,8 @@ ok(run(test(["pkcs12_api_test",
              "-has-key", 1,
              "-has-cert", 1,
              ])), "Test pkcs12_parse()");
+
+ok(run(test(["pkcs12_api_test",
+            ])), "Test pkcs12_create_ex2_test()");
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));
