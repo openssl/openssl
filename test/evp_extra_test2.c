@@ -1082,11 +1082,11 @@ static int test_evp_pbe_alg_add(void)
     EVP_PBE_KEYGEN *keygen = NULL;
 
     if (!TEST_true(EVP_PBE_alg_add(NID_pbeWithMD5AndDES_CBC, EVP_des_cbc(), EVP_md5(),
-                    PKCS5_PBE_keyivgen)))
+                                   PKCS5_PBE_keyivgen)))
         goto err;
 
     if (!TEST_true(EVP_PBE_find_ex(EVP_PBE_TYPE_OUTER, NID_pbeWithMD5AndDES_CBC,
-                         &cipher_nid, &md_nid, &keygen, &keygen_ex)))
+                                   &cipher_nid, &md_nid, &keygen, &keygen_ex)))
         goto err;
 
     if (!TEST_true(keygen != NULL))

@@ -74,8 +74,9 @@ then this parameter is not returned.
 
 =head2 PBE algorithm add
 
-EVP_PBE_alg_add_type() and EVP_PBE_alg_add() add an algorithm to the list of known algorithms.
-Their parameters have the same meaning as for PBE algorithm search functions.
+EVP_PBE_alg_add_type() and EVP_PBE_alg_add() add an algorithm to the list
+of known algorithms. Their parameters have the same meaning as for
+EVP_PBE_find() and EVP_PBE_find_ex() functions.
 
 =head1 NOTES
 
