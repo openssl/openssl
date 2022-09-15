@@ -62,6 +62,13 @@ sub run_rsa_tests {
              if disabled($cmd) || $cmd eq 'pkey' || disabled("rc4")
                 || disabled ("legacy");
 
+        run(test(["provider_version_test",
+                  "-config", srctop_file("test", "legacy.cnf"),
+                  "-provider", "legacy", ">3.0.5"]),
+                 capture => 1, statusvar => \my $exit);
+        skip "Legacy provider version is too old", 1
+            if !$exit;
+
          subtest "$cmd conversions -- private key" => sub {
              tconversion( -type => 'pvk', -prefix => "$cmd-pvk",
                           -in => srctop_file("test", "testrsa.pem"),
