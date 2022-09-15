@@ -705,10 +705,16 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
     CMS_RecipientInfo *ri;
     int i, r, cms_pkey_ri_type;
     int debug = 0, match_ri = 0;
+    CMS_EncryptedContentInfo *ec = ossl_cms_get0_env_enc_content(cms);
+
+    /* Prevent mem leak on earlier CMS_decrypt_set1_{pkey_and_peer,password} */
+    OPENSSL_clear_free(ec->key, ec->keylen);
+    ec->key = NULL;
+    ec->keylen = 0;
 
     ris = CMS_get0_RecipientInfos(cms);
     if (ris != NULL)
-        debug = ossl_cms_get0_env_enc_content(cms)->debug;
+        debug = ec->debug;
 
     cms_pkey_ri_type = ossl_cms_pkey_get_ri_type(pk);
     if (cms_pkey_ri_type == CMS_RECIPINFO_NONE) {
@@ -843,7 +849,7 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
 {
     int r;
     BIO *cont;
-
+    CMS_EncryptedContentInfo *ec;
     int nid = OBJ_obj2nid(CMS_get0_type(cms));
 
     if (nid != NID_pkcs7_enveloped
@@ -853,14 +859,9 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
     }
     if (dcont == NULL && !check_content(cms))
         return 0;
-    if (flags & CMS_DEBUG_DECRYPT)
-        ossl_cms_get0_env_enc_content(cms)->debug = 1;
-    else
-        ossl_cms_get0_env_enc_content(cms)->debug = 0;
-    if (cert == NULL)
-        ossl_cms_get0_env_enc_content(cms)->havenocert = 1;
-    else
-        ossl_cms_get0_env_enc_content(cms)->havenocert = 0;
+    ec = ossl_cms_get0_env_enc_content(cms);
+    ec->debug = (flags & CMS_DEBUG_DECRYPT) != 0;
+    ec->havenocert = cert == NULL;
     if (pk == NULL && cert == NULL && dcont == NULL && out == NULL)
         return 1;
     if (pk != NULL && !CMS_decrypt_set1_pkey(cms, pk, cert))
