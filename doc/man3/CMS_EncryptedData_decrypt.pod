@@ -21,10 +21,10 @@ to and I<flags> is an optional set of flags.
 I<dcont> is used in the rare case where the encrypted content is detached. It
 will normally be set to NULL.
 
-The following flags can be passed in the B<flags> parameter.
+The following flags can be passed in the I<flags> parameter.
 
-If the B<CMS_TEXT> flag is set MIME headers for type B<text/plain> are deleted
-from the content. If the content is not of type B<text/plain> then an error is
+If the B<CMS_TEXT> flag is set MIME headers for type C<text/plain> are deleted
+from the content. If the content is not of type C<text/plain> then an error is
 returned.
 
 =head1 RETURN VALUES
