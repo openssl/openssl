@@ -2327,8 +2327,6 @@ void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
 int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
                         STACK_OF(X509) *chain)
 {
-    int ret = 1;
-
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
@@ -2426,11 +2424,9 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     }
 
     /* Inherit callbacks and flags from X509_STORE if not set use defaults. */
-    if (store != NULL)
-        ret = X509_VERIFY_PARAM_inherit(ctx->param, store->param);
-    else
+    if (store == NULL)
         ctx->param->inh_flags |= X509_VP_FLAG_DEFAULT | X509_VP_FLAG_ONCE;
-    if (ret == 0)
+    else if (X509_VERIFY_PARAM_inherit(ctx->param, store->param) == 0)
         goto err;
 
     if (!X509_STORE_CTX_set_default(ctx, "default"))
