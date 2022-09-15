@@ -13,7 +13,7 @@
 
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *libprov = NULL;
-static const char *prov_name = "fips";
+static const char *prov_name = NULL;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -30,7 +30,7 @@ const OPTIONS *test_get_options(void)
         { "config", OPT_CONFIG_FILE, '<',
           "The configuration file to use for the libctx" },
         { "provider", OPT_PROVIDER, '<',
-          "The provider to check (default: fips)" },
+          "The provider to check" },
         { NULL }
     };
     return test_options;
@@ -66,6 +66,9 @@ int setup_tests(void)
             return 0;
         }
     }
+
+    if (!TEST_ptr(prov_name))
+        return 0;
 
     if (!test_get_libctx(&libctx, NULL, config_file, &libprov, NULL))
         return 0;

@@ -361,7 +361,8 @@ SKIP: {
     skip "EC is not supported or FIPS is disabled", 3
         if disabled("ec") || $no_fips;
 
-    run(test(["fips_version_test", "-config", $provconf, ">3.0.4"]),
+    run(test(["provider_version_test", "-config", $provconf, "-provider", "fips",
+              ">3.0.4"]),
              capture => 1, statusvar => \my $exit);
     skip "FIPS provider version is too old", 3
         if !$exit;

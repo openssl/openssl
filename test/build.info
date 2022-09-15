@@ -63,7 +63,8 @@ IF[{- !$disabled{tests} -}]
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
           provfetchtest prov_config_test rand_test ca_internals_test \
-          bio_tfo_test membio_test bio_dgram_test list_test fips_version_test
+          bio_tfo_test membio_test bio_dgram_test list_test \
+          provider_version_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -436,9 +437,9 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[defltfips_test]=../include  ../apps/include
   DEPEND[defltfips_test]=../libcrypto libtestutil.a
 
-  SOURCE[fips_version_test]=fips_version_test.c
-  INCLUDE[fips_version_test]=../include  ../apps/include
-  DEPEND[fips_version_test]=../libcrypto libtestutil.a
+  SOURCE[provider_version_test]=provider_version_test.c
+  INCLUDE[provider_version_test]=../include  ../apps/include
+  DEPEND[provider_version_test]=../libcrypto libtestutil.a
 
   SOURCE[ocspapitest]=ocspapitest.c
   INCLUDE[ocspapitest]=../include ../apps/include
