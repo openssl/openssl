@@ -322,4 +322,16 @@
 #  endif
 # endif
 
+# ifndef OSSL_CRYPTO_ASIZE_1
+#  if defined(__GNUC__)
+#   define OSSL_CRYPTO_ASIZE_1 __attribute__((alloc_size(1)))
+#   define OSSL_CRYPTO_ASIZE_2 __attribute__((alloc_size(2)))
+#   define OSSL_CRYPTO_ASIZE_3 __attribute__((alloc_size(3)))
+#  else
+#   define OSSL_CRYPTO_ASIZE_1
+#   define OSSL_CRYPTO_ASIZE_2
+#   define OSSL_CRYPTO_ASIZE_3
+#  endif
+# endif
+
 #endif  /* OPENSSL_MACROS_H */

@@ -318,15 +318,15 @@ void CRYPTO_get_mem_functions(CRYPTO_malloc_fn *malloc_fn,
                               CRYPTO_realloc_fn *realloc_fn,
                               CRYPTO_free_fn *free_fn);
 
-OSSL_CRYPTO_ALLOC void *CRYPTO_malloc(size_t num, const char *file, int line);
-OSSL_CRYPTO_ALLOC void *CRYPTO_zalloc(size_t num, const char *file, int line);
-OSSL_CRYPTO_ALLOC void *CRYPTO_memdup(const void *str, size_t siz, const char *file, int line);
+OSSL_CRYPTO_ALLOC OSSL_CRYPTO_ASIZE_1 void *CRYPTO_malloc(size_t num, const char *file, int line);
+OSSL_CRYPTO_ALLOC OSSL_CRYPTO_ASIZE_1 void *CRYPTO_zalloc(size_t num, const char *file, int line);
+OSSL_CRYPTO_ALLOC OSSL_CRYPTO_ASIZE_2 void *CRYPTO_memdup(const void *str, size_t siz, const char *file, int line);
 OSSL_CRYPTO_ALLOC char *CRYPTO_strdup(const char *str, const char *file, int line);
 OSSL_CRYPTO_ALLOC char *CRYPTO_strndup(const char *str, size_t s, const char *file, int line);
 void CRYPTO_free(void *ptr, const char *file, int line);
 void CRYPTO_clear_free(void *ptr, size_t num, const char *file, int line);
-void *CRYPTO_realloc(void *addr, size_t num, const char *file, int line);
-void *CRYPTO_clear_realloc(void *addr, size_t old_num, size_t num,
+OSSL_CRYPTO_ASIZE_2 void *CRYPTO_realloc(void *addr, size_t num, const char *file, int line);
+OSSL_CRYPTO_ASIZE_3 void *CRYPTO_clear_realloc(void *addr, size_t old_num, size_t num,
                            const char *file, int line);
 
 int CRYPTO_secure_malloc_init(size_t sz, size_t minsize);
