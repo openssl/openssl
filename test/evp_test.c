@@ -1596,8 +1596,8 @@ static int mac_test_run_mac(EVP_TEST *t)
             goto err;
         }
     }
-    /* FIPS(3.0.0): can't reinitialise MAC contexts #18100 */
-    if (reinit-- && fips_provider_version_gt(libctx, 3, 0, 0)) {
+    /* FIPS(3.0.2): can't reinitialise MAC contexts #18100 */
+    if (reinit-- && provider_version_gt(libctx, "fips", 3, 0, 2)) {
         OSSL_PARAM ivparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
         int ret;
 
@@ -2823,8 +2823,8 @@ static int kdf_test_run(EVP_TEST *t)
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    /* FIPS(3.0.0): can't dup KDF contexts #17572 */
-    if (fips_provider_version_gt(libctx, 3, 0, 0)
+    /* FIPS(3.0.3): can't dup KDF contexts #17572 */
+    if (provider_version_gt(libctx, "fips", 3, 0, 3)
             && (ctx = EVP_KDF_CTX_dup(expected->ctx)) != NULL) {
         EVP_KDF_CTX_free(expected->ctx);
         expected->ctx = ctx;
@@ -2921,8 +2921,8 @@ static int pkey_kdf_test_run(EVP_TEST *t)
     unsigned char *got = NULL;
     size_t got_len = 0;
 
-    if (fips_provider_version_eq(libctx, 3, 0, 0)) {
-        /* FIPS(3.0.0): can't deal with oversized output buffers #18533 */
+    if (provider_version_le(libctx, "fips", 3, 0, 3)) {
+        /* FIPS(3.0.3): can't deal with oversized output buffers #18533 */
         got_len = expected->output_len;
     } else {
         /* Find out the KDF output size */
@@ -3717,22 +3717,29 @@ static int securitycheck_enabled(void)
  */
 static int prov_available(char *providers)
 {
-    char *p;
-    int more = 1;
+    char *p, *next;
 
-    while (more) {
+    while (providers != NULL) {
         for (; isspace(*providers); providers++)
             continue;
         if (*providers == '\0')
             break;               /* End of the road */
         for (p = providers; *p != '\0' && !isspace(*p); p++)
             continue;
-        if (*p == '\0')
-            more = 0;
-        else
-            *p = '\0';
+        if (*p == '\0') {
+            next = NULL;
+        } else {
+            *p++ = '\0';
+            next = p;
+        }
+
+        /* Check for version restrictions */
+        if ((p = strchr(providers, ':')) != NULL)
+            *p++ = '\0';
         if (OSSL_PROVIDER_available(libctx, providers))
-            return 1;            /* Found one */
+            if (p == NULL || provider_version_match(libctx, providers, p))
+                return 1;
+        providers = next;
     }
     return 0;
 }
@@ -3835,7 +3842,7 @@ start:
         goto start;
     } else if (strcmp(pp->key, "FIPSversion") == 0) {
         if (prov_available("fips")) {
-            j = fips_provider_version_match(libctx, pp->value);
+            j = provider_version_match(libctx, "fips", pp->value);
             if (j < 0) {
                 TEST_info("Line %d: error matching FIPS versions\n", t->s.curr);
                 return 0;
