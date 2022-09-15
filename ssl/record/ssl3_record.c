@@ -15,24 +15,6 @@
 #include "record_local.h"
 #include "internal/cryptlib.h"
 
-static const unsigned char ssl3_pad_1[48] = {
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
-};
-
-static const unsigned char ssl3_pad_2[48] = {
-    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c
-};
-
 /*
  * Clear the contents of an SSL3_RECORD but retain any memory allocated
  */
@@ -158,85 +140,6 @@ int ssl3_do_compress(SSL_CONNECTION *sc, SSL3_RECORD *wr)
 
     wr->input = wr->data;
 #endif
-    return 1;
-}
-
-/*-
- * ssl3_enc encrypts/decrypts |n_recs| records in |inrecs|. Calls SSLfatal on
- * internal error, but not otherwise. It is the responsibility of the caller to
- * report a bad_record_mac
- *
- * Returns:
- *    0: if the record is publicly invalid, or an internal error
- *    1: Success or Mac-then-encrypt decryption failed (MAC will be randomised)
- */
-int ssl3_enc(SSL_CONNECTION *s, SSL3_RECORD *inrecs, size_t n_recs, int sending,
-             SSL_MAC_BUF *mac, size_t macsize)
-{
-    SSL3_RECORD *rec;
-    EVP_CIPHER_CTX *ds;
-    size_t l, i;
-    size_t bs;
-    const EVP_CIPHER *enc;
-
-    assert(sending);
-    rec = inrecs;
-    /*
-     * We shouldn't ever be called with more than one record in the SSLv3 case
-     */
-    if (n_recs != 1)
-        return 0;
-
-    ds = s->enc_write_ctx;
-    if (s->enc_write_ctx == NULL)
-        enc = NULL;
-    else
-        enc = EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx);
-
-    if ((s->session == NULL) || (ds == NULL) || (enc == NULL)) {
-        memmove(rec->data, rec->input, rec->length);
-        rec->input = rec->data;
-    } else {
-        int provided = (EVP_CIPHER_get0_provider(enc) != NULL);
-
-        l = rec->length;
-        bs = EVP_CIPHER_CTX_get_block_size(ds);
-
-        /* COMPRESS */
-
-        if ((bs != 1) && !provided) {
-            /*
-             * We only do this for legacy ciphers. Provided ciphers add the
-             * padding on the provider side.
-             */
-            i = bs - (l % bs);
-
-            /* we need to add 'i-1' padding bytes */
-            l += i;
-            /*
-             * the last of these zero bytes will be overwritten with the
-             * padding length.
-             */
-            memset(&rec->input[rec->length], 0, i);
-            rec->length += i;
-            rec->input[l - 1] = (unsigned char)(i - 1);
-        }
-
-        if (EVP_CIPHER_get0_provider(enc) != NULL) {
-            int outlen;
-
-            if (!EVP_CipherUpdate(ds, rec->data, &outlen, rec->input,
-                                  (unsigned int)l))
-                return 0;
-            rec->length = outlen;
-        } else {
-            if (EVP_Cipher(ds, rec->data, rec->input, (unsigned int)l) < 1) {
-                /* Shouldn't happen */
-                SSLfatal(s, SSL_AD_BAD_RECORD_MAC, ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
-        }
-    }
     return 1;
 }
 
@@ -462,66 +365,6 @@ int tls1_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             }
         }
     }
-    return 1;
-}
-
-int n_ssl3_mac(SSL_CONNECTION *sc, SSL3_RECORD *rec, unsigned char *md,
-               int sending)
-{
-    unsigned char *mac_sec, *seq;
-    const EVP_MD_CTX *hash;
-    unsigned char *p, rec_char;
-    size_t md_size;
-    size_t npad;
-    int t;
-    unsigned int md_size_u;
-    EVP_MD_CTX *md_ctx;
-
-    /*
-     * All read record layer operations should have been moved to the new
-     * record layer code
-     */
-    assert(sending);
-
-    mac_sec = &(sc->s3.write_mac_secret[0]);
-    seq = RECORD_LAYER_get_write_sequence(&sc->rlayer);
-    hash = sc->write_hash;
-
-    t = EVP_MD_CTX_get_size(hash);
-    if (t < 0)
-        return 0;
-    md_size = t;
-    npad = (48 / md_size) * md_size;
-
-    /* Chop the digest off the end :-) */
-    md_ctx = EVP_MD_CTX_new();
-
-    if (md_ctx == NULL)
-        return 0;
-
-    rec_char = rec->type;
-    p = md;
-    s2n(rec->length, p);
-    if (EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
-        || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
-        || EVP_DigestUpdate(md_ctx, ssl3_pad_1, npad) <= 0
-        || EVP_DigestUpdate(md_ctx, seq, 8) <= 0
-        || EVP_DigestUpdate(md_ctx, &rec_char, 1) <= 0
-        || EVP_DigestUpdate(md_ctx, md, 2) <= 0
-        || EVP_DigestUpdate(md_ctx, rec->input, rec->length) <= 0
-        || EVP_DigestFinal_ex(md_ctx, md, NULL) <= 0
-        || EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
-        || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
-        || EVP_DigestUpdate(md_ctx, ssl3_pad_2, npad) <= 0
-        || EVP_DigestUpdate(md_ctx, md, md_size) <= 0
-        || EVP_DigestFinal_ex(md_ctx, md, &md_size_u) <= 0) {
-        EVP_MD_CTX_free(md_ctx);
-        return 0;
-    }
-
-    EVP_MD_CTX_free(md_ctx);
-
-    ssl3_record_sequence_update(seq);
     return 1;
 }
 
