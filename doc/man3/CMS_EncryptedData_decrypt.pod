@@ -26,15 +26,17 @@ to and I<flags> is an optional set of flags.
 I<dcont> is used in the rare case where the encrypted content is detached. It
 will normally be set to NULL.
 
-The following flags can be passed in the B<flags> parameter.
+The following flags can be passed in the I<flags> parameter.
 
-If the B<CMS_TEXT> flag is set MIME headers for type B<text/plain> are deleted
-from the content. If the content is not of type B<text/plain> then an error is
+If the B<CMS_TEXT> flag is set MIME headers for type C<text/plain> are deleted
+from the content. If the content is not of type C<text/plain> then an error is
 returned.
 
 CMS_EnvelopedData_decrypt() decrypts, similarly to CMS_decrypt(3),
-a CMS EnvelopedData object I<env> using the symmetric key I<secret> or
-the private key of the recipient B<pkey> and its associated certificate B<cert>.
+a CMS EnvelopedData object I<env> using the symmetric key I<secret> if it
+is not NULL, otherwise the private key of the recipient I<pkey>.
+If I<pkey> is given, it is recommended to provide also the associated
+certificate in I<cert> - see L<CMS_decrypt(3)> and the NOTES on I<cert> there.
 The optional parameters I<flags> and I<dcont> are used as described above.
 The optional parameters library context I<libctx> and property query I<propq>
 are used when retrieving algorithms from providers.
