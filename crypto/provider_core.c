@@ -8,6 +8,18 @@
  */
 
 #include <assert.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <libgen.h>
+
+#define __USE_GNU
+#define _GNU_SOURCE
+#include <link.h>
+#include <dlfcn.h>
+
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -850,6 +862,15 @@ static int provider_init(OSSL_PROVIDER *prov)
             const char *load_dir = NULL;
             char *allocated_load_dir = NULL;
             struct provider_store_st *store;
+            char *f = NULL;
+            size_t size = 0;
+            char *dir = NULL;
+            static char *osslmodules = "ossl-modules";
+            struct stat s;
+            Dl_info info;
+
+            memset(&s, 0, sizeof(struct stat));
+            memset(&info, 0, sizeof(Dl_info));
 
             if ((prov->module = DSO_new()) == NULL) {
                 /* DSO_new() generates an error already */
@@ -874,9 +895,32 @@ static int provider_init(OSSL_PROVIDER *prov)
 
             if (load_dir == NULL) {
                 load_dir = ossl_safe_getenv("OPENSSL_MODULES");
+
                 if (load_dir == NULL)
                     load_dir = MODULESDIR;
-            }
+
+                    if (stat(load_dir, &s) == -1) {
+                        /* try out relative path to shared lib with our symbol */
+                        if (dladdr(OpenSSL_version, &info)) {
+                            f = OPENSSL_strdup(info.dli_fname);
+                            if (f == NULL) {
+                                ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+                                goto end;
+                            }
+                            dir = dirname(f);
+                            size = strlen(dir) + strlen("/") + strlen(osslmodules) + 1;
+                            allocated_load_dir = OPENSSL_realloc(allocated_load_dir, size);
+                            if (allocated_load_dir == NULL) {
+                                ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+                                OPENSSL_free(f);
+                                goto end;
+                            }
+                            BIO_snprintf(allocated_load_dir, size, "%s%s%s", dir, "/", osslmodules);
+                            load_dir = allocated_load_dir;
+                            OPENSSL_free(f);
+                        }
+                    }
+                }
 
             DSO_ctrl(prov->module, DSO_CTRL_SET_FLAGS,
                      DSO_FLAG_NAME_TRANSLATION_EXT_ONLY, NULL);
