@@ -22,7 +22,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                  size_t taglen,
                                  int mactype,
                                  const EVP_MD *md,
-                                 const SSL_COMP *comp)
+                                 COMP_METHOD *comp)
 {
     EVP_CIPHER_CTX *ciph_ctx;
     EVP_PKEY *mac_key;
@@ -45,7 +45,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     }
 #ifndef OPENSSL_NO_COMP
     if (comp != NULL) {
-        rl->compctx = COMP_CTX_new(comp->method);
+        rl->compctx = COMP_CTX_new(comp);
         if (rl->compctx == NULL) {
             ERR_raise(ERR_LIB_SSL, SSL_R_COMPRESSION_LIBRARY_ERROR);
             return OSSL_RECORD_RETURN_FATAL;

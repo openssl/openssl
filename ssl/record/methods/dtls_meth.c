@@ -628,7 +628,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       size_t ivlen, unsigned char *mackey, size_t mackeylen,
                       const EVP_CIPHER *ciph, size_t taglen,
                       int mactype,
-                      const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
+                      const EVP_MD *md, COMP_METHOD *comp, BIO *prev,
                       BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
                       const OSSL_PARAM *settings, const OSSL_PARAM *options,
                       const OSSL_DISPATCH *fns, void *cbarg,
@@ -712,5 +712,6 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_set_max_pipelines,
     dtls_set_in_init,
     tls_get_state,
-    tls_set_options
+    tls_set_options,
+    tls_get_compression
 };

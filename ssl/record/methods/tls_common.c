@@ -12,6 +12,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/core_names.h>
+#include <openssl/comp.h>
 #include "internal/e_os.h"
 #include "internal/packet.h"
 #include "../../ssl_local.h"
@@ -1197,7 +1198,7 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                          unsigned char *mackey, size_t mackeylen,
                          const EVP_CIPHER *ciph, size_t taglen,
                          int mactype,
-                         const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
+                         const EVP_MD *md, COMP_METHOD *comp, BIO *prev,
                          BIO *transport, BIO *next, BIO_ADDR *local,
                          BIO_ADDR *peer, const OSSL_PARAM *settings,
                          const OSSL_PARAM *options,
@@ -1327,7 +1328,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                      size_t ivlen, unsigned char *mackey, size_t mackeylen,
                      const EVP_CIPHER *ciph, size_t taglen,
                      int mactype,
-                     const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
+                     const EVP_MD *md, COMP_METHOD *comp, BIO *prev,
                      BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
                      const OSSL_PARAM *settings, const OSSL_PARAM *options,
                      const OSSL_DISPATCH *fns, void *cbarg,
@@ -2140,6 +2141,15 @@ void tls_get_state(OSSL_RECORD_LAYER *rl, const char **shortstr,
         *longstr = lng;
 }
 
+const COMP_METHOD *tls_get_compression(OSSL_RECORD_LAYER *rl)
+{
+#ifndef OPENSSL_NO_COMP
+    return (rl->compctx == NULL) ? NULL : COMP_CTX_get_method(rl->compctx);
+#else
+    return NULL;
+#endif
+}
+
 const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_new_record_layer,
     tls_free,
@@ -2162,5 +2172,6 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_set_max_pipelines,
     NULL,
     tls_get_state,
-    tls_set_options
+    tls_set_options,
+    tls_get_compression
 };
