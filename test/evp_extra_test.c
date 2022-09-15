@@ -3303,6 +3303,8 @@ static int test_evp_bf_default_keylen(int idx)
 
     if (lgcyprov == NULL)
         return TEST_skip("Test requires legacy provider to be loaded");
+    if (provider_version_lt(testctx, "legacy", 3, 0, 4))
+        return TEST_skip("Test requires legacy provider 3.0.4 or later");
 
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, algos[idx], testpropq))
             || !TEST_int_eq(EVP_CIPHER_get_key_length(cipher), 16)
