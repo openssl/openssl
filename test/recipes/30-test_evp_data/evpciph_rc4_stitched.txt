@@ -1,6 +1,7 @@
 Title = RC4-HMAC-MD5 test vectors
 
-Availablein = legacy
+# FIPS(3.0.2): incorrect parameter name #18112
+Availablein = legacy:>3.0.2
 Cipher = RC4-HMAC-MD5
 Key = d48ecc0a163a06626bd1b7e172dfb5b3
 MACKey = 5973581f63768353af37d3f51ec9f6ef
@@ -11,7 +12,8 @@ Ciphertext = eea8eba927d9b16c640958f922b3ca43b197eea520674aa1d059156dfd4c12249e2
 # DECRYPT must be a separate entry due to change in TLSAAD value
 Operation = ENCRYPT
 
-Availablein = legacy
+# FIPS(3.0.2): incorrect parameter name #18112
+Availablein = legacy:>3.0.2
 Cipher = RC4-HMAC-MD5
 Key = d48ecc0a163a06626bd1b7e172dfb5b3
 MACKey = 5973581f63768353af37d3f51ec9f6ef
