@@ -375,7 +375,7 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                  size_t taglen,
                                  int mactype,
                                  const EVP_MD *md,
-                                 const SSL_COMP *comp)
+                                 COMP_METHOD *comp)
 {
     ktls_crypto_info_t crypto_info;
 
@@ -499,7 +499,7 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       size_t ivlen, unsigned char *mackey, size_t mackeylen,
                       const EVP_CIPHER *ciph, size_t taglen,
                       int mactype,
-                      const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
+                      const EVP_MD *md, COMP_METHOD *comp, BIO *prev,
                       BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
                       const OSSL_PARAM *settings, const OSSL_PARAM *options,
                       const OSSL_DISPATCH *fns, void *cbarg,
@@ -520,10 +520,11 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     /*
      * TODO(RECLAYER): We're not ready to set the crypto state for the write
-     * record layer. Fix this once we are
+     * record layer in TLSv1.3. Fix this once we are
      */
-    if (direction == OSSL_RECORD_DIRECTION_WRITE)
+    if (direction == OSSL_RECORD_DIRECTION_WRITE && vers == TLS1_3_VERSION)
         return 1;
+
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, key, keylen, iv,
                                             ivlen, mackey, mackeylen, ciph,
                                             taglen, mactype, md, comp);
@@ -563,5 +564,6 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_set_max_pipelines,
     NULL,
     tls_get_state,
-    tls_set_options
+    tls_set_options,
+    tls_get_compression
 };

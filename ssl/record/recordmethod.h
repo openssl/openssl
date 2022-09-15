@@ -134,7 +134,7 @@ struct ossl_record_method_st {
                             size_t taglen,
                             int mactype,
                             const EVP_MD *md,
-                            const SSL_COMP *comp,
+                            COMP_METHOD *comp,
                             BIO *prev,
                             BIO *transport,
                             BIO *next,
@@ -300,6 +300,8 @@ struct ossl_record_method_st {
      * new_record_layer call.
      */
     int (*set_options)(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options);
+
+    const COMP_METHOD *(*get_compression)(OSSL_RECORD_LAYER *rl);
 };
 
 

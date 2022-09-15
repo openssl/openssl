@@ -4773,7 +4773,11 @@ const COMP_METHOD *SSL_get_current_compression(const SSL *s)
     if (sc == NULL)
         return NULL;
 
-    return sc->compress ? COMP_CTX_get_method(sc->compress) : NULL;
+    /* TODO(RECLAYER): Remove me once SSLv3/DTLS moved to write record layer */
+    if (SSL_CONNECTION_IS_DTLS(sc) || sc->version == SSL3_VERSION)
+        return sc->compress ? COMP_CTX_get_method(sc->compress) : NULL;
+
+    return sc->rlayer.wrlmethod->get_compression(sc->rlayer.wrl);
 #else
     return NULL;
 #endif
@@ -4787,7 +4791,7 @@ const COMP_METHOD *SSL_get_current_expansion(const SSL *s)
     if (sc == NULL)
         return NULL;
 
-    return sc->expand ? COMP_CTX_get_method(sc->expand) : NULL;
+    return sc->rlayer.rrlmethod->get_compression(sc->rlayer.rrl);
 #else
     return NULL;
 #endif
