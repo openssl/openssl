@@ -1521,11 +1521,10 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     OSSL_RECORD_TEMPLATE *thistempl;
 
     /*
-     * TODO(RECLAYER): Remove this once SSLv3/TLSv1.3/DTLS crypto has
+     * TODO(RECLAYER): Remove this once TLSv1.3/DTLS crypto has
      *                 been moved to the new write record layer.
      */
-    if (rl->version == SSL3_VERSION
-            || rl->version == TLS1_3_VERSION
+    if (rl->version == TLS1_3_VERSION
             || rl->isdtls) {
         SSL_SESSION *sess = s->session;
 
@@ -1767,11 +1766,10 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
             unsigned char *mac;
 
             /*
-             * TODO(RECLAYER): Remove this once SSLv3/TLSv1.3/DTLS crypto has
+             * TODO(RECLAYER): Remove this once TLSv1.3/DTLS crypto has
              *                 been moved to the new write record layer.
              */
-            if (rl->version == SSL3_VERSION
-                    || rl->version == TLS1_3_VERSION
+            if (rl->version == TLS1_3_VERSION
                     || rl->isdtls) {
                 if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
                         || !ssl->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
@@ -1826,30 +1824,17 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     } else {
         if (!using_ktls) {
             if (prefix) {
-                /*
-                * TODO(RECLAYER): Remove this once SSLv3 crypto has been moved
-                *                 to the new write record layer.
-                */
-                if (rl->version == SSL3_VERSION) {
-                    if (ssl->method->ssl3_enc->enc(s, wr, 1, 1, NULL, mac_size) < 1) {
-                        if (!ossl_statem_in_error(s))
-                            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                        goto err;
-                    }
-                } else {
-                    if (rl->funcs->cipher(rl, wr, 1, 1, NULL, mac_size) < 1) {
-                        if (!ossl_statem_in_error(s))
-                            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                        goto err;
-                    }
+                if (rl->funcs->cipher(rl, wr, 1, 1, NULL, mac_size) < 1) {
+                    if (!ossl_statem_in_error(s))
+                        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
                 }
             }
             /*
-             * TODO(RECLAYER): Remove this once SSLv3/TLSv1.3/DTLS crypto has
+             * TODO(RECLAYER): Remove this once TLSv1.3/DTLS crypto has
              *                 been moved to the new write record layer.
              */
-            if (rl->version == SSL3_VERSION
-                    || rl->version == TLS1_3_VERSION
+            if (rl->version == TLS1_3_VERSION
                     || rl->isdtls) {
                 if (ssl->method->ssl3_enc->enc(s, wr + prefix, numtempl, 1, NULL,
                                                mac_size) < 1) {
@@ -1894,11 +1879,10 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
             unsigned char *mac;
 
             /*
-             * TODO(RECLAYER): Remove this once SSLv3/TLSv1.3/DTLS crypto has
+             * TODO(RECLAYER): Remove this once TLSv1.3/DTLS crypto has
              *                 been moved to the new write record layer.
              */
-            if (rl->version == SSL3_VERSION
-                    || rl->version == TLS1_3_VERSION
+            if (rl->version == TLS1_3_VERSION
                     || rl->isdtls) {
                 if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
                         || !ssl->method->ssl3_enc->mac(s, thiswr, mac, 1)) {

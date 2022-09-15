@@ -24,6 +24,7 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                  COMP_METHOD *comp)
 {
     EVP_CIPHER_CTX *ciph_ctx;
+    int enc = (rl->direction == OSSL_RECORD_DIRECTION_WRITE) ? 1 : 0;
 
     if (md == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -41,6 +42,12 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
     }
+
+    if ((md != NULL && EVP_DigestInit_ex(rl->md_ctx, md, NULL) <= 0)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return OSSL_RECORD_RETURN_FATAL;
+    }
+
 #ifndef OPENSSL_NO_COMP
     if (comp != NULL) {
         rl->compctx = COMP_CTX_new(comp);
@@ -51,7 +58,7 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     }
 #endif
 
-    if (!EVP_DecryptInit_ex(ciph_ctx, ciph, NULL, key, iv)) {
+    if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, iv, enc)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
     }

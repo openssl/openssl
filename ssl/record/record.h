@@ -226,10 +226,6 @@ __owur int ssl3_read_bytes(SSL *s, int type, int *recvd_type,
                            unsigned char *buf, size_t len, int peek,
                            size_t *readbytes);
 __owur int ssl3_setup_buffers(SSL_CONNECTION *s);
-__owur int ssl3_enc(SSL_CONNECTION *s, SSL3_RECORD *inrecs, size_t n_recs,
-                    int send, SSL_MAC_BUF *mac, size_t macsize);
-__owur int n_ssl3_mac(SSL_CONNECTION *s, SSL3_RECORD *rec, unsigned char *md,
-                      int send);
 __owur int tls1_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs,
                     int sending, SSL_MAC_BUF *mac, size_t macsize);
 __owur int tls1_mac_old(SSL_CONNECTION *s, SSL3_RECORD *rec, unsigned char *md,
