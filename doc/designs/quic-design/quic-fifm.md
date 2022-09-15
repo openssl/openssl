@@ -348,10 +348,11 @@ typedef struct quic_txpim_pkt_st {
     QUIC_FIFD          *fifd;
 
     /* Regenerate-strategy frames. */
-    unsigned int        had_handshake_done      : 1;
-    unsigned int        had_max_data_frame      : 1;
-    unsigned int        had_max_streams_frame   : 1;
-    unsigned int        had_ack_frame           : 1;
+    unsigned int        had_handshake_done          : 1;
+    unsigned int        had_max_data_frame          : 1;
+    unsigned int        had_max_streams_bidi_frame  : 1;
+    unsigned int        had_max_streams_uni_frame   : 1;
+    unsigned int        had_ack_frame               : 1;
 
     /* Private data follows. */
 } QUIC_TXPIM_PKT;
@@ -412,6 +413,12 @@ const QUIC_TXPIM_CHUNK *ossl_quic_txpim_pkt_get_chunks(QUIC_TXPIM_PKT *fpkt);
  * ossl_quic_txpim_pkt_get_chunks().
  */
 size_t ossl_quic_txpim_pkt_get_num_chunks(QUIC_TXPIM_PKT *fpkt);
+
+/*
+ * Returns the number of QUIC_TXPIM_PKTs allocated by the given TXPIM that have
+ * yet to be returned to the TXPIM.
+ */
+size_t ossl_quic_txpim_get_in_use(QUIC_TXPIM *txpim);
 ```
 
 The Frame-in-Flight Dispatcher (FIFD)
@@ -452,7 +459,7 @@ simply glues all of these parts together.
 ### API
 
 ```c
-typedef struct quic_fifm_st {
+typedef struct quic_fifd_st {
   /* (internals) */
 } QUIC_FIFD;
 
@@ -496,9 +503,6 @@ Typical Intended TX Packetiser Usage
   all CFQ frames are considered of higher priority). For each such frame
   it places in a packet, it:
 
-  - informs the CFQ that the CFQ item has been transmitted, causing a
-    transition of the CFQ item to the `TX` state;
-
   - calls `ossl_quic_txpim_pkt_add_cfq_item()` on the TXPIM to log the CFQ item
     as having been transmitted in the given packet, so that the CFQ item can be
     released or requeued depending on the ultimate fate of the packet.
@@ -517,7 +521,9 @@ Typical Intended TX Packetiser Usage
 
 - TX Packetiser calls `ossl_quic_fifd_pkt_commit()`. The FIFD takes care
   of submitting the packet to the ACK Manager and provides its own callback
-  implementation.
+  implementation. It also takes care of informing the CFQ that any CFQ items
+  which were added via `ossl_quic_txpim_pkt_add_cfq_item()` have been
+  transmitted.
 
   In the event of packet loss, ACK or discard, the appropriate QUIC Send Stream,
   CFQ and regenerate callback calls are made. Regardless of the outcome, the

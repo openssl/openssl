@@ -35,7 +35,8 @@ typedef struct quic_txpim_pkt_st {
     /* Regenerate-strategy frames. */
     unsigned int        had_handshake_done_frame    : 1;
     unsigned int        had_max_data_frame          : 1;
-    unsigned int        had_max_streams_frame       : 1;
+    unsigned int        had_max_streams_bidi_frame  : 1;
+    unsigned int        had_max_streams_uni_frame   : 1;
     unsigned int        had_ack_frame               : 1;
 
     /* Private data follows. */
@@ -105,5 +106,11 @@ const QUIC_TXPIM_CHUNK *ossl_quic_txpim_pkt_get_chunks(QUIC_TXPIM_PKT *fpkt);
  * ossl_quic_txpim_pkt_get_chunks().
  */
 size_t ossl_quic_txpim_pkt_get_num_chunks(QUIC_TXPIM_PKT *fpkt);
+
+/*
+ * Returns the number of QUIC_TXPIM_PKTs allocated by the given TXPIM that have
+ * yet to be returned to the TXPIM.
+ */
+size_t ossl_quic_txpim_get_in_use(QUIC_TXPIM *txpim);
 
 #endif

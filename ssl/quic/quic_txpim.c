@@ -111,7 +111,8 @@ static void txpim_clear(QUIC_TXPIM_PKT_EX *ex)
     ex->public.fifd                        = NULL;
     ex->public.had_handshake_done_frame    = 0;
     ex->public.had_max_data_frame          = 0;
-    ex->public.had_max_streams_frame       = 0;
+    ex->public.had_max_streams_bidi_frame  = 0;
+    ex->public.had_max_streams_uni_frame   = 0;
     ex->public.had_ack_frame               = 0;
 }
 
@@ -200,6 +201,10 @@ const QUIC_TXPIM_CHUNK *ossl_quic_txpim_pkt_get_chunks(QUIC_TXPIM_PKT *fpkt)
     QUIC_TXPIM_PKT_EX *ex = (QUIC_TXPIM_PKT_EX *)fpkt;
 
     if (ex->chunks_need_sort) {
+        /*
+         * List of chunks will generally be very small so there is no issue
+         * simply sorting here.
+         */
         qsort(ex->chunks, ex->num_chunks, sizeof(QUIC_TXPIM_CHUNK), compare);
         ex->chunks_need_sort = 0;
     }
@@ -212,4 +217,9 @@ size_t ossl_quic_txpim_pkt_get_num_chunks(QUIC_TXPIM_PKT *fpkt)
     QUIC_TXPIM_PKT_EX *ex = (QUIC_TXPIM_PKT_EX *)fpkt;
 
     return ex->num_chunks;
+}
+
+size_t ossl_quic_txpim_get_in_use(QUIC_TXPIM *txpim)
+{
+    return txpim->in_use;
 }
