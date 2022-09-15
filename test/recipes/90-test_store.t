@@ -32,9 +32,14 @@ my @src_files =
       "apps/server.pem" );
 my @data_files =
     ( "testrsa.msb" );
+
+run(test(["provider_version_test", "-config", srctop_file("test", "legacy.cnf"),
+          "-provider", "legacy", "<=3.0.5"]),
+         capture => 1, statusvar => \my $exit);
 push(@data_files,
      ( "testrsa.pvk" ))
-    unless disabled("legacy") || disabled("rc4");
+    unless disabled("legacy") || disabled("rc4") || $exit;
+
 my @src_rsa_files =
     ( "test/testrsa.pem",
       "test/testrsapub.pem" );
