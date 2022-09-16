@@ -80,7 +80,7 @@ Decapsulate data using RSA:
      /* malloc failure */
 
  /* Decapsulated secret data is secretlen bytes long */
- if (EVP_PKEY_decapsulaterctx, secret, &secretlen, in, inlen) <= 0)
+ if (EVP_PKEY_decapsulate(ctx, secret, &secretlen, in, inlen) <= 0)
      /* Error */
 
 

@@ -97,6 +97,5 @@ char *ossl_ec_check_group_type_id2name(int flags);
 int ossl_ec_set_check_group_type_from_name(EC_KEY *ec, const char *name);
 int ossl_ec_generate_key_dhkem(EC_KEY *eckey,
                                const unsigned char *ikm, size_t ikmlen);
-int ossl_ec_public_from_private(EC_KEY *eckey, BIGNUM *priv_key, BN_CTX *ctx);
 # endif /* OPENSSL_NO_EC */
 #endif

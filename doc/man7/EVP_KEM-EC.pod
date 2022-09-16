@@ -24,7 +24,7 @@ following operation:
 =item "DHKEM" (B<OSSL_KEM_PARAM_OPERATION_DHKEM>)
 
 The encapsulate function generates an ephemeral keypair. It produces keymaterial
-by doing a ECDH key exchange using the ephemeral private key and a supplied
+by doing an ECDH key exchange using the ephemeral private key and a supplied
 recipient public key. A HKDF operation using the keymaterial and a kem context
 then produces a shared secret. The shared secret and the ephemeral public key
 are returned.

@@ -130,6 +130,11 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
                 provauthkey = evp_pkey_export_to_provider(authkey, ctx->libctx,
                                                           &tmp_keymgmt,
                                                           ctx->propquery);
+                if (provauthkey == NULL) {
+                    EVP_KEM_free(kem);
+                    ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+                    goto err;
+                }
             }
         }
         if (tmp_keymgmt == NULL)
