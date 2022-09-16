@@ -159,7 +159,6 @@ static ossl_ssize_t zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *o
 {
     int err = Z_OK;
     struct zlib_state *state = ctx->data;
-    ossl_ssize_t ret;
 
     if (state == NULL)
         return -1;
@@ -174,10 +173,7 @@ static ossl_ssize_t zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *o
         return -1;
     if (state->ostream.avail_out > olen)
         return -1;
-    ret = (ossl_ssize_t)(olen - state->ostream.avail_out);
-    if (ret < 0)
-        return -1;
-    return ret;
+    return (ossl_ssize_t)(olen - state->ostream.avail_out);
 }
 
 static ossl_ssize_t zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
@@ -186,7 +182,6 @@ static ossl_ssize_t zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out
 {
     int err = Z_OK;
     struct zlib_state *state = ctx->data;
-    ossl_ssize_t ret;
 
     if (state == NULL)
         return 0;
@@ -201,10 +196,7 @@ static ossl_ssize_t zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out
         return -1;
     if (state->istream.avail_out > olen)
         return -1;
-    ret = (ossl_ssize_t)(olen - state->istream.avail_out);
-    if (ret < 0)
-        return -1;
-    return ret;
+    return (ossl_ssize_t)(olen - state->istream.avail_out);
 }
 
 static CRYPTO_ONCE zlib_once = CRYPTO_ONCE_STATIC_INIT;

@@ -233,6 +233,8 @@ static ossl_ssize_t zstd_stateful_compress_block(COMP_CTX *ctx, unsigned char *o
         return -1;
 
  end:
+    if (outbuf.pos > OSSL_SSIZE_MAX)
+        return -1;
     fret = (ossl_ssize_t)outbuf.pos;
     if (fret < 0)
         return -1;
@@ -273,6 +275,8 @@ static ossl_ssize_t zstd_stateful_expand_block(COMP_CTX *ctx, unsigned char *out
     if (inbuf.pos < inbuf.size)
         return -1;
 
+    if (outbuf.pos > OSSL_SSIZE_MAX)
+        return -1;
     fret = (ossl_ssize_t)outbuf.pos;
     if (fret < 0)
         return -1;
