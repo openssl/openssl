@@ -7,6 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <libgen.h>
+
+#define __USE_GNU
+#define _GNU_SOURCE
+#include <link.h>
+#include <dlfcn.h>
+
 #include <openssl/store.h>
 #include "internal/cryptlib.h"
 #include "crypto/x509.h"
@@ -109,6 +121,18 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
                             long argl, char **retp, OSSL_LIB_CTX *libctx,
                             const char *propq)
 {
+    char *f = NULL;
+    char *data = NULL;
+    char *ssl3 = "ssl-3";
+    char *certs = "certs";
+    char *sep = "/";
+    size_t size = 0;
+    struct stat s;
+    Dl_info info;
+
+    memset(&s, 0, sizeof(struct stat));
+    memset(&info, 0, sizeof(Dl_info));
+
     switch (cmd) {
     case X509_L_ADD_STORE:
         /* First try the newer default cert URI envvar. */
@@ -127,13 +151,35 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
         if (!*argp)
             return 1;
 
-        {
-            STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
-            char *data = OPENSSL_strdup(argp);
+        if (argp) {
+            data = OPENSSL_strdup(argp);
 
             if (data == NULL) {
                 return 0;
             }
+
+            /* fall back to relative path to shared lib with our symbol */
+            if (stat(data, &s) == -1) {
+                if (dladdr(OpenSSL_version, &info)) {
+                    f = OPENSSL_strdup(info.dli_fname);
+                    if (f == NULL) {
+                        return 0;
+                    }
+                    char *d = dirname(f);
+                    size = strlen(d) + strlen(sep) + strlen(ssl3) + strlen(sep) + strlen(certs) + 1;
+                    data = OPENSSL_realloc(data, size);
+                    if (data == NULL) {
+                        OPENSSL_free(f);
+                        return 0;
+                    }
+                    BIO_snprintf(data, size, "%s%s%s%s%s", d, sep, ssl3, sep, certs);
+                    stat(data, &s);
+                    OPENSSL_free(f);
+                }
+            }
+
+            STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
+
             if (uris == NULL) {
                 uris = sk_OPENSSL_STRING_new_null();
                 X509_LOOKUP_set_method_data(ctx, uris);
