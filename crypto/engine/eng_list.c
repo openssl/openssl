@@ -8,6 +8,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <libgen.h>
+
+#define __USE_GNU
+#define _GNU_SOURCE
+#include <link.h>
+#include <dlfcn.h>
+
 /* We need to use some engine deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
@@ -371,6 +383,16 @@ ENGINE *ENGINE_by_id(const char *id)
 {
     ENGINE *iterator;
     char *load_dir = NULL;
+    char *f = NULL;
+    size_t size = 0;
+    char *dir = NULL;
+    static char *engines3 = "engines-3";
+    struct stat s;
+    Dl_info info;
+
+    memset(&s, 0, sizeof(struct stat));
+    memset(&info, 0, sizeof(Dl_info));
+
     if (id == NULL) {
         ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
@@ -415,6 +437,30 @@ ENGINE *ENGINE_by_id(const char *id)
     if (strcmp(id, "dynamic")) {
         if ((load_dir = ossl_safe_getenv("OPENSSL_ENGINES")) == NULL)
             load_dir = ENGINESDIR;
+
+        load_dir = OPENSSL_strdup(load_dir);
+
+        if (stat(load_dir, &s) == -1) {
+            /* try out relative path to shared lib with our symbol */
+            if (dladdr(OpenSSL_version, &info)) {
+                f = OPENSSL_strdup(info.dli_fname);
+                if (f == NULL) {
+                    ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
+                    return NULL;
+                }
+                dir = dirname(f);
+                size = strlen(dir) + strlen("/") + strlen(engines3) + 1;
+                load_dir = OPENSSL_realloc(load_dir, size);
+                if (load_dir == NULL) {
+                    ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
+                    OPENSSL_free(f);
+                    return NULL;
+                }
+                BIO_snprintf(load_dir, size, "%s%s%s", dir, "/", engines3);
+                OPENSSL_free(f);
+            }
+        }
+
         iterator = ENGINE_by_id("dynamic");
         if (!iterator || !ENGINE_ctrl_cmd_string(iterator, "ID", id, 0) ||
             !ENGINE_ctrl_cmd_string(iterator, "DIR_LOAD", "2", 0) ||
