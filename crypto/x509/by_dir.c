@@ -23,6 +23,16 @@
 #include <errno.h>
 #include <sys/types.h>
 
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <libgen.h>
+
+#define __USE_GNU
+#define _GNU_SOURCE
+#include <link.h>
+#include <dlfcn.h>
+
 #ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 #endif
@@ -84,20 +94,59 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 {
     int ret = 0;
     BY_DIR *ld = (BY_DIR *)ctx->method_data;
+    char *f = NULL;
+    char *d = NULL;
+    size_t size = 0;
+    char *dir = NULL;
+    char *ssl3 = "ssl-3";
+    char *certs = "certs";
+    char *sep = "/";
+    struct stat s;
+    Dl_info info;
+
+    memset(&s, 0, sizeof(struct stat));
+    memset(&info, 0, sizeof(Dl_info));
 
     switch (cmd) {
     case X509_L_ADD_DIR:
         if (argl == X509_FILETYPE_DEFAULT) {
             /* If SSL_CERT_PATH is provided and non-empty, use that. */
-            const char *dir = ossl_safe_getenv(X509_get_default_cert_path_env());
+            dir = ossl_safe_getenv(X509_get_default_cert_path_env());
 
             /* Fallback to SSL_CERT_DIR. */
             if (dir == NULL)
                 dir = ossl_safe_getenv(X509_get_default_cert_dir_env());
 
             /* Fallback to built-in default. */
-            if (dir == NULL)
-                dir = X509_get_default_cert_dir();
+            if (dir == NULL) {
+                dir = OPENSSL_strdup(X509_get_default_cert_dir());
+
+                if (dir == NULL)
+                    goto error_out;
+
+                /* fall back to relative path to shared lib with our symbol */
+                if (stat(dir, &s) == -1) {
+                    if (dladdr(OpenSSL_version, &info)) {
+                        f = OPENSSL_strdup(info.dli_fname);
+                        if (f == NULL) {
+                            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+                            OPENSSL_free(dir);
+                            goto error_out;
+                        }
+                        d = dirname(f);
+                        size = strlen(d) + strlen(sep) + strlen(ssl3) + strlen(sep) + strlen(certs) + 1;
+                        dir = OPENSSL_realloc(dir, size);
+                        if (dir == NULL) {
+                            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+                            OPENSSL_free(f);
+                            OPENSSL_free(dir);
+                            goto error_out;
+                        }
+                    BIO_snprintf(dir, size, "%s%s%s%s%s", d, sep, ssl3, sep, certs);
+                    OPENSSL_free(f);
+                    }
+                }
+            }
 
             ret = add_cert_dir(ld, dir, X509_FILETYPE_PEM);
             if (!ret) {
@@ -107,6 +156,7 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
             ret = add_cert_dir(ld, argp, (int)argl);
         break;
     }
+error_out:
     return ret;
 }
 
