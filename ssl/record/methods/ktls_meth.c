@@ -18,49 +18,6 @@
 #if defined(__FreeBSD__)
 # include "crypto/cryptodev.h"
 
-/*
- * TODO(RECLAYER): This is essentially a copy of ktls_int_check_supported_cipher
- * but using an SSL object instead of an OSSL_RECORD_LAYER object. Once
- * the write side has been moved to the record layer this can be deleted
- */
-int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
-                                const EVP_MD *md, size_t taglen)
-{
-
-    switch (s->version) {
-    case TLS1_VERSION:
-    case TLS1_1_VERSION:
-    case TLS1_2_VERSION:
-    case TLS1_3_VERSION:
-        break;
-    default:
-        return 0;
-    }
-
-    if (EVP_CIPHER_is_a(c, "AES-128-GCM")
-            || EVP_CIPHER_is_a(c, "AES-256-GCM")
-# ifdef OPENSSL_KTLS_CHACHA20_POLY1305
-            || EVP_CIPHER_is_a(c, "CHACHA20-POLY1305")
-# endif
-       )
-        return 1;
-
-    if (!EVP_CIPHER_is_a(c, "AES-128-CBC")
-            && !EVP_CIPHER_is_a(c, "AES-256-CBC"))
-        return 0;
-
-    if (s->ext.use_etm)
-        return 0;
-
-    if (md == NULL
-            || EVP_MD_is_a(md, "SHA1")
-            || EVP_MD_is_a(md, "SHA2-256")
-            || EVP_MD_is_a(md, "SHA2-384"))
-        return 1;
-
-    return 0;
-}
-
 /*-
  * Check if a given cipher is supported by the KTLS interface.
  * The kernel might still fail the setsockopt() if no suitable
@@ -76,7 +33,9 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
     case TLS1_VERSION:
     case TLS1_1_VERSION:
     case TLS1_2_VERSION:
+#ifdef OPENSSL_KTLS_TLS13
     case TLS1_3_VERSION:
+#endif
         break;
     default:
         return 0;
@@ -109,6 +68,7 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
 }
 
 /* Function to configure kernel TLS structure */
+static
 int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c,
                           EVP_MD *md, void *rl_sequence,
                           ktls_crypto_info_t *crypto_info, int is_tx,
@@ -163,51 +123,6 @@ int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c
 #endif                         /* __FreeBSD__ */
 
 #if defined(OPENSSL_SYS_LINUX)
-
-/*
- * TODO(RECLAYER): This is essentially a copy of ktls_int_check_supported_cipher
- * but using an SSL object instead of an OSSL_RECORD_LAYER object. Once
- * the write side has been moved to the record layer this can be deleted
- */
-int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
-                                const EVP_MD *md, size_t taglen)
-{
-    switch (s->version) {
-    case TLS1_2_VERSION:
-    case TLS1_3_VERSION:
-        break;
-    default:
-        return 0;
-    }
-
-    /*
-     * Check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128
-     * or Chacha20-Poly1305
-     */
-# ifdef OPENSSL_KTLS_AES_CCM_128
-    if (EVP_CIPHER_is_a(c, "AES-128-CCM")) {
-        if (s->version == TLS_1_3_VERSION /* broken on 5.x kernels */
-            || taglen != EVP_CCM_TLS_TAG_LEN)
-            return 0;
-        return 1;
-    } else
-# endif
-    if (0
-# ifdef OPENSSL_KTLS_AES_GCM_128
-        || EVP_CIPHER_is_a(c, "AES-128-GCM")
-# endif
-# ifdef OPENSSL_KTLS_AES_GCM_256
-        || EVP_CIPHER_is_a(c, "AES-256-GCM")
-# endif
-# ifdef OPENSSL_KTLS_CHACHA20_POLY1305
-        || EVP_CIPHER_is_a(c, "ChaCha20-Poly1305")
-# endif
-        ) {
-        return 1;
-    }
-    return 0;
-}
-
 /* Function to check supported ciphers in Linux */
 static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
                                            const EVP_CIPHER *c,
@@ -216,7 +131,9 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
 {
     switch (rl->version) {
     case TLS1_2_VERSION:
+#ifdef OPENSSL_KTLS_TLS13
     case TLS1_3_VERSION:
+#endif
         break;
     default:
         return 0;
@@ -251,6 +168,7 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
 }
 
 /* Function to configure kernel TLS structure */
+static
 int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c,
                           const EVP_MD *md, void *rl_sequence,
                           ktls_crypto_info_t *crypto_info, int is_tx,
@@ -517,13 +435,6 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         return ret;
 
     (*retrl)->funcs = &ossl_ktls_funcs;
-
-    /*
-     * TODO(RECLAYER): We're not ready to set the crypto state for the write
-     * record layer in TLSv1.3. Fix this once we are
-     */
-    if (direction == OSSL_RECORD_DIRECTION_WRITE && vers == TLS1_3_VERSION)
-        return 1;
 
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, key, keylen, iv,
                                             ivlen, mackey, mackeylen, ciph,
