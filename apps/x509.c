@@ -70,7 +70,7 @@ const OPTIONS x509_options[] = {
     {"copy_extensions", OPT_COPY_EXTENSIONS, 's',
      "copy extensions when converting from CSR to x509 or vice versa"},
     {"inform", OPT_INFORM, 'f',
-     "CSR input file format to try first (DER or PEM) - default PEM"},
+     "CSR input format to use (PEM or DER; by default try PEM first)"},
     {"vfyopt", OPT_VFYOPT, 's', "CSR verification parameter in n:v form"},
     {"key", OPT_KEY, 's',
      "Key for signing, and to include unless using -force_pubkey"},

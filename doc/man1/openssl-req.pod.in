@@ -72,7 +72,7 @@ Print out a usage message.
 
 =item B<-inform> B<DER>|B<PEM>
 
-The CSR input file format to try first; PEM by default.
+The CSR input file format to use; by default PEM is tried first.
 See L<openssl-format-options(1)> for details.
 
 =item B<-outform> B<DER>|B<PEM>

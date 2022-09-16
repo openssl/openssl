@@ -103,7 +103,8 @@ const OPTIONS req_options[] = {
      "Specify engine to be used for key generation operations"},
 #endif
     {"in", OPT_IN, '<', "X.509 request input file (default stdin)"},
-    {"inform", OPT_INFORM, 'F', "CSR input format to try first - DER or PEM"},
+    {"inform", OPT_INFORM, 'F',
+     "CSR input format to use (PEM or DER; by default try PEM first)"},
     {"verify", OPT_VERIFY, '-', "Verify self-signature on the request"},
 
     OPT_SECTION("Certificate"),

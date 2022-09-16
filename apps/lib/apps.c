@@ -529,22 +529,25 @@ X509_REQ *load_csr(const char *file, int format, const char *desc)
 X509_REQ *load_csr_autofmt(const char *infile, int format, const char *desc)
 {
     X509_REQ *csr;
-    BIO *bio_bak = bio_err;
 
-    if (format == FORMAT_UNDEF)
-        format = FORMAT_PEM;
-    bio_err = NULL; /* do not show errors on more than one try */
-    csr = load_csr(infile, format, NULL /* desc */);
-    bio_err = bio_bak;
-    if (csr == NULL) {
-        ERR_clear_error();
-        format = format == FORMAT_PEM ? FORMAT_ASN1 : FORMAT_PEM;
-        csr = load_csr(infile, format, NULL /* desc */);
+    if (format != FORMAT_UNDEF) {
+        csr = load_csr(infile, format, desc);
+    } else { /* try PEM, then DER */
+        BIO *bio_bak = bio_err;
+
+        bio_err = NULL; /* do not show errors on more than one try */
+        csr = load_csr(infile, FORMAT_PEM, NULL /* desc */);
+        bio_err = bio_bak;
+        if (csr == NULL) {
+            ERR_clear_error();
+            csr = load_csr(infile, FORMAT_ASN1, NULL /* desc */);
+        }
+        if (csr == NULL) {
+            BIO_printf(bio_err, "error: unable to load %s from file '%s'\n",
+                       desc, infile);
+        }
     }
-    if (csr == NULL) {
-        BIO_printf(bio_err, "error: unable to load %s from file '%s'\n", desc,
-                   infile);
-    } else {
+    if (csr != NULL) {
         EVP_PKEY *pkey = X509_REQ_get0_pubkey(csr);
         int ret = do_X509_REQ_verify(csr, pkey, NULL /* vfyopts */);
 
@@ -554,8 +557,7 @@ X509_REQ *load_csr_autofmt(const char *infile, int format, const char *desc)
             BIO_puts(bio_err, "Warning: CSR self-signature does not match the contents");
         return csr;
     }
-    ERR_print_errors(bio_err);
-    return NULL;
+    return csr;
 }
 
 void cleanse(char *str)

@@ -169,7 +169,7 @@ const OPTIONS ca_options[] = {
     {"outdir", OPT_OUTDIR, '/', "Where to put output cert"},
     {"in", OPT_IN, '<', "The input cert request(s)"},
     {"inform", OPT_INFORM, 'F',
-     "CSR input format to try first (DER or PEM); default PEM"},
+     "CSR input format to use (PEM or DER; by default try PEM first)"},
     {"infiles", OPT_INFILES, '-', "The last argument, requests to process"},
     {"out", OPT_OUT, '>', "Where to put the output file(s)"},
     {"dateopt", OPT_DATEOPT, 's', "Datetime format used for printing. (rfc_822/iso_8601). Default is rfc_822."},
