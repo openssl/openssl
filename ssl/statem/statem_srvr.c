@@ -374,15 +374,13 @@ static int send_server_key_exchange(SSL_CONNECTION *s)
 }
 
 /*
- * Should we send a CompressedCertificate message?
+ * Used to determine if we shoud send a CompressedCertificate message
  *
- * Valid return values are:
- *   1: Yes
- *   0: No
+ * Returns the algorithm to use, TLSEXT_comp_cert_none means no compression
  */
 static int get_compressed_certificate_alg(SSL_CONNECTION *sc)
 {
-#ifndef OPENSSL_NO_COMP_ALG    
+#ifndef OPENSSL_NO_COMP_ALG
     int *alg = sc->ext.compress_certificate_from_peer;
 
     if (sc->s3.tmp.cert == NULL)
@@ -3749,6 +3747,10 @@ CON_FUNC_RETURN tls_construct_server_compressed_certificate(SSL_CONNECTION *sc, 
     int alg = get_compressed_certificate_alg(sc);
     OSSL_COMP_CERT *cc = sc->s3.tmp.cert->comp_cert[alg];
 
+    if (!ossl_assert(cc != NULL)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
     /*
      * Server can't compress on-demand
      * Use pre-compressed certificate
@@ -3759,7 +3761,7 @@ CON_FUNC_RETURN tls_construct_server_compressed_certificate(SSL_CONNECTION *sc, 
             || !WPACKET_memcpy(pkt, cc->data, cc->len)
             || !WPACKET_close(pkt))
         return 0;
-        
+
     sc->s3.tmp.cert->cert_comp_used++;
     return 1;
 }

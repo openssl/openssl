@@ -48,11 +48,11 @@ The following compression algorithms (B<alg> arguments) may be used:
 
 =over 4
 
-=item TLSEXT_comp_cert_brotli
+=item * TLSEXT_comp_cert_brotli
 
-=item TLSEXT_comp_cert_zlib
+=item * TLSEXT_comp_cert_zlib
 
-=item TLSEXT_comp_cert_zstd
+=item * TLSEXT_comp_cert_zstd
 
 =back
 
@@ -60,12 +60,12 @@ The above is also the default preference order. If a preference order is not
 specified, then the default preference order is sent to the peer and the
 received peer's preference order will be used when compressing a certificate.
 Otherwise, the configured preference order is sent to the peer and is used
-when compressing the certificate.
+to filter the peer's preference order.
 
 SSL_CTX_compress_certs() and SSL_compress_certs() are used to pre-compress all
 the configured certificates on an SSL_CTX (or SSL) with algorithm B<alg>. If
-B<alg> is 0, then the certificates are compressed with every configured
-algorithm in the library. Calling these functions on a client SSL_CTX/SSL will
+B<alg> is 0, then the certificates are compressed with the algorithms specified
+in the preference list. Calling these functions on a client SSL_CTX/SSL will
 result in an error, as only server certificates may be pre-compressed.
 
 SSL_CTX_get1_compressed_cert() and SSL_get1_compressed_cert() are used to 
@@ -80,6 +80,14 @@ most recently set certificate. This pre-compressed certificate can only be used
 by a server.
 
 =head1 NOTES
+
+Each side of the connection sends their compression algorithm preference list
+to their peer indicating compressed certificate support. The received preference
+list is filtered by the configured preference list (i.e. the intersection is
+saved). As the default list includes all the enabled algorithms, not specifying
+a preference will allow any enabled algorithm by the peer. The filtered peer's
+preference order is used to determine what algorithm to use when sending a
+compressed certificate.
 
 Only server certificates may be pre-compressed. Calling any of these functions
 (except SSL_CTX_set1_cert_comp_preferences()/SSL_set1_cert_comp_preferences())
@@ -97,6 +105,19 @@ free B<*data> via OPENSSL_free().
 
 The compressed certificate data set by SSL_CTX_set1_compressed_cert() and
 SSL_set1_compressed_cert() is copied into the SSL_CTX/SSL.
+
+SSL_CTX_compress_certs() and SSL_compress_certs() return an error under the
+following conditions:
+
+=over 4
+
+=item * If no certificates have been configured.
+
+=item * If the specified algorithm B<alg> is not enabled.
+
+=item * If B<alg> is 0 and no compression algorithms are enabled.
+
+=back
 
 Sending compressed certificates may be disabled on a connection via the
 SSL_OP_NO_TX_CERTIFICATE_COMPRESSION option. Receiving compressed certificates
@@ -124,7 +145,7 @@ L<SSL_CTX_use_certificate(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 3.1.0.
+These functions were added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 
