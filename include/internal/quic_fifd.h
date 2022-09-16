@@ -21,7 +21,7 @@
  * QUIC Frame-in-Flight Dispatcher (FIFD)
  * ======================================
  */
-typedef struct quic_fifd_st {
+struct quic_fifd_st {
     /* Internal data; use the ossl_quic_fifd functions. */
     QUIC_CFQ       *cfq;
     OSSL_ACKM      *ackm;
@@ -33,7 +33,7 @@ typedef struct quic_fifd_st {
                                  uint64_t stream_id,
                                  void *arg);
     void           *regen_frame_arg;
-} QUIC_FIFD;
+};
 
 int ossl_quic_fifd_init(QUIC_FIFD *fifd,
                         QUIC_CFQ *cfq,
