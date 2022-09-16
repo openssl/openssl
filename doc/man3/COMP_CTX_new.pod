@@ -161,7 +161,7 @@ L<BIO_new(3)>, L<SSL_CTX_set_options(3)>, L<SSL_set_options(3)>
 
 =head1 HISTORY
 
-Brotli and Zstandard functions were added in OpenSSL 3.1.0.
+Brotli and Zstandard functions were added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 
