@@ -2852,18 +2852,6 @@ __owur int ssl_log_secret(SSL_CONNECTION *s, const char *label,
 #define EARLY_EXPORTER_SECRET_LABEL "EARLY_EXPORTER_SECRET"
 #define EXPORTER_SECRET_LABEL "EXPORTER_SECRET"
 
-#  ifndef OPENSSL_NO_KTLS
-/* ktls.c */
-int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
-                                const EVP_MD *md, size_t taglen);
-int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version,
-                          const EVP_CIPHER *c, const EVP_MD *md,
-                          void *rl_sequence, ktls_crypto_info_t *crypto_info,
-                          int is_tx, unsigned char *iv, size_t ivlen,
-                          unsigned char *key, size_t keylen,
-                          unsigned char *mac_key, size_t mac_secret_size);
-#  endif
-
 __owur int srp_generate_server_master_secret(SSL_CONNECTION *s);
 __owur int srp_generate_client_master_secret(SSL_CONNECTION *s);
 __owur int srp_verify_server_param(SSL_CONNECTION *s);

@@ -25,6 +25,7 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 {
     EVP_CIPHER_CTX *ciph_ctx;
     int mode;
+    int enc = (rl->direction == OSSL_RECORD_DIRECTION_WRITE) ? 1 : 0;
 
     if (ivlen > sizeof(rl->iv)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -42,13 +43,13 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 
     mode = EVP_CIPHER_get_mode(ciph);
 
-    if (EVP_DecryptInit_ex(ciph_ctx, ciph, NULL, NULL, NULL) <= 0
+    if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL, enc) <= 0
         || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen,
                                NULL) <= 0
         || (mode == EVP_CIPH_CCM_MODE
             && EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG, taglen,
                                    NULL) <= 0)
-        || EVP_DecryptInit_ex(ciph_ctx, NULL, NULL, key, NULL) <= 0) {
+        || EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, enc) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
     }

@@ -461,11 +461,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     int level;
     int direction = (which & SSL3_CC_READ) != 0 ? OSSL_RECORD_DIRECTION_READ
                                                 : OSSL_RECORD_DIRECTION_WRITE;
-#if !defined(OPENSSL_NO_KTLS) && defined(OPENSSL_KTLS_TLS13)
-    ktls_crypto_info_t crypto_info;
-    void *rl_sequence;
-    BIO *bio;
-#endif
 
     if (which & SSL3_CC_READ) {
         iv = s->read_iv;
@@ -719,59 +714,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
-    if ((which & SSL3_CC_READ) != 0) {
-        /* TODO(RECLAYER): Remove me when write rlayer done */
-        goto skip_ktls;
-    }
-
-#ifndef OPENSSL_NO_KTLS
-# if defined(OPENSSL_KTLS_TLS13)
-    if (!(which & SSL3_CC_APPLICATION)
-            || (s->options & SSL_OP_ENABLE_KTLS) == 0)
-        goto skip_ktls;
-
-    /* ktls supports only the maximum fragment size */
-    if (ssl_get_max_send_fragment(s) != SSL3_RT_MAX_PLAIN_LENGTH)
-        goto skip_ktls;
-
-    /* ktls does not support record padding */
-    if (s->rlayer.record_padding_cb != NULL || s->rlayer.block_padding > 0)
-        goto skip_ktls;
-
-    /* check that cipher is supported */
-    if (!ktls_check_supported_cipher(s, cipher, NULL, taglen))
-        goto skip_ktls;
-
-    if (which & SSL3_CC_WRITE)
-        bio = s->wbio;
-    else
-        bio = s->rbio;
-
-    if (!ossl_assert(bio != NULL)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /* All future data will get encrypted by ktls. Flush the BIO or skip ktls */
-    if (which & SSL3_CC_WRITE) {
-        if (BIO_flush(bio) <= 0)
-            goto skip_ktls;
-    }
-
-    /* configure kernel crypto structure */
-    /*
-     * If we get here we are only doing the write side. The read side goes
-     * through the new record layer code.
-     */
-    rl_sequence = RECORD_LAYER_get_write_sequence(&s->rlayer);
-
-    if (!ktls_configure_crypto(sctx->libctx, s->version, cipher, NULL,
-                               rl_sequence, &crypto_info, which & SSL3_CC_WRITE,
-                               iv, ivlen, key, keylen, NULL, 0))
-        goto skip_ktls;
-# endif
-#endif
-skip_ktls:
     ret = 1;
  err:
     if ((which & SSL3_CC_EARLY) != 0) {

@@ -1073,14 +1073,8 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl)
         goto end;
 
     cbuf[0] = count++;
-    /* TODO(RECLAYER): Remove me once TLSv1.3 write side converted */
-    if (SSL_CONNECTION_IS_TLS13(serversc)) {
-        memcpy(crec_wseq_before, &clientsc->rlayer.write_sequence, SEQ_NUM_SIZE);
-        memcpy(srec_wseq_before, &serversc->rlayer.write_sequence, SEQ_NUM_SIZE);
-    } else {
-        memcpy(crec_wseq_before, &clientsc->rlayer.wrl->sequence, SEQ_NUM_SIZE);
-        memcpy(srec_wseq_before, &serversc->rlayer.wrl->sequence, SEQ_NUM_SIZE);
-    }
+    memcpy(crec_wseq_before, &clientsc->rlayer.wrl->sequence, SEQ_NUM_SIZE);
+    memcpy(srec_wseq_before, &serversc->rlayer.wrl->sequence, SEQ_NUM_SIZE);
     memcpy(crec_rseq_before, &clientsc->rlayer.rrl->sequence, SEQ_NUM_SIZE);
     memcpy(srec_rseq_before, &serversc->rlayer.rrl->sequence, SEQ_NUM_SIZE);
 
@@ -1102,14 +1096,8 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl)
         }
     }
 
-    /* TODO(RECLAYER): Remove me once TLSv1.3 write side converted */
-    if (SSL_CONNECTION_IS_TLS13(serversc)) {
-        memcpy(crec_wseq_after, &clientsc->rlayer.write_sequence, SEQ_NUM_SIZE);
-        memcpy(srec_wseq_after, &serversc->rlayer.write_sequence, SEQ_NUM_SIZE);
-    } else {
-        memcpy(crec_wseq_after, &clientsc->rlayer.wrl->sequence, SEQ_NUM_SIZE);
-        memcpy(srec_wseq_after, &serversc->rlayer.wrl->sequence, SEQ_NUM_SIZE);
-    }
+    memcpy(crec_wseq_after, &clientsc->rlayer.wrl->sequence, SEQ_NUM_SIZE);
+    memcpy(srec_wseq_after, &serversc->rlayer.wrl->sequence, SEQ_NUM_SIZE);
     memcpy(crec_rseq_after, &clientsc->rlayer.rrl->sequence, SEQ_NUM_SIZE);
     memcpy(srec_rseq_after, &serversc->rlayer.rrl->sequence, SEQ_NUM_SIZE);
 

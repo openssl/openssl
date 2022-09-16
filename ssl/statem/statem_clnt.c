@@ -682,6 +682,22 @@ WORK_STATE ossl_statem_client_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
                 /* SSLfatal() already called */
                 return WORK_ERROR;
             }
+        } else if (s->ext.early_data == SSL_EARLY_DATA_REJECTED) {
+            /*
+             * This must be a second ClientHello after an HRR following an
+             * earlier rejected attempt to send early data. Since we were
+             * previously encrypting the early data we now need to reset the
+             * write record layer in order to write in plaintext again.
+             */
+            if (!ssl_set_new_record_layer(s,
+                                          TLS_ANY_VERSION,
+                                          OSSL_RECORD_DIRECTION_WRITE,
+                                          OSSL_RECORD_PROTECTION_LEVEL_NONE,
+                                          NULL, 0, NULL, 0, NULL,  0, NULL, 0,
+                                          NID_undef, NULL, NULL)) {
+                /* SSLfatal already called */
+                return WORK_ERROR;
+            }
         }
         break;
 
@@ -765,15 +781,6 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             /* Treat the next message as the first packet */
             s->first_packet = 1;
         }
-        break;
-
-    case TLS_ST_CW_END_OF_EARLY_DATA:
-        /*
-         * We set the enc_write_ctx back to NULL because we may end up writing
-         * in cleartext again if we get a HelloRetryRequest from the server.
-         */
-        EVP_CIPHER_CTX_free(s->enc_write_ctx);
-        s->enc_write_ctx = NULL;
         break;
 
     case TLS_ST_CW_KEY_EXCH:

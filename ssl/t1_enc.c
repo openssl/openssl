@@ -165,11 +165,6 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     size_t n, i, j, k, cl;
     int iivlen;
     int reuse_dd = 0;
-#ifndef OPENSSL_NO_KTLS
-    ktls_crypto_info_t crypto_info;
-    void *rl_sequence;
-    BIO *bio;
-#endif
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     /*
      * Taglen is only relevant for CCM ciphersuites. Other ciphersuites
@@ -253,7 +248,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         }
 
         /* TODO(RECLAYER): Temporary - remove me when DTLS write rlayer done*/
-        goto skip_ktls;
+        goto done;
     } else {
         s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
         if (s->ext.use_etm)
@@ -283,7 +278,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
 
         /* TODO(RECLAYER): Temporary - remove me when DTLS write rlayer done*/
         if (!SSL_CONNECTION_IS_DTLS(s))
-            goto skip_ktls;
+            goto done;
 
         if (s->enc_write_ctx != NULL && !SSL_CONNECTION_IS_DTLS(s)) {
             reuse_dd = 1;
@@ -394,57 +389,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
-#ifndef OPENSSL_NO_KTLS
-    if (s->compress || (s->options & SSL_OP_ENABLE_KTLS) == 0)
-        goto skip_ktls;
-
-    /* ktls supports only the maximum fragment size */
-    if (ssl_get_max_send_fragment(s) != SSL3_RT_MAX_PLAIN_LENGTH)
-        goto skip_ktls;
-
-    /* check that cipher is supported */
-    if (!ktls_check_supported_cipher(s, c, m, taglen))
-        goto skip_ktls;
-
-    if (which & SSL3_CC_WRITE)
-        bio = s->wbio;
-    else
-        bio = s->rbio;
-
-    if (!ossl_assert(bio != NULL)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /* All future data will get encrypted by ktls. Flush the BIO or skip ktls */
-    if (which & SSL3_CC_WRITE) {
-       if (BIO_flush(bio) <= 0)
-           goto skip_ktls;
-    }
-
-    /* ktls doesn't support renegotiation */
-    if ((BIO_get_ktls_send(s->wbio) && (which & SSL3_CC_WRITE)) ||
-        (BIO_get_ktls_recv(s->rbio) && (which & SSL3_CC_READ))) {
-        SSLfatal(s, SSL_AD_NO_RENEGOTIATION, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /*
-     * If we get here we are only doing the write side. The read side goes
-     * through the new record layer code.
-     */
-    rl_sequence = RECORD_LAYER_get_write_sequence(&s->rlayer);
-
-    if (!ktls_configure_crypto(sctx->libctx, s->version, c, m, rl_sequence,
-                               &crypto_info, which & SSL3_CC_WRITE, iv,
-                               (size_t)k, key, cl, mac_secret, mac_secret_size))
-        goto skip_ktls;
-
-    /* ktls works with user provided buffers directly */
-    if (BIO_set_ktls(bio, &crypto_info, which & SSL3_CC_WRITE))
-        SSL_set_options(SSL_CONNECTION_GET_SSL(s), SSL_OP_NO_RENEGOTIATION);
-#endif                          /* OPENSSL_NO_KTLS */
- skip_ktls:
+ done:
     s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
 
     OSSL_TRACE_BEGIN(TLS) {

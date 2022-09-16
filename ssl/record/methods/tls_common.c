@@ -1465,11 +1465,8 @@ size_t tls_get_max_record_len(OSSL_RECORD_LAYER *rl)
 size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, int type, size_t len,
                                    size_t maxfrag, size_t *preffrag)
 {
-    /* TODO(RECLAYER): Remove me */
-    SSL_CONNECTION *s = rl->cbarg;
-
     /*
-     * TODO(RECLYAER): There is no test for the pipelining code. We should add
+     * TODO(RECLAYER): There is no test for the pipelining code. We should add
      *                 one.
      */
     /*
@@ -1477,8 +1474,8 @@ size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, int type, size_t len,
      * it, then return the preferred number of pipelines.
      */
     if (rl->max_pipelines > 0
-            && s->enc_write_ctx != NULL
-            && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx))
+            && rl->enc_ctx!= NULL
+            && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(rl->enc_ctx))
                 & EVP_CIPH_FLAG_PIPELINE) != 0
             && RLAYER_USE_EXPLICIT_IV(rl)) {
         size_t pipes;
@@ -1521,11 +1518,10 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     OSSL_RECORD_TEMPLATE *thistempl;
 
     /*
-     * TODO(RECLAYER): Remove this once TLSv1.3/DTLS crypto has
+     * TODO(RECLAYER): Remove this once DTLS crypto has
      *                 been moved to the new write record layer.
      */
-    if (rl->version == TLS1_3_VERSION
-            || rl->isdtls) {
+    if (rl->isdtls) {
         SSL_SESSION *sess = s->session;
 
         if ((sess == NULL)
@@ -1644,7 +1640,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
          * record type
          */
         if (rl->version == TLS1_3_VERSION
-                && s->enc_write_ctx != NULL
+                && rl->enc_ctx != NULL
                 && (s->statem.enc_write_state != ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
                     || thistempl->type != SSL3_RT_ALERT))
             rectype = SSL3_RT_APPLICATION_DATA;
@@ -1707,7 +1703,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
 
         if (rl->version == TLS1_3_VERSION
                 && !using_ktls
-                && s->enc_write_ctx != NULL
+                && rl->enc_ctx != NULL
                 && (s->statem.enc_write_state != ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
                     || thistempl->type != SSL3_RT_ALERT)) {
             size_t rlen, max_send_fragment;
@@ -1766,11 +1762,10 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
             unsigned char *mac;
 
             /*
-             * TODO(RECLAYER): Remove this once TLSv1.3/DTLS crypto has
+             * TODO(RECLAYER): Remove this once DTLS crypto has
              *                 been moved to the new write record layer.
              */
-            if (rl->version == TLS1_3_VERSION
-                    || rl->isdtls) {
+            if (rl->isdtls) {
                 if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
                         || !ssl->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
                     RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1816,8 +1811,9 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
          * We haven't actually negotiated the version yet, but we're trying to
          * send early data - so we need to use the tls13enc function.
          */
-        if (tls13_enc(s, wr, numtempl, 1, NULL, mac_size) < 1) {
-            if (!ossl_statem_in_error(s))
+        /* TODO(RECLAYER): Is this branch necessary now? */
+        if (rl->funcs->cipher(rl, wr, numtempl, 1, NULL, mac_size) < 1) {
+            if (!ossl_statem_in_error(s)) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -1831,11 +1827,10 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                 }
             }
             /*
-             * TODO(RECLAYER): Remove this once TLSv1.3/DTLS crypto has
+             * TODO(RECLAYER): Remove this once DTLS crypto has
              *                 been moved to the new write record layer.
              */
-            if (rl->version == TLS1_3_VERSION
-                    || rl->isdtls) {
+            if (rl->isdtls) {
                 if (ssl->method->ssl3_enc->enc(s, wr + prefix, numtempl, 1, NULL,
                                                mac_size) < 1) {
                     if (!ossl_statem_in_error(s))
@@ -1879,11 +1874,10 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
             unsigned char *mac;
 
             /*
-             * TODO(RECLAYER): Remove this once TLSv1.3/DTLS crypto has
+             * TODO(RECLAYER): Remove this once DTLS crypto has
              *                 been moved to the new write record layer.
              */
-            if (rl->version == TLS1_3_VERSION
-                    || rl->isdtls) {
+            if (rl->isdtls) {
                 if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
                         || !ssl->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
                     RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
