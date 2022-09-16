@@ -909,7 +909,6 @@ static int ssl_add_cert_to_wpacket(SSL_CONNECTION *s, WPACKET *pkt,
                                    X509 *x, int chain, int for_comp)
 {
     int len;
-    int error = -1;
     unsigned char *outbytes;
     int context = SSL_EXT_TLS1_3_CERTIFICATE;
 
@@ -918,33 +917,30 @@ static int ssl_add_cert_to_wpacket(SSL_CONNECTION *s, WPACKET *pkt,
 
     len = i2d_X509(x, NULL);
     if (len < 0) {
-        error = ERR_R_BUF_LIB;
-        goto err;
+        if (!for_comp)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_BUF_LIB);
+        return 0;
     }
     if (!WPACKET_sub_allocate_bytes_u24(pkt, len, &outbytes)
             || i2d_X509(x, &outbytes) != len) {
-        error = ERR_R_INTERNAL_ERROR;
-        goto err;
+        if (!for_comp)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
 
     if ((SSL_CONNECTION_IS_TLS13(s) || for_comp)
             && !tls_construct_extensions(s, pkt, context, x, chain)) {
         /* SSLfatal() already called */
-        goto err;
+        return 0;
     }
 
     return 1;
- err:
-    if (!for_comp && error != -1)
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, error);
-    return 0;
 }
 
 /* Add certificate chain to provided WPACKET */
 static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, int for_comp)
 {
     int i, chain_count;
-    int error = -1;
     X509 *x;
     STACK_OF(X509) *extra_certs;
     STACK_OF(X509) *chain = NULL;
@@ -976,13 +972,15 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, i
                                                        sctx->propq);
 
         if (xs_ctx == NULL) {
-            error = ERR_R_MALLOC_FAILURE;
-            goto err;
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            return 0;
         }
         if (!X509_STORE_CTX_init(xs_ctx, chain_store, x, NULL)) {
             X509_STORE_CTX_free(xs_ctx);
-            error = ERR_R_X509_LIB;
-            goto err;
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_X509_LIB);
+            return 0;
         }
         /*
          * It is valid for the chain not to be complete (because normally we
@@ -1003,8 +1001,9 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, i
             ERR_raise(ERR_LIB_SSL, SSL_R_CA_MD_TOO_WEAK);
 #endif
             X509_STORE_CTX_free(xs_ctx);
-            error = i;
-            goto err;
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, i);
+            return 0;
         }
         chain_count = sk_X509_num(chain);
         for (i = 0; i < chain_count; i++) {
@@ -1013,34 +1012,30 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, i
             if (!ssl_add_cert_to_wpacket(s, pkt, x, i, for_comp)) {
                 /* SSLfatal() already called */
                 X509_STORE_CTX_free(xs_ctx);
-                goto err;
+                return 0;
             }
         }
         X509_STORE_CTX_free(xs_ctx);
     } else {
         i = ssl_security_cert_chain(s, extra_certs, x, 0);
         if (i != 1) {
-            error = i;
-            goto err;
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, i);
+            return 0;
         }
         if (!ssl_add_cert_to_wpacket(s, pkt, x, 0, for_comp)) {
             /* SSLfatal() already called */
-            goto err;
+            return 0;
         }
         for (i = 0; i < sk_X509_num(extra_certs); i++) {
             x = sk_X509_value(extra_certs, i);
             if (!ssl_add_cert_to_wpacket(s, pkt, x, i + 1, for_comp)) {
                 /* SSLfatal() already called */
-                goto err;
+                return 0;
             }
         }
     }
     return 1;
- err:
-    if (!for_comp && error != -1)
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, error);
-    return 0;
-
 }
 
 unsigned long ssl3_output_cert_chain(SSL_CONNECTION *s, WPACKET *pkt,

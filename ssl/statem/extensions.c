@@ -830,7 +830,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
                              X509 *x, size_t chainidx)
 {
     size_t i;
-    int min_version, max_version = 0, reason, error = -1;
+    int min_version, max_version = 0, reason;
     const EXTENSION_DEFINITION *thisexd;
     int for_comp = (context & SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION) != 0;
 
@@ -844,15 +844,17 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
                  (SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO)) != 0
                 && !WPACKET_set_flags(pkt,
                                       WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH))) {
-        error = ERR_R_INTERNAL_ERROR;
-        goto err;
+        if (!for_comp)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
 
     if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
         reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
         if (reason != 0) {
-            error = reason;
-            goto err;
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, reason);
+            return 0;
         }
     }
 
@@ -863,7 +865,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     }
     if (!custom_ext_add(s, context, pkt, x, chainidx, max_version)) {
         /* SSLfatal() already called */
-        goto err;
+        return 0;
     }
 
     for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
@@ -885,7 +887,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
         ret = construct(s, pkt, context, x, chainidx);
         if (ret == EXT_RETURN_FAIL) {
             /* SSLfatal() already called */
-            goto err;
+            return 0;
         }
         if (ret == EXT_RETURN_SENT
                 && (context & (SSL_EXT_CLIENT_HELLO
@@ -895,15 +897,12 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     if (!WPACKET_close(pkt)) {
-        error = ERR_R_INTERNAL_ERROR;
-        goto err;
+        if (!for_comp)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
 
     return 1;
- err:
-    if (!for_comp && error != -1)
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, error);
-    return 0;
 }
 
 /*
