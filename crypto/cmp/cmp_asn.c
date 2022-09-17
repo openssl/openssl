@@ -116,6 +116,11 @@ ASN1_ADB(OSSL_CMP_ITAV) = {
                                    ASN1_UTF8STRING)),
     ADB_ENTRY(NID_id_it_caCerts,
               ASN1_SEQUENCE_OF_OPT(OSSL_CMP_ITAV, infoValue.caCerts, X509)),
+    ADB_ENTRY(NID_id_it_rootCaCert,
+              ASN1_OPT(OSSL_CMP_ITAV, infoValue.rootCaCert, X509)),
+    ADB_ENTRY(NID_id_it_rootCaKeyUpdate,
+              ASN1_OPT(OSSL_CMP_ITAV, infoValue.rootCaKeyUpdate,
+                       OSSL_CMP_ROOTCAKEYUPDATE)),
 } ASN1_ADB_END(OSSL_CMP_ITAV, 0, infoType, 0,
                &infotypeandvalue_default_tt, NULL);
 
@@ -125,6 +130,14 @@ ASN1_SEQUENCE(OSSL_CMP_ITAV) = {
 } ASN1_SEQUENCE_END(OSSL_CMP_ITAV)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_ITAV)
 IMPLEMENT_ASN1_DUP_FUNCTION(OSSL_CMP_ITAV)
+
+ASN1_SEQUENCE(OSSL_CMP_ROOTCAKEYUPDATE) = {
+    /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
+    ASN1_SIMPLE(OSSL_CMP_ROOTCAKEYUPDATE, newWithNew, X509),
+    ASN1_EXP_OPT(OSSL_CMP_ROOTCAKEYUPDATE, newWithOld, X509, 0),
+    ASN1_EXP_OPT(OSSL_CMP_ROOTCAKEYUPDATE, oldWithNew, X509, 1)
+} ASN1_SEQUENCE_END(OSSL_CMP_ROOTCAKEYUPDATE)
+IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
 
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_create(ASN1_OBJECT *type, ASN1_TYPE *value)
 {
@@ -212,6 +225,84 @@ int OSSL_CMP_ITAV_get0_caCerts(const OSSL_CMP_ITAV *itav, STACK_OF(X509) **out)
     }
     *out = sk_X509_num(itav->infoValue.caCerts) > 0
         ? itav->infoValue.caCerts : NULL;
+    return 1;
+}
+
+OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaCert(const X509 *rootCaCert)
+{
+    OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_new();
+
+    if (itav == NULL)
+        return NULL;
+    if (rootCaCert != NULL
+            && (itav->infoValue.rootCaCert = X509_dup(rootCaCert)) == NULL) {
+        OSSL_CMP_ITAV_free(itav);
+        return NULL;
+    }
+    itav->infoType = OBJ_nid2obj(NID_id_it_rootCaCert);
+    return itav;
+}
+
+int OSSL_CMP_ITAV_get0_rootCaCert(const OSSL_CMP_ITAV *itav, X509 **out)
+{
+    if (itav == NULL || out == NULL) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (OBJ_obj2nid(itav->infoType) != NID_id_it_rootCaCert) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    *out = itav->infoValue.rootCaCert;
+    return 1;
+}
+OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaKeyUpdate(const X509 *newWithNew,
+                                                 const X509 *newWithOld,
+                                                 const X509 *oldWithNew)
+{
+    OSSL_CMP_ITAV *itav;
+    OSSL_CMP_ROOTCAKEYUPDATE *upd = OSSL_CMP_ROOTCAKEYUPDATE_new();
+
+    if (upd == NULL)
+        return NULL;
+    if (newWithNew != NULL && (upd->newWithNew = X509_dup(newWithNew)) == NULL)
+        goto err;
+    if (newWithOld != NULL && (upd->newWithOld = X509_dup(newWithOld)) == NULL)
+        goto err;
+    if (oldWithNew != NULL && (upd->oldWithNew = X509_dup(oldWithNew)) == NULL)
+        goto err;
+    if ((itav = OSSL_CMP_ITAV_new()) == NULL)
+        goto err;
+    itav->infoType = OBJ_nid2obj(NID_id_it_rootCaKeyUpdate);
+    itav->infoValue.rootCaKeyUpdate = upd;
+    return itav;
+
+    err:
+    OSSL_CMP_ROOTCAKEYUPDATE_free(upd);
+    return NULL;
+}
+
+int OSSL_CMP_ITAV_get0_rootCaKeyUpdate(const OSSL_CMP_ITAV *itav,
+                                       X509 **newWithNew,
+                                       X509 **newWithOld,
+                                       X509 **oldWithNew)
+{
+    OSSL_CMP_ROOTCAKEYUPDATE *upd;
+
+    if (itav == NULL || newWithNew == NULL) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (OBJ_obj2nid(itav->infoType) != NID_id_it_rootCaKeyUpdate) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    upd = itav->infoValue.rootCaKeyUpdate;
+    *newWithNew = upd->newWithNew;
+    if (newWithOld != NULL)
+        *newWithOld = upd->newWithOld;
+    if (oldWithNew != NULL)
+        *oldWithNew = upd->oldWithNew;
     return 1;
 }
 

@@ -56,8 +56,26 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 0,genm with missing infotype value, -section,, -cmd,genm,,BLANK,,, -infotype,,,BLANK,,BLANK,
 0,genm with invalid infotype value, -section,, -cmd,genm,,BLANK,,, -infotype,asdf,,BLANK,,BLANK,
 1,genm with infotype signKeyPairTypes, -section,, -cmd,genm,,BLANK,,, -infotype,signKeyPairTypes,,BLANK,,BLANK,
-0,genm with infotype caCerts but missing -cacertsout, -section,, -cmd,genm,,BLANK,,, -infotype,caCerts,,BLANK,,BLANK,
-1,genm with infotype caCerts, -section,, -cmd,genm,, -cacertsout,_RESULT_DIR/test.cacerts.pem,, -infotype,caCerts,,BLANK,,BLANK,
+,,,,,,,,,,,,,,,,,,,,,,
+1,genm caCerts                           , -section,, -cmd,genm,, -cacertsout,_RESULT_DIR/test.cacerts.pem,, -infotype,caCerts,,BLANK,,BLANK,
+0,genm caCerts missing cacertsout option , -section,, -cmd,genm,, BLANK      ,                            ,, -infotype,caCerts,,BLANK,,BLANK,
+0,genm caCerts missing cacertsout arg    , -section,, -cmd,genm,, -cacertsout,BLANK                       ,, -infotype,caCerts,,BLANK,,BLANK,
+0,genm caCerts extra cacertsout arg      , -section,, -cmd,genm,, -cacertsout,_RESULT_DIR/test.cacerts.pem,_RESULT_DIR/test.cacerts.pem, -infotype,caCerts,,BLANK,,BLANK,
+,,,,,,,,,,,,,,,,,,,,,,
+1,genm rootCaCert with oldwithold        , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew0.pem
+1,genm rootCaCert without oldwithold     , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, BLANK      ,               , -newwithnew, _RESULT_DIR/test.newwithnew.pem
+0,genm rootCaCert oldwithold missing arg , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold,               , -newwithnew, _RESULT_DIR/test.newwithnew.pem
+0,genm rootCaCert oldwithold empty file  , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, empty.txt     , -newwithnew, _RESULT_DIR/test.newwithnew.pem
+0,genm rootCaCert oldwithold random file , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, random.bin    , -newwithnew, _RESULT_DIR/test.newwithnew.pem
+0,genm rootCaCert oldwithold nonexistent , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, idontexist    , -newwithnew, _RESULT_DIR/test.newwithnew.pem
+0,genm rootCaCert oldwithold wrong       , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, signer.crt    , -newwithnew, _RESULT_DIR/test.newwithnew.pem
+0,genm rootCaCert missing newwithnew     , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, BLANK      ,,
+0,genm rootCaCert newwithnew missing arg , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew,,
+1,genm rootCaCert with oldwithnew        , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew1.pem, -oldwithnew, _RESULT_DIR/test.oldwithnew1.pem
+0,genm rootCaCert oldwithnew missing arg , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew.pem, -oldwithnew,,
+1,genm rootCaCert newwithnew oldwithnew newwithold  , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew2.pem, -oldwithnew, _RESULT_DIR/test.oldwithnew2.pem, -newwithold, _RESULT_DIR/test.newwithold1.pem
+0,genm rootCaCert newwithold missig arg  , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew.pem, -oldwithnew, _RESULT_DIR/test.oldwithnew.pem, -newwithold,,
+1,genm rootCaCert newwithnew newwithold  , -section,, -cmd,genm,, BLANK,,, -infotype,rootCaCert,, -oldwithold, oldWithOld.pem, -newwithnew, _RESULT_DIR/test.newwithnew3.pem, -newwithold, _RESULT_DIR/test.newwithold2.pem
 ,,,,,,,,,,,,,,,,,,,,,,
 1,geninfo, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,1.2.3:int:987,BLANK,,BLANK,
 0,geninfo missing argument, -section,, -cmd,cr,, -cert,signer.crt, -key,signer.p12, -keypass,pass:12345,BLANK,, -geninfo,,,,,

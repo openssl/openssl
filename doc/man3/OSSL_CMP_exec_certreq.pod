@@ -14,7 +14,8 @@ OSSL_CMP_KUR,
 OSSL_CMP_try_certreq,
 OSSL_CMP_exec_RR_ses,
 OSSL_CMP_exec_GENM_ses,
-OSSL_CMP_get1_caCerts
+OSSL_CMP_get1_caCerts,
+OSSL_CMP_get1_rootCaKeyUpdate
 - functions implementing CMP client transactions
 
 =head1 SYNOPSIS
@@ -37,6 +38,9 @@ OSSL_CMP_get1_caCerts
 
  STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx);
  int OSSL_CMP_get1_caCerts(OSSL_CMP_CTX *ctx, STACK_OF(X509) **out);
+ int OSSL_CMP_get1_rootCaKeyUpdate(OSSL_CMP_CTX *ctx,
+                                   const X509 *oldWithOld, X509 **newWithNew,
+                                   X509 **newWithOld, X509 **oldWithNew);
 
 =head1 DESCRIPTION
 
@@ -132,6 +136,23 @@ On success it assigns to I<*out> the list of certificates received,
 which must be freed by the caller.
 NULL output means that no CA certificates were provided by the server.
 
+OSSL_CMP_get1_rootCaKeyUpdate() uses a genm request message
+with infoType rootCaCert to obtain from the CMP server referenced by I<ctx>
+in a genp response message with infoType rootCaKeyUpdate any update of the
+given root CA certificate I<oldWithOld> and verifies it as far as possible.
+See RFC 4210 section 4.4 for details.
+On success it assigns to I<*newWithNew> the root certificate received.
+When the I<newWithOld> and I<oldWithNew> output parameters are not NULL,
+it assigns to them the corresponding transition certificates.
+NULL means that the respective certificate was not provided by the server.
+All certificates obtained this way must be freed by the caller.
+
+B<WARNING:>
+The I<newWithNew> certificate is meant to be a certificate that will be trusted.
+The trust placed in it cannot be stronger than the trust placed in
+the I<oldwithold> certificate if present, otherwise it cannot be stronger than
+the weakest trust in any of the certificates in the trust store of I<ctx>.
+
 =head1 NOTES
 
 CMP is defined in RFC 4210 (and CRMF in RFC 4211).
@@ -140,8 +161,8 @@ The CMP client implementation is limited to one request per CMP message
 (and consequently to at most one response component per CMP message).
 
 When a client obtains from a CMP server CA certificates that it is going to
-trust, for instance via the caPubs field of a certificate response
-or using functions like OSSL_CMP_get1_caCerts(),
+trust, for instance via the caPubs field of a certificate response or using
+functions like OSSL_CMP_get1_caCerts() and OSSL_CMP_get1_rootCaKeyUpdate(),
 authentication of the CMP server is particularly critical.
 So special care must be taken setting up server authentication in I<ctx>
 using functions such as
@@ -167,7 +188,8 @@ In the latter case L<OSSL_CMP_CTX_get0_newCert(3)> yields NULL
 and the output parameter I<checkAfter> has been used to
 assign the received value unless I<checkAfter> is NULL.
 
-OSSL_CMP_exec_RR_ses() and OSSL_CMP_get1_caCerts()
+OSSL_CMP_exec_RR_ses(), OSSL_CMP_get1_caCerts(),
+and OSSL_CMP_get1_rootCaKeyUpdate()
 return 1 on success, 0 on error.
 
 OSSL_CMP_exec_GENM_ses() returns NULL on error,
@@ -191,7 +213,8 @@ L<OSSL_CMP_MSG_http_perform(3)>
 
 The OpenSSL CMP support was added in OpenSSL 3.0.
 
-OSSL_CMP_get1_caCerts() was added in OpenSSL 3.2.
+OSSL_CMP_get1_caCerts() and OSSL_CMP_get1_rootCaKeyUpdate()
+were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

@@ -63,6 +63,7 @@
 #  define CMP_R_INVALID_ARGS                               100
 #  define CMP_R_INVALID_GENP                               193
 #  define CMP_R_INVALID_OPTION                             174
+#  define CMP_R_INVALID_ROOTCAKEYUPDATE                    195
 #  define CMP_R_MISSING_CERTID                             165
 #  define CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION  130
 #  define CMP_R_MISSING_KEY_USAGE_DIGITALSIGNATURE         142

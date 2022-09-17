@@ -11,7 +11,11 @@ srv_trusted = signer_root.crt
 
 ref_cert = signer_only.crt
 rsp_cert = signer_only.crt
-rsp_capubs = signer_root.crt
+rsp_capubs = trusted.crt
 rsp_extracerts = signer_issuing.crt
+
+rsp_newwithnew = newWithNew.pem
+rsp_newwithold = newWithOld.pem
+rsp_oldwithnew = oldWithNew.pem
 
 verbosity = 7
