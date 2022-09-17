@@ -126,7 +126,6 @@ struct ossl_crmf_singlepubinfo_st {
 DEFINE_STACK_OF(OSSL_CRMF_SINGLEPUBINFO)
 typedef STACK_OF(OSSL_CRMF_SINGLEPUBINFO) OSSL_CRMF_PUBINFOS;
 
-
 /*-
  * PKIPublicationInfo ::= SEQUENCE {
  *      action     INTEGER {

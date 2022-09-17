@@ -11,7 +11,6 @@
  * CRMF implementation by Martin Peylo, Miikka Viljanen, and David von Oheimb.
  */
 
-
 #include <string.h>
 
 #include <openssl/rand.h>
@@ -200,7 +199,7 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
 
     if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, mac_nid, NULL, &hmac_md_nid, NULL)
         || OBJ_obj2txt(hmac_mdname, sizeof(hmac_mdname),
-                        OBJ_nid2obj(hmac_md_nid), 0) <= 0) {
+                       OBJ_nid2obj(hmac_md_nid), 0) <= 0) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
     }

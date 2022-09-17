@@ -97,6 +97,7 @@ static int execute_exec_RR_ses_test(CMP_SES_TEST_FIXTURE *fixture)
 static int execute_exec_GENM_ses_test(CMP_SES_TEST_FIXTURE *fixture)
 {
     STACK_OF(OSSL_CMP_ITAV) *itavs = NULL;
+
     if (!TEST_ptr(itavs = OSSL_CMP_exec_GENM_ses(fixture->cmp_ctx)))
         return 0;
     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
@@ -183,7 +184,6 @@ static int test_exec_IR_ses_poll_timeout(void)
     EXECUTE_TEST(execute_exec_certrequest_ses_test, tear_down);
     return result;
 }
-
 
 static int test_exec_CR_ses(void)
 {
@@ -299,6 +299,7 @@ static int execute_exchange_certConf_test(CMP_SES_TEST_FIXTURE *fixture)
         ossl_cmp_exchange_certConf(fixture->cmp_ctx,
                                    OSSL_CMP_PKIFAILUREINFO_addInfoNotAvailable,
                                    "abcdefg");
+
     return TEST_int_eq(fixture->expected, res);
 }
 

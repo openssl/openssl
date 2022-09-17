@@ -515,7 +515,6 @@ static int test_X509_STORE_only_self_issued(void)
     return result;
 }
 
-
 void cleanup_tests(void)
 {
     EVP_PKEY_free(loadedprivkey);
@@ -578,7 +577,7 @@ int setup_tests(void)
     if (TEST_true(EVP_PKEY_up_ref(loadedprivkey)))
         loadedpubkey = loadedprivkey;
     if (!TEST_ptr(ir_protected = load_pkimsg(ir_protected_f, libctx))
-            || !TEST_ptr(ir_unprotected = load_pkimsg(ir_unprotected_f, libctx)))
+        || !TEST_ptr(ir_unprotected = load_pkimsg(ir_unprotected_f, libctx)))
         return 0;
     if (!TEST_ptr(endentity1 = load_cert_pem(endentity1_f, libctx))
             || !TEST_ptr(endentity2 = load_cert_pem(endentity2_f, libctx))
