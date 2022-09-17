@@ -235,6 +235,7 @@ CMP_R_GETTING_GENP:192:getting genp
 CMP_R_INVALID_ARGS:100:invalid args
 CMP_R_INVALID_GENP:193:invalid genp
 CMP_R_INVALID_OPTION:174:invalid option
+CMP_R_INVALID_ROOTCAKEYUPDATE:195:invalid rootcakeyupdate
 CMP_R_MISSING_CERTID:165:missing certid
 CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION:130:\
 	missing key input for creating protection

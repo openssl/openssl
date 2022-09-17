@@ -88,6 +88,8 @@ static const ERR_STRING_DATA CMP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_INVALID_ARGS), "invalid args"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_INVALID_GENP), "invalid genp"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_INVALID_OPTION), "invalid option"},
+    {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_INVALID_ROOTCAKEYUPDATE),
+     "invalid rootcakeyupdate"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_MISSING_CERTID), "missing certid"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION),
     "missing key input for creating protection"},

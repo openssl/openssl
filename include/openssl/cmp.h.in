@@ -264,6 +264,16 @@ void OSSL_CMP_ITAV_free(OSSL_CMP_ITAV *itav);
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_caCerts(const STACK_OF(X509) *caCerts);
 int OSSL_CMP_ITAV_get0_caCerts(const OSSL_CMP_ITAV *itav, STACK_OF(X509) **out);
 
+OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaCert(const X509 *rootCaCert);
+int OSSL_CMP_ITAV_get0_rootCaCert(const OSSL_CMP_ITAV *itav, X509 **out);
+OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_rootCaKeyUpdate(const X509 *newWithNew,
+                                                 const X509 *newWithOld,
+                                                 const X509 *oldWithNew);
+int OSSL_CMP_ITAV_get0_rootCaKeyUpdate(const OSSL_CMP_ITAV *itav,
+                                       X509 **newWithNew,
+                                       X509 **newWithOld,
+                                       X509 **oldWithNew);
+
 void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
 
 /* from cmp_ctx.c */
@@ -488,6 +498,9 @@ STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx);
 
 /* from cmp_genm.c */
 int OSSL_CMP_get1_caCerts(OSSL_CMP_CTX *ctx, STACK_OF(X509) **out);
+int OSSL_CMP_get1_rootCaKeyUpdate(OSSL_CMP_CTX *ctx,
+                                  const X509 *oldWithOld, X509 **newWithNew,
+                                  X509 **newWithOld, X509 **oldWithNew);
 
 #  ifdef  __cplusplus
 }

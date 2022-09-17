@@ -205,6 +205,9 @@ typedef struct ossl_cmp_cakeyupdanncontent_st {
 } OSSL_CMP_CAKEYUPDANNCONTENT;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CAKEYUPDANNCONTENT)
 
+typedef struct ossl_cmp_rootcakeyupdate_st OSSL_CMP_ROOTCAKEYUPDATE;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
+
 /*-
  * declared already here as it will be used in OSSL_CMP_MSG (nested) and
  * infoType and infoValue
@@ -252,6 +255,10 @@ struct ossl_cmp_itav_st {
         STACK_OF(ASN1_UTF8STRING) *suppLangTagsValue;
         /* NID_id_it_caCerts - CA Certificates */
         STACK_OF(X509) *caCerts;
+        /* NID_id_it_rootCaCert - Root CA Certificate */
+        X509 *rootCaCert;
+        /* NID_id_it_rootCaKeyUpdate - Root CA Certificate Update */
+        OSSL_CMP_ROOTCAKEYUPDATE *rootCaKeyUpdate;
         /* this is to be used for so far undeclared objects */
         ASN1_TYPE *other;
     } infoValue;
@@ -737,6 +744,21 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_PROTECTEDPART)
  *           -- self-signed certificate with the identifier certID.
  *   }
  */
+
+/*
+ * RootCaKeyUpdateContent ::= SEQUENCE {
+ *      newWithNew       CMPCertificate,
+ *      newWithOld   [0] CMPCertificate OPTIONAL,
+ *      oldWithNew   [1] CMPCertificate OPTIONAL
+ * }
+ */
+
+struct ossl_cmp_rootcakeyupdate_st {
+    X509 *newWithNew;
+    X509 *newWithOld;
+    X509 *oldWithNew;
+} /* OSSL_CMP_ROOTCAKEYUPDATE */;
+DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ROOTCAKEYUPDATE)
 
 /* from cmp_asn.c */
 int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a);

@@ -68,6 +68,10 @@ Server authentication options:
 [B<-srvcertout> I<filename>]
 [B<-extracertsout> I<filename>]
 [B<-cacertsout> I<filename>]
+[B<-oldwithold> I<filename>]
+[B<-newwithnew> I<filename>]
+[B<-newwithold> I<filename>]
+[B<-oldwithnew> I<filename>]
 
 Client authentication and protection options:
 
@@ -129,6 +133,9 @@ Mock server options:
 [B<-rsp_cert> I<filename>|I<uri>]
 [B<-rsp_extracerts> I<filenames>|I<uris>]
 [B<-rsp_capubs> I<filenames>|I<uris>]
+[B<-rsp_newwithnew> I<filename>|I<uri>]
+[B<-rsp_newwithold> I<filename>|I<uri>]
+[B<-rsp_oldwithnew> I<filename>|I<uri>]
 [B<-poll_count> I<number>]
 [B<-check_after> I<number>]
 [B<-grant_implicitconf>]
@@ -237,7 +244,7 @@ ITAV B<infoType>s is printed to stdout.
 
 Set InfoType name to use for requesting specific info in B<genm>,
 e.g., C<signKeyPairTypes>.
-So far, there is specific support for C<caCerts>.
+So far, there is specific support for C<caCerts> and C<rootCaCert>.
 
 =item B<-geninfo> I<OID:int:N>
 
@@ -669,6 +676,43 @@ The file where to save the list of CA certificates contained in the caPubs field
 if a positive certificate response (i.e., IP, CP, or KUP) message was received
 or contained in a general response (genp) message with infoType C<caCerts>.
 
+=item B<-oldwithold> I<filename>
+
+The root CA certificate to include in a genm request of infoType C<rootCaCert>.
+If present and the optional oldWithNew certificate is received,
+it is verified using the newWithNew certificate as the (only) trust anchor.
+
+=item B<-newwithnew> I<filename>
+
+This option must be provided when B<-infotype> I<rootCaCert> is given.
+It specifies the file to save the newWithNew certificate
+received in a genp message of type C<rootCaKeyUpdate>.
+If on success no such cert was received, this file (if present) is deleted
+to indicate that the requested root CA certificate update is not available.
+
+Any received newWithNew certificate is verified
+using any received newWithOld certificate as untrusted intermediate certificate
+and the certificate provided with B<-oldwithold> as the (only) trust anchor,
+or if not provided, using the certificates given with the B<-trusted> option.
+
+B<WARNING:>
+The newWithNew certificate is meant to be certificate that will be trusted.
+The trust placed in it cannot be stronger than the trust placed in
+the B<-oldwithold> certificate if present, otherwise it cannot be stronger than
+the weakest trust placed in any of the B<-trusted> certificates.
+
+=item B<-newwithold> I<filename>
+
+The file to save any newWithOld certificate
+received in a genp message of infoType C<rootCaKeyUpdate>.
+If on success no such cert was received, this is indicated by deleting the file.
+
+=item B<-oldwithnew> I<filename>
+
+The file to save any oldWithNew certificate
+received in a genp message of infoType C<rootCaKeyUpdate>.
+If on success no such cert was received, this is indicated by deleting the file.
+
 =back
 
 =head2 Client authentication options
@@ -803,7 +847,9 @@ See L<openssl(1)/Format Options> for details.
 
 Pass phrase source for certificate given with the B<-trusted>, B<-untrusted>,
 B<-own_trusted>, B<-srvcert>, B<-out_trusted>, B<-extracerts>,
-B<-srv_trusted>, B<-srv_untrusted>, B<-rsp_extracerts>, B<-rsp_capubs>,
+B<-srv_trusted>, B<-srv_untrusted>, B<-ref_cert>, B<-rsp_cert>,
+B<-rsp_extracerts>, B<-rsp_capubs>,
+B<-rsp_newwithnew>, B<-rsp_newwithold>, B<-rsp_oldwithnew>,
 B<-tls_extra>, and B<-tls_trusted> options.
 If not given here, the password will be prompted for if needed.
 
@@ -1054,6 +1100,18 @@ Extra certificates to be included in mock certification responses.
 
 CA certificates to be included in mock Initialization Response (IP) message.
 
+=item B<-rsp_newwithnew> I<filename>|I<uri>
+
+Certificate to be returned in newWithNew field of genp of type rootCaKeyUpdate.
+
+=item B<-rsp_newwithold> I<filename>|I<uri>
+
+Certificate to be returned in newWithOld field of genp of type rootCaKeyUpdate.
+
+=item B<-rsp_oldwithnew> I<filename>|I<uri>
+
+Certificate to be returned in oldWithNew field of genp of type rootCaKeyUpdate.
+
 =item B<-poll_count> I<number>
 
 Number of times the client must poll before receiving a certificate.
@@ -1129,7 +1187,7 @@ only affect the certificate verification enabled via the B<-out_trusted> option.
 
 When a client obtains from a CMP server CA certificates that it is going to
 trust, for instance via the C<caPubs> field of a certificate response
-or using general messages with infoType C<caCerts>,
+or using general messages with infoType C<caCerts> or C<rootCaCert>,
 authentication of the CMP server is particularly critical.
 So special care must be taken setting up server authentication
 using B<-trusted> and related options for certificate-based authentication

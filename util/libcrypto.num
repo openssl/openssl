@@ -5448,6 +5448,11 @@ BIO_ADDR_dup                            ?	3_2_0	EXIST::FUNCTION:SOCK
 OSSL_CMP_ITAV_new_caCerts               ?	3_2_0	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_get0_caCerts              ?	3_2_0	EXIST::FUNCTION:CMP
 OSSL_CMP_get1_caCerts                   ?	3_2_0	EXIST::FUNCTION:CMP
+OSSL_CMP_ITAV_new_rootCaCert            ?	3_2_0	EXIST::FUNCTION:CMP
+OSSL_CMP_ITAV_get0_rootCaCert           ?	3_2_0	EXIST::FUNCTION:CMP
+OSSL_CMP_ITAV_new_rootCaKeyUpdate       ?	3_2_0	EXIST::FUNCTION:CMP
+OSSL_CMP_ITAV_get0_rootCaKeyUpdate      ?	3_2_0	EXIST::FUNCTION:CMP
+OSSL_CMP_get1_rootCaKeyUpdate           ?	3_2_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get0_libctx                ?	3_2_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get0_propq                 ?	3_2_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_reset_geninfo_ITAVs        ?	3_0_8	EXIST::FUNCTION:CMP
