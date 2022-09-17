@@ -11,19 +11,17 @@ OSSL_CMP_ITAV_push0_stack_item
 
 =head1 SYNOPSIS
 
-  #include <openssl/cmp.h>
-  OSSL_CMP_ITAV *OSSL_CMP_ITAV_create(ASN1_OBJECT *type, ASN1_TYPE *value);
-  void OSSL_CMP_ITAV_set0(OSSL_CMP_ITAV *itav, ASN1_OBJECT *type,
-                          ASN1_TYPE *value);
-  ASN1_OBJECT *OSSL_CMP_ITAV_get0_type(const OSSL_CMP_ITAV *itav);
-  ASN1_TYPE *OSSL_CMP_ITAV_get0_value(const OSSL_CMP_ITAV *itav);
+ #include <openssl/cmp.h>
 
-  int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
-                                     OSSL_CMP_ITAV *itav);
+ OSSL_CMP_ITAV *OSSL_CMP_ITAV_create(ASN1_OBJECT *type, ASN1_TYPE *value);
+ void OSSL_CMP_ITAV_set0(OSSL_CMP_ITAV *itav, ASN1_OBJECT *type,
+                         ASN1_TYPE *value);
+ ASN1_OBJECT *OSSL_CMP_ITAV_get0_type(const OSSL_CMP_ITAV *itav);
+ ASN1_TYPE *OSSL_CMP_ITAV_get0_value(const OSSL_CMP_ITAV *itav);
+ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
+                                    OSSL_CMP_ITAV *itav);
 
 =head1 DESCRIPTION
-
-Certificate Management Protocol (CMP, RFC 4210) extension to OpenSSL
 
 ITAV is short for InfoTypeAndValue. This type is defined in RFC 4210
 section 5.3.19 and Appendix F. It is used at various places in CMP messages,
@@ -81,10 +79,9 @@ included in the requests' PKIHeader's genInfo field.
     OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_create(type, val);
     if (itav == NULL) ...
 
-    OSSL_CMP_CTX *ctx = OSSL_CMP_CTX_new();
-    if (ctx == NULL || !OSSL_CMP_CTX_geninfo_push0_ITAV(ctx, itav)) {
+    if (!OSSL_CMP_CTX_push0_geninfo_ITAV(ctx, itav)) {
         OSSL_CMP_ITAV_free(itav); /* also frees type and val */
-        goto err;
+        ...
     }
 
     ...
