@@ -329,6 +329,7 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
             ossl_cmp_certrepmessage_get0_certresponse(msg->body->value.ip,
                                                       OSSL_CMP_CERTREQID);
         X509 *newcrt = ossl_cmp_certresponse_get1_cert(crep, ctx, pkey);
+
         /*
          * maybe better use get_cert_status() from cmp_client.c, which catches
          * errors
@@ -421,6 +422,7 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                                      : "no trusted store");
     } else {
         STACK_OF(X509) *trusted = X509_STORE_get1_all_certs(ctx->trusted);
+
         ret = check_msg_with_certs(ctx, trusted,
                                    mode_3gpp ? "self-issued extraCerts"
                                              : "certs in trusted store",

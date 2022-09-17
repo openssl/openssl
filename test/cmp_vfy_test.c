@@ -98,6 +98,7 @@ static int execute_verify_popo_test(CMP_VFY_TEST_FIXTURE *fixture)
     if (fixture->expected == 0) {
         const OSSL_CRMF_MSGS *reqs = fixture->msg->body->value.ir;
         const OSSL_CRMF_MSG *req = sk_OSSL_CRMF_MSG_value(reqs, 0);
+
         if (req == NULL || !flip_bit(req->popo->value.signature->signature))
             return 0;
     }
@@ -218,6 +219,7 @@ static int test_validate_msg_signature_partial_chain(int expired)
         fixture = NULL;
     } else {
         X509_VERIFY_PARAM *vpm = X509_STORE_get0_param(ts);
+
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_PARTIAL_CHAIN);
         if (expired)
             X509_VERIFY_PARAM_set_time(vpm, test_time_after_expiration);
@@ -322,13 +324,13 @@ static int test_validate_msg_signature_sender_cert_extracert(void)
     return result;
 }
 
-
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_signature_sender_cert_absent(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     fixture->expected = 0;
-    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_0_extracerts, libctx))) {
+    if (!TEST_ptr(fixture->msg =
+                  load_pkimsg(ir_protected_0_extracerts, libctx))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -383,6 +385,7 @@ static void setup_path(CMP_VFY_TEST_FIXTURE **fixture, X509 *wrong, int expired)
     if (expired) {
         X509_STORE *ts = OSSL_CMP_CTX_get0_trusted((*fixture)->cmp_ctx);
         X509_VERIFY_PARAM *vpm = X509_STORE_get0_param(ts);
+
         X509_VERIFY_PARAM_set_time(vpm, test_time_after_expiration);
     }
     if (!add_trusted((*fixture)->cmp_ctx, wrong == NULL ? root : wrong)
@@ -466,6 +469,7 @@ static void setup_check_update(CMP_VFY_TEST_FIXTURE **fixture, int expected,
         (*fixture) = NULL;
     } else if (trid_data != NULL) {
         ASN1_OCTET_STRING *trid = ASN1_OCTET_STRING_new();
+
         if (trid == NULL
             || !ASN1_OCTET_STRING_set(trid, trid_data,
                                       OSSL_CMP_TRANSACTIONID_LENGTH)
@@ -567,7 +571,6 @@ void cleanup_tests(void)
     return;
 }
 
-
 #define USAGE "server.crt client.crt " \
     "EndEntity1.crt EndEntity2.crt " \
     "Root_CA.crt Intermediate_CA.crt " \
@@ -635,7 +638,8 @@ int setup_tests(void)
     if (!TEST_int_eq(1, RAND_bytes(rand_data, OSSL_CMP_TRANSACTIONID_LENGTH)))
         goto err;
     if (!TEST_ptr(ir_unprotected = load_pkimsg(ir_unprotected_f, libctx))
-            || !TEST_ptr(ir_rmprotection = load_pkimsg(ir_rmprotection_f, libctx)))
+            || !TEST_ptr(ir_rmprotection = load_pkimsg(ir_rmprotection_f,
+                                                       libctx)))
         goto err;
 
     /* Message validation tests */

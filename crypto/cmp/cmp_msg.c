@@ -59,7 +59,6 @@ int ossl_cmp_msg_set0_libctx(OSSL_CMP_MSG *msg, OSSL_LIB_CTX *libctx,
     return 1;
 }
 
-
 OSSL_CMP_PKIHEADER *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg)
 {
     if (msg == NULL) {
@@ -332,9 +331,9 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
             && (exts = X509_REQ_get_extensions(ctx->p10CSR)) == NULL)
         goto err;
     if (!ctx->SubjectAltName_nodefault && !HAS_SAN(ctx) && refcert != NULL
-            && (default_sans = X509V3_get_d2i(X509_get0_extensions(refcert),
-                                              NID_subject_alt_name, NULL, NULL))
-            != NULL
+        && (default_sans = X509V3_get_d2i(X509_get0_extensions(refcert),
+                                          NID_subject_alt_name, NULL, NULL))
+        != NULL
             && !add1_extension(&exts, NID_subject_alt_name, crit, default_sans))
         goto err;
     if (ctx->reqExtensions != NULL /* augment/override existing ones */
@@ -543,15 +542,15 @@ OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx)
 
     /* Fill the template from the contents of the certificate to be revoked */
     ret = ctx->oldCert != NULL
-    ? OSSL_CRMF_CERTTEMPLATE_fill(rd->certDetails,
-                                  NULL /* pubkey would be redundant */,
-                                  NULL /* subject would be redundant */,
-                                  X509_get_issuer_name(ctx->oldCert),
-                                  X509_get0_serialNumber(ctx->oldCert))
-    : OSSL_CRMF_CERTTEMPLATE_fill(rd->certDetails,
-                                  X509_REQ_get0_pubkey(ctx->p10CSR),
-                                  X509_REQ_get_subject_name(ctx->p10CSR),
-                                  NULL, NULL);
+        ? OSSL_CRMF_CERTTEMPLATE_fill(rd->certDetails,
+                                      NULL /* pubkey would be redundant */,
+                                      NULL /* subject would be redundant */,
+                                      X509_get_issuer_name(ctx->oldCert),
+                                      X509_get0_serialNumber(ctx->oldCert))
+        : OSSL_CRMF_CERTTEMPLATE_fill(rd->certDetails,
+                                      X509_REQ_get0_pubkey(ctx->p10CSR),
+                                      X509_REQ_get_subject_name(ctx->p10CSR),
+                                      NULL, NULL);
     if (!ret)
         goto err;
 

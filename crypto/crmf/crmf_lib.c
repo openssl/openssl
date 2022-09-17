@@ -81,7 +81,6 @@ int OSSL_CRMF_MSG_set1_##ctrlinf##_##atyp(OSSL_CRMF_MSG *msg, const valt *in) \
     return 0;                                                             \
 }
 
-
 /*-
  * Pushes the given control attribute into the controls stack of a CertRequest
  * (section 6)
@@ -244,7 +243,6 @@ IMPLEMENT_CRMF_CTRL_FUNC(utf8Pairs, ASN1_UTF8STRING, regInfo)
 /* id-regInfo-certReq to regInfo (section 7.2) */
 IMPLEMENT_CRMF_CTRL_FUNC(certReq, OSSL_CRMF_CERTREQUEST, regInfo)
 
-
 /* retrieves the certificate template of crm */
 OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm)
 {
@@ -254,7 +252,6 @@ OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm)
     }
     return crm->certReq->certTemplate;
 }
-
 
 int OSSL_CRMF_MSG_set0_validity(OSSL_CRMF_MSG *crm,
                                 ASN1_TIME *notBefore, ASN1_TIME *notAfter)
@@ -274,7 +271,6 @@ int OSSL_CRMF_MSG_set0_validity(OSSL_CRMF_MSG *crm,
     tmpl->validity = vld;
     return 1;
 }
-
 
 int OSSL_CRMF_MSG_set_certReqId(OSSL_CRMF_MSG *crm, int rid)
 {
@@ -315,7 +311,6 @@ int OSSL_CRMF_MSG_get_certReqId(const OSSL_CRMF_MSG *crm)
     return crmf_asn1_get_int(crm->certReq->certReqId);
 }
 
-
 int OSSL_CRMF_MSG_set0_extensions(OSSL_CRMF_MSG *crm,
                                   X509_EXTENSIONS *exts)
 {
@@ -335,7 +330,6 @@ int OSSL_CRMF_MSG_set0_extensions(OSSL_CRMF_MSG *crm,
     tmpl->extensions = exts;
     return 1;
 }
-
 
 int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm,
                                   X509_EXTENSION *ext)
@@ -395,7 +389,6 @@ static int create_popo_signature(OSSL_CRMF_POPOSIGNINGKEY *ps,
                              ps->algorithmIdentifier, NULL, ps->signature, cr,
                              NULL, pkey, digest, libctx, propq);
 }
-
 
 int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,
                               EVP_PKEY *pkey, const EVP_MD *digest,
@@ -537,7 +530,7 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
 }
 
 const X509_PUBKEY
-    *OSSL_CRMF_CERTTEMPLATE_get0_publicKey(const OSSL_CRMF_CERTTEMPLATE *tmpl)
+*OSSL_CRMF_CERTTEMPLATE_get0_publicKey(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->publicKey : NULL;
 }
@@ -550,20 +543,20 @@ const ASN1_INTEGER
 }
 
 const X509_NAME
-    *OSSL_CRMF_CERTTEMPLATE_get0_subject(const OSSL_CRMF_CERTTEMPLATE *tmpl)
+*OSSL_CRMF_CERTTEMPLATE_get0_subject(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->subject : NULL;
 }
 
 /* retrieves the issuer name of the given cert template or NULL on error */
 const X509_NAME
-    *OSSL_CRMF_CERTTEMPLATE_get0_issuer(const OSSL_CRMF_CERTTEMPLATE *tmpl)
+*OSSL_CRMF_CERTTEMPLATE_get0_issuer(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->issuer : NULL;
 }
 
 X509_EXTENSIONS
-    *OSSL_CRMF_CERTTEMPLATE_get0_extensions(const OSSL_CRMF_CERTTEMPLATE *tmpl)
+*OSSL_CRMF_CERTTEMPLATE_get0_extensions(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->extensions : NULL;
 }
@@ -576,7 +569,8 @@ const X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid)
 }
 
 /* retrieves the serialNumber of the given CertId or NULL on error */
-const ASN1_INTEGER *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID *cid)
+const ASN1_INTEGER *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID
+                                                       *cid)
 {
     return cid != NULL ? cid->serialNumber : NULL;
 }
@@ -608,7 +602,6 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
         return 0;
     return 1;
 }
-
 
 /*-
  * Decrypts the certificate in the given encryptedValue using private key pkey.
