@@ -587,7 +587,8 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
     }
 
     for (i = 0; i < sk_MEMPACKET_num(ctx->pkts); i++) {
-        looppkt = sk_MEMPACKET_value(ctx->pkts, i);
+        if (!TEST_ptr(looppkt = sk_MEMPACKET_value(ctx->pkts, i)))
+            goto err;
         /* Check if we found the right place to insert this packet */
         if (looppkt->num > thispkt->num) {
             if (sk_MEMPACKET_insert(ctx->pkts, thispkt, i) == 0)
