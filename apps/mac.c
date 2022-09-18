@@ -169,9 +169,6 @@ opthelp:
             goto err;
     }
 
-    /* Use text mode for stdin */
-    if (infile == NULL || strcmp(infile, "-") == 0)
-        inform = FORMAT_TEXT;
     in = bio_open_default(infile, 'r', inform);
     if (in == NULL)
         goto err;
