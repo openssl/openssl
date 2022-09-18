@@ -241,6 +241,9 @@ int ciphers_main(int argc, char **argv)
 
             c = sk_SSL_CIPHER_value(sk, i);
 
+            if (!ossl_assert(c != NULL))
+                continue;
+
             if (Verbose) {
                 unsigned long id = SSL_CIPHER_get_id(c);
                 int id0 = (int)(id >> 24);
