@@ -714,12 +714,20 @@ long BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
  */
 size_t BIO_ctrl_pending(BIO *bio)
 {
-    return BIO_ctrl(bio, BIO_CTRL_PENDING, 0, NULL);
+    long ret = BIO_ctrl(bio, BIO_CTRL_PENDING, 0, NULL);
+
+    if (ret < 0)
+        ret = 0;
+    return (size_t)ret;
 }
 
 size_t BIO_ctrl_wpending(BIO *bio)
 {
-    return BIO_ctrl(bio, BIO_CTRL_WPENDING, 0, NULL);
+    long ret = BIO_ctrl(bio, BIO_CTRL_WPENDING, 0, NULL);
+
+    if (ret < 0)
+        ret = 0;
+    return (size_t)ret;
 }
 
 /* put the 'bio' on the end of b's list of operators */
