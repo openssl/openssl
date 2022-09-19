@@ -190,9 +190,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_fetch_prov_test]=evp_fetch_prov_test.c
   INCLUDE[evp_fetch_prov_test]=../include ../apps/include
   DEPEND[evp_fetch_prov_test]=../libcrypto libtestutil.a
-  IF[{- $disabled{fips} || !$target{dso_scheme} -}]
-    DEFINE[evp_extra_test]=NO_FIPS_MODULE
-  ENDIF
 
   SOURCE[provfetchtest]=provfetchtest.c
   INCLUDE[provfetchtest]=../include ../apps/include
