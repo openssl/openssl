@@ -794,6 +794,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     unsigned char key[EVP_MAX_KEY_LENGTH];
     unsigned char *insecret, *iv;
     unsigned char secret[EVP_MAX_MD_SIZE];
+    unsigned char *log_label;
     EVP_CIPHER_CTX *ciph_ctx;
     size_t keylen, ivlen, taglen;
     int ret = 0, l;
@@ -840,6 +841,13 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
             /* SSLfatal already called */
             goto err;
         }
+    }
+
+    /* Call Key log on successful traffic secret update */
+    log_label = s->server == sending ? SERVER_APPLICATION_LABEL : CLIENT_APPLICATION_LABEL;
+    if (!ssl_log_secret(s, log_label, secret, hashlen)) {
+        /* SSLfatal() already called */
+        goto err;
     }
 
     s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
