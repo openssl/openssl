@@ -38,6 +38,7 @@ OSSL_CMP_CTX_set1_referenceValue,
 OSSL_CMP_CTX_set1_secretValue,
 OSSL_CMP_CTX_set1_recipient,
 OSSL_CMP_CTX_push0_geninfo_ITAV,
+OSSL_CMP_CTX_reset_geninfo_ITAVs,
 OSSL_CMP_CTX_set1_extraCertsOut,
 OSSL_CMP_CTX_set0_newPkey,
 OSSL_CMP_CTX_get0_newPkey,
@@ -124,6 +125,7 @@ OSSL_CMP_CTX_set1_senderNonce
  /* CMP message header and extra certificates: */
  int OSSL_CMP_CTX_set1_recipient(OSSL_CMP_CTX *ctx, const X509_NAME *name);
  int OSSL_CMP_CTX_push0_geninfo_ITAV(OSSL_CMP_CTX *ctx, OSSL_CMP_ITAV *itav);
+ int OSSL_CMP_CTX_reset_geninfo_ITAVs(OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_set1_extraCertsOut(OSSL_CMP_CTX *ctx,
                                      STACK_OF(X509) *extraCertsOut);
 
@@ -530,6 +532,9 @@ OSSL_CMP_CTX_push0_geninfo_ITAV() adds I<itav> to the stack in the I<ctx> to be
 added to the GeneralInfo field of the CMP PKIMessage header of a request
 message sent with this context.
 
+OSSL_CMP_CTX_reset_geninfo_ITAVs()
+clears any ITAVs that were added by OSSL_CMP_CTX_push0_geninfo_ITAV().
+
 OSSL_CMP_CTX_set1_extraCertsOut() sets the stack of extraCerts that will be
 sent to remote.
 
@@ -732,7 +737,8 @@ OSSL_CMP_certConf_cb() returns I<fail_info> if it is not equal to 0,
 else 0 on successful validation,
 or else a bit field with the B<OSSL_CMP_PKIFAILUREINFO_incorrectData> bit set.
 
-All other functions, including OSSL_CMP_CTX_reinit(),
+All other functions, including OSSL_CMP_CTX_reinit()
+and OSSL_CMP_CTX_reset_geninfo_ITAVs(),
 return 1 on success, 0 on error.
 
 =head1 EXAMPLES
@@ -812,6 +818,8 @@ OSSL_CMP_CTX_get0_trustedStore() was renamed to OSSL_CMP_CTX_get0_trusted() and
 OSSL_CMP_CTX_set0_trustedStore() was renamed to OSSL_CMP_CTX_set0_trusted(),
 using macros, while keeping the old names for backward compatibility,
 in OpenSSL 3.2.
+
+OSSL_CMP_CTX_reset_geninfo_ITAVs() was added in OpenSSL 3.0.8.
 
 OSSL_CMP_CTX_get0_libctx(), OSSL_CMP_CTX_get0_propq(), and
 OSSL_CMP_CTX_get0_validatedSrvCert() were added in OpenSSL 3.2.
