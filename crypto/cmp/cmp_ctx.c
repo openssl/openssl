@@ -517,6 +517,17 @@ int OSSL_CMP_CTX_push0_geninfo_ITAV(OSSL_CMP_CTX *ctx, OSSL_CMP_ITAV *itav)
     return OSSL_CMP_ITAV_push0_stack_item(&ctx->geninfo_ITAVs, itav);
 }
 
+int OSSL_CMP_CTX_reset_geninfo_ITAVs(OSSL_CMP_CTX *ctx)
+{
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    OSSL_CMP_ITAVs_free(ctx->geninfo_ITAVs);
+    ctx->geninfo_ITAVs = NULL;
+    return 1;
+}
+
 /* Add an itav for the body of outgoing general messages */
 int OSSL_CMP_CTX_push0_genm_ITAV(OSSL_CMP_CTX *ctx, OSSL_CMP_ITAV *itav)
 {
