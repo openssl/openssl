@@ -1735,10 +1735,10 @@ static void rx_state_teardown(struct rx_state *s)
     }
 
     if (s->quic_conn != NULL) {
-        ossl_quic_free((SSL *)s->quic_conn);
+        SSL_free((SSL *)s->quic_conn);
         s->quic_conn = NULL;
     }
-    if (s->quic_ssl_ctx) {
+    if (s->quic_ssl_ctx != NULL) {
         SSL_CTX_free(s->quic_ssl_ctx);
         s->quic_ssl_ctx = NULL;
     }
