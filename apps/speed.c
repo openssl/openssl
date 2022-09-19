@@ -86,6 +86,8 @@
 # define RSA_DEFAULT_PRIME_NUM 2
 #endif
 
+#define NELEM(x) (int)(sizeof(x) / sizeof((x)[0]))
+
 typedef struct openssl_speed_sec_st {
     int sym;
     int rsa;
@@ -3406,9 +3408,6 @@ static char *sstrsep(char **string, const char *delim)
     char isdelim[256];
     char *token = *string;
 
-    if (**string == 0)
-        return NULL;
-
     memset(isdelim, 0, sizeof(isdelim));
     isdelim[0] = 1;
 
@@ -3426,6 +3425,23 @@ static char *sstrsep(char **string, const char *delim)
     }
 
     return token;
+}
+
+static int strtoint(const char *str, const int min_val, const int upper_val,
+                    int *res)
+{
+    char *end = NULL;
+    long int val = 0;
+
+    errno = 0;
+    val = strtol(str, &end, 10);
+    if (errno == 0 && end != str && *end == 0
+        && min_val <= val && val < upper_val) {
+        *res = (int)val;
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 static int do_multi(int multi, int size_num)
@@ -3468,6 +3484,8 @@ static int do_multi(int multi, int size_num)
         FILE *f;
         char buf[1024];
         char *p;
+        int k;
+        double d;
 
         f = fdopen(fds[n], "r");
         while (fgets(buf, sizeof(buf), f)) {
@@ -3486,93 +3504,80 @@ static int do_multi(int multi, int size_num)
                 int alg;
                 int j;
 
-                alg = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
-                for (j = 0; j < size_num; ++j)
-                    results[alg][j] += atof(sstrsep(&p, sep));
+                if (strtoint(sstrsep(&p, sep), 0, ALGOR_NUM, &alg)) {
+                    sstrsep(&p, sep);
+                    for (j = 0; j < size_num; ++j)
+                        results[alg][j] += atof(sstrsep(&p, sep));
+                }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F2:")) {
-                int k;
-                double d;
+                if (strtoint(sstrsep(&p, sep), 0, NELEM(rsa_results), &k)) {
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
+                    d = atof(sstrsep(&p, sep));
+                    rsa_results[k][0] += d;
 
-                d = atof(sstrsep(&p, sep));
-                rsa_results[k][0] += d;
-
-                d = atof(sstrsep(&p, sep));
-                rsa_results[k][1] += d;
+                    d = atof(sstrsep(&p, sep));
+                    rsa_results[k][1] += d;
+                }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F3:")) {
-                int k;
-                double d;
+                if (strtoint(sstrsep(&p, sep), 0, NELEM(dsa_results), &k)) {
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
+                    d = atof(sstrsep(&p, sep));
+                    dsa_results[k][0] += d;
 
-                d = atof(sstrsep(&p, sep));
-                dsa_results[k][0] += d;
-
-                d = atof(sstrsep(&p, sep));
-                dsa_results[k][1] += d;
+                    d = atof(sstrsep(&p, sep));
+                    dsa_results[k][1] += d;
+                }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F4:")) {
-                int k;
-                double d;
+                if (strtoint(sstrsep(&p, sep), 0, NELEM(ecdsa_results), &k)) {
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
+                    d = atof(sstrsep(&p, sep));
+                    ecdsa_results[k][0] += d;
 
-                d = atof(sstrsep(&p, sep));
-                ecdsa_results[k][0] += d;
-
-                d = atof(sstrsep(&p, sep));
-                ecdsa_results[k][1] += d;
+                    d = atof(sstrsep(&p, sep));
+                    ecdsa_results[k][1] += d;
+                }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F5:")) {
-                int k;
-                double d;
+                if (strtoint(sstrsep(&p, sep), 0, NELEM(ecdh_results), &k)) {
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
-
-                d = atof(sstrsep(&p, sep));
-                ecdh_results[k][0] += d;
+                    d = atof(sstrsep(&p, sep));
+                    ecdh_results[k][0] += d;
+                }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F6:")) {
-                int k;
-                double d;
+                if (strtoint(sstrsep(&p, sep), 0, NELEM(eddsa_results), &k)) {
+                    sstrsep(&p, sep);
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
-                sstrsep(&p, sep);
+                    d = atof(sstrsep(&p, sep));
+                    eddsa_results[k][0] += d;
 
-                d = atof(sstrsep(&p, sep));
-                eddsa_results[k][0] += d;
-
-                d = atof(sstrsep(&p, sep));
-                eddsa_results[k][1] += d;
+                    d = atof(sstrsep(&p, sep));
+                    eddsa_results[k][1] += d;
+                }
 # ifndef OPENSSL_NO_SM2
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F7:")) {
-                int k;
-                double d;
+                if (strtoint(sstrsep(&p, sep), 0, NELEM(sm2_results), &k)) {
+                    sstrsep(&p, sep);
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
-                sstrsep(&p, sep);
+                    d = atof(sstrsep(&p, sep));
+                    sm2_results[k][0] += d;
 
-                d = atof(sstrsep(&p, sep));
-                sm2_results[k][0] += d;
-
-                d = atof(sstrsep(&p, sep));
-                sm2_results[k][1] += d;
+                    d = atof(sstrsep(&p, sep));
+                    sm2_results[k][1] += d;
+                }
 # endif /* OPENSSL_NO_SM2 */
 # ifndef OPENSSL_NO_DH
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F8:")) {
-                int k;
-                double d;
+                if (strtoint(sstrsep(&p, sep), 0, NELEM(ffdh_results), &k)) {
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
-
-                d = atof(sstrsep(&p, sep));
-                ffdh_results[k][0] += d;
+                    d = atof(sstrsep(&p, sep));
+                    ffdh_results[k][0] += d;
+                }
 # endif /* OPENSSL_NO_DH */
             } else if (!HAS_PREFIX(buf, "+H:")) {
                 BIO_printf(bio_err, "Unknown type '%s' from child %d\n", buf,
