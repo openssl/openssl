@@ -227,6 +227,14 @@
       my $obj = platform->obj($_);
       push @{$unified_info{includes_extra}->{$obj}}, qw(../);
   }
+  foreach (grep /\[\.ssl\].*?\.o$/, keys %{$unified_info{sources}}) {
+      my $obj = platform->obj($_);
+      # Most of the files in [.ssl.record.methods] include "ssl_local.h"
+      # which includes things like "record/record.h".  Adding "./" as an
+      # inclusion directory helps making this sort of header from these
+      # directories.
+      push @{$unified_info{includes_extra}->{$obj}}, qw(./);
+  }
   foreach (grep /\[\.ssl\.(?:record|statem)\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
       # Most of the files in [.ssl.record] and [.ssl.statem] include
@@ -235,6 +243,14 @@
       # from these directories.
       push @{$unified_info{includes_extra}->{$obj}}, qw(../);
 
+  }
+  foreach (grep /\[\.ssl\.record\.methods\].*?\.o$/, keys %{$unified_info{sources}}) {
+      my $obj = platform->obj($_);
+      # Most of the files in [.ssl.record.methods] include "../../ssl_local.h"
+      # which includes things like "record/record.h".  Adding "../../" as an
+      # inclusion directory helps making this sort of header from these
+      # directories.
+      push @{$unified_info{includes_extra}->{$obj}}, qw(../../);
   }
   foreach (grep /\[\.test\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
