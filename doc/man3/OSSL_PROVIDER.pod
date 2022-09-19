@@ -19,7 +19,7 @@ OSSL_PROVIDER_self_test
  typedef struct ossl_provider_st OSSL_PROVIDER;
 
  int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *libctx,
-                                            const char *path);
+                                           const char *path);
 
  OSSL_PROVIDER *OSSL_PROVIDER_load(OSSL_LIB_CTX *libctx, const char *name);
  OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
