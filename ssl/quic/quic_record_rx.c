@@ -116,6 +116,12 @@ struct ossl_qrx_st {
     /* Length of connection IDs used in short-header packets in bytes. */
     size_t                      short_conn_id_len;
 
+    /* Maximum number of deferred datagrams buffered at any one time. */
+    size_t                      max_deferred;
+
+    /* Current count of deferred datagrams. */
+    size_t                      num_deferred;
+
     /*
      * List of URXEs which are filled with received encrypted data.
      * These are returned to the DEMUX's free list as they are processed.
@@ -176,7 +182,7 @@ OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
     OSSL_QRX *qrx;
     size_t i;
 
-    if (args->demux == NULL)
+    if (args->demux == NULL || args->max_deferred == 0)
         return 0;
 
     qrx = OPENSSL_zalloc(sizeof(OSSL_QRX));
@@ -191,6 +197,7 @@ OSSL_QRX *ossl_qrx_new(const OSSL_QRX_ARGS *args)
     qrx->demux                  = args->demux;
     qrx->short_conn_id_len      = args->short_conn_id_len;
     qrx->init_key_phase_bit     = args->init_key_phase_bit;
+    qrx->max_deferred           = args->max_deferred;
     return qrx;
 }
 
@@ -245,6 +252,7 @@ static void qrx_on_rx(QUIC_URXE *urxe, void *arg)
     /* Initialize our own fields inside the URXE and add to the pending list. */
     urxe->processed     = 0;
     urxe->hpr_removed   = 0;
+    urxe->deferred      = 0;
     ossl_quic_urxe_insert_tail(&qrx->urx_pending, urxe);
 }
 
@@ -1042,10 +1050,20 @@ static int qrx_process_one_urxe(OSSL_QRX *qrx, QUIC_URXE *e)
      * either the free or deferred list.
      */
     ossl_quic_urxe_remove(&qrx->urx_pending, e);
-    if (was_deferred > 0)
+    if (was_deferred > 0 &&
+            (e->deferred || qrx->num_deferred < qrx->max_deferred)) {
         ossl_quic_urxe_insert_tail(&qrx->urx_deferred, e);
-    else
+        if (!e->deferred) {
+            e->deferred = 1;
+            ++qrx->num_deferred;
+        }
+    } else {
+        if (e->deferred) {
+            e->deferred = 0;
+            --qrx->num_deferred;
+        }
         ossl_quic_demux_release_urxe(qrx->demux, e);
+    }
 
     return 1;
 }
