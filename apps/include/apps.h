@@ -13,6 +13,7 @@
 # include "e_os.h" /* struct timeval for DTLS */
 # include "internal/nelem.h"
 # include "internal/sockets.h" /* for openssl_fdset() */
+# include "internal/cryptlib.h"  /* ossl_assert() */
 # include <assert.h>
 
 # include <stdarg.h>
