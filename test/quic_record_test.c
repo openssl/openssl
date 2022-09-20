@@ -1700,7 +1700,8 @@ static int rx_state_ensure(struct rx_state *s)
                                                     NULL)))
         return 0;
 
-    s->args.demux = s->demux;
+    s->args.demux           = s->demux;
+    s->args.max_deferred    = 32;
 
     if (s->qrx == NULL
         && !TEST_ptr(s->qrx = ossl_qrx_new(&s->args)))
