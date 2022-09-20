@@ -532,7 +532,7 @@ static int dtls1_retrieve_buffered_fragment(SSL_CONNECTION *s, size_t *len)
                  * We have fragments for a ClientHello without a cookie,
                  * even though we have sent a HelloVerifyRequest. It is possible
                  * that the HelloVerifyRequest got lost and this is a
-                 * retranmission of the original ClientHello
+                 * retransmission of the original ClientHello
                  */
                 next = pqueue_next(&iter);
                 if (next != NULL) {
