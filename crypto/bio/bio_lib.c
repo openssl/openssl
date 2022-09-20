@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <openssl/crypto.h>
+#include "internal/numbers.h"
 #include "bio_local.h"
 
 /*
@@ -718,6 +719,10 @@ size_t BIO_ctrl_pending(BIO *bio)
 
     if (ret < 0)
         ret = 0;
+#if LONG_MAX > SIZE_MAX
+    if (ret > SIZE_MAX)
+        ret = SIZE_MAX;
+#endif
     return (size_t)ret;
 }
 
@@ -727,6 +732,10 @@ size_t BIO_ctrl_wpending(BIO *bio)
 
     if (ret < 0)
         ret = 0;
+#if LONG_MAX > SIZE_MAX
+    if (ret > SIZE_MAX)
+        ret = SIZE_MAX;
+#endif
     return (size_t)ret;
 }
 
