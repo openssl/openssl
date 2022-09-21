@@ -103,7 +103,7 @@ must OSSL_FUNC_kem_auth_decapsulate_init.
 OSSL_FUNC_kem_get_ctx_params is optional but if it is present then so must
 OSSL_FUNC_kem_gettable_ctx_params.
 Similarly, OSSL_FUNC_kem_set_ctx_params is optional but if it is present then
-so must OSSL_FUNC_kem_settable_ctx_params.
+OSSL_FUNC_kem_settable_ctx_params must also be present.
 
 An asymmetric kem algorithm must also implement some mechanism for generating,
 loading or importing keys via the key management (OSSL_OP_KEYMGMT) operation.

@@ -36,7 +36,7 @@
 #include "eckem.h"
 
 /*
- * Used to store constants from Table 7.1
+ * Used to store constants from Section 7.1 "Table 2 KEM IDs"
  * and the bitmask for curves described in Section 7.1.3 DeriveKeyPair
  */
 typedef struct {
@@ -73,8 +73,8 @@ static OSSL_FUNC_kem_freectx_fn eckem_freectx;
 static OSSL_FUNC_kem_set_ctx_params_fn eckem_set_ctx_params;
 static OSSL_FUNC_kem_settable_ctx_params_fn eckem_settable_ctx_params;
 
-/* See Table 7.1 */
-static const DHKEM_ALG dhkem_alg[]= {
+/* See Section 7.1 "Table 2 KEM IDs" */
+static const DHKEM_ALG dhkem_alg[] = {
     { "P-256", "SHA256", 0x0010, 32, 65,  32, 0xFF },
     { "P-384", "SHA384", 0x0011, 48, 97,  48, 0xFF },
     { "P-521", "SHA512", 0x0012, 64, 133, 66, 0x01 },
@@ -384,10 +384,11 @@ static int dhkem_extract_and_expand(EVP_KDF_CTX *kctx,
 
     ret = ossl_hpke_labeled_extract(kctx, prk, prklen,
                                     NULL, 0, suiteid, sizeof(suiteid),
-                                    "eae_prk", dhkm, dhkmlen)
+                                    OSSL_DHKEM_LABEL_EAE_PRK, dhkm, dhkmlen)
           && ossl_hpke_labeled_expand(kctx, okm, okmlen, prk, prklen,
                                       suiteid, sizeof(suiteid),
-                                      "shared_secret", kemctx, kemctxlen);
+                                      OSSL_DHKEM_LABEL_SHARED_SECRET,
+                                      kemctx, kemctxlen);
     OPENSSL_cleanse(prk, prklen);
     return ret;
 }
@@ -445,7 +446,7 @@ int ossl_ec_dhkem_derive_private(EC_KEY *ec, BIGNUM *priv,
 
     if (!ossl_hpke_labeled_extract(kdfctx, prk, alg->secretlen,
                                    NULL, 0, suiteid, sizeof(suiteid),
-                                   "dkp_prk", ikm, ikmlen))
+                                   OSSL_DHKEM_LABEL_DKP_PRK, ikm, ikmlen))
         goto err;
 
     order = EC_GROUP_get0_order(EC_KEY_get0_group(ec));
@@ -453,7 +454,8 @@ int ossl_ec_dhkem_derive_private(EC_KEY *ec, BIGNUM *priv,
         if (!ossl_hpke_labeled_expand(kdfctx, privbuf, alg->encodedprivlen,
                                       prk, alg->secretlen,
                                       suiteid, sizeof(suiteid),
-                                      "candidate", &counter, 1))
+                                      OSSL_DHKEM_LABEL_CANDIDATE,
+                                      &counter, 1))
             goto err;
         privbuf[0] &= alg->bitmask;
         if (BN_bin2bn(privbuf, alg->encodedprivlen, priv) == NULL)

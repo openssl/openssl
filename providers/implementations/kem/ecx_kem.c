@@ -37,7 +37,7 @@
 
 #define MAX_ECX_KEYLEN X448_KEYLEN
 
-/* KEM identifiers from Table 7.1 */
+/* KEM identifiers from Section 7.1 "Table 2 KEM IDs" */
 #define KEMID_X25519_HKDF_SHA256 0x20
 #define KEMID_X448_HKDF_SHA512   0x21
 
@@ -68,7 +68,7 @@ static OSSL_FUNC_kem_auth_encapsulate_init_fn ecxkem_auth_encapsulate_init;
 static OSSL_FUNC_kem_auth_decapsulate_init_fn ecxkem_auth_decapsulate_init;
 
 /*
- * Set KEM values as specified in Table 7.1
+ * Set KEM values as specified in Section 7.1 "Table 2 KEM IDs"
  * There is only one set of values for X25519 and X448.
  * Additional values could be set via set_params if required.
  */
@@ -314,10 +314,11 @@ static int dhkem_extract_and_expand(EVP_KDF_CTX *kctx,
 
     ret = ossl_hpke_labeled_extract(kctx, prk, prklen,
                                     NULL, 0, suiteid, sizeof(suiteid),
-                                    "eae_prk", dhkm, dhkmlen)
+                                    OSSL_DHKEM_LABEL_EAE_PRK, dhkm, dhkmlen)
           && ossl_hpke_labeled_expand(kctx, okm, okmlen, prk, prklen,
                                       suiteid, sizeof(suiteid),
-                                      "shared_secret", kemctx, kemctxlen);
+                                      OSSL_DHKEM_LABEL_SHARED_SECRET,
+                                      kemctx, kemctxlen);
     OPENSSL_cleanse(prk, prklen);
     return ret;
 }
@@ -366,11 +367,12 @@ int ossl_ecx_dhkem_derive_private(ECX_KEY *ecx, unsigned char *privout,
 
     if (!ossl_hpke_labeled_extract(kdfctx, prk, prklen,
                                    NULL, 0, suiteid, sizeof(suiteid),
-                                   "dkp_prk", ikm, ikmlen))
+                                   OSSL_DHKEM_LABEL_DKP_PRK, ikm, ikmlen))
         goto err;
 
     if (!ossl_hpke_labeled_expand(kdfctx, privout, keylen, prk, prklen,
-                                  suiteid, sizeof(suiteid), "sk", NULL, 0))
+                                  suiteid, sizeof(suiteid), OSSL_DHKEM_LABEL_SK,
+                                  NULL, 0))
         goto err;
     ret = 1;
 err:

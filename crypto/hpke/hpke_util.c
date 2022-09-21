@@ -28,7 +28,8 @@
  */
 #define LABELED_EXPAND_SIZE (LABELED_EXTRACT_SIZE + 3 * OSSL_HPKE_MAX_PUBLIC)
 
-static const char LABEL_HPKEV1[] = "HPKE-v1";
+/* ASCII: "HPKE-v1", in hex for EBCDIC compatibility */
+static const char LABEL_HPKEV1[] = "\x48\x50\x4B\x45\x2D\x76\x31";
 
 static int kdf_derive(EVP_KDF_CTX *kctx,
                       unsigned char *out, size_t outlen, int mode,
