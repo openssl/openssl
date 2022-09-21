@@ -107,6 +107,10 @@ are available:
 typedef struct quic_conn_id_st {
     unsigned char id_len;
     unsigned char id[QUIC_MAX_CONN_ID_LEN];
+#if 0
+    /* likely required later, although this might not be the ideal location */
+    unsigned char reset_token[16];  /* stateless reset token is per conn ID */
+#endif
 } QUIC_CONN_ID;
 
 static ossl_unused ossl_inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
@@ -127,15 +131,15 @@ typedef struct quic_remote_conn_id_cache_st QUIC_REMOTE_CONN_ID_CACHE;
 /*
  * Allocate and free a remote connection ID cache
  */
-QUIC_REMOTE_CONN_ID_CACHE *ossl_quic_remote_conn_id_cache_new_conn(
-        unsigned int id_limit   /* [active_connection_id_limit] */
+QUIC_REMOTE_CONN_ID_CACHE *ossl_quic_remote_conn_id_cache_new(
+        size_t id_limit   /* [active_connection_id_limit] */
     );
 void ossl_quic_remote_conn_id_cache_free(QUIC_REMOTE_CONN_ID_CACHE *cache);
 
 /*
  * Add a remote connection ID to the cache
  */
-int ossl_quic_cache_add_remote_conn_id(QUIC_REMOTE_CONN_ID_CACHE *cache,
+int ossl_quic_remote_conn_id_cache_add(QUIC_REMOTE_CONN_ID_CACHE *cache,
                                        const QUIC_CONNECTION *conn,
                                        const unsigned char *conn_id,
                                        size_t conn_id_len,
@@ -146,7 +150,7 @@ int ossl_quic_cache_add_remote_conn_id(QUIC_REMOTE_CONN_ID_CACHE *cache,
  * Each connection can have multiple connection IDs associated with different
  * routes.  This function returns one of these in a non-specified manner.
  */
-int ossl_quic_conn_id_cache_get0_remote_conn_id(
+int ossl_quic_remote_conn_id_cache_get0_conn_id(
         const QUIC_REMOTE_CONN_ID_CACHE *cache,
         const QUIC_CONNECTION *conn, QUIC_CONN_ID **cid);
 
@@ -154,14 +158,14 @@ int ossl_quic_conn_id_cache_get0_remote_conn_id(
  * Retire remote connection IDs up to and including the one determined by the
  * sequence number.
  */
-int ossl_quic_conn_id_cache_retire_remote_conn_ids(
+int ossl_quic_remote_conn_id_cache_retire(
         QUIC_REMOTE_CONN_ID_CACHE *cache, uint64_t seq_no);
 
 /*
  * Remove remote connection IDs up to and including the one determined by the
  * sequence number.
  */
-int ossl_quic_conn_id_cache_retire_remove_conn_ids(
+int ossl_quic_remote_conn_id_cache_remove(
         QUIC_REMOTE_CONN_ID_CACHE *cache, uint64_t seq_no);
 ```
 
@@ -173,7 +177,7 @@ typedef struct quic_local_conn_id_cache_st QUIC_LOCAL_CONN_ID_CACHE;
 /*
  * Allocate and free a local connection ID cache
  */
-QUIC_LOCAL_CONN_ID_CACHE *ossl_quic_local_conn_id_cache_new_conn(void);
+QUIC_LOCAL_CONN_ID_CACHE *ossl_quic_local_conn_id_cache_new(void);
 void ossl_quic_local_conn_id_cache_free(QUIC_LOCAL_CONN_ID_CACHE *cache);
 
 /*
@@ -187,14 +191,14 @@ int ossl_quic_local_conn_id_cache_new_conn_id(QUIC_LOCAL_CONN_ID_CACHE *cache,
 /*
  * Remove a local connection and all associated cached IDs
  */
-int ossl_quic_remove_connection(QUIC_LOCAL_CONN_ID_CACHE *cache,
-                                const QUIC_CONNECTION *conn);
+int ossl_quic_local_conn_id_cache_remove_conn(QUIC_LOCAL_CONN_ID_CACHE *cache,
+                                              const QUIC_CONNECTION *conn);
 
 /*
  * Lookup a local connection by ID.
  * Returns the connection or NULL if absent.
  */
-QUIC_CONNECTION *ossl_quic_get0_local_conn(
+QUIC_CONNECTION *ossl_quic_local_conn_id_cache_get0_conn(
         const QUIC_LOCAL_CONN_ID_CACHE *cache,
         const unsigned char *conn_id, size_t conn_id_len);
 
@@ -202,14 +206,14 @@ QUIC_CONNECTION *ossl_quic_get0_local_conn(
  * Retire local connection IDs up to and including the one specified by the
  * sequence number.
  */
-int ossl_quic_conn_id_cache_retire_local_conn_ids(
+int ossl_quic_local_conn_id_cache_retire(
         QUIC_LOCAL_CONN_ID_CACHE *cache, uint64_t from_seq_no);
 
 /*
  * Remove local connection IDs up to and including the one specified by the
  * sequence number.
  */
-int ossl_quic_conn_id_cache_remove_local_conn_ids(
+int ossl_quic_local_conn_id_cache_remove(
         QUIC_LOCAL_CONN_ID_CACHE *cache, uint64_t from_seq_no);
 ```
 
@@ -221,17 +225,41 @@ Additional status and source information is also included.
 typedef struct quic_route_st QUIC_ROUTE;
 typedef struct quic_route_table QUIC_ROUTE_TABLE;
 
-typedef struct quic_route_st {
-    QUIC_CONN_ID local;
-    QUIC_CONN_ID remote;
-    uint64_t     seq_no;        /* Sequence number for both ends */
-    unsigned int retired : 1;   /* Connection ID has been retired */
+struct quic_route_st {
+    QUIC_CONNECTION *conn;
+    QUIC_CONN_ID     local;
+    QUIC_CONN_ID     remote;
+    uint64_t         seq_no;        /* Sequence number for both ends */
+    unsigned int     retired : 1;   /* Connection ID has been retired */
 #if 0
     /* Later will require */
-    BIO_ADDR remote_address;    /* remote source address */
-    /* which exposes union bio_addr_st more widely */
+    BIO_ADDR         remote_address;/* remote source address */
 #endif
 };
+
+QUIC_ROUTE_TABLE *ossl_quic_route_new(void);
+void ossl_quic_route_free(QUIC_ROUTE_TABLE *routes);
+```
+
+### Add route to route table
+
+```c
+int ossl_route_add_route(QUIC_ROUTE_TABLE *cache,
+                         QUIC_ROUTE_TABLE *route);
+```
+
+### Route query
+
+```c
+/*
+ * Query a route table entry by either local or remote ID
+ */
+QUIC_ROUTE *ossl_route_get0_local_conn(
+        const QUIC_ROUTE_TABLE *cache,
+        const unsigned char *conn_id, size_t conn_id_len);
+QUIC_ROUTE *ossl_route_get0_remote_conn(
+        const QUIC_ROUTE_TABLE *cache,
+        const unsigned char *conn_id, size_t conn_id_len);
 ```
 
 ### Route retirement
