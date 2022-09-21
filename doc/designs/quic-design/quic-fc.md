@@ -126,7 +126,7 @@ our CWM increased. In other words, it is passed whenever we receive a `MAX_DATA`
 frame, with the integer value contained in that frame (or when we receive the
 `initial_max_data` transport parameter).
 
-The On TX Window Updated event expresses the the CWM (that is, the cumulative
+The On TX Window Updated event expresses the CWM (that is, the cumulative
 number of controlled bytes we are allowed to send since the start of the
 connection), thus it is monotonic and may never regress. If an On TX Window
 Update event is passed to the state machine with a value lower than that passed
@@ -148,7 +148,7 @@ frames.)
 We must not exceed the flow control limits, else the peer may terminate the
 connection with an error.
 
-An initial connection-level credit is communicated by the peer in tthe
+An initial connection-level credit is communicated by the peer in the
 `initial_max_data` transport parameter. All other credits occur as a result of a
 `MAX_DATA` frame.
 
