@@ -237,15 +237,15 @@ struct quic_route_st {
 #endif
 };
 
-QUIC_ROUTE_TABLE *ossl_quic_route_new(void);
-void ossl_quic_route_free(QUIC_ROUTE_TABLE *routes);
+QUIC_ROUTE_TABLE *ossl_quic_route_table_new(void);
+void ossl_quic_route_table_free(QUIC_ROUTE_TABLE *routes);
 ```
 
 ### Add route to route table
 
 ```c
-int ossl_route_add_route(QUIC_ROUTE_TABLE *cache,
-                         QUIC_ROUTE_TABLE *route);
+int ossl_route_table_add_route(QUIC_ROUTE_TABLE *cache,
+                               QUIC_ROUTE_TABLE *route);
 ```
 
 ### Route query
@@ -254,10 +254,10 @@ int ossl_route_add_route(QUIC_ROUTE_TABLE *cache,
 /*
  * Query a route table entry by either local or remote ID
  */
-QUIC_ROUTE *ossl_route_get0_local_conn(
+QUIC_ROUTE *ossl_route_table_get0_route_from_local(
         const QUIC_ROUTE_TABLE *cache,
         const unsigned char *conn_id, size_t conn_id_len);
-QUIC_ROUTE *ossl_route_get0_remote_conn(
+QUIC_ROUTE *ossl_route_table_get0_route_from_remote(
         const QUIC_ROUTE_TABLE *cache,
         const unsigned char *conn_id, size_t conn_id_len);
 ```
@@ -268,14 +268,16 @@ QUIC_ROUTE *ossl_route_get0_remote_conn(
 /*
  * Retire by sequence number up to and including the one specified.
  */
-int ossl_quic_route_retire(QUIC_ROUTE_TABLE *routes, QUIC_CONNECTION *conn,
-                           uint64_t seq_no);
+int ossl_quic_route_table_retire(QUIC_ROUTE_TABLE *routes,
+                                 QUIC_CONNECTION *conn,
+                                 uint64_t seq_no);
 
 /*
  * Delete by sequence number up to and including the one specified.
  */
-int ossl_quic_route_remove(QUIC_ROUTE_TABLE *routes, QUIC_CONNECTION *conn,
-                           uint64_t seq_no);
+int ossl_quic_route_table_remove(QUIC_ROUTE_TABLE *routes,
+                                 QUIC_CONNECTION *conn,
+                                 uint64_t seq_no);
 ```
 
 [5.1]: (https://datatracker.ietf.org/doc/html/rfc9000#section-5.1)
