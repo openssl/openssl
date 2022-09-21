@@ -128,6 +128,10 @@ struct quic_demux_st {
 
     /* Whether to use local address support. */
     char                        use_local_addr;
+
+    /* Stateless reset callback. */
+    ossl_quic_stateless_reset_cb_fn    *stateless_reset_cb;
+    void                               *stateless_reset_cb_arg;
 };
 
 QUIC_DEMUX *ossl_quic_demux_new(BIO *net_bio,
@@ -294,6 +298,14 @@ void ossl_quic_demux_unregister_by_cb(QUIC_DEMUX *demux,
     }
 }
 
+void ossl_quic_demux_set_stateless_reset_cb(QUIC_DEMUX *demux,
+                                            ossl_quic_stateless_reset_cb_fn *cb,
+                                            void *cb_arg)
+{
+    demux->stateless_reset_cb       = cb;
+    demux->stateless_reset_cb_arg   = cb_arg;
+}
+
 static QUIC_URXE *demux_alloc_urxe(size_t alloc_len)
 {
     QUIC_URXE *e;
@@ -408,6 +420,24 @@ static int demux_identify_conn_id(QUIC_DEMUX *demux,
 static QUIC_DEMUX_CONN *demux_identify_conn(QUIC_DEMUX *demux, QUIC_URXE *e)
 {
     QUIC_CONN_ID dst_conn_id;
+
+    /* Determine if this datagram is a stateless reset packet. */
+    if (demux->stateless_reset_cb != NULL
+        && e->data_len >= QUIC_MIN_VALID_PKT_LEN_CRYPTO) {
+        QUIC_DEMUX_RESET_INFO info = {0};
+
+        info.token
+            = ossl_quic_urxe_data(e) + e->data_len - QUIC_STATELESS_RESET_TOKEN_LEN;
+        info.token_len      = QUIC_STATELESS_RESET_TOKEN_LEN;
+        info.peer           = &e->peer;
+
+        if (demux->stateless_reset_cb(&info, demux->stateless_reset_cb_arg))
+            /*
+             * Stateless reset, treat as though an unknown connection. (DCID
+             * will be randomised anyway, so no point looking it up.)
+             */
+            return NULL;
+    }
 
     if (!demux_identify_conn_id(demux, e, &dst_conn_id))
         /*

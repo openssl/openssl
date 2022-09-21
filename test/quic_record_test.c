@@ -26,6 +26,7 @@ static const QUIC_CONN_ID empty_conn_id = {0, {0}};
 #define RX_TEST_OP_CHECK_KEY_EPOCH        10 /* check key epoch value matches */
 #define RX_TEST_OP_KEY_UPDATE_TIMEOUT     11 /* complete key update process */
 #define RX_TEST_OP_SET_INIT_KEY_PHASE     12 /* initial Key Phase bit value */
+#define RX_TEST_OP_ARM_STATELESS_RESET    13 /* match stateless reset token */
 
 struct rx_test_op {
     unsigned char op;
@@ -49,18 +50,18 @@ struct rx_test_op {
 #define RX_OP_INJECT(dgram) \
     { RX_TEST_OP_INJECT, (dgram), sizeof(dgram), NULL, 0, 0, 0, NULL },
 #define RX_OP_PROVIDE_SECRET(el, suite, key)                           \
-    {                                                               \
+    {                                                                  \
         RX_TEST_OP_PROVIDE_SECRET, (key), sizeof(key),                 \
-        NULL, (el), (suite), 0, NULL, NULL                          \
+        NULL, (el), (suite), 0, NULL, NULL                             \
     },
 #define RX_OP_PROVIDE_SECRET_INITIAL(dcid) \
     { RX_TEST_OP_PROVIDE_SECRET_INITIAL, NULL, 0, NULL, 0, 0, 0, &(dcid), NULL },
 #define RX_OP_DISCARD_EL(el) \
     { RX_TEST_OP_DISCARD_EL, NULL, 0, NULL, (el), 0, 0, NULL, NULL },
 #define RX_OP_CHECK_PKT(expect_hdr, expect_body)                       \
-    {                                                               \
+    {                                                                  \
         RX_TEST_OP_CHECK_PKT, (expect_body), sizeof(expect_body),      \
-        &(expect_hdr), 0, 0, 0, NULL, NULL                          \
+        &(expect_hdr), 0, 0, 0, NULL, NULL                             \
     },
 #define RX_OP_CHECK_NO_PKT() \
     { RX_TEST_OP_CHECK_NO_PKT, NULL, 0, NULL, 0, 0, 0, NULL, NULL },
@@ -70,6 +71,11 @@ struct rx_test_op {
     { RX_TEST_OP_KEY_UPDATE_TIMEOUT, NULL, 0, NULL, (normal), 0, 0, NULL },
 #define RX_OP_SET_INIT_KEY_PHASE(kp_bit) \
     { RX_TEST_OP_SET_INIT_KEY_PHASE, NULL, 0, NULL, (kp_bit), 0, 0, NULL },
+#define RX_OP_ARM_STATELESS_RESET(token)                                \
+    {                                                                   \
+      RX_TEST_OP_ARM_STATELESS_RESET, (token), sizeof(token), NULL,     \
+      0, 0, 0, NULL, NULL                                               \
+    },
 
 #define RX_OP_INJECT_N(n)                                          \
     RX_OP_INJECT(rx_script_##n##_in)
@@ -1609,6 +1615,37 @@ static const struct rx_test_op rx_script_8[] = {
     RX_OP_END
 };
 
+/* 9. Stateless Reset Processing */
+static const unsigned char reset_token_zero[16] = {0};
+
+static const unsigned char reset_token_9[] = {
+    /* Last 16 bytes of datagram 1 */
+    0x3d, 0x20, 0x39, 0x8c, 0x27, 0x64, 0x56, 0xcb, 0xc4, 0x21, 0x58, 0x40,
+    0x7d, 0xd0, 0x74, 0xee
+};
+
+static const struct rx_test_op rx_script_9[] = {
+    /* Reuse datagram 1. Check we can receive it normally. */
+    RX_OP_SET_SCID_LEN(2)
+    RX_OP_SET_INIT_LARGEST_PN(0)
+    RX_OP_ADD_RX_DCID(empty_conn_id)
+    RX_OP_PROVIDE_SECRET_INITIAL(rx_script_1_dcid)
+    RX_OP_INJECT_CHECK(1)
+    RX_OP_CHECK_NO_PKT()
+
+    /* And again */
+    RX_OP_ARM_STATELESS_RESET(reset_token_zero)
+    RX_OP_INJECT_CHECK(1)
+    RX_OP_CHECK_NO_PKT()
+
+    /* This time, it should be recognised as a stateless reset */
+    RX_OP_ARM_STATELESS_RESET(reset_token_9)
+    RX_OP_INJECT_N(1)
+    RX_OP_CHECK_NO_PKT()
+
+    RX_OP_END
+};
+
 static const struct rx_test_op *rx_scripts[] = {
     rx_script_1,
     rx_script_2,
@@ -1617,7 +1654,8 @@ static const struct rx_test_op *rx_scripts[] = {
     rx_script_5,
     rx_script_6,
     rx_script_7,
-    rx_script_8
+    rx_script_8,
+    rx_script_9
 };
 
 static int cmp_pkt_hdr(const QUIC_PKT_HDR *a, const QUIC_PKT_HDR *b,
@@ -1663,6 +1701,8 @@ struct rx_state {
     QUIC_DEMUX     *demux;
     OSSL_QRX       *qrx;
     OSSL_QRX_ARGS   args;
+    char            stateless_reset_fail, stateless_reset_armed;
+    unsigned char   expect_stateless_reset_token[QUIC_STATELESS_RESET_TOKEN_LEN];
 };
 
 static void rx_state_teardown(struct rx_state *s)
@@ -1690,6 +1730,23 @@ static OSSL_TIME fake_time(void *arg)
     return expected_time(++time_counter);
 }
 
+static int stateless_reset_cb(const QUIC_DEMUX_RESET_INFO *info, void *arg)
+{
+    struct rx_state *s = arg;
+
+    if (!TEST_size_t_eq(info->token_len, QUIC_STATELESS_RESET_TOKEN_LEN)
+        || !TEST_ptr(info->peer)) {
+        s->stateless_reset_fail = 1;
+        return 0;
+    }
+
+    if (s->stateless_reset_armed
+        && !CRYPTO_memcmp(s->expect_stateless_reset_token, info->token, info->token_len))
+        return 1;
+
+    return 0;
+}
+
 static int rx_state_ensure(struct rx_state *s)
 {
     if (s->demux == NULL
@@ -1699,6 +1756,8 @@ static int rx_state_ensure(struct rx_state *s)
                                                     fake_time,
                                                     NULL)))
         return 0;
+
+    ossl_quic_demux_set_stateless_reset_cb(s->demux, stateless_reset_cb, s);
 
     s->args.demux           = s->demux;
     s->args.max_deferred    = 32;
@@ -1818,10 +1877,22 @@ static int rx_run_script(const struct rx_test_op *script)
                 rx_state_teardown(&s);
                 s.args.init_key_phase_bit = (unsigned char)op->enc_level;
                 break;
+            case RX_TEST_OP_ARM_STATELESS_RESET:
+                if (!TEST_true(rx_state_ensure(&s))
+                    || !TEST_size_t_eq(op->buf_len, QUIC_STATELESS_RESET_TOKEN_LEN))
+                    goto err;
+
+                memcpy(s.expect_stateless_reset_token, op->buf,
+                       QUIC_STATELESS_RESET_TOKEN_LEN);
+                s.stateless_reset_armed = 1;
+                break;
             default:
                 OPENSSL_assert(0);
                 goto err;
         }
+
+    if (!TEST_false(s.stateless_reset_fail))
+        goto err;
 
     testresult = 1;
 err:

@@ -107,6 +107,8 @@ ossl_quic_pkt_type_must_be_last(uint32_t pkt_type)
 #define QUIC_MIN_VALID_PKT_LEN_VERSION_NEG  7
 #define QUIC_MIN_VALID_PKT_LEN              QUIC_MIN_VALID_PKT_LEN_VERSION_NEG
 
+#define QUIC_STATELESS_RESET_TOKEN_LEN     16
+
 typedef struct quic_pkt_hdr_ptrs_st QUIC_PKT_HDR_PTRS;
 
 /*

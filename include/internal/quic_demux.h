@@ -238,6 +238,41 @@ void ossl_quic_demux_unregister_by_cb(QUIC_DEMUX *demux,
                                       void *cb_arg);
 
 /*
+ * Sets a callback for stateless reset processing.
+ *
+ * This callback, if set, is called for every received datagram. info->token and
+ * info->token_len points to a sequence of bytes which are potentially a
+ * stateless reset token. (In current versions of QUIC, token_len is always 16.)
+ * info->peer points to the remote address from which the datagram was received.
+ *
+ * The callback must return 0 if info->token is not a stateless reset token for
+ * the given source IP and 1 if it is. If this function returns 1, the datagram
+ * is not processed as an ordinary packet and not passed to any QRX instance,
+ * and the processing of the datagram stops. The callback is expected to note
+ * that a stateless reset has occurred and perform whatever work is necessary to
+ * handle this case. If the callback returns 0, the datagram is processed
+ * normally and handed off to a QRX instance if possible.
+ *
+ * The info structure and the fields referenced from it are guaranteed to be
+ * valid only for the duration of the callback.
+ *
+ * IMPORTANT: The implementation of this callback must not expose timing
+ * channels for stateless reset tokens.
+ */
+typedef struct quic_demux_reset_info_st {
+    const unsigned char    *token;
+    size_t                  token_len;
+    const BIO_ADDR         *peer;
+} QUIC_DEMUX_RESET_INFO;
+
+typedef int (ossl_quic_stateless_reset_cb_fn)(const QUIC_DEMUX_RESET_INFO *info,
+                                              void *arg);
+
+void ossl_quic_demux_set_stateless_reset_cb(QUIC_DEMUX *demux,
+                                            ossl_quic_stateless_reset_cb_fn *cb,
+                                            void *cb_arg);
+
+/*
  * Releases a URXE back to the demuxer. No reference must be made to the URXE or
  * its buffer after calling this function. The URXE must not be in any queue;
  * that is, its prev and next pointers must be NULL.
