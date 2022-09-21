@@ -29,6 +29,7 @@
 #include <math.h>
 #include "apps.h"
 #include "progs.h"
+#include "internal/nelem.h"
 #include "internal/numbers.h"
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
@@ -85,8 +86,6 @@
 #ifndef RSA_DEFAULT_PRIME_NUM
 # define RSA_DEFAULT_PRIME_NUM 2
 #endif
-
-#define NELEM(x) (int)(sizeof(x) / sizeof((x)[0]))
 
 typedef struct openssl_speed_sec_st {
     int sym;
@@ -3484,6 +3483,7 @@ static int do_multi(int multi, int size_num)
         FILE *f;
         char buf[1024];
         char *p;
+        char *tk;
         int k;
         double d;
 
@@ -3510,7 +3510,8 @@ static int do_multi(int multi, int size_num)
                         results[alg][j] += atof(sstrsep(&p, sep));
                 }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F2:")) {
-                if (strtoint(sstrsep(&p, sep), 0, NELEM(rsa_results), &k)) {
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(rsa_results), &k)) {
                     sstrsep(&p, sep);
 
                     d = atof(sstrsep(&p, sep));
@@ -3520,7 +3521,8 @@ static int do_multi(int multi, int size_num)
                     rsa_results[k][1] += d;
                 }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F3:")) {
-                if (strtoint(sstrsep(&p, sep), 0, NELEM(dsa_results), &k)) {
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(dsa_results), &k)) {
                     sstrsep(&p, sep);
 
                     d = atof(sstrsep(&p, sep));
@@ -3530,7 +3532,8 @@ static int do_multi(int multi, int size_num)
                     dsa_results[k][1] += d;
                 }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F4:")) {
-                if (strtoint(sstrsep(&p, sep), 0, NELEM(ecdsa_results), &k)) {
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(ecdsa_results), &k)) {
                     sstrsep(&p, sep);
 
                     d = atof(sstrsep(&p, sep));
@@ -3540,14 +3543,16 @@ static int do_multi(int multi, int size_num)
                     ecdsa_results[k][1] += d;
                 }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F5:")) {
-                if (strtoint(sstrsep(&p, sep), 0, NELEM(ecdh_results), &k)) {
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(ecdh_results), &k)) {
                     sstrsep(&p, sep);
 
                     d = atof(sstrsep(&p, sep));
                     ecdh_results[k][0] += d;
                 }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F6:")) {
-                if (strtoint(sstrsep(&p, sep), 0, NELEM(eddsa_results), &k)) {
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(eddsa_results), &k)) {
                     sstrsep(&p, sep);
                     sstrsep(&p, sep);
 
@@ -3559,7 +3564,8 @@ static int do_multi(int multi, int size_num)
                 }
 # ifndef OPENSSL_NO_SM2
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F7:")) {
-                if (strtoint(sstrsep(&p, sep), 0, NELEM(sm2_results), &k)) {
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(sm2_results), &k)) {
                     sstrsep(&p, sep);
                     sstrsep(&p, sep);
 
@@ -3572,7 +3578,8 @@ static int do_multi(int multi, int size_num)
 # endif /* OPENSSL_NO_SM2 */
 # ifndef OPENSSL_NO_DH
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F8:")) {
-                if (strtoint(sstrsep(&p, sep), 0, NELEM(ffdh_results), &k)) {
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(ffdh_results), &k)) {
                     sstrsep(&p, sep);
 
                     d = atof(sstrsep(&p, sep));
