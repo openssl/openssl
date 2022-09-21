@@ -670,7 +670,7 @@ Don't build support for binary Elliptic Curves
 
 ### enable-ec_nistp_64_gcc_128
 
-Enable support for optimised implementations of some commonly used NIST
+Enable support for optimized implementations of some commonly used NIST
 elliptic curves.
 
 This option is only supported on platforms:
@@ -1005,7 +1005,7 @@ The `ripemd` algorithm is deprecated and if used is synonymous with `rmd160`.
 
     -Dxxx, -Ixxx, -Wp, -lxxx, -Lxxx, -Wl, -rpath, -R, -framework, -static
 
-These system specific options will be recognised and passed through to the
+These system specific options will be recognized and passed through to the
 compiler to allow you to define preprocessor symbols, specify additional
 libraries, library directories or other compiler options.  It might be worth
 noting that some compilers generate code specifically for processor the
@@ -1018,7 +1018,7 @@ below and how these flags interact with those variables.
 
     -xxx, +xxx, /xxx
 
-Additional options that are not otherwise recognised are passed through as
+Additional options that are not otherwise recognized are passed through as
 they are to the compiler as well.  Unix-style options beginning with a
 `-` or `+` and Windows-style options beginning with a `/` are recognized.
 Again, consult your compiler documentation.
