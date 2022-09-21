@@ -153,7 +153,7 @@ metadata associated with it:
   to the `TX` state. If the packet it was sent in is subsequently lost,
   it is transitioned back to the `NEW` state.
 
-Packets in the `NEW` state participate in a priority queue (the NEW queue)
+Frames in the `NEW` state participate in a priority queue (the NEW queue)
 according to their priority and the CFQ's NEW queue can be iterated in priority
 order by callers.
 
@@ -324,9 +324,9 @@ allocation made per transmitted packet. The TX packetiser will obtain
 a `QUIC_TXPIM_PKT` structure from the TXPIM, fill in the structure including
 the ACK Manager data, and submit it via the FIFD which we introduce below.
 
-The TXPIM does not anything with the `QUIC_TXPIM_PKT` structure itself
-other than managing its allocation and manipulation. Constructive
-use of the data kept in the TXPIM is made by the FIFD.
+The TXPIM does do not anything with the `QUIC_TXPIM_PKT` structure itself other
+than managing its allocation and manipulation. Constructive use of the data kept
+in the TXPIM is made by the FIFD.
 
 ### API
 
