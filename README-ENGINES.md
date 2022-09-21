@@ -53,7 +53,7 @@ user/admin the set of commands and parameter types a given ENGINE
 implementation supports, and for an application to directly feed string
 based input to those ENGINEs, in the form of name-value pairs. This is an
 extensible way for ENGINEs to define their own "configuration" mechanisms
-that are specific to a given ENGINE (eg. for a particular hardware
+that are specific to a given ENGINE (e.g. for a particular hardware
 device) but that should be consistent across *all* OpenSSL-based
 applications when they use that ENGINE. Work is in progress (or at least
 in planning) for supporting these control commands from the CONF (or
@@ -136,7 +136,7 @@ applications. This could be because existing compiled-in implementations
 have known problems and you wish to use a newer version with an existing
 application. It could equally be because the application (or OpenSSL
 library) you are using simply doesn't have support for the ENGINE you
-wish to use, and the ENGINE provider (eg. hardware vendor) is providing
+wish to use, and the ENGINE provider (e.g. hardware vendor) is providing
 you with a self-contained implementation in the form of a shared-library.
 The other use-case for "dynamic" is with applications that wish to
 maintain the smallest foot-print possible and so do not link in various
@@ -185,7 +185,7 @@ the shared-library ENGINE implementation. If this command succeeds, the
 (copy of the) 'dynamic' ENGINE will magically morph into the ENGINE
 that has been loaded from the shared-library. As such, any control
 commands supported by the loaded ENGINE could then be executed as per
-normal. Eg. if ENGINE "foo" is implemented in the shared-library
+normal. E.g. if ENGINE "foo" is implemented in the shared-library
 "libfoo.so" and it supports some special control command "CMD_FOO", the
 following code would load and use it (NB: obviously this code has no
 error checking);
@@ -197,7 +197,7 @@ error checking);
     ENGINE_ctrl_cmd_string(e, "CMD_FOO", "some input data", 0);
 
 For testing, the "openssl engine" utility can be useful for this sort
-of thing. For example the above code excerpt would achieve much the
+of thing. For example, the above code excerpt would achieve much the
 same result as;
 
     openssl engine dynamic \
@@ -218,21 +218,21 @@ Applications that support the ENGINE API and more specifically, the
 such commands through to ENGINEs. As such, you would select "dynamic"
 as the ENGINE to use, and the parameters/commands you pass would
 control the *actual* ENGINE used. Each command is actually a name-value
-pair and the value can sometimes be omitted (eg. the "LOAD" command).
+pair and the value can sometimes be omitted (e.g. the "LOAD" command).
 Whilst the syntax demonstrated in "openssl engine" uses a colon to
 separate the command name from the value, applications may provide
-their own syntax for making that separation (eg. a win32 registry
+their own syntax for making that separation (e.g. a win32 registry
 key-value pair may be used by some applications). The reason for the
 "-pre" syntax in the "openssl engine" utility is that some commands
-might be issued to an ENGINE *after* it has been initialised for use.
-Eg. if an ENGINE implementation requires a smart-card to be inserted
-during initialisation (or a PIN to be typed, or whatever), there may be
+might be issued to an ENGINE *after* it has been initialized for use.
+E.g. if an ENGINE implementation requires a smart-card to be inserted
+during initialization (or a PIN to be typed, or whatever), there may be
 a control command you can issue afterwards to "forget" the smart-card
-so that additional initialisation is no longer possible. In
+so that additional initialization is no longer possible. In
 applications such as web-servers, where potentially volatile code may
 run on the same host system, this may provide some arguable security
 value. In such a case, the command would be passed to the ENGINE after
-it has been initialised for use, and so the "-post" switch would be
+it has been initialized for use, and so the "-post" switch would be
 used instead. Applications may provide a different syntax for
 supporting this distinction, and some may simply not provide it at all
 ("-pre" is almost always what you're after, in reality).
@@ -256,7 +256,7 @@ overheads from only *that* ENGINE once it has been loaded.
 
 Sounds good? Maybe, but currently building an ENGINE implementation as
 a shared-library that can be loaded by "dynamic" isn't automated in
-OpenSSL's build process. It can be done manually quite easily however.
+OpenSSL's build process. It can be done manually quite easily, however.
 Such a shared-library can either be built with any OpenSSL code it
 needs statically linked in, or it can link dynamically against OpenSSL
 if OpenSSL itself is built as a shared library. The instructions are
@@ -273,8 +273,8 @@ ENGINE.
   1. "cd" to the crypto/engine/ directory of a pre-compiled OpenSSL
      source tree.
 
-  2. Recompile at least one source file so you can see all the compiler
-     flags (and syntax) being used to build normally. Eg;
+  2. Recompile at least one source file, so you can see all the compiler
+     flags (and syntax) being used to build normally. E.g;
 
          touch hw_atalla.c ; make
 
@@ -284,7 +284,7 @@ ENGINE.
      "hw_atalla.c" file but with the following two changes;
       * add "-DENGINE_DYNAMIC_SUPPORT" to the command line switches,
       * change the output file from "hw_atalla.o" to something new,
-        eg. "tmp_atalla.o"
+        e.g. "tmp_atalla.o"
 
   4. Link "tmp_atalla.o" into a shared-library using the top-level
      OpenSSL libraries to resolve any dependencies. The syntax for doing
@@ -295,7 +295,7 @@ ENGINE.
          gcc -shared -o dyn_atalla.so tmp_atalla.o -L../.. -lcrypto
 
   5. Test your shared library using "openssl engine" as explained in the
-     previous section. Eg. from the top-level directory, you might try
+     previous section. E.g. from the top-level directory, you might try
 
          apps/openssl engine -vvvv dynamic \
                -pre SO_PATH:./crypto/engine/dyn_atalla.so -pre LOAD
@@ -304,7 +304,7 @@ If the shared-library loads successfully, you will see both "-pre"
 commands marked as "SUCCESS" and the list of control commands
 displayed (because of "-vvvv") will be the control commands for the
 *atalla* ENGINE (ie. *not* the 'dynamic' ENGINE). You can also add
-the "-t" switch to the utility if you want it to try and initialise
+the "-t" switch to the utility if you want it to try and initialize
 the atalla ENGINE for use to test any possible hardware/driver issues.
 
 PROBLEMS
