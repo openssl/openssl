@@ -63,8 +63,8 @@ Source code tarballs of the official releases can be downloaded from
 The OpenSSL project does not distribute the toolkit in binary form.
 
 However, for a large variety of operating systems precompiled versions
-of the OpenSSL toolkit are available. In particular on Linux and other
-Unix operating systems it is normally recommended to link against the
+of the OpenSSL toolkit are available. In particular, on Linux and other
+Unix operating systems, it is normally recommended to link against the
 precompiled shared libraries provided by the distributor or vendor.
 
 For Testing and Development
@@ -94,7 +94,7 @@ GitHub and clone your public fork instead.
 
     git clone https://github.com/yourname/openssl.git
 
-This is necessary, because all development of OpenSSL nowadays is done via
+This is necessary because all development of OpenSSL nowadays is done via
 GitHub pull requests. For more details, see [Contributing](#contributing).
 
 Build and Install
@@ -133,7 +133,7 @@ Wiki
 ----
 
 There is a Wiki at [wiki.openssl.org] which is currently not very active.
-It contains a lot of useful information, not all of which is up to date.
+It contains a lot of useful information, not all of which is up-to-date.
 
 License
 =======
@@ -148,7 +148,7 @@ Support
 =======
 
 There are various ways to get in touch. The correct channel depends on
-your requirement. see the [SUPPORT](SUPPORT.md) file for more details.
+your requirement. See the [SUPPORT](SUPPORT.md) file for more details.
 
 Contributing
 ============
@@ -160,7 +160,7 @@ Legalities
 ==========
 
 A number of nations restrict the use or export of cryptography. If you are
-potentially subject to such restrictions you should seek legal advice before
+potentially subject to such restrictions, you should seek legal advice before
 attempting to develop or distribute cryptographic code.
 
 Copyright
