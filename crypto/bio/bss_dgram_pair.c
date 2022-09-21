@@ -19,7 +19,7 @@
  * bytes at a time.
  */
 struct ring_buf {
-    void *start; /* start of buffer, never changes */
+    unsigned char *start; /* start of buffer, never changes */
     size_t len; /* size of buffer allocation in bytes */
     size_t count; /* number of bytes currently pushed */
     /*
@@ -60,9 +60,9 @@ static void ring_buf_head_tail(struct ring_buf *r, int idx, uint8_t **buf, size_
 {
     size_t max_len = r->len - r->idx[idx];
 
-    if (!idx && max_len > r->len - r->count)
+    if (idx == 0 && max_len > r->len - r->count)
         max_len = r->len - r->count;
-    if (idx && max_len > r->count)
+    if (idx == 1 && max_len > r->count)
         max_len = r->count;
 
     *buf = (uint8_t *)r->start + r->idx[idx];
@@ -108,12 +108,6 @@ static void ring_buf_push_pop(struct ring_buf *r, int idx, size_t num_bytes)
 
 #define ring_buf_push(r, num_bytes) ring_buf_push_pop((r), 0, (num_bytes))
 #define ring_buf_pop(r, num_bytes) ring_buf_push_pop((r), 1, (num_bytes))
-
-/* Returns number of bytes currently queued in the buffer. */
-static ossl_unused ossl_inline size_t ring_buf_count(const struct ring_buf *r)
-{
-    return r->count;
-}
 
 static void ring_buf_clear(struct ring_buf *r)
 {
@@ -426,7 +420,6 @@ static size_t dgram_pair_ctrl_pending(BIO *bio)
     CRYPTO_THREAD_unlock(peerb->lock);
 
     if (!ossl_assert(l == 0 || l == sizeof(hdr)))
-        /* Should not be possible */
         return 0;
 
     return l > 0 ? hdr.len : 0;
@@ -553,7 +546,6 @@ static long dgram_pair_ctrl(BIO *bio, int cmd, long num, void *ptr)
         return 0;
 
     switch (cmd) {
-
     /*
      * BIO_set_write_buf_size: Set the size of the ring buffer used for storing
      * datagrams. No more writes can be performed once the buffer is filled up,
@@ -854,8 +846,11 @@ static int dgram_pair_lock_both_write(struct bio_dgram_pair_st *a,
     x = (a->role == 1) ? a : b;
     y = (a->role == 1) ? b : a;
 
-    OPENSSL_assert(a->role != b->role);
-    OPENSSL_assert(a != b && x != y);
+    if (!ossl_assert(a->role != b->role))
+        return 0;
+
+    if (!ossl_assert(a != b && x != y))
+        return 0;
 
     if (CRYPTO_THREAD_write_lock(x->lock) == 0)
         return 0;

@@ -68,8 +68,5 @@
 # define BIO_R_WSASTARTUP                                 122
 # define BIO_R_PORT_MISMATCH                              150
 # define BIO_R_PEER_ADDR_NOT_AVAILABLE                    151
-# define BIO_R_LOCAL_ADDR_NOT_AVAILABLE                   148
-# define BIO_R_NON_FATAL                                  149
-# define BIO_R_PEER_ADDR_NOT_AVAILABLE                    152
 
 #endif
