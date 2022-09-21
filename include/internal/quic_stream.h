@@ -38,9 +38,9 @@
  *     data which can be written to a stream is not infinite and to allow the
  *     caller to manifest backpressure conditions to the user.
  *
- * The QSS is instantiated once for every stream with a send component (i.e.,
- * for a unidirectional send stream or for the send component of a bidirectional
- * stream).
+ * The QUIC_SSTREAM is instantiated once for every stream with a send component
+ * (i.e., for a unidirectional send stream or for the send component of a
+ * bidirectional stream).
  *
  * Note: The terms 'TX' and 'RX' are used when referring to frames, packets and
  * datagrams. The terms 'send' and 'receive' are used when referring to the
@@ -49,13 +49,13 @@
 typedef struct quic_sstream_st QUIC_SSTREAM;
 
 /*
- * Instantiates a new QSS. init_buf_size specifies the initial size of the
- * stream data buffer in bytes, which must be positive.
+ * Instantiates a new QUIC_SSTREAM. init_buf_size specifies the initial size of
+ * the stream data buffer in bytes, which must be positive.
  */
 QUIC_SSTREAM *ossl_quic_sstream_new(size_t init_buf_size);
 
 /*
- * Frees a QSS and associated stream data storage.
+ * Frees a QUIC_SSTREAM and associated stream data storage.
  *
  * Any iovecs returned by ossl_quic_sstream_get_stream_frame cease to be valid after
  * calling this function.
@@ -154,7 +154,7 @@ int ossl_quic_sstream_mark_transmitted(QUIC_SSTREAM *qss,
  *
  * This function fails returning 0 if ossl_quic_sstream_fin() has not been called or if
  * final_size is not correct. The final_size argument is not strictly needed by
- * the QSS but is required as a sanity check.
+ * the QUIC_SSTREAM but is required as a sanity check.
  */
 int ossl_quic_sstream_mark_transmitted_fin(QUIC_SSTREAM *qss,
                                            uint64_t final_size);
@@ -175,8 +175,8 @@ int ossl_quic_sstream_mark_lost(QUIC_SSTREAM *qss,
                                 uint64_t end);
 
 /*
- * (RX/ACKM use.) Informs the QSS that a STREAM frame with the FIN bit set was
- * lost.
+ * (RX/ACKM use.) Informs the QUIC_SSTREAM that a STREAM frame with the FIN bit
+ * set was lost.
  *
  * Returns 1 on success and 0 on error.
  */
@@ -199,8 +199,8 @@ int ossl_quic_sstream_mark_acked(QUIC_SSTREAM *qss,
                                  uint64_t end);
 
 /*
- * (RX/ACKM use.) Informs the QSS that a STREAM frame with the FIN bit set
- * was acknowledged.
+ * (RX/ACKM use.) Informs the QUIC_SSTREAM that a STREAM frame with the FIN bit
+ * set was acknowledged.
  *
  * Returns 1 on success and 0 on error.
  */

@@ -1,3 +1,12 @@
+/*
+ * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 #include "internal/quic_stream.h"
 #include "internal/uint_set.h"
 #include "internal/common.h"
@@ -154,8 +163,10 @@ static int ring_buf_resize(struct ring_buf *r, size_t num_bytes)
     rnew.ctail_offset   = rnew.head_offset;
 
     for (;;) {
-        if (!ring_buf_get_buf_at(r, r->ctail_offset + copied, &src, &src_len))
+        if (!ring_buf_get_buf_at(r, r->ctail_offset + copied, &src, &src_len)) {
+            OPENSSL_free(rnew.start);
             return 0;
+        }
 
         if (src_len == 0)
             break;
@@ -178,7 +189,7 @@ static int ring_buf_resize(struct ring_buf *r, size_t num_bytes)
 
 /*
  * ==================================================================
- * QSS
+ * QUIC Send Stream
  */
 struct quic_sstream_st {
     struct ring_buf ring_buf;
