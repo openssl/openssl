@@ -128,6 +128,26 @@ typedef struct ossl_qtx_pkt_st {
 
     /* Packet flags. Zero or more OSSL_QTX_PKT_FLAG_* values. */
     uint32_t                    flags;
+
+    /*
+     * Stateless reset support. If this field is non-NULL,
+     * stateless_reset_token_len must equal QUIC_STATELESS_RESET_TOKEN_LEN,
+     * and the last 16 bytes of the packet will be overwritten with the
+     * specified data.
+     *
+     * Note that packet transmission otherwise works exactly as normal. The
+     * payload will still be encrypted from the iovecs. Since a stateless reset
+     * packet cannot be decrypted (after all, the AEAD tag is overwritten by the
+     * stateless reset token), callers will usually want to specify a zero
+     * buffer as the payload to be encrypted. This design has been chosen as
+     * stateless reset packets are intended to look as similar to ordinary
+     * packets as possible; moreover by keeping the path for the transmission of
+     * stateless reset packets as similar as possible to that for ordinary
+     * packets, timing channels are minimised. Callers can control the size of
+     * the stateless reset packet by choosing the length of the payload.
+     */
+    const unsigned char        *stateless_reset_token;
+    size_t                      stateless_reset_token_len;
 } OSSL_QTX_PKT;
 
 /*

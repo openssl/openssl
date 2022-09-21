@@ -2955,7 +2955,8 @@ static const OSSL_QTX_PKT tx_script_1_pkt = {
     OSSL_NELEM(tx_script_1_iovec),
     NULL, NULL,
     2,
-    0
+    0,
+    NULL, 0
 };
 
 static const struct tx_test_op tx_script_1[] = {
@@ -3018,7 +3019,8 @@ static const OSSL_QTX_PKT tx_script_2_pkt = {
     OSSL_NELEM(tx_script_2_iovec),
     NULL, NULL,
     1,
-    0
+    0,
+    NULL, 0
 };
 
 static const struct tx_test_op tx_script_2[] = {
@@ -3067,7 +3069,8 @@ static const OSSL_QTX_PKT tx_script_3_pkt = {
     OSSL_NELEM(tx_script_3_iovec),
     NULL, NULL,
     654360564,
-    0
+    0,
+    NULL, 0
 };
 
 static const struct tx_test_op tx_script_3[] = {
@@ -3122,7 +3125,8 @@ static const OSSL_QTX_PKT tx_script_4a_pkt = {
     OSSL_NELEM(tx_script_4a_iovec),
     NULL, NULL,
     4,
-    0
+    0,
+    NULL, 0
 };
 
 static const unsigned char tx_script_4b_body[] = {
@@ -3164,7 +3168,8 @@ static const OSSL_QTX_PKT tx_script_4b_pkt = {
     OSSL_NELEM(tx_script_4b_iovec),
     NULL, NULL,
     5,
-    0
+    0,
+    NULL, 0
 };
 
 static const unsigned char tx_script_4c_body[] = {
@@ -3206,7 +3211,8 @@ static const OSSL_QTX_PKT tx_script_4c_pkt = {
     OSSL_NELEM(tx_script_4c_iovec),
     NULL, NULL,
     10,
-    0
+    0,
+    NULL, 0
 };
 
 static const struct tx_test_op tx_script_4[] = {
@@ -3275,7 +3281,8 @@ static const OSSL_QTX_PKT tx_script_5_pkt = {
     OSSL_NELEM(tx_script_5_iovec),
     NULL, NULL,
     0,
-    0
+    0,
+    NULL, 0
 };
 
 static const struct tx_test_op tx_script_5[] = {
@@ -3326,11 +3333,69 @@ static const OSSL_QTX_PKT tx_script_6_pkt = {
     OSSL_NELEM(tx_script_6_iovec),
     NULL, NULL,
     0,
-    0
+    0,
+    NULL, 0
 };
 
 static const struct tx_test_op tx_script_6[] = {
     TX_OP_WRITE_CHECK(6)
+    TX_OP_END
+};
+
+/* 7. Stateless Reset Transmission */
+static const unsigned char tx_script_7_body[] = {
+    0x01
+};
+
+static const unsigned char tx_script_7_dgram[] = {
+    0x4c, 0xfe, 0x41, 0x89, 0x65,
+    0x7b, 0xcd, 0x64, 0x94, 0x35, 0x53, 0x67, 0x3c, 0x13, 0x24, 0xd1, 0x23,
+    0x9c, 0x28, 0x7a, 0x2e
+};
+
+static const unsigned char tx_script_7_secret[] = {
+    0x9a, 0xc3, 0x12, 0xa7, 0xf8, 0x77, 0x46, 0x8e, 0xbe, 0x69, 0x42, 0x27,
+    0x48, 0xad, 0x00, 0xa1, 0x54, 0x43, 0xf1, 0x82, 0x03, 0xa0, 0x7d, 0x60,
+    0x60, 0xf6, 0x88, 0xf3, 0x0f, 0x21, 0x63, 0x2b
+};
+
+static QUIC_PKT_HDR tx_script_7_hdr = {
+    QUIC_PKT_TYPE_1RTT,         /* type */
+    0,                          /* spin bit */
+    0,                          /* key phase */
+    3,                          /* PN length */
+    0,                          /* partial */
+    0,                          /* fixed */
+    0,                          /* version */
+    { 0, {0} },                 /* DCID */
+    { 0, {0} },                 /* SCID */
+    { 0 },                      /* PN */
+    NULL, 0,                    /* Token */
+    5555, NULL                  /* Len/Data */
+};
+
+static const OSSL_QTX_IOVEC tx_script_7_iovec[] = {
+    { tx_script_7_body, sizeof(tx_script_7_body) }
+};
+
+static const unsigned char tx_script_7_token[] = {
+    0x7b, 0xcd, 0x64, 0x94, 0x35, 0x53, 0x67, 0x3c, 0x13, 0x24, 0xd1, 0x23,
+    0x9c, 0x28, 0x7a, 0x2e
+};
+
+static const OSSL_QTX_PKT tx_script_7_pkt = {
+    &tx_script_7_hdr,
+    tx_script_7_iovec,
+    OSSL_NELEM(tx_script_7_iovec),
+    NULL, NULL,
+    654360564,
+    0,
+    tx_script_7_token, sizeof(tx_script_7_token)
+};
+
+static const struct tx_test_op tx_script_7[] = {
+    TX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_CHACHA20POLY1305, tx_script_7_secret)
+    TX_OP_WRITE_CHECK(7)
     TX_OP_END
 };
 
@@ -3340,7 +3405,8 @@ static const struct tx_test_op *const tx_scripts[] = {
     tx_script_3,
     tx_script_4,
     tx_script_5,
-    tx_script_6
+    tx_script_6,
+    tx_script_7
 };
 
 static int tx_run_script(const struct tx_test_op *script)

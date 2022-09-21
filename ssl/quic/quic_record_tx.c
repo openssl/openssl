@@ -607,6 +607,15 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
         const unsigned char *src;
         size_t src_len;
 
+        if (pkt->stateless_reset_token != NULL) {
+            /*
+             * Does not make sense to specify a stateless reset token for an
+             * unencrypted packet.
+             */
+            ret = QTX_FAIL_GENERIC;
+            goto err;
+        }
+
         for (;;) {
             /* Buffer length has already been checked above. */
             src_len = iovec_cur_get_buffer(&cur, &src, SIZE_MAX);
@@ -625,6 +634,17 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
         }
 
         assert(txe->data_len - orig_data_len == pkt_len);
+
+        if (pkt->stateless_reset_token != NULL) {
+            if (pkt->stateless_reset_token_len != QUIC_STATELESS_RESET_TOKEN_LEN) {
+                ret = QTX_FAIL_GENERIC;
+                goto err;
+            }
+
+            memcpy(txe_data(txe) + txe->data_len - pkt->stateless_reset_token_len,
+                   pkt->stateless_reset_token,
+                   pkt->stateless_reset_token_len);
+        }
     }
 
     return 1;
