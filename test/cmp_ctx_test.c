@@ -108,6 +108,21 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
     return res;
 }
 
+static int test_CTX_libctx_propq(void)
+{
+    OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new();
+    const char *propq = "?provider=legacy";
+    OSSL_CMP_CTX *cmpctx = OSSL_CMP_CTX_new(libctx, propq);
+    int res = TEST_ptr(libctx)
+        && TEST_ptr(cmpctx)
+        && TEST_ptr_eq(libctx, OSSL_CMP_CTX_get0_libctx(cmpctx))
+        && TEST_str_eq(propq, OSSL_CMP_CTX_get0_propq(cmpctx));
+
+    OSSL_CMP_CTX_free(cmpctx);
+    OSSL_LIB_CTX_free(libctx);
+    return res;
+}
+
 static int test_CTX_reinit(void)
 {
     SETUP_TEST_FIXTURE(OSSL_CMP_CTX_TEST_FIXTURE, set_up);
@@ -794,8 +809,8 @@ int setup_tests(void)
         return 0;
     }
 
-    /* OSSL_CMP_CTX_new() is tested by set_up() */
-    /* OSSL_CMP_CTX_free() is tested by tear_down() */
+    /* also tests OSSL_CMP_CTX_new() and OSSL_CMP_CTX_free(): */
+    ADD_TEST(test_CTX_libctx_propq);
     ADD_TEST(test_CTX_reinit);
 
     /* various CMP options: */

@@ -264,6 +264,8 @@ void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
 OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq);
 void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx);
 int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx);
+OSSL_LIB_CTX *OSSL_CMP_CTX_get0_libctx(const OSSL_CMP_CTX *ctx);
+const char *OSSL_CMP_CTX_get0_propq(const OSSL_CMP_CTX *ctx);
 /* CMP general options: */
 #  define OSSL_CMP_OPT_LOG_VERBOSITY 0
 /* CMP transfer options: */
