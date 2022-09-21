@@ -5,6 +5,7 @@
 OSSL_CMP_CTX_new,
 OSSL_CMP_CTX_free,
 OSSL_CMP_CTX_reinit,
+OSSL_CMP_CTX_get0_libctx, OSSL_CMP_CTX_get0_propq,
 OSSL_CMP_CTX_set_option,
 OSSL_CMP_CTX_get_option,
 OSSL_CMP_CTX_set_log_cb,
@@ -73,6 +74,8 @@ OSSL_CMP_CTX_set1_senderNonce
  OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq);
  void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx);
+ OSSL_LIB_CTX *OSSL_CMP_CTX_get0_libctx(const OSSL_CMP_CTX *ctx);
+ const char *OSSL_CMP_CTX_get0_propq(const OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val);
  int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt);
 
@@ -186,6 +189,12 @@ clearing the internal CMP transaction (aka session) status, PKIStatusInfo,
 and any previous results (newCert, newChain, caPubs, and extraCertsIn)
 from the last executed transaction.
 All other field values (i.e., CMP options) are retained for potential re-use.
+
+OSSL_CMP_CTX_get0_libctx() returns the I<libctx> argument that was used
+when constructing I<ctx> with OSSL_CMP_CTX_new(), which may be NULL.
+
+OSSL_CMP_CTX_get0_propq() returns the I<propq> argument that was used
+when constructing I<ctx> with OSSL_CMP_CTX_new(), which may be NULL.
 
 OSSL_CMP_CTX_set_option() sets the given value for the given option
 (e.g., OSSL_CMP_OPT_IMPLICIT_CONFIRM) in the given OSSL_CMP_CTX structure.
@@ -448,8 +457,8 @@ certificate, for the TLS client certificate (if any), when verifying
 the CMP server certificate, and when verifying newly enrolled certificates.
 The reference counts of those certificates handled successfully are increased.
 
-OSSL_CMP_CTX_get0_untrusted(OSSL_CMP_CTX *ctx) returns a pointer to the
-list of untrusted certs, which may be empty if unset.
+OSSL_CMP_CTX_get0_untrusted() returns a pointer to the
+list of untrusted certs in I<ctx>, which may be empty if unset.
 
 OSSL_CMP_CTX_set1_cert() sets the certificate related to the client's private key
 used for CMP message protection.
@@ -676,6 +685,7 @@ CMP is defined in RFC 4210 (and CRMF in RFC 4211).
 OSSL_CMP_CTX_free() and OSSL_CMP_CTX_print_errors() do not return anything.
 
 OSSL_CMP_CTX_new(),
+OSSL_CMP_CTX_get0_libctx(), OSSL_CMP_CTX_get0_propq(),
 OSSL_CMP_CTX_get_http_cb_arg(),
 OSSL_CMP_CTX_get_transfer_cb_arg(),
 OSSL_CMP_CTX_get0_trusted(),
@@ -780,7 +790,8 @@ OSSL_CMP_CTX_set0_trustedStore() was renamed to OSSL_CMP_CTX_set0_trusted(),
 using macros, while keeping the old names for backward compatibility,
 in OpenSSL 3.2.
 
-OSSL_CMP_CTX_get0_validatedSrvCert() was added in OpenSSL 3.2.
+OSSL_CMP_CTX_get0_libctx(), OSSL_CMP_CTX_get0_propq(), and
+OSSL_CMP_CTX_get0_validatedSrvCert() were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

@@ -58,6 +58,9 @@ int PREFIX##_set0##_##NAME(OSSL_CMP_CTX *ctx, TYPE *val) \
  */
 DEFINE_OSSL_set0_NAME(OSSL_CMP_CTX, trusted, trusted, X509_STORE)
 
+DEFINE_OSSL_CMP_CTX_get0(libctx, OSSL_LIB_CTX)
+DEFINE_OSSL_CMP_CTX_get0(propq, const char)
+
 /* Get current list of non-trusted intermediate certs */
 DEFINE_OSSL_CMP_CTX_get0(untrusted, STACK_OF(X509))
 
