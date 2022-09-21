@@ -37,15 +37,6 @@ QUIC_TXFC *ossl_quic_txfc_get_parent(QUIC_TXFC *txfc)
     return txfc->parent;
 }
 
-int ossl_quic_txfc_set_parent(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc)
-{
-    if (txfc->parent == NULL || conn_txfc == NULL)
-        return 0;
-
-    txfc->parent = conn_txfc;
-    return 1;
-}
-
 int ossl_quic_txfc_bump_cwm(QUIC_TXFC *txfc, uint64_t cwm)
 {
     if (cwm <= txfc->cwm)
@@ -161,15 +152,6 @@ int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
 QUIC_RXFC *ossl_quic_rxfc_get_parent(QUIC_RXFC *rxfc)
 {
     return rxfc->parent;
-}
-
-int ossl_quic_rxfc_set_parent(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc)
-{
-    if (rxfc->parent == NULL || conn_rxfc == NULL)
-        return 0;
-
-    rxfc->parent = conn_rxfc;
-    return 1;
 }
 
 static void rxfc_start_epoch(QUIC_RXFC *rxfc)

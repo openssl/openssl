@@ -41,14 +41,6 @@ int ossl_quic_txfc_init(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc);
 QUIC_TXFC *ossl_quic_txfc_get_parent(QUIC_TXFC *txfc);
 
 /*
- * Sets the parent (i.e., connection-level) TX flow controller. Not normally
- * needed. Can only be used on a stream-level TX flow controller. This function
- * cannot be used to change a flow controller from a stream to a
- * connection-level flow controller or vice versa. Returns 1 on success.
- */
-int ossl_quic_txfc_set_parent(QUIC_TXFC *txfc, QUIC_TXFC *conn_txfc);
-
-/*
  * Bump the credit watermark (CWM) value. This is the 'On TX Window Updated'
  * operation. This function is a no-op if it has already been called with an
  * equal or higher CWM value.
@@ -165,14 +157,6 @@ int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
  * connection-level RXFC.
  */
 QUIC_RXFC *ossl_quic_rxfc_get_parent(QUIC_RXFC *rxfc);
-
-/*
- * Sets the parent (i.e., connection-level) RXFC. Not normally needed. Can only
- * be used on a stream-level RXFC. This function cannot be used to change a flow
- * controller from a stream to a connection-level flow controller or vice versa.
- * Returns 1 on success.
- */
-int ossl_quic_rxfc_set_parent(QUIC_RXFC *rxfc, QUIC_RXFC *conn_txfc);
 
 /*
  * To be called whenever a STREAM frame is received.
