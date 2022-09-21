@@ -180,7 +180,7 @@ struct ossl_record_method_st {
      * responsibility to ensure that no call to write_records exceeds this
      * number of records. |type| is the type of the records that the caller
      * wants to write, and |len| is the total amount of data that it wants
-     * to send. |maxfrag| is the maxium allowed fragment size based on user
+     * to send. |maxfrag| is the maximum allowed fragment size based on user
      * configuration, or TLS parameter negotiation. |*preffrag| contains on
      * entry the default fragment size that will actually be used based on user
      * configuration. This will always be less than or equal to |maxfrag|. On
