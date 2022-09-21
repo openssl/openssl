@@ -1445,7 +1445,7 @@ SSL_SESSION *SSL_get1_previous_client_session(SSL *s)
 
         if (ret == NULL) {
             ssl_tsan_counter(sc->session_ctx, &sc->session_ctx->stats.sess_miss);
-        } else if (sess_timedout(time(NULL), ret)) {
+        } else if (sess_timedout(ossl_time_now(), ret)) {
             ssl_tsan_counter(sc->session_ctx, &sc->session_ctx->stats.sess_timeout);
             SSL_CTX_remove_session(sc->session_ctx, ret);
             SSL_SESSION_free(ret);
