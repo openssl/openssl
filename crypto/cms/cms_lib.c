@@ -33,8 +33,11 @@ CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,
                                           (CMS_ContentInfo_it()),
                                           ossl_cms_ctx_get0_libctx(ctx),
                                           ossl_cms_ctx_get0_propq(ctx));
-    if (ci != NULL)
+    if (ci != NULL) {
+        ERR_set_mark();
         ossl_cms_resolve_libctx(ci);
+        ERR_pop_to_mark();
+    }
     return ci;
 }
 
