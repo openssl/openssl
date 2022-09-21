@@ -844,7 +844,7 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     }
 
     /* Call Key log on successful traffic secret update */
-    log_label = s->server == sending ? SERVER_APPLICATION_LABEL : CLIENT_APPLICATION_LABEL;
+    log_label = s->server == sending ? SERVER_APPLICATION_N_LABEL : CLIENT_APPLICATION_N_LABEL;
     if (!ssl_log_secret(s, log_label, secret, hashlen)) {
         /* SSLfatal() already called */
         goto err;
