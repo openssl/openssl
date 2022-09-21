@@ -23,7 +23,7 @@ For example, on Unix the final command
 
     $ make install
 
-effectively executes the following install targets
+effectively executes the following installation targets
 
     $ make install_sw
     $ make install_ssldirs
@@ -50,7 +50,7 @@ The FIPS module must have the self tests run, and the FIPS module config file
 output generated on every machine that it is to be used on. You must not copy
 the FIPS module config file output data from one machine to another.
 
-On Unix the `openssl fipsinstall` command will be invoked as follows by default:
+On Unix, the `openssl fipsinstall` command will be invoked as follows by default:
 
     $ openssl fipsinstall -out /usr/local/ssl/fipsmodule.cnf -module /usr/local/lib/ossl-modules/fips.so
 
