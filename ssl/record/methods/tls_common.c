@@ -117,22 +117,22 @@ static void tls_release_write_buffer_int(OSSL_RECORD_LAYER *rl, size_t start)
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
 # ifndef OPENSSL_NO_COMP
 #  define MAX_PREFIX_LEN ((SSL3_ALIGN_PAYLOAD - 1) \
-                           + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
-                           + SSL3_RT_HEADER_LENGTH \
-                           + SSL3_RT_MAX_COMPRESSED_OVERHEAD)
+                          + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
+                          + SSL3_RT_HEADER_LENGTH \
+                          + SSL3_RT_MAX_COMPRESSED_OVERHEAD)
 # else
 #  define MAX_PREFIX_LEN ((SSL3_ALIGN_PAYLOAD - 1) \
-                           + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
-                           + SSL3_RT_HEADER_LENGTH)
+                          + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
+                          + SSL3_RT_HEADER_LENGTH)
 # endif /* OPENSSL_NO_COMP */
 #else
 # ifndef OPENSSL_NO_COMP
 #  define MAX_PREFIX_LEN (SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
-                           + SSL3_RT_HEADER_LENGTH \
-                           + SSL3_RT_MAX_COMPRESSED_OVERHEAD)
+                          + SSL3_RT_HEADER_LENGTH \
+                          + SSL3_RT_MAX_COMPRESSED_OVERHEAD)
 # else
 #  define MAX_PREFIX_LEN (SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
-                           + SSL3_RT_HEADER_LENGTH)
+                          + SSL3_RT_HEADER_LENGTH)
 # endif /* OPENSSL_NO_COMP */
 #endif
 
