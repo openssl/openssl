@@ -75,7 +75,7 @@ and to record the statistics of the received stream data.
 Flow Controller
 ---------------
 
-This module is consuled by the TX Packetizer and RX Frame Handler for flow
+This module is consulted by the TX Packetizer and RX Frame Handler for flow
 control decisions at both the stream and connection levels.
 
 Statistics Collector
