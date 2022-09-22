@@ -128,8 +128,7 @@ static int pkcs12_create_ex2_test(int test)
     if (!TEST_ptr(p12))
         goto err;
 
-    if (test == 0)
-    {
+    if (test == 0) {
         /* Confirm PKCS12_create_ex2 returns NULL */
         ptr = PKCS12_create_ex2(NULL, NULL, NULL,
                                 NULL, NULL, NID_undef, NID_undef,
@@ -153,9 +152,7 @@ static int pkcs12_create_ex2_test(int test)
         /* PKCS12 successfully created */
         if (!TEST_ptr(ptr))
             goto err;
-    }
-    else if (test == 1)
-    {
+    } else if (test == 1) {
         /* Specified call back called - return error*/
         cb_ret = -1;
         ptr = PKCS12_create_ex2(NULL, NULL, NULL,
@@ -166,9 +163,7 @@ static int pkcs12_create_ex2_test(int test)
         /* PKCS12 not created */
        if (TEST_ptr(ptr))
             goto err;
-    }
-    else if (test == 2)
-    {
+    } else if (test == 2) {
         /* Specified call back called - return failure */
         cb_ret = 0;
         ptr = PKCS12_create_ex2(NULL, NULL, NULL,

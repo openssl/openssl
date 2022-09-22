@@ -13,7 +13,7 @@ PKCS12_SAFEBAG_set0_attrs
 
 =head1 DESCRIPTION
 
-PKCS12_SAFEBAG_set0_attrs() assignes the stack of B<X509_ATTRIBUTE>s to a
+PKCS12_SAFEBAG_set0_attrs() assigns the stack of B<X509_ATTRIBUTE>s to a
 PKCS#12 safeBag. I<bag> is the B<PKCS12_SAFEBAG> to assign the attributes to.
 
 =head1 RETURN VALUES
