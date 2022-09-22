@@ -19,7 +19,7 @@
 #include "../ssl_local.h"
 
 /*
- * ASSUMPTION: the QUIC_CONNECTION structure refers to other related
+ * TODO(QUIC): ASSUMPTION: the QUIC_CONNECTION structure refers to other related
  * components, such as OSSL_ACKM and OSSL_QRX, in some manner.  These macros
  * should be used to get those components.
  */
@@ -41,8 +41,8 @@
 typedef struct quic_stream_st QUIC_STREAM;
 
 /*
- * ASSUMPTION: ssl_get_stream() gets a QUIC_STREAM from a connection by
- * stream ID.  For now, we simply return a fake stream.
+ * TODO(QUIC): ASSUMPTION: ssl_get_stream() gets a QUIC_STREAM from a connection
+ * by stream ID.  For now, we simply return a fake stream.
  */
 static QUIC_STREAM *ssl_get_stream(QUIC_CONNECTION *conn, uint64_t stream_id)
 {
@@ -51,7 +51,10 @@ static QUIC_STREAM *ssl_get_stream(QUIC_CONNECTION *conn, uint64_t stream_id)
     return (QUIC_STREAM *)&fake_stream;
 }
 
-/* ASSUMPTION: ssl_get_stream_type() gets a stream type from a QUIC_STREAM */
+/*
+ * TODO(QUIC): ASSUMPTION: ssl_get_stream_type() gets a stream type from a
+ * QUIC_STREAM
+ */
 /* Receive */
 #define SSL_STREAM_TYPE_R       1
 /* Send */
@@ -64,8 +67,8 @@ static int ssl_get_stream_type(QUIC_STREAM *stream)
 }
 
 /*
- * ASSUMPTION: ssl_queue_data() adds data to a QUIC_STREAM, to be consumed
- * by the application when doing an SSL_read().
+ * TODO(QUIC): ASSUMPTION: ssl_queue_data() adds data to a QUIC_STREAM, to be
+ * consumed by the application when doing an SSL_read().
  *
  * We assume that queuing of the data has to be done without copying, thus
  * we get the reference counting QRX packet wrapper so it can increment the
@@ -96,8 +99,8 @@ static int ssl_queue_data(QUIC_STREAM *stream, OSSL_QRX_PKT_WRAP *pkt_wrap,
 }
 
 /*
- * ASSUMPTION: ssl_close_stream() detaches the QUIC_STREAM from the
- * QUIC_CONNECTION it's attached to, and then destroys that QUIC_STREAM
+ * TODO(QUIC): ASSUMPTION: ssl_close_stream() detaches the QUIC_STREAM from
+ * the QUIC_CONNECTION it's attached to, and then destroys that QUIC_STREAM
  * (as well as its SSL object).  |how| works the same way as in shutdown(2),
  * i.e. |SHUT_RD| closes the reader part, |SHUT_WR| closes the writer part.
  */
@@ -107,8 +110,8 @@ static int ssl_close_stream(QUIC_STREAM *stream, int how)
 }
 
 /*
- * ASSUMPTION: ssl_close_connection() closes all the streams that are
- * attached to it, then closes the QUIC_CONNECTION as well.
+ * TODO(QUIC): ASSUMPTION: ssl_close_connection() closes all the streams that
+ * are attached to it, then closes the QUIC_CONNECTION as well.
  * Actual cleanup / destruction of the QUIC_CONNECTION is assumed to be done
  * higher up in the call stack (state machine, for example?).
  */
@@ -118,9 +121,9 @@ static int ssl_close_connection(QUIC_CONNECTION *connection)
 }
 
 /*
- * ASSUMPTION: ossl_statem_set_error_state() sets an overall error state in
- * the state machine.  It's up to the state machine to determine what to do
- * with it.
+ * TODO(QUIC): ASSUMPTION: ossl_statem_set_error_state() sets an overall error
+ * state in the state machine.  It's up to the state machine to determine what
+ * to do with it.
  */
 #define QUIC_STREAM_STATE_ERROR 1
 
@@ -146,7 +149,7 @@ static void ossl_quic_fatal(QUIC_CONNECTION *c, int al, int reason,
     va_end(args);
 
     /*
-     * Add code to set the state machine error.
+     * TODO(QUIC): ADD CODE to set the state machine error.
      * It's assumed that you can get the state machine with
      * GET_CONN_STATEM(c)
      */
@@ -280,7 +283,7 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CONNECTION *connection,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* ADD CODE to send |frame_data.data| to the handshake manager */
+    /* TODO(QUIC): ADD CODE to send |frame_data.data| to the handshake manager */
 
     return 1;
 }
@@ -297,7 +300,7 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CONNECTION *connection,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* ADD CODE to send |token| to the session manager */
+    /* TODO(QUIC): ADD CODE to send |token| to the session manager */
 
     return 1;
 }
@@ -316,14 +319,14 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CONNECTION *connection,
     ackm_data->is_ack_eliciting = 1;
 
     /*
-     * ASSUMPTION: ssl_get_stream() gets a QUIC_STREAM from a
+     * TODO(QUIC): ASSUMPTION: ssl_get_stream() gets a QUIC_STREAM from a
      * QUIC_CONNECTION by stream ID.
      */
     if ((stream = ssl_get_stream(connection, frame_data.stream_id)) == NULL)
         return 0;
     /*
-     * ASSUMPTION: ssl_queue_data() knows what to do with |frame_data.offset|
-     * and |frame_data.is_fin|.
+     * TODO(QUIC): ASSUMPTION: ssl_queue_data() knows what to do with
+     * |frame_data.offset| and |frame_data.is_fin|.
      */
     if (!ssl_queue_data(stream, parent_pkt, frame_data.data, frame_data.len,
                         frame_data.offset, frame_data.is_fin))
@@ -342,7 +345,7 @@ static int depack_do_frame_max_data(PACKET *pkt, QUIC_CONNECTION *connection,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* ADD CODE to send |max_data| to flow control */
+    /* TODO(QUIC): ADD CODE to send |max_data| to flow control */
 
     return 1;
 }
@@ -361,7 +364,7 @@ static int depack_do_frame_max_stream_data(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* ADD CODE to send |max_stream_data| to flow control */
+    /* TODO(QUIC): ADD CODE to send |max_stream_data| to flow control */
 
     return 1;
 }
@@ -378,7 +381,7 @@ static int depack_do_frame_max_streams(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* ADD CODE to send |max_streams| to the connection manager */
+    /* TODO(QUIC): ADD CODE to send |max_streams| to the connection manager */
 
     return 1;
 }
@@ -395,7 +398,7 @@ static int depack_do_frame_data_blocked(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* ADD CODE to send |max_data| to flow control */
+    /* TODO(QUIC): ADD CODE to send |max_data| to flow control */
 
     return 1;
 }
@@ -414,7 +417,7 @@ static int depack_do_frame_stream_data_blocked(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* ADD CODE to send |max_data| to flow control */
+    /* TODO(QUIC): ADD CODE to send |max_data| to flow control */
 
     return 1;
 }
@@ -431,7 +434,7 @@ static int depack_do_frame_streams_blocked(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* ADD CODE to send |max_data| to connection manager */
+    /* TODO(QUIC): ADD CODE to send |max_data| to connection manager */
 
     return 1;
 }
@@ -448,7 +451,7 @@ static int depack_do_frame_new_conn_id(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* ADD CODE to send |frame_data.data| to the connection manager */
+    /* TODO(QUIC): ADD CODE to send |frame_data.data| to the connection manager */
 
     return 1;
 }
@@ -465,7 +468,7 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* ADD CODE to send |seq_num| to the connection manager */
+    /* TODO(QUIC): ADD CODE to send |seq_num| to the connection manager */
     return 1;
 }
 
@@ -481,7 +484,7 @@ static int depack_do_frame_path_challenge(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* ADD CODE to send |frame_data| to the connection manager */
+    /* TODO(QUIC): ADD CODE to send |frame_data| to the connection manager */
 
     return 1;
 }
@@ -498,7 +501,7 @@ static int depack_do_frame_path_response(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* ADD CODE to send |frame_data| to the connection manager */
+    /* TODO(QUIC): ADD CODE to send |frame_data| to the connection manager */
 
     return 1;
 }
@@ -510,7 +513,7 @@ static int depack_do_frame_conn_close(PACKET *pkt, QUIC_CONNECTION *connection)
     if (!ossl_quic_wire_decode_frame_conn_close(pkt, &frame_data))
         return 0;
 
-    /* ADD CODE to send |frame_data| to the connection manager */
+    /* TODO(QUIC): ADD CODE to send |frame_data| to the connection manager */
 
     return 1;
 }
@@ -525,7 +528,7 @@ static int depack_do_frame_handshake_done(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* ADD CODE to tell the handshake manager that we're done */
+    /* TODO(QUIC): ADD CODE to tell the handshake manager that we're done */
 
     return 1;
 }
@@ -773,7 +776,10 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
 
     /* Initialize |ackm_data| (and reinitialize |ok|)*/
     memset(&ackm_data, 0, sizeof(ackm_data));
-    /* ASSUMPTION: All packets that aren't special case have a packet number */
+    /*
+     * TODO(QUIC): ASSUMPTION: All packets that aren't special case have a
+     * packet number
+     */
     ackm_data.pkt_num = qpacket->pn;
     ackm_data.time = qpacket->time;
     switch (qpacket->hdr->type) {
@@ -792,10 +798,10 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
 
     /* Handle special cases */
     if (qpacket->hdr->type == QUIC_PKT_TYPE_RETRY) {
-        /* ADD CODE to handle a retry */
+        /* TODO(QUIC): ADD CODE to handle a retry */
         goto success;
     } else if (qpacket->hdr->type == QUIC_PKT_TYPE_VERSION_NEG) {
-        /* ADD CODE to handle version negotiation */
+        /* TODO(QUIC): ADD CODE to handle version negotiation */
         goto success;
     }
 
@@ -810,8 +816,8 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
     ok = 1;
  end:
     /*
-     * ASSUMPTION: If this function is called at all, |qpacket| is a legitimate
-     * packet, even if its contents aren't.
+     * TODO(QUIC): ASSUMPTION: If this function is called at all, |qpacket| is
+     * a legitimate packet, even if its contents aren't.
      * Therefore, we call ossl_ackm_on_rx_packet() unconditionally, as long as
      * |ackm_data| has at least been initialized.
      */
