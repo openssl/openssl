@@ -757,7 +757,13 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
     PACKET pkt;
     OSSL_ACKM_RX_PKT ackm_data;
     OSSL_QRX_PKT_WRAP *qpkt_wrap = NULL;
-    int ok = 0;                  /* Assume the worst */
+    /*
+     * ok has three states:
+     * -1 error with ackm_data uninitialized
+     *  0 error with ackm_data initialized
+     *  1 success (ackm_data initialized)
+     */
+    int ok = -1;                  /* Assume the worst */
 
     if (connection == NULL)
         goto end;
@@ -765,16 +771,7 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
     if ((qpkt_wrap = ossl_qrx_pkt_wrap_new(qpacket)) == NULL)
         goto end;
 
-    /* Phase 0: special case packet types that have no payload */
-    if (qpacket->hdr->type == QUIC_PKT_TYPE_RETRY) {
-        /* ADD CODE to handle a retry */
-        goto success;
-    } else if (qpacket->hdr->type == QUIC_PKT_TYPE_VERSION_NEG) {
-        /* ADD CODE to handle version negotiation */
-        goto success;
-    }
-
-    /* Phase 1: go through all frames and collect ACK manager data */
+    /* Initialize |ackm_data| (and reinitialize |ok|)*/
     memset(&ackm_data, 0, sizeof(ackm_data));
     /* ASSUMPTION: All packets that aren't special case have a packet number */
     ackm_data.pkt_num = qpacket->pn;
@@ -791,8 +788,18 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
         ackm_data.pkt_space = QUIC_PN_SPACE_APP;
         break;
     }
+    ok = 0;                      /* Still assume the worst */
 
-    ackm_data.is_ack_eliciting = 0;
+    /* Handle special cases */
+    if (qpacket->hdr->type == QUIC_PKT_TYPE_RETRY) {
+        /* ADD CODE to handle a retry */
+        goto success;
+    } else if (qpacket->hdr->type == QUIC_PKT_TYPE_VERSION_NEG) {
+        /* ADD CODE to handle version negotiation */
+        goto success;
+    }
+
+    /* Now that special cases are out of the way, parse frames */
     if (!PACKET_buf_init(&pkt, qpacket->hdr->data, qpacket->hdr->len)
         || !depack_process_frames(connection, &pkt, qpkt_wrap,
                                   ackm_data.pkt_space, qpacket->time,
@@ -805,9 +812,11 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
     /*
      * ASSUMPTION: If this function is called at all, |qpacket| is a legitimate
      * packet, even if its contents aren't.
-     * Therefore, we call ossl_ackm_on_rx_packet() unconditionally.
+     * Therefore, we call ossl_ackm_on_rx_packet() unconditionally, as long as
+     * |ackm_data| has at least been initialized.
      */
-    (void)ossl_ackm_on_rx_packet(GET_CONN_ACKM(connection), &ackm_data);
+    if (ok >= 0)
+        ossl_ackm_on_rx_packet(GET_CONN_ACKM(connection), &ackm_data);
 
     /*
      * Let go of the packet pointer in |qpkt_wrap|.  This means that the
@@ -817,7 +826,7 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
         qpkt_wrap->pkt = NULL;
 
     ossl_qrx_pkt_wrap_free(GET_CONN_QRX(connection), qpkt_wrap);
-    return ok;
+    return ok > 0;
 }
 
 int ossl_quic_depacketize(QUIC_CONNECTION *connection)
