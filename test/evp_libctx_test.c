@@ -745,8 +745,14 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DH
     ADD_TEST(kem_invalid_keytype);
 #endif
+    /*
+     * The FIPS provider doesn't have 3DES, so we skip this test if
+     * FIPS is available.  It's not perfect because FIPS + default might be
+     * loaded but it's good enough.
+     */
 #ifndef OPENSSL_NO_DES
-    ADD_TEST(test_cipher_tdes_randkey);
+    if (!OSSL_PROVIDER_available(libctx, "fips"))
+        ADD_TEST(test_cipher_tdes_randkey);
 #endif
     return 1;
 }
