@@ -32,6 +32,12 @@ typedef struct ossl_qrx_args_st {
     /* Length of connection IDs used in short-header packets in bytes. */
     size_t          short_conn_id_len;
 
+    /*
+     * Maximum number of deferred datagrams buffered at any one time.
+     * Suggested value: 32.
+     */
+    size_t          max_deferred;
+
     /* Initial reference PN used for RX. */
     QUIC_PN         init_largest_pn[QUIC_PN_SPACE_NUM];
 
@@ -160,8 +166,8 @@ int ossl_qrx_remove_dst_conn_id(OSSL_QRX *qrx,
  * as do calls made after a corresponding call to ossl_qrx_discard_enc_level for
  * that EL. The secret for a EL cannot be changed after it is set because QUIC
  * has no facility for introducing additional key material after an EL is setup.
- * QUIC key updates are managed automatically by the QRX and do not require user
- * intervention.
+ * QUIC key updates are managed semi-automatically by the QRX but do require
+ * some caller handling (see below).
  *
  * md is for internal use and should be NULL.
  *
@@ -258,7 +264,7 @@ void ossl_qrx_release_pkt(OSSL_QRX *qrx, void *handle);
 int ossl_qrx_processed_read_pending(OSSL_QRX *qrx);
 
 /*
- * Returns 1 if there arre any unprocessed (i.e. not yet decrypted) packets
+ * Returns 1 if there are any unprocessed (i.e. not yet decrypted) packets
  * waiting to be processed by the QRX. These may or may not result in
  * successfully decrypted packets once processed. This indicates whether
  * unprocessed data is buffered by the QRX, not whether any data is available in
@@ -434,7 +440,7 @@ int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
  * current substate of the PROVISIONED state is to the DISCARDED state, which is
  * the terminal state.
  *
- * Note that non-1RTT ELs cannot undergo key update, therefore a non-1RT EL is
+ * Note that non-1RTT ELs cannot undergo key update, therefore a non-1RTT EL is
  * always in the NORMAL substate if it is in the PROVISIONED state.
  */
 
