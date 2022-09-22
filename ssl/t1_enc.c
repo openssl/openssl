@@ -243,11 +243,11 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
             s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_TLSTREE;
 
         if (!ssl_set_new_record_layer(s, s->version,
-                                        OSSL_RECORD_DIRECTION_READ,
-                                        OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                        key, cl, iv, (size_t)k, mac_secret,
-                                        mac_secret_size, c, taglen, mac_type,
-                                        m, comp)) {
+                                      OSSL_RECORD_DIRECTION_READ,
+                                      OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
+                                      key, cl, iv, (size_t)k, mac_secret,
+                                      mac_secret_size, c, taglen, mac_type,
+                                      m, comp)) {
             /* SSLfatal already called */
             goto err;
         }
@@ -272,11 +272,11 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
             s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_TLSTREE;
 
         if (!ssl_set_new_record_layer(s, s->version,
-                                        OSSL_RECORD_DIRECTION_WRITE,
-                                        OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                        key, cl, iv, (size_t)k, mac_secret,
-                                        mac_secret_size, c, taglen, mac_type,
-                                        m, comp)) {
+                                      OSSL_RECORD_DIRECTION_WRITE,
+                                      OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
+                                      key, cl, iv, (size_t)k, mac_secret,
+                                      mac_secret_size, c, taglen, mac_type,
+                                      m, comp)) {
             /* SSLfatal already called */
             goto err;
         }

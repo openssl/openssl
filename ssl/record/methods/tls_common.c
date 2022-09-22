@@ -1613,7 +1613,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                 if (eivlen < 0) {
                     RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
                     goto err;
-            }
+                }
                 if (eivlen <= 1)
                     eivlen = 0;
             } else if (mode == EVP_CIPH_GCM_MODE) {
