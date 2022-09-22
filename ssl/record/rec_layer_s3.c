@@ -421,7 +421,7 @@ int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
                 ossl_statem_fatal(s, SSL_AD_INTERNAL_ERROR,
                                   ERR_R_INTERNAL_ERROR, NULL);
                 ret = OSSL_RECORD_RETURN_FATAL;
-            } else if (s->options & SSL_OP_IGNORE_UNEXPECTED_EOF) {
+            } else if ((s->options & SSL_OP_IGNORE_UNEXPECTED_EOF) != 0) {
                 SSL_set_shutdown(ssl, SSL_RECEIVED_SHUTDOWN);
                 s->s3.warn_alert = SSL_AD_CLOSE_NOTIFY;
             } else {

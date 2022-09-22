@@ -1781,13 +1781,13 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
             if (!WPACKET_reserve_bytes(thispkt,
                                         SSL_RT_MAX_CIPHER_BLOCK_SIZE,
                                         NULL)
-                /*
-                 * We also need next the amount of bytes written to this
-                 * sub-packet
-                 */
-                || !WPACKET_get_length(thispkt, &len)) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
+                    /*
+                    * We also need next the amount of bytes written to this
+                    * sub-packet
+                    */
+                    || !WPACKET_get_length(thispkt, &len)) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
             }
 
             /* Get a pointer to the start of this record excluding header */
@@ -1804,26 +1804,23 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
          * send early data - so we need to use the tls13enc function.
          */
         if (tls13_enc(s, wr, numtempl, 1, NULL, mac_size) < 1) {
-            if (!ossl_statem_in_error(s)) {
+            if (!ossl_statem_in_error(s))
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            }
             goto err;
         }
     } else {
         if (!using_ktls) {
             if (prefix) {
                 if (ssl->method->ssl3_enc->enc(s, wr, 1, 1, NULL, mac_size) < 1) {
-                    if (!ossl_statem_in_error(s)) {
+                    if (!ossl_statem_in_error(s))
                         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                    }
                     goto err;
                 }
             }
             if (ssl->method->ssl3_enc->enc(s, wr + prefix, numtempl, 1, NULL,
                                            mac_size) < 1) {
-                if (!ossl_statem_in_error(s)) {
+                if (!ossl_statem_in_error(s))
                     RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                }
                 goto err;
             }
         }
