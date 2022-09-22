@@ -154,6 +154,12 @@ QUIC_RXFC *ossl_quic_rxfc_get_parent(QUIC_RXFC *rxfc)
     return rxfc->parent;
 }
 
+void ossl_quic_rxfc_set_max_window_size(QUIC_RXFC *rxfc,
+                                        size_t max_window_size)
+{
+    rxfc->max_window_size = max_window_size;
+}
+
 static void rxfc_start_epoch(QUIC_RXFC *rxfc)
 {
     rxfc->epoch_start   = rxfc->now(rxfc->now_arg);

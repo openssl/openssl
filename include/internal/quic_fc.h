@@ -159,6 +159,12 @@ int ossl_quic_rxfc_init(QUIC_RXFC *rxfc, QUIC_RXFC *conn_rxfc,
 QUIC_RXFC *ossl_quic_rxfc_get_parent(QUIC_RXFC *rxfc);
 
 /*
+ * Changes the current maximum window size value.
+ */
+void ossl_quic_rxfc_set_max_window_size(QUIC_RXFC *rxfc,
+                                        size_t max_window_size);
+
+/*
  * To be called whenever a STREAM frame is received.
  *
  * end is the value (offset + len), where offset is the offset field of the
@@ -186,8 +192,8 @@ int ossl_quic_rxfc_on_rx_stream_frame(QUIC_RXFC *rxfc,
  * dequeued from a QUIC stream and passed to the application. num_bytes
  * is the number of bytes which were passed to the application.
  *
- * You should call this only on a stream-level RXFC. Pass a connection-level
- * RXFC as conn_rxfc; this function will update its state automatically.
+ * You should call this only on a stream-level RXFC. This function will update
+ * the connection-level RXFC automatically.
  *
  * rtt should be the current best understanding of the RTT to the peer, as
  * offered by the Statistics Manager.
