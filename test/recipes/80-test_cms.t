@@ -370,17 +370,6 @@ my @smime_cms_tests = (
       \&final_compare
     ],
 
-    [ "encrypted content test streaming PEM format, triple DES key",
-      [ "{cmd1}", @prov, "-EncryptedData_encrypt", "-in", $smcont, "-outform", "PEM",
-        "-des3", "-secretkey", "000102030405060708090A0B0C0D0E0F1011121314151617",
-        "-stream", "-out", "{output}.cms" ],
-      [ "{cmd2}", @prov, "-EncryptedData_decrypt", "-in", "{output}.cms",
-        "-inform", "PEM",
-        "-secretkey", "000102030405060708090A0B0C0D0E0F1011121314151617",
-        "-out", "{output}.txt" ],
-      \&final_compare
-    ],
-
     [ "encrypted content test streaming PEM format, 128 bit AES key",
       [ "{cmd1}", @prov, "-EncryptedData_encrypt", "-in", $smcont, "-outform", "PEM",
         "-aes128", "-secretkey", "000102030405060708090A0B0C0D0E0F",
@@ -392,6 +381,20 @@ my @smime_cms_tests = (
       \&final_compare
     ],
 );
+
+# FIPS 140-3: DES is unavailable
+push @smime_cms_tests, (
+    [ "encrypted content test streaming PEM format, triple DES key",
+      [ "{cmd1}", @prov, "-EncryptedData_encrypt", "-in", $smcont, "-outform", "PEM",
+        "-des3", "-secretkey", "000102030405060708090A0B0C0D0E0F1011121314151617",
+        "-stream", "-out", "{output}.cms" ],
+      [ "{cmd2}", @prov, "-EncryptedData_decrypt", "-in", "{output}.cms",
+        "-inform", "PEM",
+        "-secretkey", "000102030405060708090A0B0C0D0E0F1011121314151617",
+        "-out", "{output}.txt" ],
+      \&final_compare
+    ],
+) if $no_fips;
 
 my @smime_cms_cades_tests = (
 
