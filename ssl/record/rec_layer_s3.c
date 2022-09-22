@@ -387,9 +387,9 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
             return i;
         }
 
-        if (s->rlayer.wpend_tot == n ||
-            (type == SSL3_RT_APPLICATION_DATA &&
-             (s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE))) {
+        if (s->rlayer.wpend_tot == n
+                || (type == SSL3_RT_APPLICATION_DATA
+                    && (s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE) != 0)) {
             *written = tot + s->rlayer.wpend_tot;
             s->rlayer.wpend_tot = 0;
             return 1;
