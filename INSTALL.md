@@ -1021,7 +1021,7 @@ below and how these flags interact with those variables.
 
 Additional options that are not otherwise recognised are passed through as
 they are to the compiler as well.  Unix-style options beginning with a
-`-` or `+` and Windows-style options beginning with a `/` are recognized.
+`-` or `+` and Windows-style options beginning with a `/` are recognised.
 Again, consult your compiler documentation.
 
 If the option contains arguments separated by spaces, then the URL-style
