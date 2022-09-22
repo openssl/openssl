@@ -43,7 +43,6 @@ my @files = qw(
                 evpciph_aes_cts.txt
                 evpciph_aes_wrap.txt
                 evpciph_aes_stitched.txt
-                evpciph_des3_common.txt
                 evpkdf_hkdf.txt
                 evpkdf_pbkdf1.txt
                 evpkdf_pbkdf2.txt
@@ -66,7 +65,6 @@ push @files, qw(
                ) unless $no_dh;
 push @files, qw(
                 evpkdf_x942_des.txt
-                evpmac_cmac_des.txt
                ) unless $no_des;
 push @files, qw(evppkey_dsa.txt) unless $no_dsa;
 push @files, qw(evppkey_ecx.txt) unless $no_ec;
@@ -83,13 +81,14 @@ push @files, qw(
 my @defltfiles = qw(
                      evpciph_aes_ocb.txt
                      evpciph_aes_siv.txt
-                     evpciph_aria.txt 
+                     evpciph_aria.txt
                      evpciph_bf.txt
                      evpciph_camellia.txt
                      evpciph_camellia_cts.txt
                      evpciph_cast5.txt
                      evpciph_chacha.txt
                      evpciph_des.txt
+                     evpciph_des3_common.txt
                      evpciph_idea.txt
                      evpciph_rc2.txt
                      evpciph_rc4.txt
@@ -101,6 +100,7 @@ my @defltfiles = qw(
                      evpkdf_krb5.txt
                      evpkdf_scrypt.txt
                      evpkdf_tls11_prf.txt
+                     evpmac_cmac_des.txt
                      evpmac_blake.txt
                      evpmac_poly1305.txt
                      evpmac_siphash.txt
