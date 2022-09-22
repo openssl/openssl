@@ -1168,8 +1168,6 @@ int tls_set_options(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options)
         }
     }
 
-
-
     return 1;
 }
 

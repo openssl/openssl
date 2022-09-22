@@ -407,7 +407,7 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     /* All future data will get encrypted by ktls. Flush the BIO or skip ktls */
     if (rl->direction == OSSL_RECORD_DIRECTION_WRITE) {
         if (BIO_flush(rl->bio) <= 0)
-           return OSSL_RECORD_RETURN_NON_FATAL_ERR;
+            return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
         /* KTLS does not support record padding */
         if (rl->padding != NULL || rl->block_padding > 0)
