@@ -163,11 +163,6 @@ static void ossl_quic_fatal(QUIC_CONNECTION *c, int al, int reason,
 
 /* TODO(QUIC): [END: TO BE REMOVED] */
 
-enum depack_modes {
-    collect_ack_data,
-    process_frames
-};
-
 /*
  * Helper functions to process different frame types.
  *
@@ -182,21 +177,18 @@ static int depack_do_frame_padding(PACKET *pkt)
     return ossl_quic_wire_decode_padding(pkt);
 }
 
-static int depack_do_frame_ping(PACKET *pkt, enum depack_modes mode,
-                                OSSL_ACKM_RX_PKT *ackm_data)
+static int depack_do_frame_ping(PACKET *pkt, OSSL_ACKM_RX_PKT *ackm_data)
 {
     /* We ignore this frame, apart from eliciting an ACK */
     if (!ossl_quic_wire_decode_frame_ping(pkt))
         return 0;
-    if (mode == collect_ack_data)
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
     return 1;
 }
 
 static int depack_do_frame_ack(PACKET *pkt, QUIC_CONNECTION *connection,
-                               int packet_space, OSSL_TIME received,
-                               enum depack_modes mode)
+                               int packet_space, OSSL_TIME received)
 {
     OSSL_QUIC_FRAME_ACK ack;
     OSSL_QUIC_ACK_RANGE *ack_ranges;
@@ -215,7 +207,6 @@ static int depack_do_frame_ack(PACKET *pkt, QUIC_CONNECTION *connection,
     if (!ossl_quic_wire_decode_frame_ack(pkt, ack_delay_exp, &ack, NULL))
         ok = 0;
     if (ok
-        && mode == process_frames
         && !ossl_ackm_on_rx_ack_frame(GET_CONN_ACKM(connection), &ack,
                                       packet_space, received))
         ok = 0;
@@ -228,7 +219,6 @@ static int depack_do_frame_ack(PACKET *pkt, QUIC_CONNECTION *connection,
 
 static int depack_do_frame_reset_stream(PACKET *pkt,
                                         QUIC_CONNECTION *connection,
-                                        enum depack_modes mode,
                                         OSSL_ACKM_RX_PKT *ackm_data)
 {
     OSSL_QUIC_FRAME_RESET_STREAM frame_data;
@@ -238,11 +228,8 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
     if (!ossl_quic_wire_decode_frame_reset_stream(pkt, &frame_data))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     if ((stream = ssl_get_stream(connection, frame_data.stream_id)) == NULL)
         return 0;
@@ -258,7 +245,6 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
 
 static int depack_do_frame_stop_sending(PACKET *pkt,
                                         QUIC_CONNECTION *connection,
-                                        enum depack_modes mode,
                                         OSSL_ACKM_RX_PKT *ackm_data)
 {
     OSSL_QUIC_FRAME_STOP_SENDING frame_data;
@@ -268,11 +254,8 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
     if (!ossl_quic_wire_decode_frame_stop_sending(pkt, &frame_data))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     if ((stream = ssl_get_stream(connection, frame_data.stream_id)) == NULL)
         return 0;
@@ -287,7 +270,6 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
 }
 
 static int depack_do_frame_crypto(PACKET *pkt, QUIC_CONNECTION *connection,
-                                  enum depack_modes mode,
                                   OSSL_ACKM_RX_PKT *ackm_data)
 {
     OSSL_QUIC_FRAME_CRYPTO frame_data;
@@ -295,11 +277,8 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CONNECTION *connection,
     if (!ossl_quic_wire_decode_frame_crypto(pkt, &frame_data))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /* ADD CODE to send |frame_data.data| to the handshake manager */
 
@@ -307,7 +286,6 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CONNECTION *connection,
 }
 
 static int depack_do_frame_new_token(PACKET *pkt, QUIC_CONNECTION *connection,
-                                     enum depack_modes mode,
                                      OSSL_ACKM_RX_PKT *ackm_data)
 {
     const uint8_t *token;
@@ -316,11 +294,8 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CONNECTION *connection,
     if (!ossl_quic_wire_decode_frame_new_token(pkt, &token, &token_len))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /* ADD CODE to send |token| to the session manager */
 
@@ -329,7 +304,6 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CONNECTION *connection,
 
 static int depack_do_frame_stream(PACKET *pkt, QUIC_CONNECTION *connection,
                                   OSSL_QRX_PKT_WRAP *parent_pkt,
-                                  enum depack_modes mode,
                                   OSSL_ACKM_RX_PKT *ackm_data)
 {
     OSSL_QUIC_FRAME_STREAM frame_data;
@@ -338,11 +312,8 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CONNECTION *connection,
     if (!ossl_quic_wire_decode_frame_stream(pkt, &frame_data))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /*
      * ASSUMPTION: ssl_get_stream() gets a QUIC_STREAM from a
@@ -361,7 +332,6 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CONNECTION *connection,
 }
 
 static int depack_do_frame_max_data(PACKET *pkt, QUIC_CONNECTION *connection,
-                                    enum depack_modes mode,
                                     OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t max_data = 0;
@@ -369,11 +339,8 @@ static int depack_do_frame_max_data(PACKET *pkt, QUIC_CONNECTION *connection,
     if (!ossl_quic_wire_decode_frame_max_data(pkt, &max_data))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /* ADD CODE to send |max_data| to flow control */
 
@@ -382,7 +349,6 @@ static int depack_do_frame_max_data(PACKET *pkt, QUIC_CONNECTION *connection,
 
 static int depack_do_frame_max_stream_data(PACKET *pkt,
                                            QUIC_CONNECTION *connection,
-                                           enum depack_modes mode,
                                            OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t stream_id = 0;
@@ -392,11 +358,8 @@ static int depack_do_frame_max_stream_data(PACKET *pkt,
                                                      &max_stream_data))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /* ADD CODE to send |max_stream_data| to flow control */
 
@@ -405,7 +368,6 @@ static int depack_do_frame_max_stream_data(PACKET *pkt,
 
 static int depack_do_frame_max_streams(PACKET *pkt,
                                        QUIC_CONNECTION *connection,
-                                       enum depack_modes mode,
                                        OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t max_streams = 0;
@@ -413,11 +375,8 @@ static int depack_do_frame_max_streams(PACKET *pkt,
     if (!ossl_quic_wire_decode_frame_max_streams(pkt, &max_streams))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /* ADD CODE to send |max_streams| to the connection manager */
 
@@ -426,7 +385,6 @@ static int depack_do_frame_max_streams(PACKET *pkt,
 
 static int depack_do_frame_data_blocked(PACKET *pkt,
                                         QUIC_CONNECTION *connection,
-                                        enum depack_modes mode,
                                         OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t max_data = 0;
@@ -434,11 +392,8 @@ static int depack_do_frame_data_blocked(PACKET *pkt,
     if (!ossl_quic_wire_decode_frame_data_blocked(pkt, &max_data))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /* ADD CODE to send |max_data| to flow control */
 
@@ -447,7 +402,6 @@ static int depack_do_frame_data_blocked(PACKET *pkt,
 
 static int depack_do_frame_stream_data_blocked(PACKET *pkt,
                                                QUIC_CONNECTION *connection,
-                                               enum depack_modes mode,
                                                OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t stream_id = 0;
@@ -457,11 +411,8 @@ static int depack_do_frame_stream_data_blocked(PACKET *pkt,
                                                          &max_data))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /* ADD CODE to send |max_data| to flow control */
 
@@ -470,7 +421,6 @@ static int depack_do_frame_stream_data_blocked(PACKET *pkt,
 
 static int depack_do_frame_streams_blocked(PACKET *pkt,
                                            QUIC_CONNECTION *connection,
-                                           enum depack_modes mode,
                                            OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t max_data = 0;
@@ -478,11 +428,8 @@ static int depack_do_frame_streams_blocked(PACKET *pkt,
     if (!ossl_quic_wire_decode_frame_streams_blocked(pkt, &max_data))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /* ADD CODE to send |max_data| to connection manager */
 
@@ -491,7 +438,6 @@ static int depack_do_frame_streams_blocked(PACKET *pkt,
 
 static int depack_do_frame_new_conn_id(PACKET *pkt,
                                        QUIC_CONNECTION *connection,
-                                       enum depack_modes mode,
                                        OSSL_ACKM_RX_PKT *ackm_data)
 {
     OSSL_QUIC_FRAME_NEW_CONN_ID frame_data;
@@ -499,11 +445,8 @@ static int depack_do_frame_new_conn_id(PACKET *pkt,
     if (!ossl_quic_wire_decode_frame_new_conn_id(pkt, &frame_data))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /* ADD CODE to send |frame_data.data| to the connection manager */
 
@@ -512,7 +455,6 @@ static int depack_do_frame_new_conn_id(PACKET *pkt,
 
 static int depack_do_frame_retire_conn_id(PACKET *pkt,
                                           QUIC_CONNECTION *connection,
-                                          enum depack_modes mode,
                                           OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t seq_num;
@@ -520,11 +462,8 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
     if (!ossl_quic_wire_decode_frame_retire_conn_id(pkt, &seq_num))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /* ADD CODE to send |seq_num| to the connection manager */
     return 1;
@@ -532,7 +471,6 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
 
 static int depack_do_frame_path_challenge(PACKET *pkt,
                                           QUIC_CONNECTION *connection,
-                                          enum depack_modes mode,
                                           OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t frame_data = 0;
@@ -540,11 +478,8 @@ static int depack_do_frame_path_challenge(PACKET *pkt,
     if (!ossl_quic_wire_decode_frame_path_challenge(pkt, &frame_data))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /* ADD CODE to send |frame_data| to the connection manager */
 
@@ -553,7 +488,6 @@ static int depack_do_frame_path_challenge(PACKET *pkt,
 
 static int depack_do_frame_path_response(PACKET *pkt,
                                          QUIC_CONNECTION *connection,
-                                         enum depack_modes mode,
                                          OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t frame_data = 0;
@@ -561,27 +495,20 @@ static int depack_do_frame_path_response(PACKET *pkt,
     if (!ossl_quic_wire_decode_frame_path_response(pkt, &frame_data))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /* ADD CODE to send |frame_data| to the connection manager */
 
     return 1;
 }
 
-static int depack_do_frame_conn_close(PACKET *pkt, QUIC_CONNECTION *connection,
-                                      enum depack_modes mode)
+static int depack_do_frame_conn_close(PACKET *pkt, QUIC_CONNECTION *connection)
 {
     OSSL_QUIC_FRAME_CONN_CLOSE frame_data;
 
     if (!ossl_quic_wire_decode_frame_conn_close(pkt, &frame_data))
         return 0;
-
-    if (mode == collect_ack_data)
-        return 1;
 
     /* ADD CODE to send |frame_data| to the connection manager */
 
@@ -590,17 +517,13 @@ static int depack_do_frame_conn_close(PACKET *pkt, QUIC_CONNECTION *connection,
 
 static int depack_do_frame_handshake_done(PACKET *pkt,
                                           QUIC_CONNECTION *connection,
-                                          enum depack_modes mode,
                                           OSSL_ACKM_RX_PKT *ackm_data)
 {
     if (!ossl_quic_wire_decode_frame_handshake_done(pkt))
         return 0;
 
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 1;
-    }
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
 
     /* ADD CODE to tell the handshake manager that we're done */
 
@@ -609,7 +532,6 @@ static int depack_do_frame_handshake_done(PACKET *pkt,
 
 static int depack_do_frame_unknown_extension(PACKET *pkt,
                                              QUIC_CONNECTION *connection,
-                                             enum depack_modes mode,
                                              OSSL_ACKM_RX_PKT *ackm_data)
 {
     /*
@@ -619,15 +541,13 @@ static int depack_do_frame_unknown_extension(PACKET *pkt,
      * either.
      */
 
+    /* This frame makes the packet ACK eliciting */
+    ackm_data->is_ack_eliciting = 1;
+
     /*
      * Because we have no idea how to advance to the next frame, we return 0
      * everywhere, thereby stopping the depacketizing process.
      */
-    if (mode == collect_ack_data) {
-        /* This frame makes the packet ACK eliciting */
-        ackm_data->is_ack_eliciting = 1;
-        return 0;
-    }
 
     return 0;
 }
@@ -636,8 +556,7 @@ static int depack_do_frame_unknown_extension(PACKET *pkt,
 
 static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
                                  OSSL_QRX_PKT_WRAP *parent_pkt, int packet_space,
-                                 OSSL_TIME received, enum depack_modes mode,
-                                 OSSL_ACKM_RX_PKT *ackm_data)
+                                 OSSL_TIME received, OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint32_t pkt_type = parent_pkt->pkt->hdr->type;
 
@@ -650,7 +569,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
         switch (frame_type) {
         case OSSL_QUIC_FRAME_TYPE_PING:
             /* Allowed in all packet types */
-            if (!depack_do_frame_ping(pkt, mode, ackm_data))
+            if (!depack_do_frame_ping(pkt, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_PADDING:
@@ -664,8 +583,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             /* ACK frames are valid everywhere except in 0RTT packets */
             if (pkt_type == QUIC_PKT_TYPE_0RTT)
                 return 0;
-            if (!depack_do_frame_ack(pkt, connection, packet_space, received,
-                                     mode))
+            if (!depack_do_frame_ack(pkt, connection, packet_space, received))
                 return 0;
             break;
 
@@ -674,8 +592,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             if (pkt_type != QUIC_PKT_TYPE_0RTT
                 && pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_reset_stream(pkt, connection,
-                                              mode, ackm_data))
+            if (!depack_do_frame_reset_stream(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_STOP_SENDING:
@@ -683,22 +600,21 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             if (pkt_type != QUIC_PKT_TYPE_0RTT
                 && pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_stop_sending(pkt, connection,
-                                              mode, ackm_data))
+            if (!depack_do_frame_stop_sending(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_CRYPTO:
             /* CRYPTO frames are valid everywhere except in 0RTT packets */
             if (pkt_type == QUIC_PKT_TYPE_0RTT)
                 return 0;
-            if (!depack_do_frame_crypto(pkt, connection, mode, ackm_data))
+            if (!depack_do_frame_crypto(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
             /* NEW_TOKEN frames are valid in 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_new_token(pkt, connection, mode, ackm_data))
+            if (!depack_do_frame_new_token(pkt, connection, ackm_data))
                 return 0;
             break;
 
@@ -714,8 +630,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             if (pkt_type != QUIC_PKT_TYPE_0RTT
                 && pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_stream(pkt, connection, parent_pkt,
-                                        mode, ackm_data))
+            if (!depack_do_frame_stream(pkt, connection, parent_pkt, ackm_data))
                 return 0;
             break;
 
@@ -724,7 +639,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             if (pkt_type != QUIC_PKT_TYPE_0RTT
                 && pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_max_data(pkt, connection, mode, ackm_data))
+            if (!depack_do_frame_max_data(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA:
@@ -732,8 +647,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             if (pkt_type != QUIC_PKT_TYPE_0RTT
                 && pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_max_stream_data(pkt, connection,
-                                                 mode, ackm_data))
+            if (!depack_do_frame_max_stream_data(pkt, connection, ackm_data))
                 return 0;
             break;
 
@@ -743,7 +657,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             if (pkt_type != QUIC_PKT_TYPE_0RTT
                 && pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_max_streams(pkt, connection, mode, ackm_data))
+            if (!depack_do_frame_max_streams(pkt, connection, ackm_data))
                 return 0;
             break;
 
@@ -752,7 +666,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             if (pkt_type != QUIC_PKT_TYPE_0RTT
                 && pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_data_blocked(pkt, connection, mode, ackm_data))
+            if (!depack_do_frame_data_blocked(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED:
@@ -760,8 +674,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             if (pkt_type != QUIC_PKT_TYPE_0RTT
                 && pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_stream_data_blocked(pkt, connection,
-                                                     mode, ackm_data))
+            if (!depack_do_frame_stream_data_blocked(pkt, connection, ackm_data))
                 return 0;
             break;
 
@@ -771,8 +684,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             if (pkt_type != QUIC_PKT_TYPE_0RTT
                 && pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_streams_blocked(pkt, connection,
-                                                 mode, ackm_data))
+            if (!depack_do_frame_streams_blocked(pkt, connection, ackm_data))
                 return 0;
             break;
 
@@ -781,8 +693,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             if (pkt_type != QUIC_PKT_TYPE_0RTT
                 && pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_new_conn_id(pkt, connection,
-                                             mode, ackm_data))
+            if (!depack_do_frame_new_conn_id(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID:
@@ -790,8 +701,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             if (pkt_type != QUIC_PKT_TYPE_0RTT
                 && pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_retire_conn_id(pkt, connection,
-                                                mode, ackm_data))
+            if (!depack_do_frame_retire_conn_id(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE:
@@ -799,16 +709,14 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             if (pkt_type != QUIC_PKT_TYPE_0RTT
                 && pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_path_challenge(pkt, connection,
-                                                mode, ackm_data))
+            if (!depack_do_frame_path_challenge(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE:
             /* PATH_RESPONSE frames are valid in 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_path_response(pkt, connection,
-                                               mode, ackm_data))
+            if (!depack_do_frame_path_response(pkt, connection, ackm_data))
                 return 0;
             break;
 
@@ -820,7 +728,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             /* FALLTHRU */
         case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT:
             /* CONN_CLOSE_TRANSPORT frames are valid in all packets */
-            if (!depack_do_frame_conn_close(pkt, connection, mode))
+            if (!depack_do_frame_conn_close(pkt, connection))
                 return 0;
             break;
 
@@ -828,15 +736,13 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             /* HANDSHAKE_DONE frames are valid in 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_handshake_done(pkt, connection,
-                                                mode, ackm_data))
+            if (!depack_do_frame_handshake_done(pkt, connection, ackm_data))
                 return 0;
             break;
 
         default:
             /* Unknown frame type. */
-            if (!depack_do_frame_unknown_extension(pkt, connection,
-                                                   mode, ackm_data))
+            if (!depack_do_frame_unknown_extension(pkt, connection, ackm_data))
                 return 0;
 
             break;
@@ -888,24 +794,21 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
 
     ackm_data.is_ack_eliciting = 0;
     if (!PACKET_buf_init(&pkt, qpacket->hdr->data, qpacket->hdr->len)
-        || !depack_process_frames(NULL, &pkt, qpkt_wrap, ackm_data.pkt_space,
-                                  qpacket->time, collect_ack_data, &ackm_data))
-        goto end;
-
-    /* ASSUMPTION: The connection object has an ACK manager attached */
-    if (!ossl_ackm_on_rx_packet(GET_CONN_ACKM(connection), &ackm_data))
-        goto end;
-
-    /* Phase 2: go through all frames and process their payloads */
-    if (!PACKET_buf_init(&pkt, qpacket->hdr->data, qpacket->hdr->len)
         || !depack_process_frames(connection, &pkt, qpkt_wrap,
                                   ackm_data.pkt_space, qpacket->time,
-                                  process_frames, NULL))
+                                  &ackm_data))
         goto end;
 
  success:
     ok = 1;
  end:
+    /*
+     * ASSUMPTION: If this function is called at all, |qpacket| is a legitimate
+     * packet, even if its contents aren't.
+     * Therefore, we call ossl_ackm_on_rx_packet() unconditionally.
+     */
+    (void)ossl_ackm_on_rx_packet(GET_CONN_ACKM(connection), &ackm_data);
+
     /*
      * Let go of the packet pointer in |qpkt_wrap|.  This means that the
      * reference counter can't be incremented any more.
