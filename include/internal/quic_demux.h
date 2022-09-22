@@ -117,6 +117,12 @@ struct quic_urxe_st {
      * function was not provided).
      */
     OSSL_TIME       time;
+
+    /*
+     * Used by the QRX to mark whether a datagram has been deferred. Used by the
+     * QRX only; not used by the demuxer.
+     */
+    char            deferred;
 };
 
 /* Accessors for URXE buffer. */
