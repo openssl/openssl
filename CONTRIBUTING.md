@@ -71,7 +71,7 @@ guidelines:
     examples of our style. Run "make doc-nits" to make sure that your
     documentation changes are clean.
 
- 7. For user visible changes (API changes, behavior changes, ...),
+ 7. For user visible changes (API changes, behaviour changes, ...),
     consider adding a note in [CHANGES.md](CHANGES.md).
     This could be a summarizing description of the change, and could
     explain the grander details.
