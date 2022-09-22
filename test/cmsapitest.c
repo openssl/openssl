@@ -304,7 +304,7 @@ static int test_d2i_CMS_bio_NULL(void)
 
 static unsigned char *read_all(BIO *bio, long *p_len)
 {
-    static const int step = 256;
+    const int step = 256;
     unsigned char *buf = NULL;
     unsigned char *tmp = NULL;
     int ret;
