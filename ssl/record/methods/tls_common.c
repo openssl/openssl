@@ -1623,7 +1623,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
          */
         if (rl->version == TLS1_3_VERSION
                 && rl->enc_ctx != NULL
-                && (s->statem.enc_write_state != ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
+                && (!rl->allow_plain_alerts
                     || thistempl->type != SSL3_RT_ALERT))
             rectype = SSL3_RT_APPLICATION_DATA;
         else
@@ -1686,7 +1686,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         if (rl->version == TLS1_3_VERSION
                 && !using_ktls
                 && rl->enc_ctx != NULL
-                && (s->statem.enc_write_state != ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
+                && (!rl->allow_plain_alerts
                     || thistempl->type != SSL3_RT_ALERT)) {
             size_t rlen, max_send_fragment;
 
@@ -1779,7 +1779,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     if (!using_ktls) {
         if (prefix) {
             if (rl->funcs->cipher(rl, wr, 1, 1, NULL, mac_size) < 1) {
-                if (!ossl_statem_in_error(s)) {
+                if (rl->alert == SSL_AD_NO_ALERT) {
                     RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 }
                 goto err;
@@ -1788,7 +1788,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
 
         if (rl->funcs->cipher(rl, wr + prefix, numtempl, 1, NULL,
                                 mac_size) < 1) {
-            if (!ossl_statem_in_error(s)) {
+            if (rl->alert == SSL_AD_NO_ALERT) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             }
             goto err;

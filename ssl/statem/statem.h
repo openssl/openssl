@@ -72,15 +72,6 @@ typedef enum {
 } WRITE_STATE;
 
 typedef enum {
-    /* The enc_write_ctx can be used normally */
-    ENC_WRITE_STATE_VALID,
-    /* The enc_write_ctx cannot be used */
-    ENC_WRITE_STATE_INVALID,
-    /* Write alerts in plaintext, but otherwise use the enc_write_ctx */
-    ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
-} ENC_WRITE_STATES;
-
-typedef enum {
     CON_FUNC_ERROR = 0,
     CON_FUNC_SUCCESS,
     CON_FUNC_DONT_SEND
@@ -115,7 +106,6 @@ struct ossl_statem_st {
     /* Should we skip the CertificateVerify message? */
     unsigned int no_cert_verify;
     int use_timer;
-    ENC_WRITE_STATES enc_write_state;
 };
 typedef struct ossl_statem_st OSSL_STATEM;
 

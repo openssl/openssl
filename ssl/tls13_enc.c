@@ -343,8 +343,7 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, int sending,
                                     size_t labellen, unsigned char *secret,
                                     unsigned char *key, size_t *keylen,
                                     unsigned char *iv, size_t *ivlen,
-                                    size_t *taglen,
-                                    EVP_CIPHER_CTX *ciph_ctx)
+                                    size_t *taglen)
 {
     int hashleni = EVP_MD_get_size(md);
     size_t hashlen;
@@ -409,17 +408,6 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, int sending,
         return 0;
     }
 
-    if (sending) {
-        if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL, sending) <= 0
-            || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, *ivlen, NULL) <= 0
-            || (mode == EVP_CIPH_CCM_MODE
-                && EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG, *taglen, NULL) <= 0)
-            || EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, -1) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            return 0;
-        }
-    }
-
     return 1;
 }
 
@@ -449,7 +437,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     unsigned char *insecret;
     unsigned char *finsecret = NULL;
     const char *log_label = NULL;
-    EVP_CIPHER_CTX *ciph_ctx = NULL;
     size_t finsecretlen = 0;
     const unsigned char *label;
     size_t labellen, hashlen = 0;
@@ -462,24 +449,10 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     int direction = (which & SSL3_CC_READ) != 0 ? OSSL_RECORD_DIRECTION_READ
                                                 : OSSL_RECORD_DIRECTION_WRITE;
 
-    if (which & SSL3_CC_READ) {
+    if (which & SSL3_CC_READ)
         iv = s->read_iv;
-    } else {
-        s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
-        if (s->enc_write_ctx != NULL) {
-            EVP_CIPHER_CTX_reset(s->enc_write_ctx);
-        } else {
-            s->enc_write_ctx = EVP_CIPHER_CTX_new();
-            if (s->enc_write_ctx == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-                goto err;
-            }
-        }
-        ciph_ctx = s->enc_write_ctx;
+    else
         iv = s->write_iv;
-
-        RECORD_LAYER_reset_write_sequence(&s->rlayer);
-    }
 
     if (((which & SSL3_CC_CLIENT) && (which & SSL3_CC_WRITE))
             || ((which & SSL3_CC_SERVER) && (which & SSL3_CC_READ))) {
@@ -658,7 +631,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
 
     if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, md, cipher,
                                   insecret, hash, label, labellen, secret, key,
-                                  &keylen, iv, &ivlen, &taglen, ciph_ctx)) {
+                                  &keylen, iv, &ivlen, &taglen)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -695,10 +668,12 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
-    if (!s->server && label == client_early_traffic)
-        s->statem.enc_write_state = ENC_WRITE_STATE_WRITE_PLAIN_ALERTS;
-    else
-        s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
+    if ((which & SSL3_CC_WRITE) != 0) {
+        if (!s->server && label == client_early_traffic)
+            s->rlayer.wrlmethod->set_plain_alerts(s->rlayer.wrl, 1);
+        else
+            s->rlayer.wrlmethod->set_plain_alerts(s->rlayer.wrl, 0);
+    }
 
     level = (which & SSL3_CC_EARLY) != 0
             ? OSSL_RECORD_PROTECTION_LEVEL_EARLY
@@ -735,7 +710,6 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     unsigned char *insecret, *iv;
     unsigned char secret[EVP_MAX_MD_SIZE];
     char *log_label;
-    EVP_CIPHER_CTX *ciph_ctx;
     size_t keylen, ivlen, taglen;
     int ret = 0, l;
     int direction = sending ? OSSL_RECORD_DIRECTION_WRITE
@@ -752,21 +726,16 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     else
         insecret = s->client_app_traffic_secret;
 
-    if (sending) {
-        s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
+    if (sending)
         iv = s->write_iv;
-        ciph_ctx = s->enc_write_ctx;
-        RECORD_LAYER_reset_write_sequence(&s->rlayer);
-    } else {
+    else
         iv = s->read_iv;
-        ciph_ctx = s->enc_read_ctx;
-    }
 
     if (!derive_secret_key_and_iv(s, sending, md,
                                   s->s3.tmp.new_sym_enc, insecret, NULL,
                                   application_traffic,
                                   sizeof(application_traffic) - 1, secret, key,
-                                  &keylen, iv, &ivlen, &taglen, ciph_ctx)) {
+                                  &keylen, iv, &ivlen, &taglen)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -789,8 +758,6 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
         /* SSLfatal() already called */
         goto err;
     }
-
-    s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
     ret = 1;
  err:
     OPENSSL_cleanse(key, sizeof(key));

@@ -143,8 +143,7 @@ void ossl_statem_send_fatal(SSL_CONNECTION *s, int al)
       return;
     ossl_statem_set_in_init(s, 1);
     s->statem.state = MSG_FLOW_ERROR;
-    if (al != SSL_AD_NO_ALERT
-            && s->statem.enc_write_state != ENC_WRITE_STATE_INVALID)
+    if (al != SSL_AD_NO_ALERT)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
 }
 
