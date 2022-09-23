@@ -143,9 +143,6 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
-    if ((which & SSL3_CC_WRITE) != 0)
-        s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
-
     if (!ssl_set_new_record_layer(s, SSL3_VERSION,
                                   direction,
                                   OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
@@ -155,7 +152,6 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
-    s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
     return 1;
  err:
     return 0;

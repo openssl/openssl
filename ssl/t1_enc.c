@@ -250,7 +250,6 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         /* TODO(RECLAYER): Temporary - remove me when DTLS write rlayer done*/
         goto done;
     } else {
-        s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
         if (s->ext.use_etm)
             s->s3.flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE;
         else
@@ -390,8 +389,6 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
     }
 
  done:
-    s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
-
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "which = %04X, key:\n", which);
         BIO_dump_indent(trc_out, key, EVP_CIPHER_get_key_length(c), 4);

@@ -140,6 +140,7 @@ struct ossl_record_layer_st
     /* Sequence number for the next record */
     unsigned char sequence[SEQ_NUM_SIZE];
 
+    /* Alert code to be used if an error occurs */
     int alert;
 
     /*
