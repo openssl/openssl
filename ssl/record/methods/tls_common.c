@@ -144,6 +144,7 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
     size_t align = 0, headerlen;
     SSL3_BUFFER *wb;
     size_t currpipe;
+    /* TODO(RECLAYER): Remove me */
     SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
     size_t defltlen = 0;
 
@@ -181,7 +182,7 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
         }
 
         if (thiswb->buf == NULL) {
-            if (s->wbio == NULL || !BIO_get_ktls_send(s->wbio)) {
+            if (rl->bio == NULL || !BIO_get_ktls_send(rl->bio)) {
                 p = OPENSSL_malloc(len);
                 if (p == NULL) {
                     if (rl->numwpipes < currpipe)
@@ -1775,34 +1776,22 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         }
     }
 
-    if (s->statem.enc_write_state == ENC_WRITE_STATE_WRITE_PLAIN_ALERTS) {
-        /*
-         * We haven't actually negotiated the version yet, but we're trying to
-         * send early data - so we need to use the tls13enc function.
-         */
-        /* TODO(RECLAYER): Is this branch necessary now? */
-        if (rl->funcs->cipher(rl, wr, numtempl, 1, NULL, mac_size) < 1) {
-            if (!ossl_statem_in_error(s)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-    } else {
-        if (!using_ktls) {
-            if (prefix) {
-                if (rl->funcs->cipher(rl, wr, 1, 1, NULL, mac_size) < 1) {
-                    if (!ossl_statem_in_error(s))
-                        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                    goto err;
-                }
-            }
-
-            if (rl->funcs->cipher(rl, wr + prefix, numtempl, 1, NULL,
-                                  mac_size) < 1) {
+    if (!using_ktls) {
+        if (prefix) {
+            if (rl->funcs->cipher(rl, wr, 1, 1, NULL, mac_size) < 1) {
                 if (!ossl_statem_in_error(s)) {
                     RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 }
                 goto err;
             }
+        }
+
+        if (rl->funcs->cipher(rl, wr + prefix, numtempl, 1, NULL,
+                                mac_size) < 1) {
+            if (!ossl_statem_in_error(s)) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            }
+            goto err;
         }
     }
 
@@ -1852,7 +1841,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
             rl->msg_callback(1, thiswr->rec_version, SSL3_RT_HEADER, recordstart,
                              SSL3_RT_HEADER_LENGTH, rl->cbarg);
 
-            if (rl->version == TLS1_3_VERSION && s->enc_write_ctx != NULL) {
+            if (rl->version == TLS1_3_VERSION && rl->enc_ctx != NULL) {
                 unsigned char ctype = thistempl->type;
 
                 rl->msg_callback(1, thiswr->rec_version, SSL3_RT_INNER_CONTENT_TYPE,
