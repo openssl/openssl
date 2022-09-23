@@ -530,7 +530,7 @@ static int test_bio_dgram_pair(void)
         if (!TEST_int_eq(random_data(key, scratch, sizeof(scratch), i), 1))
             goto err;
 
-        blen = (*(uint32_t*)scratch) % mtu1;
+        blen = ((*(uint32_t*)scratch) % mtu1) + 1;
         r = BIO_write(bio1, scratch + 4, blen);
         if (r == -1)
             break;
@@ -556,7 +556,7 @@ static int test_bio_dgram_pair(void)
         if (!TEST_int_eq(random_data(key, scratch, sizeof(scratch), i), 1))
             goto err;
 
-        blen = (*(uint32_t*)scratch) % mtu1;
+        blen = ((*(uint32_t*)scratch) % mtu1) + 1;
         r = BIO_read(bio2, scratch2, sizeof(scratch2));
         if (!TEST_int_eq(r, blen))
             goto err;
