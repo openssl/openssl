@@ -390,6 +390,7 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
         ret = 1;
 
  done:
+    BN_CTX_end(ctx);
     EC_POINT_free(pt);
     BN_CTX_free(ctx);
     return ret;
