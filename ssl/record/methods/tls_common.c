@@ -144,8 +144,6 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
     size_t align = 0, headerlen;
     SSL3_BUFFER *wb;
     size_t currpipe;
-    /* TODO(RECLAYER): Remove me */
-    SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
     size_t defltlen = 0;
 
     if (firstlen == 0 || (numwpipes > 1 && nextlen == 0)) {
@@ -158,8 +156,8 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
         align = SSL3_ALIGN_PAYLOAD - 1;
 #endif
 
-        defltlen = ssl_get_max_send_fragment(s)
-            + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
+        defltlen = rl->max_frag_len + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD
+                   + headerlen + align;
 #ifndef OPENSSL_NO_COMP
         if (tls_allow_compression(rl))
             defltlen += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
@@ -237,8 +235,8 @@ int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
 #endif
 
     if (b->buf == NULL) {
-        len = SSL3_RT_MAX_PLAIN_LENGTH
-            + SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
+        len = rl->max_frag_len
+              + SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 #ifndef OPENSSL_NO_COMP
         if (tls_allow_compression(rl))
             len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
@@ -905,7 +903,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
          * Max Fragment Length setting.
          * Note: rl->max_frag_len > 0 and KTLS are mutually exclusive.
          */
-        if (rl->max_frag_len > 0 && thisrr->length > rl->max_frag_len) {
+        if (thisrr->length > rl->max_frag_len) {
             RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW, SSL_R_DATA_LENGTH_TOO_LONG);
             goto end;
         }
@@ -1214,6 +1212,12 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     if (rl == NULL)
         return OSSL_RECORD_RETURN_FATAL;
 
+    /*
+     * Default the value for max_frag_len. This may be overridden by the
+     * settings
+     */
+    rl->max_frag_len = SSL3_RT_MAX_PLAIN_LENGTH;
+
     /* Loop through all the settings since they must all be understood */
     if (settings != NULL) {
         for (p = settings; p->key != NULL; p++) {
@@ -1512,8 +1516,6 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     size_t len, wpinited = 0;
     size_t j, prefix = 0;
     int using_ktls;
-    /* TODO(RECLAYER): REMOVE ME */
-    SSL_CONNECTION *s = rl->cbarg;
     OSSL_RECORD_TEMPLATE prefixtempl;
     OSSL_RECORD_TEMPLATE *thistempl;
 
@@ -1688,7 +1690,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                 && rl->enc_ctx != NULL
                 && (!rl->allow_plain_alerts
                     || thistempl->type != SSL3_RT_ALERT)) {
-            size_t rlen, max_send_fragment;
+            size_t rlen;
 
             if (!WPACKET_put_bytes_u8(thispkt, thistempl->type)) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1697,11 +1699,10 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
             SSL3_RECORD_add_length(thiswr, 1);
 
             /* Add TLS1.3 padding */
-            max_send_fragment = ssl_get_max_send_fragment(s);
             rlen = SSL3_RECORD_get_length(thiswr);
-            if (rlen < max_send_fragment) {
+            if (rlen < rl->max_frag_len) {
                 size_t padding = 0;
-                size_t max_padding = max_send_fragment - rlen;
+                size_t max_padding = rl->max_frag_len - rlen;
 
                 if (rl->padding != NULL) {
                     padding = rl->padding(rl->cbarg, thistempl->type, rlen);
@@ -2063,6 +2064,18 @@ const COMP_METHOD *tls_get_compression(OSSL_RECORD_LAYER *rl)
 #endif
 }
 
+void tls_set_max_frag_len(OSSL_RECORD_LAYER *rl, size_t max_frag_len)
+{
+    rl->max_frag_len = max_frag_len;
+    /*
+     * We don't need to adjust buffer sizes. Write buffer sizes are
+     * automatically checked anyway. We should only be changing the read buffer
+     * size during the handshake, so we will create a new buffer when we create
+     * the new record layer. We can't change the existing buffer because it may
+     * already have data in it.
+     */
+}
+
 const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_new_record_layer,
     tls_free,
@@ -2086,5 +2099,6 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     NULL,
     tls_get_state,
     tls_set_options,
-    tls_get_compression
+    tls_get_compression,
+    tls_set_max_frag_len
 };

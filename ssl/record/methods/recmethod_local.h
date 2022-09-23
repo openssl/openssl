@@ -173,7 +173,10 @@ struct ossl_record_layer_st
     /* Set to 1 if this is the first handshake. 0 otherwise */
     int is_first_handshake;
 
-    /* The negotiated maximum fragment length */
+    /*
+     * The smaller of the configured and negotiated maximum fragment length
+     * or SSL3_RT_MAX_PLAIN_LENGTH if none
+     */
     unsigned int max_frag_len;
 
     /* The maxium amount of early data we can receive/send */
@@ -329,6 +332,7 @@ void tls_get_state(OSSL_RECORD_LAYER *rl, const char **shortstr,
                    const char **longstr);
 int tls_set_options(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options);
 const COMP_METHOD *tls_get_compression(OSSL_RECORD_LAYER *rl);
+void tls_set_max_frag_len(OSSL_RECORD_LAYER *rl, size_t max_frag_len);
 int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl);
 int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
                            size_t firstlen, size_t nextlen);

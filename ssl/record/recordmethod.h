@@ -302,6 +302,13 @@ struct ossl_record_method_st {
     int (*set_options)(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options);
 
     const COMP_METHOD *(*get_compression)(OSSL_RECORD_LAYER *rl);
+
+    /*
+     * Set the maximum fragment length to be used for the record layer. This
+     * will override any previous value supplied for the "max_frag_len"
+     * setting during construction of the record layer.
+     */
+    void (*set_max_frag_len)(OSSL_RECORD_LAYER *rl, size_t max_frag_len);
 };
 
 

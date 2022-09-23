@@ -307,16 +307,8 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     /* ktls supports only the maximum fragment size */
-    if (rl->max_frag_len > 0 && rl->max_frag_len != SSL3_RT_MAX_PLAIN_LENGTH)
+    if (rl->max_frag_len != SSL3_RT_MAX_PLAIN_LENGTH)
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
-#if 0
-    /*
-     * TODO(RECLAYER): We will need to reintroduce the check of the send
-     * fragment for KTLS once we do the record write side implementation
-     */
-    if (ssl_get_max_send_fragment(s) != SSL3_RT_MAX_PLAIN_LENGTH)
-        return OSSL_RECORD_RETURN_NON_FATAL_ERR;
-#endif
 
     /* check that cipher is supported */
     if (!ktls_int_check_supported_cipher(rl, ciph, md, taglen))
@@ -476,5 +468,6 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     NULL,
     tls_get_state,
     tls_set_options,
-    tls_get_compression
+    tls_get_compression,
+    tls_set_max_frag_len
 };
