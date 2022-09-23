@@ -2789,6 +2789,7 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         sc->max_send_fragment = larg;
         if (sc->max_send_fragment < sc->split_send_fragment)
             sc->split_send_fragment = sc->max_send_fragment;
+        sc->rlayer.wrlmethod->set_max_frag_len(sc->rlayer.wrl, larg);
         return 1;
     case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT:
         if ((size_t)larg > sc->max_send_fragment || larg == 0)

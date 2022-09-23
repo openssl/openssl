@@ -1707,14 +1707,18 @@ static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
         return 0;
     }
 
-    /* Current SSL buffer is lower than requested MFL */
-    if (s->session && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
-            && s->max_send_fragment < GET_MAX_FRAGMENT_LENGTH(s->session))
+    if (s->session && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)) {
+        s->rlayer.rrlmethod->set_max_frag_len(s->rlayer.rrl,
+                                              GET_MAX_FRAGMENT_LENGTH(s->session));
+        s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
+                                              ssl_get_max_send_fragment(s));
         /* trigger a larger buffer reallocation */
-        if (!ssl3_setup_buffers(s)) {
+        /* TODO(RECLAYER): Remove me when DTLS moved to write record layer */
+        if (SSL_CONNECTION_IS_DTLS(s) && !ssl3_setup_buffers(s)) {
             /* SSLfatal() already called */
             return 0;
         }
+    }
 
     return 1;
 }
