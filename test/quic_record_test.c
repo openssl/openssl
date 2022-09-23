@@ -1647,14 +1647,23 @@ static const struct rx_test_op rx_script_9[] = {
 };
 
 static const struct rx_test_op *rx_scripts[] = {
+    /* 1. RFC 9001 - A.3 Server Initial */
     rx_script_1,
+    /* 2. RFC 9001 - A.5 ChaCha20-Poly1305 Short Header Packet */
     rx_script_2,
+    /* 3. Real World - Version Negotiation Response */
     rx_script_3,
+    /* 4. Real World - Retry (S2C) */
     rx_script_4,
+    /* 5. Real World - S2C Multiple Packets (I/H/1-RTT (AES-128-GCM/SHA256)) */
     rx_script_5,
+    /* 6. Real World - S2C Multiple Packets (I/H/1-RTT (AES-256-GCM/SHA384)) */
     rx_script_6,
+    /* 7. Real World - S2C Multiple Packets (I/H/1-RTT (ChaCha20-Poly1305)) */
     rx_script_7,
+    /* 8. Real World - S2C Multiple Packets with Peer Initiated Key Phase Update */
     rx_script_8,
+    /* 9. Stateless Reset Processing */
     rx_script_9
 };
 
@@ -3400,12 +3409,19 @@ static const struct tx_test_op tx_script_7[] = {
 };
 
 static const struct tx_test_op *const tx_scripts[] = {
+    /* 1. RFC 9001 - A.2 Client Initial */
     tx_script_1,
+    /* 2. RFC 9001 - A.3 Server Initial */
     tx_script_2,
+    /* 3. RFC 9001 - A.5 ChaCha20-Poly1305 Short Header Packet */
     tx_script_3,
+    /* 4. Real World - AES-128-GCM Key Update */
     tx_script_4,
+    /* 5. Real World - Retry Packet */
     tx_script_5,
+    /* 6. Real World - Version Negotiation Packet */
     tx_script_6,
+    /* 7. Stateless Reset Transmission */
     tx_script_7
 };
 
