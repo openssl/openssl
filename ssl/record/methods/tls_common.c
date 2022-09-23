@@ -1513,37 +1513,18 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     int using_ktls;
     /* TODO(RECLAYER): REMOVE ME */
     SSL_CONNECTION *s = rl->cbarg;
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     OSSL_RECORD_TEMPLATE prefixtempl;
     OSSL_RECORD_TEMPLATE *thistempl;
 
-    /*
-     * TODO(RECLAYER): Remove this once DTLS crypto has
-     *                 been moved to the new write record layer.
-     */
-    if (rl->isdtls) {
-        SSL_SESSION *sess = s->session;
 
-        if ((sess == NULL)
-                || (s->enc_write_ctx == NULL)
-                || (EVP_MD_CTX_get0_md(s->write_hash) == NULL)) {
-            mac_size = 0;
-        } else {
-            mac_size = EVP_MD_CTX_get_size(s->write_hash);
-            if (mac_size < 0) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-        }
-    } else {
-        if (rl->md_ctx != NULL && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL) {
-            mac_size = EVP_MD_CTX_get_size(rl->md_ctx);
-            if (mac_size < 0) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
+    if (rl->md_ctx != NULL && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL) {
+        mac_size = EVP_MD_CTX_get_size(rl->md_ctx);
+        if (mac_size < 0) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
         }
     }
+
     /* Do we need to add an empty record prefix? */
     prefix = rl->need_empty_fragments
              && templates[0].type == SSL3_RT_APPLICATION_DATA;
@@ -1761,22 +1742,10 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         if (!using_ktls && !rl->use_etm && mac_size != 0) {
             unsigned char *mac;
 
-            /*
-             * TODO(RECLAYER): Remove this once DTLS crypto has
-             *                 been moved to the new write record layer.
-             */
-            if (rl->isdtls) {
-                if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
-                        || !ssl->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
-                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                    goto err;
-                }
-            } else {
-                if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
-                        || !rl->funcs->mac(rl, thiswr, mac, 1)) {
-                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                    goto err;
-                }
+            if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
+                    || !rl->funcs->mac(rl, thiswr, mac, 1)) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
             }
         }
 
@@ -1826,24 +1795,13 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                     goto err;
                 }
             }
-            /*
-             * TODO(RECLAYER): Remove this once DTLS crypto has
-             *                 been moved to the new write record layer.
-             */
-            if (rl->isdtls) {
-                if (ssl->method->ssl3_enc->enc(s, wr + prefix, numtempl, 1, NULL,
-                                               mac_size) < 1) {
-                    if (!ossl_statem_in_error(s))
-                        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                    goto err;
+
+            if (rl->funcs->cipher(rl, wr + prefix, numtempl, 1, NULL,
+                                  mac_size) < 1) {
+                if (!ossl_statem_in_error(s)) {
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 }
-            } else {
-                if (rl->funcs->cipher(rl, wr + prefix, numtempl, 1, NULL,
-                                      mac_size) < 1) {
-                    if (!ossl_statem_in_error(s))
-                        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                    goto err;
-                }
+                goto err;
             }
         }
     }
@@ -1873,22 +1831,10 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         if (rl->use_etm && mac_size != 0) {
             unsigned char *mac;
 
-            /*
-             * TODO(RECLAYER): Remove this once DTLS crypto has
-             *                 been moved to the new write record layer.
-             */
-            if (rl->isdtls) {
-                if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
-                        || !ssl->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
-                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                    goto err;
-                }
-            } else {
-                if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
-                        || !rl->funcs->mac(rl, thiswr, mac, 1)) {
-                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                    goto err;
-                }
+            if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
+                    || !rl->funcs->mac(rl, thiswr, mac, 1)) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
             }
 
             SSL3_RECORD_add_length(thiswr, mac_size);
