@@ -262,7 +262,7 @@ static int rxfc_should_bump_window_size(QUIC_RXFC *rxfc, OSSL_TIME rtt)
 
     now      = rxfc->now(rxfc->now_arg);
     dt       = ossl_time_subtract(now, rxfc->epoch_start);
-    t_window = ossl_time_divide(ossl_time_multiply(dt, rxfc->cur_window_size), b);
+    t_window = ossl_time_muldiv(dt, rxfc->cur_window_size, b);
 
     return ossl_time_compare(t_window, ossl_time_multiply(rtt, 4)) < 0;
 }
