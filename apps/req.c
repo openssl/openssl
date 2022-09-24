@@ -187,8 +187,8 @@ static void exts_cleanup(OPENSSL_STRING *x)
 }
 
 /*
- * Is the |kv| key already duplicated? This is remarkably tricky to get right.
- * Return 0 if unique, -1 on runtime error; 1 if found or a syntax error.
+ * Is the |kv| key already duplicated?
+ * Return 0 if unique, -1 on runtime error, -2 on syntax error; 1 if found.
  */
 static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
 {
@@ -197,11 +197,12 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
 
     /* Check syntax. */
     /* Skip leading whitespace, make a copy. */
-    while (*kv && isspace(*kv))
-        if (*++kv == '\0')
-            return 1;
-    if ((p = strchr(kv, '=')) == NULL)
-        return 1;
+    while (isspace(*kv))
+        kv++;
+    if ((p = strchr(kv, '=')) == NULL) {
+        BIO_printf(bio_err, "Parse error on -addext: missing '='\n");
+        return -2;
+    }
     off = p - kv;
     if ((kv = OPENSSL_strdup(kv)) == NULL)
         return -1;
@@ -211,14 +212,16 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
         if (!isspace(p[-1]))
             break;
     if (p == kv) {
+        BIO_printf(bio_err, "Parse error on -addext: missing key\n");
         OPENSSL_free(kv);
-        return 1;
+        return -2;
     }
     *p = '\0';
 
     /* Finally have a clean "key"; see if it's there [by attempt to add it]. */
     p = (char *)lh_OPENSSL_STRING_insert(addexts, (OPENSSL_STRING *)kv);
     if (p != NULL) {
+        BIO_printf(bio_err, "Duplicate extension name: %s\n", kv);
         OPENSSL_free(p);
         return 1;
     } else if (lh_OPENSSL_STRING_error(addexts)) {
@@ -456,10 +459,10 @@ int req_main(int argc, char **argv)
                     goto end;
             }
             i = duplicated(addexts, p);
-            if (i == 1) {
-                BIO_printf(bio_err, "Duplicate extension name: %s\n", p);
+            if (i == 1)
                 goto opthelp;
-            }
+            if (i == -1)
+                BIO_printf(bio_err, "Internal error handling -addext %s\n", p);
             if (i < 0 || BIO_printf(addext_bio, "%s\n", p) < 0)
                 goto end;
             break;
