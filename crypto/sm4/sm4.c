@@ -241,7 +241,7 @@ static ossl_inline void store_u32_be(uint32_t v, uint8_t *b)
     b[3] = (uint8_t)(v);
 }
 
-static ossl_inline uint32_t SM4_T_slow(uint32_t X)
+static ossl_inline uint32_t SM4_T_non_lin_sub(uint32_t X)
 {
     uint32_t t = 0;
 
@@ -249,6 +249,13 @@ static ossl_inline uint32_t SM4_T_slow(uint32_t X)
     t |= ((uint32_t)SM4_S[(uint8_t)(X >> 16)]) << 16;
     t |= ((uint32_t)SM4_S[(uint8_t)(X >> 8)]) << 8;
     t |= SM4_S[(uint8_t)X];
+
+    return t;
+}
+
+static ossl_inline uint32_t SM4_T_slow(uint32_t X)
+{
+    uint32_t t = SM4_T_non_lin_sub(X);
 
     /*
      * L linear transform
@@ -262,6 +269,13 @@ static ossl_inline uint32_t SM4_T(uint32_t X)
            SM4_SBOX_T1[(uint8_t)(X >> 16)] ^
            SM4_SBOX_T2[(uint8_t)(X >> 8)] ^
            SM4_SBOX_T3[(uint8_t)X];
+}
+
+static ossl_inline uint32_t SM4_key_sub(uint32_t X)
+{
+    uint32_t t = SM4_T_non_lin_sub(X);
+
+    return t ^ rotl(t, 13) ^ rotl(t, 23);
 }
 
 int ossl_sm4_set_key(const uint8_t *key, SM4_KEY *ks)
@@ -294,18 +308,15 @@ int ossl_sm4_set_key(const uint8_t *key, SM4_KEY *ks)
     K[2] = load_u32_be(key, 2) ^ FK[2];
     K[3] = load_u32_be(key, 3) ^ FK[3];
 
-    for (i = 0; i != SM4_KEY_SCHEDULE; ++i) {
-        uint32_t X = K[(i + 1) % 4] ^ K[(i + 2) % 4] ^ K[(i + 3) % 4] ^ CK[i];
-        uint32_t t = 0;
-
-        t |= ((uint32_t)SM4_S[(uint8_t)(X >> 24)]) << 24;
-        t |= ((uint32_t)SM4_S[(uint8_t)(X >> 16)]) << 16;
-        t |= ((uint32_t)SM4_S[(uint8_t)(X >> 8)]) << 8;
-        t |= SM4_S[(uint8_t)X];
-
-        t = t ^ rotl(t, 13) ^ rotl(t, 23);
-        K[i % 4] ^= t;
-        ks->rk[i] = K[i % 4];
+    for (i = 0; i < SM4_KEY_SCHEDULE; i = i + 4) {
+        K[0] ^= SM4_key_sub(K[1] ^ K[2] ^ K[3] ^ CK[i]);
+        K[1] ^= SM4_key_sub(K[2] ^ K[3] ^ K[0] ^ CK[i + 1]);
+        K[2] ^= SM4_key_sub(K[3] ^ K[0] ^ K[1] ^ CK[i + 2]);
+        K[3] ^= SM4_key_sub(K[0] ^ K[1] ^ K[2] ^ CK[i + 3]);
+        ks->rk[i    ] = K[0];
+        ks->rk[i + 1] = K[1];
+        ks->rk[i + 2] = K[2];
+        ks->rk[i + 3] = K[3];
     }
 
     return 1;
