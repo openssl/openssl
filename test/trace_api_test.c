@@ -67,7 +67,7 @@ static int test_trace_categories(void)
 }
 
 #ifndef OPENSSL_NO_TRACE
-static void put_trace_output()
+static void put_trace_output(void)
 {
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "Hello World\n");
@@ -75,7 +75,7 @@ static void put_trace_output()
     } OSSL_TRACE_END(TLS);
 }
 
-static int test_trace_channel()
+static int test_trace_channel(void)
 {
     static const char expected[] = "xyz-\nHello World\nGood Bye Universe\n-abc\n";
     static const char expected_len = sizeof(expected) - 1;
