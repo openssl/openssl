@@ -85,8 +85,8 @@ typedef enum OPTION_choice {
     OPT_KEYOUT, OPT_PASSIN, OPT_PASSOUT, OPT_NEWKEY,
     OPT_PKEYOPT, OPT_SIGOPT, OPT_VFYOPT, OPT_BATCH, OPT_NEWHDR, OPT_MODULUS,
     OPT_VERIFY, OPT_NOENC, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
-    OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT, OPT_X509,
-    OPT_CA, OPT_CAKEY,
+    OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT,
+    OPT_X509, OPT_X509V1, OPT_CA, OPT_CAKEY,
     OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL,
     OPT_COPY_EXTENSIONS, OPT_EXTENSIONS, OPT_REQEXTS, OPT_ADDEXT,
     OPT_PRECERT, OPT_MD,
@@ -117,6 +117,7 @@ const OPTIONS req_options[] = {
     {"text", OPT_TEXT, '-', "Text form of request"},
     {"x509", OPT_X509, '-',
      "Output an X.509 certificate structure instead of a cert request"},
+    {"x509v1", OPT_X509V1, '-', "Request cert generation with X.509 version 1"},
     {"CA", OPT_CA, '<', "Issuer cert to use for signing a cert, implies -x509"},
     {"CAkey", OPT_CAKEY, 's',
      "Issuer private key to use with -CA; default is -CA arg"},
@@ -261,7 +262,7 @@ int req_main(int argc, char **argv)
     int ret = 1, gen_x509 = 0, i = 0, newreq = 0, verbose = 0;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyform = FORMAT_UNDEF;
     int modulus = 0, multirdn = 1, verify = 0, noout = 0, text = 0;
-    int noenc = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0;
+    int noenc = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0, x509v1 = 0;
     long newkey_len = -1;
     unsigned long chtype = MBSTRING_ASC, reqflag = 0;
 
@@ -403,6 +404,9 @@ int req_main(int argc, char **argv)
         case OPT_TEXT:
             text = 1;
             break;
+        case OPT_X509V1:
+            x509v1 = 1;
+            /* fall thru */
         case OPT_X509:
             gen_x509 = 1;
             break;
@@ -867,7 +871,8 @@ int req_main(int argc, char **argv)
                 }
             }
 
-            i = do_X509_sign(new_x509, issuer_key, digest, sigopts, &ext_ctx);
+            i = do_X509_sign(new_x509, x509v1, issuer_key, digest, sigopts,
+                             &ext_ctx);
             if (!i)
                 goto end;
         } else {

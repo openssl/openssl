@@ -441,7 +441,7 @@ strict_verify($cert, 1);
 # AKID of self-signed certs
 
 $cert = "self-signed_v1_CA_no_KIDs.pem";
-generate_cert($cert);
+generate_cert($cert, "-x509v1");
 cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
 #TODO strict_verify($cert, 1); # self-signed v1 root cert should be accepted as CA
 
