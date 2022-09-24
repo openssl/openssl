@@ -167,9 +167,7 @@ int dsa_main(int argc, char **argv)
 
     if (!opt_cipher(ciphername, &enc))
         goto end;
-    private = pubin || pubout ? 0 : 1;
-    if (text && !pubin)
-        private = 1;
+    private = !pubin && (!pubout || text);
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
