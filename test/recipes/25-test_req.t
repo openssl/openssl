@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 92;
+plan tests => 102;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -393,16 +393,7 @@ sub generate_cert {
     push(@cmd, ("-CA", $ca_cert, "-CAkey", $ca_key)) unless $ss;
     ok(run(app([@cmd])), "generate $cert");
 }
-sub has_SKID {
-    my $cert = shift @_;
-    my $expect = shift @_;
-    cert_contains($cert, "Subject Key Identifier", $expect);
-}
-sub has_AKID {
-    my $cert = shift @_;
-    my $expect = shift @_;
-    cert_contains($cert, "Authority Key Identifier", $expect);
-}
+
 sub has_keyUsage {
     my $cert = shift @_;
     my $expect = shift @_;
@@ -424,6 +415,12 @@ my $SKID_AKID = "subjectKeyIdentifier,authorityKeyIdentifier";
 
 # # SKID
 
+my $cert = "self-signed_default_SKID_no_explicit_exts.pem";
+generate_cert($cert);
+has_version($cert, 3);
+has_SKID($cert, 1); # SKID added, though no explicit extensions given
+has_AKID($cert, 0);
+
 my $cert = "self-signed_v3_CA_hash_SKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = hash");
 has_SKID($cert, 1); # explicit hash SKID
@@ -441,7 +438,8 @@ strict_verify($cert, 1);
 # AKID of self-signed certs
 
 $cert = "self-signed_v1_CA_no_KIDs.pem";
-generate_cert($cert);
+generate_cert($cert, "-x509v1");
+has_version($cert, 1);
 cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
 #TODO strict_verify($cert, 1); # self-signed v1 root cert should be accepted as CA
 
@@ -515,6 +513,8 @@ strict_verify($cert, 1);
 $cert = "self-issued_v3_CA_no_AKID.pem";
 generate_cert($cert, "-addext", "authorityKeyIdentifier = none",
     "-in", srctop_file(@certs, "x509-check.csr"));
+has_version($cert, 3);
+has_SKID($cert, 1); # SKID added, though no explicit extensions given
 has_AKID($cert, 0);
 strict_verify($cert, 1);
 
@@ -555,6 +555,11 @@ generate_cert($cert, "-addext", "authorityKeyIdentifier = keyid:always, issuer:a
 cert_ext_has_n_different_lines($cert, 6, $SKID_AKID); # SKID != AKID, both forced
 
 # AKID of not self-issued certs
+
+$cert = "regular_v3_EE_default_KIDs_no_other_exts.pem";
+generate_cert($cert, "-key", srctop_file(@certs, "ee-key.pem"));
+has_version($cert, 3);
+cert_ext_has_n_different_lines($cert, 4, $SKID_AKID); # SKID != AKID
 
 $cert = "regular_v3_EE_default_KIDs.pem";
 generate_cert($cert, "-addext", "keyUsage = dataEncipherment",

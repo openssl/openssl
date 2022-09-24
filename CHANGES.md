@@ -127,6 +127,13 @@ OpenSSL 3.2
 
    * Lutz Jänicke*
 
+ * The `x509`, `ca`, and `req` apps now produce X.509 v3 certificates.
+   The `-x509v1` option of `req` prefers generation of X.509 v1 certificates.
+   `X509_sign()` and `X509_sign_ctx()` make sure that the certificate has
+   X.509 version 3 if the certificate information includes X.509 extensions.
+
+   *David von Oheimb*
+
  * Fix and extend certificate handling and the apps `x509`, `verify` etc.
    such as adding a trace facility for debugging certificate chain building.
 

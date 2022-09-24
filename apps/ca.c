@@ -1926,7 +1926,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         !EVP_PKEY_missing_parameters(pkey))
         EVP_PKEY_copy_parameters(pktmp, pkey);
 
-    if (!do_X509_sign(ret, pkey, dgst, sigopts, &ext_ctx))
+    if (!do_X509_sign(ret, 0, pkey, dgst, sigopts, &ext_ctx))
         goto end;
 
     /* We now just add it to the database as DB_TYPE_VAL('V') */

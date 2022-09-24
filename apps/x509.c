@@ -894,7 +894,7 @@ int x509_main(int argc, char **argv)
         }
         noout = 1;
     } else if (privkey != NULL) {
-        if (!do_X509_sign(x, privkey, digest, sigopts, &ext_ctx))
+        if (!do_X509_sign(x, 0, privkey, digest, sigopts, &ext_ctx))
             goto end;
     } else if (CAfile != NULL) {
         if ((CAkey = load_key(CAkeyfile, CAkeyformat,
@@ -906,7 +906,7 @@ int x509_main(int argc, char **argv)
             goto err;
         }
 
-        if (!do_X509_sign(x, CAkey, digest, sigopts, &ext_ctx))
+        if (!do_X509_sign(x, 0, CAkey, digest, sigopts, &ext_ctx))
             goto end;
     }
     if (badsig) {

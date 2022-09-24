@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 29;
+plan tests => 32;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -201,6 +201,11 @@ ok(run(app(["openssl", "x509", "-req", "-text", "-CAcreateserial",
             "-in", $b_csr, "-out", $b_cert])));
 # Verify issuer is CA
 ok(get_issuer($b_cert) =~ /CN=ca.example.com/);
+
+# although no explicit extensions given:
+has_version($b_cert, 3);
+has_SKID($b_cert, 1);
+has_AKID($b_cert, 1);
 
 SKIP: {
     skip "EC is not supported by this OpenSSL build", 1

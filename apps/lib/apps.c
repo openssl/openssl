@@ -2289,16 +2289,14 @@ int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey)
 }
 
 /* Ensure RFC 5280 compliance, adapt keyIDs as needed, and sign the cert info */
-int do_X509_sign(X509 *cert, EVP_PKEY *pkey, const char *md,
+int do_X509_sign(X509 *cert, int force_v1, EVP_PKEY *pkey, const char *md,
                  STACK_OF(OPENSSL_STRING) *sigopts, X509V3_CTX *ext_ctx)
 {
-    const STACK_OF(X509_EXTENSION) *exts = X509_get0_extensions(cert);
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     int self_sign;
     int rv = 0;
 
-    if (sk_X509_EXTENSION_num(exts /* may be NULL */) > 0) {
-        /* Prevent X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3 */
+    if (!force_v1) {
         if (!X509_set_version(cert, X509_VERSION_3))
             goto end;
 

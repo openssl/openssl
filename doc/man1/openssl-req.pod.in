@@ -33,6 +33,7 @@ B<openssl> B<req>
 [B<-config> I<filename>]
 [B<-section> I<name>]
 [B<-x509>]
+[B<-x509v1>]
 [B<-CA> I<filename>|I<uri>]
 [B<-CAkey> I<filename>|I<uri>]
 [B<-days> I<n>]
@@ -299,6 +300,16 @@ X.509 extensions to be added can be specified in the configuration file,
 possibly using the B<-config> and B<-extensions> options,
 and/or using the B<-addext> option.
 
+Unless B<-x509v1> is given, generated certificates bear X.509 version 3.
+Unless specified otherwise,
+key identifier extensions are included as described in L<x509v3_config(5)>.
+
+=item B<-x509v1>
+
+Request generation of certificates with X.509 version 1.
+This implies B<-x509>.
+If X.509 extensions are given, anyway X.509 version 3 is set.
+
 =item B<-CA> I<filename>|I<uri>
 
 Specifies the "CA" certificate to be used for signing a new certificate
@@ -349,7 +360,7 @@ file to specify requests for a variety of purposes.
 
 Add a specific extension to the certificate (if B<-x509> is in use)
 or certificate request.  The argument must have the form of
-a key=value pair as it would appear in a config file.
+a C<key=value> pair as it would appear in a config file.
 
 This option can be given multiple times.
 
@@ -769,6 +780,10 @@ The B<-engine> option was deprecated in OpenSSL 3.0.
 The <-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
 
 The B<-reqexts> option has been made an alias of B<-extensions> in OpenSSL 3.2.
+
+Since OpenSSL 3.2,
+generated certificates bear X.509 version 3 unless B<-x509v1> is given,
+and key identifier extensions are included by default.
 
 =head1 COPYRIGHT
 

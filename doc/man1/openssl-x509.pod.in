@@ -87,6 +87,10 @@ convert certificates to various forms, edit certificate trust settings,
 generate certificates from scratch or from certificating requests
 and then self-signing them or signing them like a "micro CA".
 
+Generated certificates bear X.509 version 3.
+Unless specified otherwise,
+key identifier extensions are included as described in L<x509v3_config(5)>.
+
 Since there are a large number of options they will split up into
 various sections.
 
@@ -303,7 +307,7 @@ as used by OpenSSL before version 1.0.0.
 Prints out the certificate extensions in text form.
 Can also be used to restrict which extensions to copy.
 Extensions are specified
-with a comma separated string, e.g., "subjectAltName,subjectKeyIdentifier".
+with a comma separated string, e.g., "subjectAltName, subjectKeyIdentifier".
 See the L<x509v3_config(5)> manual page for the extension names.
 
 =item B<-ocspid>
@@ -435,8 +439,12 @@ If this option is not
 specified then the extensions should either be contained in the unnamed
 (default) section or the default section should contain a variable called
 "extensions" which contains the section to use.
+
 See the L<x509v3_config(5)> manual page for details of the
 extension section format.
+
+Unless specified otherwise,
+key identifier extensions are included as described in L<x509v3_config(5)>.
 
 =item B<-sigopt> I<nm>:I<v>
 
@@ -781,6 +789,9 @@ keeping the old name as an alias.
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
 The B<-C> option was removed in OpenSSL 3.0.
+
+Since OpenSSL 3.2, generated certificates bear X.509 version 3,
+and key identifier extensions are included by default.
 
 =head1 COPYRIGHT
 
