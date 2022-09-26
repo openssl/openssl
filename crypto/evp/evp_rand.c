@@ -320,7 +320,7 @@ int EVP_RAND_get_params(EVP_RAND *rand, OSSL_PARAM params[])
     return 1;
 }
 
-static int evp_rand_ctx_up_ref(EVP_RAND_CTX *ctx)
+int EVP_RAND_CTX_up_ref(EVP_RAND_CTX *ctx)
 {
     int ref = 0;
 
@@ -345,7 +345,7 @@ EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, EVP_RAND_CTX *parent)
         return NULL;
     }
     if (parent != NULL) {
-        if (!evp_rand_ctx_up_ref(parent)) {
+        if (!EVP_RAND_CTX_up_ref(parent)) {
             ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
             CRYPTO_THREAD_lock_free(ctx->refcnt_lock);
             OPENSSL_free(ctx);
