@@ -74,6 +74,27 @@ struct record_functions_st
     /* Return 1 for success or 0 for error */
     int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                          size_t numtempl);
+
+    /* Allocate the rl->wbuf buffers. Return 1 for success or 0 for error */
+    int (*allocate_write_buffers)(OSSL_RECORD_LAYER *rl,
+                                  OSSL_RECORD_TEMPLATE *templates,
+                                  size_t numtempl, size_t *prefix);
+
+    /*
+     * Initialise the packets in the |pkt| array using the buffers in |rl->wbuf|.
+     * Some protocol versions may use the space in |prefixtempl| to add
+     * an artificial template in front of the |templates| array and hence may
+     * initialise 1 more WPACKET than there are templates. |*wpinited|
+     * returns the number of WPACKETs in |pkt| that were successfully
+     * initialised. This must be 0 on entry and will be filled in even on error.
+     */
+    int (*initialise_write_packets)(OSSL_RECORD_LAYER *rl,
+                                    OSSL_RECORD_TEMPLATE *templates,
+                                    size_t numtempl,
+                                    OSSL_RECORD_TEMPLATE *prefixtempl,
+                                    WPACKET *pkt,
+                                    SSL3_BUFFER *bufs,
+                                    size_t *wpinited);
 };
 
 struct ossl_record_layer_st
@@ -343,6 +364,26 @@ int tls_write_records_multiblock(OSSL_RECORD_LAYER *rl,
 
 size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, int type, size_t len,
                                    size_t maxfrag, size_t *preffrag);
+int tls_allocate_write_buffers_default(OSSL_RECORD_LAYER *rl,
+                                       OSSL_RECORD_TEMPLATE *templates,
+                                       size_t numtempl, size_t *prefix);
+int tls_initialise_write_packets_default(OSSL_RECORD_LAYER *rl,
+                                         OSSL_RECORD_TEMPLATE *templates,
+                                         size_t numtempl,
+                                         OSSL_RECORD_TEMPLATE *prefixtempl,
+                                         WPACKET *pkt,
+                                         SSL3_BUFFER *bufs,
+                                         size_t *wpinited);
+int tls1_allocate_write_buffers(OSSL_RECORD_LAYER *rl,
+                                OSSL_RECORD_TEMPLATE *templates,
+                                size_t numtempl, size_t *prefix);
+int tls1_initialise_write_packets(OSSL_RECORD_LAYER *rl,
+                                  OSSL_RECORD_TEMPLATE *templates,
+                                  size_t numtempl,
+                                  OSSL_RECORD_TEMPLATE *prefixtempl,
+                                  WPACKET *pkt,
+                                  SSL3_BUFFER *bufs,
+                                  size_t *wpinited);
 size_t tls_get_max_records_multiblock(OSSL_RECORD_LAYER *rl, int type,
                                       size_t len, size_t maxfrag,
                                       size_t *preffrag);

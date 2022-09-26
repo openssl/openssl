@@ -13,6 +13,7 @@
 #include <openssl/err.h>
 #include <openssl/core_names.h>
 #include <openssl/comp.h>
+#include <openssl/ssl.h>
 #include "internal/e_os.h"
 #include "internal/packet.h"
 #include "../../ssl_local.h"
@@ -114,28 +115,6 @@ static void tls_release_write_buffer_int(OSSL_RECORD_LAYER *rl, size_t start)
         pipes--;
     }
 }
-
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
-# ifndef OPENSSL_NO_COMP
-#  define MAX_PREFIX_LEN ((SSL3_ALIGN_PAYLOAD - 1) \
-                          + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
-                          + SSL3_RT_HEADER_LENGTH \
-                          + SSL3_RT_MAX_COMPRESSED_OVERHEAD)
-# else
-#  define MAX_PREFIX_LEN ((SSL3_ALIGN_PAYLOAD - 1) \
-                          + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
-                          + SSL3_RT_HEADER_LENGTH)
-# endif /* OPENSSL_NO_COMP */
-#else
-# ifndef OPENSSL_NO_COMP
-#  define MAX_PREFIX_LEN (SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
-                          + SSL3_RT_HEADER_LENGTH \
-                          + SSL3_RT_MAX_COMPRESSED_OVERHEAD)
-# else
-#  define MAX_PREFIX_LEN (SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
-                          + SSL3_RT_HEADER_LENGTH)
-# endif /* OPENSSL_NO_COMP */
-#endif
 
 int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
                            size_t firstlen, size_t nextlen)
@@ -1479,7 +1458,7 @@ size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, int type, size_t len,
      * it, then return the preferred number of pipelines.
      */
     if (rl->max_pipelines > 0
-            && rl->enc_ctx!= NULL
+            && rl->enc_ctx != NULL
             && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(rl->enc_ctx))
                 & EVP_CIPH_FLAG_PIPELINE) != 0
             && RLAYER_USE_EXPLICIT_IV(rl)) {
@@ -1501,6 +1480,59 @@ size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, int type, size_t len,
     return rl->funcs->get_max_records(rl, type, len, maxfrag, preffrag);
 }
 
+int tls_allocate_write_buffers_default(OSSL_RECORD_LAYER *rl,
+                                         OSSL_RECORD_TEMPLATE *templates,
+                                         size_t numtempl,
+                                         size_t *prefix)
+{
+    if (!tls_setup_write_buffer(rl, numtempl, 0, 0)) {
+        /* RLAYERfatal() already called */
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_initialise_write_packets_default(OSSL_RECORD_LAYER *rl,
+                                         OSSL_RECORD_TEMPLATE *templates,
+                                         size_t numtempl,
+                                         OSSL_RECORD_TEMPLATE *prefixtempl,
+                                         WPACKET *pkt,
+                                         SSL3_BUFFER *bufs,
+                                         size_t *wpinited)
+{
+    WPACKET *thispkt;
+    size_t j, align;
+    SSL3_BUFFER *wb;
+
+    for (j = 0; j < numtempl; j++) {
+        thispkt = &pkt[j];
+        wb = &bufs[j];
+
+        wb->type = templates[j].type;
+
+#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
+        align = (size_t)SSL3_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
+        align = SSL3_ALIGN_PAYLOAD - 1
+                - ((align - 1) % SSL3_ALIGN_PAYLOAD);
+#endif
+        SSL3_BUFFER_set_offset(wb, align);
+
+        if (!WPACKET_init_static_len(thispkt, SSL3_BUFFER_get_buf(wb),
+                                     SSL3_BUFFER_get_len(wb), 0)) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        (*wpinited)++;
+        if (!WPACKET_allocate_bytes(thispkt, align, NULL)) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                               OSSL_RECORD_TEMPLATE *templates,
                               size_t numtempl)
@@ -1511,14 +1543,11 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     SSL3_RECORD *thiswr;
     unsigned char *recordstart;
     int mac_size = 0, ret = 0;
-    size_t align = 0;
-    SSL3_BUFFER *wb;
     size_t len, wpinited = 0;
     size_t j, prefix = 0;
     int using_ktls;
     OSSL_RECORD_TEMPLATE prefixtempl;
     OSSL_RECORD_TEMPLATE *thistempl;
-
 
     if (rl->md_ctx != NULL && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL) {
         mac_size = EVP_MD_CTX_get_size(rl->md_ctx);
@@ -1528,16 +1557,14 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         }
     }
 
-    /* Do we need to add an empty record prefix? */
-    prefix = rl->need_empty_fragments
-             && templates[0].type == SSL3_RT_APPLICATION_DATA;
+    if (!rl->funcs->allocate_write_buffers(rl, templates, numtempl, &prefix)) {
+        /* RLAYERfatal() already called */
+        goto err;
+    }
 
-    /*
-     * In the prefix case we can allocate a much smaller buffer. Otherwise we
-     * just allocate the default buffer size
-     */
-    if (!tls_setup_write_buffer(rl, numtempl + prefix,
-                                prefix ? MAX_PREFIX_LEN : 0, 0)) {
+    if (!rl->funcs->initialise_write_packets(rl, templates, numtempl,
+                                             &prefixtempl, pkt, rl->wbuf,
+                                             &wpinited)) {
         /* RLAYERfatal() already called */
         goto err;
     }
@@ -1546,65 +1573,6 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     if (!ossl_assert(!using_ktls || !prefix)) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
-    }
-
-    if (prefix) {
-        /*
-         * countermeasure against known-IV weakness in CBC ciphersuites (see
-         * http://www.openssl.org/~bodo/tls-cbc.txt)
-         */
-        prefixtempl.buf = NULL;
-        prefixtempl.version = templates[0].version;
-        prefixtempl.buflen = 0;
-        prefixtempl.type = SSL3_RT_APPLICATION_DATA;
-        wpinited = 1;
-
-        wb = &rl->wbuf[0];
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
-            align = (size_t)SSL3_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
-            align = SSL3_ALIGN_PAYLOAD - 1
-                    - ((align - 1) % SSL3_ALIGN_PAYLOAD);
-#endif
-        SSL3_BUFFER_set_offset(wb, align);
-        if (!WPACKET_init_static_len(&pkt[0], SSL3_BUFFER_get_buf(wb),
-                                     SSL3_BUFFER_get_len(wb), 0)
-                || !WPACKET_allocate_bytes(&pkt[0], align, NULL)) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-        wpinited = 1;
-    }
-    for (j = 0; j < numtempl; j++) {
-        thispkt = &pkt[prefix + j];
-
-        wb = &rl->wbuf[prefix + j];
-        wb->type = templates[j].type;
-
-        if (using_ktls) {
-            /*
-            * ktls doesn't modify the buffer, but to avoid a warning we need
-            * to discard the const qualifier.
-            * This doesn't leak memory because the buffers have been
-            * released when switching to ktls.
-            */
-            SSL3_BUFFER_set_buf(wb, (unsigned char *)templates[j].buf);
-            SSL3_BUFFER_set_offset(wb, 0);
-            SSL3_BUFFER_set_app_buffer(wb, 1);
-        } else {
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
-            align = (size_t)SSL3_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
-            align = SSL3_ALIGN_PAYLOAD - 1
-                    - ((align - 1) % SSL3_ALIGN_PAYLOAD);
-#endif
-            SSL3_BUFFER_set_offset(wb, align);
-            if (!WPACKET_init_static_len(thispkt, SSL3_BUFFER_get_buf(wb),
-                                        SSL3_BUFFER_get_len(wb), 0)
-                    || !WPACKET_allocate_bytes(thispkt, align, NULL)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            wpinited++;
-        }
     }
 
     /* Clear our SSL3_RECORD structures */
@@ -1616,8 +1584,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
 
         thispkt = &pkt[j];
         thiswr = &wr[j];
-        thistempl = (j == 0 && prefix == 1) ? &prefixtempl :
-                                              &templates[j - prefix];
+        thistempl = (j < prefix) ? &prefixtempl : &templates[j - prefix];
 
         /*
          * In TLSv1.3, once encrypting, we always use application data for the
@@ -1796,13 +1763,12 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         }
     }
 
-    for (j = 0; j < prefix + numtempl; j++) {
+    for (j = 0; j < numtempl + prefix; j++) {
         size_t origlen;
 
         thispkt = &pkt[j];
         thiswr = &wr[j];
-        thistempl = (prefix == 1 && j == 0) ? &prefixtempl
-                                            : &templates[j - prefix];
+        thistempl = (j < prefix) ? &prefixtempl : &templates[j - prefix];
 
         if (using_ktls)
             goto mac_done;
