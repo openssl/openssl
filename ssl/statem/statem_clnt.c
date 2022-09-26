@@ -1988,7 +1988,8 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
         return WORK_ERROR;
     }
 
-    if ((clu = ssl_cert_lookup_by_pkey(pkey, &certidx)) == NULL) {
+    if ((clu = ssl_cert_lookup_by_pkey(pkey, &certidx,
+				       SSL_CONNECTION_GET_CTX(s))) == NULL) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return WORK_ERROR;
     }
@@ -2434,11 +2435,13 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL_CONNECTION *s, PACKET *pkt)
 MSG_PROCESS_RETURN tls_process_certificate_request(SSL_CONNECTION *s,
                                                    PACKET *pkt)
 {
-    size_t i;
-
-    /* Clear certificate validity flags */
-    for (i = 0; i < SSL_PKEY_NUM; i++)
-        s->s3.tmp.valid_flags[i] = 0;
+    /* Allocate and clear certificate validity flags */
+    OPENSSL_free(s->s3.tmp.valid_flags);
+    s->s3.tmp.valid_flags = OPENSSL_zalloc(s->ssl_pkey_num * sizeof(uint32_t));
+    if (s->s3.tmp.valid_flags == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
 
     if (SSL_CONNECTION_IS_TLS13(s)) {
         PACKET reqctx, extensions;
@@ -3768,7 +3771,8 @@ int ssl3_check_cert_and_algorithm(SSL_CONNECTION *s)
         return 1;
 
     /* This is the passed certificate */
-    clu = ssl_cert_lookup_by_pkey(X509_get0_pubkey(s->session->peer), &idx);
+    clu = ssl_cert_lookup_by_pkey(X509_get0_pubkey(s->session->peer), &idx,
+		   SSL_CONNECTION_GET_CTX(s));
 
     /* Check certificate is recognised and suitable for cipher */
     if (clu == NULL || (alg_a & clu->amask) == 0) {

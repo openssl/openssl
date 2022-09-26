@@ -755,6 +755,29 @@ typedef struct tls_group_info_st {
     char is_kem;             /* Mode for this Group: 0 is KEX, 1 is KEM */
 } TLS_GROUP_INFO;
 
+typedef struct tls_sigalg_info_st {
+    char *tlsname;           /* Algorithm Name as in TLS specs */
+    char *realname;          /* Algorithm Name according to provider */
+    char *algorithm;         /* Algorithm name to fetch */
+    char *oid;               /* OID of algorithm */
+    char *hash_algorithm;    /* Name of hash algorithm if any */
+    uint16_t code_point;     /* Code point of algorithm */
+    unsigned int secbits;    /* Bits of security (from SP800-57) */
+    int mintls;              /* Minimum TLS version, -1 unsupported */
+    int maxtls;              /* Maximum TLS version (or 0 for undefined) */
+    int mindtls;             /* Minimum DTLS version, -1 unsupported */
+    int maxdtls;             /* Maximum DTLS version (or 0 for undefined) */
+} TLS_SIGALG_INFO;
+
+/*
+ * Structure containing table entry of certificate info corresponding to
+ * CERT_PKEY entries
+ */
+typedef struct {
+    int nid; /* NID of public key algorithm */
+    uint32_t amask; /* authmask corresponding to key type */
+} SSL_CERT_LOOKUP;
+
 /* flags values */
 # define TLS_GROUP_TYPE             0x0000000FU /* Mask for group type */
 # define TLS_GROUP_CURVE_PRIME      0x00000001U
@@ -1120,12 +1143,20 @@ struct ssl_ctx_st {
     const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX];
     size_t ssl_mac_secret_size[SSL_MD_NUM_IDX];
 
+    size_t tls12_sigalgs_len;
     /* Cache of all sigalgs we know and whether they are available or not */
     struct sigalg_lookup_st *sigalg_lookup_cache;
+    /* List of all sigalgs (code points) available, incl. from providers */
+    uint16_t *tls12_sigalgs;
 
     TLS_GROUP_INFO *group_list;
     size_t group_list_len;
     size_t group_list_max_len;
+
+    TLS_SIGALG_INFO *sigalg_list;
+    SSL_CERT_LOOKUP *ssl_cert_info;
+    size_t sigalg_list_len;
+    size_t sigalg_list_max_len;
 
     /* masks of disabled algorithms */
     uint32_t disabled_enc_mask;
@@ -1210,6 +1241,8 @@ struct ssl_connection_st {
     size_t init_num;               /* amount read/written */
     size_t init_off;               /* amount read/written */
 
+    size_t ssl_pkey_num;
+
     struct {
         long flags;
         unsigned char server_random[SSL3_RANDOM_SIZE];
@@ -1244,6 +1277,7 @@ struct ssl_connection_st {
         int total_renegotiations;
         int num_renegotiations;
         int in_read_app_data;
+
         struct {
             /* actually only need to be 16+20 for SSLv3 and 12 for TLS */
             unsigned char finish_md[EVP_MAX_MD_SIZE * 2];
@@ -1307,7 +1341,7 @@ struct ssl_connection_st {
              * SSL session: e.g. appropriate curve, signature algorithms etc.
              * If zero it can't be used at all.
              */
-            uint32_t valid_flags[SSL_PKEY_NUM];
+            uint32_t *valid_flags;
             /*
              * For servers the following masks are for the key and auth algorithms
              * that are supported by the certs below. For clients they are masks of
@@ -1794,15 +1828,6 @@ typedef struct sigalg_lookup_st {
     int enabled;
 } SIGALG_LOOKUP;
 
-/*
- * Structure containing table entry of certificate info corresponding to
- * CERT_PKEY entries
- */
-typedef struct {
-    int nid; /* NID of public key algorithm */
-    uint32_t amask; /* authmask corresponding to key type */
-} SSL_CERT_LOOKUP;
-
 /* DTLS structures */
 
 # ifndef OPENSSL_NO_SCTP
@@ -2000,7 +2025,8 @@ typedef struct cert_st {
     int dh_tmp_auto;
     /* Flags related to certificates */
     uint32_t cert_flags;
-    CERT_PKEY pkeys[SSL_PKEY_NUM];
+    CERT_PKEY *pkeys;
+    size_t ssl_pkey_num;
     /* Custom certificate types sent in certificate request message. */
     uint8_t *ctype;
     size_t ctype_len;
@@ -2355,7 +2381,7 @@ const char *ssl_protocol_to_string(int version);
 /* Returns true if certificate and private key for 'idx' are present */
 static ossl_inline int ssl_has_cert(const SSL_CONNECTION *s, int idx)
 {
-    if (idx < 0 || idx >= SSL_PKEY_NUM)
+    if (idx < 0 || idx >= (int)s->ssl_pkey_num)
         return 0;
     return s->cert->pkeys[idx].x509 != NULL
         && s->cert->pkeys[idx].privatekey != NULL;
@@ -2381,7 +2407,7 @@ __owur int ossl_ssl_connection_reset(SSL *ssl);
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
 __owur int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written);
 int ssl_clear_bad_session(SSL_CONNECTION *s);
-__owur CERT *ssl_cert_new(void);
+__owur CERT *ssl_cert_new(size_t ssl_pkey_num);
 __owur CERT *ssl_cert_dup(CERT *cert);
 void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
@@ -2444,10 +2470,11 @@ __owur int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid,
                             void *other);
 int ssl_get_security_level_bits(const SSL *s, const SSL_CTX *ctx, int *levelp);
 
-__owur int ssl_cert_lookup_by_nid(int nid, size_t *pidx);
-__owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,
-                                                      size_t *pidx);
-__owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx);
+__owur int ssl_cert_lookup_by_nid(int nid, size_t *pidx, SSL_CTX *ctx);
+__owur SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,
+                                                size_t *pidx,
+						SSL_CTX *ctx);
+__owur SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx, SSL_CTX *ctx);
 
 int ssl_undefined_function(SSL *s);
 __owur int ssl_undefined_void_function(void);
@@ -2462,6 +2489,7 @@ void ssl_sort_cipher_list(void);
 int ssl_load_ciphers(SSL_CTX *ctx);
 __owur int ssl_setup_sig_algs(SSL_CTX *ctx);
 int ssl_load_groups(SSL_CTX *ctx);
+int ssl_load_sigalgs(SSL_CTX *ctx);
 __owur int ssl_fill_hello_random(SSL_CONNECTION *s, int server,
                                  unsigned char *field, size_t len,
                                  DOWNGRADE dgrd);
@@ -2750,6 +2778,7 @@ __owur int ssl_handshake_hash(SSL_CONNECTION *s,
                               unsigned char *out, size_t outlen,
                               size_t *hashlen);
 __owur const EVP_MD *ssl_md(SSL_CTX *ctx, int idx);
+int ssl_get_md_idx(int md_nid);
 __owur const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s);
 __owur const EVP_MD *ssl_prf_md(SSL_CONNECTION *s);
 

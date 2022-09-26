@@ -540,6 +540,19 @@ extern "C" {
 #define OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS          "tls-min-dtls"
 #define OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS          "tls-max-dtls"
 
+/* TLS-SIGALG Capability */
+#define OSSL_CAPABILITY_TLS_SIGALG_NAME              "tls-sigalg-name"
+#define OSSL_CAPABILITY_TLS_SIGALG_NAME_INTERNAL     "tls-sigalg-name-internal"
+#define OSSL_CAPABILITY_TLS_SIGALG_ALG               "tls-sigalg-alg"
+#define OSSL_CAPABILITY_TLS_SIGALG_HASHALG           "tls-sigalg-hashalg"
+#define OSSL_CAPABILITY_TLS_SIGALG_OID               "tls-sigalg-oid"
+#define OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT        "tls-sigalg-code-point"
+#define OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS     "tls-sigalg-sec-bits"
+#define OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS           "tls-min-tls"
+#define OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS           "tls-max-tls"
+#define OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS          "tls-min-dtls"
+#define OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS          "tls-max-dtls"
+
 /*-
  * storemgmt parameters
  */
