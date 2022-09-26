@@ -687,8 +687,10 @@ int pkcs12_main(int argc, char **argv)
             if ((cb_sk = NCONF_get_section(conf, cb_attr)) != NULL) {
                 for (i = 0; i < sk_CONF_VALUE_num(cb_sk); i++) {
                     val = sk_CONF_VALUE_value(cb_sk, i);
-                    if (strcmp(val->name, "jdkTrustedKeyUsage") == 0)
+                    if (strcmp(val->name, "jdkTrustedKeyUsage") == 0) {
                         obj = OBJ_txt2obj(val->value, 0);
+                        break;
+                    }
                 }
             } else {
                 ERR_clear_error();
