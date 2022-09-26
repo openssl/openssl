@@ -1587,14 +1587,11 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         thistempl = (j < prefix) ? &prefixtempl : &templates[j - prefix];
 
         /*
-         * In TLSv1.3, once encrypting, we always use application data for the
-         * record type
+         * Default to the record type as specified in the template unless the
+         * protocol implementation says differently.
          */
-        if (rl->version == TLS1_3_VERSION
-                && rl->enc_ctx != NULL
-                && (!rl->allow_plain_alerts
-                    || thistempl->type != SSL3_RT_ALERT))
-            rectype = SSL3_RT_APPLICATION_DATA;
+        if (rl->funcs->get_record_type != NULL)
+            rectype = rl->funcs->get_record_type(rl, thistempl);
         else
             rectype = thistempl->type;
 

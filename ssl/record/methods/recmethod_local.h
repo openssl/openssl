@@ -95,6 +95,10 @@ struct record_functions_st
                                     WPACKET *pkt,
                                     SSL3_BUFFER *bufs,
                                     size_t *wpinited);
+
+    /* Get the actual record type to be used for a given template */
+    unsigned int (*get_record_type)(OSSL_RECORD_LAYER *rl,
+                                    OSSL_RECORD_TEMPLATE *template);
 };
 
 struct ossl_record_layer_st
