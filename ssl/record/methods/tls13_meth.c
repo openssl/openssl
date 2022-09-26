@@ -239,6 +239,20 @@ static int tls13_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     return 1;
 }
 
+static unsigned int tls13_get_record_type(OSSL_RECORD_LAYER *rl,
+                                          OSSL_RECORD_TEMPLATE *template)
+{
+    if (rl->allow_plain_alerts && template->type == SSL3_RT_ALERT)
+        return  SSL3_RT_ALERT;
+
+    /*
+     * Aside from the above case we always use the application data record type
+     * when encrypting in TLSv1.3. The "inner" record type encodes the "real"
+     * record type from the template.
+     */
+    return SSL3_RT_APPLICATION_DATA;
+}
+
 struct record_functions_st tls_1_3_funcs = {
     tls13_set_crypto_state,
     tls13_cipher,
@@ -251,5 +265,6 @@ struct record_functions_st tls_1_3_funcs = {
     tls_get_max_records_default,
     tls_write_records_default,
     tls_allocate_write_buffers_default,
-    tls_initialise_write_packets_default
+    tls_initialise_write_packets_default,
+    tls13_get_record_type
 };

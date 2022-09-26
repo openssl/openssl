@@ -492,7 +492,8 @@ static struct record_functions_st ossl_ktls_funcs = {
     tls_get_max_records_default,
     tls_write_records_default,
     ktls_allocate_write_buffers,
-    ktls_initialise_write_packets
+    ktls_initialise_write_packets,
+    NULL
 };
 
 const OSSL_RECORD_METHOD ossl_ktls_record_method = {
