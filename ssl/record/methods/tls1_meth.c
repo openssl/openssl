@@ -655,7 +655,8 @@ struct record_functions_st tls_1_funcs = {
     tls_write_records_multiblock, /* Defined in tls_multib.c */
     tls1_allocate_write_buffers,
     tls1_initialise_write_packets,
-    NULL
+    NULL,
+    tls_prepare_record_header_default
 };
 
 struct record_functions_st dtls_1_funcs = {

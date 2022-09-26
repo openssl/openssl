@@ -461,7 +461,7 @@ static int ktls_initialise_write_packets(OSSL_RECORD_LAYER *rl,
     SSL3_BUFFER *wb;
 
     /*
-     * We just use the application buffer directly, and don't use any WPACKET
+     * We just use the application buffer directly and don't use any WPACKET
      * structures
      */
     wb = &bufs[0];
@@ -470,12 +470,24 @@ static int ktls_initialise_write_packets(OSSL_RECORD_LAYER *rl,
     /*
     * ktls doesn't modify the buffer, but to avoid a warning we need
     * to discard the const qualifier.
-    * This doesn't leak memory because the buffers have been
-    * released when switching to ktls.
+    * This doesn't leak memory because the buffers have never been allocated
+    * with KTLS
     */
     SSL3_BUFFER_set_buf(wb, (unsigned char *)templates[0].buf);
     SSL3_BUFFER_set_offset(wb, 0);
     SSL3_BUFFER_set_app_buffer(wb, 1);
+
+    return 1;
+}
+
+static int ktls_prepare_record_header(OSSL_RECORD_LAYER *rl,
+                                      WPACKET *thispkt,
+                                      OSSL_RECORD_TEMPLATE *templ,
+                                      unsigned int rectype,
+                                      unsigned char **recdata)
+{
+    /* The kernel writes the record header, so nothing to do */
+    *recdata = NULL;
 
     return 1;
 }
@@ -493,7 +505,8 @@ static struct record_functions_st ossl_ktls_funcs = {
     tls_write_records_default,
     ktls_allocate_write_buffers,
     ktls_initialise_write_packets,
-    NULL
+    NULL,
+    ktls_prepare_record_header
 };
 
 const OSSL_RECORD_METHOD ossl_ktls_record_method = {

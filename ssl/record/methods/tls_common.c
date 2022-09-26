@@ -1533,6 +1533,35 @@ int tls_initialise_write_packets_default(OSSL_RECORD_LAYER *rl,
     return 1;
 }
 
+int tls_prepare_record_header_default(OSSL_RECORD_LAYER *rl,
+                                      WPACKET *thispkt,
+                                      OSSL_RECORD_TEMPLATE *templ,
+                                      unsigned int rectype,
+                                      unsigned char **recdata)
+{
+    size_t maxcomplen;
+
+    *recdata = NULL;
+
+    maxcomplen = templ->buflen;
+    if (rl->compctx != NULL)
+        maxcomplen += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+
+    if (!WPACKET_put_bytes_u8(thispkt, rectype)
+            || !WPACKET_put_bytes_u16(thispkt, templ->version)
+            || !WPACKET_start_sub_packet_u16(thispkt)
+            || (rl->eivlen > 0
+                && !WPACKET_allocate_bytes(thispkt, rl->eivlen, NULL))
+            || (maxcomplen > 0
+                && !WPACKET_reserve_bytes(thispkt, maxcomplen,
+                                          recdata))) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
 int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                               OSSL_RECORD_TEMPLATE *templates,
                               size_t numtempl)
@@ -1579,7 +1608,6 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     memset(wr, 0, sizeof(wr));
     for (j = 0; j < numtempl + prefix; j++) {
         unsigned char *compressdata = NULL;
-        size_t maxcomplen;
         unsigned int rectype;
 
         thispkt = &pkt[j];
@@ -1598,23 +1626,8 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         SSL3_RECORD_set_type(thiswr, rectype);
         SSL3_RECORD_set_rec_version(thiswr, thistempl->version);
 
-        maxcomplen = thistempl->buflen;
-        if (rl->compctx != NULL)
-            maxcomplen += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
-
-        /*
-         * When using offload kernel will write the header.
-         * Otherwise write the header now
-         */
-        if (!using_ktls
-                && (!WPACKET_put_bytes_u8(thispkt, rectype)
-                || !WPACKET_put_bytes_u16(thispkt, thistempl->version)
-                || !WPACKET_start_sub_packet_u16(thispkt)
-                || (rl->eivlen > 0
-                    && !WPACKET_allocate_bytes(thispkt, rl->eivlen, NULL))
-                || (maxcomplen > 0
-                    && !WPACKET_reserve_bytes(thispkt, maxcomplen,
-                                              &compressdata)))) {
+        if (!rl->funcs->prepare_record_header(rl, thispkt, thistempl, rectype,
+                                              &compressdata)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -1637,16 +1650,12 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
                 goto err;
             }
-        } else {
-            if (using_ktls) {
-                SSL3_RECORD_reset_data(&wr[j]);
-            } else {
-                if (!WPACKET_memcpy(thispkt, thiswr->input, thiswr->length)) {
-                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                    goto err;
-                }
-                SSL3_RECORD_reset_input(&wr[j]);
+        } else if (compressdata != NULL) {
+            if (!WPACKET_memcpy(thispkt, thiswr->input, thiswr->length)) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
             }
+            SSL3_RECORD_reset_input(&wr[j]);
         }
 
         if (rl->version == TLS1_3_VERSION

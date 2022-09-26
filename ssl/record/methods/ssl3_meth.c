@@ -314,5 +314,6 @@ struct record_functions_st ssl_3_0_funcs = {
     /* These 2 functions are defined in tls1_meth.c */
     tls1_allocate_write_buffers,
     tls1_initialise_write_packets,
-    NULL
+    NULL,
+    tls_prepare_record_header_default
 };
