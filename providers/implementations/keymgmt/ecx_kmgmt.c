@@ -881,8 +881,19 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
         goto err;
     }
 
-    if (RAND_priv_bytes_ex(gctx->libctx, privkey, X25519_KEYLEN, 0) <= 0)
-        goto err;
+#ifndef FIPS_MODULE
+    if (gctx->dhkem_ikm != NULL && gctx->dhkem_ikmlen != 0) {
+        if (gctx->type != ECX_KEY_TYPE_X25519)
+            goto err;
+        if (!ossl_ecx_dhkem_derive_private(key, privkey,
+                                           gctx->dhkem_ikm, gctx->dhkem_ikmlen))
+            goto err;
+    } else
+#endif
+    {
+        if (RAND_priv_bytes_ex(gctx->libctx, privkey, X25519_KEYLEN, 0) <= 0)
+            goto err;
+    }
 
     privkey[0] &= 248;
     privkey[31] &= 127;
@@ -927,8 +938,19 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
         goto err;
     }
 
-    if (RAND_priv_bytes_ex(gctx->libctx, privkey, X448_KEYLEN, 0) <= 0)
-        goto err;
+#ifndef FIPS_MODULE
+    if (gctx->dhkem_ikm != NULL && gctx->dhkem_ikmlen != 0) {
+        if (gctx->type != ECX_KEY_TYPE_X448)
+            goto err;
+        if (!ossl_ecx_dhkem_derive_private(key, privkey,
+                                           gctx->dhkem_ikm, gctx->dhkem_ikmlen))
+            goto err;
+    } else
+#endif
+    {
+        if (RAND_priv_bytes_ex(gctx->libctx, privkey, X448_KEYLEN, 0) <= 0)
+            goto err;
+    }
 
     privkey[0] &= 252;
     privkey[55] |= 128;
