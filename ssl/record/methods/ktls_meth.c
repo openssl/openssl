@@ -15,6 +15,8 @@
 #include "recmethod_local.h"
 #include "internal/ktls.h"
 
+static struct record_functions_st ossl_ktls_funcs;
+
 #if defined(__FreeBSD__)
 # include "crypto/cryptodev.h"
 
@@ -389,19 +391,6 @@ static int ktls_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     return 1;
 }
 
-static struct record_functions_st ossl_ktls_funcs = {
-    ktls_set_crypto_state,
-    ktls_cipher,
-    NULL,
-    tls_default_set_protocol_version,
-    ktls_read_n,
-    tls_get_more_records,
-    ktls_validate_record_header,
-    ktls_post_process_record,
-    tls_get_max_records_default,
-    tls_write_records_default
-};
-
 static int
 ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       int role, int direction, int level, uint16_t epoch,
@@ -444,6 +433,67 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     }
     return ret;
 }
+
+static int ktls_allocate_write_buffers(OSSL_RECORD_LAYER *rl,
+                                       OSSL_RECORD_TEMPLATE *templates,
+                                       size_t numtempl, size_t *prefix)
+{
+    if (!ossl_assert(numtempl == 1))
+        return 0;
+
+    /*
+     * We just use the end application buffer in the case of KTLS, so nothing
+     * to do. We pretend we set up one buffer.
+     */
+    rl->numwpipes = 1;
+
+    return 1;
+}
+
+static int ktls_initialise_write_packets(OSSL_RECORD_LAYER *rl,
+                                         OSSL_RECORD_TEMPLATE *templates,
+                                         size_t numtempl,
+                                         OSSL_RECORD_TEMPLATE *prefixtempl,
+                                         WPACKET *pkt,
+                                         SSL3_BUFFER *bufs,
+                                         size_t *wpinited)
+{
+    SSL3_BUFFER *wb;
+
+    /*
+     * We just use the application buffer directly, and don't use any WPACKET
+     * structures
+     */
+    wb = &bufs[0];
+    wb->type = templates[0].type;
+
+    /*
+    * ktls doesn't modify the buffer, but to avoid a warning we need
+    * to discard the const qualifier.
+    * This doesn't leak memory because the buffers have been
+    * released when switching to ktls.
+    */
+    SSL3_BUFFER_set_buf(wb, (unsigned char *)templates[0].buf);
+    SSL3_BUFFER_set_offset(wb, 0);
+    SSL3_BUFFER_set_app_buffer(wb, 1);
+
+    return 1;
+}
+
+static struct record_functions_st ossl_ktls_funcs = {
+    ktls_set_crypto_state,
+    ktls_cipher,
+    NULL,
+    tls_default_set_protocol_version,
+    ktls_read_n,
+    tls_get_more_records,
+    ktls_validate_record_header,
+    ktls_post_process_record,
+    tls_get_max_records_default,
+    tls_write_records_default,
+    ktls_allocate_write_buffers,
+    ktls_initialise_write_packets
+};
 
 const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     ktls_new_record_layer,
