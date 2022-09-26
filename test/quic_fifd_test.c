@@ -22,18 +22,22 @@ static void step_time(uint64_t ms) {
     cur_time = ossl_time_add(cur_time, ossl_ms2time(ms));
 }
 
-static QUIC_SSTREAM *(*get_sstream_by_id_p)(uint64_t stream_id, void *arg);
+static QUIC_SSTREAM *(*get_sstream_by_id_p)(uint64_t stream_id, uint32_t pn_space,
+                                            void *arg);
 
-static QUIC_SSTREAM *get_sstream_by_id(uint64_t stream_id, void *arg)
+static QUIC_SSTREAM *get_sstream_by_id(uint64_t stream_id, uint32_t pn_space,
+                                       void *arg)
 {
-    return get_sstream_by_id_p(stream_id, arg);
+    return get_sstream_by_id_p(stream_id, pn_space, arg);
 }
 
-static void (*regen_frame_p)(uint64_t frame_type, uint64_t stream_id, void *arg);
+static void (*regen_frame_p)(uint64_t frame_type, uint64_t stream_id,
+                             QUIC_TXPIM_PKT *pkt, void *arg);
 
-static void regen_frame(uint64_t frame_type, uint64_t stream_id, void *arg)
+static void regen_frame(uint64_t frame_type, uint64_t stream_id,
+                        QUIC_TXPIM_PKT *pkt, void *arg)
 {
-    regen_frame_p(frame_type, stream_id, arg);
+    regen_frame_p(frame_type, stream_id, pkt, arg);
 }
 
 typedef struct info_st {
@@ -57,7 +61,8 @@ static int cfq_freed;
  *    Test that a submitted packet, on ack, acks all fins inside it
  *    Test that a submitted packet, on ack, releases the TXPIM packet
  */
-static QUIC_SSTREAM *sstream_expect(uint64_t stream_id, void *arg)
+static QUIC_SSTREAM *sstream_expect(uint64_t stream_id, uint32_t pn_space,
+                                    void *arg)
 {
     if (stream_id == 42 || stream_id == 43)
         return cur_info->sstream[stream_id - 42];
@@ -70,7 +75,8 @@ static uint64_t regen_frame_type[16];
 static uint64_t regen_stream_id[16];
 static size_t regen_count;
 
-static void regen_expect(uint64_t frame_type, uint64_t stream_id, void *arg)
+static void regen_expect(uint64_t frame_type, uint64_t stream_id,
+                         QUIC_TXPIM_PKT *pkt, void *arg)
 {
     regen_frame_type[regen_count] = frame_type;
     regen_stream_id[regen_count] = stream_id;

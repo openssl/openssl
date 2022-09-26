@@ -312,6 +312,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[quic_fifd_test]=../include ../apps/include
   DEPEND[quic_fifd_test]=../libcrypto.a ../libssl.a libtestutil.a
 
+  SOURCE[quic_txp_test]=quic_txp_test.c
+  INCLUDE[quic_txp_test]=../include ../apps/include
+  DEPEND[quic_txp_test]=../libcrypto.a ../libssl.a libtestutil.a
+
   SOURCE[asynctest]=asynctest.c
   INCLUDE[asynctest]=../include ../apps/include
   DEPEND[asynctest]=../libcrypto
@@ -1036,7 +1040,7 @@ ENDIF
   ENDIF
 
   IF[{- !$disabled{'quic'} -}]
-    PROGRAMS{noinst}=quicapitest quic_wire_test quic_ackm_test quic_record_test quic_fc_test quic_stream_test quic_cfq_test quic_txpim_test quic_fifd_test
+    PROGRAMS{noinst}=quicapitest quic_wire_test quic_ackm_test quic_record_test quic_fc_test quic_stream_test quic_cfq_test quic_txpim_test quic_fifd_test quic_txp_test
   ENDIF
 
   SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c

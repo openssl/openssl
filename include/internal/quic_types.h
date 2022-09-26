@@ -79,4 +79,6 @@ static ossl_unused ossl_inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
     return memcmp(a->id, b->id, a->id_len) == 0;
 }
 
+#define QUIC_MIN_INITIAL_DGRAM_LEN  1200
+
 #endif

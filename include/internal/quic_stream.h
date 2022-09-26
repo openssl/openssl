@@ -131,6 +131,12 @@ int ossl_quic_sstream_get_stream_frame(QUIC_SSTREAM *qss,
                                        size_t *num_iov);
 
 /*
+ * Returns the current size of the stream; i.e., the number of bytes which have
+ * been appended to the stream so far.
+ */
+uint64_t ossl_quic_sstream_get_cur_size(QUIC_SSTREAM *qss);
+
+/*
  * (For TX packetizer use.) Marks a logical range of the send stream as having
  * been transmitted.
  *
