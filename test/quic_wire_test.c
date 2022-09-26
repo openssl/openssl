@@ -886,7 +886,7 @@ static const OSSL_QUIC_FRAME_CONN_CLOSE encode_case_20_f = {
     0,
     0x1234,
     0x9781,
-    encode_case_20_reason,
+    (char *)encode_case_20_reason,
     sizeof(encode_case_20_reason)
 };
 

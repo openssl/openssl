@@ -583,11 +583,12 @@ int ossl_quic_wire_get_encoded_pkt_hdr_len(size_t short_conn_id_len,
             enclen = ossl_quic_vlint_encode_len(hdr->token_len);
             if (!enclen)
                 return 0;
-            len += enclen;
+
+            len += enclen + hdr->token_len;
         }
 
         if (!ossl_quic_pkt_type_must_be_last(hdr->type)) {
-            enclen = ossl_quic_vlint_encode_len(hdr->len);
+            enclen = ossl_quic_vlint_encode_len(hdr->len + hdr->pn_len);
             if (!enclen)
                 return 0;
 

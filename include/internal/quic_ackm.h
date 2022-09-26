@@ -137,7 +137,15 @@ int ossl_ackm_on_rx_packet(OSSL_ACKM *ackm, const OSSL_ACKM_RX_PKT *pkt);
 int ossl_ackm_on_rx_ack_frame(OSSL_ACKM *ackm, const OSSL_QUIC_FRAME_ACK *ack,
                               int pkt_space, OSSL_TIME rx_time);
 
+/*
+ * Discards a PN space. This must be called for a PN space before freeing the
+ * ACKM if you want in-flight packets to have their discarded callbacks called.
+ * This should never be called in ordinary QUIC usage for the Application Data
+ * PN space, but it may be called for the Application Data PN space prior to
+ * freeing the ACKM to simplify teardown implementations.
+ */
 int ossl_ackm_on_pkt_space_discarded(OSSL_ACKM *ackm, int pkt_space);
+
 int ossl_ackm_on_handshake_confirmed(OSSL_ACKM *ackm);
 int ossl_ackm_on_timeout(OSSL_ACKM *ackm);
 

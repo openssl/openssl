@@ -85,6 +85,21 @@
 #define OSSL_QUIC_FRAME_TYPE_IS_CONN_CLOSE(x) \
     (((x) & ~(uint64_t)1) == OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT)
 
+static ossl_unused ossl_inline int
+ossl_quic_frame_type_is_ack_eliciting(uint64_t frame_type)
+{
+    switch (frame_type) {
+    case OSSL_QUIC_FRAME_TYPE_PADDING:
+    case OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN:
+    case OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN:
+    case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT:
+    case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP:
+        return 0;
+    default:
+        return 1;
+    }
+}
+
 /*
  * QUIC Frame Logical Representations
  * ==================================
@@ -178,7 +193,7 @@ typedef struct ossl_quic_frame_conn_close_st {
     unsigned int    is_app : 1; /* 0: transport error, 1: app error */
     uint64_t        error_code; /* 62-bit transport or app error code */
     uint64_t        frame_type; /* transport errors only */
-    const char     *reason;     /* UTF-8 string, not necessarily zero-terminated */
+    char            *reason;    /* UTF-8 string, not necessarily zero-terminated */
     size_t          reason_len; /* Length of reason in bytes */
 } OSSL_QUIC_FRAME_CONN_CLOSE;
 
@@ -244,6 +259,13 @@ int ossl_quic_wire_encode_frame_crypto_hdr(WPACKET *hdr,
                                            const OSSL_QUIC_FRAME_CRYPTO *f);
 
 /*
+ * Returns the number of bytes which will be required to encode the given
+ * CRYPTO frame header. Does not include the payload bytes in the count.
+ * Returns 0 if input is invalid.
+ */
+size_t ossl_quic_wire_get_encoded_frame_len_crypto_hdr(const OSSL_QUIC_FRAME_CRYPTO *f);
+
+/*
  * Encodes a QUIC CRYPTO frame to the packet writer.
  *
  * This function returns a pointer to a buffer of f->len bytes which the caller
@@ -278,6 +300,13 @@ int ossl_quic_wire_encode_frame_new_token(WPACKET *pkt,
  */
 int ossl_quic_wire_encode_frame_stream_hdr(WPACKET *pkt,
                                            const OSSL_QUIC_FRAME_STREAM *f);
+
+/*
+ * Returns the number of bytes which will be required to encode the given
+ * STREAM frame header. Does not include the payload bytes in the count.
+ * Returns 0 if input is invalid.
+ */
+size_t ossl_quic_wire_get_encoded_frame_len_stream_hdr(const OSSL_QUIC_FRAME_STREAM *f);
 
 /*
  * Functions similarly to ossl_quic_wire_encode_frame_stream_hdr, but it also

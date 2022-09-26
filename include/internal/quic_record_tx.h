@@ -90,6 +90,21 @@ int ossl_qtx_provide_secret(OSSL_QTX              *qtx,
  */
 int ossl_qtx_discard_enc_level(OSSL_QTX *qtx, uint32_t enc_level);
 
+/* Returns 1 if the given encryption level is provisioned. */
+int ossl_qtx_is_enc_level_provisioned(OSSL_QTX *qtx, uint32_t enc_level);
+
+/*
+ * Given the value ciphertext_len representing an encrypted packet payload
+ * length in bytes, determines how many plaintext bytes it will decrypt to.
+ * Returns 0 if the specified EL is not provisioned or ciphertext_len is too
+ * small. The result is written to *plaintext_len.
+ */
+int ossl_qtx_calculate_plaintext_payload_len(OSSL_QTX *qtx, uint32_t enc_level,
+                                             size_t ciphertext_len,
+                                             size_t *plaintext_len);
+
+uint32_t ossl_qrl_get_suite_cipher_tag_len(uint32_t suite_id);
+
 
 /*
  * Packet Transmission
@@ -231,6 +246,9 @@ int ossl_qtx_set1_bio(OSSL_QTX *qtx, BIO *bio);
 
 /* Changes the MDPL. */
 int ossl_qtx_set_mdpl(OSSL_QTX *qtx, size_t mdpl);
+
+/* Retrieves the current MDPL. */
+size_t ossl_qtx_get_mdpl(OSSL_QTX *qtx);
 
 
 /*

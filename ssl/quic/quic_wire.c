@@ -121,6 +121,19 @@ int ossl_quic_wire_encode_frame_crypto_hdr(WPACKET *pkt,
     return 1;
 }
 
+size_t ossl_quic_wire_get_encoded_frame_len_crypto_hdr(const OSSL_QUIC_FRAME_CRYPTO *f)
+{
+    size_t a, b, c;
+
+    a = ossl_quic_vlint_encode_len(OSSL_QUIC_FRAME_TYPE_CRYPTO);
+    b = ossl_quic_vlint_encode_len(f->offset);
+    c = ossl_quic_vlint_encode_len(f->len);
+    if (a == 0 || b == 0 || c == 0)
+        return 0;
+
+    return a + b + c;
+}
+
 void *ossl_quic_wire_encode_frame_crypto(WPACKET *pkt,
                                          const OSSL_QUIC_FRAME_CRYPTO *f)
 {
@@ -172,6 +185,34 @@ int ossl_quic_wire_encode_frame_stream_hdr(WPACKET *pkt,
         return 0;
 
     return 1;
+}
+
+size_t ossl_quic_wire_get_encoded_frame_len_stream_hdr(const OSSL_QUIC_FRAME_STREAM *f)
+{
+    size_t a, b, c, d;
+
+    a = ossl_quic_vlint_encode_len(OSSL_QUIC_FRAME_TYPE_STREAM);
+    b = ossl_quic_vlint_encode_len(f->stream_id);
+    if (a == 0 || b == 0)
+        return 0;
+
+    if (f->offset > 0) {
+        c = ossl_quic_vlint_encode_len(f->offset);
+        if (c == 0)
+            return 0;
+    } else {
+        c = 0;
+    }
+
+    if (f->has_explicit_len) {
+        d = ossl_quic_vlint_encode_len(f->len);
+        if (d == 0)
+            return 0;
+    } else {
+        d = 0;
+    }
+
+    return a + b + c + d;
 }
 
 void *ossl_quic_wire_encode_frame_stream(WPACKET *pkt,

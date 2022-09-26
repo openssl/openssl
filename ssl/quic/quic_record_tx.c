@@ -97,6 +97,9 @@ OSSL_QTX *ossl_qtx_new(const OSSL_QTX_ARGS *args)
 {
     OSSL_QTX *qtx;
 
+    if (args->mdpl < QUIC_MIN_INITIAL_DGRAM_LEN)
+        return 0;
+
     qtx = OPENSSL_zalloc(sizeof(OSSL_QTX));
     if (qtx == NULL)
         return 0;
@@ -128,6 +131,9 @@ void ossl_qtx_free(OSSL_QTX *qtx)
 {
     uint32_t i;
 
+    if (qtx == NULL)
+        return;
+
     /* Free TXE queue data. */
     qtx_cleanup_txl(&qtx->pending);
     qtx_cleanup_txl(&qtx->free);
@@ -137,6 +143,7 @@ void ossl_qtx_free(OSSL_QTX *qtx)
     for (i = 0; i < QUIC_ENC_LEVEL_NUM; ++i)
         ossl_qrl_enc_level_set_discard(&qtx->el_set, i);
 
+    BIO_free(qtx->bio);
     OPENSSL_free(qtx);
 }
 
@@ -169,6 +176,11 @@ int ossl_qtx_discard_enc_level(OSSL_QTX *qtx, uint32_t enc_level)
 
     ossl_qrl_enc_level_set_discard(&qtx->el_set, enc_level);
     return 1;
+}
+
+int ossl_qtx_is_enc_level_provisioned(OSSL_QTX *qtx, uint32_t enc_level)
+{
+    return ossl_qrl_enc_level_set_get(&qtx->el_set, enc_level, 1) != NULL;
 }
 
 /* Allocate a new TXE. */
@@ -374,6 +386,31 @@ static size_t qtx_inflate_payload_len(OSSL_QTX *qtx, uint32_t enc_level,
     return plaintext_len + ossl_qrl_get_suite_cipher_tag_len(el->suite_id);
 }
 
+/* Determines the size of the AEAD input given the output size. */
+int ossl_qtx_calculate_plaintext_payload_len(OSSL_QTX *qtx, uint32_t enc_level,
+                                             size_t ciphertext_len,
+                                             size_t *plaintext_len)
+{
+    OSSL_QRL_ENC_LEVEL *el
+        = ossl_qrl_enc_level_set_get(&qtx->el_set, enc_level, 1);
+    size_t tag_len;
+
+    if (el == NULL) {
+        *plaintext_len = 0;
+        return 0;
+    }
+
+    tag_len = ossl_qrl_get_suite_cipher_tag_len(el->suite_id);
+
+    if (ciphertext_len < tag_len) {
+        *plaintext_len = 0;
+        return 0;
+    }
+
+    *plaintext_len = ciphertext_len - tag_len;
+    return 1;
+}
+
 /* Any other error (including packet being too big for MDPL). */
 #define QTX_FAIL_GENERIC            (-1)
 
@@ -529,6 +566,12 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
 
     /* Walk the iovecs to determine actual input payload length. */
     iovec_cur_init(&cur, pkt->iovec, pkt->num_iovec);
+
+    if (cur.bytes_remaining == 0) {
+        /* No zero-length payloads allowed. */
+        ret = QTX_FAIL_GENERIC;
+        goto err;
+    }
 
     /* Determine encrypted payload length. */
     payload_len = needs_encrypt ? qtx_inflate_payload_len(qtx, enc_level,
@@ -833,8 +876,16 @@ int ossl_qtx_set1_bio(OSSL_QTX *qtx, BIO *bio)
 
 int ossl_qtx_set_mdpl(OSSL_QTX *qtx, size_t mdpl)
 {
+    if (mdpl < QUIC_MIN_INITIAL_DGRAM_LEN)
+        return 0;
+
     qtx->mdpl = mdpl;
     return 1;
+}
+
+size_t ossl_qtx_get_mdpl(OSSL_QTX *qtx)
+{
+    return qtx->mdpl;
 }
 
 size_t ossl_qtx_get_queue_len_datagrams(OSSL_QTX *qtx)

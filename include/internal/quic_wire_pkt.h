@@ -46,6 +46,23 @@ ossl_quic_pkt_type_to_enc_level(uint32_t pkt_type)
     }
 }
 
+static ossl_inline ossl_unused uint32_t
+ossl_quic_enc_level_to_pkt_type(uint32_t enc_level)
+{
+    switch (enc_level) {
+        case QUIC_ENC_LEVEL_INITIAL:
+            return QUIC_PKT_TYPE_INITIAL;
+        case QUIC_ENC_LEVEL_HANDSHAKE:
+            return QUIC_PKT_TYPE_HANDSHAKE;
+        case QUIC_ENC_LEVEL_0RTT:
+            return QUIC_PKT_TYPE_0RTT;
+        case QUIC_ENC_LEVEL_1RTT:
+            return QUIC_PKT_TYPE_1RTT;
+        default:
+            return UINT32_MAX;
+    }
+}
+
 /* Determine if a packet type contains an encrypted payload. */
 static ossl_inline ossl_unused int
 ossl_quic_pkt_type_is_encrypted(uint32_t pkt_type)

@@ -48,7 +48,9 @@ typedef struct quic_txpim_chunk_st {
     uint64_t        stream_id;
     /*
      * The inclusive range of bytes in the stream. Exceptionally, if end <
-     * start, designates a frame of zero length (used for FIN-only frames).
+     * start, designates a frame of zero length (used for FIN-only frames). In
+     * this case end is the number of the final byte (i.e., one less than the
+     * final size of the stream).
      */
     uint64_t        start, end;
     /*
@@ -56,6 +58,16 @@ typedef struct quic_txpim_chunk_st {
      * CRYPTO stream.
      */
     unsigned int    has_fin : 1;
+    /*
+     * If set, a STOP_SENDING frame was sent for this stream ID. (If no data was
+     * sent for the stream, set end < start.)
+     */
+    unsigned int    has_stop_sending : 1;
+    /*
+     * If set, a RESET_STREAM frame was sent for this stream ID. (If no data was
+     * sent for the stream, set end < start.)
+     */
+    unsigned int    has_reset_stream : 1;
 } QUIC_TXPIM_CHUNK;
 
 QUIC_TXPIM *ossl_quic_txpim_new(void);

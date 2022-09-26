@@ -19,10 +19,8 @@ static int compare_iov(const unsigned char *ref, size_t ref_len,
     for (i = 0; i < iov_len; ++i)
         total_len += iov[i].buf_len;
 
-    if (ref_len != total_len) {
-        fprintf(stderr, "# expected %lu == %lu\n", ref_len, total_len);
+    if (ref_len != total_len)
         return 0;
-    }
 
     for (i = 0; i < iov_len; ++i) {
         if (memcmp(cur, iov[i].buf, iov[i].buf_len))
