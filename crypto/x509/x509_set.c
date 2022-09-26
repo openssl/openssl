@@ -210,7 +210,7 @@ int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
 
 /* Modify *siginf according to alg and sig. Return 1 on success, else 0. */
 static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
-                              const ASN1_STRING *sig)
+                              const ASN1_STRING *sig, const EVP_PKEY *pubkey)
 {
     int pknid, mdnid;
     const EVP_MD *md;
@@ -232,12 +232,20 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     case NID_undef:
         /* If we have one, use a custom handler for this algorithm */
         ameth = EVP_PKEY_asn1_find(NULL, pknid);
-        if (ameth == NULL || ameth->siginf_set == NULL
-                || !ameth->siginf_set(siginf, alg, sig)) {
-            ERR_raise(ERR_LIB_X509, X509_R_ERROR_USING_SIGINF_SET);
-            return 0;
+        if (ameth != NULL && ameth->siginf_set != NULL
+                && ameth->siginf_set(siginf, alg, sig))
+           break;
+        if (pubkey != NULL) {
+            int secbits;
+
+            secbits = EVP_PKEY_get_security_bits(pubkey);
+            if (secbits != 0) {
+                siginf->secbits = secbits;
+                break;
+            }
         }
-        break;
+        ERR_raise(ERR_LIB_X509, X509_R_ERROR_USING_SIGINF_SET);
+        return 0;
         /*
          * SHA1 and MD5 are known to be broken. Reduce security bits so that
          * they're no longer accepted at security level 1.
@@ -288,5 +296,6 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
 /* Returns 1 on success, 0 on failure */
 int ossl_x509_init_sig_info(X509 *x)
 {
-    return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature);
+    return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature,
+                              X509_PUBKEY_get0(x->cert_info.key));
 }

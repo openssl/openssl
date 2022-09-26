@@ -30,6 +30,15 @@ OpenSSL 3.2
 
    *Oliver Mihatsch*
 
+ * Added support for pluggable (provider-based) TLS signature algorithms.
+   This enables TLS 1.3 authentication operations with algorithms embedded
+   in providers not included by default in OpenSSL. In combination with
+   the already available pluggable KEM and X.509 support, this enables
+   for example suitable providers to deliver post-quantum or quantum-safe
+   cryptography to OpenSSL users.
+
+   *Michael Baentsch*
+
  * Added support for Hybrid Public Key Encryption (HPKE) as defined
    in RFC9180. HPKE is required for TLS Encrypted ClientHello (ECH),
    Message Layer Security (MLS) and other IETF specifications.

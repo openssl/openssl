@@ -890,6 +890,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
         goto sslerr;
 #endif
 
+    s->ssl_pkey_num = SSL_PKEY_NUM + ctx->sigalg_list_len;
     return ssl;
  cerr:
     ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
@@ -1432,6 +1433,7 @@ void ossl_ssl_connection_free(SSL *ssl)
     s->wbio = NULL;
     BIO_free_all(s->rbio);
     s->rbio = NULL;
+    OPENSSL_free(s->s3.tmp.valid_flags);
 }
 
 void SSL_set0_rbio(SSL *s, BIO *rbio)
@@ -3778,10 +3780,6 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     ret->session_timeout = meth->get_timeout();
     ret->max_cert_list = SSL_MAX_CERT_LIST_DEFAULT;
     ret->verify_mode = SSL_VERIFY_NONE;
-    if ((ret->cert = ssl_cert_new()) == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
-        goto err;
-    }
 
     ret->sessions = lh_SSL_SESSION_new(ssl_session_hash, ssl_session_cmp);
     if (ret->sessions == NULL) {
@@ -3802,16 +3800,34 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
 #endif
 
     /* initialize cipher/digest methods table */
-    if (!ssl_load_ciphers(ret))
+    if (!ssl_load_ciphers(ret)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
         goto err;
-    /* initialise sig algs */
-    if (!ssl_setup_sig_algs(ret))
-        goto err;
+    }
 
-    if (!ssl_load_groups(ret))
+    if (!ssl_load_groups(ret)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
         goto err;
+    }
+
+    /* load provider sigalgs */
+    if (!ssl_load_sigalgs(ret)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+        goto err;
+    }
+
+    /* initialise sig algs */
+    if (!ssl_setup_sigalgs(ret)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+        goto err;
+    }
 
     if (!SSL_CTX_set_ciphersuites(ret, OSSL_default_ciphersuites())) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+        goto err;
+    }
+
+    if ((ret->cert = ssl_cert_new(SSL_PKEY_NUM + ret->sigalg_list_len)) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
         goto err;
     }
@@ -4057,8 +4073,22 @@ void SSL_CTX_free(SSL_CTX *a)
         OPENSSL_free(a->group_list[j].algorithm);
     }
     OPENSSL_free(a->group_list);
+    for (j = 0; j < a->sigalg_list_len; j++) {
+        OPENSSL_free(a->sigalg_list[j].name);
+        OPENSSL_free(a->sigalg_list[j].sigalg_name);
+        OPENSSL_free(a->sigalg_list[j].sigalg_oid);
+        OPENSSL_free(a->sigalg_list[j].sig_name);
+        OPENSSL_free(a->sigalg_list[j].sig_oid);
+        OPENSSL_free(a->sigalg_list[j].hash_name);
+        OPENSSL_free(a->sigalg_list[j].hash_oid);
+        OPENSSL_free(a->sigalg_list[j].keytype);
+        OPENSSL_free(a->sigalg_list[j].keytype_oid);
+    }
+    OPENSSL_free(a->sigalg_list);
+    OPENSSL_free(a->ssl_cert_info);
 
     OPENSSL_free(a->sigalg_lookup_cache);
+    OPENSSL_free(a->tls12_sigalgs);
 
     CRYPTO_THREAD_lock_free(a->lock);
 #ifdef TSAN_REQUIRES_LOCKING

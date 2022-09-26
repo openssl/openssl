@@ -28,6 +28,9 @@ OpenSSL 3.2
     by default.
   * TCP Fast Open (RFC7413) support is available on Linux, macOS, and FreeBSD
     where enabled and supported.
+  * Full support for provider-based/pluggable signature algorithms in TLS 1.3
+    operations as well as X.509 data structure support. With a suitable provider
+    this fully enables use of post-quantum/quantum-safe cryptography.
 
 OpenSSL 3.1
 -----------

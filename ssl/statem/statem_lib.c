@@ -468,7 +468,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    if (ssl_cert_lookup_by_pkey(pkey, NULL) == NULL) {
+    if (ssl_cert_lookup_by_pkey(pkey, NULL, sctx) == NULL) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE);
         goto err;
@@ -1602,7 +1602,7 @@ static int ssl_method_error(const SSL_CONNECTION *s, const SSL_METHOD *method)
  */
 static int is_tls13_capable(const SSL_CONNECTION *s)
 {
-    int i;
+    size_t i;
     int curve;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
@@ -1625,7 +1625,8 @@ static int is_tls13_capable(const SSL_CONNECTION *s)
     if (s->psk_find_session_cb != NULL || s->cert->cert_cb != NULL)
         return 1;
 
-    for (i = 0; i < SSL_PKEY_NUM; i++) {
+    /* All provider-based sig algs are required to support at least TLS1.3 */
+    for (i = 0; i < s->ssl_pkey_num; i++) {
         /* Skip over certs disallowed for TLSv1.3 */
         switch (i) {
         case SSL_PKEY_DSA_SIGN:

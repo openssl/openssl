@@ -258,7 +258,8 @@ static const char *get_sigtype(int nid)
         return "gost2012_512";
 
     default:
-        return NULL;
+        /* Try to output provider-registered sig alg name */
+        return OBJ_nid2sn(nid);
     }
 }
 
