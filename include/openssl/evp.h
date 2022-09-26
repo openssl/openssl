@@ -1251,6 +1251,7 @@ const OSSL_PROVIDER *EVP_RAND_get0_provider(const EVP_RAND *rand);
 int EVP_RAND_get_params(EVP_RAND *rand, OSSL_PARAM params[]);
 
 EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, EVP_RAND_CTX *parent);
+int EVP_RAND_CTX_up_ref(EVP_RAND_CTX *ctx);
 void EVP_RAND_CTX_free(EVP_RAND_CTX *ctx);
 EVP_RAND *EVP_RAND_CTX_get0_rand(EVP_RAND_CTX *ctx);
 int EVP_RAND_CTX_get_params(EVP_RAND_CTX *ctx, OSSL_PARAM params[]);
