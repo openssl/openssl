@@ -1226,7 +1226,6 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
      * using the early keys. A server also needs to worry about rejected early
      * data that might arrive when the handshake keys are in force.
      */
-    /* TODO(RECLAYER): Check this when doing the "write" record layer */
     if (s->server && direction == OSSL_RECORD_DIRECTION_READ) {
         use_early_data = (level == OSSL_RECORD_PROTECTION_LEVEL_EARLY
                           || level == OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE);
