@@ -197,6 +197,9 @@ void ossl_qrx_free(OSSL_QRX *qrx)
 {
     uint32_t i;
 
+    if (qrx == NULL)
+        return;
+
     /* Unregister from the RX DEMUX. */
     ossl_quic_demux_unregister_by_cb(qrx->demux, qrx_on_rx, qrx);
 
@@ -1067,10 +1070,11 @@ int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt)
     if (!ossl_assert(rxe != NULL))
         return 0;
 
-    pkt->handle     = rxe;
-    pkt->hdr        = &rxe->hdr;
-    pkt->pn         = rxe->pn;
-    pkt->time       = rxe->time;
+    pkt->handle         = rxe;
+    pkt->hdr            = &rxe->hdr;
+    pkt->pn             = rxe->pn;
+    pkt->time           = rxe->time;
+    pkt->datagram_len   = rxe->datagram_len;
     pkt->peer
         = BIO_ADDR_family(&rxe->peer) != AF_UNSPEC ? &rxe->peer : NULL;
     pkt->local

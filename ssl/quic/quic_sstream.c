@@ -333,6 +333,11 @@ int ossl_quic_sstream_get_stream_frame(QUIC_SSTREAM *qss,
     return 1;
 }
 
+uint64_t ossl_quic_sstream_get_cur_size(QUIC_SSTREAM *qss)
+{
+    return qss->ring_buf.head_offset;
+}
+
 int ossl_quic_sstream_mark_transmitted(QUIC_SSTREAM *qss,
                                        uint64_t start,
                                        uint64_t end)

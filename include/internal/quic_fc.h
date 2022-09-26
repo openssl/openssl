@@ -172,10 +172,8 @@ void ossl_quic_rxfc_set_max_window_size(QUIC_RXFC *rxfc,
  *
  * is_fin should be 1 if the STREAM frame had the FIN flag set and 0 otherwise.
  *
- * conn_rxfc should point to a connection-level RXFC, which will have its state
- * updated correctly by the stream-level RXFC.
- *
- * This function may be used on a stream-level RXFC only.
+ * This function may be used on a stream-level RXFC only. The connection-level
+ * RXFC will have its state updated by the stream-level RXFC.
  *
  * You should check ossl_quic_rxfc_has_error() on both connection-level and
  * stream-level RXFCs after calling this function, as an incoming STREAM frame
