@@ -796,6 +796,7 @@ static int test_set0_attrs(void)
     return end_pkcs12_builder(pb);
 
 err:
+    (void)end_pkcs12_builder(pb);
     return 0;
 }
 
