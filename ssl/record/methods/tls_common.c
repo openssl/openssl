@@ -1750,23 +1750,20 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         }
     }
 
-    if (!using_ktls) {
-        if (prefix) {
-            if (rl->funcs->cipher(rl, wr, 1, 1, NULL, mac_size) < 1) {
-                if (rl->alert == SSL_AD_NO_ALERT) {
-                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                }
-                goto err;
-            }
-        }
-
-        if (rl->funcs->cipher(rl, wr + prefix, numtempl, 1, NULL,
-                                mac_size) < 1) {
+    if (prefix) {
+        if (rl->funcs->cipher(rl, wr, 1, 1, NULL, mac_size) < 1) {
             if (rl->alert == SSL_AD_NO_ALERT) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             }
             goto err;
         }
+    }
+
+    if (rl->funcs->cipher(rl, wr + prefix, numtempl, 1, NULL, mac_size) < 1) {
+        if (rl->alert == SSL_AD_NO_ALERT) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        }
+        goto err;
     }
 
     for (j = 0; j < numtempl + prefix; j++) {
