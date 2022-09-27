@@ -32,6 +32,7 @@ my $SYSTEM;
 my $VERSION;
 my $CCVENDOR;
 my $CCVER;
+my $CL_ARCH;
 my $GCC_BITS;
 my $GCC_ARCH;
 
@@ -376,6 +377,22 @@ sub determine_compiler_settings {
                 $CC = 'cc';
                 $CCVENDOR = 'sun';
                 $CCVER = $v;
+            }
+        }
+
+        # 'Windows NT' is the system name according to POSIX::uname()!
+        if ( $SYSTEM eq "Windows NT" ) {
+            # favor vendor cl over gcc
+            if (IPC::Cmd::can_run('cl')) {
+                $CC = 'cl';
+                $CCVENDOR = ''; # Determine later
+                $CCVER = 0;
+
+                my $v = `cl 2>&1`;
+                if ( $v =~ /Microsoft .* Version ([0-9\.]+) for (x86|x64|ARM|ia64)/ ) {
+                    $CCVER = $1;
+                    $CL_ARCH = $2;
+                }
             }
         }
     }
@@ -884,9 +901,33 @@ EOF
       ],
 
       # Windows values found by looking at Perl 5's win32/win32.c
-      [ 'amd64-.*?-Windows NT',   { target => 'VC-WIN64A' } ],
-      [ 'ia64-.*?-Windows NT',    { target => 'VC-WIN64I' } ],
-      [ 'x86-.*?-Windows NT',     { target => 'VC-WIN32'  } ],
+      [ '(amd64|ia64|x86|ARM)-.*?-Windows NT',
+        sub {
+            # If we determined the arch by asking cl, take that value,
+            # otherwise the SYSTEM we got from from POSIX::uname().
+            my $arch = $CL_ARCH // $1;
+            my $config;
+
+            if ($arch) {
+                $config = { 'amd64' => { target => 'VC-WIN64I'    },
+                            'ia64'  => { target => 'VC-WIN64I'    },
+                            'x86'   => { target => 'VC-WIN32'     },
+                            'x64'   => { target => 'VC-WIN64I'    },
+                            'ARM'   => { target => 'VC-WIN64-ARM' },
+                          } -> {$arch};
+                die <<_____ unless defined $config;
+ERROR
+I do not know how to handle ${arch}.
+_____
+            }
+            die <<_____ unless defined $config;
+ERROR
+Could not figure out the architecture.
+_____
+
+            return $config;
+        }
+      ],
 
       # VMS values found by observation on existing machinery.
       # Unfortunately, the machine part is a bit...  overdone.  It seems,
