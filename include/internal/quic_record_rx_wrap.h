@@ -10,8 +10,9 @@
 #ifndef OSSL_QUIC_RECORD_RX_WRAP_H
 # define OSSL_QUIC_RECORD_RX_WRAP_H
 
+# include <openssl/crypto.h>
+# include "internal/refcount.h"
 # include "internal/quic_record_rx.h"
-# include "quic_local.h"
 
 /*
  * OSSL_QRX_PKT handle wrapper for counted references
