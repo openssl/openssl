@@ -1628,7 +1628,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
 
         if (!rl->funcs->prepare_record_header(rl, thispkt, thistempl, rectype,
                                               &compressdata)) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            /* RLAYERfatal() already called */
             goto err;
         }
 
@@ -1658,54 +1658,11 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
             SSL3_RECORD_reset_input(&wr[j]);
         }
 
-        if (rl->version == TLS1_3_VERSION
-                && !using_ktls
-                && rl->enc_ctx != NULL
-                && (!rl->allow_plain_alerts
-                    || thistempl->type != SSL3_RT_ALERT)) {
-            size_t rlen;
-
-            if (!WPACKET_put_bytes_u8(thispkt, thistempl->type)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-            SSL3_RECORD_add_length(thiswr, 1);
-
-            /* Add TLS1.3 padding */
-            rlen = SSL3_RECORD_get_length(thiswr);
-            if (rlen < rl->max_frag_len) {
-                size_t padding = 0;
-                size_t max_padding = rl->max_frag_len - rlen;
-
-                if (rl->padding != NULL) {
-                    padding = rl->padding(rl->cbarg, thistempl->type, rlen);
-                } else if (rl->block_padding > 0) {
-                    size_t mask = rl->block_padding - 1;
-                    size_t remainder;
-
-                    /* optimize for power of 2 */
-                    if ((rl->block_padding & mask) == 0)
-                        remainder = rlen & mask;
-                    else
-                        remainder = rlen % rl->block_padding;
-                    /* don't want to add a block of padding if we don't have to */
-                    if (remainder == 0)
-                        padding = 0;
-                    else
-                        padding = rl->block_padding - remainder;
-                }
-                if (padding > 0) {
-                    /* do not allow the record to exceed max plaintext length */
-                    if (padding > max_padding)
-                        padding = max_padding;
-                    if (!WPACKET_memset(thispkt, 0, padding)) {
-                        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
-                                    ERR_R_INTERNAL_ERROR);
-                        goto err;
-                    }
-                    SSL3_RECORD_add_length(thiswr, padding);
-                }
-            }
+        if (rl->funcs->add_record_padding != NULL
+                && !rl->funcs->add_record_padding(rl, thistempl, thispkt,
+                                                  thiswr)) {
+            /* RLAYERfatal() already called */
+            goto err;
         }
 
         /*

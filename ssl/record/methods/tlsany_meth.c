@@ -148,7 +148,8 @@ struct record_functions_st tls_any_funcs = {
     tls_allocate_write_buffers_default,
     tls_initialise_write_packets_default,
     NULL,
-    tls_prepare_record_header_default
+    tls_prepare_record_header_default,
+    NULL
 };
 
 static int dtls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
@@ -167,6 +168,7 @@ struct record_functions_st dtls_any_funcs = {
     dtls_any_set_protocol_version,
     tls_default_read_n,
     dtls_get_more_records,
+    NULL,
     NULL,
     NULL,
     NULL,
