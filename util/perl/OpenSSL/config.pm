@@ -15,6 +15,7 @@ use strict;
 use warnings;
 use Getopt::Std;
 use File::Basename;
+use File::Spec;
 use IPC::Cmd;
 use POSIX;
 use Config;
@@ -51,12 +52,15 @@ my @c_compilers = qw(clang gcc cc);
 my @cc_version =
     (
      clang => sub {
+         return undef unless IPC::Cmd::can_run("$CROSS_COMPILE$CC");
          my $v = `$CROSS_COMPILE$CC -v 2>&1`;
          $v =~ m/(?:(?:clang|LLVM) version|.*based on LLVM)\s+([0-9]+\.[0-9]+)/;
          return $1;
      },
      gnu => sub {
-         my $v = `$CROSS_COMPILE$CC -dumpversion 2>/dev/null`;
+         return undef unless IPC::Cmd::can_run("$CROSS_COMPILE$CC");
+         my $nul = File::Spec->devnull();
+         my $v = `$CROSS_COMPILE$CC -dumpversion 2> $nul`;
          # Strip off whatever prefix egcs prepends the number with.
          # Hopefully, this will work for any future prefixes as well.
          $v =~ s/^[a-zA-Z]*\-//;
@@ -900,7 +904,7 @@ EOF
             } else {
                 $config{disable} = [ 'asm' ];
             }
-            return %config;
+            return { %config };
         }
       ],
 
