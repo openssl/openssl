@@ -745,7 +745,8 @@ static size_t dgram_pair_read_inner(struct bio_dgram_pair_st *b, uint8_t *buf, s
 
         ring_buf_pop(&b->rbuf, src_len);
 
-        buf         += src_len;
+        if (buf != NULL)
+            buf += src_len;
         total_read  += src_len;
         sz          -= src_len;
     }
