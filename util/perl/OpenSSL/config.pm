@@ -17,6 +17,7 @@ use Getopt::Std;
 use File::Basename;
 use IPC::Cmd;
 use POSIX;
+use Config;
 use Carp;
 
 # These control our behavior.
@@ -159,6 +160,12 @@ my $guess_patterns = [
     [ 'MINGW.*',                    '${MACHINE}-whatever-mingw' ],
     [ 'CYGWIN.*',                   '${MACHINE}-pc-cygwin' ],
     [ 'vxworks.*',                  '${MACHINE}-whatever-vxworks' ],
+
+    # The MACHINE part of the array POSIX::uname() returns on VMS isn't
+    # worth the bits wasted on it.  It's better, then, to rely on perl's
+    # %Config, which has a trustworthy item 'archname', especially since
+    # VMS installation aren't multiarch (yet)
+    [ 'OpenVMS:.*',                 "$Config{archname}-whatever-OpenVMS" ],
 
     # Note: there's also NEO and NSR, but they are old and unsupported
     [ 'NONSTOP_KERNEL:.*:NSE-.*?',  'nse-tandem-nsk${RELEASE}' ],
@@ -927,12 +934,9 @@ _____
       ],
 
       # VMS values found by observation on existing machinery.
-      # Unfortunately, the machine part is a bit...  overdone.  It seems,
-      # though, that 'Alpha' exists in that part for Alphas, making it
-      # distinguishable from Itanium.  It will be interesting to see what
-      # we'll get in the upcoming x86_64 port...
-      [ '.*Alpha.*?-.*?-OpenVMS', { target => 'vms-alpha' } ],
-      [ '.*?-.*?-OpenVMS',        { target => 'vms-ia64'  } ],
+      [ 'VMS_AXP-.*?-OpenVMS',    { target => 'vms-alpha'  } ],
+      [ 'VMS_IA64-.*?-OpenVMS',   { target => 'vms-ia64'   } ],
+      [ 'VMS_x86_64-.*?-OpenVMS', { target => 'vms-x86_64' } ],
 
       # TODO: There are a few more choices among OpenSSL config targets, but
       # reaching them involves a bit more than just a host tripet.  Select
