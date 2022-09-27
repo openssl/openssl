@@ -1109,9 +1109,11 @@ int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt)
 
 void ossl_qrx_release_pkt(OSSL_QRX *qrx, void *handle)
 {
-    RXE *rxe = handle;
+    if (handle != NULL) {
+        RXE *rxe = handle;
 
-    qrx_recycle_rxe(qrx, rxe);
+        qrx_recycle_rxe(qrx, rxe);
+    }
 }
 
 uint64_t ossl_qrx_get_bytes_received(OSSL_QRX *qrx, int clear)

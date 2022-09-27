@@ -4,5 +4,5 @@ SOURCE[$LIBSSL]=quic_method.c quic_impl.c quic_wire.c quic_ackm.c quic_statm.c
 SOURCE[$LIBSSL]=cc_dummy.c quic_demux.c quic_record_rx.c
 SOURCE[$LIBSSL]=quic_record_tx.c quic_record_util.c quic_record_shared.c quic_wire_pkt.c
 SOURCE[$LIBSSL]=quic_record_rx_wrap.c quic_rx_depack.c
-SOURCE[$LIBSSL]=quic_fc.c uint_set.c quic_stream.c
+SOURCE[$LIBSSL]=quic_fc.c uint_set.c quic_sf_list.c quic_rstream.c quic_sstream.c
 SOURCE[$LIBSSL]=quic_cfq.c quic_txpim.c quic_fifd.c

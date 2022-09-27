@@ -9,7 +9,7 @@
 
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include "quic_record_rx_wrap.h"
+#include "internal/quic_record_rx_wrap.h"
 
 OSSL_QRX_PKT_WRAP *ossl_qrx_pkt_wrap_new(OSSL_QRX_PKT *pkt)
 {
