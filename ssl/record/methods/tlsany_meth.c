@@ -134,6 +134,15 @@ static int tls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
     return 1;
 }
 
+static int tls_any_prepare_for_encryption(OSSL_RECORD_LAYER *rl,
+                                          size_t mac_size,
+                                          WPACKET *thispkt,
+                                          SSL3_RECORD *thiswr)
+{
+    /* No encryption, so nothing to do */
+    return 1;
+}
+
 struct record_functions_st tls_any_funcs = {
     tls_any_set_crypto_state,
     tls_any_cipher,
@@ -149,7 +158,8 @@ struct record_functions_st tls_any_funcs = {
     tls_initialise_write_packets_default,
     NULL,
     tls_prepare_record_header_default,
-    NULL
+    NULL,
+    tls_any_prepare_for_encryption
 };
 
 static int dtls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
@@ -168,6 +178,7 @@ struct record_functions_st dtls_any_funcs = {
     dtls_any_set_protocol_version,
     tls_default_read_n,
     dtls_get_more_records,
+    NULL,
     NULL,
     NULL,
     NULL,
