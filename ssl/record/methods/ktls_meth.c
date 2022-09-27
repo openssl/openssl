@@ -492,6 +492,15 @@ static int ktls_prepare_record_header(OSSL_RECORD_LAYER *rl,
     return 1;
 }
 
+static int ktls_prepare_for_encryption(OSSL_RECORD_LAYER *rl,
+                                       size_t mac_size,
+                                       WPACKET *thispkt,
+                                       SSL3_RECORD *thiswr)
+{
+    /* No encryption, so nothing to do */
+    return 1;
+}
+
 static struct record_functions_st ossl_ktls_funcs = {
     ktls_set_crypto_state,
     ktls_cipher,
@@ -507,7 +516,8 @@ static struct record_functions_st ossl_ktls_funcs = {
     ktls_initialise_write_packets,
     NULL,
     ktls_prepare_record_header,
-    NULL
+    NULL,
+    ktls_prepare_for_encryption
 };
 
 const OSSL_RECORD_METHOD ossl_ktls_record_method = {

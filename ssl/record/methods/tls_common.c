@@ -1562,6 +1562,56 @@ int tls_prepare_record_header_default(OSSL_RECORD_LAYER *rl,
     return 1;
 }
 
+int tls_prepare_for_encryption_default(OSSL_RECORD_LAYER *rl,
+                                       size_t mac_size,
+                                       WPACKET *thispkt,
+                                       SSL3_RECORD *thiswr)
+{
+    size_t len;
+    unsigned char *recordstart;
+
+    /*
+     * we should still have the output to thiswr->data and the input from
+     * wr->input. Length should be thiswr->length. thiswr->data still points
+     * in the wb->buf
+     */
+
+    if (!rl->use_etm && mac_size != 0) {
+        unsigned char *mac;
+
+        if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
+                || !rl->funcs->mac(rl, thiswr, mac, 1)) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+
+    /*
+     * Reserve some bytes for any growth that may occur during encryption.
+     * This will be at most one cipher block or the tag length if using
+     * AEAD. SSL_RT_MAX_CIPHER_BLOCK_SIZE covers either case.
+     */
+    if (!WPACKET_reserve_bytes(thispkt,
+                               SSL_RT_MAX_CIPHER_BLOCK_SIZE,
+                               NULL)
+            /*
+             * We also need next the amount of bytes written to this
+             * sub-packet
+             */
+            || !WPACKET_get_length(thispkt, &len)) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* Get a pointer to the start of this record excluding header */
+    recordstart = WPACKET_get_curr(thispkt) - len;
+    SSL3_RECORD_set_data(thiswr, recordstart);
+    SSL3_RECORD_reset_input(thiswr);
+    SSL3_RECORD_set_length(thiswr, len);
+
+    return 1;
+}
+
 int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                               OSSL_RECORD_TEMPLATE *templates,
                               size_t numtempl)
@@ -1665,45 +1715,9 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
             goto err;
         }
 
-        /*
-         * we should still have the output to thiswr->data and the input from
-         * wr->input. Length should be thiswr->length. thiswr->data still points
-         * in the wb->buf
-         */
-
-        if (!using_ktls && !rl->use_etm && mac_size != 0) {
-            unsigned char *mac;
-
-            if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
-                    || !rl->funcs->mac(rl, thiswr, mac, 1)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-        }
-
-        /*
-         * Reserve some bytes for any growth that may occur during encryption.
-         * This will be at most one cipher block or the tag length if using
-         * AEAD. SSL_RT_MAX_CIPHER_BLOCK_SIZE covers either case.
-         */
-        if (!using_ktls) {
-            if (!WPACKET_reserve_bytes(thispkt,
-                                        SSL_RT_MAX_CIPHER_BLOCK_SIZE,
-                                        NULL)
-                    /*
-                    * We also need next the amount of bytes written to this
-                    * sub-packet
-                    */
-                    || !WPACKET_get_length(thispkt, &len)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-
-            /* Get a pointer to the start of this record excluding header */
-            recordstart = WPACKET_get_curr(thispkt) - len;
-            SSL3_RECORD_set_data(thiswr, recordstart);
-            SSL3_RECORD_reset_input(thiswr);
-            SSL3_RECORD_set_length(thiswr, len);
+        if (!rl->funcs->prepare_for_encryption(rl, mac_size, thispkt, thiswr)) {
+            /* RLAYERfatal() already called */
+            goto err;
         }
     }
 

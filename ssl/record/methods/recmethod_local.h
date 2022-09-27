@@ -110,6 +110,16 @@ struct record_functions_st
                               OSSL_RECORD_TEMPLATE *thistempl,
                               WPACKET *thispkt,
                               SSL3_RECORD *thiswr);
+
+    /*
+     * This applies any mac that might be necessary, ensures that we have enough
+     * space in the WPACKET to perform the encryption and sets up the
+     * SSL3_RECORD ready for that encryption.
+     */
+    int (*prepare_for_encryption)(OSSL_RECORD_LAYER *rl,
+                                  size_t mac_size,
+                                  WPACKET *thispkt,
+                                  SSL3_RECORD *thiswr);
 };
 
 struct ossl_record_layer_st
@@ -407,6 +417,10 @@ int tls_prepare_record_header_default(OSSL_RECORD_LAYER *rl,
                                       OSSL_RECORD_TEMPLATE *templ,
                                       unsigned int rectype,
                                       unsigned char **recdata);
+int tls_prepare_for_encryption_default(OSSL_RECORD_LAYER *rl,
+                                       size_t mac_size,
+                                       WPACKET *thispkt,
+                                       SSL3_RECORD *thiswr);
 int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                               OSSL_RECORD_TEMPLATE *templates,
                               size_t numtempl);
