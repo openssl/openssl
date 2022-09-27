@@ -1012,7 +1012,7 @@ static ossl_ssize_t dgram_pair_write_actual(BIO *bio, const char *buf, size_t sz
                                             const BIO_ADDR *local, const BIO_ADDR *peer,
                                             int is_multi)
 {
-    static const BIO_ADDR zero_addr = {0};
+    static const BIO_ADDR zero_addr;
     size_t saved_idx, saved_count;
     struct bio_dgram_pair_st *b = bio->ptr, *peerb;
     struct dgram_hdr hdr = {0};
