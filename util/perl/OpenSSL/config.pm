@@ -920,10 +920,10 @@ EOF
             my $config;
 
             if ($arch) {
-                $config = { 'amd64' => { target => 'VC-WIN64I'    },
+                $config = { 'amd64' => { target => 'VC-WIN64A'    },
                             'ia64'  => { target => 'VC-WIN64I'    },
                             'x86'   => { target => 'VC-WIN32'     },
-                            'x64'   => { target => 'VC-WIN64I'    },
+                            'x64'   => { target => 'VC-WIN64A'    },
                             'ARM'   => { target => 'VC-WIN64-ARM' },
                           } -> {$arch};
                 die <<_____ unless defined $config;
