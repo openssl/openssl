@@ -105,6 +105,11 @@ struct record_functions_st
                                  OSSL_RECORD_TEMPLATE *templ,
                                  unsigned int rectype,
                                  unsigned char **recdata);
+
+    int (*add_record_padding)(OSSL_RECORD_LAYER *rl,
+                              OSSL_RECORD_TEMPLATE *thistempl,
+                              WPACKET *thispkt,
+                              SSL3_RECORD *thiswr);
 };
 
 struct ossl_record_layer_st

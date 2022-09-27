@@ -506,7 +506,8 @@ static struct record_functions_st ossl_ktls_funcs = {
     ktls_allocate_write_buffers,
     ktls_initialise_write_packets,
     NULL,
-    ktls_prepare_record_header
+    ktls_prepare_record_header,
+    NULL
 };
 
 const OSSL_RECORD_METHOD ossl_ktls_record_method = {
