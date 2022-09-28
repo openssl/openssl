@@ -29,7 +29,7 @@ X509_CRL_set1_nextUpdate - get or set certificate or CRL dates
 =head1 DESCRIPTION
 
 X509_get0_notBefore() and X509_get0_notAfter() return the B<notBefore>
-and B<notAfter> fields of certificate B<x> respectively. The value
+and B<notAfter> fields of certificate I<x> respectively. The value
 returned is an internal pointer which must not be freed up after
 the call.
 
@@ -39,20 +39,22 @@ non-constant mutable references to the associated date field of
 the certificate.
 
 X509_set1_notBefore() and X509_set1_notAfter() set the B<notBefore>
-and B<notAfter> fields of B<x> to B<tm>. Ownership of the passed
-parameter B<tm> is not transferred by these functions so it must
+and B<notAfter> fields of I<x> to I<tm>. Ownership of the passed
+parameter I<tm> is not transferred by these functions so it must
 be freed up after the call.
 
 X509_CRL_get0_lastUpdate() and X509_CRL_get0_nextUpdate() return the
-B<lastUpdate> and B<nextUpdate> fields of B<crl>. The value
+B<lastUpdate> and B<nextUpdate> fields of I<crl>. The value
 returned is an internal pointer which must not be freed up after
-the call. If the B<nextUpdate> field is absent from B<crl> then
-B<NULL> is returned.
+the call. If the B<nextUpdate> field is absent from I<crl> then
+NULL is returned.
 
 X509_CRL_set1_lastUpdate() and X509_CRL_set1_nextUpdate() set the B<lastUpdate>
-and B<nextUpdate> fields of B<crl> to B<tm>. Ownership of the passed parameter
-B<tm> is not transferred by these functions so it must be freed up after the
+and B<nextUpdate> fields of I<crl> to I<tm>. Ownership of the passed parameter
+I<tm> is not transferred by these functions so it must be freed up after the
 call.
+For X509_CRL_set1_nextUpdate() the I<tm> argument may be NULL,
+which implies removal of the optional B<nextUpdate> field.
 
 =head1 RETURN VALUES
 
