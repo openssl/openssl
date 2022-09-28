@@ -309,7 +309,7 @@ struct x509_object_st {
 };
 
 int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
-int ossl_x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm);
+int ossl_x509_set1_time(int *modified, ASN1_TIME **ptm, const ASN1_TIME *tm);
 int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags);
 int ossl_x509v3_cache_extensions(X509 *x);
 int ossl_x509_init_sig_info(X509 *x);
