@@ -39,8 +39,15 @@ jobs:
         #   opensslcaps: optional; if opensslcapsname (see above) is set, then
         #                this string will be used as content for the OpenSSL
         #                capabilities variable.
+        #   ppa:   Launchpad PPA repository to download packages from.
         platform: [
           {
+            arch: i386-pc-msdosdjgpp,
+            libs: libc-djgpp-dev libwatt-djgpp-dev djgpp-utils,
+            target: no-threads 386 DJGPP,
+            tests: none,
+            ppa: jwt27/djgpp-toolchain
+          }, {
             arch: aarch64-linux-gnu,
             libs: libc6-dev-arm64-cross,
             target: linux-aarch64
@@ -143,6 +150,10 @@ jobs:
         ]
     runs-on: ubuntu-latest
     steps:
+    - name: install package repository
+      if: matrix.platform.ppa != ''
+      run: |
+        sudo add-apt-repository ppa:${{ matrix.platform.ppa }}
     - name: install packages
       run: |
         sudo apt-get update
