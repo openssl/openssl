@@ -5,6 +5,9 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+# This verifies that FIPS and legacy providers built against some earlier
+# released versions continue to run against the current branch.
+
 name: Provider compatibility across versions
 on:
   schedule:
@@ -22,10 +25,7 @@ jobs:
       matrix:
         tag: [
           openssl-3.0.0,
-          openssl-3.0.1,
-          openssl-3.0.2,
           openssl-3.0.3,
-          openssl-3.0.4,
           openssl-3.0.5,
         ]
     runs-on: ubuntu-latest
