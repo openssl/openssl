@@ -5,6 +5,11 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+# This verifies that all released FIPS validated providers continue to run
+# against the current branch.  The FIPS validated sources are downloaded
+# and built as specified in the security policy and then the current branch's
+# test suite is run against the produced FIPS provider.
+
 name: Validated FIPS provider compatibility
 on: [pull_request, push]
 
@@ -29,10 +34,12 @@ jobs:
       - uses: actions/checkout@v2
         with:
           path: current
+
       - name: download module source
         run: wget --no-verbose ${{ matrix.module.url }}
       - name: unpack module source
         run: tar xzf ${{ matrix.module.tgz }}
+
       - name: localegen
         run: sudo locale-gen tr_TR.UTF-8
       - name: config current
@@ -52,6 +59,7 @@ jobs:
       - name: test current
         run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
         working-directory: ./current
+
       - name: config module
         run: ./config --banner=Configured enable-shared enable-fips
         working-directory: ${{ matrix.module.dir }}
@@ -61,6 +69,7 @@ jobs:
       - name: make module
         run: make -s -j4
         working-directory: ${{ matrix.module.dir }}
+
       - name: setup module cross validation
         run: cp providers/fips{module.cnf,.so} ../current/providers/
         working-directory: ${{ matrix.module.dir }}
