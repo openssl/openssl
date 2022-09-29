@@ -1238,7 +1238,7 @@ static NISTP224_PRE_COMP *nistp224_pre_comp_new(void)
 {
     NISTP224_PRE_COMP *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if (ret == NULL) {
+    if (ret == NULL)
         return ret;
 
     ret->references = 1;
