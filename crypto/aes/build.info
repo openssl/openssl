@@ -51,6 +51,9 @@ IF[{- !$disabled{asm} -}]
   $AESDEF_riscv64=AES_ASM
   $AESASM_riscv32=aes_core.c aes_cbc.c aes-riscv32-zkn.s
 
+  $AESASM_loongarch64=aes_core.c aes_cbc.c vpaes-loongarch64.S
+  $AESDEF_loongarch64=VPAES_ASM
+
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
   IF[$AESASM_{- $target{asm_arch} -}]
@@ -136,3 +139,6 @@ GENERATE[aes-s390x.S]=asm/aes-s390x.pl
 INCLUDE[aes-s390x.o]=..
 
 GENERATE[aes-c64xplus.S]=asm/aes-c64xplus.pl
+
+GENERATE[vpaes-loongarch64.S]=asm/vpaes-loongarch64.pl
+INCLUDE[vpaes-loongarch64.o]=..

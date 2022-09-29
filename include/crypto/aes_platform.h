@@ -158,6 +158,13 @@ void gcm_ghash_v8(u64 Xi[2],const u128 Htable[16],const u8 *inp, size_t len);
 #  define AESNI_CBC_HMAC_SHA_CAPABLE (OPENSSL_ia32cap_P[1]&(1<<(57-32)))
 # endif
 
+# if defined(__loongarch__) || defined(__loongarch64)
+#  include "loongarch_arch.h"
+#  if defined(VPAES_ASM)
+#   define VPAES_CAPABLE  (OPENSSL_loongarchcap_P & LOONGARCH_CFG2_LSX)
+#  endif
+# endif
+
 # if     defined(AES_ASM) && !defined(I386_ONLY) &&      (  \
          ((defined(__i386)       || defined(__i386__)    || \
            defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \
