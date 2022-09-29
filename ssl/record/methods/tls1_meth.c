@@ -128,8 +128,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             eivlen = EVP_CIPHER_CTX_get_iv_length(ciph_ctx);
             if (eivlen < 0) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
-               return OSSL_RECORD_RETURN_FATAL;
-
+                return OSSL_RECORD_RETURN_FATAL;
             }
             if (eivlen <= 1)
                 eivlen = 0;

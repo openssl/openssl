@@ -992,9 +992,8 @@ static int tls_do_compress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *wr)
                             wr->input, (int)wr->length);
     if (i < 0)
         return 0;
-    else
-        wr->length = i;
 
+    wr->length = i;
     wr->input = wr->data;
 #endif
     return 1;

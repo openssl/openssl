@@ -109,8 +109,8 @@ static int tls_write_records_multiblock_int(OSSL_RECORD_LAYER *rl,
      * buffer sizes will be spotted and the buffer reallocated.
      */
     packlen = EVP_CIPHER_CTX_ctrl(rl->enc_ctx,
-                                    EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE,
-                                    (int)templates[0].buflen, NULL);
+                                  EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE,
+                                  (int)templates[0].buflen, NULL);
     packlen *= numtempl;
     if (!tls_setup_write_buffer(rl, 1, packlen, packlen)) {
         /* RLAYERfatal() already called */
@@ -130,8 +130,8 @@ static int tls_write_records_multiblock_int(OSSL_RECORD_LAYER *rl,
     mb_param.len = totlen;
 
     packleni = EVP_CIPHER_CTX_ctrl(rl->enc_ctx,
-                                    EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
-                                    sizeof(mb_param), &mb_param);
+                                   EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
+                                   sizeof(mb_param), &mb_param);
     packlen = (size_t)packleni;
     if (packleni <= 0 || packlen > wb->len) { /* never happens */
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
