@@ -143,7 +143,7 @@ void *CRYPTO_secure_malloc(size_t num, const char *file, int line)
 #ifndef OPENSSL_NO_SECURE_MEMORY
     void *ret = NULL;
     size_t actual_size;
-    int reason = ERR_R_MALLOC_FAILURE;
+    int reason = CRYPTO_R_SECURE_MALLOC_FAILURE;
 
     if (!secure_mem_initialized) {
         return CRYPTO_malloc(num, file, line);
