@@ -35,7 +35,7 @@ static int ssl3_generate_key_block(SSL_CONNECTION *s, unsigned char *km, int num
     m5 = EVP_MD_CTX_new();
     s1 = EVP_MD_CTX_new();
     if (md5 == NULL || sha1 == NULL || m5 == NULL || s1 == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
     for (i = 0; (int)i < num; i += MD5_DIGEST_LENGTH) {
@@ -163,7 +163,7 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
     if (s->enc_write_ctx != NULL) {
         reuse_dd = 1;
     } else if ((s->enc_write_ctx = EVP_CIPHER_CTX_new()) == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     } else {
         /*  make sure it's initialised in case we exit later with an error */
@@ -171,7 +171,7 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
     }
     dd = s->enc_write_ctx;
     if (ssl_replace_hash(&s->write_hash, md) == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
         goto err;
     }
 #ifndef OPENSSL_NO_COMP
@@ -249,7 +249,7 @@ int ssl3_setup_key_block(SSL_CONNECTION *s)
     ssl3_cleanup_key_block(s);
 
     if ((p = OPENSSL_malloc(num)) == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -274,7 +274,7 @@ int ssl3_init_finished_mac(SSL_CONNECTION *s)
     BIO *buf = BIO_new(BIO_s_mem());
 
     if (buf == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_BIO_LIB);
         return 0;
     }
     ssl3_free_digest_list(s);
@@ -336,7 +336,7 @@ int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
 
         s->s3.handshake_dgst = EVP_MD_CTX_new();
         if (s->s3.handshake_dgst == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
             return 0;
         }
 
@@ -388,7 +388,7 @@ size_t ssl3_final_finish_mac(SSL_CONNECTION *s, const char *sender, size_t len,
 
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         return 0;
     }
     if (!EVP_MD_CTX_copy_ex(ctx, s->s3.handshake_dgst)) {
@@ -445,7 +445,7 @@ int ssl3_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
     size_t ret_secret_size = 0;
 
     if (ctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         return 0;
     }
     for (i = 0; i < 3; i++) {

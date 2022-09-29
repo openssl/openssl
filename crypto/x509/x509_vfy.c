@@ -714,7 +714,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
              */
             tmpsubject = X509_NAME_dup(tmpsubject);
             if (tmpsubject == NULL) {
-                ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
                 ctx->error = X509_V_ERR_OUT_OF_MEM;
                 return -1;
             }
@@ -1655,15 +1655,19 @@ static int check_policy(X509_STORE_CTX *ctx)
      * was verified via a bare public key, and pop it off right after the
      * X509_policy_check() call.
      */
-    if (ctx->bare_ta_signed && !sk_X509_push(ctx->chain, NULL))
+    if (ctx->bare_ta_signed && !sk_X509_push(ctx->chain, NULL)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto memerr;
+    }
     ret = X509_policy_check(&ctx->tree, &ctx->explicit_policy, ctx->chain,
                             ctx->param->policies, ctx->param->flags);
     if (ctx->bare_ta_signed)
         (void)sk_X509_pop(ctx->chain);
 
-    if (ret == X509_PCY_TREE_INTERNAL)
+    if (ret == X509_PCY_TREE_INTERNAL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
         goto memerr;
+    }
     /* Invalid or inconsistent extensions */
     if (ret == X509_PCY_TREE_INVALID) {
         int i;
@@ -1702,7 +1706,6 @@ static int check_policy(X509_STORE_CTX *ctx)
     return 1;
 
  memerr:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
     ctx->error = X509_V_ERR_OUT_OF_MEM;
     return -1;
 }
@@ -2068,20 +2071,30 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
     }
     /* Create new CRL */
     crl = X509_CRL_new_ex(base->libctx, base->propq);
-    if (crl == NULL || !X509_CRL_set_version(crl, X509_CRL_VERSION_2))
-        goto memerr;
+    if (crl == NULL || !X509_CRL_set_version(crl, X509_CRL_VERSION_2)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+        goto err;
+    }
     /* Set issuer name */
-    if (!X509_CRL_set_issuer_name(crl, X509_CRL_get_issuer(newer)))
-        goto memerr;
+    if (!X509_CRL_set_issuer_name(crl, X509_CRL_get_issuer(newer))) {
+        ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+        goto err;
+    }
 
-    if (!X509_CRL_set1_lastUpdate(crl, X509_CRL_get0_lastUpdate(newer)))
-        goto memerr;
-    if (!X509_CRL_set1_nextUpdate(crl, X509_CRL_get0_nextUpdate(newer)))
-        goto memerr;
+    if (!X509_CRL_set1_lastUpdate(crl, X509_CRL_get0_lastUpdate(newer))) {
+        ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+        goto err;
+    }
+    if (!X509_CRL_set1_nextUpdate(crl, X509_CRL_get0_nextUpdate(newer))) {
+        ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+        goto err;
+    }
 
     /* Set base CRL number: must be critical */
-    if (!X509_CRL_add1_ext_i2d(crl, NID_delta_crl, base->crl_number, 1, 0))
-        goto memerr;
+    if (!X509_CRL_add1_ext_i2d(crl, NID_delta_crl, base->crl_number, 1, 0)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+        goto err;
+    }
 
     /*
      * Copy extensions across from newest CRL to delta: this will set CRL
@@ -2090,8 +2103,10 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
     for (i = 0; i < X509_CRL_get_ext_count(newer); i++) {
         X509_EXTENSION *ext = X509_CRL_get_ext(newer, i);
 
-        if (!X509_CRL_add_ext(crl, ext, -1))
-            goto memerr;
+        if (!X509_CRL_add_ext(crl, ext, -1)) {
+            ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+            goto err;
+        }
     }
 
     /* Go through revoked entries, copying as needed */
@@ -2108,22 +2123,26 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
          */
         if (!X509_CRL_get0_by_serial(base, &rvtmp, &rvn->serialNumber)) {
             rvtmp = X509_REVOKED_dup(rvn);
-            if (rvtmp == NULL)
-                goto memerr;
+            if (rvtmp == NULL) {
+                ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
+                goto err;
+            }
             if (!X509_CRL_add0_revoked(crl, rvtmp)) {
                 X509_REVOKED_free(rvtmp);
-                goto memerr;
+                ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+                goto err;
             }
         }
     }
 
-    if (skey != NULL && md != NULL && !X509_CRL_sign(crl, skey, md))
-        goto memerr;
+    if (skey != NULL && md != NULL && !X509_CRL_sign(crl, skey, md)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+        goto err;
+    }
 
     return crl;
 
- memerr:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+ err:
     X509_CRL_free(crl);
     return NULL;
 }
@@ -2289,17 +2308,14 @@ X509_STORE_CTX *X509_STORE_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509_STORE_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    if (ctx == NULL)
         return NULL;
-    }
 
     ctx->libctx = libctx;
     if (propq != NULL) {
         ctx->propq = OPENSSL_strdup(propq);
         if (ctx->propq == NULL) {
             OPENSSL_free(ctx);
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
     }
@@ -2419,7 +2435,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 
     ctx->param = X509_VERIFY_PARAM_new();
     if (ctx->param == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
         goto err;
     }
 
@@ -2447,7 +2463,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     if (CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx,
                            &ctx->ex_data))
         return 1;
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
 
  err:
     /*
@@ -2677,7 +2693,7 @@ static unsigned char *dane_i2d(X509 *cert, uint8_t selector,
     }
 
     if (len < 0 || buf == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
         return NULL;
     }
 
@@ -3034,24 +3050,30 @@ static int build_chain(X509_STORE_CTX *ctx)
     }
 
     /* Initialize empty untrusted stack. */
-    if ((sk_untrusted = sk_X509_new_null()) == NULL)
+    if ((sk_untrusted = sk_X509_new_null()) == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto memerr;
+    }
 
     /*
      * If we got any "Cert(0) Full(0)" trust anchors from DNS, *prepend* them
      * to our working copy of the untrusted certificate stack.
      */
     if (DANETLS_ENABLED(dane) && dane->certs != NULL
-        && !X509_add_certs(sk_untrusted, dane->certs, X509_ADD_FLAG_DEFAULT))
+        && !X509_add_certs(sk_untrusted, dane->certs, X509_ADD_FLAG_DEFAULT)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
         goto memerr;
+    }
 
     /*
      * Shallow-copy the stack of untrusted certificates (with TLS, this is
      * typically the content of the peer's certificate message) so we can make
      * multiple passes over it, while free to remove elements as we go.
      */
-    if (!X509_add_certs(sk_untrusted, ctx->untrusted, X509_ADD_FLAG_DEFAULT))
+    if (!X509_add_certs(sk_untrusted, ctx->untrusted, X509_ADD_FLAG_DEFAULT)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
         goto memerr;
+    }
 
     /*
      * Still absurdly large, but arithmetically safe, a lower hard upper bound
@@ -3163,6 +3185,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                     /* Grow the chain by trusted issuer */
                     if (!sk_X509_push(ctx->chain, issuer)) {
                         X509_free(issuer);
+                        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
                         goto memerr;
                     }
                     if ((self_signed = X509_self_signed(issuer, 0)) < 0)
@@ -3330,7 +3353,6 @@ static int build_chain(X509_STORE_CTX *ctx)
     return -1;
 
  memerr:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
     ctx->error = X509_V_ERR_OUT_OF_MEM;
     sk_X509_free(sk_untrusted);
     return -1;

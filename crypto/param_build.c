@@ -54,10 +54,8 @@ static OSSL_PARAM_BLD_DEF *param_push(OSSL_PARAM_BLD *bld, const char *key,
 {
     OSSL_PARAM_BLD_DEF *pd = OPENSSL_zalloc(sizeof(*pd));
 
-    if (pd == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+    if (pd == NULL)
         return NULL;
-    }
     pd->key = key;
     pd->type = type;
     pd->size = size;
@@ -390,7 +388,6 @@ OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld)
     }
     params = OPENSSL_malloc(total);
     if (params == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         OPENSSL_secure_free(s);
         return NULL;
     }

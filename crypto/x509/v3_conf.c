@@ -148,34 +148,41 @@ static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method,
         ext_der = NULL;
         ext_len =
             ASN1_item_i2d(ext_struc, &ext_der, ASN1_ITEM_ptr(method->it));
-        if (ext_len < 0)
-            goto merr;
+        if (ext_len < 0) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+            goto err;
+        }
     } else {
         unsigned char *p;
 
         ext_len = method->i2d(ext_struc, NULL);
-        if (ext_len <= 0)
-            goto merr;
+        if (ext_len <= 0) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+            goto err;
+        }
         if ((ext_der = OPENSSL_malloc(ext_len)) == NULL)
-            goto merr;
+            goto err;
         p = ext_der;
         method->i2d(ext_struc, &p);
     }
-    if ((ext_oct = ASN1_OCTET_STRING_new()) == NULL)
-        goto merr;
+    if ((ext_oct = ASN1_OCTET_STRING_new()) == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+        goto err;
+    }
     ext_oct->data = ext_der;
     ext_der = NULL;
     ext_oct->length = ext_len;
 
     ext = X509_EXTENSION_create_by_NID(NULL, ext_nid, crit, ext_oct);
-    if (!ext)
-        goto merr;
+    if (!ext) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+        goto err;
+    }
     ASN1_OCTET_STRING_free(ext_oct);
 
     return ext;
 
- merr:
-    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+ err:
     OPENSSL_free(ext_der);
     ASN1_OCTET_STRING_free(ext_oct);
     return NULL;
@@ -256,7 +263,7 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, const char *value,
     }
 
     if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         goto err;
     }
 

@@ -186,7 +186,7 @@ static int setup_decoder(struct winstore_ctx_st *ctx)
 
     ctx->dctx = OSSL_DECODER_CTX_new();
     if (ctx->dctx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
         return 0;
     }
 

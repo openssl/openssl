@@ -303,14 +303,12 @@ static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
 {
     EVP_ASYM_CIPHER *cipher = OPENSSL_zalloc(sizeof(EVP_ASYM_CIPHER));
 
-    if (cipher == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+    if (cipher == NULL)
         return NULL;
-    }
 
     cipher->lock = CRYPTO_THREAD_lock_new();
     if (cipher->lock == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         OPENSSL_free(cipher);
         return NULL;
     }
@@ -331,7 +329,7 @@ static void *evp_asym_cipher_from_algorithm(int name_id,
     int gparamfncnt = 0, sparamfncnt = 0;
 
     if ((cipher = evp_asym_cipher_new(prov)) == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         goto err;
     }
 

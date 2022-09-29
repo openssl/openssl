@@ -19,17 +19,22 @@ X509_PKEY *X509_PKEY_new(void)
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL)
-        goto err;
+        return NULL;
 
     ret->enc_algor = X509_ALGOR_new();
     ret->enc_pkey = ASN1_OCTET_STRING_new();
-    if (ret->enc_algor == NULL || ret->enc_pkey == NULL)
+    if (ret->enc_algor == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_X509_LIB);
         goto err;
+    }
+    if (ret->enc_pkey == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+        goto err;
+    }
 
     return ret;
 err:
     X509_PKEY_free(ret);
-    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 

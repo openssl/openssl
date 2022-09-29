@@ -182,7 +182,6 @@ static void *rsa_newctx(void *provctx, const char *propq)
         || (propq != NULL
             && (propq_copy = OPENSSL_strdup(propq)) == NULL)) {
         OPENSSL_free(prsactx);
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -230,7 +229,7 @@ static unsigned char *rsa_generate_signature_aid(PROV_RSA_CTX *ctx,
     int ret;
 
     if (!WPACKET_init_der(&pkt, aid_buf, buf_len)) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -484,10 +483,8 @@ static int setup_tbuf(PROV_RSA_CTX *ctx)
 {
     if (ctx->tbuf != NULL)
         return 1;
-    if ((ctx->tbuf = OPENSSL_malloc(RSA_size(ctx->rsa))) == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if ((ctx->tbuf = OPENSSL_malloc(RSA_size(ctx->rsa))) == NULL)
         return 0;
-    }
     return 1;
 }
 
@@ -568,7 +565,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
                 return 0;
             }
             if (!setup_tbuf(prsactx)) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_PROV, ERR_R_PROV_LIB);
                 return 0;
             }
             memcpy(prsactx->tbuf, tbs, tbslen);
@@ -986,10 +983,8 @@ static void *rsa_dupctx(void *vprsactx)
         return NULL;
 
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
-    if (dstctx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (dstctx == NULL)
         return NULL;
-    }
 
     *dstctx = *srcctx;
     dstctx->rsa = NULL;

@@ -35,14 +35,14 @@ static int policy_cache_create(X509 *x,
         goto bad_policy;
     cache->data = sk_X509_POLICY_DATA_new(policy_data_cmp);
     if (cache->data == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         goto just_cleanup;
     }
     for (i = 0; i < num; i++) {
         policy = sk_POLICYINFO_value(policies, i);
         data = ossl_policy_data_new(policy, NULL, crit);
         if (data == NULL) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_X509_LIB);
             goto just_cleanup;
         }
         /*
@@ -58,7 +58,7 @@ static int policy_cache_create(X509 *x,
             ret = -1;
             goto bad_policy;
         } else if (!sk_X509_POLICY_DATA_push(cache->data, data)) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto bad_policy;
         }
         data = NULL;
@@ -90,10 +90,8 @@ static int policy_cache_new(X509 *x)
     if (x->policy_cache != NULL)
         return 1;
     cache = OPENSSL_malloc(sizeof(*cache));
-    if (cache == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    if (cache == NULL)
         return 0;
-    }
     cache->anyPolicy = NULL;
     cache->data = NULL;
     cache->any_skip = -1;

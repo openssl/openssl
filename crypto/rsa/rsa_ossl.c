@@ -104,10 +104,8 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
     ret = BN_CTX_get(ctx);
     num = BN_num_bytes(rsa->n);
     buf = OPENSSL_malloc(num);
-    if (ret == NULL || buf == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+    if (ret == NULL || buf == NULL)
         goto err;
-    }
 
     switch (padding) {
     case RSA_PKCS1_PADDING:
@@ -261,10 +259,8 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
     ret = BN_CTX_get(ctx);
     num = BN_num_bytes(rsa->n);
     buf = OPENSSL_malloc(num);
-    if (ret == NULL || buf == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+    if (ret == NULL || buf == NULL)
         goto err;
-    }
 
     switch (padding) {
     case RSA_PKCS1_PADDING:
@@ -307,7 +303,7 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
 
     if (blinding != NULL) {
         if (!local_blinding && ((unblind = BN_CTX_get(ctx)) == NULL)) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
             goto err;
         }
         if (!rsa_blinding_convert(blinding, f, unblind, ctx))
@@ -324,7 +320,7 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
     } else {
         BIGNUM *d = BN_new();
         if (d == NULL) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
             goto err;
         }
         if (rsa->d == NULL) {
@@ -391,12 +387,14 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
     BN_CTX_start(ctx);
     f = BN_CTX_get(ctx);
     ret = BN_CTX_get(ctx);
-    num = BN_num_bytes(rsa->n);
-    buf = OPENSSL_malloc(num);
-    if (ret == NULL || buf == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+    if (ret == NULL) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
         goto err;
     }
+    num = BN_num_bytes(rsa->n);
+    buf = OPENSSL_malloc(num);
+    if (buf == NULL)
+        goto err;
 
     /*
      * This check was for equality but PGP does evil things and chops off the
@@ -426,7 +424,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
 
     if (blinding != NULL) {
         if (!local_blinding && ((unblind = BN_CTX_get(ctx)) == NULL)) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
             goto err;
         }
         if (!rsa_blinding_convert(blinding, f, unblind, ctx))
@@ -444,7 +442,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
     } else {
         BIGNUM *d = BN_new();
         if (d == NULL) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
             goto err;
         }
         if (rsa->d == NULL) {
@@ -540,12 +538,14 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
     BN_CTX_start(ctx);
     f = BN_CTX_get(ctx);
     ret = BN_CTX_get(ctx);
-    num = BN_num_bytes(rsa->n);
-    buf = OPENSSL_malloc(num);
-    if (ret == NULL || buf == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+    if (ret == NULL) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
         goto err;
     }
+    num = BN_num_bytes(rsa->n);
+    buf = OPENSSL_malloc(num);
+    if (buf == NULL)
+        goto err;
 
     /*
      * This check was for equality but PGP does evil things and chops off the

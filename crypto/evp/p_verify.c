@@ -31,7 +31,7 @@ int EVP_VerifyFinal_ex(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
         EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
 
         if (tmp_ctx == NULL) {
-            ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
             return 0;
         }
         rv = EVP_MD_CTX_copy_ex(tmp_ctx, ctx);

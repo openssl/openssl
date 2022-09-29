@@ -22,13 +22,12 @@ OSSL_QRX_PKT_WRAP *ossl_qrx_pkt_wrap_new(OSSL_QRX_PKT *pkt)
 #ifdef HAVE_ATOMICS
     refcount_lock = CRYPTO_THREAD_lock_new();
     if (refcount_lock == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 #endif
 
     if ((res = OPENSSL_zalloc(sizeof(*res))) == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         CRYPTO_THREAD_lock_free(refcount_lock);
         return NULL;
     }

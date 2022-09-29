@@ -276,10 +276,8 @@ static int drbg_hmac_new(PROV_DRBG *drbg)
     PROV_DRBG_HMAC *hmac;
 
     hmac = OPENSSL_secure_zalloc(sizeof(*hmac));
-    if (hmac == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (hmac == NULL)
         return 0;
-    }
 
     drbg->data = hmac;
     /* See SP800-57 Part1 Rev4 5.6.1 Table 3 */

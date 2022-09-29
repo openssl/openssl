@@ -199,12 +199,14 @@ static int pbe_cmp(const EVP_PBE_CTL *const *a, const EVP_PBE_CTL *const *b)
 int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
                          int md_nid, EVP_PBE_KEYGEN *keygen)
 {
-    EVP_PBE_CTL *pbe_tmp;
+    EVP_PBE_CTL *pbe_tmp = NULL;
 
     if (pbe_algs == NULL) {
         pbe_algs = sk_EVP_PBE_CTL_new(pbe_cmp);
-        if (pbe_algs == NULL)
+        if (pbe_algs == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
             goto err;
+        }
     }
 
     if ((pbe_tmp = OPENSSL_zalloc(sizeof(*pbe_tmp))) == NULL)
@@ -217,13 +219,13 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
     pbe_tmp->keygen = keygen;
 
     if (!sk_EVP_PBE_CTL_push(pbe_algs, pbe_tmp)) {
-        OPENSSL_free(pbe_tmp);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         goto err;
     }
     return 1;
 
  err:
-    ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+    OPENSSL_free(pbe_tmp);
     return 0;
 }
 

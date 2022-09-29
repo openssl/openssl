@@ -132,7 +132,6 @@ static int dane_ctx_enable(struct dane_ctx_st *dctx)
     if (mdord == NULL || mdevp == NULL) {
         OPENSSL_free(mdord);
         OPENSSL_free(mdevp);
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -206,7 +205,7 @@ static int ssl_dane_dup(SSL_CONNECTION *to, SSL_CONNECTION *from)
     to->dane.trecs = sk_danetls_record_new_reserve(NULL, num);
 
     if (to->dane.trecs == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -236,17 +235,13 @@ static int dane_mtype_set(struct dane_ctx_st *dctx,
         int n = ((int)mtype) + 1;
 
         mdevp = OPENSSL_realloc(dctx->mdevp, n * sizeof(*mdevp));
-        if (mdevp == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        if (mdevp == NULL)
             return -1;
-        }
         dctx->mdevp = mdevp;
 
         mdord = OPENSSL_realloc(dctx->mdord, n * sizeof(*mdord));
-        if (mdord == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        if (mdord == NULL)
             return -1;
-        }
         dctx->mdord = mdord;
 
         /* Zero-fill any gaps */
@@ -320,10 +315,8 @@ static int dane_tlsa_add(SSL_DANE *dane,
         return 0;
     }
 
-    if ((t = OPENSSL_zalloc(sizeof(*t))) == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if ((t = OPENSSL_zalloc(sizeof(*t))) == NULL)
         return -1;
-    }
 
     t->usage = usage;
     t->selector = selector;
@@ -331,7 +324,6 @@ static int dane_tlsa_add(SSL_DANE *dane,
     t->data = OPENSSL_malloc(dlen);
     if (t->data == NULL) {
         tlsa_free(t);
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return -1;
     }
     memcpy(t->data, data, dlen);
@@ -372,7 +364,7 @@ static int dane_tlsa_add(SSL_DANE *dane,
             if ((dane->certs == NULL &&
                  (dane->certs = sk_X509_new_null()) == NULL) ||
                 !sk_X509_push(dane->certs, cert)) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
                 X509_free(cert);
                 tlsa_free(t);
                 return -1;
@@ -433,7 +425,7 @@ static int dane_tlsa_add(SSL_DANE *dane,
 
     if (!sk_danetls_record_insert(dane->trecs, t, i)) {
         tlsa_free(t);
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return -1;
     }
     dane->umask |= DANETLS_USAGE_BIT(usage);
@@ -753,7 +745,7 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
     if (!ossl_ssl_init(ssl, ctx, SSL_TYPE_SSL_CONNECTION)) {
         OPENSSL_free(s);
         s = NULL;
-        goto err;
+        goto sslerr;
     }
 
 #ifndef OPENSSL_NO_QUIC
@@ -777,7 +769,7 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
     /* Shallow copy of the ciphersuites stack */
     s->tls13_ciphersuites = sk_SSL_CIPHER_dup(ctx->tls13_ciphersuites);
     if (s->tls13_ciphersuites == NULL)
-        goto err;
+        goto cerr;
 
     /*
      * Earlier library versions used to copy the pointer to the CERT, not
@@ -790,7 +782,7 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
      */
     s->cert = ssl_cert_dup(ctx->cert);
     if (s->cert == NULL)
-        goto err;
+        goto sslerr;
 
     RECORD_LAYER_set_read_ahead(&s->rlayer, ctx->read_ahead);
     s->msg_callback = ctx->msg_callback;
@@ -809,7 +801,7 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
 
     s->param = X509_VERIFY_PARAM_new();
     if (s->param == NULL)
-        goto err;
+        goto asn1err;
     X509_VERIFY_PARAM_inherit(s->param, ctx->param);
     s->quiet_shutdown = ctx->quiet_shutdown;
 
@@ -879,12 +871,12 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
     s->allow_early_data_cb_data = ctx->allow_early_data_cb_data;
 
     if (!ssl->method->ssl_init(ssl))
-        goto err;
+        goto sslerr;
 
     s->server = (ctx->method->ssl_accept == ssl_undefined_function) ? 0 : 1;
 
     if (!SSL_clear(ssl))
-        goto err;
+        goto sslerr;
 
 #ifndef OPENSSL_NO_PSK
     s->psk_client_callback = ctx->psk_client_callback;
@@ -901,13 +893,17 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
 #ifndef OPENSSL_NO_CT
     if (!SSL_set_ct_validation_callback(ssl, ctx->ct_validation_callback,
                                         ctx->ct_validation_callback_arg))
-        goto err;
+        goto sslerr;
 #endif
 
     return ssl;
+ asn1err:
+    ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
+    goto err;
+ sslerr:
+    ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
  err:
     SSL_free(ssl);
-    ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
@@ -1174,7 +1170,7 @@ int SSL_dane_enable(SSL *s, const char *basedomain)
     dane->trecs = sk_danetls_record_new_null();
 
     if (dane->trecs == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return -1;
     }
     return 1;
@@ -3494,10 +3490,8 @@ int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
         return 1;
 
     alpn = OPENSSL_memdup(protos, protos_len);
-    if (alpn == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (alpn == NULL)
         return 1;
-    }
     OPENSSL_free(ctx->ext.alpn);
     ctx->ext.alpn = alpn;
     ctx->ext.alpn_len = protos_len;
@@ -3530,10 +3524,8 @@ int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
         return 1;
 
     alpn = OPENSSL_memdup(protos, protos_len);
-    if (alpn == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (alpn == NULL)
         return 1;
-    }
     OPENSSL_free(sc->ext.alpn);
     sc->ext.alpn = alpn;
     sc->ext.alpn_len = protos_len;
@@ -3683,15 +3675,14 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
-        return NULL;
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        goto err;
     }
 
 #ifdef TSAN_REQUIRES_LOCKING
     ret->tsan_lock = CRYPTO_THREAD_lock_new();
     if (ret->tsan_lock == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
     }
 #endif
@@ -3713,34 +3704,43 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     ret->session_timeout = meth->get_timeout();
     ret->max_cert_list = SSL_MAX_CERT_LIST_DEFAULT;
     ret->verify_mode = SSL_VERIFY_NONE;
-    if ((ret->cert = ssl_cert_new()) == NULL)
+    if ((ret->cert = ssl_cert_new()) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
         goto err;
+    }
 
     ret->sessions = lh_SSL_SESSION_new(ssl_session_hash, ssl_session_cmp);
-    if (ret->sessions == NULL)
+    if (ret->sessions == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
+    }
     ret->cert_store = X509_STORE_new();
-    if (ret->cert_store == NULL)
+    if (ret->cert_store == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
+    }
 #ifndef OPENSSL_NO_CT
     ret->ctlog_store = CTLOG_STORE_new_ex(libctx, propq);
-    if (ret->ctlog_store == NULL)
+    if (ret->ctlog_store == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CT_LIB);
         goto err;
+    }
 #endif
 
     /* initialize cipher/digest methods table */
     if (!ssl_load_ciphers(ret))
-        goto err2;
+        goto err;
     /* initialise sig algs */
     if (!ssl_setup_sig_algs(ret))
-        goto err2;
-
+        goto err;
 
     if (!ssl_load_groups(ret))
-        goto err2;
-
-    if (!SSL_CTX_set_ciphersuites(ret, OSSL_default_ciphersuites()))
         goto err;
+
+    if (!SSL_CTX_set_ciphersuites(ret, OSSL_default_ciphersuites())) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+        goto err;
+    }
 
     if (!ssl_create_cipher_list(ret,
                                 ret->tls13_ciphersuites,
@@ -3752,8 +3752,10 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     }
 
     ret->param = X509_VERIFY_PARAM_new();
-    if (ret->param == NULL)
+    if (ret->param == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
+    }
 
     /*
      * If these aren't available from the provider we'll get NULL returns.
@@ -3762,14 +3764,20 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     ret->md5 = ssl_evp_md_fetch(libctx, NID_md5, propq);
     ret->sha1 = ssl_evp_md_fetch(libctx, NID_sha1, propq);
 
-    if ((ret->ca_names = sk_X509_NAME_new_null()) == NULL)
+    if ((ret->ca_names = sk_X509_NAME_new_null()) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
+    }
 
-    if ((ret->client_ca_names = sk_X509_NAME_new_null()) == NULL)
+    if ((ret->client_ca_names = sk_X509_NAME_new_null()) == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
+    }
 
-    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data))
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
+    }
 
     if ((ret->ext.secure = OPENSSL_secure_zalloc(sizeof(*ret->ext.secure))) == NULL)
         goto err;
@@ -3791,12 +3799,16 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         ret->options |= SSL_OP_NO_TICKET;
 
     if (RAND_priv_bytes_ex(libctx, ret->ext.cookie_hmac_key,
-                           sizeof(ret->ext.cookie_hmac_key), 0) <= 0)
+                           sizeof(ret->ext.cookie_hmac_key), 0) <= 0) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_RAND_LIB);
         goto err;
+    }
 
 #ifndef OPENSSL_NO_SRP
-    if (!ssl_ctx_srp_ctx_init_intern(ret))
+    if (!ssl_ctx_srp_ctx_init_intern(ret)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
         goto err;
+    }
 #endif
 #ifndef OPENSSL_NO_ENGINE
 # ifdef OPENSSL_SSL_CLIENT_ENGINE_AUTO
@@ -3863,8 +3875,6 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
 
     return ret;
  err:
-    ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
- err2:
     SSL_CTX_free(ret);
     return NULL;
 }
@@ -5751,7 +5761,7 @@ static int ct_move_scts(STACK_OF(SCT) **dst, STACK_OF(SCT) *src,
     if (*dst == NULL) {
         *dst = sk_SCT_new_null();
         if (*dst == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
@@ -6025,7 +6035,7 @@ int ssl_validate_ct(SSL_CONNECTION *s)
     ctx = CT_POLICY_EVAL_CTX_new_ex(SSL_CONNECTION_GET_CTX(s)->libctx,
                                     SSL_CONNECTION_GET_CTX(s)->propq);
     if (ctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CT_LIB);
         goto end;
     }
 
@@ -6244,10 +6254,8 @@ int SSL_client_hello_get1_extensions_present(SSL *s, int **out, size_t *outlen)
         *outlen = 0;
         return 1;
     }
-    if ((present = OPENSSL_malloc(sizeof(*present) * num)) == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if ((present = OPENSSL_malloc(sizeof(*present) * num)) == NULL)
         return 0;
-    }
     for (i = 0; i < sc->clienthello->pre_proc_exts_len; i++) {
         ext = sc->clienthello->pre_proc_exts + i;
         if (ext->present) {
@@ -6391,10 +6399,8 @@ static int nss_keylog_int(const char *prefix,
      */
     prefix_len = strlen(prefix);
     out_len = prefix_len + (2 * parameter_1_len) + (2 * parameter_2_len) + 3;
-    if ((out = cursor = OPENSSL_malloc(out_len)) == NULL) {
-        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+    if ((out = cursor = OPENSSL_malloc(out_len)) == NULL)
         return 0;
-    }
 
     strcpy(cursor, prefix);
     cursor += prefix_len;
@@ -6489,7 +6495,7 @@ int ssl_cache_cipherlist(SSL_CONNECTION *s, PACKET *cipher_suites, int sslv2form
         raw = OPENSSL_malloc(numciphers * TLS_CIPHER_LEN);
         s->s3.tmp.ciphers_raw = raw;
         if (raw == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             return 0;
         }
         for (s->s3.tmp.ciphers_rawlen = 0;
@@ -6568,9 +6574,9 @@ int ossl_bytes_to_cipher_list(SSL_CONNECTION *s, PACKET *cipher_suites,
     scsvs = sk_SSL_CIPHER_new_null();
     if (sk == NULL || scsvs == NULL) {
         if (fatal)
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         else
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -6589,9 +6595,9 @@ int ossl_bytes_to_cipher_list(SSL_CONNECTION *s, PACKET *cipher_suites,
             if ((c->valid && !sk_SSL_CIPHER_push(sk, c)) ||
                 (!c->valid && !sk_SSL_CIPHER_push(scsvs, c))) {
                 if (fatal)
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
                 else
-                    ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
                 goto err;
             }
         }

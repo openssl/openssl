@@ -156,10 +156,8 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         int rsasize = RSA_size(prsactx->rsa);
         unsigned char *tbuf;
 
-        if ((tbuf = OPENSSL_malloc(rsasize)) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        if ((tbuf = OPENSSL_malloc(rsasize)) == NULL)
             return 0;
-        }
         if (prsactx->oaep_md == NULL) {
             OPENSSL_free(tbuf);
             prsactx->oaep_md = EVP_MD_fetch(prsactx->libctx, "SHA-1", NULL);
@@ -231,10 +229,8 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
             || prsactx->pad_mode == RSA_PKCS1_WITH_TLS_PADDING) {
         unsigned char *tbuf;
 
-        if ((tbuf = OPENSSL_malloc(len)) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        if ((tbuf = OPENSSL_malloc(len)) == NULL)
             return 0;
-        }
         ret = RSA_private_decrypt(inlen, in, tbuf, prsactx->rsa,
                                   RSA_NO_PADDING);
         /*

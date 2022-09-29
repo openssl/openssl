@@ -76,7 +76,7 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
     /* If needed, allocate stack for other certificates */
     if ((cert != NULL || ca != NULL)
             && (ocerts = sk_X509_new_null()) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_CRYPTO_LIB);
         goto err;
     }
 

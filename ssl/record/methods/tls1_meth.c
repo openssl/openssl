@@ -31,7 +31,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_FATAL;
 
     if ((rl->enc_ctx = EVP_CIPHER_CTX_new()) == NULL) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         return OSSL_RECORD_RETURN_FATAL;
     }
 

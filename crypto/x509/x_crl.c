@@ -366,7 +366,7 @@ int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev)
     if (inf->revoked == NULL)
         inf->revoked = sk_X509_REVOKED_new(X509_REVOKED_cmp);
     if (inf->revoked == NULL || !sk_X509_REVOKED_push(inf->revoked, rev)) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
         return 0;
     }
     inf->enc.modified = 1;
@@ -490,10 +490,8 @@ X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init) (X509_CRL *crl),
 {
     X509_CRL_METHOD *m = OPENSSL_malloc(sizeof(*m));
 
-    if (m == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    if (m == NULL)
         return NULL;
-    }
     m->crl_init = crl_init;
     m->crl_free = crl_free;
     m->crl_lookup = crl_lookup;

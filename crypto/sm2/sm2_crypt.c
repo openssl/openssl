@@ -151,9 +151,13 @@ int ossl_sm2_encrypt(const EC_KEY *key,
 
     kG = EC_POINT_new(group);
     kP = EC_POINT_new(group);
+    if (kG == NULL || kP == NULL) {
+        ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
+        goto done;
+    }
     ctx = BN_CTX_new_ex(libctx);
-    if (kG == NULL || kP == NULL || ctx == NULL) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
         goto done;
     }
 
@@ -172,10 +176,8 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     x2y2 = OPENSSL_zalloc(2 * field_size);
     C3 = OPENSSL_zalloc(C3_size);
 
-    if (x2y2 == NULL || C3 == NULL) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);
+    if (x2y2 == NULL || C3 == NULL)
         goto done;
-    }
 
     memset(ciphertext_buf, 0, *ciphertext_len);
 
@@ -199,10 +201,8 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     }
 
     msg_mask = OPENSSL_zalloc(msg_len);
-    if (msg_mask == NULL) {
-       ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);
+    if (msg_mask == NULL)
        goto done;
-   }
 
     /* X9.63 with no salt happens to match the KDF used in SM2 */
     if (!ossl_ecdh_kdf_X9_63(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
@@ -234,7 +234,7 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     ctext_struct.C2 = ASN1_OCTET_STRING_new();
 
     if (ctext_struct.C3 == NULL || ctext_struct.C2 == NULL) {
-       ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);
+       ERR_raise(ERR_LIB_SM2, ERR_R_ASN1_LIB);
        goto done;
     }
     if (!ASN1_OCTET_STRING_set(ctext_struct.C3, C3, C3_size)
@@ -319,7 +319,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
 
     ctx = BN_CTX_new_ex(libctx);
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
         goto done;
     }
 
@@ -336,14 +336,12 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     x2y2 = OPENSSL_zalloc(2 * field_size);
     computed_C3 = OPENSSL_zalloc(hash_size);
 
-    if (msg_mask == NULL || x2y2 == NULL || computed_C3 == NULL) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);
+    if (msg_mask == NULL || x2y2 == NULL || computed_C3 == NULL)
         goto done;
-    }
 
     C1 = EC_POINT_new(group);
     if (C1 == NULL) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
         goto done;
     }
 
@@ -369,7 +367,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
 
     hash = EVP_MD_CTX_new();
     if (hash == NULL) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SM2, ERR_R_EVP_LIB);
         goto done;
     }
 

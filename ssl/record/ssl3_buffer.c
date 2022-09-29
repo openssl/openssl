@@ -89,7 +89,7 @@ int ssl3_setup_write_buffer(SSL_CONNECTION *s, size_t numwpipes, size_t len)
                      * buffers. We assume we're so doomed that we won't even be able
                      * to send an alert.
                      */
-                    SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_MALLOC_FAILURE);
+                    SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_CRYPTO_LIB);
                     return 0;
                 }
             } else {

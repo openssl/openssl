@@ -442,7 +442,7 @@ static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
 
     pkey = EVP_PKEY_new();
     if (pkey == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -1437,10 +1437,8 @@ EVP_PKEY *EVP_PKEY_new(void)
 {
     EVP_PKEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if (ret == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+    if (ret == NULL)
         return NULL;
-    }
 
     ret->type = EVP_PKEY_NONE;
     ret->save_type = EVP_PKEY_NONE;
@@ -1448,14 +1446,14 @@ EVP_PKEY *EVP_PKEY_new(void)
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        EVPerr(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
 #ifndef FIPS_MODULE
     ret->save_parameters = 1;
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, ret, &ret->ex_data)) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         goto err;
     }
 #endif
@@ -2023,7 +2021,7 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
         if (*dest == NULL) {
             allocpkey = *dest = EVP_PKEY_new();
             if (*dest == NULL) {
-                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
                 return 0;
             }
         } else {
@@ -2049,7 +2047,7 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
                     EVP_PKEY_CTX_new_from_pkey(libctx, *dest, NULL);
 
                 if (pctx == NULL)
-                    ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
 
                 if (pctx != NULL
                     && evp_keymgmt_export(keymgmt, keydata,

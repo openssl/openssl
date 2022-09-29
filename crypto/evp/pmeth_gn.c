@@ -141,11 +141,11 @@ int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     if ((ctx->operation & EVP_PKEY_OP_TYPE_GEN) == 0)
         goto not_initialized;
 
-    if (*ppkey == NULL)
+    if (*ppkey == NULL) {
         *ppkey = allocated_pkey = EVP_PKEY_new();
 
     if (*ppkey == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         return -1;
     }
 
@@ -378,7 +378,7 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection,
         allocated_pkey = *ppkey = EVP_PKEY_new();
 
     if (*ppkey == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         return -1;
     }
 

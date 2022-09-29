@@ -286,13 +286,13 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
 
     if (b1->rbuf.len != b1->req_buf_len)
         if (ring_buf_init(&b1->rbuf, b1->req_buf_len) == 0) {
-            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_BIO_LIB);
             return 0;
         }
 
     if (b2->rbuf.len != b2->req_buf_len)
         if (ring_buf_init(&b2->rbuf, b2->req_buf_len) == 0) {
-            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_BIO_LIB);
             ring_buf_destroy(&b1->rbuf);
             return 0;
         }

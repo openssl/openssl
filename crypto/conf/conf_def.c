@@ -233,13 +233,11 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
     }
 
     section = OPENSSL_strdup("default");
-    if (section == NULL) {
-        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+    if (section == NULL)
         goto err;
-    }
 
     if (_CONF_new_data(conf) == 0) {
-        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CONF, ERR_R_CONF_LIB);
         goto err;
     }
 
@@ -426,7 +424,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 } else if (strcmp(p, "includedir") == 0) {
                     OPENSSL_free(conf->includedir);
                     if ((conf->includedir = OPENSSL_strdup(pval)) == NULL) {
-                        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+                        ERR_raise(ERR_LIB_CONF, ERR_R_CRYPTO_LIB);
                         goto err;
                     }
                 }
@@ -457,11 +455,9 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     size_t newlen = strlen(include_dir) + strlen(include) + 2;
 
                     include_path = OPENSSL_malloc(newlen);
-                    if (include_path == NULL) {
-                        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+                    if (include_path == NULL)
                         OPENSSL_free(include);
                         goto err;
-                    }
 
                     OPENSSL_strlcpy(include_path, include_dir, newlen);
                     if (!ossl_ends_with_dirsep(include_path))
@@ -495,13 +491,13 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     /* push the currently processing BIO onto stack */
                     if (biosk == NULL) {
                         if ((biosk = sk_BIO_new_null()) == NULL) {
-                            ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+                            ERR_raise(ERR_LIB_CONF, ERR_R_CRYPTO_LIB);
                             BIO_free(next);
                             goto err;
                         }
                     }
                     if (!sk_BIO_push(biosk, in)) {
-                        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+                        ERR_raise(ERR_LIB_CONF, ERR_R_CRYPTO_LIB);
                         BIO_free(next);
                         goto err;
                     }
@@ -519,16 +515,12 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
             start = eat_ws(conf, p);
             trim_ws(conf, start);
 
-            if ((v = OPENSSL_malloc(sizeof(*v))) == NULL) {
-                ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+            if ((v = OPENSSL_malloc(sizeof(*v))) == NULL)
                 goto err;
-            }
             v->name = OPENSSL_strdup(pname);
             v->value = NULL;
-            if (v->name == NULL) {
-                ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+            if (v->name == NULL)
                 goto err;
-            }
             if (!str_copy(conf, psection, &(v->value), start))
                 goto err;
 
@@ -544,7 +536,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
             } else
                 tv = sv;
             if (_CONF_add_string(conf, tv, v) == 0) {
-                ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_CONF, ERR_R_CONF_LIB);
                 goto err;
             }
             v = NULL;
@@ -757,7 +749,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
                 goto err;
             }
             if (!BUF_MEM_grow_clean(buf, newsize)) {
-                ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_CONF, ERR_R_BUF_LIB);
                 goto err;
             }
             while (*p)
@@ -849,10 +841,8 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
 
             newlen = pathlen + namelen + 2;
             newpath = OPENSSL_zalloc(newlen);
-            if (newpath == NULL) {
-                ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+            if (newpath == NULL)
                 break;
-            }
 #ifdef OPENSSL_SYS_VMS
             /*
              * If the given path isn't clear VMS syntax,

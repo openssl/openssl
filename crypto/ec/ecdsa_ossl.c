@@ -100,7 +100,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 
     if ((ctx = ctx_in) == NULL) {
         if ((ctx = BN_CTX_new_ex(eckey->libctx)) == NULL) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             return 0;
         }
     }
@@ -109,7 +109,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     r = BN_new();               /* this value is later returned in *rp */
     X = BN_new();
     if (k == NULL || r == NULL || X == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
     if ((tmp_point = EC_POINT_new(group)) == NULL) {
@@ -221,20 +221,20 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
 
     ret = ECDSA_SIG_new();
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_ECDSA_LIB);
         return NULL;
     }
     ret->r = BN_new();
     ret->s = BN_new();
     if (ret->r == NULL || ret->s == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
     s = ret->s;
 
     if ((ctx = BN_CTX_new_ex(eckey->libctx)) == NULL
         || (m = BN_new()) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
 
@@ -264,7 +264,7 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
         } else {
             ckinv = in_kinv;
             if (BN_copy(ret->r, in_r) == NULL) {
-                ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
                 goto err;
             }
         }
@@ -378,7 +378,7 @@ int ossl_ecdsa_simple_verify_sig(const unsigned char *dgst, int dgst_len,
 
     ctx = BN_CTX_new_ex(eckey->libctx);
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         return -1;
     }
     BN_CTX_start(ctx);
@@ -437,7 +437,7 @@ int ossl_ecdsa_simple_verify_sig(const unsigned char *dgst, int dgst_len,
     }
 
     if ((point = EC_POINT_new(group)) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         goto err;
     }
     if (!EC_POINT_mul(group, point, u1, pub_key, u2, ctx)) {

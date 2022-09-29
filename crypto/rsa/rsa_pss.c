@@ -97,10 +97,8 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
     maskedDBLen = emLen - hLen - 1;
     H = EM + maskedDBLen;
     DB = OPENSSL_malloc(maskedDBLen);
-    if (DB == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+    if (DB == NULL)
         goto err;
-    }
     if (PKCS1_MGF1(DB, maskedDBLen, H, hLen, mgf1Hash) < 0)
         goto err;
     for (i = 0; i < maskedDBLen; i++)
@@ -201,10 +199,8 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     }
     if (sLen > 0) {
         salt = OPENSSL_malloc(sLen);
-        if (salt == NULL) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+        if (salt == NULL)
             goto err;
-        }
         if (RAND_bytes_ex(rsa->libctx, salt, sLen, 0) <= 0)
             goto err;
     }

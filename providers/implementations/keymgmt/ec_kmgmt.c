@@ -1018,7 +1018,6 @@ static void *sm2_gen_init(void *provctx, int selection,
             return gctx;
         if ((gctx->group_name = OPENSSL_strdup("sm2")) != NULL)
             return gctx;
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         ec_gen_cleanup(gctx);
     }
     return NULL;

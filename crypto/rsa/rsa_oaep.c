@@ -112,10 +112,8 @@ int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
 
     dbmask_len = emlen - mdlen;
     dbmask = OPENSSL_malloc(dbmask_len);
-    if (dbmask == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+    if (dbmask == NULL)
         goto err;
-    }
 
     /* step 3e: dbMask = MGF(mgfSeed, nLen - HLen - 1) */
     if (PKCS1_MGF1(dbmask, dbmask_len, seed, mdlen, mgf1md) < 0)
@@ -203,16 +201,12 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
 
     dblen = num - mdlen - 1;
     db = OPENSSL_malloc(dblen);
-    if (db == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+    if (db == NULL)
         goto cleanup;
-    }
 
     em = OPENSSL_malloc(num);
-    if (em == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+    if (em == NULL)
         goto cleanup;
-    }
 
     /*
      * Caller is encouraged to pass zero-padded message created with
