@@ -218,7 +218,7 @@ static int check_pem(const char *nm, const char *name)
     return 0;
 }
 
-#define PEM_FREE(p. flags, num)                                 \
+#define PEM_FREE(p, flags, num)                                 \
     pem_free((p), (flags), (num), OPENSSL_FILE, OPENSSL_LINE)
 static void pem_free(void *p, unsigned int flags, size_t num,
                      const char *file, int line)

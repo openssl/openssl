@@ -417,7 +417,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     if (i == sk_X509_ALGOR_num(sd->digestAlgorithms)) {
         if ((alg = X509_ALGOR_new()) == NULL) {
             ERR_raise(ERR_LIB_CMS, ERR_R_X509_LIB);
-            goto merr;
+            goto err;
         }
         X509_ALGOR_set_md(alg, md);
         if (!sk_X509_ALGOR_push(sd->digestAlgorithms, alg)) {

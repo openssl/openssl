@@ -50,11 +50,10 @@ X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
     EVP_CIPHER_CTX *ctx = NULL;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     PBE2PARAM *pbe2 = NULL;
-    unsigned long r = 0;         /* Error reason */
 
     alg_nid = EVP_CIPHER_get_type(cipher);
     if (alg_nid == NID_undef) {
-        ERR_raise(ERR_LIB_ASN1, ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER;
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
         goto err;
     }
 
@@ -128,7 +127,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
     /* Now set up top level AlgorithmIdentifier */
 
     if ((ret = X509_ALGOR_new()) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_X590_LIB);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_X509_LIB);
         goto err;
     }
 

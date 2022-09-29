@@ -91,7 +91,6 @@ EC_KEY *ossl_ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
         ret->propq = OPENSSL_strdup(propq);
         if (ret->propq == NULL)
             goto err;
-        }
     }
 
     ret->references = 1;
@@ -126,6 +125,7 @@ EC_KEY *ossl_ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
 /* No ex_data inside the FIPS provider */
 #ifndef FIPS_MODULE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data)) {
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         goto err;
     }
 #endif

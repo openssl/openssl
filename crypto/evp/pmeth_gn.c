@@ -141,7 +141,7 @@ int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     if ((ctx->operation & EVP_PKEY_OP_TYPE_GEN) == 0)
         goto not_initialized;
 
-    if (*ppkey == NULL) {
+    if (*ppkey == NULL)
         *ppkey = allocated_pkey = EVP_PKEY_new();
 
     if (*ppkey == NULL) {

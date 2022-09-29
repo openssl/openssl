@@ -629,7 +629,7 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
 {
     unsigned char *val = NULL;
     size_t vallen = 0, currentvalpos;
-    int rv;
+    int rv = 0;
 
     /*
      * construct PRF arguments we construct the PRF argument ourself rather
@@ -643,7 +643,7 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
 
     val = OPENSSL_malloc(vallen);
     if (val == NULL)
-        goto err;
+        goto ret;
     currentvalpos = 0;
     memcpy(val + currentvalpos, (unsigned char *)label, llen);
     currentvalpos += llen;
@@ -695,8 +695,6 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
     goto ret;
  err1:
     ERR_raise(ERR_LIB_SSL, SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
-    rv = 0;
-    goto ret;
  ret:
     OPENSSL_clear_free(val, vallen);
     return rv;

@@ -897,6 +897,9 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
 #endif
 
     return ssl;
+ cerr:
+    ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+    goto err;
  asn1err:
     ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
     goto err;
@@ -3748,7 +3751,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
                                 OSSL_default_cipher_list(), ret->cert)
         || sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
         ERR_raise(ERR_LIB_SSL, SSL_R_LIBRARY_HAS_NO_CIPHERS);
-        goto err2;
+        goto err;
     }
 
     ret->param = X509_VERIFY_PARAM_new();

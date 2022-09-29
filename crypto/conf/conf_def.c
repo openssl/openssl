@@ -455,9 +455,10 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     size_t newlen = strlen(include_dir) + strlen(include) + 2;
 
                     include_path = OPENSSL_malloc(newlen);
-                    if (include_path == NULL)
+                    if (include_path == NULL) {
                         OPENSSL_free(include);
                         goto err;
+                    }
 
                     OPENSSL_strlcpy(include_path, include_dir, newlen);
                     if (!ossl_ends_with_dirsep(include_path))

@@ -94,9 +94,6 @@ DSO_METHOD *DSO_METHOD_openssl(void)
     return &dso_meth_vms;
 }
 
-/* Ensure 32-bit pointer for "p", and appropriate malloc() function. */
-# if __INITIAL_POINTER_SIZE == 64
-
 static int vms_load(DSO *dso)
 {
     void *ptr = NULL;
@@ -115,6 +112,8 @@ static int vms_load(DSO *dso)
 #  if __INITIAL_POINTER_SIZE == 64
 #   pragma pointer_size restore
 #  endif                        /* __INITIAL_POINTER_SIZE == 64 */
+# endif                         /* __INITIAL_POINTER_SIZE && defined
+                                 * _ANSI_C_SOURCE */
 
     const char *sp1, *sp2;      /* Search result */
     const char *ext = NULL;     /* possible extension to add */

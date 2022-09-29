@@ -330,8 +330,10 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
             NOTICEREF *nref;
 
             if (!not->noticeref) {
-                if ((nref = NOTICEREF_new()) == NULL)
-                    goto merr;
+                if ((nref = NOTICEREF_new()) == NULL) {
+                    ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+                    goto err;
+                }
                 not->noticeref = nref;
             } else
                 nref = not->noticeref;
@@ -350,7 +352,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
             STACK_OF(CONF_VALUE) *nos;
             if (!not->noticeref) {
                 if ((nref = NOTICEREF_new()) == NULL) {
-                    ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+                    ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                     goto err;
                 }
                 not->noticeref = nref;

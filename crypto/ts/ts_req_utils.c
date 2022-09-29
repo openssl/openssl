@@ -32,7 +32,7 @@ int TS_REQ_set_msg_imprint(TS_REQ *a, TS_MSG_IMPRINT *msg_imprint)
         return 1;
     new_msg_imprint = TS_MSG_IMPRINT_dup(msg_imprint);
     if (new_msg_imprint == NULL) {
-        ERR_raise(ERR_LIB_TS, ERR_R_TX_LIB);
+        ERR_raise(ERR_LIB_TS, ERR_R_TS_LIB);
         return 0;
     }
     TS_MSG_IMPRINT_free(a->msg_imprint);
