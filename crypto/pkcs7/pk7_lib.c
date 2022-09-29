@@ -224,7 +224,7 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
         if ((alg = X509_ALGOR_new()) == NULL
             || (alg->parameter = ASN1_TYPE_new()) == NULL) {
             X509_ALGOR_free(alg);
-            ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PKCS7, ERR_R_ASN1_LIB);
             return 0;
         }
         /*
@@ -290,7 +290,7 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
     if (*sk == NULL)
         *sk = sk_X509_CRL_new_null();
     if (*sk == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -483,10 +483,8 @@ int ossl_pkcs7_set1_propq(PKCS7 *p7, const char *propq)
     }
     if (propq != NULL) {
         p7->ctx.propq = OPENSSL_strdup(propq);
-        if (p7->ctx.propq == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        if (p7->ctx.propq == NULL)
             return 0;
-        }
     }
     return 1;
 }
@@ -514,7 +512,7 @@ int PKCS7_set_digest(PKCS7 *p7, const EVP_MD *md)
 {
     if (PKCS7_type_is_digest(p7)) {
         if ((p7->d.digest->md->parameter = ASN1_TYPE_new()) == NULL) {
-            ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PKCS7, ERR_R_ASN1_LIB);
             return 0;
         }
         p7->d.digest->md->parameter->type = V_ASN1_NULL;

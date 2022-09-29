@@ -611,7 +611,7 @@ static int ec_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     EC_KEY *ec = EC_KEY_new_ex(pctx->libctx, pctx->propquery);
 
     if (ec == NULL) {
-        ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         return 0;
     }
 

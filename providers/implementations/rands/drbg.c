@@ -160,10 +160,8 @@ size_t ossl_drbg_get_seed(void *vdrbg, unsigned char **pout,
 
     /* Allocate storage */
     buffer = OPENSSL_secure_malloc(bytes_needed);
-    if (buffer == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (buffer == NULL)
         return 0;
-    }
 
     /*
      * Get random data.  Include our DRBG address as
@@ -777,10 +775,8 @@ PROV_DRBG *ossl_rand_drbg_new
         return NULL;
 
     drbg = OPENSSL_zalloc(sizeof(*drbg));
-    if (drbg == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (drbg == NULL)
         return NULL;
-    }
 
     drbg->provctx = provctx;
     drbg->instantiate = instantiate;

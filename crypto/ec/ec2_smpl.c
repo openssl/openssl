@@ -188,7 +188,7 @@ int ossl_ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group,
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             goto err;
         }
     }
@@ -826,7 +826,7 @@ int ec_GF2m_simple_ladder_post(const EC_GROUP *group,
     t1 = BN_CTX_get(ctx);
     t2 = BN_CTX_get(ctx);
     if (t2 == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
 
@@ -905,7 +905,7 @@ int ec_GF2m_simple_points_mul(const EC_GROUP *group, EC_POINT *r,
      */
 
     if ((t = EC_POINT_new(group)) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         return 0;
     }
 

@@ -107,7 +107,7 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
     }
     x = X509_new_ex(libctx, propq);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
         goto err;
     }
 

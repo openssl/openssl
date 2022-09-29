@@ -35,10 +35,8 @@ char *i2s_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
         ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    if ((tmp = OPENSSL_malloc(utf8->length + 1)) == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    if ((tmp = OPENSSL_malloc(utf8->length + 1)) == NULL)
         return NULL;
-    }
     memcpy(tmp, utf8->data, utf8->length);
     tmp[utf8->length] = 0;
     return tmp;
@@ -53,11 +51,11 @@ ASN1_UTF8STRING *s2i_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
         return NULL;
     }
     if ((utf8 = ASN1_UTF8STRING_new()) == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         return NULL;
     }
     if (!ASN1_STRING_set((ASN1_STRING *)utf8, str, strlen(str))) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         ASN1_UTF8STRING_free(utf8);
         return NULL;
     }

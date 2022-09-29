@@ -104,10 +104,8 @@ static int wpacket_intern_init_len(WPACKET *pkt, size_t lenbytes)
     pkt->curr = 0;
     pkt->written = 0;
 
-    if ((pkt->subs = OPENSSL_zalloc(sizeof(*pkt->subs))) == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+    if ((pkt->subs = OPENSSL_zalloc(sizeof(*pkt->subs))) == NULL)
         return 0;
-    }
 
     if (lenbytes == 0)
         return 1;
@@ -368,10 +366,8 @@ int WPACKET_start_sub_packet_len__(WPACKET *pkt, size_t lenbytes)
     if (lenbytes > 0 && pkt->endfirst)
         return 0;
 
-    if ((sub = OPENSSL_zalloc(sizeof(*sub))) == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+    if ((sub = OPENSSL_zalloc(sizeof(*sub))) == NULL)
         return 0;
-    }
 
     sub->parent = pkt->subs;
     pkt->subs = sub;

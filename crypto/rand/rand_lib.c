@@ -731,10 +731,8 @@ static int random_set_string(char **p, const char *s)
 
     if (s != NULL) {
         d = OPENSSL_strdup(s);
-        if (d == NULL) {
-            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        if (d == NULL)
             return 0;
-        }
     }
     OPENSSL_free(*p);
     *p = d;

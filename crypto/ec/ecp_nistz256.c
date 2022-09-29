@@ -636,10 +636,8 @@ __owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
             OPENSSL_malloc((num * 16 + 5) * sizeof(P256_POINT) + 64)) == NULL
         || (p_str =
             OPENSSL_malloc(num * 33 * sizeof(unsigned char))) == NULL
-        || (scalars = OPENSSL_malloc(num * sizeof(BIGNUM *))) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        || (scalars = OPENSSL_malloc(num * sizeof(BIGNUM *))) == NULL)
         goto err;
-    }
 
     table = (void *)ALIGNPTR(table_storage, 64);
     temp = (P256_POINT *)(table + num);
@@ -868,10 +866,8 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
     w = 7;
 
     if ((precomp_storage =
-         OPENSSL_malloc(37 * 64 * sizeof(P256_POINT_AFFINE) + 64)) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+         OPENSSL_malloc(37 * 64 * sizeof(P256_POINT_AFFINE) + 64)) == NULL)
         goto err;
-    }
 
     preComputedTable = (void *)ALIGNPTR(precomp_storage, 64);
 
@@ -974,7 +970,7 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
     BIGNUM *tmp_scalar;
 
     if ((num + 1) == 0 || (num + 1) > OPENSSL_MALLOC_MAX_NELEMS(void *)) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
 
@@ -1123,16 +1119,12 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
          * handled like a normal point.
          */
         new_scalars = OPENSSL_malloc((num + 1) * sizeof(BIGNUM *));
-        if (new_scalars == NULL) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        if (new_scalars == NULL)
             goto err;
-        }
 
         new_points = OPENSSL_malloc((num + 1) * sizeof(EC_POINT *));
-        if (new_points == NULL) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        if (new_points == NULL)
             goto err;
-        }
 
         memcpy(new_scalars, scalars, num * sizeof(BIGNUM *));
         new_scalars[num] = scalar;
@@ -1226,10 +1218,8 @@ static NISTZ256_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
 
     ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if (ret == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+    if (ret == NULL)
         return ret;
-    }
 
     ret->group = group;
     ret->w = 6;                 /* default */
@@ -1237,7 +1227,7 @@ static NISTZ256_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         OPENSSL_free(ret);
         return NULL;
     }

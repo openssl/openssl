@@ -60,7 +60,6 @@ CMS_ContentInfo *CMS_ContentInfo_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
             if (ci->ctx.propq == NULL) {
                 CMS_ContentInfo_free(ci);
                 ci = NULL;
-                ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             }
         }
     }
@@ -404,7 +403,7 @@ int CMS_set_detached(CMS_ContentInfo *cms, int detached)
         (*pos)->flags |= ASN1_STRING_FLAG_CONT;
         return 1;
     }
-    ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
     return 0;
 }
 
@@ -702,18 +701,23 @@ int ossl_cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert)
 {
     CMS_IssuerAndSerialNumber *ias;
     ias = M_ASN1_new_of(CMS_IssuerAndSerialNumber);
-    if (!ias)
+    if (!ias) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
         goto err;
-    if (!X509_NAME_set(&ias->issuer, X509_get_issuer_name(cert)))
+    }
+    if (!X509_NAME_set(&ias->issuer, X509_get_issuer_name(cert))) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_X509_LIB);
         goto err;
-    if (!ASN1_STRING_copy(ias->serialNumber, X509_get0_serialNumber(cert)))
+    }
+    if (!ASN1_STRING_copy(ias->serialNumber, X509_get0_serialNumber(cert))) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
         goto err;
+    }
     M_ASN1_free_of(*pias, CMS_IssuerAndSerialNumber);
     *pias = ias;
     return 1;
  err:
     M_ASN1_free_of(ias, CMS_IssuerAndSerialNumber);
-    ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 
@@ -728,7 +732,7 @@ int ossl_cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert)
     }
     keyid = ASN1_STRING_dup(cert_keyid);
     if (!keyid) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
         return 0;
     }
     ASN1_OCTET_STRING_free(*pkeyid);

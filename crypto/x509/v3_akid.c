@@ -46,7 +46,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     if (akeyid->keyid) {
         tmp = i2s_ASN1_OCTET_STRING(NULL, akeyid->keyid);
         if (tmp == NULL) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
             return NULL;
         }
         if (!X509V3_add_value((akeyid->issuer || akeyid->serial) ? "keyid" : NULL,
@@ -68,7 +68,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     if (akeyid->serial) {
         tmp = i2s_ASN1_OCTET_STRING(NULL, akeyid->serial);
         if (tmp == NULL) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
             goto err;
         }
         if (!X509V3_add_value("serial", tmp, &extlist)) {
@@ -204,9 +204,12 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
 
     if (isname != NULL) {
         if ((gens = sk_GENERAL_NAME_new_null()) == NULL
-            || (gen = GENERAL_NAME_new()) == NULL
-            || !sk_GENERAL_NAME_push(gens, gen)) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            || (gen = GENERAL_NAME_new()) == NULL) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+            goto err;
+        }
+        if (!sk_GENERAL_NAME_push(gens, gen)) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto err;
         }
         gen->type = GEN_DIRNAME;

@@ -1109,7 +1109,7 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_read(const char *file, OSSL_LIB_CTX *libctx,
 
     msg = OSSL_CMP_MSG_new(libctx, propq);
     if (msg == NULL) {
-        ERR_raise(ERR_LIB_CMP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMP, ERR_R_CMP_LIB);
         return NULL;
     }
 

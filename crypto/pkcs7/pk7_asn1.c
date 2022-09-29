@@ -104,7 +104,6 @@ PKCS7 *PKCS7_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
             if (pkcs7->ctx.propq == NULL) {
                 PKCS7_free(pkcs7);
                 pkcs7 = NULL;
-                ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             }
         }
     }

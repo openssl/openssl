@@ -20,7 +20,7 @@ PKCS12 *PKCS12_init_ex(int mode, OSSL_LIB_CTX *ctx, const char *propq)
     PKCS12 *pkcs12;
 
     if ((pkcs12 = PKCS12_new()) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
         return NULL;
     }
     if (!ASN1_INTEGER_set(pkcs12->version, 3))
@@ -29,14 +29,14 @@ PKCS12 *PKCS12_init_ex(int mode, OSSL_LIB_CTX *ctx, const char *propq)
 
     ossl_pkcs7_set0_libctx(pkcs12->authsafes, ctx);
     if (!ossl_pkcs7_set1_propq(pkcs12->authsafes, propq)) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_PKCS7_LIB);
         goto err;
     }
 
     switch (mode) {
     case NID_pkcs7_data:
         if ((pkcs12->authsafes->d.data = ASN1_OCTET_STRING_new()) == NULL) {
-            ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
             goto err;
         }
         break;

@@ -275,14 +275,12 @@ static EVP_KEM *evp_kem_new(OSSL_PROVIDER *prov)
 {
     EVP_KEM *kem = OPENSSL_zalloc(sizeof(EVP_KEM));
 
-    if (kem == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+    if (kem == NULL)
         return NULL;
-    }
 
     kem->lock = CRYPTO_THREAD_lock_new();
     if (kem->lock == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         OPENSSL_free(kem);
         return NULL;
     }
@@ -302,7 +300,7 @@ static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
     int gparamfncnt = 0, sparamfncnt = 0;
 
     if ((kem = evp_kem_new(prov)) == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         goto err;
     }
 

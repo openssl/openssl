@@ -120,7 +120,6 @@ static void *ecdsa_newctx(void *provctx, const char *propq)
     if (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL) {
         OPENSSL_free(ctx);
         ctx = NULL;
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
     }
     return ctx;
 }

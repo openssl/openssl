@@ -24,10 +24,8 @@ unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
     if (asclen < 0)
         return NULL;
     ulen = asclen * 2 + 2;
-    if ((unitmp = OPENSSL_malloc(ulen)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+    if ((unitmp = OPENSSL_malloc(ulen)) == NULL)
         return NULL;
-    }
     for (i = 0; i < ulen - 2; i += 2) {
         unitmp[i] = 0;
         unitmp[i + 1] = asc[i >> 1];
@@ -57,10 +55,8 @@ char *OPENSSL_uni2asc(const unsigned char *uni, int unilen)
     if (!unilen || uni[unilen - 1])
         asclen++;
     uni++;
-    if ((asctmp = OPENSSL_malloc(asclen)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+    if ((asctmp = OPENSSL_malloc(asclen)) == NULL)
         return NULL;
-    }
     for (i = 0; i < unilen; i += 2)
         asctmp[i >> 1] = uni[i];
     asctmp[asclen - 1] = 0;
@@ -119,10 +115,8 @@ unsigned char *OPENSSL_utf82uni(const char *asc, int asclen,
 
     ulen += 2;  /* for trailing UTF16 zero */
 
-    if ((ret = OPENSSL_malloc(ulen)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+    if ((ret = OPENSSL_malloc(ulen)) == NULL)
         return NULL;
-    }
     /* re-run the loop writing down UTF-16 characters in big-endian order */
     for (unitmp = ret, i = 0; i < asclen; i += j) {
         j = UTF8_getc((const unsigned char *)asc+i, asclen-i, &utf32chr);
@@ -204,10 +198,8 @@ char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen)
     if (!unilen || (uni[unilen-2]||uni[unilen - 1]))
         asclen++;
 
-    if ((asctmp = OPENSSL_malloc(asclen)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+    if ((asctmp = OPENSSL_malloc(asclen)) == NULL)
         return NULL;
-    }
 
     /* re-run the loop emitting UTF-8 string */
     for (asclen = 0, i = 0; i < unilen; ) {

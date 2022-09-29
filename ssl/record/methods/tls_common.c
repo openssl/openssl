@@ -190,7 +190,7 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
                      * buffers. We assume we're so doomed that we won't even be able
                      * to send an alert.
                      */
-                    RLAYERfatal(rl, SSL_AD_NO_ALERT, ERR_R_MALLOC_FAILURE);
+                    RLAYERfatal(rl, SSL_AD_NO_ALERT, ERR_R_CRYPTO_LIB);
                     return 0;
                 }
             } else {
@@ -249,7 +249,7 @@ int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
              * We assume we're so doomed that we won't even be able to send an
              * alert.
              */
-            RLAYERfatal(rl, SSL_AD_NO_ALERT, ERR_R_MALLOC_FAILURE);
+            RLAYERfatal(rl, SSL_AD_NO_ALERT, ERR_R_CRYPTO_LIB);
             return 0;
         }
         b->buf = p;
@@ -801,7 +801,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     if (mac_size > 0) {
         macbufs = OPENSSL_zalloc(sizeof(*macbufs) * num_recs);
         if (macbufs == NULL) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             return OSSL_RECORD_RETURN_FATAL;
         }
     }
@@ -1190,10 +1190,8 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     *retrl = NULL;
 
-    if (rl == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (rl == NULL)
         return OSSL_RECORD_RETURN_FATAL;
-    }
 
     /* Loop through all the settings since they must all be understood */
     if (settings != NULL) {

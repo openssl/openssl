@@ -188,7 +188,7 @@ CONF *NCONF_new_ex(OSSL_LIB_CTX *libctx, CONF_METHOD *meth)
 
     ret = meth->create(meth);
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CONF, ERR_R_CONF_LIB);
         return NULL;
     }
     ret->libctx = libctx;

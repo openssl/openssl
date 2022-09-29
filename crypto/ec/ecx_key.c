@@ -51,11 +51,16 @@ ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey
     }
 
     ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL)
+    if (ret->lock == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         goto err;
+    }
     return ret;
 err:
-    ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+    if (ret != NULL) {
+        OPENSSL_free(ret->propq);
+        CRYPTO_THREAD_lock_free(ret->lock);
+    }
     OPENSSL_free(ret);
     return NULL;
 }

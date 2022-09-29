@@ -459,10 +459,8 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
         return -1;
     }
     buf = OPENSSL_malloc(DTLS1_RT_HEADER_LENGTH + SSL3_RT_MAX_PLAIN_LENGTH);
-    if (buf == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (buf == NULL)
         return -1;
-    }
     wbuf = RECORD_LAYER_get_wbuf(&s->rlayer)[0].buf;
 
     do {
@@ -745,7 +743,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
                                 s->msg_callback_arg);
 
             if ((tmpclient = BIO_ADDR_new()) == NULL) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_SSL, ERR_R_BIO_LIB);
                 goto end;
             }
 

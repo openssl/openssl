@@ -25,10 +25,8 @@ RAND_POOL *ossl_rand_pool_new(int entropy_requested, int secure,
     RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
     size_t min_alloc_size = RAND_POOL_MIN_ALLOCATION(secure);
 
-    if (pool == NULL) {
-        ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
+    if (pool == NULL)
         return NULL;
-    }
 
     pool->min_len = min_len;
     pool->max_len = (max_len > RAND_POOL_MAX_LENGTH) ?
@@ -42,10 +40,8 @@ RAND_POOL *ossl_rand_pool_new(int entropy_requested, int secure,
     else
         pool->buffer = OPENSSL_zalloc(pool->alloc_len);
 
-    if (pool->buffer == NULL) {
-        ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
+    if (pool->buffer == NULL)
         goto err;
-    }
 
     pool->entropy_requested = entropy_requested;
     pool->secure = secure;
@@ -67,10 +63,8 @@ RAND_POOL *ossl_rand_pool_attach(const unsigned char *buffer, size_t len,
 {
     RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
 
-    if (pool == NULL) {
-        ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
+    if (pool == NULL)
         return NULL;
-    }
 
     /*
      * The const needs to be cast away, but attached buffers will not be
@@ -222,10 +216,8 @@ static int rand_pool_grow(RAND_POOL *pool, size_t len)
             p = OPENSSL_secure_zalloc(newlen);
         else
             p = OPENSSL_zalloc(newlen);
-        if (p == NULL) {
-            ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
+        if (p == NULL)
             return 0;
-        }
         memcpy(p, pool->buffer, pool->len);
         if (pool->secure)
             OPENSSL_secure_clear_free(pool->buffer, pool->alloc_len);

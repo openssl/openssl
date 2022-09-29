@@ -46,10 +46,8 @@ static void *ecx_newctx(void *provctx, size_t keylen)
         return NULL;
 
     ctx = OPENSSL_zalloc(sizeof(PROV_ECX_CTX));
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (ctx == NULL)
         return NULL;
-    }
 
     ctx->keylen = keylen;
 
@@ -140,10 +138,8 @@ static void *ecx_dupctx(void *vecxctx)
         return NULL;
 
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
-    if (dstctx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (dstctx == NULL)
         return NULL;
-    }
 
     *dstctx = *srcctx;
     if (dstctx->key != NULL && !ossl_ecx_key_up_ref(dstctx->key)) {

@@ -126,7 +126,7 @@ int ecdh_match_params(const EC_KEY *priv, const EC_KEY *peer)
 
     ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(priv));
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_BN_LIB);
         return 0;
     }
     ret = group_priv != NULL
@@ -524,10 +524,8 @@ int ecdh_X9_63_kdf_derive(void *vpecdhctx, unsigned char *secret,
     }
     if (!ecdh_plain_derive(vpecdhctx, NULL, &stmplen, 0))
         return 0;
-    if ((stmp = OPENSSL_secure_malloc(stmplen)) == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if ((stmp = OPENSSL_secure_malloc(stmplen)) == NULL)
         return 0;
-    }
     if (!ecdh_plain_derive(vpecdhctx, stmp, &stmplen, stmplen))
         goto err;
 

@@ -72,10 +72,8 @@ static void *eddsa_newctx(void *provctx, const char *propq_unused)
         return NULL;
 
     peddsactx = OPENSSL_zalloc(sizeof(PROV_EDDSA_CTX));
-    if (peddsactx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (peddsactx == NULL)
         return NULL;
-    }
 
     peddsactx->libctx = PROV_LIBCTX_OF(provctx);
 

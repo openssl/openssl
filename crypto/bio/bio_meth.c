@@ -25,7 +25,8 @@ int BIO_get_new_index(void)
     int newval;
 
     if (!RUN_ONCE(&bio_type_init, do_bio_type_init)) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+        /* Perhaps the error should be raised in do_bio_type_init()? */
+        ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
         return -1;
     }
     if (!CRYPTO_UP_REF(&bio_count, &newval, bio_type_lock))
@@ -40,7 +41,6 @@ BIO_METHOD *BIO_meth_new(int type, const char *name)
     if (biom == NULL
             || (biom->name = OPENSSL_strdup(name)) == NULL) {
         OPENSSL_free(biom);
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     biom->type = type;
