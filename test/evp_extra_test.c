@@ -4312,7 +4312,7 @@ static int test_custom_md_meth(void)
                /*
                 * Initing our custom md and then initing another md should
                 * result in the init and cleanup functions of the custom md
-                * from being called.
+                * being called.
                 */
             || !TEST_true(EVP_DigestInit_ex(mdctx, tmp, NULL))
             || !TEST_true(EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL))
@@ -4326,6 +4326,88 @@ static int test_custom_md_meth(void)
  err:
     EVP_MD_CTX_free(mdctx);
     EVP_MD_meth_free(tmp);
+    return testresult;
+}
+
+typedef struct {
+        int data;
+} custom_ciph_ctx;
+
+static int custom_ciph_init_called = 0;
+static int custom_ciph_cleanup_called = 0;
+
+static int custom_ciph_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+                            const unsigned char *iv, int enc)
+{
+    custom_ciph_ctx *p = EVP_CIPHER_CTX_get_cipher_data(ctx);
+
+    if (p == NULL)
+        return 0;
+
+    custom_ciph_init_called++;
+    return 1;
+}
+
+static int custom_ciph_cleanup(EVP_CIPHER_CTX *ctx)
+{
+    custom_ciph_ctx *p = EVP_CIPHER_CTX_get_cipher_data(ctx);
+
+    if (p == NULL)
+        /* Nothing to do */
+        return 1;
+
+    custom_ciph_cleanup_called++;
+    return 1;
+}
+
+static int test_custom_ciph_meth(void)
+{
+    EVP_CIPHER_CTX *ciphctx = NULL;
+    EVP_CIPHER *tmp = NULL;
+    int testresult = 0;
+    int nid;
+
+    /*
+     * We are testing deprecated functions. We don't support a non-default
+     * library context in this test.
+     */
+    if (testctx != NULL)
+        return 1;
+
+    custom_ciph_init_called = custom_ciph_cleanup_called = 0;
+
+    nid = OBJ_create("1.3.6.1.4.1.16604.998866.2", "custom-ciph", "custom-ciph");
+    if (!TEST_int_ne(nid, NID_undef))
+        goto err;
+    tmp = EVP_CIPHER_meth_new(nid, 16, 16);
+    if (!TEST_ptr(tmp))
+        goto err;
+
+    if (!TEST_true(EVP_CIPHER_meth_set_init(tmp, custom_ciph_init))
+            || !TEST_true(EVP_CIPHER_meth_set_flags(tmp, EVP_CIPH_ALWAYS_CALL_INIT))
+            || !TEST_true(EVP_CIPHER_meth_set_cleanup(tmp, custom_ciph_cleanup))
+            || !TEST_true(EVP_CIPHER_meth_set_impl_ctx_size(tmp,
+                                                            sizeof(custom_ciph_ctx))))
+        goto err;
+
+    ciphctx = EVP_CIPHER_CTX_new();
+    if (!TEST_ptr(ciphctx)
+               /*
+                * Initing our custom cipher and then initing another cipher
+                * should result in the init and cleanup functions of the custom
+                * cipher being called.
+                */
+            || !TEST_true(EVP_CipherInit_ex(ciphctx, tmp, NULL, NULL, NULL, 1))
+            || !TEST_true(EVP_CipherInit_ex(ciphctx, EVP_aes_128_cbc(), NULL,
+                                            NULL, NULL, 1))
+            || !TEST_int_eq(custom_ciph_init_called, 1)
+            || !TEST_int_eq(custom_ciph_cleanup_called, 1))
+        goto err;
+
+    testresult = 1;
+ err:
+    EVP_CIPHER_CTX_free(ciphctx);
+    EVP_CIPHER_meth_free(tmp);
     return testresult;
 }
 
@@ -4627,6 +4709,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_custom_pmeth, 12);
     ADD_TEST(test_evp_md_cipher_meth);
     ADD_TEST(test_custom_md_meth);
+    ADD_TEST(test_custom_ciph_meth);
 
 # ifndef OPENSSL_NO_DYNAMIC_ENGINE
     /* Tests only support the default libctx */
