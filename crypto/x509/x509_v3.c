@@ -119,10 +119,14 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
     else if (loc < 0)
         loc = n;
 
-    if ((new_ex = X509_EXTENSION_dup(ex)) == NULL)
+    if ((new_ex = X509_EXTENSION_dup(ex)) == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
         goto err;
-    if (!sk_X509_EXTENSION_insert(sk, new_ex, loc))
+    }
+    if (!sk_X509_EXTENSION_insert(sk, new_ex, loc)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
+    }
     if (*x == NULL)
         *x = sk;
     return sk;

@@ -266,7 +266,7 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
     X509_SIG_getm(p12->mac->dinfo, &macalg, NULL);
     if (!X509_ALGOR_set0(macalg, OBJ_nid2obj(EVP_MD_get_type(md_type)),
                          V_ASN1_NULL, NULL)) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
         return 0;
     }
 

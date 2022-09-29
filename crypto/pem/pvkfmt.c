@@ -88,19 +88,17 @@ static EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type)
     if ((pkey = EVP_PKEY_new()) != NULL) {
         switch (evp_type) {
         case EVP_PKEY_RSA:
-            if (EVP_PKEY_set1_RSA(pkey, key)) {
-                ERR_raise(ERR_LIB_PEM, ERR_R_RSA_LIB);
+            if (EVP_PKEY_set1_RSA(pkey, key))
                 break;
-            }
+            ERR_raise(ERR_LIB_PEM, ERR_R_RSA_LIB);
             EVP_PKEY_free(pkey);
             pkey = NULL;
             break;
 #ifndef OPENSSL_NO_DSA
         case EVP_PKEY_DSA:
-            if (EVP_PKEY_set1_DSA(pkey, key)) {
-                ERR_raise(ERR_LIB_PEM, ERR_R_DSA_LIB);
+            if (EVP_PKEY_set1_DSA(pkey, key))
                 break;
-            }
+            ERR_raise(ERR_LIB_PEM, ERR_R_DSA_LIB);
             EVP_PKEY_free(pkey);
             pkey = NULL;
             break;

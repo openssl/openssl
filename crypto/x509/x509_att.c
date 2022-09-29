@@ -225,7 +225,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
 
     if (attr == NULL || *attr == NULL) {
         if ((ret = X509_ATTRIBUTE_new()) == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+            ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
             return NULL;
         }
     } else {

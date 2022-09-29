@@ -82,7 +82,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     /* Setup algorithm identifier for cipher */
     encalg = X509_ALGOR_new();
     if (encalg == NULL) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
         goto err;
     }
     ctx = EVP_CIPHER_CTX_new();
@@ -145,7 +145,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     X509_ALGOR_free(pwri->keyEncryptionAlgorithm);
     pwri->keyEncryptionAlgorithm = X509_ALGOR_new();
     if (pwri->keyEncryptionAlgorithm == NULL) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
         goto err;
     }
     pwri->keyEncryptionAlgorithm->algorithm = OBJ_nid2obj(wrap_nid);

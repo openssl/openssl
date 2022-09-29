@@ -53,7 +53,7 @@ int TS_MSG_IMPRINT_set_algo(TS_MSG_IMPRINT *a, X509_ALGOR *alg)
         return 1;
     new_alg = X509_ALGOR_dup(alg);
     if (new_alg == NULL) {
-        ERR_raise(ERR_LIB_TS, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_TS, ERR_R_ASN1_LIB);
         return 0;
     }
     X509_ALGOR_free(a->hash_algo);

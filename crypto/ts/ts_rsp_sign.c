@@ -685,7 +685,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     }
 
     if ((p7 = PKCS7_new_ex(ctx->libctx, ctx->propq)) == NULL) {
-        ERR_raise(ERR_LIB_TS, ERR_R_PKCS7_LIB);
+        ERR_raise(ERR_LIB_TS, ERR_R_ASN1_LIB);
         goto err;
     }
     if (!PKCS7_set_type(p7, NID_pkcs7_signed))

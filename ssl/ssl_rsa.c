@@ -74,7 +74,7 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
     }
     x = X509_new_ex(ssl->ctx->libctx, ssl->ctx->propq);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
         goto end;
     }
     if (type == SSL_FILETYPE_ASN1) {
@@ -113,7 +113,7 @@ int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
 
     x = X509_new_ex(ssl->ctx->libctx, ssl->ctx->propq);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
         return 0;
     }
 
@@ -320,7 +320,7 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
     }
     x = X509_new_ex(ctx->libctx, ctx->propq);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
         goto end;
     }
     if (type == SSL_FILETYPE_ASN1) {
@@ -350,7 +350,7 @@ int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, const unsigned char *d)
 
     x = X509_new_ex(ctx->libctx, ctx->propq);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
         return 0;
     }
 
@@ -479,7 +479,7 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
 
     x = X509_new_ex(real_ctx->libctx, real_ctx->propq);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
         goto end;
     }
     if (PEM_read_bio_X509_AUX(in, &x, passwd_callback,
@@ -518,7 +518,7 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
         while (1) {
             ca = X509_new_ex(real_ctx->libctx, real_ctx->propq);
             if (ca == NULL) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+                ERR_raise(ERR_LIB_SSL, ERR_R_ASN1_LIB);
                 goto end;
             }
             if (PEM_read_bio_X509(in, &ca, passwd_callback,

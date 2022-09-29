@@ -416,7 +416,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
 
     if (i == sk_X509_ALGOR_num(sd->digestAlgorithms)) {
         if ((alg = X509_ALGOR_new()) == NULL) {
-            ERR_raise(ERR_LIB_CMS, ERR_R_X509_LIB);
+            ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
             goto err;
         }
         X509_ALGOR_set_md(alg, md);
@@ -516,11 +516,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
 
     if (sd->signerInfos == NULL)
         sd->signerInfos = sk_CMS_SignerInfo_new_null();
-    if (sd->signerInfos == NULL) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_CMS_LIB);
-        goto err;
-    }
-    if (!sk_CMS_SignerInfo_push(sd->signerInfos, si)) {
+    if (sd->signerInfos == NULL || !sk_CMS_SignerInfo_push(sd->signerInfos, si)) {
         ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
         goto err;
     }

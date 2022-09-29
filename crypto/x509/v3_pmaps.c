@@ -93,7 +93,7 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
         }
         pmap = POLICY_MAPPING_new();
         if (pmap == NULL) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
             goto err;
         }
         pmap->issuerDomainPolicy = obj1;

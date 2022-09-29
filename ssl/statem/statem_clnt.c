@@ -1824,7 +1824,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
         certstart = certbytes;
         x = X509_new_ex(sctx->libctx, sctx->propq);
         if (x == NULL) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_X509_LIB);
+            SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_ASN1_LIB);
             goto err;
         }
         if (d2i_X509(&x, (const unsigned char **)&certbytes,

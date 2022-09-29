@@ -23,19 +23,13 @@ X509_PKEY *X509_PKEY_new(void)
 
     ret->enc_algor = X509_ALGOR_new();
     ret->enc_pkey = ASN1_OCTET_STRING_new();
-    if (ret->enc_algor == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_X509_LIB);
-        goto err;
-    }
-    if (ret->enc_pkey == NULL) {
+    if (ret->enc_algor == NULL || ret->enc_pkey == NULL) {
+        X509_PKEY_free(ret);
         ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
-        goto err;
+        return NULL;
     }
 
     return ret;
-err:
-    X509_PKEY_free(ret);
-    return NULL;
 }
 
 void X509_PKEY_free(X509_PKEY *x)

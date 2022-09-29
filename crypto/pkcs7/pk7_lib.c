@@ -221,11 +221,8 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
     if (!j) {                   /* we need to add another algorithm */
         int nid;
 
-        if ((alg = X509_ALGOR_new()) == NULL) {
-            ERR_raise(ERR_LIB_PKCS7, ERR_R_X509_LIB);
-            return 0;
-        }
-        if ((alg->parameter = ASN1_TYPE_new()) == NULL) {
+        if ((alg = X509_ALGOR_new()) == NULL
+            || (alg->parameter = ASN1_TYPE_new()) == NULL) {
             X509_ALGOR_free(alg);
             ERR_raise(ERR_LIB_PKCS7, ERR_R_ASN1_LIB);
             return 0;

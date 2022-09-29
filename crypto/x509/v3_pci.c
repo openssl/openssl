@@ -293,7 +293,7 @@ static PROXY_CERT_INFO_EXTENSION *r2i_pci(X509V3_EXT_METHOD *method,
 
     pci = PROXY_CERT_INFO_EXTENSION_new();
     if (pci == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         goto err;
     }
 

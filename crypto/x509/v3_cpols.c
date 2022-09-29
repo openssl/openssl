@@ -144,7 +144,7 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
             pol = POLICYINFO_new();
             if (pol == NULL) {
                 ASN1_OBJECT_free(pobj);
-                ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
             pol->policyid = pobj;
@@ -172,7 +172,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
     POLICYQUALINFO *qual;
 
     if ((pol = POLICYINFO_new()) == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         goto err;
     }
     for (i = 0; i < sk_CONF_VALUE_num(polstrs); i++) {
@@ -191,7 +191,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             if (pol->qualifiers == NULL)
                 pol->qualifiers = sk_POLICYQUALINFO_new_null();
             if ((qual = POLICYQUALINFO_new()) == NULL) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
             if (!sk_POLICYQUALINFO_push(pol->qualifiers, qual)) {
@@ -297,7 +297,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
     char *value = NULL;
 
     if ((qual = POLICYQUALINFO_new()) == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         goto err;
     }
     if ((qual->pqualid = OBJ_nid2obj(NID_id_qt_unotice)) == NULL) {
@@ -305,7 +305,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
         goto err;
     }
     if ((not = USERNOTICE_new()) == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         goto err;
     }
     qual->d.usernotice = not;

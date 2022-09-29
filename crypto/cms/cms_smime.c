@@ -639,7 +639,7 @@ CMS_ContentInfo *CMS_encrypt_ex(STACK_OF(X509) *certs, BIO *data,
           ? CMS_AuthEnvelopedData_create_ex(cipher, libctx, propq)
           : CMS_EnvelopedData_create_ex(cipher, libctx, propq);
     if (cms == NULL) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_EVP_LIB);
+        ERR_raise(ERR_LIB_CMS, ERR_R_CMS_LIB);
         goto err;
     }
     for (i = 0; i < sk_X509_num(certs); i++) {

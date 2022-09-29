@@ -135,7 +135,7 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
 
     ncons = NAME_CONSTRAINTS_new();
     if (ncons == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         goto err;
     }
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
@@ -153,7 +153,7 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
         tval.value = val->value;
         sub = GENERAL_SUBTREE_new();
         if (sub == NULL) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
             goto err;
         }
         if (!v2i_GENERAL_NAME_ex(sub->base, method, ctx, &tval, 1)) {

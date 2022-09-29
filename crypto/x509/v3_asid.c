@@ -588,7 +588,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
             max = s2i_ASN1_INTEGER(NULL, s + i2);
             OPENSSL_free(s);
             if (min == NULL || max == NULL) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
                 goto err;
             }
             if (ASN1_INTEGER_cmp(min, max) > 0) {

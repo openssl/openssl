@@ -187,12 +187,12 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
     if (!EVP_MD_is_a(hash_alg, SN_sha256)) {
         alg = X509_ALGOR_new();
         if (alg == NULL) {
-            ERR_raise(ERR_LIB_ESS, ERR_R_X509_LIB);
+            ERR_raise(ERR_LIB_ESS, ERR_R_ASN1_LIB);
             goto err;
         }
         X509_ALGOR_set_md(alg, hash_alg);
         if (alg->algorithm == NULL) {
-            ERR_raise(ERR_LIB_ESS, ERR_R_X509_LIB);
+            ERR_raise(ERR_LIB_ESS, ERR_R_ASN1_LIB);
             goto err;
         }
         cid->hash_alg = alg;
@@ -224,7 +224,7 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
     }
     name->type = GEN_DIRNAME;
     if ((name->d.dirn = X509_NAME_dup(X509_get_issuer_name(cert))) == NULL) {
-        ERR_raise(ERR_LIB_ESS, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_ESS, ERR_R_ASN1_LIB);
         goto err;
     }
     if (!sk_GENERAL_NAME_push(cid->issuer_serial->issuer, name)) {

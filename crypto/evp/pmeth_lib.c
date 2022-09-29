@@ -1479,17 +1479,13 @@ static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
         evp_pkey_ctx_free_cached_data(ctx, cmd, name);
         if (name != NULL) {
             ctx->cached_parameters.dist_id_name = OPENSSL_strdup(name);
-            if (ctx->cached_parameters.dist_id_name == NULL) {
-                ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
+            if (ctx->cached_parameters.dist_id_name == NULL)
                 return 0;
-            }
         }
         if (data_len > 0) {
             ctx->cached_parameters.dist_id = OPENSSL_memdup(data, data_len);
-            if (ctx->cached_parameters.dist_id == NULL) {
-                ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
+            if (ctx->cached_parameters.dist_id == NULL)
                 return 0;
-            }
         }
         ctx->cached_parameters.dist_id_set = 1;
         ctx->cached_parameters.dist_id_len = data_len;

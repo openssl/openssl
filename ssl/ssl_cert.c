@@ -471,7 +471,7 @@ STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk)
 
     ret = sk_X509_NAME_new_reserve(NULL, num);
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     for (i = 0; i < num; i++) {

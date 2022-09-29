@@ -53,7 +53,7 @@ int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
     X509_ALGOR *alg;
 
     if ((alg = X509_ALGOR_new()) == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_ASN1_LIB);
         return 0;
     }
     ASN1_OBJECT_free(alg->algorithm);
@@ -76,7 +76,7 @@ int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
         nbit = NULL;
     }
     if (!sk_X509_ALGOR_push(sk, alg)) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_CRYPTO_LIB);
         goto err;
     }
     return 1;

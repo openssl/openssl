@@ -20,7 +20,7 @@ PKCS12 *PKCS12_init_ex(int mode, OSSL_LIB_CTX *ctx, const char *propq)
     PKCS12 *pkcs12;
 
     if ((pkcs12 = PKCS12_new()) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_PKCS12_LIB);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
         return NULL;
     }
     if (!ASN1_INTEGER_set(pkcs12->version, 3))

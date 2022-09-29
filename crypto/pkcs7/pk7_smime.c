@@ -387,7 +387,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
     }
 
     if ((signers = sk_X509_new_null()) == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 

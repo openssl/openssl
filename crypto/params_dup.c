@@ -37,11 +37,8 @@ static int ossl_param_buf_alloc(OSSL_PARAM_BUF *out, size_t extra_blocks,
     size_t sz = OSSL_PARAM_ALIGN_SIZE * (extra_blocks + out->blocks);
 
     out->alloc = is_secure ? OPENSSL_secure_zalloc(sz) : OPENSSL_zalloc(sz);
-    if (out->alloc == NULL) {
-        if (is_secure)
-            ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_SECURE_MALLOC_FAILURE);
+    if (out->alloc == NULL)
         return 0;
-    }
     out->alloc_sz = sz;
     out->cur = out->alloc + extra_blocks;
     return 1;

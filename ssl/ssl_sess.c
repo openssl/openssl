@@ -195,16 +195,16 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 
     if (src->peer_chain != NULL) {
         dest->peer_chain = X509_chain_up_ref(src->peer_chain);
-        if (dest->peer_chain == NULL)
+        if (dest->peer_chain == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
             goto err;
+        }
     }
 #ifndef OPENSSL_NO_PSK
     if (src->psk_identity_hint) {
         dest->psk_identity_hint = OPENSSL_strdup(src->psk_identity_hint);
-        if (dest->psk_identity_hint == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+        if (dest->psk_identity_hint == NULL)
             goto err;
-        }
     }
     if (src->psk_identity) {
         dest->psk_identity = OPENSSL_strdup(src->psk_identity);

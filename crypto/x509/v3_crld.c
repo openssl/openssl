@@ -266,7 +266,7 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
             if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
                 goto err;
             if ((gens = GENERAL_NAMES_new()) == NULL) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
             if (!sk_GENERAL_NAME_push(gens, gen)) {
@@ -275,12 +275,12 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
             }
             gen = NULL;
             if ((point = DIST_POINT_new()) == NULL) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
             sk_DIST_POINT_push(crld, point); /* no failure as it was reserved */
             if ((point->distpoint = DIST_POINT_NAME_new()) == NULL) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
             point->distpoint->name.fullname = gens;
@@ -373,7 +373,7 @@ static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
     int i, ret;
     idp = ISSUING_DIST_POINT_new();
     if (idp == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         goto err;
     }
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {

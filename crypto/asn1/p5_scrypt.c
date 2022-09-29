@@ -126,7 +126,7 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
 
     ret = X509_ALGOR_new();
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         goto err;
     }
 
@@ -210,7 +210,7 @@ static X509_ALGOR *pkcs5_scrypt_set(const unsigned char *salt, size_t saltlen,
 
     keyfunc = X509_ALGOR_new();
     if (keyfunc == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_X509_LIB);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         goto err;
     }
 

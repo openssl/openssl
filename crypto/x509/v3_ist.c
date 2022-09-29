@@ -39,7 +39,7 @@ static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_
     int i;
 
     if (ist == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         return NULL;
     }
     for (i = 0; i < sk_CONF_VALUE_num(nval); ++i) {

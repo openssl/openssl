@@ -46,10 +46,8 @@ ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey
 
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
-        if (ret->propq == NULL) {
-            ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
+        if (ret->propq == NULL)
             goto err;
-        }
     }
 
     ret->lock = CRYPTO_THREAD_lock_new();

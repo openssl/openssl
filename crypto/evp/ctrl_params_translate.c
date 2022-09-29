@@ -458,8 +458,8 @@ static int default_fixup_args(enum state state,
             if (ctx->p2 != NULL) {
                 if (ctx->action_type == SET) {
                     ctx->buflen = BN_num_bytes(ctx->p2);
-                    if ((ctx->allocated_buf =
-                         OPENSSL_malloc(ctx->buflen)) == NULL)
+                    if ((ctx->allocated_buf
+                         = OPENSSL_malloc(ctx->buflen)) == NULL)
                         return 0;
                     if (BN_bn2nativepad(ctx->p2,
                                          ctx->allocated_buf, ctx->buflen) < 0) {

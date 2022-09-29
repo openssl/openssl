@@ -24,7 +24,7 @@ PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
     PKCS12_SAFEBAG *safebag;
 
     if ((bag = PKCS12_BAGS_new()) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_PKCS12_LIB);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
         return NULL;
     }
     bag->type = OBJ_nid2obj(nid1);
@@ -33,7 +33,7 @@ PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
         goto err;
     }
     if ((safebag = PKCS12_SAFEBAG_new()) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_PKCS12_LIB);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
         goto err;
     }
     safebag->value.bag = bag;
@@ -51,7 +51,7 @@ PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk)
     PKCS7 *p7;
 
     if ((p7 = PKCS7_new()) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_PKCS7_LIB);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
         return NULL;
     }
     p7->type = OBJ_nid2obj(NID_pkcs7_data);
@@ -94,7 +94,7 @@ PKCS7 *PKCS12_pack_p7encdata_ex(int pbe_nid, const char *pass, int passlen,
     EVP_CIPHER *pbe_ciph_fetch = NULL;
 
     if ((p7 = PKCS7_new_ex(ctx, propq)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_PKCS7_LIB);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
         return NULL;
     }
     if (!PKCS7_set_type(p7, NID_pkcs7_encrypted)) {
