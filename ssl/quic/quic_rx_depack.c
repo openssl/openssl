@@ -18,6 +18,18 @@
 #include "quic_local.h"
 #include "../ssl_local.h"
 
+#ifdef _WIN32
+#ifndef SHUT_RD
+#define SHUT_RD SD_RECEIVE
+#endif
+#ifndef SHUT_WR
+#define SHUT_WR SD_SEND
+#endif
+#ifndef SHUT_RDWR
+#define SHUT_RDWR SD_BOTH
+#endif
+#endif
+
 /*
  * TODO(QUIC): ASSUMPTION: the QUIC_CONNECTION structure refers to other related
  * components, such as OSSL_ACKM and OSSL_QRX, in some manner.  These macros
