@@ -401,7 +401,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     unsigned char *s;
     long len = 0;
     int inf, tag, xclass;
-    int i;
+    int i = 0;
 
     if ((a == NULL) || ((*a) == NULL)) {
         if ((ret = ASN1_INTEGER_new()) == NULL)
@@ -449,7 +449,8 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     *pp = p;
     return ret;
  err:
-    ERR_raise(ERR_LIB_ASN1, i);
+    if (i != 0)
+        ERR_raise(ERR_LIB_ASN1, i);
     if ((a == NULL) || (*a != ret))
         ASN1_INTEGER_free(ret);
     return NULL;
