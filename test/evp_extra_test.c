@@ -4290,7 +4290,7 @@ static int test_custom_md_meth(void)
      * library context in this test.
      */
     if (testctx != NULL)
-        return 1;
+        return TEST_skip("Non-default libctx");
 
     custom_md_init_called = custom_md_cleanup_called = 0;
 
@@ -4372,7 +4372,7 @@ static int test_custom_ciph_meth(void)
      * library context in this test.
      */
     if (testctx != NULL)
-        return 1;
+        return TEST_skip("Non-default libctx");
 
     custom_ciph_init_called = custom_ciph_cleanup_called = 0;
 
