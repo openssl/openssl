@@ -159,6 +159,8 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
      * (legacy code)
      */
     if (cipher != NULL && ctx->cipher != NULL) {
+        if (ctx->cipher->cleanup && !ctx->cipher->cleanup(ctx))
+            return 0;
         OPENSSL_clear_free(ctx->cipher_data, ctx->cipher->ctx_size);
         ctx->cipher_data = NULL;
     }
