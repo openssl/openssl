@@ -648,7 +648,14 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         }
 
         /* Check if this share is for a group we can use */
-        if (!check_in_list(s, group_id, srvrgroups, srvr_num_groups, 1)) {
+        if (!check_in_list(s, group_id, srvrgroups, srvr_num_groups, 1)
+                || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
+                   /*
+                    * We tolerate but ignore a group id that we don't think is
+                    * suitable for TLSv1.3
+                    */
+                || !tls_valid_group(s, group_id, TLS1_3_VERSION, TLS1_3_VERSION,
+                                    0, NULL)) {
             /* Share not suitable */
             continue;
         }
