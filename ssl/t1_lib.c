@@ -435,42 +435,6 @@ static uint16_t tls1_group_name2id(SSL_CTX *ctx, const char *name)
     return 0;
 }
 
-uint16_t ssl_group_id_internal_to_tls13(uint16_t curve_id)
-{
-    switch(curve_id) {
-    case OSSL_TLS_GROUP_ID_brainpoolP256r1:
-        return OSSL_TLS_GROUP_ID_brainpoolP256r1_tls13;
-    case OSSL_TLS_GROUP_ID_brainpoolP384r1:
-        return OSSL_TLS_GROUP_ID_brainpoolP384r1_tls13;
-    case OSSL_TLS_GROUP_ID_brainpoolP512r1:
-        return OSSL_TLS_GROUP_ID_brainpoolP512r1_tls13;
-    case OSSL_TLS_GROUP_ID_brainpoolP256r1_tls13:
-    case OSSL_TLS_GROUP_ID_brainpoolP384r1_tls13:
-    case OSSL_TLS_GROUP_ID_brainpoolP512r1_tls13:
-        return 0;
-    default:
-        return curve_id;
-    }
-}
-
-uint16_t ssl_group_id_tls13_to_internal(uint16_t curve_id)
-{
-    switch(curve_id) {
-    case OSSL_TLS_GROUP_ID_brainpoolP256r1:
-    case OSSL_TLS_GROUP_ID_brainpoolP384r1:
-    case OSSL_TLS_GROUP_ID_brainpoolP512r1:
-        return 0;
-    case OSSL_TLS_GROUP_ID_brainpoolP256r1_tls13:
-        return OSSL_TLS_GROUP_ID_brainpoolP256r1;
-    case OSSL_TLS_GROUP_ID_brainpoolP384r1_tls13:
-        return OSSL_TLS_GROUP_ID_brainpoolP384r1;
-    case OSSL_TLS_GROUP_ID_brainpoolP512r1_tls13:
-        return OSSL_TLS_GROUP_ID_brainpoolP512r1;
-    default:
-        return curve_id;
-    }
-}
-
 const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t group_id)
 {
     size_t i;
@@ -677,15 +641,8 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
 
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
-        uint16_t cid = id;
 
-        if (SSL_CONNECTION_IS_TLS13(s)) {
-            if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE)
-                cid = ssl_group_id_internal_to_tls13(id);
-            else
-                cid = id = ssl_group_id_tls13_to_internal(id);
-        }
-        if (!tls1_in_list(cid, supp, num_supp)
+        if (!tls1_in_list(id, supp, num_supp)
                 || !tls_group_allowed(s, id, SSL_SECOP_CURVE_SHARED))
             continue;
         if (nmatch == k)
