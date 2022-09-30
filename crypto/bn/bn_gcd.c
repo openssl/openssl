@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/constant_time.h"
 #include "bn_local.h"
 
 /*
@@ -546,23 +547,24 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
  * Note 1: we assume the bit length of both inputs is public information,
  * since access to top potentially leaks this information.
  */
-int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
+int BN_gcd(BIGNUM *res, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 {
-    BIGNUM *g, *temp = NULL;
+    BIGNUM *g, *temp = NULL, *r = NULL;
     BN_ULONG mask = 0;
-    int i, j, top, rlen, glen, m, bit = 1, delta = 1, cond = 0, shifts = 0, ret = 0;
+    int i, j, top, rlen, glen, m, bit = 1, delta = 1, shifts = 0, ret = 0;
+    intptr_t cond = 0;
 
     /* Note 2: zero input corner cases are not constant-time since they are
      * handled immediately. An attacker can run an attack under this
      * assumption without the need of side-channel information. */
     if (BN_is_zero(in_b)) {
-        ret = BN_copy(r, in_a) != NULL;
-        r->neg = 0;
+        ret = BN_copy(res, in_a) != NULL;
+        res->neg = 0;
         return ret;
     }
     if (BN_is_zero(in_a)) {
-        ret = BN_copy(r, in_b) != NULL;
-        r->neg = 0;
+        ret = BN_copy(res, in_b) != NULL;
+        res->neg = 0;
         return ret;
     }
 
@@ -570,6 +572,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     bn_check_top(in_b);
 
     BN_CTX_start(ctx);
+    r = BN_CTX_get(ctx);
     temp = BN_CTX_get(ctx);
     g = BN_CTX_get(ctx);
 
@@ -602,7 +605,8 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
         goto err;
 
     /* re arrange inputs s.t. r is odd */
-    BN_consttime_swap((~r->d[0]) & 1, r, g, top);
+    cond = (~r->d[0]) & 1;
+    constant_time_cond_swap_ptr(-cond, (void **)&r, (void **)&g);
 
     /* compute the number of iterations */
     rlen = BN_num_bits(r);
@@ -617,16 +621,16 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
         delta = (-cond & -delta) | ((cond - 1) & delta);
         r->neg ^= cond;
         /* swap */
-        BN_consttime_swap(cond, r, g, top);
+        constant_time_cond_swap_ptr(-cond, (void **)&r, (void **)&g);
 
         /* elimination step */
         delta++;
         if (!BN_add(temp, g, r))
             goto err;
-        BN_consttime_swap(g->d[0] & 1 /* g is odd */
+        cond = g->d[0] & 1 /* g is odd */
                 /* make sure g->top > 0 (i.e. if top == 0 then g == 0 always) */
-                & (~((g->top - 1) >> (sizeof(g->top) * 8 - 1))),
-                g, temp, top);
+                & (~((g->top - 1) >> (sizeof(g->top) * 8 - 1)));
+        constant_time_cond_swap_ptr(-cond, (void **)&g, (void **)&temp);
         if (!BN_rshift1(g, g))
             goto err;
     }
@@ -641,7 +645,9 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     ret = 1;
 
  err:
+    BN_set_flags(r, BN_FLG_CONSTTIME);
+    BN_copy(res, r);
     BN_CTX_end(ctx);
-    bn_check_top(r);
+    bn_check_top(res);
     return ret;
 }
