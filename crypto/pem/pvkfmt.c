@@ -90,7 +90,7 @@ static EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type)
         case EVP_PKEY_RSA:
             if (EVP_PKEY_set1_RSA(pkey, key))
                 break;
-            ERR_raise(ERR_LIB_PEM, ERR_R_RSA_LIB);
+            ERR_raise(ERR_LIB_PEM, ERR_R_EVP_LIB);
             EVP_PKEY_free(pkey);
             pkey = NULL;
             break;
@@ -98,7 +98,7 @@ static EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type)
         case EVP_PKEY_DSA:
             if (EVP_PKEY_set1_DSA(pkey, key))
                 break;
-            ERR_raise(ERR_LIB_PEM, ERR_R_DSA_LIB);
+            ERR_raise(ERR_LIB_PEM, ERR_R_EVP_LIB);
             EVP_PKEY_free(pkey);
             pkey = NULL;
             break;
