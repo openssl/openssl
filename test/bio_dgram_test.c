@@ -495,7 +495,7 @@ static int test_bio_dgram_pair(void)
     uint8_t scratch[2048 + 4], scratch2[2048];
     uint32_t key[8];
     size_t i, num_dgram, num_processed = 0;
-    BIO_MSG msgs[2] = {0}, rmsgs[2] = {0};
+    BIO_MSG msgs[2], rmsgs[2];
     BIO_ADDR *addr1 = NULL, *addr2 = NULL, *addr3 = NULL, *addr4 = NULL;
     struct in_addr in_local;
     size_t total = 0;
@@ -503,6 +503,9 @@ static int test_bio_dgram_pair(void)
                             | BIO_DGRAM_CAP_HANDLES_DST_ADDR
                             | BIO_DGRAM_CAP_PROVIDES_SRC_ADDR
                             | BIO_DGRAM_CAP_PROVIDES_DST_ADDR;
+
+    memset(msgs, 0, sizeof(msgs));
+    memset(rmsgs, 0, sizeof(rmsgs));
 
     in_local.s_addr = ntohl(0x7f000001);
 
