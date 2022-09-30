@@ -359,6 +359,32 @@ static ossl_inline void constant_time_cond_swap_64(uint64_t mask, uint64_t *a,
 }
 
 /*
+ * mask must be 0xFFFF...FFFF or 0x00000000.
+ *
+ * if (mask) {
+ *     void *tmp = *a;
+ *
+ *     *a = *b;
+ *     *b = tmp;
+ * }
+ *
+ * Some compilers complain about using ^ on pointers.  Therefore, this has to be
+ * done using integers.
+ */
+static ossl_inline void constant_time_cond_swap_ptr(intptr_t mask, void **a,
+                                                    void **b)
+{
+    intptr_t ai = (intptr_t)*a;
+    intptr_t bi = (intptr_t)*b;
+    const intptr_t xor = (ai ^ bi) & mask;
+
+    ai ^= xor;
+    bi ^= xor;
+    *a = (void *)ai;
+    *b = (void *)bi;
+}
+
+/*
  * mask must be 0xFF or 0x00.
  * "constant time" is per len.
  *
