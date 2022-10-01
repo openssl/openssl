@@ -97,8 +97,10 @@ OSSL_TIME ossl_time_from_timeval(struct timeval tv)
 {
     OSSL_TIME t;
 
+#ifndef __DJGPP__ /* tv_sec is unsigned on djgpp. */
     if (tv.tv_sec < 0)
         return ossl_time_zero();
+#endif
     t.t = tv.tv_sec * OSSL_TIME_SECOND + tv.tv_usec * OSSL_TIME_US;
     return t;
 }
