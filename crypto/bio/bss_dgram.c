@@ -218,7 +218,7 @@ static void dgram_adjust_rcv_timeout(BIO *b)
                        &(data->socket_timeout), &sz) < 0) {
             perror("getsockopt");
         } else
-            OPENSSL_assert(sz <= sizeof(data->socket_timeout));
+            OPENSSL_assert((size_t)sz <= sizeof(data->socket_timeout));
 #  endif
 
         /* Get current time */
@@ -623,7 +623,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                 perror("getsockopt");
                 ret = -1;
             } else {
-                OPENSSL_assert(sz <= sizeof(struct timeval));
+                OPENSSL_assert((size_t)sz <= sizeof(struct timeval));
                 ret = (int)sz;
             }
 #  endif
@@ -674,7 +674,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                 perror("getsockopt");
                 ret = -1;
             } else {
-                OPENSSL_assert(sz <= sizeof(struct timeval));
+                OPENSSL_assert((size_t)sz <= sizeof(struct timeval));
                 ret = (int)sz;
             }
 #  endif
