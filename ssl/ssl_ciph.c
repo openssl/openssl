@@ -820,8 +820,9 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
     OSSL_TRACE_BEGIN(TLS_CIPHER) {
         BIO_printf(trc_out,
                    "Applying rule %d with %08x/%08x/%08x/%08x/%08x %08x (%d)\n",
-                   rule, alg_mkey, alg_auth, alg_enc, alg_mac, min_tls,
-                   algo_strength, strength_bits);
+                   rule, (unsigned int)alg_mkey, (unsigned int)alg_auth,
+                   (unsigned int)alg_enc, (unsigned int)alg_mac, min_tls,
+                   (unsigned int)algo_strength, (int)strength_bits);
     }
 
     if (rule == CIPHER_DEL || rule == CIPHER_BUMP)
@@ -865,9 +866,13 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
                 BIO_printf(trc_out,
                            "\nName: %s:"
                            "\nAlgo = %08x/%08x/%08x/%08x/%08x Algo_strength = %08x\n",
-                           cp->name, cp->algorithm_mkey, cp->algorithm_auth,
-                           cp->algorithm_enc, cp->algorithm_mac, cp->min_tls,
-                           cp->algo_strength);
+                           cp->name,
+                           (unsigned int)cp->algorithm_mkey,
+                           (unsigned int)cp->algorithm_auth,
+                           (unsigned int)cp->algorithm_enc,
+                           (unsigned int)cp->algorithm_mac,
+                           cp->min_tls,
+                           (unsigned int)cp->algo_strength);
             }
             if (cipher_id != 0 && (cipher_id != cp->id))
                 continue;
