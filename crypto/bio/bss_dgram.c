@@ -765,7 +765,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling getsockopt()");
             } else {
-                OPENSSL_assert(sz <= sizeof(struct timeval));
+                OPENSSL_assert((size_t)sz <= sizeof(struct timeval));
                 ret = (int)sz;
             }
 #  endif
@@ -816,7 +816,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling getsockopt()");
             } else {
-                OPENSSL_assert(sz <= sizeof(struct timeval));
+                OPENSSL_assert((size_t)sz <= sizeof(struct timeval));
                 ret = (int)sz;
             }
 #  endif
