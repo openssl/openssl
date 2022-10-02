@@ -553,6 +553,8 @@ int BN_gcd(BIGNUM *res, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     BN_ULONG mask = 0;
     int i, j, top, rlen, glen, m, bit = 1, delta = 1, shifts = 0, ret = 0;
     intptr_t cond = 0;
+    const int consttime = (BN_get_flags(in_a, BN_FLG_CONSTTIME)
+                           | BN_get_flags(in_b, BN_FLG_CONSTTIME)) != 0;
 
     /* Note 2: zero input corner cases are not constant-time since they are
      * handled immediately. An attacker can run an attack under this
@@ -606,7 +608,10 @@ int BN_gcd(BIGNUM *res, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 
     /* re arrange inputs s.t. r is odd */
     cond = (~r->d[0]) & 1;
-    constant_time_cond_swap_ptr(-cond, (void **)&r, (void **)&g);
+    if (consttime)
+        BN_consttime_swap(cond, r, g, top);
+    else
+        constant_time_cond_swap_ptr(-cond, (void **)&r, (void **)&g);
 
     /* compute the number of iterations */
     rlen = BN_num_bits(r);
@@ -616,21 +621,27 @@ int BN_gcd(BIGNUM *res, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     for (i = 0; i < m; i++) {
         /* conditionally flip signs if delta is positive and g is odd */
         cond = (-delta >> (8 * sizeof(delta) - 1)) & g->d[0] & 1
-            /* make sure g->top > 0 (i.e. if top == 0 then g == 0 always) */
-            & (~((g->top - 1) >> (sizeof(g->top) * 8 - 1)));
+               /* make sure g->top > 0 (i.e. if top == 0 then g == 0 always) */
+               & (~((g->top - 1) >> (sizeof(g->top) * 8 - 1)));
         delta = (-cond & -delta) | ((cond - 1) & delta);
         r->neg ^= cond;
         /* swap */
-        constant_time_cond_swap_ptr(-cond, (void **)&r, (void **)&g);
+        if (consttime)
+            BN_consttime_swap(cond, r, g, top);
+        else
+            constant_time_cond_swap_ptr(-cond, (void **)&r, (void **)&g);
 
         /* elimination step */
         delta++;
         if (!BN_add(temp, g, r))
             goto err;
         cond = g->d[0] & 1 /* g is odd */
-                /* make sure g->top > 0 (i.e. if top == 0 then g == 0 always) */
-                & (~((g->top - 1) >> (sizeof(g->top) * 8 - 1)));
-        constant_time_cond_swap_ptr(-cond, (void **)&g, (void **)&temp);
+               /* make sure g->top > 0 (i.e. if top == 0 then g == 0 always) */
+               & (~((g->top - 1) >> (sizeof(g->top) * 8 - 1)));
+        if (consttime)
+            BN_consttime_swap(cond, g, temp, top);
+        else
+            constant_time_cond_swap_ptr(-cond, (void **)&g, (void **)&temp);
         if (!BN_rshift1(g, g))
             goto err;
     }
