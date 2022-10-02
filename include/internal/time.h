@@ -12,7 +12,6 @@
 # pragma once
 
 # include <openssl/e_os2.h>     /* uint64_t */
-# include "internal/e_os.h"     /* for struct timeval */
 # include "internal/safe_math.h"
 
 /*
@@ -73,52 +72,6 @@ static ossl_unused ossl_inline
 OSSL_TIME ossl_time_infinite(void)
 {
     return ossl_ticks2time(~(uint64_t)0);
-}
-
-
-/* Convert time to timeval */
-static ossl_unused ossl_inline
-struct timeval ossl_time_to_timeval(OSSL_TIME t)
-{
-    struct timeval tv;
-
-#ifdef _WIN32
-    tv.tv_sec = (long int)(t.t / OSSL_TIME_SECOND);
-#else
-    tv.tv_sec = (time_t)(t.t / OSSL_TIME_SECOND);
-#endif
-    tv.tv_usec = (t.t % OSSL_TIME_SECOND) / OSSL_TIME_US;
-    return tv;
-}
-
-/* Convert timeval to time */
-static ossl_unused ossl_inline
-OSSL_TIME ossl_time_from_timeval(struct timeval tv)
-{
-    OSSL_TIME t;
-
-    if (tv.tv_sec < 0)
-        return ossl_time_zero();
-    t.t = tv.tv_sec * OSSL_TIME_SECOND + tv.tv_usec * OSSL_TIME_US;
-    return t;
-}
-
-/* Convert OSSL_TIME to time_t */
-static ossl_unused ossl_inline
-time_t ossl_time_to_time_t(OSSL_TIME t)
-{
-    return (time_t)(t.t / OSSL_TIME_SECOND);
-}
-
-/* Convert time_t to OSSL_TIME */
-static ossl_unused ossl_inline
-OSSL_TIME ossl_time_from_time_t(time_t t)
-{
-    OSSL_TIME ot;
-
-    ot.t = t;
-    ot.t *= OSSL_TIME_SECOND;
-    return ot;
 }
 
 /* Compare two time values, return -1 if less, 1 if greater and 0 if equal */
@@ -223,6 +176,58 @@ static ossl_unused ossl_inline
 OSSL_TIME ossl_time_min(OSSL_TIME a, OSSL_TIME b)
 {
     return a.t < b.t ? a : b;
+}
+
+/*
+ * Include e_os.h late, so it can benefit from the declarations
+ * above.  This is currently used for its fallback implementation
+ * of ossl_sleep().
+ */
+# include "internal/e_os.h"     /* for struct timeval */
+
+/* Convert time to timeval */
+static ossl_unused ossl_inline
+struct timeval ossl_time_to_timeval(OSSL_TIME t)
+{
+    struct timeval tv;
+
+#ifdef _WIN32
+    tv.tv_sec = (long int)(t.t / OSSL_TIME_SECOND);
+#else
+    tv.tv_sec = (time_t)(t.t / OSSL_TIME_SECOND);
+#endif
+    tv.tv_usec = (t.t % OSSL_TIME_SECOND) / OSSL_TIME_US;
+    return tv;
+}
+
+/* Convert timeval to time */
+static ossl_unused ossl_inline
+OSSL_TIME ossl_time_from_timeval(struct timeval tv)
+{
+    OSSL_TIME t;
+
+    if (tv.tv_sec < 0)
+        return ossl_time_zero();
+    t.t = tv.tv_sec * OSSL_TIME_SECOND + tv.tv_usec * OSSL_TIME_US;
+    return t;
+}
+
+/* Convert OSSL_TIME to time_t */
+static ossl_unused ossl_inline
+time_t ossl_time_to_time_t(OSSL_TIME t)
+{
+    return (time_t)(t.t / OSSL_TIME_SECOND);
+}
+
+/* Convert time_t to OSSL_TIME */
+static ossl_unused ossl_inline
+OSSL_TIME ossl_time_from_time_t(time_t t)
+{
+    OSSL_TIME ot;
+
+    ot.t = t;
+    ot.t *= OSSL_TIME_SECOND;
+    return ot;
 }
 
 #endif
