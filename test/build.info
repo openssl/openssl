@@ -63,7 +63,8 @@ IF[{- !$disabled{tests} -}]
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
           provfetchtest prov_config_test rand_test ca_internals_test \
-          bio_tfo_test membio_test bio_dgram_test list_test fips_version_test
+          bio_tfo_test membio_test bio_dgram_test list_test fips_version_test \
+          x509acert_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -1010,6 +1011,10 @@ ENDIF
   SOURCE[quic_ackm_test]=quic_ackm_test.c
   INCLUDE[quic_ackm_test]=../include ../apps/include
   DEPEND[quic_ackm_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+  SOURCE[x509acert_test]=x509acert_test.c
+  INCLUDE[x509acert_test]=../include ../apps/include
+  DEPEND[x509acert_test]=../libcrypto.a libtestutil.a
 
 {-
    use File::Spec::Functions;

@@ -1659,6 +1659,10 @@ DEPEND[html/man3/OSSL_HTTP_transfer.html]=man3/OSSL_HTTP_transfer.pod
 GENERATE[html/man3/OSSL_HTTP_transfer.html]=man3/OSSL_HTTP_transfer.pod
 DEPEND[man/man3/OSSL_HTTP_transfer.3]=man3/OSSL_HTTP_transfer.pod
 GENERATE[man/man3/OSSL_HTTP_transfer.3]=man3/OSSL_HTTP_transfer.pod
+DEPEND[html/man3/OSSL_IETF_ATTR_SYNTAX.html]=man3/OSSL_IETF_ATTR_SYNTAX.pod
+GENERATE[html/man3/OSSL_IETF_ATTR_SYNTAX.html]=man3/OSSL_IETF_ATTR_SYNTAX.pod
+DEPEND[man/man3/OSSL_IETF_ATTR_SYNTAX.3]=man3/OSSL_IETF_ATTR_SYNTAX.pod
+GENERATE[man/man3/OSSL_IETF_ATTR_SYNTAX.3]=man3/OSSL_IETF_ATTR_SYNTAX.pod
 DEPEND[html/man3/OSSL_LIB_CTX.html]=man3/OSSL_LIB_CTX.pod
 GENERATE[html/man3/OSSL_LIB_CTX.html]=man3/OSSL_LIB_CTX.pod
 DEPEND[man/man3/OSSL_LIB_CTX.3]=man3/OSSL_LIB_CTX.pod
@@ -2639,6 +2643,10 @@ DEPEND[html/man3/X509V3_set_ctx.html]=man3/X509V3_set_ctx.pod
 GENERATE[html/man3/X509V3_set_ctx.html]=man3/X509V3_set_ctx.pod
 DEPEND[man/man3/X509V3_set_ctx.3]=man3/X509V3_set_ctx.pod
 GENERATE[man/man3/X509V3_set_ctx.3]=man3/X509V3_set_ctx.pod
+DEPEND[html/man3/X509_ACERT_get0_holder_baseCertId.html]=man3/X509_ACERT_get0_holder_baseCertId.pod
+GENERATE[html/man3/X509_ACERT_get0_holder_baseCertId.html]=man3/X509_ACERT_get0_holder_baseCertId.pod
+DEPEND[man/man3/X509_ACERT_get0_holder_baseCertId.3]=man3/X509_ACERT_get0_holder_baseCertId.pod
+GENERATE[man/man3/X509_ACERT_get0_holder_baseCertId.3]=man3/X509_ACERT_get0_holder_baseCertId.pod
 DEPEND[html/man3/X509_ALGOR_dup.html]=man3/X509_ALGOR_dup.pod
 GENERATE[html/man3/X509_ALGOR_dup.html]=man3/X509_ALGOR_dup.pod
 DEPEND[man/man3/X509_ALGOR_dup.3]=man3/X509_ALGOR_dup.pod
@@ -3178,6 +3186,7 @@ html/man3/OSSL_ESS_check_signing_certs.html \
 html/man3/OSSL_HTTP_REQ_CTX.html \
 html/man3/OSSL_HTTP_parse_url.html \
 html/man3/OSSL_HTTP_transfer.html \
+html/man3/OSSL_IETF_ATTR_SYNTAX.html \
 html/man3/OSSL_LIB_CTX.html \
 html/man3/OSSL_PARAM.html \
 html/man3/OSSL_PARAM_BLD.html \
@@ -3423,6 +3432,7 @@ html/man3/UI_create_method.html \
 html/man3/UI_new.html \
 html/man3/X509V3_get_d2i.html \
 html/man3/X509V3_set_ctx.html \
+html/man3/X509_ACERT_get0_holder_baseCertId.html \
 html/man3/X509_ALGOR_dup.html \
 html/man3/X509_CRL_get0_by_serial.html \
 html/man3/X509_EXTENSION_set_object.html \
@@ -3781,6 +3791,7 @@ man/man3/OSSL_ESS_check_signing_certs.3 \
 man/man3/OSSL_HTTP_REQ_CTX.3 \
 man/man3/OSSL_HTTP_parse_url.3 \
 man/man3/OSSL_HTTP_transfer.3 \
+man/man3/OSSL_IETF_ATTR_SYNTAX.3 \
 man/man3/OSSL_LIB_CTX.3 \
 man/man3/OSSL_PARAM.3 \
 man/man3/OSSL_PARAM_BLD.3 \
@@ -4026,6 +4037,7 @@ man/man3/UI_create_method.3 \
 man/man3/UI_new.3 \
 man/man3/X509V3_get_d2i.3 \
 man/man3/X509V3_set_ctx.3 \
+man/man3/X509_ACERT_get0_holder_baseCertId.3 \
 man/man3/X509_ALGOR_dup.3 \
 man/man3/X509_CRL_get0_by_serial.3 \
 man/man3/X509_EXTENSION_set_object.3 \

@@ -21,6 +21,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/rsa.h>
 #include <openssl/x509v3.h>
+#include <openssl/x509_acert.h>
 
 #include "asn1_item_list.h"
 
