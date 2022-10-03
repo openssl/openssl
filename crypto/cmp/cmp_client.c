@@ -11,7 +11,6 @@
 
 #include "cmp_local.h"
 #include "internal/cryptlib.h"
-#include "internal/e_os.h" /* ossl_sleep() */
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/bio.h>
@@ -332,7 +331,7 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
             OSSL_CMP_MSG_free(prep);
             prep = NULL;
             if (sleep) {
-                ossl_sleep((unsigned long)(1000 * check_after));
+                OSSL_sleep((unsigned long)(1000 * check_after));
             } else {
                 if (checkAfter != NULL)
                     *checkAfter = (int)check_after;

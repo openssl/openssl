@@ -2688,7 +2688,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx)
                                        prog, 0, 0);
         if (ret == 0) { /* no request yet */
             if (retry) {
-                ossl_sleep(1000);
+                OSSL_sleep(1000);
                 retry = 0;
                 continue;
             }
