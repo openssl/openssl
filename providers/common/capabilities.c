@@ -30,7 +30,7 @@ typedef struct tls_group_constants_st {
     int maxdtls;             /* Maximum DTLS version (or 0 for undefined) */
 } TLS_GROUP_CONSTANTS;
 
-static const TLS_GROUP_CONSTANTS group_list[38] = {
+static const TLS_GROUP_CONSTANTS group_list[] = {
     { OSSL_TLS_GROUP_ID_sect163k1, 80, TLS1_VERSION, TLS1_2_VERSION,
       DTLS1_VERSION, DTLS1_2_VERSION },
     { OSSL_TLS_GROUP_ID_sect163r1, 80, TLS1_VERSION, TLS1_2_VERSION,
