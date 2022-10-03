@@ -103,6 +103,22 @@ cert_contains(srctop_file(@certs, "fake-gp.pem"),
               "2.16.528.1.1003.1.3.5.5.2-1-0000006666-Z-12345678-01.015-12345678",
               1, 'x500 -- subjectAltName');
 
+cert_contains(srctop_file(@certs, "ext-noAssertion.pem"),
+              "No Assertion",
+              1, 'X.509 Not Assertion Extension');
+
+cert_contains(srctop_file(@certs, "ext-groupAC.pem"),
+              "Group Attribute Certificate",
+              1, 'X.509 Group Attribute Certificate Extension');
+
+cert_contains(srctop_file(@certs, "ext-sOAIdentifier.pem"),
+              "Source of Authority",
+              1, 'X.509 Source of Authority Extension');
+
+cert_contains(srctop_file(@certs, "ext-noRevAvail.pem"),
+              "No Revocation Available",
+              1, 'X.509 Source of Authority Extension');
+
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
     my $infile = srctop_file(@certs, $cert);
