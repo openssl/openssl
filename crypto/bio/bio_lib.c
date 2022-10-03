@@ -980,7 +980,7 @@ static int bio_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
         if ((unsigned long)sec_diff * 1000 < nap_milliseconds)
             nap_milliseconds = (unsigned int)sec_diff * 1000;
     }
-    ossl_sleep(nap_milliseconds);
+    OSSL_sleep(nap_milliseconds);
     return 1;
 }
 
