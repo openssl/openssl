@@ -995,8 +995,10 @@ static int tls_do_compress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *wr)
 
     wr->length = i;
     wr->input = wr->data;
-#endif
     return 1;
+#else
+    return 0;
+#endif
 }
 
 int tls_do_uncompress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
