@@ -5465,3 +5465,4 @@ EVP_PKEY_auth_encapsulate_init          ?	3_1_0	EXIST::FUNCTION:
 EVP_PKEY_auth_decapsulate_init          ?	3_1_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_set0_attrs               ?	3_1_0	EXIST::FUNCTION:
 PKCS12_create_ex2                       ?	3_1_0	EXIST::FUNCTION:
+OSSL_sleep                              ?	3_1_0	EXIST::FUNCTION:
