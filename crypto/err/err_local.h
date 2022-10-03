@@ -56,8 +56,11 @@ static ossl_inline void err_set_debug(ERR_STATE *es, size_t i,
     OPENSSL_free(es->err_file[i]);
     if (file == NULL || file[0] == '\0')
         es->err_file[i] = NULL;
-    else
-        es->err_file[i] = OPENSSL_strdup(file);
+    else if ((es->err_file[i] = CRYPTO_malloc(strlen(file) + 1,
+                                              NULL, 0)) != NULL)
+        /* We cannot use OPENSSL_strdup due to possible recursion */
+        strcpy(es->err_file[i], file);
+
     es->err_line[i] = line;
     OPENSSL_free(es->err_func[i]);
     if (fn == NULL || fn[0] == '\0')
