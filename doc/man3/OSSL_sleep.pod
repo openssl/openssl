@@ -13,9 +13,9 @@ OSSL_sleep - delay execution for a specified number of milliseconds
 =head1 DESCRIPTION
 
 OSSL_sleep() is a convenience function to delay execution of the calling
-thread for (at least) I<millis> milliseconds.  The delay may be lengthened
-slightly by system activity, by the time spent processing the call or by
-system timers granularity.
+thread for (at least) I<millis> milliseconds.  The delay is not guaranteed;
+it may be affected by system activity, by the time spent processing the call
+or by system timer granularity.
 
 =head1 RETURN VALUES
 
