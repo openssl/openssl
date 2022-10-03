@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OSSL_sleep - delay execution for a specified amount of milliseconds
+OSSL_sleep - delay execution for a specified number of milliseconds
 
 =head1 SYNOPSIS
 
