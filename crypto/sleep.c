@@ -67,13 +67,23 @@ void OSSL_sleep(uint64_t millis)
 /* Fallback to a busy wait */
 # include "internal/time.h"
 
-/*
- * This function takes unsigned int because sleep() does.  It's up to the
- * caller not to try to pass something larger.
- */
-static void ossl_sleep_secs(unsigned int secs)
+static void ossl_sleep_secs(uint64_t secs)
 {
-    sleep(secs);
+    /*
+     * sleep() takes an unsigned int argument, which is smaller than
+     * a uint64_t, so it needs to be called in smaller increments.
+     */
+    unsigned int uint_times = (unsigned int)(secs >> sizeof(unsigned int));
+    unsigned int i;
+
+    for(i = uint_times; i-- > 0;)
+        sleep((unsigned int)-1);
+    /*
+     * The loop above slept 1 second less on each iteration than it should,
+     * this compensates by sleeping as many seconds as there were iterations.
+     * Yes, this is nit picky!
+     */
+    sleep(uint_times);
 }
 
 static void ossl_sleep_millis(uint64_t millis)
@@ -87,9 +97,7 @@ static void ossl_sleep_millis(uint64_t millis)
 
 void OSSL_sleep(uint64_t millis)
 {
-    uint64_t secs;
-
-    ossl_sleep_secs((unsigned int)(millis / 1000));
+    ossl_sleep_secs(millis / 1000);
     ossl_sleep_millis(millis % 1000);
 }
 #endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
