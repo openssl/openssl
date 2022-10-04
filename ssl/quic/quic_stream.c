@@ -439,11 +439,11 @@ int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
     }
 
     /*
-     * Note: It is assumed that ossl_quic_sstream_append will be called during a call to
-     * e.g. SSL_write and this function is function is therefore designed to
-     * support such semantics. In particular, the buffer pointed to by buf is
-     * only assumed to be valid for the duration of this call, therefore we must
-     * copy the data here. We will later copy-and-encrypt the data during packet
+     * Note: It is assumed that ossl_quic_sstream_append will be called during a
+     * call to e.g. SSL_write and this function is therefore designed to support
+     * such semantics. In particular, the buffer pointed to by buf is only
+     * assumed to be valid for the duration of this call, therefore we must copy
+     * the data here. We will later copy-and-encrypt the data during packet
      * encryption, so this is a two-copy design. Supporting a one-copy design in
      * the future will require applications to use a different kind of API.
      * Supporting such changes in future will require corresponding enhancements

@@ -101,7 +101,7 @@ void ossl_quic_sstream_free(QUIC_SSTREAM *qss);
  * It is the caller's responsibility to clamp the length of data which this
  * function indicates is available according to other concerns, such as
  * stream-level flow control, connection-level flow control, or the applicable
- * MDPL for a packet under construction.
+ * maximum datagram payload length (MDPL) for a packet under construction.
  *
  * The skip argument can usually be given as zero. If it is non-zero, this
  * function outputs a range which would be output if it were called again after
