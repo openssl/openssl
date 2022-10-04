@@ -362,13 +362,13 @@ static int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
                         ALG_WARN
                             ("%s(%d): Crypto Operation failed with code %lld\n",
                              __FILE__, __LINE__, events[0].res);
-                        switch( events[0].res ){
-                            case -ENOMEM:
-                                ERR_raise_data( ERR_LIB_AF_ALG, 0, "kernel crypto operation failed -ENOMEM" );
-                                break;
-                            default:
-                                ERR_raise_data( ERR_LIB_AF_ALG, 0, "kernel crypto operation failed %d",  events[0].res  );
-                                break;
+                        switch (events[0].res) {
+                        case -ENOMEM:
+                            ERR_raise_data(ERR_LIB_AF_ALG, 0, "kernel crypto operation failed -ENOMEM");
+                            break;
+                        default:
+                            ERR_raise_data(ERR_LIB_AF_ALG, 0, "kernel crypto operation failed %d",  events[0].res);
+                            break;
                         }
                         return 0;
                     }
