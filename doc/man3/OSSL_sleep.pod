@@ -8,7 +8,7 @@ OSSL_sleep - delay execution for a specified number of milliseconds
 
  #include <openssl/crypto.h>
 
- void OSSL_sleep(unsigned long millis);
+ void OSSL_sleep(uint64_t millis);
 
 =head1 DESCRIPTION
 

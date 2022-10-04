@@ -14,7 +14,7 @@
 #if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
 # include <unistd.h>
 
-void OSSL_sleep(unsigned long millis)
+void OSSL_sleep(uint64_t millis)
 {
 # ifdef OPENSSL_SYS_VXWORKS
     struct timespec ts;
@@ -43,7 +43,7 @@ void OSSL_sleep(unsigned long millis)
 #elif defined(_WIN32)
 # include <windows.h>
 
-void OSSL_sleep(unsigned long millis)
+void OSSL_sleep(uint64_t millis)
 {
     Sleep(millis);
 }
@@ -51,7 +51,7 @@ void OSSL_sleep(unsigned long millis)
 /* Fallback to a busy wait */
 # include "internal/time.h"
 
-void OSSL_sleep(unsigned long millis)
+void OSSL_sleep(uint64_t millis)
 {
     const OSSL_TIME finish
         = ossl_time_add(ossl_time_now(), ossl_ms2time(millis));
