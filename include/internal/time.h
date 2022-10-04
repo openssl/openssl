@@ -73,13 +73,16 @@ OSSL_TIME ossl_time_infinite(void)
     return ossl_ticks2time(~(uint64_t)0);
 }
 
+#ifdef IMPLEMENT_OSSL_TIME_NOW
+IMPLEMENT_OSSL_TIME_NOW
+#else
 /* Get current time */
 static ossl_unused ossl_inline
 OSSL_TIME ossl_time_now(void)
 {
     OSSL_TIME r;
 
-#if defined(_WIN32)
+# if defined(_WIN32)
     SYSTEMTIME st;
     union {
         unsigned __int64 ul;
@@ -89,13 +92,13 @@ OSSL_TIME ossl_time_now(void)
     GetSystemTime(&st);
     SystemTimeToFileTime(&st, &now.ft);
     /* re-bias to 1/1/1970 */
-# ifdef  __MINGW32__
+#  ifdef  __MINGW32__
     now.ul -= 116444736000000000ULL;
-# else
+#  else
     now.ul -= 116444736000000000UI64;
-# endif
+#  endif
     r.t = ((uint64_t)now.ul) * (OSSL_TIME_SECOND / 10000000);
-#else   /* defined(_WIN32) */
+# else   /* defined(_WIN32) */
     struct timeval t;
 
     if (gettimeofday(&t, NULL) < 0) {
@@ -107,9 +110,10 @@ OSSL_TIME ossl_time_now(void)
         r.t = t.tv_usec <= 0 ? 0 : t.tv_usec * OSSL_TIME_US;
     else
         r.t = ((uint64_t)t.tv_sec * 1000000 + t.tv_usec) * OSSL_TIME_US;
-#endif  /* defined(_WIN32) */
+# endif  /* defined(_WIN32) */
     return r;
 }
+#endif
 
 /* Convert time to timeval */
 static ossl_unused ossl_inline

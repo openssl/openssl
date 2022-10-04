@@ -7,16 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* Custom implementation of ossl_time_now() */
+#define IMPLEMENT_OSSL_TIME_NOW                 \
+    static OSSL_TIME cur_time = { 100 };        \
+                                                \
+    static ossl_unused ossl_inline              \
+    OSSL_TIME ossl_time_now(void)               \
+    {                                           \
+        return cur_time;                        \
+    }
+
 #include "internal/event_queue.h"
 #include "internal/nelem.h"
 #include "testutil.h"
-
-static OSSL_TIME cur_time = { 100 };
-
-OSSL_TIME ossl_time_now(void)
-{
-    return cur_time;
-}
 
 #define PAYLOAD(s)  s, strlen(s) + 1
 
