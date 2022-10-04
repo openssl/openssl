@@ -7,12 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <unistd.h>
 #include <openssl/crypto.h>
 #include "internal/e_os.h"
 
 /* system-specific variants defining OSSL_sleep() */
 #if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
-# include <unistd.h>
 
 void OSSL_sleep(uint64_t millis)
 {
@@ -51,12 +51,25 @@ void OSSL_sleep(uint64_t millis)
 /* Fallback to a busy wait */
 # include "internal/time.h"
 
-void OSSL_sleep(uint64_t millis)
+static void ossl_sleep_secs(uint64_t secs)
+{
+    sleep(secs);
+}
+
+static void ossl_sleep_millis(uint64_t millis)
 {
     const OSSL_TIME finish
         = ossl_time_add(ossl_time_now(), ossl_ms2time(millis));
 
     while (ossl_time_compare(ossl_time_now(), finish) < 0)
         /* busy wait */ ;
+}
+
+void OSSL_sleep(uint64_t millis)
+{
+    uint64_t secs;
+
+    ossl_sleep_secs(millis / 1000);
+    ossl_sleep_millis(millis % 1000);
 }
 #endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
