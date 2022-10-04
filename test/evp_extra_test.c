@@ -2752,6 +2752,61 @@ static int test_RSA_get_set_params(void)
     return ret;
 }
 
+static int test_RSA_OAEP_set_get_params(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    EVP_PKEY_CTX *key_ctx = NULL;
+
+    if (nullprov != NULL)
+        return TEST_skip("Test does not support a non-default library context");
+
+    if (!TEST_ptr(key = load_example_rsa_key())
+        || !TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(0, key, 0)))
+        goto err;
+
+    {
+        int padding = RSA_PKCS1_OAEP_PADDING;
+        OSSL_PARAM params[4];
+
+        params[0] = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PAD_MODE, &padding);
+        params[1] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST,
+                                                     OSSL_DIGEST_NAME_SHA2_256, 0);
+        params[2] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST,
+                                                     OSSL_DIGEST_NAME_SHA1, 0);
+        params[3] = OSSL_PARAM_construct_end();
+
+        if (!TEST_int_gt(EVP_PKEY_encrypt_init_ex(key_ctx, params),0))
+            goto err;
+    }
+    {
+        OSSL_PARAM params[3];
+        char oaepmd[30] = { '\0' };
+        char mgf1md[30] = { '\0' };
+
+        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST,
+                                                     oaepmd, sizeof(oaepmd));
+        params[1] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST,
+                                                     mgf1md, sizeof(mgf1md));
+        params[2] = OSSL_PARAM_construct_end();
+
+        if (!TEST_true(EVP_PKEY_CTX_get_params(key_ctx, params)))
+            goto err;
+
+        if (!TEST_str_eq(oaepmd, OSSL_DIGEST_NAME_SHA2_256)
+            || !TEST_str_eq(mgf1md, OSSL_DIGEST_NAME_SHA1))
+            goto err;
+    }
+
+    ret = 1;
+
+ err:
+    EVP_PKEY_free(key);
+    EVP_PKEY_CTX_free(key_ctx);
+
+    return ret;
+}
+
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 static int test_decrypt_null_chunks(void)
 {
@@ -4666,6 +4721,7 @@ int setup_tests(void)
     ADD_TEST(test_DSA_priv_pub);
 #endif
     ADD_TEST(test_RSA_get_set_params);
+    ADD_TEST(test_RSA_OAEP_set_get_params);
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_TEST(test_decrypt_null_chunks);
 #endif
