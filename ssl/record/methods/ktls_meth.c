@@ -511,6 +511,28 @@ static int ktls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
     return 1;
 }
 
+static int ktls_prepare_write_bio(OSSL_RECORD_LAYER *rl, int type)
+{
+    /*
+     * To prevent coalescing of control and data messages,
+     * such as in buffer_write, we flush the BIO
+     */
+    if (type != SSL3_RT_APPLICATION_DATA) {
+        int ret, i = BIO_flush(rl->bio);
+
+        if (i <= 0) {
+            if (BIO_should_retry(rl->bio))
+                ret = OSSL_RECORD_RETURN_RETRY;
+            else
+                ret = OSSL_RECORD_RETURN_FATAL;
+            return ret;
+        }
+        BIO_set_ktls_ctrl_msg(rl->bio, type);
+    }
+
+    return OSSL_RECORD_RETURN_SUCCESS;
+}
+
 static struct record_functions_st ossl_ktls_funcs = {
     ktls_set_crypto_state,
     ktls_cipher,
@@ -528,7 +550,8 @@ static struct record_functions_st ossl_ktls_funcs = {
     ktls_prepare_record_header,
     NULL,
     ktls_prepare_for_encryption,
-    ktls_post_encryption_processing
+    ktls_post_encryption_processing,
+    ktls_prepare_write_bio
 };
 
 const OSSL_RECORD_METHOD ossl_ktls_record_method = {

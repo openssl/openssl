@@ -318,5 +318,6 @@ struct record_functions_st ssl_3_0_funcs = {
     tls_prepare_record_header_default,
     NULL,
     tls_prepare_for_encryption_default,
-    tls_post_encryption_processing_default
+    tls_post_encryption_processing_default,
+    NULL
 };

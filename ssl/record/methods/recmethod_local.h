@@ -130,6 +130,13 @@ struct record_functions_st
                                       OSSL_RECORD_TEMPLATE *thistempl,
                                       WPACKET *thispkt,
                                       SSL3_RECORD *thiswr);
+
+    /*
+     * Some record layer implementations need to do some custom preparation of
+     * the BIO before we write to it. KTLS does this to prevent coalescing of
+     * control and data messages.
+     */
+    int (*prepare_write_bio)(OSSL_RECORD_LAYER *rl, int type);
 };
 
 struct ossl_record_layer_st
