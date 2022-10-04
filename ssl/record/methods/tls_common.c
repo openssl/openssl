@@ -158,27 +158,24 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
             thiswb->buf = NULL;         /* force reallocation */
         }
 
-        if (thiswb->buf == NULL) {
-            if (rl->bio == NULL || !BIO_get_ktls_send(rl->bio)) {
-                p = OPENSSL_malloc(len);
-                if (p == NULL) {
-                    if (rl->numwpipes < currpipe)
-                        rl->numwpipes = currpipe;
-                    /*
-                     * We've got a malloc failure, and we're still initialising
-                     * buffers. We assume we're so doomed that we won't even be able
-                     * to send an alert.
-                     */
-                    RLAYERfatal(rl, SSL_AD_NO_ALERT, ERR_R_CRYPTO_LIB);
-                    return 0;
-                }
-            } else {
-                p = NULL;
+        p = thiswb->buf;
+        if (p == NULL) {
+            p = OPENSSL_malloc(len);
+            if (p == NULL) {
+                if (rl->numwpipes < currpipe)
+                    rl->numwpipes = currpipe;
+                /*
+                 * We've got a malloc failure, and we're still initialising
+                 * buffers. We assume we're so doomed that we won't even be able
+                 * to send an alert.
+                 */
+                RLAYERfatal(rl, SSL_AD_NO_ALERT, ERR_R_CRYPTO_LIB);
+                return 0;
             }
-            memset(thiswb, 0, sizeof(SSL3_BUFFER));
-            thiswb->buf = p;
-            thiswb->len = len;
         }
+        memset(thiswb, 0, sizeof(SSL3_BUFFER));
+        thiswb->buf = p;
+        thiswb->len = len;
     }
 
     /* Free any previously allocated buffers that we are no longer using */
