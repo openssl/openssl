@@ -160,7 +160,8 @@ struct record_functions_st tls_any_funcs = {
     tls_prepare_record_header_default,
     NULL,
     tls_any_prepare_for_encryption,
-    tls_post_encryption_processing_default
+    tls_post_encryption_processing_default,
+    NULL
 };
 
 static int dtls_any_set_protocol_version(OSSL_RECORD_LAYER *rl, int vers)
@@ -179,6 +180,7 @@ struct record_functions_st dtls_any_funcs = {
     dtls_any_set_protocol_version,
     tls_default_read_n,
     dtls_get_more_records,
+    NULL,
     NULL,
     NULL,
     NULL,

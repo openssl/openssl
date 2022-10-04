@@ -326,5 +326,6 @@ struct record_functions_st tls_1_3_funcs = {
     tls_prepare_record_header_default,
     tls13_add_record_padding,
     tls_prepare_for_encryption_default,
-    tls_post_encryption_processing_default
+    tls_post_encryption_processing_default,
+    NULL
 };

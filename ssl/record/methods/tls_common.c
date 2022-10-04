@@ -1851,21 +1851,10 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
 
         clear_sys_error();
         if (rl->bio != NULL) {
-            /*
-             * To prevent coalescing of control and data messages,
-             * such as in buffer_write, we flush the BIO
-             */
-            if (BIO_get_ktls_send(rl->bio)
-                    && thiswb->type != SSL3_RT_APPLICATION_DATA) {
-                i = BIO_flush(rl->bio);
-                if (i <= 0) {
-                    if (BIO_should_retry(rl->bio))
-                        ret = OSSL_RECORD_RETURN_RETRY;
-                    else
-                        ret = OSSL_RECORD_RETURN_FATAL;
+            if (rl->funcs->prepare_write_bio != NULL) {
+                ret = rl->funcs->prepare_write_bio(rl, thiswb->type);
+                if (ret != OSSL_RECORD_RETURN_SUCCESS)
                     return ret;
-                }
-                BIO_set_ktls_ctrl_msg(rl->bio, thiswb->type);
             }
             i = BIO_write(rl->bio, (char *)
                           &(SSL3_BUFFER_get_buf(thiswb)
