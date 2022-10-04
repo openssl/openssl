@@ -44,13 +44,34 @@ void OSSL_sleep(uint64_t millis)
 
 void OSSL_sleep(uint64_t millis)
 {
-    Sleep(millis);
+    /*
+     * Windows' Sleep() takes a DWORD argument, which is smaller than
+     * a uint64_t, so we need to split the two to shut the compiler up.
+     */
+    DWORD dword_times = (DWORD)(millis >> sizeof(DWORD));
+    DWORD i;
+
+    for(i = dword_times; i-- > 0;)
+        Sleep((DWORD)-1);
+    /*
+     * The loop above slept 1 millisec less on each iteration than it should,
+     * this compensates by sleeping as many milliseconds as there were
+     * iterations.  Yes, this is nit picky!
+     */
+    Sleep(dword_times);
+
+    /* Now, sleep the remaining milliseconds */
+    Sleep((DWORD)(millis & (DWORD)-1));
 }
 #else
 /* Fallback to a busy wait */
 # include "internal/time.h"
 
-static void ossl_sleep_secs(uint64_t secs)
+/*
+ * This function takes unsigned int because sleep() does.  It's up to the
+ * caller not to try to pass something larger.
+ */
+static void ossl_sleep_secs(unsigned int secs)
 {
     sleep(secs);
 }
@@ -68,7 +89,7 @@ void OSSL_sleep(uint64_t millis)
 {
     uint64_t secs;
 
-    ossl_sleep_secs(millis / 1000);
+    ossl_sleep_secs((unsigned int)(millis / 1000));
     ossl_sleep_millis(millis % 1000);
 }
 #endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
