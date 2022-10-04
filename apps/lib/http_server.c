@@ -18,14 +18,14 @@
 #endif
 
 #include <ctype.h>
+#include "http_server.h"
+#include "internal/sockets.h"
 #include <openssl/err.h>
 #include <openssl/trace.h>
 #include <openssl/rand.h>
-#include "internal/sockets.h"
 #include "internal/sleep.h"
 #include "s_apps.h"
 #include "log.h"
-#include "http_server.h"
 
 #if defined(__TANDEM)
 # if defined(OPENSSL_TANDEM_FLOSS)
