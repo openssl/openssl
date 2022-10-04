@@ -54,6 +54,7 @@ typedef unsigned int u_int;
 #include <openssl/ebcdic.h>
 #endif
 #include "internal/sockets.h"
+#include "internal/sleep.h"
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(int s, int stype, int prot, unsigned char *context);

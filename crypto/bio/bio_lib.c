@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <openssl/crypto.h>
 #include "internal/numbers.h"
+#include "internal/sleep.h"
 #include "bio_local.h"
 
 /*

@@ -14,8 +14,12 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "internal/time.h"
 #include "bio_local.h"
+/*
+ * This ends up including <openssl/bio.h>, which must happen after
+ * bio_local.h is included
+ */
+#include "internal/time.h"
 #ifndef OPENSSL_NO_DGRAM
 
 # ifndef OPENSSL_NO_SCTP

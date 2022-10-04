@@ -14,6 +14,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "internal/sleep.h"
+
 #include "apps.h"
 #include "http_server.h"
 #include "s_apps.h"
