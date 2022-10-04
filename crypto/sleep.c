@@ -51,7 +51,7 @@ void OSSL_sleep(uint64_t millis)
     DWORD dword_times;
     DWORD i;
 
-    dword_times = (DWORD)(millis >> sizeof(DWORD));
+    dword_times = (DWORD)(millis >> (8 * sizeof(DWORD)));
     millis &= (DWORD)-1;
     if (dword_times > 0) {
         for (i = dword_times; i-- > 0;)
@@ -81,7 +81,7 @@ static void ossl_sleep_secs(uint64_t secs)
     unsigned int uint_times;
     unsigned int i;
 
-    uint_times = (unsigned int)(secs >> sizeof(unsigned int));
+    uint_times = (unsigned int)(secs >> (8 * sizeof(unsigned int)));
     if (uint_times > 0) {
         for (i = uint_times; i-- > 0;)
             sleep((unsigned int)-1);
