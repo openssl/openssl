@@ -501,6 +501,16 @@ static int ktls_prepare_for_encryption(OSSL_RECORD_LAYER *rl,
     return 1;
 }
 
+static int ktls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
+                                           size_t mac_size,
+                                           OSSL_RECORD_TEMPLATE *templ,
+                                           WPACKET *thispkt,
+                                           SSL3_RECORD *thiswr)
+{
+    /* The kernel does anything that is needed, so nothing to do here */
+    return 1;
+}
+
 static struct record_functions_st ossl_ktls_funcs = {
     ktls_set_crypto_state,
     ktls_cipher,
@@ -517,7 +527,8 @@ static struct record_functions_st ossl_ktls_funcs = {
     NULL,
     ktls_prepare_record_header,
     NULL,
-    ktls_prepare_for_encryption
+    ktls_prepare_for_encryption,
+    ktls_post_encryption_processing
 };
 
 const OSSL_RECORD_METHOD ossl_ktls_record_method = {

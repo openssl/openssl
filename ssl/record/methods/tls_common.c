@@ -1612,6 +1612,68 @@ int tls_prepare_for_encryption_default(OSSL_RECORD_LAYER *rl,
     return 1;
 }
 
+int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
+                                           size_t mac_size,
+                                           OSSL_RECORD_TEMPLATE *thistempl,
+                                           WPACKET *thispkt,
+                                           SSL3_RECORD *thiswr)
+{
+    size_t origlen, len;
+
+    /* Allocate bytes for the encryption overhead */
+    if (!WPACKET_get_length(thispkt, &origlen)
+            /* Encryption should never shrink the data! */
+            || origlen > thiswr->length
+            || (thiswr->length > origlen
+                && !WPACKET_allocate_bytes(thispkt,
+                                           thiswr->length - origlen,
+                                           NULL))) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (rl->use_etm && mac_size != 0) {
+        unsigned char *mac;
+
+        if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
+                || !rl->funcs->mac(rl, thiswr, mac, 1)) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+
+        SSL3_RECORD_add_length(thiswr, mac_size);
+    }
+
+    if (!WPACKET_get_length(thispkt, &len)
+            || !WPACKET_close(thispkt)) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (rl->msg_callback != NULL) {
+        unsigned char *recordstart;
+
+        recordstart = WPACKET_get_curr(thispkt) - len - SSL3_RT_HEADER_LENGTH;
+        rl->msg_callback(1, thiswr->rec_version, SSL3_RT_HEADER, recordstart,
+                         SSL3_RT_HEADER_LENGTH, rl->cbarg);
+
+        if (rl->version == TLS1_3_VERSION && rl->enc_ctx != NULL) {
+            unsigned char ctype = thistempl->type;
+
+            rl->msg_callback(1, thiswr->rec_version, SSL3_RT_INNER_CONTENT_TYPE,
+                             &ctype, 1, rl->cbarg);
+        }
+    }
+
+    if (!WPACKET_finish(thispkt)) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    SSL3_RECORD_add_length(thiswr, SSL3_RT_HEADER_LENGTH);
+
+    return 1;
+}
+
 int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                               OSSL_RECORD_TEMPLATE *templates,
                               size_t numtempl)
@@ -1620,11 +1682,9 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     SSL3_RECORD wr[SSL_MAX_PIPELINES + 1];
     WPACKET *thispkt;
     SSL3_RECORD *thiswr;
-    unsigned char *recordstart;
     int mac_size = 0, ret = 0;
-    size_t len, wpinited = 0;
+    size_t wpinited = 0;
     size_t j, prefix = 0;
-    int using_ktls;
     OSSL_RECORD_TEMPLATE prefixtempl;
     OSSL_RECORD_TEMPLATE *thistempl;
 
@@ -1645,12 +1705,6 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                                              &prefixtempl, pkt, rl->wbuf,
                                              &wpinited)) {
         /* RLAYERfatal() already called */
-        goto err;
-    }
-
-    using_ktls = BIO_get_ktls_send(rl->bio);
-    if (!ossl_assert(!using_ktls || !prefix)) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -1738,67 +1792,16 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     }
 
     for (j = 0; j < numtempl + prefix; j++) {
-        size_t origlen;
-
         thispkt = &pkt[j];
         thiswr = &wr[j];
         thistempl = (j < prefix) ? &prefixtempl : &templates[j - prefix];
 
-        if (using_ktls)
-            goto mac_done;
-
-        /* Allocate bytes for the encryption overhead */
-        if (!WPACKET_get_length(thispkt, &origlen)
-                   /* Encryption should never shrink the data! */
-                || origlen > thiswr->length
-                || (thiswr->length > origlen
-                    && !WPACKET_allocate_bytes(thispkt,
-                                               thiswr->length - origlen,
-                                               NULL))) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-        if (rl->use_etm && mac_size != 0) {
-            unsigned char *mac;
-
-            if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
-                    || !rl->funcs->mac(rl, thiswr, mac, 1)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-
-            SSL3_RECORD_add_length(thiswr, mac_size);
-        }
-
-        if (!WPACKET_get_length(thispkt, &len)
-                || !WPACKET_close(thispkt)) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        if (!rl->funcs->post_encryption_processing(rl, mac_size, thistempl,
+                                                   thispkt, thiswr)) {
+            /* RLAYERfatal() already called */
             goto err;
         }
 
-        if (rl->msg_callback) {
-            recordstart = WPACKET_get_curr(thispkt) - len
-                          - SSL3_RT_HEADER_LENGTH;
-            rl->msg_callback(1, thiswr->rec_version, SSL3_RT_HEADER, recordstart,
-                             SSL3_RT_HEADER_LENGTH, rl->cbarg);
-
-            if (rl->version == TLS1_3_VERSION && rl->enc_ctx != NULL) {
-                unsigned char ctype = thistempl->type;
-
-                rl->msg_callback(1, thiswr->rec_version, SSL3_RT_INNER_CONTENT_TYPE,
-                                 &ctype, 1, rl->cbarg);
-            }
-        }
-
-        if (!WPACKET_finish(thispkt)) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-
-        /* header is added by the kernel when using offload */
-        SSL3_RECORD_add_length(thiswr, SSL3_RT_HEADER_LENGTH);
-
- mac_done:
         /*
          * we should now have thiswr->data pointing to the encrypted data, which
          * is thiswr->length long.

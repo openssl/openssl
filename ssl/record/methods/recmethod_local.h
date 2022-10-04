@@ -120,6 +120,16 @@ struct record_functions_st
                                   size_t mac_size,
                                   WPACKET *thispkt,
                                   SSL3_RECORD *thiswr);
+
+    /*
+     * Any updates required to the record after encryption has been applied. For
+     * example, adding a MAC if using encrypt-then-mac
+     */
+    int (*post_encryption_processing)(OSSL_RECORD_LAYER *rl,
+                                      size_t mac_size,
+                                      OSSL_RECORD_TEMPLATE *thistempl,
+                                      WPACKET *thispkt,
+                                      SSL3_RECORD *thiswr);
 };
 
 struct ossl_record_layer_st
@@ -421,6 +431,11 @@ int tls_prepare_for_encryption_default(OSSL_RECORD_LAYER *rl,
                                        size_t mac_size,
                                        WPACKET *thispkt,
                                        SSL3_RECORD *thiswr);
+int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
+                                           size_t mac_size,
+                                           OSSL_RECORD_TEMPLATE *thistempl,
+                                           WPACKET *thispkt,
+                                           SSL3_RECORD *thiswr);
 int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                               OSSL_RECORD_TEMPLATE *templates,
                               size_t numtempl);
