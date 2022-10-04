@@ -48,20 +48,25 @@ void OSSL_sleep(uint64_t millis)
      * Windows' Sleep() takes a DWORD argument, which is smaller than
      * a uint64_t, so we need to split the two to shut the compiler up.
      */
-    DWORD dword_times = (DWORD)(millis >> sizeof(DWORD));
+    DWORD dword_times;
     DWORD i;
 
-    for(i = dword_times; i-- > 0;)
-        Sleep((DWORD)-1);
-    /*
-     * The loop above slept 1 millisec less on each iteration than it should,
-     * this compensates by sleeping as many milliseconds as there were
-     * iterations.  Yes, this is nit picky!
-     */
-    Sleep(dword_times);
+    dword_times = (DWORD)(millis >> sizeof(DWORD));
+    millis &= (DWORD)-1;
+    if (dword_times > 0) {
+        for (i = dword_times; i-- > 0;)
+            Sleep((DWORD)-1);
+        /*
+         * The loop above slept 1 millisec less on each iteration than it
+         * should, this compensates by sleeping as many milliseconds as there
+         * were iterations.  Yes, this is nit picky!
+         */
+        Sleep(dword_times);
+    }
 
     /* Now, sleep the remaining milliseconds */
-    Sleep((DWORD)(millis & (DWORD)-1));
+    if (millis > 0)
+        Sleep((DWORD)(millis));
 }
 #else
 /* Fallback to a busy wait */
@@ -73,17 +78,20 @@ static void ossl_sleep_secs(uint64_t secs)
      * sleep() takes an unsigned int argument, which is smaller than
      * a uint64_t, so it needs to be called in smaller increments.
      */
-    unsigned int uint_times = (unsigned int)(secs >> sizeof(unsigned int));
+    unsigned int uint_times;
     unsigned int i;
 
-    for(i = uint_times; i-- > 0;)
-        sleep((unsigned int)-1);
-    /*
-     * The loop above slept 1 second less on each iteration than it should,
-     * this compensates by sleeping as many seconds as there were iterations.
-     * Yes, this is nit picky!
-     */
-    sleep(uint_times);
+    uint_times = (unsigned int)(secs >> sizeof(unsigned int));
+    if (uint_times > 0) {
+        for (i = uint_times; i-- > 0;)
+            sleep((unsigned int)-1);
+        /*
+         * The loop above slept 1 second less on each iteration than it
+         * should, this compensates by sleeping as many seconds as there were
+         * iterations.  Yes, this is nit picky!
+         */
+        sleep(uint_times);
+    }
 }
 
 static void ossl_sleep_millis(uint64_t millis)
