@@ -6,7 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-
 #include "internal/packet.h"
 #include "internal/quic_txp.h"
 #include "internal/quic_statm.h"
@@ -75,10 +74,18 @@ struct helper {
     } frame;
     OSSL_QUIC_ACK_RANGE     ack_ranges[16];
 };
-
 static void helper_cleanup(struct helper *h)
 {
     size_t i;
+    uint32_t pn_space;
+
+    if (h->qrx_pkt.handle != NULL)
+        ossl_qrx_release_pkt(h->qrx, h->qrx_pkt.handle);
+
+    for (pn_space = QUIC_PN_SPACE_INITIAL;
+         pn_space < QUIC_PN_SPACE_NUM;
+         ++pn_space)
+        ossl_ackm_on_pkt_space_discarded(h->args.ackm, pn_space);
 
     ossl_quic_tx_packetiser_free(h->txp);
     ossl_qtx_free(h->args.qtx);
@@ -1130,6 +1137,8 @@ static int run_script(const struct script_op *script)
                 break;
             case OPK_RX_PKT:
                 ossl_quic_demux_pump(h.demux);
+                if (h.qrx_pkt.handle != NULL)
+                    ossl_qrx_release_pkt(h.qrx, h.qrx_pkt.handle);
                 if (!TEST_true(ossl_qrx_read_pkt(h.qrx, &h.qrx_pkt)))
                     goto err;
                 if (!TEST_true(PACKET_buf_init(&h.pkt,

@@ -1201,8 +1201,6 @@ int ossl_ackm_on_pkt_space_discarded(OSSL_ACKM *ackm, int pkt_space)
     OSSL_ACKM_TX_PKT *pkt, *pnext;
     uint64_t num_bytes_invalidated = 0;
 
-    assert(pkt_space < QUIC_PN_SPACE_APP);
-
     if (ackm->discarded[pkt_space])
         return 0;
 

@@ -309,6 +309,7 @@ void ossl_quic_tx_packetiser_free(OSSL_QUIC_TX_PACKETISER *txp)
     ossl_quic_fifd_cleanup(&txp->fifd);
     OPENSSL_free(txp->iovec);
     OPENSSL_free((char *)txp->conn_close_frame.reason);
+    OPENSSL_free(txp->scratch);
     OPENSSL_free(txp);
 }
 
@@ -1096,6 +1097,58 @@ static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
     }
 }
 
+struct chunk_info {
+    OSSL_QUIC_FRAME_STREAM shdr;
+    OSSL_QTX_IOVEC iov[2];
+    size_t num_stream_iovec;
+    char valid;
+};
+
+static int txp_plan_stream_chunk(OSSL_QUIC_TX_PACKETISER *txp,
+                                 struct tx_helper *h,
+                                 QUIC_SSTREAM *sstream,
+                                 QUIC_TXFC *stream_txfc,
+                                 size_t skip,
+                                 struct chunk_info *chunk)
+{
+    uint64_t fc_credit, fc_swm, fc_limit;
+
+    chunk->num_stream_iovec = OSSL_NELEM(chunk->iov);
+    chunk->valid = ossl_quic_sstream_get_stream_frame(sstream, skip,
+                                                      &chunk->shdr,
+                                                      chunk->iov,
+                                                      &chunk->num_stream_iovec);
+    if (!chunk->valid)
+        return 1;
+
+    if (!ossl_assert(chunk->shdr.len > 0 || chunk->shdr.is_fin))
+        /* Should only have 0-length chunk if FIN */
+        return 0;
+
+    /* Clamp according to connection and stream-level TXFC. */
+    fc_credit   = ossl_quic_txfc_get_credit(stream_txfc);
+    fc_swm      = ossl_quic_txfc_get_swm(stream_txfc);
+    fc_limit    = fc_swm + fc_credit;
+
+    if (chunk->shdr.len > 0 && chunk->shdr.offset + chunk->shdr.len > fc_limit) {
+        chunk->shdr.len = (fc_limit <= chunk->shdr.offset)
+            ? 0 : fc_limit - chunk->shdr.offset;
+        chunk->shdr.is_fin = 0;
+    }
+
+    if (chunk->shdr.len == 0 && !chunk->shdr.is_fin) {
+        /*
+         * Nothing to do due to TXFC. Since SSTREAM returns chunks in ascending
+         * order of offset we don't need to check any later chunks, so stop
+         * iterating here.
+         */
+        chunk->valid = 0;
+        return 1;
+    }
+
+    return 1;
+}
+
 /*
  * Returns 0 on fatal error (e.g. allocation failure), 1 on success.
  * *packet_full is set to 1 if there is no longer enough room for another STREAM
@@ -1117,10 +1170,9 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
                                       uint64_t *new_credit_consumed)
 {
     int rc = 0;
-    size_t num_stream_iovec[2];
-    OSSL_QUIC_FRAME_STREAM shdrs[2], *shdr;
-    int shdr_valid[2] = {0};
-    OSSL_QTX_IOVEC iov[2][2];
+    struct chunk_info chunks[2] = {0};
+
+    OSSL_QUIC_FRAME_STREAM *shdr;
     WPACKET *wpkt;
     QUIC_TXPIM_CHUNK chunk;
     size_t i, j, space_left;
@@ -1128,11 +1180,9 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
     int could_have_following_chunk;
     uint64_t hdr_len_implicit, payload_len_implicit;
     uint64_t hdr_len_explicit, payload_len_explicit;
-    uint64_t fc_credit, fc_swm, fc_limit, fc_new_hwm;
+    uint64_t fc_swm, fc_new_hwm;
 
-    fc_credit   = ossl_quic_txfc_get_credit(stream_txfc);
     fc_swm      = ossl_quic_txfc_get_swm(stream_txfc);
-    fc_limit    = fc_swm + fc_credit;
     fc_new_hwm  = fc_swm;
 
     /*
@@ -1142,11 +1192,10 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
      * determining when we can use an implicit length in a STREAM frame.
      */
     for (i = 0; i < 2; ++i) {
-        num_stream_iovec[i] = OSSL_NELEM(iov[i]);
-        shdr_valid[i] = ossl_quic_sstream_get_stream_frame(sstream, i, &shdrs[i],
-                                                           iov[i],
-                                                           &num_stream_iovec[i]);
-        if (i == 0 && !shdr_valid[i]) {
+        if (!txp_plan_stream_chunk(txp, h, sstream, stream_txfc, i, &chunks[i]))
+            goto err;
+
+        if (i == 0 && !chunks[i].valid) {
             /* No chunks, nothing to do. */
             *stream_drained = 1;
             rc = 1;
@@ -1163,7 +1212,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
             goto err;
         }
 
-        if (!shdr_valid[i % 2]) {
+        if (!chunks[i % 2].valid) {
             /* Out of chunks; we're done. */
             *stream_drained = 1;
             rc = 1;
@@ -1178,33 +1227,12 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
              */
             goto err;
 
-        shdr = &shdrs[i % 2];
-        if (i > 0) {
+        shdr = &chunks[i % 2].shdr;
+        if (i > 0)
             /* Load next chunk for lookahead. */
-            size_t slot = (i + 1) % 2;
-
-            num_stream_iovec[slot] = OSSL_NELEM(iov[slot]);
-            shdr_valid[slot]
-                = ossl_quic_sstream_get_stream_frame(sstream, i + 1, &shdrs[slot],
-                                                     iov[slot],
-                                                     &num_stream_iovec[slot]);
-        }
-
-        if (!ossl_assert(shdr->len > 0 || shdr->is_fin))
-            /* Should only have 0-length chunk if FIN */
-            goto err;
-
-        /* Clamp according to connection and stream-level TXFC. */
-        if (shdr->len > 0 && shdr->offset + shdr->len > fc_limit) {
-            shdr->len    = (fc_limit <= shdr->offset) ? 0 : fc_limit - shdr->offset;
-            shdr->is_fin = 0;
-        }
-
-        if (shdr->len == 0 && !shdr->is_fin) {
-            /* Nothing to do due to TXFC. */
-            rc = 1;
-            goto err;
-        }
+            if (!txp_plan_stream_chunk(txp, h, sstream, stream_txfc, i + 1,
+                                       &chunks[(i + 1) % 2]))
+                goto err;
 
         /*
          * Find best fit (header length, payload length) combination for if we
@@ -1240,7 +1268,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
          * transmission in this stream?
          */
         could_have_following_chunk
-            = (next_stream != NULL || shdr_valid[(i + 1) % 2]);
+            = (next_stream != NULL || chunks[(i + 1) % 2].valid);
 
         /* Choose between explicit or implicit length representations. */
         use_explicit_len = !((can_fill_payload || !could_have_following_chunk)
@@ -1268,8 +1296,8 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
         }
 
         /* Truncate IOVs to match our chosen length. */
-        ossl_quic_sstream_adjust_iov(shdr->len, iov[i % 2],
-                                     num_stream_iovec[i % 2]);
+        ossl_quic_sstream_adjust_iov(shdr->len, chunks[i % 2].iov,
+                                     chunks[i % 2].num_stream_iovec);
 
         /*
          * Ensure we have enough iovecs allocated (1 for the header, up to 2 for
@@ -1296,9 +1324,9 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
             goto err; /* alloc error */
 
         /* Add payload iovecs to the helper (infallible). */
-        for (j = 0; j < num_stream_iovec[i % 2]; ++j)
-            tx_helper_append_iovec(h, iov[i % 2][j].buf,
-                                   iov[i % 2][j].buf_len);
+        for (j = 0; j < chunks[i % 2].num_stream_iovec; ++j)
+            tx_helper_append_iovec(h, chunks[i % 2].iov[j].buf,
+                                   chunks[i % 2].iov[j].buf_len);
 
         *have_ack_eliciting = 1;
         tx_helper_unrestrict(h); /* no longer need PING */
@@ -1321,7 +1349,6 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
     }
 
 err:
-    assert(fc_new_hwm - fc_swm <= fc_credit);
     *new_credit_consumed = fc_new_hwm - fc_swm;
     return rc;
 }
