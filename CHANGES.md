@@ -10,7 +10,7 @@ pick the appropriate release branch.
 OpenSSL Releases
 ----------------
 
- - [OpenSSL 3.1](#openssl-31)
+ - [OpenSSL 3.2](#openssl-32)
  - [OpenSSL 3.0](#openssl-30)
  - [OpenSSL 1.1.1](#openssl-111)
  - [OpenSSL 1.1.0](#openssl-110)
@@ -19,10 +19,10 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 3.1
+OpenSSL 3.2
 -----------
 
-### Changes between 3.0 and 3.1 [xx XXX xxxx]
+### Changes between 3.0 and 3.2 [xx XXX xxxx]
 
  * Add the ability to add custom attributes to PKCS12 files. Add a new API
    PKCS12_create_ex2, identical to the existing PKCS12_create_ex but allows
@@ -136,13 +136,13 @@ OpenSSL 3.1
  * The functions `OPENSSL_LH_stats`, `OPENSSL_LH_node_stats`,
    `OPENSSL_LH_node_usage_stats`, `OPENSSL_LH_stats_bio`,
    `OPENSSL_LH_node_stats_bio` and `OPENSSL_LH_node_usage_stats_bio` are now
-   marked deprecated from OpenSSL 3.1 onwards and can be disabled by defining
-   `OPENSSL_NO_DEPRECATED_3_1`.
+   marked deprecated from OpenSSL 3.2 onwards and can be disabled by defining
+   `OPENSSL_NO_DEPRECATED_3_2`.
 
    The macro `DEFINE_LHASH_OF` is now deprecated in favour of the macro
    `DEFINE_LHASH_OF_EX`, which omits the corresponding type-specific function
    definitions for these functions regardless of whether
-   `OPENSSL_NO_DEPRECATED_3_1` is defined.
+   `OPENSSL_NO_DEPRECATED_3_2` is defined.
 
    Users of `DEFINE_LHASH_OF` may start receiving deprecation warnings for these
    functions regardless of whether they are using them. It is recommended that

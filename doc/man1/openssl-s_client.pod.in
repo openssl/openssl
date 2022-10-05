@@ -781,8 +781,8 @@ deprecated.
 =item B<-ktls>
 
 Enable Kernel TLS for sending and receiving.
-This option was introduced in OpenSSL 3.1.0.
-Kernel TLS is off by default as of OpenSSL 3.1.0.
+This option was introduced in OpenSSL 3.2.0.
+Kernel TLS is off by default as of OpenSSL 3.2.0.
 
 =item B<-tfo>
 
@@ -930,7 +930,7 @@ The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
-The -tfo option was added in OpenSSL 3.1.
+The -tfo option was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

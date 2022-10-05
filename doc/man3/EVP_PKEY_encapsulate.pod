@@ -97,7 +97,7 @@ L<EVP_KEM-RSA(7)>, L<EVP_KEM-X25519(7)>, L<EVP_KEM-EC(7)>
 
 These functions EVP_PKEY_encapsulate_init() and EVP_PKEY_encapsulate() were
 added in OpenSSL 3.0.
-The function EVP_PKEY_auth_encapsulate_init() was added in OpenSSL 3.1.
+The function EVP_PKEY_auth_encapsulate_init() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

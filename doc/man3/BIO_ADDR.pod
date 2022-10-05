@@ -121,7 +121,7 @@ L<BIO_connect(3)>, L<BIO_s_connect(3)>
 
 =head1 HISTORY
 
-BIO_ADDR_dup() was added in OpenSSL 3.1.
+BIO_ADDR_dup() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

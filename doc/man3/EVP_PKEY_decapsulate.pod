@@ -95,7 +95,7 @@ L<EVP_KEM-RSA(7)>, L<EVP_KEM-X25519(7)>, L<EVP_KEM-EC(7)>
 The functions EVP_PKEY_decapsulate_init() and EVP_PKEY_decapsulate() were added
 in OpenSSL 3.0.
 
-The function EVP_PKEY_auth_decapsulate_init() was added in OpenSSL 3.1.
+The function EVP_PKEY_auth_decapsulate_init() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

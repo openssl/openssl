@@ -187,7 +187,7 @@ L<OSSL_TIME(3)>
 
 =head1 HISTORY
 
-This functionality was added to OpenSSL 3.1.
+This functionality was added to OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

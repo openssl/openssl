@@ -52,7 +52,7 @@ L<ERR_get_error(3)>, L<CMS_EncryptedData_encrypt(3)>, L<CMS_decrypt(3)>
 
 =head1 HISTORY
 
-CMS_EnvelopedData_decrypt() was added in OpenSSL 3.1.
+CMS_EnvelopedData_decrypt() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

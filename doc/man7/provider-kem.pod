@@ -220,7 +220,7 @@ L<provider(7)>
 The provider KEM interface was introduced in OpenSSL 3.0.
 
 OSSL_FUNC_kem_auth_encapsulate_init() and OSSL_FUNC_kem_auth_decapsulate_init()
-were added in OpenSSL 3.1.
+were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
