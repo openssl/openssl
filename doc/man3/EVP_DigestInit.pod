@@ -772,7 +772,7 @@ EVP_MD_CTX_get0_md() instead.
 EVP_MD_CTX_update_fn() and EVP_MD_CTX_set_update_fn() were deprecated
 in OpenSSL 3.0.
 
-EVP_MD_CTX_dup() was added in OpenSSL 3.1.
+EVP_MD_CTX_dup() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

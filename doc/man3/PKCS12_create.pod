@@ -107,7 +107,7 @@ L<passphrase-encoding(7)>
 =head1 HISTORY
 
 PKCS12_create_ex() was added in OpenSSL 3.0.
-PKCS12_create_ex2() was added in OpenSSL 3.1.
+PKCS12_create_ex2() was added in OpenSSL 3.2.
 
 The defaults for encryption algorithms, MAC algorithm, and the MAC key
 derivation iteration count were changed in OpenSSL 3.0 to more modern

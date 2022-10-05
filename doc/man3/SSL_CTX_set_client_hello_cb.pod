@@ -138,7 +138,7 @@ SSL_client_hello_get0_ciphers(), SSL_client_hello_get0_compression_methods(),
 SSL_client_hello_get0_ext(), and SSL_client_hello_get1_extensions_present()
 were added in OpenSSL 1.1.1.
 SSL_client_hello_get_extension_order()
-was added in OpenSSL 3.1.0.
+was added in OpenSSL 3.2.0.
 
 =head1 COPYRIGHT
 

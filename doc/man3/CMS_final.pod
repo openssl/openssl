@@ -47,7 +47,7 @@ L<CMS_encrypt(3)>
 
 =head1 HISTORY
 
-CMS_final_digest() was added in OpenSSL 3.1.
+CMS_final_digest() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
