@@ -61,7 +61,8 @@ DEFINE_LHASH_OF_EX(OSSL_ACKM_TX_PKT);
 
 static unsigned long tx_pkt_info_hash(const OSSL_ACKM_TX_PKT *pkt)
 {
-    return pkt->pkt_num;
+    /* Using low bits of the packet number as the hash should be enough */
+    return (unsigned long)pkt->pkt_num;
 }
 
 static int tx_pkt_info_compare(const OSSL_ACKM_TX_PKT *a,
@@ -843,8 +844,9 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
                                       ossl_ticks2time(K_GRANULARITY)));
 
     duration
-        = ossl_time_multiply(duration, 1U << min_u32(ackm->pto_count,
-                                                     MAX_PTO_COUNT));
+        = ossl_time_multiply(duration,
+                             (uint64_t)1 << min_u32(ackm->pto_count,
+                                                    MAX_PTO_COUNT));
 
     /* Anti-deadlock PTO starts from the current time. */
     if (ackm_ack_eliciting_bytes_in_flight(ackm) == 0) {
@@ -866,12 +868,15 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
                 break;
 
             /* Include max_ack_delay and backoff for app data. */
-            if (!ossl_time_is_infinite(rtt.max_ack_delay))
+            if (!ossl_time_is_infinite(rtt.max_ack_delay)) {
+                uint64_t factor
+                    = (uint64_t)1 << min_u32(ackm->pto_count, MAX_PTO_COUNT);
+
                 duration
                     = ossl_time_add(duration,
                                     ossl_time_multiply(rtt.max_ack_delay,
-                                                       1U << min_u32(ackm->pto_count,
-                                                                     MAX_PTO_COUNT)));
+                                                       factor));
+            }
         }
 
         t = ossl_time_add(ackm->time_of_last_ack_eliciting_pkt[i], duration);
