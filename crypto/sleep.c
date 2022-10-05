@@ -65,8 +65,7 @@ void OSSL_sleep(uint64_t millis)
     }
 
     /* Now, sleep the remaining milliseconds */
-    if (millis > 0)
-        Sleep((DWORD)(millis));
+    Sleep((DWORD)(millis));
 }
 #else
 /* Fallback to a busy wait */
