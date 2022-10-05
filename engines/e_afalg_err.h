@@ -34,5 +34,6 @@
 # define AFALG_R_SOCKET_CREATE_FAILED                     109
 # define AFALG_R_SOCKET_OPERATION_FAILED                  104
 # define AFALG_R_SOCKET_SET_KEY_FAILED                    106
+# define AFALG_R_KERNEL_OP_FAILED                         112
 
 #endif

@@ -79,7 +79,6 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_OSSL_ENCODER, 0, 0), "ENCODER routines"},
     {ERR_PACK(ERR_LIB_OSSL_DECODER, 0, 0), "DECODER routines"},
     {ERR_PACK(ERR_LIB_HTTP, 0, 0), "HTTP routines"},
-    {ERR_PACK(ERR_LIB_AF_ALG, 0, 0), "AF_ALG routines"},
     {0, NULL},
 };
 

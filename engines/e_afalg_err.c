@@ -30,6 +30,7 @@ static ERR_STRING_DATA AFALG_str_reasons[] = {
     {ERR_PACK(0, 0, AFALG_R_SOCKET_OPERATION_FAILED),
     "socket operation failed"},
     {ERR_PACK(0, 0, AFALG_R_SOCKET_SET_KEY_FAILED), "socket set key failed"},
+    {ERR_PACK(0, 0, AFALG_R_KERNEL_OP_FAILED), "kernel operation failed"},
     {0, NULL}
 };
 
