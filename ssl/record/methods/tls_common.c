@@ -322,8 +322,13 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
      * the buffer).
      */
     if (rl->isdtls) {
-        if (left == 0 && extend)
-            return 0;
+        if (left == 0 && extend) {
+            /*
+             * We received a record with a header but no body data. This will
+             * get dumped.
+             */
+            return OSSL_RECORD_RETURN_NON_FATAL_ERR;
+        }
         if (left > 0 && n > left)
             n = left;
     }
