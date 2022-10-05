@@ -23,7 +23,7 @@ OSSL_sleep() does not return any value.
 
 =head1 HISTORY
 
-OSSL_sleep() was added in OpenSSL 3.1.
+OSSL_sleep() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
