@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_RECORD_TEST_UTIL
+#ifndef OSSL_RECORD_TEST_UTIL_H
 # define OSSL_RECORD_TEST_UTIL_H
 
 static int cmp_pkt_hdr(const QUIC_PKT_HDR *a, const QUIC_PKT_HDR *b,
