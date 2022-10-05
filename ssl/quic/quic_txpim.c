@@ -127,6 +127,7 @@ QUIC_TXPIM_PKT *ossl_quic_txpim_pkt_alloc(QUIC_TXPIM *txpim)
     txpim_clear(ex);
     list_remove(&txpim->free_list, ex);
     ++txpim->in_use;
+    fprintf(stderr, "# alloc pkt, now %lu\n", txpim->in_use);
     return &ex->public;
 }
 
@@ -137,6 +138,7 @@ void ossl_quic_txpim_pkt_release(QUIC_TXPIM *txpim, QUIC_TXPIM_PKT *fpkt)
     assert(txpim->in_use > 0);
     --txpim->in_use;
     list_insert_tail(&txpim->free_list, ex);
+    fprintf(stderr, "# release pkt, now %lu\n", txpim->in_use);
 }
 
 void ossl_quic_txpim_pkt_add_cfq_item(QUIC_TXPIM_PKT *fpkt,

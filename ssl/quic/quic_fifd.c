@@ -236,7 +236,7 @@ int ossl_quic_fifd_pkt_commit(QUIC_FIFD *fifd, QUIC_TXPIM_PKT *pkt)
             return 0;
 
         if (chunks[i].has_fin)
-            if (!ossl_quic_sstream_mark_transmitted_fin(sstream, chunks[i].end))
+            if (!ossl_quic_sstream_mark_transmitted_fin(sstream, chunks[i].end + 1))
                 return 0;
     }
 

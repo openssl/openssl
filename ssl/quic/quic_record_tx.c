@@ -143,6 +143,7 @@ void ossl_qtx_free(OSSL_QTX *qtx)
     for (i = 0; i < QUIC_ENC_LEVEL_NUM; ++i)
         ossl_qrl_enc_level_set_discard(&qtx->el_set, i);
 
+    BIO_free(qtx->bio);
     OPENSSL_free(qtx);
 }
 

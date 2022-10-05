@@ -48,7 +48,9 @@ typedef struct quic_txpim_chunk_st {
     uint64_t        stream_id;
     /*
      * The inclusive range of bytes in the stream. Exceptionally, if end <
-     * start, designates a frame of zero length (used for FIN-only frames).
+     * start, designates a frame of zero length (used for FIN-only frames). In
+     * this case end is the number of the final byte (i.e., one less than the
+     * final size of the stream).
      */
     uint64_t        start, end;
     /*
