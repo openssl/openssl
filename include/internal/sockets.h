@@ -66,10 +66,10 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   define SHUT_RD SD_RECEIVE
 #  endif
 #  ifndef SHUT_WR
-#   define SHUT_RD SD_SEND
+#   define SHUT_WR SD_SEND
 #  endif
 #  ifndef SHUT_RDWR
-#   define SHUT_RD SD_BOTH
+#   define SHUT_RDWR SD_BOTH
 #  endif
 
 # else
