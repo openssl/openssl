@@ -22,9 +22,9 @@ jobs:
           - windows-2022
         platform:
           - arch: win64
-            config: enable-fips
+            config: enable-fips enable-quic
           - arch: win32
-            config: --strict-warnings no-fips
+            config: --strict-warnings no-fips enable-quic
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v2
