@@ -101,8 +101,7 @@ static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
      * the other encoders are looked up.  |data->flag_find_same_provider|
      * tells us which pass we're in.
      */
-    if ((data->keymgmt_prov == prov) == data->flag_find_same_provider)
-    {
+    if ((data->keymgmt_prov == prov) == data->flag_find_same_provider) {
         void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
         size_t i, end_i = sk_OPENSSL_CSTRING_num(data->names);
         int match;
