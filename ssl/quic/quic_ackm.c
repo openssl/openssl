@@ -61,7 +61,8 @@ DEFINE_LHASH_OF_EX(OSSL_ACKM_TX_PKT);
 
 static unsigned long tx_pkt_info_hash(const OSSL_ACKM_TX_PKT *pkt)
 {
-    return pkt->pkt_num;
+    /* We assume that unsigned long is 64 bits */
+    return (unsigned long)pkt->pkt_num;
 }
 
 static int tx_pkt_info_compare(const OSSL_ACKM_TX_PKT *a,
@@ -843,8 +844,8 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
                                       ossl_ticks2time(K_GRANULARITY)));
 
     duration
-        = ossl_time_multiply(duration, 1U << min_u32(ackm->pto_count,
-                                                     MAX_PTO_COUNT));
+        = ossl_time_multiply(duration, 1UL << min_u32(ackm->pto_count,
+                                                      MAX_PTO_COUNT));
 
     /* Anti-deadlock PTO starts from the current time. */
     if (ackm_ack_eliciting_bytes_in_flight(ackm) == 0) {
@@ -870,8 +871,8 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
                 duration
                     = ossl_time_add(duration,
                                     ossl_time_multiply(rtt.max_ack_delay,
-                                                       1U << min_u32(ackm->pto_count,
-                                                                     MAX_PTO_COUNT)));
+                                                       1UL << min_u32(ackm->pto_count,
+                                                                      MAX_PTO_COUNT)));
         }
 
         t = ossl_time_add(ackm->time_of_last_ack_eliciting_pkt[i], duration);
