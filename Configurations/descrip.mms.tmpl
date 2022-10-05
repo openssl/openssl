@@ -1324,14 +1324,15 @@ EOF
                 (map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
                        "\@ WRITE OPT_FILE \"$x" } @objs),
                 (map { my $x = ($_->{lib} =~ /\[/) ? $_->{lib} : "[]".$_->{lib};
-                       # Special hack to include the MAIN object
-                       # module explicitly.  This will only be done
-                       # if there isn't a 'main' in the program's
-                       # object modules already.
-                       my $main = $_->{attrs}->{has_main}
-                           ? '/INCLUDE=main' : '';
-                       ( "\@ IF nomain THEN WRITE OPT_FILE \"$x/LIB$main",
-                         "\@ IF .NOT. nomain THEN WRITE OPT_FILE \"$x/LIB" ) }
+                       # Special hack to include the MAIN object module
+                       # explicitly, if it's known that there is one.
+                       # |incmain| is defined in the rule generation further
+                       # down, with the necessary /INCLUDE=main option unless
+                       # the program has been determined to have a main function
+                       # already.
+                       $_->{attrs}->{has_main}
+                       ? "\@ WRITE OPT_FILE \"$x/LIB''incmain'"
+                       : "\@ WRITE OPT_FILE \"$x/LIB" }
                  grep { $_->{lib} =~ m|\.OLB$| }
                  @deps))
           ."\"";
@@ -1363,6 +1364,8 @@ EOF
       return <<"EOF"
 $bin : $deps
         $analyse_objs
+        @ incmain = "/INCLUDE=main"
+        @ IF .NOT. nomain THEN incmain = ""
         @ OPEN/WRITE/SHARE=READ OPT_FILE $binname.OPT
         $write_opt1
         $write_opt2
