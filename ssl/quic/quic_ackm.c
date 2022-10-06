@@ -868,7 +868,7 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
                 break;
 
             /* Include max_ack_delay and backoff for app data. */
-            if (!ossl_time_is_infinite(rtt.max_ack_delay))
+            if (!ossl_time_is_infinite(rtt.max_ack_delay)) {
                 uint64_t factor
                     = (uint64_t)1 << min_u32(ackm->pto_count, MAX_PTO_COUNT);
 
@@ -876,6 +876,7 @@ static OSSL_TIME ackm_get_pto_time_and_space(OSSL_ACKM *ackm, int *space)
                     = ossl_time_add(duration,
                                     ossl_time_multiply(rtt.max_ack_delay,
                                                        factor));
+            }
         }
 
         t = ossl_time_add(ackm->time_of_last_ack_eliciting_pkt[i], duration);
