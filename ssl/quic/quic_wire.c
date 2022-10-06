@@ -47,7 +47,7 @@ int ossl_quic_wire_encode_frame_ack(WPACKET *pkt,
                                            : OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN;
 
     uint64_t largest_ackd, first_ack_range, ack_delay_enc;
-    size_t i, num_ack_ranges = ack->num_ack_ranges;
+    uint64_t i, num_ack_ranges = ack->num_ack_ranges;
     OSSL_TIME delay;
 
     if (num_ack_ranges == 0)

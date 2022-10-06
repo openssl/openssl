@@ -201,8 +201,10 @@ static int depack_do_frame_ack(PACKET *pkt, QUIC_CONNECTION *connection,
     int ok = 1;          /* Assume the best */
 
     if (!ossl_quic_wire_peek_frame_ack_num_ranges(pkt, &total_ranges)
+        /* In case sizeof(uint64_t) > sizeof(size_t) */
+        || total_ranges > SIZE_MAX / sizeof(ack_ranges[0])
         || (ack_ranges = OPENSSL_zalloc(sizeof(ack_ranges[0])
-                                        * total_ranges)) == NULL)
+                                        * (size_t)total_ranges)) == NULL)
         return 0;
 
     ack.ack_ranges = ack_ranges;
