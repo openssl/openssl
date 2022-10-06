@@ -1624,12 +1624,12 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
 
     /* Allocate bytes for the encryption overhead */
     if (!WPACKET_get_length(thispkt, &origlen)
-                /* Encryption should never shrink the data! */
+            /* Encryption should never shrink the data! */
             || origlen > thiswr->length
             || (thiswr->length > origlen
                 && !WPACKET_allocate_bytes(thispkt,
-                                            thiswr->length - origlen,
-                                            NULL))) {
+                                           thiswr->length - origlen,
+                                           NULL))) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
