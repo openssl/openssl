@@ -563,7 +563,7 @@ int ossl_quic_wire_decode_frame_new_token(PACKET               *pkt,
     *token      = PACKET_data(pkt);
     *token_len  = (size_t)token_len_;
 
-    if (!PACKET_forward(pkt, token_len_))
+    if (!PACKET_forward(pkt, (size_t)token_len_))
         return 0;
 
     return 1;
@@ -760,7 +760,7 @@ int ossl_quic_wire_decode_frame_conn_close(PACKET *pkt,
                           (size_t)reason_len))
         return 0;
 
-    f->reason_len = reason_len;
+    f->reason_len = (size_t)reason_len;
     return 1;
 }
 
