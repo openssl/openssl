@@ -52,8 +52,8 @@ NEW_TOKEN                     GCR
 CRYPTO                        GCR/*q
 
 ============================          ]  priority group, repeats per stream
-RESET_STREAM                  GCR*    ]
-STOP_SENDING                  GCR*    ]
+RESET_STREAM                  REGEN   ]
+STOP_SENDING                  REGEN   ]
 ----------------------------          ]
 MAX_STREAM_DATA               REGEN   ]
 STREAM_DATA_BLOCKED           REGEN   ]
@@ -76,10 +76,6 @@ retransmission in the event of loss:
     with each queue entry being an octet string representing an encoded frame.
     This queue can also be used for initial transmission of **GCR** frames, not
     just retransmissions.
-
-  - **GCR\***: The `RESET_STREAM` and `STOP_SENDING` frames could use `GCR` but
-    as an optimisation they do not need to be transmitted if the stream has
-    already reached a terminal state by the time these need to be retransmitted.
 
   - **REGEN** (Regenerate): These frames can be marked for dynamic regeneration
     when a packet containing them is lost. This has the advantage of using
@@ -226,7 +222,7 @@ void ossl_quic_cfq_free(QUIC_CFQ *cfq);
  * free_cb_arg is an opaque value passed to free_cb.
  *
  * priority determines the relative ordering of control frames in a packet.
- * Lower numerical values for priority mean that a frame should come earlier in
+ * Higher numerical values for priority mean that a frame should come earlier in
  * a packet. pn_space is a QUIC_PN_SPACE_* value.
  *
  * On success, returns a QUIC_CFQ_ITEM pointer which acts as a handle to
