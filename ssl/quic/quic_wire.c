@@ -54,7 +54,7 @@ int ossl_quic_wire_encode_frame_ack(WPACKET *pkt,
         return 0;
 
     delay = ossl_time_divide(ossl_time_divide(ack->delay_time, OSSL_TIME_US),
-                             1UL << ack_delay_exponent);
+                             (uint64_t)1 << ack_delay_exponent);
     ack_delay_enc   = ossl_time2ticks(delay);
 
     largest_ackd    = ack->ack_ranges[0].end;
@@ -127,11 +127,12 @@ void *ossl_quic_wire_encode_frame_crypto(WPACKET *pkt,
     unsigned char *p = NULL;
 
     if (!ossl_quic_wire_encode_frame_crypto_hdr(pkt, f)
-            || !WPACKET_allocate_bytes(pkt, f->len, &p))
+            || f->len > SIZE_MAX /* sizeof(uint64_t) > sizeof(size_t)? */
+            || !WPACKET_allocate_bytes(pkt, (size_t)f->len, &p))
         return NULL;
 
     if (f->data != NULL)
-        memcpy(p, f->data, f->len);
+        memcpy(p, f->data, (size_t)f->len);
 
     return p;
 }
@@ -179,14 +180,15 @@ void *ossl_quic_wire_encode_frame_stream(WPACKET *pkt,
 
     unsigned char *p = NULL;
 
-    if (!ossl_quic_wire_encode_frame_stream_hdr(pkt, f))
+    if (!ossl_quic_wire_encode_frame_stream_hdr(pkt, f)
+            || f->len > SIZE_MAX /* sizeof(uint64_t) > sizeof(size_t)? */)
         return NULL;
 
-    if (!WPACKET_allocate_bytes(pkt, f->len, &p))
+    if (!WPACKET_allocate_bytes(pkt, (size_t)f->len, &p))
         return NULL;
 
     if (f->data != NULL)
-        memcpy(p, f->data, f->len);
+        memcpy(p, f->data, (size_t)f->len);
 
     return p;
 }
@@ -447,7 +449,7 @@ int ossl_quic_wire_decode_frame_ack(PACKET *pkt,
         ack->delay_time
             = ossl_time_multiply(ossl_ticks2time(OSSL_TIME_US),
                                  safe_mul_uint64_t(ack_delay_raw,
-                                                   1UL << ack_delay_exponent,
+                                                   (uint64_t)1 << ack_delay_exponent,
                                                    &err));
         if (err)
             ack->delay_time = ossl_time_infinite();
@@ -530,7 +532,8 @@ int ossl_quic_wire_decode_frame_crypto(PACKET *pkt,
 {
     if (!expect_frame_header(pkt, OSSL_QUIC_FRAME_TYPE_CRYPTO)
             || !PACKET_get_quic_vlint(pkt, &f->offset)
-            || !PACKET_get_quic_vlint(pkt, &f->len))
+            || !PACKET_get_quic_vlint(pkt, &f->len)
+            || f->len > SIZE_MAX /* sizeof(uint64_t) > sizeof(size_t)? */)
         return 0;
 
     if (PACKET_remaining(pkt) < f->len)
@@ -538,7 +541,7 @@ int ossl_quic_wire_decode_frame_crypto(PACKET *pkt,
 
     f->data = PACKET_data(pkt);
 
-    if (!PACKET_forward(pkt, f->len))
+    if (!PACKET_forward(pkt, (size_t)f->len))
         return 0;
 
     return 1;
@@ -558,7 +561,7 @@ int ossl_quic_wire_decode_frame_new_token(PACKET               *pkt,
         return 0;
 
     *token      = PACKET_data(pkt);
-    *token_len  = token_len_;
+    *token_len  = (size_t)token_len_;
 
     if (!PACKET_forward(pkt, token_len_))
         return 0;
@@ -597,7 +600,8 @@ int ossl_quic_wire_decode_frame_stream(PACKET *pkt,
 
     f->data = PACKET_data(pkt);
 
-    if (!PACKET_forward(pkt, f->len))
+    if (f->len > SIZE_MAX /* sizeof(uint64_t) > sizeof(size_t)? */
+        || !PACKET_forward(pkt, (size_t)f->len))
         return 0;
 
     return 1;
@@ -752,7 +756,8 @@ int ossl_quic_wire_decode_frame_conn_close(PACKET *pkt,
             || reason_len > SIZE_MAX)
         return 0;
 
-    if (!PACKET_get_bytes(pkt, (const unsigned char **)&f->reason, reason_len))
+    if (!PACKET_get_bytes(pkt, (const unsigned char **)&f->reason,
+                          (size_t)reason_len))
         return 0;
 
     f->reason_len = reason_len;
