@@ -629,7 +629,7 @@ int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
         return -1;
     }
     s->rwstate = SSL_NOTHING;
-    i = do_dtls1_write(s, type, buf, len, 0, written);
+    i = do_dtls1_write(s, type, buf, len, written);
     return i;
 }
 
@@ -714,7 +714,7 @@ static int ssl3_write_pending(SSL_CONNECTION *s, int type,
 }
 
 int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
-                   size_t len, int create_empty_fragment, size_t *written)
+                   size_t len, size_t *written)
 {
     unsigned char *p, *pseq;
     int i, mac_size, clear = 0;
@@ -744,7 +744,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
         /* if it went, fall through and send more stuff */
     }
 
-    if (len == 0 && !create_empty_fragment)
+    if (len == 0)
         return 0;
 
     if (len > ssl_get_max_send_fragment(sc)) {
@@ -898,15 +898,6 @@ int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
     SSL3_RECORD_add_length(&wr, DTLS1_RT_HEADER_LENGTH);
 
     ssl3_record_sequence_update(&(sc->rlayer.write_sequence[0]));
-
-    if (create_empty_fragment) {
-        /*
-         * we are in a recursive call; just return the length, don't write
-         * out anything here
-         */
-        *written = wr.length;
-        return 1;
-    }
 
     /* now let's set up wb */
     SSL3_BUFFER_set_left(wb, prefix_len + SSL3_RECORD_get_length(&wr));
