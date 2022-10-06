@@ -713,8 +713,8 @@ static int ssl3_write_pending(OSSL_RECORD_LAYER *rl, int type,
         || (!(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)
             && (s->rlayer.wpend_buf != buf))
         || (s->rlayer.wpend_type != type)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_WRITE_RETRY);
-        return -1;
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_WRITE_RETRY);
+        return OSSL_RECORD_RETURN_FATAL;
     }
 
     for (;;) {
@@ -722,16 +722,6 @@ static int ssl3_write_pending(OSSL_RECORD_LAYER *rl, int type,
         if (s->wbio != NULL) {
             s->rwstate = SSL_WRITING;
 
-            /*
-             * To prevent coalescing of control and data messages,
-             * such as in buffer_write, we flush the BIO
-             */
-            if (BIO_get_ktls_send(s->wbio) && type != SSL3_RT_APPLICATION_DATA) {
-                i = BIO_flush(s->wbio);
-                if (i <= 0)
-                    return i;
-                BIO_set_ktls_ctrl_msg(s->wbio, type);
-            }
             i = BIO_write(s->wbio, (char *)
                           &(SSL3_BUFFER_get_buf(&wb[currbuf])
                             [SSL3_BUFFER_get_offset(&wb[currbuf])]),
@@ -739,7 +729,7 @@ static int ssl3_write_pending(OSSL_RECORD_LAYER *rl, int type,
             if (i >= 0)
                 tmpwrit = i;
         } else {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BIO_NOT_SET);
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_BIO_NOT_SET);
             i = -1;
         }
 
@@ -755,7 +745,7 @@ static int ssl3_write_pending(OSSL_RECORD_LAYER *rl, int type,
             SSL3_BUFFER_add_offset(&wb[currbuf], tmpwrit);
             s->rwstate = SSL_NOTHING;
             *written = s->rlayer.wpend_ret;
-            return 1;
+            return OSSL_RECORD_RETURN_SUCCESS;
         } else if (i <= 0) {
             if (SSL_CONNECTION_IS_DTLS(s)) {
                 /*
@@ -764,7 +754,11 @@ static int ssl3_write_pending(OSSL_RECORD_LAYER *rl, int type,
                  */
                 SSL3_BUFFER_set_left(&wb[currbuf], 0);
             }
-            return i;
+
+            if (BIO_should_retry(s->wbio))
+                return OSSL_RECORD_RETURN_RETRY;
+
+            return OSSL_RECORD_RETURN_FATAL;
         }
         SSL3_BUFFER_add_offset(&wb[currbuf], tmpwrit);
         SSL3_BUFFER_sub_left(&wb[currbuf], tmpwrit);
@@ -798,21 +792,21 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl,
     else {
         mac_size = EVP_MD_CTX_get_size(sc->write_hash);
         if (mac_size < 0) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR,
-                     SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
-            return -1;
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
+                        SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
+            return OSSL_RECORD_RETURN_FATAL;
         }
     }
 
     if (numtempl != 1) {
         /* Should not happen */
-        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return -1;
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return OSSL_RECORD_RETURN_FATAL;
     }
 
     if (!rl->funcs->allocate_write_buffers(rl, templates, numtempl, NULL)) {
         /* RLAYERfatal() already called */
-        return -1;
+        return OSSL_RECORD_RETURN_FATAL;
     }
 
     wb = rl->wbuf;
@@ -835,8 +829,8 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl,
         if (mode == EVP_CIPH_CBC_MODE) {
             eivlen = EVP_CIPHER_CTX_get_iv_length(sc->enc_write_ctx);
             if (eivlen < 0) {
-                SSLfatal(sc, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
-                return -1;
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
+                return OSSL_RECORD_RETURN_FATAL;
             }
             if (eivlen <= 1)
                 eivlen = 0;
@@ -863,8 +857,8 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl,
     /* first we compress */
     if (sc->compress != NULL) {
         if (!ssl3_do_compress(sc, &wr)) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
-            return -1;
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
+            return OSSL_RECORD_RETURN_FATAL;
         }
     } else {
         memcpy(SSL3_RECORD_get_data(&wr), SSL3_RECORD_get_input(&wr),
@@ -882,8 +876,8 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl,
         if (!s->method->ssl3_enc->mac(sc, &wr,
                                       &(p[SSL3_RECORD_get_length(&wr) + eivlen]),
                                       1)) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return -1;
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
         }
         SSL3_RECORD_add_length(&wr, mac_size);
     }
@@ -897,16 +891,16 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl,
 
     if (s->method->ssl3_enc->enc(sc, &wr, 1, 1, NULL, mac_size) < 1) {
         if (!ossl_statem_in_error(sc)) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         }
-        return -1;
+        return OSSL_RECORD_RETURN_FATAL;
     }
 
     if (SSL_WRITE_ETM(sc) && mac_size != 0) {
         if (!s->method->ssl3_enc->mac(sc, &wr,
                                       &(p[SSL3_RECORD_get_length(&wr)]), 1)) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return -1;
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
         }
         SSL3_RECORD_add_length(&wr, mac_size);
     }

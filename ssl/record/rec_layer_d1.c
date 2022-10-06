@@ -684,7 +684,8 @@ int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
     tmpl.buf = buf;
     tmpl.buflen = len;
 
-    ret = sc->rlayer.wrlmethod->write_records(sc->rlayer.wrl, &tmpl, 1);
+    ret = HANDLE_RLAYER_WRITE_RETURN(sc,
+              sc->rlayer.wrlmethod->write_records(sc->rlayer.wrl, &tmpl, 1));
 
     if (ret > 0)
         *written = (int)len;
