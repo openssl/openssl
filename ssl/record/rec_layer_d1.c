@@ -713,44 +713,17 @@ static int ssl3_write_pending(SSL_CONNECTION *s, int type,
     }
 }
 
-int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
-                   size_t len, size_t *written)
+static int dtls_write_records(SSL_CONNECTION *sc, OSSL_RECORD_TEMPLATE *tmpl,
+                              size_t numtmpl)
 {
     unsigned char *p, *pseq;
-    int i, mac_size, clear = 0;
-    size_t prefix_len = 0;
+    int mac_size, clear = 0;
+    size_t prefix_len = 0, written;
     int eivlen;
     SSL3_RECORD wr;
-    SSL3_BUFFER *wb;
+    SSL3_BUFFER *wb = sc->rlayer.wbuf;
     SSL_SESSION *sess;
     SSL *s = SSL_CONNECTION_GET_SSL(sc);
-
-    wb = &sc->rlayer.wbuf[0];
-
-    /*
-     * DTLS writes whole datagrams, so there can't be anything left in
-     * the buffer.
-     */
-    if (!ossl_assert(SSL3_BUFFER_get_left(wb) == 0)) {
-        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
-    /* If we have an alert to send, lets send it */
-    if (sc->s3.alert_dispatch) {
-        i = s->method->ssl_dispatch_alert(s);
-        if (i <= 0)
-            return i;
-        /* if it went, fall through and send more stuff */
-    }
-
-    if (len == 0)
-        return 0;
-
-    if (len > ssl_get_max_send_fragment(sc)) {
-        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
-        return 0;
-    }
 
     sess = sc->session;
 
@@ -774,21 +747,10 @@ int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
 
     /* write the header */
 
-    *(p++) = type & 0xff;
-    SSL3_RECORD_set_type(&wr, type);
-    /*
-     * Special case: for hello verify request, client version 1.0 and we
-     * haven't decided which version to use yet send back using version 1.0
-     * header: otherwise some clients will ignore it.
-     */
-    if (s->method->version == DTLS_ANY_VERSION &&
-        sc->max_proto_version != DTLS1_BAD_VER) {
-        *(p++) = DTLS1_VERSION >> 8;
-        *(p++) = DTLS1_VERSION & 0xff;
-    } else {
-        *(p++) = sc->version >> 8;
-        *(p++) = sc->version & 0xff;
-    }
+    *(p++) = tmpl->type & 0xff;
+    SSL3_RECORD_set_type(&wr, tmpl->type);
+    *(p++) = tmpl->version >> 8;
+    *(p++) = tmpl->version & 0xff;
 
     /* field where we are to write out packet epoch, seq num and len */
     pseq = p;
@@ -818,8 +780,8 @@ int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
 
     /* lets setup the record stuff. */
     SSL3_RECORD_set_data(&wr, p + eivlen); /* make room for IV in case of CBC */
-    SSL3_RECORD_set_length(&wr, len);
-    SSL3_RECORD_set_input(&wr, (unsigned char *)buf);
+    SSL3_RECORD_set_length(&wr, tmpl->buflen);
+    SSL3_RECORD_set_input(&wr, (unsigned char *)tmpl->buf);
 
     /*
      * we now 'read' from wr.input, wr.length bytes into wr.data
@@ -894,7 +856,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
      * we should now have wr.data pointing to the encrypted data, which is
      * wr->length long
      */
-    SSL3_RECORD_set_type(&wr, type); /* not needed but helps for debugging */
+    SSL3_RECORD_set_type(&wr, tmpl->type); /* not needed but helps for debugging */
     SSL3_RECORD_add_length(&wr, DTLS1_RT_HEADER_LENGTH);
 
     ssl3_record_sequence_update(&(sc->rlayer.write_sequence[0]));
@@ -907,13 +869,72 @@ int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
      * memorize arguments so that ssl3_write_pending can detect bad write
      * retries later
      */
-    sc->rlayer.wpend_tot = len;
-    sc->rlayer.wpend_buf = buf;
-    sc->rlayer.wpend_type = type;
-    sc->rlayer.wpend_ret = len;
+    sc->rlayer.wpend_tot = tmpl->buflen;
+    sc->rlayer.wpend_buf = tmpl->buf;
+    sc->rlayer.wpend_type = tmpl->type;
+    sc->rlayer.wpend_ret = tmpl->buflen;
 
     /* we now just need to write the buffer. Calls SSLfatal() as required. */
-    return ssl3_write_pending(sc, type, buf, len, written);
+    return ssl3_write_pending(sc, tmpl->type, tmpl->buf, tmpl->buflen, &written);
+}
+
+int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
+                   size_t len, size_t *written)
+{
+    int i;
+    OSSL_RECORD_TEMPLATE tmpl;
+    SSL *s = SSL_CONNECTION_GET_SSL(sc);
+    SSL3_BUFFER *wb;
+    int ret;
+
+    wb = &sc->rlayer.wbuf[0];
+
+    /*
+     * DTLS writes whole datagrams, so there can't be anything left in
+     * the buffer.
+     */
+    /* TODO(RECLAYER): Remove me */
+    if (!ossl_assert(SSL3_BUFFER_get_left(wb) == 0)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* If we have an alert to send, lets send it */
+    if (sc->s3.alert_dispatch) {
+        i = s->method->ssl_dispatch_alert(s);
+        if (i <= 0)
+            return i;
+        /* if it went, fall through and send more stuff */
+    }
+
+    if (len == 0)
+        return 0;
+
+    if (len > ssl_get_max_send_fragment(sc)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
+        return 0;
+    }
+
+    tmpl.type = type;
+    /*
+     * Special case: for hello verify request, client version 1.0 and we
+     * haven't decided which version to use yet send back using version 1.0
+     * header: otherwise some clients will ignore it.
+     */
+    if (s->method->version == DTLS_ANY_VERSION
+            && sc->max_proto_version != DTLS1_BAD_VER)
+        tmpl.version = DTLS1_VERSION;
+    else
+        tmpl.version = sc->version;
+    tmpl.buf = buf;
+    tmpl.buflen = len;
+
+    ret = dtls_write_records(sc, &tmpl, 1);
+
+    if (ret > 0)
+        *written = (int)len;
+
+    return ret;
 }
 
 void dtls1_reset_seq_numbers(SSL_CONNECTION *s, int rw)
