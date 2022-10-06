@@ -119,9 +119,17 @@ static int encode_case_3_dec(PACKET *pkt, ossl_ssize_t fail)
     if (!TEST_uint64_t_eq(total_ranges, peek_total_ranges))
         return 0;
 
-    if (!TEST_mem_eq(f.ack_ranges, f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE),
+    if (!TEST_uint64_t_le(f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE),
+                          SIZE_MAX)
+        || !TEST_uint64_t_le(encode_case_3_f.num_ack_ranges
+                             * sizeof(OSSL_QUIC_ACK_RANGE),
+                             SIZE_MAX))
+        return 0;
+
+    if (!TEST_mem_eq(f.ack_ranges,
+                     (size_t)f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE),
                      encode_case_3_f.ack_ranges,
-                     encode_case_3_f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE)))
+                     (size_t)encode_case_3_f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE)))
         return 0;
 
     if (!TEST_uint64_t_eq(ossl_time2ticks(f.delay_time),
@@ -262,7 +270,11 @@ static int encode_case_6_dec(PACKET *pkt, ossl_ssize_t fail)
     if (!TEST_uint64_t_eq(f.offset, 0x1234))
         return 0;
 
-    if (!TEST_mem_eq(f.data, f.len, encode_case_6_data, sizeof(encode_case_6_data)))
+    if (!TEST_uint64_t_le(f.len, SIZE_MAX))
+        return 0;
+
+    if (!TEST_mem_eq(f.data, (size_t)f.len,
+                     encode_case_6_data, sizeof(encode_case_6_data)))
         return 0;
 
     return 1;
@@ -352,7 +364,10 @@ static int encode_case_8_dec(PACKET *pkt, ossl_ssize_t fail)
     if (fail >= 0)
         return 1;
 
-    if (!TEST_mem_eq(f.data, f.len,
+    if (!TEST_uint64_t_le(f.len, SIZE_MAX))
+        return 0;
+
+    if (!TEST_mem_eq(f.data, (size_t)f.len,
                      encode_case_8_data, sizeof(encode_case_8_data)))
         return 0;
 
@@ -404,7 +419,10 @@ static int encode_case_9_dec(PACKET *pkt, ossl_ssize_t fail)
     if (fail >= 0)
         return 1;
 
-    if (!TEST_mem_eq(f.data, f.len,
+    if (!TEST_uint64_t_le(f.len, SIZE_MAX))
+        return 0;
+
+    if (!TEST_mem_eq(f.data, (size_t)f.len,
                      encode_case_9_data, sizeof(encode_case_9_data)))
         return 0;
 
