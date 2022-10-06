@@ -244,7 +244,7 @@ __owur int dtls1_read_bytes(SSL *s, int type, int *recvd_type,
 __owur int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
                              size_t len, size_t *written);
 int do_dtls1_write(SSL_CONNECTION *s, int type, const unsigned char *buf,
-                   size_t len, int create_empty_fragment, size_t *written);
+                   size_t len, size_t *written);
 void dtls1_reset_seq_numbers(SSL_CONNECTION *s, int rw);
 void ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr);
 
