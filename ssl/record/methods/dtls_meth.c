@@ -698,12 +698,14 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
  *
  * Return values are as per SSL_write()
  */
-static int ssl3_write_pending(SSL_CONNECTION *s, int type,
+static int ssl3_write_pending(OSSL_RECORD_LAYER *rl, int type,
                               const unsigned char *buf, size_t len,
                               size_t *written)
 {
     int i;
-    SSL3_BUFFER *wb = s->rlayer.wbuf;
+    /* TODO(RECLAYER): Remove me */
+    SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
+    SSL3_BUFFER *wb = rl->wbuf;
     size_t currbuf = 0;
     size_t tmpwrit = 0;
 
@@ -769,17 +771,18 @@ static int ssl3_write_pending(SSL_CONNECTION *s, int type,
     }
 }
 
-static int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *tmpl,
-                              size_t numtmpl)
+static int dtls_write_records(OSSL_RECORD_LAYER *rl,
+                              OSSL_RECORD_TEMPLATE *templates,
+                              size_t numtempl)
 {
     /* TODO(RECLAYER): Remove me */
     SSL_CONNECTION *sc = (SSL_CONNECTION *)rl->cbarg;
     unsigned char *p, *pseq;
     int mac_size, clear = 0;
-    size_t prefix_len = 0, written;
+    size_t written;
     int eivlen;
     SSL3_RECORD wr;
-    SSL3_BUFFER *wb = sc->rlayer.wbuf;
+    SSL3_BUFFER *wb;
     SSL_SESSION *sess;
     SSL *s = SSL_CONNECTION_GET_SSL(sc);
 
@@ -801,14 +804,26 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *tmpl,
         }
     }
 
-    p = SSL3_BUFFER_get_buf(wb) + prefix_len;
+    if (numtempl != 1) {
+        /* Should not happen */
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
+    if (!rl->funcs->allocate_write_buffers(rl, templates, numtempl, NULL)) {
+        /* RLAYERfatal() already called */
+        return -1;
+    }
+
+    wb = rl->wbuf;
+    p = SSL3_BUFFER_get_buf(wb);
 
     /* write the header */
 
-    *(p++) = tmpl->type & 0xff;
-    SSL3_RECORD_set_type(&wr, tmpl->type);
-    *(p++) = tmpl->version >> 8;
-    *(p++) = tmpl->version & 0xff;
+    *(p++) = templates->type & 0xff;
+    SSL3_RECORD_set_type(&wr, templates->type);
+    *(p++) = templates->version >> 8;
+    *(p++) = templates->version & 0xff;
 
     /* field where we are to write out packet epoch, seq num and len */
     pseq = p;
@@ -838,8 +853,8 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *tmpl,
 
     /* lets setup the record stuff. */
     SSL3_RECORD_set_data(&wr, p + eivlen); /* make room for IV in case of CBC */
-    SSL3_RECORD_set_length(&wr, tmpl->buflen);
-    SSL3_RECORD_set_input(&wr, (unsigned char *)tmpl->buf);
+    SSL3_RECORD_set_length(&wr, templates->buflen);
+    SSL3_RECORD_set_input(&wr, (unsigned char *)templates->buf);
 
     /*
      * we now 'read' from wr.input, wr.length bytes into wr.data
@@ -914,26 +929,27 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *tmpl,
      * we should now have wr.data pointing to the encrypted data, which is
      * wr->length long
      */
-    SSL3_RECORD_set_type(&wr, tmpl->type); /* not needed but helps for debugging */
+    SSL3_RECORD_set_type(&wr, templates->type); /* not needed but helps for debugging */
     SSL3_RECORD_add_length(&wr, DTLS1_RT_HEADER_LENGTH);
 
     ssl3_record_sequence_update(&(sc->rlayer.write_sequence[0]));
 
     /* now let's set up wb */
-    SSL3_BUFFER_set_left(wb, prefix_len + SSL3_RECORD_get_length(&wr));
+    SSL3_BUFFER_set_left(wb, SSL3_RECORD_get_length(&wr));
     SSL3_BUFFER_set_offset(wb, 0);
 
     /*
      * memorize arguments so that ssl3_write_pending can detect bad write
      * retries later
      */
-    sc->rlayer.wpend_tot = tmpl->buflen;
-    sc->rlayer.wpend_buf = tmpl->buf;
-    sc->rlayer.wpend_type = tmpl->type;
-    sc->rlayer.wpend_ret = tmpl->buflen;
+    sc->rlayer.wpend_tot = templates->buflen;
+    sc->rlayer.wpend_buf = templates->buf;
+    sc->rlayer.wpend_type = templates->type;
+    sc->rlayer.wpend_ret = templates->buflen;
 
     /* we now just need to write the buffer. Calls SSLfatal() as required. */
-    return ssl3_write_pending(sc, tmpl->type, tmpl->buf, tmpl->buflen, &written);
+    return ssl3_write_pending(rl, templates->type, templates->buf,
+                              templates->buflen, &written);
 }
 
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {
