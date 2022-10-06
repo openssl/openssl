@@ -80,9 +80,9 @@ static int compare(const QUIC_CFQ_ITEM_EX *a, const QUIC_CFQ_ITEM_EX *b)
     else if (a->pn_space > b->pn_space)
         return 1;
 
-    if (a->priority < b->priority)
+    if (a->priority > b->priority)
         return -1;
-    else if (a->priority > b->priority)
+    else if (a->priority < b->priority)
         return 1;
 
     return 0;
@@ -251,16 +251,16 @@ void ossl_quic_cfq_mark_tx(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item)
     QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
 
     switch (ex->state) {
-        case QUIC_CFQ_STATE_NEW:
-            list_remove(&cfq->new_list, ex);
-            list_insert_tail(&cfq->tx_list, ex);
-            ex->state = QUIC_CFQ_STATE_TX;
-            break;
-        case QUIC_CFQ_STATE_TX:
-            break; /* nothing to do */
-        default:
-            assert(0); /* invalid state (e.g. in free state) */
-            break;
+    case QUIC_CFQ_STATE_NEW:
+        list_remove(&cfq->new_list, ex);
+        list_insert_tail(&cfq->tx_list, ex);
+        ex->state = QUIC_CFQ_STATE_TX;
+        break;
+    case QUIC_CFQ_STATE_TX:
+        break; /* nothing to do */
+    default:
+        assert(0); /* invalid state (e.g. in free state) */
+        break;
     }
 }
 
@@ -270,23 +270,23 @@ void ossl_quic_cfq_mark_lost(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item,
     QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
 
     switch (ex->state) {
-        case QUIC_CFQ_STATE_NEW:
-            if (priority != UINT32_MAX && priority != ex->priority) {
-                list_remove(&cfq->new_list, ex);
-                ex->priority = priority;
-                list_insert_sorted(&cfq->new_list, ex, compare);
-            }
-            break; /* nothing to do */
-        case QUIC_CFQ_STATE_TX:
-            if (priority != UINT32_MAX)
-                ex->priority = priority;
-            list_remove(&cfq->tx_list, ex);
+    case QUIC_CFQ_STATE_NEW:
+        if (priority != UINT32_MAX && priority != ex->priority) {
+            list_remove(&cfq->new_list, ex);
+            ex->priority = priority;
             list_insert_sorted(&cfq->new_list, ex, compare);
-            ex->state = QUIC_CFQ_STATE_NEW;
-            break;
-        default:
-            assert(0); /* invalid state (e.g. in free state) */
-            break;
+        }
+        break; /* nothing to do */
+    case QUIC_CFQ_STATE_TX:
+        if (priority != UINT32_MAX)
+            ex->priority = priority;
+        list_remove(&cfq->tx_list, ex);
+        list_insert_sorted(&cfq->new_list, ex, compare);
+        ex->state = QUIC_CFQ_STATE_NEW;
+        break;
+    default:
+        assert(0); /* invalid state (e.g. in free state) */
+        break;
     }
 }
 
@@ -298,19 +298,19 @@ void ossl_quic_cfq_release(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item)
 {
     QUIC_CFQ_ITEM_EX *ex = (QUIC_CFQ_ITEM_EX *)item;
     switch (ex->state) {
-        case QUIC_CFQ_STATE_NEW:
-            list_remove(&cfq->new_list, ex);
-            list_insert_tail(&cfq->free_list, ex);
-            clear_item(ex);
-            break;
-        case QUIC_CFQ_STATE_TX:
-            list_remove(&cfq->tx_list, ex);
-            list_insert_tail(&cfq->free_list, ex);
-            clear_item(ex);
-            break;
-        default:
-            assert(0); /* invalid state (e.g. in free state) */
-            break;
+    case QUIC_CFQ_STATE_NEW:
+        list_remove(&cfq->new_list, ex);
+        list_insert_tail(&cfq->free_list, ex);
+        clear_item(ex);
+        break;
+    case QUIC_CFQ_STATE_TX:
+        list_remove(&cfq->tx_list, ex);
+        list_insert_tail(&cfq->free_list, ex);
+        clear_item(ex);
+        break;
+    default:
+        assert(0); /* invalid state (e.g. in free state) */
+        break;
     }
 }
 

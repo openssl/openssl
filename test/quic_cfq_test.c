@@ -17,7 +17,7 @@ static const unsigned char ref_buf[] = {
 };
 
 static const uint32_t ref_priority[] = {
-    10, 20, 30, 40, 5, 60, 6, 80, 90, 100
+    90, 80, 70, 60, 95, 40, 94, 20, 10, 0
 };
 
 static const uint32_t ref_pn_space[] = {

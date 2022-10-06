@@ -66,7 +66,9 @@ void ossl_quic_cfq_free(QUIC_CFQ *cfq);
  */
 
 /*
- * Enqueue a frame to the CFQ. encoded points to the opaque encoded frame.
+ * Enqueue a frame to the CFQ.
+ *
+ * encoded points to the opaque encoded frame.
  *
  * free_cb is called by the CFQ when the buffer is no longer needed;
  * free_cb_arg is an opaque value passed to free_cb.
