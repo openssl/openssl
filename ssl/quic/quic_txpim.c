@@ -161,8 +161,10 @@ int ossl_quic_txpim_pkt_append_chunk(QUIC_TXPIM_PKT *fpkt,
     size_t new_alloc_chunks = ex->alloc_chunks;
 
     if (ex->num_chunks == ex->alloc_chunks) {
-        new_alloc_chunks = (ex->alloc_chunks == 0) ? 4 : ex->alloc_chunks * 2;
+        new_alloc_chunks = (ex->alloc_chunks == 0) ? 4 : ex->alloc_chunks * 8 / 5;
         if (new_alloc_chunks > MAX_ALLOC_CHUNKS)
+            new_alloc_chunks = MAX_ALLOC_CHUNKS;
+        if (ex->num_chunks == new_alloc_chunks)
             return 0;
 
         new_chunk = OPENSSL_realloc(ex->chunks,
