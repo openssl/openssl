@@ -106,9 +106,12 @@ static int vms_load(DSO *dso)
 #   pragma pointer_size save
 #   pragma pointer_size 32
 #  endif                        /* __INITIAL_POINTER_SIZE == 64 */
+# endif                         /* __INITIAL_POINTER_SIZE && defined
+                                 * _ANSI_C_SOURCE */
 
     DSO_VMS_INTERNAL *p = NULL;
 
+# if __INITIAL_POINTER_SIZE && defined _ANSI_C_SOURCE
 #  if __INITIAL_POINTER_SIZE == 64
 #   pragma pointer_size restore
 #  endif                        /* __INITIAL_POINTER_SIZE == 64 */
