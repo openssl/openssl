@@ -128,8 +128,8 @@ static int encode_case_3_dec(PACKET *pkt, ossl_ssize_t fail)
 
     if (!TEST_mem_eq(f.ack_ranges, f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE),
                      encode_case_3_f.ack_ranges,
-                     (size_t)(encode_case_3_f.num_ack_ranges
-                              * sizeof(OSSL_QUIC_ACK_RANGE))))
+                     (size_t)(encode_case_3_f.num_ack_ranges)
+                     * sizeof(OSSL_QUIC_ACK_RANGE)))
         return 0;
 
     if (!TEST_uint64_t_eq(ossl_time2ticks(f.delay_time),
