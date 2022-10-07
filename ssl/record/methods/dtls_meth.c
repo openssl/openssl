@@ -689,91 +689,13 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     return ret;
 }
 
-/*
- * TODO(RECLAYER): Temporary copy of the old ssl3_write_pending() function now
- * replaced by tls_retry_write_records(). Needs to be removed when the DTLS code
- * is converted
- */
-/* if SSL3_BUFFER_get_left() != 0, we need to call this
- *
- * Return values are as per SSL_write()
- */
-static int ssl3_write_pending(OSSL_RECORD_LAYER *rl, int type,
-                              const unsigned char *buf, size_t len,
-                              size_t *written)
-{
-    int i;
-    /* TODO(RECLAYER): Remove me */
-    SSL_CONNECTION *s = (SSL_CONNECTION *)rl->cbarg;
-    SSL3_BUFFER *wb = rl->wbuf;
-    size_t currbuf = 0;
-    size_t tmpwrit = 0;
-
-    if ((s->rlayer.wpend_tot > len)
-        || (!(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)
-            && (s->rlayer.wpend_buf != buf))
-        || (s->rlayer.wpend_type != type)) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_WRITE_RETRY);
-        return OSSL_RECORD_RETURN_FATAL;
-    }
-
-    for (;;) {
-        clear_sys_error();
-        if (s->wbio != NULL) {
-            s->rwstate = SSL_WRITING;
-
-            i = BIO_write(s->wbio, (char *)
-                          &(SSL3_BUFFER_get_buf(&wb[currbuf])
-                            [SSL3_BUFFER_get_offset(&wb[currbuf])]),
-                          (unsigned int)SSL3_BUFFER_get_left(&wb[currbuf]));
-            if (i >= 0)
-                tmpwrit = i;
-        } else {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_BIO_NOT_SET);
-            i = -1;
-        }
-
-        /*
-         * When an empty fragment is sent on a connection using KTLS,
-         * it is sent as a write of zero bytes.  If this zero byte
-         * write succeeds, i will be 0 rather than a non-zero value.
-         * Treat i == 0 as success rather than an error for zero byte
-         * writes to permit this case.
-         */
-        if (i >= 0 && tmpwrit == SSL3_BUFFER_get_left(&wb[currbuf])) {
-            SSL3_BUFFER_set_left(&wb[currbuf], 0);
-            SSL3_BUFFER_add_offset(&wb[currbuf], tmpwrit);
-            s->rwstate = SSL_NOTHING;
-            *written = s->rlayer.wpend_ret;
-            return OSSL_RECORD_RETURN_SUCCESS;
-        } else if (i <= 0) {
-            if (SSL_CONNECTION_IS_DTLS(s)) {
-                /*
-                 * For DTLS, just drop it. That's kind of the whole point in
-                 * using a datagram service
-                 */
-                SSL3_BUFFER_set_left(&wb[currbuf], 0);
-            }
-
-            if (BIO_should_retry(s->wbio))
-                return OSSL_RECORD_RETURN_RETRY;
-
-            return OSSL_RECORD_RETURN_FATAL;
-        }
-        SSL3_BUFFER_add_offset(&wb[currbuf], tmpwrit);
-        SSL3_BUFFER_sub_left(&wb[currbuf], tmpwrit);
-    }
-}
-
-static int dtls_write_records(OSSL_RECORD_LAYER *rl,
-                              OSSL_RECORD_TEMPLATE *templates,
-                              size_t numtempl)
+int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
+                       size_t numtempl)
 {
     /* TODO(RECLAYER): Remove me */
     SSL_CONNECTION *sc = (SSL_CONNECTION *)rl->cbarg;
     unsigned char *p, *pseq;
     int mac_size, clear = 0;
-    size_t written;
     int eivlen;
     SSL3_RECORD wr;
     SSL3_BUFFER *wb;
@@ -794,19 +716,19 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl,
         if (mac_size < 0) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
                         SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
-            return OSSL_RECORD_RETURN_FATAL;
+            return 0;
         }
     }
 
     if (numtempl != 1) {
         /* Should not happen */
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return OSSL_RECORD_RETURN_FATAL;
+        return 0;
     }
 
     if (!rl->funcs->allocate_write_buffers(rl, templates, numtempl, NULL)) {
         /* RLAYERfatal() already called */
-        return OSSL_RECORD_RETURN_FATAL;
+        return 0;
     }
 
     wb = rl->wbuf;
@@ -830,7 +752,7 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl,
             eivlen = EVP_CIPHER_CTX_get_iv_length(sc->enc_write_ctx);
             if (eivlen < 0) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
-                return OSSL_RECORD_RETURN_FATAL;
+                return 0;
             }
             if (eivlen <= 1)
                 eivlen = 0;
@@ -858,7 +780,7 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl,
     if (sc->compress != NULL) {
         if (!ssl3_do_compress(sc, &wr)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
-            return OSSL_RECORD_RETURN_FATAL;
+            return 0;
         }
     } else {
         memcpy(SSL3_RECORD_get_data(&wr), SSL3_RECORD_get_input(&wr),
@@ -877,7 +799,7 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl,
                                       &(p[SSL3_RECORD_get_length(&wr) + eivlen]),
                                       1)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return OSSL_RECORD_RETURN_FATAL;
+            return 0;
         }
         SSL3_RECORD_add_length(&wr, mac_size);
     }
@@ -893,14 +815,14 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl,
         if (!ossl_statem_in_error(sc)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         }
-        return OSSL_RECORD_RETURN_FATAL;
+        return 0;
     }
 
     if (SSL_WRITE_ETM(sc) && mac_size != 0) {
         if (!s->method->ssl3_enc->mac(sc, &wr,
                                       &(p[SSL3_RECORD_get_length(&wr)]), 1)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return OSSL_RECORD_RETURN_FATAL;
+            return 0;
         }
         SSL3_RECORD_add_length(&wr, mac_size);
     }
@@ -941,9 +863,8 @@ static int dtls_write_records(OSSL_RECORD_LAYER *rl,
     sc->rlayer.wpend_type = templates->type;
     sc->rlayer.wpend_ret = templates->buflen;
 
-    /* we now just need to write the buffer. Calls SSLfatal() as required. */
-    return ssl3_write_pending(rl, templates->type, templates->buf,
-                              templates->buflen, &written);
+
+    return 1;
 }
 
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {
@@ -956,7 +877,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_write_pending,
     tls_get_max_record_len,
     tls_get_max_records,
-    dtls_write_records,
+    tls_write_records,
     tls_retry_write_records,
     tls_read_record,
     tls_release_record,
