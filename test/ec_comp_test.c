@@ -489,8 +489,10 @@ static int from_generated_key_test(int curve_i)
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_EC
-    if (test_get_argument_count() > 0)
+    if (test_get_argument_count() > 0) {
+        test_skip_common_options();
         data_path = test_get_argument(0);
+    }
 
     if (init_curves() == 0) {
         printf("# Failed to initialize curves\n");
