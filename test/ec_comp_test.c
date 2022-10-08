@@ -61,8 +61,8 @@ static int init_curves(void)
     size_t i;
 
     num_known_curves = EC_get_builtin_curves(NULL, 0);
-    known_curves = OPENSSL_malloc(num_known_curves*sizeof(*known_curves));
-    if (   known_curves == NULL
+    known_curves = OPENSSL_malloc(num_known_curves * sizeof(*known_curves));
+    if (known_curves == NULL
         || EC_get_builtin_curves(known_curves, num_known_curves) == 0)
         goto fail;
 
@@ -70,7 +70,7 @@ static int init_curves(void)
     if (known_curve_names == NULL)
         goto fail;
 
-    for (i=0; i<num_known_curves; ++i) {
+    for (i = 0; i < num_known_curves; ++i) {
         known_curve_names[i] = OBJ_nid2sn(known_curves[i].nid);
         if (!strcmp(known_curve_names[i], "Oakley-EC2N-3"))
             nid_Oakley_EC2N_3 = known_curves[i].nid;
@@ -418,9 +418,9 @@ static int comp_test_actual(size_t curve_i,
      * serialization and deserialization.
      */
     /* For each supported compression format (and unspecified) */
-    for (ci=0; ci<OSSL_NELEM(comp_formats_i); ++ci)
+    for (ci = 0; ci < OSSL_NELEM(comp_formats_i); ++ci)
         /* For each of (named parameters, explicit parameters, unspecified) */
-        for (pi=0; pi<OSSL_NELEM(param_formats_i); ++pi)
+        for (pi = 0; pi < OSSL_NELEM(param_formats_i); ++pi)
             if (!test_reserialize(k, param_formats_i[param_format_i], comp_formats_i[comp_format_i],
                                   param_formats_i[pi], comp_formats_i[ci], key_src, obj_type))
                 goto fail;
@@ -436,14 +436,14 @@ static int from_deserialized_test(int curve_i, int obj_type)
     size_t comp_format_i, param_format_i;
 
     /* For each of (named parameters, explicit parameters, unspecified) */
-    for (param_format_i=0; param_format_i<3; ++param_format_i)
+    for (param_format_i = 0; param_format_i < 3; ++param_format_i)
         /* For each supported compression format (and unspecified) */
-        for (comp_format_i=0;
-             comp_format_i<OSSL_NELEM(comp_formats);
+        for (comp_format_i = 0;
+             comp_format_i < OSSL_NELEM(comp_formats);
              ++comp_format_i)
             if (comp_test_actual(curve_i, param_format_i,
                                  comp_format_i, KEY_SRC_EXISTING, obj_type) == 0)
-                    return 0;
+                return 0;
 
     return 1;
 }
@@ -453,14 +453,14 @@ static int from_generated_test(int curve_i, int obj_type)
     size_t comp_format_i, param_format_i;
 
     /* For each of (named parameters, explicit parameters, unspecified) */
-    for (param_format_i=0; param_format_i<3; ++param_format_i)
+    for (param_format_i = 0; param_format_i < 3; ++param_format_i)
         /* For each supported compression format (and unspecified) */
-        for (comp_format_i=0;
-             comp_format_i<OSSL_NELEM(comp_formats);
+        for (comp_format_i = 0;
+             comp_format_i < OSSL_NELEM(comp_formats);
              ++comp_format_i)
             if (comp_test_actual(curve_i, param_format_i,
                                  comp_format_i, KEY_SRC_GENERATE, obj_type) == 0)
-                    return 0;
+                return 0;
 
     return 1;
 }
