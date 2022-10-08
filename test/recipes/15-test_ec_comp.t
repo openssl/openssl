@@ -101,7 +101,6 @@ SKIP: {
                                 push(@args, "-param_enc");
                                 push(@args, $param_enc2);
                             }
-                            print (join "\n", @args);
                             run(app([@args]));
 
                             my $expect_conv = $conv_form2;
