@@ -66,7 +66,7 @@ static int init_curves(void)
         || EC_get_builtin_curves(known_curves, num_known_curves) == 0)
         goto fail;
 
-    known_curve_names = OPENSSL_malloc(sizeof(char *)*num_known_curves);
+    known_curve_names = OPENSSL_malloc(sizeof(char *) * num_known_curves);
     if (known_curve_names == NULL)
         goto fail;
 
