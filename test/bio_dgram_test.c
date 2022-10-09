@@ -451,6 +451,7 @@ static int test_bio_dgram(int idx)
                                bio_dgram_cases[idx].local);
 }
 
+# if !defined(OPENSSL_NO_CHACHA)
 static int random_data(const uint32_t *key, uint8_t *data, size_t data_len, size_t offset)
 {
     int ret = 0, outl;
@@ -746,7 +747,7 @@ err:
     BIO_ADDR_free(addr4);
     return testresult;
 }
-
+# endif /* !defined(OPENSSL_NO_CHACHA) */
 #endif /* !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK) */
 
 int setup_tests(void)
@@ -758,7 +759,9 @@ int setup_tests(void)
 
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
     ADD_ALL_TESTS(test_bio_dgram, OSSL_NELEM(bio_dgram_cases));
+# if !defined(OPENSSL_NO_CHACHA)
     ADD_TEST(test_bio_dgram_pair);
+# endif
 #endif
 
     return 1;
