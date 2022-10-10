@@ -197,7 +197,16 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
     if (data->data_type == NULL)
         return 0;
 
-    keymgmt = EVP_KEYMGMT_fetch(libctx, data->data_type, propq);
+    /* try to get keymgmt from the current provider first */
+    keymgmt = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)provider,
+                                          data->data_type, propq);
+    if (keymgmt == NULL) {
+        /* fallback to a more generic provider (usually default) if,
+         * the provider providing the storage functionality does not
+         * support operation on the type returned */
+        keymgmt = EVP_KEYMGMT_fetch(libctx, data->data_type, propq);
+    }
+
     ERR_set_mark();
     while (keymgmt != NULL && keydata == NULL && try_fallback-- > 0) {
         /*
@@ -209,13 +218,14 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
          *     do the export/import dance.
          */
         if (EVP_KEYMGMT_get0_provider(keymgmt) == provider) {
-            /* no point trying fallback here */
-            try_fallback = 0;
             keydata = evp_keymgmt_load(keymgmt, data->ref, data->ref_size);
         } else {
             struct evp_keymgmt_util_try_import_data_st import_data;
             OSSL_FUNC_store_export_object_fn *export_object =
                 ctx->fetched_loader->p_export_object;
+
+            /* no point trying fallback here */
+            try_fallback = 0;
 
             import_data.keymgmt = keymgmt;
             import_data.keydata = NULL;
@@ -237,8 +247,7 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
 
         if (keydata == NULL && try_fallback > 0) {
             EVP_KEYMGMT_free(keymgmt);
-            keymgmt = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)provider,
-                                                  data->data_type, propq);
+            keymgmt = EVP_KEYMGMT_fetch(libctx, data->data_type, propq);
             if (keymgmt != NULL) {
                 ERR_pop_to_mark();
                 ERR_set_mark();
