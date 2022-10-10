@@ -67,6 +67,7 @@ static EXT_LIST ext_list[] = {
     EXT_ENTRY(key_share),
     EXT_ENTRY(cookie),
     EXT_ENTRY(cryptopro_bug),
+    EXT_ENTRY(compress_certificate),
     EXT_ENTRY(early_data),
     EXT_ENTRY(certificate_authorities),
     EXT_ENTRY(padding),
