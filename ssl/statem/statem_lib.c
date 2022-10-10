@@ -973,7 +973,7 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, i
 
         if (xs_ctx == NULL) {
             if (!for_comp)
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_X509_LIB);
             return 0;
         }
         if (!X509_STORE_CTX_init(xs_ctx, chain_store, x, NULL)) {
