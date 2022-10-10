@@ -56,6 +56,19 @@ jobs:
           sudo gem install mdl
           make md-nits
 
+  check_comments:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: check for cpp comments
+      run: |
+        if egrep '(^|[ );])//' `find . -name '*.[ch]' \! -name check-format-test-positives.c`
+        then
+            echo "C++ comment detected"
+            exit 1
+        fi
+        echo "No C++ comments detected"
+
   # This checks that we use ANSI C language syntax and semantics.
   # We are not as strict with libraries, but rather adapt to what's
   # expected to be available in a certain version of each platform.
