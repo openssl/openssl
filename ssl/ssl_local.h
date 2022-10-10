@@ -1994,7 +1994,7 @@ struct cert_pkey_st {
     /*-
      * serverinfo data for this certificate.  The data is in TLS Extension
      * wire format, specifically it's a series of records like:
-     *   uint16_t extension_type; // (RFC 5246, 7.4.1.4, Extension)
+     *   uint16_t extension_type;    (RFC 5246, 7.4.1.4, Extension)
      *   uint16_t length;
      *   uint8_t data[length];
      */

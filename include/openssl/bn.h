@@ -131,10 +131,10 @@ void *BN_GENCB_get_arg(BN_GENCB *cb);
  * for t:=1 to 65 do
  *   for M:=3 to Floor(2*Sqrt(k-1)-1) do
  *     S:=0;
- *     // Sum over m
+ *     # Sum over m
  *     for m:=3 to M do
  *       s:=0;
- *       // Sum over j
+ *       # Sum over j
  *       for j:=2 to m do
  *         s+:=(RealField(32)!2)^-(j+(k-1)/j);
  *       end for;
