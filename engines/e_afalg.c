@@ -355,6 +355,8 @@ static int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
                         }
                         continue;
                     } else {
+                        char strbuf[32];
+
                         /*
                          * Retries exceed for -EBUSY or unrecoverable error
                          * condition for this instance of operation.
@@ -362,8 +364,7 @@ static int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
                         ALG_WARN
                             ("%s(%d): Crypto Operation failed with code %lld\n",
                              __FILE__, __LINE__, events[0].res);
-                        char strbuf[32];
-                        BIO_snprintf(strbuf, sizeof strbuf, "%lld", events[0].res);
+                        BIO_snprintf(strbuf, sizeof(strbuf), "%lld", events[0].res);
                         switch (events[0].res) {
                         case -ENOMEM:
                             AFALGerr(AFALG_F_KERNEL_OP, AFALG_R_KERNEL_OP_FAILED);
