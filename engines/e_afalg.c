@@ -364,7 +364,7 @@ static int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
                         ALG_WARN
                             ("%s(%d): Crypto Operation failed with code %lld\n",
                              __FILE__, __LINE__, events[0].res);
-                        BIO_snprintf(strbuf, sizeof(strbuf), "%lld", events[0].res);
+                        BIO_snprintf(strbuf, sizeof(strbuf), "%"PRIi64, events[0].res);
                         switch (events[0].res) {
                         case -ENOMEM:
                             AFALGerr(0, AFALG_R_KERNEL_OP_FAILED);
