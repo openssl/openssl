@@ -1672,9 +1672,11 @@ opthelp:
 
         BIO_printf(bio_out, "Digests:\n");
         list_digests(" ");
-        BIO_printf(bio_out, "Symmetric Ciphers:\n");
+        BIO_printf(bio_out, "\nSymmetric Ciphers:\n");
         list_ciphers(" ");
+        BIO_printf(bio_out, "\n");
         list_kdfs();
+        BIO_printf(bio_out, "\n");
         list_macs();
 
         BIO_printf(bio_out, "\nProvided Asymmetric Encryption:\n");
