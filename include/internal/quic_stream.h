@@ -18,6 +18,8 @@
 #include "internal/quic_record_tx.h"
 #include "internal/quic_record_rx.h"
 #include "internal/quic_record_rx_wrap.h"
+#include "internal/quic_fc.h"
+#include "internal/quic_statm.h"
 
 /*
  * QUIC Send Stream
@@ -282,9 +284,13 @@ void ossl_quic_sstream_adjust_iov(size_t len,
 typedef struct quic_rstream_st QUIC_RSTREAM;
 
 /*
- * Create a new instance of QUIC_RSTREAM.
+ * Create a new instance of QUIC_RSTREAM with pointers to the flow
+ * controller and statistics module. They can be NULL for unit testing.
+ * If they are non-NULL, the `rxfc` is called when receive stream data
+ * is queued or read by application. `statm` is queried for current rtt.
  */
-QUIC_RSTREAM *ossl_quic_rstream_new(OSSL_QRX *qrx);
+QUIC_RSTREAM *ossl_quic_rstream_new(OSSL_QRX *qrx, QUIC_RXFC *rxfc,
+                                    OSSL_STATM *statm);
 
 /*
  * Frees a QUIC_RSTREAM and any associated storage.
@@ -292,7 +298,13 @@ QUIC_RSTREAM *ossl_quic_rstream_new(OSSL_QRX *qrx);
 void ossl_quic_rstream_free(QUIC_RSTREAM *qrs);
 
 /*
- *
+ * Adds received stream frame data to `qrs`. The `pkt_wrap` refcount is
+ * incremented if the `data` is queued directly without copying.
+ * It can be NULL for unit-testing purposes, i.e. if `data` is static or
+ * never released before calling ossl_quic_rstream_free().
+ * The `offset` is the absolute offset of the data in the stream.
+ * `data_len` can be 0 - can be useful for indicating `fin` for empty stream.
+ * Or to indicate `fin` without any further data added to the stream.
  */
 
 int ossl_quic_rstream_queue_data(QUIC_RSTREAM *qrs, OSSL_QRX_PKT_WRAP *pkt_wrap,

@@ -7,14 +7,20 @@
 * https://www.openssl.org/source/license.html
 */
 #include "internal/common.h"
+#include "internal/time.h"
 #include "internal/quic_stream.h"
 #include "internal/quic_sf_list.h"
+#include "internal/quic_fc.h"
+#include "internal/quic_error.h"
 
 struct quic_rstream_st {
     SFRAME_LIST fl;
+    QUIC_RXFC *rxfc;
+    OSSL_STATM *statm;
 };
 
-QUIC_RSTREAM *ossl_quic_rstream_new(OSSL_QRX *qrx)
+QUIC_RSTREAM *ossl_quic_rstream_new(OSSL_QRX *qrx, QUIC_RXFC *rxfc,
+                                    OSSL_STATM *statm)
 {
     QUIC_RSTREAM *ret = OPENSSL_malloc(sizeof(*ret));
 
@@ -22,6 +28,8 @@ QUIC_RSTREAM *ossl_quic_rstream_new(OSSL_QRX *qrx)
         return NULL;
 
     ossl_sframe_list_init(&ret->fl, qrx);
+    ret->rxfc = rxfc;
+    ret->statm = statm;
     return ret;
 }
 
@@ -40,6 +48,13 @@ int ossl_quic_rstream_queue_data(QUIC_RSTREAM *qrs, OSSL_QRX_PKT_WRAP *pkt_wrap,
 
     range.start = offset;
     range.end = offset + data_len;
+
+    if (qrs->rxfc != NULL
+        && (!ossl_quic_rxfc_on_rx_stream_frame(qrs->rxfc, range.end, fin)
+            || ossl_quic_rxfc_get_error(qrs->rxfc, 0) != QUIC_ERR_NO_ERROR))
+        /* QUIC_ERR_FLOW_CONTROL_ERROR or QUIC_ERR_FINAL_SIZE detected */
+        return 0;
+
     return ossl_sframe_list_insert(&qrs->fl, &range, pkt_wrap, data, fin);
 }
 
@@ -82,7 +97,25 @@ static int read_internal(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,
 int ossl_quic_rstream_read(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,
                            size_t *readbytes, int *fin)
 {
-    return read_internal(qrs, buf, size, readbytes, fin, 1);
+    OSSL_TIME rtt;
+
+    if (qrs->statm != NULL) {
+        OSSL_RTT_INFO rtt_info;
+
+        ossl_statm_get_rtt_info(qrs->statm, &rtt_info);
+        rtt = rtt_info.smoothed_rtt;
+    } else {
+        rtt = ossl_time_zero();
+    }
+
+    if (!read_internal(qrs, buf, size, readbytes, fin, 1))
+        return 0;
+
+    if (qrs->rxfc != NULL
+        && !ossl_quic_rxfc_on_retire(qrs->rxfc, *readbytes, rtt))
+        return 0;
+
+    return 1;
 }
 
 int ossl_quic_rstream_peek(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,

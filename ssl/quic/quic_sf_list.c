@@ -101,16 +101,22 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
                             const unsigned char *data, int fin)
 {
     STREAM_FRAME *sf, *new_frame, *prev_frame, *next_frame;
+#ifndef NDEBUG
+    uint64_t curr_end = fl->tail != NULL ? fl->tail->range.end
+                                         : fl->offset;
+
+    /* This check is handled by QUIC FC already */
+    if ((fin && curr_end > range->end)
+        || (fl->fin && curr_end < range->end)) {
+        /* protocol violation: FINAL_SIZE_ERROR */
+        return 0;
+    }
+#endif
+
+    fl->fin = fin || fl->fin;
 
     /* nothing there yet */
     if (fl->tail == NULL) {
-        if ((fin && fl->offset > range->end)
-            || (fl->fin && fl->offset < range->end)) {
-            /* TODO(QUIC): protocol violation: FINAL_SIZE_ERROR */
-            return 0;
-        }
-        fl->fin = fin || fl->fin;
-
         if (fl->offset >= range->end)
             return 1;
 
@@ -120,13 +126,6 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
         ++fl->num_frames;
         return 1;
     }
-
-    if ((fin && fl->tail->range.end > range->end)
-        || (fl->fin && fl->tail->range.end < range->end)) {
-        /* TODO(QUIC): protocol violation: FINAL_SIZE_ERROR */
-        return 0;
-    }
-    fl->fin = fin || fl->fin;
 
     if (fl->offset >= range->end)
         return 1;
@@ -177,6 +176,7 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
         --fl->num_frames;
         stream_frame_free(fl, drop_frame);
     }
+
     if (next_frame != NULL) {
         /* check whether the new_frame is redundant because there is no gap */
         if (prev_frame != NULL
@@ -188,12 +188,15 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
     } else {
         fl->tail = new_frame;
     }
+
     new_frame->next = next_frame;
     new_frame->prev = prev_frame;
+
     if (prev_frame != NULL)
         prev_frame->next = new_frame;
     else
         fl->head = new_frame;
+
     ++fl->num_frames;
     return 1;
 }
@@ -254,9 +257,11 @@ int ossl_sframe_list_drop_frames(SFRAME_LIST *fl, uint64_t limit)
         stream_frame_free(fl, drop_frame);
     }
     fl->head = sf;
+
     if (sf != NULL)
         sf->prev = NULL;
     else
         fl->tail = NULL;
+
     return 1;
 }
