@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.1.1q and OpenSSL 1.1.1r [under development]
+  Major changes between OpenSSL 1.1.1q and OpenSSL 1.1.1r [11 Oct 2022]
 
       o Added a missing header for memcmp that caused compilation failure on
         some platforms
