@@ -25,7 +25,7 @@
 # define DEFINE_LIST_OF(name, type)                                         \
     typedef struct ossl_list_st_ ## name OSSL_LIST(name);                   \
     struct ossl_list_st_ ## name {                                          \
-        type *head, *tail;                                                  \
+        type *alpha, *omega;                                                \
         size_t num_elems;                                                   \
     };                                                                      \
     static ossl_unused ossl_inline void                                     \
@@ -41,12 +41,12 @@
     static ossl_unused ossl_inline type *                                   \
     ossl_list_##name##_head(const OSSL_LIST(name) *list)                    \
     {                                                                       \
-        return list->head;                                                  \
+        return list->alpha;                                                 \
     }                                                                       \
     static ossl_unused ossl_inline type *                                   \
     ossl_list_##name##_tail(const OSSL_LIST(name) *list)                    \
     {                                                                       \
-        return list->tail;                                                  \
+        return list->omega;                                                 \
     }                                                                       \
     static ossl_unused ossl_inline type *                                   \
     ossl_list_##name##_next(const type *elem)                               \
@@ -61,10 +61,10 @@
     static ossl_unused ossl_inline void                                     \
     ossl_list_##name##_remove(OSSL_LIST(name) *list, type *elem)            \
     {                                                                       \
-        if (list->head == elem)                                             \
-            list->head = elem->ossl_list_ ## name.next;                     \
-        if (list->tail == elem)                                             \
-            list->tail = elem->ossl_list_ ## name.prev;                     \
+        if (list->alpha == elem)                                            \
+            list->alpha = elem->ossl_list_ ## name.next;                    \
+        if (list->omega == elem)                                            \
+            list->omega = elem->ossl_list_ ## name.prev;                    \
         if (elem->ossl_list_ ## name.prev != NULL)                          \
             elem->ossl_list_ ## name.prev->ossl_list_ ## name.next =        \
                     elem->ossl_list_ ## name.next;                          \
@@ -78,25 +78,25 @@
     static ossl_unused ossl_inline void                                     \
     ossl_list_##name##_insert_head(OSSL_LIST(name) *list, type *elem)       \
     {                                                                       \
-        if (list->head != NULL)                                             \
-            list->head->ossl_list_ ## name.prev = elem;                     \
-        elem->ossl_list_ ## name.next = list->head;                         \
+        if (list->alpha != NULL)                                            \
+            list->alpha->ossl_list_ ## name.prev = elem;                    \
+        elem->ossl_list_ ## name.next = list->alpha;                        \
         elem->ossl_list_ ## name.prev = NULL;                               \
-        list->head = elem;                                                  \
-        if (list->tail == NULL)                                             \
-            list->tail = elem;                                              \
+        list->alpha = elem;                                                 \
+        if (list->omega == NULL)                                            \
+            list->omega = elem;                                             \
         list->num_elems++;                                                  \
     }                                                                       \
     static ossl_unused ossl_inline void                                     \
     ossl_list_##name##_insert_tail(OSSL_LIST(name) *list, type *elem)       \
     {                                                                       \
-        if (list->tail != NULL)                                             \
-            list->tail->ossl_list_ ## name.next = elem;                     \
-        elem->ossl_list_ ## name.prev = list->tail;                         \
+        if (list->omega != NULL)                                            \
+            list->omega->ossl_list_ ## name.next = elem;                    \
+        elem->ossl_list_ ## name.prev = list->omega;                        \
         elem->ossl_list_ ## name.next = NULL;                               \
-        list->tail = elem;                                                  \
-        if (list->head == NULL)                                             \
-            list->head = elem;                                              \
+        list->omega = elem;                                                 \
+        if (list->alpha == NULL)                                            \
+            list->alpha = elem;                                             \
         list->num_elems++;                                                  \
     }                                                                       \
     static ossl_unused ossl_inline void                                     \
@@ -108,21 +108,21 @@
         if (e->ossl_list_ ## name.prev != NULL)                             \
             e->ossl_list_ ## name.prev->ossl_list_ ## name.next = elem;     \
         e->ossl_list_ ## name.prev = elem;                                  \
-        if (list->head == e)                                                \
-            list->head = elem;                                              \
+        if (list->alpha == e)                                               \
+            list->alpha = elem;                                             \
         list->num_elems++;                                                  \
     }                                                                       \
     static ossl_unused ossl_inline void                                     \
     ossl_list_##name##_insert_after(OSSL_LIST(name) *list, type *e,         \
-                                     type *elem)                            \
+                                    type *elem)                             \
     {                                                                       \
         elem->ossl_list_ ## name.prev = e;                                  \
         elem->ossl_list_ ## name.next = e->ossl_list_ ## name.next;         \
         if (e->ossl_list_ ## name.next != NULL)                             \
             e->ossl_list_ ## name.next->ossl_list_ ## name.prev = elem;     \
         e->ossl_list_ ## name.next = elem;                                  \
-        if (list->tail == e)                                                \
-            list->tail = elem;                                              \
+        if (list->omega == e)                                               \
+            list->omega = elem;                                             \
         list->num_elems++;                                                  \
     }                                                                       \
     struct ossl_list_st_ ## name
