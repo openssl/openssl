@@ -10,6 +10,8 @@
 #include "internal/quic_fifd.h"
 #include "internal/quic_wire.h"
 
+DEFINE_LIST_OF(tx_history, OSSL_ACKM_TX_PKT);
+
 int ossl_quic_fifd_init(QUIC_FIFD *fifd,
                         QUIC_CFQ *cfq,
                         OSSL_ACKM *ackm,
@@ -185,8 +187,8 @@ int ossl_quic_fifd_pkt_commit(QUIC_FIFD *fifd, QUIC_TXPIM_PKT *pkt)
     pkt->ackm_pkt.on_discarded  = on_discarded;
     pkt->ackm_pkt.cb_arg        = pkt;
 
-    pkt->ackm_pkt.prev = pkt->ackm_pkt.next
-        = pkt->ackm_pkt.anext = pkt->ackm_pkt.lnext = NULL;
+    ossl_list_tx_history_init_elem(&pkt->ackm_pkt);
+    pkt->ackm_pkt.anext = pkt->ackm_pkt.lnext = NULL;
 
     /*
      * Mark the CFQ items which have been added to this packet as having been
