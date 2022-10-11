@@ -456,6 +456,15 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx)
 
     return NULL;
 }
+
+void ossl_release_default_drbg_ctx(void)
+{
+    /* early release of the DRBG in global default libctx */
+    if (default_context_int.drbg != NULL) {
+        ossl_rand_ctx_free(default_context_int.drbg);
+        default_context_int.drbg = NULL;
+    }
+}
 #endif
 
 OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx)
