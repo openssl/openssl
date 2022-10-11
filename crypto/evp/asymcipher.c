@@ -68,10 +68,10 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
     /*
      * We perform two iterations:
      *
-     * 1.  Do the normal asym cipher fetch, using the fetching data given by
-     *     the EVP_PKEY_CTX.
-     * 2.  Do the provider specific asym cipher fetch, from the same provider
+     * 1.  Do the provider specific asym cipher fetch, from the same provider
      *     as |ctx->keymgmt|
+     * 2.  Do the normal asym cipher fetch, using the fetching data given by
+     *     the EVP_PKEY_CTX.
      *
      * We then try to fetch the keymgmt from the same provider as the
      * asym cipher, and try to export |ctx->pkey| to that keymgmt (when
@@ -95,18 +95,17 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
 
         switch (iter) {
         case 1:
-            cipher = EVP_ASYM_CIPHER_fetch(ctx->libctx, supported_ciph,
-                                           ctx->propquery);
-            if (cipher != NULL)
-                tmp_prov = EVP_ASYM_CIPHER_get0_provider(cipher);
-            break;
-        case 2:
             tmp_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
             cipher =
                 evp_asym_cipher_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
                                                 supported_ciph, ctx->propquery);
+            break;
+        case 2:
+            cipher = EVP_ASYM_CIPHER_fetch(ctx->libctx, supported_ciph,
+                                           ctx->propquery);
             if (cipher == NULL)
                 goto legacy;
+            tmp_prov = EVP_ASYM_CIPHER_get0_provider(cipher);
             break;
         }
         if (cipher == NULL)
