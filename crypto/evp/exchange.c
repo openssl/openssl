@@ -257,10 +257,10 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
     /*
      * We perform two iterations:
      *
-     * 1.  Do the normal exchange fetch, using the fetching data given by
-     *     the EVP_PKEY_CTX.
-     * 2.  Do the provider specific exchange fetch, from the same provider
+     * 1.  Do the provider specific exchange fetch, from the same provider
      *     as |ctx->keymgmt|
+     * 2.  Do the normal exchange fetch, using the fetching data given by
+     *     the EVP_PKEY_CTX.
      *
      * We then try to fetch the keymgmt from the same provider as the
      * exchange, and try to export |ctx->pkey| to that keymgmt (when
@@ -284,18 +284,17 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 
         switch (iter) {
         case 1:
-            exchange =
-                EVP_KEYEXCH_fetch(ctx->libctx, supported_exch, ctx->propquery);
-            if (exchange != NULL)
-                tmp_prov = EVP_KEYEXCH_get0_provider(exchange);
-            break;
-        case 2:
             tmp_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
             exchange =
                 evp_keyexch_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
                                               supported_exch, ctx->propquery);
+            break;
+        case 2:
+            exchange =
+                EVP_KEYEXCH_fetch(ctx->libctx, supported_exch, ctx->propquery);
             if (exchange == NULL)
                 goto legacy;
+            tmp_prov = EVP_KEYEXCH_get0_provider(exchange);
             break;
         }
         if (exchange == NULL)
