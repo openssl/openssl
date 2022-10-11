@@ -367,11 +367,11 @@ static int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
                         BIO_snprintf(strbuf, sizeof(strbuf), "%lld", events[0].res);
                         switch (events[0].res) {
                         case -ENOMEM:
-                            AFALGerr(AFALG_F_KERNEL_OP, AFALG_R_KERNEL_OP_FAILED);
+                            AFALGerr(0, AFALG_R_KERNEL_OP_FAILED);
                             ERR_add_error_data(3, "-ENOMEM ( code ", strbuf, " )");
                             break;
                         default:
-                            AFALGerr(AFALG_F_KERNEL_OP, AFALG_R_KERNEL_OP_FAILED);
+                            AFALGerr(0, AFALG_R_KERNEL_OP_FAILED);
                             ERR_add_error_data(2, "code ", strbuf);
                             break;
                         }
