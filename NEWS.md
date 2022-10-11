@@ -18,6 +18,10 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
+### Major changes between OpenSSL 3.0.6 and OpenSSL 3.0.7 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.0.5 and OpenSSL 3.0.6 [11 Oct 2022]
 
   * Fix for custom ciphers to prevent accidental use of NULL encryption
