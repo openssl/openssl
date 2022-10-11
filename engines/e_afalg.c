@@ -356,6 +356,12 @@ static int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
                         continue;
                     } else {
                         char strbuf[32];
+                        // sometimes __s64 is defined as long long int
+                        // but on some archs ( like mips64 or powerpc64 ) it's just long int
+                        // to be able to use BIO_snprintf() with PRId64 without warnings
+                        // copy events[0].res to an int64_t variable
+                        // because __s64 and int64_t should always be a 64 bit type this should work
+                        int64_t op_ret = events[0].res;
 
                         /*
                          * Retries exceed for -EBUSY or unrecoverable error
@@ -364,7 +370,7 @@ static int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
                         ALG_WARN
                             ("%s(%d): Crypto Operation failed with code %lld\n",
                              __FILE__, __LINE__, events[0].res);
-                        BIO_snprintf(strbuf, sizeof(strbuf), "%"PRIi64, events[0].res);
+                        BIO_snprintf(strbuf, sizeof(strbuf), "%"PRId64, op_ret);
                         switch (events[0].res) {
                         case -ENOMEM:
                             AFALGerr(0, AFALG_R_KERNEL_OP_FAILED);
