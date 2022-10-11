@@ -41,26 +41,25 @@ int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
-    int ret = 0;
-
-    ret = ASN1_item_sign(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
-                         &x->sig_alg, &x->signature, &x->cert_info, pkey,
-                         md);
-    if (ret > 0)
-        x->cert_info.enc.modified = 1;
-    return ret;
+    /*
+     * Setting the modified flag before signing it. This makes the cached
+     * encoding to be ignored, so even if the certificate fields have changed,
+     * they are signed correctly.
+     * The X509_sign_ctx, X509_REQ_sign{,_ctx}, X509_CRL_sign{,_ctx} functions
+     * which exist below are the same.
+     */
+    x->cert_info.enc.modified = 1;
+    return (ASN1_item_sign(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
+                           &x->sig_alg, &x->signature, &x->cert_info, pkey,
+                           md));
 }
 
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
 {
-    int ret = 0;
-
-    ret = ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
-                             &x->cert_info.signature,
-                             &x->sig_alg, &x->signature, &x->cert_info, ctx);
-    if (ret > 0)
-        x->cert_info.enc.modified = 1;
-    return ret;
+    x->cert_info.enc.modified = 1;
+    return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
+                              &x->cert_info.signature,
+                              &x->sig_alg, &x->signature, &x->cert_info, ctx);
 }
 
 #ifndef OPENSSL_NO_OCSP
@@ -73,48 +72,32 @@ int X509_http_nbio(OCSP_REQ_CTX *rctx, X509 **pcert)
 
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
-    int ret = 0;
-
-    ret = ASN1_item_sign(ASN1_ITEM_rptr(X509_REQ_INFO), &x->sig_alg, NULL,
-                         x->signature, &x->req_info, pkey, md);
-    if (ret > 0)
-        x->req_info.enc.modified = 1;
-    return ret;
+    x->req_info.enc.modified = 1;
+    return (ASN1_item_sign(ASN1_ITEM_rptr(X509_REQ_INFO), &x->sig_alg, NULL,
+                           x->signature, &x->req_info, pkey, md));
 }
 
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
 {
-    int ret = 0;
-
-    ret = ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
-                             &x->sig_alg, NULL, x->signature, &x->req_info,
-                             ctx);
-    if (ret > 0)
-        x->req_info.enc.modified = 1;
-    return ret;
+    x->req_info.enc.modified = 1;
+    return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
+                              &x->sig_alg, NULL, x->signature, &x->req_info,
+                              ctx);
 }
 
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
-    int ret = 0;
-
-    ret = ASN1_item_sign(ASN1_ITEM_rptr(X509_CRL_INFO), &x->crl.sig_alg,
-                         &x->sig_alg, &x->signature, &x->crl, pkey, md);
-    if (ret > 0)
-        x->crl.enc.modified = 1;
-    return ret;
+    x->crl.enc.modified = 1;
+    return (ASN1_item_sign(ASN1_ITEM_rptr(X509_CRL_INFO), &x->crl.sig_alg,
+                           &x->sig_alg, &x->signature, &x->crl, pkey, md));
 }
 
 int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx)
 {
-    int ret = 0;
-
-    ret = ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CRL_INFO),
-                             &x->crl.sig_alg, &x->sig_alg, &x->signature,
-                             &x->crl, ctx);
-    if (ret > 0)
-        x->crl.enc.modified = 1;
-    return ret;
+    x->crl.enc.modified = 1;
+    return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CRL_INFO),
+                              &x->crl.sig_alg, &x->sig_alg, &x->signature,
+                              &x->crl, ctx);
 }
 
 #ifndef OPENSSL_NO_OCSP
