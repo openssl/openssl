@@ -7,6 +7,10 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
+ Changes between 1.1.1r and 1.1.1s [xx XXX xxxx]
+
+  *)
+
  Changes between 1.1.1q and 1.1.1r [11 Oct 2022]
 
   *) Fixed the linux-mips64 Configure target which was missing the
