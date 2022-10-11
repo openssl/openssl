@@ -116,10 +116,10 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     /*
      * We perform two iterations:
      *
-     * 1.  Do the normal signature fetch, using the fetching data given by
-     *     the EVP_PKEY_CTX.
-     * 2.  Do the provider specific signature fetch, from the same provider
+     * 1.  Do the provider specific signature fetch, from the same provider
      *     as |ctx->keymgmt|
+     * 2.  Do the normal signature fetch, using the fetching data given by
+     *     the EVP_PKEY_CTX.
      *
      * We then try to fetch the keymgmt from the same provider as the
      * signature, and try to export |ctx->pkey| to that keymgmt (when
@@ -143,18 +143,17 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
         switch (iter) {
         case 1:
-            signature = EVP_SIGNATURE_fetch(locpctx->libctx, supported_sig,
-                                            locpctx->propquery);
-            if (signature != NULL)
-                tmp_prov = EVP_SIGNATURE_get0_provider(signature);
-            break;
-        case 2:
             tmp_prov = EVP_KEYMGMT_get0_provider(locpctx->keymgmt);
             signature =
                 evp_signature_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
                                               supported_sig, locpctx->propquery);
+            break;
+        case 2:
+            signature = EVP_SIGNATURE_fetch(locpctx->libctx, supported_sig,
+                                            locpctx->propquery);
             if (signature == NULL)
                 goto legacy;
+            tmp_prov = EVP_SIGNATURE_get0_provider(signature);
             break;
         }
         if (signature == NULL)
