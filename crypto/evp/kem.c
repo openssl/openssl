@@ -64,10 +64,10 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
      * checking if kem is already there.
      * We perform two iterations:
      *
-     * 1.  Do the normal kem fetch, using the fetching data given by
-     *     the EVP_PKEY_CTX.
-     * 2.  Do the provider specific kem fetch, from the same provider
+     * 1.  Do the provider specific kem fetch, from the same provider
      *     as |ctx->keymgmt|
+     * 2.  Do the normal kem fetch, using the fetching data given by
+     *     the EVP_PKEY_CTX.
      *
      * We then try to fetch the keymgmt from the same provider as the
      * kem, and try to export |ctx->pkey| to that keymgmt (when this
@@ -91,16 +91,15 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
 
         switch (iter) {
         case 1:
-            kem = EVP_KEM_fetch(ctx->libctx, supported_kem, ctx->propquery);
-            if (kem != NULL)
-                tmp_prov = EVP_KEM_get0_provider(kem);
-            break;
-        case 2:
             tmp_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
             kem = evp_kem_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
                                           supported_kem, ctx->propquery);
-
-            if (kem == NULL) {
+            break;
+        case 2:
+            kem = EVP_KEM_fetch(ctx->libctx, supported_kem, ctx->propquery);
+            if (kem != NULL)
+                tmp_prov = EVP_KEM_get0_provider(kem);
+            else {
                 ERR_raise(ERR_LIB_EVP,
                           EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
                 ret = -2;
