@@ -97,6 +97,7 @@ void ossl_rand_cleanup_int(void)
     CRYPTO_THREAD_lock_free(rand_meth_lock);
     rand_meth_lock = NULL;
 # endif
+    ossl_release_default_drbg_ctx();
     rand_inited = 0;
 }
 

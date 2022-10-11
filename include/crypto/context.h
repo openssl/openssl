@@ -41,6 +41,7 @@ void ossl_self_test_set_callback_free(void *);
 void ossl_rand_crng_ctx_free(void *);
 void ossl_thread_event_ctx_free(void *);
 void ossl_fips_prov_ossl_ctx_free(void *);
+void ossl_release_default_drbg_ctx(void);
 #if defined(OPENSSL_THREADS)
 void ossl_threads_ctx_free(void *);
 #endif
