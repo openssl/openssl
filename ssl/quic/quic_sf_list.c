@@ -101,43 +101,35 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
                             const unsigned char *data, int fin)
 {
     STREAM_FRAME *sf, *new_frame, *prev_frame, *next_frame;
+#ifndef NDEBUG
+    uint64_t curr_end = fl->tail != NULL ? fl->tail->range.end
+                                         : fl->offset;
+
+    /* This check for FINAL_SIZE_ERROR is handled by QUIC FC already */
+    assert((!fin || curr_end <= range->end)
+           && (!fl->fin || curr_end >= range->end));
+#endif
+
+    if (fl->offset >= range->end)
+        goto end;
 
     /* nothing there yet */
     if (fl->tail == NULL) {
-        if ((fin && fl->offset > range->end)
-            || (fl->fin && fl->offset < range->end)) {
-            /* TODO(QUIC): protocol violation: FINAL_SIZE_ERROR */
-            return 0;
-        }
-        fl->fin = fin || fl->fin;
-
-        if (fl->offset >= range->end)
-            return 1;
-
         fl->tail = fl->head = stream_frame_new(range, pkt, data);
         if (fl->tail == NULL)
             return 0;
+
         ++fl->num_frames;
-        return 1;
+        goto end;
     }
-
-    if ((fin && fl->tail->range.end > range->end)
-        || (fl->fin && fl->tail->range.end < range->end)) {
-        /* TODO(QUIC): protocol violation: FINAL_SIZE_ERROR */
-        return 0;
-    }
-    fl->fin = fin || fl->fin;
-
-    if (fl->offset >= range->end)
-        return 1;
 
     /* TODO(QUIC): Check for fl->num_frames and start copying if too many */
 
     /* optimize insertion at the end */
     if (fl->tail->range.start < range->start) {
-        if (fl->tail->range.end >= range->end) {
-            return 1;
-        }
+        if (fl->tail->range.end >= range->end)
+            goto end;
+
         return append_frame(fl, range, pkt, data);
     }
 
@@ -146,12 +138,12 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
          sf = sf->next)
         prev_frame = sf;
 
-    if (prev_frame != NULL && prev_frame->range.end >= range->end) {
-        return 1;
-    }
+    if (!ossl_assert(sf != NULL))
+        /* frame list invariant broken */
+        return 0;
 
-    if (sf == NULL)
-        return append_frame(fl, range, pkt, data);
+    if (prev_frame != NULL && prev_frame->range.end >= range->end)
+        goto end;
 
     /*
      * Now we must create a new frame although in the end we might drop it,
@@ -177,24 +169,32 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
         --fl->num_frames;
         stream_frame_free(fl, drop_frame);
     }
+
     if (next_frame != NULL) {
         /* check whether the new_frame is redundant because there is no gap */
         if (prev_frame != NULL
             && next_frame->range.start <= prev_frame->range.end) {
             stream_frame_free(fl, new_frame);
-            return 1;
+            goto end;
         }
         next_frame->prev = new_frame;
     } else {
         fl->tail = new_frame;
     }
+
     new_frame->next = next_frame;
     new_frame->prev = prev_frame;
+
     if (prev_frame != NULL)
         prev_frame->next = new_frame;
     else
         fl->head = new_frame;
+
     ++fl->num_frames;
+
+ end:
+    fl->fin = fin || fl->fin;
+
     return 1;
 }
 
@@ -254,9 +254,11 @@ int ossl_sframe_list_drop_frames(SFRAME_LIST *fl, uint64_t limit)
         stream_frame_free(fl, drop_frame);
     }
     fl->head = sf;
+
     if (sf != NULL)
         sf->prev = NULL;
     else
         fl->tail = NULL;
+
     return 1;
 }
