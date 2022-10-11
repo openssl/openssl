@@ -10,6 +10,7 @@
 # define OSSL_UINT_SET_H
 
 #include "openssl/params.h"
+#include "internal/list.h"
 
 /*
  * uint64_t Integer Sets
@@ -27,17 +28,15 @@ typedef struct uint_range_st {
     uint64_t    start, end;
 } UINT_RANGE;
 
-typedef struct uint_set_item_st {
-    struct uint_set_item_st    *prev, *next;
+typedef struct uint_set_item_st UINT_SET_ITEM;
+struct uint_set_item_st {
+    OSSL_LIST_MEMBER(uint_set, UINT_SET_ITEM);
     UINT_RANGE                  range;
-} UINT_SET_ITEM;
+};
 
-typedef struct uint_set_st {
-    UINT_SET_ITEM  *head, *tail;
+DEFINE_LIST_OF(uint_set, UINT_SET_ITEM);
 
-    /* Number of ranges (not integers) in the set. */
-    size_t          num_ranges;
-} UINT_SET;
+typedef OSSL_LIST(uint_set) UINT_SET;
 
 void ossl_uint_set_init(UINT_SET *s);
 void ossl_uint_set_destroy(UINT_SET *s);
