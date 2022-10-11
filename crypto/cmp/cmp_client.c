@@ -123,13 +123,13 @@ static int save_statusInfo(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si)
 static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
                               OSSL_CMP_MSG **rep, int expected_type)
 {
-    int is_enrollment = IS_CREP(expected_type)
-        || expected_type == OSSL_CMP_PKIBODY_POLLREP
-        || expected_type == OSSL_CMP_PKIBODY_PKICONF;
+    int begin_transaction =
+        expected_type != OSSL_CMP_PKIBODY_POLLREP
+        && expected_type != OSSL_CMP_PKIBODY_PKICONF;
     const char *req_type_str =
         ossl_cmp_bodytype_to_string(OSSL_CMP_MSG_get_bodytype(req));
     const char *expected_type_str = ossl_cmp_bodytype_to_string(expected_type);
-    int msg_timeout;
+    int bak_msg_timeout = ctx->msg_timeout;
     int bt;
     time_t now = time(NULL);
     int time_left;
@@ -137,15 +137,16 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
 
     if (transfer_cb == NULL)
         transfer_cb = OSSL_CMP_MSG_http_perform;
-
     *rep = NULL;
-    msg_timeout = ctx->msg_timeout; /* backup original value */
-    if (is_enrollment && ctx->total_timeout != 0 /* timeout not infinite */) {
+
+    if (ctx->total_timeout != 0 /* not waiting indefinitely */) {
+        if (begin_transaction)
+            ctx->end_time = now + ctx->total_timeout;
         if (now >= ctx->end_time) {
             ERR_raise(ERR_LIB_CMP, CMP_R_TOTAL_TIMEOUT);
             return 0;
         }
-        if (!ossl_assert(ctx->end_time - time(NULL) < INT_MAX)) {
+        if (!ossl_assert(ctx->end_time - now < INT_MAX)) {
             /* actually cannot happen due to assignment in initial_certreq() */
             ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
             return 0;
@@ -161,7 +162,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     ossl_cmp_log1(INFO, ctx, "sending %s", req_type_str);
 
     *rep = (*transfer_cb)(ctx, req);
-    ctx->msg_timeout = msg_timeout; /* restore original value */
+    ctx->msg_timeout = bak_msg_timeout;
 
     if (*rep == NULL) {
         ERR_raise_data(ERR_LIB_CMP,
@@ -645,9 +646,6 @@ static int initial_certreq(OSSL_CMP_CTX *ctx,
     ctx->status = OSSL_CMP_PKISTATUS_request;
     if (!ossl_cmp_ctx_set0_newCert(ctx, NULL))
         return 0;
-
-    if (ctx->total_timeout != 0) /* else ctx->end_time is not used */
-        ctx->end_time = time(NULL) + ctx->total_timeout;
 
     /* also checks if all necessary options are set */
     if ((req = ossl_cmp_certreq_new(ctx, req_type, crm)) == NULL)
