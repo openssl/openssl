@@ -440,8 +440,8 @@ static void rx_pkt_history_trim_range_count(struct rx_pkt_history_st *h)
 {
     QUIC_PN highest = QUIC_PN_INVALID;
 
-    while (h->set.num_ranges > MAX_RX_ACK_RANGES) {
-        UINT_RANGE r = h->set.head->range;
+    while (ossl_list_uint_set_num(&h->set) > MAX_RX_ACK_RANGES) {
+        UINT_RANGE r = ossl_list_uint_set_head(&h->set)->range;
 
         highest = (highest == QUIC_PN_INVALID)
             ? r.end : ossl_quic_pn_max(highest, r.end);
@@ -1416,7 +1416,7 @@ static int ackm_has_newly_missing(OSSL_ACKM *ackm, int pkt_space)
 
     h = get_rx_history(ackm, pkt_space);
 
-    if (h->set.tail == NULL)
+    if (ossl_list_uint_set_num(&h->set) == 0)
         return 0;
 
     /*
@@ -1432,8 +1432,9 @@ static int ackm_has_newly_missing(OSSL_ACKM *ackm, int pkt_space)
      * the PNs we have ACK'd previously and the PN we have just received.
      */
     return ackm->ack[pkt_space].num_ack_ranges > 0
-        && h->set.tail->range.start == h->set.tail->range.end
-        && h->set.tail->range.start
+        && ossl_list_uint_set_tail(&h->set)->range.start
+           == ossl_list_uint_set_tail(&h->set)->range.end
+        && ossl_list_uint_set_tail(&h->set)->range.start
             > ackm->ack[pkt_space].ack_ranges[0].end + 1;
 }
 
@@ -1582,9 +1583,9 @@ static void ackm_fill_rx_ack_ranges(OSSL_ACKM *ackm, int pkt_space,
      * Copy out ranges from the PN set, starting at the end, until we reach our
      * maximum number of ranges.
      */
-    for (x = h->set.tail;
+    for (x = ossl_list_uint_set_tail(&h->set);
          x != NULL && i < OSSL_NELEM(ackm->ack_ranges);
-         x = x->prev, ++i) {
+         x = ossl_list_uint_set_prev(x), ++i) {
         ackm->ack_ranges[pkt_space][i].start = x->range.start;
         ackm->ack_ranges[pkt_space][i].end   = x->range.end;
     }
