@@ -14,6 +14,7 @@
 # include "internal/quic_types.h"
 # include "internal/bio_addr.h"
 # include "internal/time.h"
+# include "internal/list.h"
 
 /*
  * QUIC Demuxer
@@ -86,7 +87,7 @@ typedef struct quic_urxe_st QUIC_URXE;
 #define QUIC_MAX_PKT_PER_URXE       (sizeof(uint64_t) * 8)
 
 struct quic_urxe_st {
-    QUIC_URXE *prev, *next;
+    OSSL_LIST_MEMBER(urxe, QUIC_URXE);
 
     /*
      * The URXE data starts after this structure so we don't need a pointer.
@@ -139,9 +140,8 @@ ossl_quic_urxe_data_end(const QUIC_URXE *e)
 }
 
 /* List structure tracking a queue of URXEs. */
-typedef struct quic_urxe_list_st {
-    QUIC_URXE *head, *tail;
-} QUIC_URXE_LIST;
+DEFINE_LIST_OF(urxe, QUIC_URXE);
+typedef OSSL_LIST(urxe) QUIC_URXE_LIST;
 
 /*
  * List management helpers. These are used by the demuxer but can also be used
