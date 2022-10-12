@@ -145,7 +145,7 @@ L<SSL_CTX_use_certificate(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 3.1.
+These functions were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
