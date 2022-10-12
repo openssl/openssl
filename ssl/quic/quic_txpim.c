@@ -34,6 +34,7 @@ struct quic_txpim_st {
 QUIC_TXPIM *ossl_quic_txpim_new(void)
 {
     QUIC_TXPIM *txpim = OPENSSL_zalloc(sizeof(*txpim));
+
     if (txpim == NULL)
         return NULL;
 
@@ -198,7 +199,7 @@ static int compare(const void *a, const void *b)
     return 0;
 }
 
-const QUIC_TXPIM_CHUNK *ossl_quic_txpim_pkt_get_chunks(QUIC_TXPIM_PKT *fpkt)
+const QUIC_TXPIM_CHUNK *ossl_quic_txpim_pkt_get_chunks(const QUIC_TXPIM_PKT *fpkt)
 {
     QUIC_TXPIM_PKT_EX *ex = (QUIC_TXPIM_PKT_EX *)fpkt;
 
@@ -214,14 +215,14 @@ const QUIC_TXPIM_CHUNK *ossl_quic_txpim_pkt_get_chunks(QUIC_TXPIM_PKT *fpkt)
     return ex->chunks;
 }
 
-size_t ossl_quic_txpim_pkt_get_num_chunks(QUIC_TXPIM_PKT *fpkt)
+size_t ossl_quic_txpim_pkt_get_num_chunks(const QUIC_TXPIM_PKT *fpkt)
 {
     QUIC_TXPIM_PKT_EX *ex = (QUIC_TXPIM_PKT_EX *)fpkt;
 
     return ex->num_chunks;
 }
 
-size_t ossl_quic_txpim_get_in_use(QUIC_TXPIM *txpim)
+size_t ossl_quic_txpim_get_in_use(const QUIC_TXPIM *txpim)
 {
     return txpim->in_use;
 }

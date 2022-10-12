@@ -37,19 +37,19 @@ struct quic_cfq_item_st {
 #define QUIC_CFQ_STATE_TX       1
 
 /* Returns the frame type of a CFQ item. */
-uint64_t ossl_quic_cfq_item_get_frame_type(QUIC_CFQ_ITEM *item);
+uint64_t ossl_quic_cfq_item_get_frame_type(const QUIC_CFQ_ITEM *item);
 
 /* Returns a pointer to the encoded buffer of a CFQ item. */
-const unsigned char *ossl_quic_cfq_item_get_encoded(QUIC_CFQ_ITEM *item);
+const unsigned char *ossl_quic_cfq_item_get_encoded(const QUIC_CFQ_ITEM *item);
 
 /* Returns the length of the encoded buffer in bytes. */
-size_t ossl_quic_cfq_item_get_encoded_len(QUIC_CFQ_ITEM *item);
+size_t ossl_quic_cfq_item_get_encoded_len(const QUIC_CFQ_ITEM *item);
 
 /* Returns the CFQ item state, a QUIC_CFQ_STATE_* value. */
-int ossl_quic_cfq_item_get_state(QUIC_CFQ_ITEM *item);
+int ossl_quic_cfq_item_get_state(const QUIC_CFQ_ITEM *item);
 
 /* Returns the PN space for the CFQ item. */
-uint32_t ossl_quic_cfq_item_get_pn_space(QUIC_CFQ_ITEM *item);
+uint32_t ossl_quic_cfq_item_get_pn_space(const QUIC_CFQ_ITEM *item);
 
 /*
  * QUIC Control Frame Queue
@@ -126,7 +126,8 @@ void ossl_quic_cfq_release(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item);
  * Gets the highest priority CFQ item in the given PN space awaiting
  * transmission. If there are none, returns NULL.
  */
-QUIC_CFQ_ITEM *ossl_quic_cfq_get_priority_head(QUIC_CFQ *cfq, uint32_t pn_space);
+QUIC_CFQ_ITEM *ossl_quic_cfq_get_priority_head(const QUIC_CFQ *cfq,
+                                               uint32_t pn_space);
 
 /*
  * Given a CFQ item, gets the next CFQ item awaiting transmission in priority
@@ -134,7 +135,7 @@ QUIC_CFQ_ITEM *ossl_quic_cfq_get_priority_head(QUIC_CFQ *cfq, uint32_t pn_space)
  * ossl_quic_cfq_get_priority_head(), returns the next-lower priority item.
  * Returns NULL if the given item is the last item in priority order.
  */
-QUIC_CFQ_ITEM *ossl_quic_cfq_item_get_priority_next(QUIC_CFQ_ITEM *item,
+QUIC_CFQ_ITEM *ossl_quic_cfq_item_get_priority_next(const QUIC_CFQ_ITEM *item,
                                                     uint32_t pn_space);
 
 #endif
