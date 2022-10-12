@@ -22,6 +22,8 @@ pool functionality:
 
   3. Provide threads manually to OpenSSL for use as part of its thread pool.
 
+A thread pool is managed on a per-`OSSL_LIB_CTX` basis.
+
 Default Model
 -------------
 
@@ -43,17 +45,19 @@ during its initialisation:
  * current platform, or because OpenSSL is not built with the necessary
  * support).
  */
-int OSSL_set_max_threads(uint64_t max_threads);
+int OSSL_set_max_threads(OSSL_LIB_CTX *ctx, uint64_t max_threads);
 
 /*
  * Get the maximum number of threads currently allowed to be used by the
  * thread pool. If thread pooling is disabled or not available, returns 0.
  */
-uint64_t OSSL_get_max_threads(void);
+uint64_t OSSL_get_max_threads(OSSL_LIB_CTX *ctx);
 ```
 
 The maximum thread count is a limit, not a target. Threads will not be spawned
 unless (and until) there is demand.
+
+As usual, `ctx` can be NULL to use the default library context.
 
 Custom Thread Spawner Method
 ----------------------------
@@ -71,13 +75,15 @@ typedef struct ossl_thread_method_st {
      *
      * Returns 1 on success or 0 on failure.
      */
-    int (*spawn_thread)(void (*cb)(void *arg), void *arg,
+    int (*spawn_thread)(OSSL_LIB_CTX *ctx,
+                        void (*cb)(void *arg), void *arg,
                         OSSL_THREAD_COOKIE **thread_cookie);
 
     /*
      * Wait for a thread to exit.
      */
-    void (*join_thread)(OSSL_THREAD_COOKIE *thread_cookie);
+    void (*join_thread)(OSSL_LIB_CTX *ctx,
+                        OSSL_THREAD_COOKIE *thread_cookie);
 } OSSL_THREAD_METHOD;
 
 /*
@@ -89,7 +95,8 @@ typedef struct ossl_thread_method_st {
  * The length argument allows ABI compatibility to be preserved if methods are
  * added to the OSSL_THREAD_METHOD structure in future.
  */
-int OSSL_set_thread_method(OSSL_THREAD_METHOD *method, size_t len);
+int OSSL_set_thread_method(OSSL_LIB_CTX *ctx,
+                           OSSL_THREAD_METHOD *method, size_t len);
 ```
 
 OpenSSL uses the custom thread spawner method in accordance with the thread
@@ -208,7 +215,7 @@ void OSSL_THREAD_POOL_COOKIE_reset(OSSL_THREAD_POOL_COOKIE *cookie);
  * was entered successfully but the function subsequently returned
  * due to a call to OSSL_thread_pool_exit.
  */
-int OSSL_thread_pool_enter(OSSL_THREAD_POOL_COOKIE *cookie);
+int OSSL_thread_pool_enter(OSSL_LIB_CTX *ctx, OSSL_THREAD_POOL_COOKIE *cookie);
 
 /*
  * Causes any in progress calls to OSSL_thread_pool_enter, or any future such
