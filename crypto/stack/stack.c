@@ -397,33 +397,21 @@ int OPENSSL_sk_unshift(OPENSSL_STACK *st, const void *data)
 
 void *OPENSSL_sk_shift(OPENSSL_STACK *st)
 {
-    if (st == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
-    }
-    if (st->num == 0)
+    if (st == NULL || st->num == 0)
         return NULL;
     return internal_delete(st, 0);
 }
 
 void *OPENSSL_sk_pop(OPENSSL_STACK *st)
 {
-    if (st == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
-    }
-    if (st->num == 0)
+    if (st == NULL || st->num == 0)
         return NULL;
     return internal_delete(st, st->num - 1);
 }
 
 void OPENSSL_sk_zero(OPENSSL_STACK *st)
 {
-    if (st == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
-        return;
-    }
-    if (st->num == 0)
+    if (st == NULL || st->num == 0)
         return;
     memset(st->data, 0, sizeof(*st->data) * st->num);
     st->num = 0;
@@ -456,11 +444,7 @@ int OPENSSL_sk_num(const OPENSSL_STACK *st)
 
 void *OPENSSL_sk_value(const OPENSSL_STACK *st, int i)
 {
-    if (st == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
-    }
-    if (i < 0 || i >= st->num)
+    if (st == NULL || i < 0 || i >= st->num)
         return NULL;
     return (void *)st->data[i];
 }
