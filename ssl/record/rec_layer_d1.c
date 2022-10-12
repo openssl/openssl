@@ -137,10 +137,10 @@ int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
 
 #ifndef OPENSSL_NO_SCTP
     /* Store bio_dgram_sctp_rcvinfo struct */
-    if (BIO_dgram_is_sctp(SSL_get_rbio(ssl)) &&
-        (SSL_get_state(ssl) == TLS_ST_SR_FINISHED
-         || SSL_get_state(ssl) == TLS_ST_CR_FINISHED)) {
-        BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_SCTP_GET_RCVINFO,
+    if (BIO_dgram_is_sctp(s->rbio) &&
+        (ossl_statem_get_state(s) == TLS_ST_SR_FINISHED
+         || ossl_statem_get_state(s) == TLS_ST_CR_FINISHED)) {
+        BIO_ctrl(s->rbio, BIO_CTRL_DGRAM_SCTP_GET_RCVINFO,
                  sizeof(rdata->recordinfo), &rdata->recordinfo);
     }
 #endif
@@ -175,9 +175,9 @@ static void dtls_unbuffer_record(SSL_CONNECTION *s)
 
 #ifndef OPENSSL_NO_SCTP
         /* Restore bio_dgram_sctp_rcvinfo struct */
-        if (BIO_dgram_is_sctp(SSL_get_rbio(s))) {
-            BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SCTP_SET_RCVINFO,
-                        sizeof(rdata->recordinfo), &rdata->recordinfo);
+        if (BIO_dgram_is_sctp(s->rbio)) {
+            BIO_ctrl(s->rbio, BIO_CTRL_DGRAM_SCTP_SET_RCVINFO,
+                     sizeof(rdata->recordinfo), &rdata->recordinfo);
         }
 #endif
 

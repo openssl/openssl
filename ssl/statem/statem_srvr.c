@@ -3411,7 +3411,7 @@ WORK_STATE tls_post_process_client_key_exchange(SSL_CONNECTION *s,
                 return WORK_ERROR;
             }
 
-            BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
+            BIO_ctrl(s->wbio, BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
                      sizeof(sctpauthkey), sctpauthkey);
         }
     }
