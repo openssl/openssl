@@ -197,7 +197,7 @@ down each and finally closes both down.
 
  BIO *abio, *cbio, *cbio2;
 
- /* First call to BIO_accept() sets up accept BIO */
+ /* First call to BIO_do_accept() sets up accept BIO */
  abio = BIO_new_accept("4444");
  if (BIO_do_accept(abio) <= 0) {
      fprintf(stderr, "Error setting up accept\n");
@@ -240,7 +240,7 @@ down each and finally closes both down.
 
 =head1 HISTORY
 
-BIO_set_tfo_accept() was added in OpenSSL 3.1.
+BIO_set_tfo_accept() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

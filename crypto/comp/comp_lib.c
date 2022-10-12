@@ -19,10 +19,8 @@ COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
 {
     COMP_CTX *ret;
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return NULL;
-    }
     ret->meth = meth;
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         OPENSSL_free(ret);

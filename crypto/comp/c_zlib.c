@@ -321,10 +321,8 @@ static int bio_zlib_new(BIO *bi)
     }
 # endif
     ctx = OPENSSL_zalloc(sizeof(*ctx));
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
+    if (ctx == NULL)
         return 0;
-    }
     ctx->ibufsize = ZLIB_DEFAULT_BUFSIZE;
     ctx->obufsize = ZLIB_DEFAULT_BUFSIZE;
     ctx->zin.zalloc = Z_NULL;
@@ -376,10 +374,8 @@ static int bio_zlib_read(BIO *b, char *out, int outl)
     BIO_clear_retry_flags(b);
     if (!ctx->ibuf) {
         ctx->ibuf = OPENSSL_malloc(ctx->ibufsize);
-        if (ctx->ibuf == NULL) {
-            ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
+        if (ctx->ibuf == NULL)
             return 0;
-        }
         if ((ret = inflateInit(zin)) != Z_OK) {
             ERR_raise_data(ERR_LIB_COMP, COMP_R_ZLIB_INFLATE_ERROR,
                            "zlib error: %s", zError(ret));
@@ -441,10 +437,8 @@ static int bio_zlib_write(BIO *b, const char *in, int inl)
     if (!ctx->obuf) {
         ctx->obuf = OPENSSL_malloc(ctx->obufsize);
         /* Need error here */
-        if (ctx->obuf == NULL) {
-            ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
+        if (ctx->obuf == NULL)
             return 0;
-        }
         ctx->optr = ctx->obuf;
         ctx->ocount = 0;
         if ((ret = deflateInit(zout, ctx->comp_level)) != Z_OK) {

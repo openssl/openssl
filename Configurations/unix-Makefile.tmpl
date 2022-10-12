@@ -1130,8 +1130,16 @@ md-nits:
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
 #	...
 
+.PHONY: lint
 lint:
-	lint -DLINT $(INCLUDES) $(SRCS)
+	@( cd $(SRCDIR); \
+           echo splint -DLINT -posixlib -preproc -D__gnuc_va_list=void \
+	   -I. -Iinclude -Iapps/include $(CRYPTOHEADERS) $(SSLHEADERS) $(SRCS) )
+
+.PHONY: check-format
+check-format:
+	( cd $(SRCDIR); $(PERL) util/check-format.pl \
+			$(SRCS) \$(CRYPTOHEADERS) $(SSLHEADERS) )
 
 generate_apps:
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
@@ -1271,7 +1279,8 @@ errors:
            include/internal/asn1.h
            include/internal/sslconf.h );
    my @cryptoskipheaders = ( @sslheaders_tmpl,
-       qw( include/openssl/conf_api.h
+       qw( include/openssl/asn1_mac.h
+           include/openssl/conf_api.h
            include/openssl/ebcdic.h
            include/openssl/opensslconf.h
            include/openssl/symhacks.h ) );
@@ -1305,6 +1314,14 @@ errors:
        }
    }
    "";
+-}
+SRCS={-
+sub uniq { my %seen; grep !$seen{$_}++, @_; }
+sub flat(@) { return map { ref eq 'ARRAY' ? @$_ : $_ } @_; }
+join(" \\\n" . ' ' x 5, fill_lines(" ", $COLUMNS - 5,
+     uniq(grep /\.(c|cc|cpp)$/,
+          flat (map { $unified_info{sources}->{$_} }
+                (sort keys %{$unified_info{sources}})))))
 -}
 CRYPTOHEADERS={- join(" \\\n" . ' ' x 14,
                       fill_lines(" ", $COLUMNS - 14, sort keys %cryptoheaders)) -}

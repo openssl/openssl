@@ -112,7 +112,7 @@ the specified element in the list.
 
 =head1 HISTORY
 
-The functions described here were all added in OpenSSL 3.1.
+The functions described here were all added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

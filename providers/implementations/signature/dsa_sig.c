@@ -111,7 +111,6 @@ static void *dsa_newctx(void *provctx, const char *propq)
     if (propq != NULL && (pdsactx->propq = OPENSSL_strdup(propq)) == NULL) {
         OPENSSL_free(pdsactx);
         pdsactx = NULL;
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
     }
     return pdsactx;
 }

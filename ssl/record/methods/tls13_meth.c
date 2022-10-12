@@ -21,7 +21,7 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                   size_t taglen,
                                   int mactype,
                                   const EVP_MD *md,
-                                  const SSL_COMP *comp)
+                                  COMP_METHOD *comp)
 {
     EVP_CIPHER_CTX *ciph_ctx;
     int mode;

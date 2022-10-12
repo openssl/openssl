@@ -243,11 +243,18 @@ a client and also echoes the request to standard output.
  BIO_set_accept_bios(acpt, sbio);
  out = BIO_new_fp(stdout, BIO_NOCLOSE);
 
- /* Setup accept BIO */
+ /* First call to BIO_do_accept() sets up accept BIO */
  if (BIO_do_accept(acpt) <= 0) {
      fprintf(stderr, "Error setting up accept BIO\n");
      ERR_print_errors_fp(stderr);
      exit(1);
+ }
+
+/* Second call to BIO_do_accept() waits for incoming connection */
+ if (BIO_do_accept(acpt) <= 0) {
+    fprintf(stderr, "Error accepting connection\n");
+    ERR_print_errors_fp(stderr);
+    exit(1);
  }
 
  /* We only want one connection so remove and free accept BIO */

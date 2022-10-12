@@ -290,9 +290,8 @@ static void *sskdf_new(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
-    ctx->provctx = provctx;
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL)
+        ctx->provctx = provctx;
     return ctx;
 }
 
@@ -419,10 +418,8 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen,
         /* If no salt is set then use a default_salt of zeros */
         if (ctx->salt == NULL || ctx->salt_len <= 0) {
             ctx->salt = OPENSSL_zalloc(default_salt_len);
-            if (ctx->salt == NULL) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            if (ctx->salt == NULL)
                 return 0;
-            }
             ctx->salt_len = default_salt_len;
         }
         ret = SSKDF_mac_kdm(ctx->macctx,

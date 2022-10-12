@@ -103,6 +103,9 @@ typedef struct extensions_definition_st {
  * Definitions of all built-in extensions. NOTE: Changes in the number or order
  * of these extensions should be mirrored with equivalent changes to the
  * indexes ( TLSEXT_IDX_* ) defined in ssl_local.h.
+ * Extensions should be added to test/ext_internal_test.c as well, as that
+ * tests the ordering of the extensions.
+ *
  * Each extension has an initialiser, a client and
  * server side parser and a finaliser. The initialiser is called (if the
  * extension is relevant to the given context) even if we did not see the
@@ -123,7 +126,7 @@ typedef struct extensions_definition_st {
  * NOTE: WebSphere Application Server 7+ cannot handle empty extensions at
  * the end, keep these extensions before signature_algorithm.
  */
-#define INVALID_EXTENSION { 0x10000, 0, NULL, NULL, NULL, NULL, NULL, NULL }
+#define INVALID_EXTENSION { TLSEXT_TYPE_invalid, 0, NULL, NULL, NULL, NULL, NULL, NULL }
 static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_renegotiate,
@@ -390,6 +393,17 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     }
 };
 
+/* Returns a TLSEXT_TYPE for the given index */
+unsigned int ossl_get_extension_type(size_t idx)
+{
+    size_t num_exts = OSSL_NELEM(ext_defs);
+
+    if (idx >= num_exts)
+        return TLSEXT_TYPE_out_of_range;
+
+    return ext_defs[idx].type;
+}
+
 /* Check whether an extension's context matches the current context */
 static int validate_context(SSL_CONNECTION *s, unsigned int extctx,
                             unsigned int thisctx)
@@ -575,7 +589,7 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
     num_exts = OSSL_NELEM(ext_defs) + (exts != NULL ? exts->meths_count : 0);
     raw_extensions = OPENSSL_zalloc(num_exts * sizeof(*raw_extensions));
     if (raw_extensions == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -1395,7 +1409,7 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
                     group_id = pgroups[i];
 
                     if (check_in_list(s, group_id, clntgroups, clnt_num_groups,
-                                      2))
+                                      1))
                         break;
                 }
 

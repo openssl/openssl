@@ -305,13 +305,14 @@ int BIO_accept(int sock, char **ip_port)
     if (ip_port != NULL) {
         char *host = BIO_ADDR_hostname_string(&res, 1);
         char *port = BIO_ADDR_service_string(&res, 1);
-        if (host != NULL && port != NULL)
+        if (host != NULL && port != NULL) {
             *ip_port = OPENSSL_zalloc(strlen(host) + strlen(port) + 2);
-        else
+        } else {
             *ip_port = NULL;
+            ERR_raise(ERR_LIB_BIO, ERR_R_BIO_LIB);
+        }
 
         if (*ip_port == NULL) {
-            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
             BIO_closesocket(ret);
             ret = (int)INVALID_SOCKET;
         } else {

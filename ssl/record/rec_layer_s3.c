@@ -1136,6 +1136,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     unsigned int maxfrag = SSL3_RT_MAX_PLAIN_LENGTH;
     int use_early_data = 0;
     uint32_t max_early_data;
+    COMP_METHOD *compm = (comp == NULL) ? NULL : comp->method;
 
     meth = ssl_select_next_record_layer(s, level);
 
@@ -1282,7 +1283,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                                        s->server, direction, level, epoch,
                                        key, keylen, iv, ivlen, mackey,
                                        mackeylen, ciph, taglen, mactype, md,
-                                       comp, prev, thisbio, next, NULL, NULL,
+                                       compm, prev, thisbio, next, NULL, NULL,
                                        settings, options, rlayer_dispatch_tmp,
                                        s, &newrl);
         BIO_free(prev);

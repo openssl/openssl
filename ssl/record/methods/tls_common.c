@@ -12,6 +12,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/core_names.h>
+#include <openssl/comp.h>
 #include "internal/e_os.h"
 #include "internal/packet.h"
 #include "../../ssl_local.h"
@@ -159,7 +160,7 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
         defltlen = ssl_get_max_send_fragment(s)
             + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 #ifndef OPENSSL_NO_COMP
-        if (ssl_allow_compression(s))
+        if (tls_allow_compression(rl))
             defltlen += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
         if (!(rl->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
@@ -190,7 +191,7 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
                      * buffers. We assume we're so doomed that we won't even be able
                      * to send an alert.
                      */
-                    RLAYERfatal(rl, SSL_AD_NO_ALERT, ERR_R_MALLOC_FAILURE);
+                    RLAYERfatal(rl, SSL_AD_NO_ALERT, ERR_R_CRYPTO_LIB);
                     return 0;
                 }
             } else {
@@ -249,7 +250,7 @@ int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
              * We assume we're so doomed that we won't even be able to send an
              * alert.
              */
-            RLAYERfatal(rl, SSL_AD_NO_ALERT, ERR_R_MALLOC_FAILURE);
+            RLAYERfatal(rl, SSL_AD_NO_ALERT, ERR_R_CRYPTO_LIB);
             return 0;
         }
         b->buf = p;
@@ -801,7 +802,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     if (mac_size > 0) {
         macbufs = OPENSSL_zalloc(sizeof(*macbufs) * num_recs);
         if (macbufs == NULL) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             return OSSL_RECORD_RETURN_FATAL;
         }
     }
@@ -968,7 +969,7 @@ int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
      * If OPENSSL_NO_COMP is defined then SSL3_RT_MAX_ENCRYPTED_LENGTH
      * does not include the compression overhead anyway.
      */
-    if (rl->expand == NULL)
+    if (rl->compctx == NULL)
         len -= SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
 
@@ -979,6 +980,25 @@ int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     }
 
     return 1;
+}
+
+static int tls_do_compress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *wr)
+{
+#ifndef OPENSSL_NO_COMP
+    int i;
+
+    i = COMP_compress_block(rl->compctx, wr->data,
+                            (int)(wr->length + SSL3_RT_MAX_COMPRESSED_OVERHEAD),
+                            wr->input, (int)wr->length);
+    if (i < 0)
+        return 0;
+
+    wr->length = i;
+    wr->input = wr->data;
+    return 1;
+#else
+    return 0;
+#endif
 }
 
 int tls_do_uncompress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
@@ -993,7 +1013,7 @@ int tls_do_uncompress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     if (rec->comp == NULL)
         return 0;
 
-    i = COMP_expand_block(rl->expand, rec->comp, SSL3_RT_MAX_PLAIN_LENGTH,
+    i = COMP_expand_block(rl->compctx, rec->comp, SSL3_RT_MAX_PLAIN_LENGTH,
                           rec->data, (int)rec->length);
     if (i < 0)
         return 0;
@@ -1009,7 +1029,7 @@ int tls_do_uncompress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
 /* Shared by tlsany_meth, ssl3_meth and tls1_meth */
 int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
 {
-    if (rl->expand != NULL) {
+    if (rl->compctx != NULL) {
         if (rec->length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
             RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW,
                         SSL_R_COMPRESSED_LENGTH_TOO_LONG);
@@ -1178,7 +1198,7 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                          unsigned char *mackey, size_t mackeylen,
                          const EVP_CIPHER *ciph, size_t taglen,
                          int mactype,
-                         const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
+                         const EVP_MD *md, COMP_METHOD *comp, BIO *prev,
                          BIO *transport, BIO *next, BIO_ADDR *local,
                          BIO_ADDR *peer, const OSSL_PARAM *settings,
                          const OSSL_PARAM *options,
@@ -1190,10 +1210,8 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     *retrl = NULL;
 
-    if (rl == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (rl == NULL)
         return OSSL_RECORD_RETURN_FATAL;
-    }
 
     /* Loop through all the settings since they must all be understood */
     if (settings != NULL) {
@@ -1310,7 +1328,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                      size_t ivlen, unsigned char *mackey, size_t mackeylen,
                      const EVP_CIPHER *ciph, size_t taglen,
                      int mactype,
-                     const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
+                     const EVP_MD *md, COMP_METHOD *comp, BIO *prev,
                      BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
                      const OSSL_PARAM *settings, const OSSL_PARAM *options,
                      const OSSL_DISPATCH *fns, void *cbarg,
@@ -1373,7 +1391,7 @@ static void tls_int_free(OSSL_RECORD_LAYER *rl)
     EVP_CIPHER_CTX_free(rl->enc_ctx);
     EVP_MD_CTX_free(rl->md_ctx);
 #ifndef OPENSSL_NO_COMP
-    COMP_CTX_free(rl->expand);
+    COMP_CTX_free(rl->compctx);
 #endif
 
     if (rl->version == SSL3_VERSION)
@@ -1490,11 +1508,9 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     WPACKET *thispkt;
     SSL3_RECORD *thiswr;
     unsigned char *recordstart;
-    int mac_size, clear = 0, ret = 0;
-    int eivlen = 0;
+    int mac_size = 0, ret = 0;
     size_t align = 0;
     SSL3_BUFFER *wb;
-    SSL_SESSION *sess;
     size_t len, wpinited = 0;
     size_t j, prefix = 0;
     int using_ktls;
@@ -1504,28 +1520,36 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     OSSL_RECORD_TEMPLATE prefixtempl;
     OSSL_RECORD_TEMPLATE *thistempl;
 
-    sess = s->session;
+    /*
+     * TODO(RECLAYER): Remove this once TLSv1.3/DTLS crypto has
+     *                 been moved to the new write record layer.
+     */
+    if (rl->version == TLS1_3_VERSION
+            || rl->isdtls) {
+        SSL_SESSION *sess = s->session;
 
-    if ((sess == NULL)
-            || (s->enc_write_ctx == NULL)
-            || (EVP_MD_CTX_get0_md(s->write_hash) == NULL)) {
-        clear = s->enc_write_ctx ? 0 : 1; /* must be AEAD cipher */
-        mac_size = 0;
+        if ((sess == NULL)
+                || (s->enc_write_ctx == NULL)
+                || (EVP_MD_CTX_get0_md(s->write_hash) == NULL)) {
+            mac_size = 0;
+        } else {
+            mac_size = EVP_MD_CTX_get_size(s->write_hash);
+            if (mac_size < 0) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        }
     } else {
-        mac_size = EVP_MD_CTX_get_size(s->write_hash);
-        if (mac_size < 0) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
+        if (rl->md_ctx != NULL && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL) {
+            mac_size = EVP_MD_CTX_get_size(rl->md_ctx);
+            if (mac_size < 0) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
         }
     }
-
-    /*
-     * 'create_empty_fragment' is true only when we have recursively called
-     * ourselves.
-     * Do we need to do that recursion in order to add an empty record prefix?
-     */
+    /* Do we need to add an empty record prefix? */
     prefix = rl->need_empty_fragments
-             && !clear
              && templates[0].type == SSL3_RT_APPLICATION_DATA;
 
     /*
@@ -1603,28 +1627,6 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         }
     }
 
-    if (!using_ktls) {
-        /* Explicit IV length, block ciphers appropriate version flag */
-        if (s->enc_write_ctx != NULL && RLAYER_USE_EXPLICIT_IV(rl)
-            && rl->version != TLS1_3_VERSION) {
-            int mode = EVP_CIPHER_CTX_get_mode(s->enc_write_ctx);
-            if (mode == EVP_CIPH_CBC_MODE) {
-                eivlen = EVP_CIPHER_CTX_get_iv_length(s->enc_write_ctx);
-                if (eivlen < 0) {
-                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
-                    goto err;
-                }
-                if (eivlen <= 1)
-                    eivlen = 0;
-            } else if (mode == EVP_CIPH_GCM_MODE) {
-                /* Need explicit part of IV for GCM mode */
-                eivlen = EVP_GCM_TLS_EXPLICIT_IV_LEN;
-            } else if (mode == EVP_CIPH_CCM_MODE) {
-                eivlen = EVP_CCM_TLS_EXPLICIT_IV_LEN;
-            }
-        }
-    }
-
     /* Clear our SSL3_RECORD structures */
     memset(wr, 0, sizeof(wr));
     for (j = 0; j < numtempl + prefix; j++) {
@@ -1653,7 +1655,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         SSL3_RECORD_set_rec_version(thiswr, thistempl->version);
 
         maxcomplen = thistempl->buflen;
-        if (s->compress != NULL)
+        if (rl->compctx != NULL)
             maxcomplen += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 
         /*
@@ -1664,8 +1666,8 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                 && (!WPACKET_put_bytes_u8(thispkt, rectype)
                 || !WPACKET_put_bytes_u16(thispkt, thistempl->version)
                 || !WPACKET_start_sub_packet_u16(thispkt)
-                || (eivlen > 0
-                    && !WPACKET_allocate_bytes(thispkt, eivlen, NULL))
+                || (rl->eivlen > 0
+                    && !WPACKET_allocate_bytes(thispkt, rl->eivlen, NULL))
                 || (maxcomplen > 0
                     && !WPACKET_reserve_bytes(thispkt, maxcomplen,
                                               &compressdata)))) {
@@ -1685,8 +1687,8 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
          */
 
         /* first we compress */
-        if (s->compress != NULL) {
-            if (!ssl3_do_compress(s, thiswr)
+        if (rl->compctx != NULL) {
+            if (!tls_do_compress(rl, thiswr)
                     || !WPACKET_allocate_bytes(thispkt, thiswr->length, NULL)) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
                 goto err;
@@ -1763,10 +1765,23 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         if (!using_ktls && !rl->use_etm && mac_size != 0) {
             unsigned char *mac;
 
-            if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
-                    || !ssl->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
+            /*
+             * TODO(RECLAYER): Remove this once TLSv1.3/DTLS crypto has
+             *                 been moved to the new write record layer.
+             */
+            if (rl->version == TLS1_3_VERSION
+                    || rl->isdtls) {
+                if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
+                        || !ssl->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+            } else {
+                if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
+                        || !rl->funcs->mac(rl, thiswr, mac, 1)) {
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
             }
         }
 
@@ -1809,17 +1824,31 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
     } else {
         if (!using_ktls) {
             if (prefix) {
-                if (ssl->method->ssl3_enc->enc(s, wr, 1, 1, NULL, mac_size) < 1) {
+                if (rl->funcs->cipher(rl, wr, 1, 1, NULL, mac_size) < 1) {
                     if (!ossl_statem_in_error(s))
                         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
             }
-            if (ssl->method->ssl3_enc->enc(s, wr + prefix, numtempl, 1, NULL,
-                                           mac_size) < 1) {
-                if (!ossl_statem_in_error(s))
-                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
+            /*
+             * TODO(RECLAYER): Remove this once TLSv1.3/DTLS crypto has
+             *                 been moved to the new write record layer.
+             */
+            if (rl->version == TLS1_3_VERSION
+                    || rl->isdtls) {
+                if (ssl->method->ssl3_enc->enc(s, wr + prefix, numtempl, 1, NULL,
+                                               mac_size) < 1) {
+                    if (!ossl_statem_in_error(s))
+                        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+            } else {
+                if (rl->funcs->cipher(rl, wr + prefix, numtempl, 1, NULL,
+                                      mac_size) < 1) {
+                    if (!ossl_statem_in_error(s))
+                        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
             }
         }
     }
@@ -1849,11 +1878,25 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         if (rl->use_etm && mac_size != 0) {
             unsigned char *mac;
 
-            if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
-                    || !ssl->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
+            /*
+             * TODO(RECLAYER): Remove this once TLSv1.3/DTLS crypto has
+             *                 been moved to the new write record layer.
+             */
+            if (rl->version == TLS1_3_VERSION
+                    || rl->isdtls) {
+                if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
+                        || !ssl->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+            } else {
+                if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
+                        || !rl->funcs->mac(rl, thiswr, mac, 1)) {
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
             }
+
             SSL3_RECORD_add_length(thiswr, mac_size);
         }
 
@@ -2082,6 +2125,15 @@ void tls_get_state(OSSL_RECORD_LAYER *rl, const char **shortstr,
         *longstr = lng;
 }
 
+const COMP_METHOD *tls_get_compression(OSSL_RECORD_LAYER *rl)
+{
+#ifndef OPENSSL_NO_COMP
+    return (rl->compctx == NULL) ? NULL : COMP_CTX_get_method(rl->compctx);
+#else
+    return NULL;
+#endif
+}
+
 const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_new_record_layer,
     tls_free,
@@ -2104,5 +2156,6 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_set_max_pipelines,
     NULL,
     tls_get_state,
-    tls_set_options
+    tls_set_options,
+    tls_get_compression
 };

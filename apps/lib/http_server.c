@@ -65,7 +65,7 @@ static void killall(int ret, pid_t *kidpids)
         if (kidpids[i] != 0)
             (void)kill(kidpids[i], SIGTERM);
     OPENSSL_free(kidpids);
-    ossl_sleep(1000);
+    OSSL_sleep(1000);
     exit(ret);
 }
 
@@ -141,7 +141,7 @@ void spawn_loop(const char *prog)
                                   "child process: %ld, term signal %d%s",
                                   (long)fpid, WTERMSIG(status), dumped);
                     }
-                    ossl_sleep(1000);
+                    OSSL_sleep(1000);
                 }
                 break;
             } else if (errno != EINTR) {
@@ -156,7 +156,7 @@ void spawn_loop(const char *prog)
         switch (fpid = fork()) {
         case -1: /* error */
             /* System critically low on memory, pause and try again later */
-            ossl_sleep(30000);
+            OSSL_sleep(30000);
             break;
         case 0: /* child */
             OPENSSL_free(kidpids);

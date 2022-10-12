@@ -28,7 +28,7 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 
     ret = X509_REQ_new_ex(x->libctx, x->propq);
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
         goto err;
     }
 
@@ -309,8 +309,6 @@ int i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp)
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (!i2d_X509_REQ_INFO(&req->req_info, pp))
-        return 0;
     req->req_info.enc.modified = 1;
-    return 1;
+    return i2d_X509_REQ_INFO(&req->req_info, pp);
 }

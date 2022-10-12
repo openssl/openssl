@@ -243,10 +243,8 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
         struct collected_encoder_st encoder_data;
         struct collected_names_st keymgmt_data;
 
-        if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL) {
-            ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
+        if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL)
             goto err;
-        }
 
         /*
          * Select the first encoder implementations in two steps.
@@ -254,7 +252,7 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
          */
         keymgmt_data.names = sk_OPENSSL_CSTRING_new_null();
         if (keymgmt_data.names == NULL) {
-            ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_CRYPTO_LIB);
             goto err;
         }
 
@@ -288,7 +286,7 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
 
         sk_OPENSSL_CSTRING_free(keymgmt_data.names);
         if (encoder_data.error_occurred) {
-            ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
@@ -335,7 +333,7 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_for_pkey(const EVP_PKEY *pkey,
     }
 
     if ((ctx = OSSL_ENCODER_CTX_new()) == NULL) {
-        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_OSSL_ENCODER_LIB);
         return NULL;
     }
 

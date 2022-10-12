@@ -276,7 +276,7 @@ _dopr(char **sbuffer,
                 break;
             case 'E':
                 flags |= DP_F_UP;
-                /* fall thru */
+                /* fall through */
             case 'e':
                 if (cflags == DP_C_LDOUBLE)
                     fvalue = va_arg(args, LDOUBLE);
@@ -288,7 +288,7 @@ _dopr(char **sbuffer,
                 break;
             case 'G':
                 flags |= DP_F_UP;
-                /* fall thru */
+                /* fall through */
             case 'g':
                 if (cflags == DP_C_LDOUBLE)
                     fvalue = va_arg(args, LDOUBLE);
@@ -847,10 +847,8 @@ doapr_outch(char **sbuffer,
 
         *maxlen += BUFFER_INC;
         if (*buffer == NULL) {
-            if ((*buffer = OPENSSL_malloc(*maxlen)) == NULL) {
-                ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+            if ((*buffer = OPENSSL_malloc(*maxlen)) == NULL)
                 return 0;
-            }
             if (*currlen > 0) {
                 if (!ossl_assert(*sbuffer != NULL))
                     return 0;
@@ -861,10 +859,8 @@ doapr_outch(char **sbuffer,
             char *tmpbuf;
 
             tmpbuf = OPENSSL_realloc(*buffer, *maxlen);
-            if (tmpbuf == NULL) {
-                ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+            if (tmpbuf == NULL)
                 return 0;
-            }
             *buffer = tmpbuf;
         }
     }

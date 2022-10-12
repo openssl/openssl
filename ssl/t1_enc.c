@@ -252,7 +252,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
             goto err;
         }
 
-        /* TODO(RECLAYER): Temporary - remove me when write rlayer done*/
+        /* TODO(RECLAYER): Temporary - remove me when DTLS write rlayer done*/
         goto skip_ktls;
     } else {
         s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
@@ -281,24 +281,28 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
             goto err;
         }
 
+        /* TODO(RECLAYER): Temporary - remove me when DTLS write rlayer done*/
+        if (!SSL_CONNECTION_IS_DTLS(s))
+            goto skip_ktls;
+
         if (s->enc_write_ctx != NULL && !SSL_CONNECTION_IS_DTLS(s)) {
             reuse_dd = 1;
         } else if ((s->enc_write_ctx = EVP_CIPHER_CTX_new()) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
             goto err;
         }
         dd = s->enc_write_ctx;
         if (SSL_CONNECTION_IS_DTLS(s)) {
             mac_ctx = EVP_MD_CTX_new();
             if (mac_ctx == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
                 goto err;
             }
             s->write_hash = mac_ctx;
         } else {
             mac_ctx = ssl_replace_hash(&s->write_hash, NULL);
             if (mac_ctx == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
                 goto err;
             }
         }
@@ -494,7 +498,7 @@ int tls1_setup_key_block(SSL_CONNECTION *s)
     ssl3_cleanup_key_block(s);
 
     if ((p = OPENSSL_malloc(num)) == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -629,7 +633,7 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
 {
     unsigned char *val = NULL;
     size_t vallen = 0, currentvalpos;
-    int rv;
+    int rv = 0;
 
     /*
      * construct PRF arguments we construct the PRF argument ourself rather
@@ -643,7 +647,7 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
 
     val = OPENSSL_malloc(vallen);
     if (val == NULL)
-        goto err2;
+        goto ret;
     currentvalpos = 0;
     memcpy(val + currentvalpos, (unsigned char *)label, llen);
     currentvalpos += llen;
@@ -695,11 +699,6 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
     goto ret;
  err1:
     ERR_raise(ERR_LIB_SSL, SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
-    rv = 0;
-    goto ret;
- err2:
-    ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
-    rv = 0;
  ret:
     OPENSSL_clear_free(val, vallen);
     return rv;

@@ -33,10 +33,8 @@ RSA_PRIME_INFO *ossl_rsa_multip_info_new(void)
     RSA_PRIME_INFO *pinfo;
 
     /* create a RSA_PRIME_INFO structure */
-    if ((pinfo = OPENSSL_zalloc(sizeof(RSA_PRIME_INFO))) == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+    if ((pinfo = OPENSSL_zalloc(sizeof(RSA_PRIME_INFO))) == NULL)
         return NULL;
-    }
     if ((pinfo->r = BN_secure_new()) == NULL)
         goto err;
     if ((pinfo->d = BN_secure_new()) == NULL)

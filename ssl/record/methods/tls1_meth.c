@@ -22,16 +22,17 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                  size_t taglen,
                                  int mactype,
                                  const EVP_MD *md,
-                                 const SSL_COMP *comp)
+                                 COMP_METHOD *comp)
 {
     EVP_CIPHER_CTX *ciph_ctx;
     EVP_PKEY *mac_key;
+    int enc = (rl->direction == OSSL_RECORD_DIRECTION_WRITE) ? 1 : 0;
 
     if (level != OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
         return OSSL_RECORD_RETURN_FATAL;
 
     if ((rl->enc_ctx = EVP_CIPHER_CTX_new()) == NULL) {
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         return OSSL_RECORD_RETURN_FATAL;
     }
 
@@ -44,8 +45,8 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     }
 #ifndef OPENSSL_NO_COMP
     if (comp != NULL) {
-        rl->expand = COMP_CTX_new(comp->method);
-        if (rl->expand == NULL) {
+        rl->compctx = COMP_CTX_new(comp);
+        if (rl->compctx == NULL) {
             ERR_raise(ERR_LIB_SSL, SSL_R_COMPRESSION_LIBRARY_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }
@@ -82,26 +83,26 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     }
 
     if (EVP_CIPHER_get_mode(ciph) == EVP_CIPH_GCM_MODE) {
-        if (!EVP_DecryptInit_ex(ciph_ctx, ciph, NULL, key, NULL)
+        if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, NULL, enc)
                 || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_GCM_SET_IV_FIXED,
                                        (int)ivlen, iv) <= 0) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }
     } else if (EVP_CIPHER_get_mode(ciph) == EVP_CIPH_CCM_MODE) {
-        if (!EVP_DecryptInit_ex(ciph_ctx, ciph, NULL, NULL, NULL)
+        if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL, enc)
                 || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, 12,
                                        NULL) <= 0
                 || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG,
                                        (int)taglen, NULL) <= 0
                 || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_CCM_SET_IV_FIXED,
                                        (int)ivlen, iv) <= 0
-                || !EVP_DecryptInit_ex(ciph_ctx, NULL, NULL, key, NULL)) {
+                || !EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, enc)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }
     } else {
-        if (!EVP_DecryptInit_ex(ciph_ctx, ciph, NULL, key, iv)) {
+        if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, iv, enc)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }
@@ -117,6 +118,28 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     if (EVP_CIPHER_get0_provider(ciph) != NULL
             && !ossl_set_tls_provider_parameters(rl, ciph_ctx, ciph, md))
         return OSSL_RECORD_RETURN_FATAL;
+
+    /* Calculate the explict IV length */
+    if (RLAYER_USE_EXPLICIT_IV(rl)) {
+        int mode = EVP_CIPHER_CTX_get_mode(ciph_ctx);
+        int eivlen = 0;
+
+        if (mode == EVP_CIPH_CBC_MODE) {
+            eivlen = EVP_CIPHER_CTX_get_iv_length(ciph_ctx);
+            if (eivlen < 0) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
+                return OSSL_RECORD_RETURN_FATAL;
+            }
+            if (eivlen <= 1)
+                eivlen = 0;
+        } else if (mode == EVP_CIPH_GCM_MODE) {
+            /* Need explicit part of IV for GCM mode */
+            eivlen = EVP_GCM_TLS_EXPLICIT_IV_LEN;
+        } else if (mode == EVP_CIPH_CCM_MODE) {
+            eivlen = EVP_CCM_TLS_EXPLICIT_IV_LEN;
+        }
+        rl->eivlen = (size_t)eivlen;
+    }
 
     return OSSL_RECORD_RETURN_SUCCESS;
 }

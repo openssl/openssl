@@ -52,10 +52,8 @@ CERT *ssl_cert_new(void)
 {
     CERT *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if (ret == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (ret == NULL)
         return NULL;
-    }
 
     ret->key = &(ret->pkeys[SSL_PKEY_RSA]);
     ret->references = 1;
@@ -64,7 +62,7 @@ CERT *ssl_cert_new(void)
     ret->sec_ex = NULL;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -77,16 +75,14 @@ CERT *ssl_cert_dup(CERT *cert)
     CERT *ret = OPENSSL_zalloc(sizeof(*ret));
     int i;
 
-    if (ret == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (ret == NULL)
         return NULL;
-    }
 
     ret->references = 1;
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -115,7 +111,7 @@ CERT *ssl_cert_dup(CERT *cert)
         if (cpk->chain) {
             rpk->chain = X509_chain_up_ref(cpk->chain);
             if (!rpk->chain) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
                 goto err;
             }
         }
@@ -123,10 +119,8 @@ CERT *ssl_cert_dup(CERT *cert)
             /* Just copy everything. */
             ret->pkeys[i].serverinfo =
                 OPENSSL_malloc(cert->pkeys[i].serverinfo_length);
-            if (ret->pkeys[i].serverinfo == NULL) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            if (ret->pkeys[i].serverinfo == NULL)
                 goto err;
-            }
             ret->pkeys[i].serverinfo_length = cert->pkeys[i].serverinfo_length;
             memcpy(ret->pkeys[i].serverinfo,
                    cert->pkeys[i].serverinfo, cert->pkeys[i].serverinfo_length);
@@ -389,7 +383,7 @@ int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk)
 
     ctx = X509_STORE_CTX_new_ex(sctx->libctx, sctx->propq);
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         return 0;
     }
 
@@ -448,7 +442,7 @@ int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk)
     if (X509_STORE_CTX_get0_chain(ctx) != NULL) {
         s->verified_chain = X509_STORE_CTX_get1_chain(ctx);
         if (s->verified_chain == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
             i = 0;
         }
     }
@@ -477,13 +471,13 @@ STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk)
 
     ret = sk_X509_NAME_new_reserve(NULL, num);
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     for (i = 0; i < num; i++) {
         name = X509_NAME_dup(sk_X509_NAME_value(sk, i));
         if (name == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
             sk_X509_NAME_pop_free(ret, X509_NAME_free);
             return NULL;
         }
@@ -664,14 +658,18 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
     LHASH_OF(X509_NAME) *name_hash = lh_X509_NAME_new(xname_hash, xname_cmp);
     OSSL_LIB_CTX *prev_libctx = NULL;
 
-    if ((name_hash == NULL) || (in == NULL)) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (name_hash == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
+    if (in == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_BIO_LIB);
         goto err;
     }
 
     x = X509_new_ex(libctx, propq);
     if (x == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
     }
     if (BIO_read_filename(in, file) <= 0)
@@ -685,7 +683,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
         if (ret == NULL) {
             ret = sk_X509_NAME_new_null();
             if (ret == NULL) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
                 goto err;
             }
         }
@@ -741,7 +739,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     in = BIO_new(BIO_s_file());
 
     if (in == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_BIO_LIB);
         goto err;
     }
 
@@ -927,7 +925,7 @@ int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags)
 
     xs_ctx = X509_STORE_CTX_new_ex(real_ctx->libctx, real_ctx->propq);
     if (xs_ctx == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
     }
     if (!X509_STORE_CTX_init(xs_ctx, chain_store, cpk->x509, untrusted)) {

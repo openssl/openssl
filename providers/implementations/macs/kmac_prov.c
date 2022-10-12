@@ -310,10 +310,8 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
         return 0;
     }
     out = OPENSSL_malloc(out_len);
-    if (out == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (out == NULL)
         return 0;
-    }
     res = bytepad(out, NULL, kmac_string, sizeof(kmac_string),
                   kctx->custom, kctx->custom_len, block_len)
           && EVP_DigestUpdate(ctx, out, out_len)

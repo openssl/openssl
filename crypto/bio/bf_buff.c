@@ -291,7 +291,7 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
                 return 0;
             p1 = OPENSSL_malloc((size_t)num);
             if (p1 == NULL)
-                goto malloc_error;
+                return 0;
             OPENSSL_free(ctx->ibuf);
             ctx->ibuf = p1;
         }
@@ -322,14 +322,14 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
                 return 0;
             p1 = OPENSSL_malloc((size_t)num);
             if (p1 == NULL)
-                goto malloc_error;
+                return 0;
         }
         if ((obs > DEFAULT_BUFFER_SIZE) && (obs != ctx->obuf_size)) {
             p2 = OPENSSL_malloc((size_t)num);
             if (p2 == NULL) {
                 if (p1 != ctx->ibuf)
                     OPENSSL_free(p1);
-                goto malloc_error;
+                return 0;
             }
         }
         if (ctx->ibuf != p1) {
@@ -405,9 +405,6 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     }
     return ret;
- malloc_error:
-    ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
-    return 0;
 }
 
 static long buffer_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)

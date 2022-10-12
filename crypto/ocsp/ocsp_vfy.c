@@ -36,7 +36,7 @@ static int ocsp_verify_signer(X509 *signer, int response,
     int ret = -1;
 
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_OCSP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OCSP, ERR_R_X509_LIB);
         goto end;
     }
     if (!X509_STORE_CTX_init(ctx, st, signer, untrusted)) {

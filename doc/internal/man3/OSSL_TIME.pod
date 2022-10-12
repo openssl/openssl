@@ -189,7 +189,7 @@ B<ossl_time_min> and B<ossl_time_max> choose and return one of the input values.
 
 =head1 HISTORY
 
-This functionality was added in OpenSSL 3.1.
+This functionality was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

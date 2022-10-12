@@ -35,7 +35,7 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
     X509_ALGOR *a;
 
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         goto err;
     }
     for (i = 0; i < 2; i++) {
@@ -82,7 +82,6 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
     buf_out = OPENSSL_malloc(outll);
     if (buf_in == NULL || buf_out == NULL) {
         outl = 0;
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     p = buf_in;
@@ -130,7 +129,7 @@ int ASN1_item_sign_ex(const ASN1_ITEM *it, X509_ALGOR *algor1,
     EVP_MD_CTX *ctx = evp_md_ctx_new_ex(pkey, id, libctx, propq);
 
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         return 0;
     }
     /* We can use the non _ex variant here since the pkey is already setup */
@@ -270,7 +269,6 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     buf_out = OPENSSL_malloc(outll);
     if (buf_in == NULL || buf_out == NULL) {
         outl = 0;
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 

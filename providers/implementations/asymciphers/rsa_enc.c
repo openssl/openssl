@@ -156,10 +156,8 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         int rsasize = RSA_size(prsactx->rsa);
         unsigned char *tbuf;
 
-        if ((tbuf = OPENSSL_malloc(rsasize)) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        if ((tbuf = OPENSSL_malloc(rsasize)) == NULL)
             return 0;
-        }
         if (prsactx->oaep_md == NULL) {
             OPENSSL_free(tbuf);
             prsactx->oaep_md = EVP_MD_fetch(prsactx->libctx, "SHA-1", NULL);
@@ -231,10 +229,8 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
             || prsactx->pad_mode == RSA_PKCS1_WITH_TLS_PADDING) {
         unsigned char *tbuf;
 
-        if ((tbuf = OPENSSL_malloc(len)) == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        if ((tbuf = OPENSSL_malloc(len)) == NULL)
             return 0;
-        }
         ret = RSA_private_decrypt(inlen, in, tbuf, prsactx->rsa,
                                   RSA_NO_PADDING);
         /*
@@ -425,7 +421,7 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     char mdname[OSSL_MAX_NAME_SIZE];
     char mdprops[OSSL_MAX_PROPQUERY_SIZE] = { '\0' };
-    char *str = mdname;
+    char *str = NULL;
 
     if (prsactx == NULL)
         return 0;
@@ -434,13 +430,14 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST);
     if (p != NULL) {
+        str = mdname;
         if (!OSSL_PARAM_get_utf8_string(p, &str, sizeof(mdname)))
             return 0;
 
-        str = mdprops;
         p = OSSL_PARAM_locate_const(params,
                                     OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS);
         if (p != NULL) {
+            str = mdprops;
             if (!OSSL_PARAM_get_utf8_string(p, &str, sizeof(mdprops)))
                 return 0;
         }
@@ -496,13 +493,14 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST);
     if (p != NULL) {
+        str = mdname;
         if (!OSSL_PARAM_get_utf8_string(p, &str, sizeof(mdname)))
             return 0;
 
-        str = mdprops;
         p = OSSL_PARAM_locate_const(params,
                                     OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST_PROPS);
         if (p != NULL) {
+            str = mdprops;
             if (!OSSL_PARAM_get_utf8_string(p, &str, sizeof(mdprops)))
                 return 0;
         } else {

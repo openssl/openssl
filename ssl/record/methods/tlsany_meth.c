@@ -20,7 +20,7 @@ static int tls_any_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                     size_t taglen,
                                     int mactype,
                                     const EVP_MD *md,
-                                    const SSL_COMP *comp)
+                                    COMP_METHOD *comp)
 {
     if (level != OSSL_RECORD_PROTECTION_LEVEL_NONE) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);

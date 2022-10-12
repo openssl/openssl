@@ -778,9 +778,9 @@ The OpenSSL CMP support was added in OpenSSL 3.0.
 OSSL_CMP_CTX_get0_trustedStore() was renamed to OSSL_CMP_CTX_get0_trusted() and
 OSSL_CMP_CTX_set0_trustedStore() was renamed to OSSL_CMP_CTX_set0_trusted(),
 using macros, while keeping the old names for backward compatibility,
-in OpenSSL 3.1.
+in OpenSSL 3.2.
 
-OSSL_CMP_CTX_get0_validatedSrvCert() was added in OpenSSL 3.1.
+OSSL_CMP_CTX_get0_validatedSrvCert() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

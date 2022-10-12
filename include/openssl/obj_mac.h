@@ -890,6 +890,10 @@
 #define NID_id_ct_ASPA          1250
 #define OBJ_id_ct_ASPA          OBJ_id_smime_ct,49L
 
+#define SN_id_ct_signedTAL              "id-ct-signedTAL"
+#define NID_id_ct_signedTAL             1284
+#define OBJ_id_ct_signedTAL             OBJ_id_smime_ct,50L
+
 #define SN_id_smime_aa_receiptRequest           "id-smime-aa-receiptRequest"
 #define NID_id_smime_aa_receiptRequest          212
 #define OBJ_id_smime_aa_receiptRequest          OBJ_id_smime_aa,1L
@@ -5167,6 +5171,9 @@
 #define NID_brainpoolP256r1             927
 #define OBJ_brainpoolP256r1             1L,3L,36L,3L,3L,2L,8L,1L,1L,7L
 
+#define SN_brainpoolP256r1tls13         "brainpoolP256r1tls13"
+#define NID_brainpoolP256r1tls13                1285
+
 #define SN_brainpoolP256t1              "brainpoolP256t1"
 #define NID_brainpoolP256t1             928
 #define OBJ_brainpoolP256t1             1L,3L,36L,3L,3L,2L,8L,1L,1L,8L
@@ -5183,6 +5190,9 @@
 #define NID_brainpoolP384r1             931
 #define OBJ_brainpoolP384r1             1L,3L,36L,3L,3L,2L,8L,1L,1L,11L
 
+#define SN_brainpoolP384r1tls13         "brainpoolP384r1tls13"
+#define NID_brainpoolP384r1tls13                1286
+
 #define SN_brainpoolP384t1              "brainpoolP384t1"
 #define NID_brainpoolP384t1             932
 #define OBJ_brainpoolP384t1             1L,3L,36L,3L,3L,2L,8L,1L,1L,12L
@@ -5190,6 +5200,9 @@
 #define SN_brainpoolP512r1              "brainpoolP512r1"
 #define NID_brainpoolP512r1             933
 #define OBJ_brainpoolP512r1             1L,3L,36L,3L,3L,2L,8L,1L,1L,13L
+
+#define SN_brainpoolP512r1tls13         "brainpoolP512r1tls13"
+#define NID_brainpoolP512r1tls13                1287
 
 #define SN_brainpoolP512t1              "brainpoolP512t1"
 #define NID_brainpoolP512t1             934

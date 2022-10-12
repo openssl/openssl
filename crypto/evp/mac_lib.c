@@ -23,16 +23,15 @@ EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac)
 {
     EVP_MAC_CTX *ctx = OPENSSL_zalloc(sizeof(EVP_MAC_CTX));
 
-    if (ctx == NULL
-        || (ctx->algctx = mac->newctx(ossl_provider_ctx(mac->prov))) == NULL
-        || !EVP_MAC_up_ref(mac)) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
-        if (ctx != NULL)
-            mac->freectx(ctx->algctx);
-        OPENSSL_free(ctx);
-        ctx = NULL;
-    } else {
+    if (ctx != NULL) {
         ctx->meth = mac;
+        if ((ctx->algctx = mac->newctx(ossl_provider_ctx(mac->prov))) == NULL
+            || !EVP_MAC_up_ref(mac)) {
+            mac->freectx(ctx->algctx);
+            ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
+            OPENSSL_free(ctx);
+            ctx = NULL;
+        }
     }
     return ctx;
 }
@@ -56,14 +55,12 @@ EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src)
         return NULL;
 
     dst = OPENSSL_malloc(sizeof(*dst));
-    if (dst == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+    if (dst == NULL)
         return NULL;
-    }
 
     *dst = *src;
     if (!EVP_MAC_up_ref(dst->meth)) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         OPENSSL_free(dst);
         return NULL;
     }

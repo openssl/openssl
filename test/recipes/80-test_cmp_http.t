@@ -52,7 +52,7 @@ my @app = qw(openssl cmp);
 # the CMP server configuration consists of:
 my $ca_dn;      # The CA's Distinguished Name
 my $server_dn;  # The server's Distinguished Name
-my $server_host;# The server's host name or IP address
+my $server_host;# The server's hostname or IP address
 my $server_port;# The server's port
 my $server_tls; # The server's TLS port, if any, or 0
 my $server_path;# The server's CMP alias
@@ -65,9 +65,15 @@ my $column;     # The column number of the expected result
 my $sleep = 0;  # The time to sleep between two requests
 my $server_fh;  # Server file handle
 
+sub subst_env {
+    my $val = shift;
+    return '""""' if $val eq "";
+    return $ENV{$1} if $val =~ /^\$\{ENV::(\w+)}$/;
+    return $val;
+}
+
 # The local $server_name variables below are among others taken as the name of a
 # sub-directory with server-specific certs etc. and CA-specific config section.
-
 sub load_config {
     my $server_name = shift;
     my $section = shift;
@@ -80,19 +86,19 @@ sub load_config {
         } elsif (m/\[\s*.*?\s*\]/) {
             $active = 0;
         } elsif ($active) {
-            $ca_dn       = $1 eq "" ? '""""' : $1 if m/^\s*ca_dn\s*=\s*(.*)?\s*$/;
-            $server_dn   = $1 eq "" ? '""""' : $1 if m/^\s*server_dn\s*=\s*(.*)?\s*$/;
-            $server_host = $1 eq "" ? '""""' : $1 if m/^\s*server_host\s*=\s*(\S*)?\s*(\#.*)?$/;
-            $server_port = $1 eq "" ? '""""' : $1 if m/^\s*server_port\s*=\s*(.*)?\s*$/;
-            $server_tls  = $1 eq "" ? '""""' : $1 if m/^\s*server_tls\s*=\s*(.*)?\s*$/;
-            $server_path = $1 eq "" ? '""""' : $1 if m/^\s*server_path\s*=\s*(.*)?\s*$/;
-            $server_cert = $1 eq "" ? '""""' : $1 if m/^\s*server_cert\s*=\s*(.*)?\s*$/;
-            $kur_port    = $1 eq "" ? '""""' : $1 if m/^\s*kur_port\s*=\s*(.*)?\s*$/;
-            $pbm_port    = $1 eq "" ? '""""' : $1 if m/^\s*pbm_port\s*=\s*(.*)?\s*$/;
-            $pbm_ref     = $1 eq "" ? '""""' : $1 if m/^\s*pbm_ref\s*=\s*(.*)?\s*$/;
-            $pbm_secret  = $1 eq "" ? '""""' : $1 if m/^\s*pbm_secret\s*=\s*(.*)?\s*$/;
-            $column      = $1 eq "" ? '""""' : $1 if m/^\s*column\s*=\s*(.*)?\s*$/;
-            $sleep       = $1 eq "" ? '""""' : $1 if m/^\s*sleep\s*=\s*(.*)?\s*$/;
+            $ca_dn       = subst_env($1) if m/^\s*ca_dn\s*=\s*(.*)?\s*$/;
+            $server_dn   = subst_env($1) if m/^\s*server_dn\s*=\s*(.*)?\s*$/;
+            $server_host = subst_env($1) if m/^\s*server_host\s*=\s*(\S*)?\s*(\#.*)?$/;
+            $server_port = subst_env($1) if m/^\s*server_port\s*=\s*(.*)?\s*$/;
+            $server_tls  = subst_env($1) if m/^\s*server_tls\s*=\s*(.*)?\s*$/;
+            $server_path = subst_env($1) if m/^\s*server_path\s*=\s*(.*)?\s*$/;
+            $server_cert = subst_env($1) if m/^\s*server_cert\s*=\s*(.*)?\s*$/;
+            $kur_port    = subst_env($1) if m/^\s*kur_port\s*=\s*(.*)?\s*$/;
+            $pbm_port    = subst_env($1) if m/^\s*pbm_port\s*=\s*(.*)?\s*$/;
+            $pbm_ref     = subst_env($1) if m/^\s*pbm_ref\s*=\s*(.*)?\s*$/;
+            $pbm_secret  = subst_env($1) if m/^\s*pbm_secret\s*=\s*(.*)?\s*$/;
+            $column      = subst_env($1) if m/^\s*column\s*=\s*(.*)?\s*$/;
+            $sleep       = subst_env($1) if m/^\s*sleep\s*=\s*(.*)?\s*$/;
         }
     }
     close CH;
@@ -118,7 +124,7 @@ my @all_aspects = ("connection", "verification", "credentials", "commands", "enr
 my $faillog;
 my $file = $ENV{HARNESS_FAILLOG}; # pathname relative to result_dir
 if ($file) {
-    open($faillog, ">", $file) or die "Cannot open $file for writing: $!";
+    open($faillog, ">", $file) or die "Cannot open '$file' for writing: $!";
 }
 
 sub test_cmp_http {
@@ -130,7 +136,7 @@ sub test_cmp_http {
     my $params = shift;
     my $expected_result = shift;
     $params = [ '-server', "127.0.0.1:$server_port", @$params ]
-        unless grep { $_ eq '-server' } @$params;
+        if ($server_name eq "Mock" && !(grep { $_ eq '-server' } @$params));
     my $cmd = app([@app, @$params]);
 
     unless (is(my $actual_result = run($cmd), $expected_result, $title)) {
@@ -141,6 +147,7 @@ sub test_cmp_http {
                 " expected=$expected_result actual=$actual_result\n";
             print $faillog "$invocation\n\n";
         }
+        sleep($sleep) if $expected_result == 1;
     }
 }
 
@@ -154,14 +161,13 @@ sub test_cmp_http_aspect {
         my $i = 1;
         foreach (@$tests) {
             test_cmp_http($server_name, $aspect, $n, $i++, $$_[0], $$_[1], $$_[2]);
-            sleep($sleep);
         }
     };
-    # not unlinking test.certout*.pem, test.cacerts.pem, and test.extracerts.pem
+    # not unlinking test.cert.pem, test.cacerts.pem, and test.extracerts.pem
 }
 
 # The input files for the tests done here dynamically depend on the test server
-# selected (where the Mock server used by default is just one possibility).
+# selected (where the mock server used by default is just one possibility).
 # On the other hand the main test configuration file test.cnf, which references
 # several server-dependent input files by relative file names, is static.
 # Moreover the tests use much greater variety of input files than output files.
@@ -188,7 +194,10 @@ indir data_dir() => sub {
             }
             foreach my $aspect (@all_aspects) {
                 $aspect = chop_dblquot($aspect);
-                next if $server_name eq "Mock" && $aspect eq "certstatus";
+                if ($server_name eq "Mock" && $aspect eq "certstatus") {
+                    print "Skipping certstatus check as not supported by mock server\n";
+                    next;
+                }
                 load_config($server_name, $aspect); # update with any aspect-specific settings
                 indir $server_name => sub {
                     my $tests = load_tests($server_name, $aspect);
@@ -196,7 +205,7 @@ indir data_dir() => sub {
                 };
             };
             stop_mock_server($pid) if $pid;
-            ok(1, "killing mock server");
+            ok(1, "mock server has terminated");
           }
         }
     };
@@ -212,7 +221,7 @@ sub load_tests {
     my $result_dir = result_dir();
     my @result;
 
-    open(my $data, '<', $file) || die "Cannot open $file for reading: $!";
+    open(my $data, '<', $file) || die "Cannot open '$file' for reading: $!";
   LOOP:
     while (my $line = <$data>) {
         chomp $line;
@@ -235,7 +244,7 @@ sub load_tests {
         if ($line =~ m/,\s*-no_proxy\s*,(.*?)(,|$)/) {
             $noproxy = $1;
         } elsif ($server_host eq "127.0.0.1") {
-            # do connections to localhost (e.g., Mock server) without proxy
+            # do connections to localhost (e.g., mock server) without proxy
             $line =~ s{-section,,}{-section,,-no_proxy,127.0.0.1,} ;
         }
         if ($line =~ m/,\s*-proxy\s*,/) {
@@ -272,7 +281,7 @@ sub start_mock_server {
     print "Launching mock server: $cmd\n";
     die "Invalid port: $server_port" unless $server_port =~ m/^\d+$/;
     my $pid = open($server_fh, "$cmd|") or die "Trying to $cmd";
-    print "Pid is: $pid\n";
+    print "mock server pid=$pid\n";
     if ($server_port == 0) {
         # Find out the actual server port
         while (<$server_fh>) {
@@ -287,7 +296,8 @@ sub start_mock_server {
         stop_mock_server($pid);
         return 0;
     }
-    $server_tls = $kur_port = $pbm_port = $server_port;
+    $kur_port = $pbm_port = $server_port;
+    $server_tls = $server_port if $server_tls > 0;
     return $pid;
 }
 

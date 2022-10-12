@@ -210,10 +210,8 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
                            &paramdef, &ishex, &buf_n, &tmpbn, found))
         goto err;
 
-    if ((buf = OPENSSL_zalloc(buf_n > 0 ? buf_n : 1)) == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+    if ((buf = OPENSSL_zalloc(buf_n > 0 ? buf_n : 1)) == NULL)
         goto err;
-    }
 
     ok = construct_from_text(to, paramdef, value, value_n, ishex,
                              buf, buf_n, tmpbn);

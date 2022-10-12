@@ -175,7 +175,7 @@ The BIO_get_ktls_send() and BIO_get_ktls_recv() macros were added in
 OpenSSL 3.0. They were modified to never return -1 in OpenSSL 3.0.4.
 
 The BIO_get_conn_mode(), BIO_set_conn_mode() and BIO_set_tfo() functions
-were added in OpenSSL 3.1.
+were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

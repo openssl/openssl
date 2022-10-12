@@ -90,6 +90,7 @@ static EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type)
         case EVP_PKEY_RSA:
             if (EVP_PKEY_set1_RSA(pkey, key))
                 break;
+            ERR_raise(ERR_LIB_PEM, ERR_R_EVP_LIB);
             EVP_PKEY_free(pkey);
             pkey = NULL;
             break;
@@ -97,11 +98,14 @@ static EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type)
         case EVP_PKEY_DSA:
             if (EVP_PKEY_set1_DSA(pkey, key))
                 break;
+            ERR_raise(ERR_LIB_PEM, ERR_R_EVP_LIB);
             EVP_PKEY_free(pkey);
             pkey = NULL;
             break;
 #endif
         }
+    } else {
+        ERR_raise(ERR_LIB_PEM, ERR_R_EVP_LIB);
     }
 
     switch (evp_type) {
@@ -115,8 +119,6 @@ static EVP_PKEY *evp_pkey_new0_key(void *key, int evp_type)
 #endif
     }
 
-    if (pkey == NULL)
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
     return pkey;
 }
 
@@ -343,10 +345,8 @@ EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub)
         return NULL;
     }
     buf = OPENSSL_malloc(length);
-    if (buf == NULL) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+    if (buf == NULL)
         goto err;
-    }
     p = buf;
     if (BIO_read(in, buf, length) != (int)length) {
         ERR_raise(ERR_LIB_PEM, PEM_R_KEYBLOB_TOO_SHORT);
@@ -384,22 +384,22 @@ DSA *ossl_b2i_DSA_after_header(const unsigned char **in, unsigned int bitlen,
 
     dsa = DSA_new();
     if (dsa == NULL)
-        goto memerr;
+        goto dsaerr;
     if (!read_lebn(&p, nbyte, &pbn))
-        goto memerr;
+        goto bnerr;
 
     if (!read_lebn(&p, 20, &qbn))
-        goto memerr;
+        goto bnerr;
 
     if (!read_lebn(&p, nbyte, &gbn))
-        goto memerr;
+        goto bnerr;
 
     if (ispub) {
         if (!read_lebn(&p, nbyte, &pub_key))
-            goto memerr;
+            goto bnerr;
     } else {
         if (!read_lebn(&p, 20, &priv_key))
-            goto memerr;
+            goto bnerr;
 
         /* Set constant time flag before public key calculation */
         BN_set_flags(priv_key, BN_FLG_CONSTTIME);
@@ -407,28 +407,33 @@ DSA *ossl_b2i_DSA_after_header(const unsigned char **in, unsigned int bitlen,
         /* Calculate public key */
         pub_key = BN_new();
         if (pub_key == NULL)
-            goto memerr;
+            goto bnerr;
         if ((ctx = BN_CTX_new()) == NULL)
-            goto memerr;
+            goto bnerr;
 
         if (!BN_mod_exp(pub_key, gbn, priv_key, pbn, ctx))
-            goto memerr;
+            goto bnerr;
 
         BN_CTX_free(ctx);
         ctx = NULL;
     }
     if (!DSA_set0_pqg(dsa, pbn, qbn, gbn))
-        goto memerr;
+        goto dsaerr;
     pbn = qbn = gbn = NULL;
     if (!DSA_set0_key(dsa, pub_key, priv_key))
-        goto memerr;
+        goto dsaerr;
     pub_key = priv_key = NULL;
 
     *in = p;
     return dsa;
 
- memerr:
-    ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+ dsaerr:
+    ERR_raise(ERR_LIB_PEM, ERR_R_DSA_LIB);
+    goto err;
+ bnerr:
+    ERR_raise(ERR_LIB_PEM, ERR_R_BN_LIB);
+
+ err:
     DSA_free(dsa);
     BN_free(pbn);
     BN_free(qbn);
@@ -452,42 +457,48 @@ RSA *ossl_b2i_RSA_after_header(const unsigned char **in, unsigned int bitlen,
 
     rsa = RSA_new();
     if (rsa == NULL)
-        goto memerr;
+        goto rsaerr;
     e = BN_new();
     if (e == NULL)
-        goto memerr;
+        goto bnerr;
     if (!BN_set_word(e, read_ledword(&pin)))
-        goto memerr;
+        goto bnerr;
     if (!read_lebn(&pin, nbyte, &n))
-        goto memerr;
+        goto bnerr;
     if (!ispub) {
         if (!read_lebn(&pin, hnbyte, &p))
-            goto memerr;
+            goto bnerr;
         if (!read_lebn(&pin, hnbyte, &q))
-            goto memerr;
+            goto bnerr;
         if (!read_lebn(&pin, hnbyte, &dmp1))
-            goto memerr;
+            goto bnerr;
         if (!read_lebn(&pin, hnbyte, &dmq1))
-            goto memerr;
+            goto bnerr;
         if (!read_lebn(&pin, hnbyte, &iqmp))
-            goto memerr;
+            goto bnerr;
         if (!read_lebn(&pin, nbyte, &d))
-            goto memerr;
+            goto bnerr;
         if (!RSA_set0_factors(rsa, p, q))
-            goto memerr;
+            goto rsaerr;
         p = q = NULL;
         if (!RSA_set0_crt_params(rsa, dmp1, dmq1, iqmp))
-            goto memerr;
+            goto rsaerr;
         dmp1 = dmq1 = iqmp = NULL;
     }
     if (!RSA_set0_key(rsa, n, e, d))
-        goto memerr;
+        goto rsaerr;
     n = e = d = NULL;
 
     *in = pin;
     return rsa;
- memerr:
-    ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+
+ rsaerr:
+    ERR_raise(ERR_LIB_PEM, ERR_R_RSA_LIB);
+    goto err;
+ bnerr:
+    ERR_raise(ERR_LIB_PEM, ERR_R_BN_LIB);
+
+ err:
     BN_free(e);
     BN_free(n);
     BN_free(p);
@@ -579,7 +590,6 @@ static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
         p = *out;
     else {
         if ((p = OPENSSL_malloc(outlen)) == NULL) {
-            ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
             outlen = -1;
             goto end;
         }
@@ -840,7 +850,7 @@ static void *do_PVK_body_key(const unsigned char **in,
     EVP_CIPHER_CTX *cctx = EVP_CIPHER_CTX_new();
 
     if (cctx == NULL) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -860,10 +870,8 @@ static void *do_PVK_body_key(const unsigned char **in,
             goto err;
         }
         enctmp = OPENSSL_malloc(keylen + 8);
-        if (enctmp == NULL) {
-            ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        if (enctmp == NULL)
             goto err;
-        }
         if (!derive_pvk_key(keybuf, sizeof(keybuf), p, saltlen,
                             (unsigned char *)psbuf, inlen, libctx, propq))
             goto err;
@@ -941,10 +949,8 @@ static void *do_PVK_key_bio(BIO *in, pem_password_cb *cb, void *u,
         return 0;
     buflen = (int)keylen + saltlen;
     buf = OPENSSL_malloc(buflen);
-    if (buf == NULL) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+    if (buf == NULL)
         return 0;
-    }
     p = buf;
     if (BIO_read(in, buf, buflen) != buflen) {
         ERR_raise(ERR_LIB_PEM, PEM_R_PVK_DATA_TOO_SHORT);
@@ -1027,10 +1033,8 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
         p = *out;
     } else {
         start = p = OPENSSL_malloc(outlen);
-        if (p == NULL) {
-            ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
+        if (p == NULL)
             return -1;
-        }
     }
 
     cctx = EVP_CIPHER_CTX_new();

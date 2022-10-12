@@ -241,11 +241,11 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
         return PKCS12_ERROR;
     if (iter > 1) {
         if ((p12->mac->iter = ASN1_INTEGER_new()) == NULL) {
-            ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
             return 0;
         }
         if (!ASN1_INTEGER_set(p12->mac->iter, iter)) {
-            ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
             return 0;
         }
     }
@@ -253,10 +253,8 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
         saltlen = PKCS12_SALT_LEN;
     else if (saltlen < 0)
         return 0;
-    if ((p12->mac->salt->data = OPENSSL_malloc(saltlen)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+    if ((p12->mac->salt->data = OPENSSL_malloc(saltlen)) == NULL)
         return 0;
-    }
     p12->mac->salt->length = saltlen;
     if (salt == NULL) {
         if (RAND_bytes_ex(p12->authsafes->ctx.libctx, p12->mac->salt->data,
@@ -268,7 +266,7 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
     X509_SIG_getm(p12->mac->dinfo, &macalg, NULL);
     if (!X509_ALGOR_set0(macalg, OBJ_nid2obj(EVP_MD_get_type(md_type)),
                          V_ASN1_NULL, NULL)) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
         return 0;
     }
 

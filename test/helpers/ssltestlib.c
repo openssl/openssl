@@ -12,7 +12,6 @@
 #include "internal/nelem.h"
 #include "ssltestlib.h"
 #include "../testutil.h"
-#include "internal/e_os.h" /* for ossl_sleep() etc. */
 
 #ifdef OPENSSL_SYS_UNIX
 # include <unistd.h>
@@ -1164,7 +1163,7 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
              * give the DTLS timer a chance to do something. We only do this for
              * the first few times to prevent hangs.
              */
-            ossl_sleep(50);
+            OSSL_sleep(50);
         }
     } while (retc <=0 || rets <= 0);
 

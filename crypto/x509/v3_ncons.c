@@ -134,8 +134,10 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
     GENERAL_SUBTREE *sub = NULL;
 
     ncons = NAME_CONSTRAINTS_new();
-    if (ncons == NULL)
-        goto memerr;
+    if (ncons == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+        goto err;
+    }
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         val = sk_CONF_VALUE_value(nval, i);
         if (HAS_PREFIX(val->name, "permitted") && val->name[9]) {
@@ -150,21 +152,25 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
         }
         tval.value = val->value;
         sub = GENERAL_SUBTREE_new();
-        if (sub == NULL)
-            goto memerr;
-        if (!v2i_GENERAL_NAME_ex(sub->base, method, ctx, &tval, 1))
+        if (sub == NULL) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
             goto err;
+        }
+        if (!v2i_GENERAL_NAME_ex(sub->base, method, ctx, &tval, 1)) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+            goto err;
+        }
         if (*ptree == NULL)
             *ptree = sk_GENERAL_SUBTREE_new_null();
-        if (*ptree == NULL || !sk_GENERAL_SUBTREE_push(*ptree, sub))
-            goto memerr;
+        if (*ptree == NULL || !sk_GENERAL_SUBTREE_push(*ptree, sub)) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
+            goto err;
+        }
         sub = NULL;
     }
 
     return ncons;
 
- memerr:
-    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
  err:
     NAME_CONSTRAINTS_free(ncons);
     GENERAL_SUBTREE_free(sub);
@@ -434,7 +440,7 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
         ne = X509_NAME_get_entry(nm, i);
         cn = X509_NAME_ENTRY_get_data(ne);
 
-        /* Only process attributes that look like host names */
+        /* Only process attributes that look like hostnames */
         if ((r = cn2dnsid(cn, &idval, &idlen)) != X509_V_OK)
             return r;
         if (idlen == 0)

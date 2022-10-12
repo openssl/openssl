@@ -2466,7 +2466,7 @@ CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
     }
 
     if (md_ctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -2871,7 +2871,7 @@ static int tls_process_cke_psk_preamble(SSL_CONNECTION *s, PACKET *pkt)
 
     if (s->s3.tmp.psk == NULL) {
         s->s3.tmp.psklen = 0;
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -2916,13 +2916,13 @@ static int tls_process_cke_rsa(SSL_CONNECTION *s, PACKET *pkt)
     outlen = SSL_MAX_MASTER_KEY_LENGTH;
     rsa_decrypt = OPENSSL_malloc(outlen);
     if (rsa_decrypt == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
     ctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, rsa, sctx->propq);
     if (ctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -3112,7 +3112,7 @@ static int tls_process_cke_srp(SSL_CONNECTION *s, PACKET *pkt)
     OPENSSL_free(s->session->srp_username);
     s->session->srp_username = OPENSSL_strdup(s->srp_ctx.login);
     if (s->session->srp_username == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         return 0;
     }
 
@@ -3162,7 +3162,7 @@ static int tls_process_cke_gost(SSL_CONNECTION *s, PACKET *pkt)
 
     pkey_ctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, pk, sctx->propq);
     if (pkey_ctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         return 0;
     }
     if (EVP_PKEY_decrypt_init(pkey_ctx) <= 0) {
@@ -3267,7 +3267,7 @@ static int tls_process_cke_gost18(SSL_CONNECTION *s, PACKET *pkt)
 
     pkey_ctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, pk, sctx->propq);
     if (pkey_ctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
     if (EVP_PKEY_decrypt_init(pkey_ctx) <= 0) {
@@ -3467,7 +3467,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
         s->rlayer.rrlmethod->set_plain_alerts(s->rlayer.rrl, 0);
 
     if ((sk = sk_X509_new_null()) == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -3497,7 +3497,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
         certstart = certbytes;
         x = X509_new_ex(sctx->libctx, sctx->propq);
         if (x == NULL) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_X509_LIB);
             goto err;
         }
         if (d2i_X509(&x, (const unsigned char **)&certbytes, l) == NULL) {
@@ -3531,7 +3531,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
         }
 
         if (!sk_X509_push(sk, x)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
         }
         x = NULL;
@@ -3582,7 +3582,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
 
     if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
         if ((new_sess = ssl_session_dup(s->session, 0)) == 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
             goto err;
         }
 
@@ -3735,14 +3735,18 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
     }
     senc = OPENSSL_malloc(slen_full);
     if (senc == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
     ctx = EVP_CIPHER_CTX_new();
+    if (ctx == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+        goto err;
+    }
     hctx = ssl_hmac_new(tctx);
-    if (ctx == NULL || hctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+    if (hctx == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
         goto err;
     }
 
@@ -4017,7 +4021,7 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
                 OPENSSL_memdup(s->s3.alpn_selected, s->s3.alpn_selected_len);
             if (s->session->ext.alpn_selected == NULL) {
                 s->session->ext.alpn_selected_len = 0;
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
                 goto err;
             }
             s->session->ext.alpn_selected_len = s->s3.alpn_selected_len;

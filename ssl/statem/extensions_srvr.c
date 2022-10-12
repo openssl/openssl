@@ -342,7 +342,7 @@ int tls_parse_ctos_status_request(SSL_CONNECTION *s, PACKET *pkt,
     if (PACKET_remaining(&responder_id_list) > 0) {
         s->ext.ocsp.ids = sk_OCSP_RESPID_new_null();
         if (s->ext.ocsp.ids == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             return 0;
         }
     } else {
@@ -642,7 +642,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
          * we requested, and must be the only key_share sent.
          */
         if (s->s3.group_id != 0
-                && (ssl_group_id_tls13_to_internal(group_id) != s->s3.group_id
+                && (group_id != s->s3.group_id
                     || PACKET_remaining(&key_share_list) != 0)) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
             return 0;
@@ -663,8 +663,6 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         s->s3.group_id = group_id;
         /* Cache the selected group ID in the SSL_SESSION */
         s->session->kex_group = group_id;
-
-        group_id = ssl_group_id_tls13_to_internal(group_id);
 
         if ((s->s3.peer_tmp = ssl_generate_param_group(s, group_id)) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
@@ -732,7 +730,7 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     if (hctx == NULL || pkey == NULL) {
         EVP_MD_CTX_free(hctx);
         EVP_PKEY_free(pkey);
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         return 0;
     }
 
@@ -1612,8 +1610,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         }
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
                 || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_put_bytes_u16(pkt, ssl_group_id_internal_to_tls13(
-                                          s->s3.group_id))
+                || !WPACKET_put_bytes_u16(pkt, s->s3.group_id)
                 || !WPACKET_close(pkt)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
@@ -1655,7 +1652,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         /* Regular KEX */
         skey = ssl_generate_pkey(s, ckey);
         if (skey == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
             return EXT_RETURN_FAIL;
         }
 
@@ -1820,7 +1817,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
                                            s->session_ctx->ext.cookie_hmac_key,
                                            sizeof(s->session_ctx->ext.cookie_hmac_key));
     if (hctx == NULL || pkey == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
 

@@ -22,9 +22,9 @@ jobs:
           - windows-2022
         platform:
           - arch: win64
-            config: VC-WIN64A enable-fips
+            config: enable-fips
           - arch: win32
-            config: VC-WIN32 --strict-warnings no-fips
+            config: --strict-warnings no-fips
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v2
@@ -95,7 +95,7 @@ jobs:
     - name: config
       working-directory: _build
       run: |
-        perl ..\Configure --banner=Configured no-makedepend no-bulk no-deprecated no-fips no-asm -DOPENSSL_SMALL_FOOTPRINT VC-WIN64A
+        perl ..\Configure --banner=Configured no-makedepend no-bulk no-deprecated no-fips no-asm -DOPENSSL_SMALL_FOOTPRINT
         perl configdata.pm --dump
     - name: build
       working-directory: _build

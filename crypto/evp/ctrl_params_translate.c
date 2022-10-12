@@ -458,11 +458,9 @@ static int default_fixup_args(enum state state,
             if (ctx->p2 != NULL) {
                 if (ctx->action_type == SET) {
                     ctx->buflen = BN_num_bytes(ctx->p2);
-                    if ((ctx->allocated_buf =
-                         OPENSSL_malloc(ctx->buflen)) == NULL) {
-                        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                    if ((ctx->allocated_buf
+                         = OPENSSL_malloc(ctx->buflen)) == NULL)
                         return 0;
-                    }
                     if (BN_bn2nativepad(ctx->p2,
                                          ctx->allocated_buf, ctx->buflen) < 0) {
                         OPENSSL_free(ctx->allocated_buf);
@@ -2485,7 +2483,7 @@ lookup_translation(struct translation_st *tmpl,
             tmpl->ctrl_hexstr = ctrl_hexstr;
         } else if (tmpl->param_key != NULL) {
             /*
-             * Search criteria that originates from a OSSL_PARAM setter or
+             * Search criteria that originates from an OSSL_PARAM setter or
              * getter.
              *
              * Ctrls were fundamentally bidirectional, with only the ctrl

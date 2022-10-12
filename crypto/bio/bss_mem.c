@@ -326,10 +326,8 @@ static int mem_write(BIO *b, const char *in, int inl)
     if (bbm->use_dgrams) {
         struct buf_mem_dgram_st *dgram = OPENSSL_malloc(sizeof(*dgram));
 
-        if (dgram == NULL) {
-            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+        if (dgram == NULL)
             goto end;
-        }
 
         dgram->dgram = bbm->buf->data + blen;
         dgram->dgramlen = inl;

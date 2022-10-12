@@ -294,7 +294,7 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
 
     mctx = EVP_MD_CTX_new();
     if (mctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -413,7 +413,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (mctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -501,10 +501,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
         if (pktype == NID_id_GostR3410_2001
             || pktype == NID_id_GostR3410_2012_256
             || pktype == NID_id_GostR3410_2012_512) {
-            if ((gost_data = OPENSSL_malloc(len)) == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            if ((gost_data = OPENSSL_malloc(len)) == NULL)
                 goto err;
-            }
             BUF_reverse(gost_data, data, len);
             data = gost_data;
         }
@@ -969,7 +967,7 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk)
                                                        sctx->propq);
 
         if (xs_ctx == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_X509_LIB);
             return 0;
         }
         if (!X509_STORE_CTX_init(xs_ctx, chain_store, x, NULL)) {
@@ -2224,14 +2222,8 @@ int check_in_list(SSL_CONNECTION *s, uint16_t group_id, const uint16_t *groups,
     if (groups == NULL || num_groups == 0)
         return 0;
 
-    if (checkallow == 1)
-        group_id = ssl_group_id_tls13_to_internal(group_id);
-
     for (i = 0; i < num_groups; i++) {
         uint16_t group = groups[i];
-
-        if (checkallow == 2)
-            group = ssl_group_id_tls13_to_internal(group);
 
         if (group_id == group
                 && (!checkallow
@@ -2310,7 +2302,7 @@ int parse_ca_names(SSL_CONNECTION *s, PACKET *pkt)
     PACKET cadns;
 
     if (ca_sk == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         goto err;
     }
     /* get the CA RDNs */
@@ -2340,7 +2332,7 @@ int parse_ca_names(SSL_CONNECTION *s, PACKET *pkt)
         }
 
         if (!sk_X509_NAME_push(ca_sk, xn)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
         }
         xn = NULL;
@@ -2418,7 +2410,7 @@ size_t construct_key_exchange_tbs(SSL_CONNECTION *s, unsigned char **ptbs,
     unsigned char *tbs = OPENSSL_malloc(tbslen);
 
     if (tbs == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         return 0;
     }
     memcpy(tbs, s->s3.client_random, SSL3_RANDOM_SIZE);

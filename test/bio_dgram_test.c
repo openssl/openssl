@@ -451,6 +451,7 @@ static int test_bio_dgram(int idx)
                                bio_dgram_cases[idx].local);
 }
 
+# if !defined(OPENSSL_NO_CHACHA)
 static int random_data(const uint32_t *key, uint8_t *data, size_t data_len, size_t offset)
 {
     int ret = 0, outl;
@@ -495,7 +496,7 @@ static int test_bio_dgram_pair(void)
     uint8_t scratch[2048 + 4], scratch2[2048];
     uint32_t key[8];
     size_t i, num_dgram, num_processed = 0;
-    BIO_MSG msgs[2] = {0}, rmsgs[2] = {0};
+    BIO_MSG msgs[2], rmsgs[2];
     BIO_ADDR *addr1 = NULL, *addr2 = NULL, *addr3 = NULL, *addr4 = NULL;
     struct in_addr in_local;
     size_t total = 0;
@@ -503,6 +504,9 @@ static int test_bio_dgram_pair(void)
                             | BIO_DGRAM_CAP_HANDLES_DST_ADDR
                             | BIO_DGRAM_CAP_PROVIDES_SRC_ADDR
                             | BIO_DGRAM_CAP_PROVIDES_DST_ADDR;
+
+    memset(msgs, 0, sizeof(msgs));
+    memset(rmsgs, 0, sizeof(rmsgs));
 
     in_local.s_addr = ntohl(0x7f000001);
 
@@ -743,7 +747,7 @@ err:
     BIO_ADDR_free(addr4);
     return testresult;
 }
-
+# endif /* !defined(OPENSSL_NO_CHACHA) */
 #endif /* !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK) */
 
 int setup_tests(void)
@@ -755,7 +759,9 @@ int setup_tests(void)
 
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
     ADD_ALL_TESTS(test_bio_dgram, OSSL_NELEM(bio_dgram_cases));
+# if !defined(OPENSSL_NO_CHACHA)
     ADD_TEST(test_bio_dgram_pair);
+# endif
 #endif
 
     return 1;

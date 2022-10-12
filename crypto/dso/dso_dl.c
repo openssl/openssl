@@ -165,20 +165,16 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
      */
     if (!filespec2 || filespec1[0] == '/') {
         merged = OPENSSL_strdup(filespec1);
-        if (merged == NULL) {
-            ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+        if (merged == NULL)
             return NULL;
-        }
     }
     /*
      * If the first file specification is missing, the second one rules.
      */
     else if (!filespec1) {
         merged = OPENSSL_strdup(filespec2);
-        if (merged == NULL) {
-            ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+        if (merged == NULL)
             return NULL;
-        }
     } else
         /*
          * This part isn't as trivial as it looks.  It assumes that the
@@ -198,10 +194,8 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
             len--;
         }
         merged = OPENSSL_malloc(len + 2);
-        if (merged == NULL) {
-            ERR_raise(ERR_LIB_DSO, ERR_R_MALLOC_FAILURE);
+        if (merged == NULL)
             return NULL;
-        }
         strcpy(merged, filespec2);
         merged[spec2len] = '/';
         strcpy(&merged[spec2len + 1], filespec1);

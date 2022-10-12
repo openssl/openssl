@@ -768,7 +768,7 @@ has no effect.
 The B<-engine> option was deprecated in OpenSSL 3.0.
 The <-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
 
-The B<-reqexts> option has been made an alias of B<-extensions> in OpenSSL 3.1.
+The B<-reqexts> option has been made an alias of B<-extensions> in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

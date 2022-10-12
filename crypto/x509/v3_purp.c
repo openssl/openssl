@@ -171,10 +171,8 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     idx = X509_PURPOSE_get_by_id(id);
     /* Need a new entry */
     if (idx == -1) {
-        if ((ptmp = OPENSSL_malloc(sizeof(*ptmp))) == NULL) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        if ((ptmp = OPENSSL_malloc(sizeof(*ptmp))) == NULL)
             return 0;
-        }
         ptmp->flags = X509_PURPOSE_DYNAMIC;
     } else {
         ptmp = X509_PURPOSE_get0(idx);
@@ -188,10 +186,8 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     /* Dup supplied name */
     ptmp->name = OPENSSL_strdup(name);
     ptmp->sname = OPENSSL_strdup(sname);
-    if (ptmp->name == NULL || ptmp->sname == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    if (ptmp->name == NULL || ptmp->sname == NULL)
         goto err;
-    }
     /* Keep the dynamic flag of existing entry */
     ptmp->flags &= X509_PURPOSE_DYNAMIC;
     /* Set all other flags */
@@ -206,11 +202,11 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     if (idx == -1) {
         if (xptable == NULL
             && (xptable = sk_X509_PURPOSE_new(xp_cmp)) == NULL) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto err;
         }
         if (!sk_X509_PURPOSE_push(xptable, ptmp)) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
@@ -858,7 +854,7 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
             !(x->ex_kusage & (KU_NON_REPUDIATION | KU_DIGITAL_SIGNATURE))))
         return 0;
 
-    /* Only time stamp key usage is permitted and it's required. */
+    /* Only timestamp key usage is permitted and it's required. */
     if ((x->ex_flags & EXFLAG_XKUSAGE) == 0 || x->ex_xkusage != XKU_TIMESTAMP)
         return 0;
 

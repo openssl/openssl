@@ -92,7 +92,7 @@ int ossl_asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
      *
      * 1. "seconds" is a 'MUST'
      * 2. "Zulu" timezone is a 'MUST'
-     * 3. "+|-" is not allowed to indicate a time zone
+     * 3. "+|-" is not allowed to indicate a timezone
      */
     if (d->type == V_ASN1_UTCTIME) {
         if (d->flags & ASN1_STRING_FLAG_X509_TIME) {
@@ -420,10 +420,8 @@ int ASN1_TIME_set_string_X509(ASN1_TIME *s, const char *str)
              * new t.data would be freed after ASN1_STRING_copy is done.
              */
             t.data = OPENSSL_zalloc(t.length + 1);
-            if (t.data == NULL) {
-                ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+            if (t.data == NULL)
                 goto out;
-            }
             memcpy(t.data, str + 2, t.length);
             t.type = V_ASN1_UTCTIME;
         }
@@ -605,7 +603,9 @@ time_t ossl_asn1_string_to_time_t(const char *asn1_string)
 {
     ASN1_TIME *timestamp_asn1 = NULL;
     struct tm *timestamp_tm = NULL;
-#ifndef USE_TIMEGM
+#if defined(__DJGPP__)
+    char *tz = NULL;
+#elif !defined(USE_TIMEGM)
     time_t timestamp_local;
 #endif
     time_t timestamp_utc;
@@ -627,17 +627,38 @@ time_t ossl_asn1_string_to_time_t(const char *asn1_string)
         ASN1_TIME_free(timestamp_asn1);
         return -1;
     }
+    ASN1_TIME_free(timestamp_asn1);
 
-#ifdef USE_TIMEGM
+#if defined(__DJGPP__)
+    /*
+     * This is NOT thread-safe.  Do not use this method for platforms other
+     * than djgpp.
+     */
+    tz = getenv("TZ");
+    if (tz != NULL) {
+        tz = OPENSSL_strdup(tz);
+        if (tz == NULL) {
+            OPENSSL_free(timestamp_tm);
+            return -1;
+        }
+    }
+    setenv("TZ", "UTC", 1);
+
+    timestamp_utc = mktime(timestamp_tm);
+
+    if (tz != NULL) {
+        setenv("TZ", tz, 1);
+        OPENSSL_free(tz);
+    } else {
+        unsetenv("TZ");
+    }
+#elif defined(USE_TIMEGM)
     timestamp_utc = timegm(timestamp_tm);
-    OPENSSL_free(timestamp_tm);
 #else
     timestamp_local = mktime(timestamp_tm);
-    OPENSSL_free(timestamp_tm);
-
     timestamp_utc = timestamp_local - timezone;
 #endif
+    OPENSSL_free(timestamp_tm);
 
-    ASN1_TIME_free(timestamp_asn1);
     return timestamp_utc;
 }

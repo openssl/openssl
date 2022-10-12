@@ -36,7 +36,7 @@ struct record_functions_st
                             size_t taglen,
                             int mactype,
                             const EVP_MD *md,
-                            const SSL_COMP *comp);
+                            COMP_METHOD *comp);
 
     /*
      * Returns:
@@ -160,11 +160,14 @@ struct ossl_record_layer_st
     /* cryptographic state */
     EVP_CIPHER_CTX *enc_ctx;
 
+    /* Explicit IV length */
+    size_t eivlen;
+
     /* used for mac generation */
     EVP_MD_CTX *md_ctx;
 
-    /* uncompress */
-    COMP_CTX *expand;
+    /* compress/uncompress */
+    COMP_CTX *compctx;
 
     /* Set to 1 if this is the first handshake. 0 otherwise */
     int is_first_handshake;
@@ -292,7 +295,7 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                          unsigned char *mackey, size_t mackeylen,
                          const EVP_CIPHER *ciph, size_t taglen,
                          int mactype,
-                         const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
+                         const EVP_MD *md, COMP_METHOD *comp, BIO *prev,
                          BIO *transport, BIO *next,
                          BIO_ADDR *local, BIO_ADDR *peer,
                          const OSSL_PARAM *settings, const OSSL_PARAM *options,
@@ -324,6 +327,7 @@ void tls_set_max_pipelines(OSSL_RECORD_LAYER *rl, size_t max_pipelines);
 void tls_get_state(OSSL_RECORD_LAYER *rl, const char **shortstr,
                    const char **longstr);
 int tls_set_options(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options);
+const COMP_METHOD *tls_get_compression(OSSL_RECORD_LAYER *rl);
 int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl);
 int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
                            size_t firstlen, size_t nextlen);

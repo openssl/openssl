@@ -279,10 +279,8 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         if ((arg > EVP_MAX_IV_LENGTH) && (arg > gctx->ivlen)) {
             if (gctx->iv != c->iv)
                 OPENSSL_free(gctx->iv);
-            if ((gctx->iv = OPENSSL_malloc(arg)) == NULL) {
-                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+            if ((gctx->iv = OPENSSL_malloc(arg)) == NULL)
                 return 0;
-            }
         }
         gctx->ivlen = arg;
         return 1;
@@ -384,10 +382,8 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             if (gctx->iv == c->iv)
                 gctx_out->iv = out->iv;
             else {
-                if ((gctx_out->iv = OPENSSL_malloc(gctx->ivlen)) == NULL) {
-                    ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                if ((gctx_out->iv = OPENSSL_malloc(gctx->ivlen)) == NULL)
                     return 0;
-                }
                 memcpy(gctx_out->iv, gctx->iv, gctx->ivlen);
             }
             return 1;
@@ -593,7 +589,7 @@ static int aria_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
     case EVP_CTRL_AEAD_SET_IVLEN:
         arg = 15 - arg;
-        /* fall thru */
+        /* fall through */
     case EVP_CTRL_CCM_SET_L:
         if (arg < 2 || arg > 8)
             return 0;

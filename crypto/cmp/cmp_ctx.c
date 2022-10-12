@@ -111,7 +111,7 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
 
     ctx->libctx = libctx;
     if (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL)
-        goto oom;
+        goto err;
 
     ctx->log_verbosity = OSSL_CMP_LOG_INFO;
 
@@ -121,8 +121,10 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
     ctx->keep_alive = 1;
     ctx->msg_timeout = -1;
 
-    if ((ctx->untrusted = sk_X509_new_null()) == NULL)
-        goto oom;
+    if ((ctx->untrusted = sk_X509_new_null()) == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
 
     ctx->pbm_slen = 16;
     if (!cmp_ctx_set_md(ctx, &ctx->pbm_owf, NID_sha256))
@@ -138,8 +140,6 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
     /* all other elements are initialized to 0 or NULL, respectively */
     return ctx;
 
- oom:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
  err:
     OSSL_CMP_CTX_free(ctx);
     return NULL;
@@ -774,7 +774,7 @@ DEFINE_set1_ASN1_OCTET_STRING(OSSL_CMP_CTX, senderNonce)
 /* Set the proxy server to use for HTTP(S) connections */
 DEFINE_OSSL_CMP_CTX_set1(proxy, char)
 
-/* Set the (HTTP) host name of the CMP server */
+/* Set the (HTTP) hostname of the CMP server */
 DEFINE_OSSL_CMP_CTX_set1(server, char)
 
 /* Set the server exclusion list of the HTTP proxy server */

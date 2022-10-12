@@ -34,7 +34,7 @@ int evp_keymgmt_util_try_import(const OSSL_PARAM params[], void *arg)
     /* Just in time creation of keydata */
     if (data->keydata == NULL) {
         if ((data->keydata = evp_keymgmt_newdata(data->keymgmt)) == NULL) {
-            ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
             return 0;
         }
         delete_on_error = 1;

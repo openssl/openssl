@@ -150,7 +150,7 @@ L<X509_get_pubkey(3)>,
 The X509_PUBKEY_new_ex() and X509_PUBKEY_eq() functions were added in OpenSSL
 3.0.
 
-X509_PUBKEY_set0_public_key() was added in OpenSSL 3.1.
+X509_PUBKEY_set0_public_key() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
