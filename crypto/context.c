@@ -473,7 +473,7 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx)
     return NULL;
 }
 
-void ossl_release_drbg_ctx(void)
+void ossl_release_default_drbg_ctx(void)
 {
     /* early release of the DRBG in global default libctx */
     if (default_context_int.drbg != NULL) {
