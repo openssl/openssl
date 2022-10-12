@@ -43,7 +43,7 @@ static const uint64_t ref_frame_type[] = {
     OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
     OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
     OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
-    OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
+    OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID,
 };
 
 static const uint32_t expect[QUIC_PN_SPACE_NUM][11] = {
@@ -123,8 +123,8 @@ static int test_cfq(void)
                             QUIC_CFQ_STATE_NEW)
             || !TEST_uint_eq(ossl_quic_cfq_item_get_pn_space(item),
                              ref_pn_space[i])
-            || !TEST_uint_eq(ossl_quic_cfq_item_get_frame_type(item),
-                             ref_frame_type[i])
+            || !TEST_uint64_t_eq(ossl_quic_cfq_item_get_frame_type(item),
+                                 ref_frame_type[i])
             || !TEST_ptr_eq(ossl_quic_cfq_item_get_encoded(item),
                             ref_buf + i)
             || !TEST_size_t_eq(ossl_quic_cfq_item_get_encoded_len(item),

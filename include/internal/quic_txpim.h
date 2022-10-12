@@ -99,18 +99,18 @@ void ossl_quic_txpim_pkt_add_cfq_item(QUIC_TXPIM_PKT *fpkt,
  *
  * The chunks are sorted by (stream_id, start) in ascending order.
  */
-const QUIC_TXPIM_CHUNK *ossl_quic_txpim_pkt_get_chunks(QUIC_TXPIM_PKT *fpkt);
+const QUIC_TXPIM_CHUNK *ossl_quic_txpim_pkt_get_chunks(const QUIC_TXPIM_PKT *fpkt);
 
 /*
  * Returns the number of entries in the array returned by
  * ossl_quic_txpim_pkt_get_chunks().
  */
-size_t ossl_quic_txpim_pkt_get_num_chunks(QUIC_TXPIM_PKT *fpkt);
+size_t ossl_quic_txpim_pkt_get_num_chunks(const QUIC_TXPIM_PKT *fpkt);
 
 /*
  * Returns the number of QUIC_TXPIM_PKTs allocated by the given TXPIM that have
  * yet to be returned to the TXPIM.
  */
-size_t ossl_quic_txpim_get_in_use(QUIC_TXPIM *txpim);
+size_t ossl_quic_txpim_get_in_use(const QUIC_TXPIM *txpim);
 
 #endif
