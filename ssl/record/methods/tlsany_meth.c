@@ -185,7 +185,7 @@ struct record_functions_st dtls_any_funcs = {
     NULL,
     dtls_write_records,
     tls_allocate_write_buffers_default,
-    NULL,
+    tls_initialise_write_packets_default,
     NULL,
     NULL,
     NULL,
