@@ -116,6 +116,11 @@ int SSL_in_before(const SSL *s)
         && (sc->statem.state == MSG_FLOW_UNINITED);
 }
 
+OSSL_HANDSHAKE_STATE ossl_statem_get_state(SSL_CONNECTION *s)
+{
+    return s != NULL ? s->statem.hand_state : TLS_ST_BEFORE;
+}
+
 /*
  * Clear the state machine state and reset back to MSG_FLOW_UNINITED
  */

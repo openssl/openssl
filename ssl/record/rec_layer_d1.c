@@ -136,16 +136,12 @@ int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
     item->data = rdata;
 
 #ifndef OPENSSL_NO_SCTP
-    {
-        SSL *ssl = SSL_CONNECTION_GET_SSL(s);
-
-        /* Store bio_dgram_sctp_rcvinfo struct */
-        if (BIO_dgram_is_sctp(SSL_get_rbio(ssl)) &&
-            (SSL_get_state(ssl) == TLS_ST_SR_FINISHED
-             || SSL_get_state(ssl) == TLS_ST_CR_FINISHED)) {
-            BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_SCTP_GET_RCVINFO,
-                     sizeof(rdata->recordinfo), &rdata->recordinfo);
-        }
+    /* Store bio_dgram_sctp_rcvinfo struct */
+    if (BIO_dgram_is_sctp(s->rbio) &&
+        (ossl_statem_get_state(s) == TLS_ST_SR_FINISHED
+         || ossl_statem_get_state(s) == TLS_ST_CR_FINISHED)) {
+        BIO_ctrl(s->rbio, BIO_CTRL_DGRAM_SCTP_GET_RCVINFO,
+                 sizeof(rdata->recordinfo), &rdata->recordinfo);
     }
 #endif
 
