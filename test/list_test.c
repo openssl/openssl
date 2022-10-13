@@ -39,6 +39,9 @@ static int test_fizzbuzz(void)
     ossl_list_fizz_init(&a);
     ossl_list_buzz_init(&b);
 
+    if (!TEST_true(ossl_list_fizz_is_empty(&a)))
+        return 0;
+
     for (i = 1; i < nelem; i++) {
         elem[i].n = i;
         if (i % 3 == 0) {
@@ -51,7 +54,8 @@ static int test_fizzbuzz(void)
         }
     }
 
-    if (!TEST_size_t_eq(ossl_list_fizz_num(&a), na)
+    if (!TEST_false(ossl_list_fizz_is_empty(&a))
+            || !TEST_size_t_eq(ossl_list_fizz_num(&a), na)
             || !TEST_size_t_eq(ossl_list_buzz_num(&b), nb)
             || !TEST_ptr(ossl_list_fizz_head(&a))
             || !TEST_ptr(ossl_list_fizz_tail(&a))
