@@ -448,11 +448,11 @@ void *OPENSSL_sk_value(const OPENSSL_STACK *st, int i)
 void *OPENSSL_sk_set(OPENSSL_STACK *st, int i, const void *data)
 {
     if (st == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
     if (i < 0 || i >= st->num) {
-        ERR_raise_data(ERR_LIB_X509, ERR_R_PASSED_INVALID_ARGUMENT,
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
                        "i=%d", i);
         return NULL;
     }
