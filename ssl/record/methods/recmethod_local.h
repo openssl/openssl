@@ -349,11 +349,17 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
 int tls_get_more_records(OSSL_RECORD_LAYER *rl);
 int dtls_get_more_records(OSSL_RECORD_LAYER *rl);
 
+int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
+                               WPACKET *thispkt,
+                               OSSL_RECORD_TEMPLATE *templ,
+                               unsigned int rectype,
+                               unsigned char **recdata);
 int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                        size_t numtempl);
 
 int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *re);
+int tls_do_compress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *wr);
 int tls_do_uncompress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
 int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
 int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);

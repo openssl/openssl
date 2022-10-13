@@ -1267,6 +1267,10 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                 return 0;
             }
             s->rlayer.rrlnext = next;
+        } else {
+            if (SSL_CONNECTION_IS_DTLS(s)
+                    && level != OSSL_RECORD_PROTECTION_LEVEL_NONE)
+                epoch =  DTLS_RECORD_LAYER_get_w_epoch(&s->rlayer) + 1; /* new epoch */
         }
 
         /*
@@ -1325,9 +1329,17 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         break;
     }
 
-    if (*thismethod != NULL && !(*thismethod)->free(*thisrl)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+    /*
+     * Free the old record layer if we have one except in the case of DTLS when
+     * writing. In that case the record layer is still referenced by buffered
+     * messages for potential retransmit. Only when those buffered messages get
+     * freed do we free the record layer object (see dtls1_hm_fragment_free)
+     */
+    if (!SSL_CONNECTION_IS_DTLS(s) || direction == OSSL_RECORD_DIRECTION_READ) {
+        if (*thismethod != NULL && !(*thismethod)->free(*thisrl)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
 
     *thisrl = newrl;
