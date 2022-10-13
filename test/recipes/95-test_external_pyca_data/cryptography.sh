@@ -56,7 +56,6 @@ echo "------------------------------------------------------------------"
 
 LDFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC -L$O_LIB" pytest -n auto tests --wycheproof-root=../wycheproof
 
-
 cd ../
 deactivate
 rm -rf venv-cryptography
