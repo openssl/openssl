@@ -178,14 +178,10 @@ static void dtls_unbuffer_record(SSL_CONNECTION *s)
         s->rlayer.curr_rec = 0;
 
 #ifndef OPENSSL_NO_SCTP
-        {
-            BIO *rbio = SSL_get_rbio(SSL_CONNECTION_GET_SSL(s));
-
-            /* Restore bio_dgram_sctp_rcvinfo struct */
-            if (BIO_dgram_is_sctp(rbio)) {
-                BIO_ctrl(rbio, BIO_CTRL_DGRAM_SCTP_SET_RCVINFO,
-                         sizeof(rdata->recordinfo), &rdata->recordinfo);
-            }
+        /* Restore bio_dgram_sctp_rcvinfo struct */
+        if (BIO_dgram_is_sctp(s->rbio)) {
+            BIO_ctrl(s->rbio, BIO_CTRL_DGRAM_SCTP_SET_RCVINFO,
+                     sizeof(rdata->recordinfo), &rdata->recordinfo);
         }
 #endif
 
