@@ -297,6 +297,9 @@ void *OPENSSL_sk_delete_ptr(OPENSSL_STACK *st, const void *p)
 {
     int i;
 
+    if (st == NULL)
+        return NULL;
+
     for (i = 0; i < st->num; i++)
         if (st->data[i] == p)
             return internal_delete(st, i);
@@ -305,15 +308,8 @@ void *OPENSSL_sk_delete_ptr(OPENSSL_STACK *st, const void *p)
 
 void *OPENSSL_sk_delete(OPENSSL_STACK *st, int loc)
 {
-    if (st == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+    if (st == NULL || loc < 0 || loc >= st->num)
         return NULL;
-    }
-    if (loc < 0 || loc >= st->num) {
-        ERR_raise_data(ERR_LIB_X509, ERR_R_PASSED_INVALID_ARGUMENT,
-                       "loc=%d", loc);
-        return NULL;
-    }
 
     return internal_delete(st, loc);
 }
