@@ -33,6 +33,17 @@
     {                                                                       \
         memset(list, 0, sizeof(*list));                                     \
     }                                                                       \
+    static ossl_unused ossl_inline void                                     \
+    ossl_list_##name##_init_elem(type *elem)                                \
+    {                                                                       \
+        memset(&elem->ossl_list_ ## name, 0,                                \
+               sizeof(elem->ossl_list_ ## name));                           \
+    }                                                                       \
+    static ossl_unused ossl_inline int                                      \
+    ossl_list_##name##_is_empty(const OSSL_LIST(name) *list)                \
+    {                                                                       \
+        return list->num_elems == 0;                                        \
+    }                                                                       \
     static ossl_unused ossl_inline size_t                                   \
     ossl_list_##name##_num(const OSSL_LIST(name) *list)                     \
     {                                                                       \
