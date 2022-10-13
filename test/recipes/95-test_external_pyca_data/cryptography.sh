@@ -48,13 +48,13 @@ pip install -e vectors
 echo "------------------------------------------------------------------"
 echo "Building cryptography"
 echo "------------------------------------------------------------------"
-LFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC -L$O_LIB" pip install .
+LDFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC -L$O_LIB" pip install .
 
 echo "------------------------------------------------------------------"
 echo "Running tests"
 echo "------------------------------------------------------------------"
 
-LFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC -L$O_LIB" pytest -n auto tests --wycheproof-root=../wycheproof
+LDFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC -L$O_LIB" pytest -n auto tests --wycheproof-root=../wycheproof
 
 
 cd ../
