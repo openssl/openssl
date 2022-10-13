@@ -680,7 +680,8 @@ struct record_functions_st dtls_1_funcs = {
      * instead.
      */
     tls_allocate_write_buffers_default,
-    NULL,
+    /* Don't use tls1_initialise_write_packets for same reason as above */
+    tls_initialise_write_packets_default,
     NULL,
     NULL,
     NULL,

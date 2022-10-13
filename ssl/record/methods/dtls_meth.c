@@ -701,6 +701,9 @@ int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
     SSL3_BUFFER *wb;
     SSL_SESSION *sess;
     SSL *s = SSL_CONNECTION_GET_SSL(sc);
+    WPACKET pkt, *thispkt = &pkt;
+    size_t wpinited = 0;
+    int ret = 0;
 
     sess = sc->session;
 
@@ -731,6 +734,14 @@ int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         return 0;
     }
 
+    if (!rl->funcs->initialise_write_packets(rl, templates, numtempl,
+                                             NULL, thispkt, rl->wbuf,
+                                             &wpinited)) {
+        /* RLAYERfatal() already called */
+        return 0;
+    }
+
+
     wb = rl->wbuf;
     p = SSL3_BUFFER_get_buf(wb);
 
@@ -752,7 +763,7 @@ int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
             eivlen = EVP_CIPHER_CTX_get_iv_length(sc->enc_write_ctx);
             if (eivlen < 0) {
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
-                return 0;
+                goto err;
             }
             if (eivlen <= 1)
                 eivlen = 0;
@@ -780,7 +791,7 @@ int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
     if (sc->compress != NULL) {
         if (!ssl3_do_compress(sc, &wr)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
-            return 0;
+            goto err;
         }
     } else {
         memcpy(SSL3_RECORD_get_data(&wr), SSL3_RECORD_get_input(&wr),
@@ -799,7 +810,7 @@ int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                                       &(p[SSL3_RECORD_get_length(&wr) + eivlen]),
                                       1)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
+            goto err;
         }
         SSL3_RECORD_add_length(&wr, mac_size);
     }
@@ -815,14 +826,14 @@ int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         if (!ossl_statem_in_error(sc)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         }
-        return 0;
+        goto err;
     }
 
     if (SSL_WRITE_ETM(sc) && mac_size != 0) {
         if (!s->method->ssl3_enc->mac(sc, &wr,
                                       &(p[SSL3_RECORD_get_length(&wr)]), 1)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
+            goto err;
         }
         SSL3_RECORD_add_length(&wr, mac_size);
     }
@@ -863,8 +874,11 @@ int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
     sc->rlayer.wpend_type = templates->type;
     sc->rlayer.wpend_ret = templates->buflen;
 
-
-    return 1;
+    ret = 1;
+ err:
+    if (wpinited > 0)
+        WPACKET_cleanup(thispkt);
+    return ret;
 }
 
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {
