@@ -962,7 +962,7 @@ int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     return 1;
 }
 
-static int tls_do_compress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *wr)
+int tls_do_compress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *wr)
 {
 #ifndef OPENSSL_NO_COMP
     int i;
@@ -1514,7 +1514,8 @@ int tls_initialise_write_packets_default(OSSL_RECORD_LAYER *rl,
         wb->type = templates[j].type;
 
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
-        align = (size_t)SSL3_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
+        align = (size_t)SSL3_BUFFER_get_buf(wb);
+        align += rl->isdtls ? DTLS1_RT_HEADER_LENGTH : SSL3_RT_HEADER_LENGTH;
         align = SSL3_ALIGN_PAYLOAD - 1
                 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
 #endif
@@ -1621,6 +1622,8 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
                                            SSL3_RECORD *thiswr)
 {
     size_t origlen, len;
+    size_t headerlen = rl->isdtls ? DTLS1_RT_HEADER_LENGTH
+                                  : SSL3_RT_HEADER_LENGTH;
 
     /* Allocate bytes for the encryption overhead */
     if (!WPACKET_get_length(thispkt, &origlen)
@@ -1654,9 +1657,9 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
     if (rl->msg_callback != NULL) {
         unsigned char *recordstart;
 
-        recordstart = WPACKET_get_curr(thispkt) - len - SSL3_RT_HEADER_LENGTH;
+        recordstart = WPACKET_get_curr(thispkt) - len - headerlen;
         rl->msg_callback(1, thiswr->rec_version, SSL3_RT_HEADER, recordstart,
-                         SSL3_RT_HEADER_LENGTH, rl->cbarg);
+                         headerlen, rl->cbarg);
 
         if (rl->version == TLS1_3_VERSION && rl->enc_ctx != NULL) {
             unsigned char ctype = thistempl->type;
@@ -1671,7 +1674,7 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
         return 0;
     }
 
-    SSL3_RECORD_add_length(thiswr, SSL3_RT_HEADER_LENGTH);
+    SSL3_RECORD_add_length(thiswr, headerlen);
 
     return 1;
 }

@@ -689,36 +689,52 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     return ret;
 }
 
+int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
+                               WPACKET *thispkt,
+                               OSSL_RECORD_TEMPLATE *templ,
+                               unsigned int rectype,
+                               unsigned char **recdata)
+{
+    size_t maxcomplen;
+
+    *recdata = NULL;
+
+    maxcomplen = templ->buflen;
+    if (rl->compctx != NULL)
+        maxcomplen += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+
+    if (!WPACKET_put_bytes_u8(thispkt, rectype)
+            || !WPACKET_put_bytes_u16(thispkt, templ->version)
+            || !WPACKET_put_bytes_u16(thispkt, rl->epoch)
+            || !WPACKET_memcpy(thispkt, &(rl->sequence[2]), 6)
+            || !WPACKET_start_sub_packet_u16(thispkt)
+            || (rl->eivlen > 0
+                && !WPACKET_allocate_bytes(thispkt, rl->eivlen, NULL))
+            || (maxcomplen > 0
+                && !WPACKET_reserve_bytes(thispkt, maxcomplen,
+                                          recdata))) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
 int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                        size_t numtempl)
 {
-    /* TODO(RECLAYER): Remove me */
-    SSL_CONNECTION *sc = (SSL_CONNECTION *)rl->cbarg;
-    unsigned char *p, *pseq;
-    int mac_size, clear = 0;
-    int eivlen;
+    int mac_size = 0;
     SSL3_RECORD wr;
     SSL3_BUFFER *wb;
-    SSL_SESSION *sess;
-    SSL *s = SSL_CONNECTION_GET_SSL(sc);
     WPACKET pkt, *thispkt = &pkt;
     size_t wpinited = 0;
     int ret = 0;
+    unsigned char *compressdata = NULL;
 
-    sess = sc->session;
-
-    if ((sess == NULL)
-            || (sc->enc_write_ctx == NULL)
-            || (EVP_MD_CTX_get0_md(sc->write_hash) == NULL))
-        clear = 1;
-
-    if (clear)
-        mac_size = 0;
-    else {
-        mac_size = EVP_MD_CTX_get_size(sc->write_hash);
+    if (rl->md_ctx != NULL && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL) {
+        mac_size = EVP_MD_CTX_get_size(rl->md_ctx);
         if (mac_size < 0) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
-                        SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
     }
@@ -741,45 +757,19 @@ int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         return 0;
     }
 
-
     wb = rl->wbuf;
-    p = SSL3_BUFFER_get_buf(wb);
 
-    /* write the header */
-
-    *(p++) = templates->type & 0xff;
     SSL3_RECORD_set_type(&wr, templates->type);
-    *(p++) = templates->version >> 8;
-    *(p++) = templates->version & 0xff;
+    SSL3_RECORD_set_rec_version(&wr, templates->version);
 
-    /* field where we are to write out packet epoch, seq num and len */
-    pseq = p;
-    p += 10;
-
-    /* Explicit IV length, block ciphers appropriate version flag */
-    if (sc->enc_write_ctx) {
-        int mode = EVP_CIPHER_CTX_get_mode(sc->enc_write_ctx);
-        if (mode == EVP_CIPH_CBC_MODE) {
-            eivlen = EVP_CIPHER_CTX_get_iv_length(sc->enc_write_ctx);
-            if (eivlen < 0) {
-                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
-                goto err;
-            }
-            if (eivlen <= 1)
-                eivlen = 0;
-        }
-        /* Need explicit part of IV for GCM mode */
-        else if (mode == EVP_CIPH_GCM_MODE)
-            eivlen = EVP_GCM_TLS_EXPLICIT_IV_LEN;
-        else if (mode == EVP_CIPH_CCM_MODE)
-            eivlen = EVP_CCM_TLS_EXPLICIT_IV_LEN;
-        else
-            eivlen = 0;
-    } else
-        eivlen = 0;
+    if (!rl->funcs->prepare_record_header(rl, thispkt, templates,
+                                          templates->type, &compressdata)) {
+        /* RLAYERfatal() already called */
+        goto err;
+    }
 
     /* lets setup the record stuff. */
-    SSL3_RECORD_set_data(&wr, p + eivlen); /* make room for IV in case of CBC */
+    SSL3_RECORD_set_data(&wr, compressdata);
     SSL3_RECORD_set_length(&wr, templates->buflen);
     SSL3_RECORD_set_input(&wr, (unsigned char *)templates->buf);
 
@@ -788,91 +778,43 @@ int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
      */
 
     /* first we compress */
-    if (sc->compress != NULL) {
-        if (!ssl3_do_compress(sc, &wr)) {
+    if (rl->compctx != NULL) {
+        if (!tls_do_compress(rl, &wr)
+                || !WPACKET_allocate_bytes(thispkt, wr.length, NULL)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
             goto err;
         }
-    } else {
-        memcpy(SSL3_RECORD_get_data(&wr), SSL3_RECORD_get_input(&wr),
-               SSL3_RECORD_get_length(&wr));
-        SSL3_RECORD_reset_input(&wr);
-    }
-
-    /*
-     * we should still have the output to wr.data and the input from
-     * wr.input.  Length should be wr.length. wr.data still points in the
-     * wb->buf
-     */
-
-    if (!SSL_WRITE_ETM(sc) && mac_size != 0) {
-        if (!s->method->ssl3_enc->mac(sc, &wr,
-                                      &(p[SSL3_RECORD_get_length(&wr) + eivlen]),
-                                      1)) {
+    } else if (compressdata != NULL) {
+        if (!WPACKET_memcpy(thispkt, wr.input, wr.length)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        SSL3_RECORD_add_length(&wr, mac_size);
+        SSL3_RECORD_reset_input(&wr);
     }
 
-    /* this is true regardless of mac size */
-    SSL3_RECORD_set_data(&wr, p);
-    SSL3_RECORD_reset_input(&wr);
+    if (!rl->funcs->prepare_for_encryption(rl, mac_size, thispkt, &wr)) {
+        /* RLAYERfatal() already called */
+        goto err;
+    }
 
-    if (eivlen)
-        SSL3_RECORD_add_length(&wr, eivlen);
-
-    if (s->method->ssl3_enc->enc(sc, &wr, 1, 1, NULL, mac_size) < 1) {
-        if (!ossl_statem_in_error(sc)) {
+    if (rl->funcs->cipher(rl, &wr, 1, 1, NULL, mac_size) < 1) {
+        if (rl->alert == SSL_AD_NO_ALERT) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         }
         goto err;
     }
 
-    if (SSL_WRITE_ETM(sc) && mac_size != 0) {
-        if (!s->method->ssl3_enc->mac(sc, &wr,
-                                      &(p[SSL3_RECORD_get_length(&wr)]), 1)) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-        SSL3_RECORD_add_length(&wr, mac_size);
+    if (!rl->funcs->post_encryption_processing(rl, mac_size, templates,
+                                               thispkt, &wr)) {
+        /* RLAYERfatal() already called */
+        goto err;
     }
 
-    /* record length after mac and block padding */
-
-    /* there's only one epoch between handshake and app data */
-
-    s2n(sc->rlayer.d->w_epoch, pseq);
-
-    memcpy(pseq, &(sc->rlayer.write_sequence[2]), 6);
-    pseq += 6;
-    s2n(SSL3_RECORD_get_length(&wr), pseq);
-
-    if (sc->msg_callback)
-        sc->msg_callback(1, 0, SSL3_RT_HEADER, pseq - DTLS1_RT_HEADER_LENGTH,
-                         DTLS1_RT_HEADER_LENGTH, s, sc->msg_callback_arg);
-
-    /*
-     * we should now have wr.data pointing to the encrypted data, which is
-     * wr->length long
-     */
-    SSL3_RECORD_set_type(&wr, templates->type); /* not needed but helps for debugging */
-    SSL3_RECORD_add_length(&wr, DTLS1_RT_HEADER_LENGTH);
-
-    ssl3_record_sequence_update(&(sc->rlayer.write_sequence[0]));
+    /* TODO(RECLAYER): FIXME */
+    ssl3_record_sequence_update(rl->sequence);
 
     /* now let's set up wb */
     SSL3_BUFFER_set_left(wb, SSL3_RECORD_get_length(&wr));
-    SSL3_BUFFER_set_offset(wb, 0);
-
-    /*
-     * memorize arguments so that ssl3_write_pending can detect bad write
-     * retries later
-     */
-    sc->rlayer.wpend_tot = templates->buflen;
-    sc->rlayer.wpend_buf = templates->buf;
-    sc->rlayer.wpend_type = templates->type;
-    sc->rlayer.wpend_ret = templates->buflen;
 
     ret = 1;
  err:

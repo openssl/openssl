@@ -1899,11 +1899,8 @@ typedef struct {
 # define DTLS1_SKIP_RECORD_HEADER                 2
 
 struct dtls1_retransmit_state {
-    EVP_CIPHER_CTX *enc_write_ctx; /* cryptographic state */
-    EVP_MD_CTX *write_hash;     /* used for mac generation */
-    COMP_CTX *compress;         /* compression */
-    SSL_SESSION *session;
-    uint16_t epoch;
+    const OSSL_RECORD_METHOD *wrlmethod;
+    OSSL_RECORD_LAYER *wrl;
 };
 
 struct hm_header_st {
