@@ -701,7 +701,7 @@ int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert)
 int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
                                    X509 *cert, X509 *peer)
 {
-    STACK_OF(CMS_RecipientInfo) *ris;
+    STACK_OF(CMS_RecipientInfo) *ris = CMS_get0_RecipientInfos(cms);
     CMS_RecipientInfo *ri;
     int i, r, cms_pkey_ri_type;
     int debug = 0, match_ri = 0;
@@ -712,7 +712,6 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
     ec->key = NULL;
     ec->keylen = 0;
 
-    ris = CMS_get0_RecipientInfos(cms);
     if (ris != NULL)
         debug = ec->debug;
 
@@ -823,11 +822,16 @@ int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
 int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
                               unsigned char *pass, ossl_ssize_t passlen)
 {
-    STACK_OF(CMS_RecipientInfo) *ris;
+    STACK_OF(CMS_RecipientInfo) *ris = CMS_get0_RecipientInfos(cms);
     CMS_RecipientInfo *ri;
     int i, r;
+    CMS_EncryptedContentInfo *ec = ossl_cms_get0_env_enc_content(cms);
 
-    ris = CMS_get0_RecipientInfos(cms);
+    /* Prevent mem leak on earlier CMS_decrypt_set1_{pkey_and_peer,password} */
+    OPENSSL_clear_free(ec->key, ec->keylen);
+    ec->key = NULL;
+    ec->keylen = 0;
+
     for (i = 0; i < sk_CMS_RecipientInfo_num(ris); i++) {
         ri = sk_CMS_RecipientInfo_value(ris, i);
         if (CMS_RecipientInfo_type(ri) != CMS_RECIPINFO_PASS)
