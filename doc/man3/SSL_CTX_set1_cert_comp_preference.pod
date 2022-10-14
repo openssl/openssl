@@ -40,9 +40,10 @@ compression is only available for TLSv1.3 as defined in RFC8879.
 
 SSL_CTX_set1_cert_comp_preference() and SSL_set1_cert_comp_preference() are used
 to specify the preferred compression algorithms. The B<algs> argument is an array
-of algorithms, and B<length> is size of the B<algs> array. Only those algorithms
-enabled in the library will be accepted in B<algs>, unknown algorithms in B<algs>
-are ignored. On an error, the preference order is left unmodified.
+of algorithms, and B<length> is number of elements in the B<algs> array. Only
+those algorithms enabled in the library will be accepted in B<algs>, unknown
+algorithms in B<algs> are ignored. On an error, the preference order is left
+unmodified.
 
 The following compression algorithms (B<alg> arguments) may be used:
 
@@ -63,16 +64,16 @@ Otherwise, the configured preference order is sent to the peer and is used
 to filter the peer's preference order.
 
 SSL_CTX_compress_certs() and SSL_compress_certs() are used to pre-compress all
-the configured certificates on an SSL_CTX (or SSL) with algorithm B<alg>. If
+the configured certificates on an SSL_CTX/SSL object with algorithm B<alg>. If
 B<alg> is 0, then the certificates are compressed with the algorithms specified
-in the preference list. Calling these functions on a client SSL_CTX/SSL will
-result in an error, as only server certificates may be pre-compressed.
+in the preference list. Calling these functions on a client SSL_CTX/SSL object
+will result in an error, as only server certificates may be pre-compressed.
 
-SSL_CTX_get1_compressed_cert() and SSL_get1_compressed_cert() are used to 
-get the pre-compressed certificate most recently set that may be stored for
-later use. Calling these functions on a client
-SSL_CTX/SSL will result in an error, as only server certificates may be
-pre-compressed. The B<data> and B<orig_len> arguments are required.
+SSL_CTX_get1_compressed_cert() and SSL_get1_compressed_cert() are used to get
+the pre-compressed certificate most recently set that may be stored for later
+use. Calling these functions on a client SSL_CTX/SSL object will result in an
+error, as only server certificates may be pre-compressed. The B<data> and
+B<orig_len> arguments are required.
 
 The compressed certificate data may be passed to SSL_CTX_set1_compressed_cert()
 or SSL_set1_compressed_cert() to provide a pre-compressed version of the
@@ -90,21 +91,21 @@ preference order is used to determine what algorithm to use when sending a
 compressed certificate.
 
 Only server certificates may be pre-compressed. Calling any of these functions
-(except SSL_CTX_set1_cert_comp_preferences()/SSL_set1_cert_comp_preferences())
-on a client SSL_CTX/SSL will return an error. Client certificates are compressed
-on-demand as unique context data from the server is compressed along with the
-certificate.
+(except SSL_CTX_set1_cert_comp_preference()/SSL_set1_cert_comp_preference())
+on a client SSL_CTX/SSL object will return an error. Client certificates are
+compressed on-demand as unique context data from the server is compressed along
+with the certificate.
 
 For SSL_CTX_set1_cert_comp_preference() and SSL_set1_cert_comp_preference()
 the B<len> argument is the size of the B<algs> argument in bytes.
 
 The compressed certificate returned by SSL_CTX_get1_compressed_cert() and
-SSL_get1_compressed_cert() is the last certificate set on the SSL_CTX/SSL.
-The certificate memory is allocated by the function and the caller must
-free B<*data> via OPENSSL_free().
+SSL_get1_compressed_cert() is the last certificate set on the SSL_CTX/SSL object.
+The certificate is copied by the function and the caller must free B<*data> via
+OPENSSL_free().
 
 The compressed certificate data set by SSL_CTX_set1_compressed_cert() and
-SSL_set1_compressed_cert() is copied into the SSL_CTX/SSL.
+SSL_set1_compressed_cert() is copied into the SSL_CTX/SSL object.
 
 SSL_CTX_compress_certs() and SSL_compress_certs() return an error under the
 following conditions:

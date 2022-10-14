@@ -16,6 +16,7 @@
 #endif
 
 #include <openssl/ssl.h>
+#include "internal/nelem.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
 #include "../ssl/ssl_local.h"
@@ -161,15 +162,15 @@ static int test_ssl_cert_comp(int test)
     if (test == 3) {
         server_pref[0] = expected_server;
         server_pref[1] = expected_client;
-        if (!TEST_true(SSL_CTX_set1_cert_comp_preference(sctx, server_pref, sizeof(int) * 2)))
+        if (!TEST_true(SSL_CTX_set1_cert_comp_preference(sctx, server_pref, 2)))
             goto end;
         client_pref[0] = expected_client;
-        if (!TEST_true(SSL_CTX_set1_cert_comp_preference(cctx, client_pref, sizeof(int) * 1)))
+        if (!TEST_true(SSL_CTX_set1_cert_comp_preference(cctx, client_pref, 1)))
             goto end;
     } else {
-        if (!TEST_true(SSL_CTX_set1_cert_comp_preference(sctx, server_pref, sizeof(server_pref))))
+        if (!TEST_true(SSL_CTX_set1_cert_comp_preference(sctx, server_pref, OSSL_NELEM(server_pref))))
             goto end;
-        if (!TEST_true(SSL_CTX_set1_cert_comp_preference(cctx, client_pref, sizeof(client_pref))))
+        if (!TEST_true(SSL_CTX_set1_cert_comp_preference(cctx, client_pref, OSSL_NELEM(client_pref))))
             goto end;
     }
     if (test == 2) {
