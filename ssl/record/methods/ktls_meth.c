@@ -578,5 +578,6 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_get_state,
     tls_set_options,
     tls_get_compression,
-    tls_set_max_frag_len
+    tls_set_max_frag_len,
+    NULL
 };

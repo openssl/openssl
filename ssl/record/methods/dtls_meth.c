@@ -823,6 +823,35 @@ int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
     return ret;
 }
 
+static size_t dtls_get_max_record_overhead(OSSL_RECORD_LAYER *rl)
+{
+    size_t blocksize, mac_size;
+
+    /*
+     * TODO(RECLAYER): Review this. This is what the existing code did.
+     * I suspect it's not quite right. What about IV? AEAD Tag? Compression
+     * expansion?
+     */
+    if (rl->md_ctx != NULL) {
+        if (rl->enc_ctx != NULL
+            && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(rl->enc_ctx)) &
+                EVP_CIPH_FLAG_AEAD_CIPHER) != 0)
+            mac_size = 0;
+        else
+            mac_size = EVP_MD_CTX_get_size(rl->md_ctx);
+    } else {
+        mac_size = 0;
+    }
+
+    if (rl->enc_ctx != NULL &&
+        (EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE))
+        blocksize = 2 * EVP_CIPHER_CTX_get_block_size(rl->enc_ctx);
+    else
+        blocksize = 0;
+
+    return DTLS1_RT_HEADER_LENGTH + mac_size + blocksize;
+}
+
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_new_record_layer,
     dtls_free,
@@ -847,5 +876,6 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_get_state,
     tls_set_options,
     tls_get_compression,
-    tls_set_max_frag_len
+    tls_set_max_frag_len,
+    dtls_get_max_record_overhead
 };
