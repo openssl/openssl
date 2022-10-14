@@ -90,7 +90,8 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
     }
 
     /* Split the certs in ocerts over *cert and *ca as far as requested */
-    while ((x = sk_X509_shift(ocerts)) != NULL) {
+    while (sk_X509_num(ocerts) > 0) {
+        x = sk_X509_shift(ocerts);
         if (pkey != NULL && *pkey != NULL
                 && cert != NULL && *cert == NULL) {
             int match;
