@@ -103,14 +103,15 @@ static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
      */
     if ((data->keymgmt_prov == prov) == data->flag_find_same_provider) {
         void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
-        size_t i, end_i = sk_OPENSSL_CSTRING_num(data->names);
+        int i, end_i = sk_OPENSSL_CSTRING_num(data->names);
         int match;
 
         for (i = 0; i < end_i; i++) {
             if (data->flag_find_same_provider)
                 match = (data->id_names[i] == encoder->base.id);
             else
-                match = OSSL_ENCODER_is_a(encoder, sk_OPENSSL_CSTRING_value(data->names, i));
+                match = OSSL_ENCODER_is_a(encoder,
+                                          sk_OPENSSL_CSTRING_value(data->names, i));
             if (!match
                 || (encoder->does_selection != NULL
                     && !encoder->does_selection(provctx, data->ctx->selection))
