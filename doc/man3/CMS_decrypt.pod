@@ -96,7 +96,7 @@ The error can be obtained from ERR_get_error(3).
 =head1 BUGS
 
 The B<set1_> part of these function names is misleading
-and should bettter read: B<with_>.
+and should better read: B<with_>.
 
 The lack of single pass processing and the need to hold all data in memory as
 mentioned in CMS_verify() also applies to CMS_decrypt().
