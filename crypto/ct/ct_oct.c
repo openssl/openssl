@@ -272,12 +272,10 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
         if (sk == NULL)
             return NULL;
     } else {
-        SCT *sct;
-
         /* Use the given stack, but empty it first. */
         sk = *a;
-        while ((sct = sk_SCT_pop(sk)) != NULL)
-            SCT_free(sct);
+        while (sk_SCT_num(sk) > 0)
+            SCT_free(sk_SCT_pop(sk));
     }
 
     while (list_len > 0) {
