@@ -604,7 +604,7 @@ static int bio_zstd_read(BIO *b, char *out, int outl)
     outBuf.pos = 0;
     for (;;) {
         /* Decompress while data available */
-        while (ctx->decompress.inbuf.pos < ctx->decompress.inbuf.size) {
+        do {
             zret = ZSTD_decompressStream(ctx->decompress.state, &outBuf, &ctx->decompress.inbuf);
             if (ZSTD_isError(zret)) {
                 ERR_raise(ERR_LIB_COMP, COMP_R_ZSTD_DECOMPRESS_ERROR);
@@ -614,7 +614,7 @@ static int bio_zstd_read(BIO *b, char *out, int outl)
             /* No more output space */
             if (outBuf.pos == outBuf.size)
                 return outBuf.pos;
-        }
+        } while (ctx->decompress.inbuf.pos < ctx->decompress.inbuf.size);
 
         /*
          * No data in input buffer try to read some in, if an error then
