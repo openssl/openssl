@@ -317,6 +317,8 @@ static ossl_ssize_t zstd_oneshot_compress_block(COMP_CTX *ctx, unsigned char *ou
     if (ZSTD_isError(out_size))
         return -1;
 
+    if (out_size > OSSL_SSIZE_MAX)
+        return -1;
     ret = (ossl_ssize_t)out_size;
     if (ret < 0)
         return -1;
@@ -338,6 +340,8 @@ static ossl_ssize_t zstd_oneshot_expand_block(COMP_CTX *ctx, unsigned char *out,
     if (ZSTD_isError(out_size))
         return -1;
 
+    if (out_size > OSSL_SSIZE_MAX)
+        return -1;
     ret = (ossl_ssize_t)out_size;
     if (ret < 0)
         return -1;
