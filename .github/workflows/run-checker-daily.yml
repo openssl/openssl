@@ -140,7 +140,7 @@ jobs:
     - name: Install Dependencies for sctp option
       run:  |
         sudo apt-get update
-        sudo apt-get -yq install libsctp-dev
+        sudo apt-get -yq install lksctp-tools libsctp-dev
         sudo sysctl -w net.sctp.auth_enable=1
       if: matrix.opt == 'enable-sctp'
     - name: config
