@@ -397,7 +397,7 @@ void ossl_quic_tx_packetiser_schedule_ack_eliciting(OSSL_QUIC_TX_PACKETISER *txp
 int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
                                      uint32_t archetype)
 {
-    uint32_t enc_level, i;
+    uint32_t enc_level;
     char have_pkt_for_el[QUIC_ENC_LEVEL_NUM], is_last_in_dgram;
     size_t num_el_in_dgram = 0, pkts_done = 0;
     int rc;
@@ -422,13 +422,13 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
      */
     ossl_qtx_finish_dgram(txp->args.qtx);
 
-    for (i = 0, enc_level = QUIC_ENC_LEVEL_INITIAL;
+    for (enc_level = QUIC_ENC_LEVEL_INITIAL;
          enc_level < QUIC_ENC_LEVEL_NUM;
-         ++i, ++enc_level) {
+         ++enc_level) {
         if (!have_pkt_for_el[enc_level])
             continue;
 
-        is_last_in_dgram = (i + 1 == num_el_in_dgram);
+        is_last_in_dgram = (pkts_done + 1 == num_el_in_dgram);
         rc = txp_generate_for_el(txp, enc_level, archetype, is_last_in_dgram,
                                  have_pkt_for_el[QUIC_ENC_LEVEL_INITIAL]);
 
