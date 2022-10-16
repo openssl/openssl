@@ -137,6 +137,7 @@ static time_t reseed_time(EVP_RAND_CTX *drbg)
  */
 static int using_fips_rng(void)
 {
+#ifdef FIPS_MODULE
     EVP_RAND_CTX *primary = RAND_get0_primary(NULL);
     const OSSL_PROVIDER *prov;
     const char *name;
@@ -149,6 +150,9 @@ static int using_fips_rng(void)
         return 0;
     name = OSSL_PROVIDER_get0_name(prov);
     return strcmp(name, "OpenSSL FIPS Provider") == 0;
+#else  /* FIPS_MODULE */
+    return 0;
+#endif /* FIPS_MODULE */
 }
 
  /*
