@@ -899,16 +899,28 @@ static int provider_init(OSSL_PROVIDER *prov)
             OPENSSL_free(allocated_load_dir);
         }
 
-        if (prov->module != NULL)
-            prov->init_function = (OSSL_provider_init_fn *)
-                DSO_bind_func(prov->module, "OSSL_provider_init");
+        if (prov->module == NULL) {
+            /* DSO has already recorded errors, this is just a tracepoint */
+            ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_DSO_LIB,
+                           "name=%s", prov->name);
+            goto end;
+        }
+
+        prov->init_function = (OSSL_provider_init_fn *)
+            DSO_bind_func(prov->module, "OSSL_provider_init");
 #endif
     }
 
-    /* Call the initialise function for the provider. */
-    if (prov->init_function == NULL
-        || !prov->init_function((OSSL_CORE_HANDLE *)prov, core_dispatch,
-                                &provider_dispatch, &tmp_provctx)) {
+    /* Check for and call the initialise function for the provider. */
+    if (prov->init_function == NULL) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_UNSUPPORTED,
+                       "name=%s, provider has no provider init function",
+                       prov->name);
+        goto end;
+    }
+
+    if (!prov->init_function((OSSL_CORE_HANDLE *)prov, core_dispatch,
+                             &provider_dispatch, &tmp_provctx)) {
         ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INIT_FAIL,
                        "name=%s", prov->name);
         goto end;
