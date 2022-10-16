@@ -467,6 +467,8 @@ extern "C" {
     OSSL_PKEY_PARAM_MGF1_PROPERTIES
 #define OSSL_SIGNATURE_PARAM_DIGEST_SIZE        OSSL_PKEY_PARAM_DIGEST_SIZE
 #define OSSL_SIGNATURE_PARAM_NONCE_TYPE         "nonce-type"
+#define OSSL_SIGNATURE_PARAM_INSTANCE           "instance"
+#define OSSL_SIGNATURE_PARAM_CONTEXT_STRING     "context-string"
 
 /* Asym cipher parameters */
 #define OSSL_ASYM_CIPHER_PARAM_DIGEST                   OSSL_PKEY_PARAM_DIGEST

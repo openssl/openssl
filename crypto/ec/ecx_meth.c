@@ -821,8 +821,10 @@ static int pkey_ecd_digestsign25519(EVP_MD_CTX *ctx, unsigned char *sig,
         return 0;
     }
 
-    if (ossl_ed25519_sign(sig, tbs, tbslen, edkey->pubkey, edkey->privkey, NULL,
-                          NULL) == 0)
+    if (ossl_ed25519_sign(sig, tbs, tbslen, edkey->pubkey, edkey->privkey,
+                          0, 0, 0,
+                          NULL, 0,
+                          NULL, NULL) == 0)
         return 0;
     *siglen = ED25519_SIGSIZE;
     return 1;
@@ -849,7 +851,7 @@ static int pkey_ecd_digestsign448(EVP_MD_CTX *ctx, unsigned char *sig,
     }
 
     if (ossl_ed448_sign(edkey->libctx, sig, tbs, tbslen, edkey->pubkey,
-                        edkey->privkey, NULL, 0, edkey->propq) == 0)
+                        edkey->privkey, NULL, 0, 0, edkey->propq) == 0)
         return 0;
     *siglen = ED448_SIGSIZE;
     return 1;
@@ -870,6 +872,8 @@ static int pkey_ecd_digestverify25519(EVP_MD_CTX *ctx, const unsigned char *sig,
         return 0;
 
     return ossl_ed25519_verify(tbs, tbslen, sig, edkey->pubkey,
+                               0, 0, 0,
+                               NULL, 0,
                                edkey->libctx, edkey->propq);
 }
 
@@ -888,7 +892,7 @@ static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
         return 0;
 
     return ossl_ed448_verify(edkey->libctx, tbs, tbslen, sig, edkey->pubkey,
-                             NULL, 0, edkey->propq);
+                             NULL, 0, 0, edkey->propq);
 }
 
 static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
