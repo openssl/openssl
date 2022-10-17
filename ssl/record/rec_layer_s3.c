@@ -33,8 +33,6 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     rl->wpend_ret = 0;
     rl->wpend_buf = NULL;
 
-    ssl3_release_write_buffer(rl->s);
-
     RECORD_LAYER_reset_write_sequence(rl);
 
     if (rl->rrlmethod != NULL)
@@ -54,8 +52,10 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
 
 void RECORD_LAYER_release(RECORD_LAYER *rl)
 {
-    if (rl->numwpipes > 0)
-        ssl3_release_write_buffer(rl->s);
+    /*
+     * TODO(RECLAYER): Need a way to release the write buffers in the record
+     * layer on demand
+     */
 }
 
 /* Checks if we have unprocessed read ahead data pending */
@@ -73,10 +73,6 @@ int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl)
 
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl)
 {
-    /* TODO(RECLAYER): Remove me when DTLS is moved to the write record layer */
-    if (SSL_CONNECTION_IS_DTLS(rl->s))
-        return (rl->numwpipes > 0)
-            && SSL3_BUFFER_get_left(&rl->wbuf[rl->numwpipes - 1]) != 0;
     return rl->wpend_tot > 0;
 }
 

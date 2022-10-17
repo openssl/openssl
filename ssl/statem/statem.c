@@ -434,10 +434,6 @@ static int state_machine(SSL_CONNECTION *s, int server)
             buf = NULL;
         }
 
-        if (!ssl3_setup_buffers(s)) {
-            SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
-            goto end;
-        }
         s->init_num = 0;
 
         /*

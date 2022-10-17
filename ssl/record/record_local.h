@@ -27,30 +27,6 @@
 
 int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec);
 
-/* Macros/functions provided by the SSL3_BUFFER component */
-
-#define SSL3_BUFFER_get_buf(b)              ((b)->buf)
-#define SSL3_BUFFER_set_buf(b, n)           ((b)->buf = (n))
-#define SSL3_BUFFER_get_len(b)              ((b)->len)
-#define SSL3_BUFFER_set_len(b, l)           ((b)->len = (l))
-#define SSL3_BUFFER_get_left(b)             ((b)->left)
-#define SSL3_BUFFER_set_left(b, l)          ((b)->left = (l))
-#define SSL3_BUFFER_sub_left(b, l)          ((b)->left -= (l))
-#define SSL3_BUFFER_get_offset(b)           ((b)->offset)
-#define SSL3_BUFFER_set_offset(b, o)        ((b)->offset = (o))
-#define SSL3_BUFFER_add_offset(b, o)        ((b)->offset += (o))
-#define SSL3_BUFFER_is_initialised(b)       ((b)->buf != NULL)
-#define SSL3_BUFFER_set_default_len(b, l)   ((b)->default_len = (l))
-#define SSL3_BUFFER_set_app_buffer(b, l)    ((b)->app_buffer = (l))
-#define SSL3_BUFFER_is_app_buffer(b)        ((b)->app_buffer)
-
-void SSL3_BUFFER_clear(SSL3_BUFFER *b);
-void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, size_t n);
-void SSL3_BUFFER_release(SSL3_BUFFER *b);
-__owur int ssl3_setup_write_buffer(SSL_CONNECTION *s, size_t numwpipes,
-                                   size_t len);
-int ssl3_release_write_buffer(SSL_CONNECTION *s);
-
 /* Macros/functions provided by the SSL3_RECORD component */
 
 #define SSL3_RECORD_get_type(r)                 ((r)->type)

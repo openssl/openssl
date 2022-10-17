@@ -22,6 +22,12 @@
 
 static void tls_int_free(OSSL_RECORD_LAYER *rl);
 
+void SSL3_BUFFER_release(SSL3_BUFFER *b)
+{
+    OPENSSL_free(b->buf);
+    b->buf = NULL;
+}
+
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
                        const char *fmt, ...)
 {

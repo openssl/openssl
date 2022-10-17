@@ -1712,12 +1712,6 @@ static int final_maxfragmentlen(SSL_CONNECTION *s, unsigned int context,
                                               GET_MAX_FRAGMENT_LENGTH(s->session));
         s->rlayer.wrlmethod->set_max_frag_len(s->rlayer.wrl,
                                               ssl_get_max_send_fragment(s));
-        /* trigger a larger buffer reallocation */
-        /* TODO(RECLAYER): Remove me when DTLS moved to write record layer */
-        if (SSL_CONNECTION_IS_DTLS(s) && !ssl3_setup_buffers(s)) {
-            /* SSLfatal() already called */
-            return 0;
-        }
     }
 
     return 1;

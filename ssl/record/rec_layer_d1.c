@@ -639,20 +639,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
     int i;
     OSSL_RECORD_TEMPLATE tmpl;
     SSL *s = SSL_CONNECTION_GET_SSL(sc);
-    SSL3_BUFFER *wb;
     int ret;
-
-    wb = &sc->rlayer.wbuf[0];
-
-    /*
-     * DTLS writes whole datagrams, so there can't be anything left in
-     * the buffer.
-     */
-    /* TODO(RECLAYER): Remove me */
-    if (!ossl_assert(SSL3_BUFFER_get_left(wb) == 0)) {
-        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
 
     /* If we have an alert to send, lets send it */
     if (sc->s3.alert_dispatch) {

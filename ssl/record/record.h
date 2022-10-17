@@ -21,7 +21,7 @@ typedef struct ssl3_buffer_st SSL3_BUFFER;
  *****************************************************************************/
 
 struct ssl3_buffer_st {
-    /* at least SSL3_RT_MAX_PACKET_SIZE bytes, see ssl3_setup_buffers() */
+    /* at least SSL3_RT_MAX_PACKET_SIZE bytes */
     unsigned char *buf;
     /* default buffer size (or 0 if no default set) */
     size_t default_len;
@@ -149,14 +149,7 @@ typedef struct record_layer_st {
      * non-blocking reads)
      */
     int read_ahead;
-    /*
-     * TODO(RECLAYER): These next 2 fields can be removed when DTLS is moved to
-     * the new write record layer architecture.
-     */
-    /* How many pipelines can be used to write data */
-    size_t numwpipes;
-    /* write IO goes into here */
-    SSL3_BUFFER wbuf[SSL_MAX_PIPELINES + 1];
+
     /* number of bytes sent so far */
     size_t wnum;
     unsigned char handshake_fragment[4];
@@ -225,7 +218,6 @@ __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, size_t len,
 __owur int ssl3_read_bytes(SSL *s, int type, int *recvd_type,
                            unsigned char *buf, size_t len, int peek,
                            size_t *readbytes);
-__owur int ssl3_setup_buffers(SSL_CONNECTION *s);
 __owur int tls1_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs,
                     int sending, SSL_MAC_BUF *mac, size_t macsize);
 __owur int tls1_mac_old(SSL_CONNECTION *s, SSL3_RECORD *rec, unsigned char *md,

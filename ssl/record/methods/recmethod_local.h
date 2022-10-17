@@ -460,3 +460,19 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
 int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                               OSSL_RECORD_TEMPLATE *templates,
                               size_t numtempl);
+
+/* Macros/functions provided by the SSL3_BUFFER component */
+
+#define SSL3_BUFFER_get_buf(b)              ((b)->buf)
+#define SSL3_BUFFER_set_buf(b, n)           ((b)->buf = (n))
+#define SSL3_BUFFER_get_len(b)              ((b)->len)
+#define SSL3_BUFFER_get_left(b)             ((b)->left)
+#define SSL3_BUFFER_set_left(b, l)          ((b)->left = (l))
+#define SSL3_BUFFER_sub_left(b, l)          ((b)->left -= (l))
+#define SSL3_BUFFER_get_offset(b)           ((b)->offset)
+#define SSL3_BUFFER_set_offset(b, o)        ((b)->offset = (o))
+#define SSL3_BUFFER_add_offset(b, o)        ((b)->offset += (o))
+#define SSL3_BUFFER_set_app_buffer(b, l)    ((b)->app_buffer = (l))
+#define SSL3_BUFFER_is_app_buffer(b)        ((b)->app_buffer)
+
+void SSL3_BUFFER_release(SSL3_BUFFER *b);
