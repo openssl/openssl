@@ -10,7 +10,7 @@ Support for computing RIPEMD160 digests through the B<EVP_MD> API.
 
 =head2 Identities
 
-This implementation is only available with the legacy provider, and is
+This implementation is available in both the default and legacy providers, and is
 identified with any of the names "RIPEMD-160", "RIPEMD160", "RIPEMD" and
 "RMD160".
 
@@ -22,6 +22,10 @@ in L<EVP_MD-common(7)>.
 =head1 SEE ALSO
 
 L<provider-digest(7)>, L<OSSL_PROVIDER-default(7)>
+
+=head1 HISTORY
+
+This digest was added to the default provider in OpenSSL 3.0.7.
 
 =head1 COPYRIGHT
 
