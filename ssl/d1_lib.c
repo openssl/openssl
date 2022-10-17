@@ -454,14 +454,12 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
         return -1;
     }
 
-    if (!ssl3_setup_buffers(s)) {
-        /* ERR_raise() already called */
-        return -1;
-    }
     buf = OPENSSL_malloc(DTLS1_RT_HEADER_LENGTH + SSL3_RT_MAX_PLAIN_LENGTH);
     if (buf == NULL)
         return -1;
-    wbuf = RECORD_LAYER_get_wbuf(&s->rlayer)[0].buf;
+    wbuf = OPENSSL_malloc(DTLS1_RT_HEADER_LENGTH + SSL3_RT_MAX_PLAIN_LENGTH);
+    if (buf == NULL)
+        return -1;
 
     do {
         /* Get a packet */
@@ -836,6 +834,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
  end:
     BIO_ADDR_free(tmpclient);
     OPENSSL_free(buf);
+    OPENSSL_free(wbuf);
     return ret;
 }
 #endif

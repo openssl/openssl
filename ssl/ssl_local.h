@@ -2447,7 +2447,6 @@ const SSL_METHOD *func_name(void)  \
 
 struct openssl_ssl_test_functions {
     int (*p_ssl_init_wbio_buffer) (SSL_CONNECTION *s);
-    int (*p_ssl3_setup_buffers) (SSL_CONNECTION *s);
 };
 
 const char *ssl_protocol_to_string(int version);
@@ -2959,7 +2958,6 @@ void ssl_session_calculate_timeout(SSL_SESSION *ss);
 # else /* OPENSSL_UNIT_TEST */
 
 #  define ssl_init_wbio_buffer SSL_test_functions()->p_ssl_init_wbio_buffer
-#  define ssl3_setup_buffers SSL_test_functions()->p_ssl3_setup_buffers
 
 # endif
 

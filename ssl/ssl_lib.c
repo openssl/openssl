@@ -6388,7 +6388,8 @@ int SSL_alloc_buffers(SSL *ssl)
     if (sc == NULL)
         return 0;
 
-    return ssl3_setup_buffers(sc);
+    /* TODO(RECLAYER): Need a way to make this happen in the record layer */
+    return 1;
 }
 
 void SSL_CTX_set_keylog_callback(SSL_CTX *ctx, SSL_CTX_keylog_cb_func cb)
