@@ -669,7 +669,7 @@ struct record_functions_st dtls_1_funcs = {
     NULL,
     NULL,
     NULL,
-    dtls_write_records,
+    tls_write_records_default,
     /*
      * Don't use tls1_allocate_write_buffers since that handles empty fragment
      * records which aren't needed in DTLS. We just use the default allocation

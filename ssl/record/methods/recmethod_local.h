@@ -361,8 +361,6 @@ int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
                                     OSSL_RECORD_TEMPLATE *thistempl,
                                     WPACKET *thispkt,
                                     SSL3_RECORD *thiswr);
-int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
-                       size_t numtempl);
 
 int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *re);
