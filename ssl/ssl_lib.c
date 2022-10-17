@@ -26,18 +26,6 @@
 #include "internal/refcount.h"
 #include "internal/ktls.h"
 
-static int ssl_undefined_function_1(SSL_CONNECTION *sc, SSL3_RECORD *r, size_t s,
-                                    int t, SSL_MAC_BUF *mac, size_t macsize)
-{
-    return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
-}
-
-static int ssl_undefined_function_2(SSL_CONNECTION *sc, SSL3_RECORD *r,
-                                    unsigned char *s, int t)
-{
-    return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
-}
-
 static int ssl_undefined_function_3(SSL_CONNECTION *sc, unsigned char *r,
                                     unsigned char *s, size_t t, size_t *u)
 {
@@ -73,8 +61,6 @@ static int ssl_undefined_function_8(SSL_CONNECTION *sc)
 }
 
 SSL3_ENC_METHOD ssl3_undef_enc_method = {
-    ssl_undefined_function_1,
-    ssl_undefined_function_2,
     ssl_undefined_function_8,
     ssl_undefined_function_3,
     ssl_undefined_function_4,

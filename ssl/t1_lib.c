@@ -30,8 +30,6 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, X509 *x, EVP_PKEY *p
 static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op, const SIGALG_LOOKUP *lu);
 
 SSL3_ENC_METHOD const TLSv1_enc_data = {
-    tls1_enc,
-    tls1_mac_old,
     tls1_setup_key_block,
     tls1_generate_master_secret,
     tls1_change_cipher_state,
@@ -47,8 +45,6 @@ SSL3_ENC_METHOD const TLSv1_enc_data = {
 };
 
 SSL3_ENC_METHOD const TLSv1_1_enc_data = {
-    tls1_enc,
-    tls1_mac_old,
     tls1_setup_key_block,
     tls1_generate_master_secret,
     tls1_change_cipher_state,
@@ -64,8 +60,6 @@ SSL3_ENC_METHOD const TLSv1_1_enc_data = {
 };
 
 SSL3_ENC_METHOD const TLSv1_2_enc_data = {
-    tls1_enc,
-    tls1_mac_old,
     tls1_setup_key_block,
     tls1_generate_master_secret,
     tls1_change_cipher_state,
@@ -82,8 +76,6 @@ SSL3_ENC_METHOD const TLSv1_2_enc_data = {
 };
 
 SSL3_ENC_METHOD const TLSv1_3_enc_data = {
-    tls13_enc,
-    tls1_mac_old,
     tls13_setup_key_block,
     tls13_generate_master_secret,
     tls13_change_cipher_state,

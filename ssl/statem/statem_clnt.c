@@ -865,7 +865,7 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             }
 #endif
 
-            dtls1_reset_seq_numbers(s, SSL3_CC_WRITE);
+            dtls1_increment_epoch(s, SSL3_CC_WRITE);
         }
         break;
 

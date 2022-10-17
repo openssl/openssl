@@ -315,6 +315,11 @@ struct ossl_record_method_st {
      * writing a record
      */
     size_t (*get_max_record_overhead)(OSSL_RECORD_LAYER *rl);
+
+    /*
+     * Increment the record sequence number
+     */
+    int (*increment_sequence_ctr)(OSSL_RECORD_LAYER *rl);
 };
 
 

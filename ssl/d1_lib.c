@@ -21,8 +21,6 @@ static size_t dtls1_link_min_mtu(void);
 static const size_t g_probable_mtu[] = { 1500, 512, 256 };
 
 const SSL3_ENC_METHOD DTLSv1_enc_data = {
-    tls1_enc,
-    tls1_mac_old,
     tls1_setup_key_block,
     tls1_generate_master_secret,
     tls1_change_cipher_state,
@@ -38,8 +36,6 @@ const SSL3_ENC_METHOD DTLSv1_enc_data = {
 };
 
 const SSL3_ENC_METHOD DTLSv1_2_enc_data = {
-    tls1_enc,
-    tls1_mac_old,
     tls1_setup_key_block,
     tls1_generate_master_secret,
     tls1_change_cipher_state,
@@ -788,7 +784,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     s->d1->handshake_read_seq = 1;
     s->d1->handshake_write_seq = 1;
     s->d1->next_handshake_write_seq = 1;
-    DTLS_RECORD_LAYER_set_write_sequence(&s->rlayer, seq);
+    s->rlayer.wrlmethod->increment_sequence_ctr(s->rlayer.wrl);
 
     /*
      * We are doing cookie exchange, so make sure we set that option in the

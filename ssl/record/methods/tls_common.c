@@ -253,24 +253,6 @@ static int tls_release_read_buffer(OSSL_RECORD_LAYER *rl)
     return 1;
 }
 
-int tls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl)
-{
-    int i;
-
-    /* Increment the sequence counter */
-    for (i = SEQ_NUM_SIZE; i > 0; i--) {
-        ++(rl->sequence[i - 1]);
-        if (rl->sequence[i - 1] != 0)
-            break;
-    }
-    if (i == 0) {
-        /* Sequence has wrapped */
-        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_SEQUENCE_CTR_WRAPPED);
-        return 0;
-    }
-    return 1;
-}
-
 /*
  * Return values are as per SSL_read()
  */
@@ -2028,6 +2010,24 @@ void tls_set_max_frag_len(OSSL_RECORD_LAYER *rl, size_t max_frag_len)
      */
 }
 
+int tls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl)
+{
+    int i;
+
+    /* Increment the sequence counter */
+    for (i = SEQ_NUM_SIZE; i > 0; i--) {
+        ++(rl->sequence[i - 1]);
+        if (rl->sequence[i - 1] != 0)
+            break;
+    }
+    if (i == 0) {
+        /* Sequence has wrapped */
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_SEQUENCE_CTR_WRAPPED);
+        return 0;
+    }
+    return 1;
+}
+
 const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_new_record_layer,
     tls_free,
@@ -2053,5 +2053,6 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_set_options,
     tls_get_compression,
     tls_set_max_frag_len,
-    NULL
+    NULL,
+    tls_increment_sequence_ctr
 };

@@ -762,7 +762,7 @@ MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL_CONNECTION *s,
     }
 
     if (SSL_CONNECTION_IS_DTLS(s)) {
-        dtls1_reset_seq_numbers(s, SSL3_CC_READ);
+        dtls1_increment_epoch(s, SSL3_CC_READ);
 
         if (s->version == DTLS1_BAD_VER)
             s->d1->handshake_read_seq++;
