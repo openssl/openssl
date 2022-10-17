@@ -720,6 +720,21 @@ int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
     return 1;
 }
 
+int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
+                                    size_t mac_size,
+                                    OSSL_RECORD_TEMPLATE *thistempl,
+                                    WPACKET *thispkt,
+                                    SSL3_RECORD *thiswr)
+{
+    if (!tls_post_encryption_processing_default(rl, mac_size, thistempl,
+                                                thispkt, thiswr)) {
+        /* RLAYERfatal() already called */
+        return 0;
+    }
+
+    return tls_increment_sequence_ctr(rl);
+}
+
 int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                        size_t numtempl)
 {
@@ -806,11 +821,6 @@ int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
 
     if (!rl->funcs->post_encryption_processing(rl, mac_size, templates,
                                                thispkt, &wr)) {
-        /* RLAYERfatal() already called */
-        goto err;
-    }
-
-    if (!tls_increment_sequence_ctr(rl)) {
         /* RLAYERfatal() already called */
         goto err;
     }
