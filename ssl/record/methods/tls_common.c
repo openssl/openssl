@@ -247,6 +247,24 @@ static int tls_release_read_buffer(OSSL_RECORD_LAYER *rl)
     return 1;
 }
 
+int tls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl)
+{
+    int i;
+
+    /* Increment the sequence counter */
+    for (i = SEQ_NUM_SIZE; i > 0; i--) {
+        ++(rl->sequence[i - 1]);
+        if (rl->sequence[i - 1] != 0)
+            break;
+    }
+    if (i == 0) {
+        /* Sequence has wrapped */
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_SEQUENCE_CTR_WRAPPED);
+        return 0;
+    }
+    return 1;
+}
+
 /*
  * Return values are as per SSL_read()
  */
@@ -753,7 +771,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
      * If in encrypt-then-mac mode calculate mac from encrypted record. All
      * the details below are public so no timing details can leak.
      */
-    if (rl->use_etm && rl->md_ctx) {
+    if (rl->use_etm && rl->md_ctx != NULL) {
         unsigned char *mac;
 
         for (j = 0; j < num_recs; j++) {
@@ -838,8 +856,6 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     if (rl->enc_ctx != NULL
             && !rl->use_etm
             && EVP_MD_CTX_get0_md(rl->md_ctx) != NULL) {
-        /* rl->md_ctx != NULL => mac_size != -1 */
-
         for (j = 0; j < num_recs; j++) {
             SSL_MAC_BUF *thismb = &macbufs[j];
 

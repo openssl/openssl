@@ -26,7 +26,6 @@
 #define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
 
 int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec);
-void ssl3_record_sequence_update(unsigned char *seq);
 
 /* Macros/functions provided by the SSL3_BUFFER component */
 

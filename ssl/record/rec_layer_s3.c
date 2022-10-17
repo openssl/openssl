@@ -999,17 +999,6 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
     }
 }
 
-void ssl3_record_sequence_update(unsigned char *seq)
-{
-    int i;
-
-    for (i = 7; i >= 0; i--) {
-        ++seq[i];
-        if (seq[i] != 0)
-            break;
-    }
-}
-
 /*
  * Returns true if the current rrec was sent in SSLv2 backwards compatible
  * format and false otherwise.

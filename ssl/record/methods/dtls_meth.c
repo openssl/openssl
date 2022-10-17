@@ -810,8 +810,10 @@ int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
         goto err;
     }
 
-    /* TODO(RECLAYER): FIXME */
-    ssl3_record_sequence_update(rl->sequence);
+    if (!tls_increment_sequence_ctr(rl)) {
+        /* RLAYERfatal() already called */
+        goto err;
+    }
 
     /* now let's set up wb */
     SSL3_BUFFER_set_left(wb, SSL3_RECORD_get_length(&wr));
