@@ -356,6 +356,11 @@ int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
                                OSSL_RECORD_TEMPLATE *templ,
                                unsigned int rectype,
                                unsigned char **recdata);
+int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
+                                    size_t mac_size,
+                                    OSSL_RECORD_TEMPLATE *thistempl,
+                                    WPACKET *thispkt,
+                                    SSL3_RECORD *thiswr);
 int dtls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
                        size_t numtempl);
 
