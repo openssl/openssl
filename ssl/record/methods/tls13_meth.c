@@ -122,14 +122,8 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
     for (loop = 0; loop < SEQ_NUM_SIZE; loop++)
         iv[offset + loop] = staticiv[offset + loop] ^ seq[loop];
 
-    /* Increment the sequence counter */
-    for (loop = SEQ_NUM_SIZE; loop > 0; loop--) {
-        ++seq[loop - 1];
-        if (seq[loop - 1] != 0)
-            break;
-    }
-    if (loop == 0) {
-        /* Sequence has wrapped */
+    if (!tls_increment_sequence_ctr(rl)) {
+        /* RLAYERfatal already called */
         return 0;
     }
 

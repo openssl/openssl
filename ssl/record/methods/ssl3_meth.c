@@ -296,7 +296,9 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
         EVP_MD_CTX_free(md_ctx);
     }
 
-    ssl3_record_sequence_update(seq);
+    if (!tls_increment_sequence_ctr(rl))
+        return 0;
+
     return 1;
 }
 

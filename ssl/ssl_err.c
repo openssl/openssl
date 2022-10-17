@@ -372,6 +372,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "scsv received when renegotiating"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SCT_VERIFICATION_FAILED),
     "sct verification failed"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SEQUENCE_CTR_WRAPPED),
+    "sequence ctr wrapped"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SERVERHELLO_TLSEXT), "serverhello tlsext"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED),
     "session id context uninitialized"},

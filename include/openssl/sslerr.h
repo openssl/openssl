@@ -239,6 +239,7 @@
 # define SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING     342
 # define SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING           345
 # define SSL_R_SCT_VERIFICATION_FAILED                    208
+# define SSL_R_SEQUENCE_CTR_WRAPPED                       326
 # define SSL_R_SERVERHELLO_TLSEXT                         275
 # define SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED           277
 # define SSL_R_SHUTDOWN_WHILE_IN_INIT                     407
