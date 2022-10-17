@@ -33,8 +33,6 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     rl->wpend_ret = 0;
     rl->wpend_buf = NULL;
 
-    RECORD_LAYER_reset_write_sequence(rl);
-
     if (rl->rrlmethod != NULL)
         rl->rrlmethod->free(rl->rrl); /* Ignore return value */
     if (rl->wrlmethod != NULL)
@@ -74,11 +72,6 @@ int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl)
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl)
 {
     return rl->wpend_tot > 0;
-}
-
-void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
-{
-    memset(rl->write_sequence, 0, sizeof(rl->write_sequence));
 }
 
 size_t ssl3_pending(const SSL *s)

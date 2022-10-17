@@ -3270,8 +3270,6 @@ static int sslcon_undefined_function_1(SSL_CONNECTION *sc, unsigned char *r,
 }
 
 const SSL3_ENC_METHOD SSLv3_enc_data = {
-    NULL,
-    NULL,
     ssl3_setup_key_block,
     ssl3_generate_master_secret,
     ssl3_change_cipher_state,

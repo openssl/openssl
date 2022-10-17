@@ -114,9 +114,6 @@ typedef struct dtls_record_layer_st {
      * loss.
      */
     record_pqueue buffered_app_data;
-    /* save last and current sequence numbers for retransmissions */
-    unsigned char last_write_sequence[8];
-    unsigned char curr_write_sequence[8];
 } DTLS_RECORD_LAYER;
 
 /*****************************************************************************
@@ -162,7 +159,6 @@ typedef struct record_layer_st {
     size_t wpend_ret;
     const unsigned char *wpend_buf;
 
-    unsigned char write_sequence[SEQ_NUM_SIZE];
     /* Count of the number of consecutive warning alerts received */
     unsigned int alert_count;
     DTLS_RECORD_LAYER *d;
@@ -210,7 +206,6 @@ void RECORD_LAYER_release(RECORD_LAYER *rl);
 int RECORD_LAYER_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl);
-void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl);
 int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl);
 __owur size_t ssl3_pending(const SSL *s);
 __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, size_t len,
@@ -218,18 +213,11 @@ __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, size_t len,
 __owur int ssl3_read_bytes(SSL *s, int type, int *recvd_type,
                            unsigned char *buf, size_t len, int peek,
                            size_t *readbytes);
-__owur int tls1_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs,
-                    int sending, SSL_MAC_BUF *mac, size_t macsize);
-__owur int tls1_mac_old(SSL_CONNECTION *s, SSL3_RECORD *rec, unsigned char *md,
-                        int send);
-__owur int tls13_enc(SSL_CONNECTION *s, SSL3_RECORD *recs, size_t n_recs,
-                     int send, SSL_MAC_BUF *mac, size_t macsize);
+
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
-void DTLS_RECORD_LAYER_set_saved_w_epoch(RECORD_LAYER *rl, unsigned short e);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
-void DTLS_RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, unsigned char *seq);
 __owur int dtls1_read_bytes(SSL *s, int type, int *recvd_type,
                             unsigned char *buf, size_t len, int peek,
                             size_t *readbytes);
@@ -237,7 +225,7 @@ __owur int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
                              size_t len, size_t *written);
 int do_dtls1_write(SSL_CONNECTION *s, int type, const unsigned char *buf,
                    size_t len, size_t *written);
-void dtls1_reset_seq_numbers(SSL_CONNECTION *s, int rw);
+void dtls1_increment_epoch(SSL_CONNECTION *s, int rw);
 void ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr);
 
 # define HANDLE_RLAYER_READ_RETURN(s, ret) \

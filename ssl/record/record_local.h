@@ -48,7 +48,6 @@ int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec);
 #define SSL3_RECORD_add_off(r, o)               ((r)->off += (o))
 #define SSL3_RECORD_get_epoch(r)                ((r)->epoch)
 
-void SSL3_RECORD_clear(SSL3_RECORD *r, size_t);
 void SSL3_RECORD_release(SSL3_RECORD *r, size_t num_recs);
 void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);
 __owur int ssl3_do_compress(SSL_CONNECTION *ssl, SSL3_RECORD *wr);
