@@ -1823,13 +1823,6 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
             goto err;
         }
 
-        /*
-         * we should now have thiswr->data pointing to the encrypted data, which
-         * is thiswr->length long.
-         * Setting the type is not needed but helps for debugging
-         */
-        SSL3_RECORD_set_type(thiswr, thistempl->type);
-
         /* now let's set up wb */
         SSL3_BUFFER_set_left(&rl->wbuf[j], SSL3_RECORD_get_length(thiswr));
     }
