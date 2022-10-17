@@ -307,7 +307,6 @@ int ssl3_write_bytes(SSL *ssl, int type, const void *buf_, size_t len,
      * Some servers hang if initial client hello is larger than 256 bytes
      * and record version number > TLS 1.0
      */
-    /* TODO(RECLAYER): Does this also need to be in the DTLS equivalent code? */
     recversion = (s->version == TLS1_3_VERSION) ? TLS1_2_VERSION : s->version;
     if (SSL_get_state(ssl) == TLS_ST_CW_CLNT_HELLO
             && !s->renegotiate

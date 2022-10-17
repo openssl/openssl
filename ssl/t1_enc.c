@@ -154,23 +154,19 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
 {
     unsigned char *p, *mac_secret;
     unsigned char *key, *iv;
-    EVP_CIPHER_CTX *dd;
     const EVP_CIPHER *c;
     const SSL_COMP *comp = NULL;
     const EVP_MD *m;
     int mac_type;
     size_t mac_secret_size;
-    EVP_MD_CTX *mac_ctx;
-    EVP_PKEY *mac_key;
     size_t n, i, j, k, cl;
     int iivlen;
-    int reuse_dd = 0;
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     /*
      * Taglen is only relevant for CCM ciphersuites. Other ciphersuites
      * ignore this value so we can default it to 0.
      */
     size_t taglen = 0;
+    int direction;
 
     c = s->s3.tmp.new_sym_enc;
     m = s->s3.tmp.new_hash;
@@ -237,18 +233,7 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         else
             s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_TLSTREE;
 
-        if (!ssl_set_new_record_layer(s, s->version,
-                                      OSSL_RECORD_DIRECTION_READ,
-                                      OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                      key, cl, iv, (size_t)k, mac_secret,
-                                      mac_secret_size, c, taglen, mac_type,
-                                      m, comp)) {
-            /* SSLfatal already called */
-            goto err;
-        }
-
-        /* TODO(RECLAYER): Temporary - remove me when DTLS write rlayer done*/
-        goto done;
+        direction = OSSL_RECORD_DIRECTION_READ;
     } else {
         if (s->ext.use_etm)
             s->s3.flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE;
@@ -265,130 +250,18 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         else
             s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_TLSTREE;
 
-        if (!ssl_set_new_record_layer(s, s->version,
-                                      OSSL_RECORD_DIRECTION_WRITE,
-                                      OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                      key, cl, iv, (size_t)k, mac_secret,
-                                      mac_secret_size, c, taglen, mac_type,
-                                      m, comp)) {
-            /* SSLfatal already called */
-            goto err;
-        }
-
-        /* TODO(RECLAYER): Temporary - remove me when DTLS write rlayer done*/
-        if (!SSL_CONNECTION_IS_DTLS(s))
-            goto done;
-
-        if (s->enc_write_ctx != NULL && !SSL_CONNECTION_IS_DTLS(s)) {
-            reuse_dd = 1;
-        } else if ((s->enc_write_ctx = EVP_CIPHER_CTX_new()) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            goto err;
-        }
-        dd = s->enc_write_ctx;
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            mac_ctx = EVP_MD_CTX_new();
-            if (mac_ctx == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-                goto err;
-            }
-            s->write_hash = mac_ctx;
-        } else {
-            mac_ctx = ssl_replace_hash(&s->write_hash, NULL);
-            if (mac_ctx == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
-                goto err;
-            }
-        }
-#ifndef OPENSSL_NO_COMP
-        COMP_CTX_free(s->compress);
-        s->compress = NULL;
-        if (comp != NULL) {
-            s->compress = COMP_CTX_new(comp->method);
-            if (s->compress == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_R_COMPRESSION_LIBRARY_ERROR);
-                goto err;
-            }
-        }
-#endif
-        /*
-         * this is done by dtls1_reset_seq_numbers for DTLS
-         */
-        if (!SSL_CONNECTION_IS_DTLS(s))
-            RECORD_LAYER_reset_write_sequence(&s->rlayer);
+        direction = OSSL_RECORD_DIRECTION_WRITE;
     }
 
-    if (reuse_dd)
-        EVP_CIPHER_CTX_reset(dd);
-
-    if (!(EVP_CIPHER_get_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
-        if (mac_type == EVP_PKEY_HMAC) {
-            mac_key = EVP_PKEY_new_raw_private_key_ex(sctx->libctx, "HMAC",
-                                                      sctx->propq, mac_secret,
-                                                      mac_secret_size);
-        } else {
-            /*
-             * If its not HMAC then the only other types of MAC we support are
-             * the GOST MACs, so we need to use the old style way of creating
-             * a MAC key.
-             */
-            mac_key = EVP_PKEY_new_mac_key(mac_type, NULL, mac_secret,
-                                           (int)mac_secret_size);
-        }
-        if (mac_key == NULL
-            || EVP_DigestSignInit_ex(mac_ctx, NULL, EVP_MD_get0_name(m),
-                                     sctx->libctx, sctx->propq, mac_key,
-                                     NULL) <= 0) {
-            EVP_PKEY_free(mac_key);
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-        EVP_PKEY_free(mac_key);
-    }
-
-    OSSL_TRACE_BEGIN(TLS) {
-        BIO_printf(trc_out, "which = %04X, mac key:\n", which);
-        BIO_dump_indent(trc_out, mac_secret, i, 4);
-    } OSSL_TRACE_END(TLS);
-
-    if (EVP_CIPHER_get_mode(c) == EVP_CIPH_GCM_MODE) {
-        if (!EVP_CipherInit_ex(dd, c, NULL, key, NULL, (which & SSL3_CC_WRITE))
-            || EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GCM_SET_IV_FIXED, (int)k,
-                                    iv) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-    } else if (EVP_CIPHER_get_mode(c) == EVP_CIPH_CCM_MODE) {
-        if (!EVP_CipherInit_ex(dd, c, NULL, NULL, NULL, (which & SSL3_CC_WRITE))
-            || (EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_IVLEN, 12, NULL) <= 0)
-            || (EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_TAG, taglen, NULL) <= 0)
-            || (EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_CCM_SET_IV_FIXED, (int)k, iv) <= 0)
-            || !EVP_CipherInit_ex(dd, NULL, NULL, key, NULL, -1)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-    } else {
-        if (!EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE))) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-    }
-    /* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
-    if ((EVP_CIPHER_get_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)
-        && mac_secret_size != 0
-        && EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_MAC_KEY,
-                               (int)mac_secret_size, mac_secret) <= 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    if (EVP_CIPHER_get0_provider(c) != NULL
-            && !tls_provider_set_tls_params(s, dd, c, m)) {
+    if (!ssl_set_new_record_layer(s, s->version, direction,
+                                    OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
+                                    key, cl, iv, (size_t)k, mac_secret,
+                                    mac_secret_size, c, taglen, mac_type,
+                                    m, comp)) {
         /* SSLfatal already called */
         goto err;
     }
 
- done:
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "which = %04X, key:\n", which);
         BIO_dump_indent(trc_out, key, EVP_CIPHER_get_key_length(c), 4);
