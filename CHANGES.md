@@ -24,6 +24,10 @@ OpenSSL 3.2
 
 ### Changes between 3.0 and 3.2 [xx XXX xxxx]
 
+ * Added RIPEMD160 to the default provider.
+
+   *Paul Dale*
+
  * Add the ability to add custom attributes to PKCS12 files. Add a new API
    PKCS12_create_ex2, identical to the existing PKCS12_create_ex but allows
    for a user specified callback and optional argument.
