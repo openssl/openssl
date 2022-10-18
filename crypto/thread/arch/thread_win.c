@@ -53,32 +53,20 @@ fail:
     return 0;
 }
 
-int ossl_crypto_thread_native_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_RETVAL *retval)
+int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_RETVAL *retval)
 {
-    int req_state_mask;
     DWORD thread_retval;
     HANDLE *handle;
 
-    if (thread == NULL)
+    if (thread == NULL || thread->handle == NULL)
         return 0;
 
-    req_state_mask = CRYPTO_THREAD_TERMINATED | CRYPTO_THREAD_JOINED;
-
-    ossl_crypto_mutex_lock(thread->statelock);
-    if (CRYPTO_THREAD_GET_STATE(thread, req_state_mask))
-        goto pass;
-    while (!CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_FINISHED))
-        ossl_crypto_condvar_wait(thread->condvar, thread->statelock);
-
     handle = (HANDLE *) thread->handle;
-    if (handle == NULL)
-        goto fail;
-
     if (WaitForSingleObject(*handle, INFINITE) != WAIT_OBJECT_0)
-        goto fail;
+        return 0;
 
     if (GetExitCodeThread(*handle, &thread_retval) == 0)
-        goto fail;
+        return 0;
 
     /*
      * GetExitCodeThread call followed by this check is to make sure that
@@ -87,24 +75,12 @@ int ossl_crypto_thread_native_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_RETVAL *
      * if the thread is still active (returns STILL_ACTIVE (259)).
      */
     if (thread_retval != 0)
-        goto fail;
+        return 0;
 
     if (CloseHandle(*handle) == 0)
-        goto fail;
+        return 0;
 
-pass:
-    if (retval != NULL)
-        *retval = thread->retval;
-
-    CRYPTO_THREAD_UNSET_ERROR(thread, CRYPTO_THREAD_JOINED);
-    CRYPTO_THREAD_SET_STATE(thread, CRYPTO_THREAD_JOINED);
-    ossl_crypto_mutex_unlock(thread->statelock);
     return 1;
-
-fail:
-    CRYPTO_THREAD_SET_ERROR(thread, CRYPTO_THREAD_JOINED);
-    ossl_crypto_mutex_unlock(thread->statelock);
-    return 0;
 }
 
 int ossl_crypto_thread_native_terminate(CRYPTO_THREAD *thread)

@@ -833,7 +833,7 @@ static int test_thread_native(void)
     if (!TEST_int_eq(ossl_crypto_thread_native_terminate(t), 1))
         return 0;
 
-    if (!TEST_int_eq(ossl_crypto_thread_native_join(t, &retval), 1))
+    if (!TEST_int_eq(ossl_crypto_thread_native_join(t, &retval), 0))
         return 0;
 
     if (!TEST_int_eq(ossl_crypto_thread_native_clean(t), 1))
