@@ -736,11 +736,8 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
             if (r < 0)
                 return 0;
         }
-        /*
-         * If we have a cert try matching RecipientInfo otherwise try them
-         * all.
-         */
-        else if (cert == NULL|| !CMS_RecipientInfo_ktri_cert_cmp(ri, cert)) {
+        /* If we have a cert, try matching RecipientInfo, else try them all */
+        else if (cert == NULL || !CMS_RecipientInfo_ktri_cert_cmp(ri, cert)) {
             EVP_PKEY_up_ref(pk);
             CMS_RecipientInfo_set0_pkey(ri, pk);
             r = CMS_RecipientInfo_decrypt(cms, ri);
@@ -777,7 +774,8 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
         return 1;
     }
 
-    ERR_raise(ERR_LIB_CMS, CMS_R_NO_MATCHING_RECIPIENT);
+    if (!match_ri)
+        ERR_raise(ERR_LIB_CMS, CMS_R_NO_MATCHING_RECIPIENT);
     return 0;
 
 }
@@ -788,7 +786,7 @@ int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
 {
     STACK_OF(CMS_RecipientInfo) *ris;
     CMS_RecipientInfo *ri;
-    int i, r;
+    int i, r, match_ri = 0;
 
     ris = CMS_get0_RecipientInfos(cms);
     for (i = 0; i < sk_CMS_RecipientInfo_num(ris); i++) {
@@ -796,11 +794,10 @@ int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
         if (CMS_RecipientInfo_type(ri) != CMS_RECIPINFO_KEK)
             continue;
 
-        /*
-         * If we have an id try matching RecipientInfo otherwise try them
-         * all.
-         */
-        if (id == NULL || (CMS_RecipientInfo_kekri_id_cmp(ri, id, idlen) == 0)) {
+        /* If we have an id, try matching RecipientInfo, else try them all */
+        if (id == NULL
+                || (CMS_RecipientInfo_kekri_id_cmp(ri, id, idlen) == 0)) {
+            match_ri = 1;
             CMS_RecipientInfo_set0_key(ri, key, keylen);
             r = CMS_RecipientInfo_decrypt(cms, ri);
             CMS_RecipientInfo_set0_key(ri, NULL, 0);
@@ -814,7 +811,8 @@ int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
         }
     }
 
-    ERR_raise(ERR_LIB_CMS, CMS_R_NO_MATCHING_RECIPIENT);
+    if (!match_ri)
+        ERR_raise(ERR_LIB_CMS, CMS_R_NO_MATCHING_RECIPIENT);
     return 0;
 
 }
@@ -824,7 +822,7 @@ int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
 {
     STACK_OF(CMS_RecipientInfo) *ris = CMS_get0_RecipientInfos(cms);
     CMS_RecipientInfo *ri;
-    int i, r;
+    int i, r, match_ri = 0;
     CMS_EncryptedContentInfo *ec = ossl_cms_get0_env_enc_content(cms);
 
     /* Prevent mem leak on earlier CMS_decrypt_set1_{pkey_and_peer,password} */
@@ -836,6 +834,9 @@ int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
         ri = sk_CMS_RecipientInfo_value(ris, i);
         if (CMS_RecipientInfo_type(ri) != CMS_RECIPINFO_PASS)
             continue;
+
+        /* Must try each PasswordRecipientInfo */
+        match_ri = 1;
         CMS_RecipientInfo_set0_password(ri, pass, passlen);
         r = CMS_RecipientInfo_decrypt(cms, ri);
         CMS_RecipientInfo_set0_password(ri, NULL, 0);
@@ -843,7 +844,8 @@ int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
             return 1;
     }
 
-    ERR_raise(ERR_LIB_CMS, CMS_R_NO_MATCHING_RECIPIENT);
+    if (!match_ri)
+        ERR_raise(ERR_LIB_CMS, CMS_R_NO_MATCHING_RECIPIENT);
     return 0;
 
 }
