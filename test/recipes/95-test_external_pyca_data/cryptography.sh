@@ -45,6 +45,9 @@ cd pyca-cryptography
 pip install .[test]
 pip install -e vectors
 
+sudo rm /usr/lib/x86_64-linux-gnu/libcrypto.so
+sudo rm /usr/lib/x86_64-linux-gnu/libssl.so
+
 echo "------------------------------------------------------------------"
 echo "Building cryptography"
 echo "------------------------------------------------------------------"
@@ -56,9 +59,17 @@ echo "------------------------------------------------------------------"
 
 openssl version
 pwd
-ls -R
-find . -name libcrypto.so
-LDFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC -L$O_LIB" pytest -n auto tests --wycheproof-root=../wycheproof
+ls /opt/hostedtoolcache/Python/3.9.14/x64/lib
+find .. -name libcrypto.so
+sudo find /opt -name libcrypto.so
+echo $PATH
+echo $LD_LIBRARY_PATH
+export CFLAGS="-I$O_BINC -I$O_SINC -L$O_LIB"
+export LDFLAGS="-L$O_LIB"
+which pytest
+pytest --version
+
+pytest -n auto tests --wycheproof-root=../wycheproof
 
 cd ../
 deactivate
