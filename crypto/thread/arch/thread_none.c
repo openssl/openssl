@@ -16,7 +16,7 @@ int ossl_crypto_thread_native_spawn(CRYPTO_THREAD *thread)
     return 0;
 }
 
-int ossl_crypto_thread_native_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_RETVAL *retval)
+int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_RETVAL *retval)
 {
     return 0;
 }

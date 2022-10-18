@@ -46,6 +46,72 @@ fail:
     return NULL;
 }
 
+int ossl_crypto_thread_native_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_RETVAL *retval)
+{
+    uint64_t req_state_mask;
+
+    if (thread == NULL)
+        return 0;
+
+    ossl_crypto_mutex_lock(thread->statelock);
+    req_state_mask = CRYPTO_THREAD_TERMINATED | CRYPTO_THREAD_FINISHED \
+                     | CRYPTO_THREAD_JOINED;
+    while (!CRYPTO_THREAD_GET_STATE(thread, req_state_mask))
+        ossl_crypto_condvar_wait(thread->condvar, thread->statelock);
+
+    if (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_TERMINATED)) {
+        ossl_crypto_mutex_unlock(thread->statelock);
+        return 0;
+    }
+
+    if (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOINED))
+        goto pass;
+
+    /* Await concurrent join completion, if any. */
+    while (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOIN_AWAIT)) {
+        if (!CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOINED))
+            ossl_crypto_condvar_wait(thread->condvar, thread->statelock);
+        if (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOINED))
+            goto pass;
+    }
+    CRYPTO_THREAD_SET_STATE(thread, CRYPTO_THREAD_JOIN_AWAIT);
+    ossl_crypto_mutex_unlock(thread->statelock);
+
+    if (ossl_crypto_thread_native_perform_join(thread, retval) == 0)
+        goto fail;
+
+    ossl_crypto_mutex_lock(thread->statelock);
+pass:
+    CRYPTO_THREAD_UNSET_ERROR(thread, CRYPTO_THREAD_JOINED);
+    CRYPTO_THREAD_SET_STATE(thread, CRYPTO_THREAD_JOINED);
+
+    /*
+     * Broadcast join completion. It is important to broadcast even if
+     * we haven't performed an actual join. Multiple threads could be
+     * awaiting the CRYPTO_THREAD_JOIN_AWAIT -> CRYPTO_THREAD_JOINED
+     * transition, but broadcast on actual join would wake only one.
+     * Broadcasing here will always wake one.
+     */
+    ossl_crypto_condvar_broadcast(thread->condvar);
+    ossl_crypto_mutex_unlock(thread->statelock);
+
+    if (retval != NULL)
+        *retval = thread->retval;
+    return 1;
+
+fail:
+    ossl_crypto_mutex_lock(thread->statelock);
+    CRYPTO_THREAD_SET_ERROR(thread, CRYPTO_THREAD_JOINED);
+
+    /* Have another thread that's awaiting join retry to avoid that
+     * thread deadlock. */
+    CRYPTO_THREAD_UNSET_STATE(thread, CRYPTO_THREAD_JOIN_AWAIT);
+    ossl_crypto_condvar_broadcast(thread->condvar);
+
+    ossl_crypto_mutex_unlock(thread->statelock);
+    return 0;
+}
+
 int ossl_crypto_thread_native_clean(CRYPTO_THREAD *handle)
 {
     uint64_t req_state_mask;
