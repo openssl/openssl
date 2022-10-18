@@ -37,9 +37,9 @@ is detached. It will normally be set to NULL.
 CMS_decrypt_set1_pkey_and_peer() decrypts the CMS_ContentInfo structure I<cms>
 using the private key I<pkey>, the corresponding certificate I<cert>, which is
 recommended but may be NULL, and the (optional) originator certificate I<peer>.
-On success, it also records the key I<cms>, and then
+On success, it also records in I<cms> the decryption key I<pkey>, and then
 should be followed by C<CMS_decrypt(cms, NULL, NULL, dcont, out, flags)>.
-Among others, this call deallocates any decryption key stored in I<cms>.
+This call deallocates any decryption key stored in I<cms>.
 
 CMS_decrypt_set1_pkey() is the same as
 CMS_decrypt_set1_pkey_and_peer() with I<peer> being NULL.
@@ -48,7 +48,7 @@ CMS_decrypt_set1_password() decrypts the CMS_ContentInfo structure I<cms>
 using the secret I<pass> of length I<passlen>.
 On success, it also records in I<cms> the decryption key used, and then
 should be followed by C<CMS_decrypt(cms, NULL, NULL, dcont, out, flags)>.
-Among others, this call deallocates any decryption key stored in I<cms>.
+This call deallocates any decryption key stored in I<cms>.
 
 =head1 NOTES
 

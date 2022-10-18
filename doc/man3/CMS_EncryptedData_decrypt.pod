@@ -34,8 +34,9 @@ returned.
 
 CMS_EnvelopedData_decrypt() decrypts, similarly to CMS_decrypt(3),
 a CMS EnvelopedData object I<env> using the symmetric key I<secret> if it
-is not NULL, otherwise the private key of the recipient I<pkey> and
-the associated certificate I<cert>, which is then recommended to provide.
+is not NULL, otherwise the private key of the recipient I<pkey>.
+If I<pkey> is given, it is recommended to provide also the associated
+certificate in I<cert> - see L<CMS_decrypt(3)> and the NOTES on I<cert> there.
 The optional parameters I<flags> and I<dcont> are used as described above.
 The optional parameters library context I<libctx> and property query I<propq>
 are used when retrieving algorithms from providers.
