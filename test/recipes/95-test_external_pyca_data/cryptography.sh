@@ -54,6 +54,10 @@ echo "------------------------------------------------------------------"
 echo "Running tests"
 echo "------------------------------------------------------------------"
 
+openssl version
+pwd
+ls -R
+find . -name libcrypto.so
 LDFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC -L$O_LIB" pytest -n auto tests --wycheproof-root=../wycheproof
 
 cd ../
