@@ -901,7 +901,8 @@ static int provider_init(OSSL_PROVIDER *prov)
 
         if (prov->module == NULL) {
             /* DSO has already recorded errors, this is just a tracepoint */
-            ERR_raise(ERR_LIB_CRYPTO, ERR_R_DSO_LIB);
+            ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_DSO_LIB,
+                           "name=%s", prov->name);
             goto end;
         }
 
@@ -913,7 +914,8 @@ static int provider_init(OSSL_PROVIDER *prov)
     /* Check for and call the initialise function for the provider. */
     if (prov->init_function == NULL) {
         ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_UNSUPPORTED,
-                       "name=%s, provider has no provider init function");
+                       "name=%s, provider has no provider init function",
+                       prov->name);
         goto end;
     }
 
