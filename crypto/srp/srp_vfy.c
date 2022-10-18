@@ -407,7 +407,8 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
 
     error_code = SRP_ERR_OPEN_FILE;
 
-    if (in == NULL || BIO_read_filename(in, verifier_file) <= 0)
+    if (SRP_gN_tab == NULL ||
+        in == NULL || BIO_read_filename(in, verifier_file) <= 0)
         goto err;
 
     error_code = SRP_ERR_VBASE_INCOMPLETE_FILE;
