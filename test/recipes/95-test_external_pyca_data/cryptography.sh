@@ -39,22 +39,27 @@ cd $SRCTOP
 rm -rf venv-cryptography
 python -m venv venv-cryptography
 . ./venv-cryptography/bin/activate
+# Upgrade pip to always have latest
+pip install -U pip
 
 cd pyca-cryptography
 
-pip install .[test]
+echo "------------------------------------------------------------------"
+echo "Building cryptography and installing test requirements"
+echo "------------------------------------------------------------------"
+LDFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC " pip install .[test]
 pip install -e vectors
 
 echo "------------------------------------------------------------------"
-echo "Building cryptography"
+echo "Print linked libraries"
 echo "------------------------------------------------------------------"
-CFLAGS="-I$O_BINC -I$O_SINC -L$O_LIB" pip install .
+ldd $(find ../venv-cryptography/lib/ -iname '*.so')
+
 
 echo "------------------------------------------------------------------"
 echo "Running tests"
 echo "------------------------------------------------------------------"
-
-CFLAGS="-I$O_BINC -I$O_SINC -L$O_LIB" pytest -n auto tests --wycheproof-root=../wycheproof
+pytest -n auto tests --wycheproof-root=../wycheproof
 
 cd ../
 deactivate
