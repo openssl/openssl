@@ -2936,6 +2936,9 @@ BIO *dup_bio_out(int format)
                         BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0));
     void *prefix = NULL;
 
+    if (b == NULL)
+        return NULL;
+
 #ifdef OPENSSL_SYS_VMS
     if (FMT_istext(format))
         b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
@@ -2955,7 +2958,7 @@ BIO *dup_bio_err(int format)
     BIO *b = BIO_new_fp(stderr,
                         BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0));
 #ifdef OPENSSL_SYS_VMS
-    if (FMT_istext(format))
+    if (b != NULL && FMT_istext(format))
         b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
 #endif
     return b;
