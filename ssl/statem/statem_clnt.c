@@ -3732,7 +3732,10 @@ CON_FUNC_RETURN tls_construct_client_compressed_certificate(SSL_CONNECTION *sc,
  err:
     SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
  out:
-    WPACKET_cleanup(&tmppkt);
+    if (buf != NULL) {
+        /* If |buf| is NULL, then |tmppkt| could not have been initialized */
+        WPACKET_cleanup(&tmppkt);
+    }
     BUF_MEM_free(buf);
     COMP_CTX_free(comp);
     return ret;
