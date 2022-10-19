@@ -1334,7 +1334,10 @@ static int ssl_print_compressed_certificates(BIO *bio, const SSL_CONNECTION *sc,
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "Uncompressed length=%d\n", (int)uclen);
     BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "Compressed length=%d, Ratio=%f:1\n", (int)clen, (float)uclen / (float)clen);
+    if (clen > 0)
+        BIO_printf(bio, "Compressed length=%d, Ratio=%f:1\n", (int)clen, (float)uclen / (float)clen);
+    else
+        BIO_printf(bio, "Compressed length=%d, Ratio=unknown\n", (int)clen);
 
     BIO_dump_indent(bio, (const char *)msg, clen, indent);
 
@@ -1342,7 +1345,7 @@ static int ssl_print_compressed_certificates(BIO *bio, const SSL_CONNECTION *sc,
     if (!ossl_comp_has_alg(alg))
         return 0;
 
-    if ((ucdata = OPENSSL_malloc(uclen)) == NULL)
+    if (uclen == 0 || (ucdata = OPENSSL_malloc(uclen)) == NULL)
         return 0;
 
     switch (alg) {
