@@ -227,6 +227,12 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
+### Changes between 3.0.6 and 3.0.7 [xx XXX xxxx]
+
+ * Added RIPEMD160 to the default provider.
+
+   *Paul Dale*
+
 ### Changes between 3.0.5 and 3.0.6 [11 Oct 2022]
 
  * OpenSSL supports creating a custom cipher via the legacy
