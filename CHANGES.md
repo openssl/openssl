@@ -30,7 +30,9 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.6 and 3.0.7 [xx XXX xxxx]
 
- * none yet
+ * Added RIPEMD160 to the default provider.
+
+   *Paul Dale*
 
 ### Changes between 3.0.5 and 3.0.6 [11 Oct 2022]
 
