@@ -53,7 +53,7 @@ pip install -e vectors
 echo "------------------------------------------------------------------"
 echo "Print linked libraries"
 echo "------------------------------------------------------------------"
-ldd ../venv-cryptography/lib/python*/site-packages/cryptography/hazmat/bindings/_openssl*.so
+ldd $(find ../venv-cryptography/lib/ -iname '*.so')
 
 
 echo "------------------------------------------------------------------"
