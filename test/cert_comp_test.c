@@ -148,7 +148,11 @@ static int test_ssl_cert_comp(int test)
     if (expected_client == TLSEXT_comp_cert_none)
         expected_client = TLSEXT_comp_cert_zstd;
 #endif
-    /* if there's only one comp algorithm, pref won't do much */
+    /* 
+     * If there's only one comp algorithm, pref won't do much
+     * Coverity can get confused in this case, and consider test == 3
+     * to be DEADCODE
+     */
     if (test == 3 && expected_client == expected_server) {
         TEST_info("Only one compression algorithm configured");
         return 1;
@@ -160,6 +164,7 @@ static int test_ssl_cert_comp(int test)
                                        &sctx, &cctx, cert, privkey)))
         goto end;
     if (test == 3) {
+        /* coverity[deadcode] */
         server_pref[0] = expected_server;
         server_pref[1] = expected_client;
         if (!TEST_true(SSL_CTX_set1_cert_comp_preference(sctx, server_pref, 2)))
@@ -203,6 +208,7 @@ static int test_ssl_cert_comp(int test)
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
     if (test == 3) {
+        /* coverity[deadcode] */
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(serverssl);
 
         /* expect that the pre-compressed cert won't be used */
