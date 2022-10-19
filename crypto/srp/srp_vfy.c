@@ -393,7 +393,7 @@ static BIGNUM *SRP_gN_place_bn(STACK_OF(SRP_gN_cache) *gN_cache, char *ch)
 
 int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
 {
-    int error_code;
+    int error_code = SRP_ERR_MEMORY;
     STACK_OF(SRP_gN) *SRP_gN_tab = sk_SRP_gN_new_null();
     char *last_index = NULL;
     int i;
@@ -405,10 +405,12 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
     TXT_DB *tmpdb = NULL;
     BIO *in = BIO_new(BIO_s_file());
 
+    if (SRP_gN_tab == NULL)
+        goto err;
+
     error_code = SRP_ERR_OPEN_FILE;
 
-    if (SRP_gN_tab == NULL ||
-        in == NULL || BIO_read_filename(in, verifier_file) <= 0)
+    if (in == NULL || BIO_read_filename(in, verifier_file) <= 0)
         goto err;
 
     error_code = SRP_ERR_VBASE_INCOMPLETE_FILE;
