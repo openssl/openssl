@@ -39,6 +39,8 @@ cd $SRCTOP
 rm -rf venv-cryptography
 python -m venv venv-cryptography
 . ./venv-cryptography/bin/activate
+# Upgrade pip to always have latest
+pip install -U pip
 
 cd pyca-cryptography
 
@@ -51,7 +53,7 @@ pip install -e vectors
 echo "------------------------------------------------------------------"
 echo "Print linked libraries"
 echo "------------------------------------------------------------------"
-ldd ../venv-cryptography/lib/python*/site-packages/cryptography/hazmat/bindings/_openssl*
+ldd ../venv-cryptography/lib/python*/site-packages/cryptography/hazmat/bindings/_openssl*.so
 
 
 echo "------------------------------------------------------------------"
