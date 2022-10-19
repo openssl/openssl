@@ -24,10 +24,6 @@ OpenSSL 3.2
 
 ### Changes between 3.0 and 3.2 [xx XXX xxxx]
 
- * Added RIPEMD160 to the default provider.
-
-   *Paul Dale*
-
  * Add support for certificate compression (RFC8879), including
    library support for Brotli and Zstandard compression.
 
