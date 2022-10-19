@@ -307,7 +307,7 @@ int main(int argc, char *argv[])
     BIO_free(bio_in);
     BIO_free_all(bio_out);
     apps_shutdown();
-    BIO_free(bio_err);
+    BIO_free_all(bio_err);
     EXIT(ret);
 }
 
