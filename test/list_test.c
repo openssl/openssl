@@ -43,6 +43,8 @@ static int test_fizzbuzz(void)
         return 0;
 
     for (i = 1; i < nelem; i++) {
+        ossl_list_fizz_init_elem(elem + i);
+        ossl_list_buzz_init_elem(elem + i);
         elem[i].n = i;
         if (i % 3 == 0) {
             ossl_list_fizz_insert_tail(&a, elem + i);
@@ -99,8 +101,10 @@ static int test_insert(void)
     int n = 1;
 
     ossl_list_int_init(&l);
-    for (i = 0; i < OSSL_NELEM(elem); i++)
-            elem[i].n = i;
+    for (i = 0; i < OSSL_NELEM(elem); i++) {
+        ossl_list_int_init_elem(elem + i);
+        elem[i].n = i;
+    }
 
     /* Check various insert options - head, tail, middle */
     ossl_list_int_insert_head(&l, elem + 3);                /* 3 */

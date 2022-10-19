@@ -12,6 +12,13 @@
 # pragma once
 
 # include <string.h>
+# include <assert.h>
+
+# ifdef NDEBUG
+#  define OSSL_LIST_DBG(x)
+# else
+#  define OSSL_LIST_DBG(x) x;
+# endif
 
 /* Define a list structure */
 # define OSSL_LIST(name) OSSL_LIST_ ## name
@@ -20,6 +27,7 @@
 # define OSSL_LIST_MEMBER(name, type)                                       \
     struct {                                                                \
         type *next, *prev;                                                  \
+        OSSL_LIST_DBG(struct ossl_list_st_ ## name *list)                   \
     } ossl_list_ ## name
 
 # define DEFINE_LIST_OF(name, type)                                         \
@@ -52,26 +60,38 @@
     static ossl_unused ossl_inline type *                                   \
     ossl_list_##name##_head(const OSSL_LIST(name) *list)                    \
     {                                                                       \
+        assert(list->alpha == NULL                                          \
+               || list->alpha->ossl_list_ ## name.list == list);            \
         return list->alpha;                                                 \
     }                                                                       \
     static ossl_unused ossl_inline type *                                   \
     ossl_list_##name##_tail(const OSSL_LIST(name) *list)                    \
     {                                                                       \
+        assert(list->omega == NULL                                          \
+               || list->omega->ossl_list_ ## name.list == list);            \
         return list->omega;                                                 \
     }                                                                       \
     static ossl_unused ossl_inline type *                                   \
     ossl_list_##name##_next(const type *elem)                               \
     {                                                                       \
+        assert(elem->ossl_list_ ## name.next == NULL                        \
+               || elem->ossl_list_ ## name.next                             \
+                      ->ossl_list_ ## name.prev == elem);                   \
         return elem->ossl_list_ ## name.next;                               \
     }                                                                       \
     static ossl_unused ossl_inline type *                                   \
     ossl_list_##name##_prev(const type *elem)                               \
     {                                                                       \
+        assert(elem->ossl_list_ ## name.prev == NULL                        \
+               || elem->ossl_list_ ## name.prev                             \
+                      ->ossl_list_ ## name.next == elem);                   \
         return elem->ossl_list_ ## name.prev;                               \
     }                                                                       \
     static ossl_unused ossl_inline void                                     \
     ossl_list_##name##_remove(OSSL_LIST(name) *list, type *elem)            \
     {                                                                       \
+        assert(elem->ossl_list_ ## name.list == list);                      \
+        OSSL_LIST_DBG(elem->ossl_list_ ## name.list = NULL)                 \
         if (list->alpha == elem)                                            \
             list->alpha = elem->ossl_list_ ## name.next;                    \
         if (list->omega == elem)                                            \
@@ -89,6 +109,8 @@
     static ossl_unused ossl_inline void                                     \
     ossl_list_##name##_insert_head(OSSL_LIST(name) *list, type *elem)       \
     {                                                                       \
+        assert(elem->ossl_list_ ## name.list == NULL);                      \
+        OSSL_LIST_DBG(elem->ossl_list_ ## name.list = list)                 \
         if (list->alpha != NULL)                                            \
             list->alpha->ossl_list_ ## name.prev = elem;                    \
         elem->ossl_list_ ## name.next = list->alpha;                        \
@@ -101,6 +123,8 @@
     static ossl_unused ossl_inline void                                     \
     ossl_list_##name##_insert_tail(OSSL_LIST(name) *list, type *elem)       \
     {                                                                       \
+        assert(elem->ossl_list_ ## name.list == NULL);                      \
+        OSSL_LIST_DBG(elem->ossl_list_ ## name.list = list)                 \
         if (list->omega != NULL)                                            \
             list->omega->ossl_list_ ## name.next = elem;                    \
         elem->ossl_list_ ## name.prev = list->omega;                        \
@@ -114,6 +138,8 @@
     ossl_list_##name##_insert_before(OSSL_LIST(name) *list, type *e,        \
                                      type *elem)                            \
     {                                                                       \
+        assert(elem->ossl_list_ ## name.list == NULL);                      \
+        OSSL_LIST_DBG(elem->ossl_list_ ## name.list = list)                 \
         elem->ossl_list_ ## name.next = e;                                  \
         elem->ossl_list_ ## name.prev = e->ossl_list_ ## name.prev;         \
         if (e->ossl_list_ ## name.prev != NULL)                             \
@@ -127,6 +153,8 @@
     ossl_list_##name##_insert_after(OSSL_LIST(name) *list, type *e,         \
                                     type *elem)                             \
     {                                                                       \
+        assert(elem->ossl_list_ ## name.list == NULL);                      \
+        OSSL_LIST_DBG(elem->ossl_list_ ## name.list = list)                 \
         elem->ossl_list_ ## name.prev = e;                                  \
         elem->ossl_list_ ## name.next = e->ossl_list_ ## name.next;         \
         if (e->ossl_list_ ## name.next != NULL)                             \
