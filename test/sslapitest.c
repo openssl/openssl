@@ -33,6 +33,7 @@
 #include <openssl/param_build.h>
 #include <openssl/x509v3.h>
 #include <openssl/dh.h>
+#include <openssl/engine.h>
 
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
@@ -10043,6 +10044,385 @@ end:
 #endif
 }
 
+#ifndef OSSL_NO_USABLE_TLS1_3
+/* Test that read_ahead works across a key change */
+static int test_read_ahead_key_change(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char *msg = "Hello World";
+    size_t written, readbytes;
+    char buf[80];
+    int i;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), TLS1_3_VERSION, 0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_CTX_set_read_ahead(sctx, 1);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Write some data, send a key update, write more data */
+    if (!TEST_true(SSL_write_ex(clientssl, msg, strlen(msg), &written))
+        || !TEST_size_t_eq(written, strlen(msg)))
+        goto end;
+
+    if (!TEST_true(SSL_key_update(clientssl, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(clientssl, msg, strlen(msg), &written))
+        || !TEST_size_t_eq(written, strlen(msg)))
+        goto end;
+
+    /*
+     * Since read_ahead is on the first read below should read the record with
+     * the first app data, the second record with the key update message, and
+     * the third record with the app data all in one go. We should be able to
+     * still process the read_ahead data correctly even though it crosses
+     * epochs
+     */
+    for (i = 0; i < 2; i++) {
+        if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf) - 1,
+                                    &readbytes)))
+            goto end;
+
+        buf[readbytes] = '\0';
+        if (!TEST_str_eq(buf, msg))
+            goto end;
+    }
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+static size_t record_pad_cb(SSL *s, int type, size_t len, void *arg)
+{
+    int *called = arg;
+
+    switch ((*called)++) {
+    case 0:
+        /* Add some padding to first record */
+        return 512;
+    case 1:
+        /* Maximally pad the second record */
+        return SSL3_RT_MAX_PLAIN_LENGTH - len;
+    case 2:
+        /*
+         * Exceeding the maximum padding should be fine. It should just pad to
+         * the maximum anyway
+         */
+        return SSL3_RT_MAX_PLAIN_LENGTH + 1 - len;
+    case 3:
+        /*
+         * Very large padding should also be ok. Should just pad to the maximum
+         * allowed
+         */
+        return SIZE_MAX;
+    default:
+        return 0;
+    }
+}
+
+/*
+ * Test that setting record padding in TLSv1.3 works as expected
+ * Test 0: Record padding callback on the SSL_CTX
+ * Test 1: Record padding callback on the SSL
+ * Test 2: Record block padding on the SSL_CTX
+ * Test 3: Record block padding on the SSL
+ */
+static int test_tls13_record_padding(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char *msg = "Hello World";
+    size_t written, readbytes;
+    char buf[80];
+    int i;
+    int called = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), TLS1_3_VERSION, 0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (idx == 0) {
+        SSL_CTX_set_record_padding_callback(cctx, record_pad_cb);
+        SSL_CTX_set_record_padding_callback_arg(cctx, &called);
+        if (!TEST_ptr_eq(SSL_CTX_get_record_padding_callback_arg(cctx), &called))
+            goto end;
+    } else if (idx == 2) {
+        /* Exceeding the max plain length should fail */
+        if (!TEST_false(SSL_CTX_set_block_padding(cctx,
+                                                  SSL3_RT_MAX_PLAIN_LENGTH + 1)))
+            goto end;
+        if (!TEST_true(SSL_CTX_set_block_padding(cctx, 512)))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL)))
+        goto end;
+
+    if (idx == 1) {
+        SSL_set_record_padding_callback(clientssl, record_pad_cb);
+        SSL_set_record_padding_callback_arg(clientssl, &called);
+        if (!TEST_ptr_eq(SSL_get_record_padding_callback_arg(clientssl), &called))
+            goto end;
+    } else if (idx == 3) {
+        /* Exceeding the max plain length should fail */
+        if (!TEST_false(SSL_set_block_padding(clientssl,
+                                              SSL3_RT_MAX_PLAIN_LENGTH + 1)))
+            goto end;
+        if (!TEST_true(SSL_set_block_padding(clientssl, 512)))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    called = 0;
+    /*
+     * Write some data, then check we can read it. Do this four times to check
+     * we can continue to write and read padded data after the initial record
+     * padding has been added. We don't actually check that the padding has
+     * been applied to the record - just that we can continue to communicate
+     * normally and that the callback has been called (if appropriate).
+     */
+    for (i = 0; i < 4; i++) {
+        if (!TEST_true(SSL_write_ex(clientssl, msg, strlen(msg), &written))
+            || !TEST_size_t_eq(written, strlen(msg)))
+            goto end;
+
+        if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf) - 1,
+                                    &readbytes))
+                || !TEST_size_t_eq(written, readbytes))
+            goto end;
+
+        buf[readbytes] = '\0';
+        if (!TEST_str_eq(buf, msg))
+            goto end;
+    }
+
+    if ((idx == 0 || idx == 1) && !TEST_int_eq(called, 4))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif /* OSSL_NO_USABLE_TLS1_3 */
+
+#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
+/*
+ * Test TLSv1.2 with a pipeline capable cipher. TLSv1.3 and DTLS do not
+ * support this yet. The only pipeline capable cipher that we have is in the
+ * dasync engine (providers don't support this yet), so we have to use
+ * deprecated APIs for this test.
+ *
+ * Test 0: Client has pipelining enabled, server does not
+ * Test 1: Server has pipelining enabled, client does not
+ * Test 2: Client has pipelining enabled, server does not: not enough data to
+ *         fill all the pipelines
+ * Test 3: Client has pipelining enabled, server does not: not enough data to
+ *         fill all the pipelines by more than a full pipeline's worth
+ * Test 4: Client has pipelining enabled, server does not: more data than all
+ *         the available pipelines can take
+ * Test 5: Client has pipelining enabled, server does not: Maximum size pipeline
+ */
+static int test_pipelining(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *peera, *peerb;
+    int testresult = 0, numreads;
+    /* A 55 byte message */
+    unsigned char *msg = (unsigned char *)
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123";
+    size_t written, readbytes, offset, msglen, fragsize = 10, numpipes = 5;
+    size_t expectedreads;
+    unsigned char *buf = NULL;
+    ENGINE *e;
+
+    if (!TEST_ptr(e = ENGINE_by_id("dasync")))
+        return 0;
+
+    if (!TEST_true(ENGINE_init(e))) {
+        ENGINE_free(e);
+        return 0;
+    }
+
+    if (!TEST_true(ENGINE_register_ciphers(e)))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), 0,
+                                       TLS1_2_VERSION, &sctx, &cctx, cert,
+                                       privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set_cipher_list(clientssl, "AES128-SHA")))
+        goto end;
+
+    /* peera is always configured for pipelining, while peerb is not. */
+    if (idx == 1) {
+        peera = serverssl;
+        peerb = clientssl;
+
+    } else {
+        peera = clientssl;
+        peerb = serverssl;
+    }
+
+    if (idx == 5) {
+        numpipes = 2;
+        /* Maximum allowed fragment size */
+        fragsize = SSL3_RT_MAX_PLAIN_LENGTH;
+        msglen = fragsize * numpipes;
+        msg = OPENSSL_malloc(msglen);
+        if (!TEST_ptr(msg))
+            goto end;
+        if (!TEST_int_gt(RAND_bytes_ex(libctx, msg, msglen, 0), 0))
+            goto end;
+    } else if (idx == 4) {
+        msglen = 55;
+    } else {
+        msglen = 50;
+    }
+    if (idx == 2)
+        msglen -= 2; /* Send 2 less bytes */
+    else if (idx == 3)
+        msglen -= 12; /* Send 12 less bytes */
+
+    buf = OPENSSL_malloc(msglen);
+    if (!TEST_ptr(buf))
+        goto end;
+
+    if (idx == 5) {
+        /*
+         * Test that setting a split send fragment longer than the maximum
+         * allowed fails
+         */
+        if (!TEST_false(SSL_set_split_send_fragment(peera, fragsize + 1)))
+            goto end;
+    }
+
+    /*
+     * In the normal case. We have 5 pipelines with 10 bytes per pipeline
+     * (50 bytes in total). This is a ridiculously small number of bytes -
+     * but sufficient for our purposes
+     */
+    if (!TEST_true(SSL_set_max_pipelines(peera, numpipes))
+            || !TEST_true(SSL_set_split_send_fragment(peera, fragsize)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Write some data from peera to peerb */
+    if (!TEST_true(SSL_write_ex(peera, msg, msglen, &written))
+        || !TEST_size_t_eq(written, msglen))
+        goto end;
+
+    /*
+     * If the pipelining code worked, then we expect all |numpipes| pipelines to
+     * have been used - except in test 3 where only |numpipes - 1| pipelines
+     * will be used. This will result in |numpipes| records (|numpipes - 1| for
+     * test 3) having been sent to peerb. Since peerb is not using read_ahead we
+     * expect this to be read in |numpipes| or |numpipes - 1| separate
+     * SSL_read_ex calls. In the case of test 4, there is then one additional
+     * read for left over data that couldn't fit in the previous pipelines
+     */
+    for (offset = 0, numreads = 0;
+         offset < msglen;
+         offset += readbytes, numreads++) {
+        if (!TEST_true(SSL_read_ex(peerb, buf + offset,
+                                   msglen - offset, &readbytes)))
+            goto end;
+    }
+
+    expectedreads = idx == 4 ? numpipes + 1
+                             : (idx == 3 ? numpipes - 1 : numpipes);
+    if (!TEST_mem_eq(msg, msglen, buf, offset)
+            || !TEST_int_eq(numreads, expectedreads))
+        goto end;
+
+    /*
+     * Write some data from peerb to peera. We do this in up to |numpipes + 1|
+     * chunks to exercise the read pipelining code on peera.
+     */
+    for (offset = 0; offset < msglen; offset += fragsize) {
+        size_t sendlen = msglen - offset;
+
+        if (sendlen > fragsize)
+            sendlen = fragsize;
+        if (!TEST_true(SSL_write_ex(peerb, msg + offset, sendlen, &written))
+                || !TEST_size_t_eq(written, sendlen))
+            goto end;
+    }
+
+    /*
+     * The data was written in |numpipes|, |numpipes - 1| or |numpipes + 1|
+     * separate chunks (depending on which test we are running). If the
+     * pipelining is working then we expect peera to read up to numpipes chunks
+     * and process them in parallel, giving back the complete result in a single
+     * call to SSL_read_ex
+     */
+    if (!TEST_true(SSL_read_ex(peera, buf, msglen, &readbytes))
+            || !TEST_size_t_le(readbytes, msglen))
+        goto end;
+
+    if (idx == 4) {
+        size_t readbytes2;
+
+        if (!TEST_true(SSL_read_ex(peera, buf + readbytes,
+                                   msglen - readbytes, &readbytes2)))
+            goto end;
+        readbytes += readbytes2;
+        if (!TEST_size_t_le(readbytes, msglen))
+            goto end;
+    }
+
+    if (!TEST_mem_eq(msg, msglen, buf, readbytes))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    ENGINE_unregister_ciphers(e);
+    ENGINE_finish(e);
+    ENGINE_free(e);
+    OPENSSL_free(buf);
+    if (idx == 5)
+        OPENSSL_free(msg);
+    return testresult;
+}
+#endif /* !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE) */
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -10310,6 +10690,9 @@ int setup_tests(void)
     ADD_TEST(test_load_dhfile);
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_serverinfo_custom, 4);
+#endif
+#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
+    ADD_ALL_TESTS(test_pipelining, 6);
 #endif
     return 1;
 
