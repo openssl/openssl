@@ -1449,10 +1449,6 @@ size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, int type, size_t len,
                                    size_t maxfrag, size_t *preffrag)
 {
     /*
-     * TODO(RECLAYER): There is no test for the pipelining code. We should add
-     *                 one.
-     */
-    /*
      * If we have a pipeline capable cipher, and we have been configured to use
      * it, then return the preferred number of pipelines.
      */
