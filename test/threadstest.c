@@ -1018,36 +1018,31 @@ static int test_thread_internal(void)
 }
 #endif
 
-static uint32_t test_thread_native_multiple_joins_fn1(void *data)
+static uint32_t test_thread_native_other_joins_fn1(void *data)
 {
     return 0;
 }
 
-static uint32_t test_thread_native_multiple_joins_fn2(void *data)
+static uint32_t test_thread_native_other_joins_fn2(void *data)
 {
     ossl_crypto_thread_native_join((CRYPTO_THREAD *)data, NULL);
     return 0;
 }
 
-static uint32_t test_thread_native_multiple_joins_fn3(void *data)
+/* Test that another thread can join a thread spawned elsewhere. */
+static int test_thread_native_other_joins(void)
 {
-    ossl_crypto_thread_native_join((CRYPTO_THREAD *)data, NULL);
-    return 0;
-}
+    CRYPTO_THREAD *t1, *t2;
 
-static int test_thread_native_multiple_joins(void)
-{
-    CRYPTO_THREAD *t, *t1, *t2;
+    t1 = ossl_crypto_thread_native_start(test_thread_native_other_joins_fn1, NULL, 1);
+    t2 = ossl_crypto_thread_native_start(test_thread_native_other_joins_fn2, t1, 1);
 
-    t = ossl_crypto_thread_native_start(test_thread_native_multiple_joins_fn1, NULL, 1);
-    t1 = ossl_crypto_thread_native_start(test_thread_native_multiple_joins_fn2, t, 1);
-    t2 = ossl_crypto_thread_native_start(test_thread_native_multiple_joins_fn3, t, 1);
-
-    if (!TEST_ptr(t) || !TEST_ptr(t1) || !TEST_ptr(t2))
+    if (!TEST_ptr(t1) || !TEST_ptr(t2))
         return 0;
 
     if (!TEST_int_eq(ossl_crypto_thread_native_join(t2, NULL), 1))
         return 0;
+    /* We joined the thread that was joining t1, we can join it now too. */
     if (!TEST_int_eq(ossl_crypto_thread_native_join(t1, NULL), 1))
         return 0;
 
@@ -1055,9 +1050,6 @@ static int test_thread_native_multiple_joins(void)
         return 0;
 
     if (!TEST_int_eq(ossl_crypto_thread_native_clean(t1), 1))
-        return 0;
-
-    if (!TEST_int_eq(ossl_crypto_thread_native_clean(t), 1))
         return 0;
 
     return 1;
@@ -1143,7 +1135,7 @@ int setup_tests(void)
     ADD_TEST(test_thread_reported_flags);
 #if defined(OPENSSL_THREADS)
     ADD_TEST(test_thread_native);
-    ADD_TEST(test_thread_native_multiple_joins);
+    ADD_TEST(test_thread_native_other_joins);
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
     ADD_TEST(test_thread_internal);
 #endif
