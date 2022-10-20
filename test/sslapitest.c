@@ -33,6 +33,7 @@
 #include <openssl/param_build.h>
 #include <openssl/x509v3.h>
 #include <openssl/dh.h>
+#include <openssl/engine.h>
 
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
@@ -10150,6 +10151,143 @@ end:
 }
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 
+#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
+/*
+ * Test TLSv1.2 with a pipeline capable cipher. TLSv1.3 and DTLS do not
+ * support this yet. The only pipeline capable cipher that we have is in the
+ * dasync engine (providers don't support this yet), so we have to use
+ * deprecated APIs for this test.
+ *
+ * Test 0: Client has pipelining enabled, server does not
+ * Test 1: Server has pipelining enabled, client does not
+ * Test 2: Client has pipelining enabled, server does not: not enough data to
+ *         fill all the pipelines
+ * Test 3: Client has pipelining enabled, server does not: not enough data to
+ *         fill all the pipelines by more than a full pipeline's worth
+ */
+static int test_pipelining(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *peera, *peerb;
+    int testresult = 0, numreads;
+    char *msg = "A test message that must be at least 50 bytes long";
+    size_t written, readbytes, offset, msglen;
+    char buf[80];
+    ENGINE *e;
+
+    if (!TEST_ptr(e = ENGINE_by_id("dasync")))
+        return 0;
+
+    if (!TEST_true(ENGINE_init(e))) {
+        ENGINE_free(e);
+        return 0;
+    }
+
+    if (!TEST_true(ENGINE_register_ciphers(e)))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), 0,
+                                       TLS1_2_VERSION, &sctx, &cctx, cert,
+                                       privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set_cipher_list(clientssl, "AES128-SHA")))
+        goto end;
+
+    if (idx == 1) {
+        peera = serverssl;
+        peerb = clientssl;
+
+    } else {
+        peera = clientssl;
+        peerb = serverssl;
+    }
+
+    msglen = strlen(msg);
+    if (idx == 2)
+        msglen -= 2; /* Send 2 less bytes */
+    else if (idx == 3)
+        msglen -= 12; /* Send 12 less bytes */
+
+    /*
+     * peera is always configured for pipelining, while peerb is not. We have 5
+     * pipelines with 10 bytes per pipeline (50 bytes in total). This is a
+     * ridiculously small number of bytes - but sufficient for our purposes
+     */
+    if (!TEST_true(SSL_set_max_pipelines(peera, 5))
+            || !TEST_true(SSL_set_split_send_fragment(peera, 10)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Write some data from peera to peerb */
+    if (!TEST_true(SSL_write_ex(peera, msg, msglen, &written))
+        || !TEST_size_t_eq(written, msglen))
+        goto end;
+
+    /*
+     * If the pipelining code worked, then we expect all 5 pipelines to have
+     * been used - expect in test 3 where only 4 pipelines will be used. This
+     * will result in 5 records (4 for test 3) having been sent to peerb.
+     * Since peerb is not using read_ahead we expect this to be read in 5 or 4
+     * separate SSL_read_ex calls
+     */
+    for (offset = 0, numreads = 0;
+         offset < msglen;
+         offset += readbytes, numreads++) {
+        if (!TEST_true(SSL_read_ex(peerb, buf + offset,
+                                   sizeof(buf) - offset - 1, &readbytes)))
+            goto end;
+    }
+
+    if (!TEST_mem_eq(msg, msglen, buf, offset)
+            || !TEST_int_eq(numreads, idx == 3 ? 4 : 5))
+        goto end;
+
+    /*
+     * Write some data from peerb to peera. We do this in up to 5 chunks to
+     * exercise the read pipelining code on peera.
+     */
+    for (offset = 0; offset < msglen; offset += 10) {
+        size_t sendlen = msglen - offset;
+
+        if (sendlen > 10)
+            sendlen = 10;
+        if (!TEST_true(SSL_write_ex(peerb, msg + offset, sendlen, &written))
+                || !TEST_size_t_eq(written, sendlen))
+            goto end;
+    }
+
+    /*
+     * The data was written in 5 separate chunks. If the pipelining is working
+     * the we expect peera to read all 5 and process them in parallel, giving
+     * back the complete result in a single call to SSL_read_ex
+     */
+    if (!TEST_true(SSL_read_ex(peera, buf, sizeof(buf) - 1, &readbytes)))
+        goto end;
+
+    if (!TEST_mem_eq(msg, msglen, buf, readbytes))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    ENGINE_unregister_ciphers(e);
+    ENGINE_finish(e);
+    ENGINE_free(e);
+    return testresult;
+}
+#endif /* !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE) */
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -10425,6 +10563,9 @@ int setup_tests(void)
 #endif
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_serverinfo_custom, 4);
+#endif
+#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
+    ADD_ALL_TESTS(test_pipelining, 4);
 #endif
     return 1;
 
