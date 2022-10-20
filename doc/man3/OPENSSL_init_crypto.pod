@@ -82,7 +82,7 @@ B<OPENSSL_INIT_NO_ADD_ALL_CIPHERS> will be ignored.
 With this option the library will automatically load and make available all
 libcrypto digests. This option is a default option. Once selected subsequent
 calls to OPENSSL_init_crypto() with the option
-B<OPENSSL_INIT_NO_ADD_ALL_CIPHERS> will be ignored.
+B<OPENSSL_INIT_NO_ADD_ALL_DIGESTS> will be ignored.
 
 =item OPENSSL_INIT_NO_ADD_ALL_CIPHERS
 
