@@ -55,7 +55,6 @@ typedef CRYPTO_THREAD_RETVAL (*CRYPTO_THREAD_ROUTINE_CB)(void *,
 # define CRYPTO_THREAD_FINISHED   (1UL << 0)
 # define CRYPTO_THREAD_JOIN_AWAIT (1UL << 1)
 # define CRYPTO_THREAD_JOINED     (1UL << 2)
-# define CRYPTO_THREAD_TERMINATED (1UL << 3)
 
 # define CRYPTO_THREAD_GET_STATE(THREAD, FLAG) ((THREAD)->state & (FLAG))
 # define CRYPTO_THREAD_GET_ERROR(THREAD, FLAG) (((THREAD)->state >> 16) & (FLAG))
@@ -112,7 +111,6 @@ int ossl_crypto_thread_native_join(CRYPTO_THREAD *thread,
                               CRYPTO_THREAD_RETVAL *retval);
 int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD *thread,
                                            CRYPTO_THREAD_RETVAL *retval);
-int ossl_crypto_thread_native_terminate(CRYPTO_THREAD *thread);
 int ossl_crypto_thread_native_exit(void);
 int ossl_crypto_thread_native_is_self(CRYPTO_THREAD *thread);
 int ossl_crypto_thread_native_clean(CRYPTO_THREAD *thread);

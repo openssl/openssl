@@ -21,11 +21,6 @@ int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_
     return 0;
 }
 
-int ossl_crypto_thread_native_terminate(CRYPTO_THREAD *thread)
-{
-    return 0;
-}
-
 int ossl_crypto_thread_native_exit(void)
 {
     return 0;

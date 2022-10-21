@@ -54,15 +54,9 @@ int ossl_crypto_thread_native_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_RETVAL *
         return 0;
 
     ossl_crypto_mutex_lock(thread->statelock);
-    req_state_mask = CRYPTO_THREAD_TERMINATED | CRYPTO_THREAD_FINISHED \
-                     | CRYPTO_THREAD_JOINED;
+    req_state_mask = CRYPTO_THREAD_FINISHED | CRYPTO_THREAD_JOINED;
     while (!CRYPTO_THREAD_GET_STATE(thread, req_state_mask))
         ossl_crypto_condvar_wait(thread->condvar, thread->statelock);
-
-    if (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_TERMINATED)) {
-        ossl_crypto_mutex_unlock(thread->statelock);
-        return 0;
-    }
 
     if (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOINED))
         goto pass;
@@ -121,7 +115,6 @@ int ossl_crypto_thread_native_clean(CRYPTO_THREAD *handle)
 
     req_state_mask = 0;
     req_state_mask |= CRYPTO_THREAD_FINISHED;
-    req_state_mask |= CRYPTO_THREAD_TERMINATED;
     req_state_mask |= CRYPTO_THREAD_JOINED;
 
     ossl_crypto_mutex_lock(handle->statelock);
