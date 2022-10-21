@@ -442,6 +442,9 @@ int ossl_quic_wire_decode_frame_ack(PACKET *pkt,
     if (first_ack_range > largest_ackd)
         return 0;
 
+    if (ack_range_count > SIZE_MAX /* sizeof(uint64_t) > sizeof(size_t)? */)
+        return 0;
+
     start = largest_ackd - first_ack_range;
 
     if (ack != NULL) {
@@ -478,7 +481,7 @@ int ossl_quic_wire_decode_frame_ack(PACKET *pkt,
     }
 
     if (ack != NULL && ack_range_count + 1 < ack->num_ack_ranges)
-        ack->num_ack_ranges = ack_range_count + 1;
+        ack->num_ack_ranges = (size_t)ack_range_count + 1;
 
     if (total_ranges != NULL)
         *total_ranges = ack_range_count + 1;
