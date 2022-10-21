@@ -454,7 +454,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     if (buf == NULL)
         return -1;
     wbuf = OPENSSL_malloc(DTLS1_RT_HEADER_LENGTH + SSL3_RT_MAX_PLAIN_LENGTH);
-    if (buf == NULL)
+    if (wbuf == NULL)
         return -1;
 
     do {
