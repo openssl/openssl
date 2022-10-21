@@ -61,7 +61,7 @@ DEFINE_LHASH_OF_EX(OSSL_ACKM_TX_PKT);
 
 static unsigned long tx_pkt_info_hash(const OSSL_ACKM_TX_PKT *pkt)
 {
-    /* We assume that unsigned long is 64 bits */
+    /* Using low bits of the packet number as the hash should be enough */
     return (unsigned long)pkt->pkt_num;
 }
 
