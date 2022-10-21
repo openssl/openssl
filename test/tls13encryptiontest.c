@@ -364,7 +364,7 @@ static int test_tls13_encryption(void)
         memcpy(rrl->sequence, seqbuf, sizeof(seqbuf));
 
         /* Decrypt it */
-        if (!TEST_int_eq(wrl->funcs->cipher(rrl, &rec, 1, 0, NULL, 0), 1)) {
+        if (!TEST_int_eq(rrl->funcs->cipher(rrl, &rec, 1, 0, NULL, 0), 1)) {
             TEST_info("Failed to decrypt record %zu", ctr);
             goto err;
         }
