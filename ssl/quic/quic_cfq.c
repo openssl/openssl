@@ -324,7 +324,7 @@ QUIC_CFQ_ITEM *ossl_quic_cfq_get_priority_head(const QUIC_CFQ *cfq,
     for (; item != NULL && item->pn_space != pn_space; item = item->next);
 
     if (item == NULL)
-        return NULL; /* ubsan */
+        return NULL;
 
     return &item->public;
 }

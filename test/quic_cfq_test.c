@@ -43,7 +43,7 @@ static const uint64_t ref_frame_type[] = {
     OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
     OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
     OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
-    OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
+    OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID,
 };
 
 static const uint32_t expect[QUIC_PN_SPACE_NUM][11] = {
