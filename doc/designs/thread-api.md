@@ -69,17 +69,15 @@ support.
 
 /*
  * Is the default model supported? If THREAD_POOL is supported but DEFAULT_SPAWN
- * is not supported, the custom thread spawner or manual thread method must be
- * used.
+ * is not supported, another model must be used. Note that there is currently
+ * only one supported model (the default model), but there may be more in the
+ * future.
  */
 #define OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN  (1U<<1)
 
 /* Returns zero or more of OSSL_THREAD_SUPPORT_FLAG_*. */
 uint32_t OSSL_get_thread_support_flags(void);
 ```
-
-Since deciding on a reasonable number of threads is hardware-specific, a
-convenience function will also be provided to give a good ballpark figure:
 
 Build Options
 -------------
@@ -90,10 +88,12 @@ thread pool functionality to be compiled out. `no-thread-pool` implies
 
 A build option `default-thread-pool`/`no-default-thread-pool` will be introduced
 which allows the default thread pool functionality to be compiled out. If this
-functionality is compiled out, OpenSSL can only use multiple threads via a
-spawning method provided via the application, or via donated threads. This is
-useful for e.g. embedded applications which desire the thread pool functionality
-but for which OpenSSL lacks the necessary OS support.
+functionality is compiled out, another thread pool model must be used. Since the
+default model is the only currently supported model, disabling the default model
+renders threading functionality unusable. As such, there is little reason to use
+this option instead of `thread-pool/no-thread-pool`, however this option is
+nonetheless provided for symmetry when additional models are introduced in the
+future.
 
 Internals
 ---------
