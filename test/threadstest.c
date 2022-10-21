@@ -784,19 +784,6 @@ static uint32_t test_thread_native_fn(void *data)
     *ldata = *ldata + 1;
     return *ldata - 1;
 }
-
-static uint32_t test_thread_noreturn(void *data)
-{
-    while (1) {
-	OSSL_sleep(1000);
-    }
-
-    /* unreachable */
-    OPENSSL_die("test_thread_noreturn", __FILE__, __LINE__);
-
-    return 0;
-}
-
 /* Tests of native threads */
 
 static int test_thread_native(void)
@@ -805,7 +792,7 @@ static int test_thread_native(void)
     uint32_t local;
     CRYPTO_THREAD *t;
 
-    /* thread spawn, join and termination */
+    /* thread spawn, join */
 
     local = 1;
     t = ossl_crypto_thread_native_start(test_thread_native_fn, &local, 1);
@@ -826,29 +813,11 @@ static int test_thread_native(void)
     if (!TEST_int_eq(retval, 1) || !TEST_int_eq(local, 2))
         return 0;
 
-    if (!TEST_int_eq(ossl_crypto_thread_native_terminate(t), 1))
-        return 0;
-    if (!TEST_int_eq(ossl_crypto_thread_native_terminate(t), 1))
-        return 0;
-
-    if (!TEST_int_eq(ossl_crypto_thread_native_join(t, &retval), 0))
-        return 0;
-
     if (!TEST_int_eq(ossl_crypto_thread_native_clean(t), 1))
         return 0;
     t = NULL;
 
     if (!TEST_int_eq(ossl_crypto_thread_native_clean(t), 0))
-        return 0;
-
-    /* termination of a long running thread */
-
-    t = ossl_crypto_thread_native_start(test_thread_noreturn, NULL, 1);
-    if (!TEST_ptr(t))
-        return 0;
-    if (!TEST_int_eq(ossl_crypto_thread_native_terminate(t), 1))
-        return 0;
-    if (!TEST_int_eq(ossl_crypto_thread_native_clean(t), 1))
         return 0;
 
     return 1;

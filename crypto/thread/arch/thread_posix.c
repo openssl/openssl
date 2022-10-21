@@ -85,52 +85,6 @@ int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_
     return 1;
 }
 
-int ossl_crypto_thread_native_terminate(CRYPTO_THREAD *thread)
-{
-    void *res;
-    uint64_t mask;
-    pthread_t *handle;
-
-    mask = CRYPTO_THREAD_FINISHED;
-    mask |= CRYPTO_THREAD_TERMINATED;
-    mask |= CRYPTO_THREAD_JOINED;
-
-    if (thread == NULL)
-        return 0;
-
-    ossl_crypto_mutex_lock(thread->statelock);
-    if (thread->handle == NULL || CRYPTO_THREAD_GET_STATE(thread, mask))
-        goto terminated;
-    /* Do not fail when there's a join in progress. Do not block. */
-    if (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOIN_AWAIT))
-        goto fail;
-    ossl_crypto_mutex_unlock(thread->statelock);
-
-    handle = thread->handle;
-    if (pthread_cancel(*handle) != 0) {
-        ossl_crypto_mutex_lock(thread->statelock);
-        goto fail;
-    }
-    if (pthread_join(*handle, &res) != 0)
-        return 0;
-    if (res != PTHREAD_CANCELED)
-        return 0;
-
-    thread->handle = NULL;
-    OPENSSL_free(handle);
-
-    ossl_crypto_mutex_lock(thread->statelock);
-terminated:
-    CRYPTO_THREAD_UNSET_ERROR(thread, CRYPTO_THREAD_TERMINATED);
-    CRYPTO_THREAD_SET_STATE(thread, CRYPTO_THREAD_TERMINATED);
-    ossl_crypto_mutex_unlock(thread->statelock);
-    return 1;
-fail:
-    CRYPTO_THREAD_SET_ERROR(thread, CRYPTO_THREAD_TERMINATED);
-    ossl_crypto_mutex_unlock(thread->statelock);
-    return 0;
-}
-
 int ossl_crypto_thread_native_exit(void)
 {
     pthread_exit(NULL);

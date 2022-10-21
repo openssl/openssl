@@ -83,49 +83,6 @@ int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_
     return 1;
 }
 
-int ossl_crypto_thread_native_terminate(CRYPTO_THREAD *thread)
-{
-    uint64_t mask;
-    HANDLE *handle;
-
-    mask = CRYPTO_THREAD_FINISHED;
-    mask |= CRYPTO_THREAD_TERMINATED;
-    mask |= CRYPTO_THREAD_JOINED;
-
-    if (thread == NULL)
-        return 1;
-
-    ossl_crypto_mutex_lock(thread->statelock);
-    if (thread->handle == NULL || CRYPTO_THREAD_GET_STATE(thread, mask))
-        goto terminated;
-    ossl_crypto_mutex_unlock(thread->statelock);
-
-    handle = thread->handle;
-    if (WaitForSingleObject(*handle, 0) != WAIT_OBJECT_0) {
-        if (TerminateThread(*handle, STILL_ACTIVE) == 0) {
-            ossl_crypto_mutex_lock(thread->statelock);
-            CRYPTO_THREAD_SET_ERROR(thread, CRYPTO_THREAD_TERMINATED);
-            ossl_crypto_mutex_unlock(thread->statelock);
-            return 0;
-        }
-    }
-
-    if (CloseHandle(*handle) == 0) {
-        CRYPTO_THREAD_SET_ERROR(thread, CRYPTO_THREAD_TERMINATED);
-        return 0;
-    }
-
-    thread->handle = NULL;
-    OPENSSL_free(handle);
-
-    ossl_crypto_mutex_lock(thread->statelock);
-terminated:
-    CRYPTO_THREAD_UNSET_ERROR(thread, CRYPTO_THREAD_TERMINATED);
-    CRYPTO_THREAD_SET_STATE(thread, CRYPTO_THREAD_TERMINATED);
-    ossl_crypto_mutex_unlock(thread->statelock);
-    return 1;
-}
-
 int ossl_crypto_thread_native_exit(void)
 {
     _endthreadex(0);
