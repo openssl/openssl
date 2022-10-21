@@ -118,6 +118,55 @@ OSSL_DEPRECATEDIN_1_1_0 int RAND_event(UINT, WPARAM, LPARAM);
 #  endif
 # endif
 
+/* RAND stuff */
+EVP_RAND *EVP_RAND_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
+                         const char *properties);
+int EVP_RAND_up_ref(EVP_RAND *rand);
+void EVP_RAND_free(EVP_RAND *rand);
+const char *EVP_RAND_get0_name(const EVP_RAND *rand);
+const char *EVP_RAND_get0_description(const EVP_RAND *md);
+int EVP_RAND_is_a(const EVP_RAND *rand, const char *name);
+const OSSL_PROVIDER *EVP_RAND_get0_provider(const EVP_RAND *rand);
+int EVP_RAND_get_params(EVP_RAND *rand, OSSL_PARAM params[]);
+
+EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, EVP_RAND_CTX *parent);
+int EVP_RAND_CTX_up_ref(EVP_RAND_CTX *ctx);
+void EVP_RAND_CTX_free(EVP_RAND_CTX *ctx);
+EVP_RAND *EVP_RAND_CTX_get0_rand(EVP_RAND_CTX *ctx);
+int EVP_RAND_CTX_get_params(EVP_RAND_CTX *ctx, OSSL_PARAM params[]);
+int EVP_RAND_CTX_set_params(EVP_RAND_CTX *ctx, const OSSL_PARAM params[]);
+const OSSL_PARAM *EVP_RAND_gettable_params(const EVP_RAND *rand);
+const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand);
+const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand);
+const OSSL_PARAM *EVP_RAND_CTX_gettable_params(EVP_RAND_CTX *ctx);
+const OSSL_PARAM *EVP_RAND_CTX_settable_params(EVP_RAND_CTX *ctx);
+
+void EVP_RAND_do_all_provided(OSSL_LIB_CTX *libctx,
+                              void (*fn)(EVP_RAND *rand, void *arg),
+                              void *arg);
+int EVP_RAND_names_do_all(const EVP_RAND *rand,
+                          void (*fn)(const char *name, void *data),
+                          void *data);
+
+__owur int EVP_RAND_instantiate(EVP_RAND_CTX *ctx, unsigned int strength,
+                                int prediction_resistance,
+                                const unsigned char *pstr, size_t pstr_len,
+                                const OSSL_PARAM params[]);
+int EVP_RAND_uninstantiate(EVP_RAND_CTX *ctx);
+__owur int EVP_RAND_generate(EVP_RAND_CTX *ctx, unsigned char *out,
+                             size_t outlen, unsigned int strength,
+                             int prediction_resistance,
+                             const unsigned char *addin, size_t addin_len);
+int EVP_RAND_reseed(EVP_RAND_CTX *ctx, int prediction_resistance,
+                    const unsigned char *ent, size_t ent_len,
+                    const unsigned char *addin, size_t addin_len);
+__owur int EVP_RAND_nonce(EVP_RAND_CTX *ctx, unsigned char *out, size_t outlen);
+__owur int EVP_RAND_enable_locking(EVP_RAND_CTX *ctx);
+
+int EVP_RAND_verify_zeroization(EVP_RAND_CTX *ctx);
+unsigned int EVP_RAND_get_strength(EVP_RAND_CTX *ctx);
+int EVP_RAND_get_state(EVP_RAND_CTX *ctx);
+
 #ifdef  __cplusplus
 }
 #endif
