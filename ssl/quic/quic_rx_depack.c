@@ -208,7 +208,7 @@ static int depack_do_frame_ack(PACKET *pkt, QUIC_CONNECTION *connection,
         return 0;
 
     ack.ack_ranges = ack_ranges;
-    ack.num_ack_ranges = total_ranges;
+    ack.num_ack_ranges = (size_t)total_ranges;
 
     if (!ossl_quic_wire_decode_frame_ack(pkt, ack_delay_exp, &ack, NULL))
         ok = 0;
