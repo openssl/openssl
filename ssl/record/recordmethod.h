@@ -164,16 +164,6 @@ struct ossl_record_method_st {
      */
     size_t (*app_data_pending)(OSSL_RECORD_LAYER *rl);
 
-    int (*write_pending)(OSSL_RECORD_LAYER *rl);
-
-    /*
-     * Find out the maximum amount of plaintext data that the record layer is
-     * prepared to write in a single record. When calling write_records it is
-     * the caller's responsibility to ensure that no record template exceeds
-     * this maximum when calling write_records.
-     */
-    size_t (*get_max_record_len)(OSSL_RECORD_LAYER *rl);
-
     /*
      * Find out the maximum number of records that the record layer is prepared
      * to process in a single call to write_records. It is the caller's

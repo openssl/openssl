@@ -1442,16 +1442,6 @@ size_t tls_app_data_pending(OSSL_RECORD_LAYER *rl)
     return num;
 }
 
-int tls_write_pending(OSSL_RECORD_LAYER *rl)
-{
-    return 0;
-}
-
-size_t tls_get_max_record_len(OSSL_RECORD_LAYER *rl)
-{
-    return 0;
-}
-
 size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, int type, size_t len,
                                    size_t maxfrag, size_t *preffrag)
 {
@@ -2095,8 +2085,6 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_unprocessed_read_pending,
     tls_processed_read_pending,
     tls_app_data_pending,
-    tls_write_pending,
-    tls_get_max_record_len,
     tls_get_max_records,
     tls_write_records,
     tls_retry_write_records,

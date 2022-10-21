@@ -389,8 +389,6 @@ int tls_reset(OSSL_RECORD_LAYER *rl);
 int tls_unprocessed_read_pending(OSSL_RECORD_LAYER *rl);
 int tls_processed_read_pending(OSSL_RECORD_LAYER *rl);
 size_t tls_app_data_pending(OSSL_RECORD_LAYER *rl);
-int tls_write_pending(OSSL_RECORD_LAYER *rl);
-size_t tls_get_max_record_len(OSSL_RECORD_LAYER *rl);
 size_t tls_get_max_records(OSSL_RECORD_LAYER *rl, int type, size_t len,
                            size_t maxfrag, size_t *preffrag);
 int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
