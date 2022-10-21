@@ -27,44 +27,25 @@ Standard QUIC uses the following frame types:
 
 ```plain
 HANDSHAKE_DONE          GCR / REGEN
-----------------------------
 MAX_DATA                      REGEN
 DATA_BLOCKED                  REGEN
 MAX_STREAMS                   REGEN
 STREAMS_BLOCKED               REGEN
-----------------------------
-
-
 NEW_CONNECTION_ID             GCR
 RETIRE_CONNECTION_ID          GCR
-----------------------------
 PATH_CHALLENGE                  -
 PATH_RESPONSE                   -
-----------------------------
-ACK                             -     (non-ACK-eliciting)
-----------------------------
-CONNECTION_CLOSE              ***     (non-ACK-eliciting)
-----------------------------
+ACK                             -        (non-ACK-eliciting)
+CONNECTION_CLOSE              special    (non-ACK-eliciting)
 NEW_TOKEN                     GCR
-
-
-----------------------------
-CRYPTO                        GCR/*q
-
-============================          ]  priority group, repeats per stream
-RESET_STREAM                  REGEN   ]
-STOP_SENDING                  REGEN   ]
-----------------------------          ]
-MAX_STREAM_DATA               REGEN   ]
-STREAM_DATA_BLOCKED           REGEN   ]
-----------------------------          ]
-STREAM                        *q      ]
-============================          ]
-
-----------------------------
+CRYPTO                        GCR or special
+RESET_STREAM                  REGEN
+STOP_SENDING                  REGEN
+MAX_STREAM_DATA               REGEN
+STREAM_DATA_BLOCKED           REGEN
+STREAM                        special   
 PING                           -
-----------------------------
-PADDING                        -      (non-ACK-eliciting)
+PADDING                        -         (non-ACK-eliciting)
 ```
 
 The different frame types require various different ways of handling
@@ -82,14 +63,17 @@ retransmission in the event of loss:
     up-to-date data at the time of transmission, so is preferred over `GCR` when
     possible.
 
-  - **\*q**: STREAM handling is handled as a special case by the QUIC Send
-    Stream Manager. CRYPTO frame retransmission can also be handled using a QUIC
-    Send Stream manager.
+  - Special — `STREAM`, `CRYPTO`: `STREAM` frame handling is handled as a
+    special case by the QUIC Send Stream Manager. `CRYPTO` frame retransmission
+    can also be handled using a QUIC Send Stream manager. (`CRYPTO` frames could
+    also be handled via GCR, though suboptimally. We choose to use proper send
+    stream management, just as for application data streams.)
 
   - Some frame types do not need to be retransmitted even if lost (`PING`,
     `PADDING`, `PATH_CHALLENGE`, `PATH_RESPONSE`).
 
-  - `CONNECTION_CLOSE` is a special case and is not retransmitted per se.
+  - Special — `CONNECTION_CLOSE`: This frame is a special case and is not
+    retransmitted per se.
 
 ### Requirements
 
