@@ -787,13 +787,13 @@ static uint32_t test_thread_native_fn(void *data)
 
 static uint32_t test_thread_noreturn(void *data)
 {
-    CRYPTO_MUTEX *lock = (uint32_t*) data;
-
-    /* lock is assumed to be locked */
-    ossl_crypto_mutex_lock(lock);
+    while (1) {
+	OSSL_sleep(1000);
+    }
 
     /* unreachable */
     OPENSSL_die("test_thread_noreturn", __FILE__, __LINE__);
+
     return 0;
 }
 
@@ -801,11 +801,9 @@ static uint32_t test_thread_noreturn(void *data)
 
 static int test_thread_native(void)
 {
-    int testval = 0;
     uint32_t retval;
     uint32_t local;
     CRYPTO_THREAD *t;
-    CRYPTO_MUTEX *lock;
 
     /* thread spawn, join and termination */
 
@@ -845,28 +843,15 @@ static int test_thread_native(void)
 
     /* termination of a long running thread */
 
-    lock = ossl_crypto_mutex_new();
-    if (!TEST_ptr(lock))
-        return 0;
-    ossl_crypto_mutex_lock(lock);
-
-    t = ossl_crypto_thread_native_start(test_thread_noreturn, lock, 1);
+    t = ossl_crypto_thread_native_start(test_thread_noreturn, NULL, 1);
     if (!TEST_ptr(t))
-        goto fail;
+        return 0;
     if (!TEST_int_eq(ossl_crypto_thread_native_terminate(t), 1))
-        goto fail;
+        return 0;
     if (!TEST_int_eq(ossl_crypto_thread_native_clean(t), 1))
-        goto fail;
-
-    testval = 1;
-
-fail:
-    ossl_crypto_mutex_unlock(lock);
-    ossl_crypto_mutex_free(&lock);
-    if (!TEST_ptr_null(lock))
         return 0;
 
-    return testval;
+    return 1;
 }
 
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
