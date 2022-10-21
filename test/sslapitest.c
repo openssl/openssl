@@ -10233,7 +10233,7 @@ static int test_pipelining(int idx)
 
     /*
      * If the pipelining code worked, then we expect all 5 pipelines to have
-     * been used - expect in test 3 where only 4 pipelines will be used. This
+     * been used - except in test 3 where only 4 pipelines will be used. This
      * will result in 5 records (4 for test 3) having been sent to peerb.
      * Since peerb is not using read_ahead we expect this to be read in 5 or 4
      * separate SSL_read_ex calls
@@ -10266,7 +10266,7 @@ static int test_pipelining(int idx)
 
     /*
      * The data was written in 5 separate chunks. If the pipelining is working
-     * the we expect peera to read all 5 and process them in parallel, giving
+     * then we expect peera to read all 5 and process them in parallel, giving
      * back the complete result in a single call to SSL_read_ex
      */
     if (!TEST_true(SSL_read_ex(peera, buf, sizeof(buf) - 1, &readbytes)))
