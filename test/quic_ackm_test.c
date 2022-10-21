@@ -144,7 +144,7 @@ struct tx_ack_test_case {
     const QUIC_PN              *pn_table;
     size_t                      pn_table_len;
     const OSSL_QUIC_ACK_RANGE  *ack_ranges;
-    uint64_t                    num_ack_ranges;
+    size_t                      num_ack_ranges;
     const char                 *expect_ack; /* 1=ack, 2=lost, 4=discarded */
 };
 
@@ -633,7 +633,7 @@ struct rx_test_op {
     char                        expect_deadline;    /* CHECK_STATE */
 
     const OSSL_QUIC_ACK_RANGE  *ack_ranges;         /* CHECK_ACKS */
-    uint64_t                    num_ack_ranges;     /* CHECK_ACKS */
+    size_t                      num_ack_ranges;     /* CHECK_ACKS */
 
     QUIC_PN                     largest_acked;      /* TX */
 };
@@ -945,7 +945,7 @@ static int test_rx_ack_actual(int tidx, int space)
             if (!TEST_ptr(ack))
                 goto err;
 
-            if (!TEST_uint64_t_eq(ack->num_ack_ranges, s->num_ack_ranges))
+            if (!TEST_size_t_eq(ack->num_ack_ranges, s->num_ack_ranges))
                 goto err;
 
             for (i = 0; i < ack->num_ack_ranges; ++i) {

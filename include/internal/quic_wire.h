@@ -116,7 +116,7 @@ typedef struct ossl_quic_frame_ack_st {
      * acknowledge at least one packet number.
      */
     OSSL_QUIC_ACK_RANGE        *ack_ranges;
-    uint64_t                    num_ack_ranges;
+    size_t                      num_ack_ranges;
 
     OSSL_TIME                   delay_time;
     uint64_t                    ect0, ect1, ecnce;
