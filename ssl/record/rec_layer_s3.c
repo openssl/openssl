@@ -48,14 +48,6 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
         DTLS_RECORD_LAYER_clear(rl);
 }
 
-void RECORD_LAYER_release(RECORD_LAYER *rl)
-{
-    /*
-     * TODO(RECLAYER): Need a way to release the write buffers in the record
-     * layer on demand
-     */
-}
-
 /* Checks if we have unprocessed read ahead data pending */
 int RECORD_LAYER_read_pending(const RECORD_LAYER *rl)
 {

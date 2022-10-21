@@ -345,6 +345,8 @@ __owur int ssl3_cbc_digest_record(const EVP_MD *md,
                                   size_t mac_secret_length, char is_sslv3);
 
 int tls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl);
+int tls_alloc_buffers(OSSL_RECORD_LAYER *rl);
+int tls_free_buffers(OSSL_RECORD_LAYER *rl);
 
 int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                        int clearold, size_t *readbytes);
