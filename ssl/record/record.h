@@ -202,7 +202,6 @@ typedef struct ssl_mac_buf_st SSL_MAC_BUF;
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL_CONNECTION *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);
-void RECORD_LAYER_release(RECORD_LAYER *rl);
 int RECORD_LAYER_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl);

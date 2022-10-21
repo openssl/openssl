@@ -6365,22 +6365,22 @@ int SSL_free_buffers(SSL *ssl)
 
     rl = &sc->rlayer;
 
-    if (RECORD_LAYER_read_pending(rl) || RECORD_LAYER_write_pending(rl))
-        return 0;
-
-    RECORD_LAYER_release(rl);
-    return 1;
+    return rl->rrlmethod->free_buffers(rl->rrl)
+           && rl->wrlmethod->free_buffers(rl->wrl);
 }
 
 int SSL_alloc_buffers(SSL *ssl)
 {
+    RECORD_LAYER *rl;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
     if (sc == NULL)
         return 0;
 
-    /* TODO(RECLAYER): Need a way to make this happen in the record layer */
-    return 1;
+    rl = &sc->rlayer;
+
+    return rl->rrlmethod->alloc_buffers(rl->rrl)
+           && rl->wrlmethod->alloc_buffers(rl->wrl);
 }
 
 void SSL_CTX_set_keylog_callback(SSL_CTX *ctx, SSL_CTX_keylog_cb_func cb)

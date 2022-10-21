@@ -2031,6 +2031,66 @@ int tls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl)
     return 1;
 }
 
+int tls_alloc_buffers(OSSL_RECORD_LAYER *rl)
+{
+    if (rl->direction == OSSL_RECORD_DIRECTION_WRITE) {
+        /* If we have a pending write then buffers are already allocated */
+        if (rl->nextwbuf < rl->numwpipes)
+            return 1;
+        /*
+         * We assume 1 pipe with default sized buffer. If what we need ends up
+         * being a different size to that then it will be reallocated on demand.
+         * If we need more than 1 pipe then that will also be allocated on
+         * demand
+         */
+        if (!tls_setup_write_buffer(rl, 1, 0, 0))
+            return 0;
+
+        /*
+         * Normally when we allocate write buffers we immediately write
+         * something into it. In this case we're not doing that so mark the
+         * buffer as empty.
+         */
+        SSL3_BUFFER_set_left(&rl->wbuf[0], 0);
+        return 1;
+    }
+
+    /* Read direction */
+
+    /* If we have pending data to be read then buffers are already allocated */
+    if (rl->curr_rec < rl->num_recs || SSL3_BUFFER_get_left(&rl->rbuf) != 0)
+        return 1;
+    return tls_setup_read_buffer(rl);
+}
+
+int tls_free_buffers(OSSL_RECORD_LAYER *rl)
+{
+    if (rl->direction == OSSL_RECORD_DIRECTION_WRITE) {
+        if (rl->nextwbuf < rl->numwpipes) {
+            /*
+             * We may have pending data. If we've just got one empty buffer
+             * allocated then it has probably just been alloc'd via
+             * tls_alloc_buffers, and it is fine to free it. Otherwise this
+             * looks like real pending data and it is an error.
+             */
+            if (rl->nextwbuf != 0
+                    || rl->numwpipes != 1
+                    || SSL3_BUFFER_get_left(&rl->wbuf[0]) != 0)
+                return 0;
+        }
+        tls_release_write_buffer(rl);
+        return 1;
+    }
+
+    /* Read direction */
+
+    /* If we have pending data to be read then fail */
+    if (rl->curr_rec < rl->num_recs || SSL3_BUFFER_get_left(&rl->rbuf) != 0)
+        return 0;
+
+    return tls_release_read_buffer(rl);
+}
+
 const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_new_record_layer,
     tls_free,
@@ -2057,5 +2117,7 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_get_compression,
     tls_set_max_frag_len,
     NULL,
-    tls_increment_sequence_ctr
+    tls_increment_sequence_ctr,
+    tls_alloc_buffers,
+    tls_free_buffers
 };

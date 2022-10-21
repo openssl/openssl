@@ -320,6 +320,18 @@ struct ossl_record_method_st {
      * Increment the record sequence number
      */
     int (*increment_sequence_ctr)(OSSL_RECORD_LAYER *rl);
+
+    /*
+     * Allocate read or write buffers. Does nothing if already allocated.
+     * Assumes default buffer length and 1 pipeline.
+     */
+    int (*alloc_buffers)(OSSL_RECORD_LAYER *rl);
+
+    /*
+     * Free read or write buffers. Fails if there is pending read or write
+     * data. Buffers are automatically reallocated on next read/write.
+     */
+    int (*free_buffers)(OSSL_RECORD_LAYER *rl);
 };
 
 
