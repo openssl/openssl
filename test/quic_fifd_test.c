@@ -50,8 +50,6 @@ static INFO *cur_info;
 static int cb_fail;
 static int cfq_freed;
 
-typedef int (*test_func)(INFO *info);
-
 /* ----------------------------------------------------------------------
  * 1. Test that a submitted packet, on ack, acks all streams inside of it
  *    Test that a submitted packet, on ack, calls the get by ID function
