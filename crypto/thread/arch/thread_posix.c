@@ -15,6 +15,59 @@
 # include <sys/types.h>
 # include <unistd.h>
 
+#include <stdio.h>
+#include <pthread.h>
+#ifdef __linux__
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#define THR_ID \
+        tid = (uint64_t) syscall(__NR_gettid);
+#elif __APPLE__
+#define THR_ID \
+        pthread_threadid_np(NULL, &tid);
+#endif
+
+#define TERMIN(X) \
+    LOG("Thread %p is being terminated (native), PTID: %ld", X, *((pthread_t*)((X)->handle)));
+#define TERMED(X) \
+    LOG("Thread %p terminated (native)", X)
+#define JOINING(X) \
+    LOG("Thread %p is being joined (native), PTID: %ld", X, *((pthread_t*)((X)->handle)));
+#define JOINED(X) \
+    LOG("Thread %p joined (native), PTID: %ld", X, *((pthread_t*)((X)->handle)));
+#define CVING(X) \
+    LOG("CV waiting %p", X);
+#define CVED(X) \
+    LOG("CV recvd bcast %p", X);
+#define LOCKING(X) \
+    LOG("Lock %p locking", X);
+#define LOCKED(X) \
+    LOG("Lock %p locked", X);
+#define UNLOCKED(X) \
+    LOG("Lock %p unlocked", X);
+#define BCAST(X) \
+    LOG("Bcast %p", X);
+#define RET(X) \
+    { \
+        LOG("%s", "Returning" #X); \
+        return X; \
+    }
+#define GOTO(X) \
+    { \
+        LOG("%s", "Goto" #X); \
+        goto X; \
+    }
+#define LOG(FMT, ...) \
+    { \
+        uint64_t tid; \
+        THR_ID; \
+        printf("%s %s %d: TID:%ld PTID:%lu "FMT"\n", __FILE__, __FUNCTION__, \
+            __LINE__, tid, pthread_self(), \
+            __VA_ARGS__); \
+        fflush(stdout); \
+    }
+
 static void *thread_start_thunk(void *vthread)
 {
     CRYPTO_THREAD *thread;
@@ -95,39 +148,60 @@ int ossl_crypto_thread_native_terminate(CRYPTO_THREAD *thread)
     mask |= CRYPTO_THREAD_TERMINATED;
     mask |= CRYPTO_THREAD_JOINED;
 
-    if (thread == NULL)
-        return 0;
+    LOG("Terminating %p, PTID: %ld", thread, *((pthread_t*)((thread)->handle)));
 
+    if (thread == NULL) {
+        RET(0);
+    }
+
+    LOCKING(thread->statelock);
     ossl_crypto_mutex_lock(thread->statelock);
-    if (thread->handle == NULL || CRYPTO_THREAD_GET_STATE(thread, mask))
-        goto terminated;
+    LOCKED(thread->statelock);
+
+    if (thread->handle == NULL || CRYPTO_THREAD_GET_STATE(thread, mask)) {
+        GOTO(terminated);
+    }
     /* Do not fail when there's a join in progress. Do not block. */
-    if (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOIN_AWAIT))
-        goto fail;
+    if (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOIN_AWAIT)) {
+        GOTO(fail);
+    }
     ossl_crypto_mutex_unlock(thread->statelock);
+    UNLOCKED(thread->statelock);
 
     handle = thread->handle;
+    LOG("Calling pthread_cancel on PTID: %ld...\n", *((pthread_t*)((thread)->handle)));
     if (pthread_cancel(*handle) != 0) {
+        LOCKING(thread->statelock);
         ossl_crypto_mutex_lock(thread->statelock);
-        goto fail;
+        LOCKED(thread->statelock);
+        GOTO(fail);
     }
-    if (pthread_join(*handle, &res) != 0)
-        return 0;
-    if (res != PTHREAD_CANCELED)
-        return 0;
+    LOG("Finished pthread_cancel on PTID: %ld...\n", *((pthread_t*)((thread)->handle)));
+    LOG("Calling pthread_join on PTID: %ld...\n", *((pthread_t*)((thread)->handle)));
+    if (pthread_join(*handle, &res) != 0) {
+        RET(0);
+    }
+    LOG("Called pthread_join on PTID: %ld...\n", *((pthread_t*)((thread)->handle)));
+    if (res != PTHREAD_CANCELED) {
+        RET(0);
+    }
 
     thread->handle = NULL;
     OPENSSL_free(handle);
 
+    LOCKING(thread->statelock);
     ossl_crypto_mutex_lock(thread->statelock);
+    LOCKED(thread->statelock);
 terminated:
     CRYPTO_THREAD_UNSET_ERROR(thread, CRYPTO_THREAD_TERMINATED);
     CRYPTO_THREAD_SET_STATE(thread, CRYPTO_THREAD_TERMINATED);
     ossl_crypto_mutex_unlock(thread->statelock);
+    UNLOCKED(thread->statelock);
     return 1;
 fail:
     CRYPTO_THREAD_SET_ERROR(thread, CRYPTO_THREAD_TERMINATED);
     ossl_crypto_mutex_unlock(thread->statelock);
+    UNLOCKED(thread->statelock);
     return 0;
 }
 

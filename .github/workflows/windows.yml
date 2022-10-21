@@ -47,7 +47,10 @@ jobs:
       run: nmake /S
     - name: test
       working-directory: _build
-      run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
+      run: nmake test VERBOSE_FAILURE=yes TESTS=test_threads HARNESS_JOBS=4
+    - name: test2
+      working-directory: _build
+      run: ./test/threadstest.exe
     - name: install
       # Run on 64 bit only as 32 bit is slow enough already
       if: $${{ matrix.platform.arch == 'win64' }}
@@ -78,7 +81,10 @@ jobs:
       run: nmake /S
     - name: test
       working-directory: _build
-      run: nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
+      run: nmake test VERBOSE_FAILURE=yes TESTS=test_threads HARNESS_JOBS=4
+    - name: test2
+      working-directory: _build
+      run: ./test/threadstest.exe
   minimal:
     strategy:
       matrix:
@@ -102,4 +108,7 @@ jobs:
       run: nmake # verbose, so no /S here
     - name: test
       working-directory: _build
-      run: nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
+      run: nmake test VERBOSE_FAILURE=yes TESTS=test_threads HARNESS_JOBS=4
+    - name: test2
+      working-directory: _build
+      run: ./test/threadstest.exe

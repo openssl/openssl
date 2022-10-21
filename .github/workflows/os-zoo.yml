@@ -7,9 +7,7 @@
 
 name: OS Zoo CI
 
-on:
-  schedule:
-    - cron: '0 5 * * *'
+on: [push]
 
 permissions:
   contents: read
@@ -22,48 +20,34 @@ jobs:
         os: [
           macos-10.15,
           macos-11,
-          ubuntu-18.04,
-          ubuntu-20.04,
         ]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
     - name: config
       run: |
-        CC=${{ matrix.zoo.cc }} ./config --banner=Configured \
-            -Wall -Werror --strict-warnings enable-fips
+        CC=${{ matrix.zoo.cc }} ./config --banner=Configured
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
       run: make -s -j4
-    - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
-  windows:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [
-          windows-2019,
-          windows-2022
-        ]
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v2
-    - uses: ilammy/msvc-dev-cmd@v1
-    - uses: ilammy/setup-nasm@v1
-    - uses: shogo82148/actions-setup-perl@v1
-    - name: prepare the build directory
-      run: mkdir _build
-    - name: config
-      working-directory: _build
-      run: |
-        perl ..\Configure --banner=Configured no-makedepend enable-fips
-    - name: config dump
-      working-directory: _build
-      run: ./configdata.pm --dump
-    - name: build
-      working-directory: _build
-      run: nmake /S
-    - name: test
-      working-directory: _build
-      run: nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
+    - name: make test 1
+      run: ./test/threadstest
+    - name: make test 2
+      run: ./test/threadstest
+    - name: make test 3
+      run: ./test/threadstest
+    - name: make test 4
+      run: ./test/threadstest
+    - name: make test 5
+      run: ./test/threadstest
+    - name: make test 6
+      run: ./test/threadstest
+    - name: make test 7
+      run: ./test/threadstest
+    - name: make test 8
+      run: ./test/threadstest
+    - name: make test 9
+      run: ./test/threadstest
+    - name: make test 10
+      run: ./test/threadstest

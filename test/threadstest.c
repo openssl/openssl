@@ -34,6 +34,47 @@
 #include "testutil.h"
 #include "threadstest.h"
 
+
+#include <stdio.h>
+
+#define TERMIN(X) \
+    LOG("Thread %p is being terminated (native)", X)
+#define TERMED(X) \
+    LOG("Thread %p terminated (native)", X)
+#define JOINING(X) \
+    LOG("Thread %p is being joined (native)", X);
+#define JOINED(X) \
+    LOG("Thread %p joined (native)", X);
+#define CVING(X) \
+    LOG("CV waiting %p", X);
+#define CVED(X) \
+    LOG("CV recvd bcast %p", X);
+#define LOCKING(X) \
+    LOG("Lock %p locking", X);
+#define LOCKED(X) \
+    LOG("Lock %p locked", X);
+#define UNLOCKED(X) \
+    LOG("Lock %p unlocked", X);
+#define BCAST(X) \
+    LOG("Bcast %p", X);
+#define RET(X) \
+    { \
+        LOG("%s", "Returning" #X); \
+        return X; \
+    }
+#define GOTO(X) \
+    { \
+        LOG("%s", "Goto" #X); \
+        goto X; \
+    }
+#define LOG(FMT, ...) \
+    { \
+        printf("%s %s %d: "FMT"\n", __FILE__, __FUNCTION__, \
+            __LINE__, __VA_ARGS__); \
+        fflush(stdout); \
+    }
+
+
 /* Limit the maximum number of threads */
 #define MAXIMUM_THREADS     10
 
@@ -55,7 +96,7 @@ static CRYPTO_RWLOCK *global_lock;
 static CRYPTO_RWLOCK *tsan_lock;
 #endif
 
-/* Grab a globally unique integer value, return 0 on failure */
+/* Grab a globally unique integer value, RET(0) on failure */
 static int get_new_uid(void)
 {
     /*
@@ -67,10 +108,10 @@ static int get_new_uid(void)
     int r;
 
     if (!TEST_true(CRYPTO_THREAD_write_lock(tsan_lock)))
-        return 0;
+        RET(0);
     r = ++current_uid;
     if (!TEST_true(CRYPTO_THREAD_unlock(tsan_lock)))
-        return 0;
+        RET(0);
     return r;
 
 #else
@@ -114,7 +155,7 @@ static int test_once(void)
         || !TEST_true(wait_for_thread(thread))
         || !CRYPTO_THREAD_run_once(&once_run, once_do_run)
         || !TEST_int_eq(once_run_count, 1))
-        return 0;
+        RET(0);
     return 1;
 }
 
@@ -158,29 +199,29 @@ static int test_thread_local(void)
 
     if (!TEST_true(CRYPTO_THREAD_init_local(&thread_local_key,
                                             thread_local_destructor)))
-        return 0;
+        RET(0);
 
     ptr = CRYPTO_THREAD_get_local(&thread_local_key);
     if (!TEST_ptr_null(ptr)
         || !TEST_true(run_thread(&thread, thread_local_thread_cb))
         || !TEST_true(wait_for_thread(thread))
         || !TEST_int_eq(thread_local_thread_cb_ok, 1))
-        return 0;
+        RET(0);
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
 
     ptr = CRYPTO_THREAD_get_local(&thread_local_key);
     if (!TEST_ptr_null(ptr))
-        return 0;
+        RET(0);
 
 # if !defined(OPENSSL_SYS_WINDOWS)
     if (!TEST_int_eq(destructor_run_count, 1))
-        return 0;
+        RET(0);
 # endif
 #endif
 
     if (!TEST_true(CRYPTO_THREAD_cleanup_local(&thread_local_key)))
-        return 0;
+        RET(0);
     return 1;
 }
 
@@ -191,7 +232,7 @@ static int test_atomic(void)
     CRYPTO_RWLOCK *lock = CRYPTO_THREAD_lock_new();
 
     if (!TEST_ptr(lock))
-        return 0;
+        RET(0);
 
     if (CRYPTO_atomic_add(&val, 1, &ret, NULL)) {
         /* This succeeds therefore we're on a platform with lockless atomics */
@@ -302,7 +343,7 @@ static int thread_setup_libctx(int libctx, const char *providers[])
 
     if (libctx && !TEST_true(test_get_libctx(&multi_libctx, NULL, config_file,
                                              NULL, NULL)))
-        return 0;
+        RET(0);
 
     if (providers != NULL)
         for (n = 0; providers[n] != NULL; n++)
@@ -310,7 +351,7 @@ static int thread_setup_libctx(int libctx, const char *providers[])
                 || !TEST_ptr(multi_provider[n] = OSSL_PROVIDER_load(multi_libctx,
                                                                     providers[n]))) {
                 thead_teardown_libctx();
-                return 0;
+                RET(0);
             }
     return 1;
 }
@@ -321,7 +362,7 @@ static int teardown_threads(void)
 
     for (i = 0; i < multi_num_threads; i++)
         if (!TEST_true(wait_for_thread(multi_threads[i])))
-            return 0;
+            RET(0);
     return 1;
 }
 
@@ -330,11 +371,11 @@ static int start_threads(size_t n, void (*thread_func)(void))
     size_t i;
 
     if (!TEST_size_t_le(multi_num_threads + n, MAXIMUM_THREADS))
-        return 0;
+        RET(0);
 
     for (i = 0 ; i < n; i++)
         if (!TEST_true(run_thread(multi_threads + multi_num_threads++, thread_func)))
-            return 0;
+            RET(0);
     return 1;
 }
 
@@ -751,25 +792,25 @@ static int test_thread_reported_flags(void)
 
 #if !defined(OPENSSL_THREADS)
     if (!TEST_int_eq(flags, 0))
-        return 0;
+        RET(0);
 #endif
 
 #if defined(OPENSSL_NO_THREAD_POOL)
     if (!TEST_int_eq(flags & OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL, 0))
-        return 0;
+        RET(0);
 #else
     if (!TEST_int_eq(flags & OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL,
                      OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL))
-        return 0;
+        RET(0);
 #endif
 
 #if defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
     if (!TEST_int_eq(flags & OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN, 0))
-        return 0;
+        RET(0);
 #else
     if (!TEST_int_eq(flags & OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN,
                      OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN))
-        return 0;
+        RET(0);
 #endif
 
     return 1;
@@ -780,6 +821,7 @@ static int test_thread_reported_flags(void)
 # define TEST_THREAD_NATIVE_FN_SET_VALUE 1
 static uint32_t test_thread_native_fn(void *data)
 {
+    LOG("%s", "Entry point")
     uint32_t *ldata = (uint32_t*) data;
     *ldata = *ldata + 1;
     return *ldata - 1;
@@ -787,20 +829,24 @@ static uint32_t test_thread_native_fn(void *data)
 
 static uint32_t test_thread_noreturn(void *data)
 {
+    LOG("%s", "Entry point")
+
     while (1) {
 	OSSL_sleep(1000);
     }
 
     /* unreachable */
     OPENSSL_die("test_thread_noreturn", __FILE__, __LINE__);
-
-    return 0;
+    RET(0);
 }
 
 /* Tests of native threads */
 
 static int test_thread_native(void)
 {
+    LOG("%s", "Entry point")
+
+    int testval = 0;
     uint32_t retval;
     uint32_t local;
     CRYPTO_THREAD *t;
@@ -809,8 +855,11 @@ static int test_thread_native(void)
 
     local = 1;
     t = ossl_crypto_thread_native_start(test_thread_native_fn, &local, 1);
-    if (!TEST_ptr(t))
-        return 0;
+    if (!TEST_ptr(t)) {
+        RET(0);
+    }
+
+    LOG("Thread %p started (native), PTID: %lu", t,0);
 
     /*
      * pthread_join results in undefined behaviour if called on a joined
@@ -818,40 +867,67 @@ static int test_thread_native(void)
      * ensure that this does not happen (thread sanitizer will warn us
      * if we do).
      */
-    if (!TEST_int_eq(ossl_crypto_thread_native_join(t, &retval), 1))
-        return 0;
-    if (!TEST_int_eq(ossl_crypto_thread_native_join(t, &retval), 1))
-        return 0;
+    if (!TEST_int_eq(ossl_crypto_thread_native_join(t, &retval), 1)) {
+        RET(0);
+    }
+    LOG("Thread %p joined (native), PTID: %lu", t,0);
 
-    if (!TEST_int_eq(retval, 1) || !TEST_int_eq(local, 2))
-        return 0;
+    if (!TEST_int_eq(ossl_crypto_thread_native_join(t, &retval), 1)) {
+        RET(0);
+    }
+    LOG("Thread %p joined (native), PTID: %lu", t,0);
 
-    if (!TEST_int_eq(ossl_crypto_thread_native_terminate(t), 1))
-        return 0;
-    if (!TEST_int_eq(ossl_crypto_thread_native_terminate(t), 1))
-        return 0;
+    if (!TEST_int_eq(retval, 1) || !TEST_int_eq(local, 2)) {
+        RET(0);
+    }
 
-    if (!TEST_int_eq(ossl_crypto_thread_native_join(t, &retval), 0))
-        return 0;
+    if (!TEST_int_eq(ossl_crypto_thread_native_terminate(t), 1)) {
+        RET(0);
+    }
+    LOG("Thread %p terminted (native), PTID: %lu", t,0);
 
-    if (!TEST_int_eq(ossl_crypto_thread_native_clean(t), 1))
-        return 0;
+    if (!TEST_int_eq(ossl_crypto_thread_native_terminate(t), 1)) {
+        RET(0);
+    }
+    LOG("Thread %p terminted (native), PTID: %lu", t,0);
+
+    if (!TEST_int_eq(ossl_crypto_thread_native_join(t, &retval), 0)){
+        RET(0);
+    }
+    LOG("Thread %p joined (native), PTID: %lu", t,0);
+
+    if (!TEST_int_eq(ossl_crypto_thread_native_clean(t), 1)) {
+        RET(0);
+    }
+    LOG("Thread %p cleaned (native)", t);
+
     t = NULL;
-
-    if (!TEST_int_eq(ossl_crypto_thread_native_clean(t), 0))
-        return 0;
+    if (!TEST_int_eq(ossl_crypto_thread_native_clean(t), 0)) {
+        RET(0);
+    }
 
     /* termination of a long running thread */
 
     t = ossl_crypto_thread_native_start(test_thread_noreturn, NULL, 1);
-    if (!TEST_ptr(t))
-        return 0;
-    if (!TEST_int_eq(ossl_crypto_thread_native_terminate(t), 1))
-        return 0;
-    if (!TEST_int_eq(ossl_crypto_thread_native_clean(t), 1))
-        return 0;
+    if (!TEST_ptr(t)) {
+        RET(0);
+    }
+    LOG("Thread %p started (native), PTID: %lu", t,0);
 
-    return 1;
+    TERMIN(t)
+    if (!TEST_int_eq(ossl_crypto_thread_native_terminate(t), 1)) {
+        RET(0);
+    }
+    LOG("Thread %p terminted (native)", t);
+
+    if (!TEST_int_eq(ossl_crypto_thread_native_clean(t), 1)) {
+        RET(0);
+    }
+    LOG("Thread %p cleaned (native)", t);
+
+    testval = 1;
+
+    return testval;
 }
 
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
@@ -869,23 +945,23 @@ static int test_thread_internal(void)
 
     if (threads_supported == 0) {
         if (!TEST_uint64_t_eq(OSSL_get_max_threads(NULL), 0))
-            return 0;
+            RET(0);
         if (!TEST_uint64_t_eq(OSSL_get_max_threads(cust_ctx), 0))
-            return 0;
+            RET(0);
 
         if (!TEST_int_eq(OSSL_set_max_threads(NULL, 1), 0))
-            return 0;
+            RET(0);
         if (!TEST_int_eq(OSSL_set_max_threads(cust_ctx, 1), 0))
-            return 0;
+            RET(0);
 
         if (!TEST_uint64_t_eq(OSSL_get_max_threads(NULL), 0))
-            return 0;
+            RET(0);
         if (!TEST_uint64_t_eq(OSSL_get_max_threads(cust_ctx), 0))
-            return 0;
+            RET(0);
 
         t[0] = ossl_crypto_thread_start(NULL, test_thread_native_fn, &local[0]);
         if (!TEST_ptr_null(t[0]))
-            return 0;
+            RET(0);
 
         return 1;
     }
@@ -893,41 +969,41 @@ static int test_thread_internal(void)
     /* fail when not allowed to use threads */
 
     if (!TEST_uint64_t_eq(OSSL_get_max_threads(NULL), 0))
-        return 0;
+        RET(0);
     t[0] = ossl_crypto_thread_start(NULL, test_thread_native_fn, &local[0]);
     if (!TEST_ptr_null(t[0]))
-        return 0;
+        RET(0);
 
     /* fail when enabled on a different context */
     if (!TEST_uint64_t_eq(OSSL_get_max_threads(cust_ctx), 0))
-        return 0;
+        RET(0);
     if (!TEST_int_eq(OSSL_set_max_threads(cust_ctx, 1), 1))
-        return 0;
+        RET(0);
     if (!TEST_uint64_t_eq(OSSL_get_max_threads(NULL), 0))
-        return 0;
+        RET(0);
     if (!TEST_uint64_t_eq(OSSL_get_max_threads(cust_ctx), 1))
-        return 0;
+        RET(0);
     t[0] = ossl_crypto_thread_start(NULL, test_thread_native_fn, &local[0]);
     if (!TEST_ptr_null(t[0]))
-        return 0;
+        RET(0);
     if (!TEST_int_eq(OSSL_set_max_threads(cust_ctx, 0), 1))
-        return 0;
+        RET(0);
 
     /* sequential startup */
 
     if (!TEST_int_eq(OSSL_set_max_threads(NULL, 1), 1))
-        return 0;
+        RET(0);
     if (!TEST_uint64_t_eq(OSSL_get_max_threads(NULL), 1))
-        return 0;
+        RET(0);
     if (!TEST_uint64_t_eq(OSSL_get_max_threads(cust_ctx), 0))
-        return 0;
+        RET(0);
 
     for (i = 0; i < OSSL_NELEM(t); ++i) {
         local[0] = i + 1;
 
         t[i] = ossl_crypto_thread_start(NULL, test_thread_native_fn, &local[0]);
         if (!TEST_ptr(t[i]))
-            return 0;
+            RET(0);
 
         /*
          * pthread_join results in undefined behaviour if called on a joined
@@ -936,67 +1012,67 @@ static int test_thread_internal(void)
          * if we do).
          */
         if (!TEST_int_eq(ossl_crypto_thread_join(t[i], &retval[0]), 1))
-            return 0;
+            RET(0);
         if (!TEST_int_eq(ossl_crypto_thread_join(t[i], &retval[0]), 1))
-            return 0;
+            RET(0);
 
         if (!TEST_int_eq(retval[0], i + 1) || !TEST_int_eq(local[0], i + 2))
-            return 0;
+            RET(0);
 
         if (!TEST_int_eq(ossl_crypto_thread_clean(t[i]), 1))
-            return 0;
+            RET(0);
         t[i] = NULL;
 
         if (!TEST_int_eq(ossl_crypto_thread_clean(t[i]), 0))
-            return 0;
+            RET(0);
     }
 
     /* parallel startup */
 
     if (!TEST_int_eq(OSSL_set_max_threads(NULL, OSSL_NELEM(t)), 1))
-        return 0;
+        RET(0);
 
     for (i = 0; i < OSSL_NELEM(t); ++i) {
         local[i] = i + 1;
         t[i] = ossl_crypto_thread_start(NULL, test_thread_native_fn, &local[i]);
         if (!TEST_ptr(t[i]))
-            return 0;
+            RET(0);
     }
     for (i = 0; i < OSSL_NELEM(t); ++i) {
         if (!TEST_int_eq(ossl_crypto_thread_join(t[i], &retval[i]), 1))
-            return 0;
+            RET(0);
     }
     for (i = 0; i < OSSL_NELEM(t); ++i) {
         if (!TEST_int_eq(retval[i], i + 1) || !TEST_int_eq(local[i], i + 2))
-            return 0;
+            RET(0);
         if (!TEST_int_eq(ossl_crypto_thread_clean(t[i]), 1))
-            return 0;
+            RET(0);
     }
 
     /* parallel startup, bottleneck */
 
     if (!TEST_int_eq(OSSL_set_max_threads(NULL, OSSL_NELEM(t) - 1), 1))
-        return 0;
+        RET(0);
 
     for (i = 0; i < OSSL_NELEM(t); ++i) {
         local[i] = i + 1;
         t[i] = ossl_crypto_thread_start(NULL, test_thread_native_fn, &local[i]);
         if (!TEST_ptr(t[i]))
-            return 0;
+            RET(0);
     }
     for (i = 0; i < OSSL_NELEM(t); ++i) {
         if (!TEST_int_eq(ossl_crypto_thread_join(t[i], &retval[i]), 1))
-            return 0;
+            RET(0);
     }
     for (i = 0; i < OSSL_NELEM(t); ++i) {
         if (!TEST_int_eq(retval[i], i + 1) || !TEST_int_eq(local[i], i + 2))
-            return 0;
+            RET(0);
         if (!TEST_int_eq(ossl_crypto_thread_clean(t[i]), 1))
-            return 0;
+            RET(0);
     }
 
     if (!TEST_int_eq(OSSL_set_max_threads(NULL, 0), 1))
-        return 0;
+        RET(0);
 
     OSSL_LIB_CTX_free(cust_ctx);
     return 1;
@@ -1005,19 +1081,29 @@ static int test_thread_internal(void)
 
 static uint32_t test_thread_native_multiple_joins_fn1(void *data)
 {
-    return 0;
+    LOG("%s", "Entry point")
+    LOG("%s","Ret point")
+    RET(0);
 }
 
 static uint32_t test_thread_native_multiple_joins_fn2(void *data)
 {
+    LOG("%s", "Entry point")
+    JOINING(((CRYPTO_THREAD *)data));
     ossl_crypto_thread_native_join((CRYPTO_THREAD *)data, NULL);
-    return 0;
+    JOINED(((CRYPTO_THREAD *)data));
+    LOG("%s","Ret point")
+    RET(0);
 }
 
 static uint32_t test_thread_native_multiple_joins_fn3(void *data)
 {
+    LOG("%s", "Entry point")
+    JOINING(((CRYPTO_THREAD *)data));
     ossl_crypto_thread_native_join((CRYPTO_THREAD *)data, NULL);
-    return 0;
+    JOINED(((CRYPTO_THREAD *)data));
+    LOG("%s","Ret point")
+    RET(0);
 }
 
 static int test_thread_native_multiple_joins(void)
@@ -1025,25 +1111,35 @@ static int test_thread_native_multiple_joins(void)
     CRYPTO_THREAD *t, *t1, *t2;
 
     t = ossl_crypto_thread_native_start(test_thread_native_multiple_joins_fn1, NULL, 1);
+    LOG("Thread %p started (native), PTID: %lu", t,0);
+
     t1 = ossl_crypto_thread_native_start(test_thread_native_multiple_joins_fn2, t, 1);
+    LOG("Thread %p started (native), PTID: %lu", t1,0);
+
     t2 = ossl_crypto_thread_native_start(test_thread_native_multiple_joins_fn3, t, 1);
+    LOG("Thread %p started (native), PTID: %lu", t2,0);
 
     if (!TEST_ptr(t) || !TEST_ptr(t1) || !TEST_ptr(t2))
-        return 0;
+        RET(0);
 
+    JOINING(t2);
     if (!TEST_int_eq(ossl_crypto_thread_native_join(t2, NULL), 1))
-        return 0;
+        RET(0);
+    JOINED(t2);
+
+    JOINING(t1);
     if (!TEST_int_eq(ossl_crypto_thread_native_join(t1, NULL), 1))
-        return 0;
+        RET(0);
+    JOINED(t1);
 
     if (!TEST_int_eq(ossl_crypto_thread_native_clean(t2), 1))
-        return 0;
+        RET(0);
 
     if (!TEST_int_eq(ossl_crypto_thread_native_clean(t1), 1))
-        return 0;
+        RET(0);
 
     if (!TEST_int_eq(ossl_crypto_thread_native_clean(t), 1))
-        return 0;
+        RET(0);
 
     return 1;
 }
@@ -1071,66 +1167,17 @@ const OPTIONS *test_get_options(void)
 
 int setup_tests(void)
 {
-    OPTION_CHOICE o;
-    char *datadir;
+#define _ADD_TEST(X) \
+    printf("Calling test: %s\n", #X); \
+    fflush(stdout); \
+    ADD_TEST(X)
 
-    while ((o = opt_next()) != OPT_EOF) {
-        switch (o) {
-        case OPT_FIPS:
-            do_fips = 1;
-            break;
-        case OPT_CONFIG_FILE:
-            config_file = opt_arg();
-            break;
-        case OPT_TEST_CASES:
-            break;
-        default:
-            return 0;
-        }
-    }
-
-    if (!TEST_ptr(datadir = test_get_argument(0)))
-        return 0;
-
-    privkey = test_mk_file_path(datadir, "rsakey.pem");
-    if (!TEST_ptr(privkey))
-        return 0;
-
-    if (!TEST_ptr(global_lock = CRYPTO_THREAD_lock_new()))
-        return 0;
-
-#ifdef TSAN_REQUIRES_LOCKING
-    if (!TEST_ptr(tsan_lock = CRYPTO_THREAD_lock_new()))
-        return 0;
-#endif
-
-    /* Keep first to validate auto creation of default library context */
-    ADD_TEST(test_multi_default);
-
-    ADD_TEST(test_lock);
-    ADD_TEST(test_once);
-    ADD_TEST(test_thread_local);
-    ADD_TEST(test_atomic);
-    ADD_TEST(test_multi_load);
-    ADD_TEST(test_multi_general_worker_default_provider);
-    ADD_TEST(test_multi_general_worker_fips_provider);
-    ADD_TEST(test_multi_fetch_worker);
-    ADD_TEST(test_multi_shared_pkey);
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    ADD_TEST(test_multi_downgrade_shared_pkey);
-#endif
-    ADD_TEST(test_multi_load_unload_provider);
-    ADD_TEST(test_obj_add);
-    ADD_TEST(test_lib_ctx_load_config);
-#if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
-    ADD_TEST(test_bio_dgram_pair);
-#endif
-    ADD_TEST(test_thread_reported_flags);
+    _ADD_TEST(test_thread_reported_flags);
 #if defined(OPENSSL_THREADS)
-    ADD_TEST(test_thread_native);
-    ADD_TEST(test_thread_native_multiple_joins);
+    _ADD_TEST(test_thread_native);
+    _ADD_TEST(test_thread_native_multiple_joins);
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
-    ADD_TEST(test_thread_internal);
+    _ADD_TEST(test_thread_internal);
 #endif
 #endif
 

@@ -13,6 +13,45 @@
 # include <process.h>
 # include <windows.h>
 
+#include <stdio.h>
+
+#define TERMIN(X) \
+    LOG("Thread %p is being terminated (native)")
+#define TERMED(X) \
+    LOG("Thread %p terminated (native)", X)
+#define JOINING(X) \
+    LOG("Thread %p is being joined (native)");
+#define JOINED(X) \
+    LOG("Thread %p joined (native)", X);
+#define CVING(X) \
+    LOG("CV waiting %p", X);
+#define CVED(X) \
+    LOG("CV recvd bcast %p", X);
+#define LOCKING(X) \
+    LOG("Lock %p locking", X);
+#define LOCKED(X) \
+    LOG("Lock %p locked", X);
+#define UNLOCKED(X) \
+    LOG("Lock %p unlocked", X);
+#define BCAST(X) \
+    LOG("Bcast %p", X);
+#define RET(X) \
+    { \
+        LOG("%s", "Returning" #X); \
+        return X; \
+    }
+#define GOTO(X) \
+    { \
+        LOG("%s", "Goto" #X); \
+        goto X; \
+    }
+#define LOG(FMT, ...) \
+    { \
+        printf("%s %s %d: "FMT"\n", __FILE__, __FUNCTION__, \
+            __LINE__, __VA_ARGS__); \
+        fflush(stdout); \
+    }
+
 static DWORD __stdcall thread_start_thunk(LPVOID vthread)
 {
     CRYPTO_THREAD *thread;
@@ -95,34 +134,52 @@ int ossl_crypto_thread_native_terminate(CRYPTO_THREAD *thread)
     if (thread == NULL)
         return 1;
 
+    LOG("Terminating %p", thread);
+
+    LOCKING(thread->statelock);
     ossl_crypto_mutex_lock(thread->statelock);
-    if (thread->handle == NULL || CRYPTO_THREAD_GET_STATE(thread, mask))
-        goto terminated;
+    LOCKED(thread->statelock);
+    if (thread->handle == NULL || CRYPTO_THREAD_GET_STATE(thread, mask)) {
+        GOTO(terminated);
+    }
     ossl_crypto_mutex_unlock(thread->statelock);
+    UNLOCKED(thread->statelock);
 
     handle = thread->handle;
+    LOG("Calling waitforsingle...");
     if (WaitForSingleObject(*handle, 0) != WAIT_OBJECT_0) {
+        LOG("Calling termthr...");
         if (TerminateThread(*handle, STILL_ACTIVE) == 0) {
+            LOCKING(thread->statelock);
             ossl_crypto_mutex_lock(thread->statelock);
+            LOCKED(thread->statelock);
             CRYPTO_THREAD_SET_ERROR(thread, CRYPTO_THREAD_TERMINATED);
             ossl_crypto_mutex_unlock(thread->statelock);
-            return 0;
+            LOCKED(thread->statelock);
+            RET(0);
         }
+        LOG("Called termthr...");
     }
+    LOG("Called waitforsingle...");
 
+    LOG("Calling closehandle...");
     if (CloseHandle(*handle) == 0) {
         CRYPTO_THREAD_SET_ERROR(thread, CRYPTO_THREAD_TERMINATED);
-        return 0;
+        RET(0);
     }
+    LOG("Called closehandle...");
 
     thread->handle = NULL;
     OPENSSL_free(handle);
 
+    LOCKING(thread->statelock);
     ossl_crypto_mutex_lock(thread->statelock);
+    LOCKED(thread->statelock);
 terminated:
     CRYPTO_THREAD_UNSET_ERROR(thread, CRYPTO_THREAD_TERMINATED);
     CRYPTO_THREAD_SET_STATE(thread, CRYPTO_THREAD_TERMINATED);
     ossl_crypto_mutex_unlock(thread->statelock);
+    UNLOCKED(thread->statelock);
     return 1;
 }
 

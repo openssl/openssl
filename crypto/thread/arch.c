@@ -11,6 +11,44 @@
 #include <internal/thread_arch.h>
 
 #if defined(OPENSSL_THREADS)
+#include <stdio.h>
+
+#define TERMIN(X) \
+    LOG("Thread %p is being terminated (native)")
+#define TERMED(X) \
+    LOG("Thread %p terminated (native)", X)
+#define JOINING(X) \
+    LOG("Thread %p is being joined (native)");
+#define JOINED(X) \
+    LOG("Thread %p joined (native)", X);
+#define CVING(X) \
+    LOG("CV waiting %p", X);
+#define CVED(X) \
+    LOG("CV recvd bcast %p", X);
+#define LOCKING(X) \
+    LOG("Lock %p locking", X);
+#define LOCKED(X) \
+    LOG("Lock %p locked", X);
+#define UNLOCKED(X) \
+    LOG("Lock %p unlocked", X);
+#define BCAST(X) \
+    LOG("Bcast %p", X);
+#define RET(X) \
+    { \
+        LOG("%s", "Returning" #X); \
+        return X; \
+    }
+#define GOTO(X) \
+    { \
+        LOG("%s", "Goto" #X); \
+        goto X; \
+    }
+#define LOG(FMT, ...) \
+    { \
+        printf("%s %s %d: "FMT"\n", __FILE__, __FUNCTION__, \
+            __LINE__, __VA_ARGS__); \
+        fflush(stdout); \
+    }
 
 CRYPTO_THREAD *ossl_crypto_thread_native_start(CRYPTO_THREAD_ROUTINE routine,
                                                void *data, int joinable)
@@ -35,6 +73,7 @@ CRYPTO_THREAD *ossl_crypto_thread_native_start(CRYPTO_THREAD_ROUTINE routine,
     handle->routine = routine;
     handle->joinable = joinable;
 
+    LOG("Spawning %p...", handle);
     if (ossl_crypto_thread_native_spawn(handle) == 1)
         return handle;
 
@@ -53,34 +92,54 @@ int ossl_crypto_thread_native_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_RETVAL *
     if (thread == NULL)
         return 0;
 
+    LOG("Joining %p", thread);
+
+    LOCKING(thread->statelock);
     ossl_crypto_mutex_lock(thread->statelock);
+    LOCKED(thread->statelock);
+
     req_state_mask = CRYPTO_THREAD_TERMINATED | CRYPTO_THREAD_FINISHED \
                      | CRYPTO_THREAD_JOINED;
-    while (!CRYPTO_THREAD_GET_STATE(thread, req_state_mask))
+    while (!CRYPTO_THREAD_GET_STATE(thread, req_state_mask)) {
+        CVING(thread->condvar);
+        UNLOCKED(thread->statelock);
         ossl_crypto_condvar_wait(thread->condvar, thread->statelock);
+        LOCKED(thread->statelock);
+        CVED(thread->condvar);
+    }
 
     if (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_TERMINATED)) {
         ossl_crypto_mutex_unlock(thread->statelock);
+        UNLOCKED(thread->statelock);
         return 0;
     }
 
-    if (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOINED))
-        goto pass;
+    if (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOINED)) {
+        GOTO(pass);
+    }
 
     /* Await concurrent join completion, if any. */
     while (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOIN_AWAIT)) {
-        if (!CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOINED))
+        if (!CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOINED)) {
+            CVING(thread->condvar); UNLOCKED(thread->statelock);
             ossl_crypto_condvar_wait(thread->condvar, thread->statelock);
-        if (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOINED))
-            goto pass;
+            LOCKED(thread->statelock); CVED(thread->condvar);
+        }
+        if (CRYPTO_THREAD_GET_STATE(thread, CRYPTO_THREAD_JOINED)) {
+            GOTO(pass);
+        }
     }
     CRYPTO_THREAD_SET_STATE(thread, CRYPTO_THREAD_JOIN_AWAIT);
     ossl_crypto_mutex_unlock(thread->statelock);
+    UNLOCKED(thread->statelock);
 
-    if (ossl_crypto_thread_native_perform_join(thread, retval) == 0)
-        goto fail;
+    if (ossl_crypto_thread_native_perform_join(thread, retval) == 0) {
+        GOTO(fail);
+    }
 
+    LOCKING(thread->statelock);
     ossl_crypto_mutex_lock(thread->statelock);
+    LOCKED(thread->statelock);
 pass:
     CRYPTO_THREAD_UNSET_ERROR(thread, CRYPTO_THREAD_JOINED);
     CRYPTO_THREAD_SET_STATE(thread, CRYPTO_THREAD_JOINED);
@@ -93,13 +152,16 @@ pass:
      * Broadcasing here will always wake one.
      */
     ossl_crypto_condvar_broadcast(thread->condvar);
+    BCAST(thread->condvar);
     ossl_crypto_mutex_unlock(thread->statelock);
+    UNLOCKED(thread->condvar);
 
     if (retval != NULL)
         *retval = thread->retval;
     return 1;
 
 fail:
+    printf("failed\n"); fflush(stdout);
     ossl_crypto_mutex_lock(thread->statelock);
     CRYPTO_THREAD_SET_ERROR(thread, CRYPTO_THREAD_JOINED);
 
