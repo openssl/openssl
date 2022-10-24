@@ -331,6 +331,7 @@ int run_tests(const char *test_prog_name)
             test_flush_tapout();
         } else if (all_tests[i].num == -1) {
             set_test_title(all_tests[i].test_case_name);
+            ERR_clear_error();
             verdict = all_tests[i].test_fn();
             finalize(verdict != 0);
             test_verdict(verdict, "%d - %s", test_case_count + 1, test_title);
@@ -365,6 +366,7 @@ int run_tests(const char *test_prog_name)
                 j = (j + jstep) % all_tests[i].num;
                 if (single_iter != -1 && ((jj + 1) != single_iter))
                     continue;
+                ERR_clear_error();
                 v = all_tests[i].param_test_fn(j);
 
                 if (v == 0) {

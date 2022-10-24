@@ -192,8 +192,6 @@ static int test_ssl_corrupt(int testidx)
 
     docorrupt = 0;
 
-    ERR_clear_error();
-
     TEST_info("Starting #%d, %s", testidx, cipher_list[testidx]);
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(),
