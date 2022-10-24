@@ -327,8 +327,6 @@ static int test_d2i_CMS_decode(const int idx)
     long buf_len = 0;
     int ret = 0;
 
-    ERR_clear_error();
-
     if (!TEST_ptr(bio = BIO_new_file(derin, "r")))
       goto end;
 
