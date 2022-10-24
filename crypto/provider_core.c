@@ -1208,7 +1208,7 @@ static int provider_remove_store_methods(OSSL_PROVIDER *prov)
     if (!freeing) {
         int acc;
 
-        if (!CRYPTO_THREAD_read_lock(prov->opbits_lock))
+        if (!CRYPTO_THREAD_write_lock(prov->opbits_lock))
             return 0;
         OPENSSL_free(prov->operation_bits);
         prov->operation_bits = NULL;
