@@ -1569,6 +1569,14 @@ int tls_prepare_record_header_default(OSSL_RECORD_LAYER *rl,
     return 1;
 }
 
+/*
+ * Encryption growth may result from padding in CBC ciphersuites (never more
+ * than SSL_RT_MAX_CIPHER_BLOCK_SIZE bytes), or from an AEAD tag (never more
+ * than EVP_MAX_MD_SIZE bytes). In the case of stitched ciphersuites growth can
+ * come from both of these.
+ */
+#define MAX_ENCRYPTION_GROWTH (EVP_MAX_MD_SIZE + SSL_RT_MAX_CIPHER_BLOCK_SIZE)
+
 int tls_prepare_for_encryption_default(OSSL_RECORD_LAYER *rl,
                                        size_t mac_size,
                                        WPACKET *thispkt,
@@ -1593,14 +1601,8 @@ int tls_prepare_for_encryption_default(OSSL_RECORD_LAYER *rl,
         }
     }
 
-    /*
-     * Reserve some bytes for any growth that may occur during encryption.
-     * This will be at most one cipher block or the tag length if using
-     * AEAD. SSL_RT_MAX_CIPHER_BLOCK_SIZE covers either case.
-     */
-    if (!WPACKET_reserve_bytes(thispkt,
-                               SSL_RT_MAX_CIPHER_BLOCK_SIZE,
-                               NULL)
+    /* Reserve some bytes for any growth that may occur during encryption. */
+    if (!WPACKET_reserve_bytes(thispkt, MAX_ENCRYPTION_GROWTH, NULL)
             /*
              * We also need next the amount of bytes written to this
              * sub-packet
@@ -1631,6 +1633,8 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
 
     /* Allocate bytes for the encryption overhead */
     if (!WPACKET_get_length(thispkt, &origlen)
+               /* Check we allowed enough room for the encryption growth */
+            || !ossl_assert(origlen + MAX_ENCRYPTION_GROWTH >= thiswr->length)
             /* Encryption should never shrink the data! */
             || origlen > thiswr->length
             || (thiswr->length > origlen
