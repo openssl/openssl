@@ -25,8 +25,8 @@
 static int sizes[NUM_SIZES] = { 64, 512, 2048, 16 * 1024 };
 
 /* using global buffers */
-unsigned char *original = NULL;
-unsigned char *result = NULL;
+static unsigned char *original = NULL;
+static unsigned char *result = NULL;
 
 /*
  * For compression:
