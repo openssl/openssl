@@ -1063,9 +1063,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                  * alphanumeric, so we call this an error.
                  */
                 ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_COMMAND);
-                retval = found = 0;
-                l++;
-                break;
+                return 0;
             }
 
             if (rule == CIPHER_SPECIAL) {
