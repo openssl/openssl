@@ -1398,6 +1398,9 @@ int tls_free(OSSL_RECORD_LAYER *rl)
     size_t left, written;
     int ret = 1;
 
+    if (rl == NULL)
+        return 1;
+
     rbuf = &rl->rbuf;
 
     left = SSL3_BUFFER_get_left(rbuf);

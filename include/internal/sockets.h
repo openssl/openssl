@@ -61,6 +61,17 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   define accept(s,f,l)   ((int)accept(s,f,l))
 #  endif
 
+/* Windows have other names for shutdown() reasons */
+#  ifndef SHUT_RD
+#   define SHUT_RD SD_RECEIVE
+#  endif
+#  ifndef SHUT_WR
+#   define SHUT_WR SD_SEND
+#  endif
+#  ifndef SHUT_RDWR
+#   define SHUT_RDWR SD_BOTH
+#  endif
+
 # else
 #  if defined(__APPLE__)
     /*

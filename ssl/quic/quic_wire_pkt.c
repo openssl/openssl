@@ -206,7 +206,7 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
         if (!PACKET_copy_bytes(pkt, hdr->dst_conn_id.id, short_conn_id_len))
             return 0;
 
-        hdr->dst_conn_id.id_len = short_conn_id_len;
+        hdr->dst_conn_id.id_len = (unsigned char)short_conn_id_len;
 
         /*
          * Skip over the PN. If this is a partial decode, the PN length field
@@ -334,7 +334,7 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
 
                 if (!PACKET_get_quic_vlint(pkt, &token_len)
                     || token_len > SIZE_MAX
-                    || !PACKET_get_bytes(pkt, &hdr->token, token_len))
+                    || !PACKET_get_bytes(pkt, &hdr->token, (size_t)token_len))
                     return 0;
 
                 hdr->token_len  = (size_t)token_len;
@@ -642,7 +642,7 @@ int ossl_quic_wire_get_pkt_hdr_dst_conn_id(const unsigned char *buf,
         if (buf_len < QUIC_MIN_VALID_PKT_LEN_CRYPTO + short_conn_id_len)
             return 0;
 
-        dst_conn_id->id_len = short_conn_id_len;
+        dst_conn_id->id_len = (unsigned char)short_conn_id_len;
         memcpy(dst_conn_id->id, buf + 1, short_conn_id_len);
         return 1;
     }

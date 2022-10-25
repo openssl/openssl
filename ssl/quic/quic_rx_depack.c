@@ -13,6 +13,7 @@
 #include "internal/quic_record_rx.h"
 #include "internal/quic_ackm.h"
 #include "internal/quic_rx_depack.h"
+#include "internal/sockets.h"
 
 #include "quic_record_rx_wrap.h"
 #include "quic_local.h"
@@ -200,12 +201,14 @@ static int depack_do_frame_ack(PACKET *pkt, QUIC_CONNECTION *connection,
     int ok = 1;          /* Assume the best */
 
     if (!ossl_quic_wire_peek_frame_ack_num_ranges(pkt, &total_ranges)
+        /* In case sizeof(uint64_t) > sizeof(size_t) */
+        || total_ranges > SIZE_MAX / sizeof(ack_ranges[0])
         || (ack_ranges = OPENSSL_zalloc(sizeof(ack_ranges[0])
-                                        * total_ranges)) == NULL)
+                                        * (size_t)total_ranges)) == NULL)
         return 0;
 
     ack.ack_ranges = ack_ranges;
-    ack.num_ack_ranges = total_ranges;
+    ack.num_ack_ranges = (size_t)total_ranges;
 
     if (!ossl_quic_wire_decode_frame_ack(pkt, ack_delay_exp, &ack, NULL))
         ok = 0;

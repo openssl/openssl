@@ -54,7 +54,7 @@ static void ring_buf_destroy(struct ring_buf *r)
 
 static size_t ring_buf_used(struct ring_buf *r)
 {
-    return r->head_offset - r->ctail_offset;
+    return (size_t)(r->head_offset - r->ctail_offset);
 }
 
 static size_t ring_buf_avail(struct ring_buf *r)
@@ -122,7 +122,7 @@ static int ring_buf_get_buf_at(const struct ring_buf *r,
     }
 
     idx = logical_offset % r->alloc;
-    l   = r->head_offset - logical_offset;
+    l   = (size_t)(r->head_offset - logical_offset);
     if (l > r->alloc - idx)
         l = r->alloc - idx;
 
@@ -315,7 +315,7 @@ int ossl_quic_sstream_get_stream_frame(QUIC_SSTREAM *qss,
         assert(i < 2);
 
         if (total_len + src_len > max_len)
-            src_len = max_len - total_len;
+            src_len = (size_t)(max_len - total_len);
 
         iov[num_iov_].buf       = src;
         iov[num_iov_].buf_len   = src_len;
