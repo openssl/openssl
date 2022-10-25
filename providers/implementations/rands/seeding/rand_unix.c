@@ -773,31 +773,6 @@ int ossl_pool_add_nonce_data(RAND_POOL *pool)
     return ossl_rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
-int ossl_rand_pool_add_additional_data(RAND_POOL *pool)
-{
-    struct {
-        int fork_id;
-        CRYPTO_THREAD_ID tid;
-        uint64_t time;
-    } data;
-
-    /* Erase the entire structure including any padding */
-    memset(&data, 0, sizeof(data));
-
-    /*
-     * Add some noise from the thread id and a high resolution timer.
-     * The fork_id adds some extra fork-safety.
-     * The thread id adds a little randomness if the drbg is accessed
-     * concurrently (which is the case for the <master> drbg).
-     */
-    data.fork_id = openssl_get_fork_id();
-    data.tid = CRYPTO_THREAD_get_current_id();
-    data.time = get_timer_bits();
-
-    return ossl_rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
-}
-
-
 /*
  * Get the current time with the highest possible resolution
  *
