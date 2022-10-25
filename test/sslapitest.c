@@ -10164,15 +10164,21 @@ end:
  *         fill all the pipelines
  * Test 3: Client has pipelining enabled, server does not: not enough data to
  *         fill all the pipelines by more than a full pipeline's worth
+ * Test 4: Client has pipelining enabled, server does not: more data than all
+ *         the available pipelines can take
+ * Test 5: Client has pipelining enabled, server does not: Maximum size pipeline
  */
 static int test_pipelining(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL, *peera, *peerb;
     int testresult = 0, numreads;
-    char *msg = "A test message that must be at least 50 bytes long";
-    size_t written, readbytes, offset, msglen;
-    char buf[80];
+    /* A 55 byte message */
+    unsigned char *msg = (unsigned char *)
+        "0123456789012345678901234567890123456789012345678901234";
+    size_t written, readbytes, offset, msglen, fragsize = 10, numpipes = 5;
+    size_t expectedreads;
+    unsigned char *buf = NULL;
     ENGINE *e;
 
     if (!TEST_ptr(e = ENGINE_by_id("dasync")))
@@ -10199,6 +10205,7 @@ static int test_pipelining(int idx)
     if (!TEST_true(SSL_set_cipher_list(clientssl, "AES128-SHA")))
         goto end;
 
+    /* peera is always configured for pipelining, while peerb is not. */
     if (idx == 1) {
         peera = serverssl;
         peerb = clientssl;
@@ -10208,19 +10215,46 @@ static int test_pipelining(int idx)
         peerb = serverssl;
     }
 
-    msglen = strlen(msg);
+    if (idx == 5) {
+        numpipes = 2;
+        /* Maxium allowed fragment size */
+        fragsize = SSL3_RT_MAX_PLAIN_LENGTH;
+        msglen = fragsize * numpipes;
+        msg = OPENSSL_malloc(msglen);
+        if (!TEST_ptr(msg))
+            goto end;
+        if (!TEST_int_gt(RAND_bytes_ex(libctx, msg, msglen, 0), 0))
+            goto end;
+    } else if (idx == 4) {
+        msglen = 55;
+    } else {
+        msglen = 50;
+    }
     if (idx == 2)
         msglen -= 2; /* Send 2 less bytes */
     else if (idx == 3)
         msglen -= 12; /* Send 12 less bytes */
 
+    buf = OPENSSL_malloc(msglen);
+    if (!TEST_ptr(buf))
+        goto end;
+
+    if (idx == 5) {
+        /*
+         * Test that setting a split send fragment longer than the maximum
+         * allowed fails
+         */
+        if (!TEST_false(SSL_set_split_send_fragment(peera, fragsize + 1)))
+            goto end;
+    }
+
     /*
-     * peera is always configured for pipelining, while peerb is not. We have 5
-     * pipelines with 10 bytes per pipeline (50 bytes in total). This is a
-     * ridiculously small number of bytes - but sufficient for our purposes
+     * In the normal case. We have 5 pipelines with 10 bytes per pipeline
+     * (50 bytes in total). This is a ridiculously small number of bytes -
+     * but sufficient for our purposes
      */
-    if (!TEST_true(SSL_set_max_pipelines(peera, 5))
-            || !TEST_true(SSL_set_split_send_fragment(peera, 10)))
+    if (!TEST_true(SSL_set_max_pipelines(peera, numpipes))
+            || !TEST_true(SSL_set_split_send_fragment(peera, fragsize)))
         goto end;
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
@@ -10232,45 +10266,63 @@ static int test_pipelining(int idx)
         goto end;
 
     /*
-     * If the pipelining code worked, then we expect all 5 pipelines to have
-     * been used - except in test 3 where only 4 pipelines will be used. This
-     * will result in 5 records (4 for test 3) having been sent to peerb.
-     * Since peerb is not using read_ahead we expect this to be read in 5 or 4
-     * separate SSL_read_ex calls
+     * If the pipelining code worked, then we expect all |numpipes| pipelines to
+     * have been used - except in test 3 where only |numpipes - 1| pipelines
+     * will be used. This will result in |numpipes| records (|numpipes - 1| for
+     * test 3) having been sent to peerb. Since peerb is not using read_ahead we
+     * expect this to be read in |numpipes| or |numpipes - 1| separate
+     * SSL_read_ex calls. In the case of test 4, there is then one additional
+     * read for left over data that couldn't fit in the previous pipelines
      */
     for (offset = 0, numreads = 0;
          offset < msglen;
          offset += readbytes, numreads++) {
         if (!TEST_true(SSL_read_ex(peerb, buf + offset,
-                                   sizeof(buf) - offset - 1, &readbytes)))
+                                   msglen - offset, &readbytes)))
             goto end;
     }
 
+    expectedreads = idx == 4 ? numpipes + 1
+                             : (idx == 3 ? numpipes - 1 : numpipes);
     if (!TEST_mem_eq(msg, msglen, buf, offset)
-            || !TEST_int_eq(numreads, idx == 3 ? 4 : 5))
+            || !TEST_int_eq(numreads, expectedreads))
         goto end;
 
     /*
-     * Write some data from peerb to peera. We do this in up to 5 chunks to
-     * exercise the read pipelining code on peera.
+     * Write some data from peerb to peera. We do this in up to |numpipes + 1|
+     * chunks to exercise the read pipelining code on peera.
      */
-    for (offset = 0; offset < msglen; offset += 10) {
+    for (offset = 0; offset < msglen; offset += fragsize) {
         size_t sendlen = msglen - offset;
 
-        if (sendlen > 10)
-            sendlen = 10;
+        if (sendlen > fragsize)
+            sendlen = fragsize;
         if (!TEST_true(SSL_write_ex(peerb, msg + offset, sendlen, &written))
                 || !TEST_size_t_eq(written, sendlen))
             goto end;
     }
 
     /*
-     * The data was written in 5 separate chunks. If the pipelining is working
-     * then we expect peera to read all 5 and process them in parallel, giving
-     * back the complete result in a single call to SSL_read_ex
+     * The data was written in |numpipes|, |numpipes - 1| or |numpipes + 1|
+     * separate chunks (depending on which test we are running). If the
+     * pipelining is working then we expect peera to read up to numpipes chunks
+     * and process them in parallel, giving back the complete result in a single
+     * call to SSL_read_ex
      */
-    if (!TEST_true(SSL_read_ex(peera, buf, sizeof(buf) - 1, &readbytes)))
+    if (!TEST_true(SSL_read_ex(peera, buf, msglen, &readbytes))
+            || !TEST_size_t_le(readbytes, msglen))
         goto end;
+
+    if (idx == 4) {
+        size_t readbytes2;
+
+        if (!TEST_true(SSL_read_ex(peera, buf + readbytes,
+                                   msglen - readbytes, &readbytes2)))
+            goto end;
+        readbytes += readbytes2;
+        if (!TEST_size_t_le(readbytes, msglen))
+            goto end;
+    }
 
     if (!TEST_mem_eq(msg, msglen, buf, readbytes))
         goto end;
@@ -10284,6 +10336,9 @@ end:
     ENGINE_unregister_ciphers(e);
     ENGINE_finish(e);
     ENGINE_free(e);
+    OPENSSL_free(buf);
+    if (idx == 5)
+        OPENSSL_free(msg);
     return testresult;
 }
 #endif /* !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE) */
@@ -10565,7 +10620,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_serverinfo_custom, 4);
 #endif
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
-    ADD_ALL_TESTS(test_pipelining, 4);
+    ADD_ALL_TESTS(test_pipelining, 6);
 #endif
     return 1;
 
