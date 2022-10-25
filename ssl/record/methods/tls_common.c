@@ -223,8 +223,14 @@ int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
         if (tls_allow_compression(rl))
             len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
+
+        /* Ensure our buffer is large enough to support all our pipelines */
+        if (rl->max_pipelines > 1)
+            len *= rl->max_pipelines;
+
         if (b->default_len > len)
             len = b->default_len;
+
         if ((p = OPENSSL_malloc(len)) == NULL) {
             /*
              * We've got a malloc failure, and we're still initialising buffers.
@@ -286,24 +292,6 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
         /* start with empty packet ... */
         if (left == 0) {
             rb->offset = align;
-        } else if (align != 0 && left >= SSL3_RT_HEADER_LENGTH) {
-            /*
-             * check if next packet length is large enough to justify payload
-             * alignment...
-             */
-            pkt = rb->buf + rb->offset;
-            if (pkt[0] == SSL3_RT_APPLICATION_DATA
-                    && (pkt[3] << 8 | pkt[4]) >= 128) {
-                /*
-                 * Note that even if packet is corrupted and its length field
-                 * is insane, we can only be led to wrong decision about
-                 * whether memmove will occur or not. Header values has no
-                 * effect on memmove arguments and therefore no buffer
-                 * overrun can be triggered.
-                 */
-                memmove(rb->buf + align, pkt, left);
-                rb->offset = align;
-            }
         }
         rl->packet = rb->buf + rb->offset;
         rl->packet_length = 0;
