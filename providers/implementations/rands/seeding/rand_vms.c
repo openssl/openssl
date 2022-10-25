@@ -575,32 +575,6 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
     return data_collect_method(pool);
 }
 
-
-int ossl_rand_pool_add_additional_data(RAND_POOL *pool)
-{
-    struct {
-        CRYPTO_THREAD_ID tid;
-        unsigned __int64 time;
-    } data;
-
-    /* Erase the entire structure including any padding */
-    memset(&data, 0, sizeof(data));
-
-    /*
-     * Add some noise from the thread id and a high resolution timer.
-     * The thread id adds a little randomness if the drbg is accessed
-     * concurrently (which is the case for the <master> drbg).
-     */
-    data.tid = CRYPTO_THREAD_get_current_id();
-#if __CRTL_VER >= 80400000
-    sys$gettim_prec(&data.time);
-#else
-    sys$gettim((void*)&data.time);
-#endif
-
-    return ossl_rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
-}
-
 int ossl_rand_pool_init(void)
 {
     return 1;
