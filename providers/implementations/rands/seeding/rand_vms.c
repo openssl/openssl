@@ -570,7 +570,7 @@ int ossl_pool_add_nonce_data(RAND_POOL *pool)
      * the same time stamp is repeated, to ensure that the nonce is unique
      * with high probability for different process instances.
      *
-     * The normal OpenVMS time is specified to ne high granularity (100ns),
+     * The normal OpenVMS time is specified to be high granularity (100ns),
      * but the time update granularity given by sys$gettim() may be lower.
      *
      * OpenVMS version 8.4 (which is the latest for Alpha and Itanium) and
