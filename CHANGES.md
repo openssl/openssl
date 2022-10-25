@@ -32,6 +32,16 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Remove the constants OSSL_PKEY_PARAM_RSA_FACTOR, OSSL_PKEY_PARAM_RSA_EXPONENT,
+   and OSSL_PKEY_PARAM_RSA_COEFFICIENT. These values were not intended to be used
+   as OSSL_PARAM key names. Using these key names previously as params passed
+   into EVP_PKEY_fromdata() resulted in the values being ignored, which is not
+   the desired result if the user intended to use CRT values. Please use the
+   names such as OSSL_PKEY_PARAM_RSA_FACTOR1 instead.
+   See doc/man7/EVP_PKEY-RSA.pod for more information.
+
+   *Shane Lontis*
+
  * Added configure options to disable KDF algorithms for
    hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
 
