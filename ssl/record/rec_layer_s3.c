@@ -215,25 +215,7 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
         /* start with empty packet ... */
         if (left == 0)
             rb->offset = align;
-        else if (align != 0 && left >= SSL3_RT_HEADER_LENGTH) {
-            /*
-             * check if next packet length is large enough to justify payload
-             * alignment...
-             */
-            pkt = rb->buf + rb->offset;
-            if (pkt[0] == SSL3_RT_APPLICATION_DATA
-                && (pkt[3] << 8 | pkt[4]) >= 128) {
-                /*
-                 * Note that even if packet is corrupted and its length field
-                 * is insane, we can only be led to wrong decision about
-                 * whether memmove will occur or not. Header values has no
-                 * effect on memmove arguments and therefore no buffer
-                 * overrun can be triggered.
-                 */
-                memmove(rb->buf + align, pkt, left);
-                rb->offset = align;
-            }
-        }
+
         s->rlayer.packet = rb->buf + rb->offset;
         s->rlayer.packet_length = 0;
         /* ... now we can act as if 'extend' was set */
