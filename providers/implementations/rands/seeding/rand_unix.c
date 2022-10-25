@@ -49,7 +49,6 @@
 # include <sys/time.h>
 
 static uint64_t get_time_stamp(void);
-static uint64_t get_timer_bits(void);
 
 /* Macro to convert two thirty two bit values into a sixty four bit one */
 # define TWO32TO64(a, b) ((((uint64_t)(a)) << 32) + (b))
@@ -802,55 +801,5 @@ static uint64_t get_time_stamp(void)
     return time(NULL);
 }
 
-/*
- * Get an arbitrary timer value of the highest possible resolution
- *
- * The timer value is added as random noise to the additional data,
- * which is not considered a trusted entropy sourec, so any result
- * is acceptable.
- */
-static uint64_t get_timer_bits(void)
-{
-    uint64_t res = OPENSSL_rdtsc();
-
-    if (res != 0)
-        return res;
-
-# if defined(__sun) || defined(__hpux)
-    return gethrtime();
-# elif defined(_AIX)
-    {
-        timebasestruct_t t;
-
-        read_wall_time(&t, TIMEBASE_SZ);
-        return TWO32TO64(t.tb_high, t.tb_low);
-    }
-# elif defined(OSSL_POSIX_TIMER_OKAY)
-    {
-        struct timespec ts;
-
-#  ifdef CLOCK_BOOTTIME
-#   define CLOCK_TYPE CLOCK_BOOTTIME
-#  elif defined(_POSIX_MONOTONIC_CLOCK)
-#   define CLOCK_TYPE CLOCK_MONOTONIC
-#  else
-#   define CLOCK_TYPE CLOCK_REALTIME
-#  endif
-
-        if (clock_gettime(CLOCK_TYPE, &ts) == 0)
-            return TWO32TO64(ts.tv_sec, ts.tv_nsec);
-    }
-# endif
-# if defined(__unix__) \
-     || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
-    {
-        struct timeval tv;
-
-        if (gettimeofday(&tv, NULL) == 0)
-            return TWO32TO64(tv.tv_sec, tv.tv_usec);
-    }
-# endif
-    return time(NULL);
-}
 #endif /* (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS))
           || defined(__DJGPP__) */
