@@ -15,6 +15,7 @@
 #include <openssl/fipskey.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#include <openssl/rand.h>
 #include "internal/e_os.h"
 #include "prov/providercommon.h"
 
@@ -307,6 +308,8 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     unsigned char *indicator_checksum = NULL;
     int loclstate;
     OSSL_SELF_TEST *ev = NULL;
+    EVP_RAND *testrand = NULL;
+    EVP_RAND_CTX *rng;
 
     if (!RUN_ONCE(&fips_self_test_init, do_fips_self_test_init))
         return 0;
@@ -417,8 +420,19 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         }
     }
 
+    /* Verify that the RNG has been restored properly */
+    testrand = EVP_RAND_fetch(st->libctx, "TEST-RAND", NULL);
+    if (testrand == NULL
+            || (rng = RAND_get0_private(st->libctx)) == NULL
+            || strcmp(EVP_RAND_get0_name(EVP_RAND_CTX_get0_rand(rng)),
+                      EVP_RAND_get0_name(testrand)) == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
+        goto end;
+    }
+
     ok = 1;
 end:
+    EVP_RAND_free(testrand);
     OSSL_SELF_TEST_free(ev);
     OPENSSL_free(module_checksum);
     OPENSSL_free(indicator_checksum);
