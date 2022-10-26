@@ -300,7 +300,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x,
                                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     return pem_read_bio_key(bp, x, cb, u, libctx, propq,
-                            /* we want the public key, if available */
+                            /* we want also the public key, if available */
                             EVP_PKEY_KEYPAIR);
 }
 
