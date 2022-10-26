@@ -75,6 +75,10 @@ static EVP_PKEY *pem_read_bio_key_decoder(BIO *bp, EVP_PKEY **x,
         }
     ERR_pop_to_mark();
 
+    /* if we were asked for private key, the public key is optional */
+    if (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY)
+        selection = selection & ~OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
+
     if (!evp_keymgmt_util_has(pkey, selection)) {
         EVP_PKEY_free(pkey);
         pkey = NULL;
@@ -174,9 +178,11 @@ static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
             goto p8err;
         ret = ossl_d2i_PrivateKey_legacy(ameth->pkey_id, x, &p, len, libctx,
                                          propq);
-    } else if (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) {
+    } else if (!(selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY)
+               && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY)) {
         ret = ossl_d2i_PUBKEY_legacy(x, &p, len);
-    } else if ((slen = ossl_pem_check_suffix(nm, "PARAMETERS")) > 0) {
+    } else if (!(selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
+               && (slen = ossl_pem_check_suffix(nm, "PARAMETERS")) > 0) {
         ret = EVP_PKEY_new();
         if (ret == NULL)
             goto err;
@@ -294,6 +300,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x,
                                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     return pem_read_bio_key(bp, x, cb, u, libctx, propq,
+                            /* we want the public key, if available */
                             EVP_PKEY_KEYPAIR);
 }
 
