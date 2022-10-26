@@ -38,7 +38,7 @@ typedef enum OPTION_choice {
     OPT_NO_LOG, OPT_CORRUPT_DESC, OPT_CORRUPT_TYPE, OPT_QUIET, OPT_CONFIG,
     OPT_NO_CONDITIONAL_ERRORS,
     OPT_NO_SECURITY_CHECKS,
-    OPT_SELF_TEST_ONLOAD
+    OPT_SELF_TEST_ONLOAD, OPT_SELF_TEST_ONINSTALL
 } OPTION_CHOICE;
 
 const OPTIONS fipsinstall_options[] = {
@@ -57,6 +57,8 @@ const OPTIONS fipsinstall_options[] = {
      "Disable the run-time FIPS security checks in the module"},
     {"self_test_onload", OPT_SELF_TEST_ONLOAD, '-',
      "Forces self tests to always run on module load"},
+    {"self_test_oninstall", OPT_SELF_TEST_ONINSTALL, '-',
+     "Forces self tests to run once on module installation"},
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input config file, used when verifying"},
 
@@ -100,11 +102,32 @@ static int load_fips_prov_and_run_self_test(const char *prov_name)
 {
     int ret = 0;
     OSSL_PROVIDER *prov = NULL;
+    OSSL_PARAM params[4], *p = params;
+    char *name = "", *vers = "", *build = "";
 
     prov = OSSL_PROVIDER_load(NULL, prov_name);
     if (prov == NULL) {
         BIO_printf(bio_err, "Failed to load FIPS module\n");
         goto end;
+    }
+    if (!quiet) {
+        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_NAME,
+                                             &name, sizeof(name));
+        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_VERSION,
+                                             &vers, sizeof(vers));
+        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_BUILDINFO,
+                                             &build, sizeof(build));
+        *p = OSSL_PARAM_construct_end();
+        if (!OSSL_PROVIDER_get_params(prov, params)) {
+            BIO_printf(bio_err, "Failed to query FIPS module parameters\n");
+            goto end;
+        }
+        if (OSSL_PARAM_modified(params))
+            BIO_printf(bio_err, "\t%-10s\t%s\n", "name:", name);
+        if (OSSL_PARAM_modified(params + 1))
+            BIO_printf(bio_err, "\t%-10s\t%s\n", "version:", vers);
+        if (OSSL_PARAM_modified(params + 2))
+            BIO_printf(bio_err, "\t%-10s\t%s\n", "build:", build);
     }
     ret = 1;
 end:
@@ -290,7 +313,7 @@ end:
 
 int fipsinstall_main(int argc, char **argv)
 {
-    int ret = 1, verify = 0, gotkey = 0, gotdigest = 0, self_test_onload = 0;
+    int ret = 1, verify = 0, gotkey = 0, gotdigest = 0, self_test_onload = 1;
     int enable_conditional_errors = 1, enable_security_checks = 1;
     const char *section_name = "fips_sect";
     const char *mac_name = "HMAC";
@@ -378,6 +401,9 @@ opthelp:
         case OPT_SELF_TEST_ONLOAD:
             self_test_onload = 1;
             break;
+        case OPT_SELF_TEST_ONINSTALL:
+            self_test_onload = 0;
+            break;
         }
     }
 
@@ -393,9 +419,10 @@ opthelp:
         /* Test that a parent config can load the module */
         if (verify_module_load(parent_config)) {
             ret = OSSL_PROVIDER_available(NULL, prov_name) ? 0 : 1;
-            if (!quiet)
+            if (!quiet) {
                 BIO_printf(bio_err, "FIPS provider is %s\n",
                            ret == 0 ? "available" : " not available");
+            }
         }
         goto end;
     }
