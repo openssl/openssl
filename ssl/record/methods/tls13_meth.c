@@ -39,8 +39,6 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    rl->taglen = taglen;
-
     mode = EVP_CIPHER_get_mode(ciph);
 
     if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL, enc) <= 0

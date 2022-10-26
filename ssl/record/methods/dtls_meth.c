@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"
@@ -737,31 +738,35 @@ int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
 
 static size_t dtls_get_max_record_overhead(OSSL_RECORD_LAYER *rl)
 {
-    size_t blocksize, mac_size;
-
-    /*
-     * TODO(RECLAYER): Review this. This is what the existing code did.
-     * I suspect it's not quite right. What about IV? AEAD Tag? Compression
-     * expansion?
-     */
-    if (rl->md_ctx != NULL) {
-        if (rl->enc_ctx != NULL
-            && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(rl->enc_ctx)) &
-                EVP_CIPH_FLAG_AEAD_CIPHER) != 0)
-            mac_size = 0;
-        else
-            mac_size = EVP_MD_CTX_get_size(rl->md_ctx);
-    } else {
-        mac_size = 0;
-    }
+    size_t blocksize = 0;
 
     if (rl->enc_ctx != NULL &&
         (EVP_CIPHER_CTX_get_mode(rl->enc_ctx) == EVP_CIPH_CBC_MODE))
-        blocksize = 2 * EVP_CIPHER_CTX_get_block_size(rl->enc_ctx);
-    else
-        blocksize = 0;
+        blocksize = EVP_CIPHER_CTX_get_block_size(rl->enc_ctx);
 
-    return DTLS1_RT_HEADER_LENGTH + mac_size + blocksize;
+    /*
+     * If we have a cipher in place then the tag is mandatory. If the cipher is
+     * CBC mode then an explicit IV is also mandatory. If we know the digest,
+     * then we check it is consistent with the taglen. In the case of stitched
+     * ciphers or AEAD ciphers we don't now the digest (or there isn't one) so
+     * we just trust that the taglen is correct.
+     */
+    assert(rl->enc_ctx == NULL  || ((blocksize == 0 || rl->eivlen > 0)
+                                    && rl->taglen > 0));
+    assert(rl->md == NULL || (int)rl->taglen == EVP_MD_size(rl->md));
+
+    /*
+     * Record overhead consists of the record header, the explicit IV, any
+     * expansion due to cbc padding, and the mac/tag len. There could be
+     * further expansion due to compression - but we don't know what this will
+     * be without knowing the length of the data. However when this function is
+     * called we don't know what the length will be yet - so this is a catch-22.
+     * We *could* use SSL_3_RT_MAX_COMPRESSED_OVERHEAD which is an upper limit
+     * for the maximum record size. But this value is larger than our fallback
+     * MTU size - so isn't very helpful. We just ignore potential expansion
+     * due to compression.
+     */
+    return DTLS1_RT_HEADER_LENGTH + rl->eivlen + blocksize + rl->taglen;
 }
 
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {

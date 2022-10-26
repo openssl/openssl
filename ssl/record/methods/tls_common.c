@@ -1249,6 +1249,8 @@ tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     rl->role = role;
     rl->direction = direction;
     rl->level = level;
+    rl->taglen = taglen;
+    rl->md = md;
 
     rl->alert = SSL_AD_NO_ALERT;
 
