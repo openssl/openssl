@@ -38,6 +38,16 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.6 and 3.0.7 [xx XXX xxxx]
 
+ * Removed all references to invalid OSSL_PKEY_PARAM_RSA names for CRT parameters
+   in OpenSSL code.
+   Applications should not use the names OSSL_PKEY_PARAM_RSA_FACTOR,
+   OSSL_PKEY_PARAM_RSA_EXPONENT and OSSL_PKEY_PARAM_RSA_COEFFICIENT.
+   Use the numbered names such as OSSL_PKEY_PARAM_RSA_FACTOR1 instead.
+   Using these invalid names may cause algorithms to use slower methods
+   that ignore the CRT parameters.
+
+   *Shane Lontis*
+
  * Added RIPEMD160 to the default provider.
 
    *Paul Dale*
