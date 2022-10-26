@@ -98,7 +98,7 @@ parallelising the processing at the cost of increased memory overhead per
 connection. Setting B<read_ahead> can impact the behaviour of the SSL_pending()
 function (see L<SSL_pending(3)>). In addition the default size of the internal
 read buffer is multiplied by the number of pipelines available to ensure that we
-can read multiple records in one go. This can therefore have a signficiant
+can read multiple records in one go. This can therefore have a significant
 impact on memory usage.
 
 The SSL_CTX_set_default_read_buffer_len() and SSL_set_default_read_buffer_len()
