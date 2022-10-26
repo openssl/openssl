@@ -148,6 +148,7 @@ struct ossl_record_layer_st
     int role;
     int direction;
     int level;
+    const EVP_MD *md;
     /* DTLS only */
     uint16_t epoch;
 

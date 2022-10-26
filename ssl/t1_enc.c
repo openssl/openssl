@@ -209,12 +209,25 @@ int tls1_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
-    if (EVP_CIPHER_get_mode(c) == EVP_CIPH_CCM_MODE) {
+    switch (EVP_CIPHER_get_mode(c)) {
+    case EVP_CIPH_GCM_MODE:
+        taglen = EVP_GCM_TLS_TAG_LEN;
+        break;
+    case EVP_CIPH_CCM_MODE:
         if ((s->s3.tmp.new_cipher->algorithm_enc
                 & (SSL_AES128CCM8 | SSL_AES256CCM8)) != 0)
             taglen = EVP_CCM8_TLS_TAG_LEN;
         else
             taglen = EVP_CCM_TLS_TAG_LEN;
+        break;
+    default:
+        if (EVP_CIPHER_is_a(c, "CHACHA20-POLY1305")) {
+            taglen = EVP_CHACHAPOLY_TLS_TAG_LEN;
+        } else {
+            /* MAC secret size corresponds to the MAC output size */
+            taglen = s->s3.tmp.new_mac_secret_size;
+        }
+        break;
     }
 
     if (which & SSL3_CC_READ) {
