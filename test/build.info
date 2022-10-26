@@ -40,7 +40,7 @@ IF[{- !$disabled{tests} -}]
           exptest pbetest localetest evp_pkey_ctx_new_from_name\
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test evp_libctx_test ossl_store_test \
-          v3nametest v3ext \
+          v3nametest v3ext punycode_test \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
@@ -289,6 +289,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[pkcs7_test]=pkcs7_test.c
   INCLUDE[pkcs7_test]=../include ../apps/include
   DEPEND[pkcs7_test]=../libcrypto libtestutil.a
+
+  SOURCE[punycode_test]=punycode_test.c
+  INCLUDE[punycode_test]=../include ../apps/include
+  DEPEND[punycode_test]=../libcrypto.a libtestutil.a
 
   SOURCE[stack_test]=stack_test.c
   INCLUDE[stack_test]=../include ../apps/include
