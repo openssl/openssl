@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <limits.h>
 #include <string.h>
 #include <stdio.h>
@@ -254,6 +255,16 @@ int dtls1_do_write(SSL_CONNECTION *s, int type)
              */
             if (!ossl_assert(len == written))
                 return -1;
+
+            /*
+             * We should not exceed the MTU size. If compression is in use
+             * then the max record overhead calculation is unreliable so we do
+             * not check in that case. We use assert rather than ossl_assert
+             * because in a production build, if this assert were ever to fail,
+             * then the best thing to do is probably carry on regardless.
+             */
+            assert(s->s3.tmp.new_compression != NULL
+                   || BIO_wpending(s->wbio) <= (int)s->d1->mtu);
 
             if (type == SSL3_RT_HANDSHAKE && !s->d1->retransmitting) {
                 /*
