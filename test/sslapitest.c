@@ -10175,7 +10175,7 @@ static int test_pipelining(int idx)
     int testresult = 0, numreads;
     /* A 55 byte message */
     unsigned char *msg = (unsigned char *)
-        "0123456789012345678901234567890123456789012345678901234";
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123";
     size_t written, readbytes, offset, msglen, fragsize = 10, numpipes = 5;
     size_t expectedreads;
     unsigned char *buf = NULL;
@@ -10217,7 +10217,7 @@ static int test_pipelining(int idx)
 
     if (idx == 5) {
         numpipes = 2;
-        /* Maxium allowed fragment size */
+        /* Maximum allowed fragment size */
         fragsize = SSL3_RT_MAX_PLAIN_LENGTH;
         msglen = fragsize * numpipes;
         msg = OPENSSL_malloc(msglen);
