@@ -290,9 +290,9 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
 
     if (!extend) {
         /* start with empty packet ... */
-        if (left == 0) {
+        if (left == 0)
             rb->offset = align;
-        }
+
         rl->packet = rb->buf + rb->offset;
         rl->packet_length = 0;
         /* ... now we can act as if 'extend' was set */
