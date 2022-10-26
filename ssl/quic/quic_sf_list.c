@@ -12,28 +12,6 @@
 #include "internal/quic_record_rx_wrap.h"
 #include "internal/quic_sf_list.h"
 
-/*
- * Stream frame list
- * =================
- *
- * This data structure uses supports similar operations as uint64 set but
- * it has slightly different invariants and also carries data associated with
- * the ranges in the list.
- *
- * Operations:
- *   Insert frame (optimized insertion at the beginning and at the end).
- *   Iterated peek into the frame(s) from the beginning.
- *   Dropping frames from the beginning up to an offset (exclusive).
- *
- * Invariant: The frames in the list are sorted by the start and end bounds.
- * Invariant: There are no fully overlapping frames or frames that would
- *            be fully encompassed by another frame in the list.
- * Invariant: No frame has start > end.
- * Invariant: The range start is inclusive the end is exclusive to be
- *            able to mark an empty frame.
- * Invariant: The offset never points further than into the first frame.
- */
-
 struct stream_frame_st {
     struct stream_frame_st *prev, *next;
     UINT_RANGE range;

@@ -288,7 +288,7 @@ typedef struct quic_rstream_st QUIC_RSTREAM;
  * Create a new instance of QUIC_RSTREAM with pointers to the flow
  * controller and statistics module. They can be NULL for unit testing.
  * If they are non-NULL, the `rxfc` is called when receive stream data
- * is queued or read by application. `statm` is queried for current rtt.
+ * is read by application. `statm` is queried for current rtt.
  */
 QUIC_RSTREAM *ossl_quic_rstream_new(OSSL_QRX *qrx, QUIC_RXFC *rxfc,
                                     OSSL_STATM *statm);

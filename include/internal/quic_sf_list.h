@@ -17,7 +17,7 @@
  * Stream frame list
  * =================
  *
- * This data structure uses supports similar operations as uint64 set but
+ * This data structure supports similar operations as uint64 set but
  * it has slightly different invariants and also carries data associated with
  * the ranges in the list.
  *
