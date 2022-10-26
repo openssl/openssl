@@ -37,6 +37,7 @@ __owur const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u);
 int ossl_quic_renegotiate_check(SSL *ssl, int initok);
 
 typedef struct quic_conn_st QUIC_CONNECTION;
+typedef struct quic_stream_st QUIC_STREAM;
 
 __owur QUIC_CONNECTION *ossl_quic_conn_from_ssl(SSL *ssl);
 int ossl_quic_conn_set_qrx(QUIC_CONNECTION *qc, OSSL_QRX *qrx);

@@ -10,8 +10,6 @@
 #include "internal/time.h"
 #include "internal/quic_stream.h"
 #include "internal/quic_sf_list.h"
-#include "internal/quic_fc.h"
-#include "internal/quic_error.h"
 
 struct quic_rstream_st {
     SFRAME_LIST fl;
@@ -48,12 +46,6 @@ int ossl_quic_rstream_queue_data(QUIC_RSTREAM *qrs, OSSL_QRX_PKT_WRAP *pkt_wrap,
 
     range.start = offset;
     range.end = offset + data_len;
-
-    if (qrs->rxfc != NULL
-        && (!ossl_quic_rxfc_on_rx_stream_frame(qrs->rxfc, range.end, fin)
-            || ossl_quic_rxfc_get_error(qrs->rxfc, 0) != QUIC_ERR_NO_ERROR))
-        /* QUIC_ERR_FLOW_CONTROL_ERROR or QUIC_ERR_FINAL_SIZE detected */
-        return 0;
 
     return ossl_sframe_list_insert(&qrs->fl, &range, pkt_wrap, data, fin);
 }
