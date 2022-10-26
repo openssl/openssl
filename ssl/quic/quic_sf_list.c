@@ -91,29 +91,27 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
     }
 #endif
 
-    fl->fin = fin || fl->fin;
-
     /* nothing there yet */
     if (fl->tail == NULL) {
         if (fl->offset >= range->end)
-            return 1;
+            goto end;
 
         fl->tail = fl->head = stream_frame_new(range, pkt, data);
         if (fl->tail == NULL)
             return 0;
         ++fl->num_frames;
-        return 1;
+        goto end;
     }
 
     if (fl->offset >= range->end)
-        return 1;
+        goto end;
 
     /* TODO(QUIC): Check for fl->num_frames and start copying if too many */
 
     /* optimize insertion at the end */
     if (fl->tail->range.start < range->start) {
         if (fl->tail->range.end >= range->end) {
-            return 1;
+            goto end;
         }
         return append_frame(fl, range, pkt, data);
     }
@@ -124,11 +122,14 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
         prev_frame = sf;
 
     if (prev_frame != NULL && prev_frame->range.end >= range->end) {
-        return 1;
+        goto end;
     }
 
-    if (sf == NULL)
-        return append_frame(fl, range, pkt, data);
+    if (sf == NULL) {
+        if (append_frame(fl, range, pkt, data))
+            goto end;
+        return 0;
+    }
 
     /*
      * Now we must create a new frame although in the end we might drop it,
@@ -160,7 +161,7 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
         if (prev_frame != NULL
             && next_frame->range.start <= prev_frame->range.end) {
             stream_frame_free(fl, new_frame);
-            return 1;
+            goto end;
         }
         next_frame->prev = new_frame;
     } else {
@@ -176,6 +177,10 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
         fl->head = new_frame;
 
     ++fl->num_frames;
+
+ end:
+    fl->fin = fin || fl->fin;
+
     return 1;
 }
 
