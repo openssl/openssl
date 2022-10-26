@@ -181,7 +181,7 @@ int ossl_punycode_decode(const char *pEncoded, const size_t enc_len,
         n = n + i / (written_out + 1);
         i %= (written_out + 1);
 
-        if (written_out > max_out)
+        if (written_out >= max_out)
             return 0;
 
         memmove(pDecoded + i + 1, pDecoded + i,
