@@ -24,7 +24,7 @@ use platform;
 
 plan skip_all => "Test only supported in a fips build" if disabled("fips");
 
-plan tests => 30;
+plan tests => 31;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 my $fipskey = $ENV{FIPSKEY} // config('FIPSKEY') // '00';
@@ -239,7 +239,7 @@ SKIP: {
     ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
                 '-provider_name', 'fips', '-mac_name', 'HMAC',
                 '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
-                '-section_name', 'fips_sect',
+                '-section_name', 'fips_sect', '-self_test_oninstall',
                 '-corrupt_desc', 'DSA',
                 '-corrupt_type', 'KAT_Signature'])),
        "fipsinstall fails when the signature result is corrupted");
@@ -337,4 +337,16 @@ SKIP: {
     ok(run(app(['openssl', 'fipsinstall', '-in', $stconf,
                 '-module', $infile, '-self_test_onload', '-verify'])),
            "fipsinstall config verify passes when self test indicator is not present");
+}
+
+SKIP: {
+    run(test(["fips_version_test", "-config", $provconf, ">=3.1.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version can run self tests on install", 1
+        if !$exit;
+    ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+                '-section_name', 'fips_sect', '-self_test_oninstall'])),
+       "fipsinstall fails when attempting to run self tests on install");
 }
