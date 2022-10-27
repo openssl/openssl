@@ -271,20 +271,18 @@ sub start
     # server's output and printing it as long as there is anything there,
     # out of our way.
     my $error;
-    $pid = undef;
-    if (eval { require Win32::Process; 1; }) {
-        if (Win32::Process::Create(my $h, $^X, "perl -ne print", 0, 0, ".")) {
-            $pid = $h->GetProcessID();
-            $self->{proc_handle} = $h;  # hold handle till next round [or exit]
+    open(my $dupstdin, "<&STDIN") or die "Failed to dup STDIN, $!";
+    if (defined($pid = fork)) {
+        if ($pid) {
+            close($dupstdin) or warn "Failed to close dupped STDIN, $!"; # Only the child need it
         } else {
-            $error = Win32::FormatMessage(Win32::GetLastError());
+            while (defined($_ = <$dupstdin>)) {
+                print $_;
+            }
+            exit(0);
         }
     } else {
-        if (defined($pid = fork)) {
-            $pid or exec("$^X -ne print") or exit($!);
-        } else {
-            $error = $!;
-        }
+        $error = $!;
     }
 
     # Change back to original stdin
