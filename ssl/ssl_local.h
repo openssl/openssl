@@ -400,6 +400,15 @@
 # define SSL_READ_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
 # define SSL_WRITE_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
 
+/* alert_dispatch values */
+
+/* No alert pending */
+# define SSL_ALERT_DISPATCH_NONE    0
+/* Alert pending */
+# define SSL_ALERT_DISPATCH_PENDING 1
+/* Pending alert write needs to be retried */
+# define SSL_ALERT_DISPATCH_RETRY   2
+
 /* Mostly for SSLv3 */
 # define SSL_PKEY_RSA            0
 # define SSL_PKEY_RSA_PSS_SIGN   1
