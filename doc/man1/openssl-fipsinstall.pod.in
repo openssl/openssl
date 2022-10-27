@@ -183,9 +183,6 @@ The converse of B<-self_test_oninstall>.  The two fields related to the
 "test status indicator" and "MAC status indicator" are written to the
 output configuration file.
 
-This option allows OpenSSL 3.0 FIPS providers to be installed so that
-the self tests run only at installation time.
-
 =item B<-quiet>
 
 Do not output pass/fail messages. Implies B<-noout>.
