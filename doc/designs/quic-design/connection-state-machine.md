@@ -37,8 +37,7 @@ the handshake has been completed but not yet confirmed).
 
 However, the state machine described herein is helpful as an aid to
 understanding and broadly captures the logic which our implementation will
-intend to embody. The design of the actual implementation is discussed further
-below.
+embody. The design of the actual implementation is discussed further below.
 
 The above states and their substates are defined as follows:
 
@@ -50,7 +49,7 @@ The above states and their substates are defined as follows:
   a `HANDSHAKE_DONE` frame (which occurs in a 1-RTT packet, thus
   1-RTT packets are also invoked in the Establishing state).
   On the server, handshake confirmation occurs as soon as
-  the handshake is considered completed.
+  the handshake is considered completed (see RFC 9001 s. 4.1).
 
   The Establishing state is subdivided into the following substates:
 
@@ -149,9 +148,9 @@ The above states and their substates are defined as follows:
        - it receives a `HANDSHAKE_DONE` frame in a 1-RTT packet, or
        - it receives acknowledgement of any 1-RTT packet it sent.
 
-     (Though this discussion only covers the client state machine, it is
-      worth noting that on the server, the handshake is considered
-      confirmed as soon as it is considered completed.)
+     Though this discussion only covers the client state machine, it is worth
+     noting that on the server, the handshake is considered confirmed as soon as
+     it is considered completed.
 
    - Handshake Confirmed: The client has received confirmation from
      the server that the handshake is confirmed.
@@ -488,7 +487,7 @@ can be viewed as a diagram here (large
 image).](./images/connection-state-machine.png)
 
 We transpose the above table to sort by events rather than states, to discern
-the following table:
+the following list of events:
 
 - `APP:CONNECT`: Supported in `IDLE` state only.
 
