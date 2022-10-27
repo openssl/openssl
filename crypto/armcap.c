@@ -17,15 +17,36 @@
 #include <sys/sysctl.h>
 #endif
 #include "internal/cryptlib.h"
+#ifndef _WIN32
 #include <unistd.h>
-
+#else
+#include <windows.h>
+#endif
 #include "arm_arch.h"
 
 unsigned int OPENSSL_armcap_P = 0;
 unsigned int OPENSSL_arm_midr = 0;
 unsigned int OPENSSL_armv8_rsa_neonized = 0;
 
-#if __ARM_MAX_ARCH__<7
+#ifdef _WIN32
+void OPENSSL_cpuid_setup(void)
+{
+    OPENSSL_armcap_P |= ARMV7_NEON;
+    OPENSSL_armv8_rsa_neonized = 1;
+    if (IsProcessorFeaturePresent(PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE)) {
+        // These are all covered by one call in Windows
+        OPENSSL_armcap_P |= ARMV8_AES;
+        OPENSSL_armcap_P |= ARMV8_PMULL;
+        OPENSSL_armcap_P |= ARMV8_SHA1;
+        OPENSSL_armcap_P |= ARMV8_SHA256;
+    }
+}
+
+uint32_t OPENSSL_rdtsc(void)
+{
+    return 0;
+}
+#elif __ARM_MAX_ARCH__<7
 void OPENSSL_cpuid_setup(void)
 {
 }
