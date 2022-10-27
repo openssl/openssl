@@ -55,6 +55,10 @@ RFC 6979
 L<EVP_KDF(3)>,
 L<EVP_KDF(3)/PARAMETERS>
 
+=head1 HISTORY
+
+The EVP_KDF-HMAC-DRBG functionality was added in OpenSSL 3.2.
+
 =head1 COPYRIGHT
 
 Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
