@@ -780,7 +780,7 @@ EOF
           }
           return <<"EOF";
 $target: "$gen0" $deps
-	\$(CPP) $incs $cppflags $defs "$gen0" > \$@.i
+	\$(CPP) /D__ASSEMBLER__ $incs $cppflags $defs "$gen0" > \$@.i
 	move /Y \$@.i \$@
 EOF
       } elsif ($gen0 =~ m|^.*\.in$|) {
