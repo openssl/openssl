@@ -1345,7 +1345,8 @@ static int ssl_print_compressed_certificates(BIO *bio, const SSL_CONNECTION *sc,
     if (!ossl_comp_has_alg(alg))
         return 0;
 
-    if (uclen == 0 || (ucdata = OPENSSL_malloc(uclen)) == NULL)
+    /* Check against certificate maximum size (coverity) */
+    if (uclen == 0 || uclen > 0xFFFFFF || (ucdata = OPENSSL_malloc(uclen)) == NULL)
         return 0;
 
     switch (alg) {
