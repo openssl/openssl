@@ -5427,6 +5427,9 @@ EVP_PKEY_get0_provider                  5554	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get0_provider              5555	3_0_0	EXIST::FUNCTION:
 OPENSSL_strcasecmp                      5556	3_0_3	EXIST::FUNCTION:
 OPENSSL_strncasecmp                     5557	3_0_3	EXIST::FUNCTION:
+EVP_RAND_CTX_up_ref                     ?	3_1_0	EXIST::FUNCTION:
+RAND_set0_public                        ?	3_1_0	EXIST::FUNCTION:
+RAND_set0_private                       ?	3_1_0	EXIST::FUNCTION:
 X509_PUBKEY_set0_public_key             ?	3_2_0	EXIST::FUNCTION:
 OSSL_STACK_OF_X509_free                 ?	3_2_0	EXIST::FUNCTION:
 EVP_MD_CTX_dup                          ?	3_2_0	EXIST::FUNCTION:
@@ -5469,9 +5472,6 @@ OSSL_sleep                              ?	3_2_0	EXIST::FUNCTION:
 OSSL_get_thread_support_flags           ?	3_2_0	EXIST::FUNCTION:
 OSSL_set_max_threads                    ?	3_2_0	EXIST::FUNCTION:
 OSSL_get_max_threads                    ?	3_2_0	EXIST::FUNCTION:
-EVP_RAND_CTX_up_ref                     ?	3_0_7	EXIST::FUNCTION:
-RAND_set0_public                        ?	3_0_7	EXIST::FUNCTION:
-RAND_set0_private                       ?	3_0_7	EXIST::FUNCTION:
 COMP_brotli                             ?	3_2_0	EXIST::FUNCTION:COMP
 COMP_brotli_oneshot                     ?	3_2_0	EXIST::FUNCTION:COMP
 BIO_f_brotli                            ?	3_2_0	EXIST::FUNCTION:COMP
