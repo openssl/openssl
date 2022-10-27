@@ -31,7 +31,6 @@ static char *self_test_corrupt_desc = NULL;
 static char *self_test_corrupt_type = NULL;
 static int self_test_log = 1;
 static int quiet = 0;
-static unsigned int module_major, module_minor, module_pt;  /* provider version */
 
 typedef enum OPTION_choice {
     OPT_COMMON,
