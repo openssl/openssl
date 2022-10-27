@@ -272,6 +272,16 @@ explicitly set in PSS mode then the signing digest is used.
 Sets the digest used for the OAEP hash function. If not explicitly set then
 SHA1 is used.
 
+=item B<rsa_pkcs1_implicit_rejection:>I<flag>
+
+Disables (when set to 0) or enables (when set to 1) the use of implicit
+rejection with PKCS#1 v1.5 decryption. When enabled (the default), as a
+protection against Bleichenbacher attack, the library will generate a
+deterministic random plaintext that it will return to the caller in case
+of padding check failure.
+When disabled, it's the callers' responsibility to handle the returned
+errors in a side-channel free manner.
+
 =back
 
 =head1 RSA-PSS ALGORITHM

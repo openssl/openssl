@@ -302,6 +302,7 @@ extern "C" {
 #define OSSL_PKEY_PARAM_DIST_ID             "distid"
 #define OSSL_PKEY_PARAM_PUB_KEY             "pub"
 #define OSSL_PKEY_PARAM_PRIV_KEY            "priv"
+#define OSSL_PKEY_PARAM_IMPLICIT_REJECTION  "implicit-rejection"
 
 /* Diffie-Hellman/DSA Parameters */
 #define OSSL_PKEY_PARAM_FFC_P               "p"
@@ -482,6 +483,7 @@ extern "C" {
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL               "oaep-label"
 #define OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION       "tls-client-version"
 #define OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION   "tls-negotiated-version"
+#define OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION       "implicit-rejection"
 
 /*
  * Encoder / decoder parameters
