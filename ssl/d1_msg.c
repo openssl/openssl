@@ -48,7 +48,7 @@ int dtls1_dispatch_alert(SSL *ssl)
     if (s == NULL)
         return 0;
 
-    s->s3.alert_dispatch = 0;
+    s->s3.alert_dispatch = SSL_ALERT_DISPATCH_NONE;
 
     memset(buf, 0, sizeof(buf));
     *ptr++ = s->s3.send_alert[0];

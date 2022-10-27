@@ -621,7 +621,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
     int ret;
 
     /* If we have an alert to send, lets send it */
-    if (sc->s3.alert_dispatch) {
+    if (sc->s3.alert_dispatch > 0) {
         i = s->method->ssl_dispatch_alert(s);
         if (i <= 0)
             return i;
