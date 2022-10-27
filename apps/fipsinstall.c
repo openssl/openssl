@@ -77,28 +77,6 @@ const OPTIONS fipsinstall_options[] = {
     {NULL}
 };
 
-/*
- * Compare the module version against the passed numbers.
- * return -1 if the module is earler, +1 if it is later and 0 if it matches.
- */
-static int compare_provider_version(unsigned int major, unsigned int minor,
-                                    unsigned int pt)
-{
-    if (module_major < major)
-        return -1;
-    if (module_major > major)
-        return 1;
-    if (module_minor < minor)
-        return -1;
-    if (module_minor > minor)
-        return 1;
-    if (module_pt < pt)
-        return -1;
-    if (module_pt > pt)
-        return 1;
-    return 0;
-}
-
 static int do_mac(EVP_MAC_CTX *ctx, unsigned char *tmp, BIO *in,
                   unsigned char *out, size_t *out_len)
 {
@@ -134,31 +112,24 @@ static int load_fips_prov_and_run_self_test(const char *prov_name)
         BIO_printf(bio_err, "Failed to load FIPS module\n");
         goto end;
     }
-    *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_NAME, &name, sizeof(name));
-    *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_VERSION,
-                                         &vers, sizeof(vers));
-    *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_BUILDINFO,
-                                         &build, sizeof(build));
-    *p = OSSL_PARAM_construct_end();
-    if (!OSSL_PROVIDER_get_params(prov, params)) {
-        BIO_printf(bio_err, "Failed to query FIPS module parameters\n");
-        goto end;
-    }
     if (!quiet) {
+        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_NAME,
+                                             &name, sizeof(name));
+        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_VERSION,
+                                             &vers, sizeof(vers));
+        *p++ = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_BUILDINFO,
+                                             &build, sizeof(build));
+        *p = OSSL_PARAM_construct_end();
+        if (!OSSL_PROVIDER_get_params(prov, params)) {
+            BIO_printf(bio_err, "Failed to query FIPS module parameters\n");
+            goto end;
+        }
         if (OSSL_PARAM_modified(params))
             BIO_printf(bio_err, "\t%-10s\t%s\n", "name:", name);
         if (OSSL_PARAM_modified(params + 1))
             BIO_printf(bio_err, "\t%-10s\t%s\n", "version:", vers);
         if (OSSL_PARAM_modified(params + 2))
             BIO_printf(bio_err, "\t%-10s\t%s\n", "build:", build);
-    }
-    if (!OSSL_PARAM_modified(params + 1)) {
-        BIO_printf(bio_err, "Failed to get FIPS module version information\n");
-        goto end;
-    }
-    if (sscanf(vers, "%u.%u.%u", &module_major, &module_minor, &module_pt) != 3) {
-        BIO_printf(bio_err, "Failed to parse FIPS module version information\n");
-        goto end;
     }
     ret = 1;
 end:
@@ -556,16 +527,6 @@ opthelp:
             goto end;
         if (!load_fips_prov_and_run_self_test(prov_name))
             goto end;
-
-        /* Warn if an attempt is being made to install in a non-approved manner */
-        if (compare_provider_version(3, 1, 0) >= 0 && self_test_onload == 0) {
-            BIO_printf(bio_err,
-                    "The FIPS provider must run self tests on load or the\n"
-                    "operating environment is not FIPS approved.\n"
-                    "Consider omitting the `-self_test_oninstall' option to\n"
-                    "produce a FIPS approved installation.\n");
-            goto end;
-        }
 
         fout =
             out_fname == NULL ? dup_bio_out(FORMAT_TEXT)

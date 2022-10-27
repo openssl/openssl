@@ -184,8 +184,7 @@ The converse of B<-self_test_oninstall>.  The two fields related to the
 output configuration file.
 
 This option allows OpenSSL 3.0 FIPS providers to be installed so that
-the self tests run only at installation time.  It results in an error
-if applied to the OpenSSL 3.1 FIPS provider series.
+the self tests run only at installation time.
 
 =item B<-quiet>
 
