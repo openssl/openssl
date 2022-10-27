@@ -608,6 +608,13 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     if (!ossl_cms_env_asn1_ctrl(ri, 1))
         goto err;
 
+    if (EVP_PKEY_is_a(pkey, "RSA"))
+        /* upper layer CMS code incorrectly assumes that a successful RSA
+         * decryption means that the key matches ciphertext (which never
+         * was the case, implicit rejection or not), so to make it work
+         * disable implicit rejection for RSA keys */
+        EVP_PKEY_CTX_ctrl_str(ktri->pctx, "rsa_pkcs1_implicit_rejection", "0");
+
     if (EVP_PKEY_decrypt(ktri->pctx, NULL, &eklen,
                          ktri->encryptedKey->data,
                          ktri->encryptedKey->length) <= 0)

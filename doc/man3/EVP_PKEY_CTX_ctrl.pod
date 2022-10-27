@@ -399,6 +399,8 @@ instead of padding errors in case padding checks fail. Applications that
 want to remain secure while using earlier versions of OpenSSL, still need to
 handle both the error code from the RSA decryption operation and the
 returned message in a side channel secure manner.
+This protection against Bleichenbacher attacks can be disabled by setting
+the OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION (an unsigned integer) to 0.
 
 =head2 DSA parameters
 

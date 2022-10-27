@@ -390,6 +390,12 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
     BIGNUM *unblind = NULL;
     BN_BLINDING *blinding = NULL;
 
+    /*
+     * we need the value of the private exponent to perform implicit rejection
+     */
+    if ((rsa->flags & RSA_FLAG_EXT_PKEY) && (padding == RSA_PKCS1_PADDING))
+        padding = RSA_PKCS1_NO_IMPLICIT_REJECT_PADDING;
+
     if ((ctx = BN_CTX_new_ex(rsa->libctx)) == NULL)
         goto err;
     BN_CTX_start(ctx);
@@ -488,7 +494,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
      * derive the Key Derivation Key from private exponent and public
      * ciphertext
      */
-    if (!(rsa->flags & RSA_FLAG_EXT_PKEY)) {
+    if (padding == RSA_PKCS1_PADDING) {
         /*
          * because we use d as a handle to rsa->d we need to keep it local and
          * free before any further use of rsa->d
@@ -564,11 +570,11 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         goto err;
 
     switch (padding) {
+    case RSA_PKCS1_NO_IMPLICIT_REJECT_PADDING:
+        r = RSA_padding_check_PKCS1_type_2(to, num, buf, j, num);
+        break;
     case RSA_PKCS1_PADDING:
-        if (rsa->flags & RSA_FLAG_EXT_PKEY)
-            r = RSA_padding_check_PKCS1_type_2(to, num, buf, j, num);
-        else
-            r = ossl_rsa_padding_check_PKCS1_type_2(rsa->libctx, to, num, buf, j, num, kdk);
+        r = ossl_rsa_padding_check_PKCS1_type_2(rsa->libctx, to, num, buf, j, num, kdk);
         break;
     case RSA_PKCS1_OAEP_PADDING:
         r = RSA_padding_check_PKCS1_OAEP(to, num, buf, j, num, NULL, 0);

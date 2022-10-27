@@ -75,6 +75,8 @@ typedef struct {
     /* TLS padding */
     unsigned int client_version;
     unsigned int alt_version;
+    /* PKCS#1 v1.5 decryption mode */
+    unsigned int implicit_rejection;
 } PROV_RSA_CTX;
 
 static void *rsa_newctx(void *provctx)
@@ -107,6 +109,7 @@ static int rsa_init(void *vprsactx, void *vrsa, const OSSL_PARAM params[],
     RSA_free(prsactx->rsa);
     prsactx->rsa = vrsa;
     prsactx->operation = operation;
+    prsactx->implicit_rejection = 1;
 
     switch (RSA_test_flags(prsactx->rsa, RSA_FLAG_TYPE_MASK)) {
     case RSA_FLAG_TYPE_RSA:
@@ -195,6 +198,7 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     int ret;
+    int pad_mode;
     size_t len = RSA_size(prsactx->rsa);
 
     if (!ossl_prov_is_running())
@@ -270,8 +274,12 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         }
         OPENSSL_free(tbuf);
     } else {
-        ret = RSA_private_decrypt(inlen, in, out, prsactx->rsa,
-                                  prsactx->pad_mode);
+        if ((prsactx->implicit_rejection == 0) &&
+                (prsactx->pad_mode == RSA_PKCS1_PADDING))
+            pad_mode = RSA_PKCS1_NO_IMPLICIT_REJECT_PADDING;
+        else
+            pad_mode = prsactx->pad_mode;
+        ret = RSA_private_decrypt(inlen, in, out, prsactx->rsa, pad_mode);
     }
     *outlen = constant_time_select_s(constant_time_msb_s(ret), *outlen, ret);
     ret = constant_time_select_int(constant_time_msb(ret), 0, 1);
@@ -395,6 +403,10 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
     if (p != NULL && !OSSL_PARAM_set_uint(p, prsactx->alt_version))
         return 0;
 
+    p = OSSL_PARAM_locate(params, OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION);
+    if (p != NULL && !OSSL_PARAM_set_uint(p, prsactx->implicit_rejection))
+        return 0;
+
     return 1;
 }
 
@@ -406,6 +418,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
                     NULL, 0),
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION, NULL),
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION, NULL),
+    OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION, NULL),
     OSSL_PARAM_END
 };
 
@@ -543,6 +556,14 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
             return 0;
         prsactx->alt_version = alt_version;
     }
+    p = OSSL_PARAM_locate_const(params, OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION);
+    if (p != NULL) {
+        unsigned int implicit_rejection;
+
+        if (!OSSL_PARAM_get_uint(p, &implicit_rejection))
+            return 0;
+        prsactx->implicit_rejection = implicit_rejection;
+    }
 
     return 1;
 }
@@ -555,6 +576,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL, NULL, 0),
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION, NULL),
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION, NULL),
+    OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION, NULL),
     OSSL_PARAM_END
 };
 
