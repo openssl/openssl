@@ -4647,6 +4647,73 @@ const OPTIONS *test_get_options(void)
     return options;
 }
 
+/* Test that trying to sign with a public key errors out gracefully */
+static int test_ecx_not_private_key(int tst)
+{
+#ifdef OPENSSL_NO_EC
+    return 1;
+#else
+    EVP_PKEY *pkey = NULL;
+
+    const unsigned char msg[] = { 0x00, 0x01, 0x02, 0x03 };
+    int testresult = 0;
+    EVP_MD_CTX *ctx = NULL;
+    unsigned char *mac = NULL;
+    size_t maclen = 0;
+    int ret;
+    unsigned char *pubkey;
+    size_t pubkeylen;
+
+
+    switch (keys[tst].type) {
+        case NID_X25519:
+        case NID_X448:
+            /* Test does not apply, skip */
+            return 1;
+    }
+
+    /* Check if this algorithm supports public keys */
+    if (keys[tst].pub == NULL)
+        return 1;
+
+    pubkey = (unsigned char *)keys[tst].pub,
+    pubkeylen = strlen(keys[tst].pub);
+
+    pkey = EVP_PKEY_new_raw_public_key(keys[tst].type, NULL, pubkey, pubkeylen);
+
+    if (!TEST_ptr(pkey))
+        goto err;
+
+    if (!TEST_ptr(ctx = EVP_MD_CTX_new()))
+        goto err;
+
+    ret = EVP_DigestSignInit(ctx, NULL, NULL, NULL,
+                             pkey);
+
+    if (!TEST_true(ret))
+        goto err;
+
+    if (!TEST_true(EVP_DigestSign(ctx, NULL, &maclen, msg, sizeof(msg))))
+        goto err;
+
+    if (!TEST_ptr(mac = OPENSSL_malloc(maclen)))
+        goto err;
+
+    /* We used a bad key. We expect a failure here */
+    if (!TEST_false(EVP_DigestSign(ctx, mac, &maclen, msg, sizeof(msg))))
+        goto err;
+
+    testresult = 1;
+
+ err:
+    EVP_MD_CTX_free(ctx);
+    OPENSSL_free(mac);
+    EVP_PKEY_free(pkey);
+
+    return testresult;
+#endif
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -4781,6 +4848,8 @@ int setup_tests(void)
 #endif
 
     ADD_ALL_TESTS(test_ecx_short_keys, OSSL_NELEM(ecxnids));
+
+    ADD_ALL_TESTS(test_ecx_not_private_key, OSSL_NELEM(keys));
 
     return 1;
 }
