@@ -22,6 +22,7 @@
 # include "../vms_rms.h"
 
 /* Some compiler options may mask the declaration of "_malloc32". */
+# define DSO_MALLOC OPENSSL_malloc
 # if __INITIAL_POINTER_SIZE && defined _ANSI_C_SOURCE
 #  if __INITIAL_POINTER_SIZE == 64
 #   pragma pointer_size save
@@ -37,10 +38,9 @@ static void *dso_malloc(__size_t num, const char *file, int line)
     }
     return ret;
 }
+#   undef DSO_MALLOC
 #   define DSO_MALLOC(num) dso_malloc((num), OPENSSL_FILE, OPENSSL_LINE)
 #   pragma pointer_size restore
-#  else                         /* __INITIAL_POINTER_SIZE == 64 */
-#   define DSO_MALLOC OPENSSL_malloc
 #  endif                        /* __INITIAL_POINTER_SIZE == 64 [else] */
 # endif                         /* __INITIAL_POINTER_SIZE && defined
                                  * _ANSI_C_SOURCE */
