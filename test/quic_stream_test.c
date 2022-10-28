@@ -210,7 +210,7 @@ static int test_bulk(int idx)
     QUIC_SSTREAM *sstream = NULL;
     OSSL_QUIC_FRAME_STREAM hdr;
     OSSL_QTX_IOVEC iov[2];
-    size_t i, num_iov = 0, init_size = 8192, total_written = 0, l;
+    size_t i, num_iov = 0, init_size = 8192, l;
     size_t consumed = 0, rd, expected = 0;
     unsigned char *src_buf = NULL, *dst_buf = NULL;
     unsigned char *ref_src_buf = NULL, *ref_dst_buf = NULL;
@@ -259,7 +259,6 @@ static int test_bulk(int idx)
 
         memcpy(ref_src_cur, src_buf, consumed);
         ref_src_cur     += consumed;
-        total_written   += consumed;
     } while (consumed > 0);
 
     if (!TEST_size_t_eq(ossl_quic_sstream_get_buffer_used(sstream), init_size)
