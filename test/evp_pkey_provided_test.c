@@ -188,7 +188,12 @@ static int test_print_key_using_pem(const char *alg, const EVP_PKEY *pk)
         /* Unencrypted private key in PEM form */
         || !TEST_true(PEM_write_bio_PrivateKey(membio, pk,
                                                NULL, NULL, 0, NULL, NULL))
-        || !TEST_true(compare_with_file(alg, PRIV_PEM, membio)))
+        || !TEST_true(compare_with_file(alg, PRIV_PEM, membio))
+        /* NULL key */
+        || !TEST_false(PEM_write_bio_PrivateKey(membio, NULL,
+                                               NULL, NULL, 0, NULL, NULL))
+        || !TEST_false(PEM_write_bio_PrivateKey_traditional(membio, NULL,
+                                               NULL, NULL, 0, NULL, NULL)))
         goto err;
 
     ret = 1;

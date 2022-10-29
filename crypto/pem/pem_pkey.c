@@ -311,7 +311,7 @@ PEM_write_cb_ex_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
     IMPLEMENT_PEM_provided_write_body_main(pkey, bio);
 
  legacy:
-    if (x->ameth == NULL || x->ameth->priv_encode != NULL)
+    if (x != NULL && (x->ameth == NULL || x->ameth->priv_encode != NULL))
         return PEM_write_bio_PKCS8PrivateKey(out, x, enc,
                                              (const char *)kstr, klen, cb, u);
     return PEM_write_bio_PrivateKey_traditional(out, x, enc, kstr, klen, cb, u);
@@ -335,6 +335,9 @@ int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
     char pem_str[80];
     EVP_PKEY *copy = NULL;
     int ret;
+
+    if (x == NULL)
+        return 0;
 
     if (evp_pkey_is_assigned(x)
         && evp_pkey_is_provided(x)
