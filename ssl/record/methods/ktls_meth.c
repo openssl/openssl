@@ -533,6 +533,24 @@ static int ktls_prepare_write_bio(OSSL_RECORD_LAYER *rl, int type)
     return OSSL_RECORD_RETURN_SUCCESS;
 }
 
+static int ktls_alloc_buffers(OSSL_RECORD_LAYER *rl)
+{
+    /* We use the application buffer directly for writing */
+    if (rl->direction == OSSL_RECORD_DIRECTION_WRITE)
+        return 1;
+
+    return tls_alloc_buffers(rl);
+}
+
+static int ktls_free_buffers(OSSL_RECORD_LAYER *rl)
+{
+    /* We use the application buffer directly for writing */
+    if (rl->direction == OSSL_RECORD_DIRECTION_WRITE)
+        return 1;
+
+    return tls_free_buffers(rl);
+}
+
 static struct record_functions_st ossl_ktls_funcs = {
     ktls_set_crypto_state,
     ktls_cipher,
@@ -561,8 +579,6 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_unprocessed_read_pending,
     tls_processed_read_pending,
     tls_app_data_pending,
-    tls_write_pending,
-    tls_get_max_record_len,
     tls_get_max_records,
     tls_write_records,
     tls_retry_write_records,
@@ -580,5 +596,7 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_get_compression,
     tls_set_max_frag_len,
     NULL,
-    tls_increment_sequence_ctr
+    tls_increment_sequence_ctr,
+    ktls_alloc_buffers,
+    ktls_free_buffers
 };
