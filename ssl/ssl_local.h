@@ -1500,9 +1500,6 @@ struct ssl_connection_st {
     unsigned char exporter_master_secret[EVP_MAX_MD_SIZE];
     unsigned char early_exporter_master_secret[EVP_MAX_MD_SIZE];
 
-    unsigned char read_iv[EVP_MAX_IV_LENGTH]; /* TLSv1.3 static read IV */
-    unsigned char write_iv[EVP_MAX_IV_LENGTH]; /* TLSv1.3 static write IV */
-
     /* session info */
     /* client cert? */
     /* This is used to hold the server certificate used */
