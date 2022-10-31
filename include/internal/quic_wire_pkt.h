@@ -322,6 +322,14 @@ typedef struct quic_pkt_hdr_st {
      */
     unsigned int    fixed       :1;
 
+    /*
+     * The unused bits in the low 4 bits of a Retry packet header's first byte.
+     * This is used to ensure that Retry packets have the same bit-for-bit
+     * representation in their header when decoding and encoding them again.
+     * This is necessary to validate Retry packet headers.
+     */
+    unsigned int    unused      :4;
+
     /* [L] Version field. Valid if (type != 1RTT). */
     uint32_t        version;
 
@@ -537,4 +545,51 @@ int ossl_quic_wire_determine_pn_len(QUIC_PN pn, QUIC_PN largest_acked);
 int ossl_quic_wire_encode_pkt_hdr_pn(QUIC_PN pn,
                                      unsigned char *enc_pn,
                                      size_t enc_pn_len);
+
+/*
+ * Retry Integrity Tags
+ * ====================
+ */
+
+#define QUIC_RETRY_INTEGRITY_TAG_LEN    16
+
+/*
+ * Validate a retry integrity tag. Returns 1 if the tag is valid.
+ *
+ * Must be called on a hdr with a type of QUIC_PKT_TYPE_RETRY with a valid data
+ * pointer.
+ *
+ * client_initial_dcid must be the original DCID used by the client in its first
+ * Initial packet, as this is used to calculate the Retry Integrity Tag.
+ *
+ * Returns 0 if the tag is invalid, if called on any other type of packet or if
+ * the body is too short.
+ */
+int ossl_quic_validate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
+                                           const char *propq,
+                                           const QUIC_PKT_HDR *hdr,
+                                           const QUIC_CONN_ID *client_initial_dcid);
+
+/*
+ * Calculates a retry integrity tag. Returns 0 on error, for example if hdr does
+ * not have a type of QUIC_PKT_TYPE_RETRY.
+ *
+ * client_initial_dcid must be the original DCID used by the client in its first
+ * Initial packet, as this is used to calculate the Retry Integrity Tag.
+ *
+ * tag must point to a buffer of QUIC_RETRY_INTEGRITY_TAG_LEN bytes in size.
+ *
+ * Note that hdr->data must point to the Retry packet body, and hdr->len must
+ * include the space for the Retry Integrity Tag. (This means that you can
+ * easily fill in a tag in a Retry packet you are generating by calling this
+ * function and passing (hdr->data + hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN) as
+ * the tag argument.) This function fails if hdr->len is too short to contain a
+ * Retry Integrity Tag.
+ */
+int ossl_quic_calculate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
+                                            const char *propq,
+                                            const QUIC_PKT_HDR *hdr,
+                                            const QUIC_CONN_ID *client_initial_dcid,
+                                            unsigned char *tag);
+
 #endif
