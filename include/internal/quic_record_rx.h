@@ -162,12 +162,14 @@ int ossl_qrx_remove_dst_conn_id(OSSL_QRX *qrx,
  * secret_len is the length of the secret buffer in bytes. The buffer must be
  * sized correctly to the chosen suite, else the function fails.
  *
- * This function can only be called once for a given EL. Subsequent calls fail,
- * as do calls made after a corresponding call to ossl_qrx_discard_enc_level for
- * that EL. The secret for a EL cannot be changed after it is set because QUIC
- * has no facility for introducing additional key material after an EL is setup.
- * QUIC key updates are managed semi-automatically by the QRX but do require
- * some caller handling (see below).
+ * This function can only be called once for a given EL, except for the INITIAL
+ * EL, which can need rekeying when a connection retry occurs. Subsequent calls
+ * for non-INITIAL ELs fail, as do calls made after a corresponding call to
+ * ossl_qrx_discard_enc_level for that EL. The secret for a non-INITIAL EL
+ * cannot be changed after it is set because QUIC has no facility for
+ * introducing additional key material after an EL is setup. QUIC key updates
+ * are managed semi-automatically by the QRX but do require some caller handling
+ * (see below).
  *
  * md is for internal use and should be NULL.
  *

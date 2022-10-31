@@ -65,12 +65,14 @@ void ossl_qtx_free(OSSL_QTX *qtx);
  * secret_len is the length of the secret buffer in bytes. The buffer must be
  * sized correctly to the chosen suite, else the function fails.
  *
- * This function can only be called once for a given EL. Subsequent calls fail,
- * as do calls made after a corresponding call to ossl_qtx_discard_enc_level for
- * that EL. The secret for a EL cannot be changed after it is set because QUIC
- * has no facility for introducing additional key material after an EL is setup.
- * (QUIC key updates generate new keys from existing key material and do not
- * introduce new entropy into a connection's key material.)
+ * This function can only be called once for a given EL, except for the INITIAL
+ * EL, as the INITIAL EL can need to be rekeyed if connection retry occurs.
+ * Subsequent calls for non-INITIAL ELs fail. Calls made after a corresponding
+ * call to ossl_qtx_discard_enc_level for a given EL also fail, including for
+ * the INITIAL EL. The secret for a non-INITIAL EL cannot be changed after it is
+ * set because QUIC has no facility for introducing additional key material
+ * after an EL is setup. (QUIC key updates generate new keys from existing key
+ * material and do not introduce new entropy into a connection's key material.)
  *
  * Returns 1 on success or 0 on failure.
  */
