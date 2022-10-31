@@ -859,13 +859,6 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
         goto malformed;
 
     /*
-     * We automatically discard INITIAL keys when successfully decrypting a
-     * HANDSHAKE packet.
-     */
-    if (enc_level == QUIC_ENC_LEVEL_HANDSHAKE)
-        ossl_qrl_enc_level_set_discard(&qrx->el_set, QUIC_ENC_LEVEL_INITIAL);
-
-    /*
      * At this point, we have successfully authenticated the AEAD tag and no
      * longer need to worry about exposing the Key Phase bit in timing channels.
      * Check for a Key Phase bit differing from our expectation.

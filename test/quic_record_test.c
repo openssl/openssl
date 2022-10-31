@@ -616,12 +616,10 @@ static const struct rx_test_op rx_script_5[] = {
     RX_OP_CHECK_PKT_FRAMES_OK_N(5c)
     RX_OP_CHECK_NO_PKT()
 
-    /* Try injecting the packet again */
+    /* Discard Initial EL and try injecting the packet again */
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
     RX_OP_INJECT_N(5)
-    /*
-     * Initial packet is not output due to receiving a Handshake packet causing
-     * auto-discard of Initial keys
-     */
+    /* Initial packet is not output because we have discarded Initial keys */
     RX_OP_CHECK_PKT_FRAMES_OK_N(5b)
     RX_OP_CHECK_PKT_FRAMES_OK_N(5c)
     RX_OP_CHECK_NO_PKT()
@@ -656,6 +654,7 @@ static const struct rx_test_op rx_script_5[] = {
     RX_OP_CHECK_PKT_FRAMES_OK_N(5c)
     RX_OP_CHECK_NO_PKT()
 
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
     RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_HANDSHAKE)
     RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_1RTT)
     RX_OP_INJECT_N(5)
@@ -979,12 +978,10 @@ static const struct rx_test_op rx_script_6[] = {
     RX_OP_CHECK_PKT_FRAMES_OK_N(6c)
     RX_OP_CHECK_NO_PKT()
 
-    /* Try injecting the packet again */
+    /* Discard Initial EL and try injecting the packet again */
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
     RX_OP_INJECT_N(6)
-    /*
-     * Initial packet is not output due to receiving a Handshake packet causing
-     * auto-discard of Initial keys
-     */
+    /* Initial packet is not output because we have discarded Initial keys */
     RX_OP_CHECK_PKT_FRAMES_OK_N(6b)
     RX_OP_CHECK_PKT_FRAMES_OK_N(6c)
     RX_OP_CHECK_NO_PKT()
@@ -1337,12 +1334,10 @@ static const struct rx_test_op rx_script_7[] = {
     RX_OP_CHECK_PKT_FRAMES_OK_N(7c)
     RX_OP_CHECK_NO_PKT()
 
-    /* Try injecting the packet again */
+    /* Discard Initial EL and try injecting the packet again */
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
     RX_OP_INJECT_N(7)
-    /*
-     * Initial packet is not output due to receiving a Handshake packet causing
-     * auto-discard of Initial keys
-     */
+    /* Initial packet is not output because we have discarded Initial keys */
     RX_OP_CHECK_PKT_FRAMES_OK_N(7b)
     RX_OP_CHECK_PKT_FRAMES_OK_N(7c)
     RX_OP_CHECK_NO_PKT()
