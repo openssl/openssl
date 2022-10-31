@@ -382,8 +382,12 @@ unsigned char *ossl_quic_wire_encode_transport_param_bytes(WPACKET *pkt,
     unsigned char *b = NULL;
 
     if (!WPACKET_quic_write_vlint(pkt, id)
-            || !WPACKET_quic_write_vlint(pkt, value_len)
-            || !WPACKET_allocate_bytes(pkt, value_len, (unsigned char **)&b))
+        || !WPACKET_quic_write_vlint(pkt, value_len))
+        return NULL;
+
+    if (value_len == 0)
+        b = WPACKET_get_curr(pkt);
+    else if (!WPACKET_allocate_bytes(pkt, value_len, (unsigned char **)&b))
         return NULL;
 
     if (value != NULL)
