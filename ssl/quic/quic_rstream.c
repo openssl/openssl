@@ -33,6 +33,9 @@ QUIC_RSTREAM *ossl_quic_rstream_new(QUIC_RXFC *rxfc,
 
 void ossl_quic_rstream_free(QUIC_RSTREAM *qrs)
 {
+    if (qrs == NULL)
+        return;
+
     ossl_sframe_list_destroy(&qrs->fl);
     OPENSSL_free(qrs);
 }
