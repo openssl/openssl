@@ -199,8 +199,9 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
     if (el == NULL
         || md_name == NULL
         || init_key_phase_bit > 1 || is_tx < 0 || is_tx > 1
-        || (init_key_phase_bit > 0 && enc_level != QUIC_ENC_LEVEL_1RTT))
+        || (init_key_phase_bit > 0 && enc_level != QUIC_ENC_LEVEL_1RTT)) {
         return 0;
+    }
 
     if (enc_level == QUIC_ENC_LEVEL_INITIAL
         && el->state == QRL_EL_STATE_PROV_NORMAL) {
@@ -216,8 +217,6 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
 
     if (el->state != QRL_EL_STATE_UNPROV)
         return 0;
-
-
 
     init_keyslot = is_tx ? 0 : init_key_phase_bit;
     hpr_key_len = ossl_qrl_get_suite_hdr_prot_key_len(suite_id);

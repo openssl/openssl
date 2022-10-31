@@ -13,6 +13,5 @@
 # include "internal/quic_ssl.h"
 
 int ossl_quic_handle_frames(QUIC_CONNECTION *qc, OSSL_QRX_PKT *qpacket);
-__owur int ossl_quic_depacketize(QUIC_CONNECTION *qc);
 
 #endif

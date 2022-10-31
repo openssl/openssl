@@ -244,7 +244,7 @@ static const struct rx_test_op rx_script_3[] = {
      * However, the depacketizer still handles this sort of packet, so
      * we still pass the packet to it, to exercise what it does.
      */
-    RX_OP_INJECT_CHECK_FRAMES_OK(3)
+    RX_OP_INJECT_CHECK(3)
     RX_OP_CHECK_NO_PKT()
     RX_OP_END
 };
@@ -299,7 +299,7 @@ static const unsigned char rx_script_4_body[] = {
 
 static const struct rx_test_op rx_script_4[] = {
     RX_OP_ADD_RX_DCID(empty_conn_id)
-    RX_OP_INJECT_CHECK_FRAMES_OK(4)
+    RX_OP_INJECT_CHECK(4)
     RX_OP_CHECK_NO_PKT()
     RX_OP_END
 };
@@ -1688,31 +1688,15 @@ struct rx_state {
     OSSL_QRX           *qrx;
     OSSL_QRX_ARGS       args;
 
-    /* OSSL_ACKM with necessary data */
-    OSSL_ACKM          *ackm;
-    OSSL_CC_DATA       *ccdata;
-    OSSL_STATM          statm;       /* NOT the state machine! */
-
-    /* Used for the RX depacketizer, and wraps the |qrx| and |ackm| */
+    /* Used for the RX depacketizer */
     SSL_CTX            *quic_ssl_ctx;
     QUIC_CONNECTION    *quic_conn;
 };
 
 static void rx_state_teardown(struct rx_state *s)
 {
-    if (s->ackm != NULL) {
-        ossl_ackm_free(s->ackm);
-        ossl_quic_conn_set_ackm(s->quic_conn, NULL);
-        s->ackm = NULL;
-    }
-    if (s->ccdata != NULL) {
-        ossl_cc_dummy_method.free(s->ccdata);
-        s->ccdata = NULL;
-    }
-
     if (s->qrx != NULL) {
         ossl_qrx_free(s->qrx);
-        ossl_quic_conn_set_qrx(s->quic_conn, NULL);
         s->qrx = NULL;
     }
 
@@ -1732,13 +1716,6 @@ static void rx_state_teardown(struct rx_state *s)
 }
 
 static uint64_t time_counter = 0;
-
-static OSSL_TIME fake_now(void *ignored)
-{
-    OSSL_TIME f = {0};
-
-    return f;
-}
 
 static OSSL_TIME expected_time(uint64_t counter)
 {
@@ -1778,22 +1755,11 @@ static int rx_state_ensure_for_frames(struct rx_state *s)
     if (!rx_state_ensure(s))
         return 0;
 
-    /* Initialise ACK manager and congestion controller. */
-    if ((s->ccdata == NULL
-         && !TEST_ptr(s->ccdata = ossl_cc_dummy_method.new(NULL, NULL, NULL)))
-        || (s->ackm == NULL
-            && !TEST_ptr(s->ackm = ossl_ackm_new(fake_now, NULL, &s->statm,
-                                                 &ossl_cc_dummy_method,
-                                                 s->ccdata))))
-        return 0;
-
     if (s->quic_conn == NULL
         && (!TEST_ptr(s->quic_ssl_ctx
                       = SSL_CTX_new_ex(NULL, NULL, OSSL_QUIC_client_method()))
             || !TEST_ptr(qs = SSL_new(s->quic_ssl_ctx))
-            || !TEST_ptr(s->quic_conn = ossl_quic_conn_from_ssl(qs))
-            || !TEST_true(ossl_quic_conn_set_qrx(s->quic_conn, s->qrx))
-            || !TEST_true(ossl_quic_conn_set_ackm(s->quic_conn, s->ackm))))
+            || !TEST_ptr(s->quic_conn = ossl_quic_conn_from_ssl(qs))))
         return 0;
     return 1;
 }

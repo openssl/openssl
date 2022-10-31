@@ -15,142 +15,11 @@
 #include "internal/quic_rx_depack.h"
 #include "internal/quic_error.h"
 #include "internal/quic_fc.h"
+#include "internal/quic_ssl.h"
 #include "internal/sockets.h"
 
 #include "quic_local.h"
 #include "../ssl_local.h"
-
-/*
- * TODO(QUIC): ASSUMPTION: the QUIC_CONNECTION structure refers to other related
- * components, such as OSSL_ACKM and OSSL_QRX, in some manner.  These macros
- * should be used to get those components.
- */
-#define GET_CONN_ACKM(c)        ((c)->ackm)
-#define GET_CONN_QRX(c)         ((c)->qrx)
-#define GET_CONN_STATEM(c)      ((c)->ssl.statem)
-
-#if 0                            /* Currently unimplemented */
-# define GET_CONN_ACK_DELAY_EXP(c) (QUIC_CONNECTION_get_ack_delay_exponent(c))
-#else
-/* 3 is the default, see RFC 9000, 18.2. Transport Parameter Definitions */
-# define GET_CONN_ACK_DELAY_EXP(c) 3
-#endif
-
-/*
- * TODO(QUIC): In MVP the QUIC_CONNECTION is the only supported stream.
- */
-static QUIC_STREAM *ssl_get_stream(QUIC_CONNECTION *conn, uint64_t stream_id)
-{
-    return stream_id == 0 ? &conn->stream : NULL;
-}
-
-/*
- * TODO(QUIC): ASSUMPTION: ssl_get_stream_type() gets a stream type from a
- * QUIC_STREAM
- */
-/* Receive */
-#define SSL_STREAM_TYPE_R       1
-/* Send */
-#define SSL_STREAM_TYPE_S       2
-/* Bidirectional */
-#define SSL_STREAM_TYPE_B       (SSL_STREAM_TYPE_R|SSL_STREAM_TYPE_S)
-static int ssl_get_stream_type(QUIC_STREAM *stream)
-{
-    return SSL_STREAM_TYPE_B;
-}
-
-/*
- * We assume that queuing of the data has to be done without copying, thus
- * we get the reference counting QRX packet wrapper so it can increment the
- * reference count.  When the data is consumed (i.e. as a result of, say,
- * SSL_read()), ossl_qrx_pkt_wrap_free() must be called.
- */
-static int ssl_queue_data(QUIC_STREAM *stream, OSSL_QRX_PKT *pkt,
-                          const unsigned char *data, uint64_t data_len,
-                          uint64_t logical_offset, int is_fin)
-{
-    /* Notify stream flow controller */
-    if (stream->rxfc != NULL
-        && (!ossl_quic_rxfc_on_rx_stream_frame(stream->rxfc,
-                                               logical_offset + data_len,
-                                               is_fin)
-            || ossl_quic_rxfc_get_error(stream->rxfc, 0) != QUIC_ERR_NO_ERROR))
-        /* QUIC_ERR_FLOW_CONTROL_ERROR or QUIC_ERR_FINAL_SIZE detected */
-        return 0;
-
-    return stream->rstream == NULL
-           || ossl_quic_rstream_queue_data(stream->rstream, pkt,
-                                           logical_offset, data, data_len,
-                                           is_fin);
-}
-
-/*
- * TODO(QUIC): ASSUMPTION: ssl_close_stream() detaches the QUIC_STREAM from
- * the QUIC_CONNECTION it's attached to, and then destroys that QUIC_STREAM
- * (as well as its SSL object).  |how| works the same way as in shutdown(2),
- * i.e. |SHUT_RD| closes the reader part, |SHUT_WR| closes the writer part.
- */
-static int ssl_close_stream(QUIC_STREAM *stream, int how)
-{
-    return 1;
-}
-
-/*
- * TODO(QUIC): ASSUMPTION: ssl_close_connection() closes all the streams that
- * are attached to it, then closes the QUIC_CONNECTION as well.
- * Actual cleanup / destruction of the QUIC_CONNECTION is assumed to be done
- * higher up in the call stack (state machine, for example?).
- */
-static int ssl_close_connection(QUIC_CONNECTION *connection)
-{
-    return 1;
-}
-
-/*
- * TODO(QUIC): ASSUMPTION: ossl_statem_set_error_state() sets an overall error
- * state in the state machine.  It's up to the state machine to determine what
- * to do with it.
- */
-#define QUIC_STREAM_STATE_ERROR 1
-
-/*
- * QUICfatal() et al is the same as SSLfatal(), but for QUIC.  We define a
- * placeholder here as long as it's not defined elsewhere.
- *
- * ossl_quic_fatal() is an error reporting building block used instead of
- * ERR_set_error().  In addition to what ERR_set_error() does, this puts
- * the state machine into an error state and sends an alert if appropriate,
- * and also closes the current connection.
- * This is a permanent error for the current connection.
- */
-#ifndef QUICfatal
-
-static void ossl_quic_fatal(QUIC_CONNECTION *c, int al, int reason,
-                            const char *fmt, ...)
-{
-    va_list args;
-
-    va_start(args, fmt);
-    ERR_vset_error(ERR_LIB_SSL, reason, fmt, args);
-    va_end(args);
-
-    /*
-     * TODO(QUIC): ADD CODE to set the state machine error.
-     * It's assumed that you can get the state machine with
-     * GET_CONN_STATEM(c)
-     */
-
-    ssl_close_connection(c);
-
-}
-# define QUICfatal(c, al, r) QUICfatal_data((c), (al), (r), NULL)
-# define QUICfatal_data                                         \
-    (ERR_new(),                                                 \
-     ERR_set_debug(OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC),   \
-     ossl_quic_fatal)
-#endif
-
-/* TODO(QUIC): [END: TO BE REMOVED] */
 
 /*
  * Helper functions to process different frame types.
@@ -163,7 +32,8 @@ static void ossl_quic_fatal(QUIC_CONNECTION *c, int al, int reason,
 static int depack_do_frame_padding(PACKET *pkt)
 {
     /* We ignore this frame */
-    return ossl_quic_wire_decode_padding(pkt);
+    ossl_quic_wire_decode_padding(pkt);
+    return 1;
 }
 
 static int depack_do_frame_ping(PACKET *pkt, OSSL_ACKM_RX_PKT *ackm_data)
@@ -182,7 +52,7 @@ static int depack_do_frame_ack(PACKET *pkt, QUIC_CONNECTION *connection,
     OSSL_QUIC_FRAME_ACK ack;
     OSSL_QUIC_ACK_RANGE *ack_ranges;
     uint64_t total_ranges = 0;
-    uint32_t ack_delay_exp = GET_CONN_ACK_DELAY_EXP(connection);
+    uint32_t ack_delay_exp = connection->rx_ack_delay_exp;
     int ok = 1;          /* Assume the best */
 
     if (!ossl_quic_wire_peek_frame_ack_num_ranges(pkt, &total_ranges)
@@ -198,7 +68,7 @@ static int depack_do_frame_ack(PACKET *pkt, QUIC_CONNECTION *connection,
     if (!ossl_quic_wire_decode_frame_ack(pkt, ack_delay_exp, &ack, NULL))
         ok = 0;
     if (ok
-        && !ossl_ackm_on_rx_ack_frame(GET_CONN_ACKM(connection), &ack,
+        && !ossl_ackm_on_rx_ack_frame(connection->ackm, &ack,
                                       packet_space, received))
         ok = 0;
 
@@ -214,7 +84,6 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
 {
     OSSL_QUIC_FRAME_RESET_STREAM frame_data;
     QUIC_STREAM *stream = NULL;
-    int stream_type = 0;
 
     if (!ossl_quic_wire_decode_frame_reset_stream(pkt, &frame_data))
         return 0;
@@ -222,15 +91,11 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    if ((stream = ssl_get_stream(connection, frame_data.stream_id)) == NULL)
+    stream = ossl_quic_stream_map_get_by_id(&connection->qsm, frame_data.stream_id);
+    if (stream == NULL || stream->sstream == NULL)
         return 0;
-    stream_type = ssl_get_stream_type(stream);
 
-    ssl_close_stream(stream, SHUT_WR); /* Reuse shutdown(2) symbols */
-    if ((stream_type & SSL_STREAM_TYPE_S) != 0) {
-        QUICfatal(connection, QUIC_STREAM_STATE_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
+    /* TODO: RESET_STREAM handling */
     return 1;
 }
 
@@ -240,7 +105,6 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
 {
     OSSL_QUIC_FRAME_STOP_SENDING frame_data;
     QUIC_STREAM *stream = NULL;
-    int stream_type = 0;
 
     if (!ossl_quic_wire_decode_frame_stop_sending(pkt, &frame_data))
         return 0;
@@ -248,30 +112,39 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    if ((stream = ssl_get_stream(connection, frame_data.stream_id)) == NULL)
+    stream = ossl_quic_stream_map_get_by_id(&connection->qsm, frame_data.stream_id);
+    if (stream == NULL || stream->rstream == NULL)
         return 0;
-    stream_type = ssl_get_stream_type(stream);
 
-    ssl_close_stream(stream, SHUT_RD); /* Reuse shutdown(2) symbols */
-    if ((stream_type & SSL_STREAM_TYPE_R) != 0) {
-        QUICfatal(connection, QUIC_STREAM_STATE_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
+    /* TODO: STOP_SENDING handling */
     return 1;
 }
 
 static int depack_do_frame_crypto(PACKET *pkt, QUIC_CONNECTION *connection,
+                                  OSSL_QRX_PKT *parent_pkt,
                                   OSSL_ACKM_RX_PKT *ackm_data)
 {
-    OSSL_QUIC_FRAME_CRYPTO frame_data;
+    OSSL_QUIC_FRAME_CRYPTO f;
+    QUIC_RSTREAM *rstream;
 
-    if (!ossl_quic_wire_decode_frame_crypto(pkt, &frame_data))
+    if (!ossl_quic_wire_decode_frame_crypto(pkt, &f))
         return 0;
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* TODO(QUIC): ADD CODE to send |frame_data.data| to the handshake manager */
+    rstream = connection->crypto_recv[ackm_data->pkt_space];
+    if (!ossl_assert(rstream != NULL))
+        /*
+         * This should not happen; we should only have a NULL stream here if
+         * the EL has been discarded, and if the EL has been discarded we
+         * shouldn't be here.
+         */
+        return 0;
+
+    if (!ossl_quic_rstream_queue_data(rstream, parent_pkt,
+                                      f.offset, f.data, f.len, 0))
+        return 0;
 
     return 1;
 }
@@ -306,19 +179,33 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CONNECTION *connection,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /*
-     * TODO(QUIC): ASSUMPTION: ssl_get_stream() gets a QUIC_STREAM from a
-     * QUIC_CONNECTION by stream ID.
-     */
-    if ((stream = ssl_get_stream(connection, frame_data.stream_id)) == NULL)
+    stream = ossl_quic_stream_map_get_by_id(&connection->qsm, frame_data.stream_id);
+    if (stream == NULL || stream->rstream == NULL)
+        /* TODO: Handle as protocol violation */
         return 0;
-    /*
-     * TODO(QUIC): ASSUMPTION: ssl_queue_data() knows what to do with
-     * |frame_data.offset| and |frame_data.is_fin|.
-     */
-    if (!ssl_queue_data(stream, parent_pkt, frame_data.data, frame_data.len,
-                        frame_data.offset, frame_data.is_fin))
+
+    /* Notify stream flow controller. */
+    if (!ossl_quic_rxfc_on_rx_stream_frame(&stream->rxfc,
+                                           frame_data.offset + frame_data.len,
+                                           frame_data.is_fin)
+        || ossl_quic_rxfc_get_error(&stream->rxfc, 0) != QUIC_ERR_NO_ERROR)
+        /* QUIC_ERR_FLOW_CONTROL_ERROR or QUIC_ERR_FINAL_SIZE detected */
+        /* TODO: Handle as protocol violation */
         return 0;
+
+    /*
+     * The receive stream buffer may or may not choose to consume the data
+     * without copying by reffing the OSSL_QRX_PKT. In this case
+     * ossl_qrx_pkt_release() will be eventually called when the data is no
+     * longer needed.
+     */
+    if (!ossl_quic_rstream_queue_data(stream->rstream, parent_pkt,
+                                      frame_data.offset,
+                                      frame_data.data,
+                                      frame_data.len,
+                                      frame_data.is_fin))
+        return 0;
+
     return 1;
 }
 
@@ -333,8 +220,8 @@ static int depack_do_frame_max_data(PACKET *pkt, QUIC_CONNECTION *connection,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* TODO(QUIC): ADD CODE to send |max_data| to flow control */
-
+    ossl_quic_txfc_bump_cwm(&connection->conn_txfc, max_data);
+    ossl_quic_stream_map_update_state(&connection->qsm, connection->stream0);
     return 1;
 }
 
@@ -344,6 +231,7 @@ static int depack_do_frame_max_stream_data(PACKET *pkt,
 {
     uint64_t stream_id = 0;
     uint64_t max_stream_data = 0;
+    QUIC_STREAM *stream;
 
     if (!ossl_quic_wire_decode_frame_max_stream_data(pkt, &stream_id,
                                                      &max_stream_data))
@@ -352,8 +240,14 @@ static int depack_do_frame_max_stream_data(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* TODO(QUIC): ADD CODE to send |max_stream_data| to flow control */
+    stream = ossl_quic_stream_map_get_by_id(&connection->qsm, stream_id);
+    if (stream == NULL || stream->sstream == NULL)
+        /* If stream does not exist, just ignore it. */
+        /* TODO: This should be treated as a protocol violation. */
+        return 1;
 
+    ossl_quic_txfc_bump_cwm(&stream->txfc, max_stream_data);
+    ossl_quic_stream_map_update_state(&connection->qsm, stream);
     return 1;
 }
 
@@ -516,8 +410,7 @@ static int depack_do_frame_handshake_done(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* TODO(QUIC): ADD CODE to tell the handshake manager that we're done */
-
+    ossl_quic_conn_on_handshake_confirmed(connection);
     return 1;
 }
 
@@ -598,7 +491,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             /* CRYPTO frames are valid everywhere except in 0RTT packets */
             if (pkt_type == QUIC_PKT_TYPE_0RTT)
                 return 0;
-            if (!depack_do_frame_crypto(pkt, connection, ackm_data))
+            if (!depack_do_frame_crypto(pkt, connection, parent_pkt, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
@@ -777,17 +670,14 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
     case QUIC_PKT_TYPE_1RTT:
         ackm_data.pkt_space = QUIC_PN_SPACE_APP;
         break;
+    default:
+        /*
+         * Retry and Version Negotiation packets should not be passed to this
+         * function.
+         */
+        goto end;
     }
     ok = 0;                      /* Still assume the worst */
-
-    /* Handle special cases */
-    if (qpacket->hdr->type == QUIC_PKT_TYPE_RETRY) {
-        /* TODO(QUIC): ADD CODE to handle a retry */
-        goto success;
-    } else if (qpacket->hdr->type == QUIC_PKT_TYPE_VERSION_NEG) {
-        /* TODO(QUIC): ADD CODE to handle version negotiation */
-        goto success;
-    }
 
     /* Now that special cases are out of the way, parse frames */
     if (!PACKET_buf_init(&pkt, qpacket->hdr->data, qpacket->hdr->len)
@@ -796,7 +686,6 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
                                   &ackm_data))
         goto end;
 
- success:
     ok = 1;
  end:
     /*
@@ -806,27 +695,7 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
      * |ackm_data| has at least been initialized.
      */
     if (ok >= 0)
-        ossl_ackm_on_rx_packet(GET_CONN_ACKM(connection), &ackm_data);
+        ossl_ackm_on_rx_packet(connection->ackm, &ackm_data);
 
-    /*
-     * Release the ref to the packet. This will free the packet unless something
-     * in our processing above has added a reference to it.
-     */
-    ossl_qrx_pkt_release(qpacket);
     return ok > 0;
-}
-
-int ossl_quic_depacketize(QUIC_CONNECTION *connection)
-{
-    OSSL_QRX_PKT *qpacket = NULL;
-
-    if (connection == NULL)
-        return 0;
-
-    /* Try to read a packet from the read record layer */
-    memset(&qpacket, 0, sizeof(qpacket));
-    if (ossl_qrx_read_pkt(GET_CONN_QRX(connection), &qpacket) <= 0)
-        return 0;
-
-    return ossl_quic_handle_frames(connection, qpacket);
 }

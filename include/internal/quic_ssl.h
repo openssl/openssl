@@ -40,9 +40,13 @@ typedef struct quic_conn_st QUIC_CONNECTION;
 typedef struct quic_stream_st QUIC_STREAM;
 
 __owur QUIC_CONNECTION *ossl_quic_conn_from_ssl(SSL *ssl);
-int ossl_quic_conn_set_qrx(QUIC_CONNECTION *qc, OSSL_QRX *qrx);
-OSSL_QRX *ossl_quic_conn_get_qrx(QUIC_CONNECTION *qc);
-int ossl_quic_conn_set_ackm(QUIC_CONNECTION *qc, OSSL_ACKM *ackm);
-OSSL_ACKM *ossl_quic_conn_set_akcm(QUIC_CONNECTION *qc);
+
+int ossl_quic_tick(QUIC_CONNECTION *qc);
+int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc);
+int ossl_quic_get_poll_rfd(QUIC_CONNECTION *qc);
+int ossl_quic_get_poll_wfd(QUIC_CONNECTION *qc);
+int ossl_quic_get_want_net_read(QUIC_CONNECTION *qc);
+int ossl_quic_get_want_net_write(QUIC_CONNECTION *qc);
+int ossl_quic_get_error(const QUIC_CONNECTION *qc, int i);
 
 #endif

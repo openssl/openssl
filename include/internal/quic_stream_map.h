@@ -91,6 +91,9 @@ struct quic_stream_st {
     unsigned int    want_max_stream_data    : 1; /* used for regen only */
     unsigned int    want_stop_sending       : 1; /* used for gen or regen */
     unsigned int    want_reset_stream       : 1; /* used for gen or regen */
+
+    /* A FIN has been retired from the rstream buffer. */
+    unsigned int    recv_fin_retired        : 1;
 };
 
 /*

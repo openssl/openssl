@@ -12,34 +12,247 @@
 
 # include <openssl/ssl.h>
 # include "internal/quic_ssl.h"       /* QUIC_CONNECTION */
+# include "internal/quic_txp.h"
+# include "internal/quic_statm.h"
+# include "internal/quic_demux.h"
+# include "internal/quic_record_rx.h"
+# include "internal/quic_dummy_handshake.h"
 # include "internal/quic_fc.h"
 # include "internal/quic_stream.h"
 # include "../ssl_local.h"
 
-struct quic_stream_st {
-    /* type identifier and common data for the public SSL object */
-    struct ssl_st ssl;
+typedef struct quic_tick_result_st {
+    char        want_net_read;
+    char        want_net_write;
+    OSSL_TIME   tick_deadline;
+} QUIC_TICK_RESULT;
 
-    /* QUIC_CONNECTION that this stream belongs to */
-    QUIC_CONNECTION *conn;
-    /* receive flow controller */
-    QUIC_RXFC *rxfc;
-    /* receive and send stream objects */
-    QUIC_RSTREAM *rstream;
-    QUIC_SSTREAM *sstream;
-};
+typedef struct quic_reactor_st {
+    /*
+     * FDs which can be polled. poll_rfd is a FD which becomes readable when the
+     * QUIC state machine can potentially do work, and poll_wfd is an FD which
+     * becomes writable when the QUIC state machine can potentially do work.
+     * Generally, either of these conditions means that SSL_tick() should be
+     * called, or another SSL function which implicitly calls SSL_tick() (e.g.
+     * SSL_read/SSL_write()).
+     */
+    int poll_rfd, poll_wfd;
+    OSSL_TIME tick_deadline; /* ossl_time_infinite() if none currently applicable */
+
+    void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg);
+    void *tick_cb_arg;
+
+    /*
+     * These are true if we would like to know when we can read or write from
+     * the network respectively.
+     */
+    unsigned int want_net_read  : 1;
+    unsigned int want_net_write : 1;
+} QUIC_REACTOR;
+
+#define QUIC_CONN_STATE_IDLE                        0
+#define QUIC_CONN_STATE_ACTIVE                      1
+#define QUIC_CONN_STATE_TERMINATING_CLOSING         2
+#define QUIC_CONN_STATE_TERMINATING_DRAINING        3
+#define QUIC_CONN_STATE_TERMINATED
 
 struct quic_conn_st {
-    /* QUIC connection is always a stream (the stream id 0) */
-    struct quic_stream_st stream;
-    /* the associated tls-1.3 connection data */
-    SSL *tls;
+    /*
+     * ssl_st is a common header for ordinary SSL objects, QUIC connection
+     * objects and QUIC stream objects, allowing objects of these different
+     * types to be disambiguated at runtime and providing some common fields.
+     *
+     * Note: This must come first in the QUIC_CONNECTION structure.
+     */
+    struct ssl_st                   ssl;
 
-    /* QUIC ack manager */
-    OSSL_ACKM *ackm;
-    /* QUIC receive record layer */
-    OSSL_QRX *qrx;
+    /*
+     * The associated TLS 1.3 connection data. Used to provide the handshake
+     * layer; its 'network' side is plugged into the crypto stream for each EL
+     * (other than the 0-RTT EL).
+     */
+    SSL                             *tls;
+    QUIC_DHS                        *dhs;
+
+    /*
+     * The transport parameter block we will send or have sent.
+     * Freed after sending or when connection is freed.
+     */
+    unsigned char                   *client_transport_params;
+
+    /* Asynchronous I/O reactor. */
+    QUIC_REACTOR                    rtor;
+
+    /* The initial L4 address of the peer to use. */
+    BIO_ADDR                        init_peer_addr;
+
+    /* Network-side read and write BIOs. */
+    BIO                             *net_rbio, *net_wbio;
+
+    /*
+     * Subcomponents of the connection. All of these components are instantiated
+     * and owned by us.
+     */
+    OSSL_QUIC_TX_PACKETISER         *txp;
+    QUIC_TXPIM                      *txpim;
+    QUIC_CFQ                        *cfq;
+    QUIC_TXFC                       conn_txfc;
+    QUIC_RXFC                       conn_rxfc;
+    QUIC_STREAM_MAP                 qsm;
+    OSSL_STATM                      statm;
+    OSSL_CC_DATA                    *cc_data;
+    const OSSL_CC_METHOD            *cc_method;
+    OSSL_ACKM                       *ackm;
+
+    /*
+     * RX demuxer. We register incoming DCIDs with this. Since we currently only
+     * support client operation and use one L4 port per connection, we own the
+     * demuxer and register a single zero-length DCID with it.
+     */
+    QUIC_DEMUX                      *demux;
+
+    /* Record layers in the TX and RX directions, plus the RX demuxer. */
+    OSSL_QTX                        *qtx;
+    OSSL_QRX                        *qrx;
+
+    /*
+     * Send and receive parts of the crypto streams.
+     * crypto_send[QUIC_PN_SPACE_APP] is the 1-RTT crypto stream. There is no
+     * 0-RTT crypto stream.
+     */
+    QUIC_SSTREAM                    *crypto_send[QUIC_PN_SPACE_NUM];
+    QUIC_RSTREAM                    *crypto_recv[QUIC_PN_SPACE_NUM];
+
+    /*
+     * Our (currently only) application data stream. This is a bidirectional
+     * client-initiated stream and thus (in QUICv1) always has a stream ID of 0.
+     */
+    QUIC_STREAM                     *stream0;
+
+    /* Internal state. */
+    /*
+     * The DCID used in the first Initial packet we transmit as a client.
+     * Randomly generated and required by RFC to be at least 8 bytes.
+     */
+    QUIC_CONN_ID                    init_dcid;
+
+    /*
+     * The SCID found in the first Initial packet from the server.
+     * Valid if have_received_enc_pkt is set.
+     */
+    QUIC_CONN_ID                    init_scid;
+
+    /* The SCID found in an incoming Retry packet we handled. */
+    QUIC_CONN_ID                    retry_scid;
+
+    /* Transport parameter values received from server. */
+    uint64_t                        init_max_stream_data_bidi_local;
+    uint64_t                        init_max_stream_data_bidi_remote;
+    uint64_t                        init_max_stream_data_uni;
+    unsigned char                   rx_ack_delay_exp;
+
+    /*
+     * Temporary staging area to store information about the incoming packet we
+     * are currently processing.
+     */
+    OSSL_QRX_PKT                    *qrx_pkt;
+
+    /*
+     * State tracking. QUIC connection-level state is best represented based on
+     * whether various things have happened yet or not, rather than as an
+     * explicit FSM. We do have a coarse state variable which tracks the basic
+     * state of the connection's lifecycle, but more fine-grained conditions of
+     * the Active state are tracked via flags below. For more details, see
+     * doc/designs/quic-design/connection-state-machine.md. We are in the Open
+     * state if the state is QUIC_CSM_STATE_ACTIVE and handshake_confirmed is
+     * set.
+     */
+    unsigned int                    state                   : 3;
+
+    /*
+     * Have we received at least one encrypted packet from the peer?
+     * (If so, Retry and Version Negotiation messages should no longer
+     *  be received and should be ignored if they do occur.)
+     */
+    unsigned int                    have_received_enc_pkt   : 1;
+
+    /*
+     * Have we sent literally any packet yet? If not, there is no point polling
+     * RX.
+     */
+    unsigned int                    have_sent_any_pkt       : 1;
+
+    /*
+     * Are we currently doing proactive version negotiation?
+     */
+    unsigned int                    doing_proactive_ver_neg : 1;
+
+    /* We have received transport parameters from the peer. */
+    unsigned int                    got_transport_params    : 1;
+
+    /*
+     * This monotonically transitions to 1 once the TLS state machine is
+     * 'complete', meaning that it has both sent a Finished and successfully
+     * verified the peer's Finished (see RFC 9001 s. 4.1.1). Note that it
+     * does not transition to 1 at both peers simultaneously.
+     *
+     * Handshake completion is not the same as handshake confirmation (see
+     * below).
+     */
+    unsigned int                    handshake_complete      : 1;
+
+    /*
+     * This monotonically transitions to 1 once the handshake is confirmed.
+     * This happens on the client when we receive a HANDSHAKE_DONE frame.
+     * At our option, we may also take acknowledgement of any 1-RTT packet
+     * we sent as a handshake confirmation.
+     */
+    unsigned int                    handshake_confirmed     : 1;
+
+    /*
+     * We are sending Initial packets based on a Retry. This means we definitely
+     * should not receive another Retry, and if we do it is an error.
+     */
+    unsigned int                    doing_retry             : 1;
+
+    /*
+     * We don't store the current EL here; the TXP asks the QTX which ELs
+     * are provisioned to determine which ELs to use.
+     */
+
+    /* Have statm, qsm been initialised? Used to track cleanup. */
+    unsigned int                    have_statm              : 1;
+    unsigned int                    have_qsm                : 1;
+
+    /*
+     * Preferred EL for transmission. This is not strictly needed as it can be
+     * inferred from what keys we have provisioned, but makes determining the
+     * current EL simpler and faster.
+     */
+    unsigned int                    tx_enc_level            : 3;
+
+    /* If bit n is set, EL n has been discarded. */
+    unsigned int                    el_discarded            : 4;
 };
+
+/*
+ * Internal methods for the QUIC frontend I/O API. Used by libssl frontend API
+ * for QUIC_CONNECTION-based SSL objects.
+ */
+void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_wbio);
+void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio);
+BIO *ossl_quic_conn_get_net_rbio(const QUIC_CONNECTION *qc);
+BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc);
+
+int ossl_quic_conn_on_handshake_confirmed(QUIC_CONNECTION *qc);
+
+/*
+ * To be called when a protocol violation occurs. The connection is torn down
+ * with the given error code, which should be a QUIC_ERR_* value. Reason string
+ * is optional and copied if provided.
+ */
+void ossl_quic_conn_on_protocol_error(QUIC_CONNECTION *qc, uint64_t error_code,
+                                      const char *reason);
 
 # define QUIC_CONNECTION_FROM_SSL_int(ssl, c)   \
     ((ssl) == NULL ? NULL                       \

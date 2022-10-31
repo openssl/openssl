@@ -9,179 +9,2104 @@
 
 #include <openssl/macros.h>
 #include <openssl/objects.h>
+#include <crypto/rand.h>
 #include "quic_local.h"
+#include "internal/quic_dummy_handshake.h"
+#include "internal/quic_rx_depack.h"
+#include "internal/time.h"
 
+#define EXPECT_QUIC_CONN(qc)          ossl_assert((qc) != NULL)
+
+#define INIT_DCID_LEN           8
+#define INIT_CRYPTO_BUF_LEN     8192
+#define INIT_APP_BUF_LEN        8192
+
+static void csm_tick(QUIC_TICK_RESULT *res, void *arg);
+static OSSL_TIME csm_determine_next_tick_deadline(QUIC_CONNECTION *qc);
+
+static int csm_on_crypto_send(const unsigned char *buf, size_t buf_len,
+                              size_t *consumed, void *arg);
+static int csm_on_crypto_recv(unsigned char *buf, size_t buf_len,
+                              size_t *bytes_read, void *arg);
+static int csm_on_handshake_yield_secret(uint32_t enc_level, int direction,
+                                         uint32_t suite_id, EVP_MD *md,
+                                         const unsigned char *secret,
+                                         size_t secret_len,
+                                         void *arg);
+static int csm_on_handshake_complete(void *arg);
+static int csm_on_handshake_alert(void *arg);
+static int csm_generate_transport_params(QUIC_CONNECTION *qc,
+                                         unsigned char **buf_p,
+                                         size_t *buf_len_p);
+static int csm_discard_el(QUIC_CONNECTION *qc, uint32_t enc_level);
+static int csm_on_transport_params(const unsigned char *params,
+                                   size_t params_len,
+                                   void *arg);
+
+/*
+ * Core I/O Reactor Framework {{{1
+ * ==========================
+ *
+ * Manages use of async network I/O which the QUIC stack is built on. The core
+ * mechanic looks like this:
+ *
+ *   - There is a pollable FD for both the read and write side respectively.
+ *     Readability and writeability of these FDs respectively when network
+ *     I/O is available.
+ *
+ *   - The reactor can export these FDs to the user, as well as flags indicating
+ *     whether the user should listen for readability, writeability, or neither.
+ *
+ *   - The reactor can export a timeout indication to the user, indicating when
+ *     the reactor should be called (via libssl APIs) regardless of whether
+ *     the network socket has become ready.
+ *
+ * The reactor is based around a tick callback which is essentially the mutator
+ * function. The mutator attempts to do whatever it can, attempting to perform
+ * network I/O to the extent currently feasible. When done, the mutator returns
+ * information to the reactor indicating when it should be woken up again:
+ *
+ *   - Should it be woken up when network RX is possible?
+ *   - Should it be woken up when network TX is possible?
+ *   - Should it be woken up no later than some deadline X?
+ *
+ * The intention is that ALL I/O-related SSL_* functions with side effects (e.g.
+ * SSL_read/SSL_write) consist of three phases:
+ *
+ *   - Optionally mutate the QUIC machine's state.
+ *   - Optionally tick the QUIC reactor.
+ *   - Optionally mutate the QUIC machine's state.
+ *
+ * For example, SSL_write is a mutation (appending to a stream buffer) followed
+ * by an optional tick (generally expected as we may want to send the data
+ * immediately, though not strictly needed if transmission is being deferred due
+ * to Nagle's algorithm, etc.).
+ *
+ * SSL_read is also a mutation and in principle does not need to tick the
+ * reactor, but it generally will anyway to ensure that the reactor is regularly
+ * ticked by an application which is only reading and not writing.
+ *
+ * If the SSL object is being used in blocking mode, SSL_read may need to block
+ * if no data is available yet, and SSL_write may need to block if buffers
+ * are full.
+ *
+ * The internals of the QUIC I/O engine always use asynchronous I/O. If the
+ * application desires blocking semantics, we handle this by adding a blocking
+ * adaptation layer on top of our internal asynchronous I/O API as exposed by
+ * the reactor interface.
+ */
+static void reactor_init(QUIC_REACTOR *rtor,
+                         void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg),
+                         void *tick_cb_arg,
+                         OSSL_TIME initial_tick_deadline)
+{
+    rtor->poll_rfd          = -1;
+    rtor->poll_wfd          = -1;
+    rtor->want_net_read     = 0;
+    rtor->want_net_write    = 0;
+    rtor->tick_deadline     = initial_tick_deadline;
+
+    rtor->tick_cb           = tick_cb;
+    rtor->tick_cb_arg       = tick_cb_arg;
+}
+
+static void reactor_set_poll_rfd(QUIC_REACTOR *rtor, int rfd)
+{
+    rtor->poll_rfd = rfd;
+}
+
+static void reactor_set_poll_wfd(QUIC_REACTOR *rtor, int wfd)
+{
+    rtor->poll_wfd = wfd;
+}
+
+static int reactor_get_poll_rfd(QUIC_REACTOR *rtor)
+{
+    return rtor->poll_rfd;
+}
+
+static int reactor_get_poll_wfd(QUIC_REACTOR *rtor)
+{
+    return rtor->poll_wfd;
+}
+
+static int reactor_want_net_read(QUIC_REACTOR *rtor)
+{
+    return rtor->want_net_read;
+}
+
+static int reactor_want_net_write(QUIC_REACTOR *rtor)
+{
+    return rtor->want_net_write;
+}
+
+static OSSL_TIME reactor_get_tick_deadline(QUIC_REACTOR *rtor)
+{
+    return rtor->tick_deadline;
+}
+
+/*
+ * Do whatever work can be done, and as much work as can be done. This involves
+ * e.g. seeing if we can read anything from the network (if we want to), seeing
+ * if we can write anything to the network (if we want to), etc.
+ */
+static int reactor_tick(QUIC_REACTOR *rtor)
+{
+    QUIC_TICK_RESULT res = {0};
+
+    /*
+     * Note that the tick callback cannot fail; this is intentional. Arguably it
+     * does not make that much sense for ticking to 'fail' (in the sense of an
+     * explicit error indicated to the user) because ticking is by its nature
+     * best effort. If something fatal happens with a connection we can report
+     * it on the next actual application I/O call.
+     */
+    rtor->tick_cb(&res, rtor->tick_cb_arg);
+
+    rtor->want_net_read     = res.want_net_read;
+    rtor->want_net_write    = res.want_net_write;
+    rtor->tick_deadline     = res.tick_deadline;
+    return 1;
+}
+
+/*
+ * Blocking I/O Adaptation Layer {{{1
+ * =============================
+ *
+ * The blocking I/O adaptation layer implements blocking I/O on top of our
+ * asynchronous core.
+ *
+ * The core mechanism is reactor_block_until_pred(), which does not return until
+ * pred() returns a value other than 0. The blocker uses OS I/O synchronisation
+ * primitives (e.g. poll(2)) and ticks the reactor until the predicate is
+ * satisfied. The blocker is not required to call pred() more than once between
+ * tick calls.
+ *
+ * When pred returns a non-zero value, that value is returned by this function.
+ * This can be used to allow pred() to indicate error conditions and short
+ * circuit the blocking process.
+ *
+ * A return value of -1 is reserved for network polling errors. Therefore this
+ * return value should not be used by pred() if ambiguity is not desired. Note
+ * that the predicate function can always arrange its own output mechanism, for
+ * example by passing a structure of its own as the argument.
+ *
+ * If the SKIP_FIRST_TICK flag is set, the first call to reactor_tick() before
+ * the first call to pred() is skipped. This is useful if it is known that
+ * ticking the reactor again will not be useful (e.g. because it has already
+ * been done).
+ */
+#define SKIP_FIRST_TICK     (1U << 0)
+
+/*
+ * Utility which can be used to poll on up to two FDs. This is designed to
+ * support use of split FDs (e.g. with SSL_set_rfd and SSL_set_wfd where
+ * different FDs are used for read and write).
+ *
+ * Generally use of poll(2) is preferred where available. Windows, however,
+ * hasn't traditionally offered poll(2), only select(2). WSAPoll() was
+ * introduced in Vista but has seemingly been buggy until relatively recent
+ * versions of Windows 10. Moreover we support XP so this is not a suitable
+ * target anyway. However, the traditional issues with select(2) turn out not to
+ * be an issue on Windows; whereas traditional *NIX select(2) uses a bitmap of
+ * FDs (and thus is limited in the magnitude of the FDs expressible), Windows
+ * select(2) is very different. In Windows, socket handles are not allocated
+ * contiguously from zero and thus this bitmap approach was infeasible. Thus in
+ * adapting the Berkeley sockets API to Windows a different approach was taken
+ * whereby the fd_set contains a fixed length array of socket handles and an
+ * integer indicating how many entries are valid; thus Windows select()
+ * ironically is actually much more like *NIX poll(2) than *NIX select(2). In
+ * any case, this means that the relevant limit for Windows select() is the
+ * number of FDs being polled, not the magnitude of those FDs. Since we only
+ * poll for two FDs here, this limit does not concern us.
+ *
+ * Usage: rfd and wfd may be the same or different. Either or both may also be
+ * -1. If rfd_want_read is 1, rfd is polled for readability, and if
+ * wfd_want_write is 1, wfd is polled for writability. Note that since any
+ * passed FD is always polled for error conditions, setting rfd_want_read=0 and
+ * wfd_want_write=0 is not the same as passing -1 for both FDs.
+ *
+ * deadline is a timestamp to return at. If it is ossl_time_infinite(), the call
+ * never times out.
+ *
+ * Returns 0 on error and 1 on success. Timeout expiry is considered a success
+ * condition. We don't elaborate our return values here because the way we are
+ * actually using this doesn't currently care.
+ */
+static int poll_two_fds(int rfd, int rfd_want_read,
+                        int wfd, int wfd_want_write,
+                        OSSL_TIME deadline)
+{
+#if defined(OSSL_SYS_WINDOWS) || !defined(POLLIN)
+    fd_set rfd_set, wfd_set, efd_set;
+    OSSL_TIME now, timeout;
+    struct timeval tv, *ptv;
+    int maxfd, pres;
+
+#ifndef OSSL_SYS_WINDOWS
+    /*
+     * On Windows there is no relevant limit to the magnitude of a fd value (see
+     * above). On *NIX the fd_set uses a bitmap and we must check the limit.
+     */
+    if (rfd >= FD_SETSIZE || wfd >= FD_SETSIZE)
+        return 0;
+#endif
+
+    FD_ZERO(&rfd_set);
+    FD_ZERO(&wfd_set);
+    FD_ZERO(&efd_set);
+
+    if (rfd != -1 && rfd_want_read)
+        openssl_fdset(rfd, &rfd_set);
+    if (wfd != -1 && wfd_want_write)
+        openssl_fdset(wfd, &wfd_set);
+
+    /* Always check for error conditions. */
+    if (rfd != -1)
+        openssl_fdset(rfd, &efd_set);
+    if (wfd != -1)
+        openssl_fdset(wfd, &efd_set);
+
+    maxfd = rfd;
+    if (wfd > maxfd)
+        maxfd = wfd;
+
+    if (rfd == -1 && wfd == -1 && ossl_time_is_infinite(deadline))
+        /* Do not block forever; should not happen. */
+        return 0;
+
+    do {
+        /*
+         * select expects a timeout, not a deadline, so do the conversion.
+         * Update for each call to ensure the correct value is used if we repeat
+         * due to EINTR.
+         */
+        if (ossl_time_is_infinite(deadline)) {
+            ptv = NULL;
+        } else {
+            now = ossl_time_now();
+            /*
+             * ossl_time_subtract saturates to zero so we don't need to check if
+             * now > deadline.
+             */
+            timeout = ossl_time_subtract(deadline, now);
+            tv      = ossl_time_to_timeval(timeout);
+            ptv     = &tv;
+        }
+
+        pres = select(maxfd + 1, &rfd_set, &wfd_set, &efd_set, ptv);
+    } while (pres == -1 && get_last_socket_error_is_eintr());
+
+    return pres < 0 ? 0 : 1;
+#else
+    int pres, timeout_ms;
+    OSSL_TIME now, timeout;
+    struct pollfd pfds[2] = {0};
+    size_t npfd = 0;
+
+    if (rfd == wfd) {
+        pfds[npfd].fd = rfd;
+        pfds[npfd].events = (rfd_want_read  ? POLLIN  : 0)
+                          | (wfd_want_write ? POLLOUT : 0);
+        if (rfd >= 0 && pfds[npfd].events != 0)
+            ++npfd;
+    } else {
+        pfds[npfd].fd     = rfd;
+        pfds[npfd].events = (rfd_want_read ? POLLIN : 0);
+        if (rfd >= 0 && pfds[npfd].events != 0)
+            ++npfd;
+
+        pfds[npfd].fd     = wfd;
+        pfds[npfd].events = (wfd_want_write ? POLLOUT : 0);
+        if (wfd >= 0 && pfds[npfd].events != 0)
+            ++npfd;
+    }
+
+    if (npfd == 0 && ossl_time_is_infinite(deadline))
+        /* Do not block forever; should not happen. */
+        return 0;
+
+    do {
+        if (ossl_time_is_infinite(deadline)) {
+            timeout_ms = -1;
+        } else {
+            now         = ossl_time_now();
+            timeout     = ossl_time_subtract(deadline, now);
+            timeout_ms  = ossl_time2ms(timeout);
+        }
+
+        pres = poll(pfds, npfd, timeout_ms);
+    } while (pres == -1 && errno == EINTR);
+
+    return pres < 0 ? 0 : 1;
+#endif
+}
+
+static int reactor_block_until_pred(QUIC_REACTOR *rtor,
+                                    int (*pred)(void *arg), void *pred_arg,
+                                    uint32_t flags)
+{
+    int res;
+
+    for (;;) {
+        if ((flags & SKIP_FIRST_TICK) != 0)
+            flags &= ~SKIP_FIRST_TICK;
+        else
+            reactor_tick(rtor); /* best effort */
+
+        if ((res = pred(pred_arg)) != 0)
+            return res;
+
+        if (!poll_two_fds(reactor_get_poll_rfd(rtor),
+                          reactor_want_net_read(rtor),
+                          reactor_get_poll_wfd(rtor),
+                          reactor_want_net_write(rtor),
+                          reactor_get_tick_deadline(rtor)))
+            /*
+             * We don't actually care why the call succeeded (timeout, FD
+             * readiness), we just call reactor_tick and start trying to do I/O
+             * things again. If poll_two_fds returns 0, this is some other
+             * non-timeout failure and we should stop here.
+             *
+             * TODO(QUIC): In the future we could avoid unnecessary syscalls by
+             * not retrying network I/O that isn't ready based on the result of
+             * the poll call. However this might be difficult because it
+             * requires we do the call to poll(2) or equivalent syscall
+             * ourselves, whereas in the general case the application does the
+             * polling and just calls SSL_tick(). Implementing this optimisation
+             * in the future will probably therefore require API changes.
+             */
+            return 0;
+    }
+}
+
+/*
+ * QUIC Connection State Machine: Initialization {{{1
+ * =============================================
+ */
+
+static OSSL_TIME get_time(void *arg)
+{
+    return ossl_time_now();
+}
+
+/*
+ * gen_rand_conn_id {{{2
+ * ----------------
+ */
+static int gen_rand_conn_id(size_t len, QUIC_CONN_ID *cid)
+{
+    if (len > QUIC_MAX_CONN_ID_LEN)
+        return 0;
+
+    cid->id_len = (unsigned char)len;
+
+    if (RAND_bytes(cid->id, len) != 1) {
+        cid->id_len = 0;
+        return 0;
+    }
+
+    return 1;
+}
+
+/*
+ * csm_cleanup {{{2
+ * -----------
+ */
+static void csm_cleanup(QUIC_CONNECTION *qc)
+{
+    uint32_t pn_space;
+
+    if (qc->ackm != NULL)
+        for (pn_space = QUIC_PN_SPACE_INITIAL;
+             pn_space < QUIC_PN_SPACE_NUM;
+             ++pn_space)
+            ossl_ackm_on_pkt_space_discarded(qc->ackm, pn_space);
+
+    ossl_quic_tx_packetiser_free(qc->txp);
+    ossl_quic_txpim_free(qc->txpim);
+    ossl_quic_cfq_free(qc->cfq);
+    ossl_qtx_free(qc->qtx);
+    if (qc->cc_data != NULL)
+        qc->cc_method->free(qc->cc_data);
+    if (qc->have_statm)
+        ossl_statm_destroy(&qc->statm);
+    ossl_ackm_free(qc->ackm);
+
+    if (qc->stream0 != NULL) {
+        assert(qc->have_qsm);
+        ossl_quic_stream_map_release(&qc->qsm, qc->stream0); /* frees sstream */
+    }
+
+    if (qc->have_qsm)
+        ossl_quic_stream_map_cleanup(&qc->qsm);
+
+    for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
+        ossl_quic_sstream_free(qc->crypto_send[pn_space]);
+        ossl_quic_rstream_free(qc->crypto_recv[pn_space]);
+    }
+
+    ossl_qrx_pkt_release(qc->qrx_pkt);
+    qc->qrx_pkt = NULL;
+
+    ossl_quic_dhs_free(qc->dhs);
+    ossl_qrx_free(qc->qrx);
+    ossl_quic_demux_free(qc->demux);
+    OPENSSL_free(qc->client_transport_params);
+    BIO_free(qc->net_rbio);
+    BIO_free(qc->net_wbio);
+}
+
+/*
+ * csm_init {{{2
+ * --------
+ */
+static int csm_init(QUIC_CONNECTION *qc)
+{
+    OSSL_QUIC_TX_PACKETISER_ARGS txp_args = {0};
+    OSSL_QTX_ARGS qtx_args = {0};
+    OSSL_QRX_ARGS qrx_args = {0};
+    QUIC_DHS_ARGS dhs_args = {0};
+    uint32_t pn_space;
+
+    if (!gen_rand_conn_id(INIT_DCID_LEN, &qc->init_dcid)) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    /* We plug in a network write BIO to the QTX later when we get one. */
+    qtx_args.mdpl = 1200;
+
+    qc->qtx = ossl_qtx_new(&qtx_args);
+    if (qc->qtx == NULL) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    qc->txpim = ossl_quic_txpim_new();
+    if (qc->txpim == NULL) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    qc->cfq = ossl_quic_cfq_new();
+    if (qc->cfq == NULL) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    if (!ossl_quic_txfc_init(&qc->conn_txfc, NULL)) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    if (!ossl_quic_rxfc_init(&qc->conn_rxfc, NULL,
+                             2  * 1024 * 1024,
+                             10 * 1024 * 1024,
+                             get_time, NULL)) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    if (!ossl_statm_init(&qc->statm)) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    qc->have_statm = 1;
+    qc->cc_method = &ossl_cc_dummy_method;
+    if ((qc->cc_data = qc->cc_method->new(NULL, NULL, NULL)) == NULL) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    if ((qc->ackm = ossl_ackm_new(get_time, NULL, &qc->statm,
+                                  qc->cc_method, qc->cc_data)) == NULL) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    if (!ossl_quic_stream_map_init(&qc->qsm)) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    qc->have_qsm = 1;
+
+    /* We use a zero-length SCID. */
+    txp_args.cur_dcid           = qc->init_dcid;
+    txp_args.peer               = qc->init_peer_addr;
+    txp_args.ack_delay_exponent = 3;
+    txp_args.qtx                = qc->qtx;
+    txp_args.txpim              = qc->txpim;
+    txp_args.cfq                = qc->cfq;
+    txp_args.ackm               = qc->ackm;
+    txp_args.qsm                = &qc->qsm;
+    txp_args.conn_txfc          = &qc->conn_txfc;
+    txp_args.conn_rxfc          = &qc->conn_rxfc;
+    txp_args.cc_method          = qc->cc_method;
+    txp_args.cc_data            = qc->cc_data;
+    txp_args.now                = get_time;
+    for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
+        qc->crypto_send[pn_space] = ossl_quic_sstream_new(INIT_CRYPTO_BUF_LEN);
+        if (qc->crypto_send[pn_space] == NULL) {
+            csm_cleanup(qc);
+            return 0;
+        }
+
+        txp_args.crypto[pn_space] = qc->crypto_send[pn_space];
+    }
+
+    qc->txp = ossl_quic_tx_packetiser_new(&txp_args);
+    if (qc->txp == NULL) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    if ((qc->demux = ossl_quic_demux_new(/*BIO=*/NULL, /*Short CID Len=*/0,
+                                         1200, get_time, NULL)) == NULL) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    qrx_args.demux              = qc->demux;
+    qrx_args.short_conn_id_len  = 0; /* We use a zero-length SCID. */
+    qrx_args.max_deferred       = 32;
+
+    if ((qc->qrx = ossl_qrx_new(&qrx_args)) == NULL) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    if (!ossl_qrx_add_dst_conn_id(qc->qrx, &txp_args.cur_scid)) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
+        qc->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL);
+        if (qc->crypto_recv[pn_space] == NULL) {
+            csm_cleanup(qc);
+            return 0;
+        }
+    }
+
+    if ((qc->stream0 = ossl_quic_stream_map_alloc(&qc->qsm, 0,
+                                                  QUIC_STREAM_INITIATOR_CLIENT
+                                                  | QUIC_STREAM_DIR_BIDI)) == NULL) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    if ((qc->stream0->sstream = ossl_quic_sstream_new(INIT_APP_BUF_LEN)) == NULL) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    if ((qc->stream0->rstream = ossl_quic_rstream_new(NULL, NULL)) == NULL) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    if (!ossl_quic_txfc_init(&qc->stream0->txfc, &qc->conn_txfc)) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    if (!ossl_quic_rxfc_init(&qc->stream0->rxfc, &qc->conn_rxfc,
+                             1 * 1024 * 1024,
+                             5 * 1024 * 1024,
+                             get_time, NULL)) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    /*
+     * Determine the QUIC Transport Parameters and serialize the transport
+     * parameters block.
+     */
+    if (!csm_generate_transport_params(qc, &qc->client_transport_params,
+                                       &dhs_args.transport_params_len)) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    /* Plug in the dummy handshake layer. */
+    dhs_args.transport_params           = qc->client_transport_params;
+    dhs_args.crypto_send_cb             = csm_on_crypto_send;
+    dhs_args.crypto_send_cb_arg         = qc;
+    dhs_args.crypto_recv_cb             = csm_on_crypto_recv;
+    dhs_args.crypto_recv_cb_arg         = qc;
+    dhs_args.yield_secret_cb            = csm_on_handshake_yield_secret;
+    dhs_args.yield_secret_cb_arg        = qc;
+    dhs_args.got_transport_params_cb    = csm_on_transport_params;
+    dhs_args.got_transport_params_cb_arg= qc;
+    dhs_args.handshake_complete_cb      = csm_on_handshake_complete;
+    dhs_args.handshake_complete_cb_arg  = qc;
+    dhs_args.alert_cb                   = csm_on_handshake_alert;
+    dhs_args.alert_cb_arg               = qc;
+
+    if ((qc->dhs = ossl_quic_dhs_new(&dhs_args)) == NULL) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    qc->rx_ack_delay_exp    = QUIC_DEFAULT_ACK_DELAY_EXP;
+    qc->tx_enc_level        = QUIC_ENC_LEVEL_INITIAL;
+    reactor_init(&qc->rtor, csm_tick, qc, csm_determine_next_tick_deadline(qc));
+    return 1;
+}
+
+/*
+ * QUIC Connection State Machine: Handshake Layer Event Handling {{{1
+ * =============================================================
+ */
+static int csm_on_crypto_send(const unsigned char *buf, size_t buf_len,
+                              size_t *consumed, void *arg)
+{
+    QUIC_CONNECTION *qc = arg;
+    uint32_t enc_level = qc->tx_enc_level;
+    uint32_t pn_space = ossl_quic_enc_level_to_pn_space(enc_level);
+    QUIC_SSTREAM *sstream = qc->crypto_send[pn_space];
+
+    if (!ossl_assert(sstream != NULL))
+        return 0;
+
+    int ret = ossl_quic_sstream_append(sstream, buf, buf_len, consumed);
+    return ret;
+}
+
+static int crypto_ensure_empty(QUIC_RSTREAM *rstream)
+{
+    size_t avail = 0;
+    int is_fin = 0;
+
+    if (rstream == NULL)
+        return 1;
+
+    if (!ossl_quic_rstream_available(rstream, &avail, &is_fin))
+        return 0;
+
+    return avail == 0;
+}
+
+static int csm_on_crypto_recv(unsigned char *buf, size_t buf_len,
+                              size_t *bytes_read, void *arg)
+{
+    QUIC_CONNECTION *qc = arg;
+    QUIC_RSTREAM *rstream;
+    int is_fin = 0; /* crypto stream is never finished, so we don't use this */
+    uint32_t i;
+
+    /*
+     * After we move to a later EL we must not allow our peer to send any new
+     * bytes in the crypto stream on a previous EL. Retransmissions of old bytes
+     * are allowed.
+     *
+     * In practice we will only move to a new EL when we have consumed all bytes
+     * which should be sent on the crypto stream at a previous EL. For example,
+     * the Handshake EL should not be provisioned until we have completely
+     * consumed a TLS 1.3 ServerHello. Thus when we provision an EL the output
+     * of ossl_quic_rstream_available() should be 0 for all lower ELs. Thus if a
+     * given EL is available we simply ensure we have not received any further
+     * bytes at a lower EL.
+     */
+    for (i = QUIC_ENC_LEVEL_INITIAL; i < qc->tx_enc_level; ++i)
+        if (i != QUIC_ENC_LEVEL_0RTT &&
+            !crypto_ensure_empty(qc->crypto_recv[ossl_quic_enc_level_to_pn_space(i)])) {
+            /* TODO: Protocol violation */
+            return 0;
+        }
+
+    rstream = qc->crypto_recv[ossl_quic_enc_level_to_pn_space(qc->tx_enc_level)];
+    if (rstream == NULL)
+        return 0;
+
+    return ossl_quic_rstream_read(rstream, buf, buf_len, bytes_read,
+                                  &is_fin);
+}
+
+static int csm_on_handshake_yield_secret(uint32_t enc_level, int direction,
+                                         uint32_t suite_id, EVP_MD *md,
+                                         const unsigned char *secret,
+                                         size_t secret_len,
+                                         void *arg)
+{
+    QUIC_CONNECTION *qc = arg;
+    uint32_t i;
+
+    if (enc_level < QUIC_ENC_LEVEL_HANDSHAKE || enc_level >= QUIC_ENC_LEVEL_NUM)
+        /* Invalid EL. */
+        return 0;
+
+    if (enc_level <= qc->tx_enc_level)
+        /*
+         * Does not make sense for us to try and provision an EL we have already
+         * attained.
+         */
+        return 0;
+
+    /*
+     * Ensure all crypto streams for previous ELs are now empty of available
+     * data.
+     */
+    for (i = QUIC_ENC_LEVEL_INITIAL; i < enc_level; ++i)
+        if (!crypto_ensure_empty(qc->crypto_recv[i])) {
+            /* TODO: Protocol violation */
+            return 0;
+        }
+
+    if (direction) {
+        /* TX */
+        if (!ossl_qtx_provide_secret(qc->qtx, enc_level,
+                                     suite_id, md,
+                                     secret, secret_len))
+            return 0;
+
+        qc->tx_enc_level = enc_level;
+    } else {
+        /* RX */
+        if (!ossl_qrx_provide_secret(qc->qrx, enc_level,
+                                     suite_id, md,
+                                     secret, secret_len))
+            return 0;
+    }
+
+    return 1;
+}
+
+static int csm_on_handshake_complete(void *arg)
+{
+    QUIC_CONNECTION *qc = arg;
+
+    if (qc->handshake_complete)
+        return 0; /* this should not happen twice */
+
+    if (!ossl_assert(qc->tx_enc_level == QUIC_ENC_LEVEL_1RTT))
+        return 0;
+
+    if (!qc->got_transport_params)
+        /*
+         * Was not a valid QUIC handshake if we did not get valid transport
+         * params.
+         */
+        return 0;
+
+    /* Don't need transport parameters anymore. */
+    OPENSSL_free(qc->client_transport_params);
+    qc->client_transport_params = NULL;
+
+    qc->handshake_complete = 1;
+    return 1;
+}
+
+static int csm_on_handshake_alert(void *arg)
+{
+    /* TODO */
+    return 1;
+}
+
+/* QUIC Connection State Machine: Transport Parameters {{{1
+ * ===================================================
+ */
+static int csm_generate_transport_params(QUIC_CONNECTION *qc,
+                                         unsigned char **buf_p,
+                                         size_t *buf_len_p)
+{
+    int ok = 0;
+    BUF_MEM *buf_mem = NULL;
+    WPACKET wpkt;
+    int wpkt_valid = 0;
+
+    if ((buf_mem = BUF_MEM_new()) == NULL)
+        goto err;
+
+    if (!WPACKET_init(&wpkt, buf_mem))
+        goto err;
+
+    wpkt_valid = 1;
+
+    if (ossl_quic_wire_encode_transport_param_bytes(&wpkt, QUIC_TPARAM_DISABLE_ACTIVE_MIGRATION,
+                                                    NULL, 0) == NULL)
+        goto err;
+
+    if (ossl_quic_wire_encode_transport_param_bytes(&wpkt, QUIC_TPARAM_INITIAL_SCID,
+                                                    NULL, 0) == NULL)
+        goto err;
+
+    if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_MAX_IDLE_TIMEOUT,
+                                                   30000))
+        goto err;
+
+    if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_MAX_UDP_PAYLOAD_SIZE,
+                                                   1452))
+        goto err;
+
+    if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_ACTIVE_CONN_ID_LIMIT,
+                                                   4))
+        goto err;
+
+    if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_DATA,
+                                                   786432))
+        goto err;
+
+    if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_LOCAL,
+                                                   524288))
+        goto err;
+
+    if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_REMOTE,
+                                                   524288))
+        goto err;
+
+    if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_UNI,
+                                                   524288))
+        goto err;
+
+    if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAMS_BIDI,
+                                                   100))
+        goto err;
+
+    if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAMS_UNI,
+                                                   100))
+        goto err;
+
+    if (!WPACKET_get_total_written(&wpkt, buf_len_p))
+        goto err;
+
+    *buf_p = (unsigned char *)buf_mem->data;
+    buf_mem->data = NULL;
+
+    ok = 1;
+err:
+    if (wpkt_valid)
+        WPACKET_finish(&wpkt);
+    BUF_MEM_free(buf_mem);
+    return ok;
+}
+
+static int tparam_to_cid(PACKET *pkt, QUIC_CONN_ID *cid)
+{
+    const unsigned char *body;
+    size_t len = 0;
+    uint64_t id;
+
+    body = ossl_quic_wire_decode_transport_param_bytes(pkt, &id, &len);
+    if (body == NULL || len > QUIC_MAX_CONN_ID_LEN)
+        return 0;
+
+    cid->id_len = (unsigned char)len;
+    memcpy(cid->id, body, cid->id_len);
+    return 1;
+}
+
+/*
+ * Called by handshake layer when we receive QUIC Transport Parameters from the
+ * peer. Note that these are not authenticated until the handshake is marked
+ * as complete.
+ */
+static int csm_on_transport_params(const unsigned char *params,
+                                   size_t params_len,
+                                   void *arg)
+{
+    QUIC_CONNECTION *qc = arg;
+    PACKET pkt;
+    uint64_t id, v;
+    size_t len;
+    const unsigned char *body;
+    int got_orig_dcid = 0;
+    int got_initial_scid = 0;
+    int got_retry_scid = 0;
+    int got_initial_max_data = 0;
+    int got_initial_max_stream_data_bidi_local = 0;
+    int got_initial_max_stream_data_bidi_remote = 0;
+    int got_initial_max_stream_data_uni = 0;
+    int got_ack_delay_exp = 0;
+    QUIC_CONN_ID cid;
+
+    if (qc->got_transport_params)
+        return 0;
+
+    if (!PACKET_buf_init(&pkt, params, params_len))
+        return 0;
+
+    while (PACKET_remaining(&pkt) > 0) {
+        if (!ossl_quic_wire_peek_transport_param(&pkt, &id))
+            return 0;
+
+        switch (id) {
+            case QUIC_TPARAM_ORIG_DCID:
+                if (got_orig_dcid)
+                    return 0; /* must not appear more than once */
+
+                if (!tparam_to_cid(&pkt, &cid))
+                    return 0;
+
+                /* Must match our initial DCID. */
+                if (!ossl_quic_conn_id_eq(&qc->init_dcid, &cid))
+                    return 0;
+
+                got_orig_dcid = 1;
+                break;
+
+            case QUIC_TPARAM_RETRY_SCID:
+                if (got_retry_scid || !qc->doing_retry)
+                    /* must not appear more than once or if retry not done */
+                    return 0;
+
+                if (!tparam_to_cid(&pkt, &cid))
+                    return 0;
+
+                /* Must match Retry packet SCID. */
+                if (!ossl_quic_conn_id_eq(&qc->retry_scid, &cid))
+                    return 0;
+
+                got_retry_scid = 1;
+                break;
+
+            case QUIC_TPARAM_INITIAL_SCID:
+                if (got_initial_scid)
+                    /* must not appear more than once */
+                    return 0;
+
+                if (!tparam_to_cid(&pkt, &cid))
+                    return 0;
+
+                /* Must match SCID of first Initial packet from server. */
+                if (!ossl_quic_conn_id_eq(&qc->init_scid, &cid))
+                    return 0;
+
+                got_initial_scid = 1;
+                break;
+
+            case QUIC_TPARAM_INITIAL_MAX_DATA:
+                if (got_initial_max_data)
+                    /* must not appear more than once */
+                    return 0;
+
+                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+                    return 0;
+
+                ossl_quic_txfc_bump_cwm(&qc->conn_txfc, v);
+                got_initial_max_data = 1;
+                break;
+
+            case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_LOCAL:
+                if (got_initial_max_stream_data_bidi_local)
+                    /* must not appear more than once */
+                    return 0;
+
+                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+                    return 0;
+
+                qc->init_max_stream_data_bidi_local = v;
+                got_initial_max_stream_data_bidi_local = 1;
+                break;
+
+            case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_REMOTE:
+                if (got_initial_max_stream_data_bidi_remote)
+                    /* must not appear more than once */
+                    return 0;
+
+                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+                    return 0;
+
+                qc->init_max_stream_data_bidi_remote = v;
+                got_initial_max_stream_data_bidi_remote = 1;
+
+                /* Apply to stream 0. */
+                ossl_quic_txfc_bump_cwm(&qc->stream0->txfc, v);
+                got_initial_max_stream_data_bidi_remote = 1;
+                break;
+
+            case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_UNI:
+                if (got_initial_max_stream_data_uni)
+                    /* must not appear more than once */
+                    return 0;
+
+                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+                    return 0;
+
+                qc->init_max_stream_data_uni = v;
+                got_initial_max_stream_data_uni = 1;
+                break;
+
+            case QUIC_TPARAM_ACK_DELAY_EXP:
+                if (got_ack_delay_exp)
+                    /* must not appear more than once */
+                    return 0;
+
+                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
+                    || v > QUIC_MAX_ACK_DELAY_EXP)
+                    return 0;
+
+                qc->rx_ack_delay_exp = (unsigned char)v;
+                got_ack_delay_exp = 1;
+                break;
+
+            //case QUIC_TPARAM_MAX_IDLE_TIMEOUT:
+            //   break;
+            // QUIC_TPARAM_STATELESS_RESET_TOKEN
+            // QUIC_TPARAM_MAX_UDP_PAYLOAD_SIZE
+            // QUIC_TPARAM_INITIAL_MAX_STREAMS_BIDI
+            // QUIC_TPARAM_INITIAL_MAX_STREAMS_UNI
+            // QUIC_TPARAM_ACK_DELAY_EXPONENT
+            // QUIC_TPARAM_MAX_ACK_DELAY
+            // QUIC_TPARAM_DISABLE_ACTIVE_MIGRATION
+            // QUIC_TPARAM_PREFERRED_ADDR
+            // QUIC_TPARAM_ACTIVE_CONN_ID_LIMIT
+
+            default:
+                /* Skip over and ignore. */
+                body = ossl_quic_wire_decode_transport_param_bytes(&pkt, &id,
+                                                                   &len);
+                if (body == NULL)
+                    return 0;
+
+                break;
+        }
+    }
+
+    if (!got_orig_dcid || !got_initial_scid || got_retry_scid != qc->doing_retry)
+        /* Transport parameters were not valid. */
+        return 0;
+
+    qc->got_transport_params = 1;
+
+    if (got_initial_max_data || got_initial_max_stream_data_bidi_remote)
+        /* If FC credit was bumped, we may now be able to send. */
+        ossl_quic_stream_map_update_state(&qc->qsm, qc->stream0);
+
+    return 1;
+}
+
+/*
+ * QUIC Connection State Machine: Ticker-Mutator {{{1
+ * =============================================
+ */
+static int csm_rx(QUIC_CONNECTION *qc);
+static int csm_tx(QUIC_CONNECTION *qc);
+
+/*
+ * The central ticker function called by the reactor. This does everything, or
+ * at least everything network I/O related. Best effort - not allowed to fail
+ * "loudly".
+ */
+static void csm_tick(QUIC_TICK_RESULT *res, void *arg)
+{
+    OSSL_TIME now, deadline;
+    QUIC_CONNECTION *qc = arg;
+
+    /*
+     * When we tick the QUIC connection, we do everything we need to do
+     * periodically. In order, we:
+     *
+     *   - handle any incoming data from the network;
+     *   - handle any timer events which are due to fire (ACKM, etc.)
+     *   - write any data to the network due to be sent, to the extent
+     *     possible;
+     *   - determine the time at which we should next be ticked.
+     */
+
+    /* Handle any incoming data from the network. */
+    csm_rx(qc);
+
+    /*
+     * Allow the handshake layer to check for any new incoming data and generate
+     * new outgoing data.
+     */
+    ossl_quic_dhs_tick(qc->dhs);
+
+    /*
+     * Handle any timer events which are due to fire; namely, the loss detection
+     * deadline.
+     *
+     * ACKM ACK generation deadline is polled by TXP, so we don't need to handle
+     * it here.
+     */
+    now         = ossl_time_now();
+    deadline    = ossl_ackm_get_loss_detection_deadline(qc->ackm);
+    if (ossl_time_compare(now, deadline) >= 0)
+        ossl_ackm_on_timeout(qc->ackm);
+
+    /* Write any data to the network due to be sent. */
+    csm_tx(qc);
+
+    /* Determine the time at which we should next be ticked. */
+    res->tick_deadline = csm_determine_next_tick_deadline(qc);
+
+    /* Always process network input. */
+    res->want_net_read = 1;
+
+    /* We want to write to the network if we have any in our queue. */
+    res->want_net_write = (ossl_qtx_get_queue_len_datagrams(qc->qtx) > 0);
+}
+
+/* Process incoming packets and handle frames, if any. */
+static int csm_rx_handle_packet(QUIC_CONNECTION *qc);
+static int csm_retry(QUIC_CONNECTION *qc,
+                     const unsigned char *retry_token,
+                     size_t retry_token_len,
+                     const QUIC_CONN_ID *retry_scid);
+
+static int csm_rx(QUIC_CONNECTION *qc)
+{
+    if (!qc->have_sent_any_pkt)
+        /*
+         * We have not sent anything yet, therefore there is no need to check
+         * for incoming data.
+         */
+        return 1;
+
+    /*
+     * Get DEMUX to BIO_recvmmsg from the network and queue incoming datagrams
+     * to the appropriate QRX instance.
+     */
+    ossl_quic_demux_pump(qc->demux); /* best effort */
+
+    for (;;) {
+        /* Release prior packet. */
+        ossl_qrx_pkt_release(qc->qrx_pkt);
+        qc->qrx_pkt = NULL;
+
+        if (!ossl_qrx_read_pkt(qc->qrx, &qc->qrx_pkt))
+            break;
+
+        csm_rx_handle_packet(qc); /* best effort */
+    }
+
+    return 1;
+}
+
+/* Handles the packet currently in qc->qrx_pkt->hdr. */
+static int csm_rx_handle_packet(QUIC_CONNECTION *qc)
+{
+    assert(qc->qrx_pkt != NULL);
+
+    if (ossl_quic_pkt_type_is_encrypted(qc->qrx_pkt->hdr->type)
+        && !qc->have_received_enc_pkt) {
+        qc->init_scid = qc->qrx_pkt->hdr->src_conn_id;
+        qc->have_received_enc_pkt = 1;
+    }
+
+    /* Handle incoming packet. */
+    switch (qc->qrx_pkt->hdr->type) {
+        case QUIC_PKT_TYPE_RETRY:
+            if (qc->doing_retry)
+                /* It is not allowed to ask a client to do a retry more than
+                 * once. */
+                return 0;
+
+            if (qc->qrx_pkt->hdr->len <= QUIC_RETRY_INTEGRITY_TAG_LEN)
+                /* Packets with zero-length Retry Tokens are invalid. */
+                return 0;
+
+            /*
+             * TODO: Theoretically this should probably be in the QRX. However
+             * because validation is dependent on context (namely the client's
+             * initial DCID) we can't do this cleanly. In the future we should
+             * probably add a callback to the QRX to let it call us (via the
+             * DEMUX) and ask us about the correct original DCID, rather than
+             * allow the QRX to emit a potentially malformed packet to the upper
+             * layers. However, special casing this will do for now.
+             */
+            if (!ossl_quic_validate_retry_integrity_tag(qc->ssl.ctx->libctx,
+                                                   qc->ssl.ctx->propq,
+                                                   qc->qrx_pkt->hdr,
+                                                   &qc->init_dcid))
+                /* Malformed retry packet, ignore. */
+                return 0;
+
+            csm_retry(qc, qc->qrx_pkt->hdr->data,
+                      qc->qrx_pkt->hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN,
+                      &qc->qrx_pkt->hdr->src_conn_id);
+            break;
+
+        case QUIC_PKT_TYPE_VERSION_NEG:
+            /* TODO: Implement version negotiation */
+            break;
+
+        default:
+            if (qc->qrx_pkt->hdr->type == QUIC_PKT_TYPE_HANDSHAKE)
+                /*
+                 * We automatically drop INITIAL EL keys when first successfully
+                 * decrypting a HANDSHAKE packet, as per the RFC.
+                 */
+                csm_discard_el(qc, QUIC_ENC_LEVEL_INITIAL);
+
+            /* This packet contains frames, pass to the RXDP. */
+            ossl_quic_handle_frames(qc, qc->qrx_pkt); /* best effort */
+
+            /*
+             * Regardless of the outcome of frame handling, unref the packet.
+             * This will free the packet unless something added another
+             * reference to it during frame processing.
+             */
+            ossl_qrx_pkt_release(qc->qrx_pkt);
+            qc->qrx_pkt = NULL;
+            break;
+    }
+
+    return 1;
+}
+
+/* Try to generate packets and if possible, flush them to the network. */
+static int csm_tx(QUIC_CONNECTION *qc)
+{
+    /*
+     * Send a packet, if we need to. Best effort. The TXP consults the CC and
+     * applies any limitations imposed by it, so we don't need to do it here.
+     *
+     * Best effort. In particular if TXP fails for some reason we should still
+     * flush any queued packets which we already generated.
+     */
+    if (ossl_quic_tx_packetiser_generate(qc->txp,
+                                         TX_PACKETISER_ARCHETYPE_NORMAL) == 2)
+        qc->have_sent_any_pkt = 1;
+
+    ossl_qtx_flush_net(qc->qtx); /* best effort */
+    return 1;
+}
+
+/* Determine next tick deadline. */
+static OSSL_TIME csm_determine_next_tick_deadline(QUIC_CONNECTION *qc)
+{
+    OSSL_TIME deadline;
+    uint32_t pn_space;
+
+    deadline = ossl_ackm_get_loss_detection_deadline(qc->ackm);
+    for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space)
+        deadline = ossl_time_min(deadline,
+                                 ossl_ackm_get_ack_deadline(qc->ackm, pn_space));
+
+    /* When will CC let us send more? */
+    if (ossl_quic_tx_packetiser_has_pending(qc->txp, TX_PACKETISER_ARCHETYPE_NORMAL,
+                                            TX_PACKETISER_BYPASS_CC))
+        deadline = ossl_time_min(deadline,
+                                 qc->cc_method->get_next_credit_time(qc->cc_data));
+
+    /* TODO: TIMER IDLE_TIMEOUT */
+    /* TODO: TIMER TERMINATING_TIMEOUT */
+    return deadline;
+}
+
+/*
+ * QUIC Connection State Machine: Lifecycle Transitions {{{1
+ * ====================================================
+ */
+
+/*
+ * csm_connect {{{2
+ * -----------
+ */
+static int csm_connect(QUIC_CONNECTION *qc)
+{
+    if (qc->state != QUIC_CONN_STATE_IDLE)
+        /* Calls to connect are idempotent */
+        return 1;
+
+    /* Plug in secrets for the Initial EL. */
+    if (!ossl_quic_provide_initial_secret(qc->ssl.ctx->libctx,
+                                          qc->ssl.ctx->propq,
+                                          &qc->init_dcid,
+                                          /*is_server=*/0,
+                                          qc->qrx, qc->qtx))
+        return 0;
+
+    /* Change state. */
+    qc->state                   = QUIC_CONN_STATE_ACTIVE;
+    qc->doing_proactive_ver_neg = 0; /* not currently supported */
+
+    /* Handshake layer: start (e.g. send CH). */
+    if (!ossl_quic_dhs_tick(qc->dhs))
+        return 0;
+
+    reactor_tick(&qc->rtor); /* best effort */
+    return 1;
+}
+
+/*
+ * csm_retry {{{2
+ * ---------
+ *
+ * Called when a server asks us to do a retry.
+ */
+static void free_token(const unsigned char *buf, size_t buf_len, void *arg)
+{
+    OPENSSL_free((unsigned char *)buf);
+}
+
+static int csm_retry(QUIC_CONNECTION *qc,
+                     const unsigned char *retry_token,
+                     size_t retry_token_len,
+                     const QUIC_CONN_ID *retry_scid)
+{
+    void *buf;
+
+    /* We change to using the SCID in the Retry packet as the DCID. */
+    if (!ossl_quic_tx_packetiser_set_cur_dcid(qc->txp, retry_scid))
+        return 0;
+
+    /*
+     * Now we retry. We will release the Retry packet immediately, so copy
+     * the token.
+     */
+    if ((buf = OPENSSL_malloc(retry_token_len)) == NULL)
+        return 0;
+
+    memcpy(buf, retry_token, retry_token_len);
+
+    ossl_quic_tx_packetiser_set_initial_token(qc->txp, buf, retry_token_len,
+                                              free_token, NULL);
+
+    qc->retry_scid  = *retry_scid;
+    qc->doing_retry = 1;
+
+    /*
+     * We need to stimulate the Initial EL to generate the first CRYPTO frame
+     * again. We can do this most cleanly by simply forcing the ACKM to consider
+     * the first Initial packet as lost, which it effectively was as the server
+     * hasn't processed it. This also maintains the desired behaviour with e.g.
+     * PNs not resetting and so on.
+     *
+     * The PN we used initially is always zero, because QUIC does not allow
+     * repeated retries.
+     */
+    if (!ossl_ackm_mark_packet_pseudo_lost(qc->ackm, QUIC_PN_SPACE_INITIAL,
+                                      /*PN=*/0))
+        return 0;
+
+    /*
+     * Plug in new secrets for the Initial EL. This is the only time we change
+     * the secrets for an EL after we already provisioned it.
+     */
+    if (!ossl_quic_provide_initial_secret(qc->ssl.ctx->libctx,
+                                          qc->ssl.ctx->propq,
+                                          &qc->retry_scid,
+                                          /*is_server=*/0,
+                                          qc->qrx, qc->qtx))
+        return 0;
+
+    return 1;
+}
+
+/*
+ * csm_discard_el {{{2
+ * --------------
+ */
+static int csm_discard_el(QUIC_CONNECTION *qc,
+                          uint32_t enc_level)
+{
+    if (!ossl_assert(enc_level < QUIC_ENC_LEVEL_1RTT))
+        return 0;
+
+    if ((qc->el_discarded & (1U << enc_level)) != 0)
+        /* Already done. */
+        return 1;
+
+    /* Best effort for all of these. */
+    ossl_quic_tx_packetiser_discard_enc_level(qc->txp, enc_level);
+    ossl_qrx_discard_enc_level(qc->qrx, enc_level);
+    ossl_qtx_discard_enc_level(qc->qtx, enc_level);
+
+    if (enc_level != QUIC_ENC_LEVEL_0RTT) {
+        uint32_t pn_space = ossl_quic_enc_level_to_pn_space(enc_level);
+
+        ossl_ackm_on_pkt_space_discarded(qc->ackm, pn_space);
+
+        /* We should still have crypto streams at this point. */
+        assert(qc->crypto_send[pn_space] != NULL);
+        assert(qc->crypto_recv[pn_space] != NULL);
+
+        /* Get rid of the crypto stream state for the EL. */
+        ossl_quic_sstream_free(qc->crypto_send[pn_space]);
+        qc->crypto_send[pn_space] = NULL;
+
+        ossl_quic_rstream_free(qc->crypto_recv[pn_space]);
+        qc->crypto_recv[pn_space] = NULL;
+    }
+
+    qc->el_discarded |= (1U << enc_level);
+    return 1;
+}
+
+/*
+ * ossl_quic_conn_on_handshake_confirmed {{{2
+ * -------------------------------------
+ * Called by the RXDP.
+ */
+int ossl_quic_conn_on_handshake_confirmed(QUIC_CONNECTION *qc)
+{
+    if (qc->handshake_confirmed)
+        return 1;
+
+    csm_discard_el(qc, QUIC_ENC_LEVEL_HANDSHAKE);
+    qc->handshake_confirmed = 1;
+    return 1;
+}
+
+/*
+ * ossl_quic_conn_on_protocol_error {{{2
+ * --------------------------------
+ */
+void ossl_quic_conn_on_protocol_error(QUIC_CONNECTION *qc, uint64_t error_code,
+                                      const char *reason)
+{
+    fprintf(stderr, "# PROTOCOL ERROR: %lu: %s\n", error_code,
+            reason != NULL ? reason : "");
+    // TERMINATING - CLOSING
+    // TERMINATING - DRAINING
+    // TERMINATED
+    /* TODO */
+}
+
+/*
+ * QUIC Front-End I/O API: Initialization {{{1
+ * ======================================
+ *
+ *         SSL_new                  => ossl_quic_new
+ *                                     ossl_quic_init
+ *         SSL_reset                => ossl_quic_reset
+ *         SSL_clear                => ossl_quic_clea
+ *                                     ossl_quic_deinit
+ *         SSL_free                 => ossl_quic_free
+ *
+ */
+
+/*
+ * SSL_new {{{2
+ * -------
+ */
 SSL *ossl_quic_new(SSL_CTX *ctx)
 {
-    QUIC_CONNECTION *qc;
-    SSL *ssl = NULL;
-    SSL_CONNECTION *sc;
+    QUIC_CONNECTION *qc = NULL;
+    SSL *ssl_base = NULL;
 
     qc = OPENSSL_zalloc(sizeof(*qc));
     if (qc == NULL)
         goto err;
 
-    ssl = &qc->stream.ssl;
-    if (!ossl_ssl_init(ssl, ctx, SSL_TYPE_QUIC_CONNECTION)) {
-        OPENSSL_free(qc);
-        ssl = NULL;
+    /* Initialise the QUIC_CONNECTION's stub header. */
+    ssl_base = &qc->ssl;
+    if (!ossl_ssl_init(ssl_base, ctx, SSL_TYPE_QUIC_CONNECTION)) {
+        ssl_base = NULL;
         goto err;
     }
-    qc->tls = ossl_ssl_connection_new(ctx);
-    if (qc->tls == NULL || (sc = SSL_CONNECTION_FROM_SSL(qc->tls)) == NULL)
-        goto err;
-    /* override the user_ssl of the inner connection */
-    sc->user_ssl = ssl;
 
-    /* We'll need to set proper TLS method on qc->tls here */
-    return ssl;
+    if (!csm_init(qc))
+        /* csm_init does its own teardown on error */
+        goto err;
+
+    return ssl_base;
+
 err:
-    ossl_quic_free(ssl);
+    OPENSSL_free(qc);
     return NULL;
 }
 
-int ossl_quic_init(SSL *s)
-{
-    return s->method->ssl_clear(s);
-}
-
-void ossl_quic_deinit(SSL *s)
-{
-    return;
-}
-
+/*
+ * SSL_free {{{2
+ * --------
+ */
 void ossl_quic_free(SSL *s)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (qc == NULL) {
-        /* TODO(QUIC): Temporarily needed to release the inner tls object */
-        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
-
-        if (sc != NULL)
-            ossl_ssl_connection_free(s);
+    /* We should never be called on anything but a QUIC_CONNECTION. */
+    if (!EXPECT_QUIC_CONN(qc))
         return;
-    }
 
-    SSL_free(qc->tls);
-    return;
+    csm_cleanup(qc);
+    /* Note: SSL_free calls OPENSSL_free(qc) for us */
 }
 
+/*
+ * ossl_quic_init {{{2
+ * --------------
+ */
+int ossl_quic_init(SSL *s)
+{
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (!EXPECT_QUIC_CONN(qc))
+        return 0;
+
+    /* Same op as SSL_clear, forward the call. */
+    return ossl_quic_clear(s);
+}
+
+/*
+ * ossl_quic_deinit {{{2
+ * ----------------
+ */
+void ossl_quic_deinit(SSL *s)
+{
+    /* No-op. */
+}
+
+/*
+ * SSL_reset {{{2
+ * ---------
+ */
 int ossl_quic_reset(SSL *s)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (qc == NULL) {
-        /* TODO(QUIC): Temporarily needed to reset the inner tls object */
-        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    if (!EXPECT_QUIC_CONN(qc))
+        return 0;
 
-        return sc != NULL ? ossl_ssl_connection_reset(s) : 0;
-    }
-
-    return ossl_ssl_connection_reset(qc->tls);
+    /* Currently a no-op. */
+    return 1;
 }
 
+/*
+ * SSL_clear {{{2
+ * ---------
+ */
 int ossl_quic_clear(SSL *s)
 {
-    return 1;
-}
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-int ossl_quic_accept(SSL *s)
-{
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_QUIC_SSL(s);
-
-    if (sc == NULL)
+    if (!EXPECT_QUIC_CONN(qc))
         return 0;
 
-    ossl_statem_set_in_init(sc, 0);
+    /* Currently a no-op. */
     return 1;
 }
 
+/*
+ * QUIC Front-End I/O API: Network BIO Configuration {{{1
+ * =================================================
+ */
+
+/*
+ * csm_determine_poll_fd_from_bio {{{2
+ * ------------------------------
+ * Determine what FD we should poll on based on our underlying network BIO.
+ */
+static int csm_determine_poll_fd_from_bio(QUIC_CONNECTION *qc, BIO *net_bio, int *pfd)
+{
+    int fd = -1;
+
+    /*
+     * Various cases:
+     *
+     *   - BIO_dgram
+     *   - BIO_dgram_pair
+     *   - Known bad BIOs (e.g. TCP socket), abort
+     *   - Unknown BIO (could be custom implementation, benefit of doubt,
+     *                  but what do we do?)
+     */
+    switch (BIO_method_type(net_bio)) {
+        case BIO_TYPE_DGRAM:
+            if (BIO_get_fd(net_bio, &fd) < 0)
+                return 0;
+
+            break;
+
+        case BIO_TYPE_DGRAM_PAIR:
+            return 0; /* TODO */
+
+        case BIO_TYPE_NONE:
+        case BIO_TYPE_FILE:
+        case BIO_TYPE_MEM:
+        case BIO_TYPE_FD:
+        case BIO_TYPE_SOCKET:
+        case BIO_TYPE_NULL:
+        case BIO_TYPE_SSL:
+        case BIO_TYPE_MD:
+        case BIO_TYPE_BUFFER: /* TODO */
+        case BIO_TYPE_CIPHER:
+        case BIO_TYPE_BASE64:
+        case BIO_TYPE_CONNECT:
+        case BIO_TYPE_ACCEPT:
+        case BIO_TYPE_NBIO_TEST:
+        case BIO_TYPE_NULL_FILTER:
+        case BIO_TYPE_BIO:
+        case BIO_TYPE_LINEBUFFER:
+        case BIO_TYPE_ASN1:
+        case BIO_TYPE_COMP:
+        case BIO_TYPE_CORE_TO_PROV:
+#ifndef OPENSSL_NO_SCTP
+        case BIO_TYPE_DGRAM_SCTP:
+#endif
+            /* These BIO types will never be supported. */
+            return 0;
+
+        default:
+            /*
+             * Unknown BIO type. In the future we should support custom BIOs but
+             * while we are prototyping, we don't for now.
+             */
+            return 0;
+    }
+
+    *pfd = fd;
+    return 1;
+}
+
+/*
+ * ossl_quic_conn_set0_net_rbio {{{2
+ * ----------------------------
+ */
+void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
+{
+    int rfd = -1;
+
+    if (qc->net_rbio == net_rbio)
+        return;
+
+    if (net_rbio != NULL && !csm_determine_poll_fd_from_bio(qc, net_rbio, &rfd)) {
+        /* If we cannot analyse the BIO, treat it as setting a NULL BIO. */
+        rfd         = -1;
+        net_rbio    = NULL;
+
+        if (qc->net_rbio == net_rbio)
+            return;
+    }
+
+    reactor_set_poll_rfd(&qc->rtor, rfd);
+    BIO_free(qc->net_rbio);
+    ossl_quic_demux_set_bio(qc->demux, net_rbio);
+    qc->net_rbio = net_rbio;
+}
+
+/*
+ * ossl_quic_conn_set0_net_wbio {{{2
+ * ----------------------------
+ */
+void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio)
+{
+    int wfd = -1;
+
+    if (qc->net_wbio == net_wbio)
+        return;
+
+    if (net_wbio != NULL && !csm_determine_poll_fd_from_bio(qc, net_wbio, &wfd)) {
+        /* If we cannot analyse the BIO, treat it as setting a NULL BIO. */
+        wfd         = -1;
+        net_wbio    = NULL;
+
+        if (qc->net_wbio == net_wbio)
+            return;
+    }
+
+    reactor_set_poll_wfd(&qc->rtor, wfd);
+    BIO_free(qc->net_wbio);
+    ossl_qtx_set_bio(qc->qtx, net_wbio);
+    qc->net_wbio = net_wbio;
+}
+
+/*
+ * ossl_quic_conn_get_net_rbio {{{2
+ * ---------------------------
+ */
+BIO *ossl_quic_conn_get_net_rbio(const QUIC_CONNECTION *qc)
+{
+    return qc->net_rbio;
+}
+
+/* ossl_quic_conn_get_net_wbio {{{2
+ * ---------------------------
+ */
+BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc)
+{
+    return qc->net_wbio;
+}
+
+/*
+ * QUIC Front-End I/O API: Asynchronous I/O Management {{{1
+ * ===================================================
+ *
+ *   (BIO/)SSL_tick                 => ossl_quic_tick
+ *   (BIO/)SSL_get_tick_timeout     => ossl_quic_get_tick_timeout
+ *   (BIO/)SSL_get_poll_fd          => ossl_quic_get_poll_fd
+ *
+ */
+
+/*
+ * SSL_tick {{{2
+ * --------
+ *
+ * Ticks the reactor.
+ */
+int ossl_quic_tick(QUIC_CONNECTION *qc)
+{
+    reactor_tick(&qc->rtor);
+    return 1;
+}
+
+/*
+ * SSL_get_tick_timeout {{{2
+ * --------------------
+ *
+ * Get the time in milliseconds until the SSL object should be ticked by the
+ * application by calling SSL_tick(). Returns 0 if the object should be ticked
+ * immediately and -1 if no timeout is currently active.
+ */
+int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc)
+{
+    OSSL_TIME now, deadline;
+
+    deadline = reactor_get_tick_deadline(&qc->rtor);
+    if (ossl_time_is_infinite(deadline))
+        return -1; /* infinity */
+
+    now = ossl_time_now();
+    if (ossl_time_compare(now, deadline) >= 0)
+        return 0;
+
+    return ossl_time2ms(ossl_time_subtract(deadline, now));
+}
+
+/*
+ * SSL_get_poll_rfd {{{2
+ * ----------------
+ */
+int ossl_quic_get_poll_rfd(QUIC_CONNECTION *qc)
+{
+    return reactor_get_poll_rfd(&qc->rtor);
+}
+
+/*
+ * SSL_get_poll_wfd {{{2
+ * ----------------
+ */
+int ossl_quic_get_poll_wfd(QUIC_CONNECTION *qc)
+{
+    return reactor_get_poll_wfd(&qc->rtor);
+}
+
+/*
+ * SSL_get_want_net_read {{{2
+ * ---------------------
+ */
+int ossl_quic_get_want_net_read(QUIC_CONNECTION *qc)
+{
+    return reactor_want_net_read(&qc->rtor);
+}
+
+/*
+ * SSL_get_want_net_write {{{2
+ * ----------------------
+ */
+int ossl_quic_get_want_net_write(QUIC_CONNECTION *qc)
+{
+    return reactor_want_net_write(&qc->rtor);
+}
+
+/*
+ * QUIC Front-End I/O API: Connection Lifecycle Operations {{{1
+ * =======================================================
+ *
+ *         SSL_shutdown             => ossl_quic_shutdown
+ *         SSL_ctrl                 => ossl_quic_ctrl
+ *   (BIO/)SSL_connect              => ossl_quic_connect
+ *   (BIO/)SSL_accept               => ossl_quic_accept
+ *
+ */
+
+/*
+ * SSL_shutdown {{{2
+ * ------------
+ */
+int ossl_quic_shutdown(SSL *s)
+{
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (!EXPECT_QUIC_CONN(qc))
+        return 0;
+
+    return 0; // TODO
+}
+
+/* SSL_ctrl {{{2
+ * --------
+ */
+long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
+{
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (!EXPECT_QUIC_CONN(qc))
+        return 0;
+
+    switch (cmd) {
+    default:
+        return 0;
+    }
+}
+
+/* SSL_connect {{{2
+ * -----------
+ */
 int ossl_quic_connect(SSL *s)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_QUIC_SSL(s);
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL)
+    if (!EXPECT_QUIC_CONN(qc))
         return 0;
 
-    ossl_statem_set_in_init(sc, 0);
-    return 1;
+    return csm_connect(qc);
 }
 
-int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *readbytes)
+/* SSL_accept {{{2
+ * ----------
+ */
+int ossl_quic_accept(SSL *s)
 {
-    int ret;
-    BIO *rbio = SSL_get_rbio(s);
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_QUIC_SSL(s);
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL || rbio == NULL)
+    if (!EXPECT_QUIC_CONN(qc))
         return 0;
 
-    sc->rwstate = SSL_READING;
-    ret = BIO_read_ex(rbio, buf, len, readbytes);
-    if (ret > 0 || !BIO_should_retry(rbio))
-        sc->rwstate = SSL_NOTHING;
-    return ret <= 0 ? -1 : ret;
+    /* Server mode not currently supported. */
+    return 0;
 }
 
-int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *readbytes)
+
+/*
+ * QUIC Front-End I/O API: Steady-State Operations {{{1
+ * ===============================================
+ *
+ * Here we dispatch calls to the steady-state front-end I/O API functions; that
+ * is, the functions used during the established phase of a QUIC connection
+ * (e.g. SSL_read, SSL_write).
+ *
+ * Each function must handle both blocking and non-blocking modes. As discussed
+ * above, all QUIC I/O is implemented using non-blocking mode internally.
+ *
+ *   (BIO/)SSL_read                 => ossl_quic_read
+ *   (BIO/)SSL_write                => ossl_quic_write
+ *
+ */
+
+static int blocking_mode(QUIC_CONNECTION *qc)
 {
-    return -1;
+    return 1; // TODO
+}
+
+/*
+ * SSL_get_error {{{2
+ * -------------
+ */
+int ossl_quic_get_error(const QUIC_CONNECTION *qc, int i)
+{
+    return SSL_ERROR_NONE; // TODO
+}
+
+/*
+ * SSL_write {{{2
+ * ---------
+ */
+struct quic_write_again_args {
+    QUIC_CONNECTION *qc;
+    const void      *buf;
+    size_t          len;
+    size_t          *written;
+};
+
+static int quic_write_again(void *arg)
+{
+    struct quic_write_again_args *args = arg;
+
+    // TODO what if connection is torn down due to error while blocking (e.g. rx
+    // bad frame)
+
+    if (!ossl_quic_sstream_append(args->qc->stream0->sstream, args->buf,
+                                   args->len, args->written))
+        return -2;
+
+    if (*args->written > 0)
+        /* appended at least one byte, the SSL_write op can finish now */
+        return 1;
+
+    return 0; /* did not write anything, keep trying */
 }
 
 int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
 {
-    BIO *wbio = SSL_get_wbio(s);
-    int ret;
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_QUIC_SSL(s);
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+    struct quic_write_again_args args;
+    int res;
 
-    if (sc == NULL || wbio == NULL)
+    *written = 0;
+
+    if (!EXPECT_QUIC_CONN(qc))
         return 0;
 
-    sc->rwstate = SSL_WRITING;
-    ret = BIO_write_ex(wbio, buf, len, written);
-    if (ret > 0 || !BIO_should_retry(wbio))
-        sc->rwstate = SSL_NOTHING;
-    return ret;
-}
+    // TODO if closed
+    // TODO stop_sending, reset_stream?
 
-int ossl_quic_shutdown(SSL *s)
-{
+    if (qc->stream0 == NULL || qc->stream0->sstream == NULL)
+        return 0;
+
+    if (!ossl_quic_sstream_append(qc->stream0->sstream, buf,
+                                  len, written)) {
+        /* Stream already finished or allocation error. */
+        *written = 0;
+        return 0;
+    }
+
+    if (*written > 0) {
+        /*
+         * We have appended at least one byte to the stream.
+         * Potentially mark stream as active, depending on FC.
+         */
+        ossl_quic_stream_map_update_state(&qc->qsm, qc->stream0);
+
+        /*
+         * Try and send.
+         *
+         * TODO(QUIC): It is probably inefficient to try and do this
+         * immediately, plus we should eventually consider Nagle's algorithm
+         * etc.
+         */
+        reactor_tick(&qc->rtor);
+    } else if (blocking_mode(qc)) {
+        /*
+         * We were not able to append anything immediately, so our stream buffer
+         * is probably full. This means we need to block until some of it is
+         * freed up.
+         */
+        args.qc         = qc;
+        args.buf        = buf;
+        args.len        = len;
+        args.written    = written;
+
+        res = reactor_block_until_pred(&qc->rtor, quic_write_again, &args, 0);
+        if (res <= 0)
+            return 0;
+    }
+
     return 1;
 }
 
-long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
-{
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_QUIC_SSL(s);
+/*
+ * SSL_read {{{2
+ * --------
+ */
+struct quic_read_again_args {
+    QUIC_CONNECTION *qc;
+    QUIC_STREAM     *stream;
+    void            *buf;
+    size_t          len;
+    size_t          *bytes_read;
+};
 
-    if (sc == NULL)
+static int quic_read_actual(QUIC_CONNECTION *qc,
+                            QUIC_STREAM *stream,
+                            void *buf, size_t buf_len,
+                            size_t *bytes_read)
+{
+    int is_fin = 0;
+
+    if (stream->rstream == NULL)
         return 0;
 
-    switch(cmd) {
-    case SSL_CTRL_CHAIN:
-        if (larg)
-            return ssl_cert_set1_chain(sc, NULL, (STACK_OF(X509) *)parg);
-        else
-            return ssl_cert_set0_chain(sc, NULL, (STACK_OF(X509) *)parg);
+    if (!ossl_quic_rstream_read(stream->rstream, buf, buf_len,
+                                bytes_read, &is_fin))
+        return 0;
+
+    if (*bytes_read > 0) {
+        /*
+         * We have read at least one byte from the stream. Inform stream-level
+         * RXFC of the retirement of controlled bytes. Update the active stream
+         * status (the RXFC may now want to emit a frame granting more credit to
+         * the peer).
+         */
+        OSSL_RTT_INFO rtt_info;
+        ossl_statm_get_rtt_info(&qc->statm, &rtt_info);
+
+        if (!ossl_quic_rxfc_on_retire(&qc->stream0->rxfc, *bytes_read,
+                                      rtt_info.smoothed_rtt))
+            return 0;
     }
-    return 0;
+
+    if (is_fin)
+        stream->recv_fin_retired = 1;
+
+    if (*bytes_read > 0)
+        ossl_quic_stream_map_update_state(&qc->qsm, qc->stream0);
+
+    return 1;
+}
+
+static int quic_read_again(void *arg)
+{
+    struct quic_read_again_args *args = arg;
+
+    if (!quic_read_actual(args->qc, args->stream,
+                          args->buf, args->len, args->bytes_read))
+        return -1;
+
+    if (*args->bytes_read > 0)
+        /* got at least one byte, the SSL_read op can finish now */
+        return 1;
+
+    return 0; /* did not write anything, keep trying */
+}
+
+int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read)
+{
+    int res;
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+    struct quic_read_again_args args;
+
+    *bytes_read = 0;
+
+    if (!EXPECT_QUIC_CONN(qc))
+        return 0;
+
+    if (qc->stream0 == NULL)
+        return 0;
+
+    if (!quic_read_actual(qc, qc->stream0, buf, len, bytes_read))
+        return 0;
+
+    if (*bytes_read > 0) {
+        /*
+         * Even though we succeeded, tick the reactor here to ensure we are
+         * handling other aspects of the QUIC connection.
+         */
+        reactor_tick(&qc->rtor);
+        return 1;
+    } else if (blocking_mode(qc)) {
+        /*
+         * We were not able to read anything immediately, so our stream
+         * buffer is empty. This means we need to block until we get
+         * at least one byte.
+         */
+        args.qc         = qc;
+        args.stream     = qc->stream0;
+        args.buf        = buf;
+        args.len        = len;
+        args.bytes_read = bytes_read;
+
+        res = reactor_block_until_pred(&qc->rtor, quic_read_again, &args, 0);
+        if (res <= 0)
+            return 0;
+    }
+
+    return 1;
+}
+
+/* XXX Methods pending triage {{{1 */
+int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *readbytes)
+{
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (!EXPECT_QUIC_CONN(qc))
+        return 0;
+
+    /* XXX TODO */
+    return -1;
 }
 
 long ossl_quic_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
-    switch(cmd) {
-    case SSL_CTRL_CHAIN:
-        if (larg)
-            return ssl_cert_set1_chain(NULL, ctx, (STACK_OF(X509) *)parg);
-        else
-            return ssl_cert_set0_chain(NULL, ctx, (STACK_OF(X509) *)parg);
-
-    case SSL_CTRL_SET_TLSEXT_TICKET_KEYS:
-    case SSL_CTRL_GET_TLSEXT_TICKET_KEYS:
-        /* TODO(QUIC): these will have to be implemented properly */
-        return 1;
+    switch (cmd) {
+    default:
+        return 0;
     }
-    return 0;
 }
 
 long ossl_quic_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
@@ -245,35 +2170,4 @@ int ossl_quic_renegotiate_check(SSL *ssl, int initok)
 QUIC_CONNECTION *ossl_quic_conn_from_ssl(SSL *ssl)
 {
     return QUIC_CONNECTION_FROM_SSL(ssl);
-}
-
-/*
- * The following are getters and setters of pointers, but they don't affect
- * the objects being pointed at.  They are CURRENTLY to be freed separately
- * by the caller the set them in the first place.
- */
-int ossl_quic_conn_set_qrx(QUIC_CONNECTION *qc, OSSL_QRX *qrx)
-{
-    if (qc == NULL)
-        return 0;
-    qc->qrx = qrx;
-    return 1;
-}
-
-OSSL_QRX *ossl_quic_conn_get_qrx(QUIC_CONNECTION *qc)
-{
-    return qc != NULL ? qc->qrx : NULL;
-}
-
-int ossl_quic_conn_set_ackm(QUIC_CONNECTION *qc, OSSL_ACKM *ackm)
-{
-    if (qc == NULL)
-        return 0;
-    qc->ackm = ackm;
-    return 1;
-}
-
-OSSL_ACKM *ossl_quic_conn_set_akcm(QUIC_CONNECTION *qc)
-{
-    return qc != NULL ? qc->ackm : NULL;
 }
