@@ -460,6 +460,25 @@ void ossl_quic_tx_packetiser_schedule_ack_eliciting(OSSL_QUIC_TX_PACKETISER *txp
 #define TXP_ERR_SPACE        2  /* Not enough room for another packet */
 #define TXP_ERR_INPUT        3  /* Invalid/malformed input */
 
+int ossl_quic_tx_packetiser_has_pending(OSSL_QUIC_TX_PACKETISER *txp,
+                                        uint32_t archetype,
+                                        uint32_t flags)
+{
+    uint32_t enc_level;
+    int bypass_cc = ((flags & TX_PACKETISER_BYPASS_CC) != 0);
+
+    if (!bypass_cc && !txp->args.cc_method->can_send(txp->args.cc_data))
+        return 0;
+
+    for (enc_level = QUIC_ENC_LEVEL_INITIAL;
+         enc_level < QUIC_ENC_LEVEL_NUM;
+         ++enc_level)
+        if (txp_el_pending(txp, enc_level, archetype))
+            return 1;
+
+    return 0;
+}
+
 /*
  * Generates a datagram by polling the various ELs to determine if they want to
  * generate any frames, and generating a datagram which coalesces packets for
