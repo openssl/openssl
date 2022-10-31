@@ -796,6 +796,9 @@ static int csm_on_handshake_complete(void *arg)
     OPENSSL_free(qc->client_transport_params);
     qc->client_transport_params = NULL;
 
+    /* Tell TXP the handshake is complete. */
+    ossl_quic_tx_packetiser_notify_handshake_complete(qc->txp);
+
     qc->handshake_complete = 1;
     return 1;
 }
@@ -1438,6 +1441,14 @@ int ossl_quic_conn_on_handshake_confirmed(QUIC_CONNECTION *qc)
 {
     if (qc->handshake_confirmed)
         return 1;
+
+    if (!qc->handshake_complete)
+        /*
+         * Does not make sense for handshake to be confirmed before it is
+         * completed.
+         * TODO: Handle as protocol violation.
+         */
+        return 0;
 
     csm_discard_el(qc, QUIC_ENC_LEVEL_HANDSHAKE);
     qc->handshake_confirmed = 1;

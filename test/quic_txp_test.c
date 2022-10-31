@@ -227,6 +227,7 @@ err:
 #define OPK_RESET_STREAM            19  /* Mark stream for RESET_STREAM */
 #define OPK_CONN_TXFC_BUMP          20  /* Bump connection TXFC CWM */
 #define OPK_STREAM_TXFC_BUMP        21  /* Bump stream TXFC CWM */
+#define OPK_HANDSHAKE_COMPLETE      22  /* Mark handshake as complete */
 
 struct script_op {
     uint32_t opcode;
@@ -280,6 +281,8 @@ struct script_op {
     { OPK_CONN_TXFC_BUMP, (cwm) },
 #define OP_STREAM_TXFC_BUMP(id, cwm) \
     { OPK_STREAM_TXFC_BUMP, (cwm), (id) },
+#define OP_HANDSHAKE_COMPLETE() \
+    { OPK_HANDSHAKE_COMPLETE },
 
 static int schedule_handshake_done(struct helper *h)
 {
@@ -601,6 +604,7 @@ static int check_stream_9(struct helper *h)
 
 static const struct script_op script_9[] = {
     OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1)
+    OP_HANDSHAKE_COMPLETE()
     OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
     OP_STREAM_NEW(42)
     OP_STREAM_SEND(42, stream_9)
@@ -909,6 +913,7 @@ static int check_stream_10d(struct helper *h)
 
 static const struct script_op script_10[] = {
     OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1)
+    OP_HANDSHAKE_COMPLETE()
     OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
     OP_STREAM_NEW(42)
     OP_STREAM_NEW(43)
@@ -982,6 +987,7 @@ static int check_stream_12(struct helper *h)
 
 static const struct script_op script_12[] = {
     OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1)
+    OP_HANDSHAKE_COMPLETE()
     OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
     OP_STREAM_NEW(42)
     OP_STOP_SENDING(42, 4568)
@@ -1014,6 +1020,7 @@ static ossl_unused int check_stream_13(struct helper *h)
 
 static const struct script_op script_13[] = {
     OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1)
+    OP_HANDSHAKE_COMPLETE()
     OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
     OP_STREAM_NEW(42)
     OP_CONN_TXFC_BUMP(8)
@@ -1065,6 +1072,7 @@ static int check_14(struct helper *h)
 
 static const struct script_op script_14[] = {
     OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1)
+    OP_HANDSHAKE_COMPLETE()
     OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
     OP_CHECK(gen_conn_close)
     OP_TXP_GENERATE(TX_PACKETISER_ARCHETYPE_NORMAL)
@@ -1398,6 +1406,9 @@ static int run_script(const struct script_op *script)
 
                 ossl_quic_stream_map_update_state(h.args.qsm, s);
             }
+            break;
+        case OPK_HANDSHAKE_COMPLETE:
+            ossl_quic_tx_packetiser_notify_handshake_complete(h.txp);
             break;
         default:
             TEST_error("bad opcode");

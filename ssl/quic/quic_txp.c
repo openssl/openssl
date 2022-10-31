@@ -59,6 +59,9 @@ struct ossl_quic_tx_packetiser_st {
      */
     unsigned int    want_conn_close         : 1;
 
+    /* Has the handshake been completed? */
+    unsigned int    handshake_complete      : 1;
+
     OSSL_QUIC_FRAME_CONN_CLOSE  conn_close_frame;
 
     /* Internal state - packet assembly. */
@@ -443,6 +446,11 @@ int ossl_quic_tx_packetiser_discard_enc_level(OSSL_QUIC_TX_PACKETISER *txp,
     return 1;
 }
 
+void ossl_quic_tx_packetiser_notify_handshake_complete(OSSL_QUIC_TX_PACKETISER *txp)
+{
+    txp->handshake_complete = 1;
+}
+
 void ossl_quic_tx_packetiser_schedule_handshake_done(OSSL_QUIC_TX_PACKETISER *txp)
 {
     txp->want_handshake_done = 1;
@@ -796,7 +804,7 @@ static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
             }
        }
 
-    if (a.allow_stream_rel) {
+    if (a.allow_stream_rel && txp->handshake_complete) {
         QUIC_STREAM_ITER it;
 
         /* If there are any active streams, 0/1-RTT wants to produce a packet.
@@ -1944,7 +1952,7 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
             goto fatal_err;
 
     /* Stream-specific frames */
-    if (a.allow_stream_rel)
+    if (a.allow_stream_rel && txp->handshake_complete)
         if (!txp_generate_stream_related(txp, &h, pn_space, tpkt, min_ppl,
                                          &have_ack_eliciting,
                                          &tmp_head))
