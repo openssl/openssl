@@ -8148,6 +8148,82 @@ static int test_shutdown(int tst)
     return testresult;
 }
 
+/*
+ * Test that sending close_notify alerts works correctly in the case of a
+ * retryable write failure.
+ */
+static int test_async_shutdown(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    BIO *bretry = BIO_new(bio_s_always_retry()), *tmp = NULL;
+
+    if (!TEST_ptr(bretry))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(),
+                                       0, 0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+                                      NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Close write side of clientssl */
+    if (!TEST_int_eq(SSL_shutdown(clientssl), 0))
+        goto end;
+
+    tmp = SSL_get_wbio(serverssl);
+    if (!TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    SSL_set0_wbio(serverssl, bretry);
+    bretry = NULL;
+
+    /* First server shutdown should fail because of a retrable write failure */
+    if (!TEST_int_eq(SSL_shutdown(serverssl), -1)
+            || !TEST_int_eq(SSL_get_error(serverssl, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* Second server shutdown should fail for the same reason */
+    if (!TEST_int_eq(SSL_shutdown(serverssl), -1)
+            || !TEST_int_eq(SSL_get_error(serverssl, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    SSL_set0_wbio(serverssl, tmp);
+    tmp = NULL;
+
+    /* Third server shutdown should send close_notify */
+    if (!TEST_int_eq(SSL_shutdown(serverssl), 0))
+        goto end;
+
+    /* Fourth server shutdown should read close_notify from client and finish */
+    if (!TEST_int_eq(SSL_shutdown(serverssl), 1))
+        goto end;
+
+    /* Client should also successfully fully shutdown */
+    if (!TEST_int_eq(SSL_shutdown(clientssl), 1))
+        goto end;
+
+    testresult = 1;
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free(bretry);
+    BIO_free(tmp);
+
+    return testresult;
+}
+
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
 static int cert_cb_cnt;
 
@@ -10580,6 +10656,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
     ADD_ALL_TESTS(test_ticket_callbacks, 20);
     ADD_ALL_TESTS(test_shutdown, 7);
+    ADD_TEST(test_async_shutdown);
     ADD_ALL_TESTS(test_incorrect_shutdown, 2);
     ADD_ALL_TESTS(test_cert_cb, 6);
     ADD_ALL_TESTS(test_client_cert_cb, 2);
