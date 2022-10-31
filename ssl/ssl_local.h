@@ -1501,8 +1501,6 @@ struct ssl_connection_st {
     unsigned char early_exporter_master_secret[EVP_MAX_MD_SIZE];
 
     unsigned char read_iv[EVP_MAX_IV_LENGTH]; /* TLSv1.3 static read IV */
-    COMP_CTX *compress;         /* compression */
-    COMP_CTX *expand;           /* uncompress */
     unsigned char write_iv[EVP_MAX_IV_LENGTH]; /* TLSv1.3 static write IV */
 
     /* session info */
@@ -2472,7 +2470,6 @@ __owur int ossl_ssl_connection_reset(SSL *ssl);
 
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
 __owur int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written);
-void ssl_clear_cipher_ctx(SSL_CONNECTION *s);
 int ssl_clear_bad_session(SSL_CONNECTION *s);
 __owur CERT *ssl_cert_new(void);
 __owur CERT *ssl_cert_dup(CERT *cert);

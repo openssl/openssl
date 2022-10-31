@@ -541,11 +541,29 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
 void OPENSSL_VPROC_FUNC(void) {}
 #endif
 
-
-static void clear_ciphers(SSL_CONNECTION *s)
+static int clear_record_layer(SSL_CONNECTION *s)
 {
-    /* clear the current cipher */
-    ssl_clear_cipher_ctx(s);
+    int ret;
+
+    /* We try and reset both record layers even if one fails */
+
+    ret = ssl_set_new_record_layer(s,
+                                   SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION
+                                                             : TLS_ANY_VERSION,
+                                   OSSL_RECORD_DIRECTION_READ,
+                                   OSSL_RECORD_PROTECTION_LEVEL_NONE,
+                                   NULL, 0, NULL, 0, NULL,  0, NULL, 0,
+                                   NID_undef, NULL, NULL);
+
+    ret &= ssl_set_new_record_layer(s,
+                                    SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION
+                                                              : TLS_ANY_VERSION,
+                                    OSSL_RECORD_DIRECTION_WRITE,
+                                    OSSL_RECORD_PROTECTION_LEVEL_NONE,
+                                    NULL, 0, NULL, 0, NULL,  0, NULL, 0,
+                                    NID_undef, NULL, NULL);
+    /* SSLfatal already called in the event of failure */
+    return ret;
 }
 
 int SSL_clear(SSL *s)
@@ -595,7 +613,6 @@ int ossl_ssl_connection_reset(SSL *s)
 
     BUF_MEM_free(sc->init_buf);
     sc->init_buf = NULL;
-    clear_ciphers(sc);
     sc->first_packet = 0;
 
     sc->key_update = SSL_KEY_UPDATE_NONE;
@@ -639,24 +656,8 @@ int ossl_ssl_connection_reset(SSL *s)
     BIO_free(sc->rlayer.rrlnext);
     sc->rlayer.rrlnext = NULL;
 
-    if (!ssl_set_new_record_layer(sc,
-                                  SSL_CONNECTION_IS_DTLS(sc) ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
-                                  OSSL_RECORD_DIRECTION_READ,
-                                  OSSL_RECORD_PROTECTION_LEVEL_NONE,
-                                  NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                  NID_undef, NULL, NULL)) {
-        /* SSLfatal already called */
+    if (!clear_record_layer(sc))
         return 0;
-    }
-    if (!ssl_set_new_record_layer(sc,
-                                  SSL_CONNECTION_IS_DTLS(sc) ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
-                                  OSSL_RECORD_DIRECTION_WRITE,
-                                  OSSL_RECORD_PROTECTION_LEVEL_NONE,
-                                  NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                  NID_undef, NULL, NULL)) {
-        /* SSLfatal already called */
-        return 0;
-    }
 
     return 1;
 }
@@ -1368,8 +1369,6 @@ void ossl_ssl_connection_free(SSL *ssl)
     }
     SSL_SESSION_free(s->psksession);
     OPENSSL_free(s->psksession_id);
-
-    clear_ciphers(s);
 
     ssl_cert_free(s->cert);
     OPENSSL_free(s->shared_sigalgs);
@@ -4485,7 +4484,8 @@ void SSL_set_accept_state(SSL *s)
     sc->shutdown = 0;
     ossl_statem_clear(sc);
     sc->handshake_func = s->method->ssl_accept;
-    clear_ciphers(sc);
+    /* Ignore return value. Its a void public API function */
+    clear_record_layer(sc);
 }
 
 void SSL_set_connect_state(SSL *s)
@@ -4500,7 +4500,8 @@ void SSL_set_connect_state(SSL *s)
     sc->shutdown = 0;
     ossl_statem_clear(sc);
     sc->handshake_func = s->method->ssl_connect;
-    clear_ciphers(sc);
+    /* Ignore return value. Its a void public API function */
+    clear_record_layer(sc);
 }
 
 int ssl_undefined_function(SSL *s)
@@ -4710,16 +4711,6 @@ SSL *SSL_dup(SSL *s)
  err:
     SSL_free(ret);
     return NULL;
-}
-
-void ssl_clear_cipher_ctx(SSL_CONNECTION *s)
-{
-#ifndef OPENSSL_NO_COMP
-    COMP_CTX_free(s->expand);
-    s->expand = NULL;
-    COMP_CTX_free(s->compress);
-    s->compress = NULL;
-#endif
 }
 
 X509 *SSL_get_certificate(const SSL *s)
