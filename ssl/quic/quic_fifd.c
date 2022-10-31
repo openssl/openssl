@@ -59,7 +59,7 @@ static void on_acked(void *arg)
     /* STREAM and CRYPTO stream chunks, FINs and stream FC frames */
     for (i = 0; i < num_chunks; ++i) {
         sstream = fifd->get_sstream_by_id(chunks[i].stream_id,
-                                          QUIC_PN_SPACE_APP,
+                                          pkt->ackm_pkt.pkt_space,
                                           fifd->get_sstream_by_id_arg);
         if (sstream == NULL)
             continue;
@@ -93,7 +93,7 @@ static void on_lost(void *arg)
     /* STREAM and CRYPTO stream chunks, FIN and stream FC frames */
     for (i = 0; i < num_chunks; ++i) {
         sstream = fifd->get_sstream_by_id(chunks[i].stream_id,
-                                          QUIC_PN_SPACE_APP,
+                                          pkt->ackm_pkt.pkt_space,
                                           fifd->get_sstream_by_id_arg);
         if (sstream == NULL)
             continue;
