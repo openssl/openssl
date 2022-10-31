@@ -546,8 +546,6 @@ static void clear_ciphers(SSL_CONNECTION *s)
 {
     /* clear the current cipher */
     ssl_clear_cipher_ctx(s);
-    ssl_clear_hash_ctx(&s->read_hash);
-    ssl_clear_hash_ctx(&s->write_hash);
 }
 
 int SSL_clear(SSL *s)
@@ -4716,14 +4714,6 @@ SSL *SSL_dup(SSL *s)
 
 void ssl_clear_cipher_ctx(SSL_CONNECTION *s)
 {
-    if (s->enc_read_ctx != NULL) {
-        EVP_CIPHER_CTX_free(s->enc_read_ctx);
-        s->enc_read_ctx = NULL;
-    }
-    if (s->enc_write_ctx != NULL) {
-        EVP_CIPHER_CTX_free(s->enc_write_ctx);
-        s->enc_write_ctx = NULL;
-    }
 #ifndef OPENSSL_NO_COMP
     COMP_CTX_free(s->expand);
     s->expand = NULL;
@@ -5503,32 +5493,6 @@ int SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets)
 size_t SSL_CTX_get_num_tickets(const SSL_CTX *ctx)
 {
     return ctx->num_tickets;
-}
-
-/*
- * Allocates new EVP_MD_CTX and sets pointer to it into given pointer
- * variable, freeing EVP_MD_CTX previously stored in that variable, if any.
- * If EVP_MD pointer is passed, initializes ctx with this |md|.
- * Returns the newly allocated ctx;
- */
-
-EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md)
-{
-    ssl_clear_hash_ctx(hash);
-    *hash = EVP_MD_CTX_new();
-    if (*hash == NULL || (md && EVP_DigestInit_ex(*hash, md, NULL) <= 0)) {
-        EVP_MD_CTX_free(*hash);
-        *hash = NULL;
-        return NULL;
-    }
-    return *hash;
-}
-
-void ssl_clear_hash_ctx(EVP_MD_CTX **hash)
-{
-
-    EVP_MD_CTX_free(*hash);
-    *hash = NULL;
 }
 
 /* Retrieve handshake hashes */

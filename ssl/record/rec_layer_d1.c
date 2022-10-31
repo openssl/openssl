@@ -318,8 +318,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * make sure that we are not getting application data when we are
          * doing a handshake for the first time
          */
-        if (SSL_in_init(s) && (type == SSL3_RT_APPLICATION_DATA) &&
-            (sc->enc_read_ctx == NULL)) {
+        if (SSL_in_init(s) && (type == SSL3_RT_APPLICATION_DATA)
+                && (SSL_IS_FIRST_HANDSHAKE(sc))) {
             SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE,
                      SSL_R_APP_DATA_IN_HANDSHAKE);
             return -1;
