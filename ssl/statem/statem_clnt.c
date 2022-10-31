@@ -1785,11 +1785,21 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
     RAW_EXTENSION *extensions = NULL;
 
     /*
-     * If we were sending early_data then the enc_write_ctx is now invalid and
-     * should not be used.
+     * If we were sending early_data then any alerts should not be sent using
+     * the old wrlmethod.
      */
-    EVP_CIPHER_CTX_free(s->enc_write_ctx);
-    s->enc_write_ctx = NULL;
+    if (s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING
+            && !ssl_set_new_record_layer(s,
+                                         TLS_ANY_VERSION,
+                                         OSSL_RECORD_DIRECTION_WRITE,
+                                         OSSL_RECORD_PROTECTION_LEVEL_NONE,
+                                         NULL, 0, NULL, 0, NULL,  0, NULL, 0,
+                                         NID_undef, NULL, NULL)) {
+        /* SSLfatal already called */
+        goto err;
+    }
+    /* We are definitely going to be using TLSv1.3 */
+    s->rlayer.wrlmethod->set_protocol_version(s->rlayer.wrl, TLS1_3_VERSION);
 
     if (!tls_collect_extensions(s, extpkt, SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
                                 &extensions, NULL, 1)

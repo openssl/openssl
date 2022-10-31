@@ -1499,14 +1499,12 @@ struct ssl_connection_st {
     unsigned char server_app_traffic_secret[EVP_MAX_MD_SIZE];
     unsigned char exporter_master_secret[EVP_MAX_MD_SIZE];
     unsigned char early_exporter_master_secret[EVP_MAX_MD_SIZE];
-    EVP_CIPHER_CTX *enc_read_ctx; /* cryptographic state */
+
     unsigned char read_iv[EVP_MAX_IV_LENGTH]; /* TLSv1.3 static read IV */
-    EVP_MD_CTX *read_hash;      /* used for mac generation */
     COMP_CTX *compress;         /* compression */
     COMP_CTX *expand;           /* uncompress */
-    EVP_CIPHER_CTX *enc_write_ctx; /* cryptographic state */
     unsigned char write_iv[EVP_MAX_IV_LENGTH]; /* TLSv1.3 static write IV */
-    EVP_MD_CTX *write_hash;     /* used for mac generation */
+
     /* session info */
     /* client cert? */
     /* This is used to hold the server certificate used */
@@ -2824,8 +2822,6 @@ __owur int ssl_security_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk,
 
 int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs);
 
-__owur EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
-void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
 __owur long ssl_get_algorithm2(SSL_CONNECTION *s);
 __owur int tls12_copy_sigalgs(SSL_CONNECTION *s, WPACKET *pkt,
                               const uint16_t *psig, size_t psiglen);
