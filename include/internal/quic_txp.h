@@ -87,6 +87,19 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
                                      uint32_t archetype);
 
 /*
+ * Returns 1 if one or more packets would be generated if
+ * ossl_quic_tx_packetiser_generate were called.
+ *
+ * If TX_PACKETISER_BYPASS_CC is set in flags, congestion control is
+ * ignored for the purposes of making this determination.
+ */
+#define TX_PACKETISER_BYPASS_CC   (1U << 0)
+
+int ossl_quic_tx_packetiser_has_pending(OSSL_QUIC_TX_PACKETISER *txp,
+                                        uint32_t archetype,
+                                        uint32_t flags);
+
+/*
  * Set the token used in Initial packets. The callback is called when the buffer
  * is no longer needed; for example, when the TXP is freed or when this function
  * is called again with a new buffer.
