@@ -916,7 +916,7 @@ static int ackm_in_persistent_congestion(OSSL_ACKM *ackm,
 }
 
 static void ackm_on_pkts_lost(OSSL_ACKM *ackm, int pkt_space,
-                              const OSSL_ACKM_TX_PKT *lpkt)
+                              const OSSL_ACKM_TX_PKT *lpkt, int pseudo)
 {
     const OSSL_ACKM_TX_PKT *p, *pnext;
     OSSL_RTT_INFO rtt;
@@ -940,6 +940,14 @@ static void ackm_on_pkts_lost(OSSL_ACKM *ackm, int pkt_space,
 
         p->on_lost(p->cb_arg);
     }
+
+    if (pseudo)
+        /*
+         * If this is psuedo-loss (e.g. during connection retry) we do not
+         * inform the CC as it is not a real loss and not reflective of network
+         * conditions.
+         */
+        return;
 
     /*
      * Only consider lost packets with regards to congestion after getting an
@@ -1181,7 +1189,7 @@ int ossl_ackm_on_rx_ack_frame(OSSL_ACKM *ackm, const OSSL_QUIC_FRAME_ACK *ack,
     /* Handle inferred loss. */
     lost_pkts = ackm_detect_and_remove_lost_pkts(ackm, pkt_space);
     if (lost_pkts != NULL)
-        ackm_on_pkts_lost(ackm, pkt_space, lost_pkts);
+        ackm_on_pkts_lost(ackm, pkt_space, lost_pkts, /*pseudo=*/0);
 
     ackm_on_pkts_acked(ackm, na_pkts);
 
@@ -1268,7 +1276,7 @@ int ossl_ackm_on_timeout(OSSL_ACKM *ackm)
         /* Time threshold loss detection. */
         lost_pkts = ackm_detect_and_remove_lost_pkts(ackm, pkt_space);
         assert(lost_pkts != NULL);
-        ackm_on_pkts_lost(ackm, pkt_space, lost_pkts);
+        ackm_on_pkts_lost(ackm, pkt_space, lost_pkts, /*pseudo=*/0);
         ackm_set_loss_detection_timer(ackm);
         return 1;
     }
@@ -1638,4 +1646,20 @@ void ossl_ackm_set_ack_deadline_callback(OSSL_ACKM *ackm,
 {
     ackm->ack_deadline_cb     = fn;
     ackm->ack_deadline_cb_arg = arg;
+}
+
+int ossl_ackm_mark_packet_pseudo_lost(OSSL_ACKM *ackm,
+                                      int pkt_space, QUIC_PN pn)
+{
+    struct tx_pkt_history_st *h = get_tx_history(ackm, pkt_space);
+    OSSL_ACKM_TX_PKT *pkt;
+
+    pkt = tx_pkt_history_by_pkt_num(h, pn);
+    if (pkt == NULL)
+        return 0;
+
+    tx_pkt_history_remove(h, pkt->pkt_num);
+    pkt->lnext = NULL;
+    ackm_on_pkts_lost(ackm, pkt_space, pkt, /*pseudo=*/1);
+    return 1;
 }
