@@ -7,3 +7,6 @@ SOURCE[$LIBSSL]=quic_record_rx_wrap.c quic_rx_depack.c
 SOURCE[$LIBSSL]=quic_fc.c uint_set.c quic_sf_list.c quic_rstream.c quic_sstream.c
 SOURCE[$LIBSSL]=quic_cfq.c quic_txpim.c quic_fifd.c quic_txp.c
 SOURCE[$LIBSSL]=quic_stream_map.c
+SOURCE[$LIBSSL]=quic_sf_list.c quic_rstream.c quic_sstream.c
+SOURCE[$LIBSSL]=quic_sf_list.c quic_rstream.c quic_sstream.c
+SOURCE[$LIBSSL]=quic_dummy_handshake.c
