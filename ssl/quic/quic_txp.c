@@ -440,7 +440,6 @@ int ossl_quic_tx_packetiser_discard_enc_level(OSSL_QUIC_TX_PACKETISER *txp,
     if (enc_level != QUIC_ENC_LEVEL_0RTT)
         txp->args.crypto[ossl_quic_enc_level_to_pn_space(enc_level)] = NULL;
 
-    ossl_qtx_discard_enc_level(txp->args.qtx, enc_level);
     return 1;
 }
 
