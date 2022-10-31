@@ -104,11 +104,6 @@ OSSL_QTX *ossl_qtx_new(const OSSL_QTX_ARGS *args)
     if (qtx == NULL)
         return 0;
 
-    if (args->bio != NULL && !BIO_up_ref(args->bio)) {
-        OPENSSL_free(qtx);
-        return 0;
-    }
-
     qtx->libctx             = args->libctx;
     qtx->propq              = args->propq;
     qtx->bio                = args->bio;
@@ -143,7 +138,6 @@ void ossl_qtx_free(OSSL_QTX *qtx)
     for (i = 0; i < QUIC_ENC_LEVEL_NUM; ++i)
         ossl_qrl_enc_level_set_discard(&qtx->el_set, i);
 
-    BIO_free(qtx->bio);
     OPENSSL_free(qtx);
 }
 
@@ -864,14 +858,9 @@ int ossl_qtx_pop_net(OSSL_QTX *qtx, BIO_MSG *msg)
     return 1;
 }
 
-int ossl_qtx_set1_bio(OSSL_QTX *qtx, BIO *bio)
+void ossl_qtx_set_bio(OSSL_QTX *qtx, BIO *bio)
 {
-    if (bio != NULL && !BIO_up_ref(bio))
-        return 0;
-
-    BIO_free(qtx->bio);
     qtx->bio = bio;
-    return 1;
 }
 
 int ossl_qtx_set_mdpl(OSSL_QTX *qtx, size_t mdpl)
