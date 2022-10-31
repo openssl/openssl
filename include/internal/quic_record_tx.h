@@ -240,9 +240,10 @@ size_t ossl_qtx_get_unflushed_pkt_count(OSSL_QTX *qtx);
 
 /*
  * Change the BIO being used by the QTX. May be NULL if actual transmission is
- * not currently required.
+ * not currently required. Does not ref the BIO; the caller is responsible for
+ * ensuring the lifetime of the BIO exceeds the lifetime of the QTX.
  */
-int ossl_qtx_set1_bio(OSSL_QTX *qtx, BIO *bio);
+void ossl_qtx_set_bio(OSSL_QTX *qtx, BIO *bio);
 
 /* Changes the MDPL. */
 int ossl_qtx_set_mdpl(OSSL_QTX *qtx, size_t mdpl);
