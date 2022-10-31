@@ -194,6 +194,11 @@ QUIC_DEMUX *ossl_quic_demux_new(BIO *net_bio,
 void ossl_quic_demux_free(QUIC_DEMUX *demux);
 
 /*
+ * Changes the BIO which the demuxer reads from.
+ */
+void ossl_quic_demux_set_bio(QUIC_DEMUX *demux, BIO *net_bio);
+
+/*
  * Register a datagram handler callback for a connection ID.
  *
  * ossl_quic_demux_pump will call the specified function if it receives a datagram

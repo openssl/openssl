@@ -150,6 +150,11 @@ void ossl_quic_demux_free(QUIC_DEMUX *demux)
     OPENSSL_free(demux);
 }
 
+void ossl_quic_demux_set_bio(QUIC_DEMUX *demux, BIO *net_bio)
+{
+    demux->net_bio = net_bio;
+}
+
 static QUIC_DEMUX_CONN *demux_get_by_conn_id(QUIC_DEMUX *demux,
                                              const QUIC_CONN_ID *dst_conn_id)
 {
