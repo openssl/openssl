@@ -274,7 +274,7 @@ sub start
     open(my $dupstdin, "<&STDIN") or die "Failed to dup STDIN, $!";
     if (defined($pid = fork)) {
         if ($pid) {
-            close($dupstdin) or warn "Failed to close dupped STDIN, $!"; # Only the child need it
+            close($dupstdin) or warn "Failed to close dupped STDIN, $!"; # Only the child needs it
         } else {
             while (defined($_ = <$dupstdin>)) {
                 print $_;
