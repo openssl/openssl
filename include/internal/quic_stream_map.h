@@ -61,7 +61,7 @@ struct quic_stream_st {
     uint64_t        txp_txfc_new_credit_consumed;
 
     QUIC_SSTREAM    *sstream;   /* NULL if RX-only */
-    void            *rstream;   /* NULL if TX only (placeholder) */
+    QUIC_RSTREAM    *rstream;   /* NULL if TX only */
     QUIC_TXFC       txfc;       /* NULL if RX-only */
     QUIC_RXFC       rxfc;       /* NULL if TX-only */
     unsigned int    type   : 8; /* QUIC_STREAM_INITIATOR_*, QUIC_STREAM_DIR_* */

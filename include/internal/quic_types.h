@@ -81,4 +81,7 @@ static ossl_unused ossl_inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
 
 #define QUIC_MIN_INITIAL_DGRAM_LEN  1200
 
+#define QUIC_DEFAULT_ACK_DELAY_EXP  3
+#define QUIC_MAX_ACK_DELAY_EXP      20
+
 #endif

@@ -100,6 +100,25 @@ ossl_quic_frame_type_is_ack_eliciting(uint64_t frame_type)
     }
 }
 
+/* QUIC Transport Parameter Types */
+#define QUIC_TPARAM_ORIG_DCID                           0x00
+#define QUIC_TPARAM_MAX_IDLE_TIMEOUT                    0x01
+#define QUIC_TPARAM_STATELESS_RESET_TOKEN               0x02
+#define QUIC_TPARAM_MAX_UDP_PAYLOAD_SIZE                0x03
+#define QUIC_TPARAM_INITIAL_MAX_DATA                    0x04
+#define QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_LOCAL  0x05
+#define QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_REMOTE 0x06
+#define QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_UNI         0x07
+#define QUIC_TPARAM_INITIAL_MAX_STREAMS_BIDI            0x08
+#define QUIC_TPARAM_INITIAL_MAX_STREAMS_UNI             0x09
+#define QUIC_TPARAM_ACK_DELAY_EXP                       0x0A
+#define QUIC_TPARAM_MAX_ACK_DELAY                       0x0B
+#define QUIC_TPARAM_DISABLE_ACTIVE_MIGRATION            0x0C
+#define QUIC_TPARAM_PREFERRED_ADDR                      0x0D
+#define QUIC_TPARAM_ACTIVE_CONN_ID_LIMIT                0x0E
+#define QUIC_TPARAM_INITIAL_SCID                        0x0F
+#define QUIC_TPARAM_RETRY_SCID                          0x10
+
 /*
  * QUIC Frame Logical Representations
  * ==================================
