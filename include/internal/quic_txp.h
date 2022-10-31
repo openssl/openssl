@@ -134,6 +134,14 @@ int ossl_quic_tx_packetiser_set_peer(OSSL_QUIC_TX_PACKETISER *txp,
 int ossl_quic_tx_packetiser_discard_enc_level(OSSL_QUIC_TX_PACKETISER *txp,
                                               uint32_t enc_level);
 
+/*
+ * Informs the TX packetiser that the handshake is complete. The TX packetiser
+ * will not send 1-RTT application data until the handshake is complete,
+ * as the authenticity of the peer is not confirmed until the handshake
+ * complete event occurs.
+ */
+void ossl_quic_tx_packetiser_notify_handshake_complete(OSSL_QUIC_TX_PACKETISER *txp);
+
 /* Asks the TXP to generate a HANDSHAKE_DONE frame in the next 1-RTT packet. */
 void ossl_quic_tx_packetiser_schedule_handshake_done(OSSL_QUIC_TX_PACKETISER *txp);
 
