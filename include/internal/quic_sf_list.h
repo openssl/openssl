@@ -12,6 +12,7 @@
 
 #include "internal/common.h"
 #include "internal/uint_set.h"
+#include "internal/quic_record_rx.h"
 
 /*
  * Stream frame list
@@ -38,7 +39,6 @@
 typedef struct stream_frame_st STREAM_FRAME;
 
 typedef struct sframe_list_st {
-    OSSL_QRX *qrx;
     STREAM_FRAME  *head, *tail;
     /* Is the tail frame final. */
     unsigned int fin;
@@ -48,10 +48,10 @@ typedef struct sframe_list_st {
     uint64_t offset;
 } SFRAME_LIST;
 
-void ossl_sframe_list_init(SFRAME_LIST *fl, OSSL_QRX *qrx);
+void ossl_sframe_list_init(SFRAME_LIST *fl);
 void ossl_sframe_list_destroy(SFRAME_LIST *fl);
 int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
-                            OSSL_QRX_PKT_WRAP *pkt,
+                            OSSL_QRX_PKT *pkt,
                             const unsigned char *data, int fin);
 int ossl_sframe_list_peek(const SFRAME_LIST *fl, void **iter,
                           UINT_RANGE *range, const unsigned char **data,

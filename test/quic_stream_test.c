@@ -330,7 +330,7 @@ static int test_rstream_simple(void)
     size_t readbytes = 0, avail = 0;
     int fin = 0;
 
-    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, NULL)))
+    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL)))
         goto err;
 
     if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 5,
@@ -405,7 +405,7 @@ static int test_rstream_random(int idx)
 
     if (!TEST_ptr(bulk_data = OPENSSL_malloc(data_size))
         || !TEST_ptr(read_buf = OPENSSL_malloc(data_size))
-        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, NULL)))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL)))
         goto err;
 
     for (i = 0; i < data_size; ++i)

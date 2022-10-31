@@ -13,7 +13,6 @@
 #include "internal/quic_record_rx.h"
 #include "internal/quic_ackm.h"
 #include "internal/quic_rx_depack.h"
-#include "internal/quic_record_rx_wrap.h"
 #include "internal/quic_error.h"
 #include "internal/quic_fc.h"
 #include "internal/sockets.h"
@@ -66,7 +65,7 @@ static int ssl_get_stream_type(QUIC_STREAM *stream)
  * reference count.  When the data is consumed (i.e. as a result of, say,
  * SSL_read()), ossl_qrx_pkt_wrap_free() must be called.
  */
-static int ssl_queue_data(QUIC_STREAM *stream, OSSL_QRX_PKT_WRAP *pkt_wrap,
+static int ssl_queue_data(QUIC_STREAM *stream, OSSL_QRX_PKT *pkt,
                           const unsigned char *data, uint64_t data_len,
                           uint64_t logical_offset, int is_fin)
 {
@@ -80,7 +79,7 @@ static int ssl_queue_data(QUIC_STREAM *stream, OSSL_QRX_PKT_WRAP *pkt_wrap,
         return 0;
 
     return stream->rstream == NULL
-           || ossl_quic_rstream_queue_data(stream->rstream, pkt_wrap,
+           || ossl_quic_rstream_queue_data(stream->rstream, pkt,
                                            logical_offset, data, data_len,
                                            is_fin);
 }
@@ -295,7 +294,7 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CONNECTION *connection,
 }
 
 static int depack_do_frame_stream(PACKET *pkt, QUIC_CONNECTION *connection,
-                                  OSSL_QRX_PKT_WRAP *parent_pkt,
+                                  OSSL_QRX_PKT *parent_pkt,
                                   OSSL_ACKM_RX_PKT *ackm_data)
 {
     OSSL_QUIC_FRAME_STREAM frame_data;
@@ -547,10 +546,10 @@ static int depack_do_frame_unknown_extension(PACKET *pkt,
 /* Main frame processor */
 
 static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
-                                 OSSL_QRX_PKT_WRAP *parent_pkt, int packet_space,
+                                 OSSL_QRX_PKT *parent_pkt, int packet_space,
                                  OSSL_TIME received, OSSL_ACKM_RX_PKT *ackm_data)
 {
-    uint32_t pkt_type = parent_pkt->pkt->hdr->type;
+    uint32_t pkt_type = parent_pkt->hdr->type;
 
     while (PACKET_remaining(pkt) > 0) {
         uint64_t frame_type;
@@ -748,7 +747,6 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
 {
     PACKET pkt;
     OSSL_ACKM_RX_PKT ackm_data;
-    OSSL_QRX_PKT_WRAP *qpkt_wrap = NULL;
     /*
      * ok has three states:
      * -1 error with ackm_data uninitialized
@@ -758,9 +756,6 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
     int ok = -1;                  /* Assume the worst */
 
     if (connection == NULL)
-        goto end;
-
-    if ((qpkt_wrap = ossl_qrx_pkt_wrap_new(qpacket)) == NULL)
         goto end;
 
     /* Initialize |ackm_data| (and reinitialize |ok|)*/
@@ -796,7 +791,7 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
 
     /* Now that special cases are out of the way, parse frames */
     if (!PACKET_buf_init(&pkt, qpacket->hdr->data, qpacket->hdr->len)
-        || !depack_process_frames(connection, &pkt, qpkt_wrap,
+        || !depack_process_frames(connection, &pkt, qpacket,
                                   ackm_data.pkt_space, qpacket->time,
                                   &ackm_data))
         goto end;
@@ -814,19 +809,16 @@ int ossl_quic_handle_frames(QUIC_CONNECTION *connection, OSSL_QRX_PKT *qpacket)
         ossl_ackm_on_rx_packet(GET_CONN_ACKM(connection), &ackm_data);
 
     /*
-     * Let go of the packet pointer in |qpkt_wrap|.  This means that the
-     * reference counter can't be incremented any more.
+     * Release the ref to the packet. This will free the packet unless something
+     * in our processing above has added a reference to it.
      */
-    if (qpkt_wrap != NULL)
-        qpkt_wrap->pkt = NULL;
-
-    ossl_qrx_pkt_wrap_free(GET_CONN_QRX(connection), qpkt_wrap);
+    ossl_qrx_pkt_release(qpacket);
     return ok > 0;
 }
 
 int ossl_quic_depacketize(QUIC_CONNECTION *connection)
 {
-    OSSL_QRX_PKT qpacket;
+    OSSL_QRX_PKT *qpacket = NULL;
 
     if (connection == NULL)
         return 0;
@@ -836,5 +828,5 @@ int ossl_quic_depacketize(QUIC_CONNECTION *connection)
     if (ossl_qrx_read_pkt(GET_CONN_QRX(connection), &qpacket) <= 0)
         return 0;
 
-    return ossl_quic_handle_frames(connection, &qpacket);
+    return ossl_quic_handle_frames(connection, qpacket);
 }
