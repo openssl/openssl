@@ -22,56 +22,6 @@ static OSSL_PROVIDER *defctxnull = NULL;
 
 static int is_fips = 0;
 
-/*
- * Test that we read what we've written.
- */
-static int test_quic_write_read(void)
-{
-    SSL_CTX *cctx = NULL, *sctx = NULL;
-    SSL *clientquic = NULL, *serverquic = NULL;
-    int j, ret = 0;
-    char buf[20];
-    static char *msg = "A test message";
-    size_t msglen = strlen(msg);
-    size_t numbytes = 0;
-
-    if (!TEST_true(create_ssl_ctx_pair(libctx, OSSL_QUIC_server_method(),
-                                       OSSL_QUIC_client_method(),
-                                       0,
-                                       0,
-                                       &sctx, &cctx, NULL, NULL))
-            || !TEST_true(create_ssl_objects(sctx, cctx, &serverquic, &clientquic,
-                                             NULL, NULL))
-            || !TEST_true(create_bare_ssl_connection(serverquic, clientquic,
-                                                     SSL_ERROR_NONE, 0, 0)))
-        goto end;
-
-    for (j = 0; j < 2; j++) {
-        /* Check that sending and receiving app data is ok */
-        if (!TEST_true(SSL_write_ex(clientquic, msg, msglen, &numbytes))
-                || !TEST_true(SSL_read_ex(serverquic, buf, sizeof(buf),
-                                          &numbytes))
-                || !TEST_mem_eq(buf, numbytes, msg, msglen))
-            goto end;
-
-        if (!TEST_true(SSL_write_ex(serverquic, msg, msglen, &numbytes))
-                || !TEST_true(SSL_read_ex(clientquic, buf, sizeof(buf),
-                                          &numbytes))
-                || !TEST_mem_eq(buf, numbytes, msg, msglen))
-            goto end;
-    }
-
-    ret = 1;
-
- end:
-    SSL_free(serverquic);
-    SSL_free(clientquic);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
-
-    return ret;
-}
-
 OPT_TEST_DECLARE_USAGE("provider config\n")
 
 int setup_tests(void)
@@ -117,7 +67,6 @@ int setup_tests(void)
     if (strcmp(modulename, "fips") == 0)
         is_fips = 1;
 
-    ADD_TEST(test_quic_write_read);
     return 1;
 }
 
