@@ -27,6 +27,7 @@ static int cmp_pkt_hdr(const QUIC_PKT_HDR *a, const QUIC_PKT_HDR *b,
         || !TEST_int_eq(a->pn_len, b->pn_len)
         || !TEST_int_eq(a->partial, b->partial)
         || !TEST_int_eq(a->fixed, b->fixed)
+        || !TEST_int_eq(a->unused, b->unused)
         || !TEST_uint_eq(a->version, b->version)
         || !TEST_true(ossl_quic_conn_id_eq(&a->dst_conn_id, &b->dst_conn_id))
         || !TEST_true(ossl_quic_conn_id_eq(&a->src_conn_id, &b->src_conn_id))
