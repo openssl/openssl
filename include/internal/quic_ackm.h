@@ -213,4 +213,16 @@ int ossl_ackm_get_probe_request(OSSL_ACKM *ackm, int clear,
 
 int ossl_ackm_get_largest_unacked(OSSL_ACKM *ackm, int pkt_space, QUIC_PN *pn);
 
+/*
+ * Forces the ACKM to consider a packet with the given PN in the given PN space
+ * as having been pseudo-lost. The main reason to use this is during a Retry, to
+ * force any resources sent in the first Initial packet to be resent.
+ *
+ * The lost callback is called for the packet, but the packet is NOT considered
+ * lost for congestion control purposes. Thus this is not exactly the same as a
+ * true loss situation.
+ */
+int ossl_ackm_mark_packet_pseudo_lost(OSSL_ACKM *ackm,
+                                      int pkt_space, QUIC_PN pn);
+
 #endif
