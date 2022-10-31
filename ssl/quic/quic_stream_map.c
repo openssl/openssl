@@ -154,6 +154,9 @@ void ossl_quic_stream_map_release(QUIC_STREAM_MAP *qsm, QUIC_STREAM *stream)
     ossl_quic_sstream_free(stream->sstream);
     stream->sstream = NULL;
 
+    ossl_quic_rstream_free(stream->rstream);
+    stream->rstream = NULL;
+
     lh_QUIC_STREAM_delete(qsm->map, stream);
     OPENSSL_free(stream);
 }
