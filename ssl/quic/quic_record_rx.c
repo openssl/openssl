@@ -42,7 +42,8 @@ typedef struct rxe_st RXE;
 
 struct rxe_st {
     OSSL_LIST_MEMBER(rxe, RXE);
-    size_t              data_len, alloc_len;
+    OSSL_QRX_PKT        pkt;
+    size_t              data_len, alloc_len, refcount;
 
     /* Extra fields for per-packet information. */
     QUIC_PKT_HDR        hdr; /* data/len are decrypted payload */
@@ -329,6 +330,7 @@ static RXE *qrx_alloc_rxe(size_t alloc_len)
     ossl_list_rxe_init_elem(rxe);
     rxe->alloc_len = alloc_len;
     rxe->data_len  = 0;
+    rxe->refcount  = 0;
     return rxe;
 }
 
@@ -414,6 +416,9 @@ static void qrx_recycle_rxe(OSSL_QRX *qrx, RXE *rxe)
 {
     /* RXE should not be in any list */
     assert(ossl_list_rxe_prev(rxe) == NULL && ossl_list_rxe_next(rxe) == NULL);
+    rxe->pkt.hdr    = NULL;
+    rxe->pkt.peer   = NULL;
+    rxe->pkt.local  = NULL;
     ossl_list_rxe_insert_tail(&qrx->rx_free, rxe);
 }
 
@@ -1054,7 +1059,7 @@ static int qrx_process_pending_urxl(OSSL_QRX *qrx)
     return 1;
 }
 
-int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt)
+int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT **ppkt)
 {
     RXE *rxe;
 
@@ -1070,25 +1075,41 @@ int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt)
     if (!ossl_assert(rxe != NULL))
         return 0;
 
-    pkt->handle         = rxe;
-    pkt->hdr            = &rxe->hdr;
-    pkt->pn             = rxe->pn;
-    pkt->time           = rxe->time;
-    pkt->datagram_len   = rxe->datagram_len;
-    pkt->peer
+    assert(rxe->refcount == 0);
+    rxe->refcount = 1;
+
+    rxe->pkt.hdr            = &rxe->hdr;
+    rxe->pkt.pn             = rxe->pn;
+    rxe->pkt.time           = rxe->time;
+    rxe->pkt.datagram_len   = rxe->datagram_len;
+    rxe->pkt.peer
         = BIO_ADDR_family(&rxe->peer) != AF_UNSPEC ? &rxe->peer : NULL;
-    pkt->local
+    rxe->pkt.local
         = BIO_ADDR_family(&rxe->local) != AF_UNSPEC ? &rxe->local : NULL;
+    rxe->pkt.qrx            = qrx;
+    *ppkt = &rxe->pkt;
     return 1;
 }
 
-void ossl_qrx_release_pkt(OSSL_QRX *qrx, void *handle)
+void ossl_qrx_pkt_release(OSSL_QRX_PKT *pkt)
 {
-    if (handle != NULL) {
-        RXE *rxe = handle;
+    RXE *rxe;
 
-        qrx_recycle_rxe(qrx, rxe);
-    }
+    if (pkt == NULL)
+        return;
+
+    rxe = (RXE *)pkt;
+    assert(rxe->refcount > 0);
+    if (--rxe->refcount == 0)
+        qrx_recycle_rxe(pkt->qrx, rxe);
+}
+
+void ossl_qrx_pkt_up_ref(OSSL_QRX_PKT *pkt)
+{
+    RXE *rxe = (RXE *)pkt;
+
+    assert(rxe->refcount > 0);
+    ++rxe->refcount;
 }
 
 uint64_t ossl_qrx_get_bytes_received(OSSL_QRX *qrx, int clear)

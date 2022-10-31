@@ -9,31 +9,28 @@
 
 #include "internal/uint_set.h"
 #include "internal/common.h"
-#include "internal/quic_record_rx_wrap.h"
 #include "internal/quic_sf_list.h"
 
 struct stream_frame_st {
     struct stream_frame_st *prev, *next;
     UINT_RANGE range;
-    OSSL_QRX_PKT_WRAP *pkt;
+    OSSL_QRX_PKT *pkt;
     const unsigned char *data;
 };
 
 static void stream_frame_free(SFRAME_LIST *fl, STREAM_FRAME *sf)
 {
-    ossl_qrx_pkt_wrap_free(fl->qrx, sf->pkt);
+    ossl_qrx_pkt_release(sf->pkt);
     OPENSSL_free(sf);
 }
 
-static STREAM_FRAME *stream_frame_new(UINT_RANGE *range, OSSL_QRX_PKT_WRAP *pkt,
+static STREAM_FRAME *stream_frame_new(UINT_RANGE *range, OSSL_QRX_PKT *pkt,
                                       const unsigned char *data)
 {
     STREAM_FRAME *sf = OPENSSL_zalloc(sizeof(*sf));
 
-    if (pkt != NULL && !ossl_qrx_pkt_wrap_up_ref(pkt)) {
-        OPENSSL_free(sf);
-        return NULL;
-    }
+    if (pkt != NULL)
+        ossl_qrx_pkt_up_ref(pkt);
 
     sf->range = *range;
     sf->pkt = pkt;
@@ -42,10 +39,9 @@ static STREAM_FRAME *stream_frame_new(UINT_RANGE *range, OSSL_QRX_PKT_WRAP *pkt,
     return sf;
 }
 
-void ossl_sframe_list_init(SFRAME_LIST *fl, OSSL_QRX *qrx)
+void ossl_sframe_list_init(SFRAME_LIST *fl)
 {
     memset(fl, 0, sizeof(*fl));
-    fl->qrx = qrx;
 }
 
 void ossl_sframe_list_destroy(SFRAME_LIST *fl)
@@ -59,7 +55,7 @@ void ossl_sframe_list_destroy(SFRAME_LIST *fl)
 }
 
 static int append_frame(SFRAME_LIST *fl, UINT_RANGE *range,
-                        OSSL_QRX_PKT_WRAP *pkt,
+                        OSSL_QRX_PKT *pkt,
                         const unsigned char *data)
 {
     STREAM_FRAME *new_frame;
@@ -75,7 +71,7 @@ static int append_frame(SFRAME_LIST *fl, UINT_RANGE *range,
 }
 
 int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
-                            OSSL_QRX_PKT_WRAP *pkt,
+                            OSSL_QRX_PKT *pkt,
                             const unsigned char *data, int fin)
 {
     STREAM_FRAME *sf, *new_frame, *prev_frame, *next_frame;
