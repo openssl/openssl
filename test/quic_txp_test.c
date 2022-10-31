@@ -55,7 +55,7 @@ struct helper {
     QUIC_DEMUX                      *demux;
     OSSL_QRX                        *qrx;
     OSSL_QRX_ARGS                   qrx_args;
-    OSSL_QRX_PKT                    qrx_pkt;
+    OSSL_QRX_PKT                    *qrx_pkt;
     PACKET                          pkt;
     uint64_t                        frame_type;
     union {
@@ -80,8 +80,8 @@ static void helper_cleanup(struct helper *h)
     size_t i;
     uint32_t pn_space;
 
-    if (h->qrx_pkt.handle != NULL)
-        ossl_qrx_release_pkt(h->qrx, h->qrx_pkt.handle);
+    ossl_qrx_pkt_release(h->qrx_pkt);
+    h->qrx_pkt = NULL;
 
     for (pn_space = QUIC_PN_SPACE_INITIAL;
          pn_space < QUIC_PN_SPACE_NUM;
@@ -1134,13 +1134,13 @@ static int run_script(const struct script_op *script)
             break;
         case OPK_RX_PKT:
             ossl_quic_demux_pump(h.demux);
-            if (h.qrx_pkt.handle != NULL)
-                ossl_qrx_release_pkt(h.qrx, h.qrx_pkt.handle);
+            ossl_qrx_pkt_release(h.qrx_pkt);
+            h.qrx_pkt = NULL;
             if (!TEST_true(ossl_qrx_read_pkt(h.qrx, &h.qrx_pkt)))
                 goto err;
             if (!TEST_true(PACKET_buf_init(&h.pkt,
-                                           h.qrx_pkt.hdr->data,
-                                           h.qrx_pkt.hdr->len)))
+                                           h.qrx_pkt->hdr->data,
+                                           h.qrx_pkt->hdr->len)))
                 goto err;
             h.frame_type = UINT64_MAX;
             break;
@@ -1151,8 +1151,8 @@ static int run_script(const struct script_op *script)
             h.frame_type = UINT64_MAX;
             break;
         case OPK_EXPECT_DGRAM_LEN:
-            if (!TEST_size_t_ge(h.qrx_pkt.datagram_len, (size_t)op->arg0)
-                || !TEST_size_t_le(h.qrx_pkt.datagram_len, (size_t)op->arg1))
+            if (!TEST_size_t_ge(h.qrx_pkt->datagram_len, (size_t)op->arg0)
+                || !TEST_size_t_le(h.qrx_pkt->datagram_len, (size_t)op->arg1))
                 goto err;
             break;
         case OPK_EXPECT_FRAME:
@@ -1160,12 +1160,12 @@ static int run_script(const struct script_op *script)
                 goto err;
             break;
         case OPK_EXPECT_INITIAL_TOKEN:
-            if (!TEST_mem_eq(h.qrx_pkt.hdr->token, h.qrx_pkt.hdr->token_len,
+            if (!TEST_mem_eq(h.qrx_pkt->hdr->token, h.qrx_pkt->hdr->token_len,
                              op->buf, (size_t)op->arg0))
                 goto err;
             break;
         case OPK_EXPECT_HDR:
-            if (!TEST_true(cmp_pkt_hdr(h.qrx_pkt.hdr, op->buf,
+            if (!TEST_true(cmp_pkt_hdr(h.qrx_pkt->hdr, op->buf,
                                        NULL, 0, 0)))
                 goto err;
             break;

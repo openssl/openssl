@@ -17,7 +17,7 @@ struct quic_rstream_st {
     OSSL_STATM *statm;
 };
 
-QUIC_RSTREAM *ossl_quic_rstream_new(OSSL_QRX *qrx, QUIC_RXFC *rxfc,
+QUIC_RSTREAM *ossl_quic_rstream_new(QUIC_RXFC *rxfc,
                                     OSSL_STATM *statm)
 {
     QUIC_RSTREAM *ret = OPENSSL_malloc(sizeof(*ret));
@@ -25,7 +25,7 @@ QUIC_RSTREAM *ossl_quic_rstream_new(OSSL_QRX *qrx, QUIC_RXFC *rxfc,
     if (ret == NULL)
         return NULL;
 
-    ossl_sframe_list_init(&ret->fl, qrx);
+    ossl_sframe_list_init(&ret->fl);
     ret->rxfc = rxfc;
     ret->statm = statm;
     return ret;
@@ -37,7 +37,7 @@ void ossl_quic_rstream_free(QUIC_RSTREAM *qrs)
     OPENSSL_free(qrs);
 }
 
-int ossl_quic_rstream_queue_data(QUIC_RSTREAM *qrs, OSSL_QRX_PKT_WRAP *pkt_wrap,
+int ossl_quic_rstream_queue_data(QUIC_RSTREAM *qrs, OSSL_QRX_PKT *pkt,
                                  uint64_t offset,
                                  const unsigned char *data, uint64_t data_len,
                                  int fin)
@@ -47,7 +47,7 @@ int ossl_quic_rstream_queue_data(QUIC_RSTREAM *qrs, OSSL_QRX_PKT_WRAP *pkt_wrap,
     range.start = offset;
     range.end = offset + data_len;
 
-    return ossl_sframe_list_insert(&qrs->fl, &range, pkt_wrap, data, fin);
+    return ossl_sframe_list_insert(&qrs->fl, &range, pkt, data, fin);
 }
 
 static int read_internal(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,

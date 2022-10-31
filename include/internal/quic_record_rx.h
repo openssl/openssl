@@ -197,9 +197,6 @@ int ossl_qrx_discard_enc_level(OSSL_QRX *qrx, uint32_t enc_level);
 
 /* Information about a received packet. */
 typedef struct ossl_qrx_pkt_st {
-    /* Opaque handle to be passed to ossl_qrx_release_pkt. */
-    void               *handle;
-
     /*
      * Points to a logical representation of the decoded QUIC packet header. The
      * data and len fields point to the decrypted QUIC payload (i.e., to a
@@ -236,26 +233,35 @@ typedef struct ossl_qrx_pkt_st {
      * using a now() function.
      */
     OSSL_TIME           time;
+
+    /* The QRX which was used to receive the packet. */
+    OSSL_QRX            *qrx;
 } OSSL_QRX_PKT;
 
 /*
  * Tries to read a new decrypted packet from the QRX.
  *
- * On success, all fields of *pkt are filled and 1 is returned.
- * Else, returns 0.
+ * On success, *pkt points to a OSSL_QRX_PKT structure. The structure should be
+ * freed when no longer needed by calling ossl_qrx_pkt_release(). The structure
+ * is refcounted; to gain extra references, call ossl_qrx_pkt_ref(). This will
+ * cause a corresponding number of calls to ossl_qrx_pkt_release() to be
+ * ignored.
  *
- * The resources referenced by pkt->hdr, pkt->hdr->data and pkt->peer will
- * remain allocated at least until the user frees them by calling
- * ossl_qrx_release_pkt, which must be called once you are done with the packet.
+ * The resources referenced by (*pkt)->hdr, (*pkt)->hdr->data and (*pkt)->peer
+ * have the same lifetime as *pkt.
+ *
+ * Returns 1 on success and 0 on failure.
  */
-int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt);
+int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT **pkt);
 
 /*
- * Release the resources pointed to by an OSSL_QRX_PKT returned by
- * ossl_qrx_read_pkt. Pass the opaque value pkt->handle returned in the
- * structure.
+ * Decrement the reference count for the given packet and frees it if the
+ * reference count drops to zero. No-op if pkt is NULL.
  */
-void ossl_qrx_release_pkt(OSSL_QRX *qrx, void *handle);
+void ossl_qrx_pkt_release(OSSL_QRX_PKT *pkt);
+
+/* Increments the reference count for the given packet. */
+void ossl_qrx_pkt_up_ref(OSSL_QRX_PKT *pkt);
 
 /*
  * Returns 1 if there are any already processed (i.e. decrypted) packets waiting
