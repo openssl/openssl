@@ -21,7 +21,10 @@ OpenSSL 3.1
 
 ### Major changes between OpenSSL 3.0 and OpenSSL 3.1.0 [under development]
 
-  * none
+  * Added RIPEMD160 to the default provider.
+  * Fixed regressions introduced in 3.0.6 version.
+  * Fixed two buffer overflows in punycode decoding functions.
+    ([CVE-2022-3786]) and ([CVE-2022-3602])
 
 OpenSSL 3.0
 -----------
