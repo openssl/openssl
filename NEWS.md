@@ -20,7 +20,10 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 3.0.6 and OpenSSL 3.0.7 [under development]
 
-  * none
+  * Added RIPEMD160 to the default provider.
+  * Fixed regressions introduced in 3.0.6 version.
+  * Fixed two buffer overflows in punycode decoding functions.
+    ([CVE-2022-3786]) and ([CVE-2022-3602])
 
 ### Major changes between OpenSSL 3.0.5 and OpenSSL 3.0.6 [11 Oct 2022]
 
