@@ -1296,10 +1296,6 @@ struct ssl_connection_st {
 
     struct {
         long flags;
-        size_t read_mac_secret_size;
-        unsigned char read_mac_secret[EVP_MAX_MD_SIZE];
-        size_t write_mac_secret_size;
-        unsigned char write_mac_secret[EVP_MAX_MD_SIZE];
         unsigned char server_random[SSL3_RANDOM_SIZE];
         unsigned char client_random[SSL3_RANDOM_SIZE];
 
