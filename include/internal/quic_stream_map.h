@@ -124,9 +124,26 @@ typedef struct quic_stream_map_st {
     QUIC_STREAM_LIST_NODE   active_list;
     size_t                  rr_stepping, rr_counter;
     QUIC_STREAM             *rr_cur;
+    uint64_t                (*get_stream_limit_cb)(int uni, void *arg);
+    void                    *get_stream_limit_cb_arg;
 } QUIC_STREAM_MAP;
 
-int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm);
+/*
+ * get_stream_limit is a callback which is called to retrieve the current stream
+ * limit for streams created by us. This mechanism is not used for
+ * peer-initiated streams. If a stream's stream ID is x, a stream is allowed if
+ * (x >> 2) < returned limit value; i.e., the returned value is exclusive.
+ *
+ * If uni is 1, get the limit for locally-initiated unidirectional streams, else
+ * get the limit for locally-initiated bidirectional streams.
+ *
+ * If the callback is NULL, stream limiting is not applied.
+ * Stream limiting is used to determine if frames can currently be produced for
+ * a stream.
+ */
+int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
+                              uint64_t (*get_stream_limit_cb)(int uni, void *arg),
+                              void *get_stream_limit_cb_arg);
 
 /*
  * Any streams still in the map will be released as though

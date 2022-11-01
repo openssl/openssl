@@ -391,6 +391,13 @@ static OSSL_TIME get_time(void *arg)
     return ossl_time_now();
 }
 
+static uint64_t get_stream_limit(int uni, void *arg)
+{
+    QUIC_CONNECTION *qc = arg;
+
+    return uni ? qc->max_local_streams_uni : qc->max_local_streams_bidi;
+}
+
 /*
  * gen_rand_conn_id {{{2
  * ----------------
@@ -529,7 +536,7 @@ static int csm_init(QUIC_CONNECTION *qc)
         return 0;
     }
 
-    if (!ossl_quic_stream_map_init(&qc->qsm)) {
+    if (!ossl_quic_stream_map_init(&qc->qsm, get_stream_limit, qc)) {
         csm_cleanup(qc);
         return 0;
     }

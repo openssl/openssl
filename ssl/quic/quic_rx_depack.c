@@ -253,7 +253,8 @@ static int depack_do_frame_max_stream_data(PACKET *pkt,
 
 static int depack_do_frame_max_streams(PACKET *pkt,
                                        QUIC_CONNECTION *connection,
-                                       OSSL_ACKM_RX_PKT *ackm_data)
+                                       OSSL_ACKM_RX_PKT *ackm_data,
+                                       uint64_t frame_type)
 {
     uint64_t max_streams = 0;
 
@@ -263,7 +264,31 @@ static int depack_do_frame_max_streams(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* TODO(QUIC): ADD CODE to send |max_streams| to the connection manager */
+    if (max_streams > (((uint64_t)1) << 60)) {
+        /* TODO: Protocol violation (FRAME_ENCODING_ERROR) */
+        return 0;
+    }
+
+    switch (frame_type) {
+        case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI:
+            if (max_streams > connection->max_local_streams_bidi)
+                connection->max_local_streams_bidi = max_streams;
+
+            /* Stream may now be able to send */
+            ossl_quic_stream_map_update_state(&connection->qsm,
+                                              connection->stream0);
+            break;
+        case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI:
+            if (max_streams > connection->max_local_streams_uni)
+                connection->max_local_streams_uni = max_streams;
+
+            /* Stream may now be able to send */
+            ossl_quic_stream_map_update_state(&connection->qsm,
+                                              connection->stream0);
+            break;
+        default:
+            return 0;
+    }
 
     return 1;
 }
@@ -541,7 +566,8 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
             if (pkt_type != QUIC_PKT_TYPE_0RTT
                 && pkt_type != QUIC_PKT_TYPE_1RTT)
                 return 0;
-            if (!depack_do_frame_max_streams(pkt, connection, ackm_data))
+            if (!depack_do_frame_max_streams(pkt, connection, ackm_data,
+                                             frame_type))
                 return 0;
             break;
 
