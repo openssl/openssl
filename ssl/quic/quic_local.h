@@ -50,11 +50,38 @@ typedef struct quic_reactor_st {
     unsigned int want_net_write : 1;
 } QUIC_REACTOR;
 
+/* Represents the cause for a connection's termination. */
+typedef struct quic_terminate_cause_st {
+    /*
+     * If we are in a TERMINATING or TERMINATED state, this is the error code
+     * associated with the error. This field is valid iff we are in the
+     * TERMINATING or TERMINATED states.
+     */
+    uint64_t                        error_code;
+
+    /*
+     * If terminate_app is set and this is nonzero, this is the frame type which
+     * caused the connection to be terminated.
+     */
+    uint64_t                        frame_type;
+
+    /* Is this error code in the transport (0) or application (1) space? */
+    unsigned int                    app : 1;
+
+    /*
+     * If set, the cause of the termination is a received CONNECTION_CLOSE
+     * frame. Otherwise, we decided to terminate ourselves and sent a
+     * CONNECTION_CLOSE frame (regardless of whether the peer later also sends
+     * one).
+     */
+    unsigned int                    remote : 1;
+} QUIC_TERMINATE_CAUSE;
+
 #define QUIC_CONN_STATE_IDLE                        0
 #define QUIC_CONN_STATE_ACTIVE                      1
 #define QUIC_CONN_STATE_TERMINATING_CLOSING         2
 #define QUIC_CONN_STATE_TERMINATING_DRAINING        3
-#define QUIC_CONN_STATE_TERMINATED
+#define QUIC_CONN_STATE_TERMINATED                  4
 
 struct quic_conn_st {
     /*
@@ -177,6 +204,21 @@ struct quic_conn_st {
     /* Maximum active CID limit, as negotiated by transport parameters. */
     uint64_t                        rx_active_conn_id_limit;
 
+    /* Valid if we are in the TERMINATING or TERMINATED states. */
+    QUIC_TERMINATE_CAUSE            terminate_cause;
+
+    /*
+     * Deadline at which we move to TERMINATING state. Valid if in the
+     * TERMINATING state.
+     */
+    OSSL_TIME                       terminate_deadline;
+
+    /*
+     * Deadline at which connection dies due to idle timeout if no further
+     * events occur.
+     */
+    OSSL_TIME                       idle_deadline;
+
     /*
      * State tracking. QUIC connection-level state is best represented based on
      * whether various things have happened yet or not, rather than as an
@@ -256,6 +298,12 @@ struct quic_conn_st {
 
     /* Are we in blocking mode? */
     unsigned int                    blocking                : 1;
+
+    /*
+     * While in TERMINATING - CLOSING, set when we should generate a connection
+     * close frame.
+     */
+    unsigned int                    conn_close_queued       : 1;
 };
 
 /* Internal calls to the QUIC CSM which come from various places. */
@@ -264,10 +312,15 @@ int ossl_quic_conn_on_handshake_confirmed(QUIC_CONNECTION *qc);
 /*
  * To be called when a protocol violation occurs. The connection is torn down
  * with the given error code, which should be a QUIC_ERR_* value. Reason string
- * is optional and copied if provided.
+ * is optional and copied if provided. frame_type should be 0 if not applicable.
  */
-void ossl_quic_conn_on_protocol_error(QUIC_CONNECTION *qc, uint64_t error_code,
-                                      const char *reason);
+void ossl_quic_conn_raise_protocol_error(QUIC_CONNECTION *qc,
+                                         uint64_t error_code,
+                                         uint64_t frame_type,
+                                         const char *reason);
+
+void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
+                                         OSSL_QUIC_FRAME_CONN_CLOSE *f);
 
 # define QUIC_CONNECTION_FROM_SSL_int(ssl, c)   \
     ((ssl) == NULL ? NULL                       \

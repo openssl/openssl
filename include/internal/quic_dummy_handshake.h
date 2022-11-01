@@ -92,7 +92,7 @@ typedef struct quic_dhs_args_st {
      * down. Note that this may happen at any time, including after a connection
      * has been fully established.
      */
-    int (*alert_cb)(void *arg);
+    int (*alert_cb)(void *arg, unsigned char alert_code);
     void *alert_cb_arg;
 
     /*

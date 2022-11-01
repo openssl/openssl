@@ -13,6 +13,7 @@
 #include "quic_local.h"
 #include "internal/quic_dummy_handshake.h"
 #include "internal/quic_rx_depack.h"
+#include "internal/quic_error.h"
 #include "internal/time.h"
 
 #define EXPECT_QUIC_CONN(qc)          ossl_assert((qc) != NULL)
@@ -34,7 +35,7 @@ static int csm_on_handshake_yield_secret(uint32_t enc_level, int direction,
                                          size_t secret_len,
                                          void *arg);
 static int csm_on_handshake_complete(void *arg);
-static int csm_on_handshake_alert(void *arg);
+static int csm_on_handshake_alert(void *arg, unsigned char alert_code);
 static int csm_generate_transport_params(QUIC_CONNECTION *qc,
                                          unsigned char **buf_p,
                                          size_t *buf_len_p);
@@ -42,6 +43,9 @@ static int csm_discard_el(QUIC_CONNECTION *qc, uint32_t enc_level);
 static int csm_on_transport_params(const unsigned char *params,
                                    size_t params_len,
                                    void *arg);
+static void csm_on_terminating_timeout(QUIC_CONNECTION *qc);
+static void csm_update_idle(QUIC_CONNECTION *qc);
+static void csm_on_idle_timeout(QUIC_CONNECTION *qc);
 
 /*
  * Core I/O Reactor Framework {{{1
@@ -398,6 +402,29 @@ static uint64_t get_stream_limit(int uni, void *arg)
     return uni ? qc->max_local_streams_uni : qc->max_local_streams_bidi;
 }
 
+static int is_active(const QUIC_CONNECTION *qc)
+{
+    return qc->state == QUIC_CONN_STATE_ACTIVE;
+}
+
+/* True if the connection is terminating. */
+static int is_terminating(const QUIC_CONNECTION *qc)
+{
+    return qc->state == QUIC_CONN_STATE_TERMINATING_CLOSING
+        || qc->state == QUIC_CONN_STATE_TERMINATING_DRAINING;
+}
+
+static int is_terminated(const QUIC_CONNECTION *qc)
+{
+    return qc->state == QUIC_CONN_STATE_TERMINATED;
+}
+
+/* True if the connection is terminating or terminated. */
+static int is_term_any(const QUIC_CONNECTION *qc)
+{
+    return is_terminating(qc) || is_terminated(qc);
+}
+
 /*
  * gen_rand_conn_id {{{2
  * ----------------
@@ -664,7 +691,9 @@ static int csm_init(QUIC_CONNECTION *qc)
     qc->rx_max_ack_delay        = QUIC_DEFAULT_MAX_ACK_DELAY;
     qc->rx_ack_delay_exp        = QUIC_DEFAULT_ACK_DELAY_EXP;
     qc->rx_active_conn_id_limit = QUIC_MIN_ACTIVE_CONN_ID_LIMIT;
+    qc->max_idle_timeout        = QUIC_DEFAULT_IDLE_TIMEOUT;
     qc->tx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
+    csm_update_idle(qc);
     reactor_init(&qc->rtor, csm_tick, qc, csm_determine_next_tick_deadline(qc));
     return 1;
 }
@@ -726,7 +755,10 @@ static int csm_on_crypto_recv(unsigned char *buf, size_t buf_len,
     for (i = QUIC_ENC_LEVEL_INITIAL; i < qc->tx_enc_level; ++i)
         if (i != QUIC_ENC_LEVEL_0RTT &&
             !crypto_ensure_empty(qc->crypto_recv[ossl_quic_enc_level_to_pn_space(i)])) {
-            /* TODO: Protocol violation */
+            /* Protocol violation (RFC 9001 s. 4.1.3) */
+            ossl_quic_conn_raise_protocol_error(qc, QUIC_ERR_PROTOCOL_VIOLATION,
+                                                OSSL_QUIC_FRAME_TYPE_CRYPTO,
+                                                "crypto stream data in wrong EL");
             return 0;
         }
 
@@ -764,7 +796,10 @@ static int csm_on_handshake_yield_secret(uint32_t enc_level, int direction,
      */
     for (i = QUIC_ENC_LEVEL_INITIAL; i < enc_level; ++i)
         if (!crypto_ensure_empty(qc->crypto_recv[i])) {
-            /* TODO: Protocol violation */
+            /* Protocol violation (RFC 9001 s. 4.1.3) */
+            ossl_quic_conn_raise_protocol_error(qc, QUIC_ERR_PROTOCOL_VIOLATION,
+                                                OSSL_QUIC_FRAME_TYPE_CRYPTO,
+                                                "crypto stream data in wrong EL");
             return 0;
         }
 
@@ -815,9 +850,12 @@ static int csm_on_handshake_complete(void *arg)
     return 1;
 }
 
-static int csm_on_handshake_alert(void *arg)
+static int csm_on_handshake_alert(void *arg, unsigned char alert_code)
 {
-    /* TODO */
+    QUIC_CONNECTION *qc = arg;
+
+    ossl_quic_conn_raise_protocol_error(qc, QUIC_ERR_CRYPTO_ERR_BEGIN + alert_code,
+                                        0, "handshake alert");
     return 1;
 }
 
@@ -850,7 +888,7 @@ static int csm_generate_transport_params(QUIC_CONNECTION *qc,
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_MAX_IDLE_TIMEOUT,
-                                                   QUIC_DEFAULT_IDLE_TIMEOUT))
+                                                   qc->max_idle_timeout))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_MAX_UDP_PAYLOAD_SIZE,
@@ -950,26 +988,27 @@ static int csm_on_transport_params(const unsigned char *params,
     QUIC_CONN_ID cid;
 
     if (qc->got_transport_params)
-        return 0;
+        goto malformed;
 
     if (!PACKET_buf_init(&pkt, params, params_len))
         return 0;
 
     while (PACKET_remaining(&pkt) > 0) {
         if (!ossl_quic_wire_peek_transport_param(&pkt, &id))
-            return 0;
+            goto malformed;
 
         switch (id) {
             case QUIC_TPARAM_ORIG_DCID:
                 if (got_orig_dcid)
-                    return 0; /* must not appear more than once */
+                    /* must not appear more than once */
+                    goto malformed;
 
                 if (!tparam_to_cid(&pkt, &cid))
-                    return 0;
+                    goto malformed;
 
                 /* Must match our initial DCID. */
                 if (!ossl_quic_conn_id_eq(&qc->init_dcid, &cid))
-                    return 0;
+                    goto malformed;
 
                 got_orig_dcid = 1;
                 break;
@@ -977,14 +1016,14 @@ static int csm_on_transport_params(const unsigned char *params,
             case QUIC_TPARAM_RETRY_SCID:
                 if (got_retry_scid || !qc->doing_retry)
                     /* must not appear more than once or if retry not done */
-                    return 0;
+                    goto malformed;
 
                 if (!tparam_to_cid(&pkt, &cid))
-                    return 0;
+                    goto malformed;
 
                 /* Must match Retry packet SCID. */
                 if (!ossl_quic_conn_id_eq(&qc->retry_scid, &cid))
-                    return 0;
+                    goto malformed;
 
                 got_retry_scid = 1;
                 break;
@@ -992,14 +1031,14 @@ static int csm_on_transport_params(const unsigned char *params,
             case QUIC_TPARAM_INITIAL_SCID:
                 if (got_initial_scid)
                     /* must not appear more than once */
-                    return 0;
+                    goto malformed;
 
                 if (!tparam_to_cid(&pkt, &cid))
-                    return 0;
+                    goto malformed;
 
                 /* Must match SCID of first Initial packet from server. */
                 if (!ossl_quic_conn_id_eq(&qc->init_scid, &cid))
-                    return 0;
+                    goto malformed;
 
                 got_initial_scid = 1;
                 break;
@@ -1007,10 +1046,10 @@ static int csm_on_transport_params(const unsigned char *params,
             case QUIC_TPARAM_INITIAL_MAX_DATA:
                 if (got_initial_max_data)
                     /* must not appear more than once */
-                    return 0;
+                    goto malformed;
 
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
-                    return 0;
+                    goto malformed;
 
                 ossl_quic_txfc_bump_cwm(&qc->conn_txfc, v);
                 got_initial_max_data = 1;
@@ -1019,10 +1058,10 @@ static int csm_on_transport_params(const unsigned char *params,
             case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_LOCAL:
                 if (got_initial_max_stream_data_bidi_local)
                     /* must not appear more than once */
-                    return 0;
+                    goto malformed;
 
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
-                    return 0;
+                    goto malformed;
 
                 /*
                  * This is correct; the BIDI_LOCAL TP governs streams created by
@@ -1035,10 +1074,10 @@ static int csm_on_transport_params(const unsigned char *params,
             case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_REMOTE:
                 if (got_initial_max_stream_data_bidi_remote)
                     /* must not appear more than once */
-                    return 0;
+                    goto malformed;
 
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
-                    return 0;
+                    goto malformed;
 
                 /*
                  * This is correct; the BIDI_REMOTE TP governs streams created
@@ -1054,10 +1093,10 @@ static int csm_on_transport_params(const unsigned char *params,
             case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_UNI:
                 if (got_initial_max_stream_data_uni)
                     /* must not appear more than once */
-                    return 0;
+                    goto malformed;
 
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
-                    return 0;
+                    goto malformed;
 
                 qc->init_max_stream_data_uni_remote = v;
                 got_initial_max_stream_data_uni = 1;
@@ -1066,11 +1105,11 @@ static int csm_on_transport_params(const unsigned char *params,
             case QUIC_TPARAM_ACK_DELAY_EXP:
                 if (got_ack_delay_exp)
                     /* must not appear more than once */
-                    return 0;
+                    goto malformed;
 
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
                     || v > QUIC_MAX_ACK_DELAY_EXP)
-                    return 0;
+                    goto malformed;
 
                 qc->rx_ack_delay_exp = (unsigned char)v;
                 got_ack_delay_exp = 1;
@@ -1083,7 +1122,7 @@ static int csm_on_transport_params(const unsigned char *params,
 
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
                     || v >= (((uint64_t)1) << 14))
-                    return 0;
+                    goto malformed;
 
                 qc->rx_max_ack_delay = v;
                 got_max_ack_delay = 1;
@@ -1096,7 +1135,7 @@ static int csm_on_transport_params(const unsigned char *params,
 
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
                     || v > (((uint64_t)1) << 60))
-                    return 0;
+                    goto malformed;
 
                 assert(qc->max_local_streams_bidi == 0);
                 qc->max_local_streams_bidi = v;
@@ -1106,11 +1145,11 @@ static int csm_on_transport_params(const unsigned char *params,
             case QUIC_TPARAM_INITIAL_MAX_STREAMS_UNI:
                 if (got_initial_max_streams_uni)
                     /* must not appear more than once */
-                    return 0;
+                    goto malformed;
 
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
                     || v > (((uint64_t)1) << 60))
-                    return 0;
+                    goto malformed;
 
                 assert(qc->max_local_streams_uni == 0);
                 qc->max_local_streams_uni = v;
@@ -1120,25 +1159,26 @@ static int csm_on_transport_params(const unsigned char *params,
             case QUIC_TPARAM_MAX_IDLE_TIMEOUT:
                 if (got_max_idle_timeout)
                     /* must not appear more than once */
-                    return 0;
+                    goto malformed;
 
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
-                    return 0;
+                    goto malformed;
 
                 if (v < qc->max_idle_timeout)
                     qc->max_idle_timeout = v;
 
+                csm_update_idle(qc);
                 got_max_idle_timeout = 1;
                 break;
 
             case QUIC_TPARAM_MAX_UDP_PAYLOAD_SIZE:
                 if (got_max_udp_payload_size)
                     /* must not appear more than once */
-                    return 0;
+                    goto malformed;
 
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
                     || v < QUIC_MIN_INITIAL_DGRAM_LEN)
-                    return 0;
+                    goto malformed;
 
                 qc->rx_max_udp_payload_size = v;
                 got_max_udp_payload_size    = 1;
@@ -1147,12 +1187,11 @@ static int csm_on_transport_params(const unsigned char *params,
             case QUIC_TPARAM_ACTIVE_CONN_ID_LIMIT:
                 if (got_active_conn_id_limit)
                     /* must not appear more than once */
-                    return 0;
+                    goto malformed;
 
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
                     || v < QUIC_MIN_ACTIVE_CONN_ID_LIMIT)
-                    /* TODO: TRANSPORT_PARAMETER_ERROR */
-                    return 0;
+                    goto malformed;
 
                 qc->rx_active_conn_id_limit = v;
                 got_active_conn_id_limit = 1;
@@ -1171,7 +1210,7 @@ static int csm_on_transport_params(const unsigned char *params,
                 body = ossl_quic_wire_decode_transport_param_bytes(&pkt, &id,
                                                                    &len);
                 if (body == NULL)
-                    return 0;
+                    goto malformed;
 
                 break;
         }
@@ -1179,7 +1218,7 @@ static int csm_on_transport_params(const unsigned char *params,
 
     if (!got_orig_dcid || !got_initial_scid || got_retry_scid != qc->doing_retry)
         /* Transport parameters were not valid. */
-        return 0;
+        goto malformed;
 
     qc->got_transport_params = 1;
 
@@ -1189,6 +1228,11 @@ static int csm_on_transport_params(const unsigned char *params,
         ossl_quic_stream_map_update_state(&qc->qsm, qc->stream0);
 
     return 1;
+
+malformed:
+    ossl_quic_conn_raise_protocol_error(qc, QUIC_ERR_TRANSPORT_PARAMETER_ERROR,
+                                        0, "bad transport parameter");
+    return 0;
 }
 
 /*
@@ -1219,6 +1263,30 @@ static void csm_tick(QUIC_TICK_RESULT *res, void *arg)
      *   - determine the time at which we should next be ticked.
      */
 
+    /* If we are in the TERMINATED state, there is nothing to do. */
+    if (is_terminated(qc)) {
+        res->want_net_read  = 0;
+        res->want_net_write = 0;
+        res->tick_deadline  = ossl_time_infinite();
+        return;
+    }
+
+    /*
+     * If we are in the TERMINATING state, check if the terminating timer has
+     * expired.
+     */
+    if (is_terminating(qc)) {
+        now = ossl_time_now();
+
+        if (ossl_time_compare(now, qc->terminate_deadline) >= 0) {
+            csm_on_terminating_timeout(qc);
+            res->want_net_read  = 0;
+            res->want_net_write = 0;
+            res->tick_deadline  = ossl_time_infinite();
+            return; /* abort normal processing, nothing to do */
+        }
+    }
+
     /* Handle any incoming data from the network. */
     csm_rx(qc);
 
@@ -1230,15 +1298,28 @@ static void csm_tick(QUIC_TICK_RESULT *res, void *arg)
 
     /*
      * Handle any timer events which are due to fire; namely, the loss detection
-     * deadline.
+     * deadline and the idle timeout.
      *
      * ACKM ACK generation deadline is polled by TXP, so we don't need to handle
      * it here.
      */
     now         = ossl_time_now();
+    if (ossl_time_compare(now, qc->idle_deadline) >= 0) {
+        /*
+         * Idle timeout differs from normal protocol violation because we do not
+         * send a CONN_CLOSE frame; go straight to TERMINATED.
+         */
+        csm_on_idle_timeout(qc);
+        res->want_net_read  = 0;
+        res->want_net_write = 0;
+        res->tick_deadline  = ossl_time_infinite();
+        return;
+    }
+
     deadline    = ossl_ackm_get_loss_detection_deadline(qc->ackm);
     if (ossl_time_compare(now, deadline) >= 0)
         ossl_ackm_on_timeout(qc->ackm);
+
 
     /* Write any data to the network due to be sent. */
     csm_tx(qc);
@@ -1262,6 +1343,8 @@ static int csm_retry(QUIC_CONNECTION *qc,
 
 static int csm_rx(QUIC_CONNECTION *qc)
 {
+    int handled_any = 0;
+
     if (!qc->have_sent_any_pkt)
         /*
          * We have not sent anything yet, therefore there is no need to check
@@ -1283,8 +1366,19 @@ static int csm_rx(QUIC_CONNECTION *qc)
         if (!ossl_qrx_read_pkt(qc->qrx, &qc->qrx_pkt))
             break;
 
+        if (!handled_any)
+            csm_update_idle(qc);
+
         csm_rx_handle_packet(qc); /* best effort */
+        handled_any = 1;
     }
+
+    /*
+     * When in TERMINATING - CLOSING, generate a CONN_CLOSE frame whenever we
+     * process one or more incoming packets.
+     */
+    if (handled_any && qc->state == QUIC_CONN_STATE_TERMINATING_CLOSING)
+        qc->conn_close_queued = 1;
 
     return 1;
 }
@@ -1364,6 +1458,19 @@ static int csm_rx_handle_packet(QUIC_CONNECTION *qc)
 /* Try to generate packets and if possible, flush them to the network. */
 static int csm_tx(QUIC_CONNECTION *qc)
 {
+    if (qc->state == QUIC_CONN_STATE_TERMINATING_CLOSING) {
+        /*
+         * While closing, only send CONN_CLOSE if we've received more traffic
+         * from the peer. Once we tell the TXP to generate CONN_CLOSE, all
+         * future calls to it generate CONN_CLOSE frames, so otherwise we would
+         * just constantly generate CONN_CLOSE frames.
+         */
+        if (!qc->conn_close_queued)
+            return 0;
+
+        qc->conn_close_queued = 0;
+    }
+
     /*
      * Send a packet, if we need to. Best effort. The TXP consults the CC and
      * applies any limitations imposed by it, so we don't need to do it here.
@@ -1396,8 +1503,14 @@ static OSSL_TIME csm_determine_next_tick_deadline(QUIC_CONNECTION *qc)
         deadline = ossl_time_min(deadline,
                                  qc->cc_method->get_next_credit_time(qc->cc_data));
 
-    /* TODO: TIMER IDLE_TIMEOUT */
-    /* TODO: TIMER TERMINATING_TIMEOUT */
+    /* Is the terminating timer armed? */
+    if (is_terminating(qc))
+        deadline = ossl_time_min(deadline,
+                                 qc->terminate_deadline);
+    else if (!ossl_time_is_infinite(qc->idle_deadline))
+        deadline = ossl_time_min(deadline,
+                                 qc->idle_deadline);
+
     return deadline;
 }
 
@@ -1555,13 +1668,18 @@ int ossl_quic_conn_on_handshake_confirmed(QUIC_CONNECTION *qc)
     if (qc->handshake_confirmed)
         return 1;
 
-    if (!qc->handshake_complete)
+    if (!qc->handshake_complete) {
         /*
          * Does not make sense for handshake to be confirmed before it is
          * completed.
-         * TODO: Handle as protocol violation.
          */
+        ossl_quic_conn_raise_protocol_error(qc, QUIC_ERR_PROTOCOL_VIOLATION,
+                                            OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE,
+                                            "handshake cannot be confirmed "
+                                            "before it is completed");
+
         return 0;
+    }
 
     csm_discard_el(qc, QUIC_ENC_LEVEL_HANDSHAKE);
     qc->handshake_confirmed = 1;
@@ -1569,18 +1687,163 @@ int ossl_quic_conn_on_handshake_confirmed(QUIC_CONNECTION *qc)
 }
 
 /*
- * ossl_quic_conn_on_protocol_error {{{2
- * --------------------------------
+ * csm_terminate {{{2
+ * -------------
+ *
+ * Master function used when we want to start tearing down a connection:
+ *
+ *   - If the connection is still IDLE we can go straight to TERMINATED;
+ *
+ *   - If we are already TERMINATED this is a no-op.
+ *
+ *   - If we are TERMINATING - CLOSING and we have now got a CONNECTION_CLOSE
+ *     from the peer (tcause->remote == 1), we move to TERMINATING - CLOSING.
+ *
+ *   - If we are TERMINATING - DRAINING, we remain here until the terminating
+ *     timer expires.
+ *
+ *   - Otherwise, we are in ACTIVE and move to TERMINATING - CLOSING.
+ *     if we caused the termination (e.g. we have sent a CONNECTION_CLOSE). Note
+ *     that we are considered to have caused a termination if we sent the first
+ *     CONNECTION_CLOSE frame, even if it is caused by a peer protocol
+ *     violation. If the peer sent the first CONNECTION_CLOSE frame, we move to
+ *     TERMINATING - DRAINING.
+ *
+ * We record the termination cause structure passed on the first call only.
+ * Any successive calls have their termination cause data discarded;
+ * once we start sending a CONNECTION_CLOSE frame, we don't change the details
+ * in it.
  */
-void ossl_quic_conn_on_protocol_error(QUIC_CONNECTION *qc, uint64_t error_code,
-                                      const char *reason)
+static void csm_start_terminating(QUIC_CONNECTION *qc,
+                                  const QUIC_TERMINATE_CAUSE *tcause)
 {
-    fprintf(stderr, "# PROTOCOL ERROR: %lu: %s\n", error_code,
-            reason != NULL ? reason : "");
-    // TERMINATING - CLOSING
-    // TERMINATING - DRAINING
-    // TERMINATED
-    /* TODO */
+    switch (qc->state) {
+        default:
+        case QUIC_CONN_STATE_IDLE:
+            qc->terminate_cause = *tcause;
+            csm_on_terminating_timeout(qc);
+            break;
+
+        case QUIC_CONN_STATE_ACTIVE:
+            qc->state = tcause->remote ? QUIC_CONN_STATE_TERMINATING_DRAINING
+                                       : QUIC_CONN_STATE_TERMINATING_CLOSING;
+            qc->terminate_cause = *tcause;
+            /* TODO: Calculate deadline properly */
+            qc->terminate_deadline
+                = ossl_time_add(ossl_time_now(), ossl_ms2time(2000));
+
+            if (!tcause->remote) {
+                OSSL_QUIC_FRAME_CONN_CLOSE f = {0};
+
+                /* best effort */
+                f.error_code = qc->terminate_cause.error_code;
+                f.frame_type = qc->terminate_cause.frame_type;
+                f.is_app     = qc->terminate_cause.app;
+                ossl_quic_tx_packetiser_schedule_conn_close(qc->txp, &f);
+                qc->conn_close_queued = 1;
+            }
+            break;
+
+        case QUIC_CONN_STATE_TERMINATING_CLOSING:
+            if (tcause->remote)
+                qc->state = QUIC_CONN_STATE_TERMINATING_DRAINING;
+
+            break;
+
+        case QUIC_CONN_STATE_TERMINATING_DRAINING:
+            /* We remain here until the timout expires. */
+            break;
+
+        case QUIC_CONN_STATE_TERMINATED:
+            /* No-op. */
+            break;
+    }
+}
+
+/*
+ * ossl_quic_conn_on_remote_conn_close {{{2
+ * -----------------------------------
+ */
+void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
+                                         OSSL_QUIC_FRAME_CONN_CLOSE *f)
+{
+    QUIC_TERMINATE_CAUSE tcause = {0};
+
+    if (!is_active(qc))
+        return;
+
+    tcause.remote     = 1;
+    tcause.app        = f->is_app;
+    tcause.error_code = f->error_code;
+    tcause.frame_type = f->frame_type;
+
+    csm_start_terminating(qc, &tcause);
+}
+
+/*
+ * ossl_quic_conn_raise_protocol_error {{{2
+ * -----------------------------------
+ *
+ * This function is the master function which should be called in the event of a
+ * protocol error detected by us. We specify a QUIC transport-scope error code
+ * and optional frame type which was responsible. The reason string is not
+ * currently handled. If the connection has already terminated due to a previous
+ * protocol error, this is a no-op; first error wins.
+ */
+void ossl_quic_conn_raise_protocol_error(QUIC_CONNECTION *qc,
+                                         uint64_t error_code,
+                                         uint64_t frame_type,
+                                         const char *reason)
+{
+    QUIC_TERMINATE_CAUSE tcause = {0};
+
+    tcause.error_code = error_code;
+    tcause.frame_type = frame_type;
+
+    csm_start_terminating(qc, &tcause);
+}
+
+/*
+ * csm_on_terminating_timeout {{{2
+ * --------------------------
+ *
+ * Called once the terminating timer expires, meaning we move from TERMINATING
+ * to TERMINATED.
+ */
+static void csm_on_terminating_timeout(QUIC_CONNECTION *qc)
+{
+    qc->state = QUIC_CONN_STATE_TERMINATED;
+}
+
+/*
+ * csm_update_idle {{{2
+ * ---------------
+ */
+static void csm_update_idle(QUIC_CONNECTION *qc)
+{
+    if (qc->max_idle_timeout == 0)
+        qc->idle_deadline = ossl_time_infinite();
+    else
+        qc->idle_deadline = ossl_time_add(ossl_time_now(),
+            ossl_ms2time(qc->max_idle_timeout));
+}
+
+/*
+ * csm_on_idle_timeout {{{2
+ * -------------------
+ */
+static void csm_on_idle_timeout(QUIC_CONNECTION *qc)
+{
+    /*
+     * Idle timeout does not have an error code associated with it because a
+     * CONN_CLOSE is never sent for it. We shouldn't use this data once we reach
+     * TERMINATED anyway.
+     */
+    qc->terminate_cause.app         = 0;
+    qc->terminate_cause.error_code  = UINT64_MAX;
+    qc->terminate_cause.frame_type  = 0;
+
+    qc->state = QUIC_CONN_STATE_TERMINATED;
 }
 
 /*
@@ -2059,11 +2322,18 @@ int ossl_quic_get_want_net_write(QUIC_CONNECTION *qc)
 int ossl_quic_shutdown(SSL *s)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+    QUIC_TERMINATE_CAUSE tcause = {0};
 
     if (!EXPECT_QUIC_CONN(qc))
         return 0;
 
-    return 0; // TODO
+    /* Already terminating? */
+    if (!is_term_any(qc))
+        return 1;
+
+    tcause.app = 1;
+    csm_start_terminating(qc, &tcause);
+    return 1;
 }
 
 /* SSL_ctrl {{{2
@@ -2089,7 +2359,7 @@ int ossl_quic_connect(SSL *s)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (!EXPECT_QUIC_CONN(qc))
+    if (!EXPECT_QUIC_CONN(qc) || is_term_any(qc))
         return 0;
 
     return csm_connect(qc);
@@ -2102,7 +2372,7 @@ int ossl_quic_accept(SSL *s)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (!EXPECT_QUIC_CONN(qc))
+    if (!EXPECT_QUIC_CONN(qc) || is_term_any(qc))
         return 0;
 
     /* Server mode not currently supported. */
@@ -2132,7 +2402,7 @@ int ossl_quic_accept(SSL *s)
  */
 int ossl_quic_get_error(const QUIC_CONNECTION *qc, int i)
 {
-    return SSL_ERROR_NONE; // TODO
+    return SSL_ERROR_NONE; /* TODO */
 }
 
 /*
@@ -2150,8 +2420,9 @@ static int quic_write_again(void *arg)
 {
     struct quic_write_again_args *args = arg;
 
-    // TODO what if connection is torn down due to error while blocking (e.g. rx
-    // bad frame)
+    if (args->qc->state != QUIC_CONN_STATE_ACTIVE)
+        /* If connection is torn down due to an error while blocking, stop. */
+        return -2;
 
     if (!ossl_quic_sstream_append(args->qc->stream0->sstream, args->buf,
                                    args->len, args->written))
@@ -2175,10 +2446,7 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
     if (!EXPECT_QUIC_CONN(qc))
         return 0;
 
-    // TODO if closed
-    // TODO stop_sending, reset_stream?
-
-    if (qc->stream0 == NULL || qc->stream0->sstream == NULL)
+    if (qc->stream0 == NULL || qc->stream0->sstream == NULL || !is_active(qc))
         return 0;
 
     if (!ossl_quic_sstream_append(qc->stream0->sstream, buf,
@@ -2286,6 +2554,10 @@ static int quic_read_again(void *arg)
 {
     struct quic_read_again_args *args = arg;
 
+    if (!is_active(args->qc))
+        /* If connection is torn down due to an error while blocking, stop. */
+        return -2;
+
     if (!quic_read_actual(args->qc, args->stream,
                           args->buf, args->len, args->bytes_read,
                           args->peek))
@@ -2309,7 +2581,7 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
     if (!EXPECT_QUIC_CONN(qc))
         return 0;
 
-    if (qc->stream0 == NULL)
+    if (qc->stream0 == NULL || !is_active(qc))
         return 0;
 
     if (!quic_read_actual(qc, qc->stream0, buf, len, bytes_read, 0))

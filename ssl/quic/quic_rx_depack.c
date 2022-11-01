@@ -36,46 +36,59 @@ static int depack_do_frame_padding(PACKET *pkt)
     return 1;
 }
 
-static int depack_do_frame_ping(PACKET *pkt, OSSL_ACKM_RX_PKT *ackm_data)
+static int depack_do_frame_ping(PACKET *pkt, QUIC_CONNECTION *connection,
+                                OSSL_ACKM_RX_PKT *ackm_data)
 {
     /* We ignore this frame, apart from eliciting an ACK */
-    if (!ossl_quic_wire_decode_frame_ping(pkt))
+    if (!ossl_quic_wire_decode_frame_ping(pkt)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_PING,
+                                            "decode error");
         return 0;
+    }
+
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
     return 1;
 }
 
 static int depack_do_frame_ack(PACKET *pkt, QUIC_CONNECTION *connection,
-                               int packet_space, OSSL_TIME received)
+                               int packet_space, OSSL_TIME received,
+                               uint64_t frame_type)
 {
     OSSL_QUIC_FRAME_ACK ack;
-    OSSL_QUIC_ACK_RANGE *ack_ranges;
+    OSSL_QUIC_ACK_RANGE *ack_ranges = NULL;
     uint64_t total_ranges = 0;
     uint32_t ack_delay_exp = connection->rx_ack_delay_exp;
-    int ok = 1;          /* Assume the best */
 
     if (!ossl_quic_wire_peek_frame_ack_num_ranges(pkt, &total_ranges)
         /* In case sizeof(uint64_t) > sizeof(size_t) */
         || total_ranges > SIZE_MAX / sizeof(ack_ranges[0])
         || (ack_ranges = OPENSSL_zalloc(sizeof(ack_ranges[0])
                                         * (size_t)total_ranges)) == NULL)
-        return 0;
+        goto malformed;
 
     ack.ack_ranges = ack_ranges;
     ack.num_ack_ranges = (size_t)total_ranges;
 
     if (!ossl_quic_wire_decode_frame_ack(pkt, ack_delay_exp, &ack, NULL))
-        ok = 0;
-    if (ok
-        && !ossl_ackm_on_rx_ack_frame(connection->ackm, &ack,
-                                      packet_space, received))
-        ok = 0;
+        goto malformed;
+
+    if (!ossl_ackm_on_rx_ack_frame(connection->ackm, &ack,
+                                   packet_space, received))
+        goto malformed;
 
     OPENSSL_free(ack_ranges);
-    if (!ok)
-        return 0;
     return 1;
+
+malformed:
+    ossl_quic_conn_raise_protocol_error(connection,
+                                        QUIC_ERR_FRAME_ENCODING_ERROR,
+                                        frame_type,
+                                        "decode error");
+    OPENSSL_free(ack_ranges);
+    return 0;
 }
 
 static int depack_do_frame_reset_stream(PACKET *pkt,
@@ -85,15 +98,26 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
     OSSL_QUIC_FRAME_RESET_STREAM frame_data;
     QUIC_STREAM *stream = NULL;
 
-    if (!ossl_quic_wire_decode_frame_reset_stream(pkt, &frame_data))
+    if (!ossl_quic_wire_decode_frame_reset_stream(pkt, &frame_data)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
     stream = ossl_quic_stream_map_get_by_id(&connection->qsm, frame_data.stream_id);
-    if (stream == NULL || stream->sstream == NULL)
+    if (stream == NULL || stream->rstream == NULL) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_STREAM_STATE_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
+                                            "RESET_STREAM frame for nonexistent or "
+                                            "TX only stream");
         return 0;
+    }
 
     stream->peer_reset_stream = 1;
     ossl_quic_stream_map_update_state(&connection->qsm, stream);
@@ -107,15 +131,26 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
     OSSL_QUIC_FRAME_STOP_SENDING frame_data;
     QUIC_STREAM *stream = NULL;
 
-    if (!ossl_quic_wire_decode_frame_stop_sending(pkt, &frame_data))
+    if (!ossl_quic_wire_decode_frame_stop_sending(pkt, &frame_data)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
     stream = ossl_quic_stream_map_get_by_id(&connection->qsm, frame_data.stream_id);
-    if (stream == NULL || stream->rstream == NULL)
+    if (stream == NULL || stream->sstream == NULL) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_STREAM_STATE_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
+                                            "STOP_SENDING frame for nonexistent or "
+                                            "RX only stream");
         return 0;
+    }
 
     stream->peer_stop_sending = 1;
     ossl_quic_stream_map_update_state(&connection->qsm, stream);
@@ -129,8 +164,13 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CONNECTION *connection,
     OSSL_QUIC_FRAME_CRYPTO f;
     QUIC_RSTREAM *rstream;
 
-    if (!ossl_quic_wire_decode_frame_crypto(pkt, &f))
+    if (!ossl_quic_wire_decode_frame_crypto(pkt, &f)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_CRYPTO,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
@@ -157,8 +197,13 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CONNECTION *connection,
     const uint8_t *token;
     size_t token_len;
 
-    if (!ossl_quic_wire_decode_frame_new_token(pkt, &token, &token_len))
+    if (!ossl_quic_wire_decode_frame_new_token(pkt, &token, &token_len)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_NEW_TOKEN,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
@@ -170,30 +215,54 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CONNECTION *connection,
 
 static int depack_do_frame_stream(PACKET *pkt, QUIC_CONNECTION *connection,
                                   OSSL_QRX_PKT *parent_pkt,
-                                  OSSL_ACKM_RX_PKT *ackm_data)
+                                  OSSL_ACKM_RX_PKT *ackm_data,
+                                  uint64_t frame_type)
 {
     OSSL_QUIC_FRAME_STREAM frame_data;
     QUIC_STREAM *stream;
+    uint64_t fce;
 
-    if (!ossl_quic_wire_decode_frame_stream(pkt, &frame_data))
+    if (!ossl_quic_wire_decode_frame_stream(pkt, &frame_data)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            frame_type,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
     stream = ossl_quic_stream_map_get_by_id(&connection->qsm, frame_data.stream_id);
-    if (stream == NULL || stream->rstream == NULL)
-        /* TODO: Handle as protocol violation */
+    if (stream == NULL || stream->rstream == NULL) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_STREAM_STATE_ERROR,
+                                            frame_type,
+                                            "STREAM frame for nonexistent or "
+                                            "TX only stream");
         return 0;
+    }
 
     /* Notify stream flow controller. */
     if (!ossl_quic_rxfc_on_rx_stream_frame(&stream->rxfc,
                                            frame_data.offset + frame_data.len,
-                                           frame_data.is_fin)
-        || ossl_quic_rxfc_get_error(&stream->rxfc, 0) != QUIC_ERR_NO_ERROR)
-        /* QUIC_ERR_FLOW_CONTROL_ERROR or QUIC_ERR_FINAL_SIZE detected */
-        /* TODO: Handle as protocol violation */
+                                           frame_data.is_fin)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_INTERNAL_ERROR,
+                                            frame_type,
+                                            "internal error (flow control)");
         return 0;
+    }
+
+    /* Has a flow control error occurred? */
+    fce = ossl_quic_rxfc_get_error(&stream->rxfc, 0);
+    if (fce != QUIC_ERR_NO_ERROR) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            fce,
+                                            frame_type,
+                                            "flow control violation");
+        return 0;
+    }
 
     /*
      * The receive stream buffer may or may not choose to consume the data
@@ -216,8 +285,13 @@ static int depack_do_frame_max_data(PACKET *pkt, QUIC_CONNECTION *connection,
 {
     uint64_t max_data = 0;
 
-    if (!ossl_quic_wire_decode_frame_max_data(pkt, &max_data))
+    if (!ossl_quic_wire_decode_frame_max_data(pkt, &max_data)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_MAX_DATA,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
@@ -236,17 +310,26 @@ static int depack_do_frame_max_stream_data(PACKET *pkt,
     QUIC_STREAM *stream;
 
     if (!ossl_quic_wire_decode_frame_max_stream_data(pkt, &stream_id,
-                                                     &max_stream_data))
+                                                     &max_stream_data)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
     stream = ossl_quic_stream_map_get_by_id(&connection->qsm, stream_id);
-    if (stream == NULL || stream->sstream == NULL)
-        /* If stream does not exist, just ignore it. */
-        /* TODO: This should be treated as a protocol violation. */
-        return 1;
+    if (stream == NULL || stream->sstream == NULL) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_STREAM_STATE_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA,
+                                            "MAX_STREAM_DATA for nonexistent or "
+                                            "TX only stream");
+        return 0;
+    }
 
     ossl_quic_txfc_bump_cwm(&stream->txfc, max_stream_data);
     ossl_quic_stream_map_update_state(&connection->qsm, stream);
@@ -260,14 +343,23 @@ static int depack_do_frame_max_streams(PACKET *pkt,
 {
     uint64_t max_streams = 0;
 
-    if (!ossl_quic_wire_decode_frame_max_streams(pkt, &max_streams))
+    if (!ossl_quic_wire_decode_frame_max_streams(pkt, &max_streams)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            frame_type,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
     if (max_streams > (((uint64_t)1) << 60)) {
         /* TODO: Protocol violation (FRAME_ENCODING_ERROR) */
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            frame_type,
+                                            "invalid max streams value");
         return 0;
     }
 
@@ -289,6 +381,10 @@ static int depack_do_frame_max_streams(PACKET *pkt,
                                               connection->stream0);
             break;
         default:
+            ossl_quic_conn_raise_protocol_error(connection,
+                                                QUIC_ERR_FRAME_ENCODING_ERROR,
+                                                frame_type,
+                                                "decode error");
             return 0;
     }
 
@@ -301,8 +397,13 @@ static int depack_do_frame_data_blocked(PACKET *pkt,
 {
     uint64_t max_data = 0;
 
-    if (!ossl_quic_wire_decode_frame_data_blocked(pkt, &max_data))
+    if (!ossl_quic_wire_decode_frame_data_blocked(pkt, &max_data)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
@@ -319,8 +420,13 @@ static int depack_do_frame_stream_data_blocked(PACKET *pkt,
     uint64_t max_data = 0;
 
     if (!ossl_quic_wire_decode_frame_stream_data_blocked(pkt, &stream_id,
-                                                         &max_data))
+                                                         &max_data)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
@@ -331,12 +437,18 @@ static int depack_do_frame_stream_data_blocked(PACKET *pkt,
 
 static int depack_do_frame_streams_blocked(PACKET *pkt,
                                            QUIC_CONNECTION *connection,
-                                           OSSL_ACKM_RX_PKT *ackm_data)
+                                           OSSL_ACKM_RX_PKT *ackm_data,
+                                           uint64_t frame_type)
 {
     uint64_t max_data = 0;
 
-    if (!ossl_quic_wire_decode_frame_streams_blocked(pkt, &max_data))
+    if (!ossl_quic_wire_decode_frame_streams_blocked(pkt, &max_data)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            frame_type,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
@@ -351,8 +463,13 @@ static int depack_do_frame_new_conn_id(PACKET *pkt,
 {
     OSSL_QUIC_FRAME_NEW_CONN_ID frame_data;
 
-    if (!ossl_quic_wire_decode_frame_new_conn_id(pkt, &frame_data))
+    if (!ossl_quic_wire_decode_frame_new_conn_id(pkt, &frame_data)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
@@ -368,8 +485,13 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
 {
     uint64_t seq_num;
 
-    if (!ossl_quic_wire_decode_frame_retire_conn_id(pkt, &seq_num))
+    if (!ossl_quic_wire_decode_frame_retire_conn_id(pkt, &seq_num)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
@@ -384,8 +506,13 @@ static int depack_do_frame_path_challenge(PACKET *pkt,
 {
     uint64_t frame_data = 0;
 
-    if (!ossl_quic_wire_decode_frame_path_challenge(pkt, &frame_data))
+    if (!ossl_quic_wire_decode_frame_path_challenge(pkt, &frame_data)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
@@ -401,8 +528,13 @@ static int depack_do_frame_path_response(PACKET *pkt,
 {
     uint64_t frame_data = 0;
 
-    if (!ossl_quic_wire_decode_frame_path_response(pkt, &frame_data))
+    if (!ossl_quic_wire_decode_frame_path_response(pkt, &frame_data)) {
+        ossl_quic_conn_raise_protocol_error(connection,
+                                            QUIC_ERR_FRAME_ENCODING_ERROR,
+                                            OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE,
+                                            "decode error");
         return 0;
+    }
 
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
@@ -419,8 +551,7 @@ static int depack_do_frame_conn_close(PACKET *pkt, QUIC_CONNECTION *connection)
     if (!ossl_quic_wire_decode_frame_conn_close(pkt, &frame_data))
         return 0;
 
-    /* TODO(QUIC): ADD CODE to send |frame_data| to the connection manager */
-
+    ossl_quic_conn_on_remote_conn_close(connection, &frame_data);
     return 1;
 }
 
@@ -477,7 +608,7 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
         switch (frame_type) {
         case OSSL_QUIC_FRAME_TYPE_PING:
             /* Allowed in all packet types */
-            if (!depack_do_frame_ping(pkt, ackm_data))
+            if (!depack_do_frame_ping(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_PADDING:
@@ -489,39 +620,67 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
         case OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN:
         case OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN:
             /* ACK frames are valid everywhere except in 0RTT packets */
-            if (pkt_type == QUIC_PKT_TYPE_0RTT)
+            if (pkt_type == QUIC_PKT_TYPE_0RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "ACK not valid in 0-RTT");
                 return 0;
-            if (!depack_do_frame_ack(pkt, connection, packet_space, received))
+            }
+            if (!depack_do_frame_ack(pkt, connection, packet_space, received,
+                                     frame_type))
                 return 0;
             break;
 
         case OSSL_QUIC_FRAME_TYPE_RESET_STREAM:
             /* RESET_STREAM frames are valid in 0RTT and 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_0RTT
-                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                && pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "RESET_STREAM not valid in "
+                                                    "INITIAL/HANDSHAKE");
                 return 0;
+            }
             if (!depack_do_frame_reset_stream(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_STOP_SENDING:
             /* STOP_SENDING frames are valid in 0RTT and 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_0RTT
-                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                && pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "STOP_SENDING not valid in "
+                                                    "INITIAL/HANDSHAKE");
                 return 0;
+            }
             if (!depack_do_frame_stop_sending(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_CRYPTO:
             /* CRYPTO frames are valid everywhere except in 0RTT packets */
-            if (pkt_type == QUIC_PKT_TYPE_0RTT)
+            if (pkt_type == QUIC_PKT_TYPE_0RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "CRYPTO frame not valid in 0-RTT");
                 return 0;
+            }
             if (!depack_do_frame_crypto(pkt, connection, parent_pkt, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
             /* NEW_TOKEN frames are valid in 1RTT packets */
-            if (pkt_type != QUIC_PKT_TYPE_1RTT)
+            if (pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "NEW_TOKEN valid only in 1-RTT");
                 return 0;
+            }
             if (!depack_do_frame_new_token(pkt, connection, ackm_data))
                 return 0;
             break;
@@ -536,25 +695,41 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
         case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN_FIN:
             /* STREAM frames are valid in 0RTT and 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_0RTT
-                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                && pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "STREAM valid only in 0/1-RTT");
                 return 0;
-            if (!depack_do_frame_stream(pkt, connection, parent_pkt, ackm_data))
+            }
+            if (!depack_do_frame_stream(pkt, connection, parent_pkt, ackm_data,
+                                        frame_type))
                 return 0;
             break;
 
         case OSSL_QUIC_FRAME_TYPE_MAX_DATA:
             /* MAX_DATA frames are valid in 0RTT and 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_0RTT
-                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                && pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "MAX_DATA valid only in 0/1-RTT");
                 return 0;
+            }
             if (!depack_do_frame_max_data(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA:
             /* MAX_STREAM_DATA frames are valid in 0RTT and 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_0RTT
-                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                && pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "MAX_STREAM_DATA valid only in 0/1-RTT");
                 return 0;
+            }
             if (!depack_do_frame_max_stream_data(pkt, connection, ackm_data))
                 return 0;
             break;
@@ -563,8 +738,13 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
         case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI:
             /* MAX_STREAMS frames are valid in 0RTT and 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_0RTT
-                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                && pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "MAX_STREAMS valid only in 0/1-RTT");
                 return 0;
+            }
             if (!depack_do_frame_max_streams(pkt, connection, ackm_data,
                                              frame_type))
                 return 0;
@@ -573,16 +753,26 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
         case OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED:
             /* DATA_BLOCKED frames are valid in 0RTT and 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_0RTT
-                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                && pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "DATA_BLOCKED valid only in 0/1-RTT");
                 return 0;
+            }
             if (!depack_do_frame_data_blocked(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED:
             /* STREAM_DATA_BLOCKED frames are valid in 0RTT and 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_0RTT
-                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                && pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "STREAM_DATA_BLOCKED valid only in 0/1-RTT");
                 return 0;
+            }
             if (!depack_do_frame_stream_data_blocked(pkt, connection, ackm_data))
                 return 0;
             break;
@@ -591,40 +781,65 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
         case OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI:
             /* STREAMS_BLOCKED frames are valid in 0RTT and 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_0RTT
-                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                && pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "STREAMS valid only in 0/1-RTT");
                 return 0;
-            if (!depack_do_frame_streams_blocked(pkt, connection, ackm_data))
+            }
+            if (!depack_do_frame_streams_blocked(pkt, connection, ackm_data,
+                                                 frame_type))
                 return 0;
             break;
 
         case OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID:
             /* NEW_CONN_ID frames are valid in 0RTT and 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_0RTT
-                && pkt_type != QUIC_PKT_TYPE_1RTT)
-                return 0;
+                && pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "NEW_CONN_ID valid only in 0/1-RTT");
+            }
             if (!depack_do_frame_new_conn_id(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID:
             /* RETIRE_CONN_ID frames are valid in 0RTT and 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_0RTT
-                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                && pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "RETIRE_CONN_ID valid only in 0/1-RTT");
                 return 0;
+            }
             if (!depack_do_frame_retire_conn_id(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE:
             /* PATH_CHALLENGE frames are valid in 0RTT and 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_0RTT
-                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                && pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "PATH_CHALLENGE valid only in 0/1-RTT");
                 return 0;
+            }
             if (!depack_do_frame_path_challenge(pkt, connection, ackm_data))
                 return 0;
             break;
         case OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE:
             /* PATH_RESPONSE frames are valid in 1RTT packets */
-            if (pkt_type != QUIC_PKT_TYPE_1RTT)
+            if (pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "PATH_CHALLENGE valid only in 1-RTT");
                 return 0;
+            }
             if (!depack_do_frame_path_response(pkt, connection, ackm_data))
                 return 0;
             break;
@@ -632,8 +847,13 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
         case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP:
             /* CONN_CLOSE_APP frames are valid in 0RTT and 1RTT packets */
             if (pkt_type != QUIC_PKT_TYPE_0RTT
-                && pkt_type != QUIC_PKT_TYPE_1RTT)
+                && pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "CONN_CLOSE (APP) valid only in 0/1-RTT");
                 return 0;
+            }
             /* FALLTHRU */
         case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT:
             /* CONN_CLOSE_TRANSPORT frames are valid in all packets */
@@ -643,8 +863,13 @@ static int depack_process_frames(QUIC_CONNECTION *connection, PACKET *pkt,
 
         case OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE:
             /* HANDSHAKE_DONE frames are valid in 1RTT packets */
-            if (pkt_type != QUIC_PKT_TYPE_1RTT)
+            if (pkt_type != QUIC_PKT_TYPE_1RTT) {
+                ossl_quic_conn_raise_protocol_error(connection,
+                                                    QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    frame_type,
+                                                    "HANDSHAKE_DONE valid only in 1-RTT");
                 return 0;
+            }
             if (!depack_do_frame_handshake_done(pkt, connection, ackm_data))
                 return 0;
             break;
