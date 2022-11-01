@@ -1728,9 +1728,10 @@ static void csm_start_terminating(QUIC_CONNECTION *qc,
             qc->state = tcause->remote ? QUIC_CONN_STATE_TERMINATING_DRAINING
                                        : QUIC_CONN_STATE_TERMINATING_CLOSING;
             qc->terminate_cause = *tcause;
-            /* TODO: Calculate deadline properly */
             qc->terminate_deadline
-                = ossl_time_add(ossl_time_now(), ossl_ms2time(2000));
+                = ossl_time_add(ossl_time_now(),
+                                ossl_time_multiply(ossl_ackm_get_pto_duration(qc->ackm),
+                                                   3));
 
             if (!tcause->remote) {
                 OSSL_QUIC_FRAME_CONN_CLOSE f = {0};

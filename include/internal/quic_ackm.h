@@ -225,4 +225,10 @@ int ossl_ackm_get_largest_unacked(OSSL_ACKM *ackm, int pkt_space, QUIC_PN *pn);
 int ossl_ackm_mark_packet_pseudo_lost(OSSL_ACKM *ackm,
                                       int pkt_space, QUIC_PN pn);
 
+/*
+ * Returns the PTO duration as currently calculated. This is a quantity of time.
+ * This duration is used in various parts of QUIC besides the ACKM.
+ */
+OSSL_TIME ossl_ackm_get_pto_duration(OSSL_ACKM *ackm);
+
 #endif
