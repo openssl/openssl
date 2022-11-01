@@ -9,7 +9,10 @@
 
  Changes between 1.1.1r and 1.1.1s [xx XXX xxxx]
 
-  *)
+  *) Fixed a regression introduced in 1.1.1r version not refreshing the
+     certificate data to be signed before signing the certificate.
+
+     [Gibeom Gwon]
 
  Changes between 1.1.1q and 1.1.1r [11 Oct 2022]
 
