@@ -18,7 +18,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Major changes between OpenSSL 3.0.6 and OpenSSL 3.0.7 [under development]
+### Major changes between OpenSSL 3.0.6 and OpenSSL 3.0.7 [1 Nov 2022]
 
   * Added RIPEMD160 to the default provider.
   * Fixed regressions introduced in 3.0.6 version.
