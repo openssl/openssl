@@ -96,6 +96,7 @@ struct quic_conn_st {
     OSSL_QUIC_TX_PACKETISER         *txp;
     QUIC_TXPIM                      *txpim;
     QUIC_CFQ                        *cfq;
+    /* Connection level FC. */
     QUIC_TXFC                       conn_txfc;
     QUIC_RXFC                       conn_rxfc;
     QUIC_STREAM_MAP                 qsm;
@@ -148,7 +149,8 @@ struct quic_conn_st {
     /* Transport parameter values received from server. */
     uint64_t                        init_max_stream_data_bidi_local;
     uint64_t                        init_max_stream_data_bidi_remote;
-    uint64_t                        init_max_stream_data_uni;
+    uint64_t                        init_max_stream_data_uni_remote;
+    uint64_t                        rx_max_ack_delay; /* ms */
     unsigned char                   rx_ack_delay_exp;
 
     /*
@@ -156,6 +158,24 @@ struct quic_conn_st {
      * are currently processing.
      */
     OSSL_QRX_PKT                    *qrx_pkt;
+
+    /*
+     * Current limit on number of streams we may create. Set by transport
+     * parameters initially and then by MAX_STREAMS frames.
+     */
+    uint64_t                        max_local_streams_bidi;
+    uint64_t                        max_local_streams_uni;
+
+    /* The negotiated maximum idle timeout in milliseconds. */
+    uint64_t                        max_idle_timeout;
+
+    /*
+     * Maximum payload size in bytes for datagrams sent to our peer, as
+     * negotiated by transport parameters.
+     */
+    uint64_t                        rx_max_udp_payload_size;
+    /* Maximum active CID limit, as negotiated by transport parameters. */
+    uint64_t                        rx_active_conn_id_limit;
 
     /*
      * State tracking. QUIC connection-level state is best represented based on

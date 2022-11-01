@@ -485,7 +485,8 @@ static int csm_init(QUIC_CONNECTION *qc)
     }
 
     /* We plug in a network write BIO to the QTX later when we get one. */
-    qtx_args.mdpl = 1200;
+    qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
+    qc->rx_max_udp_payload_size = qtx_args.mdpl;
 
     qc->qtx = ossl_qtx_new(&qtx_args);
     if (qc->qtx == NULL) {
@@ -660,8 +661,10 @@ static int csm_init(QUIC_CONNECTION *qc)
         return 0;
     }
 
-    qc->rx_ack_delay_exp    = QUIC_DEFAULT_ACK_DELAY_EXP;
-    qc->tx_enc_level        = QUIC_ENC_LEVEL_INITIAL;
+    qc->rx_max_ack_delay        = QUIC_DEFAULT_MAX_ACK_DELAY;
+    qc->rx_ack_delay_exp        = QUIC_DEFAULT_ACK_DELAY_EXP;
+    qc->rx_active_conn_id_limit = QUIC_MIN_ACTIVE_CONN_ID_LIMIT;
+    qc->tx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
     reactor_init(&qc->rtor, csm_tick, qc, csm_determine_next_tick_deadline(qc));
     return 1;
 }
@@ -847,11 +850,11 @@ static int csm_generate_transport_params(QUIC_CONNECTION *qc,
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_MAX_IDLE_TIMEOUT,
-                                                   30000))
+                                                   QUIC_DEFAULT_IDLE_TIMEOUT))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_MAX_UDP_PAYLOAD_SIZE,
-                                                   1452))
+                                                   QUIC_MIN_INITIAL_DGRAM_LEN))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_ACTIVE_CONN_ID_LIMIT,
@@ -859,27 +862,32 @@ static int csm_generate_transport_params(QUIC_CONNECTION *qc,
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_DATA,
-                                                   786432))
+                                                   ossl_quic_rxfc_get_cwm(&qc->conn_rxfc)))
         goto err;
 
+    /*
+     * We actually want the default CWM for a new RXFC, but here we just use
+     * stream0 as a representative specimen. TODO: revisit this when we support
+     * multiple streams.
+     */
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_LOCAL,
-                                                   524288))
+                                                   ossl_quic_rxfc_get_cwm(&qc->stream0->rxfc)))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_REMOTE,
-                                                   524288))
+                                                   ossl_quic_rxfc_get_cwm(&qc->stream0->rxfc)))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_UNI,
-                                                   524288))
+                                                   ossl_quic_rxfc_get_cwm(&qc->stream0->rxfc)))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAMS_BIDI,
-                                                   100))
+                                                   0))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAMS_UNI,
-                                                   100))
+                                                   0))
         goto err;
 
     if (!WPACKET_get_total_written(&wpkt, buf_len_p))
@@ -932,7 +940,13 @@ static int csm_on_transport_params(const unsigned char *params,
     int got_initial_max_stream_data_bidi_local = 0;
     int got_initial_max_stream_data_bidi_remote = 0;
     int got_initial_max_stream_data_uni = 0;
+    int got_initial_max_streams_bidi = 0;
+    int got_initial_max_streams_uni = 0;
     int got_ack_delay_exp = 0;
+    int got_max_ack_delay = 0;
+    int got_max_udp_payload_size = 0;
+    int got_max_idle_timeout = 0;
+    int got_active_conn_id_limit = 0;
     QUIC_CONN_ID cid;
 
     if (qc->got_transport_params)
@@ -1010,7 +1024,11 @@ static int csm_on_transport_params(const unsigned char *params,
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
                     return 0;
 
-                qc->init_max_stream_data_bidi_local = v;
+                /*
+                 * This is correct; the BIDI_LOCAL TP governs streams created by
+                 * the endpoint which sends the TP, i.e., our peer.
+                 */
+                qc->init_max_stream_data_bidi_remote = v;
                 got_initial_max_stream_data_bidi_local = 1;
                 break;
 
@@ -1022,8 +1040,11 @@ static int csm_on_transport_params(const unsigned char *params,
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
                     return 0;
 
-                qc->init_max_stream_data_bidi_remote = v;
-                got_initial_max_stream_data_bidi_remote = 1;
+                /*
+                 * This is correct; the BIDI_REMOTE TP governs streams created
+                 * by the endpoint which receives the TP, i.e., us.
+                 */
+                qc->init_max_stream_data_bidi_local = v;
 
                 /* Apply to stream 0. */
                 ossl_quic_txfc_bump_cwm(&qc->stream0->txfc, v);
@@ -1038,7 +1059,7 @@ static int csm_on_transport_params(const unsigned char *params,
                 if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
                     return 0;
 
-                qc->init_max_stream_data_uni = v;
+                qc->init_max_stream_data_uni_remote = v;
                 got_initial_max_stream_data_uni = 1;
                 break;
 
@@ -1055,18 +1076,96 @@ static int csm_on_transport_params(const unsigned char *params,
                 got_ack_delay_exp = 1;
                 break;
 
-            //case QUIC_TPARAM_MAX_IDLE_TIMEOUT:
-            //   break;
-            // QUIC_TPARAM_STATELESS_RESET_TOKEN
-            // QUIC_TPARAM_MAX_UDP_PAYLOAD_SIZE
-            // QUIC_TPARAM_INITIAL_MAX_STREAMS_BIDI
-            // QUIC_TPARAM_INITIAL_MAX_STREAMS_UNI
-            // QUIC_TPARAM_ACK_DELAY_EXPONENT
-            // QUIC_TPARAM_MAX_ACK_DELAY
-            // QUIC_TPARAM_DISABLE_ACTIVE_MIGRATION
-            // QUIC_TPARAM_PREFERRED_ADDR
-            // QUIC_TPARAM_ACTIVE_CONN_ID_LIMIT
+            case QUIC_TPARAM_MAX_ACK_DELAY:
+                if (got_max_ack_delay)
+                    /* must not appear more than once */
+                    return 0;
 
+                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
+                    || v >= (((uint64_t)1) << 14))
+                    return 0;
+
+                qc->rx_max_ack_delay = v;
+                got_max_ack_delay = 1;
+                break;
+
+            case QUIC_TPARAM_INITIAL_MAX_STREAMS_BIDI:
+                if (got_initial_max_streams_bidi)
+                    /* must not appear more than once */
+                    return 0;
+
+                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
+                    || v > (((uint64_t)1) << 60))
+                    return 0;
+
+                assert(qc->max_local_streams_bidi == 0);
+                qc->max_local_streams_bidi = v;
+                got_initial_max_streams_bidi = 1;
+                break;
+
+            case QUIC_TPARAM_INITIAL_MAX_STREAMS_UNI:
+                if (got_initial_max_streams_uni)
+                    /* must not appear more than once */
+                    return 0;
+
+                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
+                    || v > (((uint64_t)1) << 60))
+                    return 0;
+
+                assert(qc->max_local_streams_uni == 0);
+                qc->max_local_streams_uni = v;
+                got_initial_max_streams_uni = 1;
+                break;
+
+            case QUIC_TPARAM_MAX_IDLE_TIMEOUT:
+                if (got_max_idle_timeout)
+                    /* must not appear more than once */
+                    return 0;
+
+                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+                    return 0;
+
+                if (v < qc->max_idle_timeout)
+                    qc->max_idle_timeout = v;
+
+                got_max_idle_timeout = 1;
+                break;
+
+            case QUIC_TPARAM_MAX_UDP_PAYLOAD_SIZE:
+                if (got_max_udp_payload_size)
+                    /* must not appear more than once */
+                    return 0;
+
+                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
+                    || v < QUIC_MIN_INITIAL_DGRAM_LEN)
+                    return 0;
+
+                qc->rx_max_udp_payload_size = v;
+                got_max_udp_payload_size    = 1;
+                break;
+
+            case QUIC_TPARAM_ACTIVE_CONN_ID_LIMIT:
+                if (got_active_conn_id_limit)
+                    /* must not appear more than once */
+                    return 0;
+
+                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
+                    || v < QUIC_MIN_ACTIVE_CONN_ID_LIMIT)
+                    /* TODO: TRANSPORT_PARAMETER_ERROR */
+                    return 0;
+
+                qc->rx_active_conn_id_limit = v;
+                got_active_conn_id_limit = 1;
+                break;
+
+            /*
+             * TODO: Handle:
+             *   QUIC_TPARAM_STATELESS_RESET_TOKEN
+             *   QUIC_TPARAM_PREFERRED_ADDR
+             */
+
+            case QUIC_TPARAM_DISABLE_ACTIVE_MIGRATION:
+                /* We do not currently handle migration, so nothing to do. */
             default:
                 /* Skip over and ignore. */
                 body = ossl_quic_wire_decode_transport_param_bytes(&pkt, &id,
@@ -1084,7 +1183,8 @@ static int csm_on_transport_params(const unsigned char *params,
 
     qc->got_transport_params = 1;
 
-    if (got_initial_max_data || got_initial_max_stream_data_bidi_remote)
+    if (got_initial_max_data || got_initial_max_stream_data_bidi_remote
+        || got_initial_max_streams_bidi || got_initial_max_streams_uni)
         /* If FC credit was bumped, we may now be able to send. */
         ossl_quic_stream_map_update_state(&qc->qsm, qc->stream0);
 
