@@ -4620,14 +4620,24 @@ static int test_ecx_short_keys(int tst)
 {
     unsigned char ecxkeydata = 1;
     EVP_PKEY *pkey;
+    OSSL_PROVIDER* deflprov;
+    int testresult = 1;
 
+
+    deflprov = OSSL_PROVIDER_load(NULL, "default");
+
+    if (!TEST_ptr(deflprov))
+        return 0;
 
     pkey = EVP_PKEY_new_raw_private_key(ecxnids[tst], NULL, &ecxkeydata, 1);
     if (!TEST_ptr_null(pkey)) {
         EVP_PKEY_free(pkey);
-        return 0;
+        testresult = 0;
     }
-    return 1;
+
+    OSSL_PROVIDER_unload(deflprov);
+
+    return testresult;
 }
 
 typedef enum OPTION_choice {
@@ -4663,6 +4673,7 @@ static int test_ecx_not_private_key(int tst)
     int ret;
     unsigned char *pubkey;
     size_t pubkeylen;
+    OSSL_PROVIDER* deflprov;
 
 
     switch (keys[tst].type) {
@@ -4675,6 +4686,11 @@ static int test_ecx_not_private_key(int tst)
     /* Check if this algorithm supports public keys */
     if (keys[tst].pub == NULL)
         return 1;
+
+    deflprov = OSSL_PROVIDER_load(NULL, "default");
+
+    if (!TEST_ptr(deflprov))
+        return 0;
 
     pubkey = (unsigned char *)keys[tst].pub,
     pubkeylen = strlen(keys[tst].pub);
@@ -4709,6 +4725,7 @@ static int test_ecx_not_private_key(int tst)
     EVP_MD_CTX_free(ctx);
     OPENSSL_free(mac);
     EVP_PKEY_free(pkey);
+    OSSL_PROVIDER_unload(deflprov);
 
     return testresult;
 #endif
