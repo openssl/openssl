@@ -253,6 +253,8 @@ void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
 
     should_be_active
         = allowed_by_stream_limit
+        && !s->peer_stop_sending
+        && !s->peer_reset_stream
         && ((s->rstream != NULL
             && (s->want_max_stream_data
                 || ossl_quic_rxfc_has_cwm_changed(&s->rxfc, 0)))

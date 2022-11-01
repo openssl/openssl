@@ -68,17 +68,22 @@ struct quic_stream_st {
     unsigned int    active : 1;
 
     /*
-     * Has STOP_SENDING been requested? Note that this is not the same as
-     * want_stop_sending below, as a STOP_SENDING frame may already have been
+     * Has STOP_SENDING been requested (by us)? Note that this is not the same
+     * as want_stop_sending below, as a STOP_SENDING frame may already have been
      * sent and fully acknowledged.
      */
     unsigned int    stop_sending            : 1;
 
     /*
-     * Has RESET_STREAM been requested? Works identically to STOP_SENDING for
-     * transmission purposes.
+     * Has RESET_STREAM been requested (by us)? Works identically to
+     * STOP_SENDING for transmission purposes.
      */
     unsigned int    reset_stream            : 1;
+
+    /* Has our peer sent a STOP_SENDING frame? */
+    unsigned int    peer_stop_sending       : 1;
+    /* Has our peer sent a RESET_STREAM frame? */
+    unsigned int    peer_reset_stream       : 1;
 
     /* Temporary flags used by TXP. */
     unsigned int    txp_sent_fc             : 1;

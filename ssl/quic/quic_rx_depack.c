@@ -95,7 +95,8 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
     if (stream == NULL || stream->sstream == NULL)
         return 0;
 
-    /* TODO: RESET_STREAM handling */
+    stream->peer_reset_stream = 1;
+    ossl_quic_stream_map_update_state(&connection->qsm, stream);
     return 1;
 }
 
@@ -116,7 +117,8 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
     if (stream == NULL || stream->rstream == NULL)
         return 0;
 
-    /* TODO: STOP_SENDING handling */
+    stream->peer_stop_sending = 1;
+    ossl_quic_stream_map_update_state(&connection->qsm, stream);
     return 1;
 }
 
