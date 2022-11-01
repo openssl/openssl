@@ -1663,3 +1663,19 @@ int ossl_ackm_mark_packet_pseudo_lost(OSSL_ACKM *ackm,
     ackm_on_pkts_lost(ackm, pkt_space, pkt, /*pseudo=*/1);
     return 1;
 }
+
+OSSL_TIME ossl_ackm_get_pto_duration(OSSL_ACKM *ackm)
+{
+    OSSL_TIME duration;
+    OSSL_RTT_INFO rtt;
+
+    ossl_statm_get_rtt_info(ackm->statm, &rtt);
+
+    duration = ossl_time_add(rtt.smoothed_rtt,
+                             ossl_time_max(ossl_time_multiply(rtt.rtt_variance, 4),
+                                           ossl_ticks2time(K_GRANULARITY)));
+    if (!ossl_time_is_infinite(rtt.max_ack_delay))
+        duration = ossl_time_add(duration, rtt.max_ack_delay);
+
+    return duration;
+}
