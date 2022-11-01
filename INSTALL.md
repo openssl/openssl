@@ -440,6 +440,13 @@ then this flag is optional and defaults to `ZLIB1` if not provided.
 This flag is optional and if not provided then `GNV$LIBZSHR`, `GNV$LIBZSHR32`
 or `GNV$LIBZSHR64` is used by default depending on the pointer size chosen.
 
+**RPM based distributions:** this option is not suggested to use, as internal
+DSO will try to load `libz.so`, which in most cases is a symlink to real
+shared object library with soname, and is distributed separately as a
+development RPM package.
+
+Please use `zlib` instead.
+
 ### with-zstd-include
 
     --with-zstd-include=DIR
@@ -1039,6 +1046,13 @@ Like the zlib option, but has OpenSSL load the zlib library dynamically
 when needed.
 
 This is only supported on systems where loading of shared libraries is supported.
+
+**RPM based distributions:** this option is not suggested to use, as internal
+DSO will try to load `libz.so`, which in most cases is a symlink to real
+shared object library with soname, and is distributed separately as a
+development RPM package.
+
+Please use `zlib` instead.
 
 ### enable-zstd
 

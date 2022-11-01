@@ -93,6 +93,7 @@ EOF
 # [no-]zlib     [don't] compile support for zlib compression.
 # zlib-dynamic  Like "zlib", but the zlib library is expected to be a shared
 #               library and will be loaded at run-time by the OpenSSL library.
+#               This option is not suggested for RPM based distributions.
 # sctp          include SCTP support
 # enable-quic   include QUIC support (currently just for developers as the
 #               implementation is by no means complete and usable)
