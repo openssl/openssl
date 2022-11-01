@@ -27,7 +27,7 @@ jobs:
             config: --strict-warnings no-fips enable-quic
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{ matrix.platform.arch }}
@@ -63,7 +63,7 @@ jobs:
           - windows-2022
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: shogo82148/actions-setup-perl@v1
     - name: prepare the build directory
@@ -87,7 +87,7 @@ jobs:
           - windows-2022
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: shogo82148/actions-setup-perl@v1
     - name: prepare the build directory
