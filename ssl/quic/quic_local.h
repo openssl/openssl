@@ -233,17 +233,12 @@ struct quic_conn_st {
 
     /* If bit n is set, EL n has been discarded. */
     unsigned int                    el_discarded            : 4;
+
+    /* Are we in blocking mode? */
+    unsigned int                    blocking                : 1;
 };
 
-/*
- * Internal methods for the QUIC frontend I/O API. Used by libssl frontend API
- * for QUIC_CONNECTION-based SSL objects.
- */
-void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_wbio);
-void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio);
-BIO *ossl_quic_conn_get_net_rbio(const QUIC_CONNECTION *qc);
-BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc);
-
+/* Internal calls to the QUIC CSM which come from various places. */
 int ossl_quic_conn_on_handshake_confirmed(QUIC_CONNECTION *qc);
 
 /*

@@ -342,6 +342,7 @@ static int poll_two_fds(int rfd, int rfd_want_read,
 #endif
 }
 
+/* Must only be called if we are in blocking mode. */
 static int reactor_block_until_pred(QUIC_REACTOR *rtor,
                                     int (*pred)(void *arg), void *pred_arg,
                                     uint32_t flags)
@@ -469,6 +470,8 @@ static int csm_init(QUIC_CONNECTION *qc)
     QUIC_DHS_ARGS dhs_args = {0};
     uint32_t pn_space;
 
+    qc->blocking = 1;
+
     if (!gen_rand_conn_id(INIT_DCID_LEN, &qc->init_dcid)) {
         csm_cleanup(qc);
         return 0;
@@ -535,7 +538,6 @@ static int csm_init(QUIC_CONNECTION *qc)
 
     /* We use a zero-length SCID. */
     txp_args.cur_dcid           = qc->init_dcid;
-    txp_args.peer               = qc->init_peer_addr;
     txp_args.ack_delay_exponent = 3;
     txp_args.qtx                = qc->qtx;
     txp_args.txpim              = qc->txpim;
@@ -1307,6 +1309,10 @@ static int csm_connect(QUIC_CONNECTION *qc)
         /* Calls to connect are idempotent */
         return 1;
 
+    if (BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC)
+        /* Peer address must have been set. */
+        return 0;
+
     /* Plug in secrets for the Initial EL. */
     if (!ossl_quic_provide_initial_secret(qc->ssl.ctx->libctx,
                                           qc->ssl.ctx->propq,
@@ -1587,14 +1593,71 @@ int ossl_quic_clear(SSL *s)
 /*
  * QUIC Front-End I/O API: Network BIO Configuration {{{1
  * =================================================
+ *
+ * Handling the different BIOs is difficult:
+ *
+ *   - It is more or less a requirement that we use non-blocking network I/O;
+ *     we need to be able to have timeouts on recv() calls, and make best effort
+ *     (non blocking) send() and recv() calls.
+ *
+ *     The only sensible way to do this is to configure the socket into
+ *     non-blocking mode. We could try to do select() before calling send() or
+ *     recv() to get a guarantee tha the call will not block, but this will
+ *     probably run into issues with buggy OSes which generate spurious socket
+ *     readiness events. In any case, relying on this to work reliably does not
+ *     seem sane.
+ *
+ *     Timeouts could be handled via setsockopt() socket timeout options, but
+ *     this depends on OS support and adds another syscall to every network I/O
+ *     operation. It also has obvious thread safety concerns if we want to move
+ *     to concurrent use of a single socket at some later date.
+ *
+ *     Some OSes support a MSG_DONTWAIT flag which allows a single I/O option to
+ *     be made non-blocking. However some OSes (e.g. Windows) do not support
+ *     this, so we cannot rely on this.
+ *
+ *     As such, we need to configure any FD in non-blocking mode. This may
+ *     confound users who pass a blocking socket to libssl. However, in practice
+ *     it would be extremely strange for a user of QUIC to pass an FD to us,
+ *     then also try and send receive traffic on the same socket(!). Thus the
+ *     impact of this should be limited, and can be documented.
+ *
+ *   - We support both blocking and non-blocking operation in terms of the API
+ *     presented to the user. One prospect is to set the blocking mode based on
+ *     whether the socket passed to us was already in blocking mode. However,
+ *     Windows has no API for determining if a socket is in blocking mode (!),
+ *     therefore this cannot be done portably. Currently therefore we expose an
+ *     explicit API call to set this, and default to blocking mode.
+ *
+ *   - We need to determine our initial destination UDP address. The "natural"
+ *     way for a user to do this is to set the peer variable on a BIO_dgram.
+ *     However, this has problems because BIO_dgram's peer variable is used for
+ *     both transmission and reception. This means it can be constantly being
+ *     changed to a malicious value (e.g. if some random unrelated entity on the
+ *     network starts sending traffic to us) on every read call. This is not a
+ *     direct issue because we use the 'stateless' BIO_sendmmsg and BIO_recvmmsg
+ *     calls only, which do not use this variable. However, we do need to let
+ *     the user specify the peer in a 'normal' manner. The compromise here is
+ *     that we grab the current peer value set at the time the write BIO is set
+ *     and do not read the value again.
+ *
+ *   - We also need to support memory BIOs (e.g. BIO_dgram_pair) or custom BIOs.
+ *     Currently we do this by only supporting non-blocking mode.
+ *
  */
 
 /*
- * csm_determine_poll_fd_from_bio {{{2
- * ------------------------------
- * Determine what FD we should poll on based on our underlying network BIO.
+ * csm_analyse_bio {{{2
+ * ---------------
+ *
+ * Determines:
+ *
+ *   - what FD we should poll on based on our underlying network BIO;
+ *   - what initial destination UDP address we should use.
+ *
  */
-static int csm_determine_poll_fd_from_bio(QUIC_CONNECTION *qc, BIO *net_bio, int *pfd)
+static int csm_analyse_bio(QUIC_CONNECTION *qc, BIO *net_bio,
+                           int *pfd, BIO_ADDR *peer)
 {
     int fd = -1;
 
@@ -1612,10 +1675,17 @@ static int csm_determine_poll_fd_from_bio(QUIC_CONNECTION *qc, BIO *net_bio, int
             if (BIO_get_fd(net_bio, &fd) < 0)
                 return 0;
 
+            if (peer != NULL && !BIO_dgram_get_peer(net_bio, peer))
+                return 0;
+
             break;
 
         case BIO_TYPE_DGRAM_PAIR:
-            return 0; /* TODO */
+            /* Valid, but not pollable. */
+            if (peer != NULL)
+                BIO_ADDR_clear(peer);
+
+            break;
 
         case BIO_TYPE_NONE:
         case BIO_TYPE_FILE:
@@ -1625,7 +1695,7 @@ static int csm_determine_poll_fd_from_bio(QUIC_CONNECTION *qc, BIO *net_bio, int
         case BIO_TYPE_NULL:
         case BIO_TYPE_SSL:
         case BIO_TYPE_MD:
-        case BIO_TYPE_BUFFER: /* TODO */
+        case BIO_TYPE_BUFFER:
         case BIO_TYPE_CIPHER:
         case BIO_TYPE_BASE64:
         case BIO_TYPE_CONNECT:
@@ -1666,7 +1736,7 @@ void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
     if (qc->net_rbio == net_rbio)
         return;
 
-    if (net_rbio != NULL && !csm_determine_poll_fd_from_bio(qc, net_rbio, &rfd)) {
+    if (net_rbio != NULL && !csm_analyse_bio(qc, net_rbio, &rfd, NULL)) {
         /* If we cannot analyse the BIO, treat it as setting a NULL BIO. */
         rfd         = -1;
         net_rbio    = NULL;
@@ -1679,6 +1749,13 @@ void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
     BIO_free(qc->net_rbio);
     ossl_quic_demux_set_bio(qc->demux, net_rbio);
     qc->net_rbio = net_rbio;
+
+    /*
+     * If what we have is not pollable (e.g. a BIO_dgram_pair) disable blocking
+     * mode as we do not support it for now.
+     */
+    if (net_rbio != NULL && rfd == -1)
+        qc->blocking = 0;
 }
 
 /*
@@ -1688,11 +1765,17 @@ void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
 void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio)
 {
     int wfd = -1;
+    BIO_ADDR peer, *ppeer = &peer;
 
     if (qc->net_wbio == net_wbio)
         return;
 
-    if (net_wbio != NULL && !csm_determine_poll_fd_from_bio(qc, net_wbio, &wfd)) {
+    /* If we have already got a peer address, don't try to get it again. */
+    if (BIO_ADDR_family(&qc->init_peer_addr) != AF_UNSPEC)
+        ppeer = NULL;
+
+    if (net_wbio != NULL
+        && !csm_analyse_bio(qc, net_wbio, &wfd, ppeer)) {
         /* If we cannot analyse the BIO, treat it as setting a NULL BIO. */
         wfd         = -1;
         net_wbio    = NULL;
@@ -1705,6 +1788,21 @@ void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio)
     BIO_free(qc->net_wbio);
     ossl_qtx_set_bio(qc->qtx, net_wbio);
     qc->net_wbio = net_wbio;
+
+    /*
+     * If we have not started connecting yet, update the peer address.
+     */
+    if (ppeer != NULL) {
+        ossl_quic_tx_packetiser_set_peer(qc->txp, ppeer);
+        qc->init_peer_addr = *ppeer;
+    }
+
+    /*
+     * If what we have is not pollable (e.g. a BIO_dgram_pair) disable blocking
+     * mode as we do not support it for now.
+     */
+    if (net_wbio != NULL && wfd == -1)
+        qc->blocking = 0;
 }
 
 /*
@@ -1716,12 +1814,37 @@ BIO *ossl_quic_conn_get_net_rbio(const QUIC_CONNECTION *qc)
     return qc->net_rbio;
 }
 
-/* ossl_quic_conn_get_net_wbio {{{2
+/*
+ * ossl_quic_conn_get_net_wbio {{{2
  * ---------------------------
  */
 BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc)
 {
     return qc->net_wbio;
+}
+
+/* ossl_quic_conn_get_blocking_mode {{{2
+ * --------------------------------
+ */
+int ossl_quic_conn_get_blocking_mode(const QUIC_CONNECTION *qc)
+{
+    return qc->blocking;
+}
+
+/*
+ * ossl_quic_conn_set_blocking_mode {{{2
+ * --------------------------------
+ */
+int ossl_quic_conn_set_blocking_mode(QUIC_CONNECTION *qc, int blocking)
+{
+    /* Cannot enable blocking mode if we do not have pollable FDs. */
+    if (blocking != 0 &&
+        (reactor_get_poll_rfd(&qc->rtor) == -1
+         || reactor_get_poll_wfd(&qc->rtor) == -1))
+        return 0;
+
+    qc->blocking = (blocking != 0);
+    return 1;
 }
 
 /*
@@ -1733,6 +1856,12 @@ BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc)
  *   (BIO/)SSL_get_poll_fd          => ossl_quic_get_poll_fd
  *
  */
+
+/* Returns 1 if the connection is being used in blocking mode. */
+static int blocking_mode(const QUIC_CONNECTION *qc)
+{
+    return qc->blocking;
+}
 
 /*
  * SSL_tick {{{2
@@ -1889,11 +2018,6 @@ int ossl_quic_accept(SSL *s)
  *   (BIO/)SSL_write                => ossl_quic_write
  *
  */
-
-static int blocking_mode(QUIC_CONNECTION *qc)
-{
-    return 1; // TODO
-}
 
 /*
  * SSL_get_error {{{2

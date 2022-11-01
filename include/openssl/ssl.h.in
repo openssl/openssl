@@ -2252,6 +2252,8 @@ __owur int SSL_get_poll_rfd(SSL *s);
 __owur int SSL_get_poll_wfd(SSL *s);
 __owur int SSL_want_net_read(SSL *s);
 __owur int SSL_want_net_write(SSL *s);
+__owur int SSL_set_blocking_mode(SSL *s, int blocking);
+__owur int SSL_get_blocking_mode(SSL *s);
 
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_cache_hit(s) SSL_session_reused(s)

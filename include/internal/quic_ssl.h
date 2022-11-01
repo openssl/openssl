@@ -48,5 +48,11 @@ int ossl_quic_get_poll_wfd(QUIC_CONNECTION *qc);
 int ossl_quic_get_want_net_read(QUIC_CONNECTION *qc);
 int ossl_quic_get_want_net_write(QUIC_CONNECTION *qc);
 int ossl_quic_get_error(const QUIC_CONNECTION *qc, int i);
+int ossl_quic_conn_get_blocking_mode(const QUIC_CONNECTION *qc);
+int ossl_quic_conn_set_blocking_mode(QUIC_CONNECTION *qc, int blocking);
+void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_wbio);
+void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio);
+BIO *ossl_quic_conn_get_net_rbio(const QUIC_CONNECTION *qc);
+BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc);
 
 #endif

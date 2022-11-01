@@ -7043,3 +7043,23 @@ int SSL_want_net_write(SSL *s)
 
     return ossl_quic_get_want_net_write(qc);
 }
+
+int SSL_set_blocking_mode(SSL *s, int blocking)
+{
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (qc == NULL)
+        return 0;
+
+    return ossl_quic_conn_set_blocking_mode(qc, blocking);
+}
+
+int SSL_get_blocking_mode(SSL *s)
+{
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (qc == NULL)
+        return -1;
+
+    return ossl_quic_conn_get_blocking_mode(qc);
+}

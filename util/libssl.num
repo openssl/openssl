@@ -538,3 +538,5 @@ SSL_get_poll_rfd                        ?	3_2_0	EXIST::FUNCTION:
 SSL_get_poll_wfd                        ?	3_2_0	EXIST::FUNCTION:
 SSL_want_net_read                       ?	3_2_0	EXIST::FUNCTION:
 SSL_want_net_write                      ?	3_2_0	EXIST::FUNCTION:
+SSL_set_blocking_mode                   ?	3_2_0	EXIST::FUNCTION:
+SSL_get_blocking_mode                   ?	3_2_0	EXIST::FUNCTION:
