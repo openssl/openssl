@@ -2232,42 +2232,52 @@ struct quic_read_again_args {
     void            *buf;
     size_t          len;
     size_t          *bytes_read;
+    int             peek;
 };
 
 static int quic_read_actual(QUIC_CONNECTION *qc,
                             QUIC_STREAM *stream,
                             void *buf, size_t buf_len,
-                            size_t *bytes_read)
+                            size_t *bytes_read,
+                            int peek)
 {
     int is_fin = 0;
 
     if (stream->rstream == NULL)
         return 0;
 
-    if (!ossl_quic_rstream_read(stream->rstream, buf, buf_len,
-                                bytes_read, &is_fin))
-        return 0;
-
-    if (*bytes_read > 0) {
-        /*
-         * We have read at least one byte from the stream. Inform stream-level
-         * RXFC of the retirement of controlled bytes. Update the active stream
-         * status (the RXFC may now want to emit a frame granting more credit to
-         * the peer).
-         */
-        OSSL_RTT_INFO rtt_info;
-        ossl_statm_get_rtt_info(&qc->statm, &rtt_info);
-
-        if (!ossl_quic_rxfc_on_retire(&qc->stream0->rxfc, *bytes_read,
-                                      rtt_info.smoothed_rtt))
+    if (peek) {
+        if (!ossl_quic_rstream_peek(stream->rstream, buf, buf_len,
+                                    bytes_read, &is_fin))
+            return 0;
+    } else {
+        if (!ossl_quic_rstream_read(stream->rstream, buf, buf_len,
+                                    bytes_read, &is_fin))
             return 0;
     }
 
-    if (is_fin)
-        stream->recv_fin_retired = 1;
+    if (!peek) {
+        if (*bytes_read > 0) {
+            /*
+             * We have read at least one byte from the stream. Inform stream-level
+             * RXFC of the retirement of controlled bytes. Update the active stream
+             * status (the RXFC may now want to emit a frame granting more credit to
+             * the peer).
+             */
+            OSSL_RTT_INFO rtt_info;
+            ossl_statm_get_rtt_info(&qc->statm, &rtt_info);
 
-    if (*bytes_read > 0)
-        ossl_quic_stream_map_update_state(&qc->qsm, qc->stream0);
+            if (!ossl_quic_rxfc_on_retire(&qc->stream0->rxfc, *bytes_read,
+                                          rtt_info.smoothed_rtt))
+                return 0;
+        }
+
+        if (is_fin)
+            stream->recv_fin_retired = 1;
+
+        if (*bytes_read > 0)
+            ossl_quic_stream_map_update_state(&qc->qsm, qc->stream0);
+    }
 
     return 1;
 }
@@ -2277,7 +2287,8 @@ static int quic_read_again(void *arg)
     struct quic_read_again_args *args = arg;
 
     if (!quic_read_actual(args->qc, args->stream,
-                          args->buf, args->len, args->bytes_read))
+                          args->buf, args->len, args->bytes_read,
+                          args->peek))
         return -1;
 
     if (*args->bytes_read > 0)
@@ -2287,7 +2298,7 @@ static int quic_read_again(void *arg)
     return 0; /* did not write anything, keep trying */
 }
 
-int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read)
+static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek)
 {
     int res;
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
@@ -2301,7 +2312,7 @@ int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read)
     if (qc->stream0 == NULL)
         return 0;
 
-    if (!quic_read_actual(qc, qc->stream0, buf, len, bytes_read))
+    if (!quic_read_actual(qc, qc->stream0, buf, len, bytes_read, 0))
         return 0;
 
     if (*bytes_read > 0) {
@@ -2322,6 +2333,7 @@ int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read)
         args.buf        = buf;
         args.len        = len;
         args.bytes_read = bytes_read;
+        args.peek       = peek;
 
         res = reactor_block_until_pred(&qc->rtor, quic_read_again, &args, 0);
         if (res <= 0)
@@ -2331,18 +2343,17 @@ int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read)
     return 1;
 }
 
-/* XXX Methods pending triage {{{1 */
-int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *readbytes)
+int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read)
 {
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
-
-    if (!EXPECT_QUIC_CONN(qc))
-        return 0;
-
-    /* XXX TODO */
-    return -1;
+    return quic_read(s, buf, len, bytes_read, 0);
 }
 
+int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *bytes_read)
+{
+    return quic_read(s, buf, len, bytes_read, 1);
+}
+
+/* XXX Methods pending triage {{{1 */
 long ossl_quic_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
     switch (cmd) {
