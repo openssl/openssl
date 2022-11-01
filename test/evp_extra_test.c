@@ -4660,9 +4660,6 @@ const OPTIONS *test_get_options(void)
 /* Test that trying to sign with a public key errors out gracefully */
 static int test_ecx_not_private_key(int tst)
 {
-#ifdef OPENSSL_NO_EC
-    return 1;
-#else
     EVP_PKEY *pkey = NULL;
 
     const unsigned char msg[] = { 0x00, 0x01, 0x02, 0x03 };
@@ -4673,23 +4670,22 @@ static int test_ecx_not_private_key(int tst)
     int ret;
     unsigned char *pubkey;
     size_t pubkeylen;
-    OSSL_PROVIDER* deflprov;
+    OSSL_PROVIDER* default_provider;
 
 
     switch (keys[tst].type) {
         case NID_X25519:
         case NID_X448:
-            /* Test does not apply, skip */
-            return 1;
+            return TEST_skip("signing not supported for X25519/X448");
     }
 
     /* Check if this algorithm supports public keys */
     if (keys[tst].pub == NULL)
         return 1;
 
-    deflprov = OSSL_PROVIDER_load(NULL, "default");
+    default_provider = OSSL_PROVIDER_load(NULL, "default");
 
-    if (!TEST_ptr(deflprov))
+    if (!TEST_ptr(default_provider))
         return 0;
 
     pubkey = (unsigned char *)keys[tst].pub,
@@ -4725,10 +4721,9 @@ static int test_ecx_not_private_key(int tst)
     EVP_MD_CTX_free(ctx);
     OPENSSL_free(mac);
     EVP_PKEY_free(pkey);
-    OSSL_PROVIDER_unload(deflprov);
+    OSSL_PROVIDER_unload(default_provider);
 
     return testresult;
-#endif
 }
 
 int setup_tests(void)
@@ -4866,7 +4861,9 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_ecx_short_keys, OSSL_NELEM(ecxnids));
 
+#ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_ecx_not_private_key, OSSL_NELEM(keys));
+#endif
 
     return 1;
 }
