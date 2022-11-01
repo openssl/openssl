@@ -333,8 +333,7 @@ static int depack_do_frame_max_data(PACKET *pkt, QUIC_CONNECTION *connection,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* TODO(QUIC): ADD CODE to send |max_data| to flow control */
-
+    /* No-op - informative/debugging frame. */
     return 1;
 }
 
@@ -386,8 +385,7 @@ static int depack_do_frame_data_blocked(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* TODO(QUIC): ADD CODE to send |max_data| to flow control */
-
+    /* No-op - informative/debugging frame. */
     return 1;
 }
 
@@ -422,8 +420,7 @@ static int depack_do_frame_streams_blocked(PACKET *pkt,
     /* This frame makes the packet ACK eliciting */
     ackm_data->is_ack_eliciting = 1;
 
-    /* TODO(QUIC): ADD CODE to send |max_data| to connection manager */
-
+    /* No-op - informative/debugging frame. */
     return 1;
 }
 
