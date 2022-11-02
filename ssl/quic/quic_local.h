@@ -21,6 +21,8 @@
 # include "internal/quic_stream.h"
 # include "../ssl_local.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 typedef struct quic_tick_result_st {
     char        want_net_read;
     char        want_net_write;
@@ -322,24 +324,31 @@ void ossl_quic_conn_raise_protocol_error(QUIC_CONNECTION *qc,
 void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
                                          OSSL_QUIC_FRAME_CONN_CLOSE *f);
 
-# define QUIC_CONNECTION_FROM_SSL_int(ssl, c)   \
-    ((ssl) == NULL ? NULL                       \
-     : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION \
-        ? (c QUIC_CONNECTION *)(ssl)            \
-        : NULL))
+#  define OSSL_QUIC_ANY_VERSION 0xFFFFF
 
-# define QUIC_STREAM_FROM_SSL_int(ssl, c)       \
-    ((ssl) == NULL ? NULL                       \
-     : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION \
-         || (ssl)->type == SSL_TYPE_QUIC_STREAM \
-        ? (c QUIC_STREAM *)(ssl)                \
-        : NULL))
+#  define QUIC_CONNECTION_FROM_SSL_int(ssl, c)   \
+     ((ssl) == NULL ? NULL                       \
+      : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION \
+         ? (c QUIC_CONNECTION *)(ssl)            \
+         : NULL))
 
-# define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c)               \
-    ((ssl) == NULL ? NULL                                       \
-     : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                 \
-        ? (c SSL_CONNECTION *)((c QUIC_CONNECTION *)(ssl))->tls \
-        : NULL))
+#  define QUIC_STREAM_FROM_SSL_int(ssl, c)       \
+     ((ssl) == NULL ? NULL                       \
+      : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION \
+          || (ssl)->type == SSL_TYPE_QUIC_STREAM \
+         ? (c QUIC_STREAM *)(ssl)                \
+         : NULL))
+
+#  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c)               \
+     ((ssl) == NULL ? NULL                                       \
+      : ((ssl)->type == SSL_TYPE_QUIC_CONNECTION                 \
+         ? (c SSL_CONNECTION *)((c QUIC_CONNECTION *)(ssl))->tls \
+         : NULL))
+# else
+#  define QUIC_CONNECTION_FROM_SSL_int(ssl, c) NULL
+#  define QUIC_STREAM_FROM_SSL_int(ssl, c) NULL
+#  define SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, c) NULL
+# endif
 
 # define QUIC_CONNECTION_FROM_SSL(ssl) \
     QUIC_CONNECTION_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
@@ -353,8 +362,6 @@ void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
     SSL_CONNECTION_FROM_QUIC_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
 # define SSL_CONNECTION_FROM_CONST_QUIC_SSL(ssl) \
     SSL_CONNECTION_FROM_CONST_QUIC_SSL_int(ssl, const)
-
-# define OSSL_QUIC_ANY_VERSION 0xFFFFF
 
 # define IMPLEMENT_quic_meth_func(version, func_name, q_accept, \
                                  q_connect, enc_data) \

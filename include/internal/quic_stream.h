@@ -11,14 +11,16 @@
 # define OSSL_INTERNAL_QUIC_STREAM_H
 # pragma once
 
-#include "internal/e_os.h"
-#include "internal/time.h"
-#include "internal/quic_types.h"
-#include "internal/quic_wire.h"
-#include "internal/quic_record_tx.h"
-#include "internal/quic_record_rx.h"
-#include "internal/quic_fc.h"
-#include "internal/quic_statm.h"
+# include "internal/e_os.h"
+# include "internal/time.h"
+# include "internal/quic_types.h"
+# include "internal/quic_wire.h"
+# include "internal/quic_record_tx.h"
+# include "internal/quic_record_rx.h"
+# include "internal/quic_fc.h"
+# include "internal/quic_statm.h"
+
+# ifndef OPENSSL_NO_QUIC
 
 /*
  * QUIC Send Stream
@@ -342,5 +344,7 @@ int ossl_quic_rstream_peek(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,
  * set to 0 otherwise.
  */
 int ossl_quic_rstream_available(QUIC_RSTREAM *qrs, size_t *avail, int *fin);
+
+# endif
 
 #endif

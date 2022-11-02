@@ -705,6 +705,7 @@ static int csm_init(QUIC_CONNECTION *qc)
 static int csm_on_crypto_send(const unsigned char *buf, size_t buf_len,
                               size_t *consumed, void *arg)
 {
+    int ret;
     QUIC_CONNECTION *qc = arg;
     uint32_t enc_level = qc->tx_enc_level;
     uint32_t pn_space = ossl_quic_enc_level_to_pn_space(enc_level);
@@ -713,7 +714,7 @@ static int csm_on_crypto_send(const unsigned char *buf, size_t buf_len,
     if (!ossl_assert(sstream != NULL))
         return 0;
 
-    int ret = ossl_quic_sstream_append(sstream, buf, buf_len, consumed);
+    ret = ossl_quic_sstream_append(sstream, buf, buf_len, consumed);
     return ret;
 }
 

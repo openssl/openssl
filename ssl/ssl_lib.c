@@ -1431,12 +1431,14 @@ void ossl_ssl_connection_free(SSL *ssl)
 void SSL_set0_rbio(SSL *s, BIO *rbio)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc != NULL) {
         ossl_quic_conn_set0_net_rbio(qc, rbio);
         return;
     }
+#endif
 
     if (sc == NULL)
         return;
@@ -1449,12 +1451,14 @@ void SSL_set0_rbio(SSL *s, BIO *rbio)
 void SSL_set0_wbio(SSL *s, BIO *wbio)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc != NULL) {
         ossl_quic_conn_set0_net_wbio(qc, wbio);
         return;
     }
+#endif
 
     if (sc == NULL)
         return;
@@ -1518,10 +1522,12 @@ void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio)
 BIO *SSL_get_rbio(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+#ifndef OPENSSL_NO_QUIC
     const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
 
     if (qc != NULL)
         return ossl_quic_conn_get_net_rbio(qc);
+#endif
 
     if (sc == NULL)
         return NULL;
@@ -1532,10 +1538,12 @@ BIO *SSL_get_rbio(const SSL *s)
 BIO *SSL_get_wbio(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+#ifndef OPENSSL_NO_QUIC
     const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
 
     if (qc != NULL)
         return ossl_quic_conn_get_net_rbio(qc);
+#endif
 
     if (sc == NULL)
         return NULL;
@@ -6986,80 +6994,112 @@ int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey)
 /* QUIC-specific methods which are supported on QUIC connections only. */
 int SSL_tick(SSL *s)
 {
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc == NULL)
         return 0;
 
     return ossl_quic_tick(qc);
+#else
+    return 0;
+#endif
 }
 
 int SSL_get_tick_timeout(SSL *s)
 {
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc == NULL)
         return 0;
 
     return ossl_quic_get_tick_timeout(qc);
+#else
+    return 0;
+#endif
 }
 
 int SSL_get_poll_rfd(SSL *s)
 {
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc == NULL)
-        return 0;
+        return -1;
 
     return ossl_quic_get_poll_rfd(qc);
+#else
+    return -1;
+#endif
 }
 
 int SSL_get_poll_wfd(SSL *s)
 {
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc == NULL)
-        return 0;
+        return -1;
 
     return ossl_quic_get_poll_wfd(qc);
+#else
+    return -1;
+#endif
 }
 
 int SSL_want_net_read(SSL *s)
 {
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc == NULL)
         return 0;
 
     return ossl_quic_get_want_net_read(qc);
+#else
+    return 0;
+#endif
 }
 
 int SSL_want_net_write(SSL *s)
 {
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc == NULL)
         return 0;
 
     return ossl_quic_get_want_net_write(qc);
+#else
+    return 0;
+#endif
 }
 
 int SSL_set_blocking_mode(SSL *s, int blocking)
 {
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc == NULL)
         return 0;
 
     return ossl_quic_conn_set_blocking_mode(qc, blocking);
+#else
+    return 0;
+#endif
 }
 
 int SSL_get_blocking_mode(SSL *s)
 {
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc == NULL)
         return -1;
 
     return ossl_quic_conn_get_blocking_mode(qc);
+#else
+    return 0;
+#endif
 }

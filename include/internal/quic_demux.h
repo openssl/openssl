@@ -16,6 +16,8 @@
 # include "internal/time.h"
 # include "internal/list.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * QUIC Demuxer
  * ============
@@ -272,5 +274,7 @@ int ossl_quic_demux_inject(QUIC_DEMUX *demux,
                            size_t buf_len,
                            const BIO_ADDR *peer,
                            const BIO_ADDR *local);
+
+# endif
 
 #endif

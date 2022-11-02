@@ -159,6 +159,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 # if defined(OPENSSL_SYS_WINDOWS)
 #  undef get_last_socket_error
 #  undef clear_socket_error
+#  undef get_last_socket_error_is_eintr
 #  define get_last_socket_error() WSAGetLastError()
 #  define clear_socket_error()    WSASetLastError(0)
 #  define get_last_socket_error_is_eintr() (get_last_socket_error() == WSAEINTR)
