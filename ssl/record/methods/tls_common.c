@@ -28,6 +28,21 @@ void SSL3_BUFFER_release(SSL3_BUFFER *b)
     b->buf = NULL;
 }
 
+static void SSL3_RECORD_release(SSL3_RECORD *r, size_t num_recs)
+{
+    size_t i;
+
+    for (i = 0; i < num_recs; i++) {
+        OPENSSL_free(r[i].comp);
+        r[i].comp = NULL;
+    }
+}
+
+void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num)
+{
+    memcpy(r->seq_num, seq_num, SEQ_NUM_SIZE);
+}
+
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
                        const char *fmt, ...)
 {

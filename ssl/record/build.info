@@ -11,7 +11,7 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 SOURCE[../../libssl]=\
-        rec_layer_s3.c rec_layer_d1.c ssl3_record.c
+        rec_layer_s3.c rec_layer_d1.c
 
 DEFINE[../../libssl]=$AESDEF
 
