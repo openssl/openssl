@@ -29,7 +29,8 @@
 
 static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg);
 static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,
-                      BIGNUM *e_value, BN_GENCB *cb, int pairwise_test);
+                      BIGNUM *e_value, BN_GENCB *cb, int pairwise_test,
+                      int prime_check_level);
 
 /*
  * NB: this wrapper would normally be placed in rsa_lib.c and the static
@@ -68,7 +69,18 @@ int RSA_generate_multi_prime_key(RSA *rsa, int bits, int primes,
             return 0;
     }
 #endif /* FIPS_MODULE */
-    return rsa_keygen(rsa->libctx, rsa, bits, primes, e_value, cb, 0);
+    return rsa_keygen(rsa->libctx, rsa, bits, primes, e_value, cb, 0, 0);
+}
+
+int ossl_rsa_keygen(RSA *rsa, int bits, int primes,
+                    BIGNUM *e_value, int prime_check_level, BN_GENCB *cb)
+{
+#ifdef FIPS_MODULE
+    return rsa_keygen(rsa->libctx, rsa, bits, primes, e_value, cb, 0,
+                      prime_check_level);
+#else
+    return RSA_generate_multi_prime_key(rsa, bits, primes, e_value, cb);
+#endif
 }
 
 #ifndef FIPS_MODULE
@@ -422,12 +434,13 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
 #endif /* FIPS_MODULE */
 
 static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,
-                      BIGNUM *e_value, BN_GENCB *cb, int pairwise_test)
+                      BIGNUM *e_value, BN_GENCB *cb, int pairwise_test,
+                      int prime_check_level)
 {
     int ok = 0;
 
 #ifdef FIPS_MODULE
-    ok = ossl_rsa_sp800_56b_generate_key(rsa, bits, e_value, cb);
+    ok = ossl_rsa_sp800_56b_generate_key(rsa, bits, e_value, prime_check_level, cb);
     pairwise_test = 1; /* FIPS MODE needs to always run the pairwise test */
 #else
     /*
@@ -437,7 +450,8 @@ static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,
     if (primes == 2
             && bits >= 2048
             && (e_value == NULL || BN_num_bits(e_value) > 16))
-        ok = ossl_rsa_sp800_56b_generate_key(rsa, bits, e_value, cb);
+        ok = ossl_rsa_sp800_56b_generate_key(rsa, bits, e_value,
+                                             prime_check_level, cb);
     else
         ok = rsa_multiprime_keygen(rsa, bits, primes, e_value, cb);
 #endif /* FIPS_MODULE */

@@ -129,6 +129,14 @@ The RSA "e" value. The value may be any odd number greater than or equal to
 65537. The default value is 65537.
 For legacy reasons a value of 3 is currently accepted but is deprecated.
 
+=item "prime-check-level" (B<OSSL_PKEY_PARAM_RSA_PRIME_CHECK_LEVEL>) <unsigned integer>
+
+Determines the number of Miller Rabin rounds to perform when doing prime checks.
+The default value of 0 will have an error probability of 2^-100, otherwise it
+uses a higher error probability.
+For OpenSSL providers, this parameter is ignored if the number of primes is
+larger than 2.
+
 =back
 
 =head2 RSA key generation parameters for FIPS module testing

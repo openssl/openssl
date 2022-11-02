@@ -49,6 +49,40 @@ const BIGNUM ossl_bn_inv_sqrt_2 = {
 };
 
 /*
+ * Refer to FIPS 186-5 Table B.1 and B.2 for minimum rounds of Miller Rabin
+ * required for generation of RSA aux primes (p1, p2, q1 and q2).
+ * If level is zero then the smaller values corresponding to a probability
+ * of 2^-100 are used (Table B.2).
+ */
+static int bn_rsa_fips186_5_aux_prime_MR_rounds(int nbits, int level)
+{
+    if (nbits >= 4096)
+        return level == 0 ? 22 : 44;
+    if (nbits >= 3072)
+        return level == 0 ? 27 : 41;
+    if (nbits >= 2048)
+        return level == 0 ? 32 : 38;
+    return 0;
+}
+
+/*
+ * Refer to FIPS 186-5 Table B.1 and B.2 for minimum rounds of Miller Rabin
+ * required for generation of RSA primes (p and q).
+ * If level is zero then the smaller values corresponding to a probability
+ * of 2^-100 are used (Table B.2) instead of (Table B.1).
+ */
+static int bn_rsa_fips186_5_prime_MR_rounds(int nbits, int level)
+{
+    if (nbits >= 4096)
+        return level == 0 ? 2 : 4;
+    if (nbits >= 3072)
+        return level == 0 ? 3 : 4;
+    if (nbits >= 2048)
+        return level == 0 ? 4 : 5;
+    return 0;
+}
+
+/*
  * FIPS 186-5 Table A.1. "Min length of auxiliary primes p1, p2, q1, q2".
  * (FIPS 186-5 has an entry for >= 4096 bits).
  *
@@ -97,11 +131,13 @@ static int bn_rsa_fips186_5_aux_prime_max_sum_size_for_prob_primes(int nbits)
  *     Xp1 The passed in starting point to find a probably prime.
  *     p1 The returned probable prime (first odd integer >= Xp1)
  *     ctx A BN_CTX object.
+ *     rounds The number of Miller Rabin rounds
  *     cb An optional BIGNUM callback.
  * Returns: 1 on success otherwise it returns 0.
  */
 static int bn_rsa_fips186_4_find_aux_prob_prime(const BIGNUM *Xp1,
                                                 BIGNUM *p1, BN_CTX *ctx,
+                                                int rounds,
                                                 BN_GENCB *cb)
 {
     int ret = 0;
@@ -117,7 +153,7 @@ static int bn_rsa_fips186_4_find_aux_prob_prime(const BIGNUM *Xp1,
         i++;
         BN_GENCB_call(cb, 0, i);
         /* MR test with trial division */
-        tmp = BN_check_prime(p1, ctx, cb);
+        tmp = ossl_bn_check_generated_prime(p1, rounds, ctx, cb);
         if (tmp > 0)
             break;
         if (tmp < 0)
@@ -147,6 +183,8 @@ err:
  *              internally. Used to find p1, p2.
  *     nlen The bit length of the modulus (the key size).
  *     e The public exponent.
+ *     prime_check_level set to 0 to use less MR rounds during prime checks
+ *                       (Using an error probability of 2^-100).
  *     ctx A BN_CTX object.
  *     cb An optional BIGNUM callback.
  * Returns: 1 on success otherwise it returns 0.
@@ -155,12 +193,12 @@ int ossl_bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
                                           BIGNUM *p1, BIGNUM *p2,
                                           const BIGNUM *Xp, const BIGNUM *Xp1,
                                           const BIGNUM *Xp2, int nlen,
-                                          const BIGNUM *e, BN_CTX *ctx,
-                                          BN_GENCB *cb)
+                                          const BIGNUM *e, int prime_check_level,
+                                          BN_CTX *ctx, BN_GENCB *cb)
 {
     int ret = 0;
     BIGNUM *p1i = NULL, *p2i = NULL, *Xp1i = NULL, *Xp2i = NULL;
-    int bitlen;
+    int bitlen, rounds;
 
     if (p == NULL || Xpout == NULL)
         return 0;
@@ -174,6 +212,7 @@ int ossl_bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
     if (p1i == NULL || p2i == NULL || Xp1i == NULL || Xp2i == NULL)
         goto err;
 
+    rounds = bn_rsa_fips186_5_aux_prime_MR_rounds(nlen, prime_check_level);
     bitlen = bn_rsa_fips186_5_aux_prime_min_size(nlen);
     if (bitlen == 0)
         goto err;
@@ -194,8 +233,8 @@ int ossl_bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
     }
 
     /* (Steps 4.2/5.2) - find first auxiliary probable primes */
-    if (!bn_rsa_fips186_4_find_aux_prob_prime(Xp1i, p1i, ctx, cb)
-            || !bn_rsa_fips186_4_find_aux_prob_prime(Xp2i, p2i, ctx, cb))
+    if (!bn_rsa_fips186_4_find_aux_prob_prime(Xp1i, p1i, ctx, rounds, cb)
+            || !bn_rsa_fips186_4_find_aux_prob_prime(Xp2i, p2i, ctx, rounds, cb))
         goto err;
     /* (Table B.1) auxiliary prime Max length check */
     if ((BN_num_bits(p1i) + BN_num_bits(p2i)) >=
@@ -203,7 +242,7 @@ int ossl_bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
         goto err;
     /* (Steps 4.3/5.3) - generate prime */
     if (!ossl_bn_rsa_fips186_4_derive_prime(p, Xpout, Xp, p1i, p2i, nlen, e,
-                                            ctx, cb))
+                                            prime_check_level, ctx, cb))
         goto err;
     ret = 1;
 err:
@@ -235,6 +274,8 @@ err:
  *     r2 An auxiliary prime.
  *     nlen The desired length of n (the RSA modulus).
  *     e The public exponent.
+ *     prime_check_level set to 0 to use less MR rounds during prime checks
+ *                       (Using an error probability of 2^-100).
  *     ctx A BN_CTX object.
  *     cb An optional BIGNUM callback object.
  * Returns: 1 on success otherwise it returns 0.
@@ -243,11 +284,12 @@ err:
  */
 int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
                                        const BIGNUM *r1, const BIGNUM *r2,
-                                       int nlen, const BIGNUM *e, BN_CTX *ctx,
+                                       int nlen, const BIGNUM *e,
+                                       int prime_check_level, BN_CTX *ctx,
                                        BN_GENCB *cb)
 {
     int ret = 0;
-    int i, imax;
+    int i, imax, rounds;
     int bits = nlen >> 1;
     BIGNUM *tmp, *R, *r1r2x2, *y1, *r1x2;
     BIGNUM *base, *range;
@@ -317,6 +359,7 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
      * The number has been updated to 20 * nlen/2 as used in
      * FIPS186-5 Appendix B.9 Step 9.
      */
+    rounds = bn_rsa_fips186_5_prime_MR_rounds(nlen, prime_check_level);
     imax = 20 * bits; /* max = 20/2 * nbits */
     for (;;) {
         if (Xin == NULL) {
@@ -346,8 +389,9 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
             if (BN_copy(y1, Y) == NULL
                     || !BN_sub_word(y1, 1))
                 goto err;
+
             if (BN_are_coprime(y1, e, ctx)) {
-                int rv = BN_check_prime(Y, ctx, cb);
+                int rv = ossl_bn_check_generated_prime(Y, rounds, ctx, cb);
 
                 if (rv > 0)
                     goto end;

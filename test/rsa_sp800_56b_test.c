@@ -440,17 +440,19 @@ end:
 
 static int keygen_size[] =
 {
-    2048, 3072
+    2048, 3072, 4096
 };
 
 static int test_sp80056b_keygen(int id)
 {
     RSA *key = NULL;
     int ret;
-    int sz = keygen_size[id];
+    int sz = keygen_size[id % OSSL_NELEM(keygen_size)];
+    int more_prime_tests = (sz == keygen_size[0]);
 
     ret = TEST_ptr(key = RSA_new())
-          && TEST_true(ossl_rsa_sp800_56b_generate_key(key, sz, NULL, NULL))
+          && TEST_true(ossl_rsa_sp800_56b_generate_key(key, sz, NULL,
+                                                       more_prime_tests, NULL))
           && TEST_true(ossl_rsa_sp800_56b_check_public(key))
           && TEST_true(ossl_rsa_sp800_56b_check_private(key))
           && TEST_true(ossl_rsa_sp800_56b_check_keypair(key, NULL, -1, sz));

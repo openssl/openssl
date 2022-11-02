@@ -435,6 +435,7 @@ struct rsa_gen_ctx {
     /* ACVP test parameters */
     OSSL_PARAM *acvp_test_params;
 #endif
+    int prime_check_level;
 };
 
 static int rsa_gencb(int p, int n, BN_GENCB *cb)
@@ -524,21 +525,27 @@ static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
         return 0;
     /* Only attempt to get PSS parameters when generating an RSA-PSS key */
     if (gctx->rsa_type == RSA_FLAG_TYPE_RSASSAPSS
-        && !pss_params_fromdata(&gctx->pss_params, &gctx->pss_defaults_set, params,
-                                gctx->rsa_type, gctx->libctx))
+        && !pss_params_fromdata(&gctx->pss_params, &gctx->pss_defaults_set,
+                                params, gctx->rsa_type, gctx->libctx))
         return 0;
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     /* Any ACVP test related parameters are copied into a params[] */
     if (!ossl_rsa_acvp_test_gen_params_new(&gctx->acvp_test_params, params))
         return 0;
 #endif
+    if ((p = OSSL_PARAM_locate_const(params,
+                                     OSSL_PKEY_PARAM_RSA_PRIME_CHECK_LEVEL)) != NULL) {
+        if (!OSSL_PARAM_get_int(p, &gctx->prime_check_level))
+            return 0;
+    }
     return 1;
 }
 
 #define rsa_gen_basic                                           \
     OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_BITS, NULL),          \
     OSSL_PARAM_size_t(OSSL_PKEY_PARAM_RSA_PRIMES, NULL),        \
-    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_E, NULL, 0)
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_E, NULL, 0),              \
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_RSA_PRIME_CHECK_LEVEL, NULL)
 
 /*
  * The following must be kept in sync with ossl_rsa_pss_params_30_fromdata()
@@ -616,9 +623,8 @@ static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     }
 #endif
 
-    if (!RSA_generate_multi_prime_key(rsa_tmp,
-                                      (int)gctx->nbits, (int)gctx->primes,
-                                      gctx->pub_exp, gencb))
+    if (!ossl_rsa_keygen(rsa_tmp, (int)gctx->nbits, (int)gctx->primes,
+                         gctx->pub_exp, gctx->prime_check_level, gencb))
         goto err;
 
     if (!ossl_rsa_pss_params_30_copy(ossl_rsa_get0_pss_params_30(rsa_tmp),

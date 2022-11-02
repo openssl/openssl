@@ -104,6 +104,9 @@ int ossl_rsa_verify(int dtype, const unsigned char *m,
                     size_t *prm_len, const unsigned char *sigbuf,
                     size_t siglen, RSA *rsa);
 
+int ossl_rsa_keygen(RSA *rsa, int bits, int primes,
+                    BIGNUM *e_value, int prime_check_level, BN_GENCB *cb);
+
 const unsigned char *ossl_rsa_digestinfo_encoding(int md_nid, size_t *len);
 
 extern const char *ossl_rsa_mp_factor_names[];

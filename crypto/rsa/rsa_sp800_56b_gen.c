@@ -46,6 +46,7 @@
  *                are generated internally.
  *     nbits The key size in bits (The size of the modulus n).
  *     e The public exponent.
+ *     prime_check_level 0 means use a prob err of 2^-100 when testing primes.
  *     ctx A BN_CTX object.
  *     cb An optional BIGNUM callback.
  * Returns: 1 if successful, or  0 otherwise.
@@ -55,8 +56,9 @@
  *     (Required for CAVS testing).
  */
 int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
-                                       int nbits, const BIGNUM *e, BN_CTX *ctx,
-                                       BN_GENCB *cb)
+                                       int nbits, const BIGNUM *e,
+                                       int prime_check_level,
+                                       BN_CTX *ctx, BN_GENCB *cb)
 {
     int ret = 0, ok;
     /* Temp allocated BIGNUMS */
@@ -123,12 +125,14 @@ int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
 
     /* (Step 4) Generate p, Xp */
     if (!ossl_bn_rsa_fips186_4_gen_prob_primes(rsa->p, Xpo, p1, p2, Xp, Xp1, Xp2,
-                                               nbits, e, ctx, cb))
+                                               nbits, e, prime_check_level,
+                                               ctx, cb))
         goto err;
     for (;;) {
         /* (Step 5) Generate q, Xq*/
         if (!ossl_bn_rsa_fips186_4_gen_prob_primes(rsa->q, Xqo, q1, q2, Xq, Xq1,
-                                                   Xq2, nbits, e, ctx, cb))
+                                                   Xq2, nbits, e,
+                                                   prime_check_level, ctx, cb))
             goto err;
 
         /* (Step 6) |Xp - Xq| > 2^(nbitlen/2 - 100) */
@@ -350,11 +354,13 @@ err:
  *     rsa The rsa object.
  *     nbits The intended key size in bits.
  *     efixed The public exponent. If NULL a default of 65537 is used.
+ *     prime_check_level The error probability to use when doing prime checks.
+ *                       0 = 2^-100, otherwise it uses a higher value.
  *     cb An optional BIGNUM callback.
  * Returns: 1 if successfully generated otherwise it returns 0.
  */
 int ossl_rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
-                                    BN_GENCB *cb)
+                                    int prime_check_level, BN_GENCB *cb)
 {
     int ret = 0;
     int ok;
@@ -390,7 +396,8 @@ int ossl_rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
 
     for (;;) {
         /* (Step 2) Generate prime factors */
-        if (!ossl_rsa_fips186_4_gen_prob_primes(rsa, info, nbits, e, ctx, cb))
+        if (!ossl_rsa_fips186_4_gen_prob_primes(rsa, info, nbits, e,
+                                                prime_check_level, ctx, cb))
             goto err;
         /* (Steps 3-5) Compute params d, n, dP, dQ, qInv */
         ok = ossl_rsa_sp800_56b_derive_params_from_pq(rsa, nbits, e, ctx);
