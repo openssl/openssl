@@ -238,8 +238,9 @@ static unsigned char *multihexstr2buf(const char *str[3], size_t *len)
     return outbuf;
 }
 
-static int load_record(SSL3_RECORD *rec, RECORD_DATA *recd, unsigned char **key,
-                       unsigned char *iv, size_t ivlen, unsigned char *seq)
+static int load_record(TLS_RL_RECORD *rec, RECORD_DATA *recd,
+                       unsigned char **key, unsigned char *iv, size_t ivlen,
+                       unsigned char *seq)
 {
     unsigned char *pt = NULL, *sq = NULL, *ivtmp = NULL;
     size_t ptlen;
@@ -275,7 +276,7 @@ static int load_record(SSL3_RECORD *rec, RECORD_DATA *recd, unsigned char **key,
     return 0;
 }
 
-static int test_record(SSL3_RECORD *rec, RECORD_DATA *recd, int enc)
+static int test_record(TLS_RL_RECORD *rec, RECORD_DATA *recd, int enc)
 {
     int ret = 0;
     unsigned char *refd;
@@ -305,7 +306,7 @@ static int test_record(SSL3_RECORD *rec, RECORD_DATA *recd, int enc)
 
 static int test_tls13_encryption(void)
 {
-    SSL3_RECORD rec;
+    TLS_RL_RECORD rec;
     unsigned char *key = NULL;
     const EVP_CIPHER *ciph = EVP_aes_128_gcm();
     int ret = 0;

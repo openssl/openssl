@@ -42,7 +42,7 @@ typedef struct tls_buffer_st {
     int type;
 } TLS_BUFFER;
 
-typedef struct ssl3_record_st {
+typedef struct tls_rl_record_st {
     /* Record layer version */
     /* r */
     int rec_version;
@@ -76,18 +76,18 @@ typedef struct ssl3_record_st {
     /* sequence number, needed by DTLS1 */
     /* r */
     unsigned char seq_num[SEQ_NUM_SIZE];
-} SSL3_RECORD;
+} TLS_RL_RECORD;
 
-/* Macros/functions provided by the SSL3_RECORD component */
+/* Macros/functions provided by the TLS_RL_RECORD component */
 
-#define SSL3_RECORD_set_type(r, t)              ((r)->type = (t))
-#define SSL3_RECORD_set_rec_version(r, v)       ((r)->rec_version = (v))
-#define SSL3_RECORD_get_length(r)               ((r)->length)
-#define SSL3_RECORD_set_length(r, l)            ((r)->length = (l))
-#define SSL3_RECORD_add_length(r, l)            ((r)->length += (l))
-#define SSL3_RECORD_set_data(r, d)              ((r)->data = (d))
-#define SSL3_RECORD_set_input(r, i)             ((r)->input = (i))
-#define SSL3_RECORD_reset_input(r)              ((r)->input = (r)->data)
+#define TLS_RL_RECORD_set_type(r, t)              ((r)->type = (t))
+#define TLS_RL_RECORD_set_rec_version(r, v)       ((r)->rec_version = (v))
+#define TLS_RL_RECORD_get_length(r)               ((r)->length)
+#define TLS_RL_RECORD_set_length(r, l)            ((r)->length = (l))
+#define TLS_RL_RECORD_add_length(r, l)            ((r)->length += (l))
+#define TLS_RL_RECORD_set_data(r, d)              ((r)->data = (d))
+#define TLS_RL_RECORD_set_input(r, i)             ((r)->input = (i))
+#define TLS_RL_RECORD_reset_input(r)              ((r)->input = (r)->data)
 
 
 /* Protocol version specific function pointers */
@@ -114,10 +114,10 @@ struct record_functions_st
      *       decryption failed, or EtM decryption failed.
      *    1: Success or MtE decryption failed (MAC will be randomised)
      */
-    int (*cipher)(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
+    int (*cipher)(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs, size_t n_recs,
                   int sending, SSL_MAC_BUF *macs, size_t macsize);
     /* Returns 1 for success or 0 for error */
-    int (*mac)(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
+    int (*mac)(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md,
                int sending);
 
     /* Return 1 for success or 0 for error */
@@ -131,10 +131,10 @@ struct record_functions_st
     int (*get_more_records)(OSSL_RECORD_LAYER *rl);
 
     /* Return 1 for success or 0 for error */
-    int (*validate_record_header)(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
+    int (*validate_record_header)(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec);
 
     /* Return 1 for success or 0 for error */
-    int (*post_process_record)(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
+    int (*post_process_record)(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec);
 
     /* Write related functions */
 
@@ -179,17 +179,17 @@ struct record_functions_st
     int (*add_record_padding)(OSSL_RECORD_LAYER *rl,
                               OSSL_RECORD_TEMPLATE *thistempl,
                               WPACKET *thispkt,
-                              SSL3_RECORD *thiswr);
+                              TLS_RL_RECORD *thiswr);
 
     /*
      * This applies any mac that might be necessary, ensures that we have enough
      * space in the WPACKET to perform the encryption and sets up the
-     * SSL3_RECORD ready for that encryption.
+     * TLS_RL_RECORD ready for that encryption.
      */
     int (*prepare_for_encryption)(OSSL_RECORD_LAYER *rl,
                                   size_t mac_size,
                                   WPACKET *thispkt,
-                                  SSL3_RECORD *thiswr);
+                                  TLS_RL_RECORD *thiswr);
 
     /*
      * Any updates required to the record after encryption has been applied. For
@@ -199,7 +199,7 @@ struct record_functions_st
                                       size_t mac_size,
                                       OSSL_RECORD_TEMPLATE *thistempl,
                                       WPACKET *thispkt,
-                                      SSL3_RECORD *thiswr);
+                                      TLS_RL_RECORD *thiswr);
 
     /*
      * Some record layer implementations need to do some custom preparation of
@@ -253,7 +253,7 @@ struct ossl_record_layer_st
     /* read IO goes into here */
     TLS_BUFFER rbuf;
     /* each decoded record goes in here */
-    SSL3_RECORD rrec[SSL_MAX_PIPELINES];
+    TLS_RL_RECORD rrec[SSL_MAX_PIPELINES];
 
     /* How many records have we got available in the rrec bufer */
     size_t num_recs;
@@ -376,7 +376,7 @@ typedef struct dtls_rlayer_record_data_st {
     unsigned char *packet;
     size_t packet_length;
     TLS_BUFFER rbuf;
-    SSL3_RECORD rrec;
+    TLS_RL_RECORD rrec;
 } DTLS_RLAYER_RECORD_DATA;
 
 extern struct record_functions_st ssl_3_0_funcs;
@@ -399,7 +399,8 @@ void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
                                     || (rl)->version == TLS1_2_VERSION \
                                     || (rl)->isdtls)
 
-void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);
+void ossl_tls_rl_record_set_seq_num(TLS_RL_RECORD *r,
+                                    const unsigned char *seq_num);
 
 int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
                                      EVP_CIPHER_CTX *ctx,
@@ -454,14 +455,14 @@ int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
                                     size_t mac_size,
                                     OSSL_RECORD_TEMPLATE *thistempl,
                                     WPACKET *thispkt,
-                                    SSL3_RECORD *thiswr);
+                                    TLS_RL_RECORD *thiswr);
 
 int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
-int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *re);
-int tls_do_compress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *wr);
-int tls_do_uncompress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
-int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
-int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec);
+int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *re);
+int tls_do_compress(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *wr);
+int tls_do_uncompress(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec);
+int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec);
+int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec);
 
 int
 tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
@@ -543,12 +544,12 @@ int tls_prepare_record_header_default(OSSL_RECORD_LAYER *rl,
 int tls_prepare_for_encryption_default(OSSL_RECORD_LAYER *rl,
                                        size_t mac_size,
                                        WPACKET *thispkt,
-                                       SSL3_RECORD *thiswr);
+                                       TLS_RL_RECORD *thiswr);
 int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
                                            size_t mac_size,
                                            OSSL_RECORD_TEMPLATE *thistempl,
                                            WPACKET *thispkt,
-                                           SSL3_RECORD *thiswr);
+                                           TLS_RL_RECORD *thiswr);
 int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                               OSSL_RECORD_TEMPLATE *templates,
                               size_t numtempl);

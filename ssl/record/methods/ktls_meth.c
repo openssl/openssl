@@ -367,13 +367,14 @@ static int ktls_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
     return ret;
 }
 
-static int ktls_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs,
-                       int sending, SSL_MAC_BUF *mac, size_t macsize)
+static int ktls_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *inrecs,
+                       size_t n_recs, int sending, SSL_MAC_BUF *mac,
+                       size_t macsize)
 {
     return 1;
 }
 
-static int ktls_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+static int ktls_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
     if (rec->rec_version != TLS1_2_VERSION) {
         RLAYERfatal(rl, SSL_AD_DECODE_ERROR, SSL_R_WRONG_VERSION_NUMBER);
@@ -383,7 +384,7 @@ static int ktls_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     return 1;
 }
 
-static int ktls_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+static int ktls_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
     if (rl->version == TLS1_3_VERSION)
         return tls13_common_post_process_record(rl, rec);
@@ -495,7 +496,7 @@ static int ktls_prepare_record_header(OSSL_RECORD_LAYER *rl,
 static int ktls_prepare_for_encryption(OSSL_RECORD_LAYER *rl,
                                        size_t mac_size,
                                        WPACKET *thispkt,
-                                       SSL3_RECORD *thiswr)
+                                       TLS_RL_RECORD *thiswr)
 {
     /* No encryption, so nothing to do */
     return 1;
@@ -505,7 +506,7 @@ static int ktls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
                                            size_t mac_size,
                                            OSSL_RECORD_TEMPLATE *templ,
                                            WPACKET *thispkt,
-                                           SSL3_RECORD *thiswr)
+                                           TLS_RL_RECORD *thiswr)
 {
     /* The kernel does anything that is needed, so nothing to do here */
     return 1;

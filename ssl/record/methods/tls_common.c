@@ -28,7 +28,7 @@ void ossl_tls_buffer_release(TLS_BUFFER *b)
     b->buf = NULL;
 }
 
-static void SSL3_RECORD_release(SSL3_RECORD *r, size_t num_recs)
+static void TLS_RL_RECORD_release(TLS_RL_RECORD *r, size_t num_recs)
 {
     size_t i;
 
@@ -38,7 +38,8 @@ static void SSL3_RECORD_release(SSL3_RECORD *r, size_t num_recs)
     }
 }
 
-void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num)
+void ossl_tls_rl_record_set_seq_num(TLS_RL_RECORD *r,
+                                    const unsigned char *seq_num)
 {
     memcpy(r->seq_num, seq_num, SEQ_NUM_SIZE);
 }
@@ -525,7 +526,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     int enc_err, rret;
     int i;
     size_t more, n;
-    SSL3_RECORD *rr, *thisrr;
+    TLS_RL_RECORD *rr, *thisrr;
     TLS_BUFFER *rbuf;
     unsigned char *p;
     unsigned char md[EVP_MAX_MD_SIZE];
@@ -610,7 +611,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
             } else {
                 /* SSLv3+ style record */
 
-                /* Pull apart the header into the SSL3_RECORD */
+                /* Pull apart the header into the TLS_RL_RECORD */
                 if (!PACKET_get_1(&pkt, &type)
                         || !PACKET_get_net_2(&pkt, &version)
                         || !PACKET_get_net_2_len(&pkt, &thisrr->length)) {
@@ -942,7 +943,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
 }
 
 /* Shared by ssl3_meth and tls1_meth */
-int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
     size_t len = SSL3_RT_MAX_ENCRYPTED_LENGTH;
 
@@ -969,7 +970,7 @@ int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     return 1;
 }
 
-int tls_do_compress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *wr)
+int tls_do_compress(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *wr)
 {
 #ifndef OPENSSL_NO_COMP
     int i;
@@ -988,7 +989,7 @@ int tls_do_compress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *wr)
 #endif
 }
 
-int tls_do_uncompress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+int tls_do_uncompress(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
 #ifndef OPENSSL_NO_COMP
     int i;
@@ -1014,7 +1015,7 @@ int tls_do_uncompress(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
 }
 
 /* Shared by tlsany_meth, ssl3_meth and tls1_meth */
-int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
     if (rl->compctx != NULL) {
         if (rec->length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
@@ -1038,7 +1039,7 @@ int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
 }
 
 /* Shared by tls13_meth and ktls_meth */
-int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
     if (rec->type != SSL3_RT_APPLICATION_DATA
             && rec->type != SSL3_RT_ALERT
@@ -1068,7 +1069,7 @@ int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
                     int *type, unsigned char **data, size_t *datalen,
                     uint16_t *epoch, unsigned char *seq_num)
 {
-    SSL3_RECORD *rec;
+    TLS_RL_RECORD *rec;
 
     /*
      * tls_get_more_records() can return success without actually reading
@@ -1392,7 +1393,7 @@ static void tls_int_free(OSSL_RECORD_LAYER *rl)
     if (rl->version == SSL3_VERSION)
         OPENSSL_cleanse(rl->mac_secret, sizeof(rl->mac_secret));
 
-    SSL3_RECORD_release(rl->rrec, SSL_MAX_PIPELINES);
+    TLS_RL_RECORD_release(rl->rrec, SSL_MAX_PIPELINES);
 
     OPENSSL_free(rl);
 }
@@ -1566,7 +1567,7 @@ int tls_prepare_record_header_default(OSSL_RECORD_LAYER *rl,
 int tls_prepare_for_encryption_default(OSSL_RECORD_LAYER *rl,
                                        size_t mac_size,
                                        WPACKET *thispkt,
-                                       SSL3_RECORD *thiswr)
+                                       TLS_RL_RECORD *thiswr)
 {
     size_t len;
     unsigned char *recordstart;
@@ -1606,9 +1607,9 @@ int tls_prepare_for_encryption_default(OSSL_RECORD_LAYER *rl,
 
     /* Get a pointer to the start of this record excluding header */
     recordstart = WPACKET_get_curr(thispkt) - len;
-    SSL3_RECORD_set_data(thiswr, recordstart);
-    SSL3_RECORD_reset_input(thiswr);
-    SSL3_RECORD_set_length(thiswr, len);
+    TLS_RL_RECORD_set_data(thiswr, recordstart);
+    TLS_RL_RECORD_reset_input(thiswr);
+    TLS_RL_RECORD_set_length(thiswr, len);
 
     return 1;
 }
@@ -1617,7 +1618,7 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
                                            size_t mac_size,
                                            OSSL_RECORD_TEMPLATE *thistempl,
                                            WPACKET *thispkt,
-                                           SSL3_RECORD *thiswr)
+                                           TLS_RL_RECORD *thiswr)
 {
     size_t origlen, len;
     size_t headerlen = rl->isdtls ? DTLS1_RT_HEADER_LENGTH
@@ -1646,7 +1647,7 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
             return 0;
         }
 
-        SSL3_RECORD_add_length(thiswr, mac_size);
+        TLS_RL_RECORD_add_length(thiswr, mac_size);
     }
 
     if (!WPACKET_get_length(thispkt, &len)
@@ -1675,7 +1676,7 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
         return 0;
     }
 
-    SSL3_RECORD_add_length(thiswr, headerlen);
+    TLS_RL_RECORD_add_length(thiswr, headerlen);
 
     return 1;
 }
@@ -1685,9 +1686,9 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                               size_t numtempl)
 {
     WPACKET pkt[SSL_MAX_PIPELINES + 1];
-    SSL3_RECORD wr[SSL_MAX_PIPELINES + 1];
+    TLS_RL_RECORD wr[SSL_MAX_PIPELINES + 1];
     WPACKET *thispkt;
-    SSL3_RECORD *thiswr;
+    TLS_RL_RECORD *thiswr;
     int mac_size = 0, ret = 0;
     size_t wpinited = 0;
     size_t j, prefix = 0;
@@ -1714,7 +1715,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         goto err;
     }
 
-    /* Clear our SSL3_RECORD structures */
+    /* Clear our TLS_RL_RECORD structures */
     memset(wr, 0, sizeof(wr));
     for (j = 0; j < numtempl + prefix; j++) {
         unsigned char *compressdata = NULL;
@@ -1733,8 +1734,8 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         else
             rectype = thistempl->type;
 
-        SSL3_RECORD_set_type(thiswr, rectype);
-        SSL3_RECORD_set_rec_version(thiswr, thistempl->version);
+        TLS_RL_RECORD_set_type(thiswr, rectype);
+        TLS_RL_RECORD_set_rec_version(thiswr, thistempl->version);
 
         if (!rl->funcs->prepare_record_header(rl, thispkt, thistempl, rectype,
                                               &compressdata)) {
@@ -1743,10 +1744,10 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         }
 
         /* lets setup the record stuff. */
-        SSL3_RECORD_set_data(thiswr, compressdata);
-        SSL3_RECORD_set_length(thiswr, thistempl->buflen);
+        TLS_RL_RECORD_set_data(thiswr, compressdata);
+        TLS_RL_RECORD_set_length(thiswr, thistempl->buflen);
 
-        SSL3_RECORD_set_input(thiswr, (unsigned char *)thistempl->buf);
+        TLS_RL_RECORD_set_input(thiswr, (unsigned char *)thistempl->buf);
 
         /*
          * we now 'read' from thiswr->input, thiswr->length bytes into
@@ -1765,7 +1766,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            SSL3_RECORD_reset_input(&wr[j]);
+            TLS_RL_RECORD_reset_input(&wr[j]);
         }
 
         if (rl->funcs->add_record_padding != NULL
@@ -1809,7 +1810,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         }
 
         /* now let's set up wb */
-        TLS_BUFFER_set_left(&rl->wbuf[j], SSL3_RECORD_get_length(thiswr));
+        TLS_BUFFER_set_left(&rl->wbuf[j], TLS_RL_RECORD_get_length(thiswr));
     }
 
     ret = 1;

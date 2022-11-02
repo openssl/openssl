@@ -156,8 +156,9 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
  *       decryption failed, or Encrypt-then-mac decryption failed.
  *    1: Success or Mac-then-encrypt decryption failed (MAC will be randomised)
  */
-static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
-                       int sending, SSL_MAC_BUF *macs, size_t macsize)
+static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
+                       size_t n_recs, int sending, SSL_MAC_BUF *macs,
+                       size_t macsize)
 {
     EVP_CIPHER_CTX *ds;
     size_t reclen[SSL_MAX_PIPELINES];
@@ -447,7 +448,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
     return 1;
 }
 
-static int tls1_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
+static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md,
                     int sending)
 {
     unsigned char *seq = rl->sequence;
