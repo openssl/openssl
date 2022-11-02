@@ -5430,6 +5430,7 @@ OPENSSL_strncasecmp                     5557	3_0_3	EXIST::FUNCTION:
 EVP_RAND_CTX_up_ref                     ?	3_1_0	EXIST::FUNCTION:
 RAND_set0_public                        ?	3_1_0	EXIST::FUNCTION:
 RAND_set0_private                       ?	3_1_0	EXIST::FUNCTION:
+BN_are_coprime                          ?	3_1_0	EXIST::FUNCTION:
 X509_PUBKEY_set0_public_key             ?	3_2_0	EXIST::FUNCTION:
 OSSL_STACK_OF_X509_free                 ?	3_2_0	EXIST::FUNCTION:
 EVP_MD_CTX_dup                          ?	3_2_0	EXIST::FUNCTION:
