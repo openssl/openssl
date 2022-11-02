@@ -221,6 +221,23 @@ err:
 }
 
 /*
+ * Testing for GCD(a, n) == 1 can be done by testing if there is a modulo
+ * inverse. This is much faster than the constant time version of BN_gcd().
+ */
+static ossl_inline int gcd_isone(BIGNUM *inv, BIGNUM *a, const BIGNUM *n,
+                                 BN_CTX *ctx)
+{
+    int ret = 0;
+
+    ERR_set_mark();
+    BN_set_flags(a, BN_FLG_CONSTTIME);
+    ret = (BN_mod_inverse(inv, a, n, ctx) != NULL);
+    /* Clear any errors (an error is returned if there is no inverse) */
+    ERR_pop_to_mark();
+    return ret;
+}
+
+/*
  * Constructs a probable prime (a candidate for p or q) using 2 auxiliary
  * prime numbers and the Chinese Remainder Theorem.
  *
@@ -288,8 +305,7 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
 
     if (!(BN_lshift1(r1x2, r1)
             /* (Step 1) GCD(2r1, r2) = 1 */
-            && BN_gcd(tmp, r1x2, r2, ctx)
-            && BN_is_one(tmp)
+            && gcd_isone(tmp, r1x2, r2, ctx)
             /* (Step 2) R = ((r2^-1 mod 2r1) * r2) - ((2r1^-1 mod r2)*2r1) */
             && BN_mod_inverse(R, r2, r1x2, ctx)
             && BN_mul(R, R, r2, ctx) /* R = (r2^-1 mod 2r1) * r2 */
@@ -337,10 +353,9 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
 
             /* (Step 7) If GCD(Y-1) == 1 & Y is probably prime then return Y */
             if (BN_copy(y1, Y) == NULL
-                    || !BN_sub_word(y1, 1)
-                    || !BN_gcd(tmp, y1, e, ctx))
+                    || !BN_sub_word(y1, 1))
                 goto err;
-            if (BN_is_one(tmp)) {
+            if (gcd_isone(tmp, y1, e, ctx)) {
                 int rv = BN_check_prime(Y, ctx, cb);
 
                 if (rv > 0)
