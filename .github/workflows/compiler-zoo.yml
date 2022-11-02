@@ -99,7 +99,7 @@ jobs:
         sudo apt-get update
         sudo apt-get -y install ${{ matrix.zoo.cc }}
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: config
       run: |
