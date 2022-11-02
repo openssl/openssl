@@ -20,6 +20,76 @@ typedef struct dtls_bitmap_st {
     unsigned char max_seq_num[SEQ_NUM_SIZE];
 } DTLS_BITMAP;
 
+typedef struct ssl_mac_buf_st {
+    unsigned char *mac;
+    int alloced;
+} SSL_MAC_BUF;
+
+typedef struct ssl3_buffer_st {
+    /* at least SSL3_RT_MAX_PACKET_SIZE bytes */
+    unsigned char *buf;
+    /* default buffer size (or 0 if no default set) */
+    size_t default_len;
+    /* buffer size */
+    size_t len;
+    /* where to 'copy from' */
+    size_t offset;
+    /* how many bytes left */
+    size_t left;
+    /* 'buf' is from application for KTLS */
+    int app_buffer;
+    /* The type of data stored in this buffer. Only used for writing */
+    int type;
+} SSL3_BUFFER;
+
+typedef struct ssl3_record_st {
+    /* Record layer version */
+    /* r */
+    int rec_version;
+    /* type of record */
+    /* r */
+    int type;
+    /* How many bytes available */
+    /* rw */
+    size_t length;
+    /*
+     * How many bytes were available before padding was removed? This is used
+     * to implement the MAC check in constant time for CBC records.
+     */
+    /* rw */
+    size_t orig_len;
+    /* read/write offset into 'buf' */
+    /* r */
+    size_t off;
+    /* pointer to the record data */
+    /* rw */
+    unsigned char *data;
+    /* where the decode bytes are */
+    /* rw */
+    unsigned char *input;
+    /* only used with decompression - malloc()ed */
+    /* r */
+    unsigned char *comp;
+    /* epoch number, needed by DTLS1 */
+    /* r */
+    uint16_t epoch;
+    /* sequence number, needed by DTLS1 */
+    /* r */
+    unsigned char seq_num[SEQ_NUM_SIZE];
+} SSL3_RECORD;
+
+/* Macros/functions provided by the SSL3_RECORD component */
+
+#define SSL3_RECORD_set_type(r, t)              ((r)->type = (t))
+#define SSL3_RECORD_set_rec_version(r, v)       ((r)->rec_version = (v))
+#define SSL3_RECORD_get_length(r)               ((r)->length)
+#define SSL3_RECORD_set_length(r, l)            ((r)->length = (l))
+#define SSL3_RECORD_add_length(r, l)            ((r)->length += (l))
+#define SSL3_RECORD_set_data(r, d)              ((r)->data = (d))
+#define SSL3_RECORD_set_input(r, i)             ((r)->input = (i))
+#define SSL3_RECORD_reset_input(r)              ((r)->input = (r)->data)
+
+
 /* Protocol version specific function pointers */
 struct record_functions_st
 {
@@ -329,10 +399,31 @@ void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
                                     || (rl)->version == TLS1_2_VERSION \
                                     || (rl)->isdtls)
 
+void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);
+
 int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
                                      EVP_CIPHER_CTX *ctx,
                                      const EVP_CIPHER *ciph,
                                      const EVP_MD *md);
+
+/* tls_pad.c */
+int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
+                                    size_t origreclen,
+                                    unsigned char *recdata,
+                                    unsigned char **mac,
+                                    int *alloced,
+                                    size_t block_size, size_t mac_size,
+                                    OSSL_LIB_CTX *libctx);
+
+int tls1_cbc_remove_padding_and_mac(size_t *reclen,
+                                    size_t origreclen,
+                                    unsigned char *recdata,
+                                    unsigned char **mac,
+                                    int *alloced,
+                                    size_t block_size, size_t mac_size,
+                                    int aead,
+                                    OSSL_LIB_CTX *libctx);
+
 /* ssl3_cbc.c */
 __owur char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
 __owur int ssl3_cbc_digest_record(const EVP_MD *md,

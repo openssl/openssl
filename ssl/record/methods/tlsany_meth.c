@@ -12,6 +12,8 @@
 #include "../record_local.h"
 #include "recmethod_local.h"
 
+#define MIN_SSL2_RECORD_LEN     9
+
 static int tls_any_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                     unsigned char *key, size_t keylen,
                                     unsigned char *iv, size_t ivlen,

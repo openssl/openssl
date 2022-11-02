@@ -8,7 +8,6 @@
  */
 
 typedef struct ssl_connection_st SSL_CONNECTION;
-typedef struct ssl3_buffer_st SSL3_BUFFER;
 
 #include <openssl/core_dispatch.h>
 #include "recordmethod.h"
@@ -20,60 +19,7 @@ typedef struct ssl3_buffer_st SSL3_BUFFER;
  *                                                                           *
  *****************************************************************************/
 
-struct ssl3_buffer_st {
-    /* at least SSL3_RT_MAX_PACKET_SIZE bytes */
-    unsigned char *buf;
-    /* default buffer size (or 0 if no default set) */
-    size_t default_len;
-    /* buffer size */
-    size_t len;
-    /* where to 'copy from' */
-    size_t offset;
-    /* how many bytes left */
-    size_t left;
-    /* 'buf' is from application for KTLS */
-    int app_buffer;
-    /* The type of data stored in this buffer. Only used for writing */
-    int type;
-};
-
 #define SEQ_NUM_SIZE                            8
-
-typedef struct ssl3_record_st {
-    /* Record layer version */
-    /* r */
-    int rec_version;
-    /* type of record */
-    /* r */
-    int type;
-    /* How many bytes available */
-    /* rw */
-    size_t length;
-    /*
-     * How many bytes were available before padding was removed? This is used
-     * to implement the MAC check in constant time for CBC records.
-     */
-    /* rw */
-    size_t orig_len;
-    /* read/write offset into 'buf' */
-    /* r */
-    size_t off;
-    /* pointer to the record data */
-    /* rw */
-    unsigned char *data;
-    /* where the decode bytes are */
-    /* rw */
-    unsigned char *input;
-    /* only used with decompression - malloc()ed */
-    /* r */
-    unsigned char *comp;
-    /* epoch number, needed by DTLS1 */
-    /* r */
-    uint16_t epoch;
-    /* sequence number, needed by DTLS1 */
-    /* r */
-    unsigned char seq_num[SEQ_NUM_SIZE];
-} SSL3_RECORD;
 
 typedef struct tls_record_st {
     void *rechandle;
@@ -184,21 +130,9 @@ typedef struct record_layer_st {
  *                                                                           *
  *****************************************************************************/
 
-struct ssl_mac_buf_st {
-    unsigned char *mac;
-    int alloced;
-};
-typedef struct ssl_mac_buf_st SSL_MAC_BUF;
-
-#define MIN_SSL2_RECORD_LEN     9
-
 #define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
 #define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
-#define RECORD_LAYER_get_packet(rl)             ((rl)->packet)
-#define RECORD_LAYER_add_packet_length(rl, inc) ((rl)->packet_length += (inc))
 #define DTLS_RECORD_LAYER_get_w_epoch(rl)       ((rl)->d->w_epoch)
-#define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
-#define RECORD_LAYER_get_wbuf(rl)               ((rl)->wbuf)
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL_CONNECTION *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);
@@ -215,7 +149,6 @@ __owur int ssl3_read_bytes(SSL *s, int type, int *recvd_type,
 
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl);
-void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 __owur int dtls1_read_bytes(SSL *s, int type, int *recvd_type,
                             unsigned char *buf, size_t len, int peek,

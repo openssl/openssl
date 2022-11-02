@@ -70,7 +70,7 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     d->buffered_app_data.q = buffered_app_data;
 }
 
-int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
+static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
 {
     TLS_RECORD *rdata;
     pitem *item;
