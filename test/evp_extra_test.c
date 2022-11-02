@@ -4620,13 +4620,13 @@ static int test_ecx_short_keys(int tst)
 {
     unsigned char ecxkeydata = 1;
     EVP_PKEY *pkey;
-    OSSL_PROVIDER* deflprov;
+    OSSL_PROVIDER* default_provider;
     int testresult = 1;
 
 
-    deflprov = OSSL_PROVIDER_load(NULL, "default");
+    default_provider = OSSL_PROVIDER_load(NULL, "default");
 
-    if (!TEST_ptr(deflprov))
+    if (!TEST_ptr(default_provider))
         return 0;
 
     pkey = EVP_PKEY_new_raw_private_key(ecxnids[tst], NULL, &ecxkeydata, 1);
@@ -4635,7 +4635,7 @@ static int test_ecx_short_keys(int tst)
         testresult = 0;
     }
 
-    OSSL_PROVIDER_unload(deflprov);
+    OSSL_PROVIDER_unload(default_provider);
 
     return testresult;
 }
