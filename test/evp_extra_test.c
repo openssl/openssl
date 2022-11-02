@@ -31,6 +31,7 @@
 #include <openssl/decoder.h>
 #include <openssl/rsa.h>
 #include <openssl/engine.h>
+#include <openssl/proverr.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/sizes.h"
@@ -4620,24 +4621,18 @@ static int test_ecx_short_keys(int tst)
 {
     unsigned char ecxkeydata = 1;
     EVP_PKEY *pkey;
-    OSSL_PROVIDER* default_provider;
-    int testresult = 1;
 
 
-    default_provider = OSSL_PROVIDER_load(NULL, "default");
-
-    if (!TEST_ptr(default_provider))
-        return 0;
+    if (testctx != NULL)
+        return TEST_skip("ecx keys not supported in null provider");
 
     pkey = EVP_PKEY_new_raw_private_key(ecxnids[tst], NULL, &ecxkeydata, 1);
     if (!TEST_ptr_null(pkey)) {
         EVP_PKEY_free(pkey);
-        testresult = 0;
+        return 0;
     }
 
-    OSSL_PROVIDER_unload(default_provider);
-
-    return testresult;
+    return 1;
 }
 
 typedef enum OPTION_choice {
@@ -4667,11 +4662,11 @@ static int test_ecx_not_private_key(int tst)
     EVP_MD_CTX *ctx = NULL;
     unsigned char *mac = NULL;
     size_t maclen = 0;
-    int ret;
     unsigned char *pubkey;
     size_t pubkeylen;
-    OSSL_PROVIDER* default_provider;
 
+    if (testctx != NULL)
+        return TEST_skip("ecx keys not supported in null provider");
 
     switch (keys[tst].type) {
         case NID_X25519:
@@ -4682,11 +4677,6 @@ static int test_ecx_not_private_key(int tst)
     /* Check if this algorithm supports public keys */
     if (keys[tst].pub == NULL)
         return 1;
-
-    default_provider = OSSL_PROVIDER_load(NULL, "default");
-
-    if (!TEST_ptr(default_provider))
-        return 0;
 
     pubkey = (unsigned char *)keys[tst].pub,
     pubkeylen = strlen(keys[tst].pub);
@@ -4699,29 +4689,33 @@ static int test_ecx_not_private_key(int tst)
     if (!TEST_ptr(ctx = EVP_MD_CTX_new()))
         goto err;
 
-    ret = EVP_DigestSignInit(ctx, NULL, NULL, NULL,
-                             pkey);
+    if (EVP_DigestSignInit(ctx, NULL, NULL, NULL, pkey) != 1)
+        goto check_err;
 
-    if (!TEST_true(ret))
-        goto err;
-
-    if (!TEST_true(EVP_DigestSign(ctx, NULL, &maclen, msg, sizeof(msg))))
-        goto err;
+    if (EVP_DigestSign(ctx, NULL, &maclen, msg, sizeof(msg)) != 1)
+        goto check_err;
 
     if (!TEST_ptr(mac = OPENSSL_malloc(maclen)))
         goto err;
 
-    /* We used a bad key. We expect a failure here */
-    if (!TEST_false(EVP_DigestSign(ctx, mac, &maclen, msg, sizeof(msg))))
-        goto err;
+    if (EVP_DigestSign(ctx, mac, &maclen, msg, sizeof(msg)) != 1)
+        goto check_err;
 
-    testresult = 1;
+ check_err:
+    /*
+     * Currently only EVP_DigestSign will throw PROV_R_NOT_A_PRIVATE_KEY,
+     * but we relax the check to allow error also thrown by
+     * EVP_DigestSignInit and EVP_DigestSign.
+     */
+    if (ERR_GET_REASON(ERR_peek_error()) == PROV_R_NOT_A_PRIVATE_KEY) {
+        testresult = 1;
+        ERR_clear_error();
+    }
 
  err:
     EVP_MD_CTX_free(ctx);
     OPENSSL_free(mac);
     EVP_PKEY_free(pkey);
-    OSSL_PROVIDER_unload(default_provider);
 
     return testresult;
 }
