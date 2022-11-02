@@ -4623,10 +4623,8 @@ static int test_ecx_short_keys(int tst)
     EVP_PKEY *pkey;
 
 
-    if (testctx != NULL)
-        return TEST_skip("ecx keys not supported in null provider");
-
-    pkey = EVP_PKEY_new_raw_private_key(ecxnids[tst], NULL, &ecxkeydata, 1);
+    pkey = EVP_PKEY_new_raw_private_key_ex(testctx, OBJ_nid2sn(ecxnids[tst]),
+                                           NULL, &ecxkeydata, 1);
     if (!TEST_ptr_null(pkey)) {
         EVP_PKEY_free(pkey);
         return 0;
@@ -4665,9 +4663,6 @@ static int test_ecx_not_private_key(int tst)
     unsigned char *pubkey;
     size_t pubkeylen;
 
-    if (testctx != NULL)
-        return TEST_skip("ecx keys not supported in null provider");
-
     switch (keys[tst].type) {
         case NID_X25519:
         case NID_X448:
@@ -4676,13 +4671,13 @@ static int test_ecx_not_private_key(int tst)
 
     /* Check if this algorithm supports public keys */
     if (keys[tst].pub == NULL)
-        return 1;
+        return TEST_skip("no public key present");
 
-    pubkey = (unsigned char *)keys[tst].pub,
+    pubkey = (unsigned char *)keys[tst].pub;
     pubkeylen = strlen(keys[tst].pub);
 
-    pkey = EVP_PKEY_new_raw_public_key(keys[tst].type, NULL, pubkey, pubkeylen);
-
+    pkey = EVP_PKEY_new_raw_public_key_ex(testctx, OBJ_nid2sn(keys[tst].type),
+                                          NULL, pubkey, pubkeylen);
     if (!TEST_ptr(pkey))
         goto err;
 
@@ -4698,8 +4693,8 @@ static int test_ecx_not_private_key(int tst)
     if (!TEST_ptr(mac = OPENSSL_malloc(maclen)))
         goto err;
 
-    if (EVP_DigestSign(ctx, mac, &maclen, msg, sizeof(msg)) != 1)
-        goto check_err;
+    if (!TEST_int_eq(EVP_DigestSign(ctx, mac, &maclen, msg, sizeof(msg)), 0))
+        goto err;
 
  check_err:
     /*
