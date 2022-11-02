@@ -128,20 +128,12 @@ static int demo_sign(OSSL_LIB_CTX *libctx,
     size_t sig_len = 0;
     unsigned char *sig_value = NULL;
     EVP_MD_CTX *ctx = NULL;
-    const EVP_MD *md = NULL;
 
     ctx = EVP_MD_CTX_create();
     if (ctx == NULL)
         goto end;
 
-    md = EVP_get_digestbyname(DIGEST);
-    if (md == NULL)
-        goto end;
-
-    if (EVP_DigestInit_ex(ctx, md, NULL) != 1)
-        goto end;
-
-    if (EVP_DigestSignInit(ctx, NULL, md, NULL, pkey) != 1)
+    if (EVP_DigestSignInit_ex(ctx, NULL, DIGEST, libctx, NULL, pkey, NULL) != 1)
         goto end;
 
    if (EVP_DigestSignUpdate(ctx, hamlet_1, sizeof(hamlet_1)) != 1)
@@ -183,22 +175,13 @@ static int demo_verify(OSSL_LIB_CTX *libctx,
                        EVP_PKEY *pkey)
 {
     int result = 0;
-
     EVP_MD_CTX *ctx = NULL;
-    const EVP_MD *md = NULL;
 
     ctx = EVP_MD_CTX_create();
     if(ctx == NULL)
         goto end;
 
-    md = EVP_get_digestbyname(DIGEST);
-    if(md == NULL)
-        goto end;
-
-    if (EVP_DigestInit_ex(ctx, md, NULL) != 1)
-        goto end;
-
-    if (EVP_DigestVerifyInit(ctx, NULL, md, NULL, pkey) != 1)
+    if (EVP_DigestVerifyInit_ex(ctx, NULL, DIGEST, libctx, NULL, pkey, NULL) != 1)
         goto end;
 
     if (EVP_DigestVerifyUpdate(ctx, hamlet_1, sizeof(hamlet_1)) != 1)
