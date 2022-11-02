@@ -21,7 +21,7 @@ jobs:
           mkdir ./build-3.0
           mkdir ./source
           mkdir ./source-3.0
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           path: source
       - name: config current
@@ -33,7 +33,7 @@ jobs:
       - name: make
         run: make -s -j4
         working-directory: ./build
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: openssl/openssl
           ref: openssl-3.0
@@ -63,7 +63,7 @@ jobs:
           mkdir ./build-3.0
           mkdir ./source
           mkdir ./source-3.0
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: openssl/openssl
           ref: openssl-3.0
@@ -77,7 +77,7 @@ jobs:
       - name: make 3.0
         run: make -s -j4
         working-directory: ./build-3.0
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           path: source
       - name: config current
