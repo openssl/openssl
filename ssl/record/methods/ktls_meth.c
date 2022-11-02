@@ -455,10 +455,10 @@ static int ktls_initialise_write_packets(OSSL_RECORD_LAYER *rl,
                                          size_t numtempl,
                                          OSSL_RECORD_TEMPLATE *prefixtempl,
                                          WPACKET *pkt,
-                                         SSL3_BUFFER *bufs,
+                                         TLS_BUFFER *bufs,
                                          size_t *wpinited)
 {
-    SSL3_BUFFER *wb;
+    TLS_BUFFER *wb;
 
     /*
      * We just use the application buffer directly and don't use any WPACKET
@@ -473,9 +473,9 @@ static int ktls_initialise_write_packets(OSSL_RECORD_LAYER *rl,
     * This doesn't leak memory because the buffers have never been allocated
     * with KTLS
     */
-    SSL3_BUFFER_set_buf(wb, (unsigned char *)templates[0].buf);
-    SSL3_BUFFER_set_offset(wb, 0);
-    SSL3_BUFFER_set_app_buffer(wb, 1);
+    TLS_BUFFER_set_buf(wb, (unsigned char *)templates[0].buf);
+    TLS_BUFFER_set_offset(wb, 0);
+    TLS_BUFFER_set_app_buffer(wb, 1);
 
     return 1;
 }

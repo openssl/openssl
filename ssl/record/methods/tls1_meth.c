@@ -589,11 +589,11 @@ int tls1_initialise_write_packets(OSSL_RECORD_LAYER *rl,
                                   size_t numtempl,
                                   OSSL_RECORD_TEMPLATE *prefixtempl,
                                   WPACKET *pkt,
-                                  SSL3_BUFFER *bufs,
+                                  TLS_BUFFER *bufs,
                                   size_t *wpinited)
 {
     size_t align = 0;
-    SSL3_BUFFER *wb;
+    TLS_BUFFER *wb;
     size_t prefix;
 
     /* Do we need to add an empty record prefix? */
@@ -613,14 +613,14 @@ int tls1_initialise_write_packets(OSSL_RECORD_LAYER *rl,
         wb = &bufs[0];
 
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
-        align = (size_t)SSL3_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
+        align = (size_t)TLS_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
         align = SSL3_ALIGN_PAYLOAD - 1
                 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
 #endif
-        SSL3_BUFFER_set_offset(wb, align);
+        TLS_BUFFER_set_offset(wb, align);
 
-        if (!WPACKET_init_static_len(&pkt[0], SSL3_BUFFER_get_buf(wb),
-                                     SSL3_BUFFER_get_len(wb), 0)) {
+        if (!WPACKET_init_static_len(&pkt[0], TLS_BUFFER_get_buf(wb),
+                                     TLS_BUFFER_get_len(wb), 0)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }

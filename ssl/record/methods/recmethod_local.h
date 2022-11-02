@@ -25,7 +25,7 @@ typedef struct ssl_mac_buf_st {
     int alloced;
 } SSL_MAC_BUF;
 
-typedef struct ssl3_buffer_st {
+typedef struct tls_buffer_st {
     /* at least SSL3_RT_MAX_PACKET_SIZE bytes */
     unsigned char *buf;
     /* default buffer size (or 0 if no default set) */
@@ -40,7 +40,7 @@ typedef struct ssl3_buffer_st {
     int app_buffer;
     /* The type of data stored in this buffer. Only used for writing */
     int type;
-} SSL3_BUFFER;
+} TLS_BUFFER;
 
 typedef struct ssl3_record_st {
     /* Record layer version */
@@ -163,7 +163,7 @@ struct record_functions_st
                                     size_t numtempl,
                                     OSSL_RECORD_TEMPLATE *prefixtempl,
                                     WPACKET *pkt,
-                                    SSL3_BUFFER *bufs,
+                                    TLS_BUFFER *bufs,
                                     size_t *wpinited);
 
     /* Get the actual record type to be used for a given template */
@@ -241,7 +241,7 @@ struct ossl_record_layer_st
     uint32_t mode;
 
     /* write IO goes into here */
-    SSL3_BUFFER wbuf[SSL_MAX_PIPELINES + 1];
+    TLS_BUFFER wbuf[SSL_MAX_PIPELINES + 1];
 
     /* Next wbuf with pending data still to write */
     size_t nextwbuf;
@@ -250,7 +250,7 @@ struct ossl_record_layer_st
     size_t numwpipes;
 
     /* read IO goes into here */
-    SSL3_BUFFER rbuf;
+    TLS_BUFFER rbuf;
     /* each decoded record goes in here */
     SSL3_RECORD rrec[SSL_MAX_PIPELINES];
 
@@ -374,7 +374,7 @@ struct ossl_record_layer_st
 typedef struct dtls_rlayer_record_data_st {
     unsigned char *packet;
     size_t packet_length;
-    SSL3_BUFFER rbuf;
+    TLS_BUFFER rbuf;
     SSL3_RECORD rrec;
 } DTLS_RLAYER_RECORD_DATA;
 
@@ -522,7 +522,7 @@ int tls_initialise_write_packets_default(OSSL_RECORD_LAYER *rl,
                                          size_t numtempl,
                                          OSSL_RECORD_TEMPLATE *prefixtempl,
                                          WPACKET *pkt,
-                                         SSL3_BUFFER *bufs,
+                                         TLS_BUFFER *bufs,
                                          size_t *wpinited);
 int tls1_allocate_write_buffers(OSSL_RECORD_LAYER *rl,
                                 OSSL_RECORD_TEMPLATE *templates,
@@ -532,7 +532,7 @@ int tls1_initialise_write_packets(OSSL_RECORD_LAYER *rl,
                                   size_t numtempl,
                                   OSSL_RECORD_TEMPLATE *prefixtempl,
                                   WPACKET *pkt,
-                                  SSL3_BUFFER *bufs,
+                                  TLS_BUFFER *bufs,
                                   size_t *wpinited);
 int tls_prepare_record_header_default(OSSL_RECORD_LAYER *rl,
                                       WPACKET *thispkt,
@@ -552,18 +552,18 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
                               OSSL_RECORD_TEMPLATE *templates,
                               size_t numtempl);
 
-/* Macros/functions provided by the SSL3_BUFFER component */
+/* Macros/functions provided by the TLS_BUFFER component */
 
-#define SSL3_BUFFER_get_buf(b)              ((b)->buf)
-#define SSL3_BUFFER_set_buf(b, n)           ((b)->buf = (n))
-#define SSL3_BUFFER_get_len(b)              ((b)->len)
-#define SSL3_BUFFER_get_left(b)             ((b)->left)
-#define SSL3_BUFFER_set_left(b, l)          ((b)->left = (l))
-#define SSL3_BUFFER_sub_left(b, l)          ((b)->left -= (l))
-#define SSL3_BUFFER_get_offset(b)           ((b)->offset)
-#define SSL3_BUFFER_set_offset(b, o)        ((b)->offset = (o))
-#define SSL3_BUFFER_add_offset(b, o)        ((b)->offset += (o))
-#define SSL3_BUFFER_set_app_buffer(b, l)    ((b)->app_buffer = (l))
-#define SSL3_BUFFER_is_app_buffer(b)        ((b)->app_buffer)
+#define TLS_BUFFER_get_buf(b)              ((b)->buf)
+#define TLS_BUFFER_set_buf(b, n)           ((b)->buf = (n))
+#define TLS_BUFFER_get_len(b)              ((b)->len)
+#define TLS_BUFFER_get_left(b)             ((b)->left)
+#define TLS_BUFFER_set_left(b, l)          ((b)->left = (l))
+#define TLS_BUFFER_sub_left(b, l)          ((b)->left -= (l))
+#define TLS_BUFFER_get_offset(b)           ((b)->offset)
+#define TLS_BUFFER_set_offset(b, o)        ((b)->offset = (o))
+#define TLS_BUFFER_add_offset(b, o)        ((b)->offset += (o))
+#define TLS_BUFFER_set_app_buffer(b, l)    ((b)->app_buffer = (l))
+#define TLS_BUFFER_is_app_buffer(b)        ((b)->app_buffer)
 
-void SSL3_BUFFER_release(SSL3_BUFFER *b);
+void TLS_BUFFER_release(TLS_BUFFER *b);
