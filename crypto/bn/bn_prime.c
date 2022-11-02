@@ -252,6 +252,17 @@ int ossl_bn_check_prime(const BIGNUM *w, int checks, BN_CTX *ctx,
     return bn_is_prime_int(w, checks, ctx, do_trial_division, cb);
 }
 
+/*
+ * Use this only for key generation.
+ * It always uses trial division. The number of checks
+ * (MR rounds) passed in is used without being clamped to a minimum value.
+ */
+int ossl_bn_check_generated_prime(const BIGNUM *w, int checks, BN_CTX *ctx,
+                                  BN_GENCB *cb)
+{
+    return bn_is_prime_int(w, checks, ctx, 1, cb);
+}
+
 int BN_check_prime(const BIGNUM *p, BN_CTX *ctx, BN_GENCB *cb)
 {
     return ossl_bn_check_prime(p, 0, ctx, 1, cb);
