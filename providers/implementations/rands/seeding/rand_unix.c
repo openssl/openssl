@@ -141,7 +141,6 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
     short int code;
     int i, k;
     size_t bytes_needed;
-    struct timespec ts;
     unsigned char v;
 #  ifdef OPENSSL_SYS_VOS_HPPA
     long duration;
@@ -172,8 +171,7 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
 #  endif
 
         /* Get wall clock time, take 8 bits. */
-        clock_gettime(CLOCK_REALTIME, &ts);
-        v = (unsigned char)(ts.tv_nsec & 0xFF);
+        v = get_time_stamp() & 0xFF;
         ossl_rand_pool_add(pool, arg, &v, sizeof(v), 2);
     }
     return ossl_rand_pool_entropy_available(pool);
