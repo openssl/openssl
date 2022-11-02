@@ -303,14 +303,14 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, record_pqueue *queue
 
     rdata->packet = rl->packet;
     rdata->packet_length = rl->packet_length;
-    memcpy(&(rdata->rbuf), &rl->rbuf, sizeof(SSL3_BUFFER));
+    memcpy(&(rdata->rbuf), &rl->rbuf, sizeof(TLS_BUFFER));
     memcpy(&(rdata->rrec), &rl->rrec[0], sizeof(SSL3_RECORD));
 
     item->data = rdata;
 
     rl->packet = NULL;
     rl->packet_length = 0;
-    memset(&rl->rbuf, 0, sizeof(SSL3_BUFFER));
+    memset(&rl->rbuf, 0, sizeof(TLS_BUFFER));
     memset(&rl->rrec[0], 0, sizeof(rl->rrec[0]));
 
     if (!tls_setup_read_buffer(rl)) {
@@ -338,11 +338,11 @@ static int dtls_copy_rlayer_record(OSSL_RECORD_LAYER *rl, pitem *item)
 
     rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
 
-    SSL3_BUFFER_release(&rl->rbuf);
+    ossl_tls_buffer_release(&rl->rbuf);
 
     rl->packet = rdata->packet;
     rl->packet_length = rdata->packet_length;
-    memcpy(&rl->rbuf, &(rdata->rbuf), sizeof(SSL3_BUFFER));
+    memcpy(&rl->rbuf, &(rdata->rbuf), sizeof(TLS_BUFFER));
     memcpy(&rl->rrec[0], &(rdata->rrec), sizeof(SSL3_RECORD));
 
     /* Set proper sequence number for mac calculation */
@@ -415,7 +415,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     if ((rl->rstate != SSL_ST_READ_BODY) ||
         (rl->packet_length < DTLS1_RT_HEADER_LENGTH)) {
         rret = rl->funcs->read_n(rl, DTLS1_RT_HEADER_LENGTH,
-                                 SSL3_BUFFER_get_len(&rl->rbuf), 0, 1, &n);
+                                 TLS_BUFFER_get_len(&rl->rbuf), 0, 1, &n);
         /* read timeout is handled by dtls1_read_bytes */
         if (rret < OSSL_RECORD_RETURN_SUCCESS) {
             /* RLAYERfatal() already called if appropriate */
@@ -577,7 +577,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 
 static int dtls_free(OSSL_RECORD_LAYER *rl)
 {
-    SSL3_BUFFER *rbuf;
+    TLS_BUFFER *rbuf;
     size_t left, written;
     pitem *item;
     DTLS_RLAYER_RECORD_DATA *rdata;

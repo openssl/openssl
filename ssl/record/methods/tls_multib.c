@@ -69,7 +69,7 @@ static int tls_write_records_multiblock_int(OSSL_RECORD_LAYER *rl,
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
     size_t i;
     size_t totlen;
-    SSL3_BUFFER *wb;
+    TLS_BUFFER *wb;
     unsigned char aad[13];
     EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
     size_t packlen;
