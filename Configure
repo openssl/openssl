@@ -91,9 +91,10 @@ EOF
 # no-asm        do not use assembler
 # no-egd        do not compile support for the entropy-gathering daemon APIs
 # [no-]zlib     [don't] compile support for zlib compression.
-# zlib-dynamic  Like "zlib", but the zlib library is expected to be a shared
-#               library and will be loaded at run-time by the OpenSSL library.
-#               This option is not suggested for RPM based distributions.
+# zlib-dynamic  Instead of linking the libcrypto to zlib library libcrypto
+#               will dynamically load the shared zlib library at run-time.
+#               This option requires the unversioned zlib shared library file
+#               to be present on the system.
 # sctp          include SCTP support
 # enable-quic   include QUIC support (currently just for developers as the
 #               implementation is by no means complete and usable)
