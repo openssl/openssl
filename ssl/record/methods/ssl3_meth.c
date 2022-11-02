@@ -87,10 +87,11 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
  *    0: if the record is publicly invalid, or an internal error
  *    1: Success or Mac-then-encrypt decryption failed (MAC will be randomised)
  */
-static int ssl3_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs,
-                       int sending, SSL_MAC_BUF *mac, size_t macsize)
+static int ssl3_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *inrecs,
+                       size_t n_recs, int sending, SSL_MAC_BUF *mac,
+                       size_t macsize)
 {
-    SSL3_RECORD *rec;
+    TLS_RL_RECORD *rec;
     EVP_CIPHER_CTX *ds;
     size_t l, i;
     size_t bs;
@@ -206,7 +207,7 @@ static const unsigned char ssl3_pad_2[48] = {
     0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c
 };
 
-static int ssl3_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
+static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md,
                     int sending)
 {
     unsigned char *mac_sec, *seq = rl->sequence;
