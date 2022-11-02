@@ -140,7 +140,7 @@ jobs:
         sudo apt-get -yq --force-yes install \
             gcc-${{ matrix.platform.arch }} \
             ${{ matrix.platform.libs }}
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: config with FIPS
       if: matrix.platform.fips != 'no'

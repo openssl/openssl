@@ -26,7 +26,7 @@ jobs:
     steps:
       - name: create directory
         run: mkdir ./current
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           path: current
       - name: download module source
