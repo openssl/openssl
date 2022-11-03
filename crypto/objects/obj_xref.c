@@ -141,7 +141,7 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
     nid_triple *ntr;
     int dnid = NID_undef, pnid = NID_undef, ret = 0;
 
-    if (signid == NID_undef || dig_id == NID_undef || pkey_id == NID_undef)
+    if (signid == NID_undef || pkey_id == NID_undef)
         return 0;
 
     if (!obj_sig_init())
