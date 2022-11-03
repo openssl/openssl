@@ -3689,7 +3689,7 @@ CON_FUNC_RETURN tls_construct_client_compressed_certificate(SSL_CONNECTION *sc,
 
     switch (alg) {
     case TLSEXT_comp_cert_zlib:
-        method = COMP_zlib();
+        method = COMP_zlib_oneshot();
         break;
     case TLSEXT_comp_cert_brotli:
         method = COMP_brotli_oneshot();

@@ -2520,7 +2520,7 @@ MSG_PROCESS_RETURN tls13_process_compressed_certificate(SSL_CONNECTION *sc,
     }
     switch (comp_alg) {
     case TLSEXT_comp_cert_zlib:
-        method = COMP_zlib();
+        method = COMP_zlib_oneshot();
         break;
     case TLSEXT_comp_cert_brotli:
         method = COMP_brotli_oneshot();

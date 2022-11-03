@@ -101,7 +101,7 @@ __owur static OSSL_COMP_CERT *OSSL_COMP_CERT_from_uncompressed_data(unsigned cha
         method = COMP_brotli_oneshot();
         break;
     case TLSEXT_comp_cert_zlib:
-        method = COMP_zlib();
+        method = COMP_zlib_oneshot();
         break;
     case TLSEXT_comp_cert_zstd:
         method = COMP_zstd_oneshot();
