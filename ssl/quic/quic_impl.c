@@ -1371,6 +1371,15 @@ static int csm_rx(QUIC_CONNECTION *qc)
             csm_update_idle(qc);
 
         csm_rx_handle_packet(qc); /* best effort */
+
+        /*
+         * Regardless of the outcome of frame handling, unref the packet.
+         * This will free the packet unless something added another
+         * reference to it during frame processing.
+         */
+        ossl_qrx_pkt_release(qc->qrx_pkt);
+        qc->qrx_pkt = NULL;
+
         handled_any = 1;
     }
 
@@ -1442,14 +1451,6 @@ static int csm_rx_handle_packet(QUIC_CONNECTION *qc)
 
             /* This packet contains frames, pass to the RXDP. */
             ossl_quic_handle_frames(qc, qc->qrx_pkt); /* best effort */
-
-            /*
-             * Regardless of the outcome of frame handling, unref the packet.
-             * This will free the packet unless something added another
-             * reference to it during frame processing.
-             */
-            ossl_qrx_pkt_release(qc->qrx_pkt);
-            qc->qrx_pkt = NULL;
             break;
     }
 
