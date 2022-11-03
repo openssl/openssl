@@ -1396,12 +1396,20 @@ static int csm_rx(QUIC_CONNECTION *qc)
 /* Handles the packet currently in qc->qrx_pkt->hdr. */
 static int csm_rx_handle_packet(QUIC_CONNECTION *qc)
 {
+    uint32_t enc_level;
+
     assert(qc->qrx_pkt != NULL);
 
-    if (ossl_quic_pkt_type_is_encrypted(qc->qrx_pkt->hdr->type)
-        && !qc->have_received_enc_pkt) {
-        qc->init_scid = qc->qrx_pkt->hdr->src_conn_id;
-        qc->have_received_enc_pkt = 1;
+    if (ossl_quic_pkt_type_is_encrypted(qc->qrx_pkt->hdr->type)) {
+        if (!qc->have_received_enc_pkt) {
+            qc->init_scid = qc->qrx_pkt->hdr->src_conn_id;
+            qc->have_received_enc_pkt = 1;
+        }
+
+        enc_level = ossl_quic_pkt_type_to_enc_level(qc->qrx_pkt->hdr->type);
+        if ((qc->el_discarded & (1U << enc_level)) != 0)
+            /* Do not process packets from ELs we have already discarded. */
+            return 1;
     }
 
     /* Handle incoming packet. */
