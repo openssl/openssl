@@ -4665,9 +4665,9 @@ static int test_ecx_not_private_key(int tst)
     size_t pubkeylen;
 
     switch (keys[tst].type) {
-        case NID_X25519:
-        case NID_X448:
-            return TEST_skip("signing not supported for X25519/X448");
+    case NID_X25519:
+    case NID_X448:
+        return TEST_skip("signing not supported for X25519/X448");
     }
 
     /* Check if this algorithm supports public keys */
