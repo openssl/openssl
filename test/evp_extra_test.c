@@ -4650,6 +4650,7 @@ const OPTIONS *test_get_options(void)
     return options;
 }
 
+#ifndef OPENSSL_NO_EC
 /* Test that trying to sign with a public key errors out gracefully */
 static int test_ecx_not_private_key(int tst)
 {
@@ -4714,6 +4715,7 @@ static int test_ecx_not_private_key(int tst)
 
     return testresult;
 }
+#endif /* OPENSSL_NO_EC */
 
 int setup_tests(void)
 {
