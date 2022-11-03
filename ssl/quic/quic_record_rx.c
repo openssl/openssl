@@ -376,6 +376,10 @@ static RXE *qrx_resize_rxe(RXE_LIST *rxl, RXE *rxe, size_t n)
     p = ossl_list_rxe_prev(rxe);
     ossl_list_rxe_remove(rxl, rxe);
 
+    /* Should never resize an RXE which has been handed out. */
+    if (!ossl_assert(rxe->refcount == 0))
+        return NULL;
+
     /*
      * NOTE: We do not clear old memory, although it does contain decrypted
      * data.
@@ -480,7 +484,7 @@ static uint32_t rxe_determine_pn_space(RXE *rxe)
 }
 
 static int qrx_validate_hdr_early(OSSL_QRX *qrx, RXE *rxe,
-                                  RXE *first_rxe)
+                                  const QUIC_CONN_ID *first_dcid)
 {
     /* Ensure version is what we want. */
     if (rxe->hdr.version != QUIC_VERSION_1
@@ -492,17 +496,19 @@ static int qrx_validate_hdr_early(OSSL_QRX *qrx, RXE *rxe,
         return 0;
 
     /* Version negotiation and retry packets must be the first packet. */
-    if (first_rxe != NULL && !ossl_quic_pkt_type_can_share_dgram(rxe->hdr.type))
+    if (first_dcid != NULL && !ossl_quic_pkt_type_can_share_dgram(rxe->hdr.type))
         return 0;
 
     /*
      * If this is not the first packet in a datagram, the destination connection
      * ID must match the one in that packet.
      */
-    if (first_rxe != NULL &&
-        !ossl_quic_conn_id_eq(&first_rxe->hdr.dst_conn_id,
-                              &rxe->hdr.dst_conn_id))
+    if (first_dcid != NULL) {
+        if (!ossl_assert(first_dcid->id_len < QUIC_MAX_CONN_ID_LEN)
+            || !ossl_quic_conn_id_eq(first_dcid,
+                                     &rxe->hdr.dst_conn_id))
         return 0;
+    }
 
     return 1;
 }
@@ -668,7 +674,7 @@ static void qrx_key_update_initiated(OSSL_QRX *qrx)
 /* Process a single packet in a datagram. */
 static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
                            PACKET *pkt, size_t pkt_idx,
-                           RXE **first_rxe,
+                           QUIC_CONN_ID *first_dcid,
                            size_t datagram_len)
 {
     RXE *rxe;
@@ -712,18 +718,18 @@ static int qrx_process_pkt(OSSL_QRX *qrx, QUIC_URXE *urxe,
     eop = PACKET_data(pkt);
 
     /*
-     * Make a note of the first RXE so we can later ensure the destination
-     * connection IDs of all packets in a datagram match.
+     * Make a note of the first packet's DCID so we can later ensure the
+     * destination connection IDs of all packets in a datagram match.
      */
     if (pkt_idx == 0)
-        *first_rxe = rxe;
+        *first_dcid = rxe->hdr.dst_conn_id;
 
     /*
      * Early header validation. Since we now know the packet length, we can also
      * now skip over it if we already processed it.
      */
     if (already_processed
-        || !qrx_validate_hdr_early(qrx, rxe, pkt_idx == 0 ? NULL : *first_rxe))
+        || !qrx_validate_hdr_early(qrx, rxe, pkt_idx == 0 ? NULL : first_dcid))
         /*
          * Already processed packets are handled identically to malformed
          * packets; i.e., they are ignored.
@@ -962,7 +968,7 @@ static int qrx_process_datagram(OSSL_QRX *qrx, QUIC_URXE *e,
     int have_deferred = 0;
     PACKET pkt;
     size_t pkt_idx = 0;
-    RXE *first_rxe = NULL;
+    QUIC_CONN_ID first_dcid = { 255 };
 
     qrx->bytes_received += data_len;
 
@@ -992,7 +998,7 @@ static int qrx_process_datagram(OSSL_QRX *qrx, QUIC_URXE *e,
          * length, qrx_process_pkt will take care of advancing to the end of
          * the packet, so we will exit the loop automatically in this case.
          */
-        if (qrx_process_pkt(qrx, e, &pkt, pkt_idx, &first_rxe, data_len))
+        if (qrx_process_pkt(qrx, e, &pkt, pkt_idx, &first_dcid, data_len))
             have_deferred = 1;
     }
 
