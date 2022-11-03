@@ -1318,9 +1318,8 @@ static void csm_tick(QUIC_TICK_RESULT *res, void *arg)
     }
 
     deadline    = ossl_ackm_get_loss_detection_deadline(qc->ackm);
-    if (ossl_time_compare(now, deadline) >= 0)
+    if (!ossl_time_is_zero(deadline) && ossl_time_compare(now, deadline) >= 0)
         ossl_ackm_on_timeout(qc->ackm);
-
 
     /* Write any data to the network due to be sent. */
     csm_tx(qc);
