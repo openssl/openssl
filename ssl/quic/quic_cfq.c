@@ -20,7 +20,7 @@ struct quic_cfq_item_ex_st {
     uint64_t                frame_type;
     size_t                  encoded_len;
     uint32_t                priority, pn_space;
-    char                    state;
+    int                     state;
 };
 
 uint64_t ossl_quic_cfq_item_get_frame_type(const QUIC_CFQ_ITEM *item)
