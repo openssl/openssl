@@ -29,6 +29,7 @@
 int ossl_rsa_check_key(OSSL_LIB_CTX *ctx, const RSA *rsa, int operation)
 {
     int protect = 0;
+    (void)ctx;
 
     switch (operation) {
         case EVP_PKEY_OP_SIGN:
@@ -91,7 +92,11 @@ int ossl_rsa_check_key(OSSL_LIB_CTX *ctx, const RSA *rsa, int operation)
  */
 int ossl_ec_check_key(OSSL_LIB_CTX *ctx, const EC_KEY *ec, int protect)
 {
-# if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
+# ifdef OPENSSL_NO_FIPS_SECURITYCHECKS
+    (void)ctx;
+    (void)ec;
+    (void)protect;
+# else
     if (ossl_securitycheck_enabled(ctx)) {
         int nid, strength;
         const char *curve_name;
@@ -149,7 +154,11 @@ int ossl_ec_check_key(OSSL_LIB_CTX *ctx, const EC_KEY *ec, int protect)
  */
 int ossl_dsa_check_key(OSSL_LIB_CTX *ctx, const DSA *dsa, int sign)
 {
-# if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
+# ifdef OPENSSL_NO_FIPS_SECURITYCHECKS
+    (void)ctx;
+    (void)dsa;
+    (void)sign;
+# else
     if (ossl_securitycheck_enabled(ctx)) {
         size_t L, N;
         const BIGNUM *p, *q;
@@ -193,7 +202,10 @@ int ossl_dsa_check_key(OSSL_LIB_CTX *ctx, const DSA *dsa, int sign)
  */
 int ossl_dh_check_key(OSSL_LIB_CTX *ctx, const DH *dh)
 {
-# if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
+# ifdef OPENSSL_NO_FIPS_SECURITYCHECKS
+    (void)ctx;
+    (void)dh;
+# else
     if (ossl_securitycheck_enabled(ctx)) {
         size_t L, N;
         const BIGNUM *p, *q;
@@ -229,7 +241,10 @@ int ossl_digest_get_approved_nid_with_sha1(OSSL_LIB_CTX *ctx, const EVP_MD *md,
 {
     int mdnid = ossl_digest_get_approved_nid(md);
 
-# if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
+# ifdef OPENSSL_NO_FIPS_SECURITYCHECKS
+    (void)ctx;
+    (void)sha1_allowed;
+# else
     if (ossl_securitycheck_enabled(ctx)) {
         if (mdnid == NID_undef || (mdnid == NID_sha1 && !sha1_allowed))
             mdnid = -1; /* disallowed by security checks */
@@ -240,7 +255,10 @@ int ossl_digest_get_approved_nid_with_sha1(OSSL_LIB_CTX *ctx, const EVP_MD *md,
 
 int ossl_digest_is_allowed(OSSL_LIB_CTX *ctx, const EVP_MD *md)
 {
-# if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
+# ifdef OPENSSL_NO_FIPS_SECURITYCHECKS
+    (void)ctx;
+    (void)md;
+# else
     if (ossl_securitycheck_enabled(ctx))
         return ossl_digest_get_approved_nid(md) != NID_undef;
 # endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */

@@ -76,7 +76,7 @@ int i2d_KeyParams(const EVP_PKEY *a, unsigned char **pp)
     if (evp_pkey_is_provided(a)) {
         static const struct type_and_structure_st output_info[] = {
             { "DER", "type-specific" },
-            { NULL, }
+            { NULL, NULL }
         };
 
         return i2d_provided(a, EVP_PKEY_KEY_PARAMETERS, output_info, pp);
@@ -98,7 +98,7 @@ int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp)
         static const struct type_and_structure_st output_info[] = {
             { "DER", "type-specific" },
             { "DER", "PrivateKeyInfo" },
-            { NULL, }
+            { NULL, NULL }
         };
 
         return i2d_provided(a, EVP_PKEY_KEYPAIR, output_info, pp);
@@ -126,7 +126,7 @@ int i2d_PublicKey(const EVP_PKEY *a, unsigned char **pp)
         static const struct type_and_structure_st output_info[] = {
             { "DER", "type-specific" },
             { "blob", NULL },    /* for EC */
-            { NULL, }
+            { NULL, NULL }
         };
 
         return i2d_provided(a, EVP_PKEY_PUBLIC_KEY, output_info, pp);

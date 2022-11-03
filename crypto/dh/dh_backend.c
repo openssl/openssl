@@ -131,6 +131,8 @@ int ossl_dh_is_foreign(const DH *dh)
 #ifndef FIPS_MODULE
     if (dh->engine != NULL || ossl_dh_get_method(dh) != DH_OpenSSL())
         return 1;
+#else
+    (void)dh;
 #endif
     return 0;
 }
@@ -196,6 +198,8 @@ DH *ossl_dh_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
     BIGNUM *privkey_bn = NULL;
     ASN1_INTEGER *privkey = NULL;
     DH *dh = NULL;
+    (void)libctx;
+    (void)propq;
 
     if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8inf))
         return 0;

@@ -60,6 +60,7 @@ void ossl_property_defns_free(void *vproperty_defns)
 }
 
 void *ossl_property_defns_new(OSSL_LIB_CTX *ctx) {
+    (void)ctx;
     return lh_PROPERTY_DEFN_ELEM_new(&property_defn_hash, &property_defn_cmp);
 }
 

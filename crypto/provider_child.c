@@ -36,6 +36,7 @@ struct child_prov_globals {
 
 void *ossl_child_prov_ctx_new(OSSL_LIB_CTX *libctx)
 {
+    (void)libctx;
     return OPENSSL_zalloc(sizeof(struct child_prov_globals));
 }
 

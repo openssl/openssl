@@ -348,6 +348,7 @@ static const OSSL_PARAM dh_params[] = {
 
 static const OSSL_PARAM *dh_gettable_params(void *provctx)
 {
+    (void)provctx;
     return dh_params;
 }
 
@@ -358,6 +359,7 @@ static const OSSL_PARAM dh_known_settable_params[] = {
 
 static const OSSL_PARAM *dh_settable_params(void *provctx)
 {
+    (void)provctx;
     return dh_known_settable_params;
 }
 
@@ -849,6 +851,7 @@ const OSSL_DISPATCH ossl_dh_keymgmt_functions[] = {
 /* For any DH key, we use the "DH" algorithms regardless of sub-type. */
 static const char *dhx_query_operation_name(int operation_id)
 {
+    (void)operation_id;
     return "DH";
 }
 

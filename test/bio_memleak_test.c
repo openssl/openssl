@@ -226,6 +226,13 @@ static long BIO_error_callback(BIO *bio, int cmd, const char *argp,
                                size_t len, int argi,
                                long argl, int ret, size_t *processed)
 {
+    (void)bio;
+    (void)argp;
+    (void)len;
+    (void)argi;
+    (void)argl;
+    (void)processed;
+
     if ((cmd & (BIO_CB_READ | BIO_CB_RETURN)) != 0) {
         error_callback_fired = 1;
         ret = 0;  /* fail for read operations to simulate error in input BIO */

@@ -28,7 +28,7 @@ const OPTIONS errstr_options[] = {
 
     OPT_PARAMETERS(),
     {"errnum", 0, 0, "Error number(s) to decode"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int errstr_main(int argc, char **argv)

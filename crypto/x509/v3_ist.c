@@ -37,6 +37,8 @@ static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_
 {
     ISSUER_SIGN_TOOL *ist = ISSUER_SIGN_TOOL_new();
     int i;
+    (void)method;
+    (void)ctx;
 
     if (ist == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
@@ -94,6 +96,7 @@ static int i2r_issuer_sign_tool(X509V3_EXT_METHOD *method,
                                  int indent)
 {
     int new_line = 0;
+    (void)method;
 
     if (ist == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_INVALID_ARGUMENT);

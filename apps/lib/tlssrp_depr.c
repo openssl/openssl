@@ -106,6 +106,7 @@ static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
     char *pass = app_malloc(PWD_STRLEN + 1, "SRP password buffer");
     PW_CB_DATA cb_tmp;
     int l;
+    (void)s;
 
     cb_tmp.password = (char *)srp_arg->srppassin;
     cb_tmp.prompt_info = "SRP user";
@@ -139,6 +140,8 @@ int set_up_srp_arg(SSL_CTX *ctx, SRP_ARG *srp_arg, int srp_lateuser, int c_msg,
 
 static char *dummy_srp(SSL *ssl, void *arg)
 {
+    (void)ssl;
+    (void)arg;
     return "";
 }
 

@@ -24,6 +24,19 @@ static int tls_any_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                     const EVP_MD *md,
                                     COMP_METHOD *comp)
 {
+    (void)rl;
+    (void)key;
+    (void)keylen;
+    (void)iv;
+    (void)ivlen;
+    (void)mackey;
+    (void)mackeylen;
+    (void)ciph;
+    (void)taglen;
+    (void)mactype;
+    (void)md;
+    (void)comp;
+
     if (level != OSSL_RECORD_PROTECTION_LEVEL_NONE) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
@@ -38,6 +51,13 @@ static int tls_any_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
                           size_t n_recs, int sending, SSL_MAC_BUF *macs,
                           size_t macsize)
 {
+    (void)rl;
+    (void)recs;
+    (void)n_recs;
+    (void)sending;
+    (void)macs;
+    (void)macsize;
+
     return 1;
 }
 
@@ -141,6 +161,11 @@ static int tls_any_prepare_for_encryption(OSSL_RECORD_LAYER *rl,
                                           WPACKET *thispkt,
                                           TLS_RL_RECORD *thiswr)
 {
+    (void)rl;
+    (void)mac_size;
+    (void)thispkt;
+    (void)thiswr;
+
     /* No encryption, so nothing to do */
     return 1;
 }

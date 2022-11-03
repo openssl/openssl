@@ -776,6 +776,7 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    (void)wst;
 
     s->init_num = 0;
 
@@ -1945,6 +1946,7 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
     const SSL_CERT_LOOKUP *clu;
     size_t certidx;
     int i;
+    (void)wst;
 
     if (s->rwstate == SSL_RETRY_VERIFY)
         s->rwstate = SSL_NOTHING;
@@ -3975,7 +3977,7 @@ int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
     if (totlen != 0) {
         if (empty_reneg_info_scsv) {
             static SSL_CIPHER scsv = {
-                0, NULL, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                0, NULL, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0U, 0U, 0, 0U
             };
             if (!ssl->method->put_cipher_by_char(&scsv, pkt, &len)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -3984,7 +3986,7 @@ int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
         }
         if (s->mode & SSL_MODE_SEND_FALLBACK_SCSV) {
             static SSL_CIPHER scsv = {
-                0, NULL, NULL, SSL3_CK_FALLBACK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                0, NULL, NULL, SSL3_CK_FALLBACK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0U, 0, 0U
             };
             if (!ssl->method->put_cipher_by_char(&scsv, pkt, &len)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -3998,6 +4000,8 @@ int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
 
 CON_FUNC_RETURN tls_construct_end_of_early_data(SSL_CONNECTION *s, WPACKET *pkt)
 {
+    (void)pkt;
+
     if (s->early_data_state != SSL_EARLY_DATA_WRITE_RETRY
             && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);

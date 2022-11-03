@@ -47,6 +47,8 @@ static int rc4_hmac_md5_init_key(EVP_CIPHER_CTX *ctx,
 {
     EVP_RC4_HMAC_MD5 *key = data(ctx);
     const int keylen = EVP_CIPHER_CTX_get_key_length(ctx);
+    (void)iv;
+    (void)enc;
 
     if (keylen <= 0)
         return 0;
@@ -263,7 +265,27 @@ static EVP_CIPHER r4_hmac_md5_cipher = {
     NULL,
     NULL,
     rc4_hmac_md5_ctrl,
-    NULL
+    NULL,
+    0,          /* name_id */
+    NULL,       /* type_name */
+    NULL,       /* description */
+    NULL,       /* prov */
+    0,          /* refcnt */
+    NULL,       /* lock */
+    NULL,       /* newctx */
+    NULL,       /* einit */
+    NULL,       /* dinit */
+    NULL,       /* cupdate */
+    NULL,       /* cfinal */
+    NULL,       /* ccipher */
+    NULL,       /* freectx */
+    NULL,       /* dupctx */
+    NULL,       /* get_params */
+    NULL,       /* get_ctx_params */
+    NULL,       /* set_ctx_params */
+    NULL,       /* gettable_params */
+    NULL,       /* gettable_ctx_params */
+    NULL        /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_rc4_hmac_md5(void)

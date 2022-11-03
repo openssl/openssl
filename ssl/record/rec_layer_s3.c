@@ -1378,6 +1378,8 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 
 int ssl_set_record_protocol_version(SSL_CONNECTION *s, int vers)
 {
+    (void)vers;
+
     if (!ossl_assert(s->rlayer.rrlmethod != NULL)
             || !ossl_assert(s->rlayer.wrlmethod != NULL))
         return 0;

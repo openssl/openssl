@@ -226,7 +226,7 @@ const OPTIONS srp_options[] = {
 
     OPT_PARAMETERS(),
     {"user", 0, 0, "Username(s) to process (optional)"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int srp_main(int argc, char **argv)

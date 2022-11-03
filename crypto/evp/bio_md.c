@@ -38,6 +38,8 @@ static const BIO_METHOD methods_md = {
     md_new,
     md_free,
     md_callback_ctrl,
+    NULL,                      /* bsendmmsg */
+    NULL                       /* brecvmmsg */
 };
 
 const BIO_METHOD *BIO_f_md(void)

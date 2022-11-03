@@ -57,6 +57,7 @@ BLOCK_CIPHER_defs(idea, IDEA_KEY_SCHEDULE, NID_idea, 8, 16, 8, 64,
 static int idea_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                          const unsigned char *iv, int enc)
 {
+    (void)iv;
     if (!enc) {
         if (EVP_CIPHER_CTX_get_mode(ctx) == EVP_CIPH_OFB_MODE)
             enc = 1;

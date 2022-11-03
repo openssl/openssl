@@ -49,7 +49,7 @@ const OPTIONS *test_get_options(void)
         { "defaultctx", OPT_USE_DEFAULTCTX, '-',
           "Use the default context if this is set" },
         { OPT_HELP_STR, 1, '-', "file\tProvider names to explicitly load\n" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

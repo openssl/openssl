@@ -150,6 +150,7 @@ static const PROV_GCM_HW aes_gcm = {
 #else
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
+    (void)keybits;
     return &aes_gcm;
 }
 #endif

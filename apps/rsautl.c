@@ -66,7 +66,7 @@ const OPTIONS rsautl_options[] = {
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int rsautl_main(int argc, char **argv)

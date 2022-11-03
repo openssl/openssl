@@ -86,7 +86,7 @@ const OPTIONS rsa_options[] = {
 #endif
 
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 static int try_legacy_encoding(EVP_PKEY *pkey, int outformat, int pubout,

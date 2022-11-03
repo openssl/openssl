@@ -72,6 +72,7 @@ static int i2r_NAMING_AUTHORITY(const struct v3_ext_method *method, void *in,
                                 BIO *bp, int ind)
 {
     NAMING_AUTHORITY * namingAuthority = (NAMING_AUTHORITY*) in;
+    (void)method;
 
     if (namingAuthority == NULL)
         return 0;

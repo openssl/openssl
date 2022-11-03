@@ -33,6 +33,8 @@ int main(int argc, char **argv)
     CONF *conf = NCONF_new(NCONF_default());
     int ret = 1;
     STACK_OF(OPENSSL_CSTRING) *section_names = NULL;
+    (void)argc;
+    (void)argv;
 
     if (conf != NULL && NCONF_load(conf, argv[1], &eline)) {
         int i;

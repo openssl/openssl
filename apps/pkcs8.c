@@ -64,7 +64,7 @@ const OPTIONS pkcs8_options[] = {
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int pkcs8_main(int argc, char **argv)

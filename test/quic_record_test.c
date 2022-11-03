@@ -53,26 +53,28 @@ struct rx_test_op {
 #define RX_OP_END \
     { RX_TEST_OP_END }
 #define RX_OP_SET_SCID_LEN(scid_len) \
-    { RX_TEST_OP_SET_SCID_LEN, 0, NULL, 0, NULL, (scid_len), 0, 0, NULL, NULL },
+    { RX_TEST_OP_SET_SCID_LEN, 0, NULL, 0U, NULL, (scid_len), 0U, 0U, NULL, NULL },
 #define RX_OP_SET_INIT_LARGEST_PN(largest_pn) \
-    { RX_TEST_OP_SET_INIT_LARGEST_PN, 0, NULL, 0, NULL, 0, 0, (largest_pn), NULL, NULL },
+    { RX_TEST_OP_SET_INIT_LARGEST_PN, 0U, NULL, 0, NULL, 0, 0, (largest_pn), NULL, \
+      NULL },
 #define RX_OP_ADD_RX_DCID(dcid) \
-    { RX_TEST_OP_ADD_RX_DCID, 0, NULL, 0, NULL, 0, 0, 0, &(dcid), NULL },
+    { RX_TEST_OP_ADD_RX_DCID, 0U, NULL, 0U, NULL, 0U, 0U, 0, &(dcid), NULL },
 #define RX_OP_INJECT(dgram) \
-    { RX_TEST_OP_INJECT, 0, (dgram), sizeof(dgram), NULL, 0, 0, 0, NULL },
-#define RX_OP_PROVIDE_SECRET(el, suite, key)                           \
-    {                                                               \
-        RX_TEST_OP_PROVIDE_SECRET, 0, (key), sizeof(key),             \
-        NULL, (el), (suite), 0, NULL, NULL                          \
+    { RX_TEST_OP_INJECT, 0U, (dgram), sizeof(dgram), NULL, 0U, 0U, 0, NULL, NULL },
+#define RX_OP_PROVIDE_SECRET(el, suite, key)                            \
+    {                                                                   \
+        RX_TEST_OP_PROVIDE_SECRET, 0U, (key), sizeof(key),              \
+        NULL, (el), (suite), 0, NULL, NULL                              \
     },
-#define RX_OP_PROVIDE_SECRET_INITIAL(dcid) \
-    { RX_TEST_OP_PROVIDE_SECRET_INITIAL, 0, NULL, 0, NULL, 0, 0, 0, &(dcid), NULL },
+#define RX_OP_PROVIDE_SECRET_INITIAL(dcid)                              \
+    { RX_TEST_OP_PROVIDE_SECRET_INITIAL, 0U, NULL, 0U, NULL, 0U, 0U, 0, \
+      &(dcid), NULL },
 #define RX_OP_DISCARD_EL(el) \
     { RX_TEST_OP_DISCARD_EL, 0, NULL, 0, NULL, (el), 0, 0, NULL, NULL },
 #define RX_OP_CHECK_PKT(expect_hdr, expect_body)                       \
-    {                                                               \
-        RX_TEST_OP_CHECK_PKT, 0, (expect_body), sizeof(expect_body),  \
-        &(expect_hdr), 0, 0, 0, NULL, NULL                          \
+    {                                                                  \
+        RX_TEST_OP_CHECK_PKT, 0, (expect_body), sizeof(expect_body),   \
+        &(expect_hdr), 0, 0, 0, NULL, NULL                             \
     },
 #define RX_OP_CHECK_PKT_FRAMES_OK(expect_hdr, expect_body)          \
     {                                                               \
@@ -87,13 +89,17 @@ struct rx_test_op {
         0, 0, 0, NULL, NULL                                         \
     },
 #define RX_OP_CHECK_NO_PKT() \
-    { RX_TEST_OP_CHECK_NO_PKT, 0, NULL, 0, NULL, 0, 0, 0, NULL, NULL },
+    { RX_TEST_OP_CHECK_NO_PKT, 0, NULL, 0, NULL, 0, 0, 0, \
+      NULL, NULL },
 #define RX_OP_CHECK_KEY_EPOCH(expected) \
-    { RX_TEST_OP_CHECK_KEY_EPOCH, 0, NULL, 0, NULL, 0, 0, (expected), NULL },
+    { RX_TEST_OP_CHECK_KEY_EPOCH, 0, NULL, 0, NULL, 0, 0, (expected), \
+      NULL, NULL },
 #define RX_OP_KEY_UPDATE_TIMEOUT(normal) \
-    { RX_TEST_OP_KEY_UPDATE_TIMEOUT, 0, NULL, 0, NULL, (normal), 0, 0, NULL },
+    { RX_TEST_OP_KEY_UPDATE_TIMEOUT, 0, NULL, 0, NULL, (normal), 0, 0, \
+      NULL, NULL },
 #define RX_OP_SET_INIT_KEY_PHASE(kp_bit) \
-    { RX_TEST_OP_SET_INIT_KEY_PHASE, 0, NULL, 0, NULL, (kp_bit), 0, 0, NULL },
+    { RX_TEST_OP_SET_INIT_KEY_PHASE, 0, NULL, 0, NULL, (kp_bit), 0, 0, \
+      NULL, NULL },
 
 #define RX_OP_INJECT_N(n)                                          \
     RX_OP_INJECT(rx_script_##n##_in)
@@ -1724,6 +1730,7 @@ static uint64_t time_counter = 0;
 static OSSL_TIME fake_now(void *ignored)
 {
     OSSL_TIME f = {0};
+    (void)ignored;
 
     return f;
 }
@@ -1735,6 +1742,7 @@ static OSSL_TIME expected_time(uint64_t counter)
 
 static OSSL_TIME fake_time(void *arg)
 {
+    (void)arg;
     return expected_time(++time_counter);
 }
 

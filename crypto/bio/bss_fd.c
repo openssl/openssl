@@ -70,6 +70,8 @@ static const BIO_METHOD methods_fdp = {
     fd_new,
     fd_free,
     NULL,                       /* fd_callback_ctrl */
+    NULL,                       /* no bsendmmsg */
+    NULL                        /* no brecvmmsg */
 };
 
 const BIO_METHOD *BIO_s_fd(void)

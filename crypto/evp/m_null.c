@@ -13,19 +13,26 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include "crypto/evp.h"
+#include "legacy_meth.h"
 
-static int init(EVP_MD_CTX *ctx)
+static int null_init(EVP_MD_CTX *ctx)
 {
+    (void)ctx;
     return 1;
 }
 
-static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int null_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
+    (void)ctx;
+    (void)data;
+    (void)count;
     return 1;
 }
 
-static int final(EVP_MD_CTX *ctx, unsigned char *md)
+static int null_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
+    (void)ctx;
+    (void)md;
     return 1;
 }
 
@@ -35,13 +42,15 @@ static const EVP_MD null_md = {
     0,
     0,
     EVP_ORIG_GLOBAL,
-    init,
-    update,
-    final,
+    LEGACY_EVP_MD_METH_TABLE(null_init, null_update, null_final, NULL, 0)
+    /* was:
+    null_init,
+    null_update,
+    null_final,
     NULL,
     NULL,
     0,
-    sizeof(EVP_MD *),
+    sizeof(EVP_MD *) */  /* ctx_size?? */
 };
 
 const EVP_MD *EVP_md_null(void)

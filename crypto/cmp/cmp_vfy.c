@@ -436,6 +436,11 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 static int no_log_cb(const char *func, const char *file, int line,
                      OSSL_CMP_severity level, const char *msg)
 {
+    (void)func;
+    (void)file;
+    (void)line;
+    (void)level;
+    (void)msg;
     return 1;
 }
 
@@ -641,6 +646,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 static int check_transactionID_or_nonce(ASN1_OCTET_STRING *expected,
                                         ASN1_OCTET_STRING *actual, int reason)
 {
+    (void)reason;
     if (expected != NULL
         && (actual == NULL || ASN1_OCTET_STRING_cmp(expected, actual) != 0)) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION

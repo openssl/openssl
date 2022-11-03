@@ -29,6 +29,7 @@ void ossl_bio_core_globals_free(void *vbcg)
 
 void *ossl_bio_core_globals_new(OSSL_LIB_CTX *ctx)
 {
+    (void)ctx;
     return OPENSSL_zalloc(sizeof(BIO_CORE_GLOBALS));
 }
 
@@ -108,15 +109,17 @@ static const BIO_METHOD corebiometh = {
     BIO_TYPE_CORE_TO_PROV,
     "BIO to Core filter",
     bio_core_write_ex,
-    NULL,
+    NULL,                       /* bwrite_old */
     bio_core_read_ex,
-    NULL,
+    NULL,                       /* bread_old */
     bio_core_puts,
     bio_core_gets,
     bio_core_ctrl,
     bio_core_new,
     bio_core_free,
-    NULL,
+    NULL,                       /* callback_ctrl */
+    NULL,                       /* bsendmmsg */
+    NULL                        /* brecvmmsg */
 };
 
 const BIO_METHOD *BIO_s_core(void)

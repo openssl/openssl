@@ -1513,7 +1513,7 @@ const OPTIONS list_options[] = {
      "List built in objects (OID<->name mappings)"},
 
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int list_main(int argc, char **argv)

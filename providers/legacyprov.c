@@ -27,7 +27,7 @@ static OSSL_FUNC_provider_gettable_params_fn legacy_gettable_params;
 static OSSL_FUNC_provider_get_params_fn legacy_get_params;
 static OSSL_FUNC_provider_query_operation_fn legacy_query;
 
-#define ALG(NAMES, FUNC) { NAMES, "provider=legacy", FUNC }
+#define ALG(NAMES, FUNC) { NAMES, "provider=legacy", FUNC, NAMES }
 
 #ifdef STATIC_LEGACY
 OSSL_provider_init_fn ossl_legacy_provider_init;
@@ -61,12 +61,14 @@ static const OSSL_PARAM legacy_param_types[] = {
 
 static const OSSL_PARAM *legacy_gettable_params(void *provctx)
 {
+    (void)provctx;
     return legacy_param_types;
 }
 
 static int legacy_get_params(void *provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
+    (void)provctx;
 
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_NAME);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "OpenSSL Legacy Provider"))
@@ -99,7 +101,7 @@ static const OSSL_ALGORITHM legacy_digests[] = {
 #ifndef OPENSSL_NO_RMD160
     ALG(PROV_NAMES_RIPEMD_160, ossl_ripemd160_functions),
 #endif /* OPENSSL_NO_RMD160 */
-    { NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM legacy_ciphers[] = {
@@ -157,18 +159,19 @@ static const OSSL_ALGORITHM legacy_ciphers[] = {
     ALG(PROV_NAMES_DES_CFB1, ossl_des_cfb1_functions),
     ALG(PROV_NAMES_DES_CFB8, ossl_des_cfb8_functions),
 #endif /* OPENSSL_NO_DES */
-    { NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM legacy_kdfs[] = {
     ALG(PROV_NAMES_PBKDF1, ossl_kdf_pbkdf1_functions),
     ALG(PROV_NAMES_PVKKDF, ossl_kdf_pvk_functions),
-    { NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM *legacy_query(void *provctx, int operation_id,
                                           int *no_cache)
 {
+    (void)provctx;
     *no_cache = 0;
     switch (operation_id) {
     case OSSL_OP_DIGEST:

@@ -126,9 +126,10 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
 }
 
 static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
-                               const char *value, size_t value_n, int ishex,
+                               const char *value, size_t value_n /*unused*/, int ishex,
                                void *buf, size_t buf_n, BIGNUM *tmpbn)
 {
+    (void)value_n;
     if (buf == NULL)
         return 0;
 
@@ -138,7 +139,7 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
         case OSSL_PARAM_UNSIGNED_INTEGER:
             /*
             {
-                if ((new_value = OPENSSL_malloc(new_value_n)) == NULL) {
+                if ((new_value = OPENSSL_malloc(value_n)) == NULL) {
                     BN_free(a);
                     break;
                 }
@@ -213,7 +214,7 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
     if ((buf = OPENSSL_zalloc(buf_n > 0 ? buf_n : 1)) == NULL)
         goto err;
 
-    ok = construct_from_text(to, paramdef, value, value_n, ishex,
+    ok = construct_from_text(to, paramdef, value, value_n/*unused*/, ishex,
                              buf, buf_n, tmpbn);
     BN_free(tmpbn);
     if (!ok)

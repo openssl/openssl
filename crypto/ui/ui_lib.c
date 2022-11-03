@@ -98,6 +98,7 @@ static UI_STRING *general_allocate_prompt(UI *ui, const char *prompt,
                                           int input_flags, char *result_buf)
 {
     UI_STRING *ret = NULL;
+    (void)ui;
 
     if (prompt == NULL) {
         ERR_raise(ERR_LIB_UI, ERR_R_PASSED_NULL_PARAMETER);
@@ -434,9 +435,10 @@ int UI_get_result_length(UI *ui, int i)
     return UI_get_result_string_length(sk_UI_STRING_value(ui->strings, i));
 }
 
-static int print_error(const char *str, size_t len, UI *ui)
+static int print_error(const char *str, size_t len /*unused*/, UI *ui)
 {
     UI_STRING uis;
+    (void)len;
 
     memset(&uis, 0, sizeof(uis));
     uis.type = UIT_ERROR;
@@ -525,8 +527,11 @@ int UI_process(UI *ui)
     return ok;
 }
 
-int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f) (void))
+int UI_ctrl(UI *ui, int cmd, long i, void *p/*unused*/, void (*f) (void)/*unused*/)
 {
+    (void)p;
+    (void)f;
+
     if (ui == NULL) {
         ERR_raise(ERR_LIB_UI, ERR_R_PASSED_NULL_PARAMETER);
         return -1;

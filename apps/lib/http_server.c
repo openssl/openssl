@@ -53,6 +53,7 @@ int acfd = (int)INVALID_SOCKET;
 
 void socket_timeout(int signum)
 {
+    (void)signum;
     if (acfd != (int)INVALID_SOCKET)
         (void)shutdown(acfd, SHUT_RD);
 }

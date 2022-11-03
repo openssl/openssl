@@ -937,6 +937,13 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                 const BN_ULONG *np, const BN_ULONG *n0, int num)
 {
+    (void)rp;
+    (void)ap;
+    (void)bp;
+    (void)np;
+    (void)n0;
+    (void)num;
+
     return 0;
 }
 #  endif                        /* OPENSSL_BN_ASM_MONT */

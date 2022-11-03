@@ -1918,6 +1918,10 @@ OPENSSL_EXPORT
 OPENSSL_EXPORT
     int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns)
 {
+    (void)e;
+    (void)id;
+    (void)fns;
+
     return 0;
 }
 

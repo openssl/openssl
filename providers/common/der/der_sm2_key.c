@@ -14,6 +14,7 @@
 
 int ossl_DER_w_algorithmIdentifier_SM2(WPACKET *pkt, int cont, EC_KEY *ec)
 {
+    (void)ec;
     return ossl_DER_w_begin_sequence(pkt, cont)
         /* No parameters (yet?) */
         /* It seems SM2 identifier is the same as id_ecPublidKey */

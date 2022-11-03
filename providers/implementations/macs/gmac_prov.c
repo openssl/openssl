@@ -148,6 +148,7 @@ static int gmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     struct gmac_data_st *macctx = vmacctx;
     int hlen = 0;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -171,6 +172,7 @@ static const OSSL_PARAM known_gettable_params[] = {
 };
 static const OSSL_PARAM *gmac_gettable_params(void *provctx)
 {
+    (void)provctx;
     return known_gettable_params;
 }
 

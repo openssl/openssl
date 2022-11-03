@@ -15,6 +15,7 @@
 static OSSL_TIME cur_time;
 
 static OSSL_TIME fake_now(void *arg) {
+    (void)arg;
     return cur_time;
 }
 
@@ -64,6 +65,9 @@ static int cfq_freed;
 static QUIC_SSTREAM *sstream_expect(uint64_t stream_id, uint32_t pn_space,
                                     void *arg)
 {
+    (void)pn_space;
+    (void)arg;
+
     if (stream_id == 42 || stream_id == 43)
         return cur_info->sstream[stream_id - 42];
 
@@ -78,6 +82,9 @@ static size_t regen_count;
 static void regen_expect(uint64_t frame_type, uint64_t stream_id,
                          QUIC_TXPIM_PKT *pkt, void *arg)
 {
+    (void)pkt;
+    (void)arg;
+
     regen_frame_type[regen_count] = frame_type;
     regen_stream_id[regen_count] = stream_id;
     ++regen_count;
@@ -87,6 +94,7 @@ static const unsigned char placeholder_data[] = "placeholder";
 
 static void cfq_free_cb_(unsigned char *buf, size_t buf_len, void *arg)
 {
+    (void)arg;
     if (buf == placeholder_data && buf_len == sizeof(placeholder_data))
         cfq_freed = 1;
 }
@@ -104,7 +112,7 @@ static int test_generic(INFO *info, int kind)
     OSSL_QUIC_FRAME_STREAM hdr = {0};
     OSSL_QTX_IOVEC iov[2];
     size_t num_iov;
-    QUIC_TXPIM_CHUNK chunk = {42, 0, 11, 0};
+    QUIC_TXPIM_CHUNK chunk = {42, 0, 11, 0, 0, 0};
     OSSL_QUIC_FRAME_ACK ack = {0};
     OSSL_QUIC_ACK_RANGE ack_ranges[1] = {0};
     QUIC_CFQ_ITEM *cfq_item = NULL;

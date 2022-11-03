@@ -1267,6 +1267,8 @@ static void mdname2nid(const char *mdname, void *data)
 static int legacy_asn1_ctrl_to_param(EVP_PKEY *pkey, int op,
                                      int arg1, void *arg2)
 {
+    (void)arg1;
+
     if (pkey->keymgmt == NULL)
         return 0;
     switch (op) {
@@ -1481,7 +1483,10 @@ EVP_PKEY *EVP_PKEY_new(void)
 static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt)
 {
-#ifndef FIPS_MODULE
+#ifdef FIPS_MODULE
+    (void)str;
+    (void)len;
+#else
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
     ENGINE **eptr = (e == NULL) ? &e :  NULL;
 #endif

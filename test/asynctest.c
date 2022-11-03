@@ -23,6 +23,8 @@ static int custom_free_used = 0;
 
 static int only_pause(void *args)
 {
+    (void)args;
+
     ASYNC_pause_job();
 
     return 1;
@@ -30,6 +32,8 @@ static int only_pause(void *args)
 
 static int add_two(void *args)
 {
+    (void)args;
+
     ctr++;
     ASYNC_pause_job();
     ctr++;
@@ -39,6 +43,8 @@ static int add_two(void *args)
 
 static int save_current(void *args)
 {
+    (void)args;
+
     currjob = ASYNC_get_current_job();
     ASYNC_pause_job();
 
@@ -50,6 +56,7 @@ static int change_deflt_libctx(void *args)
     OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new();
     OSSL_LIB_CTX *oldctx, *tmpctx;
     int ret = 0;
+    (void)args;
 
     if (libctx == NULL)
         return 0;
@@ -83,6 +90,8 @@ static int waitfd(void *args)
 {
     ASYNC_JOB *job;
     ASYNC_WAIT_CTX *waitctx;
+    (void)args;
+
     job = ASYNC_get_current_job();
     if (job == NULL)
         return 0;
@@ -114,6 +123,8 @@ static int waitfd(void *args)
 
 static int blockpause(void *args)
 {
+    (void)args;
+
     ASYNC_block_pause();
     ASYNC_pause_job();
     ASYNC_unblock_pause();
@@ -160,6 +171,7 @@ static int test_ASYNC_init_thread(void)
 
 static int test_callback(void *arg)
 {
+    (void)arg;
     printf("callback test pass\n");
     return 1;
 }
@@ -463,6 +475,9 @@ static int test_ASYNC_set_mem_functions(void)
 
 int main(int argc, char **argv)
 {
+    (void)argc;
+    (void)argv;
+
     if (!ASYNC_is_capable()) {
         fprintf(stderr,
                 "OpenSSL build is not ASYNC capable - skipping async tests\n");

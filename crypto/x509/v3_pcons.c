@@ -45,6 +45,8 @@ static STACK_OF(CONF_VALUE) *i2v_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD
                                                     *extlist)
 {
     POLICY_CONSTRAINTS *pcons = a;
+    (void)method;
+
     X509V3_add_value_int("Require Explicit Policy",
                          pcons->requireExplicitPolicy, &extlist);
     X509V3_add_value_int("Inhibit Policy Mapping",
@@ -59,6 +61,8 @@ static void *v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method,
     POLICY_CONSTRAINTS *pcons = NULL;
     CONF_VALUE *val;
     int i;
+    (void)method;
+    (void)ctx;
 
     if ((pcons = POLICY_CONSTRAINTS_new()) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);

@@ -43,11 +43,13 @@ static const BIO_METHOD methods_biop = {
     bread_conv,
     bio_read,
     bio_puts,
-    NULL /* no bio_gets */ ,
+    NULL,                       /* no bio_gets */
     bio_ctrl,
     bio_new,
     bio_free,
-    NULL                        /* no bio_callback_ctrl */
+    NULL,                       /* no bio_callback_ctrl */
+    NULL,                       /* no bsendmmsg */
+    NULL                        /* no brecvmmsg */
 };
 
 const BIO_METHOD *BIO_s_bio(void)

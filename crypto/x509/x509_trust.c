@@ -236,6 +236,7 @@ static int trust_1oid(X509_TRUST *trust, X509 *x, int flags)
 
 static int trust_compat(X509_TRUST *trust, X509 *x, int flags)
 {
+    (void)trust;
     /* Call for side-effect of setting EXFLAG_SS for self-signed-certs */
     if (X509_check_purpose(x, -1, 0) != 1)
         return X509_TRUST_UNTRUSTED;

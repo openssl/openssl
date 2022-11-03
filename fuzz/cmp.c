@@ -19,6 +19,8 @@
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
+    (void)argc;
+    (void)argv;
     FuzzerSetRand();
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
@@ -30,6 +32,7 @@ static int num_responses;
 
 static OSSL_CMP_MSG *transfer_cb(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req)
 {
+    (void)req;
     if (num_responses++ > 2)
         return NULL; /* prevent loops due to repeated pollRep */
     return OSSL_CMP_MSG_dup((OSSL_CMP_MSG *)
@@ -39,12 +42,21 @@ static OSSL_CMP_MSG *transfer_cb(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req)
 static int print_noop(const char *func, const char *file, int line,
                       OSSL_CMP_severity level, const char *msg)
 {
+    (void)func;
+    (void)file;
+    (void)line;
+    (void)level;
+    (void)msg;
     return 1;
 }
 
 static int allow_unprotected(const OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *rep,
                              int invalid_protection, int expected_type)
 {
+    (void)ctx;
+    (void)rep;
+    (void)invalid_protection;
+    (void)expected_type;
     return 1;
 }
 
@@ -108,6 +120,15 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                             STACK_OF(X509) **chainOut,
                                             STACK_OF(X509) **caPubs)
 {
+    (void)srv_ctx;
+    (void)cert_req;
+    (void)certReqId;
+    (void)crm;
+    (void)p10cr;
+    (void)certOut;
+    (void)chainOut;
+    (void)caPubs;
+
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
     return NULL;
 }
@@ -117,6 +138,11 @@ static OSSL_CMP_PKISI *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
                                   const X509_NAME *issuer,
                                   const ASN1_INTEGER *serial)
 {
+    (void)srv_ctx;
+    (void)rr;
+    (void)issuer;
+    (void)serial;
+
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
     return NULL;
 }
@@ -126,6 +152,11 @@ static int process_genm(OSSL_CMP_SRV_CTX *srv_ctx,
                         const STACK_OF(OSSL_CMP_ITAV) *in,
                         STACK_OF(OSSL_CMP_ITAV) **out)
 {
+    (void)srv_ctx;
+    (void)genm;
+    (void)in;
+    (void)out;
+
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
     return 0;
 }
@@ -135,6 +166,12 @@ static void process_error(OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *error,
                           const ASN1_INTEGER *errorCode,
                           const OSSL_CMP_PKIFREETEXT *errorDetails)
 {
+    (void)srv_ctx;
+    (void)error;
+    (void)statusInfo;
+    (void)errorCode;
+    (void)errorDetails;
+
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
 }
 
@@ -143,6 +180,12 @@ static int process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
                             const ASN1_OCTET_STRING *certHash,
                             const OSSL_CMP_PKISI *si)
 {
+    (void)srv_ctx;
+    (void)certConf;
+    (void)certReqId;
+    (void)certHash;
+    (void)si;
+
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
     return 0;
 }
@@ -151,6 +194,12 @@ static int process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
                            const OSSL_CMP_MSG *pollReq, int certReqId,
                            OSSL_CMP_MSG **certReq, int64_t *check_after)
 {
+    (void)srv_ctx;
+    (void)pollReq;
+    (void)certReqId;
+    (void)certReq;
+    (void)check_after;
+
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
     return 0;
 }

@@ -29,10 +29,12 @@ IMPLEMENT_CIPHER_HW_##UCMODE(mode, blowfish, PROV_BLOWFISH_CTX, BF_KEY,        \
                              BF_##mode)                                        \
 static const PROV_CIPHER_HW bf_##mode = {                                      \
     cipher_hw_blowfish_initkey,                                                \
-    cipher_hw_blowfish_##mode##_cipher                                         \
+    cipher_hw_blowfish_##mode##_cipher,                                        \
+    NULL                                /* copyctx */                          \
 };                                                                             \
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_blowfish_##mode(size_t keybits)      \
 {                                                                              \
+    (void)keybits;                                                             \
     return &bf_##mode;                                                         \
 }
 

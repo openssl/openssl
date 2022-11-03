@@ -326,6 +326,7 @@ static void *construct_decoder(const OSSL_ALGORITHM *algodef,
 /* Intermediary function to avoid ugly casts, used below */
 static void destruct_decoder(void *method, void *data)
 {
+    (void)data;
     OSSL_DECODER_free(method);
 }
 

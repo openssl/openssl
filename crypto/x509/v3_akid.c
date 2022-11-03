@@ -42,6 +42,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
 {
     char *tmp = NULL;
     STACK_OF(CONF_VALUE) *origextlist = extlist, *tmpextlist;
+    (void)method;
 
     if (akeyid->keyid) {
         tmp = i2s_ASN1_OCTET_STRING(NULL, akeyid->keyid);
@@ -109,6 +110,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     X509 *issuer_cert;
     int same_issuer, ss;
     AUTHORITY_KEYID *akeyid = AUTHORITY_KEYID_new();
+    (void)method;
 
     if (akeyid == NULL)
         goto err;

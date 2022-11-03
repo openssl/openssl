@@ -1228,6 +1228,7 @@ static int pack_local(BIO *b, MSGHDR_TYPE *mh, const BIO_ADDR *local) {
  */
 # if M_METHOD != M_METHOD_NONE
 static int translate_flags(uint64_t flags) {
+    (void)flags;
     return 0;
 }
 # endif

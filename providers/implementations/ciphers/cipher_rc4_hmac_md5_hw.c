@@ -221,7 +221,8 @@ static void cipher_hw_rc4_hmac_md5_init_mackey(PROV_CIPHER_CTX *bctx,
 static const PROV_CIPHER_HW_RC4_HMAC_MD5 rc4_hmac_md5_hw = {
     {
       cipher_hw_rc4_hmac_md5_initkey,
-      cipher_hw_rc4_hmac_md5_cipher
+      cipher_hw_rc4_hmac_md5_cipher,
+      NULL                              /* copyctx */
     },
     cipher_hw_rc4_hmac_md5_tls_init,
     cipher_hw_rc4_hmac_md5_init_mackey
@@ -229,5 +230,6 @@ static const PROV_CIPHER_HW_RC4_HMAC_MD5 rc4_hmac_md5_hw = {
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_rc4_hmac_md5(size_t keybits)
 {
+    (void)keybits;
     return (PROV_CIPHER_HW *)&rc4_hmac_md5_hw;
 }

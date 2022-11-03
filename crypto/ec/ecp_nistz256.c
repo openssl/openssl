@@ -935,6 +935,8 @@ __owur static int ecp_nistz256_set_from_affine(EC_POINT *out, const EC_GROUP *gr
                                                BN_CTX *ctx)
 {
     int ret = 0;
+    (void)group;
+    (void)ctx;
 
     if ((ret = bn_set_words(out->X, in->X, P256_LIMBS))
         && (ret = bn_set_words(out->Y, in->Y, P256_LIMBS))
@@ -1175,6 +1177,7 @@ __owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
     BN_ULONG y_aff[P256_LIMBS];
     BN_ULONG point_x[P256_LIMBS], point_y[P256_LIMBS], point_z[P256_LIMBS];
     BN_ULONG x_ret[P256_LIMBS], y_ret[P256_LIMBS];
+    (void)ctx;
 
     if (EC_POINT_is_at_infinity(group, point)) {
         ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);

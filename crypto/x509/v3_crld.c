@@ -301,6 +301,8 @@ static int dpn_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
 {
     DIST_POINT_NAME *dpn = (DIST_POINT_NAME *)*pval;
+    (void)it;
+    (void)exarg;
 
     switch (operation) {
     case ASN1_OP_NEW_POST:
@@ -367,10 +369,12 @@ const X509V3_EXT_METHOD ossl_v3_idp = {
 static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
                      STACK_OF(CONF_VALUE) *nval)
 {
-    ISSUING_DIST_POINT *idp = NULL;
+    ISSUING_DIST_POINT *idp;
     CONF_VALUE *cnf;
     char *name, *val;
     int i, ret;
+    (void)method;
+
     idp = ISSUING_DIST_POINT_new();
     if (idp == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
@@ -444,6 +448,8 @@ static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
                    int indent)
 {
     ISSUING_DIST_POINT *idp = pidp;
+    (void)method;
+
     if (idp->distpoint)
         print_distpoint(out, idp->distpoint, indent);
     if (idp->onlyuser > 0)
@@ -470,6 +476,8 @@ static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
     STACK_OF(DIST_POINT) *crld = pcrldp;
     DIST_POINT *point;
     int i;
+    (void)method;
+
     for (i = 0; i < sk_DIST_POINT_num(crld); i++) {
         if (i > 0)
             BIO_puts(out, "\n");

@@ -311,6 +311,9 @@ int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder)
 int OSSL_ENCODER_CTX_add_extra(OSSL_ENCODER_CTX *ctx,
                                OSSL_LIB_CTX *libctx, const char *propq)
 {
+    (void)ctx;
+    (void)libctx;
+    (void)propq;
     return 1;
 }
 

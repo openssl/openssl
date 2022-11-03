@@ -28,10 +28,12 @@ IMPLEMENT_CIPHER_HW_##UCMODE(mode, rc5, PROV_RC5_CTX, RC5_32_KEY,              \
                              RC5_32_##mode)                                    \
 static const PROV_CIPHER_HW rc5_##mode = {                                     \
     cipher_hw_rc5_initkey,                                                     \
-    cipher_hw_rc5_##mode##_cipher                                              \
+    cipher_hw_rc5_##mode##_cipher,                                             \
+    NULL                                                                       \
 };                                                                             \
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_rc5_##mode(size_t keybits)           \
 {                                                                              \
+    (void)keybits;                                                             \
     return &rc5_##mode;                                                        \
 }
 

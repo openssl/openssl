@@ -31,8 +31,9 @@
 static int unprotected_exception(const OSSL_CMP_CTX *ctx,
                                  const OSSL_CMP_MSG *rep,
                                  int invalid_protection,
-                                 int expected_type /* ignored here */)
+                                 int expected_type /* ignored */)
 {
+    (void)expected_type;
     int rcvd_type = OSSL_CMP_MSG_get_bodytype(rep /* may be NULL */);
     const char *msg_type = NULL;
 
@@ -538,6 +539,8 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     X509 *cert;
     char *subj = NULL;
     int ret = 1;
+    (void)req_type;
+    (void)expected_type;
 
     if (!ossl_assert(ctx != NULL))
         return 0;

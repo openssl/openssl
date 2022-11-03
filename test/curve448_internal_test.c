@@ -702,7 +702,7 @@ const OPTIONS *test_get_options(void)
         { "f", OPT_SLOW, '-', "Enables a slow test" },
         { "v", OPT_PROGRESS, '-',
               "Enables verbose mode (prints progress dots)" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

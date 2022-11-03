@@ -53,7 +53,7 @@ const OPTIONS *test_get_options(void)
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "config", OPT_CONFIG_FILE, '<',
           "The configuration file to use for the libctx" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }
@@ -93,6 +93,7 @@ static int sig_gen(EVP_PKEY *pkey, OSSL_PARAM *params, const char *digest_name,
     unsigned char *sig = NULL;
     size_t sig_len;
     size_t sz = EVP_PKEY_get_size(pkey);
+    (void)params;
 
     sig_len = sz;
     if (!TEST_ptr(sig = OPENSSL_malloc(sz))
@@ -679,6 +680,8 @@ static int cipher_enc(const char *alg,
     EVP_CIPHER_CTX *ctx = NULL;
     EVP_CIPHER *cipher = NULL;
     unsigned char out[256] = { 0 };
+    (void)key_len;
+    (void)iv_len;
 
     TEST_note("%s : %s", alg, enc ? "encrypt" : "decrypt");
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
@@ -727,6 +730,7 @@ static int aes_ccm_enc_dec(const char *alg,
     EVP_CIPHER *cipher = NULL;
     int out_len, len;
     unsigned char out[1024];
+    (void)key_len;
 
     TEST_note("%s : %s : expected to %s", alg, enc ? "encrypt" : "decrypt",
               pass ? "pass" : "fail");
@@ -814,6 +818,7 @@ static int aes_gcm_enc_dec(const char *alg,
     EVP_CIPHER *cipher = NULL;
     int out_len, len;
     unsigned char out[1024];
+    (void)key_len;
 
     TEST_note("%s : %s : expected to %s", alg, enc ? "encrypt" : "decrypt",
               pass ? "pass" : "fail");

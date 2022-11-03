@@ -37,6 +37,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                    void *exarg)
 {
     X509 *ret = (X509 *)*pval;
+    (void)it;
 
     switch (operation) {
 

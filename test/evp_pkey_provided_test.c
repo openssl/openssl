@@ -130,11 +130,19 @@ static int compare_with_file(const char *alg, int type, BIO *membio)
 
 static int pass_cb(char *buf, int size, int rwflag, void *u)
 {
+    (void)buf;
+    (void)size;
+    (void)rwflag;
+    (void)u;
     return 0;
 }
 
 static int pass_cb_error(char *buf, int size, int rwflag, void *u)
 {
+    (void)buf;
+    (void)size;
+    (void)rwflag;
+    (void)u;
     return -1;
 }
 

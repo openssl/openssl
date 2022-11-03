@@ -430,6 +430,7 @@ static int pkey_fake_import(void *fake_keydata, int ignored_selection,
                             const OSSL_PARAM params[])
 {
     struct fake_import_data_st *data = fake_keydata;
+    (void)ignored_selection;
 
     return data->export_cb(params, data->export_cbarg);
 }

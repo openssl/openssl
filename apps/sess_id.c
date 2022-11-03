@@ -40,7 +40,7 @@ const OPTIONS sess_id_options[] = {
     {"text", OPT_TEXT, '-', "Print ssl session id details"},
     {"cert", OPT_CERT, '-', "Output certificate "},
     {"noout", OPT_NOOUT, '-', "Don't output the encoded session info"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 static SSL_SESSION *load_sess_id(char *file, int format);

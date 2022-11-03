@@ -132,6 +132,7 @@ int chopup_args(ARGS *arg, char *buf)
 #ifndef APP_INIT
 int app_init(long mesgwin)
 {
+    (void)mesgwin;
     return 1;
 }
 #endif
@@ -2436,6 +2437,7 @@ static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
     STACK_OF(X509_CRL) *crls = NULL;
     X509_CRL *crl;
     STACK_OF(DIST_POINT) *crldp;
+    (void)nm;
 
     crls = sk_X509_CRL_new_null();
     if (!crls)
@@ -2512,6 +2514,7 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
 {
     APP_HTTP_TLS_INFO *info = (APP_HTTP_TLS_INFO *)arg;
     SSL_CTX *ssl_ctx = info->ssl_ctx;
+    (void)detail;
 
     if (ssl_ctx == NULL) /* not using TLS */
         return bio;

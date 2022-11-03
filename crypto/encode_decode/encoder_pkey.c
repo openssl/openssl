@@ -232,6 +232,7 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
     OSSL_LIB_CTX *libctx = NULL;
     int ok = 0, i, end;
     OSSL_NAMEMAP *namemap;
+    (void)propquery;
 
     if (!ossl_assert(ctx != NULL) || !ossl_assert(pkey != NULL)) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);

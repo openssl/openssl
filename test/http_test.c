@@ -107,6 +107,10 @@ static long http_bio_cb_ex(BIO *bio, int oper, const char *argp, size_t len,
                            int cmd, long argl, int ret, size_t *processed)
 {
     server_args *args = (server_args *)BIO_get_callback_arg(bio);
+    (void)argp;
+    (void)len;
+    (void)argl;
+    (void)processed;
 
     if (oper == (BIO_CB_CTRL | BIO_CB_RETURN) && cmd == BIO_CTRL_FLUSH)
         ret = mock_http_server(bio, args->out, args->version, args->keep_alive,

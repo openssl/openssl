@@ -329,6 +329,7 @@ static int mac_get_params(void *key, OSSL_PARAM params[])
 
 static const OSSL_PARAM *mac_gettable_params(void *provctx)
 {
+    (void)provctx;
     static const OSSL_PARAM gettable_params[] = {
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
         OSSL_PARAM_END
@@ -338,6 +339,7 @@ static const OSSL_PARAM *mac_gettable_params(void *provctx)
 
 static const OSSL_PARAM *cmac_gettable_params(void *provctx)
 {
+    (void)provctx;
     static const OSSL_PARAM gettable_params[] = {
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_CIPHER, NULL, 0),
@@ -364,6 +366,7 @@ static int mac_set_params(void *keydata, const OSSL_PARAM params[])
 
 static const OSSL_PARAM *mac_settable_params(void *provctx)
 {
+    (void)provctx;
     static const OSSL_PARAM settable_params[] = {
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
         OSSL_PARAM_END
@@ -475,6 +478,8 @@ static void *mac_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
 {
     struct mac_gen_ctx *gctx = genctx;
     MAC_KEY *key;
+    (void)cb;
+    (void)cbarg;
 
     if (!ossl_prov_is_running() || gctx == NULL)
         return NULL;

@@ -239,6 +239,7 @@ static const PROV_CIPHER_HW aes_generic_xts = {
 PROV_CIPHER_HW_declare_xts()
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts(size_t keybits)
 {
+    (void)keybits;
     PROV_CIPHER_HW_select_xts()
     return &aes_generic_xts;
 }

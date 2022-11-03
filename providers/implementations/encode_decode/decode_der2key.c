@@ -184,6 +184,8 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     long der_len = 0;
     void *key = NULL;
     int ok = 0;
+    (void)pw_cb;
+    (void)pw_cbarg;
 
     ctx->selection = selection;
     /*
@@ -333,9 +335,10 @@ static int der2key_export_object(void *vctx,
 # define dh_d2i_public_key              NULL
 # define dh_d2i_key_params              (d2i_of_void *)d2i_DHparams
 
-static void *dh_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
+static void *dh_d2i_PKCS8(void **key /*unused*/, const unsigned char **der, long der_len,
                           struct der2key_ctx_st *ctx)
 {
+    (void)key;
     return der2key_decode_p8(der, der_len, ctx,
                              (key_from_pkcs8_t *)ossl_dh_key_from_pkcs8);
 }
@@ -368,9 +371,10 @@ static void dh_adjust(void *key, struct der2key_ctx_st *ctx)
 # define dsa_d2i_public_key             (d2i_of_void *)d2i_DSAPublicKey
 # define dsa_d2i_key_params             (d2i_of_void *)d2i_DSAparams
 
-static void *dsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
+static void *dsa_d2i_PKCS8(void **key /*unused*/, const unsigned char **der, long der_len,
                            struct der2key_ctx_st *ctx)
 {
+    (void)key;
     return der2key_decode_p8(der, der_len, ctx,
                              (key_from_pkcs8_t *)ossl_dsa_key_from_pkcs8);
 }
@@ -393,9 +397,10 @@ static void dsa_adjust(void *key, struct der2key_ctx_st *ctx)
 # define ec_d2i_public_key              NULL
 # define ec_d2i_key_params              (d2i_of_void *)d2i_ECParameters
 
-static void *ec_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
-                          struct der2key_ctx_st *ctx)
+static void *ec_d2i_PKCS8(void **key /*unused*/, const unsigned char **der,
+                          long der_len, struct der2key_ctx_st *ctx)
 {
+    (void)key;
     return der2key_decode_p8(der, der_len, ctx,
                              (key_from_pkcs8_t *)ossl_ec_key_from_pkcs8);
 }
@@ -425,6 +430,7 @@ static void ec_adjust(void *key, struct der2key_ctx_st *ctx)
 static void *ecx_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                            struct der2key_ctx_st *ctx)
 {
+    (void)key;
     return der2key_decode_p8(der, der_len, ctx,
                              (key_from_pkcs8_t *)ossl_ecx_key_from_pkcs8);
 }
@@ -483,6 +489,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 static void *sm2_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                            struct der2key_ctx_st *ctx)
 {
+    (void)key;
     return der2key_decode_p8(der, der_len, ctx,
                              (key_from_pkcs8_t *)ossl_ec_key_from_pkcs8);
 }
@@ -504,6 +511,7 @@ static void *sm2_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
 static void *rsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                            struct der2key_ctx_st *ctx)
 {
+    (void)key;
     return der2key_decode_p8(der, der_len, ctx,
                              (key_from_pkcs8_t *)ossl_rsa_key_from_pkcs8);
 }
@@ -720,23 +728,23 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
  *              the DO_##kind macros above, to populate the keytype_desc_st
  *              structure.
  */
-#define MAKE_DECODER(keytype_name, keytype, type, kind)                 \
-    static const struct keytype_desc_st kind##_##keytype##_desc =       \
-        { keytype_name, ossl_##keytype##_keymgmt_functions,             \
-          DO_##kind(keytype) };                                         \
-                                                                        \
-    static OSSL_FUNC_decoder_newctx_fn kind##_der2##keytype##_newctx;   \
-                                                                        \
-    static void *kind##_der2##keytype##_newctx(void *provctx)           \
-    {                                                                   \
-        return der2key_newctx(provctx, &kind##_##keytype##_desc);       \
-    }                                                                   \
-    static int kind##_der2##keytype##_does_selection(void *provctx,     \
-                                                     int selection)     \
-    {                                                                   \
-        return der2key_check_selection(selection,                       \
-                                       &kind##_##keytype##_desc);       \
-    }                                                                   \
+#define MAKE_DECODER(keytype_name, keytype, type, kind)                        \
+    static const struct keytype_desc_st kind##_##keytype##_desc = {            \
+      keytype_name, ossl_##keytype##_keymgmt_functions, DO_##kind(keytype)};   \
+                                                                               \
+    static OSSL_FUNC_decoder_newctx_fn kind##_der2##keytype##_newctx;          \
+                                                                               \
+    static void *kind##_der2##keytype##_newctx(void *provctx)                  \
+    {                                                                          \
+        return der2key_newctx(provctx, &kind##_##keytype##_desc);              \
+    }                                                                          \
+    static int kind##_der2##keytype##_does_selection(void *provctx,            \
+                                                     int selection)            \
+    {                                                                          \
+        (void)provctx;                                                         \
+        return der2key_check_selection(selection,                              \
+                                       &kind##_##keytype##_desc);              \
+    }                                                                          \
     const OSSL_DISPATCH                                                 \
     ossl_##kind##_der_to_##keytype##_decoder_functions[] = {            \
         { OSSL_FUNC_DECODER_NEWCTX,                                     \

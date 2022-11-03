@@ -159,6 +159,7 @@ static int using_fips_rng(void)
  */
 static int disable_crngt(EVP_RAND_CTX *drbg)
 {
+    (void)drbg;
     return 1;
 }
 
@@ -527,6 +528,7 @@ static int test_rand_fork_safety(int i)
     int success = 1;
     unsigned char random[1];
     EVP_RAND_CTX *primary, *public, *private;
+    (void)i;
 
     /* All three DRBGs should be non-null */
     if (!TEST_ptr(primary = RAND_get0_primary(NULL))
@@ -738,6 +740,8 @@ typedef pthread_t thread_t;
 
 static void *thread_run(void *arg)
 {
+    (void)arg;
+
     run_multi_thread_test();
     /*
      * Because we're linking with a static library, we must stop each

@@ -95,6 +95,7 @@ void ossl_property_string_data_free(void *vpropdata)
 
 void *ossl_property_string_data_new(OSSL_LIB_CTX *ctx) {
     PROPERTY_STRING_DATA *propdata = OPENSSL_zalloc(sizeof(*propdata));
+    (void)ctx;
 
     if (propdata == NULL)
         return NULL;

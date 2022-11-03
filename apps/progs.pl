@@ -157,7 +157,7 @@ EOF
         "mdc2", "rmd160", "blake2b512", "blake2s256",
         "sm3"
     ) {
-        my $str = "    {FT_md, \"$cmd\", dgst_main, NULL, NULL},\n";
+        my $str = "    {FT_md, \"$cmd\", dgst_main, NULL, NULL, NULL},\n";
         if (grep { $cmd eq $_ } @disablables) {
             print "#ifndef OPENSSL_NO_" . uc($cmd) . "\n${str}#endif\n";
         } elsif (my $disabler = $md_disabler{$cmd}) {
@@ -203,7 +203,7 @@ EOF
         "cast-cbc", "rc5-cbc", "rc5-ecb", "rc5-cfb", "rc5-ofb",
         "sm4-cbc", "sm4-ecb", "sm4-cfb", "sm4-ofb", "sm4-ctr"
     ) {
-        my $str = "    {FT_cipher, \"$cmd\", enc_main, enc_options, NULL},\n";
+        my $str = "    {FT_cipher, \"$cmd\", enc_main, enc_options, NULL, NULL},\n";
         (my $algo = $cmd) =~ s/-.*//g;
         if (grep { $algo eq $_ } @disablables) {
             print "#ifndef OPENSSL_NO_" . uc($algo) . "\n${str}#endif\n";
@@ -214,5 +214,5 @@ EOF
         }
     }
 
-    print "    {0, NULL, NULL, NULL, NULL}\n};\n";
+    print "    {0, NULL, NULL, NULL, NULL, NULL}\n};\n";
 }

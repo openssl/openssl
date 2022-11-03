@@ -145,11 +145,13 @@ static unsigned int get_parent_reseed_count(PROV_DRBG *drbg)
 size_t ossl_drbg_get_seed(void *vdrbg, unsigned char **pout,
                           int entropy, size_t min_len,
                           size_t max_len, int prediction_resistance,
-                          const unsigned char *adin, size_t adin_len)
+                          const unsigned char *adin /*unused*/, size_t adin_len /*unused*/)
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
     size_t bytes_needed;
     unsigned char *buffer;
+    (void)adin;
+    (void)adin_len;
 
     /* Figure out how many bytes we need */
     bytes_needed = entropy >= 0 ? (entropy + 7) / 8 : 0;
@@ -276,6 +278,7 @@ typedef struct prov_drbg_nonce_global_st {
 void *ossl_prov_drbg_nonce_ctx_new(OSSL_LIB_CTX *libctx)
 {
     PROV_DRBG_NONCE_GLOBAL *dngbl = OPENSSL_zalloc(sizeof(*dngbl));
+    (void)libctx;
 
     if (dngbl == NULL)
         return NULL;

@@ -196,6 +196,12 @@ static int called_encrypt = 0;
 static int test_encrypt(EVP_PKEY_CTX *ctx, unsigned char *sig,
                         size_t *siglen, const unsigned char *tbs, size_t tbslen)
 {
+    (void)ctx;
+    (void)sig;
+    (void)siglen;
+    (void)tbs;
+    (void)tbslen;
+
     called_encrypt = 1;
     return 1;
 }
@@ -204,6 +210,7 @@ static int test_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
                            const int **pnids, int nid)
 {
     static const int rnid = EVP_PKEY_RSA;
+    (void)e;
     if (pmeth == NULL) {
         *pnids = &rnid;
         return 1;

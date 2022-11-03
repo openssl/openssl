@@ -58,6 +58,7 @@ static void list_insert_tail(QUIC_STREAM_LIST_NODE *l,
 static void list_remove(QUIC_STREAM_LIST_NODE *l,
                         QUIC_STREAM_LIST_NODE *n)
 {
+    (void)l;
     assert(n->prev != NULL && n->next != NULL
            && n->prev != n && n->next != n);
 

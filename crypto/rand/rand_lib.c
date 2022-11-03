@@ -439,6 +439,7 @@ typedef struct rand_global_st {
 void *ossl_rand_ctx_new(OSSL_LIB_CTX *libctx)
 {
     RAND_GLOBAL *dgbl = OPENSSL_zalloc(sizeof(*dgbl));
+    (void)libctx;
 
     if (dgbl == NULL)
         return NULL;
@@ -824,6 +825,7 @@ static int random_conf_init(CONF_IMODULE *md, const CONF *cnf)
 
 static void random_conf_deinit(CONF_IMODULE *md)
 {
+    (void)md;
     OSSL_TRACE(CONF, "Cleaned up random\n");
 }
 

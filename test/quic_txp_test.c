@@ -37,6 +37,7 @@ static const unsigned char secret_1[32] = {
 
 static OSSL_TIME fake_now(void *arg)
 {
+    (void)arg;
     return ossl_time_now(); /* TODO */
 }
 
@@ -237,49 +238,49 @@ struct script_op {
 };
 
 #define OP_END      \
-    { OPK_END }
+    { OPK_END, 0U, 0U, NULL, 0UL, NULL }
 #define OP_TXP_GENERATE(archetype) \
-    { OPK_TXP_GENERATE, (archetype) },
+    { OPK_TXP_GENERATE, (archetype), 0U, NULL, 0UL, NULL },
 #define OP_TXP_GENERATE_NONE(archetype) \
-    { OPK_TXP_GENERATE_NONE, (archetype) },
+    { OPK_TXP_GENERATE_NONE, (archetype), 0U, NULL, 0UL, NULL },
 #define OP_RX_PKT() \
-    { OPK_RX_PKT },
+    { OPK_RX_PKT, 0U, 0U, NULL, 0UL, NULL },
 #define OP_RX_PKT_NONE() \
-    { OPK_RX_PKT_NONE },
+    { OPK_RX_PKT_NONE, 0U, 0U, NULL, 0UL, NULL },
 #define OP_EXPECT_DGRAM_LEN(lo, hi) \
-    { OPK_EXPECT_DGRAM_LEN, (lo), (hi) },
+    { OPK_EXPECT_DGRAM_LEN, (lo), (hi), NULL, 0UL, NULL },
 #define OP_EXPECT_FRAME(frame_type) \
-    { OPK_EXPECT_FRAME, (frame_type) },
+    { OPK_EXPECT_FRAME, (frame_type), 0U, NULL, 0UL, NULL },
 #define OP_EXPECT_INITIAL_TOKEN(buf) \
-    { OPK_EXPECT_INITIAL_TOKEN, sizeof(buf), 0, buf },
+    { OPK_EXPECT_INITIAL_TOKEN, sizeof(buf), 0, buf, 0UL, NULL },
 #define OP_EXPECT_HDR(hdr) \
-    { OPK_EXPECT_HDR, 0, 0, &(hdr) },
+    { OPK_EXPECT_HDR, 0U, 0U, &(hdr), 0UL, NULL },
 #define OP_CHECK(func) \
-    { OPK_CHECK, 0, 0, NULL, 0, (func) },
+    { OPK_CHECK, 0U, 0U, NULL, 0, (func) },
 #define OP_NEXT_FRAME() \
-    { OPK_NEXT_FRAME },
+    { OPK_NEXT_FRAME, 0U, 0U, NULL, 0UL, NULL },
 #define OP_EXPECT_NO_FRAME() \
-    { OPK_EXPECT_NO_FRAME },
+    { OPK_EXPECT_NO_FRAME, 0U, 0U, NULL, 0UL, NULL },
 #define OP_PROVIDE_SECRET(el, suite, secret) \
-    { OPK_PROVIDE_SECRET, (el), (suite), (secret), sizeof(secret) },
+    { OPK_PROVIDE_SECRET, (el), (suite), (secret), sizeof(secret), 0U },
 #define OP_DISCARD_EL(el) \
-    { OPK_DISCARD_EL, (el) },
+    { OPK_DISCARD_EL, (el), 0, NULL, 0UL, NULL },
 #define OP_CRYPTO_SEND(pn_space, buf) \
-    { OPK_CRYPTO_SEND, (pn_space), 0, (buf), sizeof(buf) },
+    { OPK_CRYPTO_SEND, (pn_space), 0, (buf), sizeof(buf), NULL },
 #define OP_STREAM_NEW(id) \
-    { OPK_STREAM_NEW, (id) },
+    { OPK_STREAM_NEW, (id), 0, NULL, 0UL, NULL },
 #define OP_STREAM_SEND(id, buf) \
-    { OPK_STREAM_SEND, (id), 0, (buf), sizeof(buf) },
+    { OPK_STREAM_SEND, (id), 0, (buf), sizeof(buf), NULL },
 #define OP_STREAM_FIN(id) \
-    { OPK_STREAM_FIN, (id) },
+    { OPK_STREAM_FIN, (id), 0, NULL, 0UL, NULL },
 #define OP_STOP_SENDING(id, aec) \
-    { OPK_STOP_SENDING, (id), (aec) },
+    { OPK_STOP_SENDING, (id), (aec), NULL, 0UL, NULL },
 #define OP_RESET_STREAM(id, aec) \
-    { OPK_RESET_STREAM, (id), (aec) },
+    { OPK_RESET_STREAM, (id), (aec), NULL, 0UL, NULL },
 #define OP_CONN_TXFC_BUMP(cwm) \
-    { OPK_CONN_TXFC_BUMP, (cwm) },
+    { OPK_CONN_TXFC_BUMP, (cwm), 0, NULL, 0UL, NULL },
 #define OP_STREAM_TXFC_BUMP(id, cwm) \
-    { OPK_STREAM_TXFC_BUMP, (cwm), (id) },
+    { OPK_STREAM_TXFC_BUMP, (cwm), (id), NULL, 0UL, NULL },
 
 static int schedule_handshake_done(struct helper *h)
 {
@@ -363,6 +364,8 @@ static const struct script_op script_3[] = {
 /* 4. 1-RTT, CFQ (NEW_CONN_ID) */
 static void free_buf_mem(unsigned char *buf, size_t buf_len, void *arg)
 {
+    (void)buf;
+    (void)buf_len;
     BUF_MEM_free((BUF_MEM *)arg);
 }
 

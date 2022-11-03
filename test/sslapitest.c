@@ -139,6 +139,8 @@ struct sslapitest_log_counts {
 static int hostname_cb(SSL *s, int *al, void *arg)
 {
     const char *hostname = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+    (void)al;
+    (void)arg;
 
     if (hostname != NULL && (strcmp(hostname, "goodhost") == 0
                              || strcmp(hostname, "altgoodhost") == 0))
@@ -150,6 +152,7 @@ static int hostname_cb(SSL *s, int *al, void *arg)
 static void client_keylog_callback(const SSL *ssl, const char *line)
 {
     int line_length = strlen(line);
+    (void)ssl;
 
     /* If the log doesn't fit, error out. */
     if (client_log_buffer_index + line_length > sizeof(client_log_buffer) - 1) {
@@ -166,6 +169,7 @@ static void client_keylog_callback(const SSL *ssl, const char *line)
 static void server_keylog_callback(const SSL *ssl, const char *line)
 {
     int line_length = strlen(line);
+    (void)ssl;
 
     /* If the log doesn't fit, error out. */
     if (server_log_buffer_index + line_length > sizeof(server_log_buffer) - 1) {
@@ -548,6 +552,7 @@ static int verify_retry_cb(X509_STORE_CTX *ctx, void *arg)
     int res = X509_verify_cert(ctx);
     int idx = SSL_get_ex_data_X509_STORE_CTX_idx();
     SSL *ssl;
+    (void)arg;
 
     /* this should not happen but check anyway */
     if (idx < 0
@@ -673,6 +678,8 @@ end:
 static int get_password_cb(char *buf, int size, int rw_flag, void *userdata)
 {
     static const char pass[] = "testpass";
+    (void)rw_flag;
+    (void)userdata;
 
     if (!TEST_int_eq(size, PEM_BUFSIZE))
         return -1;
@@ -727,6 +734,7 @@ static int full_client_hello_callback(SSL *s, int *al, void *arg)
 #endif
                                        35, 22, 23, 13};
     size_t len;
+    (void)al;
 
     /* Make sure we can defer processing and get called back. */
     if ((*ctr)++ == 0)
@@ -1854,6 +1862,7 @@ static int new_called, remove_called, get_called;
 
 static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
 {
+    (void)ssl;
     new_called++;
     /*
      * sess has been up-refed for us, but we don't actually need it so free it
@@ -1865,6 +1874,8 @@ static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
 
 static void remove_session_cb(SSL_CTX *ctx, SSL_SESSION *sess)
 {
+    (void)ctx;
+    (void)sess;
     remove_called++;
 }
 
@@ -1873,6 +1884,10 @@ static SSL_SESSION *get_sess_val = NULL;
 static SSL_SESSION *get_session_cb(SSL *ssl, const unsigned char *id, int len,
                                    int *copy)
 {
+    (void)ssl;
+    (void)id;
+    (void)len;
+
     get_called++;
     *copy = 1;
     return get_sess_val;
@@ -2256,6 +2271,8 @@ static int do_cache;
 
 static int new_cachesession_cb(SSL *ssl, SSL_SESSION *sess)
 {
+    (void)ssl;
+
     if (do_cache) {
         sesscache[new_called] = sess;
     } else {
@@ -3076,6 +3093,7 @@ static int psk_server_cb_cnt = 0;
 static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
                           size_t *idlen, SSL_SESSION **sess)
 {
+    (void)ssl;
     switch (++use_session_cb_cnt) {
     case 1:
         /* The first call should always have a NULL md */
@@ -3111,6 +3129,8 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *id,
                                   unsigned int max_psk_len)
 {
     unsigned int psklen = 0;
+    (void)ssl;
+    (void)hint;
 
     psk_client_cb_cnt++;
 
@@ -3137,6 +3157,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *id,
 static int find_session_cb(SSL *ssl, const unsigned char *identity,
                            size_t identity_len, SSL_SESSION **sess)
 {
+    (void)ssl;
     find_session_cb_cnt++;
 
     /* We should only ever be called a maximum of twice per connection */
@@ -3165,6 +3186,7 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
                                   unsigned char *psk, unsigned int max_psk_len)
 {
     unsigned int psklen = 0;
+    (void)ssl;
 
     psk_server_cb_cnt++;
 
@@ -3535,9 +3557,10 @@ static int test_early_data_read_write(int idx)
 
 static int allow_ed_cb_called = 0;
 
-static int allow_early_data_cb(SSL *s, void *arg)
+static int allow_early_data_cb(SSL *ssl, void *arg)
 {
     int *usecb = (int *)arg;
+    (void)ssl;
 
     allow_ed_cb_called++;
 
@@ -3943,6 +3966,8 @@ static int alpn_select_cb(SSL *ssl, const unsigned char **out,
 {
     unsigned int protlen = 0;
     const unsigned char *prot;
+    (void)ssl;
+    (void)arg;
 
     for (prot = in; prot < in + inlen; prot += protlen) {
         protlen = *prot++;
@@ -5387,6 +5412,7 @@ static unsigned char cookie_magic_value[] = "cookie magic";
 static int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                                     unsigned int *cookie_len)
 {
+    (void)ssl;
     /*
      * Not suitable as a real cookie generation function but good enough for
      * testing!
@@ -5400,6 +5426,8 @@ static int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
 static int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
                                   unsigned int cookie_len)
 {
+    (void)ssl;
+
     if (cookie_len == sizeof(cookie_magic_value) - 1
         && memcmp(cookie, cookie_magic_value, cookie_len) == 0)
         return 1;
@@ -5525,6 +5553,8 @@ static int old_add_cb(SSL *s, unsigned int ext_type, const unsigned char **out,
 {
     int *server = (int *)add_arg;
     unsigned char *data;
+    (void)ext_type;
+    (void)al;
 
     if (SSL_is_server(s))
         srvaddoldcb++;
@@ -5544,6 +5574,10 @@ static int old_add_cb(SSL *s, unsigned int ext_type, const unsigned char **out,
 static void old_free_cb(SSL *s, unsigned int ext_type, const unsigned char *out,
                         void *add_arg)
 {
+    (void)s;
+    (void)ext_type;
+    (void)add_arg;
+   
     OPENSSL_free((unsigned char *)out);
 }
 
@@ -5551,6 +5585,8 @@ static int old_parse_cb(SSL *s, unsigned int ext_type, const unsigned char *in,
                         size_t inlen, int *al, void *parse_arg)
 {
     int *server = (int *)parse_arg;
+    (void)ext_type;
+    (void)al;
 
     if (SSL_is_server(s))
         srvparseoldcb++;
@@ -5571,6 +5607,11 @@ static int new_add_cb(SSL *s, unsigned int ext_type, unsigned int context,
 {
     int *server = (int *)add_arg;
     unsigned char *data;
+    (void)ext_type;
+    (void)context;
+    (void)x;
+    (void)chainidx;
+    (void)al;
 
     if (SSL_is_server(s))
         srvaddnewcb++;
@@ -5590,6 +5631,11 @@ static int new_add_cb(SSL *s, unsigned int ext_type, unsigned int context,
 static void new_free_cb(SSL *s, unsigned int ext_type, unsigned int context,
                         const unsigned char *out, void *add_arg)
 {
+    (void)s;
+    (void)ext_type;
+    (void)context;
+    (void)add_arg;
+
     OPENSSL_free((unsigned char *)out);
 }
 
@@ -5598,6 +5644,11 @@ static int new_parse_cb(SSL *s, unsigned int ext_type, unsigned int context,
                         size_t chainidx, int *al, void *parse_arg)
 {
     int *server = (int *)parse_arg;
+    (void)ext_type;
+    (void)context;
+    (void)x;
+    (void)chainidx;
+    (void)al;
 
     if (SSL_is_server(s))
         srvparsenewcb++;
@@ -5625,6 +5676,8 @@ static int sni_cb(SSL *s, int *al, void *arg)
 
 static int verify_cb(int preverify_ok, X509_STORE_CTX *x509_ctx)
 {
+    (void)preverify_ok;
+    (void)x509_ctx;
     return 1;
 }
 
@@ -5903,6 +5956,13 @@ static int serverinfo_custom_parse_cb(SSL *s, unsigned int ext_type,
     const size_t len = serverinfo_custom_v1_len;
     const unsigned char *si = &serverinfo_custom_v1[len - 3];
     int *p_cb_result = (int*)parse_arg;
+    (void)s;
+    (void)ext_type;
+    (void)context;
+    (void)x;
+    (void)chainidx;
+    (void)al;
+
     *p_cb_result = TEST_mem_eq(in, inlen, si, 3);
     return 1;
 }
@@ -6874,6 +6934,7 @@ static int ssl_srp_cb(SSL *s, int *ad, void *arg)
     int ret = SSL3_AL_FATAL;
     char *username;
     SRP_user_pwd *user = NULL;
+    (void)arg;
 
     username = SSL_get_srp_username(s);
     if (username == NULL) {
@@ -7636,6 +7697,7 @@ static SSL_TICKET_RETURN tick_dec_ret = SSL_TICKET_RETURN_ABORT;
 
 static int gen_tick_cb(SSL *s, void *arg)
 {
+    (void)arg;
     gen_tick_called = 1;
 
     return SSL_SESSION_set1_ticket_appdata(SSL_get_session(s), appdata,
@@ -7650,6 +7712,10 @@ static SSL_TICKET_RETURN dec_tick_cb(SSL *s, SSL_SESSION *ss,
 {
     void *tickdata;
     size_t tickdlen;
+    (void)s;
+    (void)keyname;
+    (void)keyname_length;
+    (void)arg;
 
     dec_tick_called = 1;
 
@@ -7696,6 +7762,7 @@ static int tick_key_cb(SSL *s, unsigned char key_name[16],
     EVP_CIPHER *aes128cbc;
     EVP_MD *sha256;
     int ret;
+    (void)s;
 
     tick_key_cb_called = 1;
 
@@ -7738,6 +7805,7 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
     OSSL_PARAM params[2];
     EVP_CIPHER *aes128cbc;
     int ret;
+    (void)s;
 
     tick_key_cb_called = 1;
 
@@ -8745,6 +8813,7 @@ end:
 
 static int test_session_timeout(int test)
 {
+    (void)test;
     /*
      * Test session ordering and timeout
      * Can't explicitly test performance of the new code,
@@ -9357,6 +9426,9 @@ static DH *tmp_dh_callback(SSL *s, int is_export, int keylen)
 {
     EVP_PKEY *dhpkey = get_tmp_dh_params();
     DH *ret = NULL;
+    (void)s;
+    (void)is_export;
+    (void)keylen;
 
     if (!TEST_ptr(dhpkey))
         return NULL;
@@ -10117,6 +10189,8 @@ end:
 static size_t record_pad_cb(SSL *s, int type, size_t len, void *arg)
 {
     int *called = arg;
+    (void)s;
+    (void)type;
 
     switch ((*called)++) {
     case 0:

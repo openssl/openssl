@@ -74,6 +74,9 @@ DH *ossl_dh_new_ex(OSSL_LIB_CTX *libctx)
 static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 {
     DH *ret = OPENSSL_zalloc(sizeof(*ret));
+#if defined(FIPS_MODULE) || defined(OPENSSL_NO_ENGINE)
+    (void)engine;
+#endif
 
     if (ret == NULL)
         return NULL;

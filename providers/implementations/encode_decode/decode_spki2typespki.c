@@ -62,6 +62,9 @@ static int spki2typespki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     const ASN1_OBJECT *oid = NULL;
     char dataname[OSSL_MAX_NAME_SIZE];
     OSSL_PARAM params[5], *p = params;
+    (void)selection;
+    (void)pw_cb;
+    (void)pw_cbarg;
 
     if (!ossl_read_der(ctx->provctx, cin, &der, &len))
         return 1;

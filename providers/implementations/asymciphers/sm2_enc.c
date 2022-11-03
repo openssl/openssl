@@ -84,6 +84,7 @@ static int sm2_asym_encrypt(void *vpsm2ctx, unsigned char *out, size_t *outlen,
 {
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
     const EVP_MD *md = sm2_get_md(psm2ctx);
+    (void)outsize;
 
     if (md == NULL)
         return 0;
@@ -105,6 +106,7 @@ static int sm2_asym_decrypt(void *vpsm2ctx, unsigned char *out, size_t *outlen,
 {
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
     const EVP_MD *md = sm2_get_md(psm2ctx);
+    (void)outsize;
 
     if (md == NULL)
         return 0;

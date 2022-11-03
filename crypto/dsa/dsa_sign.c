@@ -156,6 +156,7 @@ int ossl_dsa_sign_int(int type, const unsigned char *dgst, int dlen,
                       OSSL_LIB_CTX *libctx, const char *propq)
 {
     DSA_SIG *s;
+    (void)type;
 
     /* legacy case uses the method table */
     if (dsa->libctx == NULL || dsa->meth != DSA_get_default_method())
@@ -194,6 +195,7 @@ int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
     unsigned char *der = NULL;
     int derlen = -1;
     int ret = -1;
+    (void)type;
 
     s = DSA_SIG_new();
     if (s == NULL)

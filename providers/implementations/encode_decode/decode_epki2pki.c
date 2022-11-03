@@ -69,6 +69,7 @@ static int epki2pki_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     const X509_ALGOR *alg = NULL;
     BIO *in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     int ok = 0;
+    (void)selection;
 
     if (in == NULL)
         return 0;

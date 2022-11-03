@@ -328,6 +328,7 @@ static const PROV_CIPHER_HW_AES_GCM_SIV aes_gcm_siv_hw =
 
 const PROV_CIPHER_HW_AES_GCM_SIV *ossl_prov_cipher_hw_aes_gcm_siv(size_t keybits)
 {
+    (void)keybits;
     return &aes_gcm_siv_hw;
 }
 

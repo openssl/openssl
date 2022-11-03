@@ -13,6 +13,7 @@
 
 int ossl_DER_w_algorithmIdentifier_EC(WPACKET *pkt, int cont, EC_KEY *ec)
 {
+    (void)ec;
     return ossl_DER_w_begin_sequence(pkt, cont)
         /* No parameters (yet?) */
         && ossl_DER_w_precompiled(pkt, -1, ossl_der_oid_id_ecPublicKey,

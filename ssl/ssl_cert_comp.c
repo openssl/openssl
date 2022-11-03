@@ -51,6 +51,8 @@ int ossl_comp_has_alg(int a)
         return 1;
     if ((a == 0 || a == TLSEXT_comp_cert_zlib) && BIO_f_zlib() != NULL)
         return 1;
+#else
+    (void)a;
 #endif
     return 0;
 }
@@ -363,6 +365,10 @@ int SSL_CTX_set1_cert_comp_preference(SSL_CTX *ctx, int *algs, size_t len)
 #ifndef OPENSSL_NO_COMP_ALG
     return ssl_set_cert_comp_pref(ctx->cert_comp_prefs, algs, len);
 #else
+    (void)ctx;
+    (void)algs;
+    (void)len;
+
     return 0;
 #endif
 }
@@ -376,6 +382,10 @@ int SSL_set1_cert_comp_preference(SSL *ssl, int *algs, size_t len)
         return 0;
     return ssl_set_cert_comp_pref(sc->cert_comp_prefs, algs, len);
 #else
+    (void)ssl;
+    (void)algs;
+    (void)len;
+
     return 0;
 #endif
 }
@@ -389,8 +399,12 @@ int SSL_compress_certs(SSL *ssl, int alg)
         return 0;
 
     return ssl_compress_certs(ssl, sc->cert->pkeys, alg);
-#endif
+#else
+    (void)ssl;
+    (void)alg;
+
     return 0;
+#endif
 }
 
 int SSL_CTX_compress_certs(SSL_CTX *ctx, int alg)
@@ -404,6 +418,9 @@ int SSL_CTX_compress_certs(SSL_CTX *ctx, int alg)
 
     ret = ssl_compress_certs(new, ctx->cert->pkeys, alg);
     SSL_free(new);
+#else
+    (void)ctx;
+    (void)alg;
 #endif
     return ret;
 }
@@ -421,6 +438,11 @@ size_t SSL_get1_compressed_cert(SSL *ssl, int alg, unsigned char **data, size_t 
 
     return ssl_get_compressed_cert(ssl, cpk, alg, data, orig_len);
 #else
+    (void)ssl;
+    (void)alg;
+    (void)data;
+    (void)orig_len;
+
     return 0;
 #endif
 }
@@ -435,7 +457,12 @@ size_t SSL_CTX_get1_compressed_cert(SSL_CTX *ctx, int alg, unsigned char **data,
     SSL_free(new);
     return ret;
 #else
-        return 0;
+    (void)ctx;
+    (void)alg;
+    (void)data;
+    (void)orig_len;
+
+    return 0;
 #endif
 }
 
@@ -445,6 +472,12 @@ int SSL_CTX_set1_compressed_cert(SSL_CTX *ctx, int algorithm, unsigned char *com
 #ifndef OPENSSL_NO_COMP_ALG
     return ossl_set1_compressed_cert(ctx->cert, algorithm, comp_data, comp_length, orig_length);
 #else
+    (void)ctx;
+    (void)algorithm;
+    (void)comp_data;
+    (void)comp_length;
+    (void)orig_length;
+
     return 0;
 #endif
 }
@@ -461,6 +494,12 @@ int SSL_set1_compressed_cert(SSL *ssl, int algorithm, unsigned char *comp_data,
 
     return ossl_set1_compressed_cert(sc->cert, algorithm, comp_data, comp_length, orig_length);
 #else
+    (void)ssl;
+    (void)algorithm;
+    (void)comp_data;
+    (void)comp_length;
+    (void)orig_length;
+
     return 0;
 #endif
 }

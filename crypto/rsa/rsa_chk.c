@@ -257,6 +257,7 @@ int RSA_check_key(const RSA *key)
 int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 {
 #ifdef FIPS_MODULE
+    (void)cb;
     return ossl_rsa_validate_public(key)
            && ossl_rsa_validate_private(key)
            && ossl_rsa_validate_pairwise(key);

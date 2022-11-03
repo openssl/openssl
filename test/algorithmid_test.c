@@ -268,7 +268,7 @@ const OPTIONS *test_get_options(void)
         { "spki", OPT_SPKI, '-', "Test public keys in SubjectPublicKeyInfo form.  Requires one file" },
         { OPT_HELP_STR, 1, '-',
           "file...\tFile(s) to run tests on.  All files must be PEM encoded.\n" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

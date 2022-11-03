@@ -160,6 +160,9 @@ static void ecx_free(EVP_PKEY *pkey)
 /* "parameters" are always equal */
 static int ecx_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
+    (void)a;
+    (void)b;
+
     return 1;
 }
 
@@ -168,6 +171,7 @@ static int ecx_key_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 {
     const ECX_KEY *ecxkey = pkey->pkey.ecx;
     const char *nm = OBJ_nid2ln(pkey->ameth->pkey_id);
+    (void)ctx;
 
     if (op == KEY_OP_PRIVATE) {
         if (ecxkey == NULL || ecxkey->privkey == NULL) {
@@ -244,6 +248,9 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
 static int ecd_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
+    (void)pkey;
+    (void)arg1;
+
     switch (op) {
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
         /* We currently only support Pure EdDSA which takes no digest */
@@ -336,6 +343,7 @@ static int ecx_get_pub_key(const EVP_PKEY *pkey, unsigned char *pub,
 
 static size_t ecx_pkey_dirty_cnt(const EVP_PKEY *pkey)
 {
+    (void)pkey;
     /*
      * We provide no mechanism to "update" an ECX key once it has been set,
      * therefore we do not have to maintain a dirty count.
@@ -352,6 +360,8 @@ static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     OSSL_PARAM *params = NULL;
     int selection = 0;
     int rv = 0;
+    (void)libctx;
+    (void)propq;
 
     if (tmpl == NULL)
         return 0;
@@ -529,11 +539,13 @@ const EVP_PKEY_ASN1_METHOD ossl_ecx448_asn1_meth = {
 
 static int ecd_size25519(const EVP_PKEY *pkey)
 {
+    (void)pkey;
     return ED25519_SIGSIZE;
 }
 
 static int ecd_size448(const EVP_PKEY *pkey)
 {
+    (void)pkey;
     return ED448_SIGSIZE;
 }
 
@@ -544,6 +556,9 @@ static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
     const ASN1_OBJECT *obj;
     int ptype;
     int nid;
+    (void)it;
+    (void)asn;
+    (void)str;
 
     /* Sanity check: make sure it is ED25519/ED448 with absent parameters */
     X509_ALGOR_get0(&obj, &ptype, NULL, sigalg);
@@ -575,12 +590,20 @@ static int ecd_item_sign25519(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
                               X509_ALGOR *alg1, X509_ALGOR *alg2,
                               ASN1_BIT_STRING *str)
 {
+    (void)ctx;
+    (void)it;
+    (void)asn;
+    (void)str;
+
     return ecd_item_sign(alg1, alg2, NID_ED25519);
 }
 
 static int ecd_sig_info_set25519(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
                                  const ASN1_STRING *sig)
 {
+    (void)alg;
+    (void)sig;
+
     X509_SIG_INFO_set(siginf, NID_undef, NID_ED25519, X25519_SECURITY_BITS,
                       X509_SIG_INFO_TLS);
     return 1;
@@ -591,12 +614,20 @@ static int ecd_item_sign448(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
                             X509_ALGOR *alg1, X509_ALGOR *alg2,
                             ASN1_BIT_STRING *str)
 {
+    (void)ctx;
+    (void)it;
+    (void)asn;
+    (void)str;
+
     return ecd_item_sign(alg1, alg2, NID_ED448);
 }
 
 static int ecd_sig_info_set448(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
                                const ASN1_STRING *sig)
 {
+    (void)alg;
+    (void)sig;
+
     X509_SIG_INFO_set(siginf, NID_undef, NID_ED448, X448_SECURITY_BITS,
                       X509_SIG_INFO_TLS);
     return 1;
@@ -726,6 +757,8 @@ static int validate_ecx_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
                                           const unsigned char **pubkey)
 {
     const ECX_KEY *ecxkey, *peerkey;
+    (void)key;
+    (void)keylen;
 
     if (ctx->pkey == NULL || ctx->peerkey == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_KEYS_NOT_SET);
@@ -775,6 +808,10 @@ static int pkey_ecx_derive448(EVP_PKEY_CTX *ctx, unsigned char *key,
 
 static int pkey_ecx_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
+    (void)ctx;
+    (void)p1;
+    (void)p2;
+
     /* Only need to handle peer key for derivation */
     if (type == EVP_PKEY_CTRL_PEER_KEY)
         return 1;
@@ -788,7 +825,13 @@ static const EVP_PKEY_METHOD ecx25519_pkey_meth = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     pkey_ecx_derive25519,
     pkey_ecx_ctrl,
-    0
+    0,
+    NULL,                      /* digestsign */
+    NULL,                      /* digestverify */
+    NULL,                      /* check */
+    NULL,                      /* public_check */
+    NULL,                      /* param_check */
+    NULL                       /* digest_custom */
 };
 
 static const EVP_PKEY_METHOD ecx448_pkey_meth = {
@@ -798,7 +841,13 @@ static const EVP_PKEY_METHOD ecx448_pkey_meth = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     pkey_ecx_derive448,
     pkey_ecx_ctrl,
-    0
+    0,
+    NULL,                      /* digestsign */
+    NULL,                      /* digestverify */
+    NULL,                      /* check */
+    NULL,                      /* public_check */
+    NULL,                      /* param_check */
+    NULL                       /* digest_custom */
 };
 
 static int pkey_ecd_digestsign25519(EVP_MD_CTX *ctx, unsigned char *sig,
@@ -893,6 +942,9 @@ static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
 
 static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
+    (void)ctx;
+    (void)p1;
+
     switch (type) {
     case EVP_PKEY_CTRL_MD:
         /* Only NULL allowed as digest */
@@ -915,7 +967,11 @@ static const EVP_PKEY_METHOD ed25519_pkey_meth = {
     pkey_ecd_ctrl,
     0,
     pkey_ecd_digestsign25519,
-    pkey_ecd_digestverify25519
+    pkey_ecd_digestverify25519,
+    NULL,                      /* check */
+    NULL,                      /* public_check */
+    NULL,                      /* param_check */
+    NULL                       /* digest_custom */
 };
 
 static const EVP_PKEY_METHOD ed448_pkey_meth = {
@@ -926,7 +982,11 @@ static const EVP_PKEY_METHOD ed448_pkey_meth = {
     pkey_ecd_ctrl,
     0,
     pkey_ecd_digestsign448,
-    pkey_ecd_digestverify448
+    pkey_ecd_digestverify448,
+    NULL,                      /* check */
+    NULL,                      /* public_check */
+    NULL,                      /* param_check */
+    NULL                       /* digest_custom */
 };
 
 #ifdef S390X_EC_ASM

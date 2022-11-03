@@ -446,6 +446,9 @@ static int execute_msg_check_test(CMP_VFY_TEST_FIXTURE *fixture)
 static int allow_unprotected(const OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                              int invalid_protection, int allow)
 {
+    (void)ctx;
+    (void)msg;
+    (void)invalid_protection;
     return allow;
 }
 

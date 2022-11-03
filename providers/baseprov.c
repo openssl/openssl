@@ -43,12 +43,14 @@ static const OSSL_PARAM base_param_types[] = {
 
 static const OSSL_PARAM *base_gettable_params(void *provctx)
 {
+    (void)provctx;
     return base_param_types;
 }
 
 static int base_get_params(void *provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
+    (void)provctx;
 
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_NAME);
     if (p != NULL
@@ -70,29 +72,29 @@ static int base_get_params(void *provctx, OSSL_PARAM params[])
 static const OSSL_ALGORITHM base_encoder[] = {
 #define ENCODER_PROVIDER "base"
 #include "encoders.inc"
-    { NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL }
 #undef ENCODER_PROVIDER
 };
 
 static const OSSL_ALGORITHM base_decoder[] = {
 #define DECODER_PROVIDER "base"
 #include "decoders.inc"
-    { NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL }
 #undef DECODER_PROVIDER
 };
 
 static const OSSL_ALGORITHM base_store[] = {
 #define STORE(name, _fips, func_table)                           \
-    { name, "provider=base,fips=" _fips, (func_table) },
-
+    { name, "provider=base,fips=" _fips, (func_table), name },
 #include "stores.inc"
-    { NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL }
 #undef STORE
 };
 
 static const OSSL_ALGORITHM *base_query(void *provctx, int operation_id,
                                          int *no_cache)
 {
+    (void)provctx;
     *no_cache = 0;
     switch (operation_id) {
     case OSSL_OP_ENCODER:

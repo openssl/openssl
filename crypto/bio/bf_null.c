@@ -32,9 +32,11 @@ static const BIO_METHOD methods_nullf = {
     nullf_puts,
     nullf_gets,
     nullf_ctrl,
-    NULL,
-    NULL,
+    NULL,                       /* new */
+    NULL,                       /* free */
     nullf_callback_ctrl,
+    NULL,                       /* bsendmmsg callback */
+    NULL                        /* brecvmmsg callback */
 };
 
 const BIO_METHOD *BIO_f_null(void)

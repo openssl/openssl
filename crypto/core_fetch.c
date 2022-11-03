@@ -101,10 +101,11 @@ static int ossl_method_construct_postcondition(OSSL_PROVIDER *provider,
 
 static void ossl_method_construct_this(OSSL_PROVIDER *provider,
                                        const OSSL_ALGORITHM *algo,
-                                       int no_store, void *cbdata)
+                                       int no_store /*unused*/, void *cbdata)
 {
     struct construct_data_st *data = cbdata;
     void *method = NULL;
+    (void)no_store;
 
     if ((method = data->mcm->construct(algo, provider, data->mcm_data))
         == NULL)

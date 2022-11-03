@@ -425,6 +425,7 @@ static int qtx_write_hdr(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
 {
     WPACKET wpkt;
     size_t l = 0;
+    (void)qtx;
 
     if (!WPACKET_init_static_len(&wpkt, txe_data(txe) + txe->data_len,
                                  txe->alloc_len - txe->data_len, 0))

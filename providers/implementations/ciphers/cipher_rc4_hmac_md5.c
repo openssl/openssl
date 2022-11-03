@@ -47,6 +47,7 @@ static OSSL_FUNC_cipher_get_params_fn rc4_hmac_md5_get_params;
 static void *rc4_hmac_md5_newctx(void *provctx)
 {
     PROV_RC4_HMAC_MD5_CTX *ctx;
+    (void)provctx;
 
     if (!ossl_prov_is_running())
         return NULL;

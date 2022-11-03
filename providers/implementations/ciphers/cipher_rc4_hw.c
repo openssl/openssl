@@ -35,10 +35,12 @@ static int cipher_hw_rc4_cipher(PROV_CIPHER_CTX *ctx, unsigned char *out,
 
 static const PROV_CIPHER_HW rc4_hw = {
     cipher_hw_rc4_initkey,
-    cipher_hw_rc4_cipher
+    cipher_hw_rc4_cipher,
+    NULL                              /* copyctx */
 };
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_rc4(size_t keybits)
 {
+    (void)keybits;
     return &rc4_hw;
 }
 

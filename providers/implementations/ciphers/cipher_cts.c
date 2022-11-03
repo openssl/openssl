@@ -373,6 +373,10 @@ int ossl_cipher_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *out
 int ossl_cipher_cbc_cts_block_final(void *vctx, unsigned char *out, size_t *outl,
                                     size_t outsize)
 {
+    (void)vctx;
+    (void)out;
+    (void)outsize;
+
     *outl = 0;
     return 1;
 }

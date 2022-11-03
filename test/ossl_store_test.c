@@ -184,11 +184,11 @@ const OPTIONS *test_get_options(void)
 {
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
-        { "dir", OPT_INPUTDIR, '/' },
-        { "in", OPT_INFILE, '<' },
-        { "sm2", OPT_SM2FILE, '<' },
-        { "data", OPT_DATADIR, 's' },
-        { NULL }
+        { "dir", OPT_INPUTDIR, '/', NULL },
+        { "in", OPT_INFILE, '<', NULL },
+        { "sm2", OPT_SM2FILE, '<', NULL },
+        { "data", OPT_DATADIR, 's', NULL },
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

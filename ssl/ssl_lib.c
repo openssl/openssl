@@ -30,22 +30,31 @@
 static int ssl_undefined_function_3(SSL_CONNECTION *sc, unsigned char *r,
                                     unsigned char *s, size_t t, size_t *u)
 {
+    (void)r;
+    (void)s;
+    (void)t;
+    (void)u;
     return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
 }
 
 static int ssl_undefined_function_4(SSL_CONNECTION *sc, int r)
 {
+    (void)r;
     return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
 }
 
 static size_t ssl_undefined_function_5(SSL_CONNECTION *sc, const char *r,
                                        size_t s, unsigned char *t)
 {
+    (void)r;
+    (void)s;
+    (void)t;
     return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
 }
 
 static int ssl_undefined_function_6(int r)
 {
+    (void)r;
     return ssl_undefined_function(NULL);
 }
 
@@ -53,6 +62,13 @@ static int ssl_undefined_function_7(SSL_CONNECTION *sc, unsigned char *r,
                                     size_t s, const char *t, size_t u,
                                     const unsigned char *v, size_t w, int x)
 {
+    (void)r;
+    (void)s;
+    (void)t;
+    (void)u;
+    (void)v;
+    (void)w;
+    (void)x;
     return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
 }
 
@@ -72,6 +88,10 @@ SSL3_ENC_METHOD ssl3_undef_enc_method = {
     0,                          /* server_finished_label_len */
     ssl_undefined_function_6,
     ssl_undefined_function_7,
+    0U,                         /* enc_flags */
+    NULL,                       /* set_handshake_header */
+    NULL,                       /* close_construct_packet */
+    NULL,                       /* do_write */
 };
 
 struct ssl_async_args {
@@ -2398,6 +2418,12 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
 {
     ossl_ssize_t ret;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+#ifdef OPENSSL_NO_KTLS
+    (void)fd;
+    (void)offset;
+    (void)size;
+    (void)flags;
+#endif
 
     if (sc == NULL)
         return 0;
@@ -4507,6 +4533,7 @@ void SSL_set_connect_state(SSL *s)
 
 int ssl_undefined_function(SSL *s)
 {
+    (void)s;
     ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return 0;
 }
@@ -4519,11 +4546,13 @@ int ssl_undefined_void_function(void)
 
 int ssl_undefined_const_function(const SSL *s)
 {
+    (void)s;
     return 0;
 }
 
 const SSL_METHOD *ssl_bad_method(int ver)
 {
+    (void)ver;
     ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return NULL;
 }
@@ -5884,6 +5913,9 @@ const STACK_OF(SCT) *SSL_get0_peer_scts(SSL *s)
 static int ct_permissive(const CT_POLICY_EVAL_CTX * ctx,
                          const STACK_OF(SCT) *scts, void *unused_arg)
 {
+    (void)ctx;
+    (void)scts;
+    (void)unused_arg;
     return 1;
 }
 
@@ -5892,6 +5924,8 @@ static int ct_strict(const CT_POLICY_EVAL_CTX * ctx,
 {
     int count = scts != NULL ? sk_SCT_num(scts) : 0;
     int i;
+    (void)ctx;
+    (void)unused_arg;
 
     for (i = 0; i < count; ++i) {
         SCT *sct = sk_SCT_value(scts, i);

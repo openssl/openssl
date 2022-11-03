@@ -784,32 +784,40 @@ static const EVP_PKEY_METHOD rsa_pkey_meth = {
     pkey_rsa_copy,
     pkey_rsa_cleanup,
 
-    0, 0,
+    NULL, NULL,                /* paramgen_init, paramgen */
 
-    0,
+    NULL,                      /* keygen_init */
     pkey_rsa_keygen,
 
-    0,
+    NULL,                      /* sign_init */
     pkey_rsa_sign,
 
-    0,
+    NULL,                      /* verify_init */
     pkey_rsa_verify,
 
-    0,
+    NULL,                      /* verify_recover_init */
     pkey_rsa_verifyrecover,
 
-    0, 0, 0, 0,
+    NULL, NULL,                /* signctx_init, signctx */
+    NULL, NULL,                /* verifyctx_init, verify */
 
-    0,
+    NULL,                      /* encrypt_init */
     pkey_rsa_encrypt,
 
-    0,
+    NULL,                      /* decrypt_init */
     pkey_rsa_decrypt,
 
-    0, 0,
+    NULL, NULL,                /* derive_init, derive */
 
     pkey_rsa_ctrl,
-    pkey_rsa_ctrl_str
+    pkey_rsa_ctrl_str,
+
+    NULL,                      /* digestsign */
+    NULL,                      /* digestverify */
+    NULL,                      /* check */
+    NULL,                      /* public_check */
+    NULL,                      /* param_check */
+    NULL                       /* digest_custom */
 };
 
 const EVP_PKEY_METHOD *ossl_rsa_pkey_method(void)
@@ -871,21 +879,33 @@ static const EVP_PKEY_METHOD rsa_pss_pkey_meth = {
     pkey_rsa_copy,
     pkey_rsa_cleanup,
 
-    0, 0,
+    NULL, NULL,                /* paramgen_init, paramgen */
 
-    0,
+    NULL,                      /* keygen_init */
     pkey_rsa_keygen,
 
-    pkey_pss_init,
+    pkey_pss_init,             /* sign_init */
     pkey_rsa_sign,
 
-    pkey_pss_init,
+    pkey_pss_init,             /* verify_init */
     pkey_rsa_verify,
 
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    NULL, NULL,                /* verify_recover_init, verify_recover */
+    NULL, NULL,                /* signctx_init, signctx */
+    NULL, NULL,                /* verifyctx_init, verify */
+    NULL, NULL,                /* encrypt_init, encrypt */
+    NULL, NULL,                /* decrypt_init, decrypt */
+    NULL, NULL,                /* derive_init, derive */
 
     pkey_rsa_ctrl,
-    pkey_rsa_ctrl_str
+    pkey_rsa_ctrl_str,
+
+    NULL,                      /* digestsign */
+    NULL,                      /* digestverify */
+    NULL,                      /* check */
+    NULL,                      /* public_check */
+    NULL,                      /* param_check */
+    NULL                       /* digest_custom */
 };
 
 const EVP_PKEY_METHOD *ossl_rsa_pss_pkey_method(void)

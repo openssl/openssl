@@ -52,6 +52,7 @@ static STACK_OF(CONF_VALUE) *i2v_POLICY_MAPPINGS(const X509V3_EXT_METHOD
     int i;
     char obj_tmp1[80];
     char obj_tmp2[80];
+    (void)method;
 
     for (i = 0; i < sk_POLICY_MAPPING_num(pmaps); i++) {
         pmap = sk_POLICY_MAPPING_value(pmaps, i);
@@ -71,6 +72,8 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
     POLICY_MAPPINGS *pmaps;
     const int num = sk_CONF_VALUE_num(nval);
     int i;
+    (void)method;
+    (void)ctx;
 
     if ((pmaps = sk_POLICY_MAPPING_new_reserve(NULL, num)) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);

@@ -50,6 +50,7 @@ static int aesni_cbc_hmac_sha256_init_key(PROV_CIPHER_CTX *vctx,
     int ret;
     PROV_AES_HMAC_SHA_CTX *ctx = (PROV_AES_HMAC_SHA_CTX *)vctx;
     PROV_AES_HMAC_SHA256_CTX *sctx = (PROV_AES_HMAC_SHA256_CTX *)vctx;
+    (void)keylen;
 
     if (ctx->base.enc)
         ret = aesni_set_encrypt_key(key, ctx->base.keylen * 8, &ctx->ks);
@@ -827,7 +828,8 @@ static int aesni_cbc_hmac_sha256_tls1_multiblock_encrypt(
 static const PROV_CIPHER_HW_AES_HMAC_SHA cipher_hw_aes_hmac_sha256 = {
     {
       aesni_cbc_hmac_sha256_init_key,
-      aesni_cbc_hmac_sha256_cipher
+      aesni_cbc_hmac_sha256_cipher,
+      NULL                     /* copyctx */
     },
     aesni_cbc_hmac_sha256_set_mac_key,
     aesni_cbc_hmac_sha256_set_tls1_aad,

@@ -66,6 +66,7 @@ static int ffc_validate_LN(size_t L, size_t N, int type, int verify)
 #else
 static int ffc_validate_LN(size_t L, size_t N, int type, int verify)
 {
+    (void)verify;
     if (type == FFC_PARAM_TYPE_DH) {
         /* Allow legacy 1024/160 in non fips mode */
         if (L == 1024 && N == 160)
@@ -392,6 +393,7 @@ static int generate_q_fips186_2(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
     unsigned char md[EVP_MAX_MD_SIZE];
     int i, r, ret = 0, m = *retm;
     OSSL_LIB_CTX *libctx = ossl_bn_get_libctx(ctx);
+    (void)res;
 
     /* find q */
     for (;;) {
@@ -804,7 +806,8 @@ err:
 
 /* Note this function is only used for verification in fips mode */
 int ossl_ffc_params_FIPS186_2_gen_verify(OSSL_LIB_CTX *libctx,
-                                         FFC_PARAMS *params, int mode, int type,
+                                         FFC_PARAMS *params, int mode,
+                                         int type /*unused*/,
                                          size_t L, size_t N, int *res,
                                          BN_GENCB *cb)
 {
@@ -825,6 +828,7 @@ int ossl_ffc_params_FIPS186_2_gen_verify(OSSL_LIB_CTX *libctx,
     int verify = (mode == FFC_PARAM_MODE_VERIFY);
     unsigned int flags = verify ? params->flags : 0;
     const char *def_name;
+    (void)type;
 
     *res = 0;
 

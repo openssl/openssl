@@ -210,7 +210,7 @@ const OPTIONS ocsp_options[] = {
 
     OPT_V_OPTIONS,
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int ocsp_main(int argc, char **argv)

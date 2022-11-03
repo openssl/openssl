@@ -492,6 +492,8 @@ time_t time(time_t *t) TIME_IMPL(t)
 int FuzzerInitialize(int *argc, char ***argv)
 {
     STACK_OF(SSL_COMP) *comp_methods;
+    (void)argc;
+    (void)argv;
 
     FuzzerSetRand();
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ASYNC, NULL);

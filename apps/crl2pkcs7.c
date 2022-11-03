@@ -43,7 +43,7 @@ const OPTIONS crl2pkcs7_options[] = {
     {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
 
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int crl2pkcs7_main(int argc, char **argv)

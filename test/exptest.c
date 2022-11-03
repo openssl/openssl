@@ -151,6 +151,7 @@ static int test_mod_exp(int round)
     BIGNUM *a = NULL;
     BIGNUM *b = NULL;
     BIGNUM *m = NULL;
+    (void)round;
 
     if (!TEST_ptr(ctx = BN_CTX_new()))
         goto err;

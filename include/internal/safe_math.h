@@ -289,6 +289,7 @@
     static ossl_inline ossl_unused type safe_abs_ ## type_name(type a,       \
                                                                int *err)     \
     {                                                                        \
+        (void)err;                                                           \
         return a;                                                            \
     }
 

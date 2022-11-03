@@ -39,6 +39,8 @@ static int bf_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                        const unsigned char *iv, int enc)
 {
     int len = EVP_CIPHER_CTX_get_key_length(ctx);
+    (void)iv;
+    (void)enc;
 
     if (len < 0)
         return 0;

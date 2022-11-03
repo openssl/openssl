@@ -97,7 +97,7 @@ static int prov_crngt_compare_previous(const unsigned char *prev,
 size_t ossl_crngt_get_entropy(PROV_DRBG *drbg,
                               unsigned char **pout,
                               int entropy, size_t min_len, size_t max_len,
-                              int prediction_resistance)
+                              int prediction_resistance /*unused*/)
 {
     unsigned char md[EVP_MAX_MD_SIZE];
     unsigned char buf[CRNGT_BUFSIZ];
@@ -112,6 +112,7 @@ size_t ossl_crngt_get_entropy(PROV_DRBG *drbg,
     OSSL_CALLBACK *stcb = NULL;
     void *stcbarg = NULL;
     OSSL_SELF_TEST *st = NULL;
+    (void)prediction_resistance;
 
     if (crngt_glob == NULL)
         return 0;

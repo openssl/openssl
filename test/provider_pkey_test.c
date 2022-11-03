@@ -26,6 +26,7 @@ static int fetch_sig(OSSL_LIB_CTX *ctx, const char *alg, const char *propq,
     OSSL_PROVIDER *prov;
     EVP_SIGNATURE *sig = EVP_SIGNATURE_fetch(ctx, "RSA", propq);
     int ret = 0;
+    (void)alg;
 
     if (!TEST_ptr(sig))
         return 0;

@@ -63,6 +63,7 @@ static int aria_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
     int ret;
     int mode = EVP_CIPHER_CTX_get_mode(ctx);
+    (void)iv;
 
     if (enc || (mode != EVP_CIPH_ECB_MODE && mode != EVP_CIPH_CBC_MODE))
         ret = ossl_aria_set_encrypt_key(key,
@@ -120,6 +121,7 @@ static void aria_cfb8_encrypt(const unsigned char *in, unsigned char *out,
 static void aria_ecb_encrypt(const unsigned char *in, unsigned char *out,
                              const ARIA_KEY *key, const int enc)
 {
+    (void)enc;
     ossl_aria_encrypt(in, out, key);
 }
 
@@ -160,15 +162,36 @@ IMPLEMENT_ARIA_CFBR(192,8)
 IMPLEMENT_ARIA_CFBR(256,8)
 
 # define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
-static const EVP_CIPHER aria_##keylen##_##mode = { \
+static const EVP_CIPHER aria_##keylen##_##mode = {\
         nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
-        flags|EVP_CIPH_##MODE##_MODE,   \
-        EVP_ORIG_GLOBAL,                \
-        aria_init_key,                  \
-        aria_##mode##_cipher,           \
-        NULL,                           \
-        sizeof(EVP_ARIA_KEY),           \
-        NULL,NULL,NULL,NULL };          \
+        flags|EVP_CIPH_##MODE##_MODE,             \
+        EVP_ORIG_GLOBAL,                          \
+        aria_init_key,                            \
+        aria_##mode##_cipher,                     \
+        NULL,                                     \
+        sizeof(EVP_ARIA_KEY),                     \
+        NULL,NULL,NULL,NULL,                      \
+        0,           /* name_id */                \
+        NULL,        /* type_name */              \
+        NULL,        /* description */            \
+        NULL,        /* prov */                   \
+        0,           /* refcnt */                 \
+        NULL,        /* lock */                   \
+        NULL,        /* newctx */                 \
+        NULL,        /* einit */                  \
+        NULL,        /* dinit */                  \
+        NULL,        /* cupdate */                \
+        NULL,        /* cfinal */                 \
+        NULL,        /* ccipher */                \
+        NULL,        /* freectx */                \
+        NULL,        /* dupctx */                 \
+        NULL,        /* get_params */             \
+        NULL,        /* get_ctx_params */         \
+        NULL,        /* set_ctx_params */         \
+        NULL,        /* gettable_params */        \
+        NULL,        /* gettable_ctx_params */    \
+        NULL         /* settable_ctx_params */    \
+    };                                            \
 const EVP_CIPHER *EVP_aria_##keylen##_##mode(void) \
 { return &aria_##keylen##_##mode; }
 
@@ -217,6 +240,7 @@ static int aria_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
     int ret;
     EVP_ARIA_GCM_CTX *gctx = EVP_C_DATA(EVP_ARIA_GCM_CTX, ctx);
+    (void)enc;
 
     if (!iv && !key)
         return 1;
@@ -510,6 +534,7 @@ static int aria_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
     int ret;
     EVP_ARIA_CCM_CTX *cctx = EVP_C_DATA(EVP_ARIA_CCM_CTX, ctx);
+    (void)enc;
 
     if (!iv && !key)
         return 1;
@@ -771,7 +796,28 @@ static const EVP_CIPHER aria_##keylen##_##mode = { \
         aria_##mode##_cipher,                      \
         aria_##mode##_cleanup,                     \
         sizeof(EVP_ARIA_##MODE##_CTX),             \
-        NULL,NULL,aria_##mode##_ctrl,NULL };       \
+        NULL,NULL,aria_##mode##_ctrl,NULL,         \
+        0,           /* name_id */                \
+        NULL,        /* type_name */              \
+        NULL,        /* description */            \
+        NULL,        /* prov */                   \
+        0,           /* refcnt */                 \
+        NULL,        /* lock */                   \
+        NULL,        /* newctx */                 \
+        NULL,        /* einit */                  \
+        NULL,        /* dinit */                  \
+        NULL,        /* cupdate */                \
+        NULL,        /* cfinal */                 \
+        NULL,        /* ccipher */                \
+        NULL,        /* freectx */                \
+        NULL,        /* dupctx */                 \
+        NULL,        /* get_params */             \
+        NULL,        /* get_ctx_params */         \
+        NULL,        /* set_ctx_params */         \
+        NULL,        /* gettable_params */        \
+        NULL,        /* gettable_ctx_params */    \
+        NULL         /* settable_ctx_params */    \
+};                                                \
 const EVP_CIPHER *EVP_aria_##keylen##_##mode(void) \
 { return (EVP_CIPHER*)&aria_##keylen##_##mode; }
 

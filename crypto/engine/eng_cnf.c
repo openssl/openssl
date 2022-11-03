@@ -171,6 +171,7 @@ static int int_engine_module_init(CONF_IMODULE *md, const CONF *cnf)
 static void int_engine_module_finish(CONF_IMODULE *md)
 {
     ENGINE *e;
+    (void)md;
 
     while ((e = sk_ENGINE_pop(initialized_engines)))
         ENGINE_finish(e);

@@ -68,6 +68,7 @@ static const PROV_CCM_HW aes_ccm = {
 #else
 const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
 {
+    (void)keybits;
     return &aes_ccm;
 }
 #endif

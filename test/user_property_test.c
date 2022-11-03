@@ -39,6 +39,13 @@ static int tmpmd_get_params(OSSL_PARAM params[])
 static int tmpmd_digest(void *provctx, const unsigned char *in, size_t inl,
                  unsigned char *out, size_t *outl, size_t outsz)
 {
+    (void)provctx;
+    (void)in;
+    (void)inl;
+    (void)out;
+    (void)outl;
+    (void)outsz;
+
     return 0;
 }
 
@@ -49,14 +56,16 @@ static const OSSL_DISPATCH testprovmd_functions[] = {
 };
 
 static const OSSL_ALGORITHM testprov_digests[] = {
-    { "testprovmd", MYPROPERTIES, testprovmd_functions },
-    { NULL, NULL, NULL }
+    { "testprovmd", MYPROPERTIES, testprovmd_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM *testprov_query(void *provctx,
                                           int operation_id,
                                           int *no_cache)
 {
+    (void)provctx;
+
     *no_cache = 0;
     return operation_id == OSSL_OP_DIGEST ? testprov_digests : NULL;
 }
@@ -71,6 +80,7 @@ static int testprov_provider_init(const OSSL_CORE_HANDLE *handle,
                                   const OSSL_DISPATCH **out,
                                   void **provctx)
 {
+    (void)in;
     *provctx = (void *)handle;
     *out = testprov_dispatch_table;
     return 1;

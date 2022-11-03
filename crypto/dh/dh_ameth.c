@@ -374,18 +374,21 @@ static int dh_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 static int dh_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                           ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_dh_print(bp, pkey->pkey.dh, indent, 0);
 }
 
 static int dh_public_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                            ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_dh_print(bp, pkey->pkey.dh, indent, 1);
 }
 
 static int dh_private_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                             ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_dh_print(bp, pkey->pkey.dh, indent, 2);
 }
 
@@ -418,6 +421,10 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
 static int dhx_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
+    (void)pkey;
+    (void)arg1;
+    (void)arg2;
+
     switch (op) {
     default:
         return -2;
@@ -462,6 +469,8 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     OSSL_PARAM *params = NULL;
     int selection = 0;
     int rv = 0;
+    (void)libctx;
+    (void)propq;
 
     if (p == NULL || g == NULL)
         return 0;
@@ -600,7 +609,8 @@ const EVP_PKEY_ASN1_METHOD ossl_dh_asn1_meth = {
     dh_pkey_dirty_cnt,
     dh_pkey_export_to,
     dh_pkey_import_from,
-    dh_pkey_copy
+    dh_pkey_copy,
+    NULL                       /* priv_decode_ex */
 };
 
 const EVP_PKEY_ASN1_METHOD ossl_dhx_asn1_meth = {
@@ -644,5 +654,6 @@ const EVP_PKEY_ASN1_METHOD ossl_dhx_asn1_meth = {
     dh_pkey_dirty_cnt,
     dh_pkey_export_to,
     dhx_pkey_import_from,
-    dh_pkey_copy
+    dh_pkey_copy,
+    NULL                       /* priv_decode_ex */
 };

@@ -120,6 +120,7 @@ QUIC_DEMUX *ossl_quic_demux_new(BIO *net_bio,
 
 static void demux_free_conn_it(QUIC_DEMUX_CONN *conn, void *arg)
 {
+    (void)arg;
     OPENSSL_free(conn);
 }
 

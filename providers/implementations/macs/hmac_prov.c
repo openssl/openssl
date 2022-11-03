@@ -224,6 +224,7 @@ static int hmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 {
     unsigned int hlen;
     struct hmac_data_st *macctx = vmacctx;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;

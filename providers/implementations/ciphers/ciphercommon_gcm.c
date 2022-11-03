@@ -328,6 +328,7 @@ int ossl_gcm_stream_final(void *vctx, unsigned char *out, size_t *outl,
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     int i;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;

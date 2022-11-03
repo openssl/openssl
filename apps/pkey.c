@@ -62,7 +62,7 @@ const OPTIONS pkey_options[] = {
     {"ec_param_enc", OPT_EC_PARAM_ENC, 's',
      "Specifies the way the EC parameters are encoded"},
 
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int pkey_main(int argc, char **argv)

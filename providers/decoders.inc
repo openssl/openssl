@@ -28,12 +28,12 @@
 #define DECODER(_name, _input, _output, _fips)                          \
     { _name,                                                            \
       "provider=" DECODER_PROVIDER ",fips=" #_fips ",input=" #_input,   \
-      (ossl_##_input##_to_##_output##_decoder_functions) }
+      (ossl_##_input##_to_##_output##_decoder_functions), NULL }
 #define DECODER_w_structure(_name, _input, _structure, _output, _fips)  \
     { _name,                                                            \
       "provider=" DECODER_PROVIDER ",fips=" #_fips ",input=" #_input    \
       ",structure=" DECODER_STRUCTURE_##_structure,                     \
-      (ossl_##_structure##_##_input##_to_##_output##_decoder_functions) }
+      (ossl_##_structure##_##_input##_to_##_output##_decoder_functions), NULL }
 
 #ifndef OPENSSL_NO_DH
 DECODER_w_structure("DH", der, PrivateKeyInfo, dh, yes),

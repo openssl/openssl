@@ -31,6 +31,7 @@ static void *aes_siv_newctx(void *provctx, size_t keybits, unsigned int mode,
                             uint64_t flags)
 {
     PROV_AES_SIV_CTX *ctx;
+    (void)flags;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -79,6 +80,8 @@ static int siv_init(void *vctx, const unsigned char *key, size_t keylen,
                     const OSSL_PARAM params[], int enc)
 {
     PROV_AES_SIV_CTX *ctx = (PROV_AES_SIV_CTX *)vctx;
+    (void)iv;
+    (void)ivlen;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -140,6 +143,7 @@ static int siv_stream_final(void *vctx, unsigned char *out, size_t *outl,
                             size_t outsize)
 {
     PROV_AES_SIV_CTX *ctx = (PROV_AES_SIV_CTX *)vctx;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;

@@ -212,6 +212,8 @@ static int des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
     DES_cblock *deskey = (DES_cblock *)key;
     EVP_DES_KEY *dat = (EVP_DES_KEY *) EVP_CIPHER_CTX_get_cipher_data(ctx);
+    (void)iv;
+    (void)enc;
 
     dat->stream.cbc = NULL;
 # if defined(SPARC_DES_CAPABLE)
@@ -231,6 +233,8 @@ static int des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
 static int des_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
+    (void)c;
+    (void)arg;
 
     switch (type) {
     case EVP_CTRL_RAND_KEY:

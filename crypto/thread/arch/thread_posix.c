@@ -60,10 +60,12 @@ fail:
     return 0;
 }
 
-int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD *thread, CRYPTO_THREAD_RETVAL *retval)
+int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD *thread,
+                                           CRYPTO_THREAD_RETVAL *retval /*unused*/)
 {
     void *thread_retval;
     pthread_t *handle;
+    (void)retval;
 
     if (thread == NULL || thread->handle == NULL)
         return 0;

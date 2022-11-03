@@ -20,10 +20,10 @@
 # define EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0
 #endif
 
+#if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
 static int tls_is_multiblock_capable(OSSL_RECORD_LAYER *rl, int type,
                                      size_t len, size_t fraglen)
 {
-#if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
     if (type == SSL3_RT_APPLICATION_DATA
             && len >= 4 * fraglen
             && rl->compctx == NULL
@@ -34,14 +34,15 @@ static int tls_is_multiblock_capable(OSSL_RECORD_LAYER *rl, int type,
             && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(rl->enc_ctx))
                 & EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) != 0)
         return 1;
-#endif
     return 0;
 }
+#endif
 
 size_t tls_get_max_records_multiblock(OSSL_RECORD_LAYER *rl, int type,
                                       size_t len, size_t maxfrag,
                                       size_t *preffrag)
 {
+#if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
     if (tls_is_multiblock_capable(rl, type, len, *preffrag)) {
         /* minimize address aliasing conflicts */
         if ((*preffrag & 0xfff) == 0)
@@ -52,7 +53,7 @@ size_t tls_get_max_records_multiblock(OSSL_RECORD_LAYER *rl, int type,
 
         return 4;
     }
-
+#endif
     return tls_get_max_records_default(rl, type, len, maxfrag, preffrag);
 }
 
@@ -94,7 +95,6 @@ static int tls_write_records_multiblock_int(OSSL_RECORD_LAYER *rl,
     if (!tls_is_multiblock_capable(rl, templates[0].type, totlen,
                                    templates[0].buflen))
         return 0;
-
     /*
      * If we get this far, then multiblock is suitable
      * Depending on platform multi-block can deliver several *times*
@@ -160,6 +160,10 @@ static int tls_write_records_multiblock_int(OSSL_RECORD_LAYER *rl,
 
     return 1;
 #else  /* !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK */
+    (void)rl;
+    (void)templates;
+    (void)numtempl;
+
     return 0;
 #endif
 }

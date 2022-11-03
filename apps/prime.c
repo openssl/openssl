@@ -54,7 +54,7 @@ const OPTIONS prime_options[] = {
 
     OPT_PARAMETERS(),
     {"number", 0, 0, "Number(s) to check for primality if not generating"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int prime_main(int argc, char **argv)

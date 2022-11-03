@@ -53,6 +53,7 @@ int ossl_gcm_one_shot(PROV_GCM_CTX *ctx, unsigned char *aad, size_t aad_len,
                       unsigned char *out, unsigned char *tag, size_t tag_len)
 {
     int ret = 0;
+    (void)tag_len;
 
     /* Use saved AAD */
     if (!ctx->hw->aadupdate(ctx, aad, aad_len))

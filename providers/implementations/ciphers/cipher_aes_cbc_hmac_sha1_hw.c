@@ -776,7 +776,8 @@ static int aesni_cbc_hmac_sha1_tls1_multiblock_encrypt(
 static const PROV_CIPHER_HW_AES_HMAC_SHA cipher_hw_aes_hmac_sha1 = {
     {
       aesni_cbc_hmac_sha1_init_key,
-      aesni_cbc_hmac_sha1_cipher
+      aesni_cbc_hmac_sha1_cipher,
+      NULL                     /* copyctx */
     },
     aesni_cbc_hmac_sha1_set_mac_key,
     aesni_cbc_hmac_sha1_set_tls1_aad,

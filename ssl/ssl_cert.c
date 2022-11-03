@@ -1064,6 +1064,7 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
 {
     int level, minbits, pfs_mask;
     const SSL_CONNECTION *sc;
+    (void)ex;
 
     minbits = ssl_get_security_level_bits(s, ctx, &level);
 

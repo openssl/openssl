@@ -814,6 +814,8 @@ static int key2text_encode(void *vctx, const void *key, int selection,
 {
     BIO *out = ossl_bio_new_from_core_bio(vctx, cout);
     int ret;
+    (void)cb;
+    (void)cbarg;
 
     if (out == NULL)
         return 0;

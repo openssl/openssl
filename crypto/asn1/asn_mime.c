@@ -244,6 +244,7 @@ int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
     int i;
     const char *mime_prefix, *mime_eol, *cname = "smime.p7m";
     const char *msg_type = NULL;
+    (void)propq;
 
     if (flags & SMIME_OLDMIME)
         mime_prefix = "application/x-pkcs7-";

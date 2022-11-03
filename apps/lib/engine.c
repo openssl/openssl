@@ -140,6 +140,7 @@ int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e)
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE *tmpeng = NULL;
     int pkey_id = NID_undef;
+    (void)libctx;
 
     ERR_set_mark();
     ameth = EVP_PKEY_asn1_find_str(&tmpeng, algname, -1);

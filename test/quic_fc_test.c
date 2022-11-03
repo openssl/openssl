@@ -190,6 +190,7 @@ static OSSL_TIME cur_time;
 
 static OSSL_TIME fake_now(void *arg)
 {
+    (void)arg;
     return cur_time;
 }
 
@@ -222,37 +223,38 @@ struct rx_test_op {
 #define RX_OP_END \
     { RX_OPC_END }
 #define RX_OP_INIT_CONN(init_window_size, max_window_size) \
-    { RX_OPC_INIT_CONN, 0, (init_window_size), (max_window_size) },
+    { RX_OPC_INIT_CONN, 0U, (init_window_size), (max_window_size), 0, NULL },
 #define RX_OP_INIT_STREAM(stream_idx, init_window_size, max_window_size) \
-    { RX_OPC_INIT_STREAM, (stream_idx), (init_window_size), (max_window_size) },
+    { RX_OPC_INIT_STREAM, (stream_idx), (init_window_size), (max_window_size), \
+      0, NULL },
 #define RX_OP_RX(stream_idx, end, is_fin) \
-    { RX_OPC_RX, (stream_idx), (end), (is_fin) },
+    { RX_OPC_RX, (stream_idx), (end), (is_fin), 0, NULL },
 #define RX_OP_RETIRE(stream_idx, num_bytes, rtt, expect_fail) \
-    { RX_OPC_RETIRE, (stream_idx), (num_bytes), (rtt), (expect_fail) },
+    { RX_OPC_RETIRE, (stream_idx), (num_bytes), (rtt), (expect_fail), NULL },
 #define RX_OP_CHECK_CWM_CONN(expected) \
-    { RX_OPC_CHECK_CWM_CONN, 0, (expected) },
+    { RX_OPC_CHECK_CWM_CONN, 0U, (expected), 0U, 0, NULL },
 #define RX_OP_CHECK_CWM_STREAM(stream_id, expected) \
-    { RX_OPC_CHECK_CWM_STREAM, (stream_id), (expected) },
+    { RX_OPC_CHECK_CWM_STREAM, (stream_id), (expected), 0U, 0, NULL },
 #define RX_OP_CHECK_SWM_CONN(expected) \
-    { RX_OPC_CHECK_SWM_CONN, 0, (expected) },
+    { RX_OPC_CHECK_SWM_CONN, 0U, (expected), 0U, 0, NULL },
 #define RX_OP_CHECK_SWM_STREAM(stream_id, expected) \
-    { RX_OPC_CHECK_SWM_STREAM, (stream_id), (expected) },
+    { RX_OPC_CHECK_SWM_STREAM, (stream_id), (expected), 0U, 0, NULL },
 #define RX_OP_CHECK_RWM_CONN(expected) \
-    { RX_OPC_CHECK_RWM_CONN, 0, (expected) },
+    { RX_OPC_CHECK_RWM_CONN, 0U, (expected), 0U, 0, NULL },
 #define RX_OP_CHECK_RWM_STREAM(stream_id, expected) \
-    { RX_OPC_CHECK_RWM_STREAM, (stream_id), (expected) },
+    { RX_OPC_CHECK_RWM_STREAM, (stream_id), (expected), 0U, 0, NULL },
 #define RX_OP_CHECK_CHANGED_CONN(expected, clear) \
-    { RX_OPC_CHECK_CHANGED_CONN, 0, (expected), (clear) },
+    { RX_OPC_CHECK_CHANGED_CONN, 0U, (expected), (clear), 0, NULL },
 #define RX_OP_CHECK_CHANGED_STREAM(stream_id, expected, clear) \
-    { RX_OPC_CHECK_CHANGED_STREAM, (stream_id), (expected), (clear) },
+    { RX_OPC_CHECK_CHANGED_STREAM, (stream_id), (expected), (clear), 0, NULL },
 #define RX_OP_CHECK_ERROR_CONN(expected, clear) \
-    { RX_OPC_CHECK_ERROR_CONN, 0, (expected), (clear) },
+    { RX_OPC_CHECK_ERROR_CONN, 0U, (expected), (clear), 0, NULL },
 #define RX_OP_CHECK_ERROR_STREAM(stream_id, expected, clear) \
-    { RX_OPC_CHECK_ERROR_STREAM, (stream_id), (expected), (clear) },
+    { RX_OPC_CHECK_ERROR_STREAM, (stream_id), (expected), (clear), 0, NULL },
 #define RX_OP_STEP_TIME(t) \
-    { RX_OPC_STEP_TIME, 0, (t) },
+    { RX_OPC_STEP_TIME, 0U, (t), 0U, 0, NULL },
 #define RX_OP_MSG(msg) \
-    { RX_OPC_MSG, 0, 0, 0, 0, (msg) },
+    { RX_OPC_MSG, 0U, 0U, 0U, 0, (msg) },
 
 #define RX_OP_INIT(init_window_size, max_window_size) \
     RX_OP_INIT_CONN(init_window_size, max_window_size) \

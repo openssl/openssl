@@ -227,6 +227,7 @@ static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
     DES_cblock *deskey = (DES_cblock *)key;
     DES_EDE_KEY *dat = data(ctx);
+    (void)iv;
 
     dat->stream.cbc = NULL;
 # if defined(SPARC_DES_CAPABLE)
@@ -242,6 +243,8 @@ static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             return 1;
         }
     }
+# else
+    (void)enc;
 # endif
     DES_set_key_unchecked(&deskey[0], &dat->ks1);
     DES_set_key_unchecked(&deskey[1], &dat->ks2);
@@ -254,6 +257,7 @@ static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
     DES_cblock *deskey = (DES_cblock *)key;
     DES_EDE_KEY *dat = data(ctx);
+    (void)iv;
 
     dat->stream.cbc = NULL;
 # if defined(SPARC_DES_CAPABLE)
@@ -269,6 +273,8 @@ static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             return 1;
         }
     }
+# else
+    (void)enc;
 # endif
     DES_set_key_unchecked(&deskey[0], &dat->ks1);
     DES_set_key_unchecked(&deskey[1], &dat->ks2);
@@ -281,6 +287,7 @@ static int des3_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 
     DES_cblock *deskey = ptr;
     int kl;
+    (void)arg;
 
     switch (type) {
     case EVP_CTRL_RAND_KEY:
@@ -415,7 +422,27 @@ static const EVP_CIPHER des3_wrap = {
     des_ede3_init_key, des_ede3_wrap_cipher,
     NULL,
     sizeof(DES_EDE_KEY),
-    NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL,
+    0,          /* name_id */
+    NULL,       /* type_name */
+    NULL,       /* description */
+    NULL,       /* prov */
+    0,          /* refcnt */
+    NULL,       /* lock */
+    NULL,       /* newctx */
+    NULL,       /* einit */
+    NULL,       /* dinit */
+    NULL,       /* cupdate */
+    NULL,       /* cfinal */
+    NULL,       /* ccipher */
+    NULL,       /* freectx */
+    NULL,       /* dupctx */
+    NULL,       /* get_params */
+    NULL,       /* get_ctx_params */
+    NULL,       /* set_ctx_params */
+    NULL,       /* gettable_params */
+    NULL,       /* gettable_ctx_params */
+    NULL        /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_des_ede3_wrap(void)

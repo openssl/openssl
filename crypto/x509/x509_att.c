@@ -355,6 +355,7 @@ void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,
                                int atrtype, void *data)
 {
     ASN1_TYPE *ttmp = X509_ATTRIBUTE_get0_type(attr, idx);
+    (void)data;
 
     if (ttmp == NULL)
         return NULL;
@@ -364,6 +365,10 @@ void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,
         ERR_raise(ERR_LIB_X509, X509_R_WRONG_TYPE);
         return NULL;
     }
+    /* TODO: *data not set?
+    if (data)
+        *data = ttmp->value.ptr;
+    */
     return ttmp->value.ptr;
 }
 

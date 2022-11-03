@@ -87,7 +87,7 @@ const OPTIONS passwd_options[] = {
 
     OPT_PARAMETERS(),
     {"password", 0, 0, "Password text to digest (optional)"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int passwd_main(int argc, char **argv)

@@ -402,7 +402,7 @@ err:
 
 static const PROV_CIPHER_HW_CHACHA20_POLY1305 chacha20poly1305_hw =
 {
-    { chacha20_poly1305_initkey, NULL },
+    { chacha20_poly1305_initkey, NULL, NULL },
     chacha20_poly1305_aead_cipher,
     chacha20_poly1305_initiv,
     chacha_poly1305_tls_init,
@@ -411,5 +411,6 @@ static const PROV_CIPHER_HW_CHACHA20_POLY1305 chacha20poly1305_hw =
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_chacha20_poly1305(size_t keybits)
 {
+    (void)keybits;
     return (PROV_CIPHER_HW *)&chacha20poly1305_hw;
 }

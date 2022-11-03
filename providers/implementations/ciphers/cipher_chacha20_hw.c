@@ -16,6 +16,7 @@ static int chacha20_initkey(PROV_CIPHER_CTX *bctx, const uint8_t *key,
 {
     PROV_CHACHA20_CTX *ctx = (PROV_CHACHA20_CTX *)bctx;
     unsigned int i;
+    (void)keylen;
 
     if (key != NULL) {
         for (i = 0; i < CHACHA_KEY_SIZE; i += 4)
@@ -111,12 +112,13 @@ static int chacha20_cipher(PROV_CIPHER_CTX *bctx, unsigned char *out,
 }
 
 static const PROV_CIPHER_HW_CHACHA20 chacha20_hw = {
-    { chacha20_initkey, chacha20_cipher },
+    { chacha20_initkey, chacha20_cipher, NULL },
     chacha20_initiv
 };
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_chacha20(size_t keybits)
 {
+    (void)keybits;
     return (PROV_CIPHER_HW *)&chacha20_hw;
 }
 

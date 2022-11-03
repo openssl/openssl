@@ -76,6 +76,8 @@ static const BIO_METHOD methods_connectp = {
     conn_new,
     conn_free,
     conn_callback_ctrl,
+    NULL,                       /* no bsendmmsg yet */
+    NULL                        /* no brecvmmsg yet */
 };
 
 static int conn_state(BIO *b, BIO_CONNECT *c)

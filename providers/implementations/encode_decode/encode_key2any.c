@@ -378,6 +378,9 @@ static int key_to_type_specific_der_bio(BIO *out, const void *key,
     unsigned char *der = NULL;
     int derlen;
     int ret;
+    (void)key_nid;
+    (void)p2s;
+    (void)ctx;
 
     if ((derlen = k2d(key, &der)) <= 0) {
         ERR_raise(ERR_LIB_PROV, ERR_R_PROV_LIB);
@@ -399,6 +402,9 @@ static int key_to_type_specific_pem_bio_cb(BIO *out, const void *key,
                                            struct key2any_ctx_st *ctx,
                                            pem_password_cb *cb, void *cbarg)
 {
+    (void)key_nid;
+    (void)p2s;
+
     return
         PEM_ASN1_write_bio(k2d, pemname, out, key, ctx->cipher,
                            NULL, 0, cb, cbarg) > 0;
@@ -444,6 +450,7 @@ static int prepare_dh_params(const void *dh, int nid, int save,
                              void **pstr, int *pstrtype)
 {
     ASN1_STRING *params = ASN1_STRING_new();
+    (void)save;
 
     if (params == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_ASN1_LIB);
@@ -548,6 +555,7 @@ static int encode_dsa_params(const void *dsa, int nid,
                              void **pstr, int *pstrtype)
 {
     ASN1_STRING *params = ASN1_STRING_new();
+    (void)nid;
 
     if (params == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_ASN1_LIB);
@@ -671,6 +679,8 @@ static int prepare_ec_params(const void *eckey, int nid, int save,
     int curve_nid;
     const EC_GROUP *group = EC_KEY_get0_group(eckey);
     ASN1_OBJECT *params = NULL;
+    (void)nid;
+    (void)save;
 
     if (group == NULL)
         return 0;
@@ -828,6 +838,8 @@ static int prepare_rsa_params(const void *rsa, int nid, int save,
                               void **pstr, int *pstrtype)
 {
     const RSA_PSS_PARAMS_30 *pss = ossl_rsa_get0_pss_params_30((RSA *)rsa);
+    (void)nid;
+    (void)save;
 
     *pstr = NULL;
 
@@ -1254,6 +1266,7 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
     static int impl##_to_##kind##_##output##_does_selection(void *ctx,      \
                                                             int selection)  \
     {                                                                       \
+        (void)ctx;                                                          \
         return key2any_check_selection(selection,                           \
                                        DO_##kind##_selection_mask);         \
     }                                                                       \
@@ -1265,6 +1278,8 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
                                          OSSL_PASSPHRASE_CALLBACK *cb,      \
                                          void *cbarg)                       \
     {                                                                       \
+        (void)cb;                                                           \
+        (void)cbarg;                                                        \
         /* We don't deal with abstract objects */                           \
         if (key_abstract != NULL) {                                         \
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);         \

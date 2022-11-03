@@ -244,6 +244,8 @@ int PKCS5_v2_scrypt_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
     size_t keylen = 0;
     int t, rv = 0;
     SCRYPT_PARAMS *sparam = NULL;
+    (void)c;
+    (void)md;
 
     if (EVP_CIPHER_CTX_get0_cipher(ctx) == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);

@@ -120,6 +120,7 @@ void ossl_ctx_global_properties_free(void *vglobp)
 
 void *ossl_ctx_global_properties_new(OSSL_LIB_CTX *ctx)
 {
+    (void)ctx;
     return OPENSSL_zalloc(sizeof(OSSL_GLOBAL_PROPERTIES));
 }
 
@@ -131,6 +132,8 @@ OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *libctx,
 #ifndef FIPS_MODULE
     if (loadconfig && !OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL))
         return NULL;
+#else
+    (void)loadconfig;
 #endif
     globp = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES);
 
@@ -215,6 +218,7 @@ static void impl_cache_free(QUERY *elem)
 
 static void impl_cache_flush_alg(ossl_uintmax_t idx, ALGORITHM *alg)
 {
+    (void)idx;
     lh_QUERY_doall(alg->cache, &impl_cache_free);
     lh_QUERY_flush(alg->cache);
 }
@@ -415,6 +419,7 @@ alg_cleanup_by_provider(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
 {
     struct alg_cleanup_by_provider_data_st *data = arg;
     int i, count;
+    (void)idx;
 
     /*
      * We walk the stack backwards, to avoid having to deal with stack shifts
@@ -470,6 +475,7 @@ static void alg_do_each(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
 {
     struct alg_do_each_data_st *data = arg;
     int i, end = sk_IMPLEMENTATION_num(alg->impls);
+    (void)idx;
 
     for (i = 0; i < end; i++) {
         IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
@@ -642,6 +648,7 @@ static void impl_cache_flush_one_alg(ossl_uintmax_t idx, ALGORITHM *alg,
                                      void *v)
 {
     IMPL_CACHE_FLUSH *state = (IMPL_CACHE_FLUSH *)v;
+    (void)idx;
 
     state->cache = alg->cache;
     lh_QUERY_doall_IMPL_CACHE_FLUSH(state->cache, &impl_cache_flush_cache,

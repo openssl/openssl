@@ -73,6 +73,7 @@ static int aesni_cbc_hmac_sha1_init_key(EVP_CIPHER_CTX *ctx,
     EVP_AES_HMAC_SHA1 *key = data(ctx);
     int ret;
     const int keylen = EVP_CIPHER_CTX_get_key_length(ctx) * 8;
+    (void)iv;
 
     if (keylen <= 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY_LENGTH);
@@ -929,7 +930,27 @@ static EVP_CIPHER aesni_128_cbc_hmac_sha1_cipher = {
     EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_set_asn1_iv,
     EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_get_asn1_iv,
     aesni_cbc_hmac_sha1_ctrl,
-    NULL
+    NULL,   /* app_data */
+    0,      /* name_id */
+    NULL,   /* type_name */
+    NULL,   /* description */
+    NULL,   /* prov */
+    0,      /* refcnt */
+    NULL,   /* lock */
+    NULL,   /* newctx */
+    NULL,   /* einit */
+    NULL,   /* dinit */
+    NULL,   /* cupdate */
+    NULL,   /* cfinal */
+    NULL,   /* ccipher */
+    NULL,   /* freectx */
+    NULL,   /* dupctx */
+    NULL,   /* get_params */
+    NULL,   /* get_ctx_params */
+    NULL,   /* set_ctx_params */
+    NULL,   /* gettable_params */
+    NULL,   /* gettable_ctx_params */
+    NULL    /* settable_ctx_params */
 };
 
 static EVP_CIPHER aesni_256_cbc_hmac_sha1_cipher = {
@@ -949,7 +970,27 @@ static EVP_CIPHER aesni_256_cbc_hmac_sha1_cipher = {
     EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_set_asn1_iv,
     EVP_CIPH_FLAG_DEFAULT_ASN1 ? NULL : EVP_CIPHER_get_asn1_iv,
     aesni_cbc_hmac_sha1_ctrl,
-    NULL
+    NULL,   /* app_data */
+    0,      /* name_id */
+    NULL,   /* type_name */
+    NULL,   /* description */
+    NULL,   /* prov */
+    0,      /* refcnt */
+    NULL,   /* lock */
+    NULL,   /* newctx */
+    NULL,   /* einit */
+    NULL,   /* dinit */
+    NULL,   /* cupdate */
+    NULL,   /* cfinal */
+    NULL,   /* ccipher */
+    NULL,   /* freectx */
+    NULL,   /* dupctx */
+    NULL,   /* get_params */
+    NULL,   /* get_ctx_params */
+    NULL,   /* set_ctx_params */
+    NULL,   /* gettable_params */
+    NULL,   /* gettable_ctx_params */
+    NULL    /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1(void)

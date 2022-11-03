@@ -111,6 +111,8 @@ static int i2r_ocsp_crlid(const X509V3_EXT_METHOD *method, void *in, BIO *bp,
                           int ind)
 {
     OCSP_CRLID *a = in;
+    (void)method;
+
     if (a->crlUrl) {
         if (BIO_printf(bp, "%*scrlUrl: ", ind, "") <= 0)
             goto err;
@@ -143,6 +145,7 @@ static int i2r_ocsp_crlid(const X509V3_EXT_METHOD *method, void *in, BIO *bp,
 static int i2r_ocsp_acutoff(const X509V3_EXT_METHOD *method, void *cutoff,
                             BIO *bp, int ind)
 {
+    (void)method;
     if (BIO_printf(bp, "%*s", ind, "") <= 0)
         return 0;
     if (!ASN1_GENERALIZEDTIME_print(bp, cutoff))
@@ -153,6 +156,7 @@ static int i2r_ocsp_acutoff(const X509V3_EXT_METHOD *method, void *cutoff,
 static int i2r_object(const X509V3_EXT_METHOD *method, void *oid, BIO *bp,
                       int ind)
 {
+    (void)method;
     if (BIO_printf(bp, "%*s", ind, "") <= 0)
         return 0;
     if (i2a_ASN1_OBJECT(bp, oid) <= 0)
@@ -215,6 +219,7 @@ static void ocsp_nonce_free(void *a)
 static int i2r_ocsp_nonce(const X509V3_EXT_METHOD *method, void *nonce,
                           BIO *out, int indent)
 {
+    (void)method;
     if (BIO_printf(out, "%*s", indent, "") <= 0)
         return 0;
     if (i2a_ASN1_STRING(out, nonce, V_ASN1_OCTET_STRING) <= 0)
@@ -227,12 +232,19 @@ static int i2r_ocsp_nonce(const X509V3_EXT_METHOD *method, void *nonce,
 static int i2r_ocsp_nocheck(const X509V3_EXT_METHOD *method, void *nocheck,
                             BIO *out, int indent)
 {
+    (void)method;
+    (void)nocheck;
+    (void)out;
+    (void)indent;
     return 1;
 }
 
 static void *s2i_ocsp_nocheck(const X509V3_EXT_METHOD *method,
                               X509V3_CTX *ctx, const char *str)
 {
+    (void)method;
+    (void)ctx;
+    (void)str;
     return ASN1_NULL_new();
 }
 
@@ -242,6 +254,7 @@ static int i2r_ocsp_serviceloc(const X509V3_EXT_METHOD *method, void *in,
     int i;
     OCSP_SERVICELOC *a = in;
     ACCESS_DESCRIPTION *ad;
+    (void)method;
 
     if (BIO_printf(bp, "%*sIssuer: ", ind, "") <= 0)
         goto err;

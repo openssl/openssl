@@ -12,9 +12,10 @@
 #include "rand_local.h"
 
 /* Implements the default OpenSSL RAND_add() method */
-static int drbg_add(const void *buf, int num, double randomness)
+static int drbg_add(const void *buf, int num, double randomness /*unused*/)
 {
     EVP_RAND_CTX *drbg = RAND_get0_primary(NULL);
+    (void)randomness;
 
     if (drbg == NULL || num <= 0)
         return 0;
@@ -25,7 +26,7 @@ static int drbg_add(const void *buf, int num, double randomness)
 /* Implements the default OpenSSL RAND_seed() method */
 static int drbg_seed(const void *buf, int num)
 {
-    return drbg_add(buf, num, num);
+    return drbg_add(buf, num, (double)num);
 }
 
 /* Implements the default OpenSSL RAND_status() method */

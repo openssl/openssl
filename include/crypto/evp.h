@@ -434,17 +434,37 @@ static int cname##_cfb##cbits##_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, 
 #define BLOCK_CIPHER_def1(cname, nmode, mode, MODE, kstruct, nid, block_size, \
                           key_len, iv_len, flags, init_key, cleanup, \
                           set_asn1, get_asn1, ctrl) \
-static const EVP_CIPHER cname##_##mode = { \
+static const EVP_CIPHER cname##_##mode = {          \
         nid##_##nmode, block_size, key_len, iv_len, \
-        flags | EVP_CIPH_##MODE##_MODE, \
-        EVP_ORIG_GLOBAL, \
-        init_key, \
-        cname##_##mode##_cipher, \
-        cleanup, \
-        sizeof(kstruct), \
-        set_asn1, get_asn1,\
-        ctrl, \
-        NULL \
+        flags | EVP_CIPH_##MODE##_MODE,           \
+        EVP_ORIG_GLOBAL,                          \
+        init_key,                                 \
+        cname##_##mode##_cipher,                  \
+        cleanup,                                  \
+        sizeof(kstruct),                          \
+        set_asn1, get_asn1,                       \
+        ctrl,                                     \
+        NULL,        /* app_data */               \
+        0,           /* name_id */                \
+        NULL,        /* type_name */              \
+        NULL,        /* description */            \
+        NULL,        /* prov */                   \
+        0,           /* refcnt */                 \
+        NULL,        /* lock */                   \
+        NULL,        /* newctx */                 \
+        NULL,        /* einit */                  \
+        NULL,        /* dinit */                  \
+        NULL,        /* cupdate */                \
+        NULL,        /* cfinal */                 \
+        NULL,        /* ccipher */                \
+        NULL,        /* freectx */                \
+        NULL,        /* dupctx */                 \
+        NULL,        /* get_params */             \
+        NULL,        /* get_ctx_params */         \
+        NULL,        /* set_ctx_params */         \
+        NULL,        /* gettable_params */        \
+        NULL,        /* gettable_ctx_params */    \
+        NULL         /* settable_ctx_params */    \
 }; \
 const EVP_CIPHER *EVP_##cname##_##mode(void) { return &cname##_##mode; }
 

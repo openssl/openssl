@@ -122,6 +122,7 @@ static int poly1305_final(void *vmacctx, unsigned char *out, size_t *outl,
                           size_t outsize)
 {
     struct poly1305_data_st *ctx = vmacctx;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -137,6 +138,7 @@ static const OSSL_PARAM known_gettable_params[] = {
 };
 static const OSSL_PARAM *poly1305_gettable_params(void *provctx)
 {
+    (void)provctx;
     return known_gettable_params;
 }
 

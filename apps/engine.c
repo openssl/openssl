@@ -49,7 +49,7 @@ const OPTIONS engine_options[] = {
 
     OPT_PARAMETERS(),
     {"engine", 0, 0, "ID of engine(s) to load"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 static int append_buf(char **buf, int *size, const char *s)
@@ -240,6 +240,7 @@ static void util_do_cmds(ENGINE *e, STACK_OF(OPENSSL_STRING) *cmds,
                          BIO *out, const char *indent)
 {
     int loop, res, num = sk_OPENSSL_STRING_num(cmds);
+    (void)indent;
 
     if (num < 0) {
         BIO_printf(out, "[Error]: internal stack error\n");

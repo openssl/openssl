@@ -336,6 +336,7 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     size_t lbits, len;
     unsigned char encoded_outlen[KMAC_MAX_ENCODED_HEADER_LEN];
     int ok;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;

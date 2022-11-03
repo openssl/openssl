@@ -48,8 +48,28 @@ static const EVP_CIPHER d_xcbc_cipher = {
     sizeof(DESX_CBC_KEY),
     EVP_CIPHER_set_asn1_iv,
     EVP_CIPHER_get_asn1_iv,
-    NULL,
-    NULL
+    NULL,                      /* ctrl */
+    NULL,                      /* app_data */
+    0,                         /* name_id */
+    NULL,                      /* type_name */
+    NULL,                      /* description */
+    NULL,                      /* prov */
+    0,                         /* refcnt */
+    NULL,                      /* lock */
+    NULL,                      /* newctx */
+    NULL,                      /* einit */
+    NULL,                      /* dinit */
+    NULL,                      /* cupdate */
+    NULL,                      /* cfinal */
+    NULL,                      /* ccipher */
+    NULL,                      /* freectx */
+    NULL,                      /* dupctx */
+    NULL,                      /* get_params */
+    NULL,                      /* get_ctx_params */
+    NULL,                      /* set_ctx_params */
+    NULL,                      /* gettable_params */
+    NULL,                      /* gettable_ctx_params */
+    NULL                       /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_desx_cbc(void)
@@ -61,6 +81,8 @@ static int desx_cbc_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
     DES_cblock *deskey = (DES_cblock *)key;
+    (void)iv;
+    (void)enc;
 
     DES_set_key_unchecked(deskey, &data(ctx)->ks);
     memcpy(&data(ctx)->inw[0], &key[8], 8);

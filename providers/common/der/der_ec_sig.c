@@ -29,6 +29,7 @@ int ossl_DER_w_algorithmIdentifier_ECDSA_with_MD(WPACKET *pkt, int cont,
 {
     const unsigned char *precompiled = NULL;
     size_t precompiled_sz = 0;
+    (void)ec;
 
     switch (mdnid) {
         MD_CASE(sha1);

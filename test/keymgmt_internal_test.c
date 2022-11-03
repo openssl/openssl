@@ -51,6 +51,7 @@ static void tear_down(FIXTURE *fixture)
 static FIXTURE *set_up(const char *testcase_name)
 {
     FIXTURE *fixture;
+    (void)testcase_name;
 
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture)))
         || !TEST_ptr(fixture->ctx1 = OSSL_LIB_CTX_new())

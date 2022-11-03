@@ -15,7 +15,7 @@ const OPTIONS *test_get_options(void)
 {
     static const OPTIONS default_options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return default_options;
 }

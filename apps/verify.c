@@ -73,7 +73,7 @@ const OPTIONS verify_options[] = {
 
     OPT_PARAMETERS(),
     {"cert", 0, 0, "Certificate(s) to verify (optional; stdin used otherwise)"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int verify_main(int argc, char **argv)

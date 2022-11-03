@@ -13,6 +13,7 @@
 /* By default, our providers don't have an error state */
 void ossl_set_error_state(const char *type)
 {
+    (void)type;
 }
 
 /* By default, our providers are always in a happy state */

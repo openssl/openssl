@@ -19,6 +19,7 @@ static int cipher_hw_seed_initkey(PROV_CIPHER_CTX *ctx,
                                   const unsigned char *key, size_t keylen)
 {
     PROV_SEED_CTX *sctx =  (PROV_SEED_CTX *)ctx;
+    (void)keylen;
 
     SEED_set_key(key, &(sctx->ks.ks));
     return 1;
@@ -29,10 +30,12 @@ IMPLEMENT_CIPHER_HW_##UCMODE(mode, seed, PROV_SEED_CTX, SEED_KEY_SCHEDULE,     \
                              SEED_##mode)                                      \
 static const PROV_CIPHER_HW seed_##mode = {                                    \
     cipher_hw_seed_initkey,                                                    \
-    cipher_hw_seed_##mode##_cipher                                             \
+    cipher_hw_seed_##mode##_cipher,                                            \
+    NULL                                /* copyctx */                          \
 };                                                                             \
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_seed_##mode(size_t keybits)          \
 {                                                                              \
+    (void)keybits;                                                             \
     return &seed_##mode;                                                       \
 }
 

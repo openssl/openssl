@@ -85,6 +85,7 @@ void ossl_X509_PUBKEY_INTERNAL_free(X509_PUBKEY *xpub)
 static void x509_pubkey_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     X509_PUBKEY *pubkey;
+    (void)it;
 
     if (pval != NULL && (pubkey = (X509_PUBKEY *)*pval) != NULL) {
         X509_ALGOR_free(pubkey->algor);
@@ -99,6 +100,7 @@ static void x509_pubkey_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 static int x509_pubkey_ex_populate(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
+    (void)it;
 
     return (pubkey->algor != NULL
             || (pubkey->algor = X509_ALGOR_new()) != NULL)
@@ -111,6 +113,7 @@ static int x509_pubkey_ex_new_ex(ASN1_VALUE **pval, const ASN1_ITEM *it,
                                  OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509_PUBKEY *ret;
+    (void)it;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return 0;
@@ -237,6 +240,7 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
 static int x509_pubkey_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
                               const ASN1_ITEM *it, int tag, int aclass)
 {
+    (void)it;
     return ASN1_item_ex_i2d(pval, out, ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL),
                             tag, aclass);
 }
@@ -244,6 +248,7 @@ static int x509_pubkey_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
 static int x509_pubkey_ex_print(BIO *out, const ASN1_VALUE **pval, int indent,
                                 const char *fname, const ASN1_PCTX *pctx)
 {
+    (void)fname;
     return ASN1_item_print(out, *pval, indent,
                            ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL), pctx);
 }

@@ -386,6 +386,7 @@ static const OSSL_PARAM rsa_params[] = {
 
 static const OSSL_PARAM *rsa_gettable_params(void *provctx)
 {
+    (void)provctx;
     return rsa_params;
 }
 
@@ -393,6 +394,7 @@ static int rsa_validate(const void *keydata, int selection, int checktype)
 {
     const RSA *rsa = keydata;
     int ok = 1;
+    (void)checktype;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -691,6 +693,7 @@ static void *rsa_dup(const void *keydata_from, int selection)
 /* For any RSA key, we use the "RSA" algorithms regardless of sub-type. */
 static const char *rsa_query_operation_name(int operation_id)
 {
+    (void)operation_id;
     return "RSA";
 }
 

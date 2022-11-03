@@ -175,6 +175,7 @@ static int cms_copy_messageDigest(CMS_ContentInfo *cms, CMS_SignerInfo *si)
 int ossl_cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert,
                                    int type, const CMS_CTX *ctx)
 {
+    (void)ctx;
     switch (type) {
     case CMS_SIGNERINFO_ISSUER_SERIAL:
         if (!ossl_cms_set1_ias(&sid->d.issuerAndSerialNumber, cert))

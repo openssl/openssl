@@ -795,6 +795,7 @@ static const OSSL_PARAM ec_known_gettable_params[] = {
 static
 const OSSL_PARAM *ec_gettable_params(void *provctx)
 {
+    (void)provctx;
     return ec_known_gettable_params;
 }
 
@@ -812,6 +813,7 @@ static const OSSL_PARAM ec_known_settable_params[] = {
 static
 const OSSL_PARAM *ec_settable_params(void *provctx)
 {
+    (void)provctx;
     return ec_known_settable_params;
 }
 
@@ -1243,6 +1245,8 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     struct ec_gen_ctx *gctx = genctx;
     EC_KEY *ec = NULL;
     int ret = 0;
+    (void)osslcb;
+    (void)cbarg;
 
     if (!ossl_prov_is_running()
         || gctx == NULL
@@ -1307,6 +1311,8 @@ static void *sm2_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     struct ec_gen_ctx *gctx = genctx;
     EC_KEY *ec = NULL;
     int ret = 1;
+    (void)osslcb;
+    (void)cbarg;
 
     if (gctx == NULL
         || (ec = EC_KEY_new_ex(gctx->libctx, NULL)) == NULL)

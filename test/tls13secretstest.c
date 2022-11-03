@@ -128,6 +128,9 @@ static unsigned char server_ats_iv[] = {
 /* Mocked out implementations of various functions */
 int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
 {
+    (void)s;
+    (void)keep;
+
     return 1;
 }
 
@@ -137,6 +140,8 @@ static int full_hash = 0;
 int ssl_handshake_hash(SSL_CONNECTION *s, unsigned char *out, size_t outlen,
                        size_t *hashlen)
 {
+    (void)s;
+
     if (sizeof(hs_start_hash) > outlen
             || sizeof(hs_full_hash) != sizeof(hs_start_hash))
         return 0;
@@ -154,12 +159,17 @@ int ssl_handshake_hash(SSL_CONNECTION *s, unsigned char *out, size_t outlen,
 
 const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s)
 {
+    (void)s;
     return EVP_sha256();
 }
 
 int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                                      const EVP_CIPHER **enc)
 {
+    (void)ctx;
+    (void)sslc;
+    (void)enc;
+
     return 0;
 }
 
@@ -169,6 +179,15 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
                        SSL_COMP **comp, int use_etm)
 
 {
+    (void)ctx;
+    (void)s;
+    (void)enc;
+    (void)md;
+    (void)mac_pkey_type;
+    (void)mac_secret_size;
+    (void)comp;
+    (void)use_etm;
+
     return 0;
 }
 
@@ -182,39 +201,57 @@ int ssl_log_secret(SSL_CONNECTION *sc,
                    const uint8_t *secret,
                    size_t secret_len)
 {
+    (void)sc;
+    (void)label;
+    (void)secret;
+    (void)secret_len;
+
     return 1;
 }
 
 const EVP_MD *ssl_md(SSL_CTX *ctx, int idx)
 {
+    (void)ctx;
+    (void)idx;
+
     return EVP_sha256();
 }
 
 void ossl_statem_send_fatal(SSL_CONNECTION *s, int al)
 {
+    (void)s;
+    (void)al;
 }
 
 void ossl_statem_fatal(SSL_CONNECTION *s, int al, int reason,
                        const char *fmt, ...)
 {
+    (void)s;
+    (void)al;
+    (void)reason;
+    (void)fmt;
 }
 
 int ossl_statem_export_allowed(SSL_CONNECTION *s)
 {
+    (void)s;
     return 1;
 }
 
 int ossl_statem_export_early_allowed(SSL_CONNECTION *s)
 {
+    (void)s;
     return 1;
 }
 
 void ssl_evp_cipher_free(const EVP_CIPHER *cipher)
 {
+    (void)cipher;
 }
 
 void ssl_evp_md_free(const EVP_MD *md)
 {
+    (void)md;
 }
 
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version, int direction,
@@ -225,6 +262,22 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version, int direction,
                              int mactype, const EVP_MD *md,
                              const SSL_COMP *comp)
 {
+    (void)s;
+    (void)version;
+    (void)direction;
+    (void)level;
+    (void)key;
+    (void)keylen;
+    (void)iv;
+    (void)ivlen;
+    (void)mackey;
+    (void)mackeylen;
+    (void)ciph;
+    (void)taglen;
+    (void)mactype;
+    (void)md;
+    (void)comp;
+
     return 0;
 }
 

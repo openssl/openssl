@@ -65,6 +65,7 @@ int ossl_statm_init(OSSL_STATM *statm)
 
 void ossl_statm_destroy(OSSL_STATM *statm)
 {
+    (void)statm;
     /* No-op. */
 }
 

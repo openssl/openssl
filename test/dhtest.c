@@ -233,6 +233,9 @@ static int dh_test(void)
 
 static int cb(int p, int n, BN_GENCB *arg)
 {
+    (void)p;
+    (void)n;
+    (void)arg;
     return 1;
 }
 

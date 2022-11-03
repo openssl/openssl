@@ -169,6 +169,8 @@ static void look_str_cb(int nid, STACK_OF(ENGINE) *sk, ENGINE *def, void *arg)
 {
     ENGINE_FIND_STR *lk = arg;
     int i;
+    (void)def;
+
     if (lk->ameth)
         return;
     for (i = 0; i < sk_ENGINE_num(sk); i++) {

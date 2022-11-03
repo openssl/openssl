@@ -44,6 +44,7 @@ void ossl_chacha20_initctx(PROV_CHACHA20_CTX *ctx)
 static void *chacha20_newctx(void *provctx)
 {
     PROV_CHACHA20_CTX *ctx;
+    (void)provctx;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -75,6 +76,7 @@ static int chacha20_get_params(OSSL_PARAM params[])
 static int chacha20_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
+    (void)vctx;
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, CHACHA20_IVLEN)) {
@@ -105,6 +107,7 @@ static int chacha20_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     size_t len;
+    (void)vctx;
 
     if (params == NULL)
         return 1;

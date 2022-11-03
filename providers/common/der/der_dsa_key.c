@@ -19,6 +19,7 @@
 
 int ossl_DER_w_algorithmIdentifier_DSA(WPACKET *pkt, int tag, DSA *dsa)
 {
+    (void)dsa;
     return ossl_DER_w_begin_sequence(pkt, tag)
         /* No parameters (yet?) */
         && ossl_DER_w_precompiled(pkt, -1, ossl_der_oid_id_dsa,

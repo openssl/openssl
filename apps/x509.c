@@ -177,7 +177,7 @@ const OPTIONS x509_options[] = {
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 static void warn_copying(ASN1_OBJECT *excluded, const char *names)

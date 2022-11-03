@@ -712,6 +712,7 @@ static int check_ssl_ca(const X509 *x)
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
                                     int non_leaf)
 {
+    (void)xp;
     if (xku_reject(x, XKU_SSL_CLIENT))
         return 0;
     if (non_leaf)
@@ -736,6 +737,7 @@ static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
 static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
                                     int non_leaf)
 {
+    (void)xp;
     if (xku_reject(x, XKU_SSL_SERVER | XKU_SGC))
         return 0;
     if (non_leaf)
@@ -790,6 +792,7 @@ static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
                                     int non_leaf)
 {
     int ret = purpose_smime(x, non_leaf);
+    (void)xp;
 
     if (!ret || non_leaf)
         return ret;
@@ -800,6 +803,7 @@ static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
                                        int non_leaf)
 {
     int ret = purpose_smime(x, non_leaf);
+    (void)xp;
 
     if (!ret || non_leaf)
         return ret;
@@ -809,6 +813,7 @@ static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
 static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
                                   int non_leaf)
 {
+    (void)xp;
     if (non_leaf) {
         int ca_ret = check_ca(x);
 
@@ -824,6 +829,7 @@ static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
 static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
                                      int non_leaf)
 {
+    (void)xp;
     /*
      * Must be a valid CA.  Should we really support the "I don't know" value
      * (2)?
@@ -838,6 +844,7 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
                                         int non_leaf)
 {
     int i_ext;
+    (void)xp;
 
     /*
      * If non_leaf is true we must check if this is a valid CA certificate.
@@ -881,6 +888,7 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
                                    int non_leaf)
 {
     int i_ext;
+    (void)xp;
 
     /*
      * If non_leaf is true we must check if this is a valid CA certificate.
@@ -934,6 +942,9 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
 static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
                             int non_leaf)
 {
+    (void)xp;
+    (void)x;
+    (void)non_leaf;
     return 1;
 }
 

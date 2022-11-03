@@ -49,6 +49,7 @@ static void ERR_unload_OSSLTEST_strings(void)
 
 static void ERR_OSSLTEST_error(int function, int reason, const char *file, int line)
 {
+    (void)function;
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();
     ERR_raise(lib_code, reason);

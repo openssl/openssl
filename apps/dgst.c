@@ -88,7 +88,7 @@ const OPTIONS dgst_options[] = {
 
     OPT_PARAMETERS(),
     {"file", 0, 0, "Files to digest (optional; default is stdin)"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int dgst_main(int argc, char **argv)

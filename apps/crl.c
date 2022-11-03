@@ -71,7 +71,7 @@ const OPTIONS crl_options[] = {
     {"no-CAstore", OPT_NOCASTORE, '-',
      "Do not load certificates from the default certificates store"},
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int crl_main(int argc, char **argv)

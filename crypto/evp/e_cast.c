@@ -41,6 +41,8 @@ static int cast_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                          const unsigned char *iv, int enc)
 {
     int keylen = EVP_CIPHER_CTX_get_key_length(ctx);
+    (void)iv;
+    (void)enc;
 
     if (keylen <= 0)
         return 0;

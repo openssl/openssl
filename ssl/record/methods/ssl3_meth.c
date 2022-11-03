@@ -25,6 +25,11 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 {
     EVP_CIPHER_CTX *ciph_ctx;
     int enc = (rl->direction == OSSL_RECORD_DIRECTION_WRITE) ? 1 : 0;
+    (void)level;
+    (void)keylen;
+    (void)ivlen;
+    (void)taglen;
+    (void)mactype;
 
     if (md == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);

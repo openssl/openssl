@@ -26,6 +26,9 @@ static void *fuzz_rand_newctx(
          void *provctx, void *parent, const OSSL_DISPATCH *parent_dispatch)
 {
     int *st = OPENSSL_malloc(sizeof(*st));
+    (void)provctx;
+    (void)parent;
+    (void)parent_dispatch;
 
     if (st != NULL)
         *st = EVP_RAND_STATE_UNINITIALISED;
@@ -118,14 +121,15 @@ static const OSSL_DISPATCH fuzz_rand_functions[] = {
 };
 
 static const OSSL_ALGORITHM fuzz_rand_rand[] = {
-    { "fuzz", "provider=fuzz-rand", fuzz_rand_functions },
-    { NULL, NULL, NULL }
+  { "fuzz", "provider=fuzz-rand", fuzz_rand_functions, NULL },
+  { NULL, NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM *fuzz_rand_query(void *provctx,
                                              int operation_id,
                                              int *no_cache)
 {
+    (void)provctx;
     *no_cache = 0;
     switch (operation_id) {
     case OSSL_OP_RAND:
@@ -145,6 +149,8 @@ static int fuzz_rand_provider_init(const OSSL_CORE_HANDLE *handle,
                                    const OSSL_DISPATCH *in,
                                    const OSSL_DISPATCH **out, void **provctx)
 {
+    (void)handle;
+    (void)in;
     *provctx = OSSL_LIB_CTX_new();
     if (*provctx == NULL)
         return 0;

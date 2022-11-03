@@ -135,6 +135,7 @@ int ossl_event_queue_add(OSSL_EVENT_QUEUE *queue, OSSL_EVENT *event,
 
 int ossl_event_queue_remove(OSSL_EVENT_QUEUE *queue, OSSL_EVENT *event)
 {
+    (void)queue;
     if (event != NULL && event->queue != NULL) {
         ossl_pqueue_OSSL_EVENT_remove(event->queue, event->ref);
         event->queue = NULL;

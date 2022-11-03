@@ -173,7 +173,28 @@ static const EVP_CIPHER camellia_##keylen##_##mode = { \
         camellia_##mode##_cipher,       \
         NULL,                           \
         sizeof(EVP_CAMELLIA_KEY),       \
-        NULL,NULL,NULL,NULL }; \
+        NULL,NULL,NULL,NULL,            \
+        0,           /* name_id */                \
+        NULL,        /* type_name */              \
+        NULL,        /* description */            \
+        NULL,        /* prov */                   \
+        0,           /* refcnt */                 \
+        NULL,        /* lock */                   \
+        NULL,        /* newctx */                 \
+        NULL,        /* einit */                  \
+        NULL,        /* dinit */                  \
+        NULL,        /* cupdate */                \
+        NULL,        /* cfinal */                 \
+        NULL,        /* ccipher */                \
+        NULL,        /* freectx */                \
+        NULL,        /* dupctx */                 \
+        NULL,        /* get_params */             \
+        NULL,        /* get_ctx_params */         \
+        NULL,        /* set_ctx_params */         \
+        NULL,        /* gettable_params */        \
+        NULL,        /* gettable_ctx_params */    \
+        NULL         /* settable_ctx_params */    \
+    };                                            \
 const EVP_CIPHER *EVP_camellia_##keylen##_##mode(void) \
 { return &camellia_##keylen##_##mode; }
 
@@ -194,6 +215,7 @@ static int camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
     int ret, mode;
     EVP_CAMELLIA_KEY *dat = EVP_C_DATA(EVP_CAMELLIA_KEY, ctx);
+    (void)iv;
 
     ret = Camellia_set_key(key, EVP_CIPHER_CTX_get_key_length(ctx) * 8,
                            &dat->ks);

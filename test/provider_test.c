@@ -15,22 +15,22 @@ extern OSSL_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
 
 static char buf[256];
 static OSSL_PARAM greeting_request[] = {
-    { "greeting", OSSL_PARAM_UTF8_STRING, buf, sizeof(buf) },
-    { NULL, 0, NULL, 0, 0 }
+    { "greeting", OSSL_PARAM_UTF8_STRING, buf, sizeof(buf), 0U },
+    { NULL, 0, NULL, 0U, 0U }
 };
 
 static unsigned int digestsuccess = 0;
 static OSSL_PARAM digest_check[] = {
     { "digest-check", OSSL_PARAM_UNSIGNED_INTEGER, &digestsuccess,
-      sizeof(digestsuccess) },
-    { NULL, 0, NULL, 0, 0 }
+      sizeof(digestsuccess), 0U },
+    { NULL, 0, NULL, 0U, 0U }
 };
 
 static unsigned int stopsuccess = 0;
 static OSSL_PARAM stop_property_mirror[] = {
     { "stop-property-mirror", OSSL_PARAM_UNSIGNED_INTEGER, &stopsuccess,
-      sizeof(stopsuccess) },
-    { NULL, 0, NULL, 0, 0 }
+      sizeof(stopsuccess), 0U },
+    { NULL, 0, NULL, 0U, 0U }
 };
 
 static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
@@ -232,7 +232,7 @@ const OPTIONS *test_get_options(void)
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "loaded", OPT_LOADED, '-', "Run test with a loaded provider" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

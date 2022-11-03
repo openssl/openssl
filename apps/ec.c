@@ -58,7 +58,7 @@ const OPTIONS ec_options[] = {
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
 
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int ec_main(int argc, char **argv)

@@ -15,17 +15,23 @@
 
 static char *i2s_poison(const X509V3_EXT_METHOD *method, void *val)
 {
+    (void)method;
+    (void)val;
     return OPENSSL_strdup("NULL");
 }
 
 static void *s2i_poison(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx, const char *str)
 {
+    (void)method;
+    (void)ctx;
+    (void)str;
    return ASN1_NULL_new();
 }
 
 static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
                  BIO *out, int indent)
 {
+    (void)method;
     SCT_LIST_print(sct_list, out, indent, "\n", NULL);
     return 1;
 }

@@ -47,6 +47,7 @@ int ossl_quic_init(SSL *s)
 
 void ossl_quic_deinit(SSL *s)
 {
+    (void)s;
     return;
 }
 
@@ -83,6 +84,7 @@ int ossl_quic_reset(SSL *s)
 
 int ossl_quic_clear(SSL *s)
 {
+    (void)s;
     return 1;
 }
 
@@ -126,6 +128,10 @@ int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *readbytes)
 
 int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *readbytes)
 {
+    (void)s;
+    (void)buf;
+    (void)len;
+    (void)readbytes;
     return -1;
 }
 
@@ -147,6 +153,7 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
 
 int ossl_quic_shutdown(SSL *s)
 {
+    (void)s;
     return 1;
 }
 
@@ -186,16 +193,23 @@ long ossl_quic_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 long ossl_quic_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 {
+    (void)s;
+    (void)cmd;
+    (void)fp;
     return 0;
 }
 
 long ossl_quic_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 {
+    (void)ctx;
+    (void)cmd;
+    (void)fp;
     return 0;
 }
 
 size_t ossl_quic_pending(const SSL *s)
 {
+    (void)s;
     return 0;
 }
 
@@ -233,12 +247,15 @@ const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u)
         256,
         256
     };
+    (void)u;
 
     return &ciph;
 }
 
 int ossl_quic_renegotiate_check(SSL *ssl, int initok)
 {
+    (void)ssl;
+    (void)initok;
     return 1;
 }
 

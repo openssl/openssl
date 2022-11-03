@@ -290,6 +290,7 @@ static int default_check(enum state state,
                          const struct translation_st *translation,
                          const struct translation_ctx_st *ctx)
 {
+    (void)ctx;
     switch (state) {
     default:
         break;
@@ -706,6 +707,9 @@ cleanup_translation_ctx(enum state state,
                         const struct translation_st *translation,
                         struct translation_ctx_st *ctx)
 {
+    (void)state;
+    (void)translation;
+
     if (ctx->allocated_buf != NULL)
         OPENSSL_free(ctx->allocated_buf);
     ctx->allocated_buf = NULL;
@@ -1958,6 +1962,7 @@ static int fix_group_ecx(enum state state,
                          struct translation_ctx_st *ctx)
 {
     const char *value = NULL;
+    (void)translation;
 
     switch (state) {
     case PRE_PARAMS_TO_CTRL:

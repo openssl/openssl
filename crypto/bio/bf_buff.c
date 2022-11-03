@@ -35,6 +35,8 @@ static const BIO_METHOD methods_buffer = {
     buffer_new,
     buffer_free,
     buffer_callback_ctrl,
+    NULL,                       /* no bsendmmsg */
+    NULL                        /* no brecvmmsg */
 };
 
 const BIO_METHOD *BIO_f_buffer(void)

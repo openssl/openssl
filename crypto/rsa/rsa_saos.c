@@ -28,6 +28,7 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
     ASN1_OCTET_STRING sig;
     int i, j, ret = 1;
     unsigned char *p, *s;
+    (void)type;
 
     sig.type = V_ASN1_OCTET_STRING;
     sig.length = m_len;
@@ -63,6 +64,7 @@ int RSA_verify_ASN1_OCTET_STRING(int dtype,
     unsigned char *s;
     const unsigned char *p;
     ASN1_OCTET_STRING *sig = NULL;
+    (void)dtype;
 
     if (siglen != (unsigned int)RSA_size(rsa)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_WRONG_SIGNATURE_LENGTH);

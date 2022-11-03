@@ -154,7 +154,7 @@ const OPTIONS pkcs12_options[] = {
     {"maciter", OPT_MACITER, '-', "Unused, kept for backwards compatibility"},
     {"macsaltlen", OPT_MACSALTLEN, '-', "Specify the salt len for MAC"},
     {"nomac", OPT_NOMAC, '-', "Don't generate MAC"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int pkcs12_main(int argc, char **argv)

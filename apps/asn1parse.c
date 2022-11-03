@@ -53,7 +53,7 @@ const OPTIONS asn1parse_options[] = {
     {"dump", OPT_DUMP, 0, "unknown data in hex form"},
     {"dlimit", OPT_DLIMIT, 'p',
      "dump the first arg bytes of unknown data in hex form"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 static int do_generate(char *genstr, const char *genconf, BUF_MEM *buf);

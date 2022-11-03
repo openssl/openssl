@@ -32,7 +32,7 @@ const OPTIONS info_options[] = {
     {"listsep", OPT_LISTSEP, '-', "List separator character"},
     {"seeds", OPT_SEEDS, '-', "Seed sources"},
     {"cpusettings", OPT_CPUSETTINGS, '-', "CPU settings info"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int info_main(int argc, char **argv)

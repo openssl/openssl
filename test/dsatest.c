@@ -124,6 +124,8 @@ static int dsa_test(void)
 static int dsa_cb(int p, int n, BN_GENCB *arg)
 {
     static int ok = 0, num = 0;
+    (void)n;
+    (void)arg;
 
     if (p == 0)
         num++;

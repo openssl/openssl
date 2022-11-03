@@ -20,6 +20,10 @@
 
 static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
 {
+    (void)ctx;
+    (void)data;
+    (void)datalen;
+
     ERR_raise(ERR_LIB_EVP, EVP_R_ONLY_ONESHOT_SUPPORTED);
     return 0;
 }

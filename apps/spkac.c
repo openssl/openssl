@@ -53,7 +53,7 @@ const OPTIONS spkac_options[] = {
     {"verify", OPT_VERIFY, '-', "Verify SPKAC signature"},
 
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int spkac_main(int argc, char **argv)

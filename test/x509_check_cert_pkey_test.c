@@ -147,7 +147,7 @@ const OPTIONS *test_get_options(void)
         { OPT_HELP_STR, 1, '-', "expected\tthe expected return value, either 'ok' or 'failed'\n" },
         { OPT_HELP_STR, 1, '-', "file\tPEM format file containing certs, keys, and/OR CRLs\n" },
         { OPT_HELP_STR, 1, '-', "num\texpected number of credentials to be loaded from file\n" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

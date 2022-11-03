@@ -28,6 +28,7 @@ int ossl_DER_w_algorithmIdentifier_DSA_with_MD(WPACKET *pkt, int tag,
 {
     const unsigned char *precompiled = NULL;
     size_t precompiled_sz = 0;
+    (void)dsa;
 
     switch (mdnid) {
         MD_CASE(sha1);

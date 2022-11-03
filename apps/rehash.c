@@ -494,7 +494,7 @@ const OPTIONS rehash_options[] = {
 
     OPT_PARAMETERS(),
     {"directory", 0, 0, "One or more directories to process (optional)"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 

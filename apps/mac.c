@@ -49,7 +49,7 @@ const OPTIONS mac_options[] = {
 
     OPT_PARAMETERS(),
     {"mac_name", 0, 0, "MAC algorithm"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 static char *alloc_mac_algorithm_name(STACK_OF(OPENSSL_STRING) **optp,

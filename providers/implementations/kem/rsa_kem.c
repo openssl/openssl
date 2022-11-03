@@ -152,6 +152,7 @@ static int rsakem_decapsulate_init(void *vprsactx, void *vrsa,
 static int rsakem_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
 {
     PROV_RSA_CTX *ctx = (PROV_RSA_CTX *)vprsactx;
+    (void)params;
 
     return ctx != NULL;
 }

@@ -29,40 +29,41 @@
 #define ENCODER_STRUCTURE_X9_62                         "X9.62"
 
 /* Arguments are prefixed with '_' to avoid build breaks on certain platforms */
-#define ENCODER_TEXT(_name, _sym, _fips)                                \
+#define ENCODER_TEXT(_name, _sym, _fips, _algodesc)                     \
     { _name,                                                            \
       "provider=" ENCODER_PROVIDER ",fips=" #_fips ",output=text",      \
-      (ossl_##_sym##_to_text_encoder_functions) }
+      (ossl_##_sym##_to_text_encoder_functions),                        \
+      _algodesc }
 #define ENCODER(_name, _sym, _fips, _output)                            \
     { _name,                                                            \
       "provider=" ENCODER_PROVIDER ",fips=" #_fips ",output=" #_output, \
-      (ossl_##_sym##_to_##_output##_encoder_functions) }
+      (ossl_##_sym##_to_##_output##_encoder_functions), NULL }
 #define ENCODER_w_structure(_name, _sym, _fips, _output, _structure)    \
     { _name,                                                            \
       "provider=" ENCODER_PROVIDER ",fips=" #_fips ",output=" #_output  \
       ",structure=" ENCODER_STRUCTURE_##_structure,                     \
-      (ossl_##_sym##_to_##_structure##_##_output##_encoder_functions) }
+      (ossl_##_sym##_to_##_structure##_##_output##_encoder_functions), NULL }
 
 /*
  * Entries for human text "encoders"
  */
-ENCODER_TEXT("RSA", rsa, yes),
-ENCODER_TEXT("RSA-PSS", rsapss, yes),
+ENCODER_TEXT("RSA", rsa, yes, "RSA"),
+ENCODER_TEXT("RSA-PSS", rsapss, yes, "RSA-PSS"),
 #ifndef OPENSSL_NO_DH
-ENCODER_TEXT("DH", dh, yes),
-ENCODER_TEXT("DHX", dhx, yes),
+ENCODER_TEXT("DH", dh, yes, "Diffie-Hellman"),
+ENCODER_TEXT("DHX", dhx, yes, "Diffie-Hellman Exchange"),
 #endif
 #ifndef OPENSSL_NO_DSA
-ENCODER_TEXT("DSA", dsa, yes),
+ENCODER_TEXT("DSA", dsa, yes, "DSA"),
 #endif
 #ifndef OPENSSL_NO_EC
-ENCODER_TEXT("EC", ec, yes),
-ENCODER_TEXT("ED25519", ed25519, yes),
-ENCODER_TEXT("ED448", ed448, yes),
-ENCODER_TEXT("X25519", x25519, yes),
-ENCODER_TEXT("X448", x448, yes),
+ENCODER_TEXT("EC", ec, yes, "Elliptic-Curve"),
+ENCODER_TEXT("ED25519", ed25519, yes, "ED25519"),
+ENCODER_TEXT("ED448", ed448, yes, "ED448"),
+ENCODER_TEXT("X25519", x25519, yes, "X25519"),
+ENCODER_TEXT("X448", x448, yes, "X448"),
 # ifndef OPENSSL_NO_SM2
-ENCODER_TEXT("SM2", sm2, no),
+ENCODER_TEXT("SM2", sm2, no, "SM2"),
 # endif
 #endif
 

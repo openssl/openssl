@@ -228,7 +228,8 @@ static const struct {
     },
 # endif
 # ifndef OPENSSL_NO_DSA
-    { EVP_PKEY_DSA, dsaparam_bin, sizeof(dsaparam_bin) },
+    { EVP_PKEY_DSA, dsaparam_bin, sizeof(dsaparam_bin),
+      { { 0, NULL, 0 } } },
 # endif
 # ifndef OPENSSL_NO_EC
     { EVP_PKEY_EC, ecparam_bin, sizeof(ecparam_bin),

@@ -202,6 +202,7 @@ int ossl_cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
                                    const unsigned char *key, size_t keylen,
                                    const CMS_CTX *cms_ctx)
 {
+    (void)cms_ctx;
     ec->cipher = cipher;
     if (key) {
         if ((ec->key = OPENSSL_malloc(keylen)) == NULL)

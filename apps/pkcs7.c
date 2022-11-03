@@ -50,7 +50,7 @@ const OPTIONS pkcs7_options[] = {
      "When used with -print_certs, it produces a cleaner output"},
 
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int pkcs7_main(int argc, char **argv)

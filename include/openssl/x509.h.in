@@ -985,7 +985,7 @@ int X509_ATTRIBUTE_set1_object(X509_ATTRIBUTE *attr, const ASN1_OBJECT *obj);
 int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
                              const void *data, int len);
 void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx, int atrtype,
-                               void *data);
+                               void *data /*unused*/);
 int X509_ATTRIBUTE_count(const X509_ATTRIBUTE *attr);
 ASN1_OBJECT *X509_ATTRIBUTE_get0_object(X509_ATTRIBUTE *attr);
 ASN1_TYPE *X509_ATTRIBUTE_get0_type(X509_ATTRIBUTE *attr, int idx);

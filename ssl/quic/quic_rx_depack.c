@@ -57,6 +57,7 @@ static QUIC_STREAM *ssl_get_stream(QUIC_CONNECTION *conn, uint64_t stream_id)
 #define SSL_STREAM_TYPE_B       (SSL_STREAM_TYPE_R|SSL_STREAM_TYPE_S)
 static int ssl_get_stream_type(QUIC_STREAM *stream)
 {
+    (void)stream;
     return SSL_STREAM_TYPE_B;
 }
 
@@ -93,6 +94,8 @@ static int ssl_queue_data(QUIC_STREAM *stream, OSSL_QRX_PKT_WRAP *pkt_wrap,
  */
 static int ssl_close_stream(QUIC_STREAM *stream, int how)
 {
+    (void)stream;
+    (void)how;
     return 1;
 }
 
@@ -104,6 +107,7 @@ static int ssl_close_stream(QUIC_STREAM *stream, int how)
  */
 static int ssl_close_connection(QUIC_CONNECTION *connection)
 {
+    (void)connection;
     return 1;
 }
 
@@ -130,6 +134,7 @@ static void ossl_quic_fatal(QUIC_CONNECTION *c, int al, int reason,
                             const char *fmt, ...)
 {
     va_list args;
+    (void)al;
 
     va_start(args, fmt);
     ERR_vset_error(ERR_LIB_SSL, reason, fmt, args);
@@ -265,6 +270,7 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CONNECTION *connection,
                                   OSSL_ACKM_RX_PKT *ackm_data)
 {
     OSSL_QUIC_FRAME_CRYPTO frame_data;
+    (void)connection;
 
     if (!ossl_quic_wire_decode_frame_crypto(pkt, &frame_data))
         return 0;
@@ -282,6 +288,7 @@ static int depack_do_frame_new_token(PACKET *pkt, QUIC_CONNECTION *connection,
 {
     const uint8_t *token;
     size_t token_len;
+    (void)connection;
 
     if (!ossl_quic_wire_decode_frame_new_token(pkt, &token, &token_len))
         return 0;
@@ -327,6 +334,7 @@ static int depack_do_frame_max_data(PACKET *pkt, QUIC_CONNECTION *connection,
                                     OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t max_data = 0;
+    (void)connection;
 
     if (!ossl_quic_wire_decode_frame_max_data(pkt, &max_data))
         return 0;
@@ -345,6 +353,7 @@ static int depack_do_frame_max_stream_data(PACKET *pkt,
 {
     uint64_t stream_id = 0;
     uint64_t max_stream_data = 0;
+    (void)connection;
 
     if (!ossl_quic_wire_decode_frame_max_stream_data(pkt, &stream_id,
                                                      &max_stream_data))
@@ -363,6 +372,7 @@ static int depack_do_frame_max_streams(PACKET *pkt,
                                        OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t max_streams = 0;
+    (void)connection;
 
     if (!ossl_quic_wire_decode_frame_max_streams(pkt, &max_streams))
         return 0;
@@ -380,6 +390,7 @@ static int depack_do_frame_data_blocked(PACKET *pkt,
                                         OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t max_data = 0;
+    (void)connection;
 
     if (!ossl_quic_wire_decode_frame_data_blocked(pkt, &max_data))
         return 0;
@@ -398,6 +409,7 @@ static int depack_do_frame_stream_data_blocked(PACKET *pkt,
 {
     uint64_t stream_id = 0;
     uint64_t max_data = 0;
+    (void)connection;
 
     if (!ossl_quic_wire_decode_frame_stream_data_blocked(pkt, &stream_id,
                                                          &max_data))
@@ -416,6 +428,7 @@ static int depack_do_frame_streams_blocked(PACKET *pkt,
                                            OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t max_data = 0;
+    (void)connection;
 
     if (!ossl_quic_wire_decode_frame_streams_blocked(pkt, &max_data))
         return 0;
@@ -433,6 +446,7 @@ static int depack_do_frame_new_conn_id(PACKET *pkt,
                                        OSSL_ACKM_RX_PKT *ackm_data)
 {
     OSSL_QUIC_FRAME_NEW_CONN_ID frame_data;
+    (void)connection;
 
     if (!ossl_quic_wire_decode_frame_new_conn_id(pkt, &frame_data))
         return 0;
@@ -450,6 +464,7 @@ static int depack_do_frame_retire_conn_id(PACKET *pkt,
                                           OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t seq_num;
+    (void)connection;
 
     if (!ossl_quic_wire_decode_frame_retire_conn_id(pkt, &seq_num))
         return 0;
@@ -466,6 +481,7 @@ static int depack_do_frame_path_challenge(PACKET *pkt,
                                           OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t frame_data = 0;
+    (void)connection;
 
     if (!ossl_quic_wire_decode_frame_path_challenge(pkt, &frame_data))
         return 0;
@@ -483,6 +499,7 @@ static int depack_do_frame_path_response(PACKET *pkt,
                                          OSSL_ACKM_RX_PKT *ackm_data)
 {
     uint64_t frame_data = 0;
+    (void)connection;
 
     if (!ossl_quic_wire_decode_frame_path_response(pkt, &frame_data))
         return 0;
@@ -498,6 +515,7 @@ static int depack_do_frame_path_response(PACKET *pkt,
 static int depack_do_frame_conn_close(PACKET *pkt, QUIC_CONNECTION *connection)
 {
     OSSL_QUIC_FRAME_CONN_CLOSE frame_data;
+    (void)connection;
 
     if (!ossl_quic_wire_decode_frame_conn_close(pkt, &frame_data))
         return 0;
@@ -511,6 +529,8 @@ static int depack_do_frame_handshake_done(PACKET *pkt,
                                           QUIC_CONNECTION *connection,
                                           OSSL_ACKM_RX_PKT *ackm_data)
 {
+    (void)connection;
+
     if (!ossl_quic_wire_decode_frame_handshake_done(pkt))
         return 0;
 
@@ -526,6 +546,8 @@ static int depack_do_frame_unknown_extension(PACKET *pkt,
                                              QUIC_CONNECTION *connection,
                                              OSSL_ACKM_RX_PKT *ackm_data)
 {
+    (void)pkt;
+    (void)connection;
     /*
      * According to RFC 9000, 19.21. Extension Frames, extension frames
      * should be ACK eliciting.  It might be over zealous to do so for

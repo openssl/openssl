@@ -265,7 +265,7 @@ const OPTIONS *test_get_options(void)
     static const OPTIONS options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "expected", OPT_PRINT, '-', "Output values" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return options;
 }

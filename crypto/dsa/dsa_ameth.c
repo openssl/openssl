@@ -338,18 +338,21 @@ static int dsa_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
 static int dsa_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                            ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 0);
 }
 
 static int dsa_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                          ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 1);
 }
 
 static int dsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                           ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 2);
 }
 
@@ -377,6 +380,8 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
 {
     DSA_SIG *dsa_sig;
     const unsigned char *p;
+    (void)sigalg;
+    (void)pctx;
 
     if (sig == NULL) {
         if (BIO_puts(bp, "\n") <= 0)
@@ -411,6 +416,9 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
 
 static int dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
+    (void)pkey;
+    (void)arg1;
+
     switch (op) {
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
         *(int *)arg2 = NID_sha256;
@@ -438,6 +446,8 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     OSSL_PARAM *params;
     int selection = 0;
     int rv = 0;
+    (void)libctx;
+    (void)propq;
 
     if (p == NULL || q == NULL || g == NULL)
         return 0;
@@ -515,28 +525,33 @@ static int dsa_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
 }
 
 /* NB these are sorted in pkey_id order, lowest first */
+#define EVP_PKEY_ASN1_METHOD_SLACK NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 
 const EVP_PKEY_ASN1_METHOD ossl_dsa_asn1_meths[5] = {
 
     {
      EVP_PKEY_DSA2,
      EVP_PKEY_DSA,
-     ASN1_PKEY_ALIAS},
+     ASN1_PKEY_ALIAS,
+     EVP_PKEY_ASN1_METHOD_SLACK},
 
     {
      EVP_PKEY_DSA1,
      EVP_PKEY_DSA,
-     ASN1_PKEY_ALIAS},
+     ASN1_PKEY_ALIAS,
+     EVP_PKEY_ASN1_METHOD_SLACK},
 
     {
      EVP_PKEY_DSA4,
      EVP_PKEY_DSA,
-     ASN1_PKEY_ALIAS},
+     ASN1_PKEY_ALIAS,
+     EVP_PKEY_ASN1_METHOD_SLACK},
 
     {
      EVP_PKEY_DSA3,
      EVP_PKEY_DSA,
-     ASN1_PKEY_ALIAS},
+     ASN1_PKEY_ALIAS,
+     EVP_PKEY_ASN1_METHOD_SLACK},
 
     {
      EVP_PKEY_DSA,
@@ -579,6 +594,7 @@ const EVP_PKEY_ASN1_METHOD ossl_dsa_asn1_meths[5] = {
      dsa_pkey_dirty_cnt,
      dsa_pkey_export_to,
      dsa_pkey_import_from,
-     dsa_pkey_copy
+     dsa_pkey_copy,
+     NULL                      /* priv_decode_ex */
     }
 };

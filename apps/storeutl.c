@@ -64,7 +64,7 @@ const OPTIONS storeutl_options[] = {
 
     OPT_PARAMETERS(),
     {"uri", 0, 0, "URI of the store object"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int storeutl_main(int argc, char *argv[])

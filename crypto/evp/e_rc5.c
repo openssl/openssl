@@ -73,6 +73,8 @@ static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                const unsigned char *iv, int enc)
 {
     const int key_len = EVP_CIPHER_CTX_get_key_length(ctx);
+    (void)iv;
+    (void)enc;
 
     if (key_len > 255 || key_len < 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_BAD_KEY_LENGTH);

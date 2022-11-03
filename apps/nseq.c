@@ -32,7 +32,7 @@ const OPTIONS nseq_options[] = {
     {"out", OPT_OUT, '>', "Output file"},
 
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int nseq_main(int argc, char **argv)

@@ -13,6 +13,7 @@
 static DSO *DSO_new_method(DSO_METHOD *meth)
 {
     DSO *ret;
+    (void)meth;
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL)

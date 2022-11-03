@@ -121,6 +121,8 @@ int PKCS5_v2_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     EVP_PBE_KEYGEN_EX *kdf;
 
     int rv = 0;
+    (void)c;
+    (void)md;
 
     pbe2 = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBE2PARAM), param);
     if (pbe2 == NULL) {
@@ -190,6 +192,8 @@ int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
     PBKDF2PARAM *kdf = NULL;
     const EVP_MD *prfmd = NULL;
     EVP_MD *prfmd_fetch = NULL;
+    (void)c;
+    (void)md;
 
     if (EVP_CIPHER_CTX_get0_cipher(ctx) == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);

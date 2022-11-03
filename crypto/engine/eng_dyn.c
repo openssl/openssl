@@ -138,6 +138,12 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
                                        CRYPTO_EX_DATA *ad, int idx, long argl,
                                        void *argp)
 {
+    (void)parent;
+    (void)ad;
+    (void)idx;
+    (void)argl;
+    (void)argp;
+
     if (ptr) {
         dynamic_data_ctx *ctx = (dynamic_data_ctx *)ptr;
         DSO_free(ctx->dynamic_dso);
@@ -276,6 +282,7 @@ void engine_load_dynamic_int(void)
 
 static int dynamic_init(ENGINE *e)
 {
+    (void)e;
     /*
      * We always return failure - the "dynamic" engine itself can't be used
      * for anything.
@@ -285,6 +292,7 @@ static int dynamic_init(ENGINE *e)
 
 static int dynamic_finish(ENGINE *e)
 {
+    (void)e;
     /*
      * This should never be called on account of "dynamic_init" always
      * failing.
@@ -296,6 +304,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
 {
     dynamic_data_ctx *ctx = dynamic_get_data_ctx(e);
     int initialised;
+    (void)f;
 
     if (!ctx) {
         ERR_raise(ERR_LIB_ENGINE, ENGINE_R_NOT_LOADED);

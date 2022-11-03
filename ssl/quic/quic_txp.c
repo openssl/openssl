@@ -936,6 +936,7 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
 /* Determine how many bytes we should use for the encoded PN. */
 static size_t txp_determine_pn_len(OSSL_QUIC_TX_PACKETISER *txp)
 {
+    (void)txp;
     return 4; /* TODO(QUIC) */
 }
 
@@ -1170,6 +1171,7 @@ static int determine_crypto_len(struct tx_helper *h,
 {
     size_t orig_len;
     size_t base_hdr_len; /* CRYPTO header length without length field */
+    (void)h;
 
     if (chdr->len > SIZE_MAX)
         return 0;
@@ -1196,6 +1198,7 @@ static int determine_stream_len(struct tx_helper *h,
 {
     size_t orig_len;
     size_t base_hdr_len; /* STREAM header length without length field */
+    (void)h;
 
     if (shdr->len > SIZE_MAX)
         return 0;
@@ -1229,6 +1232,7 @@ static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
     WPACKET *wpkt;
     QUIC_TXPIM_CHUNK chunk;
     size_t i, space_left;
+    (void)h;
 
     for (i = 0;; ++i) {
         space_left = tx_helper_get_space_left(h);
@@ -1317,6 +1321,8 @@ static int txp_plan_stream_chunk(OSSL_QUIC_TX_PACKETISER *txp,
                                  struct chunk_info *chunk)
 {
     uint64_t fc_credit, fc_swm, fc_limit;
+    (void)txp;
+    (void)h;
 
     chunk->num_stream_iovec = OSSL_NELEM(chunk->iov);
     chunk->valid = ossl_quic_sstream_get_stream_frame(sstream, skip,
@@ -1386,6 +1392,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
     uint64_t hdr_len_implicit, payload_len_implicit;
     uint64_t hdr_len_explicit, payload_len_explicit;
     uint64_t fc_swm, fc_new_hwm;
+    (void)pn_space;
 
     fc_swm      = ossl_quic_txfc_get_swm(stream_txfc);
     fc_new_hwm  = fc_swm;

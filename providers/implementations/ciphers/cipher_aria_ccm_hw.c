@@ -36,5 +36,6 @@ static const PROV_CCM_HW ccm_aria = {
 };
 const PROV_CCM_HW *ossl_prov_aria_hw_ccm(size_t keybits)
 {
+    (void)keybits;
     return &ccm_aria;
 }

@@ -97,7 +97,7 @@ const OPTIONS pkeyutl_options[] = {
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int pkeyutl_main(int argc, char **argv)

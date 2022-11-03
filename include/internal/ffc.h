@@ -160,7 +160,7 @@ int ossl_ffc_params_FIPS186_4_gen_verify(OSSL_LIB_CTX *libctx,
                                          size_t L, size_t N, int *res,
                                          BN_GENCB *cb);
 int ossl_ffc_params_FIPS186_2_gen_verify(OSSL_LIB_CTX *libctx,
-                                         FFC_PARAMS *params, int mode, int type,
+                                         FFC_PARAMS *params, int mode, int type /*unused*/,
                                          size_t L, size_t N, int *res,
                                          BN_GENCB *cb);
 

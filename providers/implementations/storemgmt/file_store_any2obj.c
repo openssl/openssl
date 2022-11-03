@@ -52,6 +52,7 @@ static void *any2obj_newctx(void *provctx)
 
 static void any2obj_freectx(void *vctx)
 {
+    (void)vctx;
 }
 
 static int any2obj_decode_final(void *provctx, int objtype, BUF_MEM *mem,
@@ -62,6 +63,7 @@ static int any2obj_decode_final(void *provctx, int objtype, BUF_MEM *mem,
      * Ending up "empty handed" is not an error.
      */
     int ok = 1;
+    (void)provctx;
 
     if (mem != NULL) {
         OSSL_PARAM params[3];
@@ -87,6 +89,9 @@ static int der2obj_decode(void *provctx, OSSL_CORE_BIO *cin, int selection,
     BIO *in = ossl_bio_new_from_core_bio(provctx, cin);
     BUF_MEM *mem = NULL;
     int ok;
+    (void)selection;
+    (void)pw_cb;
+    (void)pw_cbarg;
 
     if (in == NULL)
         return 0;
@@ -118,6 +123,9 @@ static int msblob2obj_decode(void *provctx, OSSL_CORE_BIO *cin, int selection,
     int isdss = -1;
     int ispub = -1;
     int ok = 0;
+    (void)selection;
+    (void)pw_cb;
+    (void)pw_cbarg;
 
     if (in == NULL)
         goto err;
@@ -185,6 +193,9 @@ static int pvk2obj_decode(void *provctx, OSSL_CORE_BIO *cin, int selection,
     const unsigned char *p;
     unsigned int saltlen, keylen;
     int ok = 0;
+    (void)selection;
+    (void)pw_cb;
+    (void)pw_cbarg;
 
     if (in == NULL)
         goto err;
@@ -254,8 +265,8 @@ MAKE_DECODER(msblob, OSSL_OBJECT_PKEY);
 MAKE_DECODER(pvk, OSSL_OBJECT_PKEY);
 
 const OSSL_ALGORITHM ossl_any_to_obj_algorithm[] = {
-    { "obj", "input=DER", der_to_obj_decoder_functions },
-    { "obj", "input=MSBLOB", msblob_to_obj_decoder_functions },
-    { "obj", "input=PVK", pvk_to_obj_decoder_functions },
-    { NULL, }
+    { "obj", "input=DER", der_to_obj_decoder_functions, NULL },
+    { "obj", "input=MSBLOB", msblob_to_obj_decoder_functions, NULL },
+    { "obj", "input=PVK", pvk_to_obj_decoder_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };

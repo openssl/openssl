@@ -163,9 +163,9 @@ static DH_METHOD dh_ossl = {
     dh_bn_mod_exp,
     dh_init,
     dh_finish,
-    DH_FLAG_FIPS_METHOD,
-    NULL,
-    NULL
+    DH_FLAG_FIPS_METHOD,       /* flags */
+    NULL,                      /* app_data */
+    NULL                       /* generate_params */
 };
 
 static const DH_METHOD *default_DH_method = &dh_ossl;
@@ -184,6 +184,7 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
                          const BIGNUM *a, const BIGNUM *p,
                          const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 {
+    (void)dh;
     return BN_mod_exp_mont(r, a, p, m, ctx, m_ctx);
 }
 

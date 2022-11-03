@@ -19,6 +19,8 @@
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
+    (void)argc;
+    (void)argv;
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     CRYPTO_free_ex_index(0, -1);
     ERR_clear_error();

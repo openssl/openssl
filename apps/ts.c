@@ -125,7 +125,7 @@ const OPTIONS ts_options[] = {
     OPT_R_OPTIONS,
     OPT_V_OPTIONS,
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 /*
@@ -1034,5 +1034,6 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
 
 static int verify_cb(int ok, X509_STORE_CTX *ctx)
 {
+    (void)ctx;
     return ok;
 }

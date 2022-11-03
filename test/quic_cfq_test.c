@@ -59,6 +59,7 @@ static size_t g_free_len;
 
 static void free_cb(unsigned char *buf, size_t buf_len, void *arg)
 {
+    (void)arg;
     g_free      = buf;
     g_free_len  = buf_len;
 }

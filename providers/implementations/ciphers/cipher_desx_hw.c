@@ -29,6 +29,7 @@ static int cipher_hw_desx_cbc_initkey(PROV_CIPHER_CTX *ctx,
 {
     PROV_TDES_CTX *tctx = (PROV_TDES_CTX *)ctx;
     DES_cblock *deskey = (DES_cblock *)key;
+    (void)keylen;
 
     DES_set_key_unchecked(deskey, &tctx->ks1);
     memcpy(&tctx->ks2, &key[8], 8);

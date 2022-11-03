@@ -23,6 +23,7 @@
 static void *aes_ccm_newctx(void *provctx, size_t keybits)
 {
     PROV_AES_CCM_CTX *ctx;
+    (void)provctx;
 
     if (!ossl_prov_is_running())
         return NULL;

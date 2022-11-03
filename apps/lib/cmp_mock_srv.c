@@ -214,6 +214,7 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
 {
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
     OSSL_CMP_PKISI *si = NULL;
+    (void)p10cr;
 
     if (ctx == NULL || cert_req == NULL
             || certOut == NULL || chainOut == NULL || caPubs == NULL) {
@@ -387,6 +388,7 @@ static int process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
 {
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
     ASN1_OCTET_STRING *digest;
+    (void)si;
 
     if (ctx == NULL || certConf == NULL || certHash == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
@@ -419,6 +421,7 @@ static int process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
                            OSSL_CMP_MSG **certReq, int64_t *check_after)
 {
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
+    (void)certReqId;
 
     if (ctx == NULL || pollReq == NULL
             || certReq == NULL || check_after == NULL) {

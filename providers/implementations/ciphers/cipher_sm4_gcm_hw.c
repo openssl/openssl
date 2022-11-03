@@ -19,6 +19,7 @@ static int sm4_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 {
     PROV_SM4_GCM_CTX *actx = (PROV_SM4_GCM_CTX *)ctx;
     SM4_KEY *ks = &actx->ks.ks;
+    (void)keylen;
 
     ctx->ks = ks;
 # ifdef HWSM4_CAPABLE
@@ -83,5 +84,6 @@ static const PROV_GCM_HW sm4_gcm = {
 
 const PROV_GCM_HW *ossl_prov_sm4_hw_gcm(size_t keybits)
 {
+    (void)keybits;
     return &sm4_gcm;
 }

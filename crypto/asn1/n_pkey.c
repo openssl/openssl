@@ -17,7 +17,7 @@
 #include <openssl/x509.h>
 
 #define ASN1_BROKEN_SEQUENCE(tname) \
-        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, 0, 0}; \
+    static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, 0, 0, NULL}; \
         ASN1_SEQUENCE(tname)
 #define static_ASN1_BROKEN_SEQUENCE_END(stname) \
         static_ASN1_SEQUENCE_END_ref(stname, stname)

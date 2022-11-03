@@ -37,6 +37,7 @@ static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
                                  PKEY_USAGE_PERIOD *usage, BIO *out,
                                  int indent)
 {
+    (void)method;
     BIO_printf(out, "%*s", indent, "");
     if (usage->notBefore) {
         BIO_write(out, "Not Before: ", 12);

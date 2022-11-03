@@ -39,6 +39,7 @@ static OSSL_FUNC_cipher_gettable_ctx_params_fn chacha20_poly1305_gettable_ctx_pa
 static void *chacha20_poly1305_newctx(void *provctx)
 {
     PROV_CHACHA20_POLY1305_CTX *ctx;
+    (void)provctx;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -298,6 +299,7 @@ static int chacha20_poly1305_final(void *vctx, unsigned char *out, size_t *outl,
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     PROV_CIPHER_HW_CHACHA20_POLY1305 *hw =
         (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->hw;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;

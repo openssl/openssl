@@ -339,7 +339,7 @@ static int hpke_suite_check(OSSL_HPKE_SUITE suite,
 /*
  * @brief randomly pick a suite
  * @param libctx is the context to use
- * @param propq is a properties string
+ * @param propq is a properties string (unused)
  * @param suite is the result
  * @return 1 for success, 0 otherwise
  */
@@ -350,6 +350,7 @@ static int hpke_random_suite(OSSL_LIB_CTX *libctx,
     const OSSL_HPKE_KEM_INFO *kem_info = NULL;
     const OSSL_HPKE_KDF_INFO *kdf_info = NULL;
     const OSSL_HPKE_AEAD_INFO *aead_info = NULL;
+    (void)propq;
 
     /* random kem, kdf and aead */
     kem_info = ossl_HPKE_KEM_INFO_find_random(libctx);

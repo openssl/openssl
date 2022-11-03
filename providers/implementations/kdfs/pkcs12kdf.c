@@ -287,6 +287,7 @@ static const OSSL_PARAM *kdf_pkcs12_settable_ctx_params(
 static int kdf_pkcs12_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
+    (void)vctx;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE)) != NULL)
         return OSSL_PARAM_set_size_t(p, SIZE_MAX);

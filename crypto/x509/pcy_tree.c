@@ -18,6 +18,7 @@ static void expected_print(BIO *channel,
                            X509_POLICY_LEVEL *lev, X509_POLICY_NODE *node,
                            int indent)
 {
+    (void)indent;
     if ((lev->flags & X509_V_FLAG_INHIBIT_MAP)
         || !(node->data->flags & POLICY_DATA_FLAG_MAP_MASK))
         BIO_puts(channel, "  Not Mapped\n");

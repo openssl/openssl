@@ -330,7 +330,9 @@ int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
 
 int ossl_rsa_is_foreign(const RSA *rsa)
 {
-#ifndef FIPS_MODULE
+#ifdef FIPS_MODULE
+    (void)rsa;
+#else
     if (rsa->engine != NULL || RSA_get_method(rsa) != RSA_PKCS1_OpenSSL())
         return 1;
 #endif
@@ -562,6 +564,8 @@ RSA *ossl_rsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
     RSA *rsa;
     int pklen;
     const X509_ALGOR *alg;
+    (void)libctx;
+    (void)propq;
 
     if (!PKCS8_pkey_get0(NULL, &p, &pklen, &alg, p8inf))
         return 0;

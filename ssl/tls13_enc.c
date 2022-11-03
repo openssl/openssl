@@ -247,6 +247,7 @@ int tls13_generate_master_secret(SSL_CONNECTION *s, unsigned char *out,
                                  size_t *secret_size)
 {
     const EVP_MD *md = ssl_handshake_md(s);
+    (void)prevlen;
 
     *secret_size = EVP_MD_get_size(md);
     /* Calls SSLfatal() if required */
@@ -268,6 +269,7 @@ size_t tls13_final_finish_mac(SSL_CONNECTION *s, const char *str, size_t slen,
     size_t len = 0, hashlen;
     OSSL_PARAM params[2], *p = params;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    (void)slen;
 
     if (md == NULL)
         return 0;
@@ -348,6 +350,7 @@ static int derive_secret_key_and_iv(SSL_CONNECTION *s, int sending,
     int hashleni = EVP_MD_get_size(md);
     size_t hashlen;
     int mode;
+    (void)sending;
 
     /* Ensure cast to size_t is safe */
     if (!ossl_assert(hashleni >= 0)) {

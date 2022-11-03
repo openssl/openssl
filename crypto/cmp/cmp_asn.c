@@ -207,6 +207,7 @@ static int ossl_cmp_msg_cb(int operation, ASN1_VALUE **pval,
                            const ASN1_ITEM *it, void *exarg)
 {
     OSSL_CMP_MSG *msg = (OSSL_CMP_MSG *)*pval;
+    (void)it;
 
     switch (operation) {
     case ASN1_OP_FREE_POST:

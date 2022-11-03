@@ -13,6 +13,7 @@
 
 int ossl_DER_w_algorithmIdentifier_X25519(WPACKET *pkt, int cont, ECX_KEY *ec)
 {
+    (void)ec;
     return ossl_DER_w_begin_sequence(pkt, cont)
         /* No parameters (yet?) */
         && ossl_DER_w_precompiled(pkt, -1, ossl_der_oid_id_X25519,
@@ -22,6 +23,7 @@ int ossl_DER_w_algorithmIdentifier_X25519(WPACKET *pkt, int cont, ECX_KEY *ec)
 
 int ossl_DER_w_algorithmIdentifier_X448(WPACKET *pkt, int cont, ECX_KEY *ec)
 {
+    (void)ec;
     return ossl_DER_w_begin_sequence(pkt, cont)
         /* No parameters (yet?) */
         && ossl_DER_w_precompiled(pkt, -1, ossl_der_oid_id_X448,
@@ -31,6 +33,7 @@ int ossl_DER_w_algorithmIdentifier_X448(WPACKET *pkt, int cont, ECX_KEY *ec)
 
 int ossl_DER_w_algorithmIdentifier_ED25519(WPACKET *pkt, int cont, ECX_KEY *ec)
 {
+    (void)ec;
     return ossl_DER_w_begin_sequence(pkt, cont)
         /* No parameters (yet?) */
         && ossl_DER_w_precompiled(pkt, -1, ossl_der_oid_id_Ed25519,
@@ -40,6 +43,7 @@ int ossl_DER_w_algorithmIdentifier_ED25519(WPACKET *pkt, int cont, ECX_KEY *ec)
 
 int ossl_DER_w_algorithmIdentifier_ED448(WPACKET *pkt, int cont, ECX_KEY *ec)
 {
+    (void)ec;
     return ossl_DER_w_begin_sequence(pkt, cont)
         /* No parameters (yet?) */
         && ossl_DER_w_precompiled(pkt, -1, ossl_der_oid_id_Ed448,

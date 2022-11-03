@@ -61,6 +61,7 @@ int RSA_padding_check_X931(unsigned char *to, int tlen,
 {
     int i = 0, j;
     const unsigned char *p;
+    (void)tlen;
 
     p = from;
     if ((num != flen) || ((*p != 0x6A) && (*p != 0x6B))) {

@@ -29,12 +29,14 @@ static const OSSL_PARAM null_param_types[] = {
 
 static const OSSL_PARAM *null_gettable_params(const OSSL_PROVIDER *prov)
 {
+    (void)prov;
     return null_param_types;
 }
 
 static int null_get_params(const OSSL_PROVIDER *provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
+    (void)provctx;
 
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_NAME);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "OpenSSL Null Provider"))
@@ -52,9 +54,12 @@ static int null_get_params(const OSSL_PROVIDER *provctx, OSSL_PARAM params[])
 }
 
 static const OSSL_ALGORITHM *null_query(OSSL_PROVIDER *prov,
-                                          int operation_id,
-                                          int *no_cache)
+                                        int operation_id,
+                                        int *no_cache)
 {
+    (void)prov;
+    (void)operation_id;
+
     *no_cache = 0;
     return NULL;
 }
@@ -72,6 +77,7 @@ int ossl_null_provider_init(const OSSL_CORE_HANDLE *handle,
                             const OSSL_DISPATCH **out,
                             void **provctx)
 {
+    (void)in;
     *out = null_dispatch_table;
 
     /* Could be anything - we don't use it */

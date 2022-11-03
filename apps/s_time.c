@@ -101,7 +101,7 @@ const OPTIONS s_time_options[] = {
      "Do not load certificates from the default certificates store URI"},
 
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 #define START   0

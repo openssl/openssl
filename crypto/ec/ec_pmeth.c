@@ -470,6 +470,9 @@ static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     return ret ? EC_KEY_generate_key(ec) : 0;
 }
 
+/* from dsa_ameth.c */
+#define EVP_PKEY_ASN1_METHOD_SLACK NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+
 static const EVP_PKEY_METHOD ec_pkey_meth = {
     EVP_PKEY_EC,
     0,
@@ -506,7 +509,14 @@ static const EVP_PKEY_METHOD ec_pkey_meth = {
     0,
 #endif
     pkey_ec_ctrl,
-    pkey_ec_ctrl_str
+    pkey_ec_ctrl_str,
+
+    NULL,                      /* digestsign */
+    NULL,                      /* digestverify */
+    NULL,                      /* check */
+    NULL,                      /* public_check */
+    NULL,                      /* param_check */
+    NULL                       /* digest_custom */
 };
 
 const EVP_PKEY_METHOD *ossl_ec_pkey_method(void)

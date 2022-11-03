@@ -197,6 +197,8 @@ static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
 {
     GENERAL_SUBTREE *tree;
     int i;
+    (void)method;
+
     if (sk_GENERAL_SUBTREE_num(trees) > 0)
         BIO_printf(bp, "%*s%s:\n", ind, "", name);
     for (i = 0; i < sk_GENERAL_SUBTREE_num(trees); i++) {

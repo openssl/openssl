@@ -27,7 +27,7 @@ const OPTIONS *test_get_options(void)
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "config", OPT_CONFIG_FILE, '<',
           "The configuration file to use for the libctx" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

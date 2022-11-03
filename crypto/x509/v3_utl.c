@@ -167,6 +167,7 @@ char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
 {
     BIGNUM *bntmp = NULL;
     char *strtmp = NULL;
+    (void)method;
 
     if (!a)
         return NULL;
@@ -182,6 +183,7 @@ char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
 {
     BIGNUM *bntmp = NULL;
     char *strtmp = NULL;
+    (void)method;
 
     if (!a)
         return NULL;
@@ -199,6 +201,7 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
     ASN1_INTEGER *aint;
     int isneg, ishex;
     int ret;
+    (void)method;
 
     if (value == NULL) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_VALUE);
@@ -658,6 +661,7 @@ static int equal_email(const unsigned char *a, size_t a_len,
                        unsigned int unused_flags)
 {
     size_t i = a_len;
+    (void)unused_flags;
 
     if (a_len != b_len)
         return 0;

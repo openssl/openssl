@@ -36,6 +36,7 @@ struct ossl_self_test_st
 void *ossl_self_test_set_callback_new(OSSL_LIB_CTX *ctx)
 {
     SELF_TEST_CB *stcb;
+    (void)ctx;
 
     stcb = OPENSSL_zalloc(sizeof(*stcb));
     return stcb;

@@ -40,8 +40,9 @@ int ossl_dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
                                     BN_GENCB *cb)
 {
     int ret, res;
-
-#ifndef FIPS_MODULE
+#ifdef FIPS_MODULE
+    (void)type;
+#else
     if (type == DH_PARAMGEN_TYPE_FIPS_186_2)
         ret = ossl_ffc_params_FIPS186_2_generate(dh->libctx, &dh->params,
                                                  FFC_PARAM_TYPE_DH,
@@ -116,6 +117,7 @@ int DH_generate_parameters_ex(DH *ret, int prime_len, int generator,
                               BN_GENCB *cb)
 {
 #ifdef FIPS_MODULE
+    (void)cb;
     if (generator != 2)
         return 0;
     return dh_gen_named_group(ret->libctx, ret, prime_len);

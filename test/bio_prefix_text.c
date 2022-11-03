@@ -55,7 +55,7 @@ static const OPTIONS options[] = {
      */
     { "i", OPT_INDENT, 's', "Indentation in form '[idx:]indent'" },
     { "p", OPT_PREFIX, 's', "Prefix in form '[idx:]prefix'" },
-    { NULL }
+    { NULL, 0, 0, NULL }
 };
 
 int opt_printf_stderr(const char *fmt, ...)
@@ -95,6 +95,7 @@ static int setup_bio_chain(const char *progname)
 {
     BIO *next = NULL;
     size_t n = amount;
+    (void)progname;
 
     chain = OPENSSL_zalloc(sizeof(*chain) * n);
 

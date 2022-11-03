@@ -76,12 +76,19 @@ static long tls_corrupt_ctrl(BIO *bio, int cmd, long num, void *ptr)
 
 static int tls_corrupt_gets(BIO *bio, char *buf, int size)
 {
+    (void)bio;
+    (void)buf;
+    (void)size;
+   
     /* We don't support this - not needed anyway */
     return -1;
 }
 
 static int tls_corrupt_puts(BIO *bio, const char *str)
 {
+    (void)bio;
+    (void)str;
+   
     /* We don't support this - not needed anyway */
     return -1;
 }

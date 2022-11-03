@@ -45,6 +45,7 @@ int ossl_quic_fifd_init(QUIC_FIFD *fifd,
 void ossl_quic_fifd_cleanup(QUIC_FIFD *fifd)
 {
     /* No-op. */
+    (void)fifd;
 }
 
 static void on_acked(void *arg)

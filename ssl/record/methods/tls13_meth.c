@@ -26,6 +26,13 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     EVP_CIPHER_CTX *ciph_ctx;
     int mode;
     int enc = (rl->direction == OSSL_RECORD_DIRECTION_WRITE) ? 1 : 0;
+    (void)level;
+    (void)keylen;
+    (void)mackey;
+    (void)mackeylen;
+    (void)mactype;
+    (void)md;
+    (void)comp;
 
     if (ivlen > sizeof(rl->iv)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -69,6 +76,8 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     WPACKET wpkt;
     const EVP_CIPHER *cipher;
     int mode;
+    (void)mac;
+    (void)macsize;
 
     if (n_recs != 1) {
         /* Should not happen */

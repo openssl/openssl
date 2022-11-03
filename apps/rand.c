@@ -43,7 +43,7 @@ const OPTIONS rand_options[] = {
 
     OPT_PARAMETERS(),
     {"num", 0, 0, "Number of bytes to generate"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int rand_main(int argc, char **argv)

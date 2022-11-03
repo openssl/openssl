@@ -245,6 +245,7 @@ int evp_cipher_get_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
     int i = 0;
     long tl;
     unsigned char iv[EVP_MAX_IV_LENGTH];
+    (void)c;
 
     if (type == NULL || asn1_params == NULL)
         return 0;
@@ -263,6 +264,8 @@ int evp_cipher_get_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
 int evp_cipher_set_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
                                     evp_cipher_aead_asn1_params *asn1_params)
 {
+    (void)c;
+
     if (type == NULL || asn1_params == NULL)
         return 0;
 

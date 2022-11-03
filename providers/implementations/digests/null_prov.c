@@ -17,16 +17,22 @@ typedef struct {
 
 static int null_init(NULLMD_CTX *ctx)
 {
+    (void)ctx;
     return 1;
 }
 
 static int null_update(NULLMD_CTX *ctx, const void *data, size_t datalen)
 {
+    (void)ctx;
+    (void)data;
+    (void)datalen;
     return 1;
 }
 
 static int null_final(unsigned char *md, NULLMD_CTX *ctx)
 {
+    (void)md;
+    (void)ctx;
     return 1;
 }
 
@@ -40,6 +46,7 @@ static OSSL_FUNC_digest_final_fn name##_internal_final;                        \
 static int name##_internal_final(void *ctx, unsigned char *out, size_t *outl,  \
                                  size_t outsz)                                 \
 {                                                                              \
+    (void)outsz;                                                               \
     if (ossl_prov_is_running() && fin(out, ctx)) {                             \
         *outl = dgstsize;                                                      \
         return 1;                                                              \

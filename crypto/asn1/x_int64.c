@@ -28,6 +28,7 @@
 
 static int uint64_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
+    (void)it;
     if ((*pval = (ASN1_VALUE *)OPENSSL_zalloc(sizeof(uint64_t))) == NULL)
         return 0;
     return 1;
@@ -35,12 +36,14 @@ static int uint64_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 static void uint64_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
+    (void)it;
     OPENSSL_free(*pval);
     *pval = NULL;
 }
 
 static void uint64_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
+    (void)it;
     **(uint64_t **)pval = 0;
 }
 
@@ -51,6 +54,7 @@ static int uint64_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
     int neg = 0;
     /* this exists to bypass broken gcc optimization */
     char *cp = (char *)*pval;
+    (void)putype;
 
     /* use memcpy, because we may not be uint64_t aligned */
     memcpy(&utmp, cp, sizeof(utmp));
@@ -74,6 +78,8 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     uint64_t utmp = 0;
     char *cp;
     int neg = 0;
+    (void)utype;
+    (void)free_cont;
 
     if (*pval == NULL && !uint64_new(pval, it))
         return 0;
@@ -112,6 +118,8 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 static int uint64_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
                         int indent, const ASN1_PCTX *pctx)
 {
+    (void)indent;
+    (void)pctx;
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
         return BIO_printf(out, "%jd\n", **(int64_t **)pval);
     return BIO_printf(out, "%ju\n", **(uint64_t **)pval);
@@ -121,6 +129,7 @@ static int uint64_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
 
 static int uint32_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
+    (void)it;
     if ((*pval = (ASN1_VALUE *)OPENSSL_zalloc(sizeof(uint32_t))) == NULL)
         return 0;
     return 1;
@@ -128,12 +137,14 @@ static int uint32_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 static void uint32_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
+    (void)it;
     OPENSSL_free(*pval);
     *pval = NULL;
 }
 
 static void uint32_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
+    (void)it;
     **(uint32_t **)pval = 0;
 }
 
@@ -144,6 +155,7 @@ static int uint32_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
     int neg = 0;
     /* this exists to bypass broken gcc optimization */
     char *cp = (char *)*pval;
+    (void)putype;
 
     /* use memcpy, because we may not be uint32_t aligned */
     memcpy(&utmp, cp, sizeof(utmp));
@@ -175,6 +187,8 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     uint32_t utmp2 = 0;
     char *cp;
     int neg = 0;
+    (void)utype;
+    (void)free_cont;
 
     if (*pval == NULL && !uint64_new(pval, it))
         return 0;
@@ -219,6 +233,8 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 static int uint32_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
                         int indent, const ASN1_PCTX *pctx)
 {
+    (void)indent;
+    (void)pctx;
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
         return BIO_printf(out, "%d\n", (int)**(int32_t **)pval);
     return BIO_printf(out, "%u\n", (unsigned int)**(uint32_t **)pval);

@@ -427,6 +427,7 @@ static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,
     int ok = 0;
 
 #ifdef FIPS_MODULE
+    (void)primes;
     ok = ossl_rsa_sp800_56b_generate_key(rsa, bits, e_value, cb);
     pairwise_test = 1; /* FIPS MODE needs to always run the pairwise test */
 #else

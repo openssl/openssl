@@ -45,7 +45,7 @@ const OPTIONS kdf_options[] = {
 
     OPT_PARAMETERS(),
     {"kdf_name", 0, 0, "Name of the KDF algorithm"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 static char *alloc_kdf_algorithm_name(STACK_OF(OPENSSL_STRING) **optp,

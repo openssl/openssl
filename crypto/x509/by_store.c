@@ -109,6 +109,8 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
                             long argl, char **retp, OSSL_LIB_CTX *libctx,
                             const char *propq)
 {
+    (void)argl;
+    (void)retp;
     switch (cmd) {
     case X509_L_ADD_STORE:
         /* First try the newer default cert URI envvar. */
@@ -161,6 +163,8 @@ static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
     int i;
     int ok = 0;
+    (void)type;
+    (void)ret;
 
     for (i = 0; i < sk_OPENSSL_STRING_num(uris); i++) {
         ok = cache_objects(ctx, sk_OPENSSL_STRING_value(uris, i), criterion,

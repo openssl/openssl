@@ -47,6 +47,7 @@ static const char dummy_cookie[] = "0123456";
 static int generate_cookie_cb(SSL *ssl, unsigned char *cookie,
                               unsigned int *cookie_len)
 {
+    (void)ssl;
     memcpy(cookie, dummy_cookie, sizeof(dummy_cookie));
     *cookie_len = sizeof(dummy_cookie);
     return 1;
@@ -55,11 +56,14 @@ static int generate_cookie_cb(SSL *ssl, unsigned char *cookie,
 static int verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
                             unsigned int cookie_len)
 {
+    (void)ssl;
     return TEST_mem_eq(cookie, cookie_len, dummy_cookie, sizeof(dummy_cookie));
 }
 
-static unsigned int timer_cb(SSL *s, unsigned int timer_us)
+static unsigned int timer_cb(SSL *ssl, unsigned int timer_us)
 {
+    (void)ssl;
+
     ++timer_cb_count;
 
     if (timer_us == 0)

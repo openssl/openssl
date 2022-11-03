@@ -63,6 +63,8 @@ ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
     ASN1_BIT_STRING *bs;
     int i;
     BIT_STRING_BITNAME *bnam;
+    (void)ctx;
+
     if ((bs = ASN1_BIT_STRING_new()) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         return NULL;

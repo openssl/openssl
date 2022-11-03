@@ -46,6 +46,7 @@ static void *seed_src_new(void *provctx, void *parent,
                           const OSSL_DISPATCH *parent_dispatch)
 {
     PROV_SEED_SRC *s;
+    (void)parent_dispatch;
 
     if (parent != NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_SEED_SOURCES_MUST_NOT_HAVE_A_PARENT);
@@ -72,6 +73,10 @@ static int seed_src_instantiate(void *vseed, unsigned int strength,
                                 ossl_unused const OSSL_PARAM params[])
 {
     PROV_SEED_SRC *s = (PROV_SEED_SRC *)vseed;
+    (void)strength;
+    (void)prediction_resistance;
+    (void)pstr;
+    (void)pstr_len;
 
     s->state = EVP_RAND_STATE_READY;
     return 1;

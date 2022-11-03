@@ -36,6 +36,9 @@ static void *fake_rand_newctx(void *provctx, void *parent,
                               const OSSL_DISPATCH *parent_dispatch)
 {
     FAKE_RAND *r = OPENSSL_zalloc(sizeof(*r));
+    (void)provctx;
+    (void)parent;
+    (void)parent_dispatch;
 
     if (r != NULL)
         r->state = EVP_RAND_STATE_UNINITIALISED;
@@ -54,6 +57,7 @@ static int fake_rand_instantiate(void *vrng, ossl_unused unsigned int strength,
                                  ossl_unused const OSSL_PARAM params[])
 {
     FAKE_RAND *frng = (FAKE_RAND *)vrng;
+    (void)pstr_len;
 
     frng->state = EVP_RAND_STATE_READY;
     return 1;
@@ -74,6 +78,10 @@ static int fake_rand_generate(void *vrng, unsigned char *out, size_t outlen,
     FAKE_RAND *frng = (FAKE_RAND *)vrng;
     size_t l;
     uint32_t r;
+    (void)strength;
+    (void)prediction_resistance;
+    (void)adin;
+    (void)adinlen;
 
     if (frng->cb != NULL)
         return (*frng->cb)(out, outlen, frng->name, frng->ctx);
@@ -90,6 +98,7 @@ static int fake_rand_generate(void *vrng, unsigned char *out, size_t outlen,
 
 static int fake_rand_enable_locking(void *vrng)
 {
+    (void)vrng;
     return 1;
 }
 
@@ -138,14 +147,15 @@ static const OSSL_DISPATCH fake_rand_functions[] = {
 };
 
 static const OSSL_ALGORITHM fake_rand_rand[] = {
-    { "FAKE", "provider=fake", fake_rand_functions },
-    { NULL, NULL, NULL }
+    { "FAKE", "provider=fake", fake_rand_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM *fake_rand_query(void *provctx,
                                              int operation_id,
                                              int *no_cache)
 {
+    (void)provctx;
     *no_cache = 0;
     switch (operation_id) {
     case OSSL_OP_RAND:
@@ -165,6 +175,8 @@ static int fake_rand_provider_init(const OSSL_CORE_HANDLE *handle,
                                    const OSSL_DISPATCH *in,
                                    const OSSL_DISPATCH **out, void **provctx)
 {
+    (void)handle;
+    (void)in;
     if (!TEST_ptr(*provctx = OSSL_LIB_CTX_new()))
         return 0;
     *out = fake_rand_method;

@@ -362,18 +362,21 @@ static int eckey_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
 static int eckey_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                              ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_EC_KEY_print(bp, pkey->pkey.ec, indent, EC_KEY_PRINT_PARAM);
 }
 
 static int eckey_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                            ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_EC_KEY_print(bp, pkey->pkey.ec, indent, EC_KEY_PRINT_PUBLIC);
 }
 
 static int eckey_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                             ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_EC_KEY_print(bp, pkey->pkey.ec, indent, EC_KEY_PRINT_PRIVATE);
 }
 
@@ -700,10 +703,14 @@ const EVP_PKEY_ASN1_METHOD ossl_eckey_asn1_meth = {
 };
 
 #if !defined(OPENSSL_NO_SM2)
+/* from dsa_ameth.c */
+#define EVP_PKEY_ASN1_METHOD_SLACK NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+
 const EVP_PKEY_ASN1_METHOD ossl_sm2_asn1_meth = {
    EVP_PKEY_SM2,
    EVP_PKEY_EC,
-   ASN1_PKEY_ALIAS
+   ASN1_PKEY_ALIAS,
+   EVP_PKEY_ASN1_METHOD_SLACK
 };
 #endif
 

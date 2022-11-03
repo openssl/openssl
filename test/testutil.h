@@ -188,7 +188,7 @@ const OPTIONS *test_get_options(void) \
     enum { OPT_TEST_ENUM }; \
     static const OPTIONS options[] = { \
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE(usage_str), \
-        { NULL } \
+        { NULL, 0, 0, NULL } \
     }; \
     return options; \
 }

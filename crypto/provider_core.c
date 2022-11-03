@@ -400,6 +400,9 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
 {
     struct provider_store_st *store = NULL;
     OSSL_PROVIDER *prov = NULL;
+#ifdef FIPS_MODULE
+    (void)noconfig;
+#endif
 
     if ((store = get_provider_store(libctx)) != NULL) {
         OSSL_PROVIDER tmpl = { 0, };
@@ -520,11 +523,12 @@ static int provider_free_intern(OSSL_PROVIDER *prov, int deactivate)
  */
 OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
                                  OSSL_provider_init_fn *init_function,
-                                 int noconfig)
+                                 int noconfig /*unused*/)
 {
     struct provider_store_st *store = NULL;
     OSSL_PROVIDER_INFO template;
     OSSL_PROVIDER *prov = NULL;
+    (void)noconfig;
 
     if ((store = get_provider_store(libctx)) == NULL)
         return NULL;
@@ -579,7 +583,9 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
 static int create_provider_children(OSSL_PROVIDER *prov)
 {
     int ret = 1;
-#ifndef FIPS_MODULE
+#ifdef FIPS_MODULE
+    (void)prov;
+#else
     struct provider_store_st *store = prov->store;
     OSSL_PROVIDER_CHILD_CB *child_cb;
     int i, max;
@@ -1034,10 +1040,13 @@ static int provider_deactivate(OSSL_PROVIDER *prov, int upcalls,
 {
     int count;
     struct provider_store_st *store;
+    int lock = 1;
 #ifndef FIPS_MODULE
     int freeparent = 0;
+#else
+    (void)upcalls;
+    (void)removechildren;
 #endif
-    int lock = 1;
 
     if (!ossl_assert(prov != NULL))
         return -1;
@@ -1109,6 +1118,9 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
     int count = -1;
     struct provider_store_st *store;
     int ret = 1;
+#ifdef FIPS_MODULE
+    (void)upcalls;
+#endif
 
     store = prov->store;
     /*
@@ -1235,6 +1247,9 @@ static int provider_remove_store_methods(OSSL_PROVIDER *prov)
 int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild)
 {
     int count;
+#ifdef FIPS_MODULE
+    (void)aschild;
+#endif
 
     if (prov == NULL)
         return 0;
@@ -1492,6 +1507,7 @@ const DSO *ossl_provider_dso(const OSSL_PROVIDER *prov)
 const char *ossl_provider_module_name(const OSSL_PROVIDER *prov)
 {
 #ifdef FIPS_MODULE
+    (void)prov;
     return NULL;
 #else
     return DSO_get_filename(prov->module);
@@ -1501,6 +1517,7 @@ const char *ossl_provider_module_name(const OSSL_PROVIDER *prov)
 const char *ossl_provider_module_path(const OSSL_PROVIDER *prov)
 {
 #ifdef FIPS_MODULE
+    (void)prov;
     return NULL;
 #else
     /* FIXME: Ensure it's a full path */
@@ -1884,6 +1901,7 @@ static OSSL_FUNC_core_obj_create_fn core_obj_create;
 
 static const OSSL_PARAM *core_gettable_params(const OSSL_CORE_HANDLE *handle)
 {
+    (void)handle;
     return param_types;
 }
 
@@ -1966,12 +1984,14 @@ static int core_thread_start(const OSSL_CORE_HANDLE *handle,
  */
 static void core_new_error(const OSSL_CORE_HANDLE *handle)
 {
+    (void)handle;
     ERR_new();
 }
 
 static void core_set_error_debug(const OSSL_CORE_HANDLE *handle,
                                  const char *file, int line, const char *func)
 {
+    (void)handle;
     ERR_set_debug(file, line, func);
 }
 
@@ -1998,16 +2018,19 @@ static void core_vset_error(const OSSL_CORE_HANDLE *handle,
 
 static int core_set_error_mark(const OSSL_CORE_HANDLE *handle)
 {
+    (void)handle;
     return ERR_set_mark();
 }
 
 static int core_clear_last_error_mark(const OSSL_CORE_HANDLE *handle)
 {
+    (void)handle;
     return ERR_clear_last_mark();
 }
 
 static int core_pop_error_to_mark(const OSSL_CORE_HANDLE *handle)
 {
+    (void)handle;
     return ERR_pop_to_mark();
 }
 
@@ -2052,6 +2075,7 @@ static int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov,
     int sign_nid = OBJ_txt2nid(sign_name);
     int digest_nid = NID_undef;
     int pkey_nid = OBJ_txt2nid(pkey_name);
+    (void)prov;
 
     if (digest_name != NULL && digest_name[0] != '\0'
         && (digest_nid = OBJ_txt2nid(digest_name)) == NID_undef)
@@ -2076,6 +2100,7 @@ static int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov,
 static int core_obj_create(const OSSL_CORE_HANDLE *prov, const char *oid,
                            const char *sn, const char *ln)
 {
+    (void)prov;
     /* Check if it already exists and create it if not */
     return OBJ_txt2nid(oid) != NID_undef
            || OBJ_create(oid, sn, ln) != NID_undef;

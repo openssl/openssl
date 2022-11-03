@@ -88,6 +88,7 @@ static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
     long ltmp;
     unsigned long utmp, sign;
     int clen, pad, i;
+    (void)putype;
 
     memcpy(&ltmp, pval, COPY_SIZE(*pval, ltmp));
     if (ltmp == it->size)
@@ -131,6 +132,8 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     int i;
     long ltmp;
     unsigned long utmp = 0, sign = 0x100;
+    (void)utype;
+    (void)free_cont;
 
     if (len > 1) {
         /*
@@ -190,6 +193,9 @@ static int long_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
                       int indent, const ASN1_PCTX *pctx)
 {
     long l;
+    (void)it;
+    (void)indent;
+    (void)pctx;
 
     memcpy(&l, pval, COPY_SIZE(*pval, l));
     return BIO_printf(out, "%ld\n", l);

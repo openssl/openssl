@@ -104,6 +104,7 @@
     }                                                                   \
     PEM_write_ex_fnsig(name, TYPE, OUTTYPE, writename)                  \
     {                                                                   \
+        (void)libctx;                                                   \
         IMPLEMENT_PEM_provided_write_body_vars(type, asn1, propq);      \
         IMPLEMENT_PEM_provided_write_body_main(type, outtype);          \
         IMPLEMENT_PEM_provided_write_body_fallback(str, asn1,           \

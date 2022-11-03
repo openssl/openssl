@@ -386,18 +386,21 @@ static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
 static int rsa_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                          ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return pkey_rsa_print(bp, pkey, indent, 0);
 }
 
 static int rsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                           ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return pkey_rsa_print(bp, pkey, indent, 1);
 }
 
 static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
                          const ASN1_STRING *sig, int indent, ASN1_PCTX *pctx)
 {
+    (void)pctx;
     if (OBJ_obj2nid(sigalg->algorithm) == EVP_PKEY_RSA_PSS) {
         int rv;
         RSA_PSS_PARAMS *pss = ossl_rsa_pss_decode(sigalg);
@@ -419,6 +422,7 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     const EVP_MD *md;
     const EVP_MD *mgf1md;
     int min_saltlen;
+    (void)arg1;
 
     switch (op) {
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
@@ -571,6 +575,8 @@ int ossl_rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
 static int rsa_pss_verify_param(const EVP_MD **pmd, const EVP_MD **pmgf1md,
                                 int *psaltlen, int *ptrailerField)
 {
+    (void)pmd;
+    (void)pmgf1md;
     if (psaltlen != NULL && *psaltlen < 0) {
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_SALT_LENGTH);
         return 0;
@@ -613,6 +619,9 @@ static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
                            const void *asn, const X509_ALGOR *sigalg,
                            const ASN1_BIT_STRING *sig, EVP_PKEY *pkey)
 {
+    (void)it;
+    (void)asn;
+    (void)sig;
     /* Sanity check: make sure it is PSS */
     if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS) {
         ERR_raise(ERR_LIB_RSA, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
@@ -631,6 +640,9 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, const void *asn,
 {
     int pad_mode;
     EVP_PKEY_CTX *pkctx = EVP_MD_CTX_get_pkey_ctx(ctx);
+    (void)it;
+    (void)asn;
+    (void)sig;
 
     if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
         return 0;
@@ -673,6 +685,7 @@ static int rsa_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *sigalg,
     const EVP_MD *mgf1md = NULL, *md = NULL;
     RSA_PSS_PARAMS *pss;
     int secbits;
+    (void)sig;
 
     /* Sanity check: make sure it is PSS */
     if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS)
@@ -732,7 +745,7 @@ static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
  * There is no need to do RSA_test_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS)
  * checks in this method since the caller tests EVP_KEYMGMT_is_a() first.
  */
-static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
+static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type /*unused*/,
                              void *to_keydata,
                              OSSL_FUNC_keymgmt_import_fn *importer,
                              OSSL_LIB_CTX *libctx, const char *propq)
@@ -742,6 +755,9 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
     OSSL_PARAM *params = NULL;
     int selection = 0;
     int rv = 0;
+    (void)rsa_type;
+    (void)libctx;
+    (void)propq;
 
     if (tmpl == NULL)
         return 0;
@@ -864,7 +880,7 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
                               OSSL_FUNC_keymgmt_import_fn *importer,
                               OSSL_LIB_CTX *libctx, const char *propq)
 {
-    return rsa_int_export_to(from, RSA_FLAG_TYPE_RSA, to_keydata,
+    return rsa_int_export_to(from, RSA_FLAG_TYPE_RSA/*unused*/, to_keydata,
                              importer, libctx, propq);
 }
 
@@ -872,7 +888,7 @@ static int rsa_pss_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
                                   OSSL_FUNC_keymgmt_import_fn *importer,
                                   OSSL_LIB_CTX *libctx, const char *propq)
 {
-    return rsa_int_export_to(from, RSA_FLAG_TYPE_RSASSAPSS, to_keydata,
+    return rsa_int_export_to(from, RSA_FLAG_TYPE_RSASSAPSS/*unused*/, to_keydata,
                              importer, libctx, propq);
 }
 
@@ -926,7 +942,8 @@ const EVP_PKEY_ASN1_METHOD ossl_rsa_asn1_meths[2] = {
      rsa_bits,
      rsa_security_bits,
 
-     0, 0, 0, 0, 0, 0,
+     NULL, NULL, NULL,         /* param_decode/encode/missing */
+     NULL, NULL, NULL,         /* param_copy/cmp/print */
 
      rsa_sig_print,
      int_rsa_free,
@@ -938,19 +955,25 @@ const EVP_PKEY_ASN1_METHOD ossl_rsa_asn1_meths[2] = {
      rsa_sig_info_set,
      rsa_pkey_check,
 
-     0, 0,
-     0, 0, 0, 0,
+     NULL, NULL,               /* pkey_public/param_check */
+     NULL, NULL, NULL, NULL,   /* get/set_priv/pub_key */
 
      rsa_pkey_dirty_cnt,
      rsa_pkey_export_to,
      rsa_pkey_import_from,
-     rsa_pkey_copy
+     rsa_pkey_copy,
+     NULL                      /* priv_decode_ex */
     },
 
     {
      EVP_PKEY_RSA2,
      EVP_PKEY_RSA,
-     ASN1_PKEY_ALIAS}
+     ASN1_PKEY_ALIAS,
+     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+     NULL, NULL
+    }
 };
 
 const EVP_PKEY_ASN1_METHOD ossl_rsa_pss_asn1_meth = {
@@ -974,22 +997,24 @@ const EVP_PKEY_ASN1_METHOD ossl_rsa_pss_asn1_meth = {
      rsa_bits,
      rsa_security_bits,
 
-     0, 0, 0, 0, 0, 0,
+     NULL, NULL, NULL,         /* param_decode/encode/missing */
+     NULL, NULL, NULL,         /* param_copy/cmp/print */
 
      rsa_sig_print,
      int_rsa_free,
      rsa_pkey_ctrl,
-     0, 0,
+     NULL, NULL,               /* old_rsa_priv_decode, old_rsa_priv_encode */
      rsa_item_verify,
      rsa_item_sign,
      rsa_sig_info_set,
      rsa_pkey_check,
 
-     0, 0,
-     0, 0, 0, 0,
+     NULL, NULL,               /* pkey_public/param_check */
+     NULL, NULL, NULL, NULL,   /* get/set_priv/pub_key */
 
      rsa_pkey_dirty_cnt,
      rsa_pss_pkey_export_to,
      rsa_pss_pkey_import_from,
-     rsa_pkey_copy
+     rsa_pkey_copy,
+     NULL                      /* priv_decode_ex */
 };

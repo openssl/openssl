@@ -532,6 +532,8 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                       OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ok = 1;
+    (void)libctx;
+    (void)propq;
 
     /* There is no specific object type for PKCS12 */
     if (data->object_type == OSSL_OBJECT_UNKNOWN) {

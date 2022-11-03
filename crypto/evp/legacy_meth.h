@@ -37,4 +37,26 @@ static int nm##_final(EVP_MD_CTX *ctx, unsigned char *md)                      \
 
 
 #define LEGACY_EVP_MD_METH_TABLE(init, update, final, ctrl, blksz)             \
-    init, update, final, NULL, NULL, blksz, 0, ctrl
+    init, update, final, NULL, NULL, blksz,   \
+    0, /* ctx_size */                         \
+    ctrl,                                     \
+    /* New structure members */               \
+    0,           /* name_id */                \
+    NULL,        /* type_name */              \
+    NULL,        /* description */            \
+    NULL,        /* prov */                   \
+    0,           /* refcnt */                 \
+    NULL,        /* lock */                   \
+    NULL,        /* newctx */                 \
+    NULL,        /* dinit */                  \
+    NULL,        /* dupdate */                \
+    NULL,        /* dfinal */                 \
+    NULL,        /* digest */                 \
+    NULL,        /* freectx */                \
+    NULL,        /* dupctx */                 \
+    NULL,        /* get_params */             \
+    NULL,        /* set_ctx_params */         \
+    NULL,        /* get_ctx_params */         \
+    NULL,        /* gettable_params */        \
+    NULL,        /* settable_ctx_params */    \
+    NULL         /* gettable_ctx_params */

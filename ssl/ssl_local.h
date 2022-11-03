@@ -2959,6 +2959,8 @@ static ossl_unused ossl_inline int ssl_tsan_lock(const SSL_CTX *ctx)
 #ifdef TSAN_REQUIRES_LOCKING
     if (!CRYPTO_THREAD_write_lock(ctx->tsan_lock))
         return 0;
+#else
+    (void)ctx;
 #endif
     return 1;
 }
@@ -2967,6 +2969,8 @@ static ossl_unused ossl_inline void ssl_tsan_unlock(const SSL_CTX *ctx)
 {
 #ifdef TSAN_REQUIRES_LOCKING
     CRYPTO_THREAD_unlock(ctx->tsan_lock);
+#else
+    (void)ctx;
 #endif
 }
 

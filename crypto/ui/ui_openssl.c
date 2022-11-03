@@ -202,6 +202,7 @@ static int close_console(UI *ui);
  */
 static int write_string(UI *ui, UI_STRING *uis)
 {
+    (void)ui;
     switch (UI_get_string_type(uis)) {
     case UIT_ERROR:
     case UIT_INFO:
@@ -484,6 +485,7 @@ static int open_console(UI *ui)
 
 static int noecho_console(UI *ui)
 {
+    (void)ui;
 # ifdef TTY_FLAGS
     memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
     tty_new.TTY_FLAGS &= ~ECHO;
@@ -520,6 +522,7 @@ static int noecho_console(UI *ui)
 
 static int echo_console(UI *ui)
 {
+    (void)ui;
 # if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
     memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
     if (is_a_tty && (TTY_set(fileno(tty_in), &tty_new) == -1))
@@ -704,7 +707,10 @@ static UI_METHOD ui_openssl = {
     NULL,                       /* No flusher is needed for command lines */
     read_string,
     close_console,
-    NULL
+    NULL,                        /* duplicate */
+    NULL,                        /* destroy */
+    NULL,                        /* construct_prompt */
+    {NULL, NULL}                 /* ex_data */
 };
 
 /* The method with all the built-in console thingies */

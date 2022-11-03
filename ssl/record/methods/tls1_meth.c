@@ -28,6 +28,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     EVP_CIPHER_CTX *ciph_ctx;
     EVP_PKEY *mac_key;
     int enc = (rl->direction == OSSL_RECORD_DIRECTION_WRITE) ? 1 : 0;
+    (void)keylen;
 
     if (level != OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
         return OSSL_RECORD_RETURN_FATAL;

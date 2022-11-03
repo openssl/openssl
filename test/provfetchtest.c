@@ -20,6 +20,13 @@ static int dummy_decoder_decode(void *ctx, OSSL_CORE_BIO *cin, int selection,
                                 OSSL_CALLBACK *object_cb, void *object_cbarg,
                                 OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
+    (void)ctx;
+    (void)cin;
+    (void)selection;
+    (void)object_cb;
+    (void)object_cbarg;
+    (void)pw_cb;
+    (void)pw_cbarg;
     return 0;
 }
 
@@ -29,8 +36,8 @@ static const OSSL_DISPATCH dummy_decoder_functions[] = {
 };
 
 static const OSSL_ALGORITHM dummy_decoders[] = {
-    { "DUMMY", "provider=dummy,input=pem", dummy_decoder_functions },
-    { NULL, NULL, NULL }
+    { "DUMMY", "provider=dummy,input=pem", dummy_decoder_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 static int dummy_encoder_encode(void *ctx, OSSL_CORE_BIO *out,
@@ -38,6 +45,13 @@ static int dummy_encoder_encode(void *ctx, OSSL_CORE_BIO *out,
                                 const OSSL_PARAM obj_abstract[], int selection,
                                 OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
+    (void)ctx;
+    (void)out;
+    (void)obj_raw;
+    (void)obj_abstract;
+    (void)selection;
+    (void)cb;
+    (void)cbarg;
     return 0;
 }
 
@@ -47,12 +61,14 @@ static const OSSL_DISPATCH dummy_encoder_functions[] = {
 };
 
 static const OSSL_ALGORITHM dummy_encoders[] = {
-    { "DUMMY", "provider=dummy,output=pem", dummy_encoder_functions },
-    { NULL, NULL, NULL }
+    { "DUMMY", "provider=dummy,output=pem", dummy_encoder_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 static void *dummy_store_open(void *provctx, const char *uri)
 {
+    (void)provctx;
+    (void)uri;
     return NULL;
 }
 
@@ -60,16 +76,23 @@ static int dummy_store_load(void *loaderctx,  OSSL_CALLBACK *object_cb,
                             void *object_cbarg, OSSL_PASSPHRASE_CALLBACK *pw_cb,
                             void *pw_cbarg)
 {
+    (void)loaderctx;
+    (void)object_cb;
+    (void)object_cbarg;
+    (void)pw_cb;
+    (void)pw_cbarg;
     return 0;
 }
 
 static int dumm_store_eof(void *loaderctx)
 {
+    (void)loaderctx;
     return 0;
 }
 
 static int dummy_store_close(void *loaderctx)
 {
+    (void)loaderctx;
     return 0;
 }
 
@@ -82,18 +105,21 @@ static const OSSL_DISPATCH dummy_store_functions[] = {
 };
 
 static const OSSL_ALGORITHM dummy_store[] = {
-    { "DUMMY", "provider=dummy", dummy_store_functions },
-    { NULL, NULL, NULL }
+    { "DUMMY", "provider=dummy", dummy_store_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 static void *dummy_rand_newctx(void *provctx, void *parent,
                                const OSSL_DISPATCH *parent_calls)
 {
+    (void)parent;
+    (void)parent_calls;
     return provctx;
 }
 
 static void dummy_rand_freectx(void *vctx)
 {
+    (void)vctx;
 }
 
 static int dummy_rand_instantiate(void *vdrbg, unsigned int strength,
@@ -101,11 +127,18 @@ static int dummy_rand_instantiate(void *vdrbg, unsigned int strength,
                                   const unsigned char *pstr, size_t pstr_len,
                                   const OSSL_PARAM params[])
 {
+    (void)vdrbg;
+    (void)strength;
+    (void)prediction_resistance;
+    (void)pstr;
+    (void)pstr_len;
+    (void)params;
     return 1;
 }
 
 static int dummy_rand_uninstantiate(void *vdrbg)
 {
+    (void)vdrbg;
     return 1;
 }
 
@@ -114,7 +147,12 @@ static int dummy_rand_generate(void *vctx, unsigned char *out, size_t outlen,
                                const unsigned char *addin, size_t addin_len)
 {
     size_t i;
-
+    (void)vctx;
+    (void)strength;
+    (void)prediction_resistance;
+    (void)addin;
+    (void)addin_len;
+ 
     for (i = 0; i <outlen; i++)
         out[i] = (unsigned char)(i & 0xff);
 
@@ -127,12 +165,15 @@ static const OSSL_PARAM *dummy_rand_gettable_ctx_params(void *vctx, void *provct
         OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_REQUEST, NULL),
         OSSL_PARAM_END
     };
+    (void)vctx;
+    (void)provctx;
     return known_gettable_ctx_params;
 }
 
 static int dummy_rand_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
+    (void)vctx;
 
     p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_MAX_REQUEST);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, INT_MAX))
@@ -143,16 +184,19 @@ static int dummy_rand_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
 static int dummy_rand_enable_locking(void *vtest)
 {
+    (void)vtest;
     return 1;
 }
 
 static int dummy_rand_lock(void *vtest)
 {
+    (void)vtest;
     return 1;
 }
 
 static void dummy_rand_unlock(void *vtest)
 {
+    (void)vtest;
 }
 
 static const OSSL_DISPATCH dummy_rand_functions[] = {
@@ -171,13 +215,14 @@ static const OSSL_DISPATCH dummy_rand_functions[] = {
 };
 
 static const OSSL_ALGORITHM dummy_rand[] = {
-    { "DUMMY", "provider=dummy", dummy_rand_functions },
-    { NULL, NULL, NULL }
+    { "DUMMY", "provider=dummy", dummy_rand_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM *dummy_query(void *provctx, int operation_id,
                                          int *no_cache)
 {
+    (void)provctx;
     *no_cache = 0;
     switch (operation_id) {
     case OSSL_OP_DECODER:

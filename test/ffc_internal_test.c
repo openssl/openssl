@@ -581,6 +581,7 @@ static int ffc_private_gen_test(int index)
     BIGNUM *priv = NULL;
     DH *dh = NULL;
     BN_CTX *ctx = NULL;
+    (void)index;
 
     if (!TEST_ptr(ctx = BN_CTX_new_ex(NULL)))
         goto err;

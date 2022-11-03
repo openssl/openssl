@@ -30,6 +30,8 @@ static const BIO_METHOD null_method = {
     NULL,
     NULL,
     NULL,                     /* null_callback_ctrl */
+    NULL,                     /* bsendmmsg */
+    NULL                      /* brecvmmsg */
 };
 
 const BIO_METHOD *BIO_s_null(void)
@@ -39,16 +41,24 @@ const BIO_METHOD *BIO_s_null(void)
 
 static int null_read(BIO *b, char *out, int outl)
 {
+    (void)b;
+    (void)out;
+    (void)outl;
     return 0;
 }
 
 static int null_write(BIO *b, const char *in, int inl)
 {
+    (void)b;
+    (void)in;
     return inl;
 }
 
 static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
+    (void)b;
+    (void)num;
+    (void)ptr;
     long ret = 1;
 
     switch (cmd) {
@@ -74,11 +84,15 @@ static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 static int null_gets(BIO *bp, char *buf, int size)
 {
+    (void)bp;
+    (void)buf;
+    (void)size;
     return 0;
 }
 
 static int null_puts(BIO *bp, const char *str)
 {
+    (void)bp;
     if (str == NULL)
         return 0;
     return strlen(str);

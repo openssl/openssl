@@ -1859,7 +1859,7 @@ const OPTIONS *test_get_options(void)
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "v", OPT_VERBOSE, '-', "Enable verbose mode" },
         { OPT_HELP_STR, 1, '-', "Run HPKE tests\n" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

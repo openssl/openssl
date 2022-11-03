@@ -111,6 +111,8 @@ static int i2r_ASIdentifiers(const X509V3_EXT_METHOD *method,
                              void *ext, BIO *out, int indent)
 {
     ASIdentifiers *asid = ext;
+    (void)method;
+
     return (i2r_ASIdentifierChoice(out, asid->asnum, indent,
                                    "Autonomous System Numbers") &&
             i2r_ASIdentifierChoice(out, asid->rdi, indent,
@@ -513,6 +515,8 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
     ASN1_INTEGER *min = NULL, *max = NULL;
     ASIdentifiers *asid = NULL;
     int i;
+    (void)method;
+    (void)ctx;
 
     if ((asid = ASIdentifiers_new()) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);

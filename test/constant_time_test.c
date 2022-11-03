@@ -62,6 +62,7 @@ static int test_binary_op(unsigned int (*op) (unsigned int a, unsigned int b),
                           const char *op_name, unsigned int a, unsigned int b,
                           int is_true)
 {
+    (void)op_name;
     if (is_true && !TEST_uint_eq(op(a, b), CONSTTIME_TRUE))
         return 0;
     if (!is_true && !TEST_uint_eq(op(a, b), CONSTTIME_FALSE))
@@ -74,6 +75,7 @@ static int test_binary_op_8(unsigned
                             const char *op_name, unsigned int a,
                             unsigned int b, int is_true)
 {
+    (void)op_name;
     if (is_true && !TEST_uint_eq(op(a, b), CONSTTIME_TRUE_8))
         return 0;
     if (!is_true && !TEST_uint_eq(op(a, b), CONSTTIME_FALSE_8))
@@ -85,6 +87,7 @@ static int test_binary_op_s(size_t (*op) (size_t a, size_t b),
                             const char *op_name, size_t a, size_t b,
                             int is_true)
 {
+    (void)op_name;
     if (is_true && !TEST_size_t_eq(op(a, b), CONSTTIME_TRUE_S))
         return 0;
     if (!is_true && !TEST_uint_eq(op(a, b), CONSTTIME_FALSE_S))

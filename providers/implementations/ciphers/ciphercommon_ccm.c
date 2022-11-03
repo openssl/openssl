@@ -286,6 +286,7 @@ int ossl_ccm_stream_final(void *vctx, unsigned char *out, size_t *outl,
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
     int i;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;

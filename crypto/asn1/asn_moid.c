@@ -44,6 +44,7 @@ static int oid_module_init(CONF_IMODULE *md, const CONF *cnf)
 
 static void oid_module_finish(CONF_IMODULE *md)
 {
+    (void)md;
 }
 
 void ASN1_add_oid_module(void)

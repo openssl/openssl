@@ -236,7 +236,7 @@ const OPTIONS cms_options[] = {
     {"receipt_request_print", OPT_RR_PRINT, '-', "Print CMS Receipt Request" },
 
     OPT_V_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 static CMS_ContentInfo *load_content_info(int informat, BIO *in, int flags,

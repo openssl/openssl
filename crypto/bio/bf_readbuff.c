@@ -43,6 +43,8 @@ static const BIO_METHOD methods_readbuffer = {
     readbuffer_new,
     readbuffer_free,
     readbuffer_callback_ctrl,
+    NULL,                       /* no bsendmmsg */
+    NULL                        /* no brecvmmsg */
 };
 
 const BIO_METHOD *BIO_f_readbuffer(void)
@@ -152,10 +154,15 @@ static int readbuffer_read(BIO *b, char *out, int outl)
 
 static int readbuffer_write(BIO *b, const char *in, int inl)
 {
+    (void)b;
+    (void)in;
+    (void)inl;
     return 0;
 }
 static int readbuffer_puts(BIO *b, const char *str)
 {
+    (void)b;
+    (void)str;
     return 0;
 }
 

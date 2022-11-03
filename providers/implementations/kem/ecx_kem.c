@@ -440,6 +440,7 @@ static int generate_ecxdhkm(const ECX_KEY *sender, const ECX_KEY *peer,
                            unsigned int secretsz)
 {
     size_t len = 0;
+    (void)secretsz;
 
     /* NOTE: ossl_ecx_compute_key checks for shared secret being all zeros */
     return ossl_ecx_compute_key((ECX_KEY *)peer, (ECX_KEY *)sender,

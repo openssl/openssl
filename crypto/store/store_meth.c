@@ -273,6 +273,7 @@ static void *construct_loader(const OSSL_ALGORITHM *algodef,
 /* Intermediary function to avoid ugly casts, used below */
 static void destruct_loader(void *method, void *data)
 {
+    (void)data;
     OSSL_STORE_LOADER_free(method);
 }
 

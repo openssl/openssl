@@ -243,6 +243,7 @@ static int test_thread_internal(void)
 
 static uint32_t test_thread_native_multiple_joins_fn1(void *data)
 {
+    (void)data;
     return 0;
 }
 

@@ -200,7 +200,8 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
          * Temporary structure so OSSL_STORE_close() can work even when
          * |ctx| couldn't be allocated properly
          */
-        OSSL_STORE_CTX tmpctx = { NULL, };
+        OSSL_STORE_CTX tmpctx = { NULL, NULL, NULL, NULL, NULL,
+            0, NULL, 0, 0, NULL, {0} };
 
         tmpctx.fetched_loader = fetched_loader;
         tmpctx.loader = loader;

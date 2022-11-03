@@ -40,6 +40,7 @@ static const PROV_CIPHER_HW aria_##mode = {                                    \
 };                                                                             \
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_aria_##mode(size_t keybits)          \
 {                                                                              \
+    (void)keybits;                                                             \
     return &aria_##mode;                                                       \
 }
 

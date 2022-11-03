@@ -31,6 +31,7 @@ const X509V3_EXT_METHOD ossl_v3_delta_crl = {
 static void *s2i_asn1_int(X509V3_EXT_METHOD *meth, X509V3_CTX *ctx,
                           const char *value)
 {
+    (void)ctx;
     return s2i_ASN1_INTEGER(meth, value);
 }
 

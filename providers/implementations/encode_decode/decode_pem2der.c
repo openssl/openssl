@@ -80,6 +80,7 @@ static int pem2der_pass_helper(char *buf, int num, int w, void *data)
 {
     struct pem2der_pass_data_st *pass_data = data;
     size_t plen;
+    (void)w;
 
     if (pass_data == NULL
         || pass_data->cb == NULL
@@ -140,6 +141,7 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     long der_len = 0;
     int ok = 0;
     int objtype = OSSL_OBJECT_UNKNOWN;
+    (void)selection;
 
     ok = read_pem(ctx->provctx, cin, &pem_name, &pem_header,
                   &der, &der_len) > 0;

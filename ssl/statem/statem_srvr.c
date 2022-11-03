@@ -390,6 +390,8 @@ static int get_compressed_certificate_alg(SSL_CONNECTION *sc)
         if (sc->s3.tmp.cert->comp_cert[*alg] != NULL)
             return *alg;
     }
+#else
+    (void)sc;
 #endif
     return TLSEXT_comp_cert_none;
 }
@@ -856,6 +858,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    (void)wst;
 
     s->init_num = 0;
 
@@ -2501,6 +2504,8 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
 
 CON_FUNC_RETURN tls_construct_server_done(SSL_CONNECTION *s, WPACKET *pkt)
 {
+    (void)pkt;
+
     if (!s->s3.tmp.cert_request) {
         if (!ssl3_digest_cached_records(s, 0)) {
             /* SSLfatal() already called */
@@ -3483,6 +3488,8 @@ WORK_STATE tls_post_process_client_key_exchange(SSL_CONNECTION *s,
                      sizeof(sctpauthkey), sctpauthkey);
         }
     }
+#else
+    (void)wst;
 #endif
 
     if (s->statem.no_cert_verify || !s->session->peer) {

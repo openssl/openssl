@@ -56,6 +56,7 @@ static OSSL_FUNC_provider_teardown_fn filter_teardown;
 static const OSSL_PARAM *filter_gettable_params(void *provctx)
 {
     struct filter_prov_globals_st *globs = get_globals();
+    (void)provctx;
 
     return OSSL_PROVIDER_gettable_params(globs->deflt);
 }
@@ -63,6 +64,7 @@ static const OSSL_PARAM *filter_gettable_params(void *provctx)
 static int filter_get_params(void *provctx, OSSL_PARAM params[])
 {
     struct filter_prov_globals_st *globs = get_globals();
+    (void)provctx;
 
     return OSSL_PROVIDER_get_params(globs->deflt, params);
 }
@@ -71,6 +73,7 @@ static int filter_get_capabilities(void *provctx, const char *capability,
                                    OSSL_CALLBACK *cb, void *arg)
 {
     struct filter_prov_globals_st *globs = get_globals();
+    (void)provctx;
 
     return OSSL_PROVIDER_get_capabilities(globs->deflt, capability, cb, arg);
 }
@@ -81,6 +84,7 @@ static const OSSL_ALGORITHM *filter_query(void *provctx,
 {
     struct filter_prov_globals_st *globs = get_globals();
     int i;
+    (void)provctx;
 
     globs->query_count++;
     for (i = 0; i < globs->num_dispatch; i++) {
@@ -99,6 +103,7 @@ static void filter_unquery(void *provctx, int operation_id,
 {
     struct filter_prov_globals_st *globs = get_globals();
     int i;
+    (void)provctx;
 
     if (!TEST_ulong_gt(globs->query_count, 0))
         globs->error = 1;
@@ -114,6 +119,7 @@ static void filter_unquery(void *provctx, int operation_id,
 static void filter_teardown(void *provctx)
 {
     struct filter_prov_globals_st *globs = get_globals();
+    (void)provctx;
 
     OSSL_PROVIDER_unload(globs->deflt);
     OSSL_LIB_CTX_free(globs->libctx);
@@ -136,6 +142,9 @@ int filter_provider_init(const OSSL_CORE_HANDLE *handle,
                          const OSSL_DISPATCH **out,
                          void **provctx)
 {
+    (void)handle;
+    (void)in;
+
     memset(&ourglobals, 0, sizeof(ourglobals));
     ourglobals.libctx = OSSL_LIB_CTX_new();
     if (ourglobals.libctx == NULL)

@@ -3173,7 +3173,7 @@ const OPTIONS *test_get_options(void)
         { "stochastic", OPT_STOCHASTIC_TESTS, '-', "Run stochastic tests" },
         { OPT_HELP_STR, 1, '-',
           "file\tFile to run tests on. Normal tests are not run\n" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

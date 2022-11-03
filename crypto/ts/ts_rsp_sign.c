@@ -44,6 +44,7 @@ static ASN1_GENERALIZEDTIME
 static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *ctx, void *data)
 {
     ASN1_INTEGER *serial = ASN1_INTEGER_new();
+    (void)data;
 
     if (serial == NULL)
         goto err;
@@ -64,6 +65,7 @@ static int def_time_cb(struct TS_resp_ctx *ctx, void *data,
 {
     OSSL_TIME t;
     struct timeval tv;
+    (void)data;
 
     t = ossl_time_now();
     if (ossl_time_is_zero(t)) {
@@ -83,6 +85,8 @@ static int def_time_cb(struct TS_resp_ctx *ctx, void *data,
 static int def_extension_cb(struct TS_resp_ctx *ctx, X509_EXTENSION *ext,
                             void *data)
 {
+    (void)ext;
+    (void)data;
     TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                 "Unsupported extension.");
     TS_RESP_CTX_add_failure_info(ctx, TS_INFO_UNACCEPTED_EXTENSION);

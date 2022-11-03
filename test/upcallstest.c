@@ -15,6 +15,9 @@
 static const OSSL_ALGORITHM *obj_query(void *provctx, int operation_id,
                                        int *no_cache)
 {
+    (void)provctx;
+    (void)operation_id;
+
     *no_cache = 0;
     return NULL;
 }

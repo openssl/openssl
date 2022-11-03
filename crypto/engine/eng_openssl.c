@@ -206,6 +206,8 @@ static int test_rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
     const int n = EVP_CIPHER_CTX_get_key_length(ctx);
+    (void)iv;
+    (void)enc;
 
 # ifdef TEST_ENG_OPENSSL_RC4_P_INIT
     fprintf(stderr, "(TEST_ENG_OPENSSL_RC4) test_init_key() called\n");
@@ -298,6 +300,7 @@ static int test_cipher_nids(const int **nids)
 static int openssl_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                            const int **nids, int nid)
 {
+    (void)e;
     if (!cipher) {
         /* We are returning a list of supported nids */
         return test_cipher_nids(nids);
@@ -394,6 +397,7 @@ static int test_digest_nids(const int **nids)
 static int openssl_digests(ENGINE *e, const EVP_MD **digest,
                            const int **nids, int nid)
 {
+    (void)e;
     if (!digest) {
         /* We are returning a list of supported nids */
         return test_digest_nids(nids);
@@ -420,6 +424,10 @@ static EVP_PKEY *openssl_load_privkey(ENGINE *eng, const char *key_id,
 {
     BIO *in;
     EVP_PKEY *key;
+    (void)eng;
+    (void)ui_method;
+    (void)callback_data;
+
     fprintf(stderr, "(TEST_ENG_OPENSSL_PKEY)Loading Private key %s\n",
             key_id);
     in = BIO_new_file(key_id, "r");
@@ -656,6 +664,7 @@ static int ossl_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
 
 int openssl_destroy(ENGINE *e)
 {
+    (void)e;
     test_sha_md_destroy();
 #ifdef TEST_ENG_OPENSSL_RC4
     test_r4_cipher_destroy();

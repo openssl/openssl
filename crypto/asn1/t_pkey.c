@@ -49,6 +49,7 @@ int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
     const char *neg;
     unsigned char *buf = NULL, *tmp = NULL;
     int buflen;
+    (void)ign;
 
     if (num == NULL)
         return 1;

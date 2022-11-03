@@ -202,6 +202,10 @@ static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
 static int aes_wrap_final(void *vctx, unsigned char *out, size_t *outl,
                           size_t outsize)
 {
+    (void)vctx;
+    (void)out;
+    (void)outsize;
+
     if (!ossl_prov_is_running())
         return 0;
 
@@ -270,6 +274,7 @@ static int aes_wrap_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     static OSSL_FUNC_cipher_newctx_fn aes_##kbits##fname##_newctx;             \
     static void *aes_##kbits##fname##_newctx(void *provctx)                    \
     {                                                                          \
+        (void)provctx;                                                         \
         return aes_##mode##_newctx(kbits, blkbits, ivbits,                     \
                                    EVP_CIPH_##UCMODE##_MODE, flags);           \
     }                                                                          \

@@ -37,7 +37,7 @@ const OPTIONS version_options[] = {
     {"r", OPT_R, '-', "Show random seeding options"},
     {"v", OPT_V, '-', "Show library version"},
     {"c", OPT_C, '-', "Show CPU settings info"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int version_main(int argc, char **argv)

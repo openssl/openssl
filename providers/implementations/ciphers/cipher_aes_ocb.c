@@ -211,6 +211,7 @@ static int aes_ocb_block_update_internal(PROV_AES_OCB_CTX *ctx,
 static int cipher_updateaad(PROV_AES_OCB_CTX *ctx, const unsigned char *in,
                             unsigned char *out, size_t len)
 {
+    (void)out;
     return aes_generic_ocb_setaad(ctx, in, len);
 }
 
@@ -263,6 +264,7 @@ static int aes_ocb_block_final(void *vctx, unsigned char *out, size_t *outl,
                                size_t outsize)
 {
     PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -307,6 +309,7 @@ static void *aes_ocb_newctx(void *provctx, size_t kbits, size_t blkbits,
                             size_t ivbits, unsigned int mode, uint64_t flags)
 {
     PROV_AES_OCB_CTX *ctx;
+    (void)provctx;
 
     if (!ossl_prov_is_running())
         return NULL;

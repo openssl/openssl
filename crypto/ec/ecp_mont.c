@@ -289,6 +289,7 @@ int ossl_ec_GFp_mont_field_decode(const EC_GROUP *group, BIGNUM *r,
 int ossl_ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r,
                                       BN_CTX *ctx)
 {
+    (void)ctx;
     if (group->field_data2 == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
         return 0;

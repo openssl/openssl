@@ -262,7 +262,8 @@ static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
             ITM(aes_128_ecb_ct)
         },
         CIPHER_MODE_DECRYPT,
-        ITM(aes_128_ecb_key)
+        ITM(aes_128_ecb_key),
+        NULL, 0U, NULL, 0U, NULL, 0U
     }
 };
 

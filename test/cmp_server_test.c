@@ -55,6 +55,15 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                             STACK_OF(X509) **chainOut,
                                             STACK_OF(X509) **caPubs)
 {
+    (void)srv_ctx;
+    (void)cert_req;
+    (void)certReqId;
+    (void)crm;
+    (void)p10cr;
+    (void)certOut;
+    (void)chainOut;
+    (void)caPubs;
+
     ERR_raise(ERR_LIB_CMP, dummy_errorCode);
     return NULL;
 }

@@ -67,6 +67,7 @@ int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
                     const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey)
 {
     ECDSA_SIG *s;
+    (void)type;
 
     s = ECDSA_do_sign_ex(dgst, dlen, kinv, r, eckey);
     if (s == NULL) {
@@ -385,6 +386,7 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
     unsigned char *der = NULL;
     int derlen = -1;
     int ret = -1;
+    (void)type;
 
     s = ECDSA_SIG_new();
     if (s == NULL)

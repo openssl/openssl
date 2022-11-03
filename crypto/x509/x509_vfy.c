@@ -80,6 +80,7 @@ static int internal_verify(X509_STORE_CTX *ctx);
 
 static int null_callback(int ok, X509_STORE_CTX *e)
 {
+    (void)e;
     return ok;
 }
 
@@ -1371,6 +1372,7 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
 {
     X509 *cert_ta = sk_X509_value(cert_path, sk_X509_num(cert_path) - 1);
     X509 *crl_ta = sk_X509_value(crl_path, sk_X509_num(crl_path) - 1);
+    (void)ctx;
 
     return X509_cmp(cert_ta, crl_ta) == 0;
 }
@@ -2032,6 +2034,7 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
     X509_CRL *crl = NULL;
     int i;
     STACK_OF(X509_REVOKED) *revs = NULL;
+    (void)flags;
 
     /* CRLs can't be delta already */
     if (base->base_crl_number != NULL || newer->base_crl_number != NULL) {
@@ -2524,6 +2527,7 @@ void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, unsigned long flags)
 void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags,
                              time_t t)
 {
+    (void)flags;
     X509_VERIFY_PARAM_set_time(ctx->param, t);
 }
 

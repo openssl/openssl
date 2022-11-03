@@ -17,6 +17,7 @@ static int ccm_sm4_initkey(PROV_CCM_CTX *ctx,
                            const unsigned char *key, size_t keylen)
 {
     PROV_SM4_CCM_CTX *actx = (PROV_SM4_CCM_CTX *)ctx;
+    (void)keylen;
 
     ossl_sm4_set_key(key, &actx->ks.ks);
     CRYPTO_ccm128_init(&ctx->ccm_ctx, ctx->m, ctx->l, &actx->ks.ks,
@@ -37,5 +38,6 @@ static const PROV_CCM_HW ccm_sm4 = {
 
 const PROV_CCM_HW *ossl_prov_sm4_hw_ccm(size_t keybits)
 {
+    (void)keybits;
     return &ccm_sm4;
 }

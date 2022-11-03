@@ -3050,6 +3050,9 @@ static void keypair_test_cleanup(EVP_TEST *t)
  */
 static int void_test_parse(EVP_TEST *t, const char *keyword, const char *value)
 {
+    (void)t;
+    (void)keyword;
+    (void)value;
     return 0;
 }
 
@@ -4005,7 +4008,7 @@ const OPTIONS *test_get_options(void)
         { "config", OPT_CONFIG_FILE, '<',
           "The configuration file to use for the libctx" },
         { OPT_HELP_STR, 1, '-', "file\tFile to run tests on.\n" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }
@@ -4054,6 +4057,17 @@ void cleanup_tests(void)
 
 static int is_digest_disabled(const char *name)
 {
+#if !(defined OPENSSL_NO_BLAKE2 || \
+      defined OPENSSL_NO_MD2 || \
+      defined OPENSSL_NO_MDC2 || \
+      defined OPENSSL_NO_MD4 || \
+      defined OPENSSL_NO_MD5 || \
+      defined OPENSSL_NO_RMD160 || \
+      defined OPENSSL_NO_SM3 || \
+      defined OPENSSL_NO_WHIRLPOOL)
+    (void)name;
+#endif
+
 #ifdef OPENSSL_NO_BLAKE2
     if (HAS_CASE_PREFIX(name, "BLAKE"))
         return 1;
@@ -4091,6 +4105,10 @@ static int is_digest_disabled(const char *name)
 
 static int is_pkey_disabled(const char *name)
 {
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DH) &&                      \
+    !defined(OPENSSL_NO_DSA)
+    (void)name;
+#endif
 #ifdef OPENSSL_NO_EC
     if (HAS_CASE_PREFIX(name, "EC"))
         return 1;
@@ -4108,6 +4126,10 @@ static int is_pkey_disabled(const char *name)
 
 static int is_mac_disabled(const char *name)
 {
+#if !defined(OPENSSL_NO_BLAKE2) && !defined(OPENSSL_NO_CMAC) &&                      \
+    !defined(OPENSSL_NO_POLY1305) && !defined(OPENSSL_NO_SIPHASH)
+    (void)name;
+#endif
 #ifdef OPENSSL_NO_BLAKE2
     if (HAS_CASE_PREFIX(name, "BLAKE2BMAC")
         || HAS_CASE_PREFIX(name, "BLAKE2SMAC"))
@@ -4132,12 +4154,24 @@ static int is_kdf_disabled(const char *name)
 #ifdef OPENSSL_NO_SCRYPT
     if (HAS_CASE_SUFFIX(name, "SCRYPT"))
         return 1;
+#else
+    (void)name;
 #endif
     return 0;
 }
 
 static int is_cipher_disabled(const char *name)
 {
+#if !defined(OPENSSL_NO_ARIA) && !defined(OPENSSL_NO_BF) &&         \
+    !defined(OPENSSL_NO_CAMELLIA) && !defined(OPENSSL_NO_CAST) &&   \
+    !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) && \
+    !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_OCB) &&         \
+    !defined(OPENSSL_NO_IDEA) && !defined(OPENSSL_NO_RCS) &&        \
+    !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_SEED) &&        \
+    !defined(OPENSSL_NO_SIV) && !defined(OPENSSL_NO_SM4)
+    (void)name;
+#endif
+
 #ifdef OPENSSL_NO_ARIA
     if (HAS_CASE_PREFIX(name, "ARIA"))
         return 1;

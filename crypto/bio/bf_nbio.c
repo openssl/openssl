@@ -44,6 +44,8 @@ static const BIO_METHOD methods_nbiof = {
     nbiof_new,
     nbiof_free,
     nbiof_callback_ctrl,
+    NULL,                       /* no bsendmmsg */
+    NULL                        /* no brecvmmsg */
 };
 
 const BIO_METHOD *BIO_f_nbio_test(void)

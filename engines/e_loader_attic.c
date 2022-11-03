@@ -121,6 +121,7 @@ static int file_get_pem_pass(char *buf, int num, int w, void *data)
     char *pass = file_get_pass(pass_data->ui_method, buf, num,
                                pass_data->prompt_desc, pass_data->prompt_info,
                                pass_data->data);
+    (void)w;
 
     return pass == NULL ? 0 : strlen(pass);
 }
@@ -302,6 +303,9 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
 {
     OSSL_STORE_INFO *store_info = NULL;
     STACK_OF(OSSL_STORE_INFO) *ctx = *pctx;
+    (void)pem_header;
+    (void)libctx;
+    (void)propq;
 
     if (ctx == NULL) {
         /* Initial parsing */
@@ -445,6 +449,10 @@ static OSSL_STORE_INFO *try_decode_PKCS8Encrypted(const char *pem_name,
     BUF_MEM *mem = NULL;
     unsigned char *new_data = NULL;
     int new_data_len;
+    (void)pem_header;
+    (void)pctx;
+    (void)libctx;
+    (void)propq;
 
     if (pem_name != NULL) {
         if (strcmp(pem_name, PEM_STRING_PKCS8) != 0)
@@ -494,7 +502,8 @@ static OSSL_STORE_INFO *try_decode_PKCS8Encrypted(const char *pem_name,
 
 static FILE_HANDLER PKCS8Encrypted_handler = {
     "PKCS8Encrypted",
-    try_decode_PKCS8Encrypted
+    try_decode_PKCS8Encrypted,
+    NULL, NULL, 0
 };
 
 /*
@@ -515,6 +524,11 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
     OSSL_STORE_INFO *store_info = NULL;
     EVP_PKEY *pkey = NULL;
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
+    (void)pem_header;
+    (void)pctx;
+    (void)ui_method;
+    (void)ui_data;
+    (void)uri;
 
     if (pem_name != NULL) {
         if (strcmp(pem_name, PEM_STRING_PKCS8INF) == 0) {
@@ -625,7 +639,8 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
 
 static FILE_HANDLER PrivateKey_handler = {
     "PrivateKey",
-    try_decode_PrivateKey
+    try_decode_PrivateKey,
+    NULL, NULL, 0
 };
 
 /*
@@ -643,6 +658,13 @@ static OSSL_STORE_INFO *try_decode_PUBKEY(const char *pem_name,
 {
     OSSL_STORE_INFO *store_info = NULL;
     EVP_PKEY *pkey = NULL;
+    (void)pem_header;
+    (void)pctx;
+    (void)ui_method;
+    (void)ui_data;
+    (void)uri;
+    (void)libctx;
+    (void)propq;
 
     if (pem_name != NULL) {
         if (strcmp(pem_name, PEM_STRING_PUBLIC) != 0)
@@ -661,7 +683,8 @@ static OSSL_STORE_INFO *try_decode_PUBKEY(const char *pem_name,
 
 static FILE_HANDLER PUBKEY_handler = {
     "PUBKEY",
-    try_decode_PUBKEY
+    try_decode_PUBKEY,
+    NULL, NULL, 0
 };
 
 /*
@@ -680,6 +703,13 @@ static OSSL_STORE_INFO *try_decode_params(const char *pem_name,
     OSSL_STORE_INFO *store_info = NULL;
     EVP_PKEY *pkey = NULL;
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
+    (void)pem_header;
+    (void)pctx;
+    (void)ui_method;
+    (void)ui_data;
+    (void)uri;
+    (void)libctx;
+    (void)propq;
 
     if (pem_name != NULL) {
         int slen;
@@ -738,7 +768,8 @@ static OSSL_STORE_INFO *try_decode_params(const char *pem_name,
 
 static FILE_HANDLER params_handler = {
     "params",
-    try_decode_params
+    try_decode_params,
+    NULL, NULL, 0
 };
 
 /*
@@ -757,7 +788,6 @@ static OSSL_STORE_INFO *try_decode_X509Certificate(const char *pem_name,
 {
     OSSL_STORE_INFO *store_info = NULL;
     X509 *cert = NULL;
-
     /*
      * In most cases, we can try to interpret the serialized data as a trusted
      * cert (X509 + X509_AUX) and fall back to reading it as a normal cert
@@ -766,6 +796,13 @@ static OSSL_STORE_INFO *try_decode_X509Certificate(const char *pem_name,
      * the fallback can be used (1) or not (0).
      */
     int ignore_trusted = 1;
+    (void)pem_header;
+    (void)pctx;
+    (void)ui_method;
+    (void)ui_data;
+    (void)uri;
+    (void)libctx;
+    (void)propq;
 
     if (pem_name != NULL) {
         if (strcmp(pem_name, PEM_STRING_X509_TRUSTED) == 0)
@@ -795,7 +832,8 @@ static OSSL_STORE_INFO *try_decode_X509Certificate(const char *pem_name,
 
 static FILE_HANDLER X509Certificate_handler = {
     "X509Certificate",
-    try_decode_X509Certificate
+    try_decode_X509Certificate,
+    NULL, NULL, 0
 };
 
 /*
@@ -813,6 +851,13 @@ static OSSL_STORE_INFO *try_decode_X509CRL(const char *pem_name,
 {
     OSSL_STORE_INFO *store_info = NULL;
     X509_CRL *crl = NULL;
+    (void)pem_header;
+    (void)pctx;
+    (void)ui_method;
+    (void)ui_data;
+    (void)uri;
+    (void)libctx;
+    (void)propq;
 
     if (pem_name != NULL) {
         if (strcmp(pem_name, PEM_STRING_X509_CRL) != 0)
@@ -834,7 +879,8 @@ static OSSL_STORE_INFO *try_decode_X509CRL(const char *pem_name,
 
 static FILE_HANDLER X509CRL_handler = {
     "X509CRL",
-    try_decode_X509CRL
+    try_decode_X509CRL,
+    NULL, NULL, 0
 };
 
 /*
@@ -953,6 +999,9 @@ static OSSL_STORE_LOADER_CTX *file_open_ex
     } path_data[2];
     size_t path_data_n = 0, i;
     const char *path, *p = uri, *q;
+    (void)loader;
+    (void)ui_method;
+    (void)ui_data;
 
     /*
      * First step, just take the URI as is.
@@ -1070,6 +1119,9 @@ static OSSL_STORE_LOADER_CTX *file_attach
      const UI_METHOD *ui_method, void *ui_data)
 {
     OSSL_STORE_LOADER_CTX *ctx = NULL;
+    (void)loader;
+    (void)ui_method;
+    (void)ui_data;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL
         || (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL)) {
@@ -1683,12 +1735,14 @@ static OSSL_STORE_LOADER *loader_attic = NULL;
 
 static int loader_attic_init(ENGINE *e)
 {
+    (void)e;
     return 1;
 }
 
 
 static int loader_attic_finish(ENGINE *e)
 {
+    (void)e;
     return 1;
 }
 
@@ -1696,6 +1750,7 @@ static int loader_attic_finish(ENGINE *e)
 static int loader_attic_destroy(ENGINE *e)
 {
     OSSL_STORE_LOADER *loader = OSSL_STORE_unregister_loader("file");
+    (void)e;
 
     if (loader == NULL)
         return 0;

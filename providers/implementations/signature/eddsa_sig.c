@@ -67,6 +67,7 @@ typedef struct {
 static void *eddsa_newctx(void *provctx, const char *propq_unused)
 {
     PROV_EDDSA_CTX *peddsactx;
+    (void)propq_unused;
 
     if (!ossl_prov_is_running())
         return NULL;

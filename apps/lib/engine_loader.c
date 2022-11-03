@@ -70,6 +70,9 @@ static OSSL_STORE_LOADER_CTX *engine_open(const OSSL_STORE_LOADER *loader,
     ENGINE *e = NULL;
     char *keyid = NULL;
     OSSL_STORE_LOADER_CTX *ctx = NULL;
+    (void)loader;
+    (void)ui_method;
+    (void)ui_data;
 
     if (!CHECK_AND_SKIP_CASE_PREFIX(p, ENGINE_SCHEME_COLON))
         return NULL;
@@ -153,6 +156,7 @@ static int engine_eof(OSSL_STORE_LOADER_CTX *ctx)
 
 static int engine_error(OSSL_STORE_LOADER_CTX *ctx)
 {
+    (void)ctx;
     return 0;
 }
 

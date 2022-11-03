@@ -46,6 +46,8 @@ static const BIO_METHOD methods_sslp = {
     ssl_new,
     ssl_free,
     ssl_callback_ctrl,
+    NULL,                       /* bsendmmsg */
+    NULL                        /* brecvmmsg */
 };
 
 const BIO_METHOD *BIO_f_ssl(void)

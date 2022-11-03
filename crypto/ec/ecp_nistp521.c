@@ -1842,6 +1842,7 @@ int ossl_ec_GFp_nistp521_point_get_affine_coordinates(const EC_GROUP *group,
 {
     felem z1, z2, x_in, y_in, x_out, y_out;
     largefelem tmp;
+    (void)ctx;
 
     if (EC_POINT_is_at_infinity(group, point)) {
         ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);

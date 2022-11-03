@@ -923,6 +923,7 @@ static int dgram_pair_recvmmsg(BIO *bio, BIO_MSG *msg,
     BIO_MSG *m;
     size_t i;
     struct bio_dgram_pair_st *b = bio->ptr, *peerb;
+    (void)flags;
 
     if (num_msg == 0) {
         *num_processed = 0;
@@ -1097,6 +1098,7 @@ static int dgram_pair_sendmmsg(BIO *bio, BIO_MSG *msg,
     BIO_MSG *m;
     size_t i;
     struct bio_dgram_pair_st *b = bio->ptr;
+    (void)flags;
 
     if (num_msg == 0) {
         *num_processed = 0;

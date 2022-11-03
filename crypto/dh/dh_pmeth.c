@@ -490,7 +490,14 @@ static const EVP_PKEY_METHOD dh_pkey_meth = {
     pkey_dh_derive,
 
     pkey_dh_ctrl,
-    pkey_dh_ctrl_str
+    pkey_dh_ctrl_str,
+
+    NULL,                      /* digestsign */
+    NULL,                      /* digestverify */
+    NULL,                      /* check */
+    NULL,                      /* public_check */
+    NULL,                      /* param_check */
+    NULL                       /* digest_custom */
 };
 
 const EVP_PKEY_METHOD *ossl_dh_pkey_method(void)
@@ -529,7 +536,14 @@ static const EVP_PKEY_METHOD dhx_pkey_meth = {
     pkey_dh_derive,
 
     pkey_dh_ctrl,
-    pkey_dh_ctrl_str
+    pkey_dh_ctrl_str,
+
+    NULL,                      /* digestsign */
+    NULL,                      /* digestverify */
+    NULL,                      /* check */
+    NULL,                      /* public_check */
+    NULL,                      /* param_check */
+    NULL                       /* digest_custom */
 };
 
 const EVP_PKEY_METHOD *ossl_dhx_pkey_method(void)

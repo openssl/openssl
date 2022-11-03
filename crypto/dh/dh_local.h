@@ -47,7 +47,7 @@ struct dh_method {
     int (*compute_key) (unsigned char *key, const BIGNUM *pub_key, DH *dh);
 
     /* Can be null */
-    int (*bn_mod_exp) (const DH *dh, BIGNUM *r, const BIGNUM *a,
+    int (*bn_mod_exp) (const DH *dh /*ignored*/, BIGNUM *r, const BIGNUM *a,
                        const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
                        BN_MONT_CTX *m_ctx);
     int (*init) (DH *dh);

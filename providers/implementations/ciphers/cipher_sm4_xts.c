@@ -78,6 +78,7 @@ static void *sm4_xts_newctx(void *provctx, unsigned int mode, uint64_t flags,
                             size_t kbits, size_t blkbits, size_t ivbits)
 {
     PROV_SM4_XTS_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    (void)provctx;
 
     if (ctx != NULL) {
         ossl_cipher_generic_initkey(&ctx->base, kbits, blkbits, ivbits, mode,
@@ -122,6 +123,7 @@ static int sm4_xts_cipher(void *vctx, unsigned char *out, size_t *outl,
                           size_t outsize, const unsigned char *in, size_t inl)
 {
     PROV_SM4_XTS_CTX *ctx = (PROV_SM4_XTS_CTX *)vctx;
+    (void)outsize;
 
     if (!ossl_prov_is_running()
             || ctx->xts.key1 == NULL
@@ -183,6 +185,10 @@ static int sm4_xts_stream_update(void *vctx, unsigned char *out, size_t *outl,
 static int sm4_xts_stream_final(void *vctx, unsigned char *out, size_t *outl,
                                 size_t outsize)
 {
+    (void)vctx;
+    (void)out;
+    (void)outsize;
+
     if (!ossl_prov_is_running())
         return 0;
     *outl = 0;

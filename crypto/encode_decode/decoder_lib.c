@@ -485,6 +485,7 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
     size_t count; /* Calculates how many were added in each iteration */
     size_t numdecoders;
     STACK_OF(OSSL_DECODER) *skdecoders;
+    (void)propq;
 
     if (!ossl_assert(ctx != NULL)) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);

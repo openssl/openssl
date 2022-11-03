@@ -30,6 +30,8 @@ static BIGNUM *b5;
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
+    (void)argc;
+    (void)argv;
     b1 = BN_new();
     b2 = BN_new();
     b3 = BN_new();

@@ -234,7 +234,7 @@ static OPT_PAIR formats[] = {
     {"text", OPT_FMT_TEXT},
     {"http", OPT_FMT_HTTP},
     {"pvk", OPT_FMT_PVK},
-    {NULL}
+    {NULL, 0}
 };
 
 void opt_set_unknown_name(const char *name)

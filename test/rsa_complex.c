@@ -27,6 +27,8 @@
 
 int main(int argc, char *argv[])
 {
+    (void)argc;
+    (void)argv;
     /* There are explicitly no run time checks for this one */
     return EXIT_SUCCESS;
 }

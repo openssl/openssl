@@ -179,6 +179,10 @@ static ossl_inline int io_getevents(aio_context_t ctx, long min, long max,
 static void afalg_waitfd_cleanup(ASYNC_WAIT_CTX *ctx, const void *key,
                                  OSSL_ASYNC_FD waitfd, void *custom)
 {
+    (void)ctx;
+    (void)key;
+    (void)custom;
+
     close(waitfd);
 }
 
@@ -579,6 +583,8 @@ static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     int ret, len;
     afalg_ctx *actx;
     const char *ciphername;
+    (void)iv;
+    (void)enc;
 
     if (ctx == NULL || key == NULL) {
         ALG_WARN("%s(%d): Null Parameter\n", __FILE__, __LINE__);
@@ -771,6 +777,7 @@ static int afalg_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                          const int **nids, int nid)
 {
     int r = 1;
+    (void)e;
 
     if (cipher == NULL) {
         *nids = afalg_cipher_nids;
@@ -928,11 +935,13 @@ void engine_load_afalg_int(void)
 
 static int afalg_init(ENGINE *e)
 {
+    (void)e;
     return 1;
 }
 
 static int afalg_finish(ENGINE *e)
 {
+    (void)e;
     return 1;
 }
 
@@ -948,6 +957,7 @@ static int free_cbc(void)
 
 static int afalg_destroy(ENGINE *e)
 {
+    (void)e;
     ERR_unload_AFALG_strings();
     free_cbc();
     return 1;

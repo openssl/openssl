@@ -41,11 +41,13 @@ static int add_property_names(const char *n, ...)
 
 static int up_ref(void *p)
 {
+    (void)p;
     return 1;
 }
 
 static void down_ref(void *p)
 {
+    (void)p;
 }
 
 static int test_property_string(void)

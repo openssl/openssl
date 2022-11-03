@@ -898,7 +898,7 @@ const OPTIONS *test_get_options(void)
         { "write",   OPT_WRITE,   '-', "Write PKCS12 objects to file" },
         { "legacy",  OPT_LEGACY,  '-', "Test the legacy APIs" },
         { "context", OPT_CONTEXT, '-', "Explicitly use a non-default library context" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return options;
 }

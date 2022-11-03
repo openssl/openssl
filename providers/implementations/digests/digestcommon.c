@@ -50,5 +50,6 @@ static const OSSL_PARAM digest_default_known_gettable_params[] = {
 };
 const OSSL_PARAM *ossl_digest_default_gettable_params(void *provctx)
 {
+    (void)provctx;
     return digest_default_known_gettable_params;
 }

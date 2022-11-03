@@ -29,10 +29,12 @@ IMPLEMENT_CIPHER_HW_##UCMODE(mode, cast5, PROV_CAST_CTX, CAST_KEY,             \
                              CAST_##mode)                                      \
 static const PROV_CIPHER_HW cast5_##mode = {                                   \
     cipher_hw_cast5_initkey,                                                   \
-    cipher_hw_cast5_##mode##_cipher                                            \
+    cipher_hw_cast5_##mode##_cipher,                                           \
+    NULL                                /* copyctx */                          \
 };                                                                             \
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_cast5_##mode(size_t keybits)         \
 {                                                                              \
+    (void)keybits;                                                             \
     return &cast5_##mode;                                                      \
 }
 

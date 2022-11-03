@@ -136,6 +136,11 @@ static int msg_total_size = 0;
 static int msg_total_size_log_cb(const char *func, const char *file, int line,
                                  OSSL_CMP_severity level, const char *msg)
 {
+    (void)func;
+    (void)file;
+    (void)line;
+    (void)level;
+
     msg_total_size += strlen(msg);
     TEST_note("total=%d len=%zu msg='%s'\n", msg_total_size, strlen(msg), msg);
     return 1;
@@ -259,6 +264,7 @@ static int test_log_cb_res = 0;
 static int test_log_cb(const char *func, const char *file, int line,
                        OSSL_CMP_severity level, const char *msg)
 {
+    (void)func;
     test_log_cb_res =
 #ifndef PEDANTIC
         (TEST_str_eq(func, "execute_cmp_ctx_log_cb_test")
@@ -320,18 +326,28 @@ static int test_cmp_ctx_log_cb(void)
 
 static BIO *test_http_cb(BIO *bio, void *arg, int use_ssl, int detail)
 {
+    (void)bio;
+    (void)arg;
+    (void)use_ssl;
+    (void)detail;
     return NULL;
 }
 
 static OSSL_CMP_MSG *test_transfer_cb(OSSL_CMP_CTX *ctx,
                                       const OSSL_CMP_MSG *req)
 {
+    (void)ctx;
+    (void)req;
     return NULL;
 }
 
 static int test_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
                             const char **txt)
 {
+    (void)ctx;
+    (void)cert;
+    (void)fail_info;
+    (void)txt;
     return 0;
 }
 

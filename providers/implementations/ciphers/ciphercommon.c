@@ -510,6 +510,10 @@ int ossl_cipher_generic_stream_update(void *vctx, unsigned char *out,
 int ossl_cipher_generic_stream_final(void *vctx, unsigned char *out,
                                      size_t *outl, size_t outsize)
 {
+    (void)vctx;
+    (void)out;
+    (void)outsize;
+
     if (!ossl_prov_is_running())
         return 0;
 

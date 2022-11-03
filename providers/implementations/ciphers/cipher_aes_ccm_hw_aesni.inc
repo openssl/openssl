@@ -34,5 +34,6 @@ static const PROV_CCM_HW aesni_ccm = {
 
 const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
 {
+    (void)keybits;
     return AESNI_CAPABLE ? &aesni_ccm : &aes_ccm;
 }

@@ -72,13 +72,15 @@ static_ASN1_ITEM_TEMPLATE_END(X509_NAME_INTERNAL)
  */
 
 static const ASN1_EXTERN_FUNCS x509_name_ff = {
-    NULL,
+    NULL,                       /* app_data */
     x509_name_ex_new,
     x509_name_ex_free,
-    0,                          /* Default clear behaviour is OK */
+    NULL,                       /* Default clear behaviour is OK */
     x509_name_ex_d2i,
     x509_name_ex_i2d,
-    x509_name_ex_print
+    x509_name_ex_print,
+    NULL,                       /* asni_ex_new_ex */
+    NULL                        /* asni_ex_d2i_ex */
 };
 
 IMPLEMENT_EXTERN_ASN1(X509_NAME, V_ASN1_SEQUENCE, x509_name_ff)
@@ -90,6 +92,7 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509_NAME)
 static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
 {
     X509_NAME *ret = OPENSSL_zalloc(sizeof(*ret));
+    (void)it;
 
     if (ret == NULL)
         return 0;
@@ -116,6 +119,7 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
 static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     X509_NAME *a;
+    (void)it;
 
     if (pval == NULL || *pval == NULL)
         return;
@@ -159,6 +163,7 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
     int i, j, ret;
     STACK_OF(X509_NAME_ENTRY) *entries;
     X509_NAME_ENTRY *entry;
+    (void)it;
 
     if (len > X509_NAME_MAX)
         len = X509_NAME_MAX;
@@ -216,6 +221,9 @@ static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
 {
     int ret;
     X509_NAME *a = (X509_NAME *)*val;
+    (void)it;
+    (void)tag;
+    (void)aclass;
 
     if (a->modified) {
         ret = x509_name_encode(a);
@@ -290,6 +298,7 @@ static int x509_name_ex_print(BIO *out, const ASN1_VALUE **pval,
                               int indent,
                               const char *fname, const ASN1_PCTX *pctx)
 {
+    (void)fname;
     if (X509_NAME_print_ex(out, (const X509_NAME *)*pval,
                            indent, pctx->nm_flags) <= 0)
         return 0;
@@ -504,6 +513,7 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
 {
     char *s, *c, *b;
     int i;
+    (void)obase;
 
     b = X509_NAME_oneline(name, NULL, 0);
     if (b == NULL)

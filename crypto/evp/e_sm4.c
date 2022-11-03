@@ -42,7 +42,28 @@ static const EVP_CIPHER sm4_##mode = { \
         sm4_##mode##_cipher,            \
         NULL,                           \
         sizeof(EVP_SM4_KEY),            \
-        NULL,NULL,NULL,NULL }; \
+        NULL,NULL,NULL,NULL,            \
+        0,    /* name_id */             \
+        NULL, /* type_name */           \
+        NULL, /* description */         \
+        NULL, /* prov */                \
+        0,    /* refcnt */              \
+        NULL, /* lock */                \
+        NULL, /* newctx */              \
+        NULL, /* einit */               \
+        NULL, /* dinit */               \
+        NULL, /* cupdate */             \
+        NULL, /* cfinal */              \
+        NULL, /* ccipher */             \
+        NULL, /* freectx */             \
+        NULL, /* dupctx */              \
+        NULL, /* get_params */          \
+        NULL, /* get_ctx_params */      \
+        NULL, /* set_ctx_params */      \
+        NULL, /* gettable_params */     \
+        NULL, /* gettable_ctx_params */ \
+        NULL  /* settable_ctx_params */ \
+    };                                 \
 const EVP_CIPHER *EVP_sm4_##mode(void) \
 { return &sm4_##mode; }
 
@@ -58,6 +79,7 @@ static int sm4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
     int mode;
     EVP_SM4_KEY *dat = EVP_C_DATA(EVP_SM4_KEY,ctx);
+    (void)iv;
 
     mode = EVP_CIPHER_CTX_get_mode(ctx);
     if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE)

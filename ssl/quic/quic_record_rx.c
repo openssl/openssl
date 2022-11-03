@@ -476,6 +476,7 @@ static uint32_t rxe_determine_pn_space(RXE *rxe)
 static int qrx_validate_hdr_early(OSSL_QRX *qrx, RXE *rxe,
                                   RXE *first_rxe)
 {
+    (void)qrx;
     /* Ensure version is what we want. */
     if (rxe->hdr.version != QUIC_VERSION_1
         && rxe->hdr.version != QUIC_VERSION_NONE)
@@ -527,6 +528,7 @@ static size_t qrx_get_cipher_ctx_idx(OSSL_QRX *qrx, OSSL_QRL_ENC_LEVEL *el,
                                      uint32_t enc_level,
                                      unsigned char key_phase_bit)
 {
+    (void)qrx;
     if (enc_level != QUIC_ENC_LEVEL_1RTT)
         return 0;
 
@@ -647,6 +649,7 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
 
 static ossl_inline void ignore_res(int x)
 {
+    (void)x;
     /* No-op. */
 }
 

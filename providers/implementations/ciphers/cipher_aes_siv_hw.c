@@ -132,5 +132,6 @@ static const PROV_CIPHER_HW_AES_SIV aes_siv_hw =
 
 const PROV_CIPHER_HW_AES_SIV *ossl_prov_cipher_hw_aes_siv(size_t keybits)
 {
+    (void)keybits;
     return &aes_siv_hw;
 }

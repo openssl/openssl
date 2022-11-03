@@ -76,7 +76,7 @@ const OPTIONS dhparam_options[] = {
 
     OPT_PARAMETERS(),
     {"numbits", 0, 0, "Number of bits if generating parameters (optional)"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int dhparam_main(int argc, char **argv)

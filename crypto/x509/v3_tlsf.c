@@ -65,6 +65,8 @@ static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
     size_t j;
     ASN1_INTEGER *ai;
     long tlsextid;
+    (void)method;
+
     for (i = 0; i < sk_ASN1_INTEGER_num(tls_feature); i++) {
         ai = sk_ASN1_INTEGER_value(tls_feature, i);
         tlsextid = ASN1_INTEGER_get(ai);
@@ -94,6 +96,8 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
     int i;
     size_t j;
     long tlsextid;
+    (void)method;
+    (void)ctx;
 
     if ((tlsf = sk_ASN1_INTEGER_new_null()) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);

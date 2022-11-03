@@ -20,6 +20,7 @@ static int cipher_hw_rc2_initkey(PROV_CIPHER_CTX *ctx,
 {
     PROV_RC2_CTX *rctx =  (PROV_RC2_CTX *)ctx;
     RC2_KEY *ks = &(rctx->ks.ks);
+    (void)keylen;
 
     RC2_set_key(ks, (int)ctx->keylen, key, (int)rctx->key_bits);
     return 1;
@@ -30,10 +31,12 @@ IMPLEMENT_CIPHER_HW_##UCMODE(mode, rc2, PROV_RC2_CTX, RC2_KEY,                 \
                              RC2_##mode)                                       \
 static const PROV_CIPHER_HW rc2_##mode = {                                     \
     cipher_hw_rc2_initkey,                                                     \
-    cipher_hw_rc2_##mode##_cipher                                              \
+    cipher_hw_rc2_##mode##_cipher,                                             \
+    NULL                                /* copyctx */                          \
 };                                                                             \
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_rc2_##mode(size_t keybits)           \
 {                                                                              \
+    (void)keybits;                                                             \
     return &rc2_##mode;                                                        \
 }
 

@@ -416,6 +416,7 @@ static const OSSL_PARAM *kbkdf_settable_ctx_params(ossl_unused void *ctx,
 static int kbkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
+    (void)vctx;
 
     p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_SIZE);
     if (p == NULL)

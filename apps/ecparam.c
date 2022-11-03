@@ -62,7 +62,7 @@ const OPTIONS ecparam_options[] = {
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 static int list_builtin_curves(BIO *out)

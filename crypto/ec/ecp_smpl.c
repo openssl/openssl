@@ -367,6 +367,8 @@ int ossl_ec_GFp_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
 int ossl_ec_GFp_simple_point_set_to_infinity(const EC_GROUP *group,
                                              EC_POINT *point)
 {
+    (void)group;
+
     point->Z_is_one = 0;
     BN_zero(point->Z);
     return 1;
@@ -940,6 +942,8 @@ int ossl_ec_GFp_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a
 int ossl_ec_GFp_simple_invert(const EC_GROUP *group, EC_POINT *point,
                               BN_CTX *ctx)
 {
+    (void)ctx;
+
     if (EC_POINT_is_at_infinity(group, point) || BN_is_zero(point->Y))
         /* point is its own inverse */
         return 1;
@@ -950,6 +954,8 @@ int ossl_ec_GFp_simple_invert(const EC_GROUP *group, EC_POINT *point,
 int ossl_ec_GFp_simple_is_at_infinity(const EC_GROUP *group,
                                       const EC_POINT *point)
 {
+    (void)group;
+
     return BN_is_zero(point->Z);
 }
 

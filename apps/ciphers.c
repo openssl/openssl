@@ -72,7 +72,7 @@ const OPTIONS ciphers_options[] = {
 
     OPT_PARAMETERS(),
     {"cipher", 0, 0, "Cipher string to decode (optional)"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 #ifndef OPENSSL_NO_PSK
@@ -81,6 +81,12 @@ static unsigned int dummy_psk(SSL *ssl, const char *hint, char *identity,
                               unsigned char *psk,
                               unsigned int max_psk_len)
 {
+    (void)ssl;
+    (void)hint;
+    (void)identity;
+    (void)max_identity_len;
+    (void)psk;
+    (void)max_psk_len;
     return 0;
 }
 #endif

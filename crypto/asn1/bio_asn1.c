@@ -89,6 +89,8 @@ static const BIO_METHOD methods_asn1 = {
     asn1_bio_new,
     asn1_bio_free,
     asn1_bio_callback_ctrl,
+    NULL,                       /* no bsendmmsg */
+    NULL                        /* no brecvmmsg */
 };
 
 const BIO_METHOD *BIO_f_asn1(void)

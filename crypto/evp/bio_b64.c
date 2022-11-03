@@ -56,6 +56,8 @@ static const BIO_METHOD methods_b64 = {
     b64_new,
     b64_free,
     b64_callback_ctrl,
+    NULL,                       /* bsendmmsg */
+    NULL                        /* brecvmmsg */
 };
 
 const BIO_METHOD *BIO_f_base64(void)

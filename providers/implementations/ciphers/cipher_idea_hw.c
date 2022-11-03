@@ -21,6 +21,7 @@ static int cipher_hw_idea_initkey(PROV_CIPHER_CTX *ctx,
 {
     PROV_IDEA_CTX *ictx =  (PROV_IDEA_CTX *)ctx;
     IDEA_KEY_SCHEDULE *ks = &(ictx->ks.ks);
+    (void)keylen;
 
     if (ctx->enc
             || ctx->mode == EVP_CIPH_OFB_MODE
@@ -41,10 +42,12 @@ IMPLEMENT_CIPHER_HW_##UCMODE(mode, idea, PROV_IDEA_CTX, IDEA_KEY_SCHEDULE,     \
                              fname)                                            \
 static const PROV_CIPHER_HW idea_##mode = {                                    \
     cipher_hw_idea_initkey,                                                    \
-    cipher_hw_idea_##mode##_cipher                                             \
+    cipher_hw_idea_##mode##_cipher,                                            \
+    NULL                                /* copyctx */                          \
 };                                                                             \
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_##mode(size_t keybits)          \
 {                                                                              \
+    (void)keybits;                                                             \
     return &idea_##mode;                                                       \
 }
 

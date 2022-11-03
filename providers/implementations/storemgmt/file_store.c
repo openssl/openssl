@@ -307,6 +307,7 @@ void *file_attach(void *provctx, OSSL_CORE_BIO *cin)
 
 static const OSSL_PARAM *file_settable_ctx_params(void *provctx)
 {
+    (void)provctx;
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_STORE_PARAM_PROPERTIES, NULL, 0),
         OSSL_PARAM_int(OSSL_STORE_PARAM_EXPECT, NULL),
@@ -388,6 +389,7 @@ static int file_load_construct(OSSL_DECODER_INSTANCE *decoder_inst,
                                const OSSL_PARAM *params, void *construct_data)
 {
     struct file_load_data_st *data = construct_data;
+    (void)decoder_inst;
 
     /*
      * At some point, we may find it justifiable to recognise PKCS#12 and
@@ -410,6 +412,7 @@ static int file_load_construct(OSSL_DECODER_INSTANCE *decoder_inst,
 
 void file_load_cleanup(void *construct_data)
 {
+    (void)construct_data;
     /* Nothing to do */
 }
 
@@ -643,6 +646,8 @@ static int file_load_dir_entry(struct file_ctx_st *ctx,
     };
     char *newname = NULL;
     int ok;
+    (void)pw_cb;
+    (void)pw_cbarg;
 
     /* Loop until we get an error or until we have a suitable name */
     do {

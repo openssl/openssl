@@ -50,6 +50,7 @@ static void *key2blob_newctx(void *provctx)
 
 static void key2blob_freectx(void *vctx)
 {
+    (void)vctx;
 }
 
 static int key2blob_check_selection(int selection, int selection_mask)
@@ -90,6 +91,7 @@ static int key2blob_encode(void *vctx, const void *key, int selection,
 {
     int pubkey_len = 0, ok = 0;
     unsigned char *pubkey = NULL;
+    (void)selection;
 
     pubkey_len = i2o_ECPublicKey(key, &pubkey);
     if (pubkey_len > 0 && pubkey != NULL)
@@ -138,6 +140,7 @@ static int key2blob_encode(void *vctx, const void *key, int selection,
     }                                                                   \
     static int impl##2blob_does_selection(void *ctx, int selection)     \
     {                                                                   \
+        (void)ctx;                                                      \
         return key2blob_check_selection(selection,                      \
                                         EVP_PKEY_##selection_name);     \
     }                                                                   \
@@ -148,6 +151,8 @@ static int key2blob_encode(void *vctx, const void *key, int selection,
                                   OSSL_PASSPHRASE_CALLBACK *cb,         \
                                   void *cbarg)                          \
     {                                                                   \
+        (void)cb;                                                       \
+        (void)cbarg;                                                    \
         /* We don't deal with abstract objects */                       \
         if (key_abstract != NULL) {                                     \
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);     \

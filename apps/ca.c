@@ -255,7 +255,7 @@ const OPTIONS ca_options[] = {
 
     OPT_PARAMETERS(),
     {"certreq", 0, 0, "Certificate requests to be signed (optional)"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int ca_main(int argc, char **argv)

@@ -178,6 +178,7 @@ static int tls_prov_get_capabilities(void *provctx, const char *capability,
     int i;
     const char *dummy_base = "dummy";
     const size_t dummy_name_max_size = strlen(dummy_base) + 3;
+    (void)provctx;
 
     if (strcmp(capability, "TLS-GROUP") != 0) {
         /* We don't support this capability */
@@ -316,8 +317,8 @@ static const OSSL_ALGORITHM tls_prov_keyexch[] = {
      * Obviously this is not FIPS approved, but in order to test in conjunction
      * with the FIPS provider we pretend that it is.
      */
-    { "XOR", "provider=tls-provider,fips=yes", xor_keyexch_functions },
-    { NULL, NULL, NULL }
+    { "XOR", "provider=tls-provider,fips=yes", xor_keyexch_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 /*
@@ -445,19 +446,21 @@ static const OSSL_ALGORITHM tls_prov_kem[] = {
      * Obviously this is not FIPS approved, but in order to test in conjunction
      * with the FIPS provider we pretend that it is.
      */
-    { "XOR", "provider=tls-provider,fips=yes", xor_kem_functions },
-    { NULL, NULL, NULL }
+    { "XOR", "provider=tls-provider,fips=yes", xor_kem_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 /* Key Management for the dummy XOR key exchange algorithm */
 
 static void *xor_newdata(void *provctx)
 {
+    (void)provctx;
     return OPENSSL_zalloc(sizeof(XORKEY));
 }
 
 static void xor_freedata(void *keydata)
 {
+    (void)keydata;
     OPENSSL_free(keydata);
 }
 
@@ -544,6 +547,7 @@ static const OSSL_PARAM xor_params[] = {
 
 static const OSSL_PARAM *xor_gettable_params(void *provctx)
 {
+    (void)provctx;
     return xor_params;
 }
 
@@ -571,6 +575,7 @@ static const OSSL_PARAM xor_known_settable_params[] = {
 
 static const OSSL_PARAM *xor_settable_params(void *provctx)
 {
+    (void)provctx;
     return xor_known_settable_params;
 }
 
@@ -635,6 +640,8 @@ static void *xor_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     struct xor_gen_ctx *gctx = genctx;
     XORKEY *key = OPENSSL_zalloc(sizeof(*key));
     size_t i;
+    (void)osslcb;
+    (void)cbarg;
 
     if (key == NULL)
         return NULL;
@@ -761,13 +768,14 @@ static const OSSL_ALGORITHM tls_prov_keymgmt[] = {
      * Obviously this is not FIPS approved, but in order to test in conjunction
      * with the FIPS provider we pretend that it is.
      */
-    { "XOR", "provider=tls-provider,fips=yes", xor_keymgmt_functions },
-    { NULL, NULL, NULL }
+    { "XOR", "provider=tls-provider,fips=yes", xor_keymgmt_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM *tls_prov_query(void *provctx, int operation_id,
                                             int *no_cache)
 {
+    (void)provctx;
     *no_cache = 0;
     switch (operation_id) {
     case OSSL_OP_KEYMGMT:
@@ -839,6 +847,8 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
                       void **provctx)
 {
     OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new();
+    (void)handle;
+    (void)in;
 
     if (libctx == NULL)
         return 0;

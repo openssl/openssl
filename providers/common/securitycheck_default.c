@@ -19,6 +19,7 @@
 /* Disable the security checks in the default provider */
 int ossl_securitycheck_enabled(OSSL_LIB_CTX *libctx)
 {
+    (void)libctx;
     return 0;
 }
 

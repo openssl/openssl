@@ -50,6 +50,7 @@ static int by_file_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
 {
     int ok = 0;
     const char *file;
+    (void)ret;
 
     switch (cmd) {
     case X509_L_FILE_LOAD:

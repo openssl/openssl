@@ -137,6 +137,7 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     int ret;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;

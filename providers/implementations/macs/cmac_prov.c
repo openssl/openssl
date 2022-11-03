@@ -140,6 +140,7 @@ static int cmac_final(void *vmacctx, unsigned char *out, size_t *outl,
                       size_t outsize)
 {
     struct cmac_data_st *macctx = vmacctx;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;

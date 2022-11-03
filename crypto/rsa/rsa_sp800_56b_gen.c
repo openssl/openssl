@@ -82,6 +82,8 @@ int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
         q1 = test->q1;
         q2 = test->q2;
     }
+#else
+    (void)test;
 #endif
 
     /* (Step 1) Check key length
@@ -205,6 +207,8 @@ static int rsa_validate_rng_strength(EVP_RAND_CTX *rng, int nbits)
                   RSA_R_RANDOMNESS_SOURCE_STRENGTH_INSUFFICIENT);
         return 0;
     }
+#else
+    (void)nbits;
 #endif
     return 1;
 }

@@ -18,15 +18,15 @@
 #define OCB_SET_KEY_FN(fn_set_enc_key, fn_set_dec_key,                         \
                        fn_block_enc, fn_block_dec,                             \
                        fn_stream_enc, fn_stream_dec)                           \
-CRYPTO_ocb128_cleanup(&ctx->ocb);                                              \
-fn_set_enc_key(key, keylen * 8, &ctx->ksenc.ks);                               \
-fn_set_dec_key(key, keylen * 8, &ctx->ksdec.ks);                               \
-if (!CRYPTO_ocb128_init(&ctx->ocb, &ctx->ksenc.ks, &ctx->ksdec.ks,             \
-                        (block128_f)fn_block_enc, (block128_f)fn_block_dec,    \
-                        ctx->base.enc ? (ocb128_f)fn_stream_enc :              \
-                                        (ocb128_f)fn_stream_dec))              \
-    return 0;                                                                  \
-ctx->key_set = 1
+  CRYPTO_ocb128_cleanup(&ctx->ocb);                                            \
+  fn_set_enc_key(key, keylen * 8, &ctx->ksenc.ks);                             \
+  fn_set_dec_key(key, keylen * 8, &ctx->ksdec.ks);                             \
+  if (!CRYPTO_ocb128_init(&ctx->ocb, &ctx->ksenc.ks, &ctx->ksdec.ks,           \
+                          (block128_f)fn_block_enc, (block128_f)fn_block_dec,  \
+                          ctx->base.enc ? (ocb128_f)fn_stream_enc :            \
+                                          (ocb128_f)fn_stream_dec))            \
+      return 0;                                                                \
+  ctx->key_set = 1
 
 
 static int cipher_hw_aes_ocb_generic_initkey(PROV_CIPHER_CTX *vctx,
@@ -76,6 +76,7 @@ static int cipher_hw_aes_ocb_aesni_initkey(PROV_CIPHER_CTX *vctx,
 # define PROV_CIPHER_HW_declare()                                              \
 static const PROV_CIPHER_HW aesni_ocb = {                                      \
     cipher_hw_aes_ocb_aesni_initkey,                                           \
+    NULL,                                                                      \
     NULL                                                                       \
 };
 # define PROV_CIPHER_HW_select()                                               \
@@ -151,11 +152,13 @@ static int cipher_hw_aes_ocb_rv32i_zbkb_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
 # define PROV_CIPHER_HW_declare()                                              \
 static const PROV_CIPHER_HW aes_rv32i_zknd_zkne_ocb = {                        \
     cipher_hw_aes_ocb_rv32i_zknd_zkne_initkey,                                 \
-    NULL                                                                       \
+    NULL,                    /* cipher */                                      \
+    NULL                     /* copyctx */                                     \
 };                                                                             \
 static const PROV_CIPHER_HW aes_rv32i_zbkb_zknd_zkne_ocb = {                   \
     cipher_hw_aes_ocb_rv32i_zbkb_zknd_zkne_initkey,                            \
-    NULL                                                                       \
+    NULL,                    /* cipher */                                      \
+    NULL                     /* copyctx */                                     \
 };
 # define PROV_CIPHER_HW_select()                                               \
     if (RV32I_ZBKB_ZKND_ZKNE_CAPABLE)                                          \
@@ -169,11 +172,13 @@ static const PROV_CIPHER_HW aes_rv32i_zbkb_zknd_zkne_ocb = {                   \
 
 static const PROV_CIPHER_HW aes_generic_ocb = {
     cipher_hw_aes_ocb_generic_initkey,
-    NULL
+    NULL,                    /* cipher */
+    NULL                     /* copyctx */
 };
 PROV_CIPHER_HW_declare()
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ocb(size_t keybits)
 {
+    (void)keybits;
     PROV_CIPHER_HW_select()
     return &aes_generic_ocb;
 }

@@ -98,7 +98,7 @@ const OPTIONS enc_options[] = {
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int enc_main(int argc, char **argv)

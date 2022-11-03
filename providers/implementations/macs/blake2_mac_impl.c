@@ -39,9 +39,10 @@ struct blake2_mac_data_st {
     unsigned char key[BLAKE2_KEYBYTES];
 };
 
-static void *blake2_mac_new(void *unused_provctx)
+static void *blake2_mac_new(void *provctx)
 {
     struct blake2_mac_data_st *macctx;
+    (void)provctx;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -136,6 +137,7 @@ static int blake2_mac_final(void *vmacctx,
                             size_t outsize)
 {
     struct blake2_mac_data_st *macctx = vmacctx;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;

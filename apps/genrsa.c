@@ -70,7 +70,7 @@ const OPTIONS genrsa_options[] = {
 
     OPT_PARAMETERS(),
     {"numbits", 0, 0, "Size of key in bits"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int genrsa_main(int argc, char **argv)

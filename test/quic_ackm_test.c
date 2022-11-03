@@ -18,6 +18,7 @@ static OSSL_TIME fake_time = {0};
 
 static OSSL_TIME fake_now(void *arg)
 {
+    (void)arg;
     return fake_time;
 }
 
@@ -495,8 +496,8 @@ struct tx_ack_time_op {
 #define TX_OP_ACK(advance, pn, num_pn) \
     { TX_ACK_TIME_OP_ACK, (advance) * OSSL_TIME_MS, (pn), (num_pn), NULL },
 #define TX_OP_EXPECT(expect) \
-    { TX_ACK_TIME_OP_EXPECT, 0, 0, 0, (expect) },
-#define TX_OP_END { TX_ACK_TIME_OP_END }
+    { TX_ACK_TIME_OP_EXPECT, 0U, 0U, 0U, (expect) },
+#define TX_OP_END { TX_ACK_TIME_OP_END, 0U, 0U, 0U, NULL }
 
 static const char tx_ack_time_script_1_expect[] = {
     2, 1
@@ -687,7 +688,10 @@ struct rx_test_op {
     },
 
 #define RX_OP_END                                                   \
-    { RX_OPK_END }
+    {                                                               \
+      RX_OPK_END, 0, 0, 0,                                          \
+      0, 0, NULL, 0, 0                                              \
+    },
 
 /* RX 1. Simple Test with ACK Desired (Packet Threshold, Exactly) */
 static const OSSL_QUIC_ACK_RANGE rx_ack_ranges_1a[] = {

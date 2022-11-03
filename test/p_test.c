@@ -74,6 +74,7 @@ static void p_set_error(int lib, int reason, const char *file, int line,
 
 static const OSSL_PARAM *p_gettable_params(void *_)
 {
+    (void)_;
     return p_param_types;
 }
 
@@ -212,6 +213,7 @@ static const OSSL_ITEM *p_get_reason_strings(void *_)
         {3, "Can't load default provider"},
         {0, NULL}
     };
+    (void)_;
 
     return reason_strings;
 }

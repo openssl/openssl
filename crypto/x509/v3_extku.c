@@ -58,6 +58,8 @@ static STACK_OF(CONF_VALUE) *i2v_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD
     int i;
     ASN1_OBJECT *obj;
     char obj_tmp[80];
+    (void)method;
+
     for (i = 0; i < sk_ASN1_OBJECT_num(eku); i++) {
         obj = sk_ASN1_OBJECT_value(eku, i);
         i2t_ASN1_OBJECT(obj_tmp, 80, obj);
@@ -76,6 +78,8 @@ static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,
     CONF_VALUE *val;
     const int num = sk_CONF_VALUE_num(nval);
     int i;
+    (void)method;
+    (void)ctx;
 
     extku = sk_ASN1_OBJECT_new_reserve(NULL, num);
     if (extku == NULL) {

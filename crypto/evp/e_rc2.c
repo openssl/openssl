@@ -61,7 +61,27 @@ static const EVP_CIPHER r2_64_cbc_cipher = {
     rc2_set_asn1_type_and_iv,
     rc2_get_asn1_type_and_iv,
     rc2_ctrl,
-    NULL
+    NULL,
+    0,          /* name_id */
+    NULL,       /* type_name */
+    NULL,       /* description */
+    NULL,       /* prov */
+    0,          /* refcnt */
+    NULL,       /* lock */
+    NULL,       /* newctx */
+    NULL,       /* einit */
+    NULL,       /* dinit */
+    NULL,       /* cupdate */
+    NULL,       /* cfinal */
+    NULL,       /* ccipher */
+    NULL,       /* freectx */
+    NULL,       /* dupctx */
+    NULL,       /* get_params */
+    NULL,       /* get_ctx_params */
+    NULL,       /* set_ctx_params */
+    NULL,       /* gettable_params */
+    NULL,       /* gettable_ctx_params */
+    NULL        /* settable_ctx_params */
 };
 
 static const EVP_CIPHER r2_40_cbc_cipher = {
@@ -76,7 +96,27 @@ static const EVP_CIPHER r2_40_cbc_cipher = {
     rc2_set_asn1_type_and_iv,
     rc2_get_asn1_type_and_iv,
     rc2_ctrl,
-    NULL
+    NULL,                      /* app_data */
+    0,                         /* name_id */
+    NULL,                      /* type_name */
+    NULL,                      /* description */
+    NULL,                      /* prov */
+    0,                         /* refcnt */
+    NULL,                      /* lock */
+    NULL,                      /* newctx */
+    NULL,                      /* einit */
+    NULL,                      /* dinit */
+    NULL,                      /* cupdate */
+    NULL,                      /* cfinal */
+    NULL,                      /* ccipher */
+    NULL,                      /* freectx */
+    NULL,                      /* dupctx */
+    NULL,                      /* get_params */
+    NULL,                      /* get_ctx_params */
+    NULL,                      /* set_ctx_params */
+    NULL,                      /* gettable_params */
+    NULL,                      /* gettable_ctx_params */
+    NULL                       /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_rc2_64_cbc(void)
@@ -92,6 +132,8 @@ const EVP_CIPHER *EVP_rc2_40_cbc(void)
 static int rc2_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc)
 {
+    (void)iv;
+    (void)enc;
     RC2_set_key(&data(ctx)->ks, EVP_CIPHER_CTX_get_key_length(ctx),
                 key, data(ctx)->key_bits);
     return 1;

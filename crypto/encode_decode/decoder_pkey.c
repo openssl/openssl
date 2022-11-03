@@ -376,7 +376,17 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
 {
     int ok = 0;
     struct decoder_pkey_data_st *process_data = NULL;
-    struct collect_data_st collect_data = { NULL };
+    struct collect_data_st collect_data = {
+        NULL, /* libctx */
+        NULL, /* ctx */
+        NULL, /* keytype */
+        0, /* keytype_id */
+        0, /* sm2_id */
+        0, /* total */
+        0, /* error_occurred */
+        0, /* keytype_resolved */
+        NULL /* keymgmts */
+    };
     STACK_OF(EVP_KEYMGMT) *keymgmts = NULL;
 
     OSSL_TRACE_BEGIN(DECODER) {

@@ -262,6 +262,7 @@ static tests testpackets[9] = {
 static int cookie_gen(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
 {
     unsigned int i;
+    (void)ssl;
 
     for (i = 0; i < COOKIE_LEN; i++, cookie++)
         *cookie = i;
@@ -274,6 +275,7 @@ static int cookie_verify(SSL *ssl, const unsigned char *cookie,
                          unsigned int cookie_len)
 {
     unsigned int i;
+    (void)ssl;
 
     if (cookie_len != COOKIE_LEN)
         return 0;

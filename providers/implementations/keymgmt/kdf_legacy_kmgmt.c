@@ -93,6 +93,8 @@ static void kdf_freedata(void *kdfdata)
 
 static int kdf_has(const void *keydata, int selection)
 {
+    (void)keydata;
+    (void)selection;
     return 1; /* nothing is missing */
 }
 

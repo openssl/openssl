@@ -48,7 +48,7 @@ const OPTIONS gendsa_options[] = {
 
     OPT_PARAMETERS(),
     {"dsaparam-file", 0, 0, "File containing DSA parameters"},
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int gendsa_main(int argc, char **argv)

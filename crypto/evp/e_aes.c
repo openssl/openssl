@@ -147,6 +147,7 @@ static int aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     int ret, mode;
     EVP_AES_KEY *dat = EVP_C_DATA(EVP_AES_KEY,ctx);
     const int keylen = EVP_CIPHER_CTX_get_key_length(ctx) * 8;
+    (void)iv;
 
     if (keylen <= 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY_LENGTH);
@@ -225,6 +226,7 @@ static int aesni_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                               const unsigned char *iv, int enc)
 {
     EVP_AES_GCM_CTX *gctx = EVP_C_DATA(EVP_AES_GCM_CTX, ctx);
+    (void)enc;
 
     if (iv == NULL && key == NULL)
         return 1;
@@ -422,23 +424,65 @@ static int aesni_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 # define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aesni_##keylen##_##mode = { \
         nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
-        flags|EVP_CIPH_##MODE##_MODE,   \
-        EVP_ORIG_GLOBAL,                \
-        aesni_init_key,                 \
-        aesni_##mode##_cipher,          \
-        NULL,                           \
-        sizeof(EVP_AES_KEY),            \
-        NULL,NULL,NULL,NULL }; \
+        flags|EVP_CIPH_##MODE##_MODE,             \
+        EVP_ORIG_GLOBAL,                          \
+        aesni_init_key,                           \
+        aesni_##mode##_cipher,                    \
+        NULL,                                     \
+        sizeof(EVP_AES_KEY),                      \
+        NULL,NULL,NULL,NULL,                      \
+        0,           /* name_id */                \
+        NULL,        /* type_name */              \
+        NULL,        /* description */            \
+        NULL,        /* prov */                   \
+        0,           /* refcnt */                 \
+        NULL,        /* lock */                   \
+        NULL,        /* newctx */                 \
+        NULL,        /* einit */                  \
+        NULL,        /* dinit */                  \
+        NULL,        /* cupdate */                \
+        NULL,        /* cfinal */                 \
+        NULL,        /* ccipher */                \
+        NULL,        /* freectx */                \
+        NULL,        /* dupctx */                 \
+        NULL,        /* get_params */             \
+        NULL,        /* get_ctx_params */         \
+        NULL,        /* set_ctx_params */         \
+        NULL,        /* gettable_params */        \
+        NULL,        /* gettable_ctx_params */    \
+        NULL         /* settable_ctx_params */    \
+};                                                \
 static const EVP_CIPHER aes_##keylen##_##mode = { \
-        nid##_##keylen##_##nmode,blocksize,     \
-        keylen/8,ivlen,                 \
-        flags|EVP_CIPH_##MODE##_MODE,   \
-        EVP_ORIG_GLOBAL,                 \
-        aes_init_key,                   \
-        aes_##mode##_cipher,            \
-        NULL,                           \
-        sizeof(EVP_AES_KEY),            \
-        NULL,NULL,NULL,NULL }; \
+        nid##_##keylen##_##nmode,blocksize,       \
+        keylen/8,ivlen,                           \
+        flags|EVP_CIPH_##MODE##_MODE,             \
+        EVP_ORIG_GLOBAL,                          \
+        aes_init_key,                             \
+        aes_##mode##_cipher,                      \
+        NULL,                                     \
+        sizeof(EVP_AES_KEY),                      \
+        NULL,NULL,NULL,NULL,                      \
+        0,           /* name_id */                \
+        NULL,        /* type_name */              \
+        NULL,        /* description */            \
+        NULL,        /* prov */                   \
+        0,           /* refcnt */                 \
+        NULL,        /* lock */                   \
+        NULL,        /* newctx */                 \
+        NULL,        /* einit */                  \
+        NULL,        /* dinit */                  \
+        NULL,        /* cupdate */                \
+        NULL,        /* cfinal */                 \
+        NULL,        /* ccipher */                \
+        NULL,        /* freectx */                \
+        NULL,        /* dupctx */                 \
+        NULL,        /* get_params */             \
+        NULL,        /* get_ctx_params */         \
+        NULL,        /* set_ctx_params */         \
+        NULL,        /* gettable_params */        \
+        NULL,        /* gettable_ctx_params */    \
+        NULL         /* settable_ctx_params */    \
+};                                                \
 const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return AESNI_CAPABLE?&aesni_##keylen##_##mode:&aes_##keylen##_##mode; }
 
@@ -453,18 +497,60 @@ static const EVP_CIPHER aesni_##keylen##_##mode = { \
         aesni_##mode##_cipher,          \
         aes_##mode##_cleanup,           \
         sizeof(EVP_AES_##MODE##_CTX),   \
-        NULL,NULL,aes_##mode##_ctrl,NULL }; \
+        NULL,NULL,aes_##mode##_ctrl,NULL,         \
+        0,           /* name_id */                \
+        NULL,        /* type_name */              \
+        NULL,        /* description */            \
+        NULL,        /* prov */                   \
+        0,           /* refcnt */                 \
+        NULL,        /* lock */                   \
+        NULL,        /* newctx */                 \
+        NULL,        /* einit */                  \
+        NULL,        /* dinit */                  \
+        NULL,        /* cupdate */                \
+        NULL,        /* cfinal */                 \
+        NULL,        /* ccipher */                \
+        NULL,        /* freectx */                \
+        NULL,        /* dupctx */                 \
+        NULL,        /* get_params */             \
+        NULL,        /* get_ctx_params */         \
+        NULL,        /* set_ctx_params */         \
+        NULL,        /* gettable_params */        \
+        NULL,        /* gettable_ctx_params */    \
+        NULL         /* settable_ctx_params */    \
+};                                                \
 static const EVP_CIPHER aes_##keylen##_##mode = { \
         nid##_##keylen##_##mode,blocksize, \
         (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE?2:1)*keylen/8, \
-        ivlen,                          \
-        flags|EVP_CIPH_##MODE##_MODE,   \
-        EVP_ORIG_GLOBAL,                \
-        aes_##mode##_init_key,          \
-        aes_##mode##_cipher,            \
-        aes_##mode##_cleanup,           \
-        sizeof(EVP_AES_##MODE##_CTX),   \
-        NULL,NULL,aes_##mode##_ctrl,NULL }; \
+        ivlen,                                    \
+        flags|EVP_CIPH_##MODE##_MODE,             \
+        EVP_ORIG_GLOBAL,                          \
+        aes_##mode##_init_key,                    \
+        aes_##mode##_cipher,                      \
+        aes_##mode##_cleanup,                     \
+        sizeof(EVP_AES_##MODE##_CTX),             \
+        NULL,NULL,aes_##mode##_ctrl,NULL,         \
+        0,           /* name_id */                \
+        NULL,        /* type_name */              \
+        NULL,        /* description */            \
+        NULL,        /* prov */                   \
+        0,           /* refcnt */                 \
+        NULL,        /* lock */                   \
+        NULL,        /* newctx */                 \
+        NULL,        /* einit */                  \
+        NULL,        /* dinit */                  \
+        NULL,        /* cupdate */                \
+        NULL,        /* cfinal */                 \
+        NULL,        /* ccipher */                \
+        NULL,        /* freectx */                \
+        NULL,        /* dupctx */                 \
+        NULL,        /* get_params */             \
+        NULL,        /* get_ctx_params */         \
+        NULL,        /* set_ctx_params */         \
+        NULL,        /* gettable_params */        \
+        NULL,        /* gettable_ctx_params */    \
+        NULL         /* settable_ctx_params */    \
+};                                                \
 const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return AESNI_CAPABLE?&aesni_##keylen##_##mode:&aes_##keylen##_##mode; }
 
@@ -814,7 +900,28 @@ static const EVP_CIPHER aes_t4_##keylen##_##mode = { \
         aes_t4_##mode##_cipher,         \
         NULL,                           \
         sizeof(EVP_AES_KEY),            \
-        NULL,NULL,NULL,NULL }; \
+        NULL,NULL,NULL,NULL,                      \
+        0,           /* name_id */                \
+        NULL,        /* type_name */              \
+        NULL,        /* description */            \
+        NULL,        /* prov */                   \
+        0,           /* refcnt */                 \
+        NULL,        /* lock */                   \
+        NULL,        /* newctx */                 \
+        NULL,        /* einit */                  \
+        NULL,        /* dinit */                  \
+        NULL,        /* cupdate */                \
+        NULL,        /* cfinal */                 \
+        NULL,        /* ccipher */                \
+        NULL,        /* freectx */                \
+        NULL,        /* dupctx */                 \
+        NULL,        /* get_params */             \
+        NULL,        /* get_ctx_params */         \
+        NULL,        /* set_ctx_params */         \
+        NULL,        /* gettable_params */        \
+        NULL,        /* gettable_ctx_params */    \
+        NULL         /* settable_ctx_params */    \
+    };                                            \
 static const EVP_CIPHER aes_##keylen##_##mode = { \
         nid##_##keylen##_##nmode,blocksize,     \
         keylen/8,ivlen, \
@@ -824,7 +931,28 @@ static const EVP_CIPHER aes_##keylen##_##mode = { \
         aes_##mode##_cipher,            \
         NULL,                           \
         sizeof(EVP_AES_KEY),            \
-        NULL,NULL,NULL,NULL }; \
+        NULL,NULL,NULL,NULL,                      \
+        0,           /* name_id */                \
+        NULL,        /* type_name */              \
+        NULL,        /* description */            \
+        NULL,        /* prov */                   \
+        0,           /* refcnt */                 \
+        NULL,        /* lock */                   \
+        NULL,        /* newctx */                 \
+        NULL,        /* einit */                  \
+        NULL,        /* dinit */                  \
+        NULL,        /* cupdate */                \
+        NULL,        /* cfinal */                 \
+        NULL,        /* ccipher */                \
+        NULL,        /* freectx */                \
+        NULL,        /* dupctx */                 \
+        NULL,        /* get_params */             \
+        NULL,        /* get_ctx_params */         \
+        NULL,        /* set_ctx_params */         \
+        NULL,        /* gettable_params */        \
+        NULL,        /* gettable_ctx_params */    \
+        NULL         /* settable_ctx_params */    \
+    };                                            \
 const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return SPARC_AES_CAPABLE?&aes_t4_##keylen##_##mode:&aes_##keylen##_##mode; }
 
@@ -851,6 +979,27 @@ static const EVP_CIPHER aes_##keylen##_##mode = { \
         aes_##mode##_cleanup,           \
         sizeof(EVP_AES_##MODE##_CTX),   \
         NULL,NULL,aes_##mode##_ctrl,NULL }; \
+        0,           /* name_id */                \
+        NULL,        /* type_name */              \
+        NULL,        /* description */            \
+        NULL,        /* prov */                   \
+        0,           /* refcnt */                 \
+        NULL,        /* lock */                   \
+        NULL,        /* newctx */                 \
+        NULL,        /* einit */                  \
+        NULL,        /* dinit */                  \
+        NULL,        /* cupdate */                \
+        NULL,        /* cfinal */                 \
+        NULL,        /* ccipher */                \
+        NULL,        /* freectx */                \
+        NULL,        /* dupctx */                 \
+        NULL,        /* get_params */             \
+        NULL,        /* get_ctx_params */         \
+        NULL,        /* set_ctx_params */         \
+        NULL,        /* gettable_params */        \
+        NULL,        /* gettable_ctx_params */    \
+        NULL         /* settable_ctx_params */    \
+    };                                            \
 const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return SPARC_AES_CAPABLE?&aes_t4_##keylen##_##mode:&aes_##keylen##_##mode; }
 
@@ -2376,7 +2525,10 @@ static const EVP_CIPHER aes_##keylen##_##mode = { \
         aes_##mode##_cipher,            \
         NULL,                           \
         sizeof(EVP_AES_KEY),            \
-        NULL,NULL,NULL,NULL }; \
+        NULL,NULL,NULL,NULL,            \
+        0,NULL,NULL,NULL,               \
+        0,NULL,NULL,NULL,               \
+        NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL };      \
 const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return &aes_##keylen##_##mode; }
 
@@ -2391,7 +2543,10 @@ static const EVP_CIPHER aes_##keylen##_##mode = { \
         aes_##mode##_cipher,            \
         aes_##mode##_cleanup,           \
         sizeof(EVP_AES_##MODE##_CTX),   \
-        NULL,NULL,aes_##mode##_ctrl,NULL }; \
+        NULL,NULL,aes_##mode##_ctrl,NULL,   \
+        0,NULL,NULL,NULL,               \
+        0,NULL,NULL,NULL,               \
+        NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL }; \
 const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return &aes_##keylen##_##mode; }
 
@@ -2412,6 +2567,7 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     int ret, mode;
     EVP_AES_KEY *dat = EVP_C_DATA(EVP_AES_KEY,ctx);
     const int keylen = EVP_CIPHER_CTX_get_key_length(ctx) * 8;
+    (void)iv;
 
     if (keylen <= 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY_LENGTH);
@@ -2795,6 +2951,7 @@ static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                             const unsigned char *iv, int enc)
 {
     EVP_AES_GCM_CTX *gctx = EVP_C_DATA(EVP_AES_GCM_CTX,ctx);
+    (void)enc;
 
     if (iv == NULL && key == NULL)
         return 1;
@@ -3197,6 +3354,7 @@ BLOCK_CIPHER_custom(NID_aes, 256, 1, 12, gcm, GCM,
 static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX, c);
+    (void)arg;
 
     if (type == EVP_CTRL_COPY) {
         EVP_CIPHER_CTX *out = ptr;
@@ -3485,6 +3643,7 @@ static int aes_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                             const unsigned char *iv, int enc)
 {
     EVP_AES_CCM_CTX *cctx = EVP_C_DATA(EVP_AES_CCM_CTX,ctx);
+    (void)enc;
 
     if (iv == NULL && key == NULL)
         return 1;
@@ -3676,6 +3835,7 @@ static int aes_wrap_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
     int len;
     EVP_AES_WRAP_CTX *wctx = EVP_C_DATA(EVP_AES_WRAP_CTX,ctx);
+    (void)enc;
 
     if (iv == NULL && key == NULL)
         return 1;
@@ -3767,11 +3927,36 @@ static int aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 static const EVP_CIPHER aes_128_wrap = {
     NID_id_aes128_wrap,
-    8, 16, 8, WRAP_FLAGS, EVP_ORIG_GLOBAL,
-    aes_wrap_init_key, aes_wrap_cipher,
+    8,
+    16,
+    8,
+    WRAP_FLAGS,
+    EVP_ORIG_GLOBAL,
+    aes_wrap_init_key,
+    aes_wrap_cipher,
     NULL,
     sizeof(EVP_AES_WRAP_CTX),
-    NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL,
+    0,      /* name_id */
+    NULL,   /* type_name */
+    NULL,   /* description */
+    NULL,   /* prov */
+    0,      /* refcnt */
+    NULL,   /* lock */
+    NULL,   /* newctx */
+    NULL,   /* einit */
+    NULL,   /* dinit */
+    NULL,   /* cupdate */
+    NULL,   /* cfinal */
+    NULL,   /* ccipher */
+    NULL,   /* freectx */
+    NULL,   /* dupctx */
+    NULL,   /* get_params */
+    NULL,   /* get_ctx_params */
+    NULL,   /* set_ctx_params */
+    NULL,   /* gettable_params */
+    NULL,   /* gettable_ctx_params */
+    NULL    /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_aes_128_wrap(void)
@@ -3785,7 +3970,27 @@ static const EVP_CIPHER aes_192_wrap = {
     aes_wrap_init_key, aes_wrap_cipher,
     NULL,
     sizeof(EVP_AES_WRAP_CTX),
-    NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL,
+    0,      /* name_id */
+    NULL,   /* type_name */
+    NULL,   /* description */
+    NULL,   /* prov */
+    0,      /* refcnt */
+    NULL,   /* lock */
+    NULL,   /* newctx */
+    NULL,   /* einit */
+    NULL,   /* dinit */
+    NULL,   /* cupdate */
+    NULL,   /* cfinal */
+    NULL,   /* ccipher */
+    NULL,   /* freectx */
+    NULL,   /* dupctx */
+    NULL,   /* get_params */
+    NULL,   /* get_ctx_params */
+    NULL,   /* set_ctx_params */
+    NULL,   /* gettable_params */
+    NULL,   /* gettable_ctx_params */
+    NULL    /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_aes_192_wrap(void)
@@ -3799,7 +4004,27 @@ static const EVP_CIPHER aes_256_wrap = {
     aes_wrap_init_key, aes_wrap_cipher,
     NULL,
     sizeof(EVP_AES_WRAP_CTX),
-    NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL,
+    0,      /* name_id */
+    NULL,   /* type_name */
+    NULL,   /* description */
+    NULL,   /* prov */
+    0,      /* refcnt */
+    NULL,   /* lock */
+    NULL,   /* newctx */
+    NULL,   /* einit */
+    NULL,   /* dinit */
+    NULL,   /* cupdate */
+    NULL,   /* cfinal */
+    NULL,   /* ccipher */
+    NULL,   /* freectx */
+    NULL,   /* dupctx */
+    NULL,   /* get_params */
+    NULL,   /* get_ctx_params */
+    NULL,   /* set_ctx_params */
+    NULL,   /* gettable_params */
+    NULL,   /* gettable_ctx_params */
+    NULL    /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_aes_256_wrap(void)
@@ -3813,7 +4038,27 @@ static const EVP_CIPHER aes_128_wrap_pad = {
     aes_wrap_init_key, aes_wrap_cipher,
     NULL,
     sizeof(EVP_AES_WRAP_CTX),
-    NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL,
+    0,      /* name_id */
+    NULL,   /* type_name */
+    NULL,   /* description */
+    NULL,   /* prov */
+    0,      /* refcnt */
+    NULL,   /* lock */
+    NULL,   /* newctx */
+    NULL,   /* einit */
+    NULL,   /* dinit */
+    NULL,   /* cupdate */
+    NULL,   /* cfinal */
+    NULL,   /* ccipher */
+    NULL,   /* freectx */
+    NULL,   /* dupctx */
+    NULL,   /* get_params */
+    NULL,   /* get_ctx_params */
+    NULL,   /* set_ctx_params */
+    NULL,   /* gettable_params */
+    NULL,   /* gettable_ctx_params */
+    NULL    /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_aes_128_wrap_pad(void)
@@ -3827,7 +4072,27 @@ static const EVP_CIPHER aes_192_wrap_pad = {
     aes_wrap_init_key, aes_wrap_cipher,
     NULL,
     sizeof(EVP_AES_WRAP_CTX),
-    NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL,
+    0,      /* name_id */
+    NULL,   /* type_name */
+    NULL,   /* description */
+    NULL,   /* prov */
+    0,      /* refcnt */
+    NULL,   /* lock */
+    NULL,   /* newctx */
+    NULL,   /* einit */
+    NULL,   /* dinit */
+    NULL,   /* cupdate */
+    NULL,   /* cfinal */
+    NULL,   /* ccipher */
+    NULL,   /* freectx */
+    NULL,   /* dupctx */
+    NULL,   /* get_params */
+    NULL,   /* get_ctx_params */
+    NULL,   /* set_ctx_params */
+    NULL,   /* gettable_params */
+    NULL,   /* gettable_ctx_params */
+    NULL    /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_aes_192_wrap_pad(void)
@@ -3841,7 +4106,27 @@ static const EVP_CIPHER aes_256_wrap_pad = {
     aes_wrap_init_key, aes_wrap_cipher,
     NULL,
     sizeof(EVP_AES_WRAP_CTX),
-    NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL,
+    0,      /* name_id */
+    NULL,   /* type_name */
+    NULL,   /* description */
+    NULL,   /* prov */
+    0,      /* refcnt */
+    NULL,   /* lock */
+    NULL,   /* newctx */
+    NULL,   /* einit */
+    NULL,   /* dinit */
+    NULL,   /* cupdate */
+    NULL,   /* cfinal */
+    NULL,   /* ccipher */
+    NULL,   /* freectx */
+    NULL,   /* dupctx */
+    NULL,   /* get_params */
+    NULL,   /* get_ctx_params */
+    NULL,   /* set_ctx_params */
+    NULL,   /* gettable_params */
+    NULL,   /* gettable_ctx_params */
+    NULL    /* settable_ctx_params */
 };
 
 const EVP_CIPHER *EVP_aes_256_wrap_pad(void)
@@ -3917,6 +4202,7 @@ static int aes_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                             const unsigned char *iv, int enc)
 {
     EVP_AES_OCB_CTX *octx = EVP_C_DATA(EVP_AES_OCB_CTX,ctx);
+    (void)enc;
 
     if (iv == NULL && key == NULL)
         return 1;

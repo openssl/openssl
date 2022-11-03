@@ -41,6 +41,7 @@ typedef struct {
 static void *ecx_newctx(void *provctx, size_t keylen)
 {
     PROV_ECX_CTX *ctx;
+    (void)provctx;
 
     if (!ossl_prov_is_running())
         return NULL;

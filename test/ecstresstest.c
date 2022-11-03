@@ -114,7 +114,7 @@ const OPTIONS *test_get_options(void)
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "num", OPT_NUM_REPEATS, 'M', "Number of repeats" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

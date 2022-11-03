@@ -54,6 +54,8 @@ static const BIO_METHOD methods_enc = {
     enc_new,
     enc_free,
     enc_callback_ctrl,
+    NULL,                      /* bsendmmsg */
+    NULL                       /* brecvmmsg */
 };
 
 const BIO_METHOD *BIO_f_cipher(void)

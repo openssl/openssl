@@ -306,6 +306,7 @@ static int ecx_get_params(void *key, OSSL_PARAM params[], int bits, int secbits,
 static int ed_get_params(void *key, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
+    (void)key;
 
     if ((p = OSSL_PARAM_locate(params,
                                OSSL_PKEY_PARAM_MANDATORY_DIGEST)) != NULL
@@ -360,21 +361,25 @@ static const OSSL_PARAM ed_gettable_params[] = {
 
 static const OSSL_PARAM *x25519_gettable_params(void *provctx)
 {
+    (void)provctx;
     return ecx_gettable_params;
 }
 
 static const OSSL_PARAM *x448_gettable_params(void *provctx)
 {
+    (void)provctx;
     return ecx_gettable_params;
 }
 
 static const OSSL_PARAM *ed25519_gettable_params(void *provctx)
 {
+    (void)provctx;
     return ed_gettable_params;
 }
 
 static const OSSL_PARAM *ed448_gettable_params(void *provctx)
 {
+    (void)provctx;
     return ed_gettable_params;
 }
 
@@ -432,11 +437,15 @@ static int x448_set_params(void *key, const OSSL_PARAM params[])
 
 static int ed25519_set_params(void *key, const OSSL_PARAM params[])
 {
+    (void)key;
+    (void)params;
     return 1;
 }
 
 static int ed448_set_params(void *key, const OSSL_PARAM params[])
 {
+    (void)key;
+    (void)params;
     return 1;
 }
 
@@ -452,21 +461,25 @@ static const OSSL_PARAM ed_settable_params[] = {
 
 static const OSSL_PARAM *x25519_settable_params(void *provctx)
 {
+    (void)provctx;
     return ecx_settable_params;
 }
 
 static const OSSL_PARAM *x448_settable_params(void *provctx)
 {
+    (void)provctx;
     return ecx_settable_params;
 }
 
 static const OSSL_PARAM *ed25519_settable_params(void *provctx)
 {
+    (void)provctx;
     return ed_settable_params;
 }
 
 static const OSSL_PARAM *ed448_settable_params(void *provctx)
 {
+    (void)provctx;
     return ed_settable_params;
 }
 
@@ -654,6 +667,8 @@ err:
 static void *x25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     struct ecx_gen_ctx *gctx = genctx;
+    (void)osslcb;
+    (void)cbarg;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -668,6 +683,8 @@ static void *x25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 static void *x448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     struct ecx_gen_ctx *gctx = genctx;
+    (void)osslcb;
+    (void)cbarg;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -682,6 +699,8 @@ static void *x448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     struct ecx_gen_ctx *gctx = genctx;
+    (void)osslcb;
+    (void)cbarg;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -699,6 +718,8 @@ static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     struct ecx_gen_ctx *gctx = genctx;
+    (void)osslcb;
+    (void)cbarg;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -799,21 +820,25 @@ static int ecx_validate(const void *keydata, int selection, int type, size_t key
 
 static int x25519_validate(const void *keydata, int selection, int checktype)
 {
+    (void)checktype;
     return ecx_validate(keydata, selection, ECX_KEY_TYPE_X25519, X25519_KEYLEN);
 }
 
 static int x448_validate(const void *keydata, int selection, int checktype)
 {
+    (void)checktype;
     return ecx_validate(keydata, selection, ECX_KEY_TYPE_X448, X448_KEYLEN);
 }
 
 static int ed25519_validate(const void *keydata, int selection, int checktype)
 {
+    (void)checktype;
     return ecx_validate(keydata, selection, ECX_KEY_TYPE_ED25519, ED25519_KEYLEN);
 }
 
 static int ed448_validate(const void *keydata, int selection, int checktype)
 {
+    (void)checktype;
     return ecx_validate(keydata, selection, ECX_KEY_TYPE_ED448, ED448_KEYLEN);
 }
 

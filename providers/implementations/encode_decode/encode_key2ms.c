@@ -111,6 +111,7 @@ static int key2pvk_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
 static int key2ms_does_selection(void *vctx, int selection)
 {
+    (void)vctx;
     return (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0;
 }
 
@@ -133,6 +134,8 @@ static int key2msblob_encode(void *vctx, const void *key, int selection,
     int ispub = -1;
     EVP_PKEY *pkey = NULL;
     int ok = 0;
+    (void)pw_cb;
+    (void)pw_cbarg;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ispub = 0;

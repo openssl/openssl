@@ -68,11 +68,23 @@ static void ui_new_method_data(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
      * Do nothing, the data is allocated externally and assigned later with
      * CRYPTO_set_ex_data()
      */
+    (void)parent;
+    (void)ptr;
+    (void)ad;
+    (void)idx;
+    (void)argl;
+    (void)argp;
 }
 
 static int ui_dup_method_data(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                               void **pptr, int idx, long argl, void *argp)
 {
+    (void)to;
+    (void)from;
+    (void)idx;
+    (void)argl;
+    (void)argp;
+
     if (*pptr != NULL) {
         *pptr = OPENSSL_memdup(*pptr, sizeof(struct pem_password_cb_data));
         if (*pptr != NULL)
@@ -84,6 +96,12 @@ static int ui_dup_method_data(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
 static void ui_free_method_data(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                                 int idx, long argl, void *argp)
 {
+    (void)parent;
+    (void)ad;
+    (void)idx;
+    (void)argl;
+    (void)argp;
+
     OPENSSL_free(ptr);
 }
 
@@ -100,10 +118,12 @@ DEFINE_RUN_ONCE_STATIC(ui_method_data_index_init)
 
 static int ui_open(UI *ui)
 {
+    (void)ui;
     return 1;
 }
 static int ui_read(UI *ui, UI_STRING *uis)
 {
+    (void)ui;
     switch (UI_get_string_type(uis)) {
     case UIT_PROMPT:
         {
@@ -134,10 +154,13 @@ static int ui_read(UI *ui, UI_STRING *uis)
 }
 static int ui_write(UI *ui, UI_STRING *uis)
 {
+    (void)ui;
+    (void)uis;
     return 1;
 }
 static int ui_close(UI *ui)
 {
+    (void)ui;
     return 1;
 }
 

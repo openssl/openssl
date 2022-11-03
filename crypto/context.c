@@ -403,6 +403,7 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE *handle,
                                              const OSSL_DISPATCH *in)
 {
     OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
+    (void)handle;
 
     if (ctx == NULL)
         return NULL;
@@ -494,7 +495,9 @@ OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx)
 
 int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx)
 {
-#ifndef FIPS_MODULE
+#ifdef FIPS_MODULE
+    (void)ctx;
+#else
     if (ctx == NULL || ctx == get_default_context())
         return 1;
 #endif
@@ -503,7 +506,9 @@ int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx)
 
 int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx)
 {
-#ifndef FIPS_MODULE
+#ifdef FIPS_MODULE
+    (void)ctx;
+#else
     if (ossl_lib_ctx_get_concrete(ctx) == &default_context_int)
         return 1;
 #endif
@@ -610,6 +615,7 @@ OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx)
 const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx)
 {
 #ifdef FIPS_MODULE
+    (void)libctx;
     return "FIPS internal library context";
 #else
     if (ossl_lib_ctx_is_global_default(libctx))

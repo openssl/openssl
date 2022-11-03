@@ -16,7 +16,10 @@ static const UI_METHOD ui_null = {
     NULL,                        /* flusher */
     NULL,                        /* reader */
     NULL,                        /* closer */
-    NULL
+    NULL,                        /* duplicate */
+    NULL,                        /* destroy */
+    NULL,                        /* construct_prompt */
+    {NULL, NULL}                 /* ex_data */
 };
 
 /* The method with all the built-in thingies */

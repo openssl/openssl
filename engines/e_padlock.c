@@ -143,6 +143,7 @@ static ENGINE *ENGINE_padlock(void)
 /* Check availability of the engine */
 static int padlock_init(ENGINE *e)
 {
+    (void)e;
     return (padlock_use_rng || padlock_use_ace);
 }
 
@@ -534,6 +535,7 @@ static int
 padlock_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids,
                 int nid)
 {
+    (void)e;
     /* No specific cipher => return a list of supported nids ... */
     if (!cipher) {
         *nids = padlock_cipher_nids;
@@ -607,6 +609,7 @@ padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     struct padlock_cipher_data *cdata;
     int key_len = EVP_CIPHER_CTX_get_key_length(ctx) * 8;
     unsigned long mode = EVP_CIPHER_CTX_get_mode(ctx);
+    (void)iv;
 
     if (key == NULL)
         return 0;               /* ERROR */
@@ -744,6 +747,9 @@ OPENSSL_EXPORT
 OPENSSL_EXPORT
     int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns)
 {
+    (void)e;
+    (void)id;
+    (void)fns;
     return 0;
 }
 

@@ -75,6 +75,9 @@ RSA *ossl_rsa_new_with_ctx(OSSL_LIB_CTX *libctx)
 static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 {
     RSA *ret = OPENSSL_zalloc(sizeof(*ret));
+#if defined(OPENSSL_NO_ENGINE) || defined(FIPS_MODULE)
+    (void)engine;
+#endif
 
     if (ret == NULL)
         return NULL;
@@ -674,6 +677,7 @@ const BIGNUM *RSA_get0_iqmp(const RSA *r)
 const RSA_PSS_PARAMS *RSA_get0_pss_params(const RSA *r)
 {
 #ifdef FIPS_MODULE
+    (void)r;
     return NULL;
 #else
     return r->pss;
@@ -684,6 +688,8 @@ const RSA_PSS_PARAMS *RSA_get0_pss_params(const RSA *r)
 int ossl_rsa_set0_pss_params(RSA *r, RSA_PSS_PARAMS *pss)
 {
 #ifdef FIPS_MODULE
+    (void)r;
+    (void)pss;
     return 0;
 #else
     RSA_PSS_PARAMS_free(r->pss);

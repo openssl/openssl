@@ -424,6 +424,8 @@ static int encode_EVP_PKEY_MSBLOB(const char *file, const int line,
 static pem_password_cb pass_pw;
 static int pass_pw(char *buf, int size, int rwflag, void *userdata)
 {
+    (void)rwflag;
+
     OPENSSL_strlcpy(buf, userdata, size);
     return strlen(userdata);
 }
@@ -555,6 +557,8 @@ static int check_unprotected_PKCS8_PEM(const char *file, const int line,
 {
     static const char expected_pem_header[] =
         "-----BEGIN " PEM_STRING_PKCS8INF "-----";
+    (void)type;
+    (void)data_len;
 
     return TEST_FL_strn_eq(data, expected_pem_header,
                         sizeof(expected_pem_header) - 1);
@@ -579,6 +583,8 @@ static int check_params_DER(const char *file, const int line,
     int ok = 0;
     int itype = NID_undef;
     EVP_PKEY *pkey = NULL;
+    (void)file;
+    (void)line;
 
     if (strcmp(type, "DH") == 0)
         itype = EVP_PKEY_DH;
@@ -603,6 +609,7 @@ static int check_params_PEM(const char *file, const int line,
                             const void *data, size_t data_len)
 {
     static char expected_pem_header[80];
+    (void)data_len;
 
     return
         TEST_FL_int_gt(BIO_snprintf(expected_pem_header,
@@ -635,6 +642,7 @@ static int check_unprotected_legacy_PEM(const char *file, const int line,
                                         const void *data, size_t data_len)
 {
     static char expected_pem_header[80];
+    (void)data_len;
 
     return
         TEST_FL_int_gt(BIO_snprintf(expected_pem_header,
@@ -663,6 +671,7 @@ static int check_MSBLOB(const char *file, const int line,
     const unsigned char *datap = data;
     EVP_PKEY *pkey = b2i_PrivateKey(&datap, data_len);
     int ok = TEST_FL_ptr(pkey);
+    (void)type;
 
     EVP_PKEY_free(pkey);
     return ok;
@@ -685,6 +694,10 @@ static int check_PVK(const char *file, const int line,
     const unsigned char *in = data;
     unsigned int saltlen = 0, keylen = 0;
     int ok = ossl_do_PVK_header(&in, data_len, 0, &saltlen, &keylen);
+    (void)file;
+    (void)line;
+    (void)type;
+    (void)data_len;
 
     return ok;
 }
@@ -710,6 +723,7 @@ static int check_protected_PKCS8_DER(const char *file, const int line,
     const unsigned char *datap = data;
     X509_SIG *p8 = d2i_X509_SIG(NULL, &datap, data_len);
     int ok = TEST_FL_ptr(p8);
+    (void)type;
 
     X509_SIG_free(p8);
     return ok;
@@ -733,6 +747,8 @@ static int check_protected_PKCS8_PEM(const char *file, const int line,
 {
     static const char expected_pem_header[] =
         "-----BEGIN " PEM_STRING_PKCS8 "-----";
+    (void)type;
+    (void)data_len;
 
     return TEST_FL_strn_eq(data, expected_pem_header,
                         sizeof(expected_pem_header) - 1);
@@ -755,6 +771,7 @@ static int check_protected_legacy_PEM(const char *file, const int line,
                                       const void *data, size_t data_len)
 {
     static char expected_pem_header[80];
+    (void)data_len;
 
     return
         TEST_FL_int_gt(BIO_snprintf(expected_pem_header,
@@ -824,6 +841,8 @@ static int check_public_PEM(const char *file, const int line,
 {
     static const char expected_pem_header[] =
         "-----BEGIN " PEM_STRING_PUBLIC "-----";
+    (void)type;
+    (void)data_len;
 
     return
         TEST_FL_strn_eq(data, expected_pem_header,
@@ -848,6 +867,7 @@ static int check_public_MSBLOB(const char *file, const int line,
     const unsigned char *datap = data;
     EVP_PKEY *pkey = b2i_PublicKey(&datap, data_len);
     int ok = TEST_FL_ptr(pkey);
+    (void)type;
 
     EVP_PKEY_free(pkey);
     return ok;
@@ -1256,7 +1276,7 @@ const OPTIONS *test_get_options(void)
           "The configuration file to use for the library context" },
         { "provider", OPT_PROVIDER_NAME, 's',
           "The provider to load (The default value is 'default')" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return options;
 }

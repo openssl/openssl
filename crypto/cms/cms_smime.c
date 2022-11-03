@@ -918,6 +918,7 @@ int CMS_final_digest(CMS_ContentInfo *cms,
 {
     BIO *cmsbio;
     int ret = 0;
+    (void)flags;
 
     if ((cmsbio = CMS_dataInit(cms, dcont)) == NULL) {
         ERR_raise(ERR_LIB_CMS, CMS_R_CMS_LIB);
@@ -986,12 +987,19 @@ CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags)
 int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
                    unsigned int flags)
 {
+    (void)cms;
+    (void)dcont;
+    (void)out;
+    (void)flags;
     ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
     return 0;
 }
 
 CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags)
 {
+    (void)in;
+    (void)comp_nid;
+    (void)flags;
     ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
     return NULL;
 }

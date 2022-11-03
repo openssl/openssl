@@ -186,7 +186,7 @@ const OPTIONS *test_get_options(void)
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("conf_file\n"),
         { "f", OPT_FAIL, '-', "A failure is expected" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

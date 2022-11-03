@@ -82,6 +82,9 @@ EC_KEY *ossl_ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
                                    ENGINE *engine)
 {
     EC_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
+#if defined(OPENSSL_NO_ENGINE) || defined(FIPS_MODULE)
+    (void)engine;
+#endif
 
     if (ret == NULL)
         return NULL;

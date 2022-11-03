@@ -42,6 +42,7 @@ void BN_RECP_CTX_free(BN_RECP_CTX *recp)
 
 int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
 {
+    (void)ctx;
     if (!BN_copy(&(recp->N), d))
         return 0;
     BN_zero(&(recp->Nr));

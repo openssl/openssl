@@ -40,6 +40,8 @@ static const BIO_METHOD methods_linebuffer = {
     linebuffer_new,
     linebuffer_free,
     linebuffer_callback_ctrl,
+    NULL,                       /* no bsendmmsg */
+    NULL                        /* no brecvmmsg */
 };
 
 const BIO_METHOD *BIO_f_linebuffer(void)

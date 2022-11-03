@@ -40,7 +40,7 @@ const OPTIONS pkeyparam_options[] = {
     {"noout", OPT_NOOUT, '-', "Don't output encoded parameters"},
 
     OPT_PROV_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 int pkeyparam_main(int argc, char **argv)

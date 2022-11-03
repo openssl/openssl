@@ -370,6 +370,7 @@ static int send_finished(SSL *s, BIO *rbio)
         /* Finished MAC (12 bytes) */
     };
     unsigned char handshake_hash[EVP_MAX_MD_SIZE];
+    (void)s;
 
     /* Derive key material */
     do_PRF(TLS_MD_KEY_EXPANSION_CONST, TLS_MD_KEY_EXPANSION_CONST_SIZE,

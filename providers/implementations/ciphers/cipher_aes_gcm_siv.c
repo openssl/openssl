@@ -168,6 +168,7 @@ static int ossl_aes_gcm_siv_stream_final(void *vctx, unsigned char *out, size_t 
 {
     PROV_AES_GCM_SIV_CTX *ctx = (PROV_AES_GCM_SIV_CTX *)vctx;
     int error = 0;
+    (void)outsize;
 
     if (!ossl_prov_is_running())
         return 0;

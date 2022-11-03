@@ -133,6 +133,7 @@ const DSA_METHOD *DSA_get_method(DSA *d)
 static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 {
     DSA *ret = OPENSSL_zalloc(sizeof(*ret));
+    (void)engine;
 
     if (ret == NULL)
         return NULL;

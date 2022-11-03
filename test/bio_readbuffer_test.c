@@ -107,7 +107,7 @@ const OPTIONS *test_get_options(void)
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("file\n"),
         { OPT_HELP_STR, 1, '-', "file\tFile to run tests on.\n" },
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

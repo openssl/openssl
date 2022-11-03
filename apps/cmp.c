@@ -543,7 +543,7 @@ const OPTIONS cmp_options[] = {
      "Accept RAVERIFIED as proof-of-possession (POPO)"},
 
     OPT_V_OPTIONS,
-    {NULL}
+    {NULL, 0, 0, NULL}
 };
 
 typedef union {
@@ -1995,6 +1995,7 @@ static int save_free_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs,
     BIO *bio = NULL;
     int i;
     int n = sk_X509_num(certs /* may be NULL */);
+    (void)ctx;
 
     if (n < 0)
         n = 0;

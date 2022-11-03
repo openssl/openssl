@@ -44,6 +44,7 @@ static int execute_cmp_asn1_get_int_test(CMP_ASN_TEST_FIXTURE *fixture)
 {
     int res;
     ASN1_INTEGER *asn1integer = ASN1_INTEGER_new();
+    (void)fixture;
 
     if (!TEST_ptr(asn1integer))
         return 0;

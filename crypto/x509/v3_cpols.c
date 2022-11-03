@@ -97,6 +97,7 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
     CONF_VALUE *cnf;
     const int num = sk_CONF_VALUE_num(vals);
     int i, ia5org;
+    (void)method;
 
     if (vals == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
@@ -295,6 +296,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
     USERNOTICE *not;
     POLICYQUALINFO *qual;
     char *value = NULL;
+    (void)ctx;
 
     if ((qual = POLICYQUALINFO_new()) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
@@ -416,6 +418,8 @@ static int i2r_certpol(X509V3_EXT_METHOD *method, STACK_OF(POLICYINFO) *pol,
 {
     int i;
     POLICYINFO *pinfo;
+    (void)method;
+
     /* First print out the policy OIDs */
     for (i = 0; i < sk_POLICYINFO_num(pol); i++) {
         if (i > 0)

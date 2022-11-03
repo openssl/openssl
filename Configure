@@ -159,17 +159,15 @@ EOF
 my @gcc_devteam_warn = qw(
     -DPEDANTIC -pedantic -Wno-long-long -DUNUSEDRESULT_DEBUG
     -Wall
-    -Wmissing-declarations
     -Wextra
-    -Wno-unused-parameter
-    -Wno-missing-field-initializers
+    -Werror
+    -Wformat
+    -Wmissing-declarations
     -Wswitch
     -Wsign-compare
     -Wshadow
-    -Wformat
     -Wtype-limits
     -Wundef
-    -Werror
     -Wmissing-prototypes
     -Wstrict-prototypes
 );
@@ -185,12 +183,12 @@ my @gcc_devteam_warn = qw(
 my @clang_devteam_warn = qw(
     -Wno-unknown-warning-option
     -Wswitch-default
-    -Wno-parentheses-equality
     -Wno-language-extension-token
     -Wno-extended-offsetof
     -Wconditional-uninitialized
     -Wincompatible-pointer-types-discards-qualifiers
     -Wmissing-variable-declarations
+    -Wno-error=unused-command-line-argument
 );
 
 my @cl_devteam_warn = qw(
@@ -1639,8 +1637,8 @@ if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS') {
         # clang has builtin assembler, which doesn't recognize --help,
         # but it apparently recognizes the option in question on all
         # supported platforms even when it's meaningless. In other words
-        # probe would fail, but probed option always accepted...
-        push @{$config{cflags}}, "-Wa,--noexecstack", "-Qunused-arguments";
+        # probe would fail, but probed option always accepted.
+        push @{$config{cflags}}, "-Wa,--noexecstack";
     } else {
         my $cc = $config{CROSS_COMPILE}.$config{CC};
         open(PIPE, "$cc -Wa,--help -c -o null.$$.o -x assembler /dev/null 2>&1 |");

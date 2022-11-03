@@ -21,6 +21,7 @@
 static char *client_srp_cb(SSL *s, void *arg)
 {
     CTX_DATA *ctx_data = (CTX_DATA*)(arg);
+    (void)s;
     return OPENSSL_strdup(ctx_data->srp_password);
 }
 

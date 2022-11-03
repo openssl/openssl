@@ -136,8 +136,11 @@ int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
         level == OSSL_CMP_LOG_NOTICE ? "NOTE" :
         level == OSSL_CMP_LOG_INFO ? "info" :
         level == OSSL_CMP_LOG_DEBUG ? "DEBUG" : "(unknown level)";
-
-#ifndef NDEBUG
+#ifdef NDEBUG
+    (void)component;
+    (void)file;
+    (void)line;
+#else
     if (BIO_printf(bio, "%s:%s:%d:", improve_location_name(component, "CMP"),
                    file, line) < 0)
         return 0;

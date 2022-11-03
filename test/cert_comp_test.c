@@ -75,6 +75,8 @@ err:
 
 static int verify_cb(int preverify_ok, X509_STORE_CTX *x509_ctx)
 {
+    (void)preverify_ok;
+    (void)x509_ctx;
     return 1;
 }
 
@@ -107,6 +109,8 @@ static int ssl_comp_cert(SSL *ssl, int alg)
 static void cert_comp_info_cb(const SSL *s, int where, int ret)
 {
     int *seen = (int*)SSL_get_app_data(s);
+    (void)where;
+    (void)ret;
 
     if (SSL_is_server(s)) {
         /* TLS_ST_SR_COMP_CERT */

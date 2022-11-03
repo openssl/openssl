@@ -121,6 +121,8 @@ static const BIO_METHOD methods_ok = {
     ok_new,
     ok_free,
     ok_callback_ctrl,
+    NULL,                      /* bsendmmsg */
+    NULL                       /* brecvmmsg */
 };
 
 const BIO_METHOD *BIO_f_reliable(void)

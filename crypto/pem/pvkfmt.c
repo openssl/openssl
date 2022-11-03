@@ -999,6 +999,8 @@ EVP_PKEY *b2i_PVK_bio_ex(BIO *in, pem_password_cb *cb, void *u,
     int isdss = -1;
     int ispub = -1;
     void *key = do_PVK_key_bio(in, cb, u, &isdss, &ispub, NULL, NULL);
+    (void)libctx;
+    (void)propq;
 
     return evp_pkey_new0_key(key, isdss_to_evp_type(isdss));
 }

@@ -18,11 +18,11 @@ IMPLEMENT_LEGACY_EVP_MD_METH_LC(blake2s_int, ossl_blake2s)
 IMPLEMENT_LEGACY_EVP_MD_METH_LC(blake2b_int, ossl_blake2b)
 
 static const EVP_MD blake2b_md = {
-    NID_blake2b512,
-    0,
-    BLAKE2B_DIGEST_LENGTH,
-    0,
-    EVP_ORIG_GLOBAL,
+    NID_blake2b512,            /* type */
+    0,                         /* pkey_type */
+    BLAKE2B_DIGEST_LENGTH,     /* md_size */
+    0,                         /* flags */
+    EVP_ORIG_GLOBAL,           /* origin */
     LEGACY_EVP_MD_METH_TABLE(blake2b_int_init, blake2b_int_update,
                              blake2b_int_final, NULL, BLAKE2B_BLOCKBYTES),
 };

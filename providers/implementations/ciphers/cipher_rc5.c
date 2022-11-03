@@ -139,6 +139,7 @@ static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;           \
 static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
 {                                                                              \
      PROV_##UCALG##_CTX *ctx;                                                  \
+     (void)provctx;                                                            \
      if (!ossl_prov_is_running())                                              \
         return NULL;                                                           \
      ctx = OPENSSL_zalloc(sizeof(*ctx));                                       \

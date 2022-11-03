@@ -447,7 +447,7 @@ const OPTIONS *test_get_options(void)
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "print", OPT_PRINT, '-', "Output test tables instead of running tests"},
-        { NULL }
+        { NULL, 0, 0, NULL }
     };
     return test_options;
 }

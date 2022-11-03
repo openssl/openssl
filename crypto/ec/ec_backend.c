@@ -294,6 +294,8 @@ int ossl_ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
     int ret = 0, curve_nid, encoding_flag;
     const char *encoding_name, *pt_form_name;
     point_conversion_form_t genform;
+    (void)libctx;
+    (void)propq;
 
     if (group == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_PASSED_NULL_PARAMETER);
@@ -587,7 +589,9 @@ int ossl_ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
 
 int ossl_ec_key_is_foreign(const EC_KEY *ec)
 {
-#ifndef FIPS_MODULE
+#ifdef FIPS_MODULE
+    (void)ec;
+#else
     if (ec->engine != NULL || EC_KEY_get_method(ec) != EC_KEY_OpenSSL())
         return 1;
 #endif

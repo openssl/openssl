@@ -911,6 +911,8 @@ static int ackm_set_loss_detection_timer(OSSL_ACKM *ackm)
 static int ackm_in_persistent_congestion(OSSL_ACKM *ackm,
                                          const OSSL_ACKM_TX_PKT *lpkt)
 {
+    (void)ackm;
+    (void)lpkt;
     /* Persistent congestion not currently implemented. */
     return 0;
 }
@@ -1084,12 +1086,16 @@ int ossl_ackm_on_tx_packet(OSSL_ACKM *ackm, OSSL_ACKM_TX_PKT *pkt)
 
 int ossl_ackm_on_rx_datagram(OSSL_ACKM *ackm, size_t num_bytes)
 {
+    (void)ackm;
+    (void)num_bytes;
     /* No-op on the client. */
     return 1;
 }
 
 static void ackm_on_congestion(OSSL_ACKM *ackm, OSSL_TIME send_time)
 {
+    (void)ackm;
+    (void)send_time;
     /* Not currently implemented. */
 }
 
@@ -1120,6 +1126,7 @@ int ossl_ackm_on_rx_ack_frame(OSSL_ACKM *ackm, const OSSL_QUIC_FRAME_ACK *ack,
 {
     OSSL_ACKM_TX_PKT *na_pkts, *lost_pkts;
     int must_set_timer = 0;
+    (void)rx_time;
 
     if (ackm->largest_acked_pkt[pkt_space] == QUIC_PN_INVALID)
         ackm->largest_acked_pkt[pkt_space] = ack->ack_ranges[0].end;

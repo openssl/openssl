@@ -41,6 +41,7 @@ static int stbl_module_init(CONF_IMODULE *md, const CONF *cnf)
 
 static void stbl_module_finish(CONF_IMODULE *md)
 {
+    (void)md;
     ASN1_STRING_TABLE_cleanup();
 }
 

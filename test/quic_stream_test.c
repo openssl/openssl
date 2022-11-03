@@ -213,6 +213,7 @@ static int test_sstream_bulk(int idx)
     unsigned char *src_buf = NULL, *dst_buf = NULL;
     unsigned char *ref_src_buf = NULL, *ref_dst_buf = NULL;
     unsigned char *ref_dst_cur, *ref_src_cur, *dst_cur;
+    (void)idx;
 
     if (!TEST_ptr(sstream = ossl_quic_sstream_new(init_size)))
         goto err;
@@ -402,6 +403,7 @@ static int test_rstream_random(int idx)
     int r, s, fin;
     int ret = 0;
     size_t readbytes = 0;
+    (void)idx;
 
     if (!TEST_ptr(bulk_data = OPENSSL_malloc(data_size))
         || !TEST_ptr(read_buf = OPENSSL_malloc(data_size))
