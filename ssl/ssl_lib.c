@@ -7006,7 +7006,7 @@ int SSL_tick(SSL *s)
 #endif
 }
 
-int SSL_get_tick_timeout(SSL *s)
+int64_t SSL_get_tick_timeout(SSL *s)
 {
 #ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);

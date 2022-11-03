@@ -2255,7 +2255,7 @@ int ossl_quic_tick(QUIC_CONNECTION *qc)
  * application by calling SSL_tick(). Returns 0 if the object should be ticked
  * immediately and -1 if no timeout is currently active.
  */
-int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc)
+int64_t ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc)
 {
     OSSL_TIME now, deadline;
 
@@ -2267,7 +2267,7 @@ int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc)
     if (ossl_time_compare(now, deadline) >= 0)
         return 0;
 
-    return ossl_time2ms(ossl_time_subtract(deadline, now));
+    return (int64_t)ossl_time2ms(ossl_time_subtract(deadline, now));
 }
 
 /*

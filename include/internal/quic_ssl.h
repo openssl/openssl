@@ -41,7 +41,7 @@ typedef struct quic_conn_st QUIC_CONNECTION;
 __owur QUIC_CONNECTION *ossl_quic_conn_from_ssl(SSL *ssl);
 
 int ossl_quic_tick(QUIC_CONNECTION *qc);
-int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc);
+int64_t ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc);
 int ossl_quic_get_poll_rfd(QUIC_CONNECTION *qc);
 int ossl_quic_get_poll_wfd(QUIC_CONNECTION *qc);
 int ossl_quic_get_want_net_read(QUIC_CONNECTION *qc);

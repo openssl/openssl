@@ -2247,7 +2247,7 @@ size_t SSL_CTX_get_num_tickets(const SSL_CTX *ctx);
 
 /* QUIC support */
 int SSL_tick(SSL *s);
-__owur int SSL_get_tick_timeout(SSL *s);
+__owur int64_t SSL_get_tick_timeout(SSL *s);
 __owur int SSL_get_poll_rfd(SSL *s);
 __owur int SSL_get_poll_wfd(SSL *s);
 __owur int SSL_want_net_read(SSL *s);
