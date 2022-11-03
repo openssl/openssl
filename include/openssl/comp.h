@@ -40,6 +40,7 @@ int COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
                       unsigned char *in, int ilen);
 
 COMP_METHOD *COMP_zlib(void);
+COMP_METHOD *COMP_zlib_oneshot(void);
 COMP_METHOD *COMP_brotli(void);
 COMP_METHOD *COMP_brotli_oneshot(void);
 COMP_METHOD *COMP_zstd(void);

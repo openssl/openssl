@@ -11,6 +11,7 @@ COMP_CTX_free,
 COMP_compress_block,
 COMP_expand_block,
 COMP_zlib,
+COMP_zlib_oneshot,
 COMP_brotli,
 COMP_brotli_oneshot,
 COMP_zstd,
@@ -37,6 +38,7 @@ BIO_f_zstd
                        unsigned char *in, int ilen);
 
  COMP_METHOD *COMP_zlib(void);
+ COMP_METHOD *COMP_zlib_oneshot(void);
  COMP_METHOD *COMP_brotli(void);
  COMP_METHOD *COMP_brotli_oneshot(void);
  COMP_METHOD *COMP_zstd(void);
@@ -75,6 +77,10 @@ into the OpenSSL library. In such a case, NULL will be returned.
 =item *
 
 COMP_zlib() returns a B<COMP_METHOD> for stream-based ZLIB compression.
+
+=item *
+
+COMP_zlib_oneshot() returns a B<COMP_METHOD> for one-shot ZLIB compression.
 
 =item *
 
@@ -130,7 +136,7 @@ COMP_zlib(), COMP_brotli() and COMP_zstd() are stream-based compression methods.
 Internal state (including compression dictionary) is maintained between calls.
 If an error is returned, the stream is corrupted, and should be closed.
 
-COMP_brotli_oneshot() and COMP_zstd_oneshot() are not stream-based. These
+COMP_zlib_oneshot(), COMP_brotli_oneshot() and COMP_zstd_oneshot() are not stream-based. These
 methods do not maintain state between calls. An error in one call does not affect
 future calls.
 
@@ -138,7 +144,7 @@ future calls.
 
 COMP_CTX_new() returns a B<COMP_CTX> on success, or NULL on failure.
 
-COMP_CTX_get_method(), COMP_zlib(), COMP_brotli(), COMP_brotli_oneshot(),
+COMP_CTX_get_method(), COMP_zlib(), COMP_zlib_oneshot(), COMP_brotli(), COMP_brotli_oneshot(),
 COMP_zstd(), and COMP_zstd_oneshot() return a B<COMP_METHOD> on success,
 or NULL on failure.
 

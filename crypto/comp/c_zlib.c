@@ -74,8 +74,10 @@ static COMP_METHOD zlib_stateful_method = {
 #  include "internal/dso.h"
 
 /* Function pointers */
-typedef int (*compress_ft) (Bytef *dest, uLongf * destLen,
+typedef int (*compress_ft) (Bytef *dest, uLongf *destLen,
                             const Bytef *source, uLong sourceLen);
+typedef int (*uncompress_ft) (Bytef *dest, uLongf *destLen,
+                              const Bytef *source, uLong sourceLen);
 typedef int (*inflateEnd_ft) (z_streamp strm);
 typedef int (*inflate_ft) (z_streamp strm, int flush);
 typedef int (*inflateInit__ft) (z_streamp strm,
@@ -86,6 +88,7 @@ typedef int (*deflateInit__ft) (z_streamp strm, int level,
                                 const char *version, int stream_size);
 typedef const char *(*zError__ft) (int err);
 static compress_ft p_compress = NULL;
+static uncompress_ft p_uncompress = NULL;
 static inflateEnd_ft p_inflateEnd = NULL;
 static inflate_ft p_inflate = NULL;
 static inflateInit__ft p_inflateInit_ = NULL;
@@ -97,6 +100,7 @@ static zError__ft p_zError = NULL;
 static DSO *zlib_dso = NULL;
 
 #  define compress                p_compress
+#  define uncompress              p_uncompress
 #  define inflateEnd              p_inflateEnd
 #  define inflate                 p_inflate
 #  define inflateInit_            p_inflateInit_
@@ -199,6 +203,70 @@ static ossl_ssize_t zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out
     return (ossl_ssize_t)(olen - state->istream.avail_out);
 }
 
+/* ONESHOT COMPRESSION/DECOMPRESSION */
+
+static int zlib_oneshot_init(COMP_CTX *ctx)
+{
+    return 1;
+}
+
+static void zlib_oneshot_finish(COMP_CTX *ctx)
+{
+}
+
+static ossl_ssize_t zlib_oneshot_compress_block(COMP_CTX *ctx, unsigned char *out,
+                                                size_t olen, unsigned char *in,
+                                                size_t ilen)
+{
+    uLongf out_size;
+
+    if (ilen == 0)
+        return 0;
+
+    /* zlib's uLongf defined as unsigned long FAR */
+    if (olen > ULONG_MAX)
+        return -1;
+    out_size = (uLongf)olen;
+
+    if (compress(out, &out_size, in, ilen) != Z_OK)
+        return -1;
+
+    if (out_size > OSSL_SSIZE_MAX)
+        return -1;
+    return (ossl_ssize_t)out_size;
+}
+
+static ossl_ssize_t zlib_oneshot_expand_block(COMP_CTX *ctx, unsigned char *out,
+                                              size_t olen, unsigned char *in,
+                                              size_t ilen)
+{
+    uLongf out_size;
+
+    if (ilen == 0)
+        return 0;
+
+    /* zlib's uLongf defined as unsigned long FAR */
+    if (olen > ULONG_MAX)
+        return -1;
+    out_size = (uLongf)olen;
+
+    if (uncompress(out, &out_size, in, ilen) != Z_OK)
+        return -1;
+
+    if (out_size > OSSL_SSIZE_MAX)
+        return -1;
+    return (ossl_ssize_t)out_size;
+}
+
+static COMP_METHOD zlib_oneshot_method = {
+    NID_zlib_compression,
+    LN_zlib_compression,
+    zlib_oneshot_init,
+    zlib_oneshot_finish,
+    zlib_oneshot_compress_block,
+    zlib_oneshot_expand_block
+};
+
 static CRYPTO_ONCE zlib_once = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(ossl_comp_zlib_init)
 {
@@ -217,6 +285,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_comp_zlib_init)
     zlib_dso = DSO_load(NULL, LIBZ, NULL, 0);
     if (zlib_dso != NULL) {
         p_compress = (compress_ft) DSO_bind_func(zlib_dso, "compress");
+        p_uncompress = (compress_ft) DSO_bind_func(zlib_dso, "uncompress");
         p_inflateEnd = (inflateEnd_ft) DSO_bind_func(zlib_dso, "inflateEnd");
         p_inflate = (inflate_ft) DSO_bind_func(zlib_dso, "inflate");
         p_inflateInit_ = (inflateInit__ft) DSO_bind_func(zlib_dso, "inflateInit_");
@@ -225,7 +294,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_comp_zlib_init)
         p_deflateInit_ = (deflateInit__ft) DSO_bind_func(zlib_dso, "deflateInit_");
         p_zError = (zError__ft) DSO_bind_func(zlib_dso, "zError");
 
-        if (p_compress == NULL || p_inflateEnd == NULL
+        if (p_compress == NULL || p_uncompress == NULL || p_inflateEnd == NULL
                 || p_inflate == NULL || p_inflateInit_ == NULL
                 || p_deflateEnd == NULL || p_deflate == NULL
                 || p_deflateInit_ == NULL || p_zError == NULL) {
@@ -245,6 +314,18 @@ COMP_METHOD *COMP_zlib(void)
 #ifndef OPENSSL_NO_ZLIB
     if (RUN_ONCE(&zlib_once, ossl_comp_zlib_init))
         meth = &zlib_stateful_method;
+#endif
+
+    return meth;
+}
+
+COMP_METHOD *COMP_zlib_oneshot(void)
+{
+    COMP_METHOD *meth = NULL;
+
+#ifndef OPENSSL_NO_ZLIB
+    if (RUN_ONCE(&zlib_once, ossl_comp_zlib_init))
+        meth = &zlib_oneshot_method;
 #endif
 
     return meth;
