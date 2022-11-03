@@ -84,7 +84,7 @@ void ossl_quic_txpim_pkt_clear_chunks(QUIC_TXPIM_PKT *fpkt);
 
 /* Appends a chunk to the packet. The structure is copied. */
 int ossl_quic_txpim_pkt_append_chunk(QUIC_TXPIM_PKT *fpkt,
-                                    const QUIC_TXPIM_CHUNK *chunk);
+                                     const QUIC_TXPIM_CHUNK *chunk);
 
 /* Adds a CFQ item to the packet by prepending it to the retx_head list. */
 void ossl_quic_txpim_pkt_add_cfq_item(QUIC_TXPIM_PKT *fpkt,
