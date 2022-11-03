@@ -24,14 +24,6 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <assert.h>
 # include <string.h>
 
-# if defined(__GNUC__)
-#  define ALIGN64 __attribute__((aligned(64)))
-# elif defined(_MSC_VER)
-#  define ALIGN64 __declspec(align(64))
-# else
-#  define ALIGN64
-# endif
-
 # define ALIGN_OF(ptr, boundary) \
     ((unsigned char *)(ptr) + (boundary - (((size_t)(ptr)) & (boundary - 1))))
 
