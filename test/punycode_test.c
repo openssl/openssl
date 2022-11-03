@@ -200,7 +200,7 @@ static int test_puny_overrun(void)
     return 1;
 }
 
-static int test_dotty(void)
+static int test_dotted_overflow(void)
 {
     static const char string[] = "a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a";
     const size_t num_reps = OSSL_NELEM(string) / 2;
@@ -250,7 +250,7 @@ static int test_dotty(void)
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_punycode, OSSL_NELEM(puny_cases));
-    ADD_TEST(test_dotty);
+    ADD_TEST(test_dotted_overflow);
     ADD_TEST(test_a2ulabel);
     ADD_TEST(test_puny_overrun);
     return 1;

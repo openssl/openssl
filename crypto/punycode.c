@@ -240,8 +240,8 @@ static int codepoint2utf8(unsigned char *out, unsigned long utf)
 
 /*-
  * Return values:
- * 1 - ok, *outlen contains valid buf length
- * 0 - ok but buf was too short, *outlen contains valid buf length
+ * 1 - ok
+ * 0 - ok but buf was too short
  * -1 - bad string passed
  */
 
@@ -276,15 +276,19 @@ int ossl_a2ulabel(const char *in, char *out, size_t outlen)
         } else {
             unsigned int bufsize = LABEL_BUF_SIZE;
 
-            if (ossl_punycode_decode(inptr + 4, delta - 4, buf, &bufsize) <= 0)
-                return -1;
+            if (ossl_punycode_decode(inptr + 4, delta - 4, buf, &bufsize) <= 0) {
+                result = -1;
+                goto end;
+            }
 
             for (i = 0; i < bufsize; i++) {
                 unsigned char seed[6];
                 size_t utfsize = codepoint2utf8(seed, buf[i]);
 
-                if (utfsize == 0)
-                    return -1;
+                if (utfsize == 0) {
+                    result = -1;
+                    goto end;
+                }
 
                 if (!WPACKET_memcpy(&pkt, seed, utfsize))
                     result = 0;
@@ -302,6 +306,7 @@ int ossl_a2ulabel(const char *in, char *out, size_t outlen)
 
     if (!WPACKET_put_bytes_u8(&pkt, '\0'))
         result = 0;
+ end:
     WPACKET_cleanup(&pkt);
     return result;
 }
