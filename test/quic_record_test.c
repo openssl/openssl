@@ -1695,11 +1695,6 @@ struct rx_state {
 
 static void rx_state_teardown(struct rx_state *s)
 {
-    if (s->qrx != NULL) {
-        ossl_qrx_free(s->qrx);
-        s->qrx = NULL;
-    }
-
     if (s->quic_conn != NULL) {
         SSL_free((SSL *)s->quic_conn);
         s->quic_conn = NULL;
@@ -1707,6 +1702,11 @@ static void rx_state_teardown(struct rx_state *s)
     if (s->quic_ssl_ctx != NULL) {
         SSL_CTX_free(s->quic_ssl_ctx);
         s->quic_ssl_ctx = NULL;
+    }
+
+    if (s->qrx != NULL) {
+        ossl_qrx_free(s->qrx);
+        s->qrx = NULL;
     }
 
     if (s->demux != NULL) {
@@ -1766,7 +1766,7 @@ static int rx_state_ensure_for_frames(struct rx_state *s)
 
 static int rx_run_script(const struct rx_test_op *script)
 {
-    int testresult = 0, pkt_outstanding = 0;
+    int testresult = 0;
     struct rx_state s = {0};
     size_t i;
     OSSL_QRX_PKT *pkt = NULL;
@@ -1827,7 +1827,6 @@ static int rx_run_script(const struct rx_test_op *script)
                 if (!TEST_true(ossl_qrx_read_pkt(s.qrx, &pkt)))
                     goto err;
 
-                pkt_outstanding = 1;
                 if (!TEST_ptr(pkt) || !TEST_ptr(pkt->hdr))
                     goto err;
 
@@ -1843,20 +1842,22 @@ static int rx_run_script(const struct rx_test_op *script)
                 case RX_TEST_OP_CHECK_PKT_FRAMES_OK:
                     if (!TEST_true(rx_state_ensure_for_frames(&s)))
                         goto err;
-                    pkt_outstanding = 0;
                     if (!TEST_true(ossl_quic_handle_frames(s.quic_conn, pkt)))
                         goto err;
+                    ossl_qrx_pkt_release(pkt);
+                    pkt = NULL;
                     break;
                 case RX_TEST_OP_CHECK_PKT_FRAMES_INVALID:
                     if (!TEST_true(rx_state_ensure_for_frames(&s)))
                         goto err;
-                    pkt_outstanding = 0;
                     if (!TEST_false(ossl_quic_handle_frames(s.quic_conn, pkt)))
                         goto err;
+                    ossl_qrx_pkt_release(pkt);
+                    pkt = NULL;
                     break;
                 default:
-                    pkt_outstanding = 0;
                     ossl_qrx_pkt_release(pkt);
+                    pkt = NULL;
                     break;
                 }
                 break;
@@ -1897,8 +1898,7 @@ static int rx_run_script(const struct rx_test_op *script)
 
     testresult = 1;
 err:
-    if (pkt_outstanding)
-        ossl_qrx_pkt_release(pkt);
+    ossl_qrx_pkt_release(pkt);
     rx_state_teardown(&s);
     return testresult;
 }
