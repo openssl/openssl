@@ -8,6 +8,9 @@
  * or in the file LICENSE in the source distribution.
  */
 
+#include <stdint.h>     /* for uint8_t */
+#include <stddef.h>     /* for size_t */
+
 int FuzzerTestOneInput(const uint8_t *buf, size_t len);
 int FuzzerInitialize(int *argc, char ***argv);
 void FuzzerCleanup(void);

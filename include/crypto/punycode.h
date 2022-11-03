@@ -11,6 +11,8 @@
 # define OSSL_CRYPTO_PUNYCODE_H
 # pragma once
 
+# include <stddef.h>     /* for size_t */
+
 int ossl_punycode_decode (
     const char *pEncoded,
     const size_t enc_len,
