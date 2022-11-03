@@ -1860,7 +1860,7 @@ int tls_parse_compress_certificate(SSL_CONNECTION *sc, PACKET *pkt, unsigned int
      * The array is 0 (i.e. "none") terminated
      * The preference list only contains supported algorithms
      */
-    while (PACKET_get_1(&supported_comp_algs, &comp)) {
+    while (PACKET_get_net_2(&supported_comp_algs, &comp)) {
         if (tls_comp_in_pref(sc, comp) && !already_set[comp]) {
             sc->ext.compress_certificate_from_peer[j++] = comp;
             already_set[comp] = 1;
