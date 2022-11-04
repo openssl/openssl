@@ -28,9 +28,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
     b = OPENSSL_malloc(len + 1);
     if (b != NULL) {
+        ossl_punycode_decode((const char *)buf, len, out, &outlen);
         memcpy(b, buf, len);
         b[len] = '\0';
-        ossl_punycode_decode(b, len, out, &outlen);
         ossl_a2ulabel(b, outc, sizeof(outc));
         OPENSSL_free(b);
     }
