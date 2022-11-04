@@ -43,7 +43,7 @@ RESET_STREAM                  REGEN
 STOP_SENDING                  REGEN
 MAX_STREAM_DATA               REGEN
 STREAM_DATA_BLOCKED           REGEN
-STREAM                        special   
+STREAM                        special
 PING                           -
 PADDING                        -         (non-ACK-eliciting)
 ```
@@ -508,4 +508,3 @@ Typical Intended TX Packetiser Usage
   In the event of packet loss, ACK or discard, the appropriate QUIC Send Stream,
   CFQ and regenerate callback calls are made. Regardless of the outcome, the
   TXPIM is released.
-
