@@ -387,9 +387,9 @@ static size_t qtx_inflate_payload_len(OSSL_QTX *qtx, uint32_t enc_level,
 }
 
 /* Determines the size of the AEAD input given the output size. */
-int ossl_qtx_deflate_payload_len(OSSL_QTX *qtx, uint32_t enc_level,
-                                 size_t ciphertext_len,
-                                 size_t *plaintext_len)
+int ossl_qtx_calculate_plaintext_payload_len(OSSL_QTX *qtx, uint32_t enc_level,
+                                             size_t ciphertext_len,
+                                             size_t *plaintext_len)
 {
     OSSL_QRL_ENC_LEVEL *el
         = ossl_qrl_enc_level_set_get(&qtx->el_set, enc_level, 1);

@@ -230,7 +230,7 @@ static int stream_has_data_to_send(QUIC_STREAM *s)
 
 void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
 {
-    char should_be_active
+    int should_be_active
         = (s->rstream != NULL
            && (s->want_max_stream_data
                || ossl_quic_rxfc_has_cwm_changed(&s->rxfc, 0)))

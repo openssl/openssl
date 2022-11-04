@@ -134,7 +134,7 @@ It will also attempt to create multiple packets to send simultaneously.
 
 The packetiser should also implement a wait time to allow more data to
 accumulate before exhausting it's supply of data.  The length of the wait
-will depend on how much data is queue already and how much space remains in
+will depend on how much data is queued already and how much space remains in
 the packet being filled.  Once the wait is finished, the packets will be sent
 by calling:
 
@@ -355,7 +355,6 @@ CONNECTION_CLOSE              ***     (non-ACK-eliciting)
 ----------------------------
 NEW_TOKEN                     GCR
 
-
 ----------------------------
 CRYPTO                        GCR/*q
 
@@ -398,7 +397,7 @@ type.)
   to ensure we have room for this. We can cancel this reservation if we
   add an ACK-eliciting frame earlier. For example:
 
-  - We have been asked to ensure a frame is ACK-eliciting and the CMPPL is
+  - We have been asked to ensure a packet is ACK-eliciting and the CMPPL is
     1000 (we are coalescing with another packet).
   - We allocate 999 bytes for non-PING frames.
   - While adding non-PING frames, we add a STREAM frame, which is
@@ -501,7 +500,7 @@ Budget. There are many ways we could make use of this Streams Budget.
 
 For the purposes of stream budgeting, we consider all bytes of STREAM frames,
 stream-level flow control frames, RESET_STREAM and STOP_SENDING frames to
-“belong” to their respective streams, and the encoded size of these frames are
+“belong” to their respective streams, and the encoded sizes of these frames are
 accounted to those streams for budgeting purposes. If the total number of bytes
 of frames necessary to serialize all pending data from all active streams is
 less than our Streams Budget, there is no need for any prioritisation.

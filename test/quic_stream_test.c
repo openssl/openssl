@@ -20,7 +20,6 @@ static int compare_iov(const unsigned char *ref, size_t ref_len,
         total_len += iov[i].buf_len;
 
     if (ref_len != total_len) {
-        fprintf(stderr, "# expected %lu == %lu\n", ref_len, total_len);
         return 0;
     }
 
