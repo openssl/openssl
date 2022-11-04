@@ -99,9 +99,9 @@ int ossl_qtx_is_enc_level_provisioned(OSSL_QTX *qtx, uint32_t enc_level);
  * Returns 0 if the specified EL is not provisioned or ciphertext_len is too
  * small. The result is written to *plaintext_len.
  */
-int ossl_qtx_deflate_payload_len(OSSL_QTX *qtx, uint32_t enc_level,
-                                 size_t ciphertext_len,
-                                 size_t *plaintext_len);
+int ossl_qtx_calculate_plaintext_payload_len(OSSL_QTX *qtx, uint32_t enc_level,
+                                             size_t ciphertext_len,
+                                             size_t *plaintext_len);
 
 uint32_t ossl_qrl_get_suite_cipher_tag_len(uint32_t suite_id);
 

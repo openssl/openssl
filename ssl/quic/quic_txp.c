@@ -58,12 +58,62 @@ struct ossl_quic_tx_packetiser_st {
     size_t          alloc_iovec;    /* size of iovec array */
 };
 
+/*
+ * The TX helper records state used while generating frames into packets. It
+ * enables serialization into the packet to be done "transactionally" where
+ * serialization of a frame can be rolled back if it fails midway (e.g. if it
+ * does not fit).
+ */
 struct tx_helper {
-    OSSL_QUIC_TX_PACKETISER  *txp;
-    size_t              max_ppl, bytes_appended, scratch_bytes, reserve;
-    size_t              num_iovec;
-    char                reserve_allowed, done_implicit;
+    OSSL_QUIC_TX_PACKETISER *txp;
+    /*
+     * The Maximum Packet Payload Length in bytes. This is the amount of
+     * space we have to generate frames into.
+     */
+    size_t max_ppl;
+    /*
+     * Number of bytes we have generated so far.
+     */
+    size_t bytes_appended;
+    /*
+     * Number of scratch bytes in txp->scratch we have used so far. Some iovecs
+     * will reference this scratch buffer. When we need to use more of it (e.g.
+     * when we need to put frame headers somewhere), we append to the scratch
+     * buffer, resizing if necessary, and increase this accordingly.
+     */
+    size_t scratch_bytes;
+    /*
+     * Bytes reserved in the MaxPPL budget. We keep this number of bytes spare
+     * until reserve_allowed is set to 1. Currently this is always at most 1, as
+     * a PING frame takes up one byte and this mechanism is only used to ensure
+     * we can encode a PING frame if we have been asked to ensure a packet is
+     * ACK-eliciting and we are unusure if we are going to add any other
+     * ACK-eliciting frames before we reach our MaxPPL budget.
+     */
+    size_t reserve;
+    /*
+     * Number of iovecs we have currently appended. This is the number of
+     * entries valid in txp->iovec.
+     */
+    size_t num_iovec;
+    /*
+     * Whether we are allowed to make use of the reserve bytes in our MaxPPL
+     * budget. This is used to ensure we have room to append a PING frame later
+     * if we need to. Once we know we will not need to append a PING frame, this
+     * is set to 1.
+     */
+    char reserve_allowed;
+    /*
+     * Set to 1 if we have appended a STREAM frame with an implicit length. If
+     * this happens we should never append another frame after that frame as it
+     * cannot be validly encoded. This is just a safety check.
+     */
+    char done_implicit;
     struct {
+        /*
+         * The fields in this structure are valid if active is set, which means
+         * that a serialization transaction is currently in progress.
+         */
         BUF_MEM buf_mem;
         WPACKET wpkt;
         char    active;
@@ -161,8 +211,7 @@ static int tx_helper_append_iovec(struct tx_helper *h,
 static size_t tx_helper_get_space_left(struct tx_helper *h)
 {
     return h->max_ppl
-        - (h->reserve_allowed ? 0 : h->reserve)
-        - h->bytes_appended;
+        - (h->reserve_allowed ? 0 : h->reserve) - h->bytes_appended;
 }
 
 /*
@@ -637,6 +686,7 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
     char must_pad = dgram_contains_initial && is_last_in_dgram;
     size_t min_dpl, min_pl, min_ppl, cmpl, cmppl, running_total;
     size_t mdpl, hdr_len, pkt_overhead, cc_limit;
+    uint64_t cc_limit_;
     QUIC_PKT_HDR phdr;
     OSSL_TIME time_since_last;
 
@@ -647,9 +697,11 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
         time_since_last = ossl_time_subtract(txp->args.now(txp->args.now_arg),
                                              txp->last_tx_time);
 
-    cc_limit = txp->args.cc_method->get_send_allowance(txp->args.cc_data,
-                                                       time_since_last,
-                                                       ossl_time_is_zero(time_since_last));
+    cc_limit_ = txp->args.cc_method->get_send_allowance(txp->args.cc_data,
+                                                        time_since_last,
+                                                        ossl_time_is_zero(time_since_last));
+
+    cc_limit = (cc_limit_ > SIZE_MAX ? SIZE_MAX : (size_t)cc_limit_);
 
     /* Assemble packet header. */
     phdr.type           = ossl_quic_enc_level_to_pkt_type(enc_level);
@@ -704,7 +756,7 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
 
     /* MinPL: Minimum length of the fully encoded packet. */
     min_pl = running_total < min_dpl ? min_dpl - running_total : 0;
-    if (min_pl > cc_limit)
+    if ((uint64_t)min_pl > cc_limit)
         /*
          * Congestion control does not allow us to send a packet of adequate
          * size.
@@ -762,8 +814,8 @@ static int txp_determine_ppl_from_pl(OSSL_QUIC_TX_PACKETISER *txp,
 
     pl -= hdr_len;
 
-    if (!ossl_qtx_deflate_payload_len(txp->args.qtx, enc_level,
-                                      pl, &pl))
+    if (!ossl_qtx_calculate_plaintext_payload_len(txp->args.qtx, enc_level,
+                                                  pl, &pl))
         return 0;
 
     *r = pl;
@@ -919,12 +971,13 @@ static int try_len(size_t space_left, size_t orig_len,
                    uint64_t maxn, size_t *hdr_len, size_t *payload_len)
 {
     size_t n;
+    size_t maxn_ = maxn > SIZE_MAX ? SIZE_MAX : (size_t)maxn;
 
     *hdr_len = base_hdr_len + lenbytes;
 
     n = orig_len;
-    if (n > maxn)
-        n = maxn;
+    if (n > maxn_)
+        n = maxn_;
     if (n + *hdr_len > space_left)
         n = (space_left >= *hdr_len) ? space_left - *hdr_len : 0;
 
@@ -978,8 +1031,13 @@ static int determine_crypto_len(struct tx_helper *h,
                                 uint64_t *hlen,
                                 uint64_t *len)
 {
-    size_t orig_len = chdr->len;
+    size_t orig_len;
     size_t base_hdr_len; /* CRYPTO header length without length field */
+
+    if (chdr->len > SIZE_MAX)
+        return 0;
+
+    orig_len = (size_t)chdr->len;
 
     chdr->len = 0;
     base_hdr_len = ossl_quic_wire_get_encoded_frame_len_crypto_hdr(chdr);
@@ -999,8 +1057,13 @@ static int determine_stream_len(struct tx_helper *h,
                                 uint64_t *hlen,
                                 uint64_t *len)
 {
-    size_t orig_len = shdr->len;
+    size_t orig_len;
     size_t base_hdr_len; /* STREAM header length without length field */
+
+    if (shdr->len > SIZE_MAX)
+        return 0;
+
+    orig_len = (size_t)shdr->len;
 
     shdr->len = 0;
     base_hdr_len = ossl_quic_wire_get_encoded_frame_len_stream_hdr(shdr);
@@ -1057,8 +1120,13 @@ static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
             return 1; /* can't fit anything */
         }
 
-        /* Truncate IOVs to match our chosen length. */
-        ossl_quic_sstream_adjust_iov(chdr.len, iov, num_stream_iovec);
+        /*
+         * Truncate IOVs to match our chosen length.
+         *
+         * The length cannot be more than SIZE_MAX because this length comes
+         * from our send stream buffer.
+         */
+        ossl_quic_sstream_adjust_iov((size_t)chdr.len, iov, num_stream_iovec);
 
         /*
          * Ensure we have enough iovecs allocated (1 for the header, up to 2 for
@@ -1296,7 +1364,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
         }
 
         /* Truncate IOVs to match our chosen length. */
-        ossl_quic_sstream_adjust_iov(shdr->len, chunks[i % 2].iov,
+        ossl_quic_sstream_adjust_iov((size_t)shdr->len, chunks[i % 2].iov,
                                      chunks[i % 2].num_stream_iovec);
 
         /*
