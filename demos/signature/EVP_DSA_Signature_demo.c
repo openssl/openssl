@@ -1,5 +1,5 @@
 /*-
- * Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -40,7 +40,7 @@ static const char *hamlet_2 =
 
 static const char ALG[] = "DSA";
 static const char DIGEST[] = "SHA256";
-static const int NUMBITS = 1024;
+static const int NUMBITS = 2048;
 static const char * const PROPQUERY = NULL;
 
 static int generate_dsa_params(OSSL_LIB_CTX *libctx,
@@ -189,9 +189,6 @@ static int demo_verify(OSSL_LIB_CTX *libctx,
 
     if (EVP_DigestVerifyUpdate(ctx, hamlet_2, sizeof(hamlet_2)) != 1)
         goto end;
-
-    /* Clear any errors for the call below */
-    ERR_clear_error();
 
     if (EVP_DigestVerifyFinal(ctx, sig_value, sig_len) != 1)
         goto end;
