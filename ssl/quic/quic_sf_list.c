@@ -30,7 +30,7 @@ static STREAM_FRAME *stream_frame_new(UINT_RANGE *range, OSSL_QRX_PKT *pkt,
     STREAM_FRAME *sf = OPENSSL_zalloc(sizeof(*sf));
 
     if (pkt != NULL)
-        ossl_qrx_pkt_ref(pkt);
+        ossl_qrx_pkt_up_ref(pkt);
 
     sf->range = *range;
     sf->pkt = pkt;

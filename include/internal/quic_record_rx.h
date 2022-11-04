@@ -265,7 +265,7 @@ int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT **pkt);
 void ossl_qrx_pkt_release(OSSL_QRX_PKT *pkt);
 
 /* Increments the reference count for the given packet. */
-void ossl_qrx_pkt_ref(OSSL_QRX_PKT *pkt);
+void ossl_qrx_pkt_up_ref(OSSL_QRX_PKT *pkt);
 
 /*
  * Returns 1 if there are any already processed (i.e. decrypted) packets waiting

@@ -1103,7 +1103,7 @@ void ossl_qrx_pkt_release(OSSL_QRX_PKT *pkt)
         qrx_recycle_rxe(pkt->qrx, rxe);
 }
 
-void ossl_qrx_pkt_ref(OSSL_QRX_PKT *pkt)
+void ossl_qrx_pkt_up_ref(OSSL_QRX_PKT *pkt)
 {
     RXE *rxe = (RXE *)pkt;
 
