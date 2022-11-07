@@ -591,7 +591,7 @@ static const unsigned char stream_9[] = {
 
 static int check_stream_9(struct helper *h)
 {
-    if (!TEST_mem_eq(h->frame.stream.data, h->frame.stream.len,
+    if (!TEST_mem_eq(h->frame.stream.data, (size_t)h->frame.stream.len,
                      stream_9, sizeof(stream_9)))
         return 0;
 
@@ -845,7 +845,7 @@ static const unsigned char stream_10b[1300] = {
     0x08, 0xc4, 0x18, 0xcd
 };
 
-static size_t stream_10a_off, stream_10b_off;
+static uint64_t stream_10a_off, stream_10b_off;
 
 static int check_stream_10a(struct helper *h)
 {
@@ -853,12 +853,12 @@ static int check_stream_10a(struct helper *h)
      * Must have filled or almost filled the packet (using default MDPL of
      * 1200).
      */
-    if (!TEST_size_t_ge(h->frame.stream.len, 1150)
-        || !TEST_size_t_le(h->frame.stream.len, 1200))
+    if (!TEST_uint64_t_ge(h->frame.stream.len, 1150)
+        || !TEST_uint64_t_le(h->frame.stream.len, 1200))
         return 0;
 
-    if (!TEST_mem_eq(h->frame.stream.data, h->frame.stream.len,
-                     stream_10a, h->frame.stream.len))
+    if (!TEST_mem_eq(h->frame.stream.data, (size_t)h->frame.stream.len,
+                     stream_10a, (size_t)h->frame.stream.len))
         return 0;
 
     stream_10a_off = h->frame.stream.offset + h->frame.stream.len;
@@ -867,12 +867,12 @@ static int check_stream_10a(struct helper *h)
 
 static int check_stream_10b(struct helper *h)
 {
-    if (!TEST_size_t_ge(h->frame.stream.len, 1150)
-        || !TEST_size_t_le(h->frame.stream.len, 1200))
+    if (!TEST_uint64_t_ge(h->frame.stream.len, 1150)
+        || !TEST_uint64_t_le(h->frame.stream.len, 1200))
         return 0;
 
-    if (!TEST_mem_eq(h->frame.stream.data, h->frame.stream.len,
-                     stream_10b, h->frame.stream.len))
+    if (!TEST_mem_eq(h->frame.stream.data, (size_t)h->frame.stream.len,
+                     stream_10b, (size_t)h->frame.stream.len))
         return 0;
 
     stream_10b_off = h->frame.stream.offset + h->frame.stream.len;
@@ -881,12 +881,12 @@ static int check_stream_10b(struct helper *h)
 
 static int check_stream_10c(struct helper *h)
 {
-    if (!TEST_size_t_ge(h->frame.stream.len, 5)
-        || !TEST_size_t_le(h->frame.stream.len, 200))
+    if (!TEST_uint64_t_ge(h->frame.stream.len, 5)
+        || !TEST_uint64_t_le(h->frame.stream.len, 200))
         return 0;
 
-    if (!TEST_mem_eq(h->frame.stream.data, h->frame.stream.len,
-                     stream_10a + stream_10a_off, h->frame.stream.len))
+    if (!TEST_mem_eq(h->frame.stream.data, (size_t)h->frame.stream.len,
+                     stream_10a + stream_10a_off, (size_t)h->frame.stream.len))
         return 0;
 
     return 1;
@@ -894,12 +894,12 @@ static int check_stream_10c(struct helper *h)
 
 static int check_stream_10d(struct helper *h)
 {
-    if (!TEST_size_t_ge(h->frame.stream.len, 5)
-        || !TEST_size_t_le(h->frame.stream.len, 200))
+    if (!TEST_uint64_t_ge(h->frame.stream.len, 5)
+        || !TEST_uint64_t_le(h->frame.stream.len, 200))
         return 0;
 
-    if (!TEST_mem_eq(h->frame.stream.data, h->frame.stream.len,
-                     stream_10b + stream_10b_off, h->frame.stream.len))
+    if (!TEST_mem_eq(h->frame.stream.data, (size_t)h->frame.stream.len,
+                     stream_10b + stream_10b_off, (size_t)h->frame.stream.len))
         return 0;
 
     return 1;
@@ -1051,8 +1051,8 @@ static int gen_conn_close(struct helper *h)
 static int check_14(struct helper *h)
 {
     if (!TEST_int_eq(h->frame.conn_close.is_app, 0)
-        || !TEST_int_eq(h->frame.conn_close.frame_type,
-                        OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE)
+        || !TEST_uint64_t_eq(h->frame.conn_close.frame_type,
+                             OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE)
         || !TEST_uint64_t_eq(h->frame.conn_close.error_code, 2345)
         || !TEST_mem_eq(h->frame.conn_close.reason, h->frame.conn_close.reason_len,
                         "Reason string", 13))
@@ -1117,14 +1117,14 @@ static int run_script(const struct script_op *script)
     for (op = script; op->opcode != OPK_END; ++op) {
         switch (op->opcode) {
             case OPK_TXP_GENERATE:
-                if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, op->arg0), 2))
+                if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0), 2))
                     goto err;
 
                 ossl_qtx_finish_dgram(h.args.qtx);
                 ossl_qtx_flush_net(h.args.qtx);
                 break;
             case OPK_TXP_GENERATE_NONE:
-                if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, op->arg0), 1)) {
+                if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0), 1)) {
                     /* TODO REMOVE THIS */
                     ossl_qtx_finish_dgram(h.args.qtx);
                     ossl_qtx_flush_net(h.args.qtx);
@@ -1154,8 +1154,8 @@ static int run_script(const struct script_op *script)
                 h.frame_type = UINT64_MAX;
                 break;
             case OPK_EXPECT_DGRAM_LEN:
-                if (!TEST_size_t_ge(h.qrx_pkt.datagram_len, op->arg0)
-                    || !TEST_size_t_le(h.qrx_pkt.datagram_len, op->arg1))
+                if (!TEST_size_t_ge(h.qrx_pkt.datagram_len, (size_t)op->arg0)
+                    || !TEST_size_t_le(h.qrx_pkt.datagram_len, (size_t)op->arg1))
                     goto err;
                 break;
             case OPK_EXPECT_FRAME:
@@ -1164,7 +1164,7 @@ static int run_script(const struct script_op *script)
                 break;
             case OPK_EXPECT_INITIAL_TOKEN:
                 if (!TEST_mem_eq(h.qrx_pkt.hdr->token, h.qrx_pkt.hdr->token_len,
-                                 op->buf, op->arg0))
+                                 op->buf, (size_t)op->arg0))
                     goto err;
                 break;
             case OPK_EXPECT_HDR:
@@ -1265,16 +1265,20 @@ static int run_script(const struct script_op *script)
                     goto err;
                 break;
             case OPK_PROVIDE_SECRET:
-                if (!TEST_true(ossl_qtx_provide_secret(h.args.qtx, op->arg0, op->arg1,
+                if (!TEST_true(ossl_qtx_provide_secret(h.args.qtx,
+                                                       (uint32_t)op->arg0,
+                                                       (uint32_t)op->arg1,
                                                        NULL, op->buf, op->buf_len)))
                     goto err;
-                if (!TEST_true(ossl_qrx_provide_secret(h.qrx, op->arg0, op->arg1,
+                if (!TEST_true(ossl_qrx_provide_secret(h.qrx,
+                                                       (uint32_t)op->arg0,
+                                                       (uint32_t)op->arg1,
                                                        NULL, op->buf, op->buf_len)))
                     goto err;
                 break;
             case OPK_DISCARD_EL:
                 if (!TEST_true(ossl_quic_tx_packetiser_discard_enc_level(h.txp,
-                                                                         op->arg0)))
+                                                                         (uint32_t)op->arg0)))
                     goto err;
                 /*
                  * We do not discard on the QRX here, the object is to test the
