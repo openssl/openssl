@@ -8156,7 +8156,7 @@ static int test_async_shutdown(void)
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
-    BIO *bretry = BIO_new(bio_s_always_retry()), *tmp;
+    BIO *bretry = BIO_new(bio_s_always_retry()), *tmp = NULL;
 
     if (!TEST_ptr(bretry))
         goto end;
