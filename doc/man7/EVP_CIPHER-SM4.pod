@@ -24,6 +24,12 @@ The following algorithms are available in the default provider:
 
 =item "SM4-CFB" or "SM4-CFB128"
 
+=item "SM4-GCM"
+
+=item "SM4-CCM"
+
+=item "SM4-XTS"
+
 =back
 
 =head2 Parameters
