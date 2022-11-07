@@ -677,14 +677,6 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
     }
 }
 
-/*
- * Encryption growth may result from padding in CBC ciphersuites (never more
- * than SSL_RT_MAX_CIPHER_BLOCK_SIZE bytes), or from an AEAD tag (never more
- * than EVP_MAX_MD_SIZE bytes). In the case of stitched ciphersuites growth can
- * come from both of these.
- */
-#define MAX_ENCRYPTION_GROWTH (EVP_MAX_MD_SIZE + SSL_RT_MAX_CIPHER_BLOCK_SIZE)
-
 int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                   size_t *pipelens, size_t numpipes,
                   int create_empty_fragment, size_t *written)
@@ -1023,9 +1015,16 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             }
         }
 
-        /* Reserve some bytes for any growth that may occur during encryption. */
+        /*
+        * Reserve some bytes for any growth that may occur during encryption. If
+        * we are adding the MAC independently of the cipher algorithm, then the
+        * max encrypted overhead does not need to include an allocation for that
+        * MAC
+        */
         if (!BIO_get_ktls_send(s->wbio)) {
-            if (!WPACKET_reserve_bytes(thispkt, MAX_ENCRYPTION_GROWTH, NULL)
+            if (!WPACKET_reserve_bytes(thispkt,
+                                       SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD
+                                       - mac_size, NULL)
                 /*
                  * We also need next the amount of bytes written to this
                  * sub-packet
@@ -1078,8 +1077,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         /* Allocate bytes for the encryption overhead */
         if (!WPACKET_get_length(thispkt, &origlen)
                    /* Check we allowed enough room for the encryption growth */
-                || !ossl_assert(origlen + MAX_ENCRYPTION_GROWTH
-                                >= thiswr->length)
+                || !ossl_assert(origlen + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD
+                                - mac_size >= thiswr->length)
                    /* Encryption should never shrink the data! */
                 || origlen > thiswr->length
                 || (thiswr->length > origlen
