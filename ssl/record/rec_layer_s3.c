@@ -1356,11 +1356,14 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 
     /*
      * Free the old record layer if we have one except in the case of DTLS when
-     * writing. In that case the record layer is still referenced by buffered
-     * messages for potential retransmit. Only when those buffered messages get
-     * freed do we free the record layer object (see dtls1_hm_fragment_free)
+     * writing and there are still buffered sent messages in our queue. In that
+     * case the record layer is still referenced by those buffered messages for
+     * potential retransmit. Only when those buffered messages get freed do we
+     * free the record layer object (see dtls1_hm_fragment_free)
      */
-    if (!SSL_CONNECTION_IS_DTLS(s) || direction == OSSL_RECORD_DIRECTION_READ) {
+    if (!SSL_CONNECTION_IS_DTLS(s)
+            || direction == OSSL_RECORD_DIRECTION_READ
+            || pqueue_peek(s->d1->sent_messages) == NULL) {
         if (*thismethod != NULL && !(*thismethod)->free(*thisrl)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
