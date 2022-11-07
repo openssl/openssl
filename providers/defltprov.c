@@ -304,6 +304,7 @@ static const OSSL_ALGORITHM_CAPABLE deflt_ciphers[] = {
     ALG(PROV_NAMES_SM4_CTR, ossl_sm4128ctr_functions),
     ALG(PROV_NAMES_SM4_OFB, ossl_sm4128ofb128_functions),
     ALG(PROV_NAMES_SM4_CFB, ossl_sm4128cfb128_functions),
+    ALG(PROV_NAMES_SM4_XTS, ossl_sm4128xts_functions),
 #endif /* OPENSSL_NO_SM4 */
 #ifndef OPENSSL_NO_CHACHA
     ALG(PROV_NAMES_ChaCha20, ossl_chacha20_functions),

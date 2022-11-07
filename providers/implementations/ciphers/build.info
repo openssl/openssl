@@ -153,7 +153,9 @@ IF[{- !$disabled{sm4} -}]
   SOURCE[$SM4_GOAL]=\
       cipher_sm4.c cipher_sm4_hw.c \
       cipher_sm4_gcm.c cipher_sm4_gcm_hw.c \
-      cipher_sm4_ccm.c cipher_sm4_ccm_hw.c
+      cipher_sm4_ccm.c cipher_sm4_ccm_hw.c \
+      cipher_sm4_xts.c cipher_sm4_xts_hw.c
+
 ENDIF
 
 IF[{- !$disabled{ocb} -}]
