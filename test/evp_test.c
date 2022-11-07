@@ -557,6 +557,7 @@ typedef struct cipher_data_st {
     int tag_late;
     unsigned char *mac_key;
     size_t mac_key_len;
+    int xts_standard;
 } CIPHER_DATA;
 
 static int cipher_test_init(EVP_TEST *t, const char *alg)
@@ -696,6 +697,15 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
     }
     if (strcmp(keyword, "CTSMode") == 0) {
         cdat->cts_mode = value;
+        return 1;
+    }
+    if (strcmp(keyword, "XTSStandard") == 0) {
+        if (strcmp(value, "GB") == 0)
+            cdat->xts_standard = 0;
+        else if (strcmp(value, "IEEE") == 0)
+            cdat->xts_standard = 1;
+        else
+            return -1;
         return 1;
     }
     return 0;
@@ -940,7 +950,17 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
             goto err;
         }
     }
+    if (expected->xts_standard) {
+        OSSL_PARAM params[2];
 
+        params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_XTS_STANDARD,
+                                             &expected->xts_standard);
+        params[1] = OSSL_PARAM_construct_end();
+        if (!EVP_CIPHER_CTX_set_params(ctx, params)) {
+            t->err = "SET_XTS_STANDARD_ERROR";
+            goto err;
+        }
+    }
     EVP_CIPHER_CTX_set_padding(ctx, 0);
     t->err = "CIPHERUPDATE_ERROR";
     tmplen = 0;
