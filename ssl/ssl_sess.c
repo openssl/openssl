@@ -854,8 +854,8 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
         return 0;
 
     ssl_clear_bad_session(sc);
-    if (s->ctx->method != s->method) {
-        if (!SSL_set_ssl_method(s, s->ctx->method))
+    if (s->defltmeth != s->method) {
+        if (!SSL_set_ssl_method(s, s->defltmeth))
             return 0;
     }
 

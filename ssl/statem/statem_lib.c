@@ -1657,23 +1657,23 @@ int ssl_check_version_downgrade(SSL_CONNECTION *s)
 {
     const version_info *vent;
     const version_info *table;
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     /*
      * Check that the current protocol is the highest enabled version
-     * (according to s->ctx->method, as version negotiation may have changed
+     * (according to ssl->defltmethod, as version negotiation may have changed
      * s->method).
      */
-    if (s->version == sctx->method->version)
+    if (s->version == ssl->defltmeth->version)
         return 1;
 
     /*
      * Apparently we're using a version-flexible SSL_METHOD (not at its
      * highest protocol version).
      */
-    if (sctx->method->version == TLS_method()->version)
+    if (ssl->defltmeth->version == TLS_method()->version)
         table = tls_version_table;
-    else if (sctx->method->version == DTLS_method()->version)
+    else if (ssl->defltmeth->version == DTLS_method()->version)
         table = dtls_version_table;
     else {
         /* Unexpected state; fail closed. */

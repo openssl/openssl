@@ -644,9 +644,9 @@ int ossl_ssl_connection_reset(SSL *s)
      * Check to see if we were changed into a different method, if so, revert
      * back.
      */
-    if (s->method != SSL_CONNECTION_GET_CTX(sc)->method) {
+    if (s->method != s->defltmeth) {
         s->method->ssl_deinit(s);
-        s->method = SSL_CONNECTION_GET_CTX(sc)->method;
+        s->method = s->defltmeth;
         if (!s->method->ssl_init(s))
             return 0;
     } else {
@@ -702,7 +702,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     return ctx->method->ssl_new(ctx);
 }
 
-int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, int type)
+int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, const SSL_METHOD *method, int type)
 {
     ssl->type = type;
 
@@ -714,7 +714,7 @@ int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, int type)
     SSL_CTX_up_ref(ctx);
     ssl->ctx = ctx;
 
-    ssl->method = ctx->method;
+    ssl->defltmeth = ssl->method = method;
 
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, ssl, &ssl->ex_data))
         return 0;
@@ -722,7 +722,7 @@ int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, int type)
     return 1;
 }
 
-SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
+SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
 {
     SSL_CONNECTION *s;
     SSL *ssl;
@@ -732,7 +732,7 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
         return NULL;
 
     ssl = &s->ssl;
-    if (!ossl_ssl_init(ssl, ctx, SSL_TYPE_SSL_CONNECTION)) {
+    if (!ossl_ssl_init(ssl, ctx, method, SSL_TYPE_SSL_CONNECTION)) {
         OPENSSL_free(s);
         s = NULL;
         goto sslerr;
@@ -860,12 +860,12 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
     s->allow_early_data_cb = ctx->allow_early_data_cb;
     s->allow_early_data_cb_data = ctx->allow_early_data_cb_data;
 
-    if (!ssl->method->ssl_init(ssl))
+    if (!method->ssl_init(ssl))
         goto sslerr;
 
-    s->server = (ctx->method->ssl_accept == ssl_undefined_function) ? 0 : 1;
+    s->server = (method->ssl_accept == ssl_undefined_function) ? 0 : 1;
 
-    if (!SSL_clear(ssl))
+    if (!method->ssl_reset(ssl))
         goto sslerr;
 
 #ifndef OPENSSL_NO_PSK
@@ -902,6 +902,11 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
  err:
     SSL_free(ssl);
     return NULL;
+}
+
+SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
+{
+    return ossl_ssl_connection_new_int(ctx, ctx->method);
 }
 
 int SSL_is_dtls(const SSL *s)
@@ -2887,13 +2892,13 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
             return 0;
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
         return ssl_check_allowed_versions(larg, sc->max_proto_version)
-               && ssl_set_version_bound(s->ctx->method->version, (int)larg,
+               && ssl_set_version_bound(s->defltmeth->version, (int)larg,
                                         &sc->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
         return sc->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
         return ssl_check_allowed_versions(sc->min_proto_version, larg)
-               && ssl_set_version_bound(s->ctx->method->version, (int)larg,
+               && ssl_set_version_bound(s->defltmeth->version, (int)larg,
                                         &sc->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:
         return sc->max_proto_version;
