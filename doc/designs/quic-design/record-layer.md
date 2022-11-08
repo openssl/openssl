@@ -1,21 +1,19 @@
 Design Problem: Abstract Record Layer
 =====================================
 
-This document covers the design of an abstract record layer for use in (D)TLS
-and QUIC.
+This document covers the design of an abstract record layer for use in (D)TLS.
+The QUIC record layer is handled separately.
 
 A record within this document refers to a packet of data. It will typically
-contain some form of header data and some payload data, and will often be
+contain some header data and some payload data, and will often be
 cryptographically protected. A record may or may not have a one-to-one
-correspondence with network packets, depending on the protocol and the
-implementation details of an individual record layer.
+correspondence with network packets, depending on the implementation details of
+an individual record layer.
 
-The term record comes from the TLS and DTLS specifications. It is not used in
-QUIC. A TLS record is roughly analagous to a QUIC packet. For the sake of
-simplicity in this document we use the term record to refer to both concepts.
+The term record comes directly from the TLS and DTLS specifications.
 
-Libssl in OpenSSL 3.0 supports a number of different types of record layer,
-and record layer variants:
+Libssl supports a number of different types of record layer, and record layer
+variants:
 
 - Standard TLS record layer
 - Standard DTLS record layer
@@ -23,19 +21,19 @@ and record layer variants:
 
 Within the TLS record layer there are options to handle "multiblock" and
 "pipelining" which are different approaches for supporting the reading or
-writing of multiple records at the same time.
+writing of multiple records at the same time. All record layer variants also
+have to be able to handle different protocol versions.
 
-These different record layer implementations and variants have each been added
-at different times and over many years. The result is that each have taken
-slightly different approaches for achieving the goals that were appropriate at
-the time and the integration points where they have been added are spread
-throughout the code.
+These different record layer implementations, variants and protocol versions
+have each been added at different times and over many years. The result is that
+each took slightly different approaches for achieving the goals that were
+appropriate at the time and the integration points where they were added were
+spread throughout the code.
 
-The introduction of QUIC support will see the implementation of two more record
-layers:
-- QUIC record layer: A record here refers to a QUIC packet
-- QUIC-TLS record layer: This refers to the "inner" TLS implementation used by
-  QUIC. Records here will be QUIC CRYPTO frames.
+The introduction of QUIC support will see the implementation of a new record
+layer, i.e. the QUIC-TLS record layer. This refers to the "inner" TLS
+implementation used by QUIC. Records here will be in the form of QUIC CRYPTO
+frames.
 
 Requirements
 ------------
@@ -61,15 +59,17 @@ lists these requirements that are relevant to the record layer:
   it should be possible for external libraries to be able to use the pluggable
   record layer interface and it should offer a stable ABI (via a provider).
 
-* The internal architecture should allow for the fact that we may want to
-  support "single copy" APIs in the future
-
 The MVP requirements are:
 
 * a pluggable record layer (not public for MVP)
 
-Candidate Solution: Use a METHOD based approach
-------------------------------------------------
+Candidate Solutions that were considered
+----------------------------------------
+
+This section outlines two different solution approaches that were considered for
+the abstract record layer
+
+### Use a METHOD based approach
 
 A METHOD based approach is simply a structure containing function pointers. It
 is a common pattern in the OpenSSL codebase. Different strategies for
@@ -78,8 +78,8 @@ the caller of the METHOD.
 
 In this solution we would seek to implement a different METHOD for each of the
 types of record layer that we support, i.e. there would be one for the standard
-TLS record layer, one for the standard DTLS record layer, one for kernel TLS,
-one for QUIC and one for QUIC-TLS.
+TLS record layer, one for the standard DTLS record layer, one for kernel TLS and
+one for QUIC-TLS.
 
 In the MVP the METHOD approach would be private. However, once it has
 stabilised, it would be straight forward to supply public functions to enable
@@ -91,6 +91,7 @@ the MVP could implement a METHOD based approach, and subsequent releases could
 convert the METHODs into fully fetchable algorithms.
 
 Pros:
+
 * Simple approach that has been used historically in OpenSSL
 * Could be used as the basis for the final public solution
 * Could also be used as the basis for a fetchable solution in a subsequent
@@ -100,13 +101,13 @@ Pros:
   later release
 
 Cons:
+
 * Not consistent with the provider based approach we used for extensibility in
   3.0
 * If this option is implemented and later converted to a fetchable solution then
   some rework might be required
 
-Candidate Solution: Use a provider based approach
--------------------------------------------------
+### Use a provider based approach
 
 This approach is very similar to the alternative METHOD based approach. The
 main difference is that the record layer implementations would be held in
@@ -122,22 +123,30 @@ functions that can be implemented. Additionally implementing the infrastructure
 for a new fetchable operation is more involved than a METHOD based approach.
 
 Pros:
+
 * Consistent with the extensibility solution used in 3.0
 * If this option is implemented immediately in the MVP then it would avoid later
   rework if adopted in a subsequent release
 
 Cons:
+
 * More complicated to implement than the simple METHOD based approach
 * Cannot pass complex objects across the provider boundary
 
+### Selected solution
 
-Solution Outline: Use a METHOD based approach
----------------------------------------------
+The METHOD based approach has been selected for MVP, with the expectation that
+subsequent releases will convert it to a full provider based solution accessible
+to third party applications.
 
-This section focuses on the "Use a METHOD based approach" candidate solution
-above and further elaborates a design for how that approach might work.
+Solution Description: The METHOD based approach
+-----------------------------------------------
 
-A proposed internal record method API is given in [Appendix A](#appendix-a).
+This section focuses on the selected approach of using METHODs and further
+elaborates on how the design works.
+
+A proposed internal record method API is given in
+[Appendix A](#appendix-a-the-internal-record-method-api).
 
 An `OSSL_RECORD_METHOD` represents the implementation of a particular type of
 record layer. It contains a set of function pointers to represent the various
@@ -157,56 +166,40 @@ the kernel TLS record layer once the handshake is complete.
 
 A new `OSSL_RECORD_LAYER` is created by calling the `new` function of the
 associated `OSSL_RECORD_METHOD`, and freed by calling the `free` function. The
-internal structure details of an `OSSL_RECORD_LAYER` are entirely hidden to
-libssl and will be specific to the given `OSSL_RECORD_METHOD`.
+parameters to the `new` function also supply all of the cryptographic state
+(e.g. keys, ivs, symmetric encryption algorithms, hash algorithm etc) used by
+the record layer. The internal structure details of an `OSSL_RECORD_LAYER` are
+entirely hidden to the rest of libssl and can be specific to the given
+`OSSL_RECORD_METHOD`. In practice the standard internal TLS, DTLS and KTLS
+`OSSL_RECORD_METHOD`s all use a common `OSSL_RECORD_LAYER` structure. However
+the QUIC-TLS implementation is likely to use a different structure layout.
 
-The payload for a record that will be written out to the network will be
-assembled by libssl. That payload may be spread across multiple buffers. For
-example a QUIC record (packet) may consist of multiple frames. There might be a
-buffer containing the header data for the first frame, followed by a second
-buffer containing the contents of the frame. A third buffer might contain the
-header data for a second frame, and a fourth buffer might contain the payload
-data for the second frame. There can be an arbitrary number of buffers which,
-when concatenated together, form the total payload for the whole record. This
-approach means that libssl can avoid having to copy all of the data from
-multiple sources into a single buffer before calling the record layer.
+All of the header and payload data for a single record will be represented by an
+`OSSL_RECORD_TEMPLATE` structure when writing. Libssl will construct a set of
+templates for records to be written out and pass them to the "write" record
+layer. In most cases only a single record is ever written out at one time,
+however there are some cases (such as when using the "pipelining" or
+"multibuffer" optimisations) that multiple records can be written in one go.
 
-All of the above data for a single record will be represented by an
-`OSSL_RECORD_TEMPLATE` structure.
-
-In order to assemble a record, libssl will need to know the maximum length of a
-record that can be supported by the `OSSL_RECORD_LAYER`. In order to support
-this an `OSSL_RECORD_METHOD` will supply a `get_max_record_len()` function to
-query this value. It will be libssl's responsibility to ensure that no record
-exceeds the maximum supported record length.
-
-An `OSSL_RECORD_METHOD` supplies a `write_records` function which libssl can
-call to write one or more records. Libssl will supply an array of
-`OSSL_RECORD_TEMPLATE` objects along with the number of such templates. This
-number is guaranteed to never be greater than the maximum number of records
-that the record layer can handle at one time as returned by the
-`get_max_records()` function.
+It is the record layer's responsibility to know whether it can support multiple
+records in one go or not. It is libssl's responsibility to split the payload
+data into `OSSL_RECORD_TEMPLATE` objects. Libssl will call the record layer's
+`get_max_records()` function to determine how many records a given payload
+should be split into. If that value is more than one, then libssl will construct
+(up to) that number of `OSSL_RECORD_TEMPLATE`s and pass the whole set to the
+record layer's `write_records()` function.
 
 The implementation of the `write_records` function must construct the
 appropriate number of records, apply protection to them as required and then
-write them out to the underlying transport layer BIO. Congestion or flow control
-limits may apply. The maximum amount of data that may be sent at the current
-time is supplied by libssl in the `allowance` parameter. It is the
-`OSSL_RECORD_METHOD`'s responsibily to ensure that no more bytes than
-`allowance` are transmitted via the transport layer BIO. In the event that not
-all the data can be transmitted at the current time (either because of the
-`allowance` limit, or because the underlying transport has indicated a retry),
-then the `write_records` function will return a "retry" response. It is
-permissible for the data to be partially sent, but this is still considered a
-"retry" until all of the data is sent. The `sent` parameter will be filled in
-with the number of bytes sent during this `write_records` call in both a
-success and a retry response.
+write them out to the underlying transport layer BIO. In the event that not
+all the data can be transmitted at the current time (e.g. because the underlying
+transport has indicated a retry), then the `write_records` function will return
+a "retry" response. It is permissible for the data to be partially sent, but
+this is still considered a "retry" until all of the data is sent.
 
 On a success or retry response libssl may free its buffers immediately. The
 `OSSL_RECORD_LAYER` object will have to buffer any untransmitted data until it
-is eventually sent. The move of data from the input buffers to the internal
-`OSSL_RECORD_METHOD` buffer should occur during packet protection and is the
-"single copy" allowed by the requirements.
+is eventually sent.
 
 If a "retry" occurs, then libssl will subsequently call `retry_write_records`
 and continue to do so until a success return value is received. Libssl will
@@ -223,23 +216,81 @@ data contained in it. Each record has an associated opaque handle `rechandle`.
 The record data must remain buffered by the `OSSL_RECORD_LAYER` until it has
 been released via a call to `release_record()`.
 
+A record layer implementation supplies various functions to enable libssl to
+query the current state. In particular:
 
-<a id='appendix-a'></a>Appendix A: An internal record method API
-----------------------------------------------------------------
-A proposed internal recordmethod.h header file for the record method API:
+`unprocessed_read_pending()`: to query whether there is data buffered that has
+already been read from the underlying BIO, but not yet processed.
+
+`processed_read_pending()`: to query whether there is data buffered that has
+been read from the underlying BIO and has been processed. The data is not
+necessarily application data.
+
+`app_data_pending()`: to query the amount of processed application data that is
+buffered and available for immediate read.
+
+`get_alert_code()`: to query the alert code that should be used in the event
+that a previous attempt to read or write records failed.
+
+`get_state()`: to obtain a printable string to describe the current state of the
+record layer.
+
+`get_compression()`: to obtain information about the compression method
+currently being used by the record layer.
+
+`get_max_record_overhead()`: to obtain the maximum amount of bytes the record
+layer will add to the payload bytes before transmission. This does not include
+any expansion that might occur during compression. Currently this is only
+implemented for DTLS.
+
+In addition, libssl will tell the record layer about various events that might
+occur that are relevant to the record layer's operation:
+
+`set1_bio()`: called if the underlying BIO being used by the record layer has
+been changed.
+
+`set_protocol_version()`: called during protocol version negotiation when a
+specific protocol version has been selected.
+
+`set_plain_alerts()`: to indicate that receiving unencrypted alerts is allowed
+in the current context, even if normally we would expect to receive encrypted
+data. This is only relevant for TLSv1.3.
+
+`set_first_handshake()`: called at the beginning and end of the first handshake
+for any given (D)TLS connection.
+
+`set_max_pipelines()`: called to configure the maximum number of pipelines of
+data that the record layer should process in one go. By default this is 1.
+
+`set_in_init()`: called by libssl to tell the record layer whether we are
+currently `in_init` or not. Defaults to "true".
+
+`set_options()`: called by libssl in the event that the current set of options
+to use has been updated.
+
+`set_max_frag_len()`: called by libssl to set the maximum allowed fragment
+length that is in force at the moment. This might be the result of user
+configuration, or it may be negotiated during the handshake.
+
+`increment_sequence_ctr()`: force the record layer to increment its sequence
+counter. In most cases the record layer will entirely manage its own sequence
+counters. However in the DTLSv1_listen() corner case, libssl needs to initialise
+the record layer with an incremented sequence counter.
+
+`alloc_buffers()`: called by libssl to request that the record layer allocate
+its buffers. This is a hint only and the record layer is expected to manage its
+own buffer allocation and freeing.
+
+`free_buffers()`: called by libssl to request that the record layer free its
+buffers. This is a hint only and the record layer is expected to manage its own
+buffer allocation and freeing.
+
+Appendix A: The internal record method API
+------------------------------------------
+
+The internal recordmethod.h header file for the record method API:
 
 ```` C
-/*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License 2.0 (the "License").  You may not use
- * this file except in compliance with the License.  You can obtain a copy
- * in the file LICENSE in the source distribution or at
- * https://www.openssl.org/source/license.html
- */
-
-#include <openssl/ssl.h>
-
 /*
  * We use the term "record" here to refer to a packet of data. Records are
  * typically protected via a cipher and MAC, or an AEAD cipher (although not
@@ -248,27 +299,6 @@ A proposed internal recordmethod.h header file for the record method API:
  * "packet". The interface in this file applies to all protocols that protect
  * records/packets of data, i.e. (D)TLS and QUIC. The term record is used to
  * refer to both contexts.
- */
-
-
-/*
- * Types of QUIC record layer;
- *
- * QUIC reuses the TLS handshake for agreeing secrets. An SSL object representing
- * a QUIC connection will have an additional SSL object internally representing
- * the TLS state of the QUIC handshake. This internal TLS is referred to as
- * QUIC-TLS in this file.
- * "Records" output from QUIC-TLS contains standard TLS handshake messages and
- * are *not* encrypted directly but are instead wrapped up in plaintext
- * CRYPTO frames. These CRYPTO frames could be collected together with other
- * QUIC frames into a single QUIC packet. The QUIC record layer will then
- * encrypt the whole packet.
- *
- * So we have:
- * QUIC-TLS record layer: outputs plaintext CRYPTO frames containing TLS
- *                        handshake messages only.
- * QUIC record layer: outputs encrypted packets which may contain CRYPTO frames
- *                    or any other type of QUIC frame.
  */
 
 /*
@@ -285,33 +315,36 @@ typedef struct ossl_record_method_st OSSL_RECORD_METHOD;
 typedef struct ossl_record_layer_st OSSL_RECORD_LAYER;
 
 
-#define OSSL_RECORD_ROLE_CLIENT 0
-#define OSSL_RECORD_ROLE_SERVER 1
+# define OSSL_RECORD_ROLE_CLIENT 0
+# define OSSL_RECORD_ROLE_SERVER 1
 
-#define OSSL_RECORD_DIRECTION_READ  0
-#define OSSL_RECORD_DIRECTION_WRITE 1
+# define OSSL_RECORD_DIRECTION_READ  0
+# define OSSL_RECORD_DIRECTION_WRITE 1
 
 /*
  * Protection level. For <= TLSv1.2 only "NONE" and "APPLICATION" are used.
  */
-#define OSSL_RECORD_PROTECTION_LEVEL_NONE        0
-#define OSSL_RECORD_PROTECTION_LEVEL_EARLY       1
-#define OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE   2
-#define OSSL_RECORD_PROTECTION_LEVEL_APPLICATION 3
+# define OSSL_RECORD_PROTECTION_LEVEL_NONE        0
+# define OSSL_RECORD_PROTECTION_LEVEL_EARLY       1
+# define OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE   2
+# define OSSL_RECORD_PROTECTION_LEVEL_APPLICATION 3
 
+# define OSSL_RECORD_RETURN_SUCCESS           1
+# define OSSL_RECORD_RETURN_RETRY             0
+# define OSSL_RECORD_RETURN_NON_FATAL_ERR    -1
+# define OSSL_RECORD_RETURN_FATAL            -2
+# define OSSL_RECORD_RETURN_EOF              -3
 
 /*
  * Template for creating a record. A record consists of the |type| of data it
- * will contain (e.g. alert, handshake, application data, etc) along with an
- * array of buffers in |bufs| of size |numbufs|. There is a corresponding array
- * of buffer lengths in |buflens|. Concatenating all of the buffer data together
- * would give you the complete plaintext payload to be sent in a single record.
+ * will contain (e.g. alert, handshake, application data, etc) along with a
+ * buffer of payload data in |buf| of length |buflen|.
  */
 struct ossl_record_template_st {
     int type;
-    void **bufs;
-    size_t *buflens;
-    size_t numbufs;
+    unsigned int version;
+    const unsigned char *buf;
+    size_t buflen;
 };
 
 typedef struct ossl_record_template_st OSSL_RECORD_TEMPLATE;
@@ -350,64 +383,86 @@ struct ossl_record_method_st {
      * force at any one time (one for reading and one for writing). In some
      * protocols more than 2 might be used (e.g. in DTLS for retransmitting
      * messages from an earlier epoch).
+     *
+     * The created OSSL_RECORD_LAYER object is stored in *ret on success (or
+     * NULL otherwise). The return value will be one of
+     * OSSL_RECORD_RETURN_SUCCESS, OSSL_RECORD_RETURN_FATAL or
+     * OSSL_RECORD_RETURN_NON_FATAL. A non-fatal return means that creation of
+     * the record layer has failed because it is unsuitable, but an alternative
+     * record layer can be tried instead.
      */
 
     /*
-     * TODO: Will have to be something other than SSL_CIPHER if we make this
-     * fetchable
+     * If we eventually make this fetchable then we will need to use something
+     * other than EVP_CIPHER. Also mactype would not be a NID, but a string. For
+     * now though, this works.
      */
-    OSSL_RECORD_LAYER *new(int vers, int role, int direction, int level,
-                           unsigned char *secret, size_t secretlen,
-                           SSL_CIPHER *c, BIO *transport, BIO_ADDR *local,
-                           BIO_ADDR *peer, OSSL_PARAM *settings,
-                           OSSL_PARAM *options);
-    void free(OSSL_RECORD_LAYER *rl);
+    int (*new_record_layer)(OSSL_LIB_CTX *libctx,
+                            const char *propq, int vers,
+                            int role, int direction,
+                            int level,
+                            uint16_t epoch,
+                            unsigned char *key,
+                            size_t keylen,
+                            unsigned char *iv,
+                            size_t ivlen,
+                            unsigned char *mackey,
+                            size_t mackeylen,
+                            const EVP_CIPHER *ciph,
+                            size_t taglen,
+                            int mactype,
+                            const EVP_MD *md,
+                            COMP_METHOD *comp,
+                            BIO *prev,
+                            BIO *transport,
+                            BIO *next,
+                            BIO_ADDR *local,
+                            BIO_ADDR *peer,
+                            const OSSL_PARAM *settings,
+                            const OSSL_PARAM *options,
+                            const OSSL_DISPATCH *fns,
+                            void *cbarg,
+                            OSSL_RECORD_LAYER **ret);
+    int (*free)(OSSL_RECORD_LAYER *rl);
 
-    int reset(OSSL_RECORD_LAYER *rl); /* Is this needed? */
+    int (*reset)(OSSL_RECORD_LAYER *rl); /* Is this needed? */
 
     /* Returns 1 if we have unprocessed data buffered or 0 otherwise */
-    int unprocessed_read_pending(OSSL_RECORD_LAYER *rl);
+    int (*unprocessed_read_pending)(OSSL_RECORD_LAYER *rl);
+
     /*
      * Returns 1 if we have processed data buffered that can be read or 0 otherwise
      * - not necessarily app data
      */
-    int processed_read_pending(OSSL_RECORD_LAYER *rl);
+    int (*processed_read_pending)(OSSL_RECORD_LAYER *rl);
 
     /*
      * The amount of processed app data that is internally bufferred and
      * available to read
      */
-    size_t app_data_pending(OSSL_RECORD_LAYER *rl);
-
-    int write_pending(OSSL_RECORD_LAYER *rl);
-
-
-    /*
-     * Find out the maximum amount of plaintext data that the record layer is
-     * prepared to write in a single record. When calling write_records it is
-     * the caller's responsibility to ensure that no record template exceeds
-     * this maximum when calling write_records.
-     */
-    size_t get_max_record_len(OSSL_RECORD_LAYER *rl);
+    size_t (*app_data_pending)(OSSL_RECORD_LAYER *rl);
 
     /*
      * Find out the maximum number of records that the record layer is prepared
      * to process in a single call to write_records. It is the caller's
      * responsibility to ensure that no call to write_records exceeds this
-     * number of records.
+     * number of records. |type| is the type of the records that the caller
+     * wants to write, and |len| is the total amount of data that it wants
+     * to send. |maxfrag| is the maximum allowed fragment size based on user
+     * configuration, or TLS parameter negotiation. |*preffrag| contains on
+     * entry the default fragment size that will actually be used based on user
+     * configuration. This will always be less than or equal to |maxfrag|. On
+     * exit the record layer may update this to an alternative fragment size to
+     * be used. This must always be less than or equal to |maxfrag|.
      */
-    size_t get_max_records(OSSL_RECORD_LAYER *rl);
+    size_t (*get_max_records)(OSSL_RECORD_LAYER *rl, int type, size_t len,
+                              size_t maxfrag, size_t *preffrag);
 
     /*
      * Write |numtempl| records from the array of record templates pointed to
      * by |templates|. Each record should be no longer than the value returned
      * by get_max_record_len(), and there should be no more records than the
      * value returned by get_max_records().
-     * |allowance| is the maximum amount of "on-the-wire" data that is allowed
-     * to be sent at the moment (including all QUIC headers, but excluding any
-     * UDP/IP headers). After a successful or retry return |*sent| will
-     * be updated with the amount of data that has been sent so far. In the case
-     * of a retry this could be 0.
      * Where possible the caller will attempt to ensure that all records are the
      * same length, except the last record. This may not always be possible so
      * the record method implementation should not rely on this being the case.
@@ -423,24 +478,19 @@ struct ossl_record_method_st {
      *  0 on retry
      * -1 on failure
      */
-    int write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE **templates,
-                      size_t numtempl, size_t allowance, size_t *sent);
+    int (*write_records)(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
+                         size_t numtempl);
 
     /*
      * Retry a previous call to write_records. The caller should continue to
      * call this until the function returns with success or failure. After
-     * each retry more of the data may have been incrementally sent. |allowance|
-     * is the amount of "on-the-wire" data that is allowed to be sent at the
-     * moment. After a successful or retry return |*sent| will
-     * be updated with the amount of data that has been sent by this call to
-     * retry_write_records().
+     * each retry more of the data may have been incrementally sent.
      * Returns:
      *  1 on success
      *  0 on retry
      * -1 on failure
      */
-    int retry_write_records(OSSL_RECORD_LAYER *rl, size_t allowance,
-                            size_t *sent);
+    int (*retry_write_records)(OSSL_RECORD_LAYER *rl);
 
     /*
      * Read a record and return the record layer version and record type in
@@ -456,15 +506,99 @@ struct ossl_record_method_st {
      * Internally the the OSSL_RECORD_METHOD the implementation may read/process
      * multiple records in one go and buffer them.
      */
-    int read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
-                    int *type, unsigned char **data, size_t *datalen,
-                    uint16_t *epoch, unsigned char *seq_num);
+    int (*read_record)(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
+                      int *type, unsigned char **data, size_t *datalen,
+                      uint16_t *epoch, unsigned char *seq_num);
     /*
      * Release a buffer associated with a record previously read with
      * read_record. Records are guaranteed to be released in the order that they
      * are read.
      */
-    void release_record(OSSL_RECORD_LAYER *rl, void *rechandle);
+    int (*release_record)(OSSL_RECORD_LAYER *rl, void *rechandle);
 
+    /*
+     * In the event that a fatal error is returned from the functions above then
+     * get_alert_code() can be called to obtain a more details identifier for
+     * the error. In (D)TLS this is the alert description code.
+     */
+    int (*get_alert_code)(OSSL_RECORD_LAYER *rl);
+
+    /*
+     * Update the transport BIO from the one originally set in the
+     * new_record_layer call
+     */
+    int (*set1_bio)(OSSL_RECORD_LAYER *rl, BIO *bio);
+
+    /* Called when protocol negotiation selects a protocol version to use */
+    int (*set_protocol_version)(OSSL_RECORD_LAYER *rl, int version);
+
+    /*
+     * Whether we are allowed to receive unencrypted alerts, even if we might
+     * otherwise expect encrypted records. Ignored by protocol versions where
+     * this isn't relevant
+     */
+    void (*set_plain_alerts)(OSSL_RECORD_LAYER *rl, int allow);
+
+    /*
+     * Called immediately after creation of the record layer if we are in a
+     * first handshake. Also called at the end of the first handshake
+     */
+    void (*set_first_handshake)(OSSL_RECORD_LAYER *rl, int first);
+
+    /*
+     * Set the maximum number of pipelines that the record layer should process.
+     * The default is 1.
+     */
+    void (*set_max_pipelines)(OSSL_RECORD_LAYER *rl, size_t max_pipelines);
+
+    /*
+     * Called to tell the record layer whether we are currently "in init" or
+     * not. Default at creation of the record layer is "yes".
+     */
+    void (*set_in_init)(OSSL_RECORD_LAYER *rl, int in_init);
+
+    /*
+     * Get a short or long human readable description of the record layer state
+     */
+    void (*get_state)(OSSL_RECORD_LAYER *rl, const char **shortstr,
+                      const char **longstr);
+
+    /*
+     * Set new options or modify ones that were originaly specified in the
+     * new_record_layer call.
+     */
+    int (*set_options)(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options);
+
+    const COMP_METHOD *(*get_compression)(OSSL_RECORD_LAYER *rl);
+
+    /*
+     * Set the maximum fragment length to be used for the record layer. This
+     * will override any previous value supplied for the "max_frag_len"
+     * setting during construction of the record layer.
+     */
+    void (*set_max_frag_len)(OSSL_RECORD_LAYER *rl, size_t max_frag_len);
+
+    /*
+     * The maximum expansion in bytes that the record layer might add while
+     * writing a record
+     */
+    size_t (*get_max_record_overhead)(OSSL_RECORD_LAYER *rl);
+
+    /*
+     * Increment the record sequence number
+     */
+    int (*increment_sequence_ctr)(OSSL_RECORD_LAYER *rl);
+
+    /*
+     * Allocate read or write buffers. Does nothing if already allocated.
+     * Assumes default buffer length and 1 pipeline.
+     */
+    int (*alloc_buffers)(OSSL_RECORD_LAYER *rl);
+
+    /*
+     * Free read or write buffers. Fails if there is pending read or write
+     * data. Buffers are automatically reallocated on next read/write.
+     */
+    int (*free_buffers)(OSSL_RECORD_LAYER *rl);
 };
 ````
