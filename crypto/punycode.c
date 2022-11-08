@@ -242,7 +242,7 @@ static int codepoint2utf8(unsigned char *out, unsigned long utf)
  * Return values:
  * 1 - ok
  * 0 - ok but buf was too short
- * -1 - bad string passed
+ * -1 - bad string passed or other error
  */
 
 int ossl_a2ulabel(const char *in, char *out, size_t outlen)
