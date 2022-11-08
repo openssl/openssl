@@ -337,7 +337,7 @@ static int min_max_proto(SSL_CONF_CTX *cctx, const char *value, int *bound)
     if (cctx->ctx != NULL)
         method_version = cctx->ctx->method->version;
     else if (cctx->ssl != NULL)
-        method_version = cctx->ssl->ctx->method->version;
+        method_version = cctx->ssl->defltmeth->version;
     else
         return 0;
     if ((new_version = protocol_from_string(value)) < 0)

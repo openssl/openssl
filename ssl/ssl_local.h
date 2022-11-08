@@ -1238,6 +1238,7 @@ typedef struct cert_pkey_st CERT_PKEY;
 struct ssl_st {
     int type;
     SSL_CTX *ctx;
+    const SSL_METHOD *defltmeth;
     const SSL_METHOD *method;
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
@@ -1841,6 +1842,7 @@ struct ssl_connection_st {
 # define SSL_CONNECTION_FROM_CONST_SSL_ONLY(ssl) \
     SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
 # define SSL_CONNECTION_GET_CTX(sc) ((sc)->ssl.ctx)
+# define SSL_CONNECTION_GET_SSL(sc) (&(sc)->ssl)
 # ifndef OPENSSL_NO_QUIC
 #  include "quic/quic_local.h"
 #  define SSL_CONNECTION_FROM_SSL_int(ssl, c)                      \
@@ -1854,13 +1856,11 @@ struct ssl_connection_st {
     SSL_CONNECTION_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
 #  define SSL_CONNECTION_FROM_CONST_SSL(ssl) \
     SSL_CONNECTION_FROM_SSL_int(ssl, const)
-#  define SSL_CONNECTION_GET_SSL(sc) ((sc)->user_ssl)
 # else
 #  define SSL_CONNECTION_FROM_SSL(ssl) \
     SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, SSL_CONNECTION_NO_CONST)
 #  define SSL_CONNECTION_FROM_CONST_SSL(ssl) \
     SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
-#  define SSL_CONNECTION_GET_SSL(sc) (&(sc)->ssl)
 # endif
 
 /*
@@ -2465,7 +2465,9 @@ static ossl_inline void tls1_get_peer_groups(SSL_CONNECTION *s,
 
 # ifndef OPENSSL_UNIT_TEST
 
-__owur int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, int type);
+__owur int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, const SSL_METHOD *method,
+                         int type);
+__owur SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method);
 __owur SSL *ossl_ssl_connection_new(SSL_CTX *ctx);
 void ossl_ssl_connection_free(SSL *ssl);
 __owur int ossl_ssl_connection_reset(SSL *ssl);

@@ -118,6 +118,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
 {
     QUIC_CONNECTION *qc = NULL;
     SSL *ssl_base = NULL;
+    SSL_CONNECTION *sc = NULL;
 
     qc = OPENSSL_zalloc(sizeof(*qc));
     if (qc == NULL)
@@ -125,15 +126,22 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
 
     /* Initialise the QUIC_CONNECTION's stub header. */
     ssl_base = &qc->ssl;
-    if (!ossl_ssl_init(ssl_base, ctx, SSL_TYPE_QUIC_CONNECTION)) {
+    if (!ossl_ssl_init(ssl_base, ctx, ctx->method, SSL_TYPE_QUIC_CONNECTION)) {
         ssl_base = NULL;
         goto err;
     }
+
+    qc->tls = ossl_ssl_connection_new_int(ctx, TLS_client_method());
+    if (qc->tls == NULL || (sc = SSL_CONNECTION_FROM_SSL(qc->tls)) == NULL)
+         goto err;
+    /* override the user_ssl of the inner connection */
+    sc->user_ssl = ssl_base;
 
     /* Channel is not created yet. */
     qc->ssl_mode   = qc->ssl.ctx->mode;
     qc->last_error = SSL_ERROR_NONE;
     qc->blocking   = 1;
+
     return ssl_base;
 
 err:
@@ -156,6 +164,8 @@ void ossl_quic_free(SSL *s)
     BIO_free(qc->net_wbio);
 
     /* Note: SSL_free calls OPENSSL_free(qc) for us */
+
+    SSL_free(qc->tls);
 }
 
 /* SSL method init */
