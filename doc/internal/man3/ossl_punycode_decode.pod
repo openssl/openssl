@@ -34,10 +34,10 @@ a hostname, with stripped PUNYCODE marker I<xn-->.
 =head1 RETURN VALUES
 
 ossl_a2ulabel() returns 1 on success, 0 if the output buffer is too small and
--1 if an invalid PUNYCODE string is passed.
+-1 if an invalid PUNYCODE string is passed or another error occurs.
 
 ossl_a2ucompare() returns 1 on non-equal strings, 0 on equal strings,
--1 when an invalid PUNYCODE string is passed.
+-1 when an invalid PUNYCODE string is passed or another error occurs.
 
 ossl_punycode_decode() returns 1 on success, 0 on error. On success,
 *pout_length contains the number of codepoints decoded.
