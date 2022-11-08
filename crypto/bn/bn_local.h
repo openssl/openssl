@@ -42,6 +42,26 @@
 #  include <openssl/rand.h>
 # endif
 
+/*
+ * This should limit the stack usage due to alloca to about 4K.
+ * BN_SOFT_LIMIT is a soft limit equivalent to 2*OPENSSL_RSA_MAX_MODULUS_BITS.
+ * Beyond that size bn_mul_mont is no longer used, and the constant time
+ * assembler code is disabled, due to the blatant alloca and bn_mul_mont usage.
+ * Note that bn_mul_mont does an alloca that is hidden away in assembly.
+ * It is not recommended to do computations with numbers exceeding this limit,
+ * since the result will be highly version dependent:
+ * While the current OpenSSL version will use non-optimized, but safe code,
+ * previous versions will use optimized code, that may crash due to unexpected
+ * stack overflow, and future versions may very well turn this into a hard
+ * limit.
+ * Note however, that it is possible to override the size limit using
+ * "./config -DBN_SOFT_LIMIT=<limit>" if necessary, and the O/S specific
+ * stack limit is known and taken into consideration.
+ */
+# ifndef BN_SOFT_LIMIT
+#  define BN_SOFT_LIMIT         (4096 / BN_BYTES)
+# endif
+
 # ifndef OPENSSL_SMALL_FOOTPRINT
 #  define BN_MUL_COMBA
 #  define BN_SQR_COMBA
