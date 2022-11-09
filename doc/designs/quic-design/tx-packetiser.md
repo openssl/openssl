@@ -178,7 +178,7 @@ future. Currently, congestion control is a no-op.
 Packets
 -------
 
-Packets formats are defined in [RFC 9000 17.1 Packet Formats].
+Packet formats are defined in [RFC 9000 17.1 Packet Formats].
 
 ### Packet types
 

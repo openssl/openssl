@@ -1117,23 +1117,18 @@ static int run_script(const struct script_op *script)
     for (op = script; op->opcode != OPK_END; ++op) {
         switch (op->opcode) {
             case OPK_TXP_GENERATE:
-                if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0), 2))
+                if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0),
+                                 TX_PACKETISER_RES_SENT_PKT))
                     goto err;
 
                 ossl_qtx_finish_dgram(h.args.qtx);
                 ossl_qtx_flush_net(h.args.qtx);
                 break;
             case OPK_TXP_GENERATE_NONE:
-                if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0), 1)) {
-                    /* TODO REMOVE THIS */
-                    ossl_qtx_finish_dgram(h.args.qtx);
-                    ossl_qtx_flush_net(h.args.qtx);
-                    ossl_quic_demux_pump(h.demux);
-                    if (!TEST_true(ossl_qrx_read_pkt(h.qrx, &h.qrx_pkt)))
-                        goto err;
-                    TEST_mem_eq(NULL, 0, h.qrx_pkt.hdr->data, h.qrx_pkt.hdr->len);
+                if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0),
+                                 TX_PACKETISER_RES_NO_PKT))
                     goto err;
-                }
+
                 break;
             case OPK_RX_PKT:
                 ossl_quic_demux_pump(h.demux);
