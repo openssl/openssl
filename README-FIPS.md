@@ -7,11 +7,11 @@ A provider is essentially a dynamically loadable module which implements
 cryptographic algorithms, see the [README-PROVIDERS](README-PROVIDERS.md) file
 for further details.
 
-A cryptographic module is only FIPS valid if it has gone through the complex
+A cryptographic module is only FIPS validated after it has gone through the complex
 FIPS 140 validation process. As this process takes a very long time, it is not
 possible to validate every minor release of OpenSSL.
-If you want to be FIPS validated then you must ONLY generate a FIPS provider
-using OpenSSL versions that have a valid FIPS certificate. A FIPS certificate
+If you need a FIPS validated module then you must ONLY generate a FIPS provider
+using OpenSSL versions that have valid FIPS certificates. A FIPS certificate
 contains a link to a Security Policy, and you MUST follow the instructions
 in the Security Policy in order to be FIPS compliant.
 See <https://www.openssl.org/source/> for information related to OpenSSL
