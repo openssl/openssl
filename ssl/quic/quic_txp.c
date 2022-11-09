@@ -114,9 +114,9 @@ struct tx_helper {
          * The fields in this structure are valid if active is set, which means
          * that a serialization transaction is currently in progress.
          */
-        BUF_MEM buf_mem;
-        WPACKET wpkt;
-        char    active;
+        unsigned char   *data;
+        WPACKET         wpkt;
+        char            active;
     } txn;
 };
 
@@ -138,9 +138,7 @@ static int tx_helper_init(struct tx_helper *h, OSSL_QUIC_TX_PACKETISER *txp,
     h->scratch_bytes        = 0;
     h->reserve_allowed      = 0;
     h->done_implicit        = 0;
-    h->txn.buf_mem.data     = NULL;
-    h->txn.buf_mem.length   = 0;
-    h->txn.buf_mem.max      = 0;
+    h->txn.data             = NULL;
     h->txn.active           = 0;
 
     if (max_ppl > h->txp->scratch_len) {
@@ -223,7 +221,8 @@ static size_t tx_helper_get_space_left(struct tx_helper *h)
  */
 static WPACKET *tx_helper_begin(struct tx_helper *h)
 {
-    size_t space_left;
+    size_t space_left, len;
+    unsigned char *data;
 
     if (!ossl_assert(!h->txn.active))
         return NULL;
@@ -231,32 +230,35 @@ static WPACKET *tx_helper_begin(struct tx_helper *h)
     if (!ossl_assert(!h->done_implicit))
         return NULL;
 
-    h->txn.buf_mem.data     = (char *)h->txp->scratch + h->scratch_bytes;
-    h->txn.buf_mem.length   = h->txp->scratch_len - h->scratch_bytes;
-    h->txn.buf_mem.max      = h->txn.buf_mem.length;
+    data = (unsigned char *)h->txp->scratch + h->scratch_bytes;
+    len  = h->txp->scratch_len - h->scratch_bytes;
 
     space_left = tx_helper_get_space_left(h);
-    if (!ossl_assert(space_left <= h->txn.buf_mem.max))
+    if (!ossl_assert(space_left <= len))
         return NULL;
 
-    if (!WPACKET_init(&h->txn.wpkt, &h->txn.buf_mem))
+    if (!WPACKET_init_static_len(&h->txn.wpkt, data, len, 0))
         return NULL;
 
     if (!WPACKET_set_max_size(&h->txn.wpkt, space_left)) {
-        WPACKET_finish(&h->txn.wpkt);
+        WPACKET_cleanup(&h->txn.wpkt);
         return NULL;
     }
 
-    h->txn.active = 1;
+    h->txn.data     = data;
+    h->txn.active   = 1;
     return &h->txn.wpkt;
 }
 
-static void tx_helper_end(struct tx_helper *h)
+static void tx_helper_end(struct tx_helper *h, int success)
 {
-    WPACKET_finish(&h->txn.wpkt);
+    if (success)
+        WPACKET_finish(&h->txn.wpkt);
+    else
+        WPACKET_cleanup(&h->txn.wpkt);
 
-    h->txn.buf_mem.data = NULL;
     h->txn.active       = 0;
+    h->txn.data         = NULL;
 }
 
 /* Abort a control frame serialization transaction. */
@@ -265,7 +267,7 @@ static void tx_helper_rollback(struct tx_helper *h)
     if (!h->txn.active)
         return;
 
-    tx_helper_end(h);
+    tx_helper_end(h, 0);
 }
 
 /* Commit a control frame. */
@@ -277,17 +279,17 @@ static int tx_helper_commit(struct tx_helper *h)
         return 0;
 
     if (!WPACKET_get_total_written(&h->txn.wpkt, &l)) {
-        tx_helper_end(h);
+        tx_helper_end(h, 0);
         return 0;
     }
 
-    if (!tx_helper_append_iovec(h, (unsigned char *)h->txn.buf_mem.data, l)) {
-        tx_helper_end(h);
+    if (!tx_helper_append_iovec(h, h->txn.data, l)) {
+        tx_helper_end(h, 0);
         return 0;
     }
 
     h->scratch_bytes += l;
-    tx_helper_end(h);
+    tx_helper_end(h, 1);
     return 1;
 }
 
@@ -452,7 +454,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
     int rc;
 
     if (!txp->args.cc_method->can_send(txp->args.cc_data))
-        return 1;
+        return TX_PACKETISER_RES_NO_PKT;
 
     for (enc_level = QUIC_ENC_LEVEL_INITIAL;
          enc_level < QUIC_ENC_LEVEL_NUM;
@@ -463,7 +465,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
     }
 
     if (num_el_in_dgram == 0)
-        return 1;
+        return TX_PACKETISER_RES_NO_PKT;
 
     /*
      * Should not be needed, but a sanity check in case anyone else has been
@@ -489,14 +491,14 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
             if (pkts_done > 0)
                 break;
             else
-                return 0;
+                return TX_PACKETISER_RES_FAILURE;
         }
 
         ++pkts_done;
     }
 
     ossl_qtx_finish_dgram(txp->args.qtx);
-    return 2;
+    return TX_PACKETISER_RES_SENT_PKT;
 }
 
 struct archetype_data {
@@ -799,7 +801,7 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
 /* Determine how many bytes we should use for the encoded PN. */
 static size_t txp_determine_pn_len(OSSL_QUIC_TX_PACKETISER *txp)
 {
-    return 4; /* TODO */
+    return 4; /* TODO(QUIC) */
 }
 
 /* Determine plaintext packet payload length from payload length. */
@@ -1910,8 +1912,8 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
             stream->want_reset_stream = 0;
 
         if (stream->txp_txfc_new_credit_consumed > 0) {
-            if (!ossl_quic_txfc_consume_credit(&stream->txfc,
-                                               stream->txp_txfc_new_credit_consumed))
+            if (!ossl_assert(ossl_quic_txfc_consume_credit(&stream->txfc,
+                                                           stream->txp_txfc_new_credit_consumed)))
                 /*
                  * Should not be possible, but we should continue with our
                  * bookkeeping as we have already committed the packet to the

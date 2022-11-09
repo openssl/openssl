@@ -75,9 +75,13 @@ void ossl_quic_tx_packetiser_free(OSSL_QUIC_TX_PACKETISER *txp);
  *
  * archetype is a TX_PACKETISER_ARCHETYPE_* value.
  *
- * Returns 0 on failure (e.g. allocation error), 1 if no packets were sent (e.g.
- * because nothing wants to send anything), and 2 if packets were sent.
+ * Returns TX_PACKETISER_RES_FAILURE on failure (e.g. allocation error),
+ * TX_PACKETISER_RES_NO_PKT if no packets were sent (e.g. because nothing wants
+ * to send anything), and TX_PACKETISER_RES_SENT_PKT if packets were sent.
  */
+#define TX_PACKETISER_RES_FAILURE   0
+#define TX_PACKETISER_RES_NO_PKT    1
+#define TX_PACKETISER_RES_SENT_PKT  2
 int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
                                      uint32_t archetype);
 
