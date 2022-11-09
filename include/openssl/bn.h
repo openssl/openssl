@@ -350,6 +350,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
 int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx); /* returns
                                                                   * -2 for
                                                                   * error */
+int BN_are_coprime(BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
 BIGNUM *BN_mod_inverse(BIGNUM *ret,
                        const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx);
 BIGNUM *BN_mod_sqrt(BIGNUM *ret,

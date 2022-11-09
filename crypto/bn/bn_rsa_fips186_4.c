@@ -221,23 +221,6 @@ err:
 }
 
 /*
- * Testing for GCD(a, n) == 1 can be done by testing if there is a modulo
- * inverse. This is much faster than the constant time version of BN_gcd().
- */
-static ossl_inline int gcd_isone(BIGNUM *inv, BIGNUM *a, const BIGNUM *n,
-                                 BN_CTX *ctx)
-{
-    int ret = 0;
-
-    ERR_set_mark();
-    BN_set_flags(a, BN_FLG_CONSTTIME);
-    ret = (BN_mod_inverse(inv, a, n, ctx) != NULL);
-    /* Clear any errors (an error is returned if there is no inverse) */
-    ERR_pop_to_mark();
-    return ret;
-}
-
-/*
  * Constructs a probable prime (a candidate for p or q) using 2 auxiliary
  * prime numbers and the Chinese Remainder Theorem.
  *
@@ -303,13 +286,20 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
             goto err;
     }
 
+    /*
+     * (Step 1) GCD(2r1, r2) = 1.
+     *    Note: This algorithm was doing a gcd(2r1, r2)=1 test before doing an
+     *    mod_inverse(2r1, r2) which are effectively the same operation.
+     *    (The algorithm assumed that the gcd test would be faster). Since the
+     *    mod_inverse is currently faster than calling the constant time
+     *    BN_gcd(), the call to BN_gcd() has been omitted. The inverse result
+     *    is used further down.
+     */
     if (!(BN_lshift1(r1x2, r1)
-            /* (Step 1) GCD(2r1, r2) = 1 */
-            && gcd_isone(tmp, r1x2, r2, ctx)
+            && (BN_mod_inverse(tmp, r1x2, r2, ctx) != NULL)
             /* (Step 2) R = ((r2^-1 mod 2r1) * r2) - ((2r1^-1 mod r2)*2r1) */
-            && BN_mod_inverse(R, r2, r1x2, ctx)
+            && (BN_mod_inverse(R, r2, r1x2, ctx) != NULL)
             && BN_mul(R, R, r2, ctx) /* R = (r2^-1 mod 2r1) * r2 */
-            && BN_mod_inverse(tmp, r1x2, r2, ctx)
             && BN_mul(tmp, tmp, r1x2, ctx) /* tmp = (2r1^-1 mod r2)*2r1 */
             && BN_sub(R, R, tmp)
             /* Calculate 2r1r2 */
@@ -321,7 +311,8 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
 
     /*
      * In FIPS 186-4 imax was set to 5 * nlen/2.
-     * Analysis by Allen Roginsky (See https://csrc.nist.gov/CSRC/media/Publications/fips/186/4/final/documents/comments-received-fips186-4-december-2015.pdf
+     * Analysis by Allen Roginsky
+     * (See https://csrc.nist.gov/CSRC/media/Publications/fips/186/4/final/documents/comments-received-fips186-4-december-2015.pdf
      * page 68) indicates this has a 1 in 2 million chance of failure.
      * The number has been updated to 20 * nlen/2 as used in
      * FIPS186-5 Appendix B.9 Step 9.
@@ -355,7 +346,7 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
             if (BN_copy(y1, Y) == NULL
                     || !BN_sub_word(y1, 1))
                 goto err;
-            if (gcd_isone(tmp, y1, e, ctx)) {
+            if (BN_are_coprime(y1, e, ctx)) {
                 int rv = BN_check_prime(Y, ctx, cb);
 
                 if (rv > 0)

@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-BN_mod_inverse - compute inverse modulo n
+BN_mod_inverse, BN_are_coprime -
+inverse modulo operations on BIGNUMs
 
 =head1 SYNOPSIS
 
@@ -11,27 +12,40 @@ BN_mod_inverse - compute inverse modulo n
  BIGNUM *BN_mod_inverse(BIGNUM *r, BIGNUM *a, const BIGNUM *n,
                         BN_CTX *ctx);
 
+ int BN_are_coprime(BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+
 =head1 DESCRIPTION
 
 BN_mod_inverse() computes the inverse of B<a> modulo B<n>
 places the result in B<r> (C<(a*r)%n==1>). If B<r> is NULL,
 a new B<BIGNUM> is created.
 
-B<ctx> is a previously allocated B<BN_CTX> used for temporary
+B<ctx> is a previously allocated B<BN_CTX> used for temporary-
 variables. B<r> may be the same B<BIGNUM> as B<a> or B<n>.
+
+BN_are_coprime() determines if B<a> and B<b> are coprime.
+B<ctx> is used internally for storing temporary variables. It may be NULL.
+The values of B<a> and B<b> must not be NULL.
 
 =head1 RETURN VALUES
 
 BN_mod_inverse() returns the B<BIGNUM> containing the inverse, and
 NULL on error. The error codes can be obtained by L<ERR_get_error(3)>.
 
+BN_are_coprime() returns 1 if the B<BIGNUM>'s are coprime, otherwise it
+returns 0.
+
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>, L<BN_add(3)>
 
+=head1 HISTORY
+
+The function BN_are_coprime() was added in OpenSSL 3.2.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
