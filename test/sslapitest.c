@@ -1293,7 +1293,8 @@ end:
 #define SENDFILE_CHUNK                  (4 * 4096)
 #define min(a,b)                        ((a) > (b) ? (b) : (a))
 
-static int execute_test_ktls_sendfile(int tls_version, const char *cipher)
+static int execute_test_ktls_sendfile(int tls_version, const char *cipher,
+                                      int zerocopy)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -1349,6 +1350,12 @@ static int execute_test_ktls_sendfile(int tls_version, const char *cipher)
 
     if (!TEST_true(SSL_set_options(serverssl, SSL_OP_ENABLE_KTLS)))
         goto end;
+
+    if (zerocopy) {
+        if (!TEST_true(SSL_set_options(serverssl,
+                                       SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE)))
+            goto end;
+    }
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
                                          SSL_ERROR_NONE)))
@@ -1480,14 +1487,16 @@ static int test_ktls(int test)
                              cipher->cipher);
 }
 
-static int test_ktls_sendfile(int tst)
+static int test_ktls_sendfile(int test)
 {
     struct ktls_test_cipher *cipher;
+    int tst = test >> 1;
 
     OPENSSL_assert(tst < (int)NUM_KTLS_TEST_CIPHERS);
     cipher = &ktls_test_ciphers[tst];
 
-    return execute_test_ktls_sendfile(cipher->tls_version, cipher->cipher);
+    return execute_test_ktls_sendfile(cipher->tls_version, cipher->cipher,
+                                      test & 1);
 }
 #endif
 
@@ -10544,7 +10553,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_KTLS) && !defined(OPENSSL_NO_SOCK)
 # if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_ktls, NUM_KTLS_TEST_CIPHERS * 4);
-    ADD_ALL_TESTS(test_ktls_sendfile, NUM_KTLS_TEST_CIPHERS);
+    ADD_ALL_TESTS(test_ktls_sendfile, NUM_KTLS_TEST_CIPHERS * 2);
 # endif
 #endif
     ADD_TEST(test_large_message_tls);

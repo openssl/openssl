@@ -182,6 +182,11 @@ extern "C" {
 # define BIO_CTRL_DGRAM_GET_NO_TRUNC            88
 # define BIO_CTRL_DGRAM_SET_NO_TRUNC            89
 
+/*
+ * internal BIO:
+ * # define BIO_CTRL_SET_KTLS_TX_ZEROCOPY_SENDFILE 90
+ */
+
 # define BIO_DGRAM_CAP_NONE                 0U
 # define BIO_DGRAM_CAP_HANDLES_SRC_ADDR     (1U << 0)
 # define BIO_DGRAM_CAP_HANDLES_DST_ADDR     (1U << 1)
@@ -225,7 +230,7 @@ extern "C" {
 # define BIO_FLAGS_NONCLEAR_RST  0x400
 # define BIO_FLAGS_IN_EOF        0x800
 
-/* the BIO FLAGS values 0x1000 to 0x4000 are reserved for internal KTLS flags */
+/* the BIO FLAGS values 0x1000 to 0x8000 are reserved for internal KTLS flags */
 
 typedef union bio_addr_st BIO_ADDR;
 typedef struct bio_addrinfo_st BIO_ADDRINFO;
