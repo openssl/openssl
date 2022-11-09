@@ -175,6 +175,16 @@ by the kernel directly and not via any available OpenSSL Providers. This might
 be undesirable if, for example, the application requires all cryptographic
 operations to be performed by the FIPS provider.
 
+=item SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE
+
+With this option, sendfile() will use the zerocopy mode, which gives a
+performance boost when used with KTLS hardware offload. Note that invalid TLS
+records might be transmitted if the file is changed while being sent. This
+option has no effect if B<SSL_OP_ENABLE_KTLS> is not enabled.
+
+This option only applies to Linux. KTLS sendfile on FreeBSD doesn't offer an
+option to disable zerocopy and always runs in this mode.
+
 =item SSL_OP_ENABLE_MIDDLEBOX_COMPAT
 
 If set then dummy Change Cipher Spec (CCS) messages are sent in TLSv1.3. This

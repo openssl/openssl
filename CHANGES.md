@@ -226,6 +226,10 @@ OpenSSL 3.2
 
    *Tianjia Zhang*
 
+ * Zerocopy KTLS sendfile() support on Linux.
+
+   *Maxim Mikityanskiy*
+
 OpenSSL 3.0
 -----------
 
