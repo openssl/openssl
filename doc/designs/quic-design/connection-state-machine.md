@@ -813,8 +813,8 @@ The following API yields a current deadline (if any) after which the QUIC state
 machine should be ticked:
 
 ```c
-/* Returns milliseconds or -1 (infinity). */
-int64_t SSL_get_tick_timeout(SSL *ssl);
+/* Returns 1 on success. tv->tv_sec == -1 represents infinity. */
+int SSL_get_tick_timeout(SSL *ssl, struct timeval *tv);
 ```
 
 Finally, the tick function allows the QUIC state machine to be ticked without
@@ -901,3 +901,16 @@ Blocking mode cannot be used with a non-pollable underlying BIO. If
 `BIO_get[rw]poll_descriptor` is not implemented for either of the underlying
 read and write BIOs, blocking mode cannot be enabled and blocking mode defaults
 to off.
+
+### Initial Destination Address
+
+The initial destination address to connect to can be set explicitly using a new
+call:
+
+```c
+__owur int SSL_set_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr);
+```
+
+This may only be called before connecting. However, if it is not called before
+connecting, we can try to determine if a peer has been set on the underlying
+BIO, e.g. if it is a BIO_dgram, and automatically use that if possible.
