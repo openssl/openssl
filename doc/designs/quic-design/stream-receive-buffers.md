@@ -96,7 +96,21 @@ below. Details TBD.
 Implementation details
 ----------------------
 
-TBD
+The QUIC_RSTREAM object holds the received stream data in the SFRAME_LIST
+structure. This is a sorted list of partially (never fully) overlapping
+data frames. Each list item holds a pointer to the received packet
+wrapper for refcounting and proper release of the received packet
+data once the stream data is read by the application.
+
+Each SFRAME_LIST item has range.start and range.end values greater
+than the range.start and range.end values of the previous item in the list.
+This invariant is ensured on the insertion of overlapping stream frames.
+Any redundant frames are released. Insertion at the end of the list
+is optimised as in the ideal situation when no packets are lost we
+always just append new frames.
+
+See `include/internal/quic_stream.h` and `include/internal/quic_sf_list.h`
+for internal API details.
 
 Other considerations
 --------------------
