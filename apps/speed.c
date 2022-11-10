@@ -3508,7 +3508,7 @@ static int do_multi(int multi, int size_num)
         char buf[1024];
         char *p;
 
-        if ((f = fdopen(fds[n], "r")) == NULL){
+        if ((f = fdopen(fds[n], "r")) == NULL) {
             BIO_printf(bio_err, "fdopen failure with 0x%x\n",
                            errno);
             return 1;
