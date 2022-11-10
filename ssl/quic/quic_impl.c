@@ -429,14 +429,14 @@ static int is_term_any(const QUIC_CONNECTION *qc)
  * gen_rand_conn_id
  * ----------------
  */
-static int gen_rand_conn_id(size_t len, QUIC_CONN_ID *cid)
+static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
 {
     if (len > QUIC_MAX_CONN_ID_LEN)
         return 0;
 
     cid->id_len = (unsigned char)len;
 
-    if (RAND_bytes(cid->id, len) != 1) {
+    if (RAND_bytes_ex(libctx, cid->id, len, len * 8) != 1) {
         cid->id_len = 0;
         return 0;
     }
@@ -506,7 +506,7 @@ static int csm_init(QUIC_CONNECTION *qc)
 
     qc->blocking = 1;
 
-    if (!gen_rand_conn_id(INIT_DCID_LEN, &qc->init_dcid)) {
+    if (!gen_rand_conn_id(qc->ssl.ctx->libctx, INIT_DCID_LEN, &qc->init_dcid)) {
         csm_cleanup(qc);
         return 0;
     }
