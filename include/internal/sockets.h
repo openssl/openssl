@@ -113,6 +113,10 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   include <sys/select.h>
 #  endif
 
+#  ifdef OPENSSL_SYS_UNIX
+#    include <sys/poll.h>
+#  endif
+
 #  ifndef VMS
 #   include <sys/ioctl.h>
 #  else

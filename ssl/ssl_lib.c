@@ -6994,19 +6994,45 @@ int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey)
 /* QUIC-specific methods which are supported on QUIC connections only. */
 int SSL_tick(SSL *s)
 {
+    SSL_CONNECTION *sc;
 #ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (qc == NULL)
-        return 0;
+    if (qc != NULL)
+        return ossl_quic_tick(qc);
+#endif
 
-    return ossl_quic_tick(qc);
-#else
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    if (sc != NULL && SSL_CONNECTION_IS_DTLS(sc))
+        return DTLSv1_handle_timeout(s);
+
     return 0;
-#endif
 }
 
-int64_t SSL_get_tick_timeout(SSL *s)
+int SSL_get_tick_timeout(SSL *s, struct timeval *tv)
+{
+    SSL_CONNECTION *sc;
+#ifndef OPENSSL_NO_QUIC
+    QUIC_CONNECTION *qc;
+
+    qc = QUIC_CONNECTION_FROM_SSL(s);
+    if (qc != NULL)
+        return ossl_quic_get_tick_timeout(qc, tv);
+#endif
+
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    if (sc != NULL && SSL_CONNECTION_IS_DTLS(sc)) {
+        if (!DTLSv1_get_timeout(s, tv)) {
+            tv->tv_sec  = -1;
+            tv->tv_usec = 0;
+        }
+        return 1;
+    }
+
+    return 0;
+}
+
+int SSL_get_rpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
 {
 #ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
@@ -7014,13 +7040,13 @@ int64_t SSL_get_tick_timeout(SSL *s)
     if (qc == NULL)
         return -1;
 
-    return ossl_quic_get_tick_timeout(qc);
+    return ossl_quic_get_rpoll_descriptor(qc, desc);
 #else
     return -1;
 #endif
 }
 
-int SSL_get_poll_rfd(SSL *s)
+int SSL_get_wpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
 {
 #ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
@@ -7028,21 +7054,7 @@ int SSL_get_poll_rfd(SSL *s)
     if (qc == NULL)
         return -1;
 
-    return ossl_quic_get_poll_rfd(qc);
-#else
-    return -1;
-#endif
-}
-
-int SSL_get_poll_wfd(SSL *s)
-{
-#ifndef OPENSSL_NO_QUIC
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
-
-    if (qc == NULL)
-        return -1;
-
-    return ossl_quic_get_poll_wfd(qc);
+    return ossl_quic_get_wpoll_descriptor(qc, desc);
 #else
     return -1;
 #endif
@@ -7099,6 +7111,20 @@ int SSL_get_blocking_mode(SSL *s)
         return -1;
 
     return ossl_quic_conn_get_blocking_mode(qc);
+#else
+    return 0;
+#endif
+}
+
+int SSL_set_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr)
+{
+#ifndef OPENSSL_NO_QUIC
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (qc == NULL)
+        return -1;
+
+    return ossl_quic_conn_set_initial_peer_addr(qc, peer_addr);
 #else
     return 0;
 #endif

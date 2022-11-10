@@ -534,9 +534,10 @@ SSL_CTX_get1_compressed_cert            ?	3_2_0	EXIST::FUNCTION:
 SSL_get1_compressed_cert                ?	3_2_0	EXIST::FUNCTION:
 SSL_tick                                ?	3_2_0	EXIST::FUNCTION:
 SSL_get_tick_timeout                    ?	3_2_0	EXIST::FUNCTION:
-SSL_get_poll_rfd                        ?	3_2_0	EXIST::FUNCTION:
-SSL_get_poll_wfd                        ?	3_2_0	EXIST::FUNCTION:
 SSL_want_net_read                       ?	3_2_0	EXIST::FUNCTION:
 SSL_want_net_write                      ?	3_2_0	EXIST::FUNCTION:
 SSL_set_blocking_mode                   ?	3_2_0	EXIST::FUNCTION:
 SSL_get_blocking_mode                   ?	3_2_0	EXIST::FUNCTION:
+SSL_get_rpoll_descriptor                ?	3_2_0	EXIST::FUNCTION:
+SSL_get_wpoll_descriptor                ?	3_2_0	EXIST::FUNCTION:
+SSL_set_initial_peer_addr               ?	3_2_0	EXIST::FUNCTION:

@@ -182,6 +182,9 @@ extern "C" {
 # define BIO_CTRL_DGRAM_GET_NO_TRUNC            88
 # define BIO_CTRL_DGRAM_SET_NO_TRUNC            89
 
+# define BIO_CTRL_GET_RPOLL_DESCRIPTOR          90
+# define BIO_CTRL_GET_WPOLL_DESCRIPTOR          91
+
 # define BIO_DGRAM_CAP_NONE                 0U
 # define BIO_DGRAM_CAP_HANDLES_SRC_ADDR     (1U << 0)
 # define BIO_DGRAM_CAP_HANDLES_DST_ADDR     (1U << 1)
@@ -371,6 +374,17 @@ typedef struct bio_mmsg_cb_args_st {
     uint64_t    flags;
     size_t     *msgs_processed;
 } BIO_MMSG_CB_ARGS;
+
+#define BIO_POLL_DESCRIPTOR_TYPE_NONE       0
+#define BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD    1
+
+typedef struct bio_poll_descriptor_st {
+    int type;
+    union {
+        int     fd;
+        void    *reserved[2];
+    } value;
+} BIO_POLL_DESCRIPTOR;
 
 /*
  * #define BIO_CONN_get_param_hostname BIO_ctrl
@@ -685,6 +699,8 @@ int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written);
 __owur int BIO_sendmmsg(BIO *b, BIO_MSG *msg,
                         size_t stride, size_t num_msg, uint64_t flags,
                         size_t *msgs_processed);
+__owur int BIO_get_rpoll_descriptor(BIO *b, BIO_POLL_DESCRIPTOR *desc);
+__owur int BIO_get_wpoll_descriptor(BIO *b, BIO_POLL_DESCRIPTOR *desc);
 int BIO_puts(BIO *bp, const char *buf);
 int BIO_indent(BIO *b, int indent, int max);
 long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);

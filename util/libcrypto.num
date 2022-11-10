@@ -5481,3 +5481,5 @@ BIO_f_zstd                              ?	3_2_0	EXIST::FUNCTION:COMP
 d2i_PUBKEY_ex_fp                        ?	3_2_0	EXIST::FUNCTION:STDIO
 d2i_PUBKEY_ex_bio                       ?	3_2_0	EXIST::FUNCTION:
 COMP_zlib_oneshot                       ?	3_2_0	EXIST::FUNCTION:COMP
+BIO_get_rpoll_descriptor                ?	3_2_0	EXIST::FUNCTION:
+BIO_get_wpoll_descriptor                ?	3_2_0	EXIST::FUNCTION:

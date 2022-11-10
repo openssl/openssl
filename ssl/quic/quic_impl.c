@@ -104,8 +104,8 @@ static void reactor_init(QUIC_REACTOR *rtor,
                          void *tick_cb_arg,
                          OSSL_TIME initial_tick_deadline)
 {
-    rtor->poll_rfd          = -1;
-    rtor->poll_wfd          = -1;
+    rtor->poll_r.type       = BIO_POLL_DESCRIPTOR_TYPE_NONE;
+    rtor->poll_w.type       = BIO_POLL_DESCRIPTOR_TYPE_NONE;
     rtor->want_net_read     = 0;
     rtor->want_net_write    = 0;
     rtor->tick_deadline     = initial_tick_deadline;
@@ -114,24 +114,24 @@ static void reactor_init(QUIC_REACTOR *rtor,
     rtor->tick_cb_arg       = tick_cb_arg;
 }
 
-static void reactor_set_poll_rfd(QUIC_REACTOR *rtor, int rfd)
+static void reactor_set_poll_r(QUIC_REACTOR *rtor, const BIO_POLL_DESCRIPTOR *r)
 {
-    rtor->poll_rfd = rfd;
+    rtor->poll_r = *r;
 }
 
-static void reactor_set_poll_wfd(QUIC_REACTOR *rtor, int wfd)
+static void reactor_set_poll_w(QUIC_REACTOR *rtor, const BIO_POLL_DESCRIPTOR *w)
 {
-    rtor->poll_wfd = wfd;
+    rtor->poll_w = *w;
 }
 
-static int reactor_get_poll_rfd(QUIC_REACTOR *rtor)
+static const BIO_POLL_DESCRIPTOR *reactor_get_poll_r(QUIC_REACTOR *rtor)
 {
-    return rtor->poll_rfd;
+    return &rtor->poll_r;
 }
 
-static int reactor_get_poll_wfd(QUIC_REACTOR *rtor)
+static const BIO_POLL_DESCRIPTOR *reactor_get_poll_w(QUIC_REACTOR *rtor)
 {
-    return rtor->poll_wfd;
+    return &rtor->poll_w;
 }
 
 static int reactor_want_net_read(QUIC_REACTOR *rtor)
@@ -346,6 +346,37 @@ static int poll_two_fds(int rfd, int rfd_want_read,
 #endif
 }
 
+static int poll_descriptor_to_fd(const BIO_POLL_DESCRIPTOR *d, int *fd)
+{
+    if (d == NULL || d->type == BIO_POLL_DESCRIPTOR_TYPE_NONE) {
+        *fd = -1;
+        return 1;
+    }
+
+    if (d->type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD || d->value.fd < 0)
+        return 0;
+
+    *fd = d->value.fd;
+    return 1;
+}
+
+/*
+ * Poll up to two abstract poll descriptors. Currently we only support
+ * poll descriptors which represent FDs.
+ */
+static int poll_two_descriptors(const BIO_POLL_DESCRIPTOR *r, int r_want_read,
+                                const BIO_POLL_DESCRIPTOR *w, int w_want_write,
+                                OSSL_TIME deadline)
+{
+    int rfd, wfd;
+
+    if (!poll_descriptor_to_fd(r, &rfd)
+        || !poll_descriptor_to_fd(w, &wfd))
+        return 0;
+
+    return poll_two_fds(rfd, r_want_read, wfd, w_want_write, deadline);
+}
+
 /* Must only be called if we are in blocking mode. */
 static int reactor_block_until_pred(QUIC_REACTOR *rtor,
                                     int (*pred)(void *arg), void *pred_arg,
@@ -362,11 +393,11 @@ static int reactor_block_until_pred(QUIC_REACTOR *rtor,
         if ((res = pred(pred_arg)) != 0)
             return res;
 
-        if (!poll_two_fds(reactor_get_poll_rfd(rtor),
-                          reactor_want_net_read(rtor),
-                          reactor_get_poll_wfd(rtor),
-                          reactor_want_net_write(rtor),
-                          reactor_get_tick_deadline(rtor)))
+        if (!poll_two_descriptors(reactor_get_poll_r(rtor),
+                                  reactor_want_net_read(rtor),
+                                  reactor_get_poll_w(rtor),
+                                  reactor_want_net_write(rtor),
+                                  reactor_get_tick_deadline(rtor)))
             /*
              * We don't actually care why the call succeeded (timeout, FD
              * readiness), we just call reactor_tick and start trying to do I/O
@@ -1542,6 +1573,10 @@ static int csm_connect(QUIC_CONNECTION *qc)
         /* Peer address must have been set. */
         return 0;
 
+    /* Inform QTX of peer address. */
+    if (!ossl_quic_tx_packetiser_set_peer(qc->txp, &qc->init_peer_addr))
+        return 0;
+
     /* Plug in secrets for the Initial EL. */
     if (!ossl_quic_provide_initial_secret(qc->ssl.ctx->libctx,
                                           qc->ssl.ctx->propq,
@@ -1863,7 +1898,7 @@ static void csm_on_idle_timeout(QUIC_CONNECTION *qc)
  *         SSL_new                  => ossl_quic_new
  *                                     ossl_quic_init
  *         SSL_reset                => ossl_quic_reset
- *         SSL_clear                => ossl_quic_clea
+ *         SSL_clear                => ossl_quic_clear
  *                                     ossl_quic_deinit
  *         SSL_free                 => ossl_quic_free
  *
@@ -1982,7 +2017,7 @@ int ossl_quic_clear(SSL *s)
  *
  *     The only sensible way to do this is to configure the socket into
  *     non-blocking mode. We could try to do select() before calling send() or
- *     recv() to get a guarantee tha the call will not block, but this will
+ *     recv() to get a guarantee that the call will not block, but this will
  *     probably run into issues with buggy OSes which generate spurious socket
  *     readiness events. In any case, relying on this to work reliably does not
  *     seem sane.
@@ -2027,82 +2062,30 @@ int ossl_quic_clear(SSL *s)
  */
 
 /*
- * csm_analyse_bio
- * ---------------
+ * csm_analyse_init_peer_addr
+ * --------------------------
  *
- * Determines:
- *
- *   - what FD we should poll on based on our underlying network BIO;
- *   - what initial destination UDP address we should use.
- *
+ * Determines what initial destination UDP address we should use, if possible.
+ * If this fails the client must set the destination address manually, or use a
+ * BIO which does not need a destination address.
  */
-static int csm_analyse_bio(QUIC_CONNECTION *qc, BIO *net_bio,
-                           int *pfd, BIO_ADDR *peer)
+static int csm_analyse_init_peer_addr(BIO *net_wbio, BIO_ADDR *peer)
 {
-    int fd = -1;
+    if (!BIO_dgram_get_peer(net_wbio, peer))
+        return 0;
 
-    /*
-     * Various cases:
-     *
-     *   - BIO_dgram
-     *   - BIO_dgram_pair
-     *   - Known bad BIOs (e.g. TCP socket), abort
-     *   - Unknown BIO (could be custom implementation, benefit of doubt,
-     *                  but what do we do?)
-     */
-    switch (BIO_method_type(net_bio)) {
-        case BIO_TYPE_DGRAM:
-            if (BIO_get_fd(net_bio, &fd) < 0)
-                return 0;
-
-            if (peer != NULL && !BIO_dgram_get_peer(net_bio, peer))
-                return 0;
-
-            break;
-
-        case BIO_TYPE_DGRAM_PAIR:
-            /* Valid, but not pollable. */
-            if (peer != NULL)
-                BIO_ADDR_clear(peer);
-
-            break;
-
-        case BIO_TYPE_NONE:
-        case BIO_TYPE_FILE:
-        case BIO_TYPE_MEM:
-        case BIO_TYPE_FD:
-        case BIO_TYPE_SOCKET:
-        case BIO_TYPE_NULL:
-        case BIO_TYPE_SSL:
-        case BIO_TYPE_MD:
-        case BIO_TYPE_BUFFER:
-        case BIO_TYPE_CIPHER:
-        case BIO_TYPE_BASE64:
-        case BIO_TYPE_CONNECT:
-        case BIO_TYPE_ACCEPT:
-        case BIO_TYPE_NBIO_TEST:
-        case BIO_TYPE_NULL_FILTER:
-        case BIO_TYPE_BIO:
-        case BIO_TYPE_LINEBUFFER:
-        case BIO_TYPE_ASN1:
-        case BIO_TYPE_COMP:
-        case BIO_TYPE_CORE_TO_PROV:
-#ifndef OPENSSL_NO_SCTP
-        case BIO_TYPE_DGRAM_SCTP:
-#endif
-            /* These BIO types will never be supported. */
-            return 0;
-
-        default:
-            /*
-             * Unknown BIO type. In the future we should support custom BIOs but
-             * while we are prototyping, we don't for now.
-             */
-            return 0;
-    }
-
-    *pfd = fd;
     return 1;
+}
+
+/*
+ * validate_poll_descriptor
+ * ------------------------
+ * Determines whether we can support a given poll descriptor.
+ */
+static int validate_poll_descriptor(const BIO_POLL_DESCRIPTOR *d)
+{
+    return d->type == BIO_POLL_DESCRIPTOR_TYPE_NONE
+        || (d->type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD && d->value.fd >= 0);
 }
 
 /*
@@ -2111,21 +2094,21 @@ static int csm_analyse_bio(QUIC_CONNECTION *qc, BIO *net_bio,
  */
 void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
 {
-    int rfd = -1;
+    BIO_POLL_DESCRIPTOR d;
 
     if (qc->net_rbio == net_rbio)
         return;
 
-    if (net_rbio != NULL && !csm_analyse_bio(qc, net_rbio, &rfd, NULL)) {
-        /* If we cannot analyse the BIO, treat it as setting a NULL BIO. */
-        rfd         = -1;
-        net_rbio    = NULL;
+    if (net_rbio != NULL) {
+        if (!BIO_get_rpoll_descriptor(net_rbio, &d))
+            /* Non-pollable BIO */
+            d.type = BIO_POLL_DESCRIPTOR_TYPE_NONE;
 
-        if (qc->net_rbio == net_rbio)
+        if (!validate_poll_descriptor(&d))
             return;
     }
 
-    reactor_set_poll_rfd(&qc->rtor, rfd);
+    reactor_set_poll_r(&qc->rtor, &d);
     BIO_free(qc->net_rbio);
     ossl_quic_demux_set_bio(qc->demux, net_rbio);
     qc->net_rbio = net_rbio;
@@ -2134,7 +2117,7 @@ void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
      * If what we have is not pollable (e.g. a BIO_dgram_pair) disable blocking
      * mode as we do not support it for now.
      */
-    if (net_rbio != NULL && rfd == -1)
+    if (net_rbio != NULL && d.type == BIO_POLL_DESCRIPTOR_TYPE_NONE)
         qc->blocking = 0;
 }
 
@@ -2144,44 +2127,40 @@ void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
  */
 void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio)
 {
-    int wfd = -1;
-    BIO_ADDR peer, *ppeer = &peer;
+    BIO_POLL_DESCRIPTOR d;
 
     if (qc->net_wbio == net_wbio)
         return;
 
-    /* If we have already got a peer address, don't try to get it again. */
-    if (BIO_ADDR_family(&qc->init_peer_addr) != AF_UNSPEC)
-        ppeer = NULL;
+    if (net_wbio != NULL) {
+        if (!BIO_get_wpoll_descriptor(net_wbio, &d))
+            /* Non-pollable BIO */
+            d.type = BIO_POLL_DESCRIPTOR_TYPE_NONE;
 
-    if (net_wbio != NULL
-        && !csm_analyse_bio(qc, net_wbio, &wfd, ppeer)) {
-        /* If we cannot analyse the BIO, treat it as setting a NULL BIO. */
-        wfd         = -1;
-        net_wbio    = NULL;
-
-        if (qc->net_wbio == net_wbio)
+        if (!validate_poll_descriptor(&d))
             return;
+
+        /*
+         * If we do not have a peer address yet, and we have not started trying
+         * to connect yet, try to autodetect one.
+         */
+        if (BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC
+            && qc->state == QUIC_CONN_STATE_IDLE
+            && !csm_analyse_init_peer_addr(net_wbio, &qc->init_peer_addr))
+            /* best effort */
+            BIO_ADDR_clear(&qc->init_peer_addr);
     }
 
-    reactor_set_poll_wfd(&qc->rtor, wfd);
+    reactor_set_poll_w(&qc->rtor, &d);
     BIO_free(qc->net_wbio);
     ossl_qtx_set_bio(qc->qtx, net_wbio);
     qc->net_wbio = net_wbio;
 
     /*
-     * If we have not started connecting yet, update the peer address.
-     */
-    if (ppeer != NULL) {
-        ossl_quic_tx_packetiser_set_peer(qc->txp, ppeer);
-        qc->init_peer_addr = *ppeer;
-    }
-
-    /*
      * If what we have is not pollable (e.g. a BIO_dgram_pair) disable blocking
      * mode as we do not support it for now.
      */
-    if (net_wbio != NULL && wfd == -1)
+    if (net_wbio != NULL && d.type == BIO_POLL_DESCRIPTOR_TYPE_NONE)
         qc->blocking = 0;
 }
 
@@ -2219,11 +2198,30 @@ int ossl_quic_conn_set_blocking_mode(QUIC_CONNECTION *qc, int blocking)
 {
     /* Cannot enable blocking mode if we do not have pollable FDs. */
     if (blocking != 0 &&
-        (reactor_get_poll_rfd(&qc->rtor) == -1
-         || reactor_get_poll_wfd(&qc->rtor) == -1))
+        (reactor_get_poll_r(&qc->rtor)->type == BIO_POLL_DESCRIPTOR_TYPE_NONE
+         || reactor_get_poll_w(&qc->rtor)->type == BIO_POLL_DESCRIPTOR_TYPE_NONE))
         return 0;
 
     qc->blocking = (blocking != 0);
+    return 1;
+}
+
+/*
+ * ossl_quic_set_initial_peer_addr
+ * -------------------------------
+ */
+int ossl_quic_conn_set_initial_peer_addr(QUIC_CONNECTION *qc,
+                                         const BIO_ADDR *peer_addr)
+{
+    if (qc->state != QUIC_CONN_STATE_IDLE)
+        return 0;
+
+    if (peer_addr == NULL) {
+        BIO_ADDR_clear(&qc->init_peer_addr);
+        return 1;
+    }
+
+    qc->init_peer_addr = *peer_addr;
     return 1;
 }
 
@@ -2260,45 +2258,61 @@ int ossl_quic_tick(QUIC_CONNECTION *qc)
  * --------------------
  *
  * Get the time in milliseconds until the SSL object should be ticked by the
- * application by calling SSL_tick(). Returns 0 if the object should be ticked
- * immediately and -1 if no timeout is currently active.
+ * application by calling SSL_tick(). tv is set to 0 if the object should be
+ * ticked immediately and tv->tv_sec is set to -1 if no timeout is currently
+ * active.
  */
-int64_t ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc)
+int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc, struct timeval *tv)
 {
     OSSL_TIME now, deadline;
 
     deadline = reactor_get_tick_deadline(&qc->rtor);
-    if (ossl_time_is_infinite(deadline))
-        return -1; /* infinity */
+    if (ossl_time_is_infinite(deadline)) {
+        tv->tv_sec  = -1;
+        tv->tv_usec = 0;
+        return 1;
+    }
 
     now = ossl_time_now();
-    if (ossl_time_compare(now, deadline) >= 0)
+    if (ossl_time_compare(now, deadline) >= 0) {
+        tv->tv_sec  = 0;
+        tv->tv_usec = 0;
+        return 1;
+    }
+
+    *tv = ossl_time_to_timeval(ossl_time_subtract(deadline, now));
+    return 1;
+}
+
+/*
+ * SSL_get_rpoll_descriptor
+ * ------------------------
+ */
+int ossl_quic_get_rpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *desc)
+{
+    if (desc == NULL)
         return 0;
 
-    return (int64_t)ossl_time2ms(ossl_time_subtract(deadline, now));
+    *desc = *reactor_get_poll_r(&qc->rtor);
+    return 1;
 }
 
 /*
- * SSL_get_poll_rfd
- * ----------------
+ * SSL_get_wpoll_descriptor
+ * ------------------------
  */
-int ossl_quic_get_poll_rfd(QUIC_CONNECTION *qc)
+int ossl_quic_get_wpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *desc)
 {
-    return reactor_get_poll_rfd(&qc->rtor);
+    if (desc == NULL)
+        return 0;
+
+    *desc = *reactor_get_poll_w(&qc->rtor);
+    return 1;
 }
 
 /*
- * SSL_get_poll_wfd
- * ----------------
- */
-int ossl_quic_get_poll_wfd(QUIC_CONNECTION *qc)
-{
-    return reactor_get_poll_wfd(&qc->rtor);
-}
-
-/*
- * SSL_get_want_net_read
- * ---------------------
+ * SSL_want_net_read
+ * -----------------
  */
 int ossl_quic_get_want_net_read(QUIC_CONNECTION *qc)
 {
@@ -2306,8 +2320,8 @@ int ossl_quic_get_want_net_read(QUIC_CONNECTION *qc)
 }
 
 /*
- * SSL_get_want_net_write
- * ----------------------
+ * SSL_want_net_write
+ * ------------------
  */
 int ossl_quic_get_want_net_write(QUIC_CONNECTION *qc)
 {

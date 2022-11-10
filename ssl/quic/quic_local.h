@@ -31,14 +31,14 @@ typedef struct quic_tick_result_st {
 
 typedef struct quic_reactor_st {
     /*
-     * FDs which can be polled. poll_rfd is a FD which becomes readable when the
-     * QUIC state machine can potentially do work, and poll_wfd is an FD which
-     * becomes writable when the QUIC state machine can potentially do work.
-     * Generally, either of these conditions means that SSL_tick() should be
-     * called, or another SSL function which implicitly calls SSL_tick() (e.g.
-     * SSL_read/SSL_write()).
+     * BIO poll descriptors which can be polled. poll_r is a poll descriptor
+     * which becomes readable when the QUIC state machine can potentially do
+     * work, and poll_w is a poll descriptor which becomes writable when the
+     * QUIC state machine can potentially do work. Generally, either of these
+     * conditions means that SSL_tick() should be called, or another SSL
+     * function which implicitly calls SSL_tick() (e.g. SSL_read/SSL_write()).
      */
-    int poll_rfd, poll_wfd;
+    BIO_POLL_DESCRIPTOR poll_r, poll_w;
     OSSL_TIME tick_deadline; /* ossl_time_infinite() if none currently applicable */
 
     void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg);

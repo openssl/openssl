@@ -945,6 +945,16 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         *(int *)ptr = data->local_addr_enabled;
         break;
 
+    case BIO_CTRL_GET_RPOLL_DESCRIPTOR:
+    case BIO_CTRL_GET_WPOLL_DESCRIPTOR:
+        {
+            BIO_POLL_DESCRIPTOR *pd = ptr;
+
+            pd->type        = BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD;
+            pd->value.fd    = b->num;
+        }
+        break;
+
     default:
         ret = 0;
         break;

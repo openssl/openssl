@@ -11,6 +11,7 @@
 # define OSSL_QUIC_SSL_H
 
 # include <openssl/ssl.h>
+# include <openssl/bio.h>
 # include "internal/quic_record_rx.h" /* OSSL_QRX */
 # include "internal/quic_ackm.h"      /* OSSL_ACKM */
 
@@ -40,18 +41,20 @@ typedef struct quic_conn_st QUIC_CONNECTION;
 
 __owur QUIC_CONNECTION *ossl_quic_conn_from_ssl(SSL *ssl);
 
-int ossl_quic_tick(QUIC_CONNECTION *qc);
-int64_t ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc);
-int ossl_quic_get_poll_rfd(QUIC_CONNECTION *qc);
-int ossl_quic_get_poll_wfd(QUIC_CONNECTION *qc);
-int ossl_quic_get_want_net_read(QUIC_CONNECTION *qc);
-int ossl_quic_get_want_net_write(QUIC_CONNECTION *qc);
-int ossl_quic_get_error(const QUIC_CONNECTION *qc, int i);
-int ossl_quic_conn_get_blocking_mode(const QUIC_CONNECTION *qc);
-int ossl_quic_conn_set_blocking_mode(QUIC_CONNECTION *qc, int blocking);
+__owur int ossl_quic_tick(QUIC_CONNECTION *qc);
+__owur int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc, struct timeval *tv);
+__owur int ossl_quic_get_rpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *d);
+__owur int ossl_quic_get_wpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *d);
+__owur int ossl_quic_get_want_net_read(QUIC_CONNECTION *qc);
+__owur int ossl_quic_get_want_net_write(QUIC_CONNECTION *qc);
+__owur int ossl_quic_get_error(const QUIC_CONNECTION *qc, int i);
+__owur int ossl_quic_conn_get_blocking_mode(const QUIC_CONNECTION *qc);
+__owur int ossl_quic_conn_set_blocking_mode(QUIC_CONNECTION *qc, int blocking);
 void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_wbio);
 void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio);
 BIO *ossl_quic_conn_get_net_rbio(const QUIC_CONNECTION *qc);
 BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc);
+__owur int ossl_quic_conn_set_initial_peer_addr(QUIC_CONNECTION *qc,
+                                                const BIO_ADDR *peer_addr);
 
 #endif
