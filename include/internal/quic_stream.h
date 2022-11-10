@@ -274,8 +274,9 @@ void ossl_quic_sstream_adjust_iov(size_t len,
  * QUIC Receive Stream Manager
  * ===========================
  *
- * The QUIC Receive Stream Manager (QUIC_RSTREAM) is responsible for:
- *
+ * The QUIC Receive Stream Manager (QUIC_RSTREAM) is responsible for
+ * storing the received stream data frames until the application
+ * is able to read the data.
  *
  * The QUIC_RSTREAM is instantiated once for every stream that can receive data.
  * (i.e., for a unidirectional receiving stream or for the receiving component

@@ -74,9 +74,8 @@ static int read_internal(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,
             break;
     }
 
-    if (drop && offset != 0) {
+    if (drop && offset != 0)
         ret = ossl_sframe_list_drop_frames(&qrs->fl, offset);
-    }
 
     if (ret) {
         *readbytes = readbytes_;
