@@ -147,8 +147,6 @@ struct ossl_record_method_st {
                             OSSL_RECORD_LAYER **ret);
     int (*free)(OSSL_RECORD_LAYER *rl);
 
-    int (*reset)(OSSL_RECORD_LAYER *rl); /* Is this needed? */
-
     /* Returns 1 if we have unprocessed data buffered or 0 otherwise */
     int (*unprocessed_read_pending)(OSSL_RECORD_LAYER *rl);
 

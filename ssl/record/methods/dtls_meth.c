@@ -772,7 +772,6 @@ static size_t dtls_get_max_record_overhead(OSSL_RECORD_LAYER *rl)
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_new_record_layer,
     dtls_free,
-    tls_reset,
     tls_unprocessed_read_pending,
     tls_processed_read_pending,
     tls_app_data_pending,
