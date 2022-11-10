@@ -7012,11 +7012,11 @@ int64_t SSL_get_tick_timeout(SSL *s)
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc == NULL)
-        return 0;
+        return -1;
 
     return ossl_quic_get_tick_timeout(qc);
 #else
-    return 0;
+    return -1;
 #endif
 }
 

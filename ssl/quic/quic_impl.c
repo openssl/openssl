@@ -935,10 +935,14 @@ static int csm_generate_transport_params(QUIC_CONNECTION *qc,
     *buf_p = (unsigned char *)buf_mem->data;
     buf_mem->data = NULL;
 
+    if (!WPACKET_finish(&wpkt))
+        goto err;
+
+    wpkt_valid = 0;
     ok = 1;
 err:
     if (wpkt_valid)
-        WPACKET_finish(&wpkt);
+        WPACKET_cleanup(&wpkt);
     BUF_MEM_free(buf_mem);
     return ok;
 }
@@ -1335,7 +1339,7 @@ static void csm_tick(QUIC_TICK_RESULT *res, void *arg)
 }
 
 /* Process incoming packets and handle frames, if any. */
-static int csm_rx_handle_packet(QUIC_CONNECTION *qc);
+static void csm_rx_handle_packet(QUIC_CONNECTION *qc);
 static int csm_retry(QUIC_CONNECTION *qc,
                      const unsigned char *retry_token,
                      size_t retry_token_len,
@@ -1359,9 +1363,7 @@ static int csm_rx(QUIC_CONNECTION *qc)
     ossl_quic_demux_pump(qc->demux); /* best effort */
 
     for (;;) {
-        /* Release prior packet. */
-        ossl_qrx_pkt_release(qc->qrx_pkt);
-        qc->qrx_pkt = NULL;
+        assert(qc->qrx_pkt == NULL);
 
         if (!ossl_qrx_read_pkt(qc->qrx, &qc->qrx_pkt))
             break;
@@ -1393,7 +1395,7 @@ static int csm_rx(QUIC_CONNECTION *qc)
 }
 
 /* Handles the packet currently in qc->qrx_pkt->hdr. */
-static int csm_rx_handle_packet(QUIC_CONNECTION *qc)
+static void csm_rx_handle_packet(QUIC_CONNECTION *qc)
 {
     uint32_t enc_level;
 
@@ -1408,7 +1410,7 @@ static int csm_rx_handle_packet(QUIC_CONNECTION *qc)
         enc_level = ossl_quic_pkt_type_to_enc_level(qc->qrx_pkt->hdr->type);
         if ((qc->el_discarded & (1U << enc_level)) != 0)
             /* Do not process packets from ELs we have already discarded. */
-            return 1;
+            return;
     }
 
     /* Handle incoming packet. */
@@ -1417,11 +1419,11 @@ static int csm_rx_handle_packet(QUIC_CONNECTION *qc)
             if (qc->doing_retry)
                 /* It is not allowed to ask a client to do a retry more than
                  * once. */
-                return 0;
+                return;
 
             if (qc->qrx_pkt->hdr->len <= QUIC_RETRY_INTEGRITY_TAG_LEN)
                 /* Packets with zero-length Retry Tokens are invalid. */
-                return 0;
+                return;
 
             /*
              * TODO(QUIC): Theoretically this should probably be in the QRX.
@@ -1433,11 +1435,11 @@ static int csm_rx_handle_packet(QUIC_CONNECTION *qc)
              * upper layers. However, special casing this will do for now.
              */
             if (!ossl_quic_validate_retry_integrity_tag(qc->ssl.ctx->libctx,
-                                                   qc->ssl.ctx->propq,
-                                                   qc->qrx_pkt->hdr,
-                                                   &qc->init_dcid))
+                                                        qc->ssl.ctx->propq,
+                                                        qc->qrx_pkt->hdr,
+                                                        &qc->init_dcid))
                 /* Malformed retry packet, ignore. */
-                return 0;
+                return;
 
             csm_retry(qc, qc->qrx_pkt->hdr->data,
                       qc->qrx_pkt->hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN,
@@ -1460,8 +1462,6 @@ static int csm_rx_handle_packet(QUIC_CONNECTION *qc)
             ossl_quic_handle_frames(qc, qc->qrx_pkt); /* best effort */
             break;
     }
-
-    return 1;
 }
 
 /* Try to generate packets and if possible, flush them to the network. */
