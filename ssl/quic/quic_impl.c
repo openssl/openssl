@@ -2094,7 +2094,7 @@ static int validate_poll_descriptor(const BIO_POLL_DESCRIPTOR *d)
  */
 void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
 {
-    BIO_POLL_DESCRIPTOR d;
+    BIO_POLL_DESCRIPTOR d = {0};
 
     if (qc->net_rbio == net_rbio)
         return;
@@ -2127,7 +2127,7 @@ void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
  */
 void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio)
 {
-    BIO_POLL_DESCRIPTOR d;
+    BIO_POLL_DESCRIPTOR d = {0};
 
     if (qc->net_wbio == net_wbio)
         return;
