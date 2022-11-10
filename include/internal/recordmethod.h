@@ -144,6 +144,7 @@ struct ossl_record_method_st {
                             const OSSL_PARAM *options,
                             const OSSL_DISPATCH *fns,
                             void *cbarg,
+                            void *rlarg,
                             OSSL_RECORD_LAYER **ret);
     int (*free)(OSSL_RECORD_LAYER *rl);
 

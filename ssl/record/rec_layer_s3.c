@@ -1086,10 +1086,20 @@ static const OSSL_DISPATCH rlayer_dispatch[] = {
     { 0, NULL }
 };
 
+void ossl_ssl_set_custom_record_layer(SSL_CONNECTION *s,
+                                      const OSSL_RECORD_METHOD *meth,
+                                      void *rlarg)
+{
+    s->rlayer.custom_rlmethod = meth;
+    s->rlayer.rlarg = rlarg;
+}
+
 static const OSSL_RECORD_METHOD *ssl_select_next_record_layer(SSL_CONNECTION *s,
                                                               int direction,
                                                               int level)
 {
+    if (s->rlayer.custom_rlmethod != NULL)
+        return s->rlayer.custom_rlmethod;
 
     if (level == OSSL_RECORD_PROTECTION_LEVEL_NONE) {
         if (SSL_CONNECTION_IS_DTLS(s))
@@ -1324,7 +1334,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                                        mackeylen, ciph, taglen, mactype, md,
                                        compm, prev, thisbio, next, NULL, NULL,
                                        settings, options, rlayer_dispatch_tmp,
-                                       s, &newrl);
+                                       s, s->rlayer.rlarg, &newrl);
         BIO_free(prev);
         switch (rlret) {
         case OSSL_RECORD_RETURN_FATAL:

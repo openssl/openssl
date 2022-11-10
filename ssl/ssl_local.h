@@ -2984,4 +2984,8 @@ static ossl_unused ossl_inline void ssl_tsan_counter(const SSL_CTX *ctx,
 int ossl_comp_has_alg(int a);
 size_t ossl_calculate_comp_expansion(int alg, size_t length);
 
+void ossl_ssl_set_custom_record_layer(SSL_CONNECTION *s,
+                                      const OSSL_RECORD_METHOD *meth,
+                                      void *rlarg);
+
 #endif
