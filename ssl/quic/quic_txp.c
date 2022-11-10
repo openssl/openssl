@@ -2,6 +2,7 @@
 #include "internal/quic_fifd.h"
 #include "internal/quic_stream_map.h"
 #include "internal/common.h"
+#include <openssl/err.h>
 
 #define MIN_CRYPTO_HDR_SIZE             3
 
@@ -330,8 +331,10 @@ OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETIS
         || args->ackm == NULL
         || args->qsm == NULL
         || args->conn_txfc == NULL
-        || args->conn_rxfc == NULL)
-        return 0;
+        || args->conn_rxfc == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
 
     txp = OPENSSL_zalloc(sizeof(*txp));
     if (txp == NULL)
@@ -383,8 +386,10 @@ void ossl_quic_tx_packetiser_set_initial_token(OSSL_QUIC_TX_PACKETISER *txp,
 int ossl_quic_tx_packetiser_set_cur_dcid(OSSL_QUIC_TX_PACKETISER *txp,
                                          const QUIC_CONN_ID *dcid)
 {
-    if (dcid == NULL)
+    if (dcid == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
 
     txp->args.cur_dcid = *dcid;
     return 1;
@@ -393,8 +398,10 @@ int ossl_quic_tx_packetiser_set_cur_dcid(OSSL_QUIC_TX_PACKETISER *txp,
 int ossl_quic_tx_packetiser_set_cur_scid(OSSL_QUIC_TX_PACKETISER *txp,
                                          const QUIC_CONN_ID *scid)
 {
-    if (scid == NULL)
+    if (scid == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
 
     txp->args.cur_scid = *scid;
     return 1;
@@ -404,8 +411,10 @@ int ossl_quic_tx_packetiser_set_cur_scid(OSSL_QUIC_TX_PACKETISER *txp,
 int ossl_quic_tx_packetiser_set_peer(OSSL_QUIC_TX_PACKETISER *txp,
                                      const BIO_ADDR *peer)
 {
-    if (peer == NULL)
+    if (peer == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
 
     txp->args.peer = *peer;
     return 1;
@@ -414,8 +423,10 @@ int ossl_quic_tx_packetiser_set_peer(OSSL_QUIC_TX_PACKETISER *txp,
 int ossl_quic_tx_packetiser_discard_enc_level(OSSL_QUIC_TX_PACKETISER *txp,
                                               uint32_t enc_level)
 {
-    if (enc_level >= QUIC_ENC_LEVEL_NUM)
+    if (enc_level >= QUIC_ENC_LEVEL_NUM) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
+    }
 
     if (enc_level != QUIC_ENC_LEVEL_0RTT)
         txp->args.crypto[ossl_quic_enc_level_to_pn_space(enc_level)] = NULL;
