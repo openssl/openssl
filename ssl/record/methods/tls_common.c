@@ -1426,12 +1426,6 @@ int tls_free(OSSL_RECORD_LAYER *rl)
     return ret;
 }
 
-int tls_reset(OSSL_RECORD_LAYER *rl)
-{
-    memset(rl, 0, sizeof(*rl));
-    return 1;
-}
-
 int tls_unprocessed_read_pending(OSSL_RECORD_LAYER *rl)
 {
     return TLS_BUFFER_get_left(&rl->rbuf) != 0;
@@ -2093,7 +2087,6 @@ int tls_free_buffers(OSSL_RECORD_LAYER *rl)
 const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_new_record_layer,
     tls_free,
-    tls_reset,
     tls_unprocessed_read_pending,
     tls_processed_read_pending,
     tls_app_data_pending,

@@ -583,7 +583,6 @@ static struct record_functions_st ossl_ktls_funcs = {
 const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     ktls_new_record_layer,
     tls_free,
-    tls_reset,
     tls_unprocessed_read_pending,
     tls_processed_read_pending,
     tls_app_data_pending,
