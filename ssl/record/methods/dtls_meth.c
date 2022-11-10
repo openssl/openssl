@@ -337,7 +337,7 @@ static int dtls_copy_rlayer_record(OSSL_RECORD_LAYER *rl, pitem *item)
 
     rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
 
-    TLS_BUFFER_release(&rl->rbuf);
+    ossl_tls_buffer_release(&rl->rbuf);
 
     rl->packet = rdata->packet;
     rl->packet_length = rdata->packet_length;

@@ -22,7 +22,7 @@
 
 static void tls_int_free(OSSL_RECORD_LAYER *rl);
 
-void TLS_BUFFER_release(TLS_BUFFER *b)
+void ossl_tls_buffer_release(TLS_BUFFER *b)
 {
     OPENSSL_free(b->buf);
     b->buf = NULL;
@@ -1390,7 +1390,7 @@ static void tls_int_free(OSSL_RECORD_LAYER *rl)
     BIO_free(rl->prev);
     BIO_free(rl->bio);
     BIO_free(rl->next);
-    TLS_BUFFER_release(&rl->rbuf);
+    ossl_tls_buffer_release(&rl->rbuf);
 
     tls_release_write_buffer(rl);
 

@@ -567,4 +567,4 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
 #define TLS_BUFFER_set_app_buffer(b, l)    ((b)->app_buffer = (l))
 #define TLS_BUFFER_is_app_buffer(b)        ((b)->app_buffer)
 
-void TLS_BUFFER_release(TLS_BUFFER *b);
+void ossl_tls_buffer_release(TLS_BUFFER *b);
