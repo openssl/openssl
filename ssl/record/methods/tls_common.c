@@ -38,7 +38,8 @@ static void TLS_RL_RECORD_release(TLS_RL_RECORD *r, size_t num_recs)
     }
 }
 
-void TLS_RL_RECORD_set_seq_num(TLS_RL_RECORD *r, const unsigned char *seq_num)
+void ossl_tls_rl_record_set_seq_num(TLS_RL_RECORD *r,
+                                    const unsigned char *seq_num)
 {
     memcpy(r->seq_num, seq_num, SEQ_NUM_SIZE);
 }

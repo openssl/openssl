@@ -44,7 +44,7 @@ static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 
     cmp = satsub64be(seq, bitmap->max_seq_num);
     if (cmp > 0) {
-        TLS_RL_RECORD_set_seq_num(&rl->rrec[0], seq);
+        ossl_tls_rl_record_set_seq_num(&rl->rrec[0], seq);
         return 1;               /* this record in new */
     }
     shift = -cmp;
@@ -53,7 +53,7 @@ static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     else if (bitmap->map & ((uint64_t)1 << shift))
         return 0;               /* record previously received */
 
-    TLS_RL_RECORD_set_seq_num(&rl->rrec[0], seq);
+    ossl_tls_rl_record_set_seq_num(&rl->rrec[0], seq);
     return 1;
 }
 

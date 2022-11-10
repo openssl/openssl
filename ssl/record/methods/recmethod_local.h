@@ -398,7 +398,8 @@ void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
                                     || (rl)->version == TLS1_2_VERSION \
                                     || (rl)->isdtls)
 
-void TLS_RL_RECORD_set_seq_num(TLS_RL_RECORD *r, const unsigned char *seq_num);
+void ossl_tls_rl_record_set_seq_num(TLS_RL_RECORD *r,
+                                    const unsigned char *seq_num);
 
 int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
                                      EVP_CIPHER_CTX *ctx,
