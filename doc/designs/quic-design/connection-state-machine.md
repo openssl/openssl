@@ -667,7 +667,7 @@ and make best effort (non blocking) send() and recv() calls.
 
 The only sensible way to do this portably is to configure the socket into
 non-blocking mode. We could try to do a select() before calling send() or recv()
-to get a gurantee that the call will not block, but this will probably run into
+to get a guarantee that the call will not block, but this will probably run into
 issues with buggy OSes which generate spurious socket readiness events. In any
 case, relying on this to work reliably is not advisable.
 
@@ -708,7 +708,7 @@ event loops.
 
 Broadly, the intention so far has been to enable the use of QUIC with an
 application event loop by exposing an appropriate OS-level synchronisation
-primmitive to the application. On \*NIX platforms, this essentially means we
+primitive to the application. On \*NIX platforms, this essentially means we
 provide the application with:
 
   - An FD which should be polled for readability, writability, or both;
