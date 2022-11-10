@@ -1822,6 +1822,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
 {
     EVP_KEYMGMT *allocated_keymgmt = NULL;
     EVP_KEYMGMT *tmp_keymgmt = NULL;
+    int selection = OSSL_KEYMGMT_SELECT_ALL;
     void *keydata = NULL;
     int check;
 
@@ -1883,7 +1884,8 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
         if (pk->ameth->dirty_cnt(pk) == pk->dirty_cnt_copy) {
             if (!CRYPTO_THREAD_read_lock(pk->lock))
                 goto end;
-            op = evp_keymgmt_util_find_operation_cache(pk, tmp_keymgmt);
+            op = evp_keymgmt_util_find_operation_cache(pk, tmp_keymgmt,
+                                                       selection);
 
             /*
              * If |tmp_keymgmt| is present in the operation cache, it means
@@ -1938,7 +1940,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
         EVP_KEYMGMT_free(tmp_keymgmt); /* refcnt-- */
 
         /* Check to make sure some other thread didn't get there first */
-        op = evp_keymgmt_util_find_operation_cache(pk, tmp_keymgmt);
+        op = evp_keymgmt_util_find_operation_cache(pk, tmp_keymgmt, selection);
         if (op != NULL && op->keymgmt != NULL) {
             void *tmp_keydata = op->keydata;
 
@@ -1949,7 +1951,8 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
         }
 
         /* Add the new export to the operation cache */
-        if (!evp_keymgmt_util_cache_keydata(pk, tmp_keymgmt, keydata)) {
+        if (!evp_keymgmt_util_cache_keydata(pk, tmp_keymgmt, keydata,
+                                            selection)) {
             CRYPTO_THREAD_unlock(pk->lock);
             evp_keymgmt_freedata(tmp_keymgmt, keydata);
             keydata = NULL;
@@ -1964,7 +1967,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
     }
 #endif  /* FIPS_MODULE */
 
-    keydata = evp_keymgmt_util_export_to_provider(pk, tmp_keymgmt);
+    keydata = evp_keymgmt_util_export_to_provider(pk, tmp_keymgmt, selection);
 
  end:
     /*
