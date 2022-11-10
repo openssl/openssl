@@ -28,7 +28,7 @@
 # include <openssl/symhacks.h>
 # include <openssl/ct.h>
 # include "record/record.h"
-# include "record/recordmethod.h"
+# include "internal/recordmethod.h"
 # include "statem/statem.h"
 # include "internal/packet.h"
 # include "internal/dane.h"
