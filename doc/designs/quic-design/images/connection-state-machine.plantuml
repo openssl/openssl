@@ -2,7 +2,7 @@
 
 [*] --> IDLE
 
-ESTABLISHING : PTO_TIMEOUT: SendProbeIfAnySentPktsUnacked() [default]
+ESTABLISHING : PROBE_TIMEOUT: SendProbeIfAnySentPktsUnacked() [default]
 
 state ACTIVE {
     state ESTABLISHING {
@@ -20,7 +20,7 @@ state ACTIVE {
         [*] --> PROACTIVE_VER_NEG : use proactive VN?
         [*] --> PRE_INITIAL : else
         PROACTIVE_VER_NEG --> PRE_INITIAL : RX:VER_NEG
-        PROACTIVE_VER_NEG --> PROACTIVE_VER_NEG : PTO_TIMEOUT
+        PROACTIVE_VER_NEG --> PROACTIVE_VER_NEG : PROBE_TIMEOUT
         PRE_INITIAL --> INITIAL_EXCHANGE_A : ε
         INITIAL_EXCHANGE_A --> INITIAL_EXCHANGE_B : RX:RETRY
         INITIAL_EXCHANGE_A --> INITIAL_EXCHANGE_CONTINUED : RX:INITIAL

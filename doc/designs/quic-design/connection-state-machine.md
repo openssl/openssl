@@ -252,7 +252,7 @@ no state change occurs.
   <td><tt>TERMINATED</tt></td>
 </tr>
 <tr>
-  <td>—<tt>PTO_TIMEOUT</tt>→ †</td>
+  <td>—<tt>PROBE_TIMEOUT</tt>→ †</td>
   <td><tt>SendProbeIfAnySentPktsUnacked()</tt></td>
 </tr>
 <tr>
@@ -275,7 +275,7 @@ no state change occurs.
   <td><tt>ACTIVE.ESTABLISHING.PRE_INITIAL</tt></td>
 </tr>
 <tr>
-  <td>—<tt>PTO_TIMEOUT</tt>→</td>
+  <td>—<tt>PROBE_TIMEOUT</tt>→</td>
   <td><tt>ACTIVE.ESTABLISHING.PROACTIVE_VER_NEG</tt> (retransmit)</td>
 </tr>
 <tr>
@@ -321,7 +321,7 @@ no state change occurs.
   <td><tt>ACTIVE.ESTABLISHING.INITIAL_EXCHANGE_CONTINUED</tt></td>
 </tr>
 <tr>
-  <td>—<tt>PTO_TIMEOUT</tt>→</td>
+  <td>—<tt>PROBE_TIMEOUT</tt>→</td>
   <td>TODO: Tail loss probe for initial packets?</td>
 </tr>
 <tr>
@@ -453,7 +453,7 @@ Notes on various events:
   may cause new packets to be queued and sent, so this is not listed
   explicitly in the Transition column except for the `CAN_SEND` event.
 
-- `PTO_TIMEOUT` is raised after the PTO interval and stimulates generation
+- `PROBE_TIMEOUT` is raised after the PTO interval and stimulates generation
   of a tail loss probe.
 
 - `IDLE_TIMEOUT` is raised after the connection idle timeout expires.
@@ -502,7 +502,7 @@ the following list of events:
 
 - `RX:RETRY`: Handled in `ESTABLISHING.INITIAL_EXCHANGE_A` only.
 
-- `PTO_TIMEOUT`: Applicable to `OPEN` and all (non-ε) `ESTABLISHING`
+- `PROBE_TIMEOUT`: Applicable to `OPEN` and all (non-ε) `ESTABLISHING`
   substates. Handled via `SendProbeIfAnySentPktsUnacked()` except in the
   `ESTABLISHING.PROACTIVE_VER_NEG` state, which reenters that state to trigger
   retransmission of a Version Negotiation packet.
@@ -539,7 +539,7 @@ the following list of events:
 
 - `TLS:HANDSHAKE_COMPLETE`: Emitted by the handshake layer when the handshake
   is complete. Implies connection has been authenticated. Also implies 1-RTT EL
-  keys are avilable. Whether the handshake is complete, and also whether i  is
+  keys are available. Whether the handshake is complete, and also whether it is
   confirmed, is reasonably implemented as a flag.
 
 From here we can discern state dependence of different events:
@@ -566,7 +566,7 @@ From here we can discern state dependence of different events:
 
     State: CID: Original SCID, DCID.
 
-  - `PTO_TIMEOUT`: If we have sent at least one encrypted packet yet,
+  - `PROBE_TIMEOUT`: If we have sent at least one encrypted packet yet,
     we can handle this via a standard probe-sending mechanism. Otherwise, we are
     still in Proactive Version Negotiation and should retransmit the Version
     Negotiation packet we sent.
@@ -701,10 +701,9 @@ what the application requests.
 ### Support of arbitrary BIOs
 
 However, we need to support not just socket FDs but arbitrary BIOs as the basis
-for the use of QUIC. Support for using QUIC with e.g. BIO_dgram_pair, a
-bidirectional memory buffer with datagram semantics, is to be supported as part
-of MVP. This must be rectified with the desire to support application-managed
-event loops.
+for the use of QUIC. The use of QUIC with e.g. BIO_dgram_pair, a bidirectional
+memory buffer with datagram semantics, is to be supported as part of MVP. This
+must be reconciled with the desire to support application-managed event loops.
 
 Broadly, the intention so far has been to enable the use of QUIC with an
 application event loop by exposing an appropriate OS-level synchronisation
