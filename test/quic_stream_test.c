@@ -413,14 +413,14 @@ static int test_rstream_random(int idx)
     for (i = 0; i < data_size; ++i)
         bulk_data[i] = (unsigned char)(test_random() & 0xFF);
 
-    i = read_off = queued_min = 0;
+    read_off = queued_min = 0;
     for (r = 0; r < 100; ++r) {
         for (s = 0; s < 10; ++s) {
-            size_t off = i * 10, size = 10;
+            size_t off = (r * 10 + s) * 10, size = 10;
 
-            if (test_random() % 3 == 0)
-               /* drop packet */
-               continue;
+            if (test_random() % 5 == 0)
+                /* drop packet */
+                continue;
 
             if (off <= queued_min && off + size > queued_min)
                 queued_min = off + size;
@@ -430,11 +430,13 @@ static int test_rstream_random(int idx)
                                                         size, 0)))
                 goto err;
 
-            if (test_random() % 8 != 0)
+            if (test_random() % 5 != 0)
                continue;
 
             /* random overlapping retransmit */
-            off = test_random() % ((r + 1) * (s + 1));
+            off = read_off + test_random() % 50;
+            if (off > 50)
+                off -= 50;
             size = test_random() % 100;
             if (off + size > data_size)
                 off = data_size - size;
