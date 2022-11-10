@@ -74,6 +74,10 @@ typedef struct record_layer_st {
     /* The parent SSL_CONNECTION structure */
     SSL_CONNECTION *s;
 
+    /* Custom record layer: always selected if set */
+    const OSSL_RECORD_METHOD *custom_rlmethod;
+    /* Record layer specific argument */
+    void *rlarg;
     /* Method to use for the read record layer*/
     const OSSL_RECORD_METHOD *rrlmethod;
     /* Method to use for the write record layer*/
