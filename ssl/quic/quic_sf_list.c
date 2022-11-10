@@ -83,12 +83,9 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
     uint64_t curr_end = fl->tail != NULL ? fl->tail->range.end
                                          : fl->offset;
 
-    /* This check is handled by QUIC FC already */
-    if ((fin && curr_end > range->end)
-        || (fl->fin && curr_end < range->end)) {
-        /* protocol violation: FINAL_SIZE_ERROR */
-        return 0;
-    }
+    /* This check for FINAL_SIZE_ERROR is handled by QUIC FC already */
+    assert((!fin || curr_end <= range->end)
+           && (!fl->fin || curr_end >= range->end));
 #endif
 
     if (fl->offset >= range->end)
