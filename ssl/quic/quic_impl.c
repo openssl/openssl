@@ -48,15 +48,15 @@ static void csm_update_idle(QUIC_CONNECTION *qc);
 static void csm_on_idle_timeout(QUIC_CONNECTION *qc);
 
 /*
- * Core I/O Reactor Framework {{{1
+ * Core I/O Reactor Framework
  * ==========================
  *
  * Manages use of async network I/O which the QUIC stack is built on. The core
  * mechanic looks like this:
  *
  *   - There is a pollable FD for both the read and write side respectively.
- *     Readability and writeability of these FDs respectively when network
- *     I/O is available.
+ *     Readability and writeability of these FDs respectively determines when
+ *     network I/O is available.
  *
  *   - The reactor can export these FDs to the user, as well as flags indicating
  *     whether the user should listen for readability, writeability, or neither.
@@ -174,7 +174,7 @@ static int reactor_tick(QUIC_REACTOR *rtor)
 }
 
 /*
- * Blocking I/O Adaptation Layer {{{1
+ * Blocking I/O Adaptation Layer
  * =============================
  *
  * The blocking I/O adaptation layer implements blocking I/O on top of our
@@ -386,7 +386,7 @@ static int reactor_block_until_pred(QUIC_REACTOR *rtor,
 }
 
 /*
- * QUIC Connection State Machine: Initialization {{{1
+ * QUIC Connection State Machine: Initialization
  * =============================================
  */
 
@@ -426,7 +426,7 @@ static int is_term_any(const QUIC_CONNECTION *qc)
 }
 
 /*
- * gen_rand_conn_id {{{2
+ * gen_rand_conn_id
  * ----------------
  */
 static int gen_rand_conn_id(size_t len, QUIC_CONN_ID *cid)
@@ -445,7 +445,7 @@ static int gen_rand_conn_id(size_t len, QUIC_CONN_ID *cid)
 }
 
 /*
- * csm_cleanup {{{2
+ * csm_cleanup
  * -----------
  */
 static void csm_cleanup(QUIC_CONNECTION *qc)
@@ -493,7 +493,7 @@ static void csm_cleanup(QUIC_CONNECTION *qc)
 }
 
 /*
- * csm_init {{{2
+ * csm_init
  * --------
  */
 static int csm_init(QUIC_CONNECTION *qc)
@@ -699,7 +699,7 @@ static int csm_init(QUIC_CONNECTION *qc)
 }
 
 /*
- * QUIC Connection State Machine: Handshake Layer Event Handling {{{1
+ * QUIC Connection State Machine: Handshake Layer Event Handling
  * =============================================================
  */
 static int csm_on_crypto_send(const unsigned char *buf, size_t buf_len,
@@ -860,7 +860,7 @@ static int csm_on_handshake_alert(void *arg, unsigned char alert_code)
     return 1;
 }
 
-/* QUIC Connection State Machine: Transport Parameters {{{1
+/* QUIC Connection State Machine: Transport Parameters
  * ===================================================
  */
 static int csm_generate_transport_params(QUIC_CONNECTION *qc,
@@ -906,8 +906,8 @@ static int csm_generate_transport_params(QUIC_CONNECTION *qc,
 
     /*
      * We actually want the default CWM for a new RXFC, but here we just use
-     * stream0 as a representative specimen. TODO: revisit this when we support
-     * multiple streams.
+     * stream0 as a representative specimen. TODO(QUIC): revisit this when we
+     * support multiple streams.
      */
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_LOCAL,
                                                    ossl_quic_rxfc_get_cwm(&qc->stream0->rxfc)))
@@ -1199,7 +1199,7 @@ static int csm_on_transport_params(const unsigned char *params,
                 break;
 
             /*
-             * TODO: Handle:
+             * TODO(QUIC): Handle:
              *   QUIC_TPARAM_STATELESS_RESET_TOKEN
              *   QUIC_TPARAM_PREFERRED_ADDR
              */
@@ -1237,7 +1237,7 @@ malformed:
 }
 
 /*
- * QUIC Connection State Machine: Ticker-Mutator {{{1
+ * QUIC Connection State Machine: Ticker-Mutator
  * =============================================
  */
 static int csm_rx(QUIC_CONNECTION *qc);
@@ -1424,13 +1424,13 @@ static int csm_rx_handle_packet(QUIC_CONNECTION *qc)
                 return 0;
 
             /*
-             * TODO: Theoretically this should probably be in the QRX. However
-             * because validation is dependent on context (namely the client's
-             * initial DCID) we can't do this cleanly. In the future we should
-             * probably add a callback to the QRX to let it call us (via the
-             * DEMUX) and ask us about the correct original DCID, rather than
-             * allow the QRX to emit a potentially malformed packet to the upper
-             * layers. However, special casing this will do for now.
+             * TODO(QUIC): Theoretically this should probably be in the QRX.
+             * However because validation is dependent on context (namely the
+             * client's initial DCID) we can't do this cleanly. In the future we
+             * should probably add a callback to the QRX to let it call us (via
+             * the DEMUX) and ask us about the correct original DCID, rather
+             * than allow the QRX to emit a potentially malformed packet to the
+             * upper layers. However, special casing this will do for now.
              */
             if (!ossl_quic_validate_retry_integrity_tag(qc->ssl.ctx->libctx,
                                                    qc->ssl.ctx->propq,
@@ -1445,7 +1445,7 @@ static int csm_rx_handle_packet(QUIC_CONNECTION *qc)
             break;
 
         case QUIC_PKT_TYPE_VERSION_NEG:
-            /* TODO: Implement version negotiation */
+            /* TODO(QUIC): Implement version negotiation */
             break;
 
         default:
@@ -1524,12 +1524,12 @@ static OSSL_TIME csm_determine_next_tick_deadline(QUIC_CONNECTION *qc)
 }
 
 /*
- * QUIC Connection State Machine: Lifecycle Transitions {{{1
+ * QUIC Connection State Machine: Lifecycle Transitions
  * ====================================================
  */
 
 /*
- * csm_connect {{{2
+ * csm_connect
  * -----------
  */
 static int csm_connect(QUIC_CONNECTION *qc)
@@ -1563,7 +1563,7 @@ static int csm_connect(QUIC_CONNECTION *qc)
 }
 
 /*
- * csm_retry {{{2
+ * csm_retry
  * ---------
  *
  * Called when a server asks us to do a retry.
@@ -1628,7 +1628,7 @@ static int csm_retry(QUIC_CONNECTION *qc,
 }
 
 /*
- * csm_discard_el {{{2
+ * csm_discard_el
  * --------------
  */
 static int csm_discard_el(QUIC_CONNECTION *qc,
@@ -1668,7 +1668,7 @@ static int csm_discard_el(QUIC_CONNECTION *qc,
 }
 
 /*
- * ossl_quic_conn_on_handshake_confirmed {{{2
+ * ossl_quic_conn_on_handshake_confirmed
  * -------------------------------------
  * Called by the RXDP.
  */
@@ -1696,7 +1696,7 @@ int ossl_quic_conn_on_handshake_confirmed(QUIC_CONNECTION *qc)
 }
 
 /*
- * csm_terminate {{{2
+ * csm_terminate
  * -------------
  *
  * Master function used when we want to start tearing down a connection:
@@ -1771,7 +1771,7 @@ static void csm_start_terminating(QUIC_CONNECTION *qc,
 }
 
 /*
- * ossl_quic_conn_on_remote_conn_close {{{2
+ * ossl_quic_conn_on_remote_conn_close
  * -----------------------------------
  */
 void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
@@ -1791,7 +1791,7 @@ void ossl_quic_conn_on_remote_conn_close(QUIC_CONNECTION *qc,
 }
 
 /*
- * ossl_quic_conn_raise_protocol_error {{{2
+ * ossl_quic_conn_raise_protocol_error
  * -----------------------------------
  *
  * This function is the master function which should be called in the event of a
@@ -1814,7 +1814,7 @@ void ossl_quic_conn_raise_protocol_error(QUIC_CONNECTION *qc,
 }
 
 /*
- * csm_on_terminating_timeout {{{2
+ * csm_on_terminating_timeout
  * --------------------------
  *
  * Called once the terminating timer expires, meaning we move from TERMINATING
@@ -1826,7 +1826,7 @@ static void csm_on_terminating_timeout(QUIC_CONNECTION *qc)
 }
 
 /*
- * csm_update_idle {{{2
+ * csm_update_idle
  * ---------------
  */
 static void csm_update_idle(QUIC_CONNECTION *qc)
@@ -1839,7 +1839,7 @@ static void csm_update_idle(QUIC_CONNECTION *qc)
 }
 
 /*
- * csm_on_idle_timeout {{{2
+ * csm_on_idle_timeout
  * -------------------
  */
 static void csm_on_idle_timeout(QUIC_CONNECTION *qc)
@@ -1857,7 +1857,7 @@ static void csm_on_idle_timeout(QUIC_CONNECTION *qc)
 }
 
 /*
- * QUIC Front-End I/O API: Initialization {{{1
+ * QUIC Front-End I/O API: Initialization
  * ======================================
  *
  *         SSL_new                  => ossl_quic_new
@@ -1870,7 +1870,7 @@ static void csm_on_idle_timeout(QUIC_CONNECTION *qc)
  */
 
 /*
- * SSL_new {{{2
+ * SSL_new
  * -------
  */
 SSL *ossl_quic_new(SSL_CTX *ctx)
@@ -1901,7 +1901,7 @@ err:
 }
 
 /*
- * SSL_free {{{2
+ * SSL_free
  * --------
  */
 void ossl_quic_free(SSL *s)
@@ -1917,7 +1917,7 @@ void ossl_quic_free(SSL *s)
 }
 
 /*
- * ossl_quic_init {{{2
+ * ossl_quic_init
  * --------------
  */
 int ossl_quic_init(SSL *s)
@@ -1932,7 +1932,7 @@ int ossl_quic_init(SSL *s)
 }
 
 /*
- * ossl_quic_deinit {{{2
+ * ossl_quic_deinit
  * ----------------
  */
 void ossl_quic_deinit(SSL *s)
@@ -1941,7 +1941,7 @@ void ossl_quic_deinit(SSL *s)
 }
 
 /*
- * SSL_reset {{{2
+ * SSL_reset
  * ---------
  */
 int ossl_quic_reset(SSL *s)
@@ -1956,7 +1956,7 @@ int ossl_quic_reset(SSL *s)
 }
 
 /*
- * SSL_clear {{{2
+ * SSL_clear
  * ---------
  */
 int ossl_quic_clear(SSL *s)
@@ -1971,7 +1971,7 @@ int ossl_quic_clear(SSL *s)
 }
 
 /*
- * QUIC Front-End I/O API: Network BIO Configuration {{{1
+ * QUIC Front-End I/O API: Network BIO Configuration
  * =================================================
  *
  * Handling the different BIOs is difficult:
@@ -2027,7 +2027,7 @@ int ossl_quic_clear(SSL *s)
  */
 
 /*
- * csm_analyse_bio {{{2
+ * csm_analyse_bio
  * ---------------
  *
  * Determines:
@@ -2106,7 +2106,7 @@ static int csm_analyse_bio(QUIC_CONNECTION *qc, BIO *net_bio,
 }
 
 /*
- * ossl_quic_conn_set0_net_rbio {{{2
+ * ossl_quic_conn_set0_net_rbio
  * ----------------------------
  */
 void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
@@ -2139,7 +2139,7 @@ void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
 }
 
 /*
- * ossl_quic_conn_set0_net_wbio {{{2
+ * ossl_quic_conn_set0_net_wbio
  * ----------------------------
  */
 void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio)
@@ -2186,7 +2186,7 @@ void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio)
 }
 
 /*
- * ossl_quic_conn_get_net_rbio {{{2
+ * ossl_quic_conn_get_net_rbio
  * ---------------------------
  */
 BIO *ossl_quic_conn_get_net_rbio(const QUIC_CONNECTION *qc)
@@ -2195,7 +2195,7 @@ BIO *ossl_quic_conn_get_net_rbio(const QUIC_CONNECTION *qc)
 }
 
 /*
- * ossl_quic_conn_get_net_wbio {{{2
+ * ossl_quic_conn_get_net_wbio
  * ---------------------------
  */
 BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc)
@@ -2203,7 +2203,7 @@ BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc)
     return qc->net_wbio;
 }
 
-/* ossl_quic_conn_get_blocking_mode {{{2
+/* ossl_quic_conn_get_blocking_mode
  * --------------------------------
  */
 int ossl_quic_conn_get_blocking_mode(const QUIC_CONNECTION *qc)
@@ -2212,7 +2212,7 @@ int ossl_quic_conn_get_blocking_mode(const QUIC_CONNECTION *qc)
 }
 
 /*
- * ossl_quic_conn_set_blocking_mode {{{2
+ * ossl_quic_conn_set_blocking_mode
  * --------------------------------
  */
 int ossl_quic_conn_set_blocking_mode(QUIC_CONNECTION *qc, int blocking)
@@ -2228,7 +2228,7 @@ int ossl_quic_conn_set_blocking_mode(QUIC_CONNECTION *qc, int blocking)
 }
 
 /*
- * QUIC Front-End I/O API: Asynchronous I/O Management {{{1
+ * QUIC Front-End I/O API: Asynchronous I/O Management
  * ===================================================
  *
  *   (BIO/)SSL_tick                 => ossl_quic_tick
@@ -2244,7 +2244,7 @@ static int blocking_mode(const QUIC_CONNECTION *qc)
 }
 
 /*
- * SSL_tick {{{2
+ * SSL_tick
  * --------
  *
  * Ticks the reactor.
@@ -2256,7 +2256,7 @@ int ossl_quic_tick(QUIC_CONNECTION *qc)
 }
 
 /*
- * SSL_get_tick_timeout {{{2
+ * SSL_get_tick_timeout
  * --------------------
  *
  * Get the time in milliseconds until the SSL object should be ticked by the
@@ -2279,7 +2279,7 @@ int64_t ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc)
 }
 
 /*
- * SSL_get_poll_rfd {{{2
+ * SSL_get_poll_rfd
  * ----------------
  */
 int ossl_quic_get_poll_rfd(QUIC_CONNECTION *qc)
@@ -2288,7 +2288,7 @@ int ossl_quic_get_poll_rfd(QUIC_CONNECTION *qc)
 }
 
 /*
- * SSL_get_poll_wfd {{{2
+ * SSL_get_poll_wfd
  * ----------------
  */
 int ossl_quic_get_poll_wfd(QUIC_CONNECTION *qc)
@@ -2297,7 +2297,7 @@ int ossl_quic_get_poll_wfd(QUIC_CONNECTION *qc)
 }
 
 /*
- * SSL_get_want_net_read {{{2
+ * SSL_get_want_net_read
  * ---------------------
  */
 int ossl_quic_get_want_net_read(QUIC_CONNECTION *qc)
@@ -2306,7 +2306,7 @@ int ossl_quic_get_want_net_read(QUIC_CONNECTION *qc)
 }
 
 /*
- * SSL_get_want_net_write {{{2
+ * SSL_get_want_net_write
  * ----------------------
  */
 int ossl_quic_get_want_net_write(QUIC_CONNECTION *qc)
@@ -2315,7 +2315,7 @@ int ossl_quic_get_want_net_write(QUIC_CONNECTION *qc)
 }
 
 /*
- * QUIC Front-End I/O API: Connection Lifecycle Operations {{{1
+ * QUIC Front-End I/O API: Connection Lifecycle Operations
  * =======================================================
  *
  *         SSL_shutdown             => ossl_quic_shutdown
@@ -2326,7 +2326,7 @@ int ossl_quic_get_want_net_write(QUIC_CONNECTION *qc)
  */
 
 /*
- * SSL_shutdown {{{2
+ * SSL_shutdown
  * ------------
  */
 int ossl_quic_shutdown(SSL *s)
@@ -2346,7 +2346,7 @@ int ossl_quic_shutdown(SSL *s)
     return 1;
 }
 
-/* SSL_ctrl {{{2
+/* SSL_ctrl
  * --------
  */
 long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
@@ -2362,7 +2362,7 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
     }
 }
 
-/* SSL_connect {{{2
+/* SSL_connect
  * -----------
  */
 int ossl_quic_connect(SSL *s)
@@ -2375,7 +2375,7 @@ int ossl_quic_connect(SSL *s)
     return csm_connect(qc);
 }
 
-/* SSL_accept {{{2
+/* SSL_accept
  * ----------
  */
 int ossl_quic_accept(SSL *s)
@@ -2391,7 +2391,7 @@ int ossl_quic_accept(SSL *s)
 
 
 /*
- * QUIC Front-End I/O API: Steady-State Operations {{{1
+ * QUIC Front-End I/O API: Steady-State Operations
  * ===============================================
  *
  * Here we dispatch calls to the steady-state front-end I/O API functions; that
@@ -2407,16 +2407,16 @@ int ossl_quic_accept(SSL *s)
  */
 
 /*
- * SSL_get_error {{{2
+ * SSL_get_error
  * -------------
  */
 int ossl_quic_get_error(const QUIC_CONNECTION *qc, int i)
 {
-    return SSL_ERROR_NONE; /* TODO */
+    return SSL_ERROR_NONE; /* TODO(QUIC) */
 }
 
 /*
- * SSL_write {{{2
+ * SSL_write
  * ---------
  */
 struct quic_write_again_args {
@@ -2501,7 +2501,7 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
 }
 
 /*
- * SSL_read {{{2
+ * SSL_read
  * --------
  */
 struct quic_read_again_args {
