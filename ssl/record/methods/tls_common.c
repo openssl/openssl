@@ -16,6 +16,7 @@
 #include <openssl/ssl.h>
 #include "internal/e_os.h"
 #include "internal/packet.h"
+#include "internal/ssl3_cbc.h"
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"

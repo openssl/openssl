@@ -13,25 +13,8 @@
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
 #include "internal/constant_time.h"
+#include "internal/ssl3_cbc.h"
 #include "ciphercommon_local.h"
-
-/* Functions defined in ssl/tls_pad.c */
-int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
-                                    size_t origreclen,
-                                    unsigned char *recdata,
-                                    unsigned char **mac,
-                                    int *alloced,
-                                    size_t block_size, size_t mac_size,
-                                    OSSL_LIB_CTX *libctx);
-
-int tls1_cbc_remove_padding_and_mac(size_t *reclen,
-                                    size_t origreclen,
-                                    unsigned char *recdata,
-                                    unsigned char **mac,
-                                    int *alloced,
-                                    size_t block_size, size_t mac_size,
-                                    int aead,
-                                    OSSL_LIB_CTX *libctx);
 
 /*
  * Fills a single block of buffered data from the input, and returns the amount

@@ -14,7 +14,7 @@
 # include "internal/e_os.h"
 # include "internal/time.h"
 # include "internal/quic_types.h"
-# include "internal/packet.h"
+# include "internal/packet_quic.h"
 
 # ifndef OPENSSL_NO_QUIC
 
