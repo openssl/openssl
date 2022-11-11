@@ -377,6 +377,13 @@ static int test_dh_paramgen(void)
           && TEST_ptr(pkey);
 
     EVP_PKEY_CTX_free(gctx);
+    gctx = NULL;
+
+    ret = ret && TEST_ptr(gctx = EVP_PKEY_CTX_new_from_pkey(mainctx, pkey, NULL))
+              && TEST_int_eq(EVP_PKEY_param_check(gctx), 1)
+              && TEST_int_eq(EVP_PKEY_param_check_quick(gctx), 1);
+
+    EVP_PKEY_CTX_free(gctx);
     EVP_PKEY_free(pkey);
     return ret;
 }
