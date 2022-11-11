@@ -21,6 +21,8 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 
+#include "internal/ssl3_cbc.h"
+
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
@@ -58,17 +60,6 @@ struct hmac_data_st {
     unsigned char tls_mac_out[EVP_MAX_MD_SIZE];
     size_t tls_mac_out_size;
 };
-
-/* Defined in ssl/record/methods/ssl3_cbc.c */
-int ssl3_cbc_digest_record(const EVP_MD *md,
-                           unsigned char *md_out,
-                           size_t *md_out_size,
-                           const unsigned char header[13],
-                           const unsigned char *data,
-                           size_t data_size,
-                           size_t data_plus_mac_plus_padding_size,
-                           const unsigned char *mac_secret,
-                           size_t mac_secret_length, char is_sslv3);
 
 static void *hmac_new(void *provctx)
 {

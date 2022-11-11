@@ -9,8 +9,10 @@
 
 #include <openssl/rand.h>
 #include <openssl/evp.h>
+
 #include "internal/constant_time.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl3_cbc.h"
 
 /*
  * This file has no dependencies on the rest of libssl because it is shared
@@ -30,23 +32,6 @@ static int ssl3_cbc_copy_mac(size_t *reclen,
                              size_t mac_size,
                              size_t good,
                              OSSL_LIB_CTX *libctx);
-
-int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
-                                    size_t origreclen,
-                                    unsigned char *recdata,
-                                    unsigned char **mac,
-                                    int *alloced,
-                                    size_t block_size, size_t mac_size,
-                                    OSSL_LIB_CTX *libctx);
-
-int tls1_cbc_remove_padding_and_mac(size_t *reclen,
-                                    size_t origreclen,
-                                    unsigned char *recdata,
-                                    unsigned char **mac,
-                                    int *alloced,
-                                    size_t block_size, size_t mac_size,
-                                    int aead,
-                                    OSSL_LIB_CTX *libctx);
 
 /*-
  * ssl3_cbc_remove_padding removes padding from the decrypted, SSLv3, CBC

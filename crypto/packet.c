@@ -9,6 +9,9 @@
 
 #include "internal/cryptlib.h"
 #include "internal/packet.h"
+#if !defined OPENSSL_NO_QUIC && !defined FIPS_MODULE
+# include "internal/packet_quic.h"
+#endif
 #include <openssl/err.h>
 
 #define DEFAULT_BUF_SIZE    256
@@ -223,7 +226,7 @@ static int put_value(unsigned char *data, uint64_t value, size_t len)
     return 1;
 }
 
-#ifndef OPENSSL_NO_QUIC
+#if !defined OPENSSL_NO_QUIC && !defined FIPS_MODULE
 static int put_quic_value(unsigned char *data, size_t value, size_t len)
 {
     if (data == NULL)
@@ -274,7 +277,7 @@ static int wpacket_intern_close(WPACKET *pkt, WPACKET_SUB *sub, int doclose)
         unsigned char *buf = GETBUF(pkt);
 
         if (buf != NULL) {
-#ifndef OPENSSL_NO_QUIC
+#if !defined OPENSSL_NO_QUIC && !defined FIPS_MODULE
             if ((sub->flags & WPACKET_FLAGS_QUIC_VLINT) == 0) {
                 if (!put_value(&buf[sub->packet_len], packlen, sub->lenbytes))
                     return 0;
@@ -531,7 +534,7 @@ void WPACKET_cleanup(WPACKET *pkt)
     pkt->subs = NULL;
 }
 
-#ifndef OPENSSL_NO_QUIC
+#if !defined OPENSSL_NO_QUIC && !defined FIPS_MODULE
 
 int WPACKET_start_quic_sub_packet_bound(WPACKET *pkt, size_t max_len)
 {
