@@ -2,9 +2,7 @@
 name: Run-checker daily for 1.1.1
 # Jobs run daily on 1.1.1
 
-on:
-  schedule:
-    - cron: '42 6 * * *'
+on: [push]
 permissions:
   contents: read
 

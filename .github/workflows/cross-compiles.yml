@@ -28,9 +28,17 @@ jobs:
             libs: libc6-dev-arm64-cross,
             target: linux-aarch64
           }, {
+            arch: aarch64-linux-gnu,
+            libs: libc6-dev-arm64-cross,
+            target: linux-aarch64 -DOPENSSL_AES_CONST_TIME
+          }, {
             arch: alpha-linux-gnu,
             libs: libc6.1-dev-alpha-cross,
             target: linux-alpha-gcc
+          }, {
+            arch: alpha-linux-gnu,
+            libs: libc6.1-dev-alpha-cross,
+            target: linux-alpha-gcc -DOPENSSL_AES_CONST_TIME
           }, {
             arch: arm-linux-gnueabi,
             libs: libc6-dev-armel-cross,

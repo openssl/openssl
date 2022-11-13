@@ -183,6 +183,17 @@ jobs:
     - name: make test
       run: make test
 
+  aes-const-time:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: config
+      run: ./config --strict-warnings no-asm -DOPENSSL_AES_CONST_TIME && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test
+
   out-of-tree_build:
     runs-on: ubuntu-latest
     steps:
