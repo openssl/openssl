@@ -66,6 +66,7 @@ static int csm_on_transport_params(const unsigned char *params,
 static void csm_on_terminating_timeout(QUIC_CONNECTION *qc);
 static void csm_update_idle(QUIC_CONNECTION *qc);
 static void csm_on_idle_timeout(QUIC_CONNECTION *qc);
+static void aon_write_finish(QUIC_CONNECTION *qc);
 
 static ossl_inline int expect_quic_conn(const QUIC_CONNECTION *qc)
 {
@@ -755,6 +756,7 @@ static int csm_init(QUIC_CONNECTION *qc)
     csm_update_idle(qc);
     reactor_init(&qc->rtor, csm_tick, qc, csm_determine_next_tick_deadline(qc));
 
+    qc->ssl_mode    = qc->ssl.ctx->mode;
     qc->last_error  = SSL_ERROR_NONE;
     return 1;
 }
@@ -2394,6 +2396,13 @@ int ossl_quic_shutdown(SSL *s)
 /* SSL_ctrl
  * --------
  */
+static void fixup_mode_change(QUIC_CONNECTION *qc)
+{
+    /* If enabling EPW mode, cancel any AON write */
+    if ((qc->ssl_mode & SSL_MODE_ENABLE_PARTIAL_WRITE) != 0)
+        aon_write_finish(qc);
+}
+
 long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
@@ -2402,6 +2411,14 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
         return 0;
 
     switch (cmd) {
+    case SSL_CTRL_MODE:
+        qc->ssl_mode |= (uint32_t)larg;
+        fixup_mode_change(qc);
+        return qc->ssl_mode;
+    case SSL_CTRL_CLEAR_MODE:
+        qc->ssl_mode &= ~(uint32_t)larg;
+        fixup_mode_change(qc);
+        return qc->ssl_mode;
     default:
         return 0;
     }
@@ -2503,86 +2520,257 @@ static int quic_raise_non_normal_error(QUIC_CONNECTION *qc,
 /*
  * SSL_write
  * ---------
+ *
+ * This function provides the implementation of the public SSL_write function.
+ * It must handle:
+ *
+ *   - both blocking and non-blocking operation at the application level,
+ *     depending on how we are configured;
+ *
+ *   - SSL_MODE_ENABLE_PARTIAL_WRITE being on or off;
+ *
+ *   - SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER.
+ *
  */
+static void quic_post_write(QUIC_CONNECTION *qc, int did_append, int do_tick)
+{
+    /*
+     * We have appended at least one byte to the stream.
+     * Potentially mark stream as active, depending on FC.
+     */
+    if (did_append)
+        ossl_quic_stream_map_update_state(&qc->qsm, qc->stream0);
+
+    /*
+     * Try and send.
+     *
+     * TODO(QUIC): It is probably inefficient to try and do this immediately,
+     * plus we should eventually consider Nagle's algorithm.
+     */
+    if (do_tick)
+        reactor_tick(&qc->rtor);
+}
+
 struct quic_write_again_args {
-    QUIC_CONNECTION *qc;
-    const void      *buf;
-    size_t          len;
-    size_t          *written;
+    QUIC_CONNECTION     *qc;
+    const unsigned char *buf;
+    size_t              len;
+    size_t              total_written;
 };
 
 static int quic_write_again(void *arg)
 {
     struct quic_write_again_args *args = arg;
+    size_t actual_written = 0;
 
     if (args->qc->state != QUIC_CONN_STATE_ACTIVE)
         /* If connection is torn down due to an error while blocking, stop. */
         return -2;
 
-    if (!ossl_quic_sstream_append(args->qc->stream0->sstream, args->buf,
-                                   args->len, args->written))
+    if (!ossl_quic_sstream_append(args->qc->stream0->sstream,
+                                  args->buf, args->len, &actual_written))
         return -2;
 
-    if (*args->written > 0)
-        /* appended at least one byte, the SSL_write op can finish now */
+    quic_post_write(args->qc, actual_written > 0, 0);
+
+    args->buf           += actual_written;
+    args->len           -= actual_written;
+    args->total_written += actual_written;
+
+    if (actual_written == 0)
+        /* Written everything, done. */
         return 1;
 
-    return 0; /* did not write anything, keep trying */
+    /* Not written everything yet, keep trying. */
+    return 0;
+}
+
+static int quic_write_blocking(QUIC_CONNECTION *qc, const void *buf, size_t len,
+                               size_t *written)
+{
+    int res;
+    struct quic_write_again_args args;
+    size_t actual_written = 0;
+
+    /* First make a best effort to append as much of the data as possible. */
+    if (!ossl_quic_sstream_append(qc->stream0->sstream, buf, len,
+                                  &actual_written)) {
+        /* Stream already finished or allocation error. */
+        *written = 0;
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+    }
+
+    quic_post_write(qc, actual_written > 0, 1);
+
+    if (actual_written == len) {
+        /* Managed to append everything on the first try. */
+        *written = actual_written;
+        return 1;
+    }
+
+    /*
+     * We did not manage to append all of the data immediately, so the stream
+     * buffer has probably filled up. This means we need to block until some of
+     * it is freed up.
+     */
+    args.qc             = qc;
+    args.buf            = (const unsigned char *)buf + actual_written;
+    args.len            = len - actual_written;
+    args.total_written  = 0;
+
+    res = reactor_block_until_pred(&qc->rtor, quic_write_again, &args, 0);
+    if (res <= 0) {
+        if (qc->state != QUIC_CONN_STATE_ACTIVE)
+            return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+        else
+            return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+    }
+
+    *written = args.total_written;
+    return 1;
+}
+
+static void aon_write_begin(QUIC_CONNECTION *qc, const unsigned char *buf,
+                            size_t buf_len, size_t already_sent)
+{
+    assert(!qc->aon_write_in_progress);
+
+    qc->aon_write_in_progress = 1;
+    qc->aon_buf_base          = buf;
+    qc->aon_buf_pos           = already_sent;
+    qc->aon_buf_len           = buf_len;
+}
+
+static void aon_write_finish(QUIC_CONNECTION *qc)
+{
+    qc->aon_write_in_progress   = 0;
+    qc->aon_buf_base            = NULL;
+    qc->aon_buf_pos             = 0;
+    qc->aon_buf_len             = 0;
+}
+
+static int quic_write_nonblocking_aon(QUIC_CONNECTION *qc, const void *buf,
+                                      size_t len, size_t *written)
+{
+    const void *actual_buf;
+    size_t actual_len, actual_written = 0;
+    int accept_moving_buffer
+        = ((qc->ssl_mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER) != 0);
+
+    if (qc->aon_write_in_progress) {
+        /*
+         * We are in the middle of an AON write (i.e., a previous write did not
+         * manage to append all data to the SSTREAM and we have EPW mode
+         * disabled.)
+         */
+        if ((!accept_moving_buffer && qc->aon_buf_base != buf)
+            || len != qc->aon_buf_len)
+            /*
+             * Pointer must not have changed if we are not in accept moving
+             * buffer mode. Length must never change.
+             */
+            return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_BAD_WRITE_RETRY, NULL);
+
+        actual_buf = (unsigned char *)buf + qc->aon_buf_pos;
+        actual_len = len - qc->aon_buf_pos;
+        assert(actual_len > 0);
+    } else {
+        actual_buf = buf;
+        actual_len = len;
+    }
+
+    /* First make a best effort to append as much of the data as possible. */
+    if (!ossl_quic_sstream_append(qc->stream0->sstream, actual_buf, actual_len,
+                                  &actual_written)) {
+        /* Stream already finished or allocation error. */
+        *written = 0;
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+    }
+
+    quic_post_write(qc, actual_written > 0, 1);
+
+    if (actual_written == actual_len) {
+        /* We have sent everything. */
+        if (qc->aon_write_in_progress) {
+            /*
+             * We have sent everything, and we were in the middle of an AON
+             * write. The output write length is the total length of the AON
+             * buffer, not however many bytes we managed to write to the stream
+             * in this call.
+             */
+            *written = qc->aon_buf_len;
+            aon_write_finish(qc);
+        } else {
+            *written = actual_written;
+        }
+
+        return 1;
+    }
+
+    if (qc->aon_write_in_progress) {
+        /*
+         * AON write is in progress but we have not written everything yet. We
+         * may have managed to send zero bytes, or some number of bytes less
+         * than the total remaining which need to be appended during this
+         * AON operation.
+         */
+        qc->aon_buf_pos += actual_written;
+        assert(qc->aon_buf_pos < qc->aon_buf_len);
+        return QUIC_RAISE_NORMAL_ERROR(qc, SSL_ERROR_WANT_WRITE);
+    }
+
+    /*
+     * Not in an existing AON operation but partial write is not enabled, so we
+     * need to begin a new AON operation. However we needn't bother if we didn't
+     * actually append anything.
+     */
+    if (actual_written > 0)
+        aon_write_begin(qc, buf, len, actual_written);
+
+    /*
+     * AON - We do not publicly admit to having appended anything until AON
+     * completes.
+     */
+    *written = 0;
+    return QUIC_RAISE_NORMAL_ERROR(qc, SSL_ERROR_WANT_WRITE);
+}
+
+static int quic_write_nonblocking_epw(QUIC_CONNECTION *qc, const void *buf, size_t len,
+                                      size_t *written)
+{
+    /* Simple best effort operation. */
+    if (!ossl_quic_sstream_append(qc->stream0->sstream, buf, len, written)) {
+        /* Stream already finished or allocation error. */
+        *written = 0;
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+    }
+
+    quic_post_write(qc, *written > 0, 1);
+    return 1;
 }
 
 int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
-    struct quic_write_again_args args;
-    int res;
+    int partial_write = ((qc->ssl_mode & SSL_MODE_ENABLE_PARTIAL_WRITE) != 0);
 
     *written = 0;
 
-    if (!EXPECT_QUIC_CONN(qc))
+    if (!expect_quic_conn(qc))
         return 0;
 
-    if (qc->stream0 == NULL || qc->stream0->sstream == NULL || !is_active(qc))
-        return 0;
+    if (!is_active(qc))
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
 
-    if (!ossl_quic_sstream_append(qc->stream0->sstream, buf,
-                                  len, written)) {
-        /* Stream already finished or allocation error. */
-        *written = 0;
-        return 0;
-    }
+    if (qc->stream0 == NULL || qc->stream0->sstream == NULL)
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
 
-    if (*written > 0) {
-        /*
-         * We have appended at least one byte to the stream.
-         * Potentially mark stream as active, depending on FC.
-         */
-        ossl_quic_stream_map_update_state(&qc->qsm, qc->stream0);
-
-        /*
-         * Try and send.
-         *
-         * TODO(QUIC): It is probably inefficient to try and do this
-         * immediately, plus we should eventually consider Nagle's algorithm
-         * etc.
-         */
-        reactor_tick(&qc->rtor);
-    } else if (blocking_mode(qc)) {
-        /*
-         * We were not able to append anything immediately, so our stream buffer
-         * is probably full. This means we need to block until some of it is
-         * freed up.
-         */
-        args.qc         = qc;
-        args.buf        = buf;
-        args.len        = len;
-        args.written    = written;
-
-        res = reactor_block_until_pred(&qc->rtor, quic_write_again, &args, 0);
-        if (res <= 0)
-            return 0;
-    }
-
-    return 1;
+    if (blocking_mode(qc))
+        return quic_write_blocking(qc, buf, len, written);
+    else if (partial_write)
+        return quic_write_nonblocking_epw(qc, buf, len, written);
+    else
+        return quic_write_nonblocking_aon(qc, buf, len, written);
 }
 
 /*
