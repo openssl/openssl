@@ -91,6 +91,7 @@ the MVP could implement a METHOD based approach, and subsequent releases could
 convert the METHODs into fully fetchable algorithms.
 
 Pros:
+
 * Simple approach that has been used historically in OpenSSL
 * Could be used as the basis for the final public solution
 * Could also be used as the basis for a fetchable solution in a subsequent
@@ -100,6 +101,7 @@ Pros:
   later release
 
 Cons:
+
 * Not consistent with the provider based approach we used for extensibility in
   3.0
 * If this option is implemented and later converted to a fetchable solution then
@@ -121,11 +123,13 @@ functions that can be implemented. Additionally implementing the infrastructure
 for a new fetchable operation is more involved than a METHOD based approach.
 
 Pros:
+
 * Consistent with the extensibility solution used in 3.0
 * If this option is implemented immediately in the MVP then it would avoid later
   rework if adopted in a subsequent release
 
 Cons:
+
 * More complicated to implement than the simple METHOD based approach
 * Cannot pass complex objects across the provider boundary
 
@@ -141,7 +145,8 @@ Solution Description: The METHOD based approach
 This section focuses on the selected approach of using METHODs and further
 elaborates on how the design works.
 
-A proposed internal record method API is given in [Appendix A](#appendix-a).
+A proposed internal record method API is given in
+[Appendix A](#appendix-a-the-internal-record-method-api).
 
 An `OSSL_RECORD_METHOD` represents the implementation of a particular type of
 record layer. It contains a set of function pointers to represent the various
@@ -280,8 +285,9 @@ own buffer allocation and freeing.
 buffers. This is a hint only and the record layer is expected to manage its own
 buffer allocation and freeing.
 
-<a id='appendix-a'></a>Appendix A: The internal record method API
-----------------------------------------------------------------
+Appendix A: The internal record method API
+------------------------------------------
+
 The internal recordmethod.h header file for the record method API:
 
 ```` C
