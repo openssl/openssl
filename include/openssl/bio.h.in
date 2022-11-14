@@ -377,12 +377,17 @@ typedef struct bio_mmsg_cb_args_st {
 
 #define BIO_POLL_DESCRIPTOR_TYPE_NONE       0
 #define BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD    1
+#define BIO_POLL_DESCRIPTOR_CUSTOM_START    8192
+#define BIO_POLL_DESCRIPTOR_NUM_CUSTOM      4
 
 typedef struct bio_poll_descriptor_st {
     int type;
     union {
         int     fd;
-        void    *reserved[2];
+        union {
+            void        *ptr;
+            uint64_t    u64;
+        } custom[BIO_POLL_DESCRIPTOR_NUM_CUSTOM];
     } value;
 } BIO_POLL_DESCRIPTOR;
 
