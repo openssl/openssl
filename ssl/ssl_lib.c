@@ -4452,7 +4452,7 @@ int SSL_get_error(const SSL *s, int i)
             }
         }
 
-        if (qc == NULL && SSL_want_write(s)) {
+        if (SSL_want_write(s)) {
             /*
              * Access wbio directly - in order to use the buffered bio if
              * present
