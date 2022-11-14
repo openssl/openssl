@@ -45,8 +45,10 @@ A version number for the fips install process. Should be 1.
 
 =item B<pkcs1-15-padding>
 
-This indicates if PKCS #1 version 1.5 padding is permitted or not.  A value of '1'
-will allow such padding, a value of '0' will not.
+This indicates if PKCS #1 version 1.5 padding is permitted or not for
+asymmetric encryption and decryption.  Sign and verify operations are
+still permitted to use this padding mode.  A value of '1' will allow
+such padding, a value of '0' will not.
 
 =item B<conditional-errors>
 
