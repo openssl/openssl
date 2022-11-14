@@ -20,3 +20,9 @@ int ossl_prov_is_running(void)
 {
     return 1;
 }
+
+/* By default, providers always support PKCS #1 version 1.5 padding */
+int ossl_prov_has_pkcs1_v15_padding(ossl_unused OSSL_LIB_CTX *libctx)
+{
+    return 1;
+}
