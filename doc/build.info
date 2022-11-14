@@ -607,6 +607,10 @@ DEPEND[html/man3/BIO_get_ex_new_index.html]=man3/BIO_get_ex_new_index.pod
 GENERATE[html/man3/BIO_get_ex_new_index.html]=man3/BIO_get_ex_new_index.pod
 DEPEND[man/man3/BIO_get_ex_new_index.3]=man3/BIO_get_ex_new_index.pod
 GENERATE[man/man3/BIO_get_ex_new_index.3]=man3/BIO_get_ex_new_index.pod
+DEPEND[html/man3/BIO_get_rpoll_descriptor.html]=man3/BIO_get_rpoll_descriptor.pod
+GENERATE[html/man3/BIO_get_rpoll_descriptor.html]=man3/BIO_get_rpoll_descriptor.pod
+DEPEND[man/man3/BIO_get_rpoll_descriptor.3]=man3/BIO_get_rpoll_descriptor.pod
+GENERATE[man/man3/BIO_get_rpoll_descriptor.3]=man3/BIO_get_rpoll_descriptor.pod
 DEPEND[html/man3/BIO_meth_new.html]=man3/BIO_meth_new.pod
 GENERATE[html/man3/BIO_meth_new.html]=man3/BIO_meth_new.pod
 DEPEND[man/man3/BIO_meth_new.3]=man3/BIO_meth_new.pod
@@ -2535,6 +2539,10 @@ DEPEND[html/man3/SSL_get_rbio.html]=man3/SSL_get_rbio.pod
 GENERATE[html/man3/SSL_get_rbio.html]=man3/SSL_get_rbio.pod
 DEPEND[man/man3/SSL_get_rbio.3]=man3/SSL_get_rbio.pod
 GENERATE[man/man3/SSL_get_rbio.3]=man3/SSL_get_rbio.pod
+DEPEND[html/man3/SSL_get_rpoll_descriptor.html]=man3/SSL_get_rpoll_descriptor.pod
+GENERATE[html/man3/SSL_get_rpoll_descriptor.html]=man3/SSL_get_rpoll_descriptor.pod
+DEPEND[man/man3/SSL_get_rpoll_descriptor.3]=man3/SSL_get_rpoll_descriptor.pod
+GENERATE[man/man3/SSL_get_rpoll_descriptor.3]=man3/SSL_get_rpoll_descriptor.pod
 DEPEND[html/man3/SSL_get_session.html]=man3/SSL_get_session.pod
 GENERATE[html/man3/SSL_get_session.html]=man3/SSL_get_session.pod
 DEPEND[man/man3/SSL_get_session.3]=man3/SSL_get_session.pod
@@ -2543,6 +2551,10 @@ DEPEND[html/man3/SSL_get_shared_sigalgs.html]=man3/SSL_get_shared_sigalgs.pod
 GENERATE[html/man3/SSL_get_shared_sigalgs.html]=man3/SSL_get_shared_sigalgs.pod
 DEPEND[man/man3/SSL_get_shared_sigalgs.3]=man3/SSL_get_shared_sigalgs.pod
 GENERATE[man/man3/SSL_get_shared_sigalgs.3]=man3/SSL_get_shared_sigalgs.pod
+DEPEND[html/man3/SSL_get_tick_timeout.html]=man3/SSL_get_tick_timeout.pod
+GENERATE[html/man3/SSL_get_tick_timeout.html]=man3/SSL_get_tick_timeout.pod
+DEPEND[man/man3/SSL_get_tick_timeout.3]=man3/SSL_get_tick_timeout.pod
+GENERATE[man/man3/SSL_get_tick_timeout.3]=man3/SSL_get_tick_timeout.pod
 DEPEND[html/man3/SSL_get_verify_result.html]=man3/SSL_get_verify_result.pod
 GENERATE[html/man3/SSL_get_verify_result.html]=man3/SSL_get_verify_result.pod
 DEPEND[man/man3/SSL_get_verify_result.3]=man3/SSL_get_verify_result.pod
@@ -2607,6 +2619,10 @@ DEPEND[html/man3/SSL_set_bio.html]=man3/SSL_set_bio.pod
 GENERATE[html/man3/SSL_set_bio.html]=man3/SSL_set_bio.pod
 DEPEND[man/man3/SSL_set_bio.3]=man3/SSL_set_bio.pod
 GENERATE[man/man3/SSL_set_bio.3]=man3/SSL_set_bio.pod
+DEPEND[html/man3/SSL_set_blocking_mode.html]=man3/SSL_set_blocking_mode.pod
+GENERATE[html/man3/SSL_set_blocking_mode.html]=man3/SSL_set_blocking_mode.pod
+DEPEND[man/man3/SSL_set_blocking_mode.3]=man3/SSL_set_blocking_mode.pod
+GENERATE[man/man3/SSL_set_blocking_mode.3]=man3/SSL_set_blocking_mode.pod
 DEPEND[html/man3/SSL_set_connect_state.html]=man3/SSL_set_connect_state.pod
 GENERATE[html/man3/SSL_set_connect_state.html]=man3/SSL_set_connect_state.pod
 DEPEND[man/man3/SSL_set_connect_state.3]=man3/SSL_set_connect_state.pod
@@ -2615,6 +2631,10 @@ DEPEND[html/man3/SSL_set_fd.html]=man3/SSL_set_fd.pod
 GENERATE[html/man3/SSL_set_fd.html]=man3/SSL_set_fd.pod
 DEPEND[man/man3/SSL_set_fd.3]=man3/SSL_set_fd.pod
 GENERATE[man/man3/SSL_set_fd.3]=man3/SSL_set_fd.pod
+DEPEND[html/man3/SSL_set_initial_peer_addr.html]=man3/SSL_set_initial_peer_addr.pod
+GENERATE[html/man3/SSL_set_initial_peer_addr.html]=man3/SSL_set_initial_peer_addr.pod
+DEPEND[man/man3/SSL_set_initial_peer_addr.3]=man3/SSL_set_initial_peer_addr.pod
+GENERATE[man/man3/SSL_set_initial_peer_addr.3]=man3/SSL_set_initial_peer_addr.pod
 DEPEND[html/man3/SSL_set_retry_verify.html]=man3/SSL_set_retry_verify.pod
 GENERATE[html/man3/SSL_set_retry_verify.html]=man3/SSL_set_retry_verify.pod
 DEPEND[man/man3/SSL_set_retry_verify.3]=man3/SSL_set_retry_verify.pod
@@ -2639,6 +2659,10 @@ DEPEND[html/man3/SSL_state_string.html]=man3/SSL_state_string.pod
 GENERATE[html/man3/SSL_state_string.html]=man3/SSL_state_string.pod
 DEPEND[man/man3/SSL_state_string.3]=man3/SSL_state_string.pod
 GENERATE[man/man3/SSL_state_string.3]=man3/SSL_state_string.pod
+DEPEND[html/man3/SSL_tick.html]=man3/SSL_tick.pod
+GENERATE[html/man3/SSL_tick.html]=man3/SSL_tick.pod
+DEPEND[man/man3/SSL_tick.3]=man3/SSL_tick.pod
+GENERATE[man/man3/SSL_tick.3]=man3/SSL_tick.pod
 DEPEND[html/man3/SSL_want.html]=man3/SSL_want.pod
 GENERATE[html/man3/SSL_want.html]=man3/SSL_want.pod
 DEPEND[man/man3/SSL_want.3]=man3/SSL_want.pod
@@ -2955,6 +2979,7 @@ html/man3/BIO_f_ssl.html \
 html/man3/BIO_find_type.html \
 html/man3/BIO_get_data.html \
 html/man3/BIO_get_ex_new_index.html \
+html/man3/BIO_get_rpoll_descriptor.html \
 html/man3/BIO_meth_new.html \
 html/man3/BIO_new.html \
 html/man3/BIO_new_CMS.html \
@@ -3437,8 +3462,10 @@ html/man3/SSL_get_peer_signature_nid.html \
 html/man3/SSL_get_peer_tmp_key.html \
 html/man3/SSL_get_psk_identity.html \
 html/man3/SSL_get_rbio.html \
+html/man3/SSL_get_rpoll_descriptor.html \
 html/man3/SSL_get_session.html \
 html/man3/SSL_get_shared_sigalgs.html \
+html/man3/SSL_get_tick_timeout.html \
 html/man3/SSL_get_verify_result.html \
 html/man3/SSL_get_version.html \
 html/man3/SSL_group_to_name.html \
@@ -3455,14 +3482,17 @@ html/man3/SSL_session_reused.html \
 html/man3/SSL_set1_host.html \
 html/man3/SSL_set_async_callback.html \
 html/man3/SSL_set_bio.html \
+html/man3/SSL_set_blocking_mode.html \
 html/man3/SSL_set_connect_state.html \
 html/man3/SSL_set_fd.html \
+html/man3/SSL_set_initial_peer_addr.html \
 html/man3/SSL_set_retry_verify.html \
 html/man3/SSL_set_session.html \
 html/man3/SSL_set_shutdown.html \
 html/man3/SSL_set_verify_result.html \
 html/man3/SSL_shutdown.html \
 html/man3/SSL_state_string.html \
+html/man3/SSL_tick.html \
 html/man3/SSL_want.html \
 html/man3/SSL_write.html \
 html/man3/TS_RESP_CTX_new.html \
@@ -3568,6 +3598,7 @@ man/man3/BIO_f_ssl.3 \
 man/man3/BIO_find_type.3 \
 man/man3/BIO_get_data.3 \
 man/man3/BIO_get_ex_new_index.3 \
+man/man3/BIO_get_rpoll_descriptor.3 \
 man/man3/BIO_meth_new.3 \
 man/man3/BIO_new.3 \
 man/man3/BIO_new_CMS.3 \
@@ -4050,8 +4081,10 @@ man/man3/SSL_get_peer_signature_nid.3 \
 man/man3/SSL_get_peer_tmp_key.3 \
 man/man3/SSL_get_psk_identity.3 \
 man/man3/SSL_get_rbio.3 \
+man/man3/SSL_get_rpoll_descriptor.3 \
 man/man3/SSL_get_session.3 \
 man/man3/SSL_get_shared_sigalgs.3 \
+man/man3/SSL_get_tick_timeout.3 \
 man/man3/SSL_get_verify_result.3 \
 man/man3/SSL_get_version.3 \
 man/man3/SSL_group_to_name.3 \
@@ -4068,14 +4101,17 @@ man/man3/SSL_session_reused.3 \
 man/man3/SSL_set1_host.3 \
 man/man3/SSL_set_async_callback.3 \
 man/man3/SSL_set_bio.3 \
+man/man3/SSL_set_blocking_mode.3 \
 man/man3/SSL_set_connect_state.3 \
 man/man3/SSL_set_fd.3 \
+man/man3/SSL_set_initial_peer_addr.3 \
 man/man3/SSL_set_retry_verify.3 \
 man/man3/SSL_set_session.3 \
 man/man3/SSL_set_shutdown.3 \
 man/man3/SSL_set_verify_result.3 \
 man/man3/SSL_shutdown.3 \
 man/man3/SSL_state_string.3 \
+man/man3/SSL_tick.3 \
 man/man3/SSL_want.3 \
 man/man3/SSL_write.3 \
 man/man3/TS_RESP_CTX_new.3 \
