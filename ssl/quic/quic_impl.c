@@ -9,6 +9,7 @@
 
 #include <openssl/macros.h>
 #include <openssl/objects.h>
+#include <openssl/sslerr.h>
 #include <crypto/rand.h>
 #include "quic_local.h"
 #include "internal/quic_dummy_handshake.h"
@@ -16,11 +17,30 @@
 #include "internal/quic_error.h"
 #include "internal/time.h"
 
-#define EXPECT_QUIC_CONN(qc)          ossl_assert((qc) != NULL)
-
 #define INIT_DCID_LEN           8
 #define INIT_CRYPTO_BUF_LEN     8192
 #define INIT_APP_BUF_LEN        8192
+
+#define QUIC_RAISE_NORMAL_ERROR(qc, err)                        \
+    quic_raise_normal_error((qc), (err))
+
+#define QUIC_RAISE_NON_NORMAL_ERROR(qc, reason, ...)            \
+    quic_raise_non_normal_error((qc),                           \
+                                OPENSSL_FILE, OPENSSL_LINE,     \
+                                OPENSSL_FUNC,                   \
+                                (reason),                       \
+                                __VA_ARGS__)
+
+static int quic_raise_normal_error(QUIC_CONNECTION *qc,
+                                   int err);
+
+static int quic_raise_non_normal_error(QUIC_CONNECTION *qc,
+                                       const char *file,
+                                       int line,
+                                       const char *func,
+                                       int reason,
+                                       const char *fmt,
+                                       ...);
 
 static void csm_tick(QUIC_TICK_RESULT *res, void *arg);
 static OSSL_TIME csm_determine_next_tick_deadline(QUIC_CONNECTION *qc);
@@ -46,6 +66,14 @@ static int csm_on_transport_params(const unsigned char *params,
 static void csm_on_terminating_timeout(QUIC_CONNECTION *qc);
 static void csm_update_idle(QUIC_CONNECTION *qc);
 static void csm_on_idle_timeout(QUIC_CONNECTION *qc);
+
+static ossl_inline int expect_quic_conn(const QUIC_CONNECTION *qc)
+{
+    if (!ossl_assert(qc != NULL))
+        return QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+
+    return 1;
+}
 
 /*
  * Core I/O Reactor Framework
@@ -726,6 +754,8 @@ static int csm_init(QUIC_CONNECTION *qc)
     qc->tx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
     csm_update_idle(qc);
     reactor_init(&qc->rtor, csm_tick, qc, csm_determine_next_tick_deadline(qc));
+
+    qc->last_error  = SSL_ERROR_NONE;
     return 1;
 }
 
@@ -1944,7 +1974,7 @@ void ossl_quic_free(SSL *s)
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     /* We should never be called on anything but a QUIC_CONNECTION. */
-    if (!EXPECT_QUIC_CONN(qc))
+    if (!expect_quic_conn(qc))
         return;
 
     csm_cleanup(qc);
@@ -1959,7 +1989,7 @@ int ossl_quic_init(SSL *s)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (!EXPECT_QUIC_CONN(qc))
+    if (!expect_quic_conn(qc))
         return 0;
 
     /* Same op as SSL_clear, forward the call. */
@@ -1983,7 +2013,7 @@ int ossl_quic_reset(SSL *s)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (!EXPECT_QUIC_CONN(qc))
+    if (!expect_quic_conn(qc))
         return 0;
 
     /* Currently a no-op. */
@@ -1998,7 +2028,7 @@ int ossl_quic_clear(SSL *s)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (!EXPECT_QUIC_CONN(qc))
+    if (!expect_quic_conn(qc))
         return 0;
 
     /* Currently a no-op. */
@@ -2200,7 +2230,7 @@ int ossl_quic_conn_set_blocking_mode(QUIC_CONNECTION *qc, int blocking)
     if (blocking != 0 &&
         (reactor_get_poll_r(&qc->rtor)->type == BIO_POLL_DESCRIPTOR_TYPE_NONE
          || reactor_get_poll_w(&qc->rtor)->type == BIO_POLL_DESCRIPTOR_TYPE_NONE))
-        return 0;
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_UNSUPPORTED, NULL);
 
     qc->blocking = (blocking != 0);
     return 1;
@@ -2214,7 +2244,8 @@ int ossl_quic_conn_set_initial_peer_addr(QUIC_CONNECTION *qc,
                                          const BIO_ADDR *peer_addr)
 {
     if (qc->state != QUIC_CONN_STATE_IDLE)
-        return 0;
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
+                                           NULL);
 
     if (peer_addr == NULL) {
         BIO_ADDR_clear(&qc->init_peer_addr);
@@ -2348,7 +2379,7 @@ int ossl_quic_shutdown(SSL *s)
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
     QUIC_TERMINATE_CAUSE tcause = {0};
 
-    if (!EXPECT_QUIC_CONN(qc))
+    if (!expect_quic_conn(qc))
         return 0;
 
     /* Already terminating? */
@@ -2367,7 +2398,7 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (!EXPECT_QUIC_CONN(qc))
+    if (!expect_quic_conn(qc))
         return 0;
 
     switch (cmd) {
@@ -2381,10 +2412,18 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
  */
 int ossl_quic_connect(SSL *s)
 {
+    int ret;
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (!EXPECT_QUIC_CONN(qc) || is_term_any(qc))
+    if (!expect_quic_conn(qc))
         return 0;
+
+    if (is_term_any(qc))
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+
+    if (BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC)
+        /* Peer address must have been set. */
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
 
     return csm_connect(qc);
 }
@@ -2396,8 +2435,11 @@ int ossl_quic_accept(SSL *s)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    if (!EXPECT_QUIC_CONN(qc) || is_term_any(qc))
+    if (!expect_quic_conn(qc))
         return 0;
+
+    if (is_term_any(qc))
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
 
     /* Server mode not currently supported. */
     return 0;
@@ -2415,9 +2457,10 @@ int ossl_quic_accept(SSL *s)
  * Each function must handle both blocking and non-blocking modes. As discussed
  * above, all QUIC I/O is implemented using non-blocking mode internally.
  *
- *   (BIO/)SSL_read                 => ossl_quic_read
- *   (BIO/)SSL_write                => ossl_quic_write
- *
+ *         SSL_get_error        => partially implemented by ossl_quic_get_error
+ *   (BIO/)SSL_read             => ossl_quic_read
+ *   (BIO/)SSL_write            => ossl_quic_write
+ *         SSL_pending          => ossl_quic_pending
  */
 
 /*
@@ -2426,7 +2469,35 @@ int ossl_quic_accept(SSL *s)
  */
 int ossl_quic_get_error(const QUIC_CONNECTION *qc, int i)
 {
-    return SSL_ERROR_NONE; /* TODO(QUIC) */
+    return qc->last_error;
+}
+
+static int quic_raise_normal_error(QUIC_CONNECTION *qc,
+                                   int err)
+{
+    qc->last_error = err;
+    return 0;
+}
+
+static int quic_raise_non_normal_error(QUIC_CONNECTION *qc,
+                                       const char *file,
+                                       int line,
+                                       const char *func,
+                                       int reason,
+                                       const char *fmt,
+                                       ...)
+{
+    va_list args;
+
+    ERR_new();
+    ERR_set_debug(OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC);
+
+    va_start(args, fmt);
+    ERR_vset_error(ERR_LIB_SSL, reason, fmt, args);
+    va_end(args);
+
+    qc->last_error = SSL_ERROR_SSL;
+    return 0;
 }
 
 /*
@@ -2536,16 +2607,17 @@ static int quic_read_actual(QUIC_CONNECTION *qc,
     int is_fin = 0;
 
     if (stream->rstream == NULL)
-        return 0;
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
 
     if (peek) {
         if (!ossl_quic_rstream_peek(stream->rstream, buf, buf_len,
                                     bytes_read, &is_fin))
-            return 0;
+            return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+
     } else {
         if (!ossl_quic_rstream_read(stream->rstream, buf, buf_len,
                                     bytes_read, &is_fin))
-            return 0;
+            return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
     }
 
     if (!peek) {
@@ -2561,7 +2633,7 @@ static int quic_read_actual(QUIC_CONNECTION *qc,
 
             if (!ossl_quic_rxfc_on_retire(&qc->stream0->rxfc, *bytes_read,
                                           rtt_info.smoothed_rtt))
-                return 0;
+                return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
         }
 
         if (is_fin)
@@ -2602,13 +2674,16 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
 
     *bytes_read = 0;
 
-    if (!EXPECT_QUIC_CONN(qc))
+    if (!expect_quic_conn(qc))
         return 0;
 
-    if (qc->stream0 == NULL || !is_active(qc))
-        return 0;
+    if (!is_active(qc))
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
 
-    if (!quic_read_actual(qc, qc->stream0, buf, len, bytes_read, 0))
+    if (qc->stream0 == NULL)
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+
+    if (!quic_read_actual(qc, qc->stream0, buf, len, bytes_read, peek))
         return 0;
 
     if (*bytes_read > 0) {
@@ -2632,8 +2707,12 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
         args.peek       = peek;
 
         res = reactor_block_until_pred(&qc->rtor, quic_read_again, &args, 0);
-        if (res <= 0)
-            return 0;
+        if (res <= 0) {
+            if (qc->state != QUIC_CONN_STATE_ACTIVE)
+                return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+            else
+                return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+        }
     }
 
     return 1;

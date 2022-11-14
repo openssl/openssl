@@ -4393,11 +4393,11 @@ int SSL_get_error(const SSL *s, int i)
     unsigned long l;
     BIO *bio;
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
 
     if (i > 0)
         return SSL_ERROR_NONE;
 
-    /* TODO(QUIC): This will need more handling for QUIC_CONNECTIONs */
     if (sc == NULL)
         return SSL_ERROR_SSL;
 
@@ -4412,7 +4412,13 @@ int SSL_get_error(const SSL *s, int i)
             return SSL_ERROR_SSL;
     }
 
-    if (SSL_want_read(s)) {
+    if (qc != NULL) {
+        reason = ossl_quic_get_error(qc, i);
+        if (reason != SSL_ERROR_NONE)
+            return reason;
+    }
+
+    if (qc == NULL && SSL_want_read(s)) {
         bio = SSL_get_rbio(s);
         if (BIO_should_read(bio))
             return SSL_ERROR_WANT_READ;
@@ -4438,7 +4444,7 @@ int SSL_get_error(const SSL *s, int i)
         }
     }
 
-    if (SSL_want_write(s)) {
+    if (qc == NULL && SSL_want_write(s)) {
         /* Access wbio directly - in order to use the buffered bio if present */
         bio = sc->wbio;
         if (BIO_should_write(bio))
