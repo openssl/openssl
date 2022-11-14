@@ -2935,55 +2935,80 @@ long ossl_quic_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
     return 0;
 }
 
-size_t ossl_quic_pending(const SSL *s)
+QUIC_CONNECTION *ossl_quic_conn_from_ssl(SSL *ssl)
 {
-    return 0;
-}
-
-OSSL_TIME ossl_quic_default_timeout(void)
-{
-    return ossl_time_zero();
-}
-
-int ossl_quic_num_ciphers(void)
-{
-    return 1;
-}
-
-const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u)
-{
-    /*
-     * TODO(QUIC): This is needed so the SSL_CTX_set_cipher_list("DEFAULT");
-     * produces at least one valid TLS-1.2 cipher.
-     * Later we should allow that there are none with QUIC protocol as
-     * SSL_CTX_set_cipher_list should still allow setting a SECLEVEL.
-     */
-    static const SSL_CIPHER ciph = {
-        1,
-        TLS1_TXT_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-        TLS1_RFC_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-        TLS1_CK_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-        SSL_kECDHE,
-        SSL_aRSA,
-        SSL_AES256GCM,
-        SSL_AEAD,
-        TLS1_2_VERSION, TLS1_2_VERSION,
-        DTLS1_2_VERSION, DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
-        SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
-        256,
-        256
-    };
-
-    return &ciph;
+    return QUIC_CONNECTION_FROM_SSL(ssl);
 }
 
 int ossl_quic_renegotiate_check(SSL *ssl, int initok)
 {
-    return 1;
+    /* We never do renegotiation. */
+    return 0;
 }
 
-QUIC_CONNECTION *ossl_quic_conn_from_ssl(SSL *ssl)
+/*
+ * This is the subset of TLS1.3 ciphers which can be used with QUIC and which we
+ * actually support.
+ */
+static SSL_CIPHER tls13_quic_ciphers[] = {
+    {
+        1,
+        TLS1_3_RFC_AES_128_GCM_SHA256,
+        TLS1_3_RFC_AES_128_GCM_SHA256,
+        TLS1_3_CK_AES_128_GCM_SHA256,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_AES128GCM,
+        SSL_AEAD,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        0, 0,
+        SSL_HIGH,
+        SSL_HANDSHAKE_MAC_SHA256,
+        128,
+        128,
+    }, {
+        1,
+        TLS1_3_RFC_AES_256_GCM_SHA384,
+        TLS1_3_RFC_AES_256_GCM_SHA384,
+        TLS1_3_CK_AES_256_GCM_SHA384,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_AES256GCM,
+        SSL_AEAD,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        0, 0,
+        SSL_HIGH,
+        SSL_HANDSHAKE_MAC_SHA384,
+        256,
+        256,
+    },
+    {
+        1,
+        TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
+        TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
+        TLS1_3_CK_CHACHA20_POLY1305_SHA256,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_CHACHA20POLY1305,
+        SSL_AEAD,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        0, 0,
+        SSL_HIGH,
+        SSL_HANDSHAKE_MAC_SHA256,
+        256,
+        256,
+    }
+};
+
+int ossl_quic_num_ciphers(void)
 {
-    return QUIC_CONNECTION_FROM_SSL(ssl);
+    return OSSL_NELEM(tls13_quic_ciphers);
+}
+
+const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u)
+{
+    if (u >= OSSL_NELEM(tls13_quic_ciphers))
+        return NULL;
+
+    return &tls13_quic_ciphers[u];
 }

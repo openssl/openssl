@@ -443,7 +443,7 @@ const SSL_METHOD *func_name(void)  \
                 ossl_quic_pending, \
                 ossl_quic_num_ciphers, \
                 ossl_quic_get_cipher, \
-                ossl_quic_default_timeout, \
+                tls1_default_timeout, \
                 &enc_data, \
                 ssl_undefined_void_function, \
                 ossl_quic_callback_ctrl, \
