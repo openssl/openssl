@@ -1371,7 +1371,7 @@ static void csm_tick(QUIC_TICK_RESULT *res, void *arg)
      * ACKM ACK generation deadline is polled by TXP, so we don't need to handle
      * it here.
      */
-    now         = ossl_time_now();
+    now = ossl_time_now();
     if (ossl_time_compare(now, qc->idle_deadline) >= 0) {
         /*
          * Idle timeout differs from normal protocol violation because we do not
@@ -1384,7 +1384,7 @@ static void csm_tick(QUIC_TICK_RESULT *res, void *arg)
         return;
     }
 
-    deadline    = ossl_ackm_get_loss_detection_deadline(qc->ackm);
+    deadline = ossl_ackm_get_loss_detection_deadline(qc->ackm);
     if (!ossl_time_is_zero(deadline) && ossl_time_compare(now, deadline) >= 0)
         ossl_ackm_on_timeout(qc->ackm);
 
@@ -1551,7 +1551,8 @@ static int csm_tx(QUIC_CONNECTION *qc)
      * flush any queued packets which we already generated.
      */
     if (ossl_quic_tx_packetiser_generate(qc->txp,
-                                         TX_PACKETISER_ARCHETYPE_NORMAL) == 2)
+                                         TX_PACKETISER_ARCHETYPE_NORMAL)
+        == TX_PACKETISER_RES_SENT_PKT)
         qc->have_sent_any_pkt = 1;
 
     ossl_qtx_flush_net(qc->qtx); /* best effort */
@@ -1753,7 +1754,6 @@ int ossl_quic_conn_on_handshake_confirmed(QUIC_CONNECTION *qc)
                                             OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE,
                                             "handshake cannot be confirmed "
                                             "before it is completed");
-
         return 0;
     }
 
