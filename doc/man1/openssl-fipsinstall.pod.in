@@ -51,8 +51,8 @@ This indicates if the Known Answer Self Tests (KAT's) have successfully run.
 =item - A control to permit PKCS#1 version 1.5 padding.
 
 By default, the FIPS module will accept PKCS#1 version 1.5 padding.
-The default value of '1' disallows such padding.
-If the value is '0', then such padding is accepted for legacy use.
+A value of '1' disallows such padding.  If the value is the default of
+'0', then such padding is accepted for legacy use.
 
 =item - A control for conditional self tests errors.
 
