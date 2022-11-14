@@ -2961,7 +2961,34 @@ int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *bytes_read)
     return quic_read(s, buf, len, bytes_read, 1);
 }
 
-/* XXX Methods pending triage {{{1 */
+/*
+ * SSL_pending
+ * -----------
+ */
+size_t ossl_quic_pending(const SSL *s)
+{
+    const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
+    size_t avail = 0;
+    int fin = 0;
+
+    if (!expect_quic_conn(qc))
+        return 0;
+
+    if (qc->stream0 == NULL || qc->stream0->rstream == NULL)
+        /* Cannot raise errors here because we are const, just fail. */
+        return 0;
+
+    if (!ossl_quic_rstream_available(qc->stream0->rstream, &avail, &fin))
+        return 0;
+
+    return avail;
+}
+
+/*
+ * QUIC Front-End I/O API: SSL_CTX Management
+ * ==========================================
+ */
+
 long ossl_quic_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
     switch (cmd) {
