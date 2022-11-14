@@ -1605,10 +1605,6 @@ static int csm_connect(QUIC_CONNECTION *qc)
         /* Calls to connect are idempotent */
         return 1;
 
-    if (BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC)
-        /* Peer address must have been set. */
-        return 0;
-
     /* Inform QTX of peer address. */
     if (!ossl_quic_tx_packetiser_set_peer(qc->txp, &qc->init_peer_addr))
         return 0;
@@ -2430,6 +2426,23 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
 /* SSL_connect
  * -----------
  */
+struct quic_connect_wait_args {
+    QUIC_CONNECTION     *qc;
+};
+
+static int quic_connect_wait(void *arg)
+{
+    struct quic_connect_wait_args *args = arg;
+
+    if (args->qc->state != QUIC_CONN_STATE_ACTIVE)
+        return -1;
+
+    if (args->qc->handshake_complete)
+        return 1;
+
+    return 0;
+}
+
 int ossl_quic_connect(SSL *s)
 {
     int ret;
@@ -2445,7 +2458,36 @@ int ossl_quic_connect(SSL *s)
         /* Peer address must have been set. */
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
 
-    return csm_connect(qc);
+    /*
+     * Start connection process. Note we may come here multiple times in
+     * non-blocking mode, which is fine.
+     */
+    ret = csm_connect(qc);
+    if (!ret)
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+
+    if (qc->handshake_complete)
+        /* The handshake is now done. */
+        return 1;
+
+    if (blocking_mode(qc)) {
+        /* In blocking mode, wait for the handshake to complete. */
+        struct quic_connect_wait_args args;
+
+        args.qc     = qc;
+
+        ret = reactor_block_until_pred(&qc->rtor, quic_connect_wait, &args, 0);
+        if (qc->state != QUIC_CONN_STATE_ACTIVE)
+            return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+        else if (ret <= 0)
+            return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+
+        assert(qc->handshake_complete);
+        return 1;
+    } else {
+        /* Otherwise, indicate that the handshake isn't done yet. */
+        return QUIC_RAISE_NORMAL_ERROR(qc, SSL_ERROR_WANT_READ);
+    }
 }
 
 /* SSL_accept
