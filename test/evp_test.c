@@ -442,7 +442,7 @@ static int digest_test_run(EVP_TEST *t)
     }
     if (expected->pad_type > 0) {
         params[0] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_PAD_TYPE,
-                                              &expected->pad_type);
+                                             &expected->pad_type);
         params[1] = OSSL_PARAM_construct_end();
         if (!TEST_int_gt(EVP_MD_CTX_set_params(mctx, params), 0)) {
             t->err = "PARAMS_ERROR";
