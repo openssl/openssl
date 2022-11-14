@@ -110,10 +110,6 @@ static int rsa_init(void *vprsactx, void *vrsa, const OSSL_PARAM params[],
 
     switch (RSA_test_flags(prsactx->rsa, RSA_FLAG_TYPE_MASK)) {
     case RSA_FLAG_TYPE_RSA:
-        if (!ossl_prov_has_pkcs1_v15_padding(prsactx->libctx)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_PKCS1_15_PADDING_UNSUPPORTED);
-            return 0;
-        }
         prsactx->pad_mode = RSA_PKCS1_PADDING;
         break;
     default:
@@ -144,6 +140,12 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
 
     if (!ossl_prov_is_running())
         return 0;
+
+    if (prsactx->pad_mode == RSA_PKCS1_PADDING
+            && !ossl_prov_has_pkcs1_v15_padding(prsactx->libctx)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_PKCS1_15_PADDING_UNSUPPORTED);
+        return 0;
+    }
 
     if (out == NULL) {
         size_t len = RSA_size(prsactx->rsa);
@@ -203,6 +205,12 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
 
     if (!ossl_prov_is_running())
         return 0;
+
+    if (prsactx->pad_mode == RSA_PKCS1_PADDING
+            && !ossl_prov_has_pkcs1_v15_padding(prsactx->libctx)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_PKCS1_15_PADDING_UNSUPPORTED);
+        return 0;
+    }
 
     if (prsactx->pad_mode == RSA_PKCS1_WITH_TLS_PADDING) {
         if (out == NULL) {
@@ -497,7 +505,6 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
             if (prsactx->oaep_md == NULL)
                 return 0;
         }
-
         prsactx->pad_mode = pad_mode;
     }
 
