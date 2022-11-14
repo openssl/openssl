@@ -1155,12 +1155,13 @@ static int ssl_post_record_layer_select(SSL_CONNECTION *s, int direction)
 
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
                              int direction, int level,
+                             unsigned char *secret, size_t secretlen,
                              unsigned char *key, size_t keylen,
                              unsigned char *iv,  size_t ivlen,
                              unsigned char *mackey, size_t mackeylen,
                              const EVP_CIPHER *ciph, size_t taglen,
                              int mactype, const EVP_MD *md,
-                             const SSL_COMP *comp)
+                             const SSL_COMP *comp, const EVP_MD *kdfdigest)
 {
     OSSL_PARAM options[5], *opts = options;
     OSSL_PARAM settings[6], *set =  settings;
@@ -1330,11 +1331,12 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 
         rlret = meth->new_record_layer(sctx->libctx, sctx->propq, version,
                                        s->server, direction, level, epoch,
-                                       key, keylen, iv, ivlen, mackey,
-                                       mackeylen, ciph, taglen, mactype, md,
-                                       compm, prev, thisbio, next, NULL, NULL,
-                                       settings, options, rlayer_dispatch_tmp,
-                                       s, s->rlayer.rlarg, &newrl);
+                                       secret, secretlen, key, keylen, iv,
+                                       ivlen, mackey, mackeylen, ciph, taglen,
+                                       mactype, md, compm, kdfdigest, prev,
+                                       thisbio, next, NULL, NULL, settings,
+                                       options, rlayer_dispatch_tmp, s,
+                                       s->rlayer.rlarg, &newrl);
         BIO_free(prev);
         switch (rlret) {
         case OSSL_RECORD_RETURN_FATAL:

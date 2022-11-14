@@ -820,9 +820,9 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     if (!ssl_set_new_record_layer(s,
                                   DTLS_ANY_VERSION,
                                   OSSL_RECORD_DIRECTION_READ,
-                                  OSSL_RECORD_PROTECTION_LEVEL_NONE,
+                                  OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
                                   NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                  NID_undef, NULL, NULL)) {
+                                  NID_undef, NULL, NULL, NULL)) {
         /* SSLfatal already called */
         ret = -1;
         goto end;

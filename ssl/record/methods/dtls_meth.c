@@ -624,12 +624,14 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
 static int
 dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       int role, int direction, int level, uint16_t epoch,
+                      unsigned char *secret, size_t secretlen,
                       unsigned char *key, size_t keylen, unsigned char *iv,
                       size_t ivlen, unsigned char *mackey, size_t mackeylen,
                       const EVP_CIPHER *ciph, size_t taglen,
                       int mactype,
-                      const EVP_MD *md, COMP_METHOD *comp, BIO *prev,
-                      BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
+                      const EVP_MD *md, COMP_METHOD *comp,
+                      const EVP_MD *kdfdigest, BIO *prev, BIO *transport,
+                      BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
                       const OSSL_PARAM *settings, const OSSL_PARAM *options,
                       const OSSL_DISPATCH *fns, void *cbarg, void *rlarg,
                       OSSL_RECORD_LAYER **retrl)
