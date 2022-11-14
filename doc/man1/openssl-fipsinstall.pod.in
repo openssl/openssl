@@ -19,6 +19,7 @@ B<openssl fipsinstall>
 [B<-macopt> I<nm>:I<v>]
 [B<-noout>]
 [B<-quiet>]
+[B<-no_pkcs1_v1_5_padding>]
 [B<-no_conditional_errors>]
 [B<-no_security_checks>]
 [B<-self_test_onload>]
@@ -46,6 +47,12 @@ The generated configuration file consists of:
 This indicates if the Known Answer Self Tests (KAT's) have successfully run.
 
 =item - A MAC of the status indicator.
+
+=item - A control to permit PKCS#1 version 1.5 padding.
+
+By default, the FIPS module will accept PKCS#1 version 1.5 padding.
+The default value of '1' disallows such padding.
+If the value is '0', then such padding is accepted for legacy use.
 
 =item - A control for conditional self tests errors.
 
@@ -156,6 +163,10 @@ The default digest is SHA-256.
 
 Disable logging of the self tests.
 
+=item B<-no_pkcs1_v1_5_padding>
+
+Configure the module to reject PKCS#1 version 1.5 padding.
+
 =item B<-no_conditional_errors>
 
 Configure the module to not enter an error state if a conditional self test
@@ -218,8 +229,9 @@ test output and the options B<-corrupt_desc> and B<-corrupt_type> will be ignore
 For normal usage the base configuration file should use the default provider
 when generating the fips configuration file.
 
-The B<-self_test_oninstall> option was added and the
-B<-self_test_onload> option was made the default in OpenSSL 3.1.
+The B<-self_test_oninstall> and B<-no_pkcs1_v1_5_padding> options
+were added and the B<-self_test_onload> option was made the default in
+OpenSSL 3.1.
 
 The command and all remaining options were added in OpenSSL 3.0.
 
