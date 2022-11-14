@@ -40,5 +40,6 @@ print <<_____;
 activate = $activate
 conditional-errors = $conditional_errors
 security-checks = $security_checks
+pkcs1-15-padding = 1
 module-mac = $module_mac
 _____
