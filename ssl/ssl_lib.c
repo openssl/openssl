@@ -553,17 +553,18 @@ static int clear_record_layer(SSL_CONNECTION *s)
                                    SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION
                                                              : TLS_ANY_VERSION,
                                    OSSL_RECORD_DIRECTION_READ,
-                                   OSSL_RECORD_PROTECTION_LEVEL_NONE,
+                                   OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
                                    NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                   NID_undef, NULL, NULL);
+                                   NID_undef, NULL, NULL, NULL);
 
     ret &= ssl_set_new_record_layer(s,
                                     SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION
                                                               : TLS_ANY_VERSION,
                                     OSSL_RECORD_DIRECTION_WRITE,
-                                    OSSL_RECORD_PROTECTION_LEVEL_NONE,
+                                    OSSL_RECORD_PROTECTION_LEVEL_NONE, NULL, 0,
                                     NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                    NID_undef, NULL, NULL);
+                                    NID_undef, NULL, NULL, NULL);
+
     /* SSLfatal already called in the event of failure */
     return ret;
 }

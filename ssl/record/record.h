@@ -173,13 +173,15 @@ void ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr);
 int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
                                   char *file, int line);
 
-int ssl_set_new_record_layer(SSL_CONNECTION *s, int version, int direction,
-                             int level, unsigned char *key, size_t keylen,
+int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
+                             int direction, int level,
+                             unsigned char *secret, size_t secretlen,
+                             unsigned char *key, size_t keylen,
                              unsigned char *iv,  size_t ivlen,
                              unsigned char *mackey, size_t mackeylen,
                              const EVP_CIPHER *ciph, size_t taglen,
                              int mactype, const EVP_MD *md,
-                             const SSL_COMP *comp);
+                             const SSL_COMP *comp, const EVP_MD *kdfdigest);
 int ssl_set_record_protocol_version(SSL_CONNECTION *s, int vers);
 
 # define OSSL_FUNC_RLAYER_SKIP_EARLY_DATA        1
