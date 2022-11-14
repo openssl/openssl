@@ -17,7 +17,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/decoder.h>
-#include "EVP_Signature_demo.h"
+#include "EVP_EC_Signature_demo.h"
 
 /*
  * This demonstration will calculate and verify a signature of data using
