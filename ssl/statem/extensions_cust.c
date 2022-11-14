@@ -344,16 +344,15 @@ int SSL_CTX_has_client_custom_ext(const SSL_CTX *ctx, unsigned int ext_type)
                            NULL) != NULL;
 }
 
-static int add_custom_ext_intern(SSL_CTX *ctx, ENDPOINT role,
-                                 unsigned int ext_type,
-                                 unsigned int context,
-                                 SSL_custom_ext_add_cb_ex add_cb,
-                                 SSL_custom_ext_free_cb_ex free_cb,
-                                 void *add_arg,
-                                 SSL_custom_ext_parse_cb_ex parse_cb,
-                                 void *parse_arg)
+int ossl_tls_add_custom_ext_intern(SSL_CTX *ctx, custom_ext_methods *exts,
+                                   ENDPOINT role, unsigned int ext_type,
+                                   unsigned int context,
+                                   SSL_custom_ext_add_cb_ex add_cb,
+                                   SSL_custom_ext_free_cb_ex free_cb,
+                                   void *add_arg,
+                                   SSL_custom_ext_parse_cb_ex parse_cb,
+                                   void *parse_arg)
 {
-    custom_ext_methods *exts = &ctx->cert->custext;
     custom_ext_method *meth, *tmp;
 
     /*
@@ -363,6 +362,9 @@ static int add_custom_ext_intern(SSL_CTX *ctx, ENDPOINT role,
     if (add_cb == NULL && free_cb != NULL)
         return 0;
 
+    if (exts == NULL)
+        exts = &ctx->cert->custext;
+
 #ifndef OPENSSL_NO_CT
     /*
      * We don't want applications registering callbacks for SCT extensions
@@ -371,6 +373,7 @@ static int add_custom_ext_intern(SSL_CTX *ctx, ENDPOINT role,
      */
     if (ext_type == TLSEXT_TYPE_signed_certificate_timestamp
             && (context & SSL_EXT_CLIENT_HELLO) != 0
+            && ctx != NULL
             && SSL_CTX_ct_is_enabled(ctx))
         return 0;
 #endif
@@ -435,13 +438,13 @@ static int add_old_custom_ext(SSL_CTX *ctx, ENDPOINT role,
     parse_cb_wrap->parse_arg = parse_arg;
     parse_cb_wrap->parse_cb = parse_cb;
 
-    ret = add_custom_ext_intern(ctx, role, ext_type,
-                                context,
-                                custom_ext_add_old_cb_wrap,
-                                custom_ext_free_old_cb_wrap,
-                                add_cb_wrap,
-                                custom_ext_parse_old_cb_wrap,
-                                parse_cb_wrap);
+    ret = ossl_tls_add_custom_ext_intern(ctx, NULL, role, ext_type,
+                                         context,
+                                         custom_ext_add_old_cb_wrap,
+                                         custom_ext_free_old_cb_wrap,
+                                         add_cb_wrap,
+                                         custom_ext_parse_old_cb_wrap,
+                                         parse_cb_wrap);
 
     if (!ret) {
         OPENSSL_free(add_cb_wrap);
@@ -487,8 +490,9 @@ int SSL_CTX_add_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
                            void *add_arg,
                            SSL_custom_ext_parse_cb_ex parse_cb, void *parse_arg)
 {
-    return add_custom_ext_intern(ctx, ENDPOINT_BOTH, ext_type, context, add_cb,
-                                 free_cb, add_arg, parse_cb, parse_arg);
+    return ossl_tls_add_custom_ext_intern(ctx, NULL, ENDPOINT_BOTH, ext_type,
+                                          context, add_cb, free_cb, add_arg,
+                                          parse_cb, parse_arg);
 }
 
 int SSL_extension_supported(unsigned int ext_type)
