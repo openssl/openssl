@@ -457,6 +457,11 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
     ctx->gmult = gcm_gmult_4bit_x86;
     ctx->ghash = gcm_ghash_4bit_x86;
     return;
+# else
+    /* x86_64 fallback defaults */
+    ctx->gmult = gcm_gmult_4bit;
+    ctx->ghash = gcm_ghash_4bit;
+    return;
 # endif
 #elif defined(GHASH_ASM_ARM)
     /* ARM defaults */
