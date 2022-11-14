@@ -165,7 +165,9 @@ Disable logging of the self tests.
 
 =item B<-no_pkcs1_v1_5_padding>
 
-Configure the module to reject PKCS#1 version 1.5 padding.
+Configure the module to reject PKCS#1 version 1.5 padding for asymmetric
+encryption and decryption.  Sign and verify operations are still permitted to
+use this padding mode.
 
 =item B<-no_conditional_errors>
 
