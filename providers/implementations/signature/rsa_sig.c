@@ -235,6 +235,10 @@ static unsigned char *rsa_generate_signature_aid(PROV_RSA_CTX *ctx,
 
     switch (ctx->pad_mode) {
     case RSA_PKCS1_PADDING:
+        if (!ossl_prov_has_pkcs1_v15_padding(ctx->libctx)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_PKCS1_15_PADDING_UNSUPPORTED);
+            goto cleanup;
+        }
         ret = ossl_DER_w_algorithmIdentifier_MDWithRSAEncryption(&pkt, -1,
                                                                  ctx->mdnid);
 
@@ -413,6 +417,10 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa,
 
     switch (RSA_test_flags(prsactx->rsa, RSA_FLAG_TYPE_MASK)) {
     case RSA_FLAG_TYPE_RSA:
+        if (!ossl_prov_has_pkcs1_v15_padding(prsactx->libctx)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_PKCS1_15_PADDING_UNSUPPORTED);
+            return 0;
+        }
         prsactx->pad_mode = RSA_PKCS1_PADDING;
         break;
     case RSA_FLAG_TYPE_RSASSAPSS:
@@ -579,6 +587,10 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
             {
                 unsigned int sltmp;
 
+                if (!ossl_prov_has_pkcs1_v15_padding(prsactx->libctx)) {
+                    ERR_raise(ERR_LIB_PROV, PROV_R_PKCS1_15_PADDING_UNSUPPORTED);
+                    return 0;
+                }
                 ret = RSA_sign(prsactx->mdnid, tbs, tbslen, sig, &sltmp,
                                prsactx->rsa);
                 if (ret <= 0) {
@@ -720,6 +732,10 @@ static int rsa_verify_recover(void *vprsactx,
             {
                 size_t sltmp;
 
+                if (!ossl_prov_has_pkcs1_v15_padding(prsactx->libctx)) {
+                    ERR_raise(ERR_LIB_PROV, PROV_R_PKCS1_15_PADDING_UNSUPPORTED);
+                    return 0;
+                }
                 ret = ossl_rsa_verify(prsactx->mdnid, NULL, 0, rout, &sltmp,
                                       sig, siglen, prsactx->rsa);
                 if (ret <= 0) {
@@ -766,6 +782,10 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
     if (prsactx->md != NULL) {
         switch (prsactx->pad_mode) {
         case RSA_PKCS1_PADDING:
+            if (!ossl_prov_has_pkcs1_v15_padding(prsactx->libctx)) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_PKCS1_15_PADDING_UNSUPPORTED);
+                return 0;
+            }
             if (!RSA_verify(prsactx->mdnid, tbs, tbslen, sig, siglen,
                             prsactx->rsa)) {
                 ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
@@ -1220,6 +1240,8 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
             break;
         case RSA_PKCS1_PADDING:
             err_extra_text = "PKCS#1 padding not allowed with RSA-PSS";
+            if (!ossl_prov_has_pkcs1_v15_padding(prsactx->libctx))
+                goto bad_pad;
             goto cont;
         case RSA_NO_PADDING:
             err_extra_text = "No padding not allowed with RSA-PSS";

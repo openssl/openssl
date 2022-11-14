@@ -43,6 +43,11 @@ significant.
 
 A version number for the fips install process. Should be 1.
 
+=item B<pkcs1-15-padding>
+
+This indicates if PKCS #1 version 1.5 padding is permitted or not.  A value of '1'
+will allow such padding, a value of '0' will not.
+
 =item B<conditional-errors>
 
 The FIPS module normally enters an internal error mode if any self test fails.
@@ -91,6 +96,7 @@ For example:
  install-version = 1
  conditional-errors = 1
  security-checks = 1
+ pkcs1-15-padding = 1
  module-mac = 41:D0:FA:C2:5D:41:75:CD:7D:C3:90:55:6F:A4:DC
  install-mac = FE:10:13:5A:D3:B4:C7:82:1B:1E:17:4C:AC:84:0C
  install-status = INSTALL_SELF_TEST_KATS_RUN
@@ -101,6 +107,8 @@ When using the FIPS provider, it is recommended that the
 B<config_diagnostics> option is enabled to prevent accidental use of
 non-FIPS validated algorithms via broken or mistaken configuration.
 See L<config(5)>.
+
+The B<pkcs1-15-padding> option was added in OpenSSL 3.1.
 
 =head1 SEE ALSO
 

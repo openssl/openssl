@@ -22,3 +22,6 @@ void ossl_set_error_state(const char *type);
 
 /* Return true if the module is in a usable condition */
 int ossl_prov_is_running(void);
+
+/* Return true if PKCS #1 version 1.5 padding is supported */
+int ossl_prov_has_pkcs1_v15_padding(OSSL_LIB_CTX *libctx);

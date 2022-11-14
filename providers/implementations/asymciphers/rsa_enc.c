@@ -110,6 +110,10 @@ static int rsa_init(void *vprsactx, void *vrsa, const OSSL_PARAM params[],
 
     switch (RSA_test_flags(prsactx->rsa, RSA_FLAG_TYPE_MASK)) {
     case RSA_FLAG_TYPE_RSA:
+        if (!ossl_prov_has_pkcs1_v15_padding(prsactx->libctx)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_PKCS1_15_PADDING_UNSUPPORTED);
+            return 0;
+        }
         prsactx->pad_mode = RSA_PKCS1_PADDING;
         break;
     default:
@@ -483,11 +487,17 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
          */
         if (pad_mode == RSA_PKCS1_PSS_PADDING)
             return 0;
+        if (pad_mode == RSA_PKCS1_PADDING
+                && !ossl_prov_has_pkcs1_v15_padding(prsactx->libctx)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_PKCS1_15_PADDING_UNSUPPORTED);
+            return 0;
+        }
         if (pad_mode == RSA_PKCS1_OAEP_PADDING && prsactx->oaep_md == NULL) {
             prsactx->oaep_md = EVP_MD_fetch(prsactx->libctx, "SHA1", mdprops);
             if (prsactx->oaep_md == NULL)
                 return 0;
         }
+
         prsactx->pad_mode = pad_mode;
     }
 

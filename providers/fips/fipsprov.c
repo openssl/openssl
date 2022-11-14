@@ -82,6 +82,8 @@ typedef struct fips_global_st {
     SELF_TEST_POST_PARAMS selftest_params;
     int fips_security_checks;
     const char *fips_security_check_option;
+    int pkcs1_15_padding;
+    const char *pkcs1_15_padding_option;
 } FIPS_GLOBAL;
 
 void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
@@ -92,6 +94,8 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
         return NULL;
     fgbl->fips_security_checks = 1;
     fgbl->fips_security_check_option = "1";
+    fgbl->pkcs1_15_padding = 0;
+    fgbl->pkcs1_15_padding_option = "0";
 
     return fgbl;
 }
@@ -120,7 +124,7 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
     * OSSL_PROV_PARAM_CORE_MODULE_FILENAME).
     * OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS is not a self test parameter.
     */
-    OSSL_PARAM core_params[8], *p = core_params;
+    OSSL_PARAM core_params[9], *p = core_params;
 
     *p++ = OSSL_PARAM_construct_utf8_ptr(
             OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
@@ -150,6 +154,10 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
             OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS,
             (char **)&fgbl->fips_security_check_option,
             sizeof(fgbl->fips_security_check_option));
+    *p++ = OSSL_PARAM_construct_utf8_ptr(
+            OSSL_PROV_FIPS_PARAM_PKCS1_15_PADDING,
+            (char **)&fgbl->pkcs1_15_padding_option,
+            sizeof(fgbl->pkcs1_15_padding_option));
     *p = OSSL_PARAM_construct_end();
 
     if (!c_get_params(fgbl->handle, core_params)) {
@@ -696,6 +704,11 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
         && strcmp(fgbl->fips_security_check_option, "0") == 0)
         fgbl->fips_security_checks = 0;
 
+    /* Disable the security check if it's disabled in the fips config file. */
+    if (fgbl->pkcs1_15_padding_option != NULL
+        && strcmp(fgbl->pkcs1_15_padding_option, "1") == 0)
+        fgbl->pkcs1_15_padding = 1;
+
     ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
 
     if (!SELF_TEST_post(&fgbl->selftest_params, 0)) {
@@ -889,6 +902,14 @@ int FIPS_security_check_enabled(OSSL_LIB_CTX *libctx)
                                               OSSL_LIB_CTX_FIPS_PROV_INDEX);
 
     return fgbl->fips_security_checks;
+}
+
+int ossl_prov_has_pkcs1_v15_padding(OSSL_LIB_CTX *libctx)
+{
+    FIPS_GLOBAL *fgbl = ossl_lib_ctx_get_data(libctx,
+                                              OSSL_LIB_CTX_FIPS_PROV_INDEX);
+
+    return fgbl->pkcs1_15_padding;
 }
 
 void OSSL_SELF_TEST_get_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK **cb,

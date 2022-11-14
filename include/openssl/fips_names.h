@@ -53,6 +53,12 @@ extern "C" {
  */
 # define OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS "security-checks"
 
+/*
+ * A boolean that determines if PKCS#1 version 1.5 padding is acceped
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_PKCS1_15_PADDING "pkcs1-15-padding"
+
 # ifdef __cplusplus
 }
 # endif
