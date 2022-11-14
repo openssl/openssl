@@ -2894,6 +2894,14 @@ custom_ext_method *custom_ext_find(const custom_ext_methods *exts,
 
 void custom_ext_init(custom_ext_methods *meths);
 
+int ossl_tls_add_custom_ext_intern(SSL_CTX *ctx, custom_ext_methods *exts,
+                                   ENDPOINT role, unsigned int ext_type,
+                                   unsigned int context,
+                                   SSL_custom_ext_add_cb_ex add_cb,
+                                   SSL_custom_ext_free_cb_ex free_cb,
+                                   void *add_arg,
+                                   SSL_custom_ext_parse_cb_ex parse_cb,
+                                   void *parse_arg);
 __owur int custom_ext_parse(SSL_CONNECTION *s, unsigned int context,
                             unsigned int ext_type,
                             const unsigned char *ext_data, size_t ext_size,
