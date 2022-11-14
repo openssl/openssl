@@ -24,12 +24,12 @@
 #define QUIC_RAISE_NORMAL_ERROR(qc, err)                        \
     quic_raise_normal_error((qc), (err))
 
-#define QUIC_RAISE_NON_NORMAL_ERROR(qc, reason, ...)            \
+#define QUIC_RAISE_NON_NORMAL_ERROR(qc, reason, msg)            \
     quic_raise_non_normal_error((qc),                           \
                                 OPENSSL_FILE, OPENSSL_LINE,     \
                                 OPENSSL_FUNC,                   \
                                 (reason),                       \
-                                __VA_ARGS__)
+                                (msg))
 
 static int quic_raise_normal_error(QUIC_CONNECTION *qc,
                                    int err);
