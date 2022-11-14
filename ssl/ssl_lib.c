@@ -4393,7 +4393,9 @@ int SSL_get_error(const SSL *s, int i)
     unsigned long l;
     BIO *bio;
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+#ifndef OPENSSL_NO_QUIC
     const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
+#endif
 
     if (i > 0)
         return SSL_ERROR_NONE;
@@ -4412,58 +4414,69 @@ int SSL_get_error(const SSL *s, int i)
             return SSL_ERROR_SSL;
     }
 
+#ifndef OPENSSL_NO_QUIC
     if (qc != NULL) {
         reason = ossl_quic_get_error(qc, i);
         if (reason != SSL_ERROR_NONE)
             return reason;
     }
+#endif
 
-    if (qc == NULL && SSL_want_read(s)) {
-        bio = SSL_get_rbio(s);
-        if (BIO_should_read(bio))
-            return SSL_ERROR_WANT_READ;
-        else if (BIO_should_write(bio))
+#ifndef OPENSSL_NO_QUIC
+    if (qc == NULL)
+#endif
+    {
+        if (SSL_want_read(s)) {
+            bio = SSL_get_rbio(s);
+            if (BIO_should_read(bio))
+                return SSL_ERROR_WANT_READ;
+            else if (BIO_should_write(bio))
+                /*
+                 * This one doesn't make too much sense ... We never try to
+                 * write to the rbio, and an application program where rbio and
+                 * wbio are separate couldn't even know what it should wait for.
+                 * However if we ever set s->rwstate incorrectly (so that we
+                 * have SSL_want_read(s) instead of SSL_want_write(s)) and rbio
+                 * and wbio *are* the same, this test works around that bug; so
+                 * it might be safer to keep it.
+                 */
+                return SSL_ERROR_WANT_WRITE;
+            else if (BIO_should_io_special(bio)) {
+                reason = BIO_get_retry_reason(bio);
+                if (reason == BIO_RR_CONNECT)
+                    return SSL_ERROR_WANT_CONNECT;
+                else if (reason == BIO_RR_ACCEPT)
+                    return SSL_ERROR_WANT_ACCEPT;
+                else
+                    return SSL_ERROR_SYSCALL; /* unknown */
+            }
+        }
+
+        if (qc == NULL && SSL_want_write(s)) {
             /*
-             * This one doesn't make too much sense ... We never try to write
-             * to the rbio, and an application program where rbio and wbio
-             * are separate couldn't even know what it should wait for.
-             * However if we ever set s->rwstate incorrectly (so that we have
-             * SSL_want_read(s) instead of SSL_want_write(s)) and rbio and
-             * wbio *are* the same, this test works around that bug; so it
-             * might be safer to keep it.
+             * Access wbio directly - in order to use the buffered bio if
+             * present
              */
-            return SSL_ERROR_WANT_WRITE;
-        else if (BIO_should_io_special(bio)) {
-            reason = BIO_get_retry_reason(bio);
-            if (reason == BIO_RR_CONNECT)
-                return SSL_ERROR_WANT_CONNECT;
-            else if (reason == BIO_RR_ACCEPT)
-                return SSL_ERROR_WANT_ACCEPT;
-            else
-                return SSL_ERROR_SYSCALL; /* unknown */
+            bio = sc->wbio;
+            if (BIO_should_write(bio))
+                return SSL_ERROR_WANT_WRITE;
+            else if (BIO_should_read(bio))
+                /*
+                 * See above (SSL_want_read(s) with BIO_should_write(bio))
+                 */
+                return SSL_ERROR_WANT_READ;
+            else if (BIO_should_io_special(bio)) {
+                reason = BIO_get_retry_reason(bio);
+                if (reason == BIO_RR_CONNECT)
+                    return SSL_ERROR_WANT_CONNECT;
+                else if (reason == BIO_RR_ACCEPT)
+                    return SSL_ERROR_WANT_ACCEPT;
+                else
+                    return SSL_ERROR_SYSCALL;
+            }
         }
     }
 
-    if (qc == NULL && SSL_want_write(s)) {
-        /* Access wbio directly - in order to use the buffered bio if present */
-        bio = sc->wbio;
-        if (BIO_should_write(bio))
-            return SSL_ERROR_WANT_WRITE;
-        else if (BIO_should_read(bio))
-            /*
-             * See above (SSL_want_read(s) with BIO_should_write(bio))
-             */
-            return SSL_ERROR_WANT_READ;
-        else if (BIO_should_io_special(bio)) {
-            reason = BIO_get_retry_reason(bio);
-            if (reason == BIO_RR_CONNECT)
-                return SSL_ERROR_WANT_CONNECT;
-            else if (reason == BIO_RR_ACCEPT)
-                return SSL_ERROR_WANT_ACCEPT;
-            else
-                return SSL_ERROR_SYSCALL;
-        }
-    }
     if (SSL_want_x509_lookup(s))
         return SSL_ERROR_WANT_X509_LOOKUP;
     if (SSL_want_retry_verify(s))
@@ -4498,10 +4511,12 @@ int SSL_do_handshake(SSL *s)
 {
     int ret = 1;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc != NULL)
         return ossl_quic_do_handshake(qc);
+#endif
 
     if (sc->handshake_func == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_CONNECTION_TYPE_NOT_SET);
@@ -4530,12 +4545,14 @@ int SSL_do_handshake(SSL *s)
 void SSL_set_accept_state(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc != NULL) {
         ossl_quic_set_accept_state(qc);
         return;
     }
+#endif
 
     sc->server = 1;
     sc->shutdown = 0;
@@ -4548,12 +4565,14 @@ void SSL_set_accept_state(SSL *s)
 void SSL_set_connect_state(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc != NULL) {
         ossl_quic_set_connect_state(qc);
         return;
     }
+#endif
 
     sc->server = 0;
     sc->shutdown = 0;
@@ -7125,7 +7144,7 @@ int SSL_get_blocking_mode(SSL *s)
 
     return ossl_quic_conn_get_blocking_mode(qc);
 #else
-    return 0;
+    return -1;
 #endif
 }
 
@@ -7139,6 +7158,6 @@ int SSL_set_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr)
 
     return ossl_quic_conn_set_initial_peer_addr(qc, peer_addr);
 #else
-    return 0;
+    return -1;
 #endif
 }
