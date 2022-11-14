@@ -431,7 +431,7 @@ static int test_param_bignum(int n)
 
     if (!TEST_true(OSSL_PARAM_set_BN(&param, b)))
         goto err;
-    le_copy(buf, bnbuf, len);
+    le_copy(buf, bnbuf, sizeof(bnbuf));
     if (!TEST_mem_eq(raw_values[n].value, len, buf, len))
         goto err;
     param.data_size = param.return_size;
