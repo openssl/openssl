@@ -1566,6 +1566,9 @@ static OSSL_TIME csm_determine_next_tick_deadline(QUIC_CONNECTION *qc)
     uint32_t pn_space;
 
     deadline = ossl_ackm_get_loss_detection_deadline(qc->ackm);
+    if (ossl_time_is_zero(deadline))
+        deadline = ossl_time_infinite();
+
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space)
         deadline = ossl_time_min(deadline,
                                  ossl_ackm_get_ack_deadline(qc->ackm, pn_space));
