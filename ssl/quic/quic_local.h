@@ -308,6 +308,12 @@ struct quic_conn_st {
     unsigned int                    conn_close_queued       : 1;
 
     /*
+     * Has the application called SSL_set_accept_state? We do not support this
+     * but track it here so we can reject a subsequent handshake call.
+     */
+    unsigned int                    as_server               : 1;
+
+    /*
      * This state tracks SSL_write all-or-nothing (AON) write semantics
      * emulation.
      *

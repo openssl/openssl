@@ -40,6 +40,10 @@ typedef struct quic_conn_st QUIC_CONNECTION;
 
 __owur QUIC_CONNECTION *ossl_quic_conn_from_ssl(SSL *ssl);
 
+int ossl_quic_do_handshake(QUIC_CONNECTION *qc);
+void ossl_quic_set_connect_state(QUIC_CONNECTION *qc);
+void ossl_quic_set_accept_state(QUIC_CONNECTION *qc);
+
 __owur int ossl_quic_tick(QUIC_CONNECTION *qc);
 __owur int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc, struct timeval *tv);
 __owur int ossl_quic_get_rpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *d);

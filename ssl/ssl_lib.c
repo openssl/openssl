@@ -4498,10 +4498,10 @@ int SSL_do_handshake(SSL *s)
 {
     int ret = 1;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    /* TODO(QUIC): Special handling for QUIC will be needed */
-    if (sc == NULL)
-        return -1;
+    if (qc != NULL)
+        return ossl_quic_do_handshake(qc);
 
     if (sc->handshake_func == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_CONNECTION_TYPE_NOT_SET);
@@ -4529,11 +4529,13 @@ int SSL_do_handshake(SSL *s)
 
 void SSL_set_accept_state(SSL *s)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    /* TODO(QUIC): Special handling for QUIC will be needed */
-    if (sc == NULL)
+    if (qc != NULL) {
+        ossl_quic_set_accept_state(qc);
         return;
+    }
 
     sc->server = 1;
     sc->shutdown = 0;
@@ -4545,11 +4547,13 @@ void SSL_set_accept_state(SSL *s)
 
 void SSL_set_connect_state(SSL *s)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
-    /* TODO(QUIC): Special handling for QUIC will be needed */
-    if (sc == NULL)
+    if (qc != NULL) {
+        ossl_quic_set_connect_state(qc);
         return;
+    }
 
     sc->server = 0;
     sc->shutdown = 0;
@@ -4618,8 +4622,11 @@ const char *ssl_protocol_to_string(int version)
 const char *SSL_get_version(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
 
-    /* TODO(QUIC): Should QUIC return QUIC or TLSv1.3? */
+    if (qc != NULL)
+        return "QUIC";
+
     if (sc == NULL)
         return NULL;
 

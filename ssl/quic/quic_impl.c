@@ -2364,6 +2364,9 @@ int ossl_quic_get_want_net_write(QUIC_CONNECTION *qc)
  * QUIC Front-End I/O API: Connection Lifecycle Operations
  * =======================================================
  *
+ *         SSL_do_handshake         => ossl_quic_do_handshake
+ *         SSL_set_connect_state    => ossl_quic_set_connect_state
+ *         SSL_set_accept_state     => ossl_quic_set_accept_state
  *         SSL_shutdown             => ossl_quic_shutdown
  *         SSL_ctrl                 => ossl_quic_ctrl
  *   (BIO/)SSL_connect              => ossl_quic_connect
@@ -2423,16 +2426,40 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
     }
 }
 
-/* SSL_connect
- * -----------
+/* SSL_set_connect_state
+ * ---------------------
  */
-struct quic_connect_wait_args {
+void ossl_quic_set_connect_state(QUIC_CONNECTION *qc)
+{
+    /* Cannot be changed after handshake started */
+    if (qc->state != QUIC_CONN_STATE_IDLE)
+        return;
+
+    qc->as_server = 0;
+}
+
+/* SSL_set_accept_state
+ * --------------------
+ */
+void ossl_quic_set_accept_state(QUIC_CONNECTION *qc)
+{
+    /* Cannot be changed after handshake started */
+    if (qc->state != QUIC_CONN_STATE_IDLE)
+        return;
+
+    qc->as_server = 1;
+}
+
+/* SSL_do_handshake
+ * ----------------
+ */
+struct quic_handshake_wait_args {
     QUIC_CONNECTION     *qc;
 };
 
-static int quic_connect_wait(void *arg)
+static int quic_handshake_wait(void *arg)
 {
-    struct quic_connect_wait_args *args = arg;
+    struct quic_handshake_wait_args *args = arg;
 
     if (args->qc->state != QUIC_CONN_STATE_ACTIVE)
         return -1;
@@ -2443,13 +2470,9 @@ static int quic_connect_wait(void *arg)
     return 0;
 }
 
-int ossl_quic_connect(SSL *s)
+int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
 {
     int ret;
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
-
-    if (!expect_quic_conn(qc))
-        return 0;
 
     if (is_term_any(qc))
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
@@ -2458,12 +2481,15 @@ int ossl_quic_connect(SSL *s)
         /* Peer address must have been set. */
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
 
+    if (qc->as_server)
+        /* TODO(QUIC): Server mode not currently supported */
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+
     /*
      * Start connection process. Note we may come here multiple times in
      * non-blocking mode, which is fine.
      */
-    ret = csm_connect(qc);
-    if (!ret)
+    if (!csm_connect(qc))
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
 
     if (qc->handshake_complete)
@@ -2472,11 +2498,11 @@ int ossl_quic_connect(SSL *s)
 
     if (blocking_mode(qc)) {
         /* In blocking mode, wait for the handshake to complete. */
-        struct quic_connect_wait_args args;
+        struct quic_handshake_wait_args args;
 
         args.qc     = qc;
 
-        ret = reactor_block_until_pred(&qc->rtor, quic_connect_wait, &args, 0);
+        ret = reactor_block_until_pred(&qc->rtor, quic_handshake_wait, &args, 0);
         if (qc->state != QUIC_CONN_STATE_ACTIVE)
             return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         else if (ret <= 0)
@@ -2490,6 +2516,23 @@ int ossl_quic_connect(SSL *s)
     }
 }
 
+/* SSL_connect
+ * -----------
+ */
+int ossl_quic_connect(SSL *s)
+{
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (!expect_quic_conn(qc))
+        return 0;
+
+    /* Ensure we are in connect state (no-op if non-idle). */
+    ossl_quic_set_connect_state(qc);
+
+    /* Begin or continue the handshake */
+    return ossl_quic_do_handshake(qc);
+}
+
 /* SSL_accept
  * ----------
  */
@@ -2500,13 +2543,12 @@ int ossl_quic_accept(SSL *s)
     if (!expect_quic_conn(qc))
         return 0;
 
-    if (is_term_any(qc))
-        return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+    /* Ensure we are in accept state (no-op if non-idle). */
+    ossl_quic_set_accept_state(qc);
 
-    /* Server mode not currently supported. */
-    return 0;
+    /* Begin or continue the handshake */
+    return ossl_quic_do_handshake(qc);
 }
-
 
 /*
  * QUIC Front-End I/O API: Steady-State Operations
