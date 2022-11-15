@@ -32,6 +32,7 @@ struct ossl_lib_ctx_st {
     void *provider_conf;
     void *bio_core;
     void *child_provider;
+    void *lb_strategy;
     OSSL_METHOD_STORE *decoder_store;
     OSSL_METHOD_STORE *encoder_store;
     OSSL_METHOD_STORE *store_loader_store;
@@ -185,6 +186,9 @@ static int context_init(OSSL_LIB_CTX *ctx)
     ctx->child_provider = ossl_child_prov_ctx_new(ctx);
     if (ctx->child_provider == NULL)
         goto err;
+    ctx->lb_strategy = ossl_lb_strategy_ctx_new(ctx);
+    if (ctx->lb_strategy == NULL)
+        goto err;
 #endif
 
     /* Everything depends on properties, so we also pre-initialise that */
@@ -320,6 +324,10 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
     if (ctx->child_provider != NULL) {
         ossl_child_prov_ctx_free(ctx->child_provider);
         ctx->child_provider = NULL;
+    }
+    if (ctx->lb_strategy != NULL) {
+        ossl_lb_strategy_ctx_free(ctx->lb_strategy);
+        ctx->lb_strategy = NULL;
     }
 #endif
 }
@@ -550,6 +558,8 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
         return ctx->store_loader_store;
     case OSSL_LIB_CTX_SELF_TEST_CB_INDEX:
         return ctx->self_test_cb;
+    case OSSL_LIB_CTX_LB_STRATEGY_INDEX:
+        return ctx->lb_strategy;
 #endif
 #ifndef OPENSSL_NO_THREAD_POOL
     case OSSL_LIB_CTX_THREAD_INDEX:
