@@ -1468,6 +1468,12 @@ static void csm_rx_handle_packet(QUIC_CONNECTION *qc)
         if (!qc->have_received_enc_pkt) {
             qc->init_scid = qc->qrx_pkt->hdr->src_conn_id;
             qc->have_received_enc_pkt = 1;
+
+            /*
+             * We change to using the SCID in the first Initial packet as the
+             * DCID.
+             */
+            ossl_quic_tx_packetiser_set_cur_dcid(qc->txp, &qc->init_scid);
         }
 
         enc_level = ossl_quic_pkt_type_to_enc_level(qc->qrx_pkt->hdr->type);
