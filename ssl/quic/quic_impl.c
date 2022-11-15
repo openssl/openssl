@@ -67,6 +67,7 @@ static void csm_on_terminating_timeout(QUIC_CONNECTION *qc);
 static void csm_update_idle(QUIC_CONNECTION *qc);
 static void csm_on_idle_timeout(QUIC_CONNECTION *qc);
 static void aon_write_finish(QUIC_CONNECTION *qc);
+static int rx_early_validate(QUIC_PN pn, int pn_space, void *arg);
 
 static ossl_inline int expect_quic_conn(const QUIC_CONNECTION *qc)
 {
@@ -671,6 +672,13 @@ static int csm_init(QUIC_CONNECTION *qc)
     qrx_args.max_deferred       = 32;
 
     if ((qc->qrx = ossl_qrx_new(&qrx_args)) == NULL) {
+        csm_cleanup(qc);
+        return 0;
+    }
+
+    if (!ossl_qrx_set_early_validation_cb(qc->qrx,
+                                          rx_early_validate,
+                                          qc)) {
         csm_cleanup(qc);
         return 0;
     }
@@ -1408,6 +1416,21 @@ static int csm_retry(QUIC_CONNECTION *qc,
                      size_t retry_token_len,
                      const QUIC_CONN_ID *retry_scid);
 
+/*
+ * Called by QRX to determine if a packet is potentially invalid before trying
+ * to decrypt it.
+ */
+static int rx_early_validate(QUIC_PN pn, int pn_space, void *arg)
+{
+    QUIC_CONNECTION *qc = arg;
+
+    /* Potential duplicates should not be processed. */
+    if (!ossl_ackm_is_rx_pn_processable(qc->ackm, pn, pn_space))
+        return 0;
+
+    return 1;
+}
+
 static int csm_rx(QUIC_CONNECTION *qc)
 {
     int handled_any = 0;
@@ -1517,6 +1540,10 @@ static void csm_rx_handle_packet(QUIC_CONNECTION *qc)
 
         case QUIC_PKT_TYPE_VERSION_NEG:
             /* TODO(QUIC): Implement version negotiation */
+            break;
+
+        case QUIC_PKT_TYPE_0RTT:
+            /* Clients should never receive 0-RTT packets */
             break;
 
         default:
