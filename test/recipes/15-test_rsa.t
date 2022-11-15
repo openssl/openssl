@@ -32,7 +32,10 @@ sub run_rsa_tests {
     ok(run(app([ 'openssl', $cmd, '-check', '-in', srctop_file('test', 'testrsa.pem'), '-noout'])),
            "$cmd -check" );
 
-    ok(run(test(['rsa_x931_test'])), "RSA X931 test");
+    SKIP: {
+        skip "Skipping Deprecated rsa_x931_test", 1 if disabled("deprecated-3.0");
+        ok(run(test(['rsa_x931_test'])), "RSA X931 test");
+    };
 
     SKIP: {
          skip "Skipping $cmd conversion test", 3
