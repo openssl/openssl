@@ -67,7 +67,7 @@ static int generate_dsa_params(OSSL_LIB_CTX *libctx,
 
     result = 1;
 end:
-    if(!result) {
+    if(result != 1) {
         EVP_PKEY_free(params);
         params = NULL;
     }
@@ -103,7 +103,7 @@ static int generate_dsa_key(OSSL_LIB_CTX *libctx,
 
     result = 1;
 end:
-    if(!result) {
+    if(result != 1) {
         EVP_PKEY_free(pkey);
         pkey = NULL;
     }
@@ -131,7 +131,7 @@ static int extract_public_key(const EVP_PKEY *pkey,
 
     result = 1;
 end:
-    if (!result) {
+    if (result != 1) {
         OSSL_PARAM_free(public_key);
         public_key = NULL;
     }
@@ -151,7 +151,7 @@ static int extract_keypair(const EVP_PKEY *pkey,
 
     result = 1;
 end:
-    if (!result) {
+    if (result != 1) {
         OSSL_PARAM_free(keypair);
         keypair = NULL;
     }
@@ -186,28 +186,30 @@ static int demo_sign(OSSL_LIB_CTX *libctx,
     if (EVP_DigestSignInit_ex(ctx, NULL, DIGEST, libctx, NULL, pkey, NULL) != 1)
         goto end;
 
-   if (EVP_DigestSignUpdate(ctx, hamlet_1, sizeof(hamlet_1)) != 1)
+    if (EVP_DigestSignUpdate(ctx, hamlet_1, sizeof(hamlet_1)) != 1)
         goto end;
 
-   if (EVP_DigestSignUpdate(ctx, hamlet_2, sizeof(hamlet_2)) != 1)
+    if (EVP_DigestSignUpdate(ctx, hamlet_2, sizeof(hamlet_2)) != 1)
         goto end;
 
+    /* Calculate the signature size */
     if (EVP_DigestSignFinal(ctx, NULL, &sig_len) != 1)
         goto end;
-    if (sig_len <= 0)
+    if (sig_len == 0)
         goto end;
 
     sig_value = OPENSSL_malloc(sig_len);
     if (sig_value == NULL)
         goto end;
 
+    /* Calculate the signature */
     if (EVP_DigestSignFinal(ctx, sig_value, &sig_len) != 1)
         goto end;
 
     result = 1;
 end:
-    EVP_MD_CTX_destroy(ctx);
-    if (!result) {
+    EVP_MD_CTX_free(ctx);
+    if (result != 1) {
         OPENSSL_free(sig_value);
         sig_len = 0;
         sig_value = NULL;
@@ -260,7 +262,7 @@ static int demo_verify(OSSL_LIB_CTX *libctx,
 end:
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(pkey_ctx);
-    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_free(ctx);
     return result;
 }
 
@@ -277,27 +279,29 @@ int main(void)
 
     libctx = OSSL_LIB_CTX_new();
 
-    if (!generate_dsa_params(libctx, &params))
+    if (generate_dsa_params(libctx, &params) != 1)
         goto end;
 
-    if (!generate_dsa_key(libctx, params, &pkey))
+    if (generate_dsa_key(libctx, params, &pkey) != 1)
         goto end;
 
-    if (!extract_public_key(pkey, &public_key))
+    if (extract_public_key(pkey, &public_key) != 1)
         goto end;
 
-    if (!extract_keypair(pkey, &keypair))
+    if (extract_keypair(pkey, &keypair) != 1)
         goto end;
 
-    if (!demo_sign(libctx, &sig_len, &sig_value, keypair))
+    /* The signer signs with his private key, and distributes his public key */
+    if (demo_sign(libctx, &sig_len, &sig_value, keypair) != 1)
         goto end;
 
-    if (!demo_verify(libctx, sig_len, sig_value, public_key))
+    /* A verifier uses the signers public key to verify the signature */
+    if (demo_verify(libctx, sig_len, sig_value, public_key) != 1)
         goto end;
 
     result = 1;
 end:
-    if (!result)
+    if (result != 1)
         ERR_print_errors_fp(stderr);
 
     OPENSSL_free(sig_value);
