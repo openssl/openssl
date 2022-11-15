@@ -14,8 +14,10 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/ec.h>
+#include <openssl/provider.h>
 #ifndef FIPS_MODULE
 # include <openssl/engine.h>
+# include "prov/provider_ctx.h"
 #endif
 #include <openssl/params.h>
 #include <openssl/core_names.h>
@@ -276,6 +278,32 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
         ctx->fetched_digest = provmd;
 #endif
     }
+
+#if !defined(FIPS_MODULE)
+    /*
+     * in case of a loadbalance provider, fetch a real implementation from
+     * the underneath load_balancer libctx
+     */
+    if (ossl_provider_is_load_balancer(type->prov)) {
+        /* fetch from the child load_balancer libctx */
+        PROV_CTX *provctx;
+        EVP_MD *lbmd;
+
+        provctx = (PROV_CTX *)OSSL_PROVIDER_get0_provider_ctx(type->prov);
+        lbmd = EVP_MD_fetch(provctx->libctx,
+                            type->type != NID_undef ?
+                                OBJ_nid2sn(type->type) : "NULL",
+                            NULL);
+        if (lbmd == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        type = lbmd;
+        EVP_MD_free(ctx->fetched_digest);
+        ctx->fetched_digest = lbmd;
+        ctx->reqdigest = type;
+    }
+#endif
 
     if (type->prov != NULL && ctx->fetched_digest != type) {
         if (!EVP_MD_up_ref((EVP_MD *)type)) {
