@@ -692,7 +692,6 @@ static int IPAddressFamily_cmp(const IPAddressFamily *const *a_,
     const ASN1_OCTET_STRING *a = (*a_)->addressFamily;
     const ASN1_OCTET_STRING *b = (*b_)->addressFamily;
     int len = ((a->length <= b->length) ? a->length : b->length);
-
     int cmp = memcmp(a->data, b->data, len);
 
     return cmp ? cmp : a->length - b->length;
