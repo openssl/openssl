@@ -816,6 +816,7 @@ sub parse {
 
     foreach my $line (@_) {
         # split tries to be smart when a string ends with the thing we split on
+        $line =~ s/\r\n/\n/; # gracefully handle DOS-style end-of-line
         $line .= "\n" unless $line =~ m|\R$|;
         $line .= "#";
 
