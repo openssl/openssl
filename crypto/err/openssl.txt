@@ -1271,7 +1271,7 @@ SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE:158:\
 	at least (D)TLS 1.2 needed in Suite B mode
 SSL_R_BAD_CHANGE_CIPHER_SPEC:103:bad change cipher spec
 SSL_R_BAD_CIPHER:186:bad cipher
-SSL_R_BAD_COMPRESSION_ALGORITHM:327:bad compression algorithm
+SSL_R_BAD_COMPRESSION_ALGORITHM:326:bad compression algorithm
 SSL_R_BAD_DATA:390:bad data
 SSL_R_BAD_DATA_RETURNED_BY_CALLBACK:106:bad data returned by callback
 SSL_R_BAD_DECOMPRESSION:107:bad decompression
@@ -1490,7 +1490,7 @@ SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING:342:\
 	required compression algorithm missing
 SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING:345:scsv received when renegotiating
 SSL_R_SCT_VERIFICATION_FAILED:208:sct verification failed
-SSL_R_SEQUENCE_CTR_WRAPPED:326:sequence ctr wrapped
+SSL_R_SEQUENCE_CTR_WRAPPED:327:sequence ctr wrapped
 SSL_R_SERVERHELLO_TLSEXT:275:serverhello tlsext
 SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED:277:session id context uninitialized
 SSL_R_SHUTDOWN_WHILE_IN_INIT:407:shutdown while in init
