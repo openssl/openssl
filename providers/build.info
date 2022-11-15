@@ -67,6 +67,17 @@ DEPEND[$LIBLEGACY]=$LIBCOMMON
 DEPEND[$LIBDEFAULT]=$LIBCOMMON
 
 #
+# load-balance provider stuff
+#
+# Currently, load-balance provider is built in, it means that libcrypto must
+# include all the object files that are needed (we do that indirectly,
+# by using the appropriate libraries as source).  Note that for shared
+# libraries, SOURCEd libraries are considered as if they were specified
+# with DEPEND.
+$LBGOAL=../libcrypto
+SOURCE[$LBGOAL]=lbprov.c
+
+#
 # Default provider stuff
 #
 # Because the default provider is built in, it means that libcrypto must
