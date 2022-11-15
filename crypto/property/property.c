@@ -640,6 +640,15 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
         return 0;
     }
 
+    /* does this belong to a load_balancer libctx and fetching from it succeed? */
+    if ((ossl_lib_ctx_is_load_balancer(store->ctx))
+        && ((impl = load_balancer_fetch(store->ctx, alg->impls, nid)) != NULL)
+        && (prov == NULL || impl->provider == prov)) {
+        best_impl = impl;
+        ret = 1;
+        goto fin;
+    }
+
     if (prop_query != NULL)
         p2 = pq = ossl_parse_query(store->ctx, prop_query, 0);
     plp = ossl_ctx_global_properties(store->ctx, 0);
@@ -822,6 +831,7 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
 {
     ALGORITHM *alg;
     QUERY elem, *r;
+    IMPLEMENTATION *impl;
     int res = 0;
 
     if (nid <= 0 || store == NULL || prop_query == NULL)
@@ -832,6 +842,17 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     alg = ossl_method_store_retrieve(store, nid);
     if (alg == NULL)
         goto err;
+
+    /* does this belong to a load balancer libctx and fetching from it succeed? */
+    if ((ossl_lib_ctx_is_load_balancer(store->ctx))
+        && ((impl = load_balancer_fetch(store->ctx, alg->impls, nid)) != NULL)
+        && (prov == NULL || impl->provider == prov)
+        && (ossl_method_up_ref(&impl->method))) {
+        *method = impl->method.method;
+        res = 1;
+        ossl_property_unlock(store);
+        return res;
+    }
 
     elem.query = prop_query;
     elem.provider = prov;
