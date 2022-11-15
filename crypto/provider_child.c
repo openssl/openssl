@@ -15,6 +15,7 @@
 #include <openssl/evp.h>
 #include "internal/provider.h"
 #include "internal/cryptlib.h"
+#include "internal/core.h"
 #include "crypto/evp.h"
 #include "crypto/context.h"
 
@@ -32,6 +33,7 @@ struct child_prov_globals {
     OSSL_FUNC_provider_get0_dispatch_fn *c_prov_get0_dispatch;
     OSSL_FUNC_provider_up_ref_fn *c_prov_up_ref;
     OSSL_FUNC_provider_free_fn *c_prov_free;
+    OSSL_FUNC_provider_is_load_balancer_fn *c_prov_is_load_balancer;
 };
 
 void *ossl_child_prov_ctx_new(OSSL_LIB_CTX *libctx)
@@ -105,6 +107,22 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
         return 0;
 
     provname = gbl->c_prov_name(prov);
+
+    /*
+     * skip the creation of a child for the loadbalance provider itself
+     * because no implementation in the loadbalance provider is real, we don't
+     * want to them to be fetched.
+     */
+    if ((gbl->c_prov_is_load_balancer != NULL) &&
+        (gbl->c_prov_is_load_balancer(prov)) &&
+        ossl_lib_ctx_is_load_balancer(ctx)) {
+        /*
+         * mark as a succcess, otherwise
+         * ossl_provider_register_child_cb() fails
+         */
+        ret = 1;
+        goto err;   /* to unlock gbl->lock */
+    }
 
     /*
      * We're operating under a lock so we can store the "current" provider in
@@ -231,6 +249,9 @@ int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
             break;
         case OSSL_FUNC_PROVIDER_FREE:
             gbl->c_prov_free = OSSL_FUNC_provider_free(in);
+            break;
+        case OSSL_FUNC_PROVIDER_IS_LOAD_BALANCER:
+            gbl->c_prov_is_load_balancer = OSSL_FUNC_provider_is_load_balancer(in);
             break;
         default:
             /* Just ignore anything we don't understand */

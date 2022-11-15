@@ -68,4 +68,5 @@ __owur int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx);
 __owur int ossl_lib_ctx_read_lock(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_unlock(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx);
+int ossl_lib_ctx_is_load_balancer(OSSL_LIB_CTX *ctx);
 #endif

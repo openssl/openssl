@@ -789,6 +789,34 @@ static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
         tsan_add(&global_seed, state.seed);
 }
 
+int ossl_load_balancer_init(OSSL_LIB_CTX *ctx, int strategy)
+{
+    LB_GLOBAL *lgbl;
+    void *status;
+
+    /* initialize strategy */
+    lgbl = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_LB_STRATEGY_INDEX);
+    if (lgbl == NULL)
+        return 0;
+
+    lgbl->strategy = strategy;
+    switch (lgbl->strategy) {
+    case LB_STRATEGY_ROUND_ROBIN:
+        if ((status = lb_sched_round_robin_new_status()) == NULL)
+            return 0;
+        lgbl->strategy_status = status;
+        return 1;
+    #if 0  /* to-be-added */
+    case LB_STRATEGY_PRIORITY:
+    case LB_STRATEGY_FREE_BANDWIDTH:
+    case LB_STRATEGY_PACKET_SIZE:
+    #endif
+    default:
+        return 0;
+    }
+    return 0;
+}
+
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
                                 int nid, const char *prop_query, void **method)
 {

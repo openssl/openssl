@@ -96,4 +96,5 @@ size_t ossl_property_list_to_string(OSSL_LIB_CTX *ctx,
 int ossl_global_properties_no_mirrored(OSSL_LIB_CTX *libctx);
 void ossl_global_properties_stop_mirroring(OSSL_LIB_CTX *libctx);
 
+int ossl_load_balancer_init(OSSL_LIB_CTX *ctx, int strategy);
 #endif

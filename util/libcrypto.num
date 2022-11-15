@@ -5512,3 +5512,4 @@ BIO_get_wpoll_descriptor                ?	3_2_0	EXIST::FUNCTION:
 ASN1_item_unpack_ex                     ?	3_2_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get1_cert_ex             ?	3_2_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get1_crl_ex              ?	3_2_0	EXIST::FUNCTION:
+OSSL_LIB_CTX_new_load_balancer          ?	3_2_0	EXIST::FUNCTION:

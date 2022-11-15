@@ -524,6 +524,9 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE *handle,
                                              const OSSL_DISPATCH *in);
 OSSL_LIB_CTX *OSSL_LIB_CTX_new_child(const OSSL_CORE_HANDLE *handle,
                                      const OSSL_DISPATCH *in);
+OSSL_LIB_CTX *OSSL_LIB_CTX_new_load_balancer(const OSSL_CORE_HANDLE *handle,
+                                             const OSSL_DISPATCH *in,
+                                             int strategy);
 int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file);
 void OSSL_LIB_CTX_free(OSSL_LIB_CTX *);
 OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void);
