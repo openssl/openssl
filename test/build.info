@@ -890,6 +890,13 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[rsa_sp800_56b_test]=.. ../include ../crypto/rsa ../apps/include
     DEPEND[rsa_sp800_56b_test]=../libcrypto.a libtestutil.a
 
+    IF[{- !$disabled{'deprecated-3.0'} -}]
+      PROGRAMS{noinst}=rsa_x931_test
+      SOURCE[rsa_x931_test]=rsa_x931_test.c
+      INCLUDE[rsa_x931_test]=.. ../include ../apps/include
+      DEPEND[rsa_x931_test]=../libcrypto.a libtestutil.a
+    ENDIF
+
     SOURCE[bn_internal_test]=bn_internal_test.c
     INCLUDE[bn_internal_test]=.. ../include ../crypto/bn ../apps/include
     DEPEND[bn_internal_test]=../libcrypto.a libtestutil.a
