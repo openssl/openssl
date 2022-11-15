@@ -946,7 +946,7 @@ int ec_validate(const void *keydata, int selection, int checktype)
 
         if ((flags & EC_FLAG_CHECK_NAMED_GROUP) != 0)
             ok = ok && EC_GROUP_check_named_curve(EC_KEY_get0_group(eck),
-                           (flags & EC_FLAG_CHECK_NAMED_GROUP_NIST) != 0, ctx);
+                           (flags & EC_FLAG_CHECK_NAMED_GROUP_NIST) != 0, ctx) > 0;
         else
             ok = ok && EC_GROUP_check(EC_KEY_get0_group(eck), ctx);
     }
