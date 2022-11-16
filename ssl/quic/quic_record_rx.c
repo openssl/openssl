@@ -41,8 +41,8 @@ static ossl_inline int pkt_is_marked(const uint64_t *bitf, size_t pkt_idx)
 typedef struct rxe_st RXE;
 
 struct rxe_st {
-    OSSL_LIST_MEMBER(rxe, RXE);
     OSSL_QRX_PKT        pkt;
+    OSSL_LIST_MEMBER(rxe, RXE);
     size_t              data_len, alloc_len, refcount;
 
     /* Extra fields for per-packet information. */
@@ -179,6 +179,7 @@ static void qrx_cleanup_rxl(RXE_LIST *l)
 
     for (e = ossl_list_rxe_head(l); e != NULL; e = enext) {
         enext = ossl_list_rxe_next(e);
+        assert(e->refcount == 0);
         ossl_list_rxe_remove(l, e);
         OPENSSL_free(e);
     }
@@ -385,12 +386,13 @@ static RXE *qrx_resize_rxe(RXE_LIST *rxl, RXE *rxe, size_t n)
      * data.
      */
     rxe2 = OPENSSL_realloc(rxe, sizeof(RXE) + n);
-    if (rxe2 == NULL || rxe == rxe2) {
+    if (rxe2 == NULL) {
+        /* Resize failed, restore old allocation. */
         if (p == NULL)
             ossl_list_rxe_insert_head(rxl, rxe);
         else
             ossl_list_rxe_insert_after(rxl, p, rxe);
-        return rxe2;
+        return rxe;
     }
 
     if (p == NULL)
