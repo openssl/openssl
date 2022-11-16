@@ -30,8 +30,8 @@ I<a> equals 0, 1, I<w>, or E<verbar>I<w>E<verbar> respectively.
 BN_is_odd() tests if I<a> is odd.
 
 BN_are_coprime() determines if B<a> and B<b> are coprime.
-B<ctx> is used internally for storing temporary variables. It may be NULL.
-The values of B<a> and B<b> must not be NULL.
+B<ctx> is used internally for storing temporary variables.
+The values of B<a> and B<b> and B<ctx> must not be NULL.
 
 =head1 RETURN VALUES
 

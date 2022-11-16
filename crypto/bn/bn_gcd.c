@@ -548,17 +548,20 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 int BN_are_coprime(BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
     int ret = 0;
-    BIGNUM *tmp = BN_new();
+    BIGNUM *tmp;
 
+    BN_CTX_start(ctx);
+    tmp = BN_CTX_get(ctx);
     if (tmp == NULL)
-        return 0;
+        goto end;
 
     ERR_set_mark();
     BN_set_flags(a, BN_FLG_CONSTTIME);
     ret = (BN_mod_inverse(tmp, a, b, ctx) != NULL);
     /* Clear any errors (an error is returned if there is no inverse) */
     ERR_pop_to_mark();
-    BN_free(tmp);
+end:
+    BN_CTX_end(ctx);
     return ret;
 }
 

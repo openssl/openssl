@@ -2732,14 +2732,10 @@ static int test_coprime(void)
           && TEST_ptr(b = BN_new())
           && TEST_true(BN_set_word(a, 66))
           && TEST_true(BN_set_word(b, 99))
-          && TEST_int_eq(BN_are_coprime(a, b, NULL), 0)
           && TEST_int_eq(BN_are_coprime(a, b, ctx), 0)
-          && TEST_int_eq(BN_are_coprime(b, a, NULL), 0)
           && TEST_int_eq(BN_are_coprime(b, a, ctx), 0)
           && TEST_true(BN_set_word(a, 67))
-          && TEST_int_eq(BN_are_coprime(a, b, NULL), 1)
           && TEST_int_eq(BN_are_coprime(a, b, ctx), 1)
-          && TEST_int_eq(BN_are_coprime(b, a, NULL), 1)
           && TEST_int_eq(BN_are_coprime(b, a, ctx), 1);
     BN_free(a);
     BN_free(b);
