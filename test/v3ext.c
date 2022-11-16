@@ -295,7 +295,7 @@ static int test_addr_fam_len(void)
     if (!ASN1_OCTET_STRING_set(f1->addressFamily, key, keylen))
         goto end;
 
-    /* Mark this as inheritance so we skip some of the is_cananize checks */
+    /* Mark this as inheritance so we skip some of the is_canonize checks */
     f1->ipAddressChoice->type = IPAddressChoice_inherit;
     if (!sk_IPAddressFamily_push(addr, f1))
         goto end;
