@@ -124,8 +124,6 @@ int ossl_crypto_thread_clean(void *vhandle)
 
 #endif
 
-#if defined(OPENSSL_THREADS)
-
 void *ossl_threads_ctx_new(OSSL_LIB_CTX *ctx)
 {
     struct openssl_threads_st *t = OPENSSL_zalloc(sizeof(*t));
@@ -157,5 +155,3 @@ void ossl_threads_ctx_free(void *vdata)
     ossl_crypto_condvar_free(&t->cond_finished);
     OPENSSL_free(t);
 }
-
-#endif

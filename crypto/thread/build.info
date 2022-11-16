@@ -1,8 +1,12 @@
 LIBS=../../libcrypto
 
-$THREADS=\
+IF[{- !$disabled{'thread-pool'} -}]
+  $THREADS=\
         api.c internal.c arch.c \
         arch/thread_win.c arch/thread_posix.c arch/thread_none.c
+ELSE
+  $THREADS=api.c
+ENDIF
 
 SOURCE[../../libcrypto]=$THREADS
 SOURCE[../../providers/libfips.a]=$THREADS

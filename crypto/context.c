@@ -174,7 +174,7 @@ static int context_init(OSSL_LIB_CTX *ctx)
         goto err;
 #endif
 
-#if defined(OPENSSL_THREADS)
+#ifndef OPENSSL_NO_THREAD_POOL
     ctx->threads = ossl_threads_ctx_new(ctx);
     if (ctx->threads == NULL)
         goto err;
@@ -308,7 +308,7 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
     }
 #endif
 
-#if defined(OPENSSL_THREADS)
+#ifndef OPENSSL_NO_THREAD_POOL
     if (ctx->threads != NULL) {
         ossl_threads_ctx_free(ctx->threads);
         ctx->threads = NULL;
@@ -551,7 +551,7 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
     case OSSL_LIB_CTX_SELF_TEST_CB_INDEX:
         return ctx->self_test_cb;
 #endif
-#if defined(OPENSSL_THREADS)
+#ifndef OPENSSL_NO_THREAD_POOL
     case OSSL_LIB_CTX_THREAD_INDEX:
         return ctx->threads;
 #endif
