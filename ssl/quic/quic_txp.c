@@ -1,3 +1,12 @@
+/*
+ * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 #include "internal/quic_txp.h"
 #include "internal/quic_fifd.h"
 #include "internal/quic_stream_map.h"
@@ -103,13 +112,13 @@ struct tx_helper {
      * if we need to. Once we know we will not need to append a PING frame, this
      * is set to 1.
      */
-    char reserve_allowed;
+    unsigned int reserve_allowed : 1;
     /*
      * Set to 1 if we have appended a STREAM frame with an implicit length. If
      * this happens we should never append another frame after that frame as it
      * cannot be validly encoded. This is just a safety check.
      */
-    char done_implicit;
+    unsigned int done_implicit : 1;
     struct {
         /*
          * The fields in this structure are valid if active is set, which means
@@ -117,7 +126,7 @@ struct tx_helper {
          */
         unsigned char   *data;
         WPACKET         wpkt;
-        char            active;
+        unsigned int    active : 1;
     } txn;
 };
 
@@ -529,52 +538,167 @@ struct archetype_data {
     unsigned int allow_force_ack_eliciting  : 1;
 };
 
+static const struct archetype_data archetypes[QUIC_ENC_LEVEL_NUM][TX_PACKETISER_ARCHETYPE_NUM] = {
+    /* EL 0(INITIAL) */
+    {
+        /* EL 0(INITIAL) - Archetype 0(NORMAL) */
+        {
+            /*allow_ack                       =*/ 1,
+            /*allow_ping                      =*/ 1,
+            /*allow_crypto                    =*/ 1,
+            /*allow_handshake_done            =*/ 0,
+            /*allow_path_challenge            =*/ 0,
+            /*allow_path_response             =*/ 0,
+            /*allow_new_conn_id               =*/ 0,
+            /*allow_retire_conn_id            =*/ 0,
+            /*allow_stream_rel                =*/ 0,
+            /*allow_conn_fc                   =*/ 0,
+            /*allow_conn_close                =*/ 1,
+            /*allow_cfq_other                 =*/ 1,
+            /*allow_new_token                 =*/ 0,
+            /*allow_force_ack_eliciting       =*/ 1,
+        },
+        /* EL 0(INITIAL) - Archetype 1(ACK_ONLY) */
+        {
+            /*allow_ack                       =*/ 1,
+            /*allow_ping                      =*/ 0,
+            /*allow_crypto                    =*/ 0,
+            /*allow_handshake_done            =*/ 0,
+            /*allow_path_challenge            =*/ 0,
+            /*allow_path_response             =*/ 0,
+            /*allow_new_conn_id               =*/ 0,
+            /*allow_retire_conn_id            =*/ 0,
+            /*allow_stream_rel                =*/ 0,
+            /*allow_conn_fc                   =*/ 0,
+            /*allow_conn_close                =*/ 0,
+            /*allow_cfq_other                 =*/ 0,
+            /*allow_new_token                 =*/ 0,
+            /*allow_force_ack_eliciting       =*/ 1,
+        },
+    },
+    /* EL 1(HANDSHAKE) */
+    {
+        /* EL 1(HANDSHAKE) - Archetype 0(NORMAL) */
+        {
+            /*allow_ack                       =*/ 1,
+            /*allow_ping                      =*/ 1,
+            /*allow_crypto                    =*/ 1,
+            /*allow_handshake_done            =*/ 0,
+            /*allow_path_challenge            =*/ 0,
+            /*allow_path_response             =*/ 0,
+            /*allow_new_conn_id               =*/ 0,
+            /*allow_retire_conn_id            =*/ 0,
+            /*allow_stream_rel                =*/ 0,
+            /*allow_conn_fc                   =*/ 0,
+            /*allow_conn_close                =*/ 1,
+            /*allow_cfq_other                 =*/ 1,
+            /*allow_new_token                 =*/ 0,
+            /*allow_force_ack_eliciting       =*/ 1,
+        },
+        /* EL 1(HANDSHAKE) - Archetype 1(ACK_ONLY) */
+        {
+            /*allow_ack                       =*/ 1,
+            /*allow_ping                      =*/ 0,
+            /*allow_crypto                    =*/ 0,
+            /*allow_handshake_done            =*/ 0,
+            /*allow_path_challenge            =*/ 0,
+            /*allow_path_response             =*/ 0,
+            /*allow_new_conn_id               =*/ 0,
+            /*allow_retire_conn_id            =*/ 0,
+            /*allow_stream_rel                =*/ 0,
+            /*allow_conn_fc                   =*/ 0,
+            /*allow_conn_close                =*/ 0,
+            /*allow_cfq_other                 =*/ 0,
+            /*allow_new_token                 =*/ 0,
+            /*allow_force_ack_eliciting       =*/ 1,
+        },
+    },
+    /* EL 2(0RTT) */
+    {
+        /* EL 2(0RTT) - Archetype 0(NORMAL) */
+        {
+            /*allow_ack                       =*/ 0,
+            /*allow_ping                      =*/ 1,
+            /*allow_crypto                    =*/ 0,
+            /*allow_handshake_done            =*/ 0,
+            /*allow_path_challenge            =*/ 0,
+            /*allow_path_response             =*/ 0,
+            /*allow_new_conn_id               =*/ 1,
+            /*allow_retire_conn_id            =*/ 1,
+            /*allow_stream_rel                =*/ 1,
+            /*allow_conn_fc                   =*/ 1,
+            /*allow_conn_close                =*/ 1,
+            /*allow_cfq_other                 =*/ 0,
+            /*allow_new_token                 =*/ 0,
+            /*allow_force_ack_eliciting       =*/ 0,
+        },
+        /* EL 2(0RTT) - Archetype 1(ACK_ONLY) */
+        {
+            /*allow_ack                       =*/ 0,
+            /*allow_ping                      =*/ 0,
+            /*allow_crypto                    =*/ 0,
+            /*allow_handshake_done            =*/ 0,
+            /*allow_path_challenge            =*/ 0,
+            /*allow_path_response             =*/ 0,
+            /*allow_new_conn_id               =*/ 0,
+            /*allow_retire_conn_id            =*/ 0,
+            /*allow_stream_rel                =*/ 0,
+            /*allow_conn_fc                   =*/ 0,
+            /*allow_conn_close                =*/ 0,
+            /*allow_cfq_other                 =*/ 0,
+            /*allow_new_token                 =*/ 0,
+            /*allow_force_ack_eliciting       =*/ 0,
+        },
+    },
+    /* EL 3(1RTT) */
+    {
+        /* EL 3(1RTT) - Archetype 0(NORMAL) */
+        {
+            /*allow_ack                       =*/ 1,
+            /*allow_ping                      =*/ 1,
+            /*allow_crypto                    =*/ 1,
+            /*allow_handshake_done            =*/ 1,
+            /*allow_path_challenge            =*/ 0,
+            /*allow_path_response             =*/ 0,
+            /*allow_new_conn_id               =*/ 1,
+            /*allow_retire_conn_id            =*/ 1,
+            /*allow_stream_rel                =*/ 1,
+            /*allow_conn_fc                   =*/ 1,
+            /*allow_conn_close                =*/ 1,
+            /*allow_cfq_other                 =*/ 1,
+            /*allow_new_token                 =*/ 1,
+            /*allow_force_ack_eliciting       =*/ 1,
+        },
+        /* EL 3(1RTT) - Archetype 1(ACK_ONLY) */
+        {
+            /*allow_ack                       =*/ 1,
+            /*allow_ping                      =*/ 0,
+            /*allow_crypto                    =*/ 0,
+            /*allow_handshake_done            =*/ 0,
+            /*allow_path_challenge            =*/ 0,
+            /*allow_path_response             =*/ 0,
+            /*allow_new_conn_id               =*/ 0,
+            /*allow_retire_conn_id            =*/ 0,
+            /*allow_stream_rel                =*/ 0,
+            /*allow_conn_fc                   =*/ 0,
+            /*allow_conn_close                =*/ 0,
+            /*allow_cfq_other                 =*/ 0,
+            /*allow_new_token                 =*/ 0,
+            /*allow_force_ack_eliciting       =*/ 1,
+        }
+    }
+};
+
 static int txp_get_archetype_data(uint32_t enc_level,
                                   uint32_t archetype,
                                   struct archetype_data *a)
 {
-    char is_0  = (enc_level == QUIC_ENC_LEVEL_0RTT);
-    char is_1  = (enc_level == QUIC_ENC_LEVEL_1RTT);
-    char is_01 = (is_0 || is_1);
-    char is_ih1
-        = (enc_level == QUIC_ENC_LEVEL_INITIAL
-           || enc_level == QUIC_ENC_LEVEL_HANDSHAKE
-           || is_1);
+    if (enc_level >= QUIC_ENC_LEVEL_NUM
+        || archetype >= TX_PACKETISER_ARCHETYPE_NUM)
+        return 0;
 
-    a->allow_ack                    = is_ih1;
-    a->allow_ping                   = 1;
-    a->allow_crypto                 = is_ih1;
-    a->allow_handshake_done         = is_1;
-    a->allow_path_challenge         = 0;
-    a->allow_path_response          = 0;
-    a->allow_new_conn_id            = is_01;
-    a->allow_retire_conn_id         = is_01;
-    a->allow_stream_rel             = is_01;
-    a->allow_conn_fc                = is_01;
-    a->allow_conn_close             = 1;
-    a->allow_cfq_other              = !is_0;
-    a->allow_new_token              = is_1;
-    a->allow_force_ack_eliciting    = !is_0;
-
-    switch (archetype) {
-        case TX_PACKETISER_ARCHETYPE_NORMAL:
-            break;
-        case TX_PACKETISER_ARCHETYPE_ACK_ONLY:
-            a->allow_ping           = 0;
-            a->allow_crypto         = 0;
-            a->allow_handshake_done = 0;
-            a->allow_new_conn_id    = 0;
-            a->allow_retire_conn_id = 0;
-            a->allow_stream_rel     = 0;
-            a->allow_conn_fc        = 0;
-            a->allow_conn_close     = 0;
-            a->allow_cfq_other      = 0;
-            a->allow_new_token      = 0;
-            break;
-        default:
-            return 0;
-    }
-
+    /* No need to avoid copying this as it should not exceed one int in size. */
+    *a = archetypes[enc_level][archetype];
     return 1;
 }
 

@@ -662,11 +662,11 @@ Thus, a fully generalised datagram construction methodology looks like this:
 - For each EL in E, construct a packet bearing in mind the Remaining CMPPL
   and append it to the datagram.
 
+  For the Initial EL, we attach a token if we have been given one.
+
   If Initial is in E, the total length of the resulting datagram must be at
   least 1200, but it is up to us to which packets of which ELs in E we add
   padding to.
-
-  For the Initial EL, we attach a token if we have been given one.
 
 - Send the datagram.
 

@@ -89,14 +89,14 @@ static ossl_unused ossl_inline int
 ossl_quic_frame_type_is_ack_eliciting(uint64_t frame_type)
 {
     switch (frame_type) {
-        case OSSL_QUIC_FRAME_TYPE_PADDING:
-        case OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN:
-        case OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN:
-        case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT:
-        case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP:
-            return 0;
-        default:
-            return 1;
+    case OSSL_QUIC_FRAME_TYPE_PADDING:
+    case OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN:
+    case OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN:
+    case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT:
+    case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP:
+        return 0;
+    default:
+        return 1;
     }
 }
 

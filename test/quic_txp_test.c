@@ -74,6 +74,7 @@ struct helper {
     } frame;
     OSSL_QUIC_ACK_RANGE     ack_ranges[16];
 };
+
 static void helper_cleanup(struct helper *h)
 {
     size_t i;
@@ -621,6 +622,7 @@ static const struct script_op script_9[] = {
 };
 
 /* 10. 1-RTT, STREAM, round robin */
+/* The data below is randomly generated data. */
 static const unsigned char stream_10a[1300] = {
     0x40, 0x0d, 0xb6, 0x0d, 0x25, 0x5f, 0xdd, 0xb9, 0x05, 0x79, 0xa8, 0xe3,
     0x79, 0x32, 0xb2, 0xa7, 0x30, 0x6d, 0x29, 0xf6, 0xba, 0x50, 0xbe, 0x83,
@@ -1116,290 +1118,290 @@ static int run_script(const struct script_op *script)
     have_helper = 1;
     for (op = script; op->opcode != OPK_END; ++op) {
         switch (op->opcode) {
-            case OPK_TXP_GENERATE:
-                if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0),
-                                 TX_PACKETISER_RES_SENT_PKT))
-                    goto err;
-
-                ossl_qtx_finish_dgram(h.args.qtx);
-                ossl_qtx_flush_net(h.args.qtx);
-                break;
-            case OPK_TXP_GENERATE_NONE:
-                if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0),
-                                 TX_PACKETISER_RES_NO_PKT))
-                    goto err;
-
-                break;
-            case OPK_RX_PKT:
-                ossl_quic_demux_pump(h.demux);
-                if (h.qrx_pkt.handle != NULL)
-                    ossl_qrx_release_pkt(h.qrx, h.qrx_pkt.handle);
-                if (!TEST_true(ossl_qrx_read_pkt(h.qrx, &h.qrx_pkt)))
-                    goto err;
-                if (!TEST_true(PACKET_buf_init(&h.pkt,
-                                               h.qrx_pkt.hdr->data,
-                                               h.qrx_pkt.hdr->len)))
-                    goto err;
-                h.frame_type = UINT64_MAX;
-                break;
-            case OPK_RX_PKT_NONE:
-                ossl_quic_demux_pump(h.demux);
-                if (!TEST_false(ossl_qrx_read_pkt(h.qrx, &h.qrx_pkt)))
-                    goto err;
-                h.frame_type = UINT64_MAX;
-                break;
-            case OPK_EXPECT_DGRAM_LEN:
-                if (!TEST_size_t_ge(h.qrx_pkt.datagram_len, (size_t)op->arg0)
-                    || !TEST_size_t_le(h.qrx_pkt.datagram_len, (size_t)op->arg1))
-                    goto err;
-                break;
-            case OPK_EXPECT_FRAME:
-                if (!TEST_uint64_t_eq(h.frame_type, op->arg0))
-                    goto err;
-                break;
-            case OPK_EXPECT_INITIAL_TOKEN:
-                if (!TEST_mem_eq(h.qrx_pkt.hdr->token, h.qrx_pkt.hdr->token_len,
-                                 op->buf, (size_t)op->arg0))
-                    goto err;
-                break;
-            case OPK_EXPECT_HDR:
-                if (!TEST_true(cmp_pkt_hdr(h.qrx_pkt.hdr, op->buf,
-                                           NULL, 0, 0)))
-                    goto err;
-                break;
-            case OPK_CHECK:
-                if (!TEST_true(op->check_func(&h)))
-                    goto err;
-                break;
-            case OPK_NEXT_FRAME:
-                skip_padding(&h);
-                if (!ossl_quic_wire_peek_frame_header(&h.pkt, &h.frame_type)) {
-                    h.frame_type = UINT64_MAX;
-                    break;
-                }
-
-                switch (h.frame_type) {
-                    case OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE:
-                        if (!TEST_true(ossl_quic_wire_decode_frame_handshake_done(&h.pkt)))
-                            goto err;
-                        break;
-                    case OSSL_QUIC_FRAME_TYPE_PING:
-                        if (!TEST_true(ossl_quic_wire_decode_frame_ping(&h.pkt)))
-                            goto err;
-                        break;
-                    case OSSL_QUIC_FRAME_TYPE_MAX_DATA:
-                        if (!TEST_true(ossl_quic_wire_decode_frame_max_data(&h.pkt,
-                                                                            &h.frame.max_data)))
-                            goto err;
-                        break;
-                    case OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID:
-                        if (!TEST_true(ossl_quic_wire_decode_frame_new_conn_id(&h.pkt,
-                                                                               &h.frame.new_conn_id)))
-                            goto err;
-                        break;
-                    case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
-                        if (!TEST_true(ossl_quic_wire_decode_frame_new_token(&h.pkt,
-                                                                             &h.frame.new_token.token,
-                                                                             &h.frame.new_token.token_len)))
-                            goto err;
-                        break;
-                    case OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN:
-                    case OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN:
-                        h.frame.ack.ack_ranges      = h.ack_ranges;
-                        h.frame.ack.num_ack_ranges  = OSSL_NELEM(h.ack_ranges);
-                        if (!TEST_true(ossl_quic_wire_decode_frame_ack(&h.pkt,
-                                                                       h.args.ack_delay_exponent,
-                                                                       &h.frame.ack,
-                                                                       NULL)))
-                            goto err;
-                        break;
-                    case OSSL_QUIC_FRAME_TYPE_CRYPTO:
-                        if (!TEST_true(ossl_quic_wire_decode_frame_crypto(&h.pkt, &h.frame.crypto)))
-                            goto err;
-                        break;
-
-                    case OSSL_QUIC_FRAME_TYPE_STREAM:
-                    case OSSL_QUIC_FRAME_TYPE_STREAM_FIN:
-                    case OSSL_QUIC_FRAME_TYPE_STREAM_LEN:
-                    case OSSL_QUIC_FRAME_TYPE_STREAM_LEN_FIN:
-                    case OSSL_QUIC_FRAME_TYPE_STREAM_OFF:
-                    case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_FIN:
-                    case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN:
-                    case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN_FIN:
-                        if (!TEST_true(ossl_quic_wire_decode_frame_stream(&h.pkt, &h.frame.stream)))
-                            goto err;
-                        break;
-
-                    case OSSL_QUIC_FRAME_TYPE_STOP_SENDING:
-                        if (!TEST_true(ossl_quic_wire_decode_frame_stop_sending(&h.pkt,
-                                                                                &h.frame.stop_sending)))
-                            goto err;
-                        break;
-
-                    case OSSL_QUIC_FRAME_TYPE_RESET_STREAM:
-                        if (!TEST_true(ossl_quic_wire_decode_frame_reset_stream(&h.pkt,
-                                                                                &h.frame.reset_stream)))
-                            goto err;
-                        break;
-
-                    case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT:
-                    case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP:
-                        if (!TEST_true(ossl_quic_wire_decode_frame_conn_close(&h.pkt,
-                                                                              &h.frame.conn_close)))
-                            goto err;
-                        break;
-
-                    default:
-                        TEST_error("unknown frame type");
-                        goto err;
-                }
-                break;
-            case OPK_EXPECT_NO_FRAME:
-                skip_padding(&h);
-                if (!TEST_size_t_eq(PACKET_remaining(&h.pkt), 0))
-                    goto err;
-                break;
-            case OPK_PROVIDE_SECRET:
-                if (!TEST_true(ossl_qtx_provide_secret(h.args.qtx,
-                                                       (uint32_t)op->arg0,
-                                                       (uint32_t)op->arg1,
-                                                       NULL, op->buf, op->buf_len)))
-                    goto err;
-                if (!TEST_true(ossl_qrx_provide_secret(h.qrx,
-                                                       (uint32_t)op->arg0,
-                                                       (uint32_t)op->arg1,
-                                                       NULL, op->buf, op->buf_len)))
-                    goto err;
-                break;
-            case OPK_DISCARD_EL:
-                if (!TEST_true(ossl_quic_tx_packetiser_discard_enc_level(h.txp,
-                                                                         (uint32_t)op->arg0)))
-                    goto err;
-                /*
-                 * We do not discard on the QRX here, the object is to test the
-                 * TXP so if the TXP does erroneously send at a discarded EL we
-                 * want to know about it.
-                 */
-                break;
-            case OPK_CRYPTO_SEND:
-                {
-                    size_t consumed = 0;
-
-                    if (!TEST_true(ossl_quic_sstream_append(h.args.crypto[op->arg0],
-                                                            op->buf, op->buf_len,
-                                                            &consumed)))
-                        goto err;
-
-                    if (!TEST_size_t_eq(consumed, op->buf_len))
-                        goto err;
-                }
-                break;
-            case OPK_STREAM_NEW:
-                {
-                    QUIC_STREAM *s;
-
-                    if (!TEST_ptr(s = ossl_quic_stream_map_alloc(h.args.qsm, op->arg0,
-                                                                 QUIC_STREAM_DIR_BIDI)))
-                        goto err;
-
-                    if (!TEST_ptr(s->sstream = ossl_quic_sstream_new(512 * 1024))
-                        || !TEST_true(ossl_quic_txfc_init(&s->txfc, &h.conn_txfc))
-                        || !TEST_true(ossl_quic_rxfc_init(&s->rxfc, &h.conn_rxfc,
-                                                          1 * 1024 * 1024,
-                                                          16 * 1024 * 1024,
-                                                          fake_now, NULL))) {
-                        ossl_quic_sstream_free(s->sstream);
-                        ossl_quic_stream_map_release(h.args.qsm, s);
-                        goto err;
-                    }
-                }
-                break;
-            case OPK_STREAM_SEND:
-                {
-                    QUIC_STREAM *s;
-                    size_t consumed = 0;
-
-                    if (!TEST_ptr(s = ossl_quic_stream_map_get_by_id(h.args.qsm,
-                                                                     op->arg0)))
-                        goto err;
-
-                    if (!TEST_true(ossl_quic_sstream_append(s->sstream, op->buf,
-                                                            op->buf_len, &consumed)))
-                        goto err;
-
-                    if (!TEST_size_t_eq(consumed, op->buf_len))
-                        goto err;
-
-                    ossl_quic_stream_map_update_state(h.args.qsm, s);
-                }
-                break;
-            case OPK_STREAM_FIN:
-                {
-                    QUIC_STREAM *s;
-
-                    if (!TEST_ptr(s = ossl_quic_stream_map_get_by_id(h.args.qsm,
-                                                                     op->arg0)))
-                        goto err;
-
-                    ossl_quic_sstream_fin(s->sstream);
-                }
-                break;
-            case OPK_STOP_SENDING:
-                {
-                    QUIC_STREAM *s;
-
-                    if (!TEST_ptr(s = ossl_quic_stream_map_get_by_id(h.args.qsm,
-                                                                     op->arg0)))
-                        goto err;
-
-                    if (!TEST_true(ossl_quic_stream_stop_sending(s, op->arg1)))
-                        goto err;
-
-                    ossl_quic_stream_map_update_state(h.args.qsm, s);
-
-                    if (!TEST_true(s->active))
-                        goto err;
-                }
-                break;
-            case OPK_RESET_STREAM:
-                {
-                    QUIC_STREAM *s;
-
-                    if (!TEST_ptr(s = ossl_quic_stream_map_get_by_id(h.args.qsm,
-                                                                     op->arg0)))
-                        goto err;
-
-                    if (!TEST_true(ossl_quic_stream_reset(s, op->arg1)))
-                        goto err;
-
-                    ossl_quic_stream_map_update_state(h.args.qsm, s);
-
-                    if (!TEST_true(s->active))
-                        goto err;
-                }
-                break;
-            case OPK_CONN_TXFC_BUMP:
-                if (!TEST_true(ossl_quic_txfc_bump_cwm(h.args.conn_txfc, op->arg0)))
-                    goto err;
-
-                break;
-            case OPK_STREAM_TXFC_BUMP:
-                {
-                    QUIC_STREAM *s;
-
-                    if (!TEST_ptr(s = ossl_quic_stream_map_get_by_id(h.args.qsm,
-                                                                     op->arg1)))
-                        goto err;
-
-                    if (!TEST_true(ossl_quic_txfc_bump_cwm(&s->txfc, op->arg0)))
-                        goto err;
-
-                    ossl_quic_stream_map_update_state(h.args.qsm, s);
-                }
-                break;
-            default:
-                TEST_error("bad opcode");
+        case OPK_TXP_GENERATE:
+            if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0),
+                             TX_PACKETISER_RES_SENT_PKT))
                 goto err;
+
+            ossl_qtx_finish_dgram(h.args.qtx);
+            ossl_qtx_flush_net(h.args.qtx);
+            break;
+        case OPK_TXP_GENERATE_NONE:
+            if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0),
+                             TX_PACKETISER_RES_NO_PKT))
+                goto err;
+
+            break;
+        case OPK_RX_PKT:
+            ossl_quic_demux_pump(h.demux);
+            if (h.qrx_pkt.handle != NULL)
+                ossl_qrx_release_pkt(h.qrx, h.qrx_pkt.handle);
+            if (!TEST_true(ossl_qrx_read_pkt(h.qrx, &h.qrx_pkt)))
+                goto err;
+            if (!TEST_true(PACKET_buf_init(&h.pkt,
+                                           h.qrx_pkt.hdr->data,
+                                           h.qrx_pkt.hdr->len)))
+                goto err;
+            h.frame_type = UINT64_MAX;
+            break;
+        case OPK_RX_PKT_NONE:
+            ossl_quic_demux_pump(h.demux);
+            if (!TEST_false(ossl_qrx_read_pkt(h.qrx, &h.qrx_pkt)))
+                goto err;
+            h.frame_type = UINT64_MAX;
+            break;
+        case OPK_EXPECT_DGRAM_LEN:
+            if (!TEST_size_t_ge(h.qrx_pkt.datagram_len, (size_t)op->arg0)
+                || !TEST_size_t_le(h.qrx_pkt.datagram_len, (size_t)op->arg1))
+                goto err;
+            break;
+        case OPK_EXPECT_FRAME:
+            if (!TEST_uint64_t_eq(h.frame_type, op->arg0))
+                goto err;
+            break;
+        case OPK_EXPECT_INITIAL_TOKEN:
+            if (!TEST_mem_eq(h.qrx_pkt.hdr->token, h.qrx_pkt.hdr->token_len,
+                             op->buf, (size_t)op->arg0))
+                goto err;
+            break;
+        case OPK_EXPECT_HDR:
+            if (!TEST_true(cmp_pkt_hdr(h.qrx_pkt.hdr, op->buf,
+                                       NULL, 0, 0)))
+                goto err;
+            break;
+        case OPK_CHECK:
+            if (!TEST_true(op->check_func(&h)))
+                goto err;
+            break;
+        case OPK_NEXT_FRAME:
+            skip_padding(&h);
+            if (!ossl_quic_wire_peek_frame_header(&h.pkt, &h.frame_type)) {
+                h.frame_type = UINT64_MAX;
+                break;
+            }
+
+            switch (h.frame_type) {
+            case OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE:
+                if (!TEST_true(ossl_quic_wire_decode_frame_handshake_done(&h.pkt)))
+                    goto err;
+                break;
+            case OSSL_QUIC_FRAME_TYPE_PING:
+                if (!TEST_true(ossl_quic_wire_decode_frame_ping(&h.pkt)))
+                    goto err;
+                break;
+            case OSSL_QUIC_FRAME_TYPE_MAX_DATA:
+                if (!TEST_true(ossl_quic_wire_decode_frame_max_data(&h.pkt,
+                                                                    &h.frame.max_data)))
+                    goto err;
+                break;
+            case OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID:
+                if (!TEST_true(ossl_quic_wire_decode_frame_new_conn_id(&h.pkt,
+                                                                       &h.frame.new_conn_id)))
+                    goto err;
+                break;
+            case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
+                if (!TEST_true(ossl_quic_wire_decode_frame_new_token(&h.pkt,
+                                                                     &h.frame.new_token.token,
+                                                                     &h.frame.new_token.token_len)))
+                    goto err;
+                break;
+            case OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN:
+            case OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN:
+                h.frame.ack.ack_ranges      = h.ack_ranges;
+                h.frame.ack.num_ack_ranges  = OSSL_NELEM(h.ack_ranges);
+                if (!TEST_true(ossl_quic_wire_decode_frame_ack(&h.pkt,
+                                                               h.args.ack_delay_exponent,
+                                                               &h.frame.ack,
+                                                               NULL)))
+                    goto err;
+                break;
+            case OSSL_QUIC_FRAME_TYPE_CRYPTO:
+                if (!TEST_true(ossl_quic_wire_decode_frame_crypto(&h.pkt, &h.frame.crypto)))
+                    goto err;
+                break;
+
+            case OSSL_QUIC_FRAME_TYPE_STREAM:
+            case OSSL_QUIC_FRAME_TYPE_STREAM_FIN:
+            case OSSL_QUIC_FRAME_TYPE_STREAM_LEN:
+            case OSSL_QUIC_FRAME_TYPE_STREAM_LEN_FIN:
+            case OSSL_QUIC_FRAME_TYPE_STREAM_OFF:
+            case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_FIN:
+            case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN:
+            case OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN_FIN:
+                if (!TEST_true(ossl_quic_wire_decode_frame_stream(&h.pkt, &h.frame.stream)))
+                    goto err;
+                break;
+
+            case OSSL_QUIC_FRAME_TYPE_STOP_SENDING:
+                if (!TEST_true(ossl_quic_wire_decode_frame_stop_sending(&h.pkt,
+                                                                        &h.frame.stop_sending)))
+                    goto err;
+                break;
+
+            case OSSL_QUIC_FRAME_TYPE_RESET_STREAM:
+                if (!TEST_true(ossl_quic_wire_decode_frame_reset_stream(&h.pkt,
+                                                                        &h.frame.reset_stream)))
+                    goto err;
+                break;
+
+            case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT:
+            case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP:
+                if (!TEST_true(ossl_quic_wire_decode_frame_conn_close(&h.pkt,
+                                                                      &h.frame.conn_close)))
+                    goto err;
+                break;
+
+            default:
+                TEST_error("unknown frame type");
+                goto err;
+            }
+            break;
+        case OPK_EXPECT_NO_FRAME:
+            skip_padding(&h);
+            if (!TEST_size_t_eq(PACKET_remaining(&h.pkt), 0))
+                goto err;
+            break;
+        case OPK_PROVIDE_SECRET:
+            if (!TEST_true(ossl_qtx_provide_secret(h.args.qtx,
+                                                   (uint32_t)op->arg0,
+                                                   (uint32_t)op->arg1,
+                                                   NULL, op->buf, op->buf_len)))
+                goto err;
+            if (!TEST_true(ossl_qrx_provide_secret(h.qrx,
+                                                   (uint32_t)op->arg0,
+                                                   (uint32_t)op->arg1,
+                                                   NULL, op->buf, op->buf_len)))
+                goto err;
+            break;
+        case OPK_DISCARD_EL:
+            if (!TEST_true(ossl_quic_tx_packetiser_discard_enc_level(h.txp,
+                                                                     (uint32_t)op->arg0)))
+                goto err;
+            /*
+             * We do not discard on the QRX here, the object is to test the
+             * TXP so if the TXP does erroneously send at a discarded EL we
+             * want to know about it.
+             */
+            break;
+        case OPK_CRYPTO_SEND:
+            {
+                size_t consumed = 0;
+
+                if (!TEST_true(ossl_quic_sstream_append(h.args.crypto[op->arg0],
+                                                        op->buf, op->buf_len,
+                                                        &consumed)))
+                    goto err;
+
+                if (!TEST_size_t_eq(consumed, op->buf_len))
+                    goto err;
+            }
+            break;
+        case OPK_STREAM_NEW:
+            {
+                QUIC_STREAM *s;
+
+                if (!TEST_ptr(s = ossl_quic_stream_map_alloc(h.args.qsm, op->arg0,
+                                                             QUIC_STREAM_DIR_BIDI)))
+                    goto err;
+
+                if (!TEST_ptr(s->sstream = ossl_quic_sstream_new(512 * 1024))
+                    || !TEST_true(ossl_quic_txfc_init(&s->txfc, &h.conn_txfc))
+                    || !TEST_true(ossl_quic_rxfc_init(&s->rxfc, &h.conn_rxfc,
+                                                      1 * 1024 * 1024,
+                                                      16 * 1024 * 1024,
+                                                      fake_now, NULL))) {
+                    ossl_quic_sstream_free(s->sstream);
+                    ossl_quic_stream_map_release(h.args.qsm, s);
+                    goto err;
+                }
+            }
+            break;
+        case OPK_STREAM_SEND:
+            {
+                QUIC_STREAM *s;
+                size_t consumed = 0;
+
+                if (!TEST_ptr(s = ossl_quic_stream_map_get_by_id(h.args.qsm,
+                                                                 op->arg0)))
+                    goto err;
+
+                if (!TEST_true(ossl_quic_sstream_append(s->sstream, op->buf,
+                                                        op->buf_len, &consumed)))
+                    goto err;
+
+                if (!TEST_size_t_eq(consumed, op->buf_len))
+                    goto err;
+
+                ossl_quic_stream_map_update_state(h.args.qsm, s);
+            }
+            break;
+        case OPK_STREAM_FIN:
+            {
+                QUIC_STREAM *s;
+
+                if (!TEST_ptr(s = ossl_quic_stream_map_get_by_id(h.args.qsm,
+                                                                 op->arg0)))
+                    goto err;
+
+                ossl_quic_sstream_fin(s->sstream);
+            }
+            break;
+        case OPK_STOP_SENDING:
+            {
+                QUIC_STREAM *s;
+
+                if (!TEST_ptr(s = ossl_quic_stream_map_get_by_id(h.args.qsm,
+                                                                 op->arg0)))
+                    goto err;
+
+                if (!TEST_true(ossl_quic_stream_stop_sending(s, op->arg1)))
+                    goto err;
+
+                ossl_quic_stream_map_update_state(h.args.qsm, s);
+
+                if (!TEST_true(s->active))
+                    goto err;
+            }
+            break;
+        case OPK_RESET_STREAM:
+            {
+                QUIC_STREAM *s;
+
+                if (!TEST_ptr(s = ossl_quic_stream_map_get_by_id(h.args.qsm,
+                                                                 op->arg0)))
+                    goto err;
+
+                if (!TEST_true(ossl_quic_stream_reset(s, op->arg1)))
+                    goto err;
+
+                ossl_quic_stream_map_update_state(h.args.qsm, s);
+
+                if (!TEST_true(s->active))
+                    goto err;
+            }
+            break;
+        case OPK_CONN_TXFC_BUMP:
+            if (!TEST_true(ossl_quic_txfc_bump_cwm(h.args.conn_txfc, op->arg0)))
+                goto err;
+
+            break;
+        case OPK_STREAM_TXFC_BUMP:
+            {
+                QUIC_STREAM *s;
+
+                if (!TEST_ptr(s = ossl_quic_stream_map_get_by_id(h.args.qsm,
+                                                                 op->arg1)))
+                    goto err;
+
+                if (!TEST_true(ossl_quic_txfc_bump_cwm(&s->txfc, op->arg0)))
+                    goto err;
+
+                ossl_quic_stream_map_update_state(h.args.qsm, s);
+            }
+            break;
+        default:
+            TEST_error("bad opcode");
+            goto err;
         }
     }
 
