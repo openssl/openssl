@@ -10,8 +10,6 @@
 #include <openssl/configuration.h>
 #include <internal/thread_arch.h>
 
-#if defined(OPENSSL_THREADS)
-
 CRYPTO_THREAD *ossl_crypto_thread_native_start(CRYPTO_THREAD_ROUTINE routine,
                                                void *data, int joinable)
 {
@@ -133,18 +131,3 @@ int ossl_crypto_thread_native_clean(CRYPTO_THREAD *handle)
 
     return 1;
 }
-
-#else
-
-CRYPTO_THREAD *ossl_crypto_thread_native_start(CRYPTO_THREAD_ROUTINE routine,
-                                           void *data, int joinable)
-{
-    return NULL;
-}
-
-int ossl_crypto_thread_native_clean(CRYPTO_THREAD *handle)
-{
-    return 0;
-}
-
-#endif
