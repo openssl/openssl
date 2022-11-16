@@ -549,6 +549,7 @@ int BN_are_coprime(BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
     int ret = 0;
     BIGNUM *tmp = BN_new();
+
     if (tmp == NULL)
         return 0;
 
