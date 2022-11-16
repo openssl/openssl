@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BN_mod_inverse - inverse modulo operations on BIGNUMs
+BN_mod_inverse - compute inverse modulo n
 
 =head1 SYNOPSIS
 
@@ -17,7 +17,7 @@ BN_mod_inverse() computes the inverse of B<a> modulo B<n>
 places the result in B<r> (C<(a*r)%n==1>). If B<r> is NULL,
 a new B<BIGNUM> is created.
 
-B<ctx> is a previously allocated B<BN_CTX> used for temporary-
+B<ctx> is a previously allocated B<BN_CTX> used for temporary
 variables. B<r> may be the same B<BIGNUM> as B<a> or B<n>.
 
 =head1 RETURN VALUES
@@ -31,7 +31,7 @@ L<ERR_get_error(3)>, L<BN_add(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
