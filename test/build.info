@@ -52,7 +52,7 @@ IF[{- !$disabled{tests} -}]
           bio_callback_test bio_memleak_test bio_core_test bio_dgram_test param_build_test \
           bioprinttest sslapitest dtlstest sslcorrupttest \
           bio_enc_test pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
-          cipherbytes_test threadstest_fips \
+          cipherbytes_test threadstest_fips threadpool_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest rand_status_test sslbuffertest \
@@ -359,6 +359,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[ct_test]=ct_test.c
   INCLUDE[ct_test]=../include ../apps/include
   DEPEND[ct_test]=../libcrypto libtestutil.a
+
+  SOURCE[threadpool_test]=threadpool_test.c
+  INCLUDE[threadpool_test]=.. ../include ../apps/include
+  DEPEND[threadpool_test]=../libcrypto.a libtestutil.a
 
   SOURCE[threadstest]=threadstest.c
   INCLUDE[threadstest]=.. ../include ../apps/include
