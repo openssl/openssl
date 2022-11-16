@@ -2407,6 +2407,10 @@ options of the commands.
 
 L<fips_module(7)>
 
+=head1 HISTORY
+
+The migration guide was created for OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2021-2022 The OpenSSL Project Authors. All Rights Reserved.
