@@ -524,8 +524,8 @@ static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
         return 0;
     /* Only attempt to get PSS parameters when generating an RSA-PSS key */
     if (gctx->rsa_type == RSA_FLAG_TYPE_RSASSAPSS
-        && !pss_params_fromdata(&gctx->pss_params, &gctx->pss_defaults_set,
-                                params, gctx->rsa_type, gctx->libctx))
+        && !pss_params_fromdata(&gctx->pss_params, &gctx->pss_defaults_set, params,
+                                gctx->rsa_type, gctx->libctx))
         return 0;
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     /* Any ACVP test related parameters are copied into a params[] */
@@ -616,7 +616,8 @@ static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     }
 #endif
 
-    if (!RSA_generate_multi_prime_key(rsa_tmp, (int)gctx->nbits, (int)gctx->primes,
+    if (!RSA_generate_multi_prime_key(rsa_tmp,
+                                      (int)gctx->nbits, (int)gctx->primes,
                                       gctx->pub_exp, gencb))
         goto err;
 
