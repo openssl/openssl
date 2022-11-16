@@ -232,11 +232,13 @@ int ossl_quic_fifd_pkt_commit(QUIC_FIFD *fifd, QUIC_TXPIM_PKT *pkt)
 
         if (chunks[i].end >= chunks[i].start
             && !ossl_quic_sstream_mark_transmitted(sstream,
-                                                   chunks[i].start, chunks[i].end))
+                                                   chunks[i].start,
+                                                   chunks[i].end))
             return 0;
 
-        if (chunks[i].has_fin)
-            if (!ossl_quic_sstream_mark_transmitted_fin(sstream, chunks[i].end + 1))
+        if (chunks[i].has_fin
+            && !ossl_quic_sstream_mark_transmitted_fin(sstream,
+                                                       chunks[i].end + 1))
                 return 0;
     }
 
