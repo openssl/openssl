@@ -49,35 +49,33 @@ const BIGNUM ossl_bn_inv_sqrt_2 = {
 };
 
 /*
- * Refer to FIPS 186-5 Table B.2 for minimum rounds of Miller Rabin
- * required for generation of RSA aux primes (p1, p2, q1 and q2)
- * using an error probability of 2^–100.
+ * Refer to FIPS 186-5 Table B.1 for minimum rounds of Miller Rabin
+ * required for generation of RSA aux primes (p1, p2, q1 and q2).
  */
 static int bn_rsa_fips186_5_aux_prime_MR_rounds(int nbits)
 {
     if (nbits >= 4096)
-        return 22;
+        return 44;
     if (nbits >= 3072)
-        return 27;
+        return 41;
     if (nbits >= 2048)
-        return 32;
-    return 0;
+        return 38;
+    return 0; /* Error */
 }
 
 /*
- * Refer to FIPS 186-5 Table B.2 for minimum rounds of Miller Rabin
+ * Refer to FIPS 186-5 Table B.1 for minimum rounds of Miller Rabin
  * required for generation of RSA primes (p and q)
- * using an error probability of 2^–100.
  */
 static int bn_rsa_fips186_5_prime_MR_rounds(int nbits)
 {
     if (nbits >= 4096)
-        return 2;
-    if (nbits >= 3072)
-        return 3;
-    if (nbits >= 2048)
         return 4;
-    return 0;
+    if (nbits >= 3072)
+        return 4;
+    if (nbits >= 2048)
+        return 5;
+    return 0; /* Error */
 }
 
 /*
@@ -208,10 +206,10 @@ int ossl_bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
     if (p1i == NULL || p2i == NULL || Xp1i == NULL || Xp2i == NULL)
         goto err;
 
-    rounds = bn_rsa_fips186_5_aux_prime_MR_rounds(nlen);
     bitlen = bn_rsa_fips186_5_aux_prime_min_size(nlen);
     if (bitlen == 0)
         goto err;
+    rounds = bn_rsa_fips186_5_aux_prime_MR_rounds(nlen);
 
     /* (Steps 4.1/5.1): Randomly generate Xp1 if it is not passed in */
     if (Xp1 == NULL) {

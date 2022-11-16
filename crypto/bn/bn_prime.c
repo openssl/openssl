@@ -251,8 +251,8 @@ int ossl_bn_check_prime(const BIGNUM *w, int checks, BN_CTX *ctx,
 }
 
 /*
- * Use this only for key generation in a context where an attacker cannot
- * observe the process. It always uses trial division. The number of checks
+ * Use this only for key generation.
+ * It always uses trial division. The number of checks
  * (MR rounds) passed in is used without being clamped to a minimum value.
  */
 int ossl_bn_check_generated_prime(const BIGNUM *w, int checks, BN_CTX *ctx,
