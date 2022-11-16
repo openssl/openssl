@@ -187,14 +187,10 @@ algorithms:
 
 =over 4
 
-=item "pad-mode" (B<OSSL_ASYM_CIPHER_PARAM_PAD_MODE>) <integer>
+=item "pad-mode" (B<OSSL_ASYM_CIPHER_PARAM_PAD_MODE>) <UTF8 string> OR <integer>
 
 The type of padding to be used. The interpretation of this value will depend
-on the algorithm in use. The default provider understands these RSA padding
-modes: 1 (RSA_PKCS1_PADDING), 3 (RSA_NO_PADDING),
-4 (RSA_PKCS1_OAEP_PADDING), 5 (RSA_X931_PADDING), 6 (RSA_PKCS1_PSS_PADDING) and
-7 (RSA_PKCS1_WITH_TLS_PADDING). See L<EVP_PKEY_CTX_set_rsa_padding(3)> for
-further details.
+on the algorithm in use.
 
 =item "digest" (B<OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST>) <UTF8 string>
 
@@ -223,19 +219,21 @@ is in use.
 
 Gets or sets the properties to use when fetching the MGF1 digest algorithm.
 
+=item "oaep-label" (B<OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL>) <octet string ptr>
+
+Gets the OAEP label used when OAEP padding is in use.
+
 =item "oaep-label" (B<OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL>) <octet string>
 
-Gets or sets the OAEP label used when OAEP padding is in use.
+Sets the OAEP label used when OAEP padding is in use.
 
 =item "tls-client-version" (B<OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION>) <unsigned integer>
 
-The TLS protocol version first requested by the client. See
-B<RSA_PKCS1_WITH_TLS_PADDING> on the page L<EVP_PKEY_CTX_set_rsa_padding(3)>.
+The TLS protocol version first requested by the client.
 
 =item "tls-negotiated-version" (B<OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION>) <unsigned integer>
 
-The negotiated TLS protocol version. See
-B<RSA_PKCS1_WITH_TLS_PADDING> on the page L<EVP_PKEY_CTX_set_rsa_padding(3)>.
+The negotiated TLS protocol version.
 
 =back
 

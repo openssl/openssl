@@ -4123,6 +4123,10 @@ html/man5/x509v3_config.html
 MANDOCS[man5]=man/man5/config.5 \
 man/man5/fips_config.5 \
 man/man5/x509v3_config.5
+DEPEND[html/man7/EVP_ASYM_CIPHER-RSA.html]=man7/EVP_ASYM_CIPHER-RSA.pod
+GENERATE[html/man7/EVP_ASYM_CIPHER-RSA.html]=man7/EVP_ASYM_CIPHER-RSA.pod
+DEPEND[man/man7/EVP_ASYM_CIPHER-RSA.7]=man7/EVP_ASYM_CIPHER-RSA.pod
+GENERATE[man/man7/EVP_ASYM_CIPHER-RSA.7]=man7/EVP_ASYM_CIPHER-RSA.pod
 DEPEND[html/man7/EVP_ASYM_CIPHER-SM2.html]=man7/EVP_ASYM_CIPHER-SM2.pod
 GENERATE[html/man7/EVP_ASYM_CIPHER-SM2.html]=man7/EVP_ASYM_CIPHER-SM2.pod
 DEPEND[man/man7/EVP_ASYM_CIPHER-SM2.7]=man7/EVP_ASYM_CIPHER-SM2.pod
@@ -4639,7 +4643,8 @@ man7/img/kdf.png \
 man7/img/mac.png \
 man7/img/pkey.png \
 man7/img/rand.png
-HTMLDOCS[man7]=html/man7/EVP_ASYM_CIPHER-SM2.html \
+HTMLDOCS[man7]=html/man7/EVP_ASYM_CIPHER-RSA.html \
+html/man7/EVP_ASYM_CIPHER-SM2.html \
 html/man7/EVP_CIPHER-AES.html \
 html/man7/EVP_CIPHER-ARIA.html \
 html/man7/EVP_CIPHER-BLOWFISH.html \
@@ -4766,7 +4771,8 @@ html/man7/provider.html \
 html/man7/proxy-certificates.html \
 html/man7/ssl.html \
 html/man7/x509.html
-MANDOCS[man7]=man/man7/EVP_ASYM_CIPHER-SM2.7 \
+MANDOCS[man7]=man/man7/EVP_ASYM_CIPHER-RSA.7 \
+man/man7/EVP_ASYM_CIPHER-SM2.7 \
 man/man7/EVP_CIPHER-AES.7 \
 man/man7/EVP_CIPHER-ARIA.7 \
 man/man7/EVP_CIPHER-BLOWFISH.7 \
