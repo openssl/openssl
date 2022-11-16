@@ -189,7 +189,8 @@ int ossl_bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
                                           BIGNUM *p1, BIGNUM *p2,
                                           const BIGNUM *Xp, const BIGNUM *Xp1,
                                           const BIGNUM *Xp2, int nlen,
-                                          const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb)
+                                          const BIGNUM *e, BN_CTX *ctx,
+                                          BN_GENCB *cb)
 {
     int ret = 0;
     BIGNUM *p1i = NULL, *p2i = NULL, *Xp1i = NULL, *Xp2i = NULL;
