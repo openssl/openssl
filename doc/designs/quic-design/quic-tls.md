@@ -13,15 +13,22 @@ A QUIC-TLS handshake is managed by a QUIC_TLS object. This object provides
 3 core functions to the rest of the QUIC implementation:
 
 ```c
-QUIC_TLS *ossl_quic_tls_new(SSL *s, const QUIC_TLS_ARGS *args);
+QUIC_TLS *ossl_quic_tls_new(const QUIC_TLS_ARGS *args);
 ```
 
 The `ossl_quic_tls_new` function instantiates a new `QUIC_TLS` object associated
-with the QUIC Connection held in `s` and initialises it with a set of callbacks
-and other arguments provided in the `args` parameter. These callbacks are called
-at various key points during the handshake lifecycle such as when new keys are
+with the QUIC Connection and initialises it with a set of callbacks and other
+arguments provided in the `args` parameter. These callbacks are called at
+various key points during the handshake lifecycle such as when new keys are
 established, crypto frame data is ready to be sent or consumed, or when the
 handshake is complete.
+
+A key field of the `args` structure is the `SSL` object (`s`). This "inner"
+`SSL` object is initialised with an `SSL_CONNECTION` to represent the TLS
+handshake state. This is a different `SSL` object to the "user" visible `SSL`
+object which contains a `QUIC_CONNECTION`, i.e. the user visible `SSL` object
+contains a `QUIC_CONNECTION` which contains the inner `SSL` object which
+contains an `SSL_CONNECTION`.
 
 ```c
 void ossl_quic_tls_free(QUIC_TLS *qtls);
@@ -48,6 +55,12 @@ parameters. The `QUIC_TLS_ARGS` structure is as follows:
 
 ```c
 typedef struct quic_tls_args_st {
+    /*
+     * The "inner" SSL object for the QUIC Connection. Contains an
+     * SSL_CONNECTION
+     */
+    SSL *s;
+
     /*
      * Called to send data on the crypto stream. We use a callback rather than
      * passing the crypto stream QUIC_SSTREAM directly because this lets the CSM
