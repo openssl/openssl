@@ -412,7 +412,6 @@ extern "C" {
 #define OSSL_PKEY_PARAM_RSA_MASKGENFUNC      OSSL_PKEY_PARAM_MASKGENFUNC
 #define OSSL_PKEY_PARAM_RSA_MGF1_DIGEST      OSSL_PKEY_PARAM_MGF1_DIGEST
 #define OSSL_PKEY_PARAM_RSA_PSS_SALTLEN      "saltlen"
-#define OSSL_PKEY_PARAM_RSA_PRIME_CHECK_LEVEL "prime-check-level"
 
 /* EC, X25519 and X448 Key generation parameters */
 #define OSSL_PKEY_PARAM_DHKEM_IKM        "dhkem-ikm"

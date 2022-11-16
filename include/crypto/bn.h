@@ -104,13 +104,12 @@ int ossl_bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
                                           BIGNUM *p1, BIGNUM *p2,
                                           const BIGNUM *Xp, const BIGNUM *Xp1,
                                           const BIGNUM *Xp2, int nlen,
-                                          const BIGNUM *e, int prime_check_level,
+                                          const BIGNUM *e,
                                           BN_CTX *ctx, BN_GENCB *cb);
 
 int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
                                        const BIGNUM *r1, const BIGNUM *r2,
                                        int nlen, const BIGNUM *e,
-                                       int prime_check_level,
                                        BN_CTX *ctx, BN_GENCB *cb);
 
 OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx);
