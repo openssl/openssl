@@ -55,8 +55,8 @@
  *     (Required for CAVS testing).
  */
 int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
-                                       int nbits, const BIGNUM *e,
-                                       BN_CTX *ctx, BN_GENCB *cb)
+                                       int nbits, const BIGNUM *e, BN_CTX *ctx,
+                                       BN_GENCB *cb)
 {
     int ret = 0, ok;
     /* Temp allocated BIGNUMS */
@@ -390,8 +390,7 @@ int ossl_rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
 
     for (;;) {
         /* (Step 2) Generate prime factors */
-        if (!ossl_rsa_fips186_4_gen_prob_primes(rsa, info, nbits, e,
-                                                ctx, cb))
+        if (!ossl_rsa_fips186_4_gen_prob_primes(rsa, info, nbits, e, ctx, cb))
             goto err;
         /* (Steps 3-5) Compute params d, n, dP, dQ, qInv */
         ok = ossl_rsa_sp800_56b_derive_params_from_pq(rsa, nbits, e, ctx);
