@@ -1,0 +1,108 @@
+---
+name: Compiler Zoo CI for 1.1.1
+
+on: [push]
+
+permissions:
+  contents: read
+
+jobs:
+  compiler:
+    strategy:
+      fail-fast: false
+      matrix:
+        zoo: [
+          {
+            cc: gcc-7,
+            distro: ubuntu-20.04
+          }, {
+            cc: gcc-8,
+            distro: ubuntu-20.04
+          }, {
+            cc: gcc-9,
+            distro: ubuntu-20.04
+          }, {
+            cc: gcc-10,
+            distro: ubuntu-20.04
+          }, {
+            cc: gcc-11,
+            distro: ubuntu-22.04
+          }, {
+            cc: gcc-12,
+            distro: ubuntu-22.04
+          }, {
+            cc: clang-6.0,
+            distro: ubuntu-20.04
+          }, {
+            cc: clang-7,
+            distro: ubuntu-20.04
+          }, {
+            cc: clang-8,
+            distro: ubuntu-20.04
+          }, {
+            cc: clang-9,
+            distro: ubuntu-20.04
+          }, {
+            cc: clang-10,
+            distro: ubuntu-20.04
+          }, {
+            cc: clang-11,
+            distro: ubuntu-20.04
+          }, {
+            cc: clang-12,
+            distro: ubuntu-20.04
+          }, {
+            cc: clang-13,
+            distro: ubuntu-22.04
+          }, {
+            cc: clang-14,
+            distro: ubuntu-22.04
+          }, {
+            cc: clang-15,
+            distro: ubuntu-22.04,
+            llvm-ppa-name: jammy
+          }
+        ]
+    # We set per-compiler now to allow testing with both older and newer sets
+    # Often, the full range of oldest->newest compilers we want aren't available
+    # in a single version of Ubuntu.
+    runs-on: ${{ matrix.zoo.distro }}
+    steps:
+    - name: install packages
+      run: |
+        llvm_ppa_name="${{ matrix.zoo.llvm-ppa-name }}"
+
+        # In the Matrix above, we set llvm-ppa-name if an LLVM version isn't
+        # part of the Ubuntu version we're using. See https://apt.llvm.org/.
+        if [[ -n ${llvm_ppa_name} ]] ; then
+            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key |\
+                gpg --dearmor |\
+                sudo tee /usr/share/keyrings/llvm-snapshot.gpg.key > /dev/null
+
+            clang_version="${{ matrix.zoo.cc }}"
+            clang_version="${clang_version/clang-}"
+
+            echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] http://apt.llvm.org/${{ matrix.zoo.llvm-ppa-name }}/ llvm-toolchain-${{ matrix.zoo.llvm-ppa-name }}-${clang_version} main" \
+                | sudo tee /etc/apt/sources.list.d/llvm.list
+            echo "deb-src [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] http://apt.llvm.org/${{ matrix.zoo.llvm-ppa-name }}/ llvm-toolchain-${{ matrix.zoo.llvm-ppa-name }}-${clang_version} main" \
+                | sudo tee -a /etc/apt/sources.list.d/llvm.list
+
+            cat /etc/apt/sources.list.d/llvm.list
+        fi
+
+        sudo apt-get update
+        sudo apt-get -y install ${{ matrix.zoo.cc }}
+
+    - uses: actions/checkout@v3
+
+    - name: config
+      run: |
+        CC=${{ matrix.zoo.cc }} ./config no-shared \
+            --strict-warnings
+
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test
