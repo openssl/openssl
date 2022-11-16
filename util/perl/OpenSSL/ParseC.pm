@@ -816,14 +816,13 @@ sub parse {
 
     foreach my $line (@_) {
         # split tries to be smart when a string ends with the thing we split on
-        $line =~ s/\r\n/\n/; # gracefully handle DOS-style end-of-line
         $line .= "\n" unless $line =~ m|\R$|;
         $line .= "#";
 
         # We use ¦undef¦ as a marker for a new line from the file.
         # Since we convert one line to several and unshift that into @lines,
         # that's the only safe way we have to track the original lines
-        my @lines = map { ( undef, $_ ) } split $/, $line;
+        my @lines = map { ( undef, $_ ) } split m|\R|, $line;
 
         # Remember that extra # we added above?  Now we remove it
         pop @lines;
