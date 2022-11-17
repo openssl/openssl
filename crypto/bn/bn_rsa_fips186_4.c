@@ -69,8 +69,6 @@ static int bn_rsa_fips186_5_aux_prime_MR_rounds(int nbits)
  */
 static int bn_rsa_fips186_5_prime_MR_rounds(int nbits)
 {
-    if (nbits >= 4096)
-        return 4;
     if (nbits >= 3072)
         return 4;
     if (nbits >= 2048)
