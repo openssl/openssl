@@ -217,8 +217,6 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
     if (el->state != QRL_EL_STATE_UNPROV)
         return 0;
 
-
-
     init_keyslot = is_tx ? 0 : init_key_phase_bit;
     hpr_key_len = ossl_qrl_get_suite_hdr_prot_key_len(suite_id);
     if (hpr_key_len == 0)
