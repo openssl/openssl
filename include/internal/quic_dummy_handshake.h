@@ -95,12 +95,8 @@ typedef struct quic_dhs_args_st {
     int (*alert_cb)(void *arg, unsigned char alert_code);
     void *alert_cb_arg;
 
-    /*
-     * Transport parameters which client should send. Buffer lifetime must
-     * exceed the lifetime of the DHS.
-     */
-    const unsigned char *transport_params;
-    size_t transport_params_len;
+    /* Set to 1 if we are running in the server role. */
+    int is_server;
 } QUIC_DHS_ARGS;
 
 QUIC_DHS *ossl_quic_dhs_new(const QUIC_DHS_ARGS *args);
@@ -117,5 +113,17 @@ void ossl_quic_dhs_free(QUIC_DHS *dhs);
  * however unlikely.)
  */
 int ossl_quic_dhs_tick(QUIC_DHS *dhs);
+
+/*
+ * Set the transport parameters buffer. The lifetime of the buffer must last
+ * until either the DHS is freed or the handshake complete callback is called.
+ * This must be called before the transport parameters are needed by the DHS.
+ * For a client, this means before ossl_quic_dhs_tick() is first called; for a
+ * server, this should generally be immediately after the
+ * got_transport_params_cb callback is called.
+ */
+int ossl_quic_dhs_set_transport_params(QUIC_DHS *dhs,
+                                       const unsigned char *transport_params,
+                                       size_t transport_params_len);
 
 #endif
