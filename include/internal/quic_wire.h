@@ -457,6 +457,14 @@ int ossl_quic_wire_encode_transport_param_int(WPACKET *pkt,
                                               uint64_t value);
 
 /*
+ * Encodes a QUIC transport parameter TLV with a given ID into the WPACKET.
+ * The payload is a QUIC connection ID.
+ */
+int ossl_quic_wire_encode_transport_param_cid(WPACKET *wpkt,
+                                              uint64_t id,
+                                              const QUIC_CONN_ID *cid);
+
+/*
  * QUIC Wire Format Decoding
  * =========================
  *
@@ -715,8 +723,8 @@ int ossl_quic_wire_peek_transport_param(PACKET *pkt, uint64_t *id);
  * returned on success. This points inside the PACKET's buffer and is therefore
  * valid as long as the PACKET's buffer is valid.
  *
- * The transport parameter ID is written to *id and the length of the payload
- * in bytes is written to *len.
+ * The transport parameter ID is written to *id (if non-NULL) and the length of
+ * the payload in bytes is written to *len.
  *
  * Returns NULL on failure.
  */
@@ -727,11 +735,21 @@ const unsigned char *ossl_quic_wire_decode_transport_param_bytes(PACKET *pkt,
 /*
  * Decodes a QUIC transport parameter TLV containing a variable-length integer.
  *
- * The transport parameter ID is written to *id and the value is written to
- * *value.
+ * The transport parameter ID is written to *id (if non-NULL) and the value is
+ * written to *value.
  */
 int ossl_quic_wire_decode_transport_param_int(PACKET *pkt,
                                               uint64_t *id,
                                               uint64_t *value);
+
+/*
+ * Decodes a QUIC transport parameter TLV containing a connection ID.
+ *
+ * The transport parameter ID is written to *id (if non-NULL) and the value is
+ * written to *value.
+ */
+int ossl_quic_wire_decode_transport_param_cid(PACKET *pkt,
+                                              uint64_t *id,
+                                              QUIC_CONN_ID *cid);
 
 #endif
