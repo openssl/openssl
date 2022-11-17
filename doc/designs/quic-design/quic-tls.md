@@ -133,7 +133,7 @@ attempts to send an alert and will communicate this via the `alert_cb` callback.
 QUIC requires the use of a TLS extension in order to send and receive "transport
 parameters". These transport parameters are opaque to the `QUIC_TLS` object. It
 does not need to use them directly but instead simply includes them in an
-extenstion to be sent in the ClientHello and receives them back from the peer in
+extension to be sent in the ClientHello and receives them back from the peer in
 the EncryptedExtensions message. The data to be sent is provided in the
 `transport_params` argument. When the peer's parameters are received the
 `got_transport_params_cb` callback is invoked.
@@ -169,7 +169,7 @@ to first check whether a custom record method has been specified and always use
 that one if so.
 
 The TLS record layer code is further modified to provide the following
-capabilities which are needed in order support QUIC.
+capabilities which are needed in order to support QUIC.
 
 The custom record layer will need a record layer specific argument (`rlarg`
 above). This is passed as part of a modified `new_record_layer` call.
