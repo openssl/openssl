@@ -531,6 +531,11 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx);
 
 void OSSL_sleep(uint64_t millis);
 
+#define LB_STRATEGY_ROUND_ROBIN         1
+#define LB_STRATEGY_PRIORITY            2
+#define LB_STRATEGY_FREE_BANDWIDTH      3
+#define LB_STRATEGY_PACKET_SIZE         4
+
 # ifdef  __cplusplus
 }
 # endif

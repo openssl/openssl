@@ -112,6 +112,23 @@ typedef struct lb_global_st {
     void *strategy_status;
 } LB_GLOBAL;
 
+typedef struct {
+    /* index of the method selected last time, init to -1 */
+    int last_index;
+} LBS_ROUND_ROBIN_STATUS;
+
+static void *lb_sched_round_robin_new_status(void)
+{
+    LBS_ROUND_ROBIN_STATUS *rr_status;
+
+    rr_status = OPENSSL_malloc(sizeof(*rr_status));
+    if (rr_status == NULL)
+        return 0;
+
+    rr_status->last_index = -1;
+    return (void *)rr_status;
+}
+
 void *ossl_lb_strategy_ctx_new(OSSL_LIB_CTX *libctx)
 {
     LB_GLOBAL *lgbl = OPENSSL_zalloc(sizeof(*lgbl));
@@ -267,6 +284,74 @@ static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a, void *arg)
     }
     if (store != NULL)
         ossl_sa_ALGORITHM_set(store->algs, idx, NULL);
+}
+
+/* load-balancing scheduler function prototype */
+typedef IMPLEMENTATION *(lb_sched_fn)(STACK_OF(IMPLEMENTATION) *impls,
+                                      void *status);
+/* forward declarations of available load balancing schedulers */
+static lb_sched_fn lb_sched_round_robin;
+
+static IMPLEMENTATION *lb_sched_round_robin(STACK_OF(IMPLEMENTATION) *impls,
+                                            void *status)
+{
+    LBS_ROUND_ROBIN_STATUS *rr_status = (LBS_ROUND_ROBIN_STATUS *)status;
+    IMPLEMENTATION *impl;
+    int this_index;
+    int num;
+
+    if (rr_status == NULL)
+        return NULL;
+
+    if ((num = sk_IMPLEMENTATION_num(impls)) <= 0)    /* empty or NULL */
+        return NULL;
+
+    rr_status->last_index ++;
+    this_index = (rr_status->last_index >= num) ? 0 : rr_status->last_index;
+    rr_status->last_index = this_index;
+
+    impl = sk_IMPLEMENTATION_value(impls, this_index);
+    return impl;
+}
+
+static IMPLEMENTATION *load_balancer_fetch(OSSL_LIB_CTX *libctx,
+                               STACK_OF(IMPLEMENTATION) *impls)
+{
+    LB_GLOBAL *lgbl;
+    IMPLEMENTATION *impl = NULL;
+
+    lgbl = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_LB_STRATEGY_INDEX);
+    if (lgbl == NULL)
+        return NULL;
+
+    /* obtain the lock */
+    if (!CRYPTO_THREAD_write_lock(lgbl->lock))
+       return NULL;
+
+    switch (lgbl->strategy) {
+    case LB_STRATEGY_ROUND_ROBIN:
+        impl = lb_sched_round_robin(impls, lgbl->strategy_status);
+        goto end;
+
+    #if 0   /* To-be-added */
+    case LB_STRATEGY_PRIORITY:
+        impl = lb_sched_priority(impls, lgbl->strategy_status);
+        goto end;
+    case LB_STRATEGY_FREE_BANDWIDTH:
+        impl = lb_sched_free_bandwidth(impls, lgbl->strategy_status);
+        goto end;
+    case LB_STRATEGY_PACKET_SIZE:
+        impl = lb_sched_packet_size(impls, lgbl->strategy_status);
+        goto end;
+    #endif
+
+    default:
+        goto end;
+    }
+
+end:
+    CRYPTO_THREAD_unlock(lgbl->lock);
+    return impl;
 }
 
 /*
