@@ -32,10 +32,6 @@ static const QUIC_CONN_ID empty_conn_id = {0, {0}};
 #define RX_TEST_OP_KEY_UPDATE_TIMEOUT     11 /* complete key update process */
 #define RX_TEST_OP_SET_INIT_KEY_PHASE     12 /* initial Key Phase bit value */
 
-/* These are subtest ops for RX_TEST_OP_CHECK_PKT, to additionally check frames */
-#define RX_TEST_OP_CHECK_PKT_FRAMES_OK        1 /* check that frames are parsed ok */
-#define RX_TEST_OP_CHECK_PKT_FRAMES_INVALID   2 /* check that frames fail to parse ok */
-
 struct rx_test_op {
     unsigned char op;
     unsigned char subop;
@@ -74,18 +70,6 @@ struct rx_test_op {
         RX_TEST_OP_CHECK_PKT, 0, (expect_body), sizeof(expect_body),  \
         &(expect_hdr), 0, 0, 0, NULL, NULL                          \
     },
-#define RX_OP_CHECK_PKT_FRAMES_OK(expect_hdr, expect_body)          \
-    {                                                               \
-        RX_TEST_OP_CHECK_PKT, RX_TEST_OP_CHECK_PKT_FRAMES_OK,       \
-        (expect_body), sizeof(expect_body), &(expect_hdr),          \
-        0, 0, 0, NULL, NULL                                         \
-    },
-#define RX_OP_CHECK_PKT_FRAMES_INVALID(expect_hdr, expect_body)     \
-    {                                                               \
-        RX_TEST_OP_CHECK_PKT, RX_TEST_OP_CHECK_PKT_FRAMES_INVALID,  \
-        (expect_body), sizeof(expect_body), &(expect_hdr),          \
-        0, 0, 0, NULL, NULL                                         \
-    },
 #define RX_OP_CHECK_NO_PKT() \
     { RX_TEST_OP_CHECK_NO_PKT, 0, NULL, 0, NULL, 0, 0, 0, NULL, NULL },
 #define RX_OP_CHECK_KEY_EPOCH(expected) \
@@ -99,22 +83,10 @@ struct rx_test_op {
     RX_OP_INJECT(rx_script_##n##_in)
 #define RX_OP_CHECK_PKT_N(n)                                       \
     RX_OP_CHECK_PKT(rx_script_##n##_expect_hdr, rx_script_##n##_body)
-#define RX_OP_CHECK_PKT_FRAMES_OK_N(n)                             \
-    RX_OP_CHECK_PKT_FRAMES_OK(rx_script_##n##_expect_hdr, rx_script_##n##_body)
-#define RX_OP_CHECK_PKT_FRAMES_INVALID_N(n)                        \
-    RX_OP_CHECK_PKT_FRAMES_INVALID(rx_script_##n##_expect_hdr, rx_script_##n##_body)
 
 #define RX_OP_INJECT_CHECK(n)                                  \
     RX_OP_INJECT_N(n)                                              \
     RX_OP_CHECK_PKT_N(n)
-
-#define RX_OP_INJECT_CHECK_FRAMES_OK(n)                            \
-    RX_OP_INJECT_N(n)                                              \
-    RX_OP_CHECK_PKT_FRAMES_OK_N(n)
-
-#define RX_OP_INJECT_CHECK_FRAMES_INVALID(n)                       \
-    RX_OP_INJECT_N(n)                                              \
-    RX_OP_CHECK_PKT_FRAMES_INVALID_N(3)
 
 /* 1. RFC 9001 - A.3 Server Initial */
 static const unsigned char rx_script_1_in[] = {
@@ -162,7 +134,7 @@ static const struct rx_test_op rx_script_1[] = {
     RX_OP_SET_INIT_LARGEST_PN(0)
     RX_OP_ADD_RX_DCID(empty_conn_id)
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_1_dcid)
-    RX_OP_INJECT_CHECK_FRAMES_OK(1)
+    RX_OP_INJECT_CHECK(1)
     RX_OP_CHECK_NO_PKT()
     RX_OP_END
 };
@@ -197,7 +169,7 @@ static const struct rx_test_op rx_script_2[] = {
     RX_OP_ADD_RX_DCID(empty_conn_id)
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_CHACHA20POLY1305,
                          rx_script_2_secret)
-    RX_OP_INJECT_CHECK_FRAMES_OK(2)
+    RX_OP_INJECT_CHECK(2)
     RX_OP_CHECK_NO_PKT()
     RX_OP_END
 };
@@ -244,7 +216,7 @@ static const struct rx_test_op rx_script_3[] = {
      * However, the depacketizer still handles this sort of packet, so
      * we still pass the packet to it, to exercise what it does.
      */
-    RX_OP_INJECT_CHECK_FRAMES_OK(3)
+    RX_OP_INJECT_CHECK(3)
     RX_OP_CHECK_NO_PKT()
     RX_OP_END
 };
@@ -299,7 +271,7 @@ static const unsigned char rx_script_4_body[] = {
 
 static const struct rx_test_op rx_script_4[] = {
     RX_OP_ADD_RX_DCID(empty_conn_id)
-    RX_OP_INJECT_CHECK_FRAMES_OK(4)
+    RX_OP_INJECT_CHECK(4)
     RX_OP_CHECK_NO_PKT()
     RX_OP_END
 };
@@ -610,32 +582,32 @@ static const struct rx_test_op rx_script_5[] = {
     RX_OP_ADD_RX_DCID(empty_conn_id)
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_5_c2s_init_dcid)
     RX_OP_INJECT_N(5)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(5a)
+    RX_OP_CHECK_PKT_N(5a)
     RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE,
                       QRL_SUITE_AES128GCM, rx_script_5_handshake_secret)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(5b)
+    RX_OP_CHECK_PKT_N(5b)
     RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
                       QRL_SUITE_AES128GCM, rx_script_5_1rtt_secret)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(5c)
+    RX_OP_CHECK_PKT_N(5c)
     RX_OP_CHECK_NO_PKT()
 
     /* Discard Initial EL and try injecting the packet again */
     RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
     RX_OP_INJECT_N(5)
     /* Initial packet is not output because we have discarded Initial keys */
-    RX_OP_CHECK_PKT_FRAMES_OK_N(5b)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(5c)
+    RX_OP_CHECK_PKT_N(5b)
+    RX_OP_CHECK_PKT_N(5c)
     RX_OP_CHECK_NO_PKT()
     /* Try again with discarded keys */
     RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_HANDSHAKE)
     RX_OP_INJECT_N(5)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(5c)
+    RX_OP_CHECK_PKT_N(5c)
     RX_OP_CHECK_NO_PKT()
     /* Try again */
     RX_OP_INJECT_N(5)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(5c)
+    RX_OP_CHECK_PKT_N(5c)
     RX_OP_CHECK_NO_PKT()
     /* Try again with discarded 1-RTT keys */
     RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_1RTT)
@@ -648,15 +620,15 @@ static const struct rx_test_op rx_script_5[] = {
     RX_OP_INJECT_N(5)
     RX_OP_CHECK_NO_PKT()
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_5_c2s_init_dcid)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(5a)
+    RX_OP_CHECK_PKT_N(5a)
     RX_OP_CHECK_NO_PKT()
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE,
                       QRL_SUITE_AES128GCM, rx_script_5_handshake_secret)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(5b)
+    RX_OP_CHECK_PKT_N(5b)
     RX_OP_CHECK_NO_PKT()
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
                       QRL_SUITE_AES128GCM, rx_script_5_1rtt_secret)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(5c)
+    RX_OP_CHECK_PKT_N(5c)
     RX_OP_CHECK_NO_PKT()
 
     RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
@@ -975,32 +947,32 @@ static const struct rx_test_op rx_script_6[] = {
     RX_OP_ADD_RX_DCID(empty_conn_id)
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_6_c2s_init_dcid)
     RX_OP_INJECT_N(6)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(6a)
+    RX_OP_CHECK_PKT_N(6a)
     RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE,
                       QRL_SUITE_AES256GCM, rx_script_6_handshake_secret)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(6b)
+    RX_OP_CHECK_PKT_N(6b)
     RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
                       QRL_SUITE_AES256GCM, rx_script_6_1rtt_secret)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(6c)
+    RX_OP_CHECK_PKT_N(6c)
     RX_OP_CHECK_NO_PKT()
 
     /* Discard Initial EL and try injecting the packet again */
     RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
     RX_OP_INJECT_N(6)
     /* Initial packet is not output because we have discarded Initial keys */
-    RX_OP_CHECK_PKT_FRAMES_OK_N(6b)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(6c)
+    RX_OP_CHECK_PKT_N(6b)
+    RX_OP_CHECK_PKT_N(6c)
     RX_OP_CHECK_NO_PKT()
     /* Try again with discarded keys */
     RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_HANDSHAKE)
     RX_OP_INJECT_N(6)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(6c)
+    RX_OP_CHECK_PKT_N(6c)
     RX_OP_CHECK_NO_PKT()
     /* Try again */
     RX_OP_INJECT_N(6)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(6c)
+    RX_OP_CHECK_PKT_N(6c)
     RX_OP_CHECK_NO_PKT()
     /* Try again with discarded 1-RTT keys */
     RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_1RTT)
@@ -1013,15 +985,15 @@ static const struct rx_test_op rx_script_6[] = {
     RX_OP_INJECT_N(6)
     RX_OP_CHECK_NO_PKT()
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_6_c2s_init_dcid)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(6a)
+    RX_OP_CHECK_PKT_N(6a)
     RX_OP_CHECK_NO_PKT()
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE,
                       QRL_SUITE_AES256GCM, rx_script_6_handshake_secret)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(6b)
+    RX_OP_CHECK_PKT_N(6b)
     RX_OP_CHECK_NO_PKT()
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
                       QRL_SUITE_AES256GCM, rx_script_6_1rtt_secret)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(6c)
+    RX_OP_CHECK_PKT_N(6c)
     RX_OP_CHECK_NO_PKT()
 
     RX_OP_END
@@ -1334,32 +1306,32 @@ static const struct rx_test_op rx_script_7[] = {
     RX_OP_ADD_RX_DCID(empty_conn_id)
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_7_c2s_init_dcid)
     RX_OP_INJECT_N(7)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(7a)
+    RX_OP_CHECK_PKT_N(7a)
     RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE,
                       QRL_SUITE_CHACHA20POLY1305, rx_script_7_handshake_secret)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(7b)
+    RX_OP_CHECK_PKT_N(7b)
     RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
                       QRL_SUITE_CHACHA20POLY1305, rx_script_7_1rtt_secret)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(7c)
+    RX_OP_CHECK_PKT_N(7c)
     RX_OP_CHECK_NO_PKT()
 
     /* Discard Initial EL and try injecting the packet again */
     RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
     RX_OP_INJECT_N(7)
     /* Initial packet is not output because we have discarded Initial keys */
-    RX_OP_CHECK_PKT_FRAMES_OK_N(7b)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(7c)
+    RX_OP_CHECK_PKT_N(7b)
+    RX_OP_CHECK_PKT_N(7c)
     RX_OP_CHECK_NO_PKT()
     /* Try again with discarded keys */
     RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_HANDSHAKE)
     RX_OP_INJECT_N(7)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(7c)
+    RX_OP_CHECK_PKT_N(7c)
     RX_OP_CHECK_NO_PKT()
     /* Try again */
     RX_OP_INJECT_N(7)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(7c)
+    RX_OP_CHECK_PKT_N(7c)
     RX_OP_CHECK_NO_PKT()
     /* Try again with discarded 1-RTT keys */
     RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_1RTT)
@@ -1372,15 +1344,15 @@ static const struct rx_test_op rx_script_7[] = {
     RX_OP_INJECT_N(7)
     RX_OP_CHECK_NO_PKT()
     RX_OP_PROVIDE_SECRET_INITIAL(rx_script_7_c2s_init_dcid)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(7a)
+    RX_OP_CHECK_PKT_N(7a)
     RX_OP_CHECK_NO_PKT()
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE,
                       QRL_SUITE_CHACHA20POLY1305, rx_script_7_handshake_secret)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(7b)
+    RX_OP_CHECK_PKT_N(7b)
     RX_OP_CHECK_NO_PKT()
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
                       QRL_SUITE_CHACHA20POLY1305, rx_script_7_1rtt_secret)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(7c)
+    RX_OP_CHECK_PKT_N(7c)
     RX_OP_CHECK_NO_PKT()
 
     RX_OP_END
@@ -1592,14 +1564,14 @@ static const struct rx_test_op rx_script_8[] = {
     RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
                          QRL_SUITE_AES128GCM, rx_script_8_1rtt_secret)
     /* Now the injected packet is successfully returned */
-    RX_OP_CHECK_PKT_FRAMES_OK_N(8a)
+    RX_OP_CHECK_PKT_N(8a)
     RX_OP_CHECK_NO_PKT()
     RX_OP_CHECK_KEY_EPOCH(0)
 
     /* Packet with new key phase */
     RX_OP_INJECT_N(8b)
     /* Packet is successfully decrypted and returned */
-    RX_OP_CHECK_PKT_FRAMES_OK_N(8b)
+    RX_OP_CHECK_PKT_N(8b)
     RX_OP_CHECK_NO_PKT()
     /* Key epoch has increased */
     RX_OP_CHECK_KEY_EPOCH(1)
@@ -1610,20 +1582,20 @@ static const struct rx_test_op rx_script_8[] = {
      */
     RX_OP_INJECT_N(8c)
     /* Should still be decrypted OK */
-    RX_OP_CHECK_PKT_FRAMES_OK_N(8c)
+    RX_OP_CHECK_PKT_N(8c)
     RX_OP_CHECK_NO_PKT()
     /* Epoch has not changed */
     RX_OP_CHECK_KEY_EPOCH(1)
 
     /* Another packet with the new keys. */
     RX_OP_INJECT_N(8d)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(8d)
+    RX_OP_CHECK_PKT_N(8d)
     RX_OP_CHECK_NO_PKT()
     RX_OP_CHECK_KEY_EPOCH(1)
 
     /* We can inject the old packet multiple times and it still works */
     RX_OP_INJECT_N(8c)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(8c)
+    RX_OP_CHECK_PKT_N(8c)
     RX_OP_CHECK_NO_PKT()
     RX_OP_CHECK_KEY_EPOCH(1)
 
@@ -1644,13 +1616,13 @@ static const struct rx_test_op rx_script_8[] = {
     /* Move from COOLDOWN to NORMAL and try again */
     RX_OP_KEY_UPDATE_TIMEOUT(1)
     RX_OP_INJECT_N(8e)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(8e)
+    RX_OP_CHECK_PKT_N(8e)
     RX_OP_CHECK_NO_PKT()
     RX_OP_CHECK_KEY_EPOCH(2)
 
     /* Can still receive old packet */
     RX_OP_INJECT_N(8d)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(8d)
+    RX_OP_CHECK_PKT_N(8d)
     RX_OP_CHECK_NO_PKT()
     RX_OP_CHECK_KEY_EPOCH(2)
 
@@ -1659,7 +1631,7 @@ static const struct rx_test_op rx_script_8[] = {
 
     /* Try a packet from epoch 3 */
     RX_OP_INJECT_N(8f)
-    RX_OP_CHECK_PKT_FRAMES_OK_N(8f)
+    RX_OP_CHECK_PKT_N(8f)
     RX_OP_CHECK_NO_PKT()
     RX_OP_CHECK_KEY_EPOCH(3)
 
@@ -1688,28 +1660,13 @@ struct rx_state {
     OSSL_QRX           *qrx;
     OSSL_QRX_ARGS       args;
 
-    /* OSSL_ACKM with necessary data */
-    OSSL_ACKM          *ackm;
-    OSSL_CC_DATA       *ccdata;
-    OSSL_STATM          statm;       /* NOT the state machine! */
-
-    /* Used for the RX depacketizer, and wraps the |qrx| and |ackm| */
+    /* Used for the RX depacketizer */
     SSL_CTX            *quic_ssl_ctx;
     QUIC_CONNECTION    *quic_conn;
 };
 
 static void rx_state_teardown(struct rx_state *s)
 {
-    if (s->ackm != NULL) {
-        ossl_ackm_free(s->ackm);
-        ossl_quic_conn_set_ackm(s->quic_conn, NULL);
-        s->ackm = NULL;
-    }
-    if (s->ccdata != NULL) {
-        ossl_cc_dummy_method.free(s->ccdata);
-        s->ccdata = NULL;
-    }
-
     if (s->quic_conn != NULL) {
         SSL_free((SSL *)s->quic_conn);
         s->quic_conn = NULL;
@@ -1731,13 +1688,6 @@ static void rx_state_teardown(struct rx_state *s)
 }
 
 static uint64_t time_counter = 0;
-
-static OSSL_TIME fake_now(void *ignored)
-{
-    OSSL_TIME f = {0};
-
-    return f;
-}
 
 static OSSL_TIME expected_time(uint64_t counter)
 {
@@ -1767,33 +1717,6 @@ static int rx_state_ensure(struct rx_state *s)
         && !TEST_ptr(s->qrx = ossl_qrx_new(&s->args)))
         return 0;
 
-    return 1;
-}
-
-static int rx_state_ensure_for_frames(struct rx_state *s)
-{
-    SSL *qs;
-
-    if (!rx_state_ensure(s))
-        return 0;
-
-    /* Initialise ACK manager and congestion controller. */
-    if ((s->ccdata == NULL
-         && !TEST_ptr(s->ccdata = ossl_cc_dummy_method.new(NULL, NULL, NULL)))
-        || (s->ackm == NULL
-            && !TEST_ptr(s->ackm = ossl_ackm_new(fake_now, NULL, &s->statm,
-                                                 &ossl_cc_dummy_method,
-                                                 s->ccdata))))
-        return 0;
-
-    if (s->quic_conn == NULL
-        && (!TEST_ptr(s->quic_ssl_ctx
-                      = SSL_CTX_new_ex(NULL, NULL, OSSL_QUIC_client_method()))
-            || !TEST_ptr(qs = SSL_new(s->quic_ssl_ctx))
-            || !TEST_ptr(s->quic_conn = ossl_quic_conn_from_ssl(qs))
-            || !TEST_true(ossl_quic_conn_set_qrx(s->quic_conn, s->qrx))
-            || !TEST_true(ossl_quic_conn_set_ackm(s->quic_conn, s->ackm))))
-        return 0;
     return 1;
 }
 
@@ -1871,28 +1794,8 @@ static int rx_run_script(const struct rx_test_op *script)
                                            op->buf, op->buf_len, 1)))
                     goto err;
 
-                switch (op->subop) {
-                case RX_TEST_OP_CHECK_PKT_FRAMES_OK:
-                    if (!TEST_true(rx_state_ensure_for_frames(&s)))
-                        goto err;
-                    if (!TEST_true(ossl_quic_handle_frames(s.quic_conn, pkt)))
-                        goto err;
-                    ossl_qrx_pkt_release(pkt);
-                    pkt = NULL;
-                    break;
-                case RX_TEST_OP_CHECK_PKT_FRAMES_INVALID:
-                    if (!TEST_true(rx_state_ensure_for_frames(&s)))
-                        goto err;
-                    if (!TEST_false(ossl_quic_handle_frames(s.quic_conn, pkt)))
-                        goto err;
-                    ossl_qrx_pkt_release(pkt);
-                    pkt = NULL;
-                    break;
-                default:
-                    ossl_qrx_pkt_release(pkt);
-                    pkt = NULL;
-                    break;
-                }
+                ossl_qrx_pkt_release(pkt);
+                pkt = NULL;
                 break;
             case RX_TEST_OP_CHECK_NO_PKT:
                 if (!TEST_true(rx_state_ensure(&s)))
