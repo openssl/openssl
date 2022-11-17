@@ -5506,3 +5506,5 @@ OSSL_HPKE_CTX_get_seq                   ?	3_2_0	EXIST::FUNCTION:
 OSSL_HPKE_CTX_set_seq                   ?	3_2_0	EXIST::FUNCTION:
 OSSL_HPKE_get_recommended_ikmelen       ?	3_2_0	EXIST::FUNCTION:
 OSSL_PROVIDER_get0_default_search_path  ?	3_2_0	EXIST::FUNCTION:
+BIO_get_rpoll_descriptor                ?	3_2_0	EXIST::FUNCTION:
+BIO_get_wpoll_descriptor                ?	3_2_0	EXIST::FUNCTION:
