@@ -33,8 +33,10 @@
 struct quic_dhs_st {
     QUIC_DHS_ARGS   args;
     unsigned char   state;
-    unsigned char   *server_transport_params;
-    size_t          server_transport_params_len;
+    unsigned char   *remote_transport_params;
+    size_t          remote_transport_params_len;
+    const unsigned char *local_transport_params;
+    size_t          local_transport_params_len;
     unsigned char   rx_hdr[4];
     size_t          rx_hdr_bytes_read;
     size_t          rx_ee_bytes_read;
@@ -62,7 +64,7 @@ void ossl_quic_dhs_free(QUIC_DHS *dhs)
     if (dhs == NULL)
         return;
 
-    OPENSSL_free(dhs->server_transport_params);
+    OPENSSL_free(dhs->remote_transport_params);
     OPENSSL_free(dhs);
 }
 
@@ -146,6 +148,17 @@ static const unsigned char default_handshake_write[32] = {42, 1};
 static const unsigned char default_1rtt_read[32] = {43, 2};
 static const unsigned char default_1rtt_write[32] = {43, 1};
 
+int ossl_quic_dhs_set_transport_params(QUIC_DHS *dhs, const unsigned char *transport_params,
+                                       size_t transport_params_len)
+{
+    if (!dhs->args.is_server && dhs->state != QUIC_DHS_STATE_INITIAL)
+        return 0;
+
+    dhs->local_transport_params       = transport_params;
+    dhs->local_transport_params_len   = transport_params_len;
+    return 1;
+}
+
 int ossl_quic_dhs_tick(QUIC_DHS *dhs)
 {
     int ret;
@@ -157,8 +170,8 @@ int ossl_quic_dhs_tick(QUIC_DHS *dhs)
             case QUIC_DHS_STATE_INITIAL:
                 /* We need to send a CH */
                 if (!dhs_send(dhs, QUIC_DHS_MSG_TYPE_CH,
-                              dhs->args.transport_params,
-                              dhs->args.transport_params_len))
+                              dhs->local_transport_params,
+                              dhs->local_transport_params_len))
                     return 0;
 
                 dhs->state = QUIC_DHS_STATE_SENT_CH;
@@ -204,10 +217,10 @@ int ossl_quic_dhs_tick(QUIC_DHS *dhs)
                     if (type == QUIC_DHS_MSG_TYPE_EE) {
                         dhs->state = QUIC_DHS_STATE_RECEIVED_EE_HDR;
                         dhs->rx_ee_bytes_read               = 0;
-                        dhs->server_transport_params_len    = frame_len;
-                        dhs->server_transport_params
-                            = OPENSSL_malloc(dhs->server_transport_params_len);
-                        if (dhs->server_transport_params == NULL)
+                        dhs->remote_transport_params_len    = frame_len;
+                        dhs->remote_transport_params
+                            = OPENSSL_malloc(dhs->remote_transport_params_len);
+                        if (dhs->remote_transport_params == NULL)
                             return 0;
                     } else {
                         return 0; /* error state, unexpected type */
@@ -220,14 +233,14 @@ int ossl_quic_dhs_tick(QUIC_DHS *dhs)
                 break;
 
             case QUIC_DHS_STATE_RECEIVED_EE_HDR:
-                ret = dhs_recv_body(dhs, dhs->server_transport_params + dhs->rx_ee_bytes_read,
-                                    dhs->server_transport_params_len - dhs->rx_ee_bytes_read,
+                ret = dhs_recv_body(dhs, dhs->remote_transport_params + dhs->rx_ee_bytes_read,
+                                    dhs->remote_transport_params_len - dhs->rx_ee_bytes_read,
                                     &bytes_read);
                 if (ret == 1) {
                     dhs->rx_ee_bytes_read += bytes_read;
-                    if (bytes_read == dhs->server_transport_params_len) {
-                        if (!dhs->args.got_transport_params_cb(dhs->server_transport_params,
-                                                               dhs->server_transport_params_len,
+                    if (bytes_read == dhs->remote_transport_params_len) {
+                        if (!dhs->args.got_transport_params_cb(dhs->remote_transport_params,
+                                                               dhs->remote_transport_params_len,
                                                                dhs->args.got_transport_params_cb_arg))
                             return 0;
 
@@ -313,6 +326,8 @@ int ossl_quic_dhs_tick(QUIC_DHS *dhs)
                 if (!dhs->args.handshake_complete_cb(dhs->args.handshake_complete_cb_arg))
                     return 0;
 
+                dhs->local_transport_params       = NULL;
+                dhs->local_transport_params_len   = 0;
                 break;
 
             case QUIC_DHS_STATE_SENT_FINISHED:
