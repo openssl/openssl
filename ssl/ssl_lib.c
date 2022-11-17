@@ -6942,3 +6942,31 @@ int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey)
     ctx->cert->dh_tmp = dhpkey;
     return 1;
 }
+
+int SSL_get_rpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
+{
+#ifndef OPENSSL_NO_QUIC
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (qc == NULL)
+        return -1;
+
+    return -1; /* TODO(QUIC) */
+#else
+    return -1;
+#endif
+}
+
+int SSL_get_wpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
+{
+#ifndef OPENSSL_NO_QUIC
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (qc == NULL)
+        return -1;
+
+    return -1; /* TODO(QUIC) */
+#else
+    return -1;
+#endif
+}
