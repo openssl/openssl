@@ -10,3 +10,4 @@ SOURCE[$LIBSSL]=quic_stream_map.c
 SOURCE[$LIBSSL]=quic_sf_list.c quic_rstream.c quic_sstream.c
 SOURCE[$LIBSSL]=quic_dummy_handshake.c
 SOURCE[$LIBSSL]=quic_reactor.c
+SOURCE[$LIBSSL]=quic_channel.c
