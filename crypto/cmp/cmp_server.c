@@ -338,7 +338,7 @@ static OSSL_CMP_MSG *process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
     num = sk_OSSL_CMP_CERTSTATUS_num(ccc);
 
     if (OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_IMPLICIT_CONFIRM) == 1
-            || ctx->status != OSSL_CMP_PKISTATUS_trans /* trans. not open */) {
+            || ctx->status != OSSL_CMP_PKISTATUS_trans) {
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_UNEXPECTED_CERTCONF);
         return NULL;
     }
@@ -593,8 +593,8 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     else
         ossl_cmp_log(ERR, ctx, "cannot send proper CMP response");
 
-    /* possibly close the transaction */
-    ctx->status = OSSL_CMP_PKISTATUS_trans; /* transaction so far is open */
+    /* determine whether to keep the transaction open or not */
+    ctx->status = OSSL_CMP_PKISTATUS_trans;
     switch (rsp_type) {
     case OSSL_CMP_PKIBODY_IP:
     case OSSL_CMP_PKIBODY_CP:

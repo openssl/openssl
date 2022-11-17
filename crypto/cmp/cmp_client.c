@@ -352,7 +352,10 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     return 0;
 }
 
-/* Send certConf for IR, CR or KUR sequences and check response */
+/*
+ * Send certConf for IR, CR or KUR sequences and check response,
+ * not modifying ctx->status during the certConf exchange
+ */
 int ossl_cmp_exchange_certConf(OSSL_CMP_CTX *ctx, int fail_info,
                                const char *txt)
 {
@@ -360,7 +363,6 @@ int ossl_cmp_exchange_certConf(OSSL_CMP_CTX *ctx, int fail_info,
     OSSL_CMP_MSG *PKIconf = NULL;
     int res = 0;
 
-    /* not overwriting ctx->status on certConf exchange */
     /* OSSL_CMP_certConf_new() also checks if all necessary options are set */
     if ((certConf = ossl_cmp_certConf_new(ctx, fail_info, txt)) == NULL)
         goto err;
@@ -640,10 +642,10 @@ static int initial_certreq(OSSL_CMP_CTX *ctx,
     OSSL_CMP_MSG *req;
     int res;
 
+    ctx->status = OSSL_CMP_PKISTATUS_request;
     if (!ossl_cmp_ctx_set0_newCert(ctx, NULL))
         return 0;
 
-    ctx->status = OSSL_CMP_PKISTATUS_request;
     if (ctx->total_timeout > 0) /* else ctx->end_time is not used */
         ctx->end_time = time(NULL) + ctx->total_timeout;
 
