@@ -190,6 +190,7 @@ struct ossl_provider_st {
     /* Whether this provider is the child of some other provider */
     const OSSL_CORE_HANDLE *handle;
     unsigned int ischild:1;
+    unsigned int isloadbalancer:1;
 #endif
 
     /* Provider side data */
@@ -509,6 +510,12 @@ static int provider_free_intern(OSSL_PROVIDER *prov, int deactivate)
         return ossl_provider_deactivate(prov, 1);
 
     ossl_provider_free(prov);
+    return 1;
+}
+
+static int provider_set_load_balancer_intern(OSSL_PROVIDER *prov)
+{
+    prov->isloadbalancer = 1;
     return 1;
 }
 #endif
@@ -1675,6 +1682,11 @@ int ossl_provider_set_child(OSSL_PROVIDER *prov, const OSSL_CORE_HANDLE *handle)
     return 1;
 }
 
+int ossl_provider_is_load_balancer(const OSSL_PROVIDER *prov)
+{
+    return prov != NULL ? prov->isloadbalancer : 0;
+}
+
 int ossl_provider_default_props_update(OSSL_LIB_CTX *libctx, const char *props)
 {
 #ifndef FIPS_MODULE
@@ -1891,6 +1903,8 @@ static OSSL_FUNC_provider_get0_provider_ctx_fn core_provider_get0_provider_ctx;
 static OSSL_FUNC_provider_get0_dispatch_fn core_provider_get0_dispatch;
 static OSSL_FUNC_provider_up_ref_fn core_provider_up_ref_intern;
 static OSSL_FUNC_provider_free_fn core_provider_free_intern;
+static OSSL_FUNC_provider_set_load_balancer_fn core_provider_set_load_balancer;
+static OSSL_FUNC_provider_is_load_balancer_fn core_provider_is_load_balancer_intern;
 static OSSL_FUNC_core_obj_add_sigid_fn core_obj_add_sigid;
 static OSSL_FUNC_core_obj_create_fn core_obj_create;
 #endif
@@ -2058,6 +2072,16 @@ static int core_provider_free_intern(const OSSL_CORE_HANDLE *prov,
     return provider_free_intern((OSSL_PROVIDER *)prov, deactivate);
 }
 
+static int core_provider_set_load_balancer(const OSSL_CORE_HANDLE *prov)
+{
+    return provider_set_load_balancer_intern((OSSL_PROVIDER *)prov);
+}
+
+static int core_provider_is_load_balancer_intern(const OSSL_CORE_HANDLE *prov)
+{
+    return ossl_provider_is_load_balancer((OSSL_PROVIDER *)prov);
+}
+
 static int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov,
                               const char *sign_name, const char *digest_name,
                               const char *pkey_name)
@@ -2157,6 +2181,10 @@ static const OSSL_DISPATCH core_dispatch_[] = {
         (void (*)(void))core_provider_up_ref_intern },
     { OSSL_FUNC_PROVIDER_FREE,
         (void (*)(void))core_provider_free_intern },
+    { OSSL_FUNC_PROVIDER_SET_LOAD_BALANCER,
+        (void (*)(void))core_provider_set_load_balancer },
+    { OSSL_FUNC_PROVIDER_IS_LOAD_BALANCER,
+        (void (*)(void))core_provider_is_load_balancer_intern },
     { OSSL_FUNC_CORE_OBJ_ADD_SIGID, (void (*)(void))core_obj_add_sigid },
     { OSSL_FUNC_CORE_OBJ_CREATE, (void (*)(void))core_obj_create },
 #endif

@@ -77,6 +77,7 @@ const char *ossl_provider_module_path(const OSSL_PROVIDER *prov);
 void *ossl_provider_prov_ctx(const OSSL_PROVIDER *prov);
 const OSSL_DISPATCH *ossl_provider_get0_dispatch(const OSSL_PROVIDER *prov);
 OSSL_LIB_CTX *ossl_provider_libctx(const OSSL_PROVIDER *prov);
+int ossl_provider_is_load_balancer(const OSSL_PROVIDER *prov);
 
 /* Thin wrappers around calls to the provider */
 void ossl_provider_teardown(const OSSL_PROVIDER *prov);
