@@ -10,9 +10,8 @@
 #ifndef OSSL_QUIC_RX_DEPACK_H
 # define OSSL_QUIC_RX_DEPACK_H
 
-# include "internal/quic_ssl.h"
+# include "internal/quic_channel.h"
 
-int ossl_quic_handle_frames(QUIC_CONNECTION *qc, OSSL_QRX_PKT *qpacket);
-__owur int ossl_quic_depacketize(QUIC_CONNECTION *qc);
+int ossl_quic_handle_frames(QUIC_CHANNEL *qc, OSSL_QRX_PKT *qpacket);
 
 #endif
