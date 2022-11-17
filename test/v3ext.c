@@ -409,6 +409,49 @@ static int test_ext_syntax(void)
 
     return testresult;
 }
+
+static int test_addr_subset(void)
+{
+    int i;
+    int ret = 0;
+    IPAddrBlocks *addrEmpty = NULL;
+    IPAddrBlocks *addr[3] = { NULL, NULL };
+    ASN1_OCTET_STRING *ip1[3] = { NULL, NULL };
+    ASN1_OCTET_STRING *ip2[3] = { NULL, NULL };
+    int sz = OSSL_NELEM(addr);
+
+    for (i = 0; i < sz; ++i) {
+        /* Create the IPAddrBlocks with a good IPAddressFamily */
+        if (!TEST_ptr(addr[i] = sk_IPAddressFamily_new_null())
+            || !TEST_ptr(ip1[i] = a2i_IPADDRESS(ranges[i].ip1))
+            || !TEST_ptr(ip2[i] = a2i_IPADDRESS(ranges[i].ip2))
+            || !TEST_true(X509v3_addr_add_range(addr[i], ranges[i].afi, NULL,
+                                                ip1[i]->data, ip2[i]->data)))
+            goto end;
+    }
+
+    ret = TEST_ptr(addrEmpty = sk_IPAddressFamily_new_null())
+          && TEST_true(X509v3_addr_subset(NULL, NULL))
+          && TEST_true(X509v3_addr_subset(NULL, addr[0]))
+          && TEST_true(X509v3_addr_subset(addrEmpty, addr[0]))
+          && TEST_true(X509v3_addr_subset(addr[0], addr[0]))
+          && TEST_true(X509v3_addr_subset(addr[0], addr[1]))
+          && TEST_true(X509v3_addr_subset(addr[0], addr[2]))
+          && TEST_true(X509v3_addr_subset(addr[1], addr[2]))
+          && TEST_false(X509v3_addr_subset(addr[0], NULL))
+          && TEST_false(X509v3_addr_subset(addr[1], addr[0]))
+          && TEST_false(X509v3_addr_subset(addr[2], addr[1]))
+          && TEST_false(X509v3_addr_subset(addr[0], addrEmpty));
+end:
+    sk_IPAddressFamily_pop_free(addrEmpty, IPAddressFamily_free);
+    for (i = 0; i < sz; ++i) {
+        sk_IPAddressFamily_pop_free(addr[i], IPAddressFamily_free);
+        ASN1_OCTET_STRING_free(ip1[i]);
+        ASN1_OCTET_STRING_free(ip2[i]);
+    }
+    return ret;
+}
+
 #endif /* OPENSSL_NO_RFC3779 */
 
 OPT_TEST_DECLARE_USAGE("cert.pem\n")
@@ -429,6 +472,7 @@ int setup_tests(void)
     ADD_TEST(test_addr_ranges);
     ADD_TEST(test_ext_syntax);
     ADD_TEST(test_addr_fam_len);
+    ADD_TEST(test_addr_subset);
 #endif /* OPENSSL_NO_RFC3779 */
     return 1;
 }
