@@ -84,4 +84,11 @@ static ossl_unused ossl_inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
 #define QUIC_DEFAULT_ACK_DELAY_EXP  3
 #define QUIC_MAX_ACK_DELAY_EXP      20
 
+#define QUIC_DEFAULT_MAX_ACK_DELAY  25
+
+#define QUIC_MIN_ACTIVE_CONN_ID_LIMIT   2
+
+/* Arbitrary choice of default idle timeout (not an RFC value). */
+#define QUIC_DEFAULT_IDLE_TIMEOUT   30000
+
 #endif
