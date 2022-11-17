@@ -2054,10 +2054,12 @@ int SSL_get_async_status(SSL *s, int *status)
 int SSL_accept(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc != NULL)
         return s->method->ssl_accept(s);
+#endif
 
     if (sc == NULL)
         return 0;
@@ -2073,10 +2075,12 @@ int SSL_accept(SSL *s)
 int SSL_connect(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc != NULL)
         return s->method->ssl_connect(s);
+#endif
 
     if (sc == NULL)
         return 0;
@@ -2177,10 +2181,12 @@ static int ssl_io_intern(void *vargs)
 int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc != NULL)
         return s->method->ssl_read(s, buf, num, readbytes);
+#endif
 
     if (sc == NULL)
         return -1;
@@ -2328,10 +2334,12 @@ int SSL_get_early_data_status(const SSL *s)
 static int ssl_peek_internal(SSL *s, void *buf, size_t num, size_t *readbytes)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc != NULL)
         return s->method->ssl_peek(s, buf, num, readbytes);
+#endif
 
     if (sc == NULL)
         return 0;
@@ -2397,10 +2405,12 @@ int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
 int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+#ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc != NULL)
         return s->method->ssl_write(s, buf, num, written);
+#endif
 
     if (sc == NULL)
         return 0;
@@ -4642,10 +4652,12 @@ const char *ssl_protocol_to_string(int version)
 const char *SSL_get_version(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+#ifndef OPENSSL_NO_QUIC
     const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
 
     if (qc != NULL)
         return "QUIC";
+#endif
 
     if (sc == NULL)
         return NULL;

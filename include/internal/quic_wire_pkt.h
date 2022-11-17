@@ -14,16 +14,18 @@
 # include "internal/packet.h"
 # include "internal/quic_types.h"
 
-# define QUIC_VERSION_NONE   ((uint32_t)0)   /* Used for version negotiation */
-# define QUIC_VERSION_1      ((uint32_t)1)   /* QUIC v1 */
+# ifndef OPENSSL_NO_QUIC
+
+#  define QUIC_VERSION_NONE   ((uint32_t)0)   /* Used for version negotiation */
+#  define QUIC_VERSION_1      ((uint32_t)1)   /* QUIC v1 */
 
 /* QUIC logical packet type. These do not match wire values. */
-# define QUIC_PKT_TYPE_INITIAL        1
-# define QUIC_PKT_TYPE_0RTT           2
-# define QUIC_PKT_TYPE_HANDSHAKE      3
-# define QUIC_PKT_TYPE_RETRY          4
-# define QUIC_PKT_TYPE_1RTT           5
-# define QUIC_PKT_TYPE_VERSION_NEG    6
+#  define QUIC_PKT_TYPE_INITIAL        1
+#  define QUIC_PKT_TYPE_0RTT           2
+#  define QUIC_PKT_TYPE_HANDSHAKE      3
+#  define QUIC_PKT_TYPE_RETRY          4
+#  define QUIC_PKT_TYPE_1RTT           5
+#  define QUIC_PKT_TYPE_VERSION_NEG    6
 
 /*
  * Determine encryption level from packet type. Returns QUIC_ENC_LEVEL_NUM if
@@ -120,9 +122,9 @@ ossl_quic_pkt_type_must_be_last(uint32_t pkt_type)
  * Smallest possible QUIC packet size as per RFC (aside from version negotiation
  * packets).
  */
-#define QUIC_MIN_VALID_PKT_LEN_CRYPTO      21
-#define QUIC_MIN_VALID_PKT_LEN_VERSION_NEG  7
-#define QUIC_MIN_VALID_PKT_LEN              QUIC_MIN_VALID_PKT_LEN_VERSION_NEG
+#  define QUIC_MIN_VALID_PKT_LEN_CRYPTO      21
+#  define QUIC_MIN_VALID_PKT_LEN_VERSION_NEG  7
+#  define QUIC_MIN_VALID_PKT_LEN              QUIC_MIN_VALID_PKT_LEN_VERSION_NEG
 
 typedef struct quic_pkt_hdr_ptrs_st QUIC_PKT_HDR_PTRS;
 
@@ -142,9 +144,9 @@ typedef struct quic_hdr_protector_st {
     uint32_t            cipher_id;
 } QUIC_HDR_PROTECTOR;
 
-# define QUIC_HDR_PROT_CIPHER_AES_128    1
-# define QUIC_HDR_PROT_CIPHER_AES_256    2
-# define QUIC_HDR_PROT_CIPHER_CHACHA     3
+#  define QUIC_HDR_PROT_CIPHER_AES_128    1
+#  define QUIC_HDR_PROT_CIPHER_AES_256    2
+#  define QUIC_HDR_PROT_CIPHER_CHACHA     3
 
 /*
  * Initialises a header protector.
@@ -551,7 +553,7 @@ int ossl_quic_wire_encode_pkt_hdr_pn(QUIC_PN pn,
  * ====================
  */
 
-#define QUIC_RETRY_INTEGRITY_TAG_LEN    16
+#  define QUIC_RETRY_INTEGRITY_TAG_LEN    16
 
 /*
  * Validate a retry integrity tag. Returns 1 if the tag is valid.
@@ -591,5 +593,7 @@ int ossl_quic_calculate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
                                             const QUIC_PKT_HDR *hdr,
                                             const QUIC_CONN_ID *client_initial_dcid,
                                             unsigned char *tag);
+
+# endif
 
 #endif

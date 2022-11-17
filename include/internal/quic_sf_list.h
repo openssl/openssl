@@ -35,6 +35,7 @@
  *            able to mark an empty frame.
  * Invariant: The offset never points further than into the first frame.
  */
+# ifndef OPENSSL_NO_QUIC
 
 typedef struct stream_frame_st STREAM_FRAME;
 
@@ -57,5 +58,7 @@ int ossl_sframe_list_peek(const SFRAME_LIST *fl, void **iter,
                           UINT_RANGE *range, const unsigned char **data,
                           int *fin);
 int ossl_sframe_list_drop_frames(SFRAME_LIST *fl, uint64_t limit);
+
+# endif
 
 #endif

@@ -12,6 +12,8 @@
 #include "openssl/params.h"
 #include "internal/time.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 typedef struct ossl_cc_data_st *OSSL_CC_DATA;
 
 typedef struct ossl_cc_method_st {
@@ -152,5 +154,7 @@ typedef struct ossl_cc_method_st {
 } OSSL_CC_METHOD;
 
 extern const OSSL_CC_METHOD ossl_cc_dummy_method;
+
+# endif
 
 #endif

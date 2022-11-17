@@ -13,6 +13,8 @@
 # include <openssl/ssl.h>
 # include "internal/quic_stream.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * QUIC Dummy Handshake Module
  * ===========================
@@ -125,5 +127,7 @@ int ossl_quic_dhs_tick(QUIC_DHS *dhs);
 int ossl_quic_dhs_set_transport_params(QUIC_DHS *dhs,
                                        const unsigned char *transport_params,
                                        size_t transport_params_len);
+
+# endif
 
 #endif

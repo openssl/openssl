@@ -17,6 +17,8 @@
 # include "internal/quic_txpim.h"
 # include "internal/quic_stream.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * QUIC Frame-in-Flight Dispatcher (FIFD)
  * ======================================
@@ -56,5 +58,7 @@ int ossl_quic_fifd_init(QUIC_FIFD *fifd,
 void ossl_quic_fifd_cleanup(QUIC_FIFD *fifd); /* (no-op) */
 
 int ossl_quic_fifd_pkt_commit(QUIC_FIFD *fifd, QUIC_TXPIM_PKT *pkt);
+
+# endif
 
 #endif

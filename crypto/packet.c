@@ -223,6 +223,7 @@ static int put_value(unsigned char *data, uint64_t value, size_t len)
     return 1;
 }
 
+#ifndef OPENSSL_NO_QUIC
 static int put_quic_value(unsigned char *data, size_t value, size_t len)
 {
     if (data == NULL)
@@ -235,6 +236,7 @@ static int put_quic_value(unsigned char *data, size_t value, size_t len)
     ossl_quic_vlint_encode_n(data, value, len);
     return 1;
 }
+#endif
 
 /*
  * Internal helper function used by WPACKET_close(), WPACKET_finish() and
@@ -272,6 +274,7 @@ static int wpacket_intern_close(WPACKET *pkt, WPACKET_SUB *sub, int doclose)
         unsigned char *buf = GETBUF(pkt);
 
         if (buf != NULL) {
+#ifndef OPENSSL_NO_QUIC
             if ((sub->flags & WPACKET_FLAGS_QUIC_VLINT) == 0) {
                 if (!put_value(&buf[sub->packet_len], packlen, sub->lenbytes))
                     return 0;
@@ -279,6 +282,10 @@ static int wpacket_intern_close(WPACKET *pkt, WPACKET_SUB *sub, int doclose)
                 if (!put_quic_value(&buf[sub->packet_len], packlen, sub->lenbytes))
                     return 0;
             }
+#else
+            if (!put_value(&buf[sub->packet_len], packlen, sub->lenbytes))
+                return 0;
+#endif
         }
     } else if (pkt->endfirst && sub->parent != NULL
                && (packlen != 0
@@ -524,6 +531,8 @@ void WPACKET_cleanup(WPACKET *pkt)
     pkt->subs = NULL;
 }
 
+#ifndef OPENSSL_NO_QUIC
+
 int WPACKET_start_quic_sub_packet_bound(WPACKET *pkt, size_t max_len)
 {
     size_t enclen = ossl_quic_vlint_encode_len(max_len);
@@ -574,3 +583,5 @@ int WPACKET_quic_write_vlint(WPACKET *pkt, uint64_t v)
     ossl_quic_vlint_encode(b, v);
     return 1;
 }
+
+#endif

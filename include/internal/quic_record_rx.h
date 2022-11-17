@@ -16,6 +16,8 @@
 # include "internal/quic_record_util.h"
 # include "internal/quic_demux.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * QUIC Record Layer - RX
  * ======================
@@ -531,5 +533,7 @@ uint64_t ossl_qrx_get_cur_forged_pkt_count(OSSL_QRX *qrx);
  */
 uint64_t ossl_qrx_get_max_forged_pkt_count(OSSL_QRX *qrx,
                                            uint32_t enc_level);
+
+# endif
 
 #endif

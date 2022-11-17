@@ -15,6 +15,8 @@
 # include "internal/quic_types.h"
 # include "internal/quic_record_util.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * QUIC Record Layer - TX
  * ======================
@@ -321,5 +323,7 @@ uint64_t ossl_qtx_get_cur_epoch_pkt_count(OSSL_QTX *qtx, uint32_t enc_level);
  * error condition to a peer is a Stateless Reset packet.
  */
 uint64_t ossl_qtx_get_max_epoch_pkt_count(OSSL_QTX *qtx, uint32_t enc_level);
+
+# endif
 
 #endif
