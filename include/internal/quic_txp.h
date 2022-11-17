@@ -21,6 +21,8 @@
 # include "internal/bio_addr.h"
 # include "internal/time.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * QUIC TX Packetiser
  * ==================
@@ -158,5 +160,7 @@ void ossl_quic_tx_packetiser_schedule_ack_eliciting(OSSL_QUIC_TX_PACKETISER *txp
  */
 int ossl_quic_tx_packetiser_schedule_conn_close(OSSL_QUIC_TX_PACKETISER *txp,
                                                 const OSSL_QUIC_FRAME_CONN_CLOSE *f);
+
+# endif
 
 #endif

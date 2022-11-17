@@ -17,6 +17,8 @@
 # include "internal/quic_statm.h"
 # include "internal/time.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * QUIC Channel
  * ============
@@ -47,11 +49,11 @@
  * currently modelled.
  */
 
-#define QUIC_CHANNEL_STATE_IDLE                        0
-#define QUIC_CHANNEL_STATE_ACTIVE                      1
-#define QUIC_CHANNEL_STATE_TERMINATING_CLOSING         2
-#define QUIC_CHANNEL_STATE_TERMINATING_DRAINING        3
-#define QUIC_CHANNEL_STATE_TERMINATED                  4
+#  define QUIC_CHANNEL_STATE_IDLE                        0
+#  define QUIC_CHANNEL_STATE_ACTIVE                      1
+#  define QUIC_CHANNEL_STATE_TERMINATING_CLOSING         2
+#  define QUIC_CHANNEL_STATE_TERMINATING_DRAINING        3
+#  define QUIC_CHANNEL_STATE_TERMINATED                  4
 
 typedef struct quic_channel_args_st {
     OSSL_LIB_CTX *libctx;
@@ -155,5 +157,7 @@ int ossl_quic_channel_is_terminating(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_terminated(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_active(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_handshake_complete(const QUIC_CHANNEL *ch);
+
+# endif
 
 #endif

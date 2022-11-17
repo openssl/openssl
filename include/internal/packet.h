@@ -251,6 +251,8 @@ __owur static ossl_inline int PACKET_peek_net_8(const PACKET *pkt,
     return 1;
 }
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * Decodes a QUIC variable-length integer in |pkt| and stores the result in
  * |data|.
@@ -313,6 +315,8 @@ __owur static ossl_inline int PACKET_skip_quic_vlint(PACKET *pkt)
     packet_forward(pkt, enclen);
     return 1;
 }
+
+# endif
 
 /* Equivalent of n2l */
 /* Get 4 bytes in network order from |pkt| and store the value in |*data| */
@@ -691,6 +695,8 @@ __owur static ossl_inline int PACKET_get_length_prefixed_3(PACKET *pkt,
     return 1;
 }
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * Reads a variable-length vector prefixed with a QUIC variable-length integer
  * denoting the length, and stores the contents in |subpkt|. |pkt| can equal
@@ -717,6 +723,8 @@ __owur static ossl_inline int PACKET_get_quic_length_prefixed(PACKET *pkt,
 
     return 1;
 }
+
+# endif
 
 /* Writeable packets */
 
@@ -1027,6 +1035,8 @@ int WPACKET_is_null_buf(WPACKET *pkt);
 /* Release resources in a WPACKET if a failure has occurred. */
 void WPACKET_cleanup(WPACKET *pkt);
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * Starts a QUIC sub-packet headed by a QUIC variable-length integer. A 4-byte
  * representation is used.
@@ -1055,5 +1065,7 @@ __owur int WPACKET_quic_sub_allocate_bytes(WPACKET *pkt, size_t len,
  * Write a QUIC variable-length integer to the packet.
  */
 __owur int WPACKET_quic_write_vlint(WPACKET *pkt, uint64_t v);
+
+# endif
 
 #endif                          /* OSSL_INTERNAL_PACKET_H */

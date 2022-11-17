@@ -20,6 +20,8 @@
 #include "internal/quic_fc.h"
 #include "internal/quic_statm.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * QUIC Send Stream
  * ================
@@ -342,5 +344,7 @@ int ossl_quic_rstream_peek(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,
  * set to 0 otherwise.
  */
 int ossl_quic_rstream_available(QUIC_RSTREAM *qrs, size_t *avail, int *fin);
+
+# endif
 
 #endif

@@ -87,7 +87,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     QUIC_DHS_ARGS dhs_args = {0};
     uint32_t pn_space;
 
-    // TODO CLIENT ONLY
+    /* TODO(QUIC): This is only applicable to clients. */
     if (!gen_rand_conn_id(ch->libctx, INIT_DCID_LEN, &ch->init_dcid))
         goto err;
 

@@ -15,6 +15,8 @@
 # include "internal/quic_cfq.h"
 # include "internal/quic_ackm.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * QUIC Transmitted Packet Information Manager
  * ===========================================
@@ -124,5 +126,7 @@ size_t ossl_quic_txpim_pkt_get_num_chunks(const QUIC_TXPIM_PKT *fpkt);
  * yet to be returned to the TXPIM.
  */
 size_t ossl_quic_txpim_get_in_use(const QUIC_TXPIM *txpim);
+
+# endif
 
 #endif

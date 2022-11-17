@@ -15,6 +15,8 @@
 # include "internal/quic_record_rx.h" /* OSSL_QRX */
 # include "internal/quic_ackm.h"      /* OSSL_ACKM */
 
+# ifndef OPENSSL_NO_QUIC
+
 __owur SSL *ossl_quic_new(SSL_CTX *ctx);
 __owur int ossl_quic_init(SSL *s);
 void ossl_quic_deinit(SSL *s);
@@ -59,5 +61,7 @@ BIO *ossl_quic_conn_get_net_rbio(const QUIC_CONNECTION *qc);
 BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc);
 __owur int ossl_quic_conn_set_initial_peer_addr(QUIC_CONNECTION *qc,
                                                 const BIO_ADDR *peer_addr);
+
+# endif
 
 #endif

@@ -13,6 +13,8 @@
 # include "internal/sockets.h"
 # include <openssl/bio.h>
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * Core I/O Reactor Framework
  * ==========================
@@ -65,8 +67,6 @@
  * adaptation layer on top of our internal asynchronous I/O API as exposed by
  * the reactor interface.
  */
-# ifndef OPENSSL_NO_QUIC
-
 typedef struct quic_tick_result_st {
     char        want_net_read;
     char        want_net_write;

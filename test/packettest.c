@@ -465,6 +465,8 @@ static int test_PACKET_as_length_prefixed_2(void)
     return 1;
 }
 
+#ifndef OPENSSL_NO_QUIC
+
 static int test_PACKET_get_quic_vlint(void)
 {
     struct quic_test_case {
@@ -569,6 +571,8 @@ static int test_PACKET_get_quic_length_prefixed(void)
     return 1;
 }
 
+#endif
+
 int setup_tests(void)
 {
     unsigned int i;
@@ -599,7 +603,9 @@ int setup_tests(void)
     ADD_TEST(test_PACKET_get_length_prefixed_3);
     ADD_TEST(test_PACKET_as_length_prefixed_1);
     ADD_TEST(test_PACKET_as_length_prefixed_2);
+#ifndef OPENSSL_NO_QUIC
     ADD_TEST(test_PACKET_get_quic_vlint);
     ADD_TEST(test_PACKET_get_quic_length_prefixed);
+#endif
     return 1;
 }
