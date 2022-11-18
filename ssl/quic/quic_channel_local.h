@@ -57,8 +57,8 @@ struct quic_channel_st {
      * layer; its 'network' side is plugged into the crypto stream for each EL
      * (other than the 0-RTT EL).
      */
-    QUIC_DHS                        *dhs;
-    /* TODO(QUIC): Replace this with a QUIC_TLS instance when ready. */
+    QUIC_TLS                        *qtls;
+    SSL                             *tls;
 
     /*
      * The transport parameter block we will send or have sent.

@@ -59,6 +59,7 @@ typedef struct quic_channel_args_st {
     OSSL_LIB_CTX *libctx;
     const char *propq;
     int is_server;
+    SSL *tls;
 } QUIC_CHANNEL_ARGS;
 
 typedef struct quic_channel_st QUIC_CHANNEL;

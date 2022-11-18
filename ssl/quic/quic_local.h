@@ -16,7 +16,7 @@
 # include "internal/quic_statm.h"
 # include "internal/quic_demux.h"
 # include "internal/quic_record_rx.h"
-# include "internal/quic_dummy_handshake.h"
+# include "internal/quic_tls.h"
 # include "internal/quic_fc.h"
 # include "internal/quic_stream.h"
 # include "internal/quic_channel.h"
