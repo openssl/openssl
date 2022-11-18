@@ -68,6 +68,7 @@ static void list_remove(QUIC_STREAM_LIST_NODE *l,
 static QUIC_STREAM *active_next(QUIC_STREAM_LIST_NODE *l, QUIC_STREAM *s)
 {
     QUIC_STREAM_LIST_NODE *n = s->active_node.next;
+
     if (n == l)
         n = n->next;
     if (n == l)
@@ -127,6 +128,7 @@ QUIC_STREAM *ossl_quic_stream_map_alloc(QUIC_STREAM_MAP *qsm,
 {
     QUIC_STREAM *s;
     QUIC_STREAM key;
+
     key.id = stream_id;
 
     s = lh_QUIC_STREAM_retrieve(qsm->map, &key);

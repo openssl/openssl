@@ -371,7 +371,7 @@ void ossl_quic_tx_packetiser_free(OSSL_QUIC_TX_PACKETISER *txp)
     ossl_quic_tx_packetiser_set_initial_token(txp, NULL, 0, NULL, NULL);
     ossl_quic_fifd_cleanup(&txp->fifd);
     OPENSSL_free(txp->iovec);
-    OPENSSL_free((char *)txp->conn_close_frame.reason);
+    OPENSSL_free(txp->conn_close_frame.reason);
     OPENSSL_free(txp->scratch);
     OPENSSL_free(txp);
 }
@@ -1427,7 +1427,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
         if (!ossl_assert(!h->done_implicit))
             /*
              * Logic below should have ensured we didn't append an
-             * implicit-length unless we filled the packet or didn't have a
+             * implicit-length unless we filled the packet or didn't have
              * another stream to handle, so this should not be possible.
              */
             goto err;
