@@ -101,7 +101,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     OSSL_QUIC_TX_PACKETISER_ARGS txp_args = {0};
     OSSL_QTX_ARGS qtx_args = {0};
     OSSL_QRX_ARGS qrx_args = {0};
-    QUIC_DHS_ARGS dhs_args = {0};
+    QUIC_TLS_ARGS tls_args = {0};
     uint32_t pn_space;
     size_t rx_short_cid_len = ch->is_server ? INIT_DCID_LEN : 0;
 
@@ -233,22 +233,23 @@ static int ch_init(QUIC_CHANNEL *ch)
                              get_time, NULL))
         goto err;
 
-    /* Plug in the dummy handshake layer. */
-    dhs_args.crypto_send_cb             = ch_on_crypto_send;
-    dhs_args.crypto_send_cb_arg         = ch;
-    dhs_args.crypto_recv_cb             = ch_on_crypto_recv;
-    dhs_args.crypto_recv_cb_arg         = ch;
-    dhs_args.yield_secret_cb            = ch_on_handshake_yield_secret;
-    dhs_args.yield_secret_cb_arg        = ch;
-    dhs_args.got_transport_params_cb    = ch_on_transport_params;
-    dhs_args.got_transport_params_cb_arg= ch;
-    dhs_args.handshake_complete_cb      = ch_on_handshake_complete;
-    dhs_args.handshake_complete_cb_arg  = ch;
-    dhs_args.alert_cb                   = ch_on_handshake_alert;
-    dhs_args.alert_cb_arg               = ch;
-    dhs_args.is_server                  = ch->is_server;
+    /* Plug in the TLS handshake layer. */
+    tls_args.s                          = ch->tls;
+    tls_args.crypto_send_cb             = ch_on_crypto_send;
+    tls_args.crypto_send_cb_arg         = ch;
+    tls_args.crypto_recv_cb             = ch_on_crypto_recv;
+    tls_args.crypto_recv_cb_arg         = ch;
+    tls_args.yield_secret_cb            = ch_on_handshake_yield_secret;
+    tls_args.yield_secret_cb_arg        = ch;
+    tls_args.got_transport_params_cb    = ch_on_transport_params;
+    tls_args.got_transport_params_cb_arg= ch;
+    tls_args.handshake_complete_cb      = ch_on_handshake_complete;
+    tls_args.handshake_complete_cb_arg  = ch;
+    tls_args.alert_cb                   = ch_on_handshake_alert;
+    tls_args.alert_cb_arg               = ch;
+    tls_args.is_server                  = ch->is_server;
 
-    if ((ch->dhs = ossl_quic_dhs_new(&dhs_args)) == NULL)
+    if ((ch->qtls = ossl_quic_tls_new(&tls_args)) == NULL)
         goto err;
 
     /*
@@ -311,7 +312,7 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     ossl_qrx_pkt_release(ch->qrx_pkt);
     ch->qrx_pkt = NULL;
 
-    ossl_quic_dhs_free(ch->dhs);
+    ossl_quic_tls_free(ch->qtls);
     ossl_qrx_free(ch->qrx);
     ossl_quic_demux_free(ch->demux);
     OPENSSL_free(ch->local_transport_params);
@@ -327,6 +328,7 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
     ch->libctx      = args->libctx;
     ch->propq       = args->propq;
     ch->is_server   = args->is_server;
+    ch->tls         = args->tls;
 
     if (!ch_init(ch)) {
         OPENSSL_free(ch);
@@ -1137,7 +1139,7 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
 
     wpkt_valid = 0;
 
-    if (!ossl_quic_dhs_set_transport_params(ch->dhs, ch->local_transport_params,
+    if (!ossl_quic_tls_set_transport_params(ch->qtls, ch->local_transport_params,
                                             buf_len))
         goto err;
 
@@ -1211,7 +1213,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
          * new outgoing data.
          */
         ch->have_new_rx_secret = 0;
-        ossl_quic_dhs_tick(ch->dhs);
+        ossl_quic_tls_tick(ch->qtls);
 
         /*
          * If the handshake layer gave us a new secret, we need to do RX again
@@ -1702,7 +1704,7 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     ch->doing_proactive_ver_neg = 0; /* not currently supported */
 
     /* Handshake layer: start (e.g. send CH). */
-    if (!ossl_quic_dhs_tick(ch->dhs))
+    if (!ossl_quic_tls_tick(ch->qtls))
         return 0;
 
     ossl_quic_reactor_tick(&ch->rtor); /* best effort */

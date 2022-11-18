@@ -12,7 +12,7 @@
 #include <openssl/sslerr.h>
 #include <crypto/rand.h>
 #include "quic_local.h"
-#include "internal/quic_dummy_handshake.h"
+#include "internal/quic_tls.h"
 #include "internal/quic_rx_depack.h"
 #include "internal/quic_error.h"
 #include "internal/time.h"
@@ -590,6 +590,7 @@ static int ensure_channel_and_start(QUIC_CONNECTION *qc)
     args.libctx     = qc->ssl.ctx->libctx;
     args.propq      = qc->ssl.ctx->propq;
     args.is_server  = 0;
+    args.tls        = qc->tls;
 
     qc->ch = ossl_quic_channel_new(&args);
     if (qc->ch == NULL)
