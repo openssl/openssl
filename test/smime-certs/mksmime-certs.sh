@@ -34,6 +34,11 @@ CN="Test S/MIME EE RSA #3" $OPENSSL req -config ca.cnf -noenc \
 $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 36500 \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smrsa3.pem
 
+CN="Test S/MIME EE RSA 1024" $OPENSSL req -config ca.cnf -noenc \
+	-keyout smrsa1024.pem -out req.pem -newkey rsa:1024
+$OPENSSL x509 -req -in req.pem -CA smroot.pem -days 36500 \
+	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smrsa1024.pem
+
 # Create DSA parameters
 
 $OPENSSL dsaparam -out dsap.pem 2048
