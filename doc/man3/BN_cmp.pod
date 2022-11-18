@@ -50,7 +50,7 @@ returns 0.
 Prior to OpenSSL 1.1.0, BN_is_zero(), BN_is_one(), BN_is_word(),
 BN_abs_is_word() and BN_is_odd() were macros.
 
-The function BN_are_coprime() was added in OpenSSL 3.2.
+The function BN_are_coprime() was added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 
