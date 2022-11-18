@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__VMS)
 # include <sys/stat.h>
 # include <openssl/pem.h>
 # include <openssl/x509.h>
@@ -192,7 +192,13 @@ int main(int ac, char **av)
     OPENSSL_free(contents);
     return EXIT_SUCCESS;
 #else
+# if defined(_WIN32)
     fprintf(stderr, "This tool is not supported on Windows\n");
+# elif defined(__VMS)
+    fprintf(stderr, "This tool is not supported on VMS\n");
+# else
+    fprintf(stderr, "This tool is not supported on this platform\n");
+# endif
     exit(EXIT_FAILURE);
 #endif
 }
