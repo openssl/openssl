@@ -263,6 +263,12 @@ struct quic_channel_st {
 
     /* Are we in server mode? Never changes after instantiation. */
     unsigned int                    is_server               : 1;
+
+    /*
+     * Set temporarily when the handshake layer has given us a new secret. Used
+     * to determine if we need to check our RX queues again.
+     */
+    unsigned int                    have_new_secret         : 1;
 };
 
 # endif
