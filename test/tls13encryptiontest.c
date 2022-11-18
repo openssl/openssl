@@ -379,7 +379,7 @@ static int test_tls13_encryption(void)
         }
 
         /* Encrypt it */
-        if (!TEST_size_t_eq(tls13_enc(s, &rec, 1, 1), 1)) {
+        if (!TEST_size_t_eq(tls13_enc(s, &rec, 1, 1, NULL), 1)) {
             TEST_info("Failed to encrypt record %zu", ctr);
             goto err;
         }
@@ -389,7 +389,7 @@ static int test_tls13_encryption(void)
         }
 
         /* Decrypt it */
-        if (!TEST_int_eq(tls13_enc(s, &rec, 1, 0), 1)) {
+        if (!TEST_int_eq(tls13_enc(s, &rec, 1, 0, NULL), 1)) {
             TEST_info("Failed to decrypt record %zu", ctr);
             goto err;
         }

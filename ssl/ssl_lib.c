@@ -25,11 +25,13 @@
 
 const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
 
-static int ssl_undefined_function_1(SSL *ssl, SSL3_RECORD *r, size_t s, int t)
+static int ssl_undefined_function_1(SSL *ssl, SSL3_RECORD *r, size_t s, int t,
+                                    const SSL3_BUFFER *wb)
 {
     (void)r;
     (void)s;
     (void)t;
+    (void)wb;
     return ssl_undefined_function(ssl);
 }
 
