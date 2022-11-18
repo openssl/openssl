@@ -211,13 +211,16 @@ __owur int ssl3_read_bytes(SSL *s, int type, int *recvd_type,
                            unsigned char *buf, size_t len, int peek,
                            size_t *readbytes);
 __owur int ssl3_setup_buffers(SSL *s);
-__owur int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int send);
+__owur int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int send,
+                    const SSL3_BUFFER *wb);
 __owur int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send);
 __owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
                               size_t *written);
-__owur int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send);
+__owur int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send,
+                    const SSL3_BUFFER *wb);
 __owur int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send);
-__owur int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send);
+__owur int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send,
+                     const SSL3_BUFFER *wb);
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);

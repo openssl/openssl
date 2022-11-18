@@ -22,7 +22,8 @@
  *   -1: if the record's AEAD-authenticator is invalid or, if sending,
  *       an internal error occurred.
  */
-int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
+int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
+              const SSL3_BUFFER *wb)
 {
     EVP_CIPHER_CTX *ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH], recheader[SSL3_RT_HEADER_LENGTH];
@@ -34,6 +35,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
     uint32_t alg_enc;
     WPACKET wpkt;
 
+    (void)wb;
     if (n_recs != 1) {
         /* Should not happen */
         /* TODO(TLS1.3): Support pipelining */

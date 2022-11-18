@@ -526,7 +526,7 @@ int ssl3_get_record(SSL *s)
 
     first_rec_len = rr[0].length;
 
-    enc_err = s->method->ssl3_enc->enc(s, rr, num_recs, 0);
+    enc_err = s->method->ssl3_enc->enc(s, rr, num_recs, 0, NULL);
 
     /*-
      * enc_err is:
@@ -843,7 +843,8 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
  *   -1: if the record's padding is invalid or, if sending, an internal error
  *       occurred.
  */
-int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending)
+int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending,
+             const SSL3_BUFFER *wb)
 {
     SSL3_RECORD *rec;
     EVP_CIPHER_CTX *ds;
@@ -852,6 +853,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending)
     int imac_size;
     const EVP_CIPHER *enc;
 
+    (void)wb;
     rec = inrecs;
     /*
      * We shouldn't ever be called with more than one record in the SSLv3 case
@@ -934,7 +936,8 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending)
  *   -1: if the record's padding/AEAD-authenticator is invalid or, if sending,
  *       an internal error occurred.
  */
-int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
+int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
+             const SSL3_BUFFER *wb)
 {
     EVP_CIPHER_CTX *ds;
     size_t reclen[SSL_MAX_PIPELINES];
@@ -1068,6 +1071,13 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
                 }
 
                 if (sending) {
+                    if (wb != NULL
+                            && wb[ctr].buf - recs[ctr].data + wb[ctr].len
+                               < recs[ctr].length + pad) {
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                                 ERR_R_INTERNAL_ERROR);
+                        return -1;
+                    }
                     reclen[ctr] += pad;
                     recs[ctr].length += pad;
                 }
@@ -1675,7 +1685,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         }
     }
 
-    enc_err = s->method->ssl3_enc->enc(s, rr, 1, 0);
+    enc_err = s->method->ssl3_enc->enc(s, rr, 1, 0, NULL);
     /*-
      * enc_err is:
      *    0: (in non-constant time) if the record is publicly invalid.
