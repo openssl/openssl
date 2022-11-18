@@ -126,6 +126,12 @@ struct quic_urxe_st {
      * QRX only; not used by the demuxer.
      */
     char            deferred;
+
+    /*
+     * Used by the DEMUX to track if a URXE has been handed out. Used primarily
+     * for debugging purposes.
+     */
+    char            demux_state;
 };
 
 /* Accessors for URXE buffer. */
@@ -185,7 +191,6 @@ typedef void (ossl_quic_demux_cb_fn)(QUIC_URXE *e, void *arg);
  */
 QUIC_DEMUX *ossl_quic_demux_new(BIO *net_bio,
                                 size_t short_conn_id_len,
-                                size_t default_urxe_alloc_len,
                                 OSSL_TIME (*now)(void *arg),
                                 void *now_arg);
 
@@ -196,9 +201,15 @@ QUIC_DEMUX *ossl_quic_demux_new(BIO *net_bio,
 void ossl_quic_demux_free(QUIC_DEMUX *demux);
 
 /*
- * Changes the BIO which the demuxer reads from.
+ * Changes the BIO which the demuxer reads from. This also sets the MTU if the
+ * BIO supports querying the MTU.
  */
 void ossl_quic_demux_set_bio(QUIC_DEMUX *demux, BIO *net_bio);
+
+/*
+ * Changes the MTU in bytes we use to receive datagrams.
+ */
+int ossl_quic_demux_set_mtu(QUIC_DEMUX *demux, unsigned int mtu);
 
 /*
  * Register a datagram handler callback for a connection ID.

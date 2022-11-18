@@ -159,7 +159,7 @@ static int ch_init(QUIC_CHANNEL *ch)
         goto err;
 
     if ((ch->demux = ossl_quic_demux_new(/*BIO=*/NULL, /*Short CID Len=*/0,
-                                         1200, get_time, NULL)) == NULL)
+                                         get_time, NULL)) == NULL)
         goto err;
 
     qrx_args.demux              = ch->demux;

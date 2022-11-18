@@ -1704,7 +1704,6 @@ static int rx_state_ensure(struct rx_state *s)
     if (s->demux == NULL
         && !TEST_ptr(s->demux = ossl_quic_demux_new(NULL,
                                                     s->args.short_conn_id_len,
-                                                    1500,
                                                     fake_time,
                                                     NULL)))
         return 0;

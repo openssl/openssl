@@ -183,7 +183,7 @@ static int helper_init(struct helper *h)
     if (!TEST_ptr(h->txp = ossl_quic_tx_packetiser_new(&h->args)))
         goto err;
 
-    if (!TEST_ptr(h->demux = ossl_quic_demux_new(h->bio2, 8, 1200,
+    if (!TEST_ptr(h->demux = ossl_quic_demux_new(h->bio2, 8,
                                                  fake_now, NULL)))
         goto err;
 
