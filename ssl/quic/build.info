@@ -12,3 +12,4 @@ SOURCE[$LIBSSL]=quic_dummy_handshake.c
 SOURCE[$LIBSSL]=quic_reactor.c
 SOURCE[$LIBSSL]=quic_channel.c
 SOURCE[$LIBSSL]=quic_tserver.c
+SOURCE[$LIBSSL]=quic_tls.c
