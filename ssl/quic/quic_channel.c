@@ -531,6 +531,7 @@ static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
             return 0;
     }
 
+    ch->have_new_secret = 1;
     return 1;
 }
 
@@ -1007,14 +1008,23 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
         }
     }
 
-    /* Handle any incoming data from the network. */
-    ch_rx(ch);
+    do {
+        /* Handle any incoming data from the network. */
+        ch_rx(ch);
 
-    /*
-     * Allow the handshake layer to check for any new incoming data and generate
-     * new outgoing data.
-     */
-    ossl_quic_dhs_tick(ch->dhs);
+        /*
+         * Allow the handshake layer to check for any new incoming data and generate
+         * new outgoing data.
+         */
+        ch->have_new_secret = 0;
+        ossl_quic_dhs_tick(ch->dhs);
+
+        /*
+         * If the handshake layer gave us a new secret, we need to do RX again
+         * because packets that were not previously processable and were
+         * deferred might now be processable.
+         */
+    } while (ch->have_new_secret);
 
     /*
      * Handle any timer events which are due to fire; namely, the loss detection
