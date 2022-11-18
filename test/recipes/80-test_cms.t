@@ -636,6 +636,34 @@ my @smime_cms_param_tests = (
     ]
 );
 
+my @smime_cms_param_tests_autodigestmax = (
+    [ "signed content test streaming PEM format, RSA keys, PSS signature, saltlen=auto-digestmax, digestsize < maximum salt length",
+      [ "{cmd1}", @prov, "-sign", "-in", $smcont, "-outform", "PEM", "-nodetach",
+        "-signer", $smrsa1, "-md", "sha256",
+        "-keyopt", "rsa_padding_mode:pss", "-keyopt", "rsa_pss_saltlen:auto-digestmax",
+        "-out", "{output}.cms" ],
+      # digest is SHA-256, which produces 32, bytes of output
+      sub { my %opts = @_; rsapssSaltlen("$opts{output}.cms") == 32; },
+      [ "{cmd2}", @defaultprov, "-verify", "-in", "{output}.cms", "-inform", "PEM",
+        "-CAfile", $smroot, "-out", "{output}.txt" ],
+      \&final_compare
+    ],
+
+    [ "signed content test streaming PEM format, RSA keys, PSS signature, saltlen=auto-digestmax, digestsize > maximum salt length",
+      [ "{cmd1}", @defaultprov, "-sign", "-in", $smcont, "-outform", "PEM", "-nodetach",
+        "-signer", $smrsa1024, "-md", "sha512",
+        "-keyopt", "rsa_padding_mode:pss", "-keyopt", "rsa_pss_saltlen:auto-digestmax",
+        "-out", "{output}.cms" ],
+      # digest is SHA-512, which produces 64, bytes of output, but an RSA-PSS
+      # signature with a 1024 bit RSA key can only accomodate 62
+      sub { my %opts = @_; rsapssSaltlen("$opts{output}.cms") == 62; },
+      [ "{cmd2}", @defaultprov, "-verify", "-in", "{output}.cms", "-inform", "PEM",
+        "-CAfile", $smroot, "-out", "{output}.txt" ],
+      \&final_compare
+    ]
+);
+
+
 my @contenttype_cms_test = (
     [ "signed content test - check that content type is added to additional signerinfo, RSA keys",
       [ "{cmd1}", @prov, "-sign", "-binary", "-nodetach", "-stream", "-in", $smcont,
@@ -733,7 +761,21 @@ subtest "CMS <=> CMS consistency tests\n" => sub {
 
 subtest "CMS <=> CMS consistency tests, modified key parameters\n" => sub {
     plan tests =>
-        (scalar @smime_cms_param_tests) + (scalar @smime_cms_comp_tests);
+        (scalar @smime_cms_param_tests) + (scalar @smime_cms_comp_tests) +
+        (scalar @smime_cms_param_tests_autodigestmax) + 1;
+
+    ok(run(app(["openssl", "cms", @prov,
+                "-sign", "-in", $smcont,
+                "-outform", "PEM",
+                "-nodetach",
+                "-signer", $smrsa1,
+                "-keyopt", "rsa_padding_mode:pss",
+                "-keyopt", "rsa_pss_saltlen:auto-digestmax",
+                "-out", "digestmaxtest.cms"])));
+    # Providers that do not support rsa_pss_saltlen:auto-digestmax will parse
+    # it as 0
+    my $no_autodigestmax = rsapssSaltlen("digestmaxtest.cms") == 0;
+    1 while unlink "digestmaxtest.cms";
 
     runner_loop(prefix => 'cms2cms-mod', cmd1 => 'cms', cmd2 => 'cms',
                 tests => [ @smime_cms_param_tests ]);
@@ -745,6 +787,15 @@ subtest "CMS <=> CMS consistency tests, modified key parameters\n" => sub {
       runner_loop(prefix => 'cms2cms-comp', cmd1 => 'cms', cmd2 => 'cms',
                   tests => [ @smime_cms_comp_tests ]);
     }
+
+  SKIP: {
+    skip("rsa_pss_saltlen:auto-digestmax not supported",
+         scalar @smime_cms_param_tests_autodigestmax)
+       if $no_autodigestmax;
+
+       runner_loop(prefix => 'cms2cms-comp', 'cmd1' => 'cms', cmd2 => 'cms',
+                   tests => [ @smime_cms_param_tests_autodigestmax ]);
+  }
 };
 
 # Returns the number of matches of a Content Type Attribute in a binary file.

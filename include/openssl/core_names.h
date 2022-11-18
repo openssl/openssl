@@ -398,6 +398,7 @@ extern "C" {
 #define OSSL_PKEY_RSA_PSS_SALT_LEN_DIGEST "digest"
 #define OSSL_PKEY_RSA_PSS_SALT_LEN_MAX    "max"
 #define OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO   "auto"
+#define OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO_DIGEST_MAX "auto-digestmax"
 
 /* Key generation parameters */
 #define OSSL_PKEY_PARAM_RSA_BITS             OSSL_PKEY_PARAM_BITS
