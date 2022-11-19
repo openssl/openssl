@@ -10,16 +10,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if !defined(_WIN32) && !defined(__VMS)
+#include <openssl/e_os2.h>
+
+#ifdef OPENSSL_SYS_UNIX
 # include <sys/stat.h>
+# include <sys/resource.h>
 # include <openssl/pem.h>
 # include <openssl/x509.h>
 # include <openssl/err.h>
 # include <openssl/bio.h>
-# include <../include/internal/e_os.h>
-# if defined(OPENSSL_SYS_UNIX)
-#  include <sys/resource.h>
-# endif
+# include "internal/e_os.h"
 
 static char *prog;
 
@@ -80,7 +80,7 @@ static void usage(void)
 
 int main(int ac, char **av)
 {
-#ifndef _WIN32
+#ifdef OPENSSL_SYS_UNIX
     int i, debug = 0, count = 100, what = 'c';
     struct stat sb;
     FILE *fp;
@@ -192,9 +192,9 @@ int main(int ac, char **av)
     OPENSSL_free(contents);
     return EXIT_SUCCESS;
 #else
-# if defined(_WIN32)
+# if defined(OPENSSL_SYS_WINDOWS)
     fprintf(stderr, "This tool is not supported on Windows\n");
-# elif defined(__VMS)
+# elif defined(OPENSSL_SYS_VMS)
     fprintf(stderr, "This tool is not supported on VMS\n");
 # else
     fprintf(stderr, "This tool is not supported on this platform\n");
