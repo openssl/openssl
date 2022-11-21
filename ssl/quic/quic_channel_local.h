@@ -251,6 +251,7 @@ struct quic_channel_st {
      * current EL simpler and faster.
      */
     unsigned int                    tx_enc_level            : 3;
+    unsigned int                    rx_enc_level            : 3;
 
     /* If bit n is set, EL n has been discarded. */
     unsigned int                    el_discarded            : 4;
