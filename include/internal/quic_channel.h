@@ -141,8 +141,8 @@ int ossl_quic_channel_set_peer_addr(QUIC_CHANNEL *ch, const BIO_ADDR *peer_addr)
 /* Gets/sets the underlying network read and write BIOs. */
 BIO *ossl_quic_channel_get_net_rbio(QUIC_CHANNEL *ch);
 BIO *ossl_quic_channel_get_net_wbio(QUIC_CHANNEL *ch);
-int ossl_quic_channel_set0_net_rbio(QUIC_CHANNEL *ch, BIO *net_rbio);
-int ossl_quic_channel_set0_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio);
+int ossl_quic_channel_set_net_rbio(QUIC_CHANNEL *ch, BIO *net_rbio);
+int ossl_quic_channel_set_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio);
 
 /*
  * Returns an existing stream by stream ID. Returns NULL if the stream does not

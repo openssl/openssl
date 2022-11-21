@@ -152,6 +152,9 @@ void ossl_quic_free(SSL *s)
 
     ossl_quic_channel_free(qc->ch);
 
+    BIO_free(qc->net_rbio);
+    BIO_free(qc->net_wbio);
+
     /* Note: SSL_free calls OPENSSL_free(qc) for us */
 }
 
@@ -271,9 +274,10 @@ void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_rbio)
     if (qc->net_rbio == net_rbio)
         return;
 
-    if (qc->ch != NULL && !ossl_quic_channel_set0_net_rbio(qc->ch, net_rbio))
+    if (qc->ch != NULL && !ossl_quic_channel_set_net_rbio(qc->ch, net_rbio))
         return;
 
+    BIO_free(qc->net_rbio);
     qc->net_rbio = net_rbio;
 
     /*
@@ -298,9 +302,10 @@ void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio)
     if (qc->net_wbio == net_wbio)
         return;
 
-    if (qc->ch != NULL && !ossl_quic_channel_set0_net_wbio(qc->ch, net_wbio))
+    if (qc->ch != NULL && !ossl_quic_channel_set_net_wbio(qc->ch, net_wbio))
         return;
 
+    BIO_free(qc->net_wbio);
     qc->net_wbio = net_wbio;
 
     if (net_wbio != NULL) {
@@ -564,8 +569,8 @@ static int configure_channel(QUIC_CONNECTION *qc)
 {
     assert(qc->ch != NULL);
 
-    if (!ossl_quic_channel_set0_net_rbio(qc->ch, qc->net_rbio)
-        || !ossl_quic_channel_set0_net_wbio(qc->ch, qc->net_wbio)
+    if (!ossl_quic_channel_set_net_rbio(qc->ch, qc->net_rbio)
+        || !ossl_quic_channel_set_net_wbio(qc->ch, qc->net_wbio)
         || !ossl_quic_channel_set_peer_addr(qc->ch, &qc->init_peer_addr))
         return 0;
 
@@ -613,8 +618,6 @@ static int ensure_channel_and_start(QUIC_CONNECTION *qc)
 int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
 {
     int ret;
-
-    fprintf(stderr, "# handshake begin\n");
 
     if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch))
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
