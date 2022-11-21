@@ -13,11 +13,16 @@ on: [pull_request, push]
 # before_script:
 #     - make="make -s"
 
+permissions:
+  contents: read
+
 jobs:
   check_update:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
     - name: config
       run: ./config --strict-warnings && perl configdata.pm --dump
     - name: make build_generated

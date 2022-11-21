@@ -332,7 +332,7 @@ Contributors to OQS-OpenSSL\_1\_1\_1 include:
 - Dimitris Sikeridis (University of New Mexico / Cisco Systems)
 - Douglas Stebila (University of Waterloo)
 - Goutam Tamvada (University of Waterloo)
-- Michael Baentsch (IBM Research Zurich)
+- Michael Baentsch (baentsch.ch)
 
 ## Acknowledgments
 
