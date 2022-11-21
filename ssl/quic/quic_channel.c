@@ -234,6 +234,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     ch->rx_active_conn_id_limit = QUIC_MIN_ACTIVE_CONN_ID_LIMIT;
     ch->max_idle_timeout        = QUIC_DEFAULT_IDLE_TIMEOUT;
     ch->tx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
+    ch->rx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
     ch_update_idle(ch);
     ossl_quic_reactor_init(&ch->rtor, ch_tick, ch,
                            ch_determine_next_tick_deadline(ch));
@@ -463,7 +464,7 @@ static int ch_on_crypto_recv(unsigned char *buf, size_t buf_len,
      * given EL is available we simply ensure we have not received any further
      * bytes at a lower EL.
      */
-    for (i = QUIC_ENC_LEVEL_INITIAL; i < ch->tx_enc_level; ++i)
+    for (i = QUIC_ENC_LEVEL_INITIAL; i < ch->rx_enc_level; ++i)
         if (i != QUIC_ENC_LEVEL_0RTT &&
             !crypto_ensure_empty(ch->crypto_recv[ossl_quic_enc_level_to_pn_space(i)])) {
             /* Protocol violation (RFC 9001 s. 4.1.3) */
@@ -473,7 +474,7 @@ static int ch_on_crypto_recv(unsigned char *buf, size_t buf_len,
             return 0;
         }
 
-    rstream = ch->crypto_recv[ossl_quic_enc_level_to_pn_space(ch->tx_enc_level)];
+    rstream = ch->crypto_recv[ossl_quic_enc_level_to_pn_space(ch->rx_enc_level)];
     if (rstream == NULL)
         return 0;
 
@@ -494,28 +495,16 @@ static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
         /* Invalid EL. */
         return 0;
 
-    if (enc_level <= ch->tx_enc_level)
-        /*
-         * Does not make sense for us to try and provision an EL we have already
-         * attained.
-         */
-        return 0;
-
-    /*
-     * Ensure all crypto streams for previous ELs are now empty of available
-     * data.
-     */
-    for (i = QUIC_ENC_LEVEL_INITIAL; i < enc_level; ++i)
-        if (!crypto_ensure_empty(ch->crypto_recv[i])) {
-            /* Protocol violation (RFC 9001 s. 4.1.3) */
-            ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
-                                                   OSSL_QUIC_FRAME_TYPE_CRYPTO,
-                                                   "crypto stream data in wrong EL");
-            return 0;
-        }
 
     if (direction) {
         /* TX */
+        if (enc_level <= ch->tx_enc_level)
+            /*
+            * Does not make sense for us to try and provision an EL we have already
+            * attained.
+            */
+            return 0;
+
         if (!ossl_qtx_provide_secret(ch->qtx, enc_level,
                                      suite_id, md,
                                      secret, secret_len))
@@ -524,12 +513,33 @@ static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
         ch->tx_enc_level = enc_level;
     } else {
         /* RX */
+        if (enc_level <= ch->rx_enc_level)
+            /*
+            * Does not make sense for us to try and provision an EL we have already
+            * attained.
+            */
+            return 0;
+
+        /*
+        * Ensure all crypto streams for previous ELs are now empty of available
+        * data.
+        */
+        for (i = QUIC_ENC_LEVEL_INITIAL; i < enc_level; ++i)
+            if (!crypto_ensure_empty(ch->crypto_recv[i])) {
+                /* Protocol violation (RFC 9001 s. 4.1.3) */
+                ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
+                                                    OSSL_QUIC_FRAME_TYPE_CRYPTO,
+                                                    "crypto stream data in wrong EL");
+                return 0;
+            }
+
         if (!ossl_qrx_provide_secret(ch->qrx, enc_level,
                                      suite_id, md,
                                      secret, secret_len))
             return 0;
 
         ch->have_new_rx_secret = 1;
+        ch->rx_enc_level = enc_level;
     }
 
     return 1;
