@@ -283,8 +283,6 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     ossl_qrx_free(ch->qrx);
     ossl_quic_demux_free(ch->demux);
     OPENSSL_free(ch->local_transport_params);
-    BIO_free(ch->net_rbio);
-    BIO_free(ch->net_wbio);
 }
 
 QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
@@ -1283,7 +1281,13 @@ BIO *ossl_quic_channel_get_net_wbio(QUIC_CHANNEL *ch)
     return ch->net_wbio;
 }
 
-int ossl_quic_channel_set0_net_rbio(QUIC_CHANNEL *ch, BIO *net_rbio)
+/*
+ * QUIC_CHANNEL does not ref any BIO it is provided with, nor is any ref
+ * transferred to it. The caller (i.e., QUIC_CONNECTION) is responsible for
+ * ensuring the BIO lasts until the channel is freed or the BIO is switched out
+ * for another BIO by a subsequent successful call to this function.
+ */
+int ossl_quic_channel_set_net_rbio(QUIC_CHANNEL *ch, BIO *net_rbio)
 {
     BIO_POLL_DESCRIPTOR d = {0};
 
@@ -1300,13 +1304,12 @@ int ossl_quic_channel_set0_net_rbio(QUIC_CHANNEL *ch, BIO *net_rbio)
     }
 
     ossl_quic_reactor_set_poll_r(&ch->rtor, &d);
-    BIO_free(ch->net_rbio);
     ossl_quic_demux_set_bio(ch->demux, net_rbio);
     ch->net_rbio = net_rbio;
     return 1;
 }
 
-int ossl_quic_channel_set0_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio)
+int ossl_quic_channel_set_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio)
 {
     BIO_POLL_DESCRIPTOR d = {0};
 
@@ -1323,7 +1326,6 @@ int ossl_quic_channel_set0_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio)
     }
 
     ossl_quic_reactor_set_poll_w(&ch->rtor, &d);
-    BIO_free(ch->net_wbio);
     ossl_qtx_set_bio(ch->qtx, net_wbio);
     ch->net_wbio = net_wbio;
     return 1;
