@@ -3,7 +3,8 @@
 =head1 NAME
 
 OSSL_LIB_CTX, OSSL_LIB_CTX_new, OSSL_LIB_CTX_new_from_dispatch,
-OSSL_LIB_CTX_new_child, OSSL_LIB_CTX_free, OSSL_LIB_CTX_load_config,
+OSSL_LIB_CTX_new_child, OSSL_LIB_CTX_new_load_balancer,
+OSSL_LIB_CTX_free, OSSL_LIB_CTX_load_config,
 OSSL_LIB_CTX_get0_global_default, OSSL_LIB_CTX_set0_default
 - OpenSSL library context
 
@@ -18,6 +19,9 @@ OSSL_LIB_CTX_get0_global_default, OSSL_LIB_CTX_set0_default
                                               const OSSL_DISPATCH *in);
  OSSL_LIB_CTX *OSSL_LIB_CTX_new_child(const OSSL_CORE_HANDLE *handle,
                                       const OSSL_DISPATCH *in);
+ OSSL_LIB_CTX *OSSL_LIB_CTX_new_load_balancer(const OSSL_CORE_HANDLE *handle,
+                                              const OSSL_DISPATCH *in,
+                                              int strategy);
  int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file);
  void OSSL_LIB_CTX_free(OSSL_LIB_CTX *ctx);
  OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void);
@@ -82,6 +86,15 @@ yet be available in the newly constructed child library context. As soon as the
 B<OSSL_provider_init> function returns then the new provider is available in the
 application's library context and will be similarly mirrored in the child
 library context.
+
+OSSL_LIB_CTX_new_load_balancer() is based on OSSL_LIB_CTX_new_child() except
+that it doesn't mirror the "loadbalancer" provider self into the child libctx's
+provider store. This function accepts a I<strategy> input, which indicates what
+type of load balancing strategy the user wants to use.
+
+Available types of strategy is defined in <openssl/cryto.h>. With this input,
+a strategy related status is allocated and a scheduler function is bounded to
+the new libctx.
 
 OSSL_LIB_CTX_load_config() loads a configuration file using the given I<ctx>.
 This can be used to associate a library context with providers that are loaded
