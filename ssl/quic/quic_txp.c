@@ -1253,7 +1253,7 @@ static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
     OSSL_QTX_IOVEC iov[2];
     uint64_t hdr_bytes;
     WPACKET *wpkt;
-    QUIC_TXPIM_CHUNK chunk;
+    QUIC_TXPIM_CHUNK chunk = {0};
     size_t i, space_left;
 
     for (i = 0;; ++i) {
