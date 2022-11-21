@@ -64,6 +64,7 @@ my @prov = ("-provider-path", $provpath,
             @config,
             "-provider", $provname);
 
+my $smrsa1024 = catfile($smdir, "smrsa1024.pem");
 my $smrsa1 = catfile($smdir, "smrsa1.pem");
 my $smroot = catfile($smdir, "smroot.pem");
 
@@ -498,6 +499,7 @@ my @smime_cms_param_tests = (
         "-signer", $smrsa1,
         "-keyopt", "rsa_padding_mode:pss", "-keyopt", "rsa_pss_saltlen:max",
         "-out", "{output}.cms" ],
+      sub { my %opts = @_; rsapssSaltlen("$opts{output}.cms") == 222; },
       [ "{cmd2}", @prov, "-verify", "-in", "{output}.cms", "-inform", "PEM",
         "-CAfile", $smroot, "-out", "{output}.txt" ],
       \&final_compare
@@ -518,6 +520,29 @@ my @smime_cms_param_tests = (
         "-signer", $smrsa1,
         "-keyopt", "rsa_padding_mode:pss", "-keyopt", "rsa_mgf1_md:sha384",
         "-out", "{output}.cms" ],
+      [ "{cmd2}", @prov, "-verify", "-in", "{output}.cms", "-inform", "PEM",
+        "-CAfile", $smroot, "-out", "{output}.txt" ],
+      \&final_compare
+    ],
+
+    [ "signed content test streaming PEM format, RSA keys, PSS signature, saltlen=16",
+      [ "{cmd1}", @prov, "-sign", "-in", $smcont, "-outform", "PEM", "-nodetach",
+        "-signer", $smrsa1, "-md", "sha256",
+        "-keyopt", "rsa_padding_mode:pss", "-keyopt", "rsa_pss_saltlen:16",
+        "-out", "{output}.cms" ],
+      sub { my %opts = @_; rsapssSaltlen("$opts{output}.cms") == 16; },
+      [ "{cmd2}", @prov, "-verify", "-in", "{output}.cms", "-inform", "PEM",
+        "-CAfile", $smroot, "-out", "{output}.txt" ],
+      \&final_compare
+    ],
+
+    [ "signed content test streaming PEM format, RSA keys, PSS signature, saltlen=digest",
+      [ "{cmd1}", @prov, "-sign", "-in", $smcont, "-outform", "PEM", "-nodetach",
+        "-signer", $smrsa1, "-md", "sha256",
+        "-keyopt", "rsa_padding_mode:pss", "-keyopt", "rsa_pss_saltlen:digest",
+        "-out", "{output}.cms" ],
+      # digest is SHA-256, which produces 32 bytes of output
+      sub { my %opts = @_; rsapssSaltlen("$opts{output}.cms") == 32; },
       [ "{cmd2}", @prov, "-verify", "-in", "{output}.cms", "-inform", "PEM",
         "-CAfile", $smroot, "-out", "{output}.txt" ],
       \&final_compare
@@ -736,6 +761,57 @@ sub contentType_matches {
 
   close(HEX_IN);
   return scalar(@c);
+}
+
+sub rsapssSaltlen {
+  my ($in) = @_;
+  my $exit = 0;
+
+  my @asn1parse = run(app(["openssl", "asn1parse", "-in", $in, "-dump"]),
+                      capture => 1,
+                      statusvar => $exit);
+  return -1 if $exit != 0;
+
+  my $pssparam_offset = -1;
+  while ($_ = shift @asn1parse) {
+    chomp;
+    next unless /:rsassaPss$/;
+    # This line contains :rsassaPss, the next line contains a raw dump of the
+    # RSA_PSS_PARAMS sequence; obtain its offset
+    $_ = shift @asn1parse;
+    if (/^\s*(\d+):/) {
+      $pssparam_offset = int($1);
+    }
+  }
+
+  if ($pssparam_offset == -1) {
+    note "Failed to determine RSA_PSS_PARAM offset in CMS. " +
+         "Was the file correctly signed with RSASSA-PSS?";
+    return -1;
+  }
+
+  my @pssparam = run(app(["openssl", "asn1parse", "-in", $in,
+                          "-strparse", $pssparam_offset]),
+                     capture => 1,
+                     statusvar => $exit);
+  return -1 if $exit != 0;
+
+  my $saltlen = -1;
+  # Can't use asn1parse -item RSA_PSS_PARAMS here, because that's deprecated.
+  # This assumes the salt length is the last field, which may possibly be
+  # incorrect if there is a non-standard trailer field, but there almost never
+  # is in PSS.
+  if ($pssparam[-1] =~ /prim:\s+INTEGER\s+:([A-Fa-f0-9]+)$/) {
+    $saltlen = hex($1);
+  }
+
+  if ($saltlen == -1) {
+    note "Failed to determine salt length from RSA_PSS_PARAM struct. " +
+         "Was the file correctly signed with RSASSA-PSS?";
+    return -1;
+  }
+
+  return $saltlen;
 }
 
 subtest "CMS Check the content type attribute is added for additional signers\n" => sub {
