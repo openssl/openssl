@@ -162,8 +162,8 @@ static int hpke_aead_dec(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     }
     taglen = aead_info->taglen;
-    if ((*ptlen + taglen) < ctlen) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+    if (ctlen <= taglen || *ptlen < ctlen - taglen) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
     /* Create and initialise the context */
@@ -267,8 +267,8 @@ static int hpke_aead_enc(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     }
     taglen = aead_info->taglen;
-    if ((ptlen + taglen) > *ctlen) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+    if (*ctlen <= taglen || ptlen > *ctlen - taglen) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
     /* Create and initialise the context */
@@ -431,7 +431,7 @@ static int hpke_expansion(OSSL_HPKE_SUITE suite,
         return 0;
     }
     if (hpke_suite_check(suite) != 1) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
     aead_info = ossl_HPKE_AEAD_INFO_find_id(suite.aead_id);
@@ -587,7 +587,7 @@ static int hpke_decap(OSSL_HPKE_CTX *ctx,
     int erv = 0;
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *spub = NULL;
-    OSSL_PARAM params[3], *p = params;
+    OSSL_PARAM params[2], *p = params;
     size_t lsslen = 0;
 
     if (ctx == NULL || enc == NULL || enclen == 0 || priv == NULL) {
@@ -856,7 +856,7 @@ OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
-    ctx = OPENSSL_zalloc(sizeof(OSSL_HPKE_CTX));
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
         return NULL;
     ctx->libctx = libctx;
@@ -914,10 +914,9 @@ int OSSL_HPKE_CTX_set1_psk(OSSL_HPKE_CTX *ctx,
     }
     /* free previous values if any */
     OPENSSL_clear_free(ctx->psk, ctx->psklen);
-    ctx->psk = OPENSSL_malloc(psklen);
+    ctx->psk = OPENSSL_memdup(psk, psklen);
     if (ctx->psk == NULL)
         return 0;
-    memcpy(ctx->psk, psk, psklen);
     ctx->psklen = psklen;
     OPENSSL_free(ctx->pskid);
     ctx->pskid = OPENSSL_strdup(pskid);
@@ -937,15 +936,14 @@ int OSSL_HPKE_CTX_set1_ikme(OSSL_HPKE_CTX *ctx,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (ikmelen > OSSL_HPKE_MAX_PARMLEN) {
+    if (ikmelen == 0 || ikmelen > OSSL_HPKE_MAX_PARMLEN) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
     OPENSSL_clear_free(ctx->ikme, ctx->ikmelen);
-    ctx->ikme = OPENSSL_malloc(ikmelen);
+    ctx->ikme = OPENSSL_memdup(ikme, ikmelen);
     if (ctx->ikme == NULL)
         return 0;
-    memcpy(ctx->ikme, ikme, ikmelen);
     ctx->ikmelen = ikmelen;
     return 1;
 }
@@ -976,10 +974,9 @@ int OSSL_HPKE_CTX_set1_authpub(OSSL_HPKE_CTX *ctx,
         return 0;
     }
     OPENSSL_free(ctx->authpub);
-    ctx->authpub = OPENSSL_malloc(publen);
+    ctx->authpub = OPENSSL_memdup(pub, publen);
     if (ctx->authpub == NULL)
         return 0;
-    memcpy(ctx->authpub, pub, publen);
     ctx->authpublen = publen;
     return 1;
 }
@@ -1145,7 +1142,7 @@ int OSSL_HPKE_open(OSSL_HPKE_CTX *ctx,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         OPENSSL_cleanse(seqbuf, sizeof(seqbuf));
         return 0;
-    } 
+    }
     ctx->seq++;
     OPENSSL_cleanse(seqbuf, sizeof(seqbuf));
     return 1;
@@ -1293,8 +1290,10 @@ int OSSL_HPKE_get_grease_value(OSSL_LIB_CTX *libctx, const char *propq,
     EVP_PKEY *fakepriv = NULL;
 
     if (enc == NULL || enclen == 0
-        || ct == NULL || ctlen == 0 || suite == NULL)
+        || ct == NULL || ctlen == 0 || suite == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
     if (suite_in == NULL) {
         /* choose a random suite */
         if (hpke_random_suite(libctx, propq, &chosen) != 1) {

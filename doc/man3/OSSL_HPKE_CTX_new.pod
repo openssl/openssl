@@ -227,7 +227,7 @@ OSSL_HPKE_seal() to encrypt plaintexts using the secret stored within I<ctx>.
 
 OSSL_HPKE_encap() uses the HPKE context I<ctx>, the recipient public value
 I<pub> of size I<publen>, and an optional I<info> parameter of size I<infolen>,
-to produces the encapsulated public value I<enc>.
+to produce the encapsulated public value I<enc>.
 On input I<enclen> should contain the maximum size of the I<enc> buffer, and returns
 the output size. An error will occur if the input I<enclen> is
 smaller than the value returned from OSSL_HPKE_get_public_encap_size().

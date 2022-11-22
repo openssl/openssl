@@ -291,7 +291,7 @@ int ossl_hpke_labeled_extract(EVP_KDF_CTX *kctx,
     label_hpkev1len = strlen(LABEL_HPKEV1);
     protocol_labellen = strlen(protocol_label);
     labellen = strlen(label);
-    labeled_ikmlen = label_hpkev1len + protocol_labellen 
+    labeled_ikmlen = label_hpkev1len + protocol_labellen
                      + suiteidlen + labellen + ikmlen;
     labeled_ikm = OPENSSL_malloc(labeled_ikmlen);
     if (labeled_ikm == NULL)
