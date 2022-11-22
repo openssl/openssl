@@ -4411,6 +4411,14 @@ int SSL_get_error(const SSL *s, int i)
     if (i > 0)
         return SSL_ERROR_NONE;
 
+#ifndef OPENSSL_NO_QUIC
+    if (qc != NULL) {
+        reason = ossl_quic_get_error(qc, i);
+        if (reason != SSL_ERROR_NONE)
+            return reason;
+    }
+#endif
+
     if (sc == NULL)
         return SSL_ERROR_SSL;
 
@@ -4424,14 +4432,6 @@ int SSL_get_error(const SSL *s, int i)
         else
             return SSL_ERROR_SSL;
     }
-
-#ifndef OPENSSL_NO_QUIC
-    if (qc != NULL) {
-        reason = ossl_quic_get_error(qc, i);
-        if (reason != SSL_ERROR_NONE)
-            return reason;
-    }
-#endif
 
 #ifndef OPENSSL_NO_QUIC
     if (qc == NULL)
