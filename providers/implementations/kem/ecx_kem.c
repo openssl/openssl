@@ -32,7 +32,8 @@
 #include "prov/providercommon.h"
 #include "prov/ecx.h"
 #include "crypto/ecx.h"
-#include "crypto/hpke.h"
+#include <openssl/hpke.h>
+#include "internal/hpke_util.h"
 #include "eckem.h"
 
 #define MAX_ECX_KEYLEN X448_KEYLEN
@@ -41,6 +42,9 @@
 #define KEMID_X25519_HKDF_SHA256 0x20
 #define KEMID_X448_HKDF_SHA512   0x21
 
+/* ASCII: "KEM", in hex for EBCDIC compatibility */
+static const char LABEL_KEM[] = "\x4b\x45\x4d";
+
 typedef struct {
     ECX_KEY *recipient_key;
     ECX_KEY *sender_authkey;
@@ -48,13 +52,10 @@ typedef struct {
     char *propq;
     unsigned int mode;
     unsigned int op;
-    uint16_t kemid;
     unsigned char *ikm;
     size_t ikmlen;
     const char *kdfname;
-    const char *kdfdigestname;
-    size_t sharedsecretlen;
-    size_t keylen;
+    const OSSL_HPKE_KEM_INFO *info;
 } PROV_ECX_CTX;
 
 static OSSL_FUNC_kem_newctx_fn ecxkem_newctx;
@@ -72,21 +73,15 @@ static OSSL_FUNC_kem_auth_decapsulate_init_fn ecxkem_auth_decapsulate_init;
  * There is only one set of values for X25519 and X448.
  * Additional values could be set via set_params if required.
  */
-static void get_kem_values(ECX_KEY *ecx, uint16_t *kemid,
-                           const char **kdfdigestname, size_t *secretlen,
-                           size_t *keylen)
+static const OSSL_HPKE_KEM_INFO *get_kem_info(ECX_KEY *ecx)
 {
-    if (ecx->type == ECX_KEY_TYPE_X25519) {
-        *kemid = KEMID_X25519_HKDF_SHA256;
-        *kdfdigestname = "SHA256";
-        *secretlen = SHA256_DIGEST_LENGTH;
-    } else {
-        *kemid = KEMID_X448_HKDF_SHA512;
-        *kdfdigestname = "SHA512";
-        *secretlen = SHA512_DIGEST_LENGTH;
-    }
-    /* ECX keys have the same length for public and private keys */
-    *keylen = ecx->keylen;
+    const char *name = NULL;
+
+    if (ecx->type == ECX_KEY_TYPE_X25519)
+        name = SN_X25519;
+    else
+        name = SN_X448;
+    return ossl_HPKE_KEM_INFO_find_curve(name);
 }
 
 /*
@@ -98,8 +93,9 @@ static int recipient_key_set(PROV_ECX_CTX *ctx, ECX_KEY *ecx)
     ossl_ecx_key_free(ctx->recipient_key);
     ctx->recipient_key = NULL;
     if (ecx != NULL) {
-        get_kem_values(ecx, &ctx->kemid, &ctx->kdfdigestname,
-                       &ctx->sharedsecretlen, &ctx->keylen);
+        ctx->info = get_kem_info(ecx);
+        if (ctx->info == NULL)
+            return -2;
         ctx->kdfname = "HKDF";
         if (!ossl_ecx_key_up_ref(ecx))
             return 0;
@@ -302,7 +298,7 @@ static int dhkem_extract_and_expand(EVP_KDF_CTX *kctx,
                                     const unsigned char *kemctx,
                                     size_t kemctxlen)
 {
-    uint8_t suiteid[5];
+    uint8_t suiteid[2];
     uint8_t prk[EVP_MAX_MD_SIZE];
     size_t prklen = okmlen; /* Nh */
     int ret;
@@ -310,13 +306,14 @@ static int dhkem_extract_and_expand(EVP_KDF_CTX *kctx,
     if (prklen > sizeof(prk))
         return 0;
 
-    ossl_dhkem_getsuiteid(suiteid, kemid);
+    suiteid[0] = (kemid >> 8) &0xff;
+    suiteid[1] = kemid & 0xff;
 
     ret = ossl_hpke_labeled_extract(kctx, prk, prklen,
-                                    NULL, 0, suiteid, sizeof(suiteid),
+                                    NULL, 0, LABEL_KEM, suiteid, sizeof(suiteid),
                                     OSSL_DHKEM_LABEL_EAE_PRK, dhkm, dhkmlen)
           && ossl_hpke_labeled_expand(kctx, okm, okmlen, prk, prklen,
-                                      suiteid, sizeof(suiteid),
+                                      LABEL_KEM, suiteid, sizeof(suiteid),
                                       OSSL_DHKEM_LABEL_SHARED_SECRET,
                                       kemctx, kemctxlen);
     OPENSSL_cleanse(prk, prklen);
@@ -344,35 +341,32 @@ int ossl_ecx_dhkem_derive_private(ECX_KEY *ecx, unsigned char *privout,
     int ret = 0;
     EVP_KDF_CTX *kdfctx = NULL;
     unsigned char prk[EVP_MAX_MD_SIZE];
-    uint16_t kemid;
-    const char *kdfdigestname;
-    uint8_t suiteid[5];
-    size_t prklen, keylen;
-
-    get_kem_values(ecx, &kemid, &kdfdigestname, &prklen, &keylen);
+    uint8_t suiteid[2];
+    const OSSL_HPKE_KEM_INFO *info = get_kem_info(ecx);
 
     /* ikmlen should have a length of at least Nsk */
-    if (ikmlen < keylen) {
+    if (ikmlen < info->Nsk) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH,
                        "ikm length is :%zu, should be at least %zu",
-                       ikmlen, keylen);
+                       ikmlen, info->Nsk);
         goto err;
     }
 
-    kdfctx = ossl_kdf_ctx_create("HKDF", kdfdigestname, ecx->libctx, ecx->propq);
+    kdfctx = ossl_kdf_ctx_create("HKDF", info->mdname, ecx->libctx, ecx->propq);
     if (kdfctx == NULL)
         return 0;
 
-    ossl_dhkem_getsuiteid(suiteid, kemid);
+    suiteid[0] = info->kem_id / 256;
+    suiteid[1] = info->kem_id % 256;
 
-    if (!ossl_hpke_labeled_extract(kdfctx, prk, prklen,
-                                   NULL, 0, suiteid, sizeof(suiteid),
+    if (!ossl_hpke_labeled_extract(kdfctx, prk, info->Nsecret,
+                                   NULL, 0, LABEL_KEM, suiteid, sizeof(suiteid),
                                    OSSL_DHKEM_LABEL_DKP_PRK, ikm, ikmlen))
         goto err;
 
-    if (!ossl_hpke_labeled_expand(kdfctx, privout, keylen, prk, prklen,
-                                  suiteid, sizeof(suiteid), OSSL_DHKEM_LABEL_SK,
-                                  NULL, 0))
+    if (!ossl_hpke_labeled_expand(kdfctx, privout, info->Nsk, prk, info->Nsecret,
+                                  LABEL_KEM, suiteid, sizeof(suiteid),
+                                  OSSL_DHKEM_LABEL_SK, NULL, 0))
         goto err;
     ret = 1;
 err:
@@ -398,6 +392,7 @@ static ECX_KEY *derivekey(PROV_ECX_CTX *ctx,
     unsigned char *seed = (unsigned char *)ikm;
     size_t seedlen = ikmlen;
     unsigned char tmpbuf[OSSL_HPKE_MAX_PRIVATE];
+    const OSSL_HPKE_KEM_INFO *info = ctx->info;
 
     key = ossl_ecx_key_new(ctx->libctx, ctx->recipient_key->type, 0, ctx->propq);
     if (key == NULL)
@@ -408,12 +403,12 @@ static ECX_KEY *derivekey(PROV_ECX_CTX *ctx,
 
     /* Generate a random seed if there is no input ikm */
     if (seed == NULL || seedlen == 0) {
-        if (ctx->keylen > sizeof(tmpbuf))
+        if (info->Nsk > sizeof(tmpbuf))
             goto err;
-        if (RAND_priv_bytes_ex(ctx->libctx, tmpbuf, ctx->keylen, 0) <= 0)
+        if (RAND_priv_bytes_ex(ctx->libctx, tmpbuf, info->Nsk, 0) <= 0)
             goto err;
         seed = tmpbuf;
-        seedlen = ctx->keylen;
+        seedlen = info->Nsk;
     }
     if (!ossl_ecx_dhkem_derive_private(key, privkey, seed, seedlen))
         goto err;
@@ -485,8 +480,9 @@ static int derive_secret(PROV_ECX_CTX *ctx, unsigned char *secret,
     unsigned char dhkm[MAX_ECX_KEYLEN * 2];
     unsigned char kemctx[MAX_ECX_KEYLEN * 3];
     size_t kemctxlen = 0, dhkmlen = 0;
-    size_t encodedkeylen = ctx->keylen;
+    const OSSL_HPKE_KEM_INFO *info = ctx->info;
     int auth = ctx->sender_authkey != NULL;
+    size_t encodedkeylen = info->Npk;
 
     if (!generate_ecxdhkm(privkey1, peerkey1, dhkm, sizeof(dhkm), encodedkeylen))
         goto err;
@@ -513,12 +509,12 @@ static int derive_secret(PROV_ECX_CTX *ctx, unsigned char *secret,
     memcpy(kemctx + encodedkeylen, recipient_pub, encodedkeylen);
     if (auth)
         memcpy(kemctx + 2 * encodedkeylen, sender_authpub, encodedkeylen);
-    kdfctx = ossl_kdf_ctx_create(ctx->kdfname, ctx->kdfdigestname,
+    kdfctx = ossl_kdf_ctx_create(ctx->kdfname, info->mdname,
                                  ctx->libctx, ctx->propq);
     if (kdfctx == NULL)
         goto err;
-    if (!dhkem_extract_and_expand(kdfctx, secret, ctx->sharedsecretlen,
-                                  ctx->kemid, dhkm, dhkmlen,
+    if (!dhkem_extract_and_expand(kdfctx, secret, info->Nsecret,
+                                  info->kem_id, dhkm, dhkmlen,
                                   kemctx, kemctxlen))
         goto err;
     ret = 1;
@@ -553,22 +549,23 @@ static int dhkem_encap(PROV_ECX_CTX *ctx,
     int ret = 0;
     ECX_KEY *sender_ephemkey = NULL;
     unsigned char *sender_ephempub, *recipient_pub;
+    const OSSL_HPKE_KEM_INFO *info = ctx->info;
 
     if (enc == NULL) {
         if (enclen == NULL && secretlen == NULL)
             return 0;
         if (enclen != NULL)
-            *enclen = ctx->keylen;
+            *enclen = info->Nenc;
         if (secretlen != NULL)
-            *secretlen = ctx->sharedsecretlen;
+            *secretlen = info->Nsecret;
        return 1;
     }
 
-    if (*secretlen < ctx->sharedsecretlen) {
+    if (*secretlen < info->Nsecret) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_LENGTH, "*secretlen too small");
         return 0;
     }
-    if (*enclen < ctx->keylen) {
+    if (*enclen < info->Nenc) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_LENGTH, "*enclen too small");
         return 0;
     }
@@ -588,9 +585,9 @@ static int dhkem_encap(PROV_ECX_CTX *ctx,
         goto err;
 
     /* Return the public part of the ephemeral key */
-    memcpy(enc, sender_ephempub, ctx->keylen);
-    *enclen = ctx->keylen;
-    *secretlen = ctx->sharedsecretlen;
+    memcpy(enc, sender_ephempub, info->Nenc);
+    *enclen = info->Nenc;
+    *secretlen = info->Nsecret;
     ret = 1;
 err:
     ossl_ecx_key_free(sender_ephemkey);
@@ -620,17 +617,18 @@ static int dhkem_decap(PROV_ECX_CTX *ctx,
     int ret = 0;
     ECX_KEY *recipient_privkey = ctx->recipient_key;
     ECX_KEY *sender_ephempubkey = NULL;
+    const OSSL_HPKE_KEM_INFO *info = ctx->info;
     unsigned char *recipient_pub;
 
     if (secret == NULL) {
-        *secretlen = ctx->sharedsecretlen;
+        *secretlen = info->Nsecret;
         return 1;
     }
-    if (*secretlen < ctx->sharedsecretlen) {
+    if (*secretlen < info->Nsecret) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_LENGTH, "*secretlen too small");
         return 0;
     }
-    if (enclen != ctx->keylen) {
+    if (enclen != info->Nenc) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY, "Invalid enc public key");
         return 0;
     }
@@ -650,7 +648,7 @@ static int dhkem_decap(PROV_ECX_CTX *ctx,
                        enc, recipient_pub))
         goto err;
 
-    *secretlen = ctx->sharedsecretlen;
+    *secretlen = info->Nsecret;
     ret = 1;
 err:
     ossl_ecx_key_free(sender_ephempubkey);
