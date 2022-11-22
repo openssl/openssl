@@ -217,15 +217,19 @@ void ossl_qrx_free(OSSL_QRX *qrx)
     OPENSSL_free(qrx);
 }
 
-static void qrx_on_rx(QUIC_URXE *urxe, void *arg)
+void ossl_qrx_inject_urxe(OSSL_QRX *qrx, QUIC_URXE *urxe)
 {
-    OSSL_QRX *qrx = arg;
-
     /* Initialize our own fields inside the URXE and add to the pending list. */
     urxe->processed     = 0;
     urxe->hpr_removed   = 0;
     urxe->deferred      = 0;
     ossl_list_urxe_insert_tail(&qrx->urx_pending, urxe);
+}
+
+static void qrx_on_rx(QUIC_URXE *urxe, void *arg)
+{
+    OSSL_QRX *qrx = arg;
+    ossl_qrx_inject_urxe(qrx, urxe);
 }
 
 int ossl_qrx_add_dst_conn_id(OSSL_QRX *qrx,
