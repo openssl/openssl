@@ -322,6 +322,15 @@ int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
                                      void *cb_arg);
 
 /*
+ * Forcibly injects a URXE which has been issued by the DEMUX into the QRX for
+ * processing. This can be used to pass a received datagram to the QRX if it
+ * would not be correctly routed to the QRX via standard DCID-based routing; for
+ * example, when handling an incoming Initial packet which is attempting to
+ * establish a new connection.
+ */
+void ossl_qrx_inject_urxe(OSSL_QRX *qrx, QUIC_URXE *e);
+
+/*
  * Key Update (RX)
  * ===============
  *
