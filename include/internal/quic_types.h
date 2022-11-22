@@ -93,6 +93,8 @@ static ossl_unused ossl_inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
 /* Arbitrary choice of default idle timeout (not an RFC value). */
 #  define QUIC_DEFAULT_IDLE_TIMEOUT   30000
 
+#  define QUIC_STATELESS_RESET_TOKEN_LEN    16
+
 # endif
 
 #endif

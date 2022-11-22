@@ -594,6 +594,19 @@ static int ch_on_handshake_alert(void *arg, unsigned char alert_code)
  * peer. Note that these are not authenticated until the handshake is marked
  * as complete.
  */
+#define TP_REASON_SERVER_ONLY(x) \
+    x " may not be sent by a client"
+#define TP_REASON_DUP(x) \
+    x " appears multiple times"
+#define TP_REASON_MALFORMED(x) \
+    x " is malformed"
+#define TP_REASON_EXPECTED_VALUE(x) \
+    x " does not match expected value"
+#define TP_REASON_NOT_RETRY(x) \
+    x " sent when not performing a retry"
+#define TP_REASON_REQUIRED(x) \
+    x " was not sent but is required"
+
 static int ch_on_transport_params(const unsigned char *params,
                                   size_t params_len,
                                   void *arg)
@@ -618,6 +631,7 @@ static int ch_on_transport_params(const unsigned char *params,
     int got_max_idle_timeout = 0;
     int got_active_conn_id_limit = 0;
     QUIC_CONN_ID cid;
+    const char *reason = "bad transport parameter";
 
     if (ch->got_remote_transport_params)
         goto malformed;
@@ -631,69 +645,108 @@ static int ch_on_transport_params(const unsigned char *params,
 
         switch (id) {
         case QUIC_TPARAM_ORIG_DCID:
-            if (got_orig_dcid)
-                /* must not appear more than once */
+            if (got_orig_dcid) {
+                reason = TP_REASON_DUP("ORIG_DCID");
                 goto malformed;
+            }
 
-            if (!ossl_quic_wire_decode_transport_param_cid(&pkt, NULL, &cid))
+            if (ch->is_server) {
+                reason = TP_REASON_SERVER_ONLY("ORIG_DCID");
                 goto malformed;
+            }
+
+            if (!ossl_quic_wire_decode_transport_param_cid(&pkt, NULL, &cid)) {
+                reason = TP_REASON_MALFORMED("ORIG_DCID");
+                goto malformed;
+            }
 
             /* Must match our initial DCID. */
-            if (!ossl_quic_conn_id_eq(&ch->init_dcid, &cid))
+            if (!ossl_quic_conn_id_eq(&ch->init_dcid, &cid)) {
+                reason = TP_REASON_EXPECTED_VALUE("ORIG_DCID");
                 goto malformed;
+            }
 
             got_orig_dcid = 1;
             break;
 
         case QUIC_TPARAM_RETRY_SCID:
-            if (got_retry_scid || !ch->doing_retry)
-                /* must not appear more than once or if retry not done */
+            if (ch->is_server) {
+                reason = TP_REASON_SERVER_ONLY("RETRY_SCID");
                 goto malformed;
+            }
 
-            if (!ossl_quic_wire_decode_transport_param_cid(&pkt, NULL, &cid))
+            if (got_retry_scid) {
+                reason = TP_REASON_DUP("RETRY_SCID");
                 goto malformed;
+            }
+
+            if (!ch->doing_retry) {
+                reason = TP_REASON_NOT_RETRY("RETRY_SCID");
+                goto malformed;
+            }
+
+            if (!ossl_quic_wire_decode_transport_param_cid(&pkt, NULL, &cid)) {
+                reason = TP_REASON_MALFORMED("RETRY_SCID");
+                goto malformed;
+            }
 
             /* Must match Retry packet SCID. */
-            if (!ossl_quic_conn_id_eq(&ch->retry_scid, &cid))
+            if (!ossl_quic_conn_id_eq(&ch->retry_scid, &cid)) {
+                reason = TP_REASON_EXPECTED_VALUE("RETRY_SCID");
                 goto malformed;
+            }
 
             got_retry_scid = 1;
             break;
 
         case QUIC_TPARAM_INITIAL_SCID:
-            if (got_initial_scid)
+            if (got_initial_scid) {
                 /* must not appear more than once */
+                reason = TP_REASON_DUP("INITIAL_SCID");
                 goto malformed;
+            }
 
-            if (!ossl_quic_wire_decode_transport_param_cid(&pkt, NULL, &cid))
+            if (!ossl_quic_wire_decode_transport_param_cid(&pkt, NULL, &cid)) {
+                reason = TP_REASON_MALFORMED("INITIAL_SCID");
                 goto malformed;
+            }
 
             /* Must match SCID of first Initial packet from server. */
-            if (!ossl_quic_conn_id_eq(&ch->init_scid, &cid))
+            if (!ossl_quic_conn_id_eq(&ch->init_scid, &cid)) {
+                reason = TP_REASON_EXPECTED_VALUE("INITIAL_SCID");
                 goto malformed;
+            }
 
             got_initial_scid = 1;
             break;
 
         case QUIC_TPARAM_INITIAL_MAX_DATA:
-            if (got_initial_max_data)
+            if (got_initial_max_data) {
                 /* must not appear more than once */
+                reason = TP_REASON_DUP("INITIAL_MAX_DATA");
                 goto malformed;
+            }
 
-            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)) {
+                reason = TP_REASON_MALFORMED("INITIAL_MAX_DATA");
                 goto malformed;
+            }
 
             ossl_quic_txfc_bump_cwm(&ch->conn_txfc, v);
             got_initial_max_data = 1;
             break;
 
         case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_LOCAL:
-            if (got_initial_max_stream_data_bidi_local)
+            if (got_initial_max_stream_data_bidi_local) {
                 /* must not appear more than once */
+                reason = TP_REASON_DUP("INITIAL_MAX_STREAM_DATA_BIDI_LOCAL");
                 goto malformed;
+            }
 
-            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)) {
+                reason = TP_REASON_MALFORMED("INITIAL_MAX_STREAM_DATA_BIDI_LOCAL");
                 goto malformed;
+            }
 
             /*
              * This is correct; the BIDI_LOCAL TP governs streams created by
@@ -704,12 +757,16 @@ static int ch_on_transport_params(const unsigned char *params,
             break;
 
         case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_REMOTE:
-            if (got_initial_max_stream_data_bidi_remote)
+            if (got_initial_max_stream_data_bidi_remote) {
                 /* must not appear more than once */
+                reason = TP_REASON_DUP("INITIAL_MAX_STREAM_DATA_BIDI_REMOTE");
                 goto malformed;
+            }
 
-            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)) {
+                reason = TP_REASON_MALFORMED("INITIAL_MAX_STREAM_DATA_BIDI_REMOTE");
                 goto malformed;
+            }
 
             /*
              * This is correct; the BIDI_REMOTE TP governs streams created
@@ -723,51 +780,67 @@ static int ch_on_transport_params(const unsigned char *params,
             break;
 
         case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_UNI:
-            if (got_initial_max_stream_data_uni)
+            if (got_initial_max_stream_data_uni) {
                 /* must not appear more than once */
+                reason = TP_REASON_DUP("INITIAL_MAX_STREAM_DATA_UNI");
                 goto malformed;
+            }
 
-            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)) {
+                reason = TP_REASON_MALFORMED("INITIAL_MAX_STREAM_DATA_UNI");
                 goto malformed;
+            }
 
             ch->init_max_stream_data_uni_remote = v;
             got_initial_max_stream_data_uni = 1;
             break;
 
         case QUIC_TPARAM_ACK_DELAY_EXP:
-            if (got_ack_delay_exp)
+            if (got_ack_delay_exp) {
                 /* must not appear more than once */
+                reason = TP_REASON_DUP("ACK_DELAY_EXP");
                 goto malformed;
+            }
 
             if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
-                || v > QUIC_MAX_ACK_DELAY_EXP)
+                || v > QUIC_MAX_ACK_DELAY_EXP) {
+                reason = TP_REASON_MALFORMED("ACK_DELAY_EXP");
                 goto malformed;
+            }
 
             ch->rx_ack_delay_exp = (unsigned char)v;
             got_ack_delay_exp = 1;
             break;
 
         case QUIC_TPARAM_MAX_ACK_DELAY:
-            if (got_max_ack_delay)
+            if (got_max_ack_delay) {
                 /* must not appear more than once */
+                reason = TP_REASON_DUP("MAX_ACK_DELAY");
                 return 0;
+            }
 
             if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
-                || v >= (((uint64_t)1) << 14))
+                || v >= (((uint64_t)1) << 14)) {
+                reason = TP_REASON_MALFORMED("MAX_ACK_DELAY");
                 goto malformed;
+            }
 
             ch->rx_max_ack_delay = v;
             got_max_ack_delay = 1;
             break;
 
         case QUIC_TPARAM_INITIAL_MAX_STREAMS_BIDI:
-            if (got_initial_max_streams_bidi)
+            if (got_initial_max_streams_bidi) {
                 /* must not appear more than once */
+                reason = TP_REASON_DUP("INITIAL_MAX_STREAMS_BIDI");
                 return 0;
+            }
 
             if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
-                || v > (((uint64_t)1) << 60))
+                || v > (((uint64_t)1) << 60)) {
+                reason = TP_REASON_MALFORMED("INITIAL_MAX_STREAMS_BIDI");
                 goto malformed;
+            }
 
             assert(ch->max_local_streams_bidi == 0);
             ch->max_local_streams_bidi = v;
@@ -775,13 +848,17 @@ static int ch_on_transport_params(const unsigned char *params,
             break;
 
         case QUIC_TPARAM_INITIAL_MAX_STREAMS_UNI:
-            if (got_initial_max_streams_uni)
+            if (got_initial_max_streams_uni) {
                 /* must not appear more than once */
+                reason = TP_REASON_DUP("INITIAL_MAX_STREAMS_UNI");
                 goto malformed;
+            }
 
             if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
-                || v > (((uint64_t)1) << 60))
+                || v > (((uint64_t)1) << 60)) {
+                reason = TP_REASON_MALFORMED("INITIAL_MAX_STREAMS_UNI");
                 goto malformed;
+            }
 
             assert(ch->max_local_streams_uni == 0);
             ch->max_local_streams_uni = v;
@@ -789,12 +866,16 @@ static int ch_on_transport_params(const unsigned char *params,
             break;
 
         case QUIC_TPARAM_MAX_IDLE_TIMEOUT:
-            if (got_max_idle_timeout)
+            if (got_max_idle_timeout) {
                 /* must not appear more than once */
+                reason = TP_REASON_DUP("MAX_IDLE_TIMEOUT");
                 goto malformed;
+            }
 
-            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)) {
+                reason = TP_REASON_MALFORMED("MAX_IDLE_TIMEOUT");
                 goto malformed;
+            }
 
             if (v < ch->max_idle_timeout)
                 ch->max_idle_timeout = v;
@@ -804,36 +885,72 @@ static int ch_on_transport_params(const unsigned char *params,
             break;
 
         case QUIC_TPARAM_MAX_UDP_PAYLOAD_SIZE:
-            if (got_max_udp_payload_size)
+            if (got_max_udp_payload_size) {
                 /* must not appear more than once */
+                reason = TP_REASON_DUP("MAX_UDP_PAYLOAD_SIZE");
                 goto malformed;
+            }
 
             if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
-                || v < QUIC_MIN_INITIAL_DGRAM_LEN)
+                || v < QUIC_MIN_INITIAL_DGRAM_LEN) {
+                reason = TP_REASON_MALFORMED("MAX_UDP_PAYLOAD_SIZE");
                 goto malformed;
+            }
 
             ch->rx_max_udp_payload_size = v;
             got_max_udp_payload_size    = 1;
             break;
 
         case QUIC_TPARAM_ACTIVE_CONN_ID_LIMIT:
-            if (got_active_conn_id_limit)
+            if (got_active_conn_id_limit) {
                 /* must not appear more than once */
+                reason = TP_REASON_DUP("ACTIVE_CONN_ID_LIMIT");
                 goto malformed;
+            }
 
             if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
-                || v < QUIC_MIN_ACTIVE_CONN_ID_LIMIT)
+                || v < QUIC_MIN_ACTIVE_CONN_ID_LIMIT) {
+                reason = TP_REASON_MALFORMED("ACTIVE_CONN_ID_LIMIT");
                 goto malformed;
+            }
 
             ch->rx_active_conn_id_limit = v;
             got_active_conn_id_limit = 1;
             break;
 
-        /*
-         * TODO(QUIC): Handle:
-         *   QUIC_TPARAM_STATELESS_RESET_TOKEN
-         *   QUIC_TPARAM_PREFERRED_ADDR
-         */
+        case QUIC_TPARAM_STATELESS_RESET_TOKEN:
+            /* TODO(QUIC): Handle stateless reset tokens. */
+            /*
+             * We ignore these for now, but we must ensure a client doesn't
+             * send them.
+             */
+            if (ch->is_server) {
+                reason = TP_REASON_SERVER_ONLY("STATELESS_RESET_TOKEN");
+                goto malformed;
+            }
+
+            body = ossl_quic_wire_decode_transport_param_bytes(&pkt, &id, &len);
+            if (body == NULL || len != QUIC_STATELESS_RESET_TOKEN_LEN) {
+                reason = TP_REASON_MALFORMED("STATELESS_RESET_TOKEN");
+                goto malformed;
+            }
+
+            break;
+
+        case QUIC_TPARAM_PREFERRED_ADDR:
+            /* TODO(QUIC): Handle preferred address. */
+            if (ch->is_server) {
+                reason = TP_REASON_SERVER_ONLY("PREFERRED_ADDR");
+                goto malformed;
+            }
+
+            body = ossl_quic_wire_decode_transport_param_bytes(&pkt, &id, &len);
+            if (body == NULL) {
+                reason = TP_REASON_MALFORMED("PREFERRED_ADDR");
+                goto malformed;
+            }
+
+            break;
 
         case QUIC_TPARAM_DISABLE_ACTIVE_MIGRATION:
             /* We do not currently handle migration, so nothing to do. */
@@ -848,9 +965,22 @@ static int ch_on_transport_params(const unsigned char *params,
         }
     }
 
-    if (!got_orig_dcid || !got_initial_scid || got_retry_scid != ch->doing_retry)
-        /* Transport parameters were not valid. */
+    if (!got_initial_scid) {
+        reason = TP_REASON_REQUIRED("INITIAL_SCID");
         goto malformed;
+    }
+
+    if (!ch->is_server) {
+        if (!got_orig_dcid) {
+            reason = TP_REASON_REQUIRED("ORIG_DCID");
+            goto malformed;
+        }
+
+        if (ch->doing_retry && !got_retry_scid) {
+            reason = TP_REASON_REQUIRED("RETRY_SCID");
+            goto malformed;
+        }
+    }
 
     ch->got_remote_transport_params = 1;
 
@@ -870,7 +1000,7 @@ static int ch_on_transport_params(const unsigned char *params,
 
 malformed:
     ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_TRANSPORT_PARAMETER_ERROR,
-                                           0, "bad transport parameter");
+                                           0, reason);
     return 0;
 }
 
@@ -902,9 +1032,20 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
                                                     NULL, 0) == NULL)
         goto err;
 
-    if (ossl_quic_wire_encode_transport_param_bytes(&wpkt, QUIC_TPARAM_INITIAL_SCID,
-                                                    NULL, 0) == NULL)
-        goto err;
+    if (ch->is_server) {
+        if (!ossl_quic_wire_encode_transport_param_cid(&wpkt, QUIC_TPARAM_ORIG_DCID,
+                                                       &ch->init_dcid))
+            goto err;
+
+        if (!ossl_quic_wire_encode_transport_param_cid(&wpkt, QUIC_TPARAM_INITIAL_SCID,
+                                                       &ch->cur_local_dcid))
+            goto err;
+    } else {
+        /* Client always uses an empty SCID. */
+        if (ossl_quic_wire_encode_transport_param_bytes(&wpkt, QUIC_TPARAM_INITIAL_SCID,
+                                                        NULL, 0) == NULL)
+            goto err;
+    }
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_MAX_IDLE_TIMEOUT,
                                                    ch->max_idle_timeout))
@@ -940,7 +1081,7 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAMS_BIDI,
-                                                   0))
+                                                   ch->is_server ? 1 : 0))
         goto err;
 
     if (!ossl_quic_wire_encode_transport_param_int(&wpkt, QUIC_TPARAM_INITIAL_MAX_STREAMS_UNI,
