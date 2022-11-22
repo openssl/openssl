@@ -759,22 +759,22 @@ static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
             uint64_t frame_type = ossl_quic_cfq_item_get_frame_type(cfq_item);
 
             switch (frame_type) {
-                case OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID:
-                    if (a.allow_new_conn_id)
-                        return 1;
-                    break;
-                case OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID:
-                    if (a.allow_retire_conn_id)
-                        return 1;
-                    break;
-                case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
-                    if (a.allow_new_token)
-                        return 1;
-                    break;
-                default:
-                    if (a.allow_cfq_other)
-                        return 1;
-                    break;
+            case OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID:
+                if (a.allow_new_conn_id)
+                    return 1;
+                break;
+            case OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID:
+                if (a.allow_retire_conn_id)
+                    return 1;
+                break;
+            case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
+                if (a.allow_new_token)
+                    return 1;
+                break;
+            default:
+                if (a.allow_cfq_other)
+                    return 1;
+                break;
             }
        }
 
@@ -2149,11 +2149,9 @@ int ossl_quic_tx_packetiser_schedule_conn_close(OSSL_QUIC_TX_PACKETISER *txp,
         reason_len = max_reason_len;
 
     if (reason_len > 0) {
-        reason = OPENSSL_malloc(reason_len);
+        reason = OPENSSL_memdup(f->reason, reason_len);
         if (reason == NULL)
             return 0;
-
-        memcpy(reason, f->reason, reason_len);
     }
 
     txp->conn_close_frame               = *f;

@@ -193,7 +193,7 @@ typedef struct ossl_quic_frame_conn_close_st {
     unsigned int    is_app : 1; /* 0: transport error, 1: app error */
     uint64_t        error_code; /* 62-bit transport or app error code */
     uint64_t        frame_type; /* transport errors only */
-    char           *reason;     /* UTF-8 string, not necessarily zero-terminated */
+    char            *reason;    /* UTF-8 string, not necessarily zero-terminated */
     size_t          reason_len; /* Length of reason in bytes */
 } OSSL_QUIC_FRAME_CONN_CLOSE;
 

@@ -405,7 +405,7 @@ static int schedule_cfq_new_conn_id(struct helper *h)
     rc = 1;
 err:
     if (have_wpkt)
-        WPACKET_finish(&wpkt);
+        WPACKET_cleanup(&wpkt);
     return rc;
 }
 
@@ -479,7 +479,7 @@ static int schedule_cfq_new_token(struct helper *h)
     rc = 1;
 err:
     if (have_wpkt)
-        WPACKET_finish(&wpkt);
+        WPACKET_cleanup(&wpkt);
     return rc;
 }
 
