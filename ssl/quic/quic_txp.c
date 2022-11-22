@@ -312,11 +312,13 @@ static void on_regen_notify(uint64_t frame_type, uint64_t stream_id,
                             QUIC_TXPIM_PKT *pkt, void *arg);
 static int sstream_is_pending(QUIC_SSTREAM *sstream);
 static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
-                          uint32_t archetype);
+                          uint32_t archetype,
+                          uint32_t *conn_close_enc_level);
 static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                                uint32_t archetype,
                                char is_last_in_dgram,
-                               char dgram_contains_initial);
+                               char dgram_contains_initial,
+                               char chosen_for_conn_close);
 static size_t txp_determine_pn_len(OSSL_QUIC_TX_PACKETISER *txp);
 static int txp_determine_ppl_from_pl(OSSL_QUIC_TX_PACKETISER *txp,
                                      size_t pl,
@@ -330,7 +332,8 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
                                       size_t min_ppl,
                                       size_t max_ppl,
                                       size_t pkt_overhead,
-                                      QUIC_PKT_HDR *phdr);
+                                      QUIC_PKT_HDR *phdr,
+                                      char chosen_for_conn_close);
 
 OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETISER_ARGS *args)
 {
@@ -471,7 +474,7 @@ int ossl_quic_tx_packetiser_has_pending(OSSL_QUIC_TX_PACKETISER *txp,
                                         uint32_t archetype,
                                         uint32_t flags)
 {
-    uint32_t enc_level;
+    uint32_t enc_level, conn_close_enc_level = QUIC_ENC_LEVEL_NUM;
     int bypass_cc = ((flags & TX_PACKETISER_BYPASS_CC) != 0);
 
     if (!bypass_cc && !txp->args.cc_method->can_send(txp->args.cc_data))
@@ -480,7 +483,7 @@ int ossl_quic_tx_packetiser_has_pending(OSSL_QUIC_TX_PACKETISER *txp,
     for (enc_level = QUIC_ENC_LEVEL_INITIAL;
          enc_level < QUIC_ENC_LEVEL_NUM;
          ++enc_level)
-        if (txp_el_pending(txp, enc_level, archetype))
+        if (txp_el_pending(txp, enc_level, archetype, &conn_close_enc_level))
             return 1;
 
     return 0;
@@ -494,7 +497,7 @@ int ossl_quic_tx_packetiser_has_pending(OSSL_QUIC_TX_PACKETISER *txp,
 int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
                                      uint32_t archetype)
 {
-    uint32_t enc_level;
+    uint32_t enc_level, conn_close_enc_level = QUIC_ENC_LEVEL_NUM;
     char have_pkt_for_el[QUIC_ENC_LEVEL_NUM], is_last_in_dgram;
     size_t num_el_in_dgram = 0, pkts_done = 0;
     int rc;
@@ -505,7 +508,8 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
     for (enc_level = QUIC_ENC_LEVEL_INITIAL;
          enc_level < QUIC_ENC_LEVEL_NUM;
          ++enc_level) {
-        have_pkt_for_el[enc_level] = txp_el_pending(txp, enc_level, archetype);
+        have_pkt_for_el[enc_level] = txp_el_pending(txp, enc_level, archetype,
+                                                    &conn_close_enc_level);
         if (have_pkt_for_el[enc_level])
             ++num_el_in_dgram;
     }
@@ -527,7 +531,8 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
 
         is_last_in_dgram = (pkts_done + 1 == num_el_in_dgram);
         rc = txp_generate_for_el(txp, enc_level, archetype, is_last_in_dgram,
-                                 have_pkt_for_el[QUIC_ENC_LEVEL_INITIAL]);
+                                 have_pkt_for_el[QUIC_ENC_LEVEL_INITIAL],
+                                 enc_level == conn_close_enc_level);
 
         if (rc != TXP_ERR_SUCCESS) {
             /*
@@ -733,7 +738,8 @@ static int txp_get_archetype_data(uint32_t enc_level,
  * Always returns 0 if the given EL is discarded.
  */
 static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
-                          uint32_t archetype)
+                          uint32_t archetype,
+                          uint32_t *conn_close_enc_level)
 {
     struct archetype_data a;
     uint32_t pn_space = ossl_quic_enc_level_to_pn_space(enc_level);
@@ -741,6 +747,9 @@ static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
 
     if (!ossl_qtx_is_enc_level_provisioned(txp->args.qtx, enc_level))
         return 0;
+
+    if (*conn_close_enc_level > enc_level)
+        *conn_close_enc_level = enc_level;
 
     if (!txp_get_archetype_data(enc_level, archetype, &a))
         return 0;
@@ -774,7 +783,14 @@ static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
         return 1;
 
     /* Do we want to produce a CONNECTION_CLOSE frame? */
-    if (a.allow_conn_close && txp->want_conn_close)
+    if (a.allow_conn_close && txp->want_conn_close &&
+        *conn_close_enc_level == enc_level)
+        /*
+         * This is a bit of a special case since CONNECTION_CLOSE can appear in
+         * most packet types, and when we decide we want to send it this status
+         * isn't tied to a specific EL. So if we want to send it, we send it
+         * only on the lowest non-dropped EL.
+         */
         return 1;
 
     /* Does the CFQ have any frames queued for this PN space? */
@@ -844,7 +860,8 @@ static int sstream_is_pending(QUIC_SSTREAM *sstream)
 static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                                uint32_t archetype,
                                char is_last_in_dgram,
-                               char dgram_contains_initial)
+                               char dgram_contains_initial,
+                               char chosen_for_conn_close)
 {
     char must_pad = dgram_contains_initial && is_last_in_dgram;
     size_t min_dpl, min_pl, min_ppl, cmpl, cmppl, running_total;
@@ -956,7 +973,8 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
     pkt_overhead = cmpl - cmppl;
 
     return txp_generate_for_el_actual(txp, enc_level, archetype, min_ppl, cmppl,
-                                      pkt_overhead, &phdr);
+                                      pkt_overhead, &phdr,
+                                      chosen_for_conn_close);
 }
 
 /* Determine how many bytes we should use for the encoded PN. */
@@ -1073,7 +1091,8 @@ static int txp_generate_pre_token(OSSL_QUIC_TX_PACKETISER *txp,
                                   struct tx_helper *h,
                                   QUIC_TXPIM_PKT *tpkt,
                                   uint32_t pn_space,
-                                  struct archetype_data *a)
+                                  struct archetype_data *a,
+                                  char chosen_for_conn_close)
 {
     const OSSL_QUIC_FRAME_ACK *ack;
     OSSL_QUIC_FRAME_ACK ack2;
@@ -1111,7 +1130,7 @@ static int txp_generate_pre_token(OSSL_QUIC_TX_PACKETISER *txp,
     }
 
     /* CONNECTION_CLOSE Frames (Regenerate) */
-    if (a->allow_conn_close && txp->want_conn_close) {
+    if (a->allow_conn_close && txp->want_conn_close && chosen_for_conn_close) {
         WPACKET *wpkt = tx_helper_begin(h);
 
         if (wpkt == NULL)
@@ -1748,7 +1767,8 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
                                       size_t min_ppl,
                                       size_t max_ppl,
                                       size_t pkt_overhead,
-                                      QUIC_PKT_HDR *phdr)
+                                      QUIC_PKT_HDR *phdr,
+                                      char chosen_for_conn_close)
 {
     int rc = TXP_ERR_SUCCESS;
     struct archetype_data a;
@@ -1921,7 +1941,8 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
                  * NEW_TOKEN frames in the GCR queue we will handle these below.
                  */
                 if (!done_pre_token)
-                    if (txp_generate_pre_token(txp, &h, tpkt, pn_space, &a))
+                    if (txp_generate_pre_token(txp, &h, tpkt, pn_space, &a,
+                                               chosen_for_conn_close))
                         done_pre_token = 1;
 
                 break;
@@ -1954,7 +1975,8 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
      * PATH_RESPONSE (as desired) before, do so now.
      */
     if (!done_pre_token)
-        if (txp_generate_pre_token(txp, &h, tpkt, pn_space, &a))
+        if (txp_generate_pre_token(txp, &h, tpkt, pn_space, &a,
+                                   chosen_for_conn_close))
             done_pre_token = 1;
 
     /* CRYPTO Frames */
