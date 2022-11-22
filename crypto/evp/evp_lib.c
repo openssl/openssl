@@ -1215,7 +1215,8 @@ EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
     } else if (OPENSSL_strcasecmp(type, "ED25519") != 0
                && OPENSSL_strcasecmp(type, "X25519") != 0
                && OPENSSL_strcasecmp(type, "ED448") != 0
-               && OPENSSL_strcasecmp(type, "X448") != 0) {
+               && OPENSSL_strcasecmp(type, "X448") != 0
+               && OPENSSL_strcasecmp(type, "SM2") != 0) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
         goto end;
     }
