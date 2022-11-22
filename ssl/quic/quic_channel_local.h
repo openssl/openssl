@@ -118,19 +118,29 @@ struct quic_channel_st {
 
     /* Internal state. */
     /*
-     * The DCID used in the first Initial packet we transmit as a client.
+     * Client: The DCID used in the first Initial packet we transmit as a client.
+     * Server: The DCID used in the first Initial packet the client transmitted.
      * Randomly generated and required by RFC to be at least 8 bytes.
      */
     QUIC_CONN_ID                    init_dcid;
 
     /*
-     * The SCID found in the first Initial packet from the server.
+     * Client: The SCID found in the first Initial packet from the server.
+     * Not valid for servers.
      * Valid if have_received_enc_pkt is set.
      */
     QUIC_CONN_ID                    init_scid;
 
-    /* The SCID found in an incoming Retry packet we handled. */
+    /*
+     * Client only: The SCID found in an incoming Retry packet we handled.
+     * Not valid for servers.
+     */
     QUIC_CONN_ID                    retry_scid;
+
+    /* Server only: The DCID we currently use to talk to the peer. */
+    QUIC_CONN_ID                    cur_remote_dcid;
+    /* Server only: The DCID we currently expect the peer to use to talk to us. */
+    QUIC_CONN_ID                    cur_local_dcid;
 
     /* Transport parameter values received from server. */
     uint64_t                        init_max_stream_data_bidi_local;
