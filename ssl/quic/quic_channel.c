@@ -18,6 +18,7 @@
 #define INIT_CRYPTO_BUF_LEN     8192
 #define INIT_APP_BUF_LEN        8192
 
+static void ch_rx_pre(QUIC_CHANNEL *ch);
 static int ch_rx(QUIC_CHANNEL *ch);
 static int ch_tx(QUIC_CHANNEL *ch);
 static void ch_tick(QUIC_TICK_RESULT *res, void *arg);
@@ -1007,8 +1008,11 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
         }
     }
 
+    /* Handle any incoming data from network. */
+    ch_rx_pre(ch);
+
     do {
-        /* Handle any incoming data from the network. */
+        /* Process queued incoming packets. */
         ch_rx(ch);
 
         /*
@@ -1062,7 +1066,20 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
     res->want_net_write = (ossl_qtx_get_queue_len_datagrams(ch->qtx) > 0);
 }
 
-/* Process incoming packets and handle frames, if any. */
+/* Process incoming datagrams, if any. */
+static void ch_rx_pre(QUIC_CHANNEL *ch)
+{
+    if (!ch->have_sent_any_pkt)
+        return;
+
+    /*
+     * Get DEMUX to BIO_recvmmsg from the network and queue incoming datagrams
+     * to the appropriate QRX instance.
+     */
+    ossl_quic_demux_pump(ch->demux); /* best effort */
+}
+
+/* Process queued incoming packets and handle frames, if any. */
 static int ch_rx(QUIC_CHANNEL *ch)
 {
     int handled_any = 0;
@@ -1073,12 +1090,6 @@ static int ch_rx(QUIC_CHANNEL *ch)
          * for incoming data. TODO SERVER
          */
         return 1;
-
-    /*
-     * Get DEMUX to BIO_recvmmsg from the network and queue incoming datagrams
-     * to the appropriate QRX instance.
-     */
-    ossl_quic_demux_pump(ch->demux); /* best effort */
 
     for (;;) {
         assert(ch->qrx_pkt == NULL);
