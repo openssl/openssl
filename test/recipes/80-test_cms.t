@@ -451,10 +451,10 @@ my @smime_cms_cades_tests = (
 my @smime_cms_cades_ko_tests = (
     [ "sign content DER format, RSA key, not CAdES-BES compatible",
       [ @prov, "-sign", "-in", $smcont, "-outform", "DER", "-nodetach",
-        "-certfile", $smroot, "-signer", $smrsa1, "-out", "{output}.cms" ],
+        "-certfile", $smroot, "-signer", $smrsa1, "-out", "cades-ko.cms" ],
       "fail to verify token since requiring CAdES-BES compatibility",
-      [ @prov, "-verify", "-cades", "-in", "{output}.cms", "-inform", "DER",
-        "-CAfile", $smroot, "-out", "{output}.txt" ],
+      [ @prov, "-verify", "-cades", "-in", "cades-ko.cms", "-inform", "DER",
+        "-CAfile", $smroot, "-out", "cades-ko.txt" ],
       \&final_compare
     ]
 );
@@ -800,6 +800,7 @@ subtest "CAdES ko tests\n" => sub {
       SKIP: {
         my $skip_reason = check_availability($$_[0]);
         skip $skip_reason, 1 if $skip_reason;
+        1 while unlink "cades-ko.txt";
 
         ok(run(app(["openssl", "cms", @{$$_[1]}])), $$_[0]);
         ok(!run(app(["openssl", "cms", @{$$_[3]}])), $$_[2]);
