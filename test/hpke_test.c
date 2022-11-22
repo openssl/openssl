@@ -836,8 +836,22 @@ static char *bogus_suite_strs[] = {
     "bogus,33,3,1",
     "bogus,bogus",
     "bogus",
-    /* and one in the wrong order */
-    "aes-256-gcm,hkdf-sha512,x25519"
+    /* in reverse order */
+    "aes-256-gcm,hkdf-sha512,x25519",
+    /* good value followed by extra stuff */
+    "0x10,0x01,0x02,",
+    "0x10,0x01,0x02,,,",
+    "0x10,0x01,0x01,0x02",
+    "0x10,0x01,0x01,blah",
+    "0x10,0x01,0x01 0x02",
+    /* too few but good tokens */
+    "0x10,0x01",
+    "0x10",
+    /* empty things */
+    NULL,
+    "",
+    ",",
+    ",,"
 };
 
 /**
@@ -1068,8 +1082,8 @@ static int test_hpke_modes_suites(void)
                         res = (overallresult == 1 ? "worked" : "failed");
                         TEST_note("HPKE %s for mode: %s/0x%02x, "\
                                   "kem: %s/0x%02x, kdf: %s/0x%02x, "\
-                                  "aead: %s/0x%02x",
-                                  res, mode_str_list[mind], (int) mind,
+                                  "aead: %s/0x%02x", res,
+                                  mode_str_list[mind], (int) mind,
                                   kem_str_list[kemind], kem_id,
                                   kdf_str_list[kdfind], kdf_id,
                                   aead_str_list[aeadind], aead_id);
@@ -1189,6 +1203,9 @@ static int test_hpke_suite_strs(void)
                 snprintf(sstr, 128, "%s,%s,%s", kem_str_list[kemind],
                          kdf_str_list[kdfind], aead_str_list[aeadind]);
                 if (TEST_true(OSSL_HPKE_str2suite(sstr, &stirred)) != 1) {
+                    if (verbose)
+                        TEST_note("Unexpected str2suite fail for :%s",
+                                  bogus_suite_strs[sind]);
                     overallresult = 0;
                 }
             }
@@ -1197,6 +1214,9 @@ static int test_hpke_suite_strs(void)
     for (sind = 0; sind != OSSL_NELEM(bogus_suite_strs); sind++) {
         if (TEST_false(OSSL_HPKE_str2suite(bogus_suite_strs[sind],
                                            &stirred)) != 1) {
+            if (verbose)
+                TEST_note("OSSL_HPKE_str2suite didn't fail for bogus[%d]:%s",
+                          sind, bogus_suite_strs[sind]);
             overallresult = 0;
         }
     }

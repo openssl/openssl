@@ -19,6 +19,17 @@
 #include "internal/hpke_util.h"
 #include "internal/packet.h"
 
+/*
+ * table with identifier and synonym strings
+ * right now, there are 4 synonyms for each - a name, a hex string
+ * a hex string with a leading zero and a decimal string - more
+ * could be added but that seems like enough
+ */
+typedef struct {
+    uint16_t id;
+    char *synonyms[4];
+} synonymttab_t;
+
 /* max length of string we'll try map to a suite */
 #define OSSL_HPKE_MAX_SUITESTR 38
 
@@ -133,10 +144,9 @@ static const synonymttab_t aeadstrtab[] = {
 /* Return an object containing KEM constants associated with a EC curve name */
 const OSSL_HPKE_KEM_INFO *ossl_HPKE_KEM_INFO_find_curve(const char *curve)
 {
-    int i;
-    int sz = OSSL_NELEM(hpke_kem_tab);
+    int i, sz = OSSL_NELEM(hpke_kem_tab);
 
-    for (i = 0; i != sz; ++i) {
+    for (i = 0; i < sz; ++i) {
         const char *group = hpke_kem_tab[i].groupname;
 
         if (group == NULL)
@@ -292,7 +302,7 @@ int ossl_hpke_labeled_extract(EVP_KDF_CTX *kctx,
     protocol_labellen = strlen(protocol_label);
     labellen = strlen(label);
     labeled_ikmlen = label_hpkev1len + protocol_labellen
-                     + suiteidlen + labellen + ikmlen;
+        + suiteidlen + labellen + ikmlen;
     labeled_ikm = OPENSSL_malloc(labeled_ikmlen);
     if (labeled_ikm == NULL)
         return 0;
@@ -342,7 +352,7 @@ int ossl_hpke_labeled_expand(EVP_KDF_CTX *kctx,
     protocol_labellen = strlen(protocol_label);
     labellen = strlen(label);
     labeled_infolen = 2 + okmlen + prklen + label_hpkev1len
-                      + protocol_labellen + suiteidlen + labellen + infolen;
+        + protocol_labellen + suiteidlen + labellen + infolen;
     labeled_info = OPENSSL_malloc(labeled_infolen);
     if (labeled_info == NULL)
         return 0;
@@ -398,6 +408,27 @@ EVP_KDF_CTX *ossl_kdf_ctx_create(const char *kdfname, const char *mdname,
 }
 
 /*
+ * @brief look for a label into the synonym tables, and return its id
+ * @param st is the string value
+ * @param synp is the synonyms labels array
+ * @param outsize is the previous array size
+ * @return 0 when not found, else the matching item id.
+ */
+static uint16_t synonyms_lookup(const char *st, const synonymttab_t *synp,
+                                size_t outsize)
+{
+    size_t i, j;
+
+    for (i = 0; i < outsize; ++i) {
+        for (j = 0; j < OSSL_NELEM(synp[i].synonyms); ++j) {
+            if (OPENSSL_strcasecmp(st, synp[i].synonyms[j]) == 0)
+                return synp[i].id;
+        }
+    }
+    return 0;
+}
+
+/*
  * @brief map a string to a HPKE suite based on synonym tables
  * @param str is the string value
  * @param suite is the resulting suite
@@ -406,62 +437,61 @@ EVP_KDF_CTX *ossl_kdf_ctx_create(const char *kdfname, const char *mdname,
 int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
 {
     uint16_t kem = 0, kdf = 0, aead = 0;
-    char *st = NULL;
-    char *instrcp = NULL;
-    size_t inplen = 0;
-    int labels = 0;
-    const synonymttab_t *synp = NULL;
-    uint16_t *targ = NULL;
-    size_t i, j;
-    size_t outsize = 0;
-    size_t insize = 0;
+    char *st, *instrcp;
+    size_t inplen;
+    int labels = 0, result = 0;
 
-    if (suitestr == NULL || suite == NULL)
+    if (suitestr == NULL || suitestr[0] == 0x00 || suite == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
-    /* See if it contains a mix of our strings and numbers  */
+    }
+
     inplen = OPENSSL_strnlen(suitestr, OSSL_HPKE_MAX_SUITESTR);
     if (inplen >= OSSL_HPKE_MAX_SUITESTR)
         return 0;
-    instrcp = OPENSSL_strndup(suitestr, inplen);
-    st = strtok(instrcp, ",");
-    if (st == NULL) {
-        OPENSSL_free(instrcp);
+    /*
+     * we don't want a delimiter at the end of the string
+     * strtok() doesn't care about that, so we should
+     */
+    if (suitestr[inplen - 1] == ',')
         return 0;
-    }
-    while (st != NULL && ++labels <= 3) {
+
+    /* Duplicate `suitestr` to allow its parsing  */
+    instrcp = OPENSSL_memdup(suitestr, inplen + 1);
+    if (instrcp == NULL)
+        goto fail;
+
+    /* See if it contains a mix of our strings and numbers */
+    st = strtok(instrcp, ",");
+    if (st == NULL)
+        goto fail;
+
+    while (st != NULL && labels < 3) {
         /* check if string is known or number and if so handle appropriately */
-        if (kem == 0) {
-            synp = kemstrtab;
-            targ = &kem;
-            outsize = OSSL_NELEM(kemstrtab);
-            insize = OSSL_NELEM(kemstrtab[0].synonyms);
-        } else if (kdf == 0) {
-            synp = kdfstrtab;
-            targ = &kdf;
-            outsize = OSSL_NELEM(kdfstrtab);
-            insize = OSSL_NELEM(kdfstrtab[0].synonyms);
-        } else {
-            synp = aeadstrtab;
-            targ = &aead;
-            outsize = OSSL_NELEM(aeadstrtab);
-            insize = OSSL_NELEM(aeadstrtab[0].synonyms);
-        }
-        for (i = 0; i != outsize && *targ == 0; i++) {
-            for (j = 0; j != insize && *targ == 0; j++) {
-                if (OPENSSL_strcasecmp(st, synp[i].synonyms[j]) == 0)
-                    *targ = synp[i].id;
-            }
-        }
-        if (*targ == 0) {
-            OPENSSL_free(instrcp);
-            return 0;
-        }
+        if (labels == 0
+            && (kem = synonyms_lookup(st, kemstrtab,
+                                      OSSL_NELEM(kemstrtab))) == 0)
+            goto fail;
+        else if (labels == 1
+                 && (kdf = synonyms_lookup(st, kdfstrtab,
+                                           OSSL_NELEM(kdfstrtab))) == 0)
+            goto fail;
+        else if (labels == 2
+                 && (aead = synonyms_lookup(st, aeadstrtab,
+                                            OSSL_NELEM(aeadstrtab))) == 0)
+            goto fail;
 
         st = strtok(NULL, ",");
+        ++labels;
     }
-    OPENSSL_free(instrcp);
+    if (st != NULL || labels != 3)
+        goto fail;
     suite->kem_id = kem;
     suite->kdf_id = kdf;
     suite->aead_id = aead;
-    return 1;
+    result = 1;
+
+fail:
+    OPENSSL_free(instrcp);
+    return result;
 }

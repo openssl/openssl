@@ -60,17 +60,6 @@ typedef struct {
     size_t         Nn; /* length of a nonce for this aead */
 } OSSL_HPKE_AEAD_INFO;
 
-/*
- * table with identifier and synonym strings
- * right now, there are 4 synonyms for each - a name, a hex string
- * a hex string with a leading zero and a decimal string - more
- * could be added but that seems like enough
- */
-typedef struct OSSL_HPKE_synonymtab_str {
-    uint16_t id;
-    char *synonyms[4];
-} synonymttab_t;
-
 const OSSL_HPKE_KEM_INFO *ossl_HPKE_KEM_INFO_find_curve(const char *curve);
 const OSSL_HPKE_KEM_INFO *ossl_HPKE_KEM_INFO_find_id(uint16_t kemid);
 const OSSL_HPKE_KEM_INFO *ossl_HPKE_KEM_INFO_find_random(OSSL_LIB_CTX *ctx);
