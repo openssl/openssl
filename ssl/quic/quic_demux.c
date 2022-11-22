@@ -25,10 +25,10 @@
 typedef struct quic_demux_conn_st QUIC_DEMUX_CONN;
 
 struct quic_demux_conn_st {
-    QUIC_DEMUX_CONN            *next; /* used when unregistering only */
-    QUIC_CONN_ID                dst_conn_id;
-    ossl_quic_demux_cb_fn      *cb;
-    void                       *cb_arg;
+    QUIC_DEMUX_CONN                 *next; /* used when unregistering only */
+    QUIC_CONN_ID                    dst_conn_id;
+    ossl_quic_demux_cb_fn           *cb;
+    void                            *cb_arg;
 };
 
 DEFINE_LHASH_OF_EX(QUIC_DEMUX_CONN);
@@ -75,6 +75,10 @@ struct quic_demux_st {
 
     /* Hashtable mapping connection IDs to QUIC_DEMUX_CONN structures. */
     LHASH_OF(QUIC_DEMUX_CONN)  *conns_by_id;
+
+    /* The default packet handler, if any. */
+    ossl_quic_demux_cb_fn      *default_cb;
+    void                       *default_cb_arg;
 
     /*
      * List of URXEs which are not currently in use (i.e., not filled with
@@ -285,6 +289,14 @@ void ossl_quic_demux_unregister_by_cb(QUIC_DEMUX *demux,
     }
 }
 
+void ossl_quic_demux_set_default_handler(QUIC_DEMUX *demux,
+                                         ossl_quic_demux_cb_fn *cb,
+                                         void *cb_arg)
+{
+    demux->default_cb       = cb;
+    demux->default_cb_arg   = cb_arg;
+}
+
 static QUIC_URXE *demux_alloc_urxe(size_t alloc_len)
 {
     QUIC_URXE *e;
@@ -406,6 +418,7 @@ static int demux_recv(QUIC_DEMUX *demux)
         msg[i].data     = ossl_quic_urxe_data(urxe);
         msg[i].data_len = urxe->alloc_len;
         msg[i].peer     = &urxe->peer;
+        BIO_ADDR_clear(&urxe->peer);
         if (demux->use_local_addr)
             msg[i].local = &urxe->local;
         else
@@ -484,12 +497,21 @@ static int demux_process_pending_urxe(QUIC_DEMUX *demux, QUIC_URXE *e)
     conn = demux_identify_conn(demux, e);
     if (conn == NULL) {
         /*
-         * We could not identify a connection. We will never be able to process
-         * this datagram, so get rid of it.
+         * We could not identify a connection. If we have a default packet
+         * handler, pass it to the handler. Otherwise, we will never be able to
+         * process this datagram, so get rid of it.
          */
-        ossl_list_urxe_remove(&demux->urx_pending, e);
-        ossl_list_urxe_insert_tail(&demux->urx_free, e);
-        e->demux_state = URXE_DEMUX_STATE_FREE;
+        if (demux->default_cb != NULL) {
+            /* Pass to default handler. */
+            ossl_list_urxe_remove(&demux->urx_pending, e);
+            e->demux_state = URXE_DEMUX_STATE_ISSUED;
+            demux->default_cb(e, demux->default_cb_arg);
+        } else {
+            /* Discard. */
+            ossl_list_urxe_remove(&demux->urx_pending, e);
+            ossl_list_urxe_insert_tail(&demux->urx_free, e);
+            e->demux_state = URXE_DEMUX_STATE_FREE;
+        }
         return 1; /* keep processing pending URXEs */
     }
 
@@ -572,7 +594,7 @@ int ossl_quic_demux_inject(QUIC_DEMUX *demux,
     if (peer != NULL)
         urxe->peer = *peer;
     else
-        BIO_ADDR_clear(&urxe->local);
+        BIO_ADDR_clear(&urxe->peer);
 
     if (local != NULL)
         urxe->local = *local;
@@ -595,4 +617,13 @@ void ossl_quic_demux_release_urxe(QUIC_DEMUX *demux,
     assert(e->demux_state == URXE_DEMUX_STATE_ISSUED);
     ossl_list_urxe_insert_tail(&demux->urx_free, e);
     e->demux_state = URXE_DEMUX_STATE_FREE;
+}
+
+void ossl_quic_demux_reinject_urxe(QUIC_DEMUX *demux,
+                                   QUIC_URXE *e)
+{
+    assert(ossl_list_urxe_prev(e) == NULL && ossl_list_urxe_next(e) == NULL);
+    assert(e->demux_state == URXE_DEMUX_STATE_ISSUED);
+    ossl_list_urxe_insert_head(&demux->urx_pending, e);
+    e->demux_state = URXE_DEMUX_STATE_PENDING;
 }

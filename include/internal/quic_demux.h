@@ -169,8 +169,9 @@ typedef struct quic_demux_st QUIC_DEMUX;
  * to mutate this buffer; once the demuxer calls this callback, it will never
  * read the buffer again.
  *
- * The callee must arrange for ossl_quic_demux_release_urxe to be called on the URXE
- * at some point in the future (this need not be before the callback returns).
+ * The callee must arrange for ossl_quic_demux_release_urxe or
+ * ossl_quic_demux_reinject_urxe to be called on the URXE at some point in the
+ * future (this need not be before the callback returns).
  *
  * At the time the callback is made, the URXE will not be in any queue,
  * therefore the callee can use the prev and next fields as it wishes.
@@ -256,12 +257,40 @@ void ossl_quic_demux_unregister_by_cb(QUIC_DEMUX *demux,
                                       void *cb_arg);
 
 /*
+ * Set the default packet handler. This is used for incoming packets which don't
+ * match a registered DCID. This is only needed for servers. If a default packet
+ * handler is not set, a packet which doesn't match a registered DCID is
+ * silently dropped. A default packet handler may be unset by passing NULL.
+ *
+ * The handler is responsible for ensuring that ossl_quic_demux_reinject_urxe or
+ * ossl_quic_demux_release_urxe is called on the passed packet at some point in
+ * the future, which may or may not be before the handler returns.
+ */
+void ossl_quic_demux_set_default_handler(QUIC_DEMUX *demux,
+                                         ossl_quic_demux_cb_fn *cb,
+                                         void *cb_arg);
+
+/*
  * Releases a URXE back to the demuxer. No reference must be made to the URXE or
  * its buffer after calling this function. The URXE must not be in any queue;
  * that is, its prev and next pointers must be NULL.
  */
 void ossl_quic_demux_release_urxe(QUIC_DEMUX *demux,
                                   QUIC_URXE *e);
+
+/*
+ * Reinjects a URXE which was issued to a registered DCID callback or the
+ * default packet handler callback back into the pending queue. This is useful
+ * when a packet has been handled by the default packet handler callback such
+ * that a DCID has now been registered and can be dispatched normally by DCID.
+ * Once this has been called, the caller must not touch the URXE anymore and
+ * must not also call ossl_quic_demux_release_urxe().
+ *
+ * The URXE is reinjected at the head of the queue, so it will be reprocessed
+ * immediately.
+ */
+void ossl_quic_demux_reinject_urxe(QUIC_DEMUX *demux,
+                                   QUIC_URXE *e);
 
 /*
  * Process any unprocessed RX'd datagrams, by calling registered callbacks by
