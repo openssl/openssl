@@ -265,10 +265,10 @@ struct quic_channel_st {
     unsigned int                    is_server               : 1;
 
     /*
-     * Set temporarily when the handshake layer has given us a new secret. Used
-     * to determine if we need to check our RX queues again.
+     * Set temporarily when the handshake layer has given us a new RX secret.
+     * Used to determine if we need to check our RX queues again.
      */
-    unsigned int                    have_new_secret         : 1;
+    unsigned int                    have_new_rx_secret      : 1;
 };
 
 # endif
