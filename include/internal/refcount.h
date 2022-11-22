@@ -13,7 +13,7 @@
 # include <openssl/e_os2.h>
 # include <openssl/trace.h>
 
-# ifndef OPENSSL_DEV_NO_ATOMICS
+# if defined(OPENSSL_THREADS) && !defined(OPENSSL_DEV_NO_ATOMICS)
 #  if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
       && !defined(__STDC_NO_ATOMICS__)
 #   include <stdatomic.h>
