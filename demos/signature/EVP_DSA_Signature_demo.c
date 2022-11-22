@@ -278,6 +278,8 @@ int main(void)
     unsigned char *sig_value = NULL;
 
     libctx = OSSL_LIB_CTX_new();
+    if (libctx == NULL)
+        goto end;
 
     if (generate_dsa_params(libctx, &params) != 1)
         goto end;
