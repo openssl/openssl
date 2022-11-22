@@ -1131,9 +1131,12 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
             else
                 return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
         }
-    }
 
-    return 1;
+        return 1;
+    } else {
+        /* We did not get any bytes and are not in blocking mode. */
+        return QUIC_RAISE_NORMAL_ERROR(qc, SSL_ERROR_WANT_READ);
+    }
 }
 
 int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read)
