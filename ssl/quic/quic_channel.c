@@ -14,6 +14,16 @@
 #include "quic_channel_local.h"
 #include <openssl/rand.h>
 
+/*
+ * NOTE: While this channel implementation currently has basic server support,
+ * this functionality has been implemented for internal testing purposes and is
+ * not suitable for network use. In particular, it does not implement address
+ * validation, anti-amplification or retry logic.
+ *
+ * TODO(QUIC): Implement address validation and anti-amplification
+ * TODO(QUIC): Implement retry logic
+ */
+
 #define INIT_DCID_LEN           8
 #define INIT_CRYPTO_BUF_LEN     8192
 #define INIT_APP_BUF_LEN        8192
@@ -62,6 +72,10 @@ static void ch_on_terminating_timeout(QUIC_CHANNEL *ch);
 static void ch_start_terminating(QUIC_CHANNEL *ch,
                                  const QUIC_TERMINATE_CAUSE *tcause,
                                  int force_immediate);
+static void ch_default_packet_handler(QUIC_URXE *e, void *arg);
+static int ch_server_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
+                                 const QUIC_CONN_ID *peer_scid,
+                                 const QUIC_CONN_ID *peer_dcid);
 
 static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
 {
@@ -89,9 +103,11 @@ static int ch_init(QUIC_CHANNEL *ch)
     OSSL_QRX_ARGS qrx_args = {0};
     QUIC_DHS_ARGS dhs_args = {0};
     uint32_t pn_space;
+    size_t rx_short_cid_len = ch->is_server ? INIT_DCID_LEN : 0;
 
-    /* TODO(QUIC): This is only applicable to clients. */
-    if (!gen_rand_conn_id(ch->libctx, INIT_DCID_LEN, &ch->init_dcid))
+    /* For clients, generate our initial DCID. */
+    if (!ch->is_server
+        && !gen_rand_conn_id(ch->libctx, INIT_DCID_LEN, &ch->init_dcid))
         goto err;
 
     /* We plug in a network write BIO to the QTX later when we get one. */
@@ -161,12 +177,23 @@ static int ch_init(QUIC_CHANNEL *ch)
     if (ch->txp == NULL)
         goto err;
 
-    if ((ch->demux = ossl_quic_demux_new(/*BIO=*/NULL, /*Short CID Len=*/0,
+    if ((ch->demux = ossl_quic_demux_new(/*BIO=*/NULL,
+                                         /*Short CID Len=*/rx_short_cid_len,
                                          get_time, NULL)) == NULL)
         goto err;
 
+    /*
+     * If we are a server, setup our handler for packets not corresponding to
+     * any known DCID on our end. This is for handling clients establishing new
+     * connections.
+     */
+    if (ch->is_server)
+        ossl_quic_demux_set_default_handler(ch->demux,
+                                            ch_default_packet_handler,
+                                            ch);
+
     qrx_args.demux              = ch->demux;
-    qrx_args.short_conn_id_len  = 0; /* We use a zero-length SCID. */
+    qrx_args.short_conn_id_len  = rx_short_cid_len;
     qrx_args.max_deferred       = 32;
 
     if ((ch->qrx = ossl_qrx_new(&qrx_args)) == NULL)
@@ -177,7 +204,7 @@ static int ch_init(QUIC_CHANNEL *ch)
                                           ch))
         goto err;
 
-    if (!ossl_qrx_add_dst_conn_id(ch->qrx, &txp_args.cur_scid))
+    if (!ch->is_server && !ossl_qrx_add_dst_conn_id(ch->qrx, &txp_args.cur_scid))
         goto err;
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
@@ -219,6 +246,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     dhs_args.handshake_complete_cb_arg  = ch;
     dhs_args.alert_cb                   = ch_on_handshake_alert;
     dhs_args.alert_cb_arg               = ch;
+    dhs_args.is_server                  = ch->is_server;
 
     if ((ch->dhs = ossl_quic_dhs_new(&dhs_args)) == NULL)
         goto err;
@@ -572,6 +600,16 @@ static int ch_on_handshake_complete(void *arg)
     ossl_quic_tx_packetiser_notify_handshake_complete(ch->txp);
 
     ch->handshake_complete = 1;
+
+    if (ch->is_server) {
+        /*
+         * On the server, the handshake is confirmed as soon as it is complete.
+         */
+        ossl_quic_channel_on_handshake_confirmed(ch);
+
+        ossl_quic_tx_packetiser_schedule_handshake_done(ch->txp);
+    }
+
     return 1;
 }
 
@@ -1233,7 +1271,7 @@ static void ch_rx_pre(QUIC_CHANNEL *ch)
 {
     int ret;
 
-    if (!ch->have_sent_any_pkt)
+    if (!ch->is_server && !ch->have_sent_any_pkt)
         return;
 
     /*
@@ -1257,12 +1295,10 @@ static int ch_rx(QUIC_CHANNEL *ch)
 {
     int handled_any = 0;
 
-    if (!ch->have_sent_any_pkt)
+    if (!ch->is_server && !ch->have_sent_any_pkt)
         /*
          * We have not sent anything yet, therefore there is no need to check
          * for incoming data.
-         *
-         * TODO(QUIC): Needs revising when server support added.
          */
         return 1;
 
@@ -1326,14 +1362,12 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
     /* Handle incoming packet. */
     switch (ch->qrx_pkt->hdr->type) {
     case QUIC_PKT_TYPE_RETRY:
-        if (ch->doing_retry)
+        if (ch->doing_retry || ch->is_server)
             /*
              * It is not allowed to ask a client to do a retry more than
-             * once.
+             * once. Clients may not send retries.
              */
             return;
-
-        /* TODO(QUIC): handle server mode */
 
         if (ch->qrx_pkt->hdr->len <= QUIC_RETRY_INTEGRITY_TAG_LEN)
             /* Packets with zero-length Retry Tokens are invalid. */
@@ -1360,16 +1394,21 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
                  &ch->qrx_pkt->hdr->src_conn_id);
         break;
 
-    case QUIC_PKT_TYPE_VERSION_NEG:
-        /* TODO(QUIC): Implement version negotiation */
-        break;
-
     case QUIC_PKT_TYPE_0RTT:
-        /* TODO(QQUIC): handle if server */
-        /* Clients should never receive 0-RTT packets */
+        if (!ch->is_server)
+            /* Clients should never receive 0-RTT packets. */
+            return;
+
+        /*
+         * TODO(QUIC): Implement 0-RTT on the server side. We currently do
+         * not need to implement this as a client can only do 0-RTT if we
+         * have given it permission to in a previous session.
+         */
         break;
 
-    default:
+    case QUIC_PKT_TYPE_INITIAL:
+    case QUIC_PKT_TYPE_HANDSHAKE:
+    case QUIC_PKT_TYPE_1RTT:
         if (ch->qrx_pkt->hdr->type == QUIC_PKT_TYPE_HANDSHAKE)
             /*
              * We automatically drop INITIAL EL keys when first successfully
@@ -1380,7 +1419,89 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
         /* This packet contains frames, pass to the RXDP. */
         ossl_quic_handle_frames(ch, ch->qrx_pkt); /* best effort */
         break;
+
+    default:
+        assert(0);
+        break;
     }
+}
+
+/*
+ * This is called by the demux when we get a packet not destined for any known
+ * DCID.
+ */
+static void ch_default_packet_handler(QUIC_URXE *e, void *arg)
+{
+    QUIC_CHANNEL *ch = arg;
+    PACKET pkt;
+    QUIC_PKT_HDR hdr;
+
+    if (!ossl_assert(ch->is_server))
+        goto undesirable;
+
+    /*
+     * We only support one connection to our server currently, so if we already
+     * started one, ignore any new connection attempts.
+     */
+    if (ch->state != QUIC_CHANNEL_STATE_IDLE)
+        goto undesirable;
+
+    /*
+     * We have got a packet for an unknown DCID. This might be an attempt to
+     * open a new connection.
+     */
+    if (e->data_len < QUIC_MIN_INITIAL_DGRAM_LEN)
+        goto undesirable;
+
+    if (!PACKET_buf_init(&pkt, ossl_quic_urxe_data(e), e->data_len))
+        goto undesirable;
+
+    /*
+     * We set short_conn_id_len to SIZE_MAX here which will cause the decode
+     * operation to fail if we get a 1-RTT packet. This is fine since we only
+     * care about Initial packets.
+     */
+    if (!ossl_quic_wire_decode_pkt_hdr(&pkt, SIZE_MAX, 1, &hdr, NULL))
+        goto undesirable;
+
+    switch (hdr.version) {
+        case QUIC_VERSION_1:
+            break;
+
+        case QUIC_VERSION_NONE:
+        default:
+            /* Unknown version or proactive version negotiation request, bail. */
+            /* TODO(QUIC): Handle version negotiation on server side */
+            goto undesirable;
+    }
+
+    /*
+     * We only care about Initial packets which might be trying to establish a
+     * connection.
+     */
+    if (hdr.type != QUIC_PKT_TYPE_INITIAL)
+        goto undesirable;
+
+    /*
+     * Assume this is a valid attempt to initiate a connection.
+     *
+     * We do not register the DCID in the initial packet we received and that
+     * DCID is not actually used again, thus after provisioning the correct
+     * Initial keys derived from it (which is done in the call below) we pass
+     * the received packet directly to the QRX so that it can process it as a
+     * one-time thing, instead of going through the usual DEMUX DCID-based
+     * routing.
+     */
+    if (!ch_server_on_new_conn(ch, &e->peer,
+                               &hdr.src_conn_id,
+                               &hdr.dst_conn_id))
+        goto undesirable;
+
+    ossl_qrx_inject_urxe(ch->qrx, e);
+    return;
+
+undesirable:
+    ossl_quic_demux_release_urxe(ch->demux, e);
 }
 
 /* Try to generate packets and if possible, flush them to the network. */
@@ -1548,10 +1669,15 @@ int ossl_quic_channel_set_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio)
  * QUIC Channel: Lifecycle Events
  * ==============================
  */
-
 int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 {
-    /* TODO(QUIC): handle server */
+    if (ch->is_server)
+        /*
+         * This is not used by the server. The server moves to active
+         * automatically on receiving an incoming connection.
+         */
+        return 0;
+
     if (ch->state != QUIC_CHANNEL_STATE_IDLE)
         /* Calls to connect are idempotent */
         return 1;
@@ -1564,7 +1690,7 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     if (!ossl_quic_provide_initial_secret(ch->libctx,
                                           ch->propq,
                                           &ch->init_dcid,
-                                          /*is_server=*/0,
+                                          /*is_server=*/ch->is_server,
                                           ch->qrx, ch->qtx))
         return 0;
 
@@ -1875,4 +2001,51 @@ static void ch_on_idle_timeout(QUIC_CHANNEL *ch)
     ch->terminate_cause.frame_type  = 0;
 
     ch->state = QUIC_CHANNEL_STATE_TERMINATED;
+}
+
+/* Called when we, as a server, get a new incoming connection. */
+static int ch_server_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
+                                 const QUIC_CONN_ID *peer_scid,
+                                 const QUIC_CONN_ID *peer_dcid)
+{
+    if (!ossl_assert(ch->state == QUIC_CHANNEL_STATE_IDLE && ch->is_server))
+        return 0;
+
+    /* Generate a SCID we will use for the connection. */
+    if (!gen_rand_conn_id(ch->libctx, INIT_DCID_LEN,
+                          &ch->cur_local_dcid))
+        return 0;
+
+    /* Note our newly learnt peer address and CIDs. */
+    ch->cur_peer_addr   = *peer;
+    ch->init_dcid       = *peer_dcid;
+    ch->cur_remote_dcid = *peer_scid;
+
+    /* Inform QTX of peer address. */
+    if (!ossl_quic_tx_packetiser_set_peer(ch->txp, &ch->cur_peer_addr))
+        return 0;
+
+    /* Inform TXP of desired CIDs. */
+    if (!ossl_quic_tx_packetiser_set_cur_dcid(ch->txp, &ch->cur_remote_dcid))
+        return 0;
+
+    if (!ossl_quic_tx_packetiser_set_cur_scid(ch->txp, &ch->cur_local_dcid))
+        return 0;
+
+    /* Plug in secrets for the Initial EL. */
+    if (!ossl_quic_provide_initial_secret(ch->libctx,
+                                          ch->propq,
+                                          &ch->init_dcid,
+                                          /*is_server=*/1,
+                                          ch->qrx, ch->qtx))
+        return 0;
+
+    /* Register our local DCID in the DEMUX. */
+    if (!ossl_qrx_add_dst_conn_id(ch->qrx, &ch->cur_local_dcid))
+        return 0;
+
+    /* Change state. */
+    ch->state                   = QUIC_CHANNEL_STATE_ACTIVE;
+    ch->doing_proactive_ver_neg = 0; /* not currently supported */
+    return 1;
 }
