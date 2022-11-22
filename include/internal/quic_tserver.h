@@ -1,0 +1,79 @@
+/*
+ * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#ifndef OSSL_QUIC_TSERVER_H
+# define OSSL_QUIC_TSERVER_H
+
+# include <openssl/ssl.h>
+# include "internal/quic_stream.h"
+
+# ifndef OPENSSL_NO_QUIC
+
+/*
+ * QUIC Test Server Module
+ * =======================
+ *
+ * This implements a QUIC test server. Since full QUIC server support is not yet
+ * implemented this server is limited in features and scope. It exists to
+ * provide a target for our QUIC client to talk to for testing purposes.
+ *
+ * A given QUIC test server instance supports only one client at a time.
+ *
+ * Note that this test server is not suitable for production use because it does
+ * not implement address verification, anti-amplification or retry logic.
+ */
+typedef struct quic_tserver_st QUIC_TSERVER;
+
+typedef struct quic_tserver_args_st {
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+    BIO *net_rbio, *net_wbio;
+} QUIC_TSERVER_ARGS;
+
+QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args);
+
+void ossl_quic_tserver_free(QUIC_TSERVER *srv);
+
+/* Advances the state machine. */
+int ossl_quic_tserver_tick(QUIC_TSERVER *srv);
+
+/* Returns 1 if we have a (non-terminated) client. */
+int ossl_quic_tserver_is_connected(QUIC_TSERVER *srv);
+
+/*
+ * Attempts to read from stream 0. Writes the number of bytes read to
+ * *bytes_read and returns 1 on success. If no bytes are available, 0 is written
+ * to *bytes_read and 1 is returned (this is considered a success case).
+ *
+ * Returns 0 if connection is not currently active.
+ */
+int ossl_quic_tserver_read(QUIC_TSERVER *srv,
+                           unsigned char *buf,
+                           size_t buf_len,
+                           size_t *bytes_read);
+
+/*
+ * Attempts to write to stream 0. Writes the number of bytes consumed to
+ * *consumed and returns 1 on success. If there is no space currently available
+ * to write any bytes, 0 is written to *consumed and 1 is returned (this is
+ * considered a success case).
+ *
+ * Note that unlike libssl public APIs, this API always works in a 'partial
+ * write' mode.
+ *
+ * Returns 0 if connection is not currently active.
+ */
+int ossl_quic_tserver_write(QUIC_TSERVER *srv,
+                            const unsigned char *buf,
+                            size_t buf_len,
+                            size_t *bytes_written);
+
+# endif
+
+#endif
