@@ -527,9 +527,10 @@ static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
                                      suite_id, md,
                                      secret, secret_len))
             return 0;
+
+        ch->have_new_rx_secret = 1;
     }
 
-    ch->have_new_secret = 1;
     return 1;
 }
 
@@ -1014,7 +1015,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
          * Allow the handshake layer to check for any new incoming data and generate
          * new outgoing data.
          */
-        ch->have_new_secret = 0;
+        ch->have_new_rx_secret = 0;
         ossl_quic_dhs_tick(ch->dhs);
 
         /*
@@ -1022,7 +1023,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
          * because packets that were not previously processable and were
          * deferred might now be processable.
          */
-    } while (ch->have_new_secret);
+    } while (ch->have_new_rx_secret);
 
     /*
      * Handle any timer events which are due to fire; namely, the loss detection
