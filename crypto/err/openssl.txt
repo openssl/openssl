@@ -242,7 +242,9 @@ CMP_R_MISSING_PBM_SECRET:166:missing pbm secret
 CMP_R_MISSING_PRIVATE_KEY:131:missing private key
 CMP_R_MISSING_PROTECTION:143:missing protection
 CMP_R_MISSING_REFERENCE_CERT:168:missing reference cert
+CMP_R_MISSING_SECRET:178:missing secret
 CMP_R_MISSING_SENDER_IDENTIFICATION:111:missing sender identification
+CMP_R_MISSING_TRUST_ANCHOR:179:missing trust anchor
 CMP_R_MISSING_TRUST_STORE:144:missing trust store
 CMP_R_MULTIPLE_REQUESTS_NOT_SUPPORTED:161:multiple requests not supported
 CMP_R_MULTIPLE_RESPONSES_NOT_SUPPORTED:170:multiple responses not supported
