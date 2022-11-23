@@ -101,7 +101,7 @@ the sender will be a browser and the receiver will be a web server.
 B<OSSL_HPKE_SUITE> is a structure that holds identifiers for the algorithms
 used for KEM, KDF and AEAD operations.
 
-B<OSSL_HPKE_CTX> is an context that maintains internal state as HPKE
+B<OSSL_HPKE_CTX> is a context that maintains internal state as HPKE
 operations are carried out. Separate B<OSSL_HPKE_CTX> objects must be used for
 the sender and receiver. Attempting to use a single context for both will
 result in errors.
@@ -329,7 +329,7 @@ OSSL_HPKE_encap().
 OSSL_HPKE_CTX_set1_authpub() can be used by the receiver to set the senders
 encoded pub key I<pub> of size I<publen> into the B<OSSL_HPKE_CTX> I<ctx> before
 calling OSSL_HPKE_decap().
-For EC curves, I<pub> is in an uncompressed encoding format.
+For EC curves, I<pub> should use an uncompressed encoding format.
 
 =head2 Pre-Shared Key HPKE modes
 
@@ -340,7 +340,7 @@ B<OSSL_HPKE_MODE_PSK> and B<OSSL_HPKE_MODE_PSKAUTH> modes.
 OSSL_HPKE_CTX_set1_psk() sets the PSK identifier I<pskid> string, and PSK buffer
 I<psk> of size I<psklen> into the I<ctx>. If required this must be called
 before OSSL_HPKE_encap() or OSSL_HPKE_decap().
-As per RFC9180, if required, both I<psk> and I<pskid> must be set to non NULL values.
+As per RFC9180, if required, both I<psk> and I<pskid> must be set to non-NULL values.
 As PSKs are symmetric the same calls must happen on both sender and receiver
 sides.
 
@@ -365,7 +365,7 @@ or values that leak.
 Some protocols may have to deal with packet loss while still being able to
 decrypt arriving packets later. We provide a way to set the increment used for
 the nonce to the next subsequent call to OSSL_HPKE_seal() or OSSL_HPKE_open().
-The OSSL_HPLE_CTX_set_seq() API can be used for such purposes with the I<seq>
+The OSSL_HPKE_CTX_set_seq() API can be used for such purposes with the I<seq>
 parameter value resetting the internal nonce to be used for the next call.
 
 A baseline nonce value is established based on the encapsulation or
@@ -379,7 +379,7 @@ return 0 before the first call a sender made to OSSL_HPKE_seal() and 1 after
 that first call.
 
 For compatibility with other implementations these I<seq> increments are
-represented as a I<uint64_t>.
+represented as I<uint64_t>.
 
 Note that re-use of the same nonce and key with different plaintexts is very
 dangerous and can lead to loss of confidentiality. Applications therefore need
@@ -396,7 +396,7 @@ is supported locally.
 
 To assist with memory allocation, OSSL_HPKE_get_ciphertext_size() provides a
 way for the caller to know by how much ciphertext will be longer than a
-plaintext of length I<clearlen>.  (AEAD algoriths add a data integrity tag,
+plaintext of length I<clearlen>.  (AEAD algorithms add a data integrity tag,
 so there is a small amount of ciphertext expansion.)
 
 OSSL_HPKE_get_public_encap_size() provides a way for senders to know how big
@@ -416,7 +416,7 @@ length for I<suite_out> and a random value, and the I<ct> output will be
 a random value. The relevant sizes for buffers can be found using
 OSSL_HPKE_get_ciphertext_size() and OSSL_HPKE_get_public_encap_size().
 
-OSSL_HPKE_str2suite() maps input I<str> strings to a B<OSSL_HPKE_SUITE> object.
+OSSL_HPKE_str2suite() maps input I<str> strings to an B<OSSL_HPKE_SUITE> object.
 The input I<str> should be a comma-separated string with a KEM,
 KDF and AEAD name in that order, for example "x25519,hkdf-sha256,aes128gcm".
 This can be used by command line tools that accept string form names for HPKE
@@ -436,7 +436,6 @@ OSSL_HPKE_get_recommended_ikmelen() all return a size_t with the
 relevant value or zero on error.
 
 All other functions return 1 for success or zero for error.
-
 
 =head1 EXAMPLES
 
@@ -508,6 +507,7 @@ This example demonstrates a minimal round-trip using HPKE.
         EVP_PKEY_free(priv);
         return 0;
     }
+
 =head1 WARNINGS
 
 Note that the OSSL_HPKE_CTX_set_seq() API could be dangerous - if used with GCM

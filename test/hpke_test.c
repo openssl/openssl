@@ -836,6 +836,10 @@ static char *bogus_suite_strs[] = {
     "bogus,33,3,1",
     "bogus,bogus",
     "bogus",
+    /* one bad token */
+    "0x10,0x01,bogus",
+    "0x10,bogus,0x01",
+    "bogus,0x02,0x01",
     /* in reverse order */
     "aes-256-gcm,hkdf-sha512,x25519",
     /* surplus separators */
@@ -848,6 +852,13 @@ static char *bogus_suite_strs[] = {
     "0x10\0,0x01,0x02",
     "0x10,0x01\0,0x02",
     "0x10,0x01,\0""0x02",
+    /* embedded whitespace */
+    " aes-256-gcm,hkdf-sha512,x25519",
+    "aes-256-gcm, hkdf-sha512,x25519",
+    "aes-256-gcm ,hkdf-sha512,x25519",
+    "aes-256-gcm,hkdf-sha512, x25519",
+    "aes-256-gcm,hkdf-sha512 ,x25519",
+    "aes-256-gcm,hkdf-sha512,x25519 ",
     /* good value followed by extra stuff */
     "0x10,0x01,0x02,",
     "0x10,0x01,0x02,,,",

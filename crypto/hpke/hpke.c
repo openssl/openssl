@@ -92,8 +92,11 @@ static int hpke_kem_id_nist_curve(uint16_t kem_id)
  * @param buf is the binary buffer with the (uncompressed) public value
  * @param buflen is the length of the private key buffer
  * @return a working EVP_PKEY * or NULL
+ *
+ * Note that this could be a useful function to make public in
+ * future, but would likely require a name change.
  */
-static EVP_PKEY *EVP_PKEY_new_raw_nist_public_key(OSSL_LIB_CTX *libctx,
+static EVP_PKEY *evp_pkey_new_raw_nist_public_key(OSSL_LIB_CTX *libctx,
                                                   const char *propq,
                                                   const char *gname,
                                                   const unsigned char *buf,
@@ -510,7 +513,7 @@ static int hpke_encap(OSSL_HPKE_CTX *ctx, unsigned char *enc, size_t *enclen,
         return 0;
     }
     if (hpke_kem_id_nist_curve(ctx->suite.kem_id) == 1) {
-        pkR = EVP_PKEY_new_raw_nist_public_key(ctx->libctx, ctx->propq,
+        pkR = evp_pkey_new_raw_nist_public_key(ctx->libctx, ctx->propq,
                                                kem_info->groupname,
                                                pub, publen);
     } else {
@@ -618,7 +621,7 @@ static int hpke_decap(OSSL_HPKE_CTX *ctx,
             goto err;
         }
         if (hpke_kem_id_nist_curve(ctx->suite.kem_id) == 1) {
-            spub = EVP_PKEY_new_raw_nist_public_key(ctx->libctx, ctx->propq,
+            spub = evp_pkey_new_raw_nist_public_key(ctx->libctx, ctx->propq,
                                                     kem_info->groupname,
                                                     ctx->authpub,
                                                     ctx->authpublen);
