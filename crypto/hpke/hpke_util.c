@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/core_names.h>
 #include <openssl/kdf.h>
 #include <openssl/params.h>
@@ -24,6 +25,11 @@
  */
 #define OSSL_HPKE_STR_DELIMCHAR ','
 
+#if !defined(OPENSSL_SYS_WINDOWS)
+# define strtok_here strtok_r
+#else
+# define strtok_here strtok_s
+#endif
 /*
  * table with identifier and synonym strings
  * right now, there are 4 synonyms for each - a name, a hex string
@@ -466,7 +472,7 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
 
     /*
      * we don't want a delimiter at the end of the string;
-     * strtok_r() doesn't care about that, so we should
+     * strtok_r/s() doesn't care about that, so we should
      */
     if (suitestr[inplen - 1] == OSSL_HPKE_STR_DELIMCHAR)
         return 0;
@@ -484,7 +490,7 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
         goto fail;
 
     /* See if it contains a mix of our strings and numbers */
-    st = strtok_r(instrcp, OSSL_HPKE_STR_DELIMSTR, &st_state);
+    st = strtok_here(instrcp, OSSL_HPKE_STR_DELIMSTR, &st_state);
     if (st == NULL)
         goto fail;
 
@@ -503,7 +509,7 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
                                              OSSL_NELEM(aeadstrtab))) == 0)
             goto fail;
 
-        st = strtok_r(NULL, OSSL_HPKE_STR_DELIMSTR, &st_state);
+        st = strtok_here(NULL, OSSL_HPKE_STR_DELIMSTR, &st_state);
         ++labels;
     }
     if (st != NULL || labels != 3)
