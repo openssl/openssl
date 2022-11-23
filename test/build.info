@@ -979,6 +979,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[provider_pkey_test]=../include ../apps/include
   DEPEND[provider_pkey_test]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=provider_default_search_path_test
+  SOURCE[provider_default_search_path_test]=provider_default_search_path_test.c
+  INCLUDE[provider_default_search_path_test]=../include ../apps/include
+  DEPEND[provider_default_search_path_test]=../libcrypto libtestutil.a
+
   PROGRAMS{noinst}=params_test
   SOURCE[params_test]=params_test.c
   INCLUDE[params_test]=.. ../include ../apps/include

@@ -816,6 +816,19 @@ int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *libctx,
     return 0;
 }
 
+const char *OSSL_PROVIDER_get0_default_search_path(OSSL_LIB_CTX *libctx)
+{
+    struct provider_store_st *store;
+    char *path = NULL;
+
+    if ((store = get_provider_store(libctx)) != NULL
+            && CRYPTO_THREAD_read_lock(store->default_path_lock)) {
+        path = store->default_path;
+        CRYPTO_THREAD_unlock(store->default_path_lock);
+    }
+    return path;
+}
+
 /*
  * Internal version that doesn't affect the store flags, and thereby avoid
  * locking.  Direct callers must remember to set the store flags when
