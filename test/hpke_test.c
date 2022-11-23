@@ -1786,7 +1786,7 @@ static int test_hpke_ikms(void)
  * We'll do a typical round-trip for auth mode but provide the
  * auth public key in compressed form. That should work.
  */
-static int test_hpke_compressed()
+static int test_hpke_compressed(void)
 {
     int erv = 0;
     EVP_PKEY *privp = NULL;
@@ -1908,6 +1908,7 @@ int setup_tests(void)
     ADD_TEST(test_hpke_compressed);
     return 1;
 }
+
 void cleanup_tests(void)
 {
     OSSL_PROVIDER_unload(deflprov);
