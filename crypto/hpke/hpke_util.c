@@ -452,7 +452,7 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    /* someboday might someday extend in an untested way... */
+    /* somebody might someday extend in an untested way... */
     if (OPENSSL_strnlen(OSSL_HPKE_STR_DELIMSTR, 1) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return 0;
