@@ -19,6 +19,7 @@
 #include "crypto/ecx.h"
 #include "internal/hpke_util.h"
 #include "internal/packet.h"
+#include "internal/nelem.h"
 
 /*
  * Delimiter used in OSSL_HPKE_str2suite
@@ -166,8 +167,7 @@ const OSSL_HPKE_KEM_INFO *ossl_HPKE_KEM_INFO_find_curve(const char *curve)
 
 const OSSL_HPKE_KEM_INFO *ossl_HPKE_KEM_INFO_find_id(uint16_t kemid)
 {
-    int i;
-    int sz = OSSL_NELEM(hpke_kem_tab);
+    int i, sz = OSSL_NELEM(hpke_kem_tab);
 
     /*
      * this check can happen if we're in a no-ec build and there are no
@@ -195,8 +195,7 @@ const OSSL_HPKE_KEM_INFO *ossl_HPKE_KEM_INFO_find_random(OSSL_LIB_CTX *ctx)
 
 const OSSL_HPKE_KDF_INFO *ossl_HPKE_KDF_INFO_find_id(uint16_t kdfid)
 {
-    int i;
-    int sz = OSSL_NELEM(hpke_kdf_tab);
+    int i, sz = OSSL_NELEM(hpke_kdf_tab);
 
     for (i = 0; i != sz; ++i) {
         if (hpke_kdf_tab[i].kdf_id == kdfid)
@@ -218,8 +217,7 @@ const OSSL_HPKE_KDF_INFO *ossl_HPKE_KDF_INFO_find_random(OSSL_LIB_CTX *ctx)
 
 const OSSL_HPKE_AEAD_INFO *ossl_HPKE_AEAD_INFO_find_id(uint16_t aeadid)
 {
-    int i;
-    int sz = OSSL_NELEM(hpke_aead_tab);
+    int i, sz = OSSL_NELEM(hpke_aead_tab);
 
     for (i = 0; i != sz; ++i) {
         if (hpke_aead_tab[i].aead_id == aeadid)
@@ -443,7 +441,7 @@ static uint16_t synonyms_name2id(const char *st, const synonymttab_t *synp,
 int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
 {
     uint16_t kem = 0, kdf = 0, aead = 0;
-    char *st = NULL, *instrcp = NULL, *inpend = NULL;
+    char *st = NULL, *instrcp = NULL;
     size_t inplen;
     int labels = 0, result = 0;
     int delim_count = 0;
@@ -479,14 +477,13 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
 
     /* See if it contains a mix of our strings and numbers */
     st = instrcp;
-    inpend = instrcp + inplen;
 
     while (st != NULL && labels < 3) {
-        char *cp = st;
+        char *cp = strchr(st, OSSL_HPKE_STR_DELIMCHAR);
 
-        while (*cp != '\0' && *cp != OSSL_HPKE_STR_DELIMCHAR)
-            cp++;
-        *cp = '\0';
+        /* add a NUL like strtok would if we're not at the end */
+        if (cp)
+            *cp = '\0';
 
         /* check if string is known or number and if so handle appropriately */
         if (labels == 0
@@ -502,7 +499,7 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
                                              OSSL_NELEM(aeadstrtab))) == 0)
             goto fail;
 
-        if (cp == inpend)
+        if (cp == NULL)
             st = NULL;
         else
             st = cp + 1;

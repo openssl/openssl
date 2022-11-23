@@ -809,27 +809,27 @@ static uint16_t hpke_aead_list[] = {
  * Subsequent entries are only used for tests of
  * OSSL_HPKE_str2suite()
  */
-static char *mode_str_list[] = {
+static const char *mode_str_list[] = {
     "base", "psk", "auth", "pskauth"
 };
-static char *kem_str_list[] = {
+static const char *kem_str_list[] = {
     "P-256", "P-384", "P-521", "x25519", "x448",
     "0x10", "0x11", "0x12", "0x20", "0x21",
     "16", "17", "18", "32", "33"
 };
-static char *kdf_str_list[] = {
+static const char *kdf_str_list[] = {
     "hkdf-sha256", "hkdf-sha384", "hkdf-sha512",
     "0x1", "0x01", "0x2", "0x02", "0x3", "0x03",
     "1", "2", "3"
 };
-static char *aead_str_list[] = {
+static const char *aead_str_list[] = {
     "aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "exporter",
     "0x1", "0x01", "0x2", "0x02", "0x3", "0x03",
     "1", "2", "3",
     "0xff", "255"
 };
 /* table of bogus strings that better not work */
-static char *bogus_suite_strs[] = {
+static const char *bogus_suite_strs[] = {
     "3,33,3",
     "bogus,bogus,bogus",
     "bogus,33,3,1,bogus",
@@ -1653,9 +1653,9 @@ static int test_hpke_random_suites(void)
     OSSL_HPKE_SUITE suite = OSSL_HPKE_SUITE_DEFAULT;
     OSSL_HPKE_SUITE suite2 = { 0xff01, 0xff02, 0xff03 };
     unsigned char enc[200];
-    size_t enclen = 200;
+    size_t enclen = sizeof(enc);
     unsigned char ct[500];
-    size_t ctlen = 500;
+    size_t ctlen = sizeof(ct);
 
     /* test with NULL/0 inputs */
     if (!TEST_false(OSSL_HPKE_get_grease_value(testctx, NULL, NULL, NULL,
@@ -1667,42 +1667,44 @@ static int test_hpke_random_suites(void)
                                                ct, ctlen)))
         return 0;
 
-    enclen = 200; /* reset, 'cause get_grease() will have set for suite2  */
+    enclen = sizeof(enc); /* reset, 'cause get_grease() will have set */
     /* test with a should-be-good suite */
     if (!TEST_true(OSSL_HPKE_get_grease_value(testctx, NULL, &def_suite,
                                               &suite2, enc, &enclen,
                                               ct, ctlen)))
         return 0;
     /* no suggested suite */
-    enclen = 200; /* reset, 'cause get_grease() will have set for suite2  */
+    enclen = sizeof(enc); /* reset, 'cause get_grease() will have set */
     if (!TEST_true(OSSL_HPKE_get_grease_value(testctx, NULL, NULL, &suite2,
                                               enc, &enclen, ct, ctlen)))
         return 0;
     /* suggested suite with P-521, just to be sure we hit long values */
-    enclen = 200; /* reset, 'cause get_grease() will have set for suite2  */
+    enclen = sizeof(enc); /* reset, 'cause get_grease() will have set */
     suite.kem_id = OSSL_HPKE_KEM_ID_P521;
     if (!TEST_true(OSSL_HPKE_get_grease_value(testctx, NULL, &suite, &suite2,
                                               enc, &enclen, ct, ctlen)))
         return 0;
-    enclen = 200;
+    enclen = sizeof(enc);
     ctlen = 2; /* too-short cttext (can't fit an aead tag) */
     if (!TEST_false(OSSL_HPKE_get_grease_value(testctx, NULL, NULL, &suite2,
                                                enc, &enclen, ct, ctlen)))
         return 0;
-    ctlen = 500;
-    enclen = 200;
+
+    ctlen = sizeof(ct);
+    enclen = sizeof(enc);
+
     suite.kem_id = OSSL_HPKE_KEM_ID_X25519; /* back to default */
     suite.aead_id = 0x1234; /* bad aead */
     if (!TEST_false(OSSL_HPKE_get_grease_value(testctx, NULL, &suite, &suite2,
                                                enc, &enclen, ct, ctlen)))
         return 0;
-    enclen = 200;
+    enclen = sizeof(enc);
     suite.aead_id = def_suite.aead_id; /* good aead */
     suite.kdf_id = 0x3451; /* bad kdf */
     if (!TEST_false(OSSL_HPKE_get_grease_value(testctx, NULL, &suite, &suite2,
                                                enc, &enclen, ct, ctlen)))
         return 0;
-    enclen = 200;
+    enclen = sizeof(enc);
     suite.kdf_id = def_suite.kdf_id; /* good kdf */
     suite.kem_id = 0x4517; /* bad kem */
     if (!TEST_false(OSSL_HPKE_get_grease_value(testctx, NULL, &suite, &suite2,

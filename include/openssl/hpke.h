@@ -134,10 +134,8 @@ int OSSL_HPKE_suite_check(OSSL_HPKE_SUITE suite);
 int OSSL_HPKE_get_grease_value(OSSL_LIB_CTX *libctx, const char *propq,
                                const OSSL_HPKE_SUITE *suite_in,
                                OSSL_HPKE_SUITE *suite,
-                               unsigned char *enc,
-                               size_t *enclen,
-                               unsigned char *ct,
-                               size_t ctlen);
+                               unsigned char *enc, size_t *enclen,
+                               unsigned char *ct, size_t ctlen);
 int OSSL_HPKE_str2suite(const char *str, OSSL_HPKE_SUITE *suite);
 size_t OSSL_HPKE_get_ciphertext_size(OSSL_HPKE_SUITE suite, size_t clearlen);
 size_t OSSL_HPKE_get_public_encap_size(OSSL_HPKE_SUITE suite);
