@@ -20,6 +20,7 @@
 #include "prov/provider_ctx.h"
 
 static OSSL_FUNC_kdf_newctx_fn hmac_drbg_kdf_new;
+static OSSL_FUNC_kdf_dupctx_fn hmac_drbg_kdf_dup;
 static OSSL_FUNC_kdf_freectx_fn hmac_drbg_kdf_free;
 static OSSL_FUNC_kdf_reset_fn hmac_drbg_kdf_reset;
 static OSSL_FUNC_kdf_derive_fn hmac_drbg_kdf_derive;
@@ -74,6 +75,42 @@ static void hmac_drbg_kdf_free(void *vctx)
         hmac_drbg_kdf_reset(ctx);
         OPENSSL_free(ctx);
     }
+}
+
+static int ossl_drbg_hmac_dup(PROV_DRBG_HMAC *dst, const PROV_DRBG_HMAC *src) {
+    if (src->ctx != NULL) {
+        dst->ctx = EVP_MAC_CTX_dup(src->ctx);
+        if (dst->ctx == NULL)
+            return 0;
+    }
+    if (!ossl_prov_digest_copy(&dst->digest, &src->digest))
+        return 0;
+    memcpy(dst->K, src->K, sizeof(dst->K));
+    memcpy(dst->V, src->V, sizeof(dst->V));
+    dst->blocklen = src->blocklen;
+    return 1;
+}
+
+static void *hmac_drbg_kdf_dup(void *vctx)
+{
+    const KDF_HMAC_DRBG *src = (const KDF_HMAC_DRBG *)vctx;
+    KDF_HMAC_DRBG *dst;
+
+    dst = hmac_drbg_kdf_new(src->provctx);
+    if (dst != NULL) {
+        if (!ossl_drbg_hmac_dup(&dst->base, &src->base)
+                || !ossl_prov_memdup(src->entropy, src->entropylen,
+                                     &dst->entropy , &dst->entropylen)
+                || !ossl_prov_memdup(src->nonce, src->noncelen,
+                                     &dst->nonce, &dst->noncelen))
+            goto err;
+        dst->init = src->init;
+    }
+    return dst;
+
+ err:
+    hmac_drbg_kdf_free(dst);
+    return NULL;
 }
 
 static int hmac_drbg_kdf_derive(void *vctx, unsigned char *out, size_t outlen,
@@ -207,6 +244,7 @@ static const OSSL_PARAM *hmac_drbg_kdf_settable_ctx_params(
 const OSSL_DISPATCH ossl_kdf_hmac_drbg_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))hmac_drbg_kdf_new },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))hmac_drbg_kdf_free },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))hmac_drbg_kdf_dup },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))hmac_drbg_kdf_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))hmac_drbg_kdf_derive },
     { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS,
