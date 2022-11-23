@@ -76,7 +76,7 @@ static EVP_PKEY *pem_read_bio_key_decoder(BIO *bp, EVP_PKEY **x,
     ERR_pop_to_mark();
 
     /* if we were asked for private key, the public key is optional */
-    if (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY)
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         selection = selection & ~OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
 
     if (!evp_keymgmt_util_has(pkey, selection)) {
@@ -110,7 +110,7 @@ static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
     EVP_PKEY *ret = NULL;
 
     ERR_set_mark();  /* not interested in PEM read errors */
-    if (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) {
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
         if (!PEM_bytes_read_bio_secmem(&data, &len, &nm,
                                        PEM_STRING_EVP_PKEY,
                                        bp, cb, u)) {
@@ -120,7 +120,7 @@ static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
     } else {
         const char *pem_string = PEM_STRING_PARAMETERS;
 
-        if (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
+        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
             pem_string = PEM_STRING_PUBLIC;
         if (!PEM_bytes_read_bio(&data, &len, &nm,
                                 pem_string,
@@ -178,11 +178,11 @@ static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
             goto p8err;
         ret = ossl_d2i_PrivateKey_legacy(ameth->pkey_id, x, &p, len, libctx,
                                          propq);
-    } else if (!(selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY)
-               && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY)) {
+    } else if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) == 0
+               && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
         /* Trying legacy PUBKEY decoding only if we do not want private key. */
         ret = ossl_d2i_PUBKEY_legacy(x, &p, len);
-    } else if (!(selection & EVP_PKEY_KEYPAIR)
+    } else if ((selection & EVP_PKEY_KEYPAIR) == 0
                && (slen = ossl_pem_check_suffix(nm, "PARAMETERS")) > 0) {
         /* Trying legacy params decoding only if we do not want a key. */
         ret = EVP_PKEY_new();
