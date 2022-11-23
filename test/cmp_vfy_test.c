@@ -682,10 +682,10 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_validate_msg_mac_alg_protection_ok);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    ADD_TEST(test_validate_msg_mac_alg_protection_bad);
-    ADD_TEST(test_validate_msg_mac_alg_protection_wrong);
-#endif
     ADD_TEST(test_validate_msg_mac_alg_protection_missing);
+    ADD_TEST(test_validate_msg_mac_alg_protection_wrong);
+    ADD_TEST(test_validate_msg_mac_alg_protection_bad);
+#endif
 
     /* Cert path validation tests */
     ADD_TEST(test_validate_cert_path_ok);
