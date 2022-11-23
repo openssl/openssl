@@ -329,7 +329,6 @@ OSSL_HPKE_encap().
 OSSL_HPKE_CTX_set1_authpub() can be used by the receiver to set the senders
 encoded pub key I<pub> of size I<publen> into the B<OSSL_HPKE_CTX> I<ctx> before
 calling OSSL_HPKE_decap().
-For EC curves, I<pub> should use an uncompressed encoding format.
 
 =head2 Pre-Shared Key HPKE modes
 

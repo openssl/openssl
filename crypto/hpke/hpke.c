@@ -972,16 +972,64 @@ int OSSL_HPKE_CTX_set1_authpriv(OSSL_HPKE_CTX *ctx, EVP_PKEY *priv)
 int OSSL_HPKE_CTX_set1_authpub(OSSL_HPKE_CTX *ctx,
                                const unsigned char *pub, size_t publen)
 {
+    int erv = 0;
+    EVP_PKEY *pubp = NULL;
+    unsigned char *lpub = NULL;
+    size_t lpublen = 0;
+    const OSSL_HPKE_KEM_INFO *kem_info = NULL;
+
     if (ctx == NULL || pub == NULL || publen == 0) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    OPENSSL_free(ctx->authpub);
-    ctx->authpub = OPENSSL_memdup(pub, publen);
-    if (ctx->authpub == NULL)
+    if (ctx->mode != OSSL_HPKE_MODE_AUTH
+        && ctx->mode != OSSL_HPKE_MODE_PSKAUTH) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
-    ctx->authpublen = publen;
-    return 1;
+    }
+    /* check the value seems like a good public key for this kem */
+    kem_info = ossl_HPKE_KEM_INFO_find_id(ctx->suite.kem_id);
+    if (kem_info == NULL)
+        return 0;
+    if (hpke_kem_id_nist_curve(ctx->suite.kem_id) == 1) {
+        pubp = evp_pkey_new_raw_nist_public_key(ctx->libctx, ctx->propq,
+                                                kem_info->groupname,
+                                                pub, publen);
+    } else {
+        pubp = EVP_PKEY_new_raw_public_key_ex(ctx->libctx,
+                                              kem_info->keytype,
+                                              ctx->propq,
+                                              pub, publen);
+    }
+    if (pubp == NULL) {
+        /* can happen based on external input - buffer value may be garbage */
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+    /*
+     * extract out the public key in encoded form so we
+     * should be fine even if given compressed form
+     */
+    lpub = OPENSSL_malloc(OSSL_HPKE_MAXSIZE);
+    if (lpub == NULL)
+        goto err;
+    if (EVP_PKEY_get_octet_string_param(pubp,
+                                        OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                        lpub, OSSL_HPKE_MAXSIZE, &lpublen)
+        != 1) {
+        OPENSSL_free(lpub);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    /* free up old value */
+    OPENSSL_free(ctx->authpub);
+    ctx->authpub = lpub;
+    ctx->authpublen = lpublen;
+    erv = 1;
+
+err:
+    EVP_PKEY_free(pubp);
+    return erv;
 }
 
 int OSSL_HPKE_CTX_get_seq(OSSL_HPKE_CTX *ctx, uint64_t *seq)
