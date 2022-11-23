@@ -3,6 +3,7 @@
 =head1 NAME
 
 OSSL_PROVIDER_set_default_search_path,
+OSSL_PROVIDER_get0_default_search_path,
 OSSL_PROVIDER, OSSL_PROVIDER_load, OSSL_PROVIDER_try_load, OSSL_PROVIDER_unload,
 OSSL_PROVIDER_available, OSSL_PROVIDER_do_all,
 OSSL_PROVIDER_gettable_params, OSSL_PROVIDER_get_params,
@@ -20,6 +21,7 @@ OSSL_PROVIDER_self_test
 
  int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *libctx,
                                            const char *path);
+ const char *OSSL_PROVIDER_get0_default_search_path(OSSL_LIB_CTX *libctx);
 
  OSSL_PROVIDER *OSSL_PROVIDER_load(OSSL_LIB_CTX *libctx, const char *name);
  OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
@@ -71,6 +73,11 @@ OSSL_PROVIDER_set_default_search_path() specifies the default search I<path>
 that is to be used for looking for providers in the specified I<libctx>.
 If left unspecified, an environment variable and a fall back default value will
 be used instead.
+
+OSSL_PROVIDER_get0_default_search_path() retrieves the default search I<path>
+that is to be used for looking for providers in the specified I<libctx>.
+If successful returns the path or empty string; the path is valid until the
+context is released or OSSL_PROVIDER_set_default_search_path() is called.
 
 OSSL_PROVIDER_add_builtin() is used to add a built in provider to
 B<OSSL_PROVIDER> store in the given library context, by associating a
@@ -160,6 +167,9 @@ L<provider-base(7)/CAPABILTIIES>.
 OSSL_PROVIDER_set_default_search_path(), OSSL_PROVIDER_add(),
 OSSL_PROVIDER_unload(), OSSL_PROVIDER_get_params() and
 OSSL_PROVIDER_get_capabilities() return 1 on success, or 0 on error.
+
+OSSL_PROVIDER_get0_default_search_path() returns a pointer to a path on success,
+or NULL on error or if the path has not previously been set.
 
 OSSL_PROVIDER_load() and OSSL_PROVIDER_try_load() return a pointer to a
 provider object on success, or NULL on error.
