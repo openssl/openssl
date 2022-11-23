@@ -3940,6 +3940,8 @@ start:
                           t->s.curr, pp->key, pp->value);
                 return 0;
             }
+            if (t->skip)
+                return 0;
         }
     }
 
