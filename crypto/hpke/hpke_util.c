@@ -420,7 +420,7 @@ EVP_KDF_CTX *ossl_kdf_ctx_create(const char *kdfname, const char *mdname,
  * @return 0 when not found, else the matching item id.
  */
 static uint16_t synonyms_name2id(const char *st, const synonymttab_t *synp,
-                                size_t arrsize)
+                                 size_t arrsize)
 {
     size_t i, j;
 
@@ -442,7 +442,7 @@ static uint16_t synonyms_name2id(const char *st, const synonymttab_t *synp,
 int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
 {
     uint16_t kem = 0, kdf = 0, aead = 0;
-    char *st = NULL, *instrcp = NULL;
+    char *st = NULL, *instrcp = NULL, *st_state = NULL;
     size_t inplen;
     int labels = 0, result = 0;
     int delim_count = 0;
@@ -459,11 +459,14 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
     }
 
     inplen = OPENSSL_strnlen(suitestr, OSSL_HPKE_MAX_SUITESTR);
-    if (inplen >= OSSL_HPKE_MAX_SUITESTR)
+    if (inplen >= OSSL_HPKE_MAX_SUITESTR) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
+    }
+
     /*
      * we don't want a delimiter at the end of the string;
-     * strtok() doesn't care about that, so we should
+     * strtok_r() doesn't care about that, so we should
      */
     if (suitestr[inplen - 1] == OSSL_HPKE_STR_DELIMCHAR)
         return 0;
@@ -481,7 +484,7 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
         goto fail;
 
     /* See if it contains a mix of our strings and numbers */
-    st = strtok(instrcp, OSSL_HPKE_STR_DELIMSTR);
+    st = strtok_r(instrcp, OSSL_HPKE_STR_DELIMSTR, &st_state);
     if (st == NULL)
         goto fail;
 
@@ -489,18 +492,18 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
         /* check if string is known or number and if so handle appropriately */
         if (labels == 0
             && (kem = synonyms_name2id(st, kemstrtab,
-                                      OSSL_NELEM(kemstrtab))) == 0)
+                                       OSSL_NELEM(kemstrtab))) == 0)
             goto fail;
         else if (labels == 1
                  && (kdf = synonyms_name2id(st, kdfstrtab,
-                                           OSSL_NELEM(kdfstrtab))) == 0)
+                                            OSSL_NELEM(kdfstrtab))) == 0)
             goto fail;
         else if (labels == 2
                  && (aead = synonyms_name2id(st, aeadstrtab,
-                                            OSSL_NELEM(aeadstrtab))) == 0)
+                                             OSSL_NELEM(aeadstrtab))) == 0)
             goto fail;
 
-        st = strtok(NULL, OSSL_HPKE_STR_DELIMSTR);
+        st = strtok_r(NULL, OSSL_HPKE_STR_DELIMSTR, &st_state);
         ++labels;
     }
     if (st != NULL || labels != 3)
