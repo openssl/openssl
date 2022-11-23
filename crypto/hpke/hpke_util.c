@@ -25,11 +25,6 @@
  */
 #define OSSL_HPKE_STR_DELIMCHAR ','
 
-#if !defined(OPENSSL_SYS_WINDOWS)
-# define strtok_here strtok_r
-#else
-# define strtok_here strtok_s
-#endif
 /*
  * table with identifier and synonym strings
  * right now, there are 4 synonyms for each - a name, a hex string
@@ -448,22 +443,15 @@ static uint16_t synonyms_name2id(const char *st, const synonymttab_t *synp,
 int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
 {
     uint16_t kem = 0, kdf = 0, aead = 0;
-    char *st = NULL, *instrcp = NULL, *st_state = NULL;
+    char *st = NULL, *instrcp = NULL, *inpend = NULL;
     size_t inplen;
     int labels = 0, result = 0;
     int delim_count = 0;
-    const char OSSL_HPKE_STR_DELIMSTR[] = { OSSL_HPKE_STR_DELIMCHAR, '\0' };
 
     if (suitestr == NULL || suitestr[0] == 0x00 || suite == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    /* somebody might someday extend in an untested way... */
-    if (OPENSSL_strnlen(OSSL_HPKE_STR_DELIMSTR, 1) != 1) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
     inplen = OPENSSL_strnlen(suitestr, OSSL_HPKE_MAX_SUITESTR);
     if (inplen >= OSSL_HPKE_MAX_SUITESTR) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -490,11 +478,16 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
         goto fail;
 
     /* See if it contains a mix of our strings and numbers */
-    st = strtok_here(instrcp, OSSL_HPKE_STR_DELIMSTR, &st_state);
-    if (st == NULL)
-        goto fail;
+    st = instrcp;
+    inpend = instrcp + inplen;
 
     while (st != NULL && labels < 3) {
+        char *cp = st;
+
+        while (*cp != '\0' && *cp != OSSL_HPKE_STR_DELIMCHAR)
+            cp++;
+        *cp = '\0';
+
         /* check if string is known or number and if so handle appropriately */
         if (labels == 0
             && (kem = synonyms_name2id(st, kemstrtab,
@@ -509,7 +502,10 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
                                              OSSL_NELEM(aeadstrtab))) == 0)
             goto fail;
 
-        st = strtok_here(NULL, OSSL_HPKE_STR_DELIMSTR, &st_state);
+        if (cp == inpend)
+            st = NULL;
+        else
+            st = cp + 1;
         ++labels;
     }
     if (st != NULL || labels != 3)
