@@ -838,7 +838,7 @@ static char *bogus_suite_strs[] = {
     "bogus",
     /* in reverse order */
     "aes-256-gcm,hkdf-sha512,x25519",
-    /* delimiter diahorrea :-) */
+    /* surplus separators */
     ",,0x10,0x01,0x02",
     "0x10,,0x01,0x02",
     "0x10,0x01,,0x02",
