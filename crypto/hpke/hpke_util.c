@@ -416,15 +416,15 @@ EVP_KDF_CTX *ossl_kdf_ctx_create(const char *kdfname, const char *mdname,
  * @brief look for a label into the synonym tables, and return its id
  * @param st is the string value
  * @param synp is the synonyms labels array
- * @param outsize is the previous array size
+ * @param arrsize is the previous array size
  * @return 0 when not found, else the matching item id.
  */
-static uint16_t synonyms_lookup(const char *st, const synonymttab_t *synp,
-                                size_t outsize)
+static uint16_t synonyms_name2id(const char *st, const synonymttab_t *synp,
+                                size_t arrsize)
 {
     size_t i, j;
 
-    for (i = 0; i < outsize; ++i) {
+    for (i = 0; i < arrsize; ++i) {
         for (j = 0; j < OSSL_NELEM(synp[i].synonyms); ++j) {
             if (OPENSSL_strcasecmp(st, synp[i].synonyms[j]) == 0)
                 return synp[i].id;
@@ -488,15 +488,15 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
     while (st != NULL && labels < 3) {
         /* check if string is known or number and if so handle appropriately */
         if (labels == 0
-            && (kem = synonyms_lookup(st, kemstrtab,
+            && (kem = synonyms_name2id(st, kemstrtab,
                                       OSSL_NELEM(kemstrtab))) == 0)
             goto fail;
         else if (labels == 1
-                 && (kdf = synonyms_lookup(st, kdfstrtab,
+                 && (kdf = synonyms_name2id(st, kdfstrtab,
                                            OSSL_NELEM(kdfstrtab))) == 0)
             goto fail;
         else if (labels == 2
-                 && (aead = synonyms_lookup(st, aeadstrtab,
+                 && (aead = synonyms_name2id(st, aeadstrtab,
                                             OSSL_NELEM(aeadstrtab))) == 0)
             goto fail;
 
