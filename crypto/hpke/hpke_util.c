@@ -20,6 +20,11 @@
 #include "internal/packet.h"
 
 /*
+ * Delimiter used in OSSL_HPKE_str2suite
+ */
+#define OSSL_HPKE_STR_DELIMCHAR ','
+
+/*
  * table with identifier and synonym strings
  * right now, there are 4 synonyms for each - a name, a hex string
  * a hex string with a leading zero and a decimal string - more
@@ -437,12 +442,19 @@ static uint16_t synonyms_lookup(const char *st, const synonymttab_t *synp,
 int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
 {
     uint16_t kem = 0, kdf = 0, aead = 0;
-    char *st, *instrcp;
+    char *st = NULL, *instrcp = NULL;
     size_t inplen;
     int labels = 0, result = 0;
+    int delim_count = 0;
+    const char OSSL_HPKE_STR_DELIMSTR[] = { OSSL_HPKE_STR_DELIMCHAR, '\0' };
 
     if (suitestr == NULL || suitestr[0] == 0x00 || suite == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    /* someboday might someday extend in an untested way... */
+    if (OPENSSL_strnlen(OSSL_HPKE_STR_DELIMSTR, 1) != 1) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -450,10 +462,17 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
     if (inplen >= OSSL_HPKE_MAX_SUITESTR)
         return 0;
     /*
-     * we don't want a delimiter at the end of the string
+     * we don't want a delimiter at the end of the string;
      * strtok() doesn't care about that, so we should
      */
-    if (suitestr[inplen - 1] == ',')
+    if (suitestr[inplen - 1] == OSSL_HPKE_STR_DELIMCHAR)
+        return 0;
+    /* We want exactly two delimiters in the input string */
+    for (st = (char *)suitestr; *st != '\0'; st++) {
+        if (*st == OSSL_HPKE_STR_DELIMCHAR)
+            delim_count++;
+    }
+    if (delim_count != 2)
         return 0;
 
     /* Duplicate `suitestr` to allow its parsing  */
@@ -462,7 +481,7 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
         goto fail;
 
     /* See if it contains a mix of our strings and numbers */
-    st = strtok(instrcp, ",");
+    st = strtok(instrcp, OSSL_HPKE_STR_DELIMSTR);
     if (st == NULL)
         goto fail;
 
@@ -481,7 +500,7 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
                                             OSSL_NELEM(aeadstrtab))) == 0)
             goto fail;
 
-        st = strtok(NULL, ",");
+        st = strtok(NULL, OSSL_HPKE_STR_DELIMSTR);
         ++labels;
     }
     if (st != NULL || labels != 3)
