@@ -36,6 +36,9 @@ static OSSL_FUNC_keymgmt_get_params_fn          pkcs11_keymgmt_get_params;
 static OSSL_FUNC_keymgmt_gettable_params_fn     pkcs11_keymgmt_gettable_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn pkcs11_keymgmt_gen_settable_params;
 static OSSL_FUNC_keymgmt_gen_set_params_fn      pkcs11_keymgmt_gen_set_params;
+/* create / free key from store object */
+static OSSL_FUNC_keymgmt_load_fn                pkcs11_load;
+static OSSL_FUNC_keymgmt_free_fn                pkcs11_freedata;
 
 const OSSL_DISPATCH rsa_keymgmt_dp_tbl[] = {
     {OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))pkcs11_rsa_keymgmt_gen_init},
@@ -51,6 +54,9 @@ const OSSL_DISPATCH rsa_keymgmt_dp_tbl[] = {
     {OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS,
         (void (*)(void))pkcs11_keymgmt_gettable_params},
     {OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))pkcs11_keymgmt_has},
+    /* For loading and freeing key from store reference */
+    {OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))pkcs11_load },
+    {OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))pkcs11_freedata },
     {0, NULL}
 };
 
@@ -68,6 +74,9 @@ const OSSL_DISPATCH dsa_keymgmt_dp_tbl[] = {
     {OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS,
         (void (*)(void))pkcs11_keymgmt_gettable_params},
     {OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))pkcs11_keymgmt_has},
+    /* For loading and freeing key from store reference */
+    {OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))pkcs11_load },
+    {OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))pkcs11_freedata },
     {0, NULL}
 };
 
@@ -85,6 +94,9 @@ const OSSL_DISPATCH ecdsa_keymgmt_dp_tbl[] = {
     {OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS,
         (void (*)(void))pkcs11_keymgmt_gettable_params},
     {OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))pkcs11_keymgmt_has},
+    /* For loading and freeing key from store reference */
+    {OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))pkcs11_load },
+    {OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))pkcs11_freedata },
     {0, NULL}
 };
 
@@ -267,7 +279,7 @@ static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
     PKCS11_KEY *key = NULL;
     PKCS11_KEY *ret = NULL;
     CK_MECHANISM mech = {0, NULL, 0};
-    CK_BBOOL flag_token;
+    CK_BBOOL flag_token = CK_TRUE;
     CK_BBOOL flag_true = CK_TRUE;
     CK_RV rv = CKR_OK;
     /* rsa */
@@ -493,16 +505,16 @@ static int pkcs11_keymgmt_has(const void *keydata, int selection)
         return 0;
 
     if ((selection & 
-         (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS)) == 0)
+        (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS)) == 0)
         return 1; /* the selection is not missing */
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && (key->pub != CK_INVALID_HANDLE)
-                && (key->priv != CK_INVALID_HANDLE);
+        ok = (key->pub != CK_INVALID_HANDLE)
+              && (key->priv != CK_INVALID_HANDLE);
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = ok && (key->pub != CK_INVALID_HANDLE);
+        ok = (key->pub != CK_INVALID_HANDLE);
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-        ok = ok && (key->priv != CK_INVALID_HANDLE);
+        ok = (key->priv != CK_INVALID_HANDLE);
     return ok;
 }
 
@@ -511,15 +523,17 @@ static int pkcs11_keymgmt_get_params(void *keydata, OSSL_PARAM params[])
     PKCS11_KEY *key = (PKCS11_KEY *)keydata;
     OSSL_PARAM *p = NULL;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
-         && !OSSL_PARAM_set_int(p, key->keymgmt_ctx->keyparam.rsa.modulus_bits))
-        return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
-         && !OSSL_PARAM_set_int(p, (key->keymgmt_ctx->keyparam.rsa.modulus_bits + 7) / 8))
-        return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL) {
-        if (!OSSL_PARAM_set_utf8_string(p, PKCS11_RSA_DEFAULT_MD))
+    if (key->keymgmt_ctx != NULL) {
+        if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
+             && !OSSL_PARAM_set_int(p, key->keymgmt_ctx->keyparam.rsa.modulus_bits))
             return 0;
+        if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
+             && !OSSL_PARAM_set_int(p, (key->keymgmt_ctx->keyparam.rsa.modulus_bits + 7) / 8))
+            return 0;
+        if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL) {
+            if (!OSSL_PARAM_set_utf8_string(p, PKCS11_RSA_DEFAULT_MD))
+                return 0;
+        }
     }
 
     return 1;
@@ -664,3 +678,42 @@ OSSL_ALGORITHM *pkcs11_keymgmt_get_algo_tbl(OPENSSL_STACK *sk, const char *id)
     }
     return tblalgo;
 }
+
+static void *pkcs11_load(const void *reference, size_t reference_sz)
+{
+    PKCS11_STORE_OBJ *store_obj = (PKCS11_STORE_OBJ*)reference;
+    PKCS11_KEY *key = NULL;
+    int ret = 0;
+
+    if (store_obj == NULL)
+        goto end;
+
+    key = OPENSSL_zalloc(sizeof(*key));
+    if (key == NULL)
+        goto end;
+
+    switch (store_obj->obj_class) {
+        case CKO_PUBLIC_KEY:
+            key->pub = store_obj->obj_handle;
+            ret = 1;
+        break;
+        case CKO_PRIVATE_KEY:
+            key->priv = store_obj->obj_handle;
+            ret = 1;
+        break;
+        default:
+        break;
+    }
+end:
+    if (!ret) {
+        OPENSSL_free(key);
+        key = NULL;
+    }
+
+    return key;
+}
+
+static void pkcs11_freedata(void *keydata)
+{
+}
+
