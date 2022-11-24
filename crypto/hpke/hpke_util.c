@@ -173,8 +173,10 @@ const OSSL_HPKE_KEM_INFO *ossl_HPKE_KEM_INFO_find_id(uint16_t kemid)
      * this check can happen if we're in a no-ec build and there are no
      * KEMS available
      */
-    if (kemid == OSSL_HPKE_KEM_ID_RESERVED)
+    if (kemid == OSSL_HPKE_KEM_ID_RESERVED) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CURVE);
         return NULL;
+    }
     for (i = 0; i != sz; ++i) {
         if (hpke_kem_tab[i].kem_id == kemid)
             return &hpke_kem_tab[i];
