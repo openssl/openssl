@@ -1657,9 +1657,9 @@ Encryption using AES-CBC with a 256-bit key with "CS1" ciphertext stealing.
          goto err;
 
      /* NOTE: CTS mode does not support multiple calls to EVP_CipherUpdate() */
-     if (!EVP_CipherUpdate(ctx, encrypted, &outlen, msg, msglen))
+     if (!EVP_CipherUpdate(ctx, out, &outlen, msg, msg_len))
          goto err;
-      if (!EVP_CipherFinal_ex(ctx, encrypted + outlen, &len))
+      if (!EVP_CipherFinal_ex(ctx, out + outlen, &len))
          goto err;
      ret = 1;
  err:
