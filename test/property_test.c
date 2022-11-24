@@ -284,19 +284,42 @@ static int test_property_merge(int n)
 static int test_property_defn_cache(void)
 {
     OSSL_METHOD_STORE *store;
-    OSSL_PROPERTY_LIST *red, *blue;
-    int r = 0;
+    OSSL_PROPERTY_LIST *red = NULL, *blue = NULL, *blue2 = NULL;
+    int r;
 
-    if (TEST_ptr(store = ossl_method_store_new(NULL))
+    r = TEST_ptr(store = ossl_method_store_new(NULL))
         && add_property_names("red", "blue", NULL)
         && TEST_ptr(red = ossl_parse_property(NULL, "red"))
         && TEST_ptr(blue = ossl_parse_property(NULL, "blue"))
         && TEST_ptr_ne(red, blue)
-        && TEST_true(ossl_prop_defn_set(NULL, "red", red))
-        && TEST_true(ossl_prop_defn_set(NULL, "blue", blue))
-        && TEST_ptr_eq(ossl_prop_defn_get(NULL, "red"), red)
-        && TEST_ptr_eq(ossl_prop_defn_get(NULL, "blue"), blue))
-        r = 1;
+        && TEST_true(ossl_prop_defn_set(NULL, "red", &red));
+
+    if (!r)  {
+        ossl_property_free(red);
+        red = NULL;
+        ossl_property_free(blue);
+        blue = NULL;
+    }
+
+    r = r && TEST_true(ossl_prop_defn_set(NULL, "blue", &blue));
+    if (!r) {
+        ossl_property_free(blue);
+        blue = NULL;
+    }
+
+    r = r && TEST_ptr_eq(ossl_prop_defn_get(NULL, "red"), red)
+        && TEST_ptr_eq(ossl_prop_defn_get(NULL, "blue"), blue)
+        && TEST_ptr(blue2 = ossl_parse_property(NULL, "blue"))
+        && TEST_ptr_ne(blue2, blue)
+        && TEST_true(ossl_prop_defn_set(NULL, "blue", &blue2));
+    if (!r) {
+        ossl_property_free(blue2);
+        blue2 = NULL;
+    }
+
+    r = r && TEST_ptr_eq(blue2, blue)
+        && TEST_ptr_eq(ossl_prop_defn_get(NULL, "blue"), blue);
+
     ossl_method_store_free(store);
     return r;
 }
