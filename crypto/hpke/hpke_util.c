@@ -482,7 +482,7 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
         char *cp = strchr(st, OSSL_HPKE_STR_DELIMCHAR);
 
         /* add a NUL like strtok would if we're not at the end */
-        if (cp)
+        if (cp != NULL)
             *cp = '\0';
 
         /* check if string is known or number and if so handle appropriately */
