@@ -38,7 +38,7 @@
 
 # include <assert.h>
 
-# ifdef PTHREAD_RWLOCK_INITIALIZER
+# if defined(PTHREAD_RWLOCK_INITIALIZER) && defined(NDEBUG)
 #  define USE_RWLOCK
 # endif
 
