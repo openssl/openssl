@@ -8,6 +8,7 @@
 */
 
 #include "internal/quic_stream_map.h"
+#include "internal/nelem.h"
 
 /* QUIC Stream
  * ===========
