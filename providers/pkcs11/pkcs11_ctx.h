@@ -48,6 +48,8 @@
 #include "internal/thread_once.h"
 #include "prov/provider_ctx.h"
 
+#define MAX_STORE_OBJ_COUNT 1000
+
 typedef struct CK_OPENCRYPTOKI_FUNCTION_LIST {
     CK_VERSION version;
     CK_C_Initialize C_Initialize;
@@ -183,11 +185,24 @@ typedef struct pkcs11_digest_st {
     PKCS11_TYPE_DATA_ITEM *mechdata;
 } PKCS11_DIGEST_CTX;
 
+typedef struct pkcs11_store_obj_st {
+    PKCS11_CTX *pkcs11_ctx;
+    CK_OBJECT_HANDLE obj_handle;
+    CK_OBJECT_CLASS obj_class;
+    CK_KEY_TYPE obj_keytype;
+    int osl_class;
+} PKCS11_STORE_OBJ;
+
 typedef struct pkcs11_store_st {
     PKCS11_CTX *pkcs11_ctx;
     int expected_type;
     char search_name[9];
     char search_issuer[9];
+    CK_ULONG seek;
+    CK_ULONG count;
+    char loaded;
+    CK_OBJECT_HANDLE obj_list[MAX_STORE_OBJ_COUNT];
+    PKCS11_STORE_OBJ items[MAX_STORE_OBJ_COUNT];
 } PKCS11_STORE_CTX;
 
 struct pkcs11_st {
