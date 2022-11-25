@@ -155,6 +155,12 @@ struct xts128_context {
     block128_f block1, block2;
 };
 
+/* XTS mode for SM4 algorithm specified by GB/T 17964-2021 */
+int ossl_crypto_xts128gb_encrypt(const XTS128_CONTEXT *ctx,
+                                 const unsigned char iv[16],
+                                 const unsigned char *inp, unsigned char *out,
+                                 size_t len, int enc);
+
 struct ccm128_context {
     union {
         u64 u[2];
