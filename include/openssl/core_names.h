@@ -97,6 +97,7 @@ extern "C" {
 #define OSSL_CIPHER_PARAM_CTS_MODE             "cts_mode"     /* utf8_string */
 /* For passing the AlgorithmIdentifier parameter in DER form */
 #define OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS  "alg_id_param" /* octet_string */
+#define OSSL_CIPHER_PARAM_XTS_STANDARD         "xts_standard" /* utf8_string */
 
 #define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT                    \
     "tls1multi_maxsndfrag" /* uint */
