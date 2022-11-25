@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/core_dispatch.h>
@@ -10,48 +9,19 @@
 #include "prov/providercommon.h"
 #include "pkcs11_kmgmt.h"
 #include "pkcs11_ctx.h"
+#include "pkcs11_utils.h"
 
 #define PKCS11_DEFAULT_RSA_MODULUS_BITS     2048
 #define PKCS11_RSA_DEFAULT_MD               "SHA256"
 #define PKCS11_ECDSA_DEFAUL_NAME            "secp224r1"
+#define PKCS11_KEYMGMT_ALGO_DESCRIPTION     "PKSC11 keymgmt algo"
 
+static char* pkcs11_keymgmt_algo_description = PKCS11_KEYMGMT_ALGO_DESCRIPTION;
+static char* pkcs11_keymgmt_rsa_algo_description = "PKSC11 keymgmt rsa algo";
 /* Private functions */
 PKCS11_TYPE_DATA_ITEM *pkcs11_get_mech_data(PKCS11_CTX *provctx, CK_MECHANISM_TYPE type,
                                             CK_ULONG bits);
-static int pkcs11_add_attribute(OPENSSL_STACK *stack, CK_ATTRIBUTE_TYPE type,
-                         CK_VOID_PTR pValue, CK_ULONG ulValueLen);
 static int pkcs11_set_ec_oid_name(CK_BYTE_PTR *pp, const char *name);
-
-
-/* Internal structures */
-typedef struct pkcs11_genctx_st {
-    PKCS11_CTX *provctx;
-    CK_MECHANISM_TYPE type;
-    union {
-        struct rsa_st {
-            CK_ULONG modulus_bits;
-            BIGNUM *public_exponent;
-            PKCS11_TYPE_DATA_ITEM *mechdata;
-        } rsa;
-        struct dsa_st {
-            BIGNUM *p;
-            BIGNUM *g;
-            BIGNUM *q;
-            PKCS11_TYPE_DATA_ITEM *mechdata;
-        } dsa;
-        struct ecdsa_st {
-            CK_BYTE_PTR oid_name;
-            int oid_name_len;
-            PKCS11_TYPE_DATA_ITEM *mechdata;
-        } ecdsa;
-    };
-} PKCS11_GENCTX;
-
-typedef struct pkcs11_key_st {
-    PKCS11_GENCTX *genctx;
-    CK_OBJECT_HANDLE priv;
-    CK_OBJECT_HANDLE pub;
-} PKCS11_KEY;
 
 /* required functions */
 static OSSL_FUNC_keymgmt_gen_init_fn            pkcs11_rsa_keymgmt_gen_init;
@@ -137,8 +107,8 @@ const OSSL_PARAM pkcs11_keymgmt_gen_settable_params_tbl[] = {
 
 static void *pkcs11_rsa_keymgmt_gen_init(void *provctx, int selection, const OSSL_PARAM params[])
 {
-    PKCS11_GENCTX *genctx = NULL;
-    PKCS11_GENCTX *ret = NULL;
+    PKCS11_KEYMGMT_CTX *genctx = NULL;
+    PKCS11_KEYMGMT_CTX *ret = NULL;
 
     if (provctx == NULL)
         goto end;
@@ -151,35 +121,37 @@ static void *pkcs11_rsa_keymgmt_gen_init(void *provctx, int selection, const OSS
         goto end;
 
     genctx->type = CKM_RSA_PKCS_KEY_PAIR_GEN;
-    genctx->rsa.public_exponent = BN_new();
-    if (genctx->rsa.public_exponent == NULL)
+    genctx->keyparam.rsa.public_exponent = BN_new();
+    if (genctx->keyparam.rsa.public_exponent == NULL)
         goto end;
 
-    if (!BN_set_word(genctx->rsa.public_exponent, RSA_F4))
+    if (!BN_set_word(genctx->keyparam.rsa.public_exponent, RSA_F4))
         goto end;
 
-    genctx->rsa.modulus_bits = PKCS11_DEFAULT_RSA_MODULUS_BITS;
-    genctx->rsa.mechdata = pkcs11_get_mech_data((PKCS11_CTX *)provctx, genctx->type, PKCS11_DEFAULT_RSA_MODULUS_BITS);
-    if (!genctx->rsa.mechdata)
+    genctx->keyparam.rsa.modulus_bits = PKCS11_DEFAULT_RSA_MODULUS_BITS;
+    genctx->keyparam.rsa.mechdata = pkcs11_get_mech_data((PKCS11_CTX *)provctx, genctx->type, PKCS11_DEFAULT_RSA_MODULUS_BITS);
+    if (!genctx->keyparam.rsa.mechdata)
         goto end;
 
-    genctx->provctx = (PKCS11_CTX *)provctx;
+    genctx->pkcs11_ctx = (PKCS11_CTX *)provctx;
     ret = genctx;
 
 end:
     if (ret == NULL) {
         if (genctx != NULL) {
-            BN_free(genctx->rsa.public_exponent);
+            BN_free(genctx->keyparam.rsa.public_exponent);
             OPENSSL_free(genctx);
         }
     }
+    fprintf(stdout, "@@ %s %p\n", __FUNCTION__, ret);
+    fflush(stdout);
     return ret;
 }
 
 static void *pkcs11_dsa_keymgmt_gen_init(void *provctx, int selection, const OSSL_PARAM params[])
 {
-    PKCS11_GENCTX *genctx = NULL;
-    PKCS11_GENCTX *ret = NULL;
+    PKCS11_KEYMGMT_CTX *genctx = NULL;
+    PKCS11_KEYMGMT_CTX *ret = NULL;
 
     if (provctx == NULL)
         goto end;
@@ -192,31 +164,31 @@ static void *pkcs11_dsa_keymgmt_gen_init(void *provctx, int selection, const OSS
         goto end;
 
     genctx->type = CKM_DSA_KEY_PAIR_GEN;
-    genctx->dsa.p = BN_new();
-    if (genctx->dsa.p == NULL)
+    genctx->keyparam.dsa.p = BN_new();
+    if (genctx->keyparam.dsa.p == NULL)
         goto end;
 
-    genctx->dsa.q = BN_new();
-    if (genctx->dsa.q == NULL)
+    genctx->keyparam.dsa.q = BN_new();
+    if (genctx->keyparam.dsa.q == NULL)
         goto end;
 
-    genctx->dsa.g = BN_new();
-    if (genctx->dsa.g == NULL)
+    genctx->keyparam.dsa.g = BN_new();
+    if (genctx->keyparam.dsa.g == NULL)
         goto end;
 
-    genctx->dsa.mechdata = pkcs11_get_mech_data((PKCS11_CTX *)provctx, genctx->type, 0);
-    if (!genctx->rsa.mechdata)
+    genctx->keyparam.dsa.mechdata = pkcs11_get_mech_data((PKCS11_CTX *)provctx, genctx->type, 0);
+    if (!genctx->keyparam.rsa.mechdata)
         goto end;
 
-    genctx->provctx = (PKCS11_CTX *)provctx;
+    genctx->pkcs11_ctx = (PKCS11_CTX *)provctx;
     ret = genctx;
 
 end:
     if (ret == NULL) {
         if (genctx != NULL) {
-            BN_free(genctx->dsa.p);
-            BN_free(genctx->dsa.q);
-            BN_free(genctx->dsa.g);
+            BN_free(genctx->keyparam.dsa.p);
+            BN_free(genctx->keyparam.dsa.q);
+            BN_free(genctx->keyparam.dsa.g);
             OPENSSL_free(genctx);
         }
     }
@@ -226,8 +198,8 @@ end:
 
 static void *pkcs11_ecdsa_keymgmt_gen_init(void *provctx, int selection, const OSSL_PARAM params[])
 {
-    PKCS11_GENCTX *genctx = NULL;
-    PKCS11_GENCTX *ret = NULL;
+    PKCS11_KEYMGMT_CTX *genctx = NULL;
+    PKCS11_KEYMGMT_CTX *ret = NULL;
 
     if (provctx == NULL)
         goto end;
@@ -240,21 +212,21 @@ static void *pkcs11_ecdsa_keymgmt_gen_init(void *provctx, int selection, const O
         goto end;
 
     genctx->type = CKM_ECDSA_KEY_PAIR_GEN;
-    genctx->ecdsa.oid_name_len = pkcs11_set_ec_oid_name(&genctx->ecdsa.oid_name, PKCS11_ECDSA_DEFAUL_NAME);
-    if (genctx->ecdsa.oid_name == NULL)
+    genctx->keyparam.ecdsa.oid_name_len = pkcs11_set_ec_oid_name(&genctx->keyparam.ecdsa.oid_name, PKCS11_ECDSA_DEFAUL_NAME);
+    if (genctx->keyparam.ecdsa.oid_name == NULL)
         goto end;
 
-    genctx->ecdsa.mechdata = pkcs11_get_mech_data((PKCS11_CTX *)provctx, genctx->type, 0);
-    if (!genctx->ecdsa.mechdata)
+    genctx->keyparam.ecdsa.mechdata = pkcs11_get_mech_data((PKCS11_CTX *)provctx, genctx->type, 0);
+    if (!genctx->keyparam.ecdsa.mechdata)
         goto end;
 
-    genctx->provctx = (PKCS11_CTX *)provctx;
+    genctx->pkcs11_ctx = (PKCS11_CTX *)provctx;
     ret = genctx;
 
 end:
     if (ret == NULL) {
         if (genctx != NULL) {
-            OPENSSL_free(genctx->ecdsa.oid_name);
+            OPENSSL_free(genctx->keyparam.ecdsa.oid_name);
             OPENSSL_free(genctx);
         }
     }
@@ -289,41 +261,9 @@ PKCS11_TYPE_DATA_ITEM *pkcs11_get_mech_data(PKCS11_CTX *provctx, CK_MECHANISM_TY
     return NULL;
 }
 
-static int pkcs11_add_attribute(OPENSSL_STACK *stack, CK_ATTRIBUTE_TYPE type,
-                         CK_VOID_PTR pValue, CK_ULONG ulValueLen)
-{
-    CK_ATTRIBUTE *attr = (CK_ATTRIBUTE *)OPENSSL_zalloc(sizeof(CK_ATTRIBUTE));
-    if (attr == NULL)
-        return 0;
-    attr->type = type;
-    attr->pValue = pValue;
-    attr->ulValueLen = ulValueLen;
-    if (!OPENSSL_sk_push(stack, attr)){
-        OPENSSL_free(attr);
-        return 0;
-    }
-    return 1;
-}
-
-int pkcs11_get_byte_array(BIGNUM *num, CK_BYTE_PTR *out)
-{
-    CK_BYTE_PTR val = NULL;
-    int len = BN_num_bytes(num);
-    if (len == 0) 
-        goto end;
-    val = (CK_BYTE*)OPENSSL_zalloc(len);
-    if (val == NULL)
-        goto end;
-    len = BN_bn2bin(num, val);
-    *out = val;
-    return len;
-end:
-    return -1;
-}
-
 static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
 {
-    PKCS11_GENCTX *gctx = (PKCS11_GENCTX*)genctx;
+    PKCS11_KEYMGMT_CTX *gctx = (PKCS11_KEYMGMT_CTX*)genctx;
     PKCS11_KEY *key = NULL;
     PKCS11_KEY *ret = NULL;
     CK_MECHANISM mech = {0, NULL, 0};
@@ -351,13 +291,13 @@ static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
 
     switch(gctx->type) {
     case CKM_RSA_PKCS_KEY_PAIR_GEN:
-        mech.mechanism = gctx->rsa.mechdata->type;
+        mech.mechanism = gctx->keyparam.rsa.mechdata->type;
         break;
     case CKM_DSA_KEY_PAIR_GEN:
-        mech.mechanism = gctx->dsa.mechdata->type;
+        mech.mechanism = gctx->keyparam.dsa.mechdata->type;
         break;
     case CKM_ECDSA_KEY_PAIR_GEN:
-        mech.mechanism = gctx->ecdsa.mechdata->type;
+        mech.mechanism = gctx->keyparam.ecdsa.mechdata->type;
         break;
     default:
         goto end;
@@ -373,7 +313,8 @@ static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
     switch(gctx->type)
     {
     case CKM_RSA_PKCS_KEY_PAIR_GEN: {
-            if ((pub_exp_len = pkcs11_get_byte_array(gctx->rsa.public_exponent, &pub_exp)) < 0)
+            if ((pub_exp_len = pkcs11_get_byte_array(gctx->keyparam.rsa.public_exponent,
+                                                     &pub_exp)) < 0)
                 goto end;
             /* Common storage object attributes */
             pkcs11_add_attribute(pub_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
@@ -382,8 +323,9 @@ static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
             pkcs11_add_attribute(pub_stack, CKA_VERIFY, &flag_true, sizeof(flag_true));
             pkcs11_add_attribute(pub_stack, CKA_WRAP, &flag_true, sizeof(flag_true));
             /* RSA public key object attributes  */
-            pkcs11_add_attribute(pub_stack, CKA_MODULUS_BITS,
-                                 &gctx->rsa.modulus_bits, sizeof(gctx->rsa.modulus_bits));
+            pkcs11_add_attribute(pub_stack, CKA_MODULUS_BITS, 
+                                 &gctx->keyparam.rsa.modulus_bits, 
+                                 sizeof(gctx->keyparam.rsa.modulus_bits));
             pkcs11_add_attribute(pub_stack, CKA_PUBLIC_EXPONENT, pub_exp, pub_exp_len);
             /* Common storage object attributes */
             pkcs11_add_attribute(priv_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
@@ -396,11 +338,11 @@ static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
         }
         break;
     case CKM_DSA_KEY_PAIR_GEN: {
-            if ((p_len = pkcs11_get_byte_array(gctx->dsa.p, &p)) < 0)
+            if ((p_len = pkcs11_get_byte_array(gctx->keyparam.dsa.p, &p)) < 0)
                 goto end;
-            if ((q_len = pkcs11_get_byte_array(gctx->dsa.q, &q)) < 0)
+            if ((q_len = pkcs11_get_byte_array(gctx->keyparam.dsa.q, &q)) < 0)
                 goto end;
-            if ((g_len = pkcs11_get_byte_array(gctx->dsa.g, &g)) < 0)
+            if ((g_len = pkcs11_get_byte_array(gctx->keyparam.dsa.g, &g)) < 0)
                 goto end;
             pkcs11_add_attribute(pub_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
             /* RSA public key object attributes  */
@@ -412,7 +354,8 @@ static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
             /* Common storage object attributes */
             pkcs11_add_attribute(pub_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
             /* Common public key attributes */
-            pkcs11_add_attribute(pub_stack, CKA_EC_PARAMS, gctx->ecdsa.oid_name, gctx->ecdsa.oid_name_len);
+            pkcs11_add_attribute(pub_stack, CKA_EC_PARAMS, gctx->keyparam.ecdsa.oid_name,
+                                 gctx->keyparam.ecdsa.oid_name_len);
             /* Common storage object attributes */
             pkcs11_add_attribute(priv_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
             pkcs11_add_attribute(priv_stack, CKA_PRIVATE, &flag_true, sizeof(flag_true));
@@ -446,16 +389,22 @@ static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
     if (key == NULL)
         goto end;
 
-    key->genctx = gctx;
+    key->keymgmt_ctx = gctx;
     /* Maybe add check if PKCS11 functions are NULL or not */
-    rv = gctx->provctx->lib_functions->C_GenerateKeyPair(gctx->provctx->session, &mech,
+    rv = gctx->pkcs11_ctx->lib_functions->C_GenerateKeyPair(gctx->pkcs11_ctx->session, &mech,
                                                          pub_tbl, pub_tbl_len,
                                                          priv_tbl, priv_tbl_len,
                                                          &key->pub, &key->priv);
     if (rv != CKR_OK) {
-        SET_PKCS11_PROV_ERR(gctx->provctx, rv);
+        SET_PKCS11_PROV_ERR(gctx->pkcs11_ctx, rv);
         goto end;
     }
+
+    fprintf(stdout, "@@@ provider: %s\n", OSSL_PROVIDER_name((OSSL_PROVIDER *)gctx->pkcs11_ctx->ctx.handle));
+    fprintf(stdout, "@@@ - Pubkey = %lu\n", key->pub);
+    fprintf(stdout, "@@@ - Privkey = %lu\n", key->priv);
+    fprintf(stdout, "@@@ - lib_functions ptr %p\n", gctx->pkcs11_ctx->lib_functions);
+    fflush(stdout);
 
     ret = key;
 end:
@@ -487,21 +436,21 @@ end:
 
 static void pkcs11_keymgmt_gen_cleanup(void *genctx)
 {
-    PKCS11_GENCTX *ctx = genctx;
+    PKCS11_KEYMGMT_CTX *ctx = (PKCS11_KEYMGMT_CTX *)genctx;
 
     if (ctx != NULL) {
         switch(ctx->type)
         {
         case CKM_RSA_PKCS_KEY_PAIR_GEN:
-            BN_free(ctx->rsa.public_exponent);
+            BN_free(ctx->keyparam.rsa.public_exponent);
             break;
         case CKM_DSA_KEY_PAIR_GEN:
-            BN_free(ctx->dsa.p);
-            BN_free(ctx->dsa.q);
-            BN_free(ctx->dsa.g);
+            BN_free(ctx->keyparam.dsa.p);
+            BN_free(ctx->keyparam.dsa.q);
+            BN_free(ctx->keyparam.dsa.g);
             break;
         case CKM_ECDSA_KEY_PAIR_GEN:
-            OPENSSL_free(ctx->ecdsa.oid_name);
+            OPENSSL_free(ctx->keyparam.ecdsa.oid_name);
             break;
         }
         OPENSSL_free(ctx);
@@ -514,12 +463,22 @@ static void pkcs11_keymgmt_free(void *keydata)
     PKCS11_CTX *ctx = NULL;
 
     if (key != NULL) {
-        ctx = key->genctx->provctx;
+        ctx = key->keymgmt_ctx->pkcs11_ctx;
         if (ctx != NULL) {
-            if (key->priv)
-                (void)ctx->lib_functions->C_DestroyObject(ctx->session, key->priv);
-            if (key->pub)
+            fprintf(stdout, "@@@ provider: %s\n", OSSL_PROVIDER_name((OSSL_PROVIDER *)ctx->ctx.handle));
+            fprintf(stdout, "@@@ - lib_functions ptr %p\n", ctx->lib_functions);
+            if (key->pub) {
+                fprintf(stdout, "@@@ - Free Pubkey = %lu\n", key->pub);
+                fflush(stdout);
                 (void)ctx->lib_functions->C_DestroyObject(ctx->session, key->pub);
+            }
+            key->pub = 0;
+            if (key->priv) {
+                fprintf(stdout, "@@@ - Free Privkey = %lu\n", key->priv);
+                fflush(stdout);
+                (void)ctx->lib_functions->C_DestroyObject(ctx->session, key->priv);
+            }
+            key->priv = 0;
         }
         OPENSSL_free(key);
     }
@@ -553,10 +512,10 @@ static int pkcs11_keymgmt_get_params(void *keydata, OSSL_PARAM params[])
     OSSL_PARAM *p = NULL;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
-         && !OSSL_PARAM_set_int(p, key->genctx->rsa.modulus_bits))
+         && !OSSL_PARAM_set_int(p, key->keymgmt_ctx->keyparam.rsa.modulus_bits))
         return 0;
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
-         && !OSSL_PARAM_set_int(p, (key->genctx->rsa.modulus_bits + 7) / 8))
+         && !OSSL_PARAM_set_int(p, (key->keymgmt_ctx->keyparam.rsa.modulus_bits + 7) / 8))
         return 0;
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL) {
         if (!OSSL_PARAM_set_utf8_string(p, PKCS11_RSA_DEFAULT_MD))
@@ -604,7 +563,7 @@ end:
 
 static int pkcs11_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
-    PKCS11_GENCTX *ctx = (PKCS11_GENCTX *)genctx;
+    PKCS11_KEYMGMT_CTX *ctx = (PKCS11_KEYMGMT_CTX *)genctx;
     const OSSL_PARAM *p;
     PKCS11_CTX *provctx = NULL;
     PKCS11_TYPE_DATA_ITEM *found = NULL;
@@ -612,7 +571,7 @@ static int pkcs11_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]
     int ret = 0;
     const char *strval;
 
-    provctx = ctx->provctx;
+    provctx = ctx->pkcs11_ctx;
     switch(ctx->type) {
     case CKM_RSA_PKCS_KEY_PAIR_GEN:
         if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_BITS)) != NULL) {
@@ -624,25 +583,25 @@ static int pkcs11_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]
             if (!found)
                 goto end;
 
-            ctx->rsa.mechdata = found;
-            ctx->rsa.modulus_bits = bits;
+            ctx->keyparam.rsa.mechdata = found;
+            ctx->keyparam.rsa.modulus_bits = bits;
         }
         if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_E)) != NULL) {
-            if (!OSSL_PARAM_get_BN(p, &ctx->rsa.public_exponent))
+            if (!OSSL_PARAM_get_BN(p, &ctx->keyparam.rsa.public_exponent))
                 goto end;
         }
         break;
     case CKM_DSA_KEY_PAIR_GEN:
         if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_P)) != NULL) {
-            if (!OSSL_PARAM_get_BN(p, &ctx->dsa.p))
+            if (!OSSL_PARAM_get_BN(p, &ctx->keyparam.dsa.p))
                 goto end;
         }
         if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_G)) != NULL) {
-            if (!OSSL_PARAM_get_BN(p, &ctx->dsa.g))
+            if (!OSSL_PARAM_get_BN(p, &ctx->keyparam.dsa.g))
                 goto end;
         }
         if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_Q)) != NULL) {
-            if (!OSSL_PARAM_get_BN(p, &ctx->dsa.q))
+            if (!OSSL_PARAM_get_BN(p, &ctx->keyparam.dsa.q))
                 goto end;
         }
         break;
@@ -651,9 +610,9 @@ static int pkcs11_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]
             if (!OSSL_PARAM_get_utf8_ptr(p, &strval))
                 goto end;
             else {
-                if (ctx->ecdsa.oid_name != NULL)
-                    OPENSSL_free(ctx->ecdsa.oid_name);
-                ctx->ecdsa.oid_name_len = pkcs11_set_ec_oid_name(&ctx->ecdsa.oid_name, strval);
+                if (ctx->keyparam.ecdsa.oid_name != NULL)
+                    OPENSSL_free(ctx->keyparam.ecdsa.oid_name);
+                ctx->keyparam.ecdsa.oid_name_len = pkcs11_set_ec_oid_name(&ctx->keyparam.ecdsa.oid_name, strval);
             }
         }
         break;
@@ -663,22 +622,6 @@ static int pkcs11_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]
     ret = 1;
 end:
     return ret;
-}
-
-int pkcs11_add_algorithm(OPENSSL_STACK *stack, const char *algoname,
-                         const char *searchstr, const OSSL_DISPATCH *dispatch)
-{
-    OSSL_ALGORITHM *algo = (OSSL_ALGORITHM *)OPENSSL_zalloc(sizeof(OSSL_ALGORITHM));
-    if (algo == NULL)
-        return 0;
-    algo->algorithm_names = algoname;
-    algo->property_definition = searchstr;
-    algo->implementation = dispatch;
-    if (!OPENSSL_sk_push(stack, algo)){
-        OPENSSL_free(algo);
-        return 0;
-    }
-    return 1;
 }
 
 OSSL_ALGORITHM *pkcs11_keymgmt_get_algo_tbl(OPENSSL_STACK *sk, const char *id)
@@ -695,15 +638,15 @@ OSSL_ALGORITHM *pkcs11_keymgmt_get_algo_tbl(OPENSSL_STACK *sk, const char *id)
             switch(item->type)
             {
             case CKM_RSA_PKCS_KEY_PAIR_GEN:
-                pkcs11_add_algorithm(algo_sk, PROV_NAMES_RSA, id, rsa_keymgmt_dp_tbl);
+                pkcs11_add_algorithm(algo_sk, PROV_NAMES_RSA, id, rsa_keymgmt_dp_tbl, pkcs11_keymgmt_rsa_algo_description);
                 break;
             case CKM_DSA_KEY_PAIR_GEN:
-                pkcs11_add_algorithm(algo_sk, PROV_NAMES_DSA, id, dsa_keymgmt_dp_tbl);
+                pkcs11_add_algorithm(algo_sk, PROV_NAMES_DSA, id, dsa_keymgmt_dp_tbl, pkcs11_keymgmt_algo_description);
                 break;
             case CKM_DH_PKCS_KEY_PAIR_GEN:
                 break;
             case CKM_ECDSA_KEY_PAIR_GEN:
-                pkcs11_add_algorithm(algo_sk, PROV_NAMES_ECDSA, id, ecdsa_keymgmt_dp_tbl);
+                pkcs11_add_algorithm(algo_sk, PROV_NAMES_ECDSA, id, ecdsa_keymgmt_dp_tbl, pkcs11_keymgmt_algo_description);
                 break;
             }
         }
@@ -721,5 +664,3 @@ OSSL_ALGORITHM *pkcs11_keymgmt_get_algo_tbl(OPENSSL_STACK *sk, const char *id)
     }
     return tblalgo;
 }
-
-

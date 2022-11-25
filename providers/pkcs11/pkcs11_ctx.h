@@ -133,17 +133,53 @@ typedef struct pkcs11_type_st {
 typedef struct pkcs11_slot_st {
     CK_SLOT_ID       slotid;
     PKCS11_TYPE_DATA keymgmt;
+    PKCS11_TYPE_DATA signature;
 } PKCS11_SLOT;
+
+typedef struct pkcs11_keymgmt_st {
+    PKCS11_CTX *pkcs11_ctx;
+    CK_MECHANISM_TYPE type;
+    union {
+        struct rsa_st {
+            CK_ULONG modulus_bits;
+            BIGNUM *public_exponent;
+            PKCS11_TYPE_DATA_ITEM *mechdata;
+        } rsa;
+        struct dsa_st {
+            BIGNUM *p;
+            BIGNUM *g;
+            BIGNUM *q;
+            PKCS11_TYPE_DATA_ITEM *mechdata;
+        } dsa;
+        struct ecdsa_st {
+            CK_BYTE_PTR oid_name;
+            int oid_name_len;
+            PKCS11_TYPE_DATA_ITEM *mechdata;
+        } ecdsa;
+    }keyparam;
+} PKCS11_KEYMGMT_CTX;
+
+typedef struct pkcs11_key_st {
+    PKCS11_KEYMGMT_CTX *keymgmt_ctx;
+    CK_OBJECT_HANDLE priv;
+    CK_OBJECT_HANDLE pub;
+} PKCS11_KEY;
+
+typedef struct pkcs11_sign_st {
+    PKCS11_KEY *pkey;
+    CK_MECHANISM_TYPE type;
+    PKCS11_CTX *pkcs11_ctx;
+    int pad_type;
+    int digest;
+} PKCS11_SIGN_CTX;
 
 struct pkcs11_st {
     PROV_CTX ctx;
 
-    int name_id;
-    char *type_name;
-    const char *description;
-
-    OPENSSL_CORE_CTX *corectx;
-
+    /* pkcs11 module data */
+    CK_OPENCRYPTOKI_FUNCTION_LIST *lib_functions;
+    DSO *lib_handle;
+    
     /* default core params */
     unsigned char *openssl_version;
     unsigned char *provider_name;
@@ -151,9 +187,6 @@ struct pkcs11_st {
     unsigned char *userpin;
     char *search_str;
 
-    /* pkcs11 module data */
-    DSO *lib_handle;
-    CK_OPENCRYPTOKI_FUNCTION_LIST *lib_functions;
     int token;
 
     OPENSSL_STACK *slots;
@@ -169,22 +202,4 @@ struct pkcs11_st {
    /* functions offered by libcrypto to the providers */
 };
 
-#define SET_PKCS11_PROV_ERR(ctx, reasonidx) \
-    pkcs11_set_error(ctx, reasonidx, OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC, NULL)
-static void pkcs11_set_error(PKCS11_CTX *ctx, int reason, const char *file, int line,
-                             const char *func, const char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-    if (ctx != NULL) {
-        if (ctx->core_new_error != NULL)
-            ctx->core_new_error(ctx->ctx.handle);
-        if (ctx->core_set_error_debug != NULL)
-            ctx->core_set_error_debug(ctx->ctx.handle, file, line, func);
-        if (ctx->core_vset_error != NULL)
-            ctx->core_vset_error(ctx->ctx.handle, reason, fmt, ap);
-    }
-    va_end(ap);
-}
-
-#endif // PKSC11_CTX_H
+#endif /* PKSC11_CTX_H */
