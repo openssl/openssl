@@ -140,7 +140,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
 
     *rep = NULL;
     msg_timeout = ctx->msg_timeout; /* backup original value */
-    if (is_enrollment && ctx->total_timeout > 0 /* timeout is not infinite */) {
+    if (is_enrollment && ctx->total_timeout != 0 /* timeout not infinite */) {
         if (now >= ctx->end_time) {
             ERR_raise(ERR_LIB_CMP, CMP_R_TOTAL_TIMEOUT);
             return 0;
@@ -165,7 +165,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
 
     if (*rep == NULL) {
         ERR_raise_data(ERR_LIB_CMP,
-                       ctx->total_timeout > 0 && time(NULL) >= ctx->end_time ?
+                       ctx->total_timeout != 0 && time(NULL) >= ctx->end_time ?
                        CMP_R_TOTAL_TIMEOUT : CMP_R_TRANSFER_ERROR,
                        "request sent: %s, expected response: %s",
                        req_type_str, expected_type_str);
@@ -237,7 +237,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
  * On receiving a pollRep, which includes a checkAfter value, it return this
  * value if sleep == 0, else it sleeps as long as indicated and retries.
  *
- * A transaction timeout is enabled if ctx->total_timeout is > 0.
+ * A transaction timeout is enabled if ctx->total_timeout is != 0.
  * In this case polling will continue until the timeout is reached and then
  * polling is done a last time even if this is before the "checkAfter" time.
  *
@@ -309,7 +309,7 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                           "received polling response%s; checkAfter = %ld seconds",
                           str, check_after);
 
-            if (ctx->total_timeout > 0) { /* timeout is not infinite */
+            if (ctx->total_timeout != 0) { /* timeout is not infinite */
                 const int exp = 5; /* expected max time per msg round trip */
                 int64_t time_left = (int64_t)(ctx->end_time - exp - time(NULL));
 
@@ -646,7 +646,7 @@ static int initial_certreq(OSSL_CMP_CTX *ctx,
     if (!ossl_cmp_ctx_set0_newCert(ctx, NULL))
         return 0;
 
-    if (ctx->total_timeout > 0) /* else ctx->end_time is not used */
+    if (ctx->total_timeout != 0) /* else ctx->end_time is not used */
         ctx->end_time = time(NULL) + ctx->total_timeout;
 
     /* also checks if all necessary options are set */
