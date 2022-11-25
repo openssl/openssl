@@ -37,8 +37,8 @@ static OSSL_FUNC_keymgmt_gettable_params_fn     pkcs11_keymgmt_gettable_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn pkcs11_keymgmt_gen_settable_params;
 static OSSL_FUNC_keymgmt_gen_set_params_fn      pkcs11_keymgmt_gen_set_params;
 /* create / free key from store object */
-static OSSL_FUNC_keymgmt_load_fn                pkcs11_load;
-static OSSL_FUNC_keymgmt_free_fn                pkcs11_freedata;
+static OSSL_FUNC_keymgmt_load_fn                pkcs11_keymgmt_load;
+static OSSL_FUNC_keymgmt_free_fn                pkcs11_keymgmt_freedata;
 
 const OSSL_DISPATCH rsa_keymgmt_dp_tbl[] = {
     {OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))pkcs11_rsa_keymgmt_gen_init},
@@ -55,8 +55,8 @@ const OSSL_DISPATCH rsa_keymgmt_dp_tbl[] = {
         (void (*)(void))pkcs11_keymgmt_gettable_params},
     {OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))pkcs11_keymgmt_has},
     /* For loading and freeing key from store reference */
-    {OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))pkcs11_load },
-    {OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))pkcs11_freedata },
+    {OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))pkcs11_keymgmt_load },
+    {OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))pkcs11_keymgmt_freedata },
     {0, NULL}
 };
 
@@ -75,8 +75,8 @@ const OSSL_DISPATCH dsa_keymgmt_dp_tbl[] = {
         (void (*)(void))pkcs11_keymgmt_gettable_params},
     {OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))pkcs11_keymgmt_has},
     /* For loading and freeing key from store reference */
-    {OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))pkcs11_load },
-    {OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))pkcs11_freedata },
+    {OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))pkcs11_keymgmt_load },
+    {OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))pkcs11_keymgmt_freedata },
     {0, NULL}
 };
 
@@ -95,8 +95,8 @@ const OSSL_DISPATCH ecdsa_keymgmt_dp_tbl[] = {
         (void (*)(void))pkcs11_keymgmt_gettable_params},
     {OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))pkcs11_keymgmt_has},
     /* For loading and freeing key from store reference */
-    {OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))pkcs11_load },
-    {OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))pkcs11_freedata },
+    {OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))pkcs11_keymgmt_load },
+    {OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))pkcs11_keymgmt_freedata },
     {0, NULL}
 };
 
@@ -474,22 +474,24 @@ static void pkcs11_keymgmt_free(void *keydata)
     PKCS11_CTX *ctx = NULL;
 
     if (key != NULL) {
-        ctx = key->keymgmt_ctx->pkcs11_ctx;
-        if (ctx != NULL) {
-            fprintf(stdout, "@@@ provider: %s\n", OSSL_PROVIDER_name((OSSL_PROVIDER *)ctx->ctx.handle));
-            fprintf(stdout, "@@@ - lib_functions ptr %p\n", ctx->lib_functions);
-            if (key->pub) {
-                fprintf(stdout, "@@@ - Free Pubkey = %lu\n", key->pub);
-                fflush(stdout);
-                (void)ctx->lib_functions->C_DestroyObject(ctx->session, key->pub);
+        if (key->keymgmt_ctx) {
+            ctx = key->keymgmt_ctx->pkcs11_ctx;
+            if (ctx != NULL) {
+                fprintf(stdout, "@@@ provider: %s\n", OSSL_PROVIDER_name((OSSL_PROVIDER *)ctx->ctx.handle));
+                fprintf(stdout, "@@@ - lib_functions ptr %p\n", ctx->lib_functions);
+                if (key->pub) {
+                    fprintf(stdout, "@@@ - Free Pubkey = %lu\n", key->pub);
+                    fflush(stdout);
+                    (void)ctx->lib_functions->C_DestroyObject(ctx->session, key->pub);
+                }
+                key->pub = 0;
+                if (key->priv) {
+                    fprintf(stdout, "@@@ - Free Privkey = %lu\n", key->priv);
+                    fflush(stdout);
+                    (void)ctx->lib_functions->C_DestroyObject(ctx->session, key->priv);
+                }
+                key->priv = 0;
             }
-            key->pub = 0;
-            if (key->priv) {
-                fprintf(stdout, "@@@ - Free Privkey = %lu\n", key->priv);
-                fflush(stdout);
-                (void)ctx->lib_functions->C_DestroyObject(ctx->session, key->priv);
-            }
-            key->priv = 0;
         }
         OPENSSL_free(key);
     }
@@ -682,7 +684,7 @@ OSSL_ALGORITHM *pkcs11_keymgmt_get_algo_tbl(OPENSSL_STACK *sk, const char *id)
     return tblalgo;
 }
 
-static void *pkcs11_load(const void *reference, size_t reference_sz)
+static void *pkcs11_keymgmt_load(const void *reference, size_t reference_sz)
 {
     PKCS11_STORE_OBJ *store_obj = (PKCS11_STORE_OBJ*)reference;
     PKCS11_KEY *key = NULL;
@@ -716,7 +718,7 @@ end:
     return key;
 }
 
-static void pkcs11_freedata(void *keydata)
+static void pkcs11_keymgmt_freedata(void *keydata)
 {
 }
 
