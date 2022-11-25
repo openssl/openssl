@@ -993,6 +993,40 @@ Byte 11-12: Input length (Always 0)
 
 "tls1multi_interleave" must also be set for this operation.
 
+=item "xts_standard" (B<OSSL_CIPHER_PARAM_XTS_STANDARD>) <UTF8 string>
+
+Sets the XTS standard to use with SM4-XTS algorithm. XTS mode has two
+implementations, one is standardized in IEEE Std. 1619-2007 and has
+been widely used (e.g., XTS AES), the other is proposed recently
+(GB/T 17964-2021 implemented in May 2022) and is currently only used
+in SM4.
+
+The main difference between them is the multiplication by the
+primitive element E<alpha> to calculate the tweak values. The IEEE
+Std 1619-2007 noted that the multiplication "is a left shift of each
+byte by one bit with carry propagating from one byte to the next
+one", which means that in each byte, the leftmost bit is the most
+significant bit. But in GB/T 17964-2021, the rightmost bit is the
+most significant bit, thus the multiplication becomes a right shift
+of each byte by one bit with carry propagating from one byte to the
+next one. 
+
+Valid values for the mode are:
+
+=over 4
+
+=item "GB"
+
+The GB/T 17964-2021 variant of SM4-XTS algorithm.
+
+=item "IEEE"
+
+The IEEE Std. 1619-2007 variant of SM4-XTS algorithm.
+
+=back
+
+The default value is "GB".
+
 =back
 
 =head1 CONTROLS
