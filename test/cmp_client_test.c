@@ -340,25 +340,34 @@ static int test_try_certreq_poll_abort(void)
     return result;
 }
 
-static int test_exec_GENM_ses(int transfer_error)
+static int test_exec_GENM_ses(int transfer_error, int total_timeout, int expect)
 {
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
     if (transfer_error)
         OSSL_CMP_CTX_set_transfer_cb_arg(fixture->cmp_ctx, NULL);
-    fixture->expected = transfer_error ? OSSL_CMP_PKISTATUS_trans
-        : OSSL_CMP_PKISTATUS_accepted;
+    /*
+     * cannot use OSSL_CMP_CTX_set_option(... OSSL_CMP_OPT_TOTAL_TIMEOUT)
+     * here because this will correct total_timeout to be >= 0
+     */
+    fixture->cmp_ctx->total_timeout = total_timeout;
+    fixture->expected = expect;
     EXECUTE_TEST(execute_exec_GENM_ses_test, tear_down);
     return result;
 }
 
 static int test_exec_GENM_ses_ok(void)
 {
-    return test_exec_GENM_ses(0);
+    return test_exec_GENM_ses(0, 0, OSSL_CMP_PKISTATUS_accepted);
 }
 
-static int test_exec_GENM_ses_error(void)
+static int test_exec_GENM_ses_transfer_error(void)
 {
-    return test_exec_GENM_ses(1);
+    return test_exec_GENM_ses(1, 0, OSSL_CMP_PKISTATUS_trans);
+}
+
+static int test_exec_GENM_ses_total_timeout(void)
+{
+    return test_exec_GENM_ses(0, -1, OSSL_CMP_PKISTATUS_trans);
 }
 
 static int execute_exchange_certConf_test(CMP_SES_TEST_FIXTURE *fixture)
@@ -458,7 +467,8 @@ int setup_tests(void)
     ADD_TEST(test_try_certreq_poll);
     ADD_TEST(test_try_certreq_poll_abort);
     ADD_TEST(test_exec_GENM_ses_ok);
-    ADD_TEST(test_exec_GENM_ses_error);
+    ADD_TEST(test_exec_GENM_ses_transfer_error);
+    ADD_TEST(test_exec_GENM_ses_total_timeout);
     ADD_TEST(test_exchange_certConf);
     ADD_TEST(test_exchange_error);
     return 1;
