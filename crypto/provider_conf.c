@@ -251,7 +251,6 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         ok = provider_conf_activate(libctx, name, value, path, soft, cnf);
     } else {
         OSSL_PROVIDER_INFO entry;
-
         memset(&entry, 0, sizeof(entry));
         ok = 1;
         if (name != NULL) {

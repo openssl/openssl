@@ -131,7 +131,7 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
          * Create it - passing 1 as final param so we don't try and recursively
          * init children
          */
-        if ((cprov = ossl_provider_new(ctx, provname, ossl_child_provider_init,
+        if ((cprov = ossl_provider_new(ctx, NULL, provname, ossl_child_provider_init,
                                        1)) == NULL)
             goto err;
 

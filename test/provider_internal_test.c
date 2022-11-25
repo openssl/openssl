@@ -64,7 +64,7 @@ static int test_builtin_provider(void)
 
     ret =
         TEST_ptr(prov =
-                 ossl_provider_new(NULL, name, PROVIDER_INIT_FUNCTION_NAME, 0))
+                 ossl_provider_new(NULL, NULL, name, PROVIDER_INIT_FUNCTION_NAME, 0))
         && test_provider(prov, expected_greeting1(name));
 
     EVP_set_default_properties(NULL, "");

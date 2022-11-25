@@ -192,7 +192,7 @@ OSSL_PROVIDER *fake_rand_start(OSSL_LIB_CTX *libctx)
     if (!TEST_true(OSSL_PROVIDER_add_builtin(libctx, "fake-rand",
                                              fake_rand_provider_init))
             || !TEST_true(RAND_set_DRBG_type(libctx, "fake", NULL, NULL, NULL))
-            || !TEST_ptr(p = OSSL_PROVIDER_try_load(libctx, "fake-rand", 1)))
+            || !TEST_ptr(p = OSSL_PROVIDER_try_load(libctx, NULL, "fake-rand", 1)))
         return NULL;
 
     /* Ensure that the fake rand is initialized. */

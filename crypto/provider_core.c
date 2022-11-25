@@ -117,7 +117,7 @@
  *    provider callbacks. No other locks may be held during such callbacks.
  */
 
-static OSSL_PROVIDER *provider_new(const char *name,
+static OSSL_PROVIDER *provider_new(const char *id, const char *name,
                                    OSSL_provider_init_fn *init_function,
                                    STACK_OF(INFOPAIR) *parameters);
 
@@ -151,7 +151,8 @@ struct ossl_provider_st {
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *refcnt_lock;  /* For the ref counter */
     int activatecnt;
-    char *name;
+    char *libname;
+    char *id;
     char *path;
     DSO *module;
     OSSL_provider_init_fn *init_function;
@@ -205,7 +206,13 @@ DEFINE_STACK_OF(OSSL_PROVIDER)
 static int ossl_provider_cmp(const OSSL_PROVIDER * const *a,
                              const OSSL_PROVIDER * const *b)
 {
-    return strcmp((*a)->name, (*b)->name);
+    const char *lcmp = (*a)->libname;
+    const char *rcmp = (*b)->libname;
+    if ((*a)->id != NULL)
+        lcmp = (*a)->id;
+    if ((*b)->id != NULL)
+        rcmp = (*b)->id;
+    return strcmp(lcmp, rcmp);
 }
 
 /*-
@@ -326,6 +333,31 @@ void *ossl_provider_store_new(OSSL_LIB_CTX *ctx)
     store->libctx = ctx;
     store->use_fallbacks = 1;
 
+    for (p = ossl_predefined_providers; p->name != NULL; p++) {
+        OSSL_PROVIDER *prov = NULL;
+
+        /*
+         * We use the internal constructor directly here,
+         * otherwise we get a call loop
+         */
+        prov = provider_new(NULL, p->name, p->init);
+
+        if (prov == NULL
+            || sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
+            ossl_provider_free(prov);
+            provider_store_free(store);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+            return NULL;
+        }
+        prov->libctx = ctx;
+        prov->store = store;
+#ifndef FIPS_MODULE
+        prov->error_lib = ERR_get_next_error_library();
+#endif
+        if(p->is_fallback)
+            ossl_provider_set_fallback(prov);
+    }
+
     return store;
 }
 
@@ -420,7 +452,8 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
         }
 #endif
 
-        tmpl.name = (char *)name;
+        tmpl.id = (char *)name;
+        tmpl.libname = (char *)name;
         /*
          * A "find" operation can sort the stack, and therefore a write lock is
          * required.
@@ -442,7 +475,7 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
  * =======================
  */
 
-static OSSL_PROVIDER *provider_new(const char *name,
+static OSSL_PROVIDER *provider_new(const char *id, const char *libname,
                                    OSSL_provider_init_fn *init_function,
                                    STACK_OF(INFOPAIR) *parameters)
 {
@@ -469,9 +502,18 @@ static OSSL_PROVIDER *provider_new(const char *name,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_CRYPTO_LIB);
         return NULL;
     }
-    if ((prov->name = OPENSSL_strdup(name)) == NULL) {
+    if ((prov->libname = OPENSSL_strdup(libname)) == NULL) {
         ossl_provider_free(prov);
         return NULL;
+    }
+    if (id != NULL) {
+        prov->id = OPENSSL_strdup(id);
+        if (prov->id == NULL) {
+            if (prov->libname != NULL)
+                OPENSSL_free(prov->libname);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+            return NULL;
+        }
     }
 
     prov->init_function = init_function;
@@ -522,8 +564,8 @@ static int provider_free_intern(OSSL_PROVIDER *prov, int deactivate)
  * The caller should check. If it does exist then adding it to the store later
  * will fail.
  */
-OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
-                                 OSSL_provider_init_fn *init_function,
+OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *id,
+                                 const char *libname, OSSL_provider_init_fn *init_function,
                                  int noconfig)
 {
     struct provider_store_st *store = NULL;
@@ -539,20 +581,29 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
         size_t i;
 
         /* Check if this is a predefined builtin provider */
-        for (p = ossl_predefined_providers; p->name != NULL; p++) {
-            if (strcmp(p->name, name) == 0) {
+        for (p = ossl_predefined_providers; p->libname != NULL; p++) {
+            if (strcmp(p->libname, libname) == 0) {
                 template = *p;
                 break;
             }
         }
-        if (p->name == NULL) {
+        if (p->libname == NULL) {
             /* Check if this is a user added builtin provider */
             if (!CRYPTO_THREAD_read_lock(store->lock))
                 return NULL;
             for (i = 0, p = store->provinfo; i < store->numprovinfo; p++, i++) {
-                if (strcmp(p->name, name) == 0) {
+                if (p->id != NULL) {
+                  if (strcmp(p->id, id) && 
+                      strcmp(p->libname, libname) == 0) {
+                      template = *p;
+                      break;
+                  }
+                }
+                else {
+                  if (strcmp(p->libname, libname) == 0) {
                     template = *p;
                     break;
+                  }
                 }
             }
             CRYPTO_THREAD_unlock(store->lock);
@@ -562,7 +613,7 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     }
 
     /* provider_new() generates an error, so no need here */
-    if ((prov = provider_new(name, template.init, template.parameters)) == NULL)
+    if ((prov = provider_new(id, libname, template.init, template.parameters)) == NULL)
         return NULL;
 
     prov->libctx = libctx;
@@ -713,8 +764,10 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
             ossl_init_thread_deregister(prov);
             DSO_free(prov->module);
 #endif
-            OPENSSL_free(prov->name);
+            OPENSSL_free(prov->libname);
             OPENSSL_free(prov->path);
+            if (prov->id != NULL)
+                OPENSSL_free(prov->id);
             sk_INFOPAIR_pop_free(prov->parameters, infopair_free);
             CRYPTO_THREAD_lock_free(prov->opbits_lock);
             CRYPTO_THREAD_lock_free(prov->flag_lock);
@@ -888,7 +941,7 @@ static int provider_init(OSSL_PROVIDER *prov)
             module_path = prov->path;
             if (module_path == NULL)
                 module_path = allocated_path =
-                    DSO_convert_filename(prov->module, prov->name);
+                    DSO_convert_filename(prov->module, prov->libname);
             if (module_path != NULL)
                 merged_path = DSO_merge(prov->module, module_path, load_dir);
 
@@ -906,7 +959,7 @@ static int provider_init(OSSL_PROVIDER *prov)
         if (prov->module == NULL) {
             /* DSO has already recorded errors, this is just a tracepoint */
             ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_DSO_LIB,
-                           "name=%s", prov->name);
+                           "name=%s", prov->libname);
             goto end;
         }
 
@@ -919,14 +972,14 @@ static int provider_init(OSSL_PROVIDER *prov)
     if (prov->init_function == NULL) {
         ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_UNSUPPORTED,
                        "name=%s, provider has no provider init function",
-                       prov->name);
+                       prov->libname);
         goto end;
     }
 
     if (!prov->init_function((OSSL_CORE_HANDLE *)prov, core_dispatch,
                              &provider_dispatch, &tmp_provctx)) {
         ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INIT_FAIL,
-                       "name=%s", prov->name);
+                       "libname=%s", prov->libname);
         goto end;
     }
     prov->provctx = tmp_provctx;
@@ -1012,7 +1065,7 @@ static int provider_init(OSSL_PROVIDER *prov)
          * Set the "library" name.
          */
         prov->error_strings[0].error = ERR_PACK(prov->error_lib, 0, 0);
-        prov->error_strings[0].string = prov->name;
+        prov->error_strings[0].string = OSSL_PROVIDER_name(prov);
         /*
          * Copy reasonstrings item 0..cnt-1 to prov->error_trings positions
          * 1..cnt.
@@ -1307,7 +1360,7 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
         return 1;
     }
 
-    for (p = ossl_predefined_providers; p->name != NULL; p++) {
+    for (p = ossl_predefined_providers; p->libname != NULL; p++) {
         OSSL_PROVIDER *prov = NULL;
 
         if (!p->is_fallback)
@@ -1316,7 +1369,7 @@ static int provider_activate_fallbacks(struct provider_store_st *store)
          * We use the internal constructor directly here,
          * otherwise we get a call loop
          */
-        prov = provider_new(p->name, p->init, NULL);
+        prov = provider_new(p->id, p->libname, p->init, NULL);
         if (prov == NULL)
             goto err;
         prov->libctx = store->libctx;
@@ -1493,7 +1546,9 @@ int OSSL_PROVIDER_available(OSSL_LIB_CTX *libctx, const char *name)
 /* Getters of Provider Object data */
 const char *ossl_provider_name(const OSSL_PROVIDER *prov)
 {
-    return prov->name;
+    if (prov->id != NULL)
+        return prov->id;
+    return prov->libname;
 }
 
 const DSO *ossl_provider_dso(const OSSL_PROVIDER *prov)
@@ -1926,7 +1981,7 @@ static int core_get_params(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_CORE_VERSION)) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR);
     if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_CORE_PROV_NAME)) != NULL)
-        OSSL_PARAM_set_utf8_ptr(p, prov->name);
+        OSSL_PARAM_set_utf8_ptr(p, OSSL_PROVIDER_name(prov));
 
 #ifndef FIPS_MODULE
     if ((p = OSSL_PARAM_locate(params,

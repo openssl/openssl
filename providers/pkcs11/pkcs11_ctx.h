@@ -126,9 +126,14 @@ typedef struct pkcs11_type_item_st {
 } PKCS11_TYPE_DATA_ITEM;
 
 typedef struct pkcs11_type_st {
-    OSSL_ALGORITHM *algolist;
-    OPENSSL_STACK *items;
+    OSSL_ALGORITHM  *algolist;
+    OPENSSL_STACK   *items;
 } PKCS11_TYPE_DATA;
+
+typedef struct pkcs11_slot_st {
+    CK_SLOT_ID       slotid;
+    PKCS11_TYPE_DATA keymgmt;
+} PKCS11_SLOT;
 
 struct pkcs11_st {
     PROV_CTX ctx;
@@ -149,23 +154,12 @@ struct pkcs11_st {
     /* pkcs11 module data */
     DSO *lib_handle;
     CK_OPENCRYPTOKI_FUNCTION_LIST *lib_functions;
-    CK_SLOT_ID slot;
     int token;
 
-    PKCS11_TYPE_DATA keymgmt;
-
+    OPENSSL_STACK *slots;
+    CK_SLOT_ID sel_slot;
     CK_SESSION_HANDLE session;
     CK_BBOOL tokobjs;
-
-    /* operation dispatch tables */
-    OSSL_ALGORITHM *digest;
-    OSSL_ALGORITHM *cipher;
-    OSSL_ALGORITHM *mac;
-    OSSL_ALGORITHM *kdf;
-    OSSL_ALGORITHM *keyexch;
-    OSSL_ALGORITHM *signature;
-    OSSL_ALGORITHM *asym_cipher;
-    OSSL_ALGORITHM *serializer;
 
     /* Error functions */
     OSSL_FUNC_core_new_error_fn             *core_new_error;
