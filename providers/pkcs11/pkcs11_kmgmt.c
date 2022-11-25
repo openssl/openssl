@@ -322,58 +322,58 @@ static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
     if (priv_stack == NULL)
         goto end;
 
-    switch(gctx->type)
-    {
+    switch(gctx->type) {
     case CKM_RSA_PKCS_KEY_PAIR_GEN: {
-            if ((pub_exp_len = pkcs11_get_byte_array(gctx->keyparam.rsa.public_exponent,
-                                                     &pub_exp)) < 0)
-                goto end;
-            /* Common storage object attributes */
-            pkcs11_add_attribute(pub_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
-            /* Common public key attributes */
-            pkcs11_add_attribute(pub_stack, CKA_ENCRYPT, &flag_true, sizeof(flag_true));
-            pkcs11_add_attribute(pub_stack, CKA_VERIFY, &flag_true, sizeof(flag_true));
-            pkcs11_add_attribute(pub_stack, CKA_WRAP, &flag_true, sizeof(flag_true));
-            /* RSA public key object attributes  */
-            pkcs11_add_attribute(pub_stack, CKA_MODULUS_BITS, 
-                                 &gctx->keyparam.rsa.modulus_bits, 
-                                 sizeof(gctx->keyparam.rsa.modulus_bits));
-            pkcs11_add_attribute(pub_stack, CKA_PUBLIC_EXPONENT, pub_exp, pub_exp_len);
-            /* Common storage object attributes */
-            pkcs11_add_attribute(priv_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
-            pkcs11_add_attribute(priv_stack, CKA_PRIVATE, &flag_true, sizeof(flag_true));
-            /* Common private key attributes */
-            pkcs11_add_attribute(priv_stack, CKA_SENSITIVE, &flag_true, sizeof(flag_true));
-            pkcs11_add_attribute(priv_stack, CKA_DECRYPT, &flag_true, sizeof(flag_true));
-            pkcs11_add_attribute(priv_stack, CKA_SIGN, &flag_true, sizeof(flag_true));
-            pkcs11_add_attribute(priv_stack, CKA_UNWRAP, &flag_true, sizeof(flag_true));
-        }
+        if ((pub_exp_len = pkcs11_get_byte_array(gctx->keyparam.rsa.public_exponent,
+                                                 &pub_exp)) < 0)
+            goto end;
+        /* Common storage object attributes */
+        pkcs11_add_attribute(pub_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
+        /* Common public key attributes */
+        pkcs11_add_attribute(pub_stack, CKA_ENCRYPT, &flag_true, sizeof(flag_true));
+        pkcs11_add_attribute(pub_stack, CKA_VERIFY, &flag_true, sizeof(flag_true));
+        pkcs11_add_attribute(pub_stack, CKA_WRAP, &flag_true, sizeof(flag_true));
+        /* RSA public key object attributes  */
+        pkcs11_add_attribute(pub_stack, CKA_MODULUS_BITS,
+                             &gctx->keyparam.rsa.modulus_bits,
+                             sizeof(gctx->keyparam.rsa.modulus_bits));
+        pkcs11_add_attribute(pub_stack, CKA_PUBLIC_EXPONENT, pub_exp, pub_exp_len);
+        /* Common storage object attributes */
+        pkcs11_add_attribute(priv_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
+        pkcs11_add_attribute(priv_stack, CKA_PRIVATE, &flag_true, sizeof(flag_true));
+        /* Common private key attributes */
+        pkcs11_add_attribute(priv_stack, CKA_SENSITIVE, &flag_true, sizeof(flag_true));
+        pkcs11_add_attribute(priv_stack, CKA_DECRYPT, &flag_true, sizeof(flag_true));
+        pkcs11_add_attribute(priv_stack, CKA_SIGN, &flag_true, sizeof(flag_true));
+        pkcs11_add_attribute(priv_stack, CKA_UNWRAP, &flag_true, sizeof(flag_true));
+    }
         break;
     case CKM_DSA_KEY_PAIR_GEN: {
-            if ((p_len = pkcs11_get_byte_array(gctx->keyparam.dsa.p, &p)) < 0)
-                goto end;
-            if ((q_len = pkcs11_get_byte_array(gctx->keyparam.dsa.q, &q)) < 0)
-                goto end;
-            if ((g_len = pkcs11_get_byte_array(gctx->keyparam.dsa.g, &g)) < 0)
-                goto end;
-            pkcs11_add_attribute(pub_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
-            /* RSA public key object attributes  */
-            pkcs11_add_attribute(pub_stack, CKA_BASE, g, g_len);
-            pkcs11_add_attribute(pub_stack, CKA_PRIME, p, p_len);
-            pkcs11_add_attribute(pub_stack, CKA_SUBPRIME, q, q_len);
-        }
+        if ((p_len = pkcs11_get_byte_array(gctx->keyparam.dsa.p, &p)) < 0)
+            goto end;
+        if ((q_len = pkcs11_get_byte_array(gctx->keyparam.dsa.q, &q)) < 0)
+            goto end;
+        if ((g_len = pkcs11_get_byte_array(gctx->keyparam.dsa.g, &g)) < 0)
+            goto end;
+        pkcs11_add_attribute(pub_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
+        /* RSA public key object attributes  */
+        pkcs11_add_attribute(pub_stack, CKA_BASE, g, g_len);
+        pkcs11_add_attribute(pub_stack, CKA_PRIME, p, p_len);
+        pkcs11_add_attribute(pub_stack, CKA_SUBPRIME, q, q_len);
+    }
+        break;
     case CKM_ECDSA_KEY_PAIR_GEN: {
-            /* Common storage object attributes */
-            pkcs11_add_attribute(pub_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
-            /* Common public key attributes */
-            pkcs11_add_attribute(pub_stack, CKA_EC_PARAMS, gctx->keyparam.ecdsa.oid_name,
-                                 gctx->keyparam.ecdsa.oid_name_len);
-            /* Common storage object attributes */
-            pkcs11_add_attribute(priv_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
-            pkcs11_add_attribute(priv_stack, CKA_PRIVATE, &flag_true, sizeof(flag_true));
-            /* Common private key attributes */
-            pkcs11_add_attribute(priv_stack, CKA_SENSITIVE, &flag_true, sizeof(flag_true));
-        }
+        /* Common storage object attributes */
+        pkcs11_add_attribute(pub_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
+        /* Common public key attributes */
+        pkcs11_add_attribute(pub_stack, CKA_EC_PARAMS, gctx->keyparam.ecdsa.oid_name,
+                             gctx->keyparam.ecdsa.oid_name_len);
+        /* Common storage object attributes */
+        pkcs11_add_attribute(priv_stack, CKA_TOKEN, &flag_token, sizeof(flag_token));
+        pkcs11_add_attribute(priv_stack, CKA_PRIVATE, &flag_true, sizeof(flag_true));
+        /* Common private key attributes */
+        pkcs11_add_attribute(priv_stack, CKA_SENSITIVE, &flag_true, sizeof(flag_true));
+    }
         break;
     default:
         goto end;
@@ -451,8 +451,7 @@ static void pkcs11_keymgmt_gen_cleanup(void *genctx)
     PKCS11_KEYMGMT_CTX *ctx = (PKCS11_KEYMGMT_CTX *)genctx;
 
     if (ctx != NULL) {
-        switch(ctx->type)
-        {
+        switch(ctx->type) {
         case CKM_RSA_PKCS_KEY_PAIR_GEN:
             BN_free(ctx->keyparam.rsa.public_exponent);
             break;
@@ -496,6 +495,7 @@ static void pkcs11_keymgmt_free(void *keydata)
     }
 }
 
+/* This get's called to determine which OSSL_STORE_TYPE it will be. */
 static int pkcs11_keymgmt_has(const void *keydata, int selection)
 {
     const PKCS11_KEY *key = (PKCS11_KEY *)keydata;
@@ -509,12 +509,12 @@ static int pkcs11_keymgmt_has(const void *keydata, int selection)
         return 1; /* the selection is not missing */
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = (key->pub != CK_INVALID_HANDLE)
+        ok |= (key->pub != CK_INVALID_HANDLE)
               && (key->priv != CK_INVALID_HANDLE);
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = (key->pub != CK_INVALID_HANDLE);
+        ok |= (key->pub != CK_INVALID_HANDLE);
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-        ok = (key->priv != CK_INVALID_HANDLE);
+        ok |= (key->priv != CK_INVALID_HANDLE);
     return ok;
 }
 
@@ -523,6 +523,8 @@ static int pkcs11_keymgmt_get_params(void *keydata, OSSL_PARAM params[])
     PKCS11_KEY *key = (PKCS11_KEY *)keydata;
     OSSL_PARAM *p = NULL;
 
+    /* Need to add this check. This method gets called from the Store API which
+     * doesn't have a keycontext available */
     if (key->keymgmt_ctx != NULL) {
         if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
              && !OSSL_PARAM_set_int(p, key->keymgmt_ctx->keyparam.rsa.modulus_bits))
@@ -557,13 +559,14 @@ static int pkcs11_set_ec_oid_name(CK_BYTE_PTR *pp, const char *name)
 
     if (obj == NULL)
         goto end;
-    /* OBJ_nid2obj
-     * OBJ_get0_data(const ASN1_OBJECT *obj)*/
+
     if (pp == NULL)
         goto end;
+
     (*pp) = OPENSSL_zalloc(OBJ_length(obj) + 2);
     if ((*pp) == NULL)
         goto end;
+
     ret = OBJ_length(obj) + 2;
     pparam = (*pp);
     *pparam = 0x06;
@@ -631,7 +634,7 @@ static int pkcs11_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]
         }
         break;
     default:
-        return 0;
+        goto end;
     }
     ret = 1;
 end:
