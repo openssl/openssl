@@ -223,14 +223,17 @@ The following options can be set:
 
 =item B<OSSL_CMP_OPT_MSG_TIMEOUT>
 
-        Number of seconds (or 0 for infinite) a CMP message round trip is
-        allowed to take before a timeout error is returned.
-        Default is to use the B<OSSL_CMP_OPT_MSG_TIMEOUT> setting.
+        Number of seconds a CMP request-response message round trip
+        is allowed to take before a timeout error is returned.
+        A value <= 0 means no limitation (waiting indefinitely).
+        Default is to use the B<OSSL_CMP_OPT_TOTAL_TIMEOUT> setting.
 
 =item B<OSSL_CMP_OPT_TOTAL_TIMEOUT>
 
-        Maximum total number of seconds an enrollment (including polling)
-        may take. Default is 0 (infinite).
+        Maximum total number of seconds a transaction may take,
+        including polling etc.
+        A value <= 0 means no limitation (waiting indefinitely).
+        Default is 0.
 
 =item B<OSSL_CMP_OPT_VALIDITY_DAYS>
 
