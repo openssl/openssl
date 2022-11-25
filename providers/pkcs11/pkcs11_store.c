@@ -201,24 +201,25 @@ static int pkcs11_store_load(void *loaderctx,
                 ctx->items[i].obj_class = obj_class;
                 ctx->items[i].obj_keytype = CK_UNAVAILABLE_INFORMATION;
                 switch (obj_class) {
-                    case CKO_PRIVATE_KEY:
-                    case CKO_PUBLIC_KEY:
-                    case CKO_SECRET_KEY:
-                    {
-                        /* If the object is a key then we need to get the key type */
-                        CK_KEY_TYPE key_type = CKK_DES;
-                        CK_ATTRIBUTE keytype_attr[] = {
-                            {CKA_KEY_TYPE, &key_type, sizeof(key_type)}
-                        };
-                        rv = ctx->pkcs11_ctx->lib_functions->C_GetAttributeValue(ctx->pkcs11_ctx->session,
-                                                                                 ctx->obj_list[i], keytype_attr,
-                                                                                 1);
-                        if (rv == CKR_OK) {
-                            ctx->items[i].obj_keytype = key_type;
-                        }
+                case CKO_PRIVATE_KEY:
+                case CKO_PUBLIC_KEY:
+                case CKO_SECRET_KEY:
+                {
+                    /* If the object is a key then we need to get the key type */
+                    CK_KEY_TYPE key_type = CKK_DES;
+                    CK_ATTRIBUTE keytype_attr[] = {
+                        {CKA_KEY_TYPE, &key_type, sizeof(key_type)}
+                    };
+                    rv = ctx->pkcs11_ctx->lib_functions->C_GetAttributeValue(ctx->pkcs11_ctx->session,
+                                                                             ctx->obj_list[i], keytype_attr,
+                                                                             1);
+                    if (rv == CKR_OK) {
+                        ctx->items[i].obj_keytype = key_type;
                     }
-                    default:
-                        break;
+                }
+                    break;
+                default:
+                    break;
                 }
             }
         }
@@ -227,41 +228,34 @@ static int pkcs11_store_load(void *loaderctx,
     if (ctx->count > ctx->seek) {
         OSSL_PARAM params[4];
         char* osl_type = NULL;
-        int osl_store_type = 0;
         int osl_class = 0;
         int ispkey = 0;
-#define P11PROV_NAMES_RSA "RSA"
-#define P11PROV_DESCS_RSA "PKCS11 RSA Implementation"
-#define P11PROV_NAMES_RSAPSS "RSA-PSS:RSASSA-PSS:1.2.840.113549.1.1.10"
-#define P11PROV_DESCS_RSAPSS "PKCS11 RSA PSS Implementation"
-#define P11PROV_NAMES_EC "EC"
-        switch (ctx->items[ctx->seek].obj_class) {
-            case CKO_PUBLIC_KEY:
-                osl_store_type = OSSL_STORE_INFO_PUBKEY;
-                osl_class = OSSL_OBJECT_PKEY;
-                ispkey = 1;
-            break;
-            case CKO_PRIVATE_KEY:
-                osl_store_type = OSSL_STORE_INFO_PKEY;
-                osl_class = OSSL_OBJECT_PKEY;
-                ispkey = 1;
-            break;
-            case CKO_SECRET_KEY:
 
+        switch (ctx->items[ctx->seek].obj_class) {
+        case CKO_PUBLIC_KEY:
+            osl_class = OSSL_OBJECT_PKEY;
+            ispkey = 1;
             break;
-            case CKO_DATA:
-            case CKO_CERTIFICATE:
+        case CKO_PRIVATE_KEY:
+            osl_class = OSSL_OBJECT_PKEY;
+            ispkey = 1;
+            break;
+        case CKO_SECRET_KEY:
+            break;
+        case CKO_DATA:
+        case CKO_CERTIFICATE:
             break;
         }
         if (ispkey) {
             osl_class = OSSL_OBJECT_PKEY;
-            switch (ctx->items[ctx->seek].obj_keytype)
-            {
-                case CKK_RSA:
-                    osl_type = P11PROV_NAMES_RSA;
+            switch (ctx->items[ctx->seek].obj_keytype) {
+            case CKK_RSA:
+                osl_type = "RSA";
                 break;
-                case CKK_EC:
-                    osl_type = P11PROV_NAMES_EC;
+            case CKK_EC:
+                osl_type = "EC";
+                break;
+            default:
                 break;
             }
         }
