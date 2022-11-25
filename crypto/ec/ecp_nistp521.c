@@ -782,7 +782,6 @@ static void felem_inv(felem out, const felem in)
     felem_reduce(ftmp3, tmp);   /* 2^7 - 2^3 */
     felem_square(tmp, ftmp3);
     felem_reduce(ftmp3, tmp);   /* 2^8 - 2^4 */
-    felem_assign(ftmp4, ftmp3);
     felem_mul(tmp, ftmp3, ftmp);
     felem_reduce(ftmp4, tmp);   /* 2^8 - 2^1 */
     felem_square(tmp, ftmp4);
