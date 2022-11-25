@@ -58,24 +58,6 @@
 | HQC            | NIST Round 3 submission  | hqc192           |            3 |                    3 | 0x2F2D       | secp384_r1                       |
 | HQC            | NIST Round 3 submission  | hqc256           |            3 |                    5 | 0x022E       |                                  |
 | HQC            | NIST Round 3 submission  | hqc256           |            3 |                    5 | 0x2F2E       | secp521_r1                       |
-| NTRU-Prime     | Round 3 p384 hybrid      | ntrulpr761       |            3 |                    1 | 0x2F30       |                                  |
-| NTRU-Prime     | Round 3 p384 hybrid      | sntrup761        |            3 |                    1 | 0x2F33       |                                  |
-| NTRU-Prime     | supercop-20200826        | ntrulpr1277      |            3 |                    5 | 0x0241       |                                  |
-| NTRU-Prime     | supercop-20200826        | ntrulpr1277      |            3 |                    5 | 0x2F41       | secp521_r1                       |
-| NTRU-Prime     | supercop-20200826        | ntrulpr653       |            3 |                    1 | 0x022F       |                                  |
-| NTRU-Prime     | supercop-20200826        | ntrulpr653       |            3 |                    1 | 0x2F2F       | secp256_r1                       |
-| NTRU-Prime     | supercop-20200826        | ntrulpr761       |            3 |                    1 | 0x0230       |                                  |
-| NTRU-Prime     | supercop-20200826        | ntrulpr761       |            3 |                    1 | 0x2F43       | secp256_r1                       |
-| NTRU-Prime     | supercop-20200826        | ntrulpr857       |            3 |                    3 | 0x0231       |                                  |
-| NTRU-Prime     | supercop-20200826        | ntrulpr857       |            3 |                    3 | 0x2F31       | secp384_r1                       |
-| NTRU-Prime     | supercop-20200826        | sntrup1277       |            3 |                    5 | 0x0242       |                                  |
-| NTRU-Prime     | supercop-20200826        | sntrup1277       |            3 |                    5 | 0x2F42       | secp521_r1                       |
-| NTRU-Prime     | supercop-20200826        | sntrup653        |            3 |                    1 | 0x0232       |                                  |
-| NTRU-Prime     | supercop-20200826        | sntrup653        |            3 |                    1 | 0x2F32       | secp256_r1                       |
-| NTRU-Prime     | supercop-20200826        | sntrup761        |            3 |                    1 | 0x0233       |                                  |
-| NTRU-Prime     | supercop-20200826        | sntrup761        |            3 |                    1 | 0x2F44       | secp256_r1                       |
-| NTRU-Prime     | supercop-20200826        | sntrup857        |            3 |                    3 | 0x0234       |                                  |
-| NTRU-Prime     | supercop-20200826        | sntrup857        |            3 |                    3 | 0x2F34       | secp384_r1                       |
 | NTRU           | NIST Round 3 submission  | ntru_hps2048509  |            3 |                    1 | 0x0214       |                                  |
 | NTRU           | NIST Round 3 submission  | ntru_hps2048509  |            3 |                    1 | 0x2F14       | secp256_r1                       |
 | NTRU           | NIST Round 3 submission  | ntru_hps2048677  |            3 |                    3 | 0x0215       |                                  |
@@ -88,12 +70,6 @@
 | NTRU           | NIST Round 3 submission  | ntru_hrss1373    |            3 |                    5 | 0x2F46       | secp521_r1                       |
 | NTRU           | NIST Round 3 submission  | ntru_hrss701     |            3 |                    3 | 0x0217       |                                  |
 | NTRU           | NIST Round 3 submission  | ntru_hrss701     |            3 |                    3 | 0x2F17       | secp384_r1                       |
-| SABER          | NIST Round 3 submission  | firesaber        |            3 |                    5 | 0x021A       |                                  |
-| SABER          | NIST Round 3 submission  | firesaber        |            3 |                    5 | 0x2F1A       | secp521_r1                       |
-| SABER          | NIST Round 3 submission  | lightsaber       |            3 |                    1 | 0x0218       |                                  |
-| SABER          | NIST Round 3 submission  | lightsaber       |            3 |                    1 | 0x2F18       | secp256_r1                       |
-| SABER          | NIST Round 3 submission  | saber            |            3 |                    3 | 0x0219       |                                  |
-| SABER          | NIST Round 3 submission  | saber            |            3 |                    3 | 0x2F19       | secp384_r1                       |
 | SIDH           | NIST Round 3 submission  | sidhp434         |            3 |                    1 | 0x021B       |                                  |
 | SIDH           | NIST Round 3 submission  | sidhp434         |            3 |                    1 | 0x2F1B       | secp256_r1                       |
 | SIDH           | NIST Round 3 submission  | sidhp503         |            3 |                    2 | 0x021C       |                                  |

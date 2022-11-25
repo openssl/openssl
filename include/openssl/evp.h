@@ -83,14 +83,6 @@
 # define EVP_PKEY_RSA3072_FALCON512 NID_rsa3072_falcon512
 # define EVP_PKEY_FALCON1024 NID_falcon1024
 # define EVP_PKEY_P521_FALCON1024 NID_p521_falcon1024
-# define EVP_PKEY_PICNICL1FULL NID_picnicl1full
-# define EVP_PKEY_P256_PICNICL1FULL NID_p256_picnicl1full
-# define EVP_PKEY_RSA3072_PICNICL1FULL NID_rsa3072_picnicl1full
-# define EVP_PKEY_PICNIC3L1 NID_picnic3l1
-# define EVP_PKEY_P256_PICNIC3L1 NID_p256_picnic3l1
-# define EVP_PKEY_RSA3072_PICNIC3L1 NID_rsa3072_picnic3l1
-# define EVP_PKEY_RAINBOWVCLASSIC NID_rainbowVclassic
-# define EVP_PKEY_P521_RAINBOWVCLASSIC NID_p521_rainbowVclassic
 # define EVP_PKEY_SPHINCSHARAKA128FROBUST NID_sphincsharaka128frobust
 # define EVP_PKEY_P256_SPHINCSHARAKA128FROBUST NID_p256_sphincsharaka128frobust
 # define EVP_PKEY_RSA3072_SPHINCSHARAKA128FROBUST NID_rsa3072_sphincsharaka128frobust
@@ -100,9 +92,9 @@
 # define EVP_PKEY_SPHINCSSHAKE256128FROBUST NID_sphincsshake256128frobust
 # define EVP_PKEY_P256_SPHINCSSHAKE256128FROBUST NID_p256_sphincsshake256128frobust
 # define EVP_PKEY_RSA3072_SPHINCSSHAKE256128FROBUST NID_rsa3072_sphincsshake256128frobust
-#define OQS_OPENSSL_SIG_algs_length 36
-#define OQS_OPENSSL_KEM_algs_length 34
-#define IS_OQS_OPENSSL_KEM_NID(a) ((a >= 0x01FF) && (a <= NID_p521_sntrup1277))
+#define OQS_OPENSSL_SIG_algs_length 28
+#define OQS_OPENSSL_KEM_algs_length 23
+#define IS_OQS_OPENSSL_KEM_NID(a) ((a >= 0x01FF) && (a <= NID_p521_hqc256))
 #define IS_OQS_OPENSSL_SIG_NID(a) ((a >= NID_dilithium2) && (a <= NID_rsa3072_sphincsshake256128frobust))
 /////// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_PKEYS_END
 const char *OQSKEM_options(void);
