@@ -2,37 +2,48 @@
 
 =head1 NAME
 
-X509_check_issued - checks if certificate is apparently issued by another
-certificate
+X509_check_issued,
+X509_check_akid - check if certificate is apparently issued by another one
 
 =head1 SYNOPSIS
 
  #include <openssl/x509v3.h>
 
  int X509_check_issued(X509 *issuer, X509 *subject);
-
+ int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid);
 
 =head1 DESCRIPTION
 
 X509_check_issued() checks if certificate I<subject> was apparently issued
-using (CA) certificate I<issuer>. This function takes into account not only
-matching of the issuer field of I<subject> with the subject field of I<issuer>,
-but also compares all sub-fields of the B<authorityKeyIdentifier> extension of
+using (CA) certificate I<issuer>. It checks if the issuer field of I<subject>
+matches the subject field of I<issuer>. Moreover, it compares using
+X509_check_akid() all sub-fields of the B<authorityKeyIdentifier> extension of
 I<subject>, as far as present, with the respective B<subjectKeyIdentifier>,
 serial number, and issuer fields of I<issuer>, as far as present. It also checks
-if the B<keyUsage> field (if present) of I<issuer> allows certificate signing.
+if the I<subject> signature algorithm matches the I<issuer> public key algorithm
+and if any B<keyUsage> field given in I<issuer> allows certificate signing.
 It does not actually check the certificate signature. An error is returned
 if the I<issuer> or the I<subject> are incomplete certificates.
 
+X509_check_akid() is a more low-level function.
+It assumes that the internal B<ossl_x509v3_cache_extensions()> function
+(or equivalently, L<X509_check_purpose(3)> with its <id> parameter being -1)
+has already been called to fill in various internal fields of I<issuer>.
+It checks if all sub-fields of the authority key identifier information I<akid>,
+as far as present, match the respective B<subjectKeyIdentifier> extension (if
+present in I<issuer>), B<serialNumber> field, and B<issuer> fields of I<issuer>.
+It returns B<X509_V_OK> if I<akid> is NULL because this means no restriction.
+
 =head1 RETURN VALUES
 
-X509_check_issued() returns B<X509_V_OK> if all checks are successful
-or some B<X509_V_ERR*> constant to indicate an error.
+X509_check_issued() and X509_check_akid()
+return B<X509_V_OK> if all checks are successful
+or some B<X509_V_ERR*> constant indicating why the issuer does not match.
 
 =head1 SEE ALSO
 
 L<X509_verify_cert(3)>, L<X509_verify(3)>, L<X509_check_ca(3)>,
-L<openssl-verify(1)>, L<X509_self_signed(3)>
+L<openssl-verify(1)>, L<X509_self_signed(3)>,  L<X509_check_purpose(3)>
 
 =head1 COPYRIGHT
 

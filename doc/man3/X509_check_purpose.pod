@@ -34,6 +34,14 @@ Below are the potential ID's that can be checked:
 The checks performed take into account the X.509 extensions
 keyUsage, extendedKeyUsage, and basicConstraints.
 
+No actual check is performed if I<id> is -1.
+
+=head1 NOTES
+
+X509_check_purpose() uses the internal B<ossl_x509v3_cache_extensions()>
+function to fill in various internal fields of the certificate structure I<x>.
+This is why its I<x> argument cannot be of type I<const X509 *>.
+
 =head1 RETURN VALUES
 
 For non-CA checks
