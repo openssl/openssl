@@ -9,7 +9,7 @@
 
 #include "output.h"
 
-int test_printf_stdout(const char *fmt, ...)
+int test_printf_stdout(const char *__restrict fmt, ...)
 {
     va_list ap;
     int ret;
@@ -21,7 +21,7 @@ int test_printf_stdout(const char *fmt, ...)
     return ret;
 }
 
-int test_printf_stderr(const char *fmt, ...)
+int test_printf_stderr(const char *__restrict fmt, ...)
 {
     va_list ap;
     int ret;
@@ -33,7 +33,7 @@ int test_printf_stderr(const char *fmt, ...)
     return ret;
 }
 
-int test_printf_tapout(const char *fmt, ...)
+int test_printf_tapout(const char *__restrict fmt, ...)
 {
     va_list ap;
     int ret;
@@ -45,7 +45,7 @@ int test_printf_tapout(const char *fmt, ...)
     return ret;
 }
 
-int test_printf_taperr(const char *fmt, ...)
+int test_printf_taperr(const char *__restrict fmt, ...)
 {
     va_list ap;
     int ret;

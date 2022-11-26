@@ -94,7 +94,7 @@ int ossl_core_bio_puts(OSSL_CORE_BIO *cb, const char *buf);
 long ossl_core_bio_ctrl(OSSL_CORE_BIO *cb, int cmd, long larg, void *parg);
 int ossl_core_bio_up_ref(OSSL_CORE_BIO *cb);
 int ossl_core_bio_free(OSSL_CORE_BIO *cb);
-int ossl_core_bio_vprintf(OSSL_CORE_BIO *cb, const char *format, va_list args);
+int ossl_core_bio_vprintf(OSSL_CORE_BIO *cb, const char *__restrict format, va_list args);
 
 int ossl_bio_init_core(OSSL_LIB_CTX *libctx, const OSSL_DISPATCH *fns);
 

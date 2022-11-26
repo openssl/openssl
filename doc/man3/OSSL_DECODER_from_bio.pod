@@ -51,7 +51,7 @@ To decode an RSA key encoded with PEM from a bio:
 
  OSSL_DECODER_CTX *dctx;
  EVP_PKEY *pkey = NULL;
- const char *format = "PEM";   /* NULL for any format */
+ const char *__restrict format = "PEM";   /* NULL for any format */
  const char *structure = NULL; /* any structure */
  const char *keytype = "RSA";  /* NULL for any key */
  const unsigned char *pass = "my password";
@@ -76,7 +76,7 @@ To decode an EC key encoded with DER from a buffer:
 
  OSSL_DECODER_CTX *dctx;
  EVP_PKEY *pkey = NULL;
- const char *format = "DER";   /* NULL for any format */
+ const char *__restrict format = "DER";   /* NULL for any format */
  const char *structure = NULL; /* any structure */
  const char *keytype = "EC";   /* NULL for any key */
  const unsigned char *pass = NULL

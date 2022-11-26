@@ -41,7 +41,7 @@ static int print_syslog(const char *str, size_t len, void *levPtr)
 }
 #endif
 
-static void log_with_prefix(const char *prog, const char *fmt, va_list ap)
+static void log_with_prefix(const char *prog, const char *__restrict fmt, va_list ap)
 {
     char prefix[80];
     BIO *bio, *pre = BIO_new(BIO_f_prefix());
@@ -69,7 +69,7 @@ static void log_with_prefix(const char *prog, const char *fmt, va_list ap)
 #endif
 
 void trace_log_message(int category,
-                       const char *prog, int level, const char *fmt, ...)
+                       const char *prog, int level, const char *__restrict fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);

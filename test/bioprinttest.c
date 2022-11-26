@@ -320,12 +320,12 @@ void test_close_streams(void)
  * But we are caller's caller, and test_str_eq is the only one called,
  * and it uses only "%s", which is not "fancy"...
  */
-int test_vprintf_stdout(const char *fmt, va_list ap)
+int test_vprintf_stdout(const char *__restrict fmt, va_list ap)
 {
     return fprintf(stdout, "%*s# ", tap_level, "") + vfprintf(stdout, fmt, ap);
 }
 
-int test_vprintf_stderr(const char *fmt, va_list ap)
+int test_vprintf_stderr(const char *__restrict fmt, va_list ap)
 {
     return fprintf(stderr, "%*s# ", tap_level, "") + vfprintf(stderr, fmt, ap);
 }
@@ -340,12 +340,12 @@ int test_flush_stderr(void)
     return fflush(stderr);
 }
 
-int test_vprintf_tapout(const char *fmt, va_list ap)
+int test_vprintf_tapout(const char *__restrict fmt, va_list ap)
 {
     return fprintf(stdout, "%*s", tap_level, "") + vfprintf(stdout, fmt, ap);
 }
 
-int test_vprintf_taperr(const char *fmt, va_list ap)
+int test_vprintf_taperr(const char *__restrict fmt, va_list ap)
 {
     return fprintf(stderr, "%*s", tap_level, "") + vfprintf(stderr, fmt, ap);
 }

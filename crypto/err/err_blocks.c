@@ -37,7 +37,7 @@ void ERR_set_debug(const char *file, int line, const char *func)
     err_set_debug(es, es->top, file, line, func);
 }
 
-void ERR_set_error(int lib, int reason, const char *fmt, ...)
+void ERR_set_error(int lib, int reason, const char *__restrict fmt, ...)
 {
     va_list args;
 
@@ -46,7 +46,7 @@ void ERR_set_error(int lib, int reason, const char *fmt, ...)
     va_end(args);
 }
 
-void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
+void ERR_vset_error(int lib, int reason, const char *__restrict fmt, va_list args)
 {
     ERR_STATE *es;
     char *buf = NULL;

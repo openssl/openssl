@@ -66,7 +66,7 @@ void opt_check_usage(void)
         test_printf_stderr("Warning arguments %d and later unchecked\n", i);
 }
 
-int opt_printf_stderr(const char *fmt, ...)
+int opt_printf_stderr(const char *__restrict fmt, ...)
 {
     va_list ap;
     int ret;

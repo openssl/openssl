@@ -755,7 +755,7 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
 /* from cmp_ctx.c */
 int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
                        const char *func, const char *file, int line,
-                       const char *level_str, const char *format, ...);
+                       const char *level_str, const char *__restrict format, ...);
 # define ossl_cmp_log(level, ctx, msg) \
     ossl_cmp_print_log(OSSL_CMP_LOG_##level, ctx, OPENSSL_FUNC, OPENSSL_FILE, \
                        OPENSSL_LINE, #level, "%s", msg)

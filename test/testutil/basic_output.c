@@ -61,12 +61,12 @@ void test_close_streams(void)
     BIO_free_all(tap_err);
 }
 
-int test_vprintf_stdout(const char *fmt, va_list ap)
+int test_vprintf_stdout(const char *__restrict fmt, va_list ap)
 {
     return BIO_vprintf(bio_out, fmt, ap);
 }
 
-int test_vprintf_stderr(const char *fmt, va_list ap)
+int test_vprintf_stderr(const char *__restrict fmt, va_list ap)
 {
     return BIO_vprintf(bio_err, fmt, ap);
 }
@@ -81,12 +81,12 @@ int test_flush_stderr(void)
     return BIO_flush(bio_err);
 }
 
-int test_vprintf_tapout(const char *fmt, va_list ap)
+int test_vprintf_tapout(const char *__restrict fmt, va_list ap)
 {
     return BIO_vprintf(tap_out, fmt, ap);
 }
 
-int test_vprintf_taperr(const char *fmt, va_list ap)
+int test_vprintf_taperr(const char *__restrict fmt, va_list ap)
 {
     return BIO_vprintf(tap_err, fmt, ap);
 }

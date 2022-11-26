@@ -1976,7 +1976,7 @@ static void core_set_error_debug(const OSSL_CORE_HANDLE *handle,
 }
 
 static void core_vset_error(const OSSL_CORE_HANDLE *handle,
-                            uint32_t reason, const char *fmt, va_list args)
+                            uint32_t reason, const char *__restrict fmt, va_list args)
 {
     /*
      * We created this object originally and we know it is actually an

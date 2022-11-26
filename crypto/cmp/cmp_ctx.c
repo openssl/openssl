@@ -333,7 +333,7 @@ static size_t ossl_cmp_log_trace_cb(const char *buf, size_t cnt,
 /* Print CMP log messages (i.e., diagnostic info) via the log cb of the ctx */
 int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
                        const char *func, const char *file, int line,
-                       const char *level_str, const char *format, ...)
+                       const char *level_str, const char *__restrict format, ...)
 {
     va_list args;
     char hugebuf[1024 * 2];

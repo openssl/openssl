@@ -383,8 +383,8 @@ typedef struct ERR_string_data_st {
 /* Building blocks */
 void ERR_new(void);
 void ERR_set_debug(const char *file, int line, const char *func);
-void ERR_set_error(int lib, int reason, const char *fmt, ...);
-void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
+void ERR_set_error(int lib, int reason, const char *__restrict fmt, ...);
+void ERR_vset_error(int lib, int reason, const char *__restrict fmt, va_list args);
 
 /* Main error raising functions */
 # define ERR_raise(lib, reason) ERR_raise_data((lib),(reason),NULL)

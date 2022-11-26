@@ -138,14 +138,14 @@ int ossl_prov_bio_free(OSSL_CORE_BIO *bio)
     return c_bio_free(bio);
 }
 
-int ossl_prov_bio_vprintf(OSSL_CORE_BIO *bio, const char *format, va_list ap)
+int ossl_prov_bio_vprintf(OSSL_CORE_BIO *bio, const char *__restrict format, va_list ap)
 {
     if (c_bio_vprintf == NULL)
         return -1;
     return c_bio_vprintf(bio, format, ap);
 }
 
-int ossl_prov_bio_printf(OSSL_CORE_BIO *bio, const char *format, ...)
+int ossl_prov_bio_printf(OSSL_CORE_BIO *bio, const char *__restrict format, ...)
 {
     va_list ap;
     int ret;

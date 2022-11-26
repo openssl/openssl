@@ -395,7 +395,7 @@ int opt_uintmax(const char *arg, ossl_uintmax_t *result);
 int opt_isdir(const char *name);
 int opt_format(const char *s, unsigned long flags, int *result);
 void print_format_error(int format, unsigned long flags);
-int opt_printf_stderr(const char *fmt, ...);
+int opt_printf_stderr(const char *__restrict fmt, ...);
 int opt_string(const char *name, const char **options);
 int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
 

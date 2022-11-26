@@ -60,7 +60,7 @@ return 1 on success, or 0 on failure.
 To encode a pkey as PKCS#8 with PEM format into a bio:
 
  OSSL_ENCODER_CTX *ectx;
- const char *format = "PEM";
+ const char *__restrict format = "PEM";
  const char *structure = "PrivateKeyInfo"; /* PKCS#8 structure */
  const unsigned char *pass = "my password";
 
@@ -85,7 +85,7 @@ To encode a pkey as PKCS#8 with DER format encrypted with
 AES-256-CBC into a buffer:
 
  OSSL_ENCODER_CTX *ectx;
- const char *format = "DER";
+ const char *__restrict format = "DER";
  const char *structure = "PrivateKeyInfo"; /* PKCS#8 structure */
  const unsigned char *pass = "my password";
  unsigned char *data = NULL;

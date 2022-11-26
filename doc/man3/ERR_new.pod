@@ -11,8 +11,8 @@ ERR_new, ERR_set_debug, ERR_set_error, ERR_vset_error
 
  void ERR_new(void);
  void ERR_set_debug(const char *file, int line, const char *func);
- void ERR_set_error(int lib, int reason, const char *fmt, ...);
- void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
+ void ERR_set_error(int lib, int reason, const char *__restrict fmt, ...);
+ void ERR_vset_error(int lib, int reason, const char *__restrict fmt, va_list args);
 
 =head1 DESCRIPTION
 

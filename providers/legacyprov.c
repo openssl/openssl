@@ -273,7 +273,7 @@ void ERR_set_debug(const char *file, int line, const char *func)
     c_set_error_debug(NULL, file, line, func);
 }
 
-void ERR_set_error(int lib, int reason, const char *fmt, ...)
+void ERR_set_error(int lib, int reason, const char *__restrict fmt, ...)
 {
     va_list args;
 
@@ -282,7 +282,7 @@ void ERR_set_error(int lib, int reason, const char *fmt, ...)
     va_end(args);
 }
 
-void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
+void ERR_vset_error(int lib, int reason, const char *__restrict fmt, va_list args)
 {
     c_vset_error(NULL, ERR_PACK(lib, 0, reason), fmt, args);
 }

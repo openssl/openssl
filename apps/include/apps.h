@@ -224,7 +224,7 @@ typedef struct ca_db_st {
 
 extern int do_updatedb(CA_DB *db, time_t *now);
 
-void app_bail_out(char *fmt, ...);
+void app_bail_out(char *__restrict fmt, ...);
 void *app_malloc(size_t sz, const char *what);
 
 /* load_serial, save_serial, and rotate_serial are also used for CRL numbers */

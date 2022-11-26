@@ -14,7 +14,7 @@ ERR_add_error_txt, ERR_add_error_mem_bio
  #include <openssl/err.h>
 
  void ERR_raise(int lib, int reason);
- void ERR_raise_data(int lib, int reason, const char *fmt, ...);
+ void ERR_raise_data(int lib, int reason, const char *__restrict fmt, ...);
 
  void ERR_add_error_data(int num, ...);
  void ERR_add_error_vdata(int num, va_list arg);

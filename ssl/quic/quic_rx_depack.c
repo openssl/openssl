@@ -127,7 +127,7 @@ static int ssl_close_connection(QUIC_CONNECTION *connection)
 #ifndef QUICfatal
 
 static void ossl_quic_fatal(QUIC_CONNECTION *c, int al, int reason,
-                            const char *fmt, ...)
+                            const char *__restrict fmt, ...)
 {
     va_list args;
 

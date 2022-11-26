@@ -25,8 +25,8 @@ int ossl_prov_bio_puts(OSSL_CORE_BIO *bio, const char *str);
 int ossl_prov_bio_ctrl(OSSL_CORE_BIO *bio, int cmd, long num, void *ptr);
 int ossl_prov_bio_up_ref(OSSL_CORE_BIO *bio);
 int ossl_prov_bio_free(OSSL_CORE_BIO *bio);
-int ossl_prov_bio_vprintf(OSSL_CORE_BIO *bio, const char *format, va_list ap);
-int ossl_prov_bio_printf(OSSL_CORE_BIO *bio, const char *format, ...);
+int ossl_prov_bio_vprintf(OSSL_CORE_BIO *bio, const char *__restrict format, va_list ap);
+int ossl_prov_bio_printf(OSSL_CORE_BIO *bio, const char *__restrict format, ...);
 
 BIO_METHOD *ossl_bio_prov_init_bio_method(void);
 BIO *ossl_bio_new_from_core_bio(PROV_CTX *provctx, OSSL_CORE_BIO *corebio);

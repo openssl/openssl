@@ -123,7 +123,7 @@ void ossl_statem_clear(SSL_CONNECTION *s);
 void ossl_statem_set_renegotiate(SSL_CONNECTION *s);
 void ossl_statem_send_fatal(SSL_CONNECTION *s, int al);
 void ossl_statem_fatal(SSL_CONNECTION *s, int al, int reason,
-                       const char *fmt, ...);
+                       const char *__restrict fmt, ...);
 # define SSLfatal_alert(s, al) ossl_statem_send_fatal((s), (al))
 # define SSLfatal(s, al, r) SSLfatal_data((s), (al), (r), NULL)
 # define SSLfatal_data                                          \

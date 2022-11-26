@@ -159,7 +159,7 @@ void ossl_statem_send_fatal(SSL_CONNECTION *s, int al)
  * This is a permanent error for the current connection.
  */
 void ossl_statem_fatal(SSL_CONNECTION *s, int al, int reason,
-                       const char *fmt, ...)
+                       const char *__restrict fmt, ...)
 {
     va_list args;
 

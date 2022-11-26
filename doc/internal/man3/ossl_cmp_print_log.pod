@@ -24,7 +24,7 @@ ossl_cmp_add_error_line
 
  int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
                         const char *func, const char *file, int line,
-                        const char *level_str, const char *format, ...);
+                        const char *level_str, const char *__restrict format, ...);
  #define ossl_cmp_alert(ctx, msg)
  #define ossl_cmp_err(ctx, msg)
  #define ossl_cmp_warn(ctx, msg)

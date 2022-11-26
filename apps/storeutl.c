@@ -335,7 +335,7 @@ int storeutl_main(int argc, char *argv[])
     return ret;
 }
 
-static int indent_printf(int indent, BIO *bio, const char *format, ...)
+static int indent_printf(int indent, BIO *bio, const char *__restrict format, ...)
 {
     va_list args;
     int ret;

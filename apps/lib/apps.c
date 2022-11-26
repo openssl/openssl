@@ -641,7 +641,7 @@ EVP_PKEY *load_keyparams(const char *uri, int format, int maybe_stdin,
     return load_keyparams_suppress(uri, format, maybe_stdin, keytype, desc, 0);
 }
 
-void app_bail_out(char *fmt, ...)
+void app_bail_out(char *__restrict fmt, ...)
 {
     va_list args;
 

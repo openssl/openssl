@@ -58,7 +58,7 @@ static const OPTIONS options[] = {
     { NULL }
 };
 
-int opt_printf_stderr(const char *fmt, ...)
+int opt_printf_stderr(const char *__restrict fmt, ...)
 {
     va_list ap;
     int ret;

@@ -118,7 +118,7 @@ long ossl_core_bio_ctrl(OSSL_CORE_BIO *cb, int cmd, long larg, void *parg)
     return BIO_ctrl(cb->bio, cmd, larg, parg);
 }
 
-int ossl_core_bio_vprintf(OSSL_CORE_BIO *cb, const char *format, va_list args)
+int ossl_core_bio_vprintf(OSSL_CORE_BIO *cb, const char *__restrict format, va_list args)
 {
     return BIO_vprintf(cb->bio, format, args);
 }

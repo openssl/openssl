@@ -68,13 +68,13 @@ void test_fail_message_prefix(const char *prefix, const char *file,
 static void test_fail_message(const char *prefix, const char *file, int line,
                               const char *type, const char *left,
                               const char *right, const char *op,
-                              const char *fmt, ...)
+                              const char *__restrict fmt, ...)
             PRINTF_FORMAT(8, 9);
 
 static void test_fail_message_va(const char *prefix, const char *file,
                                  int line, const char *type,
                                  const char *left, const char *right,
-                                 const char *op, const char *fmt, va_list ap)
+                                 const char *op, const char *__restrict fmt, va_list ap)
 {
     test_fail_message_prefix(prefix, file, line, type, left, right, op);
     if (fmt != NULL) {
@@ -87,7 +87,7 @@ static void test_fail_message_va(const char *prefix, const char *file,
 static void test_fail_message(const char *prefix, const char *file,
                               int line, const char *type,
                               const char *left, const char *right,
-                              const char *op, const char *fmt, ...)
+                              const char *op, const char *__restrict fmt, ...)
 {
     va_list ap;
 
@@ -143,7 +143,7 @@ void test_perror(const char *s)
     TEST_error("%s: %s", s, strerror(errno));
 }
 
-void test_note(const char *fmt, ...)
+void test_note(const char *__restrict fmt, ...)
 {
     if (fmt != NULL) {
         va_list ap;

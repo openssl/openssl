@@ -29,7 +29,7 @@ provider-base
  void core_set_error_debug(const OSSL_CORE_HANDLE *handle,
                            const char *file, int line, const char *func);
  void core_vset_error(const OSSL_CORE_HANDLE *handle,
-                      uint32_t reason, const char *fmt, va_list args);
+                      uint32_t reason, const char *__restrict fmt, va_list args);
 
  int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov, const char  *sign_name,
                         const char *digest_name, const char *pkey_name);
@@ -67,8 +67,8 @@ provider-base
                   size_t *written);
  int BIO_up_ref(OSSL_CORE_BIO *bio);
  int BIO_free(OSSL_CORE_BIO *bio);
- int BIO_vprintf(OSSL_CORE_BIO *bio, const char *format, va_list args);
- int BIO_vsnprintf(char *buf, size_t n, const char *fmt, va_list args);
+ int BIO_vprintf(OSSL_CORE_BIO *bio, const char *__restrict format, va_list args);
+ int BIO_vsnprintf(char *buf, size_t n, const char *__restrict fmt, va_list args);
 
  void OSSL_SELF_TEST_set_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK *cb,
                                   void *cbarg);

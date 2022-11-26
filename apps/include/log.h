@@ -45,6 +45,6 @@ int log_get_verbosity(void);
  * returns nothing
  */
 void trace_log_message(int category,
-                       const char *prog, int level, const char *fmt, ...);
+                       const char *prog, int level, const char *__restrict fmt, ...);
 
 #endif /* OSSL_APPS_LOG_H */

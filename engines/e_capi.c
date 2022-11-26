@@ -111,7 +111,7 @@ typedef struct CAPI_KEY_st CAPI_KEY;
 static void capi_addlasterror(void);
 static void capi_adderror(DWORD err);
 
-static void CAPI_trace(CAPI_CTX *ctx, char *format, ...);
+static void CAPI_trace(CAPI_CTX *ctx, char *__restrict format, ...);
 
 static int capi_list_providers(CAPI_CTX *ctx, BIO *out);
 static int capi_list_containers(CAPI_CTX *ctx, BIO *out);
@@ -1096,7 +1096,7 @@ static int capi_dsa_free(DSA *dsa)
 }
 # endif
 
-static void capi_vtrace(CAPI_CTX *ctx, int level, char *format,
+static void capi_vtrace(CAPI_CTX *ctx, int level, char *__restrict format,
                         va_list argptr)
 {
     BIO *out;
@@ -1112,7 +1112,7 @@ static void capi_vtrace(CAPI_CTX *ctx, int level, char *format,
     BIO_free(out);
 }
 
-static void CAPI_trace(CAPI_CTX *ctx, char *format, ...)
+static void CAPI_trace(CAPI_CTX *ctx, char *__restrict format, ...)
 {
     va_list args;
     va_start(args, format);

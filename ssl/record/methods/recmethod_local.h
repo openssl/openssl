@@ -387,7 +387,7 @@ extern struct record_functions_st dtls_1_funcs;
 extern struct record_functions_st dtls_any_funcs;
 
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
-                       const char *fmt, ...);
+                       const char *__restrict fmt, ...);
 
 #define RLAYERfatal(rl, al, r) RLAYERfatal_data((rl), (al), (r), NULL)
 #define RLAYERfatal_data                                           \

@@ -82,7 +82,7 @@ OSSL_CORE_MAKE_FUNC(void,core_set_error_debug,
 # define OSSL_FUNC_CORE_VSET_ERROR             7
 OSSL_CORE_MAKE_FUNC(void,core_vset_error,
                     (const OSSL_CORE_HANDLE *prov,
-                     uint32_t reason, const char *fmt, va_list args))
+                     uint32_t reason, const char *__restrict fmt, va_list args))
 # define OSSL_FUNC_CORE_SET_ERROR_MARK         8
 OSSL_CORE_MAKE_FUNC(int, core_set_error_mark, (const OSSL_CORE_HANDLE *prov))
 # define OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK  9
@@ -169,10 +169,10 @@ OSSL_CORE_MAKE_FUNC(int, BIO_gets, (OSSL_CORE_BIO *bio, char *buf, int size))
 OSSL_CORE_MAKE_FUNC(int, BIO_puts, (OSSL_CORE_BIO *bio, const char *str))
 OSSL_CORE_MAKE_FUNC(int, BIO_up_ref, (OSSL_CORE_BIO *bio))
 OSSL_CORE_MAKE_FUNC(int, BIO_free, (OSSL_CORE_BIO *bio))
-OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (OSSL_CORE_BIO *bio, const char *format,
+OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (OSSL_CORE_BIO *bio, const char *__restrict format,
                                        va_list args))
 OSSL_CORE_MAKE_FUNC(int, BIO_vsnprintf,
-                   (char *buf, size_t n, const char *fmt, va_list args))
+                   (char *buf, size_t n, const char *__restrict fmt, va_list args))
 OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO *bio,
                                     int cmd, long num, void *ptr))
 

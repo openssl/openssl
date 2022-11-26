@@ -39,7 +39,7 @@ static int fmtfp(char **, char **, size_t *, size_t *,
 static int doapr_outch(char **, char **, size_t *, size_t *, int);
 static int _dopr(char **sbuffer, char **buffer,
                  size_t *maxlen, size_t *retlen, int *truncated,
-                 const char *format, va_list args);
+                 const char *__restrict format, va_list args);
 
 /* format read states */
 #define DP_S_DEFAULT    0
@@ -87,7 +87,7 @@ static int
 _dopr(char **sbuffer,
       char **buffer,
       size_t *maxlen,
-      size_t *retlen, int *truncated, const char *format, va_list args)
+      size_t *retlen, int *truncated, const char *__restrict format, va_list args)
 {
     char ch;
     int64_t value;
@@ -877,7 +877,7 @@ doapr_outch(char **sbuffer,
 
 /***************************************************************************/
 
-int BIO_printf(BIO *bio, const char *format, ...)
+int BIO_printf(BIO *bio, const char *__restrict format, ...)
 {
     va_list args;
     int ret;
@@ -890,7 +890,7 @@ int BIO_printf(BIO *bio, const char *format, ...)
     return ret;
 }
 
-int BIO_vprintf(BIO *bio, const char *format, va_list args)
+int BIO_vprintf(BIO *bio, const char *__restrict format, va_list args)
 {
     int ret;
     size_t retlen;
@@ -923,7 +923,7 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
  * closely related to BIO_printf, and we need *some* name prefix ... (XXX the
  * function should be renamed, but to what?)
  */
-int BIO_snprintf(char *buf, size_t n, const char *format, ...)
+int BIO_snprintf(char *buf, size_t n, const char *__restrict format, ...)
 {
     va_list args;
     int ret;
@@ -936,7 +936,7 @@ int BIO_snprintf(char *buf, size_t n, const char *format, ...)
     return ret;
 }
 
-int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
+int BIO_vsnprintf(char *buf, size_t n, const char *__restrict format, va_list args)
 {
     size_t retlen;
     int truncated;

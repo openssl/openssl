@@ -61,7 +61,7 @@ static OSSL_FUNC_provider_get_reason_strings_fn p_get_reason_strings;
 static OSSL_FUNC_provider_teardown_fn p_teardown;
 
 static void p_set_error(int lib, int reason, const char *file, int line,
-                        const char *func, const char *fmt, ...)
+                        const char *func, const char *__restrict fmt, ...)
 {
     va_list ap;
 

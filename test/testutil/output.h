@@ -38,13 +38,13 @@ void test_open_streams(void);
 void test_close_streams(void);
 void test_adjust_streams_tap_level(int level);
 /* The following ALL return the number of characters written */
-int test_vprintf_stdout(const char *fmt, va_list ap)
+int test_vprintf_stdout(const char *__restrict fmt, va_list ap)
     ossl_test__attr__((__format__(ossl_test__printf__, 1, 0)));
-int test_vprintf_tapout(const char *fmt, va_list ap)
+int test_vprintf_tapout(const char *__restrict fmt, va_list ap)
     ossl_test__attr__((__format__(ossl_test__printf__, 1, 0)));
-int test_vprintf_stderr(const char *fmt, va_list ap)
+int test_vprintf_stderr(const char *__restrict fmt, va_list ap)
     ossl_test__attr__((__format__(ossl_test__printf__, 1, 0)));
-int test_vprintf_taperr(const char *fmt, va_list ap)
+int test_vprintf_taperr(const char *__restrict fmt, va_list ap)
     ossl_test__attr__((__format__(ossl_test__printf__, 1, 0)));
 /* These return failure or success */
 int test_flush_stdout(void);
@@ -53,13 +53,13 @@ int test_flush_stderr(void);
 int test_flush_taperr(void);
 
 /* Commodity functions.  There's no need to override these */
-int test_printf_stdout(const char *fmt, ...)
+int test_printf_stdout(const char *__restrict fmt, ...)
     ossl_test__attr__((__format__(ossl_test__printf__, 1, 2)));
-int test_printf_tapout(const char *fmt, ...)
+int test_printf_tapout(const char *__restrict fmt, ...)
     ossl_test__attr__((__format__(ossl_test__printf__, 1, 2)));
-int test_printf_stderr(const char *fmt, ...)
+int test_printf_stderr(const char *__restrict fmt, ...)
     ossl_test__attr__((__format__(ossl_test__printf__, 1, 2)));
-int test_printf_taperr(const char *fmt, ...)
+int test_printf_taperr(const char *__restrict fmt, ...)
     ossl_test__attr__((__format__(ossl_test__printf__, 1, 2)));
 
 # undef ossl_test__printf__

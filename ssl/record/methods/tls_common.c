@@ -45,7 +45,7 @@ void ossl_tls_rl_record_set_seq_num(TLS_RL_RECORD *r,
 }
 
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
-                       const char *fmt, ...)
+                       const char *__restrict fmt, ...)
 {
     va_list args;
 
