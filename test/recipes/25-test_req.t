@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 125;
+plan tests => 129;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -589,6 +589,7 @@ has_AKID($cert, 0);
 
 my $cert = "self-signed_v3_CA_hash_SKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = hash");
+has_version($cert, 3);
 has_SKID($cert, 1); # explicit hash SKID
 
 $cert = "self-signed_v3_CA_no_SKID.pem";
@@ -611,6 +612,7 @@ cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
 
 $ca_cert = "self-signed_v3_CA_default_SKID.pem"; # will also be used below
 generate_cert($ca_cert, @v3_ca);
+has_version($ca_cert, 3);
 has_SKID($ca_cert, 1); # default SKID
 has_AKID($ca_cert, 0); # no default AKID
 strict_verify($ca_cert, 1);
@@ -688,6 +690,7 @@ $cert = "self-issued_v3_CA_no_KIDs.pem";
 generate_cert($cert, "-addext", "subjectKeyIdentifier = none",
               "-addext", "authorityKeyIdentifier = none",
               "-in", srctop_file(@certs, "x509-check.csr"));
+has_version($cert, 3);
 has_SKID($cert, 0);
 has_AKID($cert, 0);
 strict_verify($cert, 1);
@@ -759,6 +762,7 @@ $cert = "self-issued_v3_EE_no_KIDs_signed_by_CA.pem";
 generate_cert($cert, "-addext", "subjectKeyIdentifier = none",
               "-addext", "authorityKeyIdentifier = none",
               "-key", srctop_file(@certs, "ee-key.pem"));
+has_version($cert, 3);
 cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
 verify(0, $cert, 0, $ca_cert); # expecting failure because we won't fix #19095
 
