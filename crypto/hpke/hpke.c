@@ -155,25 +155,20 @@ static int hpke_aead_dec(OSSL_LIB_CTX *libctx, const char *propq,
     EVP_CIPHER *enc = NULL;
     const OSSL_HPKE_AEAD_INFO *aead_info = NULL;
 
-    if (pt == NULL || ptlen == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     aead_info = ossl_HPKE_AEAD_INFO_find_id(suite.aead_id);
     if (aead_info == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        goto err;
+        return 0;
     }
     taglen = aead_info->taglen;
     if (ctlen <= taglen || *ptlen < ctlen - taglen) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
-        goto err;
+        return 0;
     }
     /* Create and initialise the context */
-    if ((ctx = EVP_CIPHER_CTX_new()) == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
+    if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
+        return 0;
+
     /* Initialise the encryption operation */
     enc = EVP_CIPHER_fetch(libctx, aead_info->name, propq);
     if (enc == NULL) {
@@ -260,25 +255,20 @@ static int hpke_aead_enc(OSSL_LIB_CTX *libctx, const char *propq,
     EVP_CIPHER *enc = NULL;
     unsigned char tag[16];
 
-    if (ct == NULL || ctlen == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     aead_info = ossl_HPKE_AEAD_INFO_find_id(suite.aead_id);
     if (aead_info == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        goto err;
+        return 0;
     }
     taglen = aead_info->taglen;
     if (*ctlen <= taglen || ptlen > *ctlen - taglen) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
-        goto err;
+        return 0;
     }
     /* Create and initialise the context */
-    if ((ctx = EVP_CIPHER_CTX_new()) == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
+    if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
+        return 0;
+
     /* Initialise the encryption operation. */
     enc = EVP_CIPHER_fetch(libctx, aead_info->name, propq);
     if (enc == NULL) {
@@ -1435,5 +1425,8 @@ size_t OSSL_HPKE_get_recommended_ikmelen(OSSL_HPKE_SUITE suite)
     if (hpke_suite_check(suite) != 1)
         return 0;
     kem_info = ossl_HPKE_KEM_INFO_find_id(suite.kem_id);
+    if (kem_info == NULL)
+        return 0;
+
     return kem_info->Nsk;
 }

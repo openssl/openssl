@@ -1008,11 +1008,10 @@ static int test_hpke_modes_suites(void)
                             overallresult = 0;
                     }
                     if (COIN_IS_HEADS) {
-                        RAND_bytes_ex(testctx,
-                                      (unsigned char *) &startseq,
-                                      sizeof(startseq),
-                                      RAND_DRBG_STRENGTH);
-                        if (!TEST_true(OSSL_HPKE_CTX_set_seq(ctx, startseq)))
+                        if (!TEST_int_eq(1, RAND_bytes_ex(testctx,
+                                                          (unsigned char *) &startseq,
+                                                          sizeof(startseq), 0))
+                            || !TEST_true(OSSL_HPKE_CTX_set_seq(ctx, startseq)))
                             overallresult = 0;
                     } else {
                         startseq = 0;
@@ -1207,8 +1206,6 @@ static int test_hpke_suite_strs(void)
     char sstr[128];
     OSSL_HPKE_SUITE stirred;
     char giant[2048];
-    size_t suitesize;
-    size_t ptr_suitesize;
 
     for (kemind = 0; kemind != OSSL_NELEM(kem_str_list); kemind++) {
         for (kdfind = 0; kdfind != OSSL_NELEM(kdf_str_list); kdfind++) {
@@ -1244,14 +1241,6 @@ static int test_hpke_suite_strs(void)
     giant[sizeof(giant) - 1] = '\0';
     if (!TEST_false(OSSL_HPKE_str2suite(giant, &stirred)))
         overallresult = 0;
-
-    /* we'll check the size of a suite just to see what we get */
-    suitesize = sizeof(stirred);
-    ptr_suitesize = sizeof(&stirred);
-    if (verbose) {
-        TEST_note("Size of OSSL_HPKE_SUITE is %d, size of ptr is %d",
-                  (int) suitesize, (int) ptr_suitesize);
-    }
 
     return overallresult;
 }
