@@ -104,10 +104,10 @@ parallel threads. Under this model, there would be three threads:
 This has a large number of disadvantages:
 
 - There is a hard requirement for threading functionality in order to be
-  able to support blocking semantics at the application level. Use of blocking
-  semantics at the application level will have a hard requirement on use of the
-  thread assisted mode. In environments where threading support is not available
-  or desired, our APIs will only be usable in a non-blocking fashion.
+  able to support blocking semantics at the application level. Applications
+  which require blocking semantics would only be able to function in thread
+  assisted mode. In environments where threading support is not available or
+  desired, our APIs would only be usable in a non-blocking fashion.
 
 - Several threads are spawned which the application is not in control of.
   This undermines our general approach of providing the application with control
@@ -281,6 +281,8 @@ Based on the above evaluation, implementation has been undertaken using
 non-blocking I/O internally. Applications can use blocking or non-blocking I/O
 at the libssl API level. Network-level BIOs must operate in a non-blocking mode
 or be configurable by QUIC to this end.
+
+![Block Diagram](images/quic-io-arch-1.png "Block Diagram")
 
 ### Support of arbitrary BIOs
 
