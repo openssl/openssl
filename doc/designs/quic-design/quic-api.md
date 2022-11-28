@@ -110,8 +110,6 @@ Simple composition of `SSL_set_accept_state` and `SSL_do_handshake`.
 **Blocking Considerations:** Blocks until handshake completed if in blocking
 mode.
 
-**TBD:** Should this wait until handshake is completed or until it is confirmed?
-
 #### `SSL_read`, `SSL_read_ex`, `SSL_peek`, `SSL_peek_ex`
 
 | Semantics | `SSL_get_error` | Can Tick? | CSHL          |
@@ -133,10 +131,8 @@ We have to implement all of the following modes:
 - `SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER` on or off
 - Blocking mode on or off
 
-**Blocking Considerations:** Blocks until all data is written or an error occurs
-if in blocking mode.
-
-TBD: Does SSL_ENABLE_PARTIAL_WRITE interact with blocking mode?
+**Blocking Considerations:** Blocks until libssl has accepted responsibility for
+(i.e., copied) all data provided, or an error occurs, if in blocking mode.
 
 #### `SSL_pending`
 
@@ -478,7 +474,7 @@ corresponding `BIO_meth` getter/setter functions.
 **See also:**
 [BIO_s_dgram_pair(3)](https://www.openssl.org/docs/manmaster/man3/BIO_s_dgram_pair.html)
 
-The controls `BIO_dgram_get_no_trunc` (`BIO_CTRL_DGRAM_GET_NO_TRUNC`) and
+The controls `BIO_dgram_set_no_trunc` (`BIO_CTRL_DGRAM_SET_NO_TRUNC`) and
 `BIO_dgram_get_no_trunc` (`BIO_CTRL_DGRAM_GET_NO_TRUNC`) are introduced. This is
 a boolean value which may be implemented by BIOs with datagram semantics. When
 enabled, attempting to receive a datagram such that the datagram would
@@ -615,3 +611,43 @@ local addressing.
 A new predicate function `BIO_err_is_non_fatal` is defined which determines if
 an error code represents a non-fatal or transient error. For details, see
 [BIO_sendmmsg(3)](https://www.openssl.org/docs/manmaster/man3/BIO_sendmmsg.html).
+
+Q & A
+-----
+
+To assist in understanding, when a “TBD” listed above is removed, or when a
+relevant question is raised, the resolution to the question will be placed here.
+
+**Q. Should `SSL_do_handshake` wait until the handshake is completed, or until it
+is confirmed?**
+
+**Note:** [The terms *handshake complete* and *handshake confirmed* are defined
+in RFC 9001 and have specific
+meanings.](https://www.rfc-editor.org/rfc/rfc9001.html#name-handshake-complete)
+
+A. `SSL_do_handshake` should wait until the handshake is completed, because
+handshake completion represents the completion of the cryptographic
+authentication of the connection. When a connection's handshake is completed,
+TLS 1.3 Finished messages have been exchanged by both parties, even if the
+handshake has not yet been *confirmed*. Moreover, RFC 9001 s. 4.1.2 states:
+
+>Additionally, a client MAY consider the handshake to be confirmed when it
+>receives an acknowledgment for a 1-RTT packet.
+
+This logically implies that it is OK for a client to start transmitting 1-RTT
+packets prior to handshake confirmation, otherwise there would be no in-flight
+1-RTT packets for the client to receive ACKs for.
+
+**Q. Does `ENABLE_PARTIAL_WRITE` interact with blocking mode?**
+
+A. No; this mode is only relevant to non-blocking mode. In blocking mode,
+`SSL_write` always waits until all data is written unless an error occurs. The
+semantics of `SSL_write` are preserved unchanged.
+
+**Q. Does `SSL_write` block until data is written to the network, or simply
+until it is buffered?**
+
+A. `SSL_write` blocks until it has accepted responsibility for the data passed
+to it, just like `write(2)` or `send(2)`. In other words, it blocks until it can
+buffer the data. This does not necessarily mean that the data has actually been
+sent.
