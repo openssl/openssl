@@ -125,13 +125,8 @@ static EVP_PKEY *evp_pkey_new_raw_nist_public_key(OSSL_LIB_CTX *libctx,
 
 /**
  * @brief do the AEAD decryption
- * @param libctx is the context to use
- * @param propq is a properties string
- * @param suite is the ciphersuite
- * @param key is the secret
- * @param keylen is the length of the secret
+ * @param hctx is the context to use
  * @param iv is the initialisation vector
- * @param ivlen is the length of the iv
  * @param aad is the additional authenticated data
  * @param aadlen is the length of the aad
  * @param ct is the ciphertext buffer
@@ -140,10 +135,7 @@ static EVP_PKEY *evp_pkey_new_raw_nist_public_key(OSSL_LIB_CTX *libctx,
  * @param ptlen input/output, better be big enough on input, exact on output
  * @return 1 on success, 0 otherwise
  */
-static int hpke_aead_dec(OSSL_LIB_CTX *libctx, const char *propq,
-                         OSSL_HPKE_SUITE suite,
-                         const unsigned char *key, size_t keylen,
-                         const unsigned char *iv, size_t ivlen,
+static int hpke_aead_dec(OSSL_HPKE_CTX *hctx, const unsigned char *iv,
                          const unsigned char *aad, size_t aadlen,
                          const unsigned char *ct, size_t ctlen,
                          unsigned char *pt, size_t *ptlen)
@@ -155,7 +147,7 @@ static int hpke_aead_dec(OSSL_LIB_CTX *libctx, const char *propq,
     EVP_CIPHER *enc = NULL;
     const OSSL_HPKE_AEAD_INFO *aead_info = NULL;
 
-    aead_info = ossl_HPKE_AEAD_INFO_find_id(suite.aead_id);
+    aead_info = ossl_HPKE_AEAD_INFO_find_id(hctx->suite.aead_id);
     if (aead_info == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -170,9 +162,9 @@ static int hpke_aead_dec(OSSL_LIB_CTX *libctx, const char *propq,
         return 0;
 
     /* Initialise the encryption operation */
-    enc = EVP_CIPHER_fetch(libctx, aead_info->name, propq);
+    enc = EVP_CIPHER_fetch(hctx->libctx, aead_info->name, hctx->propq);
     if (enc == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_FETCH_FAILED);
         goto err;
     }
     if (EVP_DecryptInit_ex(ctx, enc, NULL, NULL, NULL) != 1) {
@@ -181,12 +173,13 @@ static int hpke_aead_dec(OSSL_LIB_CTX *libctx, const char *propq,
     }
     EVP_CIPHER_free(enc);
     enc = NULL;
-    if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL) != 1) {
+    if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
+                            hctx->noncelen, NULL) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     /* Initialise key and IV */
-    if (EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv) != 1) {
+    if (EVP_DecryptInit_ex(ctx, NULL, NULL, hctx->key, iv) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -224,13 +217,8 @@ err:
 
 /**
  * @brief do AEAD encryption as per the RFC
- * @param libctx is the context to use
- * @param propq is a properties string
- * @param suite is the ciphersuite
- * @param key is the secret
- * @param keylen is the length of the secret
+ * @param hctx is the context to use
  * @param iv is the initialisation vector
- * @param ivlen is the length of the iv
  * @param aad is the additional authenticated data
  * @param aadlen is the length of the aad
  * @param pt is the plaintext buffer
@@ -239,10 +227,7 @@ err:
  * @param ctlen input/output, needs space for tag on input, exact on output
  * @return 1 for success, 0 otherwise
  */
-static int hpke_aead_enc(OSSL_LIB_CTX *libctx, const char *propq,
-                         OSSL_HPKE_SUITE suite,
-                         const unsigned char *key, size_t keylen,
-                         const unsigned char *iv, size_t ivlen,
+static int hpke_aead_enc(OSSL_HPKE_CTX *hctx, const unsigned char *iv,
                          const unsigned char *aad, size_t aadlen,
                          const unsigned char *pt, size_t ptlen,
                          unsigned char *ct, size_t *ctlen)
@@ -255,7 +240,7 @@ static int hpke_aead_enc(OSSL_LIB_CTX *libctx, const char *propq,
     EVP_CIPHER *enc = NULL;
     unsigned char tag[16];
 
-    aead_info = ossl_HPKE_AEAD_INFO_find_id(suite.aead_id);
+    aead_info = ossl_HPKE_AEAD_INFO_find_id(hctx->suite.aead_id);
     if (aead_info == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -270,9 +255,9 @@ static int hpke_aead_enc(OSSL_LIB_CTX *libctx, const char *propq,
         return 0;
 
     /* Initialise the encryption operation. */
-    enc = EVP_CIPHER_fetch(libctx, aead_info->name, propq);
+    enc = EVP_CIPHER_fetch(hctx->libctx, aead_info->name, hctx->propq);
     if (enc == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_FETCH_FAILED);
         goto err;
     }
     if (EVP_EncryptInit_ex(ctx, enc, NULL, NULL, NULL) != 1) {
@@ -281,12 +266,13 @@ static int hpke_aead_enc(OSSL_LIB_CTX *libctx, const char *propq,
     }
     EVP_CIPHER_free(enc);
     enc = NULL;
-    if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL) != 1) {
+    if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
+                            hctx->noncelen, NULL) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     /* Initialise key and IV */
-    if (EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv) != 1) {
+    if (EVP_EncryptInit_ex(ctx, NULL, NULL, hctx->key, iv) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -1137,9 +1123,7 @@ int OSSL_HPKE_seal(OSSL_HPKE_CTX *ctx,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    if (hpke_aead_enc(ctx->libctx, ctx->propq, ctx->suite,
-                      ctx->key, ctx->keylen, seqbuf, ctx->noncelen,
-                      aad, aadlen, pt, ptlen, ct, ctlen) != 1) {
+    if (hpke_aead_enc(ctx, seqbuf, aad, aadlen, pt, ptlen, ct, ctlen) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         OPENSSL_cleanse(seqbuf, sizeof(seqbuf));
         return 0;
@@ -1177,9 +1161,7 @@ int OSSL_HPKE_open(OSSL_HPKE_CTX *ctx,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    if (hpke_aead_dec(ctx->libctx, ctx->propq, ctx->suite,
-                      ctx->key, ctx->keylen, seqbuf, ctx->noncelen,
-                      aad, aadlen, ct, ctlen, pt, ptlen) != 1) {
+    if (hpke_aead_dec(ctx, seqbuf, aad, aadlen, ct, ctlen, pt, ptlen) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         OPENSSL_cleanse(seqbuf, sizeof(seqbuf));
         return 0;
