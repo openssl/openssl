@@ -77,7 +77,7 @@ push @files, qw(
                 evppkey_ecdsa.txt
                 evppkey_kas.txt
                 evppkey_mismatch.txt
-               ) unless $no_ec || $no_gost;
+               ) unless $no_ec;
 push @files, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 
 # A list of tests that only run with the default provider
