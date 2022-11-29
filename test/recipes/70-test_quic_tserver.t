@@ -6,14 +6,16 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-use OpenSSL::Test;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
 use OpenSSL::Test::Utils;
 
-setup("test_quic_txp");
+setup("test_quic_tserver");
 
 plan skip_all => "QUIC protocol is not supported by this OpenSSL build"
     if disabled('quic');
 
 plan tests => 1;
 
-ok(run(test(["quic_tserver_test"])));
+ok(run(test(["quic_tserver_test",
+             srctop_file("test", "certs", "servercert.pem"),
+             srctop_file("test", "certs", "serverkey.pem")])));

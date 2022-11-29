@@ -36,7 +36,8 @@ typedef struct quic_tserver_args_st {
     BIO *net_rbio, *net_wbio;
 } QUIC_TSERVER_ARGS;
 
-QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args);
+QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
+                                    const char *certfile, const char *keyfile);
 
 void ossl_quic_tserver_free(QUIC_TSERVER *srv);
 

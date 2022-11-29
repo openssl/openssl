@@ -18,6 +18,8 @@
 static const char msg1[] = "The quick brown fox jumped over the lazy dogs.";
 static char msg2[1024], msg3[1024];
 
+static const char *certfile, *keyfile;
+
 static int is_want(SSL *s, int ret)
 {
     int ec = SSL_get_error(s, ret);
@@ -43,6 +45,7 @@ static int test_tserver(void)
     size_t l = 0, s_total_read = 0, s_total_written = 0, c_total_read = 0;
     int s_begin_write = 0;
     OSSL_TIME start_time;
+    unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
 
     ina.s_addr = htonl(0x7f000001UL);
 
@@ -80,7 +83,8 @@ static int test_tserver(void)
     tserver_args.net_rbio = s_net_bio;
     tserver_args.net_wbio = s_net_bio;
 
-    if (!TEST_ptr(tserver = ossl_quic_tserver_new(&tserver_args))) {
+    if (!TEST_ptr(tserver = ossl_quic_tserver_new(&tserver_args, certfile,
+                                                  keyfile))) {
         BIO_free(s_net_bio);
         goto err;
     }
@@ -105,6 +109,10 @@ static int test_tserver(void)
         goto err;
 
     if (!TEST_ptr(c_ssl = SSL_new(c_ctx)))
+        goto err;
+
+    /* 0 is a success for SSL_set_alpn_protos() */
+    if (!TEST_false(SSL_set_alpn_protos(c_ssl, alpn, sizeof(alpn))))
         goto err;
 
     /* Takes ownership of our reference to the BIO. */
@@ -215,8 +223,19 @@ err:
     return testresult;
 }
 
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
+
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
+    if (!TEST_ptr(certfile = test_get_argument(0))
+            || !TEST_ptr(keyfile = test_get_argument(1)))
+        return 0;
+
     ADD_TEST(test_tserver);
     return 1;
 }
