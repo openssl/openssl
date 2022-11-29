@@ -86,13 +86,11 @@ static const OSSL_HPKE_AEAD_INFO hpke_aead_tab[] = {
       OSSL_HPKE_MAX_NONCELEN },
     { OSSL_HPKE_AEAD_ID_AES_GCM_256, LN_aes_256_gcm, 16, 32,
       OSSL_HPKE_MAX_NONCELEN },
-#ifndef OPENSSL_NO_CHACHA20
-# ifndef OPENSSL_NO_POLY1305
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     { OSSL_HPKE_AEAD_ID_CHACHA_POLY1305, LN_chacha20_poly1305, 16, 32,
       OSSL_HPKE_MAX_NONCELEN },
-# endif
-    { OSSL_HPKE_AEAD_ID_EXPORTONLY, NULL, 0, 0, 0 }
 #endif
+    { OSSL_HPKE_AEAD_ID_EXPORTONLY, NULL, 0, 0, 0 }
 };
 
 /*
