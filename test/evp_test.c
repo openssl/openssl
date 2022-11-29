@@ -335,6 +335,8 @@ typedef struct digest_data_st {
     size_t output_len;
     /* Padding type */
     int pad_type;
+    /* XOF mode? */
+    int xof;
 } DIGEST_DATA;
 
 static int digest_test_init(EVP_TEST *t, const char *alg)
@@ -358,6 +360,7 @@ static int digest_test_init(EVP_TEST *t, const char *alg)
     mdat->digest = digest;
     mdat->fetched_digest = fetched_digest;
     mdat->pad_type = 0;
+    mdat->xof = 0;
     if (fetched_digest != NULL)
         TEST_info("%s is fetched", alg);
     return 1;
@@ -387,6 +390,8 @@ static int digest_test_parse(EVP_TEST *t,
         return evp_test_buffer_ncopy(value, mdata->input);
     if (strcmp(keyword, "Padding") == 0)
         return (mdata->pad_type = atoi(value)) > 0;
+    if (strcmp(keyword, "XOF") == 0)
+        return (mdata->xof = atoi(value)) > 0;
     return 0;
 }
 
@@ -424,7 +429,7 @@ static int digest_test_run(EVP_TEST *t)
     unsigned int got_len;
     size_t size = 0;
     int xof = 0;
-    OSSL_PARAM params[2];
+    OSSL_PARAM params[3], *p = &params[0];
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
@@ -435,25 +440,27 @@ static int digest_test_run(EVP_TEST *t)
     if (!TEST_ptr(got))
         goto err;
 
-    if (!EVP_DigestInit_ex(mctx, expected->digest, NULL)) {
+    if (expected->xof > 0) {
+        xof |= 1;
+        *p++ = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN,
+                                           &expected->output_len);
+    }
+    if (expected->pad_type > 0)
+        *p++ = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_PAD_TYPE,
+                                        &expected->pad_type);
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!EVP_DigestInit_ex2(mctx, expected->digest, params)) {
         t->err = "DIGESTINIT_ERROR";
         goto err;
     }
-    if (expected->pad_type > 0) {
-        params[0] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_PAD_TYPE,
-                                              &expected->pad_type);
-        params[1] = OSSL_PARAM_construct_end();
-        if (!TEST_int_gt(EVP_MD_CTX_set_params(mctx, params), 0)) {
-            t->err = "PARAMS_ERROR";
-            goto err;
-        }
-    }
+
     if (!evp_test_buffer_do(expected->input, digest_update_fn, mctx)) {
         t->err = "DIGESTUPDATE_ERROR";
         goto err;
     }
 
-    xof = (EVP_MD_get_flags(expected->digest) & EVP_MD_FLAG_XOF) != 0;
+    xof |= (EVP_MD_get_flags(expected->digest) & EVP_MD_FLAG_XOF) != 0;
     if (xof) {
         EVP_MD_CTX *mctx_cpy;
 
