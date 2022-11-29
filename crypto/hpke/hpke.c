@@ -52,6 +52,10 @@ struct ossl_hpke_ctx_st
     char *propq; /* properties */
     int mode; /* HPKE mode */
     OSSL_HPKE_SUITE suite; /* suite */
+    const OSSL_HPKE_KEM_INFO *kem_info;
+    const OSSL_HPKE_KDF_INFO *kdf_info;
+    const OSSL_HPKE_AEAD_INFO *aead_info;
+    EVP_CIPHER *aead_ciph;
     uint64_t seq; /* aead sequence number */
     unsigned char *shared_secret; /* KEM output, zz */
     size_t shared_secretlen;
@@ -144,15 +148,8 @@ static int hpke_aead_dec(OSSL_HPKE_CTX *hctx, const unsigned char *iv,
     EVP_CIPHER_CTX *ctx = NULL;
     int len = 0;
     size_t taglen;
-    EVP_CIPHER *enc = NULL;
-    const OSSL_HPKE_AEAD_INFO *aead_info = NULL;
 
-    aead_info = ossl_HPKE_AEAD_INFO_find_id(hctx->suite.aead_id);
-    if (aead_info == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-    taglen = aead_info->taglen;
+    taglen = hctx->aead_info->taglen;
     if (ctlen <= taglen || *ptlen < ctlen - taglen) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
@@ -161,18 +158,11 @@ static int hpke_aead_dec(OSSL_HPKE_CTX *hctx, const unsigned char *iv,
     if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
         return 0;
 
-    /* Initialise the encryption operation */
-    enc = EVP_CIPHER_fetch(hctx->libctx, aead_info->name, hctx->propq);
-    if (enc == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_FETCH_FAILED);
-        goto err;
-    }
-    if (EVP_DecryptInit_ex(ctx, enc, NULL, NULL, NULL) != 1) {
+    /* Initialise the decryption operation. */
+    if (EVP_DecryptInit_ex(ctx, hctx->aead_ciph, NULL, NULL, NULL) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    EVP_CIPHER_free(enc);
-    enc = NULL;
     if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
                             hctx->noncelen, NULL) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
@@ -211,7 +201,6 @@ err:
     if (erv != 1)
         OPENSSL_cleanse(pt, *ptlen);
     EVP_CIPHER_CTX_free(ctx);
-    EVP_CIPHER_free(enc);
     return erv;
 }
 
@@ -236,16 +225,9 @@ static int hpke_aead_enc(OSSL_HPKE_CTX *hctx, const unsigned char *iv,
     EVP_CIPHER_CTX *ctx = NULL;
     int len;
     size_t taglen = 0;
-    const OSSL_HPKE_AEAD_INFO *aead_info = NULL;
-    EVP_CIPHER *enc = NULL;
     unsigned char tag[16];
 
-    aead_info = ossl_HPKE_AEAD_INFO_find_id(hctx->suite.aead_id);
-    if (aead_info == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-    taglen = aead_info->taglen;
+    taglen = hctx->aead_info->taglen;
     if (*ctlen <= taglen || ptlen > *ctlen - taglen) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
@@ -255,17 +237,10 @@ static int hpke_aead_enc(OSSL_HPKE_CTX *hctx, const unsigned char *iv,
         return 0;
 
     /* Initialise the encryption operation. */
-    enc = EVP_CIPHER_fetch(hctx->libctx, aead_info->name, hctx->propq);
-    if (enc == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_FETCH_FAILED);
-        goto err;
-    }
-    if (EVP_EncryptInit_ex(ctx, enc, NULL, NULL, NULL) != 1) {
+    if (EVP_EncryptInit_ex(ctx, hctx->aead_ciph, NULL, NULL, NULL) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    EVP_CIPHER_free(enc);
-    enc = NULL;
     if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
                             hctx->noncelen, NULL) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
@@ -307,7 +282,6 @@ err:
     if (erv != 1)
         OPENSSL_cleanse(ct, *ctlen);
     EVP_CIPHER_CTX_free(ctx);
-    EVP_CIPHER_free(enc);
     return erv;
 }
 
@@ -335,15 +309,30 @@ static int hpke_mode_check(unsigned int mode)
  * @param suite is the suite to check
  * @return 1 for good, 0 otherwise
  */
-static int hpke_suite_check(OSSL_HPKE_SUITE suite)
+static int hpke_suite_check(OSSL_HPKE_SUITE suite,
+                            const OSSL_HPKE_KEM_INFO **kem_info,
+                            const OSSL_HPKE_KDF_INFO **kdf_info,
+                            const OSSL_HPKE_AEAD_INFO **aead_info)
 {
+    const OSSL_HPKE_KEM_INFO *kem_info_;
+    const OSSL_HPKE_KDF_INFO *kdf_info_;
+    const OSSL_HPKE_AEAD_INFO *aead_info_;
+
     /* check KEM, KDF and AEAD are supported here */
-    if (ossl_HPKE_KEM_INFO_find_id(suite.kem_id) == NULL)
+    if ((kem_info_ = ossl_HPKE_KEM_INFO_find_id(suite.kem_id)) == NULL)
         return 0;
-    if (ossl_HPKE_KDF_INFO_find_id(suite.kdf_id) == NULL)
+    if ((kdf_info_ = ossl_HPKE_KDF_INFO_find_id(suite.kdf_id)) == NULL)
         return 0;
-    if (ossl_HPKE_AEAD_INFO_find_id(suite.aead_id) == NULL)
+    if ((aead_info_ = ossl_HPKE_AEAD_INFO_find_id(suite.aead_id)) == NULL)
         return 0;
+
+    if (kem_info != NULL)
+        *kem_info = kem_info_;
+    if (kdf_info != NULL)
+        *kdf_info = kdf_info_;
+    if (aead_info != NULL)
+        *aead_info = aead_info_;
+
     return 1;
 }
 
@@ -409,21 +398,11 @@ static int hpke_expansion(OSSL_HPKE_SUITE suite,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    if (hpke_suite_check(suite) != 1) {
+    if (hpke_suite_check(suite, &kem_info, NULL, &aead_info) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
-    aead_info = ossl_HPKE_AEAD_INFO_find_id(suite.aead_id);
-    if (aead_info == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
     *cipherlen = clearlen + aead_info->taglen;
-    kem_info = ossl_HPKE_KEM_INFO_find_id(suite.kem_id);
-    if (kem_info == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
     *enclen = kem_info->Nenc;
     return 1;
 }
@@ -826,12 +805,15 @@ OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite,
                                  OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_HPKE_CTX *ctx = NULL;
+    const OSSL_HPKE_KEM_INFO *kem_info;
+    const OSSL_HPKE_KDF_INFO *kdf_info;
+    const OSSL_HPKE_AEAD_INFO *aead_info;
 
     if (hpke_mode_check(mode) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
-    if (hpke_suite_check(suite) != 1) {
+    if (hpke_suite_check(suite, &kem_info, &kdf_info, &aead_info) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
@@ -841,20 +823,34 @@ OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite,
     ctx->libctx = libctx;
     if (propq != NULL) {
         ctx->propq = OPENSSL_strdup(propq);
-        if (ctx->propq == NULL) {
-            OPENSSL_free(ctx);
-            return NULL;
+        if (ctx->propq == NULL)
+            goto err;
+    }
+    if (suite.aead_id != OSSL_HPKE_AEAD_ID_EXPORTONLY) {
+        ctx->aead_ciph = EVP_CIPHER_fetch(libctx, aead_info->name, propq);
+        if (ctx->aead_ciph == NULL) {
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_FETCH_FAILED);
+            goto err;
         }
     }
     ctx->mode = mode;
     ctx->suite = suite;
+    ctx->kem_info = kem_info;
+    ctx->kdf_info = kdf_info;
+    ctx->aead_info = aead_info;
     return ctx;
+
+ err:
+    EVP_CIPHER_free(ctx->aead_ciph);
+    OPENSSL_free(ctx);
+    return NULL;
 }
 
 void OSSL_HPKE_CTX_free(OSSL_HPKE_CTX *ctx)
 {
     if (ctx == NULL)
         return;
+    EVP_CIPHER_free(ctx->aead_ciph);
     OPENSSL_free(ctx->propq);
     OPENSSL_clear_free(ctx->exportersec, ctx->exporterseclen);
     OPENSSL_free(ctx->pskid);
@@ -1238,7 +1234,7 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (hpke_suite_check(suite) != 1) {
+    if (hpke_suite_check(suite, &kem_info, NULL, NULL) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
@@ -1249,9 +1245,6 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
         return 0;
     }
 
-    kem_info = ossl_HPKE_KEM_INFO_find_id(suite.kem_id);
-    if (kem_info == NULL)
-        return 0;
     if (hpke_kem_id_nist_curve(suite.kem_id) == 1) {
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
                                                 (char *)kem_info->groupname, 0);
@@ -1295,7 +1288,7 @@ err:
 
 int OSSL_HPKE_suite_check(OSSL_HPKE_SUITE suite)
 {
-    return hpke_suite_check(suite);
+    return hpke_suite_check(suite, NULL, NULL, NULL);
 }
 
 int OSSL_HPKE_get_grease_value(OSSL_LIB_CTX *libctx, const char *propq,
@@ -1326,17 +1319,7 @@ int OSSL_HPKE_get_grease_value(OSSL_LIB_CTX *libctx, const char *propq,
     } else {
         chosen = *suite_in;
     }
-    kem_info = ossl_HPKE_KEM_INFO_find_id(chosen.kem_id);
-    if (kem_info == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    aead_info = ossl_HPKE_AEAD_INFO_find_id(chosen.aead_id);
-    if (aead_info == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    if (hpke_suite_check(chosen) != 1) {
+    if (hpke_suite_check(chosen, &kem_info, NULL, &aead_info) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -1404,9 +1387,8 @@ size_t OSSL_HPKE_get_recommended_ikmelen(OSSL_HPKE_SUITE suite)
 {
     const OSSL_HPKE_KEM_INFO *kem_info = NULL;
 
-    if (hpke_suite_check(suite) != 1)
+    if (hpke_suite_check(suite, &kem_info, NULL, NULL) != 1)
         return 0;
-    kem_info = ossl_HPKE_KEM_INFO_find_id(suite.kem_id);
     if (kem_info == NULL)
         return 0;
 
