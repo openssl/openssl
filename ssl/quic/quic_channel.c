@@ -347,6 +347,19 @@ void ossl_quic_channel_free(QUIC_CHANNEL *ch)
     OPENSSL_free(ch);
 }
 
+/* Set mutator callbacks for test framework support */
+int ossl_quic_channel_set_mutator(QUIC_CHANNEL *ch,
+                                  ossl_mutate_packet_cb mutatecb,
+                                  ossl_finish_mutate_cb finishmutatecb,
+                                  void *mutatearg)
+{
+    if (ch->qtx == NULL)
+        return 0;
+
+    ossl_qtx_set_mutator(ch->qtx, mutatecb, finishmutatecb, mutatearg);
+    return 1;
+}
+
 int ossl_quic_channel_get_peer_addr(QUIC_CHANNEL *ch, BIO_ADDR *peer_addr)
 {
     *peer_addr = ch->cur_peer_addr;
