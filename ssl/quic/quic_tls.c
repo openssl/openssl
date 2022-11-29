@@ -641,6 +641,7 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
 
     if (!qtls->configured) {
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(qtls->args.s);
+        SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(sc);
         BIO *nullbio;
 
         /*
@@ -649,9 +650,16 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
          */
 
         /* ALPN is a requirement for QUIC and must be set */
-        if (sc->ext.alpn == NULL || sc->ext.alpn_len == 0) {
-            qtls->inerror = 1;
-            return 0;
+        if (qtls->args.is_server) {
+            if (sctx->ext.alpn_select_cb == NULL) {
+                qtls->inerror = 1;
+                return 0;
+            }
+        } else {
+            if (sc->ext.alpn == NULL || sc->ext.alpn_len == 0) {
+                qtls->inerror = 1;
+                return 0;
+            }
         }
         if (!SSL_set_min_proto_version(qtls->args.s, TLS1_3_VERSION)) {
             qtls->inerror = 1;
@@ -661,7 +669,8 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
         ossl_ssl_set_custom_record_layer(sc, &quic_tls_record_method, qtls);
 
         if (!ossl_tls_add_custom_ext_intern(NULL, &sc->cert->custext,
-                                            ENDPOINT_CLIENT,
+                                            qtls->args.is_server ? ENDPOINT_SERVER
+                                                                 : ENDPOINT_CLIENT,
                                             TLSEXT_TYPE_quic_transport_parameters,
                                             SSL_EXT_TLS1_3_ONLY
                                             | SSL_EXT_CLIENT_HELLO
@@ -685,9 +694,14 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
          */
         SSL_set_bio(qtls->args.s, nullbio, nullbio);
 
+        if (qtls->args.is_server)
+            SSL_set_accept_state(qtls->args.s);
+        else
+            SSL_set_connect_state(qtls->args.s);
+
         qtls->configured = 1;
     }
-    ret = SSL_connect(qtls->args.s);
+    ret = SSL_do_handshake(qtls->args.s);
     if (ret <= 0) {
         switch (SSL_get_error(qtls->args.s, ret)) {
         case SSL_ERROR_WANT_READ:
@@ -713,12 +727,6 @@ int ossl_quic_tls_set_transport_params(QUIC_TLS *qtls,
                                        const unsigned char *transport_params,
                                        size_t transport_params_len)
 {
-    if (!ossl_assert(!qtls->args.is_server)) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-        qtls->inerror = 1;
-        return 0;
-    }
-
     qtls->local_transport_params       = transport_params;
     qtls->local_transport_params_len   = transport_params_len;
     return 1;

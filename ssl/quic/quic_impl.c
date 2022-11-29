@@ -131,7 +131,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
         goto err;
     }
 
-    qc->tls = ossl_ssl_connection_new_int(ctx, TLS_client_method());
+    qc->tls = ossl_ssl_connection_new_int(ctx, TLS_method());
     if (qc->tls == NULL || (sc = SSL_CONNECTION_FROM_SSL(qc->tls)) == NULL)
          goto err;
     /* override the user_ssl of the inner connection */
