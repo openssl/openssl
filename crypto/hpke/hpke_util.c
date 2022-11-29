@@ -393,6 +393,10 @@ EVP_KDF_CTX *ossl_kdf_ctx_create(const char *kdfname, const char *mdname,
     EVP_KDF_CTX *kctx = NULL;
 
     kdf = EVP_KDF_fetch(libctx, kdfname, propq);
+    if (kdf == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_FETCH_FAILED);
+        return NULL;
+    }
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx != NULL && mdname != NULL) {
