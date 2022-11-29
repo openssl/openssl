@@ -1342,13 +1342,6 @@ static int test_hpke_oddcalls(void)
     if (!TEST_false(OSSL_HPKE_CTX_set1_psk(NULL, NULL, NULL, 0)))
         goto end;
 
-    /* make/break ctx */
-    if (!TEST_ptr(ctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite,
-                                          testctx, "foo")))
-        goto end;
-    OSSL_HPKE_CTX_free(ctx);
-    ctx = NULL;
-
     /* bad suite calls */
     hpke_suite.aead_id = 0xbad;
     if (!TEST_false(OSSL_HPKE_suite_check(hpke_suite)))
