@@ -73,6 +73,12 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args);
 /* No-op if ch is NULL. */
 void ossl_quic_channel_free(QUIC_CHANNEL *ch);
 
+/* Set mutator callbacks for test framework support */
+int ossl_quic_channel_set_mutator(QUIC_CHANNEL *ch,
+                                  ossl_mutate_packet_cb mutatecb,
+                                  ossl_finish_mutate_cb finishmutatecb,
+                                  void *mutatearg);
+
 /*
  * Connection Lifecycle Events
  * ===========================

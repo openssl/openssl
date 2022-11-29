@@ -41,6 +41,12 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
 
 void ossl_quic_tserver_free(QUIC_TSERVER *srv);
 
+/* Set mutator callbacks for test framework support */
+int ossl_quic_tserver_set_mutator(QUIC_TSERVER *srv,
+                                  ossl_mutate_packet_cb mutatecb,
+                                  ossl_finish_mutate_cb finishmutatecb,
+                                  void *mutatearg);
+
 /* Advances the state machine. */
 int ossl_quic_tserver_tick(QUIC_TSERVER *srv);
 

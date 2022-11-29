@@ -122,6 +122,16 @@ void ossl_quic_tserver_free(QUIC_TSERVER *srv)
     OPENSSL_free(srv);
 }
 
+/* Set mutator callbacks for test framework support */
+int ossl_quic_tserver_set_mutator(QUIC_TSERVER *srv,
+                                  ossl_mutate_packet_cb mutatecb,
+                                  ossl_finish_mutate_cb finishmutatecb,
+                                  void *mutatearg)
+{
+    return ossl_quic_channel_set_mutator(srv->ch, mutatecb, finishmutatecb,
+                                         mutatearg);
+}
+
 int ossl_quic_tserver_tick(QUIC_TSERVER *srv)
 {
     ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(srv->ch));
