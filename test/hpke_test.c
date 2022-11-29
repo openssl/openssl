@@ -797,7 +797,9 @@ static uint16_t hpke_kdf_list[] = {
 static uint16_t hpke_aead_list[] = {
     OSSL_HPKE_AEAD_ID_AES_GCM_128,
     OSSL_HPKE_AEAD_ID_AES_GCM_256,
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     OSSL_HPKE_AEAD_ID_CHACHA_POLY1305
+#endif
 };
 
 /*
