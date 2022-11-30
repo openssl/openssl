@@ -246,9 +246,12 @@ struct quic_channel_st {
     unsigned int                    have_qsm                : 1;
 
     /*
-     * Preferred EL for transmission. This is not strictly needed as it can be
-     * inferred from what keys we have provisioned, but makes determining the
-     * current EL simpler and faster.
+     * Preferred ELs for transmission and reception. This is not strictly needed
+     * as it can be inferred from what keys we have provisioned, but makes
+     * determining the current EL simpler and faster. A separate EL for
+     * transmission and reception is not strictly necessary but makes things
+     * easier for interoperation with the handshake layer, which likes to invoke
+     * the yield secret callback at different times for TX and RX.
      */
     unsigned int                    tx_enc_level            : 3;
     unsigned int                    rx_enc_level            : 3;

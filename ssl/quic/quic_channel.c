@@ -1529,7 +1529,7 @@ int ossl_quic_channel_on_handshake_confirmed(QUIC_CHANNEL *ch)
  *   - If we are already TERMINATED this is a no-op.
  *
  *   - If we are TERMINATING - CLOSING and we have now got a CONNECTION_CLOSE
- *     from the peer (tcause->remote == 1), we move to TERMINATING - CLOSING.
+ *     from the peer (tcause->remote == 1), we move to TERMINATING - DRAINING.
  *
  *   - If we are TERMINATING - DRAINING, we remain here until the terminating
  *     timer expires.
