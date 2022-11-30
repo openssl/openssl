@@ -836,6 +836,7 @@ int ossl_quic_calculate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
         return 0;
 
     /* Create and initialise cipher context. */
+    /* TODO(QUIC): Cipher fetch caching. */
     if ((cipher = EVP_CIPHER_fetch(libctx, "AES-128-GCM", propq)) == NULL)
         goto err;
 

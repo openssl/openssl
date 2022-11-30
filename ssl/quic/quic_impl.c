@@ -184,7 +184,7 @@ int ossl_quic_reset(SSL *s)
     if (!expect_quic_conn(qc))
         return 0;
 
-    /* Currently a no-op. */
+    /* TODO(QUIC); Currently a no-op. */
     return 1;
 }
 
@@ -196,7 +196,7 @@ int ossl_quic_clear(SSL *s)
     if (!expect_quic_conn(qc))
         return 0;
 
-    /* Currently a no-op. */
+    /* TODO(QUIC): Currently a no-op. */
     return 1;
 }
 
