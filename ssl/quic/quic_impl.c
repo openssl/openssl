@@ -1159,23 +1159,18 @@ long ossl_quic_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
     switch (cmd) {
     default:
-        return 0;
+        return ssl3_ctx_ctrl(ctx, cmd, larg, parg);
     }
 }
 
 long ossl_quic_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 {
-    return 0;
+    return ssl3_callback_ctrl(s, cmd, fp);
 }
 
 long ossl_quic_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 {
-    return 0;
-}
-
-QUIC_CONNECTION *ossl_quic_conn_from_ssl(SSL *ssl)
-{
-    return QUIC_CONNECTION_FROM_SSL(ssl);
+    return ssl3_ctx_callback_ctrl(ctx, cmd, fp);
 }
 
 int ossl_quic_renegotiate_check(SSL *ssl, int initok)
