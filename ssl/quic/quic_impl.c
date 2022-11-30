@@ -612,27 +612,39 @@ int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
 {
     int ret;
 
+    if (qc->ch != NULL && ossl_quic_channel_is_handshake_complete(qc->ch))
+        /* Handshake already completed. */
+        return 1;
+
     if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch))
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
 
-    if (BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC)
+    if (BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC) {
         /* Peer address must have been set. */
-        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+        QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+        return -1; /* Non-protocol error */
+    }
 
-    if (qc->as_server)
+    if (qc->as_server) {
         /* TODO(QUIC): Server mode not currently supported */
-        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+        QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+        return -1; /* Non-protocol error */
+    }
 
-    if (qc->net_rbio == NULL || qc->net_wbio == NULL)
+    if (qc->net_rbio == NULL || qc->net_wbio == NULL) {
         /* Need read and write BIOs. */
-        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+        QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+        return -1; /* Non-protocol error */
+    }
 
     /*
      * Start connection process. Note we may come here multiple times in
      * non-blocking mode, which is fine.
      */
-    if (!ensure_channel_and_start(qc))
-        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+    if (!ensure_channel_and_start(qc)) {
+        QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+        return -1; /* Non-protocol error */
+    }
 
     if (ossl_quic_channel_is_handshake_complete(qc->ch))
         /* The handshake is now done. */
@@ -645,16 +657,27 @@ int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
         args.qc     = qc;
 
         ret = block_until_pred(qc, quic_handshake_wait, &args, 0);
-        if (!ossl_quic_channel_is_active(qc->ch))
-            return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
-        else if (ret <= 0)
-            return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+        if (!ossl_quic_channel_is_active(qc->ch)) {
+            QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+            return 0; /* Shutdown before completion */
+        } else if (ret <= 0) {
+            QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+            return -1; /* Non-protocol error */
+        }
 
         assert(ossl_quic_channel_is_handshake_complete(qc->ch));
         return 1;
     } else {
+        /* Try to advance the reactor. */
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch));
+
+        if (ossl_quic_channel_is_handshake_complete(qc->ch))
+            /* The handshake is now done. */
+            return 1;
+
         /* Otherwise, indicate that the handshake isn't done yet. */
-        return QUIC_RAISE_NORMAL_ERROR(qc, SSL_ERROR_WANT_READ);
+        QUIC_RAISE_NORMAL_ERROR(qc, SSL_ERROR_WANT_READ);
+        return -1; /* Non-protocol error */
     }
 }
 
@@ -825,6 +848,10 @@ static int quic_write_blocking(QUIC_CONNECTION *qc, const void *buf, size_t len,
     return 1;
 }
 
+/*
+ * Functions to manage All-or-Nothing (AON) (that is, non-ENABLE_PARTIAL_WRITE)
+ * write semantics.
+ */
 static void aon_write_begin(QUIC_CONNECTION *qc, const unsigned char *buf,
                             size_t buf_len, size_t already_sent)
 {
@@ -954,12 +981,15 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
     if (!expect_quic_conn(qc))
         return 0;
 
-    /* If we haven't started the handshake, do so automatically. */
-    if (!qc->started && !ossl_quic_do_handshake(qc))
-        return 0;
-
     if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch))
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+
+    /*
+     * If we haven't finished the handshake, try to advance it.
+     * We don't accept writes until the handshake is completed.
+     */
+    if (ossl_quic_do_handshake(qc) < 1)
+        return 0;
 
     if (qc->stream0 == NULL || qc->stream0->sstream == NULL)
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
@@ -1041,7 +1071,7 @@ static int quic_read_again(void *arg)
 
     if (!ossl_quic_channel_is_active(args->qc->ch))
         /* If connection is torn down due to an error while blocking, stop. */
-        return -2;
+        return -1;
 
     if (!quic_read_actual(args->qc, args->stream,
                           args->buf, args->len, args->bytes_read,
@@ -1069,8 +1099,8 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
     if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch))
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
 
-    /* If we haven't started the handshake, do so automatically. */
-    if (!qc->started && !ossl_quic_do_handshake(qc))
+    /* If we haven't finished the handshake, try to advance it.*/
+    if (ossl_quic_do_handshake(qc) < 1)
         return 0;
 
     if (qc->stream0 == NULL)
