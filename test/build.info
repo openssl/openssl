@@ -71,7 +71,7 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   IF[{- !$disabled{quic} -}]
-    PROGRAMS{noinst}=priority_queue_test event_queue_test
+    PROGRAMS{noinst}=priority_queue_test event_queue_test quicfaultstest
   ENDIF
 
   IF[{- !$disabled{comp} && (!$disabled{brotli} || !$disabled{zstd} || !$disabled{zlib}) -}]
@@ -790,6 +790,10 @@ IF[{- !$disabled{tests} -}]
       SOURCE[event_queue_test]=event_queue_test.c
       INCLUDE[event_queue_test]=../include ../apps/include
       DEPEND[event_queue_test]=../libcrypto ../libssl.a libtestutil.a
+
+      SOURCE[quicfaultstest]=quicfaultstest.c helpers/quictestlib.c
+      INCLUDE[quicfaultstest]=../include ../apps/include ..
+      DEPEND[quicfaultstest]=../libcrypto.a ../libssl.a libtestutil.a
     ENDIF
 
     SOURCE[dhtest]=dhtest.c
