@@ -651,6 +651,10 @@ DEPEND[html/man3/BIO_s_core.html]=man3/BIO_s_core.pod
 GENERATE[html/man3/BIO_s_core.html]=man3/BIO_s_core.pod
 DEPEND[man/man3/BIO_s_core.3]=man3/BIO_s_core.pod
 GENERATE[man/man3/BIO_s_core.3]=man3/BIO_s_core.pod
+DEPEND[html/man3/BIO_s_dgram.html]=man3/BIO_s_dgram.pod
+GENERATE[html/man3/BIO_s_dgram.html]=man3/BIO_s_dgram.pod
+DEPEND[man/man3/BIO_s_dgram.3]=man3/BIO_s_dgram.pod
+GENERATE[man/man3/BIO_s_dgram.3]=man3/BIO_s_dgram.pod
 DEPEND[html/man3/BIO_s_dgram_pair.html]=man3/BIO_s_dgram_pair.pod
 GENERATE[html/man3/BIO_s_dgram_pair.html]=man3/BIO_s_dgram_pair.pod
 DEPEND[man/man3/BIO_s_dgram_pair.3]=man3/BIO_s_dgram_pair.pod
@@ -2942,6 +2946,7 @@ html/man3/BIO_s_accept.html \
 html/man3/BIO_s_bio.html \
 html/man3/BIO_s_connect.html \
 html/man3/BIO_s_core.html \
+html/man3/BIO_s_dgram.html \
 html/man3/BIO_s_dgram_pair.html \
 html/man3/BIO_s_fd.html \
 html/man3/BIO_s_file.html \
@@ -3549,6 +3554,7 @@ man/man3/BIO_s_accept.3 \
 man/man3/BIO_s_bio.3 \
 man/man3/BIO_s_connect.3 \
 man/man3/BIO_s_core.3 \
+man/man3/BIO_s_dgram.3 \
 man/man3/BIO_s_dgram_pair.3 \
 man/man3/BIO_s_fd.3 \
 man/man3/BIO_s_file.3 \
