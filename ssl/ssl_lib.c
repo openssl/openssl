@@ -4656,7 +4656,7 @@ const char *SSL_get_version(const SSL *s)
     const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
 
     if (qc != NULL)
-        return "QUIC";
+        return "QUICv1";
 #endif
 
     if (sc == NULL)
