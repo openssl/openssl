@@ -131,14 +131,14 @@ static int poll_two_fds(int rfd, int rfd_want_read,
     struct timeval tv, *ptv;
     int maxfd, pres;
 
-#ifndef OSSL_SYS_WINDOWS
+# ifndef OSSL_SYS_WINDOWS
     /*
      * On Windows there is no relevant limit to the magnitude of a fd value (see
      * above). On *NIX the fd_set uses a bitmap and we must check the limit.
      */
     if (rfd >= FD_SETSIZE || wfd >= FD_SETSIZE)
         return 0;
-#endif
+# endif
 
     FD_ZERO(&rfd_set);
     FD_ZERO(&wfd_set);

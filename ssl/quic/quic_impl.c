@@ -1023,6 +1023,7 @@ static int quic_read_actual(QUIC_CONNECTION *qc,
              * the peer).
              */
             OSSL_RTT_INFO rtt_info;
+
             ossl_statm_get_rtt_info(ossl_quic_channel_get_statm(qc->ch), &rtt_info);
 
             if (!ossl_quic_rxfc_on_retire(&qc->stream0->rxfc, *bytes_read,
