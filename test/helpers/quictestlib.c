@@ -7,11 +7,26 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include "quictestlib.h"
 #include "../testutil.h"
+#include "internal/quic_wire_pkt.h"
+#include "internal/quic_record_tx.h"
+
+#define GROWTH_ALLOWANCE 1024
 
 struct ossl_quic_fault {
     QUIC_TSERVER *qtserv;
+
+    /* Plain packet mutations */
+    /* Header for the plaintext packet */
+    QUIC_PKT_HDR pplainhdr;
+    /* iovec for the plaintext packet data buffer */
+    OSSL_QTX_IOVEC pplainio;
+    /* Allocted size of the plaintext packet data buffer */
+    size_t pplainbuf_alloc;
+    ossl_quic_fault_on_packet_plain_cb pplaincb;
+    void *pplaincbarg;
 };
 
 int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
@@ -146,4 +161,117 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
     ret = 1;
  err:
     return ret;
+}
+
+void ossl_quic_fault_free(OSSL_QUIC_FAULT *fault)
+{
+    if (fault == NULL)
+        return;
+
+    OPENSSL_free(fault);
+}
+
+static int packet_plain_mutate(const QUIC_PKT_HDR *hdrin,
+                               const OSSL_QTX_IOVEC *iovecin, size_t numin,
+                               QUIC_PKT_HDR **hdrout,
+                               const OSSL_QTX_IOVEC **iovecout,
+                               size_t *numout,
+                               void *arg)
+{
+    OSSL_QUIC_FAULT *fault = arg;
+    size_t i, bufsz = 0;
+    unsigned char *cur;
+
+    /* Coalesce our data into a single buffer */
+
+    /* First calculate required buffer size */
+    for (i = 0; i < numin; i++)
+        bufsz += iovecin[i].buf_len;
+
+    fault->pplainio.buf_len = bufsz;
+
+    /* Add an allowance for possible growth */
+    bufsz += GROWTH_ALLOWANCE;
+
+    fault->pplainio.buf = cur = OPENSSL_malloc(bufsz);
+    if (cur == NULL) {
+        fault->pplainio.buf_len = 0;
+        return 0;
+    }
+
+    fault->pplainbuf_alloc = bufsz;
+
+    /* Copy in the data from the input buffers */
+    for (i = 0; i < numin; i++) {
+        memcpy(cur, iovecin[i].buf, iovecin[i].buf_len);
+        cur += iovecin[i].buf_len;
+    }
+
+    fault->pplainhdr = *hdrin;
+
+    /* Cast below is safe because we allocated the buffer */
+    if (fault->pplaincb != NULL
+            && !fault->pplaincb(fault, &fault->pplainhdr,
+                                (unsigned char *)fault->pplainio.buf,
+                                fault->pplainio.buf_len, fault->pplaincbarg))
+        return 0;
+
+    *hdrout = &fault->pplainhdr;
+    *iovecout = &fault->pplainio;
+    *numout = 1;
+
+    return 1;
+}
+
+static void packet_plain_finish(void *arg)
+{
+    OSSL_QUIC_FAULT *fault = arg;
+
+    /* Cast below is safe because we allocated the buffer */
+    OPENSSL_free((unsigned char *)fault->pplainio.buf);
+    fault->pplainio.buf_len = 0;
+    fault->pplainbuf_alloc = 0;
+}
+
+int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
+                                              ossl_quic_fault_on_packet_plain_cb pplaincb,
+                                              void *pplaincbarg)
+{
+    fault->pplaincb = pplaincb;
+    fault->pplaincbarg = pplaincbarg;
+
+    return ossl_quic_tserver_set_mutator(fault->qtserv, packet_plain_mutate,
+                                         packet_plain_finish, fault);
+}
+
+/* To be called from a packet_plain_listener callback */
+int ossl_quic_fault_resize_plain_packet(OSSL_QUIC_FAULT *fault, size_t newlen)
+{
+    unsigned char *buf;
+    size_t oldlen = fault->pplainio.buf_len;
+
+    /*
+     * Alloc'd size should always be non-zero, so if this fails we've been
+     * incorrectly called
+     */
+    if (fault->pplainbuf_alloc == 0)
+        return 0;
+
+    if (newlen > fault->pplainbuf_alloc) {
+        /* This exceeds our growth allowance. Fail */
+        return 0;
+    }
+
+    /* Cast below is safe because we allocated the buffer */
+    buf = (unsigned char *)fault->pplainio.buf;
+
+    if (newlen > oldlen) {
+        /* Extend packet with 0 bytes */
+        memset(buf + oldlen, 0, newlen - oldlen);
+    } /* else we're truncating or staying the same */
+
+    fault->pplainio.buf_len = newlen;
+    fault->pplainhdr.len = newlen;
+
+    return 1;
 }
