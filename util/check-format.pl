@@ -301,14 +301,14 @@ sub report_flexibly {
     my $line = shift;
     my $msg = shift;
     my $contents = shift;
-    my $report_SPC = $msg =~ /space/;
+    my $report_SPC = $msg =~ /space|blank/;
     return if $report_SPC && $sloppy_SPC;
 
     print "$ARGV:$line:$msg:$contents" unless $self_test;
     $num_reports_line++;
     $num_reports++;
-    $num_indent_reports++ if $msg =~ m/indent/;
-    $num_nesting_issues++ if $msg =~ m/#if nesting/;
+    $num_indent_reports++ if $msg =~ m/:indent /;
+    $num_nesting_issues++ if $msg =~ m/ nesting indent /;
     $num_syntax_issues++  if $msg =~ m/unclosed|unexpected/;
     $num_SPC_reports++    if $report_SPC;
     $num_length_reports++ if $msg =~ m/length/;
