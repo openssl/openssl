@@ -165,8 +165,8 @@ my $count_before;          # number of leading whitespace characters (except lin
 my $has_label;             # current line contains label
 my $local_offset;          # current extra indent due to label, switch case/default, or leading closing brace(s)
 my $line_body_start;       # number of line where last function body started, or 0
-my $line_function_start;   # number of line where last function definition started, used if $line_body_start != 0
-my $last_function_header;  # header containing name of last function defined, used if $line_function_start != 0
+my $line_function_start;   # number of line where last function definition started, used for $line_body_start
+my $last_function_header;  # header containing name of last function defined, used if $line_body_start != 0
 my $line_opening_brace;    # number of previous line with opening brace after do/while/for, optionally for if/else
 
 my $keyword_opening_brace; # name of previous keyword, used if $line_opening_brace != 0
@@ -1129,7 +1129,7 @@ while (<>) { # loop over all lines of all input files
                 if (!$assignment_start && !$local_in_expr) {
                     # at end of function definition header (or stmt or var definition)
                     report("'{' not at line start") if length($head) != $preproc_offset && $head =~ m/\)\s*/; # at end of function definition header
-                    $line_body_start = $contents =~ m/LONG BODY/ ? 0 : $line;
+                    $line_body_start = $contents =~ m/LONG BODY/ ? 0 : $line if $line_function_start != 0;
                 }
             } else {
                 $line_opening_brace = $line if $keyword_opening_brace =~ m/do|while|for/;
