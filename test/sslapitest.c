@@ -399,7 +399,7 @@ static int test_keylog(void)
      * Now we want to test that our output data was vaguely sensible. We
      * do that by using strtok and confirming that we have more or less the
      * data we expect. For both client and server, we expect to see one master
-     * secret. The client should also see a RSA key exchange.
+     * secret. The client should also see an RSA key exchange.
      */
     expected.rsa_key_exchange_count = 1;
     expected.master_secret_count = 1;
