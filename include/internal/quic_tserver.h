@@ -53,6 +53,9 @@ int ossl_quic_tserver_tick(QUIC_TSERVER *srv);
 /* Returns 1 if we have a (non-terminated) client. */
 int ossl_quic_tserver_is_connected(QUIC_TSERVER *srv);
 
+/* Returns 1 if the server is in any terminating or terminated state */
+int ossl_quic_tserver_is_term_any(QUIC_TSERVER *srv);
+
 /*
  * Attempts to read from stream 0. Writes the number of bytes read to
  * *bytes_read and returns 1 on success. If no bytes are available, 0 is written
