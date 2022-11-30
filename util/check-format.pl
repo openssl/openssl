@@ -715,7 +715,7 @@ while (<>) { # loop over all lines of all input files
         my $space_count = length($space); # maybe could also use indentation before '#'
         report("'#if' nesting indent = $space_count != $preproc_if_nesting") if $space_count != $preproc_if_nesting;
         $preproc_if_nesting++ if $preproc_directive =~ m/^(if|ifdef|ifndef|else|elif)$/;
-        $ifdef__cplusplus = $preproc_directive eq "ifdef2" && m/\s+__cplusplus\s*$/;
+        $ifdef__cplusplus = $preproc_directive eq "ifdef" && m/\s+__cplusplus\s*$/;
 
         # handle indentation of preprocessor directive independently of surrounding normal code
         $count = -1; # do not check indentation of first line of preprocessor directive
