@@ -501,14 +501,13 @@ static int demux_process_pending_urxe(QUIC_DEMUX *demux, QUIC_URXE *e)
          * handler, pass it to the handler. Otherwise, we will never be able to
          * process this datagram, so get rid of it.
          */
+        ossl_list_urxe_remove(&demux->urx_pending, e);
         if (demux->default_cb != NULL) {
             /* Pass to default handler. */
-            ossl_list_urxe_remove(&demux->urx_pending, e);
             e->demux_state = URXE_DEMUX_STATE_ISSUED;
             demux->default_cb(e, demux->default_cb_arg);
         } else {
             /* Discard. */
-            ossl_list_urxe_remove(&demux->urx_pending, e);
             ossl_list_urxe_insert_tail(&demux->urx_free, e);
             e->demux_state = URXE_DEMUX_STATE_FREE;
         }
