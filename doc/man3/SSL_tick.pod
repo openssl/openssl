@@ -37,6 +37,11 @@ DTLSv1_handle_timeout(). Since SSL_tick() handles a superset of the use cases of
 DTLSv1_handle_timeout(), it should be preferred for new applications which do
 not require support for OpenSSL 3.1 or older.
 
+When using DTLS, an application must call SSL_tick() as indicated by calls to
+SSL_get_tick_timeout(); ticking is not performed automatically by calls to other
+SSL functions such as SSL_read() or SSL_write(). Note that this is different to
+QUIC which also performs ticking implicitly; see below.
+
 =item QUIC connection SSL objects
 
 Using SSL_tick() on an SSL object which represents a QUIC connection allows
@@ -48,9 +53,9 @@ Ordinarily, when an application uses an SSL object in blocking mode, it does not
 need to call SSL_tick() because OpenSSL performs ticking internally on an
 automatic basis. However, if an application uses a QUIC connection in
 nonblocking mode, it must at a minimum ensure that SSL_tick() is called
-periodically to allow timeout events to be handled. An application can
-find out when it next needs to call SSL_tick() for this purpose (if at all) by
-calling SSL_get_tick_timeout().
+periodically to allow timeout events to be handled. An application can find out
+when it next needs to call SSL_tick() for this purpose (if at all) by calling
+SSL_get_tick_timeout().
 
 Calling SSL_tick() on a QUIC connection SSL object being used in blocking mode
 is not necessary unless no I/O calls (such as SSL_read() or SSL_write()) will be
@@ -65,6 +70,9 @@ TODO(QUIC): Update the above paragraph once we support thread assisted mode.
 =end comment
 
 =back
+
+Calling SSL_tick() on any other kind of SSL object is a no-op. This is
+considered a success case.
 
 =head1 RETURN VALUES
 

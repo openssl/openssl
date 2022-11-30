@@ -18,9 +18,13 @@ can be used only on a QUIC connection SSL object, and can be used only before a
 connection attempt is first made. B<addr> must point to a B<BIO_ADDR>
 representing a UDP destination address of the server to connect to.
 
-In some cases, the initial destination peer address can be detected
-automatically when the SSL object is first provided with a suitable BIO. This
-behaviour can be overridden by calling SSL_set_initial_peer_addr() explicitly.
+Where a QUIC connection object is provided with a write BIO which supports the
+B<BIO_CTRL_DGRAM_GET_PEER> control (for example, B<BIO_s_dgram>), the initial
+destination peer address can be detected automatically; if
+B<BIO_CTRL_DGRAM_GET_PEER> returns a valid (non-B<AF_UNSPEC>) peer address and
+no valid peer address has yet been set, this will be set automatically as the
+initial peer address. This behaviour can be overridden by calling
+SSL_set_initial_peer_addr() with a valid peer address explicitly.
 
 The destination address used by QUIC may change over time in response to
 connection events, such as connection migration (where supported).
