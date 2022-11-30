@@ -19449,7 +19449,7 @@ ndif
    *Ralf S. Engelschall*
 
  * Incorporated the popular no-RSA/DSA-only patches
-   which allow to compile a RSA-free SSLeay.
+   which allow to compile an RSA-free SSLeay.
 
    *Andrew Cooke / Interrader Ldt., Ralf S. Engelschall*
 
