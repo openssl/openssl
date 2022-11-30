@@ -7049,9 +7049,17 @@ int SSL_tick(SSL *s)
 
     sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
     if (sc != NULL && SSL_CONNECTION_IS_DTLS(sc))
-        return DTLSv1_handle_timeout(s);
+        /*
+         * DTLSv1_handle_timeout returns 0 if the timer wasn't expired yet,
+         * which we consider a success case. Theoretically DTLSv1_handle_timeout
+         * can also return 0 if s is NULL or not a DTLS object, but we've
+         * already ruled out those possibilities above, so this is not possible
+         * here. Thus the only failure cases are where DTLSv1_handle_timeout
+         * returns -1.
+         */
+        return DTLSv1_handle_timeout(s) >= 0;
 
-    return 0;
+    return 1;
 }
 
 int SSL_get_tick_timeout(SSL *s, struct timeval *tv)
@@ -7066,15 +7074,13 @@ int SSL_get_tick_timeout(SSL *s, struct timeval *tv)
 #endif
 
     sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
-    if (sc != NULL && SSL_CONNECTION_IS_DTLS(sc)) {
-        if (!DTLSv1_get_timeout(s, tv)) {
-            tv->tv_sec  = -1;
-            tv->tv_usec = 0;
-        }
+    if (sc != NULL && SSL_CONNECTION_IS_DTLS(sc)
+        && DTLSv1_get_timeout(s, tv))
         return 1;
-    }
 
-    return 0;
+    tv->tv_sec  = -1;
+    tv->tv_usec = 0;
+    return 1;
 }
 
 int SSL_get_rpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
