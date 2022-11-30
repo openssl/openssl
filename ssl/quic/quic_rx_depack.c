@@ -356,7 +356,6 @@ static int depack_do_frame_max_streams(PACKET *pkt,
     ackm_data->is_ack_eliciting = 1;
 
     if (max_streams > (((uint64_t)1) << 60)) {
-        /* TODO: Protocol violation (FRAME_ENCODING_ERROR) */
         ossl_quic_channel_raise_protocol_error(ch,
                                                QUIC_ERR_FRAME_ENCODING_ERROR,
                                                frame_type,
