@@ -208,7 +208,7 @@ static int ch_init(QUIC_CHANNEL *ch)
         goto err;
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
-        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL);
+        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL, 0);
         if (ch->crypto_recv[pn_space] == NULL)
             goto err;
     }
@@ -221,7 +221,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     if ((ch->stream0->sstream = ossl_quic_sstream_new(INIT_APP_BUF_LEN)) == NULL)
         goto err;
 
-    if ((ch->stream0->rstream = ossl_quic_rstream_new(NULL, NULL)) == NULL)
+    if ((ch->stream0->rstream = ossl_quic_rstream_new(NULL, NULL, 0)) == NULL)
         goto err;
 
     if (!ossl_quic_txfc_init(&ch->stream0->txfc, &ch->conn_txfc))
