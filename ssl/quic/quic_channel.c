@@ -525,7 +525,7 @@ static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
         * data.
         */
         for (i = QUIC_ENC_LEVEL_INITIAL; i < enc_level; ++i)
-            if (!crypto_ensure_empty(ch->crypto_recv[i])) {
+            if (!crypto_ensure_empty(ch->crypto_recv[ossl_quic_enc_level_to_pn_space(i)])) {
                 /* Protocol violation (RFC 9001 s. 4.1.3) */
                 ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
                                                     OSSL_QUIC_FRAME_TYPE_CRYPTO,
@@ -549,7 +549,7 @@ static int ch_on_handshake_complete(void *arg)
 {
     QUIC_CHANNEL *ch = arg;
 
-    if (ch->handshake_complete)
+    if (!ossl_assert(!ch->handshake_complete))
         return 0; /* this should not happen twice */
 
     if (!ossl_assert(ch->tx_enc_level == QUIC_ENC_LEVEL_1RTT))
@@ -1422,10 +1422,8 @@ static int ch_retry(QUIC_CHANNEL *ch,
      * Now we retry. We will release the Retry packet immediately, so copy
      * the token.
      */
-    if ((buf = OPENSSL_malloc(retry_token_len)) == NULL)
+    if ((buf = OPENSSL_memdup(retry_token, retry_token_len)) == NULL)
         return 0;
-
-    memcpy(buf, retry_token, retry_token_len);
 
     ossl_quic_tx_packetiser_set_initial_token(ch->txp, buf, retry_token_len,
                                               free_token, NULL);
