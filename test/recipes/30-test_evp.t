@@ -28,6 +28,7 @@ my $no_dsa = disabled("dsa");
 my $no_ec = disabled("ec");
 my $no_sm2 = disabled("sm2");
 my $no_siv = disabled("siv");
+my $no_gost = disabled("gost");
 
 # Default config depends on if the legacy module is built or not
 my $defaultcnf = $no_legacy ? 'default.cnf' : 'default-and-legacy.cnf';
