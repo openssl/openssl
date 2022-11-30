@@ -411,7 +411,7 @@ int ossl_quic_tick(QUIC_CONNECTION *qc)
  */
 int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc, struct timeval *tv)
 {
-    OSSL_TIME now, deadline = ossl_time_infinite();
+    OSSL_TIME deadline = ossl_time_infinite();
 
     if (qc->ch != NULL)
         deadline
@@ -423,14 +423,7 @@ int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc, struct timeval *tv)
         return 1;
     }
 
-    now = ossl_time_now();
-    if (ossl_time_compare(now, deadline) >= 0) {
-        tv->tv_sec  = 0;
-        tv->tv_usec = 0;
-        return 1;
-    }
-
-    *tv = ossl_time_to_timeval(ossl_time_subtract(deadline, now));
+    *tv = ossl_time_to_timeval(ossl_time_subtract(deadline, ossl_time_now()));
     return 1;
 }
 
