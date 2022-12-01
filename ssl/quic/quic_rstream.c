@@ -185,7 +185,7 @@ int ossl_quic_rstream_get_record(QUIC_RSTREAM *qrs,
         return 0;
     }
 
-    rec_len_ = qrs->head_range.end - qrs->head_range.start;
+    rec_len_ = (size_t)(qrs->head_range.end - qrs->head_range.start);
 
     if (record_ == NULL && *rec_len != 0) {
         record_ = ring_buf_get_ptr(&qrs->rbuf, qrs->head_range.start);
