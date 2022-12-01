@@ -398,14 +398,18 @@ no state change occurs.
   <td><tt>SendPackets()</tt></td>
 </tr>
 <tr>
-  <td><tt>TERMINATING</tt></td>
-  <td></td>
+  <td rowspan="2"><tt>TERMINATING</tt></td>
+  <td rowspan="2"></td>
   <td>—<tt>TERMINATING_TIMEOUT</tt>→</td>
   <td><tt>TERMINATED</tt></td>
 </tr>
 <tr>
-  <td rowspan="4"><tt>TERMINATING.CLOSING</tt></td>
-  <td rowspan="4"><tt>enter:QueueConnectionCloseFrame()</tt><br/><tt>enter:SendPackets()</tt></td>
+  <td>—<tt>RX:STATELESS_RESET</tt>→</td>
+  <td><tt>TERMINATED</tt></td>
+</tr>
+<tr>
+  <td rowspan="3"><tt>TERMINATING.CLOSING</tt></td>
+  <td rowspan="3"><tt>enter:QueueConnectionCloseFrame()</tt><br/><tt>enter:SendPackets()</tt></td>
   <td>—<tt>RX:ANY[CONNECTION_CLOSE]</tt>→</td>
   <td><tt>TERMINATING.DRAINING</tt></td>
 </tr>
@@ -416,10 +420,6 @@ no state change occurs.
 <tr>
   <td>—<tt>CAN_SEND</tt>→</td>
   <td><tt>SendPackets()</tt></td>
-</tr>
-<tr>
-  <td>—<tt>RX:STATELESS_RESET</tt>→</td>
-  <td><tt>TERMINATED</tt></td>
 </tr>
 <tr>
   <td rowspan="1"><tt>TERMINATING.DRAINING</tt></td>
