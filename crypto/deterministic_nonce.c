@@ -158,9 +158,12 @@ int ossl_gen_deterministic_nonce_rfc6979(BIGNUM *out, const BIGNUM *q,
     unsigned char *entropyx = NULL, *nonceh = NULL, *T = NULL;
     size_t allocsz = 0;
 
+    if (out == NULL)
+        return 0;
+
     qlen_bits = BN_num_bits(q);
     if (qlen_bits == 0)
-        goto end;
+        return 0;
 
     /* Note rlen used here is in bytes since the input values are byte arrays */
     rlen = (qlen_bits + 7) / 8;
@@ -169,7 +172,7 @@ int ossl_gen_deterministic_nonce_rfc6979(BIGNUM *out, const BIGNUM *q,
     /* Use a single alloc for the buffers T, nonceh and entropyx */
     T = (unsigned char *)OPENSSL_zalloc(allocsz);
     if (T == NULL)
-        goto end;
+        return 0;
     nonceh = T + rlen;
     entropyx = nonceh + rlen;
 
