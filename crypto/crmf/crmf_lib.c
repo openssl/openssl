@@ -505,10 +505,12 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                 ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY);
                 return 0;
             }
+
             /*
-             * At this point, may check the contents of the authInfo sub-field,
-             * see RFC 4211 https://tools.ietf.org/html/rfc4211#section-4.1
+             * Should check at this point the contents of the authInfo sub-field
+             * as requested in FR #19807 according to RFC 4211 section 4.1.
              */
+
             it = ASN1_ITEM_rptr(OSSL_CRMF_POPOSIGNINGKEYINPUT);
             asn = sig->poposkInput;
         } else {

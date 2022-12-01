@@ -369,14 +369,12 @@ static void process_error(OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *error,
         BIO_printf(bio_err, "errorDetails absent\n");
     } else {
         BIO_printf(bio_err, "errorDetails: ");
-        /* Could use sk_ASN1_UTF8STRING2text() if it was exported */
         for (i = 0; i < sk_ASN1_UTF8STRING_num(errorDetails); i++) {
             if (i > 0)
                 BIO_printf(bio_err, ", ");
-            BIO_printf(bio_err, "\"");
-            ASN1_STRING_print(bio_err,
-                              sk_ASN1_UTF8STRING_value(errorDetails, i));
-            BIO_printf(bio_err, "\"");
+            ASN1_STRING_print_ex(bio_err,
+                                 sk_ASN1_UTF8STRING_value(errorDetails, i),
+                                 ASN1_STRFLGS_ESC_QUOTE);
         }
         BIO_printf(bio_err, "\n");
     }
