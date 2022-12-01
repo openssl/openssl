@@ -22,7 +22,7 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
-### Changes between 3.0 and 3.1 alpha 1 [1 Dec 2022]
+### Changes between 3.0 and 3.1.0 [xx XXX xxxx]
 
  * Our provider implementations of `OSSL_FUNC_KEYMGMT_EXPORT` and
    `OSSL_FUNC_KEYMGMT_GET_PARAMS` for EC and SM2 keys now honor
