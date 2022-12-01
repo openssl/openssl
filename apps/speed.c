@@ -62,8 +62,8 @@ VirtualLock(
     );
 #endif
 
-# if defined(OPENSSL_SYS_UNIX)
-#  include <sys/mman.h>
+#if defined(OPENSSL_SYS_LINUX)
+# include <sys/mman.h>
 #endif
 
 #include <openssl/bn.h>
