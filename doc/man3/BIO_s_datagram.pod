@@ -2,7 +2,14 @@
 
 =head1 NAME
 
-BIO_s_datagram - Network BIO with datagram semantics
+BIO_s_datagram, BIO_new_dgram,
+BIO_ctrl_dgram_connect,
+BIO_ctrl_set_connected,
+BIO_dgram_recv_timedout,
+BIO_dgram_send_timedout,
+BIO_dgram_get_peer,
+BIO_dgram_set_peer,
+BIO_dgram_get_mtu_overhead - Network BIO with datagram semantics
 
 =head1 SYNOPSIS
 
@@ -96,20 +103,20 @@ socket.
 
 If the peer argument is non-NULL, BIO_s_datagram() assumes that the underlying
 socket has been connected and will attempt to use the socket using OS APIs which
-do not specify peer addresses (for example, L<send(3)> and L<recv(3)> or
+do not specify peer addresses (for example, send(3) and recv(3) or
 similar). The peer argument should specify the peer address to which the socket
 is connected.
 
 If the peer argument is NULL, BIO_s_datagram() assumes that the underlying
 socket is not connected and will attempt to use the socket using an OS APIs
-which specify peer addresses (for example, L<sendto(3)> and L<recvfrom(3)>).
+which specify peer addresses (for example, sendto(3) and recvfrom(3)).
 
 This control does not affect the operation of L<BIO_sendmmsg(3)> or
 L<BIO_recvmmsg(3)>.
 
 =item BIO_dgram_get_peer (BIO_CTRL_DGRAM_GET_PEER)
 
-This outputs a L<BIO_ADDR> which specifies one of the following values,
+This outputs a B<BIO_ADDR> which specifies one of the following values,
 whichever happened most recently:
 
 =over 4
@@ -160,7 +167,7 @@ headers or IPv4 options are used.
 
 =item BIO_CTRL_DGRAM_SET_DONT_FRAG
 
-If B<num> is non-zero, configures the underlying network socket to enable Don't
+If B<num> is nonzero, configures the underlying network socket to enable Don't
 Fragment mode, in which datagrams will be set with the IP Don't Fragment (DF)
 bit set. If B<num> is zero, Don't Fragment mode is disabled.
 
@@ -198,7 +205,7 @@ calls.
 
 =item BIO_CTRL_DGRAM_SET_PEEK_MODE
 
-If B<num> is non-zero, enables peek mode; otherwise, disables peek mode. Where
+If B<num> is nonzero, enables peek mode; otherwise, disables peek mode. Where
 peek mode is enabled, calls to L<BIO_read(3)> read datagrams from the underlying
 network socket in peek mode, meaning that a future call to L<BIO_read(3)> will
 yield the same datagram until peek mode is disabled.
