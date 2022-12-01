@@ -605,28 +605,6 @@ static int depack_do_frame_handshake_done(PACKET *pkt,
     return 1;
 }
 
-static int depack_do_frame_unknown_extension(PACKET *pkt,
-                                             QUIC_CHANNEL *ch,
-                                             OSSL_ACKM_RX_PKT *ackm_data)
-{
-    /*
-     * According to RFC 9000, 19.21. Extension Frames, extension frames
-     * should be ACK eliciting.  It might be over zealous to do so for
-     * extensions OpenSSL doesn't know how to handle, but shouldn't hurt
-     * either.
-     */
-
-    /* This frame makes the packet ACK eliciting */
-    ackm_data->is_ack_eliciting = 1;
-
-    /*
-     * Because we have no idea how to advance to the next frame, we return 0
-     * everywhere, thereby stopping the depacketizing process.
-     */
-
-    return 0;
-}
-
 /* Main frame processor */
 
 static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
@@ -911,11 +889,12 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
             break;
 
         default:
-            /* Unknown frame type. */
-            if (!depack_do_frame_unknown_extension(pkt, ch, ackm_data))
-                return 0;
-
-            break;
+            /* Unknown frame type */
+            ossl_quic_channel_raise_protocol_error(ch,
+                                                   QUIC_ERR_PROTOCOL_VIOLATION,
+                                                   frame_type,
+                                                   "Unknown frame type received");
+            return 0;
         }
     }
 
