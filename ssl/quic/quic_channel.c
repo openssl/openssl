@@ -398,21 +398,34 @@ int ossl_quic_channel_is_active(const QUIC_CHANNEL *ch)
     return ch != NULL && ch->state == QUIC_CHANNEL_STATE_ACTIVE;
 }
 
-int ossl_quic_channel_is_terminating(const QUIC_CHANNEL *ch)
+int ossl_quic_channel_is_terminating(const QUIC_CHANNEL *ch,
+                                     QUIC_TERMINATE_CAUSE *cause)
 {
-    return ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING
-        || ch->state == QUIC_CHANNEL_STATE_TERMINATING_DRAINING;
+    if (ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING
+            || ch->state == QUIC_CHANNEL_STATE_TERMINATING_DRAINING) {
+        if (cause != NULL)
+            *cause = ch->terminate_cause;
+        return 1;
+    }
+    return 0;
 }
 
-int ossl_quic_channel_is_terminated(const QUIC_CHANNEL *ch)
+int ossl_quic_channel_is_terminated(const QUIC_CHANNEL *ch,
+                                    QUIC_TERMINATE_CAUSE *cause)
 {
-    return ch->state == QUIC_CHANNEL_STATE_TERMINATED;
+    if (ch->state == QUIC_CHANNEL_STATE_TERMINATED) {
+        if (cause != NULL)
+            *cause = ch->terminate_cause;
+        return 1;
+    }
+    return 0;
 }
 
-int ossl_quic_channel_is_term_any(const QUIC_CHANNEL *ch)
+int ossl_quic_channel_is_term_any(const QUIC_CHANNEL *ch,
+                                  QUIC_TERMINATE_CAUSE *cause)
 {
-    return ossl_quic_channel_is_terminating(ch)
-        || ossl_quic_channel_is_terminated(ch);
+    return ossl_quic_channel_is_terminating(ch, cause)
+        || ossl_quic_channel_is_terminated(ch, cause);
 }
 
 int ossl_quic_channel_is_handshake_complete(const QUIC_CHANNEL *ch)
@@ -1191,7 +1204,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
      */
 
     /* If we are in the TERMINATED state, there is nothing to do. */
-    if (ossl_quic_channel_is_terminated(ch)) {
+    if (ossl_quic_channel_is_terminated(ch, NULL)) {
         res->net_read_desired   = 0;
         res->net_write_desired  = 0;
         res->tick_deadline      = ossl_time_infinite();
@@ -1202,7 +1215,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
      * If we are in the TERMINATING state, check if the terminating timer has
      * expired.
      */
-    if (ossl_quic_channel_is_terminating(ch)) {
+    if (ossl_quic_channel_is_terminating(ch, NULL)) {
         now = ossl_time_now();
 
         if (ossl_time_compare(now, ch->terminate_deadline) >= 0) {
@@ -1273,11 +1286,11 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
      * errors in ch_rx_pre() or ch_tx() may have caused us to transition to the
      * Terminated state.
      */
-    res->net_read_desired = !ossl_quic_channel_is_terminated(ch);
+    res->net_read_desired = !ossl_quic_channel_is_terminated(ch, NULL);
 
     /* We want to write to the network if we have any in our queue. */
     res->net_write_desired
-        = (!ossl_quic_channel_is_terminated(ch)
+        = (!ossl_quic_channel_is_terminated(ch, NULL)
            && ossl_qtx_get_queue_len_datagrams(ch->qtx) > 0);
 }
 
@@ -1581,7 +1594,7 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
     OSSL_TIME deadline;
     uint32_t pn_space;
 
-    if (ossl_quic_channel_is_terminated(ch))
+    if (ossl_quic_channel_is_terminated(ch, NULL))
         return ossl_time_infinite();
 
     deadline = ossl_ackm_get_loss_detection_deadline(ch->ackm);
@@ -1599,7 +1612,7 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
                                  ch->cc_method->get_next_credit_time(ch->cc_data));
 
     /* Is the terminating timer armed? */
-    if (ossl_quic_channel_is_terminating(ch))
+    if (ossl_quic_channel_is_terminating(ch, NULL))
         deadline = ossl_time_min(deadline,
                                  ch->terminate_deadline);
     else if (!ossl_time_is_infinite(ch->idle_deadline))
@@ -1729,7 +1742,7 @@ void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
 
-    if (ossl_quic_channel_is_term_any(ch))
+    if (ossl_quic_channel_is_term_any(ch, NULL))
         return;
 
     tcause.app          = 1;

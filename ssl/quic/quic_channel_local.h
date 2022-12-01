@@ -5,33 +5,6 @@
 
 # ifndef OPENSSL_NO_QUIC
 
-/* Represents the cause for a connection's termination. */
-typedef struct quic_terminate_cause_st {
-    /*
-     * If we are in a TERMINATING or TERMINATED state, this is the error code
-     * associated with the error. This field is valid iff we are in the
-     * TERMINATING or TERMINATED states.
-     */
-    uint64_t                        error_code;
-
-    /*
-     * If terminate_app is set and this is nonzero, this is the frame type which
-     * caused the connection to be terminated.
-     */
-    uint64_t                        frame_type;
-
-    /* Is this error code in the transport (0) or application (1) space? */
-    unsigned int                    app : 1;
-
-    /*
-     * If set, the cause of the termination is a received CONNECTION_CLOSE
-     * frame. Otherwise, we decided to terminate ourselves and sent a
-     * CONNECTION_CLOSE frame (regardless of whether the peer later also sends
-     * one).
-     */
-    unsigned int                    remote : 1;
-} QUIC_TERMINATE_CAUSE;
-
 /*
  * QUIC Channel Structure
  * ======================
