@@ -11,6 +11,7 @@ OpenSSL Releases
 ----------------
 
  - [OpenSSL 3.2](#openssl-32)
+ - [OpenSSL 3.1](#openssl-31)
  - [OpenSSL 3.0](#openssl-30)
  - [OpenSSL 1.1.1](#openssl-111)
  - [OpenSSL 1.1.0](#openssl-110)
@@ -22,7 +23,7 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
-### Changes between 3.0 and 3.2 [xx XXX xxxx]
+### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
  * Added support for Hybrid Public Key Encryption (HPKE) as defined
    in RFC9180. HPKE is required for TLS Encrypted ClientHello (ECH),
@@ -92,36 +93,6 @@ OpenSSL 3.2
 
    *Darshan Sen*
 
- * Our provider implementations of `OSSL_FUNC_KEYMGMT_EXPORT` and
-   `OSSL_FUNC_KEYMGMT_GET_PARAMS` for EC and SM2 keys now honor
-   `OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT` as set (and
-   default to `POINT_CONVERSION_UNCOMPRESSED`) when exporting
-   `OSSL_PKEY_PARAM_PUB_KEY`, instead of unconditionally using
-   `POINT_CONVERSION_COMPRESSED` as in previous 3.x releases.
-   For symmetry, our implementation of `EVP_PKEY_ASN1_METHOD->export_to`
-   for legacy EC and SM2 keys is also changed similarly to honor the
-   equivalent conversion format flag as specified in the underlying
-   `EC_KEY` object being exported to a provider, when this function is
-   called through `EVP_PKEY_export()`.
-
-   *Nicola Tuveri*
-
- * RNDR and RNDRRS support in provider functions to provide
-   random number generation for Arm CPUs (aarch64).
-
-   *Orr Toledano*
-
- * s_client and s_server apps now explicitly say when the TLS version
-   does not include the renegotiation mechanism. This avoids confusion
-   between that scenario versus when the TLS version includes secure
-   renegotiation but the peer lacks support for it.
-
-   *Felipe Gasper*
-
- * AES-GCM enabled with AVX512 vAES and vPCLMULQDQ.
-
-   *Tomasz Kantecki, Andrey Matyukov*
-
  * The default SSL/TLS security level has been changed from 1 to 2. RSA,
    DSA and DH keys of 1024 bits and above and less than 2048 bits and ECC keys
    of 160 bits and above and less than 224 bits were previously accepted by
@@ -141,11 +112,6 @@ OpenSSL 3.2
    will need to load the legacy crypto provider.
 
    *Paul Dale*
-
- * The various OBJ_* functions have been made thread safe.
-
-   *Paul Dale*
-
  * CCM8 cipher suites in TLS have been downgraded to security level zero
    because they use a short authentication tag which lowers their strength.
 
@@ -155,33 +121,6 @@ OpenSSL 3.2
    by default.
 
    *Dmitry Belyavskiy*
-
- * Parallel dual-prime 1536/2048-bit modular exponentiation for
-   AVX512_IFMA capable processors.
-
-   *Sergey Kirillov, Andrey Matyukov (Intel Corp)*
-
- * The functions `OPENSSL_LH_stats`, `OPENSSL_LH_node_stats`,
-   `OPENSSL_LH_node_usage_stats`, `OPENSSL_LH_stats_bio`,
-   `OPENSSL_LH_node_stats_bio` and `OPENSSL_LH_node_usage_stats_bio` are now
-   marked deprecated from OpenSSL 3.2 onwards and can be disabled by defining
-   `OPENSSL_NO_DEPRECATED_3_2`.
-
-   The macro `DEFINE_LHASH_OF` is now deprecated in favour of the macro
-   `DEFINE_LHASH_OF_EX`, which omits the corresponding type-specific function
-   definitions for these functions regardless of whether
-   `OPENSSL_NO_DEPRECATED_3_2` is defined.
-
-   Users of `DEFINE_LHASH_OF` may start receiving deprecation warnings for these
-   functions regardless of whether they are using them. It is recommended that
-   users transition to the new macro, `DEFINE_LHASH_OF_EX`.
-
-   *Hugo Landau*
-
- * When generating safe-prime DH parameters set the recommended private key
-   length equivalent to minimum key lengths as in RFC 7919.
-
-   *Tomáš Mráz*
 
  * Add X.509 certificate codeSigning purpose and related checks on key usage and
    extended key usage of the leaf certificate according to the CA/Browser Forum.
@@ -252,6 +191,72 @@ OpenSSL 3.2
  * Zerocopy KTLS sendfile() support on Linux.
 
    *Maxim Mikityanskiy*
+
+OpenSSL 3.1
+-----------
+
+### Changes between 3.0 and 3.1.0 [xx XXX xxxx]
+
+ * Our provider implementations of `OSSL_FUNC_KEYMGMT_EXPORT` and
+   `OSSL_FUNC_KEYMGMT_GET_PARAMS` for EC and SM2 keys now honor
+   `OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT` as set (and
+   default to `POINT_CONVERSION_UNCOMPRESSED`) when exporting
+   `OSSL_PKEY_PARAM_PUB_KEY`, instead of unconditionally using
+   `POINT_CONVERSION_COMPRESSED` as in previous 3.x releases.
+   For symmetry, our implementation of `EVP_PKEY_ASN1_METHOD->export_to`
+   for legacy EC and SM2 keys is also changed similarly to honor the
+   equivalent conversion format flag as specified in the underlying
+   `EC_KEY` object being exported to a provider, when this function is
+   called through `EVP_PKEY_export()`.
+
+   *Nicola Tuveri*
+
+ * RNDR and RNDRRS support in provider functions to provide
+   random number generation for Arm CPUs (aarch64).
+
+   *Orr Toledano*
+
+ * s_client and s_server apps now explicitly say when the TLS version
+   does not include the renegotiation mechanism. This avoids confusion
+   between that scenario versus when the TLS version includes secure
+   renegotiation but the peer lacks support for it.
+
+   *Felipe Gasper*
+
+ * AES-GCM enabled with AVX512 vAES and vPCLMULQDQ.
+
+   *Tomasz Kantecki, Andrey Matyukov*
+
+ * The various OBJ_* functions have been made thread safe.
+
+   *Paul Dale*
+
+ * Parallel dual-prime 1536/2048-bit modular exponentiation for
+   AVX512_IFMA capable processors.
+
+   *Sergey Kirillov, Andrey Matyukov (Intel Corp)*
+
+ * The functions `OPENSSL_LH_stats`, `OPENSSL_LH_node_stats`,
+   `OPENSSL_LH_node_usage_stats`, `OPENSSL_LH_stats_bio`,
+   `OPENSSL_LH_node_stats_bio` and `OPENSSL_LH_node_usage_stats_bio` are now
+   marked deprecated from OpenSSL 3.1 onwards and can be disabled by defining
+   `OPENSSL_NO_DEPRECATED_3_1`.
+
+   The macro `DEFINE_LHASH_OF` is now deprecated in favour of the macro
+   `DEFINE_LHASH_OF_EX`, which omits the corresponding type-specific function
+   definitions for these functions regardless of whether
+   `OPENSSL_NO_DEPRECATED_3_1` is defined.
+
+   Users of `DEFINE_LHASH_OF` may start receiving deprecation warnings for these
+   functions regardless of whether they are using them. It is recommended that
+   users transition to the new macro, `DEFINE_LHASH_OF_EX`.
+
+   *Hugo Landau*
+
+ * When generating safe-prime DH parameters set the recommended private key
+   length equivalent to minimum key lengths as in RFC 7919.
+
+   *Tomáš Mráz*
 
 OpenSSL 3.0
 -----------
