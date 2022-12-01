@@ -144,7 +144,7 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
             SSL_tick(clientssl);
         if (!servererr) {
             ossl_quic_tserver_tick(qtserv);
-            servererr = ossl_quic_tserver_is_term_any(qtserv);
+            servererr = ossl_quic_tserver_is_term_any(qtserv, NULL);
             if (!servererr && !rets)
                 rets = ossl_quic_tserver_is_connected(qtserv);
         }

@@ -12,6 +12,7 @@
 
 # include <openssl/ssl.h>
 # include "internal/quic_stream.h"
+# include "internal/quic_channel.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -54,8 +55,12 @@ int ossl_quic_tserver_tick(QUIC_TSERVER *srv);
 int ossl_quic_tserver_is_connected(QUIC_TSERVER *srv);
 
 /* Returns 1 if the server is in any terminating or terminated state */
-int ossl_quic_tserver_is_term_any(QUIC_TSERVER *srv);
+int ossl_quic_tserver_is_term_any(QUIC_TSERVER *srv,
+                                  QUIC_TERMINATE_CAUSE *cause);
 
+/* Returns 1 if the server is in a terminated state */
+int ossl_quic_tserver_is_terminated(QUIC_TSERVER *srv,
+                                    QUIC_TERMINATE_CAUSE *cause);
 /*
  * Attempts to read from stream 0. Writes the number of bytes read to
  * *bytes_read and returns 1 on success. If no bytes are available, 0 is written
