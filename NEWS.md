@@ -21,14 +21,21 @@ OpenSSL 3.1
 
 ### Major changes between OpenSSL 3.0 and OpenSSL 3.1.0 [under development]
 
+  * SSL 3, TLS 1.0, TLS 1.1, and DTLS 1.0 only work at security level 0.
+  * Performance enhancements and new platform support including new
+    assembler code algorithm implementations.
+  * Deprecated LHASH statistics functions.
+  * FIPS 140-3 compliance changes.
+
+OpenSSL 3.0
+-----------
+
+### Major changes between OpenSSL 3.0.6 and OpenSSL 3.0.7 [1 Nov 2022]
+
   * Added RIPEMD160 to the default provider.
   * Fixed regressions introduced in 3.0.6 version.
   * Fixed two buffer overflows in punycode decoding functions.
     ([CVE-2022-3786]) and ([CVE-2022-3602])
-  * SSL 3, TLS 1.0, TLS 1.1, and DTLS 1.0 only work at security level 0.
-
-OpenSSL 3.0
------------
 
 ### Major changes between OpenSSL 3.0.5 and OpenSSL 3.0.6 [11 Oct 2022]
 
