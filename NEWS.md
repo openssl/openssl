@@ -19,7 +19,7 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
-### Major changes between OpenSSL 3.0 and OpenSSL 3.1.0 [under development]
+### Major changes between OpenSSL 3.0 and OpenSSL 3.1 alpha 1 [in pre-release]
 
   * SSL 3, TLS 1.0, TLS 1.1, and DTLS 1.0 only work at security level 0.
   * Performance enhancements and new platform support including new
