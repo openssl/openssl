@@ -47,7 +47,7 @@ different return type for the pointer.
 =head1 RETURN VALUES
 
 EVP_CIPHER_CTX_get_original_iv() and EVP_CIPHER_CTX_get_updated_iv() return 1
-on success and 0 on failure.
+on success and <=0 on failure.
 
 The functions EVP_CIPHER_CTX_iv(), EVP_CIPHER_CTX_original_iv(), and
 EVP_CIPHER_CTX_iv_noconst() return a pointer to an IV as an array of bytes on
