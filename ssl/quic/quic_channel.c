@@ -2080,3 +2080,8 @@ static int ch_server_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     ch->doing_proactive_ver_neg = 0; /* not currently supported */
     return 1;
 }
+
+SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch)
+{
+    return ch->tls;
+}
