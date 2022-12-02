@@ -3213,8 +3213,8 @@ static int test_evp_iv_aes(int idx)
             || !TEST_true(EVP_EncryptInit_ex(ctx, type, NULL, key, init_iv))
             || !TEST_true(EVP_EncryptUpdate(ctx, ciphertext, &len, msg,
                           (int)sizeof(msg)))
-            || !TEST_true(EVP_CIPHER_CTX_get_original_iv(ctx, oiv, sizeof(oiv)))
-            || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)))
+            || !TEST_int_gt(EVP_CIPHER_CTX_get_original_iv(ctx, oiv, sizeof(oiv)), 0)
+            || !TEST_int_gt(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)), 0)
             || !TEST_true(EVP_EncryptFinal_ex(ctx, ciphertext, &len)))
         goto err;
     ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
@@ -3224,7 +3224,7 @@ static int test_evp_iv_aes(int idx)
 
     /* CBC, OFB, and CFB modes: the updated iv must be reset after reinit */
     if (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, NULL))
-        || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv))))
+        || !TEST_int_gt(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)), 0))
         goto err;
     if (iv_reset) {
         if (!TEST_mem_eq(init_iv, ivlen, iv, ivlen))
@@ -3324,8 +3324,8 @@ static int test_evp_iv_des(int idx)
             || !TEST_true(EVP_EncryptInit_ex(ctx, type, NULL, key, init_iv))
             || !TEST_true(EVP_EncryptUpdate(ctx, ciphertext, &len, msg,
                           (int)sizeof(msg)))
-            || !TEST_true(EVP_CIPHER_CTX_get_original_iv(ctx, oiv, sizeof(oiv)))
-            || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)))
+            || !TEST_int_gt(EVP_CIPHER_CTX_get_original_iv(ctx, oiv, sizeof(oiv)), 0)
+            || !TEST_int_gt(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)), 0)
             || !TEST_true(EVP_EncryptFinal_ex(ctx, ciphertext, &len)))
         goto err;
     ivlen = EVP_CIPHER_CTX_get_iv_length(ctx);
@@ -3334,7 +3334,7 @@ static int test_evp_iv_des(int idx)
         goto err;
 
     if (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, NULL))
-        || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv))))
+        || !TEST_int_gt(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)), 0))
         goto err;
     if (!TEST_mem_eq(init_iv, ivlen, iv, ivlen))
         goto err;
@@ -3877,7 +3877,7 @@ static int test_evp_updated_iv(int idx)
         errmsg = "CIPHER_UPDATE";
         goto err;
     }
-    if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, updated_iv, sizeof(updated_iv)))) {
+    if (!TEST_int_gt(EVP_CIPHER_CTX_get_updated_iv(ctx, updated_iv, sizeof(updated_iv)), 0)) {
         errmsg = "CIPHER_CTX_GET_UPDATED_IV";
         goto err;
     }
