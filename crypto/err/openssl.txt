@@ -1043,6 +1043,7 @@ PROV_R_INVALID_KDF:232:invalid kdf
 PROV_R_INVALID_KEY:158:invalid key
 PROV_R_INVALID_KEY_LENGTH:105:invalid key length
 PROV_R_INVALID_MAC:151:invalid mac
+PROV_R_INVALID_MEMORY_SIZE:233:invalid memory size
 PROV_R_INVALID_MGF1_MD:167:invalid mgf1 md
 PROV_R_INVALID_MODE:125:invalid mode
 PROV_R_INVALID_OUTPUT_LENGTH:217:invalid output length
@@ -1054,6 +1055,7 @@ PROV_R_INVALID_SIGNATURE_SIZE:179:invalid signature size
 PROV_R_INVALID_STATE:212:invalid state
 PROV_R_INVALID_TAG:110:invalid tag
 PROV_R_INVALID_TAG_LENGTH:118:invalid tag length
+PROV_R_INVALID_THREAD_POOL_SIZE:234:invalid thread pool size
 PROV_R_INVALID_UKM_LENGTH:200:invalid ukm length
 PROV_R_INVALID_X931_DIGEST:170:invalid x931 digest
 PROV_R_IN_ERROR_STATE:192:in error state
