@@ -240,8 +240,10 @@ int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
     fault->pplaincb = pplaincb;
     fault->pplaincbarg = pplaincbarg;
 
-    return ossl_quic_tserver_set_mutator(fault->qtserv, packet_plain_mutate,
-                                         packet_plain_finish, fault);
+    return ossl_quic_tserver_set_plain_packet_mutator(fault->qtserv,
+                                                      packet_plain_mutate,
+                                                      packet_plain_finish,
+                                                      fault);
 }
 
 /* To be called from a packet_plain_listener callback */

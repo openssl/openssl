@@ -123,13 +123,24 @@ void ossl_quic_tserver_free(QUIC_TSERVER *srv)
 }
 
 /* Set mutator callbacks for test framework support */
-int ossl_quic_tserver_set_mutator(QUIC_TSERVER *srv,
-                                  ossl_mutate_packet_cb mutatecb,
-                                  ossl_finish_mutate_cb finishmutatecb,
-                                  void *mutatearg)
+int ossl_quic_tserver_set_plain_packet_mutator(QUIC_TSERVER *srv,
+                                               ossl_mutate_packet_cb mutatecb,
+                                               ossl_finish_mutate_cb finishmutatecb,
+                                               void *mutatearg)
 {
     return ossl_quic_channel_set_mutator(srv->ch, mutatecb, finishmutatecb,
                                          mutatearg);
+}
+
+int ossl_quic_tserver_set_handshake_mutator(QUIC_TSERVER *srv,
+                                            ossl_statem_mutate_handshake_cb mutate_handshake_cb,
+                                            ossl_statem_finish_mutate_handshake_cb finish_mutate_handshake_cb,
+                                            void *mutatearg)
+{
+    return ossl_statem_set_mutator(ossl_quic_channel_get0_ssl(srv->ch),
+                                   mutate_handshake_cb,
+                                   finish_mutate_handshake_cb,
+                                   mutatearg);
 }
 
 int ossl_quic_tserver_tick(QUIC_TSERVER *srv)

@@ -29,7 +29,7 @@
 # include <openssl/ct.h>
 # include "record/record.h"
 # include "internal/recordmethod.h"
-# include "statem/statem.h"
+# include "internal/statem.h"
 # include "internal/packet.h"
 # include "internal/dane.h"
 # include "internal/refcount.h"

@@ -195,6 +195,8 @@ int ossl_quic_channel_is_terminated(const QUIC_CHANNEL *ch,
 int ossl_quic_channel_is_active(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_handshake_complete(const QUIC_CHANNEL *ch);
 
+SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch);
+
 # endif
 
 #endif
