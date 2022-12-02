@@ -1147,7 +1147,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
              * rounding errors.
              */
             if (id == 0
-                    && sess->timeout >= (long)agesec
+                    && sess->timeout >= (time_t)agesec
                     && agems / (uint32_t)1000 == agesec
                     && ticket_age <= agems + 1000
                     && ticket_age + TICKET_AGE_ALLOWANCE >= agems + 1000) {
