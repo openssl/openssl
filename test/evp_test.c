@@ -426,7 +426,6 @@ static int digest_test_run(EVP_TEST *t)
     int xof = 0;
     OSSL_PARAM params[2];
 
-    printf("test %s (%d %d)\n", t->name, t->s.start, t->s.curr);
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
         goto err;
