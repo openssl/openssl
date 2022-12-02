@@ -59,9 +59,11 @@ __owur static int timeoutcmp(SSL_SESSION *a, SSL_SESSION *b)
  */
 void ssl_session_calculate_timeout(SSL_SESSION *ss)
 {
+#ifndef __DJGPP__ /* time_t is unsigned on djgpp */
     /* Force positive timeout */
     if (ss->timeout < 0)
         ss->timeout = 0;
+#endif
     ss->calc_timeout = ss->time + ss->timeout;
     /*
      * |timeout| is always zero or positive, so the check for
@@ -70,7 +72,7 @@ void ssl_session_calculate_timeout(SSL_SESSION *ss)
     ss->timeout_ovf = ss->time > 0 && ss->calc_timeout < ss->time;
     /*
      * N.B. Realistic overflow can only occur in our lifetimes on a
-     *      32-bit machine in January 2038.
+     *      32-bit machine with signed time_t, in January 2038.
      *      However, There are no controls to limit the |timeout|
      *      value, except to keep it positive.
      */
