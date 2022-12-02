@@ -1289,7 +1289,8 @@ EVP_CIPHER_CTX_is_encrypting() returns 1 if the I<ctx> is set up for encryption
 EVP_CIPHER_param_to_asn1() and EVP_CIPHER_asn1_to_param() return greater
 than zero for success and zero or a negative number on failure.
 
-EVP_CIPHER_CTX_rand_key() returns 1 for success.
+EVP_CIPHER_CTX_rand_key() returns 1 for success and zero or a negative number
+for failure.
 
 EVP_CIPHER_names_do_all() returns 1 if the callback was called for all names.
 A return value of 0 means that the callback was not called for any names.

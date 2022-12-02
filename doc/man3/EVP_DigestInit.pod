@@ -615,7 +615,7 @@ EVP_MD_get_block_size(),
 EVP_MD_CTX_get_size(),
 EVP_MD_CTX_get_block_size()
 
-Returns the digest or block size in bytes.
+Returns the digest or block size in bytes or -1 for failure.
 
 =item EVP_md_null()
 
