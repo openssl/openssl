@@ -2040,7 +2040,7 @@ static int test_EVP_SM2(void)
                                         sizeof(kMsg))))
             goto done;
 
-        if (!TEST_true(EVP_PKEY_decrypt_init(cctx)))
+        if (!TEST_int_gt(EVP_PKEY_decrypt_init(cctx), 0))
             goto done;
 
         if (!TEST_true(EVP_PKEY_CTX_set_params(cctx, sparams)))
