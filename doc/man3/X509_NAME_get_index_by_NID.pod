@@ -80,7 +80,7 @@ X509_NAME_get_index_by_NID() can also return -2 if the supplied
 NID is invalid.
 
 X509_NAME_entry_count() returns the total number of entries, and 0
-and -1 for failure.
+for failure.
 
 X509_NAME_get_entry() returns an B<X509_NAME> pointer to the
 requested entry or B<NULL> if the index is invalid.

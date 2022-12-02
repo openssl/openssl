@@ -121,7 +121,7 @@ using X509_EXTENSION_free().
 
 =head1 RETURN VALUES
 
-X509v3_get_ext_count() returns the extension count or 0 and -1 for failure.
+X509v3_get_ext_count() returns the extension count or 0 for failure.
 
 X509v3_get_ext(), X509v3_delete_ext() and X509_delete_ext() return an
 B<X509_EXTENSION> structure or NULL if an error occurs.
