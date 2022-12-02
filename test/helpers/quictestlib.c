@@ -12,6 +12,7 @@
 #include "../testutil.h"
 #include "internal/quic_wire_pkt.h"
 #include "internal/quic_record_tx.h"
+#include "internal/packet.h"
 
 #define GROWTH_ALLOWANCE 1024
 
@@ -27,7 +28,22 @@ struct ossl_quic_fault {
     size_t pplainbuf_alloc;
     ossl_quic_fault_on_packet_plain_cb pplaincb;
     void *pplaincbarg;
+
+    /* Handshake message mutations */
+    /* Handshake message buffer */
+    unsigned char *handbuf;
+    /* Allocated size of the handshake message buffer */
+    size_t handbufalloc;
+    /* Actual length of the handshake message */
+    size_t handbuflen;
+    ossl_quic_fault_on_handshake_cb handshakecb;
+    void *handshakecbarg;
+    ossl_quic_fault_on_enc_ext_cb encextcb;
+    void *encextcbarg;
 };
+
+static void packet_plain_finish(void *arg);
+static void handshake_finish(void *arg);
 
 int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
                               QUIC_TSERVER **qtserv, SSL **cssl,
@@ -168,6 +184,9 @@ void ossl_quic_fault_free(OSSL_QUIC_FAULT *fault)
     if (fault == NULL)
         return;
 
+    packet_plain_finish(fault);
+    handshake_finish(fault);
+
     OPENSSL_free(fault);
 }
 
@@ -231,6 +250,7 @@ static void packet_plain_finish(void *arg)
     OPENSSL_free((unsigned char *)fault->pplainio.buf);
     fault->pplainio.buf_len = 0;
     fault->pplainbuf_alloc = 0;
+    fault->pplainio.buf = NULL;
 }
 
 int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
@@ -274,6 +294,204 @@ int ossl_quic_fault_resize_plain_packet(OSSL_QUIC_FAULT *fault, size_t newlen)
 
     fault->pplainio.buf_len = newlen;
     fault->pplainhdr.len = newlen;
+
+    return 1;
+}
+
+static int handshake_mutate(const unsigned char *msgin, size_t msginlen,
+                            unsigned char **msgout, size_t *msgoutlen,
+                            void *arg)
+{
+    OSSL_QUIC_FAULT *fault = arg;
+    unsigned char *buf;
+    unsigned long payloadlen;
+    unsigned int msgtype;
+    PACKET pkt;
+
+    buf = OPENSSL_malloc(msginlen + GROWTH_ALLOWANCE);
+    if (buf == NULL)
+        return 0;
+
+    fault->handbuf = buf;
+    fault->handbuflen = msginlen;
+    fault->handbufalloc = msginlen + GROWTH_ALLOWANCE;
+    memcpy(buf, msgin, msginlen);
+
+    if (!PACKET_buf_init(&pkt, buf, msginlen)
+            || !PACKET_get_1(&pkt, &msgtype)
+            || !PACKET_get_net_3(&pkt, &payloadlen)
+            || PACKET_remaining(&pkt) != payloadlen)
+        return 0;
+
+    /* Parse specific message types */
+    switch (msgtype) {
+    case SSL3_MT_ENCRYPTED_EXTENSIONS:
+    {
+        OSSL_QF_ENCRYPTED_EXTENSIONS ee;
+
+        if (fault->encextcb == NULL)
+            break;
+
+        /*
+         * The EncryptedExtensions message is very simple. It just has an
+         * extensions block in it and nothing else.
+         */
+        ee.extensions = (unsigned char *)PACKET_data(&pkt);
+        ee.extensionslen = payloadlen;
+        if (!fault->encextcb(fault, &ee, payloadlen, fault->encextcbarg))
+            return 0;
+    }
+
+    default:
+        /* No specific handlers for these message types yet */
+        break;
+    }
+
+    if (fault->handshakecb != NULL
+            && !fault->handshakecb(fault, buf, fault->handbuflen,
+                                   fault->handshakecbarg))
+        return 0;
+
+    *msgout = buf;
+    *msgoutlen = fault->handbuflen;
+
+    return 1;
+}
+
+static void handshake_finish(void *arg)
+{
+    OSSL_QUIC_FAULT *fault = arg;
+
+    OPENSSL_free(fault->handbuf);
+    fault->handbuf = NULL;
+}
+
+int ossl_quic_fault_set_handshake_listener(OSSL_QUIC_FAULT *fault,
+                                           ossl_quic_fault_on_handshake_cb handshakecb,
+                                           void *handshakecbarg)
+{
+    fault->handshakecb = handshakecb;
+    fault->handshakecbarg = handshakecbarg;
+
+    return ossl_quic_tserver_set_handshake_mutator(fault->qtserv,
+                                                   handshake_mutate,
+                                                   handshake_finish,
+                                                   fault);
+}
+
+int ossl_quic_fault_set_hand_enc_ext_listener(OSSL_QUIC_FAULT *fault,
+                                              ossl_quic_fault_on_enc_ext_cb encextcb,
+                                              void *encextcbarg)
+{
+    fault->encextcb = encextcb;
+    fault->encextcbarg = encextcbarg;
+
+    return ossl_quic_tserver_set_handshake_mutator(fault->qtserv,
+                                                   handshake_mutate,
+                                                   handshake_finish,
+                                                   fault);
+}
+
+/* To be called from a handshake_listener callback */
+int ossl_quic_fault_resize_handshake(OSSL_QUIC_FAULT *fault, size_t newlen)
+{
+    unsigned char *buf;
+    size_t oldlen = fault->handbuflen;
+
+    /*
+     * Alloc'd size should always be non-zero, so if this fails we've been
+     * incorrectly called
+     */
+    if (fault->handbufalloc == 0)
+        return 0;
+
+    if (newlen > fault->handbufalloc) {
+        /* This exceeds our growth allowance. Fail */
+        return 0;
+    }
+
+    buf = (unsigned char *)fault->handbuf;
+
+    if (newlen > oldlen) {
+        /* Extend packet with 0 bytes */
+        memset(buf + oldlen, 0, newlen - oldlen);
+    } /* else we're truncating or staying the same */
+
+    fault->handbuflen = newlen;
+    return 1;
+}
+
+/* To be called from message specific listener callbacks */
+int ossl_quic_fault_resize_message(OSSL_QUIC_FAULT *fault, size_t newlen)
+{
+    /* First resize the underlying message */
+    if (!ossl_quic_fault_resize_handshake(fault, newlen + SSL3_HM_HEADER_LENGTH))
+        return 0;
+
+    /* Fixup the handshake message header */
+    fault->handbuf[1] = (unsigned char)((newlen >> 16) & 0xff);
+    fault->handbuf[2] = (unsigned char)((newlen >>  8) & 0xff);
+    fault->handbuf[3] = (unsigned char)((newlen      ) & 0xff);
+
+    return 1;
+}
+
+int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
+                                     unsigned int exttype, unsigned char *ext,
+                                     size_t *extlen, size_t *msglen)
+{
+    PACKET pkt, sub, subext;
+    unsigned int type;
+    const unsigned char *start, *end;
+    size_t newlen;
+
+    if (!PACKET_buf_init(&pkt, ext, *extlen))
+        return 0;
+
+    /* Extension block starts with 2 bytes for extension block length */
+    if (!PACKET_as_length_prefixed_2(&pkt, &sub))
+        return 0;
+
+    do {
+        start = PACKET_data(&sub);
+        if (!PACKET_get_net_2(&sub, &type)
+                || !PACKET_as_length_prefixed_2(&sub, &subext))
+            return 0;
+    } while (type != exttype);
+
+    /* Found it */
+    end = PACKET_data(&sub);
+
+    /*
+     * If we're not the last extension we need to move the rest earlier. The
+     * cast below is safe because we own the underlying buffer and we're no
+     * longer making PACKET calls.
+     */
+    if (end < ext + *extlen)
+        memmove((unsigned char *)start, end, end - start);
+
+    /*
+     * Calculate new extensions payload length =
+     * Original length
+     * - 2 extension block length bytes
+     * - length of removed extension
+     */
+    newlen = *extlen - 2 - (end - start);
+
+    /* Fixup the length bytes for the extension block */
+    ext[0] = (unsigned char)((newlen >> 8) & 0xff);
+    ext[1] = (unsigned char)((newlen     ) & 0xff);
+
+    /*
+     * Length of the whole extension block is the new payload length plus the
+     * 2 bytes for the length
+     */
+    *extlen = newlen + 2;
+
+    /* We can now resize the message */
+    *msglen -= (end - start);
+    if (!ossl_quic_fault_resize_message(fault, *msglen))
+        return 0;
 
     return 1;
 }

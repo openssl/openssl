@@ -77,7 +77,7 @@ typedef enum {
     CON_FUNC_DONT_SEND
 } CON_FUNC_RETURN;
 
-typedef int (*ossl_statem_mutate_handshake_cb)(unsigned char *msgin,
+typedef int (*ossl_statem_mutate_handshake_cb)(const unsigned char *msgin,
                                                size_t inlen,
                                                unsigned char **msgout,
                                                size_t *outlen,
