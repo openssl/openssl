@@ -640,9 +640,9 @@ int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num)
     params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_NUM, &n);
     ok = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->algctx, params);
 
-    if (ok != 0)
+    if (ok > 0)
         ctx->num = (int)n;
-    return ok != 0;
+    return ok > 0;
 }
 
 int EVP_CIPHER_get_key_length(const EVP_CIPHER *cipher)
