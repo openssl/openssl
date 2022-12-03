@@ -110,6 +110,10 @@ OpenSSL 3.3
 
     *Neil Horman*
 
+ * Added support for requesting CRL in CMP.
+
+    *Rajeev Ranjan, Siemens AG*
+
  * Added `-set_issuer` and `-set_subject` options to `openssl x509` to
    override the Issuer and Subject when creating a certificate. The `-subj`
    option now is an alias for `-set_subject`.
