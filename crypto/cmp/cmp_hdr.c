@@ -89,34 +89,6 @@ int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name)
         || (name->type == GEN_DIRNAME && IS_NULL_DN(name->d.directoryName));
 }
 
-/* assign to *tgt a copy of src (which may be NULL to indicate an empty DN) */
-static int set1_general_name(GENERAL_NAME **tgt, const X509_NAME *src)
-{
-    GENERAL_NAME *name;
-
-    if (!ossl_assert(tgt != NULL))
-        return 0;
-    if ((name = GENERAL_NAME_new()) == NULL)
-        goto err;
-    name->type = GEN_DIRNAME;
-
-    if (src == NULL) { /* NULL-DN */
-        if ((name->d.directoryName = X509_NAME_new()) == NULL)
-            goto err;
-    } else if (!X509_NAME_set(&name->d.directoryName, src)) {
-        goto err;
-    }
-
-    GENERAL_NAME_free(*tgt);
-    *tgt = name;
-
-    return 1;
-
- err:
-    GENERAL_NAME_free(name);
-    return 0;
-}
-
 /*
  * Set the sender name in PKIHeader.
  * when nm is NULL, sender is set to an empty string
@@ -126,14 +98,14 @@ int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm)
 {
     if (!ossl_assert(hdr != NULL))
         return 0;
-    return set1_general_name(&hdr->sender, nm);
+    return GENERAL_NAME_set1_X509_NAME(&hdr->sender, nm);
 }
 
 int ossl_cmp_hdr_set1_recipient(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm)
 {
     if (!ossl_assert(hdr != NULL))
         return 0;
-    return set1_general_name(&hdr->recipient, nm);
+    return GENERAL_NAME_set1_X509_NAME(&hdr->recipient, nm);
 }
 
 int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER *hdr)

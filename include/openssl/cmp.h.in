@@ -228,6 +228,12 @@ DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_ITAV)
 {-
     generate_stack_macros("OSSL_CMP_ITAV");
 -}
+
+typedef struct ossl_cmp_crlstatus_st OSSL_CMP_CRLSTATUS;
+{-
+    generate_stack_macros("OSSL_CMP_CRLSTATUS");
+-}
+
 typedef struct ossl_cmp_revrepcontent_st OSSL_CMP_REVREPCONTENT;
 typedef struct ossl_cmp_pkisi_st OSSL_CMP_PKISI;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_PKISI)
@@ -257,7 +263,7 @@ void OSSL_CMP_ITAV_set0(OSSL_CMP_ITAV *itav, ASN1_OBJECT *type,
                         ASN1_TYPE *value);
 ASN1_OBJECT *OSSL_CMP_ITAV_get0_type(const OSSL_CMP_ITAV *itav);
 ASN1_TYPE *OSSL_CMP_ITAV_get0_value(const OSSL_CMP_ITAV *itav);
-int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
+int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **sk_p,
                                    OSSL_CMP_ITAV *itav);
 void OSSL_CMP_ITAV_free(OSSL_CMP_ITAV *itav);
 
@@ -277,6 +283,22 @@ int OSSL_CMP_ITAV_get0_rootCaKeyUpdate(const OSSL_CMP_ITAV *itav,
                                        X509 **newWithNew,
                                        X509 **newWithOld,
                                        X509 **oldWithNew);
+
+OSSL_CMP_CRLSTATUS *OSSL_CMP_CRLSTATUS_create(const X509_CRL *crl,
+                                              const X509 *cert, int only_DN);
+OSSL_CMP_CRLSTATUS *OSSL_CMP_CRLSTATUS_new1(const DIST_POINT_NAME *dpn,
+                                            const GENERAL_NAMES *issuer,
+                                            const ASN1_TIME *thisUpdate);
+int OSSL_CMP_CRLSTATUS_get0(const OSSL_CMP_CRLSTATUS *crlstatus,
+                            DIST_POINT_NAME **dpn, GENERAL_NAMES **issuer,
+                            ASN1_TIME **thisUpdate);
+void OSSL_CMP_CRLSTATUS_free(OSSL_CMP_CRLSTATUS *crlstatus);
+OSSL_CMP_ITAV
+*OSSL_CMP_ITAV_new0_crlStatusList(STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList);
+int OSSL_CMP_ITAV_get0_crlStatusList(const OSSL_CMP_ITAV *itav,
+                                     STACK_OF(OSSL_CMP_CRLSTATUS) **out);
+OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_crls(const X509_CRL *crls);
+int OSSL_CMP_ITAV_get0_crls(const OSSL_CMP_ITAV *it, STACK_OF(X509_CRL) **out);
 
 void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
 
@@ -521,6 +543,9 @@ int OSSL_CMP_get1_caCerts(OSSL_CMP_CTX *ctx, STACK_OF(X509) **out);
 int OSSL_CMP_get1_rootCaKeyUpdate(OSSL_CMP_CTX *ctx,
                                   const X509 *oldWithOld, X509 **newWithNew,
                                   X509 **newWithOld, X509 **oldWithNew);
+int OSSL_CMP_get1_crlUpdate(OSSL_CMP_CTX *ctx, const X509 *crlcert,
+                            const X509_CRL *last_crl,
+                            X509_CRL **crl);
 
 #  ifdef  __cplusplus
 }
