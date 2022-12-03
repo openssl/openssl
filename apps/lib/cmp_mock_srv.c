@@ -20,6 +20,7 @@ typedef struct
 {
     X509 *refCert;             /* cert to expect for oldCertID in kur/rr msg */
     X509 *certOut;             /* certificate to be returned in cp/ip/kup msg */
+    X509_CRL *crlOut;          /* CRL to be returned in genp for crls */
     STACK_OF(X509) *chainOut;  /* chain of certOut to add to extraCerts field */
     STACK_OF(X509) *caPubsOut; /* used in caPubs of ip and in caCerts of genp */
     X509 *newWithNew;          /* to return in newWithNew of rootKeyUpdate */
@@ -86,6 +87,22 @@ static mock_srv_ctx *mock_srv_ctx_new(void)
 
 DEFINE_OSSL_SET1_CERT(refCert)
 DEFINE_OSSL_SET1_CERT(certOut)
+
+int ossl_cmp_mock_srv_set1_crlOut(OSSL_CMP_SRV_CTX *srv_ctx,
+                                  X509_CRL *crl)
+{
+    mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    if (crl != NULL && !X509_CRL_up_ref(crl))
+        return 0;
+    X509_CRL_free(ctx->crlOut);
+    ctx->crlOut = crl;
+    return 1;
+}
 
 int ossl_cmp_mock_srv_set1_chainOut(OSSL_CMP_SRV_CTX *srv_ctx,
                                     STACK_OF(X509) *chain)
@@ -391,6 +408,46 @@ static OSSL_CMP_PKISI *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
     return OSSL_CMP_PKISI_dup(ctx->statusOut);
 }
 
+/* return -1 for error, 0 for no update available */
+static int check_client_crl(const STACK_OF(OSSL_CMP_CRLSTATUS) *crlStatusList,
+                            const X509_CRL *crl)
+{
+    OSSL_CMP_CRLSTATUS *crlstatus;
+    DIST_POINT_NAME *dpn;
+    GENERAL_NAMES *issuer;
+    ASN1_TIME *thisupd = NULL;
+
+    if (sk_OSSL_CMP_CRLSTATUS_num(crlStatusList) != 1) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_CRLSTATUSLIST);
+        return -1;
+    }
+    if (crl == NULL)
+        return 0;
+
+    crlstatus = sk_OSSL_CMP_CRLSTATUS_value(crlStatusList, 0);
+    if (!OSSL_CMP_CRLSTATUS_get0(crlstatus, &dpn, &issuer, &thisupd))
+        return -1;
+
+    if (issuer != NULL) {
+        GENERAL_NAME *gn = sk_GENERAL_NAME_value(issuer, 0);
+
+        if (gn != NULL && gn->type == GEN_DIRNAME) {
+            X509_NAME *gen_name = gn->d.dirn;
+
+            if (X509_NAME_cmp(gen_name, X509_CRL_get_issuer(crl)) != 0) {
+                ERR_raise(ERR_LIB_CMP, CMP_R_UNKNOWN_CRL_ISSUER);
+                return -1;
+            }
+        } else {  
+            ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);  
+            return -1; /* error according to RFC 9483 section 4.3.4 */  
+        }
+    }
+
+    return thisupd == NULL
+        || ASN1_TIME_compare(thisupd, X509_CRL_get0_lastUpdate(crl)) < 0;
+}
+
 static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
                                         const OSSL_CMP_ITAV *req)
 {
@@ -416,6 +473,21 @@ static OSSL_CMP_ITAV *process_genm_itav(mock_srv_ctx *ctx, int req_nid,
                 rsp = OSSL_CMP_ITAV_new_rootCaKeyUpdate(ctx->newWithNew,
                                                         ctx->newWithOld,
                                                         ctx->oldWithNew);
+        }
+        break;
+    case NID_id_it_crlStatusList:
+        {
+            STACK_OF(OSSL_CMP_CRLSTATUS) *crlstatuslist;
+            int res = 0;
+
+            if (!OSSL_CMP_ITAV_get0_crlStatusList(req, &crlstatuslist))
+                return NULL;
+
+            res = check_client_crl(crlstatuslist, ctx->crlOut);
+            if (res < 0)
+                rsp = NULL;
+            else
+                rsp = OSSL_CMP_ITAV_new_crls(res == 0 ? NULL : ctx->crlOut);
         }
         break;
     default:

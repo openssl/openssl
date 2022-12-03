@@ -12,6 +12,7 @@ no_cache_extracerts = 1
 
 ref_cert = signer_only.crt
 rsp_cert = signer_only.crt
+rsp_crl = newcrl.pem
 rsp_capubs = trusted.crt
 rsp_extracerts = signer_issuing.crt
 

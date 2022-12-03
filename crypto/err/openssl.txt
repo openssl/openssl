@@ -234,7 +234,9 @@ CMP_R_FAILED_BUILDING_OWN_CHAIN:164:failed building own chain
 CMP_R_FAILED_EXTRACTING_PUBKEY:141:failed extracting pubkey
 CMP_R_FAILURE_OBTAINING_RANDOM:110:failure obtaining random
 CMP_R_FAIL_INFO_OUT_OF_RANGE:129:fail info out of range
+CMP_R_GENERATE_CRLSTATUS:198:error creating crlstatus
 CMP_R_GETTING_GENP:192:getting genp
+CMP_R_GET_ITAV:199:get itav
 CMP_R_INVALID_ARGS:100:invalid args
 CMP_R_INVALID_GENP:193:invalid genp
 CMP_R_INVALID_OPTION:174:invalid option
@@ -276,6 +278,7 @@ CMP_R_TRANSACTIONID_UNMATCHED:152:transactionid unmatched
 CMP_R_TRANSFER_ERROR:159:transfer error
 CMP_R_UNCLEAN_CTX:191:unclean ctx
 CMP_R_UNEXPECTED_CERTPROFILE:196:unexpected certprofile
+CMP_R_UNEXPECTED_CRLSTATUSLIST:201:unexpected crlstatuslist
 CMP_R_UNEXPECTED_PKIBODY:133:unexpected pkibody
 CMP_R_UNEXPECTED_PKISTATUS:185:unexpected pkistatus
 CMP_R_UNEXPECTED_POLLREQ:105:unexpected pollreq
@@ -283,6 +286,7 @@ CMP_R_UNEXPECTED_PVNO:153:unexpected pvno
 CMP_R_UNEXPECTED_SENDER:106:unexpected sender
 CMP_R_UNKNOWN_ALGORITHM_ID:134:unknown algorithm id
 CMP_R_UNKNOWN_CERT_TYPE:135:unknown cert type
+CMP_R_UNKNOWN_CRL_ISSUER:200:unknown crl issuer
 CMP_R_UNKNOWN_PKISTATUS:186:unknown pkistatus
 CMP_R_UNSUPPORTED_ALGORITHM:136:unsupported algorithm
 CMP_R_UNSUPPORTED_KEY_TYPE:137:unsupported key type
