@@ -76,6 +76,7 @@ void _armv8_pmull_probe(void);
 # ifdef __aarch64__
 void _armv8_sm3_probe(void);
 void _armv8_sm4_probe(void);
+void _armv8_eor3_probe(void);
 void _armv8_sha512_probe(void);
 unsigned int _armv8_cpuid_probe(void);
 void _armv8_sve_probe(void);
@@ -354,6 +355,7 @@ void OPENSSL_cpuid_setup(void)
         if (sigsetjmp(ill_jmp, 1) == 0) {
             _armv8_sm3_probe();
             OPENSSL_armcap_P |= ARMV8_SM3;
+        }
         if (sigsetjmp(ill_jmp, 1) == 0) {
             _armv8_eor3_probe();
             OPENSSL_armcap_P |= ARMV8_SHA3;
