@@ -493,9 +493,7 @@ int X509_NAME_set(X509_NAME **xn, X509_NAME *name)
 int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
 {
     char *s, *c, *b;
-    int l, i;
-
-    l = 80 - 2 - obase;
+    int i;
 
     b = X509_NAME_oneline(name, NULL, 0);
     if (!b)
@@ -521,12 +519,10 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
                 if (BIO_write(bp, ", ", 2) != 2)
                     goto err;
             }
-            l--;
         }
         if (*s == '\0')
             break;
         s++;
-        l--;
     }
 
     OPENSSL_free(b);
