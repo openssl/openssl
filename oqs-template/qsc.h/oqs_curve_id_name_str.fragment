@@ -6,6 +6,4 @@
     {% if kem['bit_security'] == 192 -%} { {{ kem['nid_hybrid'] }}, "p384_{{ kem['name_group'] }}" }, \ {%- endif -%}
     {% if kem['bit_security'] == 256 -%} { {{ kem['nid_hybrid'] }}, "p521_{{ kem['name_group'] }}" }, \ {%- endif -%}
 {%- endfor %}
-  
-
 

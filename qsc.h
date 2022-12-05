@@ -46,9 +46,39 @@
     { 0x2F2D, "p384_hqc192" }, \
     { 0x022E, "hqc256" }, \
     { 0x2F2E, "p521_hqc256" }, \
-  
-
 ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_END
+
+///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_CPS_START
+#define QSC_SIG_CPS \
+    { 0xfea0, "dilithium2" }, \
+    { 0xfea1, "p256_dilithium2" }, \
+    { 0xfea2, "rsa3072_dilithium2" }, \
+    { 0xfea3, "dilithium3" }, \
+    { 0xfea4, "p384_dilithium3" }, \
+    { 0xfea5, "dilithium5" }, \
+    { 0xfea6, "p521_dilithium5" }, \
+    { 0xfea7, "dilithium2_aes" }, \
+    { 0xfea8, "p256_dilithium2_aes" }, \
+    { 0xfea9, "rsa3072_dilithium2_aes" }, \
+    { 0xfeaa, "dilithium3_aes" }, \
+    { 0xfeab, "p384_dilithium3_aes" }, \
+    { 0xfeac, "dilithium5_aes" }, \
+    { 0xfead, "p521_dilithium5_aes" }, \
+    { 0xfe0b, "falcon512" }, \
+    { 0xfe0c, "p256_falcon512" }, \
+    { 0xfe0d, "rsa3072_falcon512" }, \
+    { 0xfe0e, "falcon1024" }, \
+    { 0xfe0f, "p521_falcon1024" }, \
+    { 0xfe42, "sphincsharaka128frobust" }, \
+    { 0xfe43, "p256_sphincsharaka128frobust" }, \
+    { 0xfe44, "rsa3072_sphincsharaka128frobust" }, \
+    { 0xfe5e, "sphincssha256128frobust" }, \
+    { 0xfe5f, "p256_sphincssha256128frobust" }, \
+    { 0xfe60, "rsa3072_sphincssha256128frobust" }, \
+    { 0xfe7a, "sphincsshake256128frobust" }, \
+    { 0xfe7b, "p256_sphincsshake256128frobust" }, \
+    { 0xfe7c, "rsa3072_sphincsshake256128frobust" }, \
+///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_CPS_END
 
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_OIDS_START
 #define QSC_SIGS \
