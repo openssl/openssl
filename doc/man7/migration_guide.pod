@@ -957,7 +957,7 @@ See also L<crypto(7)/OPENSSL PROVIDERS>.
 Implicit and Explicit Fetching is described in detail here
 L<crypto(7)/ALGORITHM FETCHING>.
 
-=head3 Mapping EVP controls and flags to provider B<OSSL_PARAM> parameters
+=head3 Mapping EVP controls and flags to provider L<OSSL_PARAM(3)> parameters
 
 The existing functions for controls (such as L<EVP_CIPHER_CTX_ctrl(3)>) and
 manipulating flags (such as L<EVP_MD_CTX_set_flags(3)>)internally use
@@ -1459,7 +1459,7 @@ See L</Deprecated low-level key exchange functions>.
 ECDH_KDF_X9_62()
 
 Applications may either set this using the helper function
-L<EVP_PKEY_CTX_set_ecdh_kdf_type(3)> or by setting an B<OSSL_PARAM> using the
+L<EVP_PKEY_CTX_set_ecdh_kdf_type(3)> or by setting an L<OSSL_PARAM(3)> using the
 "kdf-type" as shown in L<EVP_KEYEXCH-ECDH(7)/EXAMPLES>
 
 =item *
