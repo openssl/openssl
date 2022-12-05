@@ -52,7 +52,7 @@ This BIO can be used with either a connected or unconnected network socket. A
 connected socket is a network socket which has had L<BIO_connect(3)> or a
 similar OS-specific function called on it. Such a socket can only receive
 datagrams from the specified peer. Any other socket is an unconnected socket and
-can receive datagrams from any host on the network.
+can receive datagrams from any host.
 
 =item
 
@@ -84,7 +84,8 @@ the BIO_s_datagram() to change.
 
 =back
 
-Various controls are available for configuring the BIO_s_datagram():
+Various controls are available for configuring the BIO_s_datagram() using
+L<BIO_ctrl(3)>:
 
 =over 4
 
@@ -157,9 +158,13 @@ call to L<BIO_write(3)>) may have been caused by a send timeout.
 
 Returns a quantity in bytes which is a rough estimate of the number of bytes of
 overhead which should typically be added to a datagram payload size in order to
-estimate the final L3 packet size. In most cases, the maximum datagram payload
-size which can be transmitted can be determined by determining the link MTU in
-bytes and subtracting the value returned by this call.
+estimate the final size of the Layer 3 (e.g. IP) packet which will contain the
+datagram. In most cases, the maximum datagram payload size which can be
+transmitted can be determined by determining the link MTU in bytes and
+subtracting the value returned by this call.
+
+The value returned by this call depends on the network layer protocol being
+used.
 
 The value returned is not fully reliable because datagram overheads can be
 higher in atypical network configurations, for example where IPv6 extension
@@ -177,6 +182,9 @@ Queries the OS for its assessment of the Path MTU for the destination to which
 the underlying network socket, and returns that Path MTU in bytes. This control
 can only be used with a connected socket.
 
+This is not supported on all platforms and depends on OS support being
+available. Returns 0 on failure.
+
 =item BIO_CTRL_DGRAM_MTU_DISCOVER
 
 This control requests that Path MTU discovery be enabled on the underlying
@@ -188,8 +196,8 @@ Returns the minimum size of datagram payload which should always be supported on
 the BIO. This size is determined by the minimum MTU required to be supported by
 the applicable underlying network layer. Use of datagrams of this size may lead
 to suboptimal performance, but should be routable in all circumstances. The
-value returned is the datagram payload size in bytes and does not include
-overheads.
+value returned is the datagram payload size in bytes and does not include the
+size of layer 3 or layer 4 protocol headers.
 
 =item BIO_CTRL_DGRAM_MTU_EXCEEDED
 
@@ -225,6 +233,11 @@ BIO_new_dgram() returns a BIO on success and NULL on failure.
 
 BIO_ctrl_dgram_connect(), BIO_ctrl_set_connected(),
 BIO_dgram_get_peer(), BIO_dgram_set_peer() return 1 on success and 0 on failure.
+
+BIO_dgram_recv_timedout() and BIO_dgram_send_timedout() return 0 or 1 depending
+on the circumstance; see discussion above.
+
+BIO_dgram_get_mtu_overhead() returns a value in bytes.
 
 =head1 SEE ALSO
 
