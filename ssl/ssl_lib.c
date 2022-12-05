@@ -3220,14 +3220,14 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
         return NULL;
 
     for (i = 0; i < sk_SSL_CIPHER_num(clntsk); i++) {
-        int n;
+        unsigned int n;
 
         c = sk_SSL_CIPHER_value(clntsk, i);
         if (sk_SSL_CIPHER_find(srvrsk, c) < 0)
             continue;
 
         n = strlen(c->name);
-        if (n + 1 > size) {
+        if (n >= size) {
             if (p != buf)
                 --p;
             *p = '\0';
