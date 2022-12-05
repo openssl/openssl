@@ -18,7 +18,7 @@ OSSL_ALGORITHM - OpenSSL Core type to define a fetchable algorithm
 
 =head1 DESCRIPTION
 
-The B<OSSL_ALGORITHM> type is a I<public structure> that describe an
+The B<OSSL_ALGORITHM> type is a I<public structure> that describes an
 algorithm that a L<provider(7)> provides.  Arrays of this type are returned
 by providers on demand from the OpenSSL libraries to describe what
 algorithms the providers provide implementations of, and with what
@@ -42,7 +42,7 @@ L<EVP_MD_fetch(3)>, etc) to find the desired algorithm.
 
 Multiple names / identities allow a specific algorithm implementation to be
 fetched multiple ways.  For example, the RSA algorithm has the following
-know identities:
+known identities:
 
 =over 4
 
@@ -57,18 +57,11 @@ C<rsaEncryption>
 This is the name of the algorithm's OBJECT IDENTIFIER (OID), as given by the
 L<PKCS#1 RFC's ASN.1 module|https://www.rfc-editor.org/rfc/rfc8017#appendix-C>
 
-Including this identity supports fetching names that are returned by
-functions like L<OBJ_obj2txt(3)>.
-
 =item *
 
 C<1.2.840.113549.1.1.1>
 
 This is the OID itself for C<rsaEncryption>, in canonical decimal text form.
-
-Including this identity supports fetching OIDs that are returned by
-functions like L<OBJ_obj2txt(3)>, which is a fallback in case the OID hasn't
-been registered in F<libcrypto>'s internal object database.
 
 =back
 
@@ -78,6 +71,10 @@ The resulting I<algorithm_names> string would look like this:
 
 The OpenSSL libraries use the first of the algorithm names as the main
 or canonical name, on a per algorithm implementation basis.
+
+See the notes L</On the subject of algorithm names> below for a more in
+depth discussion on I<algorithm_names> and how that may interact with
+applications and libraries, including OpenSSL's.
 
 =item I<property_definition>
 
@@ -100,6 +97,28 @@ functions of a particular algorithm implementation.
 A string with a short human-readable description of the algorithm.
 
 =back
+
+=head1 NOTES
+
+=head2 On the subject of algorithm names
+
+Providers may find the need to register ASN.1 OIDs for algorithms using
+L<OBJ_create(3)> (via the B<core_obj_create> upcall described in
+L<provider-base(7)), because some application or library -- possibly still
+the OpenSSL libraries, even -- use NIDs to look up algorithms.
+
+In that scenario, you must make sure that the corresponding B<OSSL_ALGORITHM>'s
+I<algorithm_names> includes both the short and the long name.
+
+Most of the times, registering ASN.1 OIDs like this shouldn't be necessary,
+and applications and libraries are encouraged to use L<OBJ_obj2txt(3)> to
+get a text representation of the OID, which may be a long or short name for
+OIDs that are registered, or the OID itself in canonical decimal text form
+if not (or if L<OBJ_obj2txt(3)> is called with I<no_name> = 1).
+
+It's recommended to make sure that the corresponding B<OSSL_ALGORITHM>'s
+I<algorithm_names> include known names as well as the OID itself in
+canonical decimal text form.  That should cover all scenarios.
 
 =begin comment RETURN VALUES doesn't make sense for a manual that only
 describes a type, but document checkers still want that section, and
