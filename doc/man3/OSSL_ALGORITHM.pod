@@ -104,13 +104,13 @@ A string with a short human-readable description of the algorithm.
 
 Providers may find the need to register ASN.1 OIDs for algorithms using
 L<OBJ_create(3)> (via the B<core_obj_create> upcall described in
-L<provider-base(7)), because some application or library -- possibly still
+L<provider-base(7)>, because some application or library -- possibly still
 the OpenSSL libraries, even -- use NIDs to look up algorithms.
 
 In that scenario, you must make sure that the corresponding B<OSSL_ALGORITHM>'s
 I<algorithm_names> includes both the short and the long name.
 
-Most of the times, registering ASN.1 OIDs like this shouldn't be necessary,
+Most of the time, registering ASN.1 OIDs like this shouldn't be necessary,
 and applications and libraries are encouraged to use L<OBJ_obj2txt(3)> to
 get a text representation of the OID, which may be a long or short name for
 OIDs that are registered, or the OID itself in canonical decimal text form
