@@ -4,4 +4,10 @@
 IF[{- !$disabled{apps} -}]
   SCRIPTS={- $c_rehash_name -}
   SOURCE[{- $c_rehash_name -}]=c_rehash.in
+
+  PROGRAMS=handshakes_per_second
+  SOURCE[handshakes_per_second]=handshakes_per_second.c
+  INCLUDE[handshakes_per_second]=.. ../include ../../include
+  DEPEND[handshakes_per_second]=../libcrypto.a ../libssl.a
 ENDIF
+
