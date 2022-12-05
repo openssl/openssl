@@ -92,9 +92,22 @@ static int read_internal(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,
             break;
 
         if (data == NULL) {
-            data = ring_buf_get_ptr(&qrs->rbuf, range.start);
+            size_t max_len;
+
+            data = ring_buf_get_ptr(&qrs->rbuf, range.start, &max_len);
             if (!ossl_assert(data != NULL))
                 return 0;
+            if (max_len < l) {
+                memcpy(buf, data, max_len);
+                size -= max_len;
+                buf += max_len;
+                readbytes_ += max_len;
+                l -= max_len;
+                data = ring_buf_get_ptr(&qrs->rbuf, range.start + max_len,
+                                        &max_len);
+                if (!ossl_assert(data != NULL) || !ossl_assert(max_len > l))
+                    return 0;
+            }
         }
 
         memcpy(buf, data, l);
@@ -177,7 +190,7 @@ int ossl_quic_rstream_get_record(QUIC_RSTREAM *qrs,
                                  int *fin)
 {
     const unsigned char *record_ = NULL;
-    size_t rec_len_;
+    size_t rec_len_, max_len;
 
     if (!ossl_sframe_list_lock_head(&qrs->fl, &qrs->head_range, &record_, fin)) {
         *record = NULL;
@@ -187,10 +200,15 @@ int ossl_quic_rstream_get_record(QUIC_RSTREAM *qrs,
 
     rec_len_ = (size_t)(qrs->head_range.end - qrs->head_range.start);
 
-    if (record_ == NULL && *rec_len != 0) {
-        record_ = ring_buf_get_ptr(&qrs->rbuf, qrs->head_range.start);
+    if (record_ == NULL && rec_len_ != 0) {
+        record_ = ring_buf_get_ptr(&qrs->rbuf, qrs->head_range.start,
+                                   &max_len);
         if (!ossl_assert(record_ != NULL))
             return 0;
+        if (max_len < rec_len_) {
+            rec_len_ = max_len;
+            qrs->head_range.end = qrs->head_range.start + max_len;
+        }
     }
 
     *rec_len = rec_len_;

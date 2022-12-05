@@ -125,6 +125,8 @@ int ossl_sframe_list_is_head_locked(SFRAME_LIST *fl);
  * Callback function type to write stream frame data to some
  * side storage before the packet containing the frame data
  * is released.
+ * It should return 1 on success or 0 if there is not enough
+ * space available in the side storage.
  */
 typedef int (sframe_list_write_at_cb)(uint64_t logical_offset,
                                       const unsigned char *buf,

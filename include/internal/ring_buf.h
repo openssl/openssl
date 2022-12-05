@@ -64,29 +64,38 @@ static ossl_inline size_t ring_buf_avail(struct ring_buf *r)
     return r->alloc - ring_buf_used(r);
 }
 
-static ossl_inline size_t ring_buf_write_at(struct ring_buf *r,
-                                            uint64_t logical_offset,
-                                            const unsigned char *buf,
-                                            size_t buf_len)
+static ossl_inline int ring_buf_write_at(struct ring_buf *r,
+                                         uint64_t logical_offset,
+                                         const unsigned char *buf,
+                                         size_t buf_len)
 {
     size_t avail, idx, l;
     unsigned char *start = r->start;
+    int i;
 
     avail = ring_buf_avail(r);
     if (logical_offset < r->ctail_offset
         || logical_offset + buf_len > r->head_offset + avail)
         return 0;
 
-    idx = logical_offset % r->alloc;
-    l = r->alloc - idx;
-    if (buf_len < l)
-        l = buf_len;
+    for (i = 0; buf_len > 0 && i < 2; ++i) {
+        idx = logical_offset % r->alloc;
+        l = r->alloc - idx;
+        if (buf_len < l)
+            l = buf_len;
 
-    memcpy(start + idx, buf, l);
-    if (r->head_offset < logical_offset + l)
-        r->head_offset = logical_offset + l;
+        memcpy(start + idx, buf, l);
+        if (r->head_offset < logical_offset + l)
+            r->head_offset = logical_offset + l;
 
-    return l;
+        logical_offset += l;
+        buf += l;
+        buf_len -= l;
+    }
+
+    assert(buf_len == 0);
+
+    return 1;
 }
 
 static ossl_inline size_t ring_buf_push(struct ring_buf *r,
@@ -122,13 +131,17 @@ static ossl_inline size_t ring_buf_push(struct ring_buf *r,
 }
 
 static ossl_inline const unsigned char *ring_buf_get_ptr(const struct ring_buf *r,
-                                                         uint64_t logical_offset)
+                                                         uint64_t logical_offset,
+                                                         size_t *max_len)
 {
     unsigned char *start = r->start;
+    size_t idx;
 
     if (logical_offset >= r->head_offset || logical_offset < r->ctail_offset)
         return NULL;
-    return start + (logical_offset % r->alloc);
+    idx = logical_offset % r->alloc;
+    *max_len = r->alloc - idx;
+    return start + idx;
 }
 
 /*

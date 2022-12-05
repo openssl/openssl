@@ -311,6 +311,7 @@ int ossl_sframe_list_move_data(SFRAME_LIST *fl,
             else
                 fl->tail = prev_frame;
 
+            --fl->num_frames;
             stream_frame_free(fl, sf);
             sf = prev_frame;
             continue;
