@@ -208,27 +208,24 @@ See L</PARAMETERS> below for more information.
 
 =item EVP_MD_gettable_params()
 
-Get a constant B<OSSL_PARAM> array that describes the retrievable parameters
-that can be used with EVP_MD_get_params().  See L<OSSL_PARAM(3)> for the
-use of B<OSSL_PARAM> as a parameter descriptor.
+Get a constant L<OSSL_PARAM(3)> array that describes the retrievable parameters
+that can be used with EVP_MD_get_params().
 
 =item EVP_MD_gettable_ctx_params(), EVP_MD_CTX_gettable_params()
 
-Get a constant B<OSSL_PARAM> array that describes the retrievable parameters
+Get a constant L<OSSL_PARAM(3)> array that describes the retrievable parameters
 that can be used with EVP_MD_CTX_get_params().  EVP_MD_gettable_ctx_params()
 returns the parameters that can be retrieved from the algorithm, whereas
 EVP_MD_CTX_gettable_params() returns the parameters that can be retrieved
-in the context's current state.  See L<OSSL_PARAM(3)> for the use of
-B<OSSL_PARAM> as a parameter descriptor.
+in the context's current state.
 
 =item EVP_MD_settable_ctx_params(), EVP_MD_CTX_settable_params()
 
-Get a constant B<OSSL_PARAM> array that describes the settable parameters
+Get a constant L<OSSL_PARAM(3)> array that describes the settable parameters
 that can be used with EVP_MD_CTX_set_params().  EVP_MD_settable_ctx_params()
 returns the parameters that can be set from the algorithm, whereas
 EVP_MD_CTX_settable_params() returns the parameters that can be set in the
-context's current state.  See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM>
-as a parameter descriptor.
+context's current state.
 
 =item EVP_MD_CTX_set_flags(), EVP_MD_CTX_clear_flags(), EVP_MD_CTX_test_flags()
 
@@ -596,7 +593,7 @@ Returns 1 if successful or 0 for failure.
 =item EVP_MD_CTX_settable_params(),
 EVP_MD_CTX_gettable_params()
 
-Return an array of constant B<OSSL_PARAM>s, or NULL if there is none
+Return an array of constant L<OSSL_PARAM(3)>s, or NULL if there is none
 to get.
 
 =item EVP_MD_CTX_dup()
