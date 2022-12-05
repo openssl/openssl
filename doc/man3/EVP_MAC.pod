@@ -190,7 +190,6 @@ defined by the implementation.
 EVP_MAC_gettable_params() returns an L<OSSL_PARAM(3)> array that describes
 the retrievable and settable parameters.  EVP_MAC_gettable_params()
 returns parameters that can be used with EVP_MAC_get_params().
-See L<OSSL_PARAM(3)> for the use of L<OSSL_PARAM(3)> as a parameter descriptor.
 
 EVP_MAC_gettable_ctx_params() and EVP_MAC_CTX_gettable_params()
 return constant L<OSSL_PARAM(3)> arrays that describe the retrievable
@@ -198,15 +197,13 @@ parameters that can be used with EVP_MAC_CTX_get_params().
 EVP_MAC_gettable_ctx_params() returns the parameters that can be retrieved
 from the algorithm, whereas EVP_MAC_CTX_gettable_params() returns
 the parameters that can be retrieved in the context's current state.
-See L<OSSL_PARAM(3)> for the use of L<OSSL_PARAM(3)> as a parameter descriptor.
 
 EVP_MAC_settable_ctx_params() and EVP_MAC_CTX_settable_params() return
 constant L<OSSL_PARAM(3)> arrays that describe the settable parameters that
 can be used with EVP_MAC_CTX_set_params().  EVP_MAC_settable_ctx_params()
 returns the parameters that can be retrieved from the algorithm,
 whereas EVP_MAC_CTX_settable_params() returns the parameters that can
-be retrieved in the context's current state.  See L<OSSL_PARAM(3)>
-for the use of L<OSSL_PARAM(3)> as a parameter descriptor.
+be retrieved in the context's current state.
 
 =head2 Information functions
 

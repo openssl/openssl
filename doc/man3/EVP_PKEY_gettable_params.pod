@@ -29,13 +29,13 @@ EVP_PKEY_get_octet_string_param
 
 =head1 DESCRIPTION
 
+See L<OSSL_PARAM(3)> for information about parameters.
+
 EVP_PKEY_get_params() retrieves parameters from the key I<pkey>, according to
 the contents of I<params>.
-See L<OSSL_PARAM(3)> for information about parameters.
 
 EVP_PKEY_gettable_params() returns a constant list of I<params> indicating
 the names and types of key parameters that can be retrieved.
-See L<OSSL_PARAM(3)> for information about parameters.
 
 An L<OSSL_PARAM(3)> of type B<OSSL_PARAM_INTEGER> or
 B<OSSL_PARAM_UNSIGNED_INTEGER> is of arbitrary length. Such a parameter can be

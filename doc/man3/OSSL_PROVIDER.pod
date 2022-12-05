@@ -111,7 +111,6 @@ behaviour.
 
 OSSL_PROVIDER_gettable_params() is used to get a provider parameter
 descriptor set as a constant L<OSSL_PARAM(3)> array.
-See L<OSSL_PARAM(3)> for more information.
 
 OSSL_PROVIDER_get_params() is used to get provider parameter values.
 The caller must prepare the L<OSSL_PARAM(3)> array before calling this

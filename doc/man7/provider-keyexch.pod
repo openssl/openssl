@@ -156,7 +156,6 @@ array that describes the gettable parameters, i.e. parameters that can be
 handled by OP_signature_get_ctx_params().
 If OSSL_FUNC_keyexch_gettable_ctx_params() is present, OSSL_FUNC_keyexch_get_ctx_params() must
 also be present, and vice versa.
-See L<OSSL_PARAM(3)> for the use of L<OSSL_PARAM(3)> as parameter descriptor.
 
 Notice that not all settable parameters are also gettable, and vice versa.
 

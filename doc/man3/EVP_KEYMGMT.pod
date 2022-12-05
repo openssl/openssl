@@ -91,7 +91,6 @@ EVP_KEYMGMT_gettable_params() and EVP_KEYMGMT_settable_params() return a
 constant L<OSSL_PARAM(3)> array that describes the names and types of key
 parameters that can be retrieved or set.
 EVP_KEYMGMT_gettable_params() is used by L<EVP_PKEY_gettable_params(3)>.
-See L<OSSL_PARAM(3)> for the use of L<OSSL_PARAM(3)> as a parameter descriptor.
 
 EVP_KEYMGMT_gen_settable_params() returns a constant L<OSSL_PARAM(3)> array that
 describes the names and types of key generation parameters that can be set via

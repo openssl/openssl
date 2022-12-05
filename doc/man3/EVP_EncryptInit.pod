@@ -331,8 +331,7 @@ See L</PARAMETERS> below for more information.
 =item EVP_CIPHER_gettable_params()
 
 Get a constant L<OSSL_PARAM(3)> array that describes the retrievable parameters
-that can be used with EVP_CIPHER_get_params().  See L<OSSL_PARAM(3)> for the
-use of L<OSSL_PARAM(3)> as a parameter descriptor.
+that can be used with EVP_CIPHER_get_params().
 
 =item EVP_CIPHER_gettable_ctx_params() and EVP_CIPHER_CTX_gettable_params()
 
@@ -341,7 +340,6 @@ that can be used with EVP_CIPHER_CTX_get_params().
 EVP_CIPHER_gettable_ctx_params() returns the parameters that can be retrieved
 from the algorithm, whereas EVP_CIPHER_CTX_gettable_params() returns the
 parameters that can be retrieved in the context's current state.
-See L<OSSL_PARAM(3)> for the use of L<OSSL_PARAM(3)> as a parameter descriptor.
 
 =item EVP_CIPHER_settable_ctx_params() and EVP_CIPHER_CTX_settable_params()
 
@@ -350,7 +348,6 @@ that can be used with EVP_CIPHER_CTX_set_params().
 EVP_CIPHER_settable_ctx_params() returns the parameters that can be set from the
 algorithm, whereas EVP_CIPHER_CTX_settable_params() returns the parameters that
 can be set in the context's current state.
-See L<OSSL_PARAM(3)> for the use of L<OSSL_PARAM(3)> as a parameter descriptor.
 
 =item EVP_EncryptInit_ex2()
 

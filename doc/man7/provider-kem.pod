@@ -202,7 +202,6 @@ OSSL_FUNC_kem_gettable_ctx_params() and OSSL_FUNC_kem_settable_ctx_params()
 get a constant L<OSSL_PARAM(3)> array that describes the gettable and settable
 parameters, i.e. parameters that can be used with OSSL_FUNC_kem_get_ctx_params()
 and OSSL_FUNC_kem_set_ctx_params() respectively.
-See L<OSSL_PARAM(3)> for the use of L<OSSL_PARAM(3)> as parameter descriptor.
 
 =head1 RETURN VALUES
 
