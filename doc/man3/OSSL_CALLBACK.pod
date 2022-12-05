@@ -31,7 +31,7 @@ simply be passed back to the callback function when it's called.
 =item B<OSSL_CALLBACK>
 
 This is a generic callback function.  When calling this callback function,
-the caller is expected to build an B<OSSL_PARAM> array of data it wants or
+the caller is expected to build an L<OSSL_PARAM(3)> array of data it wants or
 is expected to pass back, and pass that as I<params>, as well as the opaque
 data pointer it received, as I<arg>.
 
@@ -43,7 +43,7 @@ store the pass phrase needs to be given with I<pass>, and its size with
 I<pass_size>.  The length of the prompted pass phrase will be given back in
 I<*pass_len>.
 
-Additional parameters can be passed with the B<OSSL_PARAM> array I<params>,
+Additional parameters can be passed with the L<OSSL_PARAM(3)> array I<params>,
 
 =back
 
