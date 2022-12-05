@@ -32,7 +32,7 @@
          } else {                                                     \
              (res)->tv_usec = (a)->tv_usec - (b)->tv_usec);           \
          }                                                            \
-     } while(0);
+     } while(0)
 # endif
 
 static char *prog;
