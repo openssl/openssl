@@ -42,19 +42,17 @@ python -m venv venv-cryptography
 
 cd pyca-cryptography
 
-pip install .[test]
-pip install -e vectors
-
 echo "------------------------------------------------------------------"
 echo "Building cryptography"
 echo "------------------------------------------------------------------"
-CFLAGS="-I$O_BINC -I$O_SINC -L$O_LIB" pip install .
+LDFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC" pip install .[test]
+pip install -e vectors
 
 echo "------------------------------------------------------------------"
 echo "Running tests"
 echo "------------------------------------------------------------------"
 
-CFLAGS="-I$O_BINC -I$O_SINC -L$O_LIB" pytest -n auto tests --wycheproof-root=../wycheproof
+pytest -n auto tests --wycheproof-root=../wycheproof
 
 cd ../
 deactivate
