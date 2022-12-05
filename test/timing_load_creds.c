@@ -12,7 +12,7 @@
 
 #include <openssl/e_os2.h>
 
-#ifdef OPENSSL_SYS_UNIX
+#if defined OPENSSL_SYS_UNIX
 # include <sys/stat.h>
 # include <sys/resource.h>
 # include <openssl/pem.h>
@@ -20,6 +20,7 @@
 # include <openssl/err.h>
 # include <openssl/bio.h>
 # include "internal/e_os.h"
+# if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
 
 static char *prog;
 
@@ -76,11 +77,12 @@ static void usage(void)
     fprintf(stderr, "          p for private key\n");
     exit(EXIT_FAILURE);
 }
+# endif
 #endif
 
 int main(int ac, char **av)
 {
-#ifdef OPENSSL_SYS_UNIX
+#if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
     int i, debug = 0, count = 100, what = 'c';
     struct stat sb;
     FILE *fp;
