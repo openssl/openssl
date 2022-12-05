@@ -55,11 +55,14 @@ EVP_SIGNATURE                           datatype
 GEN_SESSION_CB                          datatype
 NAMING_AUTHORITY                        datatype
 OPENSSL_Applink                         external
+OSSL_ALGORITHM                          datatype
+OSSL_CALLBACK                           datatype
 OSSL_DECODER                            datatype
 OSSL_DECODER_CTX                        datatype
 OSSL_DECODER_CONSTRUCT                  datatype
 OSSL_DECODER_CLEANUP                    datatype
 OSSL_DECODER_INSTANCE                   datatype
+OSSL_DISPATCH                           datatype
 OSSL_ENCODER                            datatype
 OSSL_ENCODER_CTX                        datatype
 OSSL_ENCODER_CONSTRUCT                  datatype
@@ -67,8 +70,10 @@ OSSL_ENCODER_CLEANUP                    datatype
 OSSL_ENCODER_INSTANCE                   datatype
 OSSL_HTTP_bio_cb_t                      datatype
 OSSL_HTTP_REQ_CTX                       datatype
+OSSL_ITEM                               datatype
 OSSL_LIB_CTX                            datatype
 OSSL_PARAM                              datatype
+OSSL_PASSPHRASE_CALLBACK                datatype
 OSSL_PROVIDER                           datatype
 OSSL_STORE_CTX                          datatype
 OSSL_STORE_INFO                         datatype
