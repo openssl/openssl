@@ -330,14 +330,16 @@ static int test_single_copy_read(QUIC_RSTREAM *qrs,
 
     while (ossl_quic_rstream_get_record(qrs, &record, &rec_len, fin)) {
         if (rec_len > 0) {
-            if (rec_len > size)
+            if (rec_len > size) {
                 rec_len = size;
+                *fin = 0;
+            }
             memcpy(buf, record, rec_len);
             size -= rec_len;
             *readbytes += rec_len;
             buf += rec_len;
         }
-        if (!ossl_quic_rstream_release_record(qrs, SIZE_MAX))
+        if (!ossl_quic_rstream_release_record(qrs, rec_len))
             return 0;
         if (*fin || size == 0)
             break;
