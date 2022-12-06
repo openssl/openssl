@@ -887,6 +887,24 @@ subtest "CMS Check that bad attributes fail when verifying signers\n" => sub {
     }
 };
 
+subtest "CMS Check that bad encryption algorithm fails\n" => sub {
+    plan tests => 1;
+
+    SKIP: {
+        skip "DES or Legacy isn't supported in this build", 1
+            if disabled("des") || disabled("legacy");
+
+        my $out = "smtst.txt";
+
+        ok(!run(app(["openssl", "cms", @legacyprov, "-encrypt",
+                    "-in", $smcont,
+                    "-stream", "-recip", $smrsa1,
+                    "-des-ede3",
+                    "-out", $out ])),
+           "Decrypt message from OpenSSL 1.1.1");
+    }
+};
+
 subtest "CMS Decrypt message encrypted with OpenSSL 1.1.1\n" => sub {
     plan tests => 1;
 
