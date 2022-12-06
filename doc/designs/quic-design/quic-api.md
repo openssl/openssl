@@ -119,6 +119,16 @@ mode.
 **Blocking Considerations:** Blocks until at least one byte is available or an
 error occurs if in blocking mode (including the peek functions).
 
+If the read part of the stream has been finished by the peer, calls to
+`SSL_read` will fail with `SSL_ERROR_ZERO_RETURN`.
+
+If a stream has terminated in a non-normal fashion (for example because the
+stream has been reset, or the connection has terminated), calls to `SSL_read`
+will fail with `SSL_ERROR_SSL`.
+
+`SSL_get_stream_read_state` can be used to clarify the stream state when an
+error occurs.
+
 #### `SSL_write`, `SSL_write_ex`
 
 | Semantics | `SSL_get_error` | Can Tick? | CSHL          |
@@ -132,7 +142,12 @@ We have to implement all of the following modes:
 - Blocking mode on or off
 
 **Blocking Considerations:** Blocks until libssl has accepted responsibility for
-(i.e., copied) all data provided, or an error occurs, if in blocking mode.
+(i.e., copied) all data provided, or an error occurs, if in blocking mode. In
+other words, it blocks until it can buffer the data. This does not necessarily
+mean that the data has actually been sent.
+
+`SSL_get_stream_write_state` can be used to clarify the stream state when an
+error occurs.
 
 #### `SSL_pending`
 
@@ -157,32 +172,18 @@ We have to implement all of the following modes:
 
 | Semantics | `SSL_get_error` | Can Tick? | CSHL          |
 | --------- | ------------- | --------- | ------------- |
-| Unchanged | Error/Want    | Yes       | CS            |
+| Unchanged | Error         | Yes       | CS            |
 
-Semantics unchanged on QUIC Connection SSL objects.
+See `SSL_shutdown_ex` below for discussion of how this will work for QUIC.
 
-Probable implementation:
-
-  - If the peer did not yet close the connection, send CONNECTION_CLOSE once
-    (best effort, tick), return 0.
-  - Otherwise, if teardown is complete, return 1.
-
-Semantics for future QUIC Stream SSL objects TBD, but:
-
-  - We should have a way for `SSL_shutdown` to only affect the stream object
-    and not the entire connection, so that applications can pass SSL objects for
-    an individual stream to parts of themselves which expect something
-    resembling traditional TCP stream and then call `SSL_shutdown`.
-
-    A reasonable design here would be to have `SSL_shutdown` on a QUIC stream
-    SSL object only shut down that stream. However this would mean
-    `SSL_shutdown` behaves differently on the default stream (i.e., the QUIC
-    connection SSL object) to other streams. Thus a new API should probably be
-    added explicitly for QUIC stream shutdown. `SSL_shutdown` on a QUIC stream
-    object will redirect to this function, or it can be used explicitly on the
-    QUIC connection object if it has a default stream bound.
+Calling `SSL_shutdown` is always exactly identical in function to calling
+`SSL_shutdown_ex` with `flags` set to 0 and `args` set to `NULL`.
 
 #### `SSL_clear`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| TBD       | TBD           | No        | C             |
 
 There are potential implementation hazards:
 
@@ -199,6 +200,59 @@ There are potential implementation hazards:
   - Preserve `SSL_clear` semantics at the handshake layer, reset all QUIC state
     (`QUIC_CHANNEL` torn down, CSM reset).
 
+**TBD:** Semantics of this on stream objects.
+
+#### `SSL_free`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| Changed   | Never         | No        | CS            |
+
+**QUIC stream SSL objects.** When used on a QUIC stream SSL object, parts of the
+stream state may continue to exist internally, managed inside the QUIC
+connection SSL object, until they can be correctly torn down, or until the QUIC
+connection SSL object is freed.
+
+If a QUIC stream SSL object is freed for a stream which has not reached a
+terminal state for all of its parts (both send and receive, as applicable), the
+stream is automatically reset (non-normal termination) with an application error
+code of 0. To explicitly reset a stream with a different application error code,
+call `SSL_stream_reset` before calling this function.
+
+If the peer continues to send data on the stream before it processes the
+notification of the stream's termination, that incoming data will be discarded.
+However, the peer will be reliably notified of the non-normal termination of the
+stream assuming that the connection remains healthy.
+
+When freeing a QUIC stream SSL object which was terminated in a non-normal
+fashion, or which was terminated automatically due to a call to this function,
+any data which was appended to the stream via `SSL_write` may or may not have
+already been transmitted, and even if already transmitted, may or may not be
+retransmitted in the event of loss.
+
+When freeing a QUIC stream SSL object which was terminated normally (for example
+via `SSL_stream_conclude`), data appended to the stream via `SSL_write` will
+still be transmitted or retransmitted as necessary, assuming that the QUIC
+connection SSL object is not freed and that the connection remains healthy.
+
+**QUIC connection SSL objects.** `SSL_free` is largely unchanged for QUIC
+connection SSL objects on the client side. When freeing a QUIC connection SSL
+object being used in client mode, there is immediate termination of any QUIC
+network I/O processing as the resources needed to handle the connection are
+immediately freed. This means that, if a QUIC connection SSL object which has
+not been shutdown properly is freed using this function:
+
+- Any data which was pending transmission or retransmission will not be
+  transmitted, including in streams which were terminated normally;
+
+- The connection closure process will not function correctly or in an
+  RFC-compliant manner. Connection closure will not be signalled to the peer
+  and the connection will simply disappear from the perspective of the peer. The
+  connection will appear to remain active until the connection's idle timeout
+  (if negotiated) takes effect.
+
+  For further discussion of this issue, see `SSL_shutdown_ex` and the Q&A.
+
 #### `SSL_set0_rbio`, `SSL_set0_wbio`, `SSL_set_bio`
 
 | Semantics | `SSL_get_error` | Can Tick? | CSHL          |
@@ -209,7 +263,8 @@ Sets network-side BIO.
 
 The changes to the semantics of these calls are as follows:
 
-  - The BIO MUST be a BIO with datagram semantics.
+  - The BIO MUST be a BIO with datagram semantics (this is a change relative to
+    TLS, though not to DTLS).
 
   - If the BIO is non-pollable (see below), application-level blocking mode will
     be forced off.
@@ -260,7 +315,7 @@ Should not require any changes.
 - `SSL_MODE_SEND_FALLBACK_SCSV`: TBD: Either ignore or fail if the client
   attempts to set this prior to handshake. The latter is probably safer.
 
-  TBD: What if the client attempts to set this post handshake? Ignore it?
+  Ignored if set after handshake (existing behaviour).
 
 - `SSL_MODE_ASYNC`: TBD.
 
@@ -280,6 +335,9 @@ for all use cases.
 
 TBD: Should we just map this to DTLS_CTRL_HANDLE_TIMEOUT internally (and maybe
 alias the CTRL #define)?
+
+TBD: Deprecate `DTLSv1_get_timeout`?
+TBD: Deprecate `DTLSv1_handle_timeout`?
 
 #### `SSL_get_tick_timeout`
 
@@ -312,9 +370,9 @@ alias the CTRL #define)?
 
 Turns blocking mode on or off. This is necessary because up until now libssl has
 operated in blocking or non-blocking mode automatically as an emergent
-consequence of whether the underlying network socket is blocking. Since we are
-proposing to use only non-blocking I/O internally, use of blocking semantics at
-the application level must be explicitly configured.
+consequence of whether the underlying network socket is blocking. For QUIC, this
+is no longer viable, thus blocking semantics at the application level must be
+explicitly configured.
 
 Use on stream objects: It may be feasible to implement this such that different
 QUIC stream SSL objects can have different settings for this option.
@@ -336,6 +394,8 @@ The implementation of these functions is a simple forward to
 `BIO_get_rpoll_descriptor` and `BIO_get_wpoll_descriptor` on the underlying
 network BIOs.
 
+TODO: Support these for non-QUIC SSL objects
+
 #### `SSL_want_net_read`, `SSL_want_net_write`
 
 | Semantics | `SSL_get_error` | Can Tick? | CSHL          |
@@ -351,6 +411,9 @@ other than `SSL_want_net_read`, `SSL_want_net_write`,
 `SSL_get_rpoll_descriptor`, `SSL_get_wpoll_descriptor` and
 `SSL_get_tick_timeout`.
 
+TODO: Support these for non-QUIC SSL objects, turning this into a unified
+replacement for `SSL_want`
+
 #### `SSL_want`, `SSL_want_read`, `SSL_want_write`
 
 The existing API `SSL_want`, and the macros defined in terms of it, are
@@ -361,8 +424,6 @@ return value of `SSL_want` can only express one I/O direction at a time (read or
 write), not both. This call will not be implemented for QUIC (e.g. always
 returns `SSL_NOTHING`) and `SSL_want_net_read` and `SSL_want_net_write` will be
 used instead.
-
-TBD: Should these be implemented for non-QUIC SSL objects?
 
 #### `SSL_set_initial_peer_addr`, `SSL_get_initial_peer_addr`
 
@@ -378,6 +439,289 @@ set explicitly and the QUIC connection SSL object is provided with a
 `BIO_s_dgram` with a peer set.
 
 `SSL_set_initial_peer_addr` cannot be called after a connection is established.
+
+#### `SSL_shutdown_ex`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Error         | Yes       | C             |
+
+```c
+typedef struct  ssl_shutdown_ex_args_st {
+    /* These arguments pertain only to QUIC connections. */
+    uint64_t    quic_error_code; /* [0, 2**62-1] */
+    const char *quic_reason;
+} SSL_SHUTDOWN_EX_ARGS;
+
+#define SSL_SHUTDOWN_FLAG_RAPID         (1U << 0)
+#define SSL_SHUTDOWN_FLAG_IMMEDIATE     (1U << 1)
+
+int SSL_shutdown_ex(SSL *ssl,
+                    uint64_t flags,
+                    const SSL_SHUTDOWN_EX_ARGS *args,
+                    size_t args_len);
+```
+
+`SSL_shutdown_ex` is an extended version of `SSL_shutdown`.
+
+`args` specifies arguments which control how the SSL object is shut down. `args`
+are read only on the first call to `SSL_shutdown_ex` for a given SSL object and
+subsequent calls to `SSL_shutdown_ex` ignore the `args` argument. `args_len`
+should be set to `sizeof(*args)`. This function is idempotent; once the shutdown
+process for a SSL object is complete, further calls are a no-op and return 1.
+
+Calling `SSL_shutdown_ex` on a QUIC connection SSL object causes the immediate
+close of the QUIC connection. “Immediate close” is as defined by RFC 9000.
+
+If no QUIC connection attempt was ever initiated using the given SSL object, the
+QUIC connection transitions immediately to the Terminated state. Otherwise, the
+connection closure process is initiated if it has not already begun.
+
+Any application stream data on a non-terminated or normally terminated stream
+which has yet to be transmitted is flushed to the network before the termination
+process begins. This ensures that where an application which calls `SSL_write`
+and performs a connection closure in a way which is considered normal to the
+application protocol being used, all of the data written is delivered to the
+peer. This behaviour may be skipped by setting the `SSL_SHUTDOWN_FLAG_IMMEDIATE`
+flag, in which case any data appended to streams via `SSL_write` (or any
+end-of-stream conditions) may not be transmitted to the peer. This flag may be
+useful where a non-normal application condition has occurred and the delivery of
+data written to streams via `SSL_write` is no longer relevant. Application
+stream data on streams which were terminated non-normally (for example via
+`SSL_stream_reset`) is not transmitted by this function.
+
+A QUIC connection can be shut down using this function in two different ways:
+
+- **RFC compliant mode.** In this mode, which provides the most robust
+  operation, the shutdown process may take a period of time up to three times
+  the current estimated RTT to the peer. It is possible for the closure process
+  to complete much faster in some circumstances but this cannot be relied upon.
+
+  In blocking mode, the function will return once the closure process is
+  complete. In non-blocking mode, `SSL_shutdown_ex` should be called until it
+  returns 1, indicating the closure process is complete and the connection is
+  now terminated.
+
+- **Rapid mode.** In this mode, a `CONNECTION_CLOSE` frame is sent in a
+  best-effort manner and the connection is terminated immediately. If the
+  `CONNECTION_CLOSE` frame sent is lost, the peer will not know that the
+  connection has terminated until the negotiated idle timeout (if any) expires.
+
+  This will generally return 0 on success, indicating that the connection has
+  not yet reached the Terminating state (unless it has already done so, in which
+  case it will return 1).
+
+  In blocking mode, this blocks until at least one `CONNECTION_CLOSE` frame is
+  sent but does not otherwise block. In non-blocking mode, this should be called
+  until it returns a non-negative value. A negative value indicates failure or
+  an I/O would-block condition.
+
+It is permissible for an application to implement a hybrid approach, for example
+by initiating a rapid or non-blocking shutdown and continuing to call `SSL_tick`
+for a duration it chooses.
+
+If `SSL_SHUTDOWN_FLAG_RAPID` is specified in `flags`, a rapid shutdown is
+performed, otherwise an RFC-compliant shutdown is performed. The principal
+effect of this flag is to disable blocking behaviour in blocking mode, and the
+QUIC implementation will still attempt to implement the Terminating state
+semantics if the application happens to tick it, until it reaches the Terminated
+state or is freed. An application can change its mind about performing a rapid
+shutdown by making a subsequent call to `SSL_shutdown_ex` without the flag set.
+
+Calling `SSL_shutdown_ex` on a QUIC stream SSL object is not valid; such a call
+will fail and has no effect. The rationale for this is that an application may
+well want to pass around SSL objects for individual QUIC streams to existing
+parts of its own code which expect something which behaves like a typical SSL
+object (i.e., a single bytestream); those components may well already call
+`SSL_shutdown` and it is not desired for such calls to affect the whole
+connection.
+
+**TBD:** Should we allow `SSL_shutdown_ex` on a QUIC stream SSL object to act as
+`SSL_stream_conclude`? Should we require this behaviour to be explicitly
+enabled?
+
+The `args->quic_error_code` and `args->reason` fields allow the application
+error code and reason string for the closure of a QUIC connection to be
+specified. If `args` or `args->reason` is `NULL`, a zero-length string is used
+for the reason. If `args` is `NULL`, an error code of 0 is used.
+`args->quic_error_code` must be in the range `[0, 2**62-1]`, else this function
+fails. These fields are ignored for SSL objects which do not represent QUIC
+connections.
+
+#### `SSL_stream_conclude`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Error         | Yes       | S             |
+
+```c
+int SSL_stream_conclude(SSL *ssl, uint64_t flags);
+```
+
+`SSL_stream_conclude` signals the normal end-of-stream condition to the send
+part of a QUIC stream. If called on a QUIC connection SSL object with a default
+stream, it signals the end of that stream to the peer. If called on a QUIC
+stream SSL object, it signals the end of that stream to the peer.
+
+This function may only be called for bidirectional streams and for outgoing
+unidirectional streams. It is a no-op if it has already been called for a given
+stream, or if either the stream or connection have entered an error state.
+
+Any data already queued for transmission via a call to `SSL_write()` will still
+be written in a reliable manner before the end-of-stream is signalled, assuming
+the connection remains healthy. This function can be thought of as appending a
+logical end-of-stream marker after any data which has previously been written to
+the stream via calls to `SSL_write`. Further attempts to call `SSL_write` after
+calling this function will fail.
+
+When calling this on a bidirectional stream, the receive part of the stream
+remains unaffected, and the peer may continue to send data via it until the peer
+also signals the end of the stream. Thus, `SSL_read()` can still be used.
+
+This function is used to conclude the send part of a stream in a normal manner.
+To perform non-normal termination of both the sending and receiving parts of a
+stream, see `SSL_stream_reset`.
+
+`flags` is reserved and should be set to 0.
+
+#### `SSL_stream_reset`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Error         | Yes       | S             |
+
+```c
+typedef struct ssl_stream_reset_args_st {
+    uint64_t quic_error_code; /* [0, 2**62-1] */
+} SSL_STREAM_RESET_ARGS;
+
+int SSL_stream_reset(SSL *ssl,
+                     const SSL_STREAM_RESET_ARGS *args,
+                     size_t args_len);
+```
+
+Conducts a non-normal termination of a bidirectional or outgoing unidirectional
+stream. For QUIC, this corresponds to a stream reset using a `RESET_STREAM`
+frame.
+
+It may be called on either a QUIC stream SSL object or a QUIC connection SSL
+object with a default stream; the given stream is reset. The QUIC connection is
+not affected.
+
+For bidirectional streams, this terminates both sending and receiving parts of
+the stream. It may not be called on an incoming unidirectional stream.
+
+If `args` is `NULL`, an application error code of 0 is used. Otherwise, the
+application error code to use is specified in `args->quic_error_code`, which
+must be in the range `[0, 2**62-1]`. `args_len` must be set to `sizeof(*args)`
+if `args` is non-NULL.
+
+Only the first call to this function has any effect; subsequent calls are
+no-ops. This is considered a success case.
+
+#### `SSL_get_stream_state`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | No        | S             |
+
+```c
+/*
+ * e.g. Non-QUIC SSL object, or QUIC connection SSL object without a default
+ * stream.
+ */
+#define SSL_STREAM_STATE_NONE           0
+/*
+ * The read or write part of the stream has been finished in a normal manner.
+ *
+ * For SSL_get_stream_read_state, this means that there is no more data to read,
+ * and that any future SSL_read calls will return any residual data waiting to
+ * be read followed by a SSL_ERROR_ZERO_RETURN condition.
+ *
+ * For SSL_get_stream_write_state, this means that the local application has
+ * already indicated the end of the stream by calling SSL_stream_conclude,
+ * and that future calls to SSL_write will fail.
+ */
+#define SSL_STREAM_STATE_FINISHED       1
+
+/*
+ * The stream was reset by the local or remote party.
+ */
+#define SSL_STREAM_STATE_RESET          2
+
+/*
+ * The underlying connection supporting the stream has closed or otherwise
+ * failed.
+ *
+ * For SSL_get_stream_read_state, this means that attempts to read from the
+ * stream via SSL_read will fail, though SSL_read may allow any residual
+ * data waiting to be read to be read first.
+ *
+ * For SSL_get_stream_write_state, this means that attempts to write to the
+ * stream will fail.
+ */
+#define SSL_STREAM_STATE_CONN_CLOSED    3
+
+int SSL_get_stream_read_state(SSL *ssl);
+int SSL_get_stream_write_state(SSL *ssl);
+```
+
+This API allows the current state of a stream to be queried. This allows an
+application to determine whether a stream is still usable and why a stream has
+reached an error state.
+
+#### `SSL_get_stream_error_code`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | No        | S             |
+
+```c
+int SSL_get_stream_error_code(SSL *ssl, uint64_t *app_error_code);
+```
+
+If a stream has been terminated normally, returns 0.
+
+If a stream has been terminated non-normally, returns 1 and writes the
+applicable application error code to `*app_error_code`.
+
+If a stream is still healthy, returns -1.
+
+#### `SSL_get_conn_close_info`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | No        | C             |
+
+```c
+typedef struct ssl_conn_close_info_st {
+    uint64_t error_code;
+    char     *reason;
+    size_t   reason_len;
+    char     is_local;
+    char     is_transport;
+} SSL_CONN_CLOSE_INFO;
+
+int SSL_get_conn_close_info(SSL *ssl,
+                            SSL_CONN_CLOSE_INFO *info,
+                            size_t info_len);
+```
+
+If a connection is still healthy, returns 0. Otherwise, fills `*info` with
+information about the error causing connection termination and returns 1.
+`info_len` must be set to `sizeof(*info)`.
+
+`info->reason` is set to point to a buffer containing a reason string. The
+buffer is valid for the lifetime of the SSL object. The reason string will
+always be zero terminated, but since it is received from a potentially untrusted
+peer, may also contain zero bytes. `info->reason_len` is the true length of the
+reason string in bytes.
+
+`info->is_local` is 1 if the connection closure was locally initiated.
+
+`info->is_transport` is 1 if the connection closure was initiated by QUIC, and 0
+if it was initiated by the application. The namespace of `info->error_code` is
+determined by this parameter.
 
 ### Future APIs
 
@@ -651,3 +995,96 @@ A. `SSL_write` blocks until it has accepted responsibility for the data passed
 to it, just like `write(2)` or `send(2)`. In other words, it blocks until it can
 buffer the data. This does not necessarily mean that the data has actually been
 sent.
+
+**Q. How should connection closure work?**
+
+A. **RFC requirements.** After we begin terminating the connection by sending a
+`CONNECTION_CLOSE` frame, QUIC requires that we continue to process network I/O
+for a certain period of time so that any further traffic from the peer results
+in generation of a further `CONNECTION_CLOSE` frame. This is necessary to handle
+the possibility that the `CONNECTION_CLOSE` frame which was initially sent may
+be lost.
+
+**API issues.** This creates a complication because it implies that the
+connection closure process may take a fair amount of time, whereas existing API
+users will generally expect to be able to call `SSL_shutdown` and then
+immediately free the SSL object.
+
+However, if the caller immediately frees the SSL object, this precludes
+our implementing the applicable logic, at least on the client side. Moreover,
+existing API users are likely to tear down underlying network BIOs immediately
+after calling `SSL_free` anyway. In other words, any implementation based on
+secretly keeping QUIC state around after a call to `SSL_free` does not seem
+particularly workable on the client side.
+
+**Server side considerations.** There is more of a prospect here on the server
+side, since multiple connections will share the same socket, which will
+presumably be associated with some kind of enduring listener object. Thus when
+server support is implemented in the future connection teardown could be handled
+internally by maintaining the state of connections undergoing termination inside
+the listener object. However, similar caveats to those discussed here when the
+listener object itself is to be town down. (It is also possible we could
+optionally allow use of the server-style API to make multiple outgoing client
+connections with a non-zero-length client-side CID on the same underlying
+network BIO.)
+
+There are only really two ways to handle this:
+
+- **RFC conformant mode.** `SSL_shutdown` only indicates that shutdown is
+  complete once the the entire connection closure process is complete.
+
+  This process consists of the Closing and Draining states. In some cases the
+  Closing state may last only briefly, namely if the peer chooses to respond to
+  our `CONNECTION_CLOSE` frame with a `CONNECTION_CLOSE` frame of its own. This
+  allows immediate progression to the Draining state. However, a peer is *not*
+  required to respond with such a frame. Thus in the worst case, this state can
+  be as long as `3*PTO`; for example a peer with a high estimated RTT of 300ms
+  would have us wait for 900ms.
+
+  In the Draining state we simply ignore all incoming traffic and do not
+  generate outgoing traffic. The purpose of this state is to simply tie up the
+  socket and ensure any data still in flight is discarded. However, RFC 9000
+  states:
+
+    Disposing of connection state prior to exiting the closing or draining state
+    could result in an endpoint generating a Stateless Reset unnecessarily when
+    it receives a late-arriving packet. Endpoints that have some alternative
+    means to ensure that late-arriving packets do not induce a response, such as
+    those that are able to close the UDP socket, MAY end these states earlier to
+    allow for faster resource recovery. Servers that retain an open socket for
+    accepting new connections SHOULD NOT end the closing or draining state early
+
+  Because our client mode implementation uses one socket per connection, it
+  appears to be reasonable based on the above text to omit the implementation of
+  the draining state (the same may not be the case for the server role when
+  implemented in the future).
+
+  Thus, in general, `SSL_shutdown` can be expected to take about one round
+  trip's time to complete when dealing with a peer whose QUIC implementation
+  happens to respond to a `CONNECTION_CLOSE` frame with a `CONNECTION_CLOSE`
+  frame of its own, and about three round trips otherwise.
+
+- **Rapid shutdown mode.** `SSL_shutdown` sends a `CONNECTION_CLOSE` frame once
+  and completes immediately. The Closing and Draining states are not used, and
+  if the `CONNECTION_CLOSE` frame was lost, the peer will have to wait for idle
+  timeout to determine that the connection is gone (there is also the
+  possibility that, if the socket is closed by the application after teardown, a
+  peer will make something of ICMP Port Unreachable messages, but this is
+  unlikely to be reliable and since this message is not authenticated, QUIC
+  implementations probably shouldn't pay much attention to it anyway.)
+
+There is little problem with `SSL_shutdown` taking as long as it needs to for
+some long-running applications, but for others it poses a real issue. For
+example, a command-line tool which makes one connection, performs one
+application-specific transaction, and then tears down the connection. In this
+case an RFC-conformant connection termination would essentially require the
+process to hang around for a substantial amount of time after the work of the
+process is done.
+
+For this reason, it is concluded that both of these shutdown modes need to be
+offered.
+
+Where connection closure is initiated remotely rather than locally, only the
+draining state is relevant. Since we conclude above that we do not need to
+implement the draining state on the client side, this means that connection
+closure can be completed immediately in the case of a remote closure.
