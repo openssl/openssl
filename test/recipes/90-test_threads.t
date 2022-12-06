@@ -55,4 +55,4 @@ close CFGINC;
 close CFGOUT;
 
 $ENV{OPENSSL_CONF} = 'thread.cnf';
-ok(run(test(["threadstest_fips"])), "running test_threads_fips");
+ok(run(test(["threadstest_fips"])), "running threadstest_fips");
