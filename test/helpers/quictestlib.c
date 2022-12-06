@@ -12,6 +12,7 @@
 #include "../testutil.h"
 #include "internal/quic_wire_pkt.h"
 #include "internal/quic_record_tx.h"
+#include "internal/quic_error.h"
 #include "internal/packet.h"
 
 #define GROWTH_ALLOWANCE 1024
@@ -156,13 +157,13 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
          * the communications and don't expect network delays. This shouldn't
          * be done in a real application.
          */
-        if (!clienterr)
+        if (!clienterr && retc <= 0)
             SSL_tick(clientssl);
-        if (!servererr) {
+        if (!servererr && rets <= 0) {
             ossl_quic_tserver_tick(qtserv);
             servererr = ossl_quic_tserver_is_term_any(qtserv, NULL);
-            if (!servererr && !rets)
-                rets = ossl_quic_tserver_is_connected(qtserv);
+            if (!servererr)
+                rets = ossl_quic_tserver_is_handshake_complete(qtserv);
         }
 
         if (clienterr && servererr)
@@ -172,11 +173,30 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
             TEST_info("No progress made");
             goto err;
         }
-    } while (retc <=0 || rets <= 0);
+    } while ((retc <= 0 && !clienterr) || (rets <= 0 && !servererr));
 
-    ret = 1;
+    if (!clienterr && !servererr)
+        ret = 1;
  err:
     return ret;
+}
+
+int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv)
+{
+    QUIC_TERMINATE_CAUSE cause;
+
+    ossl_quic_tserver_tick(qtserv);
+
+    /*
+     * Check that the server has received the protocol violation error
+     * connection close from the client
+     */
+    if (!TEST_true(ossl_quic_tserver_is_term_any(qtserv, &cause))
+            || !TEST_true(cause.remote)
+            || !TEST_uint64_t_eq(cause.error_code, QUIC_ERR_PROTOCOL_VIOLATION))
+        return 0;
+
+    return 1;
 }
 
 void ossl_quic_fault_free(OSSL_QUIC_FAULT *fault)
@@ -438,12 +458,13 @@ int ossl_quic_fault_resize_message(OSSL_QUIC_FAULT *fault, size_t newlen)
 
 int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
                                      unsigned int exttype, unsigned char *ext,
-                                     size_t *extlen, size_t *msglen)
+                                     size_t *extlen)
 {
     PACKET pkt, sub, subext;
     unsigned int type;
     const unsigned char *start, *end;
     size_t newlen;
+    size_t msglen = fault->handbuflen;
 
     if (!PACKET_buf_init(&pkt, ext, *extlen))
         return 0;
@@ -455,7 +476,7 @@ int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
     do {
         start = PACKET_data(&sub);
         if (!PACKET_get_net_2(&sub, &type)
-                || !PACKET_as_length_prefixed_2(&sub, &subext))
+                || !PACKET_get_length_prefixed_2(&sub, &subext))
             return 0;
     } while (type != exttype);
 
@@ -489,8 +510,10 @@ int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
     *extlen = newlen + 2;
 
     /* We can now resize the message */
-    *msglen -= (end - start);
-    if (!ossl_quic_fault_resize_message(fault, *msglen))
+    if ((size_t)(end - start) + SSL3_HM_HEADER_LENGTH > msglen)
+        return 0; /* Should not happen */
+    msglen -= (end - start) + SSL3_HM_HEADER_LENGTH;
+    if (!ossl_quic_fault_resize_message(fault, msglen))
         return 0;
 
     return 1;

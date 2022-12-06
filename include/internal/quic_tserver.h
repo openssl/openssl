@@ -57,8 +57,10 @@ int ossl_quic_tserver_set_handshake_mutator(QUIC_TSERVER *srv,
 /* Advances the state machine. */
 int ossl_quic_tserver_tick(QUIC_TSERVER *srv);
 
-/* Returns 1 if we have a (non-terminated) client. */
-int ossl_quic_tserver_is_connected(QUIC_TSERVER *srv);
+/*
+ * Returns 1 if we have finished the TLS handshake
+ */
+int ossl_quic_tserver_is_handshake_complete(QUIC_TSERVER *srv);
 
 /* Returns 1 if the server is in any terminating or terminated state */
 int ossl_quic_tserver_is_term_any(QUIC_TSERVER *srv,
