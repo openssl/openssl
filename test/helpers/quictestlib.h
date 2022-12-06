@@ -22,6 +22,8 @@ int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
                               OSSL_QUIC_FAULT **fault);
 int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl);
 
+int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv);
+
 void ossl_quic_fault_free(OSSL_QUIC_FAULT *fault);
 
 typedef int (*ossl_quic_fault_on_packet_plain_cb)(OSSL_QUIC_FAULT *fault,
@@ -81,11 +83,8 @@ int ossl_quic_fault_resize_message(OSSL_QUIC_FAULT *fault, size_t newlen);
  * Delete an extension from an extension block. |exttype| is the type of the
  * extension to be deleted. |ext| points to the extension block. On entry
  * |*extlen| contains the length of the extension block. It is updated with the
- * new length on exit. On entry |*msglen| is the length of the handshake message
- * (without the header). On exit it is updated with the new message length.
- * ossl_quic_fault_resize_handshake() is called automatically so there is no
- * need to call it explicitly.
+ * new length on exit.
  */
 int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
                                      unsigned int exttype, unsigned char *ext,
-                                     size_t *extlen, size_t *msglen);
+                                     size_t *extlen);

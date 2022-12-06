@@ -117,7 +117,6 @@ static int test_unknown_frame(void)
     unsigned char buf[80];
     size_t byteswritten;
     OSSL_QUIC_FAULT *fault = NULL;
-    QUIC_TERMINATE_CAUSE cause;
 
     if (!TEST_ptr(cctx))
         goto err;
@@ -169,17 +168,7 @@ static int test_unknown_frame(void)
         goto err;
 #endif
 
-    ERR_clear_error();
-
-    ossl_quic_tserver_tick(qtserv);
-
-    /*
-     * Check that the server has received the protocol violation error
-     * connection close from the client
-     */
-    if (!TEST_true(ossl_quic_tserver_is_term_any(qtserv, &cause))
-            || !TEST_true(cause.remote)
-            || !TEST_uint64_t_eq(cause.error_code, QUIC_ERR_PROTOCOL_VIOLATION))
+    if (!TEST_true(qtest_check_server_protocol_err(qtserv)))
         goto err;
 
     testresult = 1;
@@ -189,6 +178,62 @@ static int test_unknown_frame(void)
     ossl_quic_tserver_free(qtserv);
     SSL_CTX_free(cctx);
     return testresult;
+}
+
+/*
+ * Test that a server that fails to provide transport params cannot be
+ * connected to.
+ */
+static int drop_transport_params_cb(OSSL_QUIC_FAULT *fault,
+                                    OSSL_QF_ENCRYPTED_EXTENSIONS *ee,
+                                    size_t eelen, void *encextcbarg)
+{
+    if (!ossl_quic_fault_delete_extension(fault,
+                                          TLSEXT_TYPE_quic_transport_parameters,
+                                          ee->extensions, &ee->extensionslen))
+        return 0;
+
+    return 1;
+}
+
+static int test_no_transport_params(void)
+{
+    int testresult = 0;
+    SSL_CTX *cctx = SSL_CTX_new(OSSL_QUIC_client_method());
+    QUIC_TSERVER *qtserv = NULL;
+    SSL *cssl = NULL;
+    OSSL_QUIC_FAULT *fault = NULL;
+
+    if (!TEST_ptr(cctx))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_objects(cctx, cert, privkey, &qtserv,
+                                             &cssl, &fault)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_fault_set_hand_enc_ext_listener(fault,
+                                                             drop_transport_params_cb,
+                                                             NULL)))
+        goto err;
+
+    /*
+     * We expect the connection to fail because the server failed to provide
+     * transport parameters
+     */
+    if (!TEST_false(qtest_create_quic_connection(qtserv, cssl)))
+        goto err;
+
+    if (!TEST_true(qtest_check_server_protocol_err(qtserv)))
+        goto err;
+
+    testresult = 1;
+ err:
+    ossl_quic_fault_free(fault);
+    SSL_free(cssl);
+    ossl_quic_tserver_free(qtserv);
+    SSL_CTX_free(cctx);
+    return testresult;
+
 }
 
 OPT_TEST_DECLARE_USAGE("certsdir\n")
@@ -216,6 +261,7 @@ int setup_tests(void)
 
     ADD_TEST(test_basic);
     ADD_TEST(test_unknown_frame);
+    ADD_TEST(test_no_transport_params);
 
     return 1;
 
