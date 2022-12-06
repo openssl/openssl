@@ -105,7 +105,7 @@ set_version () {
             PRE_RELEASE_TAG="$PRE_LABEL$PRE_NUM"
             ;;
     esac
-    if [ -n "$PRE_RELEASE_TAG" ]; then _PRE_RELEASE_TAG="+${PRE_RELEASE_TAG}"; fi
+    if [ -n "$PRE_RELEASE_TAG" ]; then _PRE_RELEASE_TAG="-${PRE_RELEASE_TAG}"; fi
     cat > "$SOURCEDIR/VERSION.dat" <<EOF
 MAJOR=$MAJOR
 MINOR=$MINOR
