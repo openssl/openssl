@@ -4731,7 +4731,9 @@ int setup_tests(void)
             /* Swap the libctx to test non-default context only */
             nullprov = OSSL_PROVIDER_load(NULL, "null");
             deflprov = OSSL_PROVIDER_load(testctx, "default");
+#ifndef OPENSSL_SYS_TANDEM
             lgcyprov = OSSL_PROVIDER_load(testctx, "legacy");
+#endif
             break;
         case OPT_TEST_CASES:
             break;
@@ -4863,6 +4865,8 @@ void cleanup_tests(void)
 {
     OSSL_PROVIDER_unload(nullprov);
     OSSL_PROVIDER_unload(deflprov);
+#ifndef OPENSSL_SYS_TANDEM
     OSSL_PROVIDER_unload(lgcyprov);
+#endif
     OSSL_LIB_CTX_free(testctx);
 }
