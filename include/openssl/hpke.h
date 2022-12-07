@@ -65,6 +65,13 @@
 # define OSSL_HPKE_AEADSTR_CP         "chacha20-poly1305"  /* AEAD id 3 */
 # define OSSL_HPKE_AEADSTR_EXP        "exporter"           /* AEAD id 0xff */
 
+/*
+ * Roles for use in creating an OSSL_HPKE_CTX, most
+ * important use of this is to control nonce re-use.
+ */
+# define OSSL_HPKE_ROLE_SENDER 0
+# define OSSL_HPKE_ROLE_RECEIVER 1
+
 typedef struct {
     uint16_t    kem_id; /* Key Encapsulation Method id */
     uint16_t    kdf_id; /* Key Derivation Function id */
@@ -84,7 +91,7 @@ typedef struct {
 
 typedef struct ossl_hpke_ctx_st OSSL_HPKE_CTX;
 
-OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite,
+OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite, int role,
                                  OSSL_LIB_CTX *libctx, const char *propq);
 void OSSL_HPKE_CTX_free(OSSL_HPKE_CTX *ctx);
 

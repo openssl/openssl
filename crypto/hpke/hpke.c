@@ -56,6 +56,7 @@ struct ossl_hpke_ctx_st
     const OSSL_HPKE_KDF_INFO *kdf_info;
     const OSSL_HPKE_AEAD_INFO *aead_info;
     EVP_CIPHER *aead_ciph;
+    int role; /* sender(0) or receiver(1) */
     uint64_t seq; /* aead sequence number */
     unsigned char *shared_secret; /* KEM output, zz */
     size_t shared_secretlen;
@@ -801,7 +802,7 @@ err:
  * in doc/man3/OSSL_HPKE_CTX_new.pod to avoid duplication
  */
 
-OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite,
+OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite, int role,
                                  OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_HPKE_CTX *ctx = NULL;
@@ -816,6 +817,10 @@ OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite,
     if (hpke_suite_check(suite, &kem_info, &kdf_info, &aead_info) != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
+    }
+    if (role != OSSL_HPKE_ROLE_SENDER && role != OSSL_HPKE_ROLE_RECEIVER) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
     }
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
@@ -833,6 +838,7 @@ OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite,
             goto err;
         }
     }
+    ctx->role = role;
     ctx->mode = mode;
     ctx->suite = suite;
     ctx->kem_info = kem_info;
@@ -915,6 +921,10 @@ int OSSL_HPKE_CTX_set1_ikme(OSSL_HPKE_CTX *ctx,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
+    if (ctx->role != OSSL_HPKE_ROLE_SENDER) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
     OPENSSL_clear_free(ctx->ikme, ctx->ikmelen);
     ctx->ikme = OPENSSL_memdup(ikme, ikmelen);
     if (ctx->ikme == NULL)
@@ -931,6 +941,10 @@ int OSSL_HPKE_CTX_set1_authpriv(OSSL_HPKE_CTX *ctx, EVP_PKEY *priv)
     }
     if (ctx->mode != OSSL_HPKE_MODE_AUTH
         && ctx->mode != OSSL_HPKE_MODE_PSKAUTH) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    if (ctx->role != OSSL_HPKE_ROLE_SENDER) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
@@ -956,6 +970,10 @@ int OSSL_HPKE_CTX_set1_authpub(OSSL_HPKE_CTX *ctx,
     }
     if (ctx->mode != OSSL_HPKE_MODE_AUTH
         && ctx->mode != OSSL_HPKE_MODE_PSKAUTH) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    if (ctx->role != OSSL_HPKE_ROLE_RECEIVER) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
@@ -1020,6 +1038,15 @@ int OSSL_HPKE_CTX_set_seq(OSSL_HPKE_CTX *ctx, uint64_t seq)
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    /*
+     * We disallow senders from doing this as it's dangerous
+     * Receivers are ok to use this, as no harm should ensue
+     * if they go wrong.
+     */
+    if (ctx->role == OSSL_HPKE_ROLE_SENDER) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
     ctx->seq = seq;
     return 1;
 }
@@ -1034,6 +1061,10 @@ int OSSL_HPKE_encap(OSSL_HPKE_CTX *ctx,
     if (ctx == NULL || enc == NULL || enclen == NULL || *enclen == 0
         || pub == NULL || publen == 0) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (ctx->role != OSSL_HPKE_ROLE_SENDER) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
     if (infolen > OSSL_HPKE_MAX_INFOLEN) {
@@ -1067,6 +1098,10 @@ int OSSL_HPKE_decap(OSSL_HPKE_CTX *ctx,
 
     if (ctx == NULL || enc == NULL || enclen == 0 || recippriv == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (ctx->role != OSSL_HPKE_ROLE_RECEIVER) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
     if (infolen > OSSL_HPKE_MAX_INFOLEN) {
@@ -1105,6 +1140,10 @@ int OSSL_HPKE_seal(OSSL_HPKE_CTX *ctx,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (ctx->role != OSSL_HPKE_ROLE_SENDER) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
     if ((ctx->seq + 1) == 0) { /* wrap around imminent !!! */
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
@@ -1141,6 +1180,10 @@ int OSSL_HPKE_open(OSSL_HPKE_CTX *ctx,
     if (ctx == NULL || pt == NULL || ptlen == NULL || *ptlen == 0
         || ct == NULL || ctlen == 0) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (ctx->role != OSSL_HPKE_ROLE_RECEIVER) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
     if ((ctx->seq + 1) == 0) { /* wrap around imminent !!! */

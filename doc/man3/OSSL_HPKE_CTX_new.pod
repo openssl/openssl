@@ -24,7 +24,7 @@ OSSL_HPKE_CTX_get_seq, OSSL_HPKE_CTX_set_seq
      uint16_t    aead_id;
  } OSSL_HPKE_SUITE;
 
- OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite,
+ OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite, int role,
                                   OSSL_LIB_CTX *libctx, const char *propq);
  void OSSL_HPKE_CTX_free(OSSL_HPKE_CTX *ctx);
 
@@ -182,8 +182,35 @@ supplied before the encapsulation/decapsulation operation will work.
 
 =back
 
-For further information related to authentication see L</Pre-Shared Key HPKE modes>
-and L</Sender-authenticated HPKE Modes>.
+For further information related to authentication see L</Pre-Shared Key HPKE
+modes> and L</Sender-authenticated HPKE Modes>.
+
+=head2 HPKE Roles
+
+HPKE contexts have a role - either sender or receiver. This is used 
+to control which functions can be called and so that senders do not
+re-use a key and nonce with different plaintexts.
+
+OSSL_HPKE_CTX_free(), OSSL_HPKE_export(), OSSL_HPKE_CTX_set1_psk(), 
+and OSSL_HPKE_CTX_get_seq() can be called regardless of role.
+
+=over 4
+
+=item B<OSSL_HPKE_ROLE_SENDER>, 0
+
+An I<OSSL_HPKE_CTX> with this role can be used with
+OSSL_HPKE_encap(), OSSL_HPKE_seal(), OSSL_HPKE_CTX_set1_ikme() and 
+OSSL_HPKE_CTX_set1_authpriv().
+
+=item B<OSSL_HPKE_ROLE_RECEIVER>, 1
+
+An I<OSSL_HPKE_CTX> with this role can be used with OSSL_HPKE_decap(),
+OSSL_HPKE_open(), OSSL_HPKE_CTX_set1_authpub() and OSSL_HPKE_CTX_set_seq().
+
+=back
+
+Calling a function with an incorrect role set on I<OSSL_HPKE_CTX> will result
+in an error.
 
 =head2 Parameter Size Limits
 
@@ -202,13 +229,14 @@ for the I<infolen> parameter.
 
 =head2 Context Construct/Free
 
-OSSL_HPKE_CTX_new() creates a B<OSSL_HPKE_CTX> context object used for subsequent
-HPKE operations, given a I<mode> (See L</HPKE Modes>) and
-I<suite> (see L</OSSL_HPKE_SUITE Identifiers>). The I<libctx> and I<propq>
-are used when fetching algorithms from providers and may be set to NULL.
+OSSL_HPKE_CTX_new() creates a B<OSSL_HPKE_CTX> context object used for
+subsequent HPKE operations, given a I<mode> (See L</HPKE Modes>), I<suite> (see
+L</OSSL_HPKE_SUITE Identifiers>) and a I<role> (see L</HPKE Roles>). The
+I<libctx> and I<propq> are used when fetching algorithms from providers and may
+be set to NULL.
 
-OSSL_HPKE_CTX_free() frees the I<ctx> B<OSSL_HPKE_CTX> that was created previously
-by a call to OSSL_HPKE_CTX_new().
+OSSL_HPKE_CTX_free() frees the I<ctx> B<OSSL_HPKE_CTX> that was created
+previously by a call to OSSL_HPKE_CTX_new().
 
 =head2 Sender APIs
 
@@ -363,13 +391,14 @@ or values that leak.
 
 Some protocols may have to deal with packet loss while still being able to
 decrypt arriving packets later. We provide a way to set the increment used for
-the nonce to the next subsequent call to OSSL_HPKE_seal() or OSSL_HPKE_open().
-The OSSL_HPKE_CTX_set_seq() API can be used for such purposes with the I<seq>
-parameter value resetting the internal nonce to be used for the next call.
+the nonce to the next subsequent call to OSSL_HPKE_open() (but not to
+OSSL_HPKE_seal() as explained below).  The OSSL_HPKE_CTX_set_seq() API can be
+used for such purposes with the I<seq> parameter value resetting the internal
+nonce increment to be used for the next call.
 
 A baseline nonce value is established based on the encapsulation or
 decapsulation operation and is then incremented by 1 for each call to seal or
-open. (In other words, the I<seq> is a zero-based counter.)
+open. (In other words, the first I<seq> increment defaults to zero.)
 
 If a caller needs to determine how many calls to seal or open have been made
 the OSSL_HPKE_CTX_get_seq() API can be used to retrieve the increment (in the
@@ -377,18 +406,18 @@ I<seq> output) that will be used in the next call to seal or open. That would
 return 0 before the first call a sender made to OSSL_HPKE_seal() and 1 after
 that first call.
 
+Note that re-use of the same nonce and key with different plaintexts would
+be very dangerous and could lead to loss of confidentiality and integrity.
+We therefore only support application control over I<seq> for decryption
+(i.e. OSSL_HPKE_open()) operations.
+
 For compatibility with other implementations these I<seq> increments are
 represented as I<uint64_t>.
-
-Note that re-use of the same nonce and key with different plaintexts is very
-dangerous and can lead to loss of confidentiality. Applications therefore need
-to exercise extreme caution in using these APIs and would be better off avoiding
-them entirely.
 
 =head2 Protocol Convenience Functions
 
 Additional convenience APIs allow the caller to access internal details of
-local HPKE support and/or algorithms, such as parmameter lengths.
+local HPKE support and/or algorithms, such as parameter lengths.
 
 OSSL_HPKE_suite_check() checks if a specific B<OSSL_HPKE_SUITE> I<suite>
 is supported locally.
@@ -483,7 +512,9 @@ This example demonstrates a minimal round-trip using HPKE.
             goto err;
 
         /* sender's actions - encrypt data using the receivers public key */
-        if ((sctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite, NULL, NULL)) == NULL)
+        if ((sctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite,
+                                      OSSL_HPKE_ROLE_SENDER,
+                                      NULL, NULL)) == NULL)
             goto err;
         if (OSSL_HPKE_encap(sctx, enc, &enclen, pub, publen, info, infolen) != 1)
             goto err;
@@ -491,7 +522,9 @@ This example demonstrates a minimal round-trip using HPKE.
             goto err;
 
         /* receiver's actions - decrypt data using the recievers private key */
-        if ((rctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite, NULL, NULL)) == NULL)
+        if ((rctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite,
+                                      OSSL_HPKE_ROLE_RECEIVER,
+                                      NULL, NULL)) == NULL)
             goto err;
         if (OSSL_HPKE_decap(rctx, enc, enclen, priv, info, infolen) != 1)
             goto err;
