@@ -1074,7 +1074,8 @@ See L<EVP_MAC(3)>, L<EVP_MAC-HMAC(7)>, L<EVP_MAC-CMAC(7)>, L<EVP_MAC-GMAC(7)>,
 L<EVP_MAC-KMAC(7)>, L<EVP_MAC-BLAKE2(7)>, L<EVP_MAC-Poly1305(7)> and
 L<EVP_MAC-Siphash(7)> for additional information.
 
-Note that the one-shot method HMAC() is still available for compatibility purposes.
+Note that the one-shot method HMAC() is still available for compatibility purposes,
+but this can also be replaced by using EVP_Q_MAC if a library context is required.
 
 =head4 Deprecated low-level validation functions
 
