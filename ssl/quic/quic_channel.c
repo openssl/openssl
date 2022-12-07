@@ -613,12 +613,16 @@ static int ch_on_handshake_complete(void *arg)
     if (!ossl_assert(ch->tx_enc_level == QUIC_ENC_LEVEL_1RTT))
         return 0;
 
-    if (!ch->got_remote_transport_params)
+    if (!ch->got_remote_transport_params) {
         /*
          * Was not a valid QUIC handshake if we did not get valid transport
          * params.
          */
+        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
+                                               OSSL_QUIC_FRAME_TYPE_CRYPTO,
+                                               "no transport parameters received");
         return 0;
+    }
 
     /* Don't need transport parameters anymore. */
     OPENSSL_free(ch->local_transport_params);
