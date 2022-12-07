@@ -192,12 +192,12 @@ network socket.
 
 =item BIO_CTRL_DGRAM_GET_FALLBACK_MTU
 
-Returns the minimum size of datagram payload which should always be supported on
-the BIO. This size is determined by the minimum MTU required to be supported by
-the applicable underlying network layer. Use of datagrams of this size may lead
-to suboptimal performance, but should be routable in all circumstances. The
-value returned is the datagram payload size in bytes and does not include the
-size of layer 3 or layer 4 protocol headers.
+Returns the estimated minimum size of datagram payload which should always be
+supported on the BIO. This size is determined by the minimum MTU required to be
+supported by the applicable underlying network layer. Use of datagrams of this
+size may lead to suboptimal performance, but should be routable in all
+circumstances. The value returned is the datagram payload size in bytes and does
+not include the size of layer 3 or layer 4 protocol headers.
 
 =item BIO_CTRL_DGRAM_MTU_EXCEEDED
 
