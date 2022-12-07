@@ -40,7 +40,6 @@ jobs:
           enable-trace enable-fips,
           no-ts,
           no-ui,
-          enable-ktls no-ec,
         ]
     runs-on: ubuntu-latest
     steps:
