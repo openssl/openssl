@@ -11,7 +11,7 @@
  * Example showing how to validate DSA parameters.
  *
  * Proper FIPS 186-4 DSA (FFC) parameter validation requires that all
- * the parameters used for during parameter generation are supplied
+ * the parameters used during parameter generation are supplied
  * when doing the validation. Unfortunately saving DSA parameters as
  * a PEM or DER file does not write out all required fields. Because
  * of this the default provider normally only does a partial
