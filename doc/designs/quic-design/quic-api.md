@@ -228,7 +228,7 @@ error occurs.
 
 We have to implement all of the following modes:
 
-- `SSL_ENABLE_PARTIAL_WRITE` on or off
+- `SSL_MODE_ENABLE_PARTIAL_WRITE` on or off
 - `SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER` on or off
 - Blocking mode on or off
 
@@ -613,11 +613,12 @@ for a duration it chooses.
 
 If `SSL_SHUTDOWN_FLAG_RAPID` is specified in `flags`, a rapid shutdown is
 performed, otherwise an RFC-compliant shutdown is performed. The principal
-effect of this flag is to disable blocking behaviour in blocking mode, and the
-QUIC implementation will still attempt to implement the Terminating state
-semantics if the application happens to tick it, until it reaches the Terminated
-state or is freed. An application can change its mind about performing a rapid
-shutdown by making a subsequent call to `SSL_shutdown_ex` without the flag set.
+effect of this flag is to partially disable blocking behaviour in blocking mode,
+and the QUIC implementation will still attempt to implement the Terminating
+state semantics if the application happens to tick it, until it reaches the
+Terminated state or is freed. An application can change its mind about
+performing a rapid shutdown by making a subsequent call to `SSL_shutdown_ex`
+without the flag set.
 
 Calling `SSL_shutdown_ex` on a QUIC stream SSL object is not valid; such a call
 will fail and has no effect. The rationale for this is that an application may
@@ -721,7 +722,7 @@ no-ops. This is considered a success case.
  * e.g. Non-QUIC SSL object, or QUIC connection SSL object without a default
  * stream.
  */
-#define SSL_STREAM_STATE_NONE           0
+#define SSL_STREAM_STATE_NONE                   0
 /*
  * The read or write part of the stream has been finished in a normal manner.
  *
@@ -733,12 +734,17 @@ no-ops. This is considered a success case.
  * already indicated the end of the stream by calling SSL_stream_conclude,
  * and that future calls to SSL_write will fail.
  */
-#define SSL_STREAM_STATE_FINISHED       1
+#define SSL_STREAM_STATE_FINISHED               1
 
 /*
- * The stream was reset by the local or remote party.
+ * The stream was reset by the local party.
  */
-#define SSL_STREAM_STATE_RESET          2
+#define SSL_STREAM_STATE_RESET_LOCAL            2
+
+/*
+ * The stream was reset by the remote party.
+ */
+#define SSL_STREAM_STATE_RESET_REMOTE           3
 
 /*
  * The underlying connection supporting the stream has closed or otherwise
@@ -751,7 +757,7 @@ no-ops. This is considered a success case.
  * For SSL_get_stream_write_state, this means that attempts to write to the
  * stream will fail.
  */
-#define SSL_STREAM_STATE_CONN_CLOSED    3
+#define SSL_STREAM_STATE_CONN_CLOSED            4
 
 int SSL_get_stream_read_state(SSL *ssl);
 int SSL_get_stream_write_state(SSL *ssl);
@@ -1113,8 +1119,8 @@ side, since multiple connections will share the same socket, which will
 presumably be associated with some kind of enduring listener object. Thus when
 server support is implemented in the future connection teardown could be handled
 internally by maintaining the state of connections undergoing termination inside
-the listener object. However, similar caveats to those discussed here when the
-listener object itself is to be town down. (It is also possible we could
+the listener object. However, similar caveats to those discussed here arise when
+the listener object itself is to be town down. (It is also possible we could
 optionally allow use of the server-style API to make multiple outgoing client
 connections with a non-zero-length client-side CID on the same underlying
 network BIO.)
