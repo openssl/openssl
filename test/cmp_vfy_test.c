@@ -153,7 +153,7 @@ static int test_validate_msg_mac_alg_protection(int miss, int wrong)
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
 
     fixture->expected = !miss && !wrong;
-    if (!TEST_true(miss ? OSSL_CMP_CTX_set0_trusted(fixture->cmp_ctx, NULL)
+    if (!TEST_true(miss ? OSSL_CMP_CTX_set0_trustedStore(fixture->cmp_ctx, NULL)
                    : OSSL_CMP_CTX_set1_secretValue(fixture->cmp_ctx, sec_1,
                                                    wrong ? 4 : sizeof(sec_1)))
             || !TEST_ptr(fixture->msg = load_pkimsg(ip_waiting_f, libctx))) {
