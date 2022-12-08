@@ -880,7 +880,7 @@ $code.=<<___;
 	subs	$blocks,$blocks,#4
 	b.gt	.Lcbc_4_blocks_dec
 	// save back IV
-	st1	{@vtmp[3].16b}, [$ivp]
+	st1	{@data[3].16b}, [$ivp]
 	b	100f
 1:	// last block
 	subs	$blocks,$blocks,#1
