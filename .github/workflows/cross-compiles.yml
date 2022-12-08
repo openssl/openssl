@@ -90,6 +90,12 @@ jobs:
             libs: libc6-dev-sh4-cross,
             target: no-async linux-generic32,
             tests: -test_includes -test_store -test_x509_store
+          }, {
+            arch: sparc64-linux-gnu,
+            libs: libc6-dev-sparc64-cross,
+            # work around a qemu bug
+            target: -static -fno-tree-vectorize linux64-sparcv9,
+            tests: "\" OPENSSL_sparcv9cap=\"0x120:0"
           },
 
           # These build with shared libraries but they crash when run
