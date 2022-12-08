@@ -194,14 +194,8 @@ int main(int ac, char **av)
     OPENSSL_free(contents);
     return EXIT_SUCCESS;
 #else
-# if defined(OPENSSL_SYS_WINDOWS)
-    fprintf(stderr, "This tool is not supported on Windows\n");
-# elif defined(OPENSSL_SYS_VMS)
-    fprintf(stderr, "This tool is not supported on VMS\n");
-# else
     fprintf(stderr,
             "This tool is not supported on this platform for lack of POSIX1.2001 support\n");
-# endif
     exit(EXIT_FAILURE);
 #endif
 }
