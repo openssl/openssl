@@ -97,6 +97,12 @@ jobs:
             libs: libc6-dev-sh4-cross,
             target: no-async linux-latomic,
             tests: -test_includes -test_store -test_x509_store
+          }, {
+            arch: sparc64-linux-gnu,
+            libs: libc6-dev-sparc64-cross,
+            # work around a qemu bug
+            target: -static -fno-tree-vectorize linux64-sparcv9,
+            tests: "\" OPENSSL_sparcv9cap=\"0x120:0"
           },
 
           # These build with shared libraries but they crash when run
@@ -132,7 +138,7 @@ jobs:
             tests: none
           }
         ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - name: install packages
       run: |
@@ -174,5 +180,5 @@ jobs:
       if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
       run: |
         make test HARNESS_JOBS=${HARNESS_JOBS:-4} \
-                  TESTS="${{ matrix.platform.tests }} -test_afalg" \
+                  TESTS="-test_afalg ${{ matrix.platform.tests }}" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
