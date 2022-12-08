@@ -199,7 +199,8 @@ int main(int ac, char **av)
 # elif defined(OPENSSL_SYS_VMS)
     fprintf(stderr, "This tool is not supported on VMS\n");
 # else
-    fprintf(stderr, "This tool is not supported on this platform\n");
+    fprintf(stderr,
+            "This tool is not supported on this platform for lack of POSIX1.2001 support\n");
 # endif
     exit(EXIT_FAILURE);
 #endif
