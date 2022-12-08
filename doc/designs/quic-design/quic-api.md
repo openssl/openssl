@@ -5,6 +5,97 @@ This document sets out the objectives of the QUIC API design process, describes
 the new and changed APIs, and the design constraints motivating those API
 designs and the relevant design decisions.
 
+- [QUIC API Overview](#quic-api-overview)
+  * [Overview and Implementation Status](#overview-and-implementation-status)
+  * [Objectives](#objectives)
+  * [SSL Objects](#ssl-objects)
+    + [Structure of Documentation](#structure-of-documentation)
+    + [Existing APIs](#existing-apis)
+      - [`SSL_set_connect_state`](#-ssl-set-connect-state-)
+      - [`SSL_set_accept_state`](#-ssl-set-accept-state-)
+      - [`SSL_is_server`](#-ssl-is-server-)
+      - [`SSL_connect`](#-ssl-connect-)
+      - [`SSL_accept`](#-ssl-accept-)
+      - [`SSL_do_handshake`](#-ssl-do-handshake-)
+      - [`SSL_read`, `SSL_read_ex`, `SSL_peek`, `SSL_peek_ex`](#-ssl-read----ssl-read-ex----ssl-peek----ssl-peek-ex-)
+      - [`SSL_write`, `SSL_write_ex`](#-ssl-write----ssl-write-ex-)
+      - [`SSL_pending`](#-ssl-pending-)
+      - [`SSL_has_pending`](#-ssl-has-pending-)
+      - [`SSL_shutdown`](#-ssl-shutdown-)
+      - [`SSL_clear`](#-ssl-clear-)
+      - [`SSL_free`](#-ssl-free-)
+      - [`SSL_set0_rbio`, `SSL_set0_wbio`, `SSL_set_bio`](#-ssl-set0-rbio----ssl-set0-wbio----ssl-set-bio-)
+      - [`SSL_set_[rw]fd`](#-ssl-set--rw-fd-)
+      - [`SSL_get_[rw]fd`](#-ssl-get--rw-fd-)
+      - [`SSL_CTRL_MODE`, `SSL_CTRL_CLEAR_MODE`](#-ssl-ctrl-mode----ssl-ctrl-clear-mode-)
+      - [SSL Modes](#ssl-modes)
+    + [New APIs](#new-apis)
+      - [`SSL_tick`](#-ssl-tick-)
+      - [`SSL_get_tick_timeout`](#-ssl-get-tick-timeout-)
+      - [`SSL_set_blocking_mode`, `SSL_get_blocking_mode`](#-ssl-set-blocking-mode----ssl-get-blocking-mode-)
+      - [`SSL_get_rpoll_descriptor`, `SSL_get_wpoll_descriptor`](#-ssl-get-rpoll-descriptor----ssl-get-wpoll-descriptor-)
+      - [`SSL_want_net_read`, `SSL_want_net_write`](#-ssl-want-net-read----ssl-want-net-write-)
+      - [`SSL_want`, `SSL_want_read`, `SSL_want_write`](#-ssl-want----ssl-want-read----ssl-want-write-)
+      - [`SSL_set_initial_peer_addr`, `SSL_get_initial_peer_addr`](#-ssl-set-initial-peer-addr----ssl-get-initial-peer-addr-)
+      - [`SSL_shutdown_ex`](#-ssl-shutdown-ex-)
+      - [`SSL_stream_conclude`](#-ssl-stream-conclude-)
+      - [`SSL_stream_reset`](#-ssl-stream-reset-)
+      - [`SSL_get_stream_state`](#-ssl-get-stream-state-)
+      - [`SSL_get_stream_error_code`](#-ssl-get-stream-error-code-)
+      - [`SSL_get_conn_close_info`](#-ssl-get-conn-close-info-)
+    + [Future APIs](#future-apis)
+  * [BIO Objects](#bio-objects)
+    + [Existing APIs](#existing-apis-1)
+      - [`BIO_s_connect`, `BIO_new_ssl_connect`, `BIO_set_conn_hostname`](#-bio-s-connect----bio-new-ssl-connect----bio-set-conn-hostname-)
+      - [`BIO_new_bio_pair`](#-bio-new-bio-pair-)
+      - [Interactions with `BIO_f_buffer`](#interactions-with--bio-f-buffer-)
+      - [MTU Signalling](#mtu-signalling)
+    + [New APIs](#new-apis-1)
+      - [`BIO_sendmmsg` and `BIO_recvmmsg`](#-bio-sendmmsg--and--bio-recvmmsg-)
+      - [Truncation Mode](#truncation-mode)
+      - [Capability Negotiation](#capability-negotiation)
+      - [Local Address Support](#local-address-support)
+      - [`BIO_s_dgram_pair`](#-bio-s-dgram-pair-)
+      - [`BIO_POLL_DESCRIPTOR`](#-bio-poll-descriptor-)
+      - [`BIO_s_dgram_mem`](#-bio-s-dgram-mem-)
+      - [`BIO_err_is_non_fatal`](#-bio-err-is-non-fatal-)
+  * [Q & A](#q---a)
+  * [Implementation Status](#implementation-status)
+
+Overview and Implementation Status
+----------------------------------
+
+A listing of all SSL object APIs and their implications for QUIC, including
+current implementation status, can be found in
+[quic-api-ssl-funcs.md](./quic-api-ssl-funcs.md).
+
+Non-SSL object APIs which are new or changed, or otherwise discussed in this
+document are listed below, along with their implementation status. SSL object
+APIs are not listed here; see [quic-api-ssl-funcs.md](./quic-api-ssl-funcs.md)
+for details on SSL object APIs.
+
+| Semantics | API                             | Status |
+|-----------|---------------------------------|--------|
+| TBD       | `BIO_s_connect`                 | TODO  |
+| TBD       | `BIO_set_conn_hostname`         | TODO   |
+| TBD       | `BIO_new_bio_pair`              | TODO   |
+| New       | `BIO_s_dgram_pair`              | Done   |
+| Unchanged | `BIO_dgram_get_mtu`             | Done   |
+| Unchanged | `BIO_dgram_set_mtu`             | Done   |
+| New       | `BIO_sendmmsg`                  | Done   |
+| New       | `BIO_recvmmsg`                  | Done   |
+| New       | `BIO_dgram_set_no_trunc`        | Done   |
+| New       | `BIO_dgram_get_no_trunc`        | Done   |
+| New       | `BIO_dgram_set_caps`            | Done   |
+| New       | `BIO_dgram_get_caps`            | Done   |
+| New       | `BIO_dgram_get_effective_caps`  | Done   |
+| New       | `BIO_dgram_get_local_addr_cap`  | Done   |
+| New       | `BIO_dgram_set_local_addr_enable` | Done  |
+| New       | `BIO_dgram_get_local_addr_enable` | Done  |
+| New       | `BIO_get_rpoll_descriptor`      | Done   |
+| New       | `BIO_get_wpoll_descriptor`      | Done   |
+| New       | `BIO_err_is_non_fatal`          | Done   |
+
 Objectives
 ----------
 
