@@ -12,7 +12,7 @@
 
 #include <openssl/e_os2.h>
 
-#if defined OPENSSL_SYS_UNIX
+#ifdef OPENSSL_SYS_UNIX
 # include <sys/stat.h>
 # include <sys/resource.h>
 # include <openssl/pem.h>
