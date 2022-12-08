@@ -397,7 +397,7 @@ jobs:
     - name: make
       run: make -s -j4
     - name: Setup Python
-      uses: actions/setup-python@v4.3.0
+      uses: actions/setup-python@v4.3.1
       with:
         python-version: ${{ matrix.PYTHON }}
     - uses: actions-rs/toolchain@v1
