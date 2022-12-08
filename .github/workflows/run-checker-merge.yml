@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         opt: [
-          enable-asan no-shared no-asm -DOPENSSL_SMALL_FOOTPRINT,
+          enable-asan no-modules no-asm -DOPENSSL_SMALL_FOOTPRINT,
           no-dgram,
           no-dso,
           no-dynamic-engine,
