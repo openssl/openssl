@@ -19,10 +19,12 @@
 #include <openssl/ssl.h>
 #include <openssl/provider.h>
 
+#ifdef DANIEL_IMPLEMENTED_QUIC
 #ifdef OPENSSL_NO_QUIC
 #error Please enable QUIC
 #endif
 #include <openssl/quic.h>
+#endif
 
 static const int MAX_FAILURES = 16;
 
@@ -31,18 +33,32 @@ static OSSL_LIB_CTX *libctx = NULL;
 static struct {
     const char *server_ip;
     int server_port;
-    int is_server;
+    int requests_num;
+    int8_t is_server;
+    int8_t is_client;
 } params;
+
+static void usage()
+{
+    printf("Usage: ...");
+}
 
 static char *error(const char *msg)
 {
     size_t len;
     char *buf;
-    const char *errno_str = strerror(errno);
+    const char *errno_str;
+    
+    if (errno == 0) {
+        if ((buf = OPENSSL_strdup(msg)) == NULL)
+            abort();
+        return buf;
+    }
+
+    errno_str = strerror(errno);
 
     len = snprintf(NULL, 0, "%s : %s", msg, errno_str);
-    buf = OPENSSL_malloc(len + 1);
-    if (buf == NULL)
+    if ((buf = OPENSSL_malloc(len + 1)) == NULL)
         abort();
     snprintf(buf, len + 1, "%s : %s", msg, errno_str);
 
@@ -103,6 +119,10 @@ static char *create_client_socket(int *p_socket) {
     int optval = 1;
     struct sockaddr_in addr;
     char *e = NULL;
+    const int MAX_CONNECT_ATTEMPTS = 32;
+    const int RECONNECT_SLEEP=500;
+    int connect_attempts = 0;
+
 
     if ((e = create_socket(&s)) != NULL)
         goto err;
@@ -114,15 +134,16 @@ static char *create_client_socket(int *p_socket) {
         goto err;
     }
 
-    /* Reuse the address; good for quick restarts */
-    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
-        e = error("setsockopt(SO_REUSEADDR) failed");
-        goto err;
-    }
-
-    if (connect(s, (struct sockaddr*) &addr, sizeof(addr)) != 0) {
-        e = error("Cannot connect");
-        goto err;
+    for (;; connect_attempts++) {
+        if (connect(s, (struct sockaddr*) &addr, sizeof(addr)) == 0)
+            break;
+        // Daniel: This connect attempts should be done only the first time
+        if (connect_attempts >= MAX_CONNECT_ATTEMPTS) {
+            e = error("Cannot connect");
+            goto err;
+        }
+        fprintf(stderr, "Client: Cannot connect: %s\n", strerror(errno));
+        OSSL_sleep(RECONNECT_SLEEP);
     }
 
     *p_socket = s;
@@ -163,7 +184,7 @@ static int configure_client_context(SSL_CTX *client_ctx)
      * Configure the client to abort the handshake if certificate verification
      * fails
      */
-    SSL_CTX_set_verify(client_ctx, SSL_VERIFY_PEER, NULL);
+    SSL_CTX_set_verify(client_ctx, /* SSL_VERIFY_PEER */ SSL_VERIFY_NONE, NULL);
 
     /*
      * In a real application you would probably just use the default system certificate trust store and call:
@@ -187,6 +208,10 @@ static int server()
     SSL_CTX *server_ctx = NULL;
 
     int failures_num = 0;
+    int request_id = 0;
+    long start_time = -1;
+    long end_time = -1;
+    long accepted = 0;
 
     //server_ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method());
     server_ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
@@ -198,7 +223,7 @@ static int server()
     if ((e = create_server_socket(&server_socket)) != NULL)
         goto end;
 
-    for (;;) {
+    for (; request_id < params.requests_num; ++request_id) {
         int client_socket = -1;
         SSL *ssl = NULL;
         struct sockaddr_in addr;
@@ -211,6 +236,8 @@ static int server()
             e = error("Unable to accept");
             goto server_end;
         }
+        if (start_time == -1)
+            start_time = (long)time(NULL);
 
         /* Create server SSL structure using newly accepted client socket */
         ssl = SSL_new(server_ctx);
@@ -225,7 +252,10 @@ static int server()
             goto server_end;
 
         printf("Connection accepted\n");
+        end_time = (long)time(NULL);
+        ++accepted;
         // Client SSL connection accepted
+#if 0
         for (;;) {
             char rxbuf[128];
             size_t rxcap = sizeof(rxbuf);
@@ -238,7 +268,7 @@ static int server()
                 goto end;
             }
         }
-
+#endif
         /* ... */
 server_end:
         if (e != NULL || status == 0)
@@ -269,6 +299,12 @@ end:
     close(server_socket);
     SSL_CTX_free(server_ctx);
     OPENSSL_free(e);
+
+    if (start_time > 0 && end_time >= start_time && accepted > 0) {
+        printf("Accepted: %ld in %ld seconds\n %.3f accepts/sec",
+                accepted, end_time - start_time,
+                (double)accepted/(end_time - start_time));
+    }
 
     return status;
 }
@@ -342,19 +378,38 @@ int main(int argc, const char *argv[])
 {
     int status = 0;
 
+    fprintf(stderr, "handshakes_per_second: ");
+    for (int i = 0; i < argc; i++) {
+        if (i > 0) {
+            fprintf(stderr, " ");
+        }
+        fprintf(stderr, "'%s'", argv[i]);
+    }
+    fprintf(stderr, "\n");
+
     libctx = OSSL_LIB_CTX_new();
     if (libctx == NULL)
         goto end;
 
     /* Daniel: Better params parsing */
     params.is_server = OPENSSL_strcasecmp(argv[1], "server") == 0;
+    params.is_client = OPENSSL_strcasecmp(argv[1], "client") == 0;
     params.server_ip = argv[2];
     params.server_port = atoi(argv[3]);
+    params.requests_num = atoi(argv[4]);
 
     if (params.is_server) {
-        server();
+        if (!server())
+            goto end;
+    } else if (params.is_client) {
+        // Daniel: Move to client() function
+        for (int i = 0; i < params.requests_num; i++) {
+            if (!client())
+                goto end;
+        }
     } else {
-        client();
+        usage();
+        goto end;
     }
 
     status = 1;
