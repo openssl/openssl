@@ -192,6 +192,18 @@ OpenSSL 3.2
 
    *Maxim Mikityanskiy*
 
+ * Added and enabled by default implicit rejection in RSA PKCS#1 v1.5
+   decryption as a protection against Bleichenbacher-like attacks.
+   The RSA decryption API will now return a randomly generated deterministic
+   message instead of an error in case it detects an error when checking
+   padding during PKCS#1 v1.5 decryption. This is a general protection against
+   issues like CVE-2020-25659 and CVE-2020-25657. This protection can be
+   disabled by calling
+   `EVP_PKEY_CTX_ctrl_str(ctx, "rsa_pkcs1_implicit_rejection". "0")`
+   on the RSA decryption context.
+
+   *Hubert Kario*
+
 OpenSSL 3.1
 -----------
 
