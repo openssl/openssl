@@ -532,6 +532,17 @@ __owur static int parse_expected_key_type(int *ptype, const char *value)
     if (nid == NID_undef)
         nid = EC_curve_nist2nid(value);
 #endif
+    switch (nid) {
+    case NID_brainpoolP256r1tls13:
+        nid = NID_brainpoolP256r1;
+        break;
+    case NID_brainpoolP384r1tls13:
+        nid = NID_brainpoolP384r1;
+        break;
+    case NID_brainpoolP512r1tls13:
+        nid = NID_brainpoolP512r1;
+        break;
+    }    
     if (nid == NID_undef)
         return 0;
     *ptype = nid;

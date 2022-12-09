@@ -14,6 +14,12 @@ our $fips_mode;
 
 my @curves = ("prime256v1", "secp384r1", "secp521r1", "X25519",
               "X448");
+#Curves *only* suitable for use in TLSv1.3
+my @curves_tls_1_3 = ("brainpoolP256r1tls13", "brainpoolP384r1tls13",
+                      "brainpoolP512r1tls13");
+
+#It so happens that all the curves in @curves_tls_1_3 are non-fips curves
+push @curves, @curves_tls_1_3 if !$fips_mode;
 
 my @curves_tls_1_2 = ("sect233k1", "sect233r1",
               "sect283k1", "sect283r1", "sect409k1", "sect409r1",
@@ -111,6 +117,30 @@ sub generate_tests() {
                 "ExpectedResult" => "ClientFail"
             },
         };
+    }
+    if (!$fips_mode) {
+        foreach (0..$#curves_tls_1_3) {
+            my $curve = $curves_tls_1_3[$_];
+            push @tests, {
+                name => "curve-${curve}-tls13-in-tls12",
+                server => {
+                    "Curves" => $curve,
+                    "CipherString" => 'DEFAULT@SECLEVEL=1',
+                    "MaxProtocol" => "TLSv1.3"
+                },
+                client => {
+                    "CipherString" => 'ECDHE@SECLEVEL=1',
+                    "MaxProtocol" => "TLSv1.2",
+                    "Curves" => $curve
+                },
+                test   => {
+                    #These curves are only suitable for TLSv1.3 so we expect the
+                    #server to fail because it has no shared groups for TLSv1.2
+                    #ECDHE key exchange
+                    "ExpectedResult" => "ServerFail"
+                },
+            };
+        }
     }
 }
 

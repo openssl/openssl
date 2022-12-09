@@ -675,7 +675,6 @@ EXT_RETURN tls_construct_ctos_key_share(SSL *s, WPACKET *pkt,
         curve_id = s->s3.group_id;
     } else {
         for (i = 0; i < num_groups; i++) {
-
             if (!tls_group_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
                 continue;
 

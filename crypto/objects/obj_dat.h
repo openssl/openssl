@@ -1117,7 +1117,7 @@ static const unsigned char so[8076] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x30,  /* [ 8064] OBJ_id_ct_signedChecklist */
 };
 
-#define NUM_NID 1248
+#define NUM_NID 1251
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2367,9 +2367,12 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"rpkiNotify", "RPKI Notify", NID_rpkiNotify, 8, &so[8045]},
     {"id-ct-geofeedCSVwithCRLF", "id-ct-geofeedCSVwithCRLF", NID_id_ct_geofeedCSVwithCRLF, 11, &so[8053]},
     {"id-ct-signedChecklist", "id-ct-signedChecklist", NID_id_ct_signedChecklist, 11, &so[8064]},
+    {"brainpoolP256r1tls13", "brainpoolP256r1tls13", NID_brainpoolP256r1tls13},
+    {"brainpoolP384r1tls13", "brainpoolP384r1tls13", NID_brainpoolP384r1tls13},
+    {"brainpoolP512r1tls13", "brainpoolP512r1tls13", NID_brainpoolP512r1tls13},
 };
 
-#define NUM_SN 1239
+#define NUM_SN 1242
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2705,12 +2708,15 @@ static const unsigned int sn_objs[NUM_SN] = {
      925,    /* "brainpoolP224r1" */
      926,    /* "brainpoolP224t1" */
      927,    /* "brainpoolP256r1" */
+    1248,    /* "brainpoolP256r1tls13" */
      928,    /* "brainpoolP256t1" */
      929,    /* "brainpoolP320r1" */
      930,    /* "brainpoolP320t1" */
      931,    /* "brainpoolP384r1" */
+    1249,    /* "brainpoolP384r1tls13" */
      932,    /* "brainpoolP384t1" */
      933,    /* "brainpoolP512r1" */
+    1250,    /* "brainpoolP512r1tls13" */
      934,    /* "brainpoolP512t1" */
      494,    /* "buildingName" */
      860,    /* "businessCategory" */
@@ -3612,7 +3618,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1239
+#define NUM_LN 1242
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3944,12 +3950,15 @@ static const unsigned int ln_objs[NUM_LN] = {
      925,    /* "brainpoolP224r1" */
      926,    /* "brainpoolP224t1" */
      927,    /* "brainpoolP256r1" */
+    1248,    /* "brainpoolP256r1tls13" */
      928,    /* "brainpoolP256t1" */
      929,    /* "brainpoolP320r1" */
      930,    /* "brainpoolP320t1" */
      931,    /* "brainpoolP384r1" */
+    1249,    /* "brainpoolP384r1tls13" */
      932,    /* "brainpoolP384t1" */
      933,    /* "brainpoolP512r1" */
+    1250,    /* "brainpoolP512r1tls13" */
      934,    /* "brainpoolP512t1" */
      494,    /* "buildingName" */
      860,    /* "businessCategory" */

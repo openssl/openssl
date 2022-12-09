@@ -660,6 +660,10 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             continue;
         }
 
+        s->s3.group_id = group_id;
+        /* Cache the selected group ID in the SSL_SESSION */
+        s->session->kex_group = group_id;
+
         if ((s->s3.peer_tmp = ssl_generate_param_group(s, group_id)) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                    SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
