@@ -2349,7 +2349,8 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL_CONNECTION *s, PACKET *pkt)
                 goto err;
             }
         } else if (!tls1_set_peer_legacy_sigalg(s, pkey)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_R_LEGACY_SIGALG_DISALLOWED_OR_UNSUPPORTED);
             goto err;
         }
 
