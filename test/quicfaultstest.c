@@ -129,7 +129,7 @@ static int test_unknown_frame(void)
         goto err;
 
     /*
-     * Write a message from the server to the client and add an uknown frame
+     * Write a message from the server to the client and add an unknown frame
      * type
      */
     if (!TEST_true(ossl_quic_fault_set_packet_plain_listener(fault,
