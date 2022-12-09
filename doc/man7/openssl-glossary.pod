@@ -28,6 +28,11 @@ L<https://www.itu.int/rec/T-REC-X.681>,
 L<https://www.itu.int/rec/T-REC-X.682>,
 L<https://www.itu.int/rec/T-REC-X.683>
 
+=item Asymmetric Keypair
+
+A pair of related keys (L</Public key> and L</Private key>) used to perform
+cryptographic operations.
+
 =item Base Provider
 
 An OpenSSL Provider that contains encoders and decoders for OpenSSL keys.  All
@@ -35,6 +40,39 @@ the algorithm implementations in the Base Provider are also available in the
 Default Provider.
 
 L<OSSL_PROVIDER-base(7)>
+
+=item Brute-force attack
+
+An attack on an L</Algorithm> that attempts to correctly guess a input password or secret,
+normally by trying every possibly input in order to produce an existing output. It is
+important to use a sufficiently long key length, since longer keys take exponentially longer to attack.
+
+=item Certificate
+
+Certificates are used to prove the validity of a L</Public key>.
+
+=item Certificate Authority (CA)
+
+A CA is normally a company that charges customers to issue certificates for them.
+
+
+=item Certificate chain
+
+A list of certificates. The list normally starts with the end (leaf) certificate followed by one or more
+CA certificates. The last certificate is normally self signed.
+
+=item Ciphertext
+
+The output of a encryption algorithm. Decryption of ciphertext results in the L</Plaintext>
+that was used as input to the encryption algorithm.
+
+=item Confidentiality
+
+Protection of data from unauthorized access.
+
+=item Data integrity
+
+Ensures data has not been modified in an unauthorized manner.
 
 =item Decoder
 
@@ -62,6 +100,11 @@ It is defined in ITU-T document X.690:
 
 L<https://www.itu.int/rec/T-REC-X.690>
 
+=item Deterministic
+
+For a given algorithm, the same set of inputs will produce the same output.
+Hash Functions and Key Derivation Functions are examples.
+
 =item Encoder
 
 An encoder is a type of algorithm used for encoding keys and parameters to some
@@ -69,9 +112,24 @@ external format such as PEM or DER.
 
 L<OSSL_ENCODER_CTX_new_for_pkey(3)>
 
+=item Entropy
+
+Entropy refers to the randomness collected by a system for use in algorithms that require random seeds.
+A lack of good entropy can leave a cryptographic system vulnerable and unable to encrypt data securely.
+See L</Psuedo-random number>.
+
+=item Ephemeral key pair
+
+A key pair, consisting of a public key (i.e., an ephemeral public key)
+and a private key (i.e., an ephemeral private key) that is intended for
+a very short period of use. The key pair is ordinarily used in exactly
+one transaction of a cryptographic scheme. The public key of an ephemeral key
+pair is not provided in a public key certificate. See also L</Static key
+pair>.
+
 =item Explicit Fetching
 
-Explicit Fetching is a type of Fetching (see Fetching). Explicit Fetching is
+Explicit Fetching is a type of Fetching (see L</Fetching>). Explicit Fetching is
 where a function call is made to obtain an algorithm object representing an
 implementation such as L<EVP_MD_fetch(3)> or L<EVP_CIPHER_fetch(3)>
 
@@ -81,16 +139,16 @@ Fetching is the process of looking through the available algorithm
 implementations, applying selection criteria (via a property query string), and
 finally choosing the implementation that will be used.
 
-Also see Explicit Fetching and Implicit Fetching.
-
-L<crypto(7)>
+Also see L</Explicit Fetching>, L</Implicit Fetching>
+and L<crypto(7)/ALGORITHM FETCHING>.
 
 =item FIPS Provider
 
 An OpenSSL Provider that contains OpenSSL algorithm implementations that have
-been validated according to the FIPS 140-2 standard.
+been validated according to the FIPS 140-2 standard. 
 
-L<OSSL_PROVIDER-FIPS(7)>
+See L<OSSL_PROVIDER-FIPS(7)> for the algorithms that are supported. Note that this
+is a subset of the algorithms with the L</Default Provider>.
 
 =item Implicit Fetching
 
@@ -122,6 +180,17 @@ L<OSSL_LIB_CTX(3)>
 MSBLOB is a Microsoft specific binary format for RSA and DSA keys, both
 private and public.  This form is never passphrase protected.
 
+=item Non-repudiation
+
+Assurance that the L</Sender> of information is provided with proof of delivery and
+that the L</Recipient> is provided with proof of the L</Sender>'s identity, so
+that neither can later deny having processed the information.
+
+=item Nonce
+
+A nonce is an arbitrary number used only once in a cryptographic communication,
+which is often a random or L</Psuedo-random number>.
+
 =item Null Provider
 
 An OpenSSL Provider that contains no algorithm implementations. This can be
@@ -129,6 +198,11 @@ useful to prevent the default provider from being automatically loaded in a
 library context.
 
 L<OSSL_PROVIDER-null(7)>
+
+=item One-way function
+
+A function that for any input it is easy to compute an output, but it is 'hard' to invert.
+i.e, Determine the input given an output value.
 
 =item Operation
 
@@ -170,6 +244,15 @@ This is specified in RFC 5208:
 
 L<https://tools.ietf.org/html/rfc5208>
 
+=item Plaintext
+
+Any data that can be viewed or used without requiring a key or decryption.
+Plaintext is used as input to an encryption algorithm. See also L</Ciphertext>
+
+=item Private key
+
+Part of a L<crypto(7)/Asymmetric Keypair> that must be kept secret.
+
 =item Property
 
 A property is a way of classifying and selecting algorithm implementations.
@@ -204,6 +287,23 @@ L<provider(7)>
 PVK is a Microsoft specific binary format for RSA and DSA private keys.
 This form may be passphrase protected.
 
+=item Psuedo-random number
+
+A number that is produced by a L</Deterministic> algorithm called a pseudo-random number generator (PRNG),
+which has the unpredictability of a truly random sequence. The initial input supplied to the PRNG is
+called a random seed (See L</Entropy>). As the PRNG is deterministic it is important that the seed be well
+chosen and kept hidden, especially in security applications, where the pattern's unpredictability is a
+critical feature.
+
+=item Public key
+
+Part of a L<crypto(7)/Asymmetric Keypair> that can be made available to anyone,
+(Often by using a digital L</Certificate). 
+
+=item Recipient
+
+The entity that 'receives' data from a L</Sender> or L</Signer>.
+
 =item SubjectPublicKeyInfo
 
 SubjectPublicKeyInfo is an ASN.1 structure that OpenSSL uses for storing and
@@ -212,6 +312,29 @@ transmitting any public key in a key type agnostic manner.
 This is specified as part of the specification for certificates, RFC 5280:
 
 L<https://tools.ietf.org/html/rfc5280>
+
+=item Security strength
+
+A number associated with the amount of work (number of operations), that is required to break a cryptographic algorithm or system.
+It is normally expressed as a strength in bits with a value of 80, 112, 128, 192 or 256.
+
+=item Sender
+
+The entity that 'sends' data (such as secret keying material) to another entity L</Recipient>.
+
+=item Signer
+
+The entity that creates a Digital Signature.
+
+=item Static key pair
+
+A long-term key pair for which the public key is often provided in a public-key
+certificate. See also L</Ephemeral key pair>.
+
+=item Symmetric Key
+
+A secret key that must not be made public that is used for both encryption and decryption of data.
+See L<crypto(7)/Symmetric encryption>. Contrast this with a L</Asymmetric Keypair>.
 
 =back
 

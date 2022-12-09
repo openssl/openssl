@@ -184,6 +184,9 @@ This simplifies the process of adding MAC implementations.
 This includes a generic EVP_PKEY to EVP_MAC bridge, to facilitate the continued
 use of MACs through raw private keys in functionality such as
 L<EVP_DigestSign(3)> and L<EVP_DigestVerify(3)>.
+Existing applications that use MAC algorithms using EVP_PKEY
+(HMAC, SIPHASH, POLY1305 and CMAC) may be slower as they use an EVP_MAC bridge
+internally.
 
 All new applications should use the new L<EVP_MAC(3)> interface.
 See also L<OSSL_PROVIDER-default(7)/Message Authentication Code (MAC)>
