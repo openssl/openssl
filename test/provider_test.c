@@ -206,6 +206,55 @@ static int test_builtin_provider_with_child(void)
 }
 #endif
 
+static int test_builtin_provider_with_load_balancer(void)
+{
+    OSSL_LIB_CTX *libctx;
+    OSSL_PROVIDER *lbprov = NULL;
+    OSSL_PROVIDER *deflt = NULL;
+    EVP_MD_CTX *mdctx = NULL;
+    EVP_MD *md5 = NULL;
+    const unsigned char msg[] = {
+        0x00, 0x01, 0x02, 0x03
+    };
+    unsigned char outdigest[16];
+    int ok = 0;
+
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new()))
+        return 0;
+
+    lbprov = OSSL_PROVIDER_load(libctx, "loadbalance");
+    if (!TEST_ptr(lbprov))
+        goto err;
+
+    deflt = OSSL_PROVIDER_load(libctx, "default");
+    if (!TEST_ptr(deflt))
+        goto err;
+
+    /* calc MD5 */
+    md5 = EVP_MD_fetch(libctx, "MD5", "provider=loadbalance");
+    if (md5 == NULL)
+        goto err;
+
+    mdctx = EVP_MD_CTX_new();
+    if (mdctx == NULL)
+        goto err;
+
+    if (!TEST_true(EVP_DigestInit_ex(mdctx, md5, NULL))
+            || !TEST_true(EVP_DigestUpdate(mdctx, msg, strlen((const char*)msg)))
+            || !TEST_true(EVP_DigestFinal_ex(mdctx, outdigest, NULL)))
+        goto err;
+
+    ok = 1;
+err:
+    EVP_MD_CTX_free(mdctx);
+    EVP_MD_free(md5);
+    OSSL_PROVIDER_unload(deflt);
+    OSSL_PROVIDER_unload(lbprov);
+    OSSL_LIB_CTX_free(libctx);
+
+    return ok;
+}
+
 #ifndef NO_PROVIDER_MODULE
 static int test_loaded_provider(void)
 {
@@ -259,6 +308,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_MD4
         ADD_TEST(test_builtin_provider_with_child);
 #endif
+        ADD_TEST(test_builtin_provider_with_load_balancer);
     }
 #ifndef NO_PROVIDER_MODULE
     else {
