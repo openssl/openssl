@@ -234,8 +234,7 @@ and issue the following command.
 
     $ nmake install
 
-The easiest way to elevate the Command Prompt is to press and hold down
-the both the `<CTRL>` and `<SHIFT>` key while clicking the menu item in the
+The easiest way to elevate the Command Prompt is to press and hold down both the `<CTRL>` and `<SHIFT>` keys while clicking the menu item in the
 task menu.
 
 The default installation location is
