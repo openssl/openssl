@@ -83,7 +83,7 @@ int ossl_quic_fault_set_handshake_listener(OSSL_QUIC_FAULT *fault,
 
 /*
  * Helper function to be called from a handshake_listener callback if it wants
- * to rezie the handshake message (either to add new data to it, or to truncate
+ * to resize the handshake message (either to add new data to it, or to truncate
  * it). newlen must include the length of the handshake message header.
  */
 int ossl_quic_fault_resize_handshake(OSSL_QUIC_FAULT *fault, size_t newlen);
@@ -134,4 +134,18 @@ int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
  * for specific extension types
  */
 
-/* TODO(QUIC): Add a listener for a datagram here */
+/*
+ * Enable tests to listen for post-encryption QUIC packets being sent
+ */
+typedef int (*ossl_quic_fault_on_packet_cipher_cb)(OSSL_QUIC_FAULT *fault,
+                                                   /* The parsed packet header */
+                                                   QUIC_PKT_HDR *hdr,
+                                                   /* The packet payload data */
+                                                   unsigned char *buf,
+                                                   /* Length of the payload */
+                                                   size_t len,
+                                                   void *cbarg);
+
+int ossl_quic_fault_set_packet_cipher_listener(OSSL_QUIC_FAULT *fault,
+                                               ossl_quic_fault_on_packet_cipher_cb pciphercb,
+                                               void *picphercbarg);

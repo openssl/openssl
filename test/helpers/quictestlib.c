@@ -8,6 +8,7 @@
  */
 
 #include <assert.h>
+#include <openssl/bio.h>
 #include "quictestlib.h"
 #include "../testutil.h"
 #include "internal/quic_wire_pkt.h"
@@ -41,10 +42,16 @@ struct ossl_quic_fault {
     void *handshakecbarg;
     ossl_quic_fault_on_enc_ext_cb encextcb;
     void *encextcbarg;
+
+    /* Cipher packet mutations */
+    ossl_quic_fault_on_packet_cipher_cb pciphercb;
+    void *pciphercbarg;
 };
 
 static void packet_plain_finish(void *arg);
 static void handshake_finish(void *arg);
+
+static BIO_METHOD *get_bio_method(void);
 
 int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
                               QUIC_TSERVER **qtserv, SSL **cssl,
@@ -53,7 +60,7 @@ int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
     /* ALPN value as recognised by QUIC_TSERVER */
     unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
     QUIC_TSERVER_ARGS tserver_args = {0};
-    BIO *bio1 = NULL, *bio2 = NULL;
+    BIO *cbio = NULL, *sbio = NULL, *fisbio = NULL;
     BIO_ADDR *peeraddr = NULL;
     struct in_addr ina = {0};
 
@@ -71,14 +78,14 @@ int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
     if (!TEST_false(SSL_set_alpn_protos(*cssl, alpn, sizeof(alpn))))
         goto err;
 
-    if (!TEST_true(BIO_new_bio_dgram_pair(&bio1, 0, &bio2, 0)))
+    if (!TEST_true(BIO_new_bio_dgram_pair(&cbio, 0, &sbio, 0)))
         goto err;
 
-    if (!TEST_true(BIO_dgram_set_caps(bio1, BIO_DGRAM_CAP_HANDLES_DST_ADDR))
-            || !TEST_true(BIO_dgram_set_caps(bio2, BIO_DGRAM_CAP_HANDLES_DST_ADDR)))
+    if (!TEST_true(BIO_dgram_set_caps(cbio, BIO_DGRAM_CAP_HANDLES_DST_ADDR))
+            || !TEST_true(BIO_dgram_set_caps(sbio, BIO_DGRAM_CAP_HANDLES_DST_ADDR)))
         goto err;
 
-    SSL_set_bio(*cssl, bio1, bio1);
+    SSL_set_bio(*cssl, cbio, cbio);
 
     if (!TEST_ptr(peeraddr = BIO_ADDR_new()))
         goto err;
@@ -91,36 +98,43 @@ int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
     if (!TEST_true(SSL_set_initial_peer_addr(*cssl, peeraddr)))
         goto err;
 
-    /* 2 refs are passed for bio2 */
-    if (!BIO_up_ref(bio2))
-        goto err;
-    tserver_args.net_rbio = bio2;
-    tserver_args.net_wbio = bio2;
-
-    if (!TEST_ptr(*qtserv = ossl_quic_tserver_new(&tserver_args, certfile,
-                                                  keyfile))) {
-        /* We hold 2 refs to bio2 at the moment */
-        BIO_free(bio2);
-        goto err;
-    }
-    /* Ownership of bio2 is now held by *qtserv */
-    bio2 = NULL;
-
     if (fault != NULL) {
         *fault = OPENSSL_zalloc(sizeof(**fault));
         if (*fault == NULL)
             goto err;
-
-        (*fault)->qtserv = *qtserv;
     }
+
+    fisbio = BIO_new(get_bio_method());
+    if (!TEST_ptr(fisbio))
+        goto err;
+
+    BIO_set_data(fisbio, fault == NULL ? NULL : *fault);
+
+    if (!TEST_ptr(BIO_push(fisbio, sbio)))
+        goto err;
+
+    tserver_args.net_rbio = sbio;
+    tserver_args.net_wbio = fisbio;
+
+    if (!TEST_ptr(*qtserv = ossl_quic_tserver_new(&tserver_args, certfile,
+                                                  keyfile)))
+        goto err;
+
+    /* Ownership of fisbio and sbio is now held by *qtserv */
+    sbio = NULL;
+    fisbio = NULL;
+
+    if (fault != NULL)
+        (*fault)->qtserv = *qtserv;
 
     BIO_ADDR_free(peeraddr);
 
     return 1;
  err:
     BIO_ADDR_free(peeraddr);
-    BIO_free(bio1);
-    BIO_free(bio2);
+    BIO_free(cbio);
+    BIO_free(fisbio);
+    BIO_free(sbio);
     SSL_free(*cssl);
     ossl_quic_tserver_free(*qtserv);
     if (fault != NULL)
@@ -515,6 +529,124 @@ int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
     msglen -= (end - start) + SSL3_HM_HEADER_LENGTH;
     if (!ossl_quic_fault_resize_message(fault, msglen))
         return 0;
+
+    return 1;
+}
+
+#define BIO_TYPE_CIPHER_PACKET_FILTER  (0x80 | BIO_TYPE_FILTER)
+
+static BIO_METHOD *pcipherbiometh = NULL;
+
+# define BIO_MSG_N(array, stride, n) (*(BIO_MSG *)((char *)(array) + (n)*(stride)))
+
+static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
+                            size_t num_msg, uint64_t flags,
+                            size_t *num_processed)
+{
+    OSSL_QUIC_FAULT *fault;
+    BIO *next = BIO_next(b);
+    ossl_ssize_t ret = 0;
+    BIO_MSG m;
+    size_t i = 0, tmpnump;
+    QUIC_PKT_HDR hdr;
+    PACKET pkt;
+
+    m.data = NULL;
+
+    if (next == NULL)
+        return 0;
+
+    fault = BIO_get_data(b);
+    if (fault == NULL || fault->pciphercb == NULL)
+        return BIO_sendmmsg(next, msg, stride, num_msg, flags, num_processed);
+
+    if (num_msg == 0) {
+        *num_processed = 0;
+        return 1;
+    }
+
+    for (i = 0; i < num_msg; ++i) {
+        m = BIO_MSG_N(msg, stride, i);
+
+        /* Take a copy of the data so that callbacks can modify it */
+        m.data = OPENSSL_memdup(m.data, m.data_len);
+        if (m.data == NULL)
+            return 0;
+
+        if (!PACKET_buf_init(&pkt, m.data, m.data_len))
+            return 0;
+
+        do {
+            if (!ossl_quic_wire_decode_pkt_hdr(&pkt,
+                    0/* TODO(QUIC): Not sure how this should be set*/, 1, &hdr,
+                    NULL))
+                goto out;
+
+            /* TODO(QUIC): Resolve const issue here */
+            if (!fault->pciphercb(fault, &hdr, (unsigned char *)hdr.data,
+                                  hdr.len, fault->pciphercbarg))
+                goto out;
+        } while (PACKET_remaining(&pkt) > 0);
+
+        if (!BIO_sendmmsg(next, &m, stride, 1, flags, &tmpnump)) {
+            *num_processed = i;
+            goto out;
+        }
+
+        OPENSSL_free(m.data);
+        m.data = NULL;
+    }
+
+    *num_processed = i;
+    ret = 1;
+out:
+    if (i > 0)
+        ret = 1;
+    else
+        ret = 0;
+    OPENSSL_free(m.data);
+    return ret;
+}
+
+static long pcipher_ctrl(BIO *b, int cmd, long larg, void *parg)
+{
+    BIO *next = BIO_next(b);
+
+    if (next == NULL)
+        return -1;
+
+    return BIO_ctrl(next, cmd, larg, parg);
+}
+
+static BIO_METHOD *get_bio_method(void)
+{
+    BIO_METHOD *tmp;
+
+    if (pcipherbiometh != NULL)
+        return pcipherbiometh;
+
+    tmp = BIO_meth_new(BIO_TYPE_CIPHER_PACKET_FILTER, "Cipher Packet Filter");
+
+    if (!TEST_ptr(tmp))
+        return NULL;
+
+    if (!TEST_true(BIO_meth_set_sendmmsg(tmp, pcipher_sendmmsg))
+            || !TEST_true(BIO_meth_set_ctrl(tmp, pcipher_ctrl)))
+        goto err;
+
+    pcipherbiometh = tmp;
+    tmp = NULL;
+ err:
+    BIO_meth_free(tmp);
+    return pcipherbiometh;
+}
+
+int ossl_quic_fault_set_packet_cipher_listener(OSSL_QUIC_FAULT *fault,
+                                               ossl_quic_fault_on_packet_cipher_cb pciphercb,
+                                               void *pciphercbarg)
+{
+    fault->pciphercb = pciphercb;
+    fault->pciphercbarg = pciphercbarg;
 
     return 1;
 }
