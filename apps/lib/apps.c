@@ -301,6 +301,7 @@ static char *app_get_pass(const char *arg, int keepbio)
             pwdbio = BIO_push(btmp, pwdbio);
 #endif
         } else if (strcmp(arg, "stdin") == 0) {
+            unbuffer(stdin);
             pwdbio = dup_bio_in(FORMAT_TEXT);
             if (pwdbio == NULL) {
                 BIO_printf(bio_err, "Can't open BIO for stdin\n");
