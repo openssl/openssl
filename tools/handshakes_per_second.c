@@ -32,6 +32,9 @@ static OSSL_LIB_CTX *libctx = NULL;
 
 static struct {
     const char *server_ip;
+    const char *server_host;
+    const char *key;
+    const char *cert;
     int server_port;
     int requests_num;
     int8_t is_server;
@@ -68,7 +71,6 @@ static char *error(const char *msg)
 static char *create_socket(int *p_socket)
 {
     int s = -1;
-    char *err = NULL;
 
     s = socket(AF_INET, SOCK_STREAM, 0);
     if (s < 0) {
@@ -116,7 +118,6 @@ err:
 
 static char *create_client_socket(int *p_socket) {
     int s = -1;
-    int optval = 1;
     struct sockaddr_in addr;
     char *e = NULL;
     const int MAX_CONNECT_ATTEMPTS = 32;
@@ -156,19 +157,19 @@ err:
 static int configure_server_context(SSL_CTX *server_ctx)
 {
     int status = 0;
-
+/*
     if (!SSL_CTX_set_options(server_ctx,
                              SSL_OP_ALLOW_CLIENT_RENEGOTIATION))
         goto end;
     if (!SSL_CTX_set_max_proto_version(server_ctx, 0))
         goto end;
+*/
 
     /* Set the key and cert */
-    /*Daniel:  */
-    if (SSL_CTX_use_certificate_chain_file(server_ctx, "cert.pem") <= 0)
+    if (SSL_CTX_use_certificate_chain_file(server_ctx, params.cert) <= 0)
         goto end;
 
-    if (SSL_CTX_use_PrivateKey_file(server_ctx, "key.pem", SSL_FILETYPE_PEM) <= 0)
+    if (SSL_CTX_use_PrivateKey_file(server_ctx, params.key, SSL_FILETYPE_PEM) <= 0)
         goto end;
 
     status = 1;
@@ -184,14 +185,14 @@ static int configure_client_context(SSL_CTX *client_ctx)
      * Configure the client to abort the handshake if certificate verification
      * fails
      */
-    SSL_CTX_set_verify(client_ctx, /* SSL_VERIFY_PEER */ SSL_VERIFY_NONE, NULL);
+    SSL_CTX_set_verify(client_ctx, SSL_VERIFY_PEER /*SSL_VERIFY_NONE*/, NULL);
 
     /*
      * In a real application you would probably just use the default system certificate trust store and call:
      *     SSL_CTX_set_default_verify_paths(ctx);
      * In this demo though we are using a self-signed certificate, so the client must trust it directly.
      */
-    if (!SSL_CTX_load_verify_locations(client_ctx, "cert.pem", NULL))
+    if (!SSL_CTX_load_verify_locations(client_ctx, params.cert, NULL))
         goto end;
 
     status = 1;
@@ -202,7 +203,7 @@ end:
 static int server()
 {
     int status = 0;
-    const char *e = NULL;
+    char *e = NULL;
 
     int server_socket = -1;
     SSL_CTX *server_ctx = NULL;
@@ -227,7 +228,7 @@ static int server()
         int client_socket = -1;
         SSL *ssl = NULL;
         struct sockaddr_in addr;
-        int addr_len = (int)sizeof(addr);
+        socklen_t addr_len = (socklen_t)sizeof(addr);
 
         client_socket = accept(server_socket,
                                (struct sockaddr*)&addr,
@@ -238,6 +239,8 @@ static int server()
         }
         if (start_time == -1)
             start_time = (long)time(NULL);
+
+        fprintf(stderr, "Server: accepted: %d\n", request_id); // Daniel
 
         /* Create server SSL structure using newly accepted client socket */
         ssl = SSL_new(server_ctx);
@@ -255,21 +258,8 @@ static int server()
         end_time = (long)time(NULL);
         ++accepted;
         // Client SSL connection accepted
-#if 0
-        for (;;) {
-            char rxbuf[128];
-            size_t rxcap = sizeof(rxbuf);
-            /* Get message from client; will fail if client closes connection */
-            ssize_t rxlen = SSL_read(ssl, rxbuf, rxcap);
-            if (rxlen == 0) {
-                printf("Client closed connection\n");
-                break;
-            } else if (rxlen < 0) {
-                goto end;
-            }
-        }
-#endif
-        /* ... */
+
+        status = 1;
 server_end:
         if (e != NULL || status == 0)
             ++failures_num;
@@ -301,7 +291,7 @@ end:
     OPENSSL_free(e);
 
     if (start_time > 0 && end_time >= start_time && accepted > 0) {
-        printf("Accepted: %ld in %ld seconds\n %.3f accepts/sec",
+        printf("Accepted: %ld in %ld seconds\n %.3f accepts/sec\n",
                 accepted, end_time - start_time,
                 (double)accepted/(end_time - start_time));
     }
@@ -343,7 +333,7 @@ static int client()
     if (!SSL_set_tlsext_host_name(client_ssl, params.server_ip))
         goto end;
     /* Configure server hostname check */
-    if (!SSL_set1_host(client_ssl, params.server_ip))
+    if (!SSL_set1_host(client_ssl, "localhost"/* params.server_ip */))
         goto end;
 
     /* Now do SSL connect with server */
@@ -358,6 +348,24 @@ static int client()
         /* Daniel: Maybe handle other cases? */
         goto end;
     }
+    fprintf(stderr, "Client connected.\n");
+
+    /*
+     * It is necessary to attempt to read something otherwise
+     * there is a "btoken pipe" on server side.
+     */
+    for (;;) {
+        char rxbuf[128];
+        size_t rxcap = sizeof(rxbuf);
+        /* Get message from client; will fail if client closes connection */
+        ssize_t rxlen = SSL_read(client_ssl, rxbuf, rxcap);
+        if (rxlen == 0) {
+            printf("Server closed connection\n");
+            break;
+        } else if (rxlen < 0) {
+            goto end;
+        }
+    }
 
     status = 1;
 end:
@@ -366,9 +374,10 @@ end:
     } else if (status == 0) {
         ERR_print_errors_fp(stderr);
     }
-    close(client_socket);
+    SSL_shutdown(client_ssl);
     SSL_free(client_ssl);
     SSL_CTX_free(client_ctx);
+    close(client_socket);
     OPENSSL_free(e);
 
     return status;
@@ -396,12 +405,16 @@ int main(int argc, const char *argv[])
     params.is_client = OPENSSL_strcasecmp(argv[1], "client") == 0;
     params.server_ip = argv[2];
     params.server_port = atoi(argv[3]);
-    params.requests_num = atoi(argv[4]);
+    params.server_host = argv[4];
+    params.key = argv[5];
+    params.cert = argv[6];
+    params.requests_num = atoi(argv[7]);
 
     if (params.is_server) {
         if (!server())
             goto end;
     } else if (params.is_client) {
+        //OSSL_sleep(10000); // Daniel
         // Daniel: Move to client() function
         for (int i = 0; i < params.requests_num; i++) {
             if (!client())

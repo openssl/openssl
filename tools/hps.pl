@@ -28,9 +28,23 @@ sub do_fork {
     }
 }
 
-my $server_pid = do_fork('tools/handshakes_per_second', 'server', '127.0.0.1', 1024, 2048);
-my $client_pid = do_fork('tools/handshakes_per_second', 'client', '127.0.0.1', 1024, 2048);
+sub do_wait {
+    my $pid = shift;
+    my $name = shift;
+
+    my $ret = waitpid($pid, 0);
+    die("Cannot wait for process '$name'") if $pid == -1;
+    return $?;
+}
+
+# Daniel: How to call agains actual library?
+my $server_pid = do_fork('tools/handshakes_per_second', 'server', '127.0.0.1', 1024, 'localhost', 'key.pem', 'cert.pem', 2048);
+my $client_pid = do_fork('tools/handshakes_per_second', 'client', '127.0.0.1', 1024, 'localhost', 'key.pem', 'cert.pem', 2048);
 
 
-waitpid($server_pid, 0);
-waitpid($client_pid, 0);
+if (my $ret = do_wait($server_pid, "server")) {
+    warn("Server process failed: $ret");
+}
+if (my $ret = do_wait($client_pid, "client")) {
+    warn("Client process failed: $ret");
+}
