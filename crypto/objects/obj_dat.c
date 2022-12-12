@@ -729,7 +729,7 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     ASN1_OBJECT *tmpoid = NULL;
     int ok = 0;
 
-    /* With not arguments at all, nothing can be done */
+    /* With no arguments at all, nothing can be done */
     if (oid == NULL && sn == NULL && ln == NULL) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
