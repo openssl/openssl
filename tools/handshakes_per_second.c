@@ -284,14 +284,77 @@ end:
     return status;
 }
 
-static int client()
+static int client_one_connect(SSL_CTX *client_ctx, char **p_e)
 {
     int status = 0;
     char *e = NULL;
     int rets = 0, err = 0;
-
     int client_socket = -1;
     SSL *client_ssl = NULL;
+
+    if ((e = create_client_socket(&client_socket)) != NULL)
+        goto end;
+
+    /* Create client SSL structure using dedicated client socket */
+    client_ssl = SSL_new(client_ctx);
+    if (client_ssl == NULL)
+        goto end;
+
+    if (!SSL_set_fd(client_ssl, client_socket))
+        goto end;
+
+    /* Set hostname for SNI */
+    if (!SSL_set_tlsext_host_name(client_ssl, params.server_ip))
+        goto end;
+    /* Configure server hostname check */
+    if (!SSL_set1_host(client_ssl, params.server_host))
+        goto end;
+
+    /* Now do SSL connect with server */
+    for (;;) {
+        rets = SSL_connect(client_ssl);
+        if (rets == 1)
+            break;
+        // if (rets <= 0)
+        err = SSL_get_error(client_ssl, rets);
+        if (err == SSL_ERROR_WANT_ACCEPT)
+            continue;
+        /* Maybe handle other cases? */
+        goto end;
+    }
+
+    /*
+     * It is necessary to attempt to read something
+     * to prevent "broken pipe" on server side
+     */
+    for (;;) {
+        char rxbuf[128];
+        size_t rxcap = sizeof(rxbuf);
+        ssize_t rxlen = SSL_read(client_ssl, rxbuf, rxcap);
+        if (rxlen == 0) {
+            break;
+        } else if (rxlen < 0) {
+            goto end;
+        }
+    }
+
+    status = 1;
+end:
+    SSL_shutdown(client_ssl);
+    SSL_free(client_ssl);
+    close(client_socket);
+
+    if (e != NULL)
+        *p_e = e;
+    
+    return status;
+}
+
+static int client()
+{
+    int status = 0;
+    int request_id = 0;
+    char *e = NULL;
     SSL_CTX *client_ctx = NULL;
 
     //client_ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
@@ -301,57 +364,9 @@ static int client()
     if (!configure_client_context(client_ctx))
         goto end;
 
-    for (int i = 0; i < params.requests_num; i++) {
-        if ((e = create_client_socket(&client_socket)) != NULL)
+    for (; request_id < params.requests_num; ++request_id) {
+        if (!client_one_connect(client_ctx, &e))
             goto end;
-
-        /* Create client SSL structure using dedicated client socket */
-        client_ssl = SSL_new(client_ctx);
-        if (client_ssl == NULL)
-            goto end;
-
-        if (!SSL_set_fd(client_ssl, client_socket))
-            goto end;
-
-        /* Set hostname for SNI */
-        if (!SSL_set_tlsext_host_name(client_ssl, params.server_ip))
-            goto end;
-        /* Configure server hostname check */
-        if (!SSL_set1_host(client_ssl, params.server_host))
-            goto end;
-
-        /* Now do SSL connect with server */
-        for (;;) {
-            rets = SSL_connect(client_ssl);
-            if (rets == 1)
-                break;
-            // if (rets <= 0)
-            err = SSL_get_error(client_ssl, rets);
-            if (err == SSL_ERROR_WANT_ACCEPT)
-                continue;
-            /* Maybe handle other cases? */
-            goto end;
-        }
-
-        /*
-         * It is necessary to attempt to read something
-         * to prevent "broken pipe" on server side
-         */
-        for (;;) {
-            char rxbuf[128];
-            size_t rxcap = sizeof(rxbuf);
-            ssize_t rxlen = SSL_read(client_ssl, rxbuf, rxcap);
-            if (rxlen == 0) {
-                break;
-            } else if (rxlen < 0) {
-                goto end;
-            }
-        }
-        SSL_shutdown(client_ssl);
-        SSL_free(client_ssl);
-        client_ssl = NULL;
-        close(client_socket);
-        client_socket = -1;
     }
 
     status = 1;
@@ -361,10 +376,7 @@ end:
     } else if (status == 0) {
         ERR_print_errors_fp(stderr);
     }
-    SSL_shutdown(client_ssl);
-    SSL_free(client_ssl);
     SSL_CTX_free(client_ctx);
-    close(client_socket);
     OPENSSL_free(e);
 
     return status;
