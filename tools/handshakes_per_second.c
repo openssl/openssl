@@ -43,7 +43,9 @@ static struct {
 
 static void usage()
 {
-    printf("Usage: ...");
+    printf("Usage: ...\n"
+           "       This is an internal tool.\n"
+           "       It should not be called directly.\n");
 }
 
 static char *error(const char *msg)
@@ -157,13 +159,6 @@ err:
 static int configure_server_context(SSL_CTX *server_ctx)
 {
     int status = 0;
-/*
-    if (!SSL_CTX_set_options(server_ctx,
-                             SSL_OP_ALLOW_CLIENT_RENEGOTIATION))
-        goto end;
-    if (!SSL_CTX_set_max_proto_version(server_ctx, 0))
-        goto end;
-*/
 
     /* Set the key and cert */
     if (SSL_CTX_use_certificate_chain_file(server_ctx, params.cert) <= 0)
@@ -181,17 +176,8 @@ static int configure_client_context(SSL_CTX *client_ctx)
 {
     int status = 0;
 
-    /*
-     * Configure the client to abort the handshake if certificate verification
-     * fails
-     */
     SSL_CTX_set_verify(client_ctx, SSL_VERIFY_PEER /*SSL_VERIFY_NONE*/, NULL);
 
-    /*
-     * In a real application you would probably just use the default system certificate trust store and call:
-     *     SSL_CTX_set_default_verify_paths(ctx);
-     * In this demo though we are using a self-signed certificate, so the client must trust it directly.
-     */
     if (!SSL_CTX_load_verify_locations(client_ctx, params.cert, NULL))
         goto end;
 
@@ -214,7 +200,7 @@ static int server()
     long end_time = -1;
     long accepted = 0;
 
-    //server_ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method());
+    /* server_ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method()); */
     server_ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
     if (server_ctx == NULL)
         goto end;
@@ -240,8 +226,6 @@ static int server()
         if (start_time == -1)
             start_time = (long)time(NULL);
 
-        fprintf(stderr, "Server: accepted: %d\n", request_id); // Daniel
-
         /* Create server SSL structure using newly accepted client socket */
         ssl = SSL_new(server_ctx);
         if (ssl == NULL)
@@ -254,7 +238,6 @@ static int server()
         if (SSL_accept(ssl) <= 0)
             goto server_end;
 
-        printf("Connection accepted\n");
         end_time = (long)time(NULL);
         ++accepted;
         // Client SSL connection accepted
@@ -291,7 +274,9 @@ end:
     OPENSSL_free(e);
 
     if (start_time > 0 && end_time >= start_time && accepted > 0) {
-        printf("Accepted: %ld in %ld seconds\n %.3f accepts/sec\n",
+        printf("Server:\n"
+               "  Accepted: %ld in %ld seconds\n"
+               "  %.3f accepts/sec\n",
                 accepted, end_time - start_time,
                 (double)accepted/(end_time - start_time));
     }
@@ -316,55 +301,57 @@ static int client()
     if (!configure_client_context(client_ctx))
         goto end;
 
-    if ((e = create_client_socket(&client_socket)) != NULL)
-        goto end;
+    for (int i = 0; i < params.requests_num; i++) {
+        if ((e = create_client_socket(&client_socket)) != NULL)
+            goto end;
 
-    /* Create client SSL structure using dedicated client socket */
-    client_ssl = SSL_new(client_ctx);
-    if (client_ssl == NULL)
-        goto end;
+        /* Create client SSL structure using dedicated client socket */
+        client_ssl = SSL_new(client_ctx);
+        if (client_ssl == NULL)
+            goto end;
 
-    if (!SSL_set_fd(client_ssl, client_socket))
-        goto end;
+        if (!SSL_set_fd(client_ssl, client_socket))
+            goto end;
 
-    // Daniel: Finish
-    // Client SSL connection accepted
-    /* Set hostname for SNI */
-    if (!SSL_set_tlsext_host_name(client_ssl, params.server_ip))
-        goto end;
-    /* Configure server hostname check */
-    if (!SSL_set1_host(client_ssl, "localhost"/* params.server_ip */))
-        goto end;
+        /* Set hostname for SNI */
+        if (!SSL_set_tlsext_host_name(client_ssl, params.server_ip))
+            goto end;
+        /* Configure server hostname check */
+        if (!SSL_set1_host(client_ssl, params.server_host))
+            goto end;
 
-    /* Now do SSL connect with server */
-    for (;;) {
-        rets = SSL_connect(client_ssl);
-        if (rets == 1)
-            break;
-        // if (rets <= 0)
-        err = SSL_get_error(client_ssl, rets);
-        if (err == SSL_ERROR_WANT_ACCEPT)
-            continue;
-        /* Daniel: Maybe handle other cases? */
-        goto end;
-    }
-    fprintf(stderr, "Client connected.\n");
-
-    /*
-     * It is necessary to attempt to read something otherwise
-     * there is a "btoken pipe" on server side.
-     */
-    for (;;) {
-        char rxbuf[128];
-        size_t rxcap = sizeof(rxbuf);
-        /* Get message from client; will fail if client closes connection */
-        ssize_t rxlen = SSL_read(client_ssl, rxbuf, rxcap);
-        if (rxlen == 0) {
-            printf("Server closed connection\n");
-            break;
-        } else if (rxlen < 0) {
+        /* Now do SSL connect with server */
+        for (;;) {
+            rets = SSL_connect(client_ssl);
+            if (rets == 1)
+                break;
+            // if (rets <= 0)
+            err = SSL_get_error(client_ssl, rets);
+            if (err == SSL_ERROR_WANT_ACCEPT)
+                continue;
+            /* Maybe handle other cases? */
             goto end;
         }
+
+        /*
+         * It is necessary to attempt to read something
+         * to prevent "broken pipe" on server side
+         */
+        for (;;) {
+            char rxbuf[128];
+            size_t rxcap = sizeof(rxbuf);
+            ssize_t rxlen = SSL_read(client_ssl, rxbuf, rxcap);
+            if (rxlen == 0) {
+                break;
+            } else if (rxlen < 0) {
+                goto end;
+            }
+        }
+        SSL_shutdown(client_ssl);
+        SSL_free(client_ssl);
+        client_ssl = NULL;
+        close(client_socket);
+        client_socket = -1;
     }
 
     status = 1;
@@ -400,26 +387,22 @@ int main(int argc, const char *argv[])
     if (libctx == NULL)
         goto end;
 
-    /* Daniel: Better params parsing */
-    params.is_server = OPENSSL_strcasecmp(argv[1], "server") == 0;
-    params.is_client = OPENSSL_strcasecmp(argv[1], "client") == 0;
-    params.server_ip = argv[2];
-    params.server_port = atoi(argv[3]);
-    params.server_host = argv[4];
-    params.key = argv[5];
-    params.cert = argv[6];
-    params.requests_num = atoi(argv[7]);
-
+    if (argc >= 8) {
+        params.is_server = OPENSSL_strcasecmp(argv[1], "server") == 0;
+        params.is_client = OPENSSL_strcasecmp(argv[1], "client") == 0;
+        params.server_ip = argv[2];
+        params.server_port = atoi(argv[3]);
+        params.server_host = argv[4];
+        params.key = argv[5];
+        params.cert = argv[6];
+        params.requests_num = atoi(argv[7]);
+    }
     if (params.is_server) {
         if (!server())
             goto end;
     } else if (params.is_client) {
-        //OSSL_sleep(10000); // Daniel
-        // Daniel: Move to client() function
-        for (int i = 0; i < params.requests_num; i++) {
-            if (!client())
-                goto end;
-        }
+        if (!client())
+            goto end;
     } else {
         usage();
         goto end;
