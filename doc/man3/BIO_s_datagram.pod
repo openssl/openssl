@@ -141,8 +141,8 @@ Warning: When used with an unconnected network socket, the value set may be
 modified by future calls to L<BIO_read(3)>, making use of BIO_s_datagram()
 hazardous when used with unconnected network sockets; see above.
 
-This does not affect the operation of L<BIO_sendmmsg(3)>, and L<BIO_recvmmsg(3)>
-does not affect this value.
+This does not affect the operation of L<BIO_sendmmsg(3)>.
+L<BIO_recvmmsg(3)> does not affect the value set by BIO_dgram_set_peer().
 
 =item BIO_dgram_recv_timeout (BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP)
 
