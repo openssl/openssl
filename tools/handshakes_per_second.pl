@@ -38,8 +38,8 @@ sub do_wait {
 }
 
 # Daniel: How to call agains actual library?
-my $server_pid = do_fork('tools/handshakes_per_second', 'server', '127.0.0.1', 1024, 'localhost', 'key.pem', 'cert.pem', 2048);
-my $client_pid = do_fork('tools/handshakes_per_second', 'client', '127.0.0.1', 1024, 'localhost', 'key.pem', 'cert.pem', 2048);
+my $server_pid = do_fork('tools/handshakes_per_second_helper', 'server', '127.0.0.1', 1024, 'localhost', 'key.pem', 'cert.pem', 2048);
+my $client_pid = do_fork('tools/handshakes_per_second_helper', 'client', '127.0.0.1', 1024, 'localhost', 'key.pem', 'cert.pem', 2048);
 
 
 if (my $ret = do_wait($server_pid, "server")) {

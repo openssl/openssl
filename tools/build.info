@@ -5,12 +5,12 @@ IF[{- !$disabled{apps} -}]
   SCRIPTS={- $c_rehash_name -}
   SOURCE[{- $c_rehash_name -}]=c_rehash.in
 
-  SCRIPTS={- hps -}
-  SOURCE[{- hps -}]=hps.pl
+  SCRIPTS={- handshakes_per_second -}
+  SOURCE[{- handshakes_per_second -}]=handshakes_per_second.pl
 
-  PROGRAMS=handshakes_per_second
-  SOURCE[handshakes_per_second]=handshakes_per_second.c
-  INCLUDE[handshakes_per_second]=.. ../include ../../include
-  DEPEND[handshakes_per_second]=../libcrypto.a ../libssl.a
+  PROGRAMS=handshakes_per_second_helper
+  SOURCE[handshakes_per_second_helper]=handshakes_per_second_helper.c
+  INCLUDE[handshakes_per_second_helper]=.. ../include ../../include
+  DEPEND[handshakes_per_second_helper]=../libcrypto.a ../libssl.a
 ENDIF
 
