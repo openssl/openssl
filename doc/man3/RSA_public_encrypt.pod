@@ -92,9 +92,9 @@ which can potentially be used to mount a Bleichenbacher padding oracle
 attack. This is an inherent weakness in the PKCS #1 v1.5 padding
 design. Prefer RSA_PKCS1_OAEP_PADDING.
 
-In OpenSSL before version 3.1.0, both the return value and the length of
+In OpenSSL before version 3.2.0, both the return value and the length of
 returned value could be used to mount the Bleichenbacher attack.
-Since version 3.1.0, OpenSSL does not return an error in case of padding
+Since version 3.2.0, OpenSSL does not return an error in case of padding
 checks failed. Instead it generates a random message based on used private
 key and provided ciphertext so that application code doesn't have to implement
 a side-channel secure error handling.
