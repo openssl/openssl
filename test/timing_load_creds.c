@@ -27,10 +27,10 @@
      do {                                                             \
          (res)->tv_sec = (a)->tv_sec - (b)->tv_sec;                   \
          if ((a)->tv_usec < (b)->tv_usec) {                           \
-             (res)->tv_usec = (a)->tv_usec + 1000000 - (b)->tv_usec); \
+             (res)->tv_usec = (a)->tv_usec + 1000000 - (b)->tv_usec;  \
              --(res)->tv_sec;                                         \
          } else {                                                     \
-             (res)->tv_usec = (a)->tv_usec - (b)->tv_usec);           \
+             (res)->tv_usec = (a)->tv_usec - (b)->tv_usec;            \
          }                                                            \
      } while(0)
 # endif
