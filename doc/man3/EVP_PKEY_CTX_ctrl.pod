@@ -394,7 +394,7 @@ OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION should be set to the actual
 negotiated protocol version. Otherwise it should be left unset.
 
 Similarly to the B<RSA_PKCS1_WITH_TLS_PADDING> above, since OpenSSL version
-3.1.0, the use of B<RSA_PKCS1_PADDING> will return a randomly generated message
+3.2.0, the use of B<RSA_PKCS1_PADDING> will return a randomly generated message
 instead of padding errors in case padding checks fail. Applications that
 want to remain secure while using earlier versions of OpenSSL, still need to
 handle both the error code from the RSA decryption operation and the
