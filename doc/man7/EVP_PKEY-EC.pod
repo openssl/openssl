@@ -118,9 +118,9 @@ EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.
 Note, in particular, that the choice of point compression format used for
 encoding the exported value via EVP_PKEY_todata() depends on the underlying
 provider implementation.
-Before OpenSSL 3.1, the implementation of providers included with OpenSSL always
+Before OpenSSL 3.0.8, the implementation of providers included with OpenSSL always
 opted for an encoding in compressed format, unconditionally.
-Since OpenSSL 3.1, the implementation has been changed to honor the
+Since OpenSSL 3.0.8, the implementation has been changed to honor the
 B<OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT> parameter, if set, or to default
 to uncompressed format.
 
