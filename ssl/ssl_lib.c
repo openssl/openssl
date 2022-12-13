@@ -2637,6 +2637,12 @@ int SSL_shutdown(SSL *s)
      * (see ssl3_shutdown).
      */
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+#ifndef OPENSSL_NO_QUIC
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (qc != NULL)
+        return ossl_quic_conn_shutdown(qc, 0, NULL, 0);
+#endif
 
     if (sc == NULL)
         return -1;
@@ -7167,10 +7173,26 @@ int SSL_set_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr)
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc == NULL)
-        return -1;
+        return 0;
 
     return ossl_quic_conn_set_initial_peer_addr(qc, peer_addr);
 #else
-    return -1;
+    return 0;
+#endif
+}
+
+int SSL_shutdown_ex(SSL *ssl, uint64_t flags,
+                    const SSL_SHUTDOWN_EX_ARGS *args,
+                    size_t args_len)
+{
+#ifndef OPENSSL_NO_QUIC
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(ssl);
+
+    if (qc == NULL)
+        return SSL_shutdown(ssl);
+
+    return ossl_quic_conn_shutdown(qc, flags, args, args_len);
+#else
+    return SSL_shutdown(ssl);
 #endif
 }

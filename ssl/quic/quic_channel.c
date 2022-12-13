@@ -1710,14 +1710,15 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 }
 
 /* Start a locally initiated connection shutdown. */
-void ossl_quic_channel_local_close(QUIC_CHANNEL *ch)
+void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code)
 {
     QUIC_TERMINATE_CAUSE tcause = {0};
 
     if (ossl_quic_channel_is_term_any(ch))
         return;
 
-    tcause.app = 1;
+    tcause.app          = 1;
+    tcause.error_code   = app_error_code;
     ch_start_terminating(ch, &tcause, 0);
 }
 

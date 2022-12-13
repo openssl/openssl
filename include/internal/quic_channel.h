@@ -91,7 +91,7 @@ void ossl_quic_channel_free(QUIC_CHANNEL *ch);
 int ossl_quic_channel_start(QUIC_CHANNEL *ch);
 
 /* Start a locally initiated connection shutdown. */
-void ossl_quic_channel_local_close(QUIC_CHANNEL *ch);
+void ossl_quic_channel_local_close(QUIC_CHANNEL *ch, uint64_t app_error_code);
 
 /*
  * Called when the handshake is confirmed.

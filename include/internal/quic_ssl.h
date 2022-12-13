@@ -28,7 +28,6 @@ __owur int ossl_quic_connect(SSL *s);
 __owur int ossl_quic_read(SSL *s, void *buf, size_t len, size_t *readbytes);
 __owur int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *readbytes);
 __owur int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written);
-__owur int ossl_quic_shutdown(SSL *s);
 __owur long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur long ossl_quic_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg);
 __owur long ossl_quic_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
@@ -53,6 +52,10 @@ __owur int ossl_quic_get_net_write_desired(QUIC_CONNECTION *qc);
 __owur int ossl_quic_get_error(const QUIC_CONNECTION *qc, int i);
 __owur int ossl_quic_conn_get_blocking_mode(const QUIC_CONNECTION *qc);
 __owur int ossl_quic_conn_set_blocking_mode(QUIC_CONNECTION *qc, int blocking);
+__owur int ossl_quic_conn_shutdown(QUIC_CONNECTION *qc, uint64_t flags,
+                                   const SSL_SHUTDOWN_EX_ARGS *args,
+                                   size_t args_len);
+__owur int ossl_quic_conn_stream_conclude(QUIC_CONNECTION *qc);
 void ossl_quic_conn_set0_net_rbio(QUIC_CONNECTION *qc, BIO *net_wbio);
 void ossl_quic_conn_set0_net_wbio(QUIC_CONNECTION *qc, BIO *net_wbio);
 BIO *ossl_quic_conn_get_net_rbio(const QUIC_CONNECTION *qc);

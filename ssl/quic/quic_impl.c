@@ -18,6 +18,7 @@
 #include "internal/time.h"
 
 static void aon_write_finish(QUIC_CONNECTION *qc);
+static int ensure_channel(QUIC_CONNECTION *qc);
 
 /*
  * QUIC Front-End I/O API: Common Utilities
@@ -478,17 +479,34 @@ int ossl_quic_get_net_write_desired(QUIC_CONNECTION *qc)
  */
 
 /* SSL_shutdown */
-int ossl_quic_shutdown(SSL *s)
+static int quic_shutdown_wait(void *arg)
 {
-    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+    QUIC_CONNECTION *qc = arg;
 
-    if (!expect_quic_conn(qc))
-        return 0;
+    return qc->ch == NULL || ossl_quic_channel_is_terminated(qc->ch);
+}
 
-    if (qc->ch != NULL)
-        ossl_quic_channel_local_close(qc->ch);
+int ossl_quic_conn_shutdown(QUIC_CONNECTION *qc, uint64_t flags,
+                            const SSL_SHUTDOWN_EX_ARGS *args,
+                            size_t args_len)
+{
+    if (!ensure_channel(qc))
+        return -1;
 
-    return 1;
+    ossl_quic_channel_local_close(qc->ch,
+                                  args != NULL ? args->quic_error_code : 0);
+
+    /* TODO(QUIC): !SSL_SHUTDOWN_FLAG_IMMEDIATE */
+
+    if (ossl_quic_channel_is_terminated(qc->ch))
+        return 1;
+
+    if (blocking_mode(qc) && (flags & SSL_SHUTDOWN_FLAG_RAPID) == 0)
+        block_until_pred(qc, quic_shutdown_wait, NULL, 0);
+    else
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch));
+
+    return ossl_quic_channel_is_terminated(qc->ch);
 }
 
 /* SSL_ctrl */
@@ -565,12 +583,7 @@ static int configure_channel(QUIC_CONNECTION *qc)
     return 1;
 }
 
-/*
- * Creates a channel and configures it with the information we have accumulated
- * via calls made to us from the application prior to starting a handshake
- * attempt.
- */
-static int ensure_channel_and_start(QUIC_CONNECTION *qc)
+static int ensure_channel(QUIC_CONNECTION *qc)
 {
     QUIC_CHANNEL_ARGS args = {0};
 
@@ -583,6 +596,19 @@ static int ensure_channel_and_start(QUIC_CONNECTION *qc)
 
     qc->ch = ossl_quic_channel_new(&args);
     if (qc->ch == NULL)
+        return 0;
+
+    return 1;
+}
+
+/*
+ * Creates a channel and configures it with the information we have accumulated
+ * via calls made to us from the application prior to starting a handshake
+ * attempt.
+ */
+static int ensure_channel_and_start(QUIC_CONNECTION *qc)
+{
+    if (!ensure_channel(qc))
         return 0;
 
     if (!configure_channel(qc)
