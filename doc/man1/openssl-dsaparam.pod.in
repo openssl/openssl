@@ -21,6 +21,7 @@ B<openssl dsaparam>
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<numbits>]
+[I<numqbits>]
 
 =head1 DESCRIPTION
 
@@ -91,9 +92,15 @@ be handy during batch scripts and pipelines.
 
 =item I<numbits>
 
-This option specifies that a parameter set should be generated of size
-I<numbits>. It must be the last option. If this option is included then
-the input file (if any) is ignored.
+This optional argument specifies that a parameter set should be generated of 
+size I<numbits>. If this argument is included then the input file (if any) is
+ignored.
+
+=item I<numqbits>
+
+This optional argument specifies that a parameter set should be generated with 
+a subprime parameter q of size I<numqbits>. It must be the last argument. If
+this argument is included then the input file (if any) is ignored.
 
 {- $OpenSSL::safe::opt_provider_item -}
 
