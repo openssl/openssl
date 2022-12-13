@@ -142,9 +142,12 @@ int ossl_quic_tserver_read(QUIC_TSERVER *srv,
                            size_t buf_len,
                            size_t *bytes_read)
 {
-    int is_fin = 0; /* TODO(QUIC): Handle FIN in API */
+    int is_fin = 0;
 
     if (!ossl_quic_channel_is_active(srv->ch))
+        return 0;
+
+    if (srv->stream0->recv_fin_retired)
         return 0;
 
     if (!ossl_quic_rstream_read(srv->stream0->rstream, buf, buf_len,
@@ -177,6 +180,11 @@ int ossl_quic_tserver_read(QUIC_TSERVER *srv,
     return 1;
 }
 
+int ossl_quic_tserver_has_read_ended(QUIC_TSERVER *srv)
+{
+    return srv->stream0->recv_fin_retired;
+}
+
 int ossl_quic_tserver_write(QUIC_TSERVER *srv,
                             const unsigned char *buf,
                             size_t buf_len,
@@ -198,6 +206,21 @@ int ossl_quic_tserver_write(QUIC_TSERVER *srv,
                                           srv->stream0);
 
     /* Try and send. */
+    ossl_quic_tserver_tick(srv);
+    return 1;
+}
+
+int ossl_quic_tserver_conclude(QUIC_TSERVER *srv)
+{
+    if (!ossl_quic_channel_is_active(srv->ch))
+        return 0;
+
+    if (!ossl_quic_sstream_get_final_size(srv->stream0->sstream, NULL)) {
+        ossl_quic_sstream_fin(srv->stream0->sstream);
+        ossl_quic_stream_map_update_state(ossl_quic_channel_get_qsm(srv->ch),
+                                          srv->stream0);
+    }
+
     ossl_quic_tserver_tick(srv);
     return 1;
 }

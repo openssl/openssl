@@ -442,6 +442,17 @@ void ossl_quic_sstream_fin(QUIC_SSTREAM *qss)
     qss->have_final_size = 1;
 }
 
+int ossl_quic_sstream_get_final_size(QUIC_SSTREAM *qss, uint64_t *final_size)
+{
+    if (!qss->have_final_size)
+        return 0;
+
+    if (final_size != NULL)
+        *final_size = qss->ring_buf.head_offset;
+
+    return 1;
+}
+
 int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
                              const unsigned char *buf,
                              size_t buf_len,
