@@ -1157,6 +1157,11 @@ static int try_len(size_t space_left, size_t orig_len,
 
     *hdr_len = base_hdr_len + lenbytes;
 
+    if (orig_len == 0 && space_left >= *hdr_len) {
+        *payload_len = 0;
+        return 1;
+    }
+
     n = orig_len;
     if (n > maxn_)
         n = maxn_;
@@ -1167,10 +1172,11 @@ static int try_len(size_t space_left, size_t orig_len,
     return n > 0;
 }
 
-static void determine_len(size_t space_left, size_t orig_len,
-                          size_t base_hdr_len,
-                          uint64_t *hlen, uint64_t *len)
+static int determine_len(size_t space_left, size_t orig_len,
+                         size_t base_hdr_len,
+                         uint64_t *hlen, uint64_t *len)
 {
+    int ok = 0;
     size_t chosen_payload_len = 0;
     size_t chosen_hdr_len     = 0;
     size_t payload_len[4], hdr_len[4];
@@ -1193,10 +1199,12 @@ static void determine_len(size_t space_left, size_t orig_len,
         if (valid[i] && payload_len[i] >= chosen_payload_len) {
             chosen_payload_len = payload_len[i];
             chosen_hdr_len     = hdr_len[i];
+            ok                 = 1;
         }
 
     *hlen = chosen_hdr_len;
     *len  = chosen_payload_len;
+    return ok;
 }
 
 /*
@@ -1229,8 +1237,7 @@ static int determine_crypto_len(struct tx_helper *h,
 
     --base_hdr_len;
 
-    determine_len(space_left, orig_len, base_hdr_len, hlen, len);
-    return 1;
+    return determine_len(space_left, orig_len, base_hdr_len, hlen, len);
 }
 
 static int determine_stream_len(struct tx_helper *h,
@@ -1256,8 +1263,7 @@ static int determine_stream_len(struct tx_helper *h,
     if (shdr->has_explicit_len)
         --base_hdr_len;
 
-    determine_len(space_left, orig_len, base_hdr_len, hlen, len);
-    return 1;
+    return determine_len(space_left, orig_len, base_hdr_len, hlen, len);
 }
 
 static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
@@ -1297,10 +1303,8 @@ static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
 
         /* Find best fit (header length, payload length) combination. */
         if (!determine_crypto_len(h, &chdr, space_left, &hdr_bytes,
-                                  &chdr.len)
-            || hdr_bytes == 0 || chdr.len == 0) {
+                                  &chdr.len))
             return 1; /* can't fit anything */
-        }
 
         /*
          * Truncate IOVs to match our chosen length.
@@ -1457,15 +1461,15 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
     for (i = 0;; ++i) {
         space_left = tx_helper_get_space_left(h);
 
-        if (space_left < MIN_FRAME_SIZE_STREAM) {
-            *packet_full = 1;
+        if (!chunks[i % 2].valid) {
+            /* Out of chunks; we're done. */
+            *stream_drained = 1;
             rc = 1;
             goto err;
         }
 
-        if (!chunks[i % 2].valid) {
-            /* Out of chunks; we're done. */
-            *stream_drained = 1;
+        if (space_left < MIN_FRAME_SIZE_STREAM) {
+            *packet_full = 1;
             rc = 1;
             goto err;
         }
@@ -1493,8 +1497,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
         shdr->has_explicit_len = 0;
         hdr_len_implicit = payload_len_implicit = 0;
         if (!determine_stream_len(h, shdr, space_left,
-                                  &hdr_len_implicit, &payload_len_implicit)
-            || hdr_len_implicit == 0 || payload_len_implicit == 0) {
+                                  &hdr_len_implicit, &payload_len_implicit)) {
             *packet_full = 1;
             rc = 1;
             goto err; /* can't fit anything */
@@ -1534,8 +1537,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
             shdr->has_explicit_len = 1;
             hdr_len_explicit = payload_len_explicit = 0;
             if (!determine_stream_len(h, shdr, space_left,
-                                      &hdr_len_explicit, &payload_len_explicit)
-                || hdr_len_explicit == 0 || payload_len_explicit == 0) {
+                                      &hdr_len_explicit, &payload_len_explicit)) {
                 *packet_full = 1;
                 rc = 1;
                 goto err; /* can't fit anything */
@@ -1546,6 +1548,10 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
             shdr->has_explicit_len = 0;
             shdr->len = payload_len_implicit;
         }
+
+        /* If this is a FIN, don't keep filling the packet with more FINs. */
+        if (shdr->is_fin)
+            chunks[(i + 1) % 2].valid = 0;
 
         /* Truncate IOVs to match our chosen length. */
         ossl_quic_sstream_adjust_iov((size_t)shdr->len, chunks[i % 2].iov,
