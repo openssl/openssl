@@ -12,13 +12,12 @@ policies = certificatePolicies
 #policy_oids_critical = 1
 #verbosity = 7
 
-############################# server configurations
+############################# server-dependent configurations
 
 [Mock] # the built-in OpenSSL CMP mock server
 no_check_time = 1
 server_host = 127.0.0.1 # localhost
-# server_port = 0 means that the port is determined by the server
-server_port = 0
+server_port = 0 # 0 means that the port is determined by the server
 server_tls = $server_port
 server_cert = server.crt
 server = $server_host:$server_port
