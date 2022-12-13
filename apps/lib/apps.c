@@ -2277,7 +2277,7 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const char *md,
     int rv = 0;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
-    if (do_sign_init(mctx, pkey, md, sigopts) > 0)
+    if (mctx != NULL && do_sign_init(mctx, pkey, md, sigopts) > 0)
         rv = (X509_REQ_sign_ctx(x, mctx) > 0);
     EVP_MD_CTX_free(mctx);
     return rv;
@@ -2290,7 +2290,7 @@ int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const char *md,
     int rv = 0;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
-    if (do_sign_init(mctx, pkey, md, sigopts) > 0)
+    if (mctx != NULL && do_sign_init(mctx, pkey, md, sigopts) > 0)
         rv = (X509_CRL_sign_ctx(x, mctx) > 0);
     EVP_MD_CTX_free(mctx);
     return rv;
