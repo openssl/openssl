@@ -29,7 +29,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 172;
+plan tests => 173;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -421,6 +421,9 @@ ok(!verify("badalt9-cert", "", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
 
 ok(!verify("badalt10-cert", "", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
    "Name constraints nested DNS name excluded");
+
+ok(!verify("bad-othername-cert", "", ["root-cert"], ["nccaothername-cert"], ),
+   "CVE-2022-4203 type confusion test");
 
 #Check that we get the expected failure return code
 with({ exit_checker => sub { return shift == 2; } },
