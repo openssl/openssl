@@ -10,7 +10,7 @@
 
 IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   PROGRAMS{noinst}=asn1 asn1parse bignum bndiv client conf crl server smime x509
-  PROGRAMS{noinst}=punycode
+  PROGRAMS{noinst}=punycode pem
   PROGRAMS{noinst}=v3name
 
   IF[{- !$disabled{"cmp"} -}]
@@ -65,6 +65,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   INCLUDE[ct]=../include {- $ex_inc -}
   DEPEND[ct]=../libcrypto {- $ex_lib -}
 
+  SOURCE[pem]=pem.c driver.c
+  INCLUDE[pem]=../include {- $ex_inc -}
+  DEPEND[pem]=../libcrypto.a {- $ex_lib -}
+
   SOURCE[punycode]=punycode.c driver.c
   INCLUDE[punycode]=../include {- $ex_inc -}
   DEPEND[punycode]=../libcrypto.a {- $ex_lib -}
@@ -88,7 +92,7 @@ ENDIF
 
 IF[{- !$disabled{tests} -}]
   PROGRAMS{noinst}=asn1-test asn1parse-test bignum-test bndiv-test client-test conf-test crl-test server-test smime-test x509-test
-  PROGRAMS{noinst}=punycode-test
+  PROGRAMS{noinst}=punycode-test pem-test
   PROGRAMS{noinst}=v3name-test
 
   IF[{- !$disabled{"cmp"} -}]
@@ -143,6 +147,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[ct-test]=ct.c test-corpus.c
   INCLUDE[ct-test]=../include
   DEPEND[ct-test]=../libcrypto
+
+  SOURCE[pem-test]=pem.c test-corpus.c
+  INCLUDE[pem-test]=../include
+  DEPEND[pem-test]=../libcrypto.a
 
   SOURCE[punycode-test]=punycode.c test-corpus.c
   INCLUDE[punycode-test]=../include
