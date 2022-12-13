@@ -4725,6 +4725,10 @@ DEPEND[html/man7/openssl-glossary.html]=man7/openssl-glossary.pod
 GENERATE[html/man7/openssl-glossary.html]=man7/openssl-glossary.pod
 DEPEND[man/man7/openssl-glossary.7]=man7/openssl-glossary.pod
 GENERATE[man/man7/openssl-glossary.7]=man7/openssl-glossary.pod
+DEPEND[html/man7/openssl-quic.html]=man7/openssl-quic.pod
+GENERATE[html/man7/openssl-quic.html]=man7/openssl-quic.pod
+DEPEND[man/man7/openssl-quic.7]=man7/openssl-quic.pod
+GENERATE[man/man7/openssl-quic.7]=man7/openssl-quic.pod
 DEPEND[html/man7/openssl-threads.html]=man7/openssl-threads.pod
 GENERATE[html/man7/openssl-threads.html]=man7/openssl-threads.pod
 DEPEND[man/man7/openssl-threads.7]=man7/openssl-threads.pod
@@ -4940,6 +4944,7 @@ html/man7/openssl-core_dispatch.h.html \
 html/man7/openssl-core_names.h.html \
 html/man7/openssl-env.html \
 html/man7/openssl-glossary.html \
+html/man7/openssl-quic.html \
 html/man7/openssl-threads.html \
 html/man7/openssl_user_macros.html \
 html/man7/ossl_store-file.html \
@@ -5072,6 +5077,7 @@ man/man7/openssl-core_dispatch.h.7 \
 man/man7/openssl-core_names.h.7 \
 man/man7/openssl-env.7 \
 man/man7/openssl-glossary.7 \
+man/man7/openssl-quic.7 \
 man/man7/openssl-threads.7 \
 man/man7/openssl_user_macros.7 \
 man/man7/ossl_store-file.7 \
