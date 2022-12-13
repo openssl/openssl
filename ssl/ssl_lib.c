@@ -7196,3 +7196,17 @@ int SSL_shutdown_ex(SSL *ssl, uint64_t flags,
     return SSL_shutdown(ssl);
 #endif
 }
+
+int SSL_stream_conclude(SSL *ssl, uint64_t flags)
+{
+#ifndef OPENSSL_NO_QUIC
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(ssl);
+
+    if (qc == NULL)
+        return 0;
+
+    return ossl_quic_conn_stream_conclude(qc);
+#else
+    return 0;
+#endif
+}

@@ -2270,6 +2270,8 @@ __owur int SSL_shutdown_ex(SSL *ssl, uint64_t flags,
                            const SSL_SHUTDOWN_EX_ARGS *args,
                            size_t args_len);
 
+__owur int SSL_stream_conclude(SSL *ssl, uint64_t flags);
+
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_cache_hit(s) SSL_session_reused(s)
 # endif

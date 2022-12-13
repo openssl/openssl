@@ -747,6 +747,8 @@ int ossl_quic_accept(SSL *s)
  *   (BIO/)SSL_read             => ossl_quic_read
  *   (BIO/)SSL_write            => ossl_quic_write
  *         SSL_pending          => ossl_quic_pending
+ *         SSL_stream_conclude  => ossl_quic_conn_stream_conclude
+ *
  */
 
 /* SSL_get_error */
@@ -1044,6 +1046,10 @@ static int quic_read_actual(QUIC_CONNECTION *qc,
 {
     int is_fin = 0;
 
+    /* If the receive part of the stream is over, issue EOF. */
+    if (stream->recv_fin_retired)
+        return QUIC_RAISE_NORMAL_ERROR(qc, SSL_ERROR_ZERO_RETURN);
+
     if (stream->rstream == NULL)
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
 
@@ -1090,9 +1096,11 @@ static int quic_read_again(void *arg)
 {
     struct quic_read_again_args *args = arg;
 
-    if (!ossl_quic_channel_is_active(args->qc->ch))
+    if (!ossl_quic_channel_is_active(args->qc->ch)) {
         /* If connection is torn down due to an error while blocking, stop. */
+        QUIC_RAISE_NON_NORMAL_ERROR(args->qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
         return -1;
+    }
 
     if (!quic_read_actual(args->qc, args->stream,
                           args->buf, args->len, args->bytes_read,
@@ -1120,15 +1128,15 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
     if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch))
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
 
-    /* If we haven't finished the handshake, try to advance it.*/
+    /* If we haven't finished the handshake, try to advance it. */
     if (ossl_quic_do_handshake(qc) < 1)
-        return 0;
+        return 0; /* ossl_quic_do_handshake raised error here */
 
     if (qc->stream0 == NULL)
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
 
     if (!quic_read_actual(qc, qc->stream0, buf, len, bytes_read, peek))
-        return 0;
+        return 0; /* quic_read_actual raised error here */
 
     if (*bytes_read > 0) {
         /*
@@ -1151,12 +1159,10 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
         args.peek       = peek;
 
         res = block_until_pred(qc, quic_read_again, &args, 0);
-        if (res <= 0) {
-            if (!ossl_quic_channel_is_active(qc->ch))
-                return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
-            else
-                return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
-        }
+        if (res == 0)
+            return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
+        else if (res < 0)
+            return 0; /* quic_read_again raised error here */
 
         return 1;
     } else {
@@ -1196,6 +1202,26 @@ size_t ossl_quic_pending(const SSL *s)
         return 0;
 
     return avail;
+}
+
+/*
+ * SSL_stream_conclude
+ * -------------------
+ */
+int ossl_quic_conn_stream_conclude(QUIC_CONNECTION *qc)
+{
+    QUIC_STREAM *qs = qc->stream0;
+
+    if (qs == NULL || qs->sstream == NULL)
+        return 0;
+
+    if (!ossl_quic_channel_is_active(qc->ch)
+        || ossl_quic_sstream_get_final_size(qs->sstream, NULL))
+        return 1;
+
+    ossl_quic_sstream_fin(qs->sstream);
+    quic_post_write(qc, 1, 1);
+    return 1;
 }
 
 /*

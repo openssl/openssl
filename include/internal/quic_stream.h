@@ -248,6 +248,12 @@ int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
 void ossl_quic_sstream_fin(QUIC_SSTREAM *qss);
 
 /*
+ * If the stream has had ossl_quic_sstream_fin() called, returns 1 and writes
+ * the final size to *final_size. Otherwise, returns 0.
+ */
+int ossl_quic_sstream_get_final_size(QUIC_SSTREAM *qss, uint64_t *final_size);
+
+/*
  * Resizes the internal ring buffer. All stream data is preserved safely.
  *
  * This can be used to expand or contract the ring buffer, but not to contract

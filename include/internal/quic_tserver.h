@@ -51,12 +51,19 @@ int ossl_quic_tserver_is_connected(QUIC_TSERVER *srv);
  * *bytes_read and returns 1 on success. If no bytes are available, 0 is written
  * to *bytes_read and 1 is returned (this is considered a success case).
  *
- * Returns 0 if connection is not currently active.
+ * Returns 0 if connection is not currently active. If the receive part of
+ * the stream has reached the end of stream condition, returns 0; call
+ * ossl_quic_tserver_has_read_ended() to identify this condition.
  */
 int ossl_quic_tserver_read(QUIC_TSERVER *srv,
                            unsigned char *buf,
                            size_t buf_len,
                            size_t *bytes_read);
+
+/*
+ * Returns 1 if the read part of the stream has ended normally.
+ */
+int ossl_quic_tserver_has_read_ended(QUIC_TSERVER *srv);
 
 /*
  * Attempts to write to stream 0. Writes the number of bytes consumed to
@@ -73,6 +80,11 @@ int ossl_quic_tserver_write(QUIC_TSERVER *srv,
                             const unsigned char *buf,
                             size_t buf_len,
                             size_t *bytes_written);
+
+/*
+ * Signals normal end of the stream.
+ */
+int ossl_quic_tserver_conclude(QUIC_TSERVER *srv);
 
 # endif
 
