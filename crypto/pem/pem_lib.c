@@ -989,7 +989,9 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
 
 out_free:
     pem_free(*header, flags, 0);
+    *header = NULL;
     pem_free(*data, flags, 0);
+    *data = NULL;
 end:
     EVP_ENCODE_CTX_free(ctx);
     pem_free(name, flags, 0);
