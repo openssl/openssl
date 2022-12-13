@@ -2180,8 +2180,6 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
     EVP_PKEY_CTX *pkctx = NULL;
     char def_md[80];
 
-    if (ctx == NULL)
-        return 0;
     /*
      * EVP_PKEY_get_default_digest_name() returns 2 if the digest is mandatory
      * for this algorithm.
