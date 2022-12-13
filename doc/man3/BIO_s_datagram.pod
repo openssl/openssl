@@ -102,13 +102,13 @@ This informs the BIO_s_datagram() whether the underlying socket has been
 connected, and therefore how the BIO_s_datagram() should attempt to use the
 socket.
 
-If the peer argument is non-NULL, BIO_s_datagram() assumes that the underlying
-socket has been connected and will attempt to use the socket using OS APIs which
-do not specify peer addresses (for example, send(3) and recv(3) or
-similar). The peer argument should specify the peer address to which the socket
+If the I<peer> argument is non-NULL, BIO_s_datagram() assumes that the
+underlying socket has been connected and will attempt to use the socket using OS
+APIs which do not specify peer addresses (for example, send(3) and recv(3) or
+similar). The I<peer> argument should specify the peer address to which the socket
 is connected.
 
-If the peer argument is NULL, BIO_s_datagram() assumes that the underlying
+If the I<peer> argument is NULL, BIO_s_datagram() assumes that the underlying
 socket is not connected and will attempt to use the socket using an OS APIs
 which specify peer addresses (for example, sendto(3) and recvfrom(3)).
 
@@ -172,9 +172,9 @@ headers or IPv4 options are used.
 
 =item BIO_CTRL_DGRAM_SET_DONT_FRAG
 
-If B<num> is nonzero, configures the underlying network socket to enable Don't
+If I<num> is nonzero, configures the underlying network socket to enable Don't
 Fragment mode, in which datagrams will be set with the IP Don't Fragment (DF)
-bit set. If B<num> is zero, Don't Fragment mode is disabled.
+bit set. If I<num> is zero, Don't Fragment mode is disabled.
 
 =item BIO_CTRL_DGRAM_QUERY_MTU
 
@@ -223,7 +223,7 @@ L<BIO_recvmmsg(3)> is not affected by this control.
 =back
 
 BIO_new_dgram() is a helper function which instantiates a BIO_s_datagram() and
-sets the BIO to use the given socket by calling BIO_set_fd().
+sets the BIO to use the socket given in I<fd> by calling BIO_set_fd().
 
 =head1 RETURN VALUES
 

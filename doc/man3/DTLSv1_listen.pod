@@ -64,7 +64,7 @@ does not support this), then B<*peer> will be cleared and the family set to
 AF_UNSPEC. Typically user code is expected to "connect" the underlying socket to
 the peer and continue the handshake in a connected state.
 
-Warning: It is essential that the calling code connect the underlying socket to
+Warning: It is essential that the calling code connects the underlying socket to
 the peer after making use of DTLSv1_listen(). In the typical case where
 L<BIO_s_datagram(3)> is used, the peer address is updated when receiving a
 datagram on an unconnected socket. If the socket is not connected, it can
