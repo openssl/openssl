@@ -3529,6 +3529,7 @@ static int do_multi(int multi, int size_num)
         if ((f = fdopen(fds[n], "r")) == NULL) {
             BIO_printf(bio_err, "fdopen failure with 0x%x\n",
                        errno);
+            OPENSSL_free(fds);
             return 1;
         }
         while (fgets(buf, sizeof(buf), f)) {
