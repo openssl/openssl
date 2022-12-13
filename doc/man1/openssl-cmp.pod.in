@@ -268,7 +268,7 @@ L<openssl-passphrase-options(1)>.
 
 X509 Distinguished Name (DN) of subject to use in the requested certificate
 template.
-If the NULL-DN (C<"/">) is given then no subject is placed in the template.
+If the NULL-DN (C</>) is given then no subject is placed in the template.
 Default is the subject DN of any PKCS#10 CSR given with the B<-csr> option.
 For KUR, a further fallback is the subject DN
 of the reference certificate (see B<-oldcert>) if provided.
@@ -291,7 +291,7 @@ C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 X509 issuer Distinguished Name (DN) of the CA server
 to place in the requested certificate template in IR/CR/KUR.
-If the NULL-DN (C<"/">) is given then no issuer is placed in the template.
+If the NULL-DN (C</>) is given then no issuer is placed in the template.
 
 If provided and neither B<-recipient> nor B<-srvcert> is given,
 the issuer DN is used as fallback recipient of outgoing CMP messages.
@@ -390,11 +390,11 @@ B<WARNING:> This leads to behavior violating RFC 4210.
 
 =item B<-certout> I<filename>
 
-The file where the newly enrolled certificate should be saved.
+The file where any newly enrolled certificate should be saved.
 
 =item B<-chainout> I<filename>
 
-The file where the chain of the newly enrolled certificate should be saved.
+The file where the chain of any newly enrolled certificate should be saved.
 
 =back
 
@@ -629,16 +629,18 @@ with a signature key."
 
 The file where to save the successfully validated certificate, if any,
 that the CMP server used for signature-based response message protection.
+If there is no such certificate, typically because the protection was MAC-based,
+this is indicated by deleting the file (if it existed).
 
 =item B<-extracertsout> I<filename>
 
-The file where to save all certificates contained in the extraCerts field
-of the last received response message (except for pollRep and PKIConf).
+The file where to save the list of certificates contained in the extraCerts
+field of the last received response message that is not a pollRep nor PKIConf.
 
 =item B<-cacertsout> I<filename>
 
-The file where to save any CA certificates contained in the caPubs field of
-the last received certificate response (i.e., IP, CP, or KUP) message.
+The file where to save the list of CA certificates contained in the caPubs field
+if a positive certificate response (i.e., IP, CP, or KUP) message was received.
 
 =back
 

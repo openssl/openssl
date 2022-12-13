@@ -1989,7 +1989,7 @@ static int write_cert(BIO *bio, X509 *cert)
  * where DER does not make much sense for writing more than one cert!
  * Returns number of written certificates on success, -1 on error.
  */
-static int save_free_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs,
+static int save_free_certs(STACK_OF(X509) *certs,
                            const char *file, const char *desc)
 {
     BIO *bio = NULL;
@@ -2028,24 +2028,28 @@ static int save_free_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs,
     return n;
 }
 
-static int delete_certfile(const char *file, const char *desc)
+static int delete_file(const char *file, const char *desc)
 {
     if (file == NULL)
         return 1;
 
     if (unlink(file) != 0 && errno != ENOENT) {
-        CMP_err2("Failed to delete %s, which should be done to indicate there is no %s cert",
+        CMP_err2("Failed to delete %s, which should be done to indicate there is no %s",
                  file, desc);
         return 0;
     }
     return 1;
 }
 
-static int save_cert(OSSL_CMP_CTX *ctx, X509 *cert,
-                     const char *file, const char *desc)
+static int save_cert_or_delete(X509 *cert, const char *file, const char *desc)
 {
-    if (file == NULL || cert == NULL) {
+    if (file == NULL)
         return 1;
+    if (cert == NULL) {
+        char desc_cert[80];
+
+        snprintf(desc_cert, sizeof(desc_cert), "%s certificate", desc);
+        return delete_file(file, desc_cert);
     } else {
         STACK_OF(X509) *certs = sk_X509_new_null();
 
@@ -2053,7 +2057,7 @@ static int save_cert(OSSL_CMP_CTX *ctx, X509 *cert,
             sk_X509_free(certs);
             return 0;
         }
-        return save_free_certs(ctx, certs, file, desc) >= 0;
+        return save_free_certs(certs, file, desc) >= 0;
     }
 }
 
@@ -2858,13 +2862,6 @@ int cmp_main(int argc, char **argv)
         goto err;
 
     ret = 0;
-    if (!delete_certfile(opt_srvcertout, "validated server")
-        || !delete_certfile(opt_certout, "enrolled")
-        || save_free_certs(NULL, NULL, opt_extracertsout, "extra") < 0
-        || save_free_certs(NULL, NULL, opt_cacertsout, "CA") < 0
-        || save_free_certs(NULL, NULL, opt_chainout, "chain") < 0)
-        goto err;
-
     if (!app_RAND_load())
         goto err;
 
@@ -3011,28 +3008,28 @@ int cmp_main(int argc, char **argv)
         default:
             break;
         }
-        if (OSSL_CMP_CTX_get_status(cmp_ctx) < OSSL_CMP_PKISTATUS_accepted)
+        if (OSSL_CMP_CTX_get_status(cmp_ctx) < OSSL_CMP_PKISTATUS_accepted) {
+            ret = 0;
             goto err; /* we got no response, maybe even did not send request */
-
+        }
         print_status();
-        if (save_free_certs(cmp_ctx, OSSL_CMP_CTX_get1_extraCertsIn(cmp_ctx),
-                            opt_extracertsout, "extra") < 0)
+        if (!save_cert_or_delete(OSSL_CMP_CTX_get0_validatedSrvCert(cmp_ctx),
+                                 opt_srvcertout, "validated server"))
             ret = 0;
         if (!ret)
             goto err;
         ret = 0;
-        if (!save_cert(cmp_ctx, OSSL_CMP_CTX_get0_validatedSrvCert(cmp_ctx),
-                       opt_srvcertout, "validated server"))
+        if (save_free_certs(OSSL_CMP_CTX_get1_extraCertsIn(cmp_ctx),
+                            opt_extracertsout, "extra") < 0)
             goto err;
-        if (save_free_certs(cmp_ctx, OSSL_CMP_CTX_get1_caPubs(cmp_ctx),
-                            opt_cacertsout, "CA") < 0)
-            goto err;
-        if (!save_cert(cmp_ctx, newcert, opt_certout, "enrolled"))
-            goto err;
-        if (save_free_certs(cmp_ctx, OSSL_CMP_CTX_get1_newChain(cmp_ctx),
-                            opt_chainout, "chain") < 0)
-            goto err;
-
+        if (newcert != NULL && (opt_cmd == CMP_IR || opt_cmd == CMP_CR
+                                || opt_cmd == CMP_KUR || opt_cmd == CMP_P10CR))
+            if (!save_cert_or_delete(newcert, opt_certout, "newly enrolled")
+                || save_free_certs(OSSL_CMP_CTX_get1_newChain(cmp_ctx),
+                                   opt_chainout, "chain") < 0
+                || save_free_certs(OSSL_CMP_CTX_get1_caPubs(cmp_ctx),
+                                   opt_cacertsout, "CA") < 0)
+                goto err;
         if (!OSSL_CMP_CTX_reinit(cmp_ctx))
             goto err;
     }
