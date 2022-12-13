@@ -957,7 +957,9 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     *data = pem_malloc(len, flags);
     if (*header == NULL || *data == NULL) {
         pem_free(*header, flags, 0);
+        *header = NULL;
         pem_free(*data, flags, 0);
+        *data = NULL;
         goto end;
     }
     BIO_read(headerB, *header, headerlen);
