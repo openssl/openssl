@@ -41,7 +41,8 @@ static int test_tserver(void)
     SSL_CTX *c_ctx = NULL;
     SSL *c_ssl = NULL;
     short port = 8186;
-    int c_connected = 0, c_write_done = 0, c_begin_read = 0;
+    int c_connected = 0, c_write_done = 0, c_begin_read = 0, s_read_done = 0;
+    int c_wait_eos = 0;
     size_t l = 0, s_total_read = 0, s_total_written = 0, c_total_read = 0;
     int s_begin_write = 0;
     OSSL_TIME start_time;
@@ -151,22 +152,27 @@ static int test_tserver(void)
                              (int)sizeof(msg1) - 1))
                 goto err;
 
+            if (!TEST_true(SSL_stream_conclude(c_ssl, 0)))
+                goto err;
+
             c_write_done = 1;
         }
 
-        if (c_connected && c_write_done && s_total_read < sizeof(msg1) - 1) {
-            if (!TEST_true(ossl_quic_tserver_read(tserver,
-                                                  (unsigned char *)msg2 + s_total_read,
-                                                  sizeof(msg2) - s_total_read, &l)))
-                goto err;
+        if (c_connected && c_write_done && !s_read_done) {
+            if (!ossl_quic_tserver_read(tserver,
+                                        (unsigned char *)msg2 + s_total_read,
+                                        sizeof(msg2) - s_total_read, &l)) {
+                if (!TEST_true(ossl_quic_tserver_has_read_ended(tserver)))
+                    goto err;
 
-            s_total_read += l;
-            if (s_total_read == sizeof(msg1) - 1) {
-                if (!TEST_mem_eq(msg1, sizeof(msg1) - 1,
-                                 msg2, sizeof(msg1) - 1))
+                if (!TEST_mem_eq(msg1, sizeof(msg1) - 1, msg2, s_total_read))
                     goto err;
 
                 s_begin_write = 1;
+            } else {
+                s_total_read += l;
+                if (!TEST_size_t_le(s_total_read, sizeof(msg1) - 1))
+                    goto err;
             }
         }
 
@@ -178,8 +184,10 @@ static int test_tserver(void)
 
             s_total_written += l;
 
-            if (s_total_written == sizeof(msg1) - 1)
+            if (s_total_written == sizeof(msg1) - 1) {
+                ossl_quic_tserver_conclude(tserver);
                 c_begin_read = 1;
+            }
         }
 
         if (c_begin_read && c_total_read < sizeof(msg1) - 1) {
@@ -195,9 +203,22 @@ static int test_tserver(void)
                                  msg3, c_total_read))
                     goto err;
 
-                /* MATCH */
-                break;
+                c_wait_eos = 1;
             }
+        }
+
+        if (c_wait_eos) {
+            unsigned char c;
+
+            ret = SSL_read_ex(c_ssl, &c, sizeof(c), &l);
+            if (!TEST_false(ret))
+                goto err;
+
+            if (!TEST_int_eq(SSL_get_error(c_ssl, ret), SSL_ERROR_ZERO_RETURN))
+                goto err;
+
+            /* DONE */
+            break;
         }
 
         /*
