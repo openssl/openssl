@@ -2258,6 +2258,18 @@ __owur int SSL_set_blocking_mode(SSL *s, int blocking);
 __owur int SSL_get_blocking_mode(SSL *s);
 __owur int SSL_set_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr);
 
+typedef struct ssl_shutdown_ex_args_st {
+    uint64_t    quic_error_code;
+    const char  *quic_reason;
+} SSL_SHUTDOWN_EX_ARGS;
+
+#define SSL_SHUTDOWN_FLAG_RAPID         (1U << 0)
+#define SSL_SHUTDOWN_FLAG_IMMEDIATE     (1U << 1)
+
+__owur int SSL_shutdown_ex(SSL *ssl, uint64_t flags,
+                           const SSL_SHUTDOWN_EX_ARGS *args,
+                           size_t args_len);
+
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_cache_hit(s) SSL_session_reused(s)
 # endif

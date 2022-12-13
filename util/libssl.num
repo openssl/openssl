@@ -541,3 +541,4 @@ SSL_get_blocking_mode                   ?	3_2_0	EXIST::FUNCTION:
 SSL_set_initial_peer_addr               ?	3_2_0	EXIST::FUNCTION:
 SSL_net_read_desired                    ?	3_2_0	EXIST::FUNCTION:
 SSL_net_write_desired                   ?	3_2_0	EXIST::FUNCTION:
+SSL_shutdown_ex                         ?	3_2_0	EXIST::FUNCTION:
