@@ -10,8 +10,22 @@ how those hazards are mitigated.
 Objectives
 ----------
 
-The OpenSSL QUIC API design is intended to meet the following objectives,
-amongst others:
+The [requirements for QUIC](./quic-requirements.md) which have formed the basis
+for implementation include the following requirements:
+
+- The application must have the ability to be in control of the event loop
+  without requiring callbacks to process the various events. An application must
+  also have the ability to operate in “blocking” mode.
+
+- High performance applications (primarily server based) using existing libssl
+  APIs; using custom network interaction BIOs in order to get the best
+  performance at a network level as well as OS interactions (IO handling, thread
+  handling, using fibres). Would prefer to use the existing APIs - they don’t
+  want to throw away what they’ve got. Where QUIC necessitates a change they
+  would be willing to make minor changes.
+
+As such, there are several objectives for the I/O architecture of the QUIC
+implementation:
 
  - We want to support both blocking and non-blocking semantics
    for application use of the libssl APIs.
@@ -20,29 +34,41 @@ amongst others:
    for an application to do its own polling and make its own event
    loop.
 
-Requirements
-------------
+ - We want to support custom BIOs on the network side and to the extent
+   feasible, minimise the level of adaptation needed for any custom BIOs already
+   in use on the network side. More generally, the integrity of the BIO
+   abstraction layer should be preserved.
 
-These requirements are complicated by the fact that traditional use of the
-libssl API allows an application to pass an arbitrary BIO to an SSL object; not
-only that, separate BIOs can be passed for the read and write directions. The
-nature of this BIO can be arbitrary; it could be a socket, or a memory buffer.
+QUIC-Related Requirements
+-------------------------
 
-Implementation of QUIC will require that the underlying network BIO passed to
-the QUIC implementation be configured to support datagram semantics instead of
-bytestream semantics as has been the case with traditional TLS over TCP.
+Note that implementation of QUIC will require that the underlying network BIO
+passed to the QUIC implementation be configured to support datagram semantics
+instead of bytestream semantics as has been the case with traditional TLS
+over TCP. This will require applications using custom BIOs on the network side
+to make substantial changes to the implementation of those custom BIOs to model
+datagram semantics. These changes are not minor, but there is no way around this
+requirement.
 
-Implementation of QUIC requires handling of timer events as well as the
-circumstances where a network socket becomes readable or writable. In many cases
-we need to handle these events simultaneously (e.g. wait until a socket becomes
-readable, or a timeout expires, whichever comes first).
+It should also be noted that implementation of QUIC requires handling of timer
+events as well as the circumstances where a network socket becomes readable or
+writable. In many cases we need to handle these events simultaneously (e.g. wait
+until a socket becomes readable, or writable, or a timeout expires, whichever
+comes first).
 
-Blocking vs. Non-Blocking I/O
------------------------------
+Note that the discussion in this document primarily concerns usage of blocking
+vs. non-blocking I/O in the interface between the QUIC implementation and an
+underlying BIO provided to the QUIC implementation to provide it access to the
+network. This is independent of and orthogonal to the application interface to
+libssl, which will support both blocking and non-blocking I/O.
+
+Blocking vs. Non-Blocking Modes in Underlying Network BIOs
+----------------------------------------------------------
 
 The above constraints make it effectively a requirement that non-blocking I/O be
 used for the calls to the underlying network BIOs. To illustrate this point, we
-first consider how QUIC might be implemented using blocking I/O internally.
+first consider how QUIC might be implemented using blocking network I/O
+internally.
 
 To function correctly and provide blocking semantics at the application level,
 our QUIC implementation must be able to block such that it can respond to any of
@@ -86,9 +112,16 @@ Moreover, our QUIC implementation will not drive the Berkeley sockets API
 directly but uses the BIO abstraction to access the network, so these issues are
 then compounded by the limitations of our existing BIO interfaces. We do not
 have a BIO interface which provides for select(3)-like functionality or which
-can implement the required semantics above. Therefore, trying to implement QUIC
-on top of blocking I/O in this way would require violating the BIO abstraction
-layer, and would not work with custom BIOs.
+can implement the required semantics above.
+
+Moreover, even if we used select(3) directly, select(3) only gives us a
+guarantee (under a non-buggy OS) that a single syscall will not block, however
+we have no guarantee in the API contract for BIO_read(3) or BIO_write(3) that
+any given BIO implementation has such a BIO call correspond to only a single
+system call (or any system call), so this does not work either. Therefore,
+trying to implement QUIC on top of blocking I/O in this way would require
+violating the BIO abstraction layer, and would not work with custom BIOs (even
+if the poll descriptor concept discussed below were adopted).
 
 ### Blocking sockets and threads
 
@@ -100,6 +133,13 @@ parallel threads. Under this model, there would be three threads:
 - a thread which exists solely to execute blocking calls to the `BIO_read` of an
   underlying network BIO,
 - a thread which exists solely to wait for and dispatch timeout events.
+
+This could potentially be reduced to two threads if it is assumed that
+`BIO_write` calls do not take an excessive amount of time.
+
+The premise here is that the front-end I/O API (`SSL_read`, `SSL_write`, etc.)
+would coordinate and synchronise with these background worker threads via
+threading primitives such as conditional variables, etc.
 
 This has a large number of disadvantages:
 
@@ -138,7 +178,7 @@ This has a large number of disadvantages:
 Moreover, this does not appear to be a realistically implementable approach:
 
 - The question is posed of how to handle connection teardown, which does not
-  seem to be solvable. If parallel threads are blocking in blocking `BIO_read`
+  seem to be solvable. If parallel threads are blocked in blocking `BIO_read`
   and `BIO_write` calls on some underlying network BIO, there needs to be some
   way to force these calls to return once `SSL_free` is called and we need to
   tear down the connection. However, the BIO interface does not provide
@@ -162,7 +202,7 @@ There is no possible way around this. Thus, even if this solution were adopted
 (notwithstanding the issues which preclude this noted above) for the purposes of
 accommodating applications using custom network BIOs in a blocking mode, these
 applications would still have to completely rework their implementation of those
-BIOs. In any case, it is expected to be very rare that sophisticated
+BIOs. In any case, it is expected to be comparatively rare that sophisticated
 applications implementing their own custom BIOs will do so in a blocking mode.
 
 ### Use of non-blocking I/O
@@ -190,15 +230,17 @@ socket FD we use into non-blocking mode.
 
 Of the approaches outlined in this document, the use of non-blocking I/O has the
 fewest disadvantages and is the only approach which appears to actually be
-implementable in practice. Moreover, each disadvantage can be readily mitigated:
+implementable in practice. Moreover, most of the disadvantages can be readily
+mitigated:
 
   - We rely on having a select(3) or poll(3) like function available from the
     OS.
 
     However:
 
-    - Firstly, we already rely on select(3) in our code, so this does not appear
-      to raise any portability issues;
+    - Firstly, we already rely on select(3) in our code, at least in
+      non-`no-sock` builds, so this does not appear to raise any portability
+      issues;
 
     - Secondly, we have the option of providing a custom poller interface which
       allows an application to provide its own implementation of a
@@ -252,13 +294,15 @@ implementable in practice. Moreover, each disadvantage can be readily mitigated:
       Moreover, it is extremely unlikely that any such applications are using
       sockets in blocking mode anyway.
 
+   - The poll descriptor interface adds complexity to the BIO interface.
+
 Advantages:
 
   - An application retains full control of its event loop in non-blocking mode.
 
     When using libssl in application-level blocking mode, via a custom poller
-    interface, the application would actually able to exercise more control over
-    I/O than it actually is at present when using libssl in blocking mode.
+    interface, the application would actually be able to exercise more control
+    over I/O than it actually is at present when using libssl in blocking mode.
 
   - Feasible to implement and already working in tests.
     Minimises further development needed to ship.
@@ -268,6 +312,13 @@ Advantages:
 
   - Does not require an application-provided network-side custom BIO to be
     reworked to support concurrent calls to it.
+
+  - The poll descriptor interface will allow applications to implement custom
+    modes of polling in the future (e.g. an application could even building
+    blocking application-level I/O on top of a on a custom memory-based BIO
+    using condition variables, if it wished). This is actually more flexible
+    than the current TLS stack, which cannot be used in blocking mode when used
+    with a memory-based BIO.
 
   - Allows performance-optimal implementation of QUIC RFC requirements.
 
