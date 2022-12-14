@@ -916,6 +916,13 @@ long SSL_SESSION_get_time(const SSL_SESSION *s)
     return (long)ossl_time_to_time_t(s->time);
 }
 
+long SSL_SESSION_get_rtt(const SSL_SESSION *s) // return rtt in microseconds. Matches the units of nginx's $tcpinfo_rtt
+{
+    if (s == NULL)
+        return 0;
+    return (long)ossl_time2us(s->rtt);
+}
+
 long SSL_SESSION_set_time(SSL_SESSION *s, long t)
 {
     OSSL_TIME new_time = ossl_time_from_time_t((time_t)t);

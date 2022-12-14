@@ -1134,6 +1134,7 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
                 SSL_CIPHER_get_version(SSL_get_current_cipher(s))
 # define SSL_get_cipher_name(s) \
                 SSL_CIPHER_get_name(SSL_get_current_cipher(s))
+# define SSL_get_rtt(a)          SSL_SESSION_get_rtt(a)
 # define SSL_get_time(a)         SSL_SESSION_get_time(a)
 # define SSL_set_time(a,b)       SSL_SESSION_set_time((a),(b))
 # define SSL_get_timeout(a)      SSL_SESSION_get_timeout(a)
@@ -1674,6 +1675,7 @@ __owur const char *SSL_state_string(const SSL *s);
 __owur const char *SSL_rstate_string(const SSL *s);
 __owur const char *SSL_state_string_long(const SSL *s);
 __owur const char *SSL_rstate_string_long(const SSL *s);
+__owur long SSL_SESSION_get_rtt(const SSL_SESSION *s);
 __owur long SSL_SESSION_get_time(const SSL_SESSION *s);
 __owur long SSL_SESSION_set_time(SSL_SESSION *s, long t);
 __owur long SSL_SESSION_get_timeout(const SSL_SESSION *s);
