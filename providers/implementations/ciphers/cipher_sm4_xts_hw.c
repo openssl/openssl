@@ -11,8 +11,7 @@
 
 #define XTS_SET_KEY_FN(fn_set_enc_key, fn_set_dec_key,                         \
                        fn_block_enc, fn_block_dec,                             \
-                       fn_stream_enc, fn_stream_dec,                           \
-                       fn_stream_gb_enc, fn_stream_gb_dec) {                   \
+                       fn_stream, fn_stream_gb) {                              \
     size_t bytes = keylen / 2;                                                 \
                                                                                \
     if (ctx->enc) {                                                            \
@@ -26,8 +25,8 @@
     xctx->xts.block2 = (block128_f)fn_block_enc;                               \
     xctx->xts.key1 = &xctx->ks1;                                               \
     xctx->xts.key2 = &xctx->ks2;                                               \
-    xctx->stream = ctx->enc ? fn_stream_enc : fn_stream_dec;                   \
-    xctx->stream_gb = ctx->enc ? fn_stream_gb_enc : fn_stream_gb_dec;          \
+    xctx->stream = fn_stream;                                                  \
+    xctx->stream_gb = fn_stream_gb;                                            \
 }
 
 static int cipher_hw_sm4_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
@@ -35,23 +34,29 @@ static int cipher_hw_sm4_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
                                              size_t keylen)
 {
     PROV_SM4_XTS_CTX *xctx = (PROV_SM4_XTS_CTX *)ctx;
-    OSSL_xts_stream_fn stream_enc = NULL;
-    OSSL_xts_stream_fn stream_dec = NULL;
-    OSSL_xts_stream_fn stream_gb_enc = NULL;
-    OSSL_xts_stream_fn stream_gb_dec = NULL;
+    OSSL_xts_stream_fn stream = NULL;
+    OSSL_xts_stream_fn stream_gb = NULL;
 #ifdef HWSM4_CAPABLE
     if (HWSM4_CAPABLE) {
         XTS_SET_KEY_FN(HWSM4_set_encrypt_key, HWSM4_set_decrypt_key,
-                       HWSM4_encrypt, HWSM4_decrypt, stream_enc, stream_dec,
-                       stream_gb_enc, stream_gb_dec);
+                       HWSM4_encrypt, HWSM4_decrypt, stream, stream_gb);
         return 1;
     } else
 #endif /* HWSM4_CAPABLE */
+#ifdef VPSM4_EX_CAPABLE
+    stream = vpsm4_ex_xts_encrypt;
+    stream_gb = vpsm4_ex_xts_encrypt_gb;
+    if (VPSM4_EX_CAPABLE) {
+        XTS_SET_KEY_FN(vpsm4_ex_set_encrypt_key, vpsm4_ex_set_decrypt_key,
+                       vpsm4_ex_encrypt, vpsm4_ex_decrypt, stream,
+                       stream_gb);
+        return 1;
+    } else
+#endif /* VPSM4_EX_CAPABLE */
 #ifdef VPSM4_CAPABLE
     if (VPSM4_CAPABLE) {
         XTS_SET_KEY_FN(vpsm4_set_encrypt_key, vpsm4_set_decrypt_key,
-                       vpsm4_encrypt, vpsm4_decrypt, stream_enc, stream_dec,
-                       stream_gb_enc, stream_gb_dec);
+                       vpsm4_encrypt, vpsm4_decrypt, stream, stream_gb);
         return 1;
     } else
 #endif /* VPSM4_CAPABLE */
@@ -60,8 +65,7 @@ static int cipher_hw_sm4_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
     }
     {
         XTS_SET_KEY_FN(ossl_sm4_set_key, ossl_sm4_set_key, ossl_sm4_encrypt,
-                       ossl_sm4_decrypt, stream_enc, stream_dec, stream_gb_enc,
-                       stream_gb_dec);
+                       ossl_sm4_decrypt, stream, stream_gb);
     }
     return 1;
 }

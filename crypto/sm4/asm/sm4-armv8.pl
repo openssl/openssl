@@ -32,7 +32,7 @@ sub rev32() {
 my $dst = shift;
 my $src = shift;
 $code.=<<___;
-#ifndef __ARMEB__
+#ifndef __AARCH64EB__
 	rev32	$dst.16b,$src.16b
 #endif
 ___

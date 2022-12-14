@@ -42,6 +42,19 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
             (void)0;            /* terminate potentially open 'else' */
         } else
 #endif
+#ifdef VPSM4_EX_CAPABLE
+        if (VPSM4_EX_CAPABLE) {
+            vpsm4_ex_set_encrypt_key(key, ks);
+            ctx->block = (block128_f)vpsm4_ex_encrypt;
+            ctx->stream.cbc = NULL;
+            if (ctx->mode == EVP_CIPH_CBC_MODE)
+                ctx->stream.cbc = (cbc128_f)vpsm4_ex_cbc_encrypt;
+            else if (ctx->mode == EVP_CIPH_ECB_MODE)
+                ctx->stream.ecb = (ecb128_f)vpsm4_ex_ecb_encrypt;
+            else if (ctx->mode == EVP_CIPH_CTR_MODE)
+                ctx->stream.ctr = (ctr128_f)vpsm4_ex_ctr32_encrypt_blocks;
+        } else
+#endif
 #ifdef VPSM4_CAPABLE
         if (VPSM4_CAPABLE) {
             vpsm4_set_encrypt_key(key, ks);
@@ -73,6 +86,17 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
             if (ctx->mode == EVP_CIPH_ECB_MODE)
                 ctx->stream.ecb = (ecb128_f)HWSM4_ecb_encrypt;
 #endif
+        } else
+#endif
+#ifdef VPSM4_EX_CAPABLE
+        if (VPSM4_EX_CAPABLE) {
+            vpsm4_ex_set_decrypt_key(key, ks);
+            ctx->block = (block128_f)vpsm4_ex_decrypt;
+            ctx->stream.cbc = NULL;
+            if (ctx->mode == EVP_CIPH_CBC_MODE)
+                ctx->stream.cbc = (cbc128_f)vpsm4_ex_cbc_encrypt;
+        else if (ctx->mode == EVP_CIPH_ECB_MODE)
+                ctx->stream.ecb = (ecb128_f)vpsm4_ex_ecb_encrypt;
         } else
 #endif
 #ifdef VPSM4_CAPABLE
