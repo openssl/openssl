@@ -161,6 +161,8 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
                 x = BN_CTX_get(bnctx);
             if (py != NULL)
                 y = BN_CTX_get(bnctx);
+            if (x == NULL && y == NULL)
+                goto err;
 
             if (!EC_POINT_get_affine_coordinates(ecg, pub_point, x, y, bnctx))
                 goto err;
