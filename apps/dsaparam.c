@@ -129,7 +129,7 @@ int dsaparam_main(int argc, char **argv)
         }
     }
 
-    /* Optional args is bitsize and q bitsize. */
+    /* Optional args are bitsize and q bitsize. */
     argc = opt_num_rest();
     argv = opt_rest();
     if (argc == 2) {
