@@ -98,7 +98,7 @@ ignored.
 
 =item I<numqbits>
 
-This option specifies that a parameter set should be generated qith a subprime
+This option specifies that a parameter set should be generated with a subprime
 parameter q of size I<numqbits>. It must be the last option. If this option is
 included then the input file (if any) is ignored.
 
