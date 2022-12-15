@@ -1201,6 +1201,8 @@ int ossl_quic_renegotiate_check(SSL *ssl, int initok)
 /*
  * This is the subset of TLS1.3 ciphers which can be used with QUIC and which we
  * actually support.
+ *
+ * TODO(QUIC): CCM support
  */
 static SSL_CIPHER tls13_quic_ciphers[] = {
     {
