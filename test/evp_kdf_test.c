@@ -1926,7 +1926,8 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_CMAC)
     ADD_TEST(test_kdf_kbkdf_fixedinfo);
 #endif
-    ADD_TEST(test_kdf_kbkdf_kmac);
+    if (fips_provider_version_ge(NULL, 3, 1, 0))
+        ADD_TEST(test_kdf_kbkdf_kmac);
     ADD_TEST(test_kdf_get_kdf);
     ADD_TEST(test_kdf_tls1_prf);
     ADD_TEST(test_kdf_tls1_prf_invalid_digest);
