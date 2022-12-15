@@ -244,8 +244,8 @@ size_t ossl_qtx_get_unflushed_pkt_count(OSSL_QTX *qtx);
 
 /*
  * Change the BIO being used by the QTX. May be NULL if actual transmission is
- * not currently required. Does not ref the BIO; the caller is responsible for
- * ensuring the lifetime of the BIO exceeds the lifetime of the QTX.
+ * not currently required. Does not up-ref the BIO; the caller is responsible
+ * for ensuring the lifetime of the BIO exceeds the lifetime of the QTX.
  */
 void ossl_qtx_set_bio(OSSL_QTX *qtx, BIO *bio);
 

@@ -1077,7 +1077,7 @@ static int quic_read_again(void *arg)
         /* got at least one byte, the SSL_read op can finish now */
         return 1;
 
-    return 0; /* did not write anything, keep trying */
+    return 0; /* did not read anything, keep trying */
 }
 
 static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek)
