@@ -15,10 +15,10 @@ SSL_get_tick_timeout - determine when an SSL object next needs to be ticked
 SSL_get_tick_timeout() determines when the SSL object next needs to perform
 internal processing due to the passage of time.
 
-Calling SSL_get_tick_timeout() results in B<*tv> being written with an amount of
+Calling SSL_get_tick_timeout() results in I<*tv> being written with an amount of
 time left before the SSL object needs to be ticked. If the SSL object needs to
 be ticked immediately, it is set to zero; if the SSL object currently does not
-need to be ticked at any point in the future, B<tv_sec> is set to -1,
+need to be ticked at any point in the future, I<tv->tv_sec> is set to -1,
 representing infinity.
 
 This function is currently applicable only to DTLS and QUIC connection SSL
@@ -45,7 +45,7 @@ The SSL_get_tick_timeout() function was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

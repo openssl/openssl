@@ -26,7 +26,7 @@ can be used to determine when a BIO object can next be read or written
 =head1 DESCRIPTION
 
 BIO_get_rpoll_descriptor() and BIO_get_wpoll_descriptor(), on success, fill
-B<*desc> with a poll descriptor. A poll descriptor is a tagged union structure
+I<*desc> with a poll descriptor. A poll descriptor is a tagged union structure
 which represents some kind of OS or non-OS resource which can be used to
 synchronise on I/O availability events.
 
@@ -52,12 +52,12 @@ Represents the absence of a valid poll descriptor. It may be used by
 BIO_get_rpoll_descriptor() or BIO_get_wpoll_descriptor() to indicate that the
 BIO is not pollable for readability or writeability respectively.
 
-For this type, no field within the B<value> field of the B<BIO_POLL_DESCRIPTOR>
+For this type, no field within the I<value> field of the B<BIO_POLL_DESCRIPTOR>
 is valid.
 
 =item BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD
 
-The poll descriptor represents an OS socket resource. The field B<value.fd>
+The poll descriptor represents an OS socket resource. The field I<value.fd>
 in the B<BIO_POLL_DESCRIPTOR> is valid if it is not set to -1.
 
 The resource is whatever kind of handle is used by a given OS to represent
@@ -74,7 +74,7 @@ complete a BIO_write() operation.
 =item BIO_POLL_DESCRIPTOR_CUSTOM_START
 
 Type values beginning with this value (inclusive) are reserved for application
-allocation for custom poll descriptor types. The field B<value.custom> in the
+allocation for custom poll descriptor types. The field I<value.custom> in the
 B<BIO_POLL_DESCRIPTOR> is an array of length B<BIO_POLL_DESCRIPTOR_NUM_CUSTOM>.
 Each entry in this array can store a void pointer or a B<uint64_t> and can be
 used by the application arbitrarily.
@@ -90,7 +90,7 @@ including by applications, according to their needs.
 The functions BIO_get_rpoll_descriptor() and BIO_get_wpoll_descriptor() return 1
 on success and 0 on failure.
 
-These functions are permitted to succeed and initialise B<*desc> with a poll
+These functions are permitted to succeed and initialise I<*desc> with a poll
 descriptor of type B<BIO_POLL_DESCRIPTOR_TYPE_NONE> to indicate that the BIO is
 not pollable for readability or writeability respectively.
 
@@ -106,7 +106,7 @@ added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
