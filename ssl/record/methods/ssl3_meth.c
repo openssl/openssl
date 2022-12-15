@@ -221,7 +221,7 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
     hash = rl->md_ctx;
 
     t = EVP_MD_CTX_get_size(hash);
-    if (t < 0)
+    if (t <= 0)
         return 0;
     md_size = t;
     npad = (48 / md_size) * md_size;
