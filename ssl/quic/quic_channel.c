@@ -1481,8 +1481,9 @@ static int ch_discard_el(QUIC_CHANNEL *ch,
         ossl_ackm_on_pkt_space_discarded(ch->ackm, pn_space);
 
         /* We should still have crypto streams at this point. */
-        assert(ch->crypto_send[pn_space] != NULL);
-        assert(ch->crypto_recv[pn_space] != NULL);
+        if (!ossl_assert(ch->crypto_send[pn_space] != NULL)
+            || !ossl_assert(ch->crypto_recv[pn_space] != NULL))
+            return 0;
 
         /* Get rid of the crypto stream state for the EL. */
         ossl_quic_sstream_free(ch->crypto_send[pn_space]);
