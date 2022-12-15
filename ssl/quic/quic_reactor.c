@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 #include "internal/quic_reactor.h"
+#include "internal/common.h"
 
 /*
  * Core I/O Reactor Framework
@@ -159,7 +160,8 @@ static int poll_two_fds(int rfd, int rfd_want_read,
     if (wfd > maxfd)
         maxfd = wfd;
 
-    if (rfd == -1 && wfd == -1 && ossl_time_is_infinite(deadline))
+    if (!ossl_assert(rfd != -1 || wfd != -1
+                     || !ossl_time_is_infinite(deadline)))
         /* Do not block forever; should not happen. */
         return 0;
 
@@ -210,7 +212,7 @@ static int poll_two_fds(int rfd, int rfd_want_read,
             ++npfd;
     }
 
-    if (npfd == 0 && ossl_time_is_infinite(deadline))
+    if (!ossl_assert(npfd != 0 || !ossl_time_is_infinite(deadline)))
         /* Do not block forever; should not happen. */
         return 0;
 
