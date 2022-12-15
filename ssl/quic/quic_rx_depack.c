@@ -111,11 +111,20 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
     ackm_data->is_ack_eliciting = 1;
 
     stream = ossl_quic_stream_map_get_by_id(&ch->qsm, frame_data.stream_id);
-    if (stream == NULL || stream->rstream == NULL) {
+    if (stream == NULL) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                QUIC_ERR_STREAM_STATE_ERROR,
                                                OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
-                                               "RESET_STREAM frame for nonexistent or "
+                                               "RESET_STREAM frame for "
+                                               "nonexistent stream");
+        return 0;
+    }
+
+    if (stream->rstream == NULL) {
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_STREAM_STATE_ERROR,
+                                               OSSL_QUIC_FRAME_TYPE_RESET_STREAM,
+                                               "RESET_STREAM frame for "
                                                "TX only stream");
         return 0;
     }
@@ -144,11 +153,20 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
     ackm_data->is_ack_eliciting = 1;
 
     stream = ossl_quic_stream_map_get_by_id(&ch->qsm, frame_data.stream_id);
-    if (stream == NULL || stream->sstream == NULL) {
+    if (stream == NULL) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                QUIC_ERR_STREAM_STATE_ERROR,
                                                OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
-                                               "STOP_SENDING frame for nonexistent or "
+                                               "STOP_SENDING frame for "
+                                               "nonexistent stream");
+        return 0;
+    }
+
+    if (stream->sstream == NULL) {
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_STREAM_STATE_ERROR,
+                                               OSSL_QUIC_FRAME_TYPE_STOP_SENDING,
+                                               "STOP_SENDING frame for "
                                                "RX only stream");
         return 0;
     }
@@ -235,12 +253,21 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
     ackm_data->is_ack_eliciting = 1;
 
     stream = ossl_quic_stream_map_get_by_id(&ch->qsm, frame_data.stream_id);
-    if (stream == NULL || stream->rstream == NULL) {
+    if (stream == NULL) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                QUIC_ERR_STREAM_STATE_ERROR,
                                                frame_type,
-                                               "STREAM frame for nonexistent or"
-                                               " TX only stream");
+                                               "STREAM frame for nonexistent "
+                                               "stream");
+        return 0;
+    }
+
+    if (stream->rstream == NULL) {
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_STREAM_STATE_ERROR,
+                                               frame_type,
+                                               "STREAM frame for TX only "
+                                               "stream");
         return 0;
     }
 
@@ -323,12 +350,21 @@ static int depack_do_frame_max_stream_data(PACKET *pkt,
     ackm_data->is_ack_eliciting = 1;
 
     stream = ossl_quic_stream_map_get_by_id(&ch->qsm, stream_id);
-    if (stream == NULL || stream->sstream == NULL) {
+    if (stream == NULL) {
         ossl_quic_channel_raise_protocol_error(ch,
                                                QUIC_ERR_STREAM_STATE_ERROR,
                                                OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA,
-                                               "MAX_STREAM_DATA for nonexistent"
-                                               " or TX only stream");
+                                               "MAX_STREAM_DATA for nonexistent "
+                                               "stream");
+        return 0;
+    }
+
+    if (stream->sstream == NULL) {
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_STREAM_STATE_ERROR,
+                                               OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA,
+                                               "MAX_STREAM_DATA for TX only "
+                                               "stream");
         return 0;
     }
 
