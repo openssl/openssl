@@ -146,6 +146,13 @@ ssl_ct_validation_cb                    datatype
 ASN1_BIT_STRING_digest                  define
 BIO_append_filename                     define
 BIO_destroy_bio_pair                    define
+BIO_ctrl_dgram_connect                  define
+BIO_ctrl_set_connected                  define
+BIO_dgram_get_mtu_overhead              define
+BIO_dgram_get_peer                      define
+BIO_dgram_set_peer                      define
+BIO_dgram_recv_timedout                 define
+BIO_dgram_send_timedout                 define
 BIO_do_accept                           define
 BIO_do_connect                          define
 BIO_do_handshake                        define
