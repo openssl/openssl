@@ -790,7 +790,7 @@ static int quic_write_again(void *arg)
     args->len           -= actual_written;
     args->total_written += actual_written;
 
-    if (actual_written == 0)
+    if (args->len == 0)
         /* Written everything, done. */
         return 1;
 
