@@ -57,6 +57,50 @@ const OPTIONS genpkey_options[] = {
     {NULL}
 };
 
+static const char *param_datatype_2name(unsigned int type, int *ishex)
+{
+    *ishex = 0;
+
+    switch (type) {
+    case OSSL_PARAM_INTEGER: return "int";
+    case OSSL_PARAM_UNSIGNED_INTEGER: return "uint";
+    case OSSL_PARAM_REAL: return "float";
+    case OSSL_PARAM_OCTET_STRING: *ishex = 1; return "string";
+    case OSSL_PARAM_UTF8_STRING: return "string";
+    default:
+        return NULL;
+    }
+}
+
+static void show_gen_pkeyopt(const char *algname, OSSL_LIB_CTX *libctx, const char *propq)
+{
+    EVP_PKEY_CTX *ctx = NULL;
+    const OSSL_PARAM *params;
+    int i, ishex = 0;
+
+    if (algname == NULL)
+        return;
+    ctx = EVP_PKEY_CTX_new_from_name(libctx, algname, propq);
+    if (ctx == NULL)
+        return;
+
+    if (EVP_PKEY_keygen_init(ctx) <= 0)
+        goto cleanup;
+    params = EVP_PKEY_CTX_settable_params(ctx);
+    if (params == NULL)
+        goto cleanup;
+
+    BIO_printf(bio_err, "\nThe possible -pkeyopt arguments are:\n");
+    for (i = 0; params[i].key != NULL; ++i) {
+        const char *name = param_datatype_2name(params[i].data_type, &ishex);
+
+        if (name != NULL)
+            BIO_printf(bio_err, "    %s%s:%s\n", ishex ? "hex" : "", params[i].key, name);
+    }
+cleanup:
+    EVP_PKEY_CTX_free(ctx);
+}
+
 int genpkey_main(int argc, char **argv)
 {
     CONF *conf = NULL;
@@ -88,6 +132,7 @@ int genpkey_main(int argc, char **argv)
         case OPT_HELP:
             ret = 0;
             opt_help(genpkey_options);
+            show_gen_pkeyopt(algname, libctx, app_get0_propq());
             goto end;
         case OPT_OUTFORM:
             if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
