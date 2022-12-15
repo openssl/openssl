@@ -247,8 +247,8 @@ typedef struct ossl_qrx_pkt_st {
  *
  * On success, *pkt points to a OSSL_QRX_PKT structure. The structure should be
  * freed when no longer needed by calling ossl_qrx_pkt_release(). The structure
- * is refcounted; to gain extra references, call ossl_qrx_pkt_ref(). This will
- * cause a corresponding number of calls to ossl_qrx_pkt_release() to be
+ * is refcounted; to gain extra references, call ossl_qrx_pkt_up_ref(). This
+ * will cause a corresponding number of calls to ossl_qrx_pkt_release() to be
  * ignored.
  *
  * The resources referenced by (*pkt)->hdr, (*pkt)->hdr->data and (*pkt)->peer

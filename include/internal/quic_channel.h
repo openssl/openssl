@@ -81,7 +81,6 @@ void ossl_quic_channel_free(QUIC_CHANNEL *ch);
  * code (e.g. ossl_quic_channel_raise_protocol_error), others are for very
  * specific use by particular components only (e.g.
  * ossl_quic_channel_on_handshake_confirmed).
- *
  */
 
 /*

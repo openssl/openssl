@@ -178,8 +178,8 @@ struct ossl_cc_method_st {
     size_t (*get_bytes_in_flight_max)(OSSL_CC_DATA *ccdata);
 
     /*
-     * Returns the time at which the CC will next release more budget
-     * for sending, or ossl_time_infinite().
+     * Returns the next time at which the CC will release more budget for
+     * sending, or ossl_time_infinite().
      */
     OSSL_TIME (*get_next_credit_time)(OSSL_CC_DATA *ccdata);
 
