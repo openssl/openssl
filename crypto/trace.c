@@ -118,17 +118,16 @@ struct trace_category_st {
 };
 #define TRACE_CATEGORY_(name)       { #name, OSSL_TRACE_CATEGORY_##name }
 
-static const struct trace_category_st trace_categories[] = {
+static const struct trace_category_st
+    trace_categories[OSSL_TRACE_CATEGORY_NUM] = {
     TRACE_CATEGORY_(ALL),
     TRACE_CATEGORY_(TRACE),
     TRACE_CATEGORY_(INIT),
     TRACE_CATEGORY_(TLS),
     TRACE_CATEGORY_(TLS_CIPHER),
     TRACE_CATEGORY_(CONF),
-#ifndef OPENSSL_NO_ENGINE
     TRACE_CATEGORY_(ENGINE_TABLE),
     TRACE_CATEGORY_(ENGINE_REF_COUNT),
-#endif
     TRACE_CATEGORY_(PKCS5V2),
     TRACE_CATEGORY_(PKCS12_KEYGEN),
     TRACE_CATEGORY_(PKCS12_DECRYPT),
@@ -144,22 +143,16 @@ static const struct trace_category_st trace_categories[] = {
 
 const char *OSSL_trace_get_category_name(int num)
 {
-    size_t i;
-
+    if (num < 0 || (size_t)num >= OSSL_NELEM(trace_categories))
+        return NULL;
     /*
      * Partial check that OSSL_TRACE_CATEGORY_... macros
      * are synced with trace_categories array
      */
-#ifndef OPENSSL_NO_ENGINE
-    if (!ossl_assert(OSSL_TRACE_CATEGORY_NUM == OSSL_NELEM(trace_categories)))
+    if (!ossl_assert(trace_categories[num].name != NULL)
+        || !ossl_assert(trace_categories[num].num == num))
         return NULL;
-#endif
-
-    for (i = 0; i < OSSL_NELEM(trace_categories); i++)
-        if (trace_categories[i].num == num)
-            return trace_categories[i].name;
-
-    return NULL; /* not found */
+    return trace_categories[num].name;
 }
 
 int OSSL_trace_get_category_num(const char *name)
