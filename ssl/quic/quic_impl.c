@@ -492,13 +492,6 @@ int ossl_quic_shutdown(SSL *s)
 }
 
 /* SSL_ctrl */
-static void fixup_mode_change(QUIC_CONNECTION *qc)
-{
-    /* If enabling EPW mode, cancel any AON write */
-    if ((qc->ssl_mode & SSL_MODE_ENABLE_PARTIAL_WRITE) != 0)
-        aon_write_finish(qc);
-}
-
 long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
@@ -508,12 +501,14 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     switch (cmd) {
     case SSL_CTRL_MODE:
+        /* Cannot enable EPW while AON write in progress. */
+        if (qc->aon_write_in_progress)
+            larg &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
+
         qc->ssl_mode |= (uint32_t)larg;
-        fixup_mode_change(qc);
         return qc->ssl_mode;
     case SSL_CTRL_CLEAR_MODE:
         qc->ssl_mode &= ~(uint32_t)larg;
-        fixup_mode_change(qc);
         return qc->ssl_mode;
     default:
         return 0;
