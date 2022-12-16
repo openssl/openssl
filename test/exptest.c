@@ -49,7 +49,7 @@ static int test_mod_exp_zero(void)
     BIGNUM *r = NULL;
     BN_ULONG one_word = 1;
     BN_CTX *ctx = BN_CTX_new();
-    int ret = 1, failed = 0;
+    int ret = 0, failed = 0;
 
     if (!TEST_ptr(m = BN_new())
         || !TEST_ptr(a = BN_new())
