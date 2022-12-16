@@ -309,15 +309,15 @@ enum {
 };
 
 static int test_probe_counts(const OSSL_ACKM_PROBE_INFO *p,
-                             uint32_t handshake,
-                             uint32_t padded_initial,
+                             uint32_t anti_deadlock_handshake,
+                             uint32_t anti_deadlock_initial,
                              uint32_t pto_initial,
                              uint32_t pto_handshake,
                              uint32_t pto_app)
 {
-    if (!TEST_uint_eq(p->handshake, handshake))
+    if (!TEST_uint_eq(p->anti_deadlock_handshake, anti_deadlock_handshake))
         return 0;
-    if (!TEST_uint_eq(p->padded_initial, padded_initial))
+    if (!TEST_uint_eq(p->anti_deadlock_initial, anti_deadlock_initial))
         return 0;
     if (!TEST_uint_eq(p->pto[QUIC_PN_SPACE_INITIAL], pto_initial))
         return 0;

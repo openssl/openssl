@@ -205,8 +205,25 @@ int ossl_ackm_is_ack_desired(OSSL_ACKM *ackm, int pkt_space);
 int ossl_ackm_is_rx_pn_processable(OSSL_ACKM *ackm, QUIC_PN pn, int pkt_space);
 
 typedef struct ossl_ackm_probe_info_st {
-    uint32_t handshake;
-    uint32_t padded_initial;
+    /*
+     * The following two probe request types are used only for anti-deadlock
+     * purposes in relation to the anti-amplification logic, by generating
+     * packets to buy ourselves more anti-amplification credit with the server
+     * until a client address is verified. Note that like all Initial packets,
+     * any Initial probes are padded.
+     *
+     * Note: The ACKM will only ever increase these by one at a time,
+     * as only one probe packet should be generated for these cases.
+     */
+    uint32_t anti_deadlock_initial, anti_deadlock_handshake;
+
+    /*
+     * Send an ACK-eliciting packet for each count here.
+     *
+     * Note: The ACKM may increase this by either one or two for each probe
+     * request, depending on how many probe packets it thinks should be
+     * generated.
+     */
     uint32_t pto[QUIC_PN_SPACE_NUM];
 } OSSL_ACKM_PROBE_INFO;
 
