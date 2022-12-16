@@ -91,8 +91,8 @@ void spawn_loop(const char *prog)
     openlog(prog, LOG_PID, LOG_DAEMON);
 
     if (setpgid(0, 0)) {
-        log_HTTP1(prog, LOG_ERR,
-                  "fatal: error detaching from parent process group: %s",
+        log_HTTP1(prog, LOG_CRIT,
+                  "error detaching from parent process group: %s",
                   strerror(errno));
         exit(1);
     }
@@ -120,8 +120,8 @@ void spawn_loop(const char *prog)
                     }
                 }
                 if (i >= n_responders) {
-                    log_HTTP1(prog, LOG_ERR, "fatal: internal error: "
-                              "no matching child slot for pid: %ld",
+                    log_HTTP1(prog, LOG_CRIT,
+                              "internal error: no matching child slot for pid: %ld",
                               (long)fpid);
                     killall(1, kidpids);
                 }
@@ -145,8 +145,8 @@ void spawn_loop(const char *prog)
                 }
                 break;
             } else if (errno != EINTR) {
-                log_HTTP1(prog, LOG_ERR,
-                          "fatal: waitpid(): %s", strerror(errno));
+                log_HTTP1(prog, LOG_CRIT,
+                          "waitpid(): %s", strerror(errno));
                 killall(1, kidpids);
             }
         }
@@ -165,7 +165,7 @@ void spawn_loop(const char *prog)
             if (termsig)
                 _exit(0);
             if (RAND_poll() <= 0) {
-                log_HTTP(prog, LOG_ERR, "fatal: RAND_poll() failed");
+                log_HTTP(prog, LOG_CRIT, "RAND_poll() failed");
                 _exit(1);
             }
             return;
@@ -178,8 +178,8 @@ void spawn_loop(const char *prog)
                 }
             }
             if (i >= n_responders) {
-                log_HTTP(prog, LOG_ERR,
-                         "fatal: internal error: no free child slots");
+                log_HTTP(prog, LOG_CRIT,
+                         "internal error: no free child slots");
                 killall(1, kidpids);
             }
             break;
@@ -187,7 +187,7 @@ void spawn_loop(const char *prog)
     }
 
     /* The loop above can only break on termsig */
-    log_HTTP1(prog, LOG_INFO, "terminating on signal: %d", termsig);
+    log_HTTP1(prog, LOG_INFO, "Terminating on signal: %d", termsig);
     killall(0, kidpids);
 }
 #endif
@@ -208,14 +208,14 @@ BIO *http_server_init(const char *prog, const char *port, int verb)
     if (acbio == NULL
         || BIO_set_bind_mode(acbio, BIO_BIND_REUSEADDR) < 0
         || BIO_set_accept_port(acbio, port /* may be "0" */) < 0) {
-        log_HTTP(prog, LOG_ERR, "Error setting up accept BIO");
+        log_HTTP(prog, LOG_ERR, "error setting up accept BIO");
         goto err;
     }
 
     BIO_set_accept_bios(acbio, bufbio);
     bufbio = NULL;
     if (BIO_do_accept(acbio) <= 0) {
-        log_HTTP(prog, LOG_ERR, "Error starting accept");
+        log_HTTP1(prog, LOG_ERR, "error setting accept on port %s", port);
         goto err;
     }
 
@@ -223,13 +223,14 @@ BIO *http_server_init(const char *prog, const char *port, int verb)
     BIO_get_fd(acbio, &asock);
     port_num = report_server_accept(bio_out, asock, 1, 1);
     if (port_num == 0) {
-        log_HTTP(prog, LOG_ERR, "Error printing ACCEPT string");
+        log_HTTP(prog, LOG_ERR, "error printing ACCEPT string");
         goto err;
     }
 
     return acbio;
 
  err:
+    ERR_print_errors(bio_err);
     BIO_free_all(acbio);
     BIO_free(bufbio);
     return NULL;
@@ -282,7 +283,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
 
         get_sock_info_address(BIO_get_fd(acbio, NULL), NULL, &port);
         if (port == NULL) {
-            log_HTTP(prog, LOG_ERR, "Cannot get port listening on");
+            log_HTTP(prog, LOG_ERR, "cannot get port listening on");
             goto fatal;
         }
         log_HTTP1(prog, LOG_DEBUG,
@@ -331,7 +332,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
     log_HTTP1(prog, LOG_TRACE, "%s", reqbuf);
     if (end == NULL) {
         log_HTTP(prog, LOG_WARNING,
-                 "Error parsing HTTP header: missing end of line");
+                 "Cannot parse HTTP header: missing end of line");
         (void)http_server_send_status(prog, cbio, 400, "Bad Request");
         goto out;
     }
@@ -390,7 +391,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
             if ((getbio = BIO_new_mem_buf(url, len)) == NULL
                 || (b64 = BIO_new(BIO_f_base64())) == NULL) {
                 log_HTTP1(prog, LOG_ERR,
-                          "Could not allocate base64 bio with size = %d", len);
+                          "could not allocate base64 bio with size = %d", len);
                 goto fatal;
             }
             BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
@@ -472,7 +473,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         (void)http_server_send_status(prog, cbio, 400, "Bad Request");
     } else if (ppath != NULL && (*ppath = OPENSSL_strdup(url)) == NULL) {
         log_HTTP1(prog, LOG_ERR,
-                  "Out of memory allocating %zu bytes", strlen(url) + 1);
+                  "out of memory allocating %zu bytes", strlen(url) + 1);
         ASN1_item_free(req, it);
         goto fatal;
     }
