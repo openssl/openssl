@@ -220,15 +220,17 @@ int ossl_quic_rstream_get_record(QUIC_RSTREAM *qrs,
 int ossl_quic_rstream_release_record(QUIC_RSTREAM *qrs, size_t read_len)
 {
     uint64_t offset;
-    OSSL_TIME rtt = get_rtt(qrs);
 
     if (!ossl_sframe_list_is_head_locked(&qrs->fl))
         return 0;
 
-    if (read_len > qrs->head_range.end - qrs->head_range.start)
+    if (read_len > qrs->head_range.end - qrs->head_range.start) {
+        if (read_len != SIZE_MAX)
+            return 0;
         offset = qrs->head_range.end;
-    else
+    } else {
         offset = qrs->head_range.start + read_len;
+    }
 
     if (!ossl_sframe_list_drop_frames(&qrs->fl, offset))
         return 0;
@@ -236,9 +238,12 @@ int ossl_quic_rstream_release_record(QUIC_RSTREAM *qrs, size_t read_len)
     if (offset > 0)
         ring_buf_cpop_range(&qrs->rbuf, 0, offset - 1);
 
-    if (qrs->rxfc != NULL
-        && !ossl_quic_rxfc_on_retire(qrs->rxfc, offset, rtt))
-        return 0;
+    if (qrs->rxfc != NULL) {
+        OSSL_TIME rtt = get_rtt(qrs);
+
+        if (!ossl_quic_rxfc_on_retire(qrs->rxfc, offset, rtt))
+            return 0;
+    }
 
     return 1;
 }
