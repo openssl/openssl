@@ -18,18 +18,6 @@
     { 0x2F3C, "p384_kyber768" }, \
     { 0x023D, "kyber1024" }, \
     { 0x2F3D, "p521_kyber1024" }, \
-    { 0x0214, "ntru_hps2048509" }, \
-    { 0x2F14, "p256_ntru_hps2048509" }, \
-    { 0x0215, "ntru_hps2048677" }, \
-    { 0x2F15, "p384_ntru_hps2048677" }, \
-    { 0x0216, "ntru_hps4096821" }, \
-    { 0x2F16, "p521_ntru_hps4096821" }, \
-    { 0x0245, "ntru_hps40961229" }, \
-    { 0x2F45, "p521_ntru_hps40961229" }, \
-    { 0x0217, "ntru_hrss701" }, \
-    { 0x2F17, "p384_ntru_hrss701" }, \
-    { 0x0246, "ntru_hrss1373" }, \
-    { 0x2F46, "p521_ntru_hrss1373" }, \
     { 0x0238, "bikel1" }, \
     { 0x2F38, "p256_bikel1" }, \
     { 0x023B, "bikel3" }, \

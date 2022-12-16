@@ -470,12 +470,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x023A: return "kyber512";
   case 0x023C: return "kyber768";
   case 0x023D: return "kyber1024";
-  case 0x0214: return "ntru_hps2048509";
-  case 0x0215: return "ntru_hps2048677";
-  case 0x0216: return "ntru_hps4096821";
-  case 0x0245: return "ntru_hps40961229";
-  case 0x0217: return "ntru_hrss701";
-  case 0x0246: return "ntru_hrss1373";
   case 0x0238: return "bikel1";
   case 0x023B: return "bikel3";
   case 0x023E: return "kyber90s512";
@@ -495,12 +489,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
    case 0x2F3A: return "p256_kyber512 hybrid";
    case 0x2F3C: return "p384_kyber768 hybrid";
    case 0x2F3D: return "p521_kyber1024 hybrid";
-   case 0x2F14: return "p256_ntru_hps2048509 hybrid";
-   case 0x2F15: return "p384_ntru_hps2048677 hybrid";
-   case 0x2F16: return "p521_ntru_hps4096821 hybrid";
-   case 0x2F45: return "p521_ntru_hps40961229 hybrid";
-   case 0x2F17: return "p384_ntru_hrss701 hybrid";
-   case 0x2F46: return "p521_ntru_hrss1373 hybrid";
    case 0x2F38: return "p256_bikel1 hybrid";
    case 0x2F3B: return "p384_bikel3 hybrid";
    case 0x2F3E: return "p256_kyber90s512 hybrid";

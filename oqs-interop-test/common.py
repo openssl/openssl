@@ -16,9 +16,9 @@ TLS1_3_VERSION=772 #0x0304
 key_exchanges = [
 ##### OQS_TEMPLATE_FRAGMENT_KEX_ALGS_START
     # post-quantum key exchanges
-    'frodo640aes','frodo640shake','frodo976aes','frodo976shake','frodo1344aes','frodo1344shake','kyber512','kyber768','kyber1024','ntru_hps2048509','ntru_hps2048677','ntru_hps4096821','ntru_hps40961229','ntru_hrss701','ntru_hrss1373','bikel1','bikel3','kyber90s512','kyber90s768','kyber90s1024','hqc128','hqc192','hqc256',
+    'frodo640aes','frodo640shake','frodo976aes','frodo976shake','frodo1344aes','frodo1344shake','kyber512','kyber768','kyber1024','bikel1','bikel3','kyber90s512','kyber90s768','kyber90s1024','hqc128','hqc192','hqc256',
     # post-quantum + classical key exchanges
-    'p256_frodo640aes','p256_frodo640shake','p384_frodo976aes','p384_frodo976shake','p521_frodo1344aes','p521_frodo1344shake','p256_kyber512','p384_kyber768','p521_kyber1024','p256_ntru_hps2048509','p384_ntru_hps2048677','p521_ntru_hps4096821','p521_ntru_hps40961229','p384_ntru_hrss701','p521_ntru_hrss1373','p256_bikel1','p384_bikel3','p256_kyber90s512','p384_kyber90s768','p521_kyber90s1024','p256_hqc128','p384_hqc192','p521_hqc256',
+    'p256_frodo640aes','p256_frodo640shake','p384_frodo976aes','p384_frodo976shake','p521_frodo1344aes','p521_frodo1344shake','p256_kyber512','p384_kyber768','p521_kyber1024','p256_bikel1','p384_bikel3','p256_kyber90s512','p384_kyber90s768','p521_kyber90s1024','p256_hqc128','p384_hqc192','p521_hqc256',
 ##### OQS_TEMPLATE_FRAGMENT_KEX_ALGS_END
 ]
 

@@ -118,12 +118,6 @@ int oqssl_kem_nids_list[] = {
         NID_kyber512,
         NID_kyber768,
         NID_kyber1024,
-        NID_ntru_hps2048509,
-        NID_ntru_hps2048677,
-        NID_ntru_hps4096821,
-        NID_ntru_hps40961229,
-        NID_ntru_hrss701,
-        NID_ntru_hrss1373,
         NID_bikel1,
         NID_bikel3,
         NID_kyber90s512,
@@ -228,24 +222,6 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_kyber1024:
     case NID_p521_kyber1024:
       return OQS_KEM_alg_kyber_1024;
-    case NID_ntru_hps2048509:
-    case NID_p256_ntru_hps2048509:
-      return OQS_KEM_alg_ntru_hps2048509;
-    case NID_ntru_hps2048677:
-    case NID_p384_ntru_hps2048677:
-      return OQS_KEM_alg_ntru_hps2048677;
-    case NID_ntru_hps4096821:
-    case NID_p521_ntru_hps4096821:
-      return OQS_KEM_alg_ntru_hps4096821;
-    case NID_ntru_hps40961229:
-    case NID_p521_ntru_hps40961229:
-      return OQS_KEM_alg_ntru_hps40961229;
-    case NID_ntru_hrss701:
-    case NID_p384_ntru_hrss701:
-      return OQS_KEM_alg_ntru_hrss701;
-    case NID_ntru_hrss1373:
-    case NID_p521_ntru_hrss1373:
-      return OQS_KEM_alg_ntru_hrss1373;
     case NID_bikel1:
     case NID_p256_bikel1:
       return OQS_KEM_alg_bike_l1;
