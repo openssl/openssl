@@ -415,7 +415,7 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
         }
     } else if (mode == MODE_PTO) {
         OSSL_TIME deadline = ossl_ackm_get_loss_detection_deadline(h.ackm);
-        OSSL_ACKM_PROBE_INFO probe = {0};
+        OSSL_ACKM_PROBE_INFO probe;
 
         if (!TEST_int_eq(ossl_time_compare(deadline, loss_detection_deadline), 0))
             goto err;
@@ -425,9 +425,7 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
             goto err;
 
         /* Should not have any probe requests yet. */
-        if (!TEST_int_eq(ossl_ackm_get_probe_request(h.ackm, 0, &probe), 1))
-            goto err;
-
+        probe = *ossl_ackm_get_probe_request(h.ackm);
         if (!TEST_int_eq(test_probe_counts(&probe, 0, 0, 0, 0, 0), 1))
             goto err;
 
@@ -447,8 +445,9 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
 
         /* Should have a probe request. Not cleared by first call. */
         for (i = 0; i < 3; ++i) {
-            if (!TEST_int_eq(ossl_ackm_get_probe_request(h.ackm, i > 0, &probe), 1))
-                goto err;
+            probe = *ossl_ackm_get_probe_request(h.ackm);
+            if (i > 0)
+                memset(ossl_ackm_get_probe_request(h.ackm), 0, sizeof(probe));
 
             if (i == 2) {
                 if (!TEST_int_eq(test_probe_counts(&probe, 0, 0, 0, 0, 0), 1))

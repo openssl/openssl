@@ -943,7 +943,7 @@ static void ackm_on_pkts_lost(OSSL_ACKM *ackm, int pkt_space,
 
     if (pseudo)
         /*
-         * If this is psuedo-loss (e.g. during connection retry) we do not
+         * If this is pseudo-loss (e.g. during connection retry) we do not
          * inform the CC as it is not a real loss and not reflective of network
          * conditions.
          */
@@ -1316,15 +1316,9 @@ OSSL_TIME ossl_ackm_get_loss_detection_deadline(OSSL_ACKM *ackm)
     return ackm->loss_detection_deadline;
 }
 
-int ossl_ackm_get_probe_request(OSSL_ACKM *ackm, int clear,
-                                OSSL_ACKM_PROBE_INFO *info)
+OSSL_ACKM_PROBE_INFO *ossl_ackm_get_probe_request(OSSL_ACKM *ackm)
 {
-    *info = ackm->pending_probe;
-
-    if (clear != 0)
-        memset(&ackm->pending_probe, 0, sizeof(ackm->pending_probe));
-
-    return 1;
+    return &ackm->pending_probe;
 }
 
 int ossl_ackm_get_largest_unacked(OSSL_ACKM *ackm, int pkt_space, QUIC_PN *pn)
