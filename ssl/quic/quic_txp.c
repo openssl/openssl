@@ -313,9 +313,11 @@ static void on_regen_notify(uint64_t frame_type, uint64_t stream_id,
 static int sstream_is_pending(QUIC_SSTREAM *sstream);
 static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                           uint32_t archetype,
+                          int cc_can_send,
                           uint32_t *conn_close_enc_level);
 static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                                uint32_t archetype,
+                               int cc_can_send,
                                int is_last_in_dgram,
                                int dgram_contains_initial,
                                int chosen_for_conn_close);
@@ -476,14 +478,16 @@ int ossl_quic_tx_packetiser_has_pending(OSSL_QUIC_TX_PACKETISER *txp,
 {
     uint32_t enc_level, conn_close_enc_level = QUIC_ENC_LEVEL_NUM;
     int bypass_cc = ((flags & TX_PACKETISER_BYPASS_CC) != 0);
+    int cc_can_send;
 
-    if (!bypass_cc && !txp->args.cc_method->can_send(txp->args.cc_data))
-        return 0;
+    cc_can_send
+        = (bypass_cc || txp->args.cc_method->can_send(txp->args.cc_data));
 
     for (enc_level = QUIC_ENC_LEVEL_INITIAL;
          enc_level < QUIC_ENC_LEVEL_NUM;
          ++enc_level)
-        if (txp_el_pending(txp, enc_level, archetype, &conn_close_enc_level))
+        if (txp_el_pending(txp, enc_level, archetype, cc_can_send,
+                           &conn_close_enc_level))
             return 1;
 
     return 0;
@@ -498,17 +502,20 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
                                      uint32_t archetype)
 {
     uint32_t enc_level, conn_close_enc_level = QUIC_ENC_LEVEL_NUM;
-    int have_pkt_for_el[QUIC_ENC_LEVEL_NUM], is_last_in_dgram;
+    int have_pkt_for_el[QUIC_ENC_LEVEL_NUM], is_last_in_dgram, cc_can_send;
     size_t num_el_in_dgram = 0, pkts_done = 0;
     int rc;
 
-    if (!txp->args.cc_method->can_send(txp->args.cc_data))
-        return TX_PACKETISER_RES_NO_PKT;
+    /*
+     * If CC says we cannot send we still may be able to send any queued probes.
+     */
+    cc_can_send = txp->args.cc_method->can_send(txp->args.cc_data);
 
     for (enc_level = QUIC_ENC_LEVEL_INITIAL;
          enc_level < QUIC_ENC_LEVEL_NUM;
          ++enc_level) {
         have_pkt_for_el[enc_level] = txp_el_pending(txp, enc_level, archetype,
+                                                    cc_can_send,
                                                     &conn_close_enc_level);
         if (have_pkt_for_el[enc_level])
             ++num_el_in_dgram;
@@ -530,7 +537,8 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
             continue;
 
         is_last_in_dgram = (pkts_done + 1 == num_el_in_dgram);
-        rc = txp_generate_for_el(txp, enc_level, archetype, is_last_in_dgram,
+        rc = txp_generate_for_el(txp, enc_level, archetype, cc_can_send,
+                                 is_last_in_dgram,
                                  have_pkt_for_el[QUIC_ENC_LEVEL_INITIAL],
                                  enc_level == conn_close_enc_level);
 
@@ -739,6 +747,7 @@ static int txp_get_archetype_data(uint32_t enc_level,
  */
 static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                           uint32_t archetype,
+                          int cc_can_send,
                           uint32_t *conn_close_enc_level)
 {
     struct archetype_data a;
@@ -752,6 +761,23 @@ static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
         *conn_close_enc_level = enc_level;
 
     if (!txp_get_archetype_data(enc_level, archetype, &a))
+        return 0;
+
+    /* Do we need to send a PTO probe? */
+    if (a.allow_force_ack_eliciting) {
+        OSSL_ACKM_PROBE_INFO *probe_info
+            = ossl_ackm_get_probe_request(txp->args.ackm);
+
+        if ((enc_level == QUIC_ENC_LEVEL_INITIAL
+             && probe_info->anti_deadlock_initial > 0)
+            || (enc_level == QUIC_ENC_LEVEL_HANDSHAKE
+                && probe_info->anti_deadlock_handshake > 0)
+            || probe_info->pto[pn_space] > 0)
+            return 1;
+    }
+
+    if (!cc_can_send)
+        /* If CC says we cannot currently send, we can only send probes. */
         return 0;
 
     /* Does the crypto stream for this EL want to produce anything? */
@@ -859,6 +885,7 @@ static int sstream_is_pending(QUIC_SSTREAM *sstream)
  */
 static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                                uint32_t archetype,
+                               int cc_can_send,
                                int is_last_in_dgram,
                                int dgram_contains_initial,
                                int chosen_for_conn_close)
@@ -877,11 +904,20 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
         time_since_last = ossl_time_subtract(txp->args.now(txp->args.now_arg),
                                              txp->last_tx_time);
 
-    cc_limit_ = txp->args.cc_method->get_send_allowance(txp->args.cc_data,
-                                                        time_since_last,
-                                                        ossl_time_is_zero(time_since_last));
+    if (!cc_can_send) {
+        /*
+         * If we are called when we cannot send, this must be because we want
+         * to generate a probe. In this circumstance, don't clamp based on CC.
+         */
+        cc_limit = SIZE_MAX;
+    } else {
+        /* Allow CC to clamp how much we can send. */
+        cc_limit_ = txp->args.cc_method->get_send_allowance(txp->args.cc_data,
+                                                            time_since_last,
+                                                            ossl_time_is_zero(time_since_last));
 
-    cc_limit = (cc_limit_ > SIZE_MAX ? SIZE_MAX : (size_t)cc_limit_);
+        cc_limit = (cc_limit_ > SIZE_MAX ? SIZE_MAX : (size_t)cc_limit_);
+    }
 
     /* Assemble packet header. */
     phdr.type           = ossl_quic_enc_level_to_pkt_type(enc_level);
@@ -1781,18 +1817,30 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
     uint32_t pn_space = ossl_quic_enc_level_to_pn_space(enc_level);
     struct tx_helper h;
     int have_helper = 0, have_ack_eliciting = 0, done_pre_token = 0;
-    int require_ack_eliciting;
+    int require_ack_eliciting = 0;
     QUIC_CFQ_ITEM *cfq_item;
     QUIC_TXPIM_PKT *tpkt = NULL;
     OSSL_QTX_PKT pkt;
     QUIC_STREAM *tmp_head = NULL, *stream;
+    OSSL_ACKM_PROBE_INFO *probe_info
+        = ossl_ackm_get_probe_request(txp->args.ackm);
 
     if (!txp_get_archetype_data(enc_level, archetype, &a))
         goto fatal_err;
 
-    require_ack_eliciting
-        = (a.allow_force_ack_eliciting
-           && (txp->force_ack_eliciting & (1UL << pn_space)));
+    if (a.allow_force_ack_eliciting) {
+        /*
+         * Make this packet ACK-eliciting if it has been explicitly requested,
+         * or if ACKM has requested a probe for this PN space.
+         */
+        if ((txp->force_ack_eliciting & (1UL << pn_space)) != 0
+            || (enc_level == QUIC_ENC_LEVEL_INITIAL
+                && probe_info->anti_deadlock_initial > 0)
+            || (enc_level == QUIC_ENC_LEVEL_HANDSHAKE
+                && probe_info->anti_deadlock_handshake > 0)
+            || probe_info->pto[pn_space] > 0)
+            require_ack_eliciting = 1;
+    }
 
     /* Minimum cannot be bigger than maximum. */
     if (min_ppl > max_ppl)
@@ -2157,6 +2205,24 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
 
     if (tpkt->had_ack_frame)
         txp->want_ack &= ~(1UL << pn_space);
+
+    /*
+     * Decrement probe request counts if we have sent a packet that meets
+     * the requirement of a probe, namely being ACK-eliciting.
+     */
+    if (have_ack_eliciting) {
+        if (enc_level == QUIC_ENC_LEVEL_INITIAL
+            && probe_info->anti_deadlock_initial > 0)
+            --probe_info->anti_deadlock_initial;
+
+        if (enc_level == QUIC_ENC_LEVEL_HANDSHAKE
+            && probe_info->anti_deadlock_handshake > 0)
+            --probe_info->anti_deadlock_handshake;
+
+        if (a.allow_force_ack_eliciting /* (i.e., not for 0-RTT) */
+            && probe_info->pto[pn_space] > 0)
+            --probe_info->pto[pn_space];
+    }
 
     /* Done. */
     tx_helper_cleanup(&h);
