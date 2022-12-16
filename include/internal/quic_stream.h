@@ -132,6 +132,12 @@ int ossl_quic_sstream_get_stream_frame(QUIC_SSTREAM *qss,
                                        size_t *num_iov);
 
 /*
+ * Returns 1 if there is data pending transmission. Equivalent to calling
+ * ossl_quic_sstream_get_stream_frame and seeing if it succeeds.
+ */
+int ossl_quic_sstream_has_pending(QUIC_SSTREAM *qss);
+
+/*
  * Returns the current size of the stream; i.e., the number of bytes which have
  * been appended to the stream so far.
  */
