@@ -32,7 +32,7 @@
 #include "internal/e_os.h"
 
 #define HKDF_MAXBUF 2048
-#define HKDF_MAXINFO 32*1024
+#define HKDF_MAXINFO (32*1024)
 
 static OSSL_FUNC_kdf_newctx_fn kdf_hkdf_new;
 static OSSL_FUNC_kdf_dupctx_fn kdf_hkdf_dup;
