@@ -91,8 +91,8 @@ void spawn_loop(const char *prog)
     openlog(prog, LOG_PID, LOG_DAEMON);
 
     if (setpgid(0, 0)) {
-        log_HTTP1(prog, LOG_ERR,
-                  "fatal: error detaching from parent process group: %s",
+        log_HTTP1(prog, LOG_CRIT,
+                  "error detaching from parent process group: %s",
                   strerror(errno));
         exit(1);
     }
@@ -120,8 +120,8 @@ void spawn_loop(const char *prog)
                     }
                 }
                 if (i >= n_responders) {
-                    log_HTTP1(prog, LOG_ERR, "fatal: internal error: "
-                              "no matching child slot for pid: %ld",
+                    log_HTTP1(prog, LOG_CRIT,
+                              "internal error: no matching child slot for pid: %ld",
                               (long)fpid);
                     killall(1, kidpids);
                 }
@@ -145,8 +145,8 @@ void spawn_loop(const char *prog)
                 }
                 break;
             } else if (errno != EINTR) {
-                log_HTTP1(prog, LOG_ERR,
-                          "fatal: waitpid(): %s", strerror(errno));
+                log_HTTP1(prog, LOG_CRIT,
+                          "waitpid() failed: %s", strerror(errno));
                 killall(1, kidpids);
             }
         }
@@ -165,7 +165,7 @@ void spawn_loop(const char *prog)
             if (termsig)
                 _exit(0);
             if (RAND_poll() <= 0) {
-                log_HTTP(prog, LOG_ERR, "fatal: RAND_poll() failed");
+                log_HTTP(prog, LOG_CRIT, "RAND_poll() failed");
                 _exit(1);
             }
             return;
@@ -178,8 +178,8 @@ void spawn_loop(const char *prog)
                 }
             }
             if (i >= n_responders) {
-                log_HTTP(prog, LOG_ERR,
-                         "fatal: internal error: no free child slots");
+                log_HTTP(prog, LOG_CRIT,
+                         "internal error: no free child slots");
                 killall(1, kidpids);
             }
             break;
@@ -208,14 +208,14 @@ BIO *http_server_init(const char *prog, const char *port, int verb)
     if (acbio == NULL
         || BIO_set_bind_mode(acbio, BIO_BIND_REUSEADDR) < 0
         || BIO_set_accept_port(acbio, port /* may be "0" */) < 0) {
-        log_HTTP(prog, LOG_ERR, "Error setting up accept BIO");
+        log_HTTP(prog, LOG_ERR, "error setting up accept BIO");
         goto err;
     }
 
     BIO_set_accept_bios(acbio, bufbio);
     bufbio = NULL;
     if (BIO_do_accept(acbio) <= 0) {
-        log_HTTP(prog, LOG_ERR, "Error starting accept");
+        log_HTTP1(prog, LOG_ERR, "error setting accept on port %s", port);
         goto err;
     }
 
@@ -223,13 +223,14 @@ BIO *http_server_init(const char *prog, const char *port, int verb)
     BIO_get_fd(acbio, &asock);
     port_num = report_server_accept(bio_out, asock, 1, 1);
     if (port_num == 0) {
-        log_HTTP(prog, LOG_ERR, "Error printing ACCEPT string");
+        log_HTTP(prog, LOG_ERR, "error printing ACCEPT string");
         goto err;
     }
 
     return acbio;
 
  err:
+    ERR_print_errors(bio_err);
     BIO_free_all(acbio);
     BIO_free(bufbio);
     return NULL;
@@ -282,11 +283,11 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
 
         get_sock_info_address(BIO_get_fd(acbio, NULL), NULL, &port);
         if (port == NULL) {
-            log_HTTP(prog, LOG_ERR, "Cannot get port listening on");
+            log_HTTP(prog, LOG_ERR, "cannot get port listening on");
             goto fatal;
         }
         log_HTTP1(prog, LOG_DEBUG,
-                  "Awaiting new connection on port %s ...", port);
+                  "awaiting new connection on port %s ...", port);
         OPENSSL_free(port);
 
         if (BIO_do_accept(acbio) <= 0)
@@ -295,7 +296,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
 
         *pcbio = cbio = BIO_pop(acbio);
     } else {
-        log_HTTP(prog, LOG_DEBUG, "Awaiting next request ...");
+        log_HTTP(prog, LOG_DEBUG, "awaiting next request ...");
     }
     if (cbio == NULL) {
         /* Cannot call http_server_send_status(..., cbio, ...) */
@@ -316,7 +317,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         return ret;
     ret = 1;
     if (len < 0) {
-        log_HTTP(prog, LOG_WARNING, "Request line read error");
+        log_HTTP(prog, LOG_WARNING, "request line read error");
         (void)http_server_send_status(prog, cbio, 400, "Bad Request");
         goto out;
     }
@@ -326,12 +327,12 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         *end = '\0';
     if (log_get_verbosity() < LOG_TRACE)
         trace_log_message(-1, prog, LOG_INFO,
-                          "Received request, 1st line: %s", reqbuf);
-    log_HTTP(prog, LOG_TRACE, "Received request header:");
+                          "received request, 1st line: %s", reqbuf);
+    log_HTTP(prog, LOG_TRACE, "received request header:");
     log_HTTP1(prog, LOG_TRACE, "%s", reqbuf);
     if (end == NULL) {
         log_HTTP(prog, LOG_WARNING,
-                 "Error parsing HTTP header: missing end of line");
+                 "cannot parse HTTP header: missing end of line");
         (void)http_server_send_status(prog, cbio, 400, "Bad Request");
         goto out;
     }
@@ -346,7 +347,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
             url++;
         if (*url != '/') {
             log_HTTP2(prog, LOG_WARNING,
-                      "Invalid %s -- URL does not begin with '/': %s",
+                      "invalid %s -- URL does not begin with '/': %s",
                       meth, url);
             (void)http_server_send_status(prog, cbio, 400, "Bad Request");
             goto out;
@@ -359,7 +360,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
                 break;
         if (!HAS_PREFIX(end, HTTP_VERSION_STR)) {
             log_HTTP2(prog, LOG_WARNING,
-                      "Invalid %s -- bad HTTP/version string: %s",
+                      "invalid %s -- bad HTTP/version string: %s",
                       meth, end + 1);
             (void)http_server_send_status(prog, cbio, 400, "Bad Request");
             goto out;
@@ -382,7 +383,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         len = urldecode(url);
         if (len < 0) {
             log_HTTP2(prog, LOG_WARNING,
-                      "Invalid %s request -- bad URL encoding: %s", meth, url);
+                      "invalid %s request -- bad URL encoding: %s", meth, url);
             (void)http_server_send_status(prog, cbio, 400, "Bad Request");
             goto out;
         }
@@ -390,7 +391,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
             if ((getbio = BIO_new_mem_buf(url, len)) == NULL
                 || (b64 = BIO_new(BIO_f_base64())) == NULL) {
                 log_HTTP1(prog, LOG_ERR,
-                          "Could not allocate base64 bio with size = %d", len);
+                          "could not allocate base64 bio with size = %d", len);
                 goto fatal;
             }
             BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
@@ -417,7 +418,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
 
         len = BIO_gets(cbio, inbuf, sizeof(inbuf));
         if (len <= 0) {
-            log_HTTP(prog, LOG_WARNING, "Error reading HTTP header");
+            log_HTTP(prog, LOG_WARNING, "error reading HTTP header");
             (void)http_server_send_status(prog, cbio, 400, "Bad Request");
             goto out;
         }
@@ -429,7 +430,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
                   " " /* workaround for "" getting ignored */ : inbuf);
         if (end == NULL) {
             log_HTTP(prog, LOG_WARNING,
-                     "Error parsing HTTP header: missing end of line");
+                     "error parsing HTTP header: missing end of line");
             (void)http_server_send_status(prog, cbio, 400, "Bad Request");
             goto out;
         }
@@ -441,7 +442,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         value = strchr(key, ':');
         if (value == NULL) {
             log_HTTP(prog, LOG_WARNING,
-                     "Error parsing HTTP header: missing ':'");
+                     "error parsing HTTP header: missing ':'");
             (void)http_server_send_status(prog, cbio, 400, "Bad Request");
             goto out;
         }
@@ -468,11 +469,11 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
     req = ASN1_item_d2i_bio(it, getbio != NULL ? getbio : cbio, NULL);
     if (req == NULL) {
         log_HTTP(prog, LOG_WARNING,
-                 "Error parsing DER-encoded request content");
+                 "error parsing DER-encoded request content");
         (void)http_server_send_status(prog, cbio, 400, "Bad Request");
     } else if (ppath != NULL && (*ppath = OPENSSL_strdup(url)) == NULL) {
         log_HTTP1(prog, LOG_ERR,
-                  "Out of memory allocating %zu bytes", strlen(url) + 1);
+                  "out of memory allocating %zu bytes", strlen(url) + 1);
         ASN1_item_free(req, it);
         goto fatal;
     }
@@ -517,9 +518,9 @@ int http_server_send_asn1_resp(const char *prog, BIO *cbio, int keep_alive,
         return 0;
     if (log_get_verbosity() < LOG_TRACE && (p = strchr(buf, '\r')) != NULL)
         trace_log_message(-1, prog, LOG_INFO,
-                          "Sending response, 1st line: %.*s", (int)(p - buf),
+                          "sending response, 1st line: %.*s", (int)(p - buf),
                           buf);
-    log_HTTP1(prog, LOG_TRACE, "Sending response header:\n%s", buf);
+    log_HTTP1(prog, LOG_TRACE, "sending response header:\n%s", buf);
 
     ret = BIO_printf(cbio, "%s\r\n", buf) > 0
         && ASN1_item_i2d_bio(it, cbio, resp) > 0;
@@ -538,7 +539,7 @@ int http_server_send_status(const char *prog, BIO *cbio,
 
     if (ret < 0 || (size_t)ret >= sizeof(buf))
         return 0;
-    log_HTTP1(prog, LOG_TRACE, "Sending response header:\n%s", buf);
+    log_HTTP1(prog, LOG_TRACE, "sending response header:\n%s", buf);
 
     ret = BIO_printf(cbio, "%s\r\n", buf) > 0;
     (void)BIO_flush(cbio);
