@@ -277,7 +277,7 @@ static int test_generic(INFO *info, int kind)
 
         /* FIN should have been marked as lost */
         num_iov = OSSL_NELEM(iov);
-        if (!TEST_true(ossl_quic_sstream_get_stream_frame(info->sstream[1], 10,
+        if (!TEST_true(ossl_quic_sstream_get_stream_frame(info->sstream[1], 1,
                                                           &hdr, iov, &num_iov))
             || !TEST_true(hdr.is_fin)
             || !TEST_uint64_t_eq(hdr.len, 0))

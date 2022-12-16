@@ -1409,6 +1409,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
     size_t i, j, space_left;
     int needs_padding_if_implicit, can_fill_payload, use_explicit_len;
     int could_have_following_chunk;
+    uint64_t orig_len;
     uint64_t hdr_len_implicit, payload_len_implicit;
     uint64_t hdr_len_explicit, payload_len_explicit;
     uint64_t fc_swm, fc_new_hwm;
@@ -1459,6 +1460,7 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
             goto err;
 
         shdr = &chunks[i % 2].shdr;
+        orig_len = shdr->len;
         if (i > 0)
             /* Load next chunk for lookahead. */
             if (!txp_plan_stream_chunk(txp, h, sstream, stream_txfc, i + 1,
@@ -1577,6 +1579,16 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
         chunk.has_reset_stream  = 0;
         if (!ossl_quic_txpim_pkt_append_chunk(tpkt, &chunk))
             goto err; /* alloc error */
+
+        if (shdr->len < orig_len) {
+            /*
+             * If we did not serialize all of this chunk we definitely do not
+             * want to try the next chunk (and we must not mark the stream
+             * as drained).
+             */
+            rc = 1;
+            goto err;
+        }
     }
 
 err:
@@ -2093,11 +2105,8 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
          */
         ossl_quic_stream_map_update_state(txp->args.qsm, stream);
 
-        if (!stream->want_max_stream_data
-            && !stream->want_stop_sending
-            && !stream->want_reset_stream
-            && (stream->txp_drained || stream->txp_blocked))
-            assert(!stream->active);
+        if (stream->txp_drained)
+            assert(!ossl_quic_sstream_has_pending(stream->sstream));
     }
 
     /* We have now sent the packet, so update state accordingly. */

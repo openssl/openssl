@@ -280,6 +280,10 @@ int ossl_quic_sstream_get_stream_frame(QUIC_SSTREAM *qss,
         range = ossl_list_uint_set_next(range);
 
     if (range == NULL) {
+        if (i < skip)
+            /* Don't return FIN for infinitely increasing skip */
+            return 0;
+
         /* No new bytes to send, but we might have a FIN */
         if (!qss->have_final_size || qss->sent_final_size)
             return 0;
@@ -331,6 +335,15 @@ int ossl_quic_sstream_get_stream_frame(QUIC_SSTREAM *qss,
 
     *num_iov    = num_iov_;
     return 1;
+}
+
+int ossl_quic_sstream_has_pending(QUIC_SSTREAM *qss)
+{
+    OSSL_QUIC_FRAME_STREAM shdr;
+    OSSL_QTX_IOVEC iov[2];
+    size_t num_iov = OSSL_NELEM(iov);
+
+    return ossl_quic_sstream_get_stream_frame(qss, 0, &shdr, iov, &num_iov);
 }
 
 uint64_t ossl_quic_sstream_get_cur_size(QUIC_SSTREAM *qss)
