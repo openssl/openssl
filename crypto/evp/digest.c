@@ -300,7 +300,20 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
         }
         type = lbmd;
         EVP_MD_free(ctx->fetched_digest);
+        /*
+         * copying to fetched_digest so it laterly can be free'd
+         * by EVP_MD_CTX_free()
+         */
         ctx->fetched_digest = lbmd;
+        /*
+         * the incoming type (reqdigest) is from a dummy method by 'lbprov'.
+         * it can not provide proper response to function calls such as:
+         * EVP_MD_get_size(EVP_MD_CTX_get0_md(ctx)),
+         * EVP_MD_get0_name(EVP_MD_CTX_get0_md(ctx)),
+         * EVP_MD_get0_description(EVP_MD_CTX_get0_md(ctx)))
+         *
+         * set reqdigest to the actual fetched method to fix this.
+         */
         ctx->reqdigest = type;
     }
 #endif
