@@ -15,6 +15,9 @@ use OpenSSL::Test::Utils;
 my $fuzzer = "x509";
 setup("test_fuzz_${fuzzer}");
 
+plan skip_all => "This test requires ocsp support"
+    if disabled("ocsp");
+
 plan tests => 2; # one more due to below require_ok(...)
 
 require_ok(srctop_file('test','recipes','fuzz.pl'));
