@@ -9,7 +9,7 @@
 -}
 
 IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
-  PROGRAMS{noinst}=asn1 asn1parse bignum bndiv client conf crl server x509
+  PROGRAMS{noinst}=asn1 asn1parse bignum bndiv client conf crl server
   PROGRAMS{noinst}=punycode
 
   IF[{- !$disabled{"cmp"} -}]
@@ -22,6 +22,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 
   IF[{- !$disabled{"ct"} -}]
     PROGRAMS{noinst}=ct
+  ENDIF
+
+  IF[{- !$disabled{"ocsp"} -}]
+    PROGRAMS{noinst}=x509
   ENDIF
 
   SOURCE[asn1]=asn1.c driver.c fuzz_rand.c
@@ -78,7 +82,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 ENDIF
 
 IF[{- !$disabled{tests} -}]
-  PROGRAMS{noinst}=asn1-test asn1parse-test bignum-test bndiv-test client-test conf-test crl-test server-test x509-test
+  PROGRAMS{noinst}=asn1-test asn1parse-test bignum-test bndiv-test client-test conf-test crl-test server-test
   PROGRAMS{noinst}=punycode-test
 
   IF[{- !$disabled{"cmp"} -}]
@@ -91,6 +95,10 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- !$disabled{"ct"} -}]
     PROGRAMS{noinst}=ct-test
+  ENDIF
+
+  IF[{- !$disabled{"ocsp"} -}]
+    PROGRAMS{noinst}=x509-test
   ENDIF
 
   SOURCE[asn1-test]=asn1.c test-corpus.c fuzz_rand.c
