@@ -524,15 +524,15 @@ Default is 0.
 
 =item B<-trusted> I<filenames>|I<uris>
 
-When validating signature-based protection of CMP response messages,
-these are the CA certificate(s) to trust while checking certificate chains
-during CMP server authentication.
-This option gives more flexibility than the B<-srvcert> option because the
-server-side CMP signer certificate is not pinned but may be any certificate
-for which a chain to one of the given trusted certificates can be constructed.
+The certificate(s), typically of root CAs, the client shall use as trust anchors
+when validating signature-based protection of CMP response messages.
+This option is ignored if the B<-srvcert> option is given as well.
+It provides more flexibility than B<-srvcert> because the CMP protection
+certificate of the server is not pinned but may be any certificate
+from which a chain to one of the given trust anchors can be constructed.
 
-If no B<-trusted>, B<-srvcert>, and B<-secret> option is given
-then protected response messages from the server are not authenticated.
+If none of B<-trusted>, B<-srvcert>, and B<-secret> is given, message validation
+errors will be thrown unless B<-unprotected_errors> permits an exception.
 
 Multiple sources may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
@@ -547,24 +547,24 @@ have no effect on the certificate verification enabled via this option.
 Non-trusted intermediate CA certificate(s).
 Any extra certificates given with the B<-cert> option are appended to it.
 All these certificates may be useful for cert path construction
-for the CMP client certificate (to include in the extraCerts field of outgoing
-messages) and for the TLS client certificate (if TLS is enabled)
+for the own CMP signer certificate (to include in the extraCerts field of
+request messages) and for the TLS client certificate (if TLS is enabled)
 as well as for chain building
-when validating the CMP server certificate (checking signature-based
+when validating server certificates (checking signature-based
 CMP message protection) and when validating newly enrolled certificates.
 
-Multiple sources may be given, separated by commas and/or whitespace.
-Each file may contain multiple certificates.
+Multiple filenames or URLs may be given, separated by commas and/or whitespace.
+Each source may contain multiple certificates.
 
 =item B<-srvcert> I<filename>|I<uri>
 
 The specific CMP server certificate to expect and directly trust (even if it is
-expired) when validating signature-based protection of CMP response messages.
-May be set alternatively to the B<-trusted> option to pin the accepted server.
+expired) when verifying signature-based protection of CMP response messages.
+This pins the accepted server and results in ignoring the B<-trusted> option.
 
 If set, the subject of the certificate is also used
 as default value for the recipient of CMP requests
-and as default value for the expected sender of incoming CMP messages.
+and as default value for the expected sender of CMP responses.
 
 =item B<-expect_sender> I<name>
 
@@ -584,8 +584,8 @@ For details see the description of the B<-subject> option.
 =item B<-ignore_keyusage>
 
 Ignore key usage restrictions in CMP signer certificates when validating
-signature-based protection of incoming CMP messages,
-else C<digitalSignature> must be allowed for signer certificate.
+signature-based protection of incoming CMP messages.
+By default, C<digitalSignature> must be allowed by CMP signer certificates.
 
 =item B<-unprotected_errors>
 
@@ -733,7 +733,7 @@ Each source may contain multiple certificates.
 
 =item B<-unprotected_requests>
 
-Send messages without CMP-level protection.
+Send request messages without CMP-level protection.
 
 =back
 
@@ -1023,6 +1023,7 @@ Accept missing or invalid protection of requests.
 =item B<-accept_unprot_err>
 
 Accept unprotected error messages from client.
+So far this has no effect because the server does not accept any error messages.
 
 =item B<-accept_raverified>
 
