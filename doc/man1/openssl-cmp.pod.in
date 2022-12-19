@@ -632,6 +632,7 @@ For details see the description of the B<-subject> option.
 Ignore key usage restrictions in CMP signer certificates when validating
 signature-based protection of incoming CMP messages.
 By default, C<digitalSignature> must be allowed by CMP signer certificates.
+This option applies to both CMP clients and the mock server.
 
 =item B<-unprotected_errors>
 
