@@ -910,6 +910,9 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
     case OSSL_CMP_OPT_UNPROTECTED_ERRORS:
         ctx->unprotectedErrors = val;
         break;
+    case OSSL_CMP_OPT_NO_CACHE_EXTRACERTS:
+        ctx->noCacheExtraCerts = val;
+        break;
     case OSSL_CMP_OPT_VALIDITY_DAYS:
         ctx->days = val;
         break;
@@ -995,6 +998,8 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
         return ctx->unprotectedSend;
     case OSSL_CMP_OPT_UNPROTECTED_ERRORS:
         return ctx->unprotectedErrors;
+    case OSSL_CMP_OPT_NO_CACHE_EXTRACERTS:
+        return ctx->noCacheExtraCerts;
     case OSSL_CMP_OPT_VALIDITY_DAYS:
         return ctx->days;
     case OSSL_CMP_OPT_SUBJECTALTNAME_NODEFAULT:
