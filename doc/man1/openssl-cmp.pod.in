@@ -66,6 +66,7 @@ Server authentication options:
 [B<-expect_sender> I<name>]
 [B<-ignore_keyusage>]
 [B<-unprotected_errors>]
+[B<-no_cache_extracerts>]
 [B<-srvcertout> I<filename>]
 [B<-extracertsout> I<filename>]
 [B<-cacertsout> I<filename>]
@@ -669,6 +670,12 @@ with a signature key."
 =item * appendix D.4 shows PKIConf message having protection
 
 =back
+
+=item B<-no_cache_extracerts>
+
+Do not cache certificates in the extraCerts field of CMP messages received.
+By default, they are kept as they may be helful for validating further messages.
+This option applies to both CMP clients and the mock server.
 
 =item B<-srvcertout> I<filename>
 

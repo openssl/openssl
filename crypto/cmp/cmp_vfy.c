@@ -705,6 +705,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 {
     OSSL_CMP_PKIHEADER *hdr;
     const X509_NAME *expected_sender;
+    int num_untrusted, num_added, res;
 
     if (!ossl_assert(ctx != NULL && msg != NULL && msg->header != NULL))
         return 0;
@@ -728,41 +729,54 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         return 0;
     /* Note: if recipient was NULL-DN it could be learned here if needed */
 
-    if (sk_X509_num(msg->extraCerts) > 10)
-        ossl_cmp_warn(ctx,
-                      "received CMP message contains more than 10 extraCerts");
+    num_added = sk_X509_num(msg->extraCerts);
+    if (num_added > 10)
+        ossl_cmp_log1(WARN, ctx, "received CMP message contains %d extraCerts",
+                      num_added);
     /*
      * Store any provided extraCerts in ctx for use in OSSL_CMP_validate_msg()
      * and for future use, such that they are available to ctx->certConf_cb and
      * the peer does not need to send them again in the same transaction.
      * Note that it does not help validating the message before storing the
      * extraCerts because they do not belong to the protected msg part anyway.
-     * For efficiency, the extraCerts are prepended so they get used first.
+     * The extraCerts are prepended. Allows simple removal if they shall not be
+     * cached. Also they get used first, which is likely good for efficiency.
      */
-    if (!X509_add_certs(ctx->untrusted, msg->extraCerts,
-                        /* this allows self-signed certs */
-                        X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
-                        | X509_ADD_FLAG_PREPEND))
+    num_untrusted = ctx->untrusted == NULL ? 0 : sk_X509_num(ctx->untrusted);
+    res = ossl_x509_add_certs_new(&ctx->untrusted, msg->extraCerts,
+                                  /* this allows self-signed certs */
+                                  X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
+                                  | X509_ADD_FLAG_PREPEND);
+    num_added = (ctx->untrusted == NULL ? 0 : sk_X509_num(ctx->untrusted))
+        - num_untrusted;
+    if (!res) {
+        while (num_added-- > 0)
+            X509_free(sk_X509_shift(ctx->untrusted));
         return 0;
+    }
 
-    /* validate message protection */
-    if (hdr->protectionAlg != NULL) {
-        /* detect explicitly permitted exceptions for invalid protection */
-        if (!OSSL_CMP_validate_msg(ctx, msg)
-                && (cb == NULL || (*cb)(ctx, msg, 1, cb_arg) <= 0)) {
-#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (hdr->protectionAlg != NULL)
+        res = OSSL_CMP_validate_msg(ctx, msg)
+            /* explicitly permitted exceptions for invalid protection: */
+            || (cb != NULL && (*cb)(ctx, msg, 1, cb_arg) > 0);
+    else
+        /* explicitly permitted exceptions for missing protection: */
+        res = cb != NULL && (*cb)(ctx, msg, 0, cb_arg) > 0;
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    res = 1; /* support more aggressive fuzzing by letting invalid msg pass */
+#endif
+
+    /* remove extraCerts again if not caching */
+    if (ctx->noCacheExtraCerts)
+        while (num_added-- > 0)
+            X509_free(sk_X509_shift(ctx->untrusted));
+
+    if (!res) {
+        if (hdr->protectionAlg != NULL)
             ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_VALIDATING_PROTECTION);
-            return 0;
-#endif
-        }
-    } else {
-        /* detect explicitly permitted exceptions for missing protection */
-        if (cb == NULL || (*cb)(ctx, msg, 0, cb_arg) <= 0) {
-#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        else
             ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PROTECTION);
-            return 0;
-#endif
-        }
+        return 0;
     }
 
     /* check CMP version number in header */
@@ -818,18 +832,6 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      * --> Store for setting in next message
      */
     if (!ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce))
-        return 0;
-
-    /*
-     * Store any provided extraCerts in ctx for future use,
-     * such that they are available to ctx->certConf_cb and
-     * the peer does not need to send them again in the same transaction.
-     * For efficiency, the extraCerts are prepended so they get used first.
-     */
-    if (!X509_add_certs(ctx->untrusted, msg->extraCerts,
-                        /* this allows self-signed certs */
-                        X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
-                        | X509_ADD_FLAG_PREPEND))
         return 0;
 
     if (ossl_cmp_hdr_get_protection_nid(hdr) == NID_id_PasswordBasedMAC) {
