@@ -1238,9 +1238,6 @@ static int setup_verification_ctx(OSSL_CMP_CTX *ctx)
         }
     }
 
-    if (opt_ignore_keyusage)
-        (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_IGNORE_KEYUSAGE, 1);
-
     if (opt_unprotected_errors)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_UNPROTECTED_ERRORS, 1);
 
@@ -3243,6 +3240,9 @@ int cmp_main(int argc, char **argv)
         goto err;
     }
 #endif
+
+    if (opt_ignore_keyusage)
+        (void)OSSL_CMP_CTX_set_option(cmp_ctx, OSSL_CMP_OPT_IGNORE_KEYUSAGE, 1);
 
     if (opt_use_mock_srv
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
