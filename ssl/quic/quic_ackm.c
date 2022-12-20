@@ -943,7 +943,7 @@ static void ackm_on_pkts_lost(OSSL_ACKM *ackm, int pkt_space,
 
     if (pseudo)
         /*
-         * If this is psuedo-loss (e.g. during connection retry) we do not
+         * If this is pseudo-loss (e.g. during connection retry) we do not
          * inform the CC as it is not a real loss and not reflective of network
          * conditions.
          */
