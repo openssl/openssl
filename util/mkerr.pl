@@ -567,6 +567,10 @@ EOF
                 $rn =~ tr/_[A-Z]/ [a-z]/;
                 $strings{$i} = $rn;
             }
+            # Handle special case of different text in SSLv3 alerts
+            if ( $i =~ /^SSL_R_SSLV3_ALERT_/) {
+                $rn =~ s/^sslv3/ssl\/tls/;
+            }
             my $short = "    {ERR_PACK($pack_lib, 0, $i), \"$rn\"},";
             if ( length($short) <= 80 ) {
                 print OUT "$short\n";
