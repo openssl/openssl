@@ -991,6 +991,10 @@ DEPEND[html/man3/ECDSA_SIG_new.html]=man3/ECDSA_SIG_new.pod
 GENERATE[html/man3/ECDSA_SIG_new.html]=man3/ECDSA_SIG_new.pod
 DEPEND[man/man3/ECDSA_SIG_new.3]=man3/ECDSA_SIG_new.pod
 GENERATE[man/man3/ECDSA_SIG_new.3]=man3/ECDSA_SIG_new.pod
+DEPEND[html/man3/ECDSA_sign.html]=man3/ECDSA_sign.pod
+GENERATE[html/man3/ECDSA_sign.html]=man3/ECDSA_sign.pod
+DEPEND[man/man3/ECDSA_sign.3]=man3/ECDSA_sign.pod
+GENERATE[man/man3/ECDSA_sign.3]=man3/ECDSA_sign.pod
 DEPEND[html/man3/ECPKParameters_print.html]=man3/ECPKParameters_print.pod
 GENERATE[html/man3/ECPKParameters_print.html]=man3/ECPKParameters_print.pod
 DEPEND[man/man3/ECPKParameters_print.3]=man3/ECPKParameters_print.pod
@@ -2999,6 +3003,7 @@ html/man3/DTLS_get_data_mtu.html \
 html/man3/DTLS_set_timer_cb.html \
 html/man3/DTLSv1_listen.html \
 html/man3/ECDSA_SIG_new.html \
+html/man3/ECDSA_sign.html \
 html/man3/ECPKParameters_print.html \
 html/man3/EC_GFp_simple_method.html \
 html/man3/EC_GROUP_copy.html \
@@ -3599,6 +3604,7 @@ man/man3/DTLS_get_data_mtu.3 \
 man/man3/DTLS_set_timer_cb.3 \
 man/man3/DTLSv1_listen.3 \
 man/man3/ECDSA_SIG_new.3 \
+man/man3/ECDSA_sign.3 \
 man/man3/ECPKParameters_print.3 \
 man/man3/EC_GFp_simple_method.3 \
 man/man3/EC_GROUP_copy.3 \
