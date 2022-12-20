@@ -1528,6 +1528,7 @@ static int test_kdf_kbkdf_kmac(void)
 
     kctx = get_kdfbyname("KBKDF");
     ret = TEST_ptr(kctx)
+        && TEST_size_t_eq(EVP_KDF_CTX_get_kdf_size(kctx), SIZE_MAX)
         && TEST_int_gt(EVP_KDF_derive(kctx, result, sizeof(result), params), 0)
         && TEST_mem_eq(result, sizeof(result), output, sizeof(output));
 
@@ -1580,7 +1581,7 @@ static int test_kdf_ss_kmac(void)
 {
     int ret;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[6], *p = params;
+    OSSL_PARAM params[7], *p = params;
     unsigned char out[64];
     size_t mac_size = 20;
     static unsigned char z[] = {
@@ -1603,6 +1604,9 @@ static int test_kdf_ss_kmac(void)
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
                                             (char *)OSSL_MAC_NAME_KMAC128, 0);
+    /* The digest parameter is not needed here and should be ignored */
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                            (char *)"SHA256", 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, z, sizeof(z));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, other,
                                              sizeof(other));
@@ -1613,7 +1617,12 @@ static int test_kdf_ss_kmac(void)
 
     ret =
         TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SSKDF))
-        && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out), params), 0)
+        && TEST_size_t_eq(EVP_KDF_CTX_get_kdf_size(kctx), 0)
+        && TEST_int_eq(EVP_KDF_CTX_set_params(kctx, params), 1)
+        /* The bug fix for KMAC returning SIZE_MAX was added in 3.0.8 */
+        && (fips_provider_version_lt(NULL, 3, 0, 8)
+            || TEST_size_t_eq(EVP_KDF_CTX_get_kdf_size(kctx), SIZE_MAX))
+        && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out), NULL), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
 
     EVP_KDF_CTX_free(kctx);
