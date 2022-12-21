@@ -310,7 +310,7 @@ L<OSSL_trace_set_channel(3)>, L<OSSL_trace_set_callback(3)>
 The OpenSSL Tracing API was added in OpenSSL 3.0.
 
 OSSL_TRACE_STRING(), OSSL_TRACE_STRING_MAX, and OSSL_trace_string
-were added in OpensSL 3.1.
+were added in OpensSL 3.2.
 
 =head1 COPYRIGHT
 
