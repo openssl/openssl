@@ -209,6 +209,10 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1.0 [xx XXX xxxx]
 
+ * Added support for KMAC in KBKDF.
+
+   *Shane Lontis*
+
  * Our provider implementations of `OSSL_FUNC_KEYMGMT_EXPORT` and
    `OSSL_FUNC_KEYMGMT_GET_PARAMS` for EC and SM2 keys now honor
    `OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT` as set (and
