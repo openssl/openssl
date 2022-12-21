@@ -538,6 +538,7 @@ void OSSL_sleep(uint64_t millis);
 #define LB_STRATEGY_PRIORITY            2
 #define LB_STRATEGY_FREE_BANDWIDTH      3
 #define LB_STRATEGY_PACKET_SIZE         4
+#define LB_STRATEGY_MAX                 5
 
 # ifdef  __cplusplus
 }

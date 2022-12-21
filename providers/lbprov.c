@@ -15,7 +15,9 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/params.h>
+#include <openssl/proverr.h>
 #include "prov/names.h"
 #include "prov/providercommon.h"
 #include "prov/digestcommon.h"
@@ -144,6 +146,52 @@ static const OSSL_DISPATCH lbprov_dispatch_table[] = {
     { 0, NULL }
 };
 
+typedef struct lbprov_conf_st {
+    int strategy;
+} LBPROV_CONF;
+
+static LBPROV_CONF lbprov_conf;
+
+static int lbprov_get_params_from_core(OSSL_FUNC_core_get_params_fn *c_get_params,
+                                       const OSSL_CORE_HANDLE *handle)
+{
+    /*
+    * Parameters to retrieve from the configuration
+    * NOTE: inside c_get_params() these will be loaded from config items
+    * stored inside prov->parameters
+    */
+
+    OSSL_PARAM core_params[2], *p = core_params;
+    const char *strategy_string = "\0";
+    int conf_strategy = 0;
+
+    /* NOTE: config parameter values are always treated as string
+     * refer to ossl_provider_add_parameter()
+     */
+    *p++ = OSSL_PARAM_construct_utf8_ptr("lb-strategy",
+                                         (char **)&strategy_string,
+                                         sizeof(strategy_string));
+    *p = OSSL_PARAM_construct_end();
+
+    if (!c_get_params(handle, core_params)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+        return 0;
+    }
+
+    if (strategy_string[0] != '\0')
+        conf_strategy = atoi(strategy_string);
+    else                /* no strategy config from core */
+        return 1;
+
+    /* validate the returned value */
+    if ((conf_strategy < LB_STRATEGY_ROUND_ROBIN) || (conf_strategy >= LB_STRATEGY_MAX))
+        lbprov_conf.strategy = LB_STRATEGY_ROUND_ROBIN;
+    else
+        lbprov_conf.strategy = conf_strategy;
+
+    return 1;
+}
+
 OSSL_provider_init_fn ossl_lb_provider_init;
 
 int ossl_lb_provider_init(const OSSL_CORE_HANDLE *handle,
@@ -154,17 +202,29 @@ int ossl_lb_provider_init(const OSSL_CORE_HANDLE *handle,
     OSSL_LIB_CTX *libctx = NULL;
     const OSSL_DISPATCH *tmp = in;
     OSSL_FUNC_provider_set_load_balancer_fn *c_set_load_balancer = NULL;
+    OSSL_FUNC_core_get_params_fn *c_get_params = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_PROVIDER_SET_LOAD_BALANCER:
             c_set_load_balancer = OSSL_FUNC_provider_set_load_balancer(in);
             break;
+        case OSSL_FUNC_CORE_GET_PARAMS:
+            c_get_params = OSSL_FUNC_core_get_params(in);
+            break;
         default:
             /* Just ignore anything we don't understand */
             break;
         }
     }
+
+    /* initialize load balance configurations */
+    lbprov_conf.strategy = LB_STRATEGY_ROUND_ROBIN;
+
+    /* get configuration from core */
+    if ((c_get_params == NULL)
+            || (lbprov_get_params_from_core(c_get_params, handle) == 0))
+        return 0;
 
     /* mark self as a loadbalancer provider */
     if ((c_set_load_balancer == NULL) || (c_set_load_balancer(handle) == 0))
@@ -173,7 +233,7 @@ int ossl_lb_provider_init(const OSSL_CORE_HANDLE *handle,
     /* create load_balancer libctx */
     if ((*provctx = ossl_prov_ctx_new()) == NULL
         || (libctx = OSSL_LIB_CTX_new_load_balancer(handle, tmp,
-                                                    LB_STRATEGY_ROUND_ROBIN)) == NULL) {
+                                                    lbprov_conf.strategy)) == NULL) {
         OSSL_LIB_CTX_free(libctx);
         goto err;
     }
