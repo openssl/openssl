@@ -59,3 +59,16 @@ void *ASN1_item_unpack(const ASN1_STRING *oct, const ASN1_ITEM *it)
         ERR_raise(ERR_LIB_ASN1, ASN1_R_DECODE_ERROR);
     return ret;
 }
+
+void *ASN1_item_unpack_ex(const ASN1_STRING *oct, const ASN1_ITEM *it,
+                          OSSL_LIB_CTX *libctx, const char *propq)
+{
+    const unsigned char *p;
+    void *ret;
+
+    p = oct->data;
+    if ((ret = ASN1_item_d2i_ex(NULL, &p, oct->length, it,\
+                                libctx, propq)) == NULL)
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_DECODE_ERROR);
+    return ret;
+}

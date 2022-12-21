@@ -11,6 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
+#include "crypto/x509.h"
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 ASN1_TYPE *PKCS12_get_attr(const PKCS12_SAFEBAG *bag, int attr_nid)
@@ -99,6 +100,42 @@ X509_CRL *PKCS12_SAFEBAG_get1_crl(const PKCS12_SAFEBAG *bag)
         return NULL;
     return ASN1_item_unpack(bag->value.bag->value.octet,
                             ASN1_ITEM_rptr(X509_CRL));
+}
+
+X509 *PKCS12_SAFEBAG_get1_cert_ex(const PKCS12_SAFEBAG *bag,
+                                  OSSL_LIB_CTX *libctx, const char *propq)
+{
+    X509 *ret = NULL;
+
+    if (PKCS12_SAFEBAG_get_nid(bag) != NID_certBag)
+        return NULL;
+    if (OBJ_obj2nid(bag->value.bag->type) != NID_x509Certificate)
+        return NULL;
+    ret = ASN1_item_unpack_ex(bag->value.bag->value.octet,
+                              ASN1_ITEM_rptr(X509), libctx, propq);
+    if (!ossl_x509_set0_libctx(ret, libctx, propq)) {
+        X509_free(ret);
+        return NULL;
+    }
+    return ret;
+}
+
+X509_CRL *PKCS12_SAFEBAG_get1_crl_ex(const PKCS12_SAFEBAG *bag,
+                                     OSSL_LIB_CTX *libctx, const char *propq)
+{
+    X509_CRL *ret = NULL;
+
+    if (PKCS12_SAFEBAG_get_nid(bag) != NID_crlBag)
+        return NULL;
+    if (OBJ_obj2nid(bag->value.bag->type) != NID_x509Crl)
+        return NULL;
+    ret = ASN1_item_unpack_ex(bag->value.bag->value.octet,
+                              ASN1_ITEM_rptr(X509_CRL), libctx, propq);
+    if (!ossl_x509_crl_set0_libctx(ret, libctx, propq)) {
+        X509_CRL_free(ret);
+        return NULL;
+    }
+    return ret;
 }
 
 PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_cert(X509 *x509)

@@ -23,7 +23,6 @@
 
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
-static OSSL_PROVIDER *deflprov = NULL;
 
 static int test_null_args(void)
 {
@@ -39,7 +38,7 @@ static PKCS12 *PKCS12_load(const char *fpath)
     if (!TEST_ptr(bio))
         goto err;
 
-    p12 = PKCS12_init(NID_pkcs7_data);
+    p12 = PKCS12_init_ex(NID_pkcs7_data, testctx, "provider=default");
     if (!TEST_ptr(p12))
         goto err;
 
@@ -133,7 +132,7 @@ static int pkcs12_create_ex2_test(int test)
         ptr = PKCS12_create_ex2(NULL, NULL, NULL,
                                 NULL, NULL, NID_undef, NID_undef,
                                 0, 0, 0,
-                                NULL, NULL,
+                                testctx, NULL,
                                 NULL, NULL);
         if (TEST_ptr(ptr))
             goto err;
@@ -147,7 +146,7 @@ static int pkcs12_create_ex2_test(int test)
         ptr = PKCS12_create_ex2(NULL, NULL, NULL,
                                 cert, NULL, NID_undef, NID_undef,
                                 0, 0, 0,
-                                NULL, NULL,
+                                testctx, NULL,
                                 pkcs12_create_cb, (void*)&cb_ret);
         /* PKCS12 successfully created */
         if (!TEST_ptr(ptr))
@@ -158,7 +157,7 @@ static int pkcs12_create_ex2_test(int test)
         ptr = PKCS12_create_ex2(NULL, NULL, NULL,
                                 cert, NULL, NID_undef, NID_undef,
                                 0, 0, 0,
-                                NULL, NULL,
+                                testctx, NULL,
                                 pkcs12_create_cb, (void*)&cb_ret);
         /* PKCS12 not created */
        if (TEST_ptr(ptr))
@@ -169,7 +168,7 @@ static int pkcs12_create_ex2_test(int test)
         ptr = PKCS12_create_ex2(NULL, NULL, NULL,
                                 cert, NULL, NID_undef, NID_undef,
                                 0, 0, 0,
-                                NULL, NULL,
+                                testctx, NULL,
                                 pkcs12_create_cb, (void*)&cb_ret);
         /* PKCS12 successfully created */
         if (!TEST_ptr(ptr))
@@ -243,9 +242,11 @@ int setup_tests(void)
         }
     }
 
-    deflprov = OSSL_PROVIDER_load(testctx, "default");
-    if (!TEST_ptr(deflprov))
+    if (!test_get_libctx(&testctx, &nullprov, NULL, NULL, NULL)) {
+        OSSL_LIB_CTX_free(testctx);
+        testctx = NULL;
         return 0;
+    }
 
     ADD_TEST(test_null_args);
     ADD_TEST(pkcs12_parse_test);
@@ -255,7 +256,6 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
-    OSSL_PROVIDER_unload(nullprov);
-    OSSL_PROVIDER_unload(deflprov);
     OSSL_LIB_CTX_free(testctx);
+    OSSL_PROVIDER_unload(nullprov);
 }
