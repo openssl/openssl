@@ -90,7 +90,7 @@ static void show_gen_pkeyopt(const char *algname, OSSL_LIB_CTX *libctx, const ch
     if (params == NULL)
         goto cleanup;
 
-    BIO_printf(bio_err, "\npkeyopt values are\n");
+    BIO_printf(bio_err, "\nThe possible -pkeyopt arguments are:\n");
     for (i = 0; params[i].key != NULL; ++i) {
         const char *name = param_datatype_2name(params[i].data_type, &ishex);
 
