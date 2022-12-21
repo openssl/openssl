@@ -1069,7 +1069,7 @@ B<-unprotected_errors> option, which allows accepting such negative messages.
 
 If OpenSSL was built with trace support enabled (e.g., C<./config enable-trace>)
 and the environment variable B<OPENSSL_TRACE> includes B<HTTP>,
-the requests and response headers of transferred via HTTP are printed.
+the requests and the response headers transferred via HTTP are printed.
 
 =head1 EXAMPLES
 
