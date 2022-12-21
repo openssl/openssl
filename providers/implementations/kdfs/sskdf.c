@@ -498,10 +498,6 @@ static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
        return 0;
-   if (ctx->is_kmac && ossl_prov_digest_md(&ctx->digest)) {
-       ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
-       return 0;
-   }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SECRET)) != NULL
         || (p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL)

@@ -43,6 +43,8 @@ The supported parameters are:
 
 =item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
+This parameter is ignored for KMAC.
+
 =item "mac" (B<OSSL_KDF_PARAM_MAC>) <UTF8 string>
 
 =item "maclen" (B<OSSL_KDF_PARAM_MAC_SIZE>) <unsigned integer>

@@ -1581,7 +1581,7 @@ static int test_kdf_ss_kmac(void)
 {
     int ret;
     EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[6], *p = params;
+    OSSL_PARAM params[7], *p = params;
     unsigned char out[64];
     size_t mac_size = 20;
     static unsigned char z[] = {
@@ -1604,6 +1604,9 @@ static int test_kdf_ss_kmac(void)
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
                                             (char *)OSSL_MAC_NAME_KMAC128, 0);
+    /* The digest parameter is not needed here and should be ignored */
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                            (char *)"SHA256", 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, z, sizeof(z));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, other,
                                              sizeof(other));
@@ -1621,26 +1624,6 @@ static int test_kdf_ss_kmac(void)
             || TEST_size_t_eq(EVP_KDF_CTX_get_kdf_size(kctx), SIZE_MAX))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out), NULL), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
-
-    EVP_KDF_CTX_free(kctx);
-    return ret;
-}
-
-/* Test that setting the digest for SSKDF using KMAC fails */
-static int test_kdf_ss_kmac_nodigest(void)
-{
-    int ret;
-    EVP_KDF_CTX *kctx;
-    OSSL_PARAM params[3], *p = params;
-
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
-                                            (char *)OSSL_MAC_NAME_KMAC128, 0);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)"SHA256", 0);
-    *p = OSSL_PARAM_construct_end();
-
-    ret = TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SSKDF))
-          && TEST_int_eq(EVP_KDF_CTX_set_params(kctx, params), 0);
 
     EVP_KDF_CTX_free(kctx);
     return ret;
@@ -1952,10 +1935,8 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_CMAC)
     ADD_TEST(test_kdf_kbkdf_fixedinfo);
 #endif
-    if (fips_provider_version_ge(NULL, 3, 1, 0)) {
+    if (fips_provider_version_ge(NULL, 3, 1, 0))
         ADD_TEST(test_kdf_kbkdf_kmac);
-        ADD_TEST(test_kdf_ss_kmac_nodigest);
-    }
     ADD_TEST(test_kdf_get_kdf);
     ADD_TEST(test_kdf_tls1_prf);
     ADD_TEST(test_kdf_tls1_prf_invalid_digest);
