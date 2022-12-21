@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include "p12_local.h"
+#include "crypto/pkcs7/pk7_local.h"
 
 /* Cheap and nasty Unicode stuff */
 
@@ -230,12 +232,34 @@ int i2d_PKCS12_fp(FILE *fp, const PKCS12 *p12)
 
 PKCS12 *d2i_PKCS12_bio(BIO *bp, PKCS12 **p12)
 {
-    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(PKCS12), bp, p12);
+    OSSL_LIB_CTX *libctx = NULL;
+    const char *propq = NULL;
+    const PKCS7_CTX *p7ctx = NULL;
+
+    if (p12 != NULL) {
+        p7ctx = ossl_pkcs12_get0_pkcs7ctx(*p12);
+        if (p7ctx != NULL) {
+            libctx = ossl_pkcs7_ctx_get0_libctx(p7ctx);
+            propq = ossl_pkcs7_ctx_get0_propq(p7ctx);
+        }
+    }
+    return ASN1_item_d2i_bio_ex(ASN1_ITEM_rptr(PKCS12), bp, p12, libctx, propq);
 }
 
 #ifndef OPENSSL_NO_STDIO
 PKCS12 *d2i_PKCS12_fp(FILE *fp, PKCS12 **p12)
 {
-    return ASN1_item_d2i_fp(ASN1_ITEM_rptr(PKCS12), fp, p12);
+    OSSL_LIB_CTX *libctx = NULL;
+    const char *propq = NULL;
+    const PKCS7_CTX *p7ctx = NULL;
+
+    if (p12 != NULL) {
+        p7ctx = ossl_pkcs12_get0_pkcs7ctx(*p12);
+        if (p7ctx != NULL) {
+            libctx = ossl_pkcs7_ctx_get0_libctx(p7ctx);
+            propq = ossl_pkcs7_ctx_get0_propq(p7ctx);
+        }
+    }
+    return ASN1_item_d2i_fp_ex(ASN1_ITEM_rptr(PKCS12), fp, p12, libctx, propq);
 }
 #endif

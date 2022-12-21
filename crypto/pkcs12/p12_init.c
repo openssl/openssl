@@ -56,3 +56,9 @@ PKCS12 *PKCS12_init(int mode)
     return PKCS12_init_ex(mode, NULL, NULL);
 }
 
+const PKCS7_CTX *ossl_pkcs12_get0_pkcs7ctx(const PKCS12 *p12)
+{
+    if (p12 == NULL || p12->authsafes == NULL)
+        return NULL;
+    return &p12->authsafes->ctx;
+}

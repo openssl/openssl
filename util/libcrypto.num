@@ -5508,3 +5508,6 @@ OSSL_HPKE_get_recommended_ikmelen       ?	3_2_0	EXIST::FUNCTION:
 OSSL_PROVIDER_get0_default_search_path  ?	3_2_0	EXIST::FUNCTION:
 BIO_get_rpoll_descriptor                ?	3_2_0	EXIST::FUNCTION:
 BIO_get_wpoll_descriptor                ?	3_2_0	EXIST::FUNCTION:
+ASN1_item_unpack_ex                     ?	3_2_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get1_cert_ex             ?	3_2_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get1_crl_ex              ?	3_2_0	EXIST::FUNCTION:
