@@ -22,7 +22,7 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
-### Changes between 3.0 and 3.1.0 [xx XXX xxxx]
+### Changes between 3.0 and 3.1 beta 1 [21 Dec 2022]
 
  * Added support for KMAC in KBKDF.
 
