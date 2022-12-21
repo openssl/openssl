@@ -9,4 +9,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("test_traceapi", "trace_api_test");
+simple_test("test_trace_api", "trace_api_test");
