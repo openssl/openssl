@@ -94,35 +94,6 @@ jobs:
           name: Run OQS tests
           command: env DYLD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=auto << parameters.TESTSET >>
 
-  ubuntu_boringssl_interop:
-    description: A job that tests interoperability between OQS-OpenSSL and OQS-BoringSSL on a x64 Ubuntu Bionic Docker VM
-    docker:
-      - image: openquantumsafe/ci-ubuntu-focal-x86_64:latest
-# Re-enable iff docker enforces rate limitations without auth:
-#        auth:
-#          username: $DOCKER_LOGIN
-#          password: $DOCKER_PASSWORD
-    steps:
-      - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
-      - run:
-          name: Clone liboqs and BoringSSL
-          command: ./oqs-scripts/clone_liboqs.sh && ./oqs-scripts/clone_boringssl.sh
-      - run:
-          name: Build liboqs
-          command: env LIBOQS_USE_OPENSSL=OFF ./oqs-scripts/build_liboqs.sh
-      - run:
-          name: Build BoringSSL
-          command:  ./oqs-scripts/build_boringssl.sh
-      - run:
-          name: Build OpenSSL
-          command: ./Configure linux-x86_64 no-shared no-tests && make -j15
-      - run:
-          name: Test BoringSSL client against OpenSSL server
-          command: python3 -m pytest --numprocesses=auto oqs-interop-test/test_full.py --client-type=bssl
-      - run:
-          name: Test OpenSSL client against BoringSSL server
-          command: python3 -m pytest --numprocesses=auto oqs-interop-test/test_full.py --client-type=ossl
-
   trigger-downstream-ci:
     docker:
       - image: cimg/base:2020.01
@@ -183,11 +154,6 @@ workflows:
           LIBOQS_SHARED: true
           OPENSSL_SHARED: true
           TESTSET: oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py oqs-test/test_dgst.py
-      - ubuntu_boringssl_interop:
-          name: boringssl-interop
-          requires: 
-            - cond-testapproval
-          context: openquantumsafe
   on-main-branch:
     when:
       or:
