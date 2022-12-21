@@ -1515,6 +1515,18 @@ SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH:232:\
 SSL_R_SSL3_EXT_INVALID_SERVERNAME:319:ssl3 ext invalid servername
 SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE:320:ssl3 ext invalid servername type
 SSL_R_SSL3_SESSION_ID_TOO_LONG:300:ssl3 session id too long
+SSL_R_SSLV3_ALERT_BAD_CERTIFICATE:1042:ssl/tls alert bad certificate
+SSL_R_SSLV3_ALERT_BAD_RECORD_MAC:1020:ssl/tls alert bad record mac
+SSL_R_SSLV3_ALERT_CERTIFICATE_EXPIRED:1045:ssl/tls alert certificate expired
+SSL_R_SSLV3_ALERT_CERTIFICATE_REVOKED:1044:ssl/tls alert certificate revoked
+SSL_R_SSLV3_ALERT_CERTIFICATE_UNKNOWN:1046:ssl/tls alert certificate unknown
+SSL_R_SSLV3_ALERT_DECOMPRESSION_FAILURE:1030:ssl/tls alert decompression failure
+SSL_R_SSLV3_ALERT_HANDSHAKE_FAILURE:1040:ssl/tls alert handshake failure
+SSL_R_SSLV3_ALERT_ILLEGAL_PARAMETER:1047:ssl/tls alert illegal parameter
+SSL_R_SSLV3_ALERT_NO_CERTIFICATE:1041:ssl/tls alert no certificate
+SSL_R_SSLV3_ALERT_UNEXPECTED_MESSAGE:1010:ssl/tls alert unexpected message
+SSL_R_SSLV3_ALERT_UNSUPPORTED_CERTIFICATE:1043:\
+	ssl/tls alert unsupported certificate
 SSL_R_SSL_COMMAND_SECTION_EMPTY:117:ssl command section empty
 SSL_R_SSL_COMMAND_SECTION_NOT_FOUND:125:ssl command section not found
 SSL_R_SSL_CTX_HAS_NO_DEFAULT_SSL_VERSION:228:ssl ctx has no default ssl version
@@ -1530,6 +1542,27 @@ SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH:303:ssl session id has bad length
 SSL_R_SSL_SESSION_ID_TOO_LONG:408:ssl session id too long
 SSL_R_SSL_SESSION_VERSION_MISMATCH:210:ssl session version mismatch
 SSL_R_STILL_IN_INIT:121:still in init
+SSL_R_TLSV13_ALERT_CERTIFICATE_REQUIRED:1116:tlsv13 alert certificate required
+SSL_R_TLSV13_ALERT_MISSING_EXTENSION:1109:tlsv13 alert missing extension
+SSL_R_TLSV1_ALERT_ACCESS_DENIED:1049:tlsv1 alert access denied
+SSL_R_TLSV1_ALERT_DECODE_ERROR:1050:tlsv1 alert decode error
+SSL_R_TLSV1_ALERT_DECRYPTION_FAILED:1021:tlsv1 alert decryption failed
+SSL_R_TLSV1_ALERT_DECRYPT_ERROR:1051:tlsv1 alert decrypt error
+SSL_R_TLSV1_ALERT_EXPORT_RESTRICTION:1060:tlsv1 alert export restriction
+SSL_R_TLSV1_ALERT_INAPPROPRIATE_FALLBACK:1086:tlsv1 alert inappropriate fallback
+SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY:1071:tlsv1 alert insufficient security
+SSL_R_TLSV1_ALERT_INTERNAL_ERROR:1080:tlsv1 alert internal error
+SSL_R_TLSV1_ALERT_NO_RENEGOTIATION:1100:tlsv1 alert no renegotiation
+SSL_R_TLSV1_ALERT_PROTOCOL_VERSION:1070:tlsv1 alert protocol version
+SSL_R_TLSV1_ALERT_RECORD_OVERFLOW:1022:tlsv1 alert record overflow
+SSL_R_TLSV1_ALERT_UNKNOWN_CA:1048:tlsv1 alert unknown ca
+SSL_R_TLSV1_ALERT_USER_CANCELLED:1090:tlsv1 alert user cancelled
+SSL_R_TLSV1_BAD_CERTIFICATE_HASH_VALUE:1114:tlsv1 bad certificate hash value
+SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE:1113:\
+	tlsv1 bad certificate status response
+SSL_R_TLSV1_CERTIFICATE_UNOBTAINABLE:1111:tlsv1 certificate unobtainable
+SSL_R_TLSV1_UNRECOGNIZED_NAME:1112:tlsv1 unrecognized name
+SSL_R_TLSV1_UNSUPPORTED_EXTENSION:1110:tlsv1 unsupported extension
 SSL_R_TLS_ILLEGAL_EXPORTER_LABEL:367:tls illegal exporter label
 SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST:157:tls invalid ecpointformat list
 SSL_R_TOO_MANY_KEY_UPDATES:132:too many key updates
