@@ -24,7 +24,7 @@ I<r> and I<s> value of an Elliptic Curve Digital Signature Algorithm (ECDSA) sig
 (see FIPS186-4 or X9.62).
 The B<ECDSA_SIG> object was mainly used by the deprecated low level functions described in
 L<ECDSA_sign(3)>, it is still required in order to be able to set or get the values of
-'r' and 's' into or from a signature. This is mainly used for testing purposes as shown
+I<r> and I<s> into or from a signature. This is mainly used for testing purposes as shown
 in the L</EXAMPLES>.
 
 ECDSA_SIG_new() allocates an empty B<ECDSA_SIG> structure.
@@ -59,8 +59,8 @@ or NULL if it is unset.
 
 =head1 EXAMPLES
 
-Extract signature 'r' and 's' values from a ECDSA 'signature'
-of size 'signaturelen':
+Extract signature I<r> and I<s> values from a ECDSA I<signature>
+of size I<signaturelen>:
 
  ECDSA_SIG *obj;
  const BIGNUM *r, *s;
@@ -77,9 +77,14 @@ of size 'signaturelen':
 
  /* Use BN_bn2binpad() here to convert to r and s into byte arrays */
 
+ /*
+  * Do not try to access I<r> or I<s> after calling ECDSA_SIG_free(),
+  * as they are both freed by this call.
+  */
  ECDSA_SIG_free(obj);
 
-Convert 'r' and 's' byte arrays into a ECDSA_SIG signature:
+Convert I<r> and I<s> byte arrays into an ECDSA_SIG I<signature> of
+size I<signaturelen>:
 
  ECDSA_SIG *obj = NULL;
  unsigned char *signature = NULL;
@@ -128,11 +133,6 @@ L<EVP_PKEY_sign(3)>
 L<i2d_ECDSA_SIG(3)>,
 L<d2i_ECDSA_SIG(3)>,
 L<ECDSA_sign(3)>
-
-=head1 HISTORY
-
-The deprecated functions related to ECDSA were moved to L<ECDSA_sign(3)>
-in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
