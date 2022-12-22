@@ -66,18 +66,18 @@ static int test_trace_categories(void)
 
 #ifndef OPENSSL_NO_TRACE
 
-#define OSSL_START "xyz-"
-#define OSSL_HELLO "Hello World\n"
+# define OSSL_START "xyz-"
+# define OSSL_HELLO "Hello World\n"
 /* OSSL_STR80 must have length OSSL_TRACE_STRING_MAX */
-#define OSSL_STR80 "1234567890123456789012345678901234567890123456789012345678901234567890123456789\n"
-#define OSSL_STR81 (OSSL_STR80"x")
-#define OSSL_CTRL "A\xfe\nB"
-#define OSSL_MASKED "A \nB"
-#define OSSL_BYE "Good Bye Universe\n"
-#define OSSL_END "-abc"
+# define OSSL_STR80 "1234567890123456789012345678901234567890123456789012345678901234567890123456789\n"
+# define OSSL_STR81 (OSSL_STR80"x")
+# define OSSL_CTRL "A\xfe\nB"
+# define OSSL_MASKED "A \nB"
+# define OSSL_BYE "Good Bye Universe\n"
+# define OSSL_END "-abc"
 
-#define trace_string(text, full, str) \
-    OSSL_trace_string(trc_out, text, full, (unsigned char*)(str), strlen(str))
+# define trace_string(text, full, str) \
+    OSSL_trace_string(trc_out, text, full, (unsigned char *)(str), strlen(str))
 
 static int put_trace_output(void)
 {
