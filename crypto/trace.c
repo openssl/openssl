@@ -288,11 +288,6 @@ static int set_trace_data(int category, int type, BIO **channel,
     }
 
     /* Before running callbacks are done, set new data where appropriate */
-    if (channel != NULL && *channel != NULL) {
-        trace_channels[category].type = type;
-        trace_channels[category].bio = *channel;
-    }
-
     if (prefix != NULL && *prefix != NULL) {
         if ((curr_prefix = OPENSSL_strdup(*prefix)) == NULL)
             return 0;
@@ -303,6 +298,15 @@ static int set_trace_data(int category, int type, BIO **channel,
         if ((curr_suffix = OPENSSL_strdup(*suffix)) == NULL)
             return 0;
         trace_channels[category].suffix = curr_suffix;
+    }
+
+    if (channel != NULL && *channel != NULL) {
+        trace_channels[category].type = type;
+        trace_channels[category].bio = *channel;
+        /*
+         * must not be done before setting prefix/suffix, as those may fail,
+         * an then the caller is mislead to free *channel
+         */
     }
 
     /* Finally, run the attach callback on the new data */
