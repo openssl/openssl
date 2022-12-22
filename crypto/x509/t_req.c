@@ -49,7 +49,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
         nmindent = 12;
     }
 
-    if (nmflags == X509_FLAG_COMPAT)
+    if (nmflags == XN_FLAG_COMPAT)
         nmindent = 16;
 
     if (!(cflag & X509_FLAG_NO_HEADER)) {
