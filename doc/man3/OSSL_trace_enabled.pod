@@ -110,7 +110,7 @@ sections is undefined.
 
 OSSL_trace_string() outputs I<data> of length I<size> as a string on BIO I<out>.
 If I<text> is 0, the function masks any included control characters apart from
-newlines and makes sure for non-empty input that the output ends with a newline.
+newlines and makes sure for nonempty input that the output ends with a newline.
 Unless I<full> is nonzero, the length is limited (with a suitable warning)
 to B<OSSL_TRACE_STRING_MAX> characters, which currently is 80.
 
