@@ -49,10 +49,8 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
         nmindent = 12;
     }
 
-    if (nmflags == XN_FLAG_COMPAT) {
-        nmindent = 16;
+    if (nmflags == XN_FLAG_COMPAT)
         printok = 1;
-    }
 
     if (!(cflag & X509_FLAG_NO_HEADER)) {
         if (BIO_write(bp, "Certificate Request:\n", 21) <= 0)
