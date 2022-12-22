@@ -1179,6 +1179,10 @@ DEPEND[html/man3/EVP_PKEY_CTX_get0_libctx.html]=man3/EVP_PKEY_CTX_get0_libctx.po
 GENERATE[html/man3/EVP_PKEY_CTX_get0_libctx.html]=man3/EVP_PKEY_CTX_get0_libctx.pod
 DEPEND[man/man3/EVP_PKEY_CTX_get0_libctx.3]=man3/EVP_PKEY_CTX_get0_libctx.pod
 GENERATE[man/man3/EVP_PKEY_CTX_get0_libctx.3]=man3/EVP_PKEY_CTX_get0_libctx.pod
+DEPEND[html/man3/EVP_PKEY_CTX_get0_pkey.html]=man3/EVP_PKEY_CTX_get0_pkey.pod
+GENERATE[html/man3/EVP_PKEY_CTX_get0_pkey.html]=man3/EVP_PKEY_CTX_get0_pkey.pod
+DEPEND[man/man3/EVP_PKEY_CTX_get0_pkey.3]=man3/EVP_PKEY_CTX_get0_pkey.pod
+GENERATE[man/man3/EVP_PKEY_CTX_get0_pkey.3]=man3/EVP_PKEY_CTX_get0_pkey.pod
 DEPEND[html/man3/EVP_PKEY_CTX_new.html]=man3/EVP_PKEY_CTX_new.pod
 GENERATE[html/man3/EVP_PKEY_CTX_new.html]=man3/EVP_PKEY_CTX_new.pod
 DEPEND[man/man3/EVP_PKEY_CTX_new.3]=man3/EVP_PKEY_CTX_new.pod
@@ -3098,6 +3102,7 @@ html/man3/EVP_PKEY2PKCS8.html \
 html/man3/EVP_PKEY_ASN1_METHOD.html \
 html/man3/EVP_PKEY_CTX_ctrl.html \
 html/man3/EVP_PKEY_CTX_get0_libctx.html \
+html/man3/EVP_PKEY_CTX_get0_pkey.html \
 html/man3/EVP_PKEY_CTX_new.html \
 html/man3/EVP_PKEY_CTX_set1_pbe_pass.html \
 html/man3/EVP_PKEY_CTX_set_hkdf_md.html \
@@ -3711,6 +3716,7 @@ man/man3/EVP_PKEY2PKCS8.3 \
 man/man3/EVP_PKEY_ASN1_METHOD.3 \
 man/man3/EVP_PKEY_CTX_ctrl.3 \
 man/man3/EVP_PKEY_CTX_get0_libctx.3 \
+man/man3/EVP_PKEY_CTX_get0_pkey.3 \
 man/man3/EVP_PKEY_CTX_new.3 \
 man/man3/EVP_PKEY_CTX_set1_pbe_pass.3 \
 man/man3/EVP_PKEY_CTX_set_hkdf_md.3 \
