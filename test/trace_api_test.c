@@ -47,7 +47,6 @@ static int test_trace_categories(void)
         CASE(DECODER);
         CASE(ENCODER);
         CASE(REF_COUNT);
-        CASE(HTTP);
 #undef CASE
         default:
             is_cat_name_eq = TEST_ptr_null(cat_name);
