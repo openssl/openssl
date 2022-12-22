@@ -42,15 +42,17 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
     EVP_PKEY *pkey;
     STACK_OF(X509_EXTENSION) *exts;
     char mlch = ' ';
-    int nmindent = 0;
+    int nmindent = 0, printok = 0;
 
     if ((nmflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
         mlch = '\n';
         nmindent = 12;
     }
 
-    if (nmflags == XN_FLAG_COMPAT)
+    if (nmflags == XN_FLAG_COMPAT) {
         nmindent = 16;
+        printok = 1;
+    }
 
     if (!(cflag & X509_FLAG_NO_HEADER)) {
         if (BIO_write(bp, "Certificate Request:\n", 21) <= 0)
@@ -72,7 +74,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
         if (BIO_printf(bp, "        Subject:%c", mlch) <= 0)
             goto err;
         if (X509_NAME_print_ex(bp, X509_REQ_get_subject_name(x),
-            nmindent, nmflags) < 0)
+            nmindent, nmflags) < printok)
             goto err;
         if (BIO_write(bp, "\n", 1) <= 0)
             goto err;
