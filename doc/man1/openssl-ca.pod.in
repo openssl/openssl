@@ -837,6 +837,9 @@ has no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
+Since OpenSSL 3.2, generated certificates bear X.509 version 3,
+and key identifier extensions are included by default.
+
 =head1 SEE ALSO
 
 L<openssl(1)>,

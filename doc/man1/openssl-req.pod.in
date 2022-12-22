@@ -781,6 +781,10 @@ The <-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
 
 The B<-reqexts> option has been made an alias of B<-extensions> in OpenSSL 3.2.
 
+Since OpenSSL 3.2,
+generated certificates bear X.509 version 3 unless B<-x509v1> is given,
+and key identifier extensions are included by default.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.

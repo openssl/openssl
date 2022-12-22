@@ -790,6 +790,9 @@ The B<-engine> option was deprecated in OpenSSL 3.0.
 
 The B<-C> option was removed in OpenSSL 3.0.
 
+Since OpenSSL 3.2, generated certificates bear X.509 version 3,
+and key identifier extensions are included by default.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.

@@ -132,6 +132,24 @@ sub cert_contains {
     # not unlinking $out
 }
 
+sub has_version {
+    my $cert = shift @_;
+    my $expect = shift @_;
+    cert_contains($cert, "Version: $expect", 1);
+}
+
+sub has_SKID {
+    my $cert = shift @_;
+    my $expect = shift @_;
+    cert_contains($cert, "Subject Key Identifier", $expect);
+}
+
+sub has_AKID {
+    my $cert = shift @_;
+    my $expect = shift @_;
+    cert_contains($cert, "Authority Key Identifier", $expect);
+}
+
 sub uniq (@) {
     my %seen = ();
     grep { not $seen{$_}++ } @_;
