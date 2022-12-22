@@ -304,8 +304,8 @@ static int set_trace_data(int category, int type, BIO **channel,
         trace_channels[category].type = type;
         trace_channels[category].bio = *channel;
         /*
-         * must not be done before setting prefix/suffix, as those may fail,
-         * an then the caller is mislead to free *channel
+         * This must not be done before setting prefix/suffix,
+         * as those may fail, and then the caller is mislead to free *channel.
          */
     }
 
