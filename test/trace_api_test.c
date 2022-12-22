@@ -66,10 +66,10 @@ static int test_trace_categories(void)
 #ifndef OPENSSL_NO_TRACE
 static void put_trace_output(void)
 {
-    OSSL_TRACE_BEGIN(HTTP) {
+    OSSL_TRACE_BEGIN(REF_COUNT) {
         BIO_printf(trc_out, "Hello World\n");
         BIO_printf(trc_out, "Good Bye Universe\n");
-    } OSSL_TRACE_END(HTTP);
+    } OSSL_TRACE_END(REF_COUNT);
 }
 
 static int test_trace_channel(void)
@@ -85,22 +85,22 @@ static int test_trace_channel(void)
     if (!TEST_ptr(bio))
         goto end;
 
-    if (!TEST_int_eq(OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, bio), 1))
+    if (!TEST_int_eq(OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_REF_COUNT, bio), 1))
         goto end;
 
-    if (!TEST_true(OSSL_trace_enabled(OSSL_TRACE_CATEGORY_HTTP)))
+    if (!TEST_true(OSSL_trace_enabled(OSSL_TRACE_CATEGORY_REF_COUNT)))
         goto end;
 
-    if (!TEST_int_eq(OSSL_trace_set_prefix(OSSL_TRACE_CATEGORY_HTTP, "xyz-"), 1))
+    if (!TEST_int_eq(OSSL_trace_set_prefix(OSSL_TRACE_CATEGORY_REF_COUNT, "xyz-"), 1))
         goto end;
-    if (!TEST_int_eq(OSSL_trace_set_suffix(OSSL_TRACE_CATEGORY_HTTP, "-abc"), 1))
+    if (!TEST_int_eq(OSSL_trace_set_suffix(OSSL_TRACE_CATEGORY_REF_COUNT, "-abc"), 1))
         goto end;
 
     put_trace_output();
     len = BIO_get_mem_data(bio, &p_buf);
     if (!TEST_strn2_eq(p_buf, len, expected, expected_len))
         goto end;
-    if (!TEST_int_eq(OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, NULL), 1))
+    if (!TEST_int_eq(OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_REF_COUNT, NULL), 1))
         goto end;
     bio = NULL;
 
