@@ -247,8 +247,8 @@ L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
 =head1 HISTORY
 
 EC_GROUP_method_of() was deprecated in OpenSSL 3.0.
-
-EC_GROUP_check_named_curve() and EC_GROUP_get_field_type() were added in OpenSSL 3.0.
+EC_GROUP_get0_field(), EC_GROUP_check_named_curve() and EC_GROUP_get_field_type() were added in OpenSSL 3.0.
+EC_GROUP_get0_order(), EC_GROUP_order_bits() and EC_GROUP_get0_cofactor() were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
