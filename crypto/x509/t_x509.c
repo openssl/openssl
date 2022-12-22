@@ -65,7 +65,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
         nmindent = 12;
     }
 
-    if (nmflags == X509_FLAG_COMPAT) {
+    if (nmflags == XN_FLAG_COMPAT) {
         nmindent = 16;
         printok = 1;
     }
