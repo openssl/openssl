@@ -826,7 +826,7 @@ sub rsapssSaltlen {
   my $pssparam_offset = -1;
   while ($_ = shift @asn1parse) {
     chomp;
-    next unless /:rsassaPss$/;
+    next unless /:rsassaPss/;
     # This line contains :rsassaPss, the next line contains a raw dump of the
     # RSA_PSS_PARAMS sequence; obtain its offset
     $_ = shift @asn1parse;
@@ -852,7 +852,7 @@ sub rsapssSaltlen {
   # This assumes the salt length is the last field, which may possibly be
   # incorrect if there is a non-standard trailer field, but there almost never
   # is in PSS.
-  if ($pssparam[-1] =~ /prim:\s+INTEGER\s+:([A-Fa-f0-9]+)$/) {
+  if ($pssparam[-1] =~ /prim:\s+INTEGER\s+:([A-Fa-f0-9]+)/) {
     $saltlen = hex($1);
   }
 
