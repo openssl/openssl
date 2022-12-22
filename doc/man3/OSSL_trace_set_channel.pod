@@ -47,6 +47,8 @@ can be used for producing free-text trace output.
 
 OSSL_trace_set_channel() is used to enable the given trace C<category>
 by attaching the B<BIO> I<bio> object as (simple) trace channel.
+On success the ownership of the BIO is transferred to the channel,
+so the caller must not free it directly.
 
 OSSL_trace_set_prefix() and OSSL_trace_set_suffix() can be used to add
 an extra line for each channel, to be output before and after group of
