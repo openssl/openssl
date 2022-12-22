@@ -65,18 +65,45 @@ static int test_trace_categories(void)
 }
 
 #ifndef OPENSSL_NO_TRACE
-static void put_trace_output(void)
+
+#define OSSL_START "xyz-"
+#define OSSL_HELLO "Hello World\n"
+/* OSSL_STR80 must have length OSSL_TRACE_STRING_MAX */
+#define OSSL_STR80 "1234567890123456789012345678901234567890123456789012345678901234567890123456789\n"
+#define OSSL_STR81 (OSSL_STR80"x")
+#define OSSL_CTRL "A\xfe\nB"
+#define OSSL_MASKED "A \nB"
+#define OSSL_BYE "Good Bye Universe\n"
+#define OSSL_END "-abc"
+
+#define trace_string(text, full, str) \
+    OSSL_trace_string(trc_out, text, full, (unsigned char*)(str), strlen(str))
+
+static int put_trace_output(void)
 {
+    int res = 1;
+
     OSSL_TRACE_BEGIN(HTTP) {
-        BIO_printf(trc_out, "Hello World\n");
-        BIO_printf(trc_out, "Good Bye Universe\n");
+        res = TEST_int_eq(BIO_printf(trc_out, OSSL_HELLO), strlen(OSSL_HELLO))
+            + TEST_int_eq(trace_string(0, 0, OSSL_STR80), strlen(OSSL_STR80))
+            + TEST_int_eq(trace_string(0, 0, OSSL_STR81), strlen(OSSL_STR80))
+            + TEST_int_eq(trace_string(1, 1, OSSL_CTRL), strlen(OSSL_CTRL))
+            + TEST_int_eq(trace_string(0, 1, OSSL_MASKED), strlen(OSSL_MASKED)
+                          + 1) /* newline added */
+            + TEST_int_eq(BIO_printf(trc_out, OSSL_BYE), strlen(OSSL_BYE))
+            == 6;
+        /* not using '&&' but '+' to catch potentially multiple test failures */
     } OSSL_TRACE_END(HTTP);
+    return res;
 }
 
 static int test_trace_channel(void)
 {
-    static const char expected[] = "xyz-\nHello World\nGood Bye Universe\n-abc\n";
-    static const char expected_len = sizeof(expected) - 1;
+    static const char expected[] =
+        OSSL_START"\n" OSSL_HELLO
+        OSSL_STR80 "[len 81 limited to 80]: "OSSL_STR80
+        OSSL_CTRL OSSL_MASKED"\n" OSSL_BYE OSSL_END"\n";
+    static const size_t expected_len = sizeof(expected) - 1;
     BIO *bio = NULL;
     char *p_buf = NULL;
     long len = 0;
@@ -86,28 +113,29 @@ static int test_trace_channel(void)
     if (!TEST_ptr(bio))
         goto end;
 
-    if (!TEST_int_eq(OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, bio), 1))
+    if (!TEST_int_eq(OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, bio), 1)) {
+        BIO_free(bio);
         goto end;
+    }
 
     if (!TEST_true(OSSL_trace_enabled(OSSL_TRACE_CATEGORY_HTTP)))
         goto end;
 
-    if (!TEST_int_eq(OSSL_trace_set_prefix(OSSL_TRACE_CATEGORY_HTTP, "xyz-"), 1))
+    if (!TEST_int_eq(OSSL_trace_set_prefix(OSSL_TRACE_CATEGORY_HTTP,
+                                           OSSL_START), 1))
         goto end;
-    if (!TEST_int_eq(OSSL_trace_set_suffix(OSSL_TRACE_CATEGORY_HTTP, "-abc"), 1))
+    if (!TEST_int_eq(OSSL_trace_set_suffix(OSSL_TRACE_CATEGORY_HTTP,
+                                           OSSL_END), 1))
         goto end;
 
-    put_trace_output();
+    ret = put_trace_output();
     len = BIO_get_mem_data(bio, &p_buf);
     if (!TEST_strn2_eq(p_buf, len, expected, expected_len))
-        goto end;
-    if (!TEST_int_eq(OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, NULL), 1))
-        goto end;
-    bio = NULL;
+        ret = 0;
+    ret = TEST_int_eq(OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, NULL), 1)
+        && ret;
 
-    ret = 1;
  end:
-    BIO_free(bio);
     return ret;
 }
 

@@ -109,8 +109,9 @@ The result of trying to produce tracing output outside of such
 sections is undefined.
 
 OSSL_trace_string() outputs I<data> of length I<size> as a string on BIO I<out>.
-Any included control characters are masked with space if I<text> is 0.
-Unless I<full> is nonzero, the length is limited (which a suitable warning)
+If I<text> is 0, the function masks any included control characters apart from
+newlines and makes sure for non-empty input that the output ends with a newline.
+Unless I<full> is nonzero, the length is limited (with a suitable warning)
 to B<OSSL_TRACE_STRING_MAX> characters, which currently is 80.
 
 =head2 Macros
