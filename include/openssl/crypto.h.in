@@ -540,6 +540,14 @@ void OSSL_sleep(uint64_t millis);
 #define LB_STRATEGY_PACKET_SIZE         4
 #define LB_STRATEGY_MAX                 5
 
+/*
+ * a struct to hold query information about free_bandwidths from providers
+ */
+typedef struct {
+    const char *name;           /* name of a method */
+    int free_bandwidth;         /* to be returned by provider upon this query */
+} FREE_BANDWIDTH_QUERY;
+
 # ifdef  __cplusplus
 }
 # endif
