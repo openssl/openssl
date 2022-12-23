@@ -56,52 +56,45 @@ For more information see L</OPENSSL PROVIDERS>.
 confidentiality, integrity, and authentication, and non-repudiation
 
 
-=head2 Hash Function (Message Digest)
+=head2 Hash Function
 
-Given any input message (of any size), a Hash Function produces a fixed size
-output (hash) value as a result.
+Given any input message (of any size), a Hash Function (or Message Digest)
+produces a fixed size output (hash) value as a result.
 
 A Hash function exhibits the following properties:
-    It is quick to create a hash value for any given message.
-    A Hash function is deterministic.
-    It is computationally infeasible to calculate a message from any given hash (i.e. the function is one-way)
-    It is infeasible to modify a message without also modifying the hash value
-    It is infeasible to find two messages that result in the same hash.
-    Small changes to an input message result in significant changes to the out hash (avalanche effect).
+
+=over 4
+
+=item * It is quick to create a hash value for any given message.
+
+=item * A Hash function is deterministic.
+
+=item * It is computationally infeasible to calculate a message from any given hash (i.e. the function is one-way)
+
+=item * It is infeasible to modify a message without also modifying the hash value
+
+=item * It is infeasible to find two messages that result in the same hash.
+
+=item * Small changes to an input message result in significant changes to the out hash (avalanche effect).
+
+=back
 
 The OpenSSL library supports a wide number of different hash functions including
 L<EVP_MD-SHA2(7)>, L<EVP_MD-SHA3(7)>, L<EVP_MD-SHAKE(7)>, L<EVP_MD-KECCAK(7)> and L<EVP_MD-SM3(7)>.
 
-See L<OSSL_PROVIDER-default(7)/Hashing Algorithms // Message Digests>
-and L<OSSL_PROVIDER-FIPS(7)/Hashing Algorithms // Message Digests> for a
+See L<OSSL_PROVIDER-default(7)/Hashing Algorithms E<sol> Message Digests>
+and L<OSSL_PROVIDER-FIPS(7)/Hashing Algorithms E<sol> Message Digests> for a
 list of Hash Functions supported by the OpenSSL L</Providers>.
 
-See L</EVP_DigestInit(3)/EXAMPLES> for an example of how to digest a message.
+See L<EVP_DigestInit(3)/EXAMPLES> for an example of how to digest a message.
 See also the digest demos at https://github.com/openssl/openssl/tree/master/demos/digest.
 
-Hash Functions are used by other algorithms such as L</Message Authentication Code (MAC)> and L</Digital Signatures>.
+Hash Functions are used by other algorithms such as L</Message Authentication Code (MAC)> and L</Digital Signature>.
 
-=head2 Symmetric encryption
+=head2 Public key cryptography
 
-Symmetric-key algorithms use a single shared secret key that is used for both encryption of
-plaintext and decryption of ciphertext.
-The requirement that both parties have access to the secret key is one of the main drawbacks of symmetric-key encryption,
-in comparison to L</Public key cryptography (Asymmetric Cryptography)>
-Symmetric-key encryption algorithms are usually better for bulk encryption.
-since they have a smaller key size, which means less storage space and faster transmission.
-Due to this, asymmetric-key encryption is often used to exchange the secret key for symmetric-key encryption.
-
-In order to prevent brute force attacks, secret key lengths of 128 bits are commonly used.
-
-
-See L<EVP_EncryptInit(3)>
-
-For a list of available ciphers (such as L<EVP_CIPHER-AES(7)>) see L<OSSL_PROVIDER-default(7)/Symmetric Ciphers>
-and L<OSSL_PROVIDER-FIPS(7)/Symmetric Ciphers>.
-
-=head2 Public key cryptography (Asymmetric Cryptography)
-
-Public-key cryptography use pairs of related keys (a key pair) to perform cryptographic operations.
+Public-key cryptography (or Asymmetric Cryptography) use pairs of related keys (a key pair) to perform
+cryptographic operations.
 Each key pair consists of a public key which can be openly distributed, and a corresponding private
 key which must be kept secret.
 Key pairs are generated using cryptographic algorithms based on mathematical problems using one-way functions.
@@ -124,33 +117,33 @@ The public key types in OpenSSL are:
 
 =over 4
 
-=item Elliptic Curve Cryptography (ECC)
+=item * Elliptic Curve Cryptography (ECC)
 
 ECC allows smaller keys compared to non-EC cryptography to provide equivalent security strength.
 i.e. A 256 bit EC key provides 128 bit of security strength.
 
-L<EVP_PKEY-EC(7)> is used for L</Key Agreement> and L</Digital Signatures>.
+L<EVP_PKEY-EC(7)> is used for L</Key Agreement> and L</Digital Signature>.
 L<EVP_PKEY-SM2(7)>
 
 The edwards curves L<EVP_PKEY-X25519(7)> and L<EVP_PKEY-X448(7)> are used for L</Key Agreement>.
-The edwards curves L<EVP_PKEY-ED25519(7)>, L<EVP_PKEY-ED448(7)> are used for L</Digital Signatures>.
+The edwards curves L<EVP_PKEY-ED25519(7)>, L<EVP_PKEY-ED448(7)> are used for L</Digital Signature>.
 
-=item RSA
+=item * RSA
 
 See L<EVP_PKEY-RSA(7)> which is used by 
 L</Key Encapsulation Mechanism (KEM)>,
-L</Digital Signatures> and
+L</Digital Signature> and
 L</Asymmetric Key Wrapping>.
 
-=item Diffie Hellman (DH)
+=item * Diffie Hellman (DH)
 
 See L<EVP_PKEY-DH(7)> and
 L</Key Agreement>
 
-=item Digital Signature Algorithm (DSA)
+=item * Digital Signature Algorithm (DSA)
 
 See L<EVP_PKEY-DSA(7)> and
-L</Digital Signatures>
+L</Digital Signature>
 
 =back
 
@@ -158,53 +151,42 @@ DH and DSA keys use Finite Field Cryptography, See L<EVP_PKEY-FFC(7)>.
 
 =head3 Domain parameters
 
-Domain parameters are normally public values that can be shared by multiple parties,
-and are used for key generation, key agreement and digital signatures.
-They are used by DSA, DH and EC.
+Domain parameters are normally public values associated with key pairs,
+that can be shared by multiple parties, and are used for key generation,
+key agreement and digital signatures.
+
+Domain parameters are used by DSA, DH and EC.
 
 For more information see:
-L<EVP_PKEY-DSA(7)/DSA parameters>,
-L<EVP_PKEY-DH(7)/DH and DHX domain parameters> and
-L<EVP_PKEY-EC(7)/Common EC parameters>
+
+=over 4
+
+=item * L<EVP_PKEY-DSA(7)/DSA parameters>
+
+=item * L<EVP_PKEY-DH(7)/DH and DHX domain parameters>
+
+=item * L<EVP_PKEY-EC(7)/Common EC parameters>
+
+=back
 
 =head3 Asymmetric Key Generation
 
-Key generation is the process of generating key pairs.
+Asymetric key generation is the process of generating key pairs.
 In many cases keys are randomly generated using a pseudo-random number generator (PRNG).
+Large integers (in the form of B<BIGNUM>'s) or byte arrays are used to store keys.
 
-Generation in cryptography
-
-Modern cryptographic systems include symmetric-key algorithms (such as DES and AES) and public-key algorithms (such as RSA). 
-
-
-Public-key algorithms use a public key and a private key. The public key is made available to anyone (often by means of a digital certificate). A sender encrypts data with the receiver's public key; only the holder of the private key can decrypt this data.
-
-Since public-key algorithms tend to be much slower than symmetric-key algorithms, modern systems such as TLS and SSH use a combination of the two: one party receives the other's public key, and encrypts a small piece of data (either a symmetric key or some data used to generate it). The remainder of the conversation uses a (typically faster) symmetric-key algorithm for encryption.
-
-Computer cryptography uses integers for keys.
-
-A PRNG is a computer algorithm that produces data that appears random under analysis.
-PRNGs that use system entropy to seed data generally produce better results, since this makes the initial conditions of the PRNG much more difficult for an attacker to guess. Another way to generate randomness is to utilize information outside the system. Veracrypt (a disk encryption software) utilizes user mouse movements to generate unique seeds, in which users are encouraged to move their mouse sporadically. In other situations, the key is derived deterministically using a passphrase and a key derivation function.
-
-Many modern protocols are designed to have forward secrecy, which requires generating a fresh new shared key for each session.
-
-Classic cryptosystems invariably generate two identical keys at one end of the communication link and somehow transport one of the keys to the other end of the link. However, it simplifies key management to use Diffie–Hellman key exchange instead.
-
-
-
-Demos for keygen are located in https://github.com/openssl/openssl/tree/master/demos/pkey
+Demos for keygen are located in L<https://github.com/openssl/openssl/tree/master/demos/pkey>
 
 =head3 Asymmetric Encryption
 
 In a public-key encryption system, anyone with a public key can encrypt a message,
-yielding a ciphertext, but only those who know the corresponding private key can decrypt the ciphertext to obtain the original message.
-
-They use two keys, one for encryption of messages and the other one during decryption.
+yielding a ciphertext, but only those who know the corresponding private key can decrypt
+the ciphertext to obtain the original message.
 
 See L<EVP_PKEY_encrypt(3)> as well as L<EVP_ASYM_CIPHER-RSA(7)> and L<EVP_ASYM_CIPHER-SM2(7)>.
-A demo can be found at https://github.com/openssl/openssl/blob/master/demos/encrypt/rsa_encrypt.c.
+A demo can be found at L<https://github.com/openssl/openssl/blob/master/demos/encrypt/rsa_encrypt.c>
 
-=head3 Digital Signatures
+=head3 Digital Signature
 
 In a digital signature system, a sender can use a private key together with an arbitrary message to create a signature.
 Anyone with the corresponding public key can verify whether the signature matches the message, but a forger who doesn't know the
@@ -218,33 +200,190 @@ A L</Hash Function> is used in the signature generation process to obtain a cond
 data to be signed (TBS). The message digest is input to the digital signature algorithm to generate
 the digital signature.
 
-See L<EVP_DigestSignInit(3)>, L<EVP_DigestVerifyInit(3)> as well as
-L<EVP_SIGNATURE-ECDSA(7)>,
-L<EVP_SIGNATURE-ED25519(7)>,
-L<EVP_SIGNATURE-ED448(7)>,
-L<EVP_SIGNATURE-RSA(7)> and
-L<EVP_SIGNATURE-DSA(7)>.
+For more information see:
 
-See the Signature demos at L<https://github.com/openssl/openssl/tree/master/demos/signature>.
+=over 4
+
+=item * L<EVP_DigestSignInit(3)>
+
+=item * L<EVP_DigestVerifyInit(3)>
+
+=item * Signature demos
+
+L<https://github.com/openssl/openssl/tree/master/demos/signature>
+
+=item * L<EVP_SIGNATURE-ECDSA(7)>
+
+=item * L<EVP_SIGNATURE-ED25519(7)>
+
+=item * L<EVP_SIGNATURE-ED448(7)>
+
+=item * L<EVP_SIGNATURE-RSA(7)>
+
+=item * L<EVP_SIGNATURE-DSA(7)>
+
+=back
+
+=head3 Public Key Certificates
+
+Certificates are used to prove the validity of a public key.
+A certificate is an electronic document that includes the following information:
+
+=over 4
+
+=item * Public key
+
+See L</Public key cryptography>
+
+=item * Subject
+
+Identity of the owner which is typically a person or organization, computer or other device,
+
+=item * Issuer
+
+The entity that issued the certificate.
+
+=item * Validity period
+
+The NotBefore and NotAfter fields specify the time range in which it is valid to use the certificate.
+
+=item * Optional Extensions
+
+Extensions indicate how the certificate should be used, which includes
+
+Basic Constraints, Key Usage and Extended Key Usage,
+
+=item * Digital signature
+
+The L</Digital signature> of an entity that has verified the certificate's contents (Issuer).
+
+=back
+
+If the signature is valid, and the software examining the certificate trusts the issuer,
+then it can use that key to communicate securely with the certificate's subject. 
+
+In a typical public-key infrastructure (PKI) scheme, the certificate Issuer is a certificate authority (CA).
+The most common format for public key certificates is defined by L<x509(7)> as defined by RFC 5280.
+
+For a certificate chain, The Issuer of each certificate (except the last one) matches the Subject of the next certificate in the list
+Each certificate (except the last one) is signed by the secret key corresponding to the next certificate in the chain
+(i.e. the signature of one certificate can be verified using the public key contained in the following certificate)
+The last certificate in the list is a trust anchor: a certificate that you trust because it was delivered to you by some trustworthy procedure
+
+A certificate can also be self signed.
+
+=head3 Asymmetric Key Validation
+
+Prior to, or during a key-establishment transaction, the parties involved
+must obtain assurances about the validity of the key(s) being used.
+See L<SP800-56A|https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Ar3.pdf>
+for more information.
+
+The OpenSSL FIPS provider implements these assurances using:
+
+=over 4
+
+=item * L<EVP_PKEY_check(3)>
+
+=item * L<EVP_PKEY_param_check(3)>
+
+=item * L<EVP_PKEY_param_check_quick(3)>
+
+=item * L<EVP_PKEY_public_check(3)>
+
+=item * L<EVP_PKEY_public_check_quick(3)>
+
+=item * L<EVP_PKEY_private_check(3)>
+
+=item * L<EVP_PKEY_pairwise_check(3)>
+
+=back
+
+The OpenSSL default provider may do simpler checks for backwards compatibility.
+
+See also:
+
+=over 4
+
+=item * L<EVP_PKEY-DH(7)/DH key validation>
+
+=item * L<EVP_PKEY-DSA(7)/DSA key validation>,
+
+=item * L<EVP_PKEY-EC(7)/EC key validation>
+
+=item * L<EVP_PKEY-RSA(7)/RSA key validation>
+
+=back
+
+Key Validation is implemented by a L</Key Manager>.
+
+=head3 Key Manager
+
+OpenSSL L</Providers> contain Key managers for each different type of Asymmetric key.
+Each OpenSSL Key manager supports methods to handle Asymmetric Key generation,
+Asymmetric Key validation, as well as the ability to import keys into a provider,
+and export keys from a provider.
+
+For a list of Key managers see:
+
+=over 4
+
+=item * L<OSSL_PROVIDER-default(7)/Asymmetric Key Management>
+
+=item * L<OSSL_PROVIDER-FIPS(7)/Asymmetric Key Management>
+
+=back
+
+=head2 Symmetric encryption
+
+Symmetric-key algorithms use a single shared secret key that is used for both encryption of
+plaintext and decryption of ciphertext.
+The requirement that both parties have access to the secret key is one of the main drawbacks of symmetric-key encryption,
+in comparison to L</Public key cryptography>
+Symmetric-key encryption algorithms are usually better for bulk encryption.
+since they have a smaller key size, which means less storage space and faster transmission.
+Due to this, asymmetric-key encryption is often used to exchange the secret key for symmetric-key encryption.
+
+In order to prevent brute force attacks, secret key lengths of 128 bits are commonly used.
+
+See L<EVP_EncryptInit(3)>
+
+For a list of available ciphers (such as L<EVP_CIPHER-AES(7)>) see L<OSSL_PROVIDER-default(7)/Symmetric Ciphers>
+and L<OSSL_PROVIDER-FIPS(7)/Symmetric Ciphers>.
 
 =head2 Key Agreement Schemes (KAS)
 
-https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Ar3.pdf
-https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Br2.pdf
+Key Agreement Schemes involve the process of sharing of a secret key between two or more entities,
+either by:
 
+=over 4
 
-=head3 Key Agreement
+=item * Key Agreement
 
-A shared secret is derived by two (or more) parties
+Key Agreement (Key exchange) is the process of generating a shared key for each entity,
+based on information shared by the entities.
 
-For ECDH L<EVP_KEYEXCH-ECDH(7)> "ecdh-cofactor-mode" 
-See L<EVP_KEYEXCH-ECDH(7)>, L<EVP_KEYEXCH-DH(7)> and L<EVP_KEYEXCH-X25519(7)>
+For more information see:
 
-See the key exchange demo at https://github.com/openssl/openssl/tree/master/demos/keyexch
+=over 4
 
-=head3 Key Wrapping & Key Transportation
+=item * Key exchange demos
 
-Key transportation is defined as the secure transportation of a key.
+L<https://github.com/openssl/openssl/tree/master/demos/keyexch>
+
+=item * L<EVP_KEYEXCH-ECDH(7)>
+
+Refer to "ecdh-cofactor-mode" in order to use ECCDH as defined in SP800-56A.
+
+=item * L<EVP_KEYEXCH-DH(7)>
+
+=item * L<EVP_KEYEXCH-X25519(7)>
+
+=back
+
+=item * Key Transport
+
+Key transportation is defined as the secure transportation of a key from one entity to another.
 Key wrapping can be used to securely transport secret keys over an insecure channel.
 One party (the sender) selects a value for the secret keying material and then securely
 distributes that value to another party (the receiver).
@@ -254,10 +393,13 @@ the encapsulated secret key in called the Data Encryption Key (DEK).
 
 OpenSSL contains the following Key Wrapping Algorithms:
 
-=head4 Symmetric Key Wrapping
+=over 4
+
+=item * Symmetric Key Wrapping
 
 The Advanced Encryption Standard (AES) Key Wrap algorithm is defined in
-https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-38F.pdf
+L<SP800-38F|https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-38F.pdf>
+
 See L<EVP_CIPHER-AES(7)>.
 
 This consists of AES Key Wrap (KW) mode which has algorithms names
@@ -274,140 +416,96 @@ and AES encryption for unwrapping. The algorithms names are:
 An AES Key wrapping demo can be found here
 https://github.com/openssl/openssl/tree/master/demos/cipher/aeskeywrap.c
 
-=head4 Asymmetric Key Wrapping
+=item * Asymmetric Key Wrapping
 
 Key-Transport Using RSA-OAEP is defined in
-https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Br2.pdf#%5B%7B%22num%22%3A290%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C70%2C710%2C0%5D
+L<SP800-56BR2 RSA-OAEP|https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Br2.pdf#%5B%7B%22num%22%3A290%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C70%2C710%2C0%5D>
 
-See L<EVP_ASYM_CIPHER-RSA(7)> with the pad_mode of "OAEP"
-
-A RSA OEAP demo can be found here
-https://github.com/openssl/openssl/tree/master/demos/encrypt/rsa_encrypt.c
-
-
-=head2 Public Key Certificates
-
-A certificate is an electronic document that includes the following information:
+For more information see:
 
 =over 4
 
-=item Public key
+=item * L<EVP_ASYM_CIPHER-RSA(7)>
 
-See L</Public key cryptography (Asymmetric Cryptography)>
+Use the pad_mode of "OAEP"
 
-=item Subject
+=item * RSA OEAP demo
 
-Identity of the owner which is typically a person or organization, computer or other device,
-
-=item Issuer
-
-The entity that issued the certificate.
-
-=item Validity period
-
-The NotBefore and NotAfter fields specify the time range in which it is valid to use the certificate.
-
-=item Optional Extensions
-
-Extensions indicate how the certificate should be used, which includes
-
-Basic Constraints, Key Usage and Extended Key Usage,
-
-=item L</Digital signature>
-
-The digital signature of an entity that has verified the certificate's contents (Issuer).
+L<https://github.com/openssl/openssl/tree/master/demos/encrypt/rsa_encrypt.c>
 
 =back
 
-Certificates are used to prove the validity of a public key.
-If the signature is valid, and the software examining the certificate trusts the issuer,
-then it can use that key to communicate securely with the certificate's subject. 
+=back
 
-In a typical public-key infrastructure (PKI) scheme, the certificate Issuer is a certificate authority (CA).
-The most common format for public key certificates is defined by L<x509(7)> as defined by RFC 5280.
+=back
 
-For a certificate chain, The Issuer of each certificate (except the last one) matches the Subject of the next certificate in the list
-Each certificate (except the last one) is signed by the secret key corresponding to the next certificate in the chain
-(i.e. the signature of one certificate can be verified using the public key contained in the following certificate)
-The last certificate in the list is a trust anchor: a certificate that you trust because it was delivered to you by some trustworthy procedure
-
-A certificate can also be self signed.
-
-=head3 Key Validation
-
-Prior to, or during a key-establishment transactions, the parties involved
-must obtain assurances about the validity of the key(s) being used.
-See https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Ar3.pdf
-for more information.
-
-The OpenSSL FIPS provider implements these assurances using L<EVP_PKEY_check(3)>,
-L<EVP_PKEY_param_check(3)>, L<EVP_PKEY_param_check_quick(3)>,
-L<EVP_PKEY_public_check(3)>, L<EVP_PKEY_public_check_quick(3)>,
-L<EVP_PKEY_private_check(3)>, and L<EVP_PKEY_pairwise_check(3)>.
-
-The OpenSSL default provider may do simpler checks for backwards compatibility.
-
-See also L<EVP_PKEY-DH(7)/DH key validation>, L<EVP_PKEY-DSA(7)/DSA key validation>,
-L<EVP_PKEY-EC(7)/EC key validation> and L<EVP_PKEY-RSA(7)/RSA key validation>.
-
-Key Validation is implemented by a L</Key Manager>.
-
-=head2 Key Manager
-
-OpenSSL L</Providers> contain Key managers for each different type of Asymmetric key.
-Each OpenSSL Key manager supports methods to handle L</Key generation>, and L</Key validation>,
-as well as the ability to import keys into a provider, and export keys from a provider.
-
-For a list of Key managers see:
-L<OSSL_PROVIDER-default(7)/Asymmetric Key Management> and
-L<OSSL_PROVIDER-FIPS(7)/Asymmetric Key Management>.
+KAS protocols are defined by L<SP800-56A|https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Ar3.pdf> and
+L<SP800-56B|https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Br2.pdf>.
+Note that OpenSSL does not implement the high level protocols, but it does supply all the building blocks needed
+to implement them including the KDF's defined in L<SP800-56C|https://csrc.nist.gov/publications/detail/sp/800-56c/rev-2/final>
+and L</Asymmetric Key Validation>.
 
 =head2 Key Encapsulation Mechanism (KEM)
 
 A Key Encapsulation Mechanism can be used to securely transmit symmetric key material using asymmetric (public-key) algorithms.
 
-See L<EVP_PKEY_encapsulate(3)> and L<EVP_PKEY_decapsulate(3)>.
+For more information see:
 
-L<EVP_KEM-RSA(7)> supports RSA Secret Value Encapsulation (RSASVE) as defined in
-https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Br2.pdf#%5B%7B%22num%22%3A213%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C70%2C404%2C0%5D
-L<EVP_KEM-EC(7)> and L<EVP_KEM-X25519(7)> support DHKEM which is used by
-L</Hybrid Public Key Encryption (HPKE)> as defined by https://www.rfc-editor.org/rfc/rfc9180.pdf#name-key-encapsulation-mechanism
+=over 4
 
+=item * L<EVP_PKEY_encapsulate(3)>
+
+=item * L<EVP_PKEY_decapsulate(3)>
+
+=item * L<EVP_KEM-RSA(7)>
+
+This supports RSA Secret Value Encapsulation (RSASVE) as defined in
+L<SP800-56B|https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Br2.pdf#%5B%7B%22num%22%3A213%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C70%2C404%2C0%5D>
+
+=item * L<EVP_KEM-EC(7)> and L<EVP_KEM-X25519(7)>
+
+This support DHKEM which is used by L<HPKE|/Hybrid Public Key Encryption (HPKE)>
+
+=back
 
 =head2 Hybrid Public Key Encryption (HPKE)
 
 A hybrid cryptosystem is one which combines the convenience of a public-key cryptosystem with the efficiency of a symmetric-key cryptosystem.
-Hybrid Public Key Encryption (HPKE, published as https://www.rfc-editor.org/rfc/rfc9180.pdf) is a modern standard for generic hybrid encryption.
-HPKE is used within multiple IETF protocols, including MTLS and TLS Encrypted Hello. 
+Hybrid Public Key Encryption (HPKE, published as L<RFC9810|https://www.rfc-editor.org/rfc/rfc9180.pdf> is a modern standard for generic hybrid encryption.
+HPKE is used within multiple IETF protocols, including MTLS and TLS Encrypted Hello.
 HPKE works for any combination of an asymmetric KEM, key derivation function (KDF), and authenticated encryption with additional data (AEAD)
-encryption function. 
+encryption function.
 
 See L<OSSL_HPKE_CTX_new(3)>.
-
-pseudo-random number generator
-(CSPRNG).
 
 =head2 Deterministic Random Bit Generators (DRBG) 
 
 Random Numbers are required for key generation, nonces and salts.
 See L<RAND(7)> for further information.
 
-
 =head2 Message Authentication Code (MAC)
 
-A family of secret-key cryptographic algorithms acting on input data of arbitrary length to produce an output value of a specified length
+MAC's are a family of secret-key cryptographic algorithms acting on input data of arbitrary length to produce an output value of a specified length
 (called the MAC of the input data). A MAC (or tag) can be employed to provide authentication of the origin of data and/or data-integrity protection.
 MAC's are used by other algoriths such as L</Key Derivation Function (KDF)> and L</Deterministic Random Bit Generators (DRBG)>.
 
-See L<EVP_MAC(3)>
+More information related to MAC's can be found at:
 
-See the MAC demos at https://github.com/openssl/openssl/tree/master/demos/mac.
+=over 4
 
-See L<OSSL_PROVIDER-default(7)/Message Authentication Code (MAC)>
-and L<OSSL_PROVIDER-FIPS(7)/Message Authentication Code (MAC)> for a list of Hash Functions
-supported by the OpenSSL L</Providers>.
+=item * L<EVP_MAC(3)>
 
-See L<migration_guide(7)/Message Authentication Code API (EVP_MAC)> for information related to the old API used.
+=item * Mac demos L<https://github.com/openssl/openssl/tree/master/demos/mac>
+
+=item * L<OSSL_PROVIDER-default(7)/Message Authentication Code (MAC)>
+
+=item * L<OSSL_PROVIDER-FIPS(7)/Message Authentication Code (MAC)>
+
+=item * L<migration_guide(7)/Message Authentication Code API (EVP_MAC)>
+
+This contains information related to the old API used.
+
+=back
 
 =head2 Key Derivation Function (KDF)
 
@@ -416,18 +514,29 @@ such as a password or key material. Several key derivation algorithms have
 been standardized, and they are usually referred to as Key Derivation Functions (KDFs).
 KDF's are deterministic (see L<openssl-glossary(7)>).
 
-See L<EVP_KDF(3)> for more information related to OpenSSL KDF's.
+For more information related to OpenSSL KDF's see:
 
-L<EVP_KDF-SCRYPT(7)> and  L<EVP_KDF-PBKDF2(7)> are examples of Password based KDF's 
-L<EVP_KDF-HKDF(7)>, L<EVP_KDF-SS(7)>, L<EVP_KDF-KB(7)> and L<EVP_KDF-SSHKDF(7)> are examples
-of non Password based KDF's.
+=over 4
 
-For a list of KDF's supported by the OpenSSL L</Providers> See:
-L<OSSL_PROVIDER-default(7)/Key Derivation Function (KDF)>,
-L<OSSL_PROVIDER-FIPS(7)/Key Derivation Function (KDF)> and
-L<OSSL_PROVIDER-legacy(7)/Key Derivation Function (KDF)>
+=item * L<EVP_KDF(3)>
 
-KDF demos can be found at https://github.com/openssl/openssl/tree/master/demos/kdf
+=item * KDF demos L<https://github.com/openssl/openssl/tree/master/demos/kdf>
+
+=item * Password based KDF's
+
+Examples are L<EVP_KDF-SCRYPT(7)> and L<EVP_KDF-PBKDF2(7)>.
+
+=item * Non Password based KDF's.
+
+Examples are L<EVP_KDF-HKDF(7)>, L<EVP_KDF-SS(7)>, L<EVP_KDF-KB(7)> and L<EVP_KDF-SSHKDF(7)>.
+
+=item * L<OSSL_PROVIDER-default(7)/Key Derivation Function (KDF)>
+
+=item * L<OSSL_PROVIDER-FIPS(7)/Key Derivation Function (KDF)>
+
+=item * L<OSSL_PROVIDER-legacy(7)/Key Derivation Function (KDF)>
+
+=back
 
 If compatibility with OpenSSL 1.1.1 is required then a limited set of KDFs can be used via L<EVP_PKEY_derive(3)>.
 

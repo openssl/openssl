@@ -145,7 +145,7 @@ and L<crypto(7)/ALGORITHM FETCHING>.
 =item FIPS Provider
 
 An OpenSSL Provider that contains OpenSSL algorithm implementations that have
-been validated according to the FIPS 140-2 standard. 
+been validated according to the FIPS 140-2 standard.
 
 See L<OSSL_PROVIDER-FIPS(7)> for the algorithms that are supported. Note that this
 is a subset of the algorithms with the L</Default Provider>.
@@ -297,8 +297,9 @@ critical feature.
 
 =item Public key
 
-Part of a L<crypto(7)/Asymmetric Keypair> that can be made available to anyone,
-(Often by using a digital L</Certificate). 
+Part of a L</Asymmetric Keypair> that can be made available to anyone,
+(Often by using a digital L</Certificate>.
+See L<crypto(7)/Public key cryptography>
 
 =item Recipient
 
