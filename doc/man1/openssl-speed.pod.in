@@ -16,6 +16,8 @@ B<openssl speed>
 [B<-cmac> I<algo>]
 [B<-mb>]
 [B<-aead>]
+[B<-kem-algorithms>]
+[B<-signature-algorithms>]
 [B<-multi> I<num>]
 [B<-async_jobs> I<num>]
 [B<-misalign> I<num>]
@@ -96,6 +98,14 @@ Enable multi-block mode on EVP-named cipher.
 =item B<-aead>
 
 Benchmark EVP-named AEAD cipher in TLS-like sequence.
+
+=item B<-kem-algorithms>
+
+Benchmark KEM algorithms: key generation, encapsulation, decapsulation.
+
+=item B<-signature-algorithms>
+
+Benchmark signature algorithms: key generation, signature, verification.
 
 =item B<-primes> I<num>
 
