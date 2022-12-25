@@ -29,7 +29,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 182;
+plan tests => 183;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -489,6 +489,9 @@ ok(verify("ee-self-signed", "", ["ee-self-signed"], [], "-attime", "1593565200")
    "accept trusted self-signed EE cert excluding key usage keyCertSign");
 ok(verify("ee-ss-with-keyCertSign", "", ["ee-ss-with-keyCertSign"], []),
    "accept trusted self-signed EE cert with key usage keyCertSign also when strict");
+
+ok(verify("leaf-akid-issuer", "", ["rootCA"], ["interCA", "subinterCA"]),
+   "accept trusted EE cert with issuer name in authorized key identifier");
 
 SKIP: {
     skip "Ed25519 is not supported by this OpenSSL build", 6

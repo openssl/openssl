@@ -194,7 +194,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     }
 
     if (issuer == 2 || (issuer == 1 && !ss && ikeyid == NULL)) {
-        isname = X509_NAME_dup(X509_get_issuer_name(issuer_cert));
+        isname = X509_NAME_dup(X509_get_subject_name(issuer_cert));
         serial = ASN1_INTEGER_dup(X509_get0_serialNumber(issuer_cert));
         if (isname == NULL || serial == NULL) {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS);

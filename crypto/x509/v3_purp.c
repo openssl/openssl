@@ -1031,7 +1031,7 @@ int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
                 break;
             }
         }
-        if (nm != NULL && X509_NAME_cmp(nm, X509_get_issuer_name(issuer)) != 0)
+        if (nm != NULL && X509_NAME_cmp(nm, X509_get_subject_name(issuer)) != 0)
             return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;
     }
     return X509_V_OK;
