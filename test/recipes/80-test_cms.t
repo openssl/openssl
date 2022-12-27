@@ -826,7 +826,7 @@ sub rsapssSaltlen {
   my $pssparam_offset = -1;
   while ($_ = shift @asn1parse) {
     chomp;
-    next unless /:rsassaPss$/;
+    next unless /:rsassaPss/;
     # This line contains :rsassaPss, the next line contains a raw dump of the
     # RSA_PSS_PARAMS sequence; obtain its offset
     $_ = shift @asn1parse;
