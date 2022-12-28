@@ -117,7 +117,7 @@
  *    provider callbacks. No other locks may be held during such callbacks.
  */
 
-static OSSL_PROVIDER *provider_new(const char *id, const char *name,
+static OSSL_PROVIDER *provider_new(const char *id, const char *libname,
                                    OSSL_provider_init_fn *init_function,
                                    STACK_OF(INFOPAIR) *parameters);
 
@@ -490,6 +490,7 @@ static OSSL_PROVIDER *provider_new(const char *id, const char *libname,
         ossl_provider_free(prov);
         return NULL;
     }
+
     if (id != NULL) {
         prov->id = OPENSSL_strdup(id);
         if (prov->id == NULL) {
@@ -552,51 +553,19 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *id,
                                  const char *libname, OSSL_provider_init_fn *init_function,
                                  int noconfig)
 {
-    struct provider_store_st *store = NULL;
     OSSL_PROVIDER_INFO template;
     OSSL_PROVIDER *prov = NULL;
 
-    if ((store = get_provider_store(libctx)) == NULL)
+    if ((prov = ossl_provider_find(libctx, id, libname,
+                                   noconfig)) != NULL) { /* refcount +1 */
+        ossl_provider_free(prov); /* refcount -1 */
+        ERR_raise_data(ERR_LIB_CRYPTO, CRYPTO_R_PROVIDER_ALREADY_EXISTS,
+                       "libname=%s", libname);
         return NULL;
-
-    memset(&template, 0, sizeof(template));
-    if (init_function == NULL) {
-        const OSSL_PROVIDER_INFO *p;
-        size_t i;
-
-        /* Check if this is a predefined builtin provider */
-        for (p = ossl_predefined_providers; p->name != NULL; p++) {
-            if (strcmp(p->name, libname) == 0) {
-                template = *p;
-                break;
-            }
-        }
-        if (p->name == NULL) {
-            /* Check if this is a user added builtin provider */
-            if (!CRYPTO_THREAD_read_lock(store->lock))
-                return NULL;
-            for (i = 0, p = store->provinfo; i < store->numprovinfo; p++, i++) {
-                if (id != NULL) {
-                  if (strcmp(p->name, id) == 0) {
-                      template = *p;
-                      break;
-                  }
-                }
-                else {
-                  if (strcmp(p->name, libname) == 0) {
-                    template = *p;
-                    break;
-                  }
-                }
-            }
-            CRYPTO_THREAD_unlock(store->lock);
-        }
-    } else {
-        template.init = init_function;
     }
 
     /* provider_new() generates an error, so no need here */
-    if ((prov = provider_new(id, libname, template.init, template.parameters)) == NULL)
+    if ((prov = provider_new(libctx, id, libname, init_function)) == NULL)
         return NULL;
 
     prov->libctx = libctx;

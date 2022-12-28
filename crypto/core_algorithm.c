@@ -116,7 +116,7 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
         int no_store = 0;        /* Assume caching is ok */
         const OSSL_ALGORITHM *map = NULL;
         int ret = 0;
-        /*WB map is the table from provider querry */
+
         map = ossl_provider_query_operation(provider, cur_operation,
                                             &no_store);
         ret = algorithm_do_map(provider, map, cur_operation, no_store, data);
