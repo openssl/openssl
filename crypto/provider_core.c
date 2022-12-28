@@ -73,7 +73,7 @@
  * The locks available are:
  *
  * The provider flag_lock: Used to control updates to the various provider
- * "flags" (flag_initialized and flag_activated) and associated
+ * "flags" (flag_initialized, flag_activated, flag_fallback) and associated
  * "counts" (activatecnt).
  *
  * The provider refcnt_lock: Only ever used to control updates to the provider
@@ -553,19 +553,43 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *id,
                                  const char *libname, OSSL_provider_init_fn *init_function,
                                  int noconfig)
 {
+    struct provider_store_st *store = NULL;
     OSSL_PROVIDER_INFO template;
     OSSL_PROVIDER *prov = NULL;
 
-    if ((prov = ossl_provider_find(libctx, id, libname,
-                                   noconfig)) != NULL) { /* refcount +1 */
-        ossl_provider_free(prov); /* refcount -1 */
-        ERR_raise_data(ERR_LIB_CRYPTO, CRYPTO_R_PROVIDER_ALREADY_EXISTS,
-                       "libname=%s", libname);
+    if ((store = get_provider_store(libctx)) == NULL)
         return NULL;
+
+    memset(&template, 0, sizeof(template));
+    if (init_function == NULL) {
+        const OSSL_PROVIDER_INFO *p;
+        size_t i;
+
+        /* Check if this is a predefined builtin provider */
+        for (p = ossl_predefined_providers; p->name != NULL; p++) {
+            if (strcmp(p->name, libname) == 0) {
+                template = *p;
+                break;
+            }
+        }
+        if (p->name == NULL) {
+            /* Check if this is a user added builtin provider */
+            if (!CRYPTO_THREAD_read_lock(store->lock))
+                return NULL;
+            for (i = 0, p = store->provinfo; i < store->numprovinfo; p++, i++) {
+                if (strcmp(p->name, libname) == 0) {
+                    template = *p;
+                    break;
+                }
+            }
+            CRYPTO_THREAD_unlock(store->lock);
+        }
+    } else {
+        template.init = init_function;
     }
 
     /* provider_new() generates an error, so no need here */
-    if ((prov = provider_new(libctx, id, libname, init_function)) == NULL)
+    if ((prov = provider_new(id, libname, template.init, template.parameters)) == NULL)
         return NULL;
 
     prov->libctx = libctx;
