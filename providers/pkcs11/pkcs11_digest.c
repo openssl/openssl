@@ -7,6 +7,7 @@
 #include <openssl/objects.h>
 #include "prov/names.h"
 #include "prov/providercommon.h"
+#include <internal/provider.h>
 #include "pkcs11_kmgmt.h"
 #include "pkcs11_ctx.h"
 #include "pkcs11_utils.h"
@@ -199,7 +200,7 @@ static void pkcs11_digest_freectx(void *dctx)
     if (digestctx == NULL) {
         ctx = digestctx->pkcs11_ctx;
         if (ctx != NULL) {
-            fprintf(stdout, "@@@ provider: %s\n", OSSL_PROVIDER_name((OSSL_PROVIDER *)ctx->ctx.handle));
+            fprintf(stdout, "@@@ provider: %s\n", ossl_provider_name((OSSL_PROVIDER *)ctx->ctx.handle));
             fprintf(stdout, "@@@ - lib_functions ptr %p\n", ctx->lib_functions);
             if (digestctx->hdigest) {
                 fprintf(stdout, "@@@ - Free Digest = %lu\n", digestctx->hdigest);

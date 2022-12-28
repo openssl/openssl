@@ -28,8 +28,8 @@ extern "C" {
  */
 
 /* Provider Object finder, constructor and destructor */
-OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
-                                  int noconfig);
+OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *id,
+                                  const char *libname, int noconfig);
 OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *id, const char *libname,
                                  OSSL_provider_init_fn *init_function,
                                  int noconfig);

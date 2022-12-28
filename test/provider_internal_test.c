@@ -92,7 +92,7 @@ static int test_configured_provider(void)
         "Hello OpenSSL, greetings from Test Provider";
 
     return
-        TEST_ptr(prov = ossl_provider_find(NULL, name, 0))
+        TEST_ptr(prov = ossl_provider_find(NULL, NULL, name, 0))
         && test_provider(prov, expected_greeting);
 }
 #endif

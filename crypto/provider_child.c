@@ -32,6 +32,7 @@ struct child_prov_globals {
     OSSL_FUNC_provider_get0_dispatch_fn *c_prov_get0_dispatch;
     OSSL_FUNC_provider_up_ref_fn *c_prov_up_ref;
     OSSL_FUNC_provider_free_fn *c_prov_free;
+    OSSL_FUNC_provider_id_fn *c_prov_id;
 };
 
 void *ossl_child_prov_ctx_new(OSSL_LIB_CTX *libctx)
@@ -94,6 +95,7 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
     OSSL_LIB_CTX *ctx = cbdata;
     struct child_prov_globals *gbl;
     const char *provname;
+    const char *provid;
     OSSL_PROVIDER *cprov;
     int ret = 0;
 
@@ -105,6 +107,7 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
         return 0;
 
     provname = gbl->c_prov_name(prov);
+    provid = gbl->c_prov_id(prov);
 
     /*
      * We're operating under a lock so we can store the "current" provider in
@@ -112,7 +115,7 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
      */
     gbl->curr_prov = prov;
 
-    if ((cprov = ossl_provider_find(ctx, provname, 1)) != NULL) {
+    if ((cprov = ossl_provider_find(ctx, provid, provname, 1)) != NULL) {
         /*
          * We free the newly created ref. We rely on the provider sticking around
          * in the provider store.
@@ -157,6 +160,7 @@ static int provider_remove_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
     OSSL_LIB_CTX *ctx = cbdata;
     struct child_prov_globals *gbl;
     const char *provname;
+    const char *provid;
     OSSL_PROVIDER *cprov;
 
     gbl = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_CHILD_PROVIDER_INDEX);
@@ -164,7 +168,8 @@ static int provider_remove_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
         return 0;
 
     provname = gbl->c_prov_name(prov);
-    cprov = ossl_provider_find(ctx, provname, 1);
+    provid = gbl->c_prov_id(prov);
+    cprov = ossl_provider_find(ctx, provid, provname, 1);
     if (cprov == NULL)
         return 0;
     /*
@@ -215,6 +220,9 @@ int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
             break;
         case OSSL_FUNC_PROVIDER_NAME:
             gbl->c_prov_name = OSSL_FUNC_provider_name(in);
+            break;
+        case OSSL_FUNC_PROVIDER_ID:
+            gbl->c_prov_id = OSSL_FUNC_provider_id(in);
             break;
         case OSSL_FUNC_PROVIDER_GET0_PROVIDER_CTX:
             gbl->c_prov_get0_provider_ctx

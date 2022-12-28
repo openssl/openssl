@@ -5,6 +5,7 @@
 #include <openssl/params.h>
 #include <openssl/stack.h>
 #include <openssl/objects.h>
+#include <internal/provider.h>
 #include "prov/names.h"
 #include "prov/providercommon.h"
 #include "pkcs11_kmgmt.h"
@@ -412,7 +413,7 @@ static void *pkcs11_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
         goto end;
     }
 
-    fprintf(stdout, "@@@ provider: %s\n", OSSL_PROVIDER_name((OSSL_PROVIDER *)gctx->pkcs11_ctx->ctx.handle));
+    fprintf(stdout, "@@@ provider: %s\n", ossl_provider_name((OSSL_PROVIDER *)gctx->pkcs11_ctx->ctx.handle));
     fprintf(stdout, "@@@ - Pubkey = %lu\n", key->pub);
     fprintf(stdout, "@@@ - Privkey = %lu\n", key->priv);
     fprintf(stdout, "@@@ - lib_functions ptr %p\n", gctx->pkcs11_ctx->lib_functions);
@@ -477,7 +478,7 @@ static void pkcs11_keymgmt_free(void *keydata)
         if (key->keymgmt_ctx) {
             ctx = key->keymgmt_ctx->pkcs11_ctx;
             if (ctx != NULL) {
-                fprintf(stdout, "@@@ provider: %s\n", OSSL_PROVIDER_name((OSSL_PROVIDER *)ctx->ctx.handle));
+                fprintf(stdout, "@@@ provider: %s\n", ossl_provider_name((OSSL_PROVIDER *)ctx->ctx.handle));
                 fprintf(stdout, "@@@ - lib_functions ptr %p\n", ctx->lib_functions);
                 if (key->pub) {
                     fprintf(stdout, "@@@ - Free Pubkey = %lu\n", key->pub);

@@ -426,7 +426,7 @@ int pkcs11_do_GetFunctionList(PKCS11_CTX *ctx, char *libname)
         SET_PKCS11_PROV_ERR(ctx, rv);
         goto ret;
     }
-    fprintf(stdout, "@@@ Provname: %s\n", OSSL_PROVIDER_name((OSSL_PROVIDER *)ctx->ctx.handle));
+    fprintf(stdout, "@@@ Provname: %s\n", ossl_provider_name((OSSL_PROVIDER *)ctx->ctx.handle));
     fprintf(stdout, "@@@ - %s lib_functions ptr %p\n", __FUNCTION__, ctx->lib_functions);
     fflush(stdout);
 
@@ -455,7 +455,7 @@ int pkcs11_load_module(PKCS11_CTX *ctx, const char *libname)
         goto end;
 
     cinit_args.flags = CKF_OS_LOCKING_OK;
-    fprintf(stdout, "@@@ Provname: %s\n", OSSL_PROVIDER_name((OSSL_PROVIDER *)ctx->ctx.handle));
+    fprintf(stdout, "@@@ Provname: %s\n", ossl_provider_name((OSSL_PROVIDER *)ctx->ctx.handle));
     fprintf(stdout, "@@@ - %s lib_functions ptr %p\n", __FUNCTION__, ctx->lib_functions);
     fflush(stdout);
     rv = ctx->lib_functions->C_Initialize(&cinit_args);
@@ -481,7 +481,7 @@ int pkcs11_load_module(PKCS11_CTX *ctx, const char *libname)
     }
     fprintf(stdout, "@@@ - %s lib_functions ptr %p\n", __FUNCTION__, ctx->lib_functions);
     fflush(stdout);
-    fprintf(stdout, "@@@ Create session %s %lu\n", OSSL_PROVIDER_name((OSSL_PROVIDER *)ctx->ctx.handle), ctx->session);
+    fprintf(stdout, "@@@ Create session %s %lu\n", ossl_provider_name((OSSL_PROVIDER *)ctx->ctx.handle), ctx->session);
     fflush(stdout);
 
     if (ctx->userpin == NULL) {
@@ -506,7 +506,7 @@ int pkcs11_load_module(PKCS11_CTX *ctx, const char *libname)
     }
     strncpy((char *)ctx->module_filename, libname, strlen(libname));
     ret = 1;
-    fprintf(stdout, "@@@ Provname: %s\n", OSSL_PROVIDER_name((OSSL_PROVIDER *)ctx->ctx.handle));
+    fprintf(stdout, "@@@ Provname: %s\n", ossl_provider_name((OSSL_PROVIDER *)ctx->ctx.handle));
     fprintf(stdout, "@@@ - %s lib_functions ptr %p\n", __FUNCTION__, ctx->lib_functions);
     fflush(stdout);
 
@@ -721,8 +721,8 @@ void pkcs11_unload_module(PKCS11_CTX *ctx)
     if (ctx->lib_handle != NULL)
     {
         if (ctx->lib_functions != NULL) {
-            fprintf(stdout, "@@@ Provname: %s\n", OSSL_PROVIDER_name((OSSL_PROVIDER *)ctx->ctx.handle));
-            fprintf(stdout, "@@@ Close session %s %lu\n", OSSL_PROVIDER_name((OSSL_PROVIDER *)ctx->ctx.handle), ctx->session);
+            fprintf(stdout, "@@@ Provname: %s\n", ossl_provider_name((OSSL_PROVIDER *)ctx->ctx.handle));
+            fprintf(stdout, "@@@ Close session %s %lu\n", ossl_provider_name((OSSL_PROVIDER *)ctx->ctx.handle), ctx->session);
             fflush(stdout);
             if (ctx->session) {
                 ctx->lib_functions->C_CloseSession(ctx->session);
