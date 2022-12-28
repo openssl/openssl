@@ -23,7 +23,8 @@ int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *, const char *path);
 /* Load and unload a provider */
 OSSL_PROVIDER *OSSL_PROVIDER_load(OSSL_LIB_CTX *, const char *name);
 OSSL_PROVIDER *OSSL_PROVIDER_multiple_load(OSSL_LIB_CTX *, const char *provid, const char *name);
-OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *, const char *provid,
+OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *, const char *name, int retain_fallbacks);
+OSSL_PROVIDER *OSSL_PROVIDER_try_load_ex(OSSL_LIB_CTX *, const char *provid,
                                       const char *libname, int retain_fallbacks);
 int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
 int OSSL_PROVIDER_available(OSSL_LIB_CTX *, const char *name);
@@ -38,10 +39,8 @@ int OSSL_PROVIDER_get_capabilities(const OSSL_PROVIDER *prov,
                                    const char *capability,
                                    OSSL_CALLBACK *cb,
                                    void *arg);
-/*WB*/
 const OSSL_PARAM *OSSL_PROVIDER_settable_params(const OSSL_PROVIDER *prov);
 int OSSL_PROVIDER_set_params(OSSL_PROVIDER *prov, const OSSL_PARAM params[]);
-/*end WB*/
 
 const OSSL_ALGORITHM *OSSL_PROVIDER_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,

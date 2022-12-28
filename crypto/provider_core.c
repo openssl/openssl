@@ -174,10 +174,8 @@ struct ossl_provider_st {
     OSSL_FUNC_provider_teardown_fn *teardown;
     OSSL_FUNC_provider_gettable_params_fn *gettable_params;
     OSSL_FUNC_provider_get_params_fn *get_params;
-    /*WB*/
     OSSL_FUNC_provider_settable_params_fn *settable_params;
     OSSL_FUNC_provider_set_params_fn *set_params;
-    /*WB*/
     OSSL_FUNC_provider_get_capabilities_fn *get_capabilities;
     OSSL_FUNC_provider_self_test_fn *self_test;
     OSSL_FUNC_provider_query_operation_fn *query_operation;
@@ -1596,7 +1594,6 @@ int ossl_provider_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
         ? 0 : prov->get_params(prov->provctx, params);
 }
 
-/*WB*/
 const OSSL_PARAM *ossl_provider_settable_params(const OSSL_PROVIDER *prov)
 {
     return prov->settable_params == NULL
@@ -1608,7 +1605,6 @@ int ossl_provider_set_params(OSSL_PROVIDER *prov, const OSSL_PARAM params[])
     return prov->set_params == NULL
         ? 0 : prov->set_params(prov->provctx, params);
 }
-/*end WB*/
 
 int ossl_provider_self_test(const OSSL_PROVIDER *prov)
 {

@@ -87,10 +87,8 @@ int ossl_provider_get_capabilities(const OSSL_PROVIDER *prov,
                                    OSSL_CALLBACK *cb,
                                    void *arg);
 int ossl_provider_self_test(const OSSL_PROVIDER *prov);
-/*WB*/
 const OSSL_PARAM *ossl_provider_settable_params(const OSSL_PROVIDER *prov);
 int ossl_provider_set_params(OSSL_PROVIDER *prov, const OSSL_PARAM params[]);
-/*end wb*/
 
 const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,

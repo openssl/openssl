@@ -15,7 +15,7 @@
 #include "internal/provider.h"
 #include "provider_local.h"
 
-OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *provid,
+OSSL_PROVIDER *OSSL_PROVIDER_try_load_ex(OSSL_LIB_CTX *libctx, const char *provid,
                                       const char *libname, int retain_fallbacks)
 {
     OSSL_PROVIDER *prov = NULL, *actual;
@@ -49,11 +49,17 @@ OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *provid,
     return actual;
 }
 
+OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
+                                      int retain_fallbacks)
+{
+    return OSSL_PROVIDER_try_load_ex(libctx, NULL, name, retain_fallbacks);
+}
+
 OSSL_PROVIDER *OSSL_PROVIDER_load(OSSL_LIB_CTX *libctx, const char *name)
 {
     /* Any attempt to load a provider disables auto-loading of defaults */
     if (ossl_provider_disable_fallback_loading(libctx))
-        return OSSL_PROVIDER_try_load(libctx, NULL, name, 0);
+        return OSSL_PROVIDER_try_load(libctx, name, 0);
     return NULL;
 }
 
@@ -61,7 +67,7 @@ OSSL_PROVIDER *OSSL_PROVIDER_multiple_load(OSSL_LIB_CTX *libctx, const char *pro
 {
     /* Any attempt to load a provider disables auto-loading of defaults */
     if (ossl_provider_disable_fallback_loading(libctx))
-        return OSSL_PROVIDER_try_load(libctx, provid, name, 0);
+        return OSSL_PROVIDER_try_load_ex(libctx, provid, name, 0);
     return NULL;
 }
 
@@ -83,7 +89,6 @@ int OSSL_PROVIDER_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
     return ossl_provider_get_params(prov, params);
 }
 
-/*WB*/
 const OSSL_PARAM *OSSL_PROVIDER_settable_params(const OSSL_PROVIDER *prov)
 {
     return ossl_provider_settable_params(prov);
@@ -93,8 +98,6 @@ int OSSL_PROVIDER_set_params(OSSL_PROVIDER *prov, const OSSL_PARAM params[])
 {
     return ossl_provider_set_params(prov, params);
 }
-
-/*end WB*/
 
 const OSSL_ALGORITHM *OSSL_PROVIDER_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
