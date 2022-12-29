@@ -549,7 +549,6 @@ typedef struct loopargs_st {
     size_t sig_max_sig_len[MAX_KEM_NUM];
     size_t sig_act_sig_len[MAX_KEM_NUM];
     unsigned char *sig_sig[MAX_KEM_NUM];
-
 } loopargs_t;
 static int run_benchmark(int async_jobs, int (*loop_function) (void *),
                          loopargs_t * loopargs);
@@ -1176,7 +1175,12 @@ static int KEM_keygen_loop(void *args)
 
     for (count = 0; COND(kems_c[testnum][0]); count++) {
         EVP_PKEY_keygen(ctx, &pkey);
-        /* TBD: How much does free influence runtime? */
+        /* runtime defined to quite some degree by randomness,
+         * so performance overhead of _free doesn't impact
+         * results significantly. In any case this test is
+         * meant to permit relative algorithm performance
+         * comparison.
+	 */
         EVP_PKEY_free(pkey);
         pkey = NULL;
     }
@@ -1534,10 +1538,12 @@ static EVP_PKEY *get_ecdsa(const EC_CURVE *curve)
         TYPE ## _free(impl);                                    \
         return 1;                                               \
     }
+
 IS_FETCHABLE(signature, EVP_SIGNATURE)
 IS_FETCHABLE(kem, EVP_KEM)
 
 DEFINE_STACK_OF(EVP_KEM)
+
 static int kems_cmp(const EVP_KEM * const *a,
                     const EVP_KEM * const *b)
 {
@@ -1560,7 +1566,7 @@ static int kem_locate(const char *algo, unsigned int *idx)
     unsigned int i;
 
     for (i = 0; i < kems_algs_len; i++) {
-        if (!strcmp(kems_algname[i], algo)) {
+        if (strcmp(kems_algname[i], algo) == 0) {
             *idx = i;
             return 1;
         }
@@ -1569,6 +1575,7 @@ static int kem_locate(const char *algo, unsigned int *idx)
 }
 
 DEFINE_STACK_OF(EVP_SIGNATURE)
+
 static int signatures_cmp(const EVP_SIGNATURE * const *a,
                           const EVP_SIGNATURE * const *b)
 {
@@ -1590,7 +1597,7 @@ static int sig_locate(const char *algo, unsigned int *idx)
     unsigned int i;
 
     for (i = 0; i < sigs_algs_len; i++) {
-        if (!strcmp(sigs_algname[i], algo)) {
+        if (strcmp(sigs_algname[i], algo) == 0) {
             *idx = i;
             return 1;
         }
@@ -1916,28 +1923,19 @@ int speed_main(int argc, char **argv)
     for (idx = 0; idx < (unsigned int)sk_EVP_KEM_num(kem_stack); idx++) {
         EVP_KEM *kem = sk_EVP_KEM_value(kem_stack, idx);
 
-        if (!strcmp(EVP_KEM_get0_name(kem), "RSA")) {
-            if (kems_algs_len + 7 >= MAX_KEM_NUM) {
+        if (strcmp(EVP_KEM_get0_name(kem), "RSA") == 0) {
+            if (kems_algs_len + 1 + OSSL_NELEM(rsa_choices) >= MAX_KEM_NUM) {
                 BIO_printf(bio_err,
                        "Too many KEMs registered. Change MAX_KEM_NUM.\n");
                 goto end;
             }
-            kems_doit[kems_algs_len] = 1;
-            kems_algname[kems_algs_len++] = OPENSSL_strdup("RSA512");
-            kems_doit[kems_algs_len] = 1;
-            kems_algname[kems_algs_len++] = OPENSSL_strdup("RSA1024");
-            kems_doit[kems_algs_len] = 1;
-            kems_algname[kems_algs_len++] = OPENSSL_strdup("RSA2048");
-            kems_doit[kems_algs_len] = 1;
-            kems_algname[kems_algs_len++] = OPENSSL_strdup("RSA3072");
-            kems_doit[kems_algs_len] = 1;
-            kems_algname[kems_algs_len++] = OPENSSL_strdup("RSA4096");
-            kems_doit[kems_algs_len] = 1;
-            kems_algname[kems_algs_len++] = OPENSSL_strdup("RSA7680");
-            kems_doit[kems_algs_len] = 1;
-            kems_algname[kems_algs_len++] = OPENSSL_strdup("RSA15360");
+	    for (i = 0; i < OSSL_NELEM(rsa_choices); i++) {
+                kems_doit[kems_algs_len] = 1;
+                kems_algname[kems_algs_len] = OPENSSL_strdup(rsa_choices[i].name);
+		strncpy(kems_algname[kems_algs_len++], "RSA", 3);
+	    }
         }
-        else if (!strcmp(EVP_KEM_get0_name(kem), "EC")) {
+        else if (strcmp(EVP_KEM_get0_name(kem), "EC") == 0) {
             if (kems_algs_len + 3 >= MAX_KEM_NUM) {
                 BIO_printf(bio_err,
                        "Too many KEMs registered. Change MAX_KEM_NUM.\n");
@@ -1973,28 +1971,19 @@ int speed_main(int argc, char **argv)
         EVP_SIGNATURE *s = sk_EVP_SIGNATURE_value(sig_stack, idx);
         const char *sig_name = EVP_SIGNATURE_get0_name(s);
 
-        if (!strcmp(sig_name, "RSA")) {
-            if (sigs_algs_len + 7 >= MAX_SIG_NUM) {
+        if (strcmp(sig_name, "RSA") == 0) {
+            if (sigs_algs_len + 1 + OSSL_NELEM(rsa_choices) >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
                        "Too many signatures registered. Change MAX_SIG_NUM.\n");
                 goto end;
             }
-            sigs_doit[sigs_algs_len] = 1;
-            sigs_algname[sigs_algs_len++] = OPENSSL_strdup("RSA512");
-            sigs_doit[sigs_algs_len] = 1;
-            sigs_algname[sigs_algs_len++] = OPENSSL_strdup("RSA1024");
-            sigs_doit[sigs_algs_len] = 1;
-            sigs_algname[sigs_algs_len++] = OPENSSL_strdup("RSA2048");
-            sigs_doit[sigs_algs_len] = 1;
-            sigs_algname[sigs_algs_len++] = OPENSSL_strdup("RSA3072");
-            sigs_doit[sigs_algs_len] = 1;
-            sigs_algname[sigs_algs_len++] = OPENSSL_strdup("RSA4096");
-            sigs_doit[sigs_algs_len] = 1;
-            sigs_algname[sigs_algs_len++] = OPENSSL_strdup("RSA7680");
-            sigs_doit[sigs_algs_len] = 1;
-            sigs_algname[sigs_algs_len++] = OPENSSL_strdup("RSA15360");
+	    for (i = 0; i < OSSL_NELEM(rsa_choices); i++) {
+                sigs_doit[sigs_algs_len] = 1;
+                sigs_algname[sigs_algs_len] = OPENSSL_strdup(rsa_choices[i].name);
+		strncpy(sigs_algname[sigs_algs_len++], "RSA", 3);
+	    }
         }
-        else if (!strcmp(sig_name, "DSA")) {
+        else if (strcmp(sig_name, "DSA") == 0) {
             if (sigs_algs_len + 3 >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
                        "Too many signatures registered. Change MAX_SIG_NUM.\n");
@@ -2036,6 +2025,7 @@ int speed_main(int argc, char **argv)
 
     for (; *argv; argv++) {
         const char *algo = *argv;
+	int algo_found = 0;
 
         if (opt_found(algo, doit_choices, &i)) {
             doit[i] = 1;
@@ -2134,14 +2124,15 @@ int speed_main(int argc, char **argv)
         if (kem_locate(algo, &idx)) {
             kems_doit[idx]++;
             do_kems = 1;
-            continue;
+            algo_found = 1;
         }
         if (sig_locate(algo, &idx)) {
             sigs_doit[idx]++;
             do_sigs = 1;
-            continue;
+            algo_found = 1;
         }
-       
+        if (algo_found)
+            continue;
         BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, algo);
         goto end;
     }
@@ -3593,9 +3584,8 @@ skip_hmac:
                 ERR_print_errors(bio_err);
             }
 
-
             if (strncmp(kem_name, "RSA", 3) == 0) {
-                bits = atoi(kem_name+3);
+                bits = atoi(kem_name + 3);
                 params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
                                                         &bits);
                 use_params = 1;
@@ -3607,14 +3597,14 @@ skip_hmac:
             }
 
             kem_gen_ctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(),
-                                               !strncmp(kem_name, "RSA", 3)?"RSA":
-                                                !strncmp(kem_name, "EC", 2)?"EC":
+                                               (strncmp(kem_name, "RSA", 3) == 0)?"RSA":
+                                                (strncmp(kem_name, "EC", 2) == 0)?"EC":
                                                  kem_name,
                                                app_get0_propq());
 
-            if (!kem_gen_ctx || EVP_PKEY_keygen_init(kem_gen_ctx) <= 0 ||
-                (use_params &&
-                 (EVP_PKEY_CTX_set_params(kem_gen_ctx, params) <= 0))) {
+            if ((!kem_gen_ctx || EVP_PKEY_keygen_init(kem_gen_ctx) <= 0)
+                || (use_params &&
+                    (EVP_PKEY_CTX_set_params(kem_gen_ctx, params) <= 0))) {
                 BIO_printf(bio_err, "Error initializing keygen ctx for %s.\n",
                            kem_name);
                 goto kem_err_break;
@@ -3627,15 +3617,15 @@ skip_hmac:
             kem_encaps_ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
                                                         pkey,
                                                         app_get0_propq());
-            if ((kem_encaps_ctx == NULL) ||
-                (EVP_PKEY_encapsulate_init(kem_encaps_ctx, NULL) <= 0)  ||
-                ((!strncmp(kem_name, "RSA", 3) &&
-                 (EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "RSASVE") <= 0))) ||
-                (((!strncmp(kem_name, "EC", 2)) ||
-                  (!strcmp(kem_name, "X25519")) || 
-                  (!strcmp(kem_name, "X448"))) && 
-                 (EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "DHKEM") <= 0)) ||
-                (EVP_PKEY_encapsulate(kem_encaps_ctx, NULL, &out_len,
+            if ((kem_encaps_ctx == NULL)
+                || (EVP_PKEY_encapsulate_init(kem_encaps_ctx, NULL) <= 0)
+                || ((strncmp(kem_name, "RSA", 3) == 0
+                    && (EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "RSASVE") <= 0)))
+                || (((strncmp(kem_name, "EC", 2) == 0) 
+                    || (strcmp(kem_name, "X25519") == 0) 
+                    || (strcmp(kem_name, "X448") == 0 ))
+                   && (EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "DHKEM") <= 0))
+                || (EVP_PKEY_encapsulate(kem_encaps_ctx, NULL, &out_len,
                                       NULL, &send_secret_len) <= 0)) {
                 BIO_printf(bio_err,
                            "Error while initializing encaps data structs for %s.\n",
@@ -3657,15 +3647,15 @@ skip_hmac:
             kem_decaps_ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
                                                         pkey,
                                                         app_get0_propq());
-            if ((kem_decaps_ctx == NULL) ||
-                (EVP_PKEY_decapsulate_init(kem_decaps_ctx, NULL) <= 0)  ||
-                ((!strncmp(kem_name, "RSA", 3) &&
-                 (EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "RSASVE") <= 0))) ||
-                (((!strncmp(kem_name, "EC", 2)) ||
-                  (!strcmp(kem_name, "X25519")) || 
-                  (!strcmp(kem_name, "X448"))) && 
-                 (EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "DHKEM") <= 0)) ||
-                (EVP_PKEY_decapsulate(kem_decaps_ctx, NULL, &rcv_secret_len,
+            if ((kem_decaps_ctx == NULL)
+                || (EVP_PKEY_decapsulate_init(kem_decaps_ctx, NULL) <= 0) 
+                || ((strncmp(kem_name, "RSA", 3) == 0
+                  && (EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "RSASVE") <= 0)))
+                || (((strncmp(kem_name, "EC", 2) == 0)
+                     || (strcmp(kem_name, "X25519") == 0)
+                     || (strcmp(kem_name, "X448") == 0))
+                  && (EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "DHKEM") <= 0))
+                || (EVP_PKEY_decapsulate(kem_decaps_ctx, NULL, &rcv_secret_len,
                                       out, out_len) <= 0)) {
                 BIO_printf(bio_err,
                            "Error while initializing decaps data structs for %s.\n",
@@ -3679,9 +3669,9 @@ skip_hmac:
                 goto kem_err_break;
             }
             if ((EVP_PKEY_decapsulate(kem_decaps_ctx, rcv_secret,
-                                      &rcv_secret_len, out, out_len) <= 0) ||
-                (rcv_secret_len != send_secret_len) ||
-                (memcmp(send_secret, rcv_secret, send_secret_len))) {
+                                      &rcv_secret_len, out, out_len) <= 0)
+                || (rcv_secret_len != send_secret_len)
+                || (memcmp(send_secret, rcv_secret, send_secret_len))) {
                 BIO_printf(bio_err, "Decaps error for %s.\n", kem_name);
                 goto kem_err_break;
             }
@@ -3696,10 +3686,10 @@ skip_hmac:
             break;
 
             kem_err_break:
-                ERR_print_errors(bio_err);
-                op_count = 1;
-                kem_checks = 0;
-                break;
+            ERR_print_errors(bio_err);
+            op_count = 1;
+            kem_checks = 0;
+            break;
 
         }
         if (kem_checks != 0) {
@@ -3710,7 +3700,7 @@ skip_hmac:
                 run_benchmark(async_jobs, KEM_keygen_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R12:%ld:%s:%.2f\n" :
+                       mr ? "+R13:%ld:%s:%.2f\n" :
                        "%ld %s KEM keygens in %.2fs\n", count,
                        kem_name, d);
             kems_results[testnum][0] = (double)count / d;
@@ -3722,7 +3712,7 @@ skip_hmac:
                 run_benchmark(async_jobs, KEM_encaps_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R12:%ld:%s:%.2f\n" :
+                       mr ? "+R14:%ld:%s:%.2f\n" :
                        "%ld %s KEM encaps in %.2fs\n", count,
                        kem_name, d);
             kems_results[testnum][1] = (double)count / d;
@@ -3734,7 +3724,7 @@ skip_hmac:
                 run_benchmark(async_jobs, KEM_decaps_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R12:%ld:%s:%.2f\n" :
+                       mr ? "+R15:%ld:%s:%.2f\n" :
                        "%ld %s KEM decaps in %.2fs\n", count,
                        kem_name, d);
             kems_results[testnum][2] = (double)count / d;
@@ -3779,7 +3769,7 @@ skip_hmac:
 
 
             if (strncmp(sig_name, "RSA", 3) == 0) {
-                bits = atoi(sig_name+3);
+                bits = atoi(sig_name + 3);
                 params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
                                                         &bits);
                 use_params = 1;
@@ -3787,13 +3777,13 @@ skip_hmac:
 
             if (strncmp(sig_name, "DSA", 3) == 0) {
                 ctx_params = EVP_PKEY_CTX_new_id(EVP_PKEY_DSA, NULL);
-                if ((ctx_params == NULL) ||
-                    (EVP_PKEY_paramgen_init(ctx_params) <= 0) ||
-                    (EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx_params,
-                                                        atoi(sig_name+3)) <= 0) ||
-                    (EVP_PKEY_paramgen(ctx_params, &pkey_params) <= 0) ||
-                    ((sig_gen_ctx = EVP_PKEY_CTX_new(pkey_params, NULL)) == NULL) ||
-                    (EVP_PKEY_keygen_init(sig_gen_ctx) <= 0)) {
+                if ((ctx_params == NULL)
+                    || (EVP_PKEY_paramgen_init(ctx_params) <= 0)
+                    || (EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx_params,
+                                                        atoi(sig_name + 3)) <= 0)
+                    || (EVP_PKEY_paramgen(ctx_params, &pkey_params) <= 0)
+                    || ((sig_gen_ctx = EVP_PKEY_CTX_new(pkey_params, NULL)) == NULL)
+                    || (EVP_PKEY_keygen_init(sig_gen_ctx) <= 0)) {
                     BIO_printf(bio_err,
                                "Error initializing classic keygen ctx for %s.\n",
                                sig_name);
@@ -3803,12 +3793,12 @@ skip_hmac:
 
             if (sig_gen_ctx == NULL)
                 sig_gen_ctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(),
-                                      !strncmp(sig_name, "RSA", 3)?"RSA":sig_name,
+                                      (strncmp(sig_name, "RSA", 3) == 0)?"RSA":sig_name,
                                       app_get0_propq());
 
-            if (!sig_gen_ctx || EVP_PKEY_keygen_init(sig_gen_ctx) <= 0 ||
-                (use_params &&
-                (EVP_PKEY_CTX_set_params(sig_gen_ctx, params) <= 0))) {
+            if (!sig_gen_ctx || EVP_PKEY_keygen_init(sig_gen_ctx) <= 0
+                || (use_params &&
+                    (EVP_PKEY_CTX_set_params(sig_gen_ctx, params) <= 0))) {
                 BIO_printf(bio_err, "Error initializing keygen ctx for %s.\n",
                            sig_name);
                 goto sig_err_break;
@@ -3823,12 +3813,12 @@ skip_hmac:
             sig_sign_ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
                                                       pkey,
                                                       app_get0_propq());
-            if ((sig_sign_ctx == NULL) ||
-                (EVP_PKEY_sign_init(sig_sign_ctx) <= 0)  ||
-                ((!strncmp(sig_name, "RSA", 3) &&
-                 (EVP_PKEY_CTX_set_rsa_padding(sig_sign_ctx,
-                                               RSA_PKCS1_PADDING)  <= 0))) ||
-                (EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len,
+            if ((sig_sign_ctx == NULL)
+                || (EVP_PKEY_sign_init(sig_sign_ctx) <= 0)
+                || ((strncmp(sig_name, "RSA", 3) == 0
+                  && (EVP_PKEY_CTX_set_rsa_padding(sig_sign_ctx,
+                                               RSA_PKCS1_PADDING)  <= 0)))
+                || (EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len,
                                       md, md_len) <= 0)) {
                 BIO_printf(bio_err,
                            "Error while initializing signing data structs for %s.\n",
@@ -3850,10 +3840,10 @@ skip_hmac:
             sig_verify_ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
                                                         pkey,
                                                         app_get0_propq());
-            if ((sig_verify_ctx == NULL) ||
-                (EVP_PKEY_verify_init(sig_verify_ctx) <= 0)  ||
-                ((!strncmp(sig_name, "RSA", 3) &&
-                 (EVP_PKEY_CTX_set_rsa_padding(sig_verify_ctx,
+            if ((sig_verify_ctx == NULL)
+                || (EVP_PKEY_verify_init(sig_verify_ctx) <= 0)
+                || ((strncmp(sig_name, "RSA", 3) == 0
+                  && (EVP_PKEY_CTX_set_rsa_padding(sig_verify_ctx,
                                                RSA_PKCS1_PADDING) <= 0)))) {
                 BIO_printf(bio_err,
                            "Error while initializing verify data structs for %s.\n",
@@ -3877,11 +3867,12 @@ skip_hmac:
             loopargs[i].sig_act_sig_len[testnum] = sig_len;
             loopargs[i].sig_sig[testnum] = sig;
             break;
+
             sig_err_break:
-                ERR_print_errors(bio_err);
-                op_count = 1;
-                sig_checks = 0;
-                break;
+            ERR_print_errors(bio_err);
+            op_count = 1;
+            sig_checks = 0;
+            break;
 
         }
 
@@ -3893,7 +3884,7 @@ skip_hmac:
                 run_benchmark(async_jobs, SIG_keygen_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R12:%ld:%s:%.2f\n" :
+                       mr ? "+R16:%ld:%s:%.2f\n" :
                        "%ld %s signature keygens in %.2fs\n", count,
                        sig_name, d);
             sigs_results[testnum][0] = (double)count / d;
@@ -3905,7 +3896,7 @@ skip_hmac:
                 run_benchmark(async_jobs, SIG_sign_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R12:%ld:%s:%.2f\n" :
+                       mr ? "+R17:%ld:%s:%.2f\n" :
                        "%ld %s signature signs in %.2fs\n", count,
                        sig_name, d);
             sigs_results[testnum][1] = (double)count / d;
@@ -3918,7 +3909,7 @@ skip_hmac:
                 run_benchmark(async_jobs, SIG_verify_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R12:%ld:%s:%.2f\n" :
+                       mr ? "+R18:%ld:%s:%.2f\n" :
                        "%ld %s signature verifys in %.2fs\n", count,
                        sig_name, d);
             sigs_results[testnum][2] = (double)count / d;
@@ -4111,8 +4102,8 @@ skip_hmac:
             testnum = 0;
         }
         if (mr)
-            printf("+F2:%u:%s:%f:%f:%f\n",
-                   k, kem_name, kems_results[k][0], kems_results[k][1],
+            printf("+F9:%u:%f:%f:%f\n",
+                   k, kems_results[k][0], kems_results[k][1],
                    kems_results[k][2]);
         else
             printf("%27s %8.6fs %8.6fs %8.6fs %9.1f %9.1f %9.1f\n", kem_name,
@@ -4132,8 +4123,8 @@ skip_hmac:
             testnum = 0;
         }
         if (mr)
-            printf("+F2:%u:%s:%f:%f:%f\n",
-                   k, sig_name, sigs_results[k][0], sigs_results[k][1],
+            printf("+F10:%u:%f:%f:%f\n",
+                   k, sigs_results[k][0], sigs_results[k][1],
                    sigs_results[k][2]);
         else
             printf("%27s %8.6fs %8.6fs %8.6fs %9.1f %9.1f %9.1f\n", sig_name,
@@ -4212,6 +4203,10 @@ skip_hmac:
     }
     OPENSSL_free(evp_hmac_name);
     OPENSSL_free(evp_cmac_name);
+    for (k = 0; k < kems_algs_len; k++)
+        OPENSSL_free(kems_algname[k]);
+    for (k = 0; k < sigs_algs_len; k++)
+        OPENSSL_free(sigs_algname[k]);
 
     if (async_jobs > 0) {
         for (i = 0; i < loopargs_len; i++)
@@ -4464,6 +4459,30 @@ static int do_multi(int multi, int size_num)
                     ffdh_results[k][0] += d;
                 }
 # endif /* OPENSSL_NO_DH */
+            } else if (CHECK_AND_SKIP_PREFIX(p, "+F9:")) {
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(kems_results), &k)) {
+                    d = atof(sstrsep(&p, sep));
+                    kems_results[k][0] += d;
+
+                    d = atof(sstrsep(&p, sep));
+                    kems_results[k][1] += d;
+
+                    d = atof(sstrsep(&p, sep));
+                    kems_results[k][2] += d;
+                }
+            } else if (CHECK_AND_SKIP_PREFIX(p, "+F10:")) {
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(sigs_results), &k)) {
+                    d = atof(sstrsep(&p, sep));
+                    sigs_results[k][0] += d;
+
+                    d = atof(sstrsep(&p, sep));
+                    sigs_results[k][1] += d;
+
+                    d = atof(sstrsep(&p, sep));
+                    sigs_results[k][2] += d;
+                }
             } else if (!HAS_PREFIX(buf, "+H:")) {
                 BIO_printf(bio_err, "Unknown type '%s' from child %d\n", buf,
                            n);
