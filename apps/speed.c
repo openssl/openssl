@@ -360,11 +360,11 @@ static const OPT_PAIR doit_choices[] = {
 
 static double results[ALGOR_NUM][SIZE_NUM];
 
-enum { R_DSA_512, R_DSA_1024, R_DSA_2048, DSA_NUM };
+enum { R_DSA_1024, R_DSA_2048, R_DSA_3072, DSA_NUM };
 static const OPT_PAIR dsa_choices[DSA_NUM] = {
-    {"dsa512", R_DSA_512},
     {"dsa1024", R_DSA_1024},
-    {"dsa2048", R_DSA_2048}
+    {"dsa2048", R_DSA_1024},
+    {"dsa3072", R_DSA_3072}
 };
 static double dsa_results[DSA_NUM][2];  /* 2 ops: sign then verify */
 
@@ -1682,7 +1682,7 @@ int speed_main(int argc, char **argv)
     uint8_t ffdh_doit[FFDH_NUM] = { 0 };
 
 #endif /* OPENSSL_NO_DH */
-    static const unsigned int dsa_bits[DSA_NUM] = { 512, 1024, 2048 };
+    static const unsigned int dsa_bits[DSA_NUM] = { 1024, 2048, 3072 };
     uint8_t dsa_doit[DSA_NUM] = { 0 };
     /*
      * We only test over the following curves as they are representative, To
@@ -1924,15 +1924,14 @@ int speed_main(int argc, char **argv)
         EVP_KEM *kem = sk_EVP_KEM_value(kem_stack, idx);
 
         if (strcmp(EVP_KEM_get0_name(kem), "RSA") == 0) {
-            if (kems_algs_len + 1 + OSSL_NELEM(rsa_choices) >= MAX_KEM_NUM) {
+            if (kems_algs_len + OSSL_NELEM(rsa_choices) >= MAX_KEM_NUM) {
                 BIO_printf(bio_err,
                        "Too many KEMs registered. Change MAX_KEM_NUM.\n");
                 goto end;
             }
 	    for (i = 0; i < OSSL_NELEM(rsa_choices); i++) {
                 kems_doit[kems_algs_len] = 1;
-                kems_algname[kems_algs_len] = OPENSSL_strdup(rsa_choices[i].name);
-		strncpy(kems_algname[kems_algs_len++], "RSA", 3);
+                kems_algname[kems_algs_len++] = OPENSSL_strdup(rsa_choices[i].name);
 	    }
         }
         else if (strcmp(EVP_KEM_get0_name(kem), "EC") == 0) {
@@ -1972,29 +1971,26 @@ int speed_main(int argc, char **argv)
         const char *sig_name = EVP_SIGNATURE_get0_name(s);
 
         if (strcmp(sig_name, "RSA") == 0) {
-            if (sigs_algs_len + 1 + OSSL_NELEM(rsa_choices) >= MAX_SIG_NUM) {
+            if (sigs_algs_len + OSSL_NELEM(rsa_choices) >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
                        "Too many signatures registered. Change MAX_SIG_NUM.\n");
                 goto end;
             }
 	    for (i = 0; i < OSSL_NELEM(rsa_choices); i++) {
                 sigs_doit[sigs_algs_len] = 1;
-                sigs_algname[sigs_algs_len] = OPENSSL_strdup(rsa_choices[i].name);
-		strncpy(sigs_algname[sigs_algs_len++], "RSA", 3);
+                sigs_algname[sigs_algs_len++] = OPENSSL_strdup(rsa_choices[i].name);
 	    }
         }
         else if (strcmp(sig_name, "DSA") == 0) {
-            if (sigs_algs_len + 3 >= MAX_SIG_NUM) {
+            if (sigs_algs_len + OSSL_NELEM(dsa_choices) >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
                        "Too many signatures registered. Change MAX_SIG_NUM.\n");
                 goto end;
             }
-            sigs_doit[sigs_algs_len] = 1;
-            sigs_algname[sigs_algs_len++] = OPENSSL_strdup("DSA1024");
-            sigs_doit[sigs_algs_len] = 1;
-            sigs_algname[sigs_algs_len++] = OPENSSL_strdup("DSA2048");
-            sigs_doit[sigs_algs_len] = 1;
-            sigs_algname[sigs_algs_len++] = OPENSSL_strdup("DSA3072");
+	    for (i = 0; i < OSSL_NELEM(dsa_choices); i++) {
+                sigs_doit[sigs_algs_len] = 1;
+                sigs_algname[sigs_algs_len++] = OPENSSL_strdup(dsa_choices[i].name);
+	    }
         }
         /* skipping these algs as tested elsewhere - and b/o setup is a pain */
         else if (strcmp(sig_name, "ED25519") &&
@@ -2029,96 +2025,96 @@ int speed_main(int argc, char **argv)
 
         if (opt_found(algo, doit_choices, &i)) {
             doit[i] = 1;
-            continue;
+            algo_found = 1;
         }
         if (strcmp(algo, "des") == 0) {
             doit[D_CBC_DES] = doit[D_EDE3_DES] = 1;
-            continue;
+            algo_found = 1;
         }
         if (strcmp(algo, "sha") == 0) {
             doit[D_SHA1] = doit[D_SHA256] = doit[D_SHA512] = 1;
-            continue;
+            algo_found = 1;
         }
 #ifndef OPENSSL_NO_DEPRECATED_3_0
         if (strcmp(algo, "openssl") == 0) /* just for compatibility */
-            continue;
+            algo_found = 1;
 #endif
         if (HAS_PREFIX(algo, "rsa")) {
             if (algo[sizeof("rsa") - 1] == '\0') {
                 memset(rsa_doit, 1, sizeof(rsa_doit));
-                continue;
+                algo_found = 1;
             }
             if (opt_found(algo, rsa_choices, &i)) {
                 rsa_doit[i] = 1;
-                continue;
+                algo_found = 1;
             }
         }
 #ifndef OPENSSL_NO_DH
         if (HAS_PREFIX(algo, "ffdh")) {
             if (algo[sizeof("ffdh") - 1] == '\0') {
                 memset(ffdh_doit, 1, sizeof(ffdh_doit));
-                continue;
+                algo_found = 1;
             }
             if (opt_found(algo, ffdh_choices, &i)) {
                 ffdh_doit[i] = 2;
-                continue;
+                algo_found = 1;
             }
         }
 #endif
         if (HAS_PREFIX(algo, "dsa")) {
             if (algo[sizeof("dsa") - 1] == '\0') {
                 memset(dsa_doit, 1, sizeof(dsa_doit));
-                continue;
+                algo_found = 1;
             }
             if (opt_found(algo, dsa_choices, &i)) {
                 dsa_doit[i] = 2;
-                continue;
+                algo_found = 1;
             }
         }
         if (strcmp(algo, "aes") == 0) {
             doit[D_CBC_128_AES] = doit[D_CBC_192_AES] = doit[D_CBC_256_AES] = 1;
-            continue;
+            algo_found = 1;
         }
         if (strcmp(algo, "camellia") == 0) {
             doit[D_CBC_128_CML] = doit[D_CBC_192_CML] = doit[D_CBC_256_CML] = 1;
-            continue;
+            algo_found = 1;
         }
         if (HAS_PREFIX(algo, "ecdsa")) {
             if (algo[sizeof("ecdsa") - 1] == '\0') {
                 memset(ecdsa_doit, 1, sizeof(ecdsa_doit));
-                continue;
+                algo_found = 1;
             }
             if (opt_found(algo, ecdsa_choices, &i)) {
                 ecdsa_doit[i] = 2;
-                continue;
+                algo_found = 1;
             }
         }
         if (HAS_PREFIX(algo, "ecdh")) {
             if (algo[sizeof("ecdh") - 1] == '\0') {
                 memset(ecdh_doit, 1, sizeof(ecdh_doit));
-                continue;
+                algo_found = 1;
             }
             if (opt_found(algo, ecdh_choices, &i)) {
                 ecdh_doit[i] = 2;
-                continue;
+                algo_found = 1;
             }
         }
         if (strcmp(algo, "eddsa") == 0) {
             memset(eddsa_doit, 1, sizeof(eddsa_doit));
-            continue;
+            algo_found = 1;
         }
         if (opt_found(algo, eddsa_choices, &i)) {
             eddsa_doit[i] = 2;
-            continue;
+            algo_found = 1;
         }
 #ifndef OPENSSL_NO_SM2
         if (strcmp(algo, "sm2") == 0) {
             memset(sm2_doit, 1, sizeof(sm2_doit));
-            continue;
+            algo_found = 1;
         }
         if (opt_found(algo, sm2_choices, &i)) {
             sm2_doit[i] = 2;
-            continue;
+            algo_found = 1;
         }
 #endif
         if (kem_locate(algo, &idx)) {
@@ -2131,10 +2127,11 @@ int speed_main(int argc, char **argv)
             do_sigs = 1;
             algo_found = 1;
         }
-        if (algo_found)
-            continue;
-        BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, algo);
-        goto end;
+
+        if (!algo_found) {
+            BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, algo);
+            goto end;
+        }
     }
 
     /* Sanity checks */
@@ -3584,7 +3581,7 @@ skip_hmac:
                 ERR_print_errors(bio_err);
             }
 
-            if (strncmp(kem_name, "RSA", 3) == 0) {
+            if (strncmp(kem_name, "rsa", 3) == 0) {
                 bits = atoi(kem_name + 3);
                 params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
                                                         &bits);
@@ -3597,7 +3594,7 @@ skip_hmac:
             }
 
             kem_gen_ctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(),
-                                               (strncmp(kem_name, "RSA", 3) == 0)?"RSA":
+                                               (strncmp(kem_name, "rsa", 3) == 0)?"RSA":
                                                 (strncmp(kem_name, "EC", 2) == 0)?"EC":
                                                  kem_name,
                                                app_get0_propq());
@@ -3619,7 +3616,7 @@ skip_hmac:
                                                         app_get0_propq());
             if ((kem_encaps_ctx == NULL)
                 || (EVP_PKEY_encapsulate_init(kem_encaps_ctx, NULL) <= 0)
-                || ((strncmp(kem_name, "RSA", 3) == 0
+                || ((strncmp(kem_name, "rsa", 3) == 0
                     && (EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "RSASVE") <= 0)))
                 || (((strncmp(kem_name, "EC", 2) == 0) 
                     || (strcmp(kem_name, "X25519") == 0) 
@@ -3649,7 +3646,7 @@ skip_hmac:
                                                         app_get0_propq());
             if ((kem_decaps_ctx == NULL)
                 || (EVP_PKEY_decapsulate_init(kem_decaps_ctx, NULL) <= 0) 
-                || ((strncmp(kem_name, "RSA", 3) == 0
+                || ((strncmp(kem_name, "rsa", 3) == 0
                   && (EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "RSASVE") <= 0)))
                 || (((strncmp(kem_name, "EC", 2) == 0)
                      || (strcmp(kem_name, "X25519") == 0)
@@ -3768,14 +3765,14 @@ skip_hmac:
             }
 
 
-            if (strncmp(sig_name, "RSA", 3) == 0) {
+            if (strncmp(sig_name, "rsa", 3) == 0) {
                 bits = atoi(sig_name + 3);
                 params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
                                                         &bits);
                 use_params = 1;
             }
 
-            if (strncmp(sig_name, "DSA", 3) == 0) {
+            if (strncmp(sig_name, "dsa", 3) == 0) {
                 ctx_params = EVP_PKEY_CTX_new_id(EVP_PKEY_DSA, NULL);
                 if ((ctx_params == NULL)
                     || (EVP_PKEY_paramgen_init(ctx_params) <= 0)
@@ -3793,7 +3790,7 @@ skip_hmac:
 
             if (sig_gen_ctx == NULL)
                 sig_gen_ctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(),
-                                      (strncmp(sig_name, "RSA", 3) == 0)?"RSA":sig_name,
+                                      (strncmp(sig_name, "rsa", 3) == 0)?"RSA":sig_name,
                                       app_get0_propq());
 
             if (!sig_gen_ctx || EVP_PKEY_keygen_init(sig_gen_ctx) <= 0
@@ -3815,7 +3812,7 @@ skip_hmac:
                                                       app_get0_propq());
             if ((sig_sign_ctx == NULL)
                 || (EVP_PKEY_sign_init(sig_sign_ctx) <= 0)
-                || ((strncmp(sig_name, "RSA", 3) == 0
+                || ((strncmp(sig_name, "rsa", 3) == 0
                   && (EVP_PKEY_CTX_set_rsa_padding(sig_sign_ctx,
                                                RSA_PKCS1_PADDING)  <= 0)))
                 || (EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len,
@@ -3842,7 +3839,7 @@ skip_hmac:
                                                         app_get0_propq());
             if ((sig_verify_ctx == NULL)
                 || (EVP_PKEY_verify_init(sig_verify_ctx) <= 0)
-                || ((strncmp(sig_name, "RSA", 3) == 0
+                || ((strncmp(sig_name, "rsa", 3) == 0
                   && (EVP_PKEY_CTX_set_rsa_padding(sig_verify_ctx,
                                                RSA_PKCS1_PADDING) <= 0)))) {
                 BIO_printf(bio_err,
