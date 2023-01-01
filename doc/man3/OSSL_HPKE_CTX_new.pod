@@ -521,7 +521,7 @@ This example demonstrates a minimal round-trip using HPKE.
         if (OSSL_HPKE_seal(sctx, ct, &ctlen, aad, aadlen, pt, ptlen) != 1)
             goto err;
 
-        /* receiver's actions - decrypt data using the recievers private key */
+        /* receiver's actions - decrypt data using the receivers private key */
         if ((rctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite,
                                       OSSL_HPKE_ROLE_RECEIVER,
                                       NULL, NULL)) == NULL)
