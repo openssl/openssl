@@ -32,7 +32,7 @@ BIO_err_is_non_fatal - send and receive multiple datagrams in a single call
 =head1 DESCRIPTION
 
 BIO_sendmmsg() and BIO_recvmmsg() functions can be used to send and receive
-multiple messages in a single call to a BIO. They are analagous to sendmmsg(2)
+multiple messages in a single call to a BIO. They are analogous to sendmmsg(2)
 and recvmmsg(2) on operating systems which provide those functions.
 
 The B<BIO_MSG> structure provides a subset of the functionality of the B<struct
