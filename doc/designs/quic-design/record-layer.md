@@ -564,7 +564,7 @@ struct ossl_record_method_st {
                       const char **longstr);
 
     /*
-     * Set new options or modify ones that were originaly specified in the
+     * Set new options or modify ones that were originally specified in the
      * new_record_layer call.
      */
     int (*set_options)(OSSL_RECORD_LAYER *rl, const OSSL_PARAM *options);
