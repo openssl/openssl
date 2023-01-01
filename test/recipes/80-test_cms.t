@@ -655,7 +655,7 @@ my @smime_cms_param_tests_autodigestmax = (
         "-keyopt", "rsa_padding_mode:pss", "-keyopt", "rsa_pss_saltlen:auto-digestmax",
         "-out", "{output}.cms" ],
       # digest is SHA-512, which produces 64, bytes of output, but an RSA-PSS
-      # signature with a 1024 bit RSA key can only accomodate 62
+      # signature with a 1024 bit RSA key can only accommodate 62
       sub { my %opts = @_; rsapssSaltlen("$opts{output}.cms") == 62; },
       [ "{cmd2}", @defaultprov, "-verify", "-in", "{output}.cms", "-inform", "PEM",
         "-CAfile", $smroot, "-out", "{output}.txt" ],
