@@ -710,11 +710,13 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
     CMS_EncryptedContentInfo *ec = ossl_cms_get0_env_enc_content(cms);
 
     /* Prevent mem leak on earlier CMS_decrypt_set1_{pkey_and_peer,password} */
-    OPENSSL_clear_free(ec->key, ec->keylen);
-    ec->key = NULL;
-    ec->keylen = 0;
+    if (ec != NULL) {
+        OPENSSL_clear_free(ec->key, ec->keylen);
+        ec->key = NULL;
+        ec->keylen = 0;
+    }
 
-    if (ris != NULL)
+    if (ris != NULL && ec != NULL)
         debug = ec->debug;
 
     cms_pkey_ri_type = ossl_cms_pkey_get_ri_type(pk);
@@ -828,9 +830,11 @@ int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
     CMS_EncryptedContentInfo *ec = ossl_cms_get0_env_enc_content(cms);
 
     /* Prevent mem leak on earlier CMS_decrypt_set1_{pkey_and_peer,password} */
-    OPENSSL_clear_free(ec->key, ec->keylen);
-    ec->key = NULL;
-    ec->keylen = 0;
+    if (ec != NULL) {
+        OPENSSL_clear_free(ec->key, ec->keylen);
+        ec->key = NULL;
+        ec->keylen = 0;
+    }
 
     for (i = 0; i < sk_CMS_RecipientInfo_num(ris); i++) {
         ri = sk_CMS_RecipientInfo_value(ris, i);
