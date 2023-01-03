@@ -21,6 +21,10 @@
 # if !defined(__power_set)
 #  define __power_set(a) (_system_configuration.implementation & (a))
 # endif
+/* Adding below if condition as __power_set is causing core dump with allow_vmx=0 */
+# if defined(__power_set)
+# undef __power_set
+# endif
 #endif
 #if defined(__APPLE__) && defined(__MACH__)
 # include <sys/types.h>
