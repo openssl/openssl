@@ -8,7 +8,7 @@ openssl-quic - OpenSSL QUIC
 
 OpenSSL 3.2 and later features support for the QUIC transport protocol.
 Currently, only client connectivity and a single stream is supported.
-This manpage describes the usage of QUIC client functionality for both existing
+This man page describes the usage of QUIC client functionality for both existing
 and new applications.
 
 QUIC functionality uses the standard SSL API. A QUIC connection is represented
@@ -21,7 +21,7 @@ When a QUIC connection is created, it has a single bidirectional stream
 associated with it. Calls to L<SSL_read(3)> and L<SSL_write(3)> on the QUIC
 connection SSL object read and write from that stream.
 
-The remainder of this manpage discusses, in order:
+The remainder of this man page discusses, in order:
 
 =over 4
 
@@ -114,7 +114,7 @@ the I/O state of the network BIO passed to the QUIC SSL object, but instead
 reflect the flow control state of the QUIC stream associated with the SSL
 object.
 
-When used in non-blocking mode, B<SSL_ERROR_WANT_READ> indicates that the
+When used in nonblocking mode, B<SSL_ERROR_WANT_READ> indicates that the
 receive part of a QUIC stream does not currently have any more data available to
 be read, and B<SSL_ERROR_WANT_WRITE> indicates that the stream's internal buffer
 is full.
@@ -266,7 +266,7 @@ access.
 
 Changes needed: The custom BIO must be re-architected to have datagram
 semantics. L<BIO_sendmmsg(3)> and L<BIO_recvmmsg(3)> must be implemented. These
-calls must operate in a non-blocking fashion. Optionally, implement the
+calls must operate in a nonblocking fashion. Optionally, implement the
 L<BIO_get_rpoll_descriptor(3)> and L<BIO_get_wpoll_descriptor(3)> methods if
 desired. Implementing these methods is required if blocking semantics at the SSL
 API level are desired.
@@ -277,12 +277,12 @@ API level are desired.
 
 An application must explicitly configure whether it wishes to use the SSL APIs
 in blocking mode or not. Traditionally, an SSL object has automatically operated
-in blocking or non-blocking mode based on whether the underlying network BIO
-operates in blocking or non-blocking mode. QUIC requires the use of a
-non-blocking network BIO, therefore the blocking mode at the application level
+in blocking or nonblocking mode based on whether the underlying network BIO
+operates in blocking or nonblocking mode. QUIC requires the use of a
+nonblocking network BIO, therefore the blocking mode at the application level
 must be explicitly configured by the application using the new
 L<SSL_set_blocking_mode(3)> API. The default mode is blocking. If an application
-wishes to use the SSL object APIs at application level in a non-blocking manner,
+wishes to use the SSL object APIs at application level in a nonblocking manner,
 it must add a call to L<SSL_set_blocking_mode(3)> to disable blocking mode.
 
 =item
@@ -326,7 +326,7 @@ discussed in B<CHANGES TO EXISTING APIS>. Depending on whether your application
 wishes to prioritise RFC conformance or rapid shutdown, consider using the new
 L<SSL_shutdown_ex(3)> API instead. See B<QUIC-SPECIFIC APIS> for details.
 
-=cut
+=back
 
 =head1 RECOMMENDED USAGE IN NEW APPLICATIONS
 
@@ -337,10 +337,10 @@ design decisions:
 
 =item
 
-Whether the application will use blocking or non-blocking I/O at the application
+Whether the application will use blocking or nonblocking I/O at the application
 level (configured using L<SSL_set_blocking_mode(3)>).
 
-If the application does non-blocking I/O at the application level it can choose
+If the application does nonblocking I/O at the application level it can choose
 to manage its own polling and event loop; see B<APPLICATION-DRIVEN EVENT LOOPS>.
 
 =item
@@ -371,7 +371,7 @@ can be used to provide a QUIC application error code when closing a connection.
 =head1 QUIC-SPECIFIC APIS
 
 This section details new APIs which are directly or indirectly related to QUIC.
-For details on the operation of each API, see the referenced manpages.
+For details on the operation of each API, see the referenced man pages.
 
 The following SSL APIs are new but relevant to both QUIC and DTLS:
 
@@ -413,7 +413,7 @@ will block.
 
 =item L<SSL_get_rpoll_descriptor(3)>, L<SSL_get_wpoll_descriptor(3)>
 
-These functions facilitate operation in non-blocking mode.
+These functions facilitate operation in nonblocking mode.
 
 When an SSL object is being used with an underlying network read BIO which
 supports polling, L<SSL_get_rpoll_descriptor(3)> outputs an OS resource which
@@ -426,7 +426,7 @@ L<SSL_want_net_read(3)> and L<SSL_want_net_write(3)> return 1, respectively.
 
 =item L<SSL_want_net_read(3)>, L<SSL_want_net_write(3)>
 
-These functions facilitate operation in non-blocking mode and are used in
+These functions facilitate operation in nonblocking mode and are used in
 conjunction with L<SSL_get_rpoll_descriptor(3)> and
 L<SSL_get_wpoll_descriptor(3)> respectively. They determine whether the
 respective poll descriptor is currently relevant for the purposes of polling.
@@ -549,7 +549,7 @@ multiple SSL objects in the same B<SSL_CTX>.
 
 =begin comment
 
-TODO(QUIC): Amend this manpage once thread assisted mode is supported.
+TODO(QUIC): Amend this man page once thread assisted mode is supported.
 
 =end comment
 
@@ -557,10 +557,10 @@ TODO(QUIC): Amend this manpage once thread assisted mode is supported.
 
 OpenSSL's QUIC implementation is designed to facilitate applications which wish
 to use the SSL APIs in a blocking fashion, but is also designed to facilitate
-applications which wish to use the SSL APIs in a non-blocking fashion and manage
+applications which wish to use the SSL APIs in a nonblocking fashion and manage
 their own event loops and polling directly. This is useful when it is desirable
 to host OpenSSL's QUIC implementation on top of an application's existing
-non-blocking I/O infrastructure.
+nonblocking I/O infrastructure.
 
 This is supported via the concept of poll descriptors; see
 L<BIO_get_rpoll_descriptor(3)> for details. Broadly, a B<BIO_POLL_DESCRIPTOR> is
@@ -577,7 +577,7 @@ interact with the SSL object as follows:
 
 =item
 
-It should provide read and write BIOs with non-blocking datagram semantics to
+It should provide read and write BIOs with nonblocking datagram semantics to
 the SSL object using L<SSL_set0_rbio(3)> and L<SSL_set0_wbio(3)>. This could be
 a BIO abstracting a network socket such as L<BIO_s_datagram(3)>, or a BIO
 abstracting some kind of memory buffer such as L<BIO_s_dgram_pair(3)>. Use of a
@@ -585,7 +585,7 @@ custom BIO is also possible.
 
 =item
 
-It should configure the SSL object into non-blocking mode by calling
+It should configure the SSL object into nonblocking mode by calling
 L<SSL_set_blocking_mode(3)>.
 
 =item
