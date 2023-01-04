@@ -102,6 +102,7 @@
 #  define CMP_R_UNEXPECTED_PKIBODY                         133
 #  define CMP_R_UNEXPECTED_PKISTATUS                       185
 #  define CMP_R_UNEXPECTED_PVNO                            153
+#  define CMP_R_UNEXPECTED_SENDER                          104
 #  define CMP_R_UNKNOWN_ALGORITHM_ID                       134
 #  define CMP_R_UNKNOWN_CERT_TYPE                          135
 #  define CMP_R_UNKNOWN_PKISTATUS                          186

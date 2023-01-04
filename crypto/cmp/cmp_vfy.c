@@ -175,8 +175,8 @@ static int check_name(const OSSL_CMP_CTX *ctx, int log_success,
     str = X509_NAME_oneline(actual_name, NULL, 0);
     if (X509_NAME_cmp(actual_name, expect_name) == 0) {
         if (log_success && str != NULL)
-            ossl_cmp_log2(INFO, ctx, " subject matches %s: %s", expect_desc,
-                          str);
+            ossl_cmp_log3(INFO, ctx, " %s matches %s: %s",
+                          actual_desc, expect_desc, str);
         OPENSSL_free(str);
         return 1;
     }
@@ -711,22 +711,33 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         return 0;
     hdr = OSSL_CMP_MSG_get0_header(msg);
 
-    /* validate sender name of received msg */
-    if (hdr->sender->type != GEN_DIRNAME) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);
-        return 0;
-    }
-    /*
-     * Compare actual sender name of response with expected sender name.
-     * Mitigates risk to accept misused PBM secret
-     * or misused certificate of an unauthorized entity of a trusted hierarchy.
-     */
+    /* If expected_sender is given, validate sender name of received msg */
     expected_sender = ctx->expected_sender;
     if (expected_sender == NULL && ctx->srvCert != NULL)
         expected_sender = X509_get_subject_name(ctx->srvCert);
-    if (!check_name(ctx, 0, "sender DN field", hdr->sender->d.directoryName,
-                    "expected sender", expected_sender))
-        return 0;
+    if (expected_sender != NULL) {
+        const X509_NAME *actual_sender;
+        char *str;
+
+        if (hdr->sender->type != GEN_DIRNAME) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);
+            return 0;
+        }
+        actual_sender = hdr->sender->d.directoryName;
+        /*
+         * Compare actual sender name of response with expected sender name.
+         * Mitigates risk of accepting misused PBM secret or
+         * misused certificate of an unauthorized entity of a trusted hierarchy.
+         */
+        if (!check_name(ctx, 0, "sender DN field", actual_sender,
+                        "expected sender", expected_sender)) {
+            str = X509_NAME_oneline(actual_sender, NULL, 0);
+            ERR_raise_data(ERR_LIB_CMP, CMP_R_UNEXPECTED_SENDER,
+                           str != NULL ? str : "<unknown>");
+            OPENSSL_free(str);
+            return 0;
+        }
+    }
     /* Note: if recipient was NULL-DN it could be learned here if needed */
 
     num_added = sk_X509_num(msg->extraCerts);
