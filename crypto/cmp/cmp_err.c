@@ -152,6 +152,7 @@ static const ERR_STRING_DATA CMP_str_reasons[] = {
     "unexpected pkistatus"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_UNEXPECTED_POLLREQ), "unexpected pollreq"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_UNEXPECTED_PVNO), "unexpected pvno"},
+    {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_UNEXPECTED_SENDER), "unexpected sender"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_UNKNOWN_ALGORITHM_ID),
     "unknown algorithm id"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_UNKNOWN_CERT_TYPE), "unknown cert type"},
