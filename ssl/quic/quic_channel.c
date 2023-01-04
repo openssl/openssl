@@ -1036,6 +1036,8 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
          * If the handshake layer gave us a new secret, we need to do RX again
          * because packets that were not previously processable and were
          * deferred might now be processable.
+         *
+         * TODO(QUIC): Consider handling this in the yield_secret callback.
          */
     } while (ch->have_new_rx_secret);
 

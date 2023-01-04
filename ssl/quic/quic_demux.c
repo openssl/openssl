@@ -541,8 +541,6 @@ int ossl_quic_demux_inject(QUIC_DEMUX *demux,
         return 0;
 
     urxe = ossl_list_urxe_head(&demux->urx_free);
-    if (buf_len > urxe->alloc_len)
-        return 0;
 
     assert(urxe->demux_state == URXE_DEMUX_STATE_FREE);
 
