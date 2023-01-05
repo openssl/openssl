@@ -2671,6 +2671,10 @@ DEPEND[html/man3/SSL_state_string.html]=man3/SSL_state_string.pod
 GENERATE[html/man3/SSL_state_string.html]=man3/SSL_state_string.pod
 DEPEND[man/man3/SSL_state_string.3]=man3/SSL_state_string.pod
 GENERATE[man/man3/SSL_state_string.3]=man3/SSL_state_string.pod
+DEPEND[html/man3/SSL_stream_conclude.html]=man3/SSL_stream_conclude.pod
+GENERATE[html/man3/SSL_stream_conclude.html]=man3/SSL_stream_conclude.pod
+DEPEND[man/man3/SSL_stream_conclude.3]=man3/SSL_stream_conclude.pod
+GENERATE[man/man3/SSL_stream_conclude.3]=man3/SSL_stream_conclude.pod
 DEPEND[html/man3/SSL_tick.html]=man3/SSL_tick.pod
 GENERATE[html/man3/SSL_tick.html]=man3/SSL_tick.pod
 DEPEND[man/man3/SSL_tick.3]=man3/SSL_tick.pod
@@ -3507,6 +3511,7 @@ html/man3/SSL_set_shutdown.html \
 html/man3/SSL_set_verify_result.html \
 html/man3/SSL_shutdown.html \
 html/man3/SSL_state_string.html \
+html/man3/SSL_stream_conclude.html \
 html/man3/SSL_tick.html \
 html/man3/SSL_want.html \
 html/man3/SSL_write.html \
@@ -4129,6 +4134,7 @@ man/man3/SSL_set_shutdown.3 \
 man/man3/SSL_set_verify_result.3 \
 man/man3/SSL_shutdown.3 \
 man/man3/SSL_state_string.3 \
+man/man3/SSL_stream_conclude.3 \
 man/man3/SSL_tick.3 \
 man/man3/SSL_want.3 \
 man/man3/SSL_write.3 \
