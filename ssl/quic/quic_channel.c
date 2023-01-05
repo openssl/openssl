@@ -500,9 +500,9 @@ static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
         /* TX */
         if (enc_level <= ch->tx_enc_level)
             /*
-            * Does not make sense for us to try and provision an EL we have already
-            * attained.
-            */
+             * Does not make sense for us to try and provision an EL we have already
+             * attained.
+             */
             return 0;
 
         if (!ossl_qtx_provide_secret(ch->qtx, enc_level,
@@ -515,15 +515,15 @@ static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
         /* RX */
         if (enc_level <= ch->rx_enc_level)
             /*
-            * Does not make sense for us to try and provision an EL we have already
-            * attained.
-            */
+             * Does not make sense for us to try and provision an EL we have already
+             * attained.
+             */
             return 0;
 
         /*
-        * Ensure all crypto streams for previous ELs are now empty of available
-        * data.
-        */
+         * Ensure all crypto streams for previous ELs are now empty of available
+         * data.
+         */
         for (i = QUIC_ENC_LEVEL_INITIAL; i < enc_level; ++i)
             if (!crypto_ensure_empty(ch->crypto_recv[ossl_quic_enc_level_to_pn_space(i)])) {
                 /* Protocol violation (RFC 9001 s. 4.1.3) */
@@ -1164,11 +1164,13 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
     switch (ch->qrx_pkt->hdr->type) {
         case QUIC_PKT_TYPE_RETRY:
             if (ch->doing_retry)
-                /* It is not allowed to ask a client to do a retry more than
-                 * once. */
+                /*
+                 * It is not allowed to ask a client to do a retry more than
+                 * once.
+                 */
                 return;
 
-            /* TODO if server */
+            /* TODO(QUIC): handle server mode */
 
             if (ch->qrx_pkt->hdr->len <= QUIC_RETRY_INTEGRITY_TAG_LEN)
                 /* Packets with zero-length Retry Tokens are invalid. */
@@ -1200,7 +1202,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
             break;
 
         case QUIC_PKT_TYPE_0RTT:
-            /* TODO if server */
+            /* TODO(QQUIC): handle if server */
             /* Clients should never receive 0-RTT packets */
             break;
 
@@ -1362,7 +1364,7 @@ int ossl_quic_channel_set_net_wbio(QUIC_CHANNEL *ch, BIO *net_wbio)
 
 int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 {
-    /* TODO SERVER */
+    /* TODO(QUIC): handle server */
     if (ch->state != QUIC_CHANNEL_STATE_IDLE)
         /* Calls to connect are idempotent */
         return 1;
