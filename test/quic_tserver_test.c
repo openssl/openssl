@@ -214,11 +214,18 @@ static int test_tserver(void)
             if (!TEST_false(ret))
                 goto err;
 
-            if (!TEST_int_eq(SSL_get_error(c_ssl, ret), SSL_ERROR_ZERO_RETURN))
-                goto err;
+            /*
+             * Allow the implementation to take as long as it wants to finally
+             * notice EOS. Account for varied timings in OS networking stacks.
+             */
+            if (SSL_get_error(c_ssl, ret) != SSL_ERROR_WANT_READ) {
+                if (!TEST_int_eq(SSL_get_error(c_ssl, ret),
+                                 SSL_ERROR_ZERO_RETURN))
+                    goto err;
 
-            /* DONE */
-            break;
+                /* DONE */
+                break;
+            }
         }
 
         /*
