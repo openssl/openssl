@@ -42,7 +42,15 @@ int bn_mul_mont_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     int num = mont->N.top;
 
 #if defined(OPENSSL_BN_ASM_MONT) && defined(MONT_WORD)
+# if defined(__riscv) && __riscv_xlen == 64 && defined(__riscv_v)
+    // We force all mul_mont into bn_mul_mont
+    // this heavily relies on the fact that
+    // even after shrink a->top, a->d[top] is still accessible
+    // To achieve so we avoided BN_value_one() in mod_exp
+    if (1) {
+# else
     if (num > 1 && a->top == num && b->top == num) {
+# endif
         if (bn_wexpand(r, num) == NULL)
             return 0;
         if (bn_mul_mont(r->d, a->d, b->d, mont->N.d, mont->n0, num)) {
@@ -163,11 +171,24 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
                        BN_CTX *ctx)
 {
     int retn;
+# if defined(__riscv) && __riscv_xlen == 64 && defined(__riscv_v)
+    BIGNUM *T = BN_new();
+    // T = 1 (not in minimal representation)
+    BN_copy(T, a);
+    for(int i = 0; i != T->top; ++i) {
+        T->d[i] = 0;
+    }
+    T->d[0] = 1;
 
+    retn = bn_mul_mont_fixed_top(ret, a, T, mont, ctx);
+
+    BN_free(T);
+#else
     retn = bn_from_mont_fixed_top(ret, a, mont, ctx);
     bn_correct_top(ret);
     bn_check_top(ret);
 
+#endif
     return retn;
 }
 
@@ -289,7 +310,14 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
         if (BN_get_flags(mod, BN_FLG_CONSTTIME) != 0)
             BN_set_flags(&tmod, BN_FLG_CONSTTIME);
 
+# if defined(__riscv) && __riscv_xlen == 64 && defined(__riscv_v)
+        if (BN_num_bits(mod) <= 256)
+            mont->ri = 272; // 256 + 16
+        else
+            mont->ri = 4112; // 4096 + 16
+# else
         mont->ri = (BN_num_bits(mod) + (BN_BITS2 - 1)) / BN_BITS2 * BN_BITS2;
+# endif
 
 # if defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32)
         /*
