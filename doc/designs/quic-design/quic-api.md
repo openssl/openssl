@@ -394,7 +394,8 @@ Should not require any changes.
 
 - `SSL_MODE_ENABLE_PARTIAL_WRITE`: Implemented. If this mode is set during a
   non-partial-write `SSL_write` operation spanning multiple `SSL_write` calls,
-  this operation is aborted and partial write mode begins immediately.
+  this mode does not take effect until the non-partial write operation is
+  completed.
 
 - `SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER`: Implemented.
 
@@ -423,9 +424,6 @@ TBD: Should any of these be implemented as ctrls rather than actual functions?
 Advances the QUIC state machine to the extent feasible, potentially performing
 network I/O. Also compatible with DTLSv1 and supercedes `DTLSv1_handle_timeout`
 for all use cases.
-
-TBD: Should we just map this to DTLS_CTRL_HANDLE_TIMEOUT internally (and maybe
-alias the CTRL #define)?
 
 TBD: Deprecate `DTLSv1_get_timeout`?
 TBD: Deprecate `DTLSv1_handle_timeout`?
@@ -1185,3 +1183,12 @@ Where connection closure is initiated remotely rather than locally, only the
 draining state is relevant. Since we conclude above that we do not need to
 implement the draining state on the client side, this means that connection
 closure can be completed immediately in the case of a remote closure.
+
+**Q. Should we just map `SSL_tick` to `DTLS_CTRL_HANDLE_TIMEOUT` internally?**
+
+A. No, since the infinite time representation is different between the two
+calls.
+
+**Q. How should `STOP_SENDING` be supported?**
+
+TODO: Determine how `STOP_SENDING` should be supported.
