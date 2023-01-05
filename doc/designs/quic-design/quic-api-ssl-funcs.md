@@ -622,7 +622,6 @@ Notes:
 | `SSL_tick` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | `SSL_get_tick_timeout` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | `SSL_get_blocking_mode` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
-| `SSL_get_blocking_mode` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | `SSL_set_blocking_mode` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | `SSL_get_rpoll_descriptor` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
 | `SSL_get_wpoll_descriptor` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟢Done |
