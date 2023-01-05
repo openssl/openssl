@@ -246,8 +246,9 @@ static int parse_value(OSSL_LIB_CTX *ctx, const char *t[],
         r = parse_oct(&s, res);
     } else if (ossl_isdigit(*s)) {
         return parse_number(t, res);
-    } else if (ossl_isalpha(*s))
+    } else {
         return parse_unquoted(ctx, t, res, create);
+    }
     if (r)
         *t = s;
     return r;

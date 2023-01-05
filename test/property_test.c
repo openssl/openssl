@@ -141,6 +141,9 @@ static const struct {
     { "n=0x0", "n=0", 1 },
     { "n=0, sky=blue", "?n=0, sky=blue", 2 },
     { "n=1, sky=blue", "?n=0, sky=blue", 1 },
+    /* Try less obvious names and values too */
+    { "x.strange=something!, n=1", "?n=0, x.strange=something!", 1 },
+    { "x.strange=@something!, n=1", "?n=0, x.strange=@something!", 1 },
 };
 
 static int test_property_parse(int n)
@@ -151,7 +154,7 @@ static int test_property_parse(int n)
 
     if (TEST_ptr(store = ossl_method_store_new(NULL))
         && add_property_names("sky", "groan", "cold", "today", "tomorrow", "n",
-                              NULL)
+                              "x.strange", NULL)
         && TEST_ptr(p = ossl_parse_property(NULL, parser_tests[n].defn))
         && TEST_ptr(q = ossl_parse_query(NULL, parser_tests[n].query, 0))
         && TEST_int_eq(ossl_property_match_count(q, p), parser_tests[n].e))
