@@ -88,9 +88,9 @@ B<SSL_ERROR_WANT_WRITE> have different but largely compatible semantics. Since
 QUIC implements its own flow control and uses UDP datagrams, backpressure
 conditions in terms of the underlying BIO providing network I/O are not directly
 relevant to the circumstances in which these errors are produced. In particular,
-B<SSL_ERROR_WANT_WRITE> indicates that the internal send buffer for a given QUIC
-stream has been filled. Likewise, B<SSL_ERROR_WANT_READ> indicates that the
-internal receive buffer for a given QUIC stream is empty.
+B<SSL_ERROR_WANT_WRITE> indicates that the OpenSSL internal send buffer for a
+given QUIC stream has been filled. Likewise, B<SSL_ERROR_WANT_READ> indicates
+that the OpenSSL internal receive buffer for a given QUIC stream is empty.
 
 It is safe to call SSL_read() or SSL_read_ex() when more data is available
 even when the call that set this error was an SSL_write() or SSL_write_ex().

@@ -8,7 +8,7 @@ SSL_set_initial_peer_addr - set the initial peer address for a QUIC connection
 
  #include <openssl/ssl.h>
 
- __owur int SSL_set_initial_peer_addr(SSL *s, const BIO_ADDR *addr);
+ int SSL_set_initial_peer_addr(SSL *s, const BIO_ADDR *addr);
 
 =head1 DESCRIPTION
 

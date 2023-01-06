@@ -9,8 +9,8 @@ QUIC SSL object
 
  #include <openssl/ssl.h>
 
- __owur int SSL_set_blocking_mode(SSL *s, int blocking);
- __owur int SSL_get_blocking_mode(SSL *s);
+ int SSL_set_blocking_mode(SSL *s, int blocking);
+ int SSL_get_blocking_mode(SSL *s);
 
 =head1 DESCRIPTION
 

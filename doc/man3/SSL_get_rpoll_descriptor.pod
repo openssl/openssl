@@ -10,10 +10,10 @@ network I/O can be performed
 
  #include <openssl/ssl.h>
 
- __owur int SSL_get_rpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc);
- __owur int SSL_get_wpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc);
- __owur int SSL_want_net_read(SSL *s);
- __owur int SSL_want_net_write(SSL *s);
+ int SSL_get_rpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc);
+ int SSL_get_wpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc);
+ int SSL_want_net_read(SSL *s);
+ int SSL_want_net_write(SSL *s);
 
 =head1 DESCRIPTION
 
