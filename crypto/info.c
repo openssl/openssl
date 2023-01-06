@@ -131,7 +131,7 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
 #ifdef OPENSSL_RAND_SEED_NONE
         add_seeds_string("none");
 #endif
-#ifdef OPENSSL_RAND_SEED_RTDSC
+#ifdef OPENSSL_RAND_SEED_RDTSC
         add_seeds_string("stdsc");
 #endif
 #ifdef OPENSSL_RAND_SEED_RDCPU
