@@ -8,7 +8,7 @@ SSL_get_tick_timeout - determine when an SSL object next needs to be ticked
 
  #include <openssl/ssl.h>
 
- __owur int SSL_get_tick_timeout(SSL *s, struct timeval *tv);
+ int SSL_get_tick_timeout(SSL *s, struct timeval *tv);
 
 =head1 DESCRIPTION
 
