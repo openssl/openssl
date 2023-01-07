@@ -615,15 +615,6 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
     top = m->top;
 
-    if (in_mont != NULL && BN_is_zero(&in_mont->N)) {
-        ERR_raise(ERR_LIB_BN, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
-    }
-    if ((unsigned int)top > INT_MAX / sizeof(m->d[0]) / (1 << 8)) {
-        /* Prevent overflowing the powerbufLen computation below */
-        ERR_raise(ERR_LIB_BN, BN_R_BIGNUM_TOO_LONG);
-        return 0;
-    }
     /*
      * Use all bits stored in |p|, rather than |BN_num_bits|, so we do not leak
      * whether the top bits are zero.
