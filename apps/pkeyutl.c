@@ -727,7 +727,8 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
                        "Error: unable to determine file size for oneshot operation\n");
             goto end;
         }
-        mbuf = app_malloc(filesize, "oneshot sign/verify buffer");
+        mbuf = app_mmap(filesize, "oneshot sign/verify buffer");
+
         switch (pkey_op) {
         case EVP_PKEY_OP_VERIFY:
             buf_len = BIO_read(in, mbuf, filesize);
