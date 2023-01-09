@@ -1003,6 +1003,14 @@ DEPEND[html/man3/DTLS_set_timer_cb.html]=man3/DTLS_set_timer_cb.pod
 GENERATE[html/man3/DTLS_set_timer_cb.html]=man3/DTLS_set_timer_cb.pod
 DEPEND[man/man3/DTLS_set_timer_cb.3]=man3/DTLS_set_timer_cb.pod
 GENERATE[man/man3/DTLS_set_timer_cb.3]=man3/DTLS_set_timer_cb.pod
+DEPEND[html/man3/DTLSv1_get_timeout.html]=man3/DTLSv1_get_timeout.pod
+GENERATE[html/man3/DTLSv1_get_timeout.html]=man3/DTLSv1_get_timeout.pod
+DEPEND[man/man3/DTLSv1_get_timeout.3]=man3/DTLSv1_get_timeout.pod
+GENERATE[man/man3/DTLSv1_get_timeout.3]=man3/DTLSv1_get_timeout.pod
+DEPEND[html/man3/DTLSv1_handle_timeout.html]=man3/DTLSv1_handle_timeout.pod
+GENERATE[html/man3/DTLSv1_handle_timeout.html]=man3/DTLSv1_handle_timeout.pod
+DEPEND[man/man3/DTLSv1_handle_timeout.3]=man3/DTLSv1_handle_timeout.pod
+GENERATE[man/man3/DTLSv1_handle_timeout.3]=man3/DTLSv1_handle_timeout.pod
 DEPEND[html/man3/DTLSv1_listen.html]=man3/DTLSv1_listen.pod
 GENERATE[html/man3/DTLSv1_listen.html]=man3/DTLSv1_listen.pod
 DEPEND[man/man3/DTLSv1_listen.3]=man3/DTLSv1_listen.pod
@@ -3082,6 +3090,8 @@ html/man3/DSA_sign.html \
 html/man3/DSA_size.html \
 html/man3/DTLS_get_data_mtu.html \
 html/man3/DTLS_set_timer_cb.html \
+html/man3/DTLSv1_get_timeout.html \
+html/man3/DTLSv1_handle_timeout.html \
 html/man3/DTLSv1_listen.html \
 html/man3/ECDSA_SIG_new.html \
 html/man3/ECDSA_sign.html \
@@ -3702,6 +3712,8 @@ man/man3/DSA_sign.3 \
 man/man3/DSA_size.3 \
 man/man3/DTLS_get_data_mtu.3 \
 man/man3/DTLS_set_timer_cb.3 \
+man/man3/DTLSv1_get_timeout.3 \
+man/man3/DTLSv1_handle_timeout.3 \
 man/man3/DTLSv1_listen.3 \
 man/man3/ECDSA_SIG_new.3 \
 man/man3/ECDSA_sign.3 \
