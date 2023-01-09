@@ -57,9 +57,11 @@ static int ch_discard_el(QUIC_CHANNEL *ch,
                          uint32_t enc_level);
 static void ch_on_idle_timeout(QUIC_CHANNEL *ch);
 static void ch_update_idle(QUIC_CHANNEL *ch);
+static void ch_raise_net_error(QUIC_CHANNEL *ch);
 static void ch_on_terminating_timeout(QUIC_CHANNEL *ch);
 static void ch_start_terminating(QUIC_CHANNEL *ch,
-                                 const QUIC_TERMINATE_CAUSE *tcause);
+                                 const QUIC_TERMINATE_CAUSE *tcause,
+                                 int force_immediate);
 
 static int gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len, QUIC_CONN_ID *cid)
 {
@@ -1071,16 +1073,25 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
     /* Determine the time at which we should next be ticked. */
     res->tick_deadline = ch_determine_next_tick_deadline(ch);
 
-    /* Always process network input. */
-    res->want_net_read = 1;
+    /*
+     * Always process network input unless we are now terminated.
+     * Although we had not terminated at the beginning of this tick, network
+     * errors in ch_rx_pre() or ch_tx() may have caused us to transition to the
+     * Terminated state.
+     */
+    res->want_net_read = !ossl_quic_channel_is_terminated(ch);
 
     /* We want to write to the network if we have any in our queue. */
-    res->want_net_write = (ossl_qtx_get_queue_len_datagrams(ch->qtx) > 0);
+    res->want_net_write
+        = (!ossl_quic_channel_is_terminated(ch)
+           && ossl_qtx_get_queue_len_datagrams(ch->qtx) > 0);
 }
 
 /* Process incoming datagrams, if any. */
 static void ch_rx_pre(QUIC_CHANNEL *ch)
 {
+    int ret;
+
     if (!ch->have_sent_any_pkt)
         return;
 
@@ -1088,7 +1099,16 @@ static void ch_rx_pre(QUIC_CHANNEL *ch)
      * Get DEMUX to BIO_recvmmsg from the network and queue incoming datagrams
      * to the appropriate QRX instance.
      */
-    ossl_quic_demux_pump(ch->demux); /* best effort */
+    ret = ossl_quic_demux_pump(ch->demux);
+    if (ret == QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL)
+        /*
+         * We don't care about transient failure, but permanent failure means we
+         * should tear down the connection as though a protocol violation
+         * occurred. Skip straight to the Terminating state as there is no point
+         * trying to send CONNECTION_CLOSE frames if the network BIO is not
+         * operating correctly.
+         */
+        ch_raise_net_error(ch);
 }
 
 /* Process queued incoming packets and handle frames, if any. */
@@ -1245,12 +1265,33 @@ static int ch_tx(QUIC_CHANNEL *ch)
      * Best effort. In particular if TXP fails for some reason we should still
      * flush any queued packets which we already generated.
      */
-    if (ossl_quic_tx_packetiser_generate(ch->txp,
-                                         TX_PACKETISER_ARCHETYPE_NORMAL)
-        == TX_PACKETISER_RES_SENT_PKT)
-        ch->have_sent_any_pkt = 1;
+    switch (ossl_quic_tx_packetiser_generate(ch->txp,
+                                             TX_PACKETISER_ARCHETYPE_NORMAL)) {
+    case TX_PACKETISER_RES_SENT_PKT:
+        ch->have_sent_any_pkt = 1; /* Packet was sent */
+        break;
+    case TX_PACKETISER_RES_NO_PKT:
+        break; /* No packet was sent */
+    default:
+        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
+                                               "internal error");
+        break; /* Internal failure (e.g.  allocation, assertion) */
+    }
 
-    ossl_qtx_flush_net(ch->qtx); /* best effort */
+    /* Flush packets to network. */
+    switch (ossl_qtx_flush_net(ch->qtx)) {
+    case QTX_FLUSH_NET_RES_OK:
+    case QTX_FLUSH_NET_RES_TRANSIENT_FAIL:
+        /* Best effort, done for now. */
+        break;
+
+    case QTX_FLUSH_NET_RES_PERMANENT_FAIL:
+    default:
+        /* Permanent underlying network BIO, start terminating. */
+        ch_raise_net_error(ch);
+        break;
+    }
+
     return 1;
 }
 
@@ -1259,6 +1300,9 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
 {
     OSSL_TIME deadline;
     uint32_t pn_space;
+
+    if (ossl_quic_channel_is_terminated(ch))
+        return ossl_time_infinite();
 
     deadline = ossl_ackm_get_loss_detection_deadline(ch->ackm);
     if (ossl_time_is_zero(deadline))
@@ -1404,7 +1448,7 @@ void ossl_quic_channel_local_close(QUIC_CHANNEL *ch)
         return;
 
     tcause.app = 1;
-    ch_start_terminating(ch, &tcause);
+    ch_start_terminating(ch, &tcause, 0);
 }
 
 static void free_token(const unsigned char *buf, size_t buf_len, void *arg)
@@ -1552,7 +1596,8 @@ int ossl_quic_channel_on_handshake_confirmed(QUIC_CHANNEL *ch)
  * in it.
  */
 static void ch_start_terminating(QUIC_CHANNEL *ch,
-                                 const QUIC_TERMINATE_CAUSE *tcause)
+                                 const QUIC_TERMINATE_CAUSE *tcause,
+                                 int force_immediate)
 {
     switch (ch->state) {
     default:
@@ -1562,34 +1607,47 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
         break;
 
     case QUIC_CHANNEL_STATE_ACTIVE:
-        ch->state = tcause->remote ? QUIC_CHANNEL_STATE_TERMINATING_DRAINING
-                                   : QUIC_CHANNEL_STATE_TERMINATING_CLOSING;
         ch->terminate_cause = *tcause;
-        ch->terminate_deadline
-            = ossl_time_add(ossl_time_now(),
-                            ossl_time_multiply(ossl_ackm_get_pto_duration(ch->ackm),
-                                               3));
 
-        if (!tcause->remote) {
-            OSSL_QUIC_FRAME_CONN_CLOSE f = {0};
+        if (!force_immediate) {
+            ch->state = tcause->remote ? QUIC_CHANNEL_STATE_TERMINATING_DRAINING
+                                       : QUIC_CHANNEL_STATE_TERMINATING_CLOSING;
+            ch->terminate_deadline
+                = ossl_time_add(ossl_time_now(),
+                                ossl_time_multiply(ossl_ackm_get_pto_duration(ch->ackm),
+                                                   3));
 
-            /* best effort */
-            f.error_code = ch->terminate_cause.error_code;
-            f.frame_type = ch->terminate_cause.frame_type;
-            f.is_app     = ch->terminate_cause.app;
-            ossl_quic_tx_packetiser_schedule_conn_close(ch->txp, &f);
-            ch->conn_close_queued = 1;
+            if (!tcause->remote) {
+                OSSL_QUIC_FRAME_CONN_CLOSE f = {0};
+
+                /* best effort */
+                f.error_code = ch->terminate_cause.error_code;
+                f.frame_type = ch->terminate_cause.frame_type;
+                f.is_app     = ch->terminate_cause.app;
+                ossl_quic_tx_packetiser_schedule_conn_close(ch->txp, &f);
+                ch->conn_close_queued = 1;
+            }
+        } else {
+            ch_on_terminating_timeout(ch);
         }
         break;
 
     case QUIC_CHANNEL_STATE_TERMINATING_CLOSING:
-        if (tcause->remote)
+        if (force_immediate)
+            ch_on_terminating_timeout(ch);
+        else if (tcause->remote)
             ch->state = QUIC_CHANNEL_STATE_TERMINATING_DRAINING;
 
         break;
 
     case QUIC_CHANNEL_STATE_TERMINATING_DRAINING:
-        /* We remain here until the timout expires. */
+        /*
+         * Other than in the force-immediate case, we remain here until the
+         * timout expires.
+         */
+        if (force_immediate)
+            ch_on_terminating_timeout(ch);
+
         break;
 
     case QUIC_CHANNEL_STATE_TERMINATED:
@@ -1612,7 +1670,20 @@ void ossl_quic_channel_on_remote_conn_close(QUIC_CHANNEL *ch,
     tcause.error_code = f->error_code;
     tcause.frame_type = f->frame_type;
 
-    ch_start_terminating(ch, &tcause);
+    ch_start_terminating(ch, &tcause, 0);
+}
+
+static void ch_raise_net_error(QUIC_CHANNEL *ch)
+{
+    QUIC_TERMINATE_CAUSE tcause = {0};
+
+    tcause.error_code = QUIC_ERR_INTERNAL_ERROR;
+
+    /*
+     * Skip Terminating state and go directly to Terminated, no point trying to
+     * send CONNECTION_CLOSE if we cannot communicate.
+     */
+    ch_start_terminating(ch, &tcause, 1);
 }
 
 void ossl_quic_channel_raise_protocol_error(QUIC_CHANNEL *ch,
@@ -1625,7 +1696,7 @@ void ossl_quic_channel_raise_protocol_error(QUIC_CHANNEL *ch,
     tcause.error_code = error_code;
     tcause.frame_type = frame_type;
 
-    ch_start_terminating(ch, &tcause);
+    ch_start_terminating(ch, &tcause, 0);
 }
 
 /*
