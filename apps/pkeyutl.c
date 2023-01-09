@@ -14,6 +14,7 @@
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #define KEY_NONE        0
 #define KEY_PRIVKEY     1
@@ -404,7 +405,6 @@ int pkeyutl_main(int argc, char **argv)
 
     if (sigfile != NULL) {
         BIO *sigbio = BIO_new_file(sigfile, "rb");
-
         if (sigbio == NULL) {
             BIO_printf(bio_err, "Can't open signature file %s\n", sigfile);
             goto end;
@@ -727,7 +727,11 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
                        "Error: unable to determine file size for oneshot operation\n");
             goto end;
         }
+#ifdef _POSIX_MAPPED_FILES
+	mbuf = app_mmap(filesize, "oneshot sign/verify buffer");
+#else
         mbuf = app_malloc(filesize, "oneshot sign/verify buffer");
+#endif
         switch (pkey_op) {
         case EVP_PKEY_OP_VERIFY:
             buf_len = BIO_read(in, mbuf, filesize);

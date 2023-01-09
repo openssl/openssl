@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 # include <fcntl.h>
@@ -651,6 +652,16 @@ void app_bail_out(char *fmt, ...)
     va_end(args);
     ERR_print_errors(bio_err);
     exit(EXIT_FAILURE);
+}
+
+void *app_mmap(size_t sz, const char *what) {
+	void* ptr = mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	if(ptr == MAP_FAILED){
+        	app_bail_out("%s: Could not allocate %zu bytes for %s\n",opt_getprog(), sz, what);
+     	}
+ 	  
+	return ptr;
+	    
 }
 
 void *app_malloc(size_t sz, const char *what)
