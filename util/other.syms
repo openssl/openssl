@@ -264,6 +264,8 @@ DES_ede2_cfb64_encrypt                  define
 DES_ede2_ofb64_encrypt                  define
 DTLS_get_link_min_mtu                   define
 DTLS_set_link_mtu                       define
+DTLSv1_get_timeout                      define
+DTLSv1_handle_timeout                   define
 ENGINE_cleanup                          define deprecated 1.1.0
 ERR_FATAL_ERROR                         define
 ERR_GET_LIB                             define
