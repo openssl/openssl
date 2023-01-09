@@ -210,8 +210,27 @@ void ossl_qtx_finish_dgram(OSSL_QTX *qtx);
  * is desired. The queue is drained into the OS's sockets as much as possible.
  * To determine if there is still data to be sent after calling this function,
  * use ossl_qtx_get_queue_len_bytes().
+ *
+ * Returns one of the following values:
+ *
+ *   QTX_FLUSH_NET_RES_OK
+ *      Either no packets are currently queued for transmission,
+ *      or at least one packet was successfully submitted.
+ *
+ *   QTX_FLUSH_NET_RES_TRANSIENT_FAIL
+ *      The underlying network write BIO indicated a transient error
+ *      (e.g. buffers full).
+ *
+ *   QTX_FLUSH_NET_RES_PERMANENT_FAIL
+ *      Internal error (e.g. assertion or allocation error)
+ *      or the underlying network write BIO indicated a non-transient
+ *      error.
  */
-void ossl_qtx_flush_net(OSSL_QTX *qtx);
+#define QTX_FLUSH_NET_RES_OK                1
+#define QTX_FLUSH_NET_RES_TRANSIENT_FAIL    (-1)
+#define QTX_FLUSH_NET_RES_PERMANENT_FAIL    (-2)
+
+int ossl_qtx_flush_net(OSSL_QTX *qtx);
 
 /*
  * Diagnostic function. If there is any datagram pending transmission, pops it

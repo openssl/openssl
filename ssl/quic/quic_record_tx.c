@@ -812,14 +812,18 @@ static void txe_to_msg(TXE *txe, BIO_MSG *msg)
 
 #define MAX_MSGS_PER_SEND   32
 
-void ossl_qtx_flush_net(OSSL_QTX *qtx)
+int ossl_qtx_flush_net(OSSL_QTX *qtx)
 {
     BIO_MSG msg[MAX_MSGS_PER_SEND];
-    size_t wr, i;
+    size_t wr, i, total_written = 0;
     TXE *txe;
+    int res;
+
+    if (ossl_list_txe_head(&qtx->pending) == NULL)
+        return QTX_FLUSH_NET_RES_OK; /* Nothing to send. */
 
     if (qtx->bio == NULL)
-        return;
+        return QTX_FLUSH_NET_RES_PERMANENT_FAIL;
 
     for (;;) {
         for (txe = ossl_list_txe_head(&qtx->pending), i = 0;
@@ -829,21 +833,46 @@ void ossl_qtx_flush_net(OSSL_QTX *qtx)
 
         if (!i)
             /* Nothing to send. */
-            return;
+            break;
 
-        if (!BIO_sendmmsg(qtx->bio, msg, sizeof(BIO_MSG), i, 0, &wr) || wr == 0)
+        ERR_set_mark();
+        res = BIO_sendmmsg(qtx->bio, msg, sizeof(BIO_MSG), i, 0, &wr);
+        if (res && wr == 0) {
+            /*
+             * Treat 0 messages sent as a transient error and just stop for now.
+             */
+            ERR_clear_last_mark();
+            break;
+        } else if (!res) {
             /*
              * We did not get anything, so further calls will probably not
              * succeed either.
              */
-            break;
+            if (BIO_err_is_non_fatal(ERR_peek_last_error())) {
+                /* Transient error, just stop for now, clearing the error. */
+                ERR_pop_to_mark();
+                break;
+            } else {
+                /* Non-transient error, fail and do not clear the error. */
+                ERR_clear_last_mark();
+                return QTX_FLUSH_NET_RES_PERMANENT_FAIL;
+            }
+        }
+
+        ERR_clear_last_mark();
 
         /*
          * Remove everything which was successfully sent from the pending queue.
          */
         for (i = 0; i < wr; ++i)
             qtx_pending_to_free(qtx);
+
+        total_written += wr;
     }
+
+    return total_written > 0
+        ? QTX_FLUSH_NET_RES_OK
+        : QTX_FLUSH_NET_RES_TRANSIENT_FAIL;
 }
 
 int ossl_qtx_pop_net(OSSL_QTX *qtx, BIO_MSG *msg)
