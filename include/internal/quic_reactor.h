@@ -68,8 +68,8 @@
  * the reactor interface.
  */
 typedef struct quic_tick_result_st {
-    char        want_net_read;
-    char        want_net_write;
+    char        net_read_desired;
+    char        net_write_desired;
     OSSL_TIME   tick_deadline;
 } QUIC_TICK_RESULT;
 
@@ -92,8 +92,8 @@ typedef struct quic_reactor_st {
      * These are true if we would like to know when we can read or write from
      * the network respectively.
      */
-    unsigned int want_net_read  : 1;
-    unsigned int want_net_write : 1;
+    unsigned int net_read_desired   : 1;
+    unsigned int net_write_desired  : 1;
 } QUIC_REACTOR;
 
 void ossl_quic_reactor_init(QUIC_REACTOR *rtor,
@@ -111,9 +111,9 @@ const BIO_POLL_DESCRIPTOR *ossl_quic_reactor_get_poll_r(QUIC_REACTOR *rtor);
 
 const BIO_POLL_DESCRIPTOR *ossl_quic_reactor_get_poll_w(QUIC_REACTOR *rtor);
 
-int ossl_quic_reactor_want_net_read(QUIC_REACTOR *rtor);
+int ossl_quic_reactor_net_read_desired(QUIC_REACTOR *rtor);
 
-int ossl_quic_reactor_want_net_write(QUIC_REACTOR *rtor);
+int ossl_quic_reactor_net_write_desired(QUIC_REACTOR *rtor);
 
 OSSL_TIME ossl_quic_reactor_get_tick_deadline(QUIC_REACTOR *rtor);
 

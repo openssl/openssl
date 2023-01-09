@@ -998,9 +998,9 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
 
     /* If we are in the TERMINATED state, there is nothing to do. */
     if (ossl_quic_channel_is_terminated(ch)) {
-        res->want_net_read  = 0;
-        res->want_net_write = 0;
-        res->tick_deadline  = ossl_time_infinite();
+        res->net_read_desired   = 0;
+        res->net_write_desired  = 0;
+        res->tick_deadline      = ossl_time_infinite();
         return;
     }
 
@@ -1013,9 +1013,9 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
 
         if (ossl_time_compare(now, ch->terminate_deadline) >= 0) {
             ch_on_terminating_timeout(ch);
-            res->want_net_read  = 0;
-            res->want_net_write = 0;
-            res->tick_deadline  = ossl_time_infinite();
+            res->net_read_desired   = 0;
+            res->net_write_desired  = 0;
+            res->tick_deadline      = ossl_time_infinite();
             return; /* abort normal processing, nothing to do */
         }
     }
@@ -1057,9 +1057,9 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
          * send a CONN_CLOSE frame; go straight to TERMINATED.
          */
         ch_on_idle_timeout(ch);
-        res->want_net_read  = 0;
-        res->want_net_write = 0;
-        res->tick_deadline  = ossl_time_infinite();
+        res->net_read_desired   = 0;
+        res->net_write_desired  = 0;
+        res->tick_deadline      = ossl_time_infinite();
         return;
     }
 
@@ -1079,10 +1079,10 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
      * errors in ch_rx_pre() or ch_tx() may have caused us to transition to the
      * Terminated state.
      */
-    res->want_net_read = !ossl_quic_channel_is_terminated(ch);
+    res->net_read_desired = !ossl_quic_channel_is_terminated(ch);
 
     /* We want to write to the network if we have any in our queue. */
-    res->want_net_write
+    res->net_write_desired
         = (!ossl_quic_channel_is_terminated(ch)
            && ossl_qtx_get_queue_len_datagrams(ch->qtx) > 0);
 }
