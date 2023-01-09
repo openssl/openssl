@@ -628,221 +628,221 @@ static int ch_on_transport_params(const unsigned char *params,
             goto malformed;
 
         switch (id) {
-            case QUIC_TPARAM_ORIG_DCID:
-                if (got_orig_dcid)
-                    /* must not appear more than once */
-                    goto malformed;
+        case QUIC_TPARAM_ORIG_DCID:
+            if (got_orig_dcid)
+                /* must not appear more than once */
+                goto malformed;
 
-                if (!ossl_quic_wire_decode_transport_param_cid(&pkt, NULL, &cid))
-                    goto malformed;
+            if (!ossl_quic_wire_decode_transport_param_cid(&pkt, NULL, &cid))
+                goto malformed;
 
-                /* Must match our initial DCID. */
-                if (!ossl_quic_conn_id_eq(&ch->init_dcid, &cid))
-                    goto malformed;
+            /* Must match our initial DCID. */
+            if (!ossl_quic_conn_id_eq(&ch->init_dcid, &cid))
+                goto malformed;
 
-                got_orig_dcid = 1;
-                break;
+            got_orig_dcid = 1;
+            break;
 
-            case QUIC_TPARAM_RETRY_SCID:
-                if (got_retry_scid || !ch->doing_retry)
-                    /* must not appear more than once or if retry not done */
-                    goto malformed;
+        case QUIC_TPARAM_RETRY_SCID:
+            if (got_retry_scid || !ch->doing_retry)
+                /* must not appear more than once or if retry not done */
+                goto malformed;
 
-                if (!ossl_quic_wire_decode_transport_param_cid(&pkt, NULL, &cid))
-                    goto malformed;
+            if (!ossl_quic_wire_decode_transport_param_cid(&pkt, NULL, &cid))
+                goto malformed;
 
-                /* Must match Retry packet SCID. */
-                if (!ossl_quic_conn_id_eq(&ch->retry_scid, &cid))
-                    goto malformed;
+            /* Must match Retry packet SCID. */
+            if (!ossl_quic_conn_id_eq(&ch->retry_scid, &cid))
+                goto malformed;
 
-                got_retry_scid = 1;
-                break;
+            got_retry_scid = 1;
+            break;
 
-            case QUIC_TPARAM_INITIAL_SCID:
-                if (got_initial_scid)
-                    /* must not appear more than once */
-                    goto malformed;
+        case QUIC_TPARAM_INITIAL_SCID:
+            if (got_initial_scid)
+                /* must not appear more than once */
+                goto malformed;
 
-                if (!ossl_quic_wire_decode_transport_param_cid(&pkt, NULL, &cid))
-                    goto malformed;
+            if (!ossl_quic_wire_decode_transport_param_cid(&pkt, NULL, &cid))
+                goto malformed;
 
-                /* Must match SCID of first Initial packet from server. */
-                if (!ossl_quic_conn_id_eq(&ch->init_scid, &cid))
-                    goto malformed;
+            /* Must match SCID of first Initial packet from server. */
+            if (!ossl_quic_conn_id_eq(&ch->init_scid, &cid))
+                goto malformed;
 
-                got_initial_scid = 1;
-                break;
+            got_initial_scid = 1;
+            break;
 
-            case QUIC_TPARAM_INITIAL_MAX_DATA:
-                if (got_initial_max_data)
-                    /* must not appear more than once */
-                    goto malformed;
+        case QUIC_TPARAM_INITIAL_MAX_DATA:
+            if (got_initial_max_data)
+                /* must not appear more than once */
+                goto malformed;
 
-                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
-                    goto malformed;
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+                goto malformed;
 
-                ossl_quic_txfc_bump_cwm(&ch->conn_txfc, v);
-                got_initial_max_data = 1;
-                break;
+            ossl_quic_txfc_bump_cwm(&ch->conn_txfc, v);
+            got_initial_max_data = 1;
+            break;
 
-            case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_LOCAL:
-                if (got_initial_max_stream_data_bidi_local)
-                    /* must not appear more than once */
-                    goto malformed;
+        case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_LOCAL:
+            if (got_initial_max_stream_data_bidi_local)
+                /* must not appear more than once */
+                goto malformed;
 
-                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
-                    goto malformed;
-
-                /*
-                 * This is correct; the BIDI_LOCAL TP governs streams created by
-                 * the endpoint which sends the TP, i.e., our peer.
-                 */
-                ch->init_max_stream_data_bidi_remote = v;
-                got_initial_max_stream_data_bidi_local = 1;
-                break;
-
-            case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_REMOTE:
-                if (got_initial_max_stream_data_bidi_remote)
-                    /* must not appear more than once */
-                    goto malformed;
-
-                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
-                    goto malformed;
-
-                /*
-                 * This is correct; the BIDI_REMOTE TP governs streams created
-                 * by the endpoint which receives the TP, i.e., us.
-                 */
-                ch->init_max_stream_data_bidi_local = v;
-
-                /* Apply to stream 0. */
-                ossl_quic_txfc_bump_cwm(&ch->stream0->txfc, v);
-                got_initial_max_stream_data_bidi_remote = 1;
-                break;
-
-            case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_UNI:
-                if (got_initial_max_stream_data_uni)
-                    /* must not appear more than once */
-                    goto malformed;
-
-                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
-                    goto malformed;
-
-                ch->init_max_stream_data_uni_remote = v;
-                got_initial_max_stream_data_uni = 1;
-                break;
-
-            case QUIC_TPARAM_ACK_DELAY_EXP:
-                if (got_ack_delay_exp)
-                    /* must not appear more than once */
-                    goto malformed;
-
-                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
-                    || v > QUIC_MAX_ACK_DELAY_EXP)
-                    goto malformed;
-
-                ch->rx_ack_delay_exp = (unsigned char)v;
-                got_ack_delay_exp = 1;
-                break;
-
-            case QUIC_TPARAM_MAX_ACK_DELAY:
-                if (got_max_ack_delay)
-                    /* must not appear more than once */
-                    return 0;
-
-                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
-                    || v >= (((uint64_t)1) << 14))
-                    goto malformed;
-
-                ch->rx_max_ack_delay = v;
-                got_max_ack_delay = 1;
-                break;
-
-            case QUIC_TPARAM_INITIAL_MAX_STREAMS_BIDI:
-                if (got_initial_max_streams_bidi)
-                    /* must not appear more than once */
-                    return 0;
-
-                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
-                    || v > (((uint64_t)1) << 60))
-                    goto malformed;
-
-                assert(ch->max_local_streams_bidi == 0);
-                ch->max_local_streams_bidi = v;
-                got_initial_max_streams_bidi = 1;
-                break;
-
-            case QUIC_TPARAM_INITIAL_MAX_STREAMS_UNI:
-                if (got_initial_max_streams_uni)
-                    /* must not appear more than once */
-                    goto malformed;
-
-                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
-                    || v > (((uint64_t)1) << 60))
-                    goto malformed;
-
-                assert(ch->max_local_streams_uni == 0);
-                ch->max_local_streams_uni = v;
-                got_initial_max_streams_uni = 1;
-                break;
-
-            case QUIC_TPARAM_MAX_IDLE_TIMEOUT:
-                if (got_max_idle_timeout)
-                    /* must not appear more than once */
-                    goto malformed;
-
-                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
-                    goto malformed;
-
-                if (v < ch->max_idle_timeout)
-                    ch->max_idle_timeout = v;
-
-                ch_update_idle(ch);
-                got_max_idle_timeout = 1;
-                break;
-
-            case QUIC_TPARAM_MAX_UDP_PAYLOAD_SIZE:
-                if (got_max_udp_payload_size)
-                    /* must not appear more than once */
-                    goto malformed;
-
-                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
-                    || v < QUIC_MIN_INITIAL_DGRAM_LEN)
-                    goto malformed;
-
-                ch->rx_max_udp_payload_size = v;
-                got_max_udp_payload_size    = 1;
-                break;
-
-            case QUIC_TPARAM_ACTIVE_CONN_ID_LIMIT:
-                if (got_active_conn_id_limit)
-                    /* must not appear more than once */
-                    goto malformed;
-
-                if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
-                    || v < QUIC_MIN_ACTIVE_CONN_ID_LIMIT)
-                    goto malformed;
-
-                ch->rx_active_conn_id_limit = v;
-                got_active_conn_id_limit = 1;
-                break;
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+                goto malformed;
 
             /*
-             * TODO(QUIC): Handle:
-             *   QUIC_TPARAM_STATELESS_RESET_TOKEN
-             *   QUIC_TPARAM_PREFERRED_ADDR
+             * This is correct; the BIDI_LOCAL TP governs streams created by
+             * the endpoint which sends the TP, i.e., our peer.
              */
+            ch->init_max_stream_data_bidi_remote = v;
+            got_initial_max_stream_data_bidi_local = 1;
+            break;
 
-            case QUIC_TPARAM_DISABLE_ACTIVE_MIGRATION:
-                /* We do not currently handle migration, so nothing to do. */
-            default:
-                /* Skip over and ignore. */
-                body = ossl_quic_wire_decode_transport_param_bytes(&pkt, &id,
-                                                                   &len);
-                if (body == NULL)
-                    goto malformed;
+        case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_BIDI_REMOTE:
+            if (got_initial_max_stream_data_bidi_remote)
+                /* must not appear more than once */
+                goto malformed;
 
-                break;
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+                goto malformed;
+
+            /*
+             * This is correct; the BIDI_REMOTE TP governs streams created
+             * by the endpoint which receives the TP, i.e., us.
+             */
+            ch->init_max_stream_data_bidi_local = v;
+
+            /* Apply to stream 0. */
+            ossl_quic_txfc_bump_cwm(&ch->stream0->txfc, v);
+            got_initial_max_stream_data_bidi_remote = 1;
+            break;
+
+        case QUIC_TPARAM_INITIAL_MAX_STREAM_DATA_UNI:
+            if (got_initial_max_stream_data_uni)
+                /* must not appear more than once */
+                goto malformed;
+
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+                goto malformed;
+
+            ch->init_max_stream_data_uni_remote = v;
+            got_initial_max_stream_data_uni = 1;
+            break;
+
+        case QUIC_TPARAM_ACK_DELAY_EXP:
+            if (got_ack_delay_exp)
+                /* must not appear more than once */
+                goto malformed;
+
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
+                || v > QUIC_MAX_ACK_DELAY_EXP)
+                goto malformed;
+
+            ch->rx_ack_delay_exp = (unsigned char)v;
+            got_ack_delay_exp = 1;
+            break;
+
+        case QUIC_TPARAM_MAX_ACK_DELAY:
+            if (got_max_ack_delay)
+                /* must not appear more than once */
+                return 0;
+
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
+                || v >= (((uint64_t)1) << 14))
+                goto malformed;
+
+            ch->rx_max_ack_delay = v;
+            got_max_ack_delay = 1;
+            break;
+
+        case QUIC_TPARAM_INITIAL_MAX_STREAMS_BIDI:
+            if (got_initial_max_streams_bidi)
+                /* must not appear more than once */
+                return 0;
+
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
+                || v > (((uint64_t)1) << 60))
+                goto malformed;
+
+            assert(ch->max_local_streams_bidi == 0);
+            ch->max_local_streams_bidi = v;
+            got_initial_max_streams_bidi = 1;
+            break;
+
+        case QUIC_TPARAM_INITIAL_MAX_STREAMS_UNI:
+            if (got_initial_max_streams_uni)
+                /* must not appear more than once */
+                goto malformed;
+
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
+                || v > (((uint64_t)1) << 60))
+                goto malformed;
+
+            assert(ch->max_local_streams_uni == 0);
+            ch->max_local_streams_uni = v;
+            got_initial_max_streams_uni = 1;
+            break;
+
+        case QUIC_TPARAM_MAX_IDLE_TIMEOUT:
+            if (got_max_idle_timeout)
+                /* must not appear more than once */
+                goto malformed;
+
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v))
+                goto malformed;
+
+            if (v < ch->max_idle_timeout)
+                ch->max_idle_timeout = v;
+
+            ch_update_idle(ch);
+            got_max_idle_timeout = 1;
+            break;
+
+        case QUIC_TPARAM_MAX_UDP_PAYLOAD_SIZE:
+            if (got_max_udp_payload_size)
+                /* must not appear more than once */
+                goto malformed;
+
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
+                || v < QUIC_MIN_INITIAL_DGRAM_LEN)
+                goto malformed;
+
+            ch->rx_max_udp_payload_size = v;
+            got_max_udp_payload_size    = 1;
+            break;
+
+        case QUIC_TPARAM_ACTIVE_CONN_ID_LIMIT:
+            if (got_active_conn_id_limit)
+                /* must not appear more than once */
+                goto malformed;
+
+            if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
+                || v < QUIC_MIN_ACTIVE_CONN_ID_LIMIT)
+                goto malformed;
+
+            ch->rx_active_conn_id_limit = v;
+            got_active_conn_id_limit = 1;
+            break;
+
+        /*
+         * TODO(QUIC): Handle:
+         *   QUIC_TPARAM_STATELESS_RESET_TOKEN
+         *   QUIC_TPARAM_PREFERRED_ADDR
+         */
+
+        case QUIC_TPARAM_DISABLE_ACTIVE_MIGRATION:
+            /* We do not currently handle migration, so nothing to do. */
+        default:
+            /* Skip over and ignore. */
+            body = ossl_quic_wire_decode_transport_param_bytes(&pkt, &id,
+                                                               &len);
+            if (body == NULL)
+                goto malformed;
+
+            break;
         }
     }
 
@@ -1099,7 +1099,9 @@ static int ch_rx(QUIC_CHANNEL *ch)
     if (!ch->have_sent_any_pkt)
         /*
          * We have not sent anything yet, therefore there is no need to check
-         * for incoming data. TODO SERVER
+         * for incoming data.
+         *
+         * TODO(QUIC): Needs revising when server support added.
          */
         return 1;
 
@@ -1162,61 +1164,61 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch)
 
     /* Handle incoming packet. */
     switch (ch->qrx_pkt->hdr->type) {
-        case QUIC_PKT_TYPE_RETRY:
-            if (ch->doing_retry)
-                /*
-                 * It is not allowed to ask a client to do a retry more than
-                 * once.
-                 */
-                return;
-
-            /* TODO(QUIC): handle server mode */
-
-            if (ch->qrx_pkt->hdr->len <= QUIC_RETRY_INTEGRITY_TAG_LEN)
-                /* Packets with zero-length Retry Tokens are invalid. */
-                return;
-
+    case QUIC_PKT_TYPE_RETRY:
+        if (ch->doing_retry)
             /*
-             * TODO(QUIC): Theoretically this should probably be in the QRX.
-             * However because validation is dependent on context (namely the
-             * client's initial DCID) we can't do this cleanly. In the future we
-             * should probably add a callback to the QRX to let it call us (via
-             * the DEMUX) and ask us about the correct original DCID, rather
-             * than allow the QRX to emit a potentially malformed packet to the
-             * upper layers. However, special casing this will do for now.
+             * It is not allowed to ask a client to do a retry more than
+             * once.
              */
-            if (!ossl_quic_validate_retry_integrity_tag(ch->libctx,
-                                                        ch->propq,
-                                                        ch->qrx_pkt->hdr,
-                                                        &ch->init_dcid))
-                /* Malformed retry packet, ignore. */
-                return;
+            return;
 
-            ch_retry(ch, ch->qrx_pkt->hdr->data,
-                     ch->qrx_pkt->hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN,
-                     &ch->qrx_pkt->hdr->src_conn_id);
-            break;
+        /* TODO(QUIC): handle server mode */
 
-        case QUIC_PKT_TYPE_VERSION_NEG:
-            /* TODO(QUIC): Implement version negotiation */
-            break;
+        if (ch->qrx_pkt->hdr->len <= QUIC_RETRY_INTEGRITY_TAG_LEN)
+            /* Packets with zero-length Retry Tokens are invalid. */
+            return;
 
-        case QUIC_PKT_TYPE_0RTT:
-            /* TODO(QQUIC): handle if server */
-            /* Clients should never receive 0-RTT packets */
-            break;
+        /*
+         * TODO(QUIC): Theoretically this should probably be in the QRX.
+         * However because validation is dependent on context (namely the
+         * client's initial DCID) we can't do this cleanly. In the future we
+         * should probably add a callback to the QRX to let it call us (via
+         * the DEMUX) and ask us about the correct original DCID, rather
+         * than allow the QRX to emit a potentially malformed packet to the
+         * upper layers. However, special casing this will do for now.
+         */
+        if (!ossl_quic_validate_retry_integrity_tag(ch->libctx,
+                                                    ch->propq,
+                                                    ch->qrx_pkt->hdr,
+                                                    &ch->init_dcid))
+            /* Malformed retry packet, ignore. */
+            return;
 
-        default:
-            if (ch->qrx_pkt->hdr->type == QUIC_PKT_TYPE_HANDSHAKE)
-                /*
-                 * We automatically drop INITIAL EL keys when first successfully
-                 * decrypting a HANDSHAKE packet, as per the RFC.
-                 */
-                ch_discard_el(ch, QUIC_ENC_LEVEL_INITIAL);
+        ch_retry(ch, ch->qrx_pkt->hdr->data,
+                 ch->qrx_pkt->hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN,
+                 &ch->qrx_pkt->hdr->src_conn_id);
+        break;
 
-            /* This packet contains frames, pass to the RXDP. */
-            ossl_quic_handle_frames(ch, ch->qrx_pkt); /* best effort */
-            break;
+    case QUIC_PKT_TYPE_VERSION_NEG:
+        /* TODO(QUIC): Implement version negotiation */
+        break;
+
+    case QUIC_PKT_TYPE_0RTT:
+        /* TODO(QQUIC): handle if server */
+        /* Clients should never receive 0-RTT packets */
+        break;
+
+    default:
+        if (ch->qrx_pkt->hdr->type == QUIC_PKT_TYPE_HANDSHAKE)
+            /*
+             * We automatically drop INITIAL EL keys when first successfully
+             * decrypting a HANDSHAKE packet, as per the RFC.
+             */
+            ch_discard_el(ch, QUIC_ENC_LEVEL_INITIAL);
+
+        /* This packet contains frames, pass to the RXDP. */
+        ossl_quic_handle_frames(ch, ch->qrx_pkt); /* best effort */
+        break;
     }
 }
 
@@ -1553,46 +1555,46 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
                                  const QUIC_TERMINATE_CAUSE *tcause)
 {
     switch (ch->state) {
-        default:
-        case QUIC_CHANNEL_STATE_IDLE:
-            ch->terminate_cause = *tcause;
-            ch_on_terminating_timeout(ch);
-            break;
+    default:
+    case QUIC_CHANNEL_STATE_IDLE:
+        ch->terminate_cause = *tcause;
+        ch_on_terminating_timeout(ch);
+        break;
 
-        case QUIC_CHANNEL_STATE_ACTIVE:
-            ch->state = tcause->remote ? QUIC_CHANNEL_STATE_TERMINATING_DRAINING
-                                       : QUIC_CHANNEL_STATE_TERMINATING_CLOSING;
-            ch->terminate_cause = *tcause;
-            ch->terminate_deadline
-                = ossl_time_add(ossl_time_now(),
-                                ossl_time_multiply(ossl_ackm_get_pto_duration(ch->ackm),
-                                                   3));
+    case QUIC_CHANNEL_STATE_ACTIVE:
+        ch->state = tcause->remote ? QUIC_CHANNEL_STATE_TERMINATING_DRAINING
+                                   : QUIC_CHANNEL_STATE_TERMINATING_CLOSING;
+        ch->terminate_cause = *tcause;
+        ch->terminate_deadline
+            = ossl_time_add(ossl_time_now(),
+                            ossl_time_multiply(ossl_ackm_get_pto_duration(ch->ackm),
+                                               3));
 
-            if (!tcause->remote) {
-                OSSL_QUIC_FRAME_CONN_CLOSE f = {0};
+        if (!tcause->remote) {
+            OSSL_QUIC_FRAME_CONN_CLOSE f = {0};
 
-                /* best effort */
-                f.error_code = ch->terminate_cause.error_code;
-                f.frame_type = ch->terminate_cause.frame_type;
-                f.is_app     = ch->terminate_cause.app;
-                ossl_quic_tx_packetiser_schedule_conn_close(ch->txp, &f);
-                ch->conn_close_queued = 1;
-            }
-            break;
+            /* best effort */
+            f.error_code = ch->terminate_cause.error_code;
+            f.frame_type = ch->terminate_cause.frame_type;
+            f.is_app     = ch->terminate_cause.app;
+            ossl_quic_tx_packetiser_schedule_conn_close(ch->txp, &f);
+            ch->conn_close_queued = 1;
+        }
+        break;
 
-        case QUIC_CHANNEL_STATE_TERMINATING_CLOSING:
-            if (tcause->remote)
-                ch->state = QUIC_CHANNEL_STATE_TERMINATING_DRAINING;
+    case QUIC_CHANNEL_STATE_TERMINATING_CLOSING:
+        if (tcause->remote)
+            ch->state = QUIC_CHANNEL_STATE_TERMINATING_DRAINING;
 
-            break;
+        break;
 
-        case QUIC_CHANNEL_STATE_TERMINATING_DRAINING:
-            /* We remain here until the timout expires. */
-            break;
+    case QUIC_CHANNEL_STATE_TERMINATING_DRAINING:
+        /* We remain here until the timout expires. */
+        break;
 
-        case QUIC_CHANNEL_STATE_TERMINATED:
-            /* No-op. */
-            break;
+    case QUIC_CHANNEL_STATE_TERMINATED:
+        /* No-op. */
+        break;
     }
 }
 

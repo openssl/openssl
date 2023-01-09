@@ -400,28 +400,28 @@ static int depack_do_frame_max_streams(PACKET *pkt,
     }
 
     switch (frame_type) {
-        case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI:
-            if (max_streams > ch->max_local_streams_bidi)
-                ch->max_local_streams_bidi = max_streams;
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI:
+        if (max_streams > ch->max_local_streams_bidi)
+            ch->max_local_streams_bidi = max_streams;
 
-            /* Stream may now be able to send */
-            ossl_quic_stream_map_update_state(&ch->qsm,
-                                              ch->stream0);
-            break;
-        case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI:
-            if (max_streams > ch->max_local_streams_uni)
-                ch->max_local_streams_uni = max_streams;
+        /* Stream may now be able to send */
+        ossl_quic_stream_map_update_state(&ch->qsm,
+                                          ch->stream0);
+        break;
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI:
+        if (max_streams > ch->max_local_streams_uni)
+            ch->max_local_streams_uni = max_streams;
 
-            /* Stream may now be able to send */
-            ossl_quic_stream_map_update_state(&ch->qsm,
-                                              ch->stream0);
-            break;
-        default:
-            ossl_quic_channel_raise_protocol_error(ch,
-                                                   QUIC_ERR_FRAME_ENCODING_ERROR,
-                                                   frame_type,
-                                                   "decode error");
-            return 0;
+        /* Stream may now be able to send */
+        ossl_quic_stream_map_update_state(&ch->qsm,
+                                          ch->stream0);
+        break;
+    default:
+        ossl_quic_channel_raise_protocol_error(ch,
+                                               QUIC_ERR_FRAME_ENCODING_ERROR,
+                                               frame_type,
+                                               "decode error");
+        return 0;
     }
 
     return 1;
