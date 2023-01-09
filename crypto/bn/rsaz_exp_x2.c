@@ -42,8 +42,6 @@ NON_EMPTY_TRANSLATION_UNIT
 # define BITS2WORD8_SIZE(x)  (((x) + 7) >> 3)
 # define BITS2WORD64_SIZE(x) (((x) + 63) >> 6)
 
-typedef uint64_t ALIGN1 uint64_t_align1;
-
 static ossl_inline uint64_t get_digit52(const uint8_t *in, int in_len);
 static ossl_inline void put_digit52(uint8_t *out, int out_len, uint64_t digit);
 static void to_words52(BN_ULONG *out, int out_len, const BN_ULONG *in,
