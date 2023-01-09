@@ -7105,7 +7105,7 @@ int SSL_get_wpoll_descriptor(SSL *s, BIO_POLL_DESCRIPTOR *desc)
 #endif
 }
 
-int SSL_want_net_read(SSL *s)
+int SSL_net_read_desired(SSL *s)
 {
 #ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
@@ -7113,13 +7113,13 @@ int SSL_want_net_read(SSL *s)
     if (qc == NULL)
         return 0;
 
-    return ossl_quic_get_want_net_read(qc);
+    return ossl_quic_get_net_read_desired(qc);
 #else
     return 0;
 #endif
 }
 
-int SSL_want_net_write(SSL *s)
+int SSL_net_write_desired(SSL *s)
 {
 #ifndef OPENSSL_NO_QUIC
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
@@ -7127,7 +7127,7 @@ int SSL_want_net_write(SSL *s)
     if (qc == NULL)
         return 0;
 
-    return ossl_quic_get_want_net_write(qc);
+    return ossl_quic_get_net_write_desired(qc);
 #else
     return 0;
 #endif

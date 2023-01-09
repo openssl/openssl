@@ -445,22 +445,22 @@ int ossl_quic_get_wpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *des
     return BIO_get_wpoll_descriptor(qc->net_wbio, desc);
 }
 
-/* SSL_want_net_read */
-int ossl_quic_get_want_net_read(QUIC_CONNECTION *qc)
+/* SSL_net_read_desired */
+int ossl_quic_get_net_read_desired(QUIC_CONNECTION *qc)
 {
     if (qc->ch == NULL)
         return 0;
 
-    return ossl_quic_reactor_want_net_read(ossl_quic_channel_get_reactor(qc->ch));
+    return ossl_quic_reactor_net_read_desired(ossl_quic_channel_get_reactor(qc->ch));
 }
 
-/* SSL_want_net_write */
-int ossl_quic_get_want_net_write(QUIC_CONNECTION *qc)
+/* SSL_net_write_desired */
+int ossl_quic_get_net_write_desired(QUIC_CONNECTION *qc)
 {
     if (qc->ch == NULL)
         return 0;
 
-    return ossl_quic_reactor_want_net_write(ossl_quic_channel_get_reactor(qc->ch));
+    return ossl_quic_reactor_net_write_desired(ossl_quic_channel_get_reactor(qc->ch));
 }
 
 /*

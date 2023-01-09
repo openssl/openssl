@@ -20,8 +20,8 @@ void ossl_quic_reactor_init(QUIC_REACTOR *rtor,
 {
     rtor->poll_r.type       = BIO_POLL_DESCRIPTOR_TYPE_NONE;
     rtor->poll_w.type       = BIO_POLL_DESCRIPTOR_TYPE_NONE;
-    rtor->want_net_read     = 0;
-    rtor->want_net_write    = 0;
+    rtor->net_read_desired  = 0;
+    rtor->net_write_desired = 0;
     rtor->tick_deadline     = initial_tick_deadline;
 
     rtor->tick_cb           = tick_cb;
@@ -48,14 +48,14 @@ const BIO_POLL_DESCRIPTOR *ossl_quic_reactor_get_poll_w(QUIC_REACTOR *rtor)
     return &rtor->poll_w;
 }
 
-int ossl_quic_reactor_want_net_read(QUIC_REACTOR *rtor)
+int ossl_quic_reactor_net_read_desired(QUIC_REACTOR *rtor)
 {
-    return rtor->want_net_read;
+    return rtor->net_read_desired;
 }
 
-int ossl_quic_reactor_want_net_write(QUIC_REACTOR *rtor)
+int ossl_quic_reactor_net_write_desired(QUIC_REACTOR *rtor)
 {
-    return rtor->want_net_write;
+    return rtor->net_write_desired;
 }
 
 OSSL_TIME ossl_quic_reactor_get_tick_deadline(QUIC_REACTOR *rtor)
@@ -76,8 +76,8 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor)
      */
     rtor->tick_cb(&res, rtor->tick_cb_arg);
 
-    rtor->want_net_read     = res.want_net_read;
-    rtor->want_net_write    = res.want_net_write;
+    rtor->net_read_desired  = res.net_read_desired;
+    rtor->net_write_desired = res.net_write_desired;
     rtor->tick_deadline     = res.tick_deadline;
     return 1;
 }
@@ -280,9 +280,9 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
             return res;
 
         if (!poll_two_descriptors(ossl_quic_reactor_get_poll_r(rtor),
-                                  ossl_quic_reactor_want_net_read(rtor),
+                                  ossl_quic_reactor_net_read_desired(rtor),
                                   ossl_quic_reactor_get_poll_w(rtor),
-                                  ossl_quic_reactor_want_net_write(rtor),
+                                  ossl_quic_reactor_net_write_desired(rtor),
                                   ossl_quic_reactor_get_tick_deadline(rtor)))
             /*
              * We don't actually care why the call succeeded (timeout, FD
