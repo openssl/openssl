@@ -69,6 +69,7 @@ extern "C" {
 # endif
 # define BIO_TYPE_CORE_TO_PROV   (25|BIO_TYPE_SOURCE_SINK)
 # define BIO_TYPE_DGRAM_PAIR     (26|BIO_TYPE_SOURCE_SINK)
+# define BIO_TYPE_DGRAM_MEM      (27|BIO_TYPE_SOURCE_SINK)
 
 #define BIO_TYPE_START           128
 

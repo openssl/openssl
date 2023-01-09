@@ -52,7 +52,7 @@ Any data written to a memory BIO can be recalled by reading from it.
 Unless the memory BIO is read only any data read from it is deleted from
 the BIO.
 
-Memory BIOs support BIO_gets() and BIO_puts().
+Memory BIOs except BIO_s_dgram_mem() support BIO_gets() and BIO_puts().
 
 If the BIO_CLOSE flag is set when a memory BIO is freed then the underlying
 BUF_MEM structure is also freed.
@@ -92,6 +92,8 @@ as a result cannot be written to. This is useful when some data needs to be
 made available from a static area of memory in the form of a BIO. The
 supplied data is read directly from the supplied buffer: it is B<not> copied
 first, so the supplied area of memory must be unchanged until the BIO is freed.
+
+All of the five functions described above fail with BIO_s_dgram_mem().
 
 =head1 NOTES
 
@@ -169,7 +171,7 @@ Extract the BUF_MEM structure from a memory BIO and then free up the BIO:
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

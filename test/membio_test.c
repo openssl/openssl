@@ -98,6 +98,10 @@ static int test_dgram(void)
             || !TEST_true(BIO_should_retry(bio)))
         goto err;
 
+    if (!TEST_int_eq(BIO_dgram_set_mtu(bio, 123456), 1)
+            || !TEST_int_eq(BIO_dgram_get_mtu(bio), 123456))
+        goto err;
+
     testresult = 1;
  err:
     BIO_free(rbio);
