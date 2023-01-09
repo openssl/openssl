@@ -263,7 +263,7 @@ int ossl_quic_clear(SSL *s)
  */
 static int csm_analyse_init_peer_addr(BIO *net_wbio, BIO_ADDR *peer)
 {
-    if (!BIO_dgram_get_peer(net_wbio, peer))
+    if (BIO_dgram_get_peer(net_wbio, peer) <= 0)
         return 0;
 
     return 1;
@@ -877,8 +877,8 @@ static int quic_write_nonblocking_aon(QUIC_CONNECTION *qc, const void *buf,
     if (qc->aon_write_in_progress) {
         /*
          * We are in the middle of an AON write (i.e., a previous write did not
-         * manage to append all data to the SSTREAM and we have EPW mode
-         * disabled.)
+         * manage to append all data to the SSTREAM and we have Enable Partial
+         * Write (EPW) mode disabled.)
          */
         if ((!accept_moving_buffer && qc->aon_buf_base != buf)
             || len != qc->aon_buf_len)
