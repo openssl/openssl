@@ -39,6 +39,11 @@ Where a QUIC connection SSL object is used in nonblocking mode, an application
 is responsible for ensuring that the SSL object is ticked regularly; see
 L<SSL_tick(3)>.
 
+Blocking mode is disabled automatically if the application provides a QUIC
+connection SSL object with a network BIO which cannot support blocking mode. To
+re-enable blocking mode in this case, an application must set a network BIO
+which can support blocking mode and explicitly call SSL_set_blocking_mode().
+
 =head1 RETURN VALUES
 
 SSL_set_blocking_mode() returns 1 on success and 0 on failure. The function
