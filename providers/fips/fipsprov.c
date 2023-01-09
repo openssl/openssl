@@ -378,8 +378,8 @@ static const OSSL_ALGORITHM fips_keyexch[] = {
 #endif
 #ifndef OPENSSL_NO_EC
     { PROV_NAMES_ECDH, FIPS_DEFAULT_PROPERTIES, ossl_ecdh_keyexch_functions },
-    { PROV_NAMES_X25519, FIPS_DEFAULT_PROPERTIES, ossl_x25519_keyexch_functions },
-    { PROV_NAMES_X448, FIPS_DEFAULT_PROPERTIES, ossl_x448_keyexch_functions },
+    { PROV_NAMES_X25519, FIPS_UNAPPROVED_PROPERTIES, ossl_x25519_keyexch_functions },
+    { PROV_NAMES_X448, FIPS_UNAPPROVED_PROPERTIES, ossl_x448_keyexch_functions },
 #endif
     { PROV_NAMES_TLS1_PRF, FIPS_DEFAULT_PROPERTIES,
       ossl_kdf_tls1_prf_keyexch_functions },
@@ -393,8 +393,9 @@ static const OSSL_ALGORITHM fips_signature[] = {
 #endif
     { PROV_NAMES_RSA, FIPS_DEFAULT_PROPERTIES, ossl_rsa_signature_functions },
 #ifndef OPENSSL_NO_EC
-    { PROV_NAMES_ED25519, FIPS_DEFAULT_PROPERTIES, ossl_ed25519_signature_functions },
-    { PROV_NAMES_ED448, FIPS_DEFAULT_PROPERTIES, ossl_ed448_signature_functions },
+    { PROV_NAMES_ED25519, FIPS_UNAPPROVED_PROPERTIES,
+      ossl_ed25519_signature_functions },
+    { PROV_NAMES_ED448, FIPS_UNAPPROVED_PROPERTIES, ossl_ed448_signature_functions },
     { PROV_NAMES_ECDSA, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_signature_functions },
 #endif
     { PROV_NAMES_HMAC, FIPS_DEFAULT_PROPERTIES,
@@ -434,13 +435,13 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
 #ifndef OPENSSL_NO_EC
     { PROV_NAMES_EC, FIPS_DEFAULT_PROPERTIES, ossl_ec_keymgmt_functions,
       PROV_DESCS_EC },
-    { PROV_NAMES_X25519, FIPS_DEFAULT_PROPERTIES, ossl_x25519_keymgmt_functions,
+    { PROV_NAMES_X25519, FIPS_UNAPPROVED_PROPERTIES, ossl_x25519_keymgmt_functions,
       PROV_DESCS_X25519 },
-    { PROV_NAMES_X448, FIPS_DEFAULT_PROPERTIES, ossl_x448_keymgmt_functions,
+    { PROV_NAMES_X448, FIPS_UNAPPROVED_PROPERTIES, ossl_x448_keymgmt_functions,
       PROV_DESCS_X448 },
-    { PROV_NAMES_ED25519, FIPS_DEFAULT_PROPERTIES, ossl_ed25519_keymgmt_functions,
+    { PROV_NAMES_ED25519, FIPS_UNAPPROVED_PROPERTIES, ossl_ed25519_keymgmt_functions,
       PROV_DESCS_ED25519 },
-    { PROV_NAMES_ED448, FIPS_DEFAULT_PROPERTIES, ossl_ed448_keymgmt_functions,
+    { PROV_NAMES_ED448, FIPS_UNAPPROVED_PROPERTIES, ossl_ed448_keymgmt_functions,
       PROV_DESCS_ED448 },
 #endif
     { PROV_NAMES_TLS1_PRF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_keymgmt_functions,
