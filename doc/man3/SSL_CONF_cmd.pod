@@ -561,6 +561,14 @@ B<RxCertificateCompression>: support receiving compressed certificates, enabled 
 default. Inverse of B<SSL_OP_NO_RX_CERTIFICATE_COMPRESSION>: that is,
 B<-RxCertificateCompression> is the same as setting B<SSL_OP_NO_RX_CERTIFICATE_COMPRESSION>.
 
+B<KTLSTxZerocopySendfile>: use the zerocopy TX mode of sendfile(), which gives
+a performance boost when used with KTLS hardware offload. Note that invalid TLS
+records might be transmitted if the file is changed while being sent. This
+option has no effect if B<KTLS> is not enabled. Equivalent to
+B<SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE>. This option only applies to Linux.
+KTLS sendfile on FreeBSD doesn't offer an option to disable zerocopy and
+always runs in this mode.
+
 =item B<VerifyMode>
 
 The B<value> argument is a comma separated list of flags to set.

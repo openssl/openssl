@@ -426,7 +426,6 @@ static int digest_test_run(EVP_TEST *t)
     int xof = 0;
     OSSL_PARAM params[2];
 
-    printf("test %s (%d %d)\n", t->name, t->s.start, t->s.curr);
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
         goto err;
@@ -557,6 +556,7 @@ typedef struct cipher_data_st {
     int tag_late;
     unsigned char *mac_key;
     size_t mac_key_len;
+    const char *xts_standard;
 } CIPHER_DATA;
 
 static int cipher_test_init(EVP_TEST *t, const char *alg)
@@ -696,6 +696,10 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
     }
     if (strcmp(keyword, "CTSMode") == 0) {
         cdat->cts_mode = value;
+        return 1;
+    }
+    if (strcmp(keyword, "XTSStandard") == 0) {
+        cdat->xts_standard = value;
         return 1;
     }
     return 0;
@@ -940,7 +944,18 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
             goto err;
         }
     }
+    if (expected->xts_standard != NULL) {
+        OSSL_PARAM params[2];
 
+        params[0] =
+            OSSL_PARAM_construct_utf8_string(OSSL_CIPHER_PARAM_XTS_STANDARD,
+                                             (char *)expected->xts_standard, 0);
+        params[1] = OSSL_PARAM_construct_end();
+        if (!EVP_CIPHER_CTX_set_params(ctx, params)) {
+            t->err = "SET_XTS_STANDARD_ERROR";
+            goto err;
+        }
+    }
     EVP_CIPHER_CTX_set_padding(ctx, 0);
     t->err = "CIPHERUPDATE_ERROR";
     tmplen = 0;
@@ -3218,6 +3233,7 @@ typedef struct {
     size_t osin_len; /* Input length data if one shot */
     unsigned char *output; /* Expected output */
     size_t output_len; /* Expected output length */
+    const char *nonce_type;
 } DIGESTSIGN_DATA;
 
 static int digestsigver_test_init(EVP_TEST *t, const char *alg, int is_verify,
@@ -3313,6 +3329,20 @@ static int digestsigver_test_parse(EVP_TEST *t,
         if (mdata->pctx == NULL)
             return -1;
         return pkey_test_ctrl(t, mdata->pctx, value);
+    }
+    if (strcmp(keyword, "NonceType") == 0) {
+        if (strcmp(value, "deterministic") == 0) {
+            OSSL_PARAM params[2];
+            unsigned int nonce_type = 1;
+
+            params[0] =
+                OSSL_PARAM_construct_uint(OSSL_SIGNATURE_PARAM_NONCE_TYPE,
+                                          &nonce_type);
+            params[1] = OSSL_PARAM_construct_end();
+            if (!EVP_PKEY_CTX_set_params(mdata->pctx, params))
+                t->err = "EVP_PKEY_CTX_set_params_ERROR";
+        }
+        return 1;
     }
     return 0;
 }
@@ -3925,6 +3955,8 @@ start:
                           t->s.curr, pp->key, pp->value);
                 return 0;
             }
+            if (t->skip)
+                return 0;
         }
     }
 

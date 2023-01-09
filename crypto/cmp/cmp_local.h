@@ -25,7 +25,7 @@
 # include <openssl/x509v3.h>
 # include "crypto/x509.h"
 
-#define IS_NULL_DN(name) (X509_NAME_get_entry(name, 0) == NULL)
+# define IS_NULL_DN(name) (X509_NAME_get_entry(name, 0) == NULL)
 
 /*
  * this structure is used to store the context for CMP sessions
@@ -118,7 +118,7 @@ struct ossl_cmp_ctx_st {
     int revocationReason; /* revocation reason code to be included in RR */
     STACK_OF(OSSL_CMP_ITAV) *genm_ITAVs; /* content of general message */
 
-    /* result returned in responses */
+    /* result returned in responses, so far supporting only one certResponse */
     int status; /* PKIStatus of last received IP/CP/KUP/RP/error or -1 */
     OSSL_CMP_PKIFREETEXT *statusString; /* of last IP/CP/KUP/RP/error */
     int failInfoCode; /* failInfoCode of last received IP/CP/KUP/error, or -1 */
@@ -710,6 +710,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_PROTECTEDPART)
  *   }       -- or HMAC [RFC2104, RFC2202])
  */
 /*-
+ *   Not supported:
  *   id-DHBasedMac OBJECT IDENTIFIER ::= {1 2 840 113533 7 66 30}
  *   DHBMParameter ::= SEQUENCE {
  *           owf                 AlgorithmIdentifier,

@@ -15,7 +15,7 @@
 
 # include <openssl/e_os2.h>
 # include <openssl/crypto.h>
-# include "internal/nelem.h"
+# include "internal/numbers.h"   /* Ensure the definition of SIZE_MAX */
 
 /*
  * <openssl/e_os2.h> contains what we can justify to make visible to the

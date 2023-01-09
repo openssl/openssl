@@ -12,6 +12,8 @@
 #include "internal/common.h"
 #include <assert.h>
 
+DEFINE_LIST_OF(tx_history, OSSL_ACKM_TX_PKT);
+
 /*
  * TX Packet History
  * *****************
@@ -28,10 +30,7 @@
  */
 struct tx_pkt_history_st {
     /* A linked list of all our packets. */
-    OSSL_ACKM_TX_PKT *head, *tail;
-
-    /* Number of packets in the list. */
-    size_t num_packets;
+    OSSL_LIST(tx_history) packets;
 
     /*
      * Mapping from packet numbers (uint64_t) to (OSSL_ACKM_TX_PKT *)
@@ -78,8 +77,7 @@ static int tx_pkt_info_compare(const OSSL_ACKM_TX_PKT *a,
 static int
 tx_pkt_history_init(struct tx_pkt_history_st *h)
 {
-    h->head = h->tail = NULL;
-    h->num_packets  = 0;
+    ossl_list_tx_history_init(&h->packets);
     h->watermark    = 0;
     h->highest_sent = 0;
 
@@ -95,7 +93,7 @@ tx_pkt_history_destroy(struct tx_pkt_history_st *h)
 {
     lh_OSSL_ACKM_TX_PKT_free(h->map);
     h->map = NULL;
-    h->head = h->tail = NULL;
+    ossl_list_tx_history_init(&h->packets);
 }
 
 static int
@@ -113,20 +111,13 @@ tx_pkt_history_add_actual(struct tx_pkt_history_st *h,
         return 0;
 
     /* Should not already be in a list. */
-    if (!ossl_assert(pkt->next == NULL && pkt->prev == NULL))
+    if (!ossl_assert(ossl_list_tx_history_next(pkt) == NULL
+            && ossl_list_tx_history_prev(pkt) == NULL))
         return 0;
 
     lh_OSSL_ACKM_TX_PKT_insert(h->map, pkt);
 
-    pkt->next = NULL;
-    pkt->prev = h->tail;
-    if (h->tail != NULL)
-        h->tail->next = pkt;
-    h->tail = pkt;
-    if (h->head == NULL)
-        h->head = h->tail;
-
-    ++h->num_packets;
+    ossl_list_tx_history_insert_tail(&h->packets, pkt);
     return 1;
 }
 
@@ -168,19 +159,8 @@ tx_pkt_history_remove(struct tx_pkt_history_st *h, uint64_t pkt_num)
     if (pkt == NULL)
         return 0;
 
-    if (pkt->prev != NULL)
-        pkt->prev->next = pkt->next;
-    if (pkt->next != NULL)
-        pkt->next->prev = pkt->prev;
-    if (h->head == pkt)
-        h->head = pkt->next;
-    if (h->tail == pkt)
-        h->tail = pkt->prev;
-
-    pkt->prev = pkt->next = NULL;
-
+    ossl_list_tx_history_remove(&h->packets, pkt);
     lh_OSSL_ACKM_TX_PKT_delete(h->map, &key);
-    --h->num_packets;
     return 1;
 }
 
@@ -440,8 +420,8 @@ static void rx_pkt_history_trim_range_count(struct rx_pkt_history_st *h)
 {
     QUIC_PN highest = QUIC_PN_INVALID;
 
-    while (h->set.num_ranges > MAX_RX_ACK_RANGES) {
-        UINT_RANGE r = h->set.head->range;
+    while (ossl_list_uint_set_num(&h->set) > MAX_RX_ACK_RANGES) {
+        UINT_RANGE r = ossl_list_uint_set_head(&h->set)->range;
 
         highest = (highest == QUIC_PN_INVALID)
             ? r.end : ossl_quic_pn_max(highest, r.end);
@@ -695,14 +675,14 @@ static OSSL_ACKM_TX_PKT *ackm_detect_and_remove_newly_acked_pkts(OSSL_ACKM *ackm
 
     pkt = tx_pkt_history_by_pkt_num(h, ack->ack_ranges[0].end);
     if (pkt == NULL)
-        pkt = h->tail;
+        pkt = ossl_list_tx_history_tail(&h->packets);
 
     for (; pkt != NULL; pkt = pprev) {
         /*
          * Save prev value as it will be zeroed if we remove the packet from the
          * history list below.
          */
-        pprev = pkt->prev;
+        pprev = ossl_list_tx_history_prev(pkt);
 
         for (;; ++ridx) {
             if (ridx >= ack->num_ack_ranges) {
@@ -774,7 +754,7 @@ static OSSL_ACKM_TX_PKT *ackm_detect_and_remove_lost_pkts(OSSL_ACKM *ackm,
     lost_send_time = ossl_time_subtract(now, loss_delay);
 
     h   = get_tx_history(ackm, pkt_space);
-    pkt = h->head;
+    pkt = ossl_list_tx_history_head(&h->packets);
 
     for (; pkt != NULL; pkt = pnext) {
         assert(pkt_space == pkt->pkt_space);
@@ -783,7 +763,7 @@ static OSSL_ACKM_TX_PKT *ackm_detect_and_remove_lost_pkts(OSSL_ACKM *ackm,
          * Save prev value as it will be zeroed if we remove the packet from the
          * history list below.
          */
-        pnext = pkt->next;
+        pnext = ossl_list_tx_history_next(pkt);
 
         if (pkt->pkt_num > ackm->largest_acked_pkt[pkt_space])
             continue;
@@ -1221,16 +1201,15 @@ int ossl_ackm_on_pkt_space_discarded(OSSL_ACKM *ackm, int pkt_space)
     OSSL_ACKM_TX_PKT *pkt, *pnext;
     uint64_t num_bytes_invalidated = 0;
 
-    assert(pkt_space < QUIC_PN_SPACE_APP);
-
     if (ackm->discarded[pkt_space])
         return 0;
 
     if (pkt_space == QUIC_PN_SPACE_HANDSHAKE)
         ackm->peer_completed_addr_validation = 1;
 
-    for (pkt = get_tx_history(ackm, pkt_space)->head; pkt != NULL; pkt = pnext) {
-        pnext = pkt->next;
+    for (pkt = ossl_list_tx_history_head(&get_tx_history(ackm, pkt_space)->packets);
+            pkt != NULL; pkt = pnext) {
+        pnext = ossl_list_tx_history_next(pkt);
         if (pkt->is_inflight) {
             ackm->bytes_in_flight -= pkt->num_bytes;
             num_bytes_invalidated += pkt->num_bytes;
@@ -1339,10 +1318,12 @@ int ossl_ackm_get_probe_request(OSSL_ACKM *ackm, int clear,
 int ossl_ackm_get_largest_unacked(OSSL_ACKM *ackm, int pkt_space, QUIC_PN *pn)
 {
     struct tx_pkt_history_st *h;
+    OSSL_ACKM_TX_PKT *p;
 
     h = get_tx_history(ackm, pkt_space);
-    if (h->tail != NULL) {
-        *pn = h->tail->pkt_num;
+    p = ossl_list_tx_history_tail(&h->packets);
+    if (p != NULL) {
+        *pn = p->pkt_num;
         return 1;
     }
 
@@ -1416,7 +1397,7 @@ static int ackm_has_newly_missing(OSSL_ACKM *ackm, int pkt_space)
 
     h = get_rx_history(ackm, pkt_space);
 
-    if (h->set.tail == NULL)
+    if (ossl_list_uint_set_is_empty(&h->set))
         return 0;
 
     /*
@@ -1432,8 +1413,9 @@ static int ackm_has_newly_missing(OSSL_ACKM *ackm, int pkt_space)
      * the PNs we have ACK'd previously and the PN we have just received.
      */
     return ackm->ack[pkt_space].num_ack_ranges > 0
-        && h->set.tail->range.start == h->set.tail->range.end
-        && h->set.tail->range.start
+        && ossl_list_uint_set_tail(&h->set)->range.start
+           == ossl_list_uint_set_tail(&h->set)->range.end
+        && ossl_list_uint_set_tail(&h->set)->range.start
             > ackm->ack[pkt_space].ack_ranges[0].end + 1;
 }
 
@@ -1582,9 +1564,9 @@ static void ackm_fill_rx_ack_ranges(OSSL_ACKM *ackm, int pkt_space,
      * Copy out ranges from the PN set, starting at the end, until we reach our
      * maximum number of ranges.
      */
-    for (x = h->set.tail;
+    for (x = ossl_list_uint_set_tail(&h->set);
          x != NULL && i < OSSL_NELEM(ackm->ack_ranges);
-         x = x->prev, ++i) {
+         x = ossl_list_uint_set_prev(x), ++i) {
         ackm->ack_ranges[pkt_space][i].start = x->range.start;
         ackm->ack_ranges[pkt_space][i].end   = x->range.end;
     }

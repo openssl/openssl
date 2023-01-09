@@ -96,6 +96,7 @@ static int keymatexportlen = 20;
 static int async = 0;
 
 static int use_sendfile = 0;
+static int use_zc_sendfile = 0;
 
 static const char *session_id_prefix = NULL;
 
@@ -716,6 +717,7 @@ typedef enum OPTION_choice {
     OPT_KEYLOG_FILE, OPT_MAX_EARLY, OPT_RECV_MAX_EARLY, OPT_EARLY_DATA,
     OPT_S_NUM_TICKETS, OPT_ANTI_REPLAY, OPT_NO_ANTI_REPLAY, OPT_SCTP_LABEL_BUG,
     OPT_HTTP_SERVER_BINMODE, OPT_NOCANAMES, OPT_IGNORE_UNEXPECTED_EOF, OPT_KTLS,
+    OPT_USE_ZC_SENDFILE,
     OPT_TFO, OPT_CERT_COMP,
     OPT_R_ENUM,
     OPT_S_ENUM,
@@ -966,6 +968,7 @@ const OPTIONS s_server_options[] = {
 #ifndef OPENSSL_NO_KTLS
     {"ktls", OPT_KTLS, '-', "Enable Kernel TLS for sending and receiving"},
     {"sendfile", OPT_SENDFILE, '-', "Use sendfile to response file with -WWW"},
+    {"zerocopy_sendfile", OPT_USE_ZC_SENDFILE, '-', "Use zerocopy mode of KTLS sendfile"},
 #endif
 
     OPT_R_OPTIONS,
@@ -1080,6 +1083,7 @@ int s_server_main(int argc, char *argv[])
     s_brief = 0;
     async = 0;
     use_sendfile = 0;
+    use_zc_sendfile = 0;
 
     port = OPENSSL_strdup(PORT);
     cctx = SSL_CONF_CTX_new();
@@ -1656,6 +1660,11 @@ int s_server_main(int argc, char *argv[])
             use_sendfile = 1;
 #endif
             break;
+        case OPT_USE_ZC_SENDFILE:
+#ifndef OPENSSL_NO_KTLS
+            use_zc_sendfile = 1;
+#endif
+            break;
         case OPT_IGNORE_UNEXPECTED_EOF:
             ignore_unexpected_eof = 1;
             break;
@@ -1728,6 +1737,11 @@ int s_server_main(int argc, char *argv[])
 #endif
 
 #ifndef OPENSSL_NO_KTLS
+    if (use_zc_sendfile && !use_sendfile) {
+        BIO_printf(bio_out, "Warning: -zerocopy_sendfile depends on -sendfile, enabling -sendfile now.\n");
+        use_sendfile = 1;
+    }
+
     if (use_sendfile && enable_ktls == 0) {
         BIO_printf(bio_out, "Warning: -sendfile depends on -ktls, enabling -ktls now.\n");
         enable_ktls = 1;
@@ -1933,6 +1947,8 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_KTLS
     if (enable_ktls)
         SSL_CTX_set_options(ctx, SSL_OP_ENABLE_KTLS);
+    if (use_zc_sendfile)
+        SSL_CTX_set_options(ctx, SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE);
 #endif
 
     if (max_send_fragment > 0
@@ -3115,7 +3131,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     }
 
     /* lets make the output buffer a reasonable size */
-    if (!BIO_set_write_buffer_size(io, bufsize))
+    if (BIO_set_write_buffer_size(io, bufsize) <= 0)
         goto err;
 
     if ((con = SSL_new(ctx)) == NULL)
@@ -3544,7 +3560,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
         goto err;
 
     /* lets make the output buffer a reasonable size */
-    if (!BIO_set_write_buffer_size(io, bufsize))
+    if (BIO_set_write_buffer_size(io, bufsize) <= 0)
         goto err;
 
     if ((con = SSL_new(ctx)) == NULL)

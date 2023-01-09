@@ -16,6 +16,10 @@
 #include "internal/quic_types.h"
 #include "internal/quic_wire.h"
 #include "internal/quic_record_tx.h"
+#include "internal/quic_record_rx.h"
+#include "internal/quic_record_rx_wrap.h"
+#include "internal/quic_fc.h"
+#include "internal/quic_statm.h"
 
 /*
  * QUIC Send Stream
@@ -125,6 +129,12 @@ int ossl_quic_sstream_get_stream_frame(QUIC_SSTREAM *qss,
                                        OSSL_QUIC_FRAME_STREAM *hdr,
                                        OSSL_QTX_IOVEC *iov,
                                        size_t *num_iov);
+
+/*
+ * Returns the current size of the stream; i.e., the number of bytes which have
+ * been appended to the stream so far.
+ */
+uint64_t ossl_quic_sstream_get_cur_size(QUIC_SSTREAM *qss);
 
 /*
  * (For TX packetizer use.) Marks a logical range of the send stream as having
@@ -266,5 +276,72 @@ void ossl_quic_sstream_adjust_iov(size_t len,
                                   OSSL_QTX_IOVEC *iov,
                                   size_t num_iov);
 
+/*
+ * QUIC Receive Stream Manager
+ * ===========================
+ *
+ * The QUIC Receive Stream Manager (QUIC_RSTREAM) is responsible for
+ * storing the received stream data frames until the application
+ * is able to read the data.
+ *
+ * The QUIC_RSTREAM is instantiated once for every stream that can receive data.
+ * (i.e., for a unidirectional receiving stream or for the receiving component
+ * of a bidirectional stream).
+ */
+typedef struct quic_rstream_st QUIC_RSTREAM;
+
+/*
+ * Create a new instance of QUIC_RSTREAM with pointers to the flow
+ * controller and statistics module. They can be NULL for unit testing.
+ * If they are non-NULL, the `rxfc` is called when receive stream data
+ * is read by application. `statm` is queried for current rtt.
+ */
+QUIC_RSTREAM *ossl_quic_rstream_new(OSSL_QRX *qrx, QUIC_RXFC *rxfc,
+                                    OSSL_STATM *statm);
+
+/*
+ * Frees a QUIC_RSTREAM and any associated storage.
+ */
+void ossl_quic_rstream_free(QUIC_RSTREAM *qrs);
+
+/*
+ * Adds received stream frame data to `qrs`. The `pkt_wrap` refcount is
+ * incremented if the `data` is queued directly without copying.
+ * It can be NULL for unit-testing purposes, i.e. if `data` is static or
+ * never released before calling ossl_quic_rstream_free().
+ * The `offset` is the absolute offset of the data in the stream.
+ * `data_len` can be 0 - can be useful for indicating `fin` for empty stream.
+ * Or to indicate `fin` without any further data added to the stream.
+ */
+
+int ossl_quic_rstream_queue_data(QUIC_RSTREAM *qrs, OSSL_QRX_PKT_WRAP *pkt_wrap,
+                                 uint64_t offset,
+                                 const unsigned char *data, uint64_t data_len,
+                                 int fin);
+
+/*
+ * Copies the data from the stream storage to buffer `buf` of size `size`.
+ * `readbytes` is set to the number of bytes actually copied.
+ * `fin` is set to 1 if all the data from the stream were read so the
+ * stream is finished. It is set to 0 otherwise.
+ */
+int ossl_quic_rstream_read(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,
+                           size_t *readbytes, int *fin);
+
+/*
+ * Peeks at the data in the stream storage. It copies them to buffer `buf`
+ * of size `size` and sets `readbytes` to the number of bytes actually copied.
+ * `fin` is set to 1 if the copied data reach end of the stream.
+ * It is set to 0 otherwise.
+ */
+int ossl_quic_rstream_peek(QUIC_RSTREAM *qrs, unsigned char *buf, size_t size,
+                           size_t *readbytes, int *fin);
+
+/*
+ * Returns the size of the data available for reading. `fin` is set to 1 if
+ * after reading all the available data the stream will be finished,
+ * set to 0 otherwise.
+ */
+int ossl_quic_rstream_available(QUIC_RSTREAM *qrs, size_t *avail, int *fin);
 
 #endif

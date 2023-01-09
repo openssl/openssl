@@ -3,6 +3,7 @@
 =head1 NAME
 
 OSSL_PROVIDER_set_default_search_path,
+OSSL_PROVIDER_get0_default_search_path,
 OSSL_PROVIDER, OSSL_PROVIDER_load, OSSL_PROVIDER_try_load, OSSL_PROVIDER_unload,
 OSSL_PROVIDER_available, OSSL_PROVIDER_do_all,
 OSSL_PROVIDER_gettable_params, OSSL_PROVIDER_get_params,
@@ -20,6 +21,7 @@ OSSL_PROVIDER_self_test
 
  int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *libctx,
                                            const char *path);
+ const char *OSSL_PROVIDER_get0_default_search_path(OSSL_LIB_CTX *libctx);
 
  OSSL_PROVIDER *OSSL_PROVIDER_load(OSSL_LIB_CTX *libctx, const char *name);
  OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
@@ -72,6 +74,11 @@ that is to be used for looking for providers in the specified I<libctx>.
 If left unspecified, an environment variable and a fall back default value will
 be used instead.
 
+OSSL_PROVIDER_get0_default_search_path() retrieves the default search I<path>
+that is to be used for looking for providers in the specified I<libctx>.
+If successful returns the path or empty string; the path is valid until the
+context is released or OSSL_PROVIDER_set_default_search_path() is called.
+
 OSSL_PROVIDER_add_builtin() is used to add a built in provider to
 B<OSSL_PROVIDER> store in the given library context, by associating a
 provider name with a provider initialization function.
@@ -110,11 +117,10 @@ See L<OSSL_PROVIDER-default(7)> for more information on this fallback
 behaviour.
 
 OSSL_PROVIDER_gettable_params() is used to get a provider parameter
-descriptor set as a constant B<OSSL_PARAM> array.
-See L<OSSL_PARAM(3)> for more information.
+descriptor set as a constant L<OSSL_PARAM(3)> array.
 
 OSSL_PROVIDER_get_params() is used to get provider parameter values.
-The caller must prepare the B<OSSL_PARAM> array before calling this
+The caller must prepare the L<OSSL_PARAM(3)> array before calling this
 function, and the variables acting as buffers for this parameter array
 should be filled with data when it returns successfully.
 
@@ -150,7 +156,7 @@ OSSL_PROVIDER_get0_name() returns the name of the given provider.
 OSSL_PROVIDER_get_capabilities() provides information about the capabilities
 supported by the provider specified in I<prov> with the capability name
 I<capability>. For each capability of that name supported by the provider it
-will call the callback I<cb> and supply a set of B<OSSL_PARAM>s describing the
+will call the callback I<cb> and supply a set of L<OSSL_PARAM(3)>s describing the
 capability. It will also pass back the argument I<arg>. For more details about
 capabilities and what they can be used for please see
 L<provider-base(7)/CAPABILTIIES>.
@@ -160,6 +166,9 @@ L<provider-base(7)/CAPABILTIIES>.
 OSSL_PROVIDER_set_default_search_path(), OSSL_PROVIDER_add(),
 OSSL_PROVIDER_unload(), OSSL_PROVIDER_get_params() and
 OSSL_PROVIDER_get_capabilities() return 1 on success, or 0 on error.
+
+OSSL_PROVIDER_get0_default_search_path() returns a pointer to a path on success,
+or NULL on error or if the path has not previously been set.
 
 OSSL_PROVIDER_load() and OSSL_PROVIDER_try_load() return a pointer to a
 provider object on success, or NULL on error.
@@ -173,7 +182,7 @@ OSSL_PROVIDER_available() returns 1 if the named provider is available,
 otherwise 0.
 
 OSSL_PROVIDER_gettable_params() returns a pointer to an array
-of constant B<OSSL_PARAM>, or NULL if none is provided.
+of constant L<OSSL_PARAM(3)>, or NULL if none is provided.
 
 OSSL_PROVIDER_get_params() and returns 1 on success, or 0 on error.
 

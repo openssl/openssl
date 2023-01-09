@@ -24,14 +24,6 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <assert.h>
 # include <string.h>
 
-# if defined(__GNUC__)
-#  define ALIGN1  __attribute__((aligned(1)))
-# elif defined(_MSC_VER)
-#  define ALIGN1  __declspec(align(1))
-# else
-#  define ALIGN1
-# endif
-
 # define ALIGN_OF(ptr, boundary) \
     ((unsigned char *)(ptr) + (boundary - (((size_t)(ptr)) & (boundary - 1))))
 
@@ -46,8 +38,6 @@ NON_EMPTY_TRANSLATION_UNIT
 /* Number of registers required to hold |digits_num| amount of qword digits */
 # define NUMBER_OF_REGISTERS(digits_num, register_size)            \
     (((digits_num) * 64 + (register_size) - 1) / (register_size))
-
-typedef uint64_t ALIGN1 uint64_t_align1;
 
 static ossl_inline uint64_t get_digit(const uint8_t *in, int in_len);
 static ossl_inline void put_digit(uint8_t *out, int out_len, uint64_t digit);
@@ -559,9 +549,13 @@ static void to_words52(BN_ULONG *out, int out_len,
     in_str = (uint8_t *)in;
 
     for (; in_bitsize >= (2 * DIGIT_SIZE); in_bitsize -= (2 * DIGIT_SIZE), out += 2) {
-        out[0] = (*(uint64_t_align1 *)in_str) & DIGIT_MASK;
+        uint64_t digit;
+
+        memcpy(&digit, in_str, sizeof(digit));
+        out[0] = digit & DIGIT_MASK;
         in_str += 6;
-        out[1] = ((*(uint64_t_align1 *)in_str) >> 4) & DIGIT_MASK;
+        memcpy(&digit, in_str, sizeof(digit));
+        out[1] = (digit >> 4) & DIGIT_MASK;
         in_str += 7;
         out_len -= 2;
     }
@@ -620,9 +614,13 @@ static void from_words52(BN_ULONG *out, int out_bitsize, const BN_ULONG *in)
 
         for (; out_bitsize >= (2 * DIGIT_SIZE);
                out_bitsize -= (2 * DIGIT_SIZE), in += 2) {
-            (*(uint64_t_align1 *)out_str) = in[0];
+            uint64_t digit;
+
+            digit = in[0];
+            memcpy(out_str, &digit, sizeof(digit));
             out_str += 6;
-            (*(uint64_t_align1 *)out_str) ^= in[1] << 4;
+            digit = digit >> 48 | in[1] << 4;
+            memcpy(out_str, &digit, sizeof(digit));
             out_str += 7;
         }
 

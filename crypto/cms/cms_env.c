@@ -138,7 +138,7 @@ int ossl_cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
     return 1;
 }
 
-CMS_EncryptedContentInfo* ossl_cms_get0_env_enc_content(const CMS_ContentInfo *cms)
+CMS_EncryptedContentInfo *ossl_cms_get0_env_enc_content(const CMS_ContentInfo *cms)
 {
     switch (cms_get_enveloped_type(cms)) {
     case CMS_ENVELOPED_STANDARD:
@@ -266,7 +266,8 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
                                      ASN1_STRING_get0_data(secret),
                                      ASN1_STRING_length(secret)) != 1)
         goto end;
-    res = CMS_decrypt(ci, pkey, cert, detached_data, bio, flags);
+    res = CMS_decrypt(ci, secret == NULL ? pkey : NULL,
+                      secret == NULL ? cert : NULL, detached_data, bio, flags);
 
  end:
     if (ci != NULL)
@@ -606,6 +607,13 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 
     if (!ossl_cms_env_asn1_ctrl(ri, 1))
         goto err;
+
+    if (EVP_PKEY_is_a(pkey, "RSA"))
+        /* upper layer CMS code incorrectly assumes that a successful RSA
+         * decryption means that the key matches ciphertext (which never
+         * was the case, implicit rejection or not), so to make it work
+         * disable implicit rejection for RSA keys */
+        EVP_PKEY_CTX_ctrl_str(ktri->pctx, "rsa_pkcs1_implicit_rejection", "0");
 
     if (EVP_PKEY_decrypt(ktri->pctx, NULL, &eklen,
                          ktri->encryptedKey->data,

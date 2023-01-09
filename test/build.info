@@ -52,7 +52,7 @@ IF[{- !$disabled{tests} -}]
           bio_callback_test bio_memleak_test bio_core_test bio_dgram_test param_build_test \
           bioprinttest sslapitest dtlstest sslcorrupttest \
           bio_enc_test pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
-          cipherbytes_test threadstest_fips \
+          cipherbytes_test threadstest_fips threadpool_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest rand_status_test sslbuffertest \
@@ -64,7 +64,7 @@ IF[{- !$disabled{tests} -}]
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
           provfetchtest prov_config_test rand_test ca_internals_test \
           bio_tfo_test membio_test bio_dgram_test list_test fips_version_test \
-          x509_test
+          x509_test hpke_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -183,6 +183,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_extra_test]=evp_extra_test.c
   INCLUDE[evp_extra_test]=../include ../apps/include
   DEPEND[evp_extra_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[hpke_test]=hpke_test.c
+  INCLUDE[hpke_test]=../include ../apps/include
+  DEPEND[hpke_test]=../libcrypto.a libtestutil.a
 
   SOURCE[evp_extra_test2]=evp_extra_test2.c $INITSRC
   INCLUDE[evp_extra_test2]=../include ../apps/include
@@ -312,6 +316,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[quic_fifd_test]=../include ../apps/include
   DEPEND[quic_fifd_test]=../libcrypto.a ../libssl.a libtestutil.a
 
+  SOURCE[quic_txp_test]=quic_txp_test.c
+  INCLUDE[quic_txp_test]=../include ../apps/include
+  DEPEND[quic_txp_test]=../libcrypto.a ../libssl.a libtestutil.a
+
   SOURCE[asynctest]=asynctest.c
   INCLUDE[asynctest]=../include ../apps/include
   DEPEND[asynctest]=../libcrypto
@@ -359,6 +367,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[ct_test]=ct_test.c
   INCLUDE[ct_test]=../include ../apps/include
   DEPEND[ct_test]=../libcrypto libtestutil.a
+
+  SOURCE[threadpool_test]=threadpool_test.c
+  INCLUDE[threadpool_test]=.. ../include ../apps/include
+  DEPEND[threadpool_test]=../libcrypto.a libtestutil.a
 
   SOURCE[threadstest]=threadstest.c
   INCLUDE[threadstest]=.. ../include ../apps/include
@@ -967,6 +979,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[provider_pkey_test]=../include ../apps/include
   DEPEND[provider_pkey_test]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=provider_default_search_path_test
+  SOURCE[provider_default_search_path_test]=provider_default_search_path_test.c
+  INCLUDE[provider_default_search_path_test]=../include ../apps/include
+  DEPEND[provider_default_search_path_test]=../libcrypto libtestutil.a
+
   PROGRAMS{noinst}=params_test
   SOURCE[params_test]=params_test.c
   INCLUDE[params_test]=.. ../include ../apps/include
@@ -1036,7 +1053,7 @@ ENDIF
   ENDIF
 
   IF[{- !$disabled{'quic'} -}]
-    PROGRAMS{noinst}=quicapitest quic_wire_test quic_ackm_test quic_record_test quic_fc_test quic_stream_test quic_cfq_test quic_txpim_test quic_fifd_test
+    PROGRAMS{noinst}=quicapitest quic_wire_test quic_ackm_test quic_record_test quic_fc_test quic_stream_test quic_cfq_test quic_txpim_test quic_fifd_test quic_txp_test
   ENDIF
 
   SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c

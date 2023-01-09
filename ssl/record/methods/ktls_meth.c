@@ -147,8 +147,7 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
      */
 # ifdef OPENSSL_KTLS_AES_CCM_128
     if (EVP_CIPHER_is_a(c, "AES-128-CCM")) {
-        if (rl->version == TLS_1_3_VERSION /* broken on 5.x kernels */
-            || taglen != EVP_CCM_TLS_TAG_LEN)
+        if (taglen != EVP_CCM_TLS_TAG_LEN)
             return 0;
         return 1;
     } else
@@ -335,6 +334,14 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     if (!BIO_set_ktls(rl->bio, &crypto_info, rl->direction))
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
+    if (rl->direction == OSSL_RECORD_DIRECTION_WRITE &&
+        (rl->options & SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE) != 0)
+        /* Ignore errors. The application opts in to using the zerocopy
+         * optimization. If the running kernel doesn't support it, just
+         * continue without the optimization.
+         */
+        BIO_set_ktls_tx_zerocopy_sendfile(rl->bio);
+
     return OSSL_RECORD_RETURN_SUCCESS;
 }
 
@@ -367,13 +374,14 @@ static int ktls_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
     return ret;
 }
 
-static int ktls_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs,
-                       int sending, SSL_MAC_BUF *mac, size_t macsize)
+static int ktls_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *inrecs,
+                       size_t n_recs, int sending, SSL_MAC_BUF *mac,
+                       size_t macsize)
 {
     return 1;
 }
 
-static int ktls_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+static int ktls_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
     if (rec->rec_version != TLS1_2_VERSION) {
         RLAYERfatal(rl, SSL_AD_DECODE_ERROR, SSL_R_WRONG_VERSION_NUMBER);
@@ -383,7 +391,7 @@ static int ktls_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     return 1;
 }
 
-static int ktls_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+static int ktls_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
     if (rl->version == TLS1_3_VERSION)
         return tls13_common_post_process_record(rl, rec);
@@ -455,10 +463,10 @@ static int ktls_initialise_write_packets(OSSL_RECORD_LAYER *rl,
                                          size_t numtempl,
                                          OSSL_RECORD_TEMPLATE *prefixtempl,
                                          WPACKET *pkt,
-                                         SSL3_BUFFER *bufs,
+                                         TLS_BUFFER *bufs,
                                          size_t *wpinited)
 {
-    SSL3_BUFFER *wb;
+    TLS_BUFFER *wb;
 
     /*
      * We just use the application buffer directly and don't use any WPACKET
@@ -473,9 +481,9 @@ static int ktls_initialise_write_packets(OSSL_RECORD_LAYER *rl,
     * This doesn't leak memory because the buffers have never been allocated
     * with KTLS
     */
-    SSL3_BUFFER_set_buf(wb, (unsigned char *)templates[0].buf);
-    SSL3_BUFFER_set_offset(wb, 0);
-    SSL3_BUFFER_set_app_buffer(wb, 1);
+    TLS_BUFFER_set_buf(wb, (unsigned char *)templates[0].buf);
+    TLS_BUFFER_set_offset(wb, 0);
+    TLS_BUFFER_set_app_buffer(wb, 1);
 
     return 1;
 }
@@ -495,7 +503,7 @@ static int ktls_prepare_record_header(OSSL_RECORD_LAYER *rl,
 static int ktls_prepare_for_encryption(OSSL_RECORD_LAYER *rl,
                                        size_t mac_size,
                                        WPACKET *thispkt,
-                                       SSL3_RECORD *thiswr)
+                                       TLS_RL_RECORD *thiswr)
 {
     /* No encryption, so nothing to do */
     return 1;
@@ -505,7 +513,7 @@ static int ktls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
                                            size_t mac_size,
                                            OSSL_RECORD_TEMPLATE *templ,
                                            WPACKET *thispkt,
-                                           SSL3_RECORD *thiswr)
+                                           TLS_RL_RECORD *thiswr)
 {
     /* The kernel does anything that is needed, so nothing to do here */
     return 1;

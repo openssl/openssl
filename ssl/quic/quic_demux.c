@@ -14,59 +14,6 @@
 
 #define DEMUX_MAX_MSGS_PER_CALL    32
 
-void ossl_quic_urxe_remove(QUIC_URXE_LIST *l, QUIC_URXE *e)
-{
-    /* Must be in list currently. */
-    assert((e->prev != NULL || l->head == e)
-           && (e->next != NULL || l->tail == e));
-
-    if (e->prev != NULL)
-        e->prev->next = e->next;
-    if (e->next != NULL)
-        e->next->prev = e->prev;
-
-    if (e == l->head)
-        l->head = e->next;
-    if (e == l->tail)
-        l->tail = e->prev;
-
-    e->next = e->prev = NULL;
-}
-
-void ossl_quic_urxe_insert_head(QUIC_URXE_LIST *l, QUIC_URXE *e)
-{
-    /* Must not be in list. */
-    assert(e->prev == NULL && e->next == NULL);
-
-    if (l->head == NULL) {
-        l->head = l->tail = e;
-        e->next = e->prev = NULL;
-        return;
-    }
-
-    l->head->prev = e;
-    e->next = l->head;
-    e->prev = NULL;
-    l->head = e;
-}
-
-void ossl_quic_urxe_insert_tail(QUIC_URXE_LIST *l, QUIC_URXE *e)
-{
-    /* Must not be in list. */
-    assert(e->prev == NULL && e->next == NULL);
-
-    if (l->tail == NULL) {
-        l->head = l->tail = e;
-        e->next = e->prev = NULL;
-        return;
-    }
-
-    l->tail->next = e;
-    e->prev = l->tail;
-    e->next = NULL;
-    l->tail = e;
-}
-
 /* Structure used to track a given connection ID. */
 typedef struct quic_demux_conn_st QUIC_DEMUX_CONN;
 
@@ -124,7 +71,6 @@ struct quic_demux_st {
      * unconsumed data). These are moved to the pending list as they are filled.
      */
     QUIC_URXE_LIST              urx_free;
-    size_t                      num_urx_free;
 
     /*
      * List of URXEs which are filled with received encrypted data. These are
@@ -181,12 +127,11 @@ static void demux_free_urxl(QUIC_URXE_LIST *l)
 {
     QUIC_URXE *e, *enext;
 
-    for (e = l->head; e != NULL; e = enext) {
-        enext = e->next;
+    for (e = ossl_list_urxe_head(l); e != NULL; e = enext) {
+        enext = ossl_list_urxe_next(e);
+        ossl_list_urxe_remove(l, e);
         OPENSSL_free(e);
     }
-
-    l->head = l->tail = NULL;
 }
 
 void ossl_quic_demux_free(QUIC_DEMUX *demux)
@@ -314,9 +259,9 @@ static QUIC_URXE *demux_alloc_urxe(size_t alloc_len)
     if (e == NULL)
         return NULL;
 
-    e->prev = e->next   = NULL;
+    ossl_list_urxe_init_elem(e);
     e->alloc_len        = alloc_len;
-    e->data_len         = 0;
+    e->data_len = 0;
     return e;
 }
 
@@ -324,13 +269,12 @@ static int demux_ensure_free_urxe(QUIC_DEMUX *demux, size_t min_num_free)
 {
     QUIC_URXE *e;
 
-    while (demux->num_urx_free < min_num_free) {
+    while (ossl_list_urxe_num(&demux->urx_free) < min_num_free) {
         e = demux_alloc_urxe(demux->default_urxe_alloc_len);
         if (e == NULL)
             return 0;
 
-        ossl_quic_urxe_insert_tail(&demux->urx_free, e);
-        ++demux->num_urx_free;
+        ossl_list_urxe_insert_tail(&demux->urx_free, e);
     }
 
     return 1;
@@ -348,11 +292,11 @@ static int demux_recv(QUIC_DEMUX *demux)
 {
     BIO_MSG msg[DEMUX_MAX_MSGS_PER_CALL];
     size_t rd, i;
-    QUIC_URXE *urxe = demux->urx_free.head, *unext;
+    QUIC_URXE *urxe = ossl_list_urxe_head(&demux->urx_free), *unext;
     OSSL_TIME now;
 
     /* This should never be called when we have any pending URXE. */
-    assert(demux->urx_pending.head == NULL);
+    assert(ossl_list_urxe_head(&demux->urx_pending) == NULL);
 
     if (demux->net_bio == NULL)
         return 0;
@@ -361,7 +305,8 @@ static int demux_recv(QUIC_DEMUX *demux)
      * Opportunistically receive as many messages as possible in a single
      * syscall, determined by how many free URXEs are available.
      */
-    for (i = 0; i < (ossl_ssize_t)OSSL_NELEM(msg); ++i, urxe = urxe->next) {
+    for (i = 0; i < (ossl_ssize_t)OSSL_NELEM(msg);
+            ++i, urxe = ossl_list_urxe_next(urxe)) {
         if (urxe == NULL) {
             /* We need at least one URXE to receive into. */
             if (!ossl_assert(i > 0))
@@ -386,17 +331,16 @@ static int demux_recv(QUIC_DEMUX *demux)
 
     now = demux->now != NULL ? demux->now(demux->now_arg) : ossl_time_zero();
 
-    urxe = demux->urx_free.head;
+    urxe = ossl_list_urxe_head(&demux->urx_free);
     for (i = 0; i < rd; ++i, urxe = unext) {
-        unext = urxe->next;
+        unext = ossl_list_urxe_next(urxe);
         /* Set URXE with actual length of received datagram. */
         urxe->data_len      = msg[i].data_len;
         /* Time we received datagram. */
         urxe->time          = now;
         /* Move from free list to pending list. */
-        ossl_quic_urxe_remove(&demux->urx_free, urxe);
-        --demux->num_urx_free;
-        ossl_quic_urxe_insert_tail(&demux->urx_pending, urxe);
+        ossl_list_urxe_remove(&demux->urx_free, urxe);
+        ossl_list_urxe_insert_tail(&demux->urx_pending, urxe);
     }
 
     return 1;
@@ -434,7 +378,7 @@ static int demux_process_pending_urxe(QUIC_DEMUX *demux, QUIC_URXE *e)
     QUIC_DEMUX_CONN *conn;
 
     /* The next URXE we process should be at the head of the pending list. */
-    if (!ossl_assert(e == demux->urx_pending.head))
+    if (!ossl_assert(e == ossl_list_urxe_head(&demux->urx_pending)))
         return 0;
 
     conn = demux_identify_conn(demux, e);
@@ -443,9 +387,8 @@ static int demux_process_pending_urxe(QUIC_DEMUX *demux, QUIC_URXE *e)
          * We could not identify a connection. We will never be able to process
          * this datagram, so get rid of it.
          */
-        ossl_quic_urxe_remove(&demux->urx_pending, e);
-        ossl_quic_urxe_insert_tail(&demux->urx_free, e);
-        ++demux->num_urx_free;
+        ossl_list_urxe_remove(&demux->urx_pending, e);
+        ossl_list_urxe_insert_tail(&demux->urx_free, e);
         return 1; /* keep processing pending URXEs */
     }
 
@@ -453,7 +396,7 @@ static int demux_process_pending_urxe(QUIC_DEMUX *demux, QUIC_URXE *e)
      * Remove from list and invoke callback. The URXE now belongs to the
      * callback. (QUIC_DEMUX_CONN never has non-NULL cb.)
      */
-    ossl_quic_urxe_remove(&demux->urx_pending, e);
+    ossl_list_urxe_remove(&demux->urx_pending, e);
     conn->cb(e, conn->cb_arg);
     return 1;
 }
@@ -463,7 +406,7 @@ static int demux_process_pending_urxl(QUIC_DEMUX *demux)
 {
     QUIC_URXE *e;
 
-    while ((e = demux->urx_pending.head) != NULL)
+    while ((e = ossl_list_urxe_head(&demux->urx_pending)) != NULL)
         if (!demux_process_pending_urxe(demux, e))
             return 0;
 
@@ -478,7 +421,7 @@ int ossl_quic_demux_pump(QUIC_DEMUX *demux)
 {
     int ret;
 
-    if (demux->urx_pending.head == NULL) {
+    if (ossl_list_urxe_head(&demux->urx_pending) == NULL) {
         ret = demux_ensure_free_urxe(demux, DEMUX_MAX_MSGS_PER_CALL);
         if (ret != 1)
             return 0;
@@ -490,7 +433,7 @@ int ossl_quic_demux_pump(QUIC_DEMUX *demux)
         /*
          * If demux_recv returned successfully, we should always have something.
          */
-        assert(demux->urx_pending.head != NULL);
+        assert(ossl_list_urxe_head(&demux->urx_pending) != NULL);
     }
 
     return demux_process_pending_urxl(demux);
@@ -510,7 +453,7 @@ int ossl_quic_demux_inject(QUIC_DEMUX *demux,
     if (ret != 1)
         return 0;
 
-    urxe = demux->urx_free.head;
+    urxe = ossl_list_urxe_head(&demux->urx_free);
     if (buf_len > urxe->alloc_len)
         return 0;
 
@@ -528,9 +471,8 @@ int ossl_quic_demux_inject(QUIC_DEMUX *demux,
         BIO_ADDR_clear(&urxe->local);
 
     /* Move from free list to pending list. */
-    ossl_quic_urxe_remove(&demux->urx_free, urxe);
-    --demux->num_urx_free;
-    ossl_quic_urxe_insert_tail(&demux->urx_pending, urxe);
+    ossl_list_urxe_remove(&demux->urx_free, urxe);
+    ossl_list_urxe_insert_tail(&demux->urx_pending, urxe);
 
     return demux_process_pending_urxl(demux);
 }
@@ -539,7 +481,6 @@ int ossl_quic_demux_inject(QUIC_DEMUX *demux,
 void ossl_quic_demux_release_urxe(QUIC_DEMUX *demux,
                                   QUIC_URXE *e)
 {
-    assert(e->prev == NULL && e->next == NULL);
-    ossl_quic_urxe_insert_tail(&demux->urx_free, e);
-    ++demux->num_urx_free;
+    assert(ossl_list_urxe_prev(e) == NULL && ossl_list_urxe_next(e) == NULL);
+    ossl_list_urxe_insert_tail(&demux->urx_free, e);
 }

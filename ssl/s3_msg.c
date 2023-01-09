@@ -61,7 +61,7 @@ int ssl3_send_alert(SSL_CONNECTION *s, int level, int desc)
     if ((level == SSL3_AL_FATAL) && (s->session != NULL))
         SSL_CTX_remove_session(s->session_ctx, s->session);
 
-    s->s3.alert_dispatch = 1;
+    s->s3.alert_dispatch = SSL_ALERT_DISPATCH_PENDING;
     s->s3.send_alert[0] = level;
     s->s3.send_alert[1] = desc;
     if (!RECORD_LAYER_write_pending(&s->rlayer)) {
@@ -85,10 +85,9 @@ int ssl3_dispatch_alert(SSL *s)
     if (sc == NULL)
         return -1;
 
-    sc->s3.alert_dispatch = 0;
-
     if (sc->rlayer.wrlmethod == NULL) {
         /* No write record layer so we can't sent and alert. We just ignore it */
+        sc->s3.alert_dispatch = SSL_ALERT_DISPATCH_NONE;
         return 1;
     }
 
@@ -104,20 +103,43 @@ int ssl3_dispatch_alert(SSL *s)
     templ.buf = &sc->s3.send_alert[0];
     templ.buflen = 2;
 
-    /* TODO(RECLAYER): What happens if there is already a write pending? */
-    if (RECORD_LAYER_write_pending(&sc->rlayer))
-        return -1;
+    if (RECORD_LAYER_write_pending(&sc->rlayer)) {
+        if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_RETRY) {
+            /*
+             * We have a write pending but it wasn't from a previous call to
+             * this function! Can we ever get here? Maybe via API misuse??
+             * Give up.
+             */
+            sc->s3.alert_dispatch = SSL_ALERT_DISPATCH_NONE;
+            return -1;
+        }
+        /* Retry what we've already got pending */
+        i = HANDLE_RLAYER_WRITE_RETURN(sc,
+                sc->rlayer.wrlmethod->retry_write_records(sc->rlayer.wrl));
+        if (i <= 0) {
+            /* Could be NBIO. Keep alert_dispatch as SSL_ALERT_DISPATCH_RETRY */
+            return -1;
+        }
+        sc->rlayer.wpend_tot = 0;
+        sc->s3.alert_dispatch = SSL_ALERT_DISPATCH_NONE;
+        return 1;
+    }
 
     i = HANDLE_RLAYER_WRITE_RETURN(sc,
             sc->rlayer.wrlmethod->write_records(sc->rlayer.wrl, &templ, 1));
+
     if (i <= 0) {
-        sc->s3.alert_dispatch = 1;
+        sc->s3.alert_dispatch = SSL_ALERT_DISPATCH_RETRY;
+        sc->rlayer.wpend_tot = templ.buflen;
+        sc->rlayer.wpend_type = templ.type;
+        sc->rlayer.wpend_buf = templ.buf;
     } else {
         /*
          * Alert sent to BIO - now flush. If the message does not get sent due
          * to non-blocking IO, we will not worry too much.
          */
         (void)BIO_flush(sc->wbio);
+        sc->s3.alert_dispatch = SSL_ALERT_DISPATCH_NONE;
 
         if (sc->msg_callback)
             sc->msg_callback(1, sc->version, SSL3_RT_ALERT, sc->s3.send_alert,

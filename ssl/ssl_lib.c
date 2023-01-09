@@ -23,6 +23,7 @@
 #include <openssl/trace.h>
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include "internal/refcount.h"
 #include "internal/ktls.h"
 
@@ -541,13 +542,29 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
 void OPENSSL_VPROC_FUNC(void) {}
 #endif
 
-
-static void clear_ciphers(SSL_CONNECTION *s)
+static int clear_record_layer(SSL_CONNECTION *s)
 {
-    /* clear the current cipher */
-    ssl_clear_cipher_ctx(s);
-    ssl_clear_hash_ctx(&s->read_hash);
-    ssl_clear_hash_ctx(&s->write_hash);
+    int ret;
+
+    /* We try and reset both record layers even if one fails */
+
+    ret = ssl_set_new_record_layer(s,
+                                   SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION
+                                                             : TLS_ANY_VERSION,
+                                   OSSL_RECORD_DIRECTION_READ,
+                                   OSSL_RECORD_PROTECTION_LEVEL_NONE,
+                                   NULL, 0, NULL, 0, NULL,  0, NULL, 0,
+                                   NID_undef, NULL, NULL);
+
+    ret &= ssl_set_new_record_layer(s,
+                                    SSL_CONNECTION_IS_DTLS(s) ? DTLS_ANY_VERSION
+                                                              : TLS_ANY_VERSION,
+                                    OSSL_RECORD_DIRECTION_WRITE,
+                                    OSSL_RECORD_PROTECTION_LEVEL_NONE,
+                                    NULL, 0, NULL, 0, NULL,  0, NULL, 0,
+                                    NID_undef, NULL, NULL);
+    /* SSLfatal already called in the event of failure */
+    return ret;
 }
 
 int SSL_clear(SSL *s)
@@ -597,7 +614,6 @@ int ossl_ssl_connection_reset(SSL *s)
 
     BUF_MEM_free(sc->init_buf);
     sc->init_buf = NULL;
-    clear_ciphers(sc);
     sc->first_packet = 0;
 
     sc->key_update = SSL_KEY_UPDATE_NONE;
@@ -641,24 +657,8 @@ int ossl_ssl_connection_reset(SSL *s)
     BIO_free(sc->rlayer.rrlnext);
     sc->rlayer.rrlnext = NULL;
 
-    if (!ssl_set_new_record_layer(sc,
-                                  SSL_CONNECTION_IS_DTLS(sc) ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
-                                  OSSL_RECORD_DIRECTION_READ,
-                                  OSSL_RECORD_PROTECTION_LEVEL_NONE,
-                                  NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                  NID_undef, NULL, NULL)) {
-        /* SSLfatal already called */
+    if (!clear_record_layer(sc))
         return 0;
-    }
-    if (!ssl_set_new_record_layer(sc,
-                                  SSL_CONNECTION_IS_DTLS(sc) ? DTLS_ANY_VERSION : TLS_ANY_VERSION,
-                                  OSSL_RECORD_DIRECTION_WRITE,
-                                  OSSL_RECORD_PROTECTION_LEVEL_NONE,
-                                  NULL, 0, NULL, 0, NULL,  0, NULL, 0,
-                                  NID_undef, NULL, NULL)) {
-        /* SSLfatal already called */
-        return 0;
-    }
 
     return 1;
 }
@@ -1370,8 +1370,6 @@ void ossl_ssl_connection_free(SSL *ssl)
     }
     SSL_SESSION_free(s->psksession);
     OPENSSL_free(s->psksession_id);
-
-    clear_ciphers(s);
 
     ssl_cert_free(s->cert);
     OPENSSL_free(s->shared_sigalgs);
@@ -2421,7 +2419,7 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
     }
 
     /* If we have an alert to send, lets send it */
-    if (sc->s3.alert_dispatch) {
+    if (sc->s3.alert_dispatch > 0) {
         ret = (ossl_ssize_t)s->method->ssl_dispatch_alert(s);
         if (ret <= 0) {
             /* SSLfatal() already called if appropriate */
@@ -4487,7 +4485,8 @@ void SSL_set_accept_state(SSL *s)
     sc->shutdown = 0;
     ossl_statem_clear(sc);
     sc->handshake_func = s->method->ssl_accept;
-    clear_ciphers(sc);
+    /* Ignore return value. Its a void public API function */
+    clear_record_layer(sc);
 }
 
 void SSL_set_connect_state(SSL *s)
@@ -4502,7 +4501,8 @@ void SSL_set_connect_state(SSL *s)
     sc->shutdown = 0;
     ossl_statem_clear(sc);
     sc->handshake_func = s->method->ssl_connect;
-    clear_ciphers(sc);
+    /* Ignore return value. Its a void public API function */
+    clear_record_layer(sc);
 }
 
 int ssl_undefined_function(SSL *s)
@@ -4714,24 +4714,6 @@ SSL *SSL_dup(SSL *s)
     return NULL;
 }
 
-void ssl_clear_cipher_ctx(SSL_CONNECTION *s)
-{
-    if (s->enc_read_ctx != NULL) {
-        EVP_CIPHER_CTX_free(s->enc_read_ctx);
-        s->enc_read_ctx = NULL;
-    }
-    if (s->enc_write_ctx != NULL) {
-        EVP_CIPHER_CTX_free(s->enc_write_ctx);
-        s->enc_write_ctx = NULL;
-    }
-#ifndef OPENSSL_NO_COMP
-    COMP_CTX_free(s->expand);
-    s->expand = NULL;
-    COMP_CTX_free(s->compress);
-    s->compress = NULL;
-#endif
-}
-
 X509 *SSL_get_certificate(const SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
@@ -4834,7 +4816,7 @@ int ssl_init_wbio_buffer(SSL_CONNECTION *s)
     }
 
     bbio = BIO_new(BIO_f_buffer());
-    if (bbio == NULL || !BIO_set_read_buffer_size(bbio, 1)) {
+    if (bbio == NULL || BIO_set_read_buffer_size(bbio, 1) <= 0) {
         BIO_free(bbio);
         ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
         return 0;
@@ -5503,32 +5485,6 @@ int SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets)
 size_t SSL_CTX_get_num_tickets(const SSL_CTX *ctx)
 {
     return ctx->num_tickets;
-}
-
-/*
- * Allocates new EVP_MD_CTX and sets pointer to it into given pointer
- * variable, freeing EVP_MD_CTX previously stored in that variable, if any.
- * If EVP_MD pointer is passed, initializes ctx with this |md|.
- * Returns the newly allocated ctx;
- */
-
-EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md)
-{
-    ssl_clear_hash_ctx(hash);
-    *hash = EVP_MD_CTX_new();
-    if (*hash == NULL || (md && EVP_DigestInit_ex(*hash, md, NULL) <= 0)) {
-        EVP_MD_CTX_free(*hash);
-        *hash = NULL;
-        return NULL;
-    }
-    return *hash;
-}
-
-void ssl_clear_hash_ctx(EVP_MD_CTX **hash)
-{
-
-    EVP_MD_CTX_free(*hash);
-    *hash = NULL;
 }
 
 /* Retrieve handshake hashes */

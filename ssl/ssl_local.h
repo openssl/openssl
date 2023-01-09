@@ -400,6 +400,15 @@
 # define SSL_READ_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
 # define SSL_WRITE_ETM(s) (s->s3.flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
 
+/* alert_dispatch values */
+
+/* No alert pending */
+# define SSL_ALERT_DISPATCH_NONE    0
+/* Alert pending */
+# define SSL_ALERT_DISPATCH_PENDING 1
+/* Pending alert write needs to be retried */
+# define SSL_ALERT_DISPATCH_RETRY   2
+
 /* Mostly for SSLv3 */
 # define SSL_PKEY_RSA            0
 # define SSL_PKEY_RSA_PSS_SIGN   1
@@ -1297,10 +1306,6 @@ struct ssl_connection_st {
 
     struct {
         long flags;
-        size_t read_mac_secret_size;
-        unsigned char read_mac_secret[EVP_MAX_MD_SIZE];
-        size_t write_mac_secret_size;
-        unsigned char write_mac_secret[EVP_MAX_MD_SIZE];
         unsigned char server_random[SSL3_RANDOM_SIZE];
         unsigned char client_random[SSL3_RANDOM_SIZE];
 
@@ -1500,14 +1505,7 @@ struct ssl_connection_st {
     unsigned char server_app_traffic_secret[EVP_MAX_MD_SIZE];
     unsigned char exporter_master_secret[EVP_MAX_MD_SIZE];
     unsigned char early_exporter_master_secret[EVP_MAX_MD_SIZE];
-    EVP_CIPHER_CTX *enc_read_ctx; /* cryptographic state */
-    unsigned char read_iv[EVP_MAX_IV_LENGTH]; /* TLSv1.3 static read IV */
-    EVP_MD_CTX *read_hash;      /* used for mac generation */
-    COMP_CTX *compress;         /* compression */
-    COMP_CTX *expand;           /* uncompress */
-    EVP_CIPHER_CTX *enc_write_ctx; /* cryptographic state */
-    unsigned char write_iv[EVP_MAX_IV_LENGTH]; /* TLSv1.3 static write IV */
-    EVP_MD_CTX *write_hash;     /* used for mac generation */
+
     /* session info */
     /* client cert? */
     /* This is used to hold the server certificate used */
@@ -2475,7 +2473,6 @@ __owur int ossl_ssl_connection_reset(SSL *ssl);
 
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
 __owur int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written);
-void ssl_clear_cipher_ctx(SSL_CONNECTION *s);
 int ssl_clear_bad_session(SSL_CONNECTION *s);
 __owur CERT *ssl_cert_new(void);
 __owur CERT *ssl_cert_dup(CERT *cert);
@@ -2825,8 +2822,6 @@ __owur int ssl_security_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk,
 
 int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs);
 
-__owur EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
-void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
 __owur long ssl_get_algorithm2(SSL_CONNECTION *s);
 __owur int tls12_copy_sigalgs(SSL_CONNECTION *s, WPACKET *pkt,
                               const uint16_t *psig, size_t psiglen);

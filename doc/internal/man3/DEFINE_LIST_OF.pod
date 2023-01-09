@@ -3,7 +3,8 @@
 =head1 NAME
 
 DEFINE_LIST_OF, OSSL_LIST_MEMBER, OSSL_LIST,
-ossl_list_TYPE_init, ossl_list_TYPE_num,
+ossl_list_TYPE_init, ossl_list_TYPE_init_elem,
+ossl_list_TYPE_is_empty, ossl_list_TYPE_num,
 ossl_list_TYPE_head, ossl_list_TYPE_tail,
 ossl_list_TYPE_next, ossl_list_TYPE_prev,
 ossl_list_TYPE_remove, ossl_list_TYPE_insert_head, ossl_list_TYPE_insert_tail,
@@ -21,7 +22,9 @@ ossl_list_TYPE_insert_before, ossl_list_TYPE_after
  DEFINE_LIST_OF(NAME, TYPE);
 
  void ossl_list_TYPE_init(OSSL_LIST(name) *list);
+ void ossl_list_TYPE_init_elem(type *elem);
 
+ int ossl_list_TYPE_is_empty(const OSSL_LIST(name) *list);
  size_t ossl_list_TYPE_num(const OSSL_LIST(name) *list);
  type *ossl_list_TYPE_head(const OSSL_LIST(name) *list);
  type *ossl_list_TYPE_tail(const OSSL_LIST(name) *list);
@@ -48,46 +51,55 @@ The OSSL_LIST() macro returns the name for a list of the specified
 B<I<TYPE>>.  This is a structure which should be treated as opaque.
 
 DEFINE_LIST_OF() creates a set of functions for a list of B<I<TYPE>>
-elements with the name B<I<NAME>>.  The type is represented
-by B<OSSL_LIST>(B<I<NAME>>) and each function name begins with
-B<ossl_list_I<NAME>_>.  The list's linkages are stored in the
-B<OSSL_LIST_MEMBER>(B<I<NAME>>, B<I<TYPE>>) field.
+elements with the name B<I<TYPE>>.  The type is represented
+by B<OSSL_LIST>(B<I<TYPE>>) and each function name begins with
+B<ossl_list_I<TYPE>_>.  The list's linkages are stored in the
+B<OSSL_LIST_MEMBER>(B<I<TYPE>>, B<I<TYPE>>) field.
 
-B<ossl_list_I<NAME>_init>() initialises the memory pointed to by I<list>
+B<ossl_list_I<TYPE>_init>() initialises the memory pointed to by I<list>
 to zero which creates an empty list.
 
-B<ossl_list_I<NAME>_num>() returns the number of elements in I<list>.
+B<ossl_list_I<TYPE>_init_elem>() initialises the list related memory pointed
+to by I<elem> to zero which allows it to be used in lists.
 
-B<ossl_list_I<NAME>_head>() returns the first element in the I<list>
+B<ossl_list_I<TYPE>_is_empty>() returns nonzero if I<list> has no elements and
+zero otherwise.
+
+B<ossl_list_I<TYPE>_num>() returns the number of elements in I<list>.
+
+B<ossl_list_I<TYPE>_head>() returns the first element in the I<list>
 or NULL if there are no elements.
 
-B<ossl_list_I<NAME>_tail>() returns the last element in the I<list>
+B<ossl_list_I<TYPE>_tail>() returns the last element in the I<list>
 or NULL if there are no elements.
 
-B<ossl_list_I<NAME>_remove>() removes the specified element I<elem> from
+B<ossl_list_I<TYPE>_remove>() removes the specified element I<elem> from
 the I<list>.  It is illegal to remove an element that isn't in the list.
 
-B<ossl_list_I<NAME>_insert_head>() inserts the element I<elem>, which
+B<ossl_list_I<TYPE>_insert_head>() inserts the element I<elem>, which
 must not be in the list, into the first position in the I<list>.
 
-B<ossl_list_I<NAME>_insert_tail>() inserts the element I<elem>, which
+B<ossl_list_I<TYPE>_insert_tail>() inserts the element I<elem>, which
 must not be in the list, into the last position in the I<list>.
 
-B<ossl_list_I<NAME>_insert_before>() inserts the element I<elem>,
+B<ossl_list_I<TYPE>_insert_before>() inserts the element I<elem>,
 which must not be in the list, into the I<list> immediately before the
 I<existing> element.
 
-B<ossl_list_I<NAME>_insert_after>() inserts the element I<elem>,
+B<ossl_list_I<TYPE>_insert_after>() inserts the element I<elem>,
 which must not be in the list, into the I<list> immediately after the
 I<existing> element.
 
 =head1 RETURN VALUES
 
-B<ossl_list_I<NAME>_num>() returns the number of elements in the
+B<ossl_list_I<TYPE>_is_empty>() returns nonzero if the list is empty and zero
+otherwise.
+
+B<ossl_list_I<TYPE>_num>() returns the number of elements in the
 list.
 
-B<ossl_list_I<NAME>_head>(), B<ossl_list_I<NAME>_tail>(),
-B<ossl_list_I<NAME>_next>() and B<ossl_list_I<NAME>_prev>() return
+B<ossl_list_I<TYPE>_head>(), B<ossl_list_I<TYPE>_tail>(),
+B<ossl_list_I<TYPE>_next>() and B<ossl_list_I<TYPE>_prev>() return
 the specified element in the list.
 
 =head1 EXAMPLES

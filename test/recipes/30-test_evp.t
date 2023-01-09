@@ -26,7 +26,7 @@ my $no_des = disabled("des");
 my $no_dh = disabled("dh");
 my $no_dsa = disabled("dsa");
 my $no_ec = disabled("ec");
-my $no_gost = disabled("gost");
+my $no_ec2m = disabled("ec2m");
 my $no_sm2 = disabled("sm2");
 my $no_siv = disabled("siv");
 
@@ -47,6 +47,7 @@ my @files = qw(
                 evpciph_des3_common.txt
                 evpkdf_hkdf.txt
                 evpkdf_kbkdf_counter.txt
+                evpkdf_kbkdf_kmac.txt
                 evpkdf_pbkdf1.txt
                 evpkdf_pbkdf2.txt
                 evpkdf_ss.txt
@@ -78,7 +79,8 @@ push @files, qw(
                 evppkey_ecdsa.txt
                 evppkey_kas.txt
                 evppkey_mismatch.txt
-               ) unless $no_ec || $no_gost;
+               ) unless $no_ec;
+push @files, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 
 # A list of tests that only run with the default provider
 # (i.e. The algorithms are not present in the fips provider)
@@ -102,6 +104,7 @@ my @defltfiles = qw(
                      evpkdf_krb5.txt
                      evpkdf_scrypt.txt
                      evpkdf_tls11_prf.txt
+                     evpkdf_hmac_drbg.txt
                      evpmac_blake.txt
                      evpmac_poly1305.txt
                      evpmac_siphash.txt
@@ -119,8 +122,9 @@ my @defltfiles = qw(
                      evppkey_rsa.txt
                     );
 push @defltfiles, qw(evppkey_brainpool.txt) unless $no_ec;
+push @defltfiles, qw(evppkey_ecdsa_rfc6979.txt) unless $no_ec;
+push @defltfiles, qw(evppkey_dsa_rfc6979.txt) unless $no_dsa;
 push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
-push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;
 
 plan tests =>

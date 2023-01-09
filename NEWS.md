@@ -8,6 +8,7 @@ OpenSSL Releases
 ----------------
 
  - [OpenSSL 3.2](#openssl-32)
+ - [OpenSSL 3.1](#openssl-31)
  - [OpenSSL 3.0](#openssl-30)
  - [OpenSSL 1.1.1](#openssl-111)
  - [OpenSSL 1.1.0](#openssl-110)
@@ -19,7 +20,7 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
-### Major changes between OpenSSL 3.0 and OpenSSL 3.2 [under development]
+### Major changes between OpenSSL 3.1 and OpenSSL 3.2 [under development]
 
   * Added support for certificate compression (RFC8879), including
     library support for Brotli and Zstandard compression.
@@ -27,10 +28,27 @@ OpenSSL 3.2
     by default.
   * TCP Fast Open (RFC7413) support is available on Linux, macOS, and FreeBSD
     where enabled and supported.
+
+OpenSSL 3.1
+-----------
+
+### Major changes between OpenSSL 3.0 and OpenSSL 3.1.0 [under development]
+
   * SSL 3, TLS 1.0, TLS 1.1, and DTLS 1.0 only work at security level 0.
+  * Performance enhancements and new platform support including new
+    assembler code algorithm implementations.
+  * Deprecated LHASH statistics functions.
+  * FIPS 140-3 compliance changes.
 
 OpenSSL 3.0
 -----------
+
+### Major changes between OpenSSL 3.0.6 and OpenSSL 3.0.7 [1 Nov 2022]
+
+  * Added RIPEMD160 to the default provider.
+  * Fixed regressions introduced in 3.0.6 version.
+  * Fixed two buffer overflows in punycode decoding functions.
+    ([CVE-2022-3786]) and ([CVE-2022-3602])
 
 ### Major changes between OpenSSL 3.0.5 and OpenSSL 3.0.6 [11 Oct 2022]
 

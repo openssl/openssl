@@ -11,8 +11,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "internal/nelem.h"
-
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>

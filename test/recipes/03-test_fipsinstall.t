@@ -252,7 +252,7 @@ SKIP: {
 
     run(test(["fips_version_test", "-config", $provconf, "<3.1.0"]),
              capture => 1, statusvar => \my $exit);
-    skip "FIPS provider version is too new for KAT DSA signature test", 1
+    skip "FIPS provider version is too new for PCT DSA signature test", 1
         if !$exit;
     ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
                 '-provider_name', 'fips', '-mac_name', 'HMAC',

@@ -14,7 +14,6 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
-#include "internal/nelem.h"
 #include <openssl/asn1.h>
 
 /*

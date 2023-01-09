@@ -271,13 +271,13 @@ int ossl_quic_sstream_get_stream_frame(QUIC_SSTREAM *qss,
     size_t num_iov_ = 0, src_len = 0, total_len = 0, i;
     uint64_t max_len;
     const unsigned char *src = NULL;
-    UINT_SET_ITEM *range = qss->new_set.head;
+    UINT_SET_ITEM *range = ossl_list_uint_set_head(&qss->new_set);
 
     if (*num_iov < 2)
         return 0;
 
     for (i = 0; i < skip && range != NULL; ++i)
-        range = range->next;
+        range = ossl_list_uint_set_next(range);
 
     if (range == NULL) {
         /* No new bytes to send, but we might have a FIN */
@@ -331,6 +331,11 @@ int ossl_quic_sstream_get_stream_frame(QUIC_SSTREAM *qss,
 
     *num_iov    = num_iov_;
     return 1;
+}
+
+uint64_t ossl_quic_sstream_get_cur_size(QUIC_SSTREAM *qss)
+{
+    return qss->ring_buf.head_offset;
 }
 
 int ossl_quic_sstream_mark_transmitted(QUIC_SSTREAM *qss,
@@ -476,6 +481,8 @@ int ossl_quic_sstream_append(QUIC_SSTREAM *qss,
 
 static void qss_cull(QUIC_SSTREAM *qss)
 {
+    UINT_SET_ITEM *h = ossl_list_uint_set_head(&qss->acked_set);
+
     /*
      * Potentially cull data from our ring buffer. This can happen once data has
      * been ACKed and we know we are never going to have to transmit it again.
@@ -492,10 +499,8 @@ static void qss_cull(QUIC_SSTREAM *qss)
      * We only need to check the first range entry in the integer set because we
      * can only cull contiguous areas at the start of the ring buffer anyway.
      */
-    if (qss->acked_set.head != NULL)
-        ring_buf_cpop_range(&qss->ring_buf,
-                            qss->acked_set.head->range.start,
-                            qss->acked_set.head->range.end);
+    if (h != NULL)
+        ring_buf_cpop_range(&qss->ring_buf, h->range.start, h->range.end);
 }
 
 int ossl_quic_sstream_set_buffer_size(QUIC_SSTREAM *qss, size_t num_bytes)

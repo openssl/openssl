@@ -45,7 +45,7 @@ sub rev32() {
 
 	if ($src and ("$src" ne "$dst")) {
 $code.=<<___;
-#ifndef __ARMEB__
+#ifndef __AARCH64EB__
 	rev32	$dst.16b,$src.16b
 #else
 	mov	$dst.16b,$src.16b
@@ -53,7 +53,7 @@ $code.=<<___;
 ___
 	} else {
 $code.=<<___;
-#ifndef __ARMEB__
+#ifndef __AARCH64EB__
 	rev32	$dst.16b,$dst.16b
 #endif
 ___
@@ -428,10 +428,10 @@ sub load_sbox () {
 
 $code.=<<___;
 	adr	$ptr,.Lsbox
-	ld1	{@sbox[0].4s,@sbox[1].4s,@sbox[2].4s,@sbox[3].4s},[$ptr],#64
-	ld1	{@sbox[4].4s,@sbox[5].4s,@sbox[6].4s,@sbox[7].4s},[$ptr],#64
-	ld1	{@sbox[8].4s,@sbox[9].4s,@sbox[10].4s,@sbox[11].4s},[$ptr],#64
-	ld1	{@sbox[12].4s,@sbox[13].4s,@sbox[14].4s,@sbox[15].4s},[$ptr]
+	ld1	{@sbox[0].16b,@sbox[1].16b,@sbox[2].16b,@sbox[3].16b},[$ptr],#64
+	ld1	{@sbox[4].16b,@sbox[5].16b,@sbox[6].16b,@sbox[7].16b},[$ptr],#64
+	ld1	{@sbox[8].16b,@sbox[9].16b,@sbox[10].16b,@sbox[11].16b},[$ptr],#64
+	ld1	{@sbox[12].16b,@sbox[13].16b,@sbox[14].16b,@sbox[15].16b},[$ptr]
 ___
 }
 
@@ -492,9 +492,9 @@ ___
 	&rev32($vkey,$vkey);
 $code.=<<___;
 	adr	$pointer,.Lshuffles
-	ld1	{$vmap.4s},[$pointer]
+	ld1	{$vmap.2d},[$pointer]
 	adr	$pointer,.Lfk
-	ld1	{$vfk.4s},[$pointer]
+	ld1	{$vfk.2d},[$pointer]
 	eor	$vkey.16b,$vkey.16b,$vfk.16b
 	mov	$schedules,#32
 	adr	$pointer,.Lck
@@ -615,7 +615,7 @@ $code.=<<___;
 .align	5
 ${prefix}_${dir}crypt:
 	AARCH64_VALID_CALL_TARGET
-	ld1	{@data[0].16b},[$inp]
+	ld1	{@data[0].4s},[$inp]
 ___
 	&load_sbox();
 	&rev32(@data[0],@data[0]);
@@ -624,7 +624,7 @@ $code.=<<___;
 ___
 	&encrypt_1blk(@data[0]);
 $code.=<<___;
-	st1	{@data[0].16b},[$outp]
+	st1	{@data[0].4s},[$outp]
 	ret
 .size	${prefix}_${dir}crypt,.-${prefix}_${dir}crypt
 ___
@@ -692,12 +692,12 @@ $code.=<<___;
 	cmp	$blocks,#1
 	b.lt	100f
 	b.gt	1f
-	ld1	{@data[0].16b},[$inp]
+	ld1	{@data[0].4s},[$inp]
 ___
 	&rev32(@data[0],@data[0]);
 	&encrypt_1blk(@data[0]);
 $code.=<<___;
-	st1	{@data[0].16b},[$outp]
+	st1	{@data[0].4s},[$outp]
 	b	100f
 1:	// process last 2 blocks
 	ld4	{@data[0].s,@data[1].s,@data[2].s,@data[3].s}[0],[$inp],#16
@@ -798,11 +798,11 @@ ___
 	&rev32($ivec0,$ivec0);
 	&encrypt_1blk($ivec0);
 $code.=<<___;
-	st1	{$ivec0.16b},[$outp],#16
+	st1	{$ivec0.4s},[$outp],#16
 	b	1b
 2:
 	// save back IV
-	st1	{$ivec0.16b},[$ivp]
+	st1	{$ivec0.4s},[$ivp]
 	ret
 
 .Ldec:
@@ -834,7 +834,7 @@ ___
 	&transpose(@vtmp,@datax);
 	&transpose(@data,@datax);
 $code.=<<___;
-	ld1	{$ivec1.16b},[$ivp]
+	ld1	{$ivec1.4s},[$ivp]
 	ld1	{@datax[0].4s,@datax[1].4s,@datax[2].4s,@datax[3].4s},[$inp],#64
 	// note ivec1 and vtmpx[3] are resuing the same register
 	// care needs to be taken to avoid conflict
@@ -844,7 +844,7 @@ $code.=<<___;
 	eor	@vtmp[2].16b,@vtmp[2].16b,@datax[1].16b
 	eor	@vtmp[3].16b,$vtmp[3].16b,@datax[2].16b
 	// save back IV
-	st1	{$vtmpx[3].16b}, [$ivp]
+	st1	{$vtmpx[3].4s}, [$ivp]
 	eor	@data[0].16b,@data[0].16b,$datax[3].16b
 	eor	@data[1].16b,@data[1].16b,@vtmpx[0].16b
 	eor	@data[2].16b,@data[2].16b,@vtmpx[1].16b
@@ -855,7 +855,7 @@ $code.=<<___;
 	b.gt	.Lcbc_8_blocks_dec
 	b.eq	100f
 1:
-	ld1	{$ivec1.16b},[$ivp]
+	ld1	{$ivec1.4s},[$ivp]
 .Lcbc_4_blocks_dec:
 	cmp	$blocks,#4
 	b.lt	1f
@@ -880,7 +880,7 @@ $code.=<<___;
 	subs	$blocks,$blocks,#4
 	b.gt	.Lcbc_4_blocks_dec
 	// save back IV
-	st1	{@vtmp[3].16b}, [$ivp]
+	st1	{@data[3].4s}, [$ivp]
 	b	100f
 1:	// last block
 	subs	$blocks,$blocks,#1
@@ -888,13 +888,13 @@ $code.=<<___;
 	b.gt	1f
 	ld1	{@data[0].4s},[$inp],#16
 	// save back IV
-	st1	{$data[0].16b}, [$ivp]
+	st1	{$data[0].4s}, [$ivp]
 ___
 	&rev32(@datax[0],@data[0]);
 	&encrypt_1blk(@datax[0]);
 $code.=<<___;
 	eor	@datax[0].16b,@datax[0].16b,$ivec1.16b
-	st1	{@datax[0].16b},[$outp],#16
+	st1	{@datax[0].4s},[$outp],#16
 	b	100f
 1:	// last two blocks
 	ld4	{@data[0].s,@data[1].s,@data[2].s,@data[3].s}[0],[$inp]
@@ -917,7 +917,7 @@ $code.=<<___;
 	eor	@vtmp[1].16b,@vtmp[1].16b,@data[0].16b
 	st1	{@vtmp[0].4s,@vtmp[1].4s},[$outp],#32
 	// save back IV
-	st1	{@data[1].16b}, [$ivp]
+	st1	{@data[1].4s}, [$ivp]
 	b	100f
 1:	// last 3 blocks
 	ld4	{@data[0].s,@data[1].s,@data[2].s,@data[3].s}[2],[$ptr]
@@ -937,7 +937,7 @@ $code.=<<___;
 	eor	@vtmp[2].16b,@vtmp[2].16b,@data[1].16b
 	st1	{@vtmp[0].4s,@vtmp[1].4s,@vtmp[2].4s},[$outp],#48
 	// save back IV
-	st1	{@data[2].16b}, [$ivp]
+	st1	{@data[2].4s}, [$ivp]
 100:
 	ldp	d10,d11,[sp,#16]
 	ldp	d12,d13,[sp,#32]
@@ -973,9 +973,9 @@ $code.=<<___;
 ___
 	&encrypt_1blk($ivec);
 $code.=<<___;
-	ld1	{@data[0].16b},[$inp]
+	ld1	{@data[0].4s},[$inp]
 	eor	@data[0].16b,@data[0].16b,$ivec.16b
-	st1	{@data[0].16b},[$outp]
+	st1	{@data[0].4s},[$outp]
 	ret
 1:
 	AARCH64_SIGN_LINK_REGISTER
@@ -1053,9 +1053,9 @@ $code.=<<___;
 ___
 	&encrypt_1blk($ivec);
 $code.=<<___;
-	ld1	{@data[0].16b},[$inp]
+	ld1	{@data[0].4s},[$inp]
 	eor	@data[0].16b,@data[0].16b,$ivec.16b
-	st1	{@data[0].16b},[$outp]
+	st1	{@data[0].4s},[$outp]
 	b	100f
 1:	// last 2 blocks processing
 	dup	@data[0].4s,$word0

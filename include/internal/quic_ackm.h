@@ -14,6 +14,7 @@
 # include "internal/quic_types.h"
 # include "internal/quic_wire.h"
 # include "internal/time.h"
+# include "internal/list.h"
 
 typedef struct ossl_ackm_st OSSL_ACKM;
 
@@ -35,7 +36,8 @@ void ossl_ackm_set_ack_deadline_callback(OSSL_ACKM *ackm,
                                                     void *arg),
                                          void *arg);
 
-typedef struct ossl_ackm_tx_pkt_st {
+typedef struct ossl_ackm_tx_pkt_st OSSL_ACKM_TX_PKT;
+struct ossl_ackm_tx_pkt_st {
     /* The packet number of the transmitted packet. */
     QUIC_PN pkt_num;
 
@@ -89,15 +91,15 @@ typedef struct ossl_ackm_tx_pkt_st {
     /* 
      * (Internal use fields; must be zero-initialized.)
      *
-     * prev and next link us into the TX history list, anext is used to manifest
+     * Keep a TX history list, anext is used to manifest
      * a singly-linked list of newly-acknowledged packets, and lnext is used to
      * manifest a singly-linked list of newly lost packets.
      */
-    struct ossl_ackm_tx_pkt_st *prev;
-    struct ossl_ackm_tx_pkt_st *next;
+    OSSL_LIST_MEMBER(tx_history, OSSL_ACKM_TX_PKT);
+
     struct ossl_ackm_tx_pkt_st *anext;
     struct ossl_ackm_tx_pkt_st *lnext;
-} OSSL_ACKM_TX_PKT;
+};
 
 int ossl_ackm_on_tx_packet(OSSL_ACKM *ackm, OSSL_ACKM_TX_PKT *pkt);
 int ossl_ackm_on_rx_datagram(OSSL_ACKM *ackm, size_t num_bytes);
@@ -135,7 +137,15 @@ int ossl_ackm_on_rx_packet(OSSL_ACKM *ackm, const OSSL_ACKM_RX_PKT *pkt);
 int ossl_ackm_on_rx_ack_frame(OSSL_ACKM *ackm, const OSSL_QUIC_FRAME_ACK *ack,
                               int pkt_space, OSSL_TIME rx_time);
 
+/*
+ * Discards a PN space. This must be called for a PN space before freeing the
+ * ACKM if you want in-flight packets to have their discarded callbacks called.
+ * This should never be called in ordinary QUIC usage for the Application Data
+ * PN space, but it may be called for the Application Data PN space prior to
+ * freeing the ACKM to simplify teardown implementations.
+ */
 int ossl_ackm_on_pkt_space_discarded(OSSL_ACKM *ackm, int pkt_space);
+
 int ossl_ackm_on_handshake_confirmed(OSSL_ACKM *ackm);
 int ossl_ackm_on_timeout(OSSL_ACKM *ackm);
 

@@ -132,6 +132,7 @@ B<openssl> B<s_server>
 [B<-alpn> I<val>]
 [B<-ktls>]
 [B<-sendfile>]
+[B<-zerocopy_sendfile>]
 [B<-keylogfile> I<outfile>]
 [B<-recv_max_early_data> I<int>]
 [B<-max_early_data> I<int>]
@@ -791,6 +792,15 @@ If this option is set and KTLS is enabled, SSL_sendfile() will be used
 instead of BIO_write() to send the HTTP response requested by a client.
 This option is only valid when B<-ktls> along with B<-WWW> or B<-HTTP>
 are specified.
+
+=item B<-zerocopy_sendfile>
+
+If this option is set, SSL_sendfile() will use the zerocopy TX mode, which gives
+a performance boost when used with KTLS hardware offload. Note that invalid
+TLS records might be transmitted if the file is changed while being sent.
+This option depends on B<-sendfile>; when used alone, B<-sendfile> is implied,
+and a warning is shown. Note that KTLS sendfile on FreeBSD always runs in the
+zerocopy mode.
 
 =item B<-keylogfile> I<outfile>
 

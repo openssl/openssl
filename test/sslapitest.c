@@ -401,7 +401,7 @@ static int test_keylog(void)
      * Now we want to test that our output data was vaguely sensible. We
      * do that by using strtok and confirming that we have more or less the
      * data we expect. For both client and server, we expect to see one master
-     * secret. The client should also see a RSA key exchange.
+     * secret. The client should also see an RSA key exchange.
      */
     expected.rsa_key_exchange_count = 1;
     expected.master_secret_count = 1;
@@ -1293,7 +1293,8 @@ end:
 #define SENDFILE_CHUNK                  (4 * 4096)
 #define min(a,b)                        ((a) > (b) ? (b) : (a))
 
-static int execute_test_ktls_sendfile(int tls_version, const char *cipher)
+static int execute_test_ktls_sendfile(int tls_version, const char *cipher,
+                                      int zerocopy)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -1349,6 +1350,12 @@ static int execute_test_ktls_sendfile(int tls_version, const char *cipher)
 
     if (!TEST_true(SSL_set_options(serverssl, SSL_OP_ENABLE_KTLS)))
         goto end;
+
+    if (zerocopy) {
+        if (!TEST_true(SSL_set_options(serverssl,
+                                       SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE)))
+            goto end;
+    }
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
                                          SSL_ERROR_NONE)))
@@ -1443,7 +1450,9 @@ static struct ktls_test_cipher {
     { TLS1_2_VERSION, "AES256-GCM-SHA384"},
 #  endif
 #  ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+#    ifndef OPENSSL_NO_EC
     { TLS1_2_VERSION, "ECDHE-RSA-CHACHA20-POLY1305"},
+#    endif
 #  endif
 # endif
 # if !defined(OSSL_NO_USABLE_TLS1_3)
@@ -1480,14 +1489,16 @@ static int test_ktls(int test)
                              cipher->cipher);
 }
 
-static int test_ktls_sendfile(int tst)
+static int test_ktls_sendfile(int test)
 {
     struct ktls_test_cipher *cipher;
+    int tst = test >> 1;
 
     OPENSSL_assert(tst < (int)NUM_KTLS_TEST_CIPHERS);
     cipher = &ktls_test_ciphers[tst];
 
-    return execute_test_ktls_sendfile(cipher->tls_version, cipher->cipher);
+    return execute_test_ktls_sendfile(cipher->tls_version, cipher->cipher,
+                                      test & 1);
 }
 #endif
 
@@ -8148,6 +8159,82 @@ static int test_shutdown(int tst)
     return testresult;
 }
 
+/*
+ * Test that sending close_notify alerts works correctly in the case of a
+ * retryable write failure.
+ */
+static int test_async_shutdown(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    BIO *bretry = BIO_new(bio_s_always_retry()), *tmp = NULL;
+
+    if (!TEST_ptr(bretry))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(),
+                                       0, 0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+                                      NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Close write side of clientssl */
+    if (!TEST_int_eq(SSL_shutdown(clientssl), 0))
+        goto end;
+
+    tmp = SSL_get_wbio(serverssl);
+    if (!TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    SSL_set0_wbio(serverssl, bretry);
+    bretry = NULL;
+
+    /* First server shutdown should fail because of a retrable write failure */
+    if (!TEST_int_eq(SSL_shutdown(serverssl), -1)
+            || !TEST_int_eq(SSL_get_error(serverssl, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* Second server shutdown should fail for the same reason */
+    if (!TEST_int_eq(SSL_shutdown(serverssl), -1)
+            || !TEST_int_eq(SSL_get_error(serverssl, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    SSL_set0_wbio(serverssl, tmp);
+    tmp = NULL;
+
+    /* Third server shutdown should send close_notify */
+    if (!TEST_int_eq(SSL_shutdown(serverssl), 0))
+        goto end;
+
+    /* Fourth server shutdown should read close_notify from client and finish */
+    if (!TEST_int_eq(SSL_shutdown(serverssl), 1))
+        goto end;
+
+    /* Client should also successfully fully shutdown */
+    if (!TEST_int_eq(SSL_shutdown(clientssl), 1))
+        goto end;
+
+    testresult = 1;
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free(bretry);
+    BIO_free(tmp);
+
+    return testresult;
+}
+
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
 static int cert_cb_cnt;
 
@@ -10468,7 +10555,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_KTLS) && !defined(OPENSSL_NO_SOCK)
 # if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_ktls, NUM_KTLS_TEST_CIPHERS * 4);
-    ADD_ALL_TESTS(test_ktls_sendfile, NUM_KTLS_TEST_CIPHERS);
+    ADD_ALL_TESTS(test_ktls_sendfile, NUM_KTLS_TEST_CIPHERS * 2);
 # endif
 #endif
     ADD_TEST(test_large_message_tls);
@@ -10580,6 +10667,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
     ADD_ALL_TESTS(test_ticket_callbacks, 20);
     ADD_ALL_TESTS(test_shutdown, 7);
+    ADD_TEST(test_async_shutdown);
     ADD_ALL_TESTS(test_incorrect_shutdown, 2);
     ADD_ALL_TESTS(test_cert_cb, 6);
     ADD_ALL_TESTS(test_client_cert_cb, 2);

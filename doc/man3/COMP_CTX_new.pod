@@ -66,7 +66,7 @@ COMP_compress_block() compresses b<ilen> bytes from the buffer I<in> into the
 buffer b<out> of size I<olen> using the algorithm specified by I<ctx>.
 
 COMP_expand_block() expands I<ilen> bytes from the buffer I<in> into the
-buffer I<out> of size I<olen> using the lgorithm specified by I<ctx>.
+buffer I<out> of size I<olen> using the algorithm specified by I<ctx>.
 
 Methods (B<COMP_METHOD>) may be specified by one of these functions. These functions
 will be available even if their corresponding compression algorithm is not configured

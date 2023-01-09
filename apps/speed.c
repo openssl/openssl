@@ -29,6 +29,7 @@
 #include <math.h>
 #include "apps.h"
 #include "progs.h"
+#include "internal/nelem.h"
 #include "internal/numbers.h"
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
@@ -62,8 +63,8 @@ VirtualLock(
     );
 #endif
 
-# if defined(OPENSSL_SYS_UNIX)
-#  include <sys/mman.h>
+#if defined(OPENSSL_SYS_LINUX)
+# include <sys/mman.h>
 #endif
 
 #include <openssl/bn.h>
@@ -2675,11 +2676,11 @@ skip_hmac:
              * code, for maximum performance.
              */
             if ((test_ctx = EVP_PKEY_CTX_new(key_B, NULL)) == NULL /* test ctx from skeyB */
-                || !EVP_PKEY_derive_init(test_ctx) /* init derivation test_ctx */
-                || !EVP_PKEY_derive_set_peer(test_ctx, key_A) /* set peer pubkey in test_ctx */
-                || !EVP_PKEY_derive(test_ctx, NULL, &test_outlen) /* determine max length */
-                || !EVP_PKEY_derive(ctx, loopargs[i].secret_a, &outlen) /* compute a*B */
-                || !EVP_PKEY_derive(test_ctx, loopargs[i].secret_b, &test_outlen) /* compute b*A */
+                || EVP_PKEY_derive_init(test_ctx) <= 0 /* init derivation test_ctx */
+                || EVP_PKEY_derive_set_peer(test_ctx, key_A) <= 0 /* set peer pubkey in test_ctx */
+                || EVP_PKEY_derive(test_ctx, NULL, &test_outlen) <= 0 /* determine max length */
+                || EVP_PKEY_derive(ctx, loopargs[i].secret_a, &outlen) <= 0 /* compute a*B */
+                || EVP_PKEY_derive(test_ctx, loopargs[i].secret_b, &test_outlen) <= 0 /* compute b*A */
                 || test_outlen != outlen /* compare output length */) {
                 ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH computation failure.\n");
@@ -3110,10 +3111,10 @@ skip_hmac:
                 ffdh_checks = 0;
                 break;
             }
-            if (!EVP_PKEY_derive_init(test_ctx) ||
-                !EVP_PKEY_derive_set_peer(test_ctx, pkey_A) ||
-                !EVP_PKEY_derive(test_ctx, NULL, &test_out) ||
-                !EVP_PKEY_derive(test_ctx, loopargs[i].secret_ff_b, &test_out) ||
+            if (EVP_PKEY_derive_init(test_ctx) <= 0 ||
+                EVP_PKEY_derive_set_peer(test_ctx, pkey_A) <= 0 ||
+                EVP_PKEY_derive(test_ctx, NULL, &test_out) <= 0 ||
+                EVP_PKEY_derive(test_ctx, loopargs[i].secret_ff_b, &test_out) <= 0 ||
                 test_out != secret_size) {
                 BIO_printf(bio_err, "FFDH computation failure.\n");
                 op_count = 1;
@@ -3445,9 +3446,6 @@ static char *sstrsep(char **string, const char *delim)
     char isdelim[256];
     char *token = *string;
 
-    if (**string == 0)
-        return NULL;
-
     memset(isdelim, 0, sizeof(isdelim));
     isdelim[0] = 1;
 
@@ -3465,6 +3463,23 @@ static char *sstrsep(char **string, const char *delim)
     }
 
     return token;
+}
+
+static int strtoint(const char *str, const int min_val, const int upper_val,
+                    int *res)
+{
+    char *end = NULL;
+    long int val = 0;
+
+    errno = 0;
+    val = strtol(str, &end, 10);
+    if (errno == 0 && end != str && *end == 0
+        && min_val <= val && val < upper_val) {
+        *res = (int)val;
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 static int do_multi(int multi, int size_num)
@@ -3507,8 +3522,16 @@ static int do_multi(int multi, int size_num)
         FILE *f;
         char buf[1024];
         char *p;
+        char *tk;
+        int k;
+        double d;
 
-        f = fdopen(fds[n], "r");
+        if ((f = fdopen(fds[n], "r")) == NULL) {
+            BIO_printf(bio_err, "fdopen failure with 0x%x\n",
+                       errno);
+            OPENSSL_free(fds);
+            return 1;
+        }
         while (fgets(buf, sizeof(buf), f)) {
             p = strchr(buf, '\n');
             if (p)
@@ -3525,93 +3548,87 @@ static int do_multi(int multi, int size_num)
                 int alg;
                 int j;
 
-                alg = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
-                for (j = 0; j < size_num; ++j)
-                    results[alg][j] += atof(sstrsep(&p, sep));
+                if (strtoint(sstrsep(&p, sep), 0, ALGOR_NUM, &alg)) {
+                    sstrsep(&p, sep);
+                    for (j = 0; j < size_num; ++j)
+                        results[alg][j] += atof(sstrsep(&p, sep));
+                }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F2:")) {
-                int k;
-                double d;
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(rsa_results), &k)) {
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
+                    d = atof(sstrsep(&p, sep));
+                    rsa_results[k][0] += d;
 
-                d = atof(sstrsep(&p, sep));
-                rsa_results[k][0] += d;
-
-                d = atof(sstrsep(&p, sep));
-                rsa_results[k][1] += d;
+                    d = atof(sstrsep(&p, sep));
+                    rsa_results[k][1] += d;
+                }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F3:")) {
-                int k;
-                double d;
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(dsa_results), &k)) {
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
+                    d = atof(sstrsep(&p, sep));
+                    dsa_results[k][0] += d;
 
-                d = atof(sstrsep(&p, sep));
-                dsa_results[k][0] += d;
-
-                d = atof(sstrsep(&p, sep));
-                dsa_results[k][1] += d;
+                    d = atof(sstrsep(&p, sep));
+                    dsa_results[k][1] += d;
+                }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F4:")) {
-                int k;
-                double d;
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(ecdsa_results), &k)) {
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
+                    d = atof(sstrsep(&p, sep));
+                    ecdsa_results[k][0] += d;
 
-                d = atof(sstrsep(&p, sep));
-                ecdsa_results[k][0] += d;
-
-                d = atof(sstrsep(&p, sep));
-                ecdsa_results[k][1] += d;
+                    d = atof(sstrsep(&p, sep));
+                    ecdsa_results[k][1] += d;
+                }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F5:")) {
-                int k;
-                double d;
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(ecdh_results), &k)) {
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
-
-                d = atof(sstrsep(&p, sep));
-                ecdh_results[k][0] += d;
+                    d = atof(sstrsep(&p, sep));
+                    ecdh_results[k][0] += d;
+                }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F6:")) {
-                int k;
-                double d;
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(eddsa_results), &k)) {
+                    sstrsep(&p, sep);
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
-                sstrsep(&p, sep);
+                    d = atof(sstrsep(&p, sep));
+                    eddsa_results[k][0] += d;
 
-                d = atof(sstrsep(&p, sep));
-                eddsa_results[k][0] += d;
-
-                d = atof(sstrsep(&p, sep));
-                eddsa_results[k][1] += d;
+                    d = atof(sstrsep(&p, sep));
+                    eddsa_results[k][1] += d;
+                }
 # ifndef OPENSSL_NO_SM2
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F7:")) {
-                int k;
-                double d;
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(sm2_results), &k)) {
+                    sstrsep(&p, sep);
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
-                sstrsep(&p, sep);
+                    d = atof(sstrsep(&p, sep));
+                    sm2_results[k][0] += d;
 
-                d = atof(sstrsep(&p, sep));
-                sm2_results[k][0] += d;
-
-                d = atof(sstrsep(&p, sep));
-                sm2_results[k][1] += d;
+                    d = atof(sstrsep(&p, sep));
+                    sm2_results[k][1] += d;
+                }
 # endif /* OPENSSL_NO_SM2 */
 # ifndef OPENSSL_NO_DH
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F8:")) {
-                int k;
-                double d;
+                tk = sstrsep(&p, sep);
+                if (strtoint(tk, 0, OSSL_NELEM(ffdh_results), &k)) {
+                    sstrsep(&p, sep);
 
-                k = atoi(sstrsep(&p, sep));
-                sstrsep(&p, sep);
-
-                d = atof(sstrsep(&p, sep));
-                ffdh_results[k][0] += d;
+                    d = atof(sstrsep(&p, sep));
+                    ffdh_results[k][0] += d;
+                }
 # endif /* OPENSSL_NO_DH */
             } else if (!HAS_PREFIX(buf, "+H:")) {
                 BIO_printf(bio_err, "Unknown type '%s' from child %d\n", buf,

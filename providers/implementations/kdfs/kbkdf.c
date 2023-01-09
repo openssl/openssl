@@ -70,6 +70,7 @@ typedef struct {
     unsigned char *iv;
     size_t iv_len;
     int use_l;
+    int is_kmac;
     int use_separator;
 } KBKDF;
 
@@ -105,6 +106,7 @@ static void init(KBKDF *ctx)
     ctx->r = 32;
     ctx->use_l = 1;
     ctx->use_separator = 1;
+    ctx->is_kmac = 0;
 }
 
 static void *kbkdf_new(void *provctx)
@@ -170,6 +172,7 @@ static void *kbkdf_dup(void *vctx)
         dest->r = src->r;
         dest->use_l = src->use_l;
         dest->use_separator = src->use_separator;
+        dest->is_kmac = src->is_kmac;
     }
     return dest;
 
@@ -240,6 +243,31 @@ done:
     return ret;
 }
 
+/* This must be run before the key is set */
+static int kmac_init(EVP_MAC_CTX *ctx, const unsigned char *custom, size_t customlen)
+{
+    OSSL_PARAM params[2];
+
+    if (custom == NULL || customlen == 0)
+        return 1;
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
+                                                  (void *)custom, customlen);
+    params[1] = OSSL_PARAM_construct_end();
+    return EVP_MAC_CTX_set_params(ctx, params) > 0;
+}
+
+static int kmac_derive(EVP_MAC_CTX *ctx, unsigned char *out, size_t outlen,
+                       const unsigned char *context, size_t contextlen)
+{
+    OSSL_PARAM params[2];
+
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &outlen);
+    params[1] = OSSL_PARAM_construct_end();
+    return EVP_MAC_CTX_set_params(ctx, params) > 0
+           && EVP_MAC_update(ctx, context, contextlen)
+           && EVP_MAC_final(ctx, out, NULL, outlen);
+}
+
 static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
                         const OSSL_PARAM params[])
 {
@@ -272,9 +300,16 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         return 0;
     }
 
+    if (ctx->is_kmac) {
+        ret = kmac_derive(ctx->ctx_init, key, keylen,
+                          ctx->context, ctx->context_len);
+        goto done;
+    }
+
     h = EVP_MAC_CTX_get_mac_size(ctx->ctx_init);
     if (h == 0)
         goto done;
+
     if (ctx->iv_len != 0 && ctx->iv_len != h) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SEED_LENGTH);
         goto done;
@@ -329,13 +364,19 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (!ossl_prov_macctx_load_from_params(&ctx->ctx_init, params, NULL,
                                            NULL, NULL, libctx))
         return 0;
-    else if (ctx->ctx_init != NULL
-             && !EVP_MAC_is_a(EVP_MAC_CTX_get0_mac(ctx->ctx_init),
-                              OSSL_MAC_NAME_HMAC)
-             && !EVP_MAC_is_a(EVP_MAC_CTX_get0_mac(ctx->ctx_init),
-                              OSSL_MAC_NAME_CMAC)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MAC);
-        return 0;
+    else if (ctx->ctx_init != NULL) {
+        if (EVP_MAC_is_a(EVP_MAC_CTX_get0_mac(ctx->ctx_init),
+                         OSSL_MAC_NAME_KMAC128)
+            || EVP_MAC_is_a(EVP_MAC_CTX_get0_mac(ctx->ctx_init),
+                            OSSL_MAC_NAME_KMAC256)) {
+            ctx->is_kmac = 1;
+        } else if (!EVP_MAC_is_a(EVP_MAC_CTX_get0_mac(ctx->ctx_init),
+                                 OSSL_MAC_NAME_HMAC)
+                   && !EVP_MAC_is_a(EVP_MAC_CTX_get0_mac(ctx->ctx_init),
+                                    OSSL_MAC_NAME_CMAC)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MAC);
+            return 0;
+        }
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_MODE);
@@ -386,9 +427,11 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
 
     /* Set up digest context, if we can. */
-    if (ctx->ctx_init != NULL && ctx->ki_len != 0
-            && !EVP_MAC_init(ctx->ctx_init, ctx->ki, ctx->ki_len, NULL))
+    if (ctx->ctx_init != NULL && ctx->ki_len != 0) {
+        if ((ctx->is_kmac && !kmac_init(ctx->ctx_init, ctx->label, ctx->label_len))
+            || !EVP_MAC_init(ctx->ctx_init, ctx->ki, ctx->ki_len, NULL))
             return 0;
+    }
     return 1;
 }
 

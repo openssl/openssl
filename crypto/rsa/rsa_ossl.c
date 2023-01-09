@@ -17,6 +17,9 @@
 #include "crypto/bn.h"
 #include "rsa_local.h"
 #include "internal/constant_time.h"
+#include <openssl/evp.h>
+#include <openssl/sha.h>
+#include <openssl/hmac.h>
 
 static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
                                   unsigned char *to, RSA *rsa, int padding);
@@ -372,8 +375,13 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
     BIGNUM *f, *ret;
     int j, num = 0, r = -1;
     unsigned char *buf = NULL;
+    unsigned char d_hash[SHA256_DIGEST_LENGTH] = {0};
+    HMAC_CTX *hmac = NULL;
+    unsigned int md_len = SHA256_DIGEST_LENGTH;
+    unsigned char kdk[SHA256_DIGEST_LENGTH] = {0};
     BN_CTX *ctx = NULL;
     int local_blinding = 0;
+    EVP_MD *md = NULL;
     /*
      * Used only if the blinding structure is shared. A non-NULL unblind
      * instructs rsa_blinding_convert() and rsa_blinding_invert() to store
@@ -381,6 +389,12 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
      */
     BIGNUM *unblind = NULL;
     BN_BLINDING *blinding = NULL;
+
+    /*
+     * we need the value of the private exponent to perform implicit rejection
+     */
+    if ((rsa->flags & RSA_FLAG_EXT_PKEY) && (padding == RSA_PKCS1_PADDING))
+        padding = RSA_PKCS1_NO_IMPLICIT_REJECT_PADDING;
 
     if ((ctx = BN_CTX_new_ex(rsa->libctx)) == NULL)
         goto err;
@@ -402,6 +416,11 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
      */
     if (flen > num) {
         ERR_raise(ERR_LIB_RSA, RSA_R_DATA_GREATER_THAN_MOD_LEN);
+        goto err;
+    }
+
+    if (flen < 1) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_SMALL);
         goto err;
     }
 
@@ -471,13 +490,91 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         if (!rsa_blinding_invert(blinding, ret, unblind, ctx))
             goto err;
 
+    /*
+     * derive the Key Derivation Key from private exponent and public
+     * ciphertext
+     */
+    if (padding == RSA_PKCS1_PADDING) {
+        /*
+         * because we use d as a handle to rsa->d we need to keep it local and
+         * free before any further use of rsa->d
+         */
+        BIGNUM *d = BN_new();
+        if (d == NULL) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        if (rsa->d == NULL) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_MISSING_PRIVATE_KEY);
+            BN_free(d);
+            goto err;
+        }
+        BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
+        if (BN_bn2binpad(d, buf, num) < 0) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+            BN_free(d);
+            goto err;
+        }
+        BN_free(d);
+
+        /*
+         * we use hardcoded hash so that migrating between versions that use
+         * different hash doesn't provide a Bleichenbacher oracle:
+         * if the attacker can see that different versions return different
+         * messages for the same ciphertext, they'll know that the message is
+         * syntethically generated, which means that the padding check failed
+         */
+        md = EVP_MD_fetch(rsa->libctx, "sha256", NULL);
+        if (md == NULL) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
+        if (EVP_Digest(buf, num, d_hash, NULL, md, NULL) <= 0) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
+        hmac = HMAC_CTX_new();
+        if (hmac == NULL) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+
+        if (HMAC_Init_ex(hmac, d_hash, sizeof(d_hash), md, NULL) <= 0) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
+        if (flen < num) {
+            memset(buf, 0, num - flen);
+            if (HMAC_Update(hmac, buf, num - flen) <= 0) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        }
+        if (HMAC_Update(hmac, from, flen) <= 0) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
+        md_len = SHA256_DIGEST_LENGTH;
+        if (HMAC_Final(hmac, kdk, &md_len) <= 0) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    }
+
     j = BN_bn2binpad(ret, buf, num);
     if (j < 0)
         goto err;
 
     switch (padding) {
-    case RSA_PKCS1_PADDING:
+    case RSA_PKCS1_NO_IMPLICIT_REJECT_PADDING:
         r = RSA_padding_check_PKCS1_type_2(to, num, buf, j, num);
+        break;
+    case RSA_PKCS1_PADDING:
+        r = ossl_rsa_padding_check_PKCS1_type_2(rsa->libctx, to, num, buf, j, num, kdk);
         break;
     case RSA_PKCS1_OAEP_PADDING:
         r = RSA_padding_check_PKCS1_OAEP(to, num, buf, j, num, NULL, 0);
@@ -500,6 +597,8 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
 #endif
 
  err:
+    HMAC_CTX_free(hmac);
+    EVP_MD_free(md);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     OPENSSL_clear_free(buf, num);

@@ -13,9 +13,11 @@
 #include "internal/quic_record_rx.h"
 #include "internal/quic_ackm.h"
 #include "internal/quic_rx_depack.h"
+#include "internal/quic_record_rx_wrap.h"
+#include "internal/quic_error.h"
+#include "internal/quic_fc.h"
 #include "internal/sockets.h"
 
-#include "quic_record_rx_wrap.h"
 #include "quic_local.h"
 #include "../ssl_local.h"
 
@@ -35,21 +37,12 @@
 # define GET_CONN_ACK_DELAY_EXP(c) 3
 #endif
 
-/* TODO(QUIC): [BEGIN: TO BE REMOVED] placeholder macros and functions */
-
-/* Diverse things that should be implemented elsewhere, bur currently aren't. */
-
-typedef struct quic_stream_st QUIC_STREAM;
-
 /*
- * TODO(QUIC): ASSUMPTION: ssl_get_stream() gets a QUIC_STREAM from a connection
- * by stream ID.  For now, we simply return a fake stream.
+ * TODO(QUIC): In MVP the QUIC_CONNECTION is the only supported stream.
  */
 static QUIC_STREAM *ssl_get_stream(QUIC_CONNECTION *conn, uint64_t stream_id)
 {
-    static uint64_t fake_stream = 0;
-
-    return (QUIC_STREAM *)&fake_stream;
+    return stream_id == 0 ? &conn->stream : NULL;
 }
 
 /*
@@ -68,9 +61,6 @@ static int ssl_get_stream_type(QUIC_STREAM *stream)
 }
 
 /*
- * TODO(QUIC): ASSUMPTION: ssl_queue_data() adds data to a QUIC_STREAM, to be
- * consumed by the application when doing an SSL_read().
- *
  * We assume that queuing of the data has to be done without copying, thus
  * we get the reference counting QRX packet wrapper so it can increment the
  * reference count.  When the data is consumed (i.e. as a result of, say,
@@ -80,23 +70,19 @@ static int ssl_queue_data(QUIC_STREAM *stream, OSSL_QRX_PKT_WRAP *pkt_wrap,
                           const unsigned char *data, uint64_t data_len,
                           uint64_t logical_offset, int is_fin)
 {
-    /*
-     * Since this function is just a placeholder that doesn't actually queue
-     * anything, we do nothing here, not even the reference count increment.
-     */
+    /* Notify stream flow controller */
+    if (stream->rxfc != NULL
+        && (!ossl_quic_rxfc_on_rx_stream_frame(stream->rxfc,
+                                               logical_offset + data_len,
+                                               is_fin)
+            || ossl_quic_rxfc_get_error(stream->rxfc, 0) != QUIC_ERR_NO_ERROR))
+        /* QUIC_ERR_FLOW_CONTROL_ERROR or QUIC_ERR_FINAL_SIZE detected */
+        return 0;
 
-    /*
-     * 1. Queuing the data and the parent packet wrapper should happen here,
-     *    and this call with it:
-     *
-     *        ossl_qrx_pkt_wrap_up_ref(pkt_wrap);
-     *
-     * 2. Dequeuing the data happens somewhere else, and this call with it
-     *    (|pkt_wrap| replaced with the pointer from the queue):
-     *
-     *        ossl_qrx_pkt_wrap_free(pkt_wrap);
-     */
-    return 1;
+    return stream->rstream == NULL
+           || ossl_quic_rstream_queue_data(stream->rstream, pkt_wrap,
+                                           logical_offset, data, data_len,
+                                           is_fin);
 }
 
 /*

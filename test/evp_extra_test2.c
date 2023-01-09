@@ -377,6 +377,13 @@ static int test_dh_paramgen(void)
           && TEST_ptr(pkey);
 
     EVP_PKEY_CTX_free(gctx);
+    gctx = NULL;
+
+    ret = ret && TEST_ptr(gctx = EVP_PKEY_CTX_new_from_pkey(mainctx, pkey, NULL))
+              && TEST_int_eq(EVP_PKEY_param_check(gctx), 1)
+              && TEST_int_eq(EVP_PKEY_param_check_quick(gctx), 1);
+
+    EVP_PKEY_CTX_free(gctx);
     EVP_PKEY_free(pkey);
     return ret;
 }
@@ -430,6 +437,19 @@ static int test_ecx_tofrom_data_select(void)
 
     ret = TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "X25519"))
           && TEST_true(do_pkey_tofrom_data_select(key, "X25519"));
+    EVP_PKEY_free(key);
+    return ret;
+}
+#endif
+
+#ifndef OPENSSL_NO_SM2
+static int test_sm2_tofrom_data_select(void)
+{
+    int ret;
+    EVP_PKEY *key = NULL;
+
+    ret = TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "SM2"))
+          && TEST_true(do_pkey_tofrom_data_select(key, "SM2"));
     EVP_PKEY_free(key);
     return ret;
 }
@@ -1173,6 +1193,9 @@ int setup_tests(void)
     ADD_TEST(test_ec_d2i_i2d_pubkey);
 #else
     ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 1);
+#endif
+#ifndef OPENSSL_NO_SM2
+    ADD_TEST(test_sm2_tofrom_data_select);
 #endif
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(test_dsa_todata);

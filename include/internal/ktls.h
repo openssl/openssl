@@ -214,6 +214,13 @@ static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off,
 #     warning "Skipping Compilation of KTLS receive data path"
 #    endif
 #   endif
+#   if LINUX_VERSION_CODE < KERNEL_VERSION(5, 19, 0)
+#    define OPENSSL_NO_KTLS_ZC_TX
+#    ifndef PEDANTIC
+#     warning "KTLS requires Kernel Headers >= 5.19.0 for zerocopy sendfile"
+#     warning "Skipping Compilation of KTLS zerocopy sendfile"
+#    endif
+#   endif
 #   define OPENSSL_KTLS_AES_GCM_128
 #   if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
 #    define OPENSSL_KTLS_AES_GCM_256
@@ -291,6 +298,18 @@ static ossl_inline int ktls_start(int fd, ktls_crypto_info_t *crypto_info,
 {
     return setsockopt(fd, SOL_TLS, is_tx ? TLS_TX : TLS_RX,
                       crypto_info, crypto_info->tls_crypto_info_len) ? 0 : 1;
+}
+
+static ossl_inline int ktls_enable_tx_zerocopy_sendfile(int fd)
+{
+#ifndef OPENSSL_NO_KTLS_ZC_TX
+    int enable = 1;
+
+    return setsockopt(fd, SOL_TLS, TLS_TX_ZEROCOPY_RO,
+                      &enable, sizeof(enable)) ? 0 : 1;
+#else
+    return 0;
+#endif
 }
 
 /*

@@ -93,16 +93,11 @@ static int save_statusInfo(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si)
     if (!ossl_assert(ctx != NULL && si != NULL))
         return 0;
 
-    if ((ctx->status = ossl_cmp_pkisi_get_status(si)) < 0)
+    ctx->status = ossl_cmp_pkisi_get_status(si);
+    if (ctx->status < OSSL_CMP_PKISTATUS_accepted)
         return 0;
 
-    ctx->failInfoCode = 0;
-    if (si->failInfo != NULL) {
-        for (i = 0; i <= OSSL_CMP_PKIFAILUREINFO_MAX; i++) {
-            if (ASN1_BIT_STRING_get_bit(si->failInfo, i))
-                ctx->failInfoCode |= (1 << i);
-        }
-    }
+    ctx->failInfoCode = ossl_cmp_pkisi_get_pkifailureinfo(si);
 
     if (!ossl_cmp_ctx_set0_statusString(ctx, sk_ASN1_UTF8STRING_new_null())
             || (ctx->statusString == NULL))
@@ -356,7 +351,10 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     return 0;
 }
 
-/* Send certConf for IR, CR or KUR sequences and check response */
+/*
+ * Send certConf for IR, CR or KUR sequences and check response,
+ * not modifying ctx->status during the certConf exchange
+ */
 int ossl_cmp_exchange_certConf(OSSL_CMP_CTX *ctx, int fail_info,
                                const char *txt)
 {
@@ -385,6 +383,7 @@ int ossl_cmp_exchange_error(OSSL_CMP_CTX *ctx, int status, int fail_info,
     OSSL_CMP_MSG *PKIconf = NULL;
     int res = 0;
 
+    /* not overwriting ctx->status on error exchange */
     if ((si = OSSL_CMP_STATUSINFO_new(status, fail_info, txt)) == NULL)
         goto err;
     /* ossl_cmp_error_new() also checks if all necessary options are set */
@@ -487,6 +486,7 @@ int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
 {
     X509_STORE *out_trusted = OSSL_CMP_CTX_get_certConf_cb_arg(ctx);
     STACK_OF(X509) *chain = NULL;
+
     (void)text; /* make (artificial) use of var to prevent compiler warning */
 
     if (fail_info != 0) /* accept any error flagged by CMP core library */
@@ -642,7 +642,7 @@ static int initial_certreq(OSSL_CMP_CTX *ctx,
     OSSL_CMP_MSG *req;
     int res;
 
-    ctx->status = -1;
+    ctx->status = OSSL_CMP_PKISTATUS_request;
     if (!ossl_cmp_ctx_set0_newCert(ctx, NULL))
         return 0;
 
@@ -653,6 +653,7 @@ static int initial_certreq(OSSL_CMP_CTX *ctx,
     if ((req = ossl_cmp_certreq_new(ctx, req_type, crm)) == NULL)
         return 0;
 
+    ctx->status = OSSL_CMP_PKISTATUS_trans;
     res = send_receive_check(ctx, req, p_rep, rep_type);
     OSSL_CMP_MSG_free(req);
     return res;
@@ -702,7 +703,6 @@ int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
 X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
                             const OSSL_CRMF_MSG *crm)
 {
-
     OSSL_CMP_MSG *rep = NULL;
     int is_p10 = req_type == OSSL_CMP_PKIBODY_P10CR;
     int rid = is_p10 ? -1 : OSSL_CMP_CERTREQID;
@@ -742,16 +742,17 @@ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
         return 0;
     }
+    ctx->status = OSSL_CMP_PKISTATUS_request;
     if (ctx->oldCert == NULL && ctx->p10CSR == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_REFERENCE_CERT);
         return 0;
     }
-    ctx->status = -1;
 
     /* OSSL_CMP_rr_new() also checks if all necessary options are set */
     if ((rr = ossl_cmp_rr_new(ctx)) == NULL)
         goto end;
 
+    ctx->status = OSSL_CMP_PKISTATUS_trans;
     if (!send_receive_check(ctx, rr, &rp, OSSL_CMP_PKIBODY_RP))
         goto end;
 
@@ -809,7 +810,8 @@ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
         OSSL_CRMF_CERTTEMPLATE *tmpl =
             sk_OSSL_CMP_REVDETAILS_value(rr->body->value.rr, rsid)->certDetails;
         const X509_NAME *issuer = OSSL_CRMF_CERTTEMPLATE_get0_issuer(tmpl);
-        const ASN1_INTEGER *serial = OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(tmpl);
+        const ASN1_INTEGER *serial =
+            OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(tmpl);
 
         if (sk_OSSL_CRMF_CERTID_num(rrep->revCerts) != num_RevDetails) {
             ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_RP_COMPONENT_COUNT);
@@ -860,27 +862,31 @@ STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx)
 {
     OSSL_CMP_MSG *genm;
     OSSL_CMP_MSG *genp = NULL;
-    STACK_OF(OSSL_CMP_ITAV) *rcvd_itavs = NULL;
+    STACK_OF(OSSL_CMP_ITAV) *itavs = NULL;
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
-        return 0;
+        return NULL;
     }
-    ctx->status = -1;
+    ctx->status = OSSL_CMP_PKISTATUS_request;
 
     if ((genm = ossl_cmp_genm_new(ctx)) == NULL)
         goto err;
 
+    ctx->status = OSSL_CMP_PKISTATUS_trans;
     if (!send_receive_check(ctx, genm, &genp, OSSL_CMP_PKIBODY_GENP))
         goto err;
+    ctx->status = OSSL_CMP_PKISTATUS_accepted;
 
+    itavs = genp->body->value.genp;
+    if (itavs == NULL)
+        itavs = sk_OSSL_CMP_ITAV_new_null();
     /* received stack of itavs not to be freed with the genp */
-    rcvd_itavs = genp->body->value.genp;
     genp->body->value.genp = NULL;
 
  err:
     OSSL_CMP_MSG_free(genm);
     OSSL_CMP_MSG_free(genp);
 
-    return rcvd_itavs; /* recv_itavs == NULL indicates an error */
+    return itavs; /* NULL indicates error case */
 }

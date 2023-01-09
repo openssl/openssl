@@ -92,7 +92,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
 
         if ((prot = ASN1_BIT_STRING_new()) == NULL)
             goto end;
-        /* OpenSSL defaults all bit strings to be encoded as ASN.1 NamedBitList */
+        /* OpenSSL by default encodes all bit strings as ASN.1 NamedBitList */
         ossl_asn1_string_set_bits_left(prot, 0);
         if (!ASN1_BIT_STRING_set(prot, protection, sig_len)) {
             ASN1_BIT_STRING_free(prot);
@@ -242,6 +242,7 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
 
     /*
      * For the case of re-protection remove pre-existing protection.
+     * Does not remove any pre-existing extraCerts.
      */
     X509_ALGOR_free(msg->header->protectionAlg);
     msg->header->protectionAlg = NULL;

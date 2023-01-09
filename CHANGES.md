@@ -11,6 +11,7 @@ OpenSSL Releases
 ----------------
 
  - [OpenSSL 3.2](#openssl-32)
+ - [OpenSSL 3.1](#openssl-31)
  - [OpenSSL 3.0](#openssl-30)
  - [OpenSSL 1.1.1](#openssl-111)
  - [OpenSSL 1.1.0](#openssl-110)
@@ -22,17 +23,16 @@ OpenSSL Releases
 OpenSSL 3.2
 -----------
 
-### Changes between 3.0 and 3.2 [xx XXX xxxx]
+### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
- * Removed all references to invalid OSSL_PKEY_PARAM_RSA names for CRT parameters
-   in OpenSSL code.
-   Applications should not use the names OSSL_PKEY_PARAM_RSA_FACTOR,
-   OSSL_PKEY_PARAM_RSA_EXPONENT and OSSL_PKEY_PARAM_RSA_COEFFICIENT.
-   Use the numbered names such as OSSL_PKEY_PARAM_RSA_FACTOR1 instead.
-   Using these invalid names may cause algorithms to use slower methods
-   that ignore the CRT parameters.
+ * Added support for Hybrid Public Key Encryption (HPKE) as defined
+   in RFC9180. HPKE is required for TLS Encrypted ClientHello (ECH),
+   Message Layer Security (MLS) and other IETF specifications.
+   HPKE can also be used by other applications that require
+   encrypting "to" an ECDH public key. External APIs are defined in
+   include/openssl/hpke.h and documented in doc/man3/OSSL_HPKE_CTX_new.pod
 
-   *Shane Lontis*
+   *Stephen Farrell*
 
  * Add support for certificate compression (RFC8879), including
    library support for Brotli and Zstandard compression.
@@ -93,22 +93,6 @@ OpenSSL 3.2
 
    *Darshan Sen*
 
- * RNDR and RNDRRS support in provider functions to provide
-   random number generation for Arm CPUs (aarch64).
-
-   *Orr Toledano*
-
- * s_client and s_server apps now explicitly say when the TLS version
-   does not include the renegotiation mechanism. This avoids confusion
-   between that scenario versus when the TLS version includes secure
-   renegotiation but the peer lacks support for it.
-
-   *Felipe Gasper*
-
- * AES-GCM enabled with AVX512 vAES and vPCLMULQDQ.
-
-   *Tomasz Kantecki, Andrey Matyukov*
-
  * The default SSL/TLS security level has been changed from 1 to 2. RSA,
    DSA and DH keys of 1024 bits and above and less than 2048 bits and ECC keys
    of 160 bits and above and less than 224 bits were previously accepted by
@@ -128,11 +112,6 @@ OpenSSL 3.2
    will need to load the legacy crypto provider.
 
    *Paul Dale*
-
- * The various OBJ_* functions have been made thread safe.
-
-   *Paul Dale*
-
  * CCM8 cipher suites in TLS have been downgraded to security level zero
    because they use a short authentication tag which lowers their strength.
 
@@ -143,32 +122,10 @@ OpenSSL 3.2
 
    *Dmitry Belyavskiy*
 
- * Parallel dual-prime 1536/2048-bit modular exponentiation for
-   AVX512_IFMA capable processors.
+ * Add X.509 certificate codeSigning purpose and related checks on key usage and
+   extended key usage of the leaf certificate according to the CA/Browser Forum.
 
-   *Sergey Kirillov, Andrey Matyukov (Intel Corp)*
-
- * The functions `OPENSSL_LH_stats`, `OPENSSL_LH_node_stats`,
-   `OPENSSL_LH_node_usage_stats`, `OPENSSL_LH_stats_bio`,
-   `OPENSSL_LH_node_stats_bio` and `OPENSSL_LH_node_usage_stats_bio` are now
-   marked deprecated from OpenSSL 3.2 onwards and can be disabled by defining
-   `OPENSSL_NO_DEPRECATED_3_2`.
-
-   The macro `DEFINE_LHASH_OF` is now deprecated in favour of the macro
-   `DEFINE_LHASH_OF_EX`, which omits the corresponding type-specific function
-   definitions for these functions regardless of whether
-   `OPENSSL_NO_DEPRECATED_3_2` is defined.
-
-   Users of `DEFINE_LHASH_OF` may start receiving deprecation warnings for these
-   functions regardless of whether they are using them. It is recommended that
-   users transition to the new macro, `DEFINE_LHASH_OF_EX`.
-
-   *Hugo Landau*
-
- * When generating safe-prime DH parameters set the recommended private key
-   length equivalent to minimum key lengths as in RFC 7919.
-
-   *Tomáš Mráz*
+   * Lutz Jänicke*
 
  * Fix and extend certificate handling and the apps `x509`, `verify` etc.
    such as adding a trace facility for debugging certificate chain building.
@@ -223,6 +180,109 @@ OpenSSL 3.2
 
    *Hugo Landau*
 
+ * Enable KTLS with the TLS 1.3 CCM mode ciphersuites. Note that some linux
+   kernel versions that support KTLS have a known bug in CCM processing. That
+   has been fixed in stable releases starting from 5.4.164, 5.10.84, 5.15.7,
+   and all releases since 5.16. KTLS with CCM ciphersuites should be only used
+   on these releases.
+
+   *Tianjia Zhang*
+
+ * Zerocopy KTLS sendfile() support on Linux.
+
+   *Maxim Mikityanskiy*
+
+ * Added and enabled by default implicit rejection in RSA PKCS#1 v1.5
+   decryption as a protection against Bleichenbacher-like attacks.
+   The RSA decryption API will now return a randomly generated deterministic
+   message instead of an error in case it detects an error when checking
+   padding during PKCS#1 v1.5 decryption. This is a general protection against
+   issues like CVE-2020-25659 and CVE-2020-25657. This protection can be
+   disabled by calling
+   `EVP_PKEY_CTX_ctrl_str(ctx, "rsa_pkcs1_implicit_rejection". "0")`
+   on the RSA decryption context.
+
+   *Hubert Kario*
+
+OpenSSL 3.1
+-----------
+
+### Changes between 3.0 and 3.1.0 [xx XXX xxxx]
+
+ * Added support for KMAC in KBKDF.
+
+   *Shane Lontis*
+
+ * Our provider implementations of `OSSL_FUNC_KEYMGMT_EXPORT` and
+   `OSSL_FUNC_KEYMGMT_GET_PARAMS` for EC and SM2 keys now honor
+   `OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT` as set (and
+   default to `POINT_CONVERSION_UNCOMPRESSED`) when exporting
+   `OSSL_PKEY_PARAM_PUB_KEY`, instead of unconditionally using
+   `POINT_CONVERSION_COMPRESSED` as in previous 3.x releases.
+   For symmetry, our implementation of `EVP_PKEY_ASN1_METHOD->export_to`
+   for legacy EC and SM2 keys is also changed similarly to honor the
+   equivalent conversion format flag as specified in the underlying
+   `EC_KEY` object being exported to a provider, when this function is
+   called through `EVP_PKEY_export()`.
+
+   *Nicola Tuveri*
+
+ * RNDR and RNDRRS support in provider functions to provide
+   random number generation for Arm CPUs (aarch64).
+
+   *Orr Toledano*
+
+ * s_client and s_server apps now explicitly say when the TLS version
+   does not include the renegotiation mechanism. This avoids confusion
+   between that scenario versus when the TLS version includes secure
+   renegotiation but the peer lacks support for it.
+
+   *Felipe Gasper*
+
+ * AES-GCM enabled with AVX512 vAES and vPCLMULQDQ.
+
+   *Tomasz Kantecki, Andrey Matyukov*
+
+ * The various OBJ_* functions have been made thread safe.
+
+   *Paul Dale*
+
+ * Parallel dual-prime 1536/2048-bit modular exponentiation for
+   AVX512_IFMA capable processors.
+
+   *Sergey Kirillov, Andrey Matyukov (Intel Corp)*
+
+ * The functions `OPENSSL_LH_stats`, `OPENSSL_LH_node_stats`,
+   `OPENSSL_LH_node_usage_stats`, `OPENSSL_LH_stats_bio`,
+   `OPENSSL_LH_node_stats_bio` and `OPENSSL_LH_node_usage_stats_bio` are now
+   marked deprecated from OpenSSL 3.1 onwards and can be disabled by defining
+   `OPENSSL_NO_DEPRECATED_3_1`.
+
+   The macro `DEFINE_LHASH_OF` is now deprecated in favour of the macro
+   `DEFINE_LHASH_OF_EX`, which omits the corresponding type-specific function
+   definitions for these functions regardless of whether
+   `OPENSSL_NO_DEPRECATED_3_1` is defined.
+
+   Users of `DEFINE_LHASH_OF` may start receiving deprecation warnings for these
+   functions regardless of whether they are using them. It is recommended that
+   users transition to the new macro, `DEFINE_LHASH_OF_EX`.
+
+   *Hugo Landau*
+
+ * When generating safe-prime DH parameters set the recommended private key
+   length equivalent to minimum key lengths as in RFC 7919.
+
+   *Tomáš Mráz*
+
+ * Change the default salt length for PKCS#1 RSASSA-PSS signatures to the
+   maximum size that is smaller or equal to the digest length to comply with
+   FIPS 186-4 section 5. This is implemented by a new option
+   `OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO_DIGEST_MAX` ("auto-digestmax") for the
+   `rsa_pss_saltlen` parameter, which is now the default. Signature
+   verification is not affected by this change and continues to work as before.
+
+   *Clemens Lang*
+
 OpenSSL 3.0
 -----------
 
@@ -233,11 +293,63 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
-### Changes between 3.0.6 and 3.0.7 [xx XXX xxxx]
+### Changes between 3.0.6 and 3.0.7 [1 Nov 2022]
+
+ * Fixed two buffer overflows in punycode decoding functions.
+
+   A buffer overrun can be triggered in X.509 certificate verification,
+   specifically in name constraint checking. Note that this occurs after
+   certificate chain signature verification and requires either a CA to
+   have signed the malicious certificate or for the application to continue
+   certificate verification despite failure to construct a path to a trusted
+   issuer.
+
+   In a TLS client, this can be triggered by connecting to a malicious
+   server.  In a TLS server, this can be triggered if the server requests
+   client authentication and a malicious client connects.
+
+   An attacker can craft a malicious email address to overflow
+   an arbitrary number of bytes containing the `.`  character (decimal 46)
+   on the stack.  This buffer overflow could result in a crash (causing a
+   denial of service).
+   ([CVE-2022-3786])
+
+   An attacker can craft a malicious email address to overflow four
+   attacker-controlled bytes on the stack.  This buffer overflow could
+   result in a crash (causing a denial of service) or potentially remote code
+   execution depending on stack layout for any given platform/compiler.
+   ([CVE-2022-3602])
+
+   *Paul Dale*
+
+ * Removed all references to invalid OSSL_PKEY_PARAM_RSA names for CRT
+   parameters in OpenSSL code.
+   Applications should not use the names OSSL_PKEY_PARAM_RSA_FACTOR,
+   OSSL_PKEY_PARAM_RSA_EXPONENT and OSSL_PKEY_PARAM_RSA_COEFFICIENT.
+   Use the numbered names such as OSSL_PKEY_PARAM_RSA_FACTOR1 instead.
+   Using these invalid names may cause algorithms to use slower methods
+   that ignore the CRT parameters.
+
+   *Shane Lontis*
+
+ * Fixed a regression introduced in 3.0.6 version raising errors on some stack
+   operations.
+
+   *Tomáš Mráz*
+
+ * Fixed a regression introduced in 3.0.6 version not refreshing the certificate
+   data to be signed before signing the certificate.
+
+   *Gibeom Gwon*
 
  * Added RIPEMD160 to the default provider.
 
    *Paul Dale*
+
+ * Ensured that the key share group sent or accepted for the key exchange
+   is allowed for the protocol version.
+
+   *Matt Caswell*
 
 ### Changes between 3.0.5 and 3.0.6 [11 Oct 2022]
 
@@ -19381,7 +19493,7 @@ ndif
    *Ralf S. Engelschall*
 
  * Incorporated the popular no-RSA/DSA-only patches
-   which allow to compile a RSA-free SSLeay.
+   which allow to compile an RSA-free SSLeay.
 
    *Andrew Cooke / Interrader Ldt., Ralf S. Engelschall*
 

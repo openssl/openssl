@@ -690,7 +690,7 @@ EOF
         my $short = "$i:$rcodes{$i}:";
         my $t = exists $strings{$i} ? "$strings{$i}" : "";
         $t = "\\\n\t" . $t if length($short) + length($t) > 80;
-        print OUT "$short$t\n" if !exists $rextra{$i};
+        print OUT "$short$t\n";
     }
     close(OUT);
     if ( $skippedstate ) {

@@ -17,8 +17,9 @@
 extern "C" {
 # endif
 
-/* Set the default provider search path */
+/* Set and Get a library context search path */
 int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *, const char *path);
+const char *OSSL_PROVIDER_get0_default_search_path(OSSL_LIB_CTX *libctx);
 
 /* Load and unload a provider */
 OSSL_PROVIDER *OSSL_PROVIDER_load(OSSL_LIB_CTX *, const char *name);

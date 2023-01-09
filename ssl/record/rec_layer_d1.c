@@ -70,7 +70,7 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     d->buffered_app_data.q = buffered_app_data;
 }
 
-int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
+static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
 {
     TLS_RECORD *rdata;
     pitem *item;
@@ -318,8 +318,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * make sure that we are not getting application data when we are
          * doing a handshake for the first time
          */
-        if (SSL_in_init(s) && (type == SSL3_RT_APPLICATION_DATA) &&
-            (sc->enc_read_ctx == NULL)) {
+        if (SSL_in_init(s) && (type == SSL3_RT_APPLICATION_DATA)
+                && (SSL_IS_FIRST_HANDSHAKE(sc))) {
             SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE,
                      SSL_R_APP_DATA_IN_HANDSHAKE);
             return -1;
@@ -621,7 +621,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
     int ret;
 
     /* If we have an alert to send, lets send it */
-    if (sc->s3.alert_dispatch) {
+    if (sc->s3.alert_dispatch > 0) {
         i = s->method->ssl_dispatch_alert(s);
         if (i <= 0)
             return i;

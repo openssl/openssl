@@ -990,8 +990,6 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
 
 /*-
  * for these 2 messages, we need to
- * ssl->enc_read_ctx                    re-init
- * ssl->s3.read_mac_secret             re-init
  * ssl->session->read_sym_enc           assign
  * ssl->session->read_compression       assign
  * ssl->session->read_hash              assign

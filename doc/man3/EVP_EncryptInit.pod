@@ -330,27 +330,24 @@ See L</PARAMETERS> below for more information.
 
 =item EVP_CIPHER_gettable_params()
 
-Get a constant B<OSSL_PARAM> array that describes the retrievable parameters
-that can be used with EVP_CIPHER_get_params().  See L<OSSL_PARAM(3)> for the
-use of B<OSSL_PARAM> as a parameter descriptor.
+Get a constant L<OSSL_PARAM(3)> array that describes the retrievable parameters
+that can be used with EVP_CIPHER_get_params().
 
 =item EVP_CIPHER_gettable_ctx_params() and EVP_CIPHER_CTX_gettable_params()
 
-Get a constant B<OSSL_PARAM> array that describes the retrievable parameters
+Get a constant L<OSSL_PARAM(3)> array that describes the retrievable parameters
 that can be used with EVP_CIPHER_CTX_get_params().
 EVP_CIPHER_gettable_ctx_params() returns the parameters that can be retrieved
 from the algorithm, whereas EVP_CIPHER_CTX_gettable_params() returns the
 parameters that can be retrieved in the context's current state.
-See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as a parameter descriptor.
 
 =item EVP_CIPHER_settable_ctx_params() and EVP_CIPHER_CTX_settable_params()
 
-Get a constant B<OSSL_PARAM> array that describes the settable parameters
+Get a constant L<OSSL_PARAM(3)> array that describes the settable parameters
 that can be used with EVP_CIPHER_CTX_set_params().
 EVP_CIPHER_settable_ctx_params() returns the parameters that can be set from the
 algorithm, whereas EVP_CIPHER_CTX_settable_params() returns the parameters that
 can be set in the context's current state.
-See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as a parameter descriptor.
 
 =item EVP_EncryptInit_ex2()
 
@@ -654,7 +651,7 @@ See L<OSSL_PARAM(3)> for information about passing parameters.
 When EVP_CIPHER_fetch() is called it internally calls EVP_CIPHER_get_params()
 and caches the results.
 
-EVP_CIPHER_get_params() can be used with the following B<OSSL_PARAM> keys:
+EVP_CIPHER_get_params() can be used with the following L<OSSL_PARAM(3)> keys:
 
 =over 4
 
@@ -725,7 +722,7 @@ all other OpenSSL ciphers return 0.
 
 =head2 Gettable and Settable EVP_CIPHER_CTX parameters
 
-The following B<OSSL_PARAM> keys can be used with both EVP_CIPHER_CTX_get_params()
+The following L<OSSL_PARAM(3)> keys can be used with both EVP_CIPHER_CTX_get_params()
 and EVP_CIPHER_CTX_set_params().
 
 =over 4
@@ -816,7 +813,7 @@ cipher operation (either 4 or 8 records).
 
 =head2 Gettable EVP_CIPHER_CTX parameters
 
-The following B<OSSL_PARAM> keys can be used with EVP_CIPHER_CTX_get_params():
+The following L<OSSL_PARAM(3)> keys can be used with EVP_CIPHER_CTX_get_params():
 
 =over 4
 
@@ -885,7 +882,7 @@ Used to pass the TLS MAC data.
 
 =head2 Settable EVP_CIPHER_CTX parameters
 
-The following B<OSSL_PARAM> keys can be used with EVP_CIPHER_CTX_set_params():
+The following L<OSSL_PARAM(3)> keys can be used with EVP_CIPHER_CTX_set_params():
 
 =over 4
 
@@ -992,6 +989,40 @@ Byte 9-10: The protocol version
 Byte 11-12: Input length (Always 0)
 
 "tls1multi_interleave" must also be set for this operation.
+
+=item "xts_standard" (B<OSSL_CIPHER_PARAM_XTS_STANDARD>) <UTF8 string>
+
+Sets the XTS standard to use with SM4-XTS algorithm. XTS mode has two
+implementations, one is standardized in IEEE Std. 1619-2007 and has
+been widely used (e.g., XTS AES), the other is proposed recently
+(GB/T 17964-2021 implemented in May 2022) and is currently only used
+in SM4.
+
+The main difference between them is the multiplication by the
+primitive element E<alpha> to calculate the tweak values. The IEEE
+Std 1619-2007 noted that the multiplication "is a left shift of each
+byte by one bit with carry propagating from one byte to the next
+one", which means that in each byte, the leftmost bit is the most
+significant bit. But in GB/T 17964-2021, the rightmost bit is the
+most significant bit, thus the multiplication becomes a right shift
+of each byte by one bit with carry propagating from one byte to the
+next one.
+
+Valid values for the mode are:
+
+=over 4
+
+=item "GB"
+
+The GB/T 17964-2021 variant of SM4-XTS algorithm.
+
+=item "IEEE"
+
+The IEEE Std. 1619-2007 variant of SM4-XTS algorithm.
+
+=back
+
+The default value is "GB".
 
 =back
 
@@ -1258,7 +1289,8 @@ EVP_CIPHER_CTX_is_encrypting() returns 1 if the I<ctx> is set up for encryption
 EVP_CIPHER_param_to_asn1() and EVP_CIPHER_asn1_to_param() return greater
 than zero for success and zero or a negative number on failure.
 
-EVP_CIPHER_CTX_rand_key() returns 1 for success.
+EVP_CIPHER_CTX_rand_key() returns 1 for success and zero or a negative number
+for failure.
 
 EVP_CIPHER_names_do_all() returns 1 if the callback was called for all names.
 A return value of 0 means that the callback was not called for any names.
@@ -1657,9 +1689,9 @@ Encryption using AES-CBC with a 256-bit key with "CS1" ciphertext stealing.
          goto err;
 
      /* NOTE: CTS mode does not support multiple calls to EVP_CipherUpdate() */
-     if (!EVP_CipherUpdate(ctx, encrypted, &outlen, msg, msglen))
+     if (!EVP_CipherUpdate(ctx, out, &outlen, msg, msg_len))
          goto err;
-      if (!EVP_CipherFinal_ex(ctx, encrypted + outlen, &len))
+      if (!EVP_CipherFinal_ex(ctx, out + outlen, &len))
          goto err;
      ret = 1;
  err:

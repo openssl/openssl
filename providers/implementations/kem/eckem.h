@@ -11,4 +11,3 @@
 #define KEM_MODE_DHKEM       1
 
 int ossl_eckem_modename2id(const char *name);
-void ossl_dhkem_getsuiteid(unsigned char suiteid[5], uint16_t kemid);

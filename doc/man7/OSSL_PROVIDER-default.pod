@@ -145,6 +145,7 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item KRB5KDF, see L<EVP_KDF-KRB5KDF(7)>
 
+=item HMAC-DRBG, see L<EVP_KDF-HMAC-DRBG(7)>
 
 =back
 
@@ -252,6 +253,8 @@ L<OSSL_PROVIDER-base(7)>
 =head1 HISTORY
 
 The RIPEMD160 digest was added to the default provider in OpenSSL 3.0.7.
+
+All other functionality was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

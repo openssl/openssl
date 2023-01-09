@@ -21,7 +21,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     if (qc == NULL)
         goto err;
 
-    ssl = &qc->ssl;
+    ssl = &qc->stream.ssl;
     if (!ossl_ssl_init(ssl, ctx, SSL_TYPE_QUIC_CONNECTION)) {
         OPENSSL_free(qc);
         ssl = NULL;
@@ -55,6 +55,7 @@ void ossl_quic_free(SSL *s)
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc == NULL) {
+        /* TODO(QUIC): Temporarily needed to release the inner tls object */
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
         if (sc != NULL)
@@ -71,6 +72,7 @@ int ossl_quic_reset(SSL *s)
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
 
     if (qc == NULL) {
+        /* TODO(QUIC): Temporarily needed to reset the inner tls object */
         SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
         return sc != NULL ? ossl_ssl_connection_reset(s) : 0;

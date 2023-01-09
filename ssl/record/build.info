@@ -11,13 +11,7 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 SOURCE[../../libssl]=\
-        rec_layer_s3.c rec_layer_d1.c ssl3_record.c
-
-# For shared builds we need to include the sources needed in providers
-# (tls_pad.c) in libssl as well.
-SHARED_SOURCE[../../libssl]=tls_pad.c
-
-SOURCE[../../providers/libcommon.a]=tls_pad.c
+        rec_layer_s3.c rec_layer_d1.c
 
 DEFINE[../../libssl]=$AESDEF
 

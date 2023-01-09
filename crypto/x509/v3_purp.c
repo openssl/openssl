@@ -18,26 +18,26 @@
 
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
-                                    int require_ca);
+                                    int non_leaf);
 static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
-                                    int require_ca);
+                                    int non_leaf);
 static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x,
-                                       int require_ca);
-static int purpose_smime(const X509 *x, int require_ca);
+                                       int non_leaf);
+static int purpose_smime(const X509 *x, int non_leaf);
 static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
-                                    int require_ca);
+                                    int non_leaf);
 static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
-                                       int require_ca);
+                                       int non_leaf);
 static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
-                                  int require_ca);
+                                  int non_leaf);
 static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
-                                        int require_ca);
+                                        int non_leaf);
 static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
-                                        int require_ca);
+                                        int non_leaf);
 static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
-                            int require_ca);
+                            int non_leaf);
 static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
-                                     int require_ca);
+                                     int non_leaf);
 
 static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b);
 static void xptable_free(X509_PURPOSE *p);
@@ -83,7 +83,7 @@ static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b)
  * If id == -1 it just calls x509v3_cache_extensions() for its side-effect.
  * Returns 1 on success, 0 if x does not allow purpose, -1 on (internal) error.
  */
-int X509_check_purpose(X509 *x, int id, int require_ca)
+int X509_check_purpose(X509 *x, int id, int non_leaf)
 {
     int idx;
     const X509_PURPOSE *pt;
@@ -97,7 +97,7 @@ int X509_check_purpose(X509 *x, int id, int require_ca)
     if (idx == -1)
         return -1;
     pt = X509_PURPOSE_get0(idx);
-    return pt->check_purpose(pt, x, require_ca);
+    return pt->check_purpose(pt, x, non_leaf);
 }
 
 int X509_PURPOSE_set(int *p, int purpose)
@@ -710,11 +710,11 @@ static int check_ssl_ca(const X509 *x)
 }
 
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
-                                    int require_ca)
+                                    int non_leaf)
 {
     if (xku_reject(x, XKU_SSL_CLIENT))
         return 0;
-    if (require_ca)
+    if (non_leaf)
         return check_ssl_ca(x);
     /* We need to do digital signatures or key agreement */
     if (ku_reject(x, KU_DIGITAL_SIGNATURE | KU_KEY_AGREEMENT))
@@ -734,11 +734,11 @@ static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
     KU_DIGITAL_SIGNATURE | KU_KEY_ENCIPHERMENT | KU_KEY_AGREEMENT
 
 static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
-                                    int require_ca)
+                                    int non_leaf)
 {
     if (xku_reject(x, XKU_SSL_SERVER | XKU_SGC))
         return 0;
-    if (require_ca)
+    if (non_leaf)
         return check_ssl_ca(x);
 
     if (ns_reject(x, NS_SSL_SERVER))
@@ -751,22 +751,22 @@ static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
 }
 
 static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x,
-                                       int require_ca)
+                                       int non_leaf)
 {
-    int ret = check_purpose_ssl_server(xp, x, require_ca);
+    int ret = check_purpose_ssl_server(xp, x, non_leaf);
 
-    if (!ret || require_ca)
+    if (!ret || non_leaf)
         return ret;
     /* We need to encipher or Netscape complains */
     return ku_reject(x, KU_KEY_ENCIPHERMENT) ? 0 : ret;
 }
 
 /* common S/MIME checks */
-static int purpose_smime(const X509 *x, int require_ca)
+static int purpose_smime(const X509 *x, int non_leaf)
 {
     if (xku_reject(x, XKU_SMIME))
         return 0;
-    if (require_ca) {
+    if (non_leaf) {
         int ca_ret = check_ca(x);
 
         if (ca_ret == 0)
@@ -787,29 +787,29 @@ static int purpose_smime(const X509 *x, int require_ca)
 }
 
 static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
-                                    int require_ca)
+                                    int non_leaf)
 {
-    int ret = purpose_smime(x, require_ca);
+    int ret = purpose_smime(x, non_leaf);
 
-    if (!ret || require_ca)
+    if (!ret || non_leaf)
         return ret;
     return ku_reject(x, KU_DIGITAL_SIGNATURE | KU_NON_REPUDIATION) ? 0 : ret;
 }
 
 static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
-                                       int require_ca)
+                                       int non_leaf)
 {
-    int ret = purpose_smime(x, require_ca);
+    int ret = purpose_smime(x, non_leaf);
 
-    if (!ret || require_ca)
+    if (!ret || non_leaf)
         return ret;
     return ku_reject(x, KU_KEY_ENCIPHERMENT) ? 0 : ret;
 }
 
 static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
-                                  int require_ca)
+                                  int non_leaf)
 {
-    if (require_ca) {
+    if (non_leaf) {
         int ca_ret = check_ca(x);
 
         return ca_ret == 2 ? 0 : ca_ret;
@@ -822,27 +822,38 @@ static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
  * is valid. Additional checks must be made on the chain.
  */
 static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
-                                     int require_ca)
+                                     int non_leaf)
 {
     /*
      * Must be a valid CA.  Should we really support the "I don't know" value
      * (2)?
      */
-    if (require_ca)
+    if (non_leaf)
         return check_ca(x);
     /* Leaf certificate is checked in OCSP_verify() */
     return 1;
 }
 
 static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
-                                        int require_ca)
+                                        int non_leaf)
 {
     int i_ext;
 
-    /* If ca is true we must return if this is a valid CA certificate. */
-    if (require_ca)
+    /*
+     * If non_leaf is true we must check if this is a valid CA certificate.
+     * The extra requirements by the CA/Browser Forum are not checked.
+     */
+    if (non_leaf)
         return check_ca(x);
 
+    /*
+     * Key Usage is checked according to RFC 5280 and
+     * Extended Key Usage attributes is checked according to RFC 3161.
+     * The extra (and somewhat conflicting) CA/Browser Forum
+     * Baseline Requirements for the Issuance and Management of
+     * Publicly‐Trusted Code Signing Certificates, Version 3.0.0,
+     * Section 7.1.2.3: Code signing and Timestamp Certificate are not checked.
+     */
     /*
      * Check the optional key usage field:
      * if Key Usage is present, it must be one of digitalSignature
@@ -867,25 +878,28 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
 }
 
 static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
-                                   int require_ca)
+                                   int non_leaf)
 {
     int i_ext;
 
-    /* If ca is true we must return if this is a valid CA certificate. */
-    if (require_ca)
+    /*
+     * If non_leaf is true we must check if this is a valid CA certificate.
+     * The extra requirements by the CA/Browser Forum are not checked.
+     */
+    if (non_leaf)
         return check_ca(x);
 
     /*
      * Check the key usage and extended key usage fields:
      *
-     * Reference: CA Browser Forum,
-     * Baseline Requirements for the Issuance and Management of 
+     * Reference: CA/Browser Forum,
+     * Baseline Requirements for the Issuance and Management of
      * Publicly‐Trusted Code Signing Certificates, Version 3.0.0,
      * Section 7.1.2.3: Code signing and Timestamp Certificate
      *
      * Checking covers Key Usage and Extended Key Usage attributes.
-     * Other properties like CRL Distribution Points and Authoriy
-     * Information Access (AIA) are not checked.
+     * The certificatePolicies, cRLDistributionPoints (CDP), and
+     * authorityInformationAccess (AIA) extensions are so far not checked.
      */
     /* Key Usage */
     if ((x->ex_flags & EXFLAG_KUSAGE) == 0)
@@ -918,7 +932,7 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
 }
 
 static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
-                            int require_ca)
+                            int non_leaf)
 {
     return 1;
 }

@@ -45,7 +45,7 @@ static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 
     cmp = satsub64be(seq, bitmap->max_seq_num);
     if (cmp > 0) {
-        SSL3_RECORD_set_seq_num(&rl->rrec[0], seq);
+        ossl_tls_rl_record_set_seq_num(&rl->rrec[0], seq);
         return 1;               /* this record in new */
     }
     shift = -cmp;
@@ -54,7 +54,7 @@ static int dtls_record_replay_check(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     else if (bitmap->map & ((uint64_t)1 << shift))
         return 0;               /* record previously received */
 
-    SSL3_RECORD_set_seq_num(&rl->rrec[0], seq);
+    ossl_tls_rl_record_set_seq_num(&rl->rrec[0], seq);
     return 1;
 }
 
@@ -80,7 +80,7 @@ static void dtls_record_bitmap_update(OSSL_RECORD_LAYER *rl,
     }
 }
 
-static DTLS_BITMAP *dtls_get_bitmap(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rr,
+static DTLS_BITMAP *dtls_get_bitmap(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rr,
                                     unsigned int *is_next_epoch)
 {
     *is_next_epoch = 0;
@@ -113,7 +113,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 {
     int i;
     int enc_err;
-    SSL3_RECORD *rr;
+    TLS_RL_RECORD *rr;
     int imac_size;
     size_t mac_size = 0;
     unsigned char md[EVP_MAX_MD_SIZE];
@@ -303,14 +303,14 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, record_pqueue *queue
 
     rdata->packet = rl->packet;
     rdata->packet_length = rl->packet_length;
-    memcpy(&(rdata->rbuf), &rl->rbuf, sizeof(SSL3_BUFFER));
-    memcpy(&(rdata->rrec), &rl->rrec[0], sizeof(SSL3_RECORD));
+    memcpy(&(rdata->rbuf), &rl->rbuf, sizeof(TLS_BUFFER));
+    memcpy(&(rdata->rrec), &rl->rrec[0], sizeof(TLS_RL_RECORD));
 
     item->data = rdata;
 
     rl->packet = NULL;
     rl->packet_length = 0;
-    memset(&rl->rbuf, 0, sizeof(SSL3_BUFFER));
+    memset(&rl->rbuf, 0, sizeof(TLS_BUFFER));
     memset(&rl->rrec[0], 0, sizeof(rl->rrec[0]));
 
     if (!tls_setup_read_buffer(rl)) {
@@ -338,12 +338,12 @@ static int dtls_copy_rlayer_record(OSSL_RECORD_LAYER *rl, pitem *item)
 
     rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
 
-    SSL3_BUFFER_release(&rl->rbuf);
+    ossl_tls_buffer_release(&rl->rbuf);
 
     rl->packet = rdata->packet;
     rl->packet_length = rdata->packet_length;
-    memcpy(&rl->rbuf, &(rdata->rbuf), sizeof(SSL3_BUFFER));
-    memcpy(&rl->rrec[0], &(rdata->rrec), sizeof(SSL3_RECORD));
+    memcpy(&rl->rbuf, &(rdata->rbuf), sizeof(TLS_BUFFER));
+    memcpy(&rl->rrec[0], &(rdata->rrec), sizeof(TLS_RL_RECORD));
 
     /* Set proper sequence number for mac calculation */
     memcpy(&(rl->sequence[2]), &(rdata->packet[5]), 6);
@@ -383,7 +383,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     int ssl_major, ssl_minor;
     int rret;
     size_t more, n;
-    SSL3_RECORD *rr;
+    TLS_RL_RECORD *rr;
     unsigned char *p = NULL;
     unsigned short version;
     DTLS_BITMAP *bitmap;
@@ -415,7 +415,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     if ((rl->rstate != SSL_ST_READ_BODY) ||
         (rl->packet_length < DTLS1_RT_HEADER_LENGTH)) {
         rret = rl->funcs->read_n(rl, DTLS1_RT_HEADER_LENGTH,
-                                 SSL3_BUFFER_get_len(&rl->rbuf), 0, 1, &n);
+                                 TLS_BUFFER_get_len(&rl->rbuf), 0, 1, &n);
         /* read timeout is handled by dtls1_read_bytes */
         if (rret < OSSL_RECORD_RETURN_SUCCESS) {
             /* RLAYERfatal() already called if appropriate */
@@ -577,7 +577,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
 
 static int dtls_free(OSSL_RECORD_LAYER *rl)
 {
-    SSL3_BUFFER *rbuf;
+    TLS_BUFFER *rbuf;
     size_t left, written;
     pitem *item;
     DTLS_RLAYER_RECORD_DATA *rdata;
@@ -684,7 +684,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
  err:
     if (ret != OSSL_RECORD_RETURN_SUCCESS) {
-        OPENSSL_free(*retrl);
+        dtls_free(*retrl);
         *retrl = NULL;
     }
     return ret;
@@ -725,7 +725,7 @@ int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
                                     size_t mac_size,
                                     OSSL_RECORD_TEMPLATE *thistempl,
                                     WPACKET *thispkt,
-                                    SSL3_RECORD *thiswr)
+                                    TLS_RL_RECORD *thiswr)
 {
     if (!tls_post_encryption_processing_default(rl, mac_size, thistempl,
                                                 thispkt, thiswr)) {

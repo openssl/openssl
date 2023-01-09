@@ -38,7 +38,8 @@ Setting this parameter is identical to passing a I<key> to L<EVP_MAC_init(3)>.
 
 =item "cipher" (B<OSSL_MAC_PARAM_CIPHER>) <UTF8 string>
 
-Sets the name of the underlying cipher to be used.
+Sets the name of the underlying cipher to be used. The mode of the cipher
+must be CBC.
 
 =item "properties" (B<OSSL_MAC_PARAM_PROPERTIES>) <UTF8 string>
 

@@ -29,7 +29,7 @@ default provider:
 
 =item "AES-192-OFB", "AES-128-OFB" and "AES-256-OFB"
 
-=item "AES-128-SIV", "AES-192-SIV" and "AES-256-SIV"
+=item "AES-128-GCM-SIV", "AES-192-GCM-SIV" and "AES-256-GCM-SIV"
 
 =item "AES-128-XTS" and "AES-256-XTS"
 
@@ -54,6 +54,8 @@ FIPS provider:
 
 =item "AES-128-OCB", "AES-192-OCB" and "AES-256-OCB"
 
+=item "AES-128-SIV", "AES-192-SIV" and "AES-256-SIV"
+
 =back
 
 =head2 Parameters
@@ -64,6 +66,10 @@ L<EVP_EncryptInit(3)/PARAMETERS>.
 =head1 SEE ALSO
 
 L<provider-cipher(7)>, L<OSSL_PROVIDER-FIPS(7)>, L<OSSL_PROVIDER-default(7)>
+
+=head1 HISTORY
+
+The GCM-SIV mode ciphers were added in OpenSSL version 3.2.
 
 =head1 COPYRIGHT
 

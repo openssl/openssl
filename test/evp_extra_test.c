@@ -2040,7 +2040,7 @@ static int test_EVP_SM2(void)
                                         sizeof(kMsg))))
             goto done;
 
-        if (!TEST_true(EVP_PKEY_decrypt_init(cctx)))
+        if (!TEST_int_gt(EVP_PKEY_decrypt_init(cctx), 0))
             goto done;
 
         if (!TEST_true(EVP_PKEY_CTX_set_params(cctx, sparams)))
@@ -2344,7 +2344,7 @@ static int test_CMAC_keygen(void)
     if (!TEST_int_gt(EVP_PKEY_keygen_init(kctx), 0)
             || !TEST_int_gt(EVP_PKEY_CTX_ctrl(kctx, -1, EVP_PKEY_OP_KEYGEN,
                                             EVP_PKEY_CTRL_CIPHER,
-                                            0, (void *)EVP_aes_256_ecb()), 0)
+                                            0, (void *)EVP_aes_256_cbc()), 0)
             || !TEST_int_gt(EVP_PKEY_CTX_ctrl(kctx, -1, EVP_PKEY_OP_KEYGEN,
                                             EVP_PKEY_CTRL_SET_MAC_KEY,
                                             sizeof(key), (void *)key), 0)
@@ -2360,7 +2360,7 @@ static int test_CMAC_keygen(void)
      * Test a CMAC key using the direct method, and compare with the mac
      * created above.
      */
-    pkey = EVP_PKEY_new_CMAC_key(NULL, key, sizeof(key), EVP_aes_256_ecb());
+    pkey = EVP_PKEY_new_CMAC_key(NULL, key, sizeof(key), EVP_aes_256_cbc());
     if (!TEST_ptr(pkey)
             || !TEST_true(get_cmac_val(pkey, mac2))
             || !TEST_mem_eq(mac, sizeof(mac), mac2, sizeof(mac2)))

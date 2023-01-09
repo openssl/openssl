@@ -1287,3 +1287,4 @@ brainpoolP384r1tls13		1286
 brainpoolP512r1tls13		1287
 brotli		1288
 zstd		1289
+sm4_xts		1290

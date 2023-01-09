@@ -429,7 +429,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     static const unsigned char resumption_master_secret[] = "\x72\x65\x73\x20\x6D\x61\x73\x74\x65\x72";
     /* ASCII: "e exp master", in hex for EBCDIC compatibility */
     static const unsigned char early_exporter_master_secret[] = "\x65\x20\x65\x78\x70\x20\x6D\x61\x73\x74\x65\x72";
-    unsigned char *iv;
+    unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char key[EVP_MAX_KEY_LENGTH];
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char hashval[EVP_MAX_MD_SIZE];
@@ -448,11 +448,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     int level;
     int direction = (which & SSL3_CC_READ) != 0 ? OSSL_RECORD_DIRECTION_READ
                                                 : OSSL_RECORD_DIRECTION_WRITE;
-
-    if (which & SSL3_CC_READ)
-        iv = s->read_iv;
-    else
-        iv = s->write_iv;
 
     if (((which & SSL3_CC_CLIENT) && (which & SSL3_CC_WRITE))
             || ((which & SSL3_CC_SERVER) && (which & SSL3_CC_READ))) {
@@ -707,13 +702,14 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     const EVP_MD *md = ssl_handshake_md(s);
     size_t hashlen;
     unsigned char key[EVP_MAX_KEY_LENGTH];
-    unsigned char *insecret, *iv;
+    unsigned char *insecret;
     unsigned char secret[EVP_MAX_MD_SIZE];
     char *log_label;
     size_t keylen, ivlen, taglen;
     int ret = 0, l;
     int direction = sending ? OSSL_RECORD_DIRECTION_WRITE
                             : OSSL_RECORD_DIRECTION_READ;
+    unsigned char iv[EVP_MAX_IV_LENGTH];
 
     if ((l = EVP_MD_get_size(md)) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -725,11 +721,6 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
         insecret = s->server_app_traffic_secret;
     else
         insecret = s->client_app_traffic_secret;
-
-    if (sending)
-        iv = s->write_iv;
-    else
-        iv = s->read_iv;
 
     if (!derive_secret_key_and_iv(s, sending, md,
                                   s->s3.tmp.new_sym_enc, insecret, NULL,

@@ -58,7 +58,7 @@ jobs:
           }, {
             arch: m68k-linux-gnu,
             libs: libc6-dev-m68k-cross,
-            target: -static -m68040 linux-latomic,
+            target: -static -m68040 linux-latomic -Wno-stringop-overflow,
             fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
@@ -91,7 +91,7 @@ jobs:
           }, {
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
-            target: linux64-s390x
+            target: linux64-s390x -Wno-stringop-overflow
           }, {
             arch: sh4-linux-gnu,
             libs: libc6-dev-sh4-cross,
@@ -110,7 +110,7 @@ jobs:
           }, {
             arch: m68k-linux-gnu,
             libs: libc6-dev-m68k-cross,
-            target: -mcfv4e linux-latomic,
+            target: -mcfv4e linux-latomic -Wno-stringop-overflow,
             tests: none
           }, {
             arch: mips-linux-gnu,
