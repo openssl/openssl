@@ -11,6 +11,7 @@
 #include "internal/quic_wire_pkt.h"
 #include "internal/common.h"
 #include <openssl/lhash.h>
+#include <openssl/err.h>
 
 #define URXE_DEMUX_STATE_FREE       0 /* on urx_free list */
 #define URXE_DEMUX_STATE_PENDING    1 /* on urx_pending list */
@@ -369,13 +370,17 @@ static int demux_recv(QUIC_DEMUX *demux)
     size_t rd, i;
     QUIC_URXE *urxe = ossl_list_urxe_head(&demux->urx_free), *unext;
     OSSL_TIME now;
+    unsigned long err;
 
     /* This should never be called when we have any pending URXE. */
     assert(ossl_list_urxe_head(&demux->urx_pending) == NULL);
     assert(urxe->demux_state == URXE_DEMUX_STATE_FREE);
 
     if (demux->net_bio == NULL)
-        return 0;
+        /*
+         * If no BIO is plugged in, treat this as no datagram being available.
+         */
+        return QUIC_DEMUX_PUMP_RES_TRANSIENT_FAIL;
 
     /*
      * Opportunistically receive as many messages as possible in a single
@@ -386,7 +391,7 @@ static int demux_recv(QUIC_DEMUX *demux)
         if (urxe == NULL) {
             /* We need at least one URXE to receive into. */
             if (!ossl_assert(i > 0))
-                return 0;
+                return QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL;
 
             break;
         }
@@ -395,7 +400,7 @@ static int demux_recv(QUIC_DEMUX *demux)
         urxe = demux_reserve_urxe(demux, urxe, demux->mtu);
         if (urxe == NULL)
             /* Allocation error, fail. */
-            return 0;
+            return QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL;
 
         /* Ensure we zero any fields added to BIO_MSG at a later date. */
         memset(&msg[i], 0, sizeof(BIO_MSG));
@@ -408,9 +413,17 @@ static int demux_recv(QUIC_DEMUX *demux)
             BIO_ADDR_clear(&urxe->local);
     }
 
-    if (!BIO_recvmmsg(demux->net_bio, msg, sizeof(BIO_MSG), i, 0, &rd))
-        return 0;
+    ERR_set_mark();
+    if (!BIO_recvmmsg(demux->net_bio, msg, sizeof(BIO_MSG), i, 0, &rd)) {
+        err = ERR_peek_last_error();
+        ERR_pop_to_mark();
+        if (BIO_err_is_non_fatal(err))
+            return QUIC_DEMUX_PUMP_RES_TRANSIENT_FAIL;
+        else
+            return QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL;
+    }
 
+    ERR_clear_last_mark();
     now = demux->now != NULL ? demux->now(demux->now_arg) : ossl_time_zero();
 
     urxe = ossl_list_urxe_head(&demux->urx_free);
@@ -426,7 +439,7 @@ static int demux_recv(QUIC_DEMUX *demux)
         urxe->demux_state = URXE_DEMUX_STATE_PENDING;
     }
 
-    return 1;
+    return QUIC_DEMUX_PUMP_RES_OK;
 }
 
 /* Extract destination connection ID from the first packet in a datagram. */
@@ -511,11 +524,11 @@ int ossl_quic_demux_pump(QUIC_DEMUX *demux)
     if (ossl_list_urxe_head(&demux->urx_pending) == NULL) {
         ret = demux_ensure_free_urxe(demux, DEMUX_MAX_MSGS_PER_CALL);
         if (ret != 1)
-            return 0;
+            return QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL;
 
         ret = demux_recv(demux);
-        if (ret != 1)
-            return 0;
+        if (ret != QUIC_DEMUX_PUMP_RES_OK)
+            return ret;
 
         /*
          * If demux_recv returned successfully, we should always have something.
@@ -523,7 +536,10 @@ int ossl_quic_demux_pump(QUIC_DEMUX *demux)
         assert(ossl_list_urxe_head(&demux->urx_pending) != NULL);
     }
 
-    return demux_process_pending_urxl(demux);
+    if (!demux_process_pending_urxl(demux))
+        return QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL;
+
+    return QUIC_DEMUX_PUMP_RES_OK;
 }
 
 /* Artificially inject a packet into the demuxer for testing purposes. */

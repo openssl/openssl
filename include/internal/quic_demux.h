@@ -267,8 +267,26 @@ void ossl_quic_demux_release_urxe(QUIC_DEMUX *demux,
  * Process any unprocessed RX'd datagrams, by calling registered callbacks by
  * connection ID, reading more datagrams from the BIO if necessary.
  *
- * Returns 1 on success or 0 on failure.
+ * Returns one of the following values:
+ *
+ *     QUIC_DEMUX_PUMP_RES_OK
+ *         At least one incoming datagram was processed.
+ *
+ *     QUIC_DEMUX_PUMP_RES_TRANSIENT_FAIL
+ *         No more incoming datagrams are currently available.
+ *         Call again later.
+ *
+ *     QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL
+ *         Either the network read BIO has failed in a non-transient fashion, or
+ *         the QUIC implementation has encountered an internal state, assertion
+ *         or allocation error. The caller should tear down the connection
+ *         similarly to in the case of a protocol violation.
+ *
  */
+#define QUIC_DEMUX_PUMP_RES_OK              0
+#define QUIC_DEMUX_PUMP_RES_TRANSIENT_FAIL  (-1)
+#define QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL  (-2)
+
 int ossl_quic_demux_pump(QUIC_DEMUX *demux);
 
 /*
