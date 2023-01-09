@@ -13,10 +13,7 @@ can be used to determine when a BIO object can next be read or written
      int type;
      union {
          int     fd;
-         union {
-             void        *ptr;
-             uint64_t    u64;
-         } custom[BIO_POLL_DESCRIPTOR_NUM_CUSTOM];
+         void    *custom;
      } value;
  } BIO_POLL_DESCRIPTOR;
 
@@ -75,9 +72,8 @@ complete a BIO_write() operation.
 
 Type values beginning with this value (inclusive) are reserved for application
 allocation for custom poll descriptor types. The field I<value.custom> in the
-B<BIO_POLL_DESCRIPTOR> is an array of length B<BIO_POLL_DESCRIPTOR_NUM_CUSTOM>.
-Each entry in this array can store a void pointer or a B<uint64_t> and can be
-used by the application arbitrarily.
+B<BIO_POLL_DESCRIPTOR> is an opaque pointer which can be used by the application
+arbitrarily.
 
 =back
 
