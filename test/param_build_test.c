@@ -219,6 +219,8 @@ err:
     OSSL_PARAM_free(params_blt);
     OSSL_PARAM_BLD_free(bld);
     OPENSSL_free(utf);
+    BN_free(zbn);
+    BN_free(zbn_res);
     BN_free(pbn);
     BN_free(pbn_res);
     BN_free(nbn);
@@ -381,6 +383,8 @@ err:
     OSSL_PARAM_BLD_free(bld);
     OPENSSL_secure_free(data1);
     OPENSSL_secure_free(data2);
+    BN_free(zbn);
+    BN_free(zbn_res);
     BN_free(pbn);
     BN_free(pbn_res);
     BN_free(nbn);
