@@ -223,6 +223,10 @@ int OSSL_PARAM_BLD_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
         }
         if (BN_get_flags(bn, BN_FLG_SECURE) == BN_FLG_SECURE)
             secure = 1;
+
+        /* The BIGNUM is zero, we must transfer at least one byte */
+        if (sz == 0)
+            sz++;
     }
     pd = param_push(bld, key, sz, sz, OSSL_PARAM_UNSIGNED_INTEGER, secure);
     if (pd == NULL)
