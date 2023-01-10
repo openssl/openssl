@@ -3493,7 +3493,7 @@ OpenSSL 1.1.0
    could mean that detached text data signed with an earlier version of
    OpenSSL 1.1.0 may fail to verify using the fixed version, or text data
    signed with a fixed OpenSSL may fail to verify with an earlier version of
-   OpenSSL 1.1.0. A workaround is to only verify the canonicalised text data
+   OpenSSL 1.1.0. A workaround is to only verify the canonicalized text data
    and use the "-binary" flag (for the "cms" command line application) or set
    the SMIME_BINARY/PKCS7_BINARY/CMS_BINARY flags (if using CMS_verify()).
 
