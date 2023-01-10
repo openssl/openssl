@@ -433,6 +433,11 @@ int ossl_quic_channel_is_handshake_complete(const QUIC_CHANNEL *ch)
     return ch->handshake_complete;
 }
 
+int ossl_quic_channel_is_handshake_confirmed(const QUIC_CHANNEL *ch)
+{
+    return ch->handshake_confirmed;
+}
+
 /*
  * QUIC Channel: Callbacks from Miscellaneous Subsidiary Components
  * ================================================================

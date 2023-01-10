@@ -177,7 +177,7 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
             ossl_quic_tserver_tick(qtserv);
             servererr = ossl_quic_tserver_is_term_any(qtserv, NULL);
             if (!servererr)
-                rets = ossl_quic_tserver_is_handshake_complete(qtserv);
+                rets = ossl_quic_tserver_is_handshake_confirmed(qtserv);
         }
 
         if (clienterr && servererr)

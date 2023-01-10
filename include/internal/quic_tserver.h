@@ -60,7 +60,7 @@ int ossl_quic_tserver_tick(QUIC_TSERVER *srv);
 /*
  * Returns 1 if we have finished the TLS handshake
  */
-int ossl_quic_tserver_is_handshake_complete(QUIC_TSERVER *srv);
+int ossl_quic_tserver_is_handshake_confirmed(QUIC_TSERVER *srv);
 
 /* Returns 1 if the server is in any terminating or terminated state */
 int ossl_quic_tserver_is_term_any(QUIC_TSERVER *srv,
