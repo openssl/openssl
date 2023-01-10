@@ -5455,7 +5455,7 @@ CMS_EnvelopedData_decrypt               ?	3_2_0	EXIST::FUNCTION:CMS
 CMS_SignedData_free                     ?	3_2_0	EXIST::FUNCTION:CMS
 CMS_SignedData_new                      ?	3_2_0	EXIST::FUNCTION:CMS
 CMS_SignedData_verify                   ?	3_2_0	EXIST::FUNCTION:CMS
-BIO_s_dgram_mem                         ?	3_2_0	EXIST::FUNCTION:
+BIO_s_dgram_mem                         ?	3_2_0	EXIST::FUNCTION:DGRAM
 BIO_recvmmsg                            ?	3_2_0	EXIST::FUNCTION:
 BIO_sendmmsg                            ?	3_2_0	EXIST::FUNCTION:
 BIO_meth_set_sendmmsg                   ?	3_2_0	EXIST::FUNCTION:
