@@ -46,6 +46,14 @@ struct ossl_quic_fault {
     /* Cipher packet mutations */
     ossl_quic_fault_on_packet_cipher_cb pciphercb;
     void *pciphercbarg;
+
+    /* Datagram mutations */
+    ossl_quic_fault_on_datagram_cb datagramcb;
+    void *datagramcbarg;
+    /* The currently processed message */
+    BIO_MSG msg;
+    /* Allocated size of msg data buffer */
+    size_t msgalloc;
 };
 
 static void packet_plain_finish(void *arg);
@@ -546,18 +554,17 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     OSSL_QUIC_FAULT *fault;
     BIO *next = BIO_next(b);
     ossl_ssize_t ret = 0;
-    BIO_MSG m;
     size_t i = 0, tmpnump;
     QUIC_PKT_HDR hdr;
     PACKET pkt;
-
-    m.data = NULL;
+    unsigned char *tmpdata;
 
     if (next == NULL)
         return 0;
 
     fault = BIO_get_data(b);
-    if (fault == NULL || fault->pciphercb == NULL)
+    if (fault == NULL
+            || (fault->pciphercb == NULL && fault->datagramcb == NULL))
         return BIO_sendmmsg(next, msg, stride, num_msg, flags, num_processed);
 
     if (num_msg == 0) {
@@ -566,35 +573,57 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     }
 
     for (i = 0; i < num_msg; ++i) {
-        m = BIO_MSG_N(msg, stride, i);
+        fault->msg = BIO_MSG_N(msg, stride, i);
 
         /* Take a copy of the data so that callbacks can modify it */
-        m.data = OPENSSL_memdup(m.data, m.data_len);
-        if (m.data == NULL)
+        tmpdata = OPENSSL_malloc(fault->msg.data_len + GROWTH_ALLOWANCE);
+        if (tmpdata == NULL)
             return 0;
+        memcpy(tmpdata, fault->msg.data, fault->msg.data_len);
+        fault->msg.data = tmpdata;
+        fault->msgalloc = fault->msg.data_len + GROWTH_ALLOWANCE;
 
-        if (!PACKET_buf_init(&pkt, m.data, m.data_len))
-            return 0;
+        if (fault->pciphercb != NULL) {
+            if (!PACKET_buf_init(&pkt, fault->msg.data, fault->msg.data_len))
+                return 0;
 
-        do {
-            if (!ossl_quic_wire_decode_pkt_hdr(&pkt,
-                    0/* TODO(QUIC): Not sure how this should be set*/, 1, &hdr,
-                    NULL))
-                goto out;
+            do {
+                if (!ossl_quic_wire_decode_pkt_hdr(&pkt,
+                        0 /* TODO(QUIC): Not sure how this should be set*/, 1,
+                        &hdr, NULL))
+                    goto out;
 
-            /* TODO(QUIC): Resolve const issue here */
-            if (!fault->pciphercb(fault, &hdr, (unsigned char *)hdr.data,
-                                  hdr.len, fault->pciphercbarg))
-                goto out;
-        } while (PACKET_remaining(&pkt) > 0);
+                /*
+                 * hdr.data is const - but its our buffer so casting away the
+                 * const is safe
+                 */
+                if (!fault->pciphercb(fault, &hdr, (unsigned char *)hdr.data,
+                                    hdr.len, fault->pciphercbarg))
+                    goto out;
 
-        if (!BIO_sendmmsg(next, &m, stride, 1, flags, &tmpnump)) {
+                /*
+                 * TODO(QUIC): At the moment modifications to hdr by the callback
+                 * are ignored. We might need to rewrite the QUIC header to
+                 * enable tests to change this. We also don't yet have a
+                 * mechanism for the callback to change the encrypted data
+                 * length. It's not clear if that's needed or not.
+                 */
+            } while (PACKET_remaining(&pkt) > 0);
+        }
+
+        if (fault->datagramcb != NULL
+                && !fault->datagramcb(fault, &fault->msg, stride,
+                                      fault->datagramcbarg))
+            goto out;
+
+        if (!BIO_sendmmsg(next, &fault->msg, stride, 1, flags, &tmpnump)) {
             *num_processed = i;
             goto out;
         }
 
-        OPENSSL_free(m.data);
-        m.data = NULL;
+        OPENSSL_free(fault->msg.data);
+        fault->msg.data = NULL;
+        fault->msgalloc = 0;
     }
 
     *num_processed = i;
@@ -604,7 +633,8 @@ out:
         ret = 1;
     else
         ret = 0;
-    OPENSSL_free(m.data);
+    OPENSSL_free(fault->msg.data);
+    fault->msg.data = NULL;
     return ret;
 }
 
@@ -647,6 +677,31 @@ int ossl_quic_fault_set_packet_cipher_listener(OSSL_QUIC_FAULT *fault,
 {
     fault->pciphercb = pciphercb;
     fault->pciphercbarg = pciphercbarg;
+
+    return 1;
+}
+
+int ossl_quic_fault_set_datagram_listener(OSSL_QUIC_FAULT *fault,
+                                          ossl_quic_fault_on_datagram_cb datagramcb,
+                                          void *datagramcbarg)
+{
+    fault->datagramcb = datagramcb;
+    fault->datagramcbarg = datagramcbarg;
+
+    return 1;
+}
+
+/* To be called from a datagram_listener callback */
+int ossl_quic_fault_resize_datagram(OSSL_QUIC_FAULT *fault, size_t newlen)
+{
+    if (newlen > fault->msgalloc)
+            return 0;
+
+    if (newlen > fault->msg.data_len)
+        memset((unsigned char *)fault->msg.data + fault->msg.data_len, 0,
+                newlen - fault->msg.data_len);
+
+    fault->msg.data_len = newlen;
 
     return 1;
 }

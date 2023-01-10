@@ -149,3 +149,18 @@ typedef int (*ossl_quic_fault_on_packet_cipher_cb)(OSSL_QUIC_FAULT *fault,
 int ossl_quic_fault_set_packet_cipher_listener(OSSL_QUIC_FAULT *fault,
                                                ossl_quic_fault_on_packet_cipher_cb pciphercb,
                                                void *picphercbarg);
+
+/*
+ * Enable tests to listen for datagrams being sent
+ */
+typedef int (*ossl_quic_fault_on_datagram_cb)(OSSL_QUIC_FAULT *fault,
+                                              BIO_MSG *m,
+                                              size_t stride,
+                                              void *cbarg);
+
+int ossl_quic_fault_set_datagram_listener(OSSL_QUIC_FAULT *fault,
+                                          ossl_quic_fault_on_datagram_cb datagramcb,
+                                          void *datagramcbarg);
+
+/* To be called from a datagram_listener callback */
+int ossl_quic_fault_resize_datagram(OSSL_QUIC_FAULT *fault, size_t newlen);
