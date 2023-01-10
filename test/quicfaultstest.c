@@ -233,7 +233,129 @@ static int test_no_transport_params(void)
     ossl_quic_tserver_free(qtserv);
     SSL_CTX_free(cctx);
     return testresult;
+}
 
+/*
+ * Test that a corrupted encrypted packet is dropped and retransmitted
+ */
+static int docorrupt = 0;
+
+static int on_packet_cipher_cb(OSSL_QUIC_FAULT *fault, QUIC_PKT_HDR *hdr,
+                               unsigned char *buf, size_t len, void *cbarg)
+{
+    if (!docorrupt || len == 0)
+        return 1;
+
+    buf[(size_t)test_random() % len] ^= 0xff;
+    docorrupt = 0;
+
+    return 1;
+}
+
+static int test_corrupted_encrypted_packet(void)
+{
+    OSSL_QUIC_FAULT *fault = NULL;
+    int testresult = 0;
+    SSL_CTX *cctx = SSL_CTX_new(OSSL_QUIC_client_method());
+    QUIC_TSERVER *qtserv = NULL;
+    SSL *cssl = NULL;
+    char *msg = "Hello World!";
+    size_t msglen = strlen(msg);
+    unsigned char buf[80];
+    size_t bytesread, byteswritten;
+
+    if (!TEST_ptr(cctx))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_objects(cctx, cert, privkey, &qtserv,
+                                             &cssl, &fault)))
+        goto err;
+
+    /* Listen for encrypted packets being sent */
+    if (!TEST_true(ossl_quic_fault_set_packet_cipher_listener(fault,
+                                                              on_packet_cipher_cb,
+                                                              NULL)))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
+        goto err;
+
+    /* Corrupt the next server packet*/
+    docorrupt = 1;
+
+    /*
+     * Send first 5 bytes of message. This will get corrupted and is treated as
+     * "lost"
+     */
+    if (!TEST_true(ossl_quic_tserver_write(qtserv, (unsigned char *)msg, 5,
+                                           &byteswritten)))
+        goto err;
+
+    if (!TEST_size_t_eq(byteswritten, 5))
+        goto err;
+
+    /*
+     * Introduce a small delay so that the above packet has time to be detected
+     * as lost. Loss detection times are based on RTT which should be very
+     * fast for us since there isn't really a network. The loss delay timer is
+     * always at least 1ms though. We sleep for 100ms.
+     * TODO(QUIC): This assumes the calculated RTT will always be way less than
+     * 100ms - which it should be...but can we always guarantee this? An
+     * alternative might be to put in our own ossl_time_now() implementation for
+     * these tests and control the timer as part of the test. This approach has
+     * the added advantage that the test will behave reliably when run in a
+     * debugger. Without it may get unreliable debugging results. This would
+     * require some significant refactoring of the ssl/quic code though.
+     */
+    OSSL_sleep(100);
+
+    /* Send rest of message */
+    if (!TEST_true(ossl_quic_tserver_write(qtserv, (unsigned char *)msg + 5,
+                                           msglen - 5, &byteswritten)))
+        goto err;
+
+    if (!TEST_size_t_eq(byteswritten, msglen - 5))
+        goto err;
+
+    /*
+     * Receive the corrupted packet. This should get dropped and is effectively
+     * "lost". We also process the second packet which should be decrypted
+     * successfully. Therefore we ack the frames in it
+     */
+    if (!TEST_true(SSL_tick(cssl)))
+        goto err;
+
+    /*
+     * Process the ack. Detect that the first part of the message must have
+     * been lost due to the time elapsed since it was sent and resend it
+     */
+    ossl_quic_tserver_tick(qtserv);
+
+    /* Receive and process the newly arrived message data resend */
+    if (!TEST_true(SSL_tick(cssl)))
+        goto err;
+
+    /* The whole message should now have arrived */
+    if (!TEST_true(SSL_read_ex(cssl, buf, sizeof(buf), &bytesread)))
+        goto err;
+
+    if (!TEST_mem_eq(msg, msglen, buf, bytesread))
+        goto err;
+
+    /*
+     * If the test was successful then we corrupted exactly one packet and
+     * docorrupt was reset
+     */
+    if (!TEST_false(docorrupt))
+        goto err;
+
+    testresult = 1;
+ err:
+    ossl_quic_fault_free(fault);
+    SSL_free(cssl);
+    ossl_quic_tserver_free(qtserv);
+    SSL_CTX_free(cctx);
+    return testresult;
 }
 
 OPT_TEST_DECLARE_USAGE("certsdir\n")
@@ -250,7 +372,6 @@ int setup_tests(void)
     if (!TEST_ptr(certsdir = test_get_argument(0)))
         return 0;
 
-
     cert = test_mk_file_path(certsdir, "servercert.pem");
     if (cert == NULL)
         goto err;
@@ -262,6 +383,7 @@ int setup_tests(void)
     ADD_TEST(test_basic);
     ADD_TEST(test_unknown_frame);
     ADD_TEST(test_no_transport_params);
+    ADD_TEST(test_corrupted_encrypted_packet);
 
     return 1;
 
