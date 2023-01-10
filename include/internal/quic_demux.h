@@ -283,7 +283,7 @@ void ossl_quic_demux_release_urxe(QUIC_DEMUX *demux,
  *         similarly to in the case of a protocol violation.
  *
  */
-#define QUIC_DEMUX_PUMP_RES_OK              0
+#define QUIC_DEMUX_PUMP_RES_OK              1
 #define QUIC_DEMUX_PUMP_RES_TRANSIENT_FAIL  (-1)
 #define QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL  (-2)
 
