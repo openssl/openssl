@@ -1063,6 +1063,10 @@ int OSSL_PARAM_set_BN(OSSL_PARAM *p, const BIGNUM *val)
     }
 
     bytes = (size_t)BN_num_bytes(val);
+    /* We make sure that at least one byte is used, so zero is properly set */
+    if (bytes == 0)
+        bytes++;
+
     p->return_size = bytes;
     if (p->data == NULL)
         return 1;
