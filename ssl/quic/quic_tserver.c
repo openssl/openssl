@@ -167,9 +167,9 @@ int ossl_quic_tserver_is_terminated(QUIC_TSERVER *srv,
     return ossl_quic_channel_is_terminated(srv->ch, cause);
 }
 
-int ossl_quic_tserver_is_handshake_complete(QUIC_TSERVER *srv)
+int ossl_quic_tserver_is_handshake_confirmed(QUIC_TSERVER *srv)
 {
-    return ossl_quic_channel_is_handshake_complete(srv->ch);
+    return ossl_quic_channel_is_handshake_confirmed(srv->ch);
 }
 
 int ossl_quic_tserver_read(QUIC_TSERVER *srv,
