@@ -35,6 +35,8 @@
     ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER)
 #define err_unsupported_real  \
     ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_PARAM_UNSUPPORTED_FLOATING_POINT_FORMAT)
+#define err_invalid_argument  \
+   ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT) 
 
 /*
  * Return the number of bits in the mantissa of a double.  This is used to
@@ -382,6 +384,10 @@ int OSSL_PARAM_get_int32(const OSSL_PARAM *p, int32_t *val)
         err_null_argument;
         return 0;
     }
+    if (p->data_size == 0 ||  p->data == NULL) {
+        err_invalid_argument;
+        return 0;
+    }
 
     if (p->data_type == OSSL_PARAM_INTEGER) {
 #ifndef OPENSSL_SMALL_FOOTPRINT
@@ -525,6 +531,10 @@ int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val)
 
     if (val == NULL || p == NULL) {
         err_null_argument;
+        return 0;
+    }
+    if (p->data_size == 0 ||  p->data == NULL) {
+        err_invalid_argument;
         return 0;
     }
 
@@ -674,6 +684,10 @@ int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
         err_null_argument;
         return 0;
     }
+    if (p->data_size == 0 ||  p->data == NULL) {
+        err_invalid_argument;
+        return 0;
+    }
 
     if (p->data_type == OSSL_PARAM_INTEGER) {
 #ifndef OPENSSL_SMALL_FOOTPRINT
@@ -812,6 +826,10 @@ int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
 
     if (val == NULL || p == NULL) {
         err_null_argument;
+        return 0;
+    }
+    if (p->data_size == 0 ||  p->data == NULL) {
+        err_invalid_argument;
         return 0;
     }
 
@@ -1024,6 +1042,10 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, BIGNUM **val)
         err_null_argument;
         return 0;
     }
+    if (p->data_size == 0 ||  p->data == NULL) {
+        err_invalid_argument;
+        return 0;
+    }
 
     switch (p->data_type) {
     case OSSL_PARAM_UNSIGNED_INTEGER:
@@ -1113,6 +1135,10 @@ int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
 
     if (val == NULL || p == NULL) {
         err_null_argument;
+        return 0;
+    }
+    if (p->data_size == 0 ||  p->data == NULL) {
+        err_invalid_argument;
         return 0;
     }
 
