@@ -20,7 +20,7 @@ L<crypto(7)>.
 
 =head2 Main Changes from OpenSSL 3.0
 
-There are no substantial changes since OpenSSL 3.0.
+There are no changes requiring additional migration measures since OpenSSL 3.0.
 
 =head1 OPENSSL 3.0
 
