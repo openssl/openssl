@@ -226,7 +226,7 @@ void ossl_qtx_finish_dgram(OSSL_QTX *qtx);
  *      or the underlying network write BIO indicated a non-transient
  *      error.
  */
-#define QTX_FLUSH_NET_RES_OK                0
+#define QTX_FLUSH_NET_RES_OK                1
 #define QTX_FLUSH_NET_RES_TRANSIENT_FAIL    (-1)
 #define QTX_FLUSH_NET_RES_PERMANENT_FAIL    (-2)
 
