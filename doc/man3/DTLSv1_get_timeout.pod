@@ -45,10 +45,6 @@ Returns 0 on failure, or if no timeout is currently active.
 
 L<DTLSv1_handle_timeout(3)>, L<SSL_get_tick_timeout(3)>, L<ssl(7)>
 
-=head1 HISTORY
-
-The DTLSv1_get_timeout() function was added in OpenSSL 3.2.
-
 =head1 COPYRIGHT
 
 Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
