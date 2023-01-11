@@ -247,6 +247,9 @@ sub load_regs() {
 	my $next_offset = $offset + 1;
 $code.=<<___;
 	ld1w	{$reg.s},p0/z,[$inp,#$offset,MUL VL]
+#ifdef  __AARCH64EB__
+	revb    $reg.s,p0/m,$reg.s
+#endif
 ___
 	if (@_) {
 		&load_regs($next_offset, @_);
@@ -268,6 +271,9 @@ sub store_regs() {
 	my $reg = shift;
 	my $next_offset = $offset + 1;
 $code.=<<___;
+#ifdef  __AARCH64EB__
+	revb	$reg.s,p0/m,$reg.s
+#endif
 	st1w	{$reg.s},p0,[$outp,#$offset,MUL VL]
 ___
 	if (@_) {
@@ -472,14 +478,14 @@ ___
 sub SVE_TRANSFORMS() {
 $code.=<<___;
 #ifdef	__AARCH64EB__
-	rev	@x[0],@x[0]
-	rev	@x[2],@x[2]
-	rev	@x[4],@x[4]
-	rev	@x[6],@x[6]
-	rev	@x[8],@x[8]
-	rev	@x[10],@x[10]
-	rev	@x[12],@x[12]
-	rev	@x[14],@x[14]
+	rev	@sxx[0],@sxx[0]
+	rev	@sxx[2],@sxx[2]
+	rev	@sxx[4],@sxx[4]
+	rev	@sxx[6],@sxx[6]
+	rev	@sxx[8],@sxx[8]
+	rev	@sxx[10],@sxx[10]
+	rev	@sxx[12],@sxx[12]
+	rev	@sxx[14],@sxx[14]
 #endif
 	.if mixin == 1
 		add	@K[6],@K[6],#1
@@ -858,7 +864,8 @@ my  %opcode_pred = (
 	"ld1w"         => 0xA540A000,
 	"ld1rw"        => 0x8540C000,
 	"lasta"        => 0x0520A000,
-	"revh"         => 0x05258000);
+	"revh"         => 0x05258000,
+	"revb"         => 0x05248000);
 
 my  %tsize = (
 	'b'          => 0,
