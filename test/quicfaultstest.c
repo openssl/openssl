@@ -236,7 +236,7 @@ static int test_no_transport_params(void)
 }
 
 /*
- * Test that a corrupted encrypted packet is dropped and retransmitted
+ * Test that corrupted packets/datagrams are dropped and retransmitted
  */
 static int docorrupt = 0;
 
@@ -252,7 +252,25 @@ static int on_packet_cipher_cb(OSSL_QUIC_FAULT *fault, QUIC_PKT_HDR *hdr,
     return 1;
 }
 
-static int test_corrupted_encrypted_packet(void)
+static int on_datagram_cb(OSSL_QUIC_FAULT *fault, BIO_MSG *m, size_t stride,
+                          void *cbarg)
+{
+    if (!docorrupt || m->data_len == 0)
+        return 1;
+
+    if (!ossl_quic_fault_resize_datagram(fault, m->data_len - 1))
+        return 1;
+
+    docorrupt = 0;
+
+    return 1;
+}
+
+/*
+ * Test 1: Corrupt by flipping bits in an encrypted packet
+ * Test 2: Corrupt by truncating an entire datagram
+ */
+static int test_corrupted_data(int idx)
 {
     OSSL_QUIC_FAULT *fault = NULL;
     int testresult = 0;
@@ -271,12 +289,19 @@ static int test_corrupted_encrypted_packet(void)
                                              &cssl, &fault)))
         goto err;
 
-    /* Listen for encrypted packets being sent */
-    if (!TEST_true(ossl_quic_fault_set_packet_cipher_listener(fault,
-                                                              on_packet_cipher_cb,
-                                                              NULL)))
-        goto err;
-
+    if (idx == 0) {
+        /* Listen for encrypted packets being sent */
+        if (!TEST_true(ossl_quic_fault_set_packet_cipher_listener(fault,
+                                                                  on_packet_cipher_cb,
+                                                                  NULL)))
+            goto err;
+    } else {
+        /* Listen for datagrams being sent */
+        if (!TEST_true(ossl_quic_fault_set_datagram_listener(fault,
+                                                             on_datagram_cb,
+                                                             NULL)))
+            goto err;
+    }
     if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
         goto err;
 
@@ -383,7 +408,7 @@ int setup_tests(void)
     ADD_TEST(test_basic);
     ADD_TEST(test_unknown_frame);
     ADD_TEST(test_no_transport_params);
-    ADD_TEST(test_corrupted_encrypted_packet);
+    ADD_ALL_TESTS(test_corrupted_data, 2);
 
     return 1;
 
