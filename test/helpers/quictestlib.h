@@ -14,7 +14,7 @@
 typedef struct ossl_quic_fault OSSL_QUIC_FAULT;
 
 /*
- * Structure representing a parse EncryptedExtension message. Listeners can
+ * Structure representing a parsed EncryptedExtension message. Listeners can
  * make changes to the contents of structure objects as required and the fault
  * injector will reconstruct the message to be sent on
  */
@@ -70,7 +70,11 @@ int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
 
 /*
  * Helper function to be called from a packet_plain_listener callback if it
- * wants to resize the packet (either to add new data to it, or to truncate it)
+ * wants to resize the packet (either to add new data to it, or to truncate it).
+ * The buf provided to packet_plain_listener is over allocated, so this just
+ * changes the logical size and never changes the actual address of the buf.
+ * This will fail if a large resize is attempted that exceeds the over
+ * allocation.
  */
 int ossl_quic_fault_resize_plain_packet(OSSL_QUIC_FAULT *fault, size_t newlen);
 
@@ -90,7 +94,11 @@ int ossl_quic_fault_set_handshake_listener(OSSL_QUIC_FAULT *fault,
 /*
  * Helper function to be called from a handshake_listener callback if it wants
  * to resize the handshake message (either to add new data to it, or to truncate
- * it). newlen must include the length of the handshake message header.
+ * it). newlen must include the length of the handshake message header. The
+ * handshake message buffer is over allocated, so this just changes the logical
+ * size and never changes the actual address of the buf.
+ * This will fail if a large resize is attempted that exceeds the over
+ * allocation.
  */
 int ossl_quic_fault_resize_handshake(OSSL_QUIC_FAULT *fault, size_t newlen);
 
@@ -120,7 +128,10 @@ int ossl_quic_fault_set_hand_enc_ext_listener(OSSL_QUIC_FAULT *fault,
 /*
  * Helper function to be called from message specific listener callbacks. newlen
  * is the new length of the specific message excluding the handshake message
- * header.
+ * header.  The buffers provided to the message specific listeners are over
+ * allocated, so this just changes the logical size and never changes the actual
+ * address of the buffer. This will fail if a large resize is attempted that
+ * exceeds the over allocation.
  */
 int ossl_quic_fault_resize_message(OSSL_QUIC_FAULT *fault, size_t newlen);
 
@@ -168,5 +179,10 @@ int ossl_quic_fault_set_datagram_listener(OSSL_QUIC_FAULT *fault,
                                           ossl_quic_fault_on_datagram_cb datagramcb,
                                           void *datagramcbarg);
 
-/* To be called from a datagram_listener callback */
+/*
+ * To be called from a datagram_listener callback. The datagram buffer is over
+ * allocated, so this just changes the logical size and never changes the actual
+ * address of the buffer. This will fail if a large resize is attempted that
+ * exceeds the over allocation.
+ */
 int ossl_quic_fault_resize_datagram(OSSL_QUIC_FAULT *fault, size_t newlen);
