@@ -45,7 +45,13 @@ void ossl_quic_fault_free(OSSL_QUIC_FAULT *fault);
 int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl);
 
 /*
- * Confirm the server has received a protocol error
+ * Confirm that the server has received the given transport error code.
+ */
+int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code);
+
+/*
+ * Confirm the server has received a protocol error. Equivalent to calling
+ * qtest_check_server_transport_err with a code of QUIC_ERR_PROTOCOL_VIOLATION
  */
 int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv);
 

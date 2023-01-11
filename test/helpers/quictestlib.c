@@ -203,22 +203,29 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
     return ret;
 }
 
-int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv)
+int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)
 {
     QUIC_TERMINATE_CAUSE cause;
 
     ossl_quic_tserver_tick(qtserv);
 
     /*
-     * Check that the server has received the protocol violation error
-     * connection close from the client
+     * Check that the server has closed with the specified code from the client
      */
-    if (!TEST_true(ossl_quic_tserver_is_term_any(qtserv, &cause))
-            || !TEST_true(cause.remote)
-            || !TEST_uint64_t_eq(cause.error_code, QUIC_ERR_PROTOCOL_VIOLATION))
+    if (!TEST_true(ossl_quic_tserver_is_term_any(qtserv)))
+        return 0;
+
+    cause = ossl_quic_tserver_get_terminate_cause(qtserv);
+    if  (!TEST_true(cause.remote)
+            || !TEST_uint64_t_eq(cause.error_code, code))
         return 0;
 
     return 1;
+}
+
+int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv)
+{
+    return qtest_check_server_transport_err(qtserv, QUIC_ERR_PROTOCOL_VIOLATION);
 }
 
 void ossl_quic_fault_free(OSSL_QUIC_FAULT *fault)
