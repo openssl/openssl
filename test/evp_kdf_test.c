@@ -1619,8 +1619,8 @@ static int test_kdf_ss_kmac(void)
         TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_SSKDF))
         && TEST_size_t_eq(EVP_KDF_CTX_get_kdf_size(kctx), 0)
         && TEST_int_eq(EVP_KDF_CTX_set_params(kctx, params), 1)
-        /* The bug fix for KMAC returning SIZE_MAX was added in 3.1 */
-        && (fips_provider_version_lt(NULL, 3, 1, 0)
+        /* The bug fix for KMAC returning SIZE_MAX was added in 3.0.8 */
+        && (fips_provider_version_lt(NULL, 3, 0, 8)
             || TEST_size_t_eq(EVP_KDF_CTX_get_kdf_size(kctx), SIZE_MAX))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out), NULL), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
