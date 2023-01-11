@@ -52,7 +52,7 @@ fetching algorithms, and may optionally be set to NULL.
 
 PKCS12_SAFEBAG_get1_cert() and PKCS12_SAFEBAG_get1_crl() are the same as
 PKCS12_SAFEBAG_get1_cert_ex() and PKCS12_SAFEBAG_get1_crl_ex() and set the I<libctx> and
-I<prop> to NULL. This will use the default provider.
+I<prop> to NULL. This will use the default library context.
 
 PKCS12_SAFEBAG_get0_p8inf() and PKCS12_SAFEBAG_get0_pkcs8() return the PKCS8 object
 from a PKCS8shroudedKeyBag or a keyBag.

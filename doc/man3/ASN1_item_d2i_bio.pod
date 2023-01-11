@@ -74,7 +74,7 @@ ASN1_item_i2d_mem_bio() encodes the given ASN.1 value I<val>
 using the ASN.1 template I<it> and returns the result in a memory BIO.
 
 ASN1_item_pack() encodes the given ASN.1 value in I<obj> using the
-ASN.1 template I<it> and returns a B<ASN1_STRING> object. If the passed in
+ASN.1 template I<it> and returns an B<ASN1_STRING> object. If the passed in
 I<*oct> is not NULL then this is used to store the returned result, otherwise
 a new B<ASN1_STRING> object is created. If I<oct> is not NULL and I<*oct> is NULL
 then the returned return is also set into I<*oct>. If there is an error the optional
@@ -86,7 +86,6 @@ I<oct> using the ASN.1 template I<it>.
 
 ASN1_item_unpack_ex() is similar to ASN1_item_unpack(), but uses ASN1_item_d2i_ex() so
 that the I<libctx> and I<propq> can be used when doing algorithm fetching.
-
 
 =head1 RETURN VALUES
 
