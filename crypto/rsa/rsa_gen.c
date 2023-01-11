@@ -86,21 +86,22 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
     int ok = -1;
 
     if (bits < RSA_MIN_MODULUS_BITS) {
-        ok = 0;             /* we set our own err */
         ERR_raise(ERR_LIB_RSA, RSA_R_KEY_SIZE_TOO_SMALL);
-        goto err;
+        return 0;
     }
-
+    if (e_value == NULL) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_BAD_E_VALUE);
+        return 0;
+    }
     /* A bad value for e can cause infinite loops */
-    if (e_value != NULL && !ossl_rsa_check_public_exponent(e_value)) {
+    if (!ossl_rsa_check_public_exponent(e_value)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
         return 0;
     }
 
     if (primes < RSA_DEFAULT_PRIME_NUM || primes > ossl_rsa_multip_cap(bits)) {
-        ok = 0;             /* we set our own err */
         ERR_raise(ERR_LIB_RSA, RSA_R_KEY_PRIME_NUM_INVALID);
-        goto err;
+        return 0;
     }
 
     ctx = BN_CTX_new_ex(rsa->libctx);
