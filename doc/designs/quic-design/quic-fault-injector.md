@@ -9,13 +9,13 @@ OpenSSL's expectations.
 
 The QUIC Fault Injector is a component within the OpenSSL test framework that
 can be used to simulate misbehaving peers and confirm that that OpenSSL QUIC
-implementation behaves in the expected manner as a result of such misbehaviour.
+implementation behaves in the expected manner in the event of such misbehaviour.
 
 Typically an individual test will inject one particular misbehaviour (i.e. a
 fault) into an otherwise normal QUIC connection. Therefore the fault injector
 will have to be capable of creating fully normal QUIC protocol elements, but
 also offer the flexibility for a test to modify those normal protocol elements
-as required for the specific test circumstances. The OpenSSL QUIC implementaiton
+as required for the specific test circumstances. The OpenSSL QUIC implementation
 in libssl does not offer the capability to send faults since it is designed to
 be RFC compliant.
 
@@ -74,7 +74,11 @@ a pointer to the constructed handshake message in `msgin` along with its
 associated length in `inlen`. The mutator will construct a replacement handshake
 message (typically by copying the input message and modifying it) and store it
 in a newly allocated buffer. A pointer to the new buffer will be passed back
-in `*msgout` and its length will be stored in `*outlen`.
+in `*msgout` and its length will be stored in `*outlen`. Optionally the mutator
+can choose to not mutate by simply setting `*msgout = msgin`, or by creating a
+new buffer with a copy of the data in it. A return value of 1 indicates that
+the callback completed successfully. A return value of 0 indicates a fatal
+error.
 
 Once libssl has finished using the mutated buffer it will call the
 `finish_mutate_handshake_cb` callback which can then release the buffer and
@@ -82,7 +86,7 @@ perform any other cleanup as required.
 
 ### QUIC Pre-Encryption Packets
 
-QUIC Packets are the primary mechansim for exchanging protocol data within QUIC.
+QUIC Packets are the primary mechanism for exchanging protocol data within QUIC.
 Multiple packets may be held within a single datagram, and each packet may
 itself contain multiple frames. A packet gets protected via an AEAD encryption
 algorithm prior to it being sent. Fault Injector based tests may need to inject
@@ -118,7 +122,11 @@ the payload will be in an iovec array pointed to by `iovecin` and containing
 `numin` iovecs. The `mutatecb` callback is expected to allocate a new header
 structure and return it in `*hdrout` and a new set of iovecs to be stored in
 `*iovecout`. The number of iovecs need not be the same as the input. The number
-of iovecs in the output array is stored in `*numout`.
+of iovecs in the output array is stored in `*numout`. Optionally the callback
+can choose to not mutate by simply setting `*hdrout = hdrin` and
+`*iovecout = iovecin`, or by creating a new iovecs/headers with a copy of the
+data in it. A return value of 1 indicates that the callback completed
+successfully. A return value of 0 indicates a fatal error.
 
 Once the OpenSSL QUIC implementation has finished using the mutated buffers the
 `finishmutatecb` callback is called. This is expected to free any resources and
@@ -134,9 +142,9 @@ An example test might modify an encrypted packet to confirm that the AEAD
 decryption process rejects it.
 
 In order to provide this functionality the QUIC Fault Injector will insert
-itself as a man-in-the-middle between the client and server. A BIO_dgram_pair()
+itself as a man-in-the-middle between the client and server. A BIO_s_dgram_pair()
 will be used with one of the pair being used on the client end and the other
-being associated with the Fault Injector. Similarly a second BIO_dgram_pair()
+being associated with the Fault Injector. Similarly a second BIO_s_dgram_pair()
 will be created with one used on the server and other used with the Fault
 Injector.
 
@@ -184,14 +192,14 @@ to provide the basis for future work.
 
 The following outlines an illustrative set of functions that will initially be
 provided. A number of `TODO(QUIC)` comments are inserted to explain how we
-might exand the API over time:
+might expand the API over time:
 
 ```` C
 /* Type to represent the Fault Injector */
 typedef struct ossl_quic_fault OSSL_QUIC_FAULT;
 
 /*
- * Structure representing a parse EncryptedExtension message. Listeners can
+ * Structure representing a parsed EncryptedExtension message. Listeners can
  * make changes to the contents of structure objects as required and the fault
  * injector will reconstruct the message to be sent on
  */
@@ -222,7 +230,13 @@ void ossl_quic_fault_free(OSSL_QUIC_FAULT *fault);
 int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl);
 
 /*
- * Confirm the server has received a protocol error
+ * Confirm that the server has received the given transport error code.
+ */
+int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code);
+
+/*
+ * Confirm the server has received a protocol error. Equivalent to calling
+ * qtest_check_server_transport_err with a code of QUIC_ERR_PROTOCOL_VIOLATION
  */
 int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv);
 
@@ -241,7 +255,11 @@ int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
 
 /*
  * Helper function to be called from a packet_plain_listener callback if it
- * wants to resize the packet (either to add new data to it, or to truncate it)
+ * wants to resize the packet (either to add new data to it, or to truncate it).
+ * The buf provided to packet_plain_listener is over allocated, so this just
+ * changes the logical size and never changes the actual address of the buf.
+ * This will fail if a large resize is attempted that exceeds the over
+ * allocation.
  */
 int ossl_quic_fault_resize_plain_packet(OSSL_QUIC_FAULT *fault, size_t newlen);
 
@@ -260,8 +278,12 @@ int ossl_quic_fault_set_handshake_listener(OSSL_QUIC_FAULT *fault,
 
 /*
  * Helper function to be called from a handshake_listener callback if it wants
- * to rezie the handshake message (either to add new data to it, or to truncate
- * it). newlen must include the length of the handshake message header.
+ * to resize the handshake message (either to add new data to it, or to truncate
+ * it). newlen must include the length of the handshake message header. The
+ * handshake message buffer is over allocated, so this just changes the logical
+ * size and never changes the actual address of the buf.
+ * This will fail if a large resize is attempted that exceeds the over
+ * allocation.
  */
 int ossl_quic_fault_resize_handshake(OSSL_QUIC_FAULT *fault, size_t newlen);
 
@@ -287,11 +309,13 @@ int ossl_quic_fault_set_hand_enc_ext_listener(OSSL_QUIC_FAULT *fault,
 
 /* TODO(QUIC): Add listeners for other types of handshake message here */
 
-
 /*
  * Helper function to be called from message specific listener callbacks. newlen
  * is the new length of the specific message excluding the handshake message
- * header.
+ * header.  The buffers provided to the message specific listeners are over
+ * allocated, so this just changes the logical size and never changes the actual
+ * address of the buffer. This will fail if a large resize is attempted that
+ * exceeds the over allocation.
  */
 int ossl_quic_fault_resize_message(OSSL_QUIC_FAULT *fault, size_t newlen);
 
@@ -311,7 +335,42 @@ int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
  * for specific extension types
  */
 
-/* TODO(QUIC): Add a listener for a datagram here */
+/*
+ * Enable tests to listen for post-encryption QUIC packets being sent
+ */
+typedef int (*ossl_quic_fault_on_packet_cipher_cb)(OSSL_QUIC_FAULT *fault,
+                                                   /* The parsed packet header */
+                                                   QUIC_PKT_HDR *hdr,
+                                                   /* The packet payload data */
+                                                   unsigned char *buf,
+                                                   /* Lenght of the payload */
+                                                   size_t len,
+                                                   void *cbarg);
+
+int ossl_quic_fault_set_packet_cipher_listener(OSSL_QUIC_FAULT *fault,
+                                               ossl_quic_fault_on_packet_cipher_cb pciphercb,
+                                               void *picphercbarg);
+
+/*
+ * Enable tests to listen for datagrams being sent
+ */
+typedef int (*ossl_quic_fault_on_datagram_cb)(OSSL_QUIC_FAULT *fault,
+                                              BIO_MSG *m,
+                                              size_t stride,
+                                              void *cbarg);
+
+int ossl_quic_fault_set_datagram_listener(OSSL_QUIC_FAULT *fault,
+                                          ossl_quic_fault_on_datagram_cb datagramcb,
+                                          void *datagramcbarg);
+
+/*
+ * To be called from a datagram_listener callback. The datagram buffer is over
+ * allocated, so this just changes the logical size and never changes the actual
+ * address of the buffer. This will fail if a large resize is attempted that
+ * exceeds the over allocation.
+ */
+int ossl_quic_fault_resize_datagram(OSSL_QUIC_FAULT *fault, size_t newlen);
+
 ````
 
 Example Tests
