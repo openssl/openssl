@@ -370,7 +370,6 @@ static int demux_recv(QUIC_DEMUX *demux)
     size_t rd, i;
     QUIC_URXE *urxe = ossl_list_urxe_head(&demux->urx_free), *unext;
     OSSL_TIME now;
-    unsigned long err;
 
     /* This should never be called when we have any pending URXE. */
     assert(ossl_list_urxe_head(&demux->urx_pending) == NULL);
@@ -415,12 +414,15 @@ static int demux_recv(QUIC_DEMUX *demux)
 
     ERR_set_mark();
     if (!BIO_recvmmsg(demux->net_bio, msg, sizeof(BIO_MSG), i, 0, &rd)) {
-        err = ERR_peek_last_error();
-        ERR_pop_to_mark();
-        if (BIO_err_is_non_fatal(err))
+        if (BIO_err_is_non_fatal(ERR_peek_last_error())) {
+            /* Transient error, clear the error and stop. */
+            ERR_pop_to_mark();
             return QUIC_DEMUX_PUMP_RES_TRANSIENT_FAIL;
-        else
+        } else {
+            /* Non-transient error, do not clear the error. */
+            ERR_clear_last_mark();
             return QUIC_DEMUX_PUMP_RES_PERMANENT_FAIL;
+        }
     }
 
     ERR_clear_last_mark();
