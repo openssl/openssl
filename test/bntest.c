@@ -2245,6 +2245,7 @@ static int test_bin2zero(void)
 
     ret = 1;
  err:
+    BN_free(zbn);
     return ret;
 }
 
