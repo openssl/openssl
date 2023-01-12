@@ -2219,6 +2219,35 @@ static int test_mpi(int i)
     return st;
 }
 
+static int test_bin2zero(void)
+{
+    unsigned char input[] = { '\0' };
+    BIGNUM *zbn = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(zbn = BN_new()))
+        goto err;
+
+#define zerotest(fn)                           \
+    if (!TEST_ptr(fn(input, 1, zbn))    \
+        || !TEST_true(BN_is_zero(zbn))   \
+        || !TEST_ptr(fn(input, 0, zbn)) \
+        || !TEST_true(BN_is_zero(zbn))   \
+        || !TEST_ptr(fn(NULL, 0, zbn))  \
+        || !TEST_true(BN_is_zero(zbn)))  \
+        goto err
+
+    zerotest(BN_bin2bn);
+    zerotest(BN_signed_bin2bn);
+    zerotest(BN_lebin2bn);
+    zerotest(BN_signed_lebin2bn);
+#undef zerotest
+
+    ret = 1;
+ err:
+    return ret;
+}
+
 static int test_rand(void)
 {
     BIGNUM *bn = NULL;
@@ -3213,6 +3242,7 @@ int setup_tests(void)
         ADD_TEST(test_dec2bn);
         ADD_TEST(test_hex2bn);
         ADD_TEST(test_asc2bn);
+        ADD_TEST(test_bin2zero);
         ADD_ALL_TESTS(test_mpi, (int)OSSL_NELEM(kMPITests));
         ADD_ALL_TESTS(test_bn2signed, (int)OSSL_NELEM(kSignedTests_BE));
         ADD_TEST(test_negzero);
