@@ -823,8 +823,7 @@ int ossl_qtx_flush_net(OSSL_QTX *qtx)
         return QTX_FLUSH_NET_RES_OK; /* Nothing to send. */
 
     if (qtx->bio == NULL)
-        /* Treat not having a write BIO as a temporary error. */
-        return QTX_FLUSH_NET_RES_TRANSIENT_FAIL;
+        return QTX_FLUSH_NET_RES_PERMANENT_FAIL;
 
     for (;;) {
         for (txe = ossl_list_txe_head(&qtx->pending), i = 0;
@@ -855,6 +854,7 @@ int ossl_qtx_flush_net(OSSL_QTX *qtx)
                 break;
             } else {
                 /* Non-transient error, fail and do not clear the error. */
+                ERR_clear_last_mark();
                 return QTX_FLUSH_NET_RES_PERMANENT_FAIL;
             }
         }
