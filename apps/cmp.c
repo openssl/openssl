@@ -1956,7 +1956,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         if ((info = OPENSSL_zalloc(sizeof(*info))) == NULL)
             goto err;
         (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, info);
-        info->server = opt_server;
+        info->server = host;
         info->port = server_port;
         /* workaround for callback design flaw, see #17088: */
         info->use_proxy = proxy_host != NULL;
