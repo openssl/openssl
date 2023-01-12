@@ -447,6 +447,15 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
     bn_check_top(ret);
 
     /*
+     * If the input has no bits, the number is considered zero.
+     * This makes calls with s==NULL and len==0 safe.
+     */
+    if (len == 0) {
+        BN_clear(ret);
+        return ret;
+    }
+
+    /*
      * The loop that does the work iterates from least to most
      * significant BIGNUM chunk, so we adapt parameters to transfer
      * input bytes accordingly.
