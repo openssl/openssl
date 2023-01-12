@@ -817,7 +817,6 @@ int ossl_qtx_flush_net(OSSL_QTX *qtx)
     BIO_MSG msg[MAX_MSGS_PER_SEND];
     size_t wr, i, total_written = 0;
     TXE *txe;
-    unsigned long err;
     int res;
 
     if (ossl_list_txe_head(&qtx->pending) == NULL)
@@ -846,18 +845,18 @@ int ossl_qtx_flush_net(OSSL_QTX *qtx)
             ERR_clear_last_mark();
             break;
         } else if (!res) {
-            err = ERR_peek_last_error();
-            ERR_pop_to_mark();
-
             /*
              * We did not get anything, so further calls will probably not
              * succeed either.
              */
-            if (BIO_err_is_non_fatal(err))
-                /* Transient error, just stop for now. */
+            if (BIO_err_is_non_fatal(ERR_peek_last_error())) {
+                /* Transient error, just stop for now, clearing the error. */
+                ERR_pop_to_mark();
                 break;
-            else
+            } else {
+                /* Non-transient error, fail and do not clear the error. */
                 return QTX_FLUSH_NET_RES_PERMANENT_FAIL;
+            }
         }
 
         ERR_clear_last_mark();
