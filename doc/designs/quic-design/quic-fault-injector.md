@@ -343,7 +343,7 @@ typedef int (*ossl_quic_fault_on_packet_cipher_cb)(OSSL_QUIC_FAULT *fault,
                                                    QUIC_PKT_HDR *hdr,
                                                    /* The packet payload data */
                                                    unsigned char *buf,
-                                                   /* Lenght of the payload */
+                                                   /* Length of the payload */
                                                    size_t len,
                                                    void *cbarg);
 
