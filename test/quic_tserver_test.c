@@ -21,6 +21,7 @@ static char msg2[1024], msg3[1024];
 static int is_want(SSL *s, int ret)
 {
     int ec = SSL_get_error(s, ret);
+
     return ec == SSL_ERROR_WANT_READ || ec == SSL_ERROR_WANT_WRITE;
 }
 

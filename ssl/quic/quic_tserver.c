@@ -120,6 +120,7 @@ int ossl_quic_tserver_read(QUIC_TSERVER *srv,
          * the peer).
          */
         OSSL_RTT_INFO rtt_info;
+
         ossl_statm_get_rtt_info(ossl_quic_channel_get_statm(srv->ch), &rtt_info);
 
         if (!ossl_quic_rxfc_on_retire(&srv->stream0->rxfc, *bytes_read,
