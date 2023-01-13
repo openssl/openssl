@@ -2221,7 +2221,7 @@ static int test_mpi(int i)
 
 static int test_bin2zero(void)
 {
-    unsigned char input[] = { '\0' };
+    unsigned char input[] = { 0 };
     BIGNUM *zbn = NULL;
     int ret = 0;
 
