@@ -646,10 +646,10 @@ static int test_bio_dgram_pair(int idx)
     if (!TEST_int_eq(BIO_dgram_get_caps(bio2), ref_caps))
         goto err;
 
-    if (idx == 0 && !TEST_int_eq(BIO_dgram_get_effective_caps(bio1), ref_caps))
+    if (!TEST_int_eq(BIO_dgram_get_effective_caps(bio1), ref_caps))
         goto err;
 
-    if (!TEST_int_eq(BIO_dgram_get_effective_caps(bio2), 0))
+    if (idx == 0 && !TEST_int_eq(BIO_dgram_get_effective_caps(bio2), 0))
         goto err;
 
     if (!TEST_int_eq(BIO_dgram_set_caps(bio1, ref_caps), 1))
