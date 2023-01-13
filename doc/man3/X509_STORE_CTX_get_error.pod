@@ -49,8 +49,10 @@ X509_STORE_CTX_set_error_depth() sets the error I<depth>.
 This can be used in combination with X509_STORE_CTX_set_error() to set the
 depth at which an error condition was detected.
 
-X509_STORE_CTX_get_current_cert() returns the certificate in I<ctx> which
-caused the error or NULL if no certificate is relevant.
+X509_STORE_CTX_get_current_cert() returns the current certificate in
+I<ctx>. If an error occurred, the current certificate will be the one
+that is most closely related to the error, or possibly NULL if no such
+certificate is relevant.
 
 X509_STORE_CTX_set_current_cert() sets the certificate I<x> in I<ctx> which
 caused the error.
