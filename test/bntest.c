@@ -2249,6 +2249,44 @@ static int test_bin2zero(void)
     return ret;
 }
 
+static int test_bin2bn_lengths(void)
+{
+    unsigned char input[] = { 1, 2 };
+    BIGNUM *bn_be = NULL, *bn_expected_be = NULL;
+    BIGNUM *bn_le = NULL, *bn_expected_le = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(bn_be = BN_new())
+        || !TEST_ptr(bn_expected_be = BN_new())
+        || !TEST_true(BN_set_word(bn_expected_be, 0x102))
+        || !TEST_ptr(bn_le = BN_new())
+        || !TEST_ptr(bn_expected_le = BN_new())
+        || !TEST_true(BN_set_word(bn_expected_le, 0x201)))
+        goto err;
+
+#define lengthtest(fn, e)                                       \
+    if (!TEST_ptr_null(fn(input, -1, bn_##e))                   \
+        || !TEST_ptr(fn(input, 0, bn_##e))                      \
+        || !TEST_true(BN_is_zero(bn_##e))                       \
+        || !TEST_ptr(fn(input, 2, bn_##e))                      \
+        || !TEST_int_eq(BN_cmp(bn_##e, bn_expected_##e), 0))    \
+        goto err
+
+    lengthtest(BN_bin2bn, be);
+    lengthtest(BN_signed_bin2bn, be);
+    lengthtest(BN_lebin2bn, le);
+    lengthtest(BN_signed_lebin2bn, le);
+#undef lengthtest
+
+    ret = 1;
+ err:
+    BN_free(bn_be);
+    BN_free(bn_expected_be);
+    BN_free(bn_le);
+    BN_free(bn_expected_le);
+    return ret;
+}
+
 static int test_rand(void)
 {
     BIGNUM *bn = NULL;
@@ -3244,6 +3282,7 @@ int setup_tests(void)
         ADD_TEST(test_hex2bn);
         ADD_TEST(test_asc2bn);
         ADD_TEST(test_bin2zero);
+        ADD_TEST(test_bin2bn_lengths);
         ADD_ALL_TESTS(test_mpi, (int)OSSL_NELEM(kMPITests));
         ADD_ALL_TESTS(test_bn2signed, (int)OSSL_NELEM(kSignedTests_BE));
         ADD_TEST(test_negzero);

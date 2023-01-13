@@ -440,6 +440,10 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
     unsigned int n;
     BIGNUM *bn = NULL;
 
+    /* Negative length is not acceptable */
+    if (len < 0)
+        return NULL;
+
     if (ret == NULL)
         ret = bn = BN_new();
     if (ret == NULL)
