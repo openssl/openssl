@@ -199,8 +199,9 @@ static int dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
     if ((selection & DSA_POSSIBLE_SELECTIONS) == 0)
         return 0;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
-        ok = ok && ossl_dsa_ffc_params_fromdata(dsa, params);
+    /* a key without parameters is meaningless */
+    ok = ok && ossl_dsa_ffc_params_fromdata(dsa, params);
+
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         int include_private =
             selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
