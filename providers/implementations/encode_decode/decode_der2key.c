@@ -374,7 +374,7 @@ static void *dsa_d2i_PKCS8(void **key, const unsigned char **der, long der_len,
                              (key_from_pkcs8_t *)ossl_dsa_key_from_pkcs8);
 }
 
-# define dsa_d2i_PUBKEY                 (d2i_of_void *)d2i_DSA_PUBKEY
+# define dsa_d2i_PUBKEY                 (d2i_of_void *)ossl_d2i_DSA_PUBKEY
 # define dsa_free                       (free_key_fn *)DSA_free
 # define dsa_check                      NULL
 
