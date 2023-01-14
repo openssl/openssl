@@ -59,21 +59,6 @@
                          *((c)++)=(unsigned char)(((l)>>16L)&0xff), \
                          *((c)++)=(unsigned char)(((l)>>24L)&0xff))
 
-/*
- * replacements for htonl and ntohl since I have no idea what to do when
- * faced with machines with 8 byte longs.
- */
-
-# define n2l(c,l)        (l =((DES_LONG)(*((c)++)))<<24L, \
-                         l|=((DES_LONG)(*((c)++)))<<16L, \
-                         l|=((DES_LONG)(*((c)++)))<< 8L, \
-                         l|=((DES_LONG)(*((c)++))))
-
-# define l2n(l,c)        (*((c)++)=(unsigned char)(((l)>>24L)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>16L)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
-                         *((c)++)=(unsigned char)(((l)     )&0xff))
-
 /* NOTE - c is not incremented as per l2c */
 # define l2cn(l1,l2,c,n) { \
                         c+=n; \
