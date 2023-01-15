@@ -194,6 +194,7 @@ static const struct {
     { 0, "a=abc,#@!, n=1" },    /* non-ASCII character located */
     { 1, "a='Hello" },          /* Unterminated string */
     { 0, "a=\"World" },         /* Unterminated string */
+    { 0, "a=_abd_" },           /* Unquoted string not starting with alphabetic */
     { 1, "a=2, n=012345678" },  /* Bad octal digit */
     { 0, "n=0x28FG, a=3" },     /* Bad hex digit */
     { 0, "n=145d, a=2" },       /* Bad decimal digit */
