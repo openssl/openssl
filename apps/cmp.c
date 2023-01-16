@@ -2048,7 +2048,7 @@ static int save_cert_or_delete(X509 *cert, const char *file, const char *desc)
     if (cert == NULL) {
         char desc_cert[80];
 
-        snprintf(desc_cert, sizeof(desc_cert), "%s certificate", desc);
+        BIO_snprintf(desc_cert, sizeof(desc_cert), "%s certificate", desc);
         return delete_file(file, desc_cert);
     } else {
         STACK_OF(X509) *certs = sk_X509_new_null();
