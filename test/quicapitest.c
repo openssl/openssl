@@ -494,6 +494,12 @@ static int test_quic_forbidden_options(void)
         || !TEST_false(SSL_free_buffers(ssl)))
         goto err;
 
+    /* Pipelining */
+    if (!TEST_false(SSL_set_max_send_fragment(ssl, 2))
+        || !TEST_false(SSL_set_split_send_fragment(ssl, 2))
+        || !TEST_false(SSL_set_max_pipelines(ssl, 2)))
+        goto err;
+
     /* HRR */
     if  (!TEST_false(SSL_stateless(ssl)))
         goto err;
