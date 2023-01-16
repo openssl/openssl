@@ -1204,8 +1204,8 @@ static int test_hpke_suite_strs(void)
     for (kemind = 0; kemind != OSSL_NELEM(kem_str_list); kemind++) {
         for (kdfind = 0; kdfind != OSSL_NELEM(kdf_str_list); kdfind++) {
             for (aeadind = 0; aeadind != OSSL_NELEM(aead_str_list); aeadind++) {
-                snprintf(sstr, 128, "%s,%s,%s", kem_str_list[kemind],
-                         kdf_str_list[kdfind], aead_str_list[aeadind]);
+                BIO_snprintf(sstr, 128, "%s,%s,%s", kem_str_list[kemind],
+                             kdf_str_list[kdfind], aead_str_list[aeadind]);
                 if (TEST_true(OSSL_HPKE_str2suite(sstr, &stirred)) != 1) {
                     if (verbose)
                         TEST_note("Unexpected str2suite fail for :%s",
