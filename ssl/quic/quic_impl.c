@@ -2116,6 +2116,7 @@ int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *bytes_read)
  * SSL_pending
  * -----------
  */
+
 QUIC_TAKES_LOCK
 static size_t ossl_quic_pending_int(const SSL *s)
 {
@@ -2145,7 +2146,8 @@ size_t ossl_quic_pending(const SSL *s)
 
 int ossl_quic_has_pending(const SSL *s)
 {
-    return ossl_quic_pending_int(s) > 0;
+    /* Do we have app-side pending data or pending URXEs or RXEs? */
+    return ossl_quic_pending_int(s) > 0 || ossl_quic_channel_has_pending(qc->ch);
 }
 
 /*

@@ -486,6 +486,12 @@ CRYPTO_MUTEX *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch)
     return ch->mutex;
 }
 
+int ossl_quic_channel_has_pending(const QUIC_CHANNEL *ch)
+{
+    return ossl_quic_demux_has_pending(ch->demux)
+        || ossl_qrx_processed_read_pending(ch->qrx);
+}
+
 /*
  * QUIC Channel: Callbacks from Miscellaneous Subsidiary Components
  * ================================================================

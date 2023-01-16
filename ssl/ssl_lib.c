@@ -1872,6 +1872,10 @@ int SSL_pending(const SSL *s)
 
 int SSL_has_pending(const SSL *s)
 {
+#ifndef OPENSSL_NO_QUIC
+    const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+#endif
+
     /*
      * Similar to SSL_pending() but returns a 1 to indicate that we have
      * processed or unprocessed data available or 0 otherwise (as opposed to the
@@ -1888,6 +1892,11 @@ int SSL_has_pending(const SSL *s)
 #endif
 
     sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+
+#ifndef OPENSSL_NO_QUIC
+    if (qc != NULL)
+        return ossl_quic_has_pending(qc);
+#endif
 
     /* Check buffered app data if any first */
     if (SSL_CONNECTION_IS_DTLS(sc)) {

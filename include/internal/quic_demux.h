@@ -333,6 +333,11 @@ int ossl_quic_demux_inject(QUIC_DEMUX *demux,
                            const BIO_ADDR *peer,
                            const BIO_ADDR *local);
 
+/*
+ * Returns 1 if there are any pending URXEs.
+ */
+int ossl_quic_demux_has_pending(const QUIC_DEMUX *demux);
+
 # endif
 
 #endif
