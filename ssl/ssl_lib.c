@@ -672,6 +672,11 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 {
     STACK_OF(SSL_CIPHER) *sk;
 
+    if (IS_QUIC_CTX(ctx)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_WRONG_SSL_VERSION);
+        return 0;
+    }
+
     ctx->method = meth;
 
     if (!SSL_CTX_set_ciphersuites(ctx, OSSL_default_ciphersuites())) {
@@ -1990,7 +1995,7 @@ STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s)
 int SSL_copy_session_id(SSL *t, const SSL *f)
 {
     int i;
-    /* TODO(QUIC): Do we want to support this for QUIC connections? */
+    /* TODO(QUIC): Not allowed for QUIC currently. */
     SSL_CONNECTION *tsc = SSL_CONNECTION_FROM_SSL_ONLY(t);
     const SSL_CONNECTION *fsc = SSL_CONNECTION_FROM_CONST_SSL_ONLY(f);
 
@@ -4527,9 +4532,10 @@ int SSL_set_ssl_method(SSL *s, const SSL_METHOD *meth)
     int ret = 1;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    /* TODO(QUIC): Do we want this for QUIC? */
+    /* Not allowed for QUIC */
     if (sc == NULL
-        || (s->type != SSL_TYPE_SSL_CONNECTION && s->method != meth))
+        || (s->type != SSL_TYPE_SSL_CONNECTION && s->method != meth)
+        || (s->type == SSL_TYPE_SSL_CONNECTION && IS_QUIC_METHOD(meth)))
         return 0;
 
     if (s->method != meth) {

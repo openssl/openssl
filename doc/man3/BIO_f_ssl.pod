@@ -131,6 +131,8 @@ BIO_set_ssl(), BIO_get_ssl(), BIO_set_ssl_mode(),
 BIO_set_ssl_renegotiate_bytes(), BIO_set_ssl_renegotiate_timeout(),
 BIO_get_num_renegotiates(), and BIO_do_handshake() are implemented as macros.
 
+BIO_ssl_copy_session_id() is not currently supported on QUIC SSL objects.
+
 =head1 RETURN VALUES
 
 BIO_f_ssl() returns the SSL B<BIO_METHOD> structure.
