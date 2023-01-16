@@ -215,6 +215,8 @@ Only one certificate request may be outstanding at any time.
 When post-handshake authentication occurs, a refreshed NewSessionTicket
 message is sent to the client.
 
+Post-handshake authentication cannot be used with QUIC.
+
 =head1 BUGS
 
 In client mode, it is not checked whether the SSL_VERIFY_PEER flag
