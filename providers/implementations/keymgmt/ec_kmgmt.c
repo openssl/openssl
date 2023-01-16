@@ -1004,10 +1004,10 @@ static void *ec_gen_init(void *provctx, int selection,
         gctx->libctx = libctx;
         gctx->selection = selection;
         gctx->ecdh_mode = 0;
-    }
-    if (!ec_gen_set_params(gctx, params)) {
-        OPENSSL_free(gctx);
-        gctx = NULL;
+        if (!ec_gen_set_params(gctx, params)) {
+            OPENSSL_free(gctx);
+            gctx = NULL;
+        }
     }
     return gctx;
 }
