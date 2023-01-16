@@ -490,8 +490,12 @@ static int test_quic_forbidden_options(void)
         goto err;
 
     /* Buffer Management */
-    if (!TEST_true(SSL_allocate_buffers(ssl))
+    if (!TEST_true(SSL_alloc_buffers(ssl))
         || !TEST_false(SSL_free_buffers(ssl)))
+        goto err;
+
+    /* HRR */
+    if  (!TEST_false(SSL_stateless(ssl)))
         goto err;
 
     testresult = 1;

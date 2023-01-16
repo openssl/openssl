@@ -6969,8 +6969,7 @@ int SSL_stateless(SSL *s)
     int ret;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    /* TODO(QUIC): This will need further work. */
-    if (sc == NULL)
+    if (sc == NULL || IS_QUIC_SSL(s))
         return 0;
 
     /* Ensure there is no state left over from a previous invocation */
