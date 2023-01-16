@@ -11,11 +11,11 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file data_file/;
 
 setup("test_pkcs7");
 
-plan tests => 3;
+plan tests => 4;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -27,3 +27,6 @@ subtest 'pkcs7 conversions -- pkcs7d' => sub {
     tconversion( -type => 'p7d', -in => srctop_file("test", "pkcs7-1.pem"),
                  -args => ["pkcs7"] );
 };
+
+my $malformed = data_file('malformed.pkcs7');
+ok(run(app(["openssl", "pkcs7", "-in", $malformed])));
