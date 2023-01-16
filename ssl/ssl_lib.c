@@ -822,7 +822,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     if (s->param == NULL)
         goto asn1err;
     X509_VERIFY_PARAM_inherit(s->param, ctx->param);
-    s->quiet_shutdown = ctx->quiet_shutdown;
+    s->quiet_shutdown = IS_QUIC_CTX(ctx) ? 0 : ctx->quiet_shutdown;
 
     if (!IS_QUIC_CTX(ctx))
         s->ext.max_fragment_len_mode = ctx->ext.max_fragment_len_mode;
@@ -5120,7 +5120,7 @@ void SSL_set_quiet_shutdown(SSL *s, int mode)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
-    /* TODO(QUIC): Do we want this for QUIC? */
+    /* TODO(QUIC): Currently not supported for QUIC. */
     if (sc == NULL)
         return;
 
@@ -5131,7 +5131,7 @@ int SSL_get_quiet_shutdown(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL_ONLY(s);
 
-    /* TODO(QUIC): Do we want this for QUIC? */
+    /* TODO(QUIC): Currently not supported for QUIC. */
     if (sc == NULL)
         return 0;
 
