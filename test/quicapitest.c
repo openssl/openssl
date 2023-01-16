@@ -451,6 +451,22 @@ static int test_quic_forbidden_options(void)
     if (!TEST_uint64_t_eq(SSL_get_options(ssl), 0))
         goto err;
 
+    /* Readahead */
+    SSL_set_read_ahead(ssl, 1);
+    if (!TEST_false(SSL_get_read_ahead(ssl)))
+        goto err;
+
+    /* Block padding */
+    if (!TEST_true(SSL_set_block_padding(ssl, 0))
+        || !TEST_true(SSL_set_block_padding(ssl, 1))
+        || !TEST_false(SSL_set_block_padding(ssl, 2)))
+        goto err;
+
+    /* Max fragment length */
+    if (!TEST_true(SSL_set_tlsext_max_fragment_length(ssl, TLSEXT_max_fragment_length_DISABLED))
+        || !TEST_false(SSL_set_tlsext_max_fragment_length(ssl, TLSEXT_max_fragment_length_512)))
+        goto err;
+
     testresult = 1;
 err:
     SSL_free(ssl);

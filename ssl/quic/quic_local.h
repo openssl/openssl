@@ -217,7 +217,15 @@ int ossl_quic_trace(int write_p, int version, int content_type,
                     const void *buf, size_t msglen, SSL *ssl, void *arg);
 
 #  define OSSL_QUIC_ANY_VERSION     0x5155
-#  define IS_QUIC_METHOD(m)         ((m)->version == OSSL_QUIC_ANY_VERSION)
+#  ifndef OPENSSL_NO_QUIC
+#   define IS_QUIC_METHOD(m)        ((m)->version == OSSL_QUIC_ANY_VERSION)
+#   define IS_QUIC_SSL(s)           ((s) != NULL && \
+                                     ((s)->type == SSL_TYPE_QUIC_CONNECTION || \
+                                      (s)->type == SSL_TYPE_QUIC_STREAM))
+#  else
+#   define IS_QUIC_METHOD(m)        0
+#   define IS_QUIC_SSL(s)           0
+#  endif
 #  define IS_QUIC_CTX(ctx)          IS_QUIC_METHOD((ctx)->method)
 
 #  define QUIC_CONNECTION_FROM_SSL_int(ssl, c)   \

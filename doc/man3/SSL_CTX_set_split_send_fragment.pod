@@ -123,6 +123,8 @@ It affects the client-side as only its side may initiate this extension use.
 SSL_SESSION_get_max_fragment_length() gets the maximum fragment length
 negotiated in B<session>.
 
+These functions cannot be used with QUIC SSL objects.
+
 =head1 RETURN VALUES
 
 All non-void functions return 1 on success and 0 on failure.
