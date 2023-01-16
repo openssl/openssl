@@ -514,6 +514,10 @@ static int test_quic_forbidden_options(void)
     if (!TEST_false(SSL_get_quiet_shutdown(ssl)))
         goto err;
 
+    /* No duplication */
+    if (!TEST_ptr_null(SSL_dup(ssl)))
+        goto err;
+
     testresult = 1;
 err:
     SSL_free(ssl);
