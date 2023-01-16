@@ -1662,7 +1662,7 @@ int SSL_set_fd(SSL *s, int fd)
     int ret = 0;
     BIO *bio = NULL;
 
-    bio = BIO_new(BIO_s_socket());
+    bio = BIO_new(IS_QUIC_SSL(s) ? BIO_s_datagram() : BIO_s_socket());
 
     if (bio == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
@@ -1687,10 +1687,11 @@ int SSL_set_fd(SSL *s, int fd)
 int SSL_set_wfd(SSL *s, int fd)
 {
     BIO *rbio = SSL_get_rbio(s);
+    int desired_type = IS_QUIC_SSL(s) ? BIO_TYPE_DGRAM : BIO_TYPE_SOCKET;
 
-    if (rbio == NULL || BIO_method_type(rbio) != BIO_TYPE_SOCKET
+    if (rbio == NULL || BIO_method_type(rbio) != desired_type
         || (int)BIO_get_fd(rbio, NULL) != fd) {
-        BIO *bio = BIO_new(BIO_s_socket());
+        BIO *bio = BIO_new(IS_QUIC_SSL(s) ? BIO_s_datagram() : BIO_s_socket());
 
         if (bio == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
@@ -1717,10 +1718,11 @@ int SSL_set_wfd(SSL *s, int fd)
 int SSL_set_rfd(SSL *s, int fd)
 {
     BIO *wbio = SSL_get_wbio(s);
+    int desired_type = IS_QUIC_SSL(s) ? BIO_TYPE_DGRAM : BIO_TYPE_SOCKET;
 
-    if (wbio == NULL || BIO_method_type(wbio) != BIO_TYPE_SOCKET
+    if (wbio == NULL || BIO_method_type(wbio) != desired_type
         || ((int)BIO_get_fd(wbio, NULL) != fd)) {
-        BIO *bio = BIO_new(BIO_s_socket());
+        BIO *bio = BIO_new(IS_QUIC_SSL(s) ? BIO_s_datagram() : BIO_s_socket());
 
         if (bio == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
