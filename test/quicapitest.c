@@ -505,6 +505,62 @@ err:
     return testresult;
 }
 
+static int test_quic_set_fd(int idx)
+{
+    int testresult = 0;
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    int fd = -1, resfd = -1;
+    BIO *bio = NULL;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method())))
+        goto err;
+
+    if (!TEST_ptr(ssl = SSL_new(ctx)))
+        goto err;
+
+    if (!TEST_int_ge(fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0), 0))
+        goto err;
+
+    if (idx == 0) {
+        if (!TEST_true(SSL_set_fd(ssl, fd)))
+            goto err;
+        if (!TEST_ptr(bio = SSL_get_rbio(ssl)))
+            goto err;
+        if (!TEST_ptr_eq(bio, SSL_get_wbio(ssl)))
+            goto err;
+    } else if (idx == 1) {
+        if (!TEST_true(SSL_set_rfd(ssl, fd)))
+            goto err;
+        if (!TEST_ptr(bio = SSL_get_rbio(ssl)))
+            goto err;
+        if (!TEST_ptr_null(SSL_get_wbio(ssl)))
+            goto err;
+    } else {
+        if (!TEST_true(SSL_set_wfd(ssl, fd)))
+            goto err;
+        if (!TEST_ptr(bio = SSL_get_wbio(ssl)))
+            goto err;
+        if (!TEST_ptr_null(SSL_get_rbio(ssl)))
+            goto err;
+    }
+
+    if (!TEST_int_eq(BIO_method_type(bio), BIO_TYPE_DGRAM))
+        goto err;
+
+    if (!TEST_true(BIO_get_fd(bio, &resfd))
+        || !TEST_int_eq(resfd, fd))
+        goto err;
+
+    testresult = 1;
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    if (fd >= 0)
+        BIO_closesocket(fd);
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
 int setup_tests(void)
@@ -569,6 +625,7 @@ int setup_tests(void)
     ADD_TEST(test_quic_forbidden_apis_ctx);
     ADD_TEST(test_quic_forbidden_apis);
     ADD_TEST(test_quic_forbidden_options);
+    ADD_ALL_TESTS(test_quic_set_fd, 3);
     return 1;
  err:
     cleanup_tests();
