@@ -2930,7 +2930,7 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         sc->max_cert_list = (size_t)larg;
         return l;
     case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
-        if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
+        if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH || IS_QUIC_SSL(s))
             return 0;
 #ifndef OPENSSL_NO_KTLS
         if (sc->wbio != NULL && BIO_get_ktls_send(sc->wbio))
@@ -2942,12 +2942,12 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         sc->rlayer.wrlmethod->set_max_frag_len(sc->rlayer.wrl, larg);
         return 1;
     case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT:
-        if ((size_t)larg > sc->max_send_fragment || larg == 0)
+        if ((size_t)larg > sc->max_send_fragment || larg == 0 || IS_QUIC_SSL(s))
             return 0;
         sc->split_send_fragment = larg;
         return 1;
     case SSL_CTRL_SET_MAX_PIPELINES:
-        if (larg < 1 || larg > SSL_MAX_PIPELINES)
+        if (larg < 1 || larg > SSL_MAX_PIPELINES || IS_QUIC_SSL(s))
             return 0;
         sc->max_pipelines = larg;
         if (sc->rlayer.rrlmethod->set_max_pipelines != NULL)
