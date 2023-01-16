@@ -90,6 +90,7 @@ X509_VERIFY_PARAM_clear_flags() clears the flags B<flags> in B<param>.
 X509_VERIFY_PARAM_set_purpose() sets the verification purpose in B<param>
 to B<purpose>. This determines the acceptable purpose of the certificate
 chain, for example B<X509_PURPOSE_SSL_CLIENT>.
+The purpose requirement is cleared if B<purpose> is 0.
 
 X509_VERIFY_PARAM_set_trust() sets the trust setting in B<param> to
 B<trust>.
