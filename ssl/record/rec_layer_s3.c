@@ -162,7 +162,7 @@ void SSL_set_default_read_buffer_len(SSL *s, size_t len)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL)
+    if (sc == NULL || IS_QUIC_SSL(s))
         return;
     sc->rlayer.default_read_buf_len = len;
 }

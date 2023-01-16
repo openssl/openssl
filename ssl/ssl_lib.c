@@ -787,9 +787,11 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     s->msg_callback_arg = ctx->msg_callback_arg;
     s->verify_mode = ctx->verify_mode;
     s->not_resumable_session_cb = ctx->not_resumable_session_cb;
-    s->rlayer.record_padding_cb = ctx->record_padding_cb;
-    s->rlayer.record_padding_arg = ctx->record_padding_arg;
-    s->rlayer.block_padding = ctx->block_padding;
+    if (!IS_QUIC_CTX(ctx)) {
+        s->rlayer.record_padding_cb = ctx->record_padding_cb;
+        s->rlayer.record_padding_arg = ctx->record_padding_arg;
+        s->rlayer.block_padding = ctx->block_padding;
+    }
     s->sid_ctx_length = ctx->sid_ctx_length;
     if (!ossl_assert(s->sid_ctx_length <= sizeof(s->sid_ctx)))
         goto err;
@@ -803,7 +805,9 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     X509_VERIFY_PARAM_inherit(s->param, ctx->param);
     s->quiet_shutdown = ctx->quiet_shutdown;
 
-    s->ext.max_fragment_len_mode = ctx->ext.max_fragment_len_mode;
+    if (!IS_QUIC_SSL(ssl))
+        s->ext.max_fragment_len_mode = ctx->ext.max_fragment_len_mode;
+
     s->max_send_fragment = ctx->max_send_fragment;
     s->split_send_fragment = ctx->split_send_fragment;
     s->max_pipelines = ctx->max_pipelines;
@@ -1830,7 +1834,7 @@ void SSL_set_read_ahead(SSL *s, int yes)
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
     OSSL_PARAM options[2], *opts = options;
 
-    if (sc == NULL)
+    if (sc == NULL || IS_QUIC_SSL(s))
         return;
 
     RECORD_LAYER_set_read_ahead(&sc->rlayer, yes);
@@ -1847,7 +1851,7 @@ int SSL_get_read_ahead(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
-    if (sc == NULL)
+    if (sc == NULL || IS_QUIC_SSL(s))
         return 0;
 
     return RECORD_LAYER_get_read_ahead(&sc->rlayer);
@@ -2884,8 +2888,12 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     switch (cmd) {
     case SSL_CTRL_GET_READ_AHEAD:
+        if (IS_QUIC_SSL(s))
+            return 0;
         return RECORD_LAYER_get_read_ahead(&sc->rlayer);
     case SSL_CTRL_SET_READ_AHEAD:
+        if (IS_QUIC_SSL(s))
+            return 0;
         l = RECORD_LAYER_get_read_ahead(&sc->rlayer);
         RECORD_LAYER_set_read_ahead(&sc->rlayer, larg);
         return l;
@@ -5641,7 +5649,7 @@ int SSL_set_record_padding_callback(SSL *ssl,
     BIO *b;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
-    if (sc == NULL)
+    if (sc == NULL || IS_QUIC_SSL(ssl))
         return 0;
 
     b = SSL_get_wbio(ssl);
@@ -5676,7 +5684,7 @@ int SSL_set_block_padding(SSL *ssl, size_t block_size)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
-    if (sc == NULL)
+    if (sc == NULL || (IS_QUIC_SSL(ssl) && block_size > 1))
         return 0;
 
     /* block size of 0 or 1 is basically no padding */

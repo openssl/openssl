@@ -3865,7 +3865,8 @@ int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
-    if (sc == NULL)
+    if (sc == NULL
+        || (IS_QUIC_SSL(ssl) && mode != TLSEXT_max_fragment_length_DISABLED))
         return 0;
 
     if (mode != TLSEXT_max_fragment_length_DISABLED
