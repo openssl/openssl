@@ -425,7 +425,8 @@ static int dane_tlsa_add(SSL_DANE *dane,
  * Return 0 if there is only one version configured and it was disabled
  * at configure time.  Return 1 otherwise.
  */
-static int ssl_check_allowed_versions(int min_version, int max_version)
+static int ssl_check_allowed_versions(int min_version, int max_version,
+                                      int is_quic)
 {
     int minisdtls = 0, maxisdtls = 0;
 
@@ -473,7 +474,7 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
     } else {
         /* Regular TLS version checks. */
         if (min_version == 0)
-            min_version = SSL3_VERSION;
+            min_version = is_quic ? TLS1_3_VERSION : SSL3_VERSION;
         if (max_version == 0)
             max_version = TLS1_3_VERSION;
 #ifdef OPENSSL_NO_TLS1_3
@@ -757,6 +758,15 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
         s->min_proto_version = ctx->min_proto_version;
         s->max_proto_version = ctx->max_proto_version;
     }
+
+    s->min_proto_version = ctx->min_proto_version;
+    if (IS_QUIC_CTX(ctx) && s->min_proto_version < TLS1_3_VERSION)
+        s->min_proto_version = TLS1_3_VERSION;
+
+    s->max_proto_version = ctx->max_proto_version;
+    if (IS_QUIC_CTX(ctx) && s->max_proto_version < TLS1_3_VERSION)
+        s->max_proto_version = 0;
+
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
 
@@ -2980,13 +2990,17 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         else
             return 0;
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
-        return ssl_check_allowed_versions(larg, sc->max_proto_version)
+        return ssl_check_allowed_versions(larg, sc->max_proto_version,
+                                          IS_QUIC_SSL(s))
                && ssl_set_version_bound(s->defltmeth->version, (int)larg,
                                         &sc->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
         return sc->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
-        return ssl_check_allowed_versions(sc->min_proto_version, larg)
+        if (IS_QUIC_SSL(s) && larg < TLS1_3_VERSION)
+            return 0;
+        return ssl_check_allowed_versions(sc->min_proto_version, larg,
+                                          IS_QUIC_SSL(s))
                && ssl_set_version_bound(s->defltmeth->version, (int)larg,
                                         &sc->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:
@@ -3119,13 +3133,13 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_CLEAR_CERT_FLAGS:
         return (ctx->cert->cert_flags &= ~larg);
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
-        return ssl_check_allowed_versions(larg, ctx->max_proto_version)
+        return ssl_check_allowed_versions(larg, ctx->max_proto_version, 0)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
         return ctx->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
-        return ssl_check_allowed_versions(ctx->min_proto_version, larg)
+        return ssl_check_allowed_versions(ctx->min_proto_version, larg, 0)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:
