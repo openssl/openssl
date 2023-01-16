@@ -38,7 +38,6 @@ __owur int ossl_quic_key_update(SSL *s, int update_type);
 __owur int ossl_quic_get_key_update_type(const SSL *s);
 __owur int ossl_quic_num_ciphers(void);
 __owur const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u);
-__owur int ossl_quic_set_ssl_op(SSL *ssl, uint64_t op);
 int ossl_quic_renegotiate_check(SSL *ssl, int initok);
 
 typedef struct quic_conn_st QUIC_CONNECTION;
@@ -95,6 +94,10 @@ __owur int ossl_quic_get_stream_write_error_code(SSL *ssl,
 __owur int ossl_quic_get_conn_close_info(SSL *ssl,
                                          SSL_CONN_CLOSE_INFO *info,
                                          size_t info_len);
+
+uint64_t ossl_quic_set_options(SSL *s, uint64_t opts);
+uint64_t ossl_quic_clear_options(SSL *s, uint64_t opts);
+uint64_t ossl_quic_get_options(const SSL *s);
 
 /*
  * Used to override ossl_time_now() for debug purposes. While this may be

@@ -2999,4 +2999,63 @@ void ossl_ssl_set_custom_record_layer(SSL_CONNECTION *s,
                                       const OSSL_RECORD_METHOD *meth,
                                       void *rlarg);
 
+/*
+ * Options which no longer have any effect, but which can be implemented
+ * as no-ops for QUIC.
+ */
+#define OSSL_LEGACY_SSL_OPTIONS                 \
+    (SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG  | \
+     SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER        | \
+     SSL_OP_SSLEAY_080_CLIENT_DH_BUG          | \
+     SSL_OP_TLS_D5_BUG                        | \
+     SSL_OP_TLS_BLOCK_PADDING_BUG             | \
+     SSL_OP_MSIE_SSLV2_RSA_PADDING            | \
+     SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG       | \
+     SSL_OP_MICROSOFT_SESS_ID_BUG             | \
+     SSL_OP_NETSCAPE_CHALLENGE_BUG            | \
+     SSL_OP_PKCS1_CHECK_1                     | \
+     SSL_OP_PKCS1_CHECK_2                     | \
+     SSL_OP_SINGLE_DH_USE                     | \
+     SSL_OP_SINGLE_ECDH_USE                   | \
+     SSL_OP_EPHEMERAL_RSA                     )
+
+/*
+ * Options which are no-ops under QUIC or TLSv1.3 and which are therefore
+ * allowed but ignored under QUIC.
+ */
+#define OSSL_TLS1_2_OPTIONS                     \
+    (SSL_OP_CRYPTOPRO_TLSEXT_BUG              | \
+     SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS       | \
+     SSL_OP_ALLOW_CLIENT_RENEGOTIATION        | \
+     SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION | \
+     SSL_OP_NO_COMPRESSION                    | \
+     SSL_OP_NO_SSLv3                          | \
+     SSL_OP_NO_TLSv1                          | \
+     SSL_OP_NO_TLSv1_1                        | \
+     SSL_OP_NO_TLSv1_2                        | \
+     SSL_OP_NO_DTLSv1                         | \
+     SSL_OP_NO_DTLSv1_2                       | \
+     SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION | \
+     SSL_OP_CISCO_ANYCONNECT                  | \
+     SSL_OP_NO_RENEGOTIATION                  | \
+     SSL_OP_NO_EXTENDED_MASTER_SECRET         | \
+     SSL_OP_NO_ENCRYPT_THEN_MAC               | \
+     SSL_OP_COOKIE_EXCHANGE                   | \
+     SSL_OP_LEGACY_SERVER_CONNECT             | \
+     SSL_OP_IGNORE_UNEXPECTED_EOF             )
+
+/* Total mask of options permitted or ignored under QUIC. */
+#define OSSL_QUIC_PERMITTED_OPTIONS             \
+    (OSSL_LEGACY_SSL_OPTIONS                  | \
+     OSSL_TLS1_2_OPTIONS                      | \
+     SSL_OP_CIPHER_SERVER_PREFERENCE          | \
+     SSL_OP_DISABLE_TLSEXT_CA_NAMES           | \
+     SSL_OP_NO_TX_CERTIFICATE_COMPRESSION     | \
+     SSL_OP_NO_RX_CERTIFICATE_COMPRESSION     | \
+     SSL_OP_PRIORITIZE_CHACHA                 | \
+     SSL_OP_CLEANSE_PLAINTEXT                 | \
+     SSL_OP_NO_QUERY_MTU                      | \
+     SSL_OP_NO_TICKET                         | \
+     SSL_OP_NO_ANTI_REPLAY                    )
+
 #endif
