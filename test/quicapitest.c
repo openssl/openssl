@@ -438,6 +438,7 @@ static int test_quic_forbidden_options(void)
     SSL_CTX_set_read_ahead(ctx, 1);
     SSL_CTX_set_max_early_data(ctx, 1);
     SSL_CTX_set_recv_max_early_data(ctx, 1);
+    SSL_CTX_set_quiet_shutdown(ctx, 1);
 
     if (!TEST_ptr(ssl = SSL_new(ctx)))
         goto err;
@@ -507,6 +508,10 @@ static int test_quic_forbidden_options(void)
 
     /* HRR */
     if  (!TEST_false(SSL_stateless(ssl)))
+        goto err;
+
+    /* Quiet Shutdown */
+    if (!TEST_false(SSL_get_quiet_shutdown(ssl)))
         goto err;
 
     testresult = 1;
