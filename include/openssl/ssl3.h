@@ -307,6 +307,9 @@ extern "C" {
 /* Set if extended master secret extension required on renegotiation */
 # define TLS1_FLAGS_REQUIRED_EXTMS               0x1000
 
+/* Set if this is the QUIC handshake layer */
+# define TLS1_FLAGS_QUIC                         0x2000
+
 # define SSL3_MT_HELLO_REQUEST                   0
 # define SSL3_MT_CLIENT_HELLO                    1
 # define SSL3_MT_SERVER_HELLO                    2
