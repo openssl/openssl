@@ -1922,8 +1922,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         info->ssl_ctx = setup_ssl_ctx(ctx, host, engine);
         info->server = host;
         host = NULL; /* prevent deallocation */
-        if (server_port != NULL
-                && (info->port = OPENSSL_strdup(server_port)) == NULL)
+        if ((info->port = OPENSSL_strdup(server_port)) == NULL)
             goto err;
         /* workaround for callback design flaw, see #17088: */
         info->use_proxy = proxy_host != NULL;
