@@ -2064,6 +2064,18 @@ int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
         return 1;
     if (s->s3.tmp.max_ver == 0)
         return 1;
+
+    if (SSL_IS_QUIC_HANDSHAKE(s))
+        /* For QUIC, only allow these ciphersuites. */
+        switch (SSL_CIPHER_get_id(c)) {
+        case TLS1_3_CK_AES_128_GCM_SHA256:
+        case TLS1_3_CK_AES_256_GCM_SHA384:
+        case TLS1_3_CK_CHACHA20_POLY1305_SHA256:
+            break;
+        default:
+            return 1;
+        }
+
     if (!SSL_CONNECTION_IS_DTLS(s)) {
         int min_tls = c->min_tls;
 
