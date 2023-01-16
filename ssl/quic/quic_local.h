@@ -218,6 +218,7 @@ int ossl_quic_trace(int write_p, int version, int content_type,
 
 #  define OSSL_QUIC_ANY_VERSION     0x5155
 #  define IS_QUIC_METHOD(m)         ((m)->version == OSSL_QUIC_ANY_VERSION)
+#  define IS_QUIC_CTX(ctx)          IS_QUIC_METHOD((ctx)->method)
 
 #  define QUIC_CONNECTION_FROM_SSL_int(ssl, c)   \
      ((ssl) == NULL ? NULL                       \

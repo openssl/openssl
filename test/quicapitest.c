@@ -313,20 +313,81 @@ static int test_ssl_trace(void)
 }
 #endif
 
+static int ensure_valid_ciphers(const STACK_OF(SSL_CIPHER) *ciphers)
+{
+    size_t i;
+
+    /* Ensure ciphersuite list is suitably subsetted. */
+    for (i = 0; i < (size_t)sk_SSL_CIPHER_num(ciphers); ++i) {
+        const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(ciphers, i);
+        switch (SSL_CIPHER_get_id(cipher)) {
+            case TLS1_3_CK_AES_128_GCM_SHA256:
+            case TLS1_3_CK_AES_256_GCM_SHA384:
+            case TLS1_3_CK_CHACHA20_POLY1305_SHA256:
+                break;
+            default:
+                TEST_error("forbidden cipher: %s", SSL_CIPHER_get_name(cipher));
+                return 0;
+        }
+    }
+
+    return 1;
+}
+
 /*
  * Test that handshake-layer APIs which shouldn't work don't work with QUIC.
  */
-static int test_quic_forbidden_apis(void)
+static int test_quic_forbidden_apis_ctx(void)
 {
     int testresult = 0;
     SSL_CTX *ctx = NULL;
-    SSL *ssl = NULL;
 
     if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method())))
         goto err;
 
     /* This function returns 0 on success and 1 on error, and should fail. */
     if (!TEST_true(SSL_CTX_set_tlsext_use_srtp(ctx, "SRTP_AEAD_AES_128_GCM")))
+        goto err;
+
+    /*
+     * List of ciphersuites we do and don't allow in QUIC.
+     */
+#define QUIC_CIPHERSUITES \
+    "TLS_AES_128_GCM_SHA256:"           \
+    "TLS_AES_256_GCM_SHA384:"           \
+    "TLS_CHACHA20_POLY1305_SHA256"
+
+#define NON_QUIC_CIPHERSUITES           \
+    "TLS_AES_128_CCM_SHA256:"           \
+    "TLS_AES_256_CCM_SHA384:"           \
+    "TLS_AES_128_CCM_8_SHA256"
+
+    /* Set TLSv1.3 ciphersuite list for the SSL_CTX. */
+    if (!TEST_true(SSL_CTX_set_ciphersuites(ctx,
+                                            QUIC_CIPHERSUITES ":"
+                                            NON_QUIC_CIPHERSUITES)))
+        goto err;
+
+    /*
+     * Forbidden ciphersuites should show up in SSL_CTX accessors, they are only
+     * filtered in SSL_get1_supported_ciphers, so we don't check for
+     * non-inclusion here.
+     */
+
+    testresult = 1;
+err:
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
+static int test_quic_forbidden_apis(void)
+{
+    int testresult = 0;
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    STACK_OF(SSL_CIPHER) *ciphers = NULL;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method())))
         goto err;
 
     if (!TEST_ptr(ssl = SSL_new(ctx)))
@@ -336,8 +397,20 @@ static int test_quic_forbidden_apis(void)
     if (!TEST_true(SSL_set_tlsext_use_srtp(ssl, "SRTP_AEAD_AES_128_GCM")))
         goto err;
 
+    /* Set TLSv1.3 ciphersuite list for the SSL_CTX. */
+    if (!TEST_true(SSL_set_ciphersuites(ssl,
+                                        QUIC_CIPHERSUITES ":"
+                                        NON_QUIC_CIPHERSUITES)))
+        goto err;
+
+    /* Non-QUIC ciphersuites must not appear in supported ciphers list. */
+    if (!TEST_ptr(ciphers = SSL_get1_supported_ciphers(ssl))
+        || !TEST_true(ensure_valid_ciphers(ciphers)))
+        goto err;
+
     testresult = 1;
 err:
+    sk_SSL_CIPHER_free(ciphers);
     SSL_free(ssl);
     SSL_CTX_free(ctx);
     return testresult;
@@ -404,6 +477,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_SSL_TRACE) && !defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_ZLIB)
     ADD_TEST(test_ssl_trace);
 #endif
+    ADD_TEST(test_quic_forbidden_apis_ctx);
     ADD_TEST(test_quic_forbidden_apis);
     return 1;
  err:
