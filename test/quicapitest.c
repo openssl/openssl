@@ -489,6 +489,11 @@ static int test_quic_forbidden_options(void)
         || !TEST_false(SSL_write_early_data(ssl, buf, sizeof(buf), &len)))
         goto err;
 
+    /* Buffer Management */
+    if (!TEST_true(SSL_allocate_buffers(ssl))
+        || !TEST_false(SSL_free_buffers(ssl)))
+        goto err;
+
     testresult = 1;
 err:
     SSL_free(ssl);

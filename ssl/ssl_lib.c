@@ -6583,6 +6583,10 @@ int SSL_free_buffers(SSL *ssl)
     if (sc == NULL)
         return 0;
 
+    /* QUIC buffers are always 'in use'. */
+    if (IS_QUIC_SSL(ssl))
+        return 0;
+
     rl = &sc->rlayer;
 
     return rl->rrlmethod->free_buffers(rl->rrl)
@@ -6596,6 +6600,10 @@ int SSL_alloc_buffers(SSL *ssl)
 
     if (sc == NULL)
         return 0;
+
+    /* QUIC always has buffers allocated. */
+    if (IS_QUIC_SSL(ssl))
+        return 1;
 
     rl = &sc->rlayer;
 
