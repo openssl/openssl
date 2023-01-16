@@ -759,8 +759,12 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     }
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
-    s->max_early_data = ctx->max_early_data;
-    s->recv_max_early_data = ctx->recv_max_early_data;
+
+    if (!IS_QUIC_CTX(ctx)) {
+        s->max_early_data = ctx->max_early_data;
+        s->recv_max_early_data = ctx->recv_max_early_data;
+    }
+
     s->num_tickets = ctx->num_tickets;
     s->pha_enabled = ctx->pha_enabled;
 
@@ -805,7 +809,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     X509_VERIFY_PARAM_inherit(s->param, ctx->param);
     s->quiet_shutdown = ctx->quiet_shutdown;
 
-    if (!IS_QUIC_SSL(ssl))
+    if (!IS_QUIC_CTX(ctx))
         s->ext.max_fragment_len_mode = ctx->ext.max_fragment_len_mode;
 
     s->max_send_fragment = ctx->max_send_fragment;
@@ -869,8 +873,10 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
 
     s->key_update = SSL_KEY_UPDATE_NONE;
 
-    s->allow_early_data_cb = ctx->allow_early_data_cb;
-    s->allow_early_data_cb_data = ctx->allow_early_data_cb_data;
+    if (!IS_QUIC_CTX(ctx)) {
+        s->allow_early_data_cb = ctx->allow_early_data_cb;
+        s->allow_early_data_cb_data = ctx->allow_early_data_cb_data;
+    }
 
     if (!method->ssl_init(ssl))
         goto sslerr;
@@ -2341,7 +2347,6 @@ int SSL_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes)
     int ret;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
-    /* TODO(QUIC): This will need special handling for QUIC */
     if (sc == NULL)
         return 0;
 
@@ -2399,7 +2404,6 @@ int SSL_get_early_data_status(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL_ONLY(s);
 
-    /* TODO(QUIC): This will need special handling for QUIC */
     if (sc == NULL)
         return 0;
 
@@ -6878,7 +6882,7 @@ int SSL_set_max_early_data(SSL *s, uint32_t max_early_data)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL)
+    if (sc == NULL || IS_QUIC_SSL(s))
         return 0;
 
     sc->max_early_data = max_early_data;
@@ -6912,7 +6916,7 @@ int SSL_set_recv_max_early_data(SSL *s, uint32_t recv_max_early_data)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL)
+    if (sc == NULL || IS_QUIC_SSL(s))
         return 0;
 
     sc->recv_max_early_data = recv_max_early_data;
@@ -7089,7 +7093,7 @@ void SSL_set_allow_early_data_cb(SSL *s,
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL)
+    if (sc == NULL || IS_QUIC_SSL(s))
         return;
 
     sc->allow_early_data_cb = cb;
