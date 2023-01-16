@@ -17,6 +17,7 @@
 #include "helpers/quictestlib.h"
 #include "testutil.h"
 #include "testutil/output.h"
+#include "../ssl/ssl_local.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *defctxnull = NULL;
@@ -416,6 +417,47 @@ err:
     return testresult;
 }
 
+static int test_quic_forbidden_options(void)
+{
+    int testresult = 0;
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method())))
+        goto err;
+
+    /* QUIC options restrictions do not affect SSL_CTX */
+    SSL_CTX_set_options(ctx, UINT64_MAX);
+
+    if (!TEST_uint64_t_eq(SSL_CTX_get_options(ctx), UINT64_MAX))
+        goto err;
+
+    if (!TEST_ptr(ssl = SSL_new(ctx)))
+        goto err;
+
+    /* Only permitted options get transferred to SSL object */
+    if (!TEST_uint64_t_eq(SSL_get_options(ssl), OSSL_QUIC_PERMITTED_OPTIONS))
+        goto err;
+
+    /* Try again using SSL_set_options */
+    SSL_set_options(ssl, UINT64_MAX);
+
+    if (!TEST_uint64_t_eq(SSL_get_options(ssl), OSSL_QUIC_PERMITTED_OPTIONS))
+        goto err;
+
+    /* Clear everything */
+    SSL_clear_options(ssl, UINT64_MAX);
+
+    if (!TEST_uint64_t_eq(SSL_get_options(ssl), 0))
+        goto err;
+
+    testresult = 1;
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
 int setup_tests(void)
@@ -479,6 +521,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_quic_forbidden_apis_ctx);
     ADD_TEST(test_quic_forbidden_apis);
+    ADD_TEST(test_quic_forbidden_options);
     return 1;
  err:
     cleanup_tests();

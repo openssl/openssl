@@ -751,6 +751,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     RECORD_LAYER_init(&s->rlayer, s);
 
     s->options = ctx->options;
+
     s->dane.flags = ctx->dane.flags;
     if (method->version == ctx->method->version) {
         s->min_proto_version = ctx->min_proto_version;
@@ -5888,6 +5889,11 @@ uint64_t SSL_get_options(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(s))
+        return ossl_quic_get_options(s);
+#endif
+
     if (sc == NULL)
         return 0;
 
@@ -5905,13 +5911,12 @@ uint64_t SSL_set_options(SSL *s, uint64_t op)
     OSSL_PARAM options[2], *opts = options;
 
 #ifndef OPENSSL_NO_QUIC
-    if (IS_QUIC(s) && ossl_quic_set_ssl_op(s, op))
-        /* Handled by QUIC, return as set */
-        return op;
+    if (IS_QUIC(s))
+        return ossl_quic_set_options(s, op);
 #endif
 
-   sc = SSL_CONNECTION_FROM_SSL(s);
-   if (sc == NULL)
+    sc = SSL_CONNECTION_FROM_SSL(s);
+    if (sc == NULL)
         return 0;
 
     sc->options |= op;
@@ -5934,6 +5939,11 @@ uint64_t SSL_CTX_clear_options(SSL_CTX *ctx, uint64_t op)
 uint64_t SSL_clear_options(SSL *s, uint64_t op)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(s))
+        return ossl_quic_clear_options(s, op);
+#endif
 
     if (sc == NULL)
         return 0;

@@ -299,6 +299,10 @@ static void quic_unlock(QUIC_CONNECTION *qc)
  *                                     ossl_quic_deinit
  *         SSL_free                 => ossl_quic_free
  *
+ *         SSL_set_options          => ossl_quic_set_options
+ *         SSL_get_options          => ossl_quic_get_options
+ *         SSL_clear_options        => ossl_quic_clear_options
+ *
  */
 
 /* SSL_new */
@@ -322,9 +326,12 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->tls = ossl_ssl_connection_new_int(ctx, TLS_method());
     if (qc->tls == NULL || (sc = SSL_CONNECTION_FROM_SSL(qc->tls)) == NULL)
          goto err;
+
     /* override the user_ssl of the inner connection */
-    sc->user_ssl  = ssl_base;
     sc->s3.flags |= TLS1_FLAGS_QUIC;
+
+    /* Restrict options derived from the SSL_CTX. */
+    sc->options &= OSSL_QUIC_PERMITTED_OPTIONS;
 
 #if defined(OPENSSL_THREADS)
     if ((qc->mutex = ossl_crypto_mutex_new()) == NULL)
@@ -606,6 +613,48 @@ static void qc_set_default_xso(QUIC_CONNECTION *qc, QUIC_XSO *xso, int touch)
 
     if (old_xso != NULL)
         SSL_free(&old_xso->ssl);
+}
+
+/* SSL_set_options */
+static uint64_t quic_mask_or_options(SSL *ssl, uint64_t mask_value, uint64_t or_value)
+{
+    QCTX ctx;
+    uint64_t r, options;
+
+    if (!expect_quic_with_stream_lock(ssl, /*remote_init=*/-1, &ctx))
+        return 0;
+
+    /*
+     * Currently most options that we permit are handled in the handshake
+     * layer.
+     */
+    options = (SSL_get_options(ctx.qc->tls) & ~mask_value) | or_value;
+    options &= OSSL_QUIC_PERMITTED_OPTIONS;
+    r = SSL_set_options(ctx.qc->tls, options);
+
+    if (ctx.xso->stream != NULL && ctx.xso->stream->rstream != NULL)
+        ossl_quic_rstream_set_cleanse(ctx.xso->stream->rstream,
+                                      (options & SSL_OP_CLEANSE_PLAINTEXT) != 0);
+
+    quic_unlock(ctx.qc);
+    return r;
+}
+
+uint64_t ossl_quic_set_options(SSL *ssl, uint64_t options)
+{
+    return quic_mask_or_options(ssl, UINT64_MAX, options);
+}
+
+/* SSL_clear_options */
+uint64_t ossl_quic_clear_options(SSL *ssl, uint64_t options)
+{
+    return quic_mask_or_options(ssl, options, 0);
+}
+
+/* SSL_get_options */
+uint64_t ossl_quic_get_options(const SSL *ssl)
+{
+    return quic_mask_or_options((SSL *)ssl, 0, 0);
 }
 
 /*
