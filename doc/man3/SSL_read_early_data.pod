@@ -241,6 +241,8 @@ protection feature will still be used even if a callback is present unless it
 has been explicitly disabled using the SSL_OP_NO_ANTI_REPLAY option. See
 L</REPLAY PROTECTION> below.
 
+These functions cannot currently be used with QUIC SSL objects.
+
 =head1 NOTES
 
 The whole purpose of early data is to enable a client to start sending data to

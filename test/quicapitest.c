@@ -422,6 +422,8 @@ static int test_quic_forbidden_options(void)
     int testresult = 0;
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
+    char buf[16];
+    size_t len;
 
     if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method())))
         goto err;
@@ -431,6 +433,11 @@ static int test_quic_forbidden_options(void)
 
     if (!TEST_uint64_t_eq(SSL_CTX_get_options(ctx), UINT64_MAX))
         goto err;
+
+    /* Set options on CTX which should not be inherited (tested below). */
+    SSL_CTX_set_read_ahead(ctx, 1);
+    SSL_CTX_set_max_early_data(ctx, 1);
+    SSL_CTX_set_recv_max_early_data(ctx, 1);
 
     if (!TEST_ptr(ssl = SSL_new(ctx)))
         goto err;
@@ -452,6 +459,9 @@ static int test_quic_forbidden_options(void)
         goto err;
 
     /* Readahead */
+    if (!TEST_false(SSL_get_read_ahead(ssl)))
+        goto err;
+
     SSL_set_read_ahead(ssl, 1);
     if (!TEST_false(SSL_get_read_ahead(ssl)))
         goto err;
@@ -465,6 +475,18 @@ static int test_quic_forbidden_options(void)
     /* Max fragment length */
     if (!TEST_true(SSL_set_tlsext_max_fragment_length(ssl, TLSEXT_max_fragment_length_DISABLED))
         || !TEST_false(SSL_set_tlsext_max_fragment_length(ssl, TLSEXT_max_fragment_length_512)))
+        goto err;
+
+    /* Max early data */
+    if (!TEST_false(SSL_get_recv_max_early_data(ssl))
+        || !TEST_false(SSL_get_max_early_data(ssl))
+        || !TEST_false(SSL_set_recv_max_early_data(ssl, 1))
+        || !TEST_false(SSL_set_max_early_data(ssl, 1)))
+        goto err;
+
+    /* Read/Write */
+    if (!TEST_false(SSL_read_early_data(ssl, buf, sizeof(buf), &len))
+        || !TEST_false(SSL_write_early_data(ssl, buf, sizeof(buf), &len)))
         goto err;
 
     testresult = 1;
