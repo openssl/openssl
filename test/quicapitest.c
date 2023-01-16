@@ -313,6 +313,36 @@ static int test_ssl_trace(void)
 }
 #endif
 
+/*
+ * Test that handshake-layer APIs which shouldn't work don't work with QUIC.
+ */
+static int test_quic_forbidden_apis(void)
+{
+    int testresult = 0;
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method())))
+        goto err;
+
+    /* This function returns 0 on success and 1 on error, and should fail. */
+    if (!TEST_true(SSL_CTX_set_tlsext_use_srtp(ctx, "SRTP_AEAD_AES_128_GCM")))
+        goto err;
+
+    if (!TEST_ptr(ssl = SSL_new(ctx)))
+        goto err;
+
+    /* This function returns 0 on success and 1 on error, and should fail. */
+    if (!TEST_true(SSL_set_tlsext_use_srtp(ssl, "SRTP_AEAD_AES_128_GCM")))
+        goto err;
+
+    testresult = 1;
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
 int setup_tests(void)
@@ -374,7 +404,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_SSL_TRACE) && !defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_ZLIB)
     ADD_TEST(test_ssl_trace);
 #endif
-
+    ADD_TEST(test_quic_forbidden_apis);
     return 1;
  err:
     cleanup_tests();

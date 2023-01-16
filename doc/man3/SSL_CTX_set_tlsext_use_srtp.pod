@@ -116,6 +116,8 @@ master key length and the salt length as defined for the protection profile in
 use. This provides the client write master key, the server write master key, the
 client write master salt and the server write master salt in that order.
 
+These functions cannot be used with QUIC SSL objects.
+
 =head1 RETURN VALUES
 
 SSL_CTX_set_tlsext_use_srtp() and SSL_set_tlsext_use_srtp() return 0 on success

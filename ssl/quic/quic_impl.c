@@ -323,8 +323,8 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     if (qc->tls == NULL || (sc = SSL_CONNECTION_FROM_SSL(qc->tls)) == NULL)
          goto err;
     /* override the user_ssl of the inner connection */
-    sc->user_ssl = ssl_base;
-    sc->flags   |= TLS1_FLAGS_QUIC;
+    sc->user_ssl  = ssl_base;
+    sc->s3.flags |= TLS1_FLAGS_QUIC;
 
 #if defined(OPENSSL_THREADS)
     if ((qc->mutex = ossl_crypto_mutex_new()) == NULL)
