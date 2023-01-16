@@ -47,6 +47,9 @@ it would usually be preferable to create a new SSL_CTX object than to
 try to reuse an existing one in this fashion.  Its usage is considered
 deprecated.
 
+SSL_set_ssl_method() cannot be used to change a non-QUIC SSL object to a QUIC
+SSL object or vice versa.
+
 =head1 RETURN VALUES
 
 The following return values can occur for SSL_CTX_set_ssl_version()
