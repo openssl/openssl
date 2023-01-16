@@ -340,6 +340,7 @@ uint64_t ossl_quic_channel_get_rx_key_epoch(QUIC_CHANNEL *ch);
 
 /* Artificially trigger a spontaneous TXKU if possible. */
 int ossl_quic_channel_trigger_txku(QUIC_CHANNEL *ch);
+int ossl_quic_channel_has_pending(const QUIC_CHANNEL *ch);
 
 # endif
 

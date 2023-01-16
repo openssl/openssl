@@ -629,3 +629,8 @@ void ossl_quic_demux_reinject_urxe(QUIC_DEMUX *demux,
     ossl_list_urxe_insert_head(&demux->urx_pending, e);
     e->demux_state = URXE_DEMUX_STATE_PENDING;
 }
+
+int ossl_quic_demux_has_pending(const QUIC_DEMUX *demux)
+{
+    return ossl_list_urxe_head(&demux->urx_pending) != NULL;
+}
