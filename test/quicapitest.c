@@ -518,6 +518,10 @@ static int test_quic_forbidden_options(void)
     if (!TEST_ptr_null(SSL_dup(ssl)))
         goto err;
 
+    /* No clear */
+    if (!TEST_false(SSL_clear(ssl)))
+        goto err;
+
     testresult = 1;
 err:
     SSL_free(ssl);

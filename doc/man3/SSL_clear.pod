@@ -34,6 +34,8 @@ server method, even if TLS_*_methods were chosen on startup. This
 will might lead to connection failures (see L<SSL_new(3)>)
 for a description of the method's properties.
 
+This function is not supported on QUIC SSL objects.
+
 =head1 WARNINGS
 
 SSL_clear() resets the SSL object to allow for another connection. The
