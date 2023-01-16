@@ -322,6 +322,9 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     qc->tls = ossl_ssl_connection_new_int(ctx, TLS_method());
     if (qc->tls == NULL || (sc = SSL_CONNECTION_FROM_SSL(qc->tls)) == NULL)
          goto err;
+    /* override the user_ssl of the inner connection */
+    sc->user_ssl = ssl_base;
+    sc->flags   |= TLS1_FLAGS_QUIC;
 
 #if defined(OPENSSL_THREADS)
     if ((qc->mutex = ossl_crypto_mutex_new()) == NULL)
