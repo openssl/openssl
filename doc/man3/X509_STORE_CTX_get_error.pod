@@ -229,7 +229,7 @@ consistent with the supplied purpose.
 
 The basicConstraints path-length parameter has been exceeded.
 
-=item B<X509_V_ERR_INVALID_PURPOSE: unsupported certificate purpose>
+=item B<X509_V_ERR_INVALID_PURPOSE: unsuitable certificate purpose>
 
 The target certificate cannot be used for the specified purpose.
 
