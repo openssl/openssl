@@ -493,7 +493,7 @@ void ossl_quic_deinit(SSL *s)
     /* No-op. */
 }
 
-/* SSL_reset */
+/* SSL_clear (ssl_reset method) */
 int ossl_quic_reset(SSL *s)
 {
     QCTX ctx;
@@ -501,11 +501,11 @@ int ossl_quic_reset(SSL *s)
     if (!expect_quic(s, &ctx))
         return 0;
 
-    /* TODO(QUIC); Currently a no-op. */
-    return 1;
+    /* Not supported. */
+    return 0;
 }
 
-/* SSL_clear */
+/* ssl_clear method (unused) */
 int ossl_quic_clear(SSL *s)
 {
     QCTX ctx;
