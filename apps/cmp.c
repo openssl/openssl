@@ -1956,12 +1956,14 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         if ((info = OPENSSL_zalloc(sizeof(*info))) == NULL)
             goto err;
         (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, info);
+        info->ssl_ctx = setup_ssl_ctx(ctx, host, engine);
         info->server = host;
-        info->port = server_port;
+        host = NULL; /* prevent deallocation */
+        if ((info->port = OPENSSL_strdup(server_port)) == NULL)
+            goto err;
         /* workaround for callback design flaw, see #17088: */
         info->use_proxy = proxy_host != NULL;
         info->timeout = OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_MSG_TIMEOUT);
-        info->ssl_ctx = setup_ssl_ctx(ctx, host, engine);
 
         if (info->ssl_ctx == NULL)
             goto err;
@@ -3049,7 +3051,11 @@ int cmp_main(int argc, char **argv)
         /* cannot free info already here, as it may be used indirectly by: */
         OSSL_CMP_CTX_free(cmp_ctx);
 #ifndef OPENSSL_NO_SOCK
-        APP_HTTP_TLS_INFO_free(info);
+        if (info != NULL) {
+            OPENSSL_free((char *)info->server);
+            OPENSSL_free((char *)info->port);
+            APP_HTTP_TLS_INFO_free(info);
+        }
 #endif
     }
     X509_VERIFY_PARAM_free(vpm);
