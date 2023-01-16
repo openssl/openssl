@@ -3548,6 +3548,10 @@ void SSL_CTX_set_npn_advertised_cb(SSL_CTX *ctx,
                                    SSL_CTX_npn_advertised_cb_func cb,
                                    void *arg)
 {
+    if (IS_QUIC_CTX(ctx))
+        /* NPN not allowed for QUIC */
+        return;
+
     ctx->ext.npn_advertised_cb = cb;
     ctx->ext.npn_advertised_cb_arg = arg;
 }
@@ -3566,6 +3570,10 @@ void SSL_CTX_set_npn_select_cb(SSL_CTX *ctx,
                                SSL_CTX_npn_select_cb_func cb,
                                void *arg)
 {
+    if (IS_QUIC_CTX(ctx))
+        /* NPN not allowed for QUIC */
+        return;
+
     ctx->ext.npn_select_cb = cb;
     ctx->ext.npn_select_cb_arg = arg;
 }

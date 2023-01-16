@@ -111,6 +111,9 @@ the client can request any protocol it chooses. The value returned from
 this function need not be a member of the list of supported protocols
 provided by the callback.
 
+NPN functionality cannot be used with QUIC SSL objects. Use of ALPN is mandatory
+when using QUIC SSL objects.
+
 =head1 NOTES
 
 The protocol-lists must be in wire-format, which is defined as a vector of
