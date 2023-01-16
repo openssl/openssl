@@ -11,8 +11,11 @@
 #include <errno.h>
 #include "bio_local.h"
 #include "internal/cryptlib.h"
+#include "internal/safe_math.h"
 
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
+
+OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 
 /* ===========================================================================
  * Byte-wise ring buffer which supports pushing and popping blocks of multiple
@@ -262,6 +265,7 @@ struct bio_dgram_pair_st {
     unsigned int no_trunc          : 1; /* Reads fail if they would truncate */
     unsigned int local_addr_enable : 1; /* Can use BIO_MSG->local? */
     unsigned int role              : 1; /* Determines lock order */
+    unsigned int fixed_size        : 1; /* Affects BIO_s_dgram_mem only */
 };
 
 #define MIN_BUF_LEN (1024)
@@ -465,6 +469,7 @@ static int dgram_pair_ctrl_set_write_buf_size(BIO *bio, size_t len)
     }
 
     b->req_buf_len = len;
+    b->fixed_size = 1;
     return 1;
 }
 
@@ -1111,6 +1116,34 @@ static int dgram_mem_read(BIO *bio, char *buf, int sz_)
     return ret;
 }
 
+/*
+ * Calculate the array growth based on the target size.
+ *
+ * The growth factor is a rational number and is defined by a numerator
+ * and a denominator.  According to Andrew Koenig in his paper "Why Are
+ * Vectors Efficient?" from JOOP 11(5) 1998, this factor should be less
+ * than the golden ratio (1.618...).
+ *
+ * We use an expansion factor of 8 / 5 = 1.6
+ */
+static const size_t max_rbuf_size = SIZE_MAX / 2; /* unlimited in practice */
+static ossl_inline size_t compute_rbuf_growth(size_t target, size_t current)
+{
+    int err = 0;
+
+    while (current < target) {
+        if (current >= max_rbuf_size)
+            return 0;
+
+        current = safe_muldiv_size_t(current, 8, 5, &err);
+        if (err)
+            return 0;
+        if (current >= max_rbuf_size)
+            current = max_rbuf_size;
+    }
+    return current;
+}
+
 /* Must hold local write lock */
 static size_t dgram_pair_write_inner(struct bio_dgram_pair_st *b, const uint8_t *buf, size_t sz)
 {
@@ -1131,12 +1164,15 @@ static size_t dgram_pair_write_inner(struct bio_dgram_pair_st *b, const uint8_t 
          */
         ring_buf_head(&b->rbuf, &dst_buf, &dst_len);
         if (dst_len == 0) {
-            if (b->peer != NULL) /* dgram_pair is not resizeable dgram_mem is */
+            size_t new_len;
+
+            if (!b->fixed_size) /* resizeable only unless size not set explicitly */
                 break;
-            /* just double the size */
-            if (!ring_buf_resize(&b->rbuf, b->req_buf_len * 2))
+            /* increase the size */
+            new_len = compute_rbuf_growth(b->req_buf_len + sz, b->req_buf_len);
+            if (new_len == 0 || !ring_buf_resize(&b->rbuf, new_len))
                 break;
-            b->req_buf_len *= 2;
+            b->req_buf_len = new_len;
         }
 
         if (dst_len > sz)
