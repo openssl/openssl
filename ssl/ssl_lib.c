@@ -6974,6 +6974,12 @@ void SSL_CTX_set_post_handshake_auth(SSL_CTX *ctx, int val)
 void SSL_set_post_handshake_auth(SSL *ssl, int val)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+#ifndef OPENSSL_NO_QUIC
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(ssl);
+
+    if (qc != NULL)
+        return;
+#endif
 
     if (sc == NULL)
         return;
@@ -6984,6 +6990,14 @@ void SSL_set_post_handshake_auth(SSL *ssl, int val)
 int SSL_verify_client_post_handshake(SSL *ssl)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+#ifndef OPENSSL_NO_QUIC
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(ssl);
+
+    if (qc != NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_WRONG_SSL_VERSION);
+        return 0;
+    }
+#endif
 
     if (sc == NULL)
         return 0;

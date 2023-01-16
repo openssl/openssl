@@ -48,6 +48,8 @@ The read state is unknown. This should never happen.
 
 =back
 
+When used with QUIC SSL objects, these functions always return "unknown".
+
 =head1 SEE ALSO
 
 L<ssl(7)>
