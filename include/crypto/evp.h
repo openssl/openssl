@@ -951,4 +951,7 @@ int evp_md_get_number(const EVP_MD *md);
 int evp_rand_get_number(const EVP_RAND *rand);
 int evp_signature_get_number(const EVP_SIGNATURE *signature);
 
+/* get name_id from method_id */
+int evp_method_id_to_name_id(uint32_t method_id);
+
 #endif /* OSSL_CRYPTO_EVP_H */

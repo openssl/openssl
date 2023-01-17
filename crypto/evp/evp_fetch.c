@@ -117,6 +117,14 @@ static uint32_t evp_method_id(int name_id, unsigned int operation_id)
             | (operation_id & METHOD_ID_OPERATION_MASK));
 }
 
+/*
+ * a function to return name_id from method_id
+ */
+int evp_method_id_to_name_id(uint32_t method_id)
+{
+    return (method_id >> METHOD_ID_NAME_OFFSET);
+}
+
 static void *get_evp_method_from_store(void *store, const OSSL_PROVIDER **prov,
                                        void *data)
 {
