@@ -55,5 +55,5 @@ static const PROV_CIPHER_HW rv64i_zknd_zkne_##mode = {                         \
     cipher_hw_aes_copyctx                                                      \
 };
 #define PROV_CIPHER_HW_select(mode)                                            \
-if (RV64I_ZKND_ZKNE_CAPABLE)                                                   \
+if (RISCV_HAS_ZKND_AND_ZKNE())                                                 \
     return &rv64i_zknd_zkne_##mode;

@@ -502,7 +502,7 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
 #elif defined(GHASH_ASM_RISCV) && __riscv_xlen == 64
     /* RISCV defaults; gmult already set above */
     ctx->ghash = NULL;
-    if (RISCV_HAS_ZBB() && RISCV_HAS_ZBC()) {
+    if (RISCV_HAS_ZBB_AND_ZBC()) {
         ctx->ginit = gcm_init_clmul_rv64i_zbb_zbc;
         ctx->gmult = gcm_gmult_clmul_rv64i_zbb_zbc;
     }
