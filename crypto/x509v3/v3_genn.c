@@ -98,7 +98,7 @@ int GENERAL_NAME_cmp(GENERAL_NAME *a, GENERAL_NAME *b)
         return -1;
     switch (a->type) {
     case GEN_X400:
-        result = ASN1_TYPE_cmp(a->d.x400Address, b->d.x400Address);
+        result = ASN1_STRING_cmp(a->d.x400Address, b->d.x400Address);
         break;
 
     case GEN_EDIPARTY:
