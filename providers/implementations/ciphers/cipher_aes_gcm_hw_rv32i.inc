@@ -55,9 +55,9 @@ static const PROV_GCM_HW rv32i_zbkb_zknd_zkne_gcm = {
 
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
-    if (RV32I_ZBKB_ZKND_ZKNE_CAPABLE)
+    if (RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE())
         return &rv32i_zbkb_zknd_zkne_gcm;
-    if (RV32I_ZKND_ZKNE_CAPABLE)
+    if (RISCV_HAS_ZKND_AND_ZKNE())
         return &rv32i_zknd_zkne_gcm;
     return &aes_gcm;
 }

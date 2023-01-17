@@ -52,9 +52,9 @@ static const PROV_CCM_HW rv32i_zbkb_zknd_zkne_ccm = {
 
 const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
 {
-    if (RV32I_ZBKB_ZKND_ZKNE_CAPABLE)
+    if (RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE())
         return &rv32i_zbkb_zknd_zkne_ccm;
-    if (RV32I_ZKND_ZKNE_CAPABLE)
+    if (RISCV_HAS_ZKND_AND_ZKNE())
         return &rv32i_zknd_zkne_ccm;
     return &aes_ccm;
 }

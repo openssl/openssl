@@ -142,10 +142,10 @@ static const PROV_GCM_HW aes_gcm = {
 # include "cipher_aes_gcm_hw_armv8.inc"
 #elif defined(PPC_AES_GCM_CAPABLE)
 # include "cipher_aes_gcm_hw_ppc.inc"
-#elif defined(RV64I_ZKND_ZKNE_CAPABLE)
-# include "cipher_aes_gcm_hw_rv64i_zknd_zkne.inc"
-#elif defined(RV32I_ZBKB_ZKND_ZKNE_CAPABLE) && defined(RV32I_ZKND_ZKNE_CAPABLE)
-# include "cipher_aes_gcm_hw_rv32i_zknd_zkne.inc"
+#elif defined(__riscv) && __riscv_xlen == 64
+# include "cipher_aes_gcm_hw_rv64i.inc"
+#elif defined(__riscv) && __riscv_xlen == 32
+# include "cipher_aes_gcm_hw_rv32i.inc"
 #else
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
