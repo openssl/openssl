@@ -248,8 +248,8 @@ typedef int (*ossl_quic_fault_on_packet_plain_cb)(OSSL_QUIC_FAULT *fault,
                                                   void *cbarg);
 
 int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
-                                              ossl_quic_fault_on_packet_plain_cb pplaincb,
-                                              void *pplaincbarg);
+                                    ossl_quic_fault_on_packet_plain_cb pplaincb,
+                                    void *pplaincbarg);
 
 
 /*
@@ -355,8 +355,8 @@ typedef int (*ossl_quic_fault_on_packet_cipher_cb)(OSSL_QUIC_FAULT *fault,
                                                    void *cbarg);
 
 int ossl_quic_fault_set_packet_cipher_listener(OSSL_QUIC_FAULT *fault,
-                                               ossl_quic_fault_on_packet_cipher_cb pciphercb,
-                                               void *picphercbarg);
+                                ossl_quic_fault_on_packet_cipher_cb pciphercb,
+                                void *picphercbarg);
 
 /*
  * Enable tests to listen for datagrams being sent
