@@ -68,6 +68,7 @@ int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
                                               ossl_quic_fault_on_packet_plain_cb pplaincb,
                                               void *pplaincbarg);
 
+
 /*
  * Helper function to be called from a packet_plain_listener callback if it
  * wants to resize the packet (either to add new data to it, or to truncate it).
@@ -77,6 +78,13 @@ int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
  * allocation.
  */
 int ossl_quic_fault_resize_plain_packet(OSSL_QUIC_FAULT *fault, size_t newlen);
+
+/*
+ * Prepend frame data into a packet. To be called from a packet_plain_listener
+ * callback
+ */
+int ossl_quic_fault_prepend_frame(OSSL_QUIC_FAULT *fault, unsigned char *frame,
+                                  size_t frame_len);
 
 /*
  * The general handshake message listener is sent the entire handshake message

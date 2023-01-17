@@ -344,6 +344,38 @@ int ossl_quic_fault_resize_plain_packet(OSSL_QUIC_FAULT *fault, size_t newlen)
     return 1;
 }
 
+/*
+ * Prepend frame data into a packet. To be called from a packet_plain_listener
+ * callback
+ */
+int ossl_quic_fault_prepend_frame(OSSL_QUIC_FAULT *fault, unsigned char *frame,
+                                  size_t frame_len)
+{
+    unsigned char *buf;
+    size_t old_len;
+
+    /*
+     * Alloc'd size should always be non-zero, so if this fails we've been
+     * incorrectly called
+     */
+    if (fault->pplainbuf_alloc == 0)
+        return 0;
+
+    /* Cast below is safe because we allocated the buffer */
+    buf = (unsigned char *)fault->pplainio.buf;
+    old_len = fault->pplainio.buf_len;
+
+    /* Extend the size of the packet by the size of the new frame */
+    if (!TEST_true(ossl_quic_fault_resize_plain_packet(fault,
+                                                       old_len + frame_len)))
+        return 0;
+
+    memmove(buf + frame_len, buf, old_len);
+    memcpy(buf, frame, frame_len);
+
+    return 1;
+}
+
 static int handshake_mutate(const unsigned char *msgin, size_t msginlen,
                             unsigned char **msgout, size_t *msgoutlen,
                             void *arg)
