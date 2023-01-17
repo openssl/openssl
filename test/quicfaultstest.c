@@ -70,8 +70,7 @@ static int test_basic(void)
 static int add_unknown_frame_cb(OSSL_QUIC_FAULT *fault, QUIC_PKT_HDR *hdr,
                                 unsigned char *buf, size_t len, void *cbarg)
 {
-    size_t done = 0;
-
+    static size_t done = 0;
     /*
      * There are no "reserved" frame types which are definitately safe for us
      * to use for testing purposes - but we just use the highest possible
@@ -82,28 +81,11 @@ static int add_unknown_frame_cb(OSSL_QUIC_FAULT *fault, QUIC_PKT_HDR *hdr,
     };
 
     /* We only ever add the unknown frame to one packet */
-    if (done)
+    if (done++)
         return 1;
-    done++;
 
-    /* Extend the size of the packet by the size of the new frame */
-    if (!TEST_true(ossl_quic_fault_resize_plain_packet(fault,
-                                                       len + sizeof(unknown_frame))))
-        return 0;
-
-    /*
-     * We prepend the new frame to the start of the packet. We add it to the
-     * start rather than the end because stream frames that are already in the
-     * packet may not have an explicit length, and instead may just extend to
-     * the end of the packet. We could fix-up such frames to have an explicit
-     * length and add our new frame after it. But it is probably simpler just to
-     * add it to the beginning of the packet. This means moving the existing
-     * packet data.
-     */
-    memmove(buf + sizeof(unknown_frame), buf, len);
-    memcpy(buf, unknown_frame, sizeof(unknown_frame));
-
-    return 1;
+    return ossl_quic_fault_prepend_frame(fault, unknown_frame,
+                                         sizeof(unknown_frame));
 }
 
 static int test_unknown_frame(void)
