@@ -52,7 +52,7 @@ and so only usable by the Fault Injector.
 The new libssl callbacks will be as follows:
 
 ```` C
-typedef int (*ossl_statem_mutate_handshake_cb)(unsigned char *msgin,
+typedef int (*ossl_statem_mutate_handshake_cb)(const unsigned char *msgin,
                                                size_t inlen,
                                                unsigned char **msgout,
                                                size_t *outlen,
@@ -75,10 +75,9 @@ associated length in `inlen`. The mutator will construct a replacement handshake
 message (typically by copying the input message and modifying it) and store it
 in a newly allocated buffer. A pointer to the new buffer will be passed back
 in `*msgout` and its length will be stored in `*outlen`. Optionally the mutator
-can choose to not mutate by simply setting `*msgout = msgin`, or by creating a
-new buffer with a copy of the data in it. A return value of 1 indicates that
-the callback completed successfully. A return value of 0 indicates a fatal
-error.
+can choose to not mutate by simply creating a new buffer with a copy of the data
+in it. A return value of 1 indicates that the callback completed successfully. A
+return value of 0 indicates a fatal error.
 
 Once libssl has finished using the mutated buffer it will call the
 `finish_mutate_handshake_cb` callback which can then release the buffer and
@@ -123,8 +122,7 @@ the payload will be in an iovec array pointed to by `iovecin` and containing
 structure and return it in `*hdrout` and a new set of iovecs to be stored in
 `*iovecout`. The number of iovecs need not be the same as the input. The number
 of iovecs in the output array is stored in `*numout`. Optionally the callback
-can choose to not mutate by simply setting `*hdrout = hdrin` and
-`*iovecout = iovecin`, or by creating a new iovecs/headers with a copy of the
+can choose to not mutate by simply creating new iovecs/headers with a copy of the
 data in it. A return value of 1 indicates that the callback completed
 successfully. A return value of 0 indicates a fatal error.
 
@@ -250,8 +248,9 @@ typedef int (*ossl_quic_fault_on_packet_plain_cb)(OSSL_QUIC_FAULT *fault,
                                                   void *cbarg);
 
 int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
-                                    ossl_quic_fault_on_packet_plain_cb pplaincb,
-                                    void *pplaincbarg);
+                                              ossl_quic_fault_on_packet_plain_cb pplaincb,
+                                              void *pplaincbarg);
+
 
 /*
  * Helper function to be called from a packet_plain_listener callback if it
@@ -262,6 +261,13 @@ int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
  * allocation.
  */
 int ossl_quic_fault_resize_plain_packet(OSSL_QUIC_FAULT *fault, size_t newlen);
+
+/*
+ * Prepend frame data into a packet. To be called from a packet_plain_listener
+ * callback
+ */
+int ossl_quic_fault_prepend_frame(OSSL_QUIC_FAULT *fault, unsigned char *frame,
+                                  size_t frame_len);
 
 /*
  * The general handshake message listener is sent the entire handshake message
@@ -309,6 +315,7 @@ int ossl_quic_fault_set_hand_enc_ext_listener(OSSL_QUIC_FAULT *fault,
 
 /* TODO(QUIC): Add listeners for other types of handshake message here */
 
+
 /*
  * Helper function to be called from message specific listener callbacks. newlen
  * is the new length of the specific message excluding the handshake message
@@ -348,8 +355,8 @@ typedef int (*ossl_quic_fault_on_packet_cipher_cb)(OSSL_QUIC_FAULT *fault,
                                                    void *cbarg);
 
 int ossl_quic_fault_set_packet_cipher_listener(OSSL_QUIC_FAULT *fault,
-                                    ossl_quic_fault_on_packet_cipher_cb pciphercb,
-                                    void *picphercbarg);
+                                               ossl_quic_fault_on_packet_cipher_cb pciphercb,
+                                               void *picphercbarg);
 
 /*
  * Enable tests to listen for datagrams being sent
@@ -391,8 +398,7 @@ client:
 static int add_unknown_frame_cb(OSSL_QUIC_FAULT *fault, QUIC_PKT_HDR *hdr,
                                 unsigned char *buf, size_t len, void *cbarg)
 {
-    size_t done = 0;
-
+    static size_t done = 0;
     /*
      * There are no "reserved" frame types which are definitately safe for us
      * to use for testing purposes - but we just use the highest possible
@@ -403,28 +409,11 @@ static int add_unknown_frame_cb(OSSL_QUIC_FAULT *fault, QUIC_PKT_HDR *hdr,
     };
 
     /* We only ever add the unknown frame to one packet */
-    if (done)
+    if (done++)
         return 1;
-    done++;
 
-    /* Extend the size of the packet by the size of the new frame */
-    if (!TEST_true(ossl_quic_fault_resize_plain_packet(fault,
-                                                       len + sizeof(unknown_frame))))
-        return 0;
-
-    /*
-     * We prepend the new frame to the start of the packet. We add it to the
-     * start rather than the end because stream frames that are already in the
-     * packet may not have an explicit length, and instead may just extend to
-     * the end of the packet. We could fix-up such frames to have an explicit
-     * length and add our new frame after it. But it is probably simpler just to
-     * add it to the beginning of the packet. This means moving the existing
-     * packet data.
-     */
-    memmove(buf + sizeof(unknown_frame), buf, len);
-    memcpy(buf, unknown_frame, sizeof(unknown_frame));
-
-    return 1;
+    return ossl_quic_fault_prepend_frame(fault, unknown_frame,
+                                         sizeof(unknown_frame));
 }
 
 static int test_unknown_frame(void)
