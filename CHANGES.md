@@ -44,6 +44,24 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Nicola Tuveri*
 
+ * Fixed a type confusion vulnerability relating to X.400 address processing
+   inside an X.509 GeneralName. X.400 addresses were parsed as an `ASN1_STRING`
+   but subsequently interpreted by `GENERAL_NAME_cmp` as an `ASN1_TYPE`. This
+   vulnerability may allow an attacker who can provide a certificate chain and
+   CRL (neither of which need have a valid signature) to pass arbitrary pointers
+   to a `memcmp` call, creating a possible read primitive, subject to some
+   constraints. Refer to the advisory for more information. Thanks to David
+   Benjamin for discovering this issue. ([CVE-2023-0286])
+
+   This issue has been fixed by changing the public header file definition of
+   `GENERAL_NAME` so that `x400Address` reflects the implementation. It was not
+   possible for any existing application to successfully use the existing
+   definition; however, if any application references the `x400Address` field
+   (e.g. in dead code), note that the type of this field has changed. There is
+   no ABI change.
+
+   *Hugo Landau*
+
 ### Changes between 3.0.6 and 3.0.7 [1 Nov 2022]
 
  * Fixed two buffer overflows in punycode decoding functions.
@@ -19431,6 +19449,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2023-0286]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0286
 [CVE-2022-2274]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2274
 [CVE-2022-2097]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2274
 [CVE-2020-1971]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1971
