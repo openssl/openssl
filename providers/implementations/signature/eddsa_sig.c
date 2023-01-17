@@ -343,10 +343,11 @@ int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
         return 0;
     }
 #ifdef S390X_EC_ASM
-    /* s390x_ed448_digestsign() does not yet support context-strings.
-       fall back to non-accelerated sign if a context-string is provided. */
+    /* s390x_ed448_digestsign() does not yet support context-strings or pre-hashing.
+       fall back to non-accelerated sign if a context-string or pre-hasing is provided. */
     if (S390X_CAN_SIGN(ED448)
-            && peddsactx->context_string_len == 0) {
+            && peddsactx->context_string_len == 0
+            && peddsactx->prehash_flag == 0) {
         if (s390x_ed448_digestsign(edkey, sigret, tbs, tbslen) == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SIGN);
             return 0;
@@ -424,10 +425,11 @@ int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
         return 0;
 
 #ifdef S390X_EC_ASM
-    /* s390x_ed448_digestverify() does not yet support context-strings.
-       fall back to non-accelerated verify if a context-string is provided. */
+    /* s390x_ed448_digestverify() does not yet support context-strings or pre-hashing.
+       fall back to non-accelerated verify if a context-string or pre-hasing is provided. */
     if (S390X_CAN_SIGN(ED448)
-            && peddsactx->context_string_len == 0) {
+            && peddsactx->context_string_len == 0
+            && peddsactx->prehash_flag == 0) {
         return s390x_ed448_digestverify(edkey, sig, tbs, tbslen);
     }
 #endif /* S390X_EC_ASM */
