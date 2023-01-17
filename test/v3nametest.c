@@ -644,6 +644,14 @@ static struct gennamedata {
             0xb7, 0x09, 0x02, 0x02
         },
         15
+    }, {
+        /*
+         * Regression test for CVE-2023-0286.
+         */
+        {
+            0xa3, 0x00
+        },
+        2
     }
 };
 
