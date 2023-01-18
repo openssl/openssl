@@ -4,6 +4,9 @@ IF[{- !$disabled{asm} -}]
   $SM4DEF_aarch64=SM4_ASM VPSM4_ASM
   $SM4ASM_aarch64=sm4-armv8.S vpsm4-armv8.S vpsm4_ex-armv8.S
 
+  $SM4DEF_riscv64=SM4_ASM
+  $SM4ASM_riscv64=sm4-riscv64-zvksed.s
+
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
   IF[$SM4ASM_{- $target{asm_arch} -}]
@@ -34,3 +37,4 @@ GENERATE[vpsm4_ex-armv8.S]=asm/vpsm4_ex-armv8.pl
 INCLUDE[sm4-armv8.o]=..
 INCLUDE[vpsm4-armv8.o]=..
 INCLUDE[vpsm4_ex-armv8.o]=..
+GENERATE[sm4-riscv64-zvksed.s]=asm/sm4-riscv64-zvksed.pl
