@@ -1454,7 +1454,7 @@ static void ch_default_packet_handler(QUIC_URXE *e, void *arg)
         goto undesirable;
 
     if (!PACKET_buf_init(&pkt, ossl_quic_urxe_data(e), e->data_len))
-        goto undesirable;
+        goto err;
 
     /*
      * We set short_conn_id_len to SIZE_MAX here which will cause the decode
@@ -1495,11 +1495,14 @@ static void ch_default_packet_handler(QUIC_URXE *e, void *arg)
     if (!ch_server_on_new_conn(ch, &e->peer,
                                &hdr.src_conn_id,
                                &hdr.dst_conn_id))
-        goto undesirable;
+        goto err;
 
     ossl_qrx_inject_urxe(ch->qrx, e);
     return;
 
+err:
+    ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_INTERNAL_ERROR, 0,
+                                           "internal error");
 undesirable:
     ossl_quic_demux_release_urxe(ch->demux, e);
 }
@@ -1690,7 +1693,7 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     if (!ossl_quic_provide_initial_secret(ch->libctx,
                                           ch->propq,
                                           &ch->init_dcid,
-                                          /*is_server=*/ch->is_server,
+                                          ch->is_server,
                                           ch->qrx, ch->qtx))
         return 0;
 

@@ -60,9 +60,9 @@ int ossl_quic_tserver_read(QUIC_TSERVER *srv,
 
 /*
  * Attempts to write to stream 0. Writes the number of bytes consumed to
- * *consumed and returns 1 on success. If there is no space currently available
- * to write any bytes, 0 is written to *consumed and 1 is returned (this is
- * considered a success case).
+ * *bytes_written and returns 1 on success. If there is no space currently
+ * available to write any bytes, 0 is written to *consumed and 1 is returned
+ * (this is considered a success case).
  *
  * Note that unlike libssl public APIs, this API always works in a 'partial
  * write' mode.
