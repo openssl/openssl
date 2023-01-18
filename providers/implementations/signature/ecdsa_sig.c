@@ -467,6 +467,10 @@ static int ecdsa_get_ctx_params(void *vctx, OSSL_PARAM *params)
                                                     : EVP_MD_get0_name(ctx->md)))
         return 0;
 
+    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_NONCE_TYPE);
+    if (p != NULL && !OSSL_PARAM_set_uint(p, ctx->nonce_type))
+        return 0;
+
     return 1;
 }
 
@@ -474,6 +478,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_ALGORITHM_ID, NULL, 0),
     OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
+    OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_NONCE_TYPE, NULL),
     OSSL_PARAM_END
 };
 
