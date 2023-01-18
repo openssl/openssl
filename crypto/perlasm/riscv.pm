@@ -49,6 +49,77 @@ sub read_reg {
     return $1;
 }
 
+# Helper functions
+
+sub brev8_rv64i {
+    # brev8 without `brev8` instruction (only in Zbkb)
+    # Bit-reverses the first argument and needs two scratch registers
+    my $val = shift;
+    my $t0 = shift;
+    my $t1 = shift;
+    my $brev8_const = shift;
+    my $seq = <<___;
+        la      $brev8_const, Lbrev8_const
+
+        ld      $t0, 0($brev8_const)  # 0xAAAAAAAAAAAAAAAA
+        slli    $t1, $val, 1
+        and     $t1, $t1, $t0
+        and     $val, $val, $t0
+        srli    $val, $val, 1
+        or      $val, $t1, $val
+
+        ld      $t0, 8($brev8_const)  # 0xCCCCCCCCCCCCCCCC
+        slli    $t1, $val, 2
+        and     $t1, $t1, $t0
+        and     $val, $val, $t0
+        srli    $val, $val, 2
+        or      $val, $t1, $val
+
+        ld      $t0, 16($brev8_const) # 0xF0F0F0F0F0F0F0F0
+        slli    $t1, $val, 4
+        and     $t1, $t1, $t0
+        and     $val, $val, $t0
+        srli    $val, $val, 4
+        or      $val, $t1, $val
+___
+    return $seq;
+}
+
+sub sd_rev8_rv64i {
+    # rev8 without `rev8` instruction (only in Zbb or Zbkb)
+    # Stores the given value byte-reversed and needs one scratch register
+    my $val = shift;
+    my $addr = shift;
+    my $off = shift;
+    my $tmp = shift;
+    my $off0 = ($off + 0);
+    my $off1 = ($off + 1);
+    my $off2 = ($off + 2);
+    my $off3 = ($off + 3);
+    my $off4 = ($off + 4);
+    my $off5 = ($off + 5);
+    my $off6 = ($off + 6);
+    my $off7 = ($off + 7);
+    my $seq = <<___;
+        sb      $val, $off7($addr)
+        srli    $tmp, $val, 8
+        sb      $tmp, $off6($addr)
+        srli    $tmp, $val, 16
+        sb      $tmp, $off5($addr)
+        srli    $tmp, $val, 24
+        sb      $tmp, $off4($addr)
+        srli    $tmp, $val, 32
+        sb      $tmp, $off3($addr)
+        srli    $tmp, $val, 40
+        sb      $tmp, $off2($addr)
+        srli    $tmp, $val, 48
+        sb      $tmp, $off1($addr)
+        srli    $tmp, $val, 56
+        sb      $tmp, $off0($addr)
+___
+    return $seq;
+}
+
 # Scalar crypto instructions
 
 sub aes64ds {
@@ -118,6 +189,14 @@ sub aes64ks2 {
     my $rs1 = read_reg shift;
     my $rs2 = read_reg shift;
     return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($rd << 7));
+}
+
+sub brev8 {
+    # brev8 rd, rs
+    my $template = 0b011010000111_00000_101_00000_0010011;
+    my $rd = read_reg shift;
+    my $rs = read_reg shift;
+    return ".word ".($template | ($rs << 15) | ($rd << 7));
 }
 
 sub clmul {
