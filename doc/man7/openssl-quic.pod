@@ -359,8 +359,8 @@ Whether thread assisted mode will be used (see B<THREAD ASSISTED MODE>).
 
 =back
 
-Simple demos for QUIC usage under these various scenarios can be found in the
-B<doc/designs/ddd> directory of OpenSSL.
+Simple demos for QUIC usage under these various scenarios can be found at
+L<https://github.com/openssl/openssl/tree/master/doc/designs/ddd>.
 
 Applications which wish to implement QUIC-specific protocols should be aware of
 the APIs listed under B<QUIC-SPECIFIC APIS> which provide access to
@@ -529,11 +529,11 @@ L<BIO_recvmmsg(3)> is ephemeral in nature, such as "would block" errors.
 =head1 THREAD ASSISTED MODE
 
 The optional thread assisted mode can be used with
-L<OSSL_QUIC_client_thread_method(3)>. In this mode, a background thread is spun
-up automatically. The OpenSSL QUIC implementation then takes responsibility for
-ensuring that timeout events are handled on a timely basis even if no SSL I/O
-function such as L<SSL_read(3)> or L<SSL_write(3)> is called by the application
-for a long time.
+L<OSSL_QUIC_client_thread_method(3)>. In this mode, a background thread is
+created automatically. The OpenSSL QUIC implementation then takes responsibility
+for ensuring that timeout events are handled on a timely basis even if no SSL
+I/O function such as L<SSL_read(3)> or L<SSL_write(3)> is called by the
+application for a long time.
 
 All necessary locking is handled automatically internally, but the thread safety
 guarantees for the public SSL API are unchanged. Therefore, an application must
