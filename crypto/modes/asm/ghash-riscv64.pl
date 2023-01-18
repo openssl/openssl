@@ -229,6 +229,159 @@ gcm_gmult_rv64i_zbc__zbkb:
 ___
 }
 
+################################################################################
+# void gcm_ghash_rv64i_zbc(u64 Xi[2], const u128 Htable[16],
+#                          const u8 *inp, size_t len);
+# void gcm_ghash_rv64i_zbc__zbkb(u64 Xi[2], const u128 Htable[16],
+#                                const u8 *inp, size_t len);
+#
+# input:  Xi: current hash value
+#         Htable: copy of H
+#         inp: pointer to input data
+#         len: length of input data in bytes (mutiple of block size)
+# output: Xi: Xi+1 (next hash value Xi)
+{
+my ($Xi,$Htable,$inp,$len,$x0,$x1,$y0,$y1) = ("a0","a1","a2","a3","a4","a5","a6","a7");
+my ($z0,$z1,$z2,$z3,$t0,$t1,$polymod) = ("t0","t1","t2","t3","t4","t5","t6");
+
+$code .= <<___;
+.p2align 3
+.globl gcm_ghash_rv64i_zbc
+.type gcm_ghash_rv64i_zbc,\@function
+gcm_ghash_rv64i_zbc:
+    # Load Xi and bit-reverse it
+    ld        $x0, 0($Xi)
+    ld        $x1, 8($Xi)
+    @{[brev8_rv64i $x0, $z0, $z1, $z2]}
+    @{[brev8_rv64i $x1, $z0, $z1, $z2]}
+
+    # Load the key (already bit-reversed)
+    ld        $y0, 0($Htable)
+    ld        $y1, 8($Htable)
+
+    # Load the reduction constant
+    la        $polymod, Lpolymod
+    lbu       $polymod, 0($polymod)
+
+Lstep:
+    # Load the input data, bit-reverse them, and XOR them with Xi
+    ld        $t0, 0($inp)
+    ld        $t1, 8($inp)
+    add       $inp, $inp, 16
+    add       $len, $len, -16
+    @{[brev8_rv64i $t0, $z0, $z1, $z2]}
+    @{[brev8_rv64i $t1, $z0, $z1, $z2]}
+    xor       $x0, $x0, $t0
+    xor       $x1, $x1, $t1
+
+    # Multiplication (without Karatsuba)
+    @{[clmulh $z3, $x1, $y1]}
+    @{[clmul  $z2, $x1, $y1]}
+    @{[clmulh $t1, $x0, $y1]}
+    @{[clmul  $z1, $x0, $y1]}
+    xor       $z2, $z2, $t1
+    @{[clmulh $t1, $x1, $y0]}
+    @{[clmul  $t0, $x1, $y0]}
+    xor       $z2, $z2, $t1
+    xor       $z1, $z1, $t0
+    @{[clmulh $t1, $x0, $y0]}
+    @{[clmul  $z0, $x0, $y0]}
+    xor       $z1, $z1, $t1
+
+    # Reduction with clmul
+    @{[clmulh $t1, $z3, $polymod]}
+    @{[clmul  $t0, $z3, $polymod]}
+    xor       $z2, $z2, $t1
+    xor       $z1, $z1, $t0
+    @{[clmulh $t1, $z2, $polymod]}
+    @{[clmul  $t0, $z2, $polymod]}
+    xor       $x1, $z1, $t1
+    xor       $x0, $z0, $t0
+
+    # Iterate over all blocks
+    bnez      $len, Lstep
+
+    # Bit-reverse final Xi back and store it
+    @{[brev8_rv64i $x0, $z0, $z1, $z2]}
+    @{[brev8_rv64i $x1, $z0, $z1, $z2]}
+    sd        $x0, 0($Xi)
+    sd        $x1, 8($Xi)
+    ret
+.size gcm_ghash_rv64i_zbc,.-gcm_ghash_rv64i_zbc
+___
+}
+
+{
+my ($Xi,$Htable,$inp,$len,$x0,$x1,$y0,$y1) = ("a0","a1","a2","a3","a4","a5","a6","a7");
+my ($z0,$z1,$z2,$z3,$t0,$t1,$polymod) = ("t0","t1","t2","t3","t4","t5","t6");
+
+$code .= <<___;
+.p2align 3
+.globl gcm_ghash_rv64i_zbc__zbkb
+.type gcm_ghash_rv64i_zbc__zbkb,\@function
+gcm_ghash_rv64i_zbc__zbkb:
+    # Load Xi and bit-reverse it
+    ld        $x0, 0($Xi)
+    ld        $x1, 8($Xi)
+    @{[brev8  $x0, $x0]}
+    @{[brev8  $x1, $x1]}
+
+    # Load the key (already bit-reversed)
+    ld        $y0, 0($Htable)
+    ld        $y1, 8($Htable)
+
+    # Load the reduction constant
+    la        $polymod, Lpolymod
+    lbu       $polymod, 0($polymod)
+
+Lstep_zkbk:
+    # Load the input data, bit-reverse them, and XOR them with Xi
+    ld        $t0, 0($inp)
+    ld        $t1, 8($inp)
+    add       $inp, $inp, 16
+    add       $len, $len, -16
+    @{[brev8  $t0, $t0]}
+    @{[brev8  $t1, $t1]}
+    xor       $x0, $x0, $t0
+    xor       $x1, $x1, $t1
+
+    # Multiplication (without Karatsuba)
+    @{[clmulh $z3, $x1, $y1]}
+    @{[clmul  $z2, $x1, $y1]}
+    @{[clmulh $t1, $x0, $y1]}
+    @{[clmul  $z1, $x0, $y1]}
+    xor       $z2, $z2, $t1
+    @{[clmulh $t1, $x1, $y0]}
+    @{[clmul  $t0, $x1, $y0]}
+    xor       $z2, $z2, $t1
+    xor       $z1, $z1, $t0
+    @{[clmulh $t1, $x0, $y0]}
+    @{[clmul  $z0, $x0, $y0]}
+    xor       $z1, $z1, $t1
+
+    # Reduction with clmul
+    @{[clmulh $t1, $z3, $polymod]}
+    @{[clmul  $t0, $z3, $polymod]}
+    xor       $z2, $z2, $t1
+    xor       $z1, $z1, $t0
+    @{[clmulh $t1, $z2, $polymod]}
+    @{[clmul  $t0, $z2, $polymod]}
+    xor       $x1, $z1, $t1
+    xor       $x0, $z0, $t0
+
+    # Iterate over all blocks
+    bnez      $len, Lstep_zkbk
+
+    # Bit-reverse final Xi back and store it
+    @{[brev8  $x0, $x0]}
+    @{[brev8  $x1, $x1]}
+    sd $x0,  0($Xi)
+    sd $x1,  8($Xi)
+    ret
+.size gcm_ghash_rv64i_zbc__zbkb,.-gcm_ghash_rv64i_zbc__zbkb
+___
+}
+
 $code .= <<___;
 .p2align 3
 Lbrev8_const:
