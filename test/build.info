@@ -1057,7 +1057,9 @@ ENDIF
   ENDIF
 
   IF[{- !$disabled{'quic'} -}]
-    PROGRAMS{noinst}=quicapitest quic_wire_test quic_ackm_test quic_record_test quic_fc_test quic_stream_test quic_cfq_test quic_txpim_test quic_fifd_test quic_txp_test quic_tserver_test
+    PROGRAMS{noinst}=quicapitest quic_wire_test quic_ackm_test quic_record_test
+    PROGRAMS{noinst}=quic_fc_test quic_stream_test quic_cfq_test quic_txpim_test
+    PROGRAMS{noinst}=quic_fifd_test quic_txp_test quic_tserver_test
   ENDIF
 
   SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c

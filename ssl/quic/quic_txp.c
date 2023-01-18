@@ -316,9 +316,9 @@ static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                           uint32_t *conn_close_enc_level);
 static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                                uint32_t archetype,
-                               char is_last_in_dgram,
-                               char dgram_contains_initial,
-                               char chosen_for_conn_close);
+                               int is_last_in_dgram,
+                               int dgram_contains_initial,
+                               int chosen_for_conn_close);
 static size_t txp_determine_pn_len(OSSL_QUIC_TX_PACKETISER *txp);
 static int txp_determine_ppl_from_pl(OSSL_QUIC_TX_PACKETISER *txp,
                                      size_t pl,
@@ -333,7 +333,7 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
                                       size_t max_ppl,
                                       size_t pkt_overhead,
                                       QUIC_PKT_HDR *phdr,
-                                      char chosen_for_conn_close);
+                                      int chosen_for_conn_close);
 
 OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETISER_ARGS *args)
 {
@@ -498,7 +498,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
                                      uint32_t archetype)
 {
     uint32_t enc_level, conn_close_enc_level = QUIC_ENC_LEVEL_NUM;
-    char have_pkt_for_el[QUIC_ENC_LEVEL_NUM], is_last_in_dgram;
+    int have_pkt_for_el[QUIC_ENC_LEVEL_NUM], is_last_in_dgram;
     size_t num_el_in_dgram = 0, pkts_done = 0;
     int rc;
 
@@ -859,11 +859,11 @@ static int sstream_is_pending(QUIC_SSTREAM *sstream)
  */
 static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                                uint32_t archetype,
-                               char is_last_in_dgram,
-                               char dgram_contains_initial,
-                               char chosen_for_conn_close)
+                               int is_last_in_dgram,
+                               int dgram_contains_initial,
+                               int chosen_for_conn_close)
 {
-    char must_pad = dgram_contains_initial && is_last_in_dgram;
+    int must_pad = dgram_contains_initial && is_last_in_dgram;
     size_t min_dpl, min_pl, min_ppl, cmpl, cmppl, running_total;
     size_t mdpl, hdr_len, pkt_overhead, cc_limit;
     uint64_t cc_limit_;
@@ -1092,7 +1092,7 @@ static int txp_generate_pre_token(OSSL_QUIC_TX_PACKETISER *txp,
                                   QUIC_TXPIM_PKT *tpkt,
                                   uint32_t pn_space,
                                   struct archetype_data *a,
-                                  char chosen_for_conn_close)
+                                  int chosen_for_conn_close)
 {
     const OSSL_QUIC_FRAME_ACK *ack;
     OSSL_QUIC_FRAME_ACK ack2;
@@ -1264,7 +1264,7 @@ static int txp_generate_crypto_frames(OSSL_QUIC_TX_PACKETISER *txp,
                                       struct tx_helper *h,
                                       uint32_t pn_space,
                                       QUIC_TXPIM_PKT *tpkt,
-                                      char *have_ack_eliciting)
+                                      int *have_ack_eliciting)
 {
     size_t num_stream_iovec;
     OSSL_QUIC_FRAME_STREAM shdr = {0};
@@ -1351,7 +1351,7 @@ struct chunk_info {
     OSSL_QUIC_FRAME_STREAM shdr;
     OSSL_QTX_IOVEC iov[2];
     size_t num_stream_iovec;
-    char valid;
+    int valid;
 };
 
 static int txp_plan_stream_chunk(OSSL_QUIC_TX_PACKETISER *txp,
@@ -1414,9 +1414,9 @@ static int txp_generate_stream_frames(OSSL_QUIC_TX_PACKETISER *txp,
                                       QUIC_TXFC *stream_txfc,
                                       QUIC_STREAM *next_stream,
                                       size_t min_ppl,
-                                      char *have_ack_eliciting,
-                                      char *packet_full,
-                                      char *stream_drained,
+                                      int *have_ack_eliciting,
+                                      int *packet_full,
+                                      int *stream_drained,
                                       uint64_t *new_credit_consumed)
 {
     int rc = 0;
@@ -1626,7 +1626,7 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
                                        uint32_t pn_space,
                                        QUIC_TXPIM_PKT *tpkt,
                                        size_t min_ppl,
-                                       char *have_ack_eliciting,
+                                       int *have_ack_eliciting,
                                        QUIC_STREAM **tmp_head)
 {
     QUIC_STREAM_ITER it;
@@ -1727,7 +1727,7 @@ static int txp_generate_stream_related(OSSL_QUIC_TX_PACKETISER *txp,
 
         /* Stream Data Frames (STREAM) */
         if (stream->sstream != NULL) {
-            char packet_full = 0, stream_drained = 0;
+            int packet_full = 0, stream_drained = 0;
 
             if (!txp_generate_stream_frames(txp, h, pn_space, tpkt,
                                             stream->id, stream->sstream,
@@ -1768,14 +1768,14 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
                                       size_t max_ppl,
                                       size_t pkt_overhead,
                                       QUIC_PKT_HDR *phdr,
-                                      char chosen_for_conn_close)
+                                      int chosen_for_conn_close)
 {
     int rc = TXP_ERR_SUCCESS;
     struct archetype_data a;
     uint32_t pn_space = ossl_quic_enc_level_to_pn_space(enc_level);
     struct tx_helper h;
-    char have_helper = 0, have_ack_eliciting = 0, done_pre_token = 0;
-    char require_ack_eliciting;
+    int have_helper = 0, have_ack_eliciting = 0, done_pre_token = 0;
+    int require_ack_eliciting;
     QUIC_CFQ_ITEM *cfq_item;
     QUIC_TXPIM_PKT *tpkt = NULL;
     OSSL_QTX_PKT pkt;
