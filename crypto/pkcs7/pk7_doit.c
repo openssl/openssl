@@ -84,7 +84,11 @@ static int pkcs7_bio_add_digest(BIO **pbio, X509_ALGOR *alg,
     }
     (void)ERR_pop_to_mark();
 
-    BIO_set_md(btmp, md);
+    if (BIO_set_md(btmp, md) <= 0) {
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_BIO_LIB);
+        EVP_MD_free(fetched);
+        goto err;
+    }
     EVP_MD_free(fetched);
     if (*pbio == NULL)
         *pbio = btmp;
@@ -522,7 +526,11 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
             }
             (void)ERR_pop_to_mark();
 
-            BIO_set_md(btmp, md);
+            if (BIO_set_md(btmp, md) <= 0) {
+                EVP_MD_free(evp_md);
+                ERR_raise(ERR_LIB_PKCS7, ERR_R_BIO_LIB);
+                goto err;
+            }
             EVP_MD_free(evp_md);
             if (out == NULL)
                 out = btmp;
