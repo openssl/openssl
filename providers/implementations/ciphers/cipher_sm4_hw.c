@@ -127,10 +127,20 @@ static const PROV_CIPHER_HW sm4_##mode = {                                     \
     ossl_cipher_hw_generic_##mode,                                             \
     cipher_hw_sm4_copyctx                                                      \
 };                                                                             \
+PROV_CIPHER_HW_declare(mode)                                                   \
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_sm4_##mode(size_t keybits)           \
 {                                                                              \
+    PROV_CIPHER_HW_select(mode)                                                \
     return &sm4_##mode;                                                        \
 }
+
+#if defined(__riscv) && __riscv_xlen == 64
+# include "cipher_sm4_hw_rv64i.inc"
+#else
+/* The generic case */
+# define PROV_CIPHER_HW_declare(mode)
+# define PROV_CIPHER_HW_select(mode)
+#endif
 
 PROV_CIPHER_HW_sm4_mode(cbc)
 PROV_CIPHER_HW_sm4_mode(ecb)

@@ -10,6 +10,7 @@
 #include "crypto/sm4.h"
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_ccm.h"
+#include "crypto/sm4_platform.h"
 
 typedef struct prov_sm4_ccm_ctx_st {
     PROV_CCM_CTX base; /* Must be first */
