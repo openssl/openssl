@@ -281,6 +281,14 @@ sub rev8 {
 
 # Vector instructions
 
+sub vle32_v {
+    # vle32.v vd, (rs1)
+    my $template = 0b0000001_00000_00000_110_00000_0000111;
+    my $vd = read_vreg shift;
+    my $rs1 = read_reg shift;
+    return ".word ".($template | ($rs1 << 15) | ($vd << 7));
+}
+
 sub vle64_v {
     # vle64.v vd, (rs1)
     my $template = 0b0000001_00000_00000_111_00000_0000111;
@@ -332,6 +340,14 @@ sub vor_vv_v0t {
     return ".word ".($template | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
 }
 
+sub vse32_v {
+    # vse32.v vd, (rs1)
+    my $template = 0b0000001_00000_00000_110_00000_0100111;
+    my $vd = read_vreg shift;
+    my $rs1 = read_reg shift;
+    return ".word ".($template | ($rs1 << 15) | ($vd << 7));
+}
+
 sub vse64_v {
     # vse64.v vd, (rs1)
     my $template = 0b0000001_00000_00000_111_00000_0100111;
@@ -343,6 +359,11 @@ sub vse64_v {
 sub vsetivli__x0_2_e64_m1_tu_mu {
     # vsetivli x0, 2, e64, m1, tu, mu
     return ".word 0xc1817057";
+}
+
+sub vsetivli__x0_4_e32_m1_tu_mu {
+    # vsetivli x0, 4, e32, m1, tu, mu
+    return ".word 0xc1027057";
 }
 
 sub vslidedown_vi {
@@ -456,6 +477,25 @@ sub vclmul_vx {
     my $vs2 = read_vreg shift;
     my $rs1 = read_reg shift;
     return ".word ".($template | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
+}
+
+## Zvkg instructions
+
+sub vghsh_vv {
+    # vghsh.vv vd, vs2, vs1
+    my $template = 0b1011001_00000_00000_010_00000_1110111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $vs1 = read_vreg shift;
+    return ".word ".($template | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
+}
+
+sub vgmul_vv {
+    # vgmul.vv vd, vs2
+    my $template = 0b1010001_00000_10001_010_00000_1110111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    return ".word ".($template | ($vs2 << 20) | ($vd << 7));
 }
 
 1;
