@@ -403,8 +403,12 @@ void gcm_ghash_p8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 #  include "crypto/riscv_arch.h"
 #  define GHASH_ASM_RISCV
 #  undef  GHASH
-void gcm_init_clmul_rv64i_zbb_zbc(u128 Htable[16], const u64 Xi[2]);
-void gcm_gmult_clmul_rv64i_zbb_zbc(u64 Xi[2], const u128 Htable[16]);
+/* Zbc/Zbkc (scalar crypto with clmul) based routines. */
+void gcm_init_rv64i_zbc(u128 Htable[16], const u64 Xi[2]);
+void gcm_init_rv64i_zbc__zbb(u128 Htable[16], const u64 Xi[2]);
+void gcm_init_rv64i_zbc__zbkb(u128 Htable[16], const u64 Xi[2]);
+void gcm_gmult_rv64i_zbc(u64 Xi[2], const u128 Htable[16]);
+void gcm_gmult_rv64i_zbc__zbkb(u64 Xi[2], const u128 Htable[16]);
 # endif
 #endif
 
@@ -502,9 +506,17 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
 #elif defined(GHASH_ASM_RISCV) && __riscv_xlen == 64
     /* RISCV defaults; gmult already set above */
     ctx->ghash = NULL;
-    if (RISCV_HAS_ZBB_AND_ZBC()) {
-        ctx->ginit = gcm_init_clmul_rv64i_zbb_zbc;
-        ctx->gmult = gcm_gmult_clmul_rv64i_zbb_zbc;
+    if (RISCV_HAS_ZBC()) {
+        if (RISCV_HAS_ZBKB()) {
+            ctx->ginit = gcm_init_rv64i_zbc__zbkb;
+            ctx->gmult = gcm_gmult_rv64i_zbc__zbkb;
+        } else if (RISCV_HAS_ZBB()) {
+            ctx->ginit = gcm_init_rv64i_zbc__zbb;
+            ctx->gmult = gcm_gmult_rv64i_zbc;
+        } else {
+            ctx->ginit = gcm_init_rv64i_zbc;
+            ctx->gmult = gcm_gmult_rv64i_zbc;
+        }
     }
     return;
 #elif defined(GHASH_ASM)
