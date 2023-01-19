@@ -335,6 +335,14 @@ base providers. The other library context will just use the default provider.
         goto err;
 
     /*
+     * Set the default property query on the FIPS library context to
+     * ensure that only FIPS algorithms can be used.  There are a few non-FIPS
+     * approved algorithms in the FIPS provider for backward compatibility reasons.
+     */
+    if (!EVP_set_default_properties(fips_libctx, "fips=yes"))
+        goto err;
+
+    /*
      * We don't need to do anything special to load the default
      * provider into nonfips_libctx. This happens automatically if no
      * other providers are loaded.
@@ -345,7 +353,7 @@ base providers. The other library context will just use the default provider.
     /* As an example get some digests */
 
     /* Get a FIPS validated digest */
-    fipssha256 = EVP_MD_fetch(fips_libctx, "SHA2-256", "fips=yes");
+    fipssha256 = EVP_MD_fetch(fips_libctx, "SHA2-256", NULL);
     if (fipssha256 == NULL)
         goto err;
 
