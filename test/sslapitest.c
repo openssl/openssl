@@ -1520,7 +1520,7 @@ static int test_large_app_data(int tst)
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0, prot;
-    unsigned char *msg, *buf;
+    unsigned char *msg, *buf = NULL;
     size_t written, readbytes;
 
     switch (tst >> 2) {
