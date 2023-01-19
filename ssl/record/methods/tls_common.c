@@ -158,11 +158,15 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
 #endif
 
         defltlen = rl->max_frag_len + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD
-                   + headerlen + align;
+                   + headerlen + align + rl->eivlen;
 #ifndef OPENSSL_NO_COMP
         if (tls_allow_compression(rl))
             defltlen += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
+        /*
+         * We don't need to add eivlen here since empty fragments only occur
+         * when we don't have an explicit IV
+         */
         if (!(rl->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
             defltlen += headerlen + align + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
     }
