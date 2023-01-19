@@ -50,7 +50,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 19;
+plan tests => 20;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -1087,7 +1087,15 @@ with({ exit_checker => sub { return shift == 4; } },
                     '-inform', 'PEM',
                     '-in', data_file("pkcs7-md4.pem"),
                    ])),
-            "Check failure of EVP_DigestInit is handled correctly");
+            "Check failure of EVP_DigestInit in PKCS7 signed is handled");
+
+        ok(run(app(['openssl', 'smime', '-decrypt',
+                    '-inform', 'PEM',
+                    '-in', data_file("pkcs7-md4-encrypted.pem"),
+                    '-recip', srctop_file("test", "certs", "ee-cert.pem"),
+                    '-inkey', srctop_file("test", "certs", "ee-key.pem")
+                   ])),
+            "Check failure of EVP_DigestInit in PKCS7 signedAndEnveloped is handled");
     });
 
 sub check_availability {
