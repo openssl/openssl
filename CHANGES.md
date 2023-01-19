@@ -209,6 +209,14 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1.0 [xx XXX xxxx]
 
+ * The FIPS provider includes a few non-approved algorithms for
+   backward compatibility purposes and the "fips=yes" property query
+   must be used for all algorithm fetches to ensure FIPS compliance.
+
+   The algorithms that are included but not approved are Triple DES and EdDSA.
+
+   *Paul Dale*
+
  * Added support for KMAC in KBKDF.
 
    *Shane Lontis*
