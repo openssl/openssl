@@ -569,6 +569,11 @@ B<SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE>. This option only applies to Linux.
 KTLS sendfile on FreeBSD doesn't offer an option to disable zerocopy and
 always runs in this mode.
 
+B<IgnoreUnexpectedEOF>: Equivalent to B<SSL_OP_IGNORE_UNEXPECTED_EOF>.
+You should only enable this option if the protocol running over TLS can detect
+a truncation attack itself, and that the application is checking for that
+truncation attack.
+
 =item B<VerifyMode>
 
 The B<value> argument is a comma separated list of flags to set.
