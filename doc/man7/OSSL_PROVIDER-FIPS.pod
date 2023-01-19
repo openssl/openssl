@@ -7,7 +7,7 @@ OSSL_PROVIDER-FIPS - OpenSSL FIPS provider
 =head1 DESCRIPTION
 
 The OpenSSL FIPS provider is a special provider that conforms to the Federal
-Information Processing Standards (FIPS) specified in FIPS 140-2. This 'module'
+Information Processing Standards (FIPS) specified in FIPS 140-3. This 'module'
 contains an approved set of cryptographic algorithms that is validated by an
 accredited testing laboratory.
 
@@ -32,7 +32,7 @@ L<EVP_PKEY_CTX_new_from_name(3)>.
 It isn't mandatory to query for any of these properties, except to
 make sure to get implementations of this provider and none other.
 
-The "fips=yes" property can be use to make sure only FIPS approved
+The C<fips=yes> property can be use to make sure only FIPS approved
 implementations are used for crypto operations.  This may also include
 other non-crypto support operations that are not in the FIPS provider,
 such as asymmetric key encoders,
@@ -390,6 +390,20 @@ A simple self test callback is shown below for illustrative purposes.
     return ret;
   }
 
+=head1 NOTES
+
+The FIPS provider in OpenSSL 3.1 includes some non-FIPS validated elliptic curves,
+consequently the property query C<fips=yes> is mandatory for applications that
+want to operate in a FIPS approved manner.  The curves are:
+
+=over 4
+
+=item Ed25519
+
+=item Ed448
+
+=back
+
 =head1 SEE ALSO
 
 L<openssl-fipsinstall(1)>,
@@ -404,6 +418,10 @@ L<provider(7)>
 =head1 HISTORY
 
 This functionality was added in OpenSSL 3.0.
+
+OpenSSL 3.0 includes a FIPS 140-2 approved FIPS provider.
+
+OpenSSL 3.1 includes a FIPS 140-3 approved FIPS provider.
 
 =head1 COPYRIGHT
 

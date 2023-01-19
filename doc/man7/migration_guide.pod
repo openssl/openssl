@@ -20,7 +20,19 @@ L<crypto(7)>.
 
 =head2 Main Changes from OpenSSL 3.0
 
-There are no changes requiring additional migration measures since OpenSSL 3.0.
+The FIPS provider in OpenSSL 3.1 includes some non-FIPS validated elliptic curves,
+consequently the property query C<fips=yes> is mandatory for applications that
+want to operate in a FIPS approved manner.  The curves are:
+
+=over 4
+
+=item Ed25519
+
+=item Ed448
+
+=back
+
+There are no other changes requiring additional migration measures since OpenSSL 3.0.
 
 =head1 OPENSSL 3.0
 
