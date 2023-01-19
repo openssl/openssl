@@ -77,6 +77,8 @@ Quick start
     - `perl Configure VC-WIN64A`    if you want 64-bit OpenSSL or
     - `perl Configure VC-WIN64-ARM` if you want Windows on Arm (win-arm64)
        OpenSSL or
+    - `perl Configure VC-WIN32-HYBRIDCRT`
+    - `perl Configure VC-WIN64A-HYBRIDCRT`
     - `perl Configure`              to let Configure figure out the platform
 
  6. `nmake`
