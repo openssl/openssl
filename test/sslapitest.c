@@ -1507,6 +1507,146 @@ static int test_large_message_dtls(void)
 }
 #endif
 
+/*
+ * Test we can successfully send the maximum amount of application data. We
+ * test each protocol version individually, each with and without EtM enabled.
+ * TLSv1.3 doesn't use EtM so technically it is redundant to test both but it is
+ * simpler this way. We also test all combinations with and without the
+ * SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS option which affects the size of the
+ * underlying buffer.
+ */
+static int test_large_app_data(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0, prot;
+    unsigned char *msg, *buf = NULL;
+    size_t written, readbytes;
+
+    switch (tst >> 2) {
+    case 0:
+#ifndef OSSL_NO_USABLE_TLS1_3
+        prot = TLS1_3_VERSION;
+        break;
+#else
+        return 1;
+#endif
+
+    case 1:
+#ifndef OPENSSL_NO_TLS1_2
+        prot = TLS1_2_VERSION;
+        break;
+#else
+        return 1;
+#endif
+
+    case 2:
+#ifndef OPENSSL_NO_TLS1_1
+        prot = TLS1_1_VERSION;
+        break;
+#else
+        return 1;
+#endif
+
+    case 3:
+#ifndef OPENSSL_NO_TLS1
+        prot = TLS1_VERSION;
+        break;
+#else
+        return 1;
+#endif
+
+    case 4:
+#ifndef OPENSSL_NO_SSL3
+        prot = SSL3_VERSION;
+        break;
+#else
+        return 1;
+#endif
+
+    default:
+        /* Shouldn't happen */
+        return 0;
+    }
+
+    if (prot < TLS1_2_VERSION && is_fips)
+        return 1;
+
+    /* Maximal sized message of zeros */
+    msg = OPENSSL_zalloc(SSL3_RT_MAX_PLAIN_LENGTH);
+    if (!TEST_ptr(msg))
+        goto end;
+
+    buf = OPENSSL_malloc(SSL3_RT_MAX_PLAIN_LENGTH + 1);
+    if (!TEST_ptr(buf))
+        goto end;
+    /* Set whole buffer to all bits set */
+    memset(buf, 0xff, SSL3_RT_MAX_PLAIN_LENGTH + 1);
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), prot, prot,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if ((prot < TLS1_2_VERSION)) {
+        /* Older protocol versions need SECLEVEL=0 due to SHA1 usage */
+        if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0"))
+                || !TEST_true(SSL_CTX_set_cipher_list(sctx,
+                                                      "DEFAULT:@SECLEVEL=0")))
+        goto end;
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL)))
+        goto end;
+
+    if ((tst & 1) != 0) {
+        /* Setting this option gives us a minimally sized underlying buffer */
+        if (!TEST_true(SSL_set_options(serverssl,
+                                       SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
+                || !TEST_true(SSL_set_options(clientssl,
+                                              SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS)))
+            goto end;
+    }
+
+    if ((tst & 2) != 0) {
+        /*
+         * Setting this option means the MAC is added before encryption
+         * giving us a larger record for the encryption process
+         */
+        if (!TEST_true(SSL_set_options(serverssl, SSL_OP_NO_ENCRYPT_THEN_MAC))
+                || !TEST_true(SSL_set_options(clientssl,
+                                              SSL_OP_NO_ENCRYPT_THEN_MAC)))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(clientssl, msg, SSL3_RT_MAX_PLAIN_LENGTH,
+                                &written))
+            || !TEST_size_t_eq(written, SSL3_RT_MAX_PLAIN_LENGTH))
+        goto end;
+
+    /* We provide a buffer slightly larger than what we are actually expecting */
+    if (!TEST_true(SSL_read_ex(serverssl, buf, SSL3_RT_MAX_PLAIN_LENGTH + 1,
+                               &readbytes)))
+        goto end;
+
+    if (!TEST_mem_eq(msg, written, buf, readbytes))
+        goto end;
+
+    testresult = 1;
+end:
+    OPENSSL_free(msg);
+    OPENSSL_free(buf);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
                                      const SSL_METHOD *cmeth,
                                      int min_version, int max_version)
@@ -10015,6 +10155,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DTLS
     ADD_TEST(test_large_message_dtls);
 #endif
+    ADD_ALL_TESTS(test_large_app_data, 20);
     ADD_TEST(test_cleanse_plaintext);
 #ifndef OPENSSL_NO_OCSP
     ADD_TEST(test_tlsext_status_type);
