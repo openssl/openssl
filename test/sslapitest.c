@@ -1594,6 +1594,9 @@ static int test_large_app_data(int tst)
         return 0;
     }
 
+    if (prot < TLS1_2_VERSION && is_fips)
+        return 1;
+
     /* Maximal sized message of zeros */
     msg = OPENSSL_zalloc(SSL3_RT_MAX_PLAIN_LENGTH);
     if (!TEST_ptr(msg))
