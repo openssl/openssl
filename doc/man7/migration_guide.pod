@@ -20,15 +20,15 @@ L<crypto(7)>.
 
 =head2 Main Changes from OpenSSL 3.0
 
-The FIPS provider in OpenSSL 3.1 includes some non-FIPS validated elliptic curves,
+The FIPS provider in OpenSSL 3.1 includes some non-FIPS validated algorithms,
 consequently the property query C<fips=yes> is mandatory for applications that
-want to operate in a FIPS approved manner.  The curves are:
+want to operate in a FIPS approved manner.  The algoriths are:
 
 =over 4
 
-=item Ed25519
+=item Triple DES
 
-=item Ed448
+=item EdDSA
 
 =back
 

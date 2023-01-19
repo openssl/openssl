@@ -392,15 +392,15 @@ A simple self test callback is shown below for illustrative purposes.
 
 =head1 NOTES
 
-The FIPS provider in OpenSSL 3.1 includes some non-FIPS validated elliptic curves,
+The FIPS provider in OpenSSL 3.1 includes some non-FIPS validated algorithms,
 consequently the property query C<fips=yes> is mandatory for applications that
-want to operate in a FIPS approved manner.  The curves are:
+want to operate in a FIPS approved manner.  The algoriths are:
 
 =over 4
 
-=item Ed25519
+=item Triple DES
 
-=item Ed448
+=item EdDSA
 
 =back
 
