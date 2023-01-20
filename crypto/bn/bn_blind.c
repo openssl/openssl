@@ -13,20 +13,6 @@
 
 #define BN_BLINDING_COUNTER     32
 
-struct bn_blinding_st {
-    BIGNUM *A;
-    BIGNUM *Ai;
-    BIGNUM *e;
-    BIGNUM *mod;                /* just a reference */
-    CRYPTO_THREAD_ID tid;
-    int counter;
-    unsigned long flags;
-    BN_MONT_CTX *m_ctx;
-    int (*bn_mod_exp) (BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-                       const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-    CRYPTO_RWLOCK *lock;
-};
-
 BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
 {
     BN_BLINDING *ret = NULL;
