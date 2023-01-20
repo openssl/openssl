@@ -28,7 +28,7 @@ BIO_set_nbio, BIO_do_connect - connect BIO
 
  long BIO_set_nbio(BIO *b, long n);
 
- int BIO_do_connect(BIO *b);
+ long BIO_do_connect(BIO *b);
 
 =head1 DESCRIPTION
 
