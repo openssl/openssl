@@ -61,9 +61,15 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
 #define SSL_COMP_ZLIB_IDX       1
 #define SSL_COMP_NUM_IDX        2
 
+#ifndef OPENSSL_NO_COMP
+static CRYPTO_RWLOCK *ssl_comp_methods_lock = NULL;
+
+/*
+ * Protected by ssl_comp_lock. Must always be sorted so we can use a read lock
+ * for searching.
+ */
 static STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 
-#ifndef OPENSSL_NO_COMP
 static CRYPTO_ONCE ssl_load_builtin_comp_once = CRYPTO_ONCE_STATIC_INIT;
 #endif
 
@@ -457,9 +463,16 @@ DEFINE_RUN_ONCE_STATIC(do_load_builtin_compressions)
     SSL_COMP *comp = NULL;
     COMP_METHOD *method = COMP_zlib();
 
-    ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
+    if ((ssl_comp_methods_lock = CRYPTO_THREAD_lock_new()) == NULL)
+        return 0;
 
-    if (COMP_get_type(method) != NID_undef && ssl_comp_methods != NULL) {
+    if ((ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp)) == NULL) {
+        CRYPTO_THREAD_lock_free(ssl_comp_methods_lock);
+        ssl_comp_methods_lock = NULL;
+        return 0;
+    }
+
+    if (COMP_get_type(method) != NID_undef) {
         comp = OPENSSL_malloc(sizeof(*comp));
         if (comp != NULL) {
             comp->method = method;
@@ -469,6 +482,7 @@ DEFINE_RUN_ONCE_STATIC(do_load_builtin_compressions)
             sk_SSL_COMP_sort(ssl_comp_methods);
         }
     }
+
     return 1;
 }
 
@@ -519,22 +533,23 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     if (c == NULL)
         return 0;
     if (comp != NULL) {
-        SSL_COMP ctmp;
 #ifndef OPENSSL_NO_COMP
-        if (!load_builtin_compressions()) {
-            /*
-             * Currently don't care, since a failure only means that
-             * ssl_comp_methods is NULL, which is perfectly OK
-             */
-        }
-#endif
+        SSL_COMP ctmp;
+
         *comp = NULL;
         ctmp.id = s->compress_meth;
-        if (ssl_comp_methods != NULL) {
+        if (load_builtin_compressions()
+            /*
+             * ssl_comp_methods is sorted after every mutation
+             * so this can be a read lock.
+             */
+            && CRYPTO_THREAD_read_lock(ssl_comp_methods_lock)) {
             i = sk_SSL_COMP_find(ssl_comp_methods, &ctmp);
             if (i >= 0)
                 *comp = sk_SSL_COMP_value(ssl_comp_methods, i);
+            CRYPTO_THREAD_unlock(ssl_comp_methods_lock);
         }
+#endif
         /* If were only interested in comp then return success */
         if ((enc == NULL) && (md == NULL))
             return 1;
@@ -2057,17 +2072,26 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 
     comp->id = id;
     comp->method = cm;
-    load_builtin_compressions();
+    if (!load_builtin_compressions()
+        || !CRYPTO_THREAD_write_lock(ssl_comp_methods_lock)) {
+        OPENSSL_free(comp);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        return 1;
+    }
     if (ssl_comp_methods && sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
+        CRYPTO_THREAD_unlock(ssl_comp_methods_lock);
         OPENSSL_free(comp);
         ERR_raise(ERR_LIB_SSL, SSL_R_DUPLICATE_COMPRESSION_ID);
         return 1;
     }
     if (ssl_comp_methods == NULL || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
+        CRYPTO_THREAD_unlock(ssl_comp_methods_lock);
         OPENSSL_free(comp);
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 1;
     }
+    sk_SSL_COMP_sort(ssl_comp_methods);
+    CRYPTO_THREAD_unlock(ssl_comp_methods_lock);
     return 0;
 }
 #endif
