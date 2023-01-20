@@ -11,6 +11,7 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "internal/cryptlib.h"
+#include "internal/thread_once.h"
 #include <stdio.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
@@ -21,6 +22,10 @@
 #include "standard_methods.h"
 
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
+
+static CRYPTO_ONCE app_methods_lock_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_RWLOCK *app_methods_lock = NULL;
+/* protected by app_methods_lock */
 static STACK_OF(EVP_PKEY_ASN1_METHOD) *app_methods = NULL;
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_ASN1_METHOD *,
@@ -35,25 +40,69 @@ static int ameth_cmp(const EVP_PKEY_ASN1_METHOD *const *a,
 IMPLEMENT_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_ASN1_METHOD *,
                              const EVP_PKEY_ASN1_METHOD *, ameth);
 
+DEFINE_RUN_ONCE_STATIC(do_app_methods_lock_init)
+{
+    if (app_methods_lock == NULL
+        && (app_methods_lock = CRYPTO_THREAD_lock_new()) == NULL)
+        return 0;
+
+    if (app_methods == NULL
+        && (app_methods = sk_EVP_PKEY_ASN1_METHOD_new(ameth_cmp)) == NULL)
+        return 0;
+
+    return 1;
+}
+
+static int ensure_init(void)
+{
+    if (!RUN_ONCE(&app_methods_lock_init, do_app_methods_lock_init))
+        return 0;
+
+    return 1;
+}
+
+void ossl_app_methods_cleanup(void)
+{
+    sk_EVP_PKEY_ASN1_METHOD_pop_free(app_methods, EVP_PKEY_asn1_free);
+    app_methods = NULL;
+
+    if (app_methods_lock != NULL) {
+        CRYPTO_THREAD_lock_free(app_methods_lock);
+        app_methods_lock = NULL;
+    }
+}
+
 int EVP_PKEY_asn1_get_count(void)
 {
     int num = OSSL_NELEM(standard_methods);
-    if (app_methods)
+
+    if (ensure_init()
+        && CRYPTO_THREAD_read_lock(app_methods_lock)) {
         num += sk_EVP_PKEY_ASN1_METHOD_num(app_methods);
+        CRYPTO_THREAD_unlock(app_methods_lock);
+    }
+
     return num;
 }
 
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
 {
+    const EVP_PKEY_ASN1_METHOD *m;
     int num = OSSL_NELEM(standard_methods);
     if (idx < 0)
         return NULL;
     if (idx < num)
         return standard_methods[idx];
     idx -= num;
-    return sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
+    if (!ensure_init()
+        || !CRYPTO_THREAD_read_lock(app_methods_lock))
+        return NULL;
+    m = sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
+    CRYPTO_THREAD_unlock(app_methods_lock);
+    return m;
 }
 
+/* Precondition: must hold app_methods_lock (unchecked) */
 static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
 {
     EVP_PKEY_ASN1_METHOD tmp;
@@ -82,12 +131,19 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type)
 {
     const EVP_PKEY_ASN1_METHOD *t;
 
+    if (!ensure_init()
+        || !CRYPTO_THREAD_read_lock(app_methods_lock))
+        return NULL;
+
     for (;;) {
         t = pkey_asn1_find(type);
         if (!t || !(t->pkey_flags & ASN1_PKEY_ALIAS))
             break;
         type = t->pkey_base_id;
     }
+
+    CRYPTO_THREAD_unlock(app_methods_lock);
+
     if (pe) {
 #ifndef OPENSSL_NO_ENGINE
         ENGINE *e;
@@ -159,22 +215,25 @@ int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
         return 0;
     }
 
-    if (app_methods == NULL) {
-        app_methods = sk_EVP_PKEY_ASN1_METHOD_new(ameth_cmp);
-        if (app_methods == NULL)
-            return 0;
-    }
+    if (!ensure_init()
+        || !CRYPTO_THREAD_write_lock(app_methods_lock))
+        return 0;
 
     tmp.pkey_id = ameth->pkey_id;
     if (sk_EVP_PKEY_ASN1_METHOD_find(app_methods, &tmp) >= 0) {
+        CRYPTO_THREAD_unlock(app_methods_lock);
         ERR_raise(ERR_LIB_EVP,
                   EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED);
         return 0;
     }
 
-    if (!sk_EVP_PKEY_ASN1_METHOD_push(app_methods, ameth))
+    if (!sk_EVP_PKEY_ASN1_METHOD_push(app_methods, ameth)) {
+        CRYPTO_THREAD_unlock(app_methods_lock);
         return 0;
+    }
+
     sk_EVP_PKEY_ASN1_METHOD_sort(app_methods);
+    CRYPTO_THREAD_unlock(app_methods_lock);
     return 1;
 }
 

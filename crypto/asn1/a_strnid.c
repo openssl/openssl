@@ -13,7 +13,7 @@
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
 
-static  CRYPTO_ONCE stable_lock_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_ONCE stable_lock_init = CRYPTO_ONCE_STATIC_INIT;
 static CRYPTO_RWLOCK *stable_lock = NULL;
 /* protected by stable_lock */
 static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;
