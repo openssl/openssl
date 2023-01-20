@@ -116,4 +116,13 @@ OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx);
 
 extern const BIGNUM ossl_bn_inv_sqrt_2;
 
+#if defined(OPENSSL_SYS_LINUX) && !defined(FIPS_MODULE) && defined (__s390x__)
+# define S390X_MOD_EXP
+#endif
+
+int s390x_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+                const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+int s390x_crt(BIGNUM *r, const BIGNUM *i, const BIGNUM *p, const BIGNUM *q,
+            const BIGNUM *dmp, const BIGNUM *dmq, const BIGNUM *iqmp);
+
 #endif

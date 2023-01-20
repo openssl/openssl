@@ -33,6 +33,27 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa,
                            BN_CTX *ctx);
 static int rsa_ossl_init(RSA *rsa);
 static int rsa_ossl_finish(RSA *rsa);
+#ifdef S390X_MOD_EXP
+static int rsa_ossl_s390x_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa,
+                                BN_CTX *ctx);
+static RSA_METHOD rsa_pkcs1_ossl_meth = {
+    "OpenSSL PKCS#1 RSA",
+    rsa_ossl_public_encrypt,
+    rsa_ossl_public_decrypt,     /* signature verification */
+    rsa_ossl_private_encrypt,    /* signing */
+    rsa_ossl_private_decrypt,
+    rsa_ossl_s390x_mod_exp,
+    s390x_mod_exp,
+    rsa_ossl_init,
+    rsa_ossl_finish,
+    RSA_FLAG_FIPS_METHOD,       /* flags */
+    NULL,
+    0,                          /* rsa_sign */
+    0,                          /* rsa_verify */
+    NULL,                       /* rsa_keygen */
+    NULL                        /* rsa_multi_prime_keygen */
+};
+#else
 static RSA_METHOD rsa_pkcs1_ossl_meth = {
     "OpenSSL PKCS#1 RSA",
     rsa_ossl_public_encrypt,
@@ -51,6 +72,7 @@ static RSA_METHOD rsa_pkcs1_ossl_meth = {
     NULL,                       /* rsa_keygen */
     NULL                        /* rsa_multi_prime_keygen */
 };
+#endif
 
 static const RSA_METHOD *default_RSA_meth = &rsa_pkcs1_ossl_meth;
 
@@ -1098,3 +1120,16 @@ static int rsa_ossl_finish(RSA *rsa)
     BN_MONT_CTX_free(rsa->_method_mod_q);
     return 1;
 }
+
+#ifdef S390X_MOD_EXP
+static int rsa_ossl_s390x_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa,
+                                BN_CTX *ctx)
+{
+    if (rsa->version != RSA_ASN1_VERSION_MULTI) {
+        if (s390x_crt(r0, i, rsa->p, rsa->q, rsa->dmp1, rsa->dmq1, rsa->iqmp) == 1)
+            return 1;
+    }
+    return rsa_ossl_mod_exp(r0, i, rsa, ctx);
+}
+
+#endif
