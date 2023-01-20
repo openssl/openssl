@@ -646,8 +646,9 @@ int ossl_cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 int ossl_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
                                size_t ivlen)
 {
-    if (ivlen != ctx->ivlen
-        || ivlen > sizeof(ctx->iv)) {
+    if (ivlen > sizeof(ctx->iv)
+        || (!ctx->pad_iv && ivlen != ctx->ivlen)
+        || (ctx->pad_iv && ivlen > ctx->ivlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
         return 0;
     }
@@ -664,6 +665,8 @@ void ossl_cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
 
+    if ((flags & PROV_CIPHER_FLAG_PAD_IV) != 0)
+        ctx->pad_iv = 1;
     if ((flags & PROV_CIPHER_FLAG_INVERSE_CIPHER) != 0)
         ctx->inverse_cipher = 1;
     if ((flags & PROV_CIPHER_FLAG_VARIABLE_LENGTH) != 0)

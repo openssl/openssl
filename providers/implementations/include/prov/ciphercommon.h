@@ -44,6 +44,7 @@ typedef int (PROV_CIPHER_HW_FN)(PROV_CIPHER_CTX *dat, unsigned char *out,
 /* Internal flags that are only used within the provider */
 # define PROV_CIPHER_FLAG_VARIABLE_LENGTH  0x0100
 # define PROV_CIPHER_FLAG_INVERSE_CIPHER   0x0200
+# define PROV_CIPHER_FLAG_PAD_IV           0x0400
 
 struct prov_cipher_ctx_st {
     /* place buffer at the beginning for memory alignment */
@@ -73,6 +74,7 @@ struct prov_cipher_ctx_st {
     unsigned int variable_keylength : 1;
     unsigned int inverse_cipher : 1; /* set to 1 to use inverse cipher */
     unsigned int use_bits : 1; /* Set to 0 for cfb1 to use bits instead of bytes */
+    unsigned int pad_iv : 1; /* Set to 1 if the iv len can be smaller than the default size */
 
     unsigned int tlsversion; /* If TLS padding is in use the TLS version number */
     unsigned char *tlsmac;   /* tls MAC extracted from the last record */
