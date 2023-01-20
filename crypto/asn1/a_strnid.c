@@ -9,13 +9,39 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/thread_once.h"
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
 
+static  CRYPTO_ONCE stable_lock_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_RWLOCK *stable_lock = NULL;
+/* protected by stable_lock */
 static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;
+
 static void st_free(ASN1_STRING_TABLE *tbl);
 static int sk_table_cmp(const ASN1_STRING_TABLE *const *a,
                         const ASN1_STRING_TABLE *const *b);
+
+DEFINE_RUN_ONCE_STATIC(do_stable_lock_init)
+{
+    if (stable_lock == NULL
+        && (stable_lock = CRYPTO_THREAD_lock_new()) == NULL)
+        return 0;
+
+    if (stable == NULL
+        && (stable = sk_ASN1_STRING_TABLE_new(sk_table_cmp)) == NULL)
+        return 0;
+
+    return 1;
+}
+
+static int ensure_init(void)
+{
+    if (!RUN_ONCE(&stable_lock_init, do_stable_lock_init))
+        return 0;
+
+    return 1;
+}
 
 /*
  * This is the global mask for the mbstring functions: this is use to mask
@@ -85,8 +111,15 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
     unsigned long mask;
     int ret;
 
+    if (!ensure_init())
+        return NULL;
+
+    if (!CRYPTO_THREAD_write_lock(stable_lock))
+        return NULL;
+
     if (out == NULL)
         out = &str;
+
     tbl = ASN1_STRING_TABLE_get(nid);
     if (tbl != NULL) {
         mask = tbl->mask;
@@ -98,6 +131,9 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
         ret = ASN1_mbstring_copy(out, in, inlen, inform,
                                  DIRSTRING_TYPE & global_mask);
     }
+
+    CRYPTO_THREAD_unlock(stable_lock);
+
     if (ret <= 0)
         return NULL;
     return *out;
@@ -124,6 +160,7 @@ static int table_cmp(const ASN1_STRING_TABLE *a, const ASN1_STRING_TABLE *b)
 
 IMPLEMENT_OBJ_BSEARCH_CMP_FN(ASN1_STRING_TABLE, ASN1_STRING_TABLE, table);
 
+/* Precondition: Must hold write lock on stable_lock (unchecked) */
 ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
 {
     int idx;
@@ -148,23 +185,25 @@ ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
 
 static ASN1_STRING_TABLE *stable_get(int nid)
 {
-    ASN1_STRING_TABLE *tmp, *rv;
+    ASN1_STRING_TABLE *tmp, *rv = NULL, *res = NULL;
 
     /* Always need a string table so allocate one if NULL */
-    if (stable == NULL) {
-        stable = sk_ASN1_STRING_TABLE_new(sk_table_cmp);
-        if (stable == NULL)
-            return NULL;
-    }
+    if (!ensure_init())
+        return NULL;
+
+    if (!CRYPTO_THREAD_write_lock(stable_lock))
+        return NULL;
+
     tmp = ASN1_STRING_TABLE_get(nid);
-    if (tmp != NULL && tmp->flags & STABLE_FLAGS_MALLOC)
-        return tmp;
-    if ((rv = OPENSSL_zalloc(sizeof(*rv))) == NULL)
-        return NULL;
-    if (!sk_ASN1_STRING_TABLE_push(stable, rv)) {
-        OPENSSL_free(rv);
-        return NULL;
+    if (tmp != NULL && tmp->flags & STABLE_FLAGS_MALLOC) {
+        res = tmp;
+        goto out;
     }
+
+    if ((rv = OPENSSL_zalloc(sizeof(*rv))) == NULL)
+        goto out;
+    if (!sk_ASN1_STRING_TABLE_push(stable, rv))
+        goto out;
     if (tmp != NULL) {
         rv->nid = tmp->nid;
         rv->minsize = tmp->minsize;
@@ -177,7 +216,15 @@ static ASN1_STRING_TABLE *stable_get(int nid)
         rv->maxsize = -1;
         rv->flags = STABLE_FLAGS_MALLOC;
     }
-    return rv;
+
+    res = rv;
+
+out:
+    if (rv != NULL && res == NULL)
+        OPENSSL_free(rv);
+
+    CRYPTO_THREAD_unlock(stable_lock);
+    return res;
 }
 
 int ASN1_STRING_TABLE_add(int nid,
@@ -207,10 +254,15 @@ void ASN1_STRING_TABLE_cleanup(void)
     STACK_OF(ASN1_STRING_TABLE) *tmp;
 
     tmp = stable;
-    if (tmp == NULL)
-        return;
-    stable = NULL;
-    sk_ASN1_STRING_TABLE_pop_free(tmp, st_free);
+    if (tmp != NULL) {
+        stable = NULL;
+        sk_ASN1_STRING_TABLE_pop_free(tmp, st_free);
+    }
+
+    if (stable_lock != NULL) {
+        CRYPTO_THREAD_lock_free(stable_lock);
+        stable_lock = NULL;
+    }
 }
 
 static void st_free(ASN1_STRING_TABLE *tbl)
