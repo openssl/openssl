@@ -1525,7 +1525,7 @@ static int test_large_app_data(int tst)
 
     switch (tst >> 2) {
     case 0:
-#ifndef OPENSSL_NO_TLS1_3
+#ifndef OSSL_NO_USABLE_TLS1_3
         prot = TLS1_3_VERSION;
         break;
 #else
