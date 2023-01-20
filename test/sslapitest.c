@@ -809,6 +809,8 @@ static int test_large_app_data(int tst)
     int testresult = 0, prot;
     unsigned char *msg, *buf = NULL;
     size_t written, readbytes;
+    const SSL_METHOD *smeth = TLS_server_method();
+    const SSL_METHOD *cmeth = TLS_client_method();
 
     switch (tst >> 2) {
     case 0:
@@ -851,6 +853,26 @@ static int test_large_app_data(int tst)
         return 1;
 #endif
 
+    case 5:
+#ifndef OPENSSL_NO_DTLS1_2
+        prot = DTLS1_2_VERSION;
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        break;
+#else
+        return 1;
+#endif
+
+    case 6:
+#ifndef OPENSSL_NO_DTLS1
+        prot = DTLS1_VERSION;
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        break;
+#else
+        return 1;
+#endif
+
     default:
         /* Shouldn't happen */
         return 0;
@@ -867,8 +889,8 @@ static int test_large_app_data(int tst)
     /* Set whole buffer to all bits set */
     memset(buf, 0xff, SSL3_RT_MAX_PLAIN_LENGTH + 1);
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                                       prot, prot, &sctx, &cctx, cert, privkey)))
+    if (!TEST_true(create_ssl_ctx_pair(smeth, cmeth, prot, prot, &sctx, &cctx,
+                                       cert, privkey)))
         goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
@@ -7304,7 +7326,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DTLS
     ADD_TEST(test_large_message_dtls);
 #endif
-    ADD_ALL_TESTS(test_large_app_data, 20);
+    ADD_ALL_TESTS(test_large_app_data, 28);
 #ifndef OPENSSL_NO_OCSP
     ADD_TEST(test_tlsext_status_type);
 #endif
