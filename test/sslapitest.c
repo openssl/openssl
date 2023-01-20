@@ -1522,6 +1522,8 @@ static int test_large_app_data(int tst)
     int testresult = 0, prot;
     unsigned char *msg, *buf = NULL;
     size_t written, readbytes;
+    const SSL_METHOD *smeth = TLS_server_method();
+    const SSL_METHOD *cmeth = TLS_client_method();
 
     switch (tst >> 2) {
     case 0:
@@ -1564,12 +1566,32 @@ static int test_large_app_data(int tst)
         return 1;
 #endif
 
+    case 5:
+#ifndef OPENSSL_NO_DTLS1_2
+        prot = DTLS1_2_VERSION;
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        break;
+#else
+        return 1;
+#endif
+
+    case 6:
+#ifndef OPENSSL_NO_DTLS1
+        prot = DTLS1_VERSION;
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        break;
+#else
+        return 1;
+#endif
+
     default:
         /* Shouldn't happen */
         return 0;
     }
 
-    if (prot < TLS1_2_VERSION && is_fips)
+    if ((prot < TLS1_2_VERSION || prot == DTLS1_VERSION) && is_fips)
         return 1;
 
     /* Maximal sized message of zeros */
@@ -1583,12 +1605,11 @@ static int test_large_app_data(int tst)
     /* Set whole buffer to all bits set */
     memset(buf, 0xff, SSL3_RT_MAX_PLAIN_LENGTH + 1);
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), prot, prot,
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, prot, prot,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
 
-    if ((prot < TLS1_2_VERSION)) {
+    if (prot < TLS1_2_VERSION || prot == DTLS1_VERSION) {
         /* Older protocol versions need SECLEVEL=0 due to SHA1 usage */
         if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0"))
                 || !TEST_true(SSL_CTX_set_cipher_list(sctx,
@@ -10342,7 +10363,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DTLS
     ADD_TEST(test_large_message_dtls);
 #endif
-    ADD_ALL_TESTS(test_large_app_data, 20);
+    ADD_ALL_TESTS(test_large_app_data, 28);
     ADD_TEST(test_cleanse_plaintext);
 #ifndef OPENSSL_NO_OCSP
     ADD_TEST(test_tlsext_status_type);
