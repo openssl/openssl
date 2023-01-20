@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/thread_once.h"
 #include <openssl/evp.h>
 #include <openssl/core.h>
 #include <openssl/core_names.h>
@@ -30,7 +31,33 @@ struct evp_pbe_st {
     EVP_PBE_KEYGEN_EX *keygen_ex;
 };
 
+static int pbe_cmp(const EVP_PBE_CTL *const *a, const EVP_PBE_CTL *const *b);
+
+static CRYPTO_ONCE pbe_algs_lock_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_RWLOCK *pbe_algs_lock = NULL;
+/* protected by pbe_algs_lock */
 static STACK_OF(EVP_PBE_CTL) *pbe_algs;
+
+DEFINE_RUN_ONCE_STATIC(do_pbe_algs_lock_init)
+{
+    if (pbe_algs_lock == NULL
+        && (pbe_algs_lock = CRYPTO_THREAD_lock_new()) == NULL)
+        return 0;
+
+    if (pbe_algs == NULL
+        && (pbe_algs = sk_EVP_PBE_CTL_new(pbe_cmp)) == NULL)
+        return 0;
+
+    return 1;
+}
+
+static int ensure_init(void)
+{
+    if (!RUN_ONCE(&pbe_algs_lock_init, do_pbe_algs_lock_init))
+        return 0;
+
+    return 1;
+}
 
 static const EVP_PBE_CTL builtin_pbe[] = {
     {EVP_PBE_TYPE_OUTER, NID_pbeWithMD2AndDES_CBC,
@@ -201,12 +228,9 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
 {
     EVP_PBE_CTL *pbe_tmp = NULL;
 
-    if (pbe_algs == NULL) {
-        pbe_algs = sk_EVP_PBE_CTL_new(pbe_cmp);
-        if (pbe_algs == NULL) {
-            ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
-            goto err;
-        }
+    if (!ensure_init()) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
+        goto err;
     }
 
     if ((pbe_tmp = OPENSSL_zalloc(sizeof(*pbe_tmp))) == NULL)
@@ -218,10 +242,16 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
     pbe_tmp->md_nid = md_nid;
     pbe_tmp->keygen = keygen;
 
+    if (!CRYPTO_THREAD_write_lock(pbe_algs_lock))
+        goto err;
+
     if (!sk_EVP_PBE_CTL_push(pbe_algs, pbe_tmp)) {
+        CRYPTO_THREAD_unlock(pbe_algs_lock);
         ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         goto err;
     }
+
+    CRYPTO_THREAD_unlock(pbe_algs_lock);
     return 1;
 
  err:
@@ -258,9 +288,13 @@ int EVP_PBE_find_ex(int type, int pbe_nid, int *pcnid, int *pmnid,
     pbelu.pbe_type = type;
     pbelu.pbe_nid = pbe_nid;
 
-    if (pbe_algs != NULL) {
+    if (ensure_init()) {
+        if (!CRYPTO_THREAD_write_lock(pbe_algs_lock))
+            return 0;
+
         i = sk_EVP_PBE_CTL_find(pbe_algs, &pbelu);
         pbetmp = sk_EVP_PBE_CTL_value(pbe_algs, i);
+        CRYPTO_THREAD_unlock(pbe_algs_lock);
     }
     if (pbetmp == NULL) {
         pbetmp = OBJ_bsearch_pbe2(&pbelu, builtin_pbe, OSSL_NELEM(builtin_pbe));
@@ -293,6 +327,11 @@ void EVP_PBE_cleanup(void)
 {
     sk_EVP_PBE_CTL_pop_free(pbe_algs, free_evp_pbe_ctl);
     pbe_algs = NULL;
+
+    if (pbe_algs_lock != NULL) {
+        CRYPTO_THREAD_lock_free(pbe_algs_lock);
+        pbe_algs_lock = NULL;
+    }
 }
 
 int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num)
