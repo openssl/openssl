@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/thread_once.h"
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
 
@@ -47,11 +48,35 @@ static X509_TRUST trstandard[] = {
 
 #define X509_TRUST_COUNT        OSSL_NELEM(trstandard)
 
+static CRYPTO_ONCE trtable_lock_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_RWLOCK *trtable_lock = NULL;
+/* protected by trtable_lock */
 static STACK_OF(X509_TRUST) *trtable = NULL;
 
 static int tr_cmp(const X509_TRUST *const *a, const X509_TRUST *const *b)
 {
     return (*a)->trust - (*b)->trust;
+}
+
+DEFINE_RUN_ONCE_STATIC(do_trtable_lock_init)
+{
+    if (trtable_lock == NULL
+        && (trtable_lock = CRYPTO_THREAD_lock_new()) == NULL)
+        return 0;
+
+    if (trtable == NULL
+        && (trtable = sk_X509_TRUST_new(tr_cmp)) == NULL)
+        return 0;
+
+    return 1;
+}
+
+static int ensure_init(void)
+{
+    if (!RUN_ONCE(&trtable_lock_init, do_trtable_lock_init))
+        return 0;
+
+    return 1;
 }
 
 int (*X509_TRUST_set_default(int (*trust) (int, X509 *, int))) (int, X509 *,
@@ -81,18 +106,31 @@ int X509_check_trust(X509 *x, int id, int flags)
 
 int X509_TRUST_get_count(void)
 {
-    if (!trtable)
+    int r;
+
+    if (!ensure_init()
+        || !CRYPTO_THREAD_read_lock(trtable_lock))
         return X509_TRUST_COUNT;
-    return sk_X509_TRUST_num(trtable) + X509_TRUST_COUNT;
+
+    r = sk_X509_TRUST_num(trtable) + X509_TRUST_COUNT;
+    CRYPTO_THREAD_unlock(trtable_lock);
+    return r;
 }
 
 X509_TRUST *X509_TRUST_get0(int idx)
 {
+    X509_TRUST *p;
+
     if (idx < 0)
         return NULL;
     if (idx < (int)X509_TRUST_COUNT)
         return trstandard + idx;
-    return sk_X509_TRUST_value(trtable, idx - X509_TRUST_COUNT);
+    if (!ensure_init()
+        || !CRYPTO_THREAD_read_lock(trtable_lock))
+        return NULL;
+    p = sk_X509_TRUST_value(trtable, idx - X509_TRUST_COUNT);
+    CRYPTO_THREAD_unlock(trtable_lock);
+    return p;
 }
 
 int X509_TRUST_get_by_id(int id)
@@ -102,10 +140,12 @@ int X509_TRUST_get_by_id(int id)
 
     if ((id >= X509_TRUST_MIN) && (id <= X509_TRUST_MAX))
         return id - X509_TRUST_MIN;
-    if (trtable == NULL)
+    if (!ensure_init()
+        || !CRYPTO_THREAD_write_lock(trtable_lock))
         return -1;
     tmp.trust = id;
     idx = sk_X509_TRUST_find(trtable, &tmp);
+    CRYPTO_THREAD_unlock(trtable_lock);
     if (idx < 0)
         return -1;
     return idx + X509_TRUST_COUNT;
@@ -160,15 +200,17 @@ int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
 
     /* If its a new entry manage the dynamic table */
     if (idx < 0) {
-        if (trtable == NULL
-            && (trtable = sk_X509_TRUST_new(tr_cmp)) == NULL) {
+        if (!ensure_init()
+            || CRYPTO_THREAD_write_lock(trtable_lock)) {
             ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             goto err;
         }
         if (!sk_X509_TRUST_push(trtable, trtmp)) {
+            CRYPTO_THREAD_unlock(trtable_lock);
             ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             goto err;
         }
+        CRYPTO_THREAD_unlock(trtable_lock);
     }
     return 1;
  err:
@@ -194,6 +236,9 @@ void X509_TRUST_cleanup(void)
 {
     sk_X509_TRUST_pop_free(trtable, trtable_free);
     trtable = NULL;
+
+    CRYPTO_THREAD_lock_free(trtable_lock);
+    trtable_lock = NULL;
 }
 
 int X509_TRUST_get_flags(const X509_TRUST *xp)
