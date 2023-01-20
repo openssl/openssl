@@ -11,28 +11,57 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/thread_once.h"
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
 #include "ext_dat.h"
 
+static CRYPTO_ONCE ext_list_lock_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_RWLOCK *ext_list_lock = NULL;
+/* protected by ext_list_lock */
 static STACK_OF(X509V3_EXT_METHOD) *ext_list = NULL;
 
 static int ext_cmp(const X509V3_EXT_METHOD *const *a,
                    const X509V3_EXT_METHOD *const *b);
 static void ext_list_free(X509V3_EXT_METHOD *ext);
 
+DEFINE_RUN_ONCE_STATIC(do_ext_list_lock_init)
+{
+    if (ext_list_lock == NULL
+        && (ext_list_lock = CRYPTO_THREAD_lock_new()) == NULL)
+        return 0;
+
+    if (ext_list == NULL
+        && (ext_list = sk_X509V3_EXT_METHOD_new(ext_cmp)) == NULL)
+        return 0;
+
+    return 1;
+}
+
+static int ensure_init(void)
+{
+    if (!RUN_ONCE(&ext_list_lock_init, do_ext_list_lock_init))
+        return 0;
+
+    return 1;
+}
+
 int X509V3_EXT_add(X509V3_EXT_METHOD *ext)
 {
-    if (ext_list == NULL
-        && (ext_list = sk_X509V3_EXT_METHOD_new(ext_cmp)) == NULL) {
+    if (!ensure_init()
+        || !CRYPTO_THREAD_write_lock(ext_list_lock) ) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         return 0;
     }
+
     if (!sk_X509V3_EXT_METHOD_push(ext_list, ext)) {
+        CRYPTO_THREAD_unlock(ext_list_lock);
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         return 0;
     }
+
+    CRYPTO_THREAD_unlock(ext_list_lock);
     return 1;
 }
 
@@ -52,7 +81,7 @@ IMPLEMENT_OBJ_BSEARCH_CMP_FN(const X509V3_EXT_METHOD *,
 const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
 {
     X509V3_EXT_METHOD tmp;
-    const X509V3_EXT_METHOD *t = &tmp, *const *ret;
+    const X509V3_EXT_METHOD *t = &tmp, *const *ret, *m;
     int idx;
 
     if (nid < 0)
@@ -63,8 +92,15 @@ const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
         return *ret;
     if (!ext_list)
         return NULL;
+
+    if (!ensure_init()
+        || CRYPTO_THREAD_write_lock(ext_list_lock))
+        return NULL;
+
     idx = sk_X509V3_EXT_METHOD_find(ext_list, &tmp);
-    return sk_X509V3_EXT_METHOD_value(ext_list, idx);
+    m = sk_X509V3_EXT_METHOD_value(ext_list, idx);
+    CRYPTO_THREAD_unlock(ext_list_lock);
+    return m;
 }
 
 const X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext)
@@ -104,6 +140,9 @@ void X509V3_EXT_cleanup(void)
 {
     sk_X509V3_EXT_METHOD_pop_free(ext_list, ext_list_free);
     ext_list = NULL;
+
+    CRYPTO_THREAD_lock_free(ext_list_lock);
+    ext_list_lock = NULL;
 }
 
 static void ext_list_free(X509V3_EXT_METHOD *ext)
