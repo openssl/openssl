@@ -294,7 +294,7 @@ int ossl_sframe_list_move_data(SFRAME_LIST *fl,
 
             /* release the packet */
             sf->data = NULL;
-            ossl_qrx_pkt_wrap_free(fl->qrx, sf->pkt);
+            ossl_qrx_pkt_release(sf->pkt);
             sf->pkt = NULL;
         }
 
