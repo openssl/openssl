@@ -87,7 +87,7 @@ and L<OSSL_PROVIDER-FIPS(7)/Hashing Algorithms E<sol> Message Digests> for a
 list of Hash Functions supported by the OpenSSL L</Providers>.
 
 See L<EVP_DigestInit(3)/EXAMPLES> for an example of how to digest a message.
-See also the digest demos at https://github.com/openssl/openssl/tree/master/demos/digest.
+See also the L<digest demos|https://github.com/openssl/openssl/tree/master/demos/digest>.
 
 Hash Functions are used by other algorithms such as L</Message Authentication Code (MAC)> and L</Digital Signature>.
 
@@ -175,7 +175,7 @@ Asymetric key generation is the process of generating key pairs.
 In many cases keys are randomly generated using a pseudo-random number generator (PRNG).
 Large integers (in the form of B<BIGNUM>'s) or byte arrays are used to store keys.
 
-Demos for keygen are located in L<https://github.com/openssl/openssl/tree/master/demos/pkey>
+See L<Demos for keygen|https://github.com/openssl/openssl/tree/master/demos/pkey>
 
 =head3 Asymmetric Encryption
 
@@ -184,7 +184,7 @@ yielding a ciphertext, but only those who know the corresponding private key can
 the ciphertext to obtain the original message.
 
 See L<EVP_PKEY_encrypt(3)> as well as L<EVP_ASYM_CIPHER-RSA(7)> and L<EVP_ASYM_CIPHER-SM2(7)>.
-A demo can be found at L<https://github.com/openssl/openssl/blob/master/demos/encrypt/rsa_encrypt.c>
+See L<Encrypt Demo|https://github.com/openssl/openssl/blob/master/demos/encrypt/rsa_encrypt.c>
 
 =head3 Digital Signature
 
@@ -208,9 +208,7 @@ For more information see:
 
 =item * L<EVP_DigestVerifyInit(3)>
 
-=item * Signature demos
-
-L<https://github.com/openssl/openssl/tree/master/demos/signature>
+=item * L<Signature demos|https://github.com/openssl/openssl/tree/master/demos/signature>
 
 =item * L<EVP_SIGNATURE-ECDSA(7)>
 
@@ -367,9 +365,7 @@ For more information see:
 
 =over 4
 
-=item * Key exchange demos
-
-L<https://github.com/openssl/openssl/tree/master/demos/keyexch>
+=item * L<Key exchange demo|https://github.com/openssl/openssl/tree/master/demos/keyexch>
 
 =item * L<EVP_KEYEXCH-ECDH(7)>
 
@@ -400,40 +396,33 @@ OpenSSL contains the following Key Wrapping Algorithms:
 The Advanced Encryption Standard (AES) Key Wrap algorithm is defined in
 L<SP800-38F|https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-38F.pdf>
 
-See L<EVP_CIPHER-AES(7)>.
+See L<EVP_CIPHER-AES(7)> and L<AES Key Wrapping Demo|https://github.com/openssl/openssl/tree/master/demos/cipher/aeskeywrap.c>.
 
-This consists of AES Key Wrap (KW) mode which has algorithms names
-"AES-128-WRAP", "AES-192-WRAP", "AES-256-WRAP",
+This consists of:
 
-and the AES Key Wrap With Padding (KWP) mode which has algorithm names
-"AES-128-WRAP-PAD", "AES-192-WRAP-PAD", "AES-256-WRAP-PAD",
+=over 4 
 
-There are also inverse ciphers which use AES decryption for wrapping,
-and AES encryption for unwrapping. The algorithms names are:
-"AES-128-WRAP-INV", "AES-192-WRAP-INV", "AES-256-WRAP-INV",
+=item AES Key Wrap (KW) mode
+
+The algorithm names are "AES-128-WRAP", "AES-192-WRAP" and "AES-256-WRAP".
+
+=item AES Key Wrap With Padding (KWP) mode
+
+The algorithm names are "AES-128-WRAP-PAD", "AES-192-WRAP-PAD" and "AES-256-WRAP-PAD".
+
+=item inverse ciphers
+
+The inverse ciphers use AES decryption for wrapping, and AES encryption for unwrapping.
+
+The algorithms names are "AES-128-WRAP-INV", "AES-192-WRAP-INV", "AES-256-WRAP-INV",
 "AES-128-WRAP-PAD-INV", "AES-192-WRAP-PAD-INV" and "AES-256-WRAP-PAD-INV".
-
-An AES Key wrapping demo can be found here
-https://github.com/openssl/openssl/tree/master/demos/cipher/aeskeywrap.c
 
 =item * Asymmetric Key Wrapping
 
 Key-Transport Using RSA-OAEP is defined in
 L<SP800-56BR2 RSA-OAEP|https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Br2.pdf#%5B%7B%22num%22%3A290%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C70%2C710%2C0%5D>
 
-For more information see:
-
-=over 4
-
-=item * L<EVP_ASYM_CIPHER-RSA(7)>
-
-Use the pad_mode of "OAEP"
-
-=item * RSA OEAP demo
-
-L<https://github.com/openssl/openssl/tree/master/demos/encrypt/rsa_encrypt.c>
-
-=back
+For further information see L<EVP_ASYM_CIPHER-RSA(7)> and L<RSA OEAP demo|https://github.com/openssl/openssl/tree/master/demos/encrypt/rsa_encrypt.c>
 
 =back
 
@@ -471,7 +460,7 @@ This support DHKEM which is used by L<HPKE|/Hybrid Public Key Encryption (HPKE)>
 =head2 Hybrid Public Key Encryption (HPKE)
 
 A hybrid cryptosystem is one which combines the convenience of a public-key cryptosystem with the efficiency of a symmetric-key cryptosystem.
-Hybrid Public Key Encryption (HPKE, published as L<RFC9810|https://www.rfc-editor.org/rfc/rfc9180.pdf> is a modern standard for generic hybrid encryption.
+Hybrid Public Key Encryption is a modern standard for generic hybrid encryption (See L<RFC9810|https://www.rfc-editor.org/rfc/rfc9180.pdf>).
 HPKE is used within multiple IETF protocols, including MTLS and TLS Encrypted Hello.
 HPKE works for any combination of an asymmetric KEM, key derivation function (KDF), and authenticated encryption with additional data (AEAD)
 encryption function.
@@ -487,7 +476,7 @@ See L<RAND(7)> for further information.
 
 MAC's are a family of secret-key cryptographic algorithms acting on input data of arbitrary length to produce an output value of a specified length
 (called the MAC of the input data). A MAC (or tag) can be employed to provide authentication of the origin of data and/or data-integrity protection.
-MAC's are used by other algoriths such as L</Key Derivation Function (KDF)> and L</Deterministic Random Bit Generators (DRBG)>.
+MAC's are used by other algorithms such as L</Key Derivation Function (KDF)> and L</Deterministic Random Bit Generators (DRBG)>.
 
 More information related to MAC's can be found at:
 
@@ -495,7 +484,7 @@ More information related to MAC's can be found at:
 
 =item * L<EVP_MAC(3)>
 
-=item * Mac demos L<https://github.com/openssl/openssl/tree/master/demos/mac>
+=item * L<Mac demos|https://github.com/openssl/openssl/tree/master/demos/mac>
 
 =item * L<OSSL_PROVIDER-default(7)/Message Authentication Code (MAC)>
 
@@ -512,7 +501,7 @@ This contains information related to the old API used.
 Key derivation is the process of deriving one or more secret keys from input values
 such as a password or key material. Several key derivation algorithms have
 been standardized, and they are usually referred to as Key Derivation Functions (KDFs).
-KDF's are deterministic (see L<openssl-glossary(7)>).
+KDF's are L<deterministic|openssl-glossary(7)/Deterministic>.
 
 For more information related to OpenSSL KDF's see:
 
@@ -520,7 +509,7 @@ For more information related to OpenSSL KDF's see:
 
 =item * L<EVP_KDF(3)>
 
-=item * KDF demos L<https://github.com/openssl/openssl/tree/master/demos/kdf>
+=item * L<KDF demos|https://github.com/openssl/openssl/tree/master/demos/kdf>
 
 =item * Password based KDF's
 
@@ -993,7 +982,7 @@ L<openssl-glossary(7)>, L<provider(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
