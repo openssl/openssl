@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/thread_once.h"
 #include "internal/numbers.h"
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
@@ -70,11 +71,35 @@ static X509_PURPOSE xstandard[] = {
 
 #define X509_PURPOSE_COUNT OSSL_NELEM(xstandard)
 
+static CRYPTO_ONCE xptable_lock_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_RWLOCK *xptable_lock = NULL;
+/* protected by xptable_lock */
 static STACK_OF(X509_PURPOSE) *xptable = NULL;
 
 static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b)
 {
     return (*a)->purpose - (*b)->purpose;
+}
+
+DEFINE_RUN_ONCE_STATIC(do_xptable_lock_init)
+{
+    if (xptable_lock == NULL
+        && (xptable_lock = CRYPTO_THREAD_lock_new()) == NULL)
+        return 0;
+
+    if (xptable == NULL
+        && (xptable = sk_X509_PURPOSE_new(xp_cmp)) == NULL)
+        return 0;
+
+    return 1;
+}
+
+static int ensure_init(void)
+{
+    if (!RUN_ONCE(&xptable_lock_init, do_xptable_lock_init))
+        return 0;
+
+    return 1;
 }
 
 /*
@@ -110,14 +135,27 @@ int X509_PURPOSE_set(int *p, int purpose)
     return 1;
 }
 
-int X509_PURPOSE_get_count(void)
+/* Precondition: must hold xptable_lock (unchecked) */
+static int get_count(void)
 {
-    if (!xptable)
-        return X509_PURPOSE_COUNT;
-    return sk_X509_PURPOSE_num(xptable) + X509_PURPOSE_COUNT;
+    return X509_PURPOSE_COUNT + sk_X509_PURPOSE_num(xptable);
 }
 
-X509_PURPOSE *X509_PURPOSE_get0(int idx)
+int X509_PURPOSE_get_count(void)
+{
+    int ret;
+
+    if (!ensure_init()
+        || !CRYPTO_THREAD_read_lock(xptable_lock))
+        return X509_PURPOSE_COUNT;
+
+    ret = sk_X509_PURPOSE_num(xptable) + X509_PURPOSE_COUNT;
+    CRYPTO_THREAD_unlock(xptable_lock);
+    return ret;
+}
+
+/* Precondition: must hold xptable_lock (unchecked) */
+static X509_PURPOSE *get_entry(int idx)
 {
     if (idx < 0)
         return NULL;
@@ -126,16 +164,40 @@ X509_PURPOSE *X509_PURPOSE_get0(int idx)
     return sk_X509_PURPOSE_value(xptable, idx - X509_PURPOSE_COUNT);
 }
 
+X509_PURPOSE *X509_PURPOSE_get0(int idx)
+{
+    X509_PURPOSE *p;
+
+    if (idx < 0)
+        return NULL;
+    if (idx < (int)X509_PURPOSE_COUNT)
+        return xstandard + idx;
+    if (!ensure_init()
+        || !CRYPTO_THREAD_read_lock(xptable_lock))
+        return NULL;
+    p = sk_X509_PURPOSE_value(xptable, idx - X509_PURPOSE_COUNT);
+    CRYPTO_THREAD_unlock(p);
+    return p;
+}
+
 int X509_PURPOSE_get_by_sname(const char *sname)
 {
-    int i;
+    int i, count;
     X509_PURPOSE *xptmp;
 
-    for (i = 0; i < X509_PURPOSE_get_count(); i++) {
-        xptmp = X509_PURPOSE_get0(i);
-        if (strcmp(xptmp->sname, sname) == 0)
+    if (!ensure_init()
+        || !CRYPTO_THREAD_read_lock(xptable_lock))
+        return -1;
+
+    count = get_count();
+    for (i = 0; i < count; i++) {
+        xptmp = get_entry(i);
+        if (strcmp(xptmp->sname, sname) == 0) {
+            CRYPTO_THREAD_unlock(xptable_lock);
             return i;
+        }
     }
+    CRYPTO_THREAD_unlock(xptable_lock);
     return -1;
 }
 
@@ -147,10 +209,12 @@ int X509_PURPOSE_get_by_id(int purpose)
 
     if (purpose >= X509_PURPOSE_MIN && purpose <= X509_PURPOSE_MAX)
         return purpose - X509_PURPOSE_MIN;
-    if (xptable == NULL)
+    if (!ensure_init()
+        || !CRYPTO_THREAD_write_lock(xptable_lock))
         return -1;
     tmp.purpose = purpose;
     idx = sk_X509_PURPOSE_find(xptable, &tmp);
+    CRYPTO_THREAD_unlock(xptable_lock);
     if (idx < 0)
         return -1;
     return idx + X509_PURPOSE_COUNT;
@@ -200,15 +264,17 @@ int X509_PURPOSE_add(int id, int trust, int flags,
 
     /* If its a new entry manage the dynamic table */
     if (idx == -1) {
-        if (xptable == NULL
-            && (xptable = sk_X509_PURPOSE_new(xp_cmp)) == NULL) {
+        if (!ensure_init()
+            || !CRYPTO_THREAD_write_lock(xptable_lock)) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto err;
         }
         if (!sk_X509_PURPOSE_push(xptable, ptmp)) {
+            CRYPTO_THREAD_unlock(xptable_lock);
             ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto err;
         }
+        CRYPTO_THREAD_unlock(xptable_lock);
     }
     return 1;
  err:
@@ -237,6 +303,9 @@ void X509_PURPOSE_cleanup(void)
 {
     sk_X509_PURPOSE_pop_free(xptable, xptable_free);
     xptable = NULL;
+
+    CRYPTO_THREAD_lock_free(xptable_lock);
+    xptable_lock = NULL;
 }
 
 int X509_PURPOSE_get_id(const X509_PURPOSE *xp)
