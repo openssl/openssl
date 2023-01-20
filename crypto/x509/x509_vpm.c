@@ -10,6 +10,7 @@
 #include <stdio.h>
 
 #include "internal/cryptlib.h"
+#include "internal/thread_once.h"
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/x509.h>
@@ -575,6 +576,9 @@ static const X509_VERIFY_PARAM default_table[] = {
     }
 };
 
+static CRYPTO_ONCE param_table_lock_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_RWLOCK *param_table_lock = NULL;
+/* protected by param_table_lock */
 static STACK_OF(X509_VERIFY_PARAM) *param_table = NULL;
 
 static int table_cmp(const X509_VERIFY_PARAM *a, const X509_VERIFY_PARAM *b)
@@ -582,62 +586,102 @@ static int table_cmp(const X509_VERIFY_PARAM *a, const X509_VERIFY_PARAM *b)
     return strcmp(a->name, b->name);
 }
 
-DECLARE_OBJ_BSEARCH_CMP_FN(X509_VERIFY_PARAM, X509_VERIFY_PARAM, table);
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(X509_VERIFY_PARAM, X509_VERIFY_PARAM, table);
-
 static int param_cmp(const X509_VERIFY_PARAM *const *a,
                      const X509_VERIFY_PARAM *const *b)
 {
     return strcmp((*a)->name, (*b)->name);
 }
 
+DEFINE_RUN_ONCE_STATIC(do_param_table_lock_init)
+{
+    if (param_table_lock == NULL
+        && (param_table_lock = CRYPTO_THREAD_lock_new()) == NULL)
+        return 0;
+
+    if (param_table == NULL
+        && (param_table = sk_X509_VERIFY_PARAM_new(param_cmp)) == NULL)
+        return 0;
+
+    return 1;
+}
+
+static int ensure_init(void)
+{
+    if (!RUN_ONCE(&param_table_lock_init, do_param_table_lock_init))
+        return 0;
+
+    return 1;
+}
+
+DECLARE_OBJ_BSEARCH_CMP_FN(X509_VERIFY_PARAM, X509_VERIFY_PARAM, table);
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(X509_VERIFY_PARAM, X509_VERIFY_PARAM, table);
+
 int X509_VERIFY_PARAM_add0_table(X509_VERIFY_PARAM *param)
 {
-    int idx;
+    int idx, r;
     X509_VERIFY_PARAM *ptmp;
 
-    if (param_table == NULL) {
-        param_table = sk_X509_VERIFY_PARAM_new(param_cmp);
-        if (param_table == NULL)
-            return 0;
-    } else {
-        idx = sk_X509_VERIFY_PARAM_find(param_table, param);
-        if (idx >= 0) {
-            ptmp = sk_X509_VERIFY_PARAM_delete(param_table, idx);
-            X509_VERIFY_PARAM_free(ptmp);
-        }
+    if (!ensure_init()
+        || !CRYPTO_THREAD_write_lock(param_table_lock))
+        return 0;
+
+    idx = sk_X509_VERIFY_PARAM_find(param_table, param);
+    if (idx >= 0) {
+        ptmp = sk_X509_VERIFY_PARAM_delete(param_table, idx);
+        X509_VERIFY_PARAM_free(ptmp);
     }
-    return sk_X509_VERIFY_PARAM_push(param_table, param);
+
+    r = sk_X509_VERIFY_PARAM_push(param_table, param);
+    CRYPTO_THREAD_unlock(param_table_lock);
+    return r;
 }
 
 int X509_VERIFY_PARAM_get_count(void)
 {
     int num = OSSL_NELEM(default_table);
 
-    if (param_table != NULL)
+    if (ensure_init()
+        && CRYPTO_THREAD_read_lock(param_table_lock)) {
         num += sk_X509_VERIFY_PARAM_num(param_table);
+        CRYPTO_THREAD_unlock(param_table_lock);
+    }
+
     return num;
 }
 
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id)
 {
     int num = OSSL_NELEM(default_table);
+    const X509_VERIFY_PARAM *r;
 
     if (id < num)
         return default_table + id;
-    return sk_X509_VERIFY_PARAM_value(param_table, id - num);
+
+    if (!ensure_init()
+        || !CRYPTO_THREAD_read_lock(param_table_lock))
+        return NULL;
+
+    r = sk_X509_VERIFY_PARAM_value(param_table, id - num);
+    CRYPTO_THREAD_unlock(param_table_lock);
+    return r;
 }
 
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name)
 {
     int idx;
     X509_VERIFY_PARAM pm;
+    const X509_VERIFY_PARAM *p;
 
     pm.name = (char *)name;
-    if (param_table != NULL) {
+    if (ensure_init()
+        && CRYPTO_THREAD_write_lock(param_table_lock)) {
         idx = sk_X509_VERIFY_PARAM_find(param_table, &pm);
-        if (idx >= 0)
-            return sk_X509_VERIFY_PARAM_value(param_table, idx);
+        if (idx >= 0) {
+            p = sk_X509_VERIFY_PARAM_value(param_table, idx);
+            CRYPTO_THREAD_unlock(param_table_lock);
+            return p;
+        }
+        CRYPTO_THREAD_unlock(param_table_lock);
     }
     return OBJ_bsearch_table(&pm, default_table, OSSL_NELEM(default_table));
 }
@@ -646,4 +690,7 @@ void X509_VERIFY_PARAM_table_cleanup(void)
 {
     sk_X509_VERIFY_PARAM_pop_free(param_table, X509_VERIFY_PARAM_free);
     param_table = NULL;
+
+    CRYPTO_THREAD_lock_free(param_table_lock);
+    param_table_lock = NULL;
 }
