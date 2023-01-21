@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,13 +17,6 @@
  * internal use.
  */
 #include "internal/deprecated.h"
-
-/*
- * Parameter generation follows the updated Appendix 2.2 for FIPS PUB 186,
- * also Appendix 2.2 of FIPS PUB 186-1 (i.e. use SHA as defined in FIPS PUB
- * 180-1)
- */
-#define xxxHASH    EVP_sha1()
 
 #include <openssl/opensslconf.h>
 

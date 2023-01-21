@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -27,12 +27,13 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
-DEFINE_LHASH_OF(int);
+DEFINE_LHASH_OF_EX(int);
 
 static int int_tests[] = { 65537, 13, 1, 3, -5, 6, 7, 4, -10, -12, -14, 22, 9,
                            -17, 16, 17, -23, 35, 37, 173, 11 };
 static const unsigned int n_int_tests = OSSL_NELEM(int_tests);
 static short int_found[OSSL_NELEM(int_tests)];
+static short int_not_found;
 
 static unsigned long int int_hash(const int *p)
 {
@@ -56,12 +57,22 @@ static int int_find(int n)
 
 static void int_doall(int *v)
 {
-    int_found[int_find(*v)]++;
+    const int n = int_find(*v);
+
+    if (n < 0)
+        int_not_found++;
+    else
+        int_found[n]++;
 }
 
 static void int_doall_arg(int *p, short *f)
 {
-    f[int_find(*p)]++;
+    const int n = int_find(*p);
+
+    if (n < 0)
+        int_not_found++;
+    else
+        f[n]++;
 }
 
 IMPLEMENT_LHASH_DOALL_ARG(int, short);
@@ -124,7 +135,12 @@ static int test_int_lhash(void)
 
     /* do_all */
     memset(int_found, 0, sizeof(int_found));
+    int_not_found = 0;
     lh_int_doall(h, &int_doall);
+    if (!TEST_int_eq(int_not_found, 0)) {
+        TEST_info("lhash int doall encountered a not found condition");
+        goto end;
+    }
     for (i = 0; i < n_int_tests; i++)
         if (!TEST_int_eq(int_found[i], 1)) {
             TEST_info("lhash int doall %d", i);
@@ -133,7 +149,12 @@ static int test_int_lhash(void)
 
     /* do_all_arg */
     memset(int_found, 0, sizeof(int_found));
+    int_not_found = 0;
     lh_int_doall_short(h, int_doall_arg, int_found);
+    if (!TEST_int_eq(int_not_found, 0)) {
+        TEST_info("lhash int doall arg encountered a not found condition");
+        goto end;
+    }
     for (i = 0; i < n_int_tests; i++)
         if (!TEST_int_eq(int_found[i], 1)) {
             TEST_info("lhash int doall arg %d", i);
@@ -189,11 +210,6 @@ static int test_stress(void)
     if (!TEST_int_eq(lh_int_num_items(h), n))
             goto end;
 
-    TEST_info("hash full statistics:");
-    OPENSSL_LH_stats_bio((OPENSSL_LHASH *)h, bio_err);
-    TEST_note("hash full node usage:");
-    OPENSSL_LH_node_usage_stats_bio((OPENSSL_LHASH *)h, bio_err);
-
     /* delete in a different order */
     for (i = 0; i < n; i++) {
         const int j = (7 * i + 4) % n * 3 + 1;
@@ -208,11 +224,6 @@ static int test_stress(void)
         }
         OPENSSL_free(p);
     }
-
-    TEST_info("hash empty statistics:");
-    OPENSSL_LH_stats_bio((OPENSSL_LHASH *)h, bio_err);
-    TEST_note("hash empty node usage:");
-    OPENSSL_LH_node_usage_stats_bio((OPENSSL_LHASH *)h, bio_err);
 
     testresult = 1;
 end:

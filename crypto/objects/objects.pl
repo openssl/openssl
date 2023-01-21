@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -7,12 +7,15 @@
 # https://www.openssl.org/source/license.html
 
 use Getopt::Std;
+use FindBin;
+use lib "$FindBin::Bin/../../util/perl";
+use OpenSSL::copyright;
 
 our($opt_n);
 getopts('n');
 
 # The year the output file is generated.
-my $YEAR = [localtime()]->[5] + 1900;
+my $YEAR = OpenSSL::copyright::latest(($0, $ARGV[1], $ARGV[0]));
 
 open (NUMIN,"$ARGV[1]") || die "Can't open number file $ARGV[1]";
 $max_nid=0;
@@ -144,6 +147,10 @@ print <<"EOF";
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OPENSSL_OBJ_MAC_H
+# define OPENSSL_OBJ_MAC_H
+# pragma once
+
 #define SN_undef                        "UNDEF"
 #define LN_undef                        "undefined"
 #define NID_undef                       0
@@ -168,6 +175,11 @@ foreach (sort { $a <=> $b } keys %ordern)
 	print expand("#define NID_$Cname\t\t$nid{$Cname}\n") if $nid{$Cname} ne "";
 	print expand("#define OBJ_$Cname\t\t$obj{$Cname}\n") if $obj{$Cname} ne "";
 	}
+
+print <<EOF;
+
+#endif /* OPENSSL_OBJ_MAC_H */
+EOF
 
 sub process_oid
 	{

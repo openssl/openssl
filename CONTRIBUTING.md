@@ -1,32 +1,32 @@
 HOW TO CONTRIBUTE TO OpenSSL
 ============================
 
-Please visit our [Getting Started][gs] page for other ideas about how to contribute.
+Please visit our [Getting Started] page for other ideas about how to contribute.
 
-  [gs]: https://www.openssl.org/community/getting-started.html
+  [Getting Started]: <https://www.openssl.org/community/getting-started.html>
 
-Development is done on GitHub in the [openssl/openssl][gh] repository.
+Development is done on GitHub in the [openssl/openssl] repository.
 
-  [gh]: https://github.com/openssl/openssl
+  [openssl/openssl]: <https://github.com/openssl/openssl>
 
 To request new features or report bugs, please open an issue on GitHub
 
 To submit a patch, please open a pull request on GitHub.  If you are thinking
 of making a large contribution, open an issue for it before starting work,
 to get comments from the community.  Someone may be already working on
-the same thing or there may be reasons why that feature isn't implemented.
+the same thing, or there may be reasons why that feature isn't implemented.
 
 To make it easier to review and accept your pull request, please follow these
 guidelines:
 
  1. Anything other than a trivial contribution requires a [Contributor
-    License Agreement][CLA] (CLA), giving us permission to use your code.
+    License Agreement] (CLA), giving us permission to use your code.
     If your contribution is too small to require a CLA (e.g. fixing a spelling
     mistake), place the text "`CLA: trivial`" on a line by itself separated by
     an empty line from the rest of the commit message. It is not sufficient to
     only place the text in the GitHub pull request description.
 
-    [CLA]: https://www.openssl.org/policies/cla.html
+    [Contributor License Agreement]: <https://www.openssl.org/policies/cla.html>
 
     To amend a missing "`CLA: trivial`" line after submission, do the following:
 
@@ -53,18 +53,18 @@ guidelines:
     often. We do not accept merge commits, you will have to remove them
     (usually by rebasing) before it will be acceptable.
 
- 4. Patches should follow our [coding style][] and compile without warnings.
-    Where gcc or clang is available you should use the
-    --strict-warnings Configure option.  OpenSSL compiles on many varied
-    platforms: try to ensure you only use portable features.  Clean builds
-    via Travis and AppVeyor are required, and they are started automatically
+ 4. Patches should follow our [coding style] and compile without warnings.
+    Where `gcc` or `clang` is available, you should use the
+    `--strict-warnings` `Configure` option.  OpenSSL compiles on many varied
+    platforms: try to ensure you only use portable features.  Clean builds via
+    GitHub Actions and AppVeyor are required, and they are started automatically
     whenever a PR is created or updated.
 
-    [coding style]: https://www.openssl.org/policies/codingstyle.html
+    [coding style]: https://www.openssl.org/policies/technical/coding-style.html
 
  5. When at all possible, patches should include tests. These can
     either be added to an existing test, or completely new.  Please see
-    test/README for information on the test framework.
+    [test/README.md](test/README.md) for information on the test framework.
 
  6. New features or changed functionality must include
     documentation. Please look at the "pod" files in doc/man[1357] for
@@ -77,7 +77,7 @@ guidelines:
     explain the grander details.
     Have a look through existing entries for inspiration.
     Please note that this is NOT simply a copy of git-log one-liners.
-    Also note that security fixes get an entry in CHANGES.md.
+    Also note that security fixes get an entry in [CHANGES.md](CHANGES.md).
     This file helps users get more in depth information of what comes
     with a specific release without having to sift through the higher
     noise ratio in git-log.
@@ -89,3 +89,6 @@ guidelines:
     OpenSSL 1.1.0).
     This file helps users get a very quick summary of what comes with a
     specific release, to see if an upgrade is worth the effort.
+
+ 9. Guidelines how to integrate error output of new crypto library modules
+    can be found in [crypto/err/README.md](crypto/err/README.md).

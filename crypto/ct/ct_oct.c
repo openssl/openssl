@@ -21,8 +21,6 @@
 
 #include "ct_local.h"
 
-DEFINE_STACK_OF(SCT)
-
 int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
 {
     size_t siglen;
@@ -30,7 +28,7 @@ int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
     const unsigned char *p;
 
     if (sct->version != SCT_VERSION_V1) {
-        CTerr(CT_F_O2I_SCT_SIGNATURE, CT_R_UNSUPPORTED_VERSION);
+        ERR_raise(ERR_LIB_CT, CT_R_UNSUPPORTED_VERSION);
         return -1;
     }
     /*
@@ -41,7 +39,7 @@ int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
      * all supported algorithms.
      */
     if (len <= 4) {
-        CTerr(CT_F_O2I_SCT_SIGNATURE, CT_R_SCT_INVALID_SIGNATURE);
+        ERR_raise(ERR_LIB_CT, CT_R_SCT_INVALID_SIGNATURE);
         return -1;
     }
 
@@ -50,14 +48,14 @@ int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
     sct->hash_alg = *p++;
     sct->sig_alg = *p++;
     if (SCT_get_signature_nid(sct) == NID_undef) {
-        CTerr(CT_F_O2I_SCT_SIGNATURE, CT_R_SCT_INVALID_SIGNATURE);
+        ERR_raise(ERR_LIB_CT, CT_R_SCT_INVALID_SIGNATURE);
         return -1;
     }
     /* Retrieve signature and check it is consistent with the buffer length */
     n2s(p, siglen);
     len_remaining -= (p - *in);
     if (siglen > len_remaining) {
-        CTerr(CT_F_O2I_SCT_SIGNATURE, CT_R_SCT_INVALID_SIGNATURE);
+        ERR_raise(ERR_LIB_CT, CT_R_SCT_INVALID_SIGNATURE);
         return -1;
     }
 
@@ -75,7 +73,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
     const unsigned char *p;
 
     if (len == 0 || len > MAX_SCT_SIZE) {
-        CTerr(CT_F_O2I_SCT, CT_R_SCT_INVALID);
+        ERR_raise(ERR_LIB_CT, CT_R_SCT_INVALID);
         goto err;
     }
 
@@ -98,7 +96,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
          *   }
          */
         if (len < 43) {
-            CTerr(CT_F_O2I_SCT, CT_R_SCT_INVALID);
+            ERR_raise(ERR_LIB_CT, CT_R_SCT_INVALID);
             goto err;
         }
         len -= 43;
@@ -113,7 +111,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
 
         n2s(p, len2);
         if (len < len2) {
-            CTerr(CT_F_O2I_SCT, CT_R_SCT_INVALID);
+            ERR_raise(ERR_LIB_CT, CT_R_SCT_INVALID);
             goto err;
         }
         if (len2 > 0) {
@@ -127,7 +125,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
 
         sig_len = o2i_SCT_signature(sct, &p, len);
         if (sig_len <= 0) {
-            CTerr(CT_F_O2I_SCT, CT_R_SCT_INVALID);
+            ERR_raise(ERR_LIB_CT, CT_R_SCT_INVALID);
             goto err;
         }
         len -= sig_len;
@@ -158,12 +156,12 @@ int i2o_SCT_signature(const SCT *sct, unsigned char **out)
     unsigned char *p = NULL, *pstart = NULL;
 
     if (!SCT_signature_is_complete(sct)) {
-        CTerr(CT_F_I2O_SCT_SIGNATURE, CT_R_SCT_INVALID_SIGNATURE);
+        ERR_raise(ERR_LIB_CT, CT_R_SCT_INVALID_SIGNATURE);
         goto err;
     }
 
     if (sct->version != SCT_VERSION_V1) {
-        CTerr(CT_F_I2O_SCT_SIGNATURE, CT_R_UNSUPPORTED_VERSION);
+        ERR_raise(ERR_LIB_CT, CT_R_UNSUPPORTED_VERSION);
         goto err;
     }
 
@@ -180,10 +178,8 @@ int i2o_SCT_signature(const SCT *sct, unsigned char **out)
             *out += len;
         } else {
             pstart = p = OPENSSL_malloc(len);
-            if (p == NULL) {
-                CTerr(CT_F_I2O_SCT_SIGNATURE, ERR_R_MALLOC_FAILURE);
+            if (p == NULL)
                 goto err;
-            }
             *out = p;
         }
 
@@ -205,7 +201,7 @@ int i2o_SCT(const SCT *sct, unsigned char **out)
     unsigned char *p = NULL, *pstart = NULL;
 
     if (!SCT_is_complete(sct)) {
-        CTerr(CT_F_I2O_SCT, CT_R_SCT_NOT_SET);
+        ERR_raise(ERR_LIB_CT, CT_R_SCT_NOT_SET);
         goto err;
     }
     /*
@@ -227,10 +223,8 @@ int i2o_SCT(const SCT *sct, unsigned char **out)
         *out += len;
     } else {
         pstart = p = OPENSSL_malloc(len);
-        if (p == NULL) {
-            CTerr(CT_F_I2O_SCT, ERR_R_MALLOC_FAILURE);
+        if (p == NULL)
             goto err;
-        }
         *out = p;
     }
 
@@ -263,13 +257,13 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
     size_t list_len, sct_len;
 
     if (len < 2 || len > MAX_SCT_LIST_SIZE) {
-        CTerr(CT_F_O2I_SCT_LIST, CT_R_SCT_LIST_INVALID);
+        ERR_raise(ERR_LIB_CT, CT_R_SCT_LIST_INVALID);
         return NULL;
     }
 
     n2s(*pp, list_len);
     if (list_len != len - 2) {
-        CTerr(CT_F_O2I_SCT_LIST, CT_R_SCT_LIST_INVALID);
+        ERR_raise(ERR_LIB_CT, CT_R_SCT_LIST_INVALID);
         return NULL;
     }
 
@@ -290,14 +284,14 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
         SCT *sct;
 
         if (list_len < 2) {
-            CTerr(CT_F_O2I_SCT_LIST, CT_R_SCT_LIST_INVALID);
+            ERR_raise(ERR_LIB_CT, CT_R_SCT_LIST_INVALID);
             goto err;
         }
         n2s(*pp, sct_len);
         list_len -= 2;
 
         if (sct_len == 0 || sct_len > list_len) {
-            CTerr(CT_F_O2I_SCT_LIST, CT_R_SCT_LIST_INVALID);
+            ERR_raise(ERR_LIB_CT, CT_R_SCT_LIST_INVALID);
             goto err;
         }
         list_len -= sct_len;
@@ -329,13 +323,11 @@ int i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp)
     if (pp != NULL) {
         if (*pp == NULL) {
             if ((len = i2o_SCT_LIST(a, NULL)) == -1) {
-                CTerr(CT_F_I2O_SCT_LIST, CT_R_SCT_LIST_INVALID);
+                ERR_raise(ERR_LIB_CT, CT_R_SCT_LIST_INVALID);
                 return -1;
             }
-            if ((*pp = OPENSSL_malloc(len)) == NULL) {
-                CTerr(CT_F_I2O_SCT_LIST, ERR_R_MALLOC_FAILURE);
+            if ((*pp = OPENSSL_malloc(len)) == NULL)
                 return -1;
-            }
             is_pp_new = 1;
         }
         p = *pp + 2;

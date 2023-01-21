@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,81 +13,104 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/rand.h>
+#include <openssl/proverr.h>
 #include "prov/ciphercommon.h"
 #include "cipher_tdes.h"
-#include <openssl/rand.h>
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
+#include "prov/providercommon.h"
 
-void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
-                  size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw)
+void *ossl_tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
+                       size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw)
 {
-    PROV_TDES_CTX *tctx = OPENSSL_zalloc(sizeof(*tctx));
+    PROV_TDES_CTX *tctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    tctx = OPENSSL_zalloc(sizeof(*tctx));
     if (tctx != NULL)
-        cipher_generic_initkey(tctx, kbits, blkbits, ivbits, mode, flags, hw,
-                               provctx);
+        ossl_cipher_generic_initkey(tctx, kbits, blkbits, ivbits, mode, flags,
+                                    hw, provctx);
     return tctx;
 }
 
-void *tdes_dupctx(void *ctx)
+void *ossl_tdes_dupctx(void *ctx)
 {
     PROV_TDES_CTX *in = (PROV_TDES_CTX *)ctx;
-    PROV_TDES_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_TDES_CTX *ret;
 
-    if (ret == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (!ossl_prov_is_running())
         return NULL;
-    }
+
+    ret = OPENSSL_malloc(sizeof(*ret));
+    if (ret == NULL)
+        return NULL;
     in->base.hw->copyctx(&ret->base, &in->base);
 
     return ret;
 }
 
-void tdes_freectx(void *vctx)
+void ossl_tdes_freectx(void *vctx)
 {
     PROV_TDES_CTX *ctx = (PROV_TDES_CTX *)vctx;
 
+    ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
 static int tdes_init(void *vctx, const unsigned char *key, size_t keylen,
-                     const unsigned char *iv, size_t ivlen, int enc)
+                     const unsigned char *iv, size_t ivlen,
+                     const OSSL_PARAM params[], int enc)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
+    ctx->num = 0;
+    ctx->bufsz = 0;
     ctx->enc = enc;
 
     if (iv != NULL) {
-        if (!cipher_generic_initiv(ctx, iv, ivlen))
+        if (!ossl_cipher_generic_initiv(ctx, iv, ivlen))
             return 0;
+    } else if (ctx->iv_set
+               && (ctx->mode == EVP_CIPH_CBC_MODE
+                   || ctx->mode == EVP_CIPH_CFB_MODE
+                   || ctx->mode == EVP_CIPH_OFB_MODE)) {
+        /* reset IV to keep compatibility with 1.1.1 */
+        memcpy(ctx->iv, ctx->oiv, ctx->ivlen);
     }
 
     if (key != NULL) {
         if (keylen != ctx->keylen) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEYLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
-        return ctx->hw->init(ctx, key, ctx->keylen);
+        if (!ctx->hw->init(ctx, key, ctx->keylen))
+            return 0;
     }
-    return 1;
+    return ossl_cipher_generic_set_ctx_params(ctx, params);
 }
 
-int tdes_einit(void *vctx, const unsigned char *key, size_t keylen,
-               const unsigned char *iv, size_t ivlen)
+int ossl_tdes_einit(void *vctx, const unsigned char *key, size_t keylen,
+                    const unsigned char *iv, size_t ivlen,
+                    const OSSL_PARAM params[])
 {
-    return tdes_init(vctx, key, keylen, iv, ivlen, 1);
+    return tdes_init(vctx, key, keylen, iv, ivlen, params, 1);
 }
 
-int tdes_dinit(void *vctx, const unsigned char *key, size_t keylen,
-               const unsigned char *iv, size_t ivlen)
+int ossl_tdes_dinit(void *vctx, const unsigned char *key, size_t keylen,
+                    const unsigned char *iv, size_t ivlen,
+                    const OSSL_PARAM params[])
 {
-    return tdes_init(vctx, key, keylen, iv, ivlen, 0);
+    return tdes_init(vctx, key, keylen, iv, ivlen, params, 0);
 }
 
-CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(tdes)
+CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(ossl_tdes)
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_RANDOM_KEY, NULL, 0),
-CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(tdes)
+CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(ossl_tdes)
 
 static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
 {
@@ -95,7 +118,7 @@ static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
     DES_cblock *deskey = ptr;
     size_t kl = ctx->keylen;
 
-    if (kl == 0 || RAND_priv_bytes_ex(ctx->libctx, ptr, kl) <= 0)
+    if (kl == 0 || RAND_priv_bytes_ex(ctx->libctx, ptr, kl, 0) <= 0)
         return 0;
     DES_set_odd_parity(deskey);
     if (kl >= 16)
@@ -107,12 +130,12 @@ static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
     return 0;
 }
 
-int tdes_get_ctx_params(void *vctx, OSSL_PARAM params[])
+int ossl_tdes_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX  *ctx = (PROV_CIPHER_CTX *)vctx;
     OSSL_PARAM *p;
 
-    if (!cipher_generic_get_ctx_params(vctx, params))
+    if (!ossl_cipher_generic_get_ctx_params(vctx, params))
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_RANDOM_KEY);

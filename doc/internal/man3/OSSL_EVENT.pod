@@ -1,0 +1,201 @@
+=pod
+
+=head1 NAME
+
+OSSL_EVENT_QUEUE, OSSL_EVENT, OSSL_EVENT_SUBSCRIPTION, ossl_event_callback_fn,
+ossl_event_queue_add, ossl_event_queue_add_new, ossl_event_free,
+ossl_event_get_type, ossl_event_get_priority, ossl_event_get_when,
+ossl_event_get0_payload,
+ossl_event_queue_new, ossl_event_queue_free,
+ossl_event_queue_schedule, ossl_event_queue_delete,
+ossl_event_time_until, ossl_event_queue_time_until_next,
+ossl_event_queue_postpone_until,
+ossl_event_queue_get1_next_event
+- event and timer queue
+
+=head1 SYNOPSIS
+
+ #include "internal/event_queue.h"
+
+ typedef OSSL_EVENT;
+ typedef OSSL_EVENT_QUEUE;
+ typedef OSSL_EVENT_SUBSCRIPTION;
+
+ typedef int ossl_event_callback_fn(OSSL_EVENT *event, void *callback_data);
+
+ OSSL_EVENT_QUEUE *ossl_event_queue_new(void);
+ void ossl_event_queue_free(OSSL_EVENT_QUEUE *queue);
+
+ int ossl_event_queue_add(OSSL_EVENT_QUEUE *queue, OSSL_EVENT *event,
+                          uint32_t type, uint32_t priority,
+                          OSSL_TIME when, void *ctx,
+                          void *payload, size_t payload_size);
+ OSSL_EVENT *ossl_event_queue_add_new(OSSL_EVENT_QUEUE *queue,
+                                      uint32_t type, uint32_t priority,
+                                      OSSL_TIME when, void *ctx,
+                                      void *payload, size_t payload_size);
+ void ossl_event_free(OSSL_EVENT *event);
+
+ uint32_t ossl_event_get_type(const OSSL_EVENT *event);
+ uint32_t ossl_event_get_priority(const OSSL_EVENT *event);
+ OSSL_TIME ossl_event_get_when(const OSSL_EVENT *event);
+ void *ossl_event_get0_payload(const OSSL_EVENT *event, size_t *length);
+
+ int ossl_event_queue_schedule(OSSL_EVENT_QUEUE *queue, OSSL_EVENT *event);
+ int ossl_event_queue_delete(OSSL_EVENT_QUEUE *queue, OSSL_EVENT *event);
+
+ OSSL_TIME ossl_event_time_until(OSSL_EVENT *event);
+ OSSL_TIME ossl_event_queue_time_until_next(const OSSL_EVENT_QUEUE *queue);
+
+ int ossl_event_queue_postpone_until(OSSL_EVENT_QUEUE *queue,
+                                     OSSL_EVENT *event,
+                                     OSSL_TIME when);
+
+ int ossl_event_queue_get1_next_event(OSSL_EVENT_QUEUE *queue,
+                                      OSSL_EVENT **event);
+
+=head1 DESCRIPTION
+
+These functions implement an event queue.
+
+=head2 Event
+
+An event is a small structure, B<OSSL_EVENT>, carrying information:
+
+=over 4
+
+=item type
+
+A mandatory event type, which is a simple numeric identity, the
+meaning of which is not known by the event functionality itself.
+
+=item priority
+
+A mandatory nonnegative integral quantity.  The lower the priority the earlier
+the event will be processed.
+
+=item when
+
+An optional time indicating when the event could be triggered.  Events are
+guaranteed to not trigger before their time.
+
+=item context
+
+A reference to user supplied contextual informaton.  The event queue passes
+this to callbacks and never dereferences the pointer.
+
+=item payload, payload_size
+
+A reference to some event specific data of a specified length.
+
+=back
+
+The event itself is designed for a single synchronous thread, i.e. cannot be
+shared by multiple threads.  The diverse objects it refers to may, however,
+be shared by multiple threads, at the discretion of the functions in the
+method structure.
+
+Once populated, the event type, the references to event context, and the
+reference to the destructor function are considered immutable, up until the
+event structure is destroyed.
+
+The reference to the auxiliary identifying material or to the payload,
+however, are considered mutable.  Any event handler may "steal" them and
+replace the reference to them in the event structure with NULL.  Stealing
+must be done with much care.
+
+Events may be embedded in another structure or as a static variable.
+Events may also be dynamically allocated.
+
+B<ossl_event_queue_add> initialises/reinitialises a static event object
+with the specified parameters and adds it to the event queue I<queue>.
+The event object I<event> has it's fields set to the passed parameters.
+
+B<ossl_event_queue_add_new> allocates a new timer event on the heap
+and initialises and adds it as per B<ossl_event_queue_add>.  A pointer to the
+new event is returned on success and NULL is returned on error.
+
+B<ossl_event_free> frees an allocated event returned by B<ossl_event_new>.
+Does nothing if passed a pointer to a static event object which was initialised
+using B<ossl_event_set>.
+
+B<ossl_event_time_until> returns the time until I<event> would
+trigger.  The event need not be part of an event queue.
+
+B<ossl_event_queue_postpone_until> reschedules the I<event>, which must
+be scheduled as part of timer event queue I<queue>, so that it will activate
+at time I<when>.
+
+B<ossl_event_get_type> returns the type of the I<event>.
+
+B<ossl_event_get_priority> returns the priority of the I<event>.
+
+B<ossl_event_get_when> returns the triggering time of the I<event>.
+
+B<ossl_event_get0_payload> returns the payload for the I<event>, the length
+of the payload is stored in I<length>.
+
+=head2 Event queue
+
+B<OSSL_EVENT_QUEUE> is an opaque structure that defines a timer based
+event queue.  Event queue objects can only be dynamically allocated.
+
+B<ossl_event_queue_new> returns a newly allocated event queue object.
+
+B<ossl_event_queue_free> frees a event queue object returned by
+B<ossl_event_queue_new>.
+
+B<ossl_event_queue_schedule> adds the specified I<event> to the timer
+event queue I<queue>.  The I<event> must not already be contained by any
+timer event queue including I<queue>.
+
+B<ossl_event_queue_delete> removes the specified I<event> from the
+timer event queue I<queue>.  The event must have previously been added
+to I<queue> using the B<ossl_event_queue_schedule> call and must not yet
+have triggered.
+
+B<ossl_event_queue_time_until_next> returns the time until the next
+event in the timer event queue I<queue> is scheduled to trigger.
+
+B<ossl_event_queue_get1_next_event> gets the next event to process.
+The event is removed from the event queue and, if dynamically allocated,
+must be freed by the caller.  A NULL event is returned if there is no event
+to process.
+
+=head1 RETURN VALUES
+
+B<ossl_event_queue_new> returns a new timer queue or NULL on failure.
+
+B<ossl_event_new> returns a new event or NULL on failure.
+
+B<ossl_event_get_type>, B<ossl_event_get_priority> and
+B<ossl_event_get_when> return the corresponding event field.
+
+B<ossl_event_get0_payload> returns a pointer to the event's payload.
+
+B<ossl_event_queue_add>, B<ossl_event_queue_remove>,
+B<ossl_event_queue_postpone_until> and
+B<ossl_event_queue_get1_next_event> return 1 on success and 0 on failure.
+
+B<ossl_event_time_until> and B<ossl_event_queue_time_until_next>
+return a time until the next event or B<OSSL_TIME_INFINITY> if there is no
+next event.
+
+=head1 SEE ALSO
+
+L<OSSL_TIME(3)>
+
+=head1 HISTORY
+
+This functionality was added to OpenSSL 3.2.
+
+=head1 COPYRIGHT
+
+Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use this
+file except in compliance with the License.  You can obtain a copy in the file
+LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

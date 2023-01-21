@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -61,7 +61,7 @@ int X509_set_subject_name(X509 *x, const X509_NAME *name)
     return X509_NAME_set(&x->cert_info.subject, name);
 }
 
-int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm)
+int ossl_x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm)
 {
     ASN1_TIME *in;
     in = *ptm;
@@ -79,14 +79,14 @@ int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm)
 {
     if (x == NULL)
         return 0;
-    return x509_set1_time(&x->cert_info.validity.notBefore, tm);
+    return ossl_x509_set1_time(&x->cert_info.validity.notBefore, tm);
 }
 
 int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
 {
     if (x == NULL)
         return 0;
-    return x509_set1_time(&x->cert_info.validity.notAfter, tm);
+    return ossl_x509_set1_time(&x->cert_info.validity.notAfter, tm);
 }
 
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
@@ -192,60 +192,85 @@ int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
     return X509_SIG_INFO_get(&x->siginf, mdnid, pknid, secbits, flags);
 }
 
-static void x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
-                               const ASN1_STRING *sig)
+/* Modify *siginf according to alg and sig. Return 1 on success, else 0. */
+static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
+                              const ASN1_STRING *sig)
 {
     int pknid, mdnid;
     const EVP_MD *md;
+    const EVP_PKEY_ASN1_METHOD *ameth;
 
     siginf->mdnid = NID_undef;
     siginf->pknid = NID_undef;
     siginf->secbits = -1;
     siginf->flags = 0;
     if (!OBJ_find_sigid_algs(OBJ_obj2nid(alg->algorithm), &mdnid, &pknid)
-            || pknid == NID_undef)
-        return;
-    siginf->pknid = pknid;
-    if (mdnid == NID_undef) {
-        /* If we have one, use a custom handler for this algorithm */
-        const EVP_PKEY_ASN1_METHOD *ameth = EVP_PKEY_asn1_find(NULL, pknid);
-        if (ameth == NULL || ameth->siginf_set == NULL
-                || ameth->siginf_set(siginf, alg, sig) == 0)
-            return;
-        siginf->flags |= X509_SIG_INFO_VALID;
-        return;
+            || pknid == NID_undef) {
+        ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_SIGID_ALGS);
+        return 0;
     }
-    siginf->flags |= X509_SIG_INFO_VALID;
     siginf->mdnid = mdnid;
-    md = EVP_get_digestbynid(mdnid);
-    if (md == NULL)
-        return;
-    /* Security bits: half number of bits in digest */
-    siginf->secbits = EVP_MD_size(md) * 4;
-    /*
-     * SHA1 and MD5 are known to be broken. Reduce security bits so that
-     * they're no longer accepted at security level 1. The real values don't
-     * really matter as long as they're lower than 80, which is our security
-     * level 1.
-     * https://eprint.iacr.org/2020/014 puts a chosen-prefix attack for SHA1 at
-     * 2^63.4
-     * https://documents.epfl.ch/users/l/le/lenstra/public/papers/lat.pdf
-     * puts a chosen-prefix attack for MD5 at 2^39.
-     */
-    if (mdnid == NID_sha1)
-        siginf->secbits = 63;
-    else if (mdnid == NID_md5)
-        siginf->secbits = 39;
+    siginf->pknid = pknid;
+
     switch (mdnid) {
-        case NID_sha1:
-        case NID_sha256:
-        case NID_sha384:
-        case NID_sha512:
+    case NID_undef:
+        /* If we have one, use a custom handler for this algorithm */
+        ameth = EVP_PKEY_asn1_find(NULL, pknid);
+        if (ameth == NULL || ameth->siginf_set == NULL
+                || !ameth->siginf_set(siginf, alg, sig)) {
+            ERR_raise(ERR_LIB_X509, X509_R_ERROR_USING_SIGINF_SET);
+            return 0;
+        }
+        break;
+        /*
+         * SHA1 and MD5 are known to be broken. Reduce security bits so that
+         * they're no longer accepted at security level 1.
+         * The real values don't really matter as long as they're lower than 80,
+         * which is our security level 1.
+         */
+    case NID_sha1:
+        /*
+         * https://eprint.iacr.org/2020/014 puts a chosen-prefix attack
+         * for SHA1 at2^63.4
+         */
+        siginf->secbits = 63;
+        break;
+    case NID_md5:
+        /*
+         * https://documents.epfl.ch/users/l/le/lenstra/public/papers/lat.pdf
+         * puts a chosen-prefix attack for MD5 at 2^39.
+         */
+        siginf->secbits = 39;
+        break;
+    case NID_id_GostR3411_94:
+        /*
+         * There is a collision attack on GOST R 34.11-94 at 2^105, see
+         * https://link.springer.com/chapter/10.1007%2F978-3-540-85174-5_10
+         */
+        siginf->secbits = 105;
+        break;
+    default:
+        /* Security bits: half number of bits in digest */
+        if ((md = EVP_get_digestbynid(mdnid)) == NULL) {
+            ERR_raise(ERR_LIB_X509, X509_R_ERROR_GETTING_MD_BY_NID);
+            return 0;
+        }
+        siginf->secbits = EVP_MD_get_size(md) * 4;
+        break;
+    }
+    switch (mdnid) {
+    case NID_sha1:
+    case NID_sha256:
+    case NID_sha384:
+    case NID_sha512:
         siginf->flags |= X509_SIG_INFO_TLS;
     }
+    siginf->flags |= X509_SIG_INFO_VALID;
+    return 1;
 }
 
-void x509_init_sig_info(X509 *x)
+/* Returns 1 on success, 0 on failure */
+int ossl_x509_init_sig_info(X509 *x)
 {
-    x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature);
+    return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature);
 }

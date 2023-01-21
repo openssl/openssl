@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,13 +14,9 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
+#include "x509_local.h"
 #include "pcy_local.h"
 #include "ext_dat.h"
-
-DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF(POLICYINFO)
-DEFINE_STACK_OF(POLICYQUALINFO)
-DEFINE_STACK_OF(ASN1_INTEGER)
 
 /* Certificate policies extension support: this one is a bit complex... */
 
@@ -39,7 +35,7 @@ static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos);
 static int displaytext_str2tag(const char *tagstr, unsigned int *tag_len);
 static int displaytext_get_tag_len(const char *tagstr);
 
-const X509V3_EXT_METHOD v3_cpols = {
+const X509V3_EXT_METHOD ossl_v3_cpols = {
     NID_certificate_policies, 0, ASN1_ITEM_ref(CERTIFICATEPOLICIES),
     0, 0, 0, 0,
     0, 0,
@@ -103,24 +99,22 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
     int i, ia5org;
 
     if (vals == NULL) {
-        X509V3err(X509V3_F_R2I_CERTPOL, ERR_R_X509V3_LIB);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
         return NULL;
     }
 
     pols = sk_POLICYINFO_new_reserve(NULL, num);
     if (pols == NULL) {
-        X509V3err(X509V3_F_R2I_CERTPOL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
     ia5org = 0;
     for (i = 0; i < num; i++) {
         cnf = sk_CONF_VALUE_value(vals, i);
-
-        if (cnf->value || !cnf->name) {
-            X509V3err(X509V3_F_R2I_CERTPOL,
-                      X509V3_R_INVALID_POLICY_IDENTIFIER);
-            X509V3_conf_err(cnf);
+        if (cnf->value != NULL || cnf->name == NULL) {
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_POLICY_IDENTIFIER);
+            X509V3_conf_add_error_name_value(cnf);
             goto err;
         }
         pstr = cnf->name;
@@ -132,9 +126,8 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
 
             polsect = X509V3_get_section(ctx, pstr + 1);
             if (polsect == NULL) {
-                X509V3err(X509V3_F_R2I_CERTPOL, X509V3_R_INVALID_SECTION);
-
-                X509V3_conf_err(cnf);
+                ERR_raise_data(ERR_LIB_X509V3, X509V3_R_INVALID_SECTION,
+                               "%s", cnf->name);
                 goto err;
             }
             pol = policy_section(ctx, polsect, ia5org);
@@ -143,22 +136,22 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
                 goto err;
         } else {
             if ((pobj = OBJ_txt2obj(cnf->name, 0)) == NULL) {
-                X509V3err(X509V3_F_R2I_CERTPOL,
-                          X509V3_R_INVALID_OBJECT_IDENTIFIER);
-                X509V3_conf_err(cnf);
+                ERR_raise_data(ERR_LIB_X509V3,
+                               X509V3_R_INVALID_OBJECT_IDENTIFIER,
+                               "%s", cnf->name);
                 goto err;
             }
             pol = POLICYINFO_new();
             if (pol == NULL) {
                 ASN1_OBJECT_free(pobj);
-                X509V3err(X509V3_F_R2I_CERTPOL, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
             pol->policyid = pobj;
         }
         if (!sk_POLICYINFO_push(pols, pol)) {
             POLICYINFO_free(pol);
-            X509V3err(X509V3_F_R2I_CERTPOL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
@@ -178,47 +171,56 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
     POLICYINFO *pol;
     POLICYQUALINFO *qual;
 
-    if ((pol = POLICYINFO_new()) == NULL)
-        goto merr;
+    if ((pol = POLICYINFO_new()) == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+        goto err;
+    }
     for (i = 0; i < sk_CONF_VALUE_num(polstrs); i++) {
         cnf = sk_CONF_VALUE_value(polstrs, i);
         if (strcmp(cnf->name, "policyIdentifier") == 0) {
             ASN1_OBJECT *pobj;
+
             if ((pobj = OBJ_txt2obj(cnf->value, 0)) == NULL) {
-                X509V3err(X509V3_F_POLICY_SECTION,
-                          X509V3_R_INVALID_OBJECT_IDENTIFIER);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_OBJECT_IDENTIFIER);
                 X509V3_conf_err(cnf);
                 goto err;
             }
             pol->policyid = pobj;
 
-        } else if (!v3_name_cmp(cnf->name, "CPS")) {
+        } else if (!ossl_v3_name_cmp(cnf->name, "CPS")) {
             if (pol->qualifiers == NULL)
                 pol->qualifiers = sk_POLICYQUALINFO_new_null();
-            if ((qual = POLICYQUALINFO_new()) == NULL)
-                goto merr;
-            if (!sk_POLICYQUALINFO_push(pol->qualifiers, qual))
-                goto merr;
-            if ((qual->pqualid = OBJ_nid2obj(NID_id_qt_cps)) == NULL) {
-                X509V3err(X509V3_F_POLICY_SECTION, ERR_R_INTERNAL_ERROR);
+            if ((qual = POLICYQUALINFO_new()) == NULL) {
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
-            if ((qual->d.cpsuri = ASN1_IA5STRING_new()) == NULL)
-                goto merr;
+            if (!sk_POLICYQUALINFO_push(pol->qualifiers, qual)) {
+                ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
+                goto err;
+            }
+            if ((qual->pqualid = OBJ_nid2obj(NID_id_qt_cps)) == NULL) {
+                ERR_raise(ERR_LIB_X509V3, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            if ((qual->d.cpsuri = ASN1_IA5STRING_new()) == NULL) {
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+                goto err;
+            }
             if (!ASN1_STRING_set(qual->d.cpsuri, cnf->value,
-                                 strlen(cnf->value)))
-                goto merr;
-        } else if (!v3_name_cmp(cnf->name, "userNotice")) {
+                                 strlen(cnf->value))) {
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+                goto err;
+            }
+        } else if (!ossl_v3_name_cmp(cnf->name, "userNotice")) {
             STACK_OF(CONF_VALUE) *unot;
             if (*cnf->value != '@') {
-                X509V3err(X509V3_F_POLICY_SECTION,
-                          X509V3_R_EXPECTED_A_SECTION_NAME);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_EXPECTED_A_SECTION_NAME);
                 X509V3_conf_err(cnf);
                 goto err;
             }
             unot = X509V3_get_section(ctx, cnf->value + 1);
             if (!unot) {
-                X509V3err(X509V3_F_POLICY_SECTION, X509V3_R_INVALID_SECTION);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_SECTION);
 
                 X509V3_conf_err(cnf);
                 goto err;
@@ -229,24 +231,22 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
                 goto err;
             if (pol->qualifiers == NULL)
                 pol->qualifiers = sk_POLICYQUALINFO_new_null();
-            if (!sk_POLICYQUALINFO_push(pol->qualifiers, qual))
-                goto merr;
+            if (!sk_POLICYQUALINFO_push(pol->qualifiers, qual)) {
+                ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
+                goto err;
+            }
         } else {
-            X509V3err(X509V3_F_POLICY_SECTION, X509V3_R_INVALID_OPTION);
-
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_OPTION);
             X509V3_conf_err(cnf);
             goto err;
         }
     }
     if (pol->policyid == NULL) {
-        X509V3err(X509V3_F_POLICY_SECTION, X509V3_R_NO_POLICY_IDENTIFIER);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_POLICY_IDENTIFIER);
         goto err;
     }
 
     return pol;
-
- merr:
-    X509V3err(X509V3_F_POLICY_SECTION, ERR_R_MALLOC_FAILURE);
 
  err:
     POLICYINFO_free(pol);
@@ -270,17 +270,17 @@ static int displaytext_str2tag(const char *tagstr, unsigned int *tag_len)
     if (len == -1)
         return V_ASN1_VISIBLESTRING;
     *tag_len = len;
-    if (len == sizeof("UTF8") - 1 && strncmp(tagstr, "UTF8", len) == 0)
+    if (len == sizeof("UTF8") - 1 && HAS_PREFIX(tagstr, "UTF8"))
         return V_ASN1_UTF8STRING;
-    if (len == sizeof("UTF8String") - 1 && strncmp(tagstr, "UTF8String", len) == 0)
+    if (len == sizeof("UTF8String") - 1 && HAS_PREFIX(tagstr, "UTF8String"))
         return V_ASN1_UTF8STRING;
-    if (len == sizeof("BMP") - 1 && strncmp(tagstr, "BMP", len) == 0)
+    if (len == sizeof("BMP") - 1 && HAS_PREFIX(tagstr, "BMP"))
         return V_ASN1_BMPSTRING;
-    if (len == sizeof("BMPSTRING") - 1 && strncmp(tagstr, "BMPSTRING", len) == 0)
+    if (len == sizeof("BMPSTRING") - 1 && HAS_PREFIX(tagstr, "BMPSTRING"))
         return V_ASN1_BMPSTRING;
-    if (len == sizeof("VISIBLE") - 1 && strncmp(tagstr, "VISIBLE", len) == 0)
+    if (len == sizeof("VISIBLE") - 1 && HAS_PREFIX(tagstr, "VISIBLE"))
         return V_ASN1_VISIBLESTRING;
-    if (len == sizeof("VISIBLESTRING") - 1 && strncmp(tagstr, "VISIBLESTRING", len) == 0)
+    if (len == sizeof("VISIBLESTRING") - 1 && HAS_PREFIX(tagstr, "VISIBLESTRING"))
         return V_ASN1_VISIBLESTRING;
     *tag_len = 0;
     return V_ASN1_VISIBLESTRING;
@@ -296,32 +296,44 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
     POLICYQUALINFO *qual;
     char *value = NULL;
 
-    if ((qual = POLICYQUALINFO_new()) == NULL)
-        goto merr;
-    if ((qual->pqualid = OBJ_nid2obj(NID_id_qt_unotice)) == NULL) {
-        X509V3err(X509V3_F_NOTICE_SECTION, ERR_R_INTERNAL_ERROR);
+    if ((qual = POLICYQUALINFO_new()) == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         goto err;
     }
-    if ((not = USERNOTICE_new()) == NULL)
-        goto merr;
+    if ((qual->pqualid = OBJ_nid2obj(NID_id_qt_unotice)) == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    if ((not = USERNOTICE_new()) == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+        goto err;
+    }
     qual->d.usernotice = not;
     for (i = 0; i < sk_CONF_VALUE_num(unot); i++) {
         cnf = sk_CONF_VALUE_value(unot, i);
+
         value = cnf->value;
         if (strcmp(cnf->name, "explicitText") == 0) {
             tag = displaytext_str2tag(value, &tag_len);
-            if ((not->exptext = ASN1_STRING_type_new(tag)) == NULL)
-                goto merr;
+            if ((not->exptext = ASN1_STRING_type_new(tag)) == NULL) {
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+                goto err;
+            }
             if (tag_len != 0)
                 value += tag_len + 1;
             len = strlen(value);
-            if (!ASN1_STRING_set(not->exptext, value, len))
-                goto merr;
+            if (!ASN1_STRING_set(not->exptext, value, len)) {
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+                goto err;
+            }
         } else if (strcmp(cnf->name, "organization") == 0) {
             NOTICEREF *nref;
+
             if (!not->noticeref) {
-                if ((nref = NOTICEREF_new()) == NULL)
-                    goto merr;
+                if ((nref = NOTICEREF_new()) == NULL) {
+                    ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+                    goto err;
+                }
                 not->noticeref = nref;
             } else
                 nref = not->noticeref;
@@ -330,21 +342,26 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
             else
                 nref->organization->type = V_ASN1_VISIBLESTRING;
             if (!ASN1_STRING_set(nref->organization, cnf->value,
-                                 strlen(cnf->value)))
-                goto merr;
+                                 strlen(cnf->value))) {
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+                goto err;
+            }
         } else if (strcmp(cnf->name, "noticeNumbers") == 0) {
             NOTICEREF *nref;
+
             STACK_OF(CONF_VALUE) *nos;
             if (!not->noticeref) {
-                if ((nref = NOTICEREF_new()) == NULL)
-                    goto merr;
+                if ((nref = NOTICEREF_new()) == NULL) {
+                    ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+                    goto err;
+                }
                 not->noticeref = nref;
             } else
                 nref = not->noticeref;
             nos = X509V3_parse_list(cnf->value);
             if (!nos || !sk_CONF_VALUE_num(nos)) {
-                X509V3err(X509V3_F_NOTICE_SECTION, X509V3_R_INVALID_NUMBERS);
-                X509V3_conf_err(cnf);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NUMBERS);
+                X509V3_conf_add_error_name_value(cnf);
                 sk_CONF_VALUE_pop_free(nos, X509V3_conf_free);
                 goto err;
             }
@@ -353,23 +370,19 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
             if (!ret)
                 goto err;
         } else {
-            X509V3err(X509V3_F_NOTICE_SECTION, X509V3_R_INVALID_OPTION);
-            X509V3_conf_err(cnf);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_OPTION);
+            X509V3_conf_add_error_name_value(cnf);
             goto err;
         }
     }
 
     if (not->noticeref &&
         (!not->noticeref->noticenos || !not->noticeref->organization)) {
-        X509V3err(X509V3_F_NOTICE_SECTION,
-                  X509V3_R_NEED_ORGANIZATION_AND_NUMBERS);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_NEED_ORGANIZATION_AND_NUMBERS);
         goto err;
     }
 
     return qual;
-
- merr:
-    X509V3err(X509V3_F_NOTICE_SECTION, ERR_R_MALLOC_FAILURE);
 
  err:
     POLICYQUALINFO_free(qual);
@@ -386,20 +399,16 @@ static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos)
     for (i = 0; i < sk_CONF_VALUE_num(nos); i++) {
         cnf = sk_CONF_VALUE_value(nos, i);
         if ((aint = s2i_ASN1_INTEGER(NULL, cnf->name)) == NULL) {
-            X509V3err(X509V3_F_NREF_NOS, X509V3_R_INVALID_NUMBER);
-            goto err;
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NUMBER);
+            return 0;
         }
-        if (!sk_ASN1_INTEGER_push(nnums, aint))
-            goto merr;
+        if (!sk_ASN1_INTEGER_push(nnums, aint)) {
+            ASN1_INTEGER_free(aint);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
+            return 0;
+        }
     }
     return 1;
-
- merr:
-    ASN1_INTEGER_free(aint);
-    X509V3err(X509V3_F_NREF_NOS, ERR_R_MALLOC_FAILURE);
-
- err:
-    return 0;
 }
 
 static int i2r_certpol(X509V3_EXT_METHOD *method, STACK_OF(POLICYINFO) *pol,
@@ -433,7 +442,8 @@ static void print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals,
         qualinfo = sk_POLICYQUALINFO_value(quals, i);
         switch (OBJ_obj2nid(qualinfo->pqualid)) {
         case NID_id_qt_cps:
-            BIO_printf(out, "%*sCPS: %s", indent, "",
+            BIO_printf(out, "%*sCPS: %.*s", indent, "",
+                       qualinfo->d.cpsuri->length,
                        qualinfo->d.cpsuri->data);
             break;
 
@@ -457,7 +467,8 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
     if (notice->noticeref) {
         NOTICEREF *ref;
         ref = notice->noticeref;
-        BIO_printf(out, "%*sOrganization: %s\n", indent, "",
+        BIO_printf(out, "%*sOrganization: %.*s\n", indent, "",
+                   ref->organization->length,
                    ref->organization->data);
         BIO_printf(out, "%*sNumber%s: ", indent, "",
                    sk_ASN1_INTEGER_num(ref->noticenos) > 1 ? "s" : "");
@@ -481,7 +492,8 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
             BIO_puts(out, "\n");
     }
     if (notice->exptext)
-        BIO_printf(out, "%*sExplicit Text: %s", indent, "",
+        BIO_printf(out, "%*sExplicit Text: %.*s", indent, "",
+                   notice->exptext->length,
                    notice->exptext->data);
 }
 

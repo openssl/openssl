@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -16,25 +16,25 @@
 #include <openssl/err.h> /* should be implied by cmperr.h */
 #include <openssl/x509v3.h>
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_OBJECT)
-DEFINE_STACK_OF(ASN1_UTF8STRING)
-
 /*
  * use trace API for CMP-specific logging, prefixed by "CMP " and severity
  */
 
 int OSSL_CMP_log_open(void) /* is designed to be idempotent */
 {
-#ifndef OPENSSL_NO_STDIO
+#ifdef OPENSSL_NO_TRACE
+    return 1;
+#else
+# ifndef OPENSSL_NO_STDIO
     BIO *bio = BIO_new_fp(stdout, BIO_NOCLOSE);
 
     if (bio != NULL && OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_CMP, bio))
         return 1;
     BIO_free(bio);
-#endif
-    CMPerr(0, CMP_R_NO_STDIO);
+# endif
+    ERR_raise(ERR_LIB_CMP, CMP_R_NO_STDIO);
     return 0;
+#endif
 }
 
 void OSSL_CMP_log_close(void) /* is designed to be idempotent */
@@ -53,8 +53,7 @@ static OSSL_CMP_severity parse_level(const char *level)
     if (end_level == NULL)
         return -1;
 
-    if (strncmp(level, OSSL_CMP_LOG_PREFIX,
-                strlen(OSSL_CMP_LOG_PREFIX)) == 0)
+    if (HAS_PREFIX(level, OSSL_CMP_LOG_PREFIX))
         level += strlen(OSSL_CMP_LOG_PREFIX);
     len = end_level - level;
     if (len > max_level_len)
@@ -101,8 +100,8 @@ const char *ossl_cmp_log_parse_metadata(const char *buf,
                     *file = OPENSSL_strndup(p_file, p_line - 1 - p_file);
                     /* no real problem if OPENSSL_strndup() returns NULL */
                     *line = (int)line_number;
-                    msg = strchr(p_level, ':') + 1;
-                    if (*msg == ' ')
+                    msg = strchr(p_level, ':');
+                    if (msg != NULL && *++msg == ' ')
                         msg++;
                 }
             }
@@ -159,12 +158,27 @@ void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
     while ((err = ERR_get_error_all(&file, &line, &func, &data, &flags)) != 0) {
         const char *component =
             improve_location_name(func, ERR_lib_error_string(err));
+        unsigned long reason = ERR_GET_REASON(err);
+        const char *rs = NULL;
+        char rsbuf[256];
 
-        if (!(flags & ERR_TXT_STRING))
-            data = NULL;
-        BIO_snprintf(msg, sizeof(msg), "%s%s%s", ERR_reason_error_string(err),
-                     data == NULL || *data == '\0' ? "" : " : ",
-                     data == NULL ? "" : data);
+#ifndef OPENSSL_NO_ERR
+        if (ERR_SYSTEM_ERROR(err)) {
+            if (openssl_strerror_r(reason, rsbuf, sizeof(rsbuf)))
+                rs = rsbuf;
+        } else {
+            rs = ERR_reason_error_string(err);
+        }
+#endif
+        if (rs == NULL) {
+            BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", reason);
+            rs = rsbuf;
+        }
+        if (data != NULL && (flags & ERR_TXT_STRING) != 0)
+            BIO_snprintf(msg, sizeof(msg), "%s:%s", rs, data);
+        else
+            BIO_snprintf(msg, sizeof(msg), "%s", rs);
+
         if (log_fn == NULL) {
 #ifndef OPENSSL_NO_STDIO
             BIO *bio = BIO_new_fp(stderr, BIO_NOCLOSE);
@@ -175,7 +189,7 @@ void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
                 BIO_free(bio);
             }
 #else
-            /* CMPerr(0, CMP_R_NO_STDIO) makes no sense during error printing */
+            /* ERR_raise(..., CMP_R_NO_STDIO) would make no sense here */
 #endif
         } else {
             if (log_fn(component, file, line, OSSL_CMP_LOG_ERR, msg) <= 0)
@@ -184,67 +198,13 @@ void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
     }
 }
 
-/*
- * functions manipulating lists of certificates etc.
- * these functions could be generally useful.
- */
-
-int ossl_cmp_sk_X509_add1_cert(STACK_OF(X509) *sk, X509 *cert,
-                               int no_dup, int prepend)
-{
-    if (sk == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-    if (no_dup) {
-        /*
-         * not using sk_X509_set_cmp_func() and sk_X509_find()
-         * because this re-orders the certs on the stack
-         */
-        int i;
-
-        for (i = 0; i < sk_X509_num(sk); i++) {
-            if (X509_cmp(sk_X509_value(sk, i), cert) == 0)
-                return 1;
-        }
-    }
-    if (!X509_up_ref(cert))
-        return 0;
-    if (!sk_X509_insert(sk, cert, prepend ? 0 : -1)) {
-        X509_free(cert);
-        return 0;
-    }
-    return 1;
-}
-
-int ossl_cmp_sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
-                                int no_self_issued, int no_dups, int prepend)
-/* compiler would allow 'const' for the list of certs, yet they are up-ref'ed */
-{
-    int i;
-
-    if (sk == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-    for (i = 0; i < sk_X509_num(certs); i++) { /* certs may be NULL */
-        X509 *cert = sk_X509_value(certs, i);
-
-        if (!no_self_issued || X509_check_issued(cert, cert) != X509_V_OK) {
-            if (!ossl_cmp_sk_X509_add1_cert(sk, cert, no_dups, prepend))
-                return 0;
-        }
-    }
-    return 1;
-}
-
 int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
-                                   int only_self_issued)
+                                   int only_self_signed)
 {
     int i;
 
     if (store == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (certs == NULL)
@@ -252,81 +212,15 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
     for (i = 0; i < sk_X509_num(certs); i++) {
         X509 *cert = sk_X509_value(certs, i);
 
-        if (!only_self_issued || X509_check_issued(cert, cert) == X509_V_OK)
+        if (!only_self_signed || X509_self_signed(cert, 0) == 1)
             if (!X509_STORE_add_cert(store, cert)) /* ups cert ref counter */
                 return 0;
     }
     return 1;
 }
 
-/*-
- * Builds up the certificate chain of certs as high up as possible using
- * the given list of certs containing all possible intermediate certificates and
- * optionally the (possible) trust anchor(s). See also ssl_add_cert_chain().
- *
- * Intended use of this function is to find all the certificates above the trust
- * anchor needed to verify an EE's own certificate.  Those are supposed to be
- * included in the ExtraCerts field of every first sent message of a transaction
- * when MSG_SIG_ALG is utilized.
- *
- * NOTE: This allocates a stack and increments the reference count of each cert,
- * so when not needed any more the stack and all its elements should be freed.
- * NOTE: in case there is more than one possibility for the chain,
- * OpenSSL seems to take the first one, check X509_verify_cert() for details.
- *
- * returns a pointer to a stack of (up_ref'ed) X509 certificates containing:
- *      - the EE certificate given in the function arguments (cert)
- *      - all intermediate certificates up the chain toward the trust anchor
- *        whereas the (self-signed) trust anchor is not included
- * returns NULL on error
- */
-STACK_OF(X509) *ossl_cmp_build_cert_chain(STACK_OF(X509) *certs, X509 *cert)
-{
-    STACK_OF(X509) *chain = NULL, *result = NULL;
-    X509_STORE *store = X509_STORE_new();
-    X509_STORE_CTX *csc = NULL;
-
-    if (certs == NULL || cert == NULL || store == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        goto err;
-    }
-
-    csc = X509_STORE_CTX_new();
-    if (csc == NULL)
-        goto err;
-
-    if (!ossl_cmp_X509_STORE_add1_certs(store, certs, 0)
-            || !X509_STORE_CTX_init(csc, store, cert, NULL))
-        goto err;
-
-    (void)ERR_set_mark();
-    /*
-     * ignore return value as it would fail without trust anchor given in store
-     */
-    (void)X509_verify_cert(csc);
-
-    /* don't leave any new errors in the queue */
-    (void)ERR_pop_to_mark();
-
-    chain = X509_STORE_CTX_get0_chain(csc);
-
-    /* result list to store the up_ref'ed not self-issued certificates */
-    if ((result = sk_X509_new_null()) == NULL)
-        goto err;
-    if (!ossl_cmp_sk_X509_add1_certs(result, chain, 1 /* no self-issued */,
-                                     1 /* no duplicates */, 0)) {
-        sk_X509_free(result);
-        result = NULL;
-    }
-
- err:
-    X509_STORE_free(store);
-    X509_STORE_CTX_free(csc);
-    return result;
-}
-
 int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,
-                                         const char *text)
+                                         const char *text, int len)
 {
     ASN1_UTF8STRING *utf8string;
 
@@ -334,7 +228,7 @@ int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,
         return 0;
     if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
         return 0;
-    if (!ASN1_STRING_set(utf8string, text, -1))
+    if (!ASN1_STRING_set(utf8string, text, len))
         goto err;
     if (!sk_ASN1_UTF8STRING_push(sk, utf8string))
         goto err;
@@ -349,8 +243,9 @@ int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
                                     const ASN1_OCTET_STRING *src)
 {
     ASN1_OCTET_STRING *new;
+
     if (tgt == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (*tgt == src) /* self-assignment */
@@ -374,7 +269,7 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
     ASN1_OCTET_STRING *new = NULL;
 
     if (tgt == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (bytes != NULL) {

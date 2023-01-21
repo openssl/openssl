@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -15,8 +15,9 @@
 /* On machines that dont support <inttypes.h> just disable the tests */
 #if !defined(OPENSSL_NO_INTTYPES_H)
 
-# ifdef OPENSSL_SYS_WINDOWS
-#  define strcasecmp _stricmp
+# ifdef OPENSSL_SYS_VMS
+#  define strtoumax strtoull
+#  define strtoimax strtoll
 # endif
 
 typedef struct {
@@ -57,7 +58,7 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
 
     for (i = 0; i < s->numpairs; i++, pp++) {
         p = "";
-        if (strcasecmp(pp->key, "type") == 0) {
+        if (OPENSSL_strcasecmp(pp->key, "type") == 0) {
             if (type != NULL) {
                 TEST_info("Line %d: multiple type lines", s->curr);
                 return 0;
@@ -67,48 +68,48 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
                 TEST_info("Line %d: unknown type line", s->curr);
                 return 0;
             }
-        } else if (strcasecmp(pp->key, "int32") == 0) {
+        } else if (OPENSSL_strcasecmp(pp->key, "int32") == 0) {
             if (def_i32++) {
                 TEST_info("Line %d: multiple int32 lines", s->curr);
                 return 0;
             }
-            if (strcasecmp(pp->value, "invalid") != 0) {
+            if (OPENSSL_strcasecmp(pp->value, "invalid") != 0) {
                 pc->valid_i32 = 1;
                 pc->i32 = (int32_t)strtoimax(pp->value, &p, 10);
             }
-        } else if (strcasecmp(pp->key, "int64") == 0) {
+        } else if (OPENSSL_strcasecmp(pp->key, "int64") == 0) {
             if (def_i64++) {
                 TEST_info("Line %d: multiple int64 lines", s->curr);
                 return 0;
             }
-            if (strcasecmp(pp->value, "invalid") != 0) {
+            if (OPENSSL_strcasecmp(pp->value, "invalid") != 0) {
                 pc->valid_i64 = 1;
                 pc->i64 = (int64_t)strtoimax(pp->value, &p, 10);
             }
-        } else if (strcasecmp(pp->key, "uint32") == 0) {
+        } else if (OPENSSL_strcasecmp(pp->key, "uint32") == 0) {
             if (def_u32++) {
                 TEST_info("Line %d: multiple uint32 lines", s->curr);
                 return 0;
             }
-            if (strcasecmp(pp->value, "invalid") != 0) {
+            if (OPENSSL_strcasecmp(pp->value, "invalid") != 0) {
                 pc->valid_u32 = 1;
                 pc->u32 = (uint32_t)strtoumax(pp->value, &p, 10);
             }
-        } else if (strcasecmp(pp->key, "uint64") == 0) {
+        } else if (OPENSSL_strcasecmp(pp->key, "uint64") == 0) {
             if (def_u64++) {
                 TEST_info("Line %d: multiple uint64 lines", s->curr);
                 return 0;
             }
-            if (strcasecmp(pp->value, "invalid") != 0) {
+            if (OPENSSL_strcasecmp(pp->value, "invalid") != 0) {
                 pc->valid_u64 = 1;
                 pc->u64 = (uint64_t)strtoumax(pp->value, &p, 10);
             }
-        } else if (strcasecmp(pp->key, "double") == 0) {
+        } else if (OPENSSL_strcasecmp(pp->key, "double") == 0) {
             if (def_d++) {
                 TEST_info("Line %d: multiple double lines", s->curr);
                 return 0;
             }
-            if (strcasecmp(pp->value, "invalid") != 0) {
+            if (OPENSSL_strcasecmp(pp->value, "invalid") != 0) {
                 pc->valid_d = 1;
                 pc->d = strtod(pp->value, &p);
             }
@@ -128,7 +129,7 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
         return 0;
     }
 
-    if (strcasecmp(type, "int32") == 0) {
+    if (OPENSSL_strcasecmp(type, "int32") == 0) {
         if (!TEST_true(def_i32) || !TEST_true(pc->valid_i32)) {
             TEST_note("errant int32 on line %d", s->curr);
             return 0;
@@ -137,7 +138,7 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
         pc->datum = &datum_i32;
         pc->ref = &ref_i32;
         pc->size = sizeof(ref_i32);
-    } else if (strcasecmp(type, "int64") == 0) {
+    } else if (OPENSSL_strcasecmp(type, "int64") == 0) {
         if (!TEST_true(def_i64) || !TEST_true(pc->valid_i64)) {
             TEST_note("errant int64 on line %d", s->curr);
             return 0;
@@ -146,7 +147,7 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
         pc->datum = &datum_i64;
         pc->ref = &ref_i64;
         pc->size = sizeof(ref_i64);
-    } else if (strcasecmp(type, "uint32") == 0) {
+    } else if (OPENSSL_strcasecmp(type, "uint32") == 0) {
         if (!TEST_true(def_u32) || !TEST_true(pc->valid_u32)) {
             TEST_note("errant uint32 on line %d", s->curr);
             return 0;
@@ -155,7 +156,7 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
         pc->datum = &datum_u32;
         pc->ref = &ref_u32;
         pc->size = sizeof(ref_u32);
-    } else if (strcasecmp(type, "uint64") == 0) {
+    } else if (OPENSSL_strcasecmp(type, "uint64") == 0) {
         if (!TEST_true(def_u64) || !TEST_true(pc->valid_u64)) {
             TEST_note("errant uint64 on line %d", s->curr);
             return 0;
@@ -164,7 +165,7 @@ static int param_conversion_load_stanza(PARAM_CONVERSION *pc, const STANZA *s)
         pc->datum = &datum_u64;
         pc->ref = &ref_u64;
         pc->size = sizeof(ref_u64);
-    } else if (strcasecmp(type, "double") == 0) {
+    } else if (OPENSSL_strcasecmp(type, "double") == 0) {
         if (!TEST_true(def_d) || !TEST_true(pc->valid_d)) {
             TEST_note("errant double on line %d", s->curr);
             return 0;
@@ -189,7 +190,8 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     double d;
 
     if (!pc->valid_i32) {
-        if (!TEST_false(OSSL_PARAM_get_int32(pc->param, &i32))) {
+        if (!TEST_false(OSSL_PARAM_get_int32(pc->param, &i32))
+                || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to int32 on line %d", line);
             return 0;
         }
@@ -209,7 +211,8 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     }
 
     if (!pc->valid_i64) {
-        if (!TEST_false(OSSL_PARAM_get_int64(pc->param, &i64))) {
+        if (!TEST_false(OSSL_PARAM_get_int64(pc->param, &i64))
+                || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to int64 on line %d", line);
             return 0;
         }
@@ -229,7 +232,8 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     }
 
     if (!pc->valid_u32) {
-        if (!TEST_false(OSSL_PARAM_get_uint32(pc->param, &u32))) {
+        if (!TEST_false(OSSL_PARAM_get_uint32(pc->param, &u32))
+                || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to uint32 on line %d", line);
             return 0;
         }
@@ -249,7 +253,8 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     }
 
     if (!pc->valid_u64) {
-        if (!TEST_false(OSSL_PARAM_get_uint64(pc->param, &u64))) {
+        if (!TEST_false(OSSL_PARAM_get_uint64(pc->param, &u64))
+                || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to uint64 on line %d", line);
             return 0;
         }
@@ -269,13 +274,34 @@ static int param_conversion_test(const PARAM_CONVERSION *pc, int line)
     }
 
     if (!pc->valid_d) {
-        if (!TEST_false(OSSL_PARAM_get_double(pc->param, &d))) {
+        if (!TEST_false(OSSL_PARAM_get_double(pc->param, &d))
+                || !TEST_ulong_ne(ERR_get_error(), 0)) {
             TEST_note("unexpected valid conversion to double on line %d", line);
             return 0;
         }
     } else {
-        if (!TEST_true(OSSL_PARAM_get_double(pc->param, &d))
-            || !TEST_true(d == pc->d)) {
+        if (!TEST_true(OSSL_PARAM_get_double(pc->param, &d))) {
+            TEST_note("unable to convert to double on line %d", line);
+            return 0;
+        }
+        /*
+         * Check for not a number (NaN) without using the libm functions.
+         * When d is a NaN, the standard requires d == d to be false.
+         * It's less clear if d != d should be true even though it generally is.
+         * Hence we use the equality test and a not.
+         */
+        if (!(d == d)) {
+            /*
+             * We've encountered a NaN so check it's really meant to be a NaN.
+             * We ignore the case where the two values are both different NaN,
+             * that's not resolvable without knowing the underlying format
+             * or using libm functions.
+             */
+            if (!TEST_false(pc->d == pc->d)) {
+                TEST_note("unexpected NaN on line %d", line);
+                return 0;
+            }
+        } else if (!TEST_true(d == pc->d)) {
             TEST_note("unexpected conversion to double on line %d", line);
             return 0;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 
 #include <string.h>
 
+#include "internal/endian.h"
 #include "crypto/chacha.h"
 #include "crypto/ctype.h"
 
@@ -22,6 +23,28 @@ typedef union {
 } chacha_buf;
 
 # define ROTATE(v, n) (((v) << (n)) | ((v) >> (32 - (n))))
+
+# ifndef PEDANTIC
+#  if defined(__GNUC__) && __GNUC__>=2 && \
+      !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#   if defined(__riscv_zbb) || defined(__riscv_zbkb)
+#    if __riscv_xlen == 64
+#    undef ROTATE
+#    define ROTATE(x, n) ({ u32 ret;                   \
+                        asm ("roriw %0, %1, %2"        \
+                        : "=r"(ret)                    \
+                        : "r"(x), "i"(32 - (n))); ret;})
+#    endif
+#    if __riscv_xlen == 32
+#    undef ROTATE
+#    define ROTATE(x, n) ({ u32 ret;                   \
+                        asm ("rori %0, %1, %2"         \
+                        : "=r"(ret)                    \
+                        : "r"(x), "i"(32 - (n))); ret;})
+#    endif
+#   endif
+#  endif
+# endif
 
 # define U32TO8_LITTLE(p, v) do { \
                                 (p)[0] = (u8)(v >>  0); \
@@ -43,10 +66,7 @@ static void chacha20_core(chacha_buf *output, const u32 input[16])
 {
     u32 x[16];
     int i;
-    const union {
-        long one;
-        char little;
-    } is_endian = { 1 };
+    DECLARE_IS_ENDIAN;
 
     memcpy(x, input, sizeof(x));
 
@@ -61,7 +81,7 @@ static void chacha20_core(chacha_buf *output, const u32 input[16])
         QUARTERROUND(3, 4, 9, 14);
     }
 
-    if (is_endian.little) {
+    if (IS_LITTLE_ENDIAN) {
         for (i = 0; i < 16; ++i)
             output->u[i] = x[i] + input[i];
     } else {

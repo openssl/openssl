@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,14 +33,12 @@ BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
 
     bn_check_top(mod);
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        BNerr(BN_F_BN_BLINDING_NEW, ERR_R_MALLOC_FAILURE);
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return NULL;
-    }
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        BNerr(BN_F_BN_BLINDING_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_CRYPTO_LIB);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -95,7 +93,7 @@ int BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx)
     int ret = 0;
 
     if ((b->A == NULL) || (b->Ai == NULL)) {
-        BNerr(BN_F_BN_BLINDING_UPDATE, BN_R_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_BN, BN_R_NOT_INITIALIZED);
         goto err;
     }
 
@@ -138,7 +136,7 @@ int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
     bn_check_top(n);
 
     if ((b->A == NULL) || (b->Ai == NULL)) {
-        BNerr(BN_F_BN_BLINDING_CONVERT_EX, BN_R_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_BN, BN_R_NOT_INITIALIZED);
         return 0;
     }
 
@@ -172,7 +170,7 @@ int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
     bn_check_top(n);
 
     if (r == NULL && (r = b->Ai) == NULL) {
-        BNerr(BN_F_BN_BLINDING_INVERT_EX, BN_R_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_BN, BN_R_NOT_INITIALIZED);
         return 0;
     }
 
@@ -270,7 +268,7 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
 
     do {
         int rv;
-        if (!BN_priv_rand_range_ex(ret->A, ret->mod, ctx))
+        if (!BN_priv_rand_range_ex(ret->A, ret->mod, 0, ctx))
             goto err;
         if (int_bn_mod_inverse(ret->Ai, ret->A, ret->mod, ctx, &rv))
             break;
@@ -282,7 +280,7 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
             goto err;
 
         if (retry_counter-- == 0) {
-            BNerr(BN_F_BN_BLINDING_CREATE_PARAM, BN_R_TOO_MANY_ITERATIONS);
+            ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_ITERATIONS);
             goto err;
         }
     } while (1);

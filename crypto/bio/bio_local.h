@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,9 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "internal/sockets.h"
-#include "internal/refcount.h"
+#include "internal/bio_addr.h"
 
 /* BEGIN BIO_ADDRINFO/BIO_ADDR stuff. */
 
@@ -32,13 +32,6 @@
 # endif
 # ifdef OPENSSL_BIO_H
 #  error openssl/bio.h included before bio_local.h
-# endif
-
-/*
- * Undefine AF_UNIX on systems that define it but don't support it.
- */
-# if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_VMS)
-#  undef AF_UNIX
 # endif
 
 # ifdef AI_PASSIVE
@@ -71,23 +64,13 @@ struct bio_addrinfo_st {
     struct bio_addrinfo_st *bai_next;
 };
 # endif
-
-union bio_addr_st {
-    struct sockaddr sa;
-# ifdef AF_INET6
-    struct sockaddr_in6 s_in6;
-# endif
-    struct sockaddr_in s_in;
-# ifdef AF_UNIX
-    struct sockaddr_un s_un;
-# endif
-};
 #endif
 
 /* END BIO_ADDRINFO/BIO_ADDR stuff. */
 
 #include "internal/cryptlib.h"
 #include "internal/bio.h"
+#include "internal/refcount.h"
 
 typedef struct bio_f_buffer_ctx_struct {
     /*-
@@ -113,9 +96,12 @@ typedef struct bio_f_buffer_ctx_struct {
 } BIO_F_BUFFER_CTX;
 
 struct bio_st {
+    OSSL_LIB_CTX *libctx;
     const BIO_METHOD *method;
     /* bio, mode, argp, argi, argl, ret */
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     BIO_callback_fn callback;
+#endif
     BIO_callback_fn_ex callback_ex;
     char *cb_arg;               /* first argument for the callback */
     int init;
@@ -146,6 +132,12 @@ struct sockaddr *BIO_ADDR_sockaddr_noconst(BIO_ADDR *ap);
 socklen_t BIO_ADDR_sockaddr_size(const BIO_ADDR *ap);
 socklen_t BIO_ADDRINFO_sockaddr_size(const BIO_ADDRINFO *bai);
 const struct sockaddr *BIO_ADDRINFO_sockaddr(const BIO_ADDRINFO *bai);
+
+# if defined(OPENSSL_SYS_WINDOWS) && defined(WSAID_WSARECVMSG)
+#  define BIO_HAVE_WSAMSG
+extern LPFN_WSARECVMSG bio_WSARecvMsg;
+extern LPFN_WSASENDMSG bio_WSASendMsg;
+# endif
 #endif
 
 extern CRYPTO_RWLOCK *bio_type_lock;

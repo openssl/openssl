@@ -1,0 +1,53 @@
+# Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Coverage
+
+#Run once a day
+on:
+  schedule:
+    - cron:  '49 0 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    permissions:
+      checks: write  # for coverallsapp/github-action to create new checks
+      contents: read  # for actions/checkout to fetch code
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - name: package installs
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq install lcov
+        sudo apt-get -yq install bison gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python3 python3-paste python3-pyrad slapd tcsh python3-virtualenv virtualenv python3-kdcproxy
+    - name: install cpanm and Test2::V0 for gost_engine testing
+      uses: perl-actions/install-with-cpanm@v1
+      with:
+        install: Test2::V0
+    - name: setup hostname workaround
+      run: sudo hostname localhost
+    - name: config
+      run: CC=gcc ./config --banner=Configured --debug --coverage no-asm no-afalgeng enable-fips enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests enable-tfo enable-quic -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} TESTS='-test_external_krb5'
+    - name: generate coverage info
+      run: lcov -d . -c -o ./lcov.info
+    - name: Coveralls upload
+      uses: coverallsapp/github-action@1.1.3
+      with:
+        github-token: ${{ secrets.github_token }}
+        path-to-lcov: ./lcov.info

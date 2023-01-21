@@ -15,7 +15,8 @@ B<openssl> B<spkac>
 [B<-help>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
-[B<-key> I<keyfile>]
+[B<-digest> I<digest>]
+[B<-key> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
 [B<-challenge> I<string>]
@@ -24,10 +25,7 @@ B<openssl> B<spkac>
 [B<-spksect> I<section>]
 [B<-noout>]
 [B<-verify>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
-
-=for openssl ifdef engine
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -53,22 +51,26 @@ option is not specified. Ignored if the B<-key> option is used.
 Specifies the output filename to write to or standard output by
 default.
 
-=item B<-key> I<keyfile>
+=item B<-digest> I<digest>
 
-Create an SPKAC file using the private key in I<keyfile>. The
-B<-in>, B<-noout>, B<-spksect> and B<-verify> options are ignored if
+Use the specified I<digest> to sign a created SPKAC file.
+The default digest algorithm is MD5.
+
+=item B<-key> I<filename>|I<uri>
+
+Create an SPKAC file using the private key specified by I<filename> or I<uri>.
+The B<-in>, B<-noout>, B<-spksect> and B<-verify> options are ignored if
 present.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+The key format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-passin> I<arg>
 
 The input file password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-challenge> I<string>
 
@@ -151,12 +153,13 @@ L<openssl-ca(1)>
 
 =head1 HISTORY
 
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
+The B<-digest> option was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

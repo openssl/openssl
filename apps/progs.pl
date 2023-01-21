@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -21,14 +21,15 @@ die "Unrecognised option, must be -C or -H\n"
 my %commands     = ();
 my $cmdre        = qr/^\s*int\s+([a-z_][a-z0-9_]*)_main\(\s*int\s+argc\s*,/;
 my $apps_openssl = shift @ARGV;
-my $YEAR         = [localtime()]->[5] + 1900;
+my $YEAR         = [gmtime($ENV{SOURCE_DATE_EPOCH} || time())]->[5] + 1900;
 
 # because the program apps/openssl has object files as sources, and
 # they then have the corresponding C files as source, we need to chain
 # the lookups in %unified_info
 my @openssl_source =
     map { @{$unified_info{sources}->{$_}} }
-    grep { /\.o$/ }
+    grep { /\.o$/
+           && !$unified_info{attributes}->{sources}->{$apps_openssl}->{$_}->{nocheck} }
         @{$unified_info{sources}->{$apps_openssl}};
 
 foreach my $filename (@openssl_source) {
@@ -98,7 +99,6 @@ EOF
         gendh    => "dh",
         dhparam  => "dh",
         ecparam  => "ec",
-        pkcs12   => "des",
     );
     my %cmd_deprecated = (
 # The format of this table is:
@@ -150,7 +150,6 @@ EOF
     );
     foreach my $cmd (
         "md2", "md4", "md5",
-        "gost",
         "sha1", "sha224", "sha256", "sha384",
         "sha512", "sha512-224", "sha512-256",
         "sha3-224", "sha3-256", "sha3-384", "sha3-512",
@@ -189,7 +188,7 @@ EOF
         "camellia-128-cbc", "camellia-128-ecb",
         "camellia-192-cbc", "camellia-192-ecb",
         "camellia-256-cbc", "camellia-256-ecb",
-        "base64", "zlib",
+        "base64", "zlib", "brotli", "zstd",
         "des", "des3", "desx", "idea", "seed", "rc4", "rc4-40",
         "rc2", "bf", "cast", "rc5",
         "des-ecb", "des-ede", "des-ede3",
@@ -206,9 +205,7 @@ EOF
     ) {
         my $str = "    {FT_cipher, \"$cmd\", enc_main, enc_options, NULL},\n";
         (my $algo = $cmd) =~ s/-.*//g;
-        if ($cmd eq "zlib") {
-            print "#ifdef ZLIB\n${str}#endif\n";
-        } elsif (grep { $algo eq $_ } @disablables) {
+        if (grep { $algo eq $_ } @disablables) {
             print "#ifndef OPENSSL_NO_" . uc($algo) . "\n${str}#endif\n";
         } elsif (my $disabler = $cipher_disabler{$algo}) {
             print "#ifndef OPENSSL_NO_" . uc($disabler) . "\n${str}#endif\n";

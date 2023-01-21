@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -136,7 +136,8 @@ static int cipher_hw_des_cfb1_cipher(PROV_CIPHER_CTX *ctx, unsigned char *out,
 {
     size_t n, chunk = MAXCHUNK / 8;
     DES_key_schedule *key = &(((PROV_DES_CTX *)ctx)->dks.ks);
-    unsigned char c[1], d[1];
+    unsigned char c[1];
+    unsigned char d[1] = { 0 };
 
     if (inl < chunk)
         chunk = inl;
@@ -183,7 +184,7 @@ static const PROV_CIPHER_HW des_##mode = {                                     \
     cipher_hw_des_##mode##_cipher,                                             \
     cipher_hw_des_copyctx                                                      \
 };                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_des_##mode(void)                          \
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_des_##mode(void)                     \
 {                                                                              \
     return &des_##mode;                                                        \
 }

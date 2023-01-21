@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,7 +37,7 @@ static int aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 # ifdef BSAES_CAPABLE
     if (BSAES_CAPABLE) {
         GCM_HW_SET_KEY_CTR_FN(ks, AES_set_encrypt_key, AES_encrypt,
-                              bsaes_ctr32_encrypt_blocks);
+                              ossl_bsaes_ctr32_encrypt_blocks);
     } else
 # endif /* BSAES_CAPABLE */
 
@@ -126,11 +126,11 @@ static int generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char 
 
 static const PROV_GCM_HW aes_gcm = {
     aes_gcm_initkey,
-    gcm_setiv,
-    gcm_aad_update,
+    ossl_gcm_setiv,
+    ossl_gcm_aad_update,
     generic_aes_gcm_cipher_update,
-    gcm_cipher_final,
-    gcm_one_shot
+    ossl_gcm_cipher_final,
+    ossl_gcm_one_shot
 };
 
 #if defined(S390X_aes_128_CAPABLE)
@@ -141,8 +141,14 @@ static const PROV_GCM_HW aes_gcm = {
 # include "cipher_aes_gcm_hw_t4.inc"
 #elif defined(AES_PMULL_CAPABLE) && defined(AES_GCM_ASM)
 # include "cipher_aes_gcm_hw_armv8.inc"
+#elif defined(PPC_AES_GCM_CAPABLE)
+# include "cipher_aes_gcm_hw_ppc.inc"
+#elif defined(RV64I_ZKND_ZKNE_CAPABLE)
+# include "cipher_aes_gcm_hw_rv64i_zknd_zkne.inc"
+#elif defined(RV32I_ZBKB_ZKND_ZKNE_CAPABLE) && defined(RV32I_ZKND_ZKNE_CAPABLE)
+# include "cipher_aes_gcm_hw_rv32i_zknd_zkne.inc"
 #else
-const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits)
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
     return &aes_gcm;
 }

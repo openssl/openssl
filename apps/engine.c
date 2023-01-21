@@ -1,11 +1,14 @@
 /*
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/opensslconf.h>
 
@@ -19,11 +22,8 @@
 #include <openssl/ssl.h>
 #include <openssl/store.h>
 
-DEFINE_STACK_OF_STRING()
-DEFINE_STACK_OF_CSTRING()
-
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_C, OPT_T, OPT_TT, OPT_PRE, OPT_POST,
     OPT_V = 100, OPT_VV, OPT_VVV, OPT_VVVV
 } OPTION_CHOICE;
@@ -347,7 +347,7 @@ int engine_main(int argc, char **argv)
             break;
         case OPT_TT:
             test_avail_noise++;
-            /* fall thru */
+            /* fall through */
         case OPT_T:
             test_avail++;
             break;
@@ -360,7 +360,7 @@ int engine_main(int argc, char **argv)
         }
     }
 
-    /* Allow any trailing parameters as engine names. */
+    /* Any remaining arguments are engine names. */
     argc = opt_num_rest();
     argv = opt_rest();
     for ( ; *argv; argv++) {

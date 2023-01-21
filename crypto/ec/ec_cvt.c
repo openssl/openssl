@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -54,7 +54,7 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
         meth = EC_GFp_mont_method();
 #endif
 
-    ret = ec_group_new_with_libctx(bn_get_lib_ctx(ctx), NULL, meth);
+    ret = ossl_ec_group_new_ex(ossl_bn_get_libctx(ctx), NULL, meth);
     if (ret == NULL)
         return NULL;
 
@@ -75,7 +75,7 @@ EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
 
     meth = EC_GF2m_simple_method();
 
-    ret = ec_group_new_with_libctx(bn_get_lib_ctx(ctx), NULL, meth);
+    ret = ossl_ec_group_new_ex(ossl_bn_get_libctx(ctx), NULL, meth);
     if (ret == NULL)
         return NULL;
 

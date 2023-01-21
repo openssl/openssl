@@ -1,0 +1,8 @@
+#
+[pkcs12]
+certBagAttr = cb_attr
+
+# Uncomment this if you need Java compatible PKCS12 files
+[cb_attr]
+jdkTrustedKeyUsage = anyExtendedKeyUsage
+

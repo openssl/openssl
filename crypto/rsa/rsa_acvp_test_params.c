@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,7 @@
 #include "crypto/rsa.h"
 #include "rsa_local.h"
 
-int rsa_acvp_test_gen_params_new(OSSL_PARAM **dst, const OSSL_PARAM src[])
+int ossl_rsa_acvp_test_gen_params_new(OSSL_PARAM **dst, const OSSL_PARAM src[])
 {
     const OSSL_PARAM *p, *s;
     OSSL_PARAM *d, *alloc = NULL;
@@ -53,16 +53,16 @@ int rsa_acvp_test_gen_params_new(OSSL_PARAM **dst, const OSSL_PARAM src[])
         }
     }
     if (ret == 0) {
-        rsa_acvp_test_gen_params_free(alloc);
+        ossl_rsa_acvp_test_gen_params_free(alloc);
         alloc = NULL;
     }
     if (*dst != NULL)
-        rsa_acvp_test_gen_params_free(*dst);
+        ossl_rsa_acvp_test_gen_params_free(*dst);
     *dst = alloc;
     return ret;
 }
 
-void rsa_acvp_test_gen_params_free(OSSL_PARAM *dst)
+void ossl_rsa_acvp_test_gen_params_free(OSSL_PARAM *dst)
 {
     OSSL_PARAM *p;
 
@@ -76,13 +76,13 @@ void rsa_acvp_test_gen_params_free(OSSL_PARAM *dst)
     OPENSSL_free(dst);
 }
 
-int rsa_acvp_test_set_params(RSA *r, const OSSL_PARAM params[])
+int ossl_rsa_acvp_test_set_params(RSA *r, const OSSL_PARAM params[])
 {
     RSA_ACVP_TEST *t;
     const OSSL_PARAM *p;
 
     if (r->acvp_test != NULL) {
-        rsa_acvp_test_free(r->acvp_test);
+        ossl_rsa_acvp_test_free(r->acvp_test);
         r->acvp_test = NULL;
     }
 
@@ -118,11 +118,11 @@ int rsa_acvp_test_set_params(RSA *r, const OSSL_PARAM params[])
     r->acvp_test = t;
     return 1;
 err:
-    rsa_acvp_test_free(t);
+    ossl_rsa_acvp_test_free(t);
     return 0;
 }
 
-int rsa_acvp_test_get_params(RSA *r, OSSL_PARAM params[])
+int ossl_rsa_acvp_test_get_params(RSA *r, OSSL_PARAM params[])
 {
     RSA_ACVP_TEST *t;
     OSSL_PARAM *p;
@@ -148,7 +148,7 @@ int rsa_acvp_test_get_params(RSA *r, OSSL_PARAM params[])
     return 1;
 }
 
-void rsa_acvp_test_free(RSA_ACVP_TEST *t)
+void ossl_rsa_acvp_test_free(RSA_ACVP_TEST *t)
 {
     if (t != NULL) {
         BN_free(t->Xp1);

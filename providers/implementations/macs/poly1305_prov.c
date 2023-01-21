@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,11 +12,12 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 
 #include "crypto/poly1305.h"
 
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -36,15 +37,17 @@ static OSSL_FUNC_mac_final_fn poly1305_final;
 
 struct poly1305_data_st {
     void *provctx;
+    int updated;
     POLY1305 poly1305;           /* Poly1305 data */
 };
 
-static size_t poly1305_size(void);
-
 static void *poly1305_new(void *provctx)
 {
-    struct poly1305_data_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    struct poly1305_data_st *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         ctx->provctx = provctx;
     return ctx;
@@ -58,12 +61,15 @@ static void poly1305_free(void *vmacctx)
 static void *poly1305_dup(void *vsrc)
 {
     struct poly1305_data_st *src = vsrc;
-    struct poly1305_data_st *dst = poly1305_new(src->provctx);
+    struct poly1305_data_st *dst;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+    dst = OPENSSL_malloc(sizeof(*dst));
     if (dst == NULL)
         return NULL;
 
-    dst->poly1305 = src->poly1305;
+    *dst = *src;
     return dst;
 }
 
@@ -72,16 +78,40 @@ static size_t poly1305_size(void)
     return POLY1305_DIGEST_SIZE;
 }
 
-static int poly1305_init(void *vmacctx)
+static int poly1305_setkey(struct poly1305_data_st *ctx,
+                           const unsigned char *key, size_t keylen)
 {
-    /* initialize the context in MAC_ctrl function */
+    if (keylen != POLY1305_KEY_SIZE) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
+    Poly1305_Init(&ctx->poly1305, key);
+    ctx->updated = 0;
     return 1;
+}
+
+static int poly1305_init(void *vmacctx, const unsigned char *key,
+                         size_t keylen, const OSSL_PARAM params[])
+{
+    struct poly1305_data_st *ctx = vmacctx;
+
+    /* initialize the context in MAC_ctrl function */
+    if (!ossl_prov_is_running() || !poly1305_set_ctx_params(ctx, params))
+        return 0;
+    if (key != NULL)
+        return poly1305_setkey(ctx, key, keylen);
+    /* no reinitialization of context with the same key is allowed */
+    return ctx->updated == 0;
 }
 
 static int poly1305_update(void *vmacctx, const unsigned char *data,
                        size_t datalen)
 {
     struct poly1305_data_st *ctx = vmacctx;
+
+    ctx->updated = 1;
+    if (datalen == 0)
+        return 1;
 
     /* poly1305 has nothing to return in its update function */
     Poly1305_Update(&ctx->poly1305, data, datalen);
@@ -93,7 +123,11 @@ static int poly1305_final(void *vmacctx, unsigned char *out, size_t *outl,
 {
     struct poly1305_data_st *ctx = vmacctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+    ctx->updated = 1;
     Poly1305_Final(&ctx->poly1305, out);
+    *outl = poly1305_size();
     return 1;
 }
 
@@ -101,7 +135,7 @@ static const OSSL_PARAM known_gettable_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *poly1305_gettable_params(void)
+static const OSSL_PARAM *poly1305_gettable_params(void *provctx)
 {
     return known_gettable_params;
 }
@@ -120,7 +154,8 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *poly1305_settable_ctx_params(void)
+static const OSSL_PARAM *poly1305_settable_ctx_params(ossl_unused void *ctx,
+                                                      ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }
@@ -128,20 +163,15 @@ static const OSSL_PARAM *poly1305_settable_ctx_params(void)
 static int poly1305_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
 {
     struct poly1305_data_st *ctx = vmacctx;
-    const OSSL_PARAM *p = NULL;
+    const OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {
-        if (p->data_type != OSSL_PARAM_OCTET_STRING
-            || p->data_size != POLY1305_KEY_SIZE) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
-            return 0;
-        }
-        Poly1305_Init(&ctx->poly1305, p->data);
-    }
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL
+            && !poly1305_setkey(ctx, p->data, p->data_size))
+        return 0;
     return 1;
 }
 
-const OSSL_DISPATCH poly1305_functions[] = {
+const OSSL_DISPATCH ossl_poly1305_functions[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))poly1305_new },
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))poly1305_dup },
     { OSSL_FUNC_MAC_FREECTX, (void (*)(void))poly1305_free },

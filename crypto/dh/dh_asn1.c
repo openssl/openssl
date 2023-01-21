@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,6 +19,7 @@
 #include "dh_local.h"
 #include <openssl/objects.h>
 #include <openssl/asn1t.h>
+#include "crypto/dh.h"
 
 /* Override the default free and new methods */
 static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
@@ -34,7 +35,12 @@ static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         *pval = NULL;
         return 2;
     } else if (operation == ASN1_OP_D2I_POST) {
-        ((DH *)*pval)->dirty_cnt++;
+        DH *dh = (DH *)*pval;
+
+        DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
+        DH_set_flags(dh, DH_FLAG_TYPE_DH);
+        ossl_dh_cache_named_group(dh);
+        dh->dirty_cnt++;
     }
     return 1;
 }
@@ -84,8 +90,6 @@ int i2d_int_dhx(const int_dhx942_dh *a, unsigned char **pp);
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(int_dhx942_dh, DHxparams, int_dhx)
 
-/* Application public function: read in X9.42 DH parameters into DH structure */
-
 DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
 {
     FFC_PARAMS *params;
@@ -108,13 +112,14 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
 
     params = &dh->params;
     DH_set0_pqg(dh, dhx->p, dhx->q, dhx->g);
-    ffc_params_set0_j(params, dhx->j);
+    ossl_ffc_params_set0_j(params, dhx->j);
 
     if (dhx->vparams != NULL) {
         /* The counter has a maximum value of 4 * numbits(p) - 1 */
         size_t counter = (size_t)BN_get_word(dhx->vparams->counter);
-        ffc_params_set_validate_params(params, dhx->vparams->seed->data,
-                                       dhx->vparams->seed->length, counter);
+        ossl_ffc_params_set_validate_params(params, dhx->vparams->seed->data,
+                                            dhx->vparams->seed->length,
+                                            counter);
         ASN1_BIT_STRING_free(dhx->vparams->seed);
         BN_free(dhx->vparams->counter);
         OPENSSL_free(dhx->vparams);
@@ -122,6 +127,8 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
     }
 
     OPENSSL_free(dhx);
+    DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
+    DH_set_flags(dh, DH_FLAG_TYPE_DHX);
     return dh;
 }
 
@@ -135,10 +142,10 @@ int i2d_DHxparams(const DH *dh, unsigned char **pp)
     const FFC_PARAMS *params = &dh->params;
     int counter;
 
-    ffc_params_get0_pqg(params, (const BIGNUM **)&dhx.p,
-                        (const BIGNUM **)&dhx.q, (const BIGNUM **)&dhx.g);
+    ossl_ffc_params_get0_pqg(params, (const BIGNUM **)&dhx.p,
+                             (const BIGNUM **)&dhx.q, (const BIGNUM **)&dhx.g);
     dhx.j = params->j;
-    ffc_params_get_validate_params(params, &seed.data, &seedlen, &counter);
+    ossl_ffc_params_get_validate_params(params, &seed.data, &seedlen, &counter);
     seed.length = (int)seedlen;
 
     if (counter != -1 && seed.data != NULL && seed.length > 0) {

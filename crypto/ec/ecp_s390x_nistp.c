@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -115,8 +115,8 @@ static int ec_GFp_s390x_nistp_mul(const EC_GROUP *group, EC_POINT *r,
 ret:
     /* Otherwise use default. */
     if (rc == -1)
-        rc = ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
-    OPENSSL_cleanse(param + S390X_OFF_SCALAR(len), len);
+        rc = ossl_ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
+    OPENSSL_cleanse(param, sizeof(param));
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     return rc;
@@ -140,27 +140,26 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
     group = EC_KEY_get0_group(eckey);
     privkey = EC_KEY_get0_private_key(eckey);
     if (group == NULL || privkey == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, EC_R_MISSING_PARAMETERS);
+        ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
         return NULL;
     }
 
     if (!EC_KEY_can_sign(eckey)) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG,
-              EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        ERR_raise(ERR_LIB_EC, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
         return NULL;
     }
 
     k = BN_secure_new();
     sig = ECDSA_SIG_new();
     if (k == NULL || sig == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_ECDSA_LIB);
         goto ret;
     }
 
     sig->r = BN_new();
     sig->s = BN_new();
     if (sig->r == NULL || sig->s == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 
@@ -169,11 +168,15 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
     memcpy(param + S390X_OFF_H(len) + off, dgst, len - off);
 
     if (BN_bn2binpad(privkey, param + S390X_OFF_K(len), len) == -1) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 
     if (r == NULL || kinv == NULL) {
+        if (len < 0) {
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_LENGTH);
+            goto ret;
+        }
         /*
          * Generate random k and copy to param param block. RAND_priv_bytes_ex
          * is used instead of BN_priv_rand_range or BN_generate_dsa_nonce
@@ -181,16 +184,15 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
          * internally implementing counter-measures for RNG weakness.
          */
          if (RAND_priv_bytes_ex(eckey->libctx, param + S390X_OFF_RN(len),
-                                len) != 1) {
-             ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG,
-                   EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+                                (size_t)len, 0) != 1) {
+             ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
              goto ret;
          }
     } else {
         /* Reconstruct k = (k^-1)^-1. */
-        if (ec_group_do_inverse_ord(group, k, kinv, NULL) == 0
+        if (ossl_ec_group_do_inverse_ord(group, k, kinv, NULL) == 0
             || BN_bn2binpad(k, param + S390X_OFF_RN(len), len) == -1) {
-            ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             goto ret;
         }
         /* Turns KDSA internal nonce-generation off. */
@@ -198,19 +200,19 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
     }
 
     if (s390x_kdsa(fc, param, NULL, 0) != 0) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_ECDSA_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_ECDSA_LIB);
         goto ret;
     }
 
     if (BN_bin2bn(param + S390X_OFF_R(len), len, sig->r) == NULL
         || BN_bin2bn(param + S390X_OFF_S(len), len, sig->s) == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 
     ok = 1;
 ret:
-    OPENSSL_cleanse(param + S390X_OFF_K(len), 2 * len);
+    OPENSSL_cleanse(param, sizeof(param));
     if (ok != 1) {
         ECDSA_SIG_free(sig);
         sig = NULL;
@@ -234,19 +236,18 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
     group = EC_KEY_get0_group(eckey);
     pubkey = EC_KEY_get0_public_key(eckey);
     if (eckey == NULL || group == NULL || pubkey == NULL || sig == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, EC_R_MISSING_PARAMETERS);
+        ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
         return -1;
     }
 
     if (!EC_KEY_can_sign(eckey)) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG,
-              EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        ERR_raise(ERR_LIB_EC, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
         return -1;
     }
 
     ctx = BN_CTX_new_ex(group->libctx);
     if (ctx == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         return -1;
     }
 
@@ -255,7 +256,7 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
     if (x == NULL || y == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 
@@ -269,7 +270,7 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
         || BN_bn2binpad(sig->s, param + S390X_OFF_S(len), len) == -1
         || BN_bn2binpad(x, param + S390X_OFF_X(len), len) == -1
         || BN_bn2binpad(y, param + S390X_OFF_Y(len), len) == -1) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 
@@ -324,60 +325,60 @@ const EC_METHOD *EC_GFp_s390x_nistp##bits##_method(void)                \
     static const EC_METHOD EC_GFp_s390x_nistp##bits##_meth = {          \
         EC_FLAGS_DEFAULT_OCT,                                           \
         NID_X9_62_prime_field,                                          \
-        ec_GFp_simple_group_init,                                       \
-        ec_GFp_simple_group_finish,                                     \
-        ec_GFp_simple_group_clear_finish,                               \
-        ec_GFp_simple_group_copy,                                       \
-        ec_GFp_simple_group_set_curve,                                  \
-        ec_GFp_simple_group_get_curve,                                  \
-        ec_GFp_simple_group_get_degree,                                 \
-        ec_group_simple_order_bits,                                     \
-        ec_GFp_simple_group_check_discriminant,                         \
-        ec_GFp_simple_point_init,                                       \
-        ec_GFp_simple_point_finish,                                     \
-        ec_GFp_simple_point_clear_finish,                               \
-        ec_GFp_simple_point_copy,                                       \
-        ec_GFp_simple_point_set_to_infinity,                            \
-        ec_GFp_simple_point_set_affine_coordinates,                     \
-        ec_GFp_simple_point_get_affine_coordinates,                     \
+        ossl_ec_GFp_simple_group_init,                                  \
+        ossl_ec_GFp_simple_group_finish,                                \
+        ossl_ec_GFp_simple_group_clear_finish,                          \
+        ossl_ec_GFp_simple_group_copy,                                  \
+        ossl_ec_GFp_simple_group_set_curve,                             \
+        ossl_ec_GFp_simple_group_get_curve,                             \
+        ossl_ec_GFp_simple_group_get_degree,                            \
+        ossl_ec_group_simple_order_bits,                                \
+        ossl_ec_GFp_simple_group_check_discriminant,                    \
+        ossl_ec_GFp_simple_point_init,                                  \
+        ossl_ec_GFp_simple_point_finish,                                \
+        ossl_ec_GFp_simple_point_clear_finish,                          \
+        ossl_ec_GFp_simple_point_copy,                                  \
+        ossl_ec_GFp_simple_point_set_to_infinity,                       \
+        ossl_ec_GFp_simple_point_set_affine_coordinates,                \
+        ossl_ec_GFp_simple_point_get_affine_coordinates,                \
         NULL, /* point_set_compressed_coordinates */                    \
         NULL, /* point2oct */                                           \
         NULL, /* oct2point */                                           \
-        ec_GFp_simple_add,                                              \
-        ec_GFp_simple_dbl,                                              \
-        ec_GFp_simple_invert,                                           \
-        ec_GFp_simple_is_at_infinity,                                   \
-        ec_GFp_simple_is_on_curve,                                      \
-        ec_GFp_simple_cmp,                                              \
-        ec_GFp_simple_make_affine,                                      \
-        ec_GFp_simple_points_make_affine,                               \
+        ossl_ec_GFp_simple_add,                                         \
+        ossl_ec_GFp_simple_dbl,                                         \
+        ossl_ec_GFp_simple_invert,                                      \
+        ossl_ec_GFp_simple_is_at_infinity,                              \
+        ossl_ec_GFp_simple_is_on_curve,                                 \
+        ossl_ec_GFp_simple_cmp,                                         \
+        ossl_ec_GFp_simple_make_affine,                                 \
+        ossl_ec_GFp_simple_points_make_affine,                          \
         ec_GFp_s390x_nistp##bits##_mul,                                 \
         NULL, /* precompute_mult */                                     \
         NULL, /* have_precompute_mult */                                \
-        ec_GFp_simple_field_mul,                                        \
-        ec_GFp_simple_field_sqr,                                        \
+        ossl_ec_GFp_simple_field_mul,                                   \
+        ossl_ec_GFp_simple_field_sqr,                                   \
         NULL, /* field_div */                                           \
-        ec_GFp_simple_field_inv,                                        \
+        ossl_ec_GFp_simple_field_inv,                                   \
         NULL, /* field_encode */                                        \
         NULL, /* field_decode */                                        \
         NULL, /* field_set_to_one */                                    \
-        ec_key_simple_priv2oct,                                         \
-        ec_key_simple_oct2priv,                                         \
+        ossl_ec_key_simple_priv2oct,                                    \
+        ossl_ec_key_simple_oct2priv,                                    \
         NULL, /* set_private */                                         \
-        ec_key_simple_generate_key,                                     \
-        ec_key_simple_check_key,                                        \
-        ec_key_simple_generate_public_key,                              \
+        ossl_ec_key_simple_generate_key,                                \
+        ossl_ec_key_simple_check_key,                                   \
+        ossl_ec_key_simple_generate_public_key,                         \
         NULL, /* keycopy */                                             \
         NULL, /* keyfinish */                                           \
-        ecdh_simple_compute_key,                                        \
-        ecdsa_simple_sign_setup,                                        \
+        ossl_ecdh_simple_compute_key,                                   \
+        ossl_ecdsa_simple_sign_setup,                                   \
         ecdsa_s390x_nistp##bits##_sign_sig,                             \
         ecdsa_s390x_nistp##bits##_verify_sig,                           \
         NULL, /* field_inverse_mod_ord */                               \
-        ec_GFp_simple_blind_coordinates,                                \
-        ec_GFp_simple_ladder_pre,                                       \
-        ec_GFp_simple_ladder_step,                                      \
-        ec_GFp_simple_ladder_post                                       \
+        ossl_ec_GFp_simple_blind_coordinates,                           \
+        ossl_ec_GFp_simple_ladder_pre,                                  \
+        ossl_ec_GFp_simple_ladder_step,                                 \
+        ossl_ec_GFp_simple_ladder_post                                  \
     };                                                                  \
     static const EC_METHOD *ret;                                        \
                                                                         \

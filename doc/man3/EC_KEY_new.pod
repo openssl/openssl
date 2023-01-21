@@ -2,14 +2,16 @@
 
 =head1 NAME
 
-EC_KEY_get_method, EC_KEY_set_method, EC_KEY_new_with_libctx,
+EVP_EC_gen,
+EC_KEY_get_method, EC_KEY_set_method, EC_KEY_new_ex,
 EC_KEY_new, EC_KEY_get_flags, EC_KEY_set_flags, EC_KEY_clear_flags,
-EC_KEY_new_by_curve_name_with_libctx, EC_KEY_new_by_curve_name, EC_KEY_free,
+EC_KEY_new_by_curve_name_ex, EC_KEY_new_by_curve_name, EC_KEY_free,
 EC_KEY_copy, EC_KEY_dup, EC_KEY_up_ref, EC_KEY_get0_engine,
 EC_KEY_get0_group, EC_KEY_set_group, EC_KEY_get0_private_key,
 EC_KEY_set_private_key, EC_KEY_get0_public_key, EC_KEY_set_public_key,
 EC_KEY_get_conv_form,
-EC_KEY_set_conv_form, EC_KEY_set_asn1_flag, EC_KEY_precompute_mult,
+EC_KEY_set_conv_form, EC_KEY_set_asn1_flag,
+EC_KEY_decoded_from_explicit_params, EC_KEY_precompute_mult,
 EC_KEY_generate_key, EC_KEY_check_key, EC_KEY_set_public_key_affine_coordinates,
 EC_KEY_oct2key, EC_KEY_key2buf, EC_KEY_oct2priv, EC_KEY_priv2oct,
 EC_KEY_priv2buf - Functions for creating, destroying and manipulating
@@ -19,13 +21,19 @@ EC_KEY objects
 
  #include <openssl/ec.h>
 
- EC_KEY *EC_KEY_new_with_libctx(OPENSSL_CTX *ctx, const char *propq);
+ EVP_PKEY *EVP_EC_gen(const char *curve);
+
+The following functions have been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
+ EC_KEY *EC_KEY_new_ex(OSSL_LIB_CTX *ctx, const char *propq);
  EC_KEY *EC_KEY_new(void);
  int EC_KEY_get_flags(const EC_KEY *key);
  void EC_KEY_set_flags(EC_KEY *key, int flags);
  void EC_KEY_clear_flags(EC_KEY *key, int flags);
- EC_KEY *EC_KEY_new_by_curve_name_with_libctx(OPENSSL_CTX *ctx,
-                                              const char *propq, int nid);
+ EC_KEY *EC_KEY_new_by_curve_name_ex(OSSL_LIB_CTX *ctx, const char *propq,
+                                     int nid);
  EC_KEY *EC_KEY_new_by_curve_name(int nid);
  void EC_KEY_free(EC_KEY *key);
  EC_KEY *EC_KEY_copy(EC_KEY *dst, const EC_KEY *src);
@@ -35,12 +43,13 @@ EC_KEY objects
  const EC_GROUP *EC_KEY_get0_group(const EC_KEY *key);
  int EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group);
  const BIGNUM *EC_KEY_get0_private_key(const EC_KEY *key);
- int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *prv);
+ int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key);
  const EC_POINT *EC_KEY_get0_public_key(const EC_KEY *key);
  int EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub);
  point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *key);
  void EC_KEY_set_conv_form(EC_KEY *eckey, point_conversion_form_t cform);
  void EC_KEY_set_asn1_flag(EC_KEY *eckey, int asn1_flag);
+ int EC_KEY_decoded_from_explicit_params(const EC_KEY *key);
  int EC_KEY_generate_key(EC_KEY *key);
  int EC_KEY_check_key(const EC_KEY *key);
  int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y);
@@ -55,18 +64,21 @@ EC_KEY objects
  size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len);
 
  size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf);
-
-Deprecated since OpenSSL 3.0:
-
  int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx);
 
 =head1 DESCRIPTION
+
+EVP_EC_gen() generates a new EC key pair on the given I<curve>.
+
+All of the functions described below are deprecated.
+Applications should instead use EVP_EC_gen(), L<EVP_PKEY_Q_keygen(3)>, or
+L<EVP_PKEY_keygen_init(3)> and L<EVP_PKEY_keygen(3)>.
 
 An EC_KEY represents a public key and, optionally, the associated private
 key.
 A new EC_KEY with no associated curve can be constructed by calling
 EC_KEY_new_ex() and specifying the associated library context in I<ctx>
-(see L<OPENSSL_CTX(3)>) and property query string I<propq>.
+(see L<OSSL_LIB_CTX(3)>) and property query string I<propq>.
 The I<ctx> parameter may be NULL in which case the default library context is
 used.
 The reference count for the newly created EC_KEY is initially
@@ -78,16 +90,16 @@ EC_KEY_new() is the same as EC_KEY_new_ex() except that the default library
 context is always used.
 
 Alternatively a new EC_KEY can be constructed by calling
-EC_KEY_new_by_curve_name_with_libctx() and supplying the nid of the associated
-curve, the library context to be used I<ctx> (see L<OPENSSL_CTX(3)>) and any
+EC_KEY_new_by_curve_name_ex() and supplying the nid of the associated
+curve, the library context to be used I<ctx> (see L<OSSL_LIB_CTX(3)>) and any
 property query string I<propq>.
 The I<ctx> parameter may be NULL in which case the default library context is
 used. The I<propq> value may also be NULL.
 See L<EC_GROUP_new(3)> for a description of curve names.
 This function simply wraps calls to EC_KEY_new_ex() and
-EC_GROUP_new_by_curve_name_with_libctx().
+EC_GROUP_new_by_curve_name_ex().
 
-EC_KEY_new_by_curve_name() is the same as EC_KEY_new_by_curve_name_with_libctx()
+EC_KEY_new_by_curve_name() is the same as EC_KEY_new_by_curve_name_ex()
 except that the default library context is always used and a NULL property query
 string.
 
@@ -124,7 +136,9 @@ that it is valid.
 The functions EC_KEY_get0_group(), EC_KEY_set_group(),
 EC_KEY_get0_private_key(), EC_KEY_set_private_key(), EC_KEY_get0_public_key(),
 and EC_KEY_set_public_key() get and set the EC_GROUP object, the private key,
-and the EC_POINT public key for the I<key> respectively.
+and the EC_POINT public key for the B<key> respectively. The function
+EC_KEY_set_private_key() accepts NULL as the priv_key argument to securely clear
+the private key component from the EC_KEY.
 
 The functions EC_KEY_get_conv_form() and EC_KEY_set_conv_form() get and set the
 point_conversion_form for the I<key>. For a description of
@@ -142,7 +156,10 @@ EC_KEY_set_asn1_flag() sets the asn1_flag on the underlying EC_GROUP object
 (if set). Refer to L<EC_GROUP_copy(3)> for further information on the
 asn1_flag.
 
-Although deprecated in OpenSSL 3.0 and should no longer be used,
+EC_KEY_decoded_from_explicit_params() returns 1 if the group of the I<key> was
+decoded from data with explicitly encoded group parameters, -1 if the I<key>
+is NULL or the group parameters are missing, and 0 otherwise.
+
 EC_KEY_precompute_mult() stores multiples of the underlying EC_GROUP generator
 for faster point multiplication. See also L<EC_POINT_add(3)>.
 Modern versions should instead switch to named curves which OpenSSL has
@@ -171,7 +188,7 @@ EC_KEY_priv2buf() converts an EC_KEY private key into an allocated buffer.
 
 =head1 RETURN VALUES
 
-EC_KEY_new_with_libctx(), EC_KEY_new(), EC_KEY_new_by_curve_name_with_libctx(),
+EC_KEY_new_ex(), EC_KEY_new(), EC_KEY_new_by_curve_name_ex(),
 EC_KEY_new_by_curve_name() and EC_KEY_dup() return a pointer to the newly
 created EC_KEY object, or NULL on error.
 
@@ -182,10 +199,14 @@ EC_KEY_copy() returns a pointer to the destination key, or NULL on error.
 
 EC_KEY_get0_engine() returns a pointer to an ENGINE, or NULL if it wasn't set.
 
-EC_KEY_up_ref(), EC_KEY_set_group(), EC_KEY_set_private_key(),
-EC_KEY_set_public_key(), EC_KEY_precompute_mult(), EC_KEY_generate_key(),
-EC_KEY_check_key(), EC_KEY_set_public_key_affine_coordinates(),
-EC_KEY_oct2key() and EC_KEY_oct2priv() return 1 on success or 0 on error.
+EC_KEY_up_ref(), EC_KEY_set_group(), EC_KEY_set_public_key(),
+EC_KEY_precompute_mult(), EC_KEY_generate_key(), EC_KEY_check_key(),
+EC_KEY_set_public_key_affine_coordinates(), EC_KEY_oct2key() and
+EC_KEY_oct2priv() return 1 on success or 0 on error.
+
+EC_KEY_set_private_key() returns 1 on success or 0 on error except when the
+priv_key argument is NULL, in that case it returns 0, for legacy compatibility,
+and should not be treated as an error.
 
 EC_KEY_get0_group() returns the EC_GROUP associated with the EC_KEY.
 
@@ -198,20 +219,23 @@ of the buffer or 0 on error.
 
 =head1 SEE ALSO
 
+L<EVP_PKEY_Q_keygen(3)>
 L<crypto(7)>, L<EC_GROUP_new(3)>,
 L<EC_GROUP_copy(3)>, L<EC_POINT_new(3)>,
 L<EC_POINT_add(3)>,
 L<EC_GFp_simple_method(3)>,
 L<d2i_ECPKParameters(3)>,
-L<OPENSSL_CTX(3)>
+L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 
-EC_KEY_precompute_mult() was deprecated in OpenSSL 3.0.
+EVP_EC_gen() was added in OpenSSL 3.0.
+All other functions described here were deprecated in OpenSSL 3.0.
+For replacement see L<EVP_PKEY-EC(7)>.
 
 =head1 COPYRIGHT
 
-Copyright 2013-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -55,17 +55,14 @@ EC_POINT_hex2point
                            unsigned char **pbuf, BN_CTX *ctx);
  int EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *p,
                         const unsigned char *buf, size_t len, BN_CTX *ctx);
- BIGNUM *EC_POINT_point2bn(const EC_GROUP *group, const EC_POINT *p,
-                           point_conversion_form_t form, BIGNUM *bn,
-                           BN_CTX *ctx);
- EC_POINT *EC_POINT_bn2point(const EC_GROUP *group, const BIGNUM *bn,
-                             EC_POINT *p, BN_CTX *ctx);
  char *EC_POINT_point2hex(const EC_GROUP *group, const EC_POINT *p,
                           point_conversion_form_t form, BN_CTX *ctx);
  EC_POINT *EC_POINT_hex2point(const EC_GROUP *group, const char *hex,
                               EC_POINT *p, BN_CTX *ctx);
 
-Deprecated since OpenSSL 3.0:
+The following functions have been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  const EC_METHOD *EC_POINT_method_of(const EC_POINT *point);
  int EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group,
@@ -96,6 +93,11 @@ Deprecated since OpenSSL 3.0:
                                               EC_POINT *p,
                                               const BIGNUM *x, int y_bit,
                                               BN_CTX *ctx);
+ BIGNUM *EC_POINT_point2bn(const EC_GROUP *group, const EC_POINT *p,
+                           point_conversion_form_t form, BIGNUM *bn,
+                           BN_CTX *ctx);
+ EC_POINT *EC_POINT_bn2point(const EC_GROUP *group, const BIGNUM *bn,
+                             EC_POINT *p, BN_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -156,7 +158,7 @@ above maps in such rare circumstances.
 
 Points can also be described in terms of their compressed co-ordinates. For a
 point (x, y), for any given value for x such that the point is on the curve
-there will only ever be two possible values for y. Therefore a point can be set
+there will only ever be two possible values for y. Therefore, a point can be set
 using the EC_POINT_set_compressed_coordinates() function where B<x> is the x
 co-ordinate and B<y_bit> is a value 0 or 1 to identify which of the two
 possible values for y should be used.
@@ -257,7 +259,9 @@ EC_POINT_get_Jprojective_coordinates_GFp(),
 EC_POINT_set_affine_coordinates_GFp(), EC_POINT_get_affine_coordinates_GFp(),
 EC_POINT_set_compressed_coordinates_GFp(),
 EC_POINT_set_affine_coordinates_GF2m(), EC_POINT_get_affine_coordinates_GF2m(),
-EC_POINT_set_compressed_coordinates_GF2m() were deprecated in OpenSSL 3.0.
+EC_POINT_set_compressed_coordinates_GF2m(),
+EC_POINT_point2bn(), and EC_POINT_bn2point() were deprecated in OpenSSL 3.0.
+
 
 B<EC_POINT_set_affine_coordinates>, B<EC_POINT_get_affine_coordinates>,
 and B<EC_POINT_set_compressed_coordinates> were

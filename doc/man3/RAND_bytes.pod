@@ -12,12 +12,14 @@ RAND_pseudo_bytes - generate random data
  int RAND_bytes(unsigned char *buf, int num);
  int RAND_priv_bytes(unsigned char *buf, int num);
 
- int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
- int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
+ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
+                   unsigned int strength);
+ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
+                        unsigned int strength);
 
-Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following function has been deprecated since OpenSSL 1.1.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  int RAND_pseudo_bytes(unsigned char *buf, int num);
 
@@ -31,13 +33,15 @@ be used for generating values that should remain private. If using the
 default RAND_METHOD, this function uses a separate "private" PRNG
 instance so that a compromise of the "public" PRNG instance will not
 affect the secrecy of these private values, as described in L<RAND(7)>
-and L<RAND_DRBG(7)>.
+and L<EVP_RAND(7)>.
 
 RAND_bytes_ex() and RAND_priv_bytes_ex() are the same as RAND_bytes() and
-RAND_priv_bytes() except that they both take an additional I<ctx> parameter.
+RAND_priv_bytes() except that they both take additional I<strength> and
+I<ctx> parameters. The bytes generated will have a security strength of at
+least I<strength> bits.
 The DRBG used for the operation is the public or private DRBG associated with
 the specified I<ctx>. The parameter can be NULL, in which case
-the default library context is used (see L<OPENSSL_CTX(3)>.
+the default library context is used (see L<OSSL_LIB_CTX(3)>.
 If the default RAND_METHOD has been changed then for compatibility reasons the
 RAND_METHOD will be used in preference and the DRBG of the library context
 ignored.
@@ -75,7 +79,7 @@ L<RAND_bytes(3)>,
 L<RAND_priv_bytes(3)>,
 L<ERR_get_error(3)>,
 L<RAND(7)>,
-L<RAND_DRBG(7)>
+L<EVP_RAND(7)>
 
 =head1 HISTORY
 
@@ -97,7 +101,7 @@ The RAND_bytes_ex() and RAND_priv_bytes_ex() functions were added in OpenSSL 3.0
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

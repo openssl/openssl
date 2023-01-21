@@ -9,26 +9,24 @@ openssl-verify - certificate verification command
 
 B<openssl> B<verify>
 [B<-help>]
-[B<-CRLfile> I<file>]
+[B<-CRLfile> I<filename>|I<uri>]
 [B<-crl_download>]
 [B<-show_chain>]
 [B<-verbose>]
-[B<-trusted> I<file>]
-[B<-untrusted> I<file>]
+[B<-trusted> I<filename>|I<uri>]
+[B<-untrusted> I<filename>|I<uri>]
 [B<-vfyopt> I<nm>:I<v>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_v_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [B<-->]
 [I<certificate> ...]
 
-=for openssl ifdef engine
-
 =head1 DESCRIPTION
 
-This command verifies certificate chains.
+This command verifies certificate chains. If a certificate chain has multiple
+problems, this program attempts to display all of them.
 
 =head1 OPTIONS
 
@@ -38,11 +36,11 @@ This command verifies certificate chains.
 
 Print out a usage message.
 
-=item B<-CRLfile> I<file>
+=item B<-CRLfile> I<filename>|I<uri>
 
-The I<file> should contain one or more CRLs in PEM format.
+The file or URI should contain one or more CRLs in PEM or DER format.
 This option can be specified more than once to include CRLs from multiple
-I<file>s.
+sources.
 
 =item B<-crl_download>
 
@@ -58,18 +56,19 @@ flagged as "untrusted".
 
 Print extra information about the operations being performed.
 
-=item B<-trusted> I<file>
+=item B<-trusted> I<filename>|I<uri>
 
-A file of trusted certificates in PEM format.
+A file or URI of (more or less) trusted certificates.
+See L<openssl-verification-options(1)> for more information on trust settings.
+
 This option can be specified more than once to load certificates from multiple
-I<file>s.
+sources.
 
-=item B<-untrusted> I<file>
+=item B<-untrusted> I<filename>|I<uri>
 
-A file of untrusted certificates in PEM format to use for chain building.
+A file or URI of untrusted certificates to use for chain building.
 This option can be specified more than once to load certificates from multiple
-I<file>s.
-
+sources.
 
 =item B<-vfyopt> I<nm>:I<v>
 
@@ -79,9 +78,11 @@ Names and values of these options are algorithm-specific.
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 To load certificates or CRLs that require engine support, specify the
 B<-engine> option before any of the
 B<-trusted>, B<-untrusted> or B<-CRLfile> options.
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 {- $OpenSSL::safe::opt_trust_item -}
 
@@ -97,10 +98,9 @@ with a B<->.
 
 =item I<certificate> ...
 
-One or more certificates to verify. If no certificates are given,
-this command will attempt to read a certificate from standard input.
-If a certificate chain has multiple problems, this program tries to
-display all of them.
+One or more target certificates to verify, one per file. If no certificates are
+given, this command will attempt to read a single certificate from standard
+input.
 
 =back
 
@@ -115,9 +115,9 @@ general form of the error message is:
 The first line contains the name of the certificate being verified followed by
 the subject name of the certificate. The second line contains the error number
 and the depth. The depth is number of the certificate being verified when a
-problem was detected starting with zero for the certificate being verified itself
-then 1 for the CA that signed the certificate and so on. Finally a text version
-of the error number is presented.
+problem was detected starting with zero for the target ("leaf") certificate
+itself then 1 for the CA that signed the target certificate and so on.
+Finally a textual version of the error number is presented.
 
 A list of the error codes and messages can be found in
 L<X509_STORE_CTX_get_error(3)>; the full list is defined in the header file
@@ -126,26 +126,9 @@ F<< <openssl/x509_vfy.h> >>.
 This command ignores many errors, in order to allow all the problems with a
 certificate chain to be determined.
 
-=head1 BUGS
-
-Although the issuer checks are a considerable improvement over the old
-technique they still suffer from limitations in the underlying X509_LOOKUP
-API. One consequence of this is that trusted certificates with matching
-subject name must either appear in a file (as specified by the B<-CAfile>
-option), a directory (as specified by B<-CApath>), or a store (as specified
-by B<-CAstore>). If they occur in more than one location then only the
-certificates in the file will be recognised.
-
-Previous versions of OpenSSL assume certificates with matching subject
-name are identical and mishandled them.
-
-Previous versions of this documentation swapped the meaning of the
-B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT> and
-B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY> error codes.
-
 =head1 SEE ALSO
 
-L<openssl(1)>,
+L<openssl-verification-options(1)>,
 L<openssl-x509(1)>,
 L<ossl_store-file(7)>
 
@@ -153,9 +136,11 @@ L<ossl_store-file(7)>
 
 The B<-show_chain> option was added in OpenSSL 1.1.0.
 
+The B<-engine option> was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

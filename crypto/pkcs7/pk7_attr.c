@@ -17,15 +17,13 @@
 #include <openssl/x509.h>
 #include <openssl/err.h>
 
-DEFINE_STACK_OF(X509_ALGOR)
-
 int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si,
                               STACK_OF(X509_ALGOR) *cap)
 {
     ASN1_STRING *seq;
 
     if ((seq = ASN1_STRING_new()) == NULL) {
-        PKCS7err(PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_ASN1_LIB);
         return 0;
     }
     seq->length = ASN1_item_i2d((ASN1_VALUE *)cap, &seq->data,
@@ -55,19 +53,22 @@ int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
     X509_ALGOR *alg;
 
     if ((alg = X509_ALGOR_new()) == NULL) {
-        PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_ASN1_LIB);
         return 0;
     }
     ASN1_OBJECT_free(alg->algorithm);
     alg->algorithm = OBJ_nid2obj(nid);
     if (arg > 0) {
         if ((alg->parameter = ASN1_TYPE_new()) == NULL) {
+            ERR_raise(ERR_LIB_PKCS7, ERR_R_ASN1_LIB);
             goto err;
         }
         if ((nbit = ASN1_INTEGER_new()) == NULL) {
+            ERR_raise(ERR_LIB_PKCS7, ERR_R_ASN1_LIB);
             goto err;
         }
         if (!ASN1_INTEGER_set(nbit, arg)) {
+            ERR_raise(ERR_LIB_PKCS7, ERR_R_ASN1_LIB);
             goto err;
         }
         alg->parameter->value.integer = nbit;
@@ -75,11 +76,11 @@ int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
         nbit = NULL;
     }
     if (!sk_X509_ALGOR_push(sk, alg)) {
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_CRYPTO_LIB);
         goto err;
     }
     return 1;
 err:
-    PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP, ERR_R_MALLOC_FAILURE);
     ASN1_INTEGER_free(nbit);
     X509_ALGOR_free(alg);
     return 0;
@@ -98,8 +99,7 @@ int PKCS7_add_attrib_content_type(PKCS7_SIGNER_INFO *si, ASN1_OBJECT *coid)
 int PKCS7_add0_attrib_signing_time(PKCS7_SIGNER_INFO *si, ASN1_TIME *t)
 {
     if (t == NULL && (t = X509_gmtime_adj(NULL, 0)) == NULL) {
-        PKCS7err(PKCS7_F_PKCS7_ADD0_ATTRIB_SIGNING_TIME,
-                 ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_X509_LIB);
         return 0;
     }
     return PKCS7_add_signed_attribute(si, NID_pkcs9_signingTime,

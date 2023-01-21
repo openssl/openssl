@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,14 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 
 #define __NEW_STARLET 1         /* New starlet definitions since VMS 7.0 */
 #include <unistd.h>
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include <openssl/rand.h>
 #include "crypto/rand.h"
-#include "prov/rand_pool.h"
+#include "crypto/rand_pool.h"
 #include "prov/seeding.h"
 #include <descrip.h>
 #include <dvidef.h>
@@ -160,7 +161,7 @@ static const struct item_st RMI_item_data[] = {
     {4,   RMI$_BLKOUT},
     {4,   RMI$_DIRIN},
     {4,   RMI$_DIROUT},
-    /* We currently get a fault when trying these.  TODO: To be figured out. */
+    /* We currently get a fault when trying these */
 #if 0
     {140, RMI$_MSCP_EVERYTHING},   /* 35 32-bit words */
     {152, RMI$_DDTM_ALL},          /* 38 32-bit words */
@@ -362,8 +363,8 @@ size_t data_collect_method(RAND_POOL *pool)
     } data;
     size_t total_elems = 0;
     size_t total_length = 0;
-    size_t bytes_needed = rand_pool_bytes_needed(pool, ENTROPY_FACTOR);
-    size_t bytes_remaining = rand_pool_bytes_remaining(pool);
+    size_t bytes_needed = ossl_rand_pool_bytes_needed(pool, ENTROPY_FACTOR);
+    size_t bytes_remaining = ossl_rand_pool_bytes_remaining(pool);
 
     /* Take all the 64-bit items first, to ensure proper alignment of data */
     total_elems +=
@@ -388,7 +389,7 @@ size_t data_collect_method(RAND_POOL *pool)
         uint32_t status;
         uint32_t efn;
         IOSB iosb;
-        $DESCRIPTOR(SYSDEVICE,"SYS$SYSDEVICE:");
+        $DESCRIPTOR(SYSDEVICE, "SYS$SYSDEVICE:");
 
         if ((status = sys$getdviw(EFN$C_ENF, 0, &SYSDEVICE, DVI_items,
                                   0, 0, 0, 0, 0)) != SS$_NORMAL) {
@@ -469,37 +470,9 @@ size_t data_collect_method(RAND_POOL *pool)
         total_length = bytes_remaining;
 
     /* We give the pessimistic value for the amount of entropy */
-    rand_pool_add(pool, (unsigned char *)data.buffer, total_length,
-                  8 * total_length / ENTROPY_FACTOR);
-    return rand_pool_entropy_available(pool);
-}
-
-int prov_pool_add_nonce_data(RAND_POOL *pool)
-{
-    struct {
-        pid_t pid;
-        CRYPTO_THREAD_ID tid;
-        uint64_t time;
-    } data;
-
-    /* Erase the entire structure including any padding */
-    memset(&data, 0, sizeof(data));
-
-    /*
-     * Add process id, thread id, and a high resolution timestamp
-     * (where available, which is OpenVMS v8.4 and up) to ensure that
-     * the nonce is unique with high probability for different process
-     * instances.
-     */
-    data.pid = getpid();
-    data.tid = CRYPTO_THREAD_get_current_id();
-#if __CRTL_VER >= 80400000
-    sys$gettim_prec(&data.time);
-#else
-    sys$gettim((void*)&data.time);
-#endif
-
-    return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
+    ossl_rand_pool_add(pool, (unsigned char *)data.buffer, total_length,
+                       8 * total_length / ENTROPY_FACTOR);
+    return ossl_rand_pool_entropy_available(pool);
 }
 
 /*
@@ -536,7 +509,7 @@ size_t get_entropy_method(RAND_POOL *pool)
     size_t bytes_to_get = 0;
     uint32_t status;
 
-    for (bytes_needed = rand_pool_bytes_needed(pool, 1);
+    for (bytes_needed = ossl_rand_pool_bytes_needed(pool, 1);
          bytes_needed > 0;
          bytes_needed -= bytes_to_get) {
         bytes_to_get =
@@ -555,10 +528,10 @@ size_t get_entropy_method(RAND_POOL *pool)
             return 0;
         }
 
-        rand_pool_add(pool, buffer, bytes_to_get, 8 * bytes_to_get);
+        ossl_rand_pool_add(pool, buffer, bytes_to_get, 8 * bytes_to_get);
     }
 
-    return rand_pool_entropy_available(pool);
+    return ossl_rand_pool_entropy_available(pool);
 }
 
 /*
@@ -568,48 +541,76 @@ size_t get_entropy_method(RAND_POOL *pool)
  * These functions are called by the RAND / DRBG functions
  */
 
-size_t prov_pool_acquire_entropy(RAND_POOL *pool)
+size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
 {
     if (init_get_entropy_address())
         return get_entropy_method(pool);
     return data_collect_method(pool);
 }
 
-
-int rand_pool_add_additional_data(RAND_POOL *pool)
+int ossl_pool_add_nonce_data(RAND_POOL *pool)
 {
+    /*
+     * Two variables to ensure that two nonces won't ever be the same
+     */
+    static unsigned __int64 last_time = 0;
+    static unsigned __int32 last_seq = 0;
+
     struct {
+        pid_t pid;
         CRYPTO_THREAD_ID tid;
-        uint64_t time;
+        unsigned __int64 time;
+        unsigned __int32 seq;
     } data;
 
     /* Erase the entire structure including any padding */
     memset(&data, 0, sizeof(data));
 
     /*
-     * Add some noise from the thread id and a high resolution timer.
-     * The thread id adds a little randomness if the drbg is accessed
-     * concurrently (which is the case for the <master> drbg).
+     * Add process id, thread id, a timestamp, and a sequence number in case
+     * the same time stamp is repeated, to ensure that the nonce is unique
+     * with high probability for different process instances.
+     *
+     * The normal OpenVMS time is specified to be high granularity (100ns),
+     * but the time update granularity given by sys$gettim() may be lower.
+     *
+     * OpenVMS version 8.4 (which is the latest for Alpha and Itanium) and
+     * on have sys$gettim_prec() as well, which is supposedly having a better
+     * time update granularity, but tests on Itanium (and even Alpha) have
+     * shown that compared with sys$gettim(), the difference is marginal,
+     * so of very little significance in terms of entropy.
+     * Given that, and that it's a high ask to expect everyone to have
+     * upgraded to OpenVMS version 8.4, only sys$gettim() is used, and a
+     * sequence number is added as well, in case sys$gettim() returns the
+     * same time value more than once.
+     *
+     * This function is assumed to be called under thread lock, and does
+     * therefore not take concurrency into account.
      */
+    data.pid = getpid();
     data.tid = CRYPTO_THREAD_get_current_id();
-#if __CRTL_VER >= 80400000
-    sys$gettim_prec(&data.time);
-#else
+    data.seq = 0;
     sys$gettim((void*)&data.time);
-#endif
 
-    return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
+    if (data.time == last_time) {
+        data.seq = ++last_seq;
+    } else {
+        last_time = data.time;
+        last_seq = 0;
+    }
+
+    return ossl_rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
-int rand_pool_init(void)
+int ossl_rand_pool_init(void)
 {
     return 1;
 }
 
-void rand_pool_cleanup(void)
+void ossl_rand_pool_cleanup(void)
 {
 }
 
-void rand_pool_keep_random_devices_open(int keep)
+void ossl_rand_pool_keep_random_devices_open(int keep)
 {
 }

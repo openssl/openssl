@@ -2,13 +2,17 @@
 
 =head1 NAME
 
-LHASH, DECLARE_LHASH_OF,
+LHASH, LHASH_OF, DEFINE_LHASH_OF_EX, DEFINE_LHASH_OF,
 OPENSSL_LH_COMPFUNC, OPENSSL_LH_HASHFUNC, OPENSSL_LH_DOALL_FUNC,
 LHASH_DOALL_ARG_FN_TYPE,
 IMPLEMENT_LHASH_HASH_FN, IMPLEMENT_LHASH_COMP_FN,
 lh_TYPE_new, lh_TYPE_free, lh_TYPE_flush,
 lh_TYPE_insert, lh_TYPE_delete, lh_TYPE_retrieve,
-lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
+lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error,
+OPENSSL_LH_new, OPENSSL_LH_free,  OPENSSL_LH_flush,
+OPENSSL_LH_insert, OPENSSL_LH_delete, OPENSSL_LH_retrieve,
+OPENSSL_LH_doall, OPENSSL_LH_doall_arg, OPENSSL_LH_error
+- dynamic hash table
 
 =head1 SYNOPSIS
 
@@ -16,15 +20,17 @@ lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
 
  #include <openssl/lhash.h>
 
- DECLARE_LHASH_OF(TYPE);
+ LHASH_OF(TYPE)
 
- LHASH *lh_TYPE_new(OPENSSL_LH_HASHFUNC hash, OPENSSL_LH_COMPFUNC compare);
+ DEFINE_LHASH_OF_EX(TYPE);
+
+ LHASH_OF(TYPE) *lh_TYPE_new(OPENSSL_LH_HASHFUNC hash, OPENSSL_LH_COMPFUNC compare);
  void lh_TYPE_free(LHASH_OF(TYPE) *table);
  void lh_TYPE_flush(LHASH_OF(TYPE) *table);
 
  TYPE *lh_TYPE_insert(LHASH_OF(TYPE) *table, TYPE *data);
  TYPE *lh_TYPE_delete(LHASH_OF(TYPE) *table, TYPE *data);
- TYPE *lh_retrieve(LHASH_OF(TYPE) *table, TYPE *data);
+ TYPE *lh_TYPE_retrieve(LHASH_OF(TYPE) *table, TYPE *data);
 
  void lh_TYPE_doall(LHASH_OF(TYPE) *table, OPENSSL_LH_DOALL_FUNC func);
  void lh_TYPE_doall_arg(LHASH_OF(TYPE) *table, OPENSSL_LH_DOALL_FUNCARG func,
@@ -37,12 +43,35 @@ lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
  typedef void (*OPENSSL_LH_DOALL_FUNC)(const void *);
  typedef void (*LHASH_DOALL_ARG_FN_TYPE)(const void *, const void *);
 
+ OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c);
+ void OPENSSL_LH_free(OPENSSL_LHASH *lh);
+ void OPENSSL_LH_flush(OPENSSL_LHASH *lh);
+
+ void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data);
+ void *OPENSSL_LH_delete(OPENSSL_LHASH *lh, const void *data);
+ void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data);
+
+ void OPENSSL_LH_doall(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNC func);
+ void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNCARG func, void *arg);
+
+ int OPENSSL_LH_error(OPENSSL_LHASH *lh);
+
+The following macro is deprecated:
+
+ DEFINE_LHASH_OF(TYPE);
+
 =head1 DESCRIPTION
 
 This library implements type-checked dynamic hash tables. The hash
 table entries can be arbitrary structures. Usually they consist of key
 and value fields.  In the description here, B<I<TYPE>> is used a placeholder
 for any of the OpenSSL datatypes, such as I<SSL_SESSION>.
+
+To define a new type-checked dynamic hash table, use B<DEFINE_LHASH_OF_EX>().
+B<DEFINE_LHASH_OF>() was previously used for this purpose, but is now
+deprecated. The B<DEFINE_LHASH_OF_EX>() macro provides all functionality of
+B<DEFINE_LHASH_OF>() except for certain deprecated statistics functions (see
+OPENSSL_LH_stats(3)).
 
 B<lh_I<TYPE>_new>() creates a new B<LHASH_OF>(B<I<TYPE>>) structure to store
 arbitrary data entries, and specifies the 'hash' and 'compare'
@@ -162,34 +191,50 @@ that is provided by the caller):
 B<lh_I<TYPE>_error>() can be used to determine if an error occurred in the last
 operation.
 
+OPENSSL_LH_new() is the same as the B<lh_I<TYPE>_new>() except that it is not
+type specific. So instead of returning an B<LHASH_OF(I<TYPE>)> value it returns
+a B<void *>. In the same way the functions OPENSSL_LH_free(),
+OPENSSL_LH_flush(), OPENSSL_LH_insert(), OPENSSL_LH_delete(),
+OPENSSL_LH_retrieve(), OPENSSL_LH_doall(), OPENSSL_LH_doall_arg(), and
+OPENSSL_LH_error() are equivalent to the similarly named B<lh_I<TYPE>> functions
+except that they return or use a B<void *> where the equivalent B<lh_I<TYPE>>
+function returns or uses a B<I<TYPE> *> or B<LHASH_OF(I<TYPE>) *>. B<lh_I<TYPE>>
+functions are implemented as type checked wrappers around the B<OPENSSL_LH>
+functions. Most applications should not call the B<OPENSSL_LH> functions
+directly.
+
 =head1 RETURN VALUES
 
-B<lh_I<TYPE>_new>() returns NULL on error, otherwise a pointer to the new
-B<LHASH> structure.
+B<lh_I<TYPE>_new>() and OPENSSL_LH_new() return NULL on error, otherwise a
+pointer to the new B<LHASH> structure.
 
-When a hash table entry is replaced, B<lh_I<TYPE>_insert>() returns the value
-being replaced. NULL is returned on normal operation and on error.
+When a hash table entry is replaced, B<lh_I<TYPE>_insert>() or
+OPENSSL_LH_insert() return the value being replaced. NULL is returned on normal
+operation and on error.
 
-B<lh_I<TYPE>_delete>() returns the entry being deleted.  NULL is returned if
-there is no such value in the hash table.
+B<lh_I<TYPE>_delete>() and OPENSSL_LH_delete() return the entry being deleted.
+NULL is returned if there is no such value in the hash table.
 
-B<lh_I<TYPE>_retrieve>() returns the hash table entry if it has been found,
-NULL otherwise.
+B<lh_I<TYPE>_retrieve>() and OPENSSL_LH_retrieve() return the hash table entry
+if it has been found, NULL otherwise.
 
-B<lh_I<TYPE>_error>() returns 1 if an error occurred in the last operation, 0
-otherwise. It's meaningful only after non-retrieve operations.
+B<lh_I<TYPE>_error>() and OPENSSL_LH_error() return 1 if an error occurred in
+the last operation, 0 otherwise. It's meaningful only after non-retrieve
+operations.
 
-B<lh_I<TYPE>_free>(), B<lh_I<TYPE>_flush>(), B<lh_I<TYPE>_doall>() and
-B<lh_I<TYPE>_doall_arg>() return no values.
+B<lh_I<TYPE>_free>(), OPENSSL_LH_free(), B<lh_I<TYPE>_flush>(),
+OPENSSL_LH_flush(), B<lh_I<TYPE>_doall>() OPENSSL_LH_doall(),
+B<lh_I<TYPE>_doall_arg>() and OPENSSL_LH_doall_arg() return no values.
 
 =head1 NOTE
 
 The LHASH code is not thread safe. All updating operations, as well as
-B<lh_I<TYPE>_error>() call must be performed under a write lock. All retrieve
-operations should be performed under a read lock, I<unless> accurate
-usage statistics are desired. In which case, a write lock should be used
-for retrieve operations as well. For output of the usage statistics,
-using the functions from L<OPENSSL_LH_stats(3)>, a read lock suffices.
+B<lh_I<TYPE>_error>() or OPENSSL_LH_error() calls must be performed under
+a write lock. All retrieve operations should be performed under a read lock,
+I<unless> accurate usage statistics are desired. In which case, a write lock
+should be used for retrieve operations as well. For output of the usage
+statistics, using the functions from L<OPENSSL_LH_stats(3)>, a read lock
+suffices.
 
 The LHASH code regards table entries as constant data.  As such, it
 internally represents lh_insert()'d items with a "const void *"
@@ -203,7 +248,7 @@ all such parameters as constant.
 
 As an example, a hash table may be maintained by code that, for
 reasons of encapsulation, has only "const" access to the data being
-indexed in the hash table (ie. it is returned as "const" from
+indexed in the hash table (i.e. it is returned as "const" from
 elsewhere in their code) - in this case the LHASH prototypes are
 appropriate as-is.  Conversely, if the caller is responsible for the
 life-time of the data in question, then they may well wish to make
@@ -223,7 +268,8 @@ without any "const" qualifiers.
 
 =head1 BUGS
 
-B<lh_I<TYPE>_insert>() returns NULL both for success and error.
+B<lh_I<TYPE>_insert>() and OPENSSL_LH_insert() return NULL both for success
+and error.
 
 =head1 SEE ALSO
 
@@ -234,9 +280,12 @@ L<OPENSSL_LH_stats(3)>
 In OpenSSL 1.0.0, the lhash interface was revamped for better
 type checking.
 
+In OpenSSL 3.2, B<DEFINE_LHASH_OF_EX>() was introduced and B<DEFINE_LHASH_OF>()
+was deprecated.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

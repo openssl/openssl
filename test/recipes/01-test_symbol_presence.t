@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 # -*- mode: Perl -*-
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -9,11 +9,22 @@
 
 use strict;
 use File::Spec::Functions qw(devnull);
-use OpenSSL::Test qw(:DEFAULT srctop_file bldtop_dir bldtop_file);
+use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file);
 use OpenSSL::Test::Utils;
 
-setup("test_symbol_presence");
+BEGIN {
+    setup("test_symbol_presence");
+}
 
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
+
+plan skip_all => "Test is disabled on NonStop" if config('target') =~ m|^nonstop|;
+# MacOS arranges symbol names differently
+plan skip_all => "Test is disabled on MacOS" if config('target') =~ m|^darwin|;
+plan skip_all => "This is unsupported on MSYS, MinGW or MSWin32"
+    if $^O eq 'msys' or $^O eq 'MSWin32' or config('target') =~ m|^mingw|;
 plan skip_all => "Only useful when building shared libraries"
     if disabled("shared");
 
@@ -32,17 +43,18 @@ note
 foreach my $libname (@libnames) {
  SKIP:
     {
-        my $shlibpath = bldtop_file("lib" . $libname . ".so");
+        my $shlibname = platform->sharedlib("lib$libname");
+        my $shlibpath = bldtop_file($shlibname);
         *OSTDERR = *STDERR;
         *OSTDOUT = *STDOUT;
         open STDERR, ">", devnull();
         open STDOUT, ">", devnull();
-        my @nm_lines = map { s|\R$||; $_ } `nm -Pg $shlibpath 2> /dev/null`;
+        my @nm_lines = map { s|\R$||; $_ } `nm -DPg $shlibpath 2> /dev/null`;
         close STDERR;
         close STDOUT;
         *STDERR = *OSTDERR;
         *STDOUT = *OSTDOUT;
-        skip "Can't run 'nm -Pg $shlibpath' => $?...  ignoring", 2
+        skip "Can't run 'nm -DPg $shlibpath' => $?...  ignoring", 2
             unless $? == 0;
 
         my $bldtop = bldtop_dir();
@@ -58,7 +70,17 @@ foreach my $libname (@libnames) {
         note "Number of lines in \@def_lines before massaging: ", scalar @def_lines;
 
         # Massage the nm output to only contain defined symbols
-        @nm_lines = sort map { s| .*||; $_ } grep(m|.* [BCDST] .*|, @nm_lines);
+        @nm_lines =
+            sort
+            map {
+                # Drop the first space and everything following it
+                s| .*||;
+                # Drop OpenSSL dynamic version information if there is any
+                s|\@\@.+$||;
+                # Return the result
+                $_
+            }
+            grep(m|.* [BCDST] .*|, @nm_lines);
 
         # Massage the mkdef.pl output to only contain global symbols
         # The output we got is in Unix .map format, which has a global
@@ -100,18 +122,18 @@ foreach my $libname (@libnames) {
         }
 
         if (scalar @missing) {
-            note "The following symbols are missing in lib$libname.so:";
+            note "The following symbols are missing in ${shlibname}:";
             foreach (@missing) {
                 note "  $_";
             }
         }
         if (scalar @extra) {
-            note "The following symbols are extra in lib$libname.so:";
+            note "The following symbols are extra in ${shlibname}:";
             foreach (@extra) {
                 note "  $_";
             }
         }
         ok(scalar @missing == 0,
-           "check that there are no missing symbols in lib$libname.so");
+           "check that there are no missing symbols in ${shlibname}");
     }
 }

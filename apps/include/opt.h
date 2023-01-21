@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,8 @@
 #include <openssl/e_os2.h>
 #include <openssl/types.h>
 #include <stdarg.h>
+
+#define OPT_COMMON OPT_ERR = -1, OPT_EOF = 0, OPT_HELP
 
 /*
  * Common verification options.
@@ -153,14 +155,19 @@
         OPT_S__FIRST=3000, \
         OPT_S_NOSSL3, OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
         OPT_S_NOTLS1_3, OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
-        OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
+        OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_CLIENTRENEG, \
+        OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_ALLOW_NO_DHE_KEX, \
         OPT_S_PRIORITIZE_CHACHA, \
         OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS, \
         OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, OPT_S_CIPHERSUITES, \
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
         OPT_S_MINPROTO, OPT_S_MAXPROTO, \
-        OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
+        OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S_NO_ETM, \
+        OPT_S_NO_EMS, \
+        OPT_S_NO_TX_CERT_COMP, \
+        OPT_S_NO_RX_CERT_COMP, \
+        OPT_S__LAST
 
 # define OPT_S_OPTIONS \
         OPT_SECTION("TLS/SSL"), \
@@ -172,11 +179,15 @@
         {"bugs", OPT_S_BUGS, '-', "Turn on SSL bug compatibility"}, \
         {"no_comp", OPT_S_NO_COMP, '-', "Disable SSL/TLS compression (default)" }, \
         {"comp", OPT_S_COMP, '-', "Use SSL/TLS-level compression" }, \
+        {"no_tx_cert_comp", OPT_S_NO_TX_CERT_COMP, '-', "Disable sending TLSv1.3 compressed certificates" }, \
+        {"no_rx_cert_comp", OPT_S_NO_RX_CERT_COMP, '-', "Disable receiving TLSv1.3 compressed certificates" }, \
         {"no_ticket", OPT_S_NOTICKET, '-', \
             "Disable use of TLS session tickets"}, \
         {"serverpref", OPT_S_SERVERPREF, '-', "Use server's cipher preferences"}, \
         {"legacy_renegotiation", OPT_S_LEGACYRENEG, '-', \
             "Enable use of legacy renegotiation (dangerous)"}, \
+        {"client_renegotiation", OPT_S_CLIENTRENEG, '-', \
+            "Allow client-initiated renegotiation" }, \
         {"no_renegotiation", OPT_S_NO_RENEGOTIATION, '-', \
             "Disable all renegotiation."}, \
         {"legacy_server_connect", OPT_S_LEGACYCONN, '-', \
@@ -211,7 +222,11 @@
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
             "Perform all sorts of protocol violations for testing purposes"}, \
         {"no_middlebox", OPT_S_NO_MIDDLEBOX, '-', \
-            "Disable TLSv1.3 middlebox compat mode" }
+            "Disable TLSv1.3 middlebox compat mode" }, \
+        {"no_etm", OPT_S_NO_ETM, '-', \
+            "Disable Encrypt-then-Mac extension"}, \
+        {"no_ems", OPT_S_NO_EMS, '-', \
+            "Disable Extended master secret extension"}
 
 # define OPT_S_CASES \
         OPT_S__FIRST: case OPT_S__LAST: break; \
@@ -223,9 +238,12 @@
         case OPT_S_BUGS: \
         case OPT_S_NO_COMP: \
         case OPT_S_COMP: \
+        case OPT_S_NO_TX_CERT_COMP: \
+        case OPT_S_NO_RX_CERT_COMP: \
         case OPT_S_NOTICKET: \
         case OPT_S_SERVERPREF: \
         case OPT_S_LEGACYRENEG: \
+        case OPT_S_CLIENTRENEG: \
         case OPT_S_LEGACYCONN: \
         case OPT_S_ONRESUMP: \
         case OPT_S_NOLEGACYCONN: \
@@ -244,7 +262,9 @@
         case OPT_S_MINPROTO: \
         case OPT_S_MAXPROTO: \
         case OPT_S_DEBUGBROKE: \
-        case OPT_S_NO_MIDDLEBOX
+        case OPT_S_NO_MIDDLEBOX: \
+        case OPT_S_NO_ETM: \
+        case OPT_S_NO_EMS
 
 #define IS_NO_PROT_FLAG(o) \
  (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
@@ -258,7 +278,7 @@
 
 # define OPT_R_OPTIONS \
     OPT_SECTION("Random state"), \
-    {"rand", OPT_R_RAND, 's', "Load the file(s) into the random number generator"}, \
+    {"rand", OPT_R_RAND, 's', "Load the given file(s) into the random number generator"}, \
     {"writerand", OPT_R_WRITERAND, '>', "Write random data to the specified file"}
 
 # define OPT_R_CASES \
@@ -270,18 +290,23 @@
  */
 # define OPT_PROV_ENUM \
         OPT_PROV__FIRST=1600, \
-        OPT_PROV_PROVIDER, OPT_PROV_PROVIDER_PATH, \
+        OPT_PROV_PROVIDER, OPT_PROV_PROVIDER_PATH, OPT_PROV_PROPQUERY, \
         OPT_PROV__LAST
+
+# define OPT_CONFIG_OPTION \
+        { "config", OPT_CONFIG, '<', "Load a configuration file (this may load modules)" }
 
 # define OPT_PROV_OPTIONS \
         OPT_SECTION("Provider"), \
-        { "provider_path", OPT_PROV_PROVIDER_PATH, 's', "Provider load path (must be before 'provider' argument if required)" }, \
-        { "provider", OPT_PROV_PROVIDER, 's', "Provider to load (can be specified multiple times)" }
+        { "provider-path", OPT_PROV_PROVIDER_PATH, 's', "Provider load path (must be before 'provider' argument if required)" }, \
+        { "provider", OPT_PROV_PROVIDER, 's', "Provider to load (can be specified multiple times)" }, \
+        { "propquery", OPT_PROV_PROPQUERY, 's', "Property query used when fetching algorithms" }
 
 # define OPT_PROV_CASES \
         OPT_PROV__FIRST: case OPT_PROV__LAST: break; \
         case OPT_PROV_PROVIDER: \
-        case OPT_PROV_PROVIDER_PATH
+        case OPT_PROV_PROVIDER_PATH: \
+        case OPT_PROV_PROPQUERY
 
 /*
  * Option parsing.
@@ -303,6 +328,9 @@ typedef struct options_st {
     int valtype;
     const char *helpstr;
 } OPTIONS;
+/* Special retval values: */
+#define OPT_PARAM 0 /* same as OPT_EOF usually defined in apps */
+#define OPT_DUP -2 /* marks duplicate occurrence of option in help output */
 
 /*
  * A string/int pairing; widely use for option value lookup, hence the
@@ -336,43 +364,52 @@ typedef struct string_int_pair_st {
 #define OPT_SECTION(sec) { OPT_SECTION_STR, 1, '-', sec " options:\n" }
 #define OPT_PARAMETERS() { OPT_PARAM_STR, 1, '-', "Parameters:\n" }
 
-char *opt_progname(const char *argv0);
-char *opt_getprog(void);
+const char *opt_path_end(const char *filename);
 char *opt_init(int ac, char **av, const OPTIONS * o);
-int opt_next(void);
+char *opt_progname(const char *argv0);
+char *opt_appname(const char *argv0);
+char *opt_getprog(void);
+void opt_help(const OPTIONS * list);
+
 void opt_begin(void);
-int opt_format(const char *s, unsigned long flags, int *result);
-const char *format2str(int format);
-int opt_int(const char *arg, int *result);
-int opt_ulong(const char *arg, unsigned long *result);
-int opt_long(const char *arg, long *result);
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
-    defined(INTMAX_MAX) && defined(UINTMAX_MAX) && \
-    !defined(OPENSSL_NO_INTTYPES_H)
-int opt_imax(const char *arg, intmax_t *result);
-int opt_umax(const char *arg, uintmax_t *result);
-#else
-# define opt_imax opt_long
-# define opt_umax opt_ulong
-# define intmax_t long
-# define uintmax_t unsigned long
-#endif
-int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
-int opt_cipher(const char *name, const EVP_CIPHER **cipherp);
-int opt_md(const char *name, const EVP_MD **mdp);
-char *opt_arg(void);
+int opt_next(void);
 char *opt_flag(void);
+char *opt_arg(void);
 char *opt_unknown(void);
-char **opt_rest(void);
-int opt_num_rest(void);
+void reset_unknown(void);
+int opt_cipher(const char *name, EVP_CIPHER **cipherp);
+int opt_cipher_any(const char *name, EVP_CIPHER **cipherp);
+int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp);
+int opt_check_md(const char *name);
+int opt_md(const char *name, EVP_MD **mdp);
+int opt_md_silent(const char *name, EVP_MD **mdp);
+
+int opt_int(const char *arg, int *result);
+void opt_set_unknown_name(const char *name);
+int opt_int_arg(void);
+int opt_long(const char *arg, long *result);
+int opt_ulong(const char *arg, unsigned long *result);
+int opt_intmax(const char *arg, ossl_intmax_t *result);
+int opt_uintmax(const char *arg, ossl_uintmax_t *result);
+
+int opt_isdir(const char *name);
+int opt_format(const char *s, unsigned long flags, int *result);
+void print_format_error(int format, unsigned long flags);
+int opt_printf_stderr(const char *fmt, ...);
+int opt_string(const char *name, const char **options);
+int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
+
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
 int opt_provider(int i);
-void opt_help(const OPTIONS * list);
-void opt_print(const OPTIONS * opt, int doingparams, int width);
-int opt_format_error(const char *s, unsigned long flags);
-void print_format_error(int format, unsigned long flags);
-int opt_isdir(const char *name);
-int opt_printf_stderr(const char *fmt, ...);
+int opt_provider_option_given(void);
+
+char **opt_rest(void);
+int opt_num_rest(void);
+int opt_check_rest_arg(const char *expected);
+
+/* Returns non-zero if legacy paths are still available */
+int opt_legacy_okay(void);
+
 
 #endif /* OSSL_APPS_OPT_H */

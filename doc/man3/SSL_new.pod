@@ -31,8 +31,8 @@ B<SSL_CTX> that was used to create I<s>. It additionally duplicates a subset of
 the settings in I<s> into the new B<SSL> object.
 
 For SSL_dup() to work, the connection MUST be in its initial state and
-MUST NOT have not yet have started the SSL handshake.  For connections
-that are not in their initial state SSL_dup() just increments an internal
+MUST NOT have yet started the SSL handshake.  For connections that are not in
+their initial state SSL_dup() just increments an internal
 reference count and returns the I<same> handle.  It may be possible to
 use L<SSL_clear(3)> to recycle an SSL handle that is not in its initial
 state for re-use, but this is best avoided.  Instead, save and restore
@@ -61,7 +61,7 @@ L<SSL_set_tmp_dh_callback(3)>, or L<SSL_set_dh_auto(3)>
 L<SSL_set_min_proto_version(3)> or L<SSL_set_max_proto_version(3)> (Note: Only
 from OpenSSL 1.1.1h and above)
 
-=item any Verify mode, callback or depth set via L<SSL_set_verify(3)> or
+=item any verify mode, callback or depth set via L<SSL_set_verify(3)> or
 L<SSL_set_verify_depth(3)> or any configured X509 verification parameters
 
 =item any msg callback or info callback set via L<SSL_set_msg_callback(3)> or
@@ -124,7 +124,7 @@ L<ssl(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,28 +7,39 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * DSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include "dsa_local.h"
 #include "crypto/dsa.h"
 
-int dsa_check_params(const DSA *dsa, int *ret)
+int ossl_dsa_check_params(const DSA *dsa, int checktype, int *ret)
 {
-    /*
-     * (2b) FFC domain params conform to FIPS-186-4 explicit domain param
-     * validity tests.
-     */
-    return ffc_params_FIPS186_4_validate(dsa->libctx, &dsa->params,
-                                         FFC_PARAM_TYPE_DSA, ret, NULL);
+    if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK)
+        return ossl_ffc_params_simple_validate(dsa->libctx, &dsa->params,
+                                               FFC_PARAM_TYPE_DSA, ret);
+    else
+        /*
+         * Do full FFC domain params validation according to FIPS-186-4
+         *  - always in FIPS_MODULE
+         *  - only if possible (i.e., seed is set) in default provider
+         */
+        return ossl_ffc_params_full_validate(dsa->libctx, &dsa->params,
+                                             FFC_PARAM_TYPE_DSA, ret);
 }
 
 /*
  * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Full public key validation.
  */
-int dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret)
+int ossl_dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret)
 {
-    return ffc_validate_public_key(&dsa->params, pub_key, ret);
+    return ossl_ffc_validate_public_key(&dsa->params, pub_key, ret);
 }
 
 /*
@@ -36,24 +47,24 @@ int dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret)
  * To only be used with ephemeral FFC public keys generated using the approved
  * safe-prime groups.
  */
-int dsa_check_pub_key_partial(const DSA *dsa, const BIGNUM *pub_key, int *ret)
+int ossl_dsa_check_pub_key_partial(const DSA *dsa, const BIGNUM *pub_key, int *ret)
 {
-    return ffc_validate_public_key_partial(&dsa->params, pub_key, ret);
+    return ossl_ffc_validate_public_key_partial(&dsa->params, pub_key, ret);
 }
 
-int dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret)
+int ossl_dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret)
 {
     *ret = 0;
 
     return (dsa->params.q != NULL
-            && ffc_validate_private_key(dsa->params.q, priv_key, ret));
+            && ossl_ffc_validate_private_key(dsa->params.q, priv_key, ret));
 }
 
 /*
  * FFC pairwise check from SP800-56A R3.
  *    Section 5.6.2.1.4 Owner Assurance of Pair-wise Consistency
  */
-int dsa_check_pairwise(const DSA *dsa)
+int ossl_dsa_check_pairwise(const DSA *dsa)
 {
     int ret = 0;
     BN_CTX *ctx = NULL;
@@ -73,7 +84,7 @@ int dsa_check_pairwise(const DSA *dsa)
         goto err;
 
     /* recalculate the public key = (g ^ priv) mod p */
-    if (!dsa_generate_public_key(ctx, dsa, dsa->priv_key, pub_key))
+    if (!ossl_dsa_generate_public_key(ctx, dsa, dsa->priv_key, pub_key))
         goto err;
     /* check it matches the existing pubic_key */
     ret = BN_cmp(pub_key, dsa->pub_key) == 0;

@@ -23,42 +23,43 @@ B<openssl> B<req>
 [B<-new>]
 [B<-newkey> I<arg>]
 [B<-pkeyopt> I<opt>:I<value>]
+[B<-noenc>]
 [B<-nodes>]
-[B<-key> I<filename>]
+[B<-key> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-keyout> I<filename>]
 [B<-keygen_engine> I<id>]
 [B<-I<digest>>]
 [B<-config> I<filename>]
 [B<-section> I<name>]
-[B<-multivalue-rdn>]
 [B<-x509>]
+[B<-CA> I<filename>|I<uri>]
+[B<-CAkey> I<filename>|I<uri>]
 [B<-days> I<n>]
 [B<-set_serial> I<n>]
 [B<-newhdr>]
-[B<-addext> I<ext>]
+[B<-copy_extensions> I<arg>]
 [B<-extensions> I<section>]
 [B<-reqexts> I<section>]
+[B<-addext> I<ext>]
 [B<-precert>]
 [B<-utf8>]
 [B<-reqopt>]
 [B<-subject>]
 [B<-subj> I<arg>]
+[B<-multivalue-rdn>]
 [B<-sigopt> I<nm>:I<v>]
 [B<-vfyopt> I<nm>:I<v>]
 [B<-batch>]
 [B<-verbose>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
-
-=for openssl ifdef engine keygen_engine
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
 
-This command primarily creates and processes certificate requests
-in PKCS#10 format. It can additionally create self signed certificates
+This command primarily creates and processes certificate requests (CSRs)
+in PKCS#10 format. It can additionally create self-signed certificates
 for use as root CAs for example.
 
 =head1 OPTIONS
@@ -69,18 +70,24 @@ for use as root CAs for example.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
-The input and formats; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The CSR input file format to use; by default PEM is tried first.
+See L<openssl-format-options(1)> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The output format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 The data is a PKCS#10 object.
 
 =item B<-in> I<filename>
 
-This specifies the input filename to read a request from or standard input
-if this option is not specified. A request is only read if the creation
-options (B<-new> and B<-newkey>) are not specified.
+This specifies the input filename to read a request from.
+This defaults to standard input unless B<-x509> or B<-CA> is specified.
+A request is only read if the creation options
+(B<-new> or B<-newkey> or B<-precert>) are not specified.
 
 =item B<-sigopt> I<nm>:I<v>
 
@@ -100,16 +107,21 @@ which supports both options for good reasons.
 
 =end comment
 
-=item B<-passin> I<arg>, B<-passout> I<arg>
+=item B<-passin> I<arg>
 
-The password source for the input and output file.
+The password source for private key and certificate input.
 For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
+
+=item B<-passout> I<arg>
+
+The password source for the output file.
+For more information about the format of B<arg>
+see L<openssl-passphrase-options(1)>.
 
 =item B<-out> I<filename>
 
-This specifies the output filename to write to or standard output by
-default.
+This specifies the output filename to write to or standard output by default.
 
 =item B<-text>
 
@@ -117,25 +129,24 @@ Prints out the certificate request in text form.
 
 =item B<-subject>
 
-Prints out the request subject (or certificate subject if B<-x509> is
-specified)
+Prints out the certificate request subject
+(or certificate subject if B<-x509> is in use).
 
 =item B<-pubkey>
 
-Outputs the public key.
+Prints out the public key.
 
 =item B<-noout>
 
-This option prevents output of the encoded version of the request.
+This option prevents output of the encoded version of the certificate request.
 
 =item B<-modulus>
 
-This option prints out the value of the modulus of the public key
-contained in the request.
+Prints out the value of the modulus of the public key contained in the request.
 
 =item B<-verify>
 
-Verifies the signature on the request.
+Verifies the self-signature on the request.
 
 =item B<-new>
 
@@ -144,28 +155,38 @@ the user for the relevant field values. The actual fields
 prompted for and their maximum and minimum sizes are specified
 in the configuration file and any requested extensions.
 
-If the B<-key> option is not used it will generate a new RSA private
-key using information specified in the configuration file.
+If the B<-key> option is not given it will generate a new private key
+using information specified in the configuration file or given with
+the B<-newkey> and B<-pkeyopt> options,
+else by default an RSA key with 2048 bits length.
 
 =item B<-newkey> I<arg>
 
-This option creates a new certificate request and a new private
-key. The argument takes one of several forms.
+This option is used to generate a new private key unless B<-key> is given.
+It is subsequently used as if it was given using the B<-key> option.
 
-B<rsa:>I<nbits>, where
-I<nbits> is the number of bits, generates an RSA key I<nbits>
-in size. If I<nbits> is omitted, i.e. B<-newkey> I<rsa> specified,
-the default key size, specified in the configuration file is used.
+This option implies the B<-new> flag to create a new certificate request
+or a new certificate in case B<-x509> is used.
 
-All other algorithms support the B<-newkey> I<alg>:I<file> form, where file
-may be an algorithm parameter file, created with C<openssl genpkey -genparam>
+The argument takes one of several forms.
+
+[B<rsa:>]I<nbits> generates an RSA key I<nbits> in size.
+If I<nbits> is omitted, i.e., B<-newkey> B<rsa> is specified,
+the default key size specified in the configuration file
+with the B<default_bits> option is used if present, else 2048.
+
+All other algorithms support the B<-newkey> I<algname>:I<file> form, where
+I<file> is an algorithm parameter file, created with C<openssl genpkey -genparam>
 or an X.509 certificate for a key with appropriate algorithm.
 
 B<param:>I<file> generates a key using the parameter file or certificate
-I<file>, the algorithm is determined by the parameters. I<algname>:I<file>
-use algorithm I<algname> and parameter file I<file>: the two algorithms must
-match or an error occurs. I<algname> just uses algorithm I<algname>, and
-parameters, if necessary should be specified via B<-pkeyopt> parameter.
+I<file>, the algorithm is determined by the parameters.
+
+I<algname>[:I<file>] generates a key using the given algorithm I<algname>.
+If a parameter file I<file> is given then the parameters specified there
+are used, where the algorithm parameters must match I<algname>.
+If algorithm parameters are not given,
+any necessary parameters should be specified via the B<-pkeyopt> option.
 
 B<dsa:>I<filename> generates a DSA key using the parameters
 in the file I<filename>. B<ec:>I<filename> generates EC key (usable both with
@@ -181,27 +202,40 @@ options supported depends on the public key algorithm used and its
 implementation.
 See L<openssl-genpkey(1)/KEY GENERATION OPTIONS> for more details.
 
-=item B<-key> I<filename>
+=item B<-key> I<filename>|I<uri>
 
-This specifies the file to read the private key from. It also
-accepts PKCS#8 format private keys for PEM format files.
+This option provides the private key for signing a new certificate or
+certificate request.
+Unless B<-in> is given, the corresponding public key is placed in
+the new certificate or certificate request, resulting in a self-signature.
+
+For certificate signing this option is overridden by the B<-CA> option.
+
+This option also accepts PKCS#8 format private keys for PEM format files.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The format of the private key; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+The format of the private key; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-keyout> I<filename>
 
-This gives the filename to write the newly created private key to.
-If this option is not specified then the filename present in the
-configuration file is used.
+This gives the filename to write any private key to that has been newly created
+or read from B<-key>.  If neither the B<-keyout> option nor the B<-key> option
+are given then the filename specified in the configuration file with the
+B<default_keyfile> option is used, if present.  Thus, if you want to write the
+private key and the B<-key> option is provided, you should provide the
+B<-keyout> option explicitly.  If a new key is generated and no filename is
+specified the key is written to standard output.
 
-=item B<-nodes>
+=item B<-noenc>
 
 If this option is specified then if a private key is created it
 will not be encrypted.
+
+=item B<-nodes>
+
+This option is deprecated since OpenSSL 3.0; use B<-noenc> instead.
 
 =item B<-I<digest>>
 
@@ -227,61 +261,97 @@ Specifies the name of the section to use; the default is B<req>.
 =item B<-subj> I<arg>
 
 Sets subject name for new request or supersedes the subject name
-when processing a request.
+when processing a certificate request.
+
 The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
-Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Special characters may be escaped by C<\> (backslash), whitespace is retained.
 Empty values are permitted, but the corresponding type will not be included
 in the request.
-
-=item B<-multivalue-rdn>
-
-This option causes the -subj argument to be interpreted with full
-support for multivalued RDNs. Example:
+Giving a single C</> will lead to an empty sequence of RDNs (a NULL-DN).
+Multi-valued RDNs can be formed by placing a C<+> character instead of a C</>
+between the AttributeValueAssertions (AVAs) that specify the members of the set.
+Example:
 
 C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
-If -multi-rdn is not used then the UID value is C<123456+CN=John Doe>.
+=item B<-multivalue-rdn>
+
+This option has been deprecated and has no effect.
 
 =item B<-x509>
 
-This option outputs a self signed certificate instead of a certificate
-request. This is typically used to generate a test certificate or
-a self signed root CA. The extensions added to the certificate
-(if any) are specified in the configuration file. Unless specified
-using the B<-set_serial> option, a large random number will be used for
-the serial number.
+This option outputs a certificate instead of a certificate request.
+This is typically used to generate test certificates.
+It is implied by the B<-CA> option.
 
-If existing request is specified with the B<-in> option, it is converted
-to the self signed certificate otherwise new request is created.
+This option implies the B<-new> flag if B<-in> is not given.
+
+If an existing request is specified with the B<-in> option, it is converted
+to the a certificate; otherwise a request is created from scratch.
+
+Unless specified using the B<-set_serial> option,
+a large random number will be used for the serial number.
+
+Unless the B<-copy_extensions> option is used,
+X.509 extensions are not copied from any provided request input file.
+
+X.509 extensions to be added can be specified in the configuration file,
+possibly using the B<-config> and B<-extensions> options,
+and/or using the B<-addext> option.
+
+=item B<-CA> I<filename>|I<uri>
+
+Specifies the "CA" certificate to be used for signing a new certificate
+and implies use of B<-x509>.
+When present, this behaves like a "micro CA" as follows:
+The subject name of the "CA" certificate is placed as issuer name in the new
+certificate, which is then signed using the "CA" key given as specified below.
+
+=item B<-CAkey> I<filename>|I<uri>
+
+Sets the "CA" private key to sign a certificate with.
+The private key must match the public key of the certificate given with B<-CA>.
+If this option is not provided then the key must be present in the B<-CA> input.
 
 =item B<-days> I<n>
 
-When the B<-x509> option is being used this specifies the number of
+When B<-x509> is in use this specifies the number of
 days to certify the certificate for, otherwise it is ignored. I<n> should
 be a positive integer. The default is 30 days.
 
 =item B<-set_serial> I<n>
 
-Serial number to use when outputting a self signed certificate. This
-may be specified as a decimal value or a hex value if preceded by C<0x>.
+Serial number to use when outputting a self-signed certificate.
+This may be specified as a decimal value or a hex value if preceded by C<0x>.
+If not given, a large random number will be used.
+
+=item B<-copy_extensions> I<arg>
+
+Determines how X.509 extensions in certificate requests should be handled
+when B<-x509> is in use.
+If I<arg> is B<none> or this option is not present then extensions are ignored.
+If I<arg> is B<copy> or B<copyall> then
+all extensions in the request are copied to the certificate.
+
+The main use of this option is to allow a certificate request to supply
+values for certain extensions such as subjectAltName.
+
+=item B<-extensions> I<section>,
+B<-reqexts> I<section>
+
+Can be used to override the name of the configuration file section
+from which X.509 extensions are included
+in the certificate (when B<-x509> is in use) or certificate request.
+This allows several different sections to be used in the same configuration
+file to specify requests for a variety of purposes.
 
 =item B<-addext> I<ext>
 
-Add a specific extension to the certificate (if the B<-x509> option is
-present) or certificate request.  The argument must have the form of
+Add a specific extension to the certificate (if B<-x509> is in use)
+or certificate request.  The argument must have the form of
 a key=value pair as it would appear in a config file.
 
 This option can be given multiple times.
-
-=item B<-extensions> I<section>
-
-=item B<-reqexts> I<section>
-
-These options specify alternative sections to include certificate
-extensions (if the B<-x509> option is present) or certificate
-request extensions. This allows several different sections to
-be used in the same configuration file to specify requests for
-a variety of purposes.
 
 =item B<-precert>
 
@@ -302,7 +372,7 @@ configuration file, must be valid UTF8 strings.
 
 =item B<-reqopt> I<option>
 
-Customise the output format used with B<-text>. The I<option> argument can be
+Customise the printing format used with B<-text>. The I<option> argument can be
 a single option or multiple options separated by commas.
 
 See discussion of the  B<-certopt> parameter in the L<openssl-x509(1)>
@@ -349,7 +419,7 @@ The options available are described in detail below.
 
 =over 4
 
-=item B<input_password output_password>
+=item B<input_password>, B<output_password>
 
 The passwords for the input private key file (if present) and
 the output private key file (if one will be created). The
@@ -394,7 +464,7 @@ It is used for private key generation.
 =item B<encrypt_key>
 
 If this is set to B<no> then if a private key is generated it is
-B<not> encrypted. This is equivalent to the B<-nodes> command line
+B<not> encrypted. This is equivalent to the B<-noenc> command line
 option. For compatibility B<encrypt_rsa_key> is an equivalent option.
 
 =item B<default_md>
@@ -429,8 +499,8 @@ extension section format.
 =item B<x509_extensions>
 
 This specifies the configuration file section containing a list of
-extensions to add to certificate generated when the B<-x509> switch
-is used. It can be overridden by the B<-extensions> command line switch.
+extensions to add to certificate generated when B<-x509> is in use.
+It can be overridden by the B<-extensions> command line switch.
 
 =item B<prompt>
 
@@ -527,7 +597,7 @@ The same but just using req:
 
  openssl req -newkey rsa:2048 -keyout key.pem -out req.pem
 
-Generate a self signed root certificate:
+Generate a self-signed root certificate:
 
  openssl req -x509 -newkey rsa:2048 -keyout key.pem -out req.pem
 
@@ -692,12 +762,17 @@ L<x509v3_config(5)>
 
 The B<-section> option was added in OpenSSL 3.0.0.
 
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
+The B<-multivalue-rdn> option has become obsolete in OpenSSL 3.0.0 and
+has no effect.
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+The <-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
+
+The B<-reqexts> option has been made an alias of B<-extensions> in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

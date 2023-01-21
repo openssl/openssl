@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,8 +12,6 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include "crypto/x509.h"
-
-DEFINE_STACK_OF(X509_ATTRIBUTE)
 
 /*-
  * X509_REQ_INFO is handled in an unusual way to get round
@@ -50,22 +48,60 @@ static int rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 static int req_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
 {
-#ifndef OPENSSL_NO_SM2
     X509_REQ *ret = (X509_REQ *)*pval;
 
     switch (operation) {
     case ASN1_OP_D2I_PRE:
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
-        /* fall thru */
+        /* fall through */
     case ASN1_OP_NEW_POST:
         ret->distinguishing_id = NULL;
         break;
 
     case ASN1_OP_FREE_POST:
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
+        OPENSSL_free(ret->propq);
+        break;
+    case ASN1_OP_DUP_POST:
+        {
+            X509_REQ *old = exarg;
+
+            if (!ossl_x509_req_set0_libctx(ret, old->libctx, old->propq))
+                return 0;
+            if (old->req_info.pubkey != NULL) {
+                EVP_PKEY *pkey = X509_PUBKEY_get0(old->req_info.pubkey);
+
+                if (pkey != NULL) {
+                    pkey = EVP_PKEY_dup(pkey);
+                    if (pkey == NULL) {
+                        ERR_raise(ERR_LIB_X509, ERR_R_EVP_LIB);
+                        return 0;
+                    }
+                    if (!X509_PUBKEY_set(&ret->req_info.pubkey, pkey)) {
+                        EVP_PKEY_free(pkey);
+                        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
+                        return 0;
+                    }
+                    EVP_PKEY_free(pkey);
+                }
+            }
+        }
+        break;
+    case ASN1_OP_GET0_LIBCTX:
+        {
+            OSSL_LIB_CTX **libctx = exarg;
+
+            *libctx = ret->libctx;
+        }
+        break;
+    case ASN1_OP_GET0_PROPQ:
+        {
+            const char **propq = exarg;
+
+            *propq = ret->propq;
+        }
         break;
     }
-#endif
 
     return 1;
 }
@@ -101,4 +137,37 @@ void X509_REQ_set0_distinguishing_id(X509_REQ *x, ASN1_OCTET_STRING *d_id)
 ASN1_OCTET_STRING *X509_REQ_get0_distinguishing_id(X509_REQ *x)
 {
     return x->distinguishing_id;
+}
+
+/*
+ * This should only be used if the X509_REQ object was embedded inside another
+ * asn1 object and it needs a libctx to operate.
+ * Use X509_REQ_new_ex() instead if possible.
+ */
+int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
+                              const char *propq)
+{
+    if (x != NULL) {
+        x->libctx = libctx;
+        OPENSSL_free(x->propq);
+        x->propq = NULL;
+        if (propq != NULL) {
+            x->propq = OPENSSL_strdup(propq);
+            if (x->propq == NULL)
+                return 0;
+        }
+    }
+    return 1;
+}
+
+X509_REQ *X509_REQ_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
+{
+    X509_REQ *req = NULL;
+
+    req = (X509_REQ *)ASN1_item_new((X509_REQ_it()));
+    if (!ossl_x509_req_set0_libctx(req, libctx, propq)) {
+        X509_REQ_free(req);
+        req = NULL;
+    }
+    return req;
 }

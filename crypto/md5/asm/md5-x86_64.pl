@@ -139,9 +139,9 @@ $code .= <<EOF;
 .text
 .align 16
 
-.globl md5_block_asm_data_order
-.type md5_block_asm_data_order,\@function,3
-md5_block_asm_data_order:
+.globl ossl_md5_block_asm_data_order
+.type ossl_md5_block_asm_data_order,\@function,3
+ossl_md5_block_asm_data_order:
 .cfi_startproc
 	push	%rbp
 .cfi_push	%rbp
@@ -283,7 +283,7 @@ $code .= <<EOF;
 .Lepilogue:
 	ret
 .cfi_endproc
-.size md5_block_asm_data_order,.-md5_block_asm_data_order
+.size ossl_md5_block_asm_data_order,.-ossl_md5_block_asm_data_order
 EOF
 
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
@@ -378,13 +378,13 @@ se_handler:
 
 .section	.pdata
 .align	4
-	.rva	.LSEH_begin_md5_block_asm_data_order
-	.rva	.LSEH_end_md5_block_asm_data_order
-	.rva	.LSEH_info_md5_block_asm_data_order
+	.rva	.LSEH_begin_ossl_md5_block_asm_data_order
+	.rva	.LSEH_end_ossl_md5_block_asm_data_order
+	.rva	.LSEH_info_ossl_md5_block_asm_data_order
 
 .section	.xdata
 .align	8
-.LSEH_info_md5_block_asm_data_order:
+.LSEH_info_ossl_md5_block_asm_data_order:
 	.byte	9,0,0,0
 	.rva	se_handler
 ___

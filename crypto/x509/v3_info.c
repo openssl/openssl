@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,9 +15,6 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-DEFINE_STACK_OF(ACCESS_DESCRIPTION)
-DEFINE_STACK_OF(CONF_VALUE)
-
 static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
                                                        *method, AUTHORITY_INFO_ACCESS
                                                        *ainfo, STACK_OF(CONF_VALUE)
@@ -28,7 +25,7 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
                                                         STACK_OF(CONF_VALUE)
                                                         *nval);
 
-const X509V3_EXT_METHOD v3_info = { NID_info_access, X509V3_EXT_MULTILINE,
+const X509V3_EXT_METHOD ossl_v3_info = { NID_info_access, X509V3_EXT_MULTILINE,
     ASN1_ITEM_ref(AUTHORITY_INFO_ACCESS),
     0, 0, 0, 0,
     0, 0,
@@ -38,7 +35,7 @@ const X509V3_EXT_METHOD v3_info = { NID_info_access, X509V3_EXT_MULTILINE,
     NULL
 };
 
-const X509V3_EXT_METHOD v3_sinfo = { NID_sinfo_access, X509V3_EXT_MULTILINE,
+const X509V3_EXT_METHOD ossl_v3_sinfo = { NID_sinfo_access, X509V3_EXT_MULTILINE,
     ASN1_ITEM_ref(AUTHORITY_INFO_ACCESS),
     0, 0, 0, 0,
     0, 0,
@@ -76,8 +73,10 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
 
         desc = sk_ACCESS_DESCRIPTION_value(ainfo, i);
         tmp = i2v_GENERAL_NAME(method, desc->location, tret);
-        if (tmp == NULL)
+        if (tmp == NULL) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
             goto err;
+        }
         tret = tmp;
         vtmp = sk_CONF_VALUE_value(tret, i);
         i2t_ASN1_OBJECT(objtmp, sizeof(objtmp), desc->method);
@@ -94,7 +93,6 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
 
     return tret;
  err:
-    X509V3err(X509V3_F_I2V_AUTHORITY_INFO_ACCESS, ERR_R_MALLOC_FAILURE);
     if (ret == NULL && tret != NULL)
         sk_CONF_VALUE_pop_free(tret, X509V3_conf_free);
     return NULL;
@@ -109,48 +107,40 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
     AUTHORITY_INFO_ACCESS *ainfo = NULL;
     CONF_VALUE *cnf, ctmp;
     ACCESS_DESCRIPTION *acc;
-    int i, objlen;
+    int i;
     const int num = sk_CONF_VALUE_num(nval);
     char *objtmp, *ptmp;
 
     if ((ainfo = sk_ACCESS_DESCRIPTION_new_reserve(NULL, num)) == NULL) {
-        X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         return NULL;
     }
     for (i = 0; i < num; i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
         if ((acc = ACCESS_DESCRIPTION_new()) == NULL) {
-            X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
-                      ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
             goto err;
         }
         sk_ACCESS_DESCRIPTION_push(ainfo, acc); /* Cannot fail due to reserve */
         ptmp = strchr(cnf->name, ';');
         if (ptmp == NULL) {
-            X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
-                      X509V3_R_INVALID_SYNTAX);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_SYNTAX);
             goto err;
         }
-        objlen = ptmp - cnf->name;
         ctmp.name = ptmp + 1;
         ctmp.value = cnf->value;
         if (!v2i_GENERAL_NAME_ex(acc->location, method, ctx, &ctmp, 0))
             goto err;
-        if ((objtmp = OPENSSL_strndup(cnf->name, objlen)) == NULL) {
-            X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
-                      ERR_R_MALLOC_FAILURE);
+        if ((objtmp = OPENSSL_strndup(cnf->name, ptmp - cnf->name)) == NULL)
             goto err;
-        }
         acc->method = OBJ_txt2obj(objtmp, 0);
         if (!acc->method) {
-            X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
-                      X509V3_R_BAD_OBJECT);
-            ERR_add_error_data(2, "value=", objtmp);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_BAD_OBJECT,
+                           "value=%s", objtmp);
             OPENSSL_free(objtmp);
             goto err;
         }
         OPENSSL_free(objtmp);
-
     }
     return ainfo;
  err:

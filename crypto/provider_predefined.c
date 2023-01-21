@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,20 +11,22 @@
 #include "provider_local.h"
 
 OSSL_provider_init_fn ossl_default_provider_init;
+OSSL_provider_init_fn ossl_base_provider_init;
 OSSL_provider_init_fn ossl_null_provider_init;
-OSSL_provider_init_fn fips_intern_provider_init;
+OSSL_provider_init_fn ossl_fips_intern_provider_init;
 #ifdef STATIC_LEGACY
 OSSL_provider_init_fn ossl_legacy_provider_init;
 #endif
-const struct predefined_providers_st predefined_providers[] = {
+const OSSL_PROVIDER_INFO ossl_predefined_providers[] = {
 #ifdef FIPS_MODULE
-    { "fips", fips_intern_provider_init, 1 },
+    { "fips", NULL, ossl_fips_intern_provider_init, NULL, 1 },
 #else
-    { "default", ossl_default_provider_init, 1 },
+    { "default", NULL, ossl_default_provider_init, NULL, 1 },
 # ifdef STATIC_LEGACY
-    { "legacy", ossl_legacy_provider_init, 0 },
+    { "legacy", NULL, ossl_legacy_provider_init, NULL, 0 },
 # endif
-    { "null", ossl_null_provider_init, 0 },
+    { "base", NULL, ossl_base_provider_init, NULL, 0 },
+    { "null", NULL, ossl_null_provider_init, NULL, 0 },
 #endif
-    { NULL, NULL, 0 }
+    { NULL, NULL, NULL, NULL, 0 }
 };

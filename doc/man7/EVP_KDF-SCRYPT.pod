@@ -55,9 +55,16 @@ These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
 =item "p" (B<OSSL_KDF_PARAM_SCRYPT_P>) <unsigned integer>
 
-These parameters configure the scrypt work factors N, r and p.
-N is a parameter of type B<uint64_t>.
+=item "maxmem_bytes" (B<OSSL_KDF_PARAM_SCRYPT_MAXMEM>) <unsigned integer>
+
+These parameters configure the scrypt work factors N, r, maxmem and p.
+Both N and maxmem_bytes are parameters of type B<uint64_t>.
 Both r and p are parameters of type B<uint32_t>.
+
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
+
+This can be used to set the property query string when fetching the
+fixed digest internally. NULL is used if this value is not set.
 
 =back
 
@@ -66,7 +73,7 @@ Both r and p are parameters of type B<uint32_t>.
 A context for scrypt can be obtained by calling:
 
  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "SCRYPT", NULL);
- EVP_KDF_CTX *kctx = EVP_KDF_new_ctx(kdf);
+ EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of an scrypt key derivation is specified via the
 "keylen" parameter to the L<EVP_KDF_derive(3)> function.
@@ -82,7 +89,7 @@ This example derives a 64-byte long test vector using scrypt with the password
  OSSL_PARAM params[6], *p = params;
 
  kdf = EVP_KDF_fetch(NULL, "SCRYPT", NULL);
- kctx = EVP_KDF_new_ctx(kdf);
+ kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
@@ -93,10 +100,7 @@ This example derives a 64-byte long test vector using scrypt with the password
  *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_SCRYPT_R, (uint32_t)8);
  *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_SCRYPT_P, (uint32_t)16);
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_set_ctx_params(kctx, params) <= 0) {
-     error("EVP_KDF_set_ctx_params");
- }
- if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
+ if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0) {
      error("EVP_KDF_derive");
  }
 
@@ -115,7 +119,7 @@ This example derives a 64-byte long test vector using scrypt with the password
      assert(!memcmp(out, expected, sizeof(out)));
  }
 
- EVP_KDF_free_ctx(kctx);
+ EVP_KDF_CTX_free(kctx);
 
 =head1 CONFORMING TO
 
@@ -124,15 +128,19 @@ RFC 7914
 =head1 SEE ALSO
 
 L<EVP_KDF(3)>,
-L<EVP_KDF_new_ctx(3)>,
-L<EVP_KDF_free_ctx(3)>,
-L<EVP_KDF_set_ctx_params(3)>,
+L<EVP_KDF_CTX_new(3)>,
+L<EVP_KDF_CTX_free(3)>,
+L<EVP_KDF_CTX_set_params(3)>,
 L<EVP_KDF_derive(3)>,
 L<EVP_KDF(3)/PARAMETERS>
 
+=head1 HISTORY
+
+This functionality was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

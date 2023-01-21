@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,7 +25,7 @@
  *   on [aligned] data in host byte order and one - on data in input
  *   stream byte order;
  * - share common byte-order neutral collector and padding function
- *   implementations, ../md32_common.h;
+ *   implementations, crypto/md32_common.h;
  *
  * Neither of the above applies to this SHA-512 implementations. Reasons
  * [in reverse order] are:
@@ -338,34 +338,6 @@ void SHA512_Transform(SHA512_CTX *c, const unsigned char *data)
     sha512_block_data_order(c, data, 1);
 }
 
-unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md)
-{
-    SHA512_CTX c;
-    static unsigned char m[SHA384_DIGEST_LENGTH];
-
-    if (md == NULL)
-        md = m;
-    SHA384_Init(&c);
-    SHA512_Update(&c, d, n);
-    SHA512_Final(md, &c);
-    OPENSSL_cleanse(&c, sizeof(c));
-    return md;
-}
-
-unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md)
-{
-    SHA512_CTX c;
-    static unsigned char m[SHA512_DIGEST_LENGTH];
-
-    if (md == NULL)
-        md = m;
-    SHA512_Init(&c);
-    SHA512_Update(&c, d, n);
-    SHA512_Final(md, &c);
-    OPENSSL_cleanse(&c, sizeof(c));
-    return md;
-}
-
 #ifndef SHA512_ASM
 static const SHA_LONG64 K512[80] = {
     U64(0x428a2f98d728ae22), U64(0x7137449123ef65cd),
@@ -460,6 +432,103 @@ static const SHA_LONG64 K512[80] = {
                                 : "=r"(ret)                     \
                                 : "r"(*((const SHA_LONG64 *)(&(x))))); ret; })
 #    endif
+#   elif (defined(__riscv_zbkb) || defined(__riscv_zbb)) && __riscv_xlen == 32
+#    define PULL64(x) ({ SHA_LONG64 ret;                                        \
+                        unsigned int *r = (unsigned int *)(&(ret));             \
+                        const unsigned int *p = (const unsigned int *)(&(x));   \
+                        asm ("rev8 %0, %1"                                      \
+                        : "=r"(r[0])                                            \
+                        : "r" (p[1]));                                          \
+                        asm ("rev8 %0, %1"                                      \
+                        : "=r"(r[1])                                            \
+                        : "r" (p[0])); ret;                                     })
+#   elif (defined(__riscv_zbkb) || defined(__riscv_zbb)) && __riscv_xlen == 64
+#    define PULL64(x) ({ SHA_LONG64 ret;    \
+                        asm ("rev8 %0, %1"  \
+                        : "=r"(ret)         \
+                        : "r"(x)); ret;     })
+#   endif
+#   if defined(__riscv_zknh) && __riscv_xlen == 32
+#    define Sigma0(x) ({ SHA_LONG64 ret; unsigned int *r = (unsigned int *)(&(ret));    \
+                        const unsigned int *p = (const unsigned int *)(&(x));           \
+                        asm ("sha512sum0r %0, %1, %2"                                   \
+                        : "=r"(r[0])                                                    \
+                        : "r" (p[0]), "r" (p[1]));                                      \
+                        asm ("sha512sum0r %0, %2, %1"                                   \
+                        : "=r"(r[1])                                                    \
+                        : "r" (p[0]), "r" (p[1])); ret;                                 })
+#    define Sigma1(x) ({ SHA_LONG64 ret; unsigned int *r = (unsigned int *)(&(ret));    \
+                        const unsigned int *p = (const unsigned int *)(&(x));           \
+                        asm ("sha512sum1r %0, %1, %2"                                   \
+                        : "=r"(r[0])                                                    \
+                        : "r" (p[0]), "r" (p[1]));                                      \
+                        asm ("sha512sum1r %0, %2, %1"                                   \
+                        : "=r"(r[1])                                                    \
+                        : "r" (p[0]), "r" (p[1])); ret;                                 })
+#    define sigma0(x) ({ SHA_LONG64 ret; unsigned int *r = (unsigned int *)(&(ret));    \
+                        const unsigned int *p = (const unsigned int *)(&(x));           \
+                        asm ("sha512sig0l %0, %1, %2"                                   \
+                        : "=r"(r[0])                                                    \
+                        : "r" (p[0]), "r" (p[1]));                                      \
+                        asm ("sha512sig0h %0, %2, %1"                                   \
+                        : "=r"(r[1])                                                    \
+                        : "r" (p[0]), "r" (p[1])); ret;                                 })
+#    define sigma1(x) ({ SHA_LONG64 ret; unsigned int *r = (unsigned int *)(&(ret));    \
+                        const unsigned int *p = (const unsigned int *)(&(x));           \
+                        asm ("sha512sig1l %0, %1, %2"                                   \
+                        : "=r"(r[0])                                                    \
+                        : "r" (p[0]), "r" (p[1]));                                      \
+                        asm ("sha512sig1h %0, %2, %1"                                   \
+                        : "=r"(r[1])                                                    \
+                        : "r" (p[0]), "r" (p[1])); ret;                                 })
+#   elif defined(__riscv_zknh) && __riscv_xlen == 64
+#    define Sigma0(x) ({ SHA_LONG64 ret;            \
+                        asm ("sha512sum0 %0, %1"    \
+                        : "=r"(ret)                 \
+                        : "r"(x)); ret;             })
+#    define Sigma1(x) ({ SHA_LONG64 ret;            \
+                        asm ("sha512sum1 %0, %1"    \
+                        : "=r"(ret)                 \
+                        : "r"(x)); ret;             })
+#    define sigma0(x) ({ SHA_LONG64 ret;            \
+                        asm ("sha512sig0 %0, %1"    \
+                        : "=r"(ret)                 \
+                        : "r"(x)); ret;             })
+#    define sigma1(x) ({ SHA_LONG64 ret;            \
+                        asm ("sha512sig1 %0, %1"    \
+                        : "=r"(ret)                 \
+                        : "r"(x)); ret;             })
+#   endif
+#   if (defined(__riscv_zbt) || defined(__riscv_zpn)) && __riscv_xlen == 32
+#    define Ch(x,y,z) ({  SHA_LONG64 ret; unsigned int *r = (unsigned int *)(&(ret));   \
+                        const unsigned int *xp = (const unsigned int *)(&(x));          \
+                        const unsigned int *yp = (const unsigned int *)(&(y));          \
+                        const unsigned int *zp = (const unsigned int *)(&(z));          \
+                        asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3\n\t"                \
+                        : "=r"(r[0])                                                    \
+                        : "r"(xp[0]), "r"(yp[0]), "r"(zp[0]));                          \
+                        asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3\n\t"                \
+                        : "=r"(r[1])                                                    \
+                        : "r"(xp[1]), "r"(yp[1]), "r"(zp[1])); ret;                     })
+#    define Maj(x,y,z) ({ SHA_LONG64 ret; unsigned int *r = (unsigned int *)(&(ret));   \
+                        const unsigned int *xp = (const unsigned int *)(&(x));          \
+                        const unsigned int *yp = (const unsigned int *)(&(y));          \
+                        const unsigned int *zp = (const unsigned int *)(&(z));          \
+                        asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3\n\t"                \
+                        : "=r"(r[0])                                                    \
+                        : "r"(xp[0]^zp[0]), "r"(yp[0]), "r"(zp[0]));                    \
+                        asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3\n\t"                \
+                        : "=r"(r[1])                                                    \
+                        : "r"(xp[1]^zp[1]), "r"(yp[1]), "r"(zp[1])); ret;               })
+#   elif (defined(__riscv_zbt) || defined(__riscv_zpn)) && __riscv_xlen == 64
+#    define Ch(x,y,z) ({  SHA_LONG64 ret;                           \
+                        asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3"\
+                        : "=r"(ret)                                 \
+                        : "r"(x), "r"(y), "r"(z)); ret;             })
+#    define Maj(x,y,z) ({ SHA_LONG64 ret;                           \
+                        asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3"\
+                        : "=r"(ret)                                 \
+                        : "r"(x^z), "r"(y), "r"(x)); ret;           })
 #   endif
 #  elif defined(_MSC_VER)
 #   if defined(_WIN64)         /* applies to both IA-64 and AMD64 */
@@ -500,12 +569,24 @@ static SHA_LONG64 __fastcall __pull64be(const void *x)
 # ifndef ROTR
 #  define ROTR(x,s)       (((x)>>s) | (x)<<(64-s))
 # endif
-# define Sigma0(x)       (ROTR((x),28) ^ ROTR((x),34) ^ ROTR((x),39))
-# define Sigma1(x)       (ROTR((x),14) ^ ROTR((x),18) ^ ROTR((x),41))
-# define sigma0(x)       (ROTR((x),1)  ^ ROTR((x),8)  ^ ((x)>>7))
-# define sigma1(x)       (ROTR((x),19) ^ ROTR((x),61) ^ ((x)>>6))
-# define Ch(x,y,z)       (((x) & (y)) ^ ((~(x)) & (z)))
-# define Maj(x,y,z)      (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+# ifndef Sigma0
+#  define Sigma0(x)       (ROTR((x),28) ^ ROTR((x),34) ^ ROTR((x),39))
+# endif
+# ifndef Sigma1
+#  define Sigma1(x)       (ROTR((x),14) ^ ROTR((x),18) ^ ROTR((x),41))
+# endif
+# ifndef sigma0
+#  define sigma0(x)       (ROTR((x),1)  ^ ROTR((x),8)  ^ ((x)>>7))
+# endif
+# ifndef sigma1
+#  define sigma1(x)       (ROTR((x),19) ^ ROTR((x),61) ^ ((x)>>6))
+# endif
+# ifndef Ch
+#  define Ch(x,y,z)       (((x) & (y)) ^ ((~(x)) & (z)))
+# endif
+# ifndef Maj
+#  define Maj(x,y,z)      (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+# endif
 
 # if defined(__i386) || defined(__i386__) || defined(_M_IX86)
 /*

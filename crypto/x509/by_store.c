@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,23 +12,22 @@
 #include "crypto/x509.h"
 #include "x509_local.h"
 
-DEFINE_STACK_OF_STRING()
-
 /* Generic object loader, given expected type and criterion */
 static int cache_objects(X509_LOOKUP *lctx, const char *uri,
                          const OSSL_STORE_SEARCH *criterion,
-                         int depth)
+                         int depth, OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ok = 0;
     OSSL_STORE_CTX *ctx = NULL;
     X509_STORE *xstore = X509_LOOKUP_get_store(lctx);
 
-    if ((ctx = OSSL_STORE_open(uri, NULL, NULL, NULL, NULL)) == NULL)
+    if ((ctx = OSSL_STORE_open_ex(uri, libctx, propq, NULL, NULL, NULL,
+                                  NULL, NULL)) == NULL)
         return 0;
 
     /*
      * We try to set the criterion, but don't care if it was valid or not.
-     * For a OSSL_STORE, it merely serves as an optimization, the expectation
+     * For an OSSL_STORE, it merely serves as an optimization, the expectation
      * being that if the criterion couldn't be used, we will get *everything*
      * from the container that the URI represents rather than the subset that
      * the criterion indicates, so the biggest harm is that we cache more
@@ -65,7 +64,7 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
              */
             if (depth > 0)
                 ok = cache_objects(lctx, OSSL_STORE_INFO_get0_NAME(info),
-                                   criterion, depth - 1);
+                                   criterion, depth - 1, libctx, propq);
         } else {
             /*
              * We know that X509_STORE_add_{cert|crl} increments the object's
@@ -106,37 +105,58 @@ static void by_store_free(X509_LOOKUP *ctx)
     sk_OPENSSL_STRING_pop_free(uris, free_uri);
 }
 
-static int by_store_ctrl(X509_LOOKUP *ctx, int cmd,
-                         const char *argp, long argl,
-                         char **retp)
+static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
+                            long argl, char **retp, OSSL_LIB_CTX *libctx,
+                            const char *propq)
 {
     switch (cmd) {
     case X509_L_ADD_STORE:
-        /* If no URI is given, use the default cert dir as default URI */
+        /* First try the newer default cert URI envvar. */
+        if (argp == NULL)
+            argp = ossl_safe_getenv(X509_get_default_cert_uri_env());
+
+        /* If not set, see if we have a URI in the older cert dir envvar. */
         if (argp == NULL)
             argp = ossl_safe_getenv(X509_get_default_cert_dir_env());
+
+        /* Fallback to default store URI. */
         if (argp == NULL)
-            argp = X509_get_default_cert_dir();
+            argp = X509_get_default_cert_uri();
+
+        /* No point adding an empty URI. */
+        if (!*argp)
+            return 1;
 
         {
             STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
+            char *data = OPENSSL_strdup(argp);
 
+            if (data == NULL) {
+                return 0;
+            }
             if (uris == NULL) {
                 uris = sk_OPENSSL_STRING_new_null();
                 X509_LOOKUP_set_method_data(ctx, uris);
             }
-            return sk_OPENSSL_STRING_push(uris, OPENSSL_strdup(argp)) > 0;
+            return sk_OPENSSL_STRING_push(uris, data) > 0;
         }
     case X509_L_LOAD_STORE:
         /* This is a shortcut for quick loading of specific containers */
-        return cache_objects(ctx, argp, NULL, 0);
+        return cache_objects(ctx, argp, NULL, 0, libctx, propq);
     }
 
     return 0;
 }
 
+static int by_store_ctrl(X509_LOOKUP *ctx, int cmd,
+                         const char *argp, long argl, char **retp)
+{
+    return by_store_ctrl_ex(ctx, cmd, argp, argl, retp, NULL, NULL);
+}
+
 static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                    const OSSL_STORE_SEARCH *criterion, X509_OBJECT *ret)
+                    const OSSL_STORE_SEARCH *criterion, X509_OBJECT *ret,
+                    OSSL_LIB_CTX *libctx, const char *propq)
 {
     STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
     int i;
@@ -144,7 +164,7 @@ static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 
     for (i = 0; i < sk_OPENSSL_STRING_num(uris); i++) {
         ok = cache_objects(ctx, sk_OPENSSL_STRING_value(uris, i), criterion,
-                           1 /* depth */);
+                           1 /* depth */, libctx, propq);
 
         if (ok)
             break;
@@ -152,12 +172,13 @@ static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     return ok;
 }
 
-static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                            const X509_NAME *name, X509_OBJECT *ret)
+static int by_store_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                               const X509_NAME *name, X509_OBJECT *ret,
+                               OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_STORE_SEARCH *criterion =
         OSSL_STORE_SEARCH_by_name((X509_NAME *)name); /* won't modify it */
-    int ok = by_store(ctx, type, criterion, ret);
+    int ok = by_store(ctx, type, criterion, ret, libctx, propq);
     STACK_OF(X509_OBJECT) *store_objects =
         X509_STORE_get0_objects(X509_LOOKUP_get_store(ctx));
     X509_OBJECT *tmp = NULL;
@@ -182,7 +203,7 @@ static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
          *
          * To be noted is that X509_OBJECT_set1_* increment the refcount,
          * but so does X509_STORE_CTX_get_by_subject upon return of this
-         * function, so we must ensure the the refcount is decremented
+         * function, so we must ensure the refcount is decremented
          * before we return, or we will get a refcount leak.  We cannot do
          * this with X509_OBJECT_free(), though, as that will free a bit
          * too much.
@@ -205,6 +226,12 @@ static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     return ok;
 }
 
+static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                            const X509_NAME *name, X509_OBJECT *ret)
+{
+    return by_store_subject_ex(ctx, type, name, ret, NULL, NULL);
+}
+
 /*
  * We lack the implementations for get_by_issuer_serial, get_by_fingerprint
  * and get_by_alias.  There's simply not enough support in the X509_LOOKUP
@@ -222,6 +249,8 @@ static X509_LOOKUP_METHOD x509_store_lookup = {
     NULL,                        /* get_by_issuer_serial */
     NULL,                        /* get_by_fingerprint */
     NULL,                        /* get_by_alias */
+    by_store_subject_ex,
+    by_store_ctrl_ex
 };
 
 X509_LOOKUP_METHOD *X509_LOOKUP_store(void)

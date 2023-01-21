@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,14 +9,13 @@
 
 /* Part of the code in here was originally in conf.c, which is now removed */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "internal/cryptlib.h"
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
-
-DEFINE_STACK_OF(CONF_VALUE)
+#include "conf_local.h"
 
 static void value_free_hash(const CONF_VALUE *a, LHASH_OF(CONF_VALUE) *conf);
 static void value_free_stack_doall(CONF_VALUE *a);
@@ -29,7 +28,7 @@ CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section)
         return NULL;
     vv.name = NULL;
     vv.section = (char *)section;
-    return lh_CONF_VALUE_retrieve(conf->data, &vv);
+    return conf->data != NULL ? lh_CONF_VALUE_retrieve(conf->data, &vv) : NULL;
 }
 
 STACK_OF(CONF_VALUE) *_CONF_get_section_values(const CONF *conf,
@@ -74,6 +73,8 @@ char *_CONF_get_string(const CONF *conf, const char *section,
         return NULL;
     if (conf == NULL)
         return ossl_safe_getenv(name);
+    if (conf->data == NULL)
+        return NULL;
     if (section != NULL) {
         vv.name = (char *)name;
         vv.section = (char *)section;
@@ -134,7 +135,11 @@ IMPLEMENT_LHASH_DOALL_ARG_CONST(CONF_VALUE, LH_CONF_VALUE);
 
 void _CONF_free_data(CONF *conf)
 {
-    if (conf == NULL || conf->data == NULL)
+    if (conf == NULL)
+        return;
+
+    OPENSSL_free(conf->includedir);
+    if (conf->data == NULL)
         return;
 
     /* evil thing to make sure the 'OPENSSL_free()' works as expected */

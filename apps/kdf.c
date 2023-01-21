@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,11 +17,10 @@
 #include <openssl/kdf.h>
 #include <openssl/params.h>
 
-DEFINE_STACK_OF_STRING()
-
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_KDFOPT, OPT_BIN, OPT_KEYLEN, OPT_OUT,
+    OPT_CIPHER, OPT_DIGEST, OPT_MAC,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -31,6 +30,9 @@ const OPTIONS kdf_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"kdfopt", OPT_KDFOPT, 's', "KDF algorithm control parameters in n:v form"},
+    {"cipher", OPT_CIPHER, 's', "Cipher"},
+    {"digest", OPT_DIGEST, 's', "Digest"},
+    {"mac", OPT_MAC, 's', "MAC"},
     {OPT_MORE_STR, 1, '-', "See 'Supported Controls' in the EVP_KDF_ docs\n"},
     {"keylen", OPT_KEYLEN, 's', "The size of the output derived key"},
 
@@ -46,6 +48,25 @@ const OPTIONS kdf_options[] = {
     {NULL}
 };
 
+static char *alloc_kdf_algorithm_name(STACK_OF(OPENSSL_STRING) **optp,
+                                      const char *name, const char *arg)
+{
+    size_t len = strlen(name) + strlen(arg) + 2;
+    char *res;
+
+    if (*optp == NULL)
+        *optp = sk_OPENSSL_STRING_new_null();
+    if (*optp == NULL)
+        return NULL;
+
+    res = app_malloc(len, "algorithm name");
+    BIO_snprintf(res, len, "%s:%s", name, arg);
+    if (sk_OPENSSL_STRING_push(*optp, res))
+        return res;
+    OPENSSL_free(res);
+    return NULL;
+}
+
 int kdf_main(int argc, char **argv)
 {
     int ret = 1, out_bin = 0;
@@ -58,6 +79,7 @@ int kdf_main(int argc, char **argv)
     BIO *out = NULL;
     EVP_KDF *kdf = NULL;
     EVP_KDF_CTX *ctx = NULL;
+    char *digest = NULL, *cipher = NULL, *mac = NULL;
 
     prog = opt_init(argc, argv, kdf_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -85,26 +107,44 @@ opthelp:
             if (opts == NULL || !sk_OPENSSL_STRING_push(opts, opt_arg()))
                 goto opthelp;
             break;
+        case OPT_CIPHER:
+            OPENSSL_free(cipher);
+            cipher = alloc_kdf_algorithm_name(&opts, "cipher", opt_arg());
+            if (cipher == NULL)
+                goto opthelp;
+            break;
+        case OPT_DIGEST:
+            OPENSSL_free(digest);
+            digest = alloc_kdf_algorithm_name(&opts, "digest", opt_arg());
+            if (digest == NULL)
+                goto opthelp;
+            break;
+        case OPT_MAC:
+            OPENSSL_free(mac);
+            mac = alloc_kdf_algorithm_name(&opts, "mac", opt_arg());
+            if (mac == NULL)
+                goto opthelp;
+            break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto err;
             break;
         }
     }
+
+    /* One argument, the KDF name. */
     argc = opt_num_rest();
     argv = opt_rest();
-
-    if (argc != 1) {
-        BIO_printf(bio_err, "Invalid number of extra arguments\n");
+    if (argc != 1)
         goto opthelp;
-    }
 
-    if ((kdf = EVP_KDF_fetch(NULL, argv[0], NULL)) == NULL) {
+    if ((kdf = EVP_KDF_fetch(app_get0_libctx(), argv[0],
+                             app_get0_propq())) == NULL) {
         BIO_printf(bio_err, "Invalid KDF name %s\n", argv[0]);
         goto opthelp;
     }
 
-    ctx = EVP_KDF_new_ctx(kdf);
+    ctx = EVP_KDF_CTX_new(kdf);
     if (ctx == NULL)
         goto err;
 
@@ -116,7 +156,7 @@ opthelp:
         if (params == NULL)
             goto err;
 
-        if (!EVP_KDF_set_ctx_params(ctx, params)) {
+        if (!EVP_KDF_CTX_set_params(ctx, params)) {
             BIO_printf(bio_err, "KDF parameter error\n");
             ERR_print_errors(bio_err);
             ok = 0;
@@ -138,7 +178,7 @@ opthelp:
     if (dkm_bytes == NULL)
         goto err;
 
-    if (!EVP_KDF_derive(ctx, dkm_bytes, dkm_len)) {
+    if (!EVP_KDF_derive(ctx, dkm_bytes, dkm_len, NULL)) {
         BIO_printf(bio_err, "EVP_KDF_derive failed\n");
         goto err;
     }
@@ -161,8 +201,11 @@ err:
     OPENSSL_clear_free(dkm_bytes, dkm_len);
     sk_OPENSSL_STRING_free(opts);
     EVP_KDF_free(kdf);
-    EVP_KDF_free_ctx(ctx);
+    EVP_KDF_CTX_free(ctx);
     BIO_free(out);
     OPENSSL_free(hexout);
+    OPENSSL_free(cipher);
+    OPENSSL_free(digest);
+    OPENSSL_free(mac);
     return ret;
 }

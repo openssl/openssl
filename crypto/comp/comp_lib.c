@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,10 +19,11 @@ COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
 {
     COMP_CTX *ret;
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        COMPerr(COMP_F_COMP_CTX_NEW, ERR_R_MALLOC_FAILURE);
+    if (meth == NULL)
         return NULL;
-    }
+
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
+        return NULL;
     ret->meth = meth;
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         OPENSSL_free(ret);
@@ -38,11 +39,15 @@ const COMP_METHOD *COMP_CTX_get_method(const COMP_CTX *ctx)
 
 int COMP_get_type(const COMP_METHOD *meth)
 {
+    if (meth == NULL)
+        return NID_undef;
     return meth->type;
 }
 
 const char *COMP_get_name(const COMP_METHOD *meth)
 {
+    if (meth == NULL)
+        return NULL;
     return meth->name;
 }
 

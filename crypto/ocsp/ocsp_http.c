@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,54 +9,60 @@
 
 #include <openssl/ocsp.h>
 #include <openssl/http.h>
-#include "../http/http_local.h"
 
 #ifndef OPENSSL_NO_OCSP
 
-int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, const OCSP_REQUEST *req)
+OSSL_HTTP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path,
+                                    const OCSP_REQUEST *req, int buf_size)
 {
-    return OCSP_REQ_CTX_i2d(rctx, "application/ocsp-request",
-                            ASN1_ITEM_rptr(OCSP_REQUEST), (ASN1_VALUE *)req);
-}
+    OSSL_HTTP_REQ_CTX *rctx = OSSL_HTTP_REQ_CTX_new(io, io, buf_size);
 
-OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
-                               int maxline)
-{
-    BIO *req_mem = HTTP_asn1_item2bio(ASN1_ITEM_rptr(OCSP_REQUEST),
-                                      (ASN1_VALUE *)req);
-    OCSP_REQ_CTX *res =
-        HTTP_REQ_CTX_new(io, io, 0 /* no HTTP proxy used */, NULL, NULL, path,
-                         NULL /* headers */, "application/ocsp-request",
-                         req_mem /* may be NULL */,
-                         maxline, 0 /* default max_resp_len */,
-                         0 /* no timeout, blocking indefinite */, NULL,
-                         1 /* expect_asn1 */);
-    BIO_free(req_mem);
-    return res;
-}
+    if (rctx == NULL)
+        return NULL;
+    /*-
+     * by default:
+     * no bio_update_fn (and consequently no arg)
+     * no ssl
+     * no proxy
+     * no timeout (blocking indefinitely)
+     * no expected content type
+     * max_resp_len = 100 KiB
+     */
+    if (!OSSL_HTTP_REQ_CTX_set_request_line(rctx, 1 /* POST */,
+                                            NULL, NULL, path))
+        goto err;
+    /* by default, no extra headers */
+    if (!OSSL_HTTP_REQ_CTX_set_expected(rctx,
+                                        NULL /* content_type */, 1 /* asn1 */,
+                                        0 /* timeout */, 0 /* keep_alive */))
+        goto err;
+    if (req != NULL
+        && !OSSL_HTTP_REQ_CTX_set1_req(rctx, "application/ocsp-request",
+                                       ASN1_ITEM_rptr(OCSP_REQUEST),
+                                       (const ASN1_VALUE *)req))
+        goto err;
+    return rctx;
 
-int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx)
-{
-    *presp = (OCSP_RESPONSE *)
-        OCSP_REQ_CTX_nbio_d2i(rctx, ASN1_ITEM_rptr(OCSP_RESPONSE));
-    return *presp != NULL;
+ err:
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    return NULL;
 }
 
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req)
 {
     OCSP_RESPONSE *resp = NULL;
-    OCSP_REQ_CTX *ctx;
-    int rv;
+    OSSL_HTTP_REQ_CTX *ctx;
+    BIO *mem;
 
-    ctx = OCSP_sendreq_new(b, path, req, -1 /* default max resp line length */);
+    ctx = OCSP_sendreq_new(b, path, req, 0 /* default buf_size */);
     if (ctx == NULL)
         return NULL;
+    mem = OSSL_HTTP_REQ_CTX_exchange(ctx);
+    /* ASN1_item_d2i_bio handles NULL bio gracefully */
+    resp = (OCSP_RESPONSE *)ASN1_item_d2i_bio(ASN1_ITEM_rptr(OCSP_RESPONSE),
+                                              mem, NULL);
 
-    rv = OCSP_sendreq_nbio(&resp, ctx);
-
-    /* this indirectly calls ERR_clear_error(): */
-    OCSP_REQ_CTX_free(ctx);
-
-    return rv == 1 ? resp : NULL;
+    OSSL_HTTP_REQ_CTX_free(ctx);
+    return resp;
 }
 #endif /* !defined(OPENSSL_NO_OCSP) */

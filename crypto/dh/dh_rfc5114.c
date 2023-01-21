@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -32,9 +32,9 @@ DH *DH_get_##x(void) \
 \
     if (dh == NULL) \
         return NULL; \
-    dh->params.p = BN_dup(&_bignum_dh##x##_p); \
-    dh->params.g = BN_dup(&_bignum_dh##x##_g); \
-    dh->params.q = BN_dup(&_bignum_dh##x##_q); \
+    dh->params.p = BN_dup(&ossl_bignum_dh##x##_p); \
+    dh->params.g = BN_dup(&ossl_bignum_dh##x##_g); \
+    dh->params.q = BN_dup(&ossl_bignum_dh##x##_q); \
     if (dh->params.p == NULL || dh->params.q == NULL || dh->params.g == NULL) {\
         DH_free(dh); \
         return NULL; \

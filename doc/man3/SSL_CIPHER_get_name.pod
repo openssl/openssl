@@ -27,7 +27,7 @@ SSL_CIPHER_get_protocol_id
  const char *SSL_CIPHER_standard_name(const SSL_CIPHER *cipher);
  const char *OPENSSL_cipher_name(const char *stdname);
  int SSL_CIPHER_get_bits(const SSL_CIPHER *cipher, int *alg_bits);
- char *SSL_CIPHER_get_version(const SSL_CIPHER *cipher);
+ const char *SSL_CIPHER_get_version(const SSL_CIPHER *cipher);
  char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int size);
  int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);
  int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c);
@@ -157,7 +157,7 @@ Some examples for the output of SSL_CIPHER_description():
 
 SSL_CIPHER_get_name(), SSL_CIPHER_standard_name(), OPENSSL_cipher_name(),
 SSL_CIPHER_get_version() and SSL_CIPHER_description() return the corresponding
-value in a null-terminated string for a specific cipher or "(NONE)"
+value in a NUL-terminated string for a specific cipher or "(NONE)"
 if the cipher is not found.
 
 SSL_CIPHER_get_bits() returns a positive integer representing the number of

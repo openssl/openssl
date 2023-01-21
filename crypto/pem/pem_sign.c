@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -32,11 +32,9 @@ int PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     int i, ret = 0;
     unsigned int m_len;
 
-    m = OPENSSL_malloc(EVP_PKEY_size(pkey));
-    if (m == NULL) {
-        PEMerr(PEM_F_PEM_SIGNFINAL, ERR_R_MALLOC_FAILURE);
+    m = OPENSSL_malloc(EVP_PKEY_get_size(pkey));
+    if (m == NULL)
         goto err;
-    }
 
     if (EVP_SignFinal(ctx, m, &m_len, pkey) <= 0)
         goto err;

@@ -2,6 +2,7 @@
 /.dir-locals.el
 
 # Top level excludes
+/Makefile.in
 /Makefile
 /MINFO
 /TABLE
@@ -22,8 +23,31 @@
 # Auto generated headers
 /crypto/buildinf.h
 /include/crypto/*_conf.h
+/include/openssl/asn1.h
+/include/openssl/asn1t.h
+/include/openssl/bio.h
+/include/openssl/cmp.h
+/include/openssl/cms.h
+/include/openssl/conf.h
 /include/openssl/configuration.h
+/include/openssl/crmf.h
+/include/openssl/crypto.h
+/include/openssl/ct.h
+/include/openssl/err.h
+/include/openssl/ess.h
+/include/openssl/fipskey.h
+/include/openssl/lhash.h
+/include/openssl/ocsp.h
 /include/openssl/opensslv.h
+/include/openssl/pkcs12.h
+/include/openssl/pkcs7.h
+/include/openssl/safestack.h
+/include/openssl/srp.h
+/include/openssl/ssl.h
+/include/openssl/ui.h
+/include/openssl/x509.h
+/include/openssl/x509v3.h
+/include/openssl/x509_vfy.h
 
 # Auto generated doc files
 doc/man1/openssl-*.pod
@@ -32,11 +56,17 @@ doc/man1/openssl-*.pod
 providers/common/der/der_digests_gen.c
 providers/common/der/der_dsa_gen.c
 providers/common/der/der_ec_gen.c
+providers/common/der/der_ecx_gen.c
 providers/common/der/der_rsa_gen.c
+providers/common/der/der_wrap_gen.c
+providers/common/der/der_sm2_gen.c
 providers/common/include/prov/der_dsa.h
 providers/common/include/prov/der_ec.h
+providers/common/include/prov/der_ecx.h
 providers/common/include/prov/der_rsa.h
 providers/common/include/prov/der_digests.h
+providers/common/include/prov/der_wrap.h
+providers/common/include/prov/der_sm2.h
 
 # error code files
 /crypto/err/openssl.txt.old
@@ -70,6 +100,9 @@ providers/common/include/prov/der_digests.h
 /test/confdump
 /test/bio_prefix_text
 /test/evp_extra_test2
+/test/evp_pkey_ctx_new_from_name
+/test/threadstest_fips
+/test/timing_load_creds
 
 # Certain files that get created by tests on the fly
 /test-runs
@@ -93,6 +126,7 @@ providers/common/include/prov/der_digests.h
 /tools/c_rehash
 /tools/c_rehash.pl
 /util/shlib_wrap.sh
+/util/wrap.pl
 /tags
 /TAGS
 *.map
@@ -183,6 +217,7 @@ providers/common/include/prov/der_digests.h
 *.exp
 *.lib
 *.pdb
+*.tds
 *.ilk
 *.def
 *.rc
@@ -198,6 +233,7 @@ cscope.*
 *.d
 *.d.tmp
 pod2htmd.tmp
+MAKE0[0-9][0-9][0-9].@@@
 
 # Windows manifest files
 *.manifest

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,7 +12,7 @@
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 
-/* sm3_functions */
+/* ossl_sm3_functions */
 IMPLEMENT_digest_functions(sm3, SM3_CTX,
                            SM3_CBLOCK, SM3_DIGEST_LENGTH, 0,
-                           sm3_init, sm3_update, sm3_final)
+                           ossl_sm3_init, ossl_sm3_update, ossl_sm3_final)

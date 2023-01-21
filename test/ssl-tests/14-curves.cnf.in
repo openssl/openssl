@@ -12,18 +12,26 @@ use OpenSSL::Test::Utils qw(anydisabled);
 
 our $fips_mode;
 
-my @curves = ("sect163k1", "sect163r2", "sect233k1", "sect233r1",
-              "sect283k1", "sect283r1", "sect409k1", "sect409r1",
-              "sect571k1", "sect571r1", "prime192v1", "secp224r1",
-              "prime256v1", "secp384r1", "secp521r1", "X25519",
+my @curves = ("prime256v1", "secp384r1", "secp521r1", "X25519",
               "X448");
+#Curves *only* suitable for use in TLSv1.3
+my @curves_tls_1_3 = ("brainpoolP256r1tls13", "brainpoolP384r1tls13",
+                      "brainpoolP512r1tls13");
 
-my @curves_non_fips = ("sect163r1", "sect193r1", "sect193r2", "sect239k1",
+#It so happens that all the curves in @curves_tls_1_3 are non-fips curves
+push @curves, @curves_tls_1_3 if !$fips_mode;
+
+my @curves_tls_1_2 = ("sect233k1", "sect233r1",
+              "sect283k1", "sect283r1", "sect409k1", "sect409r1",
+              "sect571k1", "sect571r1", "secp224r1");
+
+my @curves_non_fips = ("sect163k1", "sect163r2", "prime192v1",
+                       "sect163r1", "sect193r1", "sect193r2", "sect239k1",
                        "secp160k1", "secp160r1", "secp160r2", "secp192k1",
                        "secp224k1",  "secp256k1", "brainpoolP256r1",
                        "brainpoolP384r1", "brainpoolP512r1");
 
-push @curves, @curves_non_fips if !$fips_mode;
+push @curves_tls_1_2, @curves_non_fips if !$fips_mode;
 
 our @tests = ();
 
@@ -34,19 +42,108 @@ sub generate_tests() {
             name => "curve-${curve}",
             server => {
                 "Curves" => $curve,
-                # TODO(TLS1.3): Can we get this to work for TLSv1.3?
-                "MaxProtocol" => "TLSv1.2"
+                "CipherString" => 'DEFAULT@SECLEVEL=1',
+                "MaxProtocol" => "TLSv1.3"
             },
             client => {
-                "CipherString" => "ECDHE",
+                "CipherString" => 'ECDHE@SECLEVEL=1',
+                "MaxProtocol" => "TLSv1.3",
+                "Curves" => $curve
+            },
+            test   => {
+                "ExpectedTmpKeyType" => $curve,
+                "ExpectedProtocol" => "TLSv1.3",
+                "ExpectedResult" => "Success"
+            },
+        };
+    }
+    foreach (0..$#curves_tls_1_2) {
+        my $curve = $curves_tls_1_2[$_];
+        push @tests, {
+            name => "curve-${curve}",
+            server => {
+                "Curves" => $curve,
+                "CipherString" => 'DEFAULT@SECLEVEL=1',
+                "MaxProtocol" => "TLSv1.3"
+            },
+            client => {
+                "CipherString" => 'ECDHE@SECLEVEL=1',
                 "MaxProtocol" => "TLSv1.2",
                 "Curves" => $curve
             },
             test   => {
                 "ExpectedTmpKeyType" => $curve,
+                "ExpectedProtocol" => "TLSv1.2",
                 "ExpectedResult" => "Success"
             },
         };
+    }
+    foreach (0..$#curves_tls_1_2) {
+        my $curve = $curves_tls_1_2[$_];
+        push @tests, {
+            name => "curve-${curve}-tls12-in-tls13",
+            server => {
+                "Curves" => "$curve:P-256",
+                "CipherString" => 'DEFAULT@SECLEVEL=1',
+                "MaxProtocol" => "TLSv1.3"
+            },
+            client => {
+                "CipherString" => 'ECDHE@SECLEVEL=1',
+                "MaxProtocol" => "TLSv1.3",
+                "MinProtocol" => "TLSv1.3",
+                "Curves" => "$curve:P-256"
+            },
+            test   => {
+                #This curve is not allowed in a TLSv1.3 key_share. We should
+                #succeed but fallback to P-256
+                "ExpectedTmpKeyType" => "P-256",
+                "ExpectedProtocol" => "TLSv1.3",
+                "ExpectedResult" => "Success"
+            },
+        };
+    }
+    foreach (0..$#curves_tls_1_2) {
+        my $curve = $curves_tls_1_2[$_];
+        push @tests, {
+            name => "curve-${curve}-tls13",
+            server => {
+                "Curves" => $curve,
+                "CipherString" => 'DEFAULT@SECLEVEL=1',
+                "MaxProtocol" => "TLSv1.3"
+            },
+            client => {
+                "CipherString" => 'ECDHE@SECLEVEL=1',
+                "MinProtocol" => "TLSv1.3",
+                "Curves" => $curve
+            },
+            test   => {
+                "ExpectedResult" => "ClientFail"
+            },
+        };
+    }
+    if (!$fips_mode) {
+        foreach (0..$#curves_tls_1_3) {
+            my $curve = $curves_tls_1_3[$_];
+            push @tests, {
+                name => "curve-${curve}-tls13-in-tls12",
+                server => {
+                    "Curves" => $curve,
+                    "CipherString" => 'DEFAULT@SECLEVEL=1',
+                    "MaxProtocol" => "TLSv1.3"
+                },
+                client => {
+                    "CipherString" => 'ECDHE@SECLEVEL=1',
+                    "MaxProtocol" => "TLSv1.2",
+                    "Curves" => $curve
+                },
+                test   => {
+                    #These curves are only suitable for TLSv1.3 so we expect the
+                    #server to fail because it has no shared groups for TLSv1.2
+                    #ECDHE key exchange
+                    "ExpectedResult" => "ServerFail"
+                },
+            };
+        }
     }
 }
 

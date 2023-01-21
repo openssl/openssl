@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* TODO: When ERR_STATE becomes opaque, this musts be removed */
 #define OSSL_FORCE_ERR_STATE
 
 #include <string.h>
@@ -18,7 +17,7 @@ void ERR_new(void)
 {
     ERR_STATE *es;
 
-    es = err_get_state_int();
+    es = ossl_err_get_state_int();
     if (es == NULL)
         return;
 
@@ -31,7 +30,7 @@ void ERR_set_debug(const char *file, int line, const char *func)
 {
     ERR_STATE *es;
 
-    es = err_get_state_int();
+    es = ossl_err_get_state_int();
     if (es == NULL)
         return;
 
@@ -55,7 +54,7 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
     unsigned long flags = 0;
     size_t i;
 
-    es = err_get_state_int();
+    es = ossl_err_get_state_int();
     if (es == NULL)
         return;
     i = es->top;
@@ -92,7 +91,8 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
         }
         if (printed_len < 0)
             printed_len = 0;
-        buf[printed_len] = '\0';
+        if (buf != NULL)
+            buf[printed_len] = '\0';
 
         /*
          * Try to reduce the size, but only if we maximized above.  If that
@@ -103,6 +103,7 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
         if ((rbuf = OPENSSL_realloc(buf, printed_len + 1)) != NULL) {
             buf = rbuf;
             buf_size = printed_len + 1;
+            buf[printed_len] = '\0';
         }
 
         if (buf != NULL)

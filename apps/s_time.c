@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,7 +22,7 @@
 #include <openssl/pem.h>
 #include "s_apps.h"
 #include <openssl/err.h>
-#include <internal/sockets.h>
+#include "internal/sockets.h"
 #if !defined(OPENSSL_SYS_MSDOS)
 # include <unistd.h>
 #endif
@@ -43,7 +43,7 @@ static const char fmt_http_get_cmd[] = "GET %s HTTP/1.0\r\n\r\n";
 static const size_t fmt_http_get_cmd_size = sizeof(fmt_http_get_cmd) - 2;
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_CONNECT, OPT_CIPHER, OPT_CIPHERSUITES, OPT_CERT, OPT_NAMEOPT, OPT_KEY,
     OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
@@ -127,7 +127,7 @@ int s_time_main(int argc, char **argv)
     int maxtime = SECONDS, nConn = 0, perform = 3, ret = 1, i, st_bugs = 0;
     long bytes_read = 0, finishtime = 0;
     OPTION_CHOICE o;
-    int min_version = 0, max_version = 0, ver, buf_len;
+    int min_version = 0, max_version = 0, ver, buf_len, fd;
     size_t buf_size;
 
     meth = TLS_client_method();
@@ -154,8 +154,7 @@ int s_time_main(int argc, char **argv)
             perform = 1;
             break;
         case OPT_VERIFY:
-            if (!opt_int(opt_arg(), &verify_args.depth))
-                goto opthelp;
+            verify_args.depth = opt_int_arg();
             BIO_printf(bio_err, "%s: verify depth is %d\n",
                        prog, verify_args.depth);
             break;
@@ -197,8 +196,7 @@ int s_time_main(int argc, char **argv)
             st_bugs = 1;
             break;
         case OPT_TIME:
-            if (!opt_int(opt_arg(), &maxtime))
-                goto opthelp;
+            maxtime = opt_int_arg();
             break;
         case OPT_WWW:
             www_path = opt_arg();
@@ -234,8 +232,9 @@ int s_time_main(int argc, char **argv)
             break;
         }
     }
-    argc = opt_num_rest();
-    if (argc != 0)
+
+    /* No extra arguments. */
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     if (cipher == NULL)
@@ -244,7 +243,6 @@ int s_time_main(int argc, char **argv)
     if ((ctx = SSL_CTX_new(meth)) == NULL)
         goto end;
 
-    SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
     SSL_CTX_set_quiet_shutdown(ctx, 1);
     if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
         goto end;
@@ -318,7 +316,8 @@ int s_time_main(int argc, char **argv)
          nConn, totalTime, ((double)nConn / totalTime), bytes_read);
     printf
         ("%d connections in %ld real seconds, %ld bytes read per connection\n",
-         nConn, (long)time(NULL) - finishtime + maxtime, bytes_read / nConn);
+         nConn, (long)time(NULL) - finishtime + maxtime,
+         nConn > 0 ? bytes_read / nConn : 0l);
 
     /*
      * Now loop and time connections using the same session id over and over
@@ -343,7 +342,8 @@ int s_time_main(int argc, char **argv)
             continue;
     }
     SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-    BIO_closesocket(SSL_get_fd(scon));
+    if ((fd = SSL_get_fd(scon)) >= 0)
+        BIO_closesocket(fd);
 
     nConn = 0;
     totalTime = 0.0;
@@ -370,7 +370,8 @@ int s_time_main(int argc, char **argv)
                 bytes_read += i;
         }
         SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-        BIO_closesocket(SSL_get_fd(scon));
+        if ((fd = SSL_get_fd(scon)) >= 0)
+            BIO_closesocket(fd);
 
         nConn += 1;
         if (SSL_session_reused(scon)) {
@@ -392,10 +393,13 @@ int s_time_main(int argc, char **argv)
     printf
         ("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n",
          nConn, totalTime, ((double)nConn / totalTime), bytes_read);
-    printf
-        ("%d connections in %ld real seconds, %ld bytes read per connection\n",
-         nConn, (long)time(NULL) - finishtime + maxtime, bytes_read / nConn);
-
+    if (nConn > 0)
+        printf
+            ("%d connections in %ld real seconds, %ld bytes read per connection\n",
+             nConn, (long)time(NULL) - finishtime + maxtime, bytes_read / nConn);
+    else
+        printf("0 connections in %ld real seconds\n",
+               (long)time(NULL) - finishtime + maxtime);
     ret = 0;
 
  end:
@@ -416,12 +420,19 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
     if ((conn = BIO_new(BIO_s_connect())) == NULL)
         return NULL;
 
-    BIO_set_conn_hostname(conn, host);
-    BIO_set_conn_mode(conn, BIO_SOCK_NODELAY);
+    if (BIO_set_conn_hostname(conn, host) <= 0
+            || BIO_set_conn_mode(conn, BIO_SOCK_NODELAY) <= 0) {
+        BIO_free(conn);
+        return NULL;
+    }
 
-    if (scon == NULL)
+    if (scon == NULL) {
         serverCon = SSL_new(ctx);
-    else {
+        if (serverCon == NULL) {
+            BIO_free(conn);
+            return NULL;
+        }
+    } else {
         serverCon = scon;
         SSL_set_connect_state(serverCon);
     }

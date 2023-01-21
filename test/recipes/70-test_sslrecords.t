@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -28,7 +28,6 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLSv1.2 enabled"
     if disabled("tls1_2");
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     \&add_empty_recs_filter,
     cmdstr(app(["openssl"]), display => 1),
@@ -43,14 +42,16 @@ my $fatal_alert = 0;    # set by filters at expected fatal alerts
 my $content_type = TLSProxy::Record::RT_APPLICATION_DATA;
 my $inject_recs_num = 1;
 $proxy->serverflags("-tls1_2");
+$proxy->clientflags("-no_tls1_3");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 20;
+plan tests => 21;
 ok($fatal_alert, "Out of context empty records test");
 
 #Test 2: Injecting in context empty records should succeed
 $proxy->clear();
 $content_type = TLSProxy::Record::RT_HANDSHAKE;
 $proxy->serverflags("-tls1_2");
+$proxy->clientflags("-no_tls1_3");
 $proxy->start();
 ok(TLSProxy::Message->success(), "In context empty records test");
 
@@ -60,6 +61,7 @@ $proxy->clear();
 #We allow 32 consecutive in context empty records
 $inject_recs_num = 33;
 $proxy->serverflags("-tls1_2");
+$proxy->clientflags("-no_tls1_3");
 $proxy->start();
 ok($fatal_alert, "Too many in context empty records test");
 
@@ -70,6 +72,7 @@ $fatal_alert = 0;
 $proxy->clear();
 $proxy->filter(\&add_frag_alert_filter);
 $proxy->serverflags("-tls1_2");
+$proxy->clientflags("-no_tls1_3");
 $proxy->start();
 ok($fatal_alert, "Fragmented alert records test");
 
@@ -84,7 +87,7 @@ use constant {
 };
 
 # The TLSv1.2 in SSLv2 ClientHello need to run at security level 0
-# because in a SSLv2 ClientHello we can't send extentions to indicate
+# because in a SSLv2 ClientHello we can't send extensions to indicate
 # which signature algorithm we want to use, and the default is SHA1.
 
 #Test 5: Inject an SSLv2 style record format for a TLSv1.2 ClientHello
@@ -92,6 +95,7 @@ my $sslv2testtype = TLSV1_2_IN_SSLV2;
 $proxy->clear();
 $proxy->filter(\&add_sslv2_filter);
 $proxy->serverflags("-tls1_2");
+$proxy->clientflags("-no_tls1_3 -legacy_renegotiation");
 $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
 $proxy->start();
 ok(TLSProxy::Message->success(), "TLSv1.2 in SSLv2 ClientHello test");
@@ -102,6 +106,7 @@ ok(TLSProxy::Message->success(), "TLSv1.2 in SSLv2 ClientHello test");
 $sslv2testtype = SSLV2_IN_SSLV2;
 $proxy->clear();
 $proxy->serverflags("-tls1_2");
+$proxy->clientflags("-no_tls1_3");
 $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "SSLv2 in SSLv2 ClientHello test");
@@ -112,6 +117,7 @@ ok(TLSProxy::Message->fail(), "SSLv2 in SSLv2 ClientHello test");
 $sslv2testtype = FRAGMENTED_IN_TLSV1_2;
 $proxy->clear();
 $proxy->serverflags("-tls1_2");
+$proxy->clientflags("-no_tls1_3");
 $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
 $proxy->start();
 ok(TLSProxy::Message->success(), "Fragmented ClientHello in TLSv1.2 test");
@@ -121,6 +127,7 @@ ok(TLSProxy::Message->success(), "Fragmented ClientHello in TLSv1.2 test");
 $sslv2testtype = FRAGMENTED_IN_SSLV2;
 $proxy->clear();
 $proxy->serverflags("-tls1_2");
+$proxy->clientflags("-no_tls1_3");
 $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Fragmented ClientHello in TLSv1.2/SSLv2 test");
@@ -130,6 +137,7 @@ ok(TLSProxy::Message->fail(), "Fragmented ClientHello in TLSv1.2/SSLv2 test");
 $sslv2testtype = ALERT_BEFORE_SSLV2;
 $proxy->clear();
 $proxy->serverflags("-tls1_2");
+$proxy->clientflags("-no_tls1_3");
 $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Alert before SSLv2 ClientHello test");
@@ -140,6 +148,7 @@ ok(TLSProxy::Message->fail(), "Alert before SSLv2 ClientHello test");
 $fatal_alert = 0;
 $proxy->clear();
 $proxy->serverflags("-tls1_2");
+$proxy->clientflags("-no_tls1_3");
 $proxy->filter(\&add_unknown_record_type);
 $proxy->start();
 ok($fatal_alert, "Unrecognised record type in TLS1.2");
@@ -166,7 +175,8 @@ ok($fatal_alert, "Changed record version in TLS1.2");
 
 #TLS1.3 specific tests
 SKIP: {
-    skip "TLSv1.3 disabled", 8 if disabled("tls1_3");
+    skip "TLSv1.3 disabled", 9
+        if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
 
     #Test 13: Sending a different record version in TLS1.3 should fail
     $proxy->clear();
@@ -237,6 +247,22 @@ SKIP: {
     $boundary_test_type = NO_DATA_BETWEEN_KEY_UPDATE;
     $proxy->start();
     ok(TLSProxy::Message->success(), "No data between KeyUpdate");
+
+    SKIP: {
+        skip "EC disabled", 1 if disabled("ec");
+
+        #Test 21: Force an HRR and change the "real" ServerHello to have a protocol
+        #         record version of 0x0301 (TLSv1.0). At this point we have already
+        #         decided that we are doing TLSv1.3 but are still using plaintext
+        #         records. The server should be sending a record version of 0x303
+        #         (TLSv1.2), but the RFC requires us to ignore this field so we
+        #         should tolerate the incorrect version.
+        $proxy->clear();
+        $proxy->filter(\&change_server_hello_version);
+        $proxy->serverflags("-groups P-256"); # Force an HRR
+        $proxy->start();
+        ok(TLSProxy::Message->success(), "Bad ServerHello record version after HRR");
+    }
  }
 
 
@@ -523,6 +549,26 @@ sub change_version
         # ... typically in ServerHelloDone
         @{$records}[-1]->version(TLSProxy::Record::VERS_TLS_1_1);
     }
+}
+
+sub change_server_hello_version
+{
+    my $proxy = shift;
+    my $records = $proxy->record_list;
+
+    # We're only interested in changing the ServerHello after an HRR
+    if ($proxy->flight != 3) {
+        return;
+    }
+
+    # The ServerHello has index 5
+    # 0 - ClientHello
+    # 1 - HRR
+    # 2 - CCS
+    # 3 - ClientHello(2)
+    # 4 - CCS
+    # 5 - ServerHello
+    @{$records}[5]->version(TLSProxy::Record::VERS_TLS_1_0);
 }
 
 sub change_outer_record_type

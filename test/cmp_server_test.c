@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2020
  * Copyright Siemens AG 2015-2020
  *
@@ -9,7 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_testlib.h"
+#include "helpers/cmp_testlib.h"
 
 typedef struct test_fixture {
     const char *test_case_name;
@@ -18,6 +18,8 @@ typedef struct test_fixture {
     OSSL_CMP_MSG *req;
 } CMP_SRV_TEST_FIXTURE;
 
+static OSSL_LIB_CTX *libctx = NULL;
+static OSSL_PROVIDER *default_null_provider = NULL, *provider = NULL;
 static OSSL_CMP_MSG *request = NULL;
 
 static void tear_down(CMP_SRV_TEST_FIXTURE *fixture)
@@ -33,7 +35,7 @@ static CMP_SRV_TEST_FIXTURE *set_up(const char *const test_case_name)
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
         return NULL;
     fixture->test_case_name = test_case_name;
-    if (!TEST_ptr(fixture->srv_ctx = OSSL_CMP_SRV_CTX_new()))
+    if (!TEST_ptr(fixture->srv_ctx = OSSL_CMP_SRV_CTX_new(libctx, NULL)))
         goto err;
     return fixture;
 
@@ -53,7 +55,7 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                             STACK_OF(X509) **chainOut,
                                             STACK_OF(X509) **caPubs)
 {
-    CMPerr(0, dummy_errorCode);
+    ERR_raise(ERR_LIB_CMP, dummy_errorCode);
     return NULL;
 }
 
@@ -67,7 +69,7 @@ static int execute_test_handle_request(CMP_SRV_TEST_FIXTURE *fixture)
     OSSL_CMP_ERRORMSGCONTENT *errorContent;
     int res = 0;
 
-    if (!TEST_ptr(client_ctx = OSSL_CMP_CTX_new())
+    if (!TEST_ptr(client_ctx = OSSL_CMP_CTX_new(libctx, NULL))
             || !TEST_true(OSSL_CMP_CTX_set_transfer_cb_arg(client_ctx, ctx)))
         goto end;
 
@@ -92,11 +94,11 @@ static int execute_test_handle_request(CMP_SRV_TEST_FIXTURE *fixture)
         goto end;
 
     if (!TEST_ptr(rsp = OSSL_CMP_CTX_server_perform(client_ctx, fixture->req))
-            || !TEST_int_eq(ossl_cmp_msg_get_bodytype(rsp),
+            || !TEST_int_eq(OSSL_CMP_MSG_get_bodytype(rsp),
                             OSSL_CMP_PKIBODY_ERROR)
             || !TEST_ptr(errorContent = rsp->body->value.error)
             || !TEST_int_eq(ASN1_INTEGER_get(errorContent->errorCode),
-                            dummy_errorCode))
+                            ERR_PACK(ERR_LIB_CMP, 0, dummy_errorCode)))
         goto end;
 
     res = 1;
@@ -119,8 +121,15 @@ static int test_handle_request(void)
 void cleanup_tests(void)
 {
     OSSL_CMP_MSG_free(request);
+    OSSL_PROVIDER_unload(default_null_provider);
+    OSSL_PROVIDER_unload(provider);
+    OSSL_LIB_CTX_free(libctx);
     return;
 }
+
+#define USAGE \
+    "CR_protected_PBM_1234.der module_name [module_conf_file]\n"
+OPT_TEST_DECLARE_USAGE(USAGE)
 
 int setup_tests(void)
 {
@@ -132,11 +141,14 @@ int setup_tests(void)
     }
 
     if (!TEST_ptr(request_f = test_get_argument(0))) {
-        TEST_error("usage: cmp_server_test CR_protected_PBM_1234.der\n");
+        TEST_error("usage: cmp_server_test %s", USAGE);
         return 0;
     }
 
-    if (!TEST_ptr(request = load_pkimsg(request_f))) {
+    if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 1, USAGE))
+        return 0;
+
+    if (!TEST_ptr(request = load_pkimsg(request_f, libctx))) {
         cleanup_tests();
         return 0;
     }

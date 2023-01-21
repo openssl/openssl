@@ -274,8 +274,16 @@ id-smime-ct 8		: id-smime-ct-DVCSResponseData
 id-smime-ct 9		: id-smime-ct-compressedData
 id-smime-ct 19		: id-smime-ct-contentCollection
 id-smime-ct 23		: id-smime-ct-authEnvelopedData
+id-smime-ct 24		: id-ct-routeOriginAuthz
+id-smime-ct 26		: id-ct-rpkiManifest
 id-smime-ct 27		: id-ct-asciiTextWithCRLF
 id-smime-ct 28		: id-ct-xml
+id-smime-ct 35		: id-ct-rpkiGhostbusters
+id-smime-ct 36		: id-ct-resourceTaggedAttest
+id-smime-ct 47		: id-ct-geofeedCSVwithCRLF
+id-smime-ct 48		: id-ct-signedChecklist
+id-smime-ct 49		: id-ct-ASPA
+id-smime-ct 50		: id-ct-signedTAL
 
 # S/MIME Attributes
 id-smime-aa 1		: id-smime-aa-receiptRequest
@@ -309,7 +317,10 @@ id-smime-aa 26		: id-smime-aa-ets-certCRLTimestamp
 id-smime-aa 27		: id-smime-aa-ets-archiveTimeStamp
 id-smime-aa 28		: id-smime-aa-signatureType
 id-smime-aa 29		: id-smime-aa-dvcs-dvc
+id-smime-aa 44		: id-aa-ets-attrCertificateRefs
+id-smime-aa 45		: id-aa-ets-attrRevocationRefs
 id-smime-aa 47		: id-smime-aa-signingCertificateV2
+id-smime-aa 48		: id-aa-ets-archiveTimestampV2
 
 # S/MIME Algorithm Identifiers
 # obsolete
@@ -351,6 +362,8 @@ certTypes 2		:			: sdsiCertificate
 !Alias crlTypes pkcs9 23
 crlTypes 1		:			: x509Crl
 
+pkcs9 52		: id-aa-CMSAlgorithmProtection
+
 !Alias pkcs12 pkcs 12
 !Alias pkcs12-pbeids pkcs12 1
 
@@ -389,6 +402,9 @@ sm-scheme 401           : SM3                   : sm3
 sm-scheme 504           : RSA-SM3		: sm3WithRSAEncryption
 
 sm-scheme 501           : SM2-SM3               : SM2-with-SM3
+
+# From GM/T 0091-2020
+sm3 3 1			:			: hmacWithSM3
 
 # From RFC4231
 rsadsi 2 8		:			: hmacWithSHA224
@@ -465,6 +481,7 @@ id-pkix 8		: id-on
 id-pkix 9		: id-pda
 id-pkix 10		: id-aca
 id-pkix 11		: id-qcs
+id-pkix 14		: id-cp
 id-pkix 12		: id-cct
 id-pkix 21		: id-ppl
 id-pkix 48		: id-ad
@@ -486,6 +503,9 @@ id-pkix-mod 13		: id-mod-timestamp-protocol
 id-pkix-mod 14		: id-mod-ocsp
 id-pkix-mod 15		: id-mod-dvcs
 id-pkix-mod 16		: id-mod-cmp2000
+id-pkix-mod 50		: id-mod-cmp2000-02
+id-pkix-mod 99		: id-mod-cmp2021-88
+id-pkix-mod 100		: id-mod-cmp2021-02
 
 # PKIX Private Extensions
 !Cname info-access
@@ -503,12 +523,15 @@ id-pe 10		: ac-proxying
 id-pe 11		: subjectInfoAccess	: Subject Information Access
 id-pe 14		: proxyCertInfo		: Proxy Certificate Information
 id-pe 24		: tlsfeature		: TLS Feature
+id-pe 28		: sbgp-ipAddrBlockv2
+id-pe 29		: sbgp-autonomousSysNumv2
 
 # PKIX policyQualifiers for Internet policy qualifiers
 id-qt 1			: id-qt-cps		: Policy Qualifier CPS
 id-qt 2			: id-qt-unotice		: Policy Qualifier User Notice
 id-qt 3			: textNotice
 
+# https://www.iana.org/assignments/smi-numbers/smi-numbers.xhtml#smi-numbers-1.3.6.1.5.5.7.3
 # PKIX key purpose identifiers
 !Cname server-auth
 id-kp 1			: serverAuth		: TLS Web Server Authentication
@@ -541,7 +564,12 @@ id-kp 25                : sendOwner             : Send Owner
 id-kp 26                : sendProxiedOwner      : Send Proxied Owner
 id-kp 27                : cmcCA                 : CMC Certificate Authority
 id-kp 28                : cmcRA                 : CMC Registration Authority
+id-kp 29                : cmcArchive            : CMC Archive Server
+id-kp 30                : id-kp-bgpsec-router 	: BGPsec Router
+id-kp 31                : id-kp-BrandIndicatorforMessageIdentification : Brand Indicator for Message Identification
+id-kp 32                : cmKGA                 : Certificate Management Key Generation Authority
 
+# https://www.iana.org/assignments/smi-numbers/smi-numbers.xhtml#smi-numbers-1.3.6.1.5.5.7.4
 # CMP information types
 id-it 1			: id-it-caProtEncCert
 id-it 2			: id-it-signKeyPairTypes
@@ -550,9 +578,9 @@ id-it 4			: id-it-preferredSymmAlg
 id-it 5			: id-it-caKeyUpdateInfo
 id-it 6			: id-it-currentCRL
 id-it 7			: id-it-unsupportedOIDs
-# obsolete
+# [Reserved and Obsolete]:
 id-it 8			: id-it-subscriptionRequest
-# obsolete
+# [Reserved and Obsolete]:
 id-it 9			: id-it-subscriptionResponse
 id-it 10		: id-it-keyPairParamReq
 id-it 11		: id-it-keyPairParamRep
@@ -561,6 +589,13 @@ id-it 13		: id-it-implicitConfirm
 id-it 14		: id-it-confirmWaitTime
 id-it 15		: id-it-origPKIMessage
 id-it 16		: id-it-suppLangTags
+id-it 17		: id-it-caCerts
+id-it 18		: id-it-rootCaKeyUpdate
+id-it 19		: id-it-certReqTemplate
+id-it 20		: id-it-rootCaCert
+id-it 21		: id-it-certProfile
+id-it 22		: id-it-crlStatusList
+id-it 23		: id-it-crls
 
 # CRMF registration
 id-pkip 1		: id-regCtrl
@@ -573,6 +608,12 @@ id-regCtrl 3		: id-regCtrl-pkiPublicationInfo
 id-regCtrl 4		: id-regCtrl-pkiArchiveOptions
 id-regCtrl 5		: id-regCtrl-oldCertID
 id-regCtrl 6		: id-regCtrl-protocolEncrKey
+id-regCtrl 7		: id-regCtrl-altCertTemplate
+# id-regCtrl 8		: id-regCtrl-wtlsTemplate	[Reserved and Obsolete]
+# id-regCtrl 9		: id-regCtrl-regTokenUTF8	[Reserved and Obsolete]
+# id-regCtrl 10		: id-regCtrl-authenticatorUTF8	[Reserved and Obsolete]
+id-regCtrl 11		: id-regCtrl-algId
+id-regCtrl 12		: id-regCtrl-rsaKeyLen
 
 # CRMF registration information
 id-regInfo 1		: id-regInfo-utf8Pairs
@@ -633,6 +674,10 @@ id-aca 6		: id-aca-encAttrs
 # qualified certificate statements
 id-qcs 1		: id-qcs-pkixQCSyntax-v1
 
+# PKIX Certificate Policies
+id-cp 2			: ipAddr-asNumber
+id-cp 3			: ipAddr-asNumberv2
+
 # CMC content types
 id-cct 1		: id-cct-crs
 id-cct 2		: id-cct-PKIData
@@ -653,7 +698,9 @@ id-ad 3			: ad_timestamping	: AD Time Stamping
 !Cname ad-dvcs
 id-ad 4			: AD_DVCS		: ad dvcs
 id-ad 5			: caRepository		: CA Repository
-
+id-ad 10		: rpkiManifest		: RPKI Manifest
+id-ad 11		: signedObject		: Signed Object
+id-ad 13		: rpkiNotify		: RPKI Notify
 
 !Alias id-pkix-OCSP ad-OCSP
 !module id-pkix-OCSP
@@ -1026,6 +1073,27 @@ holdInstruction 3	: holdInstructionReject	: Hold Instruction Reject
 
 # OID's from ITU-T.  Most of this is defined in RFC 1274.  A couple of
 # them are also mentioned in RFC 2247
+# OIDs specific to Electronic Signature Standard/CAdES are as specified in
+# ETSI EN 319 122-1 V1.2.1 (2021-10):
+# Electronic Signatures and Infrastructures (ESI); CAdES digital signatures; 
+# Part 1: Building blocks and CAdES baseline signatures
+itu-t 4			: itu-t-identified-organization
+itu-t-identified-organization 0: etsi
+etsi 1733		: electronic-signature-standard
+electronic-signature-standard 2: ess-attributes
+ess-attributes 1	: id-aa-ets-mimeType
+ess-attributes 2	: id-aa-ets-longTermValidation
+ess-attributes 3	: id-aa-ets-SignaturePolicyDocument
+ess-attributes 4	: id-aa-ets-archiveTimestampV3
+ess-attributes 5	: id-aa-ATSHashIndex
+etsi 19122		: cades
+cades 1			: cades-attributes
+cades-attributes 1	: id-aa-ets-signerAttrV2
+cades-attributes 3	: id-aa-ets-sigPolicyStore
+cades-attributes 4	: id-aa-ATSHashIndex-v2
+cades-attributes 5	: id-aa-ATSHashIndex-v3
+cades-attributes 6	: signedAssertion
+
 itu-t 9			: data
 data 2342		: pss
 pss 19200300		: ucl
@@ -1397,8 +1465,16 @@ id-tc26-gost-28147-constants 1	: id-tc26-gost-28147-param-Z : GOST 28147-89 TC26
 member-body 643 3 131 1 1	: INN	: INN
 member-body 643 100 1		: OGRN	: OGRN
 member-body 643 100 3		: SNILS	: SNILS
+member-body 643 100 5		: OGRNIP	: OGRNIP
 member-body 643 100 111	: subjectSignTool	: Signing Tool of Subject
 member-body 643 100 112	: issuerSignTool	: Signing Tool of Issuer
+member-body 643 100 113  : classSignTool   : Class of Signing Tool
+member-body 643 100 113 1 : classSignToolKC1 : Class of Signing Tool KC1
+member-body 643 100 113 2 : classSignToolKC2 : Class of Signing Tool KC2
+member-body 643 100 113 3 : classSignToolKC3 : Class of Signing Tool KC3
+member-body 643 100 113 4 : classSignToolKB1 : Class of Signing Tool KB1
+member-body 643 100 113 5 : classSignToolKB2 : Class of Signing Tool KB2
+member-body 643 100 113 6 : classSignToolKA1 : Class of Signing Tool KA1
 
 #GOST R34.13-2015 Grasshopper "Kuznechik"
 			: kuznyechik-ecb
@@ -1533,6 +1609,9 @@ sm-scheme 104 4         : SM4-CFB             : sm4-cfb
 sm-scheme 104 5         : SM4-CFB1            : sm4-cfb1
 sm-scheme 104 6         : SM4-CFB8            : sm4-cfb8
 sm-scheme 104 7         : SM4-CTR             : sm4-ctr
+sm-scheme 104 8         : SM4-GCM             : sm4-gcm
+sm-scheme 104 9         : SM4-CCM             : sm4-ccm
+sm-scheme 104 10        : SM4-XTS             : sm4-xts
 
 # There is no OID that just denotes "HMAC" oddly enough...
 
@@ -1565,12 +1644,18 @@ ISO-US 10046 2 1	: dhpublicnumber		: X9.42 DH
 1 3 36 3 3 2 8 1 1 5 : brainpoolP224r1
 1 3 36 3 3 2 8 1 1 6 : brainpoolP224t1
 1 3 36 3 3 2 8 1 1 7 : brainpoolP256r1
+# Alternate NID to represent the TLSv1.3 brainpoolP256r1 group
+                     : brainpoolP256r1tls13
 1 3 36 3 3 2 8 1 1 8 : brainpoolP256t1
 1 3 36 3 3 2 8 1 1 9 : brainpoolP320r1
 1 3 36 3 3 2 8 1 1 10 : brainpoolP320t1
 1 3 36 3 3 2 8 1 1 11 : brainpoolP384r1
+# Alternate NID to represent the TLSv1.3 brainpoolP384r1 group
+                      : brainpoolP384r1tls13
 1 3 36 3 3 2 8 1 1 12 : brainpoolP384t1
 1 3 36 3 3 2 8 1 1 13 : brainpoolP512r1
+# Alternate NID to represent the TLSv1.3 brainpoolP512r1 group
+                      : brainpoolP512r1tls13
 1 3 36 3 3 2 8 1 1 14 : brainpoolP512t1
 
 # ECDH schemes from RFC5753
@@ -1712,3 +1797,13 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
                             : AES-128-SIV  : aes-128-siv
                             : AES-192-SIV  : aes-192-siv
                             : AES-256-SIV  : aes-256-siv
+
+
+!Cname oracle
+joint-iso-itu-t 16 840 1 113894 : oracle-organization : Oracle organization
+# Jdk trustedKeyUsage attribute
+oracle 746875 1 1 : oracle-jdk-trustedkeyusage : Trusted key usage (Oracle)
+
+# NID for compression
+                            : brotli : Brotli compression
+			    : zstd : Zstandard compression

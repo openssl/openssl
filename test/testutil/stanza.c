@@ -54,7 +54,7 @@ static int read_key(STANZA *s)
         s->curr++;
         if (!TEST_int_gt(BIO_puts(s->key, tmpbuf), 0))
             return 0;
-        if (strncmp(tmpbuf, "-----END", 8) == 0)
+        if (HAS_PREFIX(tmpbuf, "-----END"))
             return 1;
     }
     TEST_error("Can't find key end");

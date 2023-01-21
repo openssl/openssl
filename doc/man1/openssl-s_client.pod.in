@@ -35,7 +35,7 @@ B<openssl> B<s_client>
 [B<-CRL> I<filename>]
 [B<-CRLform> B<DER>|B<PEM>]
 [B<-crl_download>]
-[B<-key> I<filename>]
+[B<-key> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pass> I<arg>]
 [B<-chainCAfile> I<filename>]
@@ -48,6 +48,7 @@ B<openssl> B<s_client>
 [B<-reconnect>]
 [B<-showcerts>]
 [B<-prexit>]
+[B<-no-interactive>]
 [B<-debug>]
 [B<-trace>]
 [B<-nocommands>]
@@ -56,6 +57,8 @@ B<openssl> B<s_client>
 [B<-msg>]
 [B<-timeout>]
 [B<-mtu> I<size>]
+[B<-no_etm>]
+[B<-no_ems>]
 [B<-keymatexport> I<label>]
 [B<-keymatexportlen> I<len>]
 [B<-msgfile> I<filename>]
@@ -80,9 +83,13 @@ B<openssl> B<s_client>
 [B<-read_buf>]
 [B<-ignore_unexpected_eof>]
 [B<-bugs>]
+[B<-no_tx_cert_comp>]
+[B<-no_rx_cert_comp>]
 [B<-comp>]
 [B<-no_comp>]
 [B<-brief>]
+[B<-legacy_server_connect>]
+[B<-no_legacy_server_connect>]
 [B<-allow_no_dhe_kex>]
 [B<-sigalgs> I<sigalglist>]
 [B<-curves> I<curvelist>]
@@ -114,6 +121,8 @@ B<openssl> B<s_client>
 [B<-srp_lateuser>]
 [B<-srp_moregroups>]
 [B<-srp_strength> I<number>]
+[B<-ktls>]
+[B<-tfo>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}
@@ -121,20 +130,9 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_s_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-[B<-ssl_client_engine> I<id>]
+{- $OpenSSL::safe::opt_engine_synopsis -}[B<-ssl_client_engine> I<id>]
 {- $OpenSSL::safe::opt_v_synopsis -}
 [I<host>:I<port>]
-
-=for openssl ifdef engine ssl_client_engine ct noct ctlogfile
-
-=for openssl ifdef ssl3 unix 4 6 use_srtp status trace wdebug nextprotoneg
-
-=for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 dtls mtu dtls1 dtls1_2
-
-=for openssl ifdef sctp_label_bug sctp
-
-=for openssl ifdef srpuser srppass srp_lateuser srp_moregroups srp_strength
 
 =head1 DESCRIPTION
 
@@ -192,14 +190,14 @@ When used with the B<-proxy> flag, the program will attempt to authenticate
 with the specified proxy using basic (base64) authentication.
 NB: Basic authentication is insecure; the credentials are sent to the proxy
 in easily reversible base64 encoding before any TLS/SSL session is established.
-Therefore these credentials are easily recovered by anyone able to sniff/trace
+Therefore, these credentials are easily recovered by anyone able to sniff/trace
 the network. Use with caution.
 
 =item B<-proxy_pass> I<arg>
 
 The proxy password source, used with the B<-proxy_user> flag.
 For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-unix> I<path>
 
@@ -232,9 +230,9 @@ This option cannot be used in conjunction with B<-noservername>.
 
 Suppresses sending of the SNI (Server Name Indication) extension in the
 ClientHello message. Cannot be used in conjunction with the B<-servername> or
-<-dane_tlsa_domain> options.
+B<-dane_tlsa_domain> options.
 
-=item B<-cert> I<certname>
+=item B<-cert> I<filename>
 
 The client certificate to use, if one is requested by the server.
 The default is not to use a certificate.
@@ -243,13 +241,14 @@ The chain for the client certificate may be specified using B<-cert_chain>.
 
 =item B<-certform> B<DER>|B<PEM>|B<P12>
 
-The client certificate file format to use; the default is B<PEM>.
-This option has no effect and is retained for backward compatibility only.
+The client certificate file format to use; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-cert_chain>
 
-A file containing untrusted certificates to use when attempting to build the
+A file or URI of untrusted certificates to use when attempting to build the
 certificate chain related to the certificate specified via the B<-cert> option.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-build_chain>
 
@@ -262,28 +261,28 @@ CRL file to use to check the server's certificate.
 
 =item B<-CRLform> B<DER>|B<PEM>
 
-The CRL file format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The CRL file format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-crl_download>
 
 Download CRL from distribution points in the certificate.
 
-=item B<-key> I<keyfile>
+=item B<-key> I<filename>|I<uri>
 
-The client private key file to use.
+The client private key to use.
 If not specified then the certificate file will be used to read also the key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+The key format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-pass> I<arg>
 
-the private key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass phrase options>.
+the private key and certificate file password source.
+For more information about the format of I<arg>
+see L<openssl-passphrase-options(1)>.
 
 =item B<-verify> I<depth>
 
@@ -425,6 +424,10 @@ attempt is made to access a certain URL. Note: the output produced by this
 option is not always accurate because a connection might never have been
 established.
 
+=item B<-no-interactive>
+
+This flag can be used to run the client in a non-interactive mode.
+
 =item B<-state>
 
 Prints out the SSL session states.
@@ -457,6 +460,14 @@ Enable send/receive timeout on DTLS connections.
 
 Set MTU of the link layer to the specified size.
 
+=item B<-no_etm>
+
+Disable Encrypt-then-MAC negotiation.
+
+=item B<-no_ems>
+
+Disable Extended master secret negotiation.
+
 =item B<-keymatexport> I<label>
 
 Export keying material using the specified label.
@@ -469,8 +480,7 @@ Show all protocol messages with hex dump.
 
 =item B<-trace>
 
-Show verbose trace output of protocol messages. OpenSSL needs to be compiled
-with B<enable-ssl-trace> for this option to work.
+Show verbose trace output of protocol messages.
 
 =item B<-msgfile> I<filename>
 
@@ -478,11 +488,11 @@ File to send output of B<-msg> or B<-trace> to, default standard output.
 
 =item B<-nbio_test>
 
-Tests non-blocking I/O
+Tests nonblocking I/O
 
 =item B<-nbio>
 
-Turns on non-blocking I/O
+Turns on nonblocking I/O
 
 =item B<-crlf>
 
@@ -592,6 +602,14 @@ For more information on shutting down a connection, see L<SSL_shutdown(3)>.
 
 There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
+
+=item B<-no_tx_cert_comp>
+
+Disables support for sending TLSv1.3 compressed certificates.
+
+=item B<-no_rx_cert_comp>
+
+Disables support for receiving TLSv1.3 compressed certificate.
 
 =item B<-comp>
 
@@ -751,23 +769,34 @@ Offer SRTP key management, where B<value> is a colon-separated profile list.
 
 =item B<-srpuser> I<value>
 
-Set the SRP username to the specified value.
+Set the SRP username to the specified value. This option is deprecated.
 
 =item B<-srppass> I<value>
 
-Set the SRP password to the specified value.
+Set the SRP password to the specified value. This option is deprecated.
 
 =item B<-srp_lateuser>
 
-SRP username for the second ClientHello message.
+SRP username for the second ClientHello message. This option is deprecated.
 
-=item B<-srp_moregroups>
+=item B<-srp_moregroups>  This option is deprecated.
 
 Tolerate other than the known B<g> and B<N> values.
 
 =item B<-srp_strength> I<number>
 
-Set the minimal acceptable length, in bits, for B<N>.
+Set the minimal acceptable length, in bits, for B<N>.  This option is
+deprecated.
+
+=item B<-ktls>
+
+Enable Kernel TLS for sending and receiving.
+This option was introduced in OpenSSL 3.2.0.
+Kernel TLS is off by default as of OpenSSL 3.2.0.
+
+=item B<-tfo>
+
+Enable creation of connections via TCP fast open (RFC7413).
 
 {- $OpenSSL::safe::opt_version_item -}
 
@@ -785,9 +814,11 @@ Set the minimal acceptable length, in bits, for B<N>.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 =item B<-ssl_client_engine> I<id>
 
 Specify engine to be used for client certificate operations.
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 {- $OpenSSL::safe::opt_v_item -}
 
@@ -854,14 +885,14 @@ is that a web client complains it has no certificates or gives an empty
 list to choose from. This is normally because the server is not sending
 the clients certificate authority in its "acceptable CA list" when it
 requests a certificate. By using this command, the CA list can be viewed
-and checked. However some servers only request client authentication
+and checked. However, some servers only request client authentication
 after a specific URL is requested. To obtain the list in this case it
 is necessary to use the B<-prexit> option and send an HTTP request
 for an appropriate page.
 
 If a certificate is specified on the command line using the B<-cert>
 option it will not be used unless the server specifically requests
-a client certificate. Therefore merely including a client certificate
+a client certificate. Therefore, merely including a client certificate
 on the command line is no guarantee that the certificate works.
 
 If there are problems verifying a server certificate then the
@@ -870,7 +901,7 @@ server.
 
 This command is a test tool and is designed to continue the
 handshake after any certificate verification errors. As a result it will
-accept any certificate chain (trusted or not) sent by the peer. None test
+accept any certificate chain (trusted or not) sent by the peer. Non-test
 applications should B<not> do this as it makes them vulnerable to a MITM
 attack. This behaviour can be changed by with the B<-verify_return_error>
 option: any verify errors are then returned aborting the handshake.
@@ -907,12 +938,15 @@ The B<-name> option was added in OpenSSL 1.1.1.
 
 The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
 
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
+
+The B<-tfo>, B<-no_tx_cert_comp>, and B<-no_rx_cert_comp> options were added
+in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

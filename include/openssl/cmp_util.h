@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -11,6 +11,7 @@
 
 #ifndef OPENSSL_CMP_UTIL_H
 # define OPENSSL_CMP_UTIL_H
+# pragma once
 
 # include <openssl/opensslconf.h>
 # ifndef OPENSSL_NO_CMP
@@ -38,6 +39,8 @@ typedef int OSSL_CMP_severity;
 #  define OSSL_CMP_LOG_NOTICE  5
 #  define OSSL_CMP_LOG_INFO    6
 #  define OSSL_CMP_LOG_DEBUG   7
+#  define OSSL_CMP_LOG_TRACE   8
+#  define OSSL_CMP_LOG_MAX     OSSL_CMP_LOG_TRACE
 typedef int (*OSSL_CMP_log_cb_t)(const char *func, const char *file, int line,
                                  OSSL_CMP_severity level, const char *msg);
 

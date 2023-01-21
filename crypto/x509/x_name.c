@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,9 +15,6 @@
 #include "crypto/x509.h"
 #include "crypto/asn1.h"
 #include "x509_local.h"
-
-DEFINE_STACK_OF(X509_NAME_ENTRY)
-DEFINE_STACK_OF(ASN1_VALUE)
 
 /*
  * Maximum length of X509_NAME: much larger than anything we should
@@ -95,17 +92,20 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
     X509_NAME *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL)
-        goto memerr;
-    if ((ret->entries = sk_X509_NAME_ENTRY_new_null()) == NULL)
-        goto memerr;
-    if ((ret->bytes = BUF_MEM_new()) == NULL)
-        goto memerr;
+        return 0;
+    if ((ret->entries = sk_X509_NAME_ENTRY_new_null()) == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
+    if ((ret->bytes = BUF_MEM_new()) == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_BUF_LIB);
+        goto err;
+    }
     ret->modified = 1;
     *val = (ASN1_VALUE *)ret;
     return 1;
 
- memerr:
-    ASN1err(ASN1_F_X509_NAME_EX_NEW, ERR_R_MALLOC_FAILURE);
+ err:
     if (ret) {
         sk_X509_NAME_ENTRY_free(ret->entries);
         OPENSSL_free(ret);
@@ -189,7 +189,7 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
             entry->set = i;
             if (!sk_X509_NAME_ENTRY_push(nm.x->entries, entry))
                 goto err;
-            sk_X509_NAME_ENTRY_set(entries, j, NULL);
+            (void)sk_X509_NAME_ENTRY_set(entries, j, NULL);
         }
     }
     ret = x509_name_canon(nm.x);
@@ -207,7 +207,7 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
         X509_NAME_free(nm.x);
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
                                          local_sk_X509_NAME_ENTRY_pop_free);
-    ASN1err(ASN1_F_X509_NAME_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+    ERR_raise(ERR_LIB_ASN1, ERR_R_NESTED_ASN1_ERROR);
     return 0;
 }
 
@@ -222,8 +222,8 @@ static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
         if (ret < 0)
             return ret;
         ret = x509_name_canon(a);
-        if (ret < 0)
-            return ret;
+        if (!ret)
+            return -1;
     }
     ret = a->bytes->length;
     if (out != NULL) {
@@ -249,26 +249,28 @@ static int x509_name_encode(X509_NAME *a)
 
     intname.s = sk_STACK_OF_X509_NAME_ENTRY_new_null();
     if (!intname.s)
-        goto memerr;
+        goto cerr;
     for (i = 0; i < sk_X509_NAME_ENTRY_num(a->entries); i++) {
         entry = sk_X509_NAME_ENTRY_value(a->entries, i);
         if (entry->set != set) {
             entries = sk_X509_NAME_ENTRY_new_null();
             if (!entries)
-                goto memerr;
+                goto cerr;
             if (!sk_STACK_OF_X509_NAME_ENTRY_push(intname.s, entries)) {
                 sk_X509_NAME_ENTRY_free(entries);
-                goto memerr;
+                goto cerr;
             }
             set = entry->set;
         }
         if (!sk_X509_NAME_ENTRY_push(entries, entry))
-            goto memerr;
+            goto cerr;
     }
     len = ASN1_item_ex_i2d(&intname.a, NULL,
                            ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
-    if (!BUF_MEM_grow(a->bytes, len))
-        goto memerr;
+    if (!BUF_MEM_grow(a->bytes, len)) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_BUF_LIB);
+        goto err;
+    }
     p = (unsigned char *)a->bytes->data;
     ASN1_item_ex_i2d(&intname.a,
                      &p, ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
@@ -276,10 +278,11 @@ static int x509_name_encode(X509_NAME *a)
                                          local_sk_X509_NAME_ENTRY_free);
     a->modified = 0;
     return len;
- memerr:
+ cerr:
+    ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
+ err:
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
                                          local_sk_X509_NAME_ENTRY_free);
-    ASN1err(ASN1_F_X509_NAME_ENCODE, ERR_R_MALLOC_FAILURE);
     return -1;
 }
 
@@ -301,6 +304,7 @@ static int x509_name_ex_print(BIO *out, const ASN1_VALUE **pval,
  * comparison of Name structures can be rapidly performed by just using
  * memcmp() of the canonical encoding. By omitting the leading SEQUENCE name
  * constraints of type dirName can also be checked with a simple memcmp().
+ * NOTE: For empty X509_NAME (NULL-DN), canon_enclen == 0 && canon_enc == NULL
  */
 
 static int x509_name_canon(X509_NAME *a)
@@ -320,7 +324,7 @@ static int x509_name_canon(X509_NAME *a)
     }
     intname = sk_STACK_OF_X509_NAME_ENTRY_new_null();
     if (intname == NULL) {
-        X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
     for (i = 0; i < sk_X509_NAME_ENTRY_num(a->entries); i++) {
@@ -331,25 +335,25 @@ static int x509_name_canon(X509_NAME *a)
                 goto err;
             if (!sk_STACK_OF_X509_NAME_ENTRY_push(intname, entries)) {
                 sk_X509_NAME_ENTRY_free(entries);
-                X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
                 goto err;
             }
             set = entry->set;
         }
         tmpentry = X509_NAME_ENTRY_new();
         if (tmpentry == NULL) {
-            X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
             goto err;
         }
         tmpentry->object = OBJ_dup(entry->object);
         if (tmpentry->object == NULL) {
-            X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_OBJ_LIB);
             goto err;
         }
         if (!asn1_string_canon(tmpentry->value, entry->value))
             goto err;
         if (!sk_X509_NAME_ENTRY_push(entries, tmpentry)) {
-            X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             goto err;
         }
         tmpentry = NULL;
@@ -362,10 +366,8 @@ static int x509_name_canon(X509_NAME *a)
     a->canon_enclen = len;
 
     p = OPENSSL_malloc(a->canon_enclen);
-    if (p == NULL) {
-        X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
+    if (p == NULL)
         goto err;
-    }
 
     a->canon_enc = p;
 
@@ -501,9 +503,7 @@ int X509_NAME_set(X509_NAME **xn, const X509_NAME *name)
 int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
 {
     char *s, *c, *b;
-    int l, i;
-
-    l = 80 - 2 - obase;
+    int i;
 
     b = X509_NAME_oneline(name, NULL, 0);
     if (b == NULL)
@@ -529,18 +529,16 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
                 if (BIO_write(bp, ", ", 2) != 2)
                     goto err;
             }
-            l--;
         }
         if (*s == '\0')
             break;
         s++;
-        l--;
     }
 
     OPENSSL_free(b);
     return 1;
  err:
-    X509err(X509_F_X509_NAME_PRINT, ERR_R_BUF_LIB);
+    ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
     OPENSSL_free(b);
     return 0;
 }

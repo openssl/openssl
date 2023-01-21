@@ -35,7 +35,7 @@ message then the amplification attack has succeeded.
 If DTLS is used over UDP (or any datagram based protocol that does not validate
 the source IP) then it is susceptible to this type of attack. TLSv1.3 is
 designed to operate over a stream-based transport protocol (such as TCP).
-If TCP is being used then there is no need to use SSL_stateless(). However some
+If TCP is being used then there is no need to use SSL_stateless(). However, some
 stream-based transport protocols (e.g. QUIC) may not validate the source
 address. In this case a TLSv1.3 application would be susceptible to this attack.
 
@@ -63,6 +63,23 @@ BIO is unable to obtain the B<BIO_ADDR> of the peer (for example because the BIO
 does not support this), then B<*peer> will be cleared and the family set to
 AF_UNSPEC. Typically user code is expected to "connect" the underlying socket to
 the peer and continue the handshake in a connected state.
+
+Warning: It is essential that the calling code connects the underlying socket to
+the peer after making use of DTLSv1_listen(). In the typical case where
+L<BIO_s_datagram(3)> is used, the peer address is updated when receiving a
+datagram on an unconnected socket. If the socket is not connected, it can
+receive datagrams from any host on the network, which will cause subsequent
+outgoing datagrams transmitted by DTLS to be transmitted to that host. In other
+words, failing to call BIO_connect() or a similar OS-specific function on a
+socket means that any host on the network can cause outgoing DTLS traffic to be
+redirected to it by sending a datagram to the socket in question. This does not
+break the cryptographic protections of DTLS but may facilitate a
+denial-of-service attack or allow unencrypted information in the DTLS handshake
+to be learned by an attacker. This is due to the historical design of
+L<BIO_s_datagram(3)>; see L<BIO_s_datagram(3)> for details on this issue.
+
+Once a socket has been connected, L<BIO_ctrl_set_connected(3)> should be used to
+inform the BIO that the socket is to be used in connected mode.
 
 Prior to calling DTLSv1_listen() user code must ensure that cookie generation
 and verification callbacks have been set up using
@@ -98,7 +115,7 @@ will be set up ready to continue the handshake.  the B<peer> value will also be
 filled in.
 
 A return value of 0 indicates a non-fatal error. This could (for
-example) be because of non-blocking IO, or some invalid message having been
+example) be because of nonblocking IO, or some invalid message having been
 received from a peer. Errors may be placed on the OpenSSL error queue with
 further information if appropriate. Typically user code is expected to retry the
 call to DTLSv1_listen() in the event of a non-fatal error.
@@ -126,7 +143,7 @@ The type of "peer" also changed in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

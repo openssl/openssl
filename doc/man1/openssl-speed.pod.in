@@ -9,6 +9,7 @@ openssl-speed - test library performance
 
 B<openssl speed>
 [B<-help>]
+[B<-config> I<filename>]
 [B<-elapsed>]
 [B<-evp> I<algo>]
 [B<-hmac> I<algo>]
@@ -23,19 +24,14 @@ B<openssl speed>
 [B<-seconds> I<num>]
 [B<-bytes> I<num>]
 [B<-mr>]
+[B<-mlock>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<algorithm> ...]
-
-=for openssl ifdef hmac cmac multi async_jobs engine
 
 =head1 DESCRIPTION
 
 This command is used to test the performance of cryptographic algorithms.
-To see the list of supported algorithms, use C<openssl list -digest-commands>
-or C<openssl list -cipher-commands> command. The global CSPRNG is denoted by
-the B<rand> algorithm name.
 
 =head1 OPTIONS
 
@@ -44,6 +40,12 @@ the B<rand> algorithm name.
 =item B<-help>
 
 Print out a usage message.
+
+=item B<-config> I<filename>
+
+Specifies the configuration file to use.
+Optional; for a description of the default value,
+see L<openssl(1)/COMMAND SUMMARY>.
 
 =item B<-elapsed>
 
@@ -57,6 +59,10 @@ Use the specified cipher or message digest algorithm via the EVP interface.
 If I<algo> is an AEAD cipher, then you can pass B<-aead> to benchmark a
 TLS-like sequence. And if I<algo> is a multi-buffer capable cipher, e.g.
 aes-128-cbc-hmac-sha1, then B<-mb> will time multi-buffer operation.
+
+To see the algorithms supported with this option, use
+C<openssl list -digest-algorithms> or C<openssl list -cipher-algorithms>
+command.
 
 =item B<-multi> I<num>
 
@@ -83,6 +89,14 @@ C<openssl speed -cmac aes128>.
 
 Time the decryption instead of encryption. Affects only the EVP testing.
 
+=item B<-mb>
+
+Enable multi-block mode on EVP-named cipher.
+
+=item B<-aead>
+
+Benchmark EVP-named AEAD cipher in TLS-like sequence.
+
 =item B<-primes> I<num>
 
 Generate a I<num>-prime RSA key and use it to run the benchmarks. This option
@@ -95,10 +109,16 @@ Run benchmarks for I<num> seconds.
 =item B<-bytes> I<num>
 
 Run benchmarks on I<num>-byte buffers. Affects ciphers, digests and the CSPRNG.
+The limit on the size of the buffer is INT_MAX - 64 bytes, which for a 32-bit
+int would be 2147483583 bytes.
 
 =item B<-mr>
 
 Produce the summary in a mechanical, machine-readable, format.
+
+=item B<-mlock>
+
+Lock memory into RAM for more deterministic measurements.
 
 {- $OpenSSL::safe::opt_r_item -}
 
@@ -113,9 +133,22 @@ pre-compiled grand selection is tested.
 
 =back
 
+=head1 BUGS
+
+The I<algorithm> can be selected only from a pre-compiled subset of things
+that the C<openssl speed> command knows about. To test any additional digest
+or cipher algorithm supported by OpenSSL use the C<-evp> option.
+
+There is no way to test the speed of any additional public key algorithms
+supported by third party providers with the C<openssl speed> command.
+
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

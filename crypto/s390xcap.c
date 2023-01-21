@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -74,6 +74,9 @@ void OPENSSL_s390x_functions(void);
 
 struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 
+#if defined(__GNUC__) && defined(__linux)
+__attribute__ ((visibility("hidden")))
+#endif
 void OPENSSL_cpuid_setup(void)
 {
     struct OPENSSL_s390xcap_st cap;
@@ -667,6 +670,12 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
                        0ULL},
     };
 
+    /*-
+     * z16 (2022) - z/Architecture POP
+     * Implements MSA and MSA1-9 (same as z15).
+     */
+    static const struct OPENSSL_s390xcap_st z16 = z15;
+
     char *tok_begin, *tok_end, *buff, tok[S390X_STFLE_MAX][LEN + 1];
     int rc, off, i, n;
 
@@ -721,6 +730,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
         else if TOK_CPU(z13)
         else if TOK_CPU(z14)
         else if TOK_CPU(z15)
+        else if TOK_CPU(z16)
 
         /* whitespace(ignored) or invalid tokens */
         else {

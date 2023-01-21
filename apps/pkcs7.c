@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,14 +20,11 @@
 #include <openssl/pkcs7.h>
 #include <openssl/pem.h>
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_CRL)
-
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_NOOUT,
-    OPT_TEXT, OPT_PRINT, OPT_PRINT_CERTS, OPT_ENGINE,
-    OPT_PROV_ENUM
+    OPT_TEXT, OPT_PRINT, OPT_PRINT_CERTS, OPT_QUIET,
+    OPT_ENGINE, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkcs7_options[] = {
@@ -49,6 +46,8 @@ const OPTIONS pkcs7_options[] = {
     {"print", OPT_PRINT, '-', "Print out all fields of the PKCS7 structure"},
     {"print_certs", OPT_PRINT_CERTS, '-',
      "Print_certs  print any certs or crl in the input"},
+    {"quiet", OPT_QUIET, '-',
+     "When used with -print_certs, it produces a cleaner output"},
 
     OPT_PROV_OPTIONS,
     {NULL}
@@ -57,12 +56,13 @@ const OPTIONS pkcs7_options[] = {
 int pkcs7_main(int argc, char **argv)
 {
     ENGINE *e = NULL;
-    PKCS7 *p7 = NULL;
+    PKCS7 *p7 = NULL, *p7i;
     BIO *in = NULL, *out = NULL;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM;
     char *infile = NULL, *outfile = NULL, *prog;
-    int i, print_certs = 0, text = 0, noout = 0, p7_print = 0, ret = 1;
+    int i, print_certs = 0, text = 0, noout = 0, p7_print = 0, quiet = 0, ret = 1;
     OPTION_CHOICE o;
+    OSSL_LIB_CTX *libctx = app_get0_libctx();
 
     prog = opt_init(argc, argv, pkcs7_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -102,6 +102,9 @@ int pkcs7_main(int argc, char **argv)
         case OPT_PRINT_CERTS:
             print_certs = 1;
             break;
+        case OPT_QUIET:
+            quiet = 1;
+            break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
@@ -111,19 +114,27 @@ int pkcs7_main(int argc, char **argv)
             break;
         }
     }
-    argc = opt_num_rest();
-    if (argc != 0)
+
+    /* No extra arguments. */
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     in = bio_open_default(infile, 'r', informat);
     if (in == NULL)
         goto end;
 
-    if (informat == FORMAT_ASN1)
-        p7 = d2i_PKCS7_bio(in, NULL);
-    else
-        p7 = PEM_read_bio_PKCS7(in, NULL, NULL, NULL);
+    p7 = PKCS7_new_ex(libctx, app_get0_propq());
     if (p7 == NULL) {
+        BIO_printf(bio_err, "unable to allocate PKCS7 object\n");
+        ERR_print_errors(bio_err);
+        goto end;
+    }
+
+    if (informat == FORMAT_ASN1)
+        p7i = d2i_PKCS7_bio(in, &p7);
+    else
+        p7i = PEM_read_bio_PKCS7(in, &p7, NULL, NULL);
+    if (p7i == NULL) {
         BIO_printf(bio_err, "unable to load PKCS7 object\n");
         ERR_print_errors(bio_err);
         goto end;
@@ -165,7 +176,7 @@ int pkcs7_main(int argc, char **argv)
                 x = sk_X509_value(certs, i);
                 if (text)
                     X509_print(out, x);
-                else
+                else if (!quiet)
                     dump_cert_text(out, x);
 
                 if (!noout)

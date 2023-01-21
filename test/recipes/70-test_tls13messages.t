@@ -31,8 +31,6 @@ plan skip_all => "$test_name needs TLSv1.3 enabled"
 plan skip_all => "$test_name needs EC enabled"
     if disabled("ec");
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
-
 @handmessages = (
     [TLSProxy::Message::MT_CLIENT_HELLO,
         checkhandshake::ALL_HANDSHAKES],
@@ -205,7 +203,7 @@ my $proxy = TLSProxy::Proxy->new(
 #Test 1: Check we get all the right messages for a default handshake
 (undef, my $session) = tempfile();
 $proxy->serverconnects(2);
-$proxy->clientflags("-sess_out ".$session);
+$proxy->clientflags("-no_rx_cert_comp -sess_out ".$session);
 $proxy->sessionfile($session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 17;
@@ -215,7 +213,7 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
 
 #Test 2: Resumption handshake
 $proxy->clearClient();
-$proxy->clientflags("-sess_in ".$session);
+$proxy->clientflags("-no_rx_cert_comp -sess_in ".$session);
 $proxy->clientstart();
 checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
                (checkhandshake::DEFAULT_EXTENSIONS
@@ -228,7 +226,7 @@ SKIP: {
         if disabled("ct") || disabled("ec") || disabled("ocsp");
     #Test 3: A status_request handshake (client request only)
     $proxy->clear();
-    $proxy->clientflags("-status");
+    $proxy->clientflags("-no_rx_cert_comp -status");
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                    checkhandshake::DEFAULT_EXTENSIONS
@@ -237,7 +235,8 @@ SKIP: {
 
     #Test 4: A status_request handshake (server support only)
     $proxy->clear();
-    $proxy->serverflags("-status_file "
+    $proxy->clientflags("-no_rx_cert_comp");
+    $proxy->serverflags("-no_rx_cert_comp -status_file "
                         .srctop_file("test", "recipes", "ocsp-response.der"));
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
@@ -246,8 +245,8 @@ SKIP: {
 
     #Test 5: A status_request handshake (client and server)
     $proxy->clear();
-    $proxy->clientflags("-status");
-    $proxy->serverflags("-status_file "
+    $proxy->clientflags("-no_rx_cert_comp -status");
+    $proxy->serverflags("-no_rx_cert_comp -status_file "
                         .srctop_file("test", "recipes", "ocsp-response.der"));
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
@@ -258,9 +257,9 @@ SKIP: {
 
     #Test 6: A status_request handshake (client and server) with client auth
     $proxy->clear();
-    $proxy->clientflags("-status -enable_pha -cert "
+    $proxy->clientflags("-no_rx_cert_comp -status -enable_pha -cert "
                         .srctop_file("apps", "server.pem"));
-    $proxy->serverflags("-Verify 5 -status_file "
+    $proxy->serverflags("-no_rx_cert_comp -Verify 5 -status_file "
                         .srctop_file("test", "recipes", "ocsp-response.der"));
     $proxy->start();
     checkhandshake($proxy, checkhandshake::CLIENT_AUTH_HANDSHAKE,
@@ -273,8 +272,8 @@ SKIP: {
 
 #Test 7: A client auth handshake
 $proxy->clear();
-$proxy->clientflags("-enable_pha -cert ".srctop_file("apps", "server.pem"));
-$proxy->serverflags("-Verify 5");
+$proxy->clientflags("-no_rx_cert_comp -enable_pha -cert ".srctop_file("apps", "server.pem"));
+$proxy->serverflags("-no_rx_cert_comp -Verify 5");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::CLIENT_AUTH_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS |
@@ -283,7 +282,7 @@ checkhandshake($proxy, checkhandshake::CLIENT_AUTH_HANDSHAKE,
 
 #Test 8: Server name handshake (no client request)
 $proxy->clear();
-$proxy->clientflags("-noservername");
+$proxy->clientflags("-no_rx_cert_comp -noservername");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
@@ -292,8 +291,8 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
 
 #Test 9: Server name handshake (server support only)
 $proxy->clear();
-$proxy->clientflags("-noservername");
-$proxy->serverflags("-servername testhost");
+$proxy->clientflags("-no_rx_cert_comp -noservername");
+$proxy->serverflags("-no_rx_cert_comp -servername testhost");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
@@ -302,8 +301,8 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
 
 #Test 10: Server name handshake (client and server)
 $proxy->clear();
-$proxy->clientflags("-servername testhost");
-$proxy->serverflags("-servername testhost");
+$proxy->clientflags("-no_rx_cert_comp -servername testhost");
+$proxy->serverflags("-no_rx_cert_comp -servername testhost");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
@@ -312,7 +311,7 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
 
 #Test 11: ALPN handshake (client request only)
 $proxy->clear();
-$proxy->clientflags("-alpn test");
+$proxy->clientflags("-no_rx_cert_comp -alpn test");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
@@ -321,7 +320,8 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
 
 #Test 12: ALPN handshake (server support only)
 $proxy->clear();
-$proxy->serverflags("-alpn test");
+$proxy->clientflags("-no_rx_cert_comp");
+$proxy->serverflags("-no_rx_cert_comp -alpn test");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
@@ -329,8 +329,8 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
 
 #Test 13: ALPN handshake (client and server)
 $proxy->clear();
-$proxy->clientflags("-alpn test");
-$proxy->serverflags("-alpn test");
+$proxy->clientflags("-no_rx_cert_comp -alpn test");
+$proxy->serverflags("-no_rx_cert_comp -alpn test");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
@@ -345,8 +345,8 @@ SKIP: {
     #Test 14: SCT handshake (client request only)
     $proxy->clear();
     #Note: -ct also sends status_request
-    $proxy->clientflags("-ct");
-    $proxy->serverflags("-status_file "
+    $proxy->clientflags("-no_rx_cert_comp -ct");
+    $proxy->serverflags("-no_rx_cert_comp -status_file "
                         .srctop_file("test", "recipes", "ocsp-response.der")
                         ." -serverinfo ".srctop_file("test", "serverinfo2.pem"));
     $proxy->start();
@@ -361,7 +361,8 @@ SKIP: {
 
 #Test 15: HRR Handshake
 $proxy->clear();
-$proxy->serverflags("-curves P-256");
+$proxy->clientflags("-no_rx_cert_comp");
+$proxy->serverflags("-no_rx_cert_comp -curves P-256");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::HRR_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
@@ -370,8 +371,8 @@ checkhandshake($proxy, checkhandshake::HRR_HANDSHAKE,
 
 #Test 16: Resumption handshake with HRR
 $proxy->clear();
-$proxy->clientflags("-sess_in ".$session);
-$proxy->serverflags("-curves P-256");
+$proxy->clientflags("-no_rx_cert_comp -sess_in ".$session);
+$proxy->serverflags("-no_rx_cert_comp -curves P-256");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
                (checkhandshake::DEFAULT_EXTENSIONS
@@ -382,7 +383,7 @@ checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
 
 #Test 17: Acceptable but non preferred key_share
 $proxy->clear();
-$proxy->clientflags("-curves P-256");
+$proxy->clientflags("-no_rx_cert_comp -curves P-256");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS

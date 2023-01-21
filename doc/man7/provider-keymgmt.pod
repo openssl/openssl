@@ -18,21 +18,27 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_keymgmt_new(void *provctx);
  void OSSL_FUNC_keymgmt_free(void *keydata);
 
- void *OSSL_FUNC_keymgmt_gen_init(void *provctx, int selection);
+ /* Generation, a more complex constructor */
+ void *OSSL_FUNC_keymgmt_gen_init(void *provctx, int selection,
+                                  const OSSL_PARAM params[]);
  int OSSL_FUNC_keymgmt_gen_set_template(void *genctx, void *template);
  int OSSL_FUNC_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_keymgmt_gen_settable_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_keymgmt_gen_settable_params(void *genctx,
+                                                         void *provctx);
  void *OSSL_FUNC_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg);
  void OSSL_FUNC_keymgmt_gen_cleanup(void *genctx);
 
+ /* Key loading by object reference, also a constructor */
+ void *OSSL_FUNC_keymgmt_load(const void *reference, size_t *reference_sz);
+
  /* Key object information */
  int OSSL_FUNC_keymgmt_get_params(void *keydata, OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_keymgmt_gettable_params(void);
+ const OSSL_PARAM *OSSL_FUNC_keymgmt_gettable_params(void *provctx);
  int OSSL_FUNC_keymgmt_set_params(void *keydata, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_keymgmt_settable_params(void);
+ const OSSL_PARAM *OSSL_FUNC_keymgmt_settable_params(void *provctx);
 
  /* Key object content checks */
- int OSSL_FUNC_keymgmt_has(void *keydata, int selection);
+ int OSSL_FUNC_keymgmt_has(const void *keydata, int selection);
  int OSSL_FUNC_keymgmt_match(const void *keydata1, const void *keydata2,
                              int selection);
 
@@ -40,17 +46,17 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  const char *OSSL_FUNC_keymgmt_query_operation_name(int operation_id);
 
  /* Key object import and export functions */
- int OSSL_FUNC_keymgmt_import(int selection, void *keydata, const OSSL_PARAM params[]);
+ int OSSL_FUNC_keymgmt_import(void *keydata, int selection, const OSSL_PARAM params[]);
  const OSSL_PARAM *OSSL_FUNC_keymgmt_import_types(int selection);
- int OSSL_FUNC_keymgmt_export(int selection, void *keydata,
+ int OSSL_FUNC_keymgmt_export(void *keydata, int selection,
                               OSSL_CALLBACK *param_cb, void *cbarg);
  const OSSL_PARAM *OSSL_FUNC_keymgmt_export_types(int selection);
 
- /* Key object copy */
- int OSSL_FUNC_keymgmt_copy(void *keydata_to, const void *keydata_from, int selection);
+ /* Key object duplication, a constructor */
+ void *OSSL_FUNC_keymgmt_dup(const void *keydata_from, int selection);
 
  /* Key object validation */
- int OSSL_FUNC_keymgmt_validate(void *keydata, int selection);
+ int OSSL_FUNC_keymgmt_validate(const void *keydata, int selection, int checktype);
 
 =head1 DESCRIPTION
 
@@ -66,14 +72,14 @@ The primary responsibility of the KEYMGMT operation is to hold the
 provider side key data for the OpenSSL library EVP_PKEY structure.
 
 All "functions" mentioned here are passed as function pointers between
-F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays via
-B<OSSL_ALGORITHM> arrays that are returned by the provider's
+F<libcrypto> and the provider in L<OSSL_DISPATCH(3)> arrays via
+L<OSSL_ALGORITHM(3)> arrays that are returned by the provider's
 provider_query_operation() function
 (see L<provider-base(7)/Provider Functions>).
 
 All these "functions" have a corresponding function type definition
-named B<OSSL_{name}_fn>, and a helper function to retrieve the
-function pointer from a B<OSSL_DISPATCH> element named
+named B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the
+function pointer from a L<OSSL_DISPATCH(3)> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" OSSL_FUNC_keymgmt_new() has these:
 
@@ -81,7 +87,7 @@ For example, the "function" OSSL_FUNC_keymgmt_new() has these:
  static ossl_inline OSSL_FUNC_keymgmt_new_fn
      OSSL_FUNC_keymgmt_new(const OSSL_DISPATCH *opf);
 
-B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
+L<OSSL_DISPATCH(3)> arrays are indexed by numbers that are provided as
 macros in L<openssl-core_dispatch.h(7)>, as follows:
 
  OSSL_FUNC_keymgmt_new                  OSSL_FUNC_KEYMGMT_NEW
@@ -93,6 +99,8 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_keymgmt_gen_settable_params  OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS
  OSSL_FUNC_keymgmt_gen                  OSSL_FUNC_KEYMGMT_GEN
  OSSL_FUNC_keymgmt_gen_cleanup          OSSL_FUNC_KEYMGMT_GEN_CLEANUP
+
+ OSSL_FUNC_keymgmt_load                 OSSL_FUNC_KEYMGMT_LOAD
 
  OSSL_FUNC_keymgmt_get_params           OSSL_FUNC_KEYMGMT_GET_PARAMS
  OSSL_FUNC_keymgmt_gettable_params      OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS
@@ -110,7 +118,7 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_keymgmt_export               OSSL_FUNC_KEYMGMT_EXPORT
  OSSL_FUNC_keymgmt_export_types         OSSL_FUNC_KEYMGMT_EXPORT_TYPES
 
- OSSL_FUNC_keymgmt_copy                 OSSL_FUNC_KEYMGMT_COPY
+ OSSL_FUNC_keymgmt_dup                  OSSL_FUNC_KEYMGMT_DUP
 
 =head2 Key Objects
 
@@ -167,7 +175,7 @@ Indicating that all key object parameters should be considered,
 regardless of their more granular classification.
 
 =for comment This should used by EVP functions such as
-EVP_PKEY_copy_parameters() and EVP_PKEY_cmp_parameters()
+EVP_PKEY_copy_parameters() and EVP_PKEY_parameters_eq()
 
 This is a combination of B<OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS> and
 B<OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS>.
@@ -192,12 +200,11 @@ Indicating that everything in a key object should be considered.
 The exact interpretation of those bits or how they combine is left to
 each function where you can specify a selector.
 
-=for comment One might think that a combination of bits means that all
-the selected data subsets must be considered, but then you have to
-consider that when comparing key objects (future function), an
-implementation might opt to not compare the private key if it has
-compared the public key, since a match of one half implies a match of
-the other half.
+It's left to the provider implementation to decide what is reasonable
+to do with regards to received selector bits and how to do it.
+Among others, an implementation of OSSL_FUNC_keymgmt_match() might opt
+to not compare the private half if it has compared the public half,
+since a match of one half implies a match of the other half.
 
 =head2 Constructing and Destructing Functions
 
@@ -209,12 +216,14 @@ OSSL_FUNC_keymgmt_free() should free the passed I<keydata>.
 
 OSSL_FUNC_keymgmt_gen_init(), OSSL_FUNC_keymgmt_gen_set_template(),
 OSSL_FUNC_keymgmt_gen_set_params(), OSSL_FUNC_keymgmt_gen_settable_params(),
-OSSL_FUNC_keymgmt_gen() and OSSL_FUNC_keymgmt_gen_cleanup() work together as a more
-elaborate context based key object constructor.
+OSSL_FUNC_keymgmt_gen() and OSSL_FUNC_keymgmt_gen_cleanup() work together as a
+more elaborate context based key object constructor.
 
 OSSL_FUNC_keymgmt_gen_init() should create the key object generation context
 and initialize it with I<selections>, which will determine what kind
 of contents the key object to be generated should get.
+The I<params>, if not NULL, should be set on the context in a manner similar to
+using OSSL_FUNC_keymgmt_set_params().
 
 OSSL_FUNC_keymgmt_gen_set_template() should add I<template> to the context
 I<genctx>.  The I<template> is assumed to be a key object constructed
@@ -227,7 +236,7 @@ OSSL_FUNC_keymgmt_gen_set_params() should set additional parameters from
 I<params> in the key object generation context I<genctx>.
 
 OSSL_FUNC_keymgmt_gen_settable_params() should return a constant array of
-descriptor B<OSSL_PARAM>, for parameters that OSSL_FUNC_keymgmt_gen_set_params() 
+descriptor L<OSSL_PARAM(3)>, for parameters that OSSL_FUNC_keymgmt_gen_set_params()
 can handle.
 
 OSSL_FUNC_keymgmt_gen() should perform the key object generation itself, and
@@ -238,9 +247,15 @@ progresses.
 OSSL_FUNC_keymgmt_gen_cleanup() should clean up and free the key object
 generation context I<genctx>
 
-At least one of OSSL_FUNC_keymgmt_new() and OSSL_FUNC_keymgmt_gen() are mandatory,
-as well as OSSL_FUNC_keymgmt_free().  Additionally, if OSSL_FUNC_keymgmt_gen() is
-present, OSSL_FUNC_keymgmt_gen_init() and OSSL_FUNC_keymgmt_gen_cleanup() must be
+OSSL_FUNC_keymgmt_load() creates a provider side key object based on a
+I<reference> object with a size of I<reference_sz> bytes, that only the
+provider knows how to interpret, but that may come from other operations.
+Outside the provider, this reference is simply an array of bytes.
+
+At least one of OSSL_FUNC_keymgmt_new(), OSSL_FUNC_keymgmt_gen() and
+OSSL_FUNC_keymgmt_load() are mandatory, as well as OSSL_FUNC_keymgmt_free() and
+OSSL_FUNC_keymgmt_has(). Additionally, if OSSL_FUNC_keymgmt_gen() is present,
+OSSL_FUNC_keymgmt_gen_init() and OSSL_FUNC_keymgmt_gen_cleanup() must be
 present as well.
 
 =head2 Key Object Information Functions
@@ -249,7 +264,7 @@ OSSL_FUNC_keymgmt_get_params() should extract information data associated
 with the given I<keydata>, see L</Common Information Parameters>.
 
 OSSL_FUNC_keymgmt_gettable_params() should return a constant array of
-descriptor B<OSSL_PARAM>, for parameters that OSSL_FUNC_keymgmt_get_params()
+descriptor L<OSSL_PARAM(3)>, for parameters that OSSL_FUNC_keymgmt_get_params()
 can handle.
 
 If OSSL_FUNC_keymgmt_gettable_params() is present, OSSL_FUNC_keymgmt_get_params()
@@ -259,7 +274,7 @@ OSSL_FUNC_keymgmt_set_params() should update information data associated
 with the given I<keydata>, see L</Common Information Parameters>.
 
 OSSL_FUNC_keymgmt_settable_params() should return a constant array of
-descriptor B<OSSL_PARAM>, for parameters that OSSL_FUNC_keymgmt_set_params()
+descriptor L<OSSL_PARAM(3)>, for parameters that OSSL_FUNC_keymgmt_set_params()
 can handle.
 
 If OSSL_FUNC_keymgmt_settable_params() is present, OSSL_FUNC_keymgmt_set_params()
@@ -279,7 +294,10 @@ OSSL_FUNC_keymgmt_has() should check whether the given I<keydata> contains the s
 of data indicated by the I<selector>.  A combination of several
 selector bits must consider all those subsets, not just one.  An
 implementation is, however, free to consider an empty subset of data
-to still be a valid subset.
+to still be a valid subset. For algorithms where some selection is
+not meaningful such as B<OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS> for
+RSA keys the function should just return 1 as the selected subset
+is not really missing in the key.
 
 OSSL_FUNC_keymgmt_validate() should check if the I<keydata> contains valid
 data subsets indicated by I<selection>.  Some combined selections of
@@ -287,34 +305,41 @@ data subsets may cause validation of the combined data.
 For example, the combination of B<OSSL_KEYMGMT_SELECT_PRIVATE_KEY> and
 B<OSSL_KEYMGMT_SELECT_PUBLIC_KEY> (or B<OSSL_KEYMGMT_SELECT_KEYPAIR>
 for short) is expected to check that the pairwise consistency of
-I<keydata> is valid.
+I<keydata> is valid. The I<checktype> parameter controls what type of check is
+performed on the subset of data. Two types of check are defined:
+B<OSSL_KEYMGMT_VALIDATE_FULL_CHECK> and B<OSSL_KEYMGMT_VALIDATE_QUICK_CHECK>.
+The interpretation of how much checking is performed in a full check versus a
+quick check is key type specific. Some providers may have no distinction
+between a full check and a quick check. For algorithms where some selection is
+not meaningful such as B<OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS> for
+RSA keys the function should just return 1 as there is nothing to validate for
+that selection.
 
 OSSL_FUNC_keymgmt_match() should check if the data subset indicated by
 I<selection> in I<keydata1> and I<keydata2> match.  It is assumed that
 the caller has ensured that I<keydata1> and I<keydata2> are both owned
 by the implementation of this function.
 
-=head2 Key Object Import, Export and Copy Functions
+=head2 Key Object Import, Export and Duplication Functions
 
 OSSL_FUNC_keymgmt_import() should import data indicated by I<selection> into
-I<keydata> with values taken from the B<OSSL_PARAM> array I<params>.
+I<keydata> with values taken from the L<OSSL_PARAM(3)> array I<params>.
 
 OSSL_FUNC_keymgmt_export() should extract values indicated by I<selection>
-from I<keydata>, create an B<OSSL_PARAM> array with them and call
+from I<keydata>, create an L<OSSL_PARAM(3)> array with them and call
 I<param_cb> with that array as well as the given I<cbarg>.
 
 OSSL_FUNC_keymgmt_import_types() should return a constant array of descriptor
-B<OSSL_PARAM> for data indicated by I<selection>, for parameters that
+L<OSSL_PARAM(3)> for data indicated by I<selection>, for parameters that
 OSSL_FUNC_keymgmt_import() can handle.
 
 OSSL_FUNC_keymgmt_export_types() should return a constant array of descriptor
-B<OSSL_PARAM> for data indicated by I<selection>, that the
+L<OSSL_PARAM(3)> for data indicated by I<selection>, that the
 OSSL_FUNC_keymgmt_export() callback can expect to receive.
 
-OSSL_FUNC_keymgmt_copy() should copy data subsets indicated by I<selection>
-from I<keydata_from> to I<keydata_to>.  It is assumed that the caller
-has ensured that I<keydata_to> and I<keydata_from> are both owned by
-the implementation of this function.
+OSSL_FUNC_keymgmt_dup() should duplicate data subsets indicated by
+I<selection> or the whole key data I<keydata_from> and create a new
+provider side key object with the data.
 
 =head2 Common Information Parameters
 
@@ -353,8 +378,8 @@ Bits of security is defined in SP800-57.
 
 =head1 RETURN VALUES
 
-OSSL_FUNC_keymgmt_new() should return a valid reference to the newly created provider
-side key object, or NULL on failure.
+OSSL_FUNC_keymgmt_new() and OSSL_FUNC_keymgmt_dup() should return a valid
+reference to the newly created provider side key object, or NULL on failure.
 
 OSSL_FUNC_keymgmt_import(), OSSL_FUNC_keymgmt_export(), OSSL_FUNC_keymgmt_get_params() and
 OSSL_FUNC_keymgmt_set_params() should return 1 for success or 0 on error.
@@ -372,7 +397,7 @@ applies.
 OSSL_FUNC_keymgmt_gettable_params() and OSSL_FUNC_keymgmt_settable_params()
 OSSL_FUNC_keymgmt_import_types(), OSSL_FUNC_keymgmt_export_types()
 should
-always return a constant B<OSSL_PARAM> array.
+always return a constant L<OSSL_PARAM(3)> array.
 
 =head1 SEE ALSO
 
@@ -387,7 +412,7 @@ The KEYMGMT interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

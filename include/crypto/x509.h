@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/refcount.h"
+#ifndef OSSL_CRYPTO_X509_H
+# define OSSL_CRYPTO_X509_H
+# pragma once
+
+# include "internal/refcount.h"
+# include <openssl/asn1.h>
+# include <openssl/x509.h>
+# include <openssl/conf.h>
+# include "crypto/types.h"
 
 /* Internal X509 structures and functions: not for application use */
 
@@ -74,6 +82,8 @@ struct X509_req_st {
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
+    OSSL_LIB_CTX *libctx;
+    char *propq;
 };
 
 struct X509_crl_info_st {
@@ -112,6 +122,9 @@ struct X509_crl_st {
     const X509_CRL_METHOD *meth;
     void *meth_data;
     CRYPTO_RWLOCK *lock;
+
+    OSSL_LIB_CTX *libctx;
+    char *propq;
 };
 
 struct x509_revoked_st {
@@ -189,6 +202,9 @@ struct x509_st {
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
+
+    OSSL_LIB_CTX *libctx;
+    char *propq;
 } /* X509 */ ;
 
 /*
@@ -263,7 +279,7 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     /* signed via bare TA public key, rather than CA certificate */
     int bare_ta_signed;
 
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
 };
 
@@ -292,12 +308,61 @@ struct x509_object_st {
     } data;
 };
 
-int a2i_ipadd(unsigned char *ipout, const char *ipasc);
-int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm);
-int x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags);
+int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
+int ossl_x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm);
+int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags);
+int ossl_x509v3_cache_extensions(X509 *x);
+int ossl_x509_init_sig_info(X509 *x);
 
-void x509_init_sig_info(X509 *x);
+int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
+int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
+                              const char *propq);
+int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
+                              const char *propq);
+int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *type,
+                             void *data, unsigned char *md, unsigned int *len,
+                             OSSL_LIB_CTX *libctx, const char *propq);
+int ossl_x509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags);
+int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, STACK_OF(X509) *certs,
+                            int flags);
 
+STACK_OF(X509_ATTRIBUTE) *ossl_x509at_dup(const STACK_OF(X509_ATTRIBUTE) *x);
 
-int x509_check_issued_int(X509 *issuer, X509 *subject, OPENSSL_CTX *libctx,
-                          const char *propq);
+int ossl_x509_PUBKEY_get0_libctx(OSSL_LIB_CTX **plibctx, const char **ppropq,
+                                 const X509_PUBKEY *key);
+/* Calculate default key identifier according to RFC 5280 section 4.2.1.2 (1) */
+ASN1_OCTET_STRING *ossl_x509_pubkey_hash(X509_PUBKEY *pubkey);
+
+X509_PUBKEY *ossl_d2i_X509_PUBKEY_INTERNAL(const unsigned char **pp,
+                                           long len, OSSL_LIB_CTX *libctx);
+void ossl_X509_PUBKEY_INTERNAL_free(X509_PUBKEY *xpub);
+
+RSA *ossl_d2i_RSA_PSS_PUBKEY(RSA **a, const unsigned char **pp, long length);
+int ossl_i2d_RSA_PSS_PUBKEY(const RSA *a, unsigned char **pp);
+# ifndef OPENSSL_NO_DH
+DH *ossl_d2i_DH_PUBKEY(DH **a, const unsigned char **pp, long length);
+int ossl_i2d_DH_PUBKEY(const DH *a, unsigned char **pp);
+DH *ossl_d2i_DHx_PUBKEY(DH **a, const unsigned char **pp, long length);
+int ossl_i2d_DHx_PUBKEY(const DH *a, unsigned char **pp);
+# endif /* OPENSSL_NO_DH */
+# ifndef OPENSSL_NO_EC
+ECX_KEY *ossl_d2i_ED25519_PUBKEY(ECX_KEY **a,
+                                 const unsigned char **pp, long length);
+int ossl_i2d_ED25519_PUBKEY(const ECX_KEY *a, unsigned char **pp);
+ECX_KEY *ossl_d2i_ED448_PUBKEY(ECX_KEY **a,
+                               const unsigned char **pp, long length);
+int ossl_i2d_ED448_PUBKEY(const ECX_KEY *a, unsigned char **pp);
+ECX_KEY *ossl_d2i_X25519_PUBKEY(ECX_KEY **a,
+                                const unsigned char **pp, long length);
+int ossl_i2d_X25519_PUBKEY(const ECX_KEY *a, unsigned char **pp);
+ECX_KEY *ossl_d2i_X448_PUBKEY(ECX_KEY **a,
+                              const unsigned char **pp, long length);
+int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp);
+# endif /* OPENSSL_NO_EC */
+EVP_PKEY *ossl_d2i_PUBKEY_legacy(EVP_PKEY **a, const unsigned char **pp,
+                                 long length);
+int ossl_x509_check_private_key(const EVP_PKEY *k, const EVP_PKEY *pkey);
+
+int x509v3_add_len_value_uchar(const char *name, const unsigned char *value,
+                               size_t vallen, STACK_OF(CONF_VALUE) **extlist);
+#endif  /* OSSL_CRYPTO_X509_H */

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1998-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1998-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -15,15 +15,17 @@ use strict;
 use warnings;
 use Getopt::Std;
 use File::Basename;
+use File::Spec;
 use IPC::Cmd;
 use POSIX;
+use Config;
 use Carp;
 
 # These control our behavior.
 my $DRYRUN;
 my $VERBOSE;
-my $WAIT = 1;
 my $WHERE = dirname($0);
+my $WAIT = 1;
 
 # Machine type, etc., used to determine the platform
 my $MACHINE;
@@ -32,6 +34,7 @@ my $SYSTEM;
 my $VERSION;
 my $CCVENDOR;
 my $CCVER;
+my $CL_ARCH;
 my $GCC_BITS;
 my $GCC_ARCH;
 
@@ -49,12 +52,15 @@ my @c_compilers = qw(clang gcc cc);
 my @cc_version =
     (
      clang => sub {
+         return undef unless IPC::Cmd::can_run("$CROSS_COMPILE$CC");
          my $v = `$CROSS_COMPILE$CC -v 2>&1`;
-         $v =~ m/(?:(?:^clang|LLVM) version|.*based on LLVM)\s+([0-9]+\.[0-9]+)/;
+         $v =~ m/(?:(?:clang|LLVM) version|.*based on LLVM)\s+([0-9]+\.[0-9]+)/;
          return $1;
      },
      gnu => sub {
-         my $v = `$CROSS_COMPILE$CC -dumpversion 2>/dev/null`;
+         return undef unless IPC::Cmd::can_run("$CROSS_COMPILE$CC");
+         my $nul = File::Spec->devnull();
+         my $v = `$CROSS_COMPILE$CC -dumpversion 2> $nul`;
          # Strip off whatever prefix egcs prepends the number with.
          # Hopefully, this will work for any future prefixes as well.
          $v =~ s/^[a-zA-Z]*\-//;
@@ -66,108 +72,112 @@ my @cc_version =
 my $options = '';
 
 # Pattern matches against "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}"
-my $simple_guess_patterns = [
-    [ 'A\/UX:',               'm68k-apple-aux3' ],
-    [ 'AIX:[3-9]:4:',         '${MACHINE}-ibm-aix' ],
-    [ 'AIX:.*:[5-9]:',        '${MACHINE}-ibm-aix' ],
-    [ 'AIX:',                 '${MACHINE}-ibm-aix3' ],
-    [ 'HI-UX:',               '${MACHINE}-hi-hiux' ],
-    [ 'IRIX:6.',              'mips3-sgi-irix' ],
-    [ 'IRIX64:',              'mips4-sgi-irix64' ],
-    [ 'Linux:[2-9]',          '${MACHINE}-whatever-linux2' ],
-    [ 'Linux:1',              '${MACHINE}-whatever-linux1' ],
-    [ 'GNU',                  'hurd-x86' ],
-    [ 'LynxOS:',              '${MACHINE}-lynx-lynxos' ],
+# The patterns are assumed to be wrapped like this: /^(${pattern})$/
+my $guess_patterns = [
+    [ 'A\/UX:.*',                   'm68k-apple-aux3' ],
+    [ 'AIX:[3-9]:4:.*',             '${MACHINE}-ibm-aix' ],
+    [ 'AIX:.*?:[5-9]:.*',           '${MACHINE}-ibm-aix' ],
+    [ 'AIX:.*',                     '${MACHINE}-ibm-aix3' ],
+    [ 'HI-UX:.*',                   '${MACHINE}-hi-hiux' ],
+    [ 'HP-UX:.*',
+      sub {
+          my $HPUXVER = $RELEASE;
+          $HPUXVER = s/[^.]*.[0B]*//;
+          # HPUX 10 and 11 targets are unified
+          return "${MACHINE}-hp-hpux1x" if $HPUXVER =~ m@1[0-9]@;
+          return "${MACHINE}-hp-hpux";
+      }
+    ],
+    [ 'IRIX:6\..*',                 'mips3-sgi-irix' ],
+    [ 'IRIX64:.*',                  'mips4-sgi-irix64' ],
+    [ 'Linux:[2-9]\..*',            '${MACHINE}-whatever-linux2' ],
+    [ 'Linux:1\..*',                '${MACHINE}-whatever-linux1' ],
+    [ 'GNU.*',                      'hurd-x86' ],
+    [ 'LynxOS:.*',                  '${MACHINE}-lynx-lynxos' ],
     # BSD/OS always says 386
-    [ 'BSD\/OS:4.*',          'i486-whatever-bsdi4' ],
-    [ 'BSD\/386:.*|BSD\/OS:', '${MACHINE}-whatever-bsdi' ],
-    [ 'DragonFly:',           '${MACHINE}-whatever-dragonfly' ],
-    [ 'FreeBSD:',             '${MACHINE}-whatever-freebsd' ],
-    [ 'Haiku:',               '${MACHINE}-whatever-haiku' ],
-    [ 'NetBSD:',              '${MACHINE}-whatever-netbsd' ],
-    [ 'OpenBSD:',             '${MACHINE}-whatever-openbsd' ],
-    [ 'OpenUNIX:',            '${MACHINE}-unknown-OpenUNIX${VERSION}' ],
-    [ 'Paragon.*:',           'i860-intel-osf1' ],
-    [ 'Rhapsody:',            'ppc-apple-rhapsody' ],
-    [ 'SunOS:5.',             '${MACHINE}-whatever-solaris2' ],
-    [ 'SunOS:',               '${MACHINE}-sun-sunos4' ],
-    [ 'UNIX_System_V:4.*:',   '${MACHINE}-whatever-sysv4' ],
-    [ 'VOS:.*:.*:i786',       'i386-stratus-vos' ],
-    [ 'VOS:.*:.*:',           'hppa1.1-stratus-vos' ],
-    [ '.*:4.*:R4.*:m88k',     '${MACHINE}-whatever-sysv4' ],
-    [ 'DYNIX\/ptx:4.*:',      '${MACHINE}-whatever-sysv4' ],
-    [ ':4.0:3.0:3[34]',       'i486-ncr-sysv4' ],
-    [ 'ULTRIX:',              '${MACHINE}-unknown-ultrix' ],
-    [ 'POSIX-BC',             'BS2000-siemens-sysv4' ],
-    [ 'machten:',             '${MACHINE}-tenon-${SYSTEM}' ],
-    [ 'library:',             '${MACHINE}-ncr-sysv4' ],
-    [ 'ConvexOS:.*:11.0:',    '${MACHINE}-v11-${SYSTEM}' ],
-    [ 'MINGW64.*:.*x86_64',   '${MACHINE}-whatever-mingw64' ],
-    [ 'MINGW',                '${MACHINE}-whatever-mingw' ],
-    [ 'CYGWIN',               '${MACHINE}-pc-cygwin' ],
-    [ 'vxworks',              '${MACHINE}-whatever-vxworks' ],
-    [ 'Darwin:.*Power',       'ppc-apple-darwin' ],
-    [ 'Darwin:.*x86_64',      'x86_64-apple-darwin' ],
-    [ 'Darwin:',              'i686-apple-darwin' ],
+    [ 'BSD\/OS:4\..*',              'i486-whatever-bsdi4' ],
+    # Order is important, this has to appear before 'BSD\/386:'
+    [ 'BSD/386:.*?:.*?:.*486.*|BSD/OS:.*?:.*?:.*?:.*486.*',
+      sub {
+          my $BSDVAR = `/sbin/sysctl -n hw.model`;
+          return "i586-whatever-bsdi" if $BSDVAR =~ m@Pentium@;
+          return "i386-whatever-bsdi";
+      }
+    ],
+    [ 'BSD\/386:.*|BSD\/OS:.*',     '${MACHINE}-whatever-bsdi' ],
+    # Order is important, this has to appear before 'FreeBSD:'
+    [ 'FreeBSD:.*?:.*?:.*386.*',
+      sub {
+          my $VERS = $RELEASE;
+          $VERS =~ s/[-(].*//;
+          my $MACH = `sysctl -n hw.model`;
+          $MACH = "i386" if $MACH =~ m@386@;
+          $MACH = "i486" if $MACH =~ m@486@;
+          $MACH = "i686" if $MACH =~ m@Pentium II@;
+          $MACH = "i586" if $MACH =~ m@Pentium@;
+          $MACH = "$MACHINE" if $MACH !~ /i.86/;
+          my $ARCH = 'whatever';
+          $ARCH = "pc" if $MACH =~ m@i[0-9]86@;
+          return "${MACH}-${ARCH}-freebsd${VERS}";
+      }
+    ],
+    [ 'DragonFly:.*',               '${MACHINE}-whatever-dragonfly' ],
+    [ 'FreeBSD:.*',                 '${MACHINE}-whatever-freebsd' ],
+    [ 'Haiku:.*',                   '${MACHINE}-whatever-haiku' ],
+    # Order is important, this has to appear before 'NetBSD:.*'
+    [ 'NetBSD:.*?:.*?:.*386.*',
+      sub {
+          my $hw = `/usr/sbin/sysctl -n hw.model || /sbin/sysctl -n hw.model`;
+          $hw =~  s@.*(.)86-class.*@i${1}86@;
+          return "${hw}-whatever-netbsd";
+      }
+    ],
+    [ 'NetBSD:.*',                  '${MACHINE}-whatever-netbsd' ],
+    [ 'OpenBSD:.*',                 '${MACHINE}-whatever-openbsd' ],
+    [ 'OpenUNIX:.*',                '${MACHINE}-unknown-OpenUNIX${VERSION}' ],
+    [ 'OSF1:.*?:.*?:.*alpha.*',
+      sub {
+          my $OSFMAJOR = $RELEASE;
+          $OSFMAJOR =~ 's/^V([0-9]*)\..*$/\1/';
+          return "${MACHINE}-dec-tru64" if $OSFMAJOR =~ m@[45]@;
+          return "${MACHINE}-dec-osf";
+      }
+    ],
+    [ 'Paragon.*?:.*',              'i860-intel-osf1' ],
+    [ 'Rhapsody:.*',                'ppc-apple-rhapsody' ],
+    [ 'Darwin:.*?:.*?:Power.*',     'ppc-apple-darwin' ],
+    [ 'Darwin:.*',                  '${MACHINE}-apple-darwin' ],
+    [ 'SunOS:5\..*',                '${MACHINE}-whatever-solaris2' ],
+    [ 'SunOS:.*',                   '${MACHINE}-sun-sunos4' ],
+    [ 'UNIX_System_V:4\..*?:.*',    '${MACHINE}-whatever-sysv4' ],
+    [ 'VOS:.*?:.*?:i786',           'i386-stratus-vos' ],
+    [ 'VOS:.*?:.*?:.*',             'hppa1.1-stratus-vos' ],
+    [ '.*?:4.*?:R4.*?:m88k',        '${MACHINE}-whatever-sysv4' ],
+    [ 'DYNIX\/ptx:4.*?:.*',         '${MACHINE}-whatever-sysv4' ],
+    [ '.*?:4\.0:3\.0:3[34]..(,.*)?', 'i486-ncr-sysv4' ],
+    [ 'ULTRIX:.*',                  '${MACHINE}-unknown-ultrix' ],
+    [ 'POSIX-BC.*',                 'BS2000-siemens-sysv4' ],
+    [ 'machten:.*',                 '${MACHINE}-tenon-${SYSTEM}' ],
+    [ 'library:.*',                 '${MACHINE}-ncr-sysv4' ],
+    [ 'ConvexOS:.*?:11\.0:.*',      '${MACHINE}-v11-${SYSTEM}' ],
+    [ 'MINGW64.*?:.*?:.*?:x86_64',  '${MACHINE}-whatever-mingw64' ],
+    [ 'MINGW.*',                    '${MACHINE}-whatever-mingw' ],
+    [ 'CYGWIN.*',                   '${MACHINE}-pc-cygwin' ],
+    [ 'vxworks.*',                  '${MACHINE}-whatever-vxworks' ],
 
-    # Windows values found by looking at Perl 5's win32/win32.c
-    [ 'Windows NT:.*:amd64',  'VC-WIN64A' ],
-    [ 'Windows NT:.*:ia64',   'VC-WIN64I' ],
-    [ 'Windows NT:.*:x86',    'VC-WIN32' ],
+    # The MACHINE part of the array POSIX::uname() returns on VMS isn't
+    # worth the bits wasted on it.  It's better, then, to rely on perl's
+    # %Config, which has a trustworthy item 'archname', especially since
+    # VMS installation aren't multiarch (yet)
+    [ 'OpenVMS:.*',                 "$Config{archname}-whatever-OpenVMS" ],
 
-    # VMS values found by observation on existing machinery.  Unfortunately,
-    # the machine part is a bit...  overdone.  It seems, though, that 'Alpha'
-    # exists in that part, making it distinguishable from Itanium.  It will
-    # be interesting to see what we'll get in the upcoming x86_64 port...
-    [ 'OpenVMS:.*:.*:.*:.*Alpha*', 'vms-alpha' ],
-    [ 'OpenVMS:',             'vms-ia64' ],
+    # Note: there's also NEO and NSR, but they are old and unsupported
+    [ 'NONSTOP_KERNEL:.*:NSE-.*?',  'nse-tandem-nsk${RELEASE}' ],
+    [ 'NONSTOP_KERNEL:.*:NSV-.*?',  'nsv-tandem-nsk${RELEASE}' ],
+    [ 'NONSTOP_KERNEL:.*:NSX-.*?',  'nsx-tandem-nsk${RELEASE}' ],
 
+    [ sub { -d '/usr/apollo' },     'whatever-apollo-whatever' ],
 ];
-
-# More complex cases that require run-time code.
-my $complex_sys_list = [
-    [ 'HP-UX:', sub {
-        my $HPUXVER = $RELEASE;
-        $HPUXVER = s/[^.]*.[0B]*//;
-        # HPUX 10 and 11 targets are unified
-        return "${MACHINE}-hp-hpux1x" if $HPUXVER =~ m@1[0-9]@;
-        return "${MACHINE}-hp-hpux";
-    } ],
-
-    [ 'BSD/386:.*:.*:.*486.*|BSD/OS:.*:.*:.*:.*486', sub {
-        my $BSDVAR = `/sbin/sysctl -n hw.model`;
-        return "i586-whatever-bsdi" if $BSDVAR =~ m@Pentium@;
-        return "i386-whatever-bsdi";
-    } ],
-
-    [ 'FreeBSD:.*:.*:.*386', sub {
-        my $VERS = $RELEASE;
-        $VERS =~ s/[-(].*//;
-        my $MACH = `sysctl -n hw.model`;
-        $MACH = "i386" if $MACH =~ m@386@;
-        $MACH = "i486" if $MACH =~ m@486@;
-        $MACH = "i686" if $MACH =~ m@Pentium II@;
-        $MACH = "i586" if $MACH =~ m@Pentium@;
-        $MACH = "$MACHINE" if $MACH !~ /i.86/;
-        my $ARCH = 'whatever';
-        $ARCH = "pc" if $MACH =~ m@i[0-9]86@;
-        return "${MACH}-${ARCH}-freebsd${VERS}";
-    } ],
-
-    [ 'NetBSD:.*:.*:.*386', sub {
-        my $hw = `/usr/sbin/sysctl -n hw.model || /sbin/sysctl -n hw.model`;
-        $hw =~  s@.*(.)86-class.*@i${1}86@;
-        return "${hw}-whatever-netbsd";
-    } ],
-
-    [ 'OSF1:.*:.*:.*alpha', sub {
-        my $OSFMAJOR = $RELEASE;
-        $OSFMAJOR =~ 's/^V([0-9]*)\..*$/\1/';
-        return "${MACHINE}-dec-tru64" if $OSFMAJOR =~ m@[45]@;
-        return "${MACHINE}-dec-osf";
-    } ],
-];
-
 
 # Run a command, return true if exit zero else false.
 # Multiple args are glued together into a pipeline.
@@ -193,24 +203,23 @@ sub maybe_abort {
     }
 }
 
-# Expand variable references in a string.
-sub expand {
-    my $var = shift;
-    $var =~ s/\$\{MACHINE\}/${MACHINE}/;
-    return $var;
-}
-
 # Look for ISC/SCO with its unique uname program
 sub is_sco_uname {
+    return undef unless IPC::Cmd::can_run('uname');
+
     open UNAME, "uname -X 2>/dev/null|" or return '';
     my $line = "";
+    my $os = "";
     while ( <UNAME> ) {
         chop;
         $line = $_ if m@^Release@;
+        $os = $_ if m@^System@;
     }
     close UNAME;
-    return "" if $line eq '';
-    my @fields = split($line);
+
+    return undef if $line eq '' or $os eq 'System = SunOS';
+
+    my @fields = split(/\s+/, $line);
     return $fields[2];
 }
 
@@ -243,33 +252,25 @@ sub get_sco_type {
 sub guess_system {
     ($SYSTEM, undef, $RELEASE, $VERSION, $MACHINE) = POSIX::uname();
     my $sys = "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}";
-
+    
     # Special-cases for ISC, SCO, Unixware
     my $REL = is_sco_uname();
-    if ( $REL ne "" ) {
+    if ( defined $REL ) {
         my $result = get_sco_type($REL);
-        return expand($result) if $result ne '';
+        return eval "\"$result\"" if $result ne '';
     }
 
     # Now pattern-match
 
     # Simple cases
-    foreach my $tuple ( @$simple_guess_patterns ) {
+    foreach my $tuple ( @$guess_patterns ) {
         my $pat = @$tuple[0];
-        # Trailing $ omitted on purpose.
-        next if $sys !~ /^$pat/;
-        my $result = @$tuple[1];
-        return expand($result);
-    }
+        my $check = ref $pat eq 'CODE' ? $pat->($sys) : $sys =~ /^(${pat})$/;
+        next unless $check;
 
-    # Complex cases.
-    foreach my $tuple ( @$complex_sys_list ) {
-        my $pat = @$tuple[0];
-        # Trailing $ omitted on purpose.
-        next if $sys !~ /^$pat/;
-        my $ref = @$tuple[1];
-        my $result = &$ref;
-        return expand($result);
+        my $result = @$tuple[1];
+        $result = $result->() if ref $result eq 'CODE';
+        return eval "\"$result\"";
     }
 
     # Oh well.
@@ -293,8 +294,8 @@ sub _pairs (@) {
 
 # Figure out CC, GCCVAR, etc.
 sub determine_compiler_settings {
-    # Make a copy and don't touch it.  That helps determine if we're
-    # finding the compiler here
+    # Make a copy and don't touch it.  That helps determine if we're finding
+    # the compiler here (false), or if it was set by the user (true.
     my $cc = $CC;
 
     # Set certain default
@@ -310,51 +311,59 @@ sub determine_compiler_settings {
         }
     }
 
-    # Find the compiler vendor and version number for certain compilers
-    foreach my $pair (_pairs @cc_version) {
-        # Try to get the version number.
-        # Failure gets us undef or an empty string
-        my ( $k, $v ) = @$pair;
-        $v = $v->();
+    if ( $CC ) {
+        # Find the compiler vendor and version number for certain compilers
+        foreach my $pair (_pairs @cc_version) {
+            # Try to get the version number.
+            # Failure gets us undef or an empty string
+            my ( $k, $v ) = @$pair;
+            $v = $v->();
 
-        # If we got a version number, process it
-        if ($v) {
-            $CCVENDOR = $k;
+            # If we got a version number, process it
+            if ($v) {
+                $CCVENDOR = $k;
 
-            # The returned version is expected to be one of
-            #
-            # MAJOR
-            # MAJOR.MINOR
-            # MAJOR.MINOR.{whatever}
-            #
-            # We don't care what comes after MAJOR.MINOR.  All we need is to
-            # have them calculated into a single number, using this formula:
-            #
-            # MAJOR * 100 + MINOR
-            # Here are a few examples of what we should get:
-            #
-            # 2.95.1    => 295
-            # 3.1       => 301
-            # 9         => 900
-            my @numbers = split /\./, $v;
-            my @factors = (100, 1);
-            while (@numbers && @factors) {
-                $CCVER += shift(@numbers) * shift(@factors)
+                # The returned version is expected to be one of
+                #
+                # MAJOR
+                # MAJOR.MINOR
+                # MAJOR.MINOR.{whatever}
+                #
+                # We don't care what comes after MAJOR.MINOR.  All we need is
+                # to have them calculated into a single number, using this
+                # formula:
+                #
+                # MAJOR * 100 + MINOR
+                # Here are a few examples of what we should get:
+                #
+                # 2.95.1    => 295
+                # 3.1       => 301
+                # 9         => 900
+                my @numbers = split /\./, $v;
+                my @factors = (100, 1);
+                while (@numbers && @factors) {
+                    $CCVER += shift(@numbers) * shift(@factors)
+                }
+                last;
             }
-            last;
         }
     }
 
-    # If no C compiler has been determined at this point, we die.  Hard.
-    die <<_____
-ERROR!
-No C compiler found, please specify one with the environment variable CC,
-or configure with an explicit configuration target.
-_____
-        unless $CC;
-
-    # Vendor specific overrides, only if we determined the compiler here
+    # Vendor specific overrides, only if we didn't determine the compiler here
     if ( ! $cc ) {
+        if ( $SYSTEM eq 'OpenVMS' ) {
+            my $v = `CC/VERSION NLA0:`;
+            if ($? == 0) {
+                my ($vendor, $version) =
+                    ( $v =~ m/^([A-Z]+) C V([0-9\.-]+) on / );
+                my ($major, $minor, $patch) =
+                    ( $version =~ m/^([0-9]+)\.([0-9]+)-0*?(0|[1-9][0-9]*)$/ );
+                $CC = 'CC';
+                $CCVENDOR = $vendor;
+                $CCVER = ( $major * 100 + $minor ) * 100 + $patch;
+            }
+        }
+
         if ( ${SYSTEM} eq 'AIX' ) {
             # favor vendor cc over gcc
             if (IPC::Cmd::can_run('cc')) {
@@ -365,32 +374,47 @@ _____
         }
 
         if ( $SYSTEM eq "SunOS" ) {
-            # check for WorkShop C, expected output is "cc: blah-blah C x.x"
+            # check for Oracle Developer Studio, expected output is "cc: blah-blah C x.x blah-blah"
             my $v = `(cc -V 2>&1) 2>/dev/null | egrep -e '^cc: .* C [0-9]\.[0-9]'`;
-            chomp $v;
-            $v =~ s/.* C \([0-9]\)\.\([0-9]\).*/$1.$2/;
-            my @numbers = split /\./, $v;
+            my @numbers = 
+                    ( $v =~ m/^.* C ([0-9]+)\.([0-9]+) .*/ );
             my @factors = (100, 1);
             $v = 0;
             while (@numbers && @factors) {
                 $v += shift(@numbers) * shift(@factors)
             }
 
-            if ( $v > 40000 &&  $MACHINE ne 'i86pc' ) {
+            if ($v > 500) {
                 $CC = 'cc';
-                $CCVENDOR = ''; # Determine later
+                $CCVENDOR = 'sun';
                 $CCVER = $v;
+            }
+        }
 
-                if ( $CCVER == 50000 ) {
-                    print <<'EOF';
-WARNING! Found WorkShop C 5.0.
-         Make sure you have patch #107357-01 or later applied.
-EOF
-                    maybe_abort();
+        # 'Windows NT' is the system name according to POSIX::uname()!
+        if ( $SYSTEM eq "Windows NT" ) {
+            # favor vendor cl over gcc
+            if (IPC::Cmd::can_run('cl')) {
+                $CC = 'cl';
+                $CCVENDOR = ''; # Determine later
+                $CCVER = 0;
+
+                my $v = `cl 2>&1`;
+                if ( $v =~ /Microsoft .* Version ([0-9\.]+) for (x86|x64|ARM|ia64)/ ) {
+                    $CCVER = $1;
+                    $CL_ARCH = $2;
                 }
             }
         }
     }
+
+    # If no C compiler has been determined at this point, we die.  Hard.
+    die <<_____
+ERROR!
+No C compiler found, please specify one with the environment variable CC,
+or configure with an explicit configuration target.
+_____
+        unless $CC;
 
     # On some systems, we assume a cc vendor if it's not already determined
 
@@ -456,7 +480,7 @@ EOF
       [ 'ppc-apple-rhapsody',     { target => "rhapsody-ppc" } ],
       [ 'ppc-apple-darwin.*',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             my $ISA64 = `sysctl -n hw.optional.64bitops 2>/dev/null`;
             if ( $ISA64 == 1 && $KERNEL_BITS eq '' ) {
                 print <<EOF;
@@ -472,12 +496,12 @@ EOF
       ],
       [ 'i.86-apple-darwin.*',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             my $ISA64 = `sysctl -n hw.optional.x86_64 2>/dev/null`;
             if ( $ISA64 == 1 && $KERNEL_BITS eq '' ) {
                 print <<EOF;
 WARNING! To build 64-bit package, do this:
-         KERNEL_BITS=64 $WHERE/Configure \[\[ options \]\]
+         KERNEL_BITS=64 $WHERE/Configure [options...]
 EOF
                 maybe_abort();
             }
@@ -488,17 +512,26 @@ EOF
       ],
       [ 'x86_64-apple-darwin.*',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
+            # macOS >= 10.15 is 64-bit only
+            my $SW_VERS = `sw_vers -productVersion 2>/dev/null`;
+            if ($SW_VERS =~ /^(\d+)\.(\d+)\.(\d+)$/) {
+                if ($1 > 10 || ($1 == 10 && $2 >= 15)) {
+                    die "32-bit applications not supported on macOS 10.15 or later\n" if $KERNEL_BITS eq '32';
+                    return { target => "darwin64-x86_64" };
+                }
+            }
             return { target => "darwin-i386" } if $KERNEL_BITS eq '32';
 
             print <<EOF;
 WARNING! To build 32-bit package, do this:
-         KERNEL_BITS=32 $WHERE/Configure \[\[ options \]\]
+         KERNEL_BITS=32 $WHERE/Configure [options...]
 EOF
             maybe_abort();
             return { target => "darwin64-x86_64" };
         }
       ],
+      [ 'arm64-apple-darwin.*', { target => "darwin64-arm64" } ],
       [ 'armv6\+7-.*-iphoneos',
         { target => "iphoneos-cross",
           cflags => [ qw(-arch armv6 -arch armv7) ],
@@ -535,7 +568,7 @@ EOF
       ],
       [ 'ppc64-.*-linux2',
         sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS};
+            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
             if ( $KERNEL_BITS eq '' ) {
                 print <<EOF;
 WARNING! To build 64-bit package, do this:
@@ -630,7 +663,6 @@ EOF
       ],
       [ 'armv[1-3].*-.*-linux2',  { target => "linux-generic32" } ],
       [ 'armv[7-9].*-.*-linux2',  { target => "linux-armv4",
-                                    defines => [ 'B_ENDIAN' ],
                                     cflags => [ '-march=armv7-a' ],
                                     cxxflags => [ '-march=armv7-a' ] } ],
       [ 'arm.*-.*-linux2',        { target => "linux-armv4" } ],
@@ -676,16 +708,18 @@ EOF
         }
       ],
       [ '.*86-.*-linux1',         { target => "linux-aout" } ],
+      [ 'riscv64-.*-linux.',      { target => "linux64-riscv64" } ],
       [ '.*-.*-linux.',           { target => "linux-generic32" } ],
       [ 'sun4[uv].*-.*-solaris2',
         sub {
             my $KERNEL_BITS = $ENV{KERNEL_BITS};
             my $ISA64 = `isainfo 2>/dev/null | grep sparcv9`;
-            if ( $ISA64 ne "" && $KERNEL_BITS eq '' ) {
+            my $KB = $KERNEL_BITS // '64';
+            if ( $ISA64 ne "" && $KB eq '64' ) {
                 if ( $CCVENDOR eq "sun" && $CCVER >= 500 ) {
                     print <<EOF;
-WARNING! To build 64-bit package, do this:
-         $WHERE/Configure solaris64-sparcv9-cc
+WARNING! To build 32-bit package, do this:
+         $WHERE/Configure solaris-sparcv9-cc
 EOF
                     maybe_abort();
                 } elsif ( $CCVENDOR eq "gnu" && $GCC_ARCH eq "-m64" ) {
@@ -698,7 +732,7 @@ WARNING! To build 32-bit package, do this:
          $WHERE/Configure solaris-sparcv9-gcc
 EOF
                     maybe_abort();
-                    return { target => "solaris64-sparcv9" };
+                    return { target => "solaris64-sparcv9-gcc" };
                 } elsif ( $GCC_ARCH eq "-m32" ) {
                     print <<EOF;
 NOTICE! If you *know* that your GNU C supports 64-bit/V9 ABI and you wish
@@ -708,9 +742,9 @@ EOF
                     maybe_abort();
                 }
             }
-            return { target => "solaris64-sparcv9" }
-                if $ISA64 ne "" && $KERNEL_BITS eq '64';
-            return { target => "solaris-sparcv9" };
+            return { target => "solaris64-sparcv9-cc" }
+                if $ISA64 ne "" && $KB eq '64';
+            return { target => "solaris-sparcv9-cc" };
         }
       ],
       [ 'sun4m-.*-solaris2',      { target => "solaris-sparcv8" } ],
@@ -721,13 +755,16 @@ EOF
             my $KERNEL_BITS = $ENV{KERNEL_BITS};
             my $ISA64 = `isainfo 2>/dev/null | grep amd64`;
             my $KB = $KERNEL_BITS // '64';
-            return { target => "solaris64-x86_64" }
-                if $ISA64 ne "" && $KB eq '64';
+            if ($ISA64 ne "" && $KB eq '64') {
+                return { target => "solaris64-x86_64-gcc" } if $CCVENDOR eq "gnu";
+                return { target => "solaris64-x86_64-cc" };
+            }
             my $REL = uname('-r');
             $REL =~ s/5\.//;
             my @tmp_disable = ();
             push @tmp_disable, 'sse2' if int($REL) < 10;
-            return { target => "solaris-x86",
+            #There is no solaris-x86-cc target
+            return { target => "solaris-x86-gcc",
                      disable => [ @tmp_disable ] };
         }
       ],
@@ -738,12 +775,19 @@ EOF
                                     disable => [ 'sse2' ] } ],
       [ 'alpha.*-.*-.*bsd.*',     { target => "BSD-generic64",
                                     defines => [ 'L_ENDIAN' ] } ],
-      [ 'powerpc64-.*-.*bsd.*',   { target => "BSD-generic64",
-                                    defines => [ 'B_ENDIAN' ] } ],
+      [ 'powerpc-.*-.*bsd.*',     { target => "BSD-ppc" } ],
+      [ 'powerpc64-.*-.*bsd.*',   { target => "BSD-ppc64" } ],
+      [ 'powerpc64le-.*-.*bsd.*', { target => "BSD-ppc64le" } ],
+      [ 'riscv64-.*-.*bsd.*',     { target => "BSD-riscv64" } ],
       [ 'sparc64-.*-.*bsd.*',     { target => "BSD-sparc64" } ],
+      [ 'ia64-.*-openbsd.*',      { target => "BSD-nodef-ia64" } ],
       [ 'ia64-.*-.*bsd.*',        { target => "BSD-ia64" } ],
       [ 'x86_64-.*-dragonfly.*',  { target => "BSD-x86_64" } ],
+      [ 'amd64-.*-openbsd.*',     { target => "BSD-nodef-x86_64" } ],
       [ 'amd64-.*-.*bsd.*',       { target => "BSD-x86_64" } ],
+      [ 'arm64-.*-.*bsd.*',       { target => "BSD-aarch64" } ],
+      [ 'armv6-.*-.*bsd.*',       { target => "BSD-armv4" } ],
+      [ 'armv7-.*-.*bsd.*',       { target => "BSD-armv4" } ],
       [ '.*86.*-.*-.*bsd.*',
         sub {
             # mimic ld behaviour when it's looking for libc...
@@ -761,6 +805,7 @@ EOF
                      disable => [ 'sse2' ] };
         }
       ],
+      [ '.*-.*-openbsd.*',        { target => "BSD-nodef-generic32" } ],
       [ '.*-.*-.*bsd.*',          { target => "BSD-generic32" } ],
       [ 'x86_64-.*-haiku',        { target => "haiku-x86_64" } ],
       [ '.*-.*-haiku',            { target => "haiku-x86" } ],
@@ -858,16 +903,65 @@ EOF
                 }
             }
             if ( okrun(
-                       "lsattr -E -O -l `lsdev -c processor|awk '{print \$1;exit}'`",
+                       "(lsattr -E -O -l `lsdev -c processor|awk '{print \$1;exit}'`",
                        'grep -i powerpc) >/dev/null 2>&1') ) {
                 # this applies even to Power3 and later, as they return
                 # PowerPC_POWER[345]
             } else {
                 $config{disable} = [ 'asm' ];
             }
-            return %config;
+            return { %config };
         }
       ],
+
+      # Windows values found by looking at Perl 5's win32/win32.c
+      [ '(amd64|ia64|x86|ARM)-.*?-Windows NT',
+        sub {
+            # If we determined the arch by asking cl, take that value,
+            # otherwise the SYSTEM we got from from POSIX::uname().
+            my $arch = $CL_ARCH // $1;
+            my $config;
+
+            if ($arch) {
+                $config = { 'amd64' => { target => 'VC-WIN64A'    },
+                            'ia64'  => { target => 'VC-WIN64I'    },
+                            'x86'   => { target => 'VC-WIN32'     },
+                            'x64'   => { target => 'VC-WIN64A'    },
+                            'ARM'   => { target => 'VC-WIN64-ARM' },
+                          } -> {$arch};
+                die <<_____ unless defined $config;
+ERROR
+I do not know how to handle ${arch}.
+_____
+            }
+            die <<_____ unless defined $config;
+ERROR
+Could not figure out the architecture.
+_____
+
+            return $config;
+        }
+      ],
+
+      # VMS values found by observation on existing machinery.
+      [ 'VMS_AXP-.*?-OpenVMS',    { target => 'vms-alpha'  } ],
+      [ 'VMS_IA64-.*?-OpenVMS',   { target => 'vms-ia64'   } ],
+      [ 'VMS_x86_64-.*?-OpenVMS', { target => 'vms-x86_64' } ],
+
+      # TODO: There are a few more choices among OpenSSL config targets, but
+      # reaching them involves a bit more than just a host tripet.  Select
+      # environment variables could do the job to cover for more granular
+      # build options such as data model (ILP32 or LP64), thread support
+      # model (PUT, SPT or nothing), target execution environment (OSS or
+      # GUARDIAN).  And still, there must be some kind of default when
+      # nothing else is said.
+      #
+      # nsv is a virtual x86 environment, equivalent to nsx, so we enforce
+      # the latter.
+      [ 'nse-tandem-nsk.*',       { target => 'nonstop-nse' } ],
+      [ 'nsv-tandem-nsk.*',       { target => 'nonstop-nsx' } ],
+      [ 'nsx-tandem-nsk.*',       { target => 'nonstop-nsx' } ],
+
     ];
 
 # Map GUESSOS into OpenSSL terminology.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,160 +21,41 @@
 #include "dh_local.h"
 #include <openssl/bn.h>
 #include <openssl/objects.h>
-#include "crypto/bn_dh.h"
+#include "internal/nelem.h"
 #include "crypto/dh.h"
-#include "e_os.h" /* strcasecmp */
 
-#define FFDHE(sz) {                                                            \
-    SN_ffdhe##sz, NID_ffdhe##sz,                                               \
-    sz,                                                                        \
-    &_bignum_ffdhe##sz##_p, &_bignum_ffdhe##sz##_q, &_bignum_const_2           \
-}
-
-#define MODP(sz)  {                                                            \
-    SN_modp_##sz, NID_modp_##sz,                                               \
-    sz,                                                                        \
-    &_bignum_modp_##sz##_p, &_bignum_modp_##sz##_q,  &_bignum_const_2          \
-}
-
-#define RFC5114(name, uid, sz, tag)  {                                         \
-    name, uid,                                                                 \
-    sz,                                                                        \
-    &_bignum_dh##tag##_p, &_bignum_dh##tag##_q, &_bignum_dh##tag##_g           \
-}
-
-typedef struct dh_named_group_st {
-    const char *name;
-    int uid;
-    int32_t nbits;
-    const BIGNUM *p;
-    const BIGNUM *q;
-    const BIGNUM *g;
-} DH_NAMED_GROUP;
-
-
-static const DH_NAMED_GROUP dh_named_groups[] = {
-    FFDHE(2048),
-    FFDHE(3072),
-    FFDHE(4096),
-    FFDHE(6144),
-    FFDHE(8192),
-#ifndef FIPS_MODULE
-    MODP(1536),
-#endif
-    MODP(2048),
-    MODP(3072),
-    MODP(4096),
-    MODP(6144),
-    MODP(8192),
-    /*
-     * Additional dh named groups from RFC 5114 that have a different g.
-     * The uid can be any unique identifier.
-     */
-#ifndef FIPS_MODULE
-    RFC5114("dh_1024_160", 1, 1024, 1024_160),
-    RFC5114("dh_2048_224", 2, 2048, 2048_224),
-    RFC5114("dh_2048_256", 3, 2048, 2048_256),
-#endif
-};
-
-int ffc_named_group_to_uid(const char *name)
+static DH *dh_param_init(OSSL_LIB_CTX *libctx, const DH_NAMED_GROUP *group)
 {
-    size_t i;
-
-    for (i = 0; i < OSSL_NELEM(dh_named_groups); ++i) {
-        if (strcasecmp(dh_named_groups[i].name, name) == 0)
-            return dh_named_groups[i].uid;
-    }
-    return NID_undef;
-}
-
-const char *ffc_named_group_from_uid(int uid)
-{
-    size_t i;
-
-    for (i = 0; i < OSSL_NELEM(dh_named_groups); ++i) {
-        if (dh_named_groups[i].uid == uid)
-            return dh_named_groups[i].name;
-    }
-    return NULL;
-}
-
-static DH *dh_param_init(OPENSSL_CTX *libctx, int uid, const BIGNUM *p,
-                         const BIGNUM *q, const BIGNUM *g)
-{
-    DH *dh = dh_new_with_libctx(libctx);
+    DH *dh = ossl_dh_new_ex(libctx);
 
     if (dh == NULL)
         return NULL;
 
-    dh->params.nid = uid;
-    dh->params.p = (BIGNUM *)p;
-    dh->params.q = (BIGNUM *)q;
-    dh->params.g = (BIGNUM *)g;
-    dh->length = BN_num_bits(q);
+    ossl_ffc_named_group_set(&dh->params, group);
+    dh->params.nid = ossl_ffc_named_group_get_uid(group);
     dh->dirty_cnt++;
     return dh;
 }
 
-static DH *dh_new_by_group_name(OPENSSL_CTX *libctx, const char *name)
+DH *ossl_dh_new_by_nid_ex(OSSL_LIB_CTX *libctx, int nid)
 {
-    int i;
+    const DH_NAMED_GROUP *group;
 
-    if (name == NULL)
-        return NULL;
+    if ((group = ossl_ffc_uid_to_dh_named_group(nid)) != NULL)
+        return dh_param_init(libctx, group);
 
-    for (i = 0; i < (int)OSSL_NELEM(dh_named_groups); ++i) {
-        if (strcasecmp(dh_named_groups[i].name, name) == 0) {
-            return dh_param_init(libctx, dh_named_groups[i].uid,
-                                 dh_named_groups[i].p,
-                                 dh_named_groups[i].q,
-                                 dh_named_groups[i].g);
-        }
-    }
-    DHerr(0, DH_R_INVALID_PARAMETER_NID);
+    ERR_raise(ERR_LIB_DH, DH_R_INVALID_PARAMETER_NID);
     return NULL;
-}
-
-DH *dh_new_by_nid_with_libctx(OPENSSL_CTX *libctx, int nid)
-{
-    const char *name = ffc_named_group_from_uid(nid);
-
-    return dh_new_by_group_name(libctx, name);
 }
 
 DH *DH_new_by_nid(int nid)
 {
-    return dh_new_by_nid_with_libctx(NULL, nid);
+    return ossl_dh_new_by_nid_ex(NULL, nid);
 }
 
-int ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name)
+void ossl_dh_cache_named_group(DH *dh)
 {
-    int i;
-    BIGNUM *q = NULL;
-
-    if (ffc == NULL)
-        return 0;
-
-    for (i = 0; i < (int)OSSL_NELEM(dh_named_groups); ++i) {
-        if (strcasecmp(dh_named_groups[i].name, group_name) == 0) {
-            ffc_params_set0_pqg(ffc,
-                                (BIGNUM *)dh_named_groups[i].p,
-                                (BIGNUM *)dh_named_groups[i].q,
-                                (BIGNUM *)dh_named_groups[i].g);
-            /* flush the cached nid, The DH layer is responsible for caching */
-            ffc->nid = NID_undef;
-            return 1;
-        }
-    }
-    /* gets here on error or if the name was not found */
-    BN_free(q);
-    return 0;
-}
-
-void dh_cache_named_group(DH *dh)
-{
-    int i;
+    const DH_NAMED_GROUP *group;
 
     if (dh == NULL)
         return;
@@ -186,23 +67,27 @@ void dh_cache_named_group(DH *dh)
         || dh->params.g == NULL)
         return;
 
-    for (i = 0; i < (int)OSSL_NELEM(dh_named_groups); ++i) {
-        /* Keep searching until a matching p and g is found */
-        if (BN_cmp(dh->params.p, dh_named_groups[i].p) == 0
-            && BN_cmp(dh->params.g, dh_named_groups[i].g) == 0) {
-                /* Verify q is correct if it exists */
-                if (dh->params.q != NULL) {
-                    if (BN_cmp(dh->params.q, dh_named_groups[i].q) != 0)
-                        continue;  /* ignore if q does not match */
-                } else {
-                    dh->params.q = (BIGNUM *)dh_named_groups[i].q;
-                }
-                dh->params.nid = dh_named_groups[i].uid; /* cache the nid */
-                dh->length = BN_num_bits(dh->params.q);
-                dh->dirty_cnt++;
-                break;
-        }
+    if ((group = ossl_ffc_numbers_to_dh_named_group(dh->params.p,
+                                                    dh->params.q,
+                                                    dh->params.g)) != NULL) {
+        if (dh->params.q == NULL)
+            dh->params.q = (BIGNUM *)ossl_ffc_named_group_get_q(group);
+        /* cache the nid and default key length */
+        dh->params.nid = ossl_ffc_named_group_get_uid(group);
+        dh->params.keylength = ossl_ffc_named_group_get_keylength(group);
+        dh->dirty_cnt++;
     }
+}
+
+int ossl_dh_is_named_safe_prime_group(const DH *dh)
+{
+    int id = DH_get_nid(dh);
+
+    /*
+     * Exclude RFC5114 groups (id = 1..3) since they do not have
+     * q = (p - 1) / 2
+     */
+    return (id > 3);
 }
 
 int DH_get_nid(const DH *dh)

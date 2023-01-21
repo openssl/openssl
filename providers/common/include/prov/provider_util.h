@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,7 +8,7 @@
  */
 
 #include <openssl/provider.h>
-#include <openssl/engine.h>
+#include <openssl/types.h>
 
 typedef struct {
     /*
@@ -45,7 +45,7 @@ typedef struct {
  */
 int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
                                       const OSSL_PARAM params[],
-                                      OPENSSL_CTX *ctx);
+                                      OSSL_LIB_CTX *ctx);
 
 /* Reset the PROV_CIPHER fields and free any allocated cipher reference */
 void ossl_prov_cipher_reset(PROV_CIPHER *pc);
@@ -58,6 +58,14 @@ const EVP_CIPHER *ossl_prov_cipher_cipher(const PROV_CIPHER *pc);
 ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pc);
 
 /* Digest functions */
+
+/*
+ * Fetch a digest from the specified libctx using the provided mdname and
+ * propquery. Store the result in the PROV_DIGEST and return the fetched md.
+ */
+const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OSSL_LIB_CTX *libctx,
+                                     const char *mdname, const char *propquery);
+
 /*
  * Load a digest from the specified parameters with the specified context.
  * The params "properties", "engine" and "digest" are used to determine the
@@ -66,7 +74,7 @@ ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pc);
  */
 int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
                                       const OSSL_PARAM params[],
-                                      OPENSSL_CTX *ctx);
+                                      OSSL_LIB_CTX *ctx);
 
 /* Reset the PROV_DIGEST fields and free any allocated digest reference */
 void ossl_prov_digest_reset(PROV_DIGEST *pd);
@@ -77,6 +85,21 @@ int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src);
 /* Query the digest and associated engine (if any) */
 const EVP_MD *ossl_prov_digest_md(const PROV_DIGEST *pd);
 ENGINE *ossl_prov_digest_engine(const PROV_DIGEST *pd);
+
+
+/*
+ * Set the various parameters on an EVP_MAC_CTX from the supplied arguments.
+ * If any of the supplied ciphername/mdname etc are NULL then the values
+ * from the supplied params (if non NULL) are used instead.
+ */
+int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
+                         const OSSL_PARAM params[],
+                         const char *ciphername,
+                         const char *mdname,
+                         const char *engine,
+                         const char *properties,
+                         const unsigned char *key,
+                         size_t keylen);
 
 /* MAC functions */
 /*
@@ -100,7 +123,7 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
                                       const char *macname,
                                       const char *ciphername,
                                       const char *mdname,
-                                      OPENSSL_CTX *ctx);
+                                      OSSL_LIB_CTX *ctx);
 
 typedef struct ag_capable_st {
     OSSL_ALGORITHM alg;
@@ -113,3 +136,7 @@ typedef struct ag_capable_st {
  */
 void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,
                                          OSSL_ALGORITHM *out);
+
+/* Duplicate a lump of memory safely */
+int ossl_prov_memdup(const void *src, size_t src_len,
+                     unsigned char **dest, size_t *dest_len);

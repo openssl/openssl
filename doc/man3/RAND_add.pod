@@ -18,9 +18,9 @@ RAND_keep_random_devices_open
 
  void RAND_keep_random_devices_open(int keep);
 
-Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following functions have been deprecated since OpenSSL 1.1.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam);
  void RAND_screen(void);
@@ -58,7 +58,7 @@ should consider using L<RAND_load_file(3)> instead.
 NOTE: In FIPS mode, random data provided by the application is not considered to
 be a trusted entropy source. It is mixed into the internal state of the RNG as
 additional data only and this does not count as a full reseed.
-For more details, see L<RAND_DRBG(7)>.
+For more details, see L<EVP_RAND(7)>.
 
 RAND_seed() is equivalent to RAND_add() with B<randomness> set to B<num>.
 
@@ -92,7 +92,7 @@ L<RAND_bytes(3)>,
 L<RAND_egd(3)>,
 L<RAND_load_file(3)>,
 L<RAND(7)>
-L<RAND_DRBG(7)>
+L<EVP_RAND(7)>
 
 =head1 HISTORY
 

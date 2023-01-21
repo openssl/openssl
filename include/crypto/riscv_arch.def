@@ -1,0 +1,43 @@
+/*
+ * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+/* X Macro Definitions for Specification of RISC-V Arch Capabilities */
+
+/*
+ * Each RISC-V capability ends up encoded as a single set bit in an array of
+ * words. When specifying a new capability, write a new RISCV_DEFINE_CAP
+ * statement, with an argument as the extension name in all-caps,
+ * second argument as the index in the array where the capability will be stored
+ * and third argument as the index of the bit to be used to encode the
+ * capability.
+ * RISCV_DEFINE_CAP(EXTENSION NAME, array index, bit index) */
+
+RISCV_DEFINE_CAP(ZBA, 0, 0)
+RISCV_DEFINE_CAP(ZBB, 0, 1)
+RISCV_DEFINE_CAP(ZBC, 0, 2)
+RISCV_DEFINE_CAP(ZBS, 0, 3)
+RISCV_DEFINE_CAP(ZBKB, 0, 4)
+RISCV_DEFINE_CAP(ZBKC, 0, 5)
+RISCV_DEFINE_CAP(ZBKX, 0, 6)
+RISCV_DEFINE_CAP(ZKND, 0, 7)
+RISCV_DEFINE_CAP(ZKNE, 0, 8)
+RISCV_DEFINE_CAP(ZKNH, 0, 9)
+RISCV_DEFINE_CAP(ZKSED, 0, 10)
+RISCV_DEFINE_CAP(ZKSH, 0, 11)
+RISCV_DEFINE_CAP(ZKR, 0, 12)
+RISCV_DEFINE_CAP(ZKT, 0, 13)
+
+/*
+ * In the future ...
+ * RISCV_DEFINE_CAP(ZFOO, 0, 31)
+ * RISCV_DEFINE_CAP(ZBAR, 1, 0)
+ * ... and so on.
+ */
+
+#undef RISCV_DEFINE_CAP

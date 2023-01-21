@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,16 +16,13 @@
 #include "../crypto/cmp/cmp_local.h"
 #include <openssl/err.h>
 #include "fuzzer.h"
-#include "rand.inc"
-
-DEFINE_STACK_OF(OSSL_CMP_ITAV)
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
+    FuzzerSetRand();
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
-    FuzzerSetRand();
     return 1;
 }
 
@@ -84,7 +81,7 @@ static void cmp_client_process_response(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         break;
     case OSSL_CMP_PKIBODY_POLLREP:
         ctx->status = OSSL_CMP_PKISTATUS_waiting;
-        (void)OSSL_CMP_try_certreq(ctx, OSSL_CMP_PKIBODY_CR, NULL);
+        (void)OSSL_CMP_try_certreq(ctx, OSSL_CMP_PKIBODY_CR, NULL, NULL);
         break;
     case OSSL_CMP_PKIBODY_RP:
         (void)OSSL_CMP_exec_RR_ses(ctx);
@@ -111,7 +108,7 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                             STACK_OF(X509) **chainOut,
                                             STACK_OF(X509) **caPubs)
 {
-    CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
+    ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
     return NULL;
 }
 
@@ -120,7 +117,7 @@ static OSSL_CMP_PKISI *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
                                   const X509_NAME *issuer,
                                   const ASN1_INTEGER *serial)
 {
-    CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
+    ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
     return NULL;
 }
 
@@ -129,7 +126,7 @@ static int process_genm(OSSL_CMP_SRV_CTX *srv_ctx,
                         const STACK_OF(OSSL_CMP_ITAV) *in,
                         STACK_OF(OSSL_CMP_ITAV) **out)
 {
-    CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
+    ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
     return 0;
 }
 
@@ -138,7 +135,7 @@ static void process_error(OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *error,
                           const ASN1_INTEGER *errorCode,
                           const OSSL_CMP_PKIFREETEXT *errorDetails)
 {
-    CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
+    ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
 }
 
 static int process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
@@ -146,7 +143,7 @@ static int process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
                             const ASN1_OCTET_STRING *certHash,
                             const OSSL_CMP_PKISI *si)
 {
-    CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
+    ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
     return 0;
 }
 
@@ -154,7 +151,7 @@ static int process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
                            const OSSL_CMP_MSG *pollReq, int certReqId,
                            OSSL_CMP_MSG **certReq, int64_t *check_after)
 {
-    CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
+    ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
     return 0;
 }
 
@@ -171,8 +168,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     msg = d2i_OSSL_CMP_MSG_bio(in, NULL);
     if (msg != NULL) {
         BIO *out = BIO_new(BIO_s_null());
-        OSSL_CMP_SRV_CTX *srv_ctx = OSSL_CMP_SRV_CTX_new();
-        OSSL_CMP_CTX *client_ctx = OSSL_CMP_CTX_new();
+        OSSL_CMP_SRV_CTX *srv_ctx = OSSL_CMP_SRV_CTX_new(NULL, NULL);
+        OSSL_CMP_CTX *client_ctx = OSSL_CMP_CTX_new(NULL, NULL);
 
         i2d_OSSL_CMP_MSG_bio(out, msg);
         ASN1_item_print(out, (ASN1_VALUE *)msg, 4,
@@ -202,4 +199,5 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
 void FuzzerCleanup(void)
 {
+    FuzzerClearRand();
 }

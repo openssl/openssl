@@ -25,14 +25,14 @@ CRYPTO_free_ex_data, CRYPTO_new_ex_data
  typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                            void **from_d, int idx, long argl, void *argp);
 
- int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
+ int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 
  int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
                           int idx);
 
  int CRYPTO_set_ex_data(CRYPTO_EX_DATA *r, int idx, void *arg);
 
- void *CRYPTO_get_ex_data(CRYPTO_EX_DATA *r, int idx);
+ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *r, int idx);
 
  void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *r);
 
@@ -50,7 +50,6 @@ The specific structures are:
     EC_KEY
     ENGINE
     EVP_PKEY
-    RAND_DRBG
     RSA
     SSL
     SSL_CTX
@@ -63,8 +62,8 @@ The specific structures are:
 
 In addition, the B<APP> name is reserved for use by application code.
 
-Each is identified by an B<CRYPTO_EX_INDEX_xxx> define in the B<crypto.h>
-header file.  In addition, B<CRYPTO_EX_INDEX_APP> is reserved for
+Each is identified by an B<CRYPTO_EX_INDEX_xxx> define in the header file
+F<< <openssl/crypto.h> >>.  In addition, B<CRYPTO_EX_INDEX_APP> is reserved for
 applications to use this facility for their own structures.
 
 The API described here is used by OpenSSL to manipulate exdata for specific
@@ -153,7 +152,7 @@ will fail.
 CRYPTO_get_ex_new_index() returns a new index or -1 on failure.
 
 CRYPTO_free_ex_index(), CRYPTO_alloc_ex_data() and CRYPTO_set_ex_data()
-return 1 on success or 0 on failure. 
+return 1 on success or 0 on failure.
 
 CRYPTO_get_ex_data() returns the application data or NULL on failure;
 note that NULL may be a valid value.
@@ -163,12 +162,15 @@ dup_func() should return 0 for failure and 1 for success.
 =head1 HISTORY
 
 CRYPTO_alloc_ex_data() was added in OpenSSL 3.0.
+
 The signature of the dup_func() callback was changed in OpenSSL 3.0 to use the
 type B<void **> for B<from_d>.  Previously this parameter was of type B<void *>.
 
+Support for ENGINE "exdata" was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

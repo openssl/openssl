@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,10 +21,10 @@
 #include <openssl/pem.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_NOOUT, OPT_PUBKEY, OPT_VERIFY, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_KEY, OPT_CHALLENGE, OPT_PASSIN, OPT_SPKAC,
-    OPT_SPKSECT, OPT_KEYFORM,
+    OPT_SPKSECT, OPT_KEYFORM, OPT_DIGEST,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -46,6 +46,7 @@ const OPTIONS spkac_options[] = {
     {"spkac", OPT_SPKAC, 's', "Alternative SPKAC name"},
 
     OPT_SECTION("Output"),
+    {"digest", OPT_DIGEST, 's', "Sign new SPKAC with the specified digest (default: MD5)" },
     {"out", OPT_OUT, '>', "Output file"},
     {"noout", OPT_NOOUT, '-', "Don't print SPKAC"},
     {"pubkey", OPT_PUBKEY, '-', "Output public key"},
@@ -66,8 +67,10 @@ int spkac_main(int argc, char **argv)
     char *infile = NULL, *outfile = NULL, *passinarg = NULL, *passin = NULL;
     char *spkstr = NULL, *prog;
     const char *spkac = "SPKAC", *spksect = "default";
+    const char *digest = "MD5";
+    EVP_MD *md = NULL;
     int i, ret = 1, verify = 0, noout = 0, pubkey = 0;
-    int keyformat = FORMAT_PEM;
+    int keyformat = FORMAT_UNDEF;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, spkac_options);
@@ -116,6 +119,9 @@ int spkac_main(int argc, char **argv)
         case OPT_SPKSECT:
             spksect = opt_arg();
             break;
+        case OPT_DIGEST:
+            digest = opt_arg();
+            break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
@@ -125,8 +131,9 @@ int spkac_main(int argc, char **argv)
             break;
         }
     }
-    argc = opt_num_rest();
-    if (argc != 0)
+
+    /* No extra arguments. */
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
@@ -135,6 +142,9 @@ int spkac_main(int argc, char **argv)
     }
 
     if (keyfile != NULL) {
+        if (!opt_md(digest, &md))
+            goto end;
+
         pkey = load_key(strcmp(keyfile, "-") ? keyfile : NULL,
                         keyformat, 1, passin, e, "private key");
         if (pkey == NULL)
@@ -149,7 +159,7 @@ int spkac_main(int argc, char **argv)
             BIO_printf(bio_err, "Error setting public key\n");
             goto end;
         }
-        i = NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
+        i = NETSCAPE_SPKI_sign(spki, pkey, md);
         if (i <= 0) {
             BIO_printf(bio_err, "Error signing SPKAC\n");
             goto end;
@@ -211,6 +221,7 @@ int spkac_main(int argc, char **argv)
     ret = 0;
 
  end:
+    EVP_MD_free(md);
     NCONF_free(conf);
     NETSCAPE_SPKI_free(spki);
     BIO_free_all(out);

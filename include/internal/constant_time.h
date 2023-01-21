@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_CONSTANT_TIME_H
 # define OSSL_INTERNAL_CONSTANT_TIME_H
+# pragma once
 
 # include <stdlib.h>
 # include <string.h>
@@ -179,6 +180,11 @@ static ossl_inline unsigned char constant_time_is_zero_8(unsigned int a)
 static ossl_inline uint32_t constant_time_is_zero_32(uint32_t a)
 {
     return constant_time_msb_32(~a & (a - 1));
+}
+
+static ossl_inline uint64_t constant_time_is_zero_64(uint64_t a)
+{
+    return constant_time_msb_64(~a & (a - 1));
 }
 
 static ossl_inline unsigned int constant_time_eq(unsigned int a,

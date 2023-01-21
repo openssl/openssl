@@ -26,7 +26,8 @@ functions
  /* Random number generator functions: NIST */
  int OSSL_FUNC_rand_instantiate(void *ctx, unsigned int strength,
                                 int prediction_resistance,
-                                const unsigned char *pstr, size_t pstr_len);
+                                const unsigned char *pstr, size_t pstr_len,
+                                const OSSL_PARAM params[]);
  int OSSL_FUNC_rand_uninstantiate(void *ctx);
  int OSSL_FUNC_rand_generate(void *ctx, unsigned char *out, size_t outlen,
                              unsigned int strength, int prediction_resistance,
@@ -37,11 +38,13 @@ functions
 
  /* Random number generator functions: additional */
  size_t OSSL_FUNC_rand_nonce(void *ctx, unsigned char *out, size_t outlen,
-                             int strength, size_t min_noncelen, size_t max_noncelen);
- void OSSL_FUNC_rand_set_callbacks(void *ctx, OSSL_CALLBACK *get_entropy,
-                                   OSSL_CALLBACK *cleanup_entropy,
-                                   OSSL_CALLBACK *get_nonce,
-                                   OSSL_CALLBACK *cleanup_nonce, void *arg);
+                             int strength, size_t min_noncelen,
+                             size_t max_noncelen);
+ size_t OSSL_FUNC_rand_get_seed(void *ctx, unsigned char **buffer,
+                                int entropy, size_t min_len, size_t max_len,
+                                int prediction_resistance,
+                                const unsigned char *adin, size_t adin_len);
+ void OSSL_FUNC_rand_clear_seed(void *ctx, unsigned char *buffer, size_t b_len);
  int OSSL_FUNC_rand_verify_zeroization(void *ctx);
 
  /* Context Locking */
@@ -50,9 +53,9 @@ functions
  void OSSL_FUNC_rand_unlock(void *ctx);
 
  /* RAND parameter descriptors */
- const OSSL_PARAM *OSSL_FUNC_rand_gettable_params(void);
- const OSSL_PARAM *OSSL_FUNC_rand_gettable_ctx_params(void);
- const OSSL_PARAM *OSSL_FUNC_rand_settable_ctx_params(void);
+ const OSSL_PARAM *OSSL_FUNC_rand_gettable_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_rand_gettable_ctx_params(void *ctx, void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_rand_settable_ctx_params(void *ctx, void *provctx);
 
  /* RAND parameters */
  int OSSL_FUNC_rand_get_params(OSSL_PARAM params[]);
@@ -95,7 +98,8 @@ These functions correspond to those defined in NIST SP 800-90A and SP 800-90C.
 OSSL_FUNC_rand_instantiate() is used to instantiate the DRBG I<ctx> at a requested
 security I<strength>.  In addition, I<prediction_resistance> can be requested.
 Additional input I<addin> of length I<addin_len> bytes can optionally
-be provided.
+be provided.  The parameters specified in I<params> configure the DRBG and these
+should be processed before instantiation.
 
 OSSL_FUNC_rand_uninstantiate() is used to uninstantiate the DRBG I<ctx>.  After being
 uninstantiated, a DRBG is unable to produce output until it is instantiated
@@ -114,13 +118,17 @@ OSSL_FUNC_rand_nonce() is used to generate a nonce of the given I<strength> with
 length from I<min_noncelen> to I<max_noncelen>. If the output buffer I<out> is
 NULL, the length of the nonce should be returned.
 
-OSSL_FUNC_rand_set_callbacks() is used to supply custom entropy and nonce callbacks.
-Instead of gathering seed material from its usual sources, the DRBG I<ctx>
-should call these functions.
-The I<get_entropy> and I<cleanup_entropy> callbacks obtain and release bytes
-of entropy.
-The I<get_nonce> and I<cleanup_nonce> functions obtain and release nonce bytes.
-In all cases, the additional argument I<arg> is passed to the callbacks.
+OSSL_FUNC_rand_get_seed() is used by deterministic generators to obtain their
+seeding material from their parent.  The seed bytes will meet the specified
+security level of I<entropy> bits and there will be between I<min_len>
+and I<max_len> inclusive bytes in total.  If I<prediction_resistance> is
+true, the bytes will be produced from a live entropy source.  Additional
+input I<addin> of length I<addin_len> bytes can optionally be provided.
+A pointer to the seed material is returned in I<*buffer> and this must be
+freed by a later call to OSSL_FUNC_rand_clear_seed().
+
+OSSL_FUNC_rand_clear_seed() frees a seed I<buffer> of length I<b_len> bytes
+which was previously allocated by OSSL_FUNC_rand_get_seed().
 
 OSSL_FUNC_rand_verify_zeroization() is used to determine if the internal state of the
 DRBG is zero.  This capability is mandated by NIST as part of the self
@@ -152,16 +160,23 @@ provider algorithm and stores them in I<params>.
 OSSL_FUNC_rand_set_ctx_params() sets rand parameters associated with the given
 provider side rand context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_rand_get_ctx_params() gets details of currently set parameter values
 associated with the given provider side rand context I<ctx> and stores them
 in I<params>.
+Passing NULL for I<params> should return true.
 
-OSSL_FUNC_rand_gettable_params(), OSSL_FUNC_rand_gettable_ctx_params(), and
-OSSL_FUNC_rand_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
-as descriptors of the parameters that OSSL_FUNC_rand_get_params(),
-OSSL_FUNC_rand_get_ctx_params(), and OSSL_FUNC_rand_set_ctx_params() can handle,
-respectively.
+OSSL_FUNC_rand_gettable_params(), OSSL_FUNC_rand_gettable_ctx_params(),
+and OSSL_FUNC_rand_settable_ctx_params() all return constant L<OSSL_PARAM(3)>
+arrays as descriptors of the parameters that OSSL_FUNC_rand_get_params(),
+OSSL_FUNC_rand_get_ctx_params(), and OSSL_FUNC_rand_set_ctx_params()
+can handle, respectively.  OSSL_FUNC_rand_gettable_ctx_params()
+and OSSL_FUNC_rand_settable_ctx_params() will return the parameters
+associated with the provider side context I<ctx> in its current state
+if it is not NULL.  Otherwise, they return the parameters associated
+with the provider side algorithm I<provctx>.
+
 
 Parameters currently recognised by built-in rands are as follows. Not all
 parameters are relevant to, or are understood by all rands:
@@ -220,7 +235,7 @@ instantiate the DRBG.
 Specify the minimum and maximum number of bytes of personalisation string
 that can be used with the DRBG.
 
-=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_CTR>) <unsigned integer>
+=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_COUNTER>) <unsigned integer>
 
 Specifies the number of times the DRBG has been seeded or reseeded.
 
@@ -247,18 +262,29 @@ OSSL_FUNC_rand_newctx() should return the newly created
 provider side rand context, or NULL on failure.
 
 OSSL_FUNC_rand_gettable_params(), OSSL_FUNC_rand_gettable_ctx_params() and
-OSSL_FUNC_rand_settable_ctx_params() should return a constant B<OSSL_PARAM>
+OSSL_FUNC_rand_settable_ctx_params() should return a constant L<OSSL_PARAM(3)>
 array, or NULL if none is offered.
 
 OSSL_FUNC_rand_nonce() returns the size of the generated nonce, or 0 on error.
 
+OSSL_FUNC_rand_get_seed() returns the size of the generated seed, or 0 on
+error.
+
 All of the remaining functions should return 1 for success or 0 on error.
+
+=head1 NOTES
+
+The RAND life-cycle is described in L<life_cycle-rand(7)>.  Providers should
+ensure that the various transitions listed there are supported.  At some point
+the EVP layer will begin enforcing the listed transitions.
 
 =head1 SEE ALSO
 
 L<provider(7)>,
 L<RAND(7)>,
-L<RAND_DRBG(7)>
+L<EVP_RAND(7)>,
+L<life_cycle-rand(7)>,
+L<EVP_RAND(3)>
 
 =head1 HISTORY
 
@@ -266,7 +292,7 @@ The provider RAND interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

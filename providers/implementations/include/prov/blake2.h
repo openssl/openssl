@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,9 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* TODO(3.0) Move this header into provider when dependencies are removed */
-#ifndef OSSL_PROVIDERS_DEFAULT_INCLUDE_INTERNAL_BLAKE2_H
-# define OSSL_PROVIDERS_DEFAULT_INCLUDE_INTERNAL_BLAKE2_H
+#ifndef OSSL_PROV_BLAKE2_H
+# define OSSL_PROV_BLAKE2_H
 
 # include <openssl/opensslconf.h>
 
@@ -83,34 +82,39 @@ struct blake2b_ctx_st {
 typedef struct blake2s_ctx_st BLAKE2S_CTX;
 typedef struct blake2b_ctx_st BLAKE2B_CTX;
 
-int blake2s256_init(void *ctx);
-int blake2b512_init(void *ctx);
+int ossl_blake2s256_init(void *ctx);
+int ossl_blake2b512_init(void *ctx);
 
-int blake2b_init(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P);
-int blake2b_init_key(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P, const void *key);
-int blake2b_update(BLAKE2B_CTX *c, const void *data, size_t datalen);
-int blake2b_final(unsigned char *md, BLAKE2B_CTX *c);
+int ossl_blake2b_init(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P);
+int ossl_blake2b_init_key(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P,
+                          const void *key);
+int ossl_blake2b_update(BLAKE2B_CTX *c, const void *data, size_t datalen);
+int ossl_blake2b_final(unsigned char *md, BLAKE2B_CTX *c);
 
 /*
  * These setters are internal and do not check the validity of their parameters.
  * See blake2b_mac_ctrl for validation logic.
  */
 
-void blake2b_param_init(BLAKE2B_PARAM *P);
-void blake2b_param_set_digest_length(BLAKE2B_PARAM *P, uint8_t outlen);
-void blake2b_param_set_key_length(BLAKE2B_PARAM *P, uint8_t keylen);
-void blake2b_param_set_personal(BLAKE2B_PARAM *P, const uint8_t *personal, size_t length);
-void blake2b_param_set_salt(BLAKE2B_PARAM *P, const uint8_t *salt, size_t length);
+void ossl_blake2b_param_init(BLAKE2B_PARAM *P);
+void ossl_blake2b_param_set_digest_length(BLAKE2B_PARAM *P, uint8_t outlen);
+void ossl_blake2b_param_set_key_length(BLAKE2B_PARAM *P, uint8_t keylen);
+void ossl_blake2b_param_set_personal(BLAKE2B_PARAM *P, const uint8_t *personal,
+                                     size_t length);
+void ossl_blake2b_param_set_salt(BLAKE2B_PARAM *P, const uint8_t *salt,
+                                 size_t length);
+int ossl_blake2s_init(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P);
+int ossl_blake2s_init_key(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P,
+                          const void *key);
+int ossl_blake2s_update(BLAKE2S_CTX *c, const void *data, size_t datalen);
+int ossl_blake2s_final(unsigned char *md, BLAKE2S_CTX *c);
 
-int blake2s_init(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P);
-int blake2s_init_key(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P, const void *key);
-int blake2s_update(BLAKE2S_CTX *c, const void *data, size_t datalen);
-int blake2s_final(unsigned char *md, BLAKE2S_CTX *c);
+void ossl_blake2s_param_init(BLAKE2S_PARAM *P);
+void ossl_blake2s_param_set_digest_length(BLAKE2S_PARAM *P, uint8_t outlen);
+void ossl_blake2s_param_set_key_length(BLAKE2S_PARAM *P, uint8_t keylen);
+void ossl_blake2s_param_set_personal(BLAKE2S_PARAM *P, const uint8_t *personal,
+                                     size_t length);
+void ossl_blake2s_param_set_salt(BLAKE2S_PARAM *P, const uint8_t *salt,
+                                 size_t length);
 
-void blake2s_param_init(BLAKE2S_PARAM *P);
-void blake2s_param_set_digest_length(BLAKE2S_PARAM *P, uint8_t outlen);
-void blake2s_param_set_key_length(BLAKE2S_PARAM *P, uint8_t keylen);
-void blake2s_param_set_personal(BLAKE2S_PARAM *P, const uint8_t *personal, size_t length);
-void blake2s_param_set_salt(BLAKE2S_PARAM *P, const uint8_t *salt, size_t length);
-
-#endif /* OSSL_PROVIDERS_DEFAULT_INCLUDE_INTERNAL_BLAKE2_H */
+#endif /* OSSL_PROV_BLAKE2_H */

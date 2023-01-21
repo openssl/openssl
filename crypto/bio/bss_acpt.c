@@ -1,11 +1,13 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
 #include <errno.h>
@@ -54,10 +56,8 @@ static void BIO_ACCEPT_free(BIO_ACCEPT *a);
 static const BIO_METHOD methods_acceptp = {
     BIO_TYPE_ACCEPT,
     "socket accept",
-    /* TODO: Convert to new style write function */
     bwrite_conv,
     acpt_write,
-    /* TODO: Convert to new style read function */
     bread_conv,
     acpt_read,
     acpt_puts,
@@ -92,10 +92,8 @@ static BIO_ACCEPT *BIO_ACCEPT_new(void)
 {
     BIO_ACCEPT *ret;
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        BIOerr(BIO_F_BIO_ACCEPT_NEW, ERR_R_MALLOC_FAILURE);
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return NULL;
-    }
     ret->accept_family = BIO_FAMILY_IPANY;
     ret->accept_sock = (int)INVALID_SOCKET;
     return ret;
@@ -156,10 +154,10 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
         switch (c->state) {
         case ACPT_S_BEFORE:
             if (c->param_addr == NULL && c->param_serv == NULL) {
-                BIOerr(BIO_F_ACPT_STATE, BIO_R_NO_ACCEPT_ADDR_OR_SERVICE_SPECIFIED);
-                ERR_add_error_data(4,
-                                   "hostname=", c->param_addr,
-                                   " service=", c->param_serv);
+                ERR_raise_data(ERR_LIB_BIO,
+                               BIO_R_NO_ACCEPT_ADDR_OR_SERVICE_SPECIFIED,
+                               "hostname=%s, service=%s",
+                               c->param_addr, c->param_serv);
                 goto exit_loop;
             }
 
@@ -188,11 +186,11 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                               * at least the "else" part will always be
                               * compiled.
                               */
-#ifdef AF_INET6
+#if OPENSSL_USE_IPV6
                         family = AF_INET6;
                     } else {
 #endif
-                        BIOerr(BIO_F_ACPT_STATE, BIO_R_UNAVAILABLE_IP_FAMILY);
+                        ERR_raise(ERR_LIB_BIO, BIO_R_UNAVAILABLE_IP_FAMILY);
                         goto exit_loop;
                     }
                     break;
@@ -203,7 +201,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                     family = AF_UNSPEC;
                     break;
                 default:
-                    BIOerr(BIO_F_ACPT_STATE, BIO_R_UNSUPPORTED_IP_FAMILY);
+                    ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_IP_FAMILY);
                     goto exit_loop;
                 }
                 if (BIO_lookup(c->param_addr, c->param_serv, BIO_LOOKUP_SERVER,
@@ -211,25 +209,31 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                     goto exit_loop;
             }
             if (c->addr_first == NULL) {
-                BIOerr(BIO_F_ACPT_STATE, BIO_R_LOOKUP_RETURNED_NOTHING);
+                ERR_raise(ERR_LIB_BIO, BIO_R_LOOKUP_RETURNED_NOTHING);
                 goto exit_loop;
             }
-            /* We're currently not iterating, but set this as preparation
-             * for possible future development in that regard
-             */
             c->addr_iter = c->addr_first;
             c->state = ACPT_S_CREATE_SOCKET;
             break;
 
         case ACPT_S_CREATE_SOCKET:
+            ERR_set_mark();
             s = BIO_socket(BIO_ADDRINFO_family(c->addr_iter),
                            BIO_ADDRINFO_socktype(c->addr_iter),
                            BIO_ADDRINFO_protocol(c->addr_iter), 0);
             if (s == (int)INVALID_SOCKET) {
+                if ((c->addr_iter = BIO_ADDRINFO_next(c->addr_iter)) != NULL) {
+                    /*
+                     * if there are more addresses to try, do that first
+                     */
+                    ERR_pop_to_mark();
+                    break;
+                }
+                ERR_clear_last_mark();
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling socket(%s, %s)",
                                 c->param_addr, c->param_serv);
-                BIOerr(BIO_F_ACPT_STATE, BIO_R_UNABLE_TO_CREATE_SOCKET);
+                ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_CREATE_SOCKET);
                 goto exit_loop;
             }
             c->accept_sock = s;
@@ -305,9 +309,11 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
             if (bio == NULL)
                 goto exit_loop;
 
+            BIO_set_callback_ex(bio, BIO_get_callback_ex(b));
+#ifndef OPENSSL_NO_DEPRECATED_3_0
             BIO_set_callback(bio, BIO_get_callback(b));
+#endif
             BIO_set_callback_arg(bio, BIO_get_callback_arg(b));
-
             /*
              * If the accept BIO has an bio_chain, we dup it and put the new
              * socket at the end.
@@ -444,10 +450,14 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
                 data->bio_chain = (BIO *)ptr;
             } else if (num == 4) {
                 data->accept_family = *(int *)ptr;
+            } else if (num == 5) {
+                data->bind_mode |= BIO_SOCK_TFO;
             }
         } else {
             if (num == 2) {
                 data->bind_mode &= ~BIO_SOCK_NONBLOCK;
+            } else if (num == 5) {
+                data->bind_mode &= ~BIO_SOCK_TFO;
             }
         }
         break;
@@ -489,7 +499,7 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
                 *pp = data->cache_peer_serv;
             } else if (num == 4) {
                 switch (BIO_ADDRINFO_family(data->addr_iter)) {
-#ifdef AF_INET6
+#if OPENSSL_USE_IPV6
                 case AF_INET6:
                     ret = BIO_FAMILY_IPV6;
                     break;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -11,6 +11,9 @@
  * for the EdelKey project.
  */
 
+/* All the SRP APIs in this file are deprecated */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #ifndef OPENSSL_NO_SRP
 # include "internal/cryptlib.h"
 # include <openssl/sha.h>
@@ -21,7 +24,7 @@
 /* calculate = SHA1(PAD(x) || PAD(y)) */
 
 static BIGNUM *srp_Calc_xy(const BIGNUM *x, const BIGNUM *y, const BIGNUM *N,
-                           OPENSSL_CTX *libctx, const char *propq)
+                           OSSL_LIB_CTX *libctx, const char *propq)
 {
     unsigned char digest[SHA_DIGEST_LENGTH];
     unsigned char *tmp = NULL;
@@ -49,7 +52,8 @@ static BIGNUM *srp_Calc_xy(const BIGNUM *x, const BIGNUM *y, const BIGNUM *N,
     return res;
 }
 
-static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g, OPENSSL_CTX *libctx,
+static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g,
+                          OSSL_LIB_CTX *libctx,
                           const char *propq)
 {
     /* k = SHA1(N | PAD(g)) -- tls-srp RFC 5054 */
@@ -57,7 +61,7 @@ static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g, OPENSSL_CTX *libctx,
 }
 
 BIGNUM *SRP_Calc_u_ex(const BIGNUM *A, const BIGNUM *B, const BIGNUM *N,
-                      OPENSSL_CTX *libctx, const char *propq)
+                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     /* u = SHA1(PAD(A) || PAD(B) ) -- tls-srp RFC 5054 */
     return srp_Calc_xy(A, B, N, libctx, propq);
@@ -100,7 +104,7 @@ BIGNUM *SRP_Calc_server_key(const BIGNUM *A, const BIGNUM *v, const BIGNUM *u,
 }
 
 BIGNUM *SRP_Calc_B_ex(const BIGNUM *b, const BIGNUM *N, const BIGNUM *g,
-                      const BIGNUM *v, OPENSSL_CTX *libctx, const char *propq)
+                      const BIGNUM *v, OSSL_LIB_CTX *libctx, const char *propq)
 {
     BIGNUM *kv = NULL, *gb = NULL;
     BIGNUM *B = NULL, *k = NULL;
@@ -138,7 +142,7 @@ BIGNUM *SRP_Calc_B(const BIGNUM *b, const BIGNUM *N, const BIGNUM *g,
 }
 
 BIGNUM *SRP_Calc_x_ex(const BIGNUM *s, const char *user, const char *pass,
-                      OPENSSL_CTX *libctx, const char *propq)
+                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     unsigned char dig[SHA_DIGEST_LENGTH];
     EVP_MD_CTX *ctxt;
@@ -207,9 +211,10 @@ BIGNUM *SRP_Calc_A(const BIGNUM *a, const BIGNUM *N, const BIGNUM *g)
 
 BIGNUM *SRP_Calc_client_key_ex(const BIGNUM *N, const BIGNUM *B, const BIGNUM *g,
                             const BIGNUM *x, const BIGNUM *a, const BIGNUM *u,
-                            OPENSSL_CTX *libctx, const char *propq)
+                            OSSL_LIB_CTX *libctx, const char *propq)
 {
     BIGNUM *tmp = NULL, *tmp2 = NULL, *tmp3 = NULL, *k = NULL, *K = NULL;
+    BIGNUM *xtmp = NULL;
     BN_CTX *bn_ctx;
 
     if (u == NULL || B == NULL || N == NULL || g == NULL || x == NULL
@@ -218,10 +223,13 @@ BIGNUM *SRP_Calc_client_key_ex(const BIGNUM *N, const BIGNUM *B, const BIGNUM *g
 
     if ((tmp = BN_new()) == NULL ||
         (tmp2 = BN_new()) == NULL ||
-        (tmp3 = BN_new()) == NULL)
+        (tmp3 = BN_new()) == NULL ||
+        (xtmp = BN_new()) == NULL)
         goto err;
 
-    if (!BN_mod_exp(tmp, g, x, N, bn_ctx))
+    BN_with_flags(xtmp, x, BN_FLG_CONSTTIME);
+    BN_set_flags(tmp, BN_FLG_CONSTTIME);
+    if (!BN_mod_exp(tmp, g, xtmp, N, bn_ctx))
         goto err;
     if ((k = srp_Calc_k(N, g, libctx, propq)) == NULL)
         goto err;
@@ -229,7 +237,7 @@ BIGNUM *SRP_Calc_client_key_ex(const BIGNUM *N, const BIGNUM *B, const BIGNUM *g
         goto err;
     if (!BN_mod_sub(tmp, B, tmp2, N, bn_ctx))
         goto err;
-    if (!BN_mul(tmp3, u, x, bn_ctx))
+    if (!BN_mul(tmp3, u, xtmp, bn_ctx))
         goto err;
     if (!BN_add(tmp2, a, tmp3))
         goto err;
@@ -241,6 +249,7 @@ BIGNUM *SRP_Calc_client_key_ex(const BIGNUM *N, const BIGNUM *B, const BIGNUM *g
 
  err:
     BN_CTX_free(bn_ctx);
+    BN_free(xtmp);
     BN_clear_free(tmp);
     BN_clear_free(tmp2);
     BN_clear_free(tmp3);
@@ -282,13 +291,13 @@ int SRP_Verify_A_mod_N(const BIGNUM *A, const BIGNUM *N)
 }
 
 static SRP_gN knowngN[] = {
-    {"8192", &bn_generator_19, &bn_group_8192},
-    {"6144", &bn_generator_5, &bn_group_6144},
-    {"4096", &bn_generator_5, &bn_group_4096},
-    {"3072", &bn_generator_5, &bn_group_3072},
-    {"2048", &bn_generator_2, &bn_group_2048},
-    {"1536", &bn_generator_2, &bn_group_1536},
-    {"1024", &bn_generator_2, &bn_group_1024},
+    {"8192", &ossl_bn_generator_19, &ossl_bn_group_8192},
+    {"6144", &ossl_bn_generator_5, &ossl_bn_group_6144},
+    {"4096", &ossl_bn_generator_5, &ossl_bn_group_4096},
+    {"3072", &ossl_bn_generator_5, &ossl_bn_group_3072},
+    {"2048", &ossl_bn_generator_2, &ossl_bn_group_2048},
+    {"1536", &ossl_bn_generator_2, &ossl_bn_group_1536},
+    {"1024", &ossl_bn_generator_2, &ossl_bn_group_1024},
 };
 
 # define KNOWN_GN_NUMBER sizeof(knowngN) / sizeof(SRP_gN)

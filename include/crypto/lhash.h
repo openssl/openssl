@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,8 @@
 
 #ifndef OSSL_CRYPTO_LHASH_H
 # define OSSL_CRYPTO_LHASH_H
+# pragma once
 
-unsigned long openssl_lh_strcasehash(const char *);
+unsigned long ossl_lh_strcasehash(const char *);
 
-#endif
+#endif  /* OSSL_CRYPTO_LHASH_H */

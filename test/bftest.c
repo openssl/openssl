@@ -465,7 +465,7 @@ int setup_tests(void)
 # endif
 
     while ((o = opt_next()) != OPT_EOF) {
-        switch(o) {
+        switch (o) {
         case OPT_PRINT:
             print_test_data();
             return 1;

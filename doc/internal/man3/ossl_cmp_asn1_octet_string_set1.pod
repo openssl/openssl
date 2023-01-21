@@ -3,9 +3,8 @@
 =head1 NAME
 
 ossl_cmp_asn1_octet_string_set1,
-ossl_cmp_asn1_octet_string_set1_bytes,
-ossl_cmp_build_cert_chain
-- misc internal utility functions
+ossl_cmp_asn1_octet_string_set1_bytes
+- ASN.1 octet string utility functions
 
 =head1 SYNOPSIS
 
@@ -16,32 +15,19 @@ ossl_cmp_build_cert_chain
  int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
                                            const unsigned char *bytes, int len);
 
- STACK_OF(X509) *ossl_cmp_build_cert_chain(STACK_OF(X509) *certs, X509 *cert);
-
 =head1 DESCRIPTION
 
 ossl_cmp_asn1_octet_string_set1() frees any previous value of the variable
 referenced via the I<tgt> argument and assigns either a copy of
 the ASN1_OCTET_STRING given as the I<src> argument or NULL.
-It returns 1 on success, 0 on error.
 
 ossl_cmp_asn1_octet_string_set1_bytes() frees any previous value of the variable
 referenced via the I<tgt> argument and assigns either a copy of the given byte
-string (with the given length) or NULL. It returns 1 on success, 0 on error.
-
-ossl_cmp_build_cert_chain() builds up the certificate chain of cert as high up
-as possible using the given X509_STORE containing all possible intermediate
-certificates and optionally the (possible) trust anchor(s).
+string (with the given length) or NULL.
 
 =head1 RETURN VALUES
 
-ossl_cmp_build_cert_chain()
-returns NULL on error, else a pointer to a stack of (up_ref'ed) certificates
-containing the EE certificate given in the function arguments (cert)
-and all intermediate certificates up the chain toward the trust anchor.
-The (self-signed) trust anchor is not included.
-
-All other functions return 1 on success, 0 on error.
+All functions return 1 on success, 0 on error.
 
 =head1 HISTORY
 

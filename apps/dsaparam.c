@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,12 +24,10 @@
 
 static int verbose = 0;
 
-static int gendsa_cb(EVP_PKEY_CTX *ctx);
-
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT, OPT_C,
-    OPT_NOOUT, OPT_GENKEY, OPT_ENGINE, OPT_VERBOSE,
+    OPT_COMMON,
+    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT,
+    OPT_NOOUT, OPT_GENKEY, OPT_ENGINE, OPT_VERBOSE, OPT_QUIET,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -50,9 +48,9 @@ const OPTIONS dsaparam_options[] = {
     {"out", OPT_OUT, '>', "Output file"},
     {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
     {"text", OPT_TEXT, '-', "Print as text"},
-    {"C", OPT_C, '-', "Output C code"},
     {"noout", OPT_NOOUT, '-', "No output"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+    {"quiet", OPT_QUIET, '-', "Terse output"},
     {"genkey", OPT_GENKEY, '-', "Generate a DSA key"},
 
     OPT_R_OPTIONS,
@@ -66,11 +64,11 @@ const OPTIONS dsaparam_options[] = {
 int dsaparam_main(int argc, char **argv)
 {
     ENGINE *e = NULL;
-    BIO *in = NULL, *out = NULL;
+    BIO *out = NULL;
     EVP_PKEY *params = NULL, *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     int numbits = -1, num = 0, genkey = 0;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
+    int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, noout = 0;
     int ret = 1, i, text = 0, private = 0;
     char *infile = NULL, *outfile = NULL, *prog;
     OPTION_CHOICE o;
@@ -107,9 +105,6 @@ int dsaparam_main(int argc, char **argv)
         case OPT_TEXT:
             text = 1;
             break;
-        case OPT_C:
-            C = 1;
-            break;
         case OPT_GENKEY:
             genkey = 1;
             break;
@@ -127,27 +122,33 @@ int dsaparam_main(int argc, char **argv)
         case OPT_VERBOSE:
             verbose = 1;
             break;
+        case OPT_QUIET:
+            verbose = 0;
+            break;
         }
     }
+
+    /* Optional arg is bitsize. */
     argc = opt_num_rest();
     argv = opt_rest();
-
     if (argc == 1) {
         if (!opt_int(argv[0], &num) || num < 0)
-            goto end;
-        /* generate a key */
-        numbits = num;
+            goto opthelp;
+    } else if (!opt_check_rest_arg(NULL)) {
+        goto opthelp;
     }
+    if (!app_RAND_load())
+        goto end;
+
+    /* generate a key */
+    numbits = num;
     private = genkey ? 1 : 0;
 
-    in = bio_open_default(infile, 'r', informat);
-    if (in == NULL)
-        goto end;
     out = bio_open_owner(outfile, outformat, private);
     if (out == NULL)
         goto end;
 
-    ctx = EVP_PKEY_CTX_new_from_name(NULL, "DSA", NULL);
+    ctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(), "DSA", app_get0_propq());
     if (ctx == NULL) {
         BIO_printf(bio_err,
                    "Error, DSA parameter generation context allocation failed\n");
@@ -160,9 +161,9 @@ int dsaparam_main(int argc, char **argv)
                        "         Your key size is %d! Larger key size may behave not as expected.\n",
                        OPENSSL_DSA_MAX_MODULUS_BITS, numbits);
 
-        EVP_PKEY_CTX_set_cb(ctx, gendsa_cb);
         EVP_PKEY_CTX_set_app_data(ctx, bio_err);
         if (verbose) {
+            EVP_PKEY_CTX_set_cb(ctx, progress_cb);
             BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n",
                        num);
             BIO_printf(bio_err, "This could take some time\n");
@@ -172,68 +173,22 @@ int dsaparam_main(int argc, char **argv)
                        "Error, DSA key generation paramgen init failed\n");
             goto end;
         }
-        if (!EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, num)) {
+        if (EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, num) <= 0) {
             BIO_printf(bio_err,
                        "Error, DSA key generation setting bit length failed\n");
             goto end;
         }
-        if (EVP_PKEY_paramgen(ctx, &params) <= 0) {
-            BIO_printf(bio_err, "Error, DSA key generation failed\n");
-            goto end;
-        }
-    } else if (informat == FORMAT_ASN1) {
-        params = d2i_KeyParams_bio(EVP_PKEY_DSA, NULL, in);
+        params = app_paramgen(ctx, "DSA");
     } else {
-        params = PEM_read_bio_Parameters(in, NULL);
+        params = load_keyparams(infile, informat, 1, "DSA", "DSA parameters");
     }
     if (params == NULL) {
-        BIO_printf(bio_err, "Error, unable to load DSA parameters\n");
+        /* Error message should already have been displayed */
         goto end;
     }
 
     if (text) {
         EVP_PKEY_print_params(out, params, 0, NULL);
-    }
-
-    if (C) {
-        BIGNUM *p = NULL, *q = NULL, *g = NULL;
-        unsigned char *data;
-        int len, bits_p;
-
-        EVP_PKEY_get_bn_param(params, "p", &p);
-        EVP_PKEY_get_bn_param(params, "q", &q);
-        EVP_PKEY_get_bn_param(params, "g", &g);
-        len = BN_num_bytes(p);
-        bits_p = BN_num_bits(p);
-
-        data = app_malloc(len + 20, "BN space");
-
-        BIO_printf(bio_out, "static DSA *get_dsa%d(void)\n{\n", bits_p);
-        print_bignum_var(bio_out, p, "dsap", bits_p, data);
-        print_bignum_var(bio_out, q, "dsaq", bits_p, data);
-        print_bignum_var(bio_out, g, "dsag", bits_p, data);
-        BN_free(p);
-        BN_free(q);
-        BN_free(g);
-        BIO_printf(bio_out, "    DSA *dsa = DSA_new();\n"
-                            "    BIGNUM *p, *q, *g;\n"
-                            "\n");
-        BIO_printf(bio_out, "    if (dsa == NULL)\n"
-                            "        return NULL;\n");
-        BIO_printf(bio_out, "    if (!DSA_set0_pqg(dsa, p = BN_bin2bn(dsap_%d, sizeof(dsap_%d), NULL),\n",
-                   bits_p, bits_p);
-        BIO_printf(bio_out, "                           q = BN_bin2bn(dsaq_%d, sizeof(dsaq_%d), NULL),\n",
-                   bits_p, bits_p);
-        BIO_printf(bio_out, "                           g = BN_bin2bn(dsag_%d, sizeof(dsag_%d), NULL))) {\n",
-                   bits_p, bits_p);
-        BIO_printf(bio_out, "        DSA_free(dsa);\n"
-                            "        BN_free(p);\n"
-                            "        BN_free(q);\n"
-                            "        BN_free(g);\n"
-                            "        return NULL;\n"
-                            "    }\n"
-                            "    return dsa;\n}\n");
-        OPENSSL_free(data);
     }
 
     if (outformat == FORMAT_ASN1 && genkey)
@@ -251,21 +206,19 @@ int dsaparam_main(int argc, char **argv)
     }
     if (genkey) {
         EVP_PKEY_CTX_free(ctx);
-        ctx = EVP_PKEY_CTX_new(params, NULL);
+        ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(), params,
+                app_get0_propq());
         if (ctx == NULL) {
             BIO_printf(bio_err,
                        "Error, DSA key generation context allocation failed\n");
             goto end;
         }
-        if (!EVP_PKEY_keygen_init(ctx)) {
+        if (EVP_PKEY_keygen_init(ctx) <= 0) {
             BIO_printf(bio_err,
                        "Error, unable to initialise for key generation\n");
             goto end;
         }
-        if (!EVP_PKEY_keygen(ctx, &pkey)) {
-            BIO_printf(bio_err, "Error, unable to generate key\n");
-            goto end;
-        }
+        pkey = app_keygen(ctx, "DSA", numbits, verbose);
         assert(private);
         if (outformat == FORMAT_ASN1)
             i = i2d_PrivateKey_bio(out, pkey);
@@ -276,7 +229,6 @@ int dsaparam_main(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
-    BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
@@ -285,21 +237,3 @@ int dsaparam_main(int argc, char **argv)
     return ret;
 }
 
-static int gendsa_cb(EVP_PKEY_CTX *ctx)
-{
-    static const char symbols[] = ".+*\n";
-    int p;
-    char c;
-    BIO *b;
-
-    if (!verbose)
-        return 1;
-
-    b = EVP_PKEY_CTX_get_app_data(ctx);
-    p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
-    c = (p >= 0 && (size_t)p < sizeof(symbols) - 1) ? symbols[p] : '?';
-
-    BIO_write(b, &c, 1);
-    (void)BIO_flush(b);
-    return 1;
-}

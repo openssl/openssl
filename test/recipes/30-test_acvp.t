@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -19,23 +19,12 @@ setup("test_acvp");
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan skip_all => "ACVP is not supported by this test"
-    if $no_fips || disabled("acvp_tests");
+    if $no_fips || disabled("acvp-tests");
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
-my $infile = bldtop_file('providers', platform->dso('fips'));
-
-plan tests => 2;
-
-ok(run(app(['openssl', 'fipsinstall',
-           '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-           '-module', $infile,
-           '-provider_name', 'fips', '-mac_name', 'HMAC',
-           '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-           '-section_name', 'fips_sect'])),
-   "fipsinstall");
+plan tests => 1;
 
 ok(run(test(["acvp_test", "-config", srctop_file("test","fips.cnf")])),
    "running acvp_test");

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -26,8 +26,6 @@ plan skip_all => "$test_name needs the sock feature enabled"
 
 plan skip_all => "$test_name needs SSLv3, TLSv1, TLSv1.1 or TLSv1.2 enabled"
     if alldisabled(("ssl3", "tls1", "tls1_1", "tls1_2"));
-
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 sub checkmessages($$$$$$);
 sub clearclient();
@@ -221,38 +219,38 @@ sub checkmessages($$$$$$)
 
     subtest $testname => sub {
 
-	foreach my $message (@{$proxy->message_list}) {
-	    if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO
+        foreach my $message (@{$proxy->message_list}) {
+            if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO
                 || $message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
-		#Get the extensions data
-		my %extensions = %{$message->extension_data};
-		if (defined
+                #Get the extensions data
+                my %extensions = %{$message->extension_data};
+                if (defined
                     $extensions{TLSProxy::Message::EXT_SESSION_TICKET}) {
-		    if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
-			$chellotickext = 1;
-		    } else {
-			$shellotickext = 1;
-		    }
-		}
-	    } elsif ($message->mt == TLSProxy::Message::MT_CERTIFICATE) {
-		#Must be doing a full handshake
-		$fullhand = 1;
-	    } elsif ($message->mt == TLSProxy::Message::MT_NEW_SESSION_TICKET) {
-		$ticketseen = 1;
-	    }
-	}
+                    if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
+                        $chellotickext = 1;
+                    } else {
+                        $shellotickext = 1;
+                    }
+                }
+            } elsif ($message->mt == TLSProxy::Message::MT_CERTIFICATE) {
+                #Must be doing a full handshake
+                $fullhand = 1;
+            } elsif ($message->mt == TLSProxy::Message::MT_NEW_SESSION_TICKET) {
+                $ticketseen = 1;
+            }
+        }
 
-	plan tests => 5;
+        plan tests => 5;
 
-	ok(TLSProxy::Message->success, "Handshake");
-	ok(($testch && $chellotickext) || (!$testch && !$chellotickext),
-	   "ClientHello extension Session Ticket check");
-	ok(($testsh && $shellotickext) || (!$testsh && !$shellotickext),
-	   "ServerHello extension Session Ticket check");
-	ok(($testtickseen && $ticketseen) || (!$testtickseen && !$ticketseen),
-	   "Session Ticket message presence check");
-	ok(($testhand && $fullhand) || (!$testhand && !$fullhand),
-	   "Session Ticket full handshake check");
+        ok(TLSProxy::Message->success, "Handshake");
+        ok(($testch && $chellotickext) || (!$testch && !$chellotickext),
+           "ClientHello extension Session Ticket check");
+        ok(($testsh && $shellotickext) || (!$testsh && !$shellotickext),
+           "ServerHello extension Session Ticket check");
+        ok(($testtickseen && $ticketseen) || (!$testtickseen && !$ticketseen),
+           "Session Ticket message presence check");
+        ok(($testhand && $fullhand) || (!$testhand && !$fullhand),
+           "Session Ticket full handshake check");
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,15 +15,13 @@
  */
 
 #include <string.h>
+#include "internal/endian.h"
 
 static ossl_inline uint32_t load32(const uint8_t *src)
 {
-    const union {
-        long one;
-        char little;
-    } is_endian = { 1 };
+    DECLARE_IS_ENDIAN;
 
-    if (is_endian.little) {
+    if (IS_LITTLE_ENDIAN) {
         uint32_t w;
         memcpy(&w, src, sizeof(w));
         return w;
@@ -38,12 +36,9 @@ static ossl_inline uint32_t load32(const uint8_t *src)
 
 static ossl_inline uint64_t load64(const uint8_t *src)
 {
-    const union {
-        long one;
-        char little;
-    } is_endian = { 1 };
+    DECLARE_IS_ENDIAN;
 
-    if (is_endian.little) {
+    if (IS_LITTLE_ENDIAN) {
         uint64_t w;
         memcpy(&w, src, sizeof(w));
         return w;
@@ -62,12 +57,9 @@ static ossl_inline uint64_t load64(const uint8_t *src)
 
 static ossl_inline void store32(uint8_t *dst, uint32_t w)
 {
-    const union {
-        long one;
-        char little;
-    } is_endian = { 1 };
+    DECLARE_IS_ENDIAN;
 
-    if (is_endian.little) {
+    if (IS_LITTLE_ENDIAN) {
         memcpy(dst, &w, sizeof(w));
     } else {
         uint8_t *p = (uint8_t *)dst;
@@ -80,12 +72,9 @@ static ossl_inline void store32(uint8_t *dst, uint32_t w)
 
 static ossl_inline void store64(uint8_t *dst, uint64_t w)
 {
-    const union {
-        long one;
-        char little;
-    } is_endian = { 1 };
+    DECLARE_IS_ENDIAN;
 
-    if (is_endian.little) {
+    if (IS_LITTLE_ENDIAN) {
         memcpy(dst, &w, sizeof(w));
     } else {
         uint8_t *p = (uint8_t *)dst;

@@ -7,7 +7,7 @@ DERlib - internal OpenSSL DER library
 =head1 DESCRIPTION
 
 OpenSSL contains an internal small DER reading and writing library,
-as an alternative to the publically known i2d and d2i functions.  It's
+as an alternative to the publicly known i2d and d2i functions.  It's
 solely constituted of functions that work as building blocks to create
 more similar functions to encode and decode larger structures.
 
@@ -47,13 +47,13 @@ which is defined like this in ASN.1 terms:
             r       INTEGER,
             s       INTEGER  }
 
-With the DER library, this is the correspoding code, given two OpenSSL
+With the DER library, this is the corresponding code, given two OpenSSL
 B<BIGNUM>s I<r> and I<s>:
 
-    int ok = DER_w_begin_sequence(pkt, -1)
-          && DER_w_bn(pkg, -1, s)
-          && DER_w_bn(pkg, -1, r)
-          && DER_w_end_sequence(pkt, -1);
+    int ok = ossl_DER_w_begin_sequence(pkt, -1)
+          && ossl_DER_w_bn(pkg, -1, s)
+          && ossl_DER_w_bn(pkg, -1, r)
+          && ossl_DER_w_end_sequence(pkt, -1);
 
 As an example of the use of I<tag>, an ASN.1 element like this:
 
@@ -61,7 +61,7 @@ As an example of the use of I<tag>, an ASN.1 element like this:
 
 Would be encoded like this:
 
-    DER_w_bn(pkt, 1, v)
+    ossl_DER_w_bn(pkt, 1, v)
 
 =begin comment
 
@@ -81,7 +81,7 @@ As a reminder, the AlgorithmIdentifier is specified like this:
     -- From RFC 3280, section 4.1.1.2
     AlgorithmIdentifier  ::=  SEQUENCE  {
          algorithm               OBJECT IDENTIFIER,
-         parameters              ANY DEFINED BY algorithm OPTIONAL  }    
+         parameters              ANY DEFINED BY algorithm OPTIONAL  }
 
 And the RSASSA-PSS OID and parameters are specified like this:
 
@@ -116,25 +116,26 @@ value:
                                                      int tag,
                                                      RSA *rsa)
     {
-        return DER_w_begin_sequence(pkt, tag)
-            && (DER_w_begin_sequence(pkt, DER_NO_CONTEXT)
-                && DER_w_ulong(pkt, 2, 20)
-                && DER_w_precompiled(pkt, 1,
-                                     der_mgf1SHA256Identifier,
-                                     sizeof(der_mgf1SHA256Identifier))
-                && DER_w_precompiled(pkt, 0,
-                                     der_sha256Identifier,
-                                     sizeof(der_sha256Identifier))
-                && DER_w_end_sequence(pkt, DER_NO_CONTEXT))
-            && DER_w_precompiled(pkt, DER_NO_CONTEXT,
-                                 der_id_RSASSA_PSS,
-                                 sizeof(der_id_RSASSA_PSS))
-            && DER_w_end_sequence(pkt, tag);
+        return ossl_DER_w_begin_sequence(pkt, tag)
+            && (ossl_DER_w_begin_sequence(pkt, DER_NO_CONTEXT)
+                && ossl_DER_w_uint32(pkt, 2, 20)
+                && ossl_DER_w_precompiled(pkt, 1,
+                                          der_mgf1SHA256Identifier,
+                                          sizeof(der_mgf1SHA256Identifier))
+                && ossl_DER_w_precompiled(pkt, 0,
+                                          der_sha256Identifier,
+                                          sizeof(der_sha256Identifier))
+                && ossl_DER_w_end_sequence(pkt, DER_NO_CONTEXT))
+            && ossl_DER_w_precompiled(pkt, DER_NO_CONTEXT,
+                                      der_id_RSASSA_PSS,
+                                      sizeof(der_id_RSASSA_PSS))
+            && ossl_DER_w_end_sequence(pkt, tag);
     }
 
 =head1 SEE ALSO
 
-L<DER_w_bn(3)>, L<DER_w_begin_sequence(3)>, L<DER_w_precompiled(3)>
+L<ossl_DER_w_bn(3)>, L<ossl_DER_w_begin_sequence(3)>,
+L<ossl_DER_w_precompiled(3)>
 
 =head1 COPYRIGHT
 

@@ -7,8 +7,19 @@ OSSL_PROVIDER-default - OpenSSL default provider
 =head1 DESCRIPTION
 
 The OpenSSL default provider supplies the majority of OpenSSL's diverse
-algorithm implementations.  It also acts as a fallback when no other
-provider has been loaded.
+algorithm implementations. If an application doesn't specify anything else
+explicitly (e.g. in the application or via config), then this is the
+provider that will be used as fallback: It is loaded automatically the
+first time that an algorithm is fetched from a provider or a function
+acting on providers is called and no other provider has been loaded yet.
+
+If an attempt to load a provider has already been made (whether successful
+or not) then the default provider won't be loaded automatically. Therefore
+if the default provider is to be used in conjunction with other providers
+then it must be loaded explicitly. Automatic loading of the default
+provider only occurs a maximum of once; if the default provider is
+explicitly unloaded then the default provider will not be automatically
+loaded again.
 
 =head2 Properties
 
@@ -46,6 +57,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item SHA3, see L<EVP_MD-SHA3(7)>
 
+=item KECCAK, see L<EVP_MD-KECCAK(7)>
+
 =item KECCAK-KMAC, see L<EVP_MD-KECCAK-KMAC(7)>
 
 =item SHAKE, see L<EVP_MD-SHAKE(7)>
@@ -57,6 +70,8 @@ The OpenSSL default provider supports these operations and algorithms:
 =item MD5, see L<EVP_MD-MD5(7)>
 
 =item MD5-SHA1, see L<EVP_MD-MD5-SHA1(7)>
+
+=item RIPEMD160, see L<EVP_MD-RIPEMD160(7)>
 
 =back
 
@@ -70,27 +85,15 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item CAMELLIA, see L<EVP_CIPHER-CAMELLIA(7)>
 
-=item DES, see L<EVP_CIPHER-DES(7)>
-
-=item BF, see L<EVP_CIPHER-BF(7)>
-
-=item IDEA, see L<EVP_CIPHER-IDEA(7)>
-
-=item CAST5, see L<EVP_CIPHER-CAST5(7)>
+=item 3DES, see L<EVP_CIPHER-DES(7)>
 
 =item SEED, see L<EVP_CIPHER-SEED(7)>
 
 =item SM4, see L<EVP_CIPHER-SM4(7)>
 
-=item RC2, see L<EVP_CIPHER-RC2(7)>
+=item ChaCha20, see L<EVP_CIPHER-CHACHA(7)>
 
-=item RC4, see L<EVP_CIPHER-RC4(7)>
-
-=item RC5, see L<EVP_CIPHER-RC5(7)>
-
-=item ChaCha20, see L<EVP_CIPHER-ChaCha20(7)>
-
-=item ChaCha20-Poly1305, see L<EVP_CIPHER-ChaCha20-Poly1305(7)>
+=item ChaCha20-Poly1305, see L<EVP_CIPHER-CHACHA(7)>
 
 =back
 
@@ -124,19 +127,25 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item PBKDF2, see L<EVP_KDF-PBKDF2(7)>
 
+=item PKCS12KDF, see L<EVP_KDF-PKCS12KDF(7)>
+
 =item SSHKDF, see L<EVP_KDF-SSHKDF(7)>
 
 =item TLS1-PRF, see L<EVP_KDF-TLS1_PRF(7)>
 
 =item KBKDF, see L<EVP_KDF-KB(7)>
 
-=item X942KDF, see L<EVP_KDF-X942(7)>
+=item X942KDF-ASN1, see L<EVP_KDF-X942-ASN1(7)>
+
+=item X942KDF-CONCAT, see L<EVP_KDF-X942-CONCAT(7)>
+
+=item X963KDF, see L<EVP_KDF-X963(7)>
 
 =item SCRYPT, see L<EVP_KDF-SCRYPT(7)>
 
 =item KRB5KDF, see L<EVP_KDF-KRB5KDF(7)>
 
-=item X963KDF, see L<EVP_KDF-X963(7)>
+=item HMAC-DRBG, see L<EVP_KDF-HMAC-DRBG(7)>
 
 =back
 
@@ -162,6 +171,14 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item RSA, see L<EVP_SIGNATURE-RSA(7)>
 
+=item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
+
+=item SIPHASH, see L<EVP_SIGNATURE-Siphash(7)>
+
+=item POLY1305, see L<EVP_SIGNATURE-Poly1305(7)>
+
+=item CMAC, see L<EVP_SIGNATURE-CMAC(7)>
+
 =back
 
 =head2 Asymmetric Cipher
@@ -170,6 +187,20 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item RSA, see L<EVP_ASYM_CIPHER-RSA(7)>
 
+=item SM2, see L<EVP_ASYM_CIPHER-SM2(7)>
+
+=back
+
+=head2 Asymmetric Key Encapsulation
+
+=over 4
+
+=item RSA, see L<EVP_KEM-RSA(7)>
+
+=item X25519, see L<EVP_KEM-X25519(7)>
+
+=item EC, see L<EVP_KEM-EC(7)>
+
 =back
 
 =head2 Asymmetric Key Management
@@ -177,6 +208,8 @@ The OpenSSL default provider supports these operations and algorithms:
 =over 4
 
 =item DH, see L<EVP_KEYMGMT-DH(7)>
+
+=item DHX, see L<EVP_KEYMGMT-DHX(7)>
 
 =item DSA, see L<EVP_KEYMGMT-DSA(7)>
 
@@ -190,35 +223,42 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =back
 
-=head2 Asymmetric Key Serializer
+=head2 Asymmetric Key Encoder
 
-In addition to "provider=default", this set of implementations define the
-property "fips=yes", to allow them to be used together with the FIPS
-provider.
+The default provider also includes all of the encoding algorithms
+present in the base provider.  Some of these have the property "fips=yes",
+to allow them to be used together with the FIPS provider.
 
 =over 4
 
-=item RSA, see L<OSSL_SERIALIZER-RSA(7)>
+=item RSA, see L<OSSL_ENCODER-RSA(7)>
 
-=item DH, see L<OSSL_SERIALIZER-DH(7)>
+=item DH, see L<OSSL_ENCODER-DH(7)>
 
-=item DSA, see L<OSSL_SERIALIZER-DSA(7)>
+=item DSA, see L<OSSL_ENCODER-DSA(7)>
 
-=item EC, see L<OSSL_SERIALIZER-EC(7)>
+=item EC, see L<OSSL_ENCODER-EC(7)>
 
-=item X25519, see L<OSSL_SERIALIZER-X25519(7)>
+=item X25519, see L<OSSL_ENCODER-X25519(7)>
 
-=item X448, see L<OSSL_SERIALIZER-X448(7)>
+=item X448, see L<OSSL_ENCODER-X448(7)>
 
 =back
 
 =head1 SEE ALSO
 
-L<openssl-core.h(7)>, L<openssl-core_dispatch.h(7)>, L<provider(7)>
+L<openssl-core.h(7)>, L<openssl-core_dispatch.h(7)>, L<provider(7)>,
+L<OSSL_PROVIDER-base(7)>
+
+=head1 HISTORY
+
+The RIPEMD160 digest was added to the default provider in OpenSSL 3.0.7.
+
+All other functionality was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

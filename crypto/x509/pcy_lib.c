@@ -13,8 +13,6 @@
 
 #include "pcy_local.h"
 
-DEFINE_STACK_OF(X509_POLICY_NODE)
-
 /* accessor functions */
 
 /* X509_POLICY_TREE stuff */

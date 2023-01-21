@@ -1,0 +1,113 @@
+=pod
+
+=head1 NAME
+
+X509_get_default_cert_file, X509_get_default_cert_file_env,
+X509_get_default_cert_path_env,
+X509_get_default_cert_dir, X509_get_default_cert_dir_env,
+X509_get_default_cert_uri, X509_get_default_cert_uri_env -
+retrieve default locations for trusted CA certificates
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509.h>
+
+ const char *X509_get_default_cert_file(void);
+ const char *X509_get_default_cert_dir(void);
+ const char *X509_get_default_cert_uri(void);
+
+ const char *X509_get_default_cert_file_env(void);
+ const char *X509_get_default_cert_path_env(void);
+ const char *X509_get_default_cert_dir_env(void);
+ const char *X509_get_default_cert_uri_env(void);
+
+=head1 DESCRIPTION
+
+The X509_get_default_cert_file() function returns the default path
+to a file containing trusted CA certificates. OpenSSL will use this as
+the default path when it is asked to load trusted CA certificates
+from a file and no other path is specified. If the file exists, CA certificates
+are loaded from the file.
+
+The X509_get_default_cert_dir() function returns a default delimeter-separated
+list of paths to a directories containing trusted CA certificates named in the
+hashed format. OpenSSL will use this as the default list of paths when it is
+asked to load trusted CA certificates from a directory and no other path is
+specified. If a given directory in the list exists, OpenSSL attempts to lookup
+CA certificates in this directory by calculating a filename based on a hash of
+the certificate's subject name.
+
+The X509_get_default_cert_uri() function returns the default URI for a
+certificate store accessed programmatically via an OpenSSL provider. If there is
+no default store applicable to the system for which OpenSSL was compiled, this
+returns an empty string.
+
+X509_get_default_cert_file_env() and X509_get_default_cert_uri_env() return
+environment variable names which are recommended to specify nondefault values to
+be used instead of the values returned by X509_get_default_cert_file() and
+X509_get_default_cert_uri() respectively. The values returned by the latter
+functions are not affected by these environment variables; you must check for
+these environment variables yourself, using these functions to retrieve the
+correct environment variable names. If an environment variable is not set, the
+value returned by the corresponding function above should be used.
+
+X509_get_default_cert_path_env() returns the environment variable name which is
+recommended to specify a nondefault value to be used instead of the value
+returned by X509_get_default_cert_dir(). This environment variable supercedes
+the deprecated environment variable whose name is returned by
+X509_get_default_cert_dir_env(). This environment variable was deprecated as its
+contents can be interpreted ambiguously; see NOTES.
+
+By default, OpenSSL uses the path list specified in the environment variable
+whose name is returned by X509_get_default_cert_path_env() if it is set;
+otherwise, it uses the path list specified in the environment variable whose
+name is returned by X509_get_default_cert_dir_env() if it is set; otherwise, it
+uses the value returned by X509_get_default_cert_dir()).
+
+=head1 NOTES
+
+X509_get_default_cert_uri(), X509_get_default_cert_uri_env() and
+X509_get_default_cert_path_env() were introduced in OpenSSL 3.2. Prior to this
+release, store URIs were expressed via the environment variable returned by
+X509_get_default_cert_dir_env(); this environment variable could be used to
+specify either a list of directories or a store URI. This creates an ambiguity
+in which the environment variable returned by X509_get_default_cert_dir_env() is
+interpreted both as a list of directories and as a store URI.
+
+This usage and the environment variable returned by
+X509_get_default_cert_dir_env() are now deprecated; to specify a store URI, use
+the environment variable returned by X509_get_default_cert_uri_env(), and to
+specify a list of directories, use the environment variable returned by
+X509_get_default_cert_path_env().
+
+=head1 RETURN VALUES
+
+These functions return pointers to constant strings with static storage
+duration.
+
+=head1 SEE ALSO
+
+L<X509_LOOKUP(3)>,
+L<SSL_CTX_set_default_verify_file(3)>,
+L<SSL_CTX_set_default_verify_dir(3)>,
+L<SSL_CTX_set_default_verify_store(3)>,
+L<SSL_CTX_load_verify_file(3)>,
+L<SSL_CTX_load_verify_dir(3)>,
+L<SSL_CTX_load_verify_store(3)>,
+L<SSL_CTX_load_verify_locations(3)>
+
+=head1 HISTORY
+
+X509_get_default_cert_uri(), X509_get_default_cert_path_env() and
+X509_get_default_cert_uri_env() were introduced in OpenSSL 3.2.
+
+=head1 COPYRIGHT
+
+Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

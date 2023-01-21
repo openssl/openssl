@@ -179,6 +179,26 @@ The auxiliary probable primes.
 
 =back
 
+=head2 RSA key validation
+
+For RSA keys, L<EVP_PKEY_param_check(3)> and L<EVP_PKEY_param_check_quick(3)>
+both return 1 unconditionally.
+
+For RSA keys, L<EVP_PKEY_public_check(3)> conforms to the SP800-56Br1 I<public key
+check> when the OpenSSL FIPS provider is used. The OpenSSL default provider
+performs similiar tests but relaxes the keysize restrictions for backwards
+compatibility.
+
+For RSA keys, L<EVP_PKEY_public_check_quick(3)> is the same as
+L<EVP_PKEY_public_check(3)>.
+
+For RSA keys, L<EVP_PKEY_private_check(3)> conforms to the SP800-56Br1
+I<private key test>.
+
+For RSA keys, L<EVP_PKEY_pairwise_check(3)> conforms to the
+SP800-56Br1 I<KeyPair Validation check> for the OpenSSL FIPS provider. The
+OpenSSL default provider allows testing of the validity of multi-primes.
+
 =head1 CONFORMING TO
 
 =over 4
@@ -202,14 +222,18 @@ An B<EVP_PKEY> context can be obtained by calling:
     EVP_PKEY_CTX *pctx =
         EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
 
-An B<RSA> key can be generated like this:
+An B<RSA> key can be generated simply like this:
+
+    pkey = EVP_RSA_gen(4096);
+
+or like this:
 
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *pctx =
         EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
 
     EVP_PKEY_keygen_init(pctx);
-    EVP_PKEY_gen(pctx, &pkey);
+    EVP_PKEY_generate(pctx, &pkey);
     EVP_PKEY_CTX_free(pctx);
 
 An B<RSA> key can be generated with key generation parameters:
@@ -227,17 +251,17 @@ An B<RSA> key can be generated with key generation parameters:
     params[2] = OSSL_PARAM_construct_end();
     EVP_PKEY_CTX_set_params(pctx, params);
 
-    EVP_PKEY_gen(pctx, &pkey);
+    EVP_PKEY_generate(pctx, &pkey);
     EVP_PKEY_print_private(bio_out, pkey, 0, NULL);
     EVP_PKEY_CTX_free(pctx);
 
 =head1 SEE ALSO
 
-L<EVP_KEYMGMT(3)>, L<EVP_PKEY(3)>, L<provider-keymgmt(7)>
+L<EVP_RSA_gen(3)>, L<EVP_KEYMGMT(3)>, L<EVP_PKEY(3)>, L<provider-keymgmt(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

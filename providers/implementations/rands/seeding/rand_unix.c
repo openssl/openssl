@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,15 +10,15 @@
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE
 #endif
-#include "../e_os.h"
+#include "internal/e_os.h"
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
-#include "prov/rand_pool.h"
+#include "crypto/rand_pool.h"
 #include "crypto/rand.h"
-#include <stdio.h>
 #include "internal/dso.h"
+#include "internal/nelem.h"
 #include "prov/seeding.h"
 
 #ifdef __linux
@@ -36,6 +36,10 @@
 #if defined(__OpenBSD__)
 # include <sys/param.h>
 #endif
+#if defined(__DragonFly__)
+# include <sys/param.h>
+# include <sys/random.h>
+#endif
 
 #if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
      || defined(__DJGPP__)
@@ -46,7 +50,6 @@
 # include <sys/time.h>
 
 static uint64_t get_time_stamp(void);
-static uint64_t get_timer_bits(void);
 
 /* Macro to convert two thirty two bit values into a sixty four bit one */
 # define TWO32TO64(a, b) ((((uint64_t)(a)) << 32) + (b))
@@ -72,7 +75,9 @@ static uint64_t get_timer_bits(void);
  * macro that might be undefined.
  */
 # undef OSSL_POSIX_TIMER_OKAY
-# if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0
+/* On some systems, _POSIX_TIMERS is defined but empty.
+ * Subtracting by 0 when comparing avoids an error in this case. */
+# if defined(_POSIX_TIMERS) && _POSIX_TIMERS -0 > 0
 #  if defined(__GLIBC__)
 #   if defined(__GLIBC_PREREQ)
 #    if __GLIBC_PREREQ(2, 17)
@@ -132,7 +137,7 @@ static uint64_t get_timer_bits(void);
  *
  * As a precaution, we assume only 2 bits of entropy per byte.
  */
-size_t prov_pool_acquire_entropy(RAND_POOL *pool)
+size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
 {
     short int code;
     int i, k;
@@ -147,7 +152,7 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
     extern void s$sleep2(long long *_duration, short int *_code);
 #  endif
 
-    bytes_needed = rand_pool_bytes_needed(pool, 4 /*entropy_factor*/);
+    bytes_needed = ossl_rand_pool_bytes_needed(pool, 4 /*entropy_factor*/);
 
     for (i = 0; i < bytes_needed; i++) {
         /*
@@ -170,16 +175,16 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
         /* Get wall clock time, take 8 bits. */
         clock_gettime(CLOCK_REALTIME, &ts);
         v = (unsigned char)(ts.tv_nsec & 0xFF);
-        rand_pool_add(pool, arg, &v, sizeof(v) , 2);
+        ossl_rand_pool_add(pool, arg, &v, sizeof(v), 2);
     }
-    return rand_pool_entropy_available(pool);
+    return ossl_rand_pool_entropy_available(pool);
 }
 
-void rand_pool_cleanup(void)
+void ossl_rand_pool_cleanup(void)
 {
 }
 
-void rand_pool_keep_random_devices_open(int keep)
+void ossl_rand_pool_keep_random_devices_open(int keep)
 {
 }
 
@@ -314,9 +319,7 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
 #     define __NR_getrandom    352
 #    elif defined(__cris__)
 #     define __NR_getrandom    356
-#    elif defined(__aarch64__)
-#     define __NR_getrandom    278
-#    else /* generic */
+#    else /* generic (f.e. aarch64, loongarch, loongarch64) */
 #     define __NR_getrandom    278
 #    endif
 #   endif
@@ -346,13 +349,27 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      * - OpenBSD since 5.6
      * - Linux since 3.17 with glibc 2.25
      * - FreeBSD since 12.0 (1200061)
+     *
+     * Note: Sometimes getentropy() can be provided but not implemented
+     * internally. So we need to check errno for ENOSYS
      */
-#  if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
+#  if !defined(__DragonFly__) && !defined(__NetBSD__)
+#    if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
     extern int getentropy(void *buffer, size_t length) __attribute__((weak));
 
-    if (getentropy != NULL)
-        return getentropy(buf, buflen) == 0 ? (ssize_t)buflen : -1;
-#  elif !defined(FIPS_MODULE)
+    if (getentropy != NULL) {
+        if (getentropy(buf, buflen) == 0)
+            return (ssize_t)buflen;
+        if (errno != ENOSYS)
+            return -1;
+    }
+#    elif defined(OPENSSL_APPLE_CRYPTO_RANDOM)
+
+    if (CCRandomGenerateBytes(buf, buflen) == kCCSuccess)
+	    return (ssize_t)buflen;
+
+    return -1;
+#    else
     union {
         void *p;
         int (*f)(void *buffer, size_t length);
@@ -367,13 +384,17 @@ static ssize_t syscall_random(void *buf, size_t buflen)
     ERR_pop_to_mark();
     if (p_getentropy.p != NULL)
         return p_getentropy.f(buf, buflen) == 0 ? (ssize_t)buflen : -1;
-#  endif
+#    endif
+#  endif /* !__DragonFly__ */
 
     /* Linux supports this since version 3.17 */
 #  if defined(__linux) && defined(__NR_getrandom)
     return syscall(__NR_getrandom, buf, buflen, 0);
 #  elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
     return sysctl_random(buf, buflen);
+#  elif (defined(__DragonFly__)  && __DragonFly_version >= 500700) \
+     || (defined(__NetBSD__) && __NetBSD_Version >= 1000000000)
+    return getrandom(buf, buflen, 0);
 #  else
     errno = ENOSYS;
     return -1;
@@ -396,12 +417,10 @@ static int keep_random_devices_open = 1;
        && defined(OPENSSL_RAND_SEED_GETRANDOM)
 static void *shm_addr;
 
-#    if !defined(FIPS_MODULE)
 static void cleanup_shm(void)
 {
     shmdt(shm_addr);
 }
-#    endif
 
 /*
  * Ensure that the system randomness source has been adequately seeded.
@@ -467,11 +486,8 @@ static int wait_random_seeded(void)
              * If this call fails, it isn't a big problem.
              */
             shm_addr = shmat(shm_id, NULL, SHM_RDONLY);
-#    ifndef FIPS_MODULE
-            /* TODO 3.0: The FIPS provider doesn't have OPENSSL_atexit */
             if (shm_addr != (void *)-1)
                 OPENSSL_atexit(&cleanup_shm);
-#    endif
         }
     }
     return seeded;
@@ -544,7 +560,7 @@ static void close_random_device(size_t n)
     rd->fd = -1;
 }
 
-int rand_pool_init(void)
+int ossl_rand_pool_init(void)
 {
     size_t i;
 
@@ -554,7 +570,7 @@ int rand_pool_init(void)
     return 1;
 }
 
-void rand_pool_cleanup(void)
+void ossl_rand_pool_cleanup(void)
 {
     size_t i;
 
@@ -562,26 +578,26 @@ void rand_pool_cleanup(void)
         close_random_device(i);
 }
 
-void rand_pool_keep_random_devices_open(int keep)
+void ossl_rand_pool_keep_random_devices_open(int keep)
 {
     if (!keep)
-        rand_pool_cleanup();
+        ossl_rand_pool_cleanup();
 
     keep_random_devices_open = keep;
 }
 
 #  else     /* !defined(OPENSSL_RAND_SEED_DEVRANDOM) */
 
-int rand_pool_init(void)
+int ossl_rand_pool_init(void)
 {
     return 1;
 }
 
-void rand_pool_cleanup(void)
+void ossl_rand_pool_cleanup(void)
 {
 }
 
-void rand_pool_keep_random_devices_open(int keep)
+void ossl_rand_pool_keep_random_devices_open(int keep)
 {
 }
 
@@ -590,7 +606,7 @@ void rand_pool_keep_random_devices_open(int keep)
 /*
  * Try the various seeding methods in turn, exit when successful.
  *
- * TODO(DRBG): If more than one entropy source is available, is it
+ * If more than one entropy source is available, is it
  * preferable to stop as soon as enough entropy has been collected
  * (as favored by @rsalz) or should one rather be defensive and add
  * more entropy than requested and/or from different sources?
@@ -604,12 +620,14 @@ void rand_pool_keep_random_devices_open(int keep)
  * of input from the different entropy sources (trust, quality,
  * possibility of blocking).
  */
-size_t prov_pool_acquire_entropy(RAND_POOL *pool)
+size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
 {
 #  if defined(OPENSSL_RAND_SEED_NONE)
-    return rand_pool_entropy_available(pool);
+    return ossl_rand_pool_entropy_available(pool);
 #  else
-    size_t entropy_available;
+    size_t entropy_available = 0;
+
+    (void)entropy_available;    /* avoid compiler warning */
 
 #   if defined(OPENSSL_RAND_SEED_GETRANDOM)
     {
@@ -619,12 +637,12 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
         /* Maximum allowed number of consecutive unsuccessful attempts */
         int attempts = 3;
 
-        bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+        bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
         while (bytes_needed != 0 && attempts-- > 0) {
-            buffer = rand_pool_add_begin(pool, bytes_needed);
+            buffer = ossl_rand_pool_add_begin(pool, bytes_needed);
             bytes = syscall_random(buffer, bytes_needed);
             if (bytes > 0) {
-                rand_pool_add_end(pool, bytes, 8 * bytes);
+                ossl_rand_pool_add_end(pool, bytes, 8 * bytes);
                 bytes_needed -= bytes;
                 attempts = 3; /* reset counter after successful attempt */
             } else if (bytes < 0 && errno != EINTR) {
@@ -632,7 +650,7 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
             }
         }
     }
-    entropy_available = rand_pool_entropy_available(pool);
+    entropy_available = ossl_rand_pool_entropy_available(pool);
     if (entropy_available > 0)
         return entropy_available;
 #   endif
@@ -649,7 +667,7 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
         unsigned char *buffer;
         size_t i;
 
-        bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+        bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
         for (i = 0; bytes_needed > 0 && i < OSSL_NELEM(random_device_paths);
              i++) {
             ssize_t bytes = 0;
@@ -661,11 +679,11 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
                 continue;
 
             while (bytes_needed != 0 && attempts-- > 0) {
-                buffer = rand_pool_add_begin(pool, bytes_needed);
+                buffer = ossl_rand_pool_add_begin(pool, bytes_needed);
                 bytes = read(fd, buffer, bytes_needed);
 
                 if (bytes > 0) {
-                    rand_pool_add_end(pool, bytes, 8 * bytes);
+                    ossl_rand_pool_add_end(pool, bytes, 8 * bytes);
                     bytes_needed -= bytes;
                     attempts = 3; /* reset counter on successful attempt */
                 } else if (bytes < 0 && errno != EINTR) {
@@ -675,22 +693,22 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
             if (bytes < 0 || !keep_random_devices_open)
                 close_random_device(i);
 
-            bytes_needed = rand_pool_bytes_needed(pool, 1);
+            bytes_needed = ossl_rand_pool_bytes_needed(pool, 1);
         }
-        entropy_available = rand_pool_entropy_available(pool);
+        entropy_available = ossl_rand_pool_entropy_available(pool);
         if (entropy_available > 0)
             return entropy_available;
     }
 #   endif
 
 #   if defined(OPENSSL_RAND_SEED_RDTSC)
-    entropy_available = rand_acquire_entropy_from_tsc(pool);
+    entropy_available = ossl_prov_acquire_entropy_from_tsc(pool);
     if (entropy_available > 0)
         return entropy_available;
 #   endif
 
 #   if defined(OPENSSL_RAND_SEED_RDCPU)
-    entropy_available = rand_acquire_entropy_from_cpu(pool);
+    entropy_available = ossl_prov_acquire_entropy_from_cpu(pool);
     if (entropy_available > 0)
         return entropy_available;
 #   endif
@@ -702,27 +720,27 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
         unsigned char *buffer;
         int i;
 
-        bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+        bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
         for (i = 0; bytes_needed > 0 && paths[i] != NULL; i++) {
             size_t bytes = 0;
             int num;
 
-            buffer = rand_pool_add_begin(pool, bytes_needed);
+            buffer = ossl_rand_pool_add_begin(pool, bytes_needed);
             num = RAND_query_egd_bytes(paths[i],
                                        buffer, (int)bytes_needed);
             if (num == (int)bytes_needed)
                 bytes = bytes_needed;
 
-            rand_pool_add_end(pool, bytes, 8 * bytes);
-            bytes_needed = rand_pool_bytes_needed(pool, 1);
+            ossl_rand_pool_add_end(pool, bytes, 8 * bytes);
+            bytes_needed = ossl_rand_pool_bytes_needed(pool, 1);
         }
-        entropy_available = rand_pool_entropy_available(pool);
+        entropy_available = ossl_rand_pool_entropy_available(pool);
         if (entropy_available > 0)
             return entropy_available;
     }
 #   endif
 
-    return rand_pool_entropy_available(pool);
+    return ossl_rand_pool_entropy_available(pool);
 #  endif
 }
 # endif
@@ -730,7 +748,7 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
 
 #if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
      || defined(__DJGPP__)
-int prov_pool_add_nonce_data(RAND_POOL *pool)
+int ossl_pool_add_nonce_data(RAND_POOL *pool)
 {
     struct {
         pid_t pid;
@@ -750,33 +768,8 @@ int prov_pool_add_nonce_data(RAND_POOL *pool)
     data.tid = CRYPTO_THREAD_get_current_id();
     data.time = get_time_stamp();
 
-    return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
+    return ossl_rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
-
-int rand_pool_add_additional_data(RAND_POOL *pool)
-{
-    struct {
-        int fork_id;
-        CRYPTO_THREAD_ID tid;
-        uint64_t time;
-    } data;
-
-    /* Erase the entire structure including any padding */
-    memset(&data, 0, sizeof(data));
-
-    /*
-     * Add some noise from the thread id and a high resolution timer.
-     * The fork_id adds some extra fork-safety.
-     * The thread id adds a little randomness if the drbg is accessed
-     * concurrently (which is the case for the <master> drbg).
-     */
-    data.fork_id = openssl_get_fork_id();
-    data.tid = CRYPTO_THREAD_get_current_id();
-    data.time = get_timer_bits();
-
-    return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
-}
-
 
 /*
  * Get the current time with the highest possible resolution
@@ -807,55 +800,5 @@ static uint64_t get_time_stamp(void)
     return time(NULL);
 }
 
-/*
- * Get an arbitrary timer value of the highest possible resolution
- *
- * The timer value is added as random noise to the additional data,
- * which is not considered a trusted entropy sourec, so any result
- * is acceptable.
- */
-static uint64_t get_timer_bits(void)
-{
-    uint64_t res = OPENSSL_rdtsc();
-
-    if (res != 0)
-        return res;
-
-# if defined(__sun) || defined(__hpux)
-    return gethrtime();
-# elif defined(_AIX)
-    {
-        timebasestruct_t t;
-
-        read_wall_time(&t, TIMEBASE_SZ);
-        return TWO32TO64(t.tb_high, t.tb_low);
-    }
-# elif defined(OSSL_POSIX_TIMER_OKAY)
-    {
-        struct timespec ts;
-
-#  ifdef CLOCK_BOOTTIME
-#   define CLOCK_TYPE CLOCK_BOOTTIME
-#  elif defined(_POSIX_MONOTONIC_CLOCK)
-#   define CLOCK_TYPE CLOCK_MONOTONIC
-#  else
-#   define CLOCK_TYPE CLOCK_REALTIME
-#  endif
-
-        if (clock_gettime(CLOCK_TYPE, &ts) == 0)
-            return TWO32TO64(ts.tv_sec, ts.tv_nsec);
-    }
-# endif
-# if defined(__unix__) \
-     || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
-    {
-        struct timeval tv;
-
-        if (gettimeofday(&tv, NULL) == 0)
-            return TWO32TO64(tv.tv_sec, tv.tv_usec);
-    }
-# endif
-    return time(NULL);
-}
 #endif /* (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS))
           || defined(__DJGPP__) */

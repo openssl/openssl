@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,6 +21,7 @@
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
+#include "internal/endian.h"
 
 int SHA224_Init(SHA256_CTX *c)
 {
@@ -50,34 +51,6 @@ int SHA256_Init(SHA256_CTX *c)
     c->h[7] = 0x5be0cd19UL;
     c->md_len = SHA256_DIGEST_LENGTH;
     return 1;
-}
-
-unsigned char *SHA224(const unsigned char *d, size_t n, unsigned char *md)
-{
-    SHA256_CTX c;
-    static unsigned char m[SHA224_DIGEST_LENGTH];
-
-    if (md == NULL)
-        md = m;
-    SHA224_Init(&c);
-    SHA256_Update(&c, d, n);
-    SHA256_Final(md, &c);
-    OPENSSL_cleanse(&c, sizeof(c));
-    return md;
-}
-
-unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md)
-{
-    SHA256_CTX c;
-    static unsigned char m[SHA256_DIGEST_LENGTH];
-
-    if (md == NULL)
-        md = m;
-    SHA256_Init(&c);
-    SHA256_Update(&c, d, n);
-    SHA256_Final(md, &c);
-    OPENSSL_cleanse(&c, sizeof(c));
-    return md;
 }
 
 int SHA224_Update(SHA256_CTX *c, const void *data, size_t len)
@@ -156,18 +129,63 @@ static const SHA_LONG K256[64] = {
     0x90befffaUL, 0xa4506cebUL, 0xbef9a3f7UL, 0xc67178f2UL
 };
 
+# ifndef PEDANTIC
+#  if defined(__GNUC__) && __GNUC__>=2 && \
+      !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#   if defined(__riscv_zknh)
+#    define Sigma0(x) ({ MD32_REG_T ret;            \
+                        asm ("sha256sum0 %0, %1"    \
+                        : "=r"(ret)                 \
+                        : "r"(x)); ret;             })
+#    define Sigma1(x) ({ MD32_REG_T ret;            \
+                        asm ("sha256sum1 %0, %1"    \
+                        : "=r"(ret)                 \
+                        : "r"(x)); ret;             })
+#    define sigma0(x) ({ MD32_REG_T ret;            \
+                        asm ("sha256sig0 %0, %1"    \
+                        : "=r"(ret)                 \
+                        : "r"(x)); ret;             })
+#    define sigma1(x) ({ MD32_REG_T ret;            \
+                        asm ("sha256sig1 %0, %1"    \
+                        : "=r"(ret)                 \
+                        : "r"(x)); ret;             })
+#   endif
+#   if defined(__riscv_zbt) || defined(__riscv_zpn)
+#    define Ch(x,y,z) ({  MD32_REG_T ret;                           \
+                        asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3"\
+                        : "=r"(ret)                                 \
+                        : "r"(x), "r"(y), "r"(z)); ret;             })
+#    define Maj(x,y,z) ({ MD32_REG_T ret;                           \
+                        asm (".insn r4 0x33, 1, 0x3, %0, %2, %1, %3"\
+                        : "=r"(ret)                                 \
+                        : "r"(x^z), "r"(y), "r"(x)); ret;           })
+#   endif
+#  endif
+# endif
+
 /*
  * FIPS specification refers to right rotations, while our ROTATE macro
  * is left one. This is why you might notice that rotation coefficients
  * differ from those observed in FIPS document by 32-N...
  */
-# define Sigma0(x)       (ROTATE((x),30) ^ ROTATE((x),19) ^ ROTATE((x),10))
-# define Sigma1(x)       (ROTATE((x),26) ^ ROTATE((x),21) ^ ROTATE((x),7))
-# define sigma0(x)       (ROTATE((x),25) ^ ROTATE((x),14) ^ ((x)>>3))
-# define sigma1(x)       (ROTATE((x),15) ^ ROTATE((x),13) ^ ((x)>>10))
-
-# define Ch(x,y,z)       (((x) & (y)) ^ ((~(x)) & (z)))
-# define Maj(x,y,z)      (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+# ifndef Sigma0
+#  define Sigma0(x)       (ROTATE((x),30) ^ ROTATE((x),19) ^ ROTATE((x),10))
+# endif
+# ifndef Sigma1
+#  define Sigma1(x)       (ROTATE((x),26) ^ ROTATE((x),21) ^ ROTATE((x),7))
+# endif
+# ifndef sigma0
+#  define sigma0(x)       (ROTATE((x),25) ^ ROTATE((x),14) ^ ((x)>>3))
+# endif
+# ifndef sigma1
+#  define sigma1(x)       (ROTATE((x),15) ^ ROTATE((x),13) ^ ((x)>>10))
+# endif
+# ifndef Ch
+#  define Ch(x,y,z)       (((x) & (y)) ^ ((~(x)) & (z)))
+# endif
+# ifndef Maj
+#  define Maj(x,y,z)      (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+# endif
 
 # ifdef OPENSSL_SMALL_FOOTPRINT
 
@@ -256,12 +274,7 @@ static void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
     SHA_LONG X[16];
     int i;
     const unsigned char *data = in;
-    const union {
-        long one;
-        char little;
-    } is_endian = {
-        1
-    };
+    DECLARE_IS_ENDIAN;
 
     while (num--) {
 
@@ -274,7 +287,7 @@ static void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
         g = ctx->h[6];
         h = ctx->h[7];
 
-        if (!is_endian.little && sizeof(SHA_LONG) == 4
+        if (!IS_LITTLE_ENDIAN && sizeof(SHA_LONG) == 4
             && ((size_t)in % 4) == 0) {
             const SHA_LONG *W = (const SHA_LONG *)data;
 

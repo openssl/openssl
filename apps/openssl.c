@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,10 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <internal/cryptlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include "internal/common.h"
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/trace.h>
@@ -58,6 +57,7 @@ static void warn_deprecated(const FUNCTION *fp)
 
 static int apps_startup(void)
 {
+    const char *use_libctx = NULL;
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
 #endif
@@ -67,13 +67,30 @@ static int apps_startup(void)
                           | OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
 
-    setup_ui_method();
+    (void)setup_ui_method();
+    (void)setup_engine_loader();
+
+    /*
+     * NOTE: This is an undocumented feature required for testing only.
+     * There are no guarantees that it will exist in future builds.
+     */
+    use_libctx = getenv("OPENSSL_TEST_LIBCTX");
+    if (use_libctx != NULL) {
+        /* Set this to "1" to create a global libctx */
+        if (strcmp(use_libctx, "1") == 0) {
+            if (app_create_libctx() == NULL)
+                return 0;
+        }
+    }
 
     return 1;
 }
 
 static void apps_shutdown(void)
 {
+    app_providers_cleanup();
+    OSSL_LIB_CTX_free(app_get0_libctx());
+    destroy_engine_loader();
     destroy_ui_method();
 }
 
@@ -94,8 +111,10 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
 
     switch (cmd) {
     case OSSL_TRACE_CTRL_BEGIN:
-        if (!ossl_assert(!trace_data->ingroup))
+        if (trace_data->ingroup) {
+            BIO_printf(bio_err, "ERROR: tracing already started\n");
             return 0;
+        }
         trace_data->ingroup = 1;
 
         tid = CRYPTO_THREAD_get_current_id();
@@ -107,14 +126,18 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
         BIO_set_prefix(trace_data->bio, buffer);
         break;
     case OSSL_TRACE_CTRL_WRITE:
-        if (!ossl_assert(trace_data->ingroup))
+        if (!trace_data->ingroup) {
+            BIO_printf(bio_err, "ERROR: writing when tracing not started\n");
             return 0;
+        }
 
         ret = BIO_write(trace_data->bio, buf, cnt);
         break;
     case OSSL_TRACE_CTRL_END:
-        if (!ossl_assert(trace_data->ingroup))
+        if (!trace_data->ingroup) {
+            BIO_printf(bio_err, "ERROR: finishing when tracing not started\n");
             return 0;
+        }
         trace_data->ingroup = 0;
 
         BIO_set_prefix(trace_data->bio, NULL);
@@ -145,14 +168,17 @@ static void setup_trace_category(int category)
 {
     BIO *channel;
     tracedata *trace_data;
+    BIO *bio = NULL;
 
     if (OSSL_trace_enabled(category))
         return;
 
-    channel = BIO_push(BIO_new(BIO_f_prefix()), dup_bio_err(FORMAT_TEXT));
+    bio = BIO_new(BIO_f_prefix());
+    channel = BIO_push(bio, dup_bio_err(FORMAT_TEXT));
     trace_data = OPENSSL_zalloc(sizeof(*trace_data));
 
     if (trace_data == NULL
+        || bio == NULL
         || (trace_data->bio = channel) == NULL
         || OSSL_trace_set_callback(category, internal_trace_cb,
                                    trace_data) == 0
@@ -212,7 +238,9 @@ int main(int argc, char *argv[])
     FUNCTION f, *fp;
     LHASH_OF(FUNCTION) *prog = NULL;
     char *pname;
+    const char *fname;
     ARGS arg;
+    int global_help = 0;
     int ret = 0;
 
     arg.argv = NULL;
@@ -226,9 +254,7 @@ int main(int argc, char *argv[])
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
     argv = copy_argv(&argc, argv);
 #elif defined(_WIN32)
-    /*
-     * Replace argv[] with UTF-8 encoded strings.
-     */
+    /* Replace argv[] with UTF-8 encoded strings. */
     win32_utf8argv(&argc, &argv);
 #endif
 
@@ -236,18 +262,11 @@ int main(int argc, char *argv[])
     setup_trace(getenv("OPENSSL_TRACE"));
 #endif
 
-    if (!apps_startup()) {
+    if ((fname = "apps_startup", !apps_startup())
+            || (fname = "prog_init", (prog = prog_init()) == NULL)) {
         BIO_printf(bio_err,
-                   "FATAL: Startup failure (dev note: apps_startup() failed)\n");
-        ERR_print_errors(bio_err);
-        ret = 1;
-        goto end;
-    }
-
-    prog = prog_init();
-    if (prog == NULL) {
-        BIO_printf(bio_err,
-                   "FATAL: Startup failure (dev note: prog_init() failed)\n");
+                   "FATAL: Startup failure (dev note: %s()) for %s\n",
+                   fname, argv[0]);
         ERR_print_errors(bio_err);
         ret = 1;
         goto end;
@@ -262,27 +281,33 @@ int main(int argc, char *argv[])
     f.name = pname;
     fp = lh_FUNCTION_retrieve(prog, &f);
     if (fp == NULL) {
-        /* We assume we've been called as 'openssl cmd' */
+        /* We assume we've been called as 'openssl ...' */
+        global_help = argc > 1
+            && (strcmp(argv[1], "-help") == 0 || strcmp(argv[1], "--help") == 0
+                || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--h") == 0);
         argc--;
         argv++;
+        opt_appname(argc == 1 || global_help ? "help" : argv[0]);
+    } else {
+        argv[0] = pname;
     }
 
     /* If there's a command, run with that, otherwise "help". */
-    ret = argc > 0
-        ? do_cmd(prog, argc, argv)
-        : do_cmd(prog, 1, help_argv);
+    ret = argc == 0 || global_help
+        ? do_cmd(prog, 1, help_argv)
+        : do_cmd(prog, argc, argv);
 
  end:
-    app_providers_cleanup();
     OPENSSL_free(default_config_file);
     lh_FUNCTION_free(prog);
     OPENSSL_free(arg.argv);
-    app_RAND_write();
+    if (!app_RAND_write())
+        ret = EXIT_FAILURE;
 
     BIO_free(bio_in);
     BIO_free_all(bio_out);
     apps_shutdown();
-    BIO_free(bio_err);
+    BIO_free_all(bio_err);
     EXIT(ret);
 }
 
@@ -312,12 +337,6 @@ int help_main(int argc, char **argv)
     DISPLAY_COLUMNS dc;
     char *new_argv[3];
 
-    if (argc == 0) {
-        new_argv[0] = "help";
-        new_argv[1] = NULL;
-        return do_cmd(prog_init(), 1, new_argv);
-    }
-
     prog = opt_init(argc, argv, help_options);
     while ((o = opt_next()) != OPT_hEOF) {
         switch (o) {
@@ -331,19 +350,20 @@ int help_main(int argc, char **argv)
         }
     }
 
+    /* One optional argument, the command to get help for. */
     if (opt_num_rest() == 1) {
         new_argv[0] = opt_rest()[0];
         new_argv[1] = "--help";
         new_argv[2] = NULL;
         return do_cmd(prog_init(), 2, new_argv);
     }
-    if (opt_num_rest() != 0) {
+    if (!opt_check_rest_arg(NULL)) {
         BIO_printf(bio_err, "Usage: %s\n", prog);
         return 1;
     }
 
     calculate_columns(functions, &dc);
-    BIO_printf(bio_err, "Standard commands");
+    BIO_printf(bio_err, "%s:\n\nStandard commands", prog);
     i = 0;
     tp = FT_none;
     for (fp = functions; fp->name != NULL; fp++) {
@@ -378,6 +398,7 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
 
     if (argc <= 0 || argv[0] == NULL)
         return 0;
+    memset(&f, 0, sizeof(f));
     f.name = argv[0];
     fp = lh_FUNCTION_retrieve(prog, &f);
     if (fp == NULL) {
@@ -396,12 +417,12 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
             warn_deprecated(fp);
         return fp->func(argc, argv);
     }
-    if ((strncmp(argv[0], "no-", 3)) == 0) {
+    f.name = argv[0];
+    if (CHECK_AND_SKIP_PREFIX(f.name, "no-")) {
         /*
          * User is asking if foo is unsupported, by trying to "run" the
          * no-foo command.  Strange.
          */
-        f.name = argv[0] + 3;
         if (lh_FUNCTION_retrieve(prog, &f) == NULL) {
             BIO_printf(bio_out, "%s\n", argv[0]);
             return 0;

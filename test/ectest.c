@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -9,29 +9,28 @@
  */
 
 /*
- * We need access to the deprecated EC_POINTs_mul, EC_GROUP_precompute_mult,
- * and EC_GROUP_have_precompute_mult for testing purposes
- * when the deprecated calls are not hidden
+ * EC_KEY low level APIs are deprecated for public use, but still ok for
+ * internal use.
  */
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-# define OPENSSL_SUPPRESS_DEPRECATED
-#endif
+#include "internal/deprecated.h"
 
 #include <string.h>
 #include "internal/nelem.h"
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_EC
-# include <openssl/ec.h>
-# ifndef OPENSSL_NO_ENGINE
-#  include <openssl/engine.h>
-# endif
-# include <openssl/err.h>
-# include <openssl/obj_mac.h>
-# include <openssl/objects.h>
-# include <openssl/rand.h>
-# include <openssl/bn.h>
-# include <openssl/opensslconf.h>
+#include <openssl/ec.h>
+#ifndef OPENSSL_NO_ENGINE
+# include <openssl/engine.h>
+#endif
+#include <openssl/err.h>
+#include <openssl/obj_mac.h>
+#include <openssl/objects.h>
+#include <openssl/rand.h>
+#include <openssl/bn.h>
+#include <openssl/opensslconf.h>
+#include <openssl/core_names.h>
+#include <openssl/param_build.h>
+#include <openssl/evp.h>
 
 static size_t crv_len = 0;
 static EC_builtin_curve *curves = NULL;
@@ -59,9 +58,9 @@ static int group_order_tests(EC_GROUP *group)
     if (!TEST_true(EC_GROUP_get_order(group, order, ctx))
         || !TEST_true(EC_POINT_mul(group, Q, order, NULL, NULL, ctx))
         || !TEST_true(EC_POINT_is_at_infinity(group, Q))
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         || !TEST_true(EC_GROUP_precompute_mult(group, ctx))
-# endif
+#endif
         || !TEST_true(EC_POINT_mul(group, Q, order, NULL, NULL, ctx))
         || !TEST_true(EC_POINT_is_at_infinity(group, Q))
         || !TEST_true(EC_POINT_copy(P, G))
@@ -75,10 +74,10 @@ static int group_order_tests(EC_GROUP *group)
         goto err;
 
     for (i = 1; i <= 2; i++) {
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         const BIGNUM *scalars[6];
         const EC_POINT *points[6];
-# endif
+#endif
 
         if (!TEST_true(BN_set_word(n1, i))
             /*
@@ -113,7 +112,7 @@ static int group_order_tests(EC_GROUP *group)
             || !TEST_false(EC_POINT_is_at_infinity(group, P)))
             goto err;
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         /* Exercise EC_POINTs_mul, including corner cases. */
         scalars[0] = scalars[1] = BN_value_one();
         points[0]  = points[1]  = P;
@@ -138,7 +137,7 @@ static int group_order_tests(EC_GROUP *group)
         if (!TEST_true(EC_POINTs_mul(group, P, NULL, 6, points, scalars, ctx))
             || !TEST_true(EC_POINT_is_at_infinity(group, P)))
             goto err;
-# endif
+#endif
     }
 
     r = 1;
@@ -164,10 +163,10 @@ static int prime_field_tests(void)
     EC_GROUP *group = NULL;
     EC_POINT *P = NULL, *Q = NULL, *R = NULL;
     BIGNUM *x = NULL, *y = NULL, *z = NULL, *yplusone = NULL;
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     const EC_POINT *points[4];
     const BIGNUM *scalars[4];
-# endif
+#endif
     unsigned char buf[100];
     size_t len, r = 0;
     int k;
@@ -539,7 +538,7 @@ static int prime_field_tests(void)
         || !TEST_false(EC_POINT_is_at_infinity(group, Q)))
         goto err;
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     TEST_note("combined multiplication ...");
     points[0] = Q;
     points[1] = Q;
@@ -585,7 +584,7 @@ static int prime_field_tests(void)
     if (!TEST_true(EC_POINTs_mul(group, P, NULL, 4, points, scalars, ctx))
         || !TEST_true(EC_POINT_is_at_infinity(group, P)))
         goto err;
-# endif
+#endif
     TEST_note(" ok\n");
     r = 1;
 err:
@@ -605,7 +604,7 @@ err:
     return r;
 }
 
-# ifndef OPENSSL_NO_EC2M
+#ifndef OPENSSL_NO_EC2M
 
 static struct c2_curve_test {
     const char *name;
@@ -980,20 +979,20 @@ static int char2_field_tests(void)
         || !TEST_ptr(yplusone = BN_new())
         || !TEST_true(BN_hex2bn(&x, "6"))
 /* Change test based on whether binary point compression is enabled or not. */
-#  ifdef OPENSSL_EC_BIN_PT_COMP
+# ifdef OPENSSL_EC_BIN_PT_COMP
         || !TEST_true(EC_POINT_set_compressed_coordinates(group, Q, x, 1, ctx))
-#  else
+# else
         || !TEST_true(BN_hex2bn(&y, "8"))
         || !TEST_true(EC_POINT_set_affine_coordinates(group, Q, x, y, ctx))
-#  endif
+# endif
        )
         goto err;
     if (!TEST_int_gt(EC_POINT_is_on_curve(group, Q, ctx), 0)) {
 /* Change test based on whether binary point compression is enabled or not. */
-#  ifdef OPENSSL_EC_BIN_PT_COMP
+# ifdef OPENSSL_EC_BIN_PT_COMP
         if (!TEST_true(EC_POINT_get_affine_coordinates(group, Q, x, y, ctx)))
             goto err;
-#  endif
+# endif
         TEST_info("Point is not on curve");
         test_output_bignum("x", x);
         test_output_bignum("y", y);
@@ -1028,7 +1027,7 @@ static int char2_field_tests(void)
         goto err;
 
 /* Change test based on whether binary point compression is enabled or not. */
-#  ifdef OPENSSL_EC_BIN_PT_COMP
+# ifdef OPENSSL_EC_BIN_PT_COMP
     len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_COMPRESSED,
                              buf, sizeof(buf), ctx);
     if (!TEST_size_t_ne(len, 0)
@@ -1037,7 +1036,7 @@ static int char2_field_tests(void)
         goto err;
     test_output_memory("Generator as octet string, compressed form:",
                        buf, len);
-#  endif
+# endif
 
     len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_UNCOMPRESSED,
                              buf, sizeof(buf), ctx);
@@ -1049,7 +1048,7 @@ static int char2_field_tests(void)
                        buf, len);
 
 /* Change test based on whether binary point compression is enabled or not. */
-#  ifdef OPENSSL_EC_BIN_PT_COMP
+# ifdef OPENSSL_EC_BIN_PT_COMP
     len =
         EC_POINT_point2oct(group, Q, POINT_CONVERSION_HYBRID, buf, sizeof(buf),
                            ctx);
@@ -1059,7 +1058,7 @@ static int char2_field_tests(void)
         goto err;
     test_output_memory("Generator as octet string, hybrid form:",
                        buf, len);
-#  endif
+# endif
 
     if (!TEST_true(EC_POINT_invert(group, P, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, R, ctx)))
@@ -1084,7 +1083,56 @@ err:
     BN_free(yplusone);
     return r;
 }
-# endif
+
+static int hybrid_point_encoding_test(void)
+{
+    BIGNUM *x = NULL, *y = NULL;
+    EC_GROUP *group = NULL;
+    EC_POINT *point = NULL;
+    unsigned char *buf = NULL;
+    size_t len;
+    int r = 0;
+
+    if (!TEST_true(BN_dec2bn(&x, "0"))
+        || !TEST_true(BN_dec2bn(&y, "1"))
+        || !TEST_ptr(group = EC_GROUP_new_by_curve_name(NID_sect571k1))
+        || !TEST_ptr(point = EC_POINT_new(group))
+        || !TEST_true(EC_POINT_set_affine_coordinates(group, point, x, y, NULL))
+        || !TEST_size_t_ne(0, (len = EC_POINT_point2oct(group,
+                                                        point,
+                                                        POINT_CONVERSION_HYBRID,
+                                                        NULL,
+                                                        0,
+                                                        NULL)))
+        || !TEST_ptr(buf = OPENSSL_malloc(len))
+        || !TEST_size_t_eq(len, EC_POINT_point2oct(group,
+                                                   point,
+                                                   POINT_CONVERSION_HYBRID,
+                                                   buf,
+                                                   len,
+                                                   NULL)))
+        goto err;
+
+    r = 1;
+
+    /* buf contains a valid hybrid point, check that we can decode it. */
+    if (!TEST_true(EC_POINT_oct2point(group, point, buf, len, NULL)))
+        r = 0;
+
+    /* Flip the y_bit and verify that the invalid encoding is rejected. */
+    buf[0] ^= 1;
+    if (!TEST_false(EC_POINT_oct2point(group, point, buf, len, NULL)))
+        r = 0;
+
+err:
+    BN_free(x);
+    BN_free(y);
+    EC_GROUP_free(group);
+    EC_POINT_free(point);
+    OPENSSL_free(buf);
+    return r;
+}
+#endif
 
 static int internal_curve_test(int n)
 {
@@ -1339,12 +1387,12 @@ static int nistp_single_test(int idx)
     /* random point multiplication */
     EC_POINT_mul(NISTP, Q, NULL, P, m, ctx);
     if (!TEST_int_eq(0, EC_POINT_cmp(NISTP, Q, Q_CHECK, ctx))
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         /* We have not performed precomp so this should be false */
         || !TEST_false(EC_GROUP_have_precompute_mult(NISTP))
         /* now repeat all tests with precomputation */
         || !TEST_true(EC_GROUP_precompute_mult(NISTP, ctx))
-# endif
+#endif
         )
         goto err;
 
@@ -1709,7 +1757,7 @@ int are_ec_nids_compatible(int n1d, int n2d)
 {
     int ret = 0;
     switch (n1d) {
-# ifndef OPENSSL_NO_EC2M
+#ifndef OPENSSL_NO_EC2M
         case NID_sect113r1:
         case NID_wap_wsg_idm_ecid_wtls4:
             ret = (n2d == NID_sect113r1 || n2d == NID_wap_wsg_idm_ecid_wtls4);
@@ -1731,7 +1779,7 @@ int are_ec_nids_compatible(int n1d, int n2d)
             ret = (n2d == NID_X9_62_c2pnb163v1
                    || n2d == NID_wap_wsg_idm_ecid_wtls5);
             break;
-# endif /* OPENSSL_NO_EC2M */
+#endif /* OPENSSL_NO_EC2M */
         case NID_secp112r1:
         case NID_wap_wsg_idm_ecid_wtls6:
             ret = (n2d == NID_secp112r1 || n2d == NID_wap_wsg_idm_ecid_wtls6);
@@ -1740,12 +1788,12 @@ int are_ec_nids_compatible(int n1d, int n2d)
         case NID_wap_wsg_idm_ecid_wtls7:
             ret = (n2d == NID_secp160r2 || n2d == NID_wap_wsg_idm_ecid_wtls7);
             break;
-# ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
+#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
         case NID_secp224r1:
         case NID_wap_wsg_idm_ecid_wtls12:
             ret = (n2d == NID_secp224r1 || n2d == NID_wap_wsg_idm_ecid_wtls12);
             break;
-# else
+#else
         /*
          * For SEC P-224 we want to ensure that the SECP nid is returned, as
          * that is associated with a specialized method.
@@ -1753,7 +1801,7 @@ int are_ec_nids_compatible(int n1d, int n2d)
         case NID_wap_wsg_idm_ecid_wtls12:
             ret = (n2d == NID_secp224r1);
             break;
-# endif /* def(OPENSSL_NO_EC_NISTP_64_GCC_128) */
+#endif /* def(OPENSSL_NO_EC_NISTP_64_GCC_128) */
 
         default:
             ret = (n1d == n2d);
@@ -2139,14 +2187,14 @@ static int cardinality_test(int n)
         || !TEST_true(BN_copy(g1_order, EC_GROUP_get0_order(g1)))
         || !TEST_true(EC_GROUP_get_cofactor(g1, g1_cf, ctx))
         /* construct g2 manually with g1 parameters */
-# ifndef OPENSSL_NO_EC2M
+#ifndef OPENSSL_NO_EC2M
         || !TEST_ptr(g2 = (is_binary) ?
                            EC_GROUP_new_curve_GF2m(g1_p, g1_a, g1_b, ctx) :
                            EC_GROUP_new_curve_GFp(g1_p, g1_a, g1_b, ctx))
-# else
+#else
         || !TEST_int_eq(0, is_binary)
         || !TEST_ptr(g2 = EC_GROUP_new_curve_GFp(g1_p, g1_a, g1_b, ctx))
-# endif
+#endif
         || !TEST_ptr(g2_gen = EC_POINT_new(g2))
         || !TEST_true(EC_POINT_set_affine_coordinates(g2, g2_gen, g1_x, g1_y, ctx))
         /* pass NULL cofactor: lib should compute it */
@@ -2337,11 +2385,630 @@ static int ec_point_hex2point_test(int id)
     return ret;
 }
 
-#endif /* OPENSSL_NO_EC */
+static int do_test_custom_explicit_fromdata(EC_GROUP *group, BN_CTX *ctx,
+                                            unsigned char *gen, int gen_size)
+{
+    int ret = 0, i_out;
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_PKEY *pkeyparam = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
+    const char *field_name;
+    OSSL_PARAM *params = NULL;
+    const OSSL_PARAM *gettable;
+    BIGNUM *p, *a, *b;
+    BIGNUM *p_out = NULL, *a_out = NULL, *b_out = NULL;
+    BIGNUM *order_out = NULL, *cofactor_out = NULL;
+    char name[80];
+    unsigned char buf[1024];
+    size_t buf_len, name_len;
+#ifndef OPENSSL_NO_EC2M
+    unsigned int k1 = 0, k2 = 0, k3 = 0;
+    const char *basis_name = NULL;
+#endif
+
+    p = BN_CTX_get(ctx);
+    a = BN_CTX_get(ctx);
+    b = BN_CTX_get(ctx);
+
+    if (!TEST_ptr(b)
+        || !TEST_ptr(bld = OSSL_PARAM_BLD_new()))
+        goto err;
+
+    if (EC_GROUP_get_field_type(group) == NID_X9_62_prime_field) {
+        field_name = SN_X9_62_prime_field;
+    } else {
+        field_name = SN_X9_62_characteristic_two_field;
+#ifndef OPENSSL_NO_EC2M
+        if (EC_GROUP_get_basis_type(group) == NID_X9_62_tpBasis) {
+            basis_name = SN_X9_62_tpBasis;
+            if (!TEST_true(EC_GROUP_get_trinomial_basis(group, &k1)))
+                goto err;
+        } else {
+            basis_name = SN_X9_62_ppBasis;
+            if (!TEST_true(EC_GROUP_get_pentanomial_basis(group, &k1, &k2, &k3)))
+                goto err;
+        }
+#endif /* OPENSSL_NO_EC2M */
+    }
+    if (!TEST_true(EC_GROUP_get_curve(group, p, a, b, ctx))
+        || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld,
+                          OSSL_PKEY_PARAM_EC_FIELD_TYPE, field_name, 0))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_P, p))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_A, a))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_B, b)))
+        goto err;
+
+    if (EC_GROUP_get0_seed(group) != NULL) {
+        if (!TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
+                           OSSL_PKEY_PARAM_EC_SEED, EC_GROUP_get0_seed(group),
+                           EC_GROUP_get_seed_len(group))))
+            goto err;
+    }
+    if (EC_GROUP_get0_cofactor(group) != NULL) {
+        if (!TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_COFACTOR,
+                                              EC_GROUP_get0_cofactor(group))))
+            goto err;
+    }
+
+    if (!TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
+                       OSSL_PKEY_PARAM_EC_GENERATOR, gen, gen_size))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_ORDER,
+                                             EC_GROUP_get0_order(group))))
+        goto err;
+
+    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
+        || !TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkeyparam,
+                                          EVP_PKEY_KEY_PARAMETERS, params), 0))
+        goto err;
+
+    /*- Check that all the set values are retrievable -*/
+
+    /* There should be no match to a group name since the generator changed */
+    if (!TEST_false(EVP_PKEY_get_utf8_string_param(pkeyparam,
+                        OSSL_PKEY_PARAM_GROUP_NAME, name, sizeof(name),
+                        &name_len)))
+        goto err;
+
+    /* The encoding should be explicit as it has no group */
+    if (!TEST_true(EVP_PKEY_get_utf8_string_param(pkeyparam,
+                       OSSL_PKEY_PARAM_EC_ENCODING,
+                       name, sizeof(name), &name_len))
+        || !TEST_str_eq(name, OSSL_PKEY_EC_ENCODING_EXPLICIT))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_get_utf8_string_param(pkeyparam,
+                       OSSL_PKEY_PARAM_EC_FIELD_TYPE, name, sizeof(name),
+                       &name_len))
+        || !TEST_str_eq(name, field_name))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_get_octet_string_param(pkeyparam,
+                       OSSL_PKEY_PARAM_EC_GENERATOR, buf, sizeof(buf), &buf_len))
+        || !TEST_mem_eq(buf, (int)buf_len, gen, gen_size))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_get_bn_param(pkeyparam, OSSL_PKEY_PARAM_EC_P, &p_out))
+        || !TEST_BN_eq(p_out, p)
+        || !TEST_true(EVP_PKEY_get_bn_param(pkeyparam, OSSL_PKEY_PARAM_EC_A,
+                                            &a_out))
+        || !TEST_BN_eq(a_out, a)
+        || !TEST_true(EVP_PKEY_get_bn_param(pkeyparam, OSSL_PKEY_PARAM_EC_B,
+                                            &b_out))
+        || !TEST_BN_eq(b_out, b)
+        || !TEST_true(EVP_PKEY_get_bn_param(pkeyparam, OSSL_PKEY_PARAM_EC_ORDER,
+                                            &order_out))
+        || !TEST_BN_eq(order_out, EC_GROUP_get0_order(group)))
+        goto err;
+
+    if (EC_GROUP_get0_cofactor(group) != NULL) {
+        if (!TEST_true(EVP_PKEY_get_bn_param(pkeyparam,
+                           OSSL_PKEY_PARAM_EC_COFACTOR, &cofactor_out))
+            || !TEST_BN_eq(cofactor_out, EC_GROUP_get0_cofactor(group)))
+            goto err;
+    }
+    if (EC_GROUP_get0_seed(group) != NULL) {
+        if (!TEST_true(EVP_PKEY_get_octet_string_param(pkeyparam,
+                           OSSL_PKEY_PARAM_EC_SEED, buf, sizeof(buf), &buf_len))
+            || !TEST_mem_eq(buf, buf_len, EC_GROUP_get0_seed(group),
+                            EC_GROUP_get_seed_len(group)))
+            goto err;
+    }
+
+    if (EC_GROUP_get_field_type(group) == NID_X9_62_prime_field) {
+        /* No extra fields should be set for a prime field */
+        if (!TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                            OSSL_PKEY_PARAM_EC_CHAR2_M, &i_out))
+            || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                               OSSL_PKEY_PARAM_EC_CHAR2_TP_BASIS, &i_out))
+            || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                               OSSL_PKEY_PARAM_EC_CHAR2_PP_K1, &i_out))
+            || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                               OSSL_PKEY_PARAM_EC_CHAR2_PP_K2, &i_out))
+            || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                               OSSL_PKEY_PARAM_EC_CHAR2_PP_K3, &i_out))
+            || !TEST_false(EVP_PKEY_get_utf8_string_param(pkeyparam,
+                               OSSL_PKEY_PARAM_EC_CHAR2_TYPE, name, sizeof(name),
+                               &name_len)))
+            goto err;
+    } else {
+#ifndef OPENSSL_NO_EC2M
+        if (!TEST_true(EVP_PKEY_get_int_param(pkeyparam,
+                           OSSL_PKEY_PARAM_EC_CHAR2_M, &i_out))
+            || !TEST_int_eq(EC_GROUP_get_degree(group), i_out)
+            || !TEST_true(EVP_PKEY_get_utf8_string_param(pkeyparam,
+                              OSSL_PKEY_PARAM_EC_CHAR2_TYPE, name, sizeof(name),
+                              &name_len))
+            || !TEST_str_eq(name, basis_name))
+            goto err;
+
+        if (EC_GROUP_get_basis_type(group) == NID_X9_62_tpBasis) {
+            if (!TEST_true(EVP_PKEY_get_int_param(pkeyparam,
+                               OSSL_PKEY_PARAM_EC_CHAR2_TP_BASIS, &i_out))
+                || !TEST_int_eq(k1, i_out)
+                || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                                   OSSL_PKEY_PARAM_EC_CHAR2_PP_K1, &i_out))
+                || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                                   OSSL_PKEY_PARAM_EC_CHAR2_PP_K2, &i_out))
+                || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                                   OSSL_PKEY_PARAM_EC_CHAR2_PP_K3, &i_out)))
+                goto err;
+        } else {
+            if (!TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                                OSSL_PKEY_PARAM_EC_CHAR2_TP_BASIS, &i_out))
+                || !TEST_true(EVP_PKEY_get_int_param(pkeyparam,
+                                  OSSL_PKEY_PARAM_EC_CHAR2_PP_K1, &i_out))
+                || !TEST_int_eq(k1, i_out)
+                || !TEST_true(EVP_PKEY_get_int_param(pkeyparam,
+                                  OSSL_PKEY_PARAM_EC_CHAR2_PP_K2, &i_out))
+                || !TEST_int_eq(k2, i_out)
+                || !TEST_true(EVP_PKEY_get_int_param(pkeyparam,
+                                  OSSL_PKEY_PARAM_EC_CHAR2_PP_K3, &i_out))
+                || !TEST_int_eq(k3, i_out))
+                goto err;
+        }
+#endif /* OPENSSL_NO_EC2M */
+    }
+    if (!TEST_ptr(gettable = EVP_PKEY_gettable_params(pkeyparam))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_GROUP_NAME))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_ENCODING))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_FIELD_TYPE))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_P))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_A))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_B))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_GENERATOR))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_ORDER))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_COFACTOR))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_SEED))
+#ifndef OPENSSL_NO_EC2M
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_CHAR2_M))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_CHAR2_TYPE))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_CHAR2_TP_BASIS))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_CHAR2_PP_K1))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_CHAR2_PP_K2))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_CHAR2_PP_K3))
+#endif
+        )
+        goto err;
+    ret = 1;
+err:
+    BN_free(order_out);
+    BN_free(cofactor_out);
+    BN_free(a_out);
+    BN_free(b_out);
+    BN_free(p_out);
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_BLD_free(bld);
+    EVP_PKEY_free(pkeyparam);
+    EVP_PKEY_CTX_free(pctx);
+    return ret;
+}
+
+/*
+ * check the EC_METHOD respects the supplied EC_GROUP_set_generator G
+ */
+static int custom_generator_test(int id)
+{
+    int ret = 0, nid, bsize;
+    EC_GROUP *group = NULL;
+    EC_POINT *G2 = NULL, *Q1 = NULL, *Q2 = NULL;
+    BN_CTX *ctx = NULL;
+    BIGNUM *k = NULL;
+    unsigned char *b1 = NULL, *b2 = NULL;
+
+    /* Do some setup */
+    nid = curves[id].nid;
+    TEST_note("Curve %s", OBJ_nid2sn(nid));
+    if (!TEST_ptr(ctx = BN_CTX_new()))
+        return 0;
+
+    BN_CTX_start(ctx);
+
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(nid)))
+        goto err;
+
+    /* expected byte length of encoded points */
+    bsize = (EC_GROUP_get_degree(group) + 7) / 8;
+    bsize = 1 + 2 * bsize; /* UNCOMPRESSED_POINT format */
+
+    if (!TEST_ptr(k = BN_CTX_get(ctx))
+        /* fetch a testing scalar k != 0,1 */
+        || !TEST_true(BN_rand(k, EC_GROUP_order_bits(group) - 1,
+                              BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+        /* make k even */
+        || !TEST_true(BN_clear_bit(k, 0))
+        || !TEST_ptr(G2 = EC_POINT_new(group))
+        || !TEST_ptr(Q1 = EC_POINT_new(group))
+        /* Q1 := kG */
+        || !TEST_true(EC_POINT_mul(group, Q1, k, NULL, NULL, ctx))
+        /* pull out the bytes of that */
+        || !TEST_int_eq(EC_POINT_point2oct(group, Q1,
+                                           POINT_CONVERSION_UNCOMPRESSED, NULL,
+                                           0, ctx), bsize)
+        || !TEST_ptr(b1 = OPENSSL_malloc(bsize))
+        || !TEST_int_eq(EC_POINT_point2oct(group, Q1,
+                                           POINT_CONVERSION_UNCOMPRESSED, b1,
+                                           bsize, ctx), bsize)
+        /* new generator is G2 := 2G */
+        || !TEST_true(EC_POINT_dbl(group, G2, EC_GROUP_get0_generator(group),
+                                   ctx))
+        || !TEST_true(EC_GROUP_set_generator(group, G2,
+                                             EC_GROUP_get0_order(group),
+                                             EC_GROUP_get0_cofactor(group)))
+        || !TEST_ptr(Q2 = EC_POINT_new(group))
+        || !TEST_true(BN_rshift1(k, k))
+        /* Q2 := k/2 G2 */
+        || !TEST_true(EC_POINT_mul(group, Q2, k, NULL, NULL, ctx))
+        || !TEST_int_eq(EC_POINT_point2oct(group, Q2,
+                                           POINT_CONVERSION_UNCOMPRESSED, NULL,
+                                           0, ctx), bsize)
+        || !TEST_ptr(b2 = OPENSSL_malloc(bsize))
+        || !TEST_int_eq(EC_POINT_point2oct(group, Q2,
+                                           POINT_CONVERSION_UNCOMPRESSED, b2,
+                                           bsize, ctx), bsize)
+        /* Q1 = kG = k/2 G2 = Q2 should hold */
+        || !TEST_mem_eq(b1, bsize, b2, bsize))
+        goto err;
+
+    if (!do_test_custom_explicit_fromdata(group, ctx, b1, bsize))
+        goto err;
+
+    ret = 1;
+
+ err:
+    EC_POINT_free(Q1);
+    EC_POINT_free(Q2);
+    EC_POINT_free(G2);
+    EC_GROUP_free(group);
+    BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
+    OPENSSL_free(b1);
+    OPENSSL_free(b2);
+
+    return ret;
+}
+
+/*
+ * check creation of curves from explicit params through the public API
+ */
+static int custom_params_test(int id)
+{
+    int ret = 0, nid, bsize;
+    const char *curve_name = NULL;
+    EC_GROUP *group = NULL, *altgroup = NULL;
+    EC_POINT *G2 = NULL, *Q1 = NULL, *Q2 = NULL;
+    const EC_POINT *Q = NULL;
+    BN_CTX *ctx = NULL;
+    BIGNUM *k = NULL;
+    unsigned char *buf1 = NULL, *buf2 = NULL;
+    const BIGNUM *z = NULL, *cof = NULL, *priv1 = NULL;
+    BIGNUM *p = NULL, *a = NULL, *b = NULL;
+    int is_prime = 0;
+    EC_KEY *eckey1 = NULL, *eckey2 = NULL;
+    EVP_PKEY *pkey1 = NULL, *pkey2 = NULL;
+    EVP_PKEY_CTX *pctx1 = NULL, *pctx2 = NULL;
+    size_t sslen, t;
+    unsigned char *pub1 = NULL , *pub2 = NULL;
+    OSSL_PARAM_BLD *param_bld = NULL;
+    OSSL_PARAM *params1 = NULL, *params2 = NULL;
+
+    /* Do some setup */
+    nid = curves[id].nid;
+    curve_name = OBJ_nid2sn(nid);
+    TEST_note("Curve %s", curve_name);
+
+    if (nid == NID_sm2)
+        return TEST_skip("custom params not supported with SM2");
+
+    if (!TEST_ptr(ctx = BN_CTX_new()))
+        return 0;
+
+    BN_CTX_start(ctx);
+    if (!TEST_ptr(p = BN_CTX_get(ctx))
+            || !TEST_ptr(a = BN_CTX_get(ctx))
+            || !TEST_ptr(b = BN_CTX_get(ctx))
+            || !TEST_ptr(k = BN_CTX_get(ctx)))
+        goto err;
+
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(nid)))
+        goto err;
+
+    is_prime = EC_GROUP_get_field_type(group) == NID_X9_62_prime_field;
+#ifdef OPENSSL_NO_EC2M
+    if (!is_prime) {
+        ret = TEST_skip("binary curves not supported in this build");
+        goto err;
+    }
+#endif
+
+    /* expected byte length of encoded points */
+    bsize = (EC_GROUP_get_degree(group) + 7) / 8;
+    bsize = 1 + 2 * bsize; /* UNCOMPRESSED_POINT format */
+
+    /* extract parameters from built-in curve */
+    if (!TEST_true(EC_GROUP_get_curve(group, p, a, b, ctx))
+            || !TEST_ptr(G2 = EC_POINT_new(group))
+            /* new generator is G2 := 2G */
+            || !TEST_true(EC_POINT_dbl(group, G2,
+                                       EC_GROUP_get0_generator(group), ctx))
+            /* pull out the bytes of that */
+            || !TEST_int_eq(EC_POINT_point2oct(group, G2,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               NULL, 0, ctx), bsize)
+            || !TEST_ptr(buf1 = OPENSSL_malloc(bsize))
+            || !TEST_int_eq(EC_POINT_point2oct(group, G2,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               buf1, bsize, ctx), bsize)
+            || !TEST_ptr(z = EC_GROUP_get0_order(group))
+            || !TEST_ptr(cof = EC_GROUP_get0_cofactor(group))
+        )
+        goto err;
+
+    /* create a new group using same params (but different generator) */
+    if (is_prime) {
+        if (!TEST_ptr(altgroup = EC_GROUP_new_curve_GFp(p, a, b, ctx)))
+            goto err;
+    }
+#ifndef OPENSSL_NO_EC2M
+    else {
+        if (!TEST_ptr(altgroup = EC_GROUP_new_curve_GF2m(p, a, b, ctx)))
+            goto err;
+    }
+#endif
+
+    /* set 2*G as the generator of altgroup */
+    EC_POINT_free(G2); /* discard G2 as it refers to the original group */
+    if (!TEST_ptr(G2 = EC_POINT_new(altgroup))
+            || !TEST_true(EC_POINT_oct2point(altgroup, G2, buf1, bsize, ctx))
+            || !TEST_int_eq(EC_POINT_is_on_curve(altgroup, G2, ctx), 1)
+            || !TEST_true(EC_GROUP_set_generator(altgroup, G2, z, cof))
+       )
+        goto err;
+
+    /* verify math checks out */
+    if (/* allocate temporary points on group and altgroup */
+            !TEST_ptr(Q1 = EC_POINT_new(group))
+            || !TEST_ptr(Q2 = EC_POINT_new(altgroup))
+            /* fetch a testing scalar k != 0,1 */
+            || !TEST_true(BN_rand(k, EC_GROUP_order_bits(group) - 1,
+                                  BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+            /* make k even */
+            || !TEST_true(BN_clear_bit(k, 0))
+            /* Q1 := kG on group */
+            || !TEST_true(EC_POINT_mul(group, Q1, k, NULL, NULL, ctx))
+            /* pull out the bytes of that */
+            || !TEST_int_eq(EC_POINT_point2oct(group, Q1,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               NULL, 0, ctx), bsize)
+            || !TEST_int_eq(EC_POINT_point2oct(group, Q1,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               buf1, bsize, ctx), bsize)
+            /* k := k/2 */
+            || !TEST_true(BN_rshift1(k, k))
+            /* Q2 := k/2 G2 on altgroup */
+            || !TEST_true(EC_POINT_mul(altgroup, Q2, k, NULL, NULL, ctx))
+            /* pull out the bytes of that */
+            || !TEST_int_eq(EC_POINT_point2oct(altgroup, Q2,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               NULL, 0, ctx), bsize)
+            || !TEST_ptr(buf2 = OPENSSL_malloc(bsize))
+            || !TEST_int_eq(EC_POINT_point2oct(altgroup, Q2,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               buf2, bsize, ctx), bsize)
+            /* Q1 = kG = k/2 G2 = Q2 should hold */
+            || !TEST_mem_eq(buf1, bsize, buf2, bsize))
+        goto err;
+
+    /* create two `EC_KEY`s on altgroup */
+    if (!TEST_ptr(eckey1 = EC_KEY_new())
+            || !TEST_true(EC_KEY_set_group(eckey1, altgroup))
+            || !TEST_true(EC_KEY_generate_key(eckey1))
+            || !TEST_ptr(eckey2 = EC_KEY_new())
+            || !TEST_true(EC_KEY_set_group(eckey2, altgroup))
+            || !TEST_true(EC_KEY_generate_key(eckey2)))
+        goto err;
+
+    /* retrieve priv1 for later */
+    if (!TEST_ptr(priv1 = EC_KEY_get0_private_key(eckey1)))
+        goto err;
+
+    /*
+     * retrieve bytes for pub1 for later
+     *
+     * We compute the pub key in the original group as we will later use it to
+     * define a provider key in the built-in group.
+     */
+    if (!TEST_true(EC_POINT_mul(group, Q1, priv1, NULL, NULL, ctx))
+            || !TEST_int_eq(EC_POINT_point2oct(group, Q1,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               NULL, 0, ctx), bsize)
+            || !TEST_ptr(pub1 = OPENSSL_malloc(bsize))
+            || !TEST_int_eq(EC_POINT_point2oct(group, Q1,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               pub1, bsize, ctx), bsize))
+        goto err;
+
+    /* retrieve bytes for pub2 for later */
+    if (!TEST_ptr(Q = EC_KEY_get0_public_key(eckey2))
+            || !TEST_int_eq(EC_POINT_point2oct(altgroup, Q,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               NULL, 0, ctx), bsize)
+            || !TEST_ptr(pub2 = OPENSSL_malloc(bsize))
+            || !TEST_int_eq(EC_POINT_point2oct(altgroup, Q,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               pub2, bsize, ctx), bsize))
+        goto err;
+
+    /* create two `EVP_PKEY`s from the `EC_KEY`s */
+    if (!TEST_ptr(pkey1 = EVP_PKEY_new())
+            || !TEST_int_eq(EVP_PKEY_assign_EC_KEY(pkey1, eckey1), 1))
+        goto err;
+    eckey1 = NULL; /* ownership passed to pkey1 */
+    if (!TEST_ptr(pkey2 = EVP_PKEY_new())
+            || !TEST_int_eq(EVP_PKEY_assign_EC_KEY(pkey2, eckey2), 1))
+        goto err;
+    eckey2 = NULL; /* ownership passed to pkey2 */
+
+    /* Compute keyexchange in both directions */
+    if (!TEST_ptr(pctx1 = EVP_PKEY_CTX_new(pkey1, NULL))
+            || !TEST_int_eq(EVP_PKEY_derive_init(pctx1), 1)
+            || !TEST_int_eq(EVP_PKEY_derive_set_peer(pctx1, pkey2), 1)
+            || !TEST_int_eq(EVP_PKEY_derive(pctx1, NULL, &sslen), 1)
+            || !TEST_int_gt(bsize, sslen)
+            || !TEST_int_eq(EVP_PKEY_derive(pctx1, buf1, &sslen), 1))
+        goto err;
+    if (!TEST_ptr(pctx2 = EVP_PKEY_CTX_new(pkey2, NULL))
+            || !TEST_int_eq(EVP_PKEY_derive_init(pctx2), 1)
+            || !TEST_int_eq(EVP_PKEY_derive_set_peer(pctx2, pkey1), 1)
+            || !TEST_int_eq(EVP_PKEY_derive(pctx2, NULL, &t), 1)
+            || !TEST_int_gt(bsize, t)
+            || !TEST_int_le(sslen, t)
+            || !TEST_int_eq(EVP_PKEY_derive(pctx2, buf2, &t), 1))
+        goto err;
+
+    /* Both sides should expect the same shared secret */
+    if (!TEST_mem_eq(buf1, sslen, buf2, t))
+        goto err;
+
+    /* Build parameters for provider-native keys */
+    if (!TEST_ptr(param_bld = OSSL_PARAM_BLD_new())
+            || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(param_bld,
+                                                          OSSL_PKEY_PARAM_GROUP_NAME,
+                                                          curve_name, 0))
+            || !TEST_true(OSSL_PARAM_BLD_push_octet_string(param_bld,
+                                                           OSSL_PKEY_PARAM_PUB_KEY,
+                                                           pub1, bsize))
+            || !TEST_true(OSSL_PARAM_BLD_push_BN(param_bld,
+                                                 OSSL_PKEY_PARAM_PRIV_KEY,
+                                                 priv1))
+            || !TEST_ptr(params1 = OSSL_PARAM_BLD_to_param(param_bld)))
+        goto err;
+
+    OSSL_PARAM_BLD_free(param_bld);
+    if (!TEST_ptr(param_bld = OSSL_PARAM_BLD_new())
+            || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(param_bld,
+                                                          OSSL_PKEY_PARAM_GROUP_NAME,
+                                                          curve_name, 0))
+            || !TEST_true(OSSL_PARAM_BLD_push_octet_string(param_bld,
+                                                           OSSL_PKEY_PARAM_PUB_KEY,
+                                                           pub2, bsize))
+            || !TEST_ptr(params2 = OSSL_PARAM_BLD_to_param(param_bld)))
+        goto err;
+
+    /* create two new provider-native `EVP_PKEY`s */
+    EVP_PKEY_CTX_free(pctx2);
+    if (!TEST_ptr(pctx2 = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))
+            || !TEST_int_eq(EVP_PKEY_fromdata_init(pctx2), 1)
+            || !TEST_int_eq(EVP_PKEY_fromdata(pctx2, &pkey1, EVP_PKEY_KEYPAIR,
+                                              params1), 1)
+            || !TEST_int_eq(EVP_PKEY_fromdata(pctx2, &pkey2, EVP_PKEY_PUBLIC_KEY,
+                                              params2), 1))
+        goto err;
+
+    /* compute keyexchange once more using the provider keys */
+    EVP_PKEY_CTX_free(pctx1);
+    if (!TEST_ptr(pctx1 = EVP_PKEY_CTX_new(pkey1, NULL))
+            || !TEST_int_eq(EVP_PKEY_derive_init(pctx1), 1)
+            || !TEST_int_eq(EVP_PKEY_derive_set_peer(pctx1, pkey2), 1)
+            || !TEST_int_eq(EVP_PKEY_derive(pctx1, NULL, &t), 1)
+            || !TEST_int_gt(bsize, t)
+            || !TEST_int_le(sslen, t)
+            || !TEST_int_eq(EVP_PKEY_derive(pctx1, buf1, &t), 1)
+            /* compare with previous result */
+            || !TEST_mem_eq(buf1, t, buf2, sslen))
+        goto err;
+
+    ret = 1;
+
+ err:
+    BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
+    OSSL_PARAM_BLD_free(param_bld);
+    OSSL_PARAM_free(params1);
+    OSSL_PARAM_free(params2);
+    EC_POINT_free(Q1);
+    EC_POINT_free(Q2);
+    EC_POINT_free(G2);
+    EC_GROUP_free(group);
+    EC_GROUP_free(altgroup);
+    OPENSSL_free(buf1);
+    OPENSSL_free(buf2);
+    OPENSSL_free(pub1);
+    OPENSSL_free(pub2);
+    EC_KEY_free(eckey1);
+    EC_KEY_free(eckey2);
+    EVP_PKEY_free(pkey1);
+    EVP_PKEY_free(pkey2);
+    EVP_PKEY_CTX_free(pctx1);
+    EVP_PKEY_CTX_free(pctx2);
+
+    return ret;
+}
+
+static int ec_d2i_publickey_test(void)
+{
+   unsigned char buf[1000];
+   unsigned char *pubkey_enc = buf;
+   const unsigned char *pk_enc = pubkey_enc;
+   EVP_PKEY *gen_key = NULL, *decoded_key = NULL;
+   EVP_PKEY_CTX *pctx = NULL;
+   int pklen, ret = 0;
+   OSSL_PARAM params[2];
+
+   if (!TEST_ptr(gen_key = EVP_EC_gen("P-256")))
+       goto err;
+
+   if (!TEST_int_gt(pklen = i2d_PublicKey(gen_key, &pubkey_enc), 0))
+       goto err;
+
+   params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+                                                "P-256", 0);
+   params[1] = OSSL_PARAM_construct_end();
+
+   if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))
+       || !TEST_true(EVP_PKEY_fromdata_init(pctx))
+       || !TEST_true(EVP_PKEY_fromdata(pctx, &decoded_key,
+                                       OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                       params))
+       || !TEST_ptr(decoded_key)
+       || !TEST_ptr(decoded_key = d2i_PublicKey(EVP_PKEY_EC, &decoded_key,
+                                                &pk_enc, pklen)))
+       goto err;
+
+   if (!TEST_true(EVP_PKEY_eq(gen_key, decoded_key)))
+       goto err;
+   ret = 1;
+
+ err:
+   EVP_PKEY_CTX_free(pctx);
+   EVP_PKEY_free(gen_key);
+   EVP_PKEY_free(decoded_key);
+   return ret;
+}
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_EC
     crv_len = EC_get_builtin_curves(NULL, 0);
     if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
@@ -2351,10 +3018,11 @@ int setup_tests(void)
     ADD_TEST(cofactor_range_test);
     ADD_ALL_TESTS(cardinality_test, crv_len);
     ADD_TEST(prime_field_tests);
-# ifndef OPENSSL_NO_EC2M
+#ifndef OPENSSL_NO_EC2M
+    ADD_TEST(hybrid_point_encoding_test);
     ADD_TEST(char2_field_tests);
     ADD_ALL_TESTS(char2_curve_test, OSSL_NELEM(char2_curve_tests));
-# endif
+#endif
     ADD_ALL_TESTS(nistp_single_test, OSSL_NELEM(nistp_tests_params));
     ADD_ALL_TESTS(internal_curve_test, crv_len);
     ADD_ALL_TESTS(internal_curve_test_method, crv_len);
@@ -2364,13 +3032,13 @@ int setup_tests(void)
     ADD_ALL_TESTS(check_ec_key_field_public_range_test, crv_len);
     ADD_ALL_TESTS(check_named_curve_from_ecparameters, crv_len);
     ADD_ALL_TESTS(ec_point_hex2point_test, crv_len);
-#endif /* OPENSSL_NO_EC */
+    ADD_ALL_TESTS(custom_generator_test, crv_len);
+    ADD_ALL_TESTS(custom_params_test, crv_len);
+    ADD_TEST(ec_d2i_publickey_test);
     return 1;
 }
 
 void cleanup_tests(void)
 {
-#ifndef OPENSSL_NO_EC
     OPENSSL_free(curves);
-#endif
 }

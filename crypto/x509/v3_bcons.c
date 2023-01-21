@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,8 +14,7 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
-
-DEFINE_STACK_OF(CONF_VALUE)
+#include "x509_local.h"
 
 static STACK_OF(CONF_VALUE) *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
                                                    BASIC_CONSTRAINTS *bcons,
@@ -25,7 +24,7 @@ static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
                                                 X509V3_CTX *ctx,
                                                 STACK_OF(CONF_VALUE) *values);
 
-const X509V3_EXT_METHOD v3_bcons = {
+const X509V3_EXT_METHOD ossl_v3_bcons = {
     NID_basic_constraints, 0,
     ASN1_ITEM_ref(BASIC_CONSTRAINTS),
     0, 0, 0, 0,
@@ -62,7 +61,7 @@ static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
     int i;
 
     if ((bcons = BASIC_CONSTRAINTS_new()) == NULL) {
-        X509V3err(X509V3_F_V2I_BASIC_CONSTRAINTS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         return NULL;
     }
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
@@ -74,8 +73,8 @@ static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
             if (!X509V3_get_value_int(val, &bcons->pathlen))
                 goto err;
         } else {
-            X509V3err(X509V3_F_V2I_BASIC_CONSTRAINTS, X509V3_R_INVALID_NAME);
-            X509V3_conf_err(val);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NAME);
+            X509V3_conf_add_error_name_value(val);
             goto err;
         }
     }

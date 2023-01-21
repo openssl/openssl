@@ -1242,11 +1242,11 @@ int main()
         printf(++i % 16 && i != sizeof(out) ? " " : "\n");
     }
 
-    if (memcmp(out,result,sizeof(out))) {
-        fprintf(stderr,"failure\n");
+    if (memcmp(out, result, sizeof(out))) {
+        fprintf(stderr, "failure\n");
         return 1;
     } else {
-        fprintf(stderr,"success\n");
+        fprintf(stderr, "success\n");
         return 0;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,15 +14,12 @@
 
 #include "pcy_local.h"
 
-DEFINE_STACK_OF(POLICY_MAPPING)
-DEFINE_STACK_OF(ASN1_OBJECT)
-
 /*
  * Set policy mapping entries in cache. Note: this modifies the passed
  * POLICY_MAPPINGS structure
  */
 
-int policy_cache_set_mapping(X509 *x, POLICY_MAPPINGS *maps)
+int ossl_policy_cache_set_mapping(X509 *x, POLICY_MAPPINGS *maps)
 {
     POLICY_MAPPING *map;
     X509_POLICY_DATA *data;
@@ -43,16 +40,16 @@ int policy_cache_set_mapping(X509 *x, POLICY_MAPPINGS *maps)
         }
 
         /* Attempt to find matching policy data */
-        data = policy_cache_find_data(cache, map->issuerDomainPolicy);
+        data = ossl_policy_cache_find_data(cache, map->issuerDomainPolicy);
         /* If we don't have anyPolicy can't map */
         if (data == NULL && !cache->anyPolicy)
             continue;
 
         /* Create a NODE from anyPolicy */
         if (data == NULL) {
-            data = policy_data_new(NULL, map->issuerDomainPolicy,
-                                   cache->anyPolicy->flags
-                                   & POLICY_DATA_FLAG_CRITICAL);
+            data = ossl_policy_data_new(NULL, map->issuerDomainPolicy,
+                                        cache->anyPolicy->flags
+                                        & POLICY_DATA_FLAG_CRITICAL);
             if (data == NULL)
                 goto bad_mapping;
             data->qualifier_set = cache->anyPolicy->qualifier_set;
@@ -62,7 +59,7 @@ int policy_cache_set_mapping(X509 *x, POLICY_MAPPINGS *maps)
             data->flags |= POLICY_DATA_FLAG_MAPPED_ANY;
             data->flags |= POLICY_DATA_FLAG_SHARED_QUALIFIERS;
             if (!sk_X509_POLICY_DATA_push(cache->data, data)) {
-                policy_data_free(data);
+                ossl_policy_data_free(data);
                 goto bad_mapping;
             }
         } else
@@ -76,8 +73,6 @@ int policy_cache_set_mapping(X509 *x, POLICY_MAPPINGS *maps)
 
     ret = 1;
  bad_mapping:
-    if (ret == -1)
-        x->ex_flags |= EXFLAG_INVALID_POLICY;
     sk_POLICY_MAPPING_pop_free(maps, POLICY_MAPPING_free);
     return ret;
 

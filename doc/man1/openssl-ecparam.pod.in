@@ -15,7 +15,6 @@ B<openssl ecparam>
 [B<-out> I<filename>]
 [B<-noout>]
 [B<-text>]
-[B<-C>]
 [B<-check>]
 [B<-check_named>]
 [B<-name> I<arg>]
@@ -24,11 +23,8 @@ B<openssl ecparam>
 [B<-param_enc> I<arg>]
 [B<-no_seed>]
 [B<-genkey>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
-
-=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -45,10 +41,15 @@ this command can only create EC parameters from known (named) curves.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>
 
-The input and formats; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The EC parameters input format; unspecified by default.
+See L<openssl-format-options(1)> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The EC parameters output format; the default is B<PEM>.
+See L<openssl-format-options(1)> for details.
 
 Parameters are encoded as B<EcpkParameters> as specified in IETF RFC 3279.
 
@@ -70,11 +71,6 @@ This option inhibits the output of the encoded version of the parameters.
 =item B<-text>
 
 This option prints out the EC parameters in human readable form.
-
-=item B<-C>
-
-This option converts the EC parameters into C code. The parameters can then
-be loaded by calling the get_ec_group_XXX() function.
 
 =item B<-check>
 
@@ -131,10 +127,14 @@ This option will generate an EC private key using the specified parameters.
 
 =back
 
+The L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)> commands are capable
+of performing all the operations this command can, as well as supporting
+other public key types.
+
 =head1 EXAMPLES
 
-Examples equivalent to these can be found in the documentation for the
-non-deprecated L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)> commands.
+The documentation for the L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)>
+commands contains examples equivalent to the ones listed here.
 
 To create EC parameters with the group 'prime192v1':
 
@@ -168,9 +168,15 @@ L<openssl-genpkey(1)>,
 L<openssl-ec(1)>,
 L<openssl-dsaparam(1)>
 
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
+The B<-C> option was removed in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2003-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2003-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

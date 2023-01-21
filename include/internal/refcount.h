@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,15 +8,12 @@
  */
 #ifndef OSSL_INTERNAL_REFCOUNT_H
 # define OSSL_INTERNAL_REFCOUNT_H
+# pragma once
 
-/* Used to checking reference counts, most while doing perl5 stuff :-) */
-# if defined(OPENSSL_NO_STDIO)
-#  if defined(REF_PRINT)
-#   error "REF_PRINT requires stdio"
-#  endif
-# endif
+# include <openssl/e_os2.h>
+# include <openssl/trace.h>
 
-# ifndef OPENSSL_DEV_NO_ATOMICS
+# if defined(OPENSSL_THREADS) && !defined(OPENSSL_DEV_NO_ATOMICS)
 #  if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
       && !defined(__STDC_NO_ATOMICS__)
 #   include <stdatomic.h>
@@ -30,7 +27,8 @@
 
 typedef _Atomic int CRYPTO_REF_COUNT;
 
-static inline int CRYPTO_UP_REF(_Atomic int *val, int *ret, void *lock)
+static inline int CRYPTO_UP_REF(_Atomic int *val, int *ret,
+                                ossl_unused void *lock)
 {
     *ret = atomic_fetch_add_explicit(val, 1, memory_order_relaxed) + 1;
     return 1;
@@ -46,7 +44,8 @@ static inline int CRYPTO_UP_REF(_Atomic int *val, int *ret, void *lock)
  * to mutable members doesn't have to be serialized anymore, which would
  * otherwise imply an acquire fence. Hence conditional acquire fence...
  */
-static inline int CRYPTO_DOWN_REF(_Atomic int *val, int *ret, void *lock)
+static inline int CRYPTO_DOWN_REF(_Atomic int *val, int *ret,
+                                  ossl_unused void *lock)
 {
     *ret = atomic_fetch_sub_explicit(val, 1, memory_order_relaxed) - 1;
     if (*ret == 0)
@@ -60,13 +59,14 @@ static inline int CRYPTO_DOWN_REF(_Atomic int *val, int *ret, void *lock)
 
 typedef int CRYPTO_REF_COUNT;
 
-static __inline__ int CRYPTO_UP_REF(int *val, int *ret, void *lock)
+static __inline__ int CRYPTO_UP_REF(int *val, int *ret, ossl_unused void *lock)
 {
     *ret = __atomic_fetch_add(val, 1, __ATOMIC_RELAXED) + 1;
     return 1;
 }
 
-static __inline__ int CRYPTO_DOWN_REF(int *val, int *ret, void *lock)
+static __inline__ int CRYPTO_DOWN_REF(int *val, int *ret,
+                                      ossl_unused void *lock)
 {
     *ret = __atomic_fetch_sub(val, 1, __ATOMIC_RELAXED) - 1;
     if (*ret == 0)
@@ -77,13 +77,15 @@ static __inline__ int CRYPTO_DOWN_REF(int *val, int *ret, void *lock)
 #   define HAVE_ATOMICS 1
 typedef volatile int CRYPTO_REF_COUNT;
 
-static __inline int CRYPTO_UP_REF(volatile int *val, int *ret, void *lock)
+static __inline int CRYPTO_UP_REF(volatile int *val, int *ret,
+                                  ossl_unused void *lock)
 {
     *ret = _InterlockedExchangeAdd((void *)val, 1) + 1;
     return 1;
 }
 
-static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
+static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret,
+                                    ossl_unused void *lock)
 {
     *ret = _InterlockedExchangeAdd((void *)val, -1) - 1;
     return 1;
@@ -101,13 +103,15 @@ typedef volatile int CRYPTO_REF_COUNT;
 #     define _ARM_BARRIER_ISH _ARM64_BARRIER_ISH
 #    endif
 
-static __inline int CRYPTO_UP_REF(volatile int *val, int *ret, void *lock)
+static __inline int CRYPTO_UP_REF(volatile int *val, int *ret,
+                                  ossl_unused void *lock)
 {
     *ret = _InterlockedExchangeAdd_nf(val, 1) + 1;
     return 1;
 }
 
-static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
+static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret,
+                                    ossl_unused void *lock)
 {
     *ret = _InterlockedExchangeAdd_nf(val, -1) - 1;
     if (*ret == 0)
@@ -127,13 +131,15 @@ static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
 #     endif
 #    endif
 
-static __inline int CRYPTO_UP_REF(volatile int *val, int *ret, void *lock)
+static __inline int CRYPTO_UP_REF(volatile int *val, int *ret,
+                                  ossl_unused void *lock)
 {
     *ret = _InterlockedExchangeAdd(val, 1) + 1;
     return 1;
 }
 
-static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
+static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret,
+                                    ossl_unused void *lock)
 {
     *ret = _InterlockedExchangeAdd(val, -1) - 1;
     return 1;
@@ -164,11 +170,9 @@ typedef int CRYPTO_REF_COUNT;
 #  define REF_ASSERT_ISNT(i)
 # endif
 
-# ifdef REF_PRINT
-#  define REF_PRINT_COUNT(a, b) \
-        fprintf(stderr, "%p:%4d:%s\n", b, b->references, a)
-# else
-#  define REF_PRINT_COUNT(a, b)
-# endif
+# define REF_PRINT_EX(text, count, object) \
+    OSSL_TRACE3(REF_COUNT, "%p:%4d:%s\n", (object), (count), (text));
+# define REF_PRINT_COUNT(text, object) \
+    REF_PRINT_EX(text, object->references, (void *)object)
 
 #endif

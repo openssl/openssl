@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -62,10 +62,8 @@ static int asn1_item_flags_i2d(const ASN1_VALUE *val, unsigned char **out,
         len = ASN1_item_ex_i2d(&val, NULL, it, -1, flags);
         if (len <= 0)
             return len;
-        if ((buf = OPENSSL_malloc(len)) == NULL) {
-            ASN1err(ASN1_F_ASN1_ITEM_FLAGS_I2D, ERR_R_MALLOC_FAILURE);
+        if ((buf = OPENSSL_malloc(len)) == NULL)
             return -1;
-        }
         p = buf;
         ASN1_item_ex_i2d(&val, &p, it, -1, flags);
         *out = buf;
@@ -106,17 +104,33 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         return asn1_i2d_ex_primitive(pval, out, it, tag, aclass);
 
     case ASN1_ITYPE_MSTRING:
+        /*
+         * It never makes sense for multi-strings to have implicit tagging, so
+         * if tag != -1, then this looks like an error in the template.
+         */
+        if (tag != -1) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_BAD_TEMPLATE);
+            return -1;
+        }
         return asn1_i2d_ex_primitive(pval, out, it, -1, aclass);
 
     case ASN1_ITYPE_CHOICE:
+        /*
+         * It never makes sense for CHOICE types to have implicit tagging, so
+         * if tag != -1, then this looks like an error in the template.
+         */
+        if (tag != -1) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_BAD_TEMPLATE);
+            return -1;
+        }
         if (asn1_cb && !asn1_cb(ASN1_OP_I2D_PRE, pval, it, NULL))
             return 0;
-        i = asn1_get_choice_selector_const(pval, it);
+        i = ossl_asn1_get_choice_selector_const(pval, it);
         if ((i >= 0) && (i < it->tcount)) {
             const ASN1_VALUE **pchval;
             const ASN1_TEMPLATE *chtt;
             chtt = it->templates + i;
-            pchval = asn1_get_const_field_ptr(pval, chtt);
+            pchval = ossl_asn1_get_const_field_ptr(pval, chtt);
             return asn1_template_ex_i2d(pchval, out, chtt, -1, aclass);
         }
         /* Fixme: error condition if selector out of range */
@@ -136,7 +150,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         /* fall through */
 
     case ASN1_ITYPE_SEQUENCE:
-        i = asn1_enc_restore(&seqcontlen, out, pval, it);
+        i = ossl_asn1_enc_restore(&seqcontlen, out, pval, it);
         /* An error occurred */
         if (i < 0)
             return 0;
@@ -159,10 +173,10 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
             const ASN1_TEMPLATE *seqtt;
             const ASN1_VALUE **pseqval;
             int tmplen;
-            seqtt = asn1_do_adb(*pval, tt, 1);
+            seqtt = ossl_asn1_do_adb(*pval, tt, 1);
             if (!seqtt)
                 return 0;
-            pseqval = asn1_get_const_field_ptr(pval, seqtt);
+            pseqval = ossl_asn1_get_const_field_ptr(pval, seqtt);
             tmplen = asn1_template_ex_i2d(pseqval, NULL, seqtt, -1, aclass);
             if (tmplen == -1 || (tmplen > INT_MAX - seqcontlen))
                 return -1;
@@ -177,10 +191,10 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
             const ASN1_TEMPLATE *seqtt;
             const ASN1_VALUE **pseqval;
-            seqtt = asn1_do_adb(*pval, tt, 1);
+            seqtt = ossl_asn1_do_adb(*pval, tt, 1);
             if (!seqtt)
                 return 0;
-            pseqval = asn1_get_const_field_ptr(pval, seqtt);
+            pseqval = ossl_asn1_get_const_field_ptr(pval, seqtt);
             /* FIXME: check for errors in enhanced version */
             asn1_template_ex_i2d(pseqval, out, seqtt, -1, aclass);
         }
@@ -200,9 +214,9 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
 static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
                                 const ASN1_TEMPLATE *tt, int tag, int iclass)
 {
-    int i, ret, flags, ttag, tclass, ndef;
+    const int flags = tt->flags;
+    int i, ret, ttag, tclass, ndef, len;
     const ASN1_VALUE *tval;
-    flags = tt->flags;
 
     /*
      * If field is embedded then val needs fixing so it is a pointer to
@@ -287,13 +301,16 @@ static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         /* Determine total length of items */
         skcontlen = 0;
         for (i = 0; i < sk_const_ASN1_VALUE_num(sk); i++) {
-            int tmplen;
             skitem = sk_const_ASN1_VALUE_value(sk, i);
-            tmplen = ASN1_item_ex_i2d(&skitem, NULL, ASN1_ITEM_ptr(tt->item),
-                                      -1, iclass);
-            if (tmplen == -1 || (skcontlen > INT_MAX - tmplen))
+            len = ASN1_item_ex_i2d(&skitem, NULL, ASN1_ITEM_ptr(tt->item),
+                                   -1, iclass);
+            if (len == -1 || (skcontlen > INT_MAX - len))
                 return -1;
-            skcontlen += tmplen;
+            if (len == 0 && (tt->flags & ASN1_TFLG_OPTIONAL) == 0) {
+                ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_ZERO_CONTENT);
+                return -1;
+            }
+            skcontlen += len;
         }
         sklen = ASN1_object_size(ndef, skcontlen, sktag);
         if (sklen == -1)
@@ -329,8 +346,13 @@ static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         /* EXPLICIT tagging */
         /* Find length of tagged item */
         i = ASN1_item_ex_i2d(pval, NULL, ASN1_ITEM_ptr(tt->item), -1, iclass);
-        if (!i)
+        if (i == 0) {
+            if ((tt->flags & ASN1_TFLG_OPTIONAL) == 0) {
+                ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_ZERO_CONTENT);
+                return -1;
+            }
             return 0;
+        }
         /* Find length of EXPLICIT tag */
         ret = ASN1_object_size(ndef, i, ttag);
         if (out && ret != -1) {
@@ -344,9 +366,13 @@ static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
     }
 
     /* Either normal or IMPLICIT tagging: combine class and flags */
-    return ASN1_item_ex_i2d(pval, out, ASN1_ITEM_ptr(tt->item),
-                            ttag, tclass | iclass);
-
+    len = ASN1_item_ex_i2d(pval, out, ASN1_ITEM_ptr(tt->item),
+                              ttag, tclass | iclass);
+    if (len == 0 && (tt->flags & ASN1_TFLG_OPTIONAL) == 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_ZERO_CONTENT);
+        return -1;
+    }
+    return len;
 }
 
 /* Temporary structure used to hold DER encoding of items for SET OF */
@@ -375,10 +401,11 @@ static int asn1_set_seq_out(STACK_OF(const_ASN1_VALUE) *sk,
                             int skcontlen, const ASN1_ITEM *item,
                             int do_sort, int iclass)
 {
-    int i;
+    int i, ret = 0;
     const ASN1_VALUE *skitem;
     unsigned char *tmpdat = NULL, *p = NULL;
     DER_ENC *derlst = NULL, *tder;
+
     if (do_sort) {
         /* Don't need to sort less than 2 items */
         if (sk_const_ASN1_VALUE_num(sk) < 2)
@@ -389,10 +416,8 @@ static int asn1_set_seq_out(STACK_OF(const_ASN1_VALUE) *sk,
             if (derlst == NULL)
                 return 0;
             tmpdat = OPENSSL_malloc(skcontlen);
-            if (tmpdat == NULL) {
-                OPENSSL_free(derlst);
-                return 0;
-            }
+            if (tmpdat == NULL)
+                goto err;
         }
     }
     /* If not sorting just output each item */
@@ -427,9 +452,11 @@ static int asn1_set_seq_out(STACK_OF(const_ASN1_VALUE) *sk,
         for (i = 0, tder = derlst; i < sk_const_ASN1_VALUE_num(sk); i++, tder++)
             (void)sk_const_ASN1_VALUE_set(sk, i, tder->field);
     }
+    ret = 1;
+err:
     OPENSSL_free(derlst);
     OPENSSL_free(tmpdat);
-    return 1;
+    return ret;
 }
 
 static int asn1_i2d_ex_primitive(const ASN1_VALUE **pval, unsigned char **out,
@@ -562,15 +589,15 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
         break;
 
     case V_ASN1_BIT_STRING:
-        return i2c_ASN1_BIT_STRING((ASN1_BIT_STRING *)*pval,
-                                   cout ? &cout : NULL);
+        return ossl_i2c_ASN1_BIT_STRING((ASN1_BIT_STRING *)*pval,
+                                        cout ? &cout : NULL);
 
     case V_ASN1_INTEGER:
     case V_ASN1_ENUMERATED:
         /*
          * These are all have the same content format as ASN1_INTEGER
          */
-        return i2c_ASN1_INTEGER((ASN1_INTEGER *)*pval, cout ? &cout : NULL);
+        return ossl_i2c_ASN1_INTEGER((ASN1_INTEGER *)*pval, cout ? &cout : NULL);
 
     case V_ASN1_OCTET_STRING:
     case V_ASN1_NUMERICSTRING:

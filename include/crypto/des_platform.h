@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,12 +9,12 @@
 
 #ifndef OSSL_DES_PLATFORM_H
 # define OSSL_DES_PLATFORM_H
+# pragma once
 
 # if defined(DES_ASM) && (defined(__sparc) || defined(__sparc__))
 
 /* Fujitsu SPARC64 X support */
-extern unsigned int OPENSSL_sparcv9cap_P[];
-#  include "sparc_arch.h"
+#  include "crypto/sparc_arch.h"
 
 #  ifndef OPENSSL_NO_DES
 #   define SPARC_DES_CAPABLE      (OPENSSL_sparcv9cap_P[1] & CFR_DES)

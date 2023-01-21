@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,10 +19,11 @@
 static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                    int expected, int criterion, OSSL_STORE_SEARCH *search,
                    int text, int noout, int recursive, int indent, BIO *out,
-                   const char *prog);
+                   const char *prog, OSSL_LIB_CTX *libctx);
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ENGINE, OPT_OUT, OPT_PASSIN,
+    OPT_COMMON,
+    OPT_ENGINE, OPT_OUT, OPT_PASSIN,
     OPT_NOOUT, OPT_TEXT, OPT_RECURSIVE,
     OPT_SEARCHFOR_CERTS, OPT_SEARCHFOR_KEYS, OPT_SEARCHFOR_CRLS,
     OPT_CRITERION_SUBJECT, OPT_CRITERION_ISSUER, OPT_CRITERION_SERIAL,
@@ -73,7 +74,7 @@ int storeutl_main(int argc, char *argv[])
     BIO *out = NULL;
     ENGINE *e = NULL;
     OPTION_CHOICE o;
-    char *prog = opt_init(argc, argv, storeutl_options);
+    char *prog;
     PW_CB_DATA pw_cb_data;
     int expected = 0;
     int criterion = 0;
@@ -81,10 +82,13 @@ int storeutl_main(int argc, char *argv[])
     ASN1_INTEGER *serial = NULL;
     unsigned char *fingerprint = NULL;
     size_t fingerprintlen = 0;
-    char *alias = NULL;
+    char *alias = NULL, *digestname = NULL;
     OSSL_STORE_SEARCH *search = NULL;
-    const EVP_MD *digest = NULL;
+    EVP_MD *digest = NULL;
+    OSSL_LIB_CTX *libctx = app_get0_libctx();
 
+    opt_set_unknown_name("digest");
+    prog = opt_init(argc, argv, storeutl_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
         case OPT_EOF:
@@ -155,16 +159,13 @@ int storeutl_main(int argc, char *argv[])
                            prog);
                 goto end;
             }
-            if ((subject = parse_name(opt_arg(), MBSTRING_UTF8, 1)) == NULL) {
-                BIO_printf(bio_err, "%s: can't parse subject argument.\n",
-                           prog);
+            subject = parse_name(opt_arg(), MBSTRING_UTF8, 1, "subject");
+            if (subject == NULL)
                 goto end;
-            }
             break;
         case OPT_CRITERION_ISSUER:
             if (criterion != 0
-                || (criterion == OSSL_STORE_SEARCH_BY_ISSUER_SERIAL
-                    && issuer != NULL)) {
+                && criterion != OSSL_STORE_SEARCH_BY_ISSUER_SERIAL) {
                 BIO_printf(bio_err, "%s: criterion already given.\n",
                            prog);
                 goto end;
@@ -175,16 +176,13 @@ int storeutl_main(int argc, char *argv[])
                            prog);
                 goto end;
             }
-            if ((issuer = parse_name(opt_arg(), MBSTRING_UTF8, 1)) == NULL) {
-                BIO_printf(bio_err, "%s: can't parse issuer argument.\n",
-                           prog);
+            issuer = parse_name(opt_arg(), MBSTRING_UTF8, 1, "issuer");
+            if (issuer == NULL)
                 goto end;
-            }
             break;
         case OPT_CRITERION_SERIAL:
             if (criterion != 0
-                || (criterion == OSSL_STORE_SEARCH_BY_ISSUER_SERIAL
-                    && serial != NULL)) {
+                && criterion != OSSL_STORE_SEARCH_BY_ISSUER_SERIAL) {
                 BIO_printf(bio_err, "%s: criterion already given.\n",
                            prog);
                 goto end;
@@ -250,25 +248,22 @@ int storeutl_main(int argc, char *argv[])
             e = setup_engine(opt_arg(), 0);
             break;
         case OPT_MD:
-            if (!opt_md(opt_unknown(), &digest))
-                goto opthelp;
+            digestname = opt_unknown();
+            break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
             break;
         }
     }
-    argc = opt_num_rest();
+
+    /* One argument, the URI */
+    if (!opt_check_rest_arg("URI"))
+        goto opthelp;
     argv = opt_rest();
 
-    if (argc == 0) {
-        BIO_printf(bio_err, "%s: No URI given, nothing to do...\n", prog);
+    if (!opt_md(digestname, &digest))
         goto opthelp;
-    }
-    if (argc > 1) {
-        BIO_printf(bio_err, "%s: Unknown extra parameters after URI\n", prog);
-        goto opthelp;
-    }
 
     if (criterion != 0) {
         switch (criterion) {
@@ -322,9 +317,10 @@ int storeutl_main(int argc, char *argv[])
 
     ret = process(argv[0], get_ui_method(), &pw_cb_data,
                   expected, criterion, search,
-                  text, noout, recursive, 0, out, prog);
+                  text, noout, recursive, 0, out, prog, libctx);
 
  end:
+    EVP_MD_free(digest);
     OPENSSL_free(fingerprint);
     OPENSSL_free(alias);
     ASN1_INTEGER_free(serial);
@@ -353,12 +349,13 @@ static int indent_printf(int indent, BIO *bio, const char *format, ...)
 static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                    int expected, int criterion, OSSL_STORE_SEARCH *search,
                    int text, int noout, int recursive, int indent, BIO *out,
-                   const char *prog)
+                   const char *prog, OSSL_LIB_CTX *libctx)
 {
     OSSL_STORE_CTX *store_ctx = NULL;
     int ret = 1, items = 0;
 
-    if ((store_ctx = OSSL_STORE_open(uri, uimeth, uidata, NULL, NULL))
+    if ((store_ctx = OSSL_STORE_open_ex(uri, libctx, app_get0_propq(), uimeth, uidata,
+                                        NULL, NULL, NULL))
         == NULL) {
         BIO_printf(bio_err, "Couldn't open file or uri %s\n", uri);
         ERR_print_errors(bio_err);
@@ -396,17 +393,19 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
             info == NULL ? NULL : OSSL_STORE_INFO_type_string(type);
 
         if (info == NULL) {
-            if (OSSL_STORE_eof(store_ctx))
-                break;
-
             if (OSSL_STORE_error(store_ctx)) {
                 if (recursive)
                     ERR_clear_error();
                 else
                     ERR_print_errors(bio_err);
+                if (OSSL_STORE_eof(store_ctx))
+                    break;
                 ret++;
                 continue;
             }
+
+            if (OSSL_STORE_eof(store_ctx))
+                break;
 
             BIO_printf(bio_err,
                        "ERROR: OSSL_STORE_load() returned NULL without "
@@ -439,7 +438,8 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                 const char *suburi = OSSL_STORE_INFO_get0_NAME(info);
                 ret += process(suburi, uimeth, uidata,
                                expected, criterion, search,
-                               text, noout, recursive, indent + 2, out, prog);
+                               text, noout, recursive, indent + 2, out, prog,
+                               libctx);
             }
             break;
         case OSSL_STORE_INFO_PARAMS:
@@ -449,6 +449,13 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
             if (!noout)
                 PEM_write_bio_Parameters(out,
                                          OSSL_STORE_INFO_get0_PARAMS(info));
+            break;
+        case OSSL_STORE_INFO_PUBKEY:
+            if (text)
+                EVP_PKEY_print_public(out, OSSL_STORE_INFO_get0_PUBKEY(info),
+                                      0, NULL);
+            if (!noout)
+                PEM_write_bio_PUBKEY(out, OSSL_STORE_INFO_get0_PUBKEY(info));
             break;
         case OSSL_STORE_INFO_PKEY:
             if (text)

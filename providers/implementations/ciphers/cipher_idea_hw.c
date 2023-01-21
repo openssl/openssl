@@ -43,7 +43,7 @@ static const PROV_CIPHER_HW idea_##mode = {                                    \
     cipher_hw_idea_initkey,                                                    \
     cipher_hw_idea_##mode##_cipher                                             \
 };                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_idea_##mode(size_t keybits)               \
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_##mode(size_t keybits)          \
 {                                                                              \
     return &idea_##mode;                                                       \
 }

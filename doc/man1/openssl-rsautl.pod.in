@@ -13,7 +13,7 @@ B<openssl> B<rsautl>
 [B<-passin> I<arg>]
 [B<-rev>]
 [B<-out> I<file>]
-[B<-inkey> I<file>]
+[B<-inkey> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pubin>]
 [B<-certin>]
@@ -24,18 +24,11 @@ B<openssl> B<rsautl>
 [B<-pkcs>]
 [B<-x931>]
 [B<-oaep>]
-[B<-ssl>]
-[B<-raw>]
-[B<-pkcs>]
-[B<-ssl>]
 [B<-raw>]
 [B<-hexdump>]
 [B<-asn1parse>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
-
-=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -61,7 +54,7 @@ if this option is not specified.
 =item B<-passin> I<arg>
 
 The passphrase used in the output file.
-See see L<openssl(1)/Pass Phrase Options>.
+See see L<openssl-passphrase-options(1)>.
 
 =item B<-rev>
 
@@ -72,15 +65,14 @@ Reverse the order of the input.
 Specifies the output filename to write to or standard output by
 default.
 
-=item B<-inkey> I<file>
+=item B<-inkey> I<filename>|I<uri>
 
-The input key file, by default it should be an RSA private key.
+The input key, by default it should be an RSA private key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+The key format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-pubin>
 
@@ -107,13 +99,16 @@ Encrypt the input data using an RSA public key.
 
 Decrypt the input data using an RSA private key.
 
-=item B<-pkcs>, B<-oaep>, B<-x931> B<-ssl>, B<-raw>
+=item B<-pkcs>, B<-oaep>, B<-x931> B<-raw>
 
 The padding to use: PKCS#1 v1.5 (the default), PKCS#1 OAEP,
-ANSI X9.31,
-special padding used in SSL v2 backwards compatible handshakes,
-or no padding, respectively.
+ANSI X9.31, or no padding, respectively.
 For signatures, only B<-pkcs> and B<-raw> can be used.
+
+Note: because of protection against Bleichenbacher attacks, decryption
+using PKCS#1 v1.5 mode will not return errors in case padding check failed.
+Use B<-raw> and inspect the returned value manually to check if the
+padding is correct.
 
 =item B<-hexdump>
 
@@ -238,12 +233,11 @@ L<openssl-genrsa(1)>
 
 This command was deprecated in OpenSSL 3.0.
 
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

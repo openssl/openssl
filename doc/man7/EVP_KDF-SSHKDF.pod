@@ -41,9 +41,9 @@ These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 These parameters set the respective values for the KDF.
 If a value is already set, the contents are replaced.
 
-=item "type" (B<OSSL_KDF_PARAM_SSHKDF_TYPE>) <integer>
+=item "type" (B<OSSL_KDF_PARAM_SSHKDF_TYPE>) <UTF8 string>
 
-This parameter sets the type for the SSHHKDF operation.
+This parameter sets the type for the SSHKDF operation.
 There are six supported types:
 
 =over 4
@@ -87,11 +87,11 @@ A single char of value 70 (ASCII char 'F').
 A context for SSHKDF can be obtained by calling:
 
  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "SSHKDF", NULL);
- EVP_KDF_CTX *kctx = EVP_KDF_new_ctx(kdf);
+ EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of the SSHKDF derivation is specified via the I<keylen>
 parameter to the L<EVP_KDF_derive(3)> function.
-Since the SSHKDF output length is variable, calling L<EVP_KDF_size(3)>
+Since the SSHKDF output length is variable, calling L<EVP_KDF_CTX_get_kdf_size(3)>
 to obtain the requisite length is not meaningful. The caller must
 allocate a buffer of the desired length, and pass that buffer to the
 L<EVP_KDF_derive(3)> function along with the desired length.
@@ -103,6 +103,7 @@ This example derives an 8 byte IV using SHA-256 with a 1K "key" and appropriate
 
  EVP_KDF *kdf;
  EVP_KDF_CTX *kctx;
+ char type = EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV;
  unsigned char key[1024] = "01234...";
  unsigned char xcghash[32] = "012345...";
  unsigned char session_id[32] = "012345...";
@@ -111,7 +112,7 @@ This example derives an 8 byte IV using SHA-256 with a 1K "key" and appropriate
  OSSL_PARAM params[6], *p = params;
 
  kdf = EVP_KDF_fetch(NULL, "SSHKDF", NULL);
- kctx = EVP_KDF_new_ctx(kdf);
+ kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
@@ -120,15 +121,12 @@ This example derives an 8 byte IV using SHA-256 with a 1K "key" and appropriate
                                           key, (size_t)1024);
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SSHKDF_XCGHASH,
                                           xcghash, (size_t)32);
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SSHKDF_SESSION_ID,
                                           session_id, (size_t)32);
- *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_SSHKDF_TYPE,
-                                 EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV);
+ *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_SSHKDF_TYPE,
+                                         &type, sizeof(type));
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_set_ctx_params(kctx, params) <= 0)
-     /* Error */
-
- if (EVP_KDF_derive(kctx, out, &outlen) <= 0)
+ if (EVP_KDF_derive(kctx, out, outlen, params) <= 0)
      /* Error */
 
 
@@ -139,16 +137,20 @@ RFC 4253
 =head1 SEE ALSO
 
 L<EVP_KDF(3)>,
-L<EVP_KDF_new_ctx(3)>,
-L<EVP_KDF_free_ctx(3)>,
-L<EVP_KDF_set_ctx_params(3)>,
-L<EVP_KDF_size(3)>,
+L<EVP_KDF_CTX_new(3)>,
+L<EVP_KDF_CTX_free(3)>,
+L<EVP_KDF_CTX_set_params(3)>,
+L<EVP_KDF_CTX_get_kdf_size(3)>,
 L<EVP_KDF_derive(3)>,
 L<EVP_KDF(3)/PARAMETERS>
 
+=head1 HISTORY
+
+This functionality was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

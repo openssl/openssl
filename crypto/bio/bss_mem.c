@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,7 @@ static int mem_puts(BIO *h, const char *str);
 static int mem_gets(BIO *h, char *str, int size);
 static long mem_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int mem_new(BIO *h);
+static int dgram_mem_new(BIO *h);
 static int secmem_new(BIO *h);
 static int mem_free(BIO *data);
 static int mem_buf_free(BIO *data);
@@ -26,10 +27,8 @@ static int mem_buf_sync(BIO *h);
 static const BIO_METHOD mem_method = {
     BIO_TYPE_MEM,
     "memory buffer",
-    /* TODO: Convert to new style write function */
     bwrite_conv,
     mem_write,
-    /* TODO: Convert to new style read function */
     bread_conv,
     mem_read,
     mem_puts,
@@ -40,13 +39,26 @@ static const BIO_METHOD mem_method = {
     NULL,                      /* mem_callback_ctrl */
 };
 
+static const BIO_METHOD dgram_mem_method = {
+    BIO_TYPE_MEM,
+    "datagram memory buffer",
+    bwrite_conv,
+    mem_write,
+    bread_conv,
+    mem_read,
+    mem_puts,
+    mem_gets,
+    mem_ctrl,
+    dgram_mem_new,
+    mem_free,
+    NULL,                      /* mem_callback_ctrl */
+};
+
 static const BIO_METHOD secmem_method = {
     BIO_TYPE_MEM,
     "secure memory buffer",
-    /* TODO: Convert to new style write function */
     bwrite_conv,
     mem_write,
-    /* TODO: Convert to new style read function */
     bread_conv,
     mem_read,
     mem_puts,
@@ -55,6 +67,12 @@ static const BIO_METHOD secmem_method = {
     secmem_new,
     mem_free,
     NULL,                      /* mem_callback_ctrl */
+};
+
+struct buf_mem_dgram_st {
+    char *dgram;  /* Pointer into the buffer for where the dgram starts */
+    size_t dgramlen;  /* Length of the dgram */
+    struct buf_mem_dgram_st *next; /* Next dgram to read */
 };
 
 /*
@@ -66,6 +84,9 @@ static const BIO_METHOD secmem_method = {
 typedef struct bio_buf_mem_st {
     struct buf_mem_st *buf;   /* allocated buffer */
     struct buf_mem_st *readp; /* read pointer */
+    struct buf_mem_dgram_st *dgrams; /* linked list of dgram data */
+    struct buf_mem_dgram_st *last; /* last dgram in the linked list */
+    int use_dgrams;
 } BIO_BUF_MEM;
 
 /*
@@ -76,6 +97,11 @@ typedef struct bio_buf_mem_st {
 const BIO_METHOD *BIO_s_mem(void)
 {
     return &mem_method;
+}
+
+const BIO_METHOD *BIO_s_dgram_mem(void)
+{
+    return &dgram_mem_method;
 }
 
 const BIO_METHOD *BIO_s_secmem(void)
@@ -91,7 +117,7 @@ BIO *BIO_new_mem_buf(const void *buf, int len)
     size_t sz;
 
     if (buf == NULL) {
-        BIOerr(BIO_F_BIO_NEW_MEM_BUF, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
     sz = (len < 0) ? strlen(buf) : (size_t)len;
@@ -138,9 +164,37 @@ static int mem_new(BIO *bi)
     return mem_init(bi, 0L);
 }
 
+static int dgram_mem_new(BIO *bi)
+{
+    BIO_BUF_MEM *bbm;
+
+    if (!mem_init(bi, 0L))
+        return 0;
+
+    bbm = (BIO_BUF_MEM *)bi->ptr;
+
+    bbm->use_dgrams = 1;
+    bi->num = -1;
+
+    return 1;
+}
+
 static int secmem_new(BIO *bi)
 {
     return mem_init(bi, BUF_MEM_FLAG_SECURE);
+}
+
+static void clear_all_dgrams(BIO_BUF_MEM *bbm)
+{
+    struct buf_mem_dgram_st *dgrams = bbm->dgrams;
+
+    while (dgrams != NULL) {
+        struct buf_mem_dgram_st *tmp = dgrams;
+
+        dgrams = dgrams->next;
+        OPENSSL_free(tmp);
+    }
+    bbm->dgrams = NULL;
 }
 
 static int mem_free(BIO *a)
@@ -154,6 +208,7 @@ static int mem_free(BIO *a)
     if (!mem_buf_free(a))
         return 0;
     OPENSSL_free(bb->readp);
+    clear_all_dgrams(bb);
     OPENSSL_free(bb);
     return 1;
 }
@@ -176,6 +231,7 @@ static int mem_buf_free(BIO *a)
 
 /*
  * Reallocate memory buffer if read pointer differs
+ * NOT FOR RDONLY
  */
 static int mem_buf_sync(BIO *b)
 {
@@ -196,17 +252,43 @@ static int mem_read(BIO *b, char *out, int outl)
     int ret = -1;
     BIO_BUF_MEM *bbm = (BIO_BUF_MEM *)b->ptr;
     BUF_MEM *bm = bbm->readp;
+    size_t maxreadlen = 0;
+    int eof = 0;
 
     if (b->flags & BIO_FLAGS_MEM_RDONLY)
         bm = bbm->buf;
     BIO_clear_retry_flags(b);
-    ret = (outl >= 0 && (size_t)outl > bm->length) ? (int)bm->length : outl;
+    if (bbm->use_dgrams) {
+        if (bbm->dgrams != NULL) {
+            maxreadlen = bbm->dgrams->dgramlen;
+            if (!ossl_assert(maxreadlen <= bm->length))
+                return 0;
+        } else {
+            eof = 1;
+        }
+    } else {
+        maxreadlen = bm->length;
+        eof = (maxreadlen == 0);
+    }
+    ret = (outl >= 0 && (size_t)outl > maxreadlen) ? (int)maxreadlen : outl;
     if ((out != NULL) && (ret > 0)) {
+        size_t flushlen;
+
         memcpy(out, bm->data, ret);
-        bm->length -= ret;
-        bm->max -= ret;
-        bm->data += ret;
-    } else if (bm->length == 0) {
+        flushlen = bbm->use_dgrams ? maxreadlen : (size_t)ret;
+            
+        bm->length -= flushlen;
+        bm->max -= flushlen;
+        bm->data += flushlen;
+        if (bbm->use_dgrams) {
+            struct buf_mem_dgram_st *tmp = bbm->dgrams;
+
+            bbm->dgrams = tmp->next;
+            OPENSSL_free(tmp);
+            if (bbm->dgrams == NULL)
+                bbm->last = NULL;
+        }
+    } else if (eof) {
         ret = b->num;
         if (ret != 0)
             BIO_set_retry_read(b);
@@ -220,23 +302,43 @@ static int mem_write(BIO *b, const char *in, int inl)
     int blen;
     BIO_BUF_MEM *bbm = (BIO_BUF_MEM *)b->ptr;
 
-    if (in == NULL) {
-        BIOerr(BIO_F_MEM_WRITE, BIO_R_NULL_PARAMETER);
-        goto end;
-    }
     if (b->flags & BIO_FLAGS_MEM_RDONLY) {
-        BIOerr(BIO_F_MEM_WRITE, BIO_R_WRITE_TO_READ_ONLY_BIO);
+        ERR_raise(ERR_LIB_BIO, BIO_R_WRITE_TO_READ_ONLY_BIO);
         goto end;
     }
     BIO_clear_retry_flags(b);
+
     if (inl == 0)
         return 0;
+
+    if (in == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        goto end;
+    }
     blen = bbm->readp->length;
     mem_buf_sync(b);
     if (BUF_MEM_grow_clean(bbm->buf, blen + inl) == 0)
         goto end;
+
     memcpy(bbm->buf->data + blen, in, inl);
     *bbm->readp = *bbm->buf;
+
+    if (bbm->use_dgrams) {
+        struct buf_mem_dgram_st *dgram = OPENSSL_malloc(sizeof(*dgram));
+
+        if (dgram == NULL)
+            goto end;
+
+        dgram->dgram = bbm->buf->data + blen;
+        dgram->dgramlen = inl;
+        dgram->next = NULL;
+        if (bbm->dgrams == NULL)
+            bbm->dgrams = dgram;
+        else
+            bbm->last->next = dgram;
+        bbm->last = dgram;
+    }
+
     ret = inl;
  end:
     return ret;
@@ -247,12 +349,18 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
     long ret = 1;
     char **pptr;
     BIO_BUF_MEM *bbm = (BIO_BUF_MEM *)b->ptr;
-    BUF_MEM *bm;
+    BUF_MEM *bm, *bo;            /* bio_mem, bio_other */
+    long off, remain;
 
-    if (b->flags & BIO_FLAGS_MEM_RDONLY)
+    if (b->flags & BIO_FLAGS_MEM_RDONLY) {
         bm = bbm->buf;
-    else
+        bo = bbm->readp;
+    } else {
         bm = bbm->readp;
+        bo = bbm->buf;
+    }
+    off = (bm->data == bo->data) ? 0 : bm->data - bo->data;
+    remain = bm->length;
 
     switch (cmd) {
     case BIO_CTRL_RESET:
@@ -269,18 +377,34 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
                 *bbm->buf = *bbm->readp;
             }
         }
+        clear_all_dgrams(bbm);
+        break;
+    case BIO_C_FILE_SEEK:
+        if (num < 0 || num > off + remain)
+            return -1;   /* Can't see outside of the current buffer */
+
+        bm->data = (num != 0) ? bo->data + num : bo->data;
+        bm->length = bo->length - num;
+        bm->max = bo->max - num;
+        off = num;
+        /* FALLTHRU */
+    case BIO_C_FILE_TELL:
+        ret = off;
         break;
     case BIO_CTRL_EOF:
-        ret = (long)(bm->length == 0);
+        ret = (long)(bm->length == 0 && bbm->use_dgrams == 0);
         break;
     case BIO_C_SET_BUF_MEM_EOF_RETURN:
-        b->num = (int)num;
+        if (!bbm->use_dgrams)
+            b->num = (int)num;
+        else
+            ret = -1;
         break;
     case BIO_CTRL_INFO:
         ret = (long)bm->length;
         if (ptr != NULL) {
             pptr = (char **)ptr;
-            *pptr = (char *)&(bm->data[0]);
+            *pptr = (char *)(bm->data);
         }
         break;
     case BIO_C_SET_BUF_MEM:
@@ -334,7 +458,8 @@ static int mem_gets(BIO *bp, char *buf, int size)
     if (bp->flags & BIO_FLAGS_MEM_RDONLY)
         bm = bbm->buf;
     BIO_clear_retry_flags(bp);
-    j = bm->length;
+    j = (!bbm->use_dgrams || bbm->dgrams == NULL) ? bm->length
+                                                  : bbm->dgrams->dgramlen;
     if ((size - 1) < j)
         j = size - 1;
     if (j <= 0) {

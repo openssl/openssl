@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,13 +14,11 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include "ssltestlib.h"
+#include "helpers/ssltestlib.h"
 #include "testutil.h"
 
 /* for SSL_READ_ETM() */
 #include "../ssl/ssl_local.h"
-
-DEFINE_STACK_OF(SSL_CIPHER)
 
 static int debug = 0;
 
@@ -57,6 +55,7 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
     size_t mtus[30];
     unsigned char buf[600];
     int rv = 0;
+    SSL_CONNECTION *clnt_sc;
 
     memset(buf, 0x5a, sizeof(buf));
 
@@ -134,8 +133,10 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
             }
         }
     }
+    if (!TEST_ptr(clnt_sc = SSL_CONNECTION_FROM_SSL_ONLY(clnt_ssl)))
+        goto end;
     rv = 1;
-    if (SSL_READ_ETM(clnt_ssl))
+    if (SSL_READ_ETM(clnt_sc))
         rv = 2;
  end:
     SSL_free(clnt_ssl);
@@ -170,7 +171,7 @@ static int run_mtu_tests(void)
         const char *cipher_name = SSL_CIPHER_get_name(cipher);
 
         /* As noted above, only one test for each enc/mac variant. */
-        if (strncmp(cipher_name, "PSK-", 4) != 0)
+        if (!HAS_PREFIX(cipher_name, "PSK-"))
             continue;
 
         if (!TEST_int_gt(ret = mtu_test(ctx, cipher_name, 0), 0))
@@ -187,12 +188,58 @@ static int run_mtu_tests(void)
 
  end:
     SSL_CTX_free(ctx);
-    bio_s_mempacket_test_free();
     return ret;
+}
+
+static int test_server_mtu_larger_than_max_fragment_length(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *srvr_ssl = NULL, *clnt_ssl = NULL;
+    int rv = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_method())))
+        goto end;
+
+    SSL_CTX_set_psk_server_callback(ctx, srvr_psk_callback);
+    SSL_CTX_set_psk_client_callback(ctx, clnt_psk_callback);
+
+#ifndef OPENSSL_NO_DH
+    if (!TEST_true(SSL_CTX_set_dh_auto(ctx, 1)))
+        goto end;
+#endif
+
+    if (!TEST_true(create_ssl_objects(ctx, ctx, &srvr_ssl, &clnt_ssl,
+                                      NULL, NULL)))
+        goto end;
+
+    SSL_set_options(srvr_ssl, SSL_OP_NO_QUERY_MTU);
+    if (!TEST_true(DTLS_set_link_mtu(srvr_ssl, 1500)))
+        goto end;
+
+    SSL_set_tlsext_max_fragment_length(clnt_ssl,
+                                       TLSEXT_max_fragment_length_512);
+
+    if (!TEST_true(create_ssl_connection(srvr_ssl, clnt_ssl,
+                                         SSL_ERROR_NONE)))
+        goto end;
+
+    rv = 1;
+
+ end:
+    SSL_free(clnt_ssl);
+    SSL_free(srvr_ssl);
+    SSL_CTX_free(ctx);
+    return rv;
 }
 
 int setup_tests(void)
 {
     ADD_TEST(run_mtu_tests);
+    ADD_TEST(test_server_mtu_larger_than_max_fragment_length);
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    bio_s_mempacket_test_free();
 }

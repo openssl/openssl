@@ -73,7 +73,8 @@ static const PROV_CIPHER_HW desx_cbc =
     cipher_hw_desx_cbc,
     cipher_hw_desx_copyctx
 };
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_desx_cbc(void)
+
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_desx_cbc(void)
 {
     return &desx_cbc;
 }

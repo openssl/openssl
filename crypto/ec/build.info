@@ -1,6 +1,6 @@
 $ECASM=
 IF[{- !$disabled{asm} -}]
-  $ECASM_x86=ecp_nistz256.c ecp_nistz256-x86.s
+  $ECASM_x86=ecp_nistz256.c ecp_nistz256-x86.S
   $ECDEF_x86=ECP_NISTZ256_ASM
 
   $ECASM_x86_64=ecp_nistz256.c ecp_nistz256-x86_64.s x25519-x86_64.s
@@ -30,8 +30,13 @@ IF[{- !$disabled{asm} -}]
   $ECASM_parisc20_64=
 
   $ECASM_ppc32=
-  $ECASM_ppc64=ecp_nistz256.c ecp_nistz256-ppc64.s x25519-ppc64.s
+  $ECASM_ppc64=ecp_nistz256.c ecp_ppc.c ecp_nistz256-ppc64.s x25519-ppc64.s
   $ECDEF_ppc64=ECP_NISTZ256_ASM X25519_ASM
+  IF[{- !$disabled{'ec_nistp_64_gcc_128'} -}]
+    $ECASM_ppc64=$ECASM_ppc64 ecp_nistp521-ppc64.s
+    $ECDEF_ppc64=$ECDEF_ppc64 ECP_NISTP521_ASM
+    INCLUDE[ecp_nistp521.o]=..
+  ENDIF
 
   $ECASM_c64xplus=
 
@@ -44,29 +49,38 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 $COMMON=ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c \
-        ec_curve.c ec_check.c ec_print.c ec_key.c ecx_key.c ec_asn1.c \
+        ec_curve.c ec_check.c ec_key.c ec_kmeth.c ecx_key.c ec_asn1.c \
         ec2_smpl.c \
-        ecp_oct.c ec2_oct.c ec_oct.c ec_kmeth.c ecdh_ossl.c \
+        ecp_oct.c ec2_oct.c ec_oct.c ecdh_ossl.c \
         ecdsa_ossl.c ecdsa_sign.c ecdsa_vrf.c curve25519.c \
-        curve448/arch_32/f_impl.c curve448/f_generic.c curve448/scalar.c \
+        curve448/f_generic.c curve448/scalar.c \
         curve448/curve448_tables.c curve448/eddsa.c curve448/curve448.c \
-        $ECASM ec_backend.c ecx_backend.c
+        $ECASM ec_backend.c ecx_backend.c ecdh_kdf.c curve448/arch_64/f_impl64.c \
+        curve448/arch_32/f_impl32.c
 
 IF[{- !$disabled{'ec_nistp_64_gcc_128'} -}]
   $COMMON=$COMMON ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c
 ENDIF
 
-SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c ecx_key.c \
-                        ec_err.c ecdh_kdf.c eck_prn.c ec_ctrl.c
+SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c \
+                        ec_err.c eck_prn.c \
+                        ec_deprecated.c ec_print.c
 SOURCE[../../providers/libfips.a]=$COMMON
 
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$ECDEF
 DEFINE[../../providers/libfips.a]=$ECDEF
-DEFINE[../../providers/libimplementations.a]=$ECDEF
+DEFINE[../../providers/libdefault.a]=$ECDEF
+# We only need to include the ECDEF stuff in the legacy provider when
+# it's a separate module and it's dynamically linked with libcrypto.
+# Otherwise, it already gets everything that the static libcrypto.a
+# has, and doesn't need it added again.
+IF[{- !$disabled{module} && !$disabled{shared} -}]
+  DEFINE[../providers/liblegacy.a]=$ECDEF
+ENDIF
 
-GENERATE[ecp_nistz256-x86.s]=asm/ecp_nistz256-x86.pl
+GENERATE[ecp_nistz256-x86.S]=asm/ecp_nistz256-x86.pl
 
 GENERATE[ecp_nistz256-x86_64.s]=asm/ecp_nistz256-x86_64.pl
 
@@ -78,6 +92,7 @@ INCLUDE[ecp_nistz256-sparcv9.o]=..
 INCLUDE[ecp_s390x_nistp.o]=..
 INCLUDE[ecx_s390x.o]=..
 INCLUDE[ecx_meth.o]=..
+INCLUDE[ecx_key.o]=..
 
 GENERATE[ecp_nistz256-armv4.S]=asm/ecp_nistz256-armv4.pl
 INCLUDE[ecp_nistz256-armv4.o]=..
@@ -85,12 +100,7 @@ GENERATE[ecp_nistz256-armv8.S]=asm/ecp_nistz256-armv8.pl
 INCLUDE[ecp_nistz256-armv8.o]=..
 GENERATE[ecp_nistz256-ppc64.s]=asm/ecp_nistz256-ppc64.pl
 
+GENERATE[ecp_nistp521-ppc64.s]=asm/ecp_nistp521-ppc64.pl
+
 GENERATE[x25519-x86_64.s]=asm/x25519-x86_64.pl
 GENERATE[x25519-ppc64.s]=asm/x25519-ppc64.pl
-
-INCLUDE[curve448/arch_32/f_impl.o]=curve448/arch_32 curve448
-INCLUDE[curve448/f_generic.o]=curve448/arch_32 curve448
-INCLUDE[curve448/scalar.o]=curve448/arch_32 curve448
-INCLUDE[curve448/curve448_tables.o]=curve448/arch_32 curve448
-INCLUDE[curve448/eddsa.o]=curve448/arch_32 curve448
-INCLUDE[curve448/curve448.o]=curve448/arch_32 curve448

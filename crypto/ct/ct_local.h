@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -101,7 +101,7 @@ struct sct_ctx_st {
     /* milliseconds since epoch (to check that the SCT isn't from the future) */
     uint64_t epoch_time_in_ms;
 
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
 };
 
@@ -113,14 +113,14 @@ struct ct_policy_eval_ctx_st {
     /* milliseconds since epoch (to check that SCTs aren't from the future) */
     uint64_t epoch_time_in_ms;
 
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
 };
 
 /*
  * Creates a new context for verifying an SCT.
  */
-SCT_CTX *SCT_CTX_new(OPENSSL_CTX *ctx, const char *propq);
+SCT_CTX *SCT_CTX_new(OSSL_LIB_CTX *ctx, const char *propq);
 /*
  * Deletes an SCT verification context.
  */
@@ -191,11 +191,6 @@ __owur int SCT_is_complete(const SCT *sct);
 __owur int SCT_signature_is_complete(const SCT *sct);
 
 /*
- * TODO(RJPercival): Create an SCT_signature struct and make i2o_SCT_signature
- * and o2i_SCT_signature conform to the i2d/d2i conventions.
- */
-
-/*
 * Serialize (to TLS format) an |sct| signature and write it to |out|.
 * If |out| is null, no signature will be output but the length will be returned.
 * If |out| points to a null pointer, a string will be allocated to hold the
@@ -219,4 +214,4 @@ __owur int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
 /*
  * Handlers for Certificate Transparency X509v3/OCSP extensions
  */
-extern const X509V3_EXT_METHOD v3_ct_scts[3];
+extern const X509V3_EXT_METHOD ossl_v3_ct_scts[3];

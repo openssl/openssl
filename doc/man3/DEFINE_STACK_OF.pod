@@ -8,8 +8,16 @@ sk_TYPE_num, sk_TYPE_value, sk_TYPE_new, sk_TYPE_new_null,
 sk_TYPE_reserve, sk_TYPE_free, sk_TYPE_zero, sk_TYPE_delete,
 sk_TYPE_delete_ptr, sk_TYPE_push, sk_TYPE_unshift, sk_TYPE_pop,
 sk_TYPE_shift, sk_TYPE_pop_free, sk_TYPE_insert, sk_TYPE_set,
-sk_TYPE_find, sk_TYPE_find_ex, sk_TYPE_sort, sk_TYPE_is_sorted,
-sk_TYPE_dup, sk_TYPE_deep_copy, sk_TYPE_set_cmp_func, sk_TYPE_new_reserve
+sk_TYPE_find, sk_TYPE_find_ex, sk_TYPE_find_all, sk_TYPE_sort,
+sk_TYPE_is_sorted, sk_TYPE_dup, sk_TYPE_deep_copy, sk_TYPE_set_cmp_func,
+sk_TYPE_new_reserve,
+OPENSSL_sk_deep_copy, OPENSSL_sk_delete, OPENSSL_sk_delete_ptr,
+OPENSSL_sk_dup, OPENSSL_sk_find, OPENSSL_sk_find_ex, OPENSSL_sk_find_all,
+OPENSSL_sk_free, OPENSSL_sk_insert, OPENSSL_sk_is_sorted, OPENSSL_sk_new,
+OPENSSL_sk_new_null, OPENSSL_sk_new_reserve, OPENSSL_sk_num, OPENSSL_sk_pop,
+OPENSSL_sk_pop_free, OPENSSL_sk_push, OPENSSL_sk_reserve, OPENSSL_sk_set,
+OPENSSL_sk_set_cmp_func, OPENSSL_sk_shift, OPENSSL_sk_sort,
+OPENSSL_sk_unshift, OPENSSL_sk_value, OPENSSL_sk_zero
 - stack container
 
 =head1 SYNOPSIS
@@ -46,6 +54,7 @@ sk_TYPE_dup, sk_TYPE_deep_copy, sk_TYPE_set_cmp_func, sk_TYPE_new_reserve
  TYPE *sk_TYPE_set(STACK_OF(TYPE) *sk, int idx, const TYPE *ptr);
  int sk_TYPE_find(STACK_OF(TYPE) *sk, TYPE *ptr);
  int sk_TYPE_find_ex(STACK_OF(TYPE) *sk, TYPE *ptr);
+ int sk_TYPE_find_all(STACK_OF(TYPE) *sk, TYPE *ptr, int *pnum);
  void sk_TYPE_sort(const STACK_OF(TYPE) *sk);
  int sk_TYPE_is_sorted(const STACK_OF(TYPE) *sk);
  STACK_OF(TYPE) *sk_TYPE_dup(const STACK_OF(TYPE) *sk);
@@ -165,29 +174,39 @@ B<sk_I<TYPE>_find>() searches I<sk> for the element I<ptr>.  In the case
 where no comparison function has been specified, the function performs
 a linear search for a pointer equal to I<ptr>. The index of the first
 matching element is returned or B<-1> if there is no match. In the case
-where a comparison function has been specified, I<sk> is sorted then
+where a comparison function has been specified, I<sk> is sorted and
 B<sk_I<TYPE>_find>() returns the index of a matching element or B<-1> if there
-is no match. Note that, in this case, the matching element returned is
-not guaranteed to be the first; the comparison function will usually
+is no match. Note that, in this case the comparison function will usually
 compare the values pointed to rather than the pointers themselves and
-the order of elements in I<sk> could change.
+the order of elements in I<sk> can change. Note that because the stack may be
+sorted as the result of a B<sk_I<TYPE>_find>() call, if a lock is being used to
+synchronise access to the stack across multiple threads, then that lock must be
+a "write" lock.
 
 B<sk_I<TYPE>_find_ex>() operates like B<sk_I<TYPE>_find>() except when a
 comparison function has been specified and no matching element is found.
 Instead of returning B<-1>, B<sk_I<TYPE>_find_ex>() returns the index of the
 element either before or after the location where I<ptr> would be if it were
-present in I<sk>.
+present in I<sk>. The function also does not guarantee that the first matching
+element in the sorted stack is returned.
+
+B<sk_I<TYPE>_find_all>() operates like B<sk_I<TYPE>_find>() but it also
+sets the I<*pnum> to number of matching elements in the stack. In case
+no comparison function has been specified the I<*pnum> will be always set
+to 1 if matching element was found, 0 otherwise.
 
 B<sk_I<TYPE>_sort>() sorts I<sk> using the supplied comparison function.
 
 B<sk_I<TYPE>_is_sorted>() returns B<1> if I<sk> is sorted and B<0> otherwise.
 
-B<sk_I<TYPE>_dup>() returns a copy of I<sk>. Note the pointers in the copy
-are identical to the original.
+B<sk_I<TYPE>_dup>() returns a shallow copy of I<sk>
+or an empty stack if the passed stack is NULL.
+Note the pointers in the copy are identical to the original.
 
 B<sk_I<TYPE>_deep_copy>() returns a new stack where each element has been
-copied. Copying is performed by the supplied copyfunc() and freeing by
-freefunc(). The function freefunc() is only called if an error occurs.
+copied or an empty stack if the passed stack is NULL.
+Copying is performed by the supplied copyfunc() and freeing by freefunc().
+The function freefunc() is only called if an error occurs.
 
 =head1 NOTES
 
@@ -210,16 +229,23 @@ A failed search is indicated by a B<-1> return value.
 STACK_OF(), DEFINE_STACK_OF(), DEFINE_STACK_OF_CONST(), and
 DEFINE_SPECIAL_STACK_OF() are implemented as macros.
 
+It is not an error to call B<sk_I<TYPE>_num>(), B<sk_I<TYPE>_value>(),
+B<sk_I<TYPE>_free>(), B<sk_I<TYPE>_zero>(), B<sk_I<TYPE>_pop_free>(),
+B<sk_I<TYPE>_delete>(), B<sk_I<TYPE>_delete_ptr>(), B<sk_I<TYPE>_pop>(),
+B<sk_I<TYPE>_shift>(), B<sk_I<TYPE>_find>(), B<sk_I<TYPE>_find_ex>(),
+and B<sk_I<TYPE>_find_all>() on a NULL stack, empty stack, or with
+an invalid index. An error is not raised in these conditions.
+
 The underlying utility B<OPENSSL_sk_> API should not be used directly.
 It defines these functions: OPENSSL_sk_deep_copy(),
 OPENSSL_sk_delete(), OPENSSL_sk_delete_ptr(), OPENSSL_sk_dup(),
-OPENSSL_sk_find(), OPENSSL_sk_find_ex(), OPENSSL_sk_free(),
-OPENSSL_sk_insert(), OPENSSL_sk_is_sorted(), OPENSSL_sk_new(),
-OPENSSL_sk_new_null(), OPENSSL_sk_num(), OPENSSL_sk_pop(),
-OPENSSL_sk_pop_free(), OPENSSL_sk_push(), OPENSSL_sk_reserve(),
-OPENSSL_sk_set(), OPENSSL_sk_set_cmp_func(), OPENSSL_sk_shift(),
-OPENSSL_sk_sort(), OPENSSL_sk_unshift(), OPENSSL_sk_value(),
-OPENSSL_sk_zero().
+OPENSSL_sk_find(), OPENSSL_sk_find_ex(), OPENSSL_sk_find_all(),
+OPENSSL_sk_free(), OPENSSL_sk_insert(), OPENSSL_sk_is_sorted(),
+OPENSSL_sk_new(), OPENSSL_sk_new_null(), OPENSSL_sk_new_reserve(),
+OPENSSL_sk_num(), OPENSSL_sk_pop(), OPENSSL_sk_pop_free(), OPENSSL_sk_push(),
+OPENSSL_sk_reserve(), OPENSSL_sk_set(), OPENSSL_sk_set_cmp_func(),
+OPENSSL_sk_shift(), OPENSSL_sk_sort(), OPENSSL_sk_unshift(),
+OPENSSL_sk_value(), OPENSSL_sk_zero().
 
 =head1 RETURN VALUES
 
@@ -247,6 +273,7 @@ on error.
 
 B<sk_I<TYPE>_insert>(), B<sk_I<TYPE>_push>() and B<sk_I<TYPE>_unshift>() return
 the total number of elements in the stack and 0 if an error occurred.
+B<sk_I<TYPE>_push>() further returns -1 if I<sk> is NULL.
 
 B<sk_I<TYPE>_set>() returns a pointer to the replacement element or NULL on
 error.
@@ -258,7 +285,7 @@ B<sk_I<TYPE>_is_sorted>() returns B<1> if the stack is sorted and B<0> if it is
 not.
 
 B<sk_I<TYPE>_dup>() and B<sk_I<TYPE>_deep_copy>() return a pointer to the copy
-of the stack.
+of the stack or NULL on error.
 
 =head1 HISTORY
 
@@ -270,7 +297,7 @@ B<sk_I<TYPE>_reserve>() and B<sk_I<TYPE>_new_reserve>() were added in OpenSSL
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

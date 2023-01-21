@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,7 @@
 #include <openssl/evp.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_IN, OPT_OUT, OPT_TEXT, OPT_NOOUT,
     OPT_ENGINE, OPT_CHECK,
     OPT_PROV_ENUM
@@ -52,7 +52,6 @@ int pkeyparam_main(int argc, char **argv)
     int text = 0, noout = 0, ret = EXIT_FAILURE, check = 0, r;
     OPTION_CHOICE o;
     char *infile = NULL, *outfile = NULL, *prog;
-    unsigned long err;
 
     prog = opt_init(argc, argv, pkeyparam_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -90,8 +89,9 @@ int pkeyparam_main(int argc, char **argv)
             break;
         }
     }
-    argc = opt_num_rest();
-    if (argc != 0)
+
+    /* No extra arguments. */
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     in = bio_open_default(infile, 'r', FORMAT_PEM);
@@ -100,7 +100,8 @@ int pkeyparam_main(int argc, char **argv)
     out = bio_open_default(outfile, 'w', FORMAT_PEM);
     if (out == NULL)
         goto end;
-    pkey = PEM_read_bio_Parameters(in, NULL);
+    pkey = PEM_read_bio_Parameters_ex(in, NULL, app_get0_libctx(),
+                                      app_get0_propq());
     if (pkey == NULL) {
         BIO_printf(bio_err, "Error reading parameters\n");
         ERR_print_errors(bio_err);
@@ -108,7 +109,11 @@ int pkeyparam_main(int argc, char **argv)
     }
 
     if (check) {
-        ctx = EVP_PKEY_CTX_new(pkey, e);
+        if (e == NULL)
+            ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(), pkey,
+                                             app_get0_propq());
+        else
+            ctx = EVP_PKEY_CTX_new(pkey, e);
         if (ctx == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -123,13 +128,8 @@ int pkeyparam_main(int argc, char **argv)
              * Note: at least for RSA keys if this function returns
              * -1, there will be no error reasons.
              */
-            BIO_printf(out, "Parameters are invalid\n");
-
-            while ((err = ERR_peek_error()) != 0) {
-                BIO_printf(out, "Detailed error: %s\n",
-                           ERR_reason_error_string(err));
-                ERR_get_error(); /* remove err from error stack */
-            }
+            BIO_printf(bio_err, "Parameters are invalid\n");
+            ERR_print_errors(bio_err);
             goto end;
         }
     }

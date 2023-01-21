@@ -44,7 +44,7 @@ These parameter works as described in L<EVP_RAND(3)/PARAMETERS>.
 
 =item "max_adinlen" (B<OSSL_DRBG_PARAM_MAX_ADINLEN>) <unsigned integer>
 
-=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_CTR>) <unsigned integer>
+=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_COUNTER>) <unsigned integer>
 
 These parameters work as described in L<EVP_RAND(3)/PARAMETERS>, except that
 they can all be set as well as read.
@@ -52,9 +52,8 @@ they can all be set as well as read.
 =item "test_entropy" (B<OSSL_RAND_PARAM_TEST_ENTROPY>) <octet string>
 
 Sets the bytes returned when the test generator is sent an entropy request.
-When entropy is requested, these bytes are treated as a cyclic buffer and they
-are repeated as required.  The current position is remembered across generate
-calls.
+The current position is remembered across generate calls.
+If there are insufficient data present to satisfy a call, an error is returned.
 
 =item "test_nonce" (B<OSSL_RAND_PARAM_TEST_NONCE>) <octet string>
 
@@ -68,7 +67,7 @@ Each nonce request will return all of the bytes.
 A context for a test generator can be obtained by calling:
 
  EVP_RAND *rand = EVP_RAND_fetch(NULL, "TEST-RAND", NULL);
- EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand);
+ EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand, NULL);
 
 =head1 EXAMPLES
 
@@ -90,7 +89,7 @@ A context for a test generator can be obtained by calling:
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
                                           nonce, sizeof(nonce));
  *p = OSSL_PARAM_construct_end();
- EVP_RAND_set_ctx_params(rctx, params);
+ EVP_RAND_instantiate(rctx, strength, 0, NULL, 0, params);
 
  EVP_RAND_generate(rctx, bytes, sizeof(bytes), strength, 0, NULL, 0);
 
@@ -101,9 +100,13 @@ A context for a test generator can be obtained by calling:
 L<EVP_RAND(3)>,
 L<EVP_RAND(3)/PARAMETERS>
 
+=head1 HISTORY
+
+This functionality was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

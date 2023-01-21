@@ -24,14 +24,14 @@ B<openssl> B<s_server>
 [B<-cert_chain> I<infile>]
 [B<-build_chain>]
 [B<-serverinfo> I<val>]
-[B<-key> I<infile>]
-[B<-key2> I<infile>]
+[B<-key> I<filename>|I<uri>]
+[B<-key2> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pass> I<val>]
 [B<-dcert> I<infile>]
 [B<-dcertform> B<DER>|B<PEM>|B<P12>]
 [B<-dcert_chain> I<infile>]
-[B<-dkey> I<infile>]
+[B<-dkey> I<filename>|I<uri>]
 [B<-dkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-dpass> I<val>]
 [B<-nbio_test>]
@@ -70,33 +70,37 @@ B<openssl> B<s_server>
 [B<-verify_quiet>]
 [B<-ign_eof>]
 [B<-no_ign_eof>]
+[B<-no_etm>]
+[B<-no_ems>]
 [B<-status>]
 [B<-status_verbose>]
 [B<-status_timeout> I<int>]
+[B<-proxy> I<[http[s]://][userinfo@]host[:port][/path]>]
+[B<-no_proxy> I<addresses>]
 [B<-status_url> I<val>]
 [B<-status_file> I<infile>]
+[B<-ssl_config> I<val>]
 [B<-trace>]
 [B<-security_debug>]
 [B<-security_debug_verbose>]
 [B<-brief>]
 [B<-rev>]
 [B<-async>]
-[B<-ssl_config> I<val>]
 [B<-max_send_frag> I<+int>]
 [B<-split_send_frag> I<+int>]
 [B<-max_pipelines> I<+int>]
 [B<-naccept> I<+int>]
 [B<-read_buf> I<+int>]
 [B<-bugs>]
+[B<-no_tx_cert_comp>]
+[B<-no_rx_cert_comp>]
 [B<-no_comp>]
 [B<-comp>]
 [B<-no_ticket>]
 [B<-serverpref>]
 [B<-legacy_renegotiation>]
 [B<-no_renegotiation>]
-[B<-legacy_server_connect>]
 [B<-no_resumption_on_reneg>]
-[B<-no_legacy_server_connect>]
 [B<-allow_no_dhe_kex>]
 [B<-prioritize_chacha>]
 [B<-strict>]
@@ -122,11 +126,13 @@ B<openssl> B<s_server>
 [B<-listen>]
 [B<-sctp>]
 [B<-sctp_label_bug>]
+[B<-use_srtp> I<val>]
 [B<-no_dhe>]
 [B<-nextprotoneg> I<val>]
-[B<-use_srtp> I<val>]
 [B<-alpn> I<val>]
+[B<-ktls>]
 [B<-sendfile>]
+[B<-zerocopy_sendfile>]
 [B<-keylogfile> I<outfile>]
 [B<-recv_max_early_data> I<int>]
 [B<-max_early_data> I<int>]
@@ -135,6 +141,8 @@ B<openssl> B<s_server>
 [B<-anti_replay>]
 [B<-no_anti_replay>]
 [B<-num_tickets>]
+[B<-tfo>]
+[B<-cert_comp>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
@@ -142,20 +150,7 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
-
-=for openssl ifdef unix 4 6 unlink no_dhe nextprotoneg use_srtp engine
-
-=for openssl ifdef status status_verbose status_timeout status_url status_file
-
-=for openssl ifdef psk_hint srpvfile srpuserseed sctp sctp_label_bug
-
-=for openssl ifdef sctp sctp_label_bug trace mtu timeout listen
-
-=for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 dtls mtu dtls1 dtls1_2
-
-=for openssl ifdef sendfile
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -221,15 +216,20 @@ certificate and some require a certificate with a certain public key type:
 for example the DSS cipher suites require a certificate containing a DSS
 (DSA) key. If not specified then the filename F<server.pem> will be used.
 
+=item B<-cert2> I<infile>
+
+The certificate file to use for servername; default is C<server2.pem>.
+
 =item B<-certform> B<DER>|B<PEM>|B<P12>
 
-The server certificate file format.
-This option has no effect and is retained for backward compatibility only.
+The server certificate file format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-cert_chain>
 
-A file containing untrusted certificates to use when attempting to build the
+A file or URI of untrusted certificates to use when attempting to build the
 certificate chain related to the certificate specified via the B<-cert> option.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-build_chain>
 
@@ -244,24 +244,27 @@ followed by "length" bytes of extension data).  If the client sends
 an empty TLS ClientHello extension matching the type, the corresponding
 ServerHello extension will be returned.
 
-=item B<-key> I<infile>
+=item B<-key> I<filename>|I<uri>
 
 The private key to use. If not specified then the certificate file will
 be used.
 
+=item B<-key2> I<filename>|I<uri>
+
+The private Key file to use for servername if not given via B<-cert2>.
+
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+The key format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-pass> I<val>
 
-The private key password source.
+The private key and certificate file password source.
 For more information about the format of I<val>,
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
-=item B<-dcert> I<infile>, B<-dkey> I<infile>
+=item B<-dcert> I<infile>, B<-dkey> I<filename>|I<uri>
 
 Specify an additional certificate and private key, these behave in the
 same manner as the B<-cert> and B<-key> options except there is no default
@@ -274,26 +277,26 @@ by using an appropriate certificate.
 
 =item B<-dcert_chain>
 
-A file containing untrusted certificates to use when attempting to build the
+A file or URI of untrusted certificates to use when attempting to build the
 server certificate chain when a certificate specified via the B<-dcert> option
 is in use.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-dcertform> B<DER>|B<PEM>|B<P12>
 
-The format of the additional certificate file.
-This option has no effect and is retained for backward compatibility only.
+The format of the additional certificate file; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-dkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The format of the additional private key; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options>.
+The format of the additional private key; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-dpass> I<val>
 
-The passphrase for the additional private key.
+The passphrase for the additional private key and certificate.
 For more information about the format of I<val>,
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-nbio_test>
 
@@ -306,6 +309,14 @@ This option translated a line feed from the terminal into CR+LF.
 =item B<-debug>
 
 Print extensive debugging information including a hex dump of all traffic.
+
+=item B<-security_debug>
+
+Print output from SSL/TLS security framework.
+
+=item B<-security_debug_verbose>
+
+Print more output from SSL/TLS security framework
 
 =item B<-msg>
 
@@ -325,8 +336,8 @@ The CRL file to use.
 
 =item B<-CRLform> B<DER>|B<PEM>
 
-The CRL file format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The CRL file format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-crl_download>
 
@@ -381,6 +392,10 @@ DH).
 
 Inhibit printing of session and certificate information.
 
+=item B<-no_resume_ephemeral>
+
+Disable caching and tickets if ephemeral (EC)DH is used.
+
 =item B<-tlsextdebug>
 
 Print a hex dump of any TLS extensions received from the server.
@@ -430,18 +445,62 @@ option is enabled the peer does not need to send the close_notify alert and a
 closed connection will be treated as if the close_notify alert was received.
 For more information on shutting down a connection, see L<SSL_shutdown(3)>.
 
+=item B<-servername>
+
+Servername for HostName TLS extension.
+
+=item B<-servername_fatal>
+
+On servername mismatch send fatal alert (default: warning alert).
+
 =item B<-id_prefix> I<val>
 
 Generate SSL/TLS session IDs prefixed by I<val>. This is mostly useful
-for testing any SSL/TLS code (eg. proxies) that wish to deal with multiple
+for testing any SSL/TLS code (e.g. proxies) that wish to deal with multiple
 servers, when each of which might be generating a unique range of session
-IDs (eg. with a certain prefix).
+IDs (e.g. with a certain prefix).
+
+=item B<-keymatexport>
+
+Export keying material using label.
+
+=item B<-keymatexportlen>
+
+Export the given number of bytes of keying material; default 20.
+
+=item B<-no_cache>
+
+Disable session cache.
+
+=item B<-ext_cache>.
+
+Disable internal cache, set up and use external cache.
 
 =item B<-verify_return_error>
 
 Verification errors normally just print a message but allow the
 connection to continue, for debugging purposes.
 If this option is used, then verification errors close the connection.
+
+=item B<-verify_quiet>
+
+No verify output except verify errors.
+
+=item B<-ign_eof>
+
+Ignore input EOF (default: when B<-quiet>).
+
+=item B<-no_ign_eof>
+
+Do not ignore input EOF.
+
+=item B<-no_etm>
+
+Disable Encrypt-then-MAC negotiation.
+
+=item B<-no_ems>
+
+Disable Extended master secret negotiation.
 
 =item B<-status>
 
@@ -456,21 +515,43 @@ a verbose printout of the OCSP response.
 
 Sets the timeout for OCSP response to I<int> seconds.
 
+=item B<-proxy> I<[http[s]://][userinfo@]host[:port][/path]>
+
+The HTTP(S) proxy server to use for reaching the OCSP server unless B<-no_proxy>
+applies, see below.
+The proxy port defaults to 80 or 443 if the scheme is C<https>; apart from that
+the optional C<http://> or C<https://> prefix is ignored,
+as well as any userinfo and path components.
+Defaults to the environment variable C<http_proxy> if set, else C<HTTP_PROXY>
+in case no TLS is used, otherwise C<https_proxy> if set, else C<HTTPS_PROXY>.
+
+=item B<-no_proxy> I<addresses>
+
+List of IP addresses and/or DNS names of servers
+not to use an HTTP(S) proxy for, separated by commas and/or whitespace
+(where in the latter case the whole argument must be enclosed in "...").
+Default is from the environment variable C<no_proxy> if set, else C<NO_PROXY>.
+
 =item B<-status_url> I<val>
 
 Sets a fallback responder URL to use if no responder URL is present in the
 server certificate. Without this option an error is returned if the server
 certificate does not contain a responder address.
+The optional userinfo and fragment URL components are ignored.
+Any given query component is handled as part of the path component.
 
 =item B<-status_file> I<infile>
 
 Overrides any OCSP responder URLs from the certificate and always provides the
 OCSP Response stored in the file. The file must be in DER format.
 
+=item B<-ssl_config> I<val>
+
+Configure SSL_CTX using the given configuration value.
+
 =item B<-trace>
 
-Show verbose trace output of protocol messages. OpenSSL needs to be compiled
-with B<enable-ssl-trace> for this option to work.
+Show verbose trace output of protocol messages.
 
 =item B<-brief>
 
@@ -479,9 +560,8 @@ output.
 
 =item B<-rev>
 
-Simple test server which just reverses the text received from the client
-and sends it back to the server. Also sets B<-brief>. Cannot be used in
-conjunction with B<-early_data>.
+Simple echo server that sends back received text reversed. Also sets B<-brief>.
+Cannot be used in conjunction with B<-early_data>.
 
 =item B<-async>
 
@@ -527,6 +607,14 @@ further information).
 
 There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
+
+=item B<-no_tx_cert_comp>
+
+Disables support for sending TLSv1.3 compressed certificates.
+
+=item B<-no_rx_cert_comp>
+
+Disables support for receiving TLSv1.3 compressed certificates.
 
 =item B<-no_comp>
 
@@ -607,6 +695,14 @@ will be used.
 
 Turns on non blocking I/O.
 
+=item B<-timeout>
+
+Enable timeouts.
+
+=item B<-mtu>
+
+Set link-layer MTU.
+
 =item B<-psk_identity> I<val>
 
 Expect the client to send PSK identity I<val> when using a PSK
@@ -628,6 +724,16 @@ This option must be provided in order to use a PSK cipher.
 
 Use the pem encoded SSL_SESSION data stored in I<file> as the basis of a PSK.
 Note that this will only work if TLSv1.3 is negotiated.
+
+=item B<-srpvfile>
+
+The verifier file for SRP.
+This option is deprecated.
+
+=item B<-srpuserseed>
+
+A seed string for a default user salt.
+This option is deprecated.
 
 =item B<-listen>
 
@@ -654,6 +760,10 @@ older broken implementations but breaks interoperability with correct
 implementations. Must be used in conjunction with B<-sctp>. This option is only
 available where OpenSSL has support for SCTP enabled.
 
+=item B<-use_srtp>
+
+Offer SRTP key management with a colon-separated profile list.
+
 =item B<-no_dhe>
 
 If this option is set then no DH parameters will be loaded effectively
@@ -661,7 +771,7 @@ disabling the ephemeral DH cipher suites.
 
 =item B<-alpn> I<val>, B<-nextprotoneg> I<val>
 
-These flags enable the Enable the Application-Layer Protocol Negotiation
+These flags enable the Application-Layer Protocol Negotiation
 or Next Protocol Negotiation (NPN) extension, respectively. ALPN is the
 IETF standard and replaces NPN.
 The I<val> list is a comma-separated list of supported protocol
@@ -670,11 +780,27 @@ Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
 The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
 
+=item B<-ktls>
+
+Enable Kernel TLS for sending and receiving.
+This option was introduced in OpenSSL 3.2.0.
+Kernel TLS is off by default as of OpenSSL 3.2.0.
+
 =item B<-sendfile>
 
 If this option is set and KTLS is enabled, SSL_sendfile() will be used
 instead of BIO_write() to send the HTTP response requested by a client.
-This option is only valid if B<-WWW> or B<-HTTP> is specified.
+This option is only valid when B<-ktls> along with B<-WWW> or B<-HTTP>
+are specified.
+
+=item B<-zerocopy_sendfile>
+
+If this option is set, SSL_sendfile() will use the zerocopy TX mode, which gives
+a performance boost when used with KTLS hardware offload. Note that invalid
+TLS records might be transmitted if the file is changed while being sent.
+This option depends on B<-sendfile>; when used alone, B<-sendfile> is implied,
+and a warning is shown. Note that KTLS sendfile on FreeBSD always runs in the
+zerocopy mode.
 
 =item B<-keylogfile> I<outfile>
 
@@ -710,6 +836,14 @@ automatically detect if a session ticket has been used more than once, TLSv1.3
 has been negotiated, and early data is enabled on the server. A full handshake
 is forced if a session ticket is used a second or subsequent time. Any early
 data that was sent will be rejected.
+
+=item B<-tfo>
+
+Enable acceptance of TCP Fast Open (RFC7413) connections.
+
+=item B<-cert_comp>
+
+Pre-compresses certificates (RFC8879) that will be sent during the handshake.
 
 {- $OpenSSL::safe::opt_name_item -}
 
@@ -834,15 +968,15 @@ The -no_alt_chains option was added in OpenSSL 1.1.0.
 The
 -allow-no-dhe-kex and -prioritize_chacha options were added in OpenSSL 1.1.1.
 
-All B<-keyform> and B<-dkeyform> values except B<ENGINE>
-have become obsolete in OpenSSL 3.0.0 and have no effect.
+The B<-srpvfile>, B<-srpuserseed>, and B<-engine>
+option were deprecated in OpenSSL 3.0.
 
-The B<-certform> and B<-dcertform> options have become obsolete in OpenSSL 3.0.0
-and have no effect.
+The B<-tfo>, B<-no_tx_cert_comp>, and B<-no_rx_cert_comp> options were added
+in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

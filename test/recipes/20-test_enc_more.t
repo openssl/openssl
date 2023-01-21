@@ -16,6 +16,8 @@ use File::Copy;
 use File::Compare qw/compare_text/;
 use File::Basename;
 use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir/;
+use OpenSSL::Test::Utils;
+
 
 setup("test_evp_more");
 
@@ -26,7 +28,8 @@ my $plaintext = catfile(".", "testdatafile");
 my $fail = "";
 my $cmd = "openssl";
 my $provpath = bldtop_dir("providers");
-my @prov = ("-provider_path", $provpath, "-provider", "default", "-provider", "legacy");
+my @prov = ("-provider-path", $provpath, "-provider", "default");
+push @prov, ("-provider", "legacy") unless disabled("legacy");
 
 my $ciphersstatus = undef;
 my @ciphers =
@@ -34,6 +37,9 @@ my @ciphers =
          (map { split /\s+/ }
           run(app([$cmd, "enc", "-list"]),
               capture => 1, statusvar => \$ciphersstatus)));
+@ciphers = grep {!/^-(bf|blowfish|cast|des$|des-cbc|des-cfb|des-ecb|des-ofb
+                      |desx|idea|rc2|rc4|seed)/x} @ciphers
+    if disabled("legacy");
 
 plan tests => 2 + scalar @ciphers;
 

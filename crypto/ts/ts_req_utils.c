@@ -14,8 +14,6 @@
 #include <openssl/ts.h>
 #include "ts_local.h"
 
-DEFINE_STACK_OF(X509_EXTENSION)
-
 int TS_REQ_set_version(TS_REQ *a, long version)
 {
     return ASN1_INTEGER_set(a->version, version);
@@ -34,7 +32,7 @@ int TS_REQ_set_msg_imprint(TS_REQ *a, TS_MSG_IMPRINT *msg_imprint)
         return 1;
     new_msg_imprint = TS_MSG_IMPRINT_dup(msg_imprint);
     if (new_msg_imprint == NULL) {
-        TSerr(TS_F_TS_REQ_SET_MSG_IMPRINT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_TS_LIB);
         return 0;
     }
     TS_MSG_IMPRINT_free(a->msg_imprint);
@@ -55,7 +53,7 @@ int TS_MSG_IMPRINT_set_algo(TS_MSG_IMPRINT *a, X509_ALGOR *alg)
         return 1;
     new_alg = X509_ALGOR_dup(alg);
     if (new_alg == NULL) {
-        TSerr(TS_F_TS_MSG_IMPRINT_SET_ALGO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_ASN1_LIB);
         return 0;
     }
     X509_ALGOR_free(a->hash_algo);
@@ -86,7 +84,7 @@ int TS_REQ_set_policy_id(TS_REQ *a, const ASN1_OBJECT *policy)
         return 1;
     new_policy = OBJ_dup(policy);
     if (new_policy == NULL) {
-        TSerr(TS_F_TS_REQ_SET_POLICY_ID, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_OBJ_LIB);
         return 0;
     }
     ASN1_OBJECT_free(a->policy_id);
@@ -107,7 +105,7 @@ int TS_REQ_set_nonce(TS_REQ *a, const ASN1_INTEGER *nonce)
         return 1;
     new_nonce = ASN1_INTEGER_dup(nonce);
     if (new_nonce == NULL) {
-        TSerr(TS_F_TS_REQ_SET_NONCE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_ASN1_LIB);
         return 0;
     }
     ASN1_INTEGER_free(a->nonce);

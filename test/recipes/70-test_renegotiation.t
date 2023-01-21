@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -26,7 +26,8 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLS <= 1.2 enabled"
     if alldisabled(("ssl3", "tls1", "tls1_1", "tls1_2"));
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
+plan tests => 5;
+
 my $proxy = TLSProxy::Proxy->new(
     undef,
     cmdstr(app(["openssl"]), display => 1),
@@ -36,15 +37,16 @@ my $proxy = TLSProxy::Proxy->new(
 
 #Test 1: A basic renegotiation test
 $proxy->clientflags("-no_tls1_3");
+$proxy->serverflags("-client_renegotiation");
 $proxy->reneg(1);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 3;
 ok(TLSProxy::Message->success(), "Basic renegotiation");
 
 #Test 2: Client does not send the Reneg SCSV. Reneg should fail
 $proxy->clear();
 $proxy->filter(\&reneg_filter);
 $proxy->clientflags("-no_tls1_3");
+$proxy->serverflags("-client_renegotiation");
 $proxy->reneg(1);
 $proxy->start();
 ok(TLSProxy::Message->fail(), "No client SCSV");
@@ -58,7 +60,7 @@ SKIP: {
     $proxy->filter(undef);
     $proxy->ciphers("DEFAULT:\@SECLEVEL=0");
     $proxy->clientflags("-no_tls1_3 -cipher AES128-SHA:\@SECLEVEL=0");
-    $proxy->serverflags("-no_tls1_3 -no_tls1_2");
+    $proxy->serverflags("-no_tls1_3 -no_tls1_2 -client_renegotiation");
     $proxy->reneg(1);
     $proxy->start();
     my $chversion;
@@ -78,6 +80,35 @@ SKIP: {
        "Check ClientHello version is the same");
 }
 
+SKIP: {
+    skip "TLSv1.2 disabled", 1
+        if disabled("tls1_2");
+
+    #Test 4: Test for CVE-2021-3449. client_sig_algs instead of sig_algs in
+    #        resumption ClientHello
+    $proxy->clear();
+    $proxy->filter(\&sigalgs_filter);
+    $proxy->clientflags("-tls1_2");
+    $proxy->serverflags("-client_renegotiation");
+    $proxy->reneg(1);
+    $proxy->start();
+    ok(TLSProxy::Message->fail(), "client_sig_algs instead of sig_algs");
+}
+
+SKIP: {
+    skip "TLSv1.2 and TLSv1.1 disabled", 1
+        if disabled("tls1_2") && disabled("tls1_1");
+    #Test 5: Client fails to do renegotiation
+    $proxy->clear();
+    $proxy->filter(undef);
+    $proxy->serverflags("-no_tls1_3");
+    $proxy->clientflags("-no_tls1_3");
+    $proxy->reneg(1);
+    $proxy->start();
+    ok(TLSProxy::Message->fail(),
+        "Check client renegotiation failed");
+}
+
 sub reneg_filter
 {
     my $proxy = shift;
@@ -93,6 +124,26 @@ sub reneg_filter
             my @ciphersuite = (0x002f);
             $message->ciphersuites(\@ciphersuite);
             $message->ciphersuite_len(2);
+            $message->repack();
+        }
+    }
+}
+
+sub sigalgs_filter
+{
+    my $proxy = shift;
+    my $cnt = 0;
+
+    # We're only interested in the second ClientHello message
+    foreach my $message (@{$proxy->message_list}) {
+        if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
+            next if ($cnt++ == 0);
+
+            my $sigs = pack "C10", 0x00, 0x08,
+                            # rsa_pkcs_sha{256,384,512,1}
+                            0x04, 0x01,  0x05, 0x01,  0x06, 0x01,  0x02, 0x01;
+            $message->set_extension(TLSProxy::Message::EXT_SIG_ALGS_CERT, $sigs);
+            $message->delete_extension(TLSProxy::Message::EXT_SIG_ALGS);
             $message->repack();
         }
     }

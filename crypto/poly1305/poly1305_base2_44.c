@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,7 +18,7 @@
 typedef unsigned char u8;
 typedef unsigned int u32;
 typedef unsigned long u64;
-typedef unsigned __int128 u128;
+typedef uint128_t u128;
 
 typedef struct {
     u64 h[3];

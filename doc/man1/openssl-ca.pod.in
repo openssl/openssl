@@ -10,6 +10,7 @@ openssl-ca - sample minimal CA application
 B<openssl> B<ca>
 [B<-help>]
 [B<-verbose>]
+[B<-quiet>]
 [B<-config> I<filename>]
 [B<-name> I<section>]
 [B<-section> I<section>]
@@ -22,6 +23,8 @@ B<openssl> B<ca>
 [B<-crl_hold> I<instruction>]
 [B<-crl_compromise> I<time>]
 [B<-crl_CA_compromise> I<time>]
+[B<-crl_lastupdate> I<date>]
+[B<-crl_nextupdate> I<date>]
 [B<-crldays> I<days>]
 [B<-crlhours> I<hours>]
 [B<-crlsec> I<seconds>]
@@ -31,7 +34,7 @@ B<openssl> B<ca>
 [B<-days> I<arg>]
 [B<-md> I<arg>]
 [B<-policy> I<arg>]
-[B<-keyfile> I<arg>]
+[B<-keyfile> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-key> I<arg>]
 [B<-passin> I<arg>]
@@ -42,6 +45,7 @@ B<openssl> B<ca>
 [B<-inform> B<DER>|<PEM>]
 [B<-out> I<file>]
 [B<-notext>]
+[B<-dateopt>]
 [B<-outdir> I<dir>]
 [B<-infiles>]
 [B<-spkac> I<file>]
@@ -60,23 +64,25 @@ B<openssl> B<ca>
 [B<-rand_serial>]
 [B<-multivalue-rdn>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<certreq>...]
-
-=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
-This command is a minimal CA application. It can be used
-to sign certificate requests in a variety of forms and generate
-CRLs. It also maintains a text database of issued certificates
-and their status.
-When signing certificates, a single certificate request can be specified
+This command emulates a CA application.
+See the B<WARNINGS> especially when considering to use it productively.
+It can be used to sign certificate requests (CSRs) in a variety of forms
+and generate certificate revocation lists (CRLs).
+It also maintains a text database of issued certificates and their status.
+When signing certificates, a single request can be specified
 with the B<-in> option, or multiple requests can be processed by
 specifying a set of B<certreq> files after all options.
 
-The options descriptions will be divided into each purpose.
+Note that there are also very lean ways of generating certificates:
+the B<req> and B<x509> commands can be used for directly creating certificates.
+See L<openssl-req(1)> and L<openssl-x509(1)> for details.
+
+The descriptions of the B<ca> command options are divided into each purpose.
 
 =head1 OPTIONS
 
@@ -89,6 +95,11 @@ Print out a usage message.
 =item B<-verbose>
 
 This prints extra details about the operations being performed.
+
+=item B<-quiet>
+
+This prints fewer details about the operations being performed, which may
+be handy during batch scripts or pipelines.
 
 =item B<-config> I<filename>
 
@@ -103,13 +114,14 @@ B<default_ca> in the B<ca> section).
 
 =item B<-in> I<filename>
 
-An input filename containing a single certificate request to be
+An input filename containing a single certificate request (CSR) to be
 signed by the CA.
 
 =item B<-inform> B<DER>|B<PEM>
 
-The format of the data in CSR input files.
-The default is PEM.
+The format to use when loading certificate request (CSR) input files;
+by default PEM is tried first.
+See L<openssl-format-options(1)> for details.
 
 =item B<-ss_cert> I<filename>
 
@@ -138,24 +150,24 @@ The directory to output certificates to. The certificate will be
 written to a filename consisting of the serial number in hex with
 F<.pem> appended.
 
-=item B<-cert>
+=item B<-cert> I<filename>
 
-The CA certificate file.
+The CA certificate, which must match with B<-keyfile>.
 
 =item B<-certform> B<DER>|B<PEM>|B<P12>
 
-The format of the data in certificate input files.
-This option has no effect and is retained for backward compatibility only.
+The format of the data in certificate input files; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
-=item B<-keyfile> I<filename>
+=item B<-keyfile> I<filename>|I<uri>
 
-The private key to sign requests with.
+The CA private key to sign certificate requests with.
+This must match with B<-cert>.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The format of the private key input file; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+The format of the private key input file; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-sigopt> I<nm>:I<v>
 
@@ -167,8 +179,8 @@ Names and values of these options are algorithm-specific.
 Pass options to the signature algorithm during verify operations.
 Names and values of these options are algorithm-specific.
 
-This often needs to be given while signing too, because the input
-certificate signature request is verified against its own public key,
+This often needs to be given while signing too, because the self-signature of
+a certificate signing request (CSR) is verified against the included public key,
 and that verification may need its own set of options.
 
 =item B<-key> I<password>
@@ -179,14 +191,20 @@ The password used to encrypt the private key. Since on some
 systems the command line arguments are visible (e.g., when using
 L<ps(1)> on Unix),
 this option should be used with caution.
+Better use B<-passin>.
+
+=item B<-passin> I<arg>
+
+The key password source for key files and certificate PKCS#12 files.
+For more information about the format of B<arg>
+see L<openssl-passphrase-options(1)>.
 
 =item B<-selfsign>
 
 Indicates the issued certificates are to be signed with the key
 the certificate requests were signed with (given with B<-keyfile>).
-Certificate requests signed with a different key are ignored.  If
-B<-spkac>, B<-ss_cert> or B<-gencrl> are given, B<-selfsign> is
-ignored.
+Certificate requests signed with a different key are ignored.
+If B<-spkac>, B<-ss_cert> or B<-gencrl> are given, B<-selfsign> is ignored.
 
 A consequence of using B<-selfsign> is that the self-signed
 certificate appears among the entries in the certificate database
@@ -194,14 +212,14 @@ certificate appears among the entries in the certificate database
 serial number counter as all other certificates sign with the
 self-signed certificate.
 
-=item B<-passin> I<arg>
-
-The key password source. For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
-
 =item B<-notext>
 
 Don't output the text form of a certificate to the output file.
+
+=item B<-dateopt>
+
+Specify the date output format. Values are: rfc_822 and iso_8601.
+Defaults to rfc_822.
 
 =item B<-startdate> I<date>
 
@@ -253,7 +271,7 @@ DNs match the order of the request. This is not needed for Xenroll.
 =item B<-noemailDN>
 
 The DN of a certificate can contain the EMAIL field if present in the
-request DN, however it is good policy just having the e-mail set into
+request DN, however, it is good policy just having the e-mail set into
 the altName extension of the certificate. When this option is set the
 EMAIL field is removed from the certificate' subject and set only in
 the, eventually present, extensions. The B<email_in_dn> keyword can be
@@ -268,10 +286,10 @@ and all certificates will be certified automatically.
 
 The section of the configuration file containing certificate extensions
 to be added when a certificate is issued (defaults to B<x509_extensions>
-unless the B<-extfile> option is used). If no extension section is
-present then, a V1 certificate is created. If the extension section
-is present (even if it is empty), then a V3 certificate is created. See the
-L<x509v3_config(5)> manual page for details of the
+unless the B<-extfile> option is used).
+If no X.509 extensions are specified then a V1 certificate is created,
+else a V3 certificate is created.
+See the L<x509v3_config(5)> manual page for details of the
 extension section format.
 
 =item B<-extfile> I<file>
@@ -283,11 +301,17 @@ used).
 =item B<-subj> I<arg>
 
 Supersedes subject name given in the request.
+
 The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
-Keyword characters may be escaped by C<\> (backslash), and whitespace is
-retained.
+Special characters may be escaped by C<\> (backslash), whitespace is retained.
 Empty values are permitted, but the corresponding type will not be included
 in the resulting certificate.
+Giving a single C</> will lead to an empty sequence of RDNs (a NULL-DN).
+Multi-valued RDNs can be formed by placing a C<+> character instead of a C</>
+between the AttributeValueAssertions (AVAs) that specify the members of the set.
+Example:
+
+C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 =item B<-utf8>
 
@@ -311,12 +335,7 @@ This overrides any option or configuration to use a serial number file.
 
 =item B<-multivalue-rdn>
 
-This option causes the -subj argument to be interpreted with full
-support for multivalued RDNs. Example:
-
-C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
-
-If B<-multi-rdn> is not used then the UID value is C<123456+CN=John Doe>.
+This option has been deprecated and has no effect.
 
 {- $OpenSSL::safe::opt_r_item -}
 
@@ -333,6 +352,20 @@ If B<-multi-rdn> is not used then the UID value is C<123456+CN=John Doe>.
 =item B<-gencrl>
 
 This option generates a CRL based on information in the index file.
+
+=item B<-crl_lastupdate> I<time>
+
+Allows the value of the CRL's lastUpdate field to be explicitly set; if
+this option is not present, the current time is used. Accepts times in
+YYMMDDHHMMSSZ format (the same as an ASN1 UTCTime structure) or
+YYYYMMDDHHMMSSZ format (the same as an ASN1 GeneralizedTime structure).
+
+=item B<-crl_nextupdate> I<time>
+
+Allows the value of the CRL's nextUpdate field to be explicitly set; if
+this option is present, any values given for B<-crldays>, B<-crlhours>
+and B<-crlsec> are ignored. Accepts times in the same formats as
+B<-crl_lastupdate>.
 
 =item B<-crldays> I<num>
 
@@ -522,11 +555,11 @@ present, it must contain a valid CRL number.
 
 =item B<x509_extensions>
 
-The same as B<-extensions>.
+A fallback to the B<-extensions> option.
 
 =item B<crl_extensions>
 
-The same as B<-crlexts>.
+A fallback to the B<-crlexts> option.
 
 =item B<preserve>
 
@@ -721,6 +754,8 @@ possible to include one SPKAC or self-signed certificate.
 
 =head1 BUGS
 
+This command is quirky and at times downright unfriendly.
+
 The use of an in-memory text database can cause problems when large
 numbers of certificates are present because, as the name implies
 the database has to be kept in memory.
@@ -742,13 +777,16 @@ create an empty file.
 
 =head1 WARNINGS
 
-This command is quirky and at times downright unfriendly.
+This command was originally meant as an example of how to do things in a CA.
+Its code does not have production quality.
+It was not supposed to be used as a full blown CA itself,
+nevertheless some people are using it for this purpose at least internally.
+When doing so, specific care should be taken to
+properly secure the private key(s) used for signing certificates.
+It is advisable to keep them in a secure HW storage such as a smart card or HSM
+and access them via a suitable engine or crypto provider.
 
-This command was originally meant as an example of how to do
-things in a CA. It was not supposed to be used as a full blown CA itself:
-nevertheless some people are using it for this purpose.
-
-This command command is effectively a single user command: no locking
+This command is effectively a single user command: no locking
 is done on the various files and attempts to run more than one B<openssl ca>
 command on the same database can have unpredictable results.
 
@@ -758,7 +796,6 @@ request contains a basicConstraints extension with CA:TRUE and the
 B<copy_extensions> value is set to B<copyall> and the user does not spot
 this when the certificate is displayed then this will hand the requester
 a valid CA certificate.
-
 This situation can be avoided by setting B<copy_extensions> to B<copy>
 and including basicConstraints with CA:FALSE in the configuration file.
 Then if the request contains a basicConstraints extension it will be
@@ -778,7 +815,9 @@ then even if a certificate is issued with CA:TRUE it will not be valid.
 
 Since OpenSSL 1.1.1, the program follows RFC5280. Specifically,
 certificate validity period (specified by any of B<-startdate>,
-B<-enddate> and B<-days>) will be encoded as UTCTime if the dates are
+B<-enddate> and B<-days>) and CRL last/next update time (specified by
+any of B<-crl_lastupdate>, B<-crl_nextupdate>, B<-crldays>, B<-crlhours>
+and B<-crlsec>) will be encoded as UTCTime if the dates are
 earlier than year 2049 (included), and as GeneralizedTime if the dates
 are in year 2050 or later.
 
@@ -789,10 +828,10 @@ retained mainly for compatibility reasons.
 
 The B<-section> option was added in OpenSSL 3.0.0.
 
-The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
+The B<-multivalue-rdn> option has become obsolete in OpenSSL 3.0.0 and
+has no effect.
 
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 SEE ALSO
 
@@ -806,7 +845,7 @@ L<x509v3_config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

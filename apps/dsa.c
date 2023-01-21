@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,9 +22,18 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/bn.h>
+#include <openssl/encoder.h>
+#include <openssl/core_names.h>
+#include <openssl/core_dispatch.h>
+
+#ifndef OPENSSL_NO_RC4
+# define DEFAULT_PVK_ENCR_STRENGTH      2
+#else
+# define DEFAULT_PVK_ENCR_STRENGTH      0
+#endif
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_ENGINE,
     /* Do not change the order here; see case statements below */
     OPT_PVK_NONE, OPT_PVK_WEAK, OPT_PVK_STRONG,
@@ -68,20 +77,22 @@ const OPTIONS dsa_options[] = {
 int dsa_main(int argc, char **argv)
 {
     BIO *out = NULL;
-    DSA *dsa = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
-    const EVP_CIPHER *enc = NULL;
+    EVP_CIPHER *enc = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     OPTION_CHOICE o;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
-    int i, modulus = 0, pubin = 0, pubout = 0, ret = 1;
-#ifndef OPENSSL_NO_RC4
-    int pvk_encr = 2;
-#endif
+    int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, text = 0, noout = 0;
+    int modulus = 0, pubin = 0, pubout = 0, ret = 1;
+    int pvk_encr = DEFAULT_PVK_ENCR_STRENGTH;
     int private = 0;
+    const char *output_type = NULL, *ciphername = NULL;
+    const char *output_structure = NULL;
+    int selection = 0;
+    OSSL_ENCODER_CTX *ectx = NULL;
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, dsa_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -141,8 +152,7 @@ int dsa_main(int argc, char **argv)
             pubout = 1;
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &enc))
-                goto end;
+            ciphername = opt_unknown();
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
@@ -150,10 +160,13 @@ int dsa_main(int argc, char **argv)
             break;
         }
     }
-    argc = opt_num_rest();
-    if (argc != 0)
+
+    /* No extra args. */
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
+    if (!opt_cipher(ciphername, &enc))
+        goto end;
     private = pubin || pubout ? 0 : 1;
     if (text && !pubin)
         private = 1;
@@ -165,16 +178,17 @@ int dsa_main(int argc, char **argv)
 
     BIO_printf(bio_err, "read DSA key\n");
     if (pubin)
-        pkey = load_pubkey(infile, informat, 1, passin, e, "Public Key");
+        pkey = load_pubkey(infile, informat, 1, passin, e, "public key");
     else
-        pkey = load_key(infile, informat, 1, passin, e, "Private Key");
+        pkey = load_key(infile, informat, 1, passin, e, "private key");
 
-    if (pkey != NULL)
-        dsa = EVP_PKEY_get1_DSA(pkey);
-
-    if (dsa == NULL) {
+    if (pkey == NULL) {
         BIO_printf(bio_err, "unable to load Key\n");
         ERR_print_errors(bio_err);
+        goto end;
+    }
+    if (!EVP_PKEY_is_a(pkey, "DSA")) {
+        BIO_printf(bio_err, "Not a DSA key\n");
         goto end;
     }
 
@@ -193,11 +207,16 @@ int dsa_main(int argc, char **argv)
     }
 
     if (modulus) {
-        const BIGNUM *pub_key = NULL;
-        DSA_get0_key(dsa, &pub_key, NULL);
+        BIGNUM *pub_key = NULL;
+
+        if (!EVP_PKEY_get_bn_param(pkey, "pub", &pub_key)) {
+            ERR_print_errors(bio_err);
+            goto end;
+        }
         BIO_printf(out, "Public Key=");
         BN_print(out, pub_key);
         BIO_printf(out, "\n");
+        BN_free(pub_key);
     }
 
     if (noout) {
@@ -206,64 +225,83 @@ int dsa_main(int argc, char **argv)
     }
     BIO_printf(bio_err, "writing DSA key\n");
     if (outformat == FORMAT_ASN1) {
-        if (pubin || pubout) {
-            i = i2d_DSA_PUBKEY_bio(out, dsa);
-        } else {
-            assert(private);
-            i = i2d_DSAPrivateKey_bio(out, dsa);
-        }
+        output_type = "DER";
     } else if (outformat == FORMAT_PEM) {
-        if (pubin || pubout) {
-            i = PEM_write_bio_DSA_PUBKEY(out, dsa);
-        } else {
-            assert(private);
-            i = PEM_write_bio_DSAPrivateKey(out, dsa, enc,
-                                            NULL, 0, NULL, passout);
-        }
-#ifndef OPENSSL_NO_RSA
-    } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
-        EVP_PKEY *pk;
-        pk = EVP_PKEY_new();
-        if (pk == NULL)
-           goto end;
-
-        EVP_PKEY_set1_DSA(pk, dsa);
-        if (outformat == FORMAT_PVK) {
-            if (pubin) {
-                BIO_printf(bio_err, "PVK form impossible with public key input\n");
-                EVP_PKEY_free(pk);
-                goto end;
-            }
-            assert(private);
-# ifdef OPENSSL_NO_RC4
-            BIO_printf(bio_err, "PVK format not supported\n");
-            EVP_PKEY_free(pk);
+        output_type = "PEM";
+    } else if (outformat == FORMAT_MSBLOB) {
+        output_type = "MSBLOB";
+    } else if (outformat == FORMAT_PVK) {
+        if (pubin) {
+            BIO_printf(bio_err, "PVK form impossible with public key input\n");
             goto end;
-# else
-            i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
-# endif
-        } else if (pubin || pubout) {
-            i = i2b_PublicKey_bio(out, pk);
-        } else {
-            assert(private);
-            i = i2b_PrivateKey_bio(out, pk);
         }
-        EVP_PKEY_free(pk);
-#endif
+        output_type = "PVK";
     } else {
         BIO_printf(bio_err, "bad output format specified for outfile\n");
         goto end;
     }
-    if (i <= 0) {
-        BIO_printf(bio_err, "unable to write private key\n");
-        ERR_print_errors(bio_err);
+
+    if (outformat == FORMAT_ASN1 || outformat == FORMAT_PEM) {
+        if (pubout || pubin)
+            output_structure = "SubjectPublicKeyInfo";
+        else
+            output_structure = "type-specific";
+    }
+
+    /* Select what you want in the output */
+    if (pubout || pubin) {
+        selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
+    } else {
+        assert(private);
+        selection = (OSSL_KEYMGMT_SELECT_KEYPAIR
+                     | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+    }
+
+    /* Perform the encoding */
+    ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, selection, output_type,
+                                         output_structure, NULL);
+    if (OSSL_ENCODER_CTX_get_num_encoders(ectx) == 0) {
+        BIO_printf(bio_err, "%s format not supported\n", output_type);
+        goto end;
+    }
+
+    /* Passphrase setup */
+    if (enc != NULL)
+        OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_get0_name(enc), NULL);
+
+    /* Default passphrase prompter */
+    if (enc != NULL || outformat == FORMAT_PVK) {
+        OSSL_ENCODER_CTX_set_passphrase_ui(ectx, get_ui_method(), NULL);
+        if (passout != NULL)
+            /* When passout given, override the passphrase prompter */
+            OSSL_ENCODER_CTX_set_passphrase(ectx,
+                                            (const unsigned char *)passout,
+                                            strlen(passout));
+    }
+
+    /* PVK requires a bit more */
+    if (outformat == FORMAT_PVK) {
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+        params[0] = OSSL_PARAM_construct_int("encrypt-level", &pvk_encr);
+        if (!OSSL_ENCODER_CTX_set_params(ectx, params)) {
+            BIO_printf(bio_err, "invalid PVK encryption level\n");
+            goto end;
+        }
+    }
+
+    if (!OSSL_ENCODER_to_bio(ectx, out)) {
+        BIO_printf(bio_err, "unable to write key\n");
         goto end;
     }
     ret = 0;
  end:
+    if (ret != 0)
+        ERR_print_errors(bio_err);
+    OSSL_ENCODER_CTX_free(ectx);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
-    DSA_free(dsa);
+    EVP_CIPHER_free(enc);
     release_engine(e);
     OPENSSL_free(passin);
     OPENSSL_free(passout);

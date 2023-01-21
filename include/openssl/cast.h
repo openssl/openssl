@@ -39,36 +39,29 @@ typedef struct cast_key_st {
 } CAST_KEY;
 
 # endif /* OPENSSL_NO_DEPRECATED_3_0 */
-
-DEPRECATEDIN_3_0(void CAST_set_key(CAST_KEY *key, int len,
-                                   const unsigned char *data))
-DEPRECATEDIN_3_0(void CAST_ecb_encrypt(const unsigned char *in,
-                                       unsigned char *out,
-                                       const CAST_KEY *key,
-                                       int enc))
-DEPRECATEDIN_3_0(void CAST_encrypt(CAST_LONG *data,
-                                   const CAST_KEY *key))
-DEPRECATEDIN_3_0(void CAST_decrypt(CAST_LONG *data,
-                                   const CAST_KEY *key))
-DEPRECATEDIN_3_0(void CAST_cbc_encrypt(const unsigned char *in,
-                                       unsigned char *out,
-                                       long length,
-                                       const CAST_KEY *ks,
-                                       unsigned char *iv,
-                                       int enc))
-DEPRECATEDIN_3_0(void CAST_cfb64_encrypt(const unsigned char *in,
-                                         unsigned char *out,
-                                         long length,
-                                         const CAST_KEY *schedule,
-                                         unsigned char *ivec,
-                                         int *num,
-                                         int enc))
-DEPRECATEDIN_3_0(void CAST_ofb64_encrypt(const unsigned char *in,
-                                         unsigned char *out,
-                                         long length,
-                                         const CAST_KEY *schedule,
-                                         unsigned char *ivec,
-                                         int *num))
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+void CAST_set_key(CAST_KEY *key, int len, const unsigned char *data);
+OSSL_DEPRECATEDIN_3_0
+void CAST_ecb_encrypt(const unsigned char *in, unsigned char *out,
+                      const CAST_KEY *key, int enc);
+OSSL_DEPRECATEDIN_3_0
+void CAST_encrypt(CAST_LONG *data, const CAST_KEY *key);
+OSSL_DEPRECATEDIN_3_0
+void CAST_decrypt(CAST_LONG *data, const CAST_KEY *key);
+OSSL_DEPRECATEDIN_3_0
+void CAST_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                      long length, const CAST_KEY *ks, unsigned char *iv,
+                      int enc);
+OSSL_DEPRECATEDIN_3_0
+void CAST_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+                        long length, const CAST_KEY *schedule,
+                        unsigned char *ivec, int *num, int enc);
+OSSL_DEPRECATEDIN_3_0
+void CAST_ofb64_encrypt(const unsigned char *in, unsigned char *out,
+                        long length, const CAST_KEY *schedule,
+                        unsigned char *ivec, int *num);
+# endif
 
 # ifdef  __cplusplus
 }

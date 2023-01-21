@@ -2,7 +2,7 @@ LIBS=../../libcrypto
 
 $SHA1ASM=
 IF[{- !$disabled{asm} -}]
-  $SHA1ASM_x86=sha1-586.s sha256-586.s sha512-586.s
+  $SHA1ASM_x86=sha1-586.S sha256-586.S sha512-586.S
   $SHA1DEF_x86=SHA1_ASM SHA256_ASM SHA512_ASM
   $SHA1ASM_x86_64=\
         sha1-x86_64.s sha256-x86_64.s sha512-x86_64.s sha1-mb-x86_64.s \
@@ -37,7 +37,8 @@ IF[{- !$disabled{asm} -}]
   $SHA1DEF_parisc20_64=$SHA1DEF_parisc11
 
   $SHA1ASM_ppc32=\
-        sha1-ppc.s sha256-ppc.s sha512-ppc.s sha256p8-ppc.s sha512p8-ppc.s
+        sha_ppc.c sha1-ppc.s sha256-ppc.s sha512-ppc.s sha256p8-ppc.s \
+        sha512p8-ppc.s
   $SHA1DEF_ppc32=SHA1_ASM SHA256_ASM SHA512_ASM
   $SHA1ASM_ppc64=$SHA1ASM_ppc32
   $SHA1DEF_ppc64=$SHA1DEF_ppc32
@@ -81,14 +82,21 @@ SOURCE[../../providers/libfips.a]= $COMMON
 # need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$SHA1DEF $KECCAK1600DEF
 DEFINE[../../providers/libfips.a]=$SHA1DEF $KECCAK1600DEF
-DEFINE[../../providers/libimplementations.a]=$SHA1DEF $KECCAK1600DEF
+DEFINE[../../providers/libdefault.a]=$SHA1DEF $KECCAK1600DEF
+# We only need to include the SHA1DEF and KECCAK1600DEF stuff in the
+# legacy provider when it's a separate module and it's dynamically
+# linked with libcrypto.  Otherwise, it already gets everything that
+# the static libcrypto.a has, and doesn't need it added again.
+IF[{- !$disabled{module} && !$disabled{shared} -}]
+  DEFINE[../providers/liblegacy.a]=$SHA1DEF $KECCAK1600DEF
+ENDIF
 
-GENERATE[sha1-586.s]=asm/sha1-586.pl
-DEPEND[sha1-586.s]=../perlasm/x86asm.pl
-GENERATE[sha256-586.s]=asm/sha256-586.pl
-DEPEND[sha256-586.s]=../perlasm/x86asm.pl
-GENERATE[sha512-586.s]=asm/sha512-586.pl
-DEPEND[sha512-586.s]=../perlasm/x86asm.pl
+GENERATE[sha1-586.S]=asm/sha1-586.pl
+DEPEND[sha1-586.S]=../perlasm/x86asm.pl
+GENERATE[sha256-586.S]=asm/sha256-586.pl
+DEPEND[sha256-586.S]=../perlasm/x86asm.pl
+GENERATE[sha512-586.S]=asm/sha512-586.pl
+DEPEND[sha512-586.S]=../perlasm/x86asm.pl
 
 GENERATE[sha1-ia64.s]=asm/sha1-ia64.pl
 GENERATE[sha256-ia64.s]=asm/sha512-ia64.pl
@@ -145,6 +153,7 @@ INCLUDE[sha256-armv8.o]=..
 GENERATE[sha512-armv8.S]=asm/sha512-armv8.pl
 INCLUDE[sha512-armv8.o]=..
 GENERATE[keccak1600-armv8.S]=asm/keccak1600-armv8.pl
+INCLUDE[keccak1600-armv8.o]=..
 
 GENERATE[sha1-s390x.S]=asm/sha1-s390x.pl
 INCLUDE[sha1-s390x.o]=..

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -54,21 +54,21 @@ static int test_sm4_ecb(void)
     SM4_KEY key;
     uint8_t block[SM4_BLOCK_SIZE];
 
-    SM4_set_key(k, &key);
+    ossl_sm4_set_key(k, &key);
     memcpy(block, input, SM4_BLOCK_SIZE);
 
-    SM4_encrypt(block, block, &key);
+    ossl_sm4_encrypt(block, block, &key);
     if (!TEST_mem_eq(block, SM4_BLOCK_SIZE, expected, SM4_BLOCK_SIZE))
         return 0;
 
     for (i = 0; i != 999999; ++i)
-        SM4_encrypt(block, block, &key);
+        ossl_sm4_encrypt(block, block, &key);
 
     if (!TEST_mem_eq(block, SM4_BLOCK_SIZE, expected_iter, SM4_BLOCK_SIZE))
         return 0;
 
     for (i = 0; i != 1000000; ++i)
-        SM4_decrypt(block, block, &key);
+        ossl_sm4_decrypt(block, block, &key);
 
     if (!TEST_mem_eq(block, SM4_BLOCK_SIZE, input, SM4_BLOCK_SIZE))
         return 0;

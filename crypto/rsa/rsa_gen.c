@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,10 +24,11 @@
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/self_test.h>
+#include "prov/providercommon.h"
 #include "rsa_local.h"
 
 static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg);
-static int rsa_keygen(OPENSSL_CTX *libctx, RSA *rsa, int bits, int primes,
+static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,
                       BIGNUM *e_value, BN_GENCB *cb, int pairwise_test);
 
 /*
@@ -66,7 +67,7 @@ int RSA_generate_multi_prime_key(RSA *rsa, int bits, int primes,
         else
             return 0;
     }
-#endif /* FIPS_MODUKE */
+#endif /* FIPS_MODULE */
     return rsa_keygen(rsa->libctx, rsa, bits, primes, e_value, cb, 0);
 }
 
@@ -85,24 +86,25 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
     int ok = -1;
 
     if (bits < RSA_MIN_MODULUS_BITS) {
-        ok = 0;             /* we set our own err */
-        RSAerr(0, RSA_R_KEY_SIZE_TOO_SMALL);
-        goto err;
+        ERR_raise(ERR_LIB_RSA, RSA_R_KEY_SIZE_TOO_SMALL);
+        return 0;
     }
-
+    if (e_value == NULL) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_BAD_E_VALUE);
+        return 0;
+    }
     /* A bad value for e can cause infinite loops */
-    if (e_value != NULL && !rsa_check_public_exponent(e_value)) {
-        RSAerr(0, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
+    if (!ossl_rsa_check_public_exponent(e_value)) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
         return 0;
     }
 
-    if (primes < RSA_DEFAULT_PRIME_NUM || primes > rsa_multip_cap(bits)) {
-        ok = 0;             /* we set our own err */
-        RSAerr(0, RSA_R_KEY_PRIME_NUM_INVALID);
-        goto err;
+    if (primes < RSA_DEFAULT_PRIME_NUM || primes > ossl_rsa_multip_cap(bits)) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_KEY_PRIME_NUM_INVALID);
+        return 0;
     }
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(rsa->libctx);
     if (ctx == NULL)
         goto err;
     BN_CTX_start(ctx);
@@ -153,13 +155,14 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
             goto err;
         if (rsa->prime_infos != NULL) {
             /* could this happen? */
-            sk_RSA_PRIME_INFO_pop_free(rsa->prime_infos, rsa_multip_info_free);
+            sk_RSA_PRIME_INFO_pop_free(rsa->prime_infos,
+                                       ossl_rsa_multip_info_free);
         }
         rsa->prime_infos = prime_infos;
 
         /* prime_info from 2 to |primes| -1 */
         for (i = 2; i < primes; i++) {
-            pinfo = rsa_multip_info_new();
+            pinfo = ossl_rsa_multip_info_new();
             if (pinfo == NULL)
                 goto err;
             (void)sk_RSA_PRIME_INFO_push(prime_infos, pinfo);
@@ -186,7 +189,8 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
 
         for (;;) {
  redo:
-            if (!BN_generate_prime_ex(prime, bitsr[i] + adj, 0, NULL, NULL, cb))
+            if (!BN_generate_prime_ex2(prime, bitsr[i] + adj, 0, NULL, NULL,
+                                       cb, ctx))
                 goto err;
             /*
              * prime should not be equal to p, q, r_3...
@@ -409,7 +413,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
     ok = 1;
  err:
     if (ok == -1) {
-        RSAerr(0, ERR_LIB_BN);
+        ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
         ok = 0;
     }
     BN_CTX_end(ctx);
@@ -418,25 +422,27 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
 }
 #endif /* FIPS_MODULE */
 
-static int rsa_keygen(OPENSSL_CTX *libctx, RSA *rsa, int bits, int primes,
+static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,
                       BIGNUM *e_value, BN_GENCB *cb, int pairwise_test)
 {
     int ok = 0;
 
+#ifdef FIPS_MODULE
+    ok = ossl_rsa_sp800_56b_generate_key(rsa, bits, e_value, cb);
+    pairwise_test = 1; /* FIPS MODE needs to always run the pairwise test */
+#else
     /*
-     * Only multi-prime keys or insecure keys with a small key length will use
-     * the older rsa_multiprime_keygen().
+     * Only multi-prime keys or insecure keys with a small key length or a
+     * public exponent <= 2^16 will use the older rsa_multiprime_keygen().
      */
-    if (primes == 2 && bits >= 2048)
-        ok = rsa_sp800_56b_generate_key(rsa, bits, e_value, cb);
-#ifndef FIPS_MODULE
+    if (primes == 2
+            && bits >= 2048
+            && (e_value == NULL || BN_num_bits(e_value) > 16))
+        ok = ossl_rsa_sp800_56b_generate_key(rsa, bits, e_value, cb);
     else
         ok = rsa_multiprime_keygen(rsa, bits, primes, e_value, cb);
 #endif /* FIPS_MODULE */
 
-#ifdef FIPS_MODULE
-    pairwise_test = 1; /* FIPS MODE needs to always run the pairwise test */
-#endif
     if (pairwise_test && ok > 0) {
         OSSL_CALLBACK *stcb = NULL;
         void *stcbarg = NULL;
@@ -444,6 +450,7 @@ static int rsa_keygen(OPENSSL_CTX *libctx, RSA *rsa, int bits, int primes,
         OSSL_SELF_TEST_get_callback(libctx, &stcb, &stcbarg);
         ok = rsa_keygen_pairwise_test(rsa, stcb, stcbarg);
         if (!ok) {
+            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
             /* Clear intermediate results */
             BN_clear_free(rsa->d);
             BN_clear_free(rsa->p);
@@ -475,7 +482,7 @@ static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg)
     unsigned int ciphertxt_len;
     unsigned char *ciphertxt = NULL;
     const unsigned char plaintxt[16] = {0};
-    unsigned char decoded[256];
+    unsigned char *decoded = NULL;
     unsigned int decoded_len;
     unsigned int plaintxt_len = (unsigned int)sizeof(plaintxt_len);
     int padding = RSA_PKCS1_PADDING;
@@ -488,9 +495,14 @@ static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg)
                            OSSL_SELF_TEST_DESC_PCT_RSA_PKCS1);
 
     ciphertxt_len = RSA_size(rsa);
-    ciphertxt = OPENSSL_zalloc(ciphertxt_len);
+    /*
+     * RSA_private_encrypt() and RSA_private_decrypt() requires the 'to'
+     * parameter to be a maximum of RSA_size() - allocate space for both.
+     */
+    ciphertxt = OPENSSL_zalloc(ciphertxt_len * 2);
     if (ciphertxt == NULL)
         goto err;
+    decoded = ciphertxt + ciphertxt_len;
 
     ciphertxt_len = RSA_public_encrypt(plaintxt_len, plaintxt, ciphertxt, rsa,
                                        padding);

@@ -24,12 +24,10 @@ B<openssl> B<gendsa>
 [B<-des3>]
 [B<-idea>]
 [B<-verbose>]
+[B<-quiet>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<paramfile>]
-
-=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -52,7 +50,7 @@ standard output is used.
 =item B<-passout> I<arg>
 
 The passphrase used for the output file.
-See L<openssl(1)/Pass Phrase Options>.
+See L<openssl-passphrase-options(1)>.
 
 =item B<-aes128>, B<-aes192>, B<-aes256>, B<-aria128>, B<-aria192>, B<-aria256>, B<-camellia128>, B<-camellia192>, B<-camellia256>, B<-des>, B<-des3>, B<-idea>
 
@@ -63,6 +61,11 @@ If none of these options is specified no encryption is used.
 =item B<-verbose>
 
 Print extra details about the operations being performed.
+
+=item B<-quiet>
+
+Print fewer details about the operations being performed, which may
+be handy during batch scripts and pipelines.
 
 {- $OpenSSL::safe::opt_r_item -}
 
@@ -92,9 +95,13 @@ L<openssl-dsa(1)>,
 L<openssl-genrsa(1)>,
 L<openssl-rsa(1)>
 
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

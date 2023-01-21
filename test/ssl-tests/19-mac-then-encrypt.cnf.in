@@ -13,6 +13,8 @@ package ssltests;
 
 use OpenSSL::Test::Utils;
 
+our $fips_mode;
+
 our @tests = (
     {
         name => "disable-encrypt-then-mac-server-sha",
@@ -99,4 +101,55 @@ my @tests_tls1_2 = (
     },
 );
 
+our @tests_tls1 = (
+    {
+        name => "disable-encrypt-then-mac-server-sha-tls1",
+        server => {
+          "CipherString" => 'DEFAULT:@SECLEVEL=0',
+          "Options" => "-EncryptThenMac",
+        },
+        client => {
+          "CipherString" => 'AES128-SHA@SECLEVEL=0',
+          "MinProtocol" => "TLSv1",
+          "MaxProtocol" => "TLSv1"
+        },
+        test   => {
+          "ExpectedResult" => "Success",
+        },
+    },
+    {
+        name => "disable-encrypt-then-mac-client-sha-tls1",
+        server => {
+          "CipherString" => 'DEFAULT:@SECLEVEL=0',
+        },
+        client => {
+          "CipherString" => 'AES128-SHA@SECLEVEL=0',
+          "Options" => "-EncryptThenMac",
+          "MinProtocol" => "TLSv1",
+          "MaxProtocol" => "TLSv1"
+        },
+        test   => {
+          "ExpectedResult" => "Success",
+        },
+    },
+    {
+        name => "disable-encrypt-then-mac-both-sha-tls1",
+        server => {
+          "CipherString" => 'DEFAULT:@SECLEVEL=0',
+          "Options" => "-EncryptThenMac",
+        },
+        client => {
+          "CipherString" => 'AES128-SHA@SECLEVEL=0',
+          "Options" => "-EncryptThenMac",
+          "MinProtocol" => "TLSv1",
+          "MaxProtocol" => "TLSv1"
+        },
+        test   => {
+          "ExpectedResult" => "Success",
+        },
+    },
+);
+
+
 push @tests, @tests_tls1_2 unless disabled("tls1_2");
+push @tests, @tests_tls1 unless disabled("tls1") || $fips_mode;

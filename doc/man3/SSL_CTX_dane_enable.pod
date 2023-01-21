@@ -18,10 +18,10 @@ TLS client
                             uint8_t mtype, uint8_t ord);
  int SSL_dane_enable(SSL *s, const char *basedomain);
  int SSL_dane_tlsa_add(SSL *s, uint8_t usage, uint8_t selector,
-                       uint8_t mtype, unsigned const char *data, size_t dlen);
+                       uint8_t mtype, const unsigned char *data, size_t dlen);
  int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki);
  int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
-                        uint8_t *mtype, unsigned const char **data,
+                        uint8_t *mtype, const unsigned char **data,
                         size_t *dlen);
  unsigned long SSL_CTX_dane_set_flags(SSL_CTX *ctx, unsigned long flags);
  unsigned long SSL_CTX_dane_clear_flags(SSL_CTX *ctx, unsigned long flags);
@@ -122,7 +122,7 @@ SSL_get0_dane_tlsa() can be used to retrieve the fields of the TLSA record that
 matched the peer certificate chain.
 The return value indicates the match depth or failure to match just as with
 SSL_get0_dane_authority().
-When the return value is non-negative, the storage pointed to by the B<usage>,
+When the return value is nonnegative, the storage pointed to by the B<usage>,
 B<selector>, B<mtype> and B<data> parameters is updated to the corresponding
 TLSA record fields.
 The B<data> field is in binary wire form, and is therefore not NUL-terminated,
@@ -173,7 +173,7 @@ certificate or a public key that fails to parse.
 
 The functions SSL_get0_dane_authority() and SSL_get0_dane_tlsa() return a
 negative value when DANE authentication failed or was not enabled, a
-non-negative value indicates the chain depth at which the TLSA record matched a
+nonnegative value indicates the chain depth at which the TLSA record matched a
 chain certificate, or the depth of the top-most certificate, when the TLSA
 record is a full public key that is its signer.
 
@@ -373,7 +373,7 @@ These functions were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

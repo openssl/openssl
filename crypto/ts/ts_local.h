@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -110,7 +110,7 @@ struct TS_resp_ctx {
     ASN1_INTEGER *seconds;      /* accuracy, 0 means not specified. */
     ASN1_INTEGER *millis;       /* accuracy, 0 means not specified. */
     ASN1_INTEGER *micros;       /* accuracy, 0 means not specified. */
-    unsigned clock_precision_digits; /* fraction of seconds in time stamp
+    unsigned clock_precision_digits; /* fraction of seconds in timestamp
                                       * token. */
     unsigned flags;             /* Optional info, see values above. */
     /* Callback functions. */
@@ -124,6 +124,8 @@ struct TS_resp_ctx {
     TS_REQ *request;
     TS_RESP *response;
     TS_TST_INFO *tst_info;
+    OSSL_LIB_CTX *libctx;
+    char *propq;
 };
 
 struct TS_verify_ctx {

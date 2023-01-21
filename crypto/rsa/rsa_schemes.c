@@ -67,18 +67,18 @@ static int md_is_a(const void *md, const char *name)
     return EVP_MD_is_a(md, name);
 }
 
-int rsa_oaeppss_md2nid(const EVP_MD *md)
+int ossl_rsa_oaeppss_md2nid(const EVP_MD *md)
 {
     return meth2nid(md, md_is_a,
                     oaeppss_name_nid_map, OSSL_NELEM(oaeppss_name_nid_map));
 }
 
-const char *rsa_oaeppss_nid2name(int md)
+const char *ossl_rsa_oaeppss_nid2name(int md)
 {
     return nid2name(md, oaeppss_name_nid_map, OSSL_NELEM(oaeppss_name_nid_map));
 }
 
-const char *rsa_mgf_nid2name(int mgf)
+const char *ossl_rsa_mgf_nid2name(int mgf)
 {
     if (mgf == NID_mgf1)
         return SN_mgf1;
