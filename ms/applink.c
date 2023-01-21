@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,6 +37,12 @@
 # include <stdio.h>
 # include <io.h>
 # include <fcntl.h>
+
+# ifdef __BORLANDC__
+   /* _lseek in <io.h> is a function-like macro so we can't take its address */
+#  undef _lseek
+#  define _lseek lseek
+# endif
 
 static void *app_stdin(void)
 {

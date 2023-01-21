@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -24,5 +24,6 @@ plan tests => 2;
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 subtest 'sid conversions' => sub {
-    tconversion("sid", srctop_file("test","testsid.pem"), "sess_id");
+    tconversion( -type => 'sid', -in => srctop_file("test","testsid.pem"),
+                 -args => ["sess_id"] );
 };

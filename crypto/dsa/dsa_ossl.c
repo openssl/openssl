@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,12 +20,15 @@
 #include <openssl/sha.h>
 #include "dsa_local.h"
 #include <openssl/asn1.h>
+#include "internal/deterministic_nonce.h"
 
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 static int dsa_sign_setup_no_digest(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
                                     BIGNUM **rp);
 static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
-                          BIGNUM **rp, const unsigned char *dgst, int dlen);
+                          BIGNUM **rp, const unsigned char *dgst, int dlen,
+                          unsigned int nonce_type, const char *digestname,
+                          OSSL_LIB_CTX *libctx, const char *propq);
 static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
                          DSA_SIG *sig, DSA *dsa);
 static int dsa_init(DSA *dsa);
@@ -67,7 +70,9 @@ const DSA_METHOD *DSA_OpenSSL(void)
     return &openssl_dsa_meth;
 }
 
-DSA_SIG *dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa)
+DSA_SIG *ossl_dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa,
+                              unsigned int nonce_type, const char *digestname,
+                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     BIGNUM *kinv = NULL;
     BIGNUM *m, *blind, *blindm, *tmp;
@@ -106,7 +111,8 @@ DSA_SIG *dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa)
         goto err;
 
  redo:
-    if (!dsa_sign_setup(dsa, ctx, &kinv, &ret->r, dgst, dlen))
+    if (!dsa_sign_setup(dsa, ctx, &kinv, &ret->r, dgst, dlen,
+                        nonce_type, digestname, libctx, propq))
         goto err;
 
     if (dlen > BN_num_bytes(dsa->params.q))
@@ -132,7 +138,7 @@ DSA_SIG *dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa)
     /* Generate a blinding value */
     do {
         if (!BN_priv_rand_ex(blind, BN_num_bits(dsa->params.q) - 1,
-                             BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, ctx))
+                             BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, 0, ctx))
             goto err;
     } while (BN_is_zero(blind));
     BN_set_flags(blind, BN_FLG_CONSTTIME);
@@ -174,7 +180,7 @@ DSA_SIG *dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa)
 
  err:
     if (rv == 0) {
-        DSAerr(0, reason);
+        ERR_raise(ERR_LIB_DSA, reason);
         DSA_SIG_free(ret);
         ret = NULL;
     }
@@ -185,18 +191,22 @@ DSA_SIG *dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa)
 
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 {
-    return dsa_do_sign_int(dgst, dlen, dsa);
+    return ossl_dsa_do_sign_int(dgst, dlen, dsa,
+                                0, NULL, NULL, NULL);
 }
 
 static int dsa_sign_setup_no_digest(DSA *dsa, BN_CTX *ctx_in,
                                     BIGNUM **kinvp, BIGNUM **rp)
 {
-    return dsa_sign_setup(dsa, ctx_in, kinvp, rp, NULL, 0);
+    return dsa_sign_setup(dsa, ctx_in, kinvp, rp, NULL, 0,
+                          0, NULL, NULL, NULL);
 }
 
 static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
                           BIGNUM **kinvp, BIGNUM **rp,
-                          const unsigned char *dgst, int dlen)
+                          const unsigned char *dgst, int dlen,
+                          unsigned int nonce_type, const char *digestname,
+                          OSSL_LIB_CTX *libctx, const char *propq)
 {
     BN_CTX *ctx = NULL;
     BIGNUM *k, *kinv = NULL, *r = *rp;
@@ -205,7 +215,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     int q_bits, q_words;
 
     if (!dsa->params.p || !dsa->params.q || !dsa->params.g) {
-        DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_MISSING_PARAMETERS);
+        ERR_raise(ERR_LIB_DSA, DSA_R_MISSING_PARAMETERS);
         return 0;
     }
 
@@ -213,11 +223,11 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     if (BN_is_zero(dsa->params.p)
         || BN_is_zero(dsa->params.q)
         || BN_is_zero(dsa->params.g)) {
-        DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_INVALID_PARAMETERS);
+        ERR_raise(ERR_LIB_DSA, DSA_R_INVALID_PARAMETERS);
         return 0;
     }
     if (dsa->priv_key == NULL) {
-        DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_MISSING_PRIVATE_KEY);
+        ERR_raise(ERR_LIB_DSA, DSA_R_MISSING_PRIVATE_KEY);
         return 0;
     }
 
@@ -243,14 +253,25 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     /* Get random k */
     do {
         if (dgst != NULL) {
-            /*
-             * We calculate k from SHA512(private_key + H(message) + random).
-             * This protects the private key from a weak PRNG.
-             */
-            if (!BN_generate_dsa_nonce(k, dsa->params.q, dsa->priv_key, dgst,
-                                       dlen, ctx))
-                goto err;
-        } else if (!BN_priv_rand_range_ex(k, dsa->params.q, ctx))
+            if (nonce_type == 1) {
+#ifndef FIPS_MODULE
+                if (!ossl_gen_deterministic_nonce_rfc6979(k, dsa->params.q,
+                                                          dsa->priv_key,
+                                                          dgst, dlen,
+                                                          digestname,
+                                                          libctx, propq))
+#endif
+                    goto err;
+            } else {
+                /*
+                 * We calculate k from SHA512(private_key + H(message) + random).
+                 * This protects the private key from a weak PRNG.
+                 */
+                if (!BN_generate_dsa_nonce(k, dsa->params.q, dsa->priv_key, dgst,
+                                           dlen, ctx))
+                    goto err;
+            }
+        } else if (!BN_priv_rand_range_ex(k, dsa->params.q, 0, ctx))
             goto err;
     } while (BN_is_zero(k));
 
@@ -307,7 +328,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     ret = 1;
  err:
     if (!ret)
-        DSAerr(DSA_F_DSA_SIGN_SETUP, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_DSA, ERR_R_BN_LIB);
     if (ctx != ctx_in)
         BN_CTX_free(ctx);
     BN_clear_free(k);
@@ -327,19 +348,19 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     if (dsa->params.p == NULL
         || dsa->params.q == NULL
         || dsa->params.g == NULL) {
-        DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_MISSING_PARAMETERS);
+        ERR_raise(ERR_LIB_DSA, DSA_R_MISSING_PARAMETERS);
         return -1;
     }
 
     i = BN_num_bits(dsa->params.q);
     /* fips 186-3 allows only different sizes for q */
     if (i != 160 && i != 224 && i != 256) {
-        DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_BAD_Q_VALUE);
+        ERR_raise(ERR_LIB_DSA, DSA_R_BAD_Q_VALUE);
         return -1;
     }
 
     if (BN_num_bits(dsa->params.p) > OPENSSL_DSA_MAX_MODULUS_BITS) {
-        DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_MODULUS_TOO_LARGE);
+        ERR_raise(ERR_LIB_DSA, DSA_R_MODULUS_TOO_LARGE);
         return -1;
     }
     u1 = BN_new();
@@ -415,7 +436,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
 
  err:
     if (ret < 0)
-        DSAerr(DSA_F_DSA_DO_VERIFY, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_DSA, ERR_R_BN_LIB);
     BN_CTX_free(ctx);
     BN_free(u1);
     BN_free(u2);
@@ -426,7 +447,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
 static int dsa_init(DSA *dsa)
 {
     dsa->flags |= DSA_FLAG_CACHE_MONT_P;
-    ffc_params_init(&dsa->params);
+    ossl_ffc_params_init(&dsa->params);
     dsa->dirty_cnt++;
     return 1;
 }

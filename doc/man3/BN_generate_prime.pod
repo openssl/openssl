@@ -34,9 +34,9 @@ BN_is_prime, BN_is_prime_fasttest - generate primes and test for primality
 
  void *BN_GENCB_get_arg(BN_GENCB *cb);
 
-Deprecated since OpenSSL 0.9.8, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following functions have been deprecated since OpenSSL 0.9.8, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  BIGNUM *BN_generate_prime(BIGNUM *ret, int num, int safe, BIGNUM *add,
                            BIGNUM *rem, void (*callback)(int, int, void *),
@@ -49,7 +49,9 @@ L<openssl_user_macros(7)>:
                           void (*callback)(int, int, void *), BN_CTX *ctx,
                           void *cb_arg, int do_trial_division);
 
-Deprecated since OpenSSL 3.0:
+The following functions have been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  int BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb);
 
@@ -113,12 +115,12 @@ It is recommended that B<add> is a multiple of 4.
 The random generator must be seeded prior to calling BN_generate_prime_ex().
 If the automatic seeding or reseeding of the OpenSSL CSPRNG fails due to
 external circumstances (see L<RAND(7)>), the operation will fail.
-The random number generator configured for the OPENSSL_CTX associated with
+The random number generator configured for the OSSL_LIB_CTX associated with
 B<ctx> will be used.
 
 BN_generate_prime_ex() is the same as BN_generate_prime_ex2() except that no
 B<ctx> parameter is passed.
-In this case the random number generator associated with the default OPENSSL_CTX
+In this case the random number generator associated with the default OSSL_LIB_CTX
 will be used.
 
 BN_check_prime(), BN_is_prime_ex(), BN_is_prime_fasttest_ex(), BN_is_prime()
@@ -148,7 +150,7 @@ BN_is_prime_fasttest() and BN_is_prime() behave just like
 BN_is_prime_fasttest_ex() and BN_is_prime_ex() respectively, but with the old
 style call back.
 
-B<ctx> is a pre-allocated B<BN_CTX> (to save the overhead of allocating and
+B<ctx> is a preallocated B<BN_CTX> (to save the overhead of allocating and
 freeing the structure in a loop), or B<NULL>.
 
 If the trial division is done, and no divisors are found and B<cb>
@@ -233,6 +235,9 @@ L<RAND(7)>
 
 =head1 HISTORY
 
+The BN_is_prime_ex() and BN_is_prime_fasttest_ex() functions were
+deprecated in OpenSSL 3.0.
+
 The BN_GENCB_new(), BN_GENCB_free(),
 and BN_GENCB_get_arg() functions were added in OpenSSL 1.1.0.
 
@@ -240,7 +245,7 @@ BN_check_prime() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

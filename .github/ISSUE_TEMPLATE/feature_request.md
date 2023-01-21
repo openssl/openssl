@@ -11,9 +11,9 @@ please take the time to read the following lines before posting it.
 
 NOTE:
 
-    If you're asking about how to use OpenSSL, this isn't the right 
+    If you're asking about how to use OpenSSL, this isn't the right
     forum.  Please see our User Support resources:
-    https://github.com/openssl/openssl/blob/master/.github/SUPPORT.md
+    https://github.com/openssl/openssl/blob/master/SUPPORT.md
 
 Please remember to put ``` lines before and after any commands plus
 output and code, like this:
@@ -25,7 +25,7 @@ output and code, like this:
 
     ```
     #include <stdio.h>
-    
+
     int main() {
         int foo = 1;
         printf("%d\n", foo);

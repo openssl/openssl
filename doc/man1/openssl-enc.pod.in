@@ -38,11 +38,8 @@ B<openssl> B<enc>|I<cipher>
 [B<-v>]
 [B<-debug>]
 [B<-none>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
-
-=for openssl ifdef z engine ciphers
 
 B<openssl> I<cipher> [B<...>]
 
@@ -56,6 +53,10 @@ either by itself or in addition to the encryption or decryption.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-I<cipher>>
+
+The cipher to use.
 
 =item B<-help>
 
@@ -80,7 +81,7 @@ The output filename, standard output by default.
 =item B<-pass> I<arg>
 
 The password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-e>
 
@@ -144,6 +145,8 @@ encrypting, this is the default.
 =item B<-S> I<salt>
 
 The actual salt to use: this must be represented as a string of hex digits.
+If this option is used while encrypting, the same exact value will be needed
+again during decryption.
 
 =item B<-K> I<key>
 
@@ -188,8 +191,8 @@ Debug the BIOs used for I/O.
 
 =item B<-z>
 
-Compress or decompress clear text using zlib before encryption or after
-decryption. This option exists only if OpenSSL with compiled with zlib
+Compress or decompress encrypted data using zlib after encryption or before
+decryption. This option exists only if OpenSSL was compiled with the zlib
 or zlib-dynamic option.
 
 =item B<-none>
@@ -231,9 +234,11 @@ OpenSSL.
 Without the B<-salt> option it is possible to perform efficient dictionary
 attacks on the password and to attack stream cipher encrypted data. The reason
 for this is that without the salt the same password always generates the same
-encryption key. When the salt is being used the first eight bytes of the
-encrypted data are reserved for the salt: it is generated at random when
-encrypting a file and read from the encrypted file when it is decrypted.
+encryption key.
+
+When the salt is generated at random (that means when encrypting using a
+passphrase without explicit salt given using B<-S> option), the first bytes
+of the encrypted data are reserved to store the salt for later decrypting.
 
 Some of the ciphers do not have large keys and others have security
 implications if not used correctly. A beginner is advised to just use
@@ -241,7 +246,7 @@ a strong block cipher, such as AES, in CBC mode.
 
 All the block ciphers normally use PKCS#5 padding, also known as standard
 block padding. This allows a rudimentary integrity or password check to
-be performed. However since the chance of random data passing the test
+be performed. However, since the chance of random data passing the test
 is better than 1 in 256 it isn't a very good test.
 
 If padding is disabled then the input data must be a multiple of the cipher
@@ -256,7 +261,7 @@ Blowfish and RC5 algorithms use a 128 bit key.
 Note that some of these ciphers can be disabled at compile time
 and some are available only if an appropriate engine is configured
 in the configuration file. The output when invoking this command
-with the B<-ciphers> option (that is C<openssl enc -ciphers>) is
+with the B<-list> option (that is C<openssl enc -list>) is
 a list of ciphers, supported by your version of OpenSSL, including
 ones provided by configured engines.
 
@@ -269,13 +274,22 @@ able to roll back upon authentication failure.  The AEAD modes currently in
 common use also suffer from catastrophic failure of confidentiality and/or
 integrity upon reuse of key/iv/nonce, and since B<openssl enc> places the
 entire burden of key/iv/nonce management upon the user, the risk of
-exposing AEAD modes is too great to allow.  These key/iv/nonce
+exposing AEAD modes is too great to allow. These key/iv/nonce
 management issues also affect other modes currently exposed in this command,
 but the failure modes are less extreme in these cases, and the
 functionality cannot be removed with a stable release branch.
 For bulk encryption of data, whether using authenticated encryption
 modes or other modes, L<openssl-cms(1)> is recommended, as it provides a
 standard data format and performs the needed key/iv/nonce management.
+
+When enc is used with key wrapping modes the input data cannot be streamed,
+meaning it must be processed in a single pass.
+Consequently, the input data size must be less than
+the buffer size (-bufsize arg, default to 8*1024 bytes).
+The '*-wrap' ciphers require the input to be a multiple of 8 bytes long,
+because no padding is involved.
+The '*-wrap-pad' ciphers allow any input length.
+In both cases, no IV is needed. See example below.
 
 
  base64             Base 64
@@ -316,7 +330,7 @@ standard data format and performs the needed key/iv/nonce management.
  desx               DESX algorithm.
 
  gost89             GOST 28147-89 in CFB mode (provided by ccgost engine)
- gost89-cnt        `GOST 28147-89 in CNT mode (provided by ccgost engine)
+ gost89-cnt         GOST 28147-89 in CNT mode (provided by ccgost engine)
 
  idea-cbc           IDEA algorithm in CBC mode
  idea               same as idea-cbc
@@ -363,6 +377,9 @@ standard data format and performs the needed key/iv/nonce management.
  aes-[128|192|256]-ctr  128/192/256 bit AES in CTR mode
  aes-[128|192|256]-ecb  128/192/256 bit AES in ECB mode
  aes-[128|192|256]-ofb  128/192/256 bit AES in OFB mode
+
+ aes-[128|192|256]-wrap     key wrapping using 128/192/256 bit AES
+ aes-[128|192|256]-wrap-pad key wrapping with padding using 128/192/256 bit AES
 
  aria-[128|192|256]-cbc  128/192/256 bit ARIA in CBC mode
  aria[128|192|256]       Alias for aria-[128|192|256]-cbc
@@ -412,6 +429,12 @@ Base64 decode a file then decrypt it using a password supplied in a file:
  openssl enc -aes-256-ctr -pbkdf2 -d -a -in file.aes256 -out file.txt \
     -pass file:<passfile>
 
+AES key wrapping:
+
+ openssl enc -e -a -id-aes128-wrap-pad -K 000102030405060708090A0B0C0D0E0F -in file.bin
+or
+ openssl aes128-wrap-pad -e -a -K 000102030405060708090A0B0C0D0E0F -in file.bin
+
 =head1 BUGS
 
 The B<-A> option when used with large files doesn't work properly.
@@ -426,11 +449,11 @@ The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0.
 
 The B<-list> option was added in OpenSSL 1.1.1e.
 
-The B<-ciphers> option was deprecated in OpenSSL 3.0.
+The B<-ciphers> and B<-engine> options were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

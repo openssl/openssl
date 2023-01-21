@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_TLSGROUPS_H
 # define OSSL_INTERNAL_TLSGROUPS_H
+# pragma once
 
 # define OSSL_TLS_GROUP_ID_sect163k1        0x0001
 # define OSSL_TLS_GROUP_ID_sect163r1        0x0002
@@ -40,6 +41,16 @@
 # define OSSL_TLS_GROUP_ID_brainpoolP512r1  0x001C
 # define OSSL_TLS_GROUP_ID_x25519           0x001D
 # define OSSL_TLS_GROUP_ID_x448             0x001E
+# define OSSL_TLS_GROUP_ID_brainpoolP256r1_tls13 0x001F
+# define OSSL_TLS_GROUP_ID_brainpoolP384r1_tls13 0x0020
+# define OSSL_TLS_GROUP_ID_brainpoolP512r1_tls13 0x0021
+# define OSSL_TLS_GROUP_ID_gc256A           0x0022
+# define OSSL_TLS_GROUP_ID_gc256B           0x0023
+# define OSSL_TLS_GROUP_ID_gc256C           0x0024
+# define OSSL_TLS_GROUP_ID_gc256D           0x0025
+# define OSSL_TLS_GROUP_ID_gc512A           0x0026
+# define OSSL_TLS_GROUP_ID_gc512B           0x0027
+# define OSSL_TLS_GROUP_ID_gc512C           0x0028
 # define OSSL_TLS_GROUP_ID_ffdhe2048        0x0100
 # define OSSL_TLS_GROUP_ID_ffdhe3072        0x0101
 # define OSSL_TLS_GROUP_ID_ffdhe4096        0x0102

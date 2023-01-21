@@ -15,7 +15,7 @@ B<openssl> B<rsa>
 [B<-help>]
 [B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-outform> B<DER>|B<PEM>]
-[B<-in> I<filename>]
+[B<-in> I<filename>|I<uri>]
 [B<-passin> I<arg>]
 [B<-out> I<filename>]
 [B<-passout> I<arg>]
@@ -34,23 +34,21 @@ B<openssl> B<rsa>
 [B<-text>]
 [B<-noout>]
 [B<-modulus>]
+[B<-traditional>]
 [B<-check>]
 [B<-pubin>]
 [B<-pubout>]
 [B<-RSAPublicKey_in>]
 [B<-RSAPublicKey_out>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
-
-=for openssl ifdef pvk-strong pvk-weak pvk-none engine
+[B<-pvk-strong>]
+[B<-pvk-weak>]
+[B<-pvk-none>]
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
 
 This command processes RSA keys. They can be converted between
-various forms and their components printed out. B<Note> this command uses the
-traditional SSLeay compatible format for private key encryption: newer
-applications should use the more secure PKCS#8 format using the
-L<openssl-pkcs8(1)> command.
+various forms and their components printed out.
 
 =head1 OPTIONS
 
@@ -60,26 +58,24 @@ L<openssl-pkcs8(1)> command.
 
 Print out a usage message.
 
-
 =item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key input format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+The key input format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-outform> B<DER>|B<PEM>
 
 The key output format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
-=item B<-inform> B<DER>|B<PEM>
+=item B<-traditional>
 
-The data is a PKCS#1 B<RSAPrivateKey> or B<SubjectPublicKey> object.
-On input, PKCS#8 format private keys are also accepted.
+When writing a private key, use the traditional PKCS#1 format
+instead of the PKCS#8 format.
 
-=item B<-in> I<filename>
+=item B<-in> I<filename>|I<uri>
 
-This specifies the input filename to read a key from or standard input if this
+This specifies the input to read a key from or standard input if this
 option is not specified. If the key is encrypted a pass phrase will be
 prompted for.
 
@@ -87,7 +83,7 @@ prompted for.
 
 The password source for the input and output file.
 For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-out> I<filename>
 
@@ -138,16 +134,33 @@ the input is a public key.
 
 Like B<-pubin> and B<-pubout> except B<RSAPublicKey> format is used instead.
 
+=item B<-pvk-strong>
+
+Enable 'Strong' PVK encoding level (default).
+
+=item B<-pvk-weak>
+
+Enable 'Weak' PVK encoding level.
+
+=item B<-pvk-none>
+
+Don't enforce PVK encoding.
+
 {- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
 
 =back
 
+=head1 NOTES
+
+The L<openssl-pkey(1)> command is capable of performing all the operations
+this command can, as well as supporting other public key types.
+
 =head1 EXAMPLES
 
-Examples equivalent to these can be found in the documentation for the
-non-deprecated L<openssl-pkey(1)> command.
+The documentation for the L<openssl-pkey(1)> command contains examples
+equivalent to the ones listed here.
 
 To remove the pass phrase on an RSA private key:
 
@@ -187,9 +200,13 @@ L<openssl-dsa(1)>,
 L<openssl-genrsa(1)>,
 L<openssl-gendsa(1)>
 
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

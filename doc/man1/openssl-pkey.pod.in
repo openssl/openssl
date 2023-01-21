@@ -13,34 +13,33 @@ openssl-pkey - public or private key processing command
 
 B<openssl> B<pkey>
 [B<-help>]
-[B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
-[B<-outform> B<DER>|B<PEM>]
-[B<-in> I<filename>]
-[B<-passin> I<arg>]
-[B<-out> I<filename>]
-[B<-passout> I<arg>]
-[B<-traditional>]
-[B<-I<cipher>>]
-[B<-text>]
-[B<-text_pub>]
-[B<-noout>]
-[B<-pubin>]
-[B<-pubout>]
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [B<-check>]
 [B<-pubcheck>]
+[B<-in> I<filename>|I<uri>]
+[B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-passin> I<arg>]
+[B<-pubin>]
+[B<-out> I<filename>]
+[B<-outform> B<DER>|B<PEM>]
+[B<-I<cipher>>]
+[B<-passout> I<arg>]
+[B<-traditional>]
+[B<-pubout>]
+[B<-noout>]
+[B<-text>]
+[B<-text_pub>]
 [B<-ec_conv_form> I<arg>]
 [B<-ec_param_enc> I<arg>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
-
-=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
 This command processes public or private keys. They can be
-converted between various forms and their components printed out.
+converted between various forms and their components printed.
 
 =head1 OPTIONS
+
+=head2 General options
 
 =over 4
 
@@ -48,70 +47,9 @@ converted between various forms and their components printed out.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+{- $OpenSSL::safe::opt_engine_item -}
 
-The key input format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
-
-=item B<-outform> B<DER>|B<PEM>
-
-The key output formats; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
-
-=item B<-in> I<filename>
-
-This specifies the input filename to read a key from or standard input if this
-option is not specified. If the key is encrypted a pass phrase will be
-prompted for.
-
-=item B<-passin> I<arg>, B<-passout> I<arg>
-
-The password source for the input and output file.
-For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
-
-=item B<-out> I<filename>
-
-This specifies the output filename to write a key to or standard output if this
-option is not specified. If any encryption options are set then a pass phrase
-will be prompted for. The output filename should B<not> be the same as the input
-filename.
-
-=item B<-traditional>
-
-Normally a private key is written using standard format: this is PKCS#8 form
-with the appropriate encryption algorithm (if any). If the B<-traditional>
-option is specified then the older "traditional" format is used instead.
-
-=item B<-I<cipher>>
-
-These options encrypt the private key with the supplied cipher. Any algorithm
-name accepted by EVP_get_cipherbyname() is acceptable such as B<des3>.
-
-=item B<-text>
-
-Prints out the various public or private key components in
-plain text in addition to the encoded version.
-
-=item B<-text_pub>
-
-Print out only public key components even if a private key is being processed.
-
-=item B<-noout>
-
-Do not output the encoded version of the key.
-
-=item B<-pubin>
-
-By default a private key is read from the input file: with this
-option a public key is read instead.
-
-=item B<-pubout>
-
-By default a private key is output: with this option a public
-key will be output instead. This option is automatically set if
-the input is a public key.
+{- $OpenSSL::safe::opt_provider_item -}
 
 =item B<-check>
 
@@ -120,12 +58,103 @@ components.
 
 =item B<-pubcheck>
 
-This option checks the correctness of either a public key or the public component
-of a key pair.
+This option checks the correctness of either a public key
+or the public component of a key pair.
+
+=back
+
+=head2 Input options
+
+=over 4
+
+=item B<-in> I<filename>|I<uri>
+
+This specifies the input to read a key from
+or standard input if this option is not specified.
+If the key input is encrypted and B<-passin> is not given
+a pass phrase will be prompted for.
+
+=item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+
+The key input format; unspecified by default.
+See L<openssl-format-options(1)> for details.
+
+=item B<-passin> I<arg>
+
+The password source for the key input.
+
+For more information about the format of B<arg>
+see L<openssl-passphrase-options(1)>.
+
+=item B<-pubin>
+
+By default a private key is read from the input.
+With this option only the public components are read.
+
+=back
+
+=head2 Output options
+
+=over 4
+
+=item B<-out> I<filename>
+
+This specifies the output filename to save the encoded and/or text output of key
+or standard output if this option is not specified.
+If any cipher option is set but no B<-passout> is given
+then a pass phrase will be prompted for.
+The output filename should B<not> be the same as the input filename.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The key output format; the default is B<PEM>.
+See L<openssl-format-options(1)> for details.
+
+=item B<-I<cipher>>
+
+Encrypt the PEM encoded private key with the supplied cipher. Any algorithm
+name accepted by EVP_get_cipherbyname() is acceptable such as B<aes128>.
+Encryption is not supported for DER output.
+
+=item B<-passout> I<arg>
+
+The password source for the output file.
+
+For more information about the format of B<arg>
+see L<openssl-passphrase-options(1)>.
+
+=item B<-traditional>
+
+Normally a private key is written using standard format: this is PKCS#8 form
+with the appropriate encryption algorithm (if any). If the B<-traditional>
+option is specified then the older "traditional" format is used instead.
+
+=item B<-pubout>
+
+By default the private and public key is output;
+this option restricts the output to the public components.
+This option is automatically set if the input is a public key.
+
+When combined with B<-text>, this is equivalent to B<-text_pub>.
+
+=item B<-noout>
+
+Do not output the key in encoded form.
+
+=item B<-text>
+
+Output the various key components in plain text
+(possibly in addition to the PEM encoded form).
+This cannot be combined with encoded output in DER format.
+
+=item B<-text_pub>
+
+Output in text form only the public key components (also for private keys).
+This cannot be combined with encoded output in DER format.
 
 =item B<-ec_conv_form> I<arg>
 
-This option only applies to elliptic curve based public and private keys.
+This option only applies to elliptic-curve based keys.
 
 This specifies how the points on the elliptic curve are converted
 into octet strings. Possible values are: B<compressed> (the default
@@ -146,10 +175,6 @@ explicitly given (see RFC 3279 for the definition of the
 EC parameters structures). The default value is B<named_curve>.
 B<Note> the B<implicitlyCA> alternative, as specified in RFC 3279,
 is currently not implemented in OpenSSL.
-
-{- $OpenSSL::safe::opt_engine_item -}
-
-{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 
@@ -197,9 +222,13 @@ L<openssl-dsa(1)>,
 L<openssl-genrsa(1)>,
 L<openssl-gendsa(1)>
 
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

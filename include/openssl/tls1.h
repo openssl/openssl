@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -20,6 +20,7 @@
 
 # include <openssl/buffer.h>
 # include <openssl/x509.h>
+# include <openssl/prov_ssl.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -27,13 +28,10 @@ extern "C" {
 
 /* Default security level if not overridden at config time */
 # ifndef OPENSSL_TLS_SECURITY_LEVEL
-#  define OPENSSL_TLS_SECURITY_LEVEL 1
+#  define OPENSSL_TLS_SECURITY_LEVEL 2
 # endif
 
-# define TLS1_VERSION                    0x0301
-# define TLS1_1_VERSION                  0x0302
-# define TLS1_2_VERSION                  0x0303
-# define TLS1_3_VERSION                  0x0304
+/* TLS*_VERSION constants are defined in prov_ssl.h */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define TLS_MAX_VERSION                TLS1_3_VERSION
 # endif
@@ -136,6 +134,9 @@ extern "C" {
 /* ExtensionType value from RFC7627 */
 # define TLSEXT_TYPE_extended_master_secret      23
 
+/* ExtensionType value from RFC8879 */
+# define TLSEXT_TYPE_compress_certificate        27
+
 /* ExtensionType value from RFC4507 */
 # define TLSEXT_TYPE_session_ticket              35
 
@@ -196,6 +197,15 @@ extern "C" {
 /* Total number of different digest algorithms */
 
 # define TLSEXT_hash_num                                 10
+
+/* Possible compression values from RFC8879 */
+/* Not defined in RFC8879, but used internally for no-compression */
+# define TLSEXT_comp_cert_none                            0
+# define TLSEXT_comp_cert_zlib                            1
+# define TLSEXT_comp_cert_brotli                          2
+# define TLSEXT_comp_cert_zstd                            3
+/* one more than the number of defined values - used as size of 0-terminated array */
+# define TLSEXT_comp_cert_limit                           4
 
 /* Flag set for unrecognised algorithms */
 # define TLSEXT_nid_unknown                              0x1000000
@@ -1121,6 +1131,11 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb
 # define TLS_CT_GOST12_LEGACY_SIGN       238
 # define TLS_CT_GOST12_LEGACY_512_SIGN   239
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define TLS_CT_GOST12_SIGN TLS_CT_GOST12_LEGACY_SIGN
+#  define TLS_CT_GOST12_512_SIGN TLS_CT_GOST12_LEGACY_512_SIGN
+# endif
+
 /*
  * when correcting this number, correct also SSL3_CT_NUMBER in ssl3.h (see
  * comment there)
@@ -1135,78 +1150,35 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb
 
 # define TLS1_FINISH_MAC_LENGTH          12
 
-# define TLS_MD_MAX_CONST_SIZE                   22
-# define TLS_MD_CLIENT_FINISH_CONST              "client finished"
-# define TLS_MD_CLIENT_FINISH_CONST_SIZE         15
-# define TLS_MD_SERVER_FINISH_CONST              "server finished"
-# define TLS_MD_SERVER_FINISH_CONST_SIZE         15
-# define TLS_MD_KEY_EXPANSION_CONST              "key expansion"
-# define TLS_MD_KEY_EXPANSION_CONST_SIZE         13
-# define TLS_MD_CLIENT_WRITE_KEY_CONST           "client write key"
-# define TLS_MD_CLIENT_WRITE_KEY_CONST_SIZE      16
-# define TLS_MD_SERVER_WRITE_KEY_CONST           "server write key"
-# define TLS_MD_SERVER_WRITE_KEY_CONST_SIZE      16
-# define TLS_MD_IV_BLOCK_CONST                   "IV block"
-# define TLS_MD_IV_BLOCK_CONST_SIZE              8
-# define TLS_MD_MASTER_SECRET_CONST              "master secret"
-# define TLS_MD_MASTER_SECRET_CONST_SIZE         13
-# define TLS_MD_EXTENDED_MASTER_SECRET_CONST     "extended master secret"
-# define TLS_MD_EXTENDED_MASTER_SECRET_CONST_SIZE        22
+# define TLS_MD_MAX_CONST_SIZE                     22
 
-# ifdef CHARSET_EBCDIC
-#  undef TLS_MD_CLIENT_FINISH_CONST
-/*
- * client finished
- */
-#  define TLS_MD_CLIENT_FINISH_CONST    "\x63\x6c\x69\x65\x6e\x74\x20\x66\x69\x6e\x69\x73\x68\x65\x64"
-
-#  undef TLS_MD_SERVER_FINISH_CONST
-/*
- * server finished
- */
-#  define TLS_MD_SERVER_FINISH_CONST    "\x73\x65\x72\x76\x65\x72\x20\x66\x69\x6e\x69\x73\x68\x65\x64"
-
-#  undef TLS_MD_SERVER_WRITE_KEY_CONST
-/*
- * server write key
- */
-#  define TLS_MD_SERVER_WRITE_KEY_CONST "\x73\x65\x72\x76\x65\x72\x20\x77\x72\x69\x74\x65\x20\x6b\x65\x79"
-
-#  undef TLS_MD_KEY_EXPANSION_CONST
-/*
- * key expansion
- */
-#  define TLS_MD_KEY_EXPANSION_CONST    "\x6b\x65\x79\x20\x65\x78\x70\x61\x6e\x73\x69\x6f\x6e"
-
-#  undef TLS_MD_CLIENT_WRITE_KEY_CONST
-/*
- * client write key
- */
-#  define TLS_MD_CLIENT_WRITE_KEY_CONST "\x63\x6c\x69\x65\x6e\x74\x20\x77\x72\x69\x74\x65\x20\x6b\x65\x79"
-
-#  undef TLS_MD_SERVER_WRITE_KEY_CONST
-/*
- * server write key
- */
-#  define TLS_MD_SERVER_WRITE_KEY_CONST "\x73\x65\x72\x76\x65\x72\x20\x77\x72\x69\x74\x65\x20\x6b\x65\x79"
-
-#  undef TLS_MD_IV_BLOCK_CONST
-/*
- * IV block
- */
-#  define TLS_MD_IV_BLOCK_CONST         "\x49\x56\x20\x62\x6c\x6f\x63\x6b"
-
-#  undef TLS_MD_MASTER_SECRET_CONST
-/*
- * master secret
- */
-#  define TLS_MD_MASTER_SECRET_CONST    "\x6d\x61\x73\x74\x65\x72\x20\x73\x65\x63\x72\x65\x74"
-#  undef TLS_MD_EXTENDED_MASTER_SECRET_CONST
-/*
- * extended master secret
- */
-#  define TLS_MD_EXTENDED_MASTER_SECRET_CONST    "\x65\x78\x74\x65\x6e\x64\x65\x64\x20\x6d\x61\x73\x74\x65\x72\x20\x73\x65\x63\x72\x65\x74"
-# endif
+/* ASCII: "client finished", in hex for EBCDIC compatibility */
+# define TLS_MD_CLIENT_FINISH_CONST                "\x63\x6c\x69\x65\x6e\x74\x20\x66\x69\x6e\x69\x73\x68\x65\x64"
+# define TLS_MD_CLIENT_FINISH_CONST_SIZE           15
+/* ASCII: "server finished", in hex for EBCDIC compatibility */
+# define TLS_MD_SERVER_FINISH_CONST                "\x73\x65\x72\x76\x65\x72\x20\x66\x69\x6e\x69\x73\x68\x65\x64"
+# define TLS_MD_SERVER_FINISH_CONST_SIZE           15
+/* ASCII: "server write key", in hex for EBCDIC compatibility */
+# define TLS_MD_SERVER_WRITE_KEY_CONST             "\x73\x65\x72\x76\x65\x72\x20\x77\x72\x69\x74\x65\x20\x6b\x65\x79"
+# define TLS_MD_SERVER_WRITE_KEY_CONST_SIZE        16
+/* ASCII: "key expansion", in hex for EBCDIC compatibility */
+# define TLS_MD_KEY_EXPANSION_CONST                "\x6b\x65\x79\x20\x65\x78\x70\x61\x6e\x73\x69\x6f\x6e"
+# define TLS_MD_KEY_EXPANSION_CONST_SIZE           13
+/* ASCII: "client write key", in hex for EBCDIC compatibility */
+# define TLS_MD_CLIENT_WRITE_KEY_CONST             "\x63\x6c\x69\x65\x6e\x74\x20\x77\x72\x69\x74\x65\x20\x6b\x65\x79"
+# define TLS_MD_CLIENT_WRITE_KEY_CONST_SIZE        16
+/* ASCII: "server write key", in hex for EBCDIC compatibility */
+# define TLS_MD_SERVER_WRITE_KEY_CONST             "\x73\x65\x72\x76\x65\x72\x20\x77\x72\x69\x74\x65\x20\x6b\x65\x79"
+# define TLS_MD_SERVER_WRITE_KEY_CONST_SIZE        16
+/* ASCII: "IV block", in hex for EBCDIC compatibility */
+# define TLS_MD_IV_BLOCK_CONST                     "\x49\x56\x20\x62\x6c\x6f\x63\x6b"
+# define TLS_MD_IV_BLOCK_CONST_SIZE                8
+/* ASCII: "master secret", in hex for EBCDIC compatibility */
+# define TLS_MD_MASTER_SECRET_CONST                "\x6d\x61\x73\x74\x65\x72\x20\x73\x65\x63\x72\x65\x74"
+# define TLS_MD_MASTER_SECRET_CONST_SIZE           13
+/* ASCII: "extended master secret", in hex for EBCDIC compatibility */
+# define TLS_MD_EXTENDED_MASTER_SECRET_CONST       "\x65\x78\x74\x65\x6e\x64\x65\x64\x20\x6d\x61\x73\x74\x65\x72\x20\x73\x65\x63\x72\x65\x74"
+# define TLS_MD_EXTENDED_MASTER_SECRET_CONST_SIZE  22
 
 /* TLS Session Ticket extension struct */
 struct tls_session_ticket_ext_st {

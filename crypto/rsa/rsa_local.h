@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,12 +10,10 @@
 #ifndef OSSL_CRYPTO_RSA_LOCAL_H
 #define OSSL_CRYPTO_RSA_LOCAL_H
 
-#include "crypto/rsa.h"
 #include "internal/refcount.h"
 #include "crypto/rsa.h"
 
 #define RSA_MAX_PRIME_NUM       5
-#define RSA_MIN_MODULUS_BITS    512
 
 typedef struct rsa_prime_info_st {
     BIGNUM *r;
@@ -56,7 +54,7 @@ struct rsa_st {
      */
     int dummy_zero;
 
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     int32_t version;
     const RSA_METHOD *meth;
     /* functional reference if 'meth' is ENGINE-provided */
@@ -95,11 +93,6 @@ struct rsa_st {
     BN_MONT_CTX *_method_mod_n;
     BN_MONT_CTX *_method_mod_p;
     BN_MONT_CTX *_method_mod_q;
-    /*
-     * all BIGNUM values are actually in the following data, if it is not
-     * NULL
-     */
-    char *bignum_data;
     BN_BLINDING *blinding;
     BN_BLINDING *mt_blinding;
     CRYPTO_RWLOCK *lock;
@@ -134,7 +127,7 @@ struct rsa_meth_st {
      * New sign and verify functions: some libraries don't allow arbitrary
      * data to be signed/verified: this allows them to be used. Note: for
      * this to work the RSA_public_decrypt() and RSA_private_encrypt() should
-     * *NOT* be used RSA_sign(), RSA_verify() should be used instead.
+     * *NOT* be used. RSA_sign(), RSA_verify() should be used instead.
      */
     int (*rsa_sign) (int type,
                      const unsigned char *m, unsigned int m_length,
@@ -158,50 +151,46 @@ struct rsa_meth_st {
 #define pkey_is_pss(pkey) (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
 #define pkey_ctx_is_pss(ctx) (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)
 
-RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd,
-                                      const EVP_MD *mgf1md, int saltlen);
-int rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
-                      const EVP_MD **pmgf1md, int *psaltlen);
+RSA_PSS_PARAMS *ossl_rsa_pss_params_create(const EVP_MD *sigmd,
+                                           const EVP_MD *mgf1md, int saltlen);
+int ossl_rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
+                           const EVP_MD **pmgf1md, int *psaltlen);
 /* internal function to clear and free multi-prime parameters */
-void rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo);
-void rsa_multip_info_free(RSA_PRIME_INFO *pinfo);
-RSA_PRIME_INFO *rsa_multip_info_new(void);
-int rsa_multip_calc_product(RSA *rsa);
-int rsa_multip_cap(int bits);
+void ossl_rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo);
+void ossl_rsa_multip_info_free(RSA_PRIME_INFO *pinfo);
+RSA_PRIME_INFO *ossl_rsa_multip_info_new(void);
+int ossl_rsa_multip_calc_product(RSA *rsa);
+int ossl_rsa_multip_cap(int bits);
 
-int rsa_sp800_56b_validate_strength(int nbits, int strength);
-int rsa_check_pminusq_diff(BIGNUM *diff, const BIGNUM *p, const BIGNUM *q,
-                           int nbits);
-int rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
-                BIGNUM *lcm, BIGNUM *gcd, BIGNUM *p1, BIGNUM *q1,
-                BIGNUM *p1q1);
+int ossl_rsa_sp800_56b_validate_strength(int nbits, int strength);
+int ossl_rsa_check_pminusq_diff(BIGNUM *diff, const BIGNUM *p, const BIGNUM *q,
+                                int nbits);
+int ossl_rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
+                     BIGNUM *lcm, BIGNUM *gcd, BIGNUM *p1, BIGNUM *q1,
+                     BIGNUM *p1q1);
 
-int rsa_check_public_exponent(const BIGNUM *e);
-int rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx);
-int rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx);
-int rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx);
-int rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx);
+int ossl_rsa_check_public_exponent(const BIGNUM *e);
+int ossl_rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx);
+int ossl_rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx);
+int ossl_rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx);
+int ossl_rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx);
 
-int rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx);
-int rsa_sp800_56b_check_public(const RSA *rsa);
-int rsa_sp800_56b_check_private(const RSA *rsa);
-int rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
-                                int strength, int nbits);
-int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
-                               BN_GENCB *cb);
+int ossl_rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx);
+int ossl_rsa_sp800_56b_check_public(const RSA *rsa);
+int ossl_rsa_sp800_56b_check_private(const RSA *rsa);
+int ossl_rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
+                                     int strength, int nbits);
+int ossl_rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
+                                    BN_GENCB *cb);
 
-int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
-                                        const BIGNUM *e, BN_CTX *ctx);
-int rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
-                                  int nbits, const BIGNUM *e, BN_CTX *ctx,
-                                  BN_GENCB *cb);
+int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
+                                             const BIGNUM *e, BN_CTX *ctx);
+int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
+                                       int nbits, const BIGNUM *e, BN_CTX *ctx,
+                                       BN_GENCB *cb);
 
-int rsa_padding_add_SSLv23_with_libctx(OPENSSL_CTX *libctx, unsigned char *to,
-                                       int tlen, const unsigned char *from,
-                                       int flen);
-int rsa_padding_add_PKCS1_type_2_with_libctx(OPENSSL_CTX *libctx,
-                                             unsigned char *to, int tlen,
-                                             const unsigned char *from,
-                                             int flen);
+int ossl_rsa_padding_add_PKCS1_type_2_ex(OSSL_LIB_CTX *libctx, unsigned char *to,
+                                         int tlen, const unsigned char *from,
+                                         int flen);
 
 #endif /* OSSL_CRYPTO_RSA_LOCAL_H */

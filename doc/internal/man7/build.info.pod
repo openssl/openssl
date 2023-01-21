@@ -444,6 +444,12 @@ rather than the specific I<items>.
 The I<items> may be any program, library, module, script, or any
 filename used as a value anywhere.
 
+The I<items> may also be literal build file targets.  Those are
+recognised by being surrounded be vertical bars (also known as the
+"pipe" character), C<|>.  For example:
+
+    DEPEND[|tests|]=fipsmodule.cnf
+
 B<DEPEND> statements may have attributes, which apply to each
 individual dependency in such a statement.  For example:
 
@@ -486,6 +492,17 @@ Static libraries may be sources.  In that case, its object files are
 used directly when building I<item> instead of relying on library
 dependency and symbol resolution (through B<DEPEND> statements).
 
+B<SOURCE> statements may have attributes, which apply to each
+individual dependency in such a statement.  For example:
+
+    SOURCE[prog]=prog_a.c
+    SOURCE[prog]{check}=prog_b.c prog_c.c
+
+With those statements, the association between C<prog> and C<prog_a.c>
+comes with no extra attributes, while the association between C<prog>
+and C<prog_b.c> as well as C<prog_c.c> comes with the extra attribute
+C<check>.
+
 =item B<SHARED_SOURCE[>I<item>B<]> B<=> I<file> ...
 
 Collects filenames that will be used as source files for I<item>.
@@ -494,6 +511,9 @@ The I<item> must be a singular item, and may be any library or module
 given with B<LIBS> or B<MODULES>.  For libraries, the given filenames
 are only used for their shared form, so if the item is a library name
 ending with C<.a>, the filenames will be ignored.
+
+B<SHARED_SOURCE> statements may have attributes, just as B<SOURCE>
+statements.
 
 =item B<DEFINE[>I<items>B<]> B<=> I<name>[B<=>I<value>] ...
 
@@ -554,7 +574,7 @@ appear in a linking command line (because of recursive dependencies
 through other libraries), they will be ordered in such a way that this
 dependency is maintained:
 
-    DEPEND[libfoo.a]{weak}=libfoo.a libcookie.a 
+    DEPEND[libfoo.a]{weak}=libfoo.a libcookie.a
 
 This is useful in complex dependency trees where two libraries can be
 used as alternatives for each other.  In this example, C<lib1.a> and
@@ -610,11 +630,11 @@ B<SCRIPTS>.
 For OpenSSL::Template documentation,
 C<perldoc -o man util/perl/OpenSSL/Template.pm>
 
-L<Text::Temlate|https://metacpan.org/pod/Text::Template>
+L<Text::Template|https://metacpan.org/pod/Text::Template>
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use this
 file except in compliance with the License.  You can obtain a copy in the file

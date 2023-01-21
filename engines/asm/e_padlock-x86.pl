@@ -115,6 +115,8 @@ $chunk="ebx";
 &function_begin_B("padlock_key_bswap");
 	&mov	("edx",&wparam(0));
 	&mov	("ecx",&DWP(240,"edx"));
+	&inc	("ecx");
+	&shl	("ecx",2);
 &set_label("bswap_loop");
 	&mov	("eax",&DWP(0,"edx"));
 	&bswap	("eax");

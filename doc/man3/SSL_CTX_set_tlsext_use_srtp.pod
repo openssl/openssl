@@ -56,6 +56,38 @@ This corresponds to the profile of the same name defined in RFC7714.
 
 This corresponds to the profile of the same name defined in RFC7714.
 
+=item SRTP_DOUBLE_AEAD_AES_128_GCM_AEAD_AES_128_GCM
+
+This corresponds to the profile of the same name defined in RFC8723.
+
+=item SRTP_DOUBLE_AEAD_AES_256_GCM_AEAD_AES_256_GCM
+
+This corresponds to the profile of the same name defined in RFC8723.
+
+=item SRTP_ARIA_128_CTR_HMAC_SHA1_80
+
+This corresponds to the profile of the same name defined in RFC8269.
+
+=item SRTP_ARIA_128_CTR_HMAC_SHA1_32
+
+This corresponds to the profile of the same name defined in RFC8269.
+
+=item SRTP_ARIA_256_CTR_HMAC_SHA1_80
+
+This corresponds to the profile of the same name defined in RFC8269.
+
+=item SRTP_ARIA_256_CTR_HMAC_SHA1_32
+
+This corresponds to the profile of the same name defined in RFC8269.
+
+=item SRTP_AEAD_ARIA_128_GCM
+
+This corresponds to the profile of the same name defined in RFC8269.
+
+=item SRTP_AEAD_ARIA_256_GCM
+
+This corresponds to the profile of the same name defined in RFC8269.
+
 =back
 
 Supplying an unrecognised protection profile name will result in an error.

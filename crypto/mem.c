@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 #include "internal/cryptlib.h"
 #include "crypto/cryptlib.h"
 #include <stdio.h>
@@ -26,11 +26,17 @@ static CRYPTO_free_fn free_impl = CRYPTO_free;
 #if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODULE)
 # include "internal/tsan_assist.h"
 
+# ifdef TSAN_REQUIRES_LOCKING
+#  define INCREMENT(x) /* empty */
+#  define LOAD(x) 0
+# else  /* TSAN_REQUIRES_LOCKING */
 static TSAN_QUALIFIER int malloc_count;
 static TSAN_QUALIFIER int realloc_count;
 static TSAN_QUALIFIER int free_count;
 
-# define INCREMENT(x) tsan_counter(&(x))
+#  define INCREMENT(x) tsan_counter(&(x))
+#  define LOAD(x)      tsan_load(&x)
+# endif /* TSAN_REQUIRES_LOCKING */
 
 static char *md_failstring;
 static long md_count;
@@ -79,11 +85,11 @@ void CRYPTO_get_mem_functions(CRYPTO_malloc_fn *malloc_fn,
 void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount)
 {
     if (mcount != NULL)
-        *mcount = tsan_load(&malloc_count);
+        *mcount = LOAD(malloc_count);
     if (rcount != NULL)
-        *rcount = tsan_load(&realloc_count);
+        *rcount = LOAD(realloc_count);
     if (fcount != NULL)
-        *fcount = tsan_load(&free_count);
+        *fcount = LOAD(free_count);
 }
 
 /*
@@ -164,9 +170,15 @@ void ossl_malloc_setup_failures(void)
 
 void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
+    void *ptr;
+
     INCREMENT(malloc_count);
-    if (malloc_impl != CRYPTO_malloc)
-        return malloc_impl(num, file, line);
+    if (malloc_impl != CRYPTO_malloc) {
+        ptr = malloc_impl(num, file, line);
+        if (ptr != NULL || num == 0)
+            return ptr;
+        goto err;
+    }
 
     if (num == 0)
         return NULL;
@@ -181,7 +193,20 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         allow_customize = 0;
     }
 
-    return malloc(num);
+    ptr = malloc(num);
+    if (ptr != NULL)
+        return ptr;
+ err:
+    /*
+     * ossl_err_get_state_int() in err.c uses CRYPTO_zalloc(num, NULL, 0) for
+     * ERR_STATE allocation. Prevent mem alloc error loop while reporting error.
+     */
+    if (file != NULL || line != 0) {
+        ERR_new();
+        ERR_set_debug(file, line, NULL);
+        ERR_set_error(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, NULL);
+    }
+    return NULL;
 }
 
 void *CRYPTO_zalloc(size_t num, const char *file, int line)
@@ -279,12 +304,12 @@ int CRYPTO_set_mem_debug(int flag)
 int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
 {
     (void)info; (void)file; (void)line;
-    return -1;
+    return 0;
 }
 
 int CRYPTO_mem_debug_pop(void)
 {
-    return -1;
+    return 0;
 }
 
 void CRYPTO_mem_debug_malloc(void *addr, size_t num, int flag,

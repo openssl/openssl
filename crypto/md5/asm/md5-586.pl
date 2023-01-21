@@ -42,7 +42,7 @@ $X="esi";
  0, 7, 14, 5, 12, 3, 10, 1, 8, 15, 6, 13, 4, 11, 2, 9,	# R3
  );
 
-&md5_block("md5_block_asm_data_order");
+&md5_block("ossl_md5_block_asm_data_order");
 &asm_finish();
 
 close STDOUT or die "error closing STDOUT: $!";

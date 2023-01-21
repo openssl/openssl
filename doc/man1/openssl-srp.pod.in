@@ -15,24 +15,21 @@ B<openssl srp>
 [B<-delete>]
 [B<-list>]
 [B<-name> I<section>]
-[B<-config> I<file>]
 [B<-srpvfile> I<file>]
 [B<-gn> I<identifier>]
 [B<-userinfo> I<text>]
 [B<-passin> I<arg>]
 [B<-passout> I<arg>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_config_synopsis -}
 [I<user> ...]
-
-=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
-This command is used to maintain an SRP (secure remote password) file.
-At most one of the B<-add>, B<-modify>, B<-delete>, and B<-list> options
-can be specified.
+This command is deprecated. It is used to maintain an SRP (secure remote
+password) file. At most one of the B<-add>, B<-modify>, B<-delete>, and B<-list>
+options can be specified.
 These options take zero or more usernames as parameters and perform the
 appropriate operation on the SRP file.
 For B<-list>, if no I<user> is given then all users are displayed.
@@ -51,6 +48,26 @@ Display an option summary.
 =item B<-verbose>
 
 Generate verbose output while processing.
+
+=item B<-add>
+
+Add a user and SRP verifier.
+
+=item B<-modify>
+
+Modify the SRP verifier of an existing user.
+
+=item B<-delete>
+
+Delete user from verifier file.
+
+=item B<-list>
+
+List users.
+
+=item B<-name>
+
+The particular SRP definition to use.
 
 =item B<-srpvfile> I<file>
 
@@ -71,19 +88,27 @@ adding or modifying a user.
 
 The password source for the input and output file.
 For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- $OpenSSL::safe::opt_r_item -}
+
 {- $OpenSSL::safe::opt_provider_item -}
+
+{- $OpenSSL::safe::opt_config_item -}
 
 {- $OpenSSL::safe::opt_r_synopsis -}
 
 =back
 
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

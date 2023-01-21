@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_NUMBERS_H
 # define OSSL_INTERNAL_NUMBERS_H
+# pragma once
 
 # include <limits.h>
 
@@ -60,8 +61,24 @@
 #  define UINT64_MAX __MAXUINT__(uint64_t)
 # endif
 
+# ifndef INT128_MAX
+#  if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__ == 16
+typedef __int128_t int128_t;
+typedef __uint128_t uint128_t;
+#   define INT128_MIN __MININT__(int128_t)
+#   define INT128_MAX __MAXINT__(int128_t)
+#   define UINT128_MAX __MAXUINT__(uint128_t)
+#  endif
+# endif
+
 # ifndef SIZE_MAX
 #  define SIZE_MAX __MAXUINT__(size_t)
+# endif
+
+# ifndef OSSL_INTMAX_MAX
+#  define OSSL_INTMAX_MIN __MININT__(ossl_intmax_t)
+#  define OSSL_INTMAX_MAX __MAXINT__(ossl_intmax_t)
+#  define OSSL_UINTMAX_MAX __MAXUINT__(ossl_uintmax_t)
 # endif
 
 #endif

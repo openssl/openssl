@@ -24,8 +24,8 @@ SSL_CONF_cmd_value_type() returns the type of value that B<option> refers to.
 =head1 SUPPORTED COMMAND LINE COMMANDS
 
 Currently supported B<option> names for command lines (i.e. when the
-flag B<SSL_CONF_CMDLINE> is set) are listed below. Note: all B<option> names
-are case sensitive. Unless otherwise stated commands can be used by
+flag B<SSL_CONF_FLAG_CMDLINE> is set) are listed below. Note: all B<option>
+names are case sensitive. Unless otherwise stated commands can be used by
 both clients and servers and the B<value> parameter is not used. The default
 prefix for command line commands is B<-> and that is reflected below.
 
@@ -58,9 +58,15 @@ Use server and not client preference order when determining which cipher suite,
 signature algorithm or elliptic curve to use for an incoming connection.
 Equivalent to B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
 
-=item B<-legacyrenegotiation>
+=item B<-client_renegotiation>
 
-permits the use of unsafe legacy renegotiation. Equivalent to setting
+Allows servers to accept client-initiated renegotiation. Equivalent to
+setting B<SSL_OP_ALLOW_CLIENT_RENEGOTIATION>.
+Only used by servers.
+
+=item B<-legacy_renegotiation>
+
+Permits the use of unsafe legacy renegotiation. Equivalent to setting
 B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
 
 =item B<-no_renegotiation>
@@ -70,13 +76,12 @@ B<SSL_OP_NO_RENEGOTIATION>.
 
 =item B<-no_resumption_on_reneg>
 
-set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag. Only used by servers.
+Sets B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION>. Only used by servers.
 
 =item B<-legacy_server_connect>, B<-no_legacy_server_connect>
 
-permits or prohibits the use of unsafe legacy renegotiation for OpenSSL
+Permits or prohibits the use of unsafe legacy renegotiation for OpenSSL
 clients only. Equivalent to setting or clearing B<SSL_OP_LEGACY_SERVER_CONNECT>.
-Set by default.
 
 =item B<-prioritize_chacha>
 
@@ -92,7 +97,7 @@ that there will be no forward secrecy for the resumed session.
 
 =item B<-strict>
 
-enables strict mode protocol handling. Equivalent to setting
+Enables strict mode protocol handling. Equivalent to setting
 B<SSL_CERT_FLAG_TLS_STRICT>.
 
 =item B<-sigalgs> I<algs>
@@ -141,7 +146,7 @@ for the B<key_share> sent by a client in a TLSv1.3 B<ClientHello>.
 The B<groups> argument is a colon separated list of groups. The group can
 be either the B<NIST> name (e.g. B<P-256>), some other commonly used name
 where applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
-(e.g B<prime256v1>). Group names are case sensitive. The list should be
+(e.g. B<prime256v1>). Group names are case sensitive. The list should be
 in order of preference with the most preferred group first.
 
 Currently supported groups for B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>,
@@ -157,10 +162,28 @@ This is a synonym for the B<-groups> command.
 This sets the temporary curve used for ephemeral ECDH modes. Only used
 by servers.
 
+=item B<-tx_cert_comp>
+
+Enables support for sending TLSv1.3 compressed certificates.
+
+=item B<-no_tx_cert_comp>
+
+Disables support for sending TLSv1.3 compressed certificates.
+
+=item B<-rx_cert_comp>
+
+Enables support for receiving TLSv1.3 compressed certificates.
+
+=item B<-no_rx_cert_comp>
+
+Disables support for receiving TLSv1.3 compressed certificates.
+
+=item B<-comp>
+
 The B<groups> argument is a curve name or the special value B<auto> which
 picks an appropriate curve based on client and server preferences. The
 curve can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
-(e.g B<prime256v1>). Curve names are case sensitive.
+(e.g. B<prime256v1>). Curve names are case sensitive.
 
 =item B<-cipher> I<ciphers>
 
@@ -178,12 +201,17 @@ See L<openssl-ciphers(1)> for more information.
 
 =item B<-min_protocol> I<minprot>, B<-max_protocol> I<maxprot>
 
-Sets the minimum and maximum supported protocol.  Currently supported
-protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>, B<TLSv1.2>, B<TLSv1.3>
-for TLS and B<DTLSv1>, B<DTLSv1.2> for DTLS, and B<None> for no limit.
-If either bound is not specified then only the other bound applies,
-if specified.  To restrict the supported protocol versions use these
-commands rather than the deprecated alternative commands below.
+Sets the minimum and maximum supported protocol.
+Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+B<TLSv1.2>, B<TLSv1.3> for TLS; B<DTLSv1>, B<DTLSv1.2> for DTLS, and B<None>
+for no limit.
+If either the lower or upper bound is not specified then only the other bound
+applies, if specified.
+If your application supports both TLS and DTLS you can specify any of these
+options twice, once with a bound for TLS and again with an appropriate bound
+for DTLS.
+To restrict the supported protocol versions use these commands rather than the
+deprecated alternative commands below.
 
 =item B<-record_padding> I<padding>
 
@@ -372,7 +400,7 @@ B<ClientHello>.
 The B<value> argument is a colon separated list of groups. The group can be
 either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
 applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
-(e.g B<prime256v1>). Group names are case sensitive. The list should be in
+(e.g. B<prime256v1>). Group names are case sensitive. The list should be in
 order of preference with the most preferred group first.
 
 Currently supported groups for B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>,
@@ -389,7 +417,11 @@ This sets the minimum supported SSL, TLS or DTLS version.
 
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
-The value B<None> will disable the limit.
+The SSL and TLS bounds apply only to TLS-based contexts, while the DTLS bounds
+apply only to DTLS-based contexts.
+The command can be repeated with one instance setting a TLS bound, and the
+other setting a DTLS bound.
+The value B<None> applies to both types of contexts and disables the limits.
 
 =item B<MaxProtocol>
 
@@ -397,7 +429,11 @@ This sets the maximum supported SSL, TLS or DTLS version.
 
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
-The value B<None> will disable the limit.
+The SSL and TLS bounds apply only to TLS-based contexts, while the DTLS bounds
+apply only to DTLS-based contexts.
+The command can be repeated with one instance setting a TLS bound, and the
+other setting a DTLS bound.
+The value B<None> applies to both types of contexts and disables the limits.
 
 =item B<Protocol>
 
@@ -442,7 +478,7 @@ B<SessionTicket>: session ticket support, enabled by default. Inverse of
 B<SSL_OP_NO_TICKET>: that is B<-SessionTicket> is the same as setting
 B<SSL_OP_NO_TICKET>.
 
-B<Compression>: SSL/TLS compression support, enabled by default. Inverse
+B<Compression>: SSL/TLS compression support, disabled by default. Inverse
 of B<SSL_OP_NO_COMPRESSION>.
 
 B<EmptyFragments>: use empty fragments as a countermeasure against a
@@ -478,7 +514,6 @@ Equivalent to B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
 
 B<UnsafeLegacyServerConnect>: permits the use of unsafe legacy renegotiation
 for OpenSSL clients only. Equivalent to B<SSL_OP_LEGACY_SERVER_CONNECT>.
-Set by default.
 
 B<EncryptThenMac>: use encrypt-then-mac extension, enabled by
 default. Inverse of B<SSL_OP_NO_ENCRYPT_THEN_MAC>: that is,
@@ -510,6 +545,29 @@ B<-ExtendedMasterSecret> is the same as setting B<SSL_OP_NO_EXTENDED_MASTER_SECR
 B<CANames>: use CA names extension, enabled by
 default. Inverse of B<SSL_OP_DISABLE_TLSEXT_CA_NAMES>: that is,
 B<-CANames> is the same as setting B<SSL_OP_DISABLE_TLSEXT_CA_NAMES>.
+
+B<KTLS>: Enables kernel TLS if support has been compiled in, and it is supported
+by the negotiated ciphersuites and extensions. Equivalent to
+B<SSL_OP_ENABLE_KTLS>.
+
+B<StrictCertCheck>: Enable strict certificate checking. Equivalent to
+setting B<SSL_CERT_FLAG_TLS_STRICT> with SSL_CTX_set_cert_flags().
+
+B<TxCertificateCompression>: support sending compressed certificates, enabled by
+default. Inverse of B<SSL_OP_NO_TX_CERTIFICATE_COMPRESSION>: that is,
+B<-TxCertificateCompression> is the same as setting B<SSL_OP_NO_TX_CERTIFICATE_COMPRESSION>.
+
+B<RxCertificateCompression>: support receiving compressed certificates, enabled by
+default. Inverse of B<SSL_OP_NO_RX_CERTIFICATE_COMPRESSION>: that is,
+B<-RxCertificateCompression> is the same as setting B<SSL_OP_NO_RX_CERTIFICATE_COMPRESSION>.
+
+B<KTLSTxZerocopySendfile>: use the zerocopy TX mode of sendfile(), which gives
+a performance boost when used with KTLS hardware offload. Note that invalid TLS
+records might be transmitted if the file is changed while being sent. This
+option has no effect if B<KTLS> is not enabled. Equivalent to
+B<SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE>. This option only applies to Linux.
+KTLS sendfile on FreeBSD doesn't offer an option to disable zerocopy and
+always runs in this mode.
 
 =item B<VerifyMode>
 
@@ -709,9 +767,15 @@ B<MinProtocol> and B<MaxProtocol> where added in OpenSSL 1.1.0.
 
 B<AllowNoDHEKEX> and B<PrioritizeChaCha> were added in OpenSSL 1.1.1.
 
+The B<UnsafeLegacyServerConnect> option is no longer set by default from
+OpenSSL 3.0.
+
+The B<TxCertificateCompression> and B<RxCertificateCompression> options were
+added in OpenSSL 3.2.
+
 =head1 COPYRIGHT
 
-Copyright 2012-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2012-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

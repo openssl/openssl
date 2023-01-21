@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -75,7 +75,7 @@ static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
 int print_param_types(const char *thing, const OSSL_PARAM *pdefs, int indent)
 {
     if (pdefs == NULL) {
-        BIO_printf(bio_out, "%*sNo declared %s\n", indent, "", thing);
+        return 1;
     } else if (pdefs->key == NULL) {
         /*
          * An empty list?  This shouldn't happen, but let's just make sure to
@@ -92,5 +92,41 @@ int print_param_types(const char *thing, const OSSL_PARAM *pdefs, int indent)
         }
     }
     return 1;
+}
+
+void print_param_value(const OSSL_PARAM *p, int indent)
+{
+    int64_t i;
+    uint64_t u;
+
+    printf("%*s%s: ", indent, "", p->key);
+    switch (p->data_type) {
+    case OSSL_PARAM_UNSIGNED_INTEGER:
+        if (OSSL_PARAM_get_uint64(p, &u))
+            BIO_printf(bio_out, "%llu\n", (unsigned long long int)u);
+        else
+            BIO_printf(bio_out, "error getting value\n");
+        break;
+    case OSSL_PARAM_INTEGER:
+        if (OSSL_PARAM_get_int64(p, &i))
+            BIO_printf(bio_out, "%lld\n", (long long int)i);
+        else
+            BIO_printf(bio_out, "error getting value\n");
+        break;
+    case OSSL_PARAM_UTF8_PTR:
+        BIO_printf(bio_out, "'%s'\n", *(char **)(p->data));
+        break;
+    case OSSL_PARAM_UTF8_STRING:
+        BIO_printf(bio_out, "'%s'\n", (char *)p->data);
+        break;
+    case OSSL_PARAM_OCTET_PTR:
+    case OSSL_PARAM_OCTET_STRING:
+        BIO_printf(bio_out, "<%zu bytes>\n", p->data_size);
+        break;
+    default:
+        BIO_printf(bio_out, "unknown type (%u) of %zu bytes\n",
+                   p->data_type, p->data_size);
+        break;
+    }
 }
 

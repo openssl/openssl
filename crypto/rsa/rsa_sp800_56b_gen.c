@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2018-2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -11,13 +11,14 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include <openssl/core.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
 #include "crypto/bn.h"
 #include "crypto/security_bits.h"
 #include "rsa_local.h"
 
 #define RSA_FIPS1864_MIN_KEYGEN_KEYSIZE 2048
 #define RSA_FIPS1864_MIN_KEYGEN_STRENGTH 112
-#define RSA_FIPS1864_MAX_KEYGEN_STRENGTH 256
 
 /*
  * Generate probable primes 'p' & 'q'. See FIPS 186-4 Section B.3.6
@@ -53,8 +54,9 @@
  *     Xp, Xp1, Xp2, Xq, Xq1, Xq2 are optionally passed in.
  *     (Required for CAVS testing).
  */
-int rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test, int nbits,
-                                  const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb)
+int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
+                                       int nbits, const BIGNUM *e, BN_CTX *ctx,
+                                       BN_GENCB *cb)
 {
     int ret = 0, ok;
     /* Temp allocated BIGNUMS */
@@ -87,13 +89,12 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test, int nbits,
      * Signature Generation and Key Agree/Transport.
      */
     if (nbits < RSA_FIPS1864_MIN_KEYGEN_KEYSIZE) {
-        RSAerr(RSA_F_RSA_FIPS186_4_GEN_PROB_PRIMES, RSA_R_KEY_SIZE_TOO_SMALL);
+        ERR_raise(ERR_LIB_RSA, RSA_R_KEY_SIZE_TOO_SMALL);
         return 0;
     }
 
-    if (!rsa_check_public_exponent(e)) {
-        RSAerr(RSA_F_RSA_FIPS186_4_GEN_PROB_PRIMES,
-               RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
+    if (!ossl_rsa_check_public_exponent(e)) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
         return 0;
     }
 
@@ -121,24 +122,24 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test, int nbits,
     BN_set_flags(rsa->q, BN_FLG_CONSTTIME);
 
     /* (Step 4) Generate p, Xp */
-    if (!bn_rsa_fips186_4_gen_prob_primes(rsa->p, Xpo, p1, p2, Xp, Xp1, Xp2,
-                                          nbits, e, ctx, cb))
+    if (!ossl_bn_rsa_fips186_4_gen_prob_primes(rsa->p, Xpo, p1, p2, Xp, Xp1, Xp2,
+                                               nbits, e, ctx, cb))
         goto err;
-    for(;;) {
+    for (;;) {
         /* (Step 5) Generate q, Xq*/
-        if (!bn_rsa_fips186_4_gen_prob_primes(rsa->q, Xqo, q1, q2, Xq, Xq1,
-                                              Xq2, nbits, e, ctx, cb))
+        if (!ossl_bn_rsa_fips186_4_gen_prob_primes(rsa->q, Xqo, q1, q2, Xq, Xq1,
+                                                   Xq2, nbits, e, ctx, cb))
             goto err;
 
         /* (Step 6) |Xp - Xq| > 2^(nbitlen/2 - 100) */
-        ok = rsa_check_pminusq_diff(tmp, Xpo, Xqo, nbits);
+        ok = ossl_rsa_check_pminusq_diff(tmp, Xpo, Xqo, nbits);
         if (ok < 0)
             goto err;
         if (ok == 0)
             continue;
 
         /* (Step 6) |p - q| > 2^(nbitlen/2 - 100) */
-        ok = rsa_check_pminusq_diff(tmp, rsa->p, rsa->q, nbits);
+        ok = ossl_rsa_check_pminusq_diff(tmp, rsa->p, rsa->q, nbits);
         if (ok < 0)
             goto err;
         if (ok == 0)
@@ -169,20 +170,42 @@ err:
  *              strength is unknown.
  * Returns: 1 if the key size matches the target strength, or 0 otherwise.
  */
-int rsa_sp800_56b_validate_strength(int nbits, int strength)
+int ossl_rsa_sp800_56b_validate_strength(int nbits, int strength)
 {
-    int s = (int)ifc_ffc_compute_security_bits(nbits);
+    int s = (int)ossl_ifc_ffc_compute_security_bits(nbits);
+
 #ifdef FIPS_MODULE
-    if (s < RSA_FIPS1864_MIN_KEYGEN_STRENGTH
-            || s > RSA_FIPS1864_MAX_KEYGEN_STRENGTH) {
-        RSAerr(RSA_F_RSA_SP800_56B_VALIDATE_STRENGTH, RSA_R_INVALID_MODULUS);
+    if (s < RSA_FIPS1864_MIN_KEYGEN_STRENGTH) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
         return 0;
     }
 #endif
     if (strength != -1 && s != strength) {
-        RSAerr(RSA_F_RSA_SP800_56B_VALIDATE_STRENGTH, RSA_R_INVALID_STRENGTH);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_STRENGTH);
         return 0;
     }
+    return 1;
+}
+
+/*
+ * Validate that the random bit generator is of sufficient strength to generate
+ * a key of the specified length.
+ */
+static int rsa_validate_rng_strength(EVP_RAND_CTX *rng, int nbits)
+{
+    if (rng == NULL)
+        return 0;
+#ifdef FIPS_MODULE
+    /*
+     * This should become mainstream once similar tests are added to the other
+     * key generations and once there is a way to disable these checks.
+     */
+    if (EVP_RAND_get_strength(rng) < ossl_ifc_ffc_compute_security_bits(nbits)) {
+        ERR_raise(ERR_LIB_RSA,
+                  RSA_R_RANDOMNESS_SOURCE_STRENGTH_INSUFFICIENT);
+        return 0;
+    }
+#endif
     return 1;
 }
 
@@ -206,8 +229,8 @@ int rsa_sp800_56b_validate_strength(int nbits, int strength)
  *           0 = d is too small,
  *           1 = success.
  */
-int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
-                                        const BIGNUM *e, BN_CTX *ctx)
+int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
+                                             const BIGNUM *e, BN_CTX *ctx)
 {
     int ret = -1;
     BIGNUM *p1, *q1, *lcm, *p1q1, *gcd;
@@ -228,7 +251,7 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     BN_set_flags(gcd, BN_FLG_CONSTTIME);
 
     /* LCM((p-1, q-1)) */
-    if (rsa_get_lcm(ctx, rsa->p, rsa->q, lcm, gcd, p1, q1, p1q1) != 1)
+    if (ossl_rsa_get_lcm(ctx, rsa->p, rsa->q, lcm, gcd, p1, q1, p1q1) != 1)
         goto err;
 
     /* copy e */
@@ -262,7 +285,7 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     if (rsa->dmp1 == NULL)
         rsa->dmp1 = BN_secure_new();
     if (rsa->dmp1 == NULL)
-	    goto err;
+        goto err;
     BN_set_flags(rsa->dmp1, BN_FLG_CONSTTIME);
     if (!BN_mod(rsa->dmp1, rsa->d, p1, ctx))
         goto err;
@@ -271,7 +294,7 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     if (rsa->dmq1 == NULL)
         rsa->dmq1 = BN_secure_new();
     if (rsa->dmq1 == NULL)
-	    goto err;
+        goto err;
     BN_set_flags(rsa->dmq1, BN_FLG_CONSTTIME);
     if (!BN_mod(rsa->dmq1, rsa->d, q1, ctx))
         goto err;
@@ -280,7 +303,7 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     BN_free(rsa->iqmp);
     rsa->iqmp = BN_secure_new();
     if (rsa->iqmp == NULL)
-	    goto err;
+        goto err;
     BN_set_flags(rsa->iqmp, BN_FLG_CONSTTIME);
     if (BN_mod_inverse(rsa->iqmp, rsa->q, rsa->p, ctx) == NULL)
         goto err;
@@ -330,8 +353,8 @@ err:
  *     cb An optional BIGNUM callback.
  * Returns: 1 if successfully generated otherwise it returns 0.
  */
-int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
-                               BN_GENCB *cb)
+int ossl_rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
+                                    BN_GENCB *cb)
 {
     int ret = 0;
     int ok;
@@ -344,7 +367,11 @@ int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
 #endif
 
     /* (Steps 1a-1b) : Currently ignores the strength check */
-    if (!rsa_sp800_56b_validate_strength(nbits, -1))
+    if (!ossl_rsa_sp800_56b_validate_strength(nbits, -1))
+        return 0;
+
+    /* Check that the RNG is capable of generating a key this large */
+   if (!rsa_validate_rng_strength(RAND_get0_private(rsa->libctx), nbits))
         return 0;
 
     ctx = BN_CTX_new_ex(rsa->libctx);
@@ -363,11 +390,10 @@ int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
 
     for (;;) {
         /* (Step 2) Generate prime factors */
-        if (!rsa_fips186_4_gen_prob_primes(rsa, info, nbits, e, ctx,
-                                           cb))
+        if (!ossl_rsa_fips186_4_gen_prob_primes(rsa, info, nbits, e, ctx, cb))
             goto err;
         /* (Steps 3-5) Compute params d, n, dP, dQ, qInv */
-        ok = rsa_sp800_56b_derive_params_from_pq(rsa, nbits, e, ctx);
+        ok = ossl_rsa_sp800_56b_derive_params_from_pq(rsa, nbits, e, ctx);
         if (ok < 0)
             goto err;
         if (ok > 0)
@@ -376,7 +402,7 @@ int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
     }
 
     /* (Step 6) Do pairwise test - optional validity test has been omitted */
-    ret = rsa_sp800_56b_pairwise_test(rsa, ctx);
+    ret = ossl_rsa_sp800_56b_pairwise_test(rsa, ctx);
 err:
     if (efixed == NULL)
         BN_free(e);
@@ -390,7 +416,7 @@ err:
  *
  * Returns 1 if the RSA key passes the pairwise test or 0 it it fails.
  */
-int rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx)
+int ossl_rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx)
 {
     int ret = 0;
     BIGNUM *k, *tmp;
@@ -403,11 +429,11 @@ int rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx)
     BN_set_flags(k, BN_FLG_CONSTTIME);
 
     ret = (BN_set_word(k, 2)
-          && BN_mod_exp(tmp, k, rsa->e, rsa->n, ctx)
-          && BN_mod_exp(tmp, tmp, rsa->d, rsa->n, ctx)
-          && BN_cmp(k, tmp) == 0);
+           && BN_mod_exp(tmp, k, rsa->e, rsa->n, ctx)
+           && BN_mod_exp(tmp, tmp, rsa->d, rsa->n, ctx)
+           && BN_cmp(k, tmp) == 0);
     if (ret == 0)
-        RSAerr(RSA_F_RSA_SP800_56B_PAIRWISE_TEST, RSA_R_PAIRWISE_TEST_FAILURE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_PAIRWISE_TEST_FAILURE);
 err:
     BN_CTX_end(ctx);
     return ret;

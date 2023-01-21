@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_rsa");
 
-plan tests => 10;
+plan tests => 12;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -32,25 +32,43 @@ sub run_rsa_tests {
     ok(run(app([ 'openssl', $cmd, '-check', '-in', srctop_file('test', 'testrsa.pem'), '-noout'])),
            "$cmd -check" );
 
-     SKIP: {
+    SKIP: {
          skip "Skipping $cmd conversion test", 3
-	     if disabled("rsa");
+             if disabled("rsa");
 
          subtest "$cmd conversions -- private key" => sub {
-	     tconversion($cmd, srctop_file("test", "testrsa.pem"));
+             tconversion( -type => $cmd, -prefix => "$cmd-priv",
+                          -in => srctop_file("test", "testrsa.pem") );
          };
          subtest "$cmd conversions -- private key PKCS#8" => sub {
-	     tconversion($cmd, srctop_file("test", "testrsa.pem"), "pkey");
+             tconversion( -type => $cmd, -prefix => "$cmd-pkcs8",
+                          -in => srctop_file("test", "testrsa.pem"),
+                          -args => ["pkey"] );
          };
     }
 
-     SKIP: {
+    SKIP: {
          skip "Skipping msblob conversion test", 1
-	     if disabled($cmd) || disabled("dsa") || $cmd == 'pkey';
+             if disabled($cmd) || $cmd eq 'pkey';
 
          subtest "$cmd conversions -- public key" => sub {
-	     tconversion("msb", srctop_file("test", "testrsapub.pem"), "rsa",
-		         "-pubin", "-pubout");
+             tconversion( -type => 'msb', -prefix => "$cmd-msb-pub",
+                          -in => srctop_file("test", "testrsapub.pem"),
+                          -args => ["rsa", "-pubin", "-pubout"] );
+         };
+    }
+    SKIP: {
+         skip "Skipping PVK conversion test", 1
+             if disabled($cmd) || $cmd eq 'pkey' || disabled("rc4")
+                || disabled ("legacy");
+
+         subtest "$cmd conversions -- private key" => sub {
+             tconversion( -type => 'pvk', -prefix => "$cmd-pvk",
+                          -in => srctop_file("test", "testrsa.pem"),
+                          -args => ["rsa", "-passin", "pass:testpass",
+                                    "-passout", "pass:testpass",
+                                    "-provider", "default",
+                                    "-provider", "legacy"] );
          };
     }
 }

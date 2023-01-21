@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,11 +19,6 @@
 
 #include "v3_admis.h"
 #include "ext_dat.h"
-
-DEFINE_STACK_OF(ADMISSIONS)
-DEFINE_STACK_OF(PROFESSION_INFO)
-DEFINE_STACK_OF(ASN1_STRING)
-DEFINE_STACK_OF(ASN1_OBJECT)
 
 ASN1_SEQUENCE(NAMING_AUTHORITY) = {
     ASN1_OPT(NAMING_AUTHORITY, namingAuthorityId, ASN1_OBJECT),
@@ -58,7 +53,7 @@ IMPLEMENT_ASN1_FUNCTIONS(ADMISSION_SYNTAX)
 static int i2r_ADMISSION_SYNTAX(const struct v3_ext_method *method, void *in,
                                 BIO *bp, int ind);
 
-const X509V3_EXT_METHOD v3_ext_admission = {
+const X509V3_EXT_METHOD ossl_v3_ext_admission = {
     NID_x509ExtAdmission,   /* .ext_nid = */
     0,                      /* .ext_flags = */
     ASN1_ITEM_ref(ADMISSION_SYNTAX), /* .it = */
@@ -108,7 +103,7 @@ static int i2r_NAMING_AUTHORITY(const struct v3_ext_method *method, void *in,
             || BIO_printf(bp, "\n") <= 0)
             goto err;
     }
-    if (namingAuthority->namingAuthorityUrl != NULL ) {
+    if (namingAuthority->namingAuthorityUrl != NULL) {
         if (BIO_printf(bp, "%*s  namingAuthorityUrl: ", ind, "") <= 0
             || ASN1_STRING_print(bp, namingAuthority->namingAuthorityUrl) <= 0
             || BIO_printf(bp, "\n") <= 0)
@@ -204,7 +199,7 @@ static int i2r_ADMISSION_SYNTAX(const struct v3_ext_method *method, void *in,
     return 1;
 
 err:
-    return -1;
+    return 0;
 }
 
 const ASN1_OBJECT *NAMING_AUTHORITY_get0_authorityId(const NAMING_AUTHORITY *n)

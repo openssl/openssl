@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,32 +11,17 @@
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
+#include "ec_common.h"
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-
-#ifndef OPENSSL_NO_EC
-# include <openssl/ec.h>
-
-static OPT_PAIR ec_conv_forms[] = {
-    {"compressed", POINT_CONVERSION_COMPRESSED},
-    {"uncompressed", POINT_CONVERSION_UNCOMPRESSED},
-    {"hybrid", POINT_CONVERSION_HYBRID},
-    {NULL}
-};
-
-static OPT_PAIR ec_param_enc[] = {
-    {"named_curve", OPENSSL_EC_NAMED_CURVE},
-    {"explicit", 0},
-    {NULL}
-};
-#endif
+#include <openssl/core_names.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE,
     OPT_IN, OPT_OUT, OPT_PUBIN, OPT_PUBOUT, OPT_TEXT_PUB,
-    OPT_TEXT, OPT_NOOUT, OPT_MD, OPT_TRADITIONAL, OPT_CHECK, OPT_PUB_CHECK,
+    OPT_TEXT, OPT_NOOUT, OPT_CIPHER, OPT_TRADITIONAL, OPT_CHECK, OPT_PUB_CHECK,
     OPT_EC_PARAM_ENC, OPT_EC_CONV_FORM,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
@@ -47,55 +32,58 @@ const OPTIONS pkey_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    OPT_PROV_OPTIONS,
+
     {"check", OPT_CHECK, '-', "Check key consistency"},
     {"pubcheck", OPT_PUB_CHECK, '-', "Check public key consistency"},
-    {"", OPT_MD, '-', "Any supported cipher"},
-    {"ec_param_enc", OPT_EC_PARAM_ENC, 's',
-     "Specifies the way the ec parameters are encoded"},
-    {"ec_conv_form", OPT_EC_CONV_FORM, 's',
-     "Specifies the point conversion form "},
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, 's', "Input key"},
-    {"inform", OPT_INFORM, 'f', "Input format (DER/PEM/P12/ENGINE)"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"inform", OPT_INFORM, 'f',
+     "Key input format (ENGINE, other values ignored)"},
+    {"passin", OPT_PASSIN, 's', "Key input pass phrase source"},
     {"pubin", OPT_PUBIN, '-',
-     "Read public key from input (default is private key)"},
-    {"traditional", OPT_TRADITIONAL, '-',
-     "Use traditional format for private keys"},
+     "Read only public components from key input"},
 
     OPT_SECTION("Output"),
-    {"outform", OPT_OUTFORM, 'F', "Output format (DER or PEM)"},
-    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
-    {"out", OPT_OUT, '>', "Output file"},
-    {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
-    {"text_pub", OPT_TEXT_PUB, '-', "Only output public key components"},
-    {"text", OPT_TEXT, '-', "Output in plaintext as well"},
-    {"noout", OPT_NOOUT, '-', "Don't output the key"},
+    {"out", OPT_OUT, '>', "Output file for encoded and/or text output"},
+    {"outform", OPT_OUTFORM, 'F', "Output encoding format (DER or PEM)"},
+    {"", OPT_CIPHER, '-', "Any supported cipher to be used for encryption"},
+    {"passout", OPT_PASSOUT, 's', "Output PEM file pass phrase source"},
+    {"traditional", OPT_TRADITIONAL, '-',
+     "Use traditional format for private key PEM output"},
+    {"pubout", OPT_PUBOUT, '-', "Restrict encoded output to public components"},
+    {"noout", OPT_NOOUT, '-', "Do not output the key in encoded form"},
+    {"text", OPT_TEXT, '-', "Output key components in plaintext"},
+    {"text_pub", OPT_TEXT_PUB, '-',
+     "Output only public key components in text form"},
+    {"ec_conv_form", OPT_EC_CONV_FORM, 's',
+     "Specifies the EC point conversion form in the encoding"},
+    {"ec_param_enc", OPT_EC_PARAM_ENC, 's',
+     "Specifies the way the EC parameters are encoded"},
 
-    OPT_PROV_OPTIONS,
     {NULL}
 };
 
 int pkey_main(int argc, char **argv)
 {
-    BIO *in = NULL, *out = NULL;
+    BIO *out = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
-    const EVP_CIPHER *cipher = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
     char *infile = NULL, *outfile = NULL, *passin = NULL, *passout = NULL;
-    char *passinarg = NULL, *passoutarg = NULL, *prog;
+    char *passinarg = NULL, *passoutarg = NULL, *ciphername = NULL, *prog;
     OPTION_CHOICE o;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM;
-    int pubin = 0, pubout = 0, pubtext = 0, text = 0, noout = 0, ret = 1;
+    int informat = FORMAT_UNDEF, outformat = FORMAT_PEM;
+    int pubin = 0, pubout = 0, text_pub = 0, text = 0, noout = 0, ret = 1;
     int private = 0, traditional = 0, check = 0, pub_check = 0;
 #ifndef OPENSSL_NO_EC
-    EC_KEY *eckey;
-    int ec_asn1_flag = OPENSSL_EC_NAMED_CURVE, new_ec_asn1_flag = 0;
-    int i, new_ec_form = 0;
-    point_conversion_form_t ec_form = POINT_CONVERSION_UNCOMPRESSED;
+    char *asn1_encoding = NULL;
+    char *point_format = NULL;
 #endif
 
+    opt_set_unknown_name("cipher");
     prog = opt_init(argc, argv, pkey_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -132,13 +120,13 @@ int pkey_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_PUBIN:
-            pubin = pubout = pubtext = 1;
+            pubin = pubout = 1;
             break;
         case OPT_PUBOUT:
             pubout = 1;
             break;
         case OPT_TEXT_PUB:
-            pubtext = text = 1;
+            text_pub = 1;
             break;
         case OPT_TEXT:
             text = 1;
@@ -155,28 +143,25 @@ int pkey_main(int argc, char **argv)
         case OPT_PUB_CHECK:
             pub_check = 1;
             break;
-        case OPT_MD:
-            if (!opt_cipher(opt_unknown(), &cipher))
-                goto opthelp;
+        case OPT_CIPHER:
+            ciphername = opt_unknown();
             break;
         case OPT_EC_CONV_FORM:
 #ifdef OPENSSL_NO_EC
             goto opthelp;
 #else
-            if (!opt_pair(opt_arg(), ec_conv_forms, &i))
+            point_format = opt_arg();
+            if (!opt_string(point_format, point_format_options))
                 goto opthelp;
-            new_ec_form = 1;
-            ec_form = i;
             break;
 #endif
         case OPT_EC_PARAM_ENC:
 #ifdef OPENSSL_NO_EC
             goto opthelp;
 #else
-            if (!opt_pair(opt_arg(), ec_param_enc, &i))
+            asn1_encoding = opt_arg();
+            if (!opt_string(asn1_encoding, asn1_encoding_options))
                 goto opthelp;
-            new_ec_asn1_flag = 1;
-            ec_asn1_flag = i;
             break;
 #endif
         case OPT_PROV_CASES:
@@ -185,14 +170,39 @@ int pkey_main(int argc, char **argv)
             break;
         }
     }
-    argc = opt_num_rest();
-    if (argc != 0)
+
+    /* No extra arguments. */
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
-    private = !noout && !pubout ? 1 : 0;
-    if (text && !pubtext)
-        private = 1;
+    if (text && text_pub)
+        BIO_printf(bio_err,
+                   "Warning: The -text option is ignored with -text_pub\n");
+    if (traditional && (noout || outformat != FORMAT_PEM))
+        BIO_printf(bio_err,
+                   "Warning: The -traditional is ignored since there is no PEM output\n");
 
+    /* -pubout and -text is the same as -text_pub */
+    if (!text_pub && pubout && text) {
+        text = 0;
+        text_pub = 1;
+    }
+
+    private = (!noout && !pubout) || (text && !text_pub);
+
+    if (!opt_cipher(ciphername, &cipher))
+        goto opthelp;
+    if (cipher == NULL) {
+        if (passoutarg != NULL)
+            BIO_printf(bio_err,
+                       "Warning: The -passout option is ignored without a cipher option\n");
+    } else {
+        if (noout || outformat != FORMAT_PEM) {
+            BIO_printf(bio_err,
+                       "Error: Cipher options are supported only for PEM output\n");
+            goto end;
+        }
+    }
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
         goto end;
@@ -210,26 +220,27 @@ int pkey_main(int argc, char **argv)
         goto end;
 
 #ifndef OPENSSL_NO_EC
-    /*
-     * TODO: remove this and use a set params call with a 'pkeyopt' command
-     * line option instead.
-     */
-    if (new_ec_form || new_ec_asn1_flag) {
-        if ((eckey = EVP_PKEY_get0_EC_KEY(pkey)) == NULL) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-        if (new_ec_form)
-            EC_KEY_set_conv_form(eckey, ec_form);
+    if (asn1_encoding != NULL || point_format != NULL) {
+        OSSL_PARAM params[3], *p = params;
 
-        if (new_ec_asn1_flag)
-            EC_KEY_set_asn1_flag(eckey, ec_asn1_flag);
+        if (!EVP_PKEY_is_a(pkey, "EC"))
+            goto end;
+
+        if (asn1_encoding != NULL)
+            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING,
+                                                    asn1_encoding, 0);
+        if (point_format != NULL)
+            *p++ = OSSL_PARAM_construct_utf8_string(
+                       OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+                       point_format, 0);
+        *p = OSSL_PARAM_construct_end();
+        if (EVP_PKEY_set_params(pkey, params) <= 0)
+            goto end;
     }
 #endif
 
     if (check || pub_check) {
         int r;
-        EVP_PKEY_CTX *ctx;
 
         ctx = EVP_PKEY_CTX_new(pkey, e);
         if (ctx == NULL) {
@@ -237,7 +248,7 @@ int pkey_main(int argc, char **argv)
             goto end;
         }
 
-        if (check)
+        if (check && !pubin)
             r = EVP_PKEY_check(ctx);
         else
             r = EVP_PKEY_public_check(ctx);
@@ -249,17 +260,10 @@ int pkey_main(int argc, char **argv)
              * Note: at least for RSA keys if this function returns
              * -1, there will be no error reasons.
              */
-            unsigned long err;
-
-            BIO_printf(out, "Key is invalid\n");
-
-            while ((err = ERR_peek_error()) != 0) {
-                BIO_printf(out, "Detailed error: %s\n",
-                           ERR_reason_error_string(err));
-                ERR_get_error(); /* remove err from error stack */
-            }
+            BIO_printf(bio_err, "Key is invalid\n");
+            ERR_print_errors(bio_err);
+            goto end;
         }
-        EVP_PKEY_CTX_free(ctx);
     }
 
     if (!noout) {
@@ -281,6 +285,11 @@ int pkey_main(int argc, char **argv)
                 }
             }
         } else if (outformat == FORMAT_ASN1) {
+            if (text || text_pub) {
+                BIO_printf(bio_err,
+                           "Error: Text output cannot be combined with DER output\n");
+                goto end;
+            }
             if (pubout) {
                 if (!i2d_PUBKEY_bio(out, pkey))
                     goto end;
@@ -295,15 +304,13 @@ int pkey_main(int argc, char **argv)
         }
     }
 
-    if (text) {
-        if (pubtext) {
-            if (EVP_PKEY_print_public(out, pkey, 0, NULL) <= 0)
-                goto end;
-        } else {
-            assert(private);
-            if (EVP_PKEY_print_private(out, pkey, 0, NULL) <= 0)
-                goto end;
-        }
+    if (text_pub) {
+        if (EVP_PKEY_print_public(out, pkey, 0, NULL) <= 0)
+            goto end;
+    } else if (text) {
+        assert(private);
+        if (EVP_PKEY_print_private(out, pkey, 0, NULL) <= 0)
+            goto end;
     }
 
     ret = 0;
@@ -311,10 +318,11 @@ int pkey_main(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
+    EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
+    EVP_CIPHER_free(cipher);
     release_engine(e);
     BIO_free_all(out);
-    BIO_free(in);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
 

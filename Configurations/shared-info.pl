@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 # -*- mode: perl; -*-
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -40,10 +40,16 @@ my %shared_info;
         };
     },
     'bsd-gcc-shared' => sub { return $shared_info{'linux-shared'}; },
+    'bsd-gcc-nodef-shared' => sub { 
+        return {
+            %{$shared_info{'gnu-shared'}},
+            shared_defflags     => '-Wl,--version-script=',
+        };
+    },
     'darwin-shared' => {
         module_ldflags        => '-bundle',
         shared_ldflag         => '-dynamiclib -current_version $(SHLIB_VERSION_NUMBER) -compatibility_version $(SHLIB_VERSION_NUMBER)',
-        shared_sonameflag     => '-install_name $(INSTALLTOP)/$(LIBDIR)/',
+        shared_sonameflag     => '-install_name $(libdir)/',
     },
     'cygwin-shared' => {
         shared_ldflag         => '-shared -Wl,--enable-auto-image-base',
@@ -55,6 +61,7 @@ my %shared_info;
             # def_flag made to empty string so it still generates
             # something
             shared_defflag    => '',
+            shared_argfileflag => '@',
         };
     },
     'alpha-osf1-shared' => sub {

@@ -22,6 +22,11 @@ const char *X509_get_default_cert_area(void)
     return X509_CERT_AREA;
 }
 
+const char *X509_get_default_cert_uri(void)
+{
+    return X509_CERT_URI;
+}
+
 const char *X509_get_default_cert_dir(void)
 {
     return X509_CERT_DIR;
@@ -30,6 +35,16 @@ const char *X509_get_default_cert_dir(void)
 const char *X509_get_default_cert_file(void)
 {
     return X509_CERT_FILE;
+}
+
+const char *X509_get_default_cert_uri_env(void)
+{
+    return X509_CERT_URI_EVP;
+}
+
+const char *X509_get_default_cert_path_env(void)
+{
+    return X509_CERT_PATH_EVP;
 }
 
 const char *X509_get_default_cert_dir_env(void)

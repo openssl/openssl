@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "bio_local.h"
+#include "internal/bio_tfo.h"
 #include "internal/cryptlib.h"
 #include "internal/ktls.h"
 
@@ -27,6 +28,14 @@
 #  define sock_puts  SockPuts
 # endif
 
+struct bss_sock_st {
+    BIO_ADDR tfo_peer;
+    int tfo_first;
+#ifndef OPENSSL_NO_KTLS
+    unsigned char ktls_record_type;
+#endif
+};
+
 static int sock_write(BIO *h, const char *buf, int num);
 static int sock_read(BIO *h, char *buf, int size);
 static int sock_puts(BIO *h, const char *str);
@@ -38,10 +47,8 @@ int BIO_sock_should_retry(int s);
 static const BIO_METHOD methods_sockp = {
     BIO_TYPE_SOCKET,
     "socket",
-    /* TODO: Convert to new style write function */
     bwrite_conv,
     sock_write,
-    /* TODO: Convert to new style read function */
     bread_conv,
     sock_read,
     sock_puts,
@@ -83,8 +90,10 @@ static int sock_new(BIO *bi)
 {
     bi->init = 0;
     bi->num = 0;
-    bi->ptr = NULL;
     bi->flags = 0;
+    bi->ptr = OPENSSL_zalloc(sizeof(struct bss_sock_st));
+    if (bi->ptr == NULL)
+        return 0;
     return 1;
 }
 
@@ -99,6 +108,8 @@ static int sock_free(BIO *a)
         a->init = 0;
         a->flags = 0;
     }
+    OPENSSL_free(a->ptr);
+    a->ptr = NULL;
     return 1;
 }
 
@@ -128,16 +139,29 @@ static int sock_read(BIO *b, char *out, int outl)
 static int sock_write(BIO *b, const char *in, int inl)
 {
     int ret = 0;
+# if !defined(OPENSSL_NO_KTLS) || defined(OSSL_TFO_SENDTO)
+    struct bss_sock_st *data = (struct bss_sock_st *)b->ptr;
+# endif
 
     clear_socket_error();
 # ifndef OPENSSL_NO_KTLS
     if (BIO_should_ktls_ctrl_msg_flag(b)) {
-        unsigned char record_type = (intptr_t)b->ptr;
+        unsigned char record_type = data->ktls_record_type;
         ret = ktls_send_ctrl_message(b->num, record_type, in, inl);
         if (ret >= 0) {
             ret = inl;
             BIO_clear_ktls_ctrl_msg_flag(b);
         }
+    } else
+# endif
+# if defined(OSSL_TFO_SENDTO)
+    if (data->tfo_first) {
+        struct bss_sock_st *data = (struct bss_sock_st *)b->ptr;
+        socklen_t peerlen = BIO_ADDR_sockaddr_size(&data->tfo_peer);
+
+        ret = sendto(b->num, in, inl, OSSL_TFO_SENDTO,
+                     BIO_ADDR_sockaddr(&data->tfo_peer), peerlen);
+        data->tfo_first = 0;
     } else
 # endif
         ret = writesocket(b->num, in, inl);
@@ -153,21 +177,24 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     long ret = 1;
     int *ip;
+    struct bss_sock_st *data = (struct bss_sock_st *)b->ptr;
 # ifndef OPENSSL_NO_KTLS
-    size_t crypto_info_len;
-#  ifdef __FreeBSD__
-    struct tls_enable *crypto_info;
-#  else
-    struct tls_crypto_info_all *crypto_info;
-#  endif
+    ktls_crypto_info_t *crypto_info;
 # endif
 
     switch (cmd) {
     case BIO_C_SET_FD:
-        sock_free(b);
+        /* minimal sock_free() */
+        if (b->shutdown) {
+            if (b->init)
+                BIO_closesocket(b->num);
+            b->flags = 0;
+        }
         b->num = *((int *)ptr);
         b->shutdown = (int)num;
         b->init = 1;
+        data->tfo_first = 0;
+        memset(&data->tfo_peer, 0, sizeof(data->tfo_peer));
         break;
     case BIO_C_GET_FD:
         if (b->init) {
@@ -190,33 +217,51 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 # ifndef OPENSSL_NO_KTLS
     case BIO_CTRL_SET_KTLS:
-#  ifdef __FreeBSD__
-        crypto_info = (struct tls_enable *)ptr;
-        crypto_info_len = sizeof(*crypto_info);
-#  else
-        crypto_info = (struct tls_crypto_info_all *)ptr;
-        crypto_info_len = crypto_info->tls_crypto_info_len;
-#  endif
-        ret = ktls_start(b->num, crypto_info, crypto_info_len, num);
+        crypto_info = (ktls_crypto_info_t *)ptr;
+        ret = ktls_start(b->num, crypto_info, num);
         if (ret)
             BIO_set_ktls_flag(b, num);
         break;
     case BIO_CTRL_GET_KTLS_SEND:
-        return BIO_should_ktls_flag(b, 1);
+        return BIO_should_ktls_flag(b, 1) != 0;
     case BIO_CTRL_GET_KTLS_RECV:
-        return BIO_should_ktls_flag(b, 0);
+        return BIO_should_ktls_flag(b, 0) != 0;
     case BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG:
         BIO_set_ktls_ctrl_msg_flag(b);
-        b->ptr = (void *)num;
+        data->ktls_record_type = (unsigned char)num;
         ret = 0;
         break;
     case BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG:
         BIO_clear_ktls_ctrl_msg_flag(b);
         ret = 0;
         break;
+    case BIO_CTRL_SET_KTLS_TX_ZEROCOPY_SENDFILE:
+        ret = ktls_enable_tx_zerocopy_sendfile(b->num);
+        if (ret)
+            BIO_set_ktls_zerocopy_sendfile_flag(b);
+        break;
 # endif
     case BIO_CTRL_EOF:
-        ret = (b->flags & BIO_FLAGS_IN_EOF) != 0 ? 1 : 0;
+        ret = (b->flags & BIO_FLAGS_IN_EOF) != 0;
+        break;
+    case BIO_C_GET_CONNECT:
+        if (ptr != NULL && num == 2) {
+            const char **pptr = (const char **)ptr;
+
+            *pptr = (const char *)&data->tfo_peer;
+        } else {
+            ret = 0;
+        }
+        break;
+    case BIO_C_SET_CONNECT:
+        if (ptr != NULL && num == 2) {
+            ret = BIO_ADDR_make(&data->tfo_peer,
+                                BIO_ADDR_sockaddr((const BIO_ADDR *)ptr));
+            if (ret)
+                data->tfo_first = 1;
+        } else {
+            ret = 0;
+        }
         break;
     default:
         ret = 0;

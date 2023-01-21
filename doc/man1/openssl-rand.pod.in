@@ -12,12 +12,9 @@ B<openssl rand>
 [B<-out> I<file>]
 [B<-base64>]
 [B<-hex>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 I<num>
-
-=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -28,7 +25,7 @@ The random bytes are generated using the L<RAND_bytes(3)> function,
 which provides a security level of 256 bits, provided it managed to
 seed itself successfully from a trusted operating system entropy source.
 Otherwise, the command will fail with a nonzero error code.
-For more details, see L<RAND_bytes(3)>, L<RAND(7)>, and L<RAND_DRBG(7)>.
+For more details, see L<RAND_bytes(3)>, L<RAND(7)>, and L<EVP_RAND(7)>.
 
 =head1 OPTIONS
 
@@ -63,11 +60,15 @@ Show the output as a hex string.
 L<openssl(1)>,
 L<RAND_bytes(3)>,
 L<RAND(7)>,
-L<RAND_DRBG(7)>
+L<EVP_RAND(7)>
+
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

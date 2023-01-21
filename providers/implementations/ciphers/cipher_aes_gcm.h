@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,6 +29,7 @@ typedef struct prov_aes_gcm_ctx_st {
                 S390X_KMA_PARAMS kma;
             } param;
             unsigned int fc;
+            unsigned int hsflag;    /* hash subkey set flag */
             unsigned char ares[16];
             unsigned char mres[16];
             unsigned char kres[16];
@@ -41,4 +42,4 @@ typedef struct prov_aes_gcm_ctx_st {
     } plat;
 } PROV_AES_GCM_CTX;
 
-const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits);
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits);

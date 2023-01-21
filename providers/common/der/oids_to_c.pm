@@ -23,8 +23,6 @@ my $OID_def_re = qr/
                        \s* ${OID_value_re}
                    /x;
 
-use Data::Dumper;
-
 sub filter_to_H {
     my ($name, $comment) = @{ shift() };
     my @oid_nums = @_;
@@ -40,7 +38,7 @@ sub filter_to_H {
 $C_comment
 #define DER_OID_V_${C_name} DER_P_OBJECT, $oid_size, ${C_bytes}
 #define DER_OID_SZ_${C_name} ${C_bytes_size}
-extern const unsigned char der_oid_${C_name}[DER_OID_SZ_${C_name}];
+extern const unsigned char ossl_der_oid_${C_name}[DER_OID_SZ_${C_name}];
 _____
 }
 
@@ -58,7 +56,7 @@ sub filter_to_C {
 
     return <<"_____";
 $C_comment
-const unsigned char der_oid_${C_name}[DER_OID_SZ_${C_name}] = {
+const unsigned char ossl_der_oid_${C_name}[DER_OID_SZ_${C_name}] = {
     DER_OID_V_${C_name}
 };
 _____

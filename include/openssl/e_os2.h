@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -102,11 +102,11 @@ extern "C" {
 # endif
 
 /* ------------------------------- OpenVMS -------------------------------- */
-# if defined(__VMS) || defined(VMS) || defined(OPENSSL_SYS_VMS)
+# if defined(__VMS) || defined(VMS)
 #  if !defined(OPENSSL_SYS_VMS)
 #   undef OPENSSL_SYS_UNIX
+#   define OPENSSL_SYS_VMS
 #  endif
-#  define OPENSSL_SYS_VMS
 #  if defined(__DECC)
 #   define OPENSSL_SYS_VMS_DECC
 #  elif defined(__DECCXX)
@@ -136,6 +136,21 @@ extern "C" {
 #  ifdef __IA32__
 #   define OPENSSL_SYS_VOS_IA32
 #  endif
+# endif
+
+/* ---------------------------- HP NonStop -------------------------------- */
+# ifdef __TANDEM
+#  ifdef _STRING
+#   include <strings.h>
+#  endif
+# define OPENSSL_USE_BUILD_DATE
+# if defined(OPENSSL_THREADS) && defined(_SPT_MODEL_)
+#  define  SPT_THREAD_SIGNAL 1
+#  define  SPT_THREAD_AWARE 1
+#  include <spthread.h>
+# elif defined(OPENSSL_THREADS) && defined(_PUT_MODEL_)
+#  include <pthread.h>
+# endif
 # endif
 
 /**
@@ -195,7 +210,7 @@ extern "C" {
 #  endif
 # endif
 
-# ifdef DEBUG_UNUSED
+# if defined(UNUSEDRESULT_DEBUG)
 #  define __owur __attribute__((__warn_unused_result__))
 # else
 #  define __owur
@@ -220,7 +235,7 @@ typedef UINT64 uint64_t;
 #  undef OPENSSL_NO_INTTYPES_H
 /* Because the specs say that inttypes.h includes stdint.h if present */
 #  undef OPENSSL_NO_STDINT_H
-# elif defined(_MSC_VER) && _MSC_VER<=1500
+# elif defined(_MSC_VER) && _MSC_VER<1600
 /*
  * minimally required typdefs for systems not supporting inttypes.h or
  * stdint.h: currently just older VC++
@@ -233,9 +248,21 @@ typedef int int32_t;
 typedef unsigned int uint32_t;
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
+# elif defined(OPENSSL_SYS_TANDEM)
+#  include <stdint.h>
+#  include <sys/types.h>
 # else
 #  include <stdint.h>
 #  undef OPENSSL_NO_STDINT_H
+# endif
+# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
+    defined(INTMAX_MAX) && defined(UINTMAX_MAX)
+typedef intmax_t ossl_intmax_t;
+typedef uintmax_t ossl_uintmax_t;
+# else
+/* Fall back to the largest we know we require and can handle */
+typedef int64_t ossl_intmax_t;
+typedef uint64_t ossl_uintmax_t;
 # endif
 
 /* ossl_inline: portable inline definition usable in public headers */
@@ -259,7 +286,8 @@ typedef unsigned __int64 uint64_t;
 #  define ossl_inline inline
 # endif
 
-# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L && \
+     !defined(__cplusplus) 
 #  define ossl_noreturn _Noreturn
 # elif defined(__GNUC__) && __GNUC__ >= 2
 #  define ossl_noreturn __attribute__((noreturn))

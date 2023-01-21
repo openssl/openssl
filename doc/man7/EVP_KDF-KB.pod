@@ -21,15 +21,21 @@ The supported parameters are:
 
 =over 4
 
-=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
-
 =item "mode" (B<OSSL_KDF_PARAM_MODE>) <UTF8 string>
+
+The mode parameter determines which flavor of KBKDF to use - currently the
+choices are "counter" and "feedback". "counter" is the default, and will be
+used if unspecified.
 
 =item "mac" (B<OSSL_KDF_PARAM_MAC>) <UTF8 string>
 
+The value is either CMAC, HMAC, KMAC128 or KMAC256.
+
 =item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
-=item "cipher" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
+=item "cipher" (B<OSSL_KDF_PARAM_CIPHER>) <UTF8 string>
+
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
 
 =item "key" (B<OSSL_KDF_PARAM_KEY>) <octet string>
 
@@ -39,25 +45,44 @@ The supported parameters are:
 
 =item "seed" (B<OSSL_KDF_PARAM_SEED>) <octet string>
 
+The seed parameter is unused in counter mode.
+
+=item "use-l" (B<OSSL_KDF_PARAM_KBKDF_USE_L>) <integer>
+
+Set to B<0> to disable use of the optional Fixed Input data 'L' (see SP800-108).
+The default value of B<1> will be used if unspecified.
+
+=item "use-separator" (B<OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR>) <integer>
+
+Set to B<0> to disable use of the optional Fixed Input data 'zero separator'
+(see SP800-108) that is placed between the Label and Context.
+The default value of B<1> will be used if unspecified.
+
+=item "r" (B<OSSL_KDF_PARAM_KBKDF_R>) <integer>
+
+Set the fixed value 'r', indicating the length of the counter in bits.
+
+Supported values are B<8>, B<16>, B<24>, and B<32>.
+The default value of B<32> will be used if unspecified.
+
 =back
 
-The mode parameter determines which flavor of KBKDF to use - currently the
-choices are "counter" and "feedback".  Counter is the default, and will be
-used if unspecified.  The seed parameter is unused in counter mode.
+Depending on whether mac is CMAC or HMAC, either digest or cipher is required
+(respectively) and the other is unused. They are unused for KMAC128 and KMAC256.
 
 The parameters key, salt, info, and seed correspond to KI, Label, Context, and
 IV (respectively) in SP800-108.  As in that document, salt, info, and seed are
 optional and may be omitted.
 
-Depending on whether mac is CMAC or HMAC, either digest or cipher is required
-(respectively) and the other is unused.
+"mac", "digest", cipher" and "properties" are described in
+L<EVP_KDF(3)/PARAMETERS>.
 
 =head1 NOTES
 
 A context for KBKDF can be obtained by calling:
 
  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "KBKDF", NULL);
- EVP_KDF_CTX *kctx = EVP_KDF_new_ctx(kdf);
+ EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of an KBKDF is specified via the C<keylen>
 parameter to the L<EVP_KDF_derive(3)> function.
@@ -76,7 +101,7 @@ Label "label", and Context "context".
  OSSL_PARAM params[6], *p = params;
 
  kdf = EVP_KDF_fetch(NULL, "KBKDF", NULL);
- kctx = EVP_KDF_new_ctx(kdf);
+ kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
@@ -84,18 +109,16 @@ Label "label", and Context "context".
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
                                          "HMAC", 0);
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                          "secret", strlen("secret"))
+                                          "secret", strlen("secret"));
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
                                           "label", strlen("label"));
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
                                           "context", strlen("context"));
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_set_ctx_params(kctx, params) <= 0)
-     error("EVP_KDF_set_ctx_params");
- else if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0)
+ if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0)
      error("EVP_KDF_derive");
 
- EVP_KDF_free_ctx(kctx);
+ EVP_KDF_CTX_free(kctx);
 
 This example derives 10 bytes using FEEDBACK-CMAC-AES256, with KI "secret",
 Label "label", and IV "sixteen bytes iv".
@@ -107,7 +130,7 @@ Label "label", and IV "sixteen bytes iv".
  unsigned char *iv = "sixteen bytes iv";
 
  kdf = EVP_KDF_fetch(NULL, "KBKDF", NULL);
- kctx = EVP_KDF_new_ctx(kdf);
+ kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER, "AES256", 0);
@@ -122,12 +145,10 @@ Label "label", and IV "sixteen bytes iv".
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
                                           iv, strlen(iv));
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_set_ctx_params(kctx, params) <= 0)
-     error("EVP_KDF_set_ctx_params");
- else if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0)
+ if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0)
      error("EVP_KDF_derive");
 
- EVP_KDF_free_ctx(kctx);
+ EVP_KDF_CTX_free(kctx);
 
 =head1 CONFORMING TO
 
@@ -136,18 +157,20 @@ NIST SP800-108, IETF RFC 6803, IETF RFC 8009.
 =head1 SEE ALSO
 
 L<EVP_KDF(3)>,
-L<EVP_KDF_free_ctx(3)>,
-L<EVP_KDF_size(3)>,
+L<EVP_KDF_CTX_free(3)>,
+L<EVP_KDF_CTX_get_kdf_size(3)>,
 L<EVP_KDF_derive(3)>,
 L<EVP_KDF(3)/PARAMETERS>
 
 =head1 HISTORY
 
-This functionality was added to OpenSSL 3.0.
+This functionality was added in OpenSSL 3.0.
+
+Support for KMAC was added in OpenSSL 3.1.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
 Copyright 2019 Red Hat, Inc.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use

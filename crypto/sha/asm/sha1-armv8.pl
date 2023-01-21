@@ -175,9 +175,10 @@ ___
 }
 
 $code.=<<___;
+#include "arm_arch.h"
 #ifndef	__KERNEL__
-# include "arm_arch.h"
 .extern OPENSSL_armcap_P
+.hidden OPENSSL_armcap_P
 #endif
 
 .text
@@ -186,11 +187,13 @@ $code.=<<___;
 .type	sha1_block_data_order,%function
 .align	6
 sha1_block_data_order:
+	AARCH64_VALID_CALL_TARGET
 	adrp	x16,OPENSSL_armcap_P
 	ldr	w16,[x16,#:lo12:OPENSSL_armcap_P]
 	tst	w16,#ARMV8_SHA1
 	b.ne	.Lv8_entry
 
+	// Armv8.3-A PAuth: even though x30 is pushed to stack it is not popped later.
 	stp	x29,x30,[sp,#-96]!
 	add	x29,sp,#0
 	stp	x19,x20,[sp,#16]
@@ -252,6 +255,7 @@ $code.=<<___;
 .align	6
 sha1_block_armv8:
 .Lv8_entry:
+	// Armv8.3-A PAuth: even though x30 is pushed to stack it is not popped later.
 	stp	x29,x30,[sp,#-16]!
 	add	x29,sp,#0
 
@@ -323,9 +327,6 @@ $code.=<<___;
 .long	0xca62c1d6,0xca62c1d6,0xca62c1d6,0xca62c1d6	//K_60_79
 .asciz	"SHA1 block transform for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
-#if !defined(__KERNELL__) && !defined(_WIN64)
-.comm	OPENSSL_armcap_P,4,4
-#endif
 ___
 }}}
 

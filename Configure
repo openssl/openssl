@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 # -*- mode: perl; -*-
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -27,7 +27,25 @@ use OpenSSL::config;
 my $orig_death_handler = $SIG{__DIE__};
 $SIG{__DIE__} = \&death_handler;
 
-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<feature> ...] [enable-<feature> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]thread-pool] [[no-]default-thread-pool] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
+
+my $banner = <<"EOF";
+
+**********************************************************************
+***                                                                ***
+***   OpenSSL has been successfully configured                     ***
+***                                                                ***
+***   If you encounter a problem while building, please open an    ***
+***   issue on GitHub <https://github.com/openssl/openssl/issues>  ***
+***   and include the output from the following command:           ***
+***                                                                ***
+***       perl configdata.pm --dump                                ***
+***                                                                ***
+***   (If you are new to OpenSSL, you might want to consult the    ***
+***   'Troubleshooting' section in the INSTALL.md file first)      ***
+***                                                                ***
+**********************************************************************
+EOF
 
 # Options:
 #
@@ -43,6 +61,9 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #               given with --prefix.
 #               This becomes the value of OPENSSLDIR in Makefile and in C.
 #               (Default: PREFIX/ssl)
+# --banner=".." Output specified text instead of default completion banner
+#
+# -w            Don't wait after showing a Configure warning
 #
 # --cross-compile-prefix Add specified prefix to binutils components.
 #
@@ -60,6 +81,10 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # [no-]threads  [don't] try to create a library that is suitable for
 #               multithreaded applications (default is "threads" if we
 #               know how to do it)
+# [no-]thread-pool
+#               [don't] allow thread pool functionality
+# [no-]default-thread-pool
+#               [don't] allow default thread pool functionality
 # [no-]shared   [don't] try to create shared libraries when supported.
 # [no-]pic      [don't] try to build position independent code when supported.
 #               If disabled, it also disables shared and dynamic-engine.
@@ -67,15 +92,17 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # no-egd        do not compile support for the entropy-gathering daemon APIs
 # [no-]zlib     [don't] compile support for zlib compression.
 # zlib-dynamic  Like "zlib", but the zlib library is expected to be a shared
-#               library and will be loaded in run-time by the OpenSSL library.
+#               library and will be loaded at run-time by the OpenSSL library.
 # sctp          include SCTP support
+# enable-quic   include QUIC support (currently just for developers as the
+#               implementation is by no means complete and usable)
 # no-uplink     Don't build support for UPLINK interface.
 # enable-weak-ssl-ciphers
 #               Enable weak ciphers that are disabled by default.
 # 386           generate 80386 code in assembly modules
 # no-sse2       disables IA-32 SSE2 code in assembly modules, the above
 #               mentioned '386' option implies this one
-# no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
+# no-<cipher>   build without specified algorithm (dsa, idea, rc5, ...)
 # -<xxx> +<xxx> All options which are unknown to the 'Configure' script are
 # /<xxx>        passed through to the compiler. Unix-style options beginning
 #               with a '-' or '+' are recognized, as well as Windows-style
@@ -117,7 +144,6 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # get past these.  Note that we only use these with C compilers, not with
 # C++ compilers.
 
-# DEBUG_UNUSED enables __owur (warn unused result) checks.
 # -DPEDANTIC complements -pedantic and is meant to mask code that
 # is not strictly standard-compliant and/or implementation-specific,
 # e.g. inline assembly, disregards to alignment requirements, such
@@ -131,9 +157,9 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # but 'long long' type.
 
 my @gcc_devteam_warn = qw(
-    -DDEBUG_UNUSED
-    -DPEDANTIC -pedantic -Wno-long-long
+    -DPEDANTIC -pedantic -Wno-long-long -DUNUSEDRESULT_DEBUG
     -Wall
+    -Wmissing-declarations
     -Wextra
     -Wno-unused-parameter
     -Wno-missing-field-initializers
@@ -141,7 +167,8 @@ my @gcc_devteam_warn = qw(
     -Wsign-compare
     -Wshadow
     -Wformat
-    -Wtype-limits
+    -Wno-type-limits
+    -Wno-tautological-constant-out-of-range-compare
     -Wundef
     -Werror
     -Wmissing-prototypes
@@ -190,7 +217,7 @@ my $apitable = {
     # The numbering used changes from 3.0 and on because we updated
     # (solidified) our version numbering scheme at that point.
 
-    # From 3.0 and on, we internalise the given version number in dedcimal
+    # From 3.0 and on, we internalise the given version number in decimal
     # as MAJOR * 10000 + MINOR * 100 + 0
     "3.0.0" => 30000,
     "3.0"   => 30000,
@@ -204,6 +231,11 @@ my $apitable = {
     "1.0.0" => 10000,
     "0.9.8" =>   908,
 };
+
+# For OpenSSL::config::get_platform
+my %guess_opts = ();
+
+my $dryrun = 0;
 
 our %table = ();
 our %config = ();
@@ -233,12 +265,25 @@ sub resolve_config;
 # Unified build supports separate build dir
 my $srcdir = catdir(absolutedir(dirname($0))); # catdir ensures local syntax
 my $blddir = catdir(absolutedir("."));         # catdir ensures local syntax
+
+# File::Spec::Unix doesn't detect case insensitivity, so we make sure to
+# check if the source and build directory are really the same, and make
+# them so.  This avoids all kinds of confusion later on.
+# We must check @File::Spec::ISA rather than using File::Spec->isa() to
+# know if File::Spec ended up loading File::Spec::Unix.
+$srcdir = $blddir
+    if (grep(/::Unix$/, @File::Spec::ISA)
+        && samedir($srcdir, $blddir));
+
 my $dofile = abs2rel(catfile($srcdir, "util/dofile.pl"));
 
 my $local_config_envname = 'OPENSSL_LOCAL_CONFIG_DIR';
 
-$config{sourcedir} = abs2rel($srcdir);
-$config{builddir} = abs2rel($blddir);
+$config{sourcedir} = abs2rel($srcdir, $blddir);
+$config{builddir} = abs2rel($blddir, $blddir);
+# echo -n 'holy hand grenade of antioch' | openssl sha256
+$config{FIPSKEY} =
+    'f4556650ac31d35461610bac4ed81b1a181b2d8a43ea2854cbae22ca74560813';
 
 # Collect reconfiguration information if needed
 my @argvcopy=@ARGV;
@@ -274,7 +319,7 @@ $config{perlargv} = [ @argvcopy ];
 # 'unshift' adds at the front of the list (i.e. in reverse input order).
 foreach ( reverse sort( 'aes', 'aria', 'bf', 'camellia', 'cast', 'des', 'dh',
                         'dsa', 'ec', 'hmac', 'idea', 'md2', 'md5', 'mdc2',
-                        'rc2', 'rc4', 'rc5', 'ripemd', 'rsa', 'seed', 'sha',
+                        'rc2', 'rc4', 'rc5', 'ripemd', 'seed', 'sha',
                         'sm2', 'sm3', 'sm4') ) {
     unshift @argvcopy, "no-$_" if ! -d catdir($srcdir, 'crypto', $_);
 }
@@ -283,7 +328,7 @@ foreach ( reverse sort( 'aes', 'aria', 'bf', 'camellia', 'cast', 'des', 'dh',
 my %version = ();
 
 collect_information(
-    collect_from_file(catfile($srcdir,'VERSION')),
+    collect_from_file(catfile($srcdir,'VERSION.dat')),
     qr/\s*(\w+)\s*=\s*(.*?)\s*$/ =>
         sub {
             # Only define it if there is a value at all
@@ -296,7 +341,7 @@ collect_information(
             }
         },
     "OTHERWISE" =>
-        sub { die "Something wrong with this line:\n$_\nin $srcdir/VERSION" },
+        sub { die "Something wrong with this line:\n$_\nin $srcdir/VERSION.dat" },
     );
 
 $config{major} = $version{MAJOR} // 'unknown';
@@ -312,7 +357,7 @@ $config{release_date} = $version{RELEASE_DATE} // 'xx XXX xxxx';
 $config{version} = "$config{major}.$config{minor}.$config{patch}";
 $config{full_version} = "$config{version}$config{prerelease}$config{build_metadata}";
 
-die "erroneous version information in VERSION: ",
+die "erroneous version information in VERSION.dat: ",
     "$config{version}, $config{shlib_version}\n"
     unless (defined $version{MAJOR}
             && defined $version{MINOR}
@@ -361,7 +406,7 @@ my @dtls = qw(dtls1 dtls1_2);
 # For developers: keep it sorted alphabetically
 
 my @disablables = (
-    "acvp_tests",
+    "acvp-tests",
     "afalgeng",
     "aria",
     "asan",
@@ -372,9 +417,14 @@ my @disablables = (
     "autoload-config",
     "bf",
     "blake2",
+    "brotli",
+    "brotli-dynamic",
     "buildtest-c++",
+    "bulk",
+    "cached-fetch",
     "camellia",
     "capieng",
+    "winstore",
     "cast",
     "chacha",
     "cmac",
@@ -383,6 +433,7 @@ my @disablables = (
     "comp",
     "crypto-mdebug",
     "ct",
+    "default-thread-pool",
     "deprecated",
     "des",
     "devcryptoeng",
@@ -394,21 +445,23 @@ my @disablables = (
     "dynamic-engine",
     "ec",
     "ec2m",
+    "ec_nistp_64_gcc_128",
     "ecdh",
     "ecdsa",
-    "ec_nistp_64_gcc_128",
     "egd",
     "engine",
     "err",
     "external-tests",
     "filenames",
     "fips",
-    "fuzz-libfuzzer",
+    "fips-securitychecks",
     "fuzz-afl",
+    "fuzz-libfuzzer",
     "gost",
     "idea",
     "ktls",
     "legacy",
+    "loadereng",
     "makedepend",
     "md2",
     "md4",
@@ -417,14 +470,15 @@ my @disablables = (
     "msan",
     "multiblock",
     "nextprotoneg",
-    "pinshared",
     "ocb",
     "ocsp",
     "padlockeng",
     "pic",
+    "pinshared",
     "poly1305",
     "posix-io",
     "psk",
+    "quic",
     "rc2",
     "rc4",
     "rc5",
@@ -450,6 +504,8 @@ my @disablables = (
     "static-engine",
     "stdio",
     "tests",
+    "tfo",
+    "thread-pool",
     "threads",
     "tls",
     "trace",
@@ -458,10 +514,12 @@ my @disablables = (
     "ui-console",
     "unit-test",
     "uplink",
-    "whirlpool",
     "weak-ssl-ciphers",
+    "whirlpool",
     "zlib",
     "zlib-dynamic",
+    "zstd",
+    "zstd-dynamic",
     );
 foreach my $proto ((@tls, @dtls))
         {
@@ -491,7 +549,10 @@ my %deprecated_disablables = (
 # All of the following are disabled by default:
 
 our %disabled = ( # "what"         => "comment"
+                  "fips"                => "default",
                   "asan"                => "default",
+                  "brotli"              => "default",
+                  "brotli-dynamic"      => "default",
                   "buildtest-c++"       => "default",
                   "crypto-mdebug"       => "default",
                   "crypto-mdebug-backtrace" => "default",
@@ -499,38 +560,58 @@ our %disabled = ( # "what"         => "comment"
                   "ec_nistp_64_gcc_128" => "default",
                   "egd"                 => "default",
                   "external-tests"      => "default",
-                  "fuzz-libfuzzer"      => "default",
                   "fuzz-afl"            => "default",
+                  "fuzz-libfuzzer"      => "default",
+                  "ktls"                => "default",
                   "md2"                 => "default",
                   "msan"                => "default",
+                  "quic"                => "default",
                   "rc5"                 => "default",
                   "sctp"                => "default",
-                  "ssl-trace"           => "default",
                   "ssl3"                => "default",
                   "ssl3-method"         => "default",
+                  "tfo"                 => "default",
                   "trace"               => "default",
                   "ubsan"               => "default",
                   "unit-test"           => "default",
                   "weak-ssl-ciphers"    => "default",
                   "zlib"                => "default",
                   "zlib-dynamic"        => "default",
-                  "ktls"                => "default",
+                  "zstd"                => "default",
+                  "zstd-dynamic"        => "default",
                 );
 
 # Note: => pair form used for aesthetics, not to truly make a hash table
 my @disable_cascades = (
     # "what"            => [ "cascade", ... ]
+    "bulk"              => [ "shared", "dso",
+                             "aria", "async", "autoload-config",
+                             "blake2", "bf", "camellia", "cast", "chacha",
+                             "cmac", "cms", "cmp", "comp", "ct",
+                             "des", "dgram", "dh", "dsa",
+                             "ec", "engine",
+                             "filenames",
+                             "idea", "ktls",
+                             "md4", "multiblock", "nextprotoneg",
+                             "ocsp", "ocb", "poly1305", "psk",
+                             "rc2", "rc4", "rmd160",
+                             "seed", "siphash", "siv",
+                             "sm3", "sm4", "srp",
+                             "srtp", "ssl3-method", "ssl-trace",
+                             "tfo",
+                             "ts", "ui-console", "whirlpool",
+                             "fips-securitychecks" ],
     sub { $config{processor} eq "386" }
                         => [ "sse2" ],
     "ssl"               => [ "ssl3" ],
     "ssl3-method"       => [ "ssl3" ],
     "zlib"              => [ "zlib-dynamic" ],
+    "brotli"            => [ "brotli-dynamic" ],
+    "zstd"              => [ "zstd-dynamic" ],
     "des"               => [ "mdc2" ],
-    "ec"                => [ "ecdsa", "ecdh", "sm2", "gost" ],
-    sub { $disabled{"ec"} && $disabled{"dh"} }
-                        => [ "tls1_3" ],
-    "dgram"             => [ "dtls", "sctp" ],
-    "sock"              => [ "dgram" ],
+    "ec"                => [ "ec2m", "ecdsa", "ecdh", "sm2", "gost" ],
+    "dgram"             => [ "dtls", "quic", "sctp" ],
+    "sock"              => [ "dgram", "tfo" ],
     "dtls"              => [ @dtls ],
     sub { 0 == scalar grep { !$disabled{$_} } @dtls }
                         => [ "dtls" ],
@@ -547,7 +628,7 @@ my @disable_cascades = (
     # Without shared libraries, dynamic engines aren't possible.
     # This is due to them having to link with libcrypto and register features
     # using the ENGINE functionality, and since that relies on global tables,
-    # those *have* to be exacty the same as the ones accessed from the app,
+    # those *have* to be exactly the same as the ones accessed from the app,
     # which cannot be guaranteed if shared libraries aren't present.
     # (note that even with shared libraries, both the app and dynamic engines
     # must be linked with the same library)
@@ -560,31 +641,35 @@ my @disable_cascades = (
     # or modules.
     "pic"               => [ "shared", "module" ],
 
-    "module"            => [ "fips" ],
+    "module"            => [ "fips", "dso" ],
 
-    "engine"            => [ grep /eng$/, @disablables ],
+    "engine"            => [ "dynamic-engine", grep(/eng$/, @disablables) ],
+    "dynamic-engine"    => [ "loadereng" ],
     "hw"                => [ "padlockeng" ],
 
     # no-autoalginit is only useful when building non-shared
-    "autoalginit"       => [ "shared", "apps" ],
+    "autoalginit"       => [ "shared", "apps", "fips" ],
 
     "stdio"             => [ "apps", "capieng", "egd" ],
     "apps"              => [ "tests" ],
     "tests"             => [ "external-tests" ],
-    "comp"              => [ "zlib" ],
+    "comp"              => [ "zlib", "brotli", "zstd" ],
     "sm3"               => [ "sm2" ],
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
 
     sub { !$disabled{"msan"} } => [ "asm" ],
 
-    sub { $disabled{cmac}; } => [ "siv" ],
-    "legacy"                 => [ "md2" ],
+    "cmac"              => [ "siv" ],
+    "legacy"            => [ "md2" ],
 
     "cmp"               => [ "crmf" ],
 
-    # Padlock engine uses low-level AES APIs which are deprecated
-    sub { $disabled{"deprecated-3.0"} }
-          => [ "padlockeng" ]
+    "fips"              => [ "fips-securitychecks", "acvp-tests" ],
+
+    "threads"           => [ "thread-pool" ],
+    "thread-pool"       => [ "default-thread-pool" ],
+
+    "deprecated-3.0"    => [ "engine", "srp" ]
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -743,6 +828,7 @@ while (@argvcopy)
         s /^threads$/enable-threads/;
         s /^zlib$/enable-zlib/;
         s /^zlib-dynamic$/enable-zlib-dynamic/;
+        s /^fips$/enable-fips/;
 
         if (/^(no|disable|enable)-(.+)$/)
                 {
@@ -828,11 +914,35 @@ while (@argvcopy)
                         {
                         delete $disabled{"zlib"};
                         }
+                elsif ($1 eq "brotli-dynamic")
+                        {
+                        delete $disabled{"brotli"};
+                        }
+                elsif ($1 eq "zstd-dynamic")
+                        {
+                        delete $disabled{"zstd"};
+                        }
                 my $algo = $1;
                 delete $disabled{$algo};
 
                 # No longer an automatic choice
                 $auto_threads = 0 if ($1 eq "threads");
+                }
+        elsif (/^-d$/)          # From older 'config'
+                {
+                $config{build_type} = "debug";
+                }
+        elsif (/^-v$/)          # From older 'config'
+                {
+                $guess_opts{verbose} = 1;
+                }
+        elsif (/^-w$/)
+                {
+                $guess_opts{nowait} = 1;
+                }
+        elsif (/^-t$/)          # From older 'config'
+                {
+                $dryrun = 1;
                 }
         elsif (/^--strict-warnings$/)
                 {
@@ -851,19 +961,11 @@ while (@argvcopy)
                 }
         elsif (/^386$/)
                 { $config{processor}=386; }
-        elsif (/^fips$/)
-                {
-                die "FIPS mode not supported\n";
-                }
         elsif (/^rsaref$/)
                 {
                 # No RSAref support any more since it's not needed.
                 # The check for the option is there so scripts aren't
                 # broken
-                }
-        elsif (/^nofipscanistercheck$/)
-                {
-                die "FIPS mode not supported\n";
                 }
         elsif (m|^[-+/]|)
                 {
@@ -896,6 +998,22 @@ while (@argvcopy)
                         {
                         $withargs{zlib_include}=$1;
                         }
+                elsif (/^--with-brotli-lib=(.*)$/)
+                        {
+                        $withargs{brotli_lib}=$1;
+                        }
+                elsif (/^--with-brotli-include=(.*)$/)
+                        {
+                        $withargs{brotli_include}=$1;
+                        }
+                elsif (/^--with-zstd-lib=(.*)$/)
+                        {
+                        $withargs{zstd_lib}=$1;
+                        }
+                elsif (/^--with-zstd-include=(.*)$/)
+                        {
+                        $withargs{zstd_include}=$1;
+                        }
                 elsif (/^--with-fuzzer-lib=(.*)$/)
                         {
                         $withargs{fuzzer_lib}=$1;
@@ -912,6 +1030,20 @@ while (@argvcopy)
                                 if ! grep { $x eq $_ } @known_seed_sources;
                             push @seed_sources, $x;
                             }
+                        }
+                elsif (/^--fips-key=(.*)$/)
+                        {
+                        $user{FIPSKEY}=lc($1);
+                        die "Non-hex character in FIPS key\n"
+                           if $user{FIPSKEY} =~ /[^a-f0-9]/;
+                        die "FIPS key must have even number of characters\n"
+                           if length $1 & 1;
+                        die "FIPS key too long (64 bytes max)\n"
+                           if length $1 > 64;
+                        }
+                elsif (/^--banner=(.*)$/)
+                        {
+                        $banner = $1 . "\n";
                         }
                 elsif (/^--cross-compile-prefix=(.*)$/)
                         {
@@ -1069,7 +1201,7 @@ if (grep { /-rpath\b/ } ($user{LDFLAGS} ? @{$user{LDFLAGS}} : ())
 
 # If no target was given, try guessing.
 unless ($target) {
-    my %system_config = OpenSSL::config::get_platform(%config, %user);
+    my %system_config = OpenSSL::config::get_platform(%guess_opts, %user);
 
     # The $system_config{disable} is used to populate %disabled with
     # entries that aren't already there.
@@ -1201,6 +1333,8 @@ if ($target) {
 
 &usage unless $target;
 
+exit 0 if $dryrun;              # From older 'config'
+
 $config{target} = $target;
 my %target = resolve_config($target);
 
@@ -1297,6 +1431,10 @@ foreach (keys %useradd) {
 }
 # At this point, we can forget everything about %user and %useradd,
 # because it's now all been merged into the corresponding $config entry
+
+if (grep { $_ =~ /(?:^|\s)-static(?:\s|$)/ } @{$config{LDFLAGS}}) {
+    disable('static', 'pic', 'threads');
+}
 
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
@@ -1398,7 +1536,7 @@ unless($disabled{threads}) {
 }
 
 my $no_shared_warn=0;
-if ($target{shared_target} eq "")
+if (($target{shared_target} // '') eq "")
         {
         $no_shared_warn = 1
             if (!$disabled{shared} || !$disabled{"dynamic-engine"});
@@ -1416,9 +1554,7 @@ unless ($disabled{asan} || defined $detected_sanitizers{asan}) {
 }
 
 unless ($disabled{ubsan} || defined $detected_sanitizers{ubsan}) {
-    # -DPEDANTIC or -fnosanitize=alignment may also be required on some
-    # platforms.
-    push @{$config{cflags}}, "-fsanitize=undefined", "-fno-sanitize-recover=all";
+    push @{$config{cflags}}, "-fsanitize=undefined", "-fno-sanitize-recover=all", "-DPEDANTIC";
 }
 
 unless ($disabled{msan} || defined $detected_sanitizers{msan}) {
@@ -1463,29 +1599,39 @@ my %predefined_CXX = $config{CXX}
 
 unless ($disabled{asm}) {
     # big endian systems can use ELFv2 ABI
-    if ($target eq "linux-ppc64") {
+    if ($target eq "linux-ppc64" || $target eq "BSD-ppc64") {
         $target{perlasm_scheme} = "linux64v2" if ($predefined_C{_CALL_ELF} == 2);
     }
 }
 
 # Check for makedepend capabilities.
 if (!$disabled{makedepend}) {
-    if ($config{target} =~ /^(VC|vms)-/) {
-        # For VC- and vms- targets, there's nothing more to do here.  The
-        # functionality is hard coded in the corresponding build files for
-        # cl (Windows) and CC/DECC (VMS).
+    # If the attribute makedep_scheme is defined, then we assume that the
+    # config target and its associated build file are programmed to deal
+    # with it.
+    # If makedep_scheme is undefined, we go looking for GCC compatible
+    # dependency making, and if that's not available, we try to fall back
+    # on 'makedepend'.
+    if ($target{makedep_scheme}) {
+        $config{makedep_scheme} = $target{makedep_scheme};
+        # If the makedepcmd attribute is defined, copy it.  If not, the
+        # build files will have to fend for themselves.
+        $config{makedepcmd} = $target{makedepcmd} if $target{makedepcmd};
     } elsif (($predefined_C{__GNUC__} // -1) >= 3
              && !($predefined_C{__APPLE_CC__} && !$predefined_C{__clang__})) {
         # We know that GNU C version 3 and up as well as all clang
         # versions support dependency generation, but Xcode did not
         # handle $cc -M before clang support (but claims __GNUC__ = 3)
-        $config{makedepprog} = "\$(CROSS_COMPILE)$config{CC}";
+        $config{makedep_scheme} = 'gcc';
     } else {
-        # In all other cases, we look for 'makedepend', and disable the
-        # capability if not found.
-        $config{makedepprog} = which('makedepend');
-        disable('unavailable', 'makedepend') unless $config{makedepprog};
+        # In all other cases, we look for 'makedepend', and set the
+        # makedep_scheme value if we found it.
+        $config{makedepcmd} = which('makedepend');
+        $config{makedep_scheme} = 'makedepend' if $config{makedepcmd};
     }
+
+    # If no depend scheme is set, we disable makedepend
+    disable('unavailable', 'makedepend') unless $config{makedep_scheme};
 }
 
 if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS') {
@@ -1576,10 +1722,6 @@ if ($strict_warnings)
                 }
         }
 
-if (grep { $_ =~ /(?:^|\s)-static(?:\s|$)/ } @{$config{LDFLAGS}}) {
-    disable('static', 'pic', 'threads');
-}
-
 $config{CFLAGS} = [ map { $_ eq '--ossl-strict-warnings'
                               ? @strict_warnings_collection
                               : ( $_ ) }
@@ -1588,20 +1730,7 @@ $config{CFLAGS} = [ map { $_ eq '--ossl-strict-warnings'
 unless ($disabled{afalgeng}) {
     $config{afalgeng}="";
     if (grep { $_ eq 'afalgeng' } @{$target{enable}}) {
-        my $minver = 4*10000 + 1*100 + 0;
-        if ($config{CROSS_COMPILE} eq "") {
-            my $verstr = `uname -r`;
-            my ($ma, $mi1, $mi2) = split("\\.", $verstr);
-            ($mi2) = $mi2 =~ /(\d+)/;
-            my $ver = $ma*10000 + $mi1*100 + $mi2;
-            if ($ver < $minver) {
-                disable('too-old-kernel', 'afalgeng');
-            } else {
-                push @{$config{engdirs}}, "afalg";
-            }
-        } else {
-            disable('cross-compiling', 'afalgeng');
-        }
+        push @{$config{engdirs}}, "afalg";
     } else {
         disable('not-linux', 'afalgeng');
     }
@@ -1624,26 +1753,25 @@ unless ($disabled{devcryptoeng}) {
 
 unless ($disabled{ktls}) {
     $config{ktls}="";
+    my $cc = $config{CROSS_COMPILE}.$config{CC};
     if ($target =~ m/^linux/) {
-        my $usr = "/usr/$config{cross_compile_prefix}";
-        chop($usr);
-        if ($config{cross_compile_prefix} eq "") {
-            $usr = "/usr";
-        }
-        my $minver = (4 << 16) + (13 << 8) + 0;
-        my @verstr = split(" ",`cat $usr/include/linux/version.h | grep LINUX_VERSION_CODE`);
-
-        if ($verstr[2] < $minver) {
+        system("printf '#include <sys/types.h>\n#include <linux/tls.h>' | $cc -E - >/dev/null 2>&1");
+        if ($? != 0) {
             disable('too-old-kernel', 'ktls');
         }
     } elsif ($target =~ m/^BSD/) {
-        my $cc = $config{CROSS_COMPILE}.$config{CC};
         system("printf '#include <sys/types.h>\n#include <sys/ktls.h>' | $cc -E - >/dev/null 2>&1");
         if ($? != 0) {
             disable('too-old-freebsd', 'ktls');
         }
     } else {
         disable('not-linux-or-freebsd', 'ktls');
+    }
+}
+
+unless ($disabled{winstore}) {
+    unless ($target =~ /^(?:Cygwin|mingw|VC-|BC-)/) {
+        disable('not-windows', 'winstore');
     }
 }
 
@@ -1708,7 +1836,7 @@ my %skipdir = ();
 my %disabled_info = ();         # For configdata.pm
 foreach my $what (sort keys %disabled) {
     # There are deprecated disablables that translate to themselves.
-    # They cause disabling cascades, but should otherwise not regiter.
+    # They cause disabling cascades, but should otherwise not register.
     next if $deprecated_disablables{$what};
     # The generated $disabled{"deprecated-x.y"} entries are special
     # and treated properly elsewhere
@@ -1718,7 +1846,7 @@ foreach my $what (sort keys %disabled) {
 
     if (!grep { $what eq $_ } ( 'buildtest-c++', 'fips', 'threads', 'shared',
                                 'module', 'pic', 'dynamic-engine', 'makedepend',
-                                'zlib-dynamic', 'zlib', 'sse2', 'legacy' )) {
+                                'sse2', 'legacy' )) {
         (my $WHAT = uc $what) =~ s|-|_|g;
         my $skipdir = $what;
 
@@ -1820,13 +1948,22 @@ if ($builder eq "unified") {
     $config{build_file_templates}
       = [ cleanfile($srcdir, catfile("Configurations", "common0.tmpl"),
                     $blddir),
-          $build_file_template,
-          cleanfile($srcdir, catfile("Configurations", "common.tmpl"),
-                    $blddir) ];
+           $build_file_template ];
 
     my @build_dirs = ( [ ] );   # current directory
 
     $config{build_infos} = [ ];
+
+    # We want to detect configdata.pm in the source tree, so we
+    # don't use it if the build tree is different.
+    my $src_configdata = cleanfile($srcdir, "configdata.pm", $blddir);
+
+    # Any source file that we recognise is placed in this hash table, with
+    # the list of its intended destinations as value.  When everything has
+    # been collected, there's a routine that checks that these source files
+    # exist, or if they are generated, that the generator exists.
+    my %check_exist = ();
+    my %check_generate = ();
 
     my %ordinals = ();
     while (@build_dirs) {
@@ -1856,6 +1993,7 @@ if ($builder eq "unified") {
         my %defines = ();
         my %depends = ();
         my %generate = ();
+        my %imagedocs = ();
         my %htmldocs = ();
         my %mandocs = ();
 
@@ -1932,10 +2070,10 @@ if ($builder eq "unified") {
                 my $ac = 1;
                 my $ak = $a;
                 my $av = 1;
-                if ($a =~ m|^(!)?(.*?)\s* = \s*(.*?)$|) {
+                if ($a =~ m|^(!)?(.*?)\s* = \s*(.*?)$|x) {
                     $ac = ! $1;
-                    $ak = $1;
-                    $av = $2;
+                    $ak = $2;
+                    $av = $3;
                 }
                 foreach my $g (@goals) {
                     if ($ac) {
@@ -1975,11 +2113,6 @@ if ($builder eq "unified") {
             }
         };
 
-        # We want to detect configdata.pm in the source tree, so we
-        # don't use it if the build tree is different.
-        my $src_configdata = cleanfile($srcdir, "configdata.pm", $blddir);
-
-
         if ($buildinfo_debug) {
             print STDERR "DEBUG: Reading ",catfile($sourced, $f),"\n";
         }
@@ -2013,7 +2146,7 @@ if ($builder eq "unified") {
         my $index_re = qr/\[\s*(?P<INDEX>(?:\\.|.)*?)\s*\]/;
         my $cond_re = qr/\[\s*(?P<COND>(?:\\.|.)*?)\s*\]/;
         my $attribs_re = qr/(?:\{\s*(?P<ATTRIBS>(?:\\.|.)*?)\s*\})?/;
-        my $value_re = qr/\s*(?P<VALUE>.*?)\s*/;
+        my $value_re = qr/(?P<VALUE>.*?)/;
         collect_information(
             collect_from_array([ @text ],
                                qr/\\$/ => sub { my $l1 = shift; my $l2 = shift;
@@ -2040,13 +2173,13 @@ if ($builder eq "unified") {
             qr/^\s* ENDIF \s*$/x
             => sub { die "ENDIF out of scope" if ! @skip;
                      pop @skip; },
-            qr/^\s* ${variable_re} \s* = ${value_re} $/x
+            qr/^\s* ${variable_re} \s* = \s* ${value_re} \s* $/x
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
                     $variables{$+{VARIABLE}} = $expand_variables->($+{VALUE});
                 }
             },
-            qr/^\s* SUBDIRS \s* = ${value_re} $/x
+            qr/^\s* SUBDIRS \s* = \s* ${value_re} \s* $/x
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
                     foreach (tokenize($expand_variables->($+{VALUE}))) {
@@ -2054,64 +2187,70 @@ if ($builder eq "unified") {
                     }
                 }
             },
-            qr/^\s* PROGRAMS ${attribs_re} \s* =  ${value_re} $/x
+            qr/^\s* PROGRAMS ${attribs_re} \s* =  \s* ${value_re} \s* $/x
             => sub { $push_to->(\@programs, undef,
                                 \$attributes{programs}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* LIBS ${attribs_re} \s* =  ${value_re} $/x
+            qr/^\s* LIBS ${attribs_re} \s* =  \s* ${value_re} \s* $/x
             => sub { $push_to->(\@libraries, undef,
                                 \$attributes{libraries}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* MODULES ${attribs_re} \s* =  ${value_re} $/x
+            qr/^\s* MODULES ${attribs_re} \s* =  \s* ${value_re} \s* $/x
             => sub { $push_to->(\@modules, undef,
                                 \$attributes{modules}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* SCRIPTS ${attribs_re} \s* =  ${value_re} $/x
+            qr/^\s* SCRIPTS ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\@scripts, undef,
                                 \$attributes{scripts}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* HTMLDOCS ${index_re} = ${value_re} $/x
+            qr/^\s* IMAGEDOCS ${index_re} \s* = \s* ${value_re} \s* $/x
+            => sub { $push_to->(\%imagedocs, $expand_variables->($+{INDEX}),
+                                undef, undef,
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
+            qr/^\s* HTMLDOCS ${index_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%htmldocs, $expand_variables->($+{INDEX}),
                                 undef, undef,
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* MANDOCS ${index_re} = ${value_re} $/x
+            qr/^\s* MANDOCS ${index_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%mandocs, $expand_variables->($+{INDEX}),
                                 undef, undef,
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* SOURCE ${index_re} = ${value_re} $/x
+            qr/^\s* SOURCE ${index_re} ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%sources, $expand_variables->($+{INDEX}),
-                                undef, undef,
+                                \$attributes{sources}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* SHARED_SOURCE ${index_re} = ${value_re} $/x
+            qr/^\s* SHARED_SOURCE ${index_re} ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%shared_sources, $expand_variables->($+{INDEX}),
-                                undef, undef,
+                                \$attributes{sources}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* INCLUDE ${index_re} = ${value_re} $/x
+            qr/^\s* INCLUDE ${index_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%includes, $expand_variables->($+{INDEX}),
                                 undef, undef,
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* DEFINE ${index_re} = ${value_re} $/x
+            qr/^\s* DEFINE ${index_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%defines, $expand_variables->($+{INDEX}),
                                 undef, undef,
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* DEPEND ${index_re} ${attribs_re} = ${value_re} $/x
+            qr/^\s* DEPEND ${index_re} ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%depends, $expand_variables->($+{INDEX}),
                                 \$attributes{depends}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
-            qr/^\s* GENERATE ${index_re} = ${value_re} $/x
+            qr/^\s* GENERATE ${index_re} ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%generate, $expand_variables->($+{INDEX}),
-                                undef, undef, $+{VALUE})
+                                \$attributes{generate}, $+{ATTRIBS},
+                                $expand_variables->($+{VALUE}))
                          if !@skip || $skip[$#skip] > 0; },
             qr/^\s* (?:\#.*)? $/x => sub { },
             "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" },
@@ -2177,9 +2316,10 @@ EOF
                 if ($s eq $src_configdata || $generate{$_} || ! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
+                my $o = $_;
                 # We recognise C++, C and asm files
                 if ($s =~ /\.(cc|cpp|c|s|S)$/) {
-                    my $o = $_;
+                    push @{$check_exist{$s}}, $ddest;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
                     $o = cleanfile($buildd, $o, $blddir);
@@ -2187,13 +2327,25 @@ EOF
                     $unified_info{sources}->{$o}->{$s} = -1;
                 } elsif ($s =~ /\.rc$/) {
                     # We also recognise resource files
-                    my $o = $_;
+                    push @{$check_exist{$s}}, $ddest;
                     $o =~ s/\.rc$/.res/; # Resource configuration
-                    my $o = cleanfile($buildd, $o, $blddir);
+                    $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{sources}->{$ddest}->{$o} = -1;
                     $unified_info{sources}->{$o}->{$s} = -1;
                 } else {
+                    push @{$check_exist{$s}}, $ddest;
                     $unified_info{sources}->{$ddest}->{$s} = 1;
+                }
+                # Fix up associated attributes
+                if ($o ne $_) {
+                    $unified_info{attributes}->{sources}->{$ddest}->{$o} =
+                        $unified_info{attributes}->{sources}->{$o}->{$s} =
+                        $attributes{sources}->{$dest}->{$_}
+                        if defined $attributes{sources}->{$dest}->{$_};
+                } else {
+                    $unified_info{attributes}->{sources}->{$ddest}->{$s} =
+                        $attributes{sources}->{$dest}->{$_}
+                        if defined $attributes{sources}->{$dest}->{$_};
                 }
             }
         }
@@ -2210,9 +2362,10 @@ EOF
                     $s = cleanfile($buildd, $_, $blddir);
                 }
 
+                my $o = $_;
                 if ($s =~ /\.(cc|cpp|c|s|S)$/) {
                     # We recognise C++, C and asm files
-                    my $o = $_;
+                    push @{$check_exist{$s}}, $ddest;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
                     $o = cleanfile($buildd, $o, $blddir);
@@ -2220,18 +2373,30 @@ EOF
                     $unified_info{sources}->{$o}->{$s} = -1;
                 } elsif ($s =~ /\.rc$/) {
                     # We also recognise resource files
-                    my $o = $_;
+                    push @{$check_exist{$s}}, $ddest;
                     $o =~ s/\.rc$/.res/; # Resource configuration
-                    my $o = cleanfile($buildd, $o, $blddir);
+                    $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{shared_sources}->{$ddest}->{$o} = -1;
                     $unified_info{sources}->{$o}->{$s} = -1;
                 } elsif ($s =~ /\.ld$/) {
                     # We also recognise linker scripts (or corresponding)
                     # We know they are generated files
-                    my $ld = cleanfile($buildd, $_, $blddir);
-                    $unified_info{shared_sources}->{$ddest}->{$ld} = 1;
+                    push @{$check_exist{$s}}, $ddest;
+                    $o = cleanfile($buildd, $_, $blddir);
+                    $unified_info{shared_sources}->{$ddest}->{$o} = 1;
                 } else {
                     die "unrecognised source file type for shared library: $s\n";
+                }
+                # Fix up associated attributes
+                if ($o ne $_) {
+                    $unified_info{attributes}->{shared_sources}->{$ddest}->{$o} =
+                        $unified_info{attributes}->{sources}->{$o}->{$s} =
+                        $attributes{sources}->{$dest}->{$_}
+                        if defined $attributes{sources}->{$dest}->{$_};
+                } else {
+                    $unified_info{attributes}->{shared_sources}->{$ddest}->{$o} =
+                        $attributes{sources}->{$dest}->{$_}
+                        if defined $attributes{sources}->{$dest}->{$_};
                 }
             }
         }
@@ -2247,34 +2412,49 @@ EOF
             $generator[0] = cleanfile($sourced, $gen, $blddir);
 
             # If the generator is itself generated, it's in the build tree
-            if ($generate{$gen}) {
+            if ($generate{$gen} || ! -f $generator[0]) {
                 $generator[0] = cleanfile($buildd, $gen, $blddir);
             }
+            $check_generate{$ddest}->{$generator[0]}++;
 
             $unified_info{generate}->{$ddest} = [ @generator ];
+            # Fix up associated attributes
+            $unified_info{attributes}->{generate}->{$ddest} =
+                $attributes{generate}->{$dest}->{$gen}
+                if defined $attributes{generate}->{$dest}->{$gen};
         }
 
         foreach (keys %depends) {
             my $dest = $_;
-            my $ddest = $dest eq "" ? "" : cleanfile($sourced, $_, $blddir);
+            my $ddest = $dest;
 
-            # If the destination doesn't exist in source, it can only be
-            # a generated file in the build tree.
-            if ($ddest ne "" && ($ddest eq $src_configdata || ! -f $ddest)) {
-                $ddest = cleanfile($buildd, $_, $blddir);
+            if ($dest =~ /^\|(.*)\|$/) {
+                # Collect the raw target
+                $unified_info{targets}->{$1} = 1;
+                $ddest = $1;
+            } elsif ($dest eq '') {
+                $ddest = '';
+            } else {
+                $ddest = cleanfile($sourced, $_, $blddir);
+
+                # If the destination doesn't exist in source, it can only be
+                # a generated file in the build tree.
+                if ($ddest eq $src_configdata || ! -f $ddest) {
+                    $ddest = cleanfile($buildd, $_, $blddir);
+                }
             }
             foreach (@{$depends{$dest}}) {
                 my $d = cleanfile($sourced, $_, $blddir);
+                my $d2 = cleanfile($buildd, $_, $blddir);
 
                 # If we know it's generated, or assume it is because we can't
                 # find it in the source tree, we set file we depend on to be
                 # in the build tree rather than the source tree.
                 if ($d eq $src_configdata
-                    || (grep { $d eq $_ }
-                        map { cleanfile($srcdir, $_, $blddir) }
-                        grep { /\.h$/ } keys %{$unified_info{generate}})
+                    || (grep { $d2 eq $_ }
+                        keys %{$unified_info{generate}})
                     || ! -f $d) {
-                    $d = cleanfile($buildd, $_, $blddir);
+                    $d = $d2;
                 }
                 $unified_info{depends}->{$ddest}->{$d} = 1;
 
@@ -2331,6 +2511,13 @@ EOF
             }
         }
 
+        foreach my $section (keys %imagedocs) {
+            foreach (@{$imagedocs{$section}}) {
+                my $imagedocs = cleanfile($buildd, $_, $blddir);
+                $unified_info{imagedocs}->{$section}->{$imagedocs} = 1;
+            }
+        }
+
         foreach my $section (keys %htmldocs) {
             foreach (@{$htmldocs{$section}}) {
                 my $htmldocs = cleanfile($buildd, $_, $blddir);
@@ -2354,6 +2541,60 @@ They are ignored and should be replaced with a combination of GENERATE,
 DEPEND and SHARED_SOURCE.
 EOF
 
+    # Check that each generated file is only generated once
+    my $ambiguous_generation = 0;
+    foreach (sort keys %check_generate) {
+        my @generators = sort keys %{$check_generate{$_}};
+        my $generators_txt = join(', ', @generators);
+        if (scalar @generators > 1) {
+            warn "$_ is GENERATEd by more than one generator ($generators_txt)\n";
+            $ambiguous_generation++;
+        }
+        if ($check_generate{$_}->{$generators[0]} > 1) {
+            warn "INFO: $_ has more than one GENERATE declaration (same generator)\n"
+        }
+    }
+    die "There are ambiguous source file generations\n"
+        if $ambiguous_generation > 0;
+
+    # All given source files should exist, or if generated, their
+    # generator should exist.  This loop ensures this is true.
+    my $missing = 0;
+    foreach my $orig (sort keys %check_exist) {
+        foreach my $dest (@{$check_exist{$orig}}) {
+            if ($orig ne $src_configdata) {
+                if ($orig =~ /\.a$/) {
+                    # Static library names may be used as sources, so we
+                    # need to detect those and give them special treatment.
+                    unless (grep { $_ eq $orig }
+                            keys %{$unified_info{libraries}}) {
+                        warn "$orig is given as source for $dest, but no such library is built\n";
+                        $missing++;
+                    }
+                } else {
+                    # A source may be generated, and its generator may be
+                    # generated as well.  We therefore loop to dig out the
+                    # first generator.
+                    my $gen = $orig;
+
+                    while (my @next = keys %{$check_generate{$gen}}) {
+                        $gen = $next[0];
+                    }
+
+                    if (! -f $gen) {
+                        if ($gen ne $orig) {
+                            $missing++;
+                            warn "$orig is given as source for $dest, but its generator (leading to $gen) is missing\n";
+                        } else {
+                            $missing++;
+                            warn "$orig is given as source for $dest, but is missing\n";
+                        }
+                    }
+                }
+            }
+        }
+    }
+    die "There are files missing\n" if $missing > 0;
 
     # Go through the sources of all libraries and check that the same basename
     # doesn't appear more than once.  Some static library archivers depend on
@@ -2471,6 +2712,19 @@ EOF
                             $unified_info{$dst}->{$prod}->{$newobj} = 1;
                             foreach my $src (@{$prod_sources{$_}}) {
                                 $unified_info{sources}->{$newobj}->{$src} = 1;
+                                # Adjust source attributes
+                                my $attrs = $unified_info{attributes}->{sources};
+                                if (defined $attrs->{$prod}
+                                    && defined $attrs->{$prod}->{$_}) {
+                                    $attrs->{$prod}->{$newobj} =
+                                        $attrs->{$prod}->{$_};
+                                    delete $attrs->{$prod}->{$_};
+                                }
+                                foreach my $objsrc (keys %{$attrs->{$_} // {}}) {
+                                    $attrs->{$newobj}->{$objsrc} =
+                                        $attrs->{$_}->{$objsrc};
+                                    delete $attrs->{$_}->{$objsrc};
+                                }
                             }
                             # Adjust dependencies
                             foreach my $deps (keys %{$unified_info{depends}->{$_}}) {
@@ -2500,12 +2754,12 @@ EOF
 
     ### Make unified_info a bit more efficient
     # One level structures
-    foreach (("programs", "libraries", "modules", "scripts")) {
+    foreach (("programs", "libraries", "modules", "scripts", "targets")) {
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
     foreach my $l1 (("sources", "shared_sources", "ldadd", "depends",
-                     "htmldocs", "mandocs")) {
+                     "imagedocs", "htmldocs", "mandocs")) {
         foreach my $l2 (sort keys %{$unified_info{$l1}}) {
             my @items =
                 sort
@@ -2552,11 +2806,13 @@ EOF
                      "dso" => [ @{$unified_info{modules}} ],
                      "bin" => [ @{$unified_info{programs}} ],
                      "script" => [ @{$unified_info{scripts}} ],
-                     "docs" => [ (map { @{$unified_info{htmldocs}->{$_} // []} }
+                     "docs" => [ (map { @{$unified_info{imagedocs}->{$_} // []} }
+                                  keys %{$unified_info{imagedocs} // {}}),
+                                 (map { @{$unified_info{htmldocs}->{$_} // []} }
                                   keys %{$unified_info{htmldocs} // {}}),
                                  (map { @{$unified_info{mandocs}->{$_} // []} }
                                   keys %{$unified_info{mandocs} // {}}) ] );
-    foreach my $type (keys %loopinfo) {
+    foreach my $type (sort keys %loopinfo) {
         foreach my $product (@{$loopinfo{$type}}) {
             my %dirs = ();
             my $pd = dirname($product);
@@ -2577,7 +2833,7 @@ EOF
                 push @{$unified_info{dirinfo}->{$d}->{deps}}, $_
                     if $d ne $pd;
             }
-            foreach (keys %dirs) {
+            foreach (sort keys %dirs) {
                 push @{$unified_info{dirinfo}->{$_}->{products}->{$type}},
                     $product;
             }
@@ -2612,9 +2868,8 @@ my %template_vars = (
     user_crossable => \@user_crossable,
 );
 my $configdata_outname = 'configdata.pm';
-print "Creating $configdata_outname\n";
 open CONFIGDATA, ">$configdata_outname.new"
-            or die "Trying to create $configdata_outname.new: $!";
+    or die "Trying to create $configdata_outname.new: $!";
 my $configdata_tmplname = cleanfile($srcdir, "configdata.pm.in", $blddir);
 my $configdata_tmpl =
     OpenSSL::Template->new(TYPE => 'FILE', SOURCE => $configdata_tmplname);
@@ -2628,12 +2883,14 @@ $configdata_tmpl->fill_in(
               ] }
 ) or die $Text::Template::ERROR;
 close CONFIGDATA;
+
 rename "$configdata_outname.new", $configdata_outname;
 if ($builder_platform eq 'unix') {
     my $mode = (0755 & ~umask);
     chmod $mode, 'configdata.pm'
         or warn sprintf("WARNING: Couldn't change mode for 'configdata.pm' to 0%03o: %s\n",$mode,$!);
 }
+print "Created $configdata_outname\n";
 
 print "Running $configdata_outname\n";
 my $perlcmd = (quotify("maybeshell", $config{PERL}))[0];
@@ -2660,23 +2917,7 @@ or position independent code, please let us know (but please first make sure
 you have tried with a current version of OpenSSL).
 EOF
 
-print <<"EOF";
-
-**********************************************************************
-***                                                                ***
-***   OpenSSL has been successfully configured                     ***
-***                                                                ***
-***   If you encounter a problem while building, please open an    ***
-***   issue on GitHub <https://github.com/openssl/openssl/issues>  ***
-***   and include the output from the following command:           ***
-***                                                                ***
-***       perl configdata.pm --dump                                ***
-***                                                                ***
-***   (If you are new to OpenSSL, you might want to consult the    ***
-***   'Troubleshooting' section in the INSTALL.md file first)      ***
-***                                                                ***
-**********************************************************************
-EOF
+print $banner;
 
 exit(0);
 
@@ -2693,7 +2934,7 @@ sub death_handler {
     my @message = ( <<"_____", @_ );
 
 Failure!  $build_file wasn't produced.
-Please read INSTALL.md and associated NOTES files.  You may also have to
+Please read INSTALL.md and associated NOTES-* files.  You may also have to
 look over your available compiler tool chain or change your configuration.
 
 _____
@@ -2970,25 +3211,25 @@ sub resolve_config {
         }
     }
 
-    foreach (sort keys %all_keys) {
-        my $previous = $combined_inheritance{$_};
+    foreach my $key (sort keys %all_keys) {
+        my $previous = $combined_inheritance{$key};
 
         # Current target doesn't have a value for the current key?
         # Assign it the default combiner, the rest of this loop body
         # will handle it just like any other coderef.
-        if (!exists $table{$target}->{$_}) {
-            $table{$target}->{$_} = $default_combiner;
+        if (!exists $table{$target}->{$key}) {
+            $table{$target}->{$key} = $default_combiner;
         }
 
-        $table{$target}->{$_} = process_values($table{$target}->{$_},
-                                               $combined_inheritance{$_},
-                                               $target, $_);
-        unless(defined($table{$target}->{$_})) {
-            delete $table{$target}->{$_};
+        $table{$target}->{$key} = process_values($table{$target}->{$key},
+                                               $combined_inheritance{$key},
+                                               $target, $key);
+        unless(defined($table{$target}->{$key})) {
+            delete $table{$target}->{$key};
         }
 #        if ($extra_checks &&
-#            $previous && !($add_called ||  $previous ~~ $table{$target}->{$_})) {
-#            warn "$_ got replaced in $target\n";
+#            $previous && !($add_called ||  $previous ~~ $table{$target}->{$key})) {
+#            warn "$key got replaced in $target\n";
 #        }
     }
 
@@ -3027,7 +3268,6 @@ sub usage
                         }
                 print STDERR $i . " ";
                 }
-        print STDERR "\n\nNOTE: If in doubt, on Unix-ish systems use './config'.\n";
         exit(1);
         }
 
@@ -3117,6 +3357,8 @@ sub print_table_entry
         "loutflag",
         "ex_libs",
         "bn_ops",
+        "enable",
+        "disable",
         "poly1035_asm_src",
         "thread_scheme",
         "perlasm_scheme",
@@ -3212,6 +3454,27 @@ sub absolutedir {
     use Cwd qw/realpath/;
 
     return realpath($dir);
+}
+
+# Check if all paths are one and the same, using stat.  They must both exist
+# We need this for the cases when File::Spec doesn't detect case insensitivity
+# (File::Spec::Unix assumes case sensitivity)
+sub samedir {
+    die "samedir expects two arguments\n" unless scalar @_ == 2;
+
+    my @stat0 = stat($_[0]);    # First argument
+    my @stat1 = stat($_[1]);    # Second argument
+
+    die "Couldn't stat $_[0]" unless @stat0;
+    die "Couldn't stat $_[1]" unless @stat1;
+
+    # Compare device number
+    return 0 unless ($stat0[0] == $stat1[0]);
+    # Compare "inode".  The perl manual recommends comparing as
+    # string rather than as number.
+    return 0 unless ($stat0[1] eq $stat1[1]);
+
+    return 1;                   # All the same
 }
 
 sub quotify {

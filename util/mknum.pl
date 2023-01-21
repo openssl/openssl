@@ -1,6 +1,6 @@
 
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -22,6 +22,7 @@ my $symhacks_file = undef;      # a symbol hacking file (optional)
 my $version = undef;            # the version to use for added symbols
 my $checkexist = 0;             # (unsure yet)
 my $warnings = 1;
+my $renumber = 0;
 my $verbose = 0;
 my $debug = 0;
 
@@ -29,6 +30,7 @@ GetOptions('ordinals=s' => \$ordinals_file,
            'symhacks=s' => \$symhacks_file,
            'version=s'  => \$version,
            'exist'      => \$checkexist,
+           'renumber'   => \$renumber,
            'warnings!'  => \$warnings,
            'verbose'    => \$verbose,
            'debug'      => \$debug)
@@ -54,7 +56,7 @@ $ordinals->invalidate();
 
 foreach my $f (($symhacks_file // (), @ARGV)) {
     print STDERR $f," ","-" x (69 - length($f)),"\n" if $verbose;
-    open IN, $f || die "Couldn't open $f: $!\n";
+    open IN, $f or die "Couldn't open $f: $!\n";
     foreach (parse(<IN>, { filename => $f,
                            warnings => $warnings,
                            verbose => $verbose,
@@ -73,7 +75,7 @@ foreach my $f (($symhacks_file // (), @ARGV)) {
                 && defined $symhacks_file
                 && $f eq $symhacks_file
                 && $_->{value} =~ /^\w(?:\w|\d)*/) {
-            $ordinals->add_alias($_->{value}, $_->{name}, @{$_->{conds}});
+            $ordinals->add_alias($f, $_->{value}, $_->{name}, @{$_->{conds}});
         } else {
             next if $_->{returntype} =~ /\b(?:ossl_)inline/;
             my $type = {
@@ -81,19 +83,14 @@ foreach my $f (($symhacks_file // (), @ARGV)) {
                 V => 'VARIABLE',
             } -> {$_->{type}};
             if ($type) {
-                $ordinals->add($_->{name}, $type, @{$_->{conds}});
+                $ordinals->add($f, $_->{name}, $type, @{$_->{conds}});
             }
         }
     }
     close IN;
 }
 
-# As long as we're running in development or alpha releases, we can have
-# symbols without specific numbers assigned.  When in beta or final release,
-# all symbols MUST have an assigned number.
-if ($version !~ m/^\d+\.\d+\.\d+(?:[a-z]+)?-(?:dev|alpha)/) {
-    $ordinals->renumber();
-}
+$ordinals->renumber() if $renumber;
 
 if ($checkexist) {
     my %new_names = map { $_->name() => 1 }
@@ -118,7 +115,15 @@ if ($checkexist) {
         }
     }
 } else {
-    $ordinals->rewrite();
+    my $dropped = 0;
+    my $unassigned;
+    my $filter = sub {
+        my $item = shift;
+        my $result = $item->number() ne '?' || $item->exists();
+        $dropped++ unless $result;
+        return $result;
+    };
+    $ordinals->rewrite(filter => $filter);
     my %stats = $ordinals->stats();
     print STDERR
         "${ordinals_file}: $stats{modified} old symbols have updated info\n"
@@ -128,9 +133,14 @@ if ($checkexist) {
     } else {
         print STDERR "${ordinals_file}: No new symbols added\n";
     }
-    if ($stats{unassigned}) {
-        my $symbol = $stats{unassigned} == 1 ? "symbol" : "symbols";
-        my $is = $stats{unassigned} == 1 ? "is" : "are";
-        print STDERR "${ordinals_file}: $stats{unassigned} $symbol $is without ordinal number\n";
+    if ($dropped) {
+        print STDERR "${ordinals_file}: Dropped $dropped new symbols\n";
+    }
+    $stats{unassigned} = 0 unless defined $stats{unassigned};
+    $unassigned = $stats{unassigned} - $dropped;
+    if ($unassigned) {
+        my $symbol = $unassigned == 1 ? "symbol" : "symbols";
+        my $is = $unassigned == 1 ? "is" : "are";
+        print STDERR "${ordinals_file}: $unassigned $symbol $is without ordinal number\n";
     }
 }

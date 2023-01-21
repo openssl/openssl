@@ -1,7 +1,7 @@
 IF[{- !$disabled{"engine"} -}]
   $PADLOCKASM=
   IF[{- !$disabled{asm} -}]
-    $PADLOCKASM_x86=e_padlock-x86.s
+    $PADLOCKASM_x86=e_padlock-x86.S
     $PADLOCKASM_x86_64=e_padlock-x86_64.s
 
     # Now that we have defined all the arch specific variables, use the
@@ -69,6 +69,17 @@ IF[{- !$disabled{"engine"} -}]
         GENERATE[devcrypto.ld]=../util/engines.num
       ENDIF
     ENDIF
+    IF[{- !$disabled{"loadereng"} -}]
+      MODULES{engine}=loader_attic
+      SOURCE[loader_attic]=e_loader_attic.c ../crypto/pem/pvkfmt.c
+      DEFINE[loader_attic]=OPENSSL_NO_PROVIDER_CODE
+      DEPEND[loader_attic]=../libcrypto
+      INCLUDE[loader_attic]=../include
+      IF[{- defined $target{shared_defflag} -}]
+        SOURCE[loader_attic]=loader_attic.ld
+        GENERATE[loader_attic.ld]=../util/engines.num
+      ENDIF
+    ENDIF
 
     MODULES{noinst,engine}=ossltest dasync
     SOURCE[dasync]=e_dasync.c
@@ -87,6 +98,6 @@ IF[{- !$disabled{"engine"} -}]
       GENERATE[ossltest.ld]=../util/engines.num
     ENDIF
   ENDIF
-  GENERATE[e_padlock-x86.s]=asm/e_padlock-x86.pl
+  GENERATE[e_padlock-x86.S]=asm/e_padlock-x86.pl
   GENERATE[e_padlock-x86_64.s]=asm/e_padlock-x86_64.pl
 ENDIF

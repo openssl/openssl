@@ -34,7 +34,7 @@ B<openssl> B<smime>
 [B<-outform> B<DER>|B<PEM>|B<SMIME>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
-[B<-inkey> I<file_or_id>]
+[B<-inkey> I<filename>|I<uri>]
 [B<-out> I<file>]
 [B<-content> I<file>]
 [B<-to> I<addr>]
@@ -46,13 +46,11 @@ B<openssl> B<smime>
 [B<-stream>]
 [B<-md> I<digest>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_config_synopsis -}
 I<recipcert> ...
-
-=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -117,19 +115,18 @@ format message that has been signed or verified.
 
 The input format of the PKCS#7 (S/MIME) structure (if one is being read);
 the default is B<SMIME>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-outform> B<DER>|B<PEM>|B<SMIME>
 
 The output format of the PKCS#7 (S/MIME) structure (if one is being written);
 the default is B<SMIME>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The key format; the default is B<PEM>.
-The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+The key format; unspecified by default.
+See L<openssl-format-options(1)> for details.
 
 =item B<-stream>, B<-indef>, B<-noindef>
 
@@ -237,6 +234,7 @@ option is present B<CRLF> is used instead.
 Allows additional certificates to be specified. When signing these will
 be included with the message. When verifying these will be searched for
 the signers certificates.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-signer> I<file>
 
@@ -258,20 +256,18 @@ Don't include any signed attributes when signing.
 The recipients certificate when decrypting a message. This certificate
 must match one of the recipients of the message or an error occurs.
 
-=item B<-inkey> I<file_or_id>
+=item B<-inkey> I<filename>|I<uri>
 
 The private key to use when signing or decrypting. This must match the
 corresponding certificate. If this option is not specified then the
 private key must be included in the certificate file specified with
 the B<-recip> or B<-signer> file. When signing this option can be used
 multiple times to specify successive keys.
-If no engine is used, the argument is taken as a file; if an engine is
-specified, the argument is given to the engine as a key identifier.
 
 =item B<-passin> I<arg>
 
 The private key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-to>, B<-from>, B<-subject>
 
@@ -291,6 +287,8 @@ Any verification errors cause the command to exit.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
+
+{- $OpenSSL::safe::opt_config_item -}
 
 =item I<recipcert> ...
 
@@ -480,12 +478,11 @@ added in OpenSSL 1.0.0
 
 The -no_alt_chains option was added in OpenSSL 1.1.0.
 
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,10 +33,6 @@
 #  define d2i_ECPKPARAMETERS                      d2i_UC_ECPKPARAMETERS
 #  undef i2d_ECPKPARAMETERS
 #  define i2d_ECPKPARAMETERS                      i2d_UC_ECPKPARAMETERS
-
-/* This one clashes with CMS_data_create */
-#  undef cms_Data_create
-#  define cms_Data_create                         priv_cms_Data_create
 
 # endif
 

@@ -14,23 +14,25 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 OSSL_provider_init_fn ossl_null_provider_init;
 
 /* Parameters we provide to the core */
-static const OSSL_ITEM null_param_types[] = {
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_NAME },
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_VERSION },
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_BUILDINFO },
-    { 0, NULL }
+static const OSSL_PARAM null_param_types[] = {
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_BUILDINFO, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_STATUS, OSSL_PARAM_INTEGER, NULL, 0),
+    OSSL_PARAM_END
 };
 
-static const OSSL_ITEM *null_gettable_params(const OSSL_PROVIDER *prov)
+static const OSSL_PARAM *null_gettable_params(const OSSL_PROVIDER *prov)
 {
     return null_param_types;
 }
 
-static int null_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
+static int null_get_params(const OSSL_PROVIDER *provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -43,7 +45,9 @@ static int null_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_BUILDINFO);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, OPENSSL_FULL_VERSION_STR))
         return 0;
-
+    p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_STATUS);
+    if (p != NULL && !OSSL_PARAM_set_int(p, ossl_prov_is_running()))
+        return 0;
     return 1;
 }
 

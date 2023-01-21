@@ -46,12 +46,15 @@ SSL_write() returns successful, B<r> bytes have been written and the next call
 to SSL_write_ex() or SSL_write() must only send the n-r bytes left, imitating
 the behaviour of write().
 
+This mode cannot be enabled while in the middle of an incomplete write
+operation.
+
 =item SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER
 
 Make it possible to retry SSL_write_ex() or SSL_write() with changed buffer
 location (the buffer contents must stay the same). This is not the default to
-avoid the misconception that non-blocking SSL_write() behaves like
-non-blocking write().
+avoid the misconception that nonblocking SSL_write() behaves like
+nonblocking write().
 
 =item SSL_MODE_AUTO_RETRY
 
@@ -64,9 +67,9 @@ If such a non-application data record was processed, the flag
 B<SSL_MODE_AUTO_RETRY> causes it to try to process the next record instead of
 returning.
 
-In a non-blocking environment applications must be prepared to handle
+In a nonblocking environment applications must be prepared to handle
 incomplete read/write operations.
-Setting B<SSL_MODE_AUTO_RETRY> for a non-blocking B<BIO> will process
+Setting B<SSL_MODE_AUTO_RETRY> for a nonblocking B<BIO> will process
 non-application data records until either no more data is available or
 an application data record has been processed.
 
@@ -105,22 +108,6 @@ Enable asynchronous processing. TLS I/O operations may indicate a retry with
 SSL_ERROR_WANT_ASYNC with this mode set if an asynchronous capable engine is
 used to perform cryptographic operations. See L<SSL_get_error(3)>.
 
-=item SSL_MODE_NO_KTLS_TX
-
-Disable the use of the kernel TLS egress data-path.
-By default kernel TLS is enabled if it is supported by the negotiated ciphersuites
-and extensions and OpenSSL has been compiled with support for it.
-The kernel TLS data-path implements the record layer,
-and the crypto algorithm. The kernel will utilize the best hardware
-available for crypto. Using the kernel data-path should reduce the memory
-footprint of OpenSSL because no buffering is required. Also, the throughput
-should improve because data copy is avoided when user data is encrypted into
-kernel memory instead of the usual encrypt than copy to kernel.
-
-Kernel TLS might not support all the features of OpenSSL. For instance,
-renegotiation, and setting the maximum fragment size is not possible as of
-Linux 4.20.
-
 =item SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG
 
 Older versions of OpenSSL had a bug in the computation of the label length
@@ -150,11 +137,10 @@ L<SSL_write(3)>, L<SSL_get_error(3)>
 =head1 HISTORY
 
 SSL_MODE_ASYNC was added in OpenSSL 1.1.0.
-SSL_MODE_NO_KTLS_TX was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

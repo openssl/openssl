@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,14 +12,10 @@
 #include <openssl/ts.h>
 #include "ts_local.h"
 
-DEFINE_STACK_OF(X509)
-
 TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)
 {
     TS_VERIFY_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (ctx == NULL)
-        TSerr(TS_F_TS_VERIFY_CTX_NEW, ERR_R_MALLOC_FAILURE);
     return ctx;
 }
 
@@ -72,6 +68,7 @@ STACK_OF(X509) *TS_VERIFY_CTX_set_certs(TS_VERIFY_CTX *ctx,
 unsigned char *TS_VERIFY_CTX_set_imprint(TS_VERIFY_CTX *ctx,
                                          unsigned char *hexstr, long len)
 {
+    OPENSSL_free(ctx->imprint);
     ctx->imprint = hexstr;
     ctx->imprint_len = len;
     return ctx->imprint;
@@ -83,7 +80,7 @@ void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx)
         return;
 
     X509_STORE_free(ctx->store);
-    sk_X509_pop_free(ctx->certs, X509_free);
+    OSSL_STACK_OF_X509_free(ctx->certs);
 
     ASN1_OBJECT_free(ctx->policy);
 
@@ -128,6 +125,8 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
         goto err;
     msg = imprint->hashed_msg;
     ret->imprint_len = ASN1_STRING_length(msg);
+    if (ret->imprint_len <= 0)
+        goto err;
     if ((ret->imprint = OPENSSL_malloc(ret->imprint_len)) == NULL)
         goto err;
     memcpy(ret->imprint, ASN1_STRING_get0_data(msg), ret->imprint_len);

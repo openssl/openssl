@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_load_client_CA_file,
+SSL_load_client_CA_file_ex, SSL_load_client_CA_file,
 SSL_add_file_cert_subjects_to_stack,
 SSL_add_dir_cert_subjects_to_stack,
 SSL_add_store_cert_subjects_to_stack
@@ -12,19 +12,26 @@ SSL_add_store_cert_subjects_to_stack
 
  #include <openssl/ssl.h>
 
+ STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
+                                                 OSSL_LIB_CTX *libctx,
+                                                 const char *propq);
  STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 
  int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
-                                         const char *file)
+                                         const char *file);
  int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
-                                        const char *dir)
+                                        const char *dir);
  int SSL_add_store_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
-                                          const char *store)
+                                          const char *store);
 
 =head1 DESCRIPTION
 
-SSL_load_client_CA_file() reads certificates from I<file> and returns
-a STACK_OF(X509_NAME) with the subject names found.
+SSL_load_client_CA_file_ex() reads certificates from I<file> and returns
+a STACK_OF(X509_NAME) with the subject names found. The library context I<libctx>
+and property query I<propq> are used when fetching algorithms from providers.
+
+SSL_load_client_CA_file() is similar to SSL_load_client_CA_file_ex()
+but uses NULL for the library context I<libctx> and property query I<propq>.
 
 SSL_add_file_cert_subjects_to_stack() reads certificates from I<file>,
 and adds their subject name to the already existing I<stack>.
@@ -84,11 +91,12 @@ L<SSL_CTX_set_client_CA_list(3)>
 
 =head1 HISTORY
 
-SSL_add_store_cert_subjects_to_stack() was added in OpenSSL 3.0.
+SSL_load_client_CA_file_ex() and SSL_add_store_cert_subjects_to_stack()
+were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

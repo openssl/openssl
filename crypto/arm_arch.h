@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,11 +21,6 @@
 #  elif defined(__GNUC__)
 #   if   defined(__aarch64__)
 #    define __ARM_ARCH__ 8
-#    if __BYTE_ORDER__==__ORDER_BIG_ENDIAN__
-#     define __ARMEB__
-#    else
-#     define __ARMEL__
-#    endif
   /*
    * Why doesn't gcc define __ARM_ARCH__? Instead it defines
    * bunch of below macros. See all_architectures[] table in
@@ -71,6 +66,8 @@
 
 # ifndef __ASSEMBLER__
 extern unsigned int OPENSSL_armcap_P;
+extern unsigned int OPENSSL_arm_midr;
+extern unsigned int OPENSSL_armv8_rsa_neonized;
 # endif
 
 # define ARMV7_NEON      (1<<0)
@@ -80,5 +77,120 @@ extern unsigned int OPENSSL_armcap_P;
 # define ARMV8_SHA256    (1<<4)
 # define ARMV8_PMULL     (1<<5)
 # define ARMV8_SHA512    (1<<6)
+# define ARMV8_CPUID     (1<<7)
+# define ARMV8_RNG       (1<<8)
+# define ARMV8_SM3       (1<<9)
+# define ARMV8_SM4       (1<<10)
+# define ARMV8_SHA3      (1<<11)
+# define ARMV8_UNROLL8_EOR3      (1<<12)
+# define ARMV8_SVE       (1<<13)
+# define ARMV8_SVE2      (1<<14)
+
+/*
+ * MIDR_EL1 system register
+ *
+ * 63___ _ ___32_31___ _ ___24_23_____20_19_____16_15__ _ __4_3_______0
+ * |            |             |         |         |          |        |
+ * |RES0        | Implementer | Variant | Arch    | PartNum  |Revision|
+ * |____ _ _____|_____ _ _____|_________|_______ _|____ _ ___|________|
+ *
+ */
+
+# define ARM_CPU_IMP_ARM           0x41
+# define HISI_CPU_IMP              0x48
+
+# define ARM_CPU_PART_CORTEX_A72   0xD08
+# define ARM_CPU_PART_N1           0xD0C
+# define ARM_CPU_PART_V1           0xD40
+# define ARM_CPU_PART_N2           0xD49
+# define HISI_CPU_PART_KP920       0xD01
+
+# define MIDR_PARTNUM_SHIFT       4
+# define MIDR_PARTNUM_MASK        (0xfffU << MIDR_PARTNUM_SHIFT)
+# define MIDR_PARTNUM(midr)       \
+           (((midr) & MIDR_PARTNUM_MASK) >> MIDR_PARTNUM_SHIFT)
+
+# define MIDR_IMPLEMENTER_SHIFT   24
+# define MIDR_IMPLEMENTER_MASK    (0xffU << MIDR_IMPLEMENTER_SHIFT)
+# define MIDR_IMPLEMENTER(midr)   \
+           (((midr) & MIDR_IMPLEMENTER_MASK) >> MIDR_IMPLEMENTER_SHIFT)
+
+# define MIDR_ARCHITECTURE_SHIFT  16
+# define MIDR_ARCHITECTURE_MASK   (0xfU << MIDR_ARCHITECTURE_SHIFT)
+# define MIDR_ARCHITECTURE(midr)  \
+           (((midr) & MIDR_ARCHITECTURE_MASK) >> MIDR_ARCHITECTURE_SHIFT)
+
+# define MIDR_CPU_MODEL_MASK \
+           (MIDR_IMPLEMENTER_MASK | \
+            MIDR_PARTNUM_MASK     | \
+            MIDR_ARCHITECTURE_MASK)
+
+# define MIDR_CPU_MODEL(imp, partnum) \
+           (((imp)     << MIDR_IMPLEMENTER_SHIFT)  | \
+            (0xfU      << MIDR_ARCHITECTURE_SHIFT) | \
+            ((partnum) << MIDR_PARTNUM_SHIFT))
+
+# define MIDR_IS_CPU_MODEL(midr, imp, partnum) \
+           (((midr) & MIDR_CPU_MODEL_MASK) == MIDR_CPU_MODEL(imp, partnum))
+
+#if defined(__ASSEMBLER__)
+
+   /*
+    * Support macros for
+    *   - Armv8.3-A Pointer Authentication and
+    *   - Armv8.5-A Branch Target Identification
+    * features which require emitting a .note.gnu.property section with the
+    * appropriate architecture-dependent feature bits set.
+    * Read more: "ELF for the Arm® 64-bit Architecture"
+    */
+
+#  if defined(__ARM_FEATURE_BTI_DEFAULT) && __ARM_FEATURE_BTI_DEFAULT == 1
+#   define GNU_PROPERTY_AARCH64_BTI (1 << 0)   /* Has Branch Target Identification */
+#   define AARCH64_VALID_CALL_TARGET hint #34  /* BTI 'c' */
+#  else
+#   define GNU_PROPERTY_AARCH64_BTI 0  /* No Branch Target Identification */
+#   define AARCH64_VALID_CALL_TARGET
+#  endif
+
+#  if defined(__ARM_FEATURE_PAC_DEFAULT) && \
+       (__ARM_FEATURE_PAC_DEFAULT & 1) == 1  /* Signed with A-key */
+#   define GNU_PROPERTY_AARCH64_POINTER_AUTH \
+     (1 << 1)                                       /* Has Pointer Authentication */
+#   define AARCH64_SIGN_LINK_REGISTER hint #25      /* PACIASP */
+#   define AARCH64_VALIDATE_LINK_REGISTER hint #29  /* AUTIASP */
+#  elif defined(__ARM_FEATURE_PAC_DEFAULT) && \
+       (__ARM_FEATURE_PAC_DEFAULT & 2) == 2  /* Signed with B-key */
+#   define GNU_PROPERTY_AARCH64_POINTER_AUTH \
+     (1 << 1)                                       /* Has Pointer Authentication */
+#   define AARCH64_SIGN_LINK_REGISTER hint #27      /* PACIBSP */
+#   define AARCH64_VALIDATE_LINK_REGISTER hint #31  /* AUTIBSP */
+#  else
+#   define GNU_PROPERTY_AARCH64_POINTER_AUTH 0  /* No Pointer Authentication */
+#   if GNU_PROPERTY_AARCH64_BTI != 0
+#    define AARCH64_SIGN_LINK_REGISTER AARCH64_VALID_CALL_TARGET
+#   else
+#    define AARCH64_SIGN_LINK_REGISTER
+#   endif
+#   define AARCH64_VALIDATE_LINK_REGISTER
+#  endif
+
+#  if GNU_PROPERTY_AARCH64_POINTER_AUTH != 0 || GNU_PROPERTY_AARCH64_BTI != 0
+    .pushsection .note.gnu.property, "a";
+    .balign 8;
+    .long 4;
+    .long 0x10;
+    .long 0x5;
+    .asciz "GNU";
+    .long 0xc0000000; /* GNU_PROPERTY_AARCH64_FEATURE_1_AND */
+    .long 4;
+    .long (GNU_PROPERTY_AARCH64_POINTER_AUTH | GNU_PROPERTY_AARCH64_BTI);
+    .long 0;
+    .popsection;
+#  endif
+
+# endif  /* defined __ASSEMBLER__ */
+
+# define IS_CPU_SUPPORT_UNROLL8_EOR3() \
+           (OPENSSL_armcap_P & ARMV8_UNROLL8_EOR3)
 
 #endif

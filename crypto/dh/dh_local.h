@@ -32,7 +32,7 @@ struct dh_st {
     CRYPTO_EX_DATA ex_data;
     ENGINE *engine;
 #endif
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     const DH_METHOD *meth;
     CRYPTO_RWLOCK *lock;
 

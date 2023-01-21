@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,8 +13,8 @@
  * The generic cipher functions for cipher modes cbc, ecb, ofb, cfb and ctr.
  * Used if there is no special hardware implementations.
  */
-int cipher_hw_generic_cbc(PROV_CIPHER_CTX *dat, unsigned char *out,
-                          const unsigned char *in, size_t len)
+int ossl_cipher_hw_generic_cbc(PROV_CIPHER_CTX *dat, unsigned char *out,
+                               const unsigned char *in, size_t len)
 {
     if (dat->stream.cbc)
         (*dat->stream.cbc) (in, out, len, dat->ks, dat->iv, dat->enc);
@@ -26,8 +26,8 @@ int cipher_hw_generic_cbc(PROV_CIPHER_CTX *dat, unsigned char *out,
     return 1;
 }
 
-int cipher_hw_generic_ecb(PROV_CIPHER_CTX *dat, unsigned char *out,
-                          const unsigned char *in, size_t len)
+int ossl_cipher_hw_generic_ecb(PROV_CIPHER_CTX *dat, unsigned char *out,
+                               const unsigned char *in, size_t len)
 {
     size_t i, bl = dat->blocksize;
 
@@ -45,8 +45,8 @@ int cipher_hw_generic_ecb(PROV_CIPHER_CTX *dat, unsigned char *out,
     return 1;
 }
 
-int cipher_hw_generic_ofb128(PROV_CIPHER_CTX *dat, unsigned char *out,
-                             const unsigned char *in, size_t len)
+int ossl_cipher_hw_generic_ofb128(PROV_CIPHER_CTX *dat, unsigned char *out,
+                                  const unsigned char *in, size_t len)
 {
     int num = dat->num;
 
@@ -56,8 +56,8 @@ int cipher_hw_generic_ofb128(PROV_CIPHER_CTX *dat, unsigned char *out,
     return 1;
 }
 
-int cipher_hw_generic_cfb128(PROV_CIPHER_CTX *dat, unsigned char *out,
-                             const unsigned char *in, size_t len)
+int ossl_cipher_hw_generic_cfb128(PROV_CIPHER_CTX *dat, unsigned char *out,
+                                  const unsigned char *in, size_t len)
 {
     int num = dat->num;
 
@@ -68,8 +68,8 @@ int cipher_hw_generic_cfb128(PROV_CIPHER_CTX *dat, unsigned char *out,
     return 1;
 }
 
-int cipher_hw_generic_cfb8(PROV_CIPHER_CTX *dat, unsigned char *out,
-                           const unsigned char *in, size_t len)
+int ossl_cipher_hw_generic_cfb8(PROV_CIPHER_CTX *dat, unsigned char *out,
+                                const unsigned char *in, size_t len)
 {
     int num = dat->num;
 
@@ -80,12 +80,12 @@ int cipher_hw_generic_cfb8(PROV_CIPHER_CTX *dat, unsigned char *out,
     return 1;
 }
 
-int cipher_hw_generic_cfb1(PROV_CIPHER_CTX *dat, unsigned char *out,
-                           const unsigned char *in, size_t len)
+int ossl_cipher_hw_generic_cfb1(PROV_CIPHER_CTX *dat, unsigned char *out,
+                                const unsigned char *in, size_t len)
 {
     int num = dat->num;
 
-    if ((dat->flags & EVP_CIPH_FLAG_LENGTH_BITS) != 0) {
+    if (dat->use_bits) {
         CRYPTO_cfb128_1_encrypt(in, out, len, dat->ks, dat->iv, &num,
                                 dat->enc, dat->block);
         dat->num = num;
@@ -108,8 +108,8 @@ int cipher_hw_generic_cfb1(PROV_CIPHER_CTX *dat, unsigned char *out,
     return 1;
 }
 
-int cipher_hw_generic_ctr(PROV_CIPHER_CTX *dat, unsigned char *out,
-                          const unsigned char *in, size_t len)
+int ossl_cipher_hw_generic_ctr(PROV_CIPHER_CTX *dat, unsigned char *out,
+                               const unsigned char *in, size_t len)
 {
     unsigned int num = dat->num;
 
@@ -129,29 +129,29 @@ int cipher_hw_generic_ctr(PROV_CIPHER_CTX *dat, unsigned char *out,
  * Used if there is no special hardware implementations.
  */
 
-int cipher_hw_chunked_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
-                          const unsigned char *in, size_t inl)
+int ossl_cipher_hw_chunked_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
+                               const unsigned char *in, size_t inl)
 {
     while (inl >= MAXCHUNK) {
-        cipher_hw_generic_cbc(ctx, out, in, MAXCHUNK);
+        ossl_cipher_hw_generic_cbc(ctx, out, in, MAXCHUNK);
         inl -= MAXCHUNK;
         in  += MAXCHUNK;
         out += MAXCHUNK;
     }
     if (inl > 0)
-        cipher_hw_generic_cbc(ctx, out, in, inl);
+        ossl_cipher_hw_generic_cbc(ctx, out, in, inl);
     return 1;
 }
 
-int cipher_hw_chunked_cfb8(PROV_CIPHER_CTX *ctx, unsigned char *out,
-                           const unsigned char *in, size_t inl)
+int ossl_cipher_hw_chunked_cfb8(PROV_CIPHER_CTX *ctx, unsigned char *out,
+                                const unsigned char *in, size_t inl)
 {
     size_t chunk = MAXCHUNK;
 
     if (inl < chunk)
         chunk = inl;
     while (inl > 0 && inl >= chunk) {
-        cipher_hw_generic_cfb8(ctx, out, in, inl);
+        ossl_cipher_hw_generic_cfb8(ctx, out, in, inl);
         inl -= chunk;
         in += chunk;
         out += chunk;
@@ -161,15 +161,15 @@ int cipher_hw_chunked_cfb8(PROV_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-int cipher_hw_chunked_cfb128(PROV_CIPHER_CTX *ctx, unsigned char *out,
-                             const unsigned char *in, size_t inl)
+int ossl_cipher_hw_chunked_cfb128(PROV_CIPHER_CTX *ctx, unsigned char *out,
+                                  const unsigned char *in, size_t inl)
 {
     size_t chunk = MAXCHUNK;
 
     if (inl < chunk)
         chunk = inl;
     while (inl > 0 && inl >= chunk) {
-        cipher_hw_generic_cfb128(ctx, out, in, inl);
+        ossl_cipher_hw_generic_cfb128(ctx, out, in, inl);
         inl -= chunk;
         in += chunk;
         out += chunk;
@@ -179,16 +179,16 @@ int cipher_hw_chunked_cfb128(PROV_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-int cipher_hw_chunked_ofb128(PROV_CIPHER_CTX *ctx, unsigned char *out,
-                             const unsigned char *in, size_t inl)
+int ossl_cipher_hw_chunked_ofb128(PROV_CIPHER_CTX *ctx, unsigned char *out,
+                                  const unsigned char *in, size_t inl)
 {
     while (inl >= MAXCHUNK) {
-        cipher_hw_generic_ofb128(ctx, out, in, MAXCHUNK);
+        ossl_cipher_hw_generic_ofb128(ctx, out, in, MAXCHUNK);
         inl -= MAXCHUNK;
         in  += MAXCHUNK;
         out += MAXCHUNK;
     }
     if (inl > 0)
-        cipher_hw_generic_ofb128(ctx, out, in, inl);
+        ossl_cipher_hw_generic_ofb128(ctx, out, in, inl);
     return 1;
 }

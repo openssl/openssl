@@ -1,10 +1,13 @@
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
-$DH_GOAL=../../libimplementations.a
-$DSA_GOAL=../../libimplementations.a
-$EC_GOAL=../../libimplementations.a
-$ECX_GOAL=../../libimplementations.a
+$DH_GOAL=../../libdefault.a ../../libfips.a
+$DSA_GOAL=../../libdefault.a ../../libfips.a
+$EC_GOAL=../../libdefault.a ../../libfips.a
+$ECX_GOAL=../../libdefault.a ../../libfips.a
+$KDF_GOAL=../../libdefault.a ../../libfips.a
+$MAC_GOAL=../../libdefault.a ../../libfips.a
+$RSA_GOAL=../../libdefault.a ../../libfips.a
 
 IF[{- !$disabled{dh} -}]
   SOURCE[$DH_GOAL]=dh_kmgmt.c
@@ -31,5 +34,8 @@ IF[{- !$disabled{ec} -}]
   DEFINE[$ECX_GOAL]=$ECDEF
 ENDIF
 
-SOURCE[../../libfips.a]=rsa_kmgmt.c
-SOURCE[../../libnonfips.a]=rsa_kmgmt.c
+SOURCE[$RSA_GOAL]=rsa_kmgmt.c
+
+SOURCE[$KDF_GOAL]=kdf_legacy_kmgmt.c
+
+SOURCE[$MAC_GOAL]=mac_legacy_kmgmt.c

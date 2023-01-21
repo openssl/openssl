@@ -32,7 +32,7 @@ B<-reply>
 [B<-queryfile> I<request.tsq>]
 [B<-passin> I<password_src>]
 [B<-signer> I<tsa_cert.pem>]
-[B<-inkey> I<file_or_id>]
+[B<-inkey> I<filename>|I<uri>]
 [B<-I<digest>>]
 [B<-chain> I<certs_file.pem>]
 [B<-tspolicy> I<object_id>]
@@ -41,8 +41,7 @@ B<-reply>
 [B<-out> I<response.tsr>]
 [B<-token_out>]
 [B<-text>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 B<openssl> B<ts>
 B<-verify>
@@ -51,14 +50,12 @@ B<-verify>
 [B<-queryfile> I<request.tsq>]
 [B<-in> I<response.tsr>]
 [B<-token_in>]
-[B<-untrusted> I<file>]
+[B<-untrusted> I<files>|I<uris>]
 [B<-CAfile> I<file>]
 [B<-CApath> I<dir>]
 [B<-CAstore> I<uri>]
 {- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
-
-=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
@@ -90,8 +87,8 @@ value that it had sent to the TSA.
 
 =back
 
-There is one DER encoded protocol data unit defined for transporting a time
-stamp request to the TSA and one for sending the timestamp response
+There is one DER encoded protocol data unit defined for transporting a
+timestamp request to the TSA and one for sending the timestamp response
 back to the client. This command has three main functions:
 creating a timestamp request based on a data file,
 creating a timestamp response based on a request, verifying if a
@@ -109,11 +106,23 @@ requests either by ftp or e-mail.
 
 Print out a usage message.
 
+=item B<-query>
+
+Generate a TS query. For details see L</Timestamp Request generation>.
+
+=item B<-reply>
+
+Generate a TS reply. For details see L</Timestamp Response generation>.
+
+=item B<-verify>
+
+Verify a TS response. For details see L</Timestamp Response verification>.
+
 =back
 
 =head2 Timestamp Request generation
 
-The B<-query> switch can be used for creating and printing a timestamp
+The B<-query> command can be used for creating and printing a timestamp
 request with the following options:
 
 =over 4
@@ -226,12 +235,10 @@ timeStamping. The extended key usage must also be critical, otherwise
 the certificate is going to be refused. Overrides the B<signer_cert>
 variable of the config file. (Optional)
 
-=item B<-inkey> I<file_or_id>
+=item B<-inkey> I<filename>|I<uri>
 
 The signer private key of the TSA in PEM format. Overrides the
 B<signer_key> config file option. (Optional)
-If no engine is used, the argument is taken as a file; if an engine is
-specified, the argument is given to the engine as a key identifier.
 
 =item B<-I<digest>>
 
@@ -294,8 +301,8 @@ instead of DER. (Optional)
 
 =head2 Timestamp Response verification
 
-The B<-verify> command is for verifying if a timestamp response or time
-stamp token is valid and matches a particular timestamp request or
+The B<-verify> command is for verifying if a timestamp response or
+timestamp token is valid and matches a particular timestamp request or
 data file. The B<-verify> command does not use the configuration file.
 
 =over 4
@@ -329,18 +336,21 @@ This flag can be used together with the B<-in> option and indicates
 that the input is a DER encoded timestamp token (ContentInfo) instead
 of a timestamp response (TimeStampResp). (Optional)
 
-=item B<-untrusted> I<cert_file.pem>
+=item B<-untrusted> I<files>|I<uris>
 
-Set of additional untrusted certificates in PEM format which may be
-needed when building the certificate chain for the TSA's signing
-certificate. This file must contain the TSA signing certificate and
-all intermediate CA certificates unless the response includes them.
+A set of additional untrusted certificates which may be
+needed when building the certificate chain for the TSA's signing certificate.
+These do not need to contain the TSA signing certificate and intermediate CA
+certificates as far as the response already includes them.
 (Optional)
+
+Multiple sources may be given, separated by commas and/or whitespace.
+Each file may contain multiple certificates.
 
 =item B<-CAfile> I<file>, B<-CApath> I<dir>, B<-CAstore> I<uri>
 
-See L<openssl(1)/Trusted Certificate Options> for details.
-At least one of B<-CApath>, B<-CAfile> or B<-CAstore> must be specified.
+See L<openssl-verification-options(1)/Trusted Certificate Options> for details.
+At least one of B<-CAfile>, B<-CApath> or B<-CAstore> must be specified.
 
 {- $OpenSSL::safe::opt_v_item -}
 
@@ -469,12 +479,13 @@ the TSA name field of the response. Default is no. (Optional)
 
 The SignedData objects created by the TSA always contain the
 certificate identifier of the signing certificate in a signed
-attribute (see RFC 2634, Enhanced Security Services). If this option
-is set to yes and either the B<certs> variable or the B<-chain> option
+attribute (see RFC 2634, Enhanced Security Services).
+If this variable is set to no, only this signing certificate identifier
+is included in the SigningCertificate signed attribute.
+If this variable is set to yes and the B<certs> variable or the B<-chain> option
 is specified then the certificate identifiers of the chain will also
-be included in the SigningCertificate signed attribute. If this
-variable is set to no, only the signing certificate identifier is
-included. Default is no. (Optional)
+be included, where the B<-chain> option overrides the B<certs> variable.
+Default is no.  (Optional)
 
 =item B<ess_cert_id_alg>
 
@@ -626,6 +637,8 @@ seeding mechanism. The new seeding mechanism makes it unnecessary to
 define a RANDFILE for saving and restoring randomness. This option is
 retained mainly for compatibility reasons.
 
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 SEE ALSO
 
 L<openssl(1)>,
@@ -639,7 +652,7 @@ L<ossl_store-file(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

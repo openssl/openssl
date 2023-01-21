@@ -6,7 +6,6 @@ RSA_padding_add_PKCS1_type_1, RSA_padding_check_PKCS1_type_1,
 RSA_padding_add_PKCS1_type_2, RSA_padding_check_PKCS1_type_2,
 RSA_padding_add_PKCS1_OAEP, RSA_padding_check_PKCS1_OAEP,
 RSA_padding_add_PKCS1_OAEP_mgf1, RSA_padding_check_PKCS1_OAEP_mgf1,
-RSA_padding_add_SSLv23, RSA_padding_check_SSLv23,
 RSA_padding_add_none, RSA_padding_check_none - asymmetric encryption
 padding
 
@@ -14,9 +13,9 @@ padding
 
  #include <openssl/rsa.h>
 
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following functions have been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
                                   const unsigned char *f, int fl);
@@ -47,12 +46,6 @@ L<openssl_user_macros(7)>:
                                        const unsigned char *f, int fl, int rsa_len,
                                        const unsigned char *p, int pl,
                                        const EVP_MD *md, const EVP_MD *mgf1md);
-
- int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
-                            const unsigned char *f, int fl);
-
- int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
-                              const unsigned char *f, int fl, int rsa_len);
 
  int RSA_padding_add_none(unsigned char *to, int tlen,
                           const unsigned char *f, int fl);
@@ -95,10 +88,6 @@ PKCS #1 v2.0 EME-PKCS1-v1_5 (PKCS #1 v1.5 block type 2)
 
 PKCS #1 v2.0 EME-OAEP
 
-=item SSLv23
-
-PKCS #1 EME-PKCS1-v1_5 with SSL-specific modification
-
 =item none
 
 simply copy the data
@@ -132,8 +121,8 @@ L<ERR_get_error(3)>.
 
 =head1 WARNINGS
 
-The result of RSA_padding_check_PKCS1_type_2() is a very sensitive
-information which can potentially be used to mount a Bleichenbacher
+The result of RSA_padding_check_PKCS1_type_2() is exactly the
+information which is used to mount a classical Bleichenbacher
 padding oracle attack. This is an inherent weakness in the PKCS #1
 v1.5 padding design. Prefer PKCS1_OAEP padding. If that is not
 possible, the result of RSA_padding_check_PKCS1_type_2() should be
@@ -148,6 +137,9 @@ as this would create a small timing side channel which could be
 used to mount a Bleichenbacher attack against any padding mode
 including PKCS1_OAEP.
 
+You should prefer the use of EVP PKEY APIs for PKCS#1 v1.5 decryption
+as they implement the necessary workarounds internally.
+
 =head1 SEE ALSO
 
 L<RSA_public_encrypt(3)>,
@@ -161,7 +153,7 @@ All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

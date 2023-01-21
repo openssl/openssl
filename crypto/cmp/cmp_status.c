@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -25,8 +25,6 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/asn1err.h> /* for ASN1_R_TOO_SMALL and ASN1_R_TOO_LARGE */
-
-DEFINE_STACK_OF(ASN1_UTF8STRING)
 
 /* CMP functions related to PKIStatus */
 
@@ -55,13 +53,9 @@ const char *ossl_cmp_PKIStatus_to_string(int status)
     case OSSL_CMP_PKISTATUS_keyUpdateWarning:
         return "PKIStatus: key update warning - update already done for the cert";
     default:
-        {
-            char buf[40];
-            BIO_snprintf(buf, sizeof(buf), "PKIStatus: invalid=%d", status);
-            CMPerr(0, CMP_R_ERROR_PARSING_PKISTATUS);
-            ERR_add_error_data(1, buf);
-            return NULL;
-        }
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_ERROR_PARSING_PKISTATUS,
+                       "PKIStatus: invalid=%d", status);
+        return NULL;
     }
 }
 
@@ -79,9 +73,10 @@ int ossl_cmp_pkisi_get_pkifailureinfo(const OSSL_CMP_PKISI *si)
 
     if (!ossl_assert(si != NULL))
         return -1;
-    for (i = 0; i <= OSSL_CMP_PKIFAILUREINFO_MAX; i++)
-        if (ASN1_BIT_STRING_get_bit(si->failInfo, i))
-            res |= 1 << i;
+    if (si->failInfo != NULL)
+        for (i = 0; i <= OSSL_CMP_PKIFAILUREINFO_MAX; i++)
+            if (ASN1_BIT_STRING_get_bit(si->failInfo, i))
+                res |= 1 << i;
     return res;
 }
 
@@ -156,7 +151,7 @@ int ossl_cmp_pkisi_check_pkifailureinfo(const OSSL_CMP_PKISI *si, int bit_index)
     if (!ossl_assert(si != NULL && si->failInfo != NULL))
         return -1;
     if (bit_index < 0 || bit_index > OSSL_CMP_PKIFAILUREINFO_MAX) {
-        CMPerr(0, CMP_R_INVALID_ARGS);
+        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
         return -1;
     }
 
@@ -186,17 +181,20 @@ char *snprint_PKIStatusInfo_parts(int status, int fail_info,
             || (status_string = ossl_cmp_PKIStatus_to_string(status)) == NULL)
         return NULL;
 
-#define ADVANCE_BUFFER                                         \
-        if (printed_chars < 0 || (size_t)printed_chars >= bufsize) \
-            return NULL; \
-        write_ptr += printed_chars; \
-        bufsize -= printed_chars;
+#define ADVANCE_BUFFER  \
+    if (printed_chars < 0 || (size_t)printed_chars >= bufsize)  \
+        return NULL; \
+    write_ptr += printed_chars; \
+    bufsize -= printed_chars;
 
     printed_chars = BIO_snprintf(write_ptr, bufsize, "%s", status_string);
     ADVANCE_BUFFER;
 
-    /* failInfo is optional and may be empty */
-    if (fail_info != 0) {
+    /*
+     * failInfo is optional and may be empty;
+     * if present, print failInfo before statusString because it is more concise
+     */
+    if (fail_info != -1 && fail_info != 0) {
         printed_chars = BIO_snprintf(write_ptr, bufsize, "; PKIFailureInfo: ");
         ADVANCE_BUFFER;
         for (failure = 0; failure <= OSSL_CMP_PKIFAILUREINFO_MAX; failure++) {
@@ -226,7 +224,8 @@ char *snprint_PKIStatusInfo_parts(int status, int fail_info,
         ADVANCE_BUFFER;
         for (i = 0; i < n_status_strings; i++) {
             text = sk_ASN1_UTF8STRING_value(status_strings, i);
-            printed_chars = BIO_snprintf(write_ptr, bufsize, "\"%s\"%s",
+            printed_chars = BIO_snprintf(write_ptr, bufsize, "\"%.*s\"%s",
+                                         ASN1_STRING_length(text),
                                          ASN1_STRING_get0_data(text),
                                          i < n_status_strings - 1 ? ", " : "");
             ADVANCE_BUFFER;
@@ -242,7 +241,7 @@ char *OSSL_CMP_snprint_PKIStatusInfo(const OSSL_CMP_PKISI *statusInfo,
     int failure_info;
 
     if (statusInfo == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
 
@@ -257,7 +256,7 @@ char *OSSL_CMP_CTX_snprint_PKIStatus(const OSSL_CMP_CTX *ctx, char *buf,
                                      size_t bufsize)
 {
     if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
 

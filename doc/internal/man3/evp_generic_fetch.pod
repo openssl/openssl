@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-evp_generic_fetch, evp_generic_fetch_by_number
+evp_generic_fetch, evp_generic_fetch_from_prov
 - generic algorithm fetchers and method creators for EVP
 
 =head1 SYNOPSIS
@@ -10,7 +10,7 @@ evp_generic_fetch, evp_generic_fetch_by_number
  /* Only for EVP source */
  #include "evp_local.h"
 
- void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
+ void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
                          const char *name, const char *properties,
                          void *(*new_method)(int name_id,
                                              const OSSL_DISPATCH *fns,
@@ -20,7 +20,7 @@ evp_generic_fetch, evp_generic_fetch_by_number
                          int (*up_ref_method)(void *),
                          void (*free_method)(void *));
 
- void *evp_generic_fetch_by_number(OPENSSL_CTX *ctx, int operation_id,
+ void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
                                    int name_id, const char *properties,
                                    void *(*new_method)(int name_id,
                                                        const OSSL_DISPATCH *fns,
@@ -37,13 +37,10 @@ I<libctx>, I<operation_id>, I<name>, and I<properties> and uses
 it to create an EVP method with the help of the functions
 I<new_method>, I<up_ref_method>, and I<free_method>.
 
-evp_generic_fetch_by_number() does the same thing as evp_generic_fetch(), 
-but takes a numeric I<name_id> instead of a name.
-I<name_id> must always be nonzero; as a matter of fact, it being zero
-is considered a programming error.
+evp_generic_fetch_from_prov() does the same thing as evp_generic_fetch(),
+but limits the search of methods to the provider given with I<prov>.
 This is meant to be used when one method needs to fetch an associated
-other method, and is typically called from inside the given function
-I<new_method>.
+method in the same provider.
 
 The three functions I<new_method>, I<up_ref_method>, and
 I<free_method> are supposed to:
@@ -114,10 +111,10 @@ And here's the implementation of the FOO method fetcher:
      * In this example, we have a public method creator and destructor.
      * It's not absolutely necessary, but is in the spirit of OpenSSL.
      */
-    EVP_FOO *EVP_FOO_meth_from_dispatch(int name_id,
-                                        const OSSL_DISPATCH *fns,
-                                        OSSL_PROVIDER *prov,
-                                        void *data)
+    EVP_FOO *EVP_FOO_meth_from_algorithm(int name_id,
+                                         const OSSL_DISPATCH *fns,
+                                         OSSL_PROVIDER *prov,
+                                         void *data)
     {
         EVP_FOO *foo = NULL;
 
@@ -162,10 +159,10 @@ And here's the implementation of the FOO method fetcher:
         }
     }
 
-    static void *foo_from_dispatch(const OSSL_DISPATCH *fns,
-                                   OSSL_PROVIDER *prov)
+    static void *foo_from_algorithm(const OSSL_DISPATCH *fns,
+                                    OSSL_PROVIDER *prov)
     {
-        return EVP_FOO_meth_from_dispatch(fns, prov);
+        return EVP_FOO_meth_from_algorithm(fns, prov);
     }
 
     static int foo_up_ref(void *vfoo)
@@ -182,13 +179,13 @@ And here's the implementation of the FOO method fetcher:
         EVP_FOO_meth_free(vfoo);
     }
 
-    EVP_FOO *EVP_FOO_fetch(OPENSSL_CTX *ctx,
+    EVP_FOO *EVP_FOO_fetch(OSSL_LIB_CTX *ctx,
                            const char *name,
                            const char *properties)
     {
         EVP_FOO *foo =
             evp_generic_fetch(ctx, OSSL_OP_FOO, name, properties,
-                              foo_from_dispatch, foo_up_ref, foo_free);
+                              foo_from_algorithm, foo_up_ref, foo_free);
 
         /*
          * If this method exists in legacy form, with a constant NID for the
@@ -261,7 +258,7 @@ The functions described here were all added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

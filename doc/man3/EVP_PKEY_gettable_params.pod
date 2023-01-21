@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_gettable_params, EVP_PKEY_get_int_param, EVP_PKEY_get_size_t_param,
+EVP_PKEY_gettable_params, EVP_PKEY_get_params,
+EVP_PKEY_get_int_param, EVP_PKEY_get_size_t_param,
 EVP_PKEY_get_bn_param, EVP_PKEY_get_utf8_string_param,
 EVP_PKEY_get_octet_string_param
 - retrieve key parameters from a key
@@ -12,38 +13,65 @@ EVP_PKEY_get_octet_string_param
  #include <openssl/evp.h>
 
  const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey);
- int EVP_PKEY_get_int_param(EVP_PKEY *pkey, const char *key_name, int *out);
- int EVP_PKEY_get_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t *out);
- int EVP_PKEY_get_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM **bn);
- int EVP_PKEY_get_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
-                                    char *str, size_t max_buf_sz, size_t *out_sz);
- int EVP_PKEY_get_octet_string_param(EVP_PKEY *pkey, const char *key_name,
-                                    unsigned char *buf, size_t max_buf_sz,
-                                    size_t *out_sz);
+ int EVP_PKEY_get_params(const EVP_PKEY *pkey, OSSL_PARAM params[]);
+ int EVP_PKEY_get_int_param(const EVP_PKEY *pkey, const char *key_name,
+                            int *out);
+ int EVP_PKEY_get_size_t_param(const EVP_PKEY *pkey, const char *key_name,
+                               size_t *out);
+ int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
+                           BIGNUM **bn);
+ int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
+                                    char *str, size_t max_buf_sz,
+                                    size_t *out_len);
+ int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
+                                     unsigned char *buf, size_t max_buf_sz,
+                                     size_t *out_len);
 
 =head1 DESCRIPTION
 
-EVP_PKEY_gettable_params() returns a constant list of I<params> indicating
-the names and types of key parameters that can be retrieved.
 See L<OSSL_PARAM(3)> for information about parameters.
 
+EVP_PKEY_get_params() retrieves parameters from the key I<pkey>, according to
+the contents of I<params>.
+
+EVP_PKEY_gettable_params() returns a constant list of I<params> indicating
+the names and types of key parameters that can be retrieved.
+
+An L<OSSL_PARAM(3)> of type B<OSSL_PARAM_INTEGER> or
+B<OSSL_PARAM_UNSIGNED_INTEGER> is of arbitrary length. Such a parameter can be
+obtained using any of the functions EVP_PKEY_get_int_param(),
+EVP_PKEY_get_size_t_param() or EVP_PKEY_get_bn_param(). Attempting to
+obtain an integer value that does not fit into a native C B<int> type will cause
+EVP_PKEY_get_int_param() to fail. Similarly attempting to obtain an integer
+value that is negative or does not fit into a native C B<size_t> type using
+EVP_PKEY_get_size_t_param() will also fail.
+
 EVP_PKEY_get_int_param() retrieves a key I<pkey> integer value I<*out>
-associated with a name of I<key_name>.
+associated with a name of I<key_name> if it fits into C<int> type. For
+parameters that do not fit into C<int> use EVP_PKEY_get_bn_param().
 
 EVP_PKEY_get_size_t_param() retrieves a key I<pkey> size_t value I<*out>
-associated with a name of I<key_name>.
+associated with a name of I<key_name> if it fits into C<size_t> type. For
+parameters that do not fit into C<size_t> use EVP_PKEY_get_bn_param().
 
 EVP_PKEY_get_bn_param() retrieves a key I<pkey> BIGNUM value I<**bn>
 associated with a name of I<key_name>. If I<*bn> is NULL then the BIGNUM
 is allocated by the method.
 
-EVP_PKEY_get_utf8_string_param() get a key I<pkey> UTF8 string value int a buffer
-I<str> of maximum size I<max_buf_sz> associated with a name of I<key_name>.
-I<*out_sz> is the returned size of the string if it is not NULL.
+EVP_PKEY_get_utf8_string_param() get a key I<pkey> UTF8 string value into a
+buffer I<str> of maximum size I<max_buf_sz> associated with a name of
+I<key_name>.  The maximum size must be large enough to accommodate the string
+value including a terminating NUL byte, or this function will fail.
+If I<out_len> is not NULL, I<*out_len> is set to the length of the string
+not including the terminating NUL byte. The required buffer size not including
+the terminating NUL byte can be obtained from I<*out_len> by calling the
+function with I<str> set to NULL.
 
-EVP_PKEY_get_octet_string_param() copy a I<pkey>'s octet string value into a buffer
-I<buf> of maximum size I<max_buf_sz> associated with a name of I<key_name>.
-I<*out_sz> is the returned size of the buffer if it is not NULL.
+EVP_PKEY_get_octet_string_param() get a key I<pkey>'s octet string value into a
+buffer I<buf> of maximum size I<max_buf_sz> associated with a name of I<key_name>.
+If I<out_len> is not NULL, I<*out_len> is set to the length of the contents.
+The required buffer size can be obtained from I<*out_len> by calling the
+function with I<buf> set to NULL.
 
 =head1 NOTES
 
@@ -51,19 +79,20 @@ These functions only work for B<EVP_PKEY>s that contain a provider side key.
 
 =head1 RETURN VALUES
 
-EVP_PKEY_gettable_params() returns NULL on error or if it is not supported,
+EVP_PKEY_gettable_params() returns NULL on error or if it is not supported.
 
 All other methods return 1 if a value associated with the key's I<key_name> was
 successfully returned, or 0 if there was an error.
 An error may be returned by methods EVP_PKEY_get_utf8_string_param() and
 EVP_PKEY_get_octet_string_param() if I<max_buf_sz> is not big enough to hold the
-value.
+value.  If I<out_len> is not NULL, I<*out_len> will be assigned the required
+buffer size to hold the value.
 
 =head1 EXAMPLES
 
  #include <openssl/evp.h>
 
- char *curve_name[64];
+ char curve_name[64];
  unsigned char pub[256];
  BIGNUM *bn_priv = NULL;
 
@@ -84,7 +113,6 @@ value.
      /* Error */
  }
 
-
  BN_clear_free(bn_priv);
 
 =head1 SEE ALSO
@@ -97,7 +125,7 @@ These functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

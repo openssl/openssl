@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,7 +25,8 @@ int BIO_get_new_index(void)
     int newval;
 
     if (!RUN_ONCE(&bio_type_init, do_bio_type_init)) {
-        BIOerr(BIO_F_BIO_GET_NEW_INDEX, ERR_R_MALLOC_FAILURE);
+        /* Perhaps the error should be raised in do_bio_type_init()? */
+        ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
         return -1;
     }
     if (!CRYPTO_UP_REF(&bio_count, &newval, bio_type_lock))
@@ -40,7 +41,6 @@ BIO_METHOD *BIO_meth_new(int type, const char *name)
     if (biom == NULL
             || (biom->name = OPENSSL_strdup(name)) == NULL) {
         OPENSSL_free(biom);
-        BIOerr(BIO_F_BIO_METH_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     biom->type = type;
@@ -217,4 +217,26 @@ int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
 {
     biom->callback_ctrl = callback_ctrl;
     return 1;
+}
+
+int BIO_meth_set_sendmmsg(BIO_METHOD *biom,
+                          int (*bsendmmsg) (BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *))
+{
+    biom->bsendmmsg = bsendmmsg;
+    return 1;
+}
+
+int (*BIO_meth_get_sendmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *) {
+    return biom->bsendmmsg;
+}
+
+int BIO_meth_set_recvmmsg(BIO_METHOD *biom,
+                          int (*brecvmmsg) (BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *))
+{
+    biom->brecvmmsg = brecvmmsg;
+    return 1;
+}
+
+int (*BIO_meth_get_recvmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *) {
+    return biom->brecvmmsg;
 }

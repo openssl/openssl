@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,15 +7,25 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <string.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
+#ifndef FIPS_MODULE
+# include <openssl/x509.h>
+# include "crypto/asn1.h"
+#endif
 #include "internal/sizes.h"
 #include "internal/param_build_set.h"
 #include "crypto/rsa.h"
-
-#include "e_os.h"                /* strcasecmp for Windows() */
+#include "rsa_local.h"
 
 /*
  * The intention with the "backend" source file is to offer backend support
@@ -34,23 +44,26 @@ static int collect_numbers(STACK_OF(BIGNUM) *numbers,
     if (numbers == NULL)
         return 0;
 
-    for (i = 0; names[i] != NULL; i++){
+    for (i = 0; names[i] != NULL; i++) {
         p = OSSL_PARAM_locate_const(params, names[i]);
         if (p != NULL) {
             BIGNUM *tmp = NULL;
 
-            if (!OSSL_PARAM_get_BN(p, &tmp)
-                || sk_BIGNUM_push(numbers, tmp) == 0)
+            if (!OSSL_PARAM_get_BN(p, &tmp))
                 return 0;
+            if (sk_BIGNUM_push(numbers, tmp) == 0) {
+                BN_clear_free(tmp);
+                return 0;
+            }
         }
     }
 
     return 1;
 }
 
-int rsa_fromdata(RSA *rsa, const OSSL_PARAM params[])
+int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
 {
-    const OSSL_PARAM *param_n, *param_e,  *param_d;
+    const OSSL_PARAM *param_n, *param_e,  *param_d = NULL;
     BIGNUM *n = NULL, *e = NULL, *d = NULL;
     STACK_OF(BIGNUM) *factors = NULL, *exps = NULL, *coeffs = NULL;
     int is_private = 0;
@@ -60,7 +73,8 @@ int rsa_fromdata(RSA *rsa, const OSSL_PARAM params[])
 
     param_n = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_N);
     param_e = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_E);
-    param_d = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_D);
+    if (include_private)
+        param_d = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_D);
 
     if ((param_n != NULL && !OSSL_PARAM_get_BN(param_n, &n))
         || (param_e != NULL && !OSSL_PARAM_get_BN(param_e, &e))
@@ -75,16 +89,16 @@ int rsa_fromdata(RSA *rsa, const OSSL_PARAM params[])
 
     if (is_private) {
         if (!collect_numbers(factors = sk_BIGNUM_new_null(), params,
-                             rsa_mp_factor_names)
+                             ossl_rsa_mp_factor_names)
             || !collect_numbers(exps = sk_BIGNUM_new_null(), params,
-                                rsa_mp_exp_names)
+                                ossl_rsa_mp_exp_names)
             || !collect_numbers(coeffs = sk_BIGNUM_new_null(), params,
-                                rsa_mp_coeff_names))
+                                ossl_rsa_mp_coeff_names))
             goto err;
 
         /* It's ok if this private key just has n, e and d */
         if (sk_BIGNUM_num(factors) != 0
-            && !rsa_set0_all_params(rsa, factors, exps, coeffs))
+            && !ossl_rsa_set0_all_params(rsa, factors, exps, coeffs))
             goto err;
     }
 
@@ -106,7 +120,8 @@ int rsa_fromdata(RSA *rsa, const OSSL_PARAM params[])
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
-int rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
+int ossl_rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[],
+                    int include_private)
 {
     int ret = 0;
     const BIGNUM *rsa_d = NULL, *rsa_n = NULL, *rsa_e = NULL;
@@ -118,10 +133,14 @@ int rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
         goto err;
 
     RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
-    rsa_get0_all_params(rsa, factors, exps, coeffs);
+    ossl_rsa_get0_all_params(rsa, factors, exps, coeffs);
+
+    if (!ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_N, rsa_n)
+        || !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_E, rsa_e))
+        goto err;
 
     /* Check private key data integrity */
-    if (rsa_d != NULL) {
+    if (include_private && rsa_d != NULL) {
         int numprimes = sk_BIGNUM_const_num(factors);
         int numexps = sk_BIGNUM_const_num(exps);
         int numcoeffs = sk_BIGNUM_const_num(coeffs);
@@ -134,22 +153,24 @@ int rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
         if (numprimes != 0
             && (numprimes < 2 || numexps < 2 || numcoeffs < 1))
             goto err;
+
+        if (!ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_D,
+                                     rsa_d)
+            || !ossl_param_build_set_multi_key_bn(bld, params,
+                                                  ossl_rsa_mp_factor_names,
+                                                  factors)
+            || !ossl_param_build_set_multi_key_bn(bld, params,
+                                                  ossl_rsa_mp_exp_names, exps)
+            || !ossl_param_build_set_multi_key_bn(bld, params,
+                                                  ossl_rsa_mp_coeff_names,
+                                                  coeffs))
+        goto err;
     }
 
-    if (!ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_N, rsa_n)
-        || !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_E, rsa_e)
-        || !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_D, rsa_d)
-        || !ossl_param_build_set_multi_key_bn(bld, params, rsa_mp_factor_names,
-                                              factors)
-        || !ossl_param_build_set_multi_key_bn(bld, params, rsa_mp_exp_names,
-                                              exps)
-        || !ossl_param_build_set_multi_key_bn(bld, params, rsa_mp_coeff_names,
-                                              coeffs))
-        goto err;
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     /* The acvp test results are not meant for export so check for bld == NULL */
     if (bld == NULL)
-        rsa_acvp_test_get_params(rsa, params);
+        ossl_rsa_acvp_test_get_params(rsa, params);
 #endif
     ret = 1;
  err:
@@ -159,26 +180,27 @@ int rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
     return ret;
 }
 
-int rsa_pss_params_30_todata(const RSA_PSS_PARAMS_30 *pss, const char *propq,
-                             OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
+int ossl_rsa_pss_params_30_todata(const RSA_PSS_PARAMS_30 *pss,
+                                  OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
 {
-    if (!rsa_pss_params_30_is_unrestricted(pss)) {
-        int hashalg_nid = rsa_pss_params_30_hashalg(pss);
-        int maskgenalg_nid = rsa_pss_params_30_maskgenalg(pss);
-        int maskgenhashalg_nid = rsa_pss_params_30_maskgenhashalg(pss);
-        int saltlen = rsa_pss_params_30_saltlen(pss);
-        int default_hashalg_nid = rsa_pss_params_30_hashalg(NULL);
-        int default_maskgenalg_nid = rsa_pss_params_30_maskgenalg(NULL);
-        int default_maskgenhashalg_nid = rsa_pss_params_30_maskgenhashalg(NULL);
+    if (!ossl_rsa_pss_params_30_is_unrestricted(pss)) {
+        int hashalg_nid = ossl_rsa_pss_params_30_hashalg(pss);
+        int maskgenalg_nid = ossl_rsa_pss_params_30_maskgenalg(pss);
+        int maskgenhashalg_nid = ossl_rsa_pss_params_30_maskgenhashalg(pss);
+        int saltlen = ossl_rsa_pss_params_30_saltlen(pss);
+        int default_hashalg_nid = ossl_rsa_pss_params_30_hashalg(NULL);
+        int default_maskgenalg_nid = ossl_rsa_pss_params_30_maskgenalg(NULL);
+        int default_maskgenhashalg_nid =
+                ossl_rsa_pss_params_30_maskgenhashalg(NULL);
         const char *mdname =
             (hashalg_nid == default_hashalg_nid
-             ? NULL : rsa_oaeppss_nid2name(hashalg_nid));
+             ? NULL : ossl_rsa_oaeppss_nid2name(hashalg_nid));
         const char *mgfname =
             (maskgenalg_nid == default_maskgenalg_nid
-             ? NULL : rsa_oaeppss_nid2name(maskgenalg_nid));
+             ? NULL : ossl_rsa_oaeppss_nid2name(maskgenalg_nid));
         const char *mgf1mdname =
             (maskgenhashalg_nid == default_maskgenhashalg_nid
-             ? NULL : rsa_oaeppss_nid2name(maskgenhashalg_nid));
+             ? NULL : ossl_rsa_oaeppss_nid2name(maskgenhashalg_nid));
         const char *key_md = OSSL_PKEY_PARAM_RSA_DIGEST;
         const char *key_mgf = OSSL_PKEY_PARAM_RSA_MASKGENFUNC;
         const char *key_mgf1_md = OSSL_PKEY_PARAM_RSA_MGF1_DIGEST;
@@ -203,17 +225,22 @@ int rsa_pss_params_30_todata(const RSA_PSS_PARAMS_30 *pss, const char *propq,
     return 1;
 }
 
-int rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
-                               const OSSL_PARAM params[], OPENSSL_CTX *libctx)
+int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
+                                    int *defaults_set,
+                                    const OSSL_PARAM params[],
+                                    OSSL_LIB_CTX *libctx)
 {
     const OSSL_PARAM *param_md, *param_mgf, *param_mgf1md,  *param_saltlen;
+    const OSSL_PARAM *param_propq;
+    const char *propq = NULL;
     EVP_MD *md = NULL, *mgf1md = NULL;
     int saltlen;
     int ret = 0;
 
     if (pss_params == NULL)
         return 0;
-
+    param_propq =
+        OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_DIGEST_PROPS);
     param_md =
         OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_DIGEST);
     param_mgf =
@@ -223,18 +250,25 @@ int rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
     param_saltlen =
         OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_PSS_SALTLEN);
 
+    if (param_propq != NULL) {
+        if (param_propq->data_type == OSSL_PARAM_UTF8_STRING)
+            propq = param_propq->data;
+    }
     /*
      * If we get any of the parameters, we know we have at least some
      * restrictions, so we start by setting default values, and let each
      * parameter override their specific restriction data.
      */
-    if (param_md != NULL || param_mgf != NULL || param_mgf1md != NULL
-        || param_saltlen != NULL)
-        if (!rsa_pss_params_30_set_defaults(pss_params))
+    if (!*defaults_set
+        && (param_md != NULL || param_mgf != NULL || param_mgf1md != NULL
+            || param_saltlen != NULL)) {
+        if (!ossl_rsa_pss_params_30_set_defaults(pss_params))
             return 0;
+        *defaults_set = 1;
+    }
 
     if (param_mgf != NULL) {
-        int default_maskgenalg_nid = rsa_pss_params_30_maskgenalg(NULL);
+        int default_maskgenalg_nid = ossl_rsa_pss_params_30_maskgenalg(NULL);
         const char *mgfname = NULL;
 
         if (param_mgf->data_type == OSSL_PARAM_UTF8_STRING)
@@ -242,9 +276,8 @@ int rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
         else if (!OSSL_PARAM_get_utf8_ptr(param_mgf, &mgfname))
             return 0;
 
-        /* TODO Revisit this if / when a new MGF algorithm appears */
-        if (strcasecmp(param_mgf->data,
-                       rsa_mgf_nid2name(default_maskgenalg_nid)) != 0)
+        if (OPENSSL_strcasecmp(param_mgf->data,
+                               ossl_rsa_mgf_nid2name(default_maskgenalg_nid)) != 0)
             return 0;
     }
 
@@ -261,9 +294,9 @@ int rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
         else if (!OSSL_PARAM_get_utf8_ptr(param_mgf, &mdname))
             goto err;
 
-        if ((md = EVP_MD_fetch(libctx, mdname, NULL)) == NULL
-            || !rsa_pss_params_30_set_hashalg(pss_params,
-                                              rsa_oaeppss_md2nid(md)))
+        if ((md = EVP_MD_fetch(libctx, mdname, propq)) == NULL
+            || !ossl_rsa_pss_params_30_set_hashalg(pss_params,
+                                                   ossl_rsa_oaeppss_md2nid(md)))
             goto err;
     }
 
@@ -275,15 +308,15 @@ int rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
         else if (!OSSL_PARAM_get_utf8_ptr(param_mgf, &mgf1mdname))
             goto err;
 
-        if ((mgf1md = EVP_MD_fetch(libctx, mgf1mdname, NULL)) == NULL
-            || !rsa_pss_params_30_set_maskgenhashalg(pss_params,
-                                                     rsa_oaeppss_md2nid(mgf1md)))
+        if ((mgf1md = EVP_MD_fetch(libctx, mgf1mdname, propq)) == NULL
+            || !ossl_rsa_pss_params_30_set_maskgenhashalg(
+                    pss_params, ossl_rsa_oaeppss_md2nid(mgf1md)))
             goto err;
     }
 
     if (param_saltlen != NULL) {
         if (!OSSL_PARAM_get_int(param_saltlen, &saltlen)
-            || !rsa_pss_params_30_set_saltlen(pss_params, saltlen))
+            || !ossl_rsa_pss_params_30_set_saltlen(pss_params, saltlen))
             goto err;
     }
 
@@ -294,3 +327,267 @@ int rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
     EVP_MD_free(mgf1md);
     return ret;
 }
+
+int ossl_rsa_is_foreign(const RSA *rsa)
+{
+#ifndef FIPS_MODULE
+    if (rsa->engine != NULL || RSA_get_method(rsa) != RSA_PKCS1_OpenSSL())
+        return 1;
+#endif
+    return 0;
+}
+
+static ossl_inline int rsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
+{
+    if (f != NULL && (*out = BN_dup(f)) == NULL)
+        return 0;
+    return 1;
+}
+
+RSA *ossl_rsa_dup(const RSA *rsa, int selection)
+{
+    RSA *dupkey = NULL;
+#ifndef FIPS_MODULE
+    int pnum, i;
+#endif
+
+    /* Do not try to duplicate foreign RSA keys */
+    if (ossl_rsa_is_foreign(rsa))
+        return NULL;
+
+    if ((dupkey = ossl_rsa_new_with_ctx(rsa->libctx)) == NULL)
+        return NULL;
+
+    /* public key */
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        if (!rsa_bn_dup_check(&dupkey->n, rsa->n))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->e, rsa->e))
+            goto err;
+    }
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+
+        /* private key */
+        if (!rsa_bn_dup_check(&dupkey->d, rsa->d))
+            goto err;
+
+        /* factors and crt params */
+        if (!rsa_bn_dup_check(&dupkey->p, rsa->p))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->q, rsa->q))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->dmp1, rsa->dmp1))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->dmq1, rsa->dmq1))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->iqmp, rsa->iqmp))
+            goto err;
+    }
+
+    dupkey->version = rsa->version;
+    dupkey->flags = rsa->flags;
+    /* we always copy the PSS parameters regardless of selection */
+    dupkey->pss_params = rsa->pss_params;
+
+#ifndef FIPS_MODULE
+    /* multiprime */
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
+        && (pnum = sk_RSA_PRIME_INFO_num(rsa->prime_infos)) > 0) {
+        dupkey->prime_infos = sk_RSA_PRIME_INFO_new_reserve(NULL, pnum);
+        if (dupkey->prime_infos == NULL)
+            goto err;
+        for (i = 0; i < pnum; i++) {
+            const RSA_PRIME_INFO *pinfo = NULL;
+            RSA_PRIME_INFO *duppinfo = NULL;
+
+            if ((duppinfo = OPENSSL_zalloc(sizeof(*duppinfo))) == NULL)
+                goto err;
+            /* push first so cleanup in error case works */
+            (void)sk_RSA_PRIME_INFO_push(dupkey->prime_infos, duppinfo);
+
+            pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
+            if (!rsa_bn_dup_check(&duppinfo->r, pinfo->r))
+                goto err;
+            if (!rsa_bn_dup_check(&duppinfo->d, pinfo->d))
+                goto err;
+            if (!rsa_bn_dup_check(&duppinfo->t, pinfo->t))
+                goto err;
+        }
+        if (!ossl_rsa_multip_calc_product(dupkey))
+            goto err;
+    }
+
+    if (rsa->pss != NULL) {
+        dupkey->pss = RSA_PSS_PARAMS_dup(rsa->pss);
+        if (rsa->pss->maskGenAlgorithm != NULL
+            && dupkey->pss->maskGenAlgorithm == NULL) {
+            dupkey->pss->maskHash = ossl_x509_algor_mgf1_decode(rsa->pss->maskGenAlgorithm);
+            if (dupkey->pss->maskHash == NULL)
+                goto err;
+        }
+    }
+    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_RSA,
+                            &dupkey->ex_data, &rsa->ex_data))
+        goto err;
+#endif
+
+    return dupkey;
+
+ err:
+    RSA_free(dupkey);
+    return NULL;
+}
+
+#ifndef FIPS_MODULE
+RSA_PSS_PARAMS *ossl_rsa_pss_decode(const X509_ALGOR *alg)
+{
+    RSA_PSS_PARAMS *pss;
+
+    pss = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(RSA_PSS_PARAMS),
+                                    alg->parameter);
+
+    if (pss == NULL)
+        return NULL;
+
+    if (pss->maskGenAlgorithm != NULL) {
+        pss->maskHash = ossl_x509_algor_mgf1_decode(pss->maskGenAlgorithm);
+        if (pss->maskHash == NULL) {
+            RSA_PSS_PARAMS_free(pss);
+            return NULL;
+        }
+    }
+
+    return pss;
+}
+
+static int ossl_rsa_sync_to_pss_params_30(RSA *rsa)
+{
+    const RSA_PSS_PARAMS *legacy_pss = NULL;
+    RSA_PSS_PARAMS_30 *pss = NULL;
+
+    if (rsa != NULL
+        && (legacy_pss = RSA_get0_pss_params(rsa)) != NULL
+        && (pss = ossl_rsa_get0_pss_params_30(rsa)) != NULL) {
+        const EVP_MD *md = NULL, *mgf1md = NULL;
+        int md_nid, mgf1md_nid, saltlen, trailerField;
+        RSA_PSS_PARAMS_30 pss_params;
+
+        /*
+         * We don't care about the validity of the fields here, we just
+         * want to synchronise values.  Verifying here makes it impossible
+         * to even read a key with invalid values, making it hard to test
+         * a bad situation.
+         *
+         * Other routines use ossl_rsa_pss_get_param(), so the values will
+         * be checked, eventually.
+         */
+        if (!ossl_rsa_pss_get_param_unverified(legacy_pss, &md, &mgf1md,
+                                               &saltlen, &trailerField))
+            return 0;
+        md_nid = EVP_MD_get_type(md);
+        mgf1md_nid = EVP_MD_get_type(mgf1md);
+        if (!ossl_rsa_pss_params_30_set_defaults(&pss_params)
+            || !ossl_rsa_pss_params_30_set_hashalg(&pss_params, md_nid)
+            || !ossl_rsa_pss_params_30_set_maskgenhashalg(&pss_params,
+                                                          mgf1md_nid)
+            || !ossl_rsa_pss_params_30_set_saltlen(&pss_params, saltlen)
+            || !ossl_rsa_pss_params_30_set_trailerfield(&pss_params,
+                                                        trailerField))
+            return 0;
+        *pss = pss_params;
+    }
+    return 1;
+}
+
+int ossl_rsa_pss_get_param_unverified(const RSA_PSS_PARAMS *pss,
+                                      const EVP_MD **pmd, const EVP_MD **pmgf1md,
+                                      int *psaltlen, int *ptrailerField)
+{
+    RSA_PSS_PARAMS_30 pss_params;
+
+    /* Get the defaults from the ONE place */
+    (void)ossl_rsa_pss_params_30_set_defaults(&pss_params);
+
+    if (pss == NULL)
+        return 0;
+    *pmd = ossl_x509_algor_get_md(pss->hashAlgorithm);
+    if (*pmd == NULL)
+        return 0;
+    *pmgf1md = ossl_x509_algor_get_md(pss->maskHash);
+    if (*pmgf1md == NULL)
+        return 0;
+    if (pss->saltLength)
+        *psaltlen = ASN1_INTEGER_get(pss->saltLength);
+    else
+        *psaltlen = ossl_rsa_pss_params_30_saltlen(&pss_params);
+    if (pss->trailerField)
+        *ptrailerField = ASN1_INTEGER_get(pss->trailerField);
+    else
+        *ptrailerField = ossl_rsa_pss_params_30_trailerfield(&pss_params);
+
+    return 1;
+}
+
+int ossl_rsa_param_decode(RSA *rsa, const X509_ALGOR *alg)
+{
+    RSA_PSS_PARAMS *pss;
+    const ASN1_OBJECT *algoid;
+    const void *algp;
+    int algptype;
+
+    X509_ALGOR_get0(&algoid, &algptype, &algp, alg);
+    if (OBJ_obj2nid(algoid) != EVP_PKEY_RSA_PSS)
+        return 1;
+    if (algptype == V_ASN1_UNDEF)
+        return 1;
+    if (algptype != V_ASN1_SEQUENCE) {
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PSS_PARAMETERS);
+        return 0;
+    }
+    if ((pss = ossl_rsa_pss_decode(alg)) == NULL
+        || !ossl_rsa_set0_pss_params(rsa, pss)) {
+        RSA_PSS_PARAMS_free(pss);
+        return 0;
+    }
+    if (!ossl_rsa_sync_to_pss_params_30(rsa))
+        return 0;
+    return 1;
+}
+
+RSA *ossl_rsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
+                             OSSL_LIB_CTX *libctx, const char *propq)
+{
+    const unsigned char *p;
+    RSA *rsa;
+    int pklen;
+    const X509_ALGOR *alg;
+
+    if (!PKCS8_pkey_get0(NULL, &p, &pklen, &alg, p8inf))
+        return 0;
+    rsa = d2i_RSAPrivateKey(NULL, &p, pklen);
+    if (rsa == NULL) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_RSA_LIB);
+        return NULL;
+    }
+    if (!ossl_rsa_param_decode(rsa, alg)) {
+        RSA_free(rsa);
+        return NULL;
+    }
+
+    RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
+    switch (OBJ_obj2nid(alg->algorithm)) {
+    case EVP_PKEY_RSA:
+        RSA_set_flags(rsa, RSA_FLAG_TYPE_RSA);
+        break;
+    case EVP_PKEY_RSA_PSS:
+        RSA_set_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS);
+        break;
+    default:
+        /* Leave the type bits zero */
+        break;
+    }
+
+    return rsa;
+}
+#endif

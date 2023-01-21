@@ -1,9 +1,10 @@
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
-$DH_GOAL=../../libimplementations.a
-$ECX_GOAL=../../libimplementations.a
-$ECDH_GOAL=../../libimplementations.a
+$DH_GOAL=../../libdefault.a ../../libfips.a
+$ECDH_GOAL=../../libdefault.a ../../libfips.a
+$ECX_GOAL=../../libdefault.a ../../libfips.a
+$KDF_GOAL=../../libdefault.a ../../libfips.a
 
 IF[{- !$disabled{dh} -}]
   SOURCE[$DH_GOAL]=dh_exch.c
@@ -22,6 +23,7 @@ ENDIF
 IF[{- !$disabled{ec} -}]
   SOURCE[$ECX_GOAL]=ecx_exch.c
   DEFINE[$ECX_GOAL]=$ECDEF
-  SOURCE[../../libfips.a]=ecdh_exch.c
-  SOURCE[../../libnonfips.a]=ecdh_exch.c
+  SOURCE[$ECDH_GOAL]=ecdh_exch.c
 ENDIF
+
+SOURCE[$KDF_GOAL]=kdf_exch.c

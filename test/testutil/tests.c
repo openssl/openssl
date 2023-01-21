@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,6 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
-#include "internal/nelem.h"
 #include <openssl/asn1.h>
 
 /*
@@ -208,7 +207,7 @@ void test_openssl_errors(void)
  * The desc argument is a printf format string followed by its arguments and
  * this is included in the output if the condition being tested for is false.
  */
-#define DEFINE_COMPARISON(type, name, opname, op, fmt)                  \
+#define DEFINE_COMPARISON(type, name, opname, op, fmt, cast)            \
     int test_ ## name ## _ ## opname(const char *file, int line,        \
                                      const char *s1, const char *s2,    \
                                      const type t1, const type t2)      \
@@ -217,29 +216,31 @@ void test_openssl_errors(void)
             return 1;                                                   \
         test_fail_message(NULL, file, line, #type, s1, s2, #op,         \
                           "[" fmt "] compared to [" fmt "]",            \
-                          t1, t2);                                      \
+                          (cast)t1, (cast)t2);                          \
         return 0;                                                       \
     }
 
-#define DEFINE_COMPARISONS(type, name, fmt)                             \
-    DEFINE_COMPARISON(type, name, eq, ==, fmt)                          \
-    DEFINE_COMPARISON(type, name, ne, !=, fmt)                          \
-    DEFINE_COMPARISON(type, name, lt, <, fmt)                           \
-    DEFINE_COMPARISON(type, name, le, <=, fmt)                          \
-    DEFINE_COMPARISON(type, name, gt, >, fmt)                           \
-    DEFINE_COMPARISON(type, name, ge, >=, fmt)
+#define DEFINE_COMPARISONS(type, name, fmt, cast)                       \
+    DEFINE_COMPARISON(type, name, eq, ==, fmt, cast)                    \
+    DEFINE_COMPARISON(type, name, ne, !=, fmt, cast)                    \
+    DEFINE_COMPARISON(type, name, lt, <, fmt, cast)                     \
+    DEFINE_COMPARISON(type, name, le, <=, fmt, cast)                    \
+    DEFINE_COMPARISON(type, name, gt, >, fmt, cast)                     \
+    DEFINE_COMPARISON(type, name, ge, >=, fmt, cast)
 
-DEFINE_COMPARISONS(int, int, "%d")
-DEFINE_COMPARISONS(unsigned int, uint, "%u")
-DEFINE_COMPARISONS(char, char, "%c")
-DEFINE_COMPARISONS(unsigned char, uchar, "%u")
-DEFINE_COMPARISONS(long, long, "%ld")
-DEFINE_COMPARISONS(unsigned long, ulong, "%lu")
-DEFINE_COMPARISONS(size_t, size_t, "%zu")
-DEFINE_COMPARISONS(double, double, "%g")
+DEFINE_COMPARISONS(int, int, "%d", int)
+DEFINE_COMPARISONS(unsigned int, uint, "%u", unsigned int)
+DEFINE_COMPARISONS(char, char, "%c", char)
+DEFINE_COMPARISONS(unsigned char, uchar, "%u", unsigned char)
+DEFINE_COMPARISONS(long, long, "%ld", long)
+DEFINE_COMPARISONS(unsigned long, ulong, "%lu", unsigned long)
+DEFINE_COMPARISONS(int64_t, int64_t, "%lld", long long)
+DEFINE_COMPARISONS(uint64_t, uint64_t, "%llu", unsigned long long)
+DEFINE_COMPARISONS(size_t, size_t, "%zu", size_t)
+DEFINE_COMPARISONS(double, double, "%g", double)
 
-DEFINE_COMPARISON(void *, ptr, eq, ==, "%p")
-DEFINE_COMPARISON(void *, ptr, ne, !=, "%p")
+DEFINE_COMPARISON(void *, ptr, eq, ==, "%p", void *)
+DEFINE_COMPARISON(void *, ptr, ne, !=, "%p", void *)
 
 int test_ptr_null(const char *file, int line, const char *s, const void *p)
 {
@@ -302,28 +303,28 @@ int test_str_ne(const char *file, int line, const char *st1, const char *st2,
 }
 
 int test_strn_eq(const char *file, int line, const char *st1, const char *st2,
-                 const char *s1, const char *s2, size_t len)
+                 const char *s1, size_t n1, const char *s2, size_t n2)
 {
     if (s1 == NULL && s2 == NULL)
       return 1;
-    if (s1 == NULL || s2 == NULL || strncmp(s1, s2, len) != 0) {
+    if (n1 != n2 || s1 == NULL || s2 == NULL || strncmp(s1, s2, n1) != 0) {
         test_fail_string_message(NULL, file, line, "string", st1, st2, "==",
-                                 s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, len),
-                                 s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, len));
+                                 s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, n1),
+                                 s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, n2));
         return 0;
     }
     return 1;
 }
 
 int test_strn_ne(const char *file, int line, const char *st1, const char *st2,
-                 const char *s1, const char *s2, size_t len)
+                 const char *s1, size_t n1, const char *s2, size_t n2)
 {
     if ((s1 == NULL) ^ (s2 == NULL))
       return 1;
-    if (s1 == NULL || strncmp(s1, s2, len) == 0) {
+    if (n1 != n2 || s1 == NULL || strncmp(s1, s2, n1) == 0) {
         test_fail_string_message(NULL, file, line, "string", st1, st2, "!=",
-                                 s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, len),
-                                 s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, len));
+                                 s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, n1),
+                                 s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, n2));
         return 0;
     }
     return 1;
@@ -417,8 +418,8 @@ int test_BN_eq_word(const char *file, int line, const char *bns, const char *ws,
 
     if (a != NULL && BN_is_word(a, w))
         return 1;
-    bw = BN_new();
-    BN_set_word(bw, w);
+    if ((bw = BN_new()) != NULL)
+        BN_set_word(bw, w);
     test_fail_bignum_message(NULL, file, line, "BIGNUM", bns, ws, "==", a, bw);
     BN_free(bw);
     return 0;
@@ -431,10 +432,10 @@ int test_BN_abs_eq_word(const char *file, int line, const char *bns,
 
     if (a != NULL && BN_abs_is_word(a, w))
         return 1;
-    bw = BN_new();
-    aa = BN_dup(a);
-    BN_set_negative(aa, 0);
-    BN_set_word(bw, w);
+    if ((aa = BN_dup(a)) != NULL)
+        BN_set_negative(aa, 0);
+    if ((bw = BN_new()) != NULL)
+        BN_set_word(bw, w);
     test_fail_bignum_message(NULL, file, line, "BIGNUM", bns, ws, "abs==",
                              aa, bw);
     BN_free(bw);

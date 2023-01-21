@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,10 @@ static OSSL_FUNC_BIO_new_file_fn *c_bio_new_file = NULL;
 static OSSL_FUNC_BIO_new_membuf_fn *c_bio_new_membuf = NULL;
 static OSSL_FUNC_BIO_read_ex_fn *c_bio_read_ex = NULL;
 static OSSL_FUNC_BIO_write_ex_fn *c_bio_write_ex = NULL;
+static OSSL_FUNC_BIO_gets_fn *c_bio_gets = NULL;
+static OSSL_FUNC_BIO_puts_fn *c_bio_puts = NULL;
+static OSSL_FUNC_BIO_ctrl_fn *c_bio_ctrl = NULL;
+static OSSL_FUNC_BIO_up_ref_fn *c_bio_up_ref = NULL;
 static OSSL_FUNC_BIO_free_fn *c_bio_free = NULL;
 static OSSL_FUNC_BIO_vprintf_fn *c_bio_vprintf = NULL;
 
@@ -38,6 +42,22 @@ int ossl_prov_bio_from_dispatch(const OSSL_DISPATCH *fns)
         case OSSL_FUNC_BIO_WRITE_EX:
             if (c_bio_write_ex == NULL)
                 c_bio_write_ex = OSSL_FUNC_BIO_write_ex(fns);
+            break;
+        case OSSL_FUNC_BIO_GETS:
+            if (c_bio_gets == NULL)
+                c_bio_gets = OSSL_FUNC_BIO_gets(fns);
+            break;
+        case OSSL_FUNC_BIO_PUTS:
+            if (c_bio_puts == NULL)
+                c_bio_puts = OSSL_FUNC_BIO_puts(fns);
+            break;
+        case OSSL_FUNC_BIO_CTRL:
+            if (c_bio_ctrl == NULL)
+                c_bio_ctrl = OSSL_FUNC_BIO_ctrl(fns);
+            break;
+        case OSSL_FUNC_BIO_UP_REF:
+            if (c_bio_up_ref == NULL)
+                c_bio_up_ref = OSSL_FUNC_BIO_up_ref(fns);
             break;
         case OSSL_FUNC_BIO_FREE:
             if (c_bio_free == NULL)
@@ -81,6 +101,34 @@ int ossl_prov_bio_write_ex(OSSL_CORE_BIO *bio, const void *data, size_t data_len
     if (c_bio_write_ex == NULL)
         return 0;
     return c_bio_write_ex(bio, data, data_len, written);
+}
+
+int ossl_prov_bio_gets(OSSL_CORE_BIO *bio, char *buf, int size)
+{
+    if (c_bio_gets == NULL)
+        return -1;
+    return c_bio_gets(bio, buf, size);
+}
+
+int ossl_prov_bio_puts(OSSL_CORE_BIO *bio, const char *str)
+{
+    if (c_bio_puts == NULL)
+        return -1;
+    return c_bio_puts(bio, str);
+}
+
+int ossl_prov_bio_ctrl(OSSL_CORE_BIO *bio, int cmd, long num, void *ptr)
+{
+    if (c_bio_ctrl == NULL)
+        return -1;
+    return c_bio_ctrl(bio, cmd, num, ptr);
+}
+
+int ossl_prov_bio_up_ref(OSSL_CORE_BIO *bio)
+{
+    if (c_bio_up_ref == NULL)
+        return 0;
+    return c_bio_up_ref(bio);
 }
 
 int ossl_prov_bio_free(OSSL_CORE_BIO *bio)
@@ -127,23 +175,17 @@ static int bio_core_write_ex(BIO *bio, const char *data, size_t data_len,
 
 static long bio_core_ctrl(BIO *bio, int cmd, long num, void *ptr)
 {
-    /* We don't support this */
-    assert(0);
-    return 0;
+    return ossl_prov_bio_ctrl(BIO_get_data(bio), cmd, num, ptr);
 }
 
 static int bio_core_gets(BIO *bio, char *buf, int size)
 {
-    /* We don't support this */
-    assert(0);
-    return -1;
+    return ossl_prov_bio_gets(BIO_get_data(bio), buf, size);
 }
 
 static int bio_core_puts(BIO *bio, const char *str)
 {
-    /* We don't support this */
-    assert(0);
-    return -1;
+    return ossl_prov_bio_puts(BIO_get_data(bio), str);
 }
 
 static int bio_core_new(BIO *bio)
@@ -156,11 +198,12 @@ static int bio_core_new(BIO *bio)
 static int bio_core_free(BIO *bio)
 {
     BIO_set_init(bio, 0);
+    ossl_prov_bio_free(BIO_get_data(bio));
 
     return 1;
 }
 
-BIO_METHOD *bio_prov_init_bio_method(void)
+BIO_METHOD *ossl_bio_prov_init_bio_method(void)
 {
     BIO_METHOD *corebiometh = NULL;
 
@@ -180,18 +223,21 @@ BIO_METHOD *bio_prov_init_bio_method(void)
     return corebiometh;
 }
 
-BIO *bio_new_from_core_bio(PROV_CTX *provctx, OSSL_CORE_BIO *corebio)
+BIO *ossl_bio_new_from_core_bio(PROV_CTX *provctx, OSSL_CORE_BIO *corebio)
 {
     BIO *outbio;
-    BIO_METHOD *corebiometh = PROV_CTX_get0_core_bio_method(provctx);
+    BIO_METHOD *corebiometh = ossl_prov_ctx_get0_core_bio_method(provctx);
 
     if (corebiometh == NULL)
         return NULL;
 
-    outbio = BIO_new(corebiometh);
-    if (outbio != NULL)
-        BIO_set_data(outbio, corebio);
-
+    if ((outbio = BIO_new(corebiometh)) == NULL)
+        return NULL;
+    if (!ossl_prov_bio_up_ref(corebio)) {
+        BIO_free(outbio);
+        return NULL;
+    }
+    BIO_set_data(outbio, corebio);
     return outbio;
 }
 

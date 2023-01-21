@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,12 @@
  */
 
 /* Internal tests for the asn1 module */
+
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -107,9 +113,153 @@ static int test_standard_methods(void)
     return 0;
 }
 
+/**********************************************************************
+ *
+ * Test of that i2d fail on non-existing non-optional items
+ *
+ ***/
+
+#include <openssl/rsa.h>
+
+static int test_empty_nonoptional_content(void)
+{
+    RSA *rsa = NULL;
+    BIGNUM *n = NULL;
+    BIGNUM *e = NULL;
+    int ok = 0;
+
+    if (!TEST_ptr(rsa = RSA_new())
+        || !TEST_ptr(n = BN_new())
+        || !TEST_ptr(e = BN_new())
+        || !TEST_true(RSA_set0_key(rsa, n, e, NULL)))
+        goto end;
+
+    n = e = NULL;                /* They are now "owned" by |rsa| */
+
+    /*
+     * This SHOULD fail, as we're trying to encode a public key as a private
+     * key.  The private key bits MUST be present for a proper RSAPrivateKey.
+     */
+    if (TEST_int_le(i2d_RSAPrivateKey(rsa, NULL), 0))
+        ok = 1;
+
+ end:
+    RSA_free(rsa);
+    BN_free(n);
+    BN_free(e);
+    return ok;
+}
+
+/**********************************************************************
+ *
+ * Tests of the Unicode code point range
+ *
+ ***/
+
+static int test_unicode(const unsigned char *univ, size_t len, int expected)
+{
+    const unsigned char *end = univ + len;
+    int ok = 1;
+
+    for (; univ < end; univ += 4) {
+        if (!TEST_int_eq(ASN1_mbstring_copy(NULL, univ, 4, MBSTRING_UNIV,
+                                            B_ASN1_UTF8STRING),
+                         expected))
+            ok = 0;
+    }
+    return ok;
+}
+
+static int test_unicode_range(void)
+{
+    const unsigned char univ_ok[] = "\0\0\0\0"
+                                    "\0\0\xd7\xff"
+                                    "\0\0\xe0\x00"
+                                    "\0\x10\xff\xff";
+    const unsigned char univ_bad[] = "\0\0\xd8\x00"
+                                     "\0\0\xdf\xff"
+                                     "\0\x11\x00\x00"
+                                     "\x80\x00\x00\x00"
+                                     "\xff\xff\xff\xff";
+    int ok = 1;
+
+    if (!test_unicode(univ_ok, sizeof univ_ok - 1, V_ASN1_UTF8STRING))
+        ok = 0;
+    if (!test_unicode(univ_bad, sizeof univ_bad - 1, -1))
+        ok = 0;
+    return ok;
+}
+
+/**********************************************************************
+ *
+ * Tests of object creation
+ *
+ ***/
+
+static int test_obj_create_once(const char *oid, const char *sn, const char *ln)
+{
+    int nid;
+
+    ERR_set_mark();
+
+    nid = OBJ_create(oid, sn, ln);
+
+    if (nid == NID_undef) {
+        unsigned long err = ERR_peek_last_error();
+        int l = ERR_GET_LIB(err);
+        int r = ERR_GET_REASON(err);
+
+        /* If it exists, that's fine, otherwise not */
+        if (l != ERR_LIB_OBJ || r != OBJ_R_OID_EXISTS) {
+            ERR_clear_last_mark();
+            return 0;
+        }
+    }
+    ERR_pop_to_mark();
+    return 1;
+}
+
+static int test_obj_create(void)
+{
+/* Stolen from evp_extra_test.c */
+#define arc "1.3.6.1.4.1.16604.998866."
+#define broken_arc "25."
+#define sn_prefix "custom"
+#define ln_prefix "custom"
+
+    /* Try different combinations of correct object creation */
+    if (!TEST_true(test_obj_create_once(NULL, sn_prefix "1", NULL))
+        || !TEST_int_ne(OBJ_sn2nid(sn_prefix "1"), NID_undef)
+        || !TEST_true(test_obj_create_once(NULL, NULL, ln_prefix "2"))
+        || !TEST_int_ne(OBJ_ln2nid(ln_prefix "2"), NID_undef)
+        || !TEST_true(test_obj_create_once(NULL, sn_prefix "3", ln_prefix "3"))
+        || !TEST_int_ne(OBJ_sn2nid(sn_prefix "3"), NID_undef)
+        || !TEST_int_ne(OBJ_ln2nid(ln_prefix "3"), NID_undef)
+        || !TEST_true(test_obj_create_once(arc "4", NULL, NULL))
+        || !TEST_true(test_obj_create_once(arc "5", sn_prefix "5", NULL))
+        || !TEST_int_ne(OBJ_sn2nid(sn_prefix "5"), NID_undef)
+        || !TEST_true(test_obj_create_once(arc "6", NULL, ln_prefix "6"))
+        || !TEST_int_ne(OBJ_ln2nid(ln_prefix "6"), NID_undef)
+        || !TEST_true(test_obj_create_once(arc "7",
+                                           sn_prefix "7", ln_prefix "7"))
+        || !TEST_int_ne(OBJ_sn2nid(sn_prefix "7"), NID_undef)
+        || !TEST_int_ne(OBJ_ln2nid(ln_prefix "7"), NID_undef))
+        return 0;
+
+    if (!TEST_false(test_obj_create_once(NULL, NULL, NULL))
+        || !TEST_false(test_obj_create_once(broken_arc "8",
+                                            sn_prefix "8", ln_prefix "8")))
+        return 0;
+
+    return 1;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
     ADD_TEST(test_standard_methods);
+    ADD_TEST(test_empty_nonoptional_content);
+    ADD_TEST(test_unicode_range);
+    ADD_TEST(test_obj_create);
     return 1;
 }

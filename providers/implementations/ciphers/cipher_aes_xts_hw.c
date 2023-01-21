@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -59,22 +59,26 @@ static int cipher_hw_aes_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
         XTS_SET_KEY_FN(HWAES_set_encrypt_key, HWAES_set_decrypt_key,
                        HWAES_encrypt, HWAES_decrypt,
                        stream_enc, stream_dec);
+        return 1;
     } else
 #endif /* HWAES_CAPABLE */
 
 #ifdef BSAES_CAPABLE
     if (BSAES_CAPABLE) {
-        stream_enc = bsaes_xts_encrypt;
-        stream_dec = bsaes_xts_decrypt;
-    }
+        stream_enc = ossl_bsaes_xts_encrypt;
+        stream_dec = ossl_bsaes_xts_decrypt;
+    } else
 #endif /* BSAES_CAPABLE */
-
 #ifdef VPAES_CAPABLE
     if (VPAES_CAPABLE) {
         XTS_SET_KEY_FN(vpaes_set_encrypt_key, vpaes_set_decrypt_key,
                        vpaes_encrypt, vpaes_decrypt, stream_enc, stream_dec);
+        return 1;
     } else
 #endif /* VPAES_CAPABLE */
+    {
+        (void)0;
+    }
     {
         XTS_SET_KEY_FN(AES_set_encrypt_key, AES_set_decrypt_key,
                        AES_encrypt, AES_decrypt, stream_enc, stream_dec);
@@ -154,6 +158,73 @@ static const PROV_CIPHER_HW aes_xts_t4 = {                                     \
 # define PROV_CIPHER_HW_select_xts()                                           \
 if (SPARC_AES_CAPABLE)                                                         \
     return &aes_xts_t4;
+#elif defined(RV64I_ZKND_ZKNE_CAPABLE)
+
+static int cipher_hw_aes_xts_rv64i_zknd_zkne_initkey(PROV_CIPHER_CTX *ctx,
+                                                     const unsigned char *key,
+                                                     size_t keylen)
+{
+    PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
+    OSSL_xts_stream_fn stream_enc = NULL;
+    OSSL_xts_stream_fn stream_dec = NULL;
+
+    XTS_SET_KEY_FN(rv64i_zkne_set_encrypt_key, rv64i_zknd_set_decrypt_key,
+                   rv64i_zkne_encrypt, rv64i_zknd_decrypt,
+                   stream_enc, stream_dec);
+    return 1;
+}
+
+# define PROV_CIPHER_HW_declare_xts()                                          \
+static const PROV_CIPHER_HW aes_xts_rv64i_zknd_zkne = {                        \
+    cipher_hw_aes_xts_rv64i_zknd_zkne_initkey,                                 \
+    NULL,                                                                      \
+    cipher_hw_aes_xts_copyctx                                                  \
+};
+# define PROV_CIPHER_HW_select_xts()                                           \
+if (RV64I_ZKND_ZKNE_CAPABLE)                                                   \
+    return &aes_xts_rv64i_zknd_zkne;
+#elif defined(RV32I_ZBKB_ZKND_ZKNE_CAPABLE) && defined(RV32I_ZKND_ZKNE_CAPABLE)
+
+static int cipher_hw_aes_xts_rv32i_zknd_zkne_initkey(PROV_CIPHER_CTX *ctx,
+                                                     const unsigned char *key,
+                                                     size_t keylen)
+{
+    PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
+
+    XTS_SET_KEY_FN(rv32i_zkne_set_encrypt_key, rv32i_zknd_zkne_set_decrypt_key,
+                   rv32i_zkne_encrypt, rv32i_zknd_decrypt,
+                   NULL, NULL);
+    return 1;
+}
+
+static int cipher_hw_aes_xts_rv32i_zbkb_zknd_zkne_initkey(PROV_CIPHER_CTX *ctx,
+                                                         const unsigned char *key,
+                                                         size_t keylen)
+{
+    PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
+
+    XTS_SET_KEY_FN(rv32i_zbkb_zkne_set_encrypt_key, rv32i_zbkb_zknd_zkne_set_decrypt_key,
+                   rv32i_zkne_encrypt, rv32i_zknd_decrypt,
+                   NULL, NULL);
+    return 1;
+}
+
+# define PROV_CIPHER_HW_declare_xts()                                          \
+static const PROV_CIPHER_HW aes_xts_rv32i_zknd_zkne = {                        \
+    cipher_hw_aes_xts_rv32i_zknd_zkne_initkey,                                 \
+    NULL,                                                                      \
+    cipher_hw_aes_xts_copyctx                                                  \
+};                                                                             \
+static const PROV_CIPHER_HW aes_xts_rv32i_zbkb_zknd_zkne = {                   \
+    cipher_hw_aes_xts_rv32i_zbkb_zknd_zkne_initkey,                            \
+    NULL,                                                                      \
+    cipher_hw_aes_xts_copyctx                                                  \
+};
+# define PROV_CIPHER_HW_select_xts()                                           \
+if (RV32I_ZBKB_ZKND_ZKNE_CAPABLE)                                              \
+    return &aes_xts_rv32i_zbkb_zknd_zkne;                                      \
+if (RV32I_ZKND_ZKNE_CAPABLE)                                                   \
+    return &aes_xts_rv32i_zknd_zkne;
 # else
 /* The generic case */
 # define PROV_CIPHER_HW_declare_xts()
@@ -166,7 +237,7 @@ static const PROV_CIPHER_HW aes_generic_xts = {
     cipher_hw_aes_xts_copyctx
 };
 PROV_CIPHER_HW_declare_xts()
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_xts(size_t keybits)
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts(size_t keybits)
 {
     PROV_CIPHER_HW_select_xts()
     return &aes_generic_xts;

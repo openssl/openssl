@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,12 +9,12 @@
 
 #ifndef OSSL_CMLL_PLATFORM_H
 # define OSSL_CMLL_PLATFORM_H
+# pragma once
 
 # if defined(CMLL_ASM) && (defined(__sparc) || defined(__sparc__))
 
 /* Fujitsu SPARC64 X support */
-extern unsigned int OPENSSL_sparcv9cap_P[];
-#  include "sparc_arch.h"
+#  include "crypto/sparc_arch.h"
 
 #  ifndef OPENSSL_NO_CAMELLIA
 #   define SPARC_CMLL_CAPABLE      (OPENSSL_sparcv9cap_P[1] & CFR_CAMELLIA)
@@ -28,16 +28,16 @@ void cmll_t4_decrypt(const unsigned char *in, unsigned char *out,
 
 void cmll128_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
                             size_t len, const CAMELLIA_KEY *key,
-                            unsigned char *ivec);
+                            unsigned char *ivec, int /*unused*/);
 void cmll128_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
                             size_t len, const CAMELLIA_KEY *key,
-                            unsigned char *ivec);
+                            unsigned char *ivec, int /*unused*/);
 void cmll256_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
                             size_t len, const CAMELLIA_KEY *key,
-                            unsigned char *ivec);
+                            unsigned char *ivec, int /*unused*/);
 void cmll256_t4_cbc_decrypt(const unsigned char *in, unsigned char *out,
                             size_t len, const CAMELLIA_KEY *key,
-                            unsigned char *ivec);
+                            unsigned char *ivec, int /*unused*/);
 void cmll128_t4_ctr32_encrypt(const unsigned char *in, unsigned char *out,
                               size_t blocks, const CAMELLIA_KEY *key,
                               unsigned char *ivec);

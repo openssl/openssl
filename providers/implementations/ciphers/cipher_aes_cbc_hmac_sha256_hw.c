@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,12 +17,12 @@
 #include "cipher_aes_cbc_hmac_sha.h"
 
 #if !defined(AES_CBC_HMAC_SHA_CAPABLE) || !defined(AESNI_CAPABLE)
-int cipher_capable_aes_cbc_hmac_sha256(void)
+int ossl_cipher_capable_aes_cbc_hmac_sha256(void)
 {
     return 0;
 }
 
-const PROV_CIPHER_HW_AES_HMAC_SHA *PROV_CIPHER_HW_aes_cbc_hmac_sha256(void)
+const PROV_CIPHER_HW_AES_HMAC_SHA *ossl_prov_cipher_hw_aes_cbc_hmac_sha256(void)
 {
     return NULL;
 }
@@ -37,7 +37,7 @@ int aesni_cbc_sha256_enc(const void *inp, void *out, size_t blocks,
                          const AES_KEY *key, unsigned char iv[16],
                          SHA256_CTX *ctx, const void *in0);
 
-int cipher_capable_aes_cbc_hmac_sha256(void)
+int ossl_cipher_capable_aes_cbc_hmac_sha256(void)
 {
     return AESNI_CBC_HMAC_SHA_CAPABLE
            && aesni_cbc_sha256_enc(NULL, NULL, 0, NULL, NULL, NULL, NULL);
@@ -61,6 +61,9 @@ static int aesni_cbc_hmac_sha256_init_key(PROV_CIPHER_CTX *vctx,
     sctx->md = sctx->head;
 
     ctx->payload_length = NO_PAYLOAD_LENGTH;
+
+    vctx->removetlspad = 1;
+    vctx->removetlsfixed = SHA256_DIGEST_LENGTH + AES_BLOCK_SIZE;
 
     return ret < 0 ? 0 : 1;
 }
@@ -144,7 +147,7 @@ static size_t tls1_multi_block_encrypt(void *vctx,
 #  endif
 
     /* ask for IVs in bulk */
-    if (RAND_bytes_ex(ctx->base.libctx, (IVs = blocks[0].c), 16 * x4) <= 0)
+    if (RAND_bytes_ex(ctx->base.libctx, (IVs = blocks[0].c), 16 * x4, 0) <= 0)
         return 0;
 
     mctx = (SHA256_MB_CTX *) (storage + 32 - ((size_t)storage % 32)); /* align */
@@ -652,8 +655,9 @@ static int aesni_cbc_hmac_sha256_cipher(PROV_CIPHER_CTX *vctx,
                 size_t off = out - p;
                 unsigned int c, cmask;
 
-                maxpad += SHA256_DIGEST_LENGTH;
-                for (res = 0, i = 0, j = 0; j < maxpad; j++) {
+                for (res = 0, i = 0, j = 0;
+                     j < maxpad + SHA256_DIGEST_LENGTH;
+                     j++) {
                     c = p[j];
                     cmask =
                         ((int)(j - off - SHA256_DIGEST_LENGTH)) >>
@@ -663,7 +667,6 @@ static int aesni_cbc_hmac_sha256_cipher(PROV_CIPHER_CTX *vctx,
                     res |= (c ^ pmac->c[i]) & cmask;
                     i += 1 & cmask;
                 }
-                maxpad -= SHA256_DIGEST_LENGTH;
 
                 res = 0 - ((0 - res) >> (sizeof(res) * 8 - 1));
                 ret &= (int)~res;
@@ -730,7 +733,7 @@ static int aesni_cbc_hmac_sha256_set_tls1_aad(void *vctx,
             if (len < AES_BLOCK_SIZE)
                 return 0;
             len -= AES_BLOCK_SIZE;
-            p[aad_len] = len >> 8;
+            p[aad_len - 2] = len >> 8;
             p[aad_len - 1] = len;
         }
         sctx->md = sctx->head;
@@ -835,7 +838,7 @@ static const PROV_CIPHER_HW_AES_HMAC_SHA cipher_hw_aes_hmac_sha256 = {
 # endif
 };
 
-const PROV_CIPHER_HW_AES_HMAC_SHA *PROV_CIPHER_HW_aes_cbc_hmac_sha256(void)
+const PROV_CIPHER_HW_AES_HMAC_SHA *ossl_prov_cipher_hw_aes_cbc_hmac_sha256(void)
 {
     return &cipher_hw_aes_hmac_sha256;
 }

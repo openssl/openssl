@@ -58,7 +58,7 @@ other encoding is undefined.
       * here just one example
       */
      switch (OSSL_STORE_INFO_get_type(info)) {
-     case OSSL_STORE_INFO_X509:
+     case OSSL_STORE_INFO_CERT:
          /* Print the X.509 certificate text */
          X509_print_fp(stdout, OSSL_STORE_INFO_get0_CERT(info));
          /* Print the X.509 certificate PEM output */

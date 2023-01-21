@@ -72,38 +72,39 @@ typedef struct DES_ks {
 
 #   define DES_fixup_key_parity DES_set_odd_parity
 #  endif
-
-DEPRECATEDIN_3_0(const char *DES_options(void))
-DEPRECATEDIN_3_0(void DES_ecb3_encrypt(const_DES_cblock *input,
-                                       DES_cblock *output,
-                                       DES_key_schedule *ks1,
-                                       DES_key_schedule *ks2,
-                                       DES_key_schedule *ks3, int enc))
-DEPRECATEDIN_3_0(DES_LONG DES_cbc_cksum(const unsigned char *input,
-                                        DES_cblock *output, long length,
-                                        DES_key_schedule *schedule,
-                                        const_DES_cblock *ivec))
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 const char *DES_options(void);
+OSSL_DEPRECATEDIN_3_0
+void DES_ecb3_encrypt(const_DES_cblock *input, DES_cblock *output,
+                      DES_key_schedule *ks1, DES_key_schedule *ks2,
+                      DES_key_schedule *ks3, int enc);
+OSSL_DEPRECATEDIN_3_0
+DES_LONG DES_cbc_cksum(const unsigned char *input, DES_cblock *output,
+                       long length, DES_key_schedule *schedule,
+                       const_DES_cblock *ivec);
+#  endif
 /* DES_cbc_encrypt does not update the IV!  Use DES_ncbc_encrypt instead. */
-DEPRECATEDIN_3_0(void DES_cbc_encrypt(const unsigned char *input,
-                                      unsigned char *output, long length,
-                                      DES_key_schedule *schedule,
-                                      DES_cblock *ivec, int enc))
-DEPRECATEDIN_3_0(void DES_ncbc_encrypt(const unsigned char *input,
-                                       unsigned char *output, long length,
-                                       DES_key_schedule *schedule,
-                                       DES_cblock *ivec, int enc))
-DEPRECATEDIN_3_0(void DES_xcbc_encrypt(const unsigned char *input,
-                                       unsigned char *output, long length,
-                                       DES_key_schedule *schedule,
-                                       DES_cblock *ivec, const_DES_cblock *inw,
-                                       const_DES_cblock *outw, int enc))
-DEPRECATEDIN_3_0(void DES_cfb_encrypt(const unsigned char *in,
-                                      unsigned char *out, int numbits,
-                                      long length, DES_key_schedule *schedule,
-                                      DES_cblock *ivec, int enc))
-DEPRECATEDIN_3_0(void DES_ecb_encrypt(const_DES_cblock *input,
-                                      DES_cblock *output, DES_key_schedule *ks,
-                                      int enc))
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+void DES_cbc_encrypt(const unsigned char *input, unsigned char *output,
+                     long length, DES_key_schedule *schedule, DES_cblock *ivec,
+                     int enc);
+OSSL_DEPRECATEDIN_3_0
+void DES_ncbc_encrypt(const unsigned char *input, unsigned char *output,
+                      long length, DES_key_schedule *schedule, DES_cblock *ivec,
+                      int enc);
+OSSL_DEPRECATEDIN_3_0
+void DES_xcbc_encrypt(const unsigned char *input, unsigned char *output,
+                      long length, DES_key_schedule *schedule, DES_cblock *ivec,
+                      const_DES_cblock *inw, const_DES_cblock *outw, int enc);
+OSSL_DEPRECATEDIN_3_0
+void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
+                     long length, DES_key_schedule *schedule, DES_cblock *ivec,
+                     int enc);
+OSSL_DEPRECATEDIN_3_0
+void DES_ecb_encrypt(const_DES_cblock *input, DES_cblock *output,
+                     DES_key_schedule *ks, int enc);
+#  endif
 
 /*
  * This is the DES encryption function that gets called by just about every
@@ -115,8 +116,10 @@ DEPRECATEDIN_3_0(void DES_ecb_encrypt(const_DES_cblock *input,
  * long's and ks is the DES_key_schedule to use.  enc, is non zero specifies
  * encryption, zero if decryption.
  */
-DEPRECATEDIN_3_0(void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks,
-                                   int enc))
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc);
+#  endif
 
 /*
  * This functions is the same as DES_encrypt1() except that the DES initial
@@ -126,78 +129,79 @@ DEPRECATEDIN_3_0(void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks,
  * DES_encrypt2() DES_encrypt2() FP() is the same as DES_encrypt1()
  * DES_encrypt1() DES_encrypt1() except faster :-).
  */
-DEPRECATEDIN_3_0(void DES_encrypt2(DES_LONG *data, DES_key_schedule *ks,
-                                   int enc))
-
-DEPRECATEDIN_3_0(void DES_encrypt3(DES_LONG *data, DES_key_schedule *ks1,
-                  DES_key_schedule *ks2, DES_key_schedule *ks3))
-DEPRECATEDIN_3_0(void DES_decrypt3(DES_LONG *data, DES_key_schedule *ks1,
-                  DES_key_schedule *ks2, DES_key_schedule *ks3))
-DEPRECATEDIN_3_0(void DES_ede3_cbc_encrypt(const unsigned char *input,
-                                           unsigned char *output, long length,
-                                           DES_key_schedule *ks1,
-                                           DES_key_schedule *ks2,
-                                           DES_key_schedule *ks3,
-                                           DES_cblock *ivec, int enc))
-DEPRECATEDIN_3_0(void DES_ede3_cfb64_encrypt(const unsigned char *in,
-                                             unsigned char *out, long length,
-                                             DES_key_schedule *ks1,
-                                             DES_key_schedule *ks2,
-                                             DES_key_schedule *ks3,
-                                             DES_cblock *ivec, int *num,
-                                             int enc))
-DEPRECATEDIN_3_0(void DES_ede3_cfb_encrypt(const unsigned char *in,
-                                           unsigned char *out, int numbits,
-                                           long length, DES_key_schedule *ks1,
-                                           DES_key_schedule *ks2,
-                                           DES_key_schedule *ks3,
-                                           DES_cblock *ivec, int enc))
-DEPRECATEDIN_3_0(void DES_ede3_ofb64_encrypt(const unsigned char *in,
-                                             unsigned char *out, long length,
-                                             DES_key_schedule *ks1,
-                                             DES_key_schedule *ks2,
-                                             DES_key_schedule *ks3,
-                                             DES_cblock *ivec, int *num))
-DEPRECATEDIN_3_0(char *DES_fcrypt(const char *buf, const char *salt, char *ret))
-DEPRECATEDIN_3_0(char *DES_crypt(const char *buf, const char *salt))
-DEPRECATEDIN_3_0(void DES_ofb_encrypt(const unsigned char *in,
-                                      unsigned char *out, int numbits,
-                                      long length, DES_key_schedule *schedule,
-                                      DES_cblock *ivec))
-DEPRECATEDIN_3_0(void DES_pcbc_encrypt(const unsigned char *input,
-                                       unsigned char *output, long length,
-                                       DES_key_schedule *schedule,
-                                       DES_cblock *ivec, int enc))
-DEPRECATEDIN_3_0(DES_LONG DES_quad_cksum(const unsigned char *input,
-                                         DES_cblock output[], long length,
-                                         int out_count, DES_cblock *seed))
-DEPRECATEDIN_3_0(int DES_random_key(DES_cblock *ret))
-DEPRECATEDIN_3_0(void DES_set_odd_parity(DES_cblock *key))
-DEPRECATEDIN_3_0(int DES_check_key_parity(const_DES_cblock *key))
-DEPRECATEDIN_3_0(int DES_is_weak_key(const_DES_cblock *key))
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+void DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc);
+OSSL_DEPRECATEDIN_3_0
+void DES_encrypt3(DES_LONG *data, DES_key_schedule *ks1, DES_key_schedule *ks2,
+                  DES_key_schedule *ks3);
+OSSL_DEPRECATEDIN_3_0
+void DES_decrypt3(DES_LONG *data, DES_key_schedule *ks1, DES_key_schedule *ks2,
+                  DES_key_schedule *ks3);
+OSSL_DEPRECATEDIN_3_0
+void DES_ede3_cbc_encrypt(const unsigned char *input, unsigned char *output,
+                          long length, DES_key_schedule *ks1,
+                          DES_key_schedule *ks2, DES_key_schedule *ks3,
+                          DES_cblock *ivec, int enc);
+OSSL_DEPRECATEDIN_3_0
+void DES_ede3_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+                            long length, DES_key_schedule *ks1,
+                            DES_key_schedule *ks2, DES_key_schedule *ks3,
+                            DES_cblock *ivec, int *num, int enc);
+OSSL_DEPRECATEDIN_3_0
+void DES_ede3_cfb_encrypt(const unsigned char *in, unsigned char *out,
+                          int numbits, long length, DES_key_schedule *ks1,
+                          DES_key_schedule *ks2, DES_key_schedule *ks3,
+                          DES_cblock *ivec, int enc);
+OSSL_DEPRECATEDIN_3_0
+void DES_ede3_ofb64_encrypt(const unsigned char *in, unsigned char *out,
+                            long length, DES_key_schedule *ks1,
+                            DES_key_schedule *ks2, DES_key_schedule *ks3,
+                            DES_cblock *ivec, int *num);
+OSSL_DEPRECATEDIN_3_0
+char *DES_fcrypt(const char *buf, const char *salt, char *ret);
+OSSL_DEPRECATEDIN_3_0
+char *DES_crypt(const char *buf, const char *salt);
+OSSL_DEPRECATEDIN_3_0
+void DES_ofb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
+                     long length, DES_key_schedule *schedule, DES_cblock *ivec);
+OSSL_DEPRECATEDIN_3_0
+void DES_pcbc_encrypt(const unsigned char *input, unsigned char *output,
+                      long length, DES_key_schedule *schedule,
+                      DES_cblock *ivec, int enc);
+OSSL_DEPRECATEDIN_3_0
+DES_LONG DES_quad_cksum(const unsigned char *input, DES_cblock output[],
+                        long length, int out_count, DES_cblock *seed);
+OSSL_DEPRECATEDIN_3_0 int DES_random_key(DES_cblock *ret);
+OSSL_DEPRECATEDIN_3_0 void DES_set_odd_parity(DES_cblock *key);
+OSSL_DEPRECATEDIN_3_0 int DES_check_key_parity(const_DES_cblock *key);
+OSSL_DEPRECATEDIN_3_0 int DES_is_weak_key(const_DES_cblock *key);
+#  endif
 /*
  * DES_set_key (= set_key = DES_key_sched = key_sched) calls
  * DES_set_key_checked
  */
-DEPRECATEDIN_3_0(int DES_set_key(const_DES_cblock *key,
-                                 DES_key_schedule *schedule))
-DEPRECATEDIN_3_0(int DES_key_sched(const_DES_cblock *key,
-                                   DES_key_schedule *schedule))
-DEPRECATEDIN_3_0(int DES_set_key_checked(const_DES_cblock *key,
-                                         DES_key_schedule *schedule))
-DEPRECATEDIN_3_0(void DES_set_key_unchecked(const_DES_cblock *key,
-                                            DES_key_schedule *schedule))
-DEPRECATEDIN_3_0(void DES_string_to_key(const char *str, DES_cblock *key))
-DEPRECATEDIN_3_0(void DES_string_to_2keys(const char *str, DES_cblock *key1,
-                                          DES_cblock *key2))
-DEPRECATEDIN_3_0(void DES_cfb64_encrypt(const unsigned char *in,
-                                        unsigned char *out, long length,
-                                        DES_key_schedule *schedule,
-                                        DES_cblock *ivec, int *num, int enc))
-DEPRECATEDIN_3_0(void DES_ofb64_encrypt(const unsigned char *in,
-                                        unsigned char *out, long length,
-                                        DES_key_schedule *schedule,
-                                        DES_cblock *ivec, int *num))
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+int DES_set_key(const_DES_cblock *key, DES_key_schedule *schedule);
+OSSL_DEPRECATEDIN_3_0
+int DES_key_sched(const_DES_cblock *key, DES_key_schedule *schedule);
+OSSL_DEPRECATEDIN_3_0
+int DES_set_key_checked(const_DES_cblock *key, DES_key_schedule *schedule);
+OSSL_DEPRECATEDIN_3_0
+void DES_set_key_unchecked(const_DES_cblock *key, DES_key_schedule *schedule);
+OSSL_DEPRECATEDIN_3_0 void DES_string_to_key(const char *str, DES_cblock *key);
+OSSL_DEPRECATEDIN_3_0
+void DES_string_to_2keys(const char *str, DES_cblock *key1, DES_cblock *key2);
+OSSL_DEPRECATEDIN_3_0
+void DES_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+                       long length, DES_key_schedule *schedule,
+                       DES_cblock *ivec, int *num, int enc);
+OSSL_DEPRECATEDIN_3_0
+void DES_ofb64_encrypt(const unsigned char *in, unsigned char *out,
+                       long length, DES_key_schedule *schedule,
+                       DES_cblock *ivec, int *num);
+#  endif
 
 #  ifdef  __cplusplus
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,121 +7,239 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>       /* for sscanf() */
+#include <string.h>
 #include <openssl/http.h>
 #include <openssl/httperr.h>
+#include <openssl/bio.h> /* for BIO_snprintf() */
 #include <openssl/err.h>
-#include <string.h>
 #include "internal/cryptlib.h" /* for ossl_assert() */
 
-#include "http_local.h"
-
-/*
- * Parse a URL and split it up into host, port and path components and
- * whether it indicates SSL/TLS. Return 1 on success, 0 on error.
- */
-
-int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
-                        char **ppath, int *pssl)
+static void init_pstring(char **pstr)
 {
-    char *p, *buf;
-    char *host;
-    const char *port = OSSL_HTTP_PORT;
-    size_t https_len = strlen(OSSL_HTTPS_NAME);
+    if (pstr != NULL) {
+        *pstr = NULL;
+    }
+}
 
-    if (!ossl_assert(https_len >= strlen(OSSL_HTTP_NAME)))
-        return 0;
+static int copy_substring(char **dest, const char *start, const char *end)
+{
+    return dest == NULL
+        || (*dest = OPENSSL_strndup(start, end - start)) != NULL;
+}
+
+static void free_pstring(char **pstr)
+{
+    if (pstr != NULL) {
+        OPENSSL_free(*pstr);
+        *pstr = NULL;
+    }
+}
+
+int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
+                   char **pport, int *pport_num,
+                   char **ppath, char **pquery, char **pfrag)
+{
+    const char *p, *tmp;
+    const char *scheme, *scheme_end;
+    const char *user, *user_end;
+    const char *host, *host_end;
+    const char *port, *port_end;
+    unsigned int portnum;
+    const char *path, *path_end;
+    const char *query, *query_end;
+    const char *frag, *frag_end;
+
+    init_pstring(pscheme);
+    init_pstring(puser);
+    init_pstring(phost);
+    init_pstring(pport);
+    init_pstring(ppath);
+    init_pstring(pfrag);
+    init_pstring(pquery);
+
     if (url == NULL) {
-        HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    if (phost != NULL)
-        *phost = NULL;
-    if (pport != NULL)
-        *pport = NULL;
-    if (ppath != NULL)
-        *ppath = NULL;
-    if (pssl != NULL)
-        *pssl = 0;
-
-    /* dup the buffer since we are going to mess with it */
-    if ((buf = OPENSSL_strdup(url)) == NULL)
-        goto err;
-
-    /* Check for initial colon */
-    p = strchr(buf, ':');
-    if (p == NULL || (size_t)(p - buf) > https_len) {
-        p = buf;
+    /* check for optional prefix "<scheme>://" */
+    scheme = scheme_end = url;
+    p = strstr(url, "://");
+    if (p == NULL) {
+        p = url;
     } else {
-        *(p++) = '\0';
-
-        if (strcmp(buf, OSSL_HTTPS_NAME) == 0) {
-            if (pssl != NULL)
-                *pssl = 1;
-            port = OSSL_HTTPS_PORT;
-        } else if (strcmp(buf, OSSL_HTTP_NAME) != 0) {
+        scheme_end = p;
+        if (scheme_end == scheme)
             goto parse_err;
-        }
-
-        /* Check for double slash */
-        if ((p[0] != '/') || (p[1] != '/'))
-            goto parse_err;
-        p += 2;
+        p += strlen("://");
     }
-    host = p;
 
-    /* Check for trailing part of path */
-    p = strchr(p, '/');
-    if (ppath != NULL && (*ppath = OPENSSL_strdup(p == NULL ? "/" : p)) == NULL)
-        goto err;
-    if (p != NULL)
-        *p = '\0'; /* Set start of path to 0 so hostname[:port] is valid */
+    /* parse optional "userinfo@" */
+    user = user_end = host = p;
+    host = strchr(p, '@');
+    if (host != NULL)
+        user_end = host++;
+    else
+        host = p;
 
-    p = host;
+    /* parse hostname/address as far as needed here */
     if (host[0] == '[') {
-        /* ipv6 literal */
-        host++;
-        p = strchr(host, ']');
-        if (p == NULL)
+        /* IPv6 literal, which may include ':' */
+        host_end = strchr(host + 1, ']');
+        if (host_end == NULL)
             goto parse_err;
-        *p = '\0';
-        p++;
+        p = ++host_end;
+    } else {
+        /* look for start of optional port, path, query, or fragment */
+        host_end = strchr(host, ':');
+        if (host_end == NULL)
+            host_end = strchr(host, '/');
+        if (host_end == NULL)
+            host_end = strchr(host, '?');
+        if (host_end == NULL)
+            host_end = strchr(host, '#');
+        if (host_end == NULL) /* the remaining string is just the hostname */
+            host_end = host + strlen(host);
+        p = host_end;
     }
 
-    /* Look for optional ':' for port number */
-    if ((p = strchr(p, ':'))) {
-        *p = '\0';
-        port = p + 1;
+    /* parse optional port specification starting with ':' */
+    port = "0"; /* default */
+    if (*p == ':')
+        port = ++p;
+    /* remaining port spec handling is also done for the default values */
+    /* make sure a decimal port number is given */
+    if (!sscanf(port, "%u", &portnum) || portnum > 65535) {
+        ERR_raise_data(ERR_LIB_HTTP, HTTP_R_INVALID_PORT_NUMBER, "%s", port);
+        goto err;
     }
-    if (phost != NULL && (*phost = OPENSSL_strdup(host)) == NULL)
-        goto err;
-    if (pport != NULL && (*pport = OPENSSL_strdup(port)) == NULL)
-        goto err;
+    for (port_end = port; '0' <= *port_end && *port_end <= '9'; port_end++)
+        ;
+    if (port == p) /* port was given explicitly */
+        p += port_end - port;
 
-    OPENSSL_free(buf);
+    /* check for optional path starting with '/' or '?'. Else must start '#' */
+    path = p;
+    if (*path != '\0' && *path != '/' && *path != '?' && *path != '#') {
+        ERR_raise(ERR_LIB_HTTP, HTTP_R_INVALID_URL_PATH);
+        goto parse_err;
+    }
+    path_end = query = query_end = frag = frag_end = path + strlen(path);
+
+    /* parse optional "?query" */
+    tmp = strchr(p, '?');
+    if (tmp != NULL) {
+        p = tmp;
+        if (pquery != NULL) {
+            path_end = p;
+            query = p + 1;
+        }
+    }
+
+    /* parse optional "#fragment" */
+    tmp = strchr(p, '#');
+    if (tmp != NULL) {
+        if (query == path_end) /* we did not record a query component */
+            path_end = tmp;
+        query_end = tmp;
+        frag = tmp + 1;
+    }
+
+    if (!copy_substring(pscheme, scheme, scheme_end)
+            || !copy_substring(phost, host, host_end)
+            || !copy_substring(pport, port, port_end)
+            || !copy_substring(puser, user, user_end)
+            || !copy_substring(pquery, query, query_end)
+            || !copy_substring(pfrag, frag, frag_end))
+        goto err;
+    if (pport_num != NULL)
+        *pport_num = (int)portnum;
+    if (*path == '/') {
+        if (!copy_substring(ppath, path, path_end))
+            goto err;
+    } else if (ppath != NULL) { /* must prepend '/' */
+        size_t buflen = 1 + path_end - path + 1;
+
+        if ((*ppath = OPENSSL_malloc(buflen)) == NULL)
+            goto err;
+        BIO_snprintf(*ppath, buflen, "/%s", path);
+    }
     return 1;
 
  parse_err:
-    HTTPerr(0, HTTP_R_ERROR_PARSING_URL);
+    ERR_raise(ERR_LIB_HTTP, HTTP_R_ERROR_PARSING_URL);
 
  err:
-    if (ppath != NULL) {
-        OPENSSL_free(*ppath);
-        *ppath = NULL;
-    }
-    if (pport != NULL) {
-        OPENSSL_free(*pport);
-        *pport = NULL;
-    }
-    if (phost != NULL) {
-        OPENSSL_free(*phost);
-        *phost = NULL;
-    }
-    OPENSSL_free(buf);
+    free_pstring(pscheme);
+    free_pstring(puser);
+    free_pstring(phost);
+    free_pstring(pport);
+    free_pstring(ppath);
+    free_pstring(pquery);
+    free_pstring(pfrag);
     return 0;
 }
 
-int http_use_proxy(const char *no_proxy, const char *server)
+int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
+                        char **pport, int *pport_num,
+                        char **ppath, char **pquery, char **pfrag)
+{
+    char *scheme, *port;
+    int ssl = 0, portnum;
+
+    init_pstring(pport);
+    if (pssl != NULL)
+        *pssl = 0;
+    if (!OSSL_parse_url(url, &scheme, puser, phost, &port, pport_num,
+                        ppath, pquery, pfrag))
+        return 0;
+
+    /* check for optional HTTP scheme "http[s]" */
+    if (strcmp(scheme, OSSL_HTTPS_NAME) == 0) {
+        ssl = 1;
+        if (pssl != NULL)
+            *pssl = ssl;
+    } else if (*scheme != '\0' && strcmp(scheme, OSSL_HTTP_NAME) != 0) {
+        ERR_raise(ERR_LIB_HTTP, HTTP_R_INVALID_URL_SCHEME);
+        OPENSSL_free(scheme);
+        OPENSSL_free(port);
+        goto err;
+    }
+    OPENSSL_free(scheme);
+
+    if (strcmp(port, "0") == 0) {
+        /* set default port */
+        OPENSSL_free(port);
+        port = ssl ? OSSL_HTTPS_PORT : OSSL_HTTP_PORT;
+        if (!ossl_assert(sscanf(port, "%d", &portnum) == 1))
+            goto err;
+        if (pport_num != NULL)
+            *pport_num = portnum;
+        if (pport != NULL) {
+            *pport = OPENSSL_strdup(port);
+            if (*pport == NULL)
+                goto err;
+        }
+    } else {
+        if (pport != NULL)
+            *pport = port;
+        else
+            OPENSSL_free(port);
+    }
+    return 1;
+
+ err:
+    free_pstring(puser);
+    free_pstring(phost);
+    free_pstring(ppath);
+    free_pstring(pquery);
+    free_pstring(pfrag);
+    return 0;
+}
+
+/* Respect no_proxy, taking default value from environment variable(s) */
+static int use_proxy(const char *no_proxy, const char *server)
 {
     size_t sl;
     const char *found = NULL;
@@ -138,6 +256,7 @@ int http_use_proxy(const char *no_proxy, const char *server)
         no_proxy = getenv("no_proxy");
     if (no_proxy == NULL)
         no_proxy = getenv(OPENSSL_NO_PROXY);
+
     if (no_proxy != NULL)
         found = strstr(no_proxy, server);
     while (found != NULL
@@ -147,12 +266,10 @@ int http_use_proxy(const char *no_proxy, const char *server)
     return found == NULL;
 }
 
-const char *http_adapt_proxy(const char *proxy, const char *no_proxy,
-                             const char *server, int use_ssl)
+/* Take default value from environment variable(s), respect no_proxy */
+const char *OSSL_HTTP_adapt_proxy(const char *proxy, const char *no_proxy,
+                                  const char *server, int use_ssl)
 {
-    const int http_len = strlen(OSSL_HTTP_PREFIX);
-    const int https_len = strlen(OSSL_HTTPS_PREFIX);
-
     /*
      * using environment variable names, both lowercase and uppercase variants,
      * compatible with other HTTP client implementations like wget, curl and git
@@ -162,16 +279,8 @@ const char *http_adapt_proxy(const char *proxy, const char *no_proxy,
     if (proxy == NULL)
         proxy = getenv(use_ssl ? OPENSSL_HTTP_PROXY :
                        OPENSSL_HTTPS_PROXY);
-    if (proxy == NULL)
-        return NULL;
 
-    /* skip any leading "http://" or "https://" */
-    if (strncmp(proxy, OSSL_HTTP_PREFIX, http_len) == 0)
-        proxy += http_len;
-    else if (strncmp(proxy, OSSL_HTTPS_PREFIX, https_len) == 0)
-        proxy += https_len;
-
-    if (*proxy == '\0' || !http_use_proxy(no_proxy, server))
+    if (proxy == NULL || *proxy == '\0' || !use_proxy(no_proxy, server))
         return NULL;
     return proxy;
 }

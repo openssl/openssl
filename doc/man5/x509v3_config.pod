@@ -7,8 +7,9 @@ x509v3_config - X509 V3 certificate extension configuration format
 =head1 DESCRIPTION
 
 Several OpenSSL commands can add extensions to a certificate or
-certificate request based on the contents of a configuration file.
-The syntax of this file is described in L<config(5)>.
+certificate request based on the contents of a configuration file
+and CLI options such as B<-addext>.
+The syntax of configuration files is described in L<config(5)>.
 The commands typically have an option to specify the name of the configuration
 file, and a section within that file; see the documentation of the
 individual command for details.
@@ -21,6 +22,9 @@ Each entry in the extension section takes the form:
  name = [critical, ]value(s)
 
 If B<critical> is present then the extension will be marked as critical.
+
+If multiple entries are processed for the same extension name,
+later entries override earlier ones with the same name.
 
 The format of B<values> depends on the value of B<name>, many have a
 type-value pairing where the type and value are separated by a colon.
@@ -75,8 +79,8 @@ section. In this example:
  subjectAltName = @alt_section
 
  [alt_section]
- email = steve@here
- email = steve@there
+ email = steve@example.com
+ email = steve@example.org
 
 will only recognize the last value.  To specify multiple values append a
 numeric identifier, as shown here:
@@ -85,8 +89,8 @@ numeric identifier, as shown here:
  subjectAltName = @alt_section
 
  [alt_section]
- email.1 = steve@here
- email.2 = steve@there
+ email.1 = steve@example.com
+ email.2 = steve@example.org
 
 The syntax of raw extensions is defined by the source code that parses
 the extension but should be documened.
@@ -105,7 +109,7 @@ They do not define the semantics of the extension.
 This is a multi-valued extension which indicates whether a certificate is
 a CA certificate. The first value is B<CA> followed by B<TRUE> or
 B<FALSE>. If B<CA> is B<TRUE> then an optional B<pathlen> name followed by a
-non-negative value can be included.
+nonnegative value can be included.
 
 For example:
 
@@ -138,15 +142,15 @@ Examples:
 =head2 Extended Key Usage
 
 This extension consists of a list of values indicating purposes for which
-the certificate public key can be used for, Each value can be either a
-short text name or an OID.
+the certificate public key can be used.
+Each value can be either a short text name or an OID.
 The following text names, and their intended meaning, are known:
 
- Value                  Meaning
- -----                  -------
- serverAuth             SSL/TLS Web Server Authentication
- clientAuth             SSL/TLS Web Client Authentication
- codeSigning            Code signing
+ Value                  Meaning according to RFC 5280 etc.
+ -----                  ----------------------------------
+ serverAuth             SSL/TLS WWW Server Authentication
+ clientAuth             SSL/TLS WWW Client Authentication
+ codeSigning            Code Signing
  emailProtection        E-mail Protection (S/MIME)
  timeStamping           Trusted Timestamping
  OCSPSigning            OCSP Signing
@@ -156,6 +160,10 @@ The following text names, and their intended meaning, are known:
  msCTLSign              Microsoft Trust List Signing
  msEFS                  Microsoft Encrypted File System
 
+While IETF RFC 5280 says that B<id-kp-serverAuth> and B<id-kp-clientAuth>
+are only for WWW use, in practice they are used for all kinds of TLS clients
+and servers, and this is what OpenSSL assumes as well.
+
 Examples:
 
  extendedKeyUsage = critical, codeSigning, 1.2.3.4
@@ -164,11 +172,15 @@ Examples:
 
 =head2 Subject Key Identifier
 
-This is a string extension with one of two legal values. If it is the word
-B<hash>, then OpenSSL will follow the process in RFC 5280 to calculate the
-hash value.
-Otherwise, the value should be a hex string to output directly, however this
-is strongly discouraged.
+The SKID extension specification has a value with three choices.
+If the value is the word B<none> then no SKID extension will be included.
+If the value is the word B<hash>, or by default for the B<x509>, B<req>, and
+B<ca> apps, the process specified in RFC 5280 section 4.2.1.2. (1) is followed:
+The keyIdentifier is composed of the 160-bit SHA-1 hash of the value of the BIT
+STRING subjectPublicKey (excluding the tag, length, and number of unused bits).
+
+Otherwise, the value must be a hex string (possibly with C<:> separating bytes)
+to output directly, however, this is strongly discouraged.
 
 Example:
 
@@ -176,16 +188,27 @@ Example:
 
 =head2 Authority Key Identifier
 
-This extension has two options, B<keyid> and B<issuer>. Either or both
-can have the value B<always>, indicated by putting a colon between
-the option and its value.
+The AKID extension specification may have the value B<none>
+indicating that no AKID shall be included.
+Otherwise it may have the value B<keyid> or B<issuer>
+or both of them, separated by C<,>.
+Either or both can have the option B<always>,
+indicated by putting a colon C<:> between the value and this option.
+For self-signed certificates the AKID is suppressed unless B<always> is present.
+By default the B<x509>, B<req>, and B<ca> apps behave as if B<none> was given
+for self-signed certificates and B<keyid>C<,> B<issuer> otherwise.
 
-If B<keyid> is present, than an attempt is made to copy the subject key
-identifier from the parent certificate. If the value B<always> is present,
-then an error can be returned if the option fails.  If B<issuer> is present,
-an attempt is made to copy the issuer and serial number from the parent
-certificate. This is done if the B<keyid> option fails, or if B<issuer>
-has B<always> specified.
+If B<keyid> is present, an attempt is made to
+copy the subject key identifier (SKID) from the issuer certificate except if
+the issuer certificate is the same as the current one and it is not self-signed.
+The hash of the public key related to the signing key is taken as fallback
+if the issuer certificate is the same as the current certificate.
+If B<always> is present but no value can be obtained, an error is returned.
+
+If B<issuer> is present, and in addition it has the option B<always> specified
+or B<keyid> is not present,
+then the issuer DN and serial number are copied from the issuer certificate.
+If this fails, an error is returned.
 
 Examples:
 
@@ -206,9 +229,11 @@ B<dirName> (a distinguished name),
 and B<otherName>.
 The syntax of each is described in the following paragraphs.
 
-The B<email> option has a special C<copy> value, which will automatically
-include any email addresses contained in the certificate subject name in
-the extension.
+The B<email> option has two special values.
+C<copy> will automatically include any email addresses
+contained in the certificate subject name in the extension.
+C<move> will automatically move any email addresses
+from the certificate subject name to the extension.
 
 The IP address used in the B<IP> option can be in either IPv4 or IPv6 format.
 
@@ -222,13 +247,13 @@ using the syntax in L<ASN1_generate_nconf(3)>.
 
 Examples:
 
- subjectAltName = email:copy, email:my@other.address, URI:http://my.url.here/
+ subjectAltName = email:copy, email:my@example.com, URI:http://my.example.com/
 
  subjectAltName = IP:192.168.7.1
 
  subjectAltName = IP:13::17
 
- subjectAltName = email:my@other.address, RID:1.2.3.4
+ subjectAltName = email:my@example.com, RID:1.2.3.4
 
  subjectAltName = otherName:1.2.3.4;UTF8:some other identifier
 
@@ -240,6 +265,15 @@ Examples:
  O = My Organization
  OU = My Unit
  CN = My Name
+
+Non-ASCII Email Address conforming the syntax defined in Section 3.3 of RFC 6531
+are provided as otherName.SmtpUTF8Mailbox. According to RFC 8398, the email
+address should be provided as UTF8String. To enforce the valid representation in
+the certificate, the SmtpUTF8Mailbox should be provided as follows
+
+ subjectAltName=@alts
+ [alts]
+ otherName = 1.3.6.1.5.5.7.8.9;FORMAT:UTF8,UTF8String:nonasciiname.example.com
 
 =head2 Issuer Alternative Name
 
@@ -260,9 +294,17 @@ B<access_id;location>, where B<access_id> is an object identifier
 (although only a few values are well-known) and B<location> has the same
 syntax as subject alternative name (except that B<email:copy> is not supported).
 
+Possible values for access_id include B<OCSP> (OCSP responder),
+B<caIssuers> (CA Issuers),
+B<ad_timestamping> (AD Time Stamping),
+B<AD_DVCS> (ad dvcs),
+B<caRepository> (CA Repository).
+
 Examples:
 
- authorityInfoAccess = OCSP;URI:http://ocsp.my.host/
+ authorityInfoAccess = OCSP;URI:http://ocsp.example.com/,caIssuers;URI:http://myca.example.com/ca.cer
+
+ authorityInfoAccess = OCSP;URI:http://ocsp.example.com/
 
 =head2 CRL distribution points
 
@@ -306,9 +348,9 @@ Only one of B<fullname> or B<relativename> should be specified.
 
 Simple examples:
 
- crlDistributionPoints = URI:http://myhost.com/myca.crl
+ crlDistributionPoints = URI:http://example.com/myca.crl
 
- crlDistributionPoints = URI:http://my.com/my.crl, URI:http://oth.com/my.crl
+ crlDistributionPoints = URI:http://example.com/myca.crl, URI:http://example.org/my.crl
 
 Full distribution point example:
 
@@ -316,7 +358,7 @@ Full distribution point example:
  crlDistributionPoints = crldp1_section
 
  [crldp1_section]
- fullname = URI:http://myhost.com/myca.crl
+ fullname = URI:http://example.com/myca.crl
  CRLissuer = dirName:issuer_sect
  reasons = keyCompromise, CACompromise
 
@@ -362,7 +404,7 @@ Example:
  issuingDistributionPoint = critical, @idp_section
 
  [idp_section]
- fullname = URI:http://myhost.com/myca.crl
+ fullname = URI:http://example.com/myca.crl
  indirectCRL = TRUE
  onlysomereasons = keyCompromise, CACompromise
 
@@ -405,8 +447,8 @@ Example:
 
  [polsect]
  policyIdentifier = 1.3.5.8
- CPS.1 = "http://my.host.name/"
- CPS.2 = "http://my.your.name/"
+ CPS.1 = "http://my.host.example.com/"
+ CPS.2 = "http://my.your.example.com/"
  userNotice.1 = @notice
 
  [notice]
@@ -451,7 +493,7 @@ Examples:
 
  nameConstraints = permitted;IP:192.168.0.0/255.255.0.0
 
- nameConstraints = permitted;email:.somedomain.com
+ nameConstraints = permitted;email:.example.com
 
  nameConstraints = excluded;email:.com
 
@@ -549,7 +591,7 @@ L<ASN1_generate_nconf(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

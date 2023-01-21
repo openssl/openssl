@@ -61,8 +61,6 @@ The scrypt KDF also uses EVP_PKEY_CTX_set1_pbe_pass() as well as
 the value from the string controls "pass" and "hexpass".
 See L<EVP_PKEY_CTX_set1_pbe_pass(3)>.
 
-All the functions described here are implemented as macros.
-
 =head1 RETURN VALUES
 
 All these functions return 1 for success and 0 or a negative value for
@@ -76,6 +74,11 @@ L<EVP_KDF(3)>
 L<EVP_PKEY_CTX_new(3)>,
 L<EVP_PKEY_CTX_ctrl_str(3)>,
 L<EVP_PKEY_derive(3)>
+
+=head1 HISTORY
+
+All of the functions described here were converted from macros to functions in
+OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

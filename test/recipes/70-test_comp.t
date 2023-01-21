@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -26,8 +26,6 @@ plan skip_all => "$test_name needs the sock feature enabled"
 
 plan skip_all => "$test_name needs TLSv1.3 or TLSv1.2 enabled"
     if disabled("tls1_3") && disabled("tls1_2");
-
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 use constant {
     MULTIPLE_COMPRESSIONS => 0,
@@ -65,7 +63,8 @@ SKIP: {
 }
 
 SKIP: {
-    skip "TLSv1.3 disabled", 2 if disabled("tls1_3");
+    skip "TLSv1.3 disabled", 2
+        if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
     #Test 3: Check that sending multiple compression methods in a TLSv1.3
     #        ClientHello fails
     $proxy->clear();

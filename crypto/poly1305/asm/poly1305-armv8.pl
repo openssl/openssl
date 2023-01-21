@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -61,13 +61,18 @@ $code.=<<___;
 
 // forward "declarations" are required for Apple
 .extern	OPENSSL_armcap_P
-.globl	poly1305_blocks
-.globl	poly1305_emit
-
+.hidden	OPENSSL_armcap_P
 .globl	poly1305_init
+.hidden	poly1305_init
+.globl	poly1305_blocks
+.hidden	poly1305_blocks
+.globl	poly1305_emit
+.hidden	poly1305_emit
+
 .type	poly1305_init,%function
 .align	5
 poly1305_init:
+	AARCH64_VALID_CALL_TARGET
 	cmp	$inp,xzr
 	stp	xzr,xzr,[$ctx]		// zero hash value
 	stp	xzr,xzr,[$ctx,#16]	// [along with is_base2_26]
@@ -81,7 +86,7 @@ poly1305_init:
 	ldp	$r0,$r1,[$inp]		// load key
 	mov	$s1,#0xfffffffc0fffffff
 	movk	$s1,#0x0fff,lsl#48
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	$r0,$r0			// flip bytes
 	rev	$r1,$r1
 #endif
@@ -115,6 +120,9 @@ poly1305_init:
 .align	5
 poly1305_blocks:
 .Lpoly1305_blocks:
+	// The symbol .Lpoly1305_blocks is not a .globl symbol
+	// but a pointer to it is returned by poly1305_init
+	AARCH64_VALID_CALL_TARGET
 	ands	$len,$len,#-16
 	b.eq	.Lno_data
 
@@ -128,7 +136,7 @@ poly1305_blocks:
 .Loop:
 	ldp	$t0,$t1,[$inp],#16	// load input
 	sub	$len,$len,#16
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	$t0,$t0
 	rev	$t1,$t1
 #endif
@@ -180,6 +188,9 @@ poly1305_blocks:
 .align	5
 poly1305_emit:
 .Lpoly1305_emit:
+	// The symbol .poly1305_emit is not a .globl symbol
+	// but a pointer to it is returned by poly1305_init
+	AARCH64_VALID_CALL_TARGET
 	ldp	$h0,$h1,[$ctx]		// load hash base 2^64
 	ldr	$h2,[$ctx,#16]
 	ldp	$t0,$t1,[$nonce]	// load nonce
@@ -193,13 +204,13 @@ poly1305_emit:
 	csel	$h0,$h0,$d0,eq
 	csel	$h1,$h1,$d1,eq
 
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	ror	$t0,$t0,#32		// flip nonce words
 	ror	$t1,$t1,#32
 #endif
 	adds	$h0,$h0,$t0		// accumulate nonce
 	adc	$h1,$h1,$t1
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	$h0,$h0			// flip output bytes
 	rev	$h1,$h1
 #endif
@@ -287,13 +298,16 @@ poly1305_splat:
 .align	5
 poly1305_blocks_neon:
 .Lpoly1305_blocks_neon:
+	// The symbol .Lpoly1305_blocks_neon is not a .globl symbol
+	// but a pointer to it is returned by poly1305_init
+	AARCH64_VALID_CALL_TARGET
 	ldr	$is_base2_26,[$ctx,#24]
 	cmp	$len,#128
 	b.hs	.Lblocks_neon
 	cbz	$is_base2_26,.Lpoly1305_blocks
 
 .Lblocks_neon:
-	.inst	0xd503233f		// paciasp
+	AARCH64_SIGN_LINK_REGISTER
 	stp	x29,x30,[sp,#-80]!
 	add	x29,sp,#0
 
@@ -331,7 +345,7 @@ poly1305_blocks_neon:
 	adcs	$h1,$h1,xzr
 	adc	$h2,$h2,xzr
 
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	$d0,$d0
 	rev	$d1,$d1
 #endif
@@ -377,7 +391,7 @@ poly1305_blocks_neon:
 	ldp	$d0,$d1,[$inp],#16	// load input
 	sub	$len,$len,#16
 	add	$s1,$r1,$r1,lsr#2	// s1 = r1 + (r1 >> 2)
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	$d0,$d0
 	rev	$d1,$d1
 #endif
@@ -462,7 +476,7 @@ poly1305_blocks_neon:
 	lsl	$padbit,$padbit,#24
 	add	x15,$ctx,#48
 
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	x8,x8
 	rev	x12,x12
 	rev	x9,x9
@@ -498,7 +512,7 @@ poly1305_blocks_neon:
 	ld1	{$S2,$R3,$S3,$R4},[x15],#64
 	ld1	{$S4},[x15]
 
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	x8,x8
 	rev	x12,x12
 	rev	x9,x9
@@ -559,7 +573,7 @@ poly1305_blocks_neon:
 	umull	$ACC1,$IN23_0,${R1}[2]
 	 ldp	x9,x13,[$in2],#48
 	umull	$ACC0,$IN23_0,${R0}[2]
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	 rev	x8,x8
 	 rev	x12,x12
 	 rev	x9,x9
@@ -624,7 +638,7 @@ poly1305_blocks_neon:
 	umlal	$ACC4,$IN01_2,${R2}[0]
 	umlal	$ACC1,$IN01_2,${S4}[0]
 	umlal	$ACC2,$IN01_2,${R0}[0]
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	 rev	x8,x8
 	 rev	x12,x12
 	 rev	x9,x9
@@ -862,8 +876,8 @@ poly1305_blocks_neon:
 	st1	{$ACC4}[0],[$ctx]
 
 .Lno_data_neon:
-	.inst	0xd50323bf		// autiasp
 	ldr	x29,[sp],#80
+	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	poly1305_blocks_neon,.-poly1305_blocks_neon
 
@@ -871,6 +885,9 @@ poly1305_blocks_neon:
 .align	5
 poly1305_emit_neon:
 .Lpoly1305_emit_neon:
+	// The symbol .Lpoly1305_emit_neon is not a .globl symbol
+	// but a pointer to it is returned by poly1305_init
+	AARCH64_VALID_CALL_TARGET
 	ldr	$is_base2_26,[$ctx,#24]
 	cbz	$is_base2_26,poly1305_emit
 
@@ -905,13 +922,13 @@ poly1305_emit_neon:
 	csel	$h0,$h0,$d0,eq
 	csel	$h1,$h1,$d1,eq
 
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	ror	$t0,$t0,#32		// flip nonce words
 	ror	$t1,$t1,#32
 #endif
 	adds	$h0,$h0,$t0		// accumulate nonce
 	adc	$h1,$h1,$t1
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	$h0,$h0			// flip output bytes
 	rev	$h1,$h1
 #endif

@@ -15,9 +15,9 @@ SSL_CTX_set_tlsext_ticket_key_cb
                unsigned char iv[EVP_MAX_IV_LENGTH],
                EVP_CIPHER_CTX *ctx, EVP_MAC_CTX *hctx, int enc));
 
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
+The following function has been deprecated since OpenSSL 3.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
  int SSL_CTX_set_tlsext_ticket_key_cb(SSL_CTX sslctx,
      int (*cb)(SSL *s, unsigned char key_name[16],
@@ -49,7 +49,7 @@ ticket information or it starts a full TLS handshake to create a new session
 ticket.
 
 Before the callback function is started I<ctx> and I<hctx> have been
-initialised with L<EVP_CIPHER_CTX_reset(3)> and L<EVP_MAC_new_ctx(3)>
+initialised with L<EVP_CIPHER_CTX_reset(3)> and L<EVP_MAC_CTX_new(3)>
 respectively.
 
 For new sessions tickets, when the client doesn't present a session ticket, or
@@ -61,12 +61,12 @@ I<iv>, and set the cipher context I<ctx> and the hash context I<hctx>.
 The I<name> is 16 characters long and is used as a key identifier.
 
 The I<iv> length is the length of the IV of the corresponding cipher. The
-maximum IV length is B<EVP_MAX_IV_LENGTH> bytes defined in B<evp.h>.
+maximum IV length is B<EVP_MAX_IV_LENGTH> bytes defined in F<< <openssl/evp.h> >>.
 
 The initialization vector I<iv> should be a random value. The cipher context
 I<ctx> should use the initialisation vector I<iv>. The cipher context can be
 set using L<EVP_EncryptInit_ex(3)>. The hmac context and digest can be set using
-L<EVP_MAC_set_ctx_params(3)> with the B<OSSL_MAC_PARAM_KEY> and
+L<EVP_MAC_CTX_set_params(3)> with the B<OSSL_MAC_PARAM_KEY> and
 B<OSSL_MAC_PARAM_DIGEST> parameters respectively.
 
 When the client presents a session ticket, the callback function with be called
@@ -76,7 +76,7 @@ the session ticket. The OpenSSL library expects that the I<name> will be used
 to retrieve a cryptographic parameters and that the cryptographic context
 I<ctx> will be set with the retrieved parameters and the initialization vector
 I<iv>. using a function like L<EVP_DecryptInit_ex(3)>. The key material and
-digest for I<hctx> need to be set using L<EVP_MAC_set_ctx_params(3)> with the
+digest for I<hctx> need to be set using L<EVP_MAC_CTX_set_params(3)> with the
 B<OSSL_MAC_PARAM_KEY> and B<OSSL_MAC_PARAM_DIGEST> parameters respectively.
 
 If the I<name> is still valid but a renewal of the ticket is required the
@@ -120,8 +120,8 @@ The SSL_CTX_set_tlsext_ticket_key_cb() function is identical to
 SSL_CTX_set_tlsext_ticket_key_evp_cb() except that it takes a deprecated
 HMAC_CTX pointer instead of an EVP_MAC_CTX one.
 Before this callback function is started I<hctx> will have been
-initialised with L<EVP_MAC_new_ctx(3)> and the digest set with
-L<EVP_MAC_set_ctx_params(3)>.
+initialised with L<EVP_MAC_CTX_new(3)> and the digest set with
+L<EVP_MAC_CTX_set_params(3)>.
 The I<hctx> key material can be set using L<HMAC_Init_ex(3)>.
 
 =head1 NOTES
@@ -145,7 +145,7 @@ enable an attacker to obtain the session keys.
 
 =head1 RETURN VALUES
 
-returns 0 to indicate the callback function was set.
+Returns 1 to indicate the callback function was set and 0 otherwise.
 
 =head1 EXAMPLES
 
@@ -159,6 +159,7 @@ Reference Implementation:
                                      EVP_MAC_CTX *hctx, int enc)
  {
      OSSL_PARAM params[3];
+     your_type_t *key; /* something that you need to implement */
 
      if (enc) { /* create new session */
          if (RAND_bytes(iv, EVP_MAX_IV_LENGTH) <= 0)
@@ -178,33 +179,40 @@ Reference Implementation:
          }
          memcpy(key_name, key->name, 16);
 
-         EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL, key->aes_key, iv);
+         if (EVP_EncryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key->aes_key,
+                                iv) == 0)
+            return -1; /* error in cipher initialisation */
 
          params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                                       key->hmac_key, 16);
+                                                       key->hmac_key, 32);
          params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                       "sha256", 0);
          params[2] = OSSL_PARAM_construct_end();
-         EVP_MAC_set_ctx_params(hctx, params);
+         if (EVP_MAC_CTX_set_params(hctx, params) == 0)
+            return -1; /* error in mac initialisation */
 
          return 1;
 
      } else { /* retrieve session */
-         key = findkey(name);
+         time_t t = time(NULL);
+         key = findkey(key_name); /* something that you need to implement */
 
-         if (key == NULL || key->expire < now())
+         if (key == NULL || key->expire < t)
              return 0;
 
          params[0] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                                       key->hmac_key, 16);
+                                                       key->hmac_key, 32);
          params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                       "sha256", 0);
          params[2] = OSSL_PARAM_construct_end();
-         EVP_MAC_set_ctx_params(hctx, params);
+         if (EVP_MAC_CTX_set_params(hctx, params) == 0)
+            return -1; /* error in mac initialisation */
 
-         EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL, key->aes_key, iv);
+         if (EVP_DecryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key->aes_key,
+                                iv) == 0)
+            return -1; /* error in cipher initialisation */
 
-         if (key->expire < now() - RENEW_TIME) {
+         if (key->expire < t - RENEW_TIME) { /* RENEW_TIME: implement */
              /*
               * return 2 - This session will get a new ticket even though the
               * current one is still valid.
@@ -233,7 +241,7 @@ OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2014-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2014-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,7 @@
 #define OCB_SET_KEY_FN(fn_set_enc_key, fn_set_dec_key,                         \
                        fn_block_enc, fn_block_dec,                             \
                        fn_stream_enc, fn_stream_dec)                           \
+CRYPTO_ocb128_cleanup(&ctx->ocb);                                              \
 fn_set_enc_key(key, keylen * 8, &ctx->ksenc.ks);                               \
 fn_set_dec_key(key, keylen * 8, &ctx->ksdec.ks);                               \
 if (!CRYPTO_ocb128_init(&ctx->ocb, &ctx->ksenc.ks, &ctx->ksdec.ks,             \
@@ -102,6 +103,65 @@ static const PROV_CIPHER_HW aes_t4_ocb = {                                     \
 # define PROV_CIPHER_HW_select()                                               \
     if (SPARC_AES_CAPABLE)                                                     \
         return &aes_t4_ocb;
+#elif defined(RV64I_ZKND_ZKNE_CAPABLE)
+
+static int cipher_hw_aes_ocb_rv64i_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
+                                                     const unsigned char *key,
+                                                     size_t keylen)
+{
+    PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
+
+    OCB_SET_KEY_FN(rv64i_zkne_set_encrypt_key, rv64i_zknd_set_decrypt_key,
+                   rv64i_zkne_encrypt, rv64i_zknd_decrypt, NULL, NULL);
+    return 1;
+}
+
+# define PROV_CIPHER_HW_declare()                                              \
+static const PROV_CIPHER_HW aes_rv64i_zknd_zkne_ocb = {                        \
+    cipher_hw_aes_ocb_rv64i_zknd_zkne_initkey,                                 \
+    NULL                                                                       \
+};
+# define PROV_CIPHER_HW_select()                                               \
+    if (RV64I_ZKND_ZKNE_CAPABLE)                                               \
+        return &aes_rv64i_zknd_zkne_ocb;
+#elif defined(RV32I_ZBKB_ZKND_ZKNE_CAPABLE) && defined(RV32I_ZKND_ZKNE_CAPABLE)
+
+static int cipher_hw_aes_ocb_rv32i_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
+                                                     const unsigned char *key,
+                                                     size_t keylen)
+{
+    PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
+
+    OCB_SET_KEY_FN(rv32i_zkne_set_encrypt_key, rv32i_zknd_zkne_set_decrypt_key,
+                   rv32i_zkne_encrypt, rv32i_zknd_decrypt, NULL, NULL);
+    return 1;
+}
+
+static int cipher_hw_aes_ocb_rv32i_zbkb_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
+                                                          const unsigned char *key,
+                                                          size_t keylen)
+{
+    PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
+
+    OCB_SET_KEY_FN(rv32i_zbkb_zkne_set_encrypt_key, rv32i_zbkb_zknd_zkne_set_decrypt_key,
+                   rv32i_zkne_encrypt, rv32i_zknd_decrypt, NULL, NULL);
+    return 1;
+}
+
+# define PROV_CIPHER_HW_declare()                                              \
+static const PROV_CIPHER_HW aes_rv32i_zknd_zkne_ocb = {                        \
+    cipher_hw_aes_ocb_rv32i_zknd_zkne_initkey,                                 \
+    NULL                                                                       \
+};                                                                             \
+static const PROV_CIPHER_HW aes_rv32i_zbkb_zknd_zkne_ocb = {                   \
+    cipher_hw_aes_ocb_rv32i_zbkb_zknd_zkne_initkey,                            \
+    NULL                                                                       \
+};
+# define PROV_CIPHER_HW_select()                                               \
+    if (RV32I_ZBKB_ZKND_ZKNE_CAPABLE)                                          \
+        return &aes_rv32i_zbkb_zknd_zkne_ocb;                                  \
+    if (RV32I_ZKND_ZKNE_CAPABLE)                                               \
+        return &aes_rv32i_zknd_zkne_ocb;
 #else
 # define PROV_CIPHER_HW_declare()
 # define PROV_CIPHER_HW_select()
@@ -112,7 +172,7 @@ static const PROV_CIPHER_HW aes_generic_ocb = {
     NULL
 };
 PROV_CIPHER_HW_declare()
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_ocb(size_t keybits)
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ocb(size_t keybits)
 {
     PROV_CIPHER_HW_select()
     return &aes_generic_ocb;

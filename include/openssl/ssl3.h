@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -212,7 +212,7 @@ extern "C" {
 # define SSL3_MD_CLIENT_FINISHED_CONST   "\x43\x4C\x4E\x54"
 # define SSL3_MD_SERVER_FINISHED_CONST   "\x53\x52\x56\x52"
 
-# define SSL3_VERSION                    0x0300
+/* SSL3_VERSION is defined in prov_ssl.h */
 # define SSL3_VERSION_MAJOR              0x03
 # define SSL3_VERSION_MINOR              0x00
 
@@ -317,6 +317,7 @@ extern "C" {
 # define SSL3_MT_CERTIFICATE_STATUS              22
 # define SSL3_MT_SUPPLEMENTAL_DATA               23
 # define SSL3_MT_KEY_UPDATE                      24
+# define SSL3_MT_COMPRESSED_CERTIFICATE          25
 # ifndef OPENSSL_NO_NEXTPROTONEG
 #  define SSL3_MT_NEXT_PROTO                     67
 # endif

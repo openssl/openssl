@@ -54,13 +54,13 @@ The behaviour of SSL_shutdown() additionally depends on the underlying BIO.
 If the underlying BIO is B<blocking>, SSL_shutdown() will only return once the
 handshake step has been finished or an error occurred.
 
-If the underlying BIO is B<non-blocking>, SSL_shutdown() will also return
+If the underlying BIO is B<nonblocking>, SSL_shutdown() will also return
 when the underlying BIO could not satisfy the needs of SSL_shutdown()
 to continue the handshake. In this case a call to SSL_get_error() with the
 return value of SSL_shutdown() will yield B<SSL_ERROR_WANT_READ> or
 B<SSL_ERROR_WANT_WRITE>. The calling process then must repeat the call after
 taking appropriate action to satisfy the needs of SSL_shutdown().
-The action depends on the underlying BIO. When using a non-blocking socket,
+The action depends on the underlying BIO. When using a nonblocking socket,
 nothing is to be done, but select() can be used to check for the required
 condition. When using a buffering BIO, like a BIO pair, data must be written
 into or retrieved out of the BIO before being able to continue.
@@ -150,7 +150,7 @@ and the peer's close_notify alert was received.
 
 The shutdown was not successful.
 Call L<SSL_get_error(3)> with the return value B<ret> to find out the reason.
-It can occur if an action is needed to continue the operation for non-blocking
+It can occur if an action is needed to continue the operation for nonblocking
 BIOs.
 
 It can also occur when not all data was read using SSL_read().

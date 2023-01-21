@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,7 @@
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
 {
     ASN1_OCTET_STRING **pos;
+
     pos = CMS_get0_content(cms);
     if (pos == NULL)
         return 0;
@@ -29,13 +30,24 @@ int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
         *boundary = &(*pos)->data;
         return 1;
     }
-    CMSerr(CMS_F_CMS_STREAM, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_CMS, ERR_R_CMS_LIB);
     return 0;
 }
 
 CMS_ContentInfo *d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms)
 {
-    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(CMS_ContentInfo), bp, cms);
+    CMS_ContentInfo *ci;
+    const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms == NULL ? NULL : *cms);
+
+    ci = ASN1_item_d2i_bio_ex(ASN1_ITEM_rptr(CMS_ContentInfo), bp, cms,
+                              ossl_cms_ctx_get0_libctx(ctx),
+                              ossl_cms_ctx_get0_propq(ctx));
+    if (ci != NULL) {
+        ERR_set_mark();
+        ossl_cms_resolve_libctx(ci);
+        ERR_pop_to_mark();
+    }
+    return ci;
 }
 
 int i2d_CMS_bio(BIO *bp, CMS_ContentInfo *cms)
@@ -71,19 +83,40 @@ int SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags)
     STACK_OF(X509_ALGOR) *mdalgs;
     int ctype_nid = OBJ_obj2nid(cms->contentType);
     int econt_nid = OBJ_obj2nid(CMS_get0_eContentType(cms));
+    const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms);
+
     if (ctype_nid == NID_pkcs7_signed)
         mdalgs = cms->d.signedData->digestAlgorithms;
     else
         mdalgs = NULL;
 
-    return SMIME_write_ASN1(bio, (ASN1_VALUE *)cms, data, flags,
-                            ctype_nid, econt_nid, mdalgs,
-                            ASN1_ITEM_rptr(CMS_ContentInfo));
+    return SMIME_write_ASN1_ex(bio, (ASN1_VALUE *)cms, data, flags, ctype_nid,
+                               econt_nid, mdalgs,
+                               ASN1_ITEM_rptr(CMS_ContentInfo),
+                               ossl_cms_ctx_get0_libctx(ctx),
+                               ossl_cms_ctx_get0_propq(ctx));
+}
+
+CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, int flags, BIO **bcont,
+                                   CMS_ContentInfo **cms)
+{
+    CMS_ContentInfo *ci;
+    const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms == NULL ? NULL : *cms);
+
+    ci = (CMS_ContentInfo *)SMIME_read_ASN1_ex(bio, flags, bcont,
+                                               ASN1_ITEM_rptr(CMS_ContentInfo),
+                                               (ASN1_VALUE **)cms,
+                                               ossl_cms_ctx_get0_libctx(ctx),
+                                               ossl_cms_ctx_get0_propq(ctx));
+    if (ci != NULL) {
+        ERR_set_mark();
+        ossl_cms_resolve_libctx(ci);
+        ERR_pop_to_mark();
+    }
+    return ci;
 }
 
 CMS_ContentInfo *SMIME_read_CMS(BIO *bio, BIO **bcont)
 {
-    return (CMS_ContentInfo *)SMIME_read_ASN1(bio, bcont,
-                                              ASN1_ITEM_rptr
-                                              (CMS_ContentInfo));
+    return SMIME_read_CMS_ex(bio, 0, bcont, NULL);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,16 +13,18 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
-#include "prov/providercommonerr.h"
+#include "prov/providercommon.h"
 #include "prov/implementations.h"
-# include "prov/provider_util.h"
+#include "prov/provider_util.h"
 
 /* See RFC 4253, Section 7.2 */
 static OSSL_FUNC_kdf_newctx_fn kdf_sshkdf_new;
+static OSSL_FUNC_kdf_dupctx_fn kdf_sshkdf_dup;
 static OSSL_FUNC_kdf_freectx_fn kdf_sshkdf_free;
 static OSSL_FUNC_kdf_reset_fn kdf_sshkdf_reset;
 static OSSL_FUNC_kdf_derive_fn kdf_sshkdf_derive;
@@ -53,9 +55,11 @@ static void *kdf_sshkdf_new(void *provctx)
 {
     KDF_SSHKDF *ctx;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
-    ctx->provctx = provctx;
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL)
+        ctx->provctx = provctx;
     return ctx;
 }
 
@@ -72,12 +76,38 @@ static void kdf_sshkdf_free(void *vctx)
 static void kdf_sshkdf_reset(void *vctx)
 {
     KDF_SSHKDF *ctx = (KDF_SSHKDF *)vctx;
+    void *provctx = ctx->provctx;
 
     ossl_prov_digest_reset(&ctx->digest);
     OPENSSL_clear_free(ctx->key, ctx->key_len);
     OPENSSL_clear_free(ctx->xcghash, ctx->xcghash_len);
     OPENSSL_clear_free(ctx->session_id, ctx->session_id_len);
     memset(ctx, 0, sizeof(*ctx));
+    ctx->provctx = provctx;
+}
+
+static void *kdf_sshkdf_dup(void *vctx)
+{
+    const KDF_SSHKDF *src = (const KDF_SSHKDF *)vctx;
+    KDF_SSHKDF *dest;
+
+    dest = kdf_sshkdf_new(src->provctx);
+    if (dest != NULL) {
+        if (!ossl_prov_memdup(src->key, src->key_len,
+                              &dest->key, &dest->key_len)
+                || !ossl_prov_memdup(src->xcghash, src->xcghash_len,
+                                     &dest->xcghash , &dest->xcghash_len)
+                || !ossl_prov_memdup(src->session_id, src->session_id_len,
+                                     &dest->session_id , &dest->session_id_len)
+                || !ossl_prov_digest_copy(&dest->digest, &src->digest))
+            goto err;
+        dest->type = src->type;
+    }
+    return dest;
+
+ err:
+    kdf_sshkdf_free(dest);
+    return NULL;
 }
 
 static int sshkdf_set_membuf(unsigned char **dst, size_t *dst_len,
@@ -85,15 +115,20 @@ static int sshkdf_set_membuf(unsigned char **dst, size_t *dst_len,
 {
     OPENSSL_clear_free(*dst, *dst_len);
     *dst = NULL;
+    *dst_len = 0;
     return OSSL_PARAM_get_octet_string(p, (void **)dst, 0, dst_len);
 }
 
-static int kdf_sshkdf_derive(void *vctx, unsigned char *key,
-                             size_t keylen)
+static int kdf_sshkdf_derive(void *vctx, unsigned char *key, size_t keylen,
+                             const OSSL_PARAM params[])
 {
     KDF_SSHKDF *ctx = (KDF_SSHKDF *)vctx;
-    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+    const EVP_MD *md;
 
+    if (!ossl_prov_is_running() || !kdf_sshkdf_set_ctx_params(ctx, params))
+        return 0;
+
+    md = ossl_prov_digest_md(&ctx->digest);
     if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
@@ -124,8 +159,10 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KDF_SSHKDF *ctx = vctx;
-    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
-    int t;
+    OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(ctx->provctx);
+
+    if (params == NULL)
+        return 1;
 
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
         return 0;
@@ -146,19 +183,24 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SSHKDF_TYPE))
         != NULL) {
-        if (p->data == NULL || p->data_size == 0)
+        const char *kdftype;
+
+        if (!OSSL_PARAM_get_utf8_string_ptr(p, &kdftype))
             return 0;
-        t = *(unsigned char *)p->data;
-        if (t < 65 || t > 70) {
+        /* Expect one character (byte in this case) */
+        if (kdftype == NULL || p->data_size != 1)
+            return 0;
+        if (kdftype[0] < 65 || kdftype[0] > 70) {
             ERR_raise(ERR_LIB_PROV, PROV_R_VALUE_ERROR);
             return 0;
         }
-        ctx->type = (char)t;
+        ctx->type = kdftype[0];
     }
     return 1;
 }
 
-static const OSSL_PARAM *kdf_sshkdf_settable_ctx_params(void)
+static const OSSL_PARAM *kdf_sshkdf_settable_ctx_params(ossl_unused void *ctx,
+                                                        ossl_unused void *p_ctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
@@ -181,7 +223,8 @@ static int kdf_sshkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *kdf_sshkdf_gettable_ctx_params(void)
+static const OSSL_PARAM *kdf_sshkdf_gettable_ctx_params(ossl_unused void *ctx,
+                                                        ossl_unused void *p_ctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
@@ -190,8 +233,9 @@ static const OSSL_PARAM *kdf_sshkdf_gettable_ctx_params(void)
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH kdf_sshkdf_functions[] = {
+const OSSL_DISPATCH ossl_kdf_sshkdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_sshkdf_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kdf_sshkdf_dup },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_sshkdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_sshkdf_reset },
     { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_sshkdf_derive },

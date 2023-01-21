@@ -10,19 +10,38 @@ openssl-list - list algorithms and features
 B<openssl list>
 [B<-help>]
 [B<-verbose>]
+[B<-select> I<name>]
 [B<-1>]
+[B<-all-algorithms>]
 [B<-commands>]
-[B<-digest-commands>]
+[B<-standard-commands>]
 [B<-digest-algorithms>]
-[B<-kdf-algorithms>]
+{- output_off() if $disabled{"deprecated-3.0"}; ""
+-}[B<-digest-commands>]
+{- output_on() if $disabled{"deprecated-3.0"}; ""
+-}[B<-kdf-algorithms>]
 [B<-mac-algorithms>]
+[B<-random-instances>]
 [B<-random-generators>]
-[B<-cipher-commands>]
 [B<-cipher-algorithms>]
+{- output_off() if $disabled{"deprecated-3.0"}; ""
+-}[B<-cipher-commands>]
+{- output_on() if $disabled{"deprecated-3.0"}; ""
+-}[B<-encoders>]
+[B<-decoders>]
+[B<-key-managers>]
+[B<-key-exchange-algorithms>]
+[B<-kem-algorithms>]
+[B<-signature-algorithms>]
+[B<-asymcipher-algorithms>]
 [B<-public-key-algorithms>]
 [B<-public-key-methods>]
-[B<-engines>]
-[B<-disabled>]
+[B<-store-loaders>]
+[B<-providers>]
+{- output_off() if $disabled{"deprecated-3.0"}; ""
+-}[B<-engines>]
+{- output_on() if $disabled{"deprecated-3.0"}; ""
+-}[B<-disabled>]
 [B<-objects>]
 [B<-options> I<command>]
 {- $OpenSSL::safe::opt_provider_synopsis -}
@@ -45,39 +64,103 @@ Display a usage message.
 Displays extra information.
 The options below where verbosity applies say a bit more about what that means.
 
+=item B<-select> I<name>
+
+Only list algorithms that match this name.
+
 =item B<-1>
 
 List the commands, digest-commands, or cipher-commands in a single column.
 If used, this option must be given first.
 
+=item B<-all-algorithms>
+
+Display lists of all algorithms.  These include:
+
+=over 4
+
+=item Asymmetric ciphers
+
+=item Decoders
+
+=item Digests
+
+=item Encoders
+
+=item Key derivation algorithms (KDF)
+
+=item Key encapsulation methods (KEM)
+
+=item Key exchange algorithms (KEX)
+
+=item Key managers
+
+=item Message authentication code algorithms (MAC)
+
+=item Random number generators (RNG, DRBG)
+
+=item Signature algorithms
+
+=item Store loaders
+
+=item Symmetric ciphers
+
+=back
+
 =item B<-commands>
 
 Display a list of standard commands.
 
+=item B<-standard-commands>
+
+List of standard commands.
+
 =item B<-digest-commands>
+
+This option is deprecated. Use B<digest-algorithms> instead.
 
 Display a list of message digest commands, which are typically used
 as input to the L<openssl-dgst(1)> or L<openssl-speed(1)> commands.
 
 =item B<-cipher-commands>
 
+This option is deprecated. Use B<cipher-algorithms> instead.
+
 Display a list of cipher commands, which are typically used as input
-to the L<openssl-dgst(1)> or L<openssl-speed(1)> commands.
+to the L<openssl-enc(1)> or L<openssl-speed(1)> commands.
 
-=item B<-digest-algorithms>, B<-kdf-algorithms>, B<-mac-algorithms>,
-B<-cipher-algorithms>
+=item B<-cipher-algorithms>, B<-digest-algorithms>, B<-kdf-algorithms>,
+B<-mac-algorithms>,
 
-Display a list of cipher, digest, kdf and mac algorithms.
+Display a list of symmetric cipher, digest, kdf and mac algorithms.
 See L</Display of algorithm names> for a description of how names are
 displayed.
 
 In verbose mode, the algorithms provided by a provider will get additional
 information on what parameters each implementation supports.
 
+=item B<-random-instances>
+
+List the primary, public and private random number generator details.
+
 =item B<-random-generators>
 
 Display a list of random number generators.
+See L</Display of algorithm names> for a description of how names are
+displayed.
 
+=item B<-encoders>
+
+Display a list of encoders.
+See L</Display of algorithm names> for a description of how names are
+displayed.
+
+In verbose mode, the algorithms provided by a provider will get additional
+information on what parameters each implementation supports.
+
+=item B<-decoders>
+
+Display a list of decoders.
 See L</Display of algorithm names> for a description of how names are
 displayed.
 
@@ -88,12 +171,48 @@ information on what parameters each implementation supports.
 
 Display a list of public key algorithms, with each algorithm as
 a block of multiple lines, all but the first are indented.
+The options B<key-exchange-algorithms>, B<kem-algorithms>,
+B<signature-algorithms>, and B<asymcipher-algorithms> will display similar info.
 
 =item B<-public-key-methods>
 
-Display a list of public key method OIDs.
+Display a list of public key methods.
+
+=item B<-key-managers>
+
+Display a list of key managers.
+
+=item B<-key-exchange-algorithms>
+
+Display a list of key exchange algorithms.
+
+=item B<-kem-algorithms>
+
+Display a list of key encapsulation algorithms.
+
+=item B<-signature-algorithms>
+
+Display a list of signature algorithms.
+
+=item B<-asymcipher-algorithms>
+
+Display a list of asymmetric cipher algorithms.
+
+=item B<-store-loaders>
+
+Display a list of store loaders.
+
+=item B<-providers>
+
+Display a list of all loaded providers with their names, version and status.
+
+In verbose mode, the full version and all provider parameters will additionally
+be displayed.
+
 
 =item B<-engines>
+
+This option is deprecated.
 
 Display a list of loaded engines.
 
@@ -146,9 +265,14 @@ In both cases, C<bar> is the name of the provider.
 
 =back
 
+=head1 HISTORY
+
+The B<-engines>, B<-digest-commands>, and B<-cipher-commands> options
+were deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

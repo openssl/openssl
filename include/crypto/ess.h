@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,26 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* internal ESS related stuff */
-
-ESS_SIGNING_CERT *ESS_SIGNING_CERT_get(PKCS7_SIGNER_INFO *si);
-int ESS_SIGNING_CERT_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc);
-
-ESS_SIGNING_CERT *ESS_SIGNING_CERT_new_init(X509 *signcert,
-                                            STACK_OF(X509) *certs,
-                                            int issuer_needed);
-
-ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_get(PKCS7_SIGNER_INFO *si);
-int ESS_SIGNING_CERT_V2_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT_V2 *sc);
-
-ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
-                                                  X509 *signcert,
-                                                  STACK_OF(X509) *certs,
-                                                  int issuer_needed);
-
-/* Returns < 0 if certificate is not found, certificate index otherwise. */
-int ess_find_cert_v2(const STACK_OF(ESS_CERT_ID_V2) *cert_ids, const X509 *cert);
-int ess_find_cert(const STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert);
+#ifndef OSSL_CRYPTO_ESS_H
+# define OSSL_CRYPTO_ESS_H
+# pragma once
 
 /*-
  * IssuerSerial ::= SEQUENCE {
@@ -89,3 +72,5 @@ struct ESS_signing_cert_v2_st {
     STACK_OF(ESS_CERT_ID_V2) *cert_ids;
     STACK_OF(POLICYINFO) *policy_info;
 };
+
+#endif /* OSSL_CRYPTO_ESS_H */

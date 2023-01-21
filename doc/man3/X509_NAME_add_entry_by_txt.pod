@@ -66,13 +66,13 @@ RelativeDistinguishedName (RDN).
 B<loc> actually determines the index where the new entry is inserted:
 if it is -1 it is appended.
 
-B<set> determines how the new type is added. If it is zero a
-new RDN is created.
+B<set> determines how the new type is added.
+If it is zero a new RDN is created.
 
-If B<set> is -1 or 1 it is added to the previous or next RDN
-structure respectively. This will then be a multivalued RDN:
-since multivalues RDNs are very seldom used B<set> is almost
-always set to zero.
+If B<set> is -1 or 1 it is added as a new set member
+to the previous or next RDN structure, respectively.
+This will then become part of a multi-valued RDN (containing a set of AVAs).
+Since multi-valued RDNs are very rarely used B<set> typically will be zero.
 
 =head1 RETURN VALUES
 

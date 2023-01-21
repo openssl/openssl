@@ -41,15 +41,16 @@ typedef struct RIPEMD160state_st {
     unsigned int num;
 } RIPEMD160_CTX;
 #  endif
-
-DEPRECATEDIN_3_0(int RIPEMD160_Init(RIPEMD160_CTX *c))
-DEPRECATEDIN_3_0(int RIPEMD160_Update(RIPEMD160_CTX *c, const void *data,
-                                      size_t len))
-DEPRECATEDIN_3_0(int RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c))
-DEPRECATEDIN_3_0(unsigned char *RIPEMD160(const unsigned char *d, size_t n,
-                                          unsigned char *md))
-DEPRECATEDIN_3_0(void RIPEMD160_Transform(RIPEMD160_CTX *c,
-                                          const unsigned char *b))
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 int RIPEMD160_Init(RIPEMD160_CTX *c);
+OSSL_DEPRECATEDIN_3_0 int RIPEMD160_Update(RIPEMD160_CTX *c, const void *data,
+                                           size_t len);
+OSSL_DEPRECATEDIN_3_0 int RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c);
+OSSL_DEPRECATEDIN_3_0 unsigned char *RIPEMD160(const unsigned char *d, size_t n,
+                                               unsigned char *md);
+OSSL_DEPRECATEDIN_3_0 void RIPEMD160_Transform(RIPEMD160_CTX *c,
+                                               const unsigned char *b);
+#  endif
 
 #  ifdef  __cplusplus
 }

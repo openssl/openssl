@@ -39,4 +39,16 @@ our @tests = (
           "ExpectedClientAlert" => "UnknownCA",
         },
     },
+
+    {
+        name => "name-constraints-no-san-in-ee",
+        server => {
+            "Certificate" => test_pem("goodcn2-chain.pem"),
+            "PrivateKey"  => test_pem("goodcn2-key.pem"),
+        },
+        client => {
+            "VerifyCAFile" => test_pem("root-cert.pem"),
+        },
+        test   => { "ExpectedResult" => "Success" },
+    },
 );

@@ -47,11 +47,21 @@ inside the B<pathname> are B<ignored>.  Similarly, if a file is opened
 while scanning a directory, and that file has an B<.include> directive
 that specifies a directory, that is also ignored.
 
-As a general rule, the B<pathname> should be an absolute path.  Relative
-paths are evaluated based on the current working directory, so unless the
-file with the B<.include> directive is application-specific, the inclusion
-will not work as expected.  The environment variable B<OPENSSL_CONF_INCLUDE>,
-if it exists, will be prepended to all B<.include> B<pathname>'s.
+As a general rule, the B<pathname> should be an absolute path; this can
+be enforced with the B<abspath> and B<includedir> pragmas, described below.
+The environment variable B<OPENSSL_CONF_INCLUDE>, if it exists,
+is prepended to all relative pathnames.
+If the pathname is still relative, it is interpreted based on the
+current working directory.
+
+To require all file inclusions to name absolute paths, use the following
+directive:
+
+ .pragma [=] abspath:value
+
+The default behavior, where the B<value> is B<false> or B<off>, is to allow
+relative paths. To require all B<.include> pathnames to be absolute paths,
+use a B<value> of B<true> or B<on>.
 
 In these files, the dollar sign, B<$>, is used to reference a variable, as
 described below.  On some platforms, however, it is common to treat B<$>
@@ -60,22 +70,18 @@ done with the following directive:
 
  .pragma [=] dollarid:value
 
-Where B<value> is one of the following:
-
-=over 4
-
-=item B<off> or B<false>
-
-This is the default behavior. For example, C<foo$bar> is interpreted as
-C<foo> followed by the expansion of the variable C<bar>.
-
-=item B<on> or B<true>
-
-This specifies that dollar signs are part of the symbol name and
+The default behavior, where the B<value> is B<false> or B<off>, is to treat
+the dollarsign as indicating a variable name; C<foo$bar> is interpreted as
+C<foo> followed by the expansion of the variable C<bar>. If B<value> is
+B<true> or B<on>, then C<foo$bar> is a single seven-character name nad
 variable expansions must be specified using braces or parentheses.
-For example, C<foo$bar> is treated as a single seven-character name.
 
-=back
+ .pragma [=] includedir:value
+
+If a relative pathname is specified in the B<.include> directive, and
+the B<OPENSSL_CONF_INCLUDE> environment variable doesn't exist, then
+the value of the B<includedir> pragma, if it exists, is prepended to the
+pathname.
 
 =head2 Settings
 
@@ -160,7 +166,17 @@ how to configure any modules in the library. It is not an error to leave
 any module in its default configuration. An application can specify a
 different name by calling CONF_modules_load_file(), for example, directly.
 
- # This must be in the default section
+OpenSSL also looks up the value of B<config_diagnostics>.
+If this exists and has a nonzero numeric value, any error suppressing flags
+passed to CONF_modules_load() will be ignored.
+This is useful for diagnosing misconfigurations but its use in
+production requires additional consideration.  With this option enabled,
+a configuration error will completely prevent access to a service.
+Without this option and in the presence of a configuration error, access
+will be allowed but the desired configuration will B<not> be used.
+
+ # These must be in the default section
+ config_diagnostics = 1
  openssl_conf = openssl_init
 
  [openssl_init]
@@ -169,6 +185,7 @@ different name by calling CONF_modules_load_file(), for example, directly.
  alg_section = evp_properties
  ssl_conf = ssl_configuration
  engines = engines
+ random = random
 
  [oids]
  ... new oids here ...
@@ -184,6 +201,9 @@ different name by calling CONF_modules_load_file(), for example, directly.
 
  [engines]
  ... engine properties here ...
+
+ [random]
+ ... random properties here ...
 
 The semantics of each module are described below. The phrase "in the
 initialization section" refers to the section identified by the
@@ -253,6 +273,15 @@ significant.
 All parameters in the section as well as sub-sections are made
 available to the provider.
 
+=head3 Default provider and its activation
+
+If no providers are activated explicitly, the default one is activated implicitly.
+See L<OSSL_PROVIDER-default(7)> for more details.
+
+If you add a section explicitly activating any other provider(s),
+you most probably need to explicitly activate the default provider,
+otherwise it becomes unavailable in openssl. It may make the system remotely unavailable.
+
 =head2 EVP Configuration
 
 The name B<alg_section> in the initialization section names the section
@@ -299,10 +328,15 @@ section with the configuration for that name. For example:
 
 The configuration name B<system_default> has a special meaning.  If it
 exists, it is applied whenever an B<SSL_CTX> object is created.  For example,
-to impose a system-wide minimum on protocol version:
+to impose system-wide minimum TLS and DTLS protocol versions:
 
  [tls_system_default]
  MinProtocol = TLSv1.2
+ MinProtocol = DTLSv1.2
+
+The minimum TLS protocol is applied to B<SSL_CTX> objects that are TLS-based,
+and the minimum DTLS protocol to those are DTLS-based.
+The same applies also to maximum versions set with B<MaxProtocol>.
 
 Each configuration section consists of name/value pairs that are parsed
 by B<SSL_CONF_cmd(3)>, which will be called by SSL_CTX_config() or
@@ -378,6 +412,63 @@ For example:
  default_algorithms = ALL
  other_ctrl = EMPTY
 
+=head2 Random Configuration
+
+The name B<random> in the initialization section names the section
+containing the random number generator settings.
+
+Within the random section, the following names have meaning:
+
+=over 4
+
+=item B<random>
+
+This is used to specify the random bit generator.
+For example:
+
+ [random]
+ random = CTR-DRBG
+
+The available random bit generators are:
+
+=over 4
+
+=item B<CTR-DRBG>
+
+=item B<HASH-DRBG>
+
+=item B<HMAC-DRBG>
+
+=back
+
+=item B<cipher>
+
+This specifies what cipher a B<CTR-DRBG> random bit generator will use.
+Other random bit generators ignore this name.
+The default value is B<AES-256-CTR>.
+
+=item B<digest>
+
+This specifies what digest the B<HASH-DRBG> or B<HMAC-DRBG> random bit
+generators will use.  Other random bit generators ignore this name.
+
+=item B<properties>
+
+This sets the property query used when fetching the random bit generator and
+any underlying algorithms.
+
+=item B<seed>
+
+This sets the randomness source that should be used.  By default B<SEED-SRC>
+will be used outside of the FIPS provider.  The FIPS provider uses call backs
+to access the same randomness sources from outside the validated boundary.
+
+=item B<seed_properties>
+
+This sets the property query used when fetching the randomness source.
+
+=back
+
 =head1 EXAMPLES
 
 This example shows how to use quoting and escaping.
@@ -430,7 +521,7 @@ F<sample>.
 
 =item B<OPENSSL_CONF>
 
-The path to the config file.
+The path to the config file, or the empty string for none.
 Ignored in set-user-ID and set-group-ID programs.
 
 =item B<OPENSSL_ENGINES>
@@ -474,15 +565,17 @@ configuration files using that syntax will have to be modified.
 =head1 SEE ALSO
 
 L<openssl-x509(1)>, L<openssl-req(1)>, L<openssl-ca(1)>,
+L<openssl-fipsinstall(1)>,
 L<ASN1_generate_nconf(3)>,
 L<EVP_set_default_properties(3)>,
+L<CONF_modules_load(3)>,
 L<CONF_modules_load_file(3)>,
 L<fips_config(5)>, and
 L<x509v3_config(5)>.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

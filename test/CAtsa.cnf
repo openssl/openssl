@@ -3,6 +3,9 @@
 # This config is used by the Time Stamp Authority tests.
 #
 
+# Comment out the next line to ignore configuration errors
+config_diagnostics = 1
+
 # Extra OBJECT IDENTIFIER info:
 oid_section		= new_oids
 
@@ -48,7 +51,6 @@ emailAddress		= optional
 
 #----------------------------------------------------------------------
 [ req ]
-default_bits		= 2048
 default_md		= sha1
 distinguished_name	= $ENV::TSDNSECT
 encrypt_rsa_key		= no

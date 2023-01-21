@@ -67,7 +67,7 @@ handshake.
   - InternalError - some other error
 
 * ExpectedClientAlert, ExpectedServerAlert - expected alert. See
-  `ssl_test_ctx.c` for known values. Note: the expected alert is currently
+  `test/helpers/ssl_test_ctx.c` for known values. Note: the expected alert is currently
   matched against the _last_ received alert (i.e., a fatal alert or a
   `close_notify`). Warning alert expectations are not yet supported. (A warning
   alert will not be correctly matched, if followed by a `close_notify` or
@@ -261,12 +261,14 @@ environment variable to point to the location of the certs. E.g., from the root
 OpenSSL directory, do
 
     $ CTLOG_FILE=test/ct/log_list.cnf TEST_CERTS_DIR=test/certs test/ssl_test \
-      test/ssl-tests/01-simple.cnf
+      test/ssl-tests/01-simple.cnf default
 
 or for shared builds
 
     $ CTLOG_FILE=test/ct/log_list.cnf  TEST_CERTS_DIR=test/certs \
-      util/wrap.pl test/ssl_test test/ssl-tests/01-simple.cnf
+      util/wrap.pl test/ssl_test test/ssl-tests/01-simple.cnf default
+
+In the above examples, `default` is the provider to use.
 
 Note that the test expectations sometimes depend on the Configure settings. For
 example, the negotiated protocol depends on the set of available (enabled)
@@ -281,3 +283,14 @@ of the generated `test/ssl-tests/*.cnf` correspond to expected outputs in with
 the default Configure options. To run `ssl_test` manually from the command line
 in a build with a different configuration, you may need to generate the right
 `*.cnf` file from the `*.cnf.in` input first.
+
+Running a test manually via make
+--------------------------------
+
+Individual tests may be run by adding the SSL_TESTS variable to the `make`
+command line. The SSL_TESTS variable is set to the list of input (or ".in")
+files. The values in SSL_TESTS are globbed.
+
+    $ make test TESTS=test_ssl_new SSL_TESTS="0*.cnf.in"
+
+    $ make test TESTS=test_ssl_new SSL_TESTS="01-simple.cnf.in 05-sni.cnf.in"

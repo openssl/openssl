@@ -8,10 +8,8 @@
  */
 
 #include <string.h>
-#include "ssltestlib.h"
+#include "helpers/ssltestlib.h"
 #include "testutil.h"
-
-DEFINE_STACK_OF(SSL_CIPHER)
 
 static int docorrupt = 0;
 
@@ -112,7 +110,7 @@ static const BIO_METHOD *bio_f_tls_corrupt_filter(void)
     if (method_tls_corrupt == NULL) {
         method_tls_corrupt = BIO_meth_new(BIO_TYPE_CUSTOM_FILTER,
                                           "TLS corrupt filter");
-        if (   method_tls_corrupt == NULL
+        if (method_tls_corrupt == NULL
             || !BIO_meth_set_write(method_tls_corrupt, tls_corrupt_write)
             || !BIO_meth_set_read(method_tls_corrupt, tls_corrupt_read)
             || !BIO_meth_set_puts(method_tls_corrupt, tls_corrupt_puts)
@@ -190,6 +188,7 @@ static int test_ssl_corrupt(int testidx)
     int testresult = 0;
     STACK_OF(SSL_CIPHER) *ciphers;
     const SSL_CIPHER *currcipher;
+    int err;
 
     docorrupt = 0;
 
@@ -201,7 +200,8 @@ static int test_ssl_corrupt(int testidx)
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, cipher_list[testidx]))
+    if (!TEST_true(SSL_CTX_set_dh_auto(sctx, 1))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx, cipher_list[testidx]))
             || !TEST_true(SSL_CTX_set_ciphersuites(cctx, ""))
             || !TEST_ptr(ciphers = SSL_CTX_get_ciphers(cctx))
             || !TEST_int_eq(sk_SSL_CIPHER_num(ciphers), 1)
@@ -234,9 +234,14 @@ static int test_ssl_corrupt(int testidx)
     if (!TEST_int_lt(SSL_read(server, junk, sizeof(junk)), 0))
         goto end;
 
-    if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
-                     SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC))
-        goto end;
+    do {
+        err = ERR_get_error();
+
+        if (err == 0) {
+            TEST_error("Decryption failed or bad record MAC not seen");
+            goto end;
+        }
+    } while (ERR_GET_REASON(err) != SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
 
     testresult = 1;
  end:

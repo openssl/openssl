@@ -33,6 +33,7 @@ OSSL_TRACE_ENABLED
  } OSSL_TRACE_END(category);
 
  /* one-shot trace macros */
+ OSSL_TRACE(category, text)
  OSSL_TRACE1(category, format, arg1)
  OSSL_TRACE2(category, format, arg1, arg2)
  ...
@@ -49,23 +50,23 @@ The functions described here are mainly interesting for those who provide
 OpenSSL functionality, either in OpenSSL itself or in engine modules
 or similar.
 
-If tracing is enabled (see L</NOTES> below), these functions are used to
-generate free text tracing output.
+If the tracing facility is enabled (see L</Configure Tracing> below),
+these functions are used to generate free text tracing output.
 
 The tracing output is divided into types which are enabled
 individually by the application.
 The tracing types are described in detail in
 L<OSSL_trace_set_callback(3)/Trace types>.
-The fallback type C<OSSL_TRACE_CATEGORY_ALL> should I<not> be used
+The fallback type B<OSSL_TRACE_CATEGORY_ALL> should I<not> be used
 with the functions described here.
 
-Tracing for a specific category is enabled if a so called
+Tracing for a specific category is enabled at run-time if a so-called
 I<trace channel> is attached to it. A trace channel is simply a
 BIO object to which the application can write its trace output.
 
 The application has two different ways of registering a trace channel,
-either by directly providing a BIO object using OSSL_trace_set_channel(),
-or by providing a callback routine using OSSL_trace_set_callback().
+either by directly providing a BIO object using L<OSSL_trace_set_channel(3)>,
+or by providing a callback routine using L<OSSL_trace_set_callback(3)>.
 The latter is wrapped internally by a dedicated BIO object, so for the
 tracing code both channel types are effectively indistinguishable.
 We call them a I<simple trace channel> and a I<callback trace channel>,
@@ -86,10 +87,12 @@ but rather uses a set of convenience macros, see the L</Macros> section below.
 =head2 Functions
 
 OSSL_trace_enabled() can be used to check if tracing for the given
-C<category> is enabled.
+I<category> is enabled, i.e., if the tracing facility has been statically
+enabled (see L</Configure Tracing> below) and a trace channel has been
+registered using L<OSSL_trace_set_channel(3)> or L<OSSL_trace_set_callback(3)>.
 
 OSSL_trace_begin() is used to starts a tracing section, and get the
-channel for the given C<category> in form of a BIO.
+channel for the given I<category> in form of a BIO.
 This BIO can only be used for output.
 
 OSSL_trace_end() is used to end a tracing section.
@@ -104,12 +107,12 @@ sections is undefined.
 There are a number of convenience macros defined, to make tracing
 easy and consistent.
 
-C<OSSL_TRACE_BEGIN(category)> and C<OSSL_TRACE_END(category)> reserve
-the B<BIO> C<trc_out> and are used as follows to wrap a trace section:
+OSSL_TRACE_BEGIN() and OSSL_TRACE_END() reserve the B<BIO> C<trc_out> and are
+used as follows to wrap a trace section:
 
  OSSL_TRACE_BEGIN(TLS) {
 
-     BIO_fprintf(trc_out, ... );
+     BIO_printf(trc_out, ... );
 
  } OSSL_TRACE_END(TLS);
 
@@ -119,13 +122,13 @@ This will normally expand to:
      BIO *trc_out = OSSL_trace_begin(OSSL_TRACE_CATEGORY_TLS);
      if (trc_out != NULL) {
          ...
-         BIO_fprintf(trc_out, ...);
+         BIO_printf(trc_out, ...);
      }
      OSSL_trace_end(OSSL_TRACE_CATEGORY_TLS, trc_out);
  } while (0);
 
-C<OSSL_TRACE_CANCEL(category)> must be used before returning from or
-jumping out of a trace section:
+OSSL_TRACE_CANCEL() must be used before returning from or jumping out of a
+trace section:
 
  OSSL_TRACE_BEGIN(TLS) {
 
@@ -133,7 +136,7 @@ jumping out of a trace section:
          OSSL_TRACE_CANCEL(TLS);
          goto err;
      }
-     BIO_fprintf(trc_out, ... );
+     BIO_printf(trc_out, ... );
 
  } OSSL_TRACE_END(TLS);
 
@@ -146,13 +149,13 @@ This will normally expand to:
              OSSL_trace_end(OSSL_TRACE_CATEGORY_TLS, trc_out);
              goto err;
          }
-         BIO_fprintf(trc_out, ... );
+         BIO_printf(trc_out, ... );
      }
      OSSL_trace_end(OSSL_TRACE_CATEGORY_TLS, trc_out);
  } while (0);
 
 
-C<OSSL_TRACE()> and C<OSSL_TRACE1()>, C<OSSL_TRACE2()>, ... C<OSSL_TRACE9()> are
+OSSL_TRACE() and OSSL_TRACE1(), OSSL_TRACE2(), ... OSSL_TRACE9() are
 so-called one-shot macros:
 
 The macro call C<OSSL_TRACE(category, text)>, produces literal text trace output.
@@ -165,14 +168,14 @@ It expands to:
      BIO_printf(trc_out, format, arg1, ..., argN)
  } OSSL_TRACE_END(category)
 
-Internally, all one-shot macros are implemented using a generic C<OSSL_TRACEV()>
+Internally, all one-shot macros are implemented using a generic OSSL_TRACEV()
 macro, since C90 does not support variadic macros. This helper macro has a rather
 weird synopsis and should not be used directly.
 
-The C<OSSL_TRACE_ENABLED(category)> macro can be used to conditionally execute
-some code only if a specific trace category is enabled.
+The OSSL_TRACE_ENABLED() macro can be used to conditionally execute some code
+only if a specific trace category is enabled.
 In some situations this is simpler than entering a trace section using
-C<OSSL_TRACE_BEGIN(category)> and C<OSSL_TRACE_END(category)>.
+OSSL_TRACE_BEGIN() and OSSL_TRACE_END().
 For example, the code
 
  if (OSSL_TRACE_ENABLED(TLS)) {
@@ -230,11 +233,11 @@ When the library is built with tracing disabled:
 
 =item *
 
-The macro C<OPENSSL_NO_TRACE> is defined in C<openssl/opensslconf.h>.
+The macro B<OPENSSL_NO_TRACE> is defined in F<< <openssl/opensslconf.h> >>.
 
 =item *
 
-all functions are still present, bu OSSL_trace_enabled() will always
+all functions are still present, but OSSL_trace_enabled() will always
 report the categories as disabled, and all other functions will do
 nothing.
 
@@ -249,7 +252,7 @@ For example, take this example from L</Macros> section above:
          OSSL_TRACE_CANCEL(TLS);
          goto err;
      }
-     BIO_fprintf(trc_out, ... );
+     BIO_printf(trc_out, ... );
 
  } OSSL_TRACE_END(TLS);
 
@@ -262,7 +265,7 @@ When the tracing API isn't operational, that will expand to:
              ((void)0);
              goto err;
          }
-         BIO_fprintf(trc_out, ... );
+         BIO_printf(trc_out, ... );
      }
  } while (0);
 
@@ -270,19 +273,23 @@ When the tracing API isn't operational, that will expand to:
 
 =head1 RETURN VALUES
 
-OSSL_trace_enabled() returns 1 if tracing for the given B<type> is
+OSSL_trace_enabled() returns 1 if tracing for the given I<type> is
 operational and enabled, otherwise 0.
 
-OSSL_trace_begin() returns a C<BIO *> if the given B<type> is enabled,
-otherwise C<NULL>.
+OSSL_trace_begin() returns a B<BIO> pointer if the given I<type> is enabled,
+otherwise NULL.
+
+=head1 SEE ALSO
+
+L<OSSL_trace_set_channel(3)>, L<OSSL_trace_set_callback(3)>
 
 =head1 HISTORY
 
-The OpenSSL Tracing API was added ino OpenSSL 3.0.
+The OpenSSL Tracing API was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

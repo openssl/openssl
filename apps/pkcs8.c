@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,7 +18,7 @@
 #include <openssl/pkcs12.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_COMMON,
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
     OPT_TOPK8, OPT_NOITER, OPT_NOCRYPT,
 #ifndef OPENSSL_NO_SCRYPT
@@ -74,8 +74,8 @@ int pkcs8_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
     X509_SIG *p8 = NULL;
-    const EVP_CIPHER *cipher = NULL;
-    char *infile = NULL, *outfile = NULL;
+    EVP_CIPHER *cipher = NULL;
+    char *infile = NULL, *outfile = NULL, *ciphername = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *prog;
 #ifndef OPENSSL_NO_UI_CONSOLE
     char pass[APP_PASS_LEN];
@@ -83,7 +83,7 @@ int pkcs8_main(int argc, char **argv)
     char *passin = NULL, *passout = NULL, *p8pass = NULL;
     OPTION_CHOICE o;
     int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
+    int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
     int private = 0, traditional = 0;
 #ifndef OPENSSL_NO_SCRYPT
     long scrypt_N = 0, scrypt_r = 0, scrypt_p = 0;
@@ -136,8 +136,7 @@ int pkcs8_main(int argc, char **argv)
             traditional = 1;
             break;
         case OPT_V2:
-            if (!opt_cipher(opt_arg(), &cipher))
-                goto opthelp;
+            ciphername = opt_arg();
             break;
         case OPT_V1:
             pbe_nid = OBJ_txt2nid(opt_arg());
@@ -155,11 +154,10 @@ int pkcs8_main(int argc, char **argv)
                 goto opthelp;
             }
             if (cipher == NULL)
-                cipher = EVP_aes_256_cbc();
+                cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
             break;
         case OPT_ITER:
-            if (!opt_int(opt_arg(), &iter))
-                goto opthelp;
+            iter =  opt_int_arg();
             break;
         case OPT_PASSIN:
             passinarg = opt_arg();
@@ -176,7 +174,7 @@ int pkcs8_main(int argc, char **argv)
             scrypt_r = 8;
             scrypt_p = 1;
             if (cipher == NULL)
-                cipher = EVP_aes_256_cbc();
+                cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
             break;
         case OPT_SCRYPT_N:
             if (!opt_long(opt_arg(), &scrypt_N) || scrypt_N <= 0)
@@ -193,11 +191,19 @@ int pkcs8_main(int argc, char **argv)
 #endif
         }
     }
-    argc = opt_num_rest();
-    if (argc != 0)
+
+    /* No extra arguments. */
+    if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
     private = 1;
+    if (!app_RAND_load())
+        goto end;
+
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &cipher))
+            goto opthelp;
+    }
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
@@ -205,9 +211,10 @@ int pkcs8_main(int argc, char **argv)
     }
 
     if ((pbe_nid == -1) && cipher == NULL)
-        cipher = EVP_aes_256_cbc();
+        cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
 
-    in = bio_open_default(infile, 'r', informat);
+    in = bio_open_default(infile, 'r',
+                          informat == FORMAT_UNDEF ? FORMAT_PEM : informat);
     if (in == NULL)
         goto end;
     out = bio_open_owner(outfile, outformat, private);
@@ -291,7 +298,7 @@ int pkcs8_main(int argc, char **argv)
     }
 
     if (nocrypt) {
-        if (informat == FORMAT_PEM) {
+        if (informat == FORMAT_PEM || informat == FORMAT_UNDEF) {
             p8inf = PEM_read_bio_PKCS8_PRIV_KEY_INFO(in, NULL, NULL, NULL);
         } else if (informat == FORMAT_ASN1) {
             p8inf = d2i_PKCS8_PRIV_KEY_INFO_bio(in, NULL);
@@ -300,7 +307,7 @@ int pkcs8_main(int argc, char **argv)
             goto end;
         }
     } else {
-        if (informat == FORMAT_PEM) {
+        if (informat == FORMAT_PEM || informat == FORMAT_UNDEF) {
             p8 = PEM_read_bio_PKCS8(in, NULL, NULL, NULL);
         } else if (informat == FORMAT_ASN1) {
             p8 = d2i_PKCS8_bio(in, NULL);
@@ -362,6 +369,7 @@ int pkcs8_main(int argc, char **argv)
     X509_SIG_free(p8);
     PKCS8_PRIV_KEY_INFO_free(p8inf);
     EVP_PKEY_free(pkey);
+    EVP_CIPHER_free(cipher);
     release_engine(e);
     BIO_free_all(out);
     BIO_free(in);

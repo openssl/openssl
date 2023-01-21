@@ -21,6 +21,7 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_data);
 
 int setup_ui_method(void);
 void destroy_ui_method(void);
+int set_base_ui_method(const UI_METHOD *ui_method);
 const UI_METHOD *get_ui_method(void);
 
 extern BIO *bio_err;

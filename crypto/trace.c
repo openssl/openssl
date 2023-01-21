@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,9 +16,8 @@
 #include <openssl/trace.h>
 #include "internal/bio.h"
 #include "internal/nelem.h"
+#include "internal/refcount.h"
 #include "crypto/cryptlib.h"
-
-#include "e_os.h"                /* strcasecmp for Windows */
 
 #ifndef OPENSSL_NO_TRACE
 
@@ -119,7 +118,8 @@ struct trace_category_st {
 };
 #define TRACE_CATEGORY_(name)       { #name, OSSL_TRACE_CATEGORY_##name }
 
-static const struct trace_category_st trace_categories[] = {
+static const struct trace_category_st
+    trace_categories[OSSL_TRACE_CATEGORY_NUM] = {
     TRACE_CATEGORY_(ALL),
     TRACE_CATEGORY_(TRACE),
     TRACE_CATEGORY_(INIT),
@@ -133,26 +133,39 @@ static const struct trace_category_st trace_categories[] = {
     TRACE_CATEGORY_(PKCS12_DECRYPT),
     TRACE_CATEGORY_(X509V3_POLICY),
     TRACE_CATEGORY_(BN_CTX),
+    TRACE_CATEGORY_(CMP),
     TRACE_CATEGORY_(STORE),
-};
+    TRACE_CATEGORY_(DECODER),
+    TRACE_CATEGORY_(ENCODER),
+    TRACE_CATEGORY_(REF_COUNT),
+    TRACE_CATEGORY_(HTTP),
+}; /* KEEP THIS LIST IN SYNC with #define OSSL_TRACE_CATEGORY_... in trace.h */
 
 const char *OSSL_trace_get_category_name(int num)
 {
-    size_t i;
-
-    for (i = 0; i < OSSL_NELEM(trace_categories); i++)
-        if (trace_categories[i].num == num)
-            return trace_categories[i].name;
-    return NULL; /* not found */
+    if (num < 0 || (size_t)num >= OSSL_NELEM(trace_categories))
+        return NULL;
+    /*
+     * Partial check that OSSL_TRACE_CATEGORY_... macros
+     * are synced with trace_categories array
+     */
+    if (!ossl_assert(trace_categories[num].name != NULL)
+        || !ossl_assert(trace_categories[num].num == num))
+        return NULL;
+    return trace_categories[num].name;
 }
 
 int OSSL_trace_get_category_num(const char *name)
 {
     size_t i;
 
+    if (name == NULL)
+        return -1;
+
     for (i = 0; i < OSSL_NELEM(trace_categories); i++)
-        if (strcasecmp(name, trace_categories[i].name) == 0)
+        if (OPENSSL_strcasecmp(name, trace_categories[i].name) == 0)
             return trace_categories[i].num;
+
     return -1; /* not found */
 }
 
@@ -464,7 +477,8 @@ BIO *OSSL_trace_begin(int category)
     prefix = trace_channels[category].prefix;
 
     if (channel != NULL) {
-        CRYPTO_THREAD_write_lock(trace_lock);
+        if (!CRYPTO_THREAD_write_lock(trace_lock))
+            return NULL;
         current_channel = channel;
         switch (trace_channels[category].type) {
         case SIMPLE_CHANNEL:
@@ -489,6 +503,8 @@ void OSSL_trace_end(int category, BIO * channel)
     char *suffix = NULL;
 
     category = ossl_trace_get_category(category);
+    if (category < 0)
+        return;
     suffix = trace_channels[category].suffix;
     if (channel != NULL
         && ossl_assert(channel == current_channel)) {

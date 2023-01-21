@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -18,13 +18,11 @@ setup("test_evp_fetch_prov");
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 my @types = ( "digest", "cipher" );
 
-my @setups = ();
 my @testdata = (
     { config    => srctop_file("test", "default.cnf"),
       providers => [ 'default' ],
@@ -43,15 +41,6 @@ my @testdata = (
 );
 
 unless ($no_fips) {
-    push @setups, {
-        cmd     => app(['openssl', 'fipsinstall',
-                        '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                        '-module', bldtop_file('providers', platform->dso('fips')),
-                        '-provider_name', 'fips', '-mac_name', 'HMAC',
-                        '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-                        '-section_name', 'fips_sect']),
-        message => "fipsinstall"
-    };
     push @testdata, (
         { config    => srctop_file("test", "fips.cnf"),
           providers => [ 'fips' ],
@@ -107,14 +96,10 @@ foreach (@testdata) {
     $testcount += scalar @{$_->{tests}};
 }
 
-plan tests => 1 + scalar @setups + $testcount * scalar(@types);
+plan tests => 1 + $testcount * scalar(@types);
 
 ok(run(test(["evp_fetch_prov_test", "-defaultctx"])),
    "running evp_fetch_prov_test using the default libctx");
-
-foreach my $setup (@setups) {
-    ok(run($setup->{cmd}), $setup->{message});
-}
 
 foreach my $alg (@types) {
     foreach my $testcase (@testdata) {

@@ -12,26 +12,15 @@ use OpenSSL::Test::Utils;
 our $fips_mode;
 our $no_deflt_libctx;
 
-my $server;
-
-if ($fips_mode) {
-    #TODO(3.0): No EdDSA support in FIPS mode at the moment
-    $server = {
-        "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
-        "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
-        "MaxProtocol" => "TLSv1.2"
-    };
-} else {
-    $server = {
-        "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
-        "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
-        "Ed25519.Certificate" => test_pem("server-ed25519-cert.pem"),
-        "Ed25519.PrivateKey" => test_pem("server-ed25519-key.pem"),
-        "Ed448.Certificate" => test_pem("server-ed448-cert.pem"),
-        "Ed448.PrivateKey" => test_pem("server-ed448-key.pem"),
-        "MaxProtocol" => "TLSv1.2"
-    };
-}
+my $server = {
+    "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+    "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+    "Ed25519.Certificate" => test_pem("server-ed25519-cert.pem"),
+    "Ed25519.PrivateKey" => test_pem("server-ed25519-key.pem"),
+    "Ed448.Certificate" => test_pem("server-ed448-cert.pem"),
+    "Ed448.PrivateKey" => test_pem("server-ed448-key.pem"),
+    "MaxProtocol" => "TLSv1.2"
+};
 
 my $server_pss = {
     "PSS.Certificate" => test_pem("server-pss-cert.pem"),
@@ -200,29 +189,6 @@ our @tests = (
         },
     },
     {
-        name => "ECDSA Signature Algorithm Selection SHA1",
-        server => {
-            "CipherString" => "DEFAULT:\@SECLEVEL=0",
-            "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
-            "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
-            "Ed25519.Certificate" => test_pem("server-ed25519-cert.pem"),
-            "Ed25519.PrivateKey" => test_pem("server-ed25519-key.pem"),
-            "Ed448.Certificate" => test_pem("server-ed448-cert.pem"),
-            "Ed448.PrivateKey" => test_pem("server-ed448-key.pem"),
-            "MaxProtocol" => "TLSv1.2"
-        },
-        client => {
-            "CipherString" => "DEFAULT:\@SECLEVEL=0",
-            "SignatureAlgorithms" => "ECDSA+SHA1",
-        },
-        test   => {
-            "ExpectedServerCertType" => "P-256",
-            "ExpectedServerSignHash" => "SHA1",
-            "ExpectedServerSignType" => "EC",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
         name => "ECDSA Signature Algorithm Selection compressed point",
         server => {
             "ECDSA.Certificate" => test_pem("server-cecdsa-cert.pem"),
@@ -327,10 +293,6 @@ our @tests = (
             "ExpectedResult" => "Success"
         },
     },
-);
-
-my @tests_non_fips = (
-    # TODO(3.0) No Ed25519/Ed448 in FIPS mode at the moment
     {
         name => "Ed25519 CipherString and Signature Algorithm Selection",
         server => $server,
@@ -361,28 +323,6 @@ my @tests_non_fips = (
         test   => {
             "ExpectedServerCertType" =>, "Ed448",
             "ExpectedServerSignType" =>, "Ed448",
-            # Note: certificate_authorities not sent for TLS < 1.3
-            "ExpectedServerCANames" =>, "empty",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
-        name => "ECDSA with brainpool",
-        server =>  {
-            "Certificate" => test_pem("server-ecdsa-brainpoolP256r1-cert.pem"),
-            "PrivateKey" => test_pem("server-ecdsa-brainpoolP256r1-key.pem"),
-            "Groups" => "brainpoolP256r1",
-        },
-        client => {
-            #We don't restrict this to TLSv1.2, although use of brainpool
-            #should force this anyway so that this should succeed
-            "CipherString" => "aECDSA",
-            "RequestCAFile" => test_pem("root-cert.pem"),
-            "Groups" => "brainpoolP256r1",
-        },
-        test   => {
-            "ExpectedServerCertType" =>, "brainpoolP256r1",
-            "ExpectedServerSignType" =>, "EC",
             # Note: certificate_authorities not sent for TLS < 1.3
             "ExpectedServerCANames" =>, "empty",
             "ExpectedResult" => "Success"
@@ -456,6 +396,53 @@ my @tests_non_fips = (
         test   => {
             "ExpectedClientCertType" => "Ed448",
             "ExpectedClientSignType" => "Ed448",
+            "ExpectedResult" => "Success"
+        },
+    },
+);
+
+my @tests_non_fips = (
+    {
+        name => "ECDSA Signature Algorithm Selection SHA1",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+            "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+            "Ed25519.Certificate" => test_pem("server-ed25519-cert.pem"),
+            "Ed25519.PrivateKey" => test_pem("server-ed25519-key.pem"),
+            "Ed448.Certificate" => test_pem("server-ed448-cert.pem"),
+            "Ed448.PrivateKey" => test_pem("server-ed448-key.pem"),
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            "SignatureAlgorithms" => "ECDSA+SHA1",
+        },
+        test   => {
+            "ExpectedServerCertType" => "P-256",
+            "ExpectedServerSignHash" => "SHA1",
+            "ExpectedServerSignType" => "EC",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "ECDSA with brainpool",
+        server =>  {
+            "Certificate" => test_pem("server-ecdsa-brainpoolP256r1-cert.pem"),
+            "PrivateKey" => test_pem("server-ecdsa-brainpoolP256r1-key.pem"),
+            "Groups" => "brainpoolP256r1",
+        },
+        client => {
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "aECDSA",
+            "RequestCAFile" => test_pem("root-cert.pem"),
+            "Groups" => "brainpoolP256r1",
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "brainpoolP256r1",
+            "ExpectedServerSignType" =>, "EC",
+            # Note: certificate_authorities not sent for TLS < 1.3
+            "ExpectedServerCANames" =>, "empty",
             "ExpectedResult" => "Success"
         },
     },
@@ -598,9 +585,14 @@ my @tests_pss = (
 my @tests_tls_1_1 = (
     {
         name => "Only RSA-PSS Certificate, TLS v1.1",
-        server => $server_pss_only,
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            "Certificate" => test_pem("server-pss-cert.pem"),
+            "PrivateKey" => test_pem("server-pss-key.pem"),
+        },
         client => {
             "MaxProtocol" => "TLSv1.1",
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
         },
         test   => {
             "ExpectedResult" => "ServerFail"
@@ -907,6 +899,25 @@ my @tests_tls_1_3_non_fips = (
         },
     },
     {
+        name => "TLS 1.3 ECDSA with brainpool but no suitable groups",
+        server =>  {
+            "Certificate" => test_pem("server-ecdsa-brainpoolP256r1-cert.pem"),
+            "PrivateKey" => test_pem("server-ecdsa-brainpoolP256r1-key.pem"),
+            "Groups" => "brainpoolP256r1",
+        },
+        client => {
+            "CipherString" => "aECDSA",
+            "RequestCAFile" => test_pem("root-cert.pem"),
+            "Groups" => "brainpoolP256r1",
+        },
+        test   => {
+            #We only configured brainpoolP256r1 on the client side, but TLSv1.3
+            #is enabled and this group is not allowed in TLSv1.3. Therefore this
+            #should fail
+            "ExpectedResult" => "ClientFail"
+        },
+    },
+    {
         name => "TLS 1.3 ECDSA with brainpool",
         server =>  {
             "Certificate" => test_pem("server-ecdsa-brainpoolP256r1-cert.pem"),
@@ -918,7 +929,7 @@ my @tests_tls_1_3_non_fips = (
             "MaxProtocol" => "TLSv1.3"
         },
         test   => {
-            "ExpectedResult" => "ServerFail"
+            "ExpectedResult" => "Success"
         },
     },
 );
@@ -980,7 +991,6 @@ my @tests_dsa_tls_1_3 = (
 );
 
 if (!disabled("dsa")) {
-    #TODO(3.0): Temporary workaround for DH issues in FIPS. Needs investigation
-    push @tests, @tests_dsa_tls_1_2 unless disabled("dh") || $fips_mode;
+    push @tests, @tests_dsa_tls_1_2 unless disabled("dh");
     push @tests, @tests_dsa_tls_1_3 unless disabled("tls1_3");
 }

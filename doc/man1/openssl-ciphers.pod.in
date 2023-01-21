@@ -26,8 +26,6 @@ B<openssl> B<ciphers>
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [I<cipherlist>]
 
-=for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3 psk srp
-
 =head1 DESCRIPTION
 
 This command converts textual OpenSSL cipher lists into
@@ -67,7 +65,8 @@ When combined with B<-s> includes cipher suites which require PSK.
 
 =item B<-srp>
 
-When combined with B<-s> includes cipher suites which require SRP.
+When combined with B<-s> includes cipher suites which require SRP. This option
+is deprecated.
 
 =item B<-v>
 
@@ -115,6 +114,10 @@ used. The format is described below.
 
 The cipher list consists of one or more I<cipher strings> separated by colons.
 Commas or spaces are also acceptable separators but colons are normally used.
+
+The cipher string may reference a cipher using its standard name from
+the IANA TLS Cipher Suites Registry
+(L<https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-4>).
 
 The actual cipher string can take several different forms.
 
@@ -795,7 +798,7 @@ The B<-convert> option was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

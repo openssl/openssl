@@ -31,7 +31,7 @@ static const PROV_CIPHER_HW seed_##mode = {                                    \
     cipher_hw_seed_initkey,                                                    \
     cipher_hw_seed_##mode##_cipher                                             \
 };                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_seed_##mode(size_t keybits)               \
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_seed_##mode(size_t keybits)          \
 {                                                                              \
     return &seed_##mode;                                                       \
 }

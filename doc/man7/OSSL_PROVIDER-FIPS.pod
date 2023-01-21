@@ -6,7 +6,7 @@ OSSL_PROVIDER-FIPS - OpenSSL FIPS provider
 
 =head1 DESCRIPTION
 
-The OpenSSL FIPS provider is a special provider that conforms to the Federal 
+The OpenSSL FIPS provider is a special provider that conforms to the Federal
 Information Processing Standards (FIPS) specified in FIPS 140-2. This 'module'
 contains an approved set of cryptographic algorithms that is validated by an
 accredited testing laboratory.
@@ -18,7 +18,7 @@ defined:
 
 =over 4
 
-=item "provider=default"
+=item "provider=fips"
 
 =item "fips=yes"
 
@@ -34,8 +34,8 @@ make sure to get implementations of this provider and none other.
 
 The "fips=yes" property can be use to make sure only FIPS approved
 implementations are used for crypto operations.  This may also include
-other non-crypto support operations that are not in the fips provider,
-such as asymmetric key serializers,
+other non-crypto support operations that are not in the FIPS provider,
+such as asymmetric key encoders,
 see L<OSSL_PROVIDER-default(7)/Asymmetric Key Management>.
 
 =head1 OPERATIONS AND ALGORITHMS
@@ -62,8 +62,6 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item AES, see L<EVP_CIPHER-AES(7)>
 
-=item DES-EDE3 (TrippleDES), see L<EVP_CIPHER-DES(7)>
-
 =back
 
 =head2 Message Authentication Code (MAC)
@@ -86,13 +84,23 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item HKDF, see L<EVP_KDF-HKDF(7)>
 
-=item SSKDF, see L<EVP_KDF-SSKDF(7)>
+=item TLS13-KDF, see L<EVP_KDF-TLS13_KDF(7)>
+
+=item SSKDF, see L<EVP_KDF-SS(7)>
 
 =item PBKDF2, see L<EVP_KDF-PBKDF2(7)>
 
-=item TLS1-PRF, see L<EVP_KDF-TLS1-PRF(7)>
+=item SSHKDF, see L<EVP_KDF-SSHKDF(7)>
 
-=item KBKDF, see L<EVP_KDF-KBKDF(7)>
+=item TLS1-PRF, see L<EVP_KDF-TLS1_PRF(7)>
+
+=item KBKDF, see L<EVP_KDF-KB(7)>
+
+=item X942KDF-ASN1, see L<EVP_KDF-X942-ASN1(7)>
+
+=item X942KDF-CONCAT, see L<EVP_KDF-X942-CONCAT(7)>
+
+=item X963KDF, see L<EVP_KDF-X963(7)>
 
 =back
 
@@ -106,11 +114,7 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item X25519, see L<EVP_KEYEXCH-X25519(7)>
 
-This has the property "provider=fips,fips=no"
-
 =item X448, see L<EVP_KEYEXCH-X448(7)>
-
-This has the property "provider=fips,fips=no"
 
 =back
 
@@ -118,7 +122,15 @@ This has the property "provider=fips,fips=no"
 
 =over 4
 
-=item DSA, see L<EVP_KEYEXCH-DSA(7)>
+=item RSA, see L<EVP_SIGNATURE-RSA(7)>
+
+=item X25519, see L<EVP_SIGNATURE-ED25519(7)>
+
+=item X448, see L<EVP_SIGNATURE-ED448(7)>
+
+=item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
+
+=item CMAC, see L<EVP_SIGNATURE-CMAC(7)>
 
 =back
 
@@ -126,7 +138,15 @@ This has the property "provider=fips,fips=no"
 
 =over 4
 
-=item RSA, see L<EVP_KEYEXCH-RSA(7)>
+=item RSA, see L<EVP_ASYM_CIPHER-RSA(7)>
+
+=back
+
+=head2 Asymmetric Key Encapsulation
+
+=over 4
+
+=item RSA, see L<EVP_KEM-RSA(7)>
 
 =back
 
@@ -136,9 +156,17 @@ This has the property "provider=fips,fips=no"
 
 =item DH, see L<EVP_KEYMGMT-DH(7)>
 
+=item DHX, see L<EVP_KEYMGMT-DHX(7)>
+
 =item DSA, see L<EVP_KEYMGMT-DSA(7)>
 
 =item RSA, see L<EVP_KEYMGMT-RSA(7)>
+
+=item EC, see L<EVP_KEYMGMT-EC(7)>
+
+=item X25519, see L<EVP_KEYMGMT-X25519(7)>
+
+=item X448, see L<EVP_KEYMGMT-X448(7)>
 
 =back
 
@@ -178,6 +206,10 @@ file after successfully running the self tests during installation.
 
 Known answer test for a symmetric cipher.
 
+=item "KAT_AsymmetricCipher" (B<OSSL_SELF_TEST_TYPE_KAT_ASYM_CIPHER>)
+
+Known answer test for a asymmetric cipher.
+
 =item "KAT_Digest" (B<OSSL_SELF_TEST_TYPE_KAT_DIGEST>)
 
 Known answer test for a digest.
@@ -185,6 +217,10 @@ Known answer test for a digest.
 =item "KAT_Signature" (B<OSSL_SELF_TEST_TYPE_KAT_SIGNATURE>)
 
 Known answer test for a signature.
+
+=item "PCT_Signature" (B<OSSL_SELF_TEST_TYPE_PCT_SIGNATURE>)
+
+Pairwise Consistency check for a signature.
 
 =item "KAT_KDF" (B<OSSL_SELF_TEST_TYPE_KAT_KDF>)
 
@@ -198,9 +234,13 @@ Known answer test for key agreement.
 
 Known answer test for a Deterministic Random Bit Generator.
 
-=item "Pairwise_Consistency_Test" (B<OSSL_SELF_TEST_TYPE_PCT>)
+=item "Conditional_PCT" (B<OSSL_SELF_TEST_TYPE_PCT>)
 
 Conditional test that is run during the generation of key pairs.
+
+=item "Continuous_RNG_Test" (B<OSSL_SELF_TEST_TYPE_CRNG>)
+
+Continuous random number generator test.
 
 =back
 
@@ -231,7 +271,15 @@ The FIPS module passes the following descriptions(s) to OSSL_SELF_TEST_onbegin()
 
 Key generation tests used with the "Pairwise_Consistency_Test" type.
 
+=item "RSA_Encrypt" (B<OSSL_SELF_TEST_DESC_ASYM_RSA_ENC>)
+
+=item "RSA_Decrypt" (B<OSSL_SELF_TEST_DESC_ASYM_RSA_DEC>)
+
+"KAT_AsymmetricCipher" uses this to indicate an encrypt or decrypt KAT.
+
 =item "AES_GCM" (B<OSSL_SELF_TEST_DESC_CIPHER_AES_GCM>)
+
+=item "AES_ECB_Decrypt" (B<OSSL_SELF_TEST_DESC_CIPHER_AES_ECB>)
 
 =item "TDES" (B<OSSL_SELF_TEST_DESC_CIPHER_TDES>)
 
@@ -261,7 +309,23 @@ Key agreement tests used with the "KAT_KA" type.
 
 =item "HKDF" (B<OSSL_SELF_TEST_DESC_KDF_HKDF>)
 
+=item "TLS13_KDF_EXTRACT" (B<OSSL_SELF_TEST_DESC_KDF_TLS13_EXTRACT>)
+
+=item "TLS13_KDF_EXPAND" (B<OSSL_SELF_TEST_DESC_KDF_TLS13_EXPAND>)
+
 =item "SSKDF" (B<OSSL_SELF_TEST_DESC_KDF_SSKDF>)
+
+=item "X963KDF" (B<OSSL_SELF_TEST_DESC_KDF_X963KDF>)
+
+=item "X942KDF" (B<OSSL_SELF_TEST_DESC_KDF_X942KDF>)
+
+=item "PBKDF2" (B<OSSL_SELF_TEST_DESC_KDF_PBKDF2>)
+
+=item "SSHKDF" (B<OSSL_SELF_TEST_DESC_KDF_SSHKDF>)
+
+=item "TLS12_PRF" (B<OSSL_SELF_TEST_DESC_KDF_TLS12_PRF>)
+
+=item "KBKDF" (B<OSSL_SELF_TEST_DESC_KDF_KBKDF>)
 
 Key Derivation Function tests used with the "KAT_KDF" type.
 
@@ -272,6 +336,10 @@ Key Derivation Function tests used with the "KAT_KDF" type.
 =item "HMAC" (B<OSSL_SELF_TEST_DESC_DRBG_HMAC>)
 
 DRBG tests used with the "DRBG" type.
+
+= item "RNG" (B<OSSL_SELF_TEST_DESC_RNG>)
+
+"Continuous_RNG_Test" uses this.
 
 =back
 
@@ -335,11 +403,11 @@ L<provider(7)>
 
 =head1 HISTORY
 
-The type and functions described here were added in OpenSSL 3.0.
+This functionality was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -22,6 +22,8 @@ Individuals
  * Bernd Edlinger
  * Bodo Möller
  * David Benjamin
+ * David von Oheimb
+ * Dmitry Belyavskiy (Дмитрий Белявский)
  * Emilia Käsper
  * Eric Young
  * Geoff Thorpe
@@ -31,14 +33,19 @@ Individuals
  * Mark J. Cox
  * Matt Caswell
  * Matthias St. Pierre
+ * Nicola Tuveri
  * Nils Larsch
+ * Patrick Steuer
  * Paul Dale
  * Paul C. Sutton
+ * Paul Yang
  * Ralf S. Engelschall
  * Rich Salz
  * Richard Levitte
+ * Shane Lontis
  * Stephen Henson
  * Steve Marquess
  * Tim Hudson
+ * Tomáš Mráz
  * Ulf Möller
  * Viktor Dukhovni

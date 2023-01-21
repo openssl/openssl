@@ -13,8 +13,7 @@
 #include <openssl/x509.h>
 #include <openssl/buffer.h>
 #include "crypto/x509.h"
-
-DEFINE_STACK_OF(X509_NAME_ENTRY)
+#include "crypto/ctype.h"
 
 /*
  * Limit to ensure we don't overflow: much greater than
@@ -28,6 +27,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
     const X509_NAME_ENTRY *ne;
     int i;
     int n, lold, l, l1, l2, num, j, type;
+    int prev_set = -1;
     const char *s;
     char *p;
     unsigned char *q;
@@ -41,9 +41,9 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
 
     if (buf == NULL) {
         if ((b = BUF_MEM_new()) == NULL)
-            goto err;
+            goto buferr;
         if (!BUF_MEM_grow(b, 200))
-            goto err;
+            goto buferr;
         b->data[0] = '\0';
         len = 200;
     } else if (len == 0) {
@@ -73,7 +73,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         type = ne->value->type;
         num = ne->value->length;
         if (num > NAME_ONELINE_MAX) {
-            X509err(X509_F_X509_NAME_ONELINE, X509_R_NAME_TOO_LONG);
+            ERR_raise(ERR_LIB_X509, X509_R_NAME_TOO_LONG);
             goto end;
         }
         q = ne->value->data;
@@ -109,31 +109,28 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
             if (!gs_doit[j & 3])
                 continue;
             l2++;
-#ifndef CHARSET_EBCDIC
-            if ((q[j] < ' ') || (q[j] > '~'))
+            if (q[j] == '/' || q[j] == '+')
+                l2++; /* char needs to be escaped */
+            else if ((ossl_toascii(q[j]) < ossl_toascii(' ')) ||
+                     (ossl_toascii(q[j]) > ossl_toascii('~')))
                 l2 += 3;
-#else
-            if ((os_toascii[q[j]] < os_toascii[' ']) ||
-                (os_toascii[q[j]] > os_toascii['~']))
-                l2 += 3;
-#endif
         }
 
         lold = l;
         l += 1 + l1 + 1 + l2;
         if (l > NAME_ONELINE_MAX) {
-            X509err(X509_F_X509_NAME_ONELINE, X509_R_NAME_TOO_LONG);
+            ERR_raise(ERR_LIB_X509, X509_R_NAME_TOO_LONG);
             goto end;
         }
         if (b != NULL) {
             if (!BUF_MEM_grow(b, l + 1))
-                goto err;
+                goto buferr;
             p = &(b->data[lold]);
         } else if (l > len) {
             break;
         } else
             p = &(buf[lold]);
-        *(p++) = '/';
+        *(p++) = prev_set == ne->set ? '+' : '/';
         memcpy(p, s, (unsigned int)l1);
         p += l1;
         *(p++) = '=';
@@ -152,8 +149,11 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
                 *(p++) = 'x';
                 *(p++) = hex[(n >> 4) & 0x0f];
                 *(p++) = hex[n & 0x0f];
-            } else
+            } else {
+                if (n == '/' || n == '+')
+                    *(p++) = '\\';
                 *(p++) = n;
+            }
 #else
             n = os_toascii[q[j]];
             if ((n < os_toascii[' ']) || (n > os_toascii['~'])) {
@@ -161,11 +161,15 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
                 *(p++) = 'x';
                 *(p++) = hex[(n >> 4) & 0x0f];
                 *(p++) = hex[n & 0x0f];
-            } else
+            } else {
+                if (n == os_toascii['/'] || n == os_toascii['+'])
+                    *(p++) = '\\';
                 *(p++) = q[j];
+            }
 #endif
         }
         *p = '\0';
+        prev_set = ne->set;
     }
     if (b != NULL) {
         p = b->data;
@@ -175,8 +179,8 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
     if (i == 0)
         *p = '\0';
     return p;
- err:
-    X509err(X509_F_X509_NAME_ONELINE, ERR_R_MALLOC_FAILURE);
+ buferr:
+    ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
  end:
     BUF_MEM_free(b);
     return NULL;

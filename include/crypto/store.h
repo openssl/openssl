@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,21 +9,15 @@
 
 #ifndef OSSL_CRYPTO_STORE_H
 # define OSSL_CRYPTO_STORE_H
+# pragma once
 
 # include <openssl/bio.h>
 # include <openssl/store.h>
 # include <openssl/ui.h>
 
-/*
- * Two functions to read PEM data off an already opened BIO.  To be used
- * instead of OSSLSTORE_open() and OSSLSTORE_close().  Everything is done
- * as usual with OSSLSTORE_load() and OSSLSTORE_eof().
- */
-OSSL_STORE_CTX *ossl_store_attach_pem_bio(BIO *bp, const UI_METHOD *ui_method,
-                                          void *ui_data, OPENSSL_CTX *libctx,
-                                          const char *propq);
-int ossl_store_detach_pem_bio(OSSL_STORE_CTX *ctx);
-
 void ossl_store_cleanup_int(void);
+int ossl_store_loader_get_number(const OSSL_STORE_LOADER *loader);
+int ossl_store_loader_store_cache_flush(OSSL_LIB_CTX *libctx);
+int ossl_store_loader_store_remove_all_provided(const OSSL_PROVIDER *prov);
 
 #endif

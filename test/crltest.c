@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2022 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,9 +16,6 @@
 #include <openssl/x509.h>
 
 #include "testutil.h"
-
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_CRL)
 
 #define PARAM_TIME 1474934400 /* Sep 27th, 2016 */
 
@@ -203,9 +200,16 @@ static BIO *glue2bio(const char **pem, char **out)
  */
 static X509_CRL *CRL_from_strings(const char **pem)
 {
+    X509_CRL *crl;
     char *p;
     BIO *b = glue2bio(pem, &p);
-    X509_CRL *crl = PEM_read_bio_X509_CRL(b, NULL, NULL, NULL);
+
+    if (b == NULL) {
+        OPENSSL_free(p);
+        return NULL;
+    }
+
+    crl = PEM_read_bio_X509_CRL(b, NULL, NULL, NULL);
 
     OPENSSL_free(p);
     BIO_free(b);
@@ -217,9 +221,16 @@ static X509_CRL *CRL_from_strings(const char **pem)
  */
 static X509 *X509_from_strings(const char **pem)
 {
+    X509 *x;
     char *p;
     BIO *b = glue2bio(pem, &p);
-    X509 *x = PEM_read_bio_X509(b, NULL, NULL, NULL);
+
+    if (b == NULL) {
+        OPENSSL_free(p);
+        return NULL;
+    }
+
+    x = PEM_read_bio_X509(b, NULL, NULL, NULL);
 
     OPENSSL_free(p);
     BIO_free(b);
@@ -267,7 +278,7 @@ static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
     status = X509_verify_cert(ctx) == 1 ? X509_V_OK
                                         : X509_STORE_CTX_get_error(ctx);
 err:
-    sk_X509_pop_free(roots, X509_free);
+    OSSL_STACK_OF_X509_free(roots);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
     X509_VERIFY_PARAM_free(param);
     X509_STORE_CTX_free(ctx);
@@ -365,6 +376,12 @@ static int test_reuse_crl(void)
     X509_CRL *reused_crl = CRL_from_strings(kBasicCRL);
     char *p;
     BIO *b = glue2bio(kRevokedCRL, &p);
+
+    if (b == NULL) {
+        OPENSSL_free(p);
+        X509_CRL_free(reused_crl);
+        return 0;
+    }
 
     reused_crl = PEM_read_bio_X509_CRL(b, &reused_crl, NULL, NULL);
 

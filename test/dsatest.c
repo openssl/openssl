@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -108,9 +108,11 @@ static int dsa_test(void)
     if (!TEST_int_eq(i, j) || !TEST_mem_eq(buf, i, out_g, i))
         goto end;
 
-    DSA_generate_key(dsa);
-    DSA_sign(0, str1, 20, sig, &siglen, dsa);
-    if (TEST_true(DSA_verify(0, str1, 20, sig, siglen, dsa)))
+    if (!TEST_true(DSA_generate_key(dsa)))
+        goto end;
+    if (!TEST_true(DSA_sign(0, str1, 20, sig, &siglen, dsa)))
+        goto end;
+    if (TEST_int_gt(DSA_verify(0, str1, 20, sig, siglen, dsa), 0))
         ret = 1;
 
  end:
@@ -249,16 +251,17 @@ static int dsa_keygen_test(void)
         || !TEST_ptr(settables = EVP_PKEY_CTX_settable_params(pg_ctx))
         || !TEST_ptr(OSSL_PARAM_locate_const(settables,
                                              OSSL_PKEY_PARAM_FFC_PBITS))
+        || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_type(pg_ctx, "fips186_4"))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(pg_ctx, 2048))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_q_bits(pg_ctx, 224))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_seed(pg_ctx, seed_data,
                                                          sizeof(seed_data)))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_md_props(pg_ctx, "SHA256",
                                                              ""))
-        || !TEST_int_gt(EVP_PKEY_gen(pg_ctx, &param_key), 0)
+        || !TEST_int_gt(EVP_PKEY_generate(pg_ctx, &param_key), 0)
         || !TEST_ptr(kg_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, param_key, NULL))
         || !TEST_int_gt(EVP_PKEY_keygen_init(kg_ctx), 0)
-        || !TEST_int_gt(EVP_PKEY_gen(kg_ctx, &key), 0))
+        || !TEST_int_gt(EVP_PKEY_generate(kg_ctx, &key), 0))
         goto end;
 
     if (!TEST_true(EVP_PKEY_get_bn_param(key, OSSL_PKEY_PARAM_FFC_P, &p_out))
@@ -301,6 +304,27 @@ end:
     return ret;
 }
 
+static int test_dsa_default_paramgen_validate(int i)
+{
+    int ret;
+    EVP_PKEY_CTX *gen_ctx = NULL;
+    EVP_PKEY_CTX *check_ctx = NULL;
+    EVP_PKEY *params = NULL;
+
+    ret = TEST_ptr(gen_ctx = EVP_PKEY_CTX_new_from_name(NULL, "DSA", NULL))
+          && TEST_int_gt(EVP_PKEY_paramgen_init(gen_ctx), 0)
+          && (i == 0
+              || TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(gen_ctx, 512)))
+          && TEST_int_gt(EVP_PKEY_generate(gen_ctx, &params), 0)
+          && TEST_ptr(check_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, params, NULL))
+          && TEST_int_gt(EVP_PKEY_param_check(check_ctx), 0);
+
+    EVP_PKEY_free(params);
+    EVP_PKEY_CTX_free(check_ctx);
+    EVP_PKEY_CTX_free(gen_ctx);
+    return ret;
+}
+
 #endif /* OPENSSL_NO_DSA */
 
 int setup_tests(void)
@@ -308,6 +332,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(dsa_test);
     ADD_TEST(dsa_keygen_test);
+    ADD_ALL_TESTS(test_dsa_default_paramgen_validate, 2);
 #endif
     return 1;
 }

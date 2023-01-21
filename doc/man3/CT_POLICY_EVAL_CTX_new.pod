@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CT_POLICY_EVAL_CTX_new_with_libctx,
+CT_POLICY_EVAL_CTX_new_ex,
 CT_POLICY_EVAL_CTX_new, CT_POLICY_EVAL_CTX_free,
 CT_POLICY_EVAL_CTX_get0_cert, CT_POLICY_EVAL_CTX_set1_cert,
 CT_POLICY_EVAL_CTX_get0_issuer, CT_POLICY_EVAL_CTX_set1_issuer,
@@ -14,8 +14,8 @@ Encapsulates the data required to evaluate whether SCTs meet a Certificate Trans
 
  #include <openssl/ct.h>
 
- CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_with_libctx(OPENSSL_CTX *libctx,
-                                                        const char *propq);
+ CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_ex(OSSL_LIB_CTX *libctx,
+                                               const char *propq);
  CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
  void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx);
  X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
@@ -58,12 +58,12 @@ the current time
 
 The above requirements are met using the setters described below.
 
-CT_POLICY_EVAL_CTX_new_with_libctx() creates an empty policy evaluation context
+CT_POLICY_EVAL_CTX_new_ex() creates an empty policy evaluation context
 and associates it with the given library context I<libctx> and property query
 string I<propq>.
 
 CT_POLICY_EVAL_CTX_new() does the same thing as
-CT_POLICY_EVAL_CTX_new_with_libctx() except that it uses the default library
+CT_POLICY_EVAL_CTX_new_ex() except that it uses the default library
 context and property query string.
 
 The CT_POLICY_EVAL_CTX should then be populated using:
@@ -116,7 +116,7 @@ found in the TLS SCT extension or OCSP response.
 
 =head1 RETURN VALUES
 
-CT_POLICY_EVAL_CTX_new_with_libctx() and CT_POLICY_EVAL_CTX_new() will return
+CT_POLICY_EVAL_CTX_new_ex() and CT_POLICY_EVAL_CTX_new() will return
 NULL if malloc fails.
 
 =head1 SEE ALSO
@@ -125,7 +125,7 @@ L<ct(7)>
 
 =head1 HISTORY
 
-CT_POLICY_EVAL_CTX_new_with_libctx was added in OpenSSL 3.0. All other
+CT_POLICY_EVAL_CTX_new_ex was added in OpenSSL 3.0. All other
 functions were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT

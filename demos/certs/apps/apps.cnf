@@ -7,6 +7,10 @@
 HOME			= .
 CN			= "Not Defined"
 
+# Comment out the next line to ignore configuration errors
+config_diagnostics = 1
+
+
 ####################################################################
 [ req ]
 default_bits		= 2048

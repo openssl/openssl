@@ -9,9 +9,10 @@
 HERE=`dirname $0`
 
 # Get all version data as shell variables
-. $HERE/../VERSION
+. $HERE/../VERSION.dat
 
 if [ -n "$PRE_RELEASE_TAG" ]; then PRE_RELEASE_TAG=-$PRE_RELEASE_TAG; fi
+if [ -n "$BUILD_METADATA" ]; then BUILD_METADATA=+$BUILD_METADATA; fi
 version=$MAJOR.$MINOR.$PATCH$PRE_RELEASE_TAG$BUILD_METADATA
 basename=openssl
 
@@ -31,8 +32,7 @@ done
 if [ -z "$TARFILE" ]; then TARFILE="$NAME.tar"; fi
 
 # This counts on .gitattributes to specify what files should be ignored
-git archive --worktree-attributes --format=tar --prefix="$NAME/" -v HEAD \
-    | gzip -9 > "$TARFILE.gz"
+git archive --worktree-attributes -9 --prefix="$NAME/" -o $TARFILE.gz -v HEAD
 
 # Good old way to ensure we display an absolute path
 td=`dirname $TARFILE`

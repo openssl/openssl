@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -7,6 +7,8 @@
 
 # Set some Perl variables for use by util/dofile.pl when processing
 # POD files (mainly man1).
+
+use configdata;
 
 # Verify options
 $OpenSSL::safe::opt_v_synopsis = ""
@@ -39,7 +41,7 @@ $OpenSSL::safe::opt_v_synopsis = ""
 . "[B<-verify_ip> I<ip>]\n"
 . "[B<-verify_name> I<name>]\n"
 . "[B<-x509_strict>]\n"
-. "[B<-issuer_checks>]\n";
+. "[B<-issuer_checks>]";
 $OpenSSL::safe::opt_v_item = ""
 . "=item B<-allow_proxy_certs>, B<-attime>, B<-no_check_time>,\n"
 . "B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,\n"
@@ -51,24 +53,24 @@ $OpenSSL::safe::opt_v_item = ""
 . "B<-verify_ip>, B<-verify_name>, B<-x509_strict> B<-issuer_checks>\n"
 . "\n"
 . "Set various options of certificate chain verification.\n"
-. "See L<openssl(1)/Verification Options> for details.";
+. "See L<openssl-verification-options(1)/Verification Options> for details.";
 
 
 # Extended validation options.
 $OpenSSL::safe::opt_x_synopsis = ""
-. "[B<-xkey>] I<infile>\n"
+. "[B<-xkey> I<infile>]\n"
 . "[B<-xcert> I<file>]\n"
-. "[B<-xchain>] I<file>\n"
-. "[B<-xchain_build>] I<file>\n"
+. "[B<-xchain> I<file>]\n"
+. "[B<-xchain_build> I<file>]\n"
 . "[B<-xcertform> B<DER>|B<PEM>]>\n"
 . "[B<-xkeyform> B<DER>|B<PEM>]>";
 $OpenSSL::safe::opt_x_item = ""
-. "=item B<xkey> I<infile>, B<-xcert> I<file>, B<-xchain> I<file>,\n"
+. "=item B<-xkey> I<infile>, B<-xcert> I<file>, B<-xchain> I<file>,\n"
 . "B<-xchain_build> I<file>, B<-xcertform> B<DER>|B<PEM>,\n"
 . "B<-xkeyform> B<DER>|B<PEM>\n"
 . "\n"
 . "Set extended certificate verification options.\n"
-. "See L<openssl(1)/Extended Verification Options> for details.";
+. "See L<openssl-verification-options(1)/Extended Verification Options> for details.";
 
 # Name output options
 $OpenSSL::safe::opt_name_synopsis = ""
@@ -77,7 +79,7 @@ $OpenSSL::safe::opt_name_item = ""
 . "=item B<-nameopt> I<option>\n"
 . "\n"
 . "This specifies how the subject or issuer names are displayed.\n"
-. "See L<openssl(1)/Name Format Options> for details.";
+. "See L<openssl-namedisplay-options(1)> for details.";
 
 # Random State Options
 $OpenSSL::safe::opt_r_synopsis = ""
@@ -91,21 +93,37 @@ $OpenSSL::safe::opt_r_item = ""
 # Provider options
 $OpenSSL::safe::opt_provider_synopsis = ""
 . "[B<-provider> I<name>]\n"
-. "[B<-provider_path> I<path>]";
+. "[B<-provider-path> I<path>]\n"
+. "[B<-propquery> I<propq>]";
 $OpenSSL::safe::opt_provider_item = ""
 . "=item B<-provider> I<name>\n"
 . "\n"
-. "=item B<-provider_path> I<path>\n"
+. "=item B<-provider-path> I<path>\n"
 . "\n"
-. "See L<openssl(1)/Provider Options>.";
+. "=item B<-propquery> I<propq>\n"
+. "\n"
+. "See L<openssl(1)/Provider Options>, L<provider(7)>, and L<property(7)>.";
+
+# Configuration option
+$OpenSSL::safe::opt_config_synopsis = ""
+. "[B<-config> I<configfile>]";
+$OpenSSL::safe::opt_config_item = ""
+. "=item B<-config> I<configfile>\n"
+. "\n"
+. "See L<openssl(1)/Configuration Option>.";
 
 # Engine option
-$OpenSSL::safe::opt_engine_synopsis = ""
-. "[B<-engine> I<id>]";
-$OpenSSL::safe::opt_engine_item = ""
-. "=item B<-engine> I<id>\n"
-. "\n"
-. "See L<openssl(1)/Engine Options>.";
+$OpenSSL::safe::opt_engine_synopsis = "";
+$OpenSSL::safe::opt_engine_item = "";
+if (!$disabled{"deprecated-3.0"}) {
+  $OpenSSL::safe::opt_engine_synopsis = ""
+  . "[B<-engine> I<id>]\n";
+  $OpenSSL::safe::opt_engine_item = ""
+  . "=item B<-engine> I<id>\n"
+  . "\n"
+  . "See L<openssl(1)/Engine Options>.\n"
+  . "This option is deprecated.";
+}
 
 # Trusted certs options
 $OpenSSL::safe::opt_trust_synopsis = ""
@@ -119,7 +137,7 @@ $OpenSSL::safe::opt_trust_item = ""
 . "=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>,\n"
 . "B<-CAstore> I<uri>, B<-no-CAstore>\n"
 . "\n"
-. "See L<openssl(1)/Trusted Certificate Options> for details.";
+. "See L<openssl-verification-options(1)/Trusted Certificate Options> for details.";
 
 # TLS Version Options
 $OpenSSL::safe::opt_versiontls_synopsis = ""
@@ -161,11 +179,13 @@ $OpenSSL::safe::opt_s_synopsis = ""
 . "[B<-comp>]\n"
 . "[B<-no_ticket>]\n"
 . "[B<-serverpref>]\n"
+. "[B<-client_renegotiation>]\n"
 . "[B<-legacy_renegotiation>]\n"
 . "[B<-no_renegotiation>]\n"
 . "[B<-no_resumption_on_reneg>]\n"
 . "[B<-legacy_server_connect>]\n"
 . "[B<-no_legacy_server_connect>]\n"
+. "[B<-no_etm>]\n"
 . "[B<-allow_no_dhe_kex>]\n"
 . "[B<-prioritize_chacha>]\n"
 . "[B<-strict>]\n"
@@ -183,8 +203,10 @@ $OpenSSL::safe::opt_s_synopsis = ""
 . "[B<-no_middlebox>]";
 $OpenSSL::safe::opt_s_item = ""
 . "=item B<-bugs>, B<-comp>, B<-no_comp>, B<-no_ticket>, B<-serverpref>,\n"
-. "B<-legacy_renegotiation>, B<-no_renegotiation>, B<-no_resumption_on_reneg>,\n"
-. "B<-legacy_server_connect>, B<-no_legacy_server_connect>,\n"
+. "B<-client_renegotiation>,\n"
+. "B<-legacy_renegotiation>, B<-no_renegotiation>,\n"
+. "B<-no_resumption_on_reneg>,\n"
+. "B<-legacy_server_connect>, B<-no_legacy_server_connect>, B<-no_etm>\n"
 . "B<-allow_no_dhe_kex>, B<-prioritize_chacha>, B<-strict>, B<-sigalgs>\n"
 . "I<algs>, B<-client_sigalgs> I<algs>, B<-groups> I<groups>, B<-curves>\n"
 . "I<curves>, B<-named_curve> I<curve>, B<-cipher> I<ciphers>, B<-ciphersuites>\n"
