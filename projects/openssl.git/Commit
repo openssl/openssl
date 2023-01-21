@@ -1,0 +1,25 @@
+projects / openssl.git / commit
+
+commit
+ ? search: 
+ re
+summary | shortlog | log | commit | commitdiff | tree
+(parent: c9466f3) | patch
+Adding a separated build settings for BSD flavors master
+author	David Carlier <devnexen@gmail.com>	
+Sat, 19 Dec 2020 05:07:09 -0600 (11:07 +0000)
+committer	Hugo Landau <hlandau@openssl.org>	
+Fri, 20 Jan 2023 05:04:50 -0600 (11:04 +0000)
+commit	c3bd630df0c3630c66155fb8c4baf54810d24695
+tree	bb508cc22f4d94cb6e26a033f8961983a10c212f	tree | snapshot
+parent	c9466f38e0191aa86e0bd49267b0c4ef33e3a3d2	commit | diff
+Adding a separated build settings for BSD flavors
+to avoid inheriting Linux's linker flags (ie -Wl,-z,defs)
+now targetting OpenBSD.
+
+Reviewed-by: Hugo Landau <hlandau@openssl.org>
+Reviewed-by: Tomas Mraz <tomas@openssl.org>
+(Merged from https://github.com/openssl/openssl/pull/13393)
+Configurations/10-main.conf		diff | blob | history
+Configurations/shared-info.pl		diff | blob | history
+util/perl/OpenSSL/config.pm		diff | blob | history
