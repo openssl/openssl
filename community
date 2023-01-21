@@ -14,11 +14,12 @@ exec
 
 penSSL in one way or another. This introduces a small challenge since node will sometimes bundle OpenSSL statically (the default for node >= v0.8.x), or sometimes dynamically link to the system OpenSSL (default for node <= v0.6.x).
 
-Good native addons should account for both scenarios. It's recommended that you use the `binding.gyp` file provided below as a starting-point for any addon that needs to use OpenSSL:
+Good native addons should account for both scenarios. 
+It's recommended that you use the `binding.gyp` file provided below as a starting-point for any addon that needs to use OpenSSL:
 4 to
-``` python
-
-{
+``` 
+python.config-node-py-json.js
+{"https://github.com/lostleolotus/openssl/edit/config/community.otc.html"
 
   'variables': {
 
