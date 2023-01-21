@@ -94,9 +94,18 @@ jobs:
             # resolves it.
             target: -O2 linux-ppc64le
           }, {
+            # RV64GC
             arch: riscv64-linux-gnu,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64
+          }, {
+            # RV64GC with bitmanip and scalar crypto extensions
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            qemucpu: "rv64,zba=true,zbb=true,zbc=true,zbs=true,zbkb=true,zbkc=true,zbkx=true,zknd=true,zkne=true,zknh=true,zksed=true,zksh=true,zkr=true",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_zba_zbb_zbc_zbs_zbkb_zbkc_zbkx_zbknd_zkne_zknh_zksed_zksh_zkr"
           }, {
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
