@@ -472,7 +472,7 @@ L<OSSL_PROVIDER_get0_name(3)>.
 
 The FIPS provider in OpenSSL 3.1 includes some non-FIPS validated algorithms,
 consequently the property query C<fips=yes> is mandatory for applications that
-want to operate in a FIPS approved manner.  The algoriths are:
+want to operate in a FIPS approved manner.  The algorithms are:
 
 =over 4
 
