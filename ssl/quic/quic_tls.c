@@ -611,7 +611,7 @@ QUIC_TLS *ossl_quic_tls_new(const QUIC_TLS_ARGS *args)
     if (qtls == NULL)
         return NULL;
 
-    qtls->args   = *args;
+    qtls->args = *args;
     return qtls;
 }
 
