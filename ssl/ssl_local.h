@@ -1249,10 +1249,6 @@ struct ssl_st {
 struct ssl_connection_st {
     /* type identifier and common data */
     struct ssl_st ssl;
-#ifndef OPENSSL_NO_QUIC
-    /* pointer to parent SSL of QUIC_CONNECTION or self */
-    struct ssl_st *user_ssl;
-#endif
     /*
      * protocol version (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION,
      * DTLS1_VERSION)
