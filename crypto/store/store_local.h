@@ -113,6 +113,7 @@ struct ossl_store_loader_st {
     OSSL_FUNC_store_close_fn *p_close;
     OSSL_FUNC_store_export_object_fn *p_export_object;
     OSSL_FUNC_store_delete_fn *p_delete;
+    OSSL_FUNC_store_open_ex_fn *p_open_ex;
 };
 DEFINE_LHASH_OF_EX(OSSL_STORE_LOADER);
 
