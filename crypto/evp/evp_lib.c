@@ -209,7 +209,7 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
             break;
 
         default:
-            ret = EVP_CIPHER_get_asn1_iv(c, type);
+            ret = EVP_CIPHER_get_asn1_iv(c, type) >= 0 ? 1 : -1;
         }
     } else if (cipher->prov != NULL) {
         OSSL_PARAM params[3], *p = params;
