@@ -251,8 +251,8 @@ static int quic_write_records(OSSL_RECORD_LAYER *rl,
          * exceed SSL3_RT_MAX_PLAIN_LENGTH - so it should be a safe
          * assumption
          */
-        dummyrec[3] = (unsigned char)((template->buflen >> 8) &0xff);
-        dummyrec[4] = (unsigned char)(template->buflen &0xff);
+        dummyrec[3] = (unsigned char)((template->buflen >> 8) & 0xff);
+        dummyrec[4] = (unsigned char)(template->buflen & 0xff);
 
         rl->msg_callback(1, TLS1_3_VERSION, SSL3_RT_HEADER, dummyrec,
                             SSL3_RT_HEADER_LENGTH, rl->cbarg);
@@ -385,8 +385,8 @@ static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
          * *datalen will always fit into 2 bytes because our original buffer
          * size is less than that.
          */
-        dummyrec[3] = (unsigned char)((*datalen >> 8) &0xff);
-        dummyrec[4] = (unsigned char)(*datalen &0xff);
+        dummyrec[3] = (unsigned char)((*datalen >> 8) & 0xff);
+        dummyrec[4] = (unsigned char)(*datalen & 0xff);
 
         rl->msg_callback(0, TLS1_3_VERSION, SSL3_RT_HEADER, dummyrec,
                          SSL3_RT_HEADER_LENGTH, rl->cbarg);
