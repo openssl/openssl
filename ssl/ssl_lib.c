@@ -571,7 +571,6 @@ static int clear_record_layer(SSL_CONNECTION *s)
 
 int SSL_clear(SSL *s)
 {
-
     if (s->method == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_NO_METHOD_SPECIFIED);
         return 0;
