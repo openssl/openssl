@@ -66,6 +66,7 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
                    OSSL_STORE_post_process_info_fn post_process,
                    void *post_process_data)
 {
+    struct ossl_passphrase_data_st pwdata = { 0 };
     const OSSL_STORE_LOADER *loader = NULL;
     OSSL_STORE_LOADER *fetched_loader = NULL;
     OSSL_STORE_LOADER_CTX *loader_ctx = NULL;
@@ -102,6 +103,13 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
 
     ERR_set_mark();
 
+    if (ui_method != NULL
+        && (!ossl_pw_set_ui_method(&pwdata, ui_method, ui_data)
+            || !ossl_pw_enable_passphrase_caching(&pwdata))) {
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
+
     /*
      * Try each scheme until we find one that could open the URI.
      *
@@ -135,17 +143,28 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
             void *provctx = OSSL_PROVIDER_get0_provider_ctx(provider);
 
             no_loader_found = 0;
-            loader_ctx = fetched_loader->p_open(provctx, uri);
+            if (fetched_loader->p_open_ex != NULL) {
+                loader_ctx =
+                    fetched_loader->p_open_ex(provctx, uri, params,
+                                              ossl_pw_passphrase_callback_dec,
+                                              &pwdata);
+            } else {
+                loader_ctx = fetched_loader->p_open(provctx, uri);
+                if (loader_ctx != NULL &&
+                    !loader_set_params(fetched_loader, loader_ctx,
+                                       params, propq)) {
+                    (void)fetched_loader->p_close(loader_ctx);
+                    loader_ctx = NULL;
+                }
+            }
             if (loader_ctx == NULL) {
-                OSSL_STORE_LOADER_free(fetched_loader);
-                fetched_loader = NULL;
-            } else if (!loader_set_params(fetched_loader, loader_ctx,
-                                          params, propq)) {
-                (void)fetched_loader->p_close(loader_ctx);
                 OSSL_STORE_LOADER_free(fetched_loader);
                 fetched_loader = NULL;
             }
             loader = fetched_loader;
+
+            /* Clear any internally cached passphrase */
+            (void)ossl_pw_clear_passphrase_cache(&pwdata);
         }
     }
 
@@ -171,18 +190,13 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
         || (ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
         goto err;
 
-    if (ui_method != NULL
-        && (!ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data)
-            || !ossl_pw_enable_passphrase_caching(&ctx->pwdata))) {
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
-        goto err;
-    }
     ctx->properties = propq_copy;
     ctx->fetched_loader = fetched_loader;
     ctx->loader = loader;
     ctx->loader_ctx = loader_ctx;
     ctx->post_process = post_process;
     ctx->post_process_data = post_process_data;
+    ctx->pwdata = pwdata;
 
     /*
      * If the attempt to open with the 'file' scheme loader failed and the
