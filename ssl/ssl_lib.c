@@ -739,11 +739,6 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
         goto sslerr;
     }
 
-#ifndef OPENSSL_NO_QUIC
-    /* set the parent (user visible) ssl to self */
-    s->user_ssl = ssl;
-#endif
-
     RECORD_LAYER_init(&s->rlayer, s);
 
     s->options = ctx->options;
