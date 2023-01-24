@@ -365,4 +365,5 @@ int ossl_x509_check_private_key(const EVP_PKEY *k, const EVP_PKEY *pkey);
 
 int x509v3_add_len_value_uchar(const char *name, const unsigned char *value,
                                size_t vallen, STACK_OF(CONF_VALUE) **extlist);
+
 #endif  /* OSSL_CRYPTO_X509_H */

@@ -32,6 +32,7 @@
 #include "crypto/store.h"
 #include <openssl/cmp_util.h> /* for OSSL_CMP_log_close() */
 #include <openssl/trace.h>
+#include <openssl/x509v3.h>
 #include "crypto/ctype.h"
 
 static int stopped = 0;
@@ -454,6 +455,24 @@ void OPENSSL_cleanup(void)
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_trace_cleanup()\n");
     ossl_trace_cleanup();
+
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: X509_VERIFY_PARAM_table_cleanup()\n");
+    X509_VERIFY_PARAM_table_cleanup();
+
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: X509_TRUST_cleanup()\n");
+    X509_TRUST_cleanup();
+
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: X509_PURPOSE_cleanup()\n");
+    X509_PURPOSE_cleanup();
+
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: X509V3_EXT_cleanup()\n");
+    X509V3_EXT_cleanup();
+
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_app_methods_cleanup()\n");
+    ossl_app_methods_cleanup();
+
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: ASN1_STRING_TABLE_cleanup()\n");
+    ASN1_STRING_TABLE_cleanup();
 
     base_inited = 0;
 }

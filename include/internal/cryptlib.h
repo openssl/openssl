@@ -159,4 +159,5 @@ char *ossl_ipaddr_to_asc(unsigned char *p, int len);
 char *ossl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);
 unsigned char *ossl_hexstr2buf_sep(const char *str, long *buflen,
                                    const char sep);
+
 #endif
