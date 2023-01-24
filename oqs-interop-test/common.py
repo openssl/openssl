@@ -33,8 +33,10 @@ signatures = [
     'falcon512',
     'falcon1024',
     'sphincsharaka128frobust',
+    'sphincsharaka128fsimple',
     'sphincssha256128frobust',
-    'sphincsshake256128frobust',
+    'sphincssha256128ssimple',
+    'sphincsshake256128fsimple',
 ##### OQS_TEMPLATE_FRAGMENT_PQ_SIG_ALGS_END
 ]
 

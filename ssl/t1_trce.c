@@ -636,12 +636,18 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_sphincsharaka128frobust, "sphincsharaka128frobust"},
     {TLSEXT_SIGALG_p256_sphincsharaka128frobust, "p256_sphincsharaka128frobust"},
     {TLSEXT_SIGALG_rsa3072_sphincsharaka128frobust, "rsa3072_sphincsharaka128frobust"},
+    {TLSEXT_SIGALG_sphincsharaka128fsimple, "sphincsharaka128fsimple"},
+    {TLSEXT_SIGALG_p256_sphincsharaka128fsimple, "p256_sphincsharaka128fsimple"},
+    {TLSEXT_SIGALG_rsa3072_sphincsharaka128fsimple, "rsa3072_sphincsharaka128fsimple"},
     {TLSEXT_SIGALG_sphincssha256128frobust, "sphincssha256128frobust"},
     {TLSEXT_SIGALG_p256_sphincssha256128frobust, "p256_sphincssha256128frobust"},
     {TLSEXT_SIGALG_rsa3072_sphincssha256128frobust, "rsa3072_sphincssha256128frobust"},
-    {TLSEXT_SIGALG_sphincsshake256128frobust, "sphincsshake256128frobust"},
-    {TLSEXT_SIGALG_p256_sphincsshake256128frobust, "p256_sphincsshake256128frobust"},
-    {TLSEXT_SIGALG_rsa3072_sphincsshake256128frobust, "rsa3072_sphincsshake256128frobust"},
+    {TLSEXT_SIGALG_sphincssha256128ssimple, "sphincssha256128ssimple"},
+    {TLSEXT_SIGALG_p256_sphincssha256128ssimple, "p256_sphincssha256128ssimple"},
+    {TLSEXT_SIGALG_rsa3072_sphincssha256128ssimple, "rsa3072_sphincssha256128ssimple"},
+    {TLSEXT_SIGALG_sphincsshake256128fsimple, "sphincsshake256128fsimple"},
+    {TLSEXT_SIGALG_p256_sphincsshake256128fsimple, "p256_sphincsshake256128fsimple"},
+    {TLSEXT_SIGALG_rsa3072_sphincsshake256128fsimple, "rsa3072_sphincsshake256128fsimple"},
 ///// OQS_TEMPLATE_FRAGMENT_POPULATE_SIGALG_TBL_END
 };
 

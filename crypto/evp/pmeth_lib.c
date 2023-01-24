@@ -91,12 +91,18 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &sphincsharaka128frobust_pkey_meth,
     &p256_sphincsharaka128frobust_pkey_meth,
     &rsa3072_sphincsharaka128frobust_pkey_meth,
+    &sphincsharaka128fsimple_pkey_meth,
+    &p256_sphincsharaka128fsimple_pkey_meth,
+    &rsa3072_sphincsharaka128fsimple_pkey_meth,
     &sphincssha256128frobust_pkey_meth,
     &p256_sphincssha256128frobust_pkey_meth,
     &rsa3072_sphincssha256128frobust_pkey_meth,
-    &sphincsshake256128frobust_pkey_meth,
-    &p256_sphincsshake256128frobust_pkey_meth,
-    &rsa3072_sphincsshake256128frobust_pkey_meth,
+    &sphincssha256128ssimple_pkey_meth,
+    &p256_sphincssha256128ssimple_pkey_meth,
+    &rsa3072_sphincssha256128ssimple_pkey_meth,
+    &sphincsshake256128fsimple_pkey_meth,
+    &p256_sphincsshake256128fsimple_pkey_meth,
+    &rsa3072_sphincsshake256128fsimple_pkey_meth,
 ///// OQS_TEMPLATE_FRAGMENT_LIST_PKEY_METHS_END
 };
 

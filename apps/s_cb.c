@@ -296,18 +296,30 @@ static const char *get_sigtype(int nid)
         return "ECDSA p256 - SPHINCS+-Haraka-128f-robust";
     case NID_rsa3072_sphincsharaka128frobust:
         return "RSA3072 - SPHINCS+-Haraka-128f-robust";
+    case NID_sphincsharaka128fsimple:
+        return "SPHINCS+-Haraka-128f-simple";
+    case NID_p256_sphincsharaka128fsimple:
+        return "ECDSA p256 - SPHINCS+-Haraka-128f-simple";
+    case NID_rsa3072_sphincsharaka128fsimple:
+        return "RSA3072 - SPHINCS+-Haraka-128f-simple";
     case NID_sphincssha256128frobust:
         return "SPHINCS+-SHA256-128f-robust";
     case NID_p256_sphincssha256128frobust:
         return "ECDSA p256 - SPHINCS+-SHA256-128f-robust";
     case NID_rsa3072_sphincssha256128frobust:
         return "RSA3072 - SPHINCS+-SHA256-128f-robust";
-    case NID_sphincsshake256128frobust:
-        return "SPHINCS+-SHAKE256-128f-robust";
-    case NID_p256_sphincsshake256128frobust:
-        return "ECDSA p256 - SPHINCS+-SHAKE256-128f-robust";
-    case NID_rsa3072_sphincsshake256128frobust:
-        return "RSA3072 - SPHINCS+-SHAKE256-128f-robust";
+    case NID_sphincssha256128ssimple:
+        return "SPHINCS+-SHA256-128s-simple";
+    case NID_p256_sphincssha256128ssimple:
+        return "ECDSA p256 - SPHINCS+-SHA256-128s-simple";
+    case NID_rsa3072_sphincssha256128ssimple:
+        return "RSA3072 - SPHINCS+-SHA256-128s-simple";
+    case NID_sphincsshake256128fsimple:
+        return "SPHINCS+-SHAKE256-128f-simple";
+    case NID_p256_sphincsshake256128fsimple:
+        return "ECDSA p256 - SPHINCS+-SHAKE256-128f-simple";
+    case NID_rsa3072_sphincsshake256128fsimple:
+        return "RSA3072 - SPHINCS+-SHAKE256-128f-simple";
 ///// OQS_TEMPLATE_FRAGMENT_SIG_NAME_STR_END
     default:
         return NULL;

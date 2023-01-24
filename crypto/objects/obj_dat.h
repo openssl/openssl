@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7955] = {
+static const unsigned char so[7991] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1098,15 +1098,21 @@ static const unsigned char so[7955] = {
     0x2B,0xCE,0x0F,0x06,0x01,0x01,                 /* [ 7900] OBJ_sphincsharaka128frobust */
     0x2B,0xCE,0x0F,0x06,0x01,0x02,                 /* [ 7906] OBJ_p256_sphincsharaka128frobust */
     0x2B,0xCE,0x0F,0x06,0x01,0x03,                 /* [ 7912] OBJ_rsa3072_sphincsharaka128frobust */
-    0x2B,0xCE,0x0F,0x06,0x04,0x01,                 /* [ 7918] OBJ_sphincssha256128frobust */
-    0x2B,0xCE,0x0F,0x06,0x04,0x02,                 /* [ 7924] OBJ_p256_sphincssha256128frobust */
-    0x2B,0xCE,0x0F,0x06,0x04,0x03,                 /* [ 7930] OBJ_rsa3072_sphincssha256128frobust */
-    0x2B,0xCE,0x0F,0x06,0x07,0x01,                 /* [ 7936] OBJ_sphincsshake256128frobust */
-    0x2B,0xCE,0x0F,0x06,0x07,0x02,                 /* [ 7942] OBJ_p256_sphincsshake256128frobust */
-    0x2B,0xCE,0x0F,0x06,0x07,0x03,                 /* [ 7948] OBJ_rsa3072_sphincsshake256128frobust */
+    0x2B,0xCE,0x0F,0x06,0x01,0x04,                 /* [ 7918] OBJ_sphincsharaka128fsimple */
+    0x2B,0xCE,0x0F,0x06,0x01,0x05,                 /* [ 7924] OBJ_p256_sphincsharaka128fsimple */
+    0x2B,0xCE,0x0F,0x06,0x01,0x06,                 /* [ 7930] OBJ_rsa3072_sphincsharaka128fsimple */
+    0x2B,0xCE,0x0F,0x06,0x04,0x01,                 /* [ 7936] OBJ_sphincssha256128frobust */
+    0x2B,0xCE,0x0F,0x06,0x04,0x02,                 /* [ 7942] OBJ_p256_sphincssha256128frobust */
+    0x2B,0xCE,0x0F,0x06,0x04,0x03,                 /* [ 7948] OBJ_rsa3072_sphincssha256128frobust */
+    0x2B,0xCE,0x0F,0x06,0x04,0x0A,                 /* [ 7954] OBJ_sphincssha256128ssimple */
+    0x2B,0xCE,0x0F,0x06,0x04,0x0B,                 /* [ 7960] OBJ_p256_sphincssha256128ssimple */
+    0x2B,0xCE,0x0F,0x06,0x04,0x0C,                 /* [ 7966] OBJ_rsa3072_sphincssha256128ssimple */
+    0x2B,0xCE,0x0F,0x06,0x07,0x04,                 /* [ 7972] OBJ_sphincsshake256128fsimple */
+    0x2B,0xCE,0x0F,0x06,0x07,0x05,                 /* [ 7978] OBJ_p256_sphincsshake256128fsimple */
+    0x2B,0xCE,0x0F,0x06,0x07,0x06,                 /* [ 7984] OBJ_rsa3072_sphincsshake256128fsimple */
 };
 
-#define NUM_NID 1259
+#define NUM_NID 1265
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2361,15 +2367,21 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"sphincsharaka128frobust", "sphincsharaka128frobust", NID_sphincsharaka128frobust, 6, &so[7900]},
     {"p256_sphincsharaka128frobust", "p256_sphincsharaka128frobust", NID_p256_sphincsharaka128frobust, 6, &so[7906]},
     {"rsa3072_sphincsharaka128frobust", "rsa3072_sphincsharaka128frobust", NID_rsa3072_sphincsharaka128frobust, 6, &so[7912]},
-    {"sphincssha256128frobust", "sphincssha256128frobust", NID_sphincssha256128frobust, 6, &so[7918]},
-    {"p256_sphincssha256128frobust", "p256_sphincssha256128frobust", NID_p256_sphincssha256128frobust, 6, &so[7924]},
-    {"rsa3072_sphincssha256128frobust", "rsa3072_sphincssha256128frobust", NID_rsa3072_sphincssha256128frobust, 6, &so[7930]},
-    {"sphincsshake256128frobust", "sphincsshake256128frobust", NID_sphincsshake256128frobust, 6, &so[7936]},
-    {"p256_sphincsshake256128frobust", "p256_sphincsshake256128frobust", NID_p256_sphincsshake256128frobust, 6, &so[7942]},
-    {"rsa3072_sphincsshake256128frobust", "rsa3072_sphincsshake256128frobust", NID_rsa3072_sphincsshake256128frobust, 6, &so[7948]},
+    {"sphincsharaka128fsimple", "sphincsharaka128fsimple", NID_sphincsharaka128fsimple, 6, &so[7918]},
+    {"p256_sphincsharaka128fsimple", "p256_sphincsharaka128fsimple", NID_p256_sphincsharaka128fsimple, 6, &so[7924]},
+    {"rsa3072_sphincsharaka128fsimple", "rsa3072_sphincsharaka128fsimple", NID_rsa3072_sphincsharaka128fsimple, 6, &so[7930]},
+    {"sphincssha256128frobust", "sphincssha256128frobust", NID_sphincssha256128frobust, 6, &so[7936]},
+    {"p256_sphincssha256128frobust", "p256_sphincssha256128frobust", NID_p256_sphincssha256128frobust, 6, &so[7942]},
+    {"rsa3072_sphincssha256128frobust", "rsa3072_sphincssha256128frobust", NID_rsa3072_sphincssha256128frobust, 6, &so[7948]},
+    {"sphincssha256128ssimple", "sphincssha256128ssimple", NID_sphincssha256128ssimple, 6, &so[7954]},
+    {"p256_sphincssha256128ssimple", "p256_sphincssha256128ssimple", NID_p256_sphincssha256128ssimple, 6, &so[7960]},
+    {"rsa3072_sphincssha256128ssimple", "rsa3072_sphincssha256128ssimple", NID_rsa3072_sphincssha256128ssimple, 6, &so[7966]},
+    {"sphincsshake256128fsimple", "sphincsshake256128fsimple", NID_sphincsshake256128fsimple, 6, &so[7972]},
+    {"p256_sphincsshake256128fsimple", "p256_sphincsshake256128fsimple", NID_p256_sphincsshake256128fsimple, 6, &so[7978]},
+    {"rsa3072_sphincsshake256128fsimple", "rsa3072_sphincsshake256128fsimple", NID_rsa3072_sphincsshake256128fsimple, 6, &so[7984]},
 };
 
-#define NUM_SN 1248
+#define NUM_SN 1254
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3278,8 +3290,10 @@ static const unsigned int sn_objs[NUM_SN] = {
     1220,    /* "p256_kyber512" */
     1225,    /* "p256_kyber90s512" */
     1251,    /* "p256_sphincsharaka128frobust" */
-    1254,    /* "p256_sphincssha256128frobust" */
-    1257,    /* "p256_sphincsshake256128frobust" */
+    1254,    /* "p256_sphincsharaka128fsimple" */
+    1257,    /* "p256_sphincssha256128frobust" */
+    1260,    /* "p256_sphincssha256128ssimple" */
+    1263,    /* "p256_sphincsshake256128fsimple" */
     1224,    /* "p384_bikel3" */
     1235,    /* "p384_dilithium3" */
     1242,    /* "p384_dilithium3_aes" */
@@ -3363,8 +3377,10 @@ static const unsigned int sn_objs[NUM_SN] = {
     1240,    /* "rsa3072_dilithium2_aes" */
     1247,    /* "rsa3072_falcon512" */
     1252,    /* "rsa3072_sphincsharaka128frobust" */
-    1255,    /* "rsa3072_sphincssha256128frobust" */
-    1258,    /* "rsa3072_sphincsshake256128frobust" */
+    1255,    /* "rsa3072_sphincsharaka128fsimple" */
+    1258,    /* "rsa3072_sphincssha256128frobust" */
+    1261,    /* "rsa3072_sphincssha256128ssimple" */
+    1264,    /* "rsa3072_sphincsshake256128fsimple" */
        6,    /* "rsaEncryption" */
      644,    /* "rsaOAEPEncryptionSET" */
      377,    /* "rsaSignature" */
@@ -3557,8 +3573,10 @@ static const unsigned int sn_objs[NUM_SN] = {
     1142,    /* "sm-scheme" */
      387,    /* "snmpv2" */
     1250,    /* "sphincsharaka128frobust" */
-    1253,    /* "sphincssha256128frobust" */
-    1256,    /* "sphincsshake256128frobust" */
+    1253,    /* "sphincsharaka128fsimple" */
+    1256,    /* "sphincssha256128frobust" */
+    1259,    /* "sphincssha256128ssimple" */
+    1262,    /* "sphincsshake256128fsimple" */
      660,    /* "street" */
       85,    /* "subjectAltName" */
      769,    /* "subjectDirectoryAttributes" */
@@ -3621,7 +3639,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1248
+#define NUM_LN 1254
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4503,8 +4521,10 @@ static const unsigned int ln_objs[NUM_LN] = {
     1220,    /* "p256_kyber512" */
     1225,    /* "p256_kyber90s512" */
     1251,    /* "p256_sphincsharaka128frobust" */
-    1254,    /* "p256_sphincssha256128frobust" */
-    1257,    /* "p256_sphincsshake256128frobust" */
+    1254,    /* "p256_sphincsharaka128fsimple" */
+    1257,    /* "p256_sphincssha256128frobust" */
+    1260,    /* "p256_sphincssha256128ssimple" */
+    1263,    /* "p256_sphincsshake256128fsimple" */
     1224,    /* "p384_bikel3" */
     1235,    /* "p384_dilithium3" */
     1242,    /* "p384_dilithium3_aes" */
@@ -4612,8 +4632,10 @@ static const unsigned int ln_objs[NUM_LN] = {
     1240,    /* "rsa3072_dilithium2_aes" */
     1247,    /* "rsa3072_falcon512" */
     1252,    /* "rsa3072_sphincsharaka128frobust" */
-    1255,    /* "rsa3072_sphincssha256128frobust" */
-    1258,    /* "rsa3072_sphincsshake256128frobust" */
+    1255,    /* "rsa3072_sphincsharaka128fsimple" */
+    1258,    /* "rsa3072_sphincssha256128frobust" */
+    1261,    /* "rsa3072_sphincssha256128ssimple" */
+    1264,    /* "rsa3072_sphincsshake256128fsimple" */
        6,    /* "rsaEncryption" */
      644,    /* "rsaOAEPEncryptionSET" */
      377,    /* "rsaSignature" */
@@ -4823,8 +4845,10 @@ static const unsigned int ln_objs[NUM_LN] = {
     1133,    /* "sm4-ecb" */
     1135,    /* "sm4-ofb" */
     1250,    /* "sphincsharaka128frobust" */
-    1253,    /* "sphincssha256128frobust" */
-    1256,    /* "sphincsshake256128frobust" */
+    1253,    /* "sphincsharaka128fsimple" */
+    1256,    /* "sphincssha256128frobust" */
+    1259,    /* "sphincssha256128ssimple" */
+    1262,    /* "sphincsshake256128fsimple" */
       16,    /* "stateOrProvinceName" */
      660,    /* "streetAddress" */
      498,    /* "subtreeMaximumQuality" */
@@ -4873,7 +4897,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1099
+#define NUM_OBJ 1105
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5247,12 +5271,18 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1250,    /* OBJ_sphincsharaka128frobust      1 3 9999 6 1 1 */
     1251,    /* OBJ_p256_sphincsharaka128frobust 1 3 9999 6 1 2 */
     1252,    /* OBJ_rsa3072_sphincsharaka128frobust 1 3 9999 6 1 3 */
-    1253,    /* OBJ_sphincssha256128frobust      1 3 9999 6 4 1 */
-    1254,    /* OBJ_p256_sphincssha256128frobust 1 3 9999 6 4 2 */
-    1255,    /* OBJ_rsa3072_sphincssha256128frobust 1 3 9999 6 4 3 */
-    1256,    /* OBJ_sphincsshake256128frobust    1 3 9999 6 7 1 */
-    1257,    /* OBJ_p256_sphincsshake256128frobust 1 3 9999 6 7 2 */
-    1258,    /* OBJ_rsa3072_sphincsshake256128frobust 1 3 9999 6 7 3 */
+    1253,    /* OBJ_sphincsharaka128fsimple      1 3 9999 6 1 4 */
+    1254,    /* OBJ_p256_sphincsharaka128fsimple 1 3 9999 6 1 5 */
+    1255,    /* OBJ_rsa3072_sphincsharaka128fsimple 1 3 9999 6 1 6 */
+    1256,    /* OBJ_sphincssha256128frobust      1 3 9999 6 4 1 */
+    1257,    /* OBJ_p256_sphincssha256128frobust 1 3 9999 6 4 2 */
+    1258,    /* OBJ_rsa3072_sphincssha256128frobust 1 3 9999 6 4 3 */
+    1259,    /* OBJ_sphincssha256128ssimple      1 3 9999 6 4 10 */
+    1260,    /* OBJ_p256_sphincssha256128ssimple 1 3 9999 6 4 11 */
+    1261,    /* OBJ_rsa3072_sphincssha256128ssimple 1 3 9999 6 4 12 */
+    1262,    /* OBJ_sphincsshake256128fsimple    1 3 9999 6 7 4 */
+    1263,    /* OBJ_p256_sphincsshake256128fsimple 1 3 9999 6 7 5 */
+    1264,    /* OBJ_rsa3072_sphincsshake256128fsimple 1 3 9999 6 7 6 */
      631,    /* OBJ_setAttr_GenCryptgrm          2 23 42 3 3 3 1 */
      632,    /* OBJ_setAttr_T2Enc                2 23 42 3 3 4 1 */
      633,    /* OBJ_setAttr_T2cleartxt           2 23 42 3 3 4 2 */

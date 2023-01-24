@@ -60,12 +60,18 @@
     { 0xfe42, "sphincsharaka128frobust" }, \
     { 0xfe43, "p256_sphincsharaka128frobust" }, \
     { 0xfe44, "rsa3072_sphincsharaka128frobust" }, \
+    { 0xfe45, "sphincsharaka128fsimple" }, \
+    { 0xfe46, "p256_sphincsharaka128fsimple" }, \
+    { 0xfe47, "rsa3072_sphincsharaka128fsimple" }, \
     { 0xfe5e, "sphincssha256128frobust" }, \
     { 0xfe5f, "p256_sphincssha256128frobust" }, \
     { 0xfe60, "rsa3072_sphincssha256128frobust" }, \
-    { 0xfe7a, "sphincsshake256128frobust" }, \
-    { 0xfe7b, "p256_sphincsshake256128frobust" }, \
-    { 0xfe7c, "rsa3072_sphincsshake256128frobust" }, \
+    { 0xfe67, "sphincssha256128ssimple" }, \
+    { 0xfe68, "p256_sphincssha256128ssimple" }, \
+    { 0xfe69, "rsa3072_sphincssha256128ssimple" }, \
+    { 0xfe7d, "sphincsshake256128fsimple" }, \
+    { 0xfe7e, "p256_sphincsshake256128fsimple" }, \
+    { 0xfe7f, "rsa3072_sphincsshake256128fsimple" }, \
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_CPS_END
 
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_OIDS_START
@@ -92,12 +98,18 @@
 	oid_add_from_string("sphincsharaka128frobust", "1.3.9999.6.1.1"); \
 	oid_add_from_string("p256_sphincsharaka128frobust", "1.3.9999.6.1.2"); \
 	oid_add_from_string("rsa3072_sphincsharaka128frobust", "1.3.9999.6.1.3"); \
+	oid_add_from_string("sphincsharaka128fsimple", "1.3.9999.6.1.4"); \
+	oid_add_from_string("p256_sphincsharaka128fsimple", "1.3.9999.6.1.5"); \
+	oid_add_from_string("rsa3072_sphincsharaka128fsimple", "1.3.9999.6.1.6"); \
 	oid_add_from_string("sphincssha256128frobust", "1.3.9999.6.4.1"); \
 	oid_add_from_string("p256_sphincssha256128frobust", "1.3.9999.6.4.2"); \
 	oid_add_from_string("rsa3072_sphincssha256128frobust", "1.3.9999.6.4.3"); \
-	oid_add_from_string("sphincsshake256128frobust", "1.3.9999.6.7.1"); \
-	oid_add_from_string("p256_sphincsshake256128frobust", "1.3.9999.6.7.2"); \
-	oid_add_from_string("rsa3072_sphincsshake256128frobust", "1.3.9999.6.7.3"); \
+	oid_add_from_string("sphincssha256128ssimple", "1.3.9999.6.4.10"); \
+	oid_add_from_string("p256_sphincssha256128ssimple", "1.3.9999.6.4.11"); \
+	oid_add_from_string("rsa3072_sphincssha256128ssimple", "1.3.9999.6.4.12"); \
+	oid_add_from_string("sphincsshake256128fsimple", "1.3.9999.6.7.4"); \
+	oid_add_from_string("p256_sphincsshake256128fsimple", "1.3.9999.6.7.5"); \
+	oid_add_from_string("rsa3072_sphincsshake256128fsimple", "1.3.9999.6.7.6"); \
 
 
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_OIDS_END

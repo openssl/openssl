@@ -16,9 +16,9 @@ signatures = [
     'ecdsap256', 'rsa3072',
 ##### OQS_TEMPLATE_FRAGMENT_SIG_ALGS_START
     # post-quantum signatures
-    'dilithium2','dilithium3','dilithium5','dilithium2_aes','dilithium3_aes','dilithium5_aes','falcon512','falcon1024','sphincsharaka128frobust','sphincssha256128frobust','sphincsshake256128frobust',
+    'dilithium2','dilithium3','dilithium5','dilithium2_aes','dilithium3_aes','dilithium5_aes','falcon512','falcon1024','sphincsharaka128frobust','sphincsharaka128fsimple','sphincssha256128frobust','sphincssha256128ssimple','sphincsshake256128fsimple',
     # post-quantum + classical signatures
-    'p256_dilithium2','rsa3072_dilithium2','p384_dilithium3','p521_dilithium5','p256_dilithium2_aes','rsa3072_dilithium2_aes','p384_dilithium3_aes','p521_dilithium5_aes','p256_falcon512','rsa3072_falcon512','p521_falcon1024','p256_sphincsharaka128frobust','rsa3072_sphincsharaka128frobust','p256_sphincssha256128frobust','rsa3072_sphincssha256128frobust','p256_sphincsshake256128frobust','rsa3072_sphincsshake256128frobust',
+    'p256_dilithium2','rsa3072_dilithium2','p384_dilithium3','p521_dilithium5','p256_dilithium2_aes','rsa3072_dilithium2_aes','p384_dilithium3_aes','p521_dilithium5_aes','p256_falcon512','rsa3072_falcon512','p521_falcon1024','p256_sphincsharaka128frobust','rsa3072_sphincsharaka128frobust','p256_sphincsharaka128fsimple','rsa3072_sphincsharaka128fsimple','p256_sphincssha256128frobust','rsa3072_sphincssha256128frobust','p256_sphincssha256128ssimple','rsa3072_sphincssha256128ssimple','p256_sphincsshake256128fsimple','rsa3072_sphincsshake256128fsimple',
 ##### OQS_TEMPLATE_FRAGMENT_SIG_ALGS_END
 ]
 
