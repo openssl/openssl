@@ -496,7 +496,7 @@ int ossl_quic_conn_shutdown(QUIC_CONNECTION *qc, uint64_t flags,
     ossl_quic_channel_local_close(qc->ch,
                                   args != NULL ? args->quic_error_code : 0);
 
-    /* TODO(QUIC): !SSL_SHUTDOWN_FLAG_IMMEDIATE */
+    /* TODO(QUIC): !SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH */
 
     if (ossl_quic_channel_is_terminated(qc->ch))
         return 1;
@@ -748,7 +748,6 @@ int ossl_quic_accept(SSL *s)
  *   (BIO/)SSL_write            => ossl_quic_write
  *         SSL_pending          => ossl_quic_pending
  *         SSL_stream_conclude  => ossl_quic_conn_stream_conclude
- *
  */
 
 /* SSL_get_error */
