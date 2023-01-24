@@ -263,8 +263,8 @@ Conversely, when the B<-S> option is used during decryption, the ciphertext
 is expected to not have a prepended salt value.
 
 When using OpenSSL 3.0 or later to decrypt data that was encrypted with an
-explicit salt under OpenSSL 1.1.1 do not the B<-S> option, the salt will then be
-read from the ciphertext.
+explicit salt under OpenSSL 1.1.1 do not use the B<-S> option, the salt will
+then be read from the ciphertext.
 To generate ciphertext that can be decrypted with OpenSSL 1.1.1 do not use
 the B<-S> option, the salt will be then be generated randomly and prepended
 to the output.
