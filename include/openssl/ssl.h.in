@@ -2263,8 +2263,8 @@ typedef struct ssl_shutdown_ex_args_st {
     const char  *quic_reason;
 } SSL_SHUTDOWN_EX_ARGS;
 
-#define SSL_SHUTDOWN_FLAG_RAPID         (1U << 0)
-#define SSL_SHUTDOWN_FLAG_IMMEDIATE     (1U << 1)
+#define SSL_SHUTDOWN_FLAG_RAPID             (1U << 0)
+#define SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH   (1U << 1)
 
 __owur int SSL_shutdown_ex(SSL *ssl, uint64_t flags,
                            const SSL_SHUTDOWN_EX_ARGS *args,

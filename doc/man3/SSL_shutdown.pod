@@ -99,8 +99,8 @@ For more information see L<SSL_CTX_set_options(3)>.
 
 SSL_shutdown_ex() is an extended version of SSL_shutdown(). If non-NULL, I<args>
 must point to a B<SSL_SHUTDOWN_EX_ARGS> structure and I<args_len> must be set to
-I<sizeof(SSL_SHUTDOWN_EX_ARGS)>. The B<SSL_SHUTDOWN_EX_ARGS> structure must be
-zero-initialized. If B<args> is NULL, the behaviour is the same as passing a
+C<sizeof(SSL_SHUTDOWN_EX_ARGS)>. The B<SSL_SHUTDOWN_EX_ARGS> structure must be
+zero-initialized. If I<args> is NULL, the behaviour is the same as passing a
 zero-initialised B<SSL_SHUTDOWN_EX_ARGS> structure. When used with a non-QUIC
 SSL object, the arguments are ignored and the call functions identically to
 SSL_shutdown().
@@ -124,7 +124,7 @@ call to SSL_shutdown_ex() for a given QUIC connection SSL object.
 
 When using QUIC, how an application uses SSL_shutdown() or SSL_shutdown_ex() has
 implications for whether QUIC closes a connection in an RFC-compliant manner.
-For discussion these issues, and for discussion of the I<flags> argument, see
+For discussion of these issues, and for discussion of the I<flags> argument, see
 B<QUIC-SPECIFIC SHUTDOWN CONSIDERATIONS> below.
 
 =head2 First to close the connection
@@ -172,10 +172,10 @@ shutdown process is considered complete. An exception to this is streams which
 terminated in a non-normal fashion, for example due to a stream reset; only
 streams which are non-terminated or which terminated in a normal fashion have
 their pending send buffers flushed in this manner. This behaviour can be skipped
-by setting the B<SSL_SHUTDOWN_FLAG_IMMEDIATE> flag; in this case, data remaining
-in stream send buffers may not be transmitted to the peer. This flag may be used
-when a non-normal application condition has occurred and the delivery of data
-written to streams via L<SSL_write(3)> is no longer relevant.
+by setting the B<SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH> flag; in this case, data
+remaining in stream send buffers may not be transmitted to the peer. This flag
+may be used when a non-normal application condition has occurred and the
+delivery of data written to streams via L<SSL_write(3)> is no longer relevant.
 
 Aspects of how QUIC handles connection closure must be taken into account by
 applications. Ordinarily, QUIC expects a connection to continue to be serviced
@@ -207,7 +207,7 @@ down.
 =item Rapid shutdown mode
 
 In this mode, the peer is notified of connection closure on a best effort basis
-by sending a single QUIC packet. If that QUIC packet i slost, the peer will not
+by sending a single QUIC packet. If that QUIC packet is lost, the peer will not
 know that the connection has terminated until the negotiated idle timeout (if
 any) expires.
 
@@ -268,6 +268,10 @@ L<SSL_accept(3)>, L<SSL_set_shutdown(3)>,
 L<SSL_CTX_set_quiet_shutdown(3)>, L<SSL_CTX_set_options(3)>
 L<SSL_clear(3)>, L<SSL_free(3)>,
 L<ssl(7)>, L<bio(7)>
+
+=head1 HISTORY
+
+The SSL_shutdown_ex() function was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

@@ -27,7 +27,7 @@ When calling this on a stream, the receive part of the stream remains
 unaffected, and the peer may continue to send data until it also signals the end
 of the stream. Thus, SSL_read() can still be used.
 
-B<flags> is reserved and should be set to 0.
+I<flags> is reserved and should be set to 0.
 
 Only the first call to this function has any effect for a given stream;
 subsequent calls are no-ops. This is considered a success case.
