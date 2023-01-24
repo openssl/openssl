@@ -1077,13 +1077,9 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
         ctx->keep_alive = val;
         break;
     case OSSL_CMP_OPT_MSG_TIMEOUT:
-        if (val < 0)
-            val = 0;
         ctx->msg_timeout = val;
         break;
     case OSSL_CMP_OPT_TOTAL_TIMEOUT:
-        if (val < 0)
-            val = 0;
         ctx->total_timeout = val;
         break;
     case OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR:
