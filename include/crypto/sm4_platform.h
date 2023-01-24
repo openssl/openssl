@@ -35,6 +35,13 @@ static inline int vpsm4_capable(void)
 #    define HWSM4_ecb_encrypt sm4_v8_ecb_encrypt
 #    define HWSM4_ctr32_encrypt_blocks sm4_v8_ctr32_encrypt_blocks
 #   endif
+#  elif defined(__riscv)
+#    include "riscv_arch.h"
+#    define RVI_ZKSED_CAPABLE   (RISCV_HAS_ZKSED())
+int rvi_zksed_cipher(const unsigned char *in, unsigned char *out,
+                   const SM4_KEY *key);
+int rvi_zksed_set_encrypt_key(const unsigned char *userKey, SM4_KEY *key);
+int rvi_zksed_set_decrypt_key(const unsigned char *userKey, SM4_KEY *key);
 #  endif
 # endif /* OPENSSL_CPUID_OBJ */
 
