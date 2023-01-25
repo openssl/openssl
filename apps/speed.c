@@ -1241,12 +1241,11 @@ static int SIG_sign_loop(void *args)
     loopargs_t *tempargs = *(loopargs_t **) args;
     EVP_PKEY_CTX *ctx = tempargs->sig_sign_ctx[testnum];
     /* be sure to not change stored sig: */
-    unsigned char *sig = OPENSSL_malloc(tempargs->sig_max_sig_len[testnum]);
-    unsigned char md[SHA256_DIGEST_LENGTH];
+    unsigned char *sig = app_malloc(tempargs->sig_max_sig_len[testnum],
+                                    "sig sign loop");
+    unsigned char md[SHA256_DIGEST_LENGTH] = { 0 };
     size_t md_len = SHA256_DIGEST_LENGTH;
     int count;
-
-    memset(md, 0, SHA256_DIGEST_LENGTH);
 
     for (count = 0; COND(kems_c[testnum][1]); count++) {
         size_t sig_len = tempargs->sig_max_sig_len[testnum];
@@ -3587,21 +3586,21 @@ skip_hmac:
                                                         &bits);
                 use_params = 1;
             } else if (strncmp(kem_name, "EC", 2) == 0) {
-                name = (char *)(kem_name+2);
+                name = (char *)(kem_name + 2);
                 params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
                                                   name, 0);
                 use_params = 1;
             }
 
             kem_gen_ctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(),
-                                               (strncmp(kem_name, "rsa", 3) == 0)?"RSA":
-                                                (strncmp(kem_name, "EC", 2) == 0)?"EC":
+                                               (strncmp(kem_name, "rsa", 3) == 0) ? "RSA":
+                                                (strncmp(kem_name, "EC", 2) == 0) ? "EC":
                                                  kem_name,
                                                app_get0_propq());
 
             if ((!kem_gen_ctx || EVP_PKEY_keygen_init(kem_gen_ctx) <= 0)
-                || (use_params &&
-                    (EVP_PKEY_CTX_set_params(kem_gen_ctx, params) <= 0))) {
+                || (use_params
+                    && (EVP_PKEY_CTX_set_params(kem_gen_ctx, params) <= 0))) {
                 BIO_printf(bio_err, "Error initializing keygen ctx for %s.\n",
                            kem_name);
                 goto kem_err_break;
@@ -3618,9 +3617,9 @@ skip_hmac:
                 || (EVP_PKEY_encapsulate_init(kem_encaps_ctx, NULL) <= 0)
                 || ((strncmp(kem_name, "rsa", 3) == 0
                     && (EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "RSASVE") <= 0)))
-                || (((strncmp(kem_name, "EC", 2) == 0) 
-                    || (strcmp(kem_name, "X25519") == 0) 
-                    || (strcmp(kem_name, "X448") == 0 ))
+                || ((strncmp(kem_name, "EC", 2) == 0 
+                    || strcmp(kem_name, "X25519") == 0 
+                    || strcmp(kem_name, "X448") == 0 )
                    && (EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "DHKEM") <= 0))
                 || (EVP_PKEY_encapsulate(kem_encaps_ctx, NULL, &out_len,
                                       NULL, &send_secret_len) <= 0)) {
@@ -3629,8 +3628,8 @@ skip_hmac:
                            kem_name);
                 goto kem_err_break;
             }
-            out = OPENSSL_malloc(out_len);
-            send_secret = OPENSSL_malloc(send_secret_len);
+            out = app_malloc(out_len, "encaps result");
+            send_secret = app_malloc(send_secret_len, "encaps secret");
             if (out == NULL || send_secret == NULL) {
                 BIO_printf(bio_err, "MemAlloc error in encaps for %s.\n", kem_name);
                 goto kem_err_break;
@@ -3648,9 +3647,9 @@ skip_hmac:
                 || (EVP_PKEY_decapsulate_init(kem_decaps_ctx, NULL) <= 0) 
                 || ((strncmp(kem_name, "rsa", 3) == 0
                   && (EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "RSASVE") <= 0)))
-                || (((strncmp(kem_name, "EC", 2) == 0)
-                     || (strcmp(kem_name, "X25519") == 0)
-                     || (strcmp(kem_name, "X448") == 0))
+                || ((strncmp(kem_name, "EC", 2) == 0
+                     || strcmp(kem_name, "X25519") == 0
+                     || strcmp(kem_name, "X448") == 0)
                   && (EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "DHKEM") <= 0))
                 || (EVP_PKEY_decapsulate(kem_decaps_ctx, NULL, &rcv_secret_len,
                                       out, out_len) <= 0)) {
@@ -3659,7 +3658,7 @@ skip_hmac:
                            kem_name);
                 goto kem_err_break;
             }
-            rcv_secret = OPENSSL_malloc(rcv_secret_len);
+            rcv_secret = app_malloc(rcv_secret_len, "KEM decaps secret");
             if (rcv_secret == NULL) {
                 BIO_printf(bio_err, "MemAlloc failure in decaps for %s.\n",
                            kem_name);
@@ -3682,16 +3681,15 @@ skip_hmac:
             loopargs[i].kem_rcv_secret[testnum] = rcv_secret;
             break;
 
-            kem_err_break:
+        kem_err_break:
             ERR_print_errors(bio_err);
             op_count = 1;
             kem_checks = 0;
             break;
-
         }
         if (kem_checks != 0) {
             kskey_print_message(kem_name, "keygen", kems_c[testnum][0],
-                                 seconds.kem);
+                                seconds.kem);
             Time_F(START);
             count =
                 run_benchmark(async_jobs, KEM_keygen_loop, loopargs);
@@ -3764,7 +3762,6 @@ skip_hmac:
                 ERR_print_errors(bio_err);
             }
 
-
             if (strncmp(sig_name, "rsa", 3) == 0) {
                 bits = atoi(sig_name + 3);
                 params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
@@ -3822,7 +3819,7 @@ skip_hmac:
                            sig_name);
                 goto sig_err_break;
             }
-            sig = OPENSSL_malloc(sig_len = max_sig_len);
+            sig = app_malloc(sig_len = max_sig_len, "signature buffer");
             if (sig == NULL) {
                 BIO_printf(bio_err, "MemAlloc error in sign for %s.\n", sig_name);
                 goto sig_err_break;
@@ -3852,8 +3849,7 @@ skip_hmac:
                 BIO_printf(bio_err, "Verify error for %s.\n", sig_name);
                 goto sig_err_break;
             }
-            if (EVP_PKEY_verify(sig_verify_ctx, sig, sig_len,
-                                      md, md_len) <= 0) {
+            if (EVP_PKEY_verify(sig_verify_ctx, sig, sig_len, md, md_len) <= 0) {
                 BIO_printf(bio_err, "Verify 2 error for %s.\n", sig_name);
                 goto sig_err_break;
             }
@@ -3865,12 +3861,11 @@ skip_hmac:
             loopargs[i].sig_sig[testnum] = sig;
             break;
 
-            sig_err_break:
+        sig_err_break:
             ERR_print_errors(bio_err);
             op_count = 1;
             sig_checks = 0;
             break;
-
         }
 
         if (sig_checks != 0) {
@@ -4092,6 +4087,7 @@ skip_hmac:
     testnum = 1;
     for (k = 0; k < kems_algs_len; k++) {
         const char *kem_name = kems_algname[k];
+
         if (!kems_doit[k] || !do_kems)
             continue;
         if (testnum && !mr) {
