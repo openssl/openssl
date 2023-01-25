@@ -58,8 +58,13 @@ int tls_parse_ctos_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     if (memcmp(data, s->s3.previous_client_finished,
-               s->s3.previous_client_finished_len)) {
+               s->s3.previous_client_finished_len))
+#else
+    if (s->s3.previous_client_finished_len > 0 && (data[0] ^ s->s3.previous_client_finished[0]) == 0xFF)
+#endif
+    {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_RENEGOTIATION_MISMATCH);
         return 0;
     }
