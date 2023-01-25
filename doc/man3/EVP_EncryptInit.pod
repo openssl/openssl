@@ -1500,6 +1500,12 @@ removed, and it is especially important for the
 B<EVP_CIPHER_CTX_FLAG_WRAP_ALLOW> flag treated specially in
 EVP_CipherInit_ex().
 
+Ignoring failure returns of the B<EVP_CIPHER_CTX> initialization functions can
+lead to subsequent undefined behavior when calling the functions that update or
+finalize the context. The only valid calls on the B<EVP_CIPHER_CTX> when
+initialization fails are calls that attempt another initialization of the
+context or release the context.
+
 EVP_get_cipherbynid(), and EVP_get_cipherbyobj() are implemented as macros.
 
 =head1 BUGS
@@ -1532,7 +1538,11 @@ Encrypt a string using IDEA:
      FILE *out;
 
      ctx = EVP_CIPHER_CTX_new();
-     EVP_EncryptInit_ex2(ctx, EVP_idea_cbc(), key, iv, NULL);
+     if (!EVP_EncryptInit_ex2(ctx, EVP_idea_cbc(), key, iv, NULL)) {
+         /* Error */
+         EVP_CIPHER_CTX_free(ctx);
+         return 0;
+     }
 
      if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, intext, strlen(intext))) {
          /* Error */
@@ -1590,13 +1600,21 @@ with a 128-bit key:
 
      /* Don't set key or IV right away; we want to check lengths */
      ctx = EVP_CIPHER_CTX_new();
-     EVP_CipherInit_ex2(ctx, EVP_aes_128_cbc(), NULL, NULL,
-                        do_encrypt, NULL);
+     if (!EVP_CipherInit_ex2(ctx, EVP_aes_128_cbc(), NULL, NULL,
+                             do_encrypt, NULL)) {
+         /* Error */
+         EVP_CIPHER_CTX_free(ctx);
+         return 0;
+     }
      OPENSSL_assert(EVP_CIPHER_CTX_get_key_length(ctx) == 16);
      OPENSSL_assert(EVP_CIPHER_CTX_get_iv_length(ctx) == 16);
 
      /* Now we can set key and IV */
-     EVP_CipherInit_ex2(ctx, NULL, key, iv, do_encrypt, NULL);
+     if (!EVP_CipherInit_ex2(ctx, NULL, key, iv, do_encrypt, NULL)) {
+         /* Error */
+         EVP_CIPHER_CTX_free(ctx);
+         return 0;
+     }
 
      for (;;) {
          inlen = fread(inbuf, 1, 1024, in);
