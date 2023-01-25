@@ -333,12 +333,12 @@ execute_HDR_generalInfo_push1_items_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_ptr(asn1int))
         return 0;
 
-    if (!TEST_ptr(val)) {
+    if (!TEST_ptr(val)
+            || !TEST_true(ASN1_INTEGER_set(asn1int, 88))) {
         ASN1_INTEGER_free(asn1int);
         return 0;
     }
 
-    ASN1_INTEGER_set(asn1int, 88);
     ASN1_TYPE_set(val, V_ASN1_INTEGER, asn1int);
     if (!TEST_ptr(itav = OSSL_CMP_ITAV_create(OBJ_txt2obj(oid, 1), val))) {
         ASN1_TYPE_free(val);
