@@ -29,8 +29,11 @@ DEFINE_RUN_ONCE_STATIC(do_stable_lock_init)
         return 0;
 
     if (stable == NULL
-        && (stable = sk_ASN1_STRING_TABLE_new(sk_table_cmp)) == NULL)
+        && (stable = sk_ASN1_STRING_TABLE_new(sk_table_cmp)) == NULL) {
+        CRYPTO_THREAD_lock_free(stable_lock);
+        stable_lock = NULL;
         return 0;
+    }
 
     return 1;
 }
@@ -259,10 +262,8 @@ void ASN1_STRING_TABLE_cleanup(void)
         sk_ASN1_STRING_TABLE_pop_free(tmp, st_free);
     }
 
-    if (stable_lock != NULL) {
-        CRYPTO_THREAD_lock_free(stable_lock);
-        stable_lock = NULL;
-    }
+    CRYPTO_THREAD_lock_free(stable_lock);
+    stable_lock = NULL;
 }
 
 static void st_free(ASN1_STRING_TABLE *tbl)
