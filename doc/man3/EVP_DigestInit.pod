@@ -573,6 +573,7 @@ Returns 1 for success or 0 for failure.
 EVP_Digest(),
 EVP_DigestInit_ex2(),
 EVP_DigestInit_ex(),
+EVP_DigestInit(),
 EVP_DigestUpdate(),
 EVP_DigestFinal_ex(),
 EVP_DigestFinalXOF(), and
@@ -651,6 +652,13 @@ are still in common use.
 For most applications the I<impl> parameter to EVP_DigestInit_ex() will be
 set to NULL to use the default digest implementation.
 
+Ignoring failure returns of EVP_DigestInit_ex(), EVP_DigestInit_ex2(), or
+EVP_DigestInit() can lead to undefined behavior on subsequent calls
+updating or finalizing the B<EVP_MD_CTX> such as the EVP_DigestUpdate() or
+EVP_DigestFinal() functions. The only valid calls on the B<EVP_MD_CTX>
+when initialization fails are calls that attempt another initialization of
+the context or release the context.
+
 The functions EVP_DigestInit(), EVP_DigestFinal() and EVP_MD_CTX_copy() are
 obsolete but are retained to maintain compatibility with existing code. New
 applications should use EVP_DigestInit_ex(), EVP_DigestFinal_ex() and
@@ -698,10 +706,26 @@ digest name passed on the command line.
      }
 
      mdctx = EVP_MD_CTX_new();
-     EVP_DigestInit_ex2(mdctx, md, NULL);
-     EVP_DigestUpdate(mdctx, mess1, strlen(mess1));
-     EVP_DigestUpdate(mdctx, mess2, strlen(mess2));
-     EVP_DigestFinal_ex(mdctx, md_value, &md_len);
+     if (!EVP_DigestInit_ex2(mdctx, md, NULL)) {
+         printf("Message digest initialization failed.\n");
+         EVP_MD_CTX_free(mdctx);
+         exit(1);
+     }
+     if (!EVP_DigestUpdate(mdctx, mess1, strlen(mess1))) {
+         printf("Message digest update failed.\n");
+         EVP_MD_CTX_free(mdctx);
+         exit(1);
+     }
+     if (!EVP_DigestUpdate(mdctx, mess2, strlen(mess2))) {
+         printf("Message digest update failed.\n");
+         EVP_MD_CTX_free(mdctx);
+         exit(1);
+     }
+     if (!EVP_DigestFinal_ex(mdctx, md_value, &md_len)) {
+         printf("Message digest finalization failed.\n");
+         EVP_MD_CTX_free(mdctx);
+         exit(1);
+     }
      EVP_MD_CTX_free(mdctx);
 
      printf("Digest is: ");
