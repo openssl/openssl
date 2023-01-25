@@ -88,8 +88,11 @@ DEFINE_RUN_ONCE_STATIC(do_xptable_lock_init)
         return 0;
 
     if (xptable == NULL
-        && (xptable = sk_X509_PURPOSE_new(xp_cmp)) == NULL)
+        && (xptable = sk_X509_PURPOSE_new(xp_cmp)) == NULL) {
+        CRYPTO_THREAD_lock_free(xptable_lock);
+        xptable_lock = NULL;
         return 0;
+    }
 
     return 1;
 }
@@ -149,7 +152,8 @@ int X509_PURPOSE_get_count(void)
         || !CRYPTO_THREAD_read_lock(xptable_lock))
         return X509_PURPOSE_COUNT;
 
-    ret = sk_X509_PURPOSE_num(xptable) + X509_PURPOSE_COUNT;
+    ret = get_count();
+
     CRYPTO_THREAD_unlock(xptable_lock);
     return ret;
 }
@@ -175,8 +179,8 @@ X509_PURPOSE *X509_PURPOSE_get0(int idx)
     if (!ensure_init()
         || !CRYPTO_THREAD_read_lock(xptable_lock))
         return NULL;
-    p = sk_X509_PURPOSE_value(xptable, idx - X509_PURPOSE_COUNT);
-    CRYPTO_THREAD_unlock(p);
+    p = get_entry(idx);
+    CRYPTO_THREAD_unlock(xptable_lock);
     return p;
 }
 
