@@ -172,6 +172,10 @@ multiple times on a context and the parameters set by previous calls should be
 preserved if the I<pkey> parameter is NULL. The call then just resets the state
 of the I<ctx>.
 
+Ignoring failure returns of EVP_DigestSignInit() and EVP_DigestSignInit_ex()
+functions can lead to subsequent undefined behavior when calling
+EVP_DigestSignUpdate(), EVP_DigestSignFinal(), or EVP_DigestSign().
+
 The use of EVP_PKEY_get_size() with these functions is discouraged because some
 signature operations may have a signature length which depends on the
 parameters set. As a result EVP_PKEY_get_size() would have to return a value
