@@ -599,8 +599,11 @@ DEFINE_RUN_ONCE_STATIC(do_param_table_lock_init)
         return 0;
 
     if (param_table == NULL
-        && (param_table = sk_X509_VERIFY_PARAM_new(param_cmp)) == NULL)
+        && (param_table = sk_X509_VERIFY_PARAM_new(param_cmp)) == NULL) {
+        CRYPTO_THREAD_lock_free(param_table_lock);
+        param_table_lock = NULL;
         return 0;
+    }
 
     return 1;
 }
@@ -675,6 +678,7 @@ const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name)
     pm.name = (char *)name;
     if (ensure_init()
         && CRYPTO_THREAD_write_lock(param_table_lock)) {
+        /* Needs write lock as sk_find may sort the stack. */
         idx = sk_X509_VERIFY_PARAM_find(param_table, &pm);
         if (idx >= 0) {
             p = sk_X509_VERIFY_PARAM_value(param_table, idx);
