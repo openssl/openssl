@@ -97,7 +97,7 @@ DEFINE_RUN_ONCE_STATIC(do_xptable_lock_init)
     return 1;
 }
 
-static int ensure_init(void)
+static int ensure_xptable_init(void)
 {
     if (!RUN_ONCE(&xptable_lock_init, do_xptable_lock_init))
         return 0;
@@ -148,7 +148,7 @@ int X509_PURPOSE_get_count(void)
 {
     int ret;
 
-    if (!ensure_init()
+    if (!ensure_xptable_init()
         || !CRYPTO_THREAD_read_lock(xptable_lock))
         return X509_PURPOSE_COUNT;
 
@@ -176,7 +176,7 @@ X509_PURPOSE *X509_PURPOSE_get0(int idx)
         return NULL;
     if (idx < (int)X509_PURPOSE_COUNT)
         return xstandard + idx;
-    if (!ensure_init()
+    if (!ensure_xptable_init()
         || !CRYPTO_THREAD_read_lock(xptable_lock))
         return NULL;
     p = get_entry(idx);
@@ -189,7 +189,7 @@ int X509_PURPOSE_get_by_sname(const char *sname)
     int i, count;
     X509_PURPOSE *xptmp;
 
-    if (!ensure_init()
+    if (!ensure_xptable_init()
         || !CRYPTO_THREAD_read_lock(xptable_lock))
         return -1;
 
@@ -213,7 +213,7 @@ int X509_PURPOSE_get_by_id(int purpose)
 
     if (purpose >= X509_PURPOSE_MIN && purpose <= X509_PURPOSE_MAX)
         return purpose - X509_PURPOSE_MIN;
-    if (!ensure_init()
+    if (!ensure_xptable_init()
         || !CRYPTO_THREAD_write_lock(xptable_lock))
         return -1;
     tmp.purpose = purpose;
@@ -268,7 +268,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
 
     /* If its a new entry manage the dynamic table */
     if (idx == -1) {
-        if (!ensure_init()
+        if (!ensure_xptable_init()
             || !CRYPTO_THREAD_write_lock(xptable_lock)) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto err;

@@ -38,7 +38,7 @@ DEFINE_RUN_ONCE_STATIC(do_stable_lock_init)
     return 1;
 }
 
-static int ensure_init(void)
+static int ensure_stable_init(void)
 {
     if (!RUN_ONCE(&stable_lock_init, do_stable_lock_init))
         return 0;
@@ -114,7 +114,7 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
     unsigned long mask;
     int ret;
 
-    if (!ensure_init())
+    if (!ensure_stable_init())
         return NULL;
 
     if (!CRYPTO_THREAD_write_lock(stable_lock))
@@ -191,7 +191,7 @@ static ASN1_STRING_TABLE *stable_get(int nid)
     ASN1_STRING_TABLE *tmp, *rv = NULL, *res = NULL;
 
     /* Always need a string table so allocate one if NULL */
-    if (!ensure_init())
+    if (!ensure_stable_init())
         return NULL;
 
     if (!CRYPTO_THREAD_write_lock(stable_lock))

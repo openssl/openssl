@@ -608,7 +608,7 @@ DEFINE_RUN_ONCE_STATIC(do_param_table_lock_init)
     return 1;
 }
 
-static int ensure_init(void)
+static int ensuure_param_table_init(void)
 {
     if (!RUN_ONCE(&param_table_lock_init, do_param_table_lock_init))
         return 0;
@@ -624,7 +624,7 @@ int X509_VERIFY_PARAM_add0_table(X509_VERIFY_PARAM *param)
     int idx, r;
     X509_VERIFY_PARAM *ptmp;
 
-    if (!ensure_init()
+    if (!ensuure_param_table_init()
         || !CRYPTO_THREAD_write_lock(param_table_lock))
         return 0;
 
@@ -643,7 +643,7 @@ int X509_VERIFY_PARAM_get_count(void)
 {
     int num = OSSL_NELEM(default_table);
 
-    if (ensure_init()
+    if (ensuure_param_table_init()
         && CRYPTO_THREAD_read_lock(param_table_lock)) {
         num += sk_X509_VERIFY_PARAM_num(param_table);
         CRYPTO_THREAD_unlock(param_table_lock);
@@ -660,7 +660,7 @@ const X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id)
     if (id < num)
         return default_table + id;
 
-    if (!ensure_init()
+    if (!ensuure_param_table_init()
         || !CRYPTO_THREAD_read_lock(param_table_lock))
         return NULL;
 
@@ -676,7 +676,7 @@ const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name)
     const X509_VERIFY_PARAM *p;
 
     pm.name = (char *)name;
-    if (ensure_init()
+    if (ensuure_param_table_init()
         && CRYPTO_THREAD_write_lock(param_table_lock)) {
         /* Needs write lock as sk_find may sort the stack. */
         idx = sk_X509_VERIFY_PARAM_find(param_table, &pm);

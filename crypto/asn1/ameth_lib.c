@@ -56,7 +56,7 @@ DEFINE_RUN_ONCE_STATIC(do_app_methods_lock_init)
     return 1;
 }
 
-static int ensure_init(void)
+static int ensure_app_methods_init(void)
 {
     if (!RUN_ONCE(&app_methods_lock_init, do_app_methods_lock_init))
         return 0;
@@ -77,7 +77,7 @@ int EVP_PKEY_asn1_get_count(void)
 {
     int num = OSSL_NELEM(standard_methods);
 
-    if (ensure_init()
+    if (ensure_app_methods_init()
         && CRYPTO_THREAD_read_lock(app_methods_lock)) {
         num += sk_EVP_PKEY_ASN1_METHOD_num(app_methods);
         CRYPTO_THREAD_unlock(app_methods_lock);
@@ -96,7 +96,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
     if (idx < num)
         return standard_methods[idx];
     idx -= num;
-    if (!ensure_init()
+    if (!ensure_app_methods_init()
         || !CRYPTO_THREAD_read_lock(app_methods_lock))
         return NULL;
     m = sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
@@ -133,7 +133,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type)
 {
     const EVP_PKEY_ASN1_METHOD *t;
 
-    if (!ensure_init()
+    if (!ensure_app_methods_init()
         || !CRYPTO_THREAD_read_lock(app_methods_lock))
         return NULL;
 
@@ -217,7 +217,7 @@ int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
         return 0;
     }
 
-    if (!ensure_init()
+    if (!ensure_app_methods_init()
         || !CRYPTO_THREAD_write_lock(app_methods_lock))
         return 0;
 

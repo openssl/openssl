@@ -74,7 +74,7 @@ DEFINE_RUN_ONCE_STATIC(do_trtable_lock_init)
     return 1;
 }
 
-static int ensure_init(void)
+static int ensure_trtable_init(void)
 {
     if (!RUN_ONCE(&trtable_lock_init, do_trtable_lock_init))
         return 0;
@@ -111,7 +111,7 @@ int X509_TRUST_get_count(void)
 {
     int r;
 
-    if (!ensure_init()
+    if (!ensure_trtable_init()
         || !CRYPTO_THREAD_read_lock(trtable_lock))
         return X509_TRUST_COUNT;
 
@@ -128,7 +128,7 @@ X509_TRUST *X509_TRUST_get0(int idx)
         return NULL;
     if (idx < (int)X509_TRUST_COUNT)
         return trstandard + idx;
-    if (!ensure_init()
+    if (!ensure_trtable_init()
         || !CRYPTO_THREAD_read_lock(trtable_lock))
         return NULL;
     p = sk_X509_TRUST_value(trtable, idx - X509_TRUST_COUNT);
@@ -143,7 +143,7 @@ int X509_TRUST_get_by_id(int id)
 
     if ((id >= X509_TRUST_MIN) && (id <= X509_TRUST_MAX))
         return id - X509_TRUST_MIN;
-    if (!ensure_init()
+    if (!ensure_trtable_init()
         || !CRYPTO_THREAD_write_lock(trtable_lock))
         return -1;
     tmp.trust = id;
@@ -203,7 +203,7 @@ int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
 
     /* If its a new entry manage the dynamic table */
     if (idx < 0) {
-        if (!ensure_init()
+        if (!ensure_trtable_init()
             || CRYPTO_THREAD_write_lock(trtable_lock)) {
             ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             goto err;

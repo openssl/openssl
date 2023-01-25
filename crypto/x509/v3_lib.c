@@ -42,7 +42,7 @@ DEFINE_RUN_ONCE_STATIC(do_ext_list_lock_init)
     return 1;
 }
 
-static int ensure_init(void)
+static int ensure_ext_list_init(void)
 {
     if (!RUN_ONCE(&ext_list_lock_init, do_ext_list_lock_init))
         return 0;
@@ -52,7 +52,7 @@ static int ensure_init(void)
 
 int X509V3_EXT_add(X509V3_EXT_METHOD *ext)
 {
-    if (!ensure_init()
+    if (!ensure_ext_list_init()
         || !CRYPTO_THREAD_write_lock(ext_list_lock) ) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         return 0;
@@ -96,7 +96,7 @@ const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
     if (!ext_list)
         return NULL;
 
-    if (!ensure_init()
+    if (!ensure_ext_list_init()
         || CRYPTO_THREAD_write_lock(ext_list_lock))
         return NULL;
 

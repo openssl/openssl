@@ -54,7 +54,7 @@ DEFINE_RUN_ONCE_STATIC(do_pbe_algs_lock_init)
     return 1;
 }
 
-static int ensure_init(void)
+static int ensure_pbe_algs_init(void)
 {
     if (!RUN_ONCE(&pbe_algs_lock_init, do_pbe_algs_lock_init))
         return 0;
@@ -231,7 +231,7 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
 {
     EVP_PBE_CTL *pbe_tmp = NULL;
 
-    if (!ensure_init()) {
+    if (!ensure_pbe_algs_init()) {
         ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         goto err;
     }
@@ -291,7 +291,7 @@ int EVP_PBE_find_ex(int type, int pbe_nid, int *pcnid, int *pmnid,
     pbelu.pbe_type = type;
     pbelu.pbe_nid = pbe_nid;
 
-    if (ensure_init()) {
+    if (ensure_pbe_algs_init()) {
         if (!CRYPTO_THREAD_write_lock(pbe_algs_lock))
             return 0;
 
