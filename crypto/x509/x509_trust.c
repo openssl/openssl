@@ -65,8 +65,11 @@ DEFINE_RUN_ONCE_STATIC(do_trtable_lock_init)
         return 0;
 
     if (trtable == NULL
-        && (trtable = sk_X509_TRUST_new(tr_cmp)) == NULL)
+        && (trtable = sk_X509_TRUST_new(tr_cmp)) == NULL) {
+        CRYPTO_THREAD_lock_free(trtable_lock);
+        trtable_lock = NULL;
         return 0;
+    }
 
     return 1;
 }
