@@ -45,8 +45,11 @@ DEFINE_RUN_ONCE_STATIC(do_pbe_algs_lock_init)
         return 0;
 
     if (pbe_algs == NULL
-        && (pbe_algs = sk_EVP_PBE_CTL_new(pbe_cmp)) == NULL)
+        && (pbe_algs = sk_EVP_PBE_CTL_new(pbe_cmp)) == NULL) {
+        CRYPTO_THREAD_lock_free(pbe_algs_lock);
+        pbe_algs_lock = NULL;
         return 0;
+    }
 
     return 1;
 }
@@ -292,6 +295,7 @@ int EVP_PBE_find_ex(int type, int pbe_nid, int *pcnid, int *pmnid,
         if (!CRYPTO_THREAD_write_lock(pbe_algs_lock))
             return 0;
 
+        /* sk_find requires a write lock as it may sort the stack. */
         i = sk_EVP_PBE_CTL_find(pbe_algs, &pbelu);
         pbetmp = sk_EVP_PBE_CTL_value(pbe_algs, i);
         CRYPTO_THREAD_unlock(pbe_algs_lock);
@@ -328,10 +332,8 @@ void EVP_PBE_cleanup(void)
     sk_EVP_PBE_CTL_pop_free(pbe_algs, free_evp_pbe_ctl);
     pbe_algs = NULL;
 
-    if (pbe_algs_lock != NULL) {
-        CRYPTO_THREAD_lock_free(pbe_algs_lock);
-        pbe_algs_lock = NULL;
-    }
+    CRYPTO_THREAD_lock_free(pbe_algs_lock);
+    pbe_algs_lock = NULL;
 }
 
 int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num)
