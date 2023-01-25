@@ -3758,6 +3758,29 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             }
             return (int)sc->ext.peer_supportedgroups_len;
         }
+    case SSL_CTRL_GET_USED_GROUP_ID:
+        {
+          if (s == NULL || s->s3 == NULL) return 0;
+          if (s->server || s->session == NULL) return 0;
+          return s->s3->tmp.oqs_kem_curve_id ? s->s3->tmp.oqs_kem_curve_id : s->s3->group_id;
+        }
+    case SSL_CTRL_GET_USED_GROUP_NID:
+        {
+          if (s == NULL || s->s3 == NULL) return 0;
+          if (s->server || s->session == NULL) return 0;
+          TLS_GROUP_INFO *tls_group_info =
+            tls1_group_id_lookup(s->s3->tmp.oqs_kem_curve_id ?
+                                 s->s3->tmp.oqs_kem_curve_id : s->s3->group_id);
+          return tls_group_info == NULL ? 0 : tls_group_info->nid;
+        }
+    case SSL_CTRL_GET_USED_SIGALG_NID:
+        {
+          if (s == NULL || s->s3 == NULL) return 0;
+          if (s->server || s->session == NULL) return 0;
+          if (s->s3->tmp.peer_sigalg->sig == EVP_PKEY_EC)
+             return s->s3->tmp.peer_sigalg->sigandhash;
+          return s->s3->tmp.peer_sigalg->sig;
+        }
 
     default:
         break;
