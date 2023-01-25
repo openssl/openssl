@@ -44,6 +44,7 @@ int tls_parse_ctos_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
 {
     unsigned int ilen;
     const unsigned char *data;
+    int ok;
 
     /* Parse the length byte */
     if (!PACKET_get_1(pkt, &ilen)
@@ -58,8 +59,16 @@ int tls_parse_ctos_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    if (memcmp(data, s->s3.previous_client_finished,
-               s->s3.previous_client_finished_len)) {
+    ok = memcmp(data, s->s3.previous_client_finished,
+                    s->s3.previous_client_finished_len);
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (ok) {
+        if (data[0] ^ s->s3.previous_client_finished[0] != 0xFF) {
+            ok = 0;
+        }
+    }
+#endif
+    if (ok) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_RENEGOTIATION_MISMATCH);
         return 0;
     }

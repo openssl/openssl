@@ -787,6 +787,7 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
     size_t md_len;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     int was_first = SSL_IS_FIRST_HANDSHAKE(s);
+    int ok;
 
 
     /* This is a real handshake so make sure we clean it up at the end */
@@ -831,8 +832,16 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
         return MSG_PROCESS_ERROR;
     }
 
-    if (CRYPTO_memcmp(PACKET_data(pkt), s->s3.tmp.peer_finish_md,
-                      md_len) != 0) {
+    ok = CRYPTO_memcmp(PACKET_data(pkt), s->s3.tmp.peer_finish_md,
+                       md_len);
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (ok != 0) {
+        if (PACKET_data(pkt)[0] ^ s->s3.tmp.peer_finish_md[0] != 0xFF) {
+            ok = 0;
+        }
+    }
+#endif
+    if (ok != 0) {
         SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_DIGEST_CHECK_FAILED);
         return MSG_PROCESS_ERROR;
     }
