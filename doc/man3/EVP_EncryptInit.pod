@@ -1536,8 +1536,8 @@ removed, and it is especially important for the
 B<EVP_CIPHER_CTX_FLAG_WRAP_ALLOW> flag treated specially in
 EVP_CipherInit_ex().
 
-Ignoring failure of the B<EVP_CIPHER_CTX> initialization functions can lead
-to subsequent undefined behavior when calling the functions that update or
+Ignoring failure returns of the B<EVP_CIPHER_CTX> initialization functions can
+lead to subsequent undefined behavior when calling the functions that update or
 finalize the context. The only valid calls on the B<EVP_CIPHER_CTX> when
 initialization fails are calls that attempt another initialization of the
 context or release the context.

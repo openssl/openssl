@@ -161,9 +161,9 @@ multiple times on a context and the parameters set by previous calls should be
 preserved if the I<pkey> parameter is NULL. The call then just resets the state
 of the I<ctx>.
 
-Ignoring failure of EVP_DigestVerifyInit() and EVP_DigestVerifyInit_ex() functions
-can lead to subsequent undefined behavior when calling EVP_DigestVerifyUpdate(),
-EVP_DigestVerifyFinal(), or EVP_DigestVerify().
+Ignoring failure returns of EVP_DigestVerifyInit() and EVP_DigestVerifyInit_ex()
+functions can lead to subsequent undefined behavior when calling
+EVP_DigestVerifyUpdate(), EVP_DigestVerifyFinal(), or EVP_DigestVerify().
 
 =head1 SEE ALSO
 
