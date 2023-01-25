@@ -8,7 +8,7 @@ packets, frames, etc) that are not in accordance with the specifications or
 OpenSSL's expectations.
 
 The QUIC Fault Injector is a component within the OpenSSL test framework that
-can be used to simulate misbehaving peers and confirm that that OpenSSL QUIC
+can be used to simulate misbehaving peers and confirm that OpenSSL QUIC
 implementation behaves in the expected manner in the event of such misbehaviour.
 
 Typically an individual test will inject one particular misbehaviour (i.e. a
@@ -68,7 +68,7 @@ int ossl_statem_set_mutator(SSL *s,
 
 The two callbacks are set via a single internal function call
 `ossl_statem_set_mutator`. The mutator callback `mutate_handshake_cb` will be
-called after a handshake message has been constructed and is ready to send, but
+called after each handshake message has been constructed and is ready to send, but
 before it has been passed through the handshake hashing code. It will be passed
 a pointer to the constructed handshake message in `msgin` along with its
 associated length in `inlen`. The mutator will construct a replacement handshake
@@ -115,7 +115,7 @@ void ossl_qtx_set_mutator(OSSL_QTX *qtx, ossl_mutate_packet_cb mutatecb,
 ````
 
 A single new function call will set both callbacks. The `mutatecb` callback will
-be invoked after a packet has been constructued but before protection has
+be invoked after each packet has been constructed but before protection has
 been applied to it. The header for the packet will be pointed to by `hdrin` and
 the payload will be in an iovec array pointed to by `iovecin` and containing
 `numin` iovecs. The `mutatecb` callback is expected to allocate a new header
