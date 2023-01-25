@@ -33,8 +33,11 @@ DEFINE_RUN_ONCE_STATIC(do_ext_list_lock_init)
         return 0;
 
     if (ext_list == NULL
-        && (ext_list = sk_X509V3_EXT_METHOD_new(ext_cmp)) == NULL)
+        && (ext_list = sk_X509V3_EXT_METHOD_new(ext_cmp)) == NULL) {
+        CRYPTO_THREAD_lock_free(ext_list_lock);
+        ext_list_lock = NULL;
         return 0;
+    }
 
     return 1;
 }
@@ -97,6 +100,7 @@ const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
         || CRYPTO_THREAD_write_lock(ext_list_lock))
         return NULL;
 
+    /* Needs write lock as sk_find may sort the stack. */
     idx = sk_X509V3_EXT_METHOD_find(ext_list, &tmp);
     m = sk_X509V3_EXT_METHOD_value(ext_list, idx);
     CRYPTO_THREAD_unlock(ext_list_lock);
