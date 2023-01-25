@@ -47,8 +47,11 @@ DEFINE_RUN_ONCE_STATIC(do_app_methods_lock_init)
         return 0;
 
     if (app_methods == NULL
-        && (app_methods = sk_EVP_PKEY_ASN1_METHOD_new(ameth_cmp)) == NULL)
+        && (app_methods = sk_EVP_PKEY_ASN1_METHOD_new(ameth_cmp)) == NULL) {
+        CRYPTO_THREAD_lock_free(app_methods_lock);
+        app_methods_lock = NULL;
         return 0;
+    }
 
     return 1;
 }
@@ -66,10 +69,8 @@ void ossl_app_methods_cleanup(void)
     sk_EVP_PKEY_ASN1_METHOD_pop_free(app_methods, EVP_PKEY_asn1_free);
     app_methods = NULL;
 
-    if (app_methods_lock != NULL) {
-        CRYPTO_THREAD_lock_free(app_methods_lock);
-        app_methods_lock = NULL;
-    }
+    CRYPTO_THREAD_lock_free(app_methods_lock);
+    app_methods_lock = NULL;
 }
 
 int EVP_PKEY_asn1_get_count(void)
@@ -89,6 +90,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
 {
     const EVP_PKEY_ASN1_METHOD *m;
     int num = OSSL_NELEM(standard_methods);
+
     if (idx < 0)
         return NULL;
     if (idx < num)
