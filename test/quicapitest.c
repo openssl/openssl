@@ -76,6 +76,52 @@ static int test_quic_write_read(void)
 }
 #endif
 
+/* Test that a vanilla QUIC SSL object has the expected ciphersuites available */
+static int test_ciphersuites(void)
+{
+    SSL_CTX *ctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *ssl;
+    int testresult = 0;
+    const STACK_OF(SSL_CIPHER) *ciphers = NULL;
+    const SSL_CIPHER *cipher;
+    /* We expect this exactly list of ciphersuites by default */
+    int cipherids[] = {
+        TLS1_3_CK_AES_256_GCM_SHA384,
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+        TLS1_3_CK_CHACHA20_POLY1305_SHA256,
+#endif
+        TLS1_3_CK_AES_128_GCM_SHA256
+    };
+    size_t i;
+
+    if (!TEST_ptr(ctx))
+        return 0;
+
+    ssl = SSL_new(ctx);
+    if (!TEST_ptr(ssl))
+        goto err;
+
+    ciphers = SSL_get_ciphers(ssl);
+
+    if (!TEST_int_eq(sk_SSL_CIPHER_num(ciphers), OSSL_NELEM(cipherids)))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(cipherids); i++) {
+        cipher = sk_SSL_CIPHER_value(ciphers, i);
+        if (!TEST_ptr(cipher))
+            goto err;
+        if (!TEST_uint_eq(SSL_CIPHER_get_id(cipher), cipherids[i]))
+            goto err;
+    }
+
+    testresult = 1;
+ err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("provider config\n")
 
 int setup_tests(void)
@@ -125,6 +171,8 @@ int setup_tests(void)
 #if 0
     ADD_TEST(test_quic_write_read);
 #endif
+    ADD_TEST(test_ciphersuites);
+
     return 1;
 }
 
