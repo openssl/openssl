@@ -409,6 +409,11 @@ sub vsetivli__x0_4_e32_m1_tu_mu {
     return ".word 0xc1027057";
 }
 
+sub vsetivli__x0_4_e64_m1_tu_mu {
+    # vsetivli x0, 4, e64, m1, tu, mu
+    return ".word 0xc1827057";
+}
+
 sub vslidedown_vi {
     # vslidedown.vi vd, vs2, uimm
     my $template = 0b0011111_00000_00000_011_00000_1010111;
@@ -610,7 +615,7 @@ sub vaesz_vs {
     return ".word ".($template | ($vs2 << 20) | ($vd << 7));
 }
 
-## Zvknha instructions
+## Zvknha and Zvknhb instructions
 
 sub vsha2ms_vv {
     # vsha2ms.vv vd, vs2, vs1
