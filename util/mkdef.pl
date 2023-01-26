@@ -113,6 +113,7 @@ my %OS_data = (
                      platforms  => { UNIX                       => 1 } },
     "solaris-gcc" => 'solaris', # alias
     linux       => 'solaris',   # alias
+    Linux       => 'linux',     # alias
     "bsd-gcc"   => 'solaris',   # alias
     aix         => { writer     => \&writer_aix,
                      sort       => sorter_unix(),
@@ -126,7 +127,9 @@ my %OS_data = (
                      platforms  => { WIN32                      => 1,
                                      _WIN32                     => 1 } },
     windows     => 'WINDOWS',   # alias
+    Windows     => 'WINDOWS',   # alias
     WIN32       => 'WINDOWS',   # alias
+    Win32       => 'WIN32',     # alias
     win32       => 'WIN32',     # alias
     32          => 'WIN32',     # alias
     NT          => 'WIN32',     # alias

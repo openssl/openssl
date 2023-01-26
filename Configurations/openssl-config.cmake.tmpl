@@ -48,11 +48,32 @@ cmake_minimum_required(VERSION 3.17)
 cmake_policy(SET CMP0054 NEW)
 set(CMAKE_EXECUTE_PROCESS_COMMAND_ECHO STDOUT)
 
+include(CheckCCompilerFlag)
+include(CheckPIESupported)
+
+# Determine the perl executable
 if(PERL_EXECUTABLE)
   set(PERL "${PERL_EXECUTABLE}")
 else()
   set(PERL {- fixup_path($config{PERL}) -})
 endif()
+
+# Make position independent targets
+check_pie_supported(OUTPUT_VARIABLE _OSSL_CHECK_PIE_SUPPORT_OUTPUT LANGUAGES C)
+if(NOT CMAKE_C_LINK_PIE_SUPPORTED)
+  set(OPENSSL_POSITION_INDEPENDENT_CODE OFF)
+  if(NOT WIN32)
+    message(WARNING "PIE is not supported at link time: ${_OSSL_CHECK_PIE_SUPPORT_OUTPUT}.\n"
+                    "PIE link options will not be passed to linker.")
+  endif()
+else()
+  set(OPENSSL_POSITION_INDEPENDENT_CODE ON)
+endif()
+
+# Determine version-script support.
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ossl-version-script-test.def" "{ };")
+check_c_compiler_flag("-Wl,--version-script=${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ossl-version-script-test.def"
+                        OPENSSL_HAS_VERSION_SCRIPT_SUPPORT)
 
 set(OPENSSL_SRCDIR {- use File::Spec::Functions qw(:DEFAULT rel2abs);
                       fixup_path(rel2abs($config{sourcedir})) -})
@@ -70,7 +91,7 @@ set(SHLIB_VERSION_NUMBER "{- $config{shlib_version} -}")
 if (WIN32)
   set(OPENSSL_OS "windows")
 else()
-  set(OPENSSL_OS "{- (my $os = $target{shared_target}) =~ s|-shared$||; $os -}")
+  set(OPENSSL_OS "${CMAKE_SYSTEM_NAME}")
 endif()
 
 set(OPENSSL_LIBS {- join(" ", map { my $x = platform->staticlib($_) // ();
@@ -100,17 +121,10 @@ set(OPENSSL_FIPSMODULENAME {- die 'More that one FIPS module' if scalar @fipsmod
 set(OPENSSL_PROGRAMS {- our @PROGRAMS = map { my $x = platform->bin($_) // ();
                                               $x ? compute_target_name('bin', $_) : () } @{$unified_info{programs}};
                         join(" ", @PROGRAMS) -})
-set(OPENSSL_PROGRAMPDBS {- join(" ", map { fixup_path($_.".pdb") } @{$unified_info{programs}}) -})
-set(OPENSSL_SCRIPTS {- our @SCRIPTS = @{$unified_info{scripts}};
-                       join(" ", map { fixup_path($_) } @SCRIPTS) -})
-{- output_off() if $disabled{makedepend}; "" -}
-set(OPENSSL_DEPS {- join(" ", map { platform->isobj($_) ? platform->dep($_) : () }
-                    grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
-                    keys %{$unified_info{sources}}); -})
-{- output_on() if $disabled{makedepend}; "" -}
-#set(OPENSSL_GENERATED_MANDATORY {- # Files that require mandatory generation
-#                                   our @GENERATED_MANDATORY = @{$unified_info{depends}->{""}};
-#                                   join(" ", map { fixup_path($_) } @GENERATED_MANDATORY) -})
+
+set(OPENSSL_GENERATED_MANDATORY {- # Files that require mandatory generation
+                                   our @GENERATED_MANDATORY = @{$unified_info{depends}->{""}};
+                                   join(" ", map { fixup_path($_) } @GENERATED_MANDATORY) -})
 #set(OPENSSL_GENERATED {- # common0.tmpl provides @generated
 #                         our @GENERATED = map { platform->convertext($_) } @generated;
 #                         join(" ", map { fixup_path($_) } @GENERATED) -})
@@ -265,9 +279,6 @@ set(OPENSSL_LD {- $x = $config{LD}; $x ? fixup_path($x) : () -})
 set(OPENSSL_LDFLAGS {- join(" ", map { quotify1($_) } @{$config{LDFLAGS}}) -})
 set(OPENSSL_EX_LIBS {- join(" ", map { fixup_path($_) } @{$config{LDLIBS}}) -})
 
-set(OPENSSL_AS {- $x = $config{AS}; $x ? fixup_path($x) : () -})
-set(OPENSSL_ASFLAGS {- join(' ', @{$config{ASFLAGS}}) -})
-
 ##### Project flags ##################################################
 
 set(OPENSSL_LIB_DEFINES -DOPENSSLDIR="${OPENSSL_OPENSSLDIR}" -DENGINESDIR="${OPENSSL_ENGINESDIR}" -DMODULESDIR="${OPENSSL_MODULESDIR}")
@@ -280,30 +291,41 @@ else()
 endif()
 
 if (WIN32)
-  set(OPENSSL_PROJECT_DEFINES -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_WINSOCK_DEPRECATED_NO_WARNINGS)
+  set(OPENSSL_COMMON_DEFINES -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_WINSOCK_DEPRECATED_NO_WARNINGS)
   set(OPENSSL_SHLIB_DEFINES -D_WINDLL)
 else()
-  set(OPENSSL_PROJECT_DEFINES)
+  set(OPENSSL_COMMON_DEFINES)
   set(OPENSSL_SHLIB_DEFINES)
-  set(OPENSSL_OS "windows")
 endif()
 
 # Variables starting with CNF_ are common variables for all product types
 
-set(CNF_ASFLAGS {- join(' ', $target{asflags} || (), @{$config{asflags}}) -})
-set(CNF_CPPFLAGS {- our $cppflags2 = join(' ', $target{cppflags} || (),
-                            (map { '-D'.$_ } @{$target{defines}},
-                                                       @{$config{defines}}),
-                            (map { '-I'.fixup_path($_) } @{$target{includes}},
-                                                         @{$config{includes}}),
-                            @{$config{cppflags}}) -})
-set(CNF_CFLAGS {- join(' ', $target{cflags} || (), @{$config{cflags}}) -})
-set(CNF_CXXFLAGS {- join(' ', $target{cxxflags} || (), @{$config{cxxflags}}) -})
-set(CNF_LDFLAGS {- join(' ', $target{lflags} || (), @{$config{lflags}}) -})
-set(CNF_EX_LIBS {- my @ex_libs = ();
-                   push @ex_libs, 'ws2_32' unless $disabled{sock};
-                   push @ex_libs, 'gdi32 advapi32 crypt32 user32';
-                   join(' ', @ex_libs, @{$config{ex_libs}}) -})
+
+if (WIN32)
+  set(CNF_ASFLAGS "-f win64 {- join(' ', $target{asflags} || (), @{$config{asflags}}) -}")
+else()
+  set(CNF_ASFLAGS)
+endif()
+set(CNF_CPPFLAGS "{- our $cppflags2 = join(' ', $target{cppflags} || (),
+                    (map { '-D'.$_ } @{$target{defines}},
+                                               @{$config{defines}}),
+                    (map { '-I'.fixup_path($_) } @{$target{includes}},
+                                                 @{$config{includes}}),
+                    @{$config{cppflags}}) -}")
+if (WIN32)
+  set(CNF_CPPFLAGS "-DUNICODE -D_UNICODE -DWIN32_LEAN_AND_MEAN ${CNF_CPPFLAGS}")
+endif()
+set(CNF_CFLAGS "{- join(' ', $target{cflags} || (), @{$config{cflags}}) -}")
+set(CNF_CXXFLAGS "{- join(' ', $target{cxxflags} || (), @{$config{cxxflags}}) -}")
+set(CNF_LDFLAGS "{- join(' ', $target{lflags} || (), @{$config{lflags}}) -}")
+if (WIN32)
+  set(CNF_EX_LIBS {- my @ex_libs = ();
+                     push @ex_libs, 'ws2_32' unless $disabled{sock};
+                     push @ex_libs, 'gdi32 advapi32 crypt32 user32';
+                     join(' ', @ex_libs, @{$config{ex_libs}}) -})
+else()
+  set(CNF_EX_LIBS {- join(' ', @{$config{ex_libs}}) -})
+endif()
 
 # Variables starting with LIB_ are used to build library object files
 # and shared libraries.
@@ -379,7 +401,18 @@ set(CPPFLAGS_Q "{- join(' ', $lib_cppflags || (),
                              $cppflags2 || (),
                              $cppflags1 || ()) -}")
 
-set(PERLASM_SCHEME "{- $target{perlasm_scheme} -}")
+
+if(WIN32)
+  enable_language(ASM_NASM)
+  set(PERLASM_SCHEME "{- $target{perlasm_scheme} -}")
+  set(OPENSSL_AS {- $x = $config{AS}; $x ? fixup_path($x) : () -})
+  set(OPENSSL_ASFLAGS {- join(' ', @{$config{ASFLAGS}}) -})
+else()
+  enable_language(ASM)
+  set(OPENSSL_AS "${CMAKE_ASM_COMPILER}")
+  set(OPENSSL_ASFLAGS "-x assembler")
+  set(PERLASM_SCHEME "elf")
+endif()
 
 set(OPENSSL_PROCESSOR "{- $config{processor} -}")
 
@@ -493,7 +526,7 @@ EOF
           if (defined($generator)) {
             return <<"EOF";
 add_custom_command(OUTPUT $gen_out
-                   COMMAND \${CMAKE_COMMAND} -E env "ASM=\${OPENSSL_AS}" $generator $gen_out
+                   COMMAND \${CMAKE_COMMAND} -E env "CC=\${OPENSSL_AS}" "ASM=\${OPENSSL_AS}" $generator $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
           }
@@ -513,9 +546,22 @@ EOF
           my @perlmodules = ( 'configdata.pm',
                               grep { $_ =~ m|\.pm$| } @{$args{deps}} );
           my %perlmoduleincs = map { fixup_path("-I".rel2abs(dirname($_))) => 1 } @perlmodules;
-          $deps = join(' ', $deps, compute_platform_depends(@perlmodules));
+          $deps = join(' ', map { fixup_path($_) } $deps, compute_platform_depends(@perlmodules));
           @perlmodules = map { "-M".basename($_, '.pm') } @perlmodules;
           my $perlmodules = join(' ', '', sort keys %perlmoduleincs, @perlmodules);
+
+          # If this is a mandatory generated file, then generate it during
+          # configuration using execute_process.
+          if (grep { $args{src} eq $_ } @GENERATED_MANDATORY) {
+              return <<"EOF";
+execute_process(COMMAND "\${PERL}"$perlmodules $dofile "-o$target{build_file}" $gen_in$gen_args
+                OUTPUT_FILE $gen_out
+                WORKING_DIRECTORY "\${OPENSSL_SRCDIR}"
+                COMMAND_ECHO STDERR)
+EOF
+          }
+
+          # Check if this is a doc to be generated.
           if ($args{src} =~ /\.pod$/) {
               my $gen_cmd = escape_cmd('${PERL}'.$perlmodules.' '
                                         .$dofile.' -o'.$target{build_file}.' '
@@ -527,11 +573,11 @@ add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
           }
+
           return <<"EOF";
-execute_process(COMMAND "\${PERL}"$perlmodules $dofile "-o$target{build_file}" $gen_in$gen_args
-                OUTPUT_FILE $gen_out
-                WORKING_DIRECTORY "\${OPENSSL_SRCDIR}"
-                COMMAND_ECHO STDERR)
+add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in DEPENDS $deps
+                   COMMAND \${PERL}$perlmodules $dofile "-o$target{build_file}" $gen_in$gen_args > $gen_out
+                   WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
       } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
           #
@@ -601,19 +647,6 @@ EOF
                                     $x : escape_cmd("\${OPENSSL_SRCDIR}/".$x) } @{$args{deps}});
      my $incs = join("", map { ' -I"'.$_.'"' } @{$args{incs}});
      my $defs = join("", map { " -D".$_ } @{$args{defs}});
-     my $cflags = { shlib => ' ${LIB_CFLAGS}',
-		    lib => ' ${LIB_CFLAGS}',
-		    dso => ' ${DSO_CFLAGS}',
-		    bin => ' ${BIN_CFLAGS}' } -> {$args{intent}};
-     $cflags .= $incs;
-     $cflags .= { shlib => ' ${LIB_CPPFLAGS}',
-		  lib => ' ${LIB_CPPFLAGS}',
-		  dso => ' ${DSO_CPPFLAGS}',
-		  bin => ' ${BIN_CPPFLAGS}' } -> {$args{intent}};
-     my $asflags = { shlib => ' ${LIB_ASFLAGS}',
-		     lib => ' ${LIB_ASFLAGS}',
-		     dso => ' ${DSO_ASFLAGS}',
-		     bin => ' ${BIN_ASFLAGS}' } -> {$args{intent}};
      my $makedepcmd = $config{makedepcmd} unless $disabled{makedepend};
      my $obj = platform->obj($args{obj});
      my $dep = platform->dep($args{obj});
@@ -634,7 +667,7 @@ EOF
  }
 
  # We *know* this routine is only called when we've configure 'shared'.
- # Also, note that even though the import library built here looks like
+ # Also, note that even though an import library built here looks like
  # a static library, it really isn't.
  sub obj2shlib {
      my %args = @_;
@@ -654,13 +687,12 @@ EOF
      my $incs = join(" ", map { fixup_path("\${OPENSSL_SRCDIR}".($_ eq '.' ? "" : "/$_")) }
                           @{$args{incs}});
      my $defs = join("", map { " -D".$_ } @{$args{defs}});
-     my $import = platform->sharedlib_import($lib);
      my $lddefs = join(" ", map { fixup_path("\${OPENSSL_SRCDIR}/".$_) } @lddefs);
      return <<"EOF"
 # Shared library
 list(APPEND OPENSSL_SHARED_TARGETS $dll_n)
 set(OPENSSL_INCLUDES_$dll_n $incs)
-set(OPENSSL_DEFINES_$dll_n \${OPENSSL_PROJECT_DEFINES} \${OPENSSL_LIB_DEFINES} \${OPENSSL_SHLIB_DEFINES}$defs)
+set(OPENSSL_DEFINES_$dll_n \${OPENSSL_COMMON_DEFINES} \${OPENSSL_LIB_DEFINES} \${OPENSSL_SHLIB_DEFINES}$defs)
 set(OPENSSL_LINK_LIBRARIES_$dll_n \${LIB_EX_LIBS}$linklibs)
 set(OPENSSL_LINK_DEFS_$dll_n $lddefs)
 EOF
@@ -687,7 +719,7 @@ EOF
 # DSO library
 list(APPEND OPENSSL_DSO_TARGETS $dso_n)
 set(OPENSSL_INCLUDES_$dso_n $incs)
-set(OPENSSL_DEFINES_$dso_n \${OPENSSL_PROJECT_DEFINES} \${OPENSSL_LIB_DEFINES} \${OPENSSL_SHLIB_DEFINES}$defs)
+set(OPENSSL_DEFINES_$dso_n \${OPENSSL_COMMON_DEFINES} \${OPENSSL_LIB_DEFINES} \${OPENSSL_SHLIB_DEFINES}$defs)
 set(OPENSSL_LINK_LIBRARIES_$dso_n \${DSO_EX_LIBS}$linklibs)
 set(OPENSSL_LINK_DEFS_$dso_n $lddefs)
 EOF
@@ -707,7 +739,7 @@ EOF
 # Static library
 list(APPEND OPENSSL_STATIC_TARGETS $lib_n)
 set(OPENSSL_INCLUDES_$lib_n $incs)
-set(OPENSSL_DEFINES_$lib_n \${OPENSSL_PROJECT_DEFINES} \${OPENSSL_LIB_DEFINES}$defs)
+set(OPENSSL_DEFINES_$lib_n \${OPENSSL_COMMON_DEFINES} \${OPENSSL_LIB_DEFINES}$defs)
 set(OPENSSL_LINK_LIBRARIES_$lib_n \${LIB_EX_LIBS})
 EOF
      if (@deps) {
@@ -734,7 +766,7 @@ EOF
 # Program binary
 list(APPEND OPENSSL_BIN_TARGETS $bin_n)
 set(OPENSSL_INCLUDES_$bin_n $incs)
-set(OPENSSL_DEFINES_$bin_n \${OPENSSL_PROJECT_DEFINES} \${OPENSSL_LIB_DEFINES}$defs)
+set(OPENSSL_DEFINES_$bin_n \${OPENSSL_COMMON_DEFINES} \${OPENSSL_LIB_DEFINES}$defs)
 set(OPENSSL_LINK_LIBRARIES_$bin_n \${BIN_EX_LIBS}$linklibs)
 EOF
   }
