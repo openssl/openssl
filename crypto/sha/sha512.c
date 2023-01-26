@@ -149,6 +149,10 @@ int SHA512_Init(SHA512_CTX *c)
 
 #ifndef SHA512_ASM
 static
+#else
+# ifdef INCLUDE_C_SHA512
+void sha512_block_data_order_c(SHA512_CTX *ctx, const void *in, size_t num);
+# endif
 #endif
 void sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num);
 
@@ -338,7 +342,7 @@ void SHA512_Transform(SHA512_CTX *c, const unsigned char *data)
     sha512_block_data_order(c, data, 1);
 }
 
-#ifndef SHA512_ASM
+#if !defined(SHA512_ASM) || defined(INCLUDE_C_SHA512)
 static const SHA_LONG64 K512[80] = {
     U64(0x428a2f98d728ae22), U64(0x7137449123ef65cd),
     U64(0xb5c0fbcfec4d3b2f), U64(0xe9b5dba58189dbbc),
@@ -737,8 +741,12 @@ static void sha512_block_data_order(SHA512_CTX *ctx, const void *in,
         T1 = X[(j)&0x0f] += s0 + s1 + X[(j+9)&0x0f];    \
         ROUND_00_15(i+j,a,b,c,d,e,f,g,h);               } while (0)
 
+#ifdef INCLUDE_C_SHA512
+void sha512_block_data_order_c(SHA512_CTX *ctx, const void *in, size_t num)
+#else
 static void sha512_block_data_order(SHA512_CTX *ctx, const void *in,
                                     size_t num)
+#endif
 {
     const SHA_LONG64 *W = in;
     SHA_LONG64 a, b, c, d, e, f, g, h, s0, s1, T1;
