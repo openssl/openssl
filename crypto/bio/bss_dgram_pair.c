@@ -22,7 +22,7 @@ OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
  * bytes at a time.
  */
 struct ring_buf {
-    unsigned char *start; /* start of buffer, never changes */
+    unsigned char *start; /* start of buffer */
     size_t len; /* size of buffer allocation in bytes */
     size_t count; /* number of bytes currently pushed */
     /*
@@ -433,9 +433,9 @@ static int dgram_pair_ctrl_eof(BIO *bio)
     /* If we aren't initialized, we can never read anything */
     if (!bio->init)
         return 1;
-    if (!is_dgram_pair(b)) {
+    if (!is_dgram_pair(b))
         return 0;
-    }
+
 
     peerb = b->peer->ptr;
     if (!ossl_assert(peerb != NULL))
@@ -1052,7 +1052,7 @@ static int dgram_pair_recvmmsg(BIO *bio, BIO_MSG *msg,
     if (is_dgram_pair(b))
         readb = b->peer->ptr;
     else
-        readb = b;  
+        readb = b;
 
     if (CRYPTO_THREAD_write_lock(readb->lock) == 0) {
         ERR_raise(ERR_LIB_BIO, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
