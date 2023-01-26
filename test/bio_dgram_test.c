@@ -518,7 +518,7 @@ static int test_bio_dgram_pair(int idx)
             goto err;
     } else {
         if (!TEST_ptr(bio1 = bio2 = BIO_new(BIO_s_dgram_mem())))
-            goto err;;
+            goto err;
     }
 
     mtu1 = BIO_dgram_get_mtu(bio1);
