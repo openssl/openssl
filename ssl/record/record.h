@@ -7,8 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-typedef struct ssl_connection_st SSL_CONNECTION;
-
 #include <openssl/core_dispatch.h>
 #include "internal/recordmethod.h"
 

@@ -27,9 +27,9 @@
 # include <openssl/async.h>
 # include <openssl/symhacks.h>
 # include <openssl/ct.h>
-# include "record/record.h"
 # include "internal/recordmethod.h"
 # include "internal/statem.h"
+# include "record/record.h"
 # include "internal/packet.h"
 # include "internal/dane.h"
 # include "internal/refcount.h"
