@@ -16,8 +16,8 @@ use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "0.1";
 @ISA = qw(Exporter);
-@EXPORT = qw(cmp_versions quotify1 quotify_l fixup_cmd_elements fixup_cmd
-             dump_data);
+@EXPORT = qw(cmp_versions quotify1 quotify_l escape_cmd fixup_path
+             fixup_cmd_elements fixup_cmd dump_data);
 @EXPORT_OK = qw();
 
 =head1 NAME
@@ -125,6 +125,41 @@ sub quotify_l {
             quotify1($_);
         }
     } @_;
+}
+
+=over 4
+
+=item escape_cmd STRING
+
+This escapes any @, \, " and space-character by prepending a \ to them.
+Note that this does NOT escape the $ character.
+This is primarily used for escaping CMake commands.
+
+=back
+
+=cut
+
+sub escape_cmd {
+    my $s = shift @_;
+    $s =~ s/([\@\\" ])/\\$1/g;
+    return $s;
+}
+
+=over 4
+
+=item fixup_path STRING
+
+This takes a path and makes it absolute, then converts backslashes (\) to
+forward slashes (/) even on Windows, then adds quotes (") around the path.
+
+=back
+
+=cut
+
+sub fixup_path {
+    my $s = shift @_;
+    $s =~ s/\\/\//g;
+    '"'.$s.'"';
 }
 
 =over 4

@@ -1,5 +1,5 @@
 # Auxiliary program source
-IF[{- $config{target} =~ /^(?:VC-|mingw|BC-)/ -}]
+IF[{- $config{target} =~ /^(?:VC-|mingw|BC-|CMake)/ -}]
   # It's called 'init', but doesn't have much 'init' in it...
   $AUXLIBAPPSSRC=win32_init.c
 ENDIF

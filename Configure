@@ -2704,6 +2704,14 @@ EOF
                         # (+1 instead of -1)
                         if ($_ =~ /\.(o|res)$/) {
                             (my $prodname = $prod) =~ s|\.a$||;
+                            ## N.B. Figure out a better way than this ugly hack
+                            ##      to generate sources for CMake.
+                            #if ($target =~ /^CMake/) {
+                            #    # CMake handles objects for us.
+                            #    foreach my $src (@{$prod_sources{$_}}) {
+                            #        $unified_info{$dst}->{$prod}->{$src} = 1;
+                            #    }
+                            #}
                             my $newobj =
                                 catfile(dirname($_),
                                         basename($prodname)

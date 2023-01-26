@@ -61,7 +61,9 @@ sub fill_in {
     my %hash = ( %{$opts{HASH}} );
     delete $opts{HASH};
 
-    $self->SUPER::fill_in(HASH => { quotify1 => \&quotify1,
+    $self->SUPER::fill_in(HASH => { fixup_path => \&fixup_path,
+                                    escape_cmd => \&escape_cmd,
+                                    quotify1 => \&quotify1,
                                     quotify_l => \&quotify_l,
                                     output_on => sub { $self->output_on() },
                                     output_off => sub { $self->output_off() },
