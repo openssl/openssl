@@ -38,9 +38,13 @@ TODO(QUIC): Once streams are implemented, revise this text
 
 =end comment
 
+This function is not supported on non-QUIC SSL objects.
+
 =head1 RETURN VALUES
 
 Returns 1 on success and 0 on failure.
+
+Returns 0 if called on a non-QUIC SSL object.
 
 =head1 SEE ALSO
 
