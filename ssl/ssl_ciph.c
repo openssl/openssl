@@ -1495,9 +1495,11 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
      */
     num_of_ciphers = ssl_method->num_ciphers();
 
-    co_list = OPENSSL_malloc(sizeof(*co_list) * num_of_ciphers);
-    if (co_list == NULL)
-        return NULL;          /* Failure */
+    if (num_of_ciphers > 0) {
+        co_list = OPENSSL_malloc(sizeof(*co_list) * num_of_ciphers);
+        if (co_list == NULL)
+            return NULL;          /* Failure */
+    }
 
     ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers,
                                disabled_mkey, disabled_auth, disabled_enc,
