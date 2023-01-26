@@ -1066,10 +1066,12 @@ static int dgram_pair_recvmmsg(BIO *bio, BIO_MSG *msg,
                                    m->local, m->peer, 1);
         if (l < 0) {
             *num_processed = i;
-            if (i > 0)
+            if (i > 0) {
                 ret = 1;
-            else
+            } else {
+                ERR_raise(ERR_LIB_BIO, -l);
                 ret = 0;
+            }
             goto out;
         }
 
