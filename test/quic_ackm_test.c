@@ -425,7 +425,7 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
             goto err;
 
         /* Should not have any probe requests yet. */
-        probe = *ossl_ackm_get_probe_request(h.ackm);
+        probe = *ossl_ackm_get0_probe_request(h.ackm);
         if (!TEST_int_eq(test_probe_counts(&probe, 0, 0, 0, 0, 0), 1))
             goto err;
 
@@ -445,9 +445,9 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
 
         /* Should have a probe request. Not cleared by first call. */
         for (i = 0; i < 3; ++i) {
-            probe = *ossl_ackm_get_probe_request(h.ackm);
+            probe = *ossl_ackm_get0_probe_request(h.ackm);
             if (i > 0)
-                memset(ossl_ackm_get_probe_request(h.ackm), 0, sizeof(probe));
+                memset(ossl_ackm_get0_probe_request(h.ackm), 0, sizeof(probe));
 
             if (i == 2) {
                 if (!TEST_int_eq(test_probe_counts(&probe, 0, 0, 0, 0, 0), 1))

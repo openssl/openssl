@@ -1316,7 +1316,7 @@ OSSL_TIME ossl_ackm_get_loss_detection_deadline(OSSL_ACKM *ackm)
     return ackm->loss_detection_deadline;
 }
 
-OSSL_ACKM_PROBE_INFO *ossl_ackm_get_probe_request(OSSL_ACKM *ackm)
+OSSL_ACKM_PROBE_INFO *ossl_ackm_get0_probe_request(OSSL_ACKM *ackm)
 {
     return &ackm->pending_probe;
 }

@@ -1089,7 +1089,7 @@ static const struct script_op script_14[] = {
 /* 15. INITIAL, Anti-Deadlock Probe Simulation */
 static int gen_probe_initial(struct helper *h)
 {
-    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get_probe_request(h->args.ackm);
+    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(h->args.ackm);
 
     /*
      * Pretend the ACKM asked for an anti-deadlock Initial probe.
@@ -1117,7 +1117,7 @@ static const struct script_op script_15[] = {
 /* 16. HANDSHAKE, Anti-Deadlock Probe Simulation */
 static int gen_probe_handshake(struct helper *h)
 {
-    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get_probe_request(h->args.ackm);
+    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(h->args.ackm);
 
     /*
      * Pretend the ACKM asked for an anti-deadlock Handshake probe.
@@ -1146,7 +1146,7 @@ static const struct script_op script_16[] = {
 /* 17. 1-RTT, Probe Simulation */
 static int gen_probe_1rtt(struct helper *h)
 {
-    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get_probe_request(h->args.ackm);
+    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(h->args.ackm);
 
     /*
      * Pretend the ACKM asked for a 1-RTT PTO probe.

@@ -766,7 +766,7 @@ static int txp_el_pending(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
     /* Do we need to send a PTO probe? */
     if (a.allow_force_ack_eliciting) {
         OSSL_ACKM_PROBE_INFO *probe_info
-            = ossl_ackm_get_probe_request(txp->args.ackm);
+            = ossl_ackm_get0_probe_request(txp->args.ackm);
 
         if ((enc_level == QUIC_ENC_LEVEL_INITIAL
              && probe_info->anti_deadlock_initial > 0)
@@ -1823,7 +1823,7 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
     OSSL_QTX_PKT pkt;
     QUIC_STREAM *tmp_head = NULL, *stream;
     OSSL_ACKM_PROBE_INFO *probe_info
-        = ossl_ackm_get_probe_request(txp->args.ackm);
+        = ossl_ackm_get0_probe_request(txp->args.ackm);
 
     if (!txp_get_archetype_data(enc_level, archetype, &a))
         goto fatal_err;
