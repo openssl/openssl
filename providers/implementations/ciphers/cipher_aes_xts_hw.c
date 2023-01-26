@@ -175,15 +175,45 @@ static int cipher_hw_aes_xts_rv64i_zknd_zkne_initkey(PROV_CIPHER_CTX *ctx,
     return 1;
 }
 
+static int cipher_hw_aes_xts_rv64i_zvkned_initkey(PROV_CIPHER_CTX *ctx,
+                                                     const unsigned char *key,
+                                                     size_t keylen)
+{
+    PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
+    OSSL_xts_stream_fn stream_enc = NULL;
+    OSSL_xts_stream_fn stream_dec = NULL;
+
+    /* Zvkned only supports 128 and 256 bit keys. */
+    if (keylen * 8 == 128 || keylen * 8 == 256) {
+        XTS_SET_KEY_FN(rv64i_zvkned_set_encrypt_key,
+                       rv64i_zvkned_set_decrypt_key,
+                       rv64i_zvkned_encrypt, rv64i_zvkned_decrypt,
+                       stream_enc, stream_dec);
+    } else {
+        XTS_SET_KEY_FN(AES_set_encrypt_key, AES_set_decrypt_key,
+                       AES_encrypt, AES_decrypt,
+                       stream_enc, stream_dec);
+    }
+    return 1;
+}
+
 # define PROV_CIPHER_HW_declare_xts()                                          \
 static const PROV_CIPHER_HW aes_xts_rv64i_zknd_zkne = {                        \
     cipher_hw_aes_xts_rv64i_zknd_zkne_initkey,                                 \
     NULL,                                                                      \
     cipher_hw_aes_xts_copyctx                                                  \
 };
+static const PROV_CIPHER_HW aes_xts_rv64i_zvkned = {                           \
+    cipher_hw_aes_xts_rv64i_zvkned_initkey,                                    \
+    NULL,                                                                      \
+    cipher_hw_aes_xts_copyctx                                                  \
+};
+
 # define PROV_CIPHER_HW_select_xts()                                           \
-if (RISCV_HAS_ZKND_AND_ZKNE())                                                 \
-    return &aes_xts_rv64i_zknd_zkne;
+if (RISCV_HAS_ZVKNED() && riscv_vlen() >= 128)                                 \
+    return &aes_xts_rv64i_zvkned;                                              \
+else if (RISCV_HAS_ZKND_AND_ZKNE())                                            \
+    return &aes_xts_rv64i_zknd_zkne;                                           \
 
 #elif defined(__riscv) && __riscv_xlen == 32
 

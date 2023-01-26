@@ -117,13 +117,38 @@ static int cipher_hw_aes_ocb_rv64i_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
     return 1;
 }
 
+static int cipher_hw_aes_ocb_rv64i_zvkned_initkey(PROV_CIPHER_CTX *vctx,
+                                                     const unsigned char *key,
+                                                     size_t keylen)
+{
+    PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
+
+    /* Zvkned only supports 128 and 256 bit keys. */
+    if (keylen * 8 == 128 || keylen * 8 == 256) {
+        OCB_SET_KEY_FN(rv64i_zvkned_set_encrypt_key,
+                       rv64i_zvkned_set_decrypt_key,
+                       rv64i_zvkned_encrypt, rv64i_zvkned_decrypt,
+                       NULL, NULL);
+    } else {
+        OCB_SET_KEY_FN(AES_set_encrypt_key, AES_set_decrypt_key,
+                       AES_encrypt, AES_decrypt, NULL, NULL);
+    }
+    return 1;
+}
+
 # define PROV_CIPHER_HW_declare()                                              \
 static const PROV_CIPHER_HW aes_rv64i_zknd_zkne_ocb = {                        \
     cipher_hw_aes_ocb_rv64i_zknd_zkne_initkey,                                 \
     NULL                                                                       \
+};                                                                             \
+static const PROV_CIPHER_HW aes_rv64i_zvkned_ocb = {                           \
+    cipher_hw_aes_ocb_rv64i_zvkned_initkey,                                    \
+    NULL                                                                       \
 };
 # define PROV_CIPHER_HW_select()                                               \
-    if (RISCV_HAS_ZKND_AND_ZKNE())                                             \
+    if (RISCV_HAS_ZVKNED() && riscv_vlen() >= 128)                             \
+        return &aes_rv64i_zvkned_ocb;                                          \
+    else if (RISCV_HAS_ZKND_AND_ZKNE())                                        \
         return &aes_rv64i_zknd_zkne_ocb;
 
 #elif defined(__riscv) && __riscv_xlen == 32

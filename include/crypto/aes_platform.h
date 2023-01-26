@@ -435,6 +435,7 @@ void aes256_t4_xts_decrypt(const unsigned char *in, unsigned char *out,
 /* RISC-V 64 support */
 #  include "riscv_arch.h"
 
+/* Zkne and Zknd extensions (scalar crypto AES). */
 int rv64i_zkne_set_encrypt_key(const unsigned char *userKey, const int bits,
                           AES_KEY *key);
 int rv64i_zknd_set_decrypt_key(const unsigned char *userKey, const int bits,
@@ -443,6 +444,16 @@ void rv64i_zkne_encrypt(const unsigned char *in, unsigned char *out,
                    const AES_KEY *key);
 void rv64i_zknd_decrypt(const unsigned char *in, unsigned char *out,
                    const AES_KEY *key);
+/* Zvkned extension (vector crypto AES). */
+int rv64i_zvkned_set_encrypt_key(const unsigned char *userKey, const int bits,
+                                 AES_KEY *key);
+int rv64i_zvkned_set_decrypt_key(const unsigned char *userKey, const int bits,
+                                 AES_KEY *key);
+void rv64i_zvkned_encrypt(const unsigned char *in, unsigned char *out,
+                          const AES_KEY *key);
+void rv64i_zvkned_decrypt(const unsigned char *in, unsigned char *out,
+                          const AES_KEY *key);
+
 # elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
 /* RISC-V 32 support */
 #  include "riscv_arch.h"
