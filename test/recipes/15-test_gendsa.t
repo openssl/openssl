@@ -28,7 +28,7 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
     ($no_fips ? 0 : 2)          # FIPS related tests
-    + 11;
+    + 13;
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-algorithm', 'DSA',
@@ -106,6 +106,14 @@ ok(run(app([ 'openssl', 'genpkey',
 ok(!run(app([ 'openssl', 'genpkey',
               '-algorithm', 'DSA'])),
    "genpkey DSA with no params should fail");
+
+ok(run(app(["openssl", "gendsa", "-verbose",
+            'dsagen.pem'])),
+    "gendsa with -verbose option and dsagen parameter");
+
+ok(!run(app(["openssl", "gendsa",
+             'dsagen.pem', "-verbose"])),
+   "gendsa with extra parameter (at end) should fail");
 
 unless ($no_fips) {
     my $provconf = srctop_file("test", "fips-and-base.cnf");
