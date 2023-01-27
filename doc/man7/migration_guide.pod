@@ -472,6 +472,14 @@ The function code part of the error code is now always set to 0. For that
 reason the ERR_GET_FUNC() macro was removed. Applications must resolve
 the error codes only using the library number and the reason code.
 
+=head4 ChaCha20-Poly1305 cipher does not allow a truncated IV length to be used
+
+In OpenSSL 3.0 setting the IV length to any value other than 12 will result in an
+error.
+Prior to OpenSSL 3.0 the ivlen could be smaller that the required 12 byte length,
+using EVP_CIPHER_CTX_ctrl(ctx, EVP_CRTL_AEAD_SET_IVLEN, ivlen, NULL). This resulted
+in an IV that had leading zero padding.
+
 =head2 Installation and Compilation
 
 Please refer to the INSTALL.md file in the top of the distribution for
