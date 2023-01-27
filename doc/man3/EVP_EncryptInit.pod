@@ -448,6 +448,8 @@ If not called a default nonce length of 12 (i.e. 96 bits) is used. The maximum
 nonce length is 12 bytes (i.e. 96-bits). If a nonce of less than 12 bytes is set
 then the nonce is automatically padded with leading 0 bytes to make it 12 bytes
 in length.
+Warning: Setting the length to values less than 12 will produce an error in OpenSSL
+version 3.0 and later. For secure operation it is not recommended to set this value.
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag)
 
