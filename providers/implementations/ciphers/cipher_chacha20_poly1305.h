@@ -25,7 +25,7 @@ typedef struct {
     struct { uint64_t aad, text; } len;
     unsigned int aad : 1;
     unsigned int mac_inited : 1;
-    size_t tag_len, nonce_len;
+    size_t tag_len;
     size_t tls_payload_length;
     size_t tls_aad_pad_sz;
 } PROV_CHACHA20_POLY1305_CTX;
