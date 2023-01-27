@@ -414,6 +414,11 @@ sub vsetivli__x0_4_e64_m1_tu_mu {
     return ".word 0xc1827057";
 }
 
+sub vsetivli__x0_8_e32_m1_tu_mu {
+    # vsetivli x0, 8, e32, m1, tu, mu
+    return ".word 0xc1047057";
+}
+
 sub vslidedown_vi {
     # vslidedown.vi vd, vs2, uimm
     my $template = 0b0011111_00000_00000_011_00000_1010111;
@@ -661,6 +666,26 @@ sub vsm4r_vs {
     my $vd = read_vreg shift;
     my $vs2 = read_vreg shift;
     return ".word ".($template | ($vs2 << 20) | ($vd << 7));
+}
+
+## zvksh instructions
+
+sub vsm3c_vi {
+    # vsm3c.vi vd, vs2, uimm
+    my $template = 0b1010111_00000_00000_010_00000_1110111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $uimm = shift;
+    return ".word ".($template | ($vs2 << 20) | ($uimm << 15 ) | ($vd << 7));
+}
+
+sub vsm3me_vv {
+    # vsm3me.vv vd, vs2, vs1
+    my $template = 0b1000001_00000_00000_010_00000_1110111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $vs1 = read_vreg shift;
+    return ".word ".($template | ($vs2 << 20) | ($vs1 << 15 ) | ($vd << 7));
 }
 
 1;
