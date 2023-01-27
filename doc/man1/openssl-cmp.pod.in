@@ -363,6 +363,7 @@ via the included subject name and public key.
 =item B<-out_trusted> I<filenames>|I<uris>
 
 Trusted certificate(s) to use for validating the newly enrolled certificate.
+During this verification, any certificate status checking is disabled.
 
 Multiple sources may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
