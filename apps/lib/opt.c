@@ -1054,8 +1054,13 @@ int opt_check_rest_arg(const char *expected)
         opt_printf_stderr("%s: Missing argument: %s\n", prog, expected);
         return 0;
     }
-    if (expected != NULL)
-        return 1;
+    if (expected != NULL) {
+        opt = argv[opt_index + 1];
+        if (opt == NULL || *opt == '\0')
+            return 1;
+        opt_printf_stderr("%s: Extra argument after %s: \"%s\"\n", prog, expected, opt);
+        return 0;
+    }
     if (opt_unknown() == NULL)
         opt_printf_stderr("%s: Extra option: \"%s\"\n", prog, opt);
     else
