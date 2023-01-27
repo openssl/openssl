@@ -63,6 +63,7 @@ static const size_t kRISCVNumCaps =
 #define RISCV_HAS_ZVBB_AND_ZVKNHA() (RISCV_HAS_ZVBB() && RISCV_HAS_ZVKNHA())
 #define RISCV_HAS_ZVBB_AND_ZVKNHB() (RISCV_HAS_ZVBB() && RISCV_HAS_ZVKNHB())
 #define RISCV_HAS_ZVBB_AND_ZVKSED() (RISCV_HAS_ZVBB() && RISCV_HAS_ZVKSED())
+#define RISCV_HAS_ZVBB_AND_ZVKSH() (RISCV_HAS_ZVBB() && RISCV_HAS_ZVKSH())
 
 /*
  * Get the size of a vector register in bits (VLEN).
