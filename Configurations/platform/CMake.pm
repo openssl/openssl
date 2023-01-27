@@ -18,9 +18,9 @@ sub libext              { $target{lib_extension} || '.a' }
 sub dsoext              { $target{dso_extension} || platform->shlibextsimple()
                               || '.so' }
 sub defext              { $target{def_extension} || '.def' }
-sub asmext              { $^O eq 'msys' or
-                          $^O eq 'MSWin32' or
-                          $config{target} =~ m|^mingw| ? '.asm' : '.s' }
+sub asmext              { return ($^O eq 'msys' ||
+                                  $^O eq 'MSWin32' ||
+                                  $config{target} =~ m|^mingw|) ? '.asm' : '.s'; }
 
 # Other extra that aren't defined in platform::BASE
 sub resext              { '.res' }

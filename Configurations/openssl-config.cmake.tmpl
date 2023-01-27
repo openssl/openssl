@@ -71,9 +71,11 @@ else()
 endif()
 
 # Determine version-script support.
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ossl-version-script-test.def" "{ };")
-check_c_compiler_flag("-Wl,--version-script=${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ossl-version-script-test.def"
-                        OPENSSL_HAS_VERSION_SCRIPT_SUPPORT)
+if(NOT CMAKE_LINK_DEF_FILE_FLAG)
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ossl-version-script-test.def" "{ };")
+  check_c_compiler_flag("-Wl,--version-script=${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ossl-version-script-test.def"
+                          OPENSSL_HAS_VERSION_SCRIPT_SUPPORT)
+endif()
 
 set(OPENSSL_SRCDIR {- use File::Spec::Functions qw(:DEFAULT rel2abs);
                       fixup_path(rel2abs($config{sourcedir})) -})
@@ -300,24 +302,23 @@ endif()
 
 # Variables starting with CNF_ are common variables for all product types
 
-
 if (WIN32)
-  set(CNF_ASFLAGS "-f win64 {- join(' ', $target{asflags} || (), @{$config{asflags}}) -}")
+  set(CNF_ASFLAGS -f win64 {- join(' ', $target{asflags} || (), @{$config{asflags}}) -})
 else()
   set(CNF_ASFLAGS)
 endif()
-set(CNF_CPPFLAGS "{- our $cppflags2 = join(' ', $target{cppflags} || (),
-                    (map { '-D'.$_ } @{$target{defines}},
-                                               @{$config{defines}}),
-                    (map { '-I'.fixup_path($_) } @{$target{includes}},
-                                                 @{$config{includes}}),
-                    @{$config{cppflags}}) -}")
+set(CNF_CPPFLAGS {- our $cppflags2 = join(' ', $target{cppflags} || (),
+                            (map { '-D'.$_ } @{$target{defines}},
+                                                       @{$config{defines}}),
+                            (map { '-I'.fixup_path($_) } @{$target{includes}},
+                                                         @{$config{includes}}),
+                            @{$config{cppflags}}) -})
 if (WIN32)
-  set(CNF_CPPFLAGS "-DUNICODE -D_UNICODE -DWIN32_LEAN_AND_MEAN ${CNF_CPPFLAGS}")
+  set(CNF_CPPFLAGS -DUNICODE -D_UNICODE -DWIN32_LEAN_AND_MEAN ${CNF_CPPFLAGS})
 endif()
-set(CNF_CFLAGS "{- join(' ', $target{cflags} || (), @{$config{cflags}}) -}")
-set(CNF_CXXFLAGS "{- join(' ', $target{cxxflags} || (), @{$config{cxxflags}}) -}")
-set(CNF_LDFLAGS "{- join(' ', $target{lflags} || (), @{$config{lflags}}) -}")
+set(CNF_CFLAGS {- join(' ', $target{cflags} || (), @{$config{cflags}}) -})
+set(CNF_CXXFLAGS {- join(' ', $target{cxxflags} || (), @{$config{cxxflags}}) -})
+set(CNF_LDFLAGS {- join(' ', $target{lflags} || (), @{$config{lflags}}) -})
 if (WIN32)
   set(CNF_EX_LIBS {- my @ex_libs = ();
                      push @ex_libs, 'ws2_32' unless $disabled{sock};
@@ -404,13 +405,15 @@ set(CPPFLAGS_Q "{- join(' ', $lib_cppflags || (),
 
 if(WIN32)
   enable_language(ASM_NASM)
-  set(PERLASM_SCHEME "{- $target{perlasm_scheme} -}")
   set(OPENSSL_AS {- $x = $config{AS}; $x ? fixup_path($x) : () -})
   set(OPENSSL_ASFLAGS {- join(' ', @{$config{ASFLAGS}}) -})
+  set(OPENSSL_AS_ENV "ASM=${OPENSSL_AS}")
+  set(PERLASM_SCHEME "{- $target{perlasm_scheme} -}")
 else()
   enable_language(ASM)
   set(OPENSSL_AS "${CMAKE_ASM_COMPILER}")
   set(OPENSSL_ASFLAGS "-x assembler")
+  set(OPENSSL_AS_ENV "CC=${OPENSSL_AS}")
   set(PERLASM_SCHEME "elf")
 endif()
 
@@ -526,7 +529,7 @@ EOF
           if (defined($generator)) {
             return <<"EOF";
 add_custom_command(OUTPUT $gen_out
-                   COMMAND \${CMAKE_COMMAND} -E env "CC=\${OPENSSL_AS}" "ASM=\${OPENSSL_AS}" $generator $gen_out
+                   COMMAND \${CMAKE_COMMAND} -E env "\${OPENSSL_AS_ENV}" $generator $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
           }
