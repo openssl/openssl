@@ -1,6 +1,6 @@
 # Auxiliary program source
 IF[{- $config{target} =~ /^(?:VC-|mingw|BC-)/ ||
-      $config{target} =~ /^(?:CMake)/ && $^O eq 'MSWin32' -}]
+      $config{target} =~ /^(?:CMake)/ && $^O eq 'MSWin32' -}] # CMake: any better way to do this?
   # It's called 'init', but doesn't have much 'init' in it...
   $AUXLIBAPPSSRC=win32_init.c
 ENDIF
