@@ -84,7 +84,7 @@ static int test_ciphersuites(void)
     int testresult = 0;
     const STACK_OF(SSL_CIPHER) *ciphers = NULL;
     const SSL_CIPHER *cipher;
-    /* We expect this exactly list of ciphersuites by default */
+    /* We expect this exact list of ciphersuites by default */
     int cipherids[] = {
         TLS1_3_CK_AES_256_GCM_SHA384,
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
@@ -92,7 +92,7 @@ static int test_ciphersuites(void)
 #endif
         TLS1_3_CK_AES_128_GCM_SHA256
     };
-    size_t i;
+    size_t i, j;
 
     if (!TEST_ptr(ctx))
         return 0;
@@ -103,16 +103,19 @@ static int test_ciphersuites(void)
 
     ciphers = SSL_get_ciphers(ssl);
 
-    if (!TEST_int_eq(sk_SSL_CIPHER_num(ciphers), OSSL_NELEM(cipherids)))
-        goto err;
-
-    for (i = 0; i < OSSL_NELEM(cipherids); i++) {
-        cipher = sk_SSL_CIPHER_value(ciphers, i);
+    for (i = 0, j = 0; i < OSSL_NELEM(cipherids); i++) {
+        if (cipherids[i] == TLS1_3_CK_CHACHA20_POLY1305_SHA256 && is_fips)
+            continue;
+        cipher = sk_SSL_CIPHER_value(ciphers, j++);
         if (!TEST_ptr(cipher))
             goto err;
         if (!TEST_uint_eq(SSL_CIPHER_get_id(cipher), cipherids[i]))
             goto err;
     }
+
+    /* We should have checked all the ciphers in the stack */
+    if (!TEST_int_eq(sk_SSL_CIPHER_num(ciphers), j))
+        goto err;
 
     testresult = 1;
  err:
