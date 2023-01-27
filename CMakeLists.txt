@@ -13,9 +13,12 @@ cmake_minimum_required(VERSION 3.17)
 project(OpenSSL C CXX)
 
 # Configure the OpenSSL project
-if(PERL_EXECUTABLE AND OPENSSL_CONFIGURE_OPTIONS)
+if(OPENSSL_CONFIGURE_OPTIONS)
   #set(ENV{BUILDFILE_DEBUG_RULES} 1)
   #set(ENV{BUILDFILE_DEBUG_DEPENDS} 1)
+  if (NOT PERL_EXECUTABLE)
+    find_package(Perl REQUIRED)
+  endif()
   execute_process(
     COMMAND ${PERL_EXECUTABLE} Configure CMake ${OPENSSL_CONFIGURE_OPTIONS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -27,7 +30,7 @@ if(PERL_EXECUTABLE AND OPENSSL_CONFIGURE_OPTIONS)
 endif()
 
 # Include the generated CMake config.
-include(openssl-config.cmake)
+include(openssl.cmake)
 
 # Add static library targets.
 foreach(static_target ${OPENSSL_STATIC_TARGETS})
@@ -72,7 +75,7 @@ endforeach()
 
 # Add DSO module targets.
 foreach(dso_target ${OPENSSL_DSO_TARGETS})
-  add_library(openssl_${dso_target} SHARED ${OPENSSL_SOURCES_${dso_target}} ${OPENSSL_LINK_DEFS_${dso_target}})
+  add_library(openssl_${dso_target} MODULE ${OPENSSL_SOURCES_${dso_target}} ${OPENSSL_LINK_DEFS_${dso_target}})
   target_include_directories(openssl_${dso_target} PRIVATE ${OPENSSL_INCLUDES_${dso_target}})
   target_compile_definitions(openssl_${dso_target} PRIVATE ${OPENSSL_DEFINES_${dso_target}})
   target_link_libraries(openssl_${dso_target} PRIVATE ${OPENSSL_LINK_LIBRARIES_${dso_target}})

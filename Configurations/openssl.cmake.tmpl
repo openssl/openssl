@@ -90,11 +90,7 @@ set(OPENSSL_VERSION_MINOR "{- $config{minor} -}")
 
 set(SHLIB_VERSION_NUMBER "{- $config{shlib_version} -}")
 
-if (WIN32)
-  set(OPENSSL_OS "windows")
-else()
-  set(OPENSSL_OS "${CMAKE_SYSTEM_NAME}")
-endif()
+set(OPENSSL_OS "${CMAKE_SYSTEM_NAME}")
 
 set(OPENSSL_LIBS {- join(" ", map { my $x = platform->staticlib($_) // ();
                                     $x ? compute_target_name('lib', $_) : () } @{$unified_info{libraries}}) -})
@@ -452,11 +448,8 @@ set(OPENSSL_PROCESSOR "{- $config{processor} -}")
  }
 
   sub generatetarget {
-      my %args = @_;
-      my $deps = join(" ", compute_platform_depends(@{$args{deps}}));
+      # Nothing to do for CMake for now.
       return <<"EOF";
-# generatetarget
-#$args{target}: $deps
 EOF
   }
 
