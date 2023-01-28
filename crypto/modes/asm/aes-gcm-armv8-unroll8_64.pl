@@ -178,6 +178,7 @@ $code.=".arch   armv8.2-a+crypto\n.text\n";
 
 $input_ptr="x0";  #argument block
 $bit_length="x1";
+$byte_length="x9";
 $output_ptr="x2";
 $current_tag="x3";
 $counter="x16";
@@ -263,6 +264,7 @@ unroll8_eor3_aes_gcm_enc_128_kernel:
 	AARCH64_VALID_CALL_TARGET
 	cbz	x1, .L128_enc_ret
 	stp	d8, d9, [sp, #-80]!
+	lsr	$byte_length, $bit_length, #3
 	mov	$counter, x4
 	mov	$cc, x5
 	stp	d10, d11, [sp, #16]
@@ -275,7 +277,7 @@ unroll8_eor3_aes_gcm_enc_128_kernel:
 	mov	$constant_temp, #0x100000000				@ set up counter increment
 	movi	$rctr_inc.16b, #0x0
 	mov	$rctr_inc.d[1], $constant_temp
-	lsr	$main_end_input_ptr, $bit_length, #3		  	@ byte_len
+	mov	$main_end_input_ptr, $byte_length
 	ld1	{ $ctr0b}, [$counter]					@ CTR block 0
 
 	sub	$main_end_input_ptr, $main_end_input_ptr, #1	 	@ byte_len - 1
@@ -1331,7 +1333,7 @@ unroll8_eor3_aes_gcm_enc_128_kernel:
 	ext	$acc_lb, $acc_lb, $acc_lb, #8
 	rev64	$acc_lb, $acc_lb
 	st1	{ $acc_l.16b }, [$current_tag]
-	lsr	x0, $bit_length, #3					@ return sizes
+	mov	x0, $byte_length
 
 	ldp	d10, d11, [sp, #16]
 	ldp	d12, d13, [sp, #32]
@@ -1361,6 +1363,7 @@ unroll8_eor3_aes_gcm_dec_128_kernel:
 	AARCH64_VALID_CALL_TARGET
 	cbz	x1, .L128_dec_ret
 	stp	d8, d9, [sp, #-80]!
+	lsr	$byte_length, $bit_length, #3
 	mov	$counter, x4
 	mov	$cc, x5
 	stp	d10, d11, [sp, #16]
@@ -1370,7 +1373,7 @@ unroll8_eor3_aes_gcm_dec_128_kernel:
 	stp	x5, xzr, [sp, #64]
 	add	$modulo_constant, sp, #64
 
-	lsr	$main_end_input_ptr, $bit_length, #3		 	@ byte_len
+	mov	$main_end_input_ptr, $byte_length
 	ld1	{ $ctr0b}, [$counter]					@ CTR block 0
 
 	ldp	$rk0q, $rk1q, [$cc, #0]				 	@ load rk0, rk1
@@ -2422,7 +2425,7 @@ unroll8_eor3_aes_gcm_dec_128_kernel:
 
 	str	$rtmp_ctrq, [$counter]					@ store the updated counter
 
-	lsr	x0, $bit_length, #3
+	mov	x0, $byte_length
 
 	ldp	d10, d11, [sp, #16]
 	ldp	d12, d13, [sp, #32]
@@ -2514,6 +2517,7 @@ unroll8_eor3_aes_gcm_enc_192_kernel:
 	AARCH64_VALID_CALL_TARGET
 	cbz	x1, .L192_enc_ret
 	stp	d8, d9, [sp, #-80]!
+	lsr	$byte_length, $bit_length, #3
 	mov	$counter, x4
 	mov	$cc, x5
 	stp	d10, d11, [sp, #16]
@@ -2523,7 +2527,7 @@ unroll8_eor3_aes_gcm_enc_192_kernel:
 	stp	x5, xzr, [sp, #64]
 	add	$modulo_constant, sp, #64
 
-	lsr	$main_end_input_ptr, $bit_length, #3		 	@ byte_len
+	mov	$main_end_input_ptr, $byte_length
 	ld1	{ $ctr0b}, [$counter]					@ CTR block 0
 
 	mov	$constant_temp, #0x100000000				@ set up counter increment
@@ -3645,7 +3649,7 @@ unroll8_eor3_aes_gcm_enc_192_kernel:
 	rev64	$acc_lb, $acc_lb
 	st1	{ $acc_l.16b }, [$current_tag]
 
-	lsr	x0, $bit_length, #3					@ return sizes
+	mov	x0, $byte_length					@ return sizes
 
 	ldp	d10, d11, [sp, #16]
 	ldp	d12, d13, [sp, #32]
@@ -3675,6 +3679,7 @@ unroll8_eor3_aes_gcm_dec_192_kernel:
 	AARCH64_VALID_CALL_TARGET
 	cbz	x1, .L192_dec_ret
 	stp	d8, d9, [sp, #-80]!
+	lsr	$byte_length, $bit_length, #3
 	mov	$counter, x4
 	mov	$cc, x5
 	stp	d10, d11, [sp, #16]
@@ -3684,7 +3689,7 @@ unroll8_eor3_aes_gcm_dec_192_kernel:
 	stp     x5, xzr, [sp, #64]
 	add     $modulo_constant, sp, #64
 
-	lsr	$main_end_input_ptr, $bit_length, #3		 	@ byte_len
+	mov	$main_end_input_ptr, $byte_length
 	ld1	{ $ctr0b}, [$counter]					@ CTR block 0
 	ld1	{ $acc_lb}, [$current_tag]
 
@@ -4796,6 +4801,8 @@ unroll8_eor3_aes_gcm_dec_192_kernel:
 	rev64	$acc_lb, $acc_lb
 	st1	{ $acc_l.16b }, [$current_tag]
 
+	mov	x0, $byte_length
+
 	ldp	d10, d11, [sp, #16]
 	ldp	d12, d13, [sp, #32]
 	ldp	d14, d15, [sp, #48]
@@ -4887,6 +4894,7 @@ unroll8_eor3_aes_gcm_enc_256_kernel:
 	AARCH64_VALID_CALL_TARGET
 	cbz	x1, .L256_enc_ret
 	stp	d8, d9, [sp, #-80]!
+	lsr	$byte_length, $bit_length, #3
 	mov	$counter, x4
 	mov	$cc, x5
 	stp	d10, d11, [sp, #16]
@@ -4898,7 +4906,7 @@ unroll8_eor3_aes_gcm_enc_256_kernel:
 
 	ld1	{ $ctr0b}, [$counter]					@ CTR block 0
 
-	lsr	$main_end_input_ptr, $bit_length, #3		 	@ byte_len
+	mov	$main_end_input_ptr, $byte_length
 
 	mov	$constant_temp, #0x100000000			@ set up counter increment
 	movi	$rctr_inc.16b, #0x0
@@ -6086,7 +6094,7 @@ unroll8_eor3_aes_gcm_enc_256_kernel:
 		ext	$acc_lb, $acc_lb, $acc_lb, #8
 	rev64	$acc_lb, $acc_lb
 	st1	{ $acc_l.16b }, [$current_tag]
-	lsr	x0, $bit_length, #3					@ return sizes
+	mov	x0, $byte_length					@ return sizes
 
         ldp     d10, d11, [sp, #16]
 	ldp     d12, d13, [sp, #32]
@@ -6117,6 +6125,7 @@ unroll8_eor3_aes_gcm_dec_256_kernel:
 	AARCH64_VALID_CALL_TARGET
 	cbz	x1, .L256_dec_ret
 	stp	d8, d9, [sp, #-80]!
+	lsr	$byte_length, $bit_length, #3
 	mov	$counter, x4
 	mov	$cc, x5
 	stp	d10, d11, [sp, #16]
@@ -6131,7 +6140,7 @@ unroll8_eor3_aes_gcm_dec_256_kernel:
 	mov	$constant_temp, #0x100000000			@ set up counter increment
 	movi	$rctr_inc.16b, #0x0
 	mov	$rctr_inc.d[1], $constant_temp
-	lsr	$main_end_input_ptr, $bit_length, #3		  	@ byte_len
+	mov	$main_end_input_ptr, $byte_length
 
 	sub	$main_end_input_ptr, $main_end_input_ptr, #1		@ byte_len - 1
 
@@ -7312,7 +7321,7 @@ unroll8_eor3_aes_gcm_dec_256_kernel:
 	ext	$acc_lb, $acc_lb, $acc_lb, #8
 	rev64	$acc_lb, $acc_lb
 	st1	{ $acc_l.16b }, [$current_tag]
-	lsr	x0, $bit_length, #3					@ return sizes
+	mov	x0, $byte_length
 
         ldp     d10, d11, [sp, #16]
 	ldp     d12, d13, [sp, #32]
