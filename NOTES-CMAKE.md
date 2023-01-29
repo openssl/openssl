@@ -14,7 +14,7 @@ Use the appropriate package manager for Unix systems to acquire Perl.
 please see the [Notes for Windows platforms](NOTES-WINDOWS.md) or [Notes for Unix platforms](NOTES-UNIX.md).
 
 
-## Windows
+## Windows 
 
 ### Netwide Assembler (NASM) on Windows
 
@@ -25,16 +25,16 @@ Quick start
 
  1. Install Perl (and NASM is necessary)
 
- 3. Make sure CMake, Perl, and NASM are all on your PATH.
+ 2. Make sure CMake, Perl, and NASM are all installed and available in whatever form that's feasible for the target platform.
 
- 5. From the root of the OpenSSL source directory enter
+ 3. From the root of the OpenSSL source directory enter
     - `perl Configure CMake`
 
     The perl Configure script will produce `openssl-config.cmake` in the root OpenSSL source directory.
 
- 6. You can now configure CMake in the root OpenSSL source directory using the CMakeLists.txt file.
+ 4. You can now configure CMake in the root OpenSSL source directory using the CMakeLists.txt file.
  
- 7. Additionally, you can embed OpenSSL directly into a custom CMake project by using `add_subdirectory(<OPENSSL_SOURCE_DIR> <OPENSSL_BINARY_DIR>)`, this even suppoort automatic perl configuration if the `OPENSSL_CONFIGURE_OPTIONS` CMake variable is set.
+ 5. Additionally, you can embed OpenSSL directly into a custom CMake project by using `add_subdirectory(<OPENSSL_SOURCE_DIR> <OPENSSL_BINARY_DIR>)`, this even suppoort automatic perl configuration if the `OPENSSL_CONFIGURE_OPTIONS` CMake variable is set.
 
 The CMake scripts produce a CMake target for each library that OpenSSL was configured for, they can be referenced in a CMake script using the aliased form `OpenSSL::<target>` or `openssl_<target>`, for example `OpenSSL::libcrypto` or `openssl_libcrypto`.
 
