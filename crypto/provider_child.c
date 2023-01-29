@@ -135,8 +135,10 @@ static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
                                        1)) == NULL)
             goto err;
 
-        if (!ossl_provider_activate(cprov, 0, 0))
+        if (!ossl_provider_activate(cprov, 0, 0)) {
+            ossl_provider_free(cprov);
             goto err;
+        }
 
         if (!ossl_provider_set_child(cprov, prov)
             || !ossl_provider_add_to_store(cprov, NULL, 0)) {
