@@ -17,7 +17,7 @@ if(OPENSSL_CONFIGURE_OPTIONS)
   #set(ENV{BUILDFILE_DEBUG_RULES} 1)
   #set(ENV{BUILDFILE_DEBUG_DEPENDS} 1)
   if (NOT PERL_EXECUTABLE)
-    find_package(Perl REQUIRED)
+    find_package(Perl 5.10.0 REQUIRED)
   endif()
   execute_process(
     COMMAND ${PERL_EXECUTABLE} Configure CMake ${OPENSSL_CONFIGURE_OPTIONS}
