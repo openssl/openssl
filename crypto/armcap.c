@@ -400,7 +400,8 @@ void OPENSSL_cpuid_setup(void)
             OPENSSL_armv8_rsa_neonized = 1;
     }
     if ((MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V1) ||
-         MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N2)) &&
+         MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N2) ||
+         MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V2)) &&
         (OPENSSL_armcap_P & ARMV8_SHA3))
         OPENSSL_armcap_P |= ARMV8_UNROLL8_EOR3;
 # endif
