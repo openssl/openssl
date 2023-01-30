@@ -44,19 +44,10 @@
   '';
 -}
 
-cmake_minimum_required(VERSION 3.17)
-cmake_policy(SET CMP0054 NEW)
 set(CMAKE_EXECUTE_PROCESS_COMMAND_ECHO STDOUT)
 
 include(CheckCCompilerFlag)
 include(CheckPIESupported)
-
-# Determine the perl executable
-if(PERL_EXECUTABLE)
-  set(PERL "${PERL_EXECUTABLE}")
-else()
-  set(PERL {- fixup_path($config{PERL}) -})
-endif()
 
 # Make position independent targets
 check_pie_supported(OUTPUT_VARIABLE _OSSL_CHECK_PIE_SUPPORT_OUTPUT LANGUAGES C)
@@ -279,14 +270,11 @@ set(OPENSSL_EX_LIBS {- join(" ", map { fixup_path($_) } @{$config{LDLIBS}}) -})
 
 ##### Project flags ##################################################
 
-set(OPENSSL_LIB_DEFINES -DOPENSSLDIR="${OPENSSL_OPENSSLDIR}" -DENGINESDIR="${OPENSSL_ENGINESDIR}" -DMODULESDIR="${OPENSSL_MODULESDIR}")
-include(TestBigEndian)
-test_big_endian(OPENSSL_IS_BIG_ENDIAN)
-if(OPENSSL_IS_BIG_ENDIAN)
-  set(OPENSSL_LIB_DEFINES -DB_ENDIAN ${OPENSSL_LIB_DEFINES})
-else()
-  set(OPENSSL_LIB_DEFINES -DL_ENDIAN ${OPENSSL_LIB_DEFINES})
-endif()
+set(OPENSSL_LIB_DEFINES {- join(' ', (map { '-D'.quotify1($_) }
+                                          @{$target{lib_defines}},
+                                          @{$target{shared_defines}},
+                                          @{$config{lib_defines}},
+                                          @{$config{shared_defines}})) -} -DOPENSSLDIR="${OPENSSL_OPENSSLDIR}" -DENGINESDIR="${OPENSSL_ENGINESDIR}" -DMODULESDIR="${OPENSSL_MODULESDIR}")
 
 if (WIN32)
   set(OPENSSL_COMMON_DEFINES -DOPENSSL_SYS_WIN32 -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_WINSOCK_DEPRECATED_NO_WARNINGS)
@@ -397,7 +385,7 @@ set(BIN_EX_LIBS ${CNF_EX_LIBS} ${OPENSSL_EX_LIBS})
 set(CPPFLAGS_Q "{- join(' ', $lib_cppflags || (),
                              $cppflags2 || (),
                              $cppflags1 || ()) -}")
-
+set(PLATFORM "{- $config{target} -}")
 
 if(WIN32)
   enable_language(ASM_NASM)
@@ -476,7 +464,7 @@ EOF
           return <<"EOF";
 list(APPEND GENERATE_HTML_DOCS $gen_out)
 add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $pod
-                   COMMAND \${PERL} "util/mkpod2html.pl" -i $pod -o $gen_out -t "$title" -r "\${OPENSSL_SRCDIR}/doc"
+                   COMMAND \${PERL_EXECUTABLE} "util/mkpod2html.pl" -i $pod -o $gen_out -t "$title" -r "\${OPENSSL_SRCDIR}/doc"
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
       } elsif (platform->isdef($args{src})) {
@@ -493,7 +481,7 @@ EOF
               $args{generator}->[1] || basename(platform->dsoname($args{product}));
           return <<"EOF";
 add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gensrc
-                   COMMAND \${PERL} $mkdef$ord_ver --type $args{intent} --ordinals $gensrc --name $ord_name --OS \${OPENSSL_OS} > $gen_out
+                   COMMAND \${PERL_EXECUTABLE} $mkdef$ord_ver --type $args{intent} --ordinals $gensrc --name $ord_name --OS \${OPENSSL_OS} > $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
       } elsif (platform->isasm($args{src})) {
@@ -511,7 +499,7 @@ EOF
 
           my $generator;
           if ($gen0 =~ /\.pl$/) {
-              $generator = '${PERL}'.$gen_incs.' '.$gen_in.$gen_args
+              $generator = '${PERL_EXECUTABLE}'.$gen_incs.' '.$gen_in.$gen_args
                   .' "${PERLASM_SCHEME}"'.$incs.' '.$cppflags.$defs.' ${PROCESSSOR}';
           } elsif ($gen0 =~ /\.S$/) {
               $generator = undef;
@@ -550,7 +538,7 @@ EOF
           # configuration using execute_process.
           if (grep { $args{src} eq $_ } @GENERATED_MANDATORY) {
               return <<"EOF";
-execute_process(COMMAND "\${PERL}"$perlmodules $dofile "-o$target{build_file}" $gen_in$gen_args
+execute_process(COMMAND "\${PERL_EXECUTABLE}"$perlmodules $dofile "-o$target{build_file}" $gen_in$gen_args
                 OUTPUT_FILE $gen_out
                 WORKING_DIRECTORY "\${OPENSSL_SRCDIR}"
                 COMMAND_ECHO STDERR)
@@ -559,20 +547,20 @@ EOF
 
           # Check if this is a doc to be generated.
           if ($args{src} =~ /\.pod$/) {
-              my $gen_cmd = escape_cmd('${PERL}'.$perlmodules.' '
+              my $gen_cmd = escape_cmd('${PERL_EXECUTABLE}'.$perlmodules.' '
                                         .$dofile.' -o'.$target{build_file}.' '
                                         .$gen_in.$gen_args.' > '.$gen_out);
               return <<"EOF";
 list(APPEND GENERATE_POD_DOCS $gen_out)
 add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in
-                   COMMAND \${PERL}$perlmodules $dofile -o$target{build_file} $gen_in$gen_args > $gen_out
+                   COMMAND \${PERL_EXECUTABLE}$perlmodules $dofile -o$target{build_file} $gen_in$gen_args > $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
           }
 
           return <<"EOF";
 add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in DEPENDS $deps
-                   COMMAND \${PERL}$perlmodules $dofile "-o$target{build_file}" $gen_in$gen_args > $gen_out
+                   COMMAND \${PERL_EXECUTABLE}$perlmodules $dofile "-o$target{build_file}" $gen_in$gen_args > $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
       } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
@@ -584,7 +572,7 @@ EOF
           $gen0 = fixup_path(platform->bin($gen0));
           my $gen_out = fixup_path($args{src});
           return <<"EOF";
-execute_process(COMMAND "\${PERL}" "\${OPENSSL_BLDDIR}/util/wrap.pl" $gen0$gen_args
+execute_process(COMMAND "\${PERL_EXECUTABLE}" "\${OPENSSL_BLDDIR}/util/wrap.pl" $gen0$gen_args
                 OUTPUT_FILE $gen_out
                 WORKING_DIRECTORY "\${OPENSSL_SRCDIR}"
                 COMMAND_ECHO STDERR)
@@ -599,7 +587,7 @@ EOF
             return <<"EOF";
 # Generate resource
 add_custom_command(OUTPUT $gen_out
-                   COMMAND \${PERL}$gen_incs $gen_in$gen_args > $gen_out
+                   COMMAND \${PERL_EXECUTABLE}$gen_incs $gen_in$gen_args > $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
           }
@@ -607,7 +595,7 @@ EOF
               return <<"EOF";
 list(APPEND GENERATE_MAN_DOCS $gen_out)
 add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in
-                   COMMAND \${PERL}$gen_incs $gen_in$gen_args > $gen_out
+                   COMMAND \${PERL_EXECUTABLE}$gen_incs $gen_in$gen_args > $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
           }
@@ -619,7 +607,7 @@ EOF
           }
           return <<"EOF";
 add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in $depends
-                   COMMAND \${PERL}$gen_incs $gen_in$gen_args > $gen_out
+                   COMMAND \${PERL_EXECUTABLE}$gen_incs $gen_in$gen_args > $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
       }
@@ -670,16 +658,12 @@ EOF
      my $lib = $args{lib};
      my $dll = platform->sharedlib($lib);
      my $dll_n = compute_target_name('shlib', $lib);
-     my @objs = map { platform->convertext($_) }
-                grep { platform->issrc($_) }
-                @{$args{objs}};
      my @lddefs = map { platform->def($_) }
                   grep { platform->isdef($_) }
                   @{$args{objs}};
      my @deps = compute_lib_depend_targets(@{$args{deps}});
      die "More than one exported symbols list" if scalar @lddefs > 1;
      my $linklibs = join("", map { " $_" } @deps);
-     my $objs = join(" ", map { fixup_path("\${OPENSSL_SRCDIR}/".$_) } @objs, @lddefs);
      my $incs = join(" ", map { fixup_path("\${OPENSSL_SRCDIR}".($_ eq '.' ? "" : "/$_")) }
                           @{$args{incs}});
      my $defs = join("", map { " -D".$_ } @{$args{defs}});
@@ -697,15 +681,11 @@ EOF
      my %args = @_;
      my $dso = basename(platform->dso($args{module}));
      my $dso_n = compute_target_name('dso', $args{module});
-     my @objs = map { platform->convertext($_) }
-                grep { platform->issrc($_) }
-                @{$args{objs}};
      my @lddefs = map { platform->def($_) }
                   grep { platform->isdef($_) }
                   @{$args{objs}};
      my @deps = compute_lib_depend_targets(@{$args{deps}});
      die "More than one exported symbols list" if scalar @lddefs > 1;
-     my $objs = join(" ", map { fixup_path("\${OPENSSL_SRCDIR}/".$_) } @objs, @lddefs);
      my $incs = join(" ", map { fixup_path("\${OPENSSL_SRCDIR}".($_ eq '.' ? "" : "/$_"))}
                           @{$args{incs}});
      my $defs = join("", map { " -D".$_ } @{$args{defs}});
@@ -723,11 +703,7 @@ EOF
  sub obj2lib {
      my %args = @_;
      my $lib_n = compute_target_name('lib', $args{lib});
-     my @objs = map { platform->convertext($_) }
-                grep { platform->issrc($_) }
-                @{$args{objs}};
      my @deps = compute_lib_depend_targets(@{$args{deps}});
-     my $objs = join(" ", map { fixup_path("\${OPENSSL_SRCDIR}/".$_) } @objs);
      my $incs = join(" ", map { fixup_path("\${OPENSSL_SRCDIR}".($_ eq '.' ? "" : "/$_")) }
                           @{$args{incs}});
      my $defs = join("", map { " -D".$_ } @{$args{defs}});
@@ -749,11 +725,7 @@ EOF
  sub obj2bin {
      my %args = @_;
      my $bin_n = compute_target_name('bin', $args{bin});
-     my @objs = map { platform->convertext($_) }
-                grep { platform->issrc($_) }
-                @{$args{objs}};
      my @deps = compute_lib_depend_targets(@{$args{deps}});
-     my $objs = join(" ", map { fixup_path("\${OPENSSL_SRCDIR}/".$_) } @objs);
      my $incs = join(" ", map { fixup_path("\${OPENSSL_SRCDIR}".($_ eq '.' ? "" : "/$_")) }
                           @{$args{incs}});
      my $defs = join("", map { " -D".$_ } @{$args{defs}});
@@ -774,7 +746,7 @@ EOF
                                                       "util", "dofile.pl")),
                                       rel2abs($config{builddir})));
       return <<"EOF";
-execute_process(COMMAND "\${PERL}" "-I\${OPENSSL_BLDDIR}" -Mconfigdata $dofile "-o$target{build_file}" $sources
+execute_process(COMMAND "\${PERL_EXECUTABLE}" "-I\${OPENSSL_BLDDIR}" -Mconfigdata $dofile "-o$target{build_file}" $sources
                 OUTPUT_FILE $script
                 WORKING_DIRECTORY "\${OPENSSL_SRCDIR}"
                 COMMAND_ECHO STDERR)
