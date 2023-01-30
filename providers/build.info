@@ -120,7 +120,7 @@ IF[{- !$disabled{fips} -}]
   DEPEND[fipsmodule.cnf]=$FIPSGOAL
 
   # Add VERSIONINFO resource for windows
-  IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-|CMake)/ -}]
+  IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
     GENERATE[fips.rc]=../util/mkrc.pl fips
     SOURCE[$FIPSGOAL]=fips.rc
   ENDIF
@@ -154,7 +154,7 @@ IF[{- !$disabled{legacy} -}]
     ENDIF
 
     # Add VERSIONINFO resource for windows
-    IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-|CMake)/ -}]
+    IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
       GENERATE[legacy.rc]=../util/mkrc.pl legacy
       SOURCE[$LEGACYGOAL]=legacy.rc
     ENDIF

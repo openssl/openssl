@@ -5,8 +5,7 @@
 # be useful here.
 #
 # Auxiliary program source (copied from ../apps/build.info)
-IF[{- $config{target} =~ /^(?:VC-|mingw|BC-)/ ||
-      $config{target} =~ /^(?:CMake)/ && $^O eq 'MSWin32' -}]
+IF[{- $config{target} =~ /^(?:VC-|mingw|BC-)/ -}]
   # It's called 'init', but doesn't have much 'init' in it...
   $AUXLIBAPPSSRC=../apps/lib/win32_init.c
 ENDIF
