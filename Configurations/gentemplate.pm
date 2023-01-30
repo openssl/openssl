@@ -362,8 +362,6 @@ sub dolib {
         my @objs = ();
         my @foreign_objs = ();
         my @deps = ();
-        my @incs = ();
-        my @defs = ();
         foreach (@{$self->{info}->{shared_sources}->{$lib} // []}) {
             if ($_ !~ m|\.a$|) {
                 push @objs, $_;
@@ -375,8 +373,6 @@ sub dolib {
             }
         }
         @deps = ( grep { $_ ne $lib } $self->resolvedepends($lib, @deps) );
-        @incs = ( @{$self->{info}->{includes}->{$lib} // []} );
-        @defs = ( @{$self->{info}->{defines}->{$lib} // []} );
         print STDERR "DEBUG[dolib:shlib] \%attrs for $lib : ", ,
             join(",", map { "\n    $_ = $attrs{$_}" } sort keys %attrs), "\n"
             if %attrs && $debug_rules;
@@ -389,19 +385,11 @@ sub dolib {
         print STDERR "DEBUG[dolib:shlib] \@foreign_objs for $lib : ",
             join(",", map { "\n    $_" } @foreign_objs), "\n"
             if @foreign_objs && $debug_rules;
-        print STDERR "DEBUG[dolib:shlib] \@incs for $lib : ",
-            join(",", map { "\n    $_" } @incs), "\n"
-            if @incs && $debug_rules;
-        print STDERR "DEBUG[dolib:shlib] \@defs for $lib : ",
-            join(",", map { "\n    $_" } @defs), "\n"
-            if @defs && $debug_rules;
         $self->emit('obj2shlib',
              lib => $lib,
              attrs => { %attrs },
              objs => [ @objs, @foreign_objs ],
-             deps => [ @deps ],
-             incs => [ @incs ],
-             defs => [ @defs ]);
+             deps => [ @deps ]);
         foreach (@objs) {
             # If this is somehow a compiled object, take care of it that way
             # Otherwise, it might simply be generated
@@ -424,8 +412,6 @@ sub dolib {
         # Symbol resolution will happen when any program, module or shared
         # library is linked with this one.
         my @objs = ();
-        my @incs = ();
-        my @defs = ();
         my @sourcedeps = ();
         my @foreign_objs = ();
         foreach (@{$self->{info}->{sources}->{$lib}}) {
@@ -449,21 +435,10 @@ sub dolib {
         print STDERR "DEBUG[dolib:lib] \@foreign_objs for $lib : ",
             join(",", map { "\n    $_" } @foreign_objs), "\n"
             if @foreign_objs && $debug_rules;
-        @incs = ( @{$self->{info}->{includes}->{$lib} // []} );
-        print STDERR "DEBUG[dolib:lib] \@incs for $lib : ",
-            join(",", map { "\n    $_" } @incs), "\n"
-            if @incs && $debug_rules;
-        @defs = ( @{$self->{info}->{defines}->{$lib} // []} );
-        print STDERR "DEBUG[dolib:lib] \@defs for $lib : ",
-            join(",", map { "\n    $_" } @defs), "\n"
-            if @defs && $debug_rules;
         $self->emit('obj2lib',
              lib => $lib, attrs => { %attrs },
              objs => [ @objs, @foreign_objs ],
-             deps => [ @sourcedeps ],
-             incs => [ @incs ],
-             defs => [ @defs ]
-             );
+             deps => [ @sourcedeps ]);
         foreach (@objs) {
             $self->doobj($_, $lib, intent => "lib", attrs => { %attrs });
         }
@@ -482,8 +457,6 @@ sub domodule {
     my @objs = @{$self->{info}->{sources}->{$module}};
     my @deps = ( grep { $_ ne $module }
                  $self->resolvedepends($module) );
-    my @incs = ( @{$self->{info}->{includes}->{$module} // []} );
-    my @defs = ( @{$self->{info}->{defines}->{$module} // []} );
     print STDERR "DEBUG[domodule] \%attrs for $module :",
         join(",", map { "\n    $_ = $attrs{$_}" } sort keys %attrs), "\n"
         if $debug_rules;
@@ -493,20 +466,11 @@ sub domodule {
     print STDERR "DEBUG[domodule] \@deps for $module : ",
         join(",", map { "\n    $_" } @deps), "\n"
         if $debug_rules;
-    print STDERR "DEBUG[domodule] \@incs for $module : ",
-        join(",", map { "\n    $_" } @incs), "\n"
-        if $debug_rules;
-    print STDERR "DEBUG[domodule] \@defs for $module : ",
-        join(",", map { "\n    $_" } @defs), "\n"
-        if $debug_rules;
     $self->emit('obj2dso',
          module => $module,
          attrs => { %attrs },
          objs => [ @objs ],
-         deps => [ @deps ],
-         incs => [ @incs ],
-         defs => [ @defs ]
-         );
+         deps => [ @deps ]);
     foreach (@{$self->{info}->{sources}->{$module}}) {
         # If this is somehow a compiled object, take care of it that way
         # Otherwise, it might simply be generated
@@ -528,8 +492,6 @@ sub dobin {
     my %attrs = %{$self->{info}->{attributes}->{programs}->{$bin} // {}};
     my @objs = @{$self->{info}->{sources}->{$bin}};
     my @deps = ( grep { $_ ne $bin } $self->resolvedepends($bin) );
-    my @incs = ( @{$self->{info}->{includes}->{$bin} // []} );
-    my @defs = ( @{$self->{info}->{defines}->{$bin} // []} );
     print STDERR "DEBUG[dobin] \%attrs for $bin : ",
         join(",", map { "\n    $_ = $attrs{$_}" } sort keys %attrs), "\n"
         if %attrs && $debug_rules;
@@ -539,19 +501,11 @@ sub dobin {
     print STDERR "DEBUG[dobin] \@deps for $bin : ",
         join(",", map { "\n    $_" } @deps), "\n"
         if @deps && $debug_rules;
-    print STDERR "DEBUG[dobin] \@incs for $bin : ",
-        join(",", map { "\n    $_" } @incs), "\n"
-        if @incs && $debug_rules;
-    print STDERR "DEBUG[dobin] \@defs for $bin : ",
-        join(",", map { "\n    $_" } @defs), "\n"
-        if @defs && $debug_rules;
     $self->emit('obj2bin',
          bin => $bin,
          attrs => { %attrs },
          objs => [ @objs ],
-         deps => [ @deps ],
-         incs => [ @incs ],
-         defs => [ @defs ]);
+         deps => [ @deps ]);
     foreach (@objs) {
         $self->doobj($_, $bin, intent => "bin", attrs => { %attrs });
     }

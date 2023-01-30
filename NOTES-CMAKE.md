@@ -60,9 +60,8 @@ CMake Variables
     OPENSSL_BIN_TARGETS                 - The CMake application/program targets
 
     OPENSSL_SOURCES_<target>            - The source files for a specific target
+    OPENSSL_ASM_SOURCES_<target>        - The asm source files for a specific target
     OPENSSL_LINK_DEFS_<target>          - The linker defs files for a specific target
-    OPENSSL_INCLUDES_<target>           - The include directories for a specific target
-    OPENSSL_DEFINES_<target>            - The compiler definitions for a specific target
     OPENSSL_LINK_LIBRARIES_<target>     - The link libraries for a specific target
     OPENSSL_DEPENDENCIES_<target>       - The dependencies for a specific target
 
