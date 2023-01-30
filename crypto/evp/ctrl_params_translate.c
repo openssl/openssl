@@ -387,7 +387,7 @@ static int default_fixup_args(enum state state,
 {
     int ret;
 
-    if ((ret = default_check(state, translation, ctx)) < 0)
+    if ((ret = default_check(state, translation, ctx)) <= 0)
         return ret;
 
     switch (state) {
