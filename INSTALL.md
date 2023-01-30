@@ -1307,7 +1307,7 @@ from `include/openssl/configuration.h.in`.
 If none of the generated build files suit your purpose, it's possible to
 write your own build file template and give its name through the environment
 variable `BUILDFILE`.  For example, Ninja build files could be supported by
-writing `Configurations/build.ninja.tmpl` and the configure with `BUILDFILE`
+writing `Configurations/build.ninja.tmpl` and then configure with `BUILDFILE`
 set like this (Unix syntax shown, you'll have to adapt for other platforms):
 
     $ BUILDFILE=build.ninja perl Configure [options...]
