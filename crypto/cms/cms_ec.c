@@ -346,7 +346,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 
     penclen = CMS_SharedInfo_encode(&penc, wrap_alg, ukm, keylen);
 
-    if (penclen == 0)
+    if (penclen <= 0)
         goto err;
 
     if (EVP_PKEY_CTX_set0_ecdh_kdf_ukm(pctx, penc, penclen) <= 0)
