@@ -360,11 +360,10 @@ static const OPT_PAIR doit_choices[] = {
 
 static double results[ALGOR_NUM][SIZE_NUM];
 
-enum { R_DSA_1024, R_DSA_2048, R_DSA_3072, DSA_NUM };
+enum { R_DSA_1024, R_DSA_2048, DSA_NUM };
 static const OPT_PAIR dsa_choices[DSA_NUM] = {
     {"dsa1024", R_DSA_1024},
-    {"dsa2048", R_DSA_1024},
-    {"dsa3072", R_DSA_3072}
+    {"dsa2048", R_DSA_2048}
 };
 static double dsa_results[DSA_NUM][2];  /* 2 ops: sign then verify */
 
@@ -1165,7 +1164,7 @@ static int SM2_verify_loop(void *args)
 }
 #endif                         /* OPENSSL_NO_SM2 */
 
-static long kems_c[MAX_KEM_NUM][3];
+static long kems_c[MAX_KEM_NUM][3]; /* keygen, encaps, decaps */
 static int KEM_keygen_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -1219,7 +1218,7 @@ static int KEM_decaps_loop(void *args)
     return count;
 }
 
-static long sigs_c[MAX_SIG_NUM][3];
+static long sigs_c[MAX_SIG_NUM][3]; /* keygen, sign, verify */
 static int SIG_keygen_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -1604,6 +1603,14 @@ static int sig_locate(const char *algo, unsigned int *idx)
     return 0;
 }
 
+static int get_max(const uint8_t doit[], size_t algs_len) {
+    int i, maxcnt = 0;
+
+    for (i = 0; i < algs_len; i++)
+        if (maxcnt < doit[i]) maxcnt = doit[i];
+    return maxcnt;
+}
+
 int speed_main(int argc, char **argv)
 {
     CONF *conf = NULL;
@@ -1681,7 +1688,7 @@ int speed_main(int argc, char **argv)
     uint8_t ffdh_doit[FFDH_NUM] = { 0 };
 
 #endif /* OPENSSL_NO_DH */
-    static const unsigned int dsa_bits[DSA_NUM] = { 1024, 2048, 3072 };
+    static const unsigned int dsa_bits[DSA_NUM] = { 1024, 2048 };
     uint8_t dsa_doit[DSA_NUM] = { 0 };
     /*
      * We only test over the following curves as they are representative, To
@@ -1925,13 +1932,13 @@ int speed_main(int argc, char **argv)
         if (strcmp(EVP_KEM_get0_name(kem), "RSA") == 0) {
             if (kems_algs_len + OSSL_NELEM(rsa_choices) >= MAX_KEM_NUM) {
                 BIO_printf(bio_err,
-                       "Too many KEMs registered. Change MAX_KEM_NUM.\n");
+                           "Too many KEMs registered. Change MAX_KEM_NUM.\n");
                 goto end;
             }
-	    for (i = 0; i < OSSL_NELEM(rsa_choices); i++) {
+            for (i = 0; i < OSSL_NELEM(rsa_choices); i++) {
                 kems_doit[kems_algs_len] = 1;
                 kems_algname[kems_algs_len++] = OPENSSL_strdup(rsa_choices[i].name);
-	    }
+            }
         }
         else if (strcmp(EVP_KEM_get0_name(kem), "EC") == 0) {
             if (kems_algs_len + 3 >= MAX_KEM_NUM) {
@@ -1975,21 +1982,21 @@ int speed_main(int argc, char **argv)
                        "Too many signatures registered. Change MAX_SIG_NUM.\n");
                 goto end;
             }
-	    for (i = 0; i < OSSL_NELEM(rsa_choices); i++) {
+	        for (i = 0; i < OSSL_NELEM(rsa_choices); i++) {
                 sigs_doit[sigs_algs_len] = 1;
                 sigs_algname[sigs_algs_len++] = OPENSSL_strdup(rsa_choices[i].name);
-	    }
+	        }
         }
         else if (strcmp(sig_name, "DSA") == 0) {
-            if (sigs_algs_len + OSSL_NELEM(dsa_choices) >= MAX_SIG_NUM) {
+            if (sigs_algs_len + DSA_NUM >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
                        "Too many signatures registered. Change MAX_SIG_NUM.\n");
                 goto end;
             }
-	    for (i = 0; i < OSSL_NELEM(dsa_choices); i++) {
+            for (i = 0; i < DSA_NUM; i++) {
                 sigs_doit[sigs_algs_len] = 1;
                 sigs_algname[sigs_algs_len++] = OPENSSL_strdup(dsa_choices[i].name);
-	    }
+            }
         }
         /* skipping these algs as tested elsewhere - and b/o setup is a pain */
         else if (strcmp(sig_name, "ED25519") &&
@@ -2146,18 +2153,16 @@ int speed_main(int argc, char **argv)
         }
     }
     if (kems_algs_len > 0) {
-        int maxcnt = 0;
-        for (i = 0; i < kems_algs_len; i++)
-            if (maxcnt < kems_doit[i]) maxcnt = kems_doit[i];
+        int maxcnt = get_max(kems_doit, kems_algs_len);
+
         if (maxcnt > 1) /* some algs explicitly selected */
             for (i = 0; i < kems_algs_len; i++)
                 /* disable the rest */
                 kems_doit[i]--;
     }
     if (sigs_algs_len > 0) {
-        int maxcnt = 0;
-        for (i = 0; i < sigs_algs_len; i++)
-            if (maxcnt < sigs_doit[i]) maxcnt = sigs_doit[i];
+        int maxcnt = get_max(sigs_doit, sigs_algs_len);
+
         if (maxcnt > 1) /* some algs explicitly selected */
             for (i = 0; i < sigs_algs_len; i++)
                 /* disable the rest */
@@ -3600,7 +3605,7 @@ skip_hmac:
 
             if ((!kem_gen_ctx || EVP_PKEY_keygen_init(kem_gen_ctx) <= 0)
                 || (use_params
-                    && (EVP_PKEY_CTX_set_params(kem_gen_ctx, params) <= 0))) {
+                    && EVP_PKEY_CTX_set_params(kem_gen_ctx, params) <= 0)) {
                 BIO_printf(bio_err, "Error initializing keygen ctx for %s.\n",
                            kem_name);
                 goto kem_err_break;
@@ -3613,16 +3618,16 @@ skip_hmac:
             kem_encaps_ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
                                                         pkey,
                                                         app_get0_propq());
-            if ((kem_encaps_ctx == NULL)
-                || (EVP_PKEY_encapsulate_init(kem_encaps_ctx, NULL) <= 0)
-                || ((strncmp(kem_name, "rsa", 3) == 0
-                    && (EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "RSASVE") <= 0)))
+            if (kem_encaps_ctx == NULL
+                || EVP_PKEY_encapsulate_init(kem_encaps_ctx, NULL) <= 0
+                || (strncmp(kem_name, "rsa", 3) == 0
+                    && EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "RSASVE") <= 0)
                 || ((strncmp(kem_name, "EC", 2) == 0 
                     || strcmp(kem_name, "X25519") == 0 
                     || strcmp(kem_name, "X448") == 0 )
-                   && (EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "DHKEM") <= 0))
-                || (EVP_PKEY_encapsulate(kem_encaps_ctx, NULL, &out_len,
-                                      NULL, &send_secret_len) <= 0)) {
+                   && EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "DHKEM") <= 0)
+                || EVP_PKEY_encapsulate(kem_encaps_ctx, NULL, &out_len,
+                                      NULL, &send_secret_len) <= 0) {
                 BIO_printf(bio_err,
                            "Error while initializing encaps data structs for %s.\n",
                            kem_name);
@@ -3643,16 +3648,16 @@ skip_hmac:
             kem_decaps_ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
                                                         pkey,
                                                         app_get0_propq());
-            if ((kem_decaps_ctx == NULL)
-                || (EVP_PKEY_decapsulate_init(kem_decaps_ctx, NULL) <= 0) 
-                || ((strncmp(kem_name, "rsa", 3) == 0
-                  && (EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "RSASVE") <= 0)))
+            if (kem_decaps_ctx == NULL
+                || EVP_PKEY_decapsulate_init(kem_decaps_ctx, NULL) <= 0 
+                || (strncmp(kem_name, "rsa", 3) == 0
+                  && EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "RSASVE") <= 0)
                 || ((strncmp(kem_name, "EC", 2) == 0
                      || strcmp(kem_name, "X25519") == 0
                      || strcmp(kem_name, "X448") == 0)
-                  && (EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "DHKEM") <= 0))
-                || (EVP_PKEY_decapsulate(kem_decaps_ctx, NULL, &rcv_secret_len,
-                                      out, out_len) <= 0)) {
+                  && EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "DHKEM") <= 0)
+                || EVP_PKEY_decapsulate(kem_decaps_ctx, NULL, &rcv_secret_len,
+                                        out, out_len) <= 0) {
                 BIO_printf(bio_err,
                            "Error while initializing decaps data structs for %s.\n",
                            kem_name);
@@ -3664,10 +3669,10 @@ skip_hmac:
                            kem_name);
                 goto kem_err_break;
             }
-            if ((EVP_PKEY_decapsulate(kem_decaps_ctx, rcv_secret,
-                                      &rcv_secret_len, out, out_len) <= 0)
-                || (rcv_secret_len != send_secret_len)
-                || (memcmp(send_secret, rcv_secret, send_secret_len))) {
+            if (EVP_PKEY_decapsulate(kem_decaps_ctx, rcv_secret,
+                                      &rcv_secret_len, out, out_len) <= 0
+                || rcv_secret_len != send_secret_len
+                || memcmp(send_secret, rcv_secret, send_secret_len)) {
                 BIO_printf(bio_err, "Decaps error for %s.\n", kem_name);
                 goto kem_err_break;
             }
@@ -3771,13 +3776,13 @@ skip_hmac:
 
             if (strncmp(sig_name, "dsa", 3) == 0) {
                 ctx_params = EVP_PKEY_CTX_new_id(EVP_PKEY_DSA, NULL);
-                if ((ctx_params == NULL)
-                    || (EVP_PKEY_paramgen_init(ctx_params) <= 0)
-                    || (EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx_params,
-                                                        atoi(sig_name + 3)) <= 0)
-                    || (EVP_PKEY_paramgen(ctx_params, &pkey_params) <= 0)
-                    || ((sig_gen_ctx = EVP_PKEY_CTX_new(pkey_params, NULL)) == NULL)
-                    || (EVP_PKEY_keygen_init(sig_gen_ctx) <= 0)) {
+                if (ctx_params == NULL
+                    || EVP_PKEY_paramgen_init(ctx_params) <= 0
+                    || EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx_params,
+                                                        atoi(sig_name + 3)) <= 0
+                    || EVP_PKEY_paramgen(ctx_params, &pkey_params) <= 0
+                    || (sig_gen_ctx = EVP_PKEY_CTX_new(pkey_params, NULL)) == NULL
+                    || EVP_PKEY_keygen_init(sig_gen_ctx) <= 0) {
                     BIO_printf(bio_err,
                                "Error initializing classic keygen ctx for %s.\n",
                                sig_name);
@@ -3792,7 +3797,7 @@ skip_hmac:
 
             if (!sig_gen_ctx || EVP_PKEY_keygen_init(sig_gen_ctx) <= 0
                 || (use_params &&
-                    (EVP_PKEY_CTX_set_params(sig_gen_ctx, params) <= 0))) {
+                    EVP_PKEY_CTX_set_params(sig_gen_ctx, params) <= 0)) {
                 BIO_printf(bio_err, "Error initializing keygen ctx for %s.\n",
                            sig_name);
                 goto sig_err_break;
@@ -3807,13 +3812,13 @@ skip_hmac:
             sig_sign_ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
                                                       pkey,
                                                       app_get0_propq());
-            if ((sig_sign_ctx == NULL)
-                || (EVP_PKEY_sign_init(sig_sign_ctx) <= 0)
-                || ((strncmp(sig_name, "rsa", 3) == 0
+            if (sig_sign_ctx == NULL
+                || EVP_PKEY_sign_init(sig_sign_ctx) <= 0
+                || (strncmp(sig_name, "rsa", 3) == 0
                   && (EVP_PKEY_CTX_set_rsa_padding(sig_sign_ctx,
-                                               RSA_PKCS1_PADDING)  <= 0)))
-                || (EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len,
-                                      md, md_len) <= 0)) {
+                                               RSA_PKCS1_PADDING)  <= 0))
+                || EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len,
+                                      md, md_len) <= 0) {
                 BIO_printf(bio_err,
                            "Error while initializing signing data structs for %s.\n",
                            sig_name);
@@ -3834,11 +3839,11 @@ skip_hmac:
             sig_verify_ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(),
                                                         pkey,
                                                         app_get0_propq());
-            if ((sig_verify_ctx == NULL)
-                || (EVP_PKEY_verify_init(sig_verify_ctx) <= 0)
-                || ((strncmp(sig_name, "rsa", 3) == 0
+            if (sig_verify_ctx == NULL
+                || EVP_PKEY_verify_init(sig_verify_ctx) <= 0
+                || (strncmp(sig_name, "rsa", 3) == 0
                   && (EVP_PKEY_CTX_set_rsa_padding(sig_verify_ctx,
-                                               RSA_PKCS1_PADDING) <= 0)))) {
+                                               RSA_PKCS1_PADDING) <= 0))) {
                 BIO_printf(bio_err,
                            "Error while initializing verify data structs for %s.\n",
                            sig_name);
