@@ -391,6 +391,14 @@ set(BIN_LDFLAGS {- join(' ', $target{bin_lflags} || (),
                             @{$config{bin_lflags}}) -} ${CNF_LDFLAGS} ${LDFLAGS})
 set(BIN_EX_LIBS ${CNF_EX_LIBS} ${OPENSSL_EX_LIBS})
 
+# Expand semicolon separated list into space separated flags.
+list(JOIN LIB_CPPFLAGS " " LIB_CPPFLAGS)
+list(JOIN LIB_CFLAGS " " LIB_CFLAGS)
+list(JOIN DSO_CPPFLAGS " " DSO_CPPFLAGS)
+list(JOIN DSO_CFLAGS " " DSO_CFLAGS)
+list(JOIN BIN_CPPFLAGS " " BIN_CPPFLAGS)
+list(JOIN BIN_CFLAGS " " BIN_CFLAGS)
+
 # CPPFLAGS_Q is used for one thing only: to build up buildinf.h
 set(CPPFLAGS_Q "{- join(' ', $lib_cppflags || (),
                              $cppflags2 || (),
@@ -459,10 +467,11 @@ EOF
       my $gen_incs = join("", map { " ".fixup_path("-I".$_) } @{$args{generator_incs}});
       my $incs = join("", map { " ".fixup_path("-I".$_) } @{$args{incs}});
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
+      my @gen_deps = compute_platform_depends(@{$args{generator_deps}},
+                                              @{$args{deps}});
       my $deps = join(' ',
                       map { file_name_is_absolute($_) || ($_ =~ m|^../|) ? "\"$_\"" : $_ }
-                      compute_platform_depends(@{$args{generator_deps}},
-                                               @{$args{deps}}));
+                      @gen_deps);
 
       if ($args{src} =~ /\.html$/) {
           #
@@ -489,8 +498,12 @@ EOF
           my $ord_ver = $args{intent} eq 'lib' ? ' --version ${OPENSSL_VERSION_NUMBER}' : '';
           my $ord_name =
               $args{generator}->[1] || basename(platform->dsoname($args{product}));
+          my $gen_deps = join(' ', map { fixup_path($_)} @gen_deps);
+          if (@gen_deps) {
+              $gen_deps = ' DEPENDS '.$gen_deps;
+          }
           return <<"EOF";
-add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gensrc
+add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gensrc$gen_deps
                    COMMAND \${PERL_EXECUTABLE} $mkdef$ord_ver --type $args{intent} --ordinals $gensrc --name $ord_name --OS \${OPENSSL_OS} > $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
@@ -517,9 +530,14 @@ EOF
               die "Generator type for $src unknown: $gen0\n";
           }
 
+          my $gen_deps = join(' ', map { fixup_path($_)} @gen_deps);
+          if (@gen_deps) {
+              $gen_deps = ' DEPENDS '.$gen_deps;
+          }
+
           if (defined($generator)) {
             return <<"EOF";
-add_custom_command(OUTPUT $gen_out
+add_custom_command(OUTPUT $gen_out$gen_deps
                    COMMAND \${CMAKE_COMMAND} -E env "\${OPENSSL_AS_ENV}" $generator $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
@@ -544,8 +562,6 @@ EOF
           @perlmodules = map { "-M".basename($_, '.pm') } @perlmodules;
           my $perlmodules = join(' ', '', sort keys %perlmoduleincs, @perlmodules);
 
-          our @gen_deps = compute_platform_depends(@{$args{generator_deps}},
-                                                   @{$args{deps}});
           my $gen_deps = join(' ', map { fixup_path($_)} @gen_deps);
           if (@gen_deps) {
               $gen_deps = ' DEPENDS '.$gen_deps;
@@ -602,10 +618,19 @@ EOF
                                     ? $gen0 : "\${OPENSSL_SRCDIR}/".$gen0);
           my $gen_out = fixup_path(file_name_is_absolute($args{src}) || ($args{src} =~ m|^../|)
                                     ? $args{src} : "\${OPENSSL_SRCDIR}/".$args{src});
+
+          our @gen_deps = compute_platform_depends(@{$args{generator_deps}},
+                                                   @{$args{deps}});
+          my $gen_deps = join(' ', map { fixup_path(file_name_is_absolute($_) || ($_ =~ m|^../|)
+                                                  ? $_ : "\${OPENSSL_SRCDIR}/".$_) } @gen_deps);
+          if (@gen_deps) {
+              $gen_deps = ' DEPENDS '.$gen_deps;
+          }
+
           if ($args{src} =~ /\.rc$/) {
             return <<"EOF";
 # Generate resource
-add_custom_command(OUTPUT $gen_out
+add_custom_command(OUTPUT $gen_out$gen_deps
                    COMMAND \${PERL_EXECUTABLE}$gen_incs $gen_in$gen_args > $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
@@ -613,18 +638,14 @@ EOF
           if ($gen0 =~ /\.pod$/ || $args{src} =~ /\.pod$/) {
               return <<"EOF";
 list(APPEND GENERATE_MAN_DOCS $gen_out)
-add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in
+add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in$gen_deps
                    COMMAND \${PERL_EXECUTABLE}$gen_incs $gen_in$gen_args > $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
           }
-          my $depends = join(' ', map { fixup_path(file_name_is_absolute($_) || ($_ =~ m|^../|)
-                                                  ? $_ : "\${OPENSSL_SRCDIR}/".$_) } @{$args{deps}});
-          if (@{$args{deps}}) {
-              $depends = ' DEPENDS '.$depends;
-          }
+
           return <<"EOF";
-add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in$depends
+add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in$gen_deps
                    COMMAND \${PERL_EXECUTABLE}$gen_incs $gen_in$gen_args > $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
@@ -632,7 +653,6 @@ EOF
   }
 
  sub src2obj {
-     my $asmext = platform->asmext();
      my %args = @_;
      my $product = basename(platform->dsoname($args{product}));
      my $target_n = compute_target_name($args{intent}, $args{product});
@@ -651,7 +671,7 @@ EOF
      my $dep = platform->dep($args{obj});
 
     my $recipe;
-    if ($srcs[0] =~ /\Q${asmext}\E$/) {
+    if (platform->isasm($args{srcs}->[0])) {
         my $asflags = { shlib => '${LIB_ASFLAGS}',
 		        lib => '${LIB_ASFLAGS}',
 		        dso => '${DSO_ASFLAGS}',
@@ -754,9 +774,9 @@ list(APPEND OPENSSL_STATIC_TARGETS $lib_n)
 set(OPENSSL_LINK_LIBRARIES_$lib_n \${LIB_EX_LIBS})
 EOF
      if (@deps) {
-        my $sourcedeps = join(" ", @deps);
+        my $objdeps = join(" ", map { $_."_object" } @deps);
         $recipe .= <<"EOF";
-set(OPENSSL_DEPENDENCIES_$lib_n $sourcedeps)
+set(OPENSSL_DEPENDENCIES_$lib_n $objdeps)
 EOF
      }
      return $recipe;
