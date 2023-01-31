@@ -31,11 +31,13 @@
       if ($intent eq 'lib') {
           return basename(platform->staticname($x));
       } elsif ($intent eq 'shlib') {
-          return basename(platform->sharedname($x) // platform->staticname($x));
+          return basename(platform->sharedname($x) // platform->staticname($x)) . "_shared";
       } elsif ($intent eq 'dso') {
           return basename(platform->dsoname($x));
       } elsif ($intent eq 'bin') {
           return basename(platform->binname($x));
+      } elsif ($intent eq 'obj') {
+          return basename(platform->staticname($x)) . "_object";
       } else {
           return basename(platform->staticname($x));
       }
@@ -721,8 +723,8 @@ EOF
  sub obj2shlib {
      my %args = @_;
      my $lib = $args{lib};
-     my $dll = platform->sharedlib($lib);
-     my $dll_n = compute_target_name('shlib', $lib);
+     my $shlib = platform->sharedlib($lib);
+     my $shlib_n = compute_target_name('shlib', $lib);
      my @lddefs = map { platform->def($_) }
                   grep { platform->isdef($_) }
                   @{$args{objs}};
@@ -735,9 +737,9 @@ EOF
      my $lddefs = join(" ", map { fixup_path("\${OPENSSL_SRCDIR}/".$_) } @lddefs);
      return <<"EOF"
 # Shared library
-list(APPEND OPENSSL_SHARED_TARGETS $dll_n)
-set(OPENSSL_LINK_LIBRARIES_$dll_n \${LIB_EX_LIBS}$linklibs)
-set(OPENSSL_LINK_DEFS_$dll_n $lddefs)
+list(APPEND OPENSSL_SHARED_TARGETS $shlib_n)
+set(OPENSSL_LINK_LIBRARIES_$shlib_n \${LIB_EX_LIBS}$linklibs)
+set(OPENSSL_LINK_DEFS_$shlib_n $lddefs)
 EOF
  }
  sub obj2dso {
