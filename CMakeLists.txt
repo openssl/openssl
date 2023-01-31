@@ -31,34 +31,35 @@ endif()
 # Include the generated CMake config.
 include(openssl.cmake)
 
-# Generate mandatory files.
-add_custom_target(openssl_generated_mandatory ALL DEPENDS ${OPENSSL_GENERATED_MANDATORY})
+# Process object library targets.
+foreach(object_target ${OPENSSL_OBJECT_TARGETS})
+  add_library(ossl_${object_target}_object OBJECT ${OPENSSL_ASM_SOURCES_${object_target}}
+                                                  ${OPENSSL_SOURCES_${object_target}})
+  target_link_libraries(ossl_${object_target}_object PRIVATE ${OPENSSL_LINK_LIBRARIES_${object_target}})
+endforeach()
 
 # Add static library targets.
 foreach(static_target ${OPENSSL_STATIC_TARGETS})
-  if(OPENSSL_DEPENDENCIES_${static_target})
-    add_library(openssl_${static_target} STATIC ${OPENSSL_ASM_SOURCES_${static_target}} ${OPENSSL_SOURCES_${static_target}})
-    add_dependencies(openssl_${static_target} ${OPENSSL_DEPENDENCIES_${static_target}})
-    target_link_libraries(openssl_${static_target} PRIVATE ${OPENSSL_LINK_LIBRARIES_${static_target}} ${OPENSSL_DEPENDENCIES_${static_target}})
-  else()
-    add_library(openssl_${static_target}_object OBJECT ${OPENSSL_ASM_SOURCES_${static_target}} ${OPENSSL_SOURCES_${static_target}})
-    add_library(openssl_${static_target} STATIC ${OPENSSL_ASM_SOURCES_${static_target}} ${OPENSSL_SOURCES_${static_target}})
-    target_link_libraries(openssl_${static_target} PRIVATE ${OPENSSL_LINK_LIBRARIES_${static_target}})
-  endif()
-  set_target_properties(openssl_${static_target} PROPERTIES OUTPUT_NAME "${static_target}")
-  set_target_properties(openssl_${static_target} PROPERTIES PREFIX "") # prevent lib prefix
+  add_library(openssl_${static_target} STATIC ${OPENSSL_ASM_SOURCES_${static_target}}
+                                              ${OPENSSL_SOURCES_${static_target}})
+  target_link_libraries(openssl_${static_target} PRIVATE ${OPENSSL_LINK_LIBRARIES_${static_target}} ${OPENSSL_OBJECT_DEPENDS_${static_target}})
+  set_target_properties(openssl_${static_target} PROPERTIES OUTPUT_NAME "${static_target}" PREFIX "") # prevent lib prefix
   if(OPENSSL_POSITION_INDEPENDENT_CODE)
     set_property(TARGET openssl_${static_target} PROPERTY POSITION_INDEPENDENT_CODE ON)
+  endif()
+  if(OPENSSL_DEPENDENCIES_${static_target})
+    add_dependencies(openssl_${static_target} ${OPENSSL_DEPENDENCIES_${static_target}})
   endif()
   add_library(OpenSSL::${static_target} ALIAS openssl_${static_target})
 endforeach()
 
 # Add shared library targets.
 foreach(shared_target ${OPENSSL_SHARED_TARGETS})
-  add_library(openssl_${shared_target} SHARED ${OPENSSL_ASM_SOURCES_${shared_target}} ${OPENSSL_SOURCES_${shared_target}} ${OPENSSL_LINK_DEFS_${shared_target}})
+  add_library(openssl_${shared_target} SHARED ${OPENSSL_ASM_SOURCES_${shared_target}}
+                                              ${OPENSSL_SOURCES_${shared_target}}
+                                              ${OPENSSL_LINK_DEFS_${shared_target}})
   target_link_libraries(openssl_${shared_target} PRIVATE ${OPENSSL_LINK_LIBRARIES_${shared_target}})
-  set_target_properties(openssl_${shared_target} PROPERTIES OUTPUT_NAME "${shared_target}")
-  set_target_properties(openssl_${shared_target} PROPERTIES PREFIX "") # prevent lib prefix
+  set_target_properties(openssl_${shared_target} PROPERTIES OUTPUT_NAME "${shared_target}" PREFIX "") # prevent lib prefix
   if(OPENSSL_POSITION_INDEPENDENT_CODE)
     set_property(TARGET openssl_${shared_target} PROPERTY POSITION_INDEPENDENT_CODE ON)
   endif()
@@ -77,10 +78,11 @@ endforeach()
 
 # Add DSO module targets.
 foreach(dso_target ${OPENSSL_DSO_TARGETS})
-  add_library(openssl_${dso_target} MODULE ${OPENSSL_ASM_SOURCES_${dso_target}} ${OPENSSL_SOURCES_${dso_target}} ${OPENSSL_LINK_DEFS_${dso_target}})
+  add_library(openssl_${dso_target} MODULE ${OPENSSL_ASM_SOURCES_${dso_target}}
+                                           ${OPENSSL_SOURCES_${dso_target}}
+                                           ${OPENSSL_LINK_DEFS_${dso_target}})
   target_link_libraries(openssl_${dso_target} PRIVATE ${OPENSSL_LINK_LIBRARIES_${dso_target}})
-  set_target_properties(openssl_${dso_target} PROPERTIES OUTPUT_NAME "${dso_target}")
-  set_target_properties(openssl_${dso_target} PROPERTIES PREFIX "") # prevent lib prefix
+  set_target_properties(openssl_${dso_target} PROPERTIES OUTPUT_NAME "${dso_target}" PREFIX "") # prevent lib prefix
   if(OPENSSL_POSITION_INDEPENDENT_CODE)
     set_property(TARGET openssl_${dso_target} PROPERTY POSITION_INDEPENDENT_CODE ON)
   endif()
@@ -99,7 +101,8 @@ endforeach()
 
 # Add binary executable targets.
 foreach(bin_target ${OPENSSL_BIN_TARGETS})
-  add_executable(openssl_${bin_target} ${OPENSSL_ASM_SOURCES_${bin_target}} ${OPENSSL_SOURCES_${bin_target}})
+  add_executable(openssl_${bin_target} ${OPENSSL_ASM_SOURCES_${bin_target}}
+                                       ${OPENSSL_SOURCES_${bin_target}})
   target_link_libraries(openssl_${bin_target} PRIVATE ${OPENSSL_LINK_LIBRARIES_${bin_target}})
   set_target_properties(openssl_${bin_target} PROPERTIES OUTPUT_NAME "${bin_target}")
   if(OPENSSL_POSITION_INDEPENDENT_CODE)

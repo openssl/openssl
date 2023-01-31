@@ -5,8 +5,7 @@
 {-
   use File::Basename;
   use OpenSSL::Util;
-
-  our $sover_dirname = platform->shlib_version_as_filename();
+  use platform::BASE qw(platform::BASE);
 
   my $build_scheme = $target{build_scheme};
   my $install_flavour = $build_scheme->[$#$build_scheme]; # last element
@@ -25,22 +24,58 @@
   $win_installroot = $ENV{$win_installroot};
   $win_commonroot = $ENV{$win_commonroot};
 
+  # Generic overrides for some internal platform file conversion subroutines.
+
+  # To mark forward compatibility, we include the OpenSSL major release version
+  # number in the installed shared library names.
+  (my $sover_filename = $config{shlib_version}) =~ s|\.|_|g;
+  sub shlib_version_as_filename {
+      return $sover_filename
+  }
+  our $sover_dirname = shlib_version_as_filename();
+
+  sub binname {
+      return platform::BASE->binname($_[0]);
+  }
+
+  sub dsoname {
+      return platform::BASE->dsoname($_[0]);
+  }
+
+  sub sharedname {
+      return platform::BASE::__concat(platform::BASE->sharedname($_[0]),
+                                      "_",
+                                      shlib_version_as_filename());
+  }
+
+  sub staticname {
+      return platform::BASE->staticname($_[0]);
+  }
+
+  sub sharedlib { return platform::BASE->sharedlib($_[0]) }
+  sub staticlib { return platform::BASE->staticlib($_[0]) }
+
+  sub sharedlib_simple { return undef; }
+  sub sharedlib_import { return undef; }
+
+  # Computes a CMake target name.
   sub compute_target_name {
       my $intent = shift;
       my $x = shift;
       if ($intent eq 'lib') {
-          return basename(platform->staticname($x));
+          return basename(staticname($x));
       } elsif ($intent eq 'shlib') {
-          return basename(platform->sharedname($x) // platform->staticname($x)) . "_shared";
+          return basename(sharedname($x));
       } elsif ($intent eq 'dso') {
-          return basename(platform->dsoname($x));
+          return basename(dsoname($x));
       } elsif ($intent eq 'bin') {
-          return basename(platform->binname($x));
+          return basename(binname($x));
       } elsif ($intent eq 'obj') {
-          return basename(platform->staticname($x)) . "_object";
+          return basename(staticname($x)) . "_object";
       } else {
-          return basename(platform->staticname($x));
+          return basename(staticname($x));
       }
+      return undef;
   }
 
   '';
@@ -85,9 +120,9 @@ set(SHLIB_VERSION_NUMBER "{- $config{shlib_version} -}")
 
 set(OPENSSL_OS "${CMAKE_SYSTEM_NAME}")
 
-set(OPENSSL_LIBS {- join(" ", map { my $x = platform->staticlib($_) // ();
+set(OPENSSL_LIBS {- join(" ", map { my $x = staticlib($_) // ();
                                     $x ? compute_target_name('lib', $_) : () } @{$unified_info{libraries}}) -})
-set(OPENSSL_SHLIBS {- join(" ", map { my $x = platform->sharedlib($_) // ();
+set(OPENSSL_SHLIBS {- join(" ", map { my $x = sharedlib($_) // ();
                                       $x ? compute_target_name('shlib', $_) : () } @{$unified_info{libraries}}) -})
 set(OPENSSL_MODULES {-  our @MODULES = map { my $x = platform->dso($_) // ();
                                              $x ? compute_target_name('dso', $_) : () }
@@ -113,21 +148,23 @@ set(OPENSSL_PROGRAMS {- our @PROGRAMS = map { my $x = platform->bin($_) // ();
                                               $x ? compute_target_name('bin', $_) : () } @{$unified_info{programs}};
                         join(" ", @PROGRAMS) -})
 
+# Generate mandatory files.
+# TODO: Figure out a way to auto-generate this during build instead of configure.
 set(OPENSSL_GENERATED_MANDATORY {- # Files that require mandatory generation
                                    our @GENERATED_MANDATORY = @{$unified_info{depends}->{""}};
-                                   join(" ", map { fixup_path($_) } @GENERATED_MANDATORY) -})
+                                   join(" ", map { fixup_path(file_name_is_absolute($_) || ($_ =~ m|^../|)
+                                                    ? $_ : "\${OPENSSL_SRCDIR}/".$_) } @GENERATED_MANDATORY) -})
 #set(OPENSSL_GENERATED {- # common0.tmpl provides @generated
 #                         our @GENERATED = map { platform->convertext($_) } @generated;
 #                         join(" ", map { fixup_path($_) } @GENERATED) -})
 
 set(OPENSSL_INSTALL_LIBS {-
-        join(" ", map { fixup_path(platform->sharedlib_import($_)
-                                   // platform->staticlib($_)) }
+        join(" ", map { fixup_path(sharedlib_import($_) // staticlib($_)) }
                   grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
                   @{$unified_info{libraries}})
 -})
 set(OPENSSL_INSTALL_SHLIBS {-
-        join(" ", map { my $x = platform->sharedlib($_);
+        join(" ", map { my $x = sharedlib($_);
                         $x ? fixup_path($x) : () }
                   grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
                   @{$unified_info{libraries}})
@@ -441,18 +478,16 @@ set(OPENSSL_PROCESSOR "{- $config{processor} -}")
 
  # Helper function to figure out dependencies on libraries
  # It takes a list of library names and outputs a list of dependencies
- sub compute_lib_depends {
+ sub compute_lib_depend_names {
+     my $prefix = shift;
      if ($disabled{shared}) {
-	 return map { platform->staticlib($_) } @_;
+	 return map { $prefix . basename(staticname($_)) } @_;
      }
-     return map { platform->sharedlib_import($_) // platform->staticlib($_) } @_;
+     return map { $prefix . basename(sharedname($_) // staticname($_)) } @_;
  }
 
  sub compute_lib_depend_targets {
-     if ($disabled{shared}) {
-	 return map { "openssl_".basename(platform->staticname($_)) } @_;
-     }
-     return map { "openssl_".basename(platform->sharedname($_) // platform->staticname($_)) } @_;
+     return compute_lib_depend_names("openssl_", @_);
  }
 
   sub generatetarget {
@@ -499,7 +534,7 @@ EOF
                                          rel2abs($config{builddir})));
           my $ord_ver = $args{intent} eq 'lib' ? ' --version ${OPENSSL_VERSION_NUMBER}' : '';
           my $ord_name =
-              $args{generator}->[1] || basename(platform->dsoname($args{product}));
+              $args{generator}->[1] || basename(dsoname($args{product}));
           my $gen_deps = join(' ', map { fixup_path($_)} @gen_deps);
           if (@gen_deps) {
               $gen_deps = ' DEPENDS '.$gen_deps;
@@ -573,9 +608,10 @@ EOF
           # configuration using execute_process.
           if (grep { $args{src} eq $_ } @GENERATED_MANDATORY) {
               return <<"EOF";
-add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in$gen_deps
-                   COMMAND \${PERL_EXECUTABLE}$perlmodules $dofile -o$target{build_file} $gen_in$gen_args > $gen_out
-                   WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
+execute_process(COMMAND "\${PERL_EXECUTABLE}"$perlmodules $dofile "-o$target{build_file}" $gen_in$gen_args
+                OUTPUT_FILE $gen_out
+                WORKING_DIRECTORY "\${OPENSSL_SRCDIR}"
+                COMMAND_ECHO STDERR)
 EOF
           }
 
@@ -656,7 +692,7 @@ EOF
 
  sub src2obj {
      my %args = @_;
-     my $product = basename(platform->dsoname($args{product}));
+     my $product = basename(dsoname($args{product}));
      my $target_n = compute_target_name($args{intent}, $args{product});
      my @srcs = map { my $x = $_;
                       (platform->isasm($x) && grep { $x eq $_ } @generated)
@@ -722,9 +758,7 @@ EOF
  # a static library, it really isn't.
  sub obj2shlib {
      my %args = @_;
-     my $lib = $args{lib};
-     my $shlib = platform->sharedlib($lib);
-     my $shlib_n = compute_target_name('shlib', $lib);
+     my $shlib_n = compute_target_name('shlib', $args{lib});
      my @lddefs = map { platform->def($_) }
                   grep { platform->isdef($_) }
                   @{$args{objs}};
@@ -738,6 +772,7 @@ EOF
      return <<"EOF"
 # Shared library
 list(APPEND OPENSSL_SHARED_TARGETS $shlib_n)
+set(OPENSSL_DEPENDENCIES_$shlib_n)
 set(OPENSSL_LINK_LIBRARIES_$shlib_n \${LIB_EX_LIBS}$linklibs)
 set(OPENSSL_LINK_DEFS_$shlib_n $lddefs)
 EOF
@@ -759,6 +794,7 @@ EOF
      return <<"EOF";
 # DSO library
 list(APPEND OPENSSL_DSO_TARGETS $dso_n)
+set(OPENSSL_DEPENDENCIES_$dso_n)
 set(OPENSSL_LINK_LIBRARIES_$dso_n \${DSO_EX_LIBS}$linklibs)
 set(OPENSSL_LINK_DEFS_$dso_n $lddefs)
 EOF
@@ -766,19 +802,22 @@ EOF
  sub obj2lib {
      my %args = @_;
      my $lib_n = compute_target_name('lib', $args{lib});
-     my @deps = compute_lib_depend_targets(@{$args{deps}});
+     my @deps = compute_lib_depend_names("", @{$args{deps}});
      my $incs = join(" ", map { fixup_path("\${OPENSSL_SRCDIR}".($_ eq '.' ? "" : "/$_")) }
                           @{$args{incs}});
      my $defs = join("", map { " -D".$_ } @{$args{defs}});
      my $recipe = <<"EOF";
 # Static library
 list(APPEND OPENSSL_STATIC_TARGETS $lib_n)
+set(OPENSSL_DEPENDENCIES_$lib_n)
 set(OPENSSL_LINK_LIBRARIES_$lib_n \${LIB_EX_LIBS})
 EOF
      if (@deps) {
-        my $objdeps = join(" ", map { $_."_object" } @deps);
+        my $objdeps = join(" ", map { "ossl_".$_."_object" } @deps);
+        my $deps = join(" ", @deps);
         $recipe .= <<"EOF";
-set(OPENSSL_DEPENDENCIES_$lib_n $objdeps)
+list(APPEND OPENSSL_OBJECT_TARGETS $deps)
+set(OPENSSL_OBJECT_DEPENDS_$lib_n $objdeps)
 EOF
      }
      return $recipe;
@@ -794,6 +833,7 @@ EOF
      return <<"EOF";
 # Program binary
 list(APPEND OPENSSL_BIN_TARGETS $bin_n)
+set(OPENSSL_DEPENDENCIES_$bin_n)
 set(OPENSSL_LINK_LIBRARIES_$bin_n \${BIN_EX_LIBS}$linklibs)
 EOF
   }
