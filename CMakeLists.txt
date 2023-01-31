@@ -31,6 +31,9 @@ endif()
 # Include the generated CMake config.
 include(openssl.cmake)
 
+# Generate mandatory files.
+add_custom_target(openssl_generated_mandatory ALL DEPENDS ${OPENSSL_GENERATED_MANDATORY})
+
 # Add static library targets.
 foreach(static_target ${OPENSSL_STATIC_TARGETS})
   add_library(openssl_${static_target} STATIC ${OPENSSL_ASM_SOURCES_${static_target}} ${OPENSSL_SOURCES_${static_target}})

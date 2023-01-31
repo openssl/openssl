@@ -544,14 +544,20 @@ EOF
           @perlmodules = map { "-M".basename($_, '.pm') } @perlmodules;
           my $perlmodules = join(' ', '', sort keys %perlmoduleincs, @perlmodules);
 
+          our @gen_deps = compute_platform_depends(@{$args{generator_deps}},
+                                                   @{$args{deps}});
+          my $gen_deps = join(' ', map { fixup_path($_)} @gen_deps);
+          if (@gen_deps) {
+              $gen_deps = ' DEPENDS '.$gen_deps;
+          }
+
           # If this is a mandatory generated file, then generate it during
           # configuration using execute_process.
           if (grep { $args{src} eq $_ } @GENERATED_MANDATORY) {
               return <<"EOF";
-execute_process(COMMAND "\${PERL_EXECUTABLE}"$perlmodules $dofile "-o$target{build_file}" $gen_in$gen_args
-                OUTPUT_FILE $gen_out
-                WORKING_DIRECTORY "\${OPENSSL_SRCDIR}"
-                COMMAND_ECHO STDERR)
+add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in$gen_deps
+                   COMMAND \${PERL_EXECUTABLE}$perlmodules $dofile -o$target{build_file} $gen_in$gen_args > $gen_out
+                   WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
           }
 
@@ -562,21 +568,15 @@ EOF
                                         .$gen_in.$gen_args.' > '.$gen_out);
               return <<"EOF";
 list(APPEND GENERATE_POD_DOCS $gen_out)
-add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in
+add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in$gen_deps
                    COMMAND \${PERL_EXECUTABLE}$perlmodules $dofile -o$target{build_file} $gen_in$gen_args > $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
           }
 
-          our @gen_deps = compute_platform_depends(@{$args{generator_deps}},
-                                                   @{$args{deps}});
-          my $gen_deps = join(' ', map { fixup_path($_)} @gen_deps);
-          if (@gen_deps) {
-              $gen_deps = ' DEPENDS '.$gen_deps;
-          }
           return <<"EOF";
 add_custom_command(OUTPUT $gen_out MAIN_DEPENDENCY $gen_in$gen_deps
-                   COMMAND \${PERL_EXECUTABLE}$perlmodules $dofile "-o$target{build_file}" $gen_in$gen_args > $gen_out
+                   COMMAND \${PERL_EXECUTABLE}$perlmodules $dofile -o$target{build_file} $gen_in$gen_args > $gen_out
                    WORKING_DIRECTORY "\${OPENSSL_SRCDIR}")
 EOF
       } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
