@@ -9,20 +9,42 @@
 use strict;
 use warnings;
 
+# Set $have_stacktrace to 1 if we have Devel::StackTrace
+my $have_stacktrace = 0;
+if (eval {require Devel::StackTrace;1;}) {
+    $have_stacktrace = 1;
+}
+
 my @regs = map("x$_",(0..31));
+# Mapping from the RISC-V psABI ABI mnemonic names to the register number.
+my @regaliases = ('zero','ra','sp','gp','tp','t0','t1','t2','s0','s1',
+    map("a$_",(0..7)),
+    map("s$_",(2..11)),
+    map("t$_",(3..6))
+);
+
 my %reglookup;
 @reglookup{@regs} = @regs;
+@reglookup{@regaliases} = @regs;
 
 # Takes a register name, possibly an alias, and converts it to a register index
 # from 0 to 31
 sub read_reg {
     my $reg = lc shift;
     if (!exists($reglookup{$reg})) {
-        die("Unknown register ".$reg);
+        my $trace = "";
+        if ($have_stacktrace) {
+            $trace = Devel::StackTrace->new->as_string;
+        }
+        die("Unknown register ".$reg."\n".$trace);
     }
     my $regstr = $reglookup{$reg};
     if (!($regstr =~ /^x([0-9]+)$/)) {
-        die("Could not process register ".$reg);
+        my $trace = "";
+        if ($have_stacktrace) {
+            $trace = Devel::StackTrace->new->as_string;
+        }
+        die("Could not process register ".$reg."\n".$trace);
     }
     return $1;
 }
