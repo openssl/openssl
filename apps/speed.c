@@ -1604,7 +1604,8 @@ static int sig_locate(const char *algo, unsigned int *idx)
 }
 
 static int get_max(const uint8_t doit[], size_t algs_len) {
-    int i, maxcnt = 0;
+    size_t i = 0;
+    int maxcnt = 0;
 
     for (i = 0; i < algs_len; i++)
         if (maxcnt < doit[i]) maxcnt = doit[i];
