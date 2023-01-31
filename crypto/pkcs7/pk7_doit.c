@@ -330,7 +330,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
                 if (xalg->parameter == NULL)
                     goto err;
             }
-            if (EVP_CIPHER_param_to_asn1(ctx, xalg->parameter) < 0)
+            if (EVP_CIPHER_param_to_asn1(ctx, xalg->parameter) <= 0)
                 goto err;
         }
 
