@@ -64,7 +64,7 @@ IF[{- !$disabled{tests} -}]
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
           provfetchtest prov_config_test rand_test ca_internals_test \
           bio_tfo_test membio_test bio_dgram_test list_test fips_version_test \
-          x509_test hpke_test
+          x509_test hpke_test pairwise_fail_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -227,6 +227,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[provider_status_test]=provider_status_test.c
   INCLUDE[provider_status_test]=../include ../apps/include
   DEPEND[provider_status_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[pairwise_fail_test]=pairwise_fail_test.c
+  INCLUDE[pairwise_fail_test]=../include ../apps/include
+  DEPEND[pairwise_fail_test]=../libcrypto.a libtestutil.a
 
   SOURCE[evp_pkey_dhkem_test]=evp_pkey_dhkem_test.c
   INCLUDE[evp_pkey_dhkem_test]=../include ../apps/include
