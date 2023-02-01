@@ -890,6 +890,7 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
 
         default:
             /* Unknown frame type */
+            ackm_data->is_ack_eliciting = 1;
             ossl_quic_channel_raise_protocol_error(ch,
                                                    QUIC_ERR_PROTOCOL_VIOLATION,
                                                    frame_type,
