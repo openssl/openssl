@@ -19,6 +19,7 @@ typedef enum OPTION_choice {
     OPT_CONFIG_FILE,
     OPT_PAIRWISETEST,
     OPT_DSAPARAM,
+    OPT_FIPSVERSION,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -29,6 +30,7 @@ struct self_test_arg {
 static OSSL_LIB_CTX *libctx = NULL;
 static char *pairwise_name = NULL;
 static char *dsaparam_file = NULL;
+static char *fips_version = NULL;
 
 static struct self_test_arg self_test_args = { 0 };
 
@@ -41,6 +43,8 @@ const OPTIONS *test_get_options(void)
         { "pairwise", OPT_PAIRWISETEST, 's',
           "Test keygen pairwise test failures" },
         { "dsaparam", OPT_DSAPARAM, 's', "DSA param file" },
+        { "FIPSVersion", OPT_FIPSVERSION, 's',
+          "Versions of the fips provider that support this test" },
         { NULL }
     };
     return test_options;
@@ -141,6 +145,7 @@ int setup_tests(void)
 {
     OPTION_CHOICE o;
     char *config_file = NULL;
+    int match = 1;
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -152,6 +157,9 @@ int setup_tests(void)
             break;
         case OPT_DSAPARAM:
             dsaparam_file = opt_arg();
+            break;
+        case OPT_FIPSVERSION:
+            fips_version = opt_arg();
             break;
         case OPT_TEST_CASES:
            break;
@@ -168,7 +176,14 @@ int setup_tests(void)
         opt_printf_stderr("Failed to load config\n");
         return 0;
     }
-    ADD_TEST(test_keygen_pairwise_failure);
+    if (fips_version != NULL)
+        match = fips_provider_version_match(libctx, fips_version);
+    if (TEST_int_lt(match, 0))
+        return 0;
+    if (match == 1)
+        ADD_TEST(test_keygen_pairwise_failure);
+    else
+        TEST_info("Skipping test for '%s' when using older fips provider\n", pairwise_name);
     return 1;
 }
 

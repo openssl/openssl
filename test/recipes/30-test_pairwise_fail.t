@@ -39,7 +39,7 @@ SKIP: {
                  "-pairwise", "ec"])),
        "fips provider ec keygen pairwise failure test");
     ok(run(test(["pairwise_fail_test", "-config", srctop_file("test","fips.cnf"),
-                 "-pairwise", "eckat"])),
+                 "-pairwise", "eckat", "-FIPSVersion", ">=3.1.0"])),
        "fips provider ec keygen kat failure test");
 }
 
@@ -50,6 +50,7 @@ SKIP: {
                  "-pairwise", "dsa", "-dsaparam", data_file("dsaparam.pem")])),
        "fips provider dsa keygen pairwise failure test");
     ok(run(test(["pairwise_fail_test", "-config", srctop_file("test","fips.cnf"),
-                 "-pairwise", "dsakat", "-dsaparam", data_file("dsaparam.pem")])),
+                 "-pairwise", "dsakat", "-dsaparam", data_file("dsaparam.pem"),
+                 "-FIPSVersion", ">=3.1.0"])),
        "fips provider dsa keygen kat failure test");
 }
