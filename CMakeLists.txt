@@ -10,7 +10,9 @@
 
 cmake_minimum_required(VERSION 3.14)
 
-project(OpenSSL C CXX)
+project(OpenSSL LANGUAGES C CXX
+        DESCRIPTION "Open-source SSL and Cryptographic library"
+        HOMEPAGE_URL "https://github.com/openssl/openssl")
 
 # Configure the OpenSSL project
 if(OPENSSL_CONFIGURE_OPTIONS)
