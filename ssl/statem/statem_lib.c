@@ -831,13 +831,16 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
         return MSG_PROCESS_ERROR;
     }
 
-#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    if (CRYPTO_memcmp(PACKET_data(pkt), s->s3.tmp.peer_finish_md,
-                      md_len) != 0)
-#else
-    if (md_len > 0 && (PACKET_data(pkt)[0] ^ s->s3.tmp.peer_finish_md[0]) == 0xFF)
+    int ok = CRYPTO_memcmp(PACKET_data(pkt), s->s3.tmp.peer_finish_md,
+                       md_len);
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (ok != 0) {
+        if (PACKET_data(pkt)[0] ^ s->s3.tmp.peer_finish_md[0] != 0xFF) {
+            ok = 0;
+        }
+    }
 #endif
-    {
+    if (ok != 0) {
         SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_DIGEST_CHECK_FAILED);
         return MSG_PROCESS_ERROR;
     }
