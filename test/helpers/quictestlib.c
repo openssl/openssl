@@ -641,12 +641,12 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                     goto out;
 
                 /*
-                * TODO(QUIC): At the moment modifications to hdr by the callback
-                * are ignored. We might need to rewrite the QUIC header to
-                * enable tests to change this. We also don't yet have a
-                * mechanism for the callback to change the encrypted data
-                * length. It's not clear if that's needed or not.
-                */
+                 * TODO(QUIC): At the moment modifications to hdr by the callback
+                 * are ignored. We might need to rewrite the QUIC header to
+                 * enable tests to change this. We also don't yet have a
+                 * mechanism for the callback to change the encrypted data
+                 * length. It's not clear if that's needed or not.
+                 */
             } while (PACKET_remaining(&pkt) > 0);
         }
 
