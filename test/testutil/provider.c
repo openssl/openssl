@@ -38,7 +38,7 @@ int test_get_libctx(OSSL_LIB_CTX **libctx, OSSL_PROVIDER **default_null_prov,
         goto err;
     }
 
-    if (module_name != NULL
+    if (provider != NULL && module_name != NULL
             && (*provider = OSSL_PROVIDER_load(new_libctx, module_name)) == NULL) {
         opt_printf_stderr("Failed to load provider %s\n", module_name);
         goto err;
