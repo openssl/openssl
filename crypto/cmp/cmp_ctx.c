@@ -669,13 +669,13 @@ int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, TYPE *val) \
  */
 DEFINE_OSSL_CMP_CTX_set1_up_ref(srvCert, X509)
 
-/* Set the X509 name of the recipient. Set in the PKIHeader */
+/* Set the X509 name of the recipient to be placed in the PKIHeader */
 DEFINE_OSSL_CMP_CTX_set1(recipient, X509_NAME)
 
 /* Store the X509 name of the expected sender in the PKIHeader of responses */
 DEFINE_OSSL_CMP_CTX_set1(expected_sender, X509_NAME)
 
-/* Set the X509 name of the issuer. Set in the PKIHeader */
+/* Set the X509 name of the issuer to be placed in the certTemplate */
 DEFINE_OSSL_CMP_CTX_set1(issuer, X509_NAME)
 
 /*
