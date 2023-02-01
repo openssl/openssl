@@ -659,6 +659,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         ERR_raise_data(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_ACCEPTED,
                        "rejecting newly enrolled cert with subject: %s; %s",
                        subj, txt);
+        ctx->status = OSSL_CMP_PKISTATUS_rejection;
         ret = 0;
     }
     OPENSSL_free(subj);
