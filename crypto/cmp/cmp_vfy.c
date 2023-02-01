@@ -642,7 +642,6 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     return 0;
 }
 
-
 /*-
  * Check received message (i.e., response by server or request from client)
  * Any msg->extraCerts are prepended to ctx->untrusted.
