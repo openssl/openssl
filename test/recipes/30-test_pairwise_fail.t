@@ -23,11 +23,15 @@ plan skip_all => "These tests are unsupported in a non fips build"
     if disabled("fips");
 
 plan tests => 5;
+my $provconf = srctop_file("test", "fips-and-base.cnf");
+
+run(test(["fips_version_test", "-config", $provconf, ">=3.1.0"]),
+    capture => 1, statusvar => \my $exit);
 
 SKIP: {
     skip "Skip RSA test because of no rsa in this build", 1
         if disabled("rsa");
-    ok(run(test(["pairwise_fail_test", "-config", srctop_file("test","fips.cnf"),
+    ok(run(test(["pairwise_fail_test", "-config", $provconf,
                  "-pairwise", "rsa"])),
        "fips provider rsa keygen pairwise failure test");
 }
@@ -35,22 +39,27 @@ SKIP: {
 SKIP: {
     skip "Skip EC test because of no ec in this build", 2
         if disabled("ec");
-    ok(run(test(["pairwise_fail_test", "-config", srctop_file("test","fips.cnf"),
+    ok(run(test(["pairwise_fail_test", "-config", $provconf,
                  "-pairwise", "ec"])),
        "fips provider ec keygen pairwise failure test");
-    ok(run(test(["pairwise_fail_test", "-config", srctop_file("test","fips.cnf"),
-                 "-pairwise", "eckat", "-FIPSVersion", ">=3.1.0"])),
+
+    skip "FIPS provider version is too old", 1
+        if !$exit;
+    ok(run(test(["pairwise_fail_test", "-config", $provconf,
+                 "-pairwise", "eckat"])),
        "fips provider ec keygen kat failure test");
 }
 
 SKIP: {
-    skip "Skip DSA tests because of no dsa in this build", 3
+    skip "Skip DSA tests because of no dsa in this build", 2
         if disabled("dsa");
-    ok(run(test(["pairwise_fail_test", "-config", srctop_file("test","fips.cnf"),
+    ok(run(test(["pairwise_fail_test", "-config", $provconf,
                  "-pairwise", "dsa", "-dsaparam", data_file("dsaparam.pem")])),
        "fips provider dsa keygen pairwise failure test");
-    ok(run(test(["pairwise_fail_test", "-config", srctop_file("test","fips.cnf"),
-                 "-pairwise", "dsakat", "-dsaparam", data_file("dsaparam.pem"),
-                 "-FIPSVersion", ">=3.1.0"])),
+
+    skip "FIPS provider version is too old", 1
+        if !$exit;
+    ok(run(test(["pairwise_fail_test", "-config", $provconf,
+                 "-pairwise", "dsakat", "-dsaparam", data_file("dsaparam.pem")])),
        "fips provider dsa keygen kat failure test");
 }
