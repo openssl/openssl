@@ -212,8 +212,11 @@ int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)
     /*
      * Check that the server has closed with the specified code from the client
      */
-    if (!TEST_true(ossl_quic_tserver_is_term_any(qtserv, &cause))
-            || !TEST_true(cause.remote)
+    if (!TEST_true(ossl_quic_tserver_is_term_any(qtserv)))
+        return 0;
+
+    cause = ossl_quic_tserver_get_terminate_cause(qtserv);
+    if  (!TEST_true(cause.remote)
             || !TEST_uint64_t_eq(cause.error_code, code))
         return 0;
 
