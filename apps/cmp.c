@@ -1133,7 +1133,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
         goto err;
 
     if (opt_send_error)
-        (void)ossl_cmp_mock_srv_set_send_error(srv_ctx, 1);
+        (void)ossl_cmp_mock_srv_set_sendError(srv_ctx, 1);
 
     if (opt_send_unprotected)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_UNPROTECTED_SEND, 1);
