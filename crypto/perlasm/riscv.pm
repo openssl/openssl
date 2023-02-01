@@ -120,4 +120,33 @@ sub aes64ks2 {
     return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($rd << 7));
 }
 
+sub clmul {
+    # Encoding for clmul rd, rs1, rs2 instruction on RV64
+    #                XXXXXXX_ rs2 _ rs1 _XXX_ rd  _XXXXXXX
+    my $template = 0b0000101_00000_00000_001_00000_0110011;
+    my $rd = read_reg shift;
+    my $rs1 = read_reg shift;
+    my $rs2 = read_reg shift;
+    return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($rd << 7));
+}
+
+sub clmulh {
+    # Encoding for clmulh rd, rs1, rs2 instruction on RV64
+    #                XXXXXXX_ rs2 _ rs1 _XXX_ rd  _XXXXXXX
+    my $template = 0b0000101_00000_00000_011_00000_0110011;
+    my $rd = read_reg shift;
+    my $rs1 = read_reg shift;
+    my $rs2 = read_reg shift;
+    return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($rd << 7));
+}
+
+sub rev8 {
+    # Encoding for rev8 rd, rs instruction on RV64
+    #               XXXXXXXXXXXXX_ rs  _XXX_ rd  _XXXXXXX
+    my $template = 0b011010111000_00000_101_00000_0010011;
+    my $rd = read_reg shift;
+    my $rs = read_reg shift;
+    return ".word ".($template | ($rs << 15) | ($rd << 7));
+}
+
 1;
