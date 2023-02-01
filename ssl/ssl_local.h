@@ -29,7 +29,6 @@
 # include <openssl/ct.h>
 # include "internal/recordmethod.h"
 # include "internal/statem.h"
-# include "record/record.h"
 # include "internal/packet.h"
 # include "internal/dane.h"
 # include "internal/refcount.h"
@@ -37,6 +36,7 @@
 # include "internal/bio.h"
 # include "internal/ktls.h"
 # include "internal/time.h"
+# include "record/record.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
