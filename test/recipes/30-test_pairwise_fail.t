@@ -26,7 +26,7 @@ plan tests => 5;
 my $provconf = srctop_file("test", "fips-and-base.cnf");
 
 run(test(["fips_version_test", "-config", $provconf, ">=3.1.0"]),
-    capture => 1, statusvar => \my $exit);
+    capture => 1, statusvar => \my $fips_exit);
 
 SKIP: {
     skip "Skip RSA test because of no rsa in this build", 1
@@ -44,7 +44,7 @@ SKIP: {
        "fips provider ec keygen pairwise failure test");
 
     skip "FIPS provider version is too old", 1
-        if !$exit;
+        if !$fips_exit;
     ok(run(test(["pairwise_fail_test", "-config", $provconf,
                  "-pairwise", "eckat"])),
        "fips provider ec keygen kat failure test");
@@ -58,7 +58,7 @@ SKIP: {
        "fips provider dsa keygen pairwise failure test");
 
     skip "FIPS provider version is too old", 1
-        if !$exit;
+        if !$fips_exit;
     ok(run(test(["pairwise_fail_test", "-config", $provconf,
                  "-pairwise", "dsakat", "-dsaparam", data_file("dsaparam.pem")])),
        "fips provider dsa keygen kat failure test");
