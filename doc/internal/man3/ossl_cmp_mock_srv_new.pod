@@ -8,7 +8,7 @@ ossl_cmp_mock_srv_set1_certOut,
 ossl_cmp_mock_srv_set1_chainOut,
 ossl_cmp_mock_srv_set1_caPubsOut,
 ossl_cmp_mock_srv_set_statusInfo,
-ossl_cmp_mock_srv_set_send_error,
+ossl_cmp_mock_srv_set_sendError,
 ossl_cmp_mock_srv_set_pollCount,
 ossl_cmp_mock_srv_set_checkAfterTime
 - functions used for testing with CMP mock server
@@ -27,7 +27,7 @@ ossl_cmp_mock_srv_set_checkAfterTime
                                       STACK_OF(X509) *caPubs);
  int ossl_cmp_mock_srv_set_statusInfo(OSSL_CMP_SRV_CTX *srv_ctx, int status,
                                       int fail_info, const char *text);
- int ossl_cmp_mock_srv_set_send_error(OSSL_CMP_SRV_CTX *srv_ctx, int val);
+ int ossl_cmp_mock_srv_set_sendError(OSSL_CMP_SRV_CTX *srv_ctx, int bodytype);
  int ossl_cmp_mock_srv_set_pollCount(OSSL_CMP_SRV_CTX *srv_ctx, int count);
  int ossl_cmp_mock_srv_set_checkAfterTime(OSSL_CMP_SRV_CTX *srv_ctx, int sec);
 
@@ -51,7 +51,9 @@ ossl_cmp_mock_srv_set1_caPubsOut() sets the caPubs to be returned in an ip.
 
 ossl_cmp_mock_srv_set_statusInfo() sets the status info to be returned.
 
-ossl_cmp_mock_srv_set_send_error() enables enforcement of error responses.
+ossl_cmp_mock_srv_set_sendError() enables enforcement of error responses
+for requests of the given I<bodytype>, or for all requests if I<bodytype> is 1.
+A I<bodytype> of -1 can be used to disable this feature, which is the default.
 
 ossl_cmp_mock_srv_set_pollCount() sets the number of polls before cert response.
 
