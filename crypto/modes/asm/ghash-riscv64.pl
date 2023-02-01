@@ -6,69 +6,24 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+use strict;
+use warnings;
+
+use FindBin qw($Bin);
+use lib "$Bin";
+use lib "$Bin/../../perlasm";
+use riscv;
+
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
-$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
-$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
+my $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+my $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 $output and open STDOUT,">$output";
 
-my @regs = map("x$_",(0..31));
-my @regaliases = ('zero','ra','sp','gp','tp','t0','t1','t2','s0','s1',
-    map("a$_",(0..7)),
-    map("s$_",(2..11)),
-    map("t$_",(3..6))
-);
-
-my %reglookup;
-@reglookup{@regs} = @regs;
-@reglookup{@regaliases} = @regs;
-
-# Takes a register name, possibly an alias, and converts it to a register index
-# from 0 to 31
-sub read_reg {
-    my $reg = lc shift;
-    if (!exists($reglookup{$reg})) {
-        die("Unknown register ".$reg);
-    }
-    my $regstr = $reglookup{$reg};
-    if (!($regstr =~ /^x([0-9]+)$/)) {
-        die("Could not process register ".$reg);
-    }
-    return $1;
-}
-
-sub rv64_rev8 {
-    # Encoding for rev8 rd, rs instruction on RV64
-    #               XXXXXXXXXXXXX_ rs  _XXX_ rd  _XXXXXXX
-    my $template = 0b011010111000_00000_101_00000_0010011;
-    my $rd = read_reg shift;
-    my $rs = read_reg shift;
-
-    return ".word ".($template | ($rs << 15) | ($rd << 7));
-}
-
-sub rv64_clmul {
-    # Encoding for clmul rd, rs1, rs2 instruction on RV64
-    #                XXXXXXX_ rs2 _ rs1 _XXX_ rd  _XXXXXXX
-    my $template = 0b0000101_00000_00000_001_00000_0110011;
-    my $rd = read_reg shift;
-    my $rs1 = read_reg shift;
-    my $rs2 = read_reg shift;
-
-    return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($rd << 7));
-}
-
-sub rv64_clmulh {
-    # Encoding for clmulh rd, rs1, rs2 instruction on RV64
-    #                XXXXXXX_ rs2 _ rs1 _XXX_ rd  _XXXXXXX
-    my $template = 0b0000101_00000_00000_011_00000_0110011;
-    my $rd = read_reg shift;
-    my $rs1 = read_reg shift;
-    my $rs2 = read_reg shift;
-
-    return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($rd << 7));
-}
+my $code=<<___;
+.text
+___
 
 ################################################################################
 # gcm_init_clmul_rv64i_zbb_zbc(u128 Htable[16], const u64 Xi[2])
@@ -79,7 +34,6 @@ sub rv64_clmulh {
 my ($Haddr,$Xi,$TEMP) = ("a0","a1","a2");
 
 $code .= <<___;
-.text
 .balign 16
 .globl gcm_init_clmul_rv64i_zbb_zbc
 .type gcm_init_clmul_rv64i_zbb_zbc,\@function
@@ -111,7 +65,6 @@ my ($Xi,$Haddr,$A1,$A0,$B1,$B0,$C1,$C0,$D1,$D0,$E1,$E0,$TEMP,$TEMP2,$qp_low) =
  ("a0","a1","a2","a3","a4","a5","a6","a7","t0","t1","t2","t3","t4","t5","t6");
 
 $code .= <<___;
-.text
 .balign 16
 .globl gcm_gmult_clmul_rv64i_zbb_zbc
 .type gcm_gmult_clmul_rv64i_zbb_zbc,\@function
@@ -138,19 +91,19 @@ gcm_gmult_clmul_rv64i_zbb_zbc:
     # Then:
     # A*B = [C1:C0+C1+D1+E1:D1+C0+D0+E0:D0]
 
-    @{[rv64_rev8    $A1, $A1]}
-    @{[rv64_clmul   $C0,$A1,$B1]}
-    @{[rv64_clmulh  $C1,$A1,$B1]}
+    @{[rev8         $A1, $A1]}
+    @{[clmul        $C0,$A1,$B1]}
+    @{[clmulh       $C1,$A1,$B1]}
 
-    @{[rv64_rev8    $A0,$A0]}
-    @{[rv64_clmul   $D0,$A0,$B0]}
-    @{[rv64_clmulh  $D1,$A0,$B0]}
+    @{[rev8         $A0,$A0]}
+    @{[clmul        $D0,$A0,$B0]}
+    @{[clmulh       $D1,$A0,$B0]}
 
     xor             $TEMP,$A0,$A1
     xor             $TEMP2,$B0,$B1
 
-    @{[rv64_clmul   $E0,$TEMP,$TEMP2]}
-    @{[rv64_clmulh  $E1,$TEMP,$TEMP2]}
+    @{[clmul        $E0,$TEMP,$TEMP2]}
+    @{[clmulh       $E1,$TEMP,$TEMP2]}
 
     # 0th term is just C1
 
@@ -211,12 +164,12 @@ my ($CC0,$EE0,$AA1,$AA0,$BB1) = ($A0,$B1,$E0,$D0,$qp_low);
 
 $code .= <<___;
 
-    @{[rv64_clmul   $CC0,$AA1,$BB1]}
+    @{[clmul        $CC0,$AA1,$BB1]}
     #clmul          DD0,AA0,BB0     # BB0 is 0, so DD0 = 0
     #clmulh         DD1,AA0,BB0     # BB0 is 0, so DD1 = 0
     xor             $TEMP,$AA0,$AA1
     #xor            TEMP2,BB0,BB1   # TEMP2 = BB1 = qp_low
-    @{[rv64_clmul   $EE0,$TEMP,$BB1]}
+    @{[clmul        $EE0,$TEMP,$BB1]}
 
     # Result is [N/A:N/A:DD1+CC0+DD0+EE0:DD0]
     # Simplifying: [CC0+EE0:0]
@@ -249,8 +202,8 @@ my ($AA1,$AA0,$BB1,$CC1,$CC0,$EE1,$EE0) = ($E0,$D0,$qp_low,$A0,$A1,$C0,$B0);
 
 $code .= <<___;
 
-    @{[rv64_clmul   $CC0,$AA1,$BB1]}
-    @{[rv64_clmulh  $CC1,$AA1,$BB1]}
+    @{[clmul        $CC0,$AA1,$BB1]}
+    @{[clmulh       $CC1,$AA1,$BB1]}
 
     #clmul          DD0,AA0,BB0   # BB0 = 0 so DD0 = 0
     #clmulh         DD1,AA0,BB0   # BB0 = 0 so DD1 = 0
@@ -258,8 +211,8 @@ $code .= <<___;
     xor             $TEMP,$AA0,$AA1
     #xor            TEMP2,BB0,BB1 # BB0 = 0 to TEMP2 == BB1 == qp_low
 
-    @{[rv64_clmul   $EE0,$TEMP,$BB1]}
-    @{[rv64_clmulh  $EE1,$TEMP,$BB1]}
+    @{[clmul        $EE0,$TEMP,$BB1]}
+    @{[clmulh       $EE1,$TEMP,$BB1]}
 
     # Need the DD1+CC0+DD0+EE0 term to shift its leftmost bit into the
     # intermediate result.
@@ -277,14 +230,14 @@ $code .= <<___;
     or              $CC1,$CC1,$TEMP2
     # xor in C1
     xor             $CC1,$CC1,$C1
-    @{[rv64_rev8    $CC1,$CC1]}
+    @{[rev8         $CC1,$CC1]}
 
     slli            $CC0,$CC0,1
     srli            $TEMP,$TEMP,63
     or              $CC0,$CC0,$TEMP
     # xor in E1
     xor             $CC0,$CC0,$E1
-    @{[rv64_rev8    $CC0,$CC0]}
+    @{[rev8         $CC0,$CC0]}
     sd              $CC1,0(a0)
     sd              $CC0,8(a0)
 
