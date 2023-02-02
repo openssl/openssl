@@ -868,7 +868,9 @@ Default is one invocation.
 
 =item B<-reqin> I<filenames>
 
-Take sequence of CMP requests from file(s).
+Take the sequence of CMP requests to send to the server from file(s).
+This option is ignored if the B<-rspin> option is given
+because in the latter case no requests are actually sent.
 
 Multiple filenames may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
@@ -883,14 +885,15 @@ and the CMP server complains that the transaction ID has already been used.
 
 =item B<-reqout> I<filenames>
 
-Save sequence of CMP requests to file(s).
+Save the sequence of CMP requests created by the client to file(s).
+These requests are not sent to the server if the B<-reqin> option is used, too.
 
 Multiple filenames may be given, separated by commas and/or whitespace.
 As many files are written as needed to store the complete transaction.
 
 =item B<-rspin> I<filenames>
 
-Process sequence of CMP responses provided in file(s), skipping server.
+Process the sequence of CMP responses provided in file(s), skipping server.
 This excludes I<-server>, I<-port>, and I<-use_mock_srv>.
 
 Multiple filenames may be given, separated by commas and/or whitespace.
@@ -898,7 +901,7 @@ As many files are read as needed for the complete transaction.
 
 =item B<-rspout> I<filenames>
 
-Save sequence of CMP responses to file(s).
+Save the sequence of received CMP responses to file(s).
 
 Multiple filenames may be given, separated by commas and/or whitespace.
 As many files are written as needed to store the complete transaction.
