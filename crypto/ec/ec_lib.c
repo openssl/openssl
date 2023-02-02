@@ -19,6 +19,7 @@
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/opensslv.h>
+#include <openssl/param_build.h>
 #include "crypto/ec.h"
 #include "internal/nelem.h"
 #include "ec_local.h"
@@ -1747,4 +1748,39 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
 
     return group;
 #endif /* FIPS_MODULE */
+}
+
+OSSL_PARAM *EC_GROUP_to_params(const EC_GROUP *group, OSSL_LIB_CTX *libctx,
+                               const char *propq, BN_CTX *bnctx)
+{
+    OSSL_PARAM_BLD *tmpl = NULL;
+    BN_CTX *new_bnctx = NULL;
+    unsigned char *gen_buf = NULL;
+    OSSL_PARAM *params = NULL;
+
+    if (group == NULL)
+        goto err;
+
+    tmpl = OSSL_PARAM_BLD_new();
+    if (tmpl == NULL)
+        goto err;
+
+    if (bnctx == NULL)
+        bnctx = new_bnctx = BN_CTX_new_ex(libctx);
+    if (bnctx == NULL)
+        goto err;
+    BN_CTX_start(bnctx);
+
+    if (!ossl_ec_group_todata(
+            group, tmpl, NULL, libctx, propq, bnctx, &gen_buf))
+        goto err;
+
+    params = OSSL_PARAM_BLD_to_param(tmpl);
+
+ err:
+    OSSL_PARAM_BLD_free(tmpl);
+    OPENSSL_free(gen_buf);
+    BN_CTX_end(bnctx);
+    BN_CTX_free(new_bnctx);
+    return params;
 }
