@@ -757,12 +757,12 @@ static int write_PKIMESSAGE(const OSSL_CMP_MSG *msg, char **filenames)
 }
 
 /* read DER-encoded OSSL_CMP_MSG from the specified file name item */
-static OSSL_CMP_MSG *read_PKIMESSAGE(char **filenames)
+static OSSL_CMP_MSG *read_PKIMESSAGE(const char *desc, char **filenames)
 {
     char *file;
     OSSL_CMP_MSG *ret;
 
-    if (filenames == NULL) {
+    if (filenames == NULL || desc == NULL) {
         CMP_err("NULL arg to read_PKIMESSAGE");
         return NULL;
     }
@@ -777,6 +777,8 @@ static OSSL_CMP_MSG *read_PKIMESSAGE(char **filenames)
     ret = OSSL_CMP_MSG_read(file, app_get0_libctx(), app_get0_propq());
     if (ret == NULL)
         CMP_err1("cannot read PKIMessage from file '%s'", file);
+    else
+        CMP_info2("%s %s", desc, file);
     return ret;
 }
 
@@ -798,7 +800,7 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
             && !write_PKIMESSAGE(req, &opt_reqout))
         goto err;
     if (opt_reqin != NULL && opt_rspin == NULL) {
-        if ((req_new = read_PKIMESSAGE(&opt_reqin)) == NULL)
+        if ((req_new = read_PKIMESSAGE("actually sending", &opt_reqin)) == NULL)
             goto err;
         /*-
          * The transaction ID in req_new read from opt_reqin may not be fresh.
@@ -811,9 +813,9 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
     }
 
     if (opt_rspin != NULL) {
-        res = read_PKIMESSAGE(&opt_rspin);
+        res = read_PKIMESSAGE("actually using", &opt_rspin);
     } else {
-        const OSSL_CMP_MSG *actual_req = opt_reqin != NULL ? req_new : req;
+        const OSSL_CMP_MSG *actual_req = req_new != NULL ? req_new : req;
 
         res = opt_use_mock_srv
             ? OSSL_CMP_CTX_server_perform(ctx, actual_req)
@@ -822,7 +824,7 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
     if (res == NULL)
         goto err;
 
-    if (opt_reqin != NULL || prev_opt_rspin != NULL) {
+    if (req_new != NULL || prev_opt_rspin != NULL) {
         /* need to satisfy nonce and transactionID checks */
         ASN1_OCTET_STRING *nonce;
         ASN1_OCTET_STRING *tid;
