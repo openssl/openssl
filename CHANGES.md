@@ -25,6 +25,11 @@ OpenSSL 3.2
 
 ### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
+ * Added EC_GROUP_to_params which creates an OSSL_PARAM array
+   from a given EC_GROUP.
+
+   *Oliver Mihatsch*
+
  * Added support for Hybrid Public Key Encryption (HPKE) as defined
    in RFC9180. HPKE is required for TLS Encrypted ClientHello (ECH),
    Message Layer Security (MLS) and other IETF specifications.
