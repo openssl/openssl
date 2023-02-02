@@ -437,7 +437,7 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
     (void)ERR_pop_to_mark();
 
     mdbio = BIO_new(BIO_f_md());
-    if (mdbio == NULL || !BIO_set_md(mdbio, digest)) {
+    if (mdbio == NULL || BIO_set_md(mdbio, digest) <= 0) {
         ERR_raise(ERR_LIB_CMS, CMS_R_MD_BIO_INIT_ERROR);
         goto err;
     }
