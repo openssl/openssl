@@ -2303,8 +2303,8 @@ int do_X509_sign(X509 *cert, int force_v1, EVP_PKEY *pkey, const char *md,
             goto end;
 
         /*
-         * Add default SKID before AKID such that AKID can make use of it
-         * in case the certificate is self-signed
+         * Unless SKID is disabled, add default SKID before AKID such that
+         * AKID can make use of it in case the certificate is self-signed
          */
         /* Prevent X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER */
         if (!adapt_keyid_ext(cert, ext_ctx, "subjectKeyIdentifier", "hash", 1))
