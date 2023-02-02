@@ -67,9 +67,9 @@ int ssl3_do_write(SSL_CONNECTION *s, int type)
      * If we're running the test suite then we may need to mutate the message
      * we've been asked to write. Does not happen in normal operation.
      */
-    if (!s->statem.write_in_progress
+    if (s->statem.mutate_handshake_cb != NULL
+            && !s->statem.write_in_progress
             && type == SSL3_RT_HANDSHAKE
-            && s->statem.mutate_handshake_cb != NULL
             && s->init_num >= SSL3_HM_HEADER_LENGTH) {
         unsigned char *msg;
         size_t msglen;
