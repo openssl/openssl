@@ -784,7 +784,7 @@ BIO *BIO_dup_chain(BIO *in)
         /* This will let SSL_s_sock() work with stdin/stdout */
         new_bio->num = bio->num;
 
-        if (!BIO_dup_state(bio, (char *)new_bio)) {
+        if (BIO_dup_state(bio, (char *)new_bio) <= 0) {
             BIO_free(new_bio);
             goto err;
         }
