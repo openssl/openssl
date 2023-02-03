@@ -524,7 +524,7 @@ sub compute_tweak_vec() {
 	my $std = shift;
 	&rbit(@vtmp[2],$src,$std);
 $code.=<<___;
-	ldr  @qtmp[0], =0x01010101010101010101010101010187
+	ldr  @qtmp[0], .Lxts_magic
 	shl  $des.16b, @vtmp[2].16b, #1
 	ext  @vtmp[1].16b, @vtmp[2].16b, @vtmp[2].16b,#15
 	ushr @vtmp[1].16b, @vtmp[1].16b, #7
@@ -572,6 +572,8 @@ _vpsm4_consts:
 	.dword 0x56aa3350a3b1bac6,0xb27022dc677d9197
 .Lshuffles:
 	.dword 0x0B0A090807060504,0x030201000F0E0D0C
+.Lxts_magic:
+	.dword 0x0101010101010187,0x0101010101010101
 
 .size	_vpsm4_consts,.-_vpsm4_consts
 ___
