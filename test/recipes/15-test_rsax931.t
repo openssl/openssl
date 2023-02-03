@@ -60,4 +60,4 @@ ok(!run(app(['openssl', 'pkeyutl', '-in', $infile, '-rawin', '-inkey', $inkey,
              '-pkeyopt', 'pad-mode:x931',
              '-verify',
              '-sigfile', 'sigoaep.txt'])),
-  "RSA Verify with x931 padding using using data signed with oaep padding should fail");
+  "RSA Verify with x931 padding using data signed with oaep padding should fail");
