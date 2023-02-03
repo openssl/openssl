@@ -884,6 +884,9 @@ Default is one invocation.
 Take the sequence of CMP requests to send to the server from file(s).
 This option is ignored if the B<-rspin> option is given
 because in the latter case no requests are actually sent.
+Except for first request, the client needs to update the recipNonce field in any
+further request in order to satisfy the checks to be performed by the server.
+This triggers re-protection (if protection is required).
 
 Multiple filenames may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
