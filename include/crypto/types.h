@@ -20,6 +20,9 @@ typedef struct rsa_meth_st RSA_METHOD;
 typedef struct ec_key_st EC_KEY;
 typedef struct ec_key_method_st EC_KEY_METHOD;
 #  endif
+#  ifndef OPENSSL_NO_DSA
+typedef struct dsa_st DSA;
+#  endif
 # endif
 
 # ifndef OPENSSL_NO_EC
