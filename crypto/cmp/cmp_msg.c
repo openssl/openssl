@@ -1086,6 +1086,20 @@ int OSSL_CMP_MSG_update_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             || ossl_cmp_msg_protect(ctx, msg);
 }
 
+int OSSL_CMP_MSG_update_recipNonce(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
+{
+    if (ctx == NULL || msg == NULL || msg->header == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    if (ctx->recipNonce == NULL) /* nothing to do for 1st msg in transaction */
+        return 1;
+    if (!ossl_cmp_asn1_octet_string_set1(&msg->header->recipNonce,
+                                         ctx->recipNonce))
+        return 0;
+    return msg->header->protectionAlg == NULL || ossl_cmp_msg_protect(ctx, msg);
+}
+
 OSSL_CMP_MSG *OSSL_CMP_MSG_read(const char *file, OSSL_LIB_CTX *libctx,
                                 const char *propq)
 {

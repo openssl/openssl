@@ -5434,3 +5434,4 @@ RAND_set0_private                       5561	3_1_0	EXIST::FUNCTION:
 EVP_MD_CTX_dup                          5562	3_1_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_dup                      5563	3_1_0	EXIST::FUNCTION:
 BN_are_coprime                          5564	3_1_0	EXIST::FUNCTION:
+OSSL_CMP_MSG_update_recipNonce          5565	3_0_9	EXIST::FUNCTION:CMP

@@ -810,6 +810,13 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
         if (opt_reqin_new_tid
                 && !OSSL_CMP_MSG_update_transactionID(ctx, req_new))
             goto err;
+
+        /*
+         * Except for first request, need to satisfy recipNonce check by server.
+         * Unfortunately requires re-protection if protection is required.
+         */
+        if (!OSSL_CMP_MSG_update_recipNonce(ctx, req_new))
+            goto err;
     }
 
     if (opt_rspin != NULL) {
@@ -825,7 +832,7 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
         goto err;
 
     if (req_new != NULL || prev_opt_rspin != NULL) {
-        /* need to satisfy nonce and transactionID checks */
+        /* need to satisfy nonce and transactionID checks by client */
         ASN1_OCTET_STRING *nonce;
         ASN1_OCTET_STRING *tid;
 
