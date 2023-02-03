@@ -886,7 +886,7 @@ This option is ignored if the B<-rspin> option is given
 because in the latter case no requests are actually sent.
 Except for first request, the client needs to update the recipNonce field in any
 further request in order to satisfy the checks to be performed by the server.
-This triggers re-protection (if protection is required).
+This causes re-protection (if protecting requests is required).
 
 Multiple filenames may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
@@ -895,7 +895,7 @@ As many files are read as needed for a complete transaction.
 =item B<-reqin_new_tid>
 
 Use a fresh transactionID for CMP request messages read using B<-reqin>,
-which requires re-protecting them as far as they were protected before.
+which causes their reprotection (if protecting requests is required).
 This may be needed in case the sequence of requests is reused
 and the CMP server complains that the transaction ID has already been used.
 

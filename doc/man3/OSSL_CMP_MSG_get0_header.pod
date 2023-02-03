@@ -35,11 +35,12 @@ OSSL_CMP_MSG_get_bodytype() returns the body type of the given CMP message.
 
 OSSL_CMP_MSG_update_transactionID() updates the transactionID field
 in the header of the given message according to the CMP_CTX.
-This requires re-protecting the message (if it was protected).
+If I<ctx> does not contain a transaction ID, a fresh one is created before.
+The message gets re-protected (if protecting requests is required).
 
 OSSL_CMP_MSG_update_recipNonce() updates the recipNonce field
 in the header of the given message according to the CMP_CTX.
-This requires re-protecting the message if it was protected.
+The message gets re-protected (if protecting requests is required).
 
 OSSL_CMP_CTX_setup_CRM() creates a CRMF certificate request message
 from various information provided in the CMP context argument I<ctx>
@@ -142,7 +143,7 @@ L<OSSL_CMP_CTX_push1_subjectAltName(3)>, L<OSSL_CMP_CTX_push0_policy(3)>
 
 The OpenSSL CMP support was added in OpenSSL 3.0.
 
-OSSL_CMP_MSG_update_recipNonce() was added in OpenSSL 3.0.8.
+OSSL_CMP_MSG_update_recipNonce() was added in OpenSSL 3.0.9.
 
 =head1 COPYRIGHT
 
