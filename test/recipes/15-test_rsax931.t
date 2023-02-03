@@ -26,7 +26,7 @@ ok(run(app(['openssl', 'pkeyutl', '-in', $infile, '-rawin', '-inkey', $inkey,
             '-pkeyopt', 'pad-mode:x931',
             '-sign',
             '-out', 'sigx931.txt'])),
-  "RSA Sign with x931 padding  using SHA256");
+  "RSA Sign with x931 padding using SHA256");
 
 ok(run(app(['openssl', 'pkeyutl', '-in', $infile, '-rawin', '-inkey', $inkey,
             '-digest', 'SHA256',
