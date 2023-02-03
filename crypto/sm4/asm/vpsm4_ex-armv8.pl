@@ -475,12 +475,12 @@ sub load_sbox () {
 	my $data = shift;
 
 $code.=<<___;
-	ldr $MaskQ,	   =0x0306090c0f0205080b0e0104070a0d00
-	ldr $TAHMatQ,	=0x22581a6002783a4062185a2042387a00
-	ldr $TALMatQ,	=0xc10bb67c4a803df715df62a89e54e923
-	ldr $ATAHMatQ,   =0x1407c6d56c7fbeadb9aa6b78c1d21300
-	ldr $ATALMatQ,   =0xe383c1a1fe9edcbc6404462679195b3b
-	ldr $ANDMaskQ,	=0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f
+	ldr $MaskQ, .Lsbox_magic
+	ldr $TAHMatQ, .Lsbox_magic+16
+	ldr $TALMatQ, .Lsbox_magic+32
+	ldr $ATAHMatQ, .Lsbox_magic+48
+	ldr $ATALMatQ, .Lsbox_magic+64
+	ldr $ANDMaskQ, .Lsbox_magic+80
 ___
 }
 
@@ -525,7 +525,7 @@ sub compute_tweak_vec() {
 	my $std = shift;
 	&rbit(@vtmp[2],$src,$std);
 $code.=<<___;
-	ldr  @qtmp[0], =0x01010101010101010101010101010187
+	ldr  @qtmp[0], .Lxts_magic
 	shl  $des.16b, @vtmp[2].16b, #1
 	ext  @vtmp[1].16b, @vtmp[2].16b, @vtmp[2].16b,#15
 	ushr @vtmp[1].16b, @vtmp[1].16b, #7
@@ -556,6 +556,15 @@ _${prefix}_consts:
 	.dword 0x56aa3350a3b1bac6,0xb27022dc677d9197
 .Lshuffles:
 	.dword 0x0B0A090807060504,0x030201000F0E0D0C
+.Lxts_magic:
+	.dword 0x0101010101010187,0x0101010101010101
+.Lsbox_magic:
+	.dword 0x0b0e0104070a0d00,0x0306090c0f020508
+	.dword 0x62185a2042387a00,0x22581a6002783a40
+	.dword 0x15df62a89e54e923,0xc10bb67c4a803df7
+	.dword 0xb9aa6b78c1d21300,0x1407c6d56c7fbead
+	.dword 0x6404462679195b3b,0xe383c1a1fe9edcbc
+	.dword 0x0f0f0f0f0f0f0f0f,0x0f0f0f0f0f0f0f0f
 
 .size	_${prefix}_consts,.-_${prefix}_consts
 ___
