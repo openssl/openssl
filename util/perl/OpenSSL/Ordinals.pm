@@ -349,7 +349,7 @@ sub _putback {
         croak "Duplicate entries for ".$items[0]->name()." from ".
             $items[0]->source()." and ".$items[1]->source()."\n"
             if $items[0]->name() eq $items[1]->name()
-            && $items[0]->type() eq $items[2]->type()
+            && $items[0]->type() eq $items[1]->type()
             && $items[0]->platforms() eq $items[1]->platforms();
 
         # Check that all platforms exist in both items, and have opposite values
