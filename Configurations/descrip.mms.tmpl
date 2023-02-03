@@ -240,8 +240,6 @@
       # includes "../ssl_local.h".  Adding "./quic" as an inclusion directory
       # helps making this sort of header from these directories.
       push @{$unified_info{includes_extra}->{$obj}}, qw(./quic);
-      use Data::Dumper;
-      print STDERR Dumper($unified_info{includes_extra});
   }
   foreach (grep /\[\.ssl\.(?:record|statem)\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
