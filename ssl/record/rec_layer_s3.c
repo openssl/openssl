@@ -608,14 +608,13 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
         if (numpipes > maxpipes)
             numpipes = maxpipes;
 
-        if (n / numpipes >= max_send_fragment) {
+        if (n / numpipes >= split_send_fragment) {
             /*
              * We have enough data to completely fill all available
              * pipelines
              */
-            for (j = 0; j < numpipes; j++) {
-                pipelens[j] = max_send_fragment;
-            }
+            for (j = 0; j < numpipes; j++)
+                pipelens[j] = split_send_fragment;
         } else {
             /* We can partially fill all available pipelines */
             tmppipelen = n / numpipes;
