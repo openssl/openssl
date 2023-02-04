@@ -206,7 +206,7 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
         }
 
     left = rb->left;
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
+#if SSL3_ALIGN_PAYLOAD != 0
     align = (size_t)rb->buf + SSL3_RT_HEADER_LENGTH;
     align = SSL3_ALIGN_PAYLOAD - 1 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
 #endif
@@ -766,7 +766,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
     if (create_empty_fragment) {
         wb = &s->rlayer.wbuf[0];
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
+#if SSL3_ALIGN_PAYLOAD != 0
         /*
          * extra fragment would be couple of cipher blocks, which would be
          * multiple of SSL3_ALIGN_PAYLOAD, so if we want to align the real
@@ -778,7 +778,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         SSL3_BUFFER_set_offset(wb, align);
         if (!WPACKET_init_static_len(&pkt[0], SSL3_BUFFER_get_buf(wb),
                                      SSL3_BUFFER_get_len(wb), 0)
-                || !WPACKET_allocate_bytes(&pkt[0], align, NULL)) {
+                || (align != 0
+                    && !WPACKET_allocate_bytes(&pkt[0], align, NULL))) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
                      ERR_R_INTERNAL_ERROR);
             goto err;
@@ -801,14 +802,15 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             thispkt = &pkt[j];
 
             wb = &s->rlayer.wbuf[j];
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
+#if SSL3_ALIGN_PAYLOAD != 0
             align = (size_t)SSL3_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
             align = SSL3_ALIGN_PAYLOAD - 1 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
 #endif
             SSL3_BUFFER_set_offset(wb, align);
             if (!WPACKET_init_static_len(thispkt, SSL3_BUFFER_get_buf(wb),
                                          SSL3_BUFFER_get_len(wb), 0)
-                    || !WPACKET_allocate_bytes(thispkt, align, NULL)) {
+                    || (align != 0
+                        && !WPACKET_allocate_bytes(thispkt, align, NULL))) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
                          ERR_R_INTERNAL_ERROR);
                 goto err;

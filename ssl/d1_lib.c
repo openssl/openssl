@@ -493,8 +493,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     }
     buf = RECORD_LAYER_get_rbuf(&s->rlayer)->buf;
     wbuf = RECORD_LAYER_get_wbuf(&s->rlayer)[0].buf;
-#if defined(SSL3_ALIGN_PAYLOAD)
-# if SSL3_ALIGN_PAYLOAD != 0
+#if SSL3_ALIGN_PAYLOAD != 0
     /*
      * Using SSL3_RT_HEADER_LENGTH here instead of DTLS1_RT_HEADER_LENGTH for
      * consistency with ssl3_read_n. In practice it should make no difference
@@ -503,7 +502,6 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
      */
     align = (size_t)buf + SSL3_RT_HEADER_LENGTH;
     align = SSL3_ALIGN_PAYLOAD - 1 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
-# endif
 #endif
     buf += align;
 
