@@ -153,7 +153,7 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
         else
             headerlen = SSL3_RT_HEADER_LENGTH;
 
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
+#if SSL3_ALIGN_PAYLOAD != 0
         align = SSL3_ALIGN_PAYLOAD - 1;
 #endif
 
@@ -228,7 +228,7 @@ int tls_setup_read_buffer(OSSL_RECORD_LAYER *rl)
     else
         headerlen = SSL3_RT_HEADER_LENGTH;
 
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
+#if SSL3_ALIGN_PAYLOAD != 0
     align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 #endif
 
@@ -299,7 +299,7 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
 
     rb = &rl->rbuf;
     left = rb->left;
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
+#if SSL3_ALIGN_PAYLOAD != 0
     align = (size_t)rb->buf + SSL3_RT_HEADER_LENGTH;
     align = SSL3_ALIGN_PAYLOAD - 1 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
 #endif
@@ -1503,7 +1503,7 @@ int tls_initialise_write_packets_default(OSSL_RECORD_LAYER *rl,
                                          size_t *wpinited)
 {
     WPACKET *thispkt;
-    size_t j, align;
+    size_t j, align = 0;
     TLS_BUFFER *wb;
 
     for (j = 0; j < numtempl; j++) {
@@ -1512,7 +1512,7 @@ int tls_initialise_write_packets_default(OSSL_RECORD_LAYER *rl,
 
         wb->type = templates[j].type;
 
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
+#if SSL3_ALIGN_PAYLOAD != 0
         align = (size_t)TLS_BUFFER_get_buf(wb);
         align += rl->isdtls ? DTLS1_RT_HEADER_LENGTH : SSL3_RT_HEADER_LENGTH;
         align = SSL3_ALIGN_PAYLOAD - 1
@@ -1526,7 +1526,7 @@ int tls_initialise_write_packets_default(OSSL_RECORD_LAYER *rl,
             return 0;
         }
         (*wpinited)++;
-        if (!WPACKET_allocate_bytes(thispkt, align, NULL)) {
+        if (align != 0 && !WPACKET_allocate_bytes(thispkt, align, NULL)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }

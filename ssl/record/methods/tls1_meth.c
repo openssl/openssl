@@ -539,7 +539,7 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
     return ret;
 }
 
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
+#if SSL3_ALIGN_PAYLOAD != 0
 # ifndef OPENSSL_NO_COMP
 #  define MAX_PREFIX_LEN ((SSL3_ALIGN_PAYLOAD - 1) \
                            + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD \
@@ -612,7 +612,7 @@ int tls1_initialise_write_packets(OSSL_RECORD_LAYER *rl,
 
         wb = &bufs[0];
 
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
+#if SSL3_ALIGN_PAYLOAD != 0
         align = (size_t)TLS_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
         align = SSL3_ALIGN_PAYLOAD - 1
                 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
@@ -625,7 +625,7 @@ int tls1_initialise_write_packets(OSSL_RECORD_LAYER *rl,
             return 0;
         }
         *wpinited = 1;
-        if (!WPACKET_allocate_bytes(&pkt[0], align, NULL)) {
+        if (align != 0 && !WPACKET_allocate_bytes(&pkt[0], align, NULL)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
