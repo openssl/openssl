@@ -52,8 +52,8 @@
       return platform::BASE->staticname($_[0]);
   }
 
-  sub sharedlib { return platform::BASE->sharedlib($_[0]) }
-  sub staticlib { return platform::BASE->staticlib($_[0]) }
+  sub sharedlib { return platform::BASE::__concat(platform::BASE->sharedname($_[0]), platform->shlibext()) }
+  sub staticlib { return platform::BASE->staticname($_[0]) . platform->libext() }
 
   sub sharedlib_simple { return undef; }
   sub sharedlib_import { return undef; }
@@ -298,14 +298,30 @@ endif(OPENSSL_DESTDIR)
 
 set(OPENSSL_CC {- $x = $config{CC}; $x ? fixup_path($x) : () -})
 set(OPENSSL_CXX {- $x = $config{CXX}; $x ? fixup_path($x) : () -})
-set(OPENSSL_CXXFLAGS {- our $cppflags1 = join(" ",
+set(OPENSSL_CPPINCLUDES {- join(" ", map { escape_cmd($_) } @{$config{CPPINCLUDES}}) -})
+set(OPENSSL_CPPFLAGS {- our $cppflags1 = join(" ",
                                               (map { "-D".$_} @{$config{CPPDEFINES}}),
                                               (map { " -I".$_} @{$config{CPPINCLUDES}}),
-                                              @{$config{CXXFLAGS}}) -})
+                                              @{$config{CPPFLAGS}}) -})
+set(OPENSSL_CXXFLAGS {- our $cxxflags1 = join(" ", @{$config{CXXFLAGS}}) -})
 set(OPENSSL_CFLAGS {- join(" ", @{$config{CFLAGS}}) -})
 set(OPENSSL_LD {- $x = $config{LD}; $x ? fixup_path($x) : () -})
 set(OPENSSL_LDFLAGS {- join(" ", map { quotify1($_) } @{$config{LDFLAGS}}) -})
 set(OPENSSL_EX_LIBS {- join(" ", map { fixup_path($_) } @{$config{LDLIBS}}) -})
+
+if(WIN32)
+  enable_language(ASM_NASM)
+  set(OPENSSL_AS {- $x = $config{AS}; $x ? fixup_path($x) : () -})
+  set(OPENSSL_ASFLAGS {- join(' ', @{$config{ASFLAGS}}) -})
+  set(OPENSSL_AS_ENV "ASM=${OPENSSL_AS}")
+  set(PERLASM_SCHEME "{- $target{perlasm_scheme} -}")
+else()
+  enable_language(ASM)
+  set(OPENSSL_AS "${CMAKE_ASM_COMPILER}")
+  set(OPENSSL_ASFLAGS "-x assembler")
+  set(OPENSSL_AS_ENV "CC=${OPENSSL_AS}")
+  set(PERLASM_SCHEME "elf")
+endif()
 
 ##### Project flags ##################################################
 
@@ -321,9 +337,6 @@ endif()
 
 set(CNF_ASFLAGS {- join(' ', $target{asflags} || (), @{$config{asflags}}) -})
 set(CNF_CPPDEFS {- join(' ', @{$target{defines}}, @{$config{defines}}) -})
-if (WIN32) # Force some defines on win32
-  set(CNF_CPPDEFS OPENSSL_SYS_WIN32 WIN32_LEAN_AND_MEAN UNICODE _UNICODE ${CNF_CPPDEFS})
-endif()
 set(CNF_CPPINCS {- join(' ', map { fixup_path($_) } @{$target{includes}}, @{$config{includes}}) -})
 set(CNF_CPPFLAGS {- our $cppflags2 = join(' ', $target{cppflags} || (),
                         (map { '-D'.$_ } @{$target{defines}}, @{$config{defines}}),
@@ -348,93 +361,108 @@ endif()
 # files.
 
 set(LIB_ASFLAGS {- join(' ', $target{lib_asflags} || (),
-                             @{$config{lib_asflags}}) -} ${CNF_ASFLAGS} ${ASFLAGS})
-set(LIB_CPPDEFS {- join(' ', @{$target{lib_defines}},
-                             @{$target{shared_defines}},
-                             @{$config{lib_defines}},
-                             @{$config{shared_defines}}) -} OPENSSLDIR="${OPENSSL_OPENSSLDIR}" ENGINESDIR="${OPENSSL_ENGINESDIR}" MODULESDIR="${OPENSSL_MODULESDIR}" ${CNF_CPPDEFS})
-set(LIB_CPPINCS {- join(' ', (map { fixup_path($_) }
-                                 @{$target{lib_includes}},
-                                 @{$target{shared_includes}},
-                                 @{$config{lib_includes}},
-                                 @{$config{shared_includes}})) -} ${CNF_CPPINCS})
+                             @{$config{lib_asflags}}) -} ${CNF_ASFLAGS} ${OPENSSL_ASFLAGS})
 set(LIB_CPPFLAGS {- our $lib_cppflags =
                     join(' ', $target{lib_cppflags} || (),
-                            $target{shared_cppflag} || (),
-                            (map { '-D'.$_ }
-                                 @{$target{lib_defines}},
-                                 @{$target{shared_defines}},
-                                 @{$config{lib_defines}},
-                                 @{$config{shared_defines}}),
-                            (map { '-I'.fixup_path($_) }
-                                 @{$target{lib_includes}},
-                                 @{$target{shared_includes}},
-                                 @{$config{lib_includes}},
-                                 @{$config{shared_includes}}),
-                            @{$config{lib_cppflags}},
-                            @{$config{shared_cppflag}});
-                    join(' ', $lib_cppflags) -} -DOPENSSLDIR="${OPENSSL_OPENSSLDIR}" -DENGINESDIR="${OPENSSL_ENGINESDIR}" -DMODULESDIR="${OPENSSL_MODULESDIR}" ${CNF_CPPFLAGS} ${CPPFLAGS})
+                              $target{shared_cppflag} || (),
+                              @{$config{lib_cppflags}},
+                              @{$config{shared_cppflag}});
+                    join(' ', $lib_cppflags) -} ${CNF_CPPFLAGS} ${OPENSSL_CPPFLAGS})
 set(LIB_CFLAGS {- join(' ', $target{lib_cflags} || (),
                             $target{shared_cflag} || (),
                             @{$config{lib_cflags}},
-                            @{$config{shared_cflag}}) -} ${CNF_CFLAGS} ${CFLAGS})
+                            @{$config{shared_cflag}}) -} ${CNF_CFLAGS} ${OPENSSL_CFLAGS})
 set(LIB_LDFLAGS {- join(' ', $target{shared_ldflag} || (),
-                             $config{shared_ldflag} || ()) -} ${CNF_LDFLAGS} ${LDFLAGS})
+                             $config{shared_ldflag} || ()) -} ${CNF_LDFLAGS} ${OPENSSL_LDFLAGS})
 set(LIB_EX_LIBS ${CNF_EX_LIBS} ${OPENSSL_EX_LIBS})
 set(DSO_ASFLAGS {- join(' ', $target{dso_asflags} || (),
                              $target{module_asflags} || (),
                              @{$config{dso_asflags}},
-                             @{$config{module_asflags}}) -} ${CNF_ASFLAGS} ${ASFLAGS})
-set(DSO_CPPDEFS {- join(' ', @{$target{dso_defines}},
-                             @{$target{module_defines}},
-                             @{$config{dso_defines}},
-                             @{$config{module_defines}}) -} ${CNF_CPPDEFS})
-set(DSO_CPPINCS {- join(' ', (map { fixup_path($_) }
-                                @{$target{dso_includes}},
-                                @{$target{module_includes}},
-                                @{$config{dso_includes}},
-                                @{$config{module_includes}})) -} ${CNF_CPPINCS})
+                             @{$config{module_asflags}}) -} ${CNF_ASFLAGS} ${OPENSSL_ASFLAGS})
 set(DSO_CPPFLAGS {- join(' ', $target{dso_cppflags} || (),
-                            $target{module_cppflag} || (),
-                            (map { '-D'.quotify1($_) }
-                                 @{$target{dso_defines}},
-                                 @{$target{module_defines}},
-                                 @{$config{dso_defines}},
-                                 @{$config{module_defines}}),
-                            (map { '-I'.quotify1($_) }
-                                 @{$target{dso_includes}},
-                                 @{$target{module_includes}},
-                                 @{$config{dso_includes}},
-                                 @{$config{module_includes}}),
-                            @{$config{dso_cppflags}},
-                            @{$config{module_cppflags}}) -} ${CNF_CPPFLAGS} ${CPPFLAGS})
+                              $target{module_cppflag} || (),
+                              @{$config{dso_cppflags}},
+                              @{$config{module_cppflags}}) -} ${CNF_CPPFLAGS} ${OPENSSL_CPPFLAGS})
 set(DSO_CFLAGS {- join(' ', $target{dso_cflags} || (),
                             $target{module_cflags} || (),
                             @{$config{dso_cflags}},
-                            @{$config{module_cflags}}) -} ${CNF_CFLAGS} ${CFLAGS})
+                            @{$config{module_cflags}}) -} ${CNF_CFLAGS} ${OPENSSL_CFLAGS})
 set(DSO_LDFLAGS {- join(' ', $target{dso_lflags} || (),
                             $target{module_ldflags} || (),
                             @{$config{dso_lflags}},
-                            @{$config{module_ldflags}}) -} ${CNF_LDFLAGS} ${LDFLAGS})
+                            @{$config{module_ldflags}}) -} ${CNF_LDFLAGS} ${OPENSSL_LDFLAGS})
 set(DSO_EX_LIBS ${CNF_EX_LIBS} ${OPENSSL_EX_LIBS})
 set(BIN_ASFLAGS {- join(' ', $target{bin_asflags} || (),
-                             @{$config{bin_asflags}}) -} ${CNF_ASFLAGS} ${ASFLAGS})
-set(BIN_CPPDEFS {- join(' ', @{$target{bin_defines}}) -} ${CNF_CPPDEFS})
-set(BIN_CPPINCS {- join(' ', map { fixup_path($_) } @{$target{bin_includes}}) -} ${CNF_CPPINCS})
+                             @{$config{bin_asflags}}) -} ${CNF_ASFLAGS} ${OPENSSL_ASFLAGS})
 set(BIN_CPPFLAGS {- join(' ', $target{bin_cppflags} || (),
-                            (map { '-D'.$_ } @{$config{bin_defines} || ()}),
-                            @{$config{bin_cppflags}}) -} ${CNF_CPPFLAGS} ${CPPFLAGS})
+                             @{$config{bin_cppflags}}) -} ${CNF_CPPFLAGS} ${OPENSSL_CPPFLAGS})
 set(BIN_CFLAGS {- join(' ', $target{bin_cflags} || (),
-                            @{$config{bin_cflags}}) -} ${CNF_CFLAGS} ${CFLAGS})
+                            @{$config{bin_cflags}}) -} ${CNF_CFLAGS} ${OPENSSL_CFLAGS})
 set(BIN_LDFLAGS {- join(' ', $target{bin_lflags} || (),
-                            @{$config{bin_lflags}}) -} ${CNF_LDFLAGS} ${LDFLAGS})
+                            @{$config{bin_lflags}}) -} ${CNF_LDFLAGS} ${OPENSSL_LDFLAGS})
 set(BIN_EX_LIBS ${CNF_EX_LIBS} ${OPENSSL_EX_LIBS})
 
+# Set CMake lists for flags.
+set(OPENSSL_LIB_CPPFLAGS ${LIB_CPPFLAGS})
+set(OPENSSL_LIB_CFLAGS ${LIB_CFLAGS})
+set(OPENSSL_LIB_CPPINCS {- join(' ', (map { fixup_path($_) }
+                                     @{$target{lib_includes}},
+                                     @{$target{shared_includes}},
+                                     @{$config{lib_includes}},
+                                     @{$config{shared_includes}})) -} ${CNF_CPPINCS})
+set(OPENSSL_LIB_CPPDEFS {- join(' ', @{$target{lib_defines}},
+                                     @{$target{shared_defines}},
+                                     @{$config{lib_defines}},
+                                     @{$config{shared_defines}}) -}
+  OPENSSLDIR="${OPENSSL_OPENSSLDIR}" ENGINESDIR="${OPENSSL_ENGINESDIR}" MODULESDIR="${OPENSSL_MODULESDIR}" ${CNF_CPPDEFS})
+
+set(OPENSSL_DSO_CPPFLAGS ${DSO_CPPFLAGS})
+set(OPENSSL_DSO_CFLAGS ${DSO_CFLAGS})
+set(OPENSSL_DSO_CPPINCS {- join(' ', (map { fixup_path($_) }
+                                     @{$target{dso_includes}},
+                                     @{$target{module_includes}},
+                                     @{$config{dso_includes}},
+                                     @{$config{module_includes}})) -} ${CNF_CPPINCS})
+set(OPENSSL_DSO_CPPDEFS {- join(' ', @{$target{dso_defines}},
+                                     @{$target{module_defines}},
+                                     @{$config{dso_defines}},
+                                     @{$config{module_defines}}) -} ${CNF_CPPDEFS})
+
+set(OPENSSL_BIN_CPPFLAGS ${BIN_CPPFLAGS})
+set(OPENSSL_BIN_CFLAGS ${BIN_CFLAGS})
+set(OPENSSL_BIN_CPPINCS {- join(' ', map { fixup_path($_) } @{$target{bin_includes}}) -} ${CNF_CPPINCS})
+set(OPENSSL_BIN_CPPDEFS {- join(' ', @{$target{bin_defines}}) -} ${CNF_CPPDEFS})
+
 # Expand semicolon separated list into space separated flags.
+list(APPEND LIB_CPPFLAGS {- join(' ', (map { '-I'.fixup_path($_) }
+                                        @{$target{lib_includes}},
+                                        @{$target{shared_includes}},
+                                        @{$config{lib_includes}},
+                                        @{$config{shared_includes}}),
+                                      (map { '-D'.quotify1($_) }
+                                        @{$target{lib_defines}},
+                                        @{$target{shared_defines}},
+                                        @{$config{lib_defines}},
+                                        @{$config{shared_defines}})) -}
+  -DOPENSSLDIR="${OPENSSL_OPENSSLDIR}" -DENGINESDIR="${OPENSSL_ENGINESDIR}" -DMODULESDIR="${OPENSSL_MODULESDIR}")
 list(JOIN LIB_CPPFLAGS " " LIB_CPPFLAGS)
 list(JOIN LIB_CFLAGS " " LIB_CFLAGS)
+
+list(APPEND DSO_CPPFLAGS {- join(' ', (map { '-I'.quotify1($_) }
+                                        @{$target{dso_includes}},
+                                        @{$target{module_includes}},
+                                        @{$config{dso_includes}},
+                                        @{$config{module_includes}}),
+                                      (map { '-D'.quotify1($_) }
+                                        @{$target{dso_defines}},
+                                        @{$target{module_defines}},
+                                        @{$config{dso_defines}},
+                                        @{$config{module_defines}})) -})
 list(JOIN DSO_CPPFLAGS " " DSO_CPPFLAGS)
 list(JOIN DSO_CFLAGS " " DSO_CFLAGS)
+
+list(APPEND BIN_CPPFLAGS {- join(' ', (map { '-D'.$_ }
+                                        @{$config{bin_defines} || ()})) -})
 list(JOIN BIN_CPPFLAGS " " BIN_CPPFLAGS)
 list(JOIN BIN_CFLAGS " " BIN_CFLAGS)
 
@@ -443,20 +471,6 @@ set(CPPFLAGS_Q "{- join(' ', $lib_cppflags || (),
                              $cppflags2 || (),
                              $cppflags1 || ()) -}")
 set(PLATFORM "{- $config{target} -}")
-
-if(WIN32)
-  enable_language(ASM_NASM)
-  set(OPENSSL_AS {- $x = $config{AS}; $x ? fixup_path($x) : () -})
-  set(OPENSSL_ASFLAGS {- join(' ', @{$config{ASFLAGS}}) -})
-  set(OPENSSL_AS_ENV "ASM=${OPENSSL_AS}")
-  set(PERLASM_SCHEME "{- $target{perlasm_scheme} -}")
-else()
-  enable_language(ASM)
-  set(OPENSSL_AS "${CMAKE_ASM_COMPILER}")
-  set(OPENSSL_ASFLAGS "-x assembler")
-  set(OPENSSL_AS_ENV "CC=${OPENSSL_AS}")
-  set(PERLASM_SCHEME "elf")
-endif()
 
 set(OPENSSL_PROCESSOR "{- $config{processor} -}")
 
@@ -723,24 +737,30 @@ EOF
 list(APPEND OPENSSL_ASM_S_SOURCES_$target_n $srcs)
 EOF
     } else {
-        my $defs = { shlib => '${LIB_CPPDEFS}',
-		     lib => '${LIB_CPPDEFS}',
-		     dso => '${DSO_CPPDEFS}',
-		     bin => '${BIN_CPPDEFS}' } -> {$args{intent}};
+        my $defs = { shlib => '${OPENSSL_LIB_CPPDEFS}',
+		     lib => '${OPENSSL_LIB_CPPDEFS}',
+		     dso => '${OPENSSL_DSO_CPPDEFS}',
+		     bin => '${OPENSSL_BIN_CPPDEFS}' } -> {$args{intent}};
         if (@{$args{defs}}) {
             $defs .= ";";
             $defs .= join(";", @{$args{defs}});
         }
+        my $opts = { shlib => '${OPENSSL_LIB_CFLAGS};${OPENSSL_LIB_CPPFLAGS}',
+		     lib => '${OPENSSL_LIB_CFLAGS};${OPENSSL_LIB_CPPFLAGS}',
+		     dso => '${OPENSSL_DSO_CFLAGS};${OPENSSL_DSO_CPPFLAGS}',
+		     bin => '${OPENSSL_BIN_CFLAGS};${OPENSSL_BIN_CPPFLAGS}' } -> {$args{intent}};
         $recipe .= <<"EOF";
 list(APPEND OPENSSL_SOURCES_$target_n $srcs)
+set_source_files_properties($src0 PROPERTIES COMPILE_OPTIONS "$opts")
 set_source_files_properties($src0 PROPERTIES COMPILE_DEFINITIONS "$defs")
 EOF
     }
     if (@{$args{incs}}) {
-        my $incs = join(';', map { my $x = "\${OPENSSL_SRCDIR}".($_ eq '.' ? "" : "/$_");
+        my @incs = @{$args{incs}};
+        my $incs = join(';', map { my $x = "\${OPENSSL_SRCDIR}". ($_ eq '.' ? "" : "/$_");
                                    $x =~ s/\\/\//g;
                                    file_name_is_absolute($_) || ($_ =~ m|^../|) ?
-                                       $x : escape_cmd($x) } @{$args{incs}});
+                                       escape_cmd($_) : escape_cmd($x) } @incs);
         $recipe .= <<"EOF";
 set_source_files_properties($src0 PROPERTIES INCLUDE_DIRECTORIES "$incs")
 EOF
