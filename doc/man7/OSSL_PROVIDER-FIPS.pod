@@ -400,9 +400,9 @@ want to operate in a FIPS approved manner.  The algorithms are:
 
 =over 4
 
-=item Triple DES
+=item Triple DES ECB
 
-=item EdDSA
+=item Triple DES CBC
 
 =back
 
