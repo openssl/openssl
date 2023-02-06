@@ -154,23 +154,23 @@ int ossl_quic_tserver_tick(QUIC_TSERVER *srv)
 }
 
 /* Returns 1 if the server is in any terminating or terminated state */
-int ossl_quic_tserver_is_term_any(QUIC_TSERVER *srv)
+int ossl_quic_tserver_is_term_any(const QUIC_TSERVER *srv)
 {
     return ossl_quic_channel_is_term_any(srv->ch);
 }
 
-QUIC_TERMINATE_CAUSE ossl_quic_tserver_get_terminate_cause(QUIC_TSERVER *srv)
+QUIC_TERMINATE_CAUSE ossl_quic_tserver_get_terminate_cause(const QUIC_TSERVER *srv)
 {
     return ossl_quic_channel_get_terminate_cause(srv->ch);
 }
 
 /* Returns 1 if the server is in a terminated state */
-int ossl_quic_tserver_is_terminated(QUIC_TSERVER *srv)
+int ossl_quic_tserver_is_terminated(const QUIC_TSERVER *srv)
 {
     return ossl_quic_channel_is_terminated(srv->ch);
 }
 
-int ossl_quic_tserver_is_handshake_confirmed(QUIC_TSERVER *srv)
+int ossl_quic_tserver_is_handshake_confirmed(const QUIC_TSERVER *srv)
 {
     return ossl_quic_channel_is_handshake_confirmed(srv->ch);
 }
