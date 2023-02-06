@@ -121,13 +121,12 @@ static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
     if (kl == 0 || RAND_priv_bytes_ex(ctx->libctx, ptr, kl, 0) <= 0)
         return 0;
     DES_set_odd_parity(deskey);
-    if (kl >= 16)
+    if (kl >= 16) {
         DES_set_odd_parity(deskey + 1);
-    if (kl >= 24) {
-        DES_set_odd_parity(deskey + 2);
-        return 1;
+        if (kl >= 24)
+            DES_set_odd_parity(deskey + 2);
     }
-    return 0;
+    return 1;
 }
 
 int ossl_tdes_get_ctx_params(void *vctx, OSSL_PARAM params[])
