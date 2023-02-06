@@ -666,12 +666,8 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     }
 
     *num_processed = i;
-    ret = 1;
 out:
-    if (i > 0)
-        ret = 1;
-    else
-        ret = 0;
+    ret = i > 0;
     OPENSSL_free(fault->msg.data);
     fault->msg.data = NULL;
     return ret;
