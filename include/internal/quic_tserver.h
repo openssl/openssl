@@ -58,7 +58,7 @@ int ossl_quic_tserver_set_handshake_mutator(QUIC_TSERVER *srv,
 int ossl_quic_tserver_tick(QUIC_TSERVER *srv);
 
 /*
- * Returns 1 if we have have finished the TLS handshake
+ * Returns 1 if we have finished the TLS handshake
  */
 int ossl_quic_tserver_is_handshake_confirmed(QUIC_TSERVER *srv);
 
