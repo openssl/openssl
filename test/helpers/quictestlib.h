@@ -11,18 +11,18 @@
 #include <internal/quic_tserver.h>
 
 /* Type to represent the Fault Injector */
-typedef struct ossl_quic_fault OSSL_QUIC_FAULT;
+typedef struct qtest_fault QTEST_FAULT;
 
 /*
  * Structure representing a parsed EncryptedExtension message. Listeners can
  * make changes to the contents of structure objects as required and the fault
  * injector will reconstruct the message to be sent on
  */
-typedef struct ossl_qf_encrypted_extensions {
+typedef struct qtest_fault_encrypted_extensions {
     /* EncryptedExtension messages just have an extensions block */
     unsigned char *extensions;
     size_t extensionslen;
-} OSSL_QF_ENCRYPTED_EXTENSIONS;
+} QTEST_ENCRYPTED_EXTENSIONS;
 
 /*
  * Given an SSL_CTX for the client and filenames for the server certificate and
@@ -31,12 +31,12 @@ typedef struct ossl_qf_encrypted_extensions {
  */
 int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
                               QUIC_TSERVER **qtserv, SSL **cssl,
-                              OSSL_QUIC_FAULT **fault);
+                              QTEST_FAULT **fault);
 
 /*
  * Free up a Fault Injector instance
  */
-void ossl_quic_fault_free(OSSL_QUIC_FAULT *fault);
+void qtest_fault_free(QTEST_FAULT *fault);
 
 /*
  * Run the TLS handshake to create a QUIC connection between the client and
@@ -58,15 +58,15 @@ int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv);
 /*
  * Enable tests to listen for pre-encryption QUIC packets being sent
  */
-typedef int (*ossl_quic_fault_on_packet_plain_cb)(OSSL_QUIC_FAULT *fault,
-                                                  QUIC_PKT_HDR *hdr,
-                                                  unsigned char *buf,
-                                                  size_t len,
-                                                  void *cbarg);
+typedef int (*qtest_fault_on_packet_plain_cb)(QTEST_FAULT *fault,
+                                              QUIC_PKT_HDR *hdr,
+                                              unsigned char *buf,
+                                              size_t len,
+                                              void *cbarg);
 
-int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
-                                              ossl_quic_fault_on_packet_plain_cb pplaincb,
-                                              void *pplaincbarg);
+int qtest_fault_set_packet_plain_listener(QTEST_FAULT *fault,
+                                          qtest_fault_on_packet_plain_cb pplaincb,
+                                          void *pplaincbarg);
 
 
 /*
@@ -77,27 +77,27 @@ int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
  * This will fail if a large resize is attempted that exceeds the over
  * allocation.
  */
-int ossl_quic_fault_resize_plain_packet(OSSL_QUIC_FAULT *fault, size_t newlen);
+int qtest_fault_resize_plain_packet(QTEST_FAULT *fault, size_t newlen);
 
 /*
  * Prepend frame data into a packet. To be called from a packet_plain_listener
  * callback
  */
-int ossl_quic_fault_prepend_frame(OSSL_QUIC_FAULT *fault, unsigned char *frame,
-                                  size_t frame_len);
+int qtest_fault_prepend_frame(QTEST_FAULT *fault, unsigned char *frame,
+                              size_t frame_len);
 
 /*
  * The general handshake message listener is sent the entire handshake message
  * data block, including the handshake header itself
  */
-typedef int (*ossl_quic_fault_on_handshake_cb)(OSSL_QUIC_FAULT *fault,
-                                               unsigned char *msg,
-                                               size_t msglen,
-                                               void *handshakecbarg);
-
-int ossl_quic_fault_set_handshake_listener(OSSL_QUIC_FAULT *fault,
-                                           ossl_quic_fault_on_handshake_cb handshakecb,
+typedef int (*qtest_fault_on_handshake_cb)(QTEST_FAULT *fault,
+                                           unsigned char *msg,
+                                           size_t msglen,
                                            void *handshakecbarg);
+
+int qtest_fault_set_handshake_listener(QTEST_FAULT *fault,
+                                       qtest_fault_on_handshake_cb handshakecb,
+                                       void *handshakecbarg);
 
 /*
  * Helper function to be called from a handshake_listener callback if it wants
@@ -108,7 +108,7 @@ int ossl_quic_fault_set_handshake_listener(OSSL_QUIC_FAULT *fault,
  * This will fail if a large resize is attempted that exceeds the over
  * allocation.
  */
-int ossl_quic_fault_resize_handshake(OSSL_QUIC_FAULT *fault, size_t newlen);
+int qtest_fault_resize_handshake(QTEST_FAULT *fault, size_t newlen);
 
 /*
  * TODO(QUIC): Add listeners for specifc types of frame here. E.g. we might
@@ -121,14 +121,14 @@ int ossl_quic_fault_resize_handshake(OSSL_QUIC_FAULT *fault, size_t newlen);
  * listener these messages are pre-parsed and supplied with message specific
  * data and exclude the handshake header
  */
-typedef int (*ossl_quic_fault_on_enc_ext_cb)(OSSL_QUIC_FAULT *fault,
-                                             OSSL_QF_ENCRYPTED_EXTENSIONS *ee,
-                                             size_t eelen,
-                                             void *encextcbarg);
+typedef int (*qtest_fault_on_enc_ext_cb)(QTEST_FAULT *fault,
+                                         QTEST_ENCRYPTED_EXTENSIONS *ee,
+                                         size_t eelen,
+                                         void *encextcbarg);
 
-int ossl_quic_fault_set_hand_enc_ext_listener(OSSL_QUIC_FAULT *fault,
-                                              ossl_quic_fault_on_enc_ext_cb encextcb,
-                                              void *encextcbarg);
+int qtest_fault_set_hand_enc_ext_listener(QTEST_FAULT *fault,
+                                          qtest_fault_on_enc_ext_cb encextcb,
+                                          void *encextcbarg);
 
 /* TODO(QUIC): Add listeners for other types of handshake message here */
 
@@ -141,7 +141,7 @@ int ossl_quic_fault_set_hand_enc_ext_listener(OSSL_QUIC_FAULT *fault,
  * address of the buffer. This will fail if a large resize is attempted that
  * exceeds the over allocation.
  */
-int ossl_quic_fault_resize_message(OSSL_QUIC_FAULT *fault, size_t newlen);
+int qtest_fault_resize_message(QTEST_FAULT *fault, size_t newlen);
 
 /*
  * Helper function to delete an extension from an extension block. |exttype| is
@@ -149,9 +149,9 @@ int ossl_quic_fault_resize_message(OSSL_QUIC_FAULT *fault, size_t newlen);
  * On entry |*extlen| contains the length of the extension block. It is updated
  * with the new length on exit.
  */
-int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
-                                     unsigned int exttype, unsigned char *ext,
-                                     size_t *extlen);
+int qtest_fault_delete_extension(QTEST_FAULT *fault,
+                                 unsigned int exttype, unsigned char *ext,
+                                 size_t *extlen);
 
 /*
  * TODO(QUIC): Add additional helper functions for quering extensions here (e.g.
@@ -162,30 +162,30 @@ int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
 /*
  * Enable tests to listen for post-encryption QUIC packets being sent
  */
-typedef int (*ossl_quic_fault_on_packet_cipher_cb)(OSSL_QUIC_FAULT *fault,
-                                                   /* The parsed packet header */
-                                                   QUIC_PKT_HDR *hdr,
-                                                   /* The packet payload data */
-                                                   unsigned char *buf,
-                                                   /* Length of the payload */
-                                                   size_t len,
-                                                   void *cbarg);
+typedef int (*qtest_fault_on_packet_cipher_cb)(QTEST_FAULT *fault,
+                                               /* The parsed packet header */
+                                               QUIC_PKT_HDR *hdr,
+                                               /* The packet payload data */
+                                               unsigned char *buf,
+                                               /* Length of the payload */
+                                               size_t len,
+                                               void *cbarg);
 
-int ossl_quic_fault_set_packet_cipher_listener(OSSL_QUIC_FAULT *fault,
-                                               ossl_quic_fault_on_packet_cipher_cb pciphercb,
-                                               void *picphercbarg);
+int qtest_fault_set_packet_cipher_listener(QTEST_FAULT *fault,
+                                           qtest_fault_on_packet_cipher_cb pciphercb,
+                                           void *picphercbarg);
 
 /*
  * Enable tests to listen for datagrams being sent
  */
-typedef int (*ossl_quic_fault_on_datagram_cb)(OSSL_QUIC_FAULT *fault,
-                                              BIO_MSG *m,
-                                              size_t stride,
-                                              void *cbarg);
+typedef int (*qtest_fault_on_datagram_cb)(QTEST_FAULT *fault,
+                                          BIO_MSG *m,
+                                          size_t stride,
+                                          void *cbarg);
 
-int ossl_quic_fault_set_datagram_listener(OSSL_QUIC_FAULT *fault,
-                                          ossl_quic_fault_on_datagram_cb datagramcb,
-                                          void *datagramcbarg);
+int qtest_fault_set_datagram_listener(QTEST_FAULT *fault,
+                                      qtest_fault_on_datagram_cb datagramcb,
+                                      void *datagramcbarg);
 
 /*
  * To be called from a datagram_listener callback. The datagram buffer is over
@@ -193,4 +193,4 @@ int ossl_quic_fault_set_datagram_listener(OSSL_QUIC_FAULT *fault,
  * address of the buffer. This will fail if a large resize is attempted that
  * exceeds the over allocation.
  */
-int ossl_quic_fault_resize_datagram(OSSL_QUIC_FAULT *fault, size_t newlen);
+int qtest_fault_resize_datagram(QTEST_FAULT *fault, size_t newlen);

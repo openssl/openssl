@@ -67,7 +67,7 @@ static int test_basic(void)
 /*
  * Test that adding an unknown frame type is handled correctly
  */
-static int add_unknown_frame_cb(OSSL_QUIC_FAULT *fault, QUIC_PKT_HDR *hdr,
+static int add_unknown_frame_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
                                 unsigned char *buf, size_t len, void *cbarg)
 {
     static size_t done = 0;
@@ -84,8 +84,8 @@ static int add_unknown_frame_cb(OSSL_QUIC_FAULT *fault, QUIC_PKT_HDR *hdr,
     if (done++)
         return 1;
 
-    return ossl_quic_fault_prepend_frame(fault, unknown_frame,
-                                         sizeof(unknown_frame));
+    return qtest_fault_prepend_frame(fault, unknown_frame,
+                                     sizeof(unknown_frame));
 }
 
 static int test_unknown_frame(void)
@@ -98,7 +98,7 @@ static int test_unknown_frame(void)
     size_t msglen = strlen(msg);
     unsigned char buf[80];
     size_t byteswritten;
-    OSSL_QUIC_FAULT *fault = NULL;
+    QTEST_FAULT *fault = NULL;
 
     if (!TEST_ptr(cctx))
         goto err;
@@ -114,9 +114,9 @@ static int test_unknown_frame(void)
      * Write a message from the server to the client and add an unknown frame
      * type
      */
-    if (!TEST_true(ossl_quic_fault_set_packet_plain_listener(fault,
-                                                             add_unknown_frame_cb,
-                                                             NULL)))
+    if (!TEST_true(qtest_fault_set_packet_plain_listener(fault,
+                                                         add_unknown_frame_cb,
+                                                         NULL)))
         goto err;
 
     if (!TEST_true(ossl_quic_tserver_write(qtserv, (unsigned char *)msg, msglen,
@@ -155,7 +155,7 @@ static int test_unknown_frame(void)
 
     testresult = 1;
  err:
-    ossl_quic_fault_free(fault);
+    qtest_fault_free(fault);
     SSL_free(cssl);
     ossl_quic_tserver_free(qtserv);
     SSL_CTX_free(cctx);
@@ -166,13 +166,13 @@ static int test_unknown_frame(void)
  * Test that a server that fails to provide transport params cannot be
  * connected to.
  */
-static int drop_transport_params_cb(OSSL_QUIC_FAULT *fault,
-                                    OSSL_QF_ENCRYPTED_EXTENSIONS *ee,
+static int drop_transport_params_cb(QTEST_FAULT *fault,
+                                    QTEST_ENCRYPTED_EXTENSIONS *ee,
                                     size_t eelen, void *encextcbarg)
 {
-    if (!ossl_quic_fault_delete_extension(fault,
-                                          TLSEXT_TYPE_quic_transport_parameters,
-                                          ee->extensions, &ee->extensionslen))
+    if (!qtest_fault_delete_extension(fault,
+                                      TLSEXT_TYPE_quic_transport_parameters,
+                                      ee->extensions, &ee->extensionslen))
         return 0;
 
     return 1;
@@ -184,7 +184,7 @@ static int test_no_transport_params(void)
     SSL_CTX *cctx = SSL_CTX_new(OSSL_QUIC_client_method());
     QUIC_TSERVER *qtserv = NULL;
     SSL *cssl = NULL;
-    OSSL_QUIC_FAULT *fault = NULL;
+    QTEST_FAULT *fault = NULL;
 
     if (!TEST_ptr(cctx))
         goto err;
@@ -193,9 +193,9 @@ static int test_no_transport_params(void)
                                              &cssl, &fault)))
         goto err;
 
-    if (!TEST_true(ossl_quic_fault_set_hand_enc_ext_listener(fault,
-                                                             drop_transport_params_cb,
-                                                             NULL)))
+    if (!TEST_true(qtest_fault_set_hand_enc_ext_listener(fault,
+                                                         drop_transport_params_cb,
+                                                         NULL)))
         goto err;
 
     /*
@@ -210,7 +210,7 @@ static int test_no_transport_params(void)
 
     testresult = 1;
  err:
-    ossl_quic_fault_free(fault);
+    qtest_fault_free(fault);
     SSL_free(cssl);
     ossl_quic_tserver_free(qtserv);
     SSL_CTX_free(cctx);
@@ -222,7 +222,7 @@ static int test_no_transport_params(void)
  */
 static int docorrupt = 0;
 
-static int on_packet_cipher_cb(OSSL_QUIC_FAULT *fault, QUIC_PKT_HDR *hdr,
+static int on_packet_cipher_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
                                unsigned char *buf, size_t len, void *cbarg)
 {
     if (!docorrupt || len == 0)
@@ -234,13 +234,13 @@ static int on_packet_cipher_cb(OSSL_QUIC_FAULT *fault, QUIC_PKT_HDR *hdr,
     return 1;
 }
 
-static int on_datagram_cb(OSSL_QUIC_FAULT *fault, BIO_MSG *m, size_t stride,
+static int on_datagram_cb(QTEST_FAULT *fault, BIO_MSG *m, size_t stride,
                           void *cbarg)
 {
     if (!docorrupt || m->data_len == 0)
         return 1;
 
-    if (!ossl_quic_fault_resize_datagram(fault, m->data_len - 1))
+    if (!qtest_fault_resize_datagram(fault, m->data_len - 1))
         return 1;
 
     docorrupt = 0;
@@ -254,7 +254,7 @@ static int on_datagram_cb(OSSL_QUIC_FAULT *fault, BIO_MSG *m, size_t stride,
  */
 static int test_corrupted_data(int idx)
 {
-    OSSL_QUIC_FAULT *fault = NULL;
+    QTEST_FAULT *fault = NULL;
     int testresult = 0;
     SSL_CTX *cctx = SSL_CTX_new(OSSL_QUIC_client_method());
     QUIC_TSERVER *qtserv = NULL;
@@ -273,15 +273,15 @@ static int test_corrupted_data(int idx)
 
     if (idx == 0) {
         /* Listen for encrypted packets being sent */
-        if (!TEST_true(ossl_quic_fault_set_packet_cipher_listener(fault,
-                                                                  on_packet_cipher_cb,
-                                                                  NULL)))
+        if (!TEST_true(qtest_fault_set_packet_cipher_listener(fault,
+                                                              on_packet_cipher_cb,
+                                                              NULL)))
             goto err;
     } else {
         /* Listen for datagrams being sent */
-        if (!TEST_true(ossl_quic_fault_set_datagram_listener(fault,
-                                                             on_datagram_cb,
-                                                             NULL)))
+        if (!TEST_true(qtest_fault_set_datagram_listener(fault,
+                                                         on_datagram_cb,
+                                                         NULL)))
             goto err;
     }
     if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
@@ -358,7 +358,7 @@ static int test_corrupted_data(int idx)
 
     testresult = 1;
  err:
-    ossl_quic_fault_free(fault);
+    qtest_fault_free(fault);
     SSL_free(cssl);
     ossl_quic_tserver_free(qtserv);
     SSL_CTX_free(cctx);

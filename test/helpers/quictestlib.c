@@ -18,7 +18,7 @@
 
 #define GROWTH_ALLOWANCE 1024
 
-struct ossl_quic_fault {
+struct qtest_fault {
     QUIC_TSERVER *qtserv;
 
     /* Plain packet mutations */
@@ -28,7 +28,7 @@ struct ossl_quic_fault {
     OSSL_QTX_IOVEC pplainio;
     /* Allocted size of the plaintext packet data buffer */
     size_t pplainbuf_alloc;
-    ossl_quic_fault_on_packet_plain_cb pplaincb;
+    qtest_fault_on_packet_plain_cb pplaincb;
     void *pplaincbarg;
 
     /* Handshake message mutations */
@@ -38,17 +38,17 @@ struct ossl_quic_fault {
     size_t handbufalloc;
     /* Actual length of the handshake message */
     size_t handbuflen;
-    ossl_quic_fault_on_handshake_cb handshakecb;
+    qtest_fault_on_handshake_cb handshakecb;
     void *handshakecbarg;
-    ossl_quic_fault_on_enc_ext_cb encextcb;
+    qtest_fault_on_enc_ext_cb encextcb;
     void *encextcbarg;
 
     /* Cipher packet mutations */
-    ossl_quic_fault_on_packet_cipher_cb pciphercb;
+    qtest_fault_on_packet_cipher_cb pciphercb;
     void *pciphercbarg;
 
     /* Datagram mutations */
-    ossl_quic_fault_on_datagram_cb datagramcb;
+    qtest_fault_on_datagram_cb datagramcb;
     void *datagramcbarg;
     /* The currently processed message */
     BIO_MSG msg;
@@ -63,7 +63,7 @@ static BIO_METHOD *get_bio_method(void);
 
 int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
                               QUIC_TSERVER **qtserv, SSL **cssl,
-                              OSSL_QUIC_FAULT **fault)
+                              QTEST_FAULT **fault)
 {
     /* ALPN value as recognised by QUIC_TSERVER */
     unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
@@ -228,7 +228,7 @@ int qtest_check_server_protocol_err(QUIC_TSERVER *qtserv)
     return qtest_check_server_transport_err(qtserv, QUIC_ERR_PROTOCOL_VIOLATION);
 }
 
-void ossl_quic_fault_free(OSSL_QUIC_FAULT *fault)
+void qtest_fault_free(QTEST_FAULT *fault)
 {
     if (fault == NULL)
         return;
@@ -246,7 +246,7 @@ static int packet_plain_mutate(const QUIC_PKT_HDR *hdrin,
                                size_t *numout,
                                void *arg)
 {
-    OSSL_QUIC_FAULT *fault = arg;
+    QTEST_FAULT *fault = arg;
     size_t i, bufsz = 0;
     unsigned char *cur;
 
@@ -293,7 +293,7 @@ static int packet_plain_mutate(const QUIC_PKT_HDR *hdrin,
 
 static void packet_plain_finish(void *arg)
 {
-    OSSL_QUIC_FAULT *fault = arg;
+    QTEST_FAULT *fault = arg;
 
     /* Cast below is safe because we allocated the buffer */
     OPENSSL_free((unsigned char *)fault->pplainio.buf);
@@ -302,9 +302,9 @@ static void packet_plain_finish(void *arg)
     fault->pplainio.buf = NULL;
 }
 
-int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
-                                              ossl_quic_fault_on_packet_plain_cb pplaincb,
-                                              void *pplaincbarg)
+int qtest_fault_set_packet_plain_listener(QTEST_FAULT *fault,
+                                          qtest_fault_on_packet_plain_cb pplaincb,
+                                          void *pplaincbarg)
 {
     fault->pplaincb = pplaincb;
     fault->pplaincbarg = pplaincbarg;
@@ -316,7 +316,7 @@ int ossl_quic_fault_set_packet_plain_listener(OSSL_QUIC_FAULT *fault,
 }
 
 /* To be called from a packet_plain_listener callback */
-int ossl_quic_fault_resize_plain_packet(OSSL_QUIC_FAULT *fault, size_t newlen)
+int qtest_fault_resize_plain_packet(QTEST_FAULT *fault, size_t newlen)
 {
     unsigned char *buf;
     size_t oldlen = fault->pplainio.buf_len;
@@ -351,8 +351,8 @@ int ossl_quic_fault_resize_plain_packet(OSSL_QUIC_FAULT *fault, size_t newlen)
  * Prepend frame data into a packet. To be called from a packet_plain_listener
  * callback
  */
-int ossl_quic_fault_prepend_frame(OSSL_QUIC_FAULT *fault, unsigned char *frame,
-                                  size_t frame_len)
+int qtest_fault_prepend_frame(QTEST_FAULT *fault, unsigned char *frame,
+                              size_t frame_len)
 {
     unsigned char *buf;
     size_t old_len;
@@ -369,8 +369,8 @@ int ossl_quic_fault_prepend_frame(OSSL_QUIC_FAULT *fault, unsigned char *frame,
     old_len = fault->pplainio.buf_len;
 
     /* Extend the size of the packet by the size of the new frame */
-    if (!TEST_true(ossl_quic_fault_resize_plain_packet(fault,
-                                                       old_len + frame_len)))
+    if (!TEST_true(qtest_fault_resize_plain_packet(fault,
+                                                   old_len + frame_len)))
         return 0;
 
     memmove(buf + frame_len, buf, old_len);
@@ -383,7 +383,7 @@ static int handshake_mutate(const unsigned char *msgin, size_t msginlen,
                             unsigned char **msgout, size_t *msgoutlen,
                             void *arg)
 {
-    OSSL_QUIC_FAULT *fault = arg;
+    QTEST_FAULT *fault = arg;
     unsigned char *buf;
     unsigned long payloadlen;
     unsigned int msgtype;
@@ -408,7 +408,7 @@ static int handshake_mutate(const unsigned char *msgin, size_t msginlen,
     switch (msgtype) {
     case SSL3_MT_ENCRYPTED_EXTENSIONS:
     {
-        OSSL_QF_ENCRYPTED_EXTENSIONS ee;
+        QTEST_ENCRYPTED_EXTENSIONS ee;
 
         if (fault->encextcb == NULL)
             break;
@@ -441,15 +441,15 @@ static int handshake_mutate(const unsigned char *msgin, size_t msginlen,
 
 static void handshake_finish(void *arg)
 {
-    OSSL_QUIC_FAULT *fault = arg;
+    QTEST_FAULT *fault = arg;
 
     OPENSSL_free(fault->handbuf);
     fault->handbuf = NULL;
 }
 
-int ossl_quic_fault_set_handshake_listener(OSSL_QUIC_FAULT *fault,
-                                           ossl_quic_fault_on_handshake_cb handshakecb,
-                                           void *handshakecbarg)
+int qtest_fault_set_handshake_listener(QTEST_FAULT *fault,
+                                       qtest_fault_on_handshake_cb handshakecb,
+                                       void *handshakecbarg)
 {
     fault->handshakecb = handshakecb;
     fault->handshakecbarg = handshakecbarg;
@@ -460,9 +460,9 @@ int ossl_quic_fault_set_handshake_listener(OSSL_QUIC_FAULT *fault,
                                                    fault);
 }
 
-int ossl_quic_fault_set_hand_enc_ext_listener(OSSL_QUIC_FAULT *fault,
-                                              ossl_quic_fault_on_enc_ext_cb encextcb,
-                                              void *encextcbarg)
+int qtest_fault_set_hand_enc_ext_listener(QTEST_FAULT *fault,
+                                          qtest_fault_on_enc_ext_cb encextcb,
+                                          void *encextcbarg)
 {
     fault->encextcb = encextcb;
     fault->encextcbarg = encextcbarg;
@@ -474,7 +474,7 @@ int ossl_quic_fault_set_hand_enc_ext_listener(OSSL_QUIC_FAULT *fault,
 }
 
 /* To be called from a handshake_listener callback */
-int ossl_quic_fault_resize_handshake(OSSL_QUIC_FAULT *fault, size_t newlen)
+int qtest_fault_resize_handshake(QTEST_FAULT *fault, size_t newlen)
 {
     unsigned char *buf;
     size_t oldlen = fault->handbuflen;
@@ -503,10 +503,10 @@ int ossl_quic_fault_resize_handshake(OSSL_QUIC_FAULT *fault, size_t newlen)
 }
 
 /* To be called from message specific listener callbacks */
-int ossl_quic_fault_resize_message(OSSL_QUIC_FAULT *fault, size_t newlen)
+int qtest_fault_resize_message(QTEST_FAULT *fault, size_t newlen)
 {
     /* First resize the underlying message */
-    if (!ossl_quic_fault_resize_handshake(fault, newlen + SSL3_HM_HEADER_LENGTH))
+    if (!qtest_fault_resize_handshake(fault, newlen + SSL3_HM_HEADER_LENGTH))
         return 0;
 
     /* Fixup the handshake message header */
@@ -517,9 +517,9 @@ int ossl_quic_fault_resize_message(OSSL_QUIC_FAULT *fault, size_t newlen)
     return 1;
 }
 
-int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
-                                     unsigned int exttype, unsigned char *ext,
-                                     size_t *extlen)
+int qtest_fault_delete_extension(QTEST_FAULT *fault,
+                                 unsigned int exttype, unsigned char *ext,
+                                 size_t *extlen)
 {
     PACKET pkt, sub, subext;
     unsigned int type;
@@ -574,7 +574,7 @@ int ossl_quic_fault_delete_extension(OSSL_QUIC_FAULT *fault,
     if ((size_t)(end - start) + SSL3_HM_HEADER_LENGTH > msglen)
         return 0; /* Should not happen */
     msglen -= (end - start) + SSL3_HM_HEADER_LENGTH;
-    if (!ossl_quic_fault_resize_message(fault, msglen))
+    if (!qtest_fault_resize_message(fault, msglen))
         return 0;
 
     return 1;
@@ -590,7 +590,7 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                             size_t num_msg, uint64_t flags,
                             size_t *num_processed)
 {
-    OSSL_QUIC_FAULT *fault;
+    QTEST_FAULT *fault;
     BIO *next = BIO_next(b);
     ossl_ssize_t ret = 0;
     size_t i = 0, tmpnump;
@@ -710,9 +710,9 @@ static BIO_METHOD *get_bio_method(void)
     return pcipherbiometh;
 }
 
-int ossl_quic_fault_set_packet_cipher_listener(OSSL_QUIC_FAULT *fault,
-                                               ossl_quic_fault_on_packet_cipher_cb pciphercb,
-                                               void *pciphercbarg)
+int qtest_fault_set_packet_cipher_listener(QTEST_FAULT *fault,
+                                           qtest_fault_on_packet_cipher_cb pciphercb,
+                                           void *pciphercbarg)
 {
     fault->pciphercb = pciphercb;
     fault->pciphercbarg = pciphercbarg;
@@ -720,9 +720,9 @@ int ossl_quic_fault_set_packet_cipher_listener(OSSL_QUIC_FAULT *fault,
     return 1;
 }
 
-int ossl_quic_fault_set_datagram_listener(OSSL_QUIC_FAULT *fault,
-                                          ossl_quic_fault_on_datagram_cb datagramcb,
-                                          void *datagramcbarg)
+int qtest_fault_set_datagram_listener(QTEST_FAULT *fault,
+                                      qtest_fault_on_datagram_cb datagramcb,
+                                      void *datagramcbarg)
 {
     fault->datagramcb = datagramcb;
     fault->datagramcbarg = datagramcbarg;
@@ -731,7 +731,7 @@ int ossl_quic_fault_set_datagram_listener(OSSL_QUIC_FAULT *fault,
 }
 
 /* To be called from a datagram_listener callback */
-int ossl_quic_fault_resize_datagram(OSSL_QUIC_FAULT *fault, size_t newlen)
+int qtest_fault_resize_datagram(QTEST_FAULT *fault, size_t newlen)
 {
     if (newlen > fault->msgalloc)
             return 0;
