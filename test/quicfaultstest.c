@@ -305,16 +305,16 @@ static int test_corrupted_data(int idx)
      * Introduce a small delay so that the above packet has time to be detected
      * as lost. Loss detection times are based on RTT which should be very
      * fast for us since there isn't really a network. The loss delay timer is
-     * always at least 1ms though, so we sleep for that period.
+     * always at least 1ms though. We sleep for 100ms.
      * TODO(QUIC): This assumes the calculated RTT will always be way less than
-     * 1ms - which it should be...but can we always guarantee this? An
+     * 100ms - which it should be...but can we always guarantee this? An
      * alternative might be to put in our own ossl_time_now() implementation for
      * these tests and control the timer as part of the test. This approach has
      * the added advantage that the test will behave reliably when run in a
      * debugger. Without it may get unreliable debugging results. This would
      * require some significant refactoring of the ssl/quic code though.
      */
-    OSSL_sleep(1);
+    OSSL_sleep(100);
 
     /* Send rest of message */
     if (!TEST_true(ossl_quic_tserver_write(qtserv, (unsigned char *)msg + 5,
