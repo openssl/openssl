@@ -154,7 +154,7 @@ int qtest_fault_delete_extension(QTEST_FAULT *fault,
                                  size_t *extlen);
 
 /*
- * TODO(QUIC): Add additional helper functions for quering extensions here (e.g.
+ * TODO(QUIC): Add additional helper functions for querying extensions here (e.g.
  * finding or adding them). We could also provide a "listener" API for listening
  * for specific extension types
  */
