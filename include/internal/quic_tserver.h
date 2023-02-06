@@ -63,12 +63,12 @@ int ossl_quic_tserver_tick(QUIC_TSERVER *srv);
 int ossl_quic_tserver_is_handshake_confirmed(QUIC_TSERVER *srv);
 
 /* Returns 1 if the server is in any terminating or terminated state */
-int ossl_quic_tserver_is_term_any(QUIC_TSERVER *srv,
-                                  QUIC_TERMINATE_CAUSE *cause);
+int ossl_quic_tserver_is_term_any(QUIC_TSERVER *srv);
+
+QUIC_TERMINATE_CAUSE ossl_quic_tserver_get_terminate_cause(QUIC_TSERVER *srv);
 
 /* Returns 1 if the server is in a terminated state */
-int ossl_quic_tserver_is_terminated(QUIC_TSERVER *srv,
-                                    QUIC_TERMINATE_CAUSE *cause);
+int ossl_quic_tserver_is_terminated(QUIC_TSERVER *srv);
 /*
  * Attempts to read from stream 0. Writes the number of bytes read to
  * *bytes_read and returns 1 on success. If no bytes are available, 0 is written

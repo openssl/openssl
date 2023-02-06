@@ -646,7 +646,7 @@ int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
         /* Handshake already completed. */
         return 1;
 
-    if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch, NULL))
+    if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch))
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
 
     if (BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC) {
@@ -1012,7 +1012,7 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
     if (!expect_quic_conn(qc))
         return 0;
 
-    if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch, NULL))
+    if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch))
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
 
     /*
@@ -1133,7 +1133,7 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
     if (!expect_quic_conn(qc))
         return 0;
 
-    if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch, NULL))
+    if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch))
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
 
     /* If we haven't finished the handshake, try to advance it. */
