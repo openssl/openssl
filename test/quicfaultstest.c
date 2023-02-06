@@ -228,7 +228,7 @@ static int on_packet_cipher_cb(QTEST_FAULT *fault, QUIC_PKT_HDR *hdr,
     if (!docorrupt || len == 0)
         return 1;
 
-    buf[0] ^= 0xff;
+    buf[(size_t)test_random() % len] ^= 0xff;
     docorrupt = 0;
 
     return 1;
