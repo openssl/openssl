@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2017-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2023 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
