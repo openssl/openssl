@@ -43,6 +43,18 @@ OpenSSL 3.1
 OpenSSL 3.0
 -----------
 
+### Major changes between OpenSSL 3.0.7 and OpenSSL 3.0.8 [7 Feb 2023]
+
+  * Fixed NULL dereference during PKCS7 data verification ([CVE-2023-0401])
+  * Fixed X.400 address type confusion in X.509 GeneralName ([CVE-2023-0286])
+  * Fixed NULL dereference validating DSA public key ([CVE-2023-0217])
+  * Fixed Invalid pointer dereference in d2i_PKCS7 functions ([CVE-2023-0216])
+  * Fixed Use-after-free following BIO_new_NDEF ([CVE-2023-0215])
+  * Fixed Double free after calling PEM_read_bio_ex ([CVE-2022-4450])
+  * Fixed Timing Oracle in RSA Decryption ([CVE-2022-4304])
+  * Fixed X.509 Name Constraints Read Buffer Overflow ([CVE-2022-4203])
+  * Fixed X.509 Policy Constraints Double Locking ([CVE-2022-3996])
+
 ### Major changes between OpenSSL 3.0.6 and OpenSSL 3.0.7 [1 Nov 2022]
 
   * Added RIPEMD160 to the default provider.
@@ -79,19 +91,19 @@ OpenSSL 3.0
   * Fix a bug in the OPENSSL_LH_flush() function that breaks reuse of the memory
     occuppied by the removed hash table entries ([CVE-2022-1473])
 
-### Major changes between OpenSSL 3.0.1 and OpenSSL 3.0.2
+### Major changes between OpenSSL 3.0.1 and OpenSSL 3.0.2 [15 Mar 2022]
 
   * Fixed a bug in the BN_mod_sqrt() function that can cause it to loop forever
     for non-prime moduli ([CVE-2022-0778])
 
-### Major changes between OpenSSL 3.0.0 and OpenSSL 3.0.1
+### Major changes between OpenSSL 3.0.0 and OpenSSL 3.0.1 [14 Dec 2021]
 
   * Fixed invalid handling of X509_verify_cert() internal errors in libssl
     ([CVE-2021-4044])
   * Allow fetching an operation from the provider that owns an unexportable key
     as a fallback if that is still allowed by the property query.
 
-### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0
+### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0 [7 sep 2021]
 
   * Enhanced 'openssl list' with many new options.
   * Added migration guide to man7.
@@ -1443,7 +1455,17 @@ OpenSSL 0.9.x
   * Support for various new platforms
 
 <!-- Links -->
-
+[CVE-2023-0401]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0401
+[CVE-2023-0286]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0286
+[CVE-2023-0217]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0217
+[CVE-2023-0216]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0216
+[CVE-2023-0215]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0215
+[CVE-2022-4450]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-4450
+[CVE-2022-4304]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-4304
+[CVE-2022-4203]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-4203
+[CVE-2022-3996]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-3996
+[CVE-2022-2274]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2274
+[CVE-2022-2097]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2274
 [CVE-2020-1971]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1971
 [CVE-2020-1967]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1967
 [CVE-2019-1563]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1563
