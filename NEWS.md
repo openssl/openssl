@@ -18,7 +18,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Major changes between OpenSSL 3.0.7 and OpenSSL 3.0.8 [under development]
+### Major changes between OpenSSL 3.0.7 and OpenSSL 3.0.8 [7 Feb 2023]
 
   * Fixed NULL dereference during PKCS7 data verification ([CVE-2023-0401])
   * Fixed X.400 address type confusion in X.509 GeneralName ([CVE-2023-0286])
