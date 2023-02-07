@@ -7,7 +7,7 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.1s and 1.1.1t [xx XXX xxxx]
+ Changes between 1.1.1s and 1.1.1t [7 Feb 2023]
 
   *) Fixed X.400 address type confusion in X.509 GeneralName.
 
