@@ -631,7 +631,7 @@ static int default_fixup_args(enum state state,
                     return 1;
                 case OSSL_PARAM_UTF8_STRING:
                     return OSSL_PARAM_get_utf8_string(ctx->params,
-                                                      &ctx->p2, ctx->sz);
+                                                      (char **)&ctx->p2, ctx->sz);
                 case OSSL_PARAM_OCTET_STRING:
                     return OSSL_PARAM_get_octet_string(ctx->params,
                                                        ctx->p2, ctx->sz,
