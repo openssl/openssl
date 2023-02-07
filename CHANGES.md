@@ -28,6 +28,10 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
+### Changes between 3.0.8 and 3.0.9 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.0.7 and 3.0.8 [7 Feb 2023]
 
  * Fixed NULL dereference during PKCS7 data verification.
