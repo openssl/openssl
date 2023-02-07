@@ -631,7 +631,7 @@ static int default_fixup_args(enum state state,
                     return 1;
                 case OSSL_PARAM_UTF8_STRING:
                     return OSSL_PARAM_get_utf8_string(ctx->params,
-                                                      ctx->p2, ctx->sz);
+                                                      &ctx->p2, ctx->sz);
                 case OSSL_PARAM_OCTET_STRING:
                     return OSSL_PARAM_get_octet_string(ctx->params,
                                                        ctx->p2, ctx->sz,
@@ -1155,6 +1155,8 @@ static int fix_ec_paramgen_curve_nid(enum state state,
         ctx->p1 = OBJ_sn2nid(ctx->p2);
         ctx->p2 = NULL;
     }
+
+    ctx->ctrl_cmd = EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID;
 
     return ret;
 }
