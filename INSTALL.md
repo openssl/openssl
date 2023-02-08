@@ -788,6 +788,11 @@ Build (and install) the FIPS provider
 Don't perform FIPS module run-time checks related to enforcement of security
 parameters such as minimum security strength of keys.
 
+### no-fips-ems_check
+
+Don't compile in the FIPS module run-time check related to enforcement of EMS
+during TLS1_PRF KDF.
+
 ### enable-fuzz-libfuzzer, enable-fuzz-afl
 
 Build with support for fuzzing using either libfuzzer or AFL.

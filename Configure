@@ -455,6 +455,7 @@ my @disablables = (
     "filenames",
     "fips",
     "fips-securitychecks",
+    "fips-ems_check",
     "fuzz-afl",
     "fuzz-libfuzzer",
     "gost",
@@ -600,7 +601,8 @@ my @disable_cascades = (
                              "srtp", "ssl3-method", "ssl-trace",
                              "tfo",
                              "ts", "ui-console", "whirlpool",
-                             "fips-securitychecks" ],
+                             "fips-securitychecks",
+                             "fips-ems_check"],
     sub { $config{processor} eq "386" }
                         => [ "sse2" ],
     "ssl"               => [ "ssl3" ],
@@ -664,7 +666,7 @@ my @disable_cascades = (
 
     "cmp"               => [ "crmf" ],
 
-    "fips"              => [ "fips-securitychecks", "acvp-tests" ],
+    "fips"              => [ "fips-securitychecks", "acvp-tests", "fips-ems_check"],
 
     "threads"           => [ "thread-pool" ],
     "thread-pool"       => [ "default-thread-pool" ],

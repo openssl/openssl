@@ -99,6 +99,7 @@ static char *tmpfilename = NULL;
 static char *dhfile = NULL;
 
 static int is_fips = 0;
+static int fips_ems_check = 0;
 
 #define LOG_BUFFER_SIZE 2048
 static char server_log_buffer[LOG_BUFFER_SIZE + 1] = {0};
@@ -796,7 +797,7 @@ static int test_no_ems(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
-    int testresult = 0;
+    int testresult = 0, status;
 
     if (!create_ssl_ctx_pair(libctx, TLS_server_method(), TLS_client_method(),
                              TLS1_VERSION, TLS1_2_VERSION,
@@ -812,19 +813,25 @@ static int test_no_ems(void)
         goto end;
     }
 
-    if (!create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)) {
-        printf("Creating SSL connection failed\n");
-        goto end;
-    }
-
-    if (SSL_get_extms_support(serverssl)) {
-        printf("Server reports Extended Master Secret support\n");
-        goto end;
-    }
-
-    if (SSL_get_extms_support(clientssl)) {
-        printf("Client reports Extended Master Secret support\n");
-        goto end;
+    status = create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE);
+    if (fips_ems_check) {
+        if (status == 1) {
+            printf("When FIPS uses the EMS check a connection that doesnt use EMS should fail\n");
+            goto end;
+        }
+    } else {
+        if (!status) {
+            printf("Creating SSL connection failed\n");
+            goto end;
+        }
+        if (SSL_get_extms_support(serverssl)) {
+            printf("Server reports Extended Master Secret support\n");
+            goto end;
+        }
+        if (SSL_get_extms_support(clientssl)) {
+            printf("Client reports Extended Master Secret support\n");
+            goto end;
+        }
     }
     testresult = 1;
 
@@ -10740,8 +10747,23 @@ int setup_tests(void)
             && !TEST_false(OSSL_PROVIDER_available(libctx, "default")))
         return 0;
 
-    if (strcmp(modulename, "fips") == 0)
+    if (strcmp(modulename, "fips") == 0) {
+        OSSL_PROVIDER *prov = NULL;
+        OSSL_PARAM params[2];
+
         is_fips = 1;
+
+        prov = OSSL_PROVIDER_load(libctx, "fips");
+        if (prov != NULL) {
+            /* Query the fips provider to check if the check ems option is enabled */
+            params[0] =
+                OSSL_PARAM_construct_int(OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK,
+                                         &fips_ems_check);
+            params[1] = OSSL_PARAM_construct_end();
+            OSSL_PROVIDER_get_params(prov, params);
+            OSSL_PROVIDER_unload(prov);
+        }
+    }
 
     /*
      * We add, but don't load the test "tls-provider". We'll load it when we
@@ -10816,6 +10838,12 @@ int setup_tests(void)
     if (privkey8192 == NULL)
         goto err;
 
+    if (fips_ems_check) {
+#ifndef OPENSSL_NO_TLS1_2
+        ADD_TEST(test_no_ems);
+#endif
+        return 1;
+    }
 #if !defined(OPENSSL_NO_KTLS) && !defined(OPENSSL_NO_SOCK)
 # if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_ktls, NUM_KTLS_TEST_CIPHERS * 4);

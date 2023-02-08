@@ -21,6 +21,7 @@ B<openssl fipsinstall>
 [B<-quiet>]
 [B<-no_conditional_errors>]
 [B<-no_security_checks>]
+[B<-ems_check>]
 [B<-self_test_onload>]
 [B<-self_test_oninstall>]
 [B<-corrupt_desc> I<selftest_description>]
@@ -164,6 +165,18 @@ fails as described above.
 =item B<-no_security_checks>
 
 Configure the module to not perform run-time security checks as described above.
+
+Enabling the configuration option "no-fips-securitychecks" provides another way to
+turn off the check at compile time.
+
+=item B<-ems_check>
+
+Configure the module to enable a run-time Extended Master Secret (EMS) check
+when using the TLS1_PRF KDF algorithm. This check is disabled by default.
+See RFC 7627 for information related to EMS.
+
+This option is ignored if the compile time configuration option "no-fips-ems_check"
+is enabled.
 
 =item B<-self_test_onload>
 

@@ -41,6 +41,23 @@ query.  Including C<provider=fips> in your property query guarantees
 that the OpenSSL FIPS provider is used for cryptographic operations
 rather than other FIPS capable providers.
 
+=head2 Provider parameters
+
+See L<provider-base(7)/Provider parameters> for a list of base parameters.
+Additionally the OpenSSL FIPS provider also supports the following gettable
+parameters:
+
+=over 4
+
+=item "security-checks" (B<OSSL_OSSL_PROV_PARAM_SECURITY_CHECKS>) <unsigned integer>
+
+=item "tls1-prf-ems-check" (B<OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK>) <unsigned integer>
+
+For further information refer to the L<openssl-fipsinstall(1)> options for
+B<-no_security_checks> and B<-ems_check>.
+
+=back
+
 =head1 OPERATIONS AND ALGORITHMS
 
 The OpenSSL FIPS provider supports these operations and algorithms:
@@ -186,6 +203,21 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 =item TEST-RAND, see L<EVP_RAND-TEST-RAND(7)>
 
 TEST-RAND is an unapproved algorithm.
+
+=back
+
+=head1 Provider Parameters
+
+See L<provider-base(7)/Provider parameters> for a list of base parameters.
+Additionally the OpenSSL FIPS provider also supports the following gettable
+parameters:
+
+=over 4
+
+=item "security-checks" (B<OSSL_OSSL_PROV_PARAM_SECURITY_CHECKS>) <unsigned integer>
+
+For further information refer to the L<openssl-fipsinstall(1)> option
+B<-no_security_checks>.
 
 =back
 
