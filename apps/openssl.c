@@ -308,6 +308,7 @@ int main(int argc, char *argv[])
     BIO_free_all(bio_out);
     apps_shutdown();
     BIO_free_all(bio_err);
+    OPENSSL_cleanup();
     EXIT(ret);
 }
 
