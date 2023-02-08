@@ -47,8 +47,10 @@
 
 static OSSL_FUNC_keymgmt_import_fn xor_import;
 static OSSL_FUNC_keymgmt_import_types_fn xor_import_types;
+static OSSL_FUNC_keymgmt_import_types_ex_fn xor_import_types_ex;
 static OSSL_FUNC_keymgmt_export_fn xor_export;
 static OSSL_FUNC_keymgmt_export_types_fn xor_export_types;
+static OSSL_FUNC_keymgmt_export_types_ex_fn xor_export_types_ex;
 
 int tls_provider_init(const OSSL_CORE_HANDLE *handle,
                       const OSSL_DISPATCH *in,
@@ -1061,9 +1063,25 @@ static const OSSL_PARAM *xor_import_types(int select)
     return (select & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0 ? xor_key_types : NULL;
 }
 
+static const OSSL_PARAM *xor_import_types_ex(void *provctx, int select)
+{
+    if (provctx == NULL)
+        return NULL;
+
+    return xor_import_types(select);
+}
+
 static const OSSL_PARAM *xor_export_types(int select)
 {
     return (select & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0 ? xor_key_types : NULL;
+}
+
+static const OSSL_PARAM *xor_export_types_ex(void *provctx, int select)
+{
+    if (provctx == NULL)
+        return NULL;
+
+    return xor_export_types(select);
 }
 
 static void xor_gen_cleanup(void *genctx)
@@ -1088,8 +1106,10 @@ static const OSSL_DISPATCH xor_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))xor_freekey },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))xor_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))xor_import_types },
+    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES_EX, (void (*)(void))xor_import_types_ex },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))xor_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))xor_export_types },
+    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES_EX, (void (*)(void))xor_export_types_ex },
     { 0, NULL }
 };
 
