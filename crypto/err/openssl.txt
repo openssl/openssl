@@ -987,6 +987,7 @@ PROV_R_BN_ERROR:160:bn error
 PROV_R_CIPHER_OPERATION_FAILED:102:cipher operation failed
 PROV_R_DERIVATION_FUNCTION_INIT_FAILED:205:derivation function init failed
 PROV_R_DIGEST_NOT_ALLOWED:174:digest not allowed
+PROV_R_EMS_NOT_ENABLED:233:ems not enabled
 PROV_R_ENTROPY_SOURCE_STRENGTH_TOO_WEAK:186:entropy source strength too weak
 PROV_R_ERROR_INSTANTIATING_DRBG:188:error instantiating drbg
 PROV_R_ERROR_RETRIEVING_ENTROPY:189:error retrieving entropy

@@ -347,6 +347,7 @@ SKIP: {
     ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
                 '-provider_name', 'fips', '-mac_name', 'HMAC',
                 '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
-                '-section_name', 'fips_sect', '-self_test_oninstall'])),
+                '-section_name', 'fips_sect', '-self_test_oninstall',
+                '-ems_check'])),
        "fipsinstall fails when attempting to run self tests on install");
 }

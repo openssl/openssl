@@ -39,6 +39,7 @@ typedef enum OPTION_choice {
     OPT_NO_LOG, OPT_CORRUPT_DESC, OPT_CORRUPT_TYPE, OPT_QUIET, OPT_CONFIG,
     OPT_NO_CONDITIONAL_ERRORS,
     OPT_NO_SECURITY_CHECKS,
+    OPT_TLS_PRF_EMS_CHECK,
     OPT_SELF_TEST_ONLOAD, OPT_SELF_TEST_ONINSTALL
 } OPTION_CHOICE;
 
@@ -51,15 +52,17 @@ const OPTIONS fipsinstall_options[] = {
     {"provider_name", OPT_PROV_NAME, 's', "FIPS provider name"},
     {"section_name", OPT_SECTION_NAME, 's',
      "FIPS Provider config section name (optional)"},
-     {"no_conditional_errors", OPT_NO_CONDITIONAL_ERRORS, '-',
-      "Disable the ability of the fips module to enter an error state if"
-      " any conditional self tests fail"},
+    {"no_conditional_errors", OPT_NO_CONDITIONAL_ERRORS, '-',
+     "Disable the ability of the fips module to enter an error state if"
+     " any conditional self tests fail"},
     {"no_security_checks", OPT_NO_SECURITY_CHECKS, '-',
      "Disable the run-time FIPS security checks in the module"},
     {"self_test_onload", OPT_SELF_TEST_ONLOAD, '-',
      "Forces self tests to always run on module load"},
     {"self_test_oninstall", OPT_SELF_TEST_ONINSTALL, '-',
      "Forces self tests to run once on module installation"},
+    {"ems_check", OPT_TLS_PRF_EMS_CHECK, '-',
+     "Enable the run-time FIPS check for EMS during TLS1_PRF"},
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input config file, used when verifying"},
 
@@ -172,6 +175,7 @@ static int write_config_fips_section(BIO *out, const char *section,
                                      size_t module_mac_len,
                                      int conditional_errors,
                                      int security_checks,
+                                     int ems_check,
                                      unsigned char *install_mac,
                                      size_t install_mac_len)
 {
@@ -185,6 +189,8 @@ static int write_config_fips_section(BIO *out, const char *section,
                       conditional_errors ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS,
                       security_checks ? "1" : "0") <= 0
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK,
+                      ems_check ? "1" : "0") <= 0
         || !print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
                       module_mac_len))
         goto end;
@@ -206,7 +212,8 @@ static CONF *generate_config_and_load(const char *prov_name,
                                       unsigned char *module_mac,
                                       size_t module_mac_len,
                                       int conditional_errors,
-                                      int security_checks)
+                                      int security_checks,
+                                      int ems_check)
 {
     BIO *mem_bio = NULL;
     CONF *conf = NULL;
@@ -219,6 +226,7 @@ static CONF *generate_config_and_load(const char *prov_name,
                                        module_mac, module_mac_len,
                                        conditional_errors,
                                        security_checks,
+                                       ems_check,
                                        NULL, 0))
         goto end;
 
@@ -316,6 +324,7 @@ int fipsinstall_main(int argc, char **argv)
 {
     int ret = 1, verify = 0, gotkey = 0, gotdigest = 0, self_test_onload = 1;
     int enable_conditional_errors = 1, enable_security_checks = 1;
+    int enable_tls_prf_ems_check = 0; /* This is off by default */
     const char *section_name = "fips_sect";
     const char *mac_name = "HMAC";
     const char *prov_name = "fips";
@@ -360,6 +369,9 @@ opthelp:
             break;
         case OPT_NO_SECURITY_CHECKS:
             enable_security_checks = 0;
+            break;
+        case OPT_TLS_PRF_EMS_CHECK:
+            enable_tls_prf_ems_check = 1;
             break;
         case OPT_QUIET:
             quiet = 1;
@@ -521,7 +533,8 @@ opthelp:
         conf = generate_config_and_load(prov_name, section_name, module_mac,
                                         module_mac_len,
                                         enable_conditional_errors,
-                                        enable_security_checks);
+                                        enable_security_checks,
+                                        enable_tls_prf_ems_check);
         if (conf == NULL)
             goto end;
         if (!load_fips_prov_and_run_self_test(prov_name))
@@ -538,6 +551,7 @@ opthelp:
                                        module_mac, module_mac_len,
                                        enable_conditional_errors,
                                        enable_security_checks,
+                                       enable_tls_prf_ems_check,
                                        install_mac, install_mac_len))
             goto end;
         if (!quiet)
