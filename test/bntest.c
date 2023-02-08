@@ -3198,6 +3198,50 @@ static int file_test_run(STANZA *s)
     return 0;
 }
 
+static int test_print(void)
+{
+    int ret = 0;
+
+#ifdef OPENSSL_NO_STDIO
+    return 1;
+#else
+    BIGNUM *bn = NULL;
+    BIO *bio = NULL;
+
+    if (!TEST_ptr(bn = BN_new()))
+        return 0;
+    if (!TEST_ptr(bio = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT)))
+        goto err;
+
+    if (!TEST_true(BN_set_word(bn, 0x1234)))
+        goto err;
+    if (!TEST_true(BN_print_fp(stdout, bn)))
+        goto err;
+    BIO_printf(bio, "\n");
+
+    TEST_note("\nSize in bits of (BN_ULLONG, BN_ULONG) = %s\n", BN_options());
+    ret = 1;
+err:
+    BN_free(bn);
+    BIO_free(bio);
+#endif
+    return ret;
+}
+
+static int test_dh_named_primes(void)
+{
+    int ret;
+    BIGNUM *bn1 = NULL, *bn2 = NULL, *bn3 = NULL;
+
+    ret = TEST_ptr(bn1 = BN_get_rfc2409_prime_768(bn1))
+          && TEST_ptr(bn2 = BN_get_rfc3526_prime_1536())
+          && TEST_ptr(bn3 = BN_get_rfc3526_prime_6144());
+    BN_free(bn1);
+    BN_free(bn2);
+    BN_free(bn3);
+    return ret;
+}
+
 static int run_file_tests(int i)
 {
     STANZA *s = NULL;
@@ -3311,6 +3355,8 @@ int setup_tests(void)
         ADD_ALL_TESTS(test_mod_exp, (int)OSSL_NELEM(ModExpTests));
         ADD_ALL_TESTS(test_mod_exp_consttime, (int)OSSL_NELEM(ModExpTests));
         ADD_TEST(test_mod_exp2_mont);
+        ADD_TEST(test_print);
+        ADD_TEST(test_dh_named_primes);
         if (stochastic)
             ADD_TEST(test_rand_range);
     } else {
