@@ -21,11 +21,12 @@ extern "C" {
 #define OSSL_PROV_PARAM_CORE_MODULE_FILENAME "module-filename" /* utf8_ptr */
 
 /* Well known parameter names that Providers can define */
-#define OSSL_PROV_PARAM_NAME            "name"                /* utf8_ptr */
-#define OSSL_PROV_PARAM_VERSION         "version"             /* utf8_ptr */
-#define OSSL_PROV_PARAM_BUILDINFO       "buildinfo"           /* utf8_ptr */
-#define OSSL_PROV_PARAM_STATUS          "status"              /* uint */
-#define OSSL_PROV_PARAM_SECURITY_CHECKS "security-checks"     /* uint */
+#define OSSL_PROV_PARAM_NAME               "name"                /* utf8_ptr */
+#define OSSL_PROV_PARAM_VERSION            "version"             /* utf8_ptr */
+#define OSSL_PROV_PARAM_BUILDINFO          "buildinfo"           /* utf8_ptr */
+#define OSSL_PROV_PARAM_STATUS             "status"              /* uint */
+#define OSSL_PROV_PARAM_SECURITY_CHECKS    "security-checks"     /* uint */
+#define OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK "tls1-prf-ems-check"  /* uint */
 
 /* Self test callback parameters */
 #define OSSL_PROV_PARAM_SELF_TEST_PHASE  "st-phase" /* utf8_string */
