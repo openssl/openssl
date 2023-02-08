@@ -102,9 +102,7 @@ $UTIL_COMMON=\
         param_build_set.c der_writer.c threads_lib.c params_dup.c \
         quic_vlint.c time.c
 
-IF[{- !$disabled{shared} -}]
-  SOURCE[../libssl]=sparse_array.c
-ENDIF
+SHARED_SOURCE[../libssl]=sparse_array.c
 
 SOURCE[../libcrypto]=$UTIL_COMMON \
         mem.c mem_sec.c \
