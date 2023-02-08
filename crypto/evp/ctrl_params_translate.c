@@ -786,7 +786,17 @@ static int fix_cipher_md(enum state state,
             (void *)get_algo_by_name(ctx->pctx->libctx, ctx->p2);
         ctx->p1 = 1;
     } else if (state == PRE_PARAMS_TO_CTRL && ctx->action_type == SET) {
-        ctx->p2 = (void *)get_algo_by_name(ctx->pctx->libctx, ctx->p2);
+        void * algo = (void *)get_algo_by_name(ctx->pctx->libctx, ctx->p2);
+        /*
+         * When |state| is PRE_PARAMS_TO_CTRL, |ctx->action_type| is SET and 
+         * |translation->param_data_type| is OSSL_PARAM_UTF8_STRING, 
+         * |ctx->p2| is allocated by default_fixup_args and should
+         * be freed.
+         */
+        if (translation->param_data_type == OSSL_PARAM_UTF8_STRING) {
+            OPENSSL_free(ctx->p2);
+        }
+        ctx->p2 = algo;
         ctx->p1 = 0;
     }
 
@@ -906,6 +916,16 @@ static int fix_kdf_type(enum state state,
                 ret = 1;
                 break;
             }
+        if (state == PRE_PARAMS_TO_CTRL && ctx->action_type == SET
+            && translation->param_data_type == OSSL_PARAM_UTF8_STRING) {
+            /*
+             * When |state| is PRE_PARAMS_TO_CTRL, |ctx->action_type| is SET and 
+             * |translation->param_data_type| is OSSL_PARAM_UTF8_STRING, 
+             * |ctx->p2| is allocated by default_fixup_args and should
+             * be freed.
+             */
+            OPENSSL_free(ctx->p2);
+        }
         ctx->p2 = NULL;
     } else if (state == PRE_PARAMS_TO_CTRL && ctx->action_type == GET) {
         ctx->p1 = -2;
@@ -979,7 +999,18 @@ static int fix_oid(enum state state,
          * in |ctx->p2|, all we need to do now is to replace that with the
          * corresponding ASN1_OBJECT.
          */
-        ctx->p2 = (ASN1_OBJECT *)OBJ_txt2obj(ctx->p2, 0);
+        ASN1_OBJECT * obj = (ASN1_OBJECT *)OBJ_txt2obj(ctx->p2, 0);
+        if (state == PRE_PARAMS_TO_CTRL && ctx->action_type == SET
+            && translation->param_data_type == OSSL_PARAM_UTF8_STRING) {
+            /*
+             * When |state| is PRE_PARAMS_TO_CTRL, |ctx->action_type| is SET and 
+             * |translation->param_data_type| is OSSL_PARAM_UTF8_STRING, 
+             * |ctx->p2| is allocated by default_fixup_args and should
+             * be freed.
+             */
+            OPENSSL_free(ctx->p2);
+        }
+        ctx->p2 = obj;
     }
 
     return ret;
@@ -1120,6 +1151,16 @@ static int fix_ec_param_enc(enum state state,
             ctx->p1 = OPENSSL_EC_NAMED_CURVE;
         else
             ctx->p1 = ret = -2;
+        if (ctx->action_type == SET && translation->param_data_type == OSSL_PARAM_UTF8_STRING)
+        {
+            /*
+             * When |state| is PRE_PARAMS_TO_CTRL, |ctx->action_type| is SET and 
+             * |translation->param_data_type| is OSSL_PARAM_UTF8_STRING, 
+             * |ctx->p2| is allocated by default_fixup_args and should
+             * be freed.
+             */
+            OPENSSL_free(ctx->p2);
+        }
         ctx->p2 = NULL;
     }
 
@@ -1153,6 +1194,16 @@ static int fix_ec_paramgen_curve_nid(enum state state,
 
     if (state == PRE_PARAMS_TO_CTRL) {
         ctx->p1 = OBJ_sn2nid(ctx->p2);
+        if (ctx->action_type == SET && translation->param_data_type == OSSL_PARAM_UTF8_STRING)
+        {
+            /*
+             * When |state| is PRE_PARAMS_TO_CTRL, |ctx->action_type| is SET and 
+             * |translation->param_data_type| is OSSL_PARAM_UTF8_STRING, 
+             * |ctx->p2| is allocated by default_fixup_args and should
+             * be freed.
+             */
+            OPENSSL_free(ctx->p2);
+        }
         ctx->p2 = NULL;
     }
 
@@ -1219,6 +1270,16 @@ static int fix_ecdh_cofactor(enum state state,
         }
     } else if (state == PRE_PARAMS_TO_CTRL && ctx->action_type == GET) {
         ctx->p1 = -2;
+    }
+    else if (state == PRE_PARAMS_TO_CTRL && ctx->action_type == SET
+        && translation->param_data_type == OSSL_PARAM_UTF8_STRING) {
+        /*
+         * When |state| is PRE_PARAMS_TO_CTRL, |ctx->action_type| is SET and 
+         * |translation->param_data_type| is OSSL_PARAM_UTF8_STRING, 
+         * |ctx->p2| is allocated by default_fixup_args and should
+         * be freed.
+         */
+        OPENSSL_free(ctx->p2);
     }
 
     return ret;
@@ -1343,6 +1404,16 @@ static int fix_rsa_padding_mode(enum state state,
         } else {
             ctx->p1 = str_value_map[i].id;
         }
+        if (ctx->action_type == SET && state == PRE_PARAMS_TO_CTRL
+            && translation->param_data_type == OSSL_PARAM_UTF8_STRING) {
+            /*
+             * When |state| is PRE_PARAMS_TO_CTRL, |ctx->action_type| is SET and 
+             * |translation->param_data_type| is OSSL_PARAM_UTF8_STRING, 
+             * |ctx->p2| is allocated by default_fixup_args and should
+             * be freed.
+             */
+            OPENSSL_free(ctx->p2);
+        }
         ctx->p2 = NULL;
     }
 
@@ -1423,6 +1494,16 @@ static int fix_rsa_pss_saltlen(enum state state,
         } else {
             ctx->p1 = val;
         }
+        if (ctx->action_type == SET && state == PRE_PARAMS_TO_CTRL
+            && translation->param_data_type == OSSL_PARAM_UTF8_STRING) {
+            /*
+             * When |state| is PRE_PARAMS_TO_CTRL, |ctx->action_type| is SET and 
+             * |translation->param_data_type| is OSSL_PARAM_UTF8_STRING, 
+             * |ctx->p2| is allocated by default_fixup_args and should
+             * be freed.
+             */
+            OPENSSL_free(ctx->p2);
+        }
         ctx->p2 = NULL;
     }
 
@@ -1475,6 +1556,16 @@ static int fix_hkdf_mode(enum state state,
             ret = str_value_map[i].id;
         else
             ctx->p1 = str_value_map[i].id;
+        if (ctx->action_type == SET && state == PRE_PARAMS_TO_CTRL
+            && translation->param_data_type == OSSL_PARAM_UTF8_STRING) {
+            /*
+             * When |state| is PRE_PARAMS_TO_CTRL, |ctx->action_type| is SET and 
+             * |translation->param_data_type| is OSSL_PARAM_UTF8_STRING, 
+             * |ctx->p2| is allocated by default_fixup_args and should
+             * be freed.
+             */
+            OPENSSL_free(ctx->p2);
+        }
         ctx->p2 = NULL;
     }
 
