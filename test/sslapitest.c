@@ -37,7 +37,6 @@
 
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
-#include "testutil/output.h"
 #include "internal/nelem.h"
 #include "internal/ktls.h"
 #include "../ssl/ssl_local.h"
@@ -7791,6 +7790,50 @@ static int test_ssl_get_shared_ciphers(int tst)
            && int_test_ssl_get_shared_ciphers(tst, 1);
 }
 
+static int test_ssl_get_used_group(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION,
+                                       TLS_MAX_VERSION,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA"))
+            || !TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_256_GCM_SHA384"))
+            || !TEST_true(SSL_CTX_set_cipher_list(sctx, "AES256-SHA"))
+            || !TEST_true(SSL_CTX_set_ciphersuites(sctx, "TLS_AES_256_GCM_SHA384")))
+         goto end;
+
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_long_eq(SSL_get_used_group_id(serverssl), 29)
+            || !TEST_long_eq(SSL_get_used_group_nid(serverssl), 1034)
+            || !TEST_long_eq(SSL_get_used_sigalg_nid(serverssl), 0)
+            || !TEST_long_eq(SSL_get_used_group_id(clientssl), 0)
+            || !TEST_long_eq(SSL_get_used_group_nid(clientssl), 0)
+            || !TEST_long_eq(SSL_get_used_sigalg_nid(clientssl), 912))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
 
 static const char *appdata = "Hello World";
 static int gen_tick_called, dec_tick_called, tick_key_cb_called;
@@ -10827,6 +10870,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_ssl_pending, 2);
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
+    ADD_ALL_TESTS(test_ssl_get_used_group, 1);
     ADD_ALL_TESTS(test_ticket_callbacks, 20);
     ADD_ALL_TESTS(test_shutdown, 7);
     ADD_TEST(test_async_shutdown);
