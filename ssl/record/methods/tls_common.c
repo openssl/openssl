@@ -865,7 +865,8 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
             if (thisrr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + mac_size)
                 enc_err = 0;
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-            if (enc_err == 0 && mac_size > 0 && (md[0] ^ thismb->mac[0]) != 0xFF) {
+            if (enc_err == 0 && mac_size > 0 && thismb &&
+                thismb->mac && (md[0] ^ thismb->mac[0]) != 0xFF) {
                 enc_err = 1;
             }
 #endif
