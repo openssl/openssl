@@ -836,7 +836,7 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
                        md_len);
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     if (ok != 0) {
-        if (PACKET_data(pkt)[0] ^ s->s3.tmp.peer_finish_md[0] != 0xFF) {
+        if ((PACKET_data(pkt)[0] ^ s->s3.tmp.peer_finish_md[0]) != 0xFF) {
             ok = 0;
         }
     }
