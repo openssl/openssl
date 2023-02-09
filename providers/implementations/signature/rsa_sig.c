@@ -838,7 +838,7 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
             return 0;
         rslen = RSA_public_decrypt(siglen, sig, prsactx->tbuf, prsactx->rsa,
                                    prsactx->pad_mode);
-        if (rslen == 0) {
+        if (rslen <= 0) {
             ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
             return 0;
         }
