@@ -109,7 +109,7 @@ static ossl_inline void _mul_limb(limb_t *hi, limb_t *lo, limb_t a, limb_t b)
     *hi = t >> LIMB_BIT_SIZE;
     *lo = (limb_t)t;
 }
-#elif (BN_BYTES == 8) && (defined _MSC_VER)
+#elif (BN_BYTES == 8) && (defined _MSC_VER) && !defined(_M_ARM) && !defined(_M_ARM64)
 /* https://learn.microsoft.com/en-us/cpp/intrinsics/umul128?view=msvc-170 */
 #pragma intrinsic(_umul128)
 static ossl_inline void _mul_limb(limb_t *hi, limb_t *lo, limb_t a, limb_t b)
