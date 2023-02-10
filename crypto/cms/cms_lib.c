@@ -614,11 +614,12 @@ int CMS_add0_crl(CMS_ContentInfo *cms, X509_CRL *crl)
 
 int CMS_add1_crl(CMS_ContentInfo *cms, X509_CRL *crl)
 {
-    int r;
-    r = CMS_add0_crl(cms, crl);
-    if (r > 0)
-        X509_CRL_up_ref(crl);
-    return r;
+    if (!X509_CRL_up_ref(crl))
+        return 0;
+    if (CMS_add0_crl(cms, crl))
+        return 1;
+    X509_CRL_free(crl);
+    return 0;
 }
 
 STACK_OF(X509) *CMS_get1_certs(CMS_ContentInfo *cms)
