@@ -589,6 +589,10 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         BN_free(d);
     }
 
+    if (blinding)
+        if (!rsa_blinding_invert(blinding, ret, unblind, ctx))
+            goto err;
+
     /*
      * derive the Key Derivation Key from private exponent and public
      * ciphertext
@@ -598,20 +602,9 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
             goto err;
     }
 
-    if (blinding) {
-        /*
-         * ossl_bn_rsa_do_unblind() combines blinding inversion and
-         * 0-padded BN BE serialization
-         */
-        j = ossl_bn_rsa_do_unblind(ret, blinding, unblind, rsa->n, ctx,
-                                   buf, num);
-        if (j == 0)
-            goto err;
-    } else {
-        j = BN_bn2binpad(ret, buf, num);
-        if (j < 0)
-            goto err;
-    }
+    j = BN_bn2binpad(ret, buf, num);
+    if (j < 0)
+        goto err;
 
     switch (padding) {
     case RSA_PKCS1_NO_IMPLICIT_REJECT_PADDING:
