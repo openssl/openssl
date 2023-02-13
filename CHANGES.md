@@ -30,6 +30,17 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.8 and 3.0.9 [xx XXX xxxx]
 
+ * Reworked the Fix for the Timing Oracle in RSA Decryption ([CVE-2022-4304]).
+   The previous fix for this timing side channel turned out to cause
+   a severe 2-3x performance regression in the typical use case
+   compared to 3.0.7. The new fix uses existing constant time
+   code paths, and restores the previous performance level while
+   fully eliminating all existing timing side channels.
+   The fix was developed by Bernd Edlinger with testing support
+   by Hubert Kario.
+
+   *Bernd Edlinger*
+
  * Corrected documentation of X509_VERIFY_PARAM_add0_policy() to mention
    that it does not enable policy checking. Thanks to David Benjamin for
    discovering this issue.
