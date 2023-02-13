@@ -128,7 +128,7 @@ void spawn_loop(const char *prog)
                 if (status != 0) {
                     if (WIFEXITED(status)) {
                         log_HTTP2(prog, LOG_WARNING,
-                                  "child process: %ld, exit status: %d",
+                                  "Child process: %ld, exit status: %d",
                                   (long)fpid, WEXITSTATUS(status));
                     } else if (WIFSIGNALED(status)) {
                         char *dumped = "";
@@ -138,7 +138,7 @@ void spawn_loop(const char *prog)
                             dumped = " (core dumped)";
 # endif
                         log_HTTP3(prog, LOG_WARNING,
-                                  "child process: %ld, term signal %d%s",
+                                  "Child process: %ld, term signal %d%s",
                                   (long)fpid, WTERMSIG(status), dumped);
                     }
                     OSSL_sleep(1000);
