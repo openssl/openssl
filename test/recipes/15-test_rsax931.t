@@ -53,7 +53,7 @@ ok(run(app(['openssl', 'pkeyutl', '-in', $infile, '-rawin', '-inkey', $inkey,
             '-pkeyopt', 'pad-mode:oaep',
             '-sign',
             '-out', 'sigoaep.txt'])),
-  "RSA Sign with oaep padding  using SHA256");
+  "RSA Sign with oaep padding using SHA256");
 
 ok(!run(app(['openssl', 'pkeyutl', '-in', $infile, '-rawin', '-inkey', $inkey,
              '-digest', 'SHA256',
