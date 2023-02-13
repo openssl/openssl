@@ -3233,9 +3233,9 @@ static int test_dh_named_primes(void)
     int ret;
     BIGNUM *bn1 = NULL, *bn2 = NULL, *bn3 = NULL;
 
-    ret = TEST_ptr(bn1 = BN_get_rfc2409_prime_768(bn1))
-          && TEST_ptr(bn2 = BN_get_rfc3526_prime_1536())
-          && TEST_ptr(bn3 = BN_get_rfc3526_prime_6144());
+    ret = TEST_ptr(bn1 = BN_get_rfc2409_prime_768(NULL))
+          && TEST_ptr(bn2 = BN_get_rfc3526_prime_1536(NULL))
+          && TEST_ptr(bn3 = BN_get_rfc3526_prime_6144(NULL));
     BN_free(bn1);
     BN_free(bn2);
     BN_free(bn3);
