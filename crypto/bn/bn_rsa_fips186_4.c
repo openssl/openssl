@@ -357,7 +357,7 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
              *    sqrt(2) * 2^(nlen/2-1) <= Random X <= (2^(nlen/2)) - 1.
              */
             if (!BN_priv_rand_range_ex(X, range, 0, ctx) || !BN_add(X, X, base))
-                goto end;
+                goto err;
         }
         /* (Step 4) Y = X + ((R - X) mod 2r1r2) */
         if (!BN_mod_sub(Y, R, X, r1r2x2, ctx) || !BN_add(Y, Y, X))
