@@ -9,6 +9,16 @@
 
  Changes between 1.1.1t and 1.1.1u [xx XXX xxxx]
 
+  *) Reworked the Fix for the Timing Oracle in RSA Decryption (CVE-2022-4304).
+     The previous fix for this timing side channel turned out to cause
+     a severe 2-3x performance regression in the typical use case
+     compared to 1.1.1s. The new fix uses existing constant time
+     code paths, and restores the previous performance level while
+     fully eliminating all existing timing side channels.
+     The fix was developed by Bernd Edlinger with testing support
+     by Hubert Kario.
+     [Bernd Edlinger]
+
   *) Corrected documentation of X509_VERIFY_PARAM_add0_policy() to mention
      that it does not enable policy checking. Thanks to
      David Benjamin for discovering this issue. (CVE-2023-0466)
