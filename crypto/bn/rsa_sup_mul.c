@@ -109,7 +109,7 @@ static ossl_inline void _mul_limb(limb_t *hi, limb_t *lo, limb_t a, limb_t b)
     *hi = t >> LIMB_BIT_SIZE;
     *lo = (limb_t)t;
 }
-#elif (BN_BYTES == 8) && (defined _MSC_VER)
+#elif (BN_BYTES == 8) && (defined _MSC_VER) && defined(_WIN64)
 # if defined(_M_X64)
 /*
  * on x86_64 (x64) we can use the _umul128 intrinsic to get one `mul`
