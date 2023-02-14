@@ -159,6 +159,7 @@ static char *opt_reqin = NULL;
 static int opt_reqin_new_tid = 0;
 static char *opt_reqout = NULL;
 static char *opt_rspin = NULL;
+static int rspin_in_use = 0;
 static char *opt_rspout = NULL;
 static int opt_use_mock_srv = 0;
 
@@ -475,7 +476,7 @@ const OPTIONS cmp_options[] = {
     {"rspin", OPT_RSPIN, 's',
      "Process sequence of CMP responses provided in file(s), skipping server"},
     {"rspout", OPT_RSPOUT, 's',
-     "Save sequence of received CMP responses to file(s)"},
+     "Save sequence of actually used CMP responses to file(s)"},
 
     {"use_mock_srv", OPT_USE_MOCK_SRV, '-',
      "Use internal mock server at API level, bypassing socket-based HTTP"},
@@ -801,9 +802,24 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
     } else {
         const OSSL_CMP_MSG *actual_req = req_new != NULL ? req_new : req;
 
-        res = opt_use_mock_srv
-            ? OSSL_CMP_CTX_server_perform(ctx, actual_req)
-            : OSSL_CMP_MSG_http_perform(ctx, actual_req);
+        if (opt_use_mock_srv) {
+            if (rspin_in_use)
+                CMP_warn("too few -rspin filename arguments; resorting to using mock server");
+            res = OSSL_CMP_CTX_server_perform(ctx, actual_req);
+        } else {
+#ifndef OPENSSL_NO_SOCK
+            if (opt_server == NULL) {
+                CMP_err("missing -server or -use_mock_srv option, or too few -rspin filename arguments");
+                goto err;
+            }
+            if (rspin_in_use)
+                CMP_warn("too few -rspin filename arguments; resorting to contacting server");
+            res = OSSL_CMP_MSG_http_perform(ctx, actual_req);
+#else
+            CMP_err("-server not supported on no-sock build; missing -use_mock_srv option or too few -rspin filename arguments");
+#endif
+        }
+        rspin_in_use = 0;
     }
     if (res == NULL)
         goto err;
@@ -1013,10 +1029,10 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
                 goto err;
         }
     } else if (opt_srv_cert == NULL) {
-        CMP_err("mock server credentials must be given if -use_mock_srv or -port is used");
+        CMP_err("server credentials (-srv_secret or -srv_cert) must be given if -use_mock_srv or -port is used");
         goto err;
     } else {
-        CMP_warn("mock server will not be able to handle PBM-protected requests since -srv_secret is not given");
+        CMP_warn("server will not be able to handle PBM-protected requests since -srv_secret is not given");
     }
 
     if (opt_srv_secret == NULL
@@ -1907,8 +1923,11 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_TOTAL_TIMEOUT,
                                       opt_total_timeout);
 
-    if (opt_reqin != NULL && opt_rspin != NULL)
-        CMP_warn("-reqin is ignored since -rspin is present");
+    if (opt_rspin != NULL) {
+        rspin_in_use = 1;
+        if (opt_reqin != NULL)
+            CMP_warn("-reqin is ignored since -rspin is present");
+    }
     if (opt_reqin_new_tid && opt_reqin == NULL)
         CMP_warn("-reqin_new_tid is ignored since -reqin is not present");
     if (opt_reqin != NULL || opt_reqout != NULL
@@ -1962,7 +1981,9 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 
     /* not printing earlier, to minimize confusion in case setup fails before */
     if (opt_rspin != NULL)
-        CMP_info("will not contact any server since -rspin is given");
+        CMP_info2("will contact %s%s "
+                  "only if -rspin argument gives too few filenames",
+                  server_buf, proxy_buf);
     else
         CMP_info2("will contact %s%s", server_buf, proxy_buf);
 
@@ -2914,8 +2935,16 @@ int cmp_main(int argc, char **argv)
             CMP_err("-tls_used option not supported with -port option");
             goto err;
         }
-        if (opt_use_mock_srv || opt_server != NULL || opt_rspin != NULL) {
-            CMP_err("cannot use -port with -use_mock_srv, -server, or -rspin options");
+        if (opt_server != NULL || opt_use_mock_srv) {
+            CMP_err("The -port option excludes -server and -use_mock_srv");
+            goto err;
+        }
+        if (opt_reqin != NULL || opt_reqout != NULL) {
+            CMP_err("The -port option does not support -reqin and -reqout");
+            goto err;
+        }
+        if (opt_rspin != NULL || opt_rspout != NULL) {
+            CMP_err("The -port option does not support -rspin and -rspout");
             goto err;
         }
     }
@@ -2924,10 +2953,6 @@ int cmp_main(int argc, char **argv)
         goto err;
     }
 #endif
-    if (opt_rspin != NULL && opt_use_mock_srv) {
-        CMP_err("cannot use both -rspin and -use_mock_srv options");
-        goto err;
-    }
 
     if (opt_use_mock_srv
 #ifndef OPENSSL_NO_SOCK
@@ -2948,8 +2973,8 @@ int cmp_main(int argc, char **argv)
     }
 
 #ifndef OPENSSL_NO_SOCK
-    if (opt_tls_used && (opt_use_mock_srv || opt_rspin != NULL)) {
-        CMP_warn("ignoring -tls_used option since -use_mock_srv or -rspin is given");
+    if (opt_tls_used && (opt_use_mock_srv || opt_server == NULL)) {
+        CMP_warn("ignoring -tls_used option since -use_mock_srv is given or -server is not given");
         opt_tls_used = 0;
     }
 
@@ -2960,11 +2985,11 @@ int cmp_main(int argc, char **argv)
 
     /* act as CMP client, possibly using internal mock server */
 
-    if (opt_server != NULL) {
-        if (opt_rspin != NULL) {
-            CMP_warn("ignoring -server option since -rspin is given");
-            opt_server = NULL;
-        }
+    if (opt_rspin != NULL) {
+        if (opt_server != NULL)
+            CMP_warn("-server option is not used if enough filenames given for -rspin");
+        if (opt_use_mock_srv)
+            CMP_warn("-use_mock_srv option is not used if enough filenames given for -rspin");
     }
 #endif
 
