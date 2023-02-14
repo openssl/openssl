@@ -85,6 +85,7 @@ ENDIF
 IF[{- !$disabled{tests} -}]
   PROGRAMS{noinst}=asn1-test asn1parse-test bignum-test bndiv-test client-test conf-test crl-test server-test x509-test
   PROGRAMS{noinst}=punycode-test
+  PROGRAMS{noinst}=v3name_fuzzer-test
 
   IF[{- !$disabled{"cmp"} -}]
     PROGRAMS{noinst}=cmp-test
