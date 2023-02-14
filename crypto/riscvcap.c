@@ -17,8 +17,12 @@
 #define OPENSSL_RISCVCAP_IMPL
 #include "crypto/riscv_arch.h"
 
+extern size_t riscv_vlen_asm(void);
+
 static void parse_env(const char *envstr);
 static void strtoupper(char *str);
+
+static size_t vlen = 0;
 
 uint32_t OPENSSL_rdtsc(void)
 {
@@ -67,6 +71,11 @@ static void parse_env(const char *envstr)
     }
 }
 
+size_t riscv_vlen(void)
+{
+    return vlen;
+}
+
 # if defined(__GNUC__) && __GNUC__>=2
 __attribute__ ((constructor))
 # endif
@@ -81,6 +90,9 @@ void OPENSSL_cpuid_setup(void)
 
     if ((e = getenv("OPENSSL_riscvcap"))) {
         parse_env(e);
-        return;
+    }
+
+    if (RISCV_HAS_V()) {
+        vlen = riscv_vlen_asm();
     }
 }
