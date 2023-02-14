@@ -449,7 +449,8 @@ Reason numbers defined in RFC 5280 are:
 
 The DNS hostname or IP address and optionally port
 of the CMP server to connect to using HTTP(S).
-This excludes I<-port> and I<-use_mock_srv> and is ignored with I<-rspin>.
+This option excludes I<-port> and I<-use_mock_srv>.
+It is ignored if I<-rspin> is given with enough filename arguments.
 
 The scheme C<https> may be given only if the B<-tls_used> option is provided.
 In this case the default port is 443, else 80.
@@ -816,11 +817,12 @@ B<-tls_key>.
 
 Enable using TLS (even when other TLS-related options are not set)
 for message exchange with CMP server via HTTP.
-This option is not supported with the I<-port> option
-and is ignored with the I<-use_mock_srv> and I<-rspin> options
-or if the I<-server> option is not given.
+This option is not supported with the I<-port> option.
+It is ignored if the I<-server> option is not given or I<-use_mock_srv> is given
+or I<-rspin> is given with enough filename arguments.
 
-The following TLS-related options are ignored if B<-tls_used> is not given.
+The following TLS-related options are ignored
+if B<-tls_used> is not given or does not take effect.
 
 =item B<-tls_cert> I<filename>|I<uri>
 
@@ -882,16 +884,23 @@ Default is one invocation.
 
 =item B<-reqin> I<filenames>
 
-Take the sequence of CMP requests to send to the server from file(s).
+Take the sequence of CMP requests to send to the server from the given file(s)
+rather than from the sequence of requests produced internally.
+
 This option is ignored if the B<-rspin> option is given
 because in the latter case no requests are actually sent.
-Except for first request, the client needs to update the recipNonce field in any
-further request in order to satisfy the checks to be performed by the server.
-This causes re-protection (if protecting requests is required).
 
 Multiple filenames may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
-As many files are read as needed for a complete transaction.
+
+The files are read as far as needed to complete the transaction
+and filenames have been provided.  If more requests are needed,
+the remaining ones are taken from the items at the respective position
+in the sequence of requests produced internally.
+
+The client needs to update the recipNonce field in the given requests (except
+for the first one) in order to satisfy the checks to be performed by the server.
+This causes re-protection (if protecting requests is required).
 
 =item B<-reqin_new_tid>
 
@@ -902,32 +911,44 @@ and the CMP server complains that the transaction ID has already been used.
 
 =item B<-reqout> I<filenames>
 
-Save the sequence of CMP requests created by the client to file(s).
+Save the sequence of CMP requests created by the client to the given file(s).
 These requests are not sent to the server if the B<-reqin> option is used, too.
 
 Multiple filenames may be given, separated by commas and/or whitespace.
-As many files are written as needed to store the complete transaction.
+
+Files are written as far as needed to save the transaction
+and filenames have been provided.
+If the transaction contains more requests, the remaining ones are not saved.
 
 =item B<-rspin> I<filenames>
 
-Process the sequence of CMP responses provided in file(s), skipping server.
-This excludes I<-server>, I<-port>, and I<-use_mock_srv>.
+Process the sequence of CMP responses provided in the given file(s),
+not contacting any given server,
+as long as enough filenames are provided to complete the transaction.
 
 Multiple filenames may be given, separated by commas and/or whitespace.
-As many files are read as needed for the complete transaction.
+
+Any server specified via the I<-server> or I<-use_mock_srv> options is contacted
+only if more responses are needed to complete the transaction.
+In this case the transaction will fail
+unless the server has been prepared to continue the already started transaction.
 
 =item B<-rspout> I<filenames>
 
-Save the sequence of received CMP responses to file(s).
+Save the sequence of actually used CMP responses to the given file(s).
+These have been received from the server unless B<-rspin> takes effect.
 
 Multiple filenames may be given, separated by commas and/or whitespace.
-As many files are written as needed to store the complete transaction.
+
+Files are written as far as needed to save the responses
+contained in the transaction and filenames have been provided.
+If the transaction contains more responses, the remaining ones are not saved.
 
 =item B<-use_mock_srv>
 
 Test the client using the internal CMP server mock-up at API level,
 bypassing socket-based transfer via HTTP.
-This excludes I<-server>, I<-port>, and I<-rspin>.
+This excludes the B<-server> and B<-port> options.
 
 =back
 
@@ -938,7 +959,9 @@ This excludes I<-server>, I<-port>, and I<-rspin>.
 =item B<-port> I<number>
 
 Act as HTTP-based CMP server mock-up listening on the given port.
-This excludes I<-server>, I<-rspin>, and I<-use_mock_srv>.
+This excludes the B<-server> and B<-use_mock_srv> options.
+The B<-rspin>, B<-rspout>, B<-reqin>, and B<-reqout> options
+so far are not supported in this mode.
 
 =item B<-max_msgs> I<number>
 

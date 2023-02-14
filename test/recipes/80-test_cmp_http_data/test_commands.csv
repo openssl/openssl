@@ -60,3 +60,5 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 1,reqin new tid, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir.der _RESULT_DIR/certConf.der,,BLANK,,,BLANK,,BLANK,-reqin_new_tid
 0,reqin wrong req, -section,, -cmd,ir,,-reqin,_RESULT_DIR/cr.der _RESULT_DIR/certConf.der,,BLANK,,,BLANK,,BLANK,BLANK
 1,rspin, -section,, -cmd,ir,,BLANK,,,-rspin,_RESULT_DIR/ip.der _RESULT_DIR/pkiConf.der,,BLANK,,BLANK,
+0,rspin too few files - server must reject, -section,, -cmd,ir,,BLANK,,,-rspin,_RESULT_DIR/ip.der,,BLANK,,BLANK,-secret,_PBM_SECRET
+0,rspin too few files - no server, -section,, -cmd,ir,,BLANK,,,-rspin,_RESULT_DIR/ip.der,,BLANK,,BLANK, -server, """"
