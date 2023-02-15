@@ -852,7 +852,9 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 # define OSSL_CMP_PKIBODY_POLLREP  26
 # define OSSL_CMP_PKIBODY_TYPE_MAX OSSL_CMP_PKIBODY_POLLREP
 /* certReqId for the first - and so far only - certificate request */
-# define OSSL_CMP_CERTREQID 0
+# define OSSL_CMP_CERTREQID         0
+# define OSSL_CMP_CERTREQID_NONE    -1
+# define OSSL_CMP_CERTREQID_INVALID -2
 /* sequence id for the first - and so far only - revocation request */
 # define OSSL_CMP_REVREQSID 0
 int ossl_cmp_msg_set0_libctx(OSSL_CMP_MSG *msg, OSSL_LIB_CTX *libctx,
@@ -885,8 +887,8 @@ OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
                                  int unprotected);
 int ossl_cmp_certstatus_set0_certHash(OSSL_CMP_CERTSTATUS *certStatus,
                                       ASN1_OCTET_STRING *hash);
-OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
-                                    const char *text);
+OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int certReqId,
+                                    int fail_info, const char *text);
 OSSL_CMP_MSG *ossl_cmp_pollReq_new(OSSL_CMP_CTX *ctx, int crid);
 OSSL_CMP_MSG *ossl_cmp_pollRep_new(OSSL_CMP_CTX *ctx, int crid,
                                    int64_t poll_after);
@@ -922,8 +924,8 @@ int ossl_cmp_verify_popo(const OSSL_CMP_CTX *ctx,
                          const OSSL_CMP_MSG *msg, int accept_RAVerified);
 
 /* from cmp_client.c */
-int ossl_cmp_exchange_certConf(OSSL_CMP_CTX *ctx, int fail_info,
-                               const char *txt);
+int ossl_cmp_exchange_certConf(OSSL_CMP_CTX *ctx, int certReqId,
+                               int fail_info, const char *txt);
 int ossl_cmp_exchange_error(OSSL_CMP_CTX *ctx, int status, int fail_info,
                             const char *txt, int errorCode, const char *detail);
 
