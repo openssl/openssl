@@ -405,7 +405,7 @@ static int test_exec_GENM_ses_total_timeout(void)
 static int execute_exchange_certConf_test(CMP_SES_TEST_FIXTURE *fixture)
 {
     int res =
-        ossl_cmp_exchange_certConf(fixture->cmp_ctx,
+        ossl_cmp_exchange_certConf(fixture->cmp_ctx, OSSL_CMP_CERTREQID,
                                    OSSL_CMP_PKIFAILUREINFO_addInfoNotAvailable,
                                    "abcdefg");
 
