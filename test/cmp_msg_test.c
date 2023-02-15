@@ -107,7 +107,8 @@ static int execute_rr_create_test(CMP_MSG_TEST_FIXTURE *fixture)
 static int execute_certconf_create_test(CMP_MSG_TEST_FIXTURE *fixture)
 {
     EXECUTE_MSG_CREATION_TEST(ossl_cmp_certConf_new
-                              (fixture->cmp_ctx, fixture->fail_info, NULL));
+                              (fixture->cmp_ctx, OSSL_CMP_CERTREQID,
+                               fixture->fail_info, NULL));
 }
 
 static int execute_genm_create_test(CMP_MSG_TEST_FIXTURE *fixture)
