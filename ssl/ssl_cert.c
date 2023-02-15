@@ -53,7 +53,7 @@ CERT *ssl_cert_new(size_t ssl_pkey_num)
     CERT *ret = NULL;
 
     /* Should never happen */
-    if (ssl_pkey_num < SSL_PKEY_NUM)
+    if (!ossl_assert(ssl_pkey_num >= SSL_PKEY_NUM))
         return NULL;
 
     ret = OPENSSL_zalloc(sizeof(*ret));
@@ -63,7 +63,6 @@ CERT *ssl_cert_new(size_t ssl_pkey_num)
     ret->ssl_pkey_num = ssl_pkey_num;
     ret->pkeys = OPENSSL_zalloc(ret->ssl_pkey_num * sizeof(CERT_PKEY));
     if (ret->pkeys == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -97,10 +96,8 @@ CERT *ssl_cert_dup(CERT *cert)
 
     ret->ssl_pkey_num = cert->ssl_pkey_num;
     ret->pkeys = OPENSSL_zalloc(ret->ssl_pkey_num * sizeof(CERT_PKEY));
-    if (ret->pkeys == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (ret->pkeys == NULL)
         return NULL;
-    }
 
     ret->references = 1;
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
@@ -309,6 +306,7 @@ int ssl_cert_set0_chain(SSL_CONNECTION *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
 int ssl_cert_set1_chain(SSL_CONNECTION *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
 {
     STACK_OF(X509) *dchain;
+
     if (!chain)
         return ssl_cert_set0_chain(s, ctx, NULL);
     dchain = X509_chain_up_ref(chain);
@@ -325,6 +323,7 @@ int ssl_cert_add0_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
 {
     int r;
     CERT_PKEY *cpk = s ? s->cert->key : ctx->cert->key;
+
     if (!cpk)
         return 0;
     r = ssl_security_cert(s, ctx, x, 0, 0);
@@ -350,6 +349,7 @@ int ssl_cert_add1_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
 int ssl_cert_select_current(CERT *c, X509 *x)
 {
     size_t i;
+
     if (x == NULL)
         return 0;
     for (i = 0; i < c->ssl_pkey_num; i++) {
@@ -373,6 +373,7 @@ int ssl_cert_select_current(CERT *c, X509 *x)
 int ssl_cert_set_current(CERT *c, long op)
 {
     size_t i, idx;
+
     if (!c)
         return 0;
     if (op == SSL_CERT_SET_FIRST)
@@ -1176,7 +1177,7 @@ int ssl_cert_lookup_by_nid(int nid, size_t *pidx, SSL_CTX *ctx)
     }
     for (i = 0; i < ctx->sigalg_list_len; i++) {
         if (ctx->ssl_cert_info[i].nid == nid) {
-            *pidx = SSL_PKEY_NUM+i;
+            *pidx = SSL_PKEY_NUM + i;
             return 1;
         }
     }
@@ -1205,9 +1206,9 @@ SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx, SSL_C
         if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->nid))
             || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->nid))) {
             if (pidx != NULL)
-                *pidx = SSL_PKEY_NUM+i;
+                *pidx = SSL_PKEY_NUM + i;
             return &ctx->ssl_cert_info[i];
-	}
+        }
     }
 
     return NULL;
@@ -1218,6 +1219,6 @@ SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx, SSL_CTX *ctx)
     if (idx >= (OSSL_NELEM(ssl_cert_info) + ctx->sigalg_list_len))
         return NULL;
     else if (idx >= (OSSL_NELEM(ssl_cert_info)))
-        return &(ctx->ssl_cert_info[idx-SSL_PKEY_NUM]);
+        return &(ctx->ssl_cert_info[idx - SSL_PKEY_NUM]);
     return &ssl_cert_info[idx];
 }

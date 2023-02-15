@@ -756,12 +756,16 @@ typedef struct tls_group_info_st {
 } TLS_GROUP_INFO;
 
 typedef struct tls_sigalg_info_st {
-    char *tlsname;           /* Algorithm Name as in TLS specs */
-    char *realname;          /* Algorithm Name according to provider */
-    char *algorithm;         /* Algorithm name to fetch */
-    char *oid;               /* OID of algorithm */
-    char *hash_algorithm;    /* Name of hash algorithm if any */
-    uint16_t code_point;     /* Code point of algorithm */
+    char *name;              /* name as in IANA TLS specs */
+    uint16_t code_point;     /* IANA-specified code point of sigalg-name */
+    char *sigalg_name;       /* (combined) sigalg name */
+    char *sigalg_oid;        /* (combined) sigalg OID */
+    char *sig_name;          /* pure signature algorithm name */
+    char *sig_oid;           /* pure signature algorithm OID */
+    char *hash_name;         /* hash algorithm name */
+    char *hash_oid;          /* hash algorithm OID */
+    char *keytype;           /* keytype name */
+    char *keytype_oid;       /* keytype OID */
     unsigned int secbits;    /* Bits of security (from SP800-57) */
     int mintls;              /* Minimum TLS version, -1 unsupported */
     int maxtls;              /* Maximum TLS version (or 0 for undefined) */
@@ -924,6 +928,7 @@ struct ssl_ctx_st {
     size_t max_cert_list;
 
     struct cert_st /* CERT */ *cert;
+    SSL_CERT_LOOKUP *ssl_cert_info;
     int read_ahead;
 
     /* callback that allows applications to peek at protocol messages */
@@ -1154,7 +1159,6 @@ struct ssl_ctx_st {
     size_t group_list_max_len;
 
     TLS_SIGALG_INFO *sigalg_list;
-    SSL_CERT_LOOKUP *ssl_cert_info;
     size_t sigalg_list_len;
     size_t sigalg_list_max_len;
 
@@ -2473,7 +2477,7 @@ int ssl_get_security_level_bits(const SSL *s, const SSL_CTX *ctx, int *levelp);
 __owur int ssl_cert_lookup_by_nid(int nid, size_t *pidx, SSL_CTX *ctx);
 __owur SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,
                                                 size_t *pidx,
-						SSL_CTX *ctx);
+                                                SSL_CTX *ctx);
 __owur SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx, SSL_CTX *ctx);
 
 int ssl_undefined_function(SSL *s);

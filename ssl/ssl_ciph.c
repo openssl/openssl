@@ -2156,7 +2156,7 @@ int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
 int ssl_get_md_idx(int md_nid) {
     int i;
 
-    for(i=0; i<SSL_MD_NUM_IDX; i++) {
+    for(i = 0; i < SSL_MD_NUM_IDX; i++) {
         if (md_nid == ssl_cipher_table_mac[i].nid)
             return i;
     }
@@ -2231,17 +2231,16 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
 
 int ssl_cert_is_disabled(SSL_CTX *ctx, size_t idx)
 {
-    /* A new provider-loaded key type is always enabled */
-    if (idx >= SSL_PKEY_NUM) {
-        return 0;
-    }
-    else {
-        const SSL_CERT_LOOKUP *cl = ssl_cert_lookup_by_idx(idx, ctx);
+    SSL_CERT_LOOKUP *cl;
 
-        if (cl == NULL || (cl->amask & ctx->disabled_auth_mask) != 0)
-            return 1;
+    /* A provider-loaded key type is always enabled */
+    if (idx >= SSL_PKEY_NUM)
         return 0;
-    }
+
+    cl = ssl_cert_lookup_by_idx(idx, ctx);
+    if (cl == NULL || (cl->amask & ctx->disabled_auth_mask) != 0)
+        return 1;
+    return 0;
 }
 
 /*

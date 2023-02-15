@@ -234,15 +234,15 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
         ameth = EVP_PKEY_asn1_find(NULL, pknid);
         if (ameth != NULL && ameth->siginf_set != NULL
                 && ameth->siginf_set(siginf, alg, sig)) {
-	    break;
-	}
-	if (pubkey != NULL) {
-	    int secbits = EVP_PKEY_get_security_bits(pubkey);
-	    if (secbits != 0) {
+           break;
+        }
+        if (pubkey != NULL) {
+            int secbits = EVP_PKEY_get_security_bits(pubkey);
+            if (secbits != 0) {
                 siginf->secbits = secbits;
-		break;
-	    }
-	}
+                break;
+            }
+        }
         ERR_raise(ERR_LIB_X509, X509_R_ERROR_USING_SIGINF_SET);
         return 0;
         /*
@@ -296,5 +296,5 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
 int ossl_x509_init_sig_info(X509 *x)
 {
     return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature,
-		              X509_PUBKEY_get0(x->cert_info.key));
+                              X509_PUBKEY_get0(x->cert_info.key));
 }

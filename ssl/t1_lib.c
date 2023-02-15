@@ -427,6 +427,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
     const OSSL_PARAM *p;
     TLS_SIGALG_INFO *sinf = NULL;
     EVP_KEYMGMT *keymgmt;
+    const char *keytype;
     unsigned int code_point = 0;
     int ret = 0;
 
@@ -441,10 +442,8 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
                                   (ctx->sigalg_list_max_len
                                    + TLS_SIGALG_LIST_MALLOC_BLOCK_SIZE)
                                   * sizeof(TLS_SIGALG_INFO));
-        if (tmp == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        if (tmp == NULL)
             return 0;
-        }
         ctx->sigalg_list = tmp;
         memset(tmp + ctx->sigalg_list_max_len, 0,
                sizeof(TLS_SIGALG_INFO) * TLS_SIGALG_LIST_MALLOC_BLOCK_SIZE);
@@ -453,84 +452,130 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
 
     sinf = &ctx->sigalg_list[ctx->sigalg_list_len];
 
+    /* First, mandatory parameters */
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_NAME);
     if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
-    sinf->tlsname = OPENSSL_strdup(p->data);
-    if (sinf->tlsname == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    sinf->sigalg_name = OPENSSL_strdup(p->data);
+    if (sinf->sigalg_name == NULL)
+        goto err;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
+    sinf->name = OPENSSL_strdup(p->data);
+    if (sinf->name == NULL)
+        goto err;
 
     p = OSSL_PARAM_locate_const(params,
-		                OSSL_CAPABILITY_TLS_SIGALG_NAME_INTERNAL);
-    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
-        goto err;
-    }
-    sinf->realname = OPENSSL_strdup(p->data);
-    if (sinf->realname == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
-    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_ALG);
-    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
-        goto err;
-    }
-    sinf->algorithm = OPENSSL_strdup(p->data);
-    if (sinf->algorithm == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
-    /* Truly optional */
-    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_HASHALG);
-    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
-        sinf->hash_algorithm = NULL;
-    }
-    else {
-        sinf->hash_algorithm = OPENSSL_strdup(p->data);
-        if (sinf->hash_algorithm == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-    }
-
-    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_OID);
-    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
-        goto err;
-    }
-    sinf->oid = OPENSSL_strdup(p->data);
-    if (sinf->oid == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
-    p = OSSL_PARAM_locate_const(params,
-		                OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT);
-    if (p == NULL || !OSSL_PARAM_get_uint(p, &code_point)
-		  || code_point > UINT16_MAX) {
+                                OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT);
+    if (p == NULL
+        || !OSSL_PARAM_get_uint(p, &code_point)
+        || code_point > UINT16_MAX) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
     sinf->code_point = (uint16_t)code_point;
 
     p = OSSL_PARAM_locate_const(params,
-		                OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS);
+                                OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS);
     if (p == NULL || !OSSL_PARAM_get_uint(p, &sinf->secbits)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
 
+    /* Now, optional parameters */
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_OID);
+    if (p == NULL) {
+        sinf->sigalg_oid = NULL;
+    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
+        goto err;
+    } else {
+        sinf->sigalg_oid = OPENSSL_strdup(p->data);
+        if (sinf->sigalg_oid == NULL)
+            goto err;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_SIG_NAME);
+    if (p == NULL) {
+        sinf->sig_name = NULL;
+    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
+        goto err;
+    } else {
+        sinf->sig_name = OPENSSL_strdup(p->data);
+        if (sinf->sig_name == NULL)
+            goto err;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_SIG_OID);
+    if (p == NULL) {
+        sinf->sig_oid = NULL;
+    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
+        goto err;
+    } else {
+        sinf->sig_oid = OPENSSL_strdup(p->data);
+        if (sinf->sig_oid == NULL)
+            goto err;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_HASH_NAME);
+    if (p == NULL) {
+        sinf->hash_name = NULL;
+    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
+        goto err;
+    } else {
+        sinf->hash_name = OPENSSL_strdup(p->data);
+        if (sinf->hash_name == NULL)
+            goto err;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_HASH_OID);
+    if (p == NULL) {
+        sinf->hash_oid = NULL;
+    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
+        goto err;
+    } else {
+        sinf->hash_oid = OPENSSL_strdup(p->data);
+        if (sinf->hash_oid == NULL)
+            goto err;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE);
+    if (p == NULL) {
+        sinf->keytype = NULL;
+    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
+        goto err;
+    } else {
+        sinf->keytype = OPENSSL_strdup(p->data);
+        if (sinf->keytype == NULL)
+            goto err;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_OID);
+    if (p == NULL) {
+        sinf->keytype_oid = NULL;
+    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
+        goto err;
+    } else {
+        sinf->keytype_oid = OPENSSL_strdup(p->data);
+        if (sinf->keytype_oid == NULL)
+            goto err;
+    }
+
+    /* The remaining parameters below are mandatory again */
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS);
-    if (p == NULL || !OSSL_PARAM_get_int(p, &sinf->mintls) ||
-		    sinf->mintls < TLS1_3_VERSION) {
+    if (p == NULL || !OSSL_PARAM_get_int(p, &sinf->mintls)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+    if ((sinf->mintls != 0) && (sinf->mintls != -1) &&
+        ((sinf->mintls < TLS1_3_VERSION))) {
+        /* ignore this sigalg as this OpenSSL doesn't know how to handle it */
+        ret = 1;
         goto err;
     }
 
@@ -539,18 +584,18 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
-
-    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS);
-    if (p == NULL || !OSSL_PARAM_get_int(p, &sinf->mindtls)) {
+    if ((sinf->maxtls != 0) && (sinf->maxtls != -1) &&
+        ((sinf->maxtls < sinf->mintls))) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
-
-    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS);
-    if (p == NULL || !OSSL_PARAM_get_int(p, &sinf->maxdtls)) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+    if ((sinf->maxtls != 0) && (sinf->maxtls != -1) &&
+        ((sinf->maxtls < TLS1_3_VERSION))) {
+        /* ignore this sigalg as this OpenSSL doesn't know how to handle it */
+        ret = 1;
         goto err;
     }
+
     /*
      * Now check that the algorithm is actually usable for our property query
      * string. Regardless of the result we still return success because we have
@@ -559,7 +604,12 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
      */
     ret = 1;
     ERR_set_mark();
-    keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, sinf->algorithm, ctx->propq);
+    keytype = (sinf->keytype != NULL
+               ? sinf->keytype
+               : (sinf->sig_name != NULL
+                  ? sinf->sig_name
+                  : sinf->sigalg_name));
+    keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, keytype, ctx->propq);
     if (keymgmt != NULL) {
         /*
          * We have successfully fetched the algorithm - however if the provider
@@ -574,7 +624,31 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
          * behaviour)?
          */
         if (EVP_KEYMGMT_get0_provider(keymgmt) == provider) {
-            /* We have a match - so we will use this signature */
+            /*
+             * We have a match - so we could use this signature;
+             * Check proper object registration first, though. 
+             * Don't care about return value as this may have been
+             * done within providers or previous calls to
+             * add_provider_sigalgs.
+             */
+            OBJ_create(sinf->sigalg_oid, sinf->sigalg_name, NULL);
+            /* sanity check: Without successful registration don't use alg */
+            if ((OBJ_txt2nid(sinf->sigalg_name) == NID_undef) ||
+                (OBJ_nid2obj(OBJ_txt2nid(sinf->sigalg_name)) == NULL)) {
+                    ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+                    goto err;
+            }
+            if (sinf->sig_name != NULL)
+                OBJ_create(sinf->sig_oid, sinf->sig_name, NULL);
+            if (sinf->keytype != NULL)
+                OBJ_create(sinf->keytype_oid, sinf->keytype, NULL);
+            if (sinf->hash_name != NULL)
+                OBJ_create(sinf->hash_oid, sinf->hash_name, NULL);
+            OBJ_add_sigid(OBJ_txt2nid(sinf->sigalg_name),
+                          (sinf->hash_name != NULL
+                           ? OBJ_txt2nid(sinf->hash_name)
+                           : NID_undef),
+                          OBJ_txt2nid(keytype));
             ctx->sigalg_list_len++;
             sinf = NULL;
         }
@@ -583,10 +657,24 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
     ERR_pop_to_mark();
  err:
     if (sinf != NULL) {
-        OPENSSL_free(sinf->tlsname);
-        OPENSSL_free(sinf->realname);
-        OPENSSL_free(sinf->algorithm);
-        sinf->algorithm = sinf->tlsname = sinf->realname = NULL;
+        OPENSSL_free(sinf->name);
+        sinf->name = NULL;
+        OPENSSL_free(sinf->sigalg_name);
+        sinf->sigalg_name = NULL;
+        OPENSSL_free(sinf->sigalg_oid);
+        sinf->sigalg_oid = NULL;
+        OPENSSL_free(sinf->sig_name);
+        sinf->sig_name = NULL;
+        OPENSSL_free(sinf->sig_oid);
+        sinf->sig_oid = NULL;
+        OPENSSL_free(sinf->hash_name);
+        sinf->hash_name = NULL;
+        OPENSSL_free(sinf->hash_oid);
+        sinf->hash_oid = NULL;
+        OPENSSL_free(sinf->keytype);
+        sinf->keytype = NULL;
+        OPENSSL_free(sinf->keytype_oid);
+        sinf->keytype_oid = NULL;
     }
     return ret;
 }
@@ -599,7 +687,8 @@ static int discover_provider_sigalgs(OSSL_PROVIDER *provider, void *vctx)
     pgd.provider = provider;
     OSSL_PROVIDER_get_capabilities(provider, "TLS-SIGALG",
                                    add_provider_sigalgs, &pgd);
-    /* Always OK, even if provider doesn't support the capability: 
+    /*
+     * Always OK, even if provider doesn't support the capability:
      * Reconsider testing retval when legacy sigalgs are also loaded this way.
      */
     return 1;
@@ -616,17 +705,16 @@ int ssl_load_sigalgs(SSL_CTX *ctx)
     /* now populate ctx->ssl_cert_info */
     if (ctx->sigalg_list_len > 0) {
         ctx->ssl_cert_info = OPENSSL_zalloc(sizeof(lu) * ctx->sigalg_list_len);
-        if (ctx->ssl_cert_info == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        if (ctx->ssl_cert_info == NULL)
             return 0;
-        }
         for(i = 0; i < ctx->sigalg_list_len; i++) {
-            ctx->ssl_cert_info[i].nid = OBJ_sn2nid(ctx->sigalg_list[i].algorithm);
+            ctx->ssl_cert_info[i].nid = OBJ_txt2nid(ctx->sigalg_list[i].sigalg_name);
             ctx->ssl_cert_info[i].amask = SSL_aANY;
         }
     }
 
-    /* For now, leave it at this: legacy sigalgs stay in their own
+    /* 
+     * For now, leave it at this: legacy sigalgs stay in their own
      * data structures until "legacy cleanup" occurs.
      */
 
@@ -1398,7 +1486,7 @@ int ssl_setup_sig_algs(SSL_CTX *ctx)
         EVP_PKEY_CTX *pctx;
 
         cache[i] = *lu;
-	tls12_sigalgs_list[i] = tls12_sigalgs[i];
+        tls12_sigalgs_list[i] = tls12_sigalgs[i];
 
         /*
          * Check hash is available.
@@ -1427,20 +1515,20 @@ int ssl_setup_sig_algs(SSL_CTX *ctx)
 
     /* Now complete cache and tls12_sigalgs list with provider sig information */
     cache_idx = OSSL_NELEM(sigalg_lookup_tbl);
-    for (i=0; i<ctx->sigalg_list_len; i++) {
-	TLS_SIGALG_INFO si = ctx->sigalg_list[i];
-	cache[cache_idx].name = si.algorithm;
-	cache[cache_idx].sigalg = si.code_point;
-	tls12_sigalgs_list[cache_idx] = si.code_point;
-	cache[cache_idx].hash = OBJ_sn2nid(si.hash_algorithm);
-	cache[cache_idx].hash_idx = ssl_get_md_idx(cache[cache_idx].hash);
-	cache[cache_idx].sig = OBJ_sn2nid(si.algorithm);
-	cache[cache_idx].sig_idx = i+SSL_PKEY_NUM;
-	cache[cache_idx].sigandhash = cache[cache_idx].sig;
-	cache[cache_idx].curve = NID_undef;
+    for (i = 0; i < ctx->sigalg_list_len; i++) {
+        TLS_SIGALG_INFO si = ctx->sigalg_list[i];
+        cache[cache_idx].name = si.name;
+        cache[cache_idx].sigalg = si.code_point;
+        tls12_sigalgs_list[cache_idx] = si.code_point;
+        cache[cache_idx].hash = si.hash_name?OBJ_txt2nid(si.hash_name):NID_undef;
+        cache[cache_idx].hash_idx = ssl_get_md_idx(cache[cache_idx].hash);
+        cache[cache_idx].sig = OBJ_txt2nid(si.sigalg_name);
+        cache[cache_idx].sig_idx = i + SSL_PKEY_NUM;
+        cache[cache_idx].sigandhash = OBJ_txt2nid(si.sigalg_name);
+        cache[cache_idx].curve = NID_undef;
         /* all provided sigalgs are enabled by load */
         cache[cache_idx].enabled = 1;
-	cache_idx++;
+        cache_idx++;
     }
     ERR_pop_to_mark();
     ctx->sigalg_lookup_cache = cache;
@@ -1533,8 +1621,8 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL_CONNECTION *s,
 
             /* Work out index corresponding to ciphersuite */
             for (i = 0; i < s->ssl_pkey_num; i++) {
-                const SSL_CERT_LOOKUP *clu = ssl_cert_lookup_by_idx(i,
-				                     SSL_CONNECTION_GET_CTX(s));
+                const SSL_CERT_LOOKUP *clu
+                    = ssl_cert_lookup_by_idx(i, SSL_CONNECTION_GET_CTX(s));
 
                 if (clu == NULL)
                     continue;
@@ -1717,7 +1805,8 @@ static int sigalg_security_bits(SSL_CTX *ctx, const SIGALG_LOOKUP *lu)
         else if (lu->sigalg == TLSEXT_SIGALG_ed448)
             secbits = 224;
     }
-    /* For provider-based sigalgs we have secbits information available
+    /*
+     * For provider-based sigalgs we have secbits information available
      * in the (provider-loaded) sigalg_list structure
      */
     if ((secbits == 0) && (lu->sig_idx >= SSL_PKEY_NUM)
@@ -1756,7 +1845,8 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
     }
     lu = tls1_lookup_sigalg(s, sig);
     /* if this sigalg is loaded, set so far unknown pkeyid to its sig NID */
-    if ((pkeyid == -1) && (lu != NULL)) pkeyid = lu->sig;
+    if ((pkeyid == -1) && (lu != NULL))
+        pkeyid = lu->sig;
 
     /* Should never happen */
     if (pkeyid == -1)
@@ -1776,8 +1866,8 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
     }
     /* Check the sigalg is consistent with the key OID */
     if (!ssl_cert_lookup_by_nid(
-                 (pkeyid==EVP_PKEY_RSA_PSS)?EVP_PKEY_get_id(pkey):pkeyid, &cidx,
-		 SSL_CONNECTION_GET_CTX(s))
+                 (pkeyid == EVP_PKEY_RSA_PSS) ? EVP_PKEY_get_id(pkey) : pkeyid,
+                 &cidx, SSL_CONNECTION_GET_CTX(s))
             || lu->sig_idx != (int)cidx) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
@@ -1972,13 +2062,13 @@ int tls1_set_server_sigalgs(SSL_CONNECTION *s)
     s->shared_sigalgs = NULL;
     s->shared_sigalgslen = 0;
 
-    /* Allocate and clear certificate validity flags */
-    OPENSSL_free(s->s3.tmp.valid_flags);
-    s->s3.tmp.valid_flags = OPENSSL_zalloc(s->ssl_pkey_num * sizeof(uint32_t));
-    if (s->s3.tmp.valid_flags == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+    /* Clear certificate validity flags */
+    if (s->s3.tmp.valid_flags)
+        memset(s->s3.tmp.valid_flags, 0, s->ssl_pkey_num * sizeof(uint32_t));
+    else
+        s->s3.tmp.valid_flags = OPENSSL_zalloc(s->ssl_pkey_num * sizeof(uint32_t));
+    if (s->s3.tmp.valid_flags == NULL)
         return 0;
-    }
     /*
      * If peer sent no signature algorithms check to see if we support
      * the default algorithm for each certificate type
@@ -2443,7 +2533,7 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL_CONNECTION *s, int op)
             continue;
 
         clu = ssl_cert_lookup_by_idx(lu->sig_idx,
-			             SSL_CONNECTION_GET_CTX(s));
+                                     SSL_CONNECTION_GET_CTX(s));
         if (clu == NULL)
                 continue;
 
@@ -2971,7 +3061,7 @@ int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
             return 0;
 
         if (ssl_cert_lookup_by_pkey(pk, &certidx,
-				    SSL_CONNECTION_GET_CTX(s)) == NULL)
+                                    SSL_CONNECTION_GET_CTX(s)) == NULL)
             return 0;
         idx = certidx;
         pvalid = s->s3.tmp.valid_flags + idx;
@@ -3378,7 +3468,7 @@ static int tls12_get_cert_sigalg_idx(const SSL_CONNECTION *s,
 {
     int sig_idx = lu->sig_idx;
     const SSL_CERT_LOOKUP *clu = ssl_cert_lookup_by_idx(sig_idx,
-		                      SSL_CONNECTION_GET_CTX(s));
+                                                        SSL_CONNECTION_GET_CTX(s));
 
     /* If not recognised or not supported by cipher mask it is not suitable */
     if (clu == NULL
