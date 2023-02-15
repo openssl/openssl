@@ -32,7 +32,7 @@ server certificate type.
 SSL_get0_peer_rpk() returns the peer's raw public key from SSL B<s>.
 
 SSL_SESSION_get0_peer_rpk() returns the peer's raw public key from
-SSL_SESSION B<ss> in the case of resumption.
+SSL_SESSION B<ss>.
 
 =head1 NOTES
 
