@@ -37,6 +37,7 @@
 
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
+#include "testutil/output.h"
 #include "internal/nelem.h"
 #include "internal/ktls.h"
 #include "../ssl/ssl_local.h"
@@ -7796,7 +7797,7 @@ static int test_ssl_get_used_group(int tst)
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
                                        TLS1_VERSION,
                                        TLS_MAX_VERSION,
@@ -7807,11 +7808,11 @@ static int test_ssl_get_used_group(int tst)
             || !TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_256_GCM_SHA384"))
             || !TEST_true(SSL_CTX_set_cipher_list(sctx, "AES256-SHA"))
             || !TEST_true(SSL_CTX_set_ciphersuites(sctx, "TLS_AES_256_GCM_SHA384")))
-         goto end;
+        goto end;
 
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                             NULL, NULL))
+                                      NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE)))
         goto end;

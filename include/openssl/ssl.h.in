@@ -1502,13 +1502,11 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(s, SSL_CTRL_GET_MIN_PROTO_VERSION, 0, NULL)
 # define SSL_get_max_proto_version(s) \
         SSL_ctrl(s, SSL_CTRL_GET_MAX_PROTO_VERSION, 0, NULL)
-#define SSL_get_oqs_kem_curve_id(s) \
-        SSL_ctrl(s, SSL_CTRL_GET_OQS_KEM_CURVE_ID, 0, NULL)
-#define SSL_get_used_group_id(s) \
+# define SSL_get_used_group_id(s) \
         SSL_ctrl(s, SSL_CTRL_GET_USED_GROUP_ID, 0, NULL)
-#define SSL_get_used_group_nid(s) \
+# define SSL_get_used_group_nid(s) \
         SSL_ctrl(s, SSL_CTRL_GET_USED_GROUP_NID, 0, NULL)
-#define SSL_get_used_sigalg_nid(s) \
+# define SSL_get_used_sigalg_nid(s) \
         SSL_ctrl(s, SSL_CTRL_GET_USED_SIGALG_NID, 0, NULL)
 
 const char *SSL_group_to_name(SSL *s, int id);
@@ -1541,6 +1539,7 @@ int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey);
 # define SSL_get_shared_curve          SSL_get_shared_group
 # define SSL_get_used_curve_id         SSL_get_used_group_id
 # define SSL_get_used_curve_nid        SSL_get_used_group_nid
+
 
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /* Provide some compatibility macros for removed functionality. */

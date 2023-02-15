@@ -3760,27 +3760,26 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         }
     case SSL_CTRL_GET_USED_GROUP_ID:
         {
-          if (s == NULL || s->s3 == NULL) return 0;
-          if (s->server == 0|| s->session == NULL) return 0;
-          return s->s3->tmp.oqs_kem_curve_id ? s->s3->tmp.oqs_kem_curve_id : s->s3->group_id;
+            if (sc == NULL) return 0;
+            if (sc->server == 0|| sc->session == NULL) return 0;
+            return sc->s3.group_id;
         }
     case SSL_CTRL_GET_USED_GROUP_NID:
         {
-          if (s == NULL || s->s3 == NULL) return 0;
-          if (s->server == 0|| s->session == NULL) return 0;
-          const TLS_GROUP_INFO *tls_group_info =
-            tls1_group_id_lookup(s->s3->tmp.oqs_kem_curve_id ?
-                                 s->s3->tmp.oqs_kem_curve_id : s->s3->group_id);
-          return tls_group_info == NULL ? 0 : tls_group_info->nid;
+            if (sc == NULL) return 0;
+            if (sc->server == 0|| sc->session == NULL) return 0;
+            const TLS_GROUP_INFO *tls_group_info =
+                    tls1_group_id_lookup(s->ctx, sc->s3.group_id);
+            return tls_group_info == NULL ? 0 : tls_group_info->group_id;
         }
     case SSL_CTRL_GET_USED_SIGALG_NID:
         {
-          if (s == NULL || s->s3 == NULL) return 0;
-          if (s->session == NULL) return 0;
-          if (s->s3->tmp.peer_sigalg == NULL) return 0;
-          if (s->s3->tmp.peer_sigalg->sig == EVP_PKEY_EC)
-             return s->s3->tmp.peer_sigalg->sigandhash;
-          return s->s3->tmp.peer_sigalg->sig;
+            if (sc == NULL) return 0;
+            if (sc->session == NULL) return 0;
+            if (sc->s3.tmp.peer_sigalg == NULL) return 0;
+            if (sc->s3.tmp.peer_sigalg->sig == EVP_PKEY_EC)
+                return sc->s3.tmp.peer_sigalg->sigandhash;
+            return sc->s3.tmp.peer_sigalg->sig;
         }
 
     default:
