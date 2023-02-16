@@ -10043,6 +10043,28 @@ end:
 #endif
 }
 
+static int test_calling_set1_groups_list_twice(void)
+{
+    int testresult = 0;
+
+    SSL_CTX *ctx = NULL;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_method())))
+        goto end;
+
+    /* calling SSL_CTX_set1_groups_list twice to ensure, it's not leaking memory */
+    if (!TEST_true(SSL_CTX_set1_groups_list(ctx, "secp384r1:prime256v1")))
+        goto end;
+    if (!TEST_true(SSL_CTX_set1_groups_list(ctx, "secp384r1:prime256v1")))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_CTX_free(ctx);
+
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -10311,6 +10333,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_serverinfo_custom, 4);
 #endif
+    ADD_TEST(test_calling_set1_groups_list_twice);
     return 1;
 
  err:
