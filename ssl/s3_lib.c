@@ -3770,7 +3770,8 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             if (sc->server == 0|| sc->session == NULL) return 0;
             const TLS_GROUP_INFO *tls_group_info =
                     tls1_group_id_lookup(s->ctx, sc->s3.group_id);
-            return tls_group_info == NULL ? 0 : tls_group_info->group_id;
+            if (tls_group_info == NULL) return 0;
+            return tls1_group_id2nid(tls_group_info->group_id, 0);
         }
     case SSL_CTRL_GET_USED_SIGALG_NID:
         {
