@@ -774,7 +774,7 @@ static int EVP_Update_loop(void *args)
     else
         rc = EVP_EncryptFinal_ex(ctx, buf, &outl);
 
-    if (rc <= 1)
+    if (rc == 0)
         BIO_printf(bio_err, "Error finalizing cipher loop\n");
     return count;
 }
@@ -816,7 +816,7 @@ static int EVP_Update_loop_ccm(void *args)
     else
         final = EVP_EncryptFinal_ex(ctx, buf, &outl);
 
-    if (final <= 1)
+    if (final == 0)
         BIO_printf(bio_err, "Error finalizing ccm loop\n");
     return realcount;
 }
