@@ -712,13 +712,16 @@ int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, const SSL_METHOD *method, int type)
     if (ssl->lock == NULL)
         return 0;
 
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, ssl, &ssl->ex_data)) {
+        CRYPTO_THREAD_lock_free(ssl->lock);
+        ssl->lock = NULL;
+        return 0;
+    }
+
     SSL_CTX_up_ref(ctx);
     ssl->ctx = ctx;
 
     ssl->defltmeth = ssl->method = method;
-
-    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, ssl, &ssl->ex_data))
-        return 0;
 
     return 1;
 }
