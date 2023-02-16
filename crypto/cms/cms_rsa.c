@@ -98,8 +98,10 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
     if (EVP_PKEY_CTX_set_rsa_mgf1_md(pkctx, mgf1md) <= 0)
         goto err;
     if (label != NULL
-            && EVP_PKEY_CTX_set0_rsa_oaep_label(pkctx, label, labellen) <= 0)
+            && EVP_PKEY_CTX_set0_rsa_oaep_label(pkctx, label, labellen) <= 0) {
+        OPENSSL_free(label);
         goto err;
+    }
     /* Carry on */
     rv = 1;
 
