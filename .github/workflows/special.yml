@@ -1,0 +1,28 @@
+name: "Special checks"
+
+on:
+  pull_request: []
+  push: []
+
+jobs:
+  # This build test does one thing only, it tries to brutally merge
+  # libcrypto.a and libssl.a, thus ensuring that there aren't any duplicate
+  # symbols between them.
+  check-libcrypto-libssl-duplication:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout OpenSSL
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: configure OpenSSL
+        run: ./Configure
+      - name: build OpenSSL libs
+        run: make -s build_generated build_libs
+      - name: generate build test
+        run: |
+          echo '#include <openssl/ssl.h>'               > bt.c
+          echo 'int main(int argc, char **argv)'        >> bt.c
+          echo '{ }'                                    >> bt.c
+          cc -o bt -I include bt.c \
+                -Wl,--whole-archive libssl.a libcrypto.a -Wl,--no-whole-archive
