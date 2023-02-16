@@ -25,7 +25,6 @@ The trust of this OpenSSL PKCS11 provider would be high because:
 
 PKCS11 requirements
 ----------------------------
-
 These are the minimum requirements that were identified for a PKCS11 provider:
 
 - The PKCS11 provider should be compatible with the PKCS#11 standard v2.40.
@@ -47,9 +46,16 @@ These are the minimum requirements that were identified for a PKCS11 provider:
   the OSSL_STORE_open API.
 
 
+Restrictions:
+----------------------------
+- The PKCS11 provider will not support dynamic PKCS#11 library selection,
+  as described in RFC 7512.
+- Each PKCS11 provider context is limited to one or more slots/tokes with
+  the same capabilities (mechanism list, key-length, etc).
+
+
 OpenSSL addition
 -----------------------------
-
 The PKCS11 provider needs some enhancement in OpenSSL to fulfill the requirements
 and cover the behaviour of a PKCS11 driver.
 
@@ -62,15 +68,7 @@ The PKCS11 provider needs at least 3 parameters to set up the provider.
   pin-source, if it is not specified in the object, provided by the store. The
   parameter works similar to the "pin-source" query attribute in RFC 7512.
 
-No provider query caching:
-The PKCS11 provider needs to load a PKCS11 driver module, which would load
-the PKCS11 standard API. Multiple devices can be supported with one PKCS11 module.
-Devices can be selected by slot number or token name. The selected device can support
-only a part of all the PKCS11 features and can differ from device to device, this means the
-dispatch tables from the provider query function should not be cached.
-
 Multiple provider instances:
 It should be possible to work on multiple devices on different slot at the same time.
 This requires an additional OpenSSL provider load API to create multiple instances
 from one provider library.
-
