@@ -12,7 +12,7 @@ use warnings;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 use OpenSSL::Test::Utils;
 
-my $fuzzer = "v3name_fuzzer";
+my $fuzzer = "v3name";
 setup("test_fuzz_${fuzzer}");
 
 plan tests => 2; # one more due to below require_ok(...)
