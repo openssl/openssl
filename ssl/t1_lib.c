@@ -765,6 +765,7 @@ int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
     tmparr = OPENSSL_memdup(gcb.gid_arr, gcb.gidcnt * sizeof(*tmparr));
     if (tmparr == NULL)
         goto end;
+    OPENSSL_free(*pext);
     *pext = tmparr;
     *pextlen = gcb.gidcnt;
     ret = 1;
