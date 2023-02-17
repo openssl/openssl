@@ -125,4 +125,9 @@ int s390x_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 int s390x_crt(BIGNUM *r, const BIGNUM *i, const BIGNUM *p, const BIGNUM *q,
             const BIGNUM *dmp, const BIGNUM *dmq, const BIGNUM *iqmp);
 
+int ossl_bn_blinding_convert(BIGNUM *n, BIGNUM *r, BN_BLINDING *b,
+                             BN_CTX *ctx, int fixed_top);
+int ossl_bn_blinding_invert(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
+                            BN_CTX *ctx, int fixed_top);
+
 #endif

@@ -131,8 +131,12 @@ int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
 
 int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 {
-    int ret = 1;
+    return ossl_bn_blinding_convert(n, r, b, ctx, 0);
+}
 
+int ossl_bn_blinding_convert(BIGNUM *n, BIGNUM *r, BN_BLINDING *b,
+                             BN_CTX *ctx, int fixed_top)
+{
     bn_check_top(n);
 
     if ((b->A == NULL) || (b->Ai == NULL)) {
@@ -149,12 +153,16 @@ int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
     if (r != NULL && (BN_copy(r, b->Ai) == NULL))
         return 0;
 
-    if (b->m_ctx != NULL)
-        ret = BN_mod_mul_montgomery(n, n, b->A, b->m_ctx, ctx);
-    else
-        ret = BN_mod_mul(n, n, b->A, b->mod, ctx);
+    if (b->m_ctx != NULL) {
+        if (!bn_mul_mont_fixed_top(n, n, b->A, b->m_ctx, ctx))
+            return 0;
+        if (fixed_top)
+            return 1;
+        bn_correct_top(n);
+        return 1;
+    }
 
-    return ret;
+    return BN_mod_mul(n, n, b->A, b->mod, ctx);
 }
 
 int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
@@ -164,6 +172,12 @@ int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
 
 int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
                           BN_CTX *ctx)
+{
+    return ossl_bn_blinding_invert(n, r, b, ctx, 0);
+}
+
+int ossl_bn_blinding_invert(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
+                            BN_CTX *ctx, int fixed_top)
 {
     int ret;
 
@@ -175,24 +189,14 @@ int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
     }
 
     if (b->m_ctx != NULL) {
-        /* ensure that BN_mod_mul_montgomery takes pre-defined path */
-        if (n->dmax >= r->top) {
-            size_t i, rtop = r->top, ntop = n->top;
-            BN_ULONG mask;
-
-            for (i = 0; i < rtop; i++) {
-                mask = (BN_ULONG)0 - ((i - ntop) >> (8 * sizeof(i) - 1));
-                n->d[i] &= mask;
-            }
-            mask = (BN_ULONG)0 - ((rtop - ntop) >> (8 * sizeof(ntop) - 1));
-            /* always true, if (rtop >= ntop) n->top = r->top; */
-            n->top = (int)(rtop & ~mask) | (ntop & mask);
-            n->flags |= (BN_FLG_FIXED_TOP & ~mask);
-        }
-        ret = BN_mod_mul_montgomery(n, n, r, b->m_ctx, ctx);
-    } else {
-        ret = BN_mod_mul(n, n, r, b->mod, ctx);
+        if (!bn_mul_mont_fixed_top(n, n, r, b->m_ctx, ctx))
+            return 0;
+        if (fixed_top)
+            return 1;
+        bn_correct_top(n);
+        return 1;
     }
+    ret = BN_mod_mul(n, n, r, b->mod, ctx);
 
     bn_check_top(n);
     return ret;

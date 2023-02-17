@@ -229,7 +229,7 @@ static int rsa_blinding_convert(BN_BLINDING *b, BIGNUM *f, BIGNUM *unblind,
         /*
          * Local blinding: store the unblinding factor in BN_BLINDING.
          */
-        return BN_BLINDING_convert_ex(f, NULL, b, ctx);
+        return ossl_bn_blinding_convert(f, NULL, b, ctx, 1);
     } else {
         /*
          * Shared blinding: store the unblinding factor outside BN_BLINDING.
@@ -239,7 +239,7 @@ static int rsa_blinding_convert(BN_BLINDING *b, BIGNUM *f, BIGNUM *unblind,
         if (!BN_BLINDING_lock(b))
             return 0;
 
-        ret = BN_BLINDING_convert_ex(f, unblind, b, ctx);
+        ret = ossl_bn_blinding_convert(f, unblind, b, ctx, 1);
         BN_BLINDING_unlock(b);
 
         return ret;
@@ -250,14 +250,14 @@ static int rsa_blinding_invert(BN_BLINDING *b, BIGNUM *f, BIGNUM *unblind,
                                BN_CTX *ctx)
 {
     /*
-     * For local blinding, unblind is set to NULL, and BN_BLINDING_invert_ex
+     * For local blinding, unblind is set to NULL, and ossl_bn_blinding_invert
      * will use the unblinding factor stored in BN_BLINDING. If BN_BLINDING
      * is shared between threads, unblind must be non-null:
-     * BN_BLINDING_invert_ex will then use the local unblinding factor, and
+     * ossl_bn_blinding_invert will then use the local unblinding factor, and
      * will only read the modulus from BN_BLINDING. In both cases it's safe
      * to access the blinding without a lock.
      */
-    return BN_BLINDING_invert_ex(f, unblind, b, ctx);
+    return ossl_bn_blinding_invert(f, unblind, b, ctx, 1);
 }
 
 /* signing */
