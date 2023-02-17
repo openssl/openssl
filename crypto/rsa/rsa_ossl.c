@@ -391,100 +391,19 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
     return r;
 }
 
-static int derive_kdk(int flen, const unsigned char *from, RSA *rsa,
-                      unsigned char *buf, int num, unsigned char *kdk)
-{
-    int ret = 0;
-    HMAC_CTX *hmac = NULL;
-    EVP_MD *md = NULL;
-    unsigned int md_len = SHA256_DIGEST_LENGTH;
-    unsigned char d_hash[SHA256_DIGEST_LENGTH] = {0};
-    /*
-     * because we use d as a handle to rsa->d we need to keep it local and
-     * free before any further use of rsa->d
-     */
-    BIGNUM *d = BN_new();
-
-    if (d == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
-        goto err;
-    }
-    if (rsa->d == NULL) {
-        ERR_raise(ERR_LIB_RSA, RSA_R_MISSING_PRIVATE_KEY);
-        BN_free(d);
-        goto err;
-    }
-    BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
-    if (BN_bn2binpad(d, buf, num) < 0) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-        BN_free(d);
-        goto err;
-    }
-    BN_free(d);
-
-    /*
-     * we use hardcoded hash so that migrating between versions that use
-     * different hash doesn't provide a Bleichenbacher oracle:
-     * if the attacker can see that different versions return different
-     * messages for the same ciphertext, they'll know that the message is
-     * syntethically generated, which means that the padding check failed
-     */
-    md = EVP_MD_fetch(rsa->libctx, "sha256", NULL);
-    if (md == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_FETCH_FAILED);
-        goto err;
-    }
-
-    if (EVP_Digest(buf, num, d_hash, NULL, md, NULL) <= 0) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    hmac = HMAC_CTX_new();
-    if (hmac == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
-        goto err;
-    }
-
-    if (HMAC_Init_ex(hmac, d_hash, sizeof(d_hash), md, NULL) <= 0) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    if (flen < num) {
-        memset(buf, 0, num - flen);
-        if (HMAC_Update(hmac, buf, num - flen) <= 0) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-    }
-    if (HMAC_Update(hmac, from, flen) <= 0) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    md_len = SHA256_DIGEST_LENGTH;
-    if (HMAC_Final(hmac, kdk, &md_len) <= 0) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    ret = 1;
-
- err:
-    HMAC_CTX_free(hmac);
-    EVP_MD_free(md);
-    return ret;
-}
-
 static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
                                    unsigned char *to, RSA *rsa, int padding)
 {
     BIGNUM *f, *ret;
     int j, num = 0, r = -1;
     unsigned char *buf = NULL;
+    unsigned char d_hash[SHA256_DIGEST_LENGTH] = {0};
+    HMAC_CTX *hmac = NULL;
+    unsigned int md_len = SHA256_DIGEST_LENGTH;
     unsigned char kdk[SHA256_DIGEST_LENGTH] = {0};
     BN_CTX *ctx = NULL;
     int local_blinding = 0;
+    EVP_MD *md = NULL;
     /*
      * Used only if the blinding structure is shared. A non-NULL unblind
      * instructs rsa_blinding_convert() and rsa_blinding_invert() to store
@@ -589,29 +508,88 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         BN_free(d);
     }
 
+    if (blinding)
+        if (!rsa_blinding_invert(blinding, ret, unblind, ctx))
+            goto err;
+
     /*
      * derive the Key Derivation Key from private exponent and public
      * ciphertext
      */
     if (padding == RSA_PKCS1_PADDING) {
-        if (derive_kdk(flen, from, rsa, buf, num, kdk) == 0)
+        /*
+         * because we use d as a handle to rsa->d we need to keep it local and
+         * free before any further use of rsa->d
+         */
+        BIGNUM *d = BN_new();
+        if (d == NULL) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
             goto err;
+        }
+        if (rsa->d == NULL) {
+            ERR_raise(ERR_LIB_RSA, RSA_R_MISSING_PRIVATE_KEY);
+            BN_free(d);
+            goto err;
+        }
+        BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
+        if (BN_bn2binpad(d, buf, num) < 0) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+            BN_free(d);
+            goto err;
+        }
+        BN_free(d);
+
+        /*
+         * we use hardcoded hash so that migrating between versions that use
+         * different hash doesn't provide a Bleichenbacher oracle:
+         * if the attacker can see that different versions return different
+         * messages for the same ciphertext, they'll know that the message is
+         * syntethically generated, which means that the padding check failed
+         */
+        md = EVP_MD_fetch(rsa->libctx, "sha256", NULL);
+        if (md == NULL) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
+        if (EVP_Digest(buf, num, d_hash, NULL, md, NULL) <= 0) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
+        hmac = HMAC_CTX_new();
+        if (hmac == NULL) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+
+        if (HMAC_Init_ex(hmac, d_hash, sizeof(d_hash), md, NULL) <= 0) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
+        if (flen < num) {
+            memset(buf, 0, num - flen);
+            if (HMAC_Update(hmac, buf, num - flen) <= 0) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        }
+        if (HMAC_Update(hmac, from, flen) <= 0) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
+        md_len = SHA256_DIGEST_LENGTH;
+        if (HMAC_Final(hmac, kdk, &md_len) <= 0) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
     }
 
-    if (blinding) {
-        /*
-         * ossl_bn_rsa_do_unblind() combines blinding inversion and
-         * 0-padded BN BE serialization
-         */
-        j = ossl_bn_rsa_do_unblind(ret, blinding, unblind, rsa->n, ctx,
-                                   buf, num);
-        if (j == 0)
-            goto err;
-    } else {
-        j = BN_bn2binpad(ret, buf, num);
-        if (j < 0)
-            goto err;
-    }
+    j = BN_bn2binpad(ret, buf, num);
+    if (j < 0)
+        goto err;
 
     switch (padding) {
     case RSA_PKCS1_NO_IMPLICIT_REJECT_PADDING:
@@ -641,6 +619,8 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
 #endif
 
  err:
+    HMAC_CTX_free(hmac);
+    EVP_MD_free(md);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     OPENSSL_clear_free(buf, num);
