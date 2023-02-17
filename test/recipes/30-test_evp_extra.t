@@ -14,11 +14,13 @@ use OpenSSL::Test qw/:DEFAULT bldtop_dir/;
 
 setup("test_evp_extra");
 
-plan tests => 3;
+plan tests => 5;
 
 ok(run(test(["evp_extra_test"])), "running evp_extra_test");
+ok(run(test(["evp_rsa_test"])), "running evp_rsa_test");
 
 # Run tests with a non-default library context
 ok(run(test(["evp_extra_test", "-context"])), "running evp_extra_test with a non-default library context");
+ok(run(test(["evp_rsa_test", "-context"])), "running evp_rsa_test with a non-default library context");
 
 ok(run(test(["evp_extra_test2"])), "running evp_extra_test2");

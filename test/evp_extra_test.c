@@ -23,84 +23,24 @@
 #include <openssl/kdf.h>
 #include <openssl/provider.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/param_build.h>
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
 #include <openssl/aes.h>
-#include <openssl/decoder.h>
 #include <openssl/rsa.h>
 #include <openssl/engine.h>
 #include <openssl/proverr.h>
 #include "testutil.h"
 #include "internal/nelem.h"
-#include "internal/sizes.h"
 #include "crypto/evp.h"
 
 static OSSL_LIB_CTX *testctx = NULL;
 static char *testpropq = NULL;
 
+#include "evp_extra_test.inc"
+
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *deflprov = NULL;
 static OSSL_PROVIDER *lgcyprov = NULL;
-
-/*
- * kExampleRSAKeyDER is an RSA private key in ASN.1, DER format. Of course, you
- * should never use this key anywhere but in an example.
- */
-static const unsigned char kExampleRSAKeyDER[] = {
-    0x30, 0x82, 0x02, 0x5c, 0x02, 0x01, 0x00, 0x02, 0x81, 0x81, 0x00, 0xf8,
-    0xb8, 0x6c, 0x83, 0xb4, 0xbc, 0xd9, 0xa8, 0x57, 0xc0, 0xa5, 0xb4, 0x59,
-    0x76, 0x8c, 0x54, 0x1d, 0x79, 0xeb, 0x22, 0x52, 0x04, 0x7e, 0xd3, 0x37,
-    0xeb, 0x41, 0xfd, 0x83, 0xf9, 0xf0, 0xa6, 0x85, 0x15, 0x34, 0x75, 0x71,
-    0x5a, 0x84, 0xa8, 0x3c, 0xd2, 0xef, 0x5a, 0x4e, 0xd3, 0xde, 0x97, 0x8a,
-    0xdd, 0xff, 0xbb, 0xcf, 0x0a, 0xaa, 0x86, 0x92, 0xbe, 0xb8, 0x50, 0xe4,
-    0xcd, 0x6f, 0x80, 0x33, 0x30, 0x76, 0x13, 0x8f, 0xca, 0x7b, 0xdc, 0xec,
-    0x5a, 0xca, 0x63, 0xc7, 0x03, 0x25, 0xef, 0xa8, 0x8a, 0x83, 0x58, 0x76,
-    0x20, 0xfa, 0x16, 0x77, 0xd7, 0x79, 0x92, 0x63, 0x01, 0x48, 0x1a, 0xd8,
-    0x7b, 0x67, 0xf1, 0x52, 0x55, 0x49, 0x4e, 0xd6, 0x6e, 0x4a, 0x5c, 0xd7,
-    0x7a, 0x37, 0x36, 0x0c, 0xde, 0xdd, 0x8f, 0x44, 0xe8, 0xc2, 0xa7, 0x2c,
-    0x2b, 0xb5, 0xaf, 0x64, 0x4b, 0x61, 0x07, 0x02, 0x03, 0x01, 0x00, 0x01,
-    0x02, 0x81, 0x80, 0x74, 0x88, 0x64, 0x3f, 0x69, 0x45, 0x3a, 0x6d, 0xc7,
-    0x7f, 0xb9, 0xa3, 0xc0, 0x6e, 0xec, 0xdc, 0xd4, 0x5a, 0xb5, 0x32, 0x85,
-    0x5f, 0x19, 0xd4, 0xf8, 0xd4, 0x3f, 0x3c, 0xfa, 0xc2, 0xf6, 0x5f, 0xee,
-    0xe6, 0xba, 0x87, 0x74, 0x2e, 0xc7, 0x0c, 0xd4, 0x42, 0xb8, 0x66, 0x85,
-    0x9c, 0x7b, 0x24, 0x61, 0xaa, 0x16, 0x11, 0xf6, 0xb5, 0xb6, 0xa4, 0x0a,
-    0xc9, 0x55, 0x2e, 0x81, 0xa5, 0x47, 0x61, 0xcb, 0x25, 0x8f, 0xc2, 0x15,
-    0x7b, 0x0e, 0x7c, 0x36, 0x9f, 0x3a, 0xda, 0x58, 0x86, 0x1c, 0x5b, 0x83,
-    0x79, 0xe6, 0x2b, 0xcc, 0xe6, 0xfa, 0x2c, 0x61, 0xf2, 0x78, 0x80, 0x1b,
-    0xe2, 0xf3, 0x9d, 0x39, 0x2b, 0x65, 0x57, 0x91, 0x3d, 0x71, 0x99, 0x73,
-    0xa5, 0xc2, 0x79, 0x20, 0x8c, 0x07, 0x4f, 0xe5, 0xb4, 0x60, 0x1f, 0x99,
-    0xa2, 0xb1, 0x4f, 0x0c, 0xef, 0xbc, 0x59, 0x53, 0x00, 0x7d, 0xb1, 0x02,
-    0x41, 0x00, 0xfc, 0x7e, 0x23, 0x65, 0x70, 0xf8, 0xce, 0xd3, 0x40, 0x41,
-    0x80, 0x6a, 0x1d, 0x01, 0xd6, 0x01, 0xff, 0xb6, 0x1b, 0x3d, 0x3d, 0x59,
-    0x09, 0x33, 0x79, 0xc0, 0x4f, 0xde, 0x96, 0x27, 0x4b, 0x18, 0xc6, 0xd9,
-    0x78, 0xf1, 0xf4, 0x35, 0x46, 0xe9, 0x7c, 0x42, 0x7a, 0x5d, 0x9f, 0xef,
-    0x54, 0xb8, 0xf7, 0x9f, 0xc4, 0x33, 0x6c, 0xf3, 0x8c, 0x32, 0x46, 0x87,
-    0x67, 0x30, 0x7b, 0xa7, 0xac, 0xe3, 0x02, 0x41, 0x00, 0xfc, 0x2c, 0xdf,
-    0x0c, 0x0d, 0x88, 0xf5, 0xb1, 0x92, 0xa8, 0x93, 0x47, 0x63, 0x55, 0xf5,
-    0xca, 0x58, 0x43, 0xba, 0x1c, 0xe5, 0x9e, 0xb6, 0x95, 0x05, 0xcd, 0xb5,
-    0x82, 0xdf, 0xeb, 0x04, 0x53, 0x9d, 0xbd, 0xc2, 0x38, 0x16, 0xb3, 0x62,
-    0xdd, 0xa1, 0x46, 0xdb, 0x6d, 0x97, 0x93, 0x9f, 0x8a, 0xc3, 0x9b, 0x64,
-    0x7e, 0x42, 0xe3, 0x32, 0x57, 0x19, 0x1b, 0xd5, 0x6e, 0x85, 0xfa, 0xb8,
-    0x8d, 0x02, 0x41, 0x00, 0xbc, 0x3d, 0xde, 0x6d, 0xd6, 0x97, 0xe8, 0xba,
-    0x9e, 0x81, 0x37, 0x17, 0xe5, 0xa0, 0x64, 0xc9, 0x00, 0xb7, 0xe7, 0xfe,
-    0xf4, 0x29, 0xd9, 0x2e, 0x43, 0x6b, 0x19, 0x20, 0xbd, 0x99, 0x75, 0xe7,
-    0x76, 0xf8, 0xd3, 0xae, 0xaf, 0x7e, 0xb8, 0xeb, 0x81, 0xf4, 0x9d, 0xfe,
-    0x07, 0x2b, 0x0b, 0x63, 0x0b, 0x5a, 0x55, 0x90, 0x71, 0x7d, 0xf1, 0xdb,
-    0xd9, 0xb1, 0x41, 0x41, 0x68, 0x2f, 0x4e, 0x39, 0x02, 0x40, 0x5a, 0x34,
-    0x66, 0xd8, 0xf5, 0xe2, 0x7f, 0x18, 0xb5, 0x00, 0x6e, 0x26, 0x84, 0x27,
-    0x14, 0x93, 0xfb, 0xfc, 0xc6, 0x0f, 0x5e, 0x27, 0xe6, 0xe1, 0xe9, 0xc0,
-    0x8a, 0xe4, 0x34, 0xda, 0xe9, 0xa2, 0x4b, 0x73, 0xbc, 0x8c, 0xb9, 0xba,
-    0x13, 0x6c, 0x7a, 0x2b, 0x51, 0x84, 0xa3, 0x4a, 0xe0, 0x30, 0x10, 0x06,
-    0x7e, 0xed, 0x17, 0x5a, 0x14, 0x00, 0xc9, 0xef, 0x85, 0xea, 0x52, 0x2c,
-    0xbc, 0x65, 0x02, 0x40, 0x51, 0xe3, 0xf2, 0x83, 0x19, 0x9b, 0xc4, 0x1e,
-    0x2f, 0x50, 0x3d, 0xdf, 0x5a, 0xa2, 0x18, 0xca, 0x5f, 0x2e, 0x49, 0xaf,
-    0x6f, 0xcc, 0xfa, 0x65, 0x77, 0x94, 0xb5, 0xa1, 0x0a, 0xa9, 0xd1, 0x8a,
-    0x39, 0x37, 0xf4, 0x0b, 0xa0, 0xd7, 0x82, 0x27, 0x5e, 0xae, 0x17, 0x17,
-    0xa1, 0x1e, 0x54, 0x34, 0xbf, 0x6e, 0xc4, 0x8e, 0x99, 0x5d, 0x08, 0xf1,
-    0x2d, 0x86, 0x9d, 0xa5, 0x20, 0x1b, 0xe5, 0xdf,
-};
 
 /*
 * kExampleDSAKeyDER is a DSA private key in ASN.1, DER format. Of course, you
@@ -332,24 +272,6 @@ static const unsigned char kExampleRSAKeyPKCS8[] = {
 };
 
 #ifndef OPENSSL_NO_EC
-/*
- * kExampleECKeyDER is a sample EC private key encoded as an ECPrivateKey
- * structure.
- */
-static const unsigned char kExampleECKeyDER[] = {
-    0x30, 0x77, 0x02, 0x01, 0x01, 0x04, 0x20, 0x07, 0x0f, 0x08, 0x72, 0x7a,
-    0xd4, 0xa0, 0x4a, 0x9c, 0xdd, 0x59, 0xc9, 0x4d, 0x89, 0x68, 0x77, 0x08,
-    0xb5, 0x6f, 0xc9, 0x5d, 0x30, 0x77, 0x0e, 0xe8, 0xd1, 0xc9, 0xce, 0x0a,
-    0x8b, 0xb4, 0x6a, 0xa0, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d,
-    0x03, 0x01, 0x07, 0xa1, 0x44, 0x03, 0x42, 0x00, 0x04, 0xe6, 0x2b, 0x69,
-    0xe2, 0xbf, 0x65, 0x9f, 0x97, 0xbe, 0x2f, 0x1e, 0x0d, 0x94, 0x8a, 0x4c,
-    0xd5, 0x97, 0x6b, 0xb7, 0xa9, 0x1e, 0x0d, 0x46, 0xfb, 0xdd, 0xa9, 0xa9,
-    0x1e, 0x9d, 0xdc, 0xba, 0x5a, 0x01, 0xe7, 0xd6, 0x97, 0xa8, 0x0a, 0x18,
-    0xf9, 0xc3, 0xc4, 0xa3, 0x1e, 0x56, 0xe2, 0x7c, 0x83, 0x48, 0xdb, 0x16,
-    0x1a, 0x1c, 0xf5, 0x1d, 0x7e, 0xf1, 0x94, 0x2d, 0x4b, 0xcf, 0x72, 0x22,
-    0xc1,
-};
-
 /*
  * kExampleBadECKeyDER is a sample EC private key encoded as an ECPrivateKey
  * structure. The private key is equal to the order and will fail to import
@@ -583,40 +505,11 @@ static APK_DATA keycheckdata[] = {
 #endif
 };
 
-static EVP_PKEY *load_example_key(const char *keytype,
-                                  const unsigned char *data, size_t data_len)
-{
-    const unsigned char **pdata = &data;
-    EVP_PKEY *pkey = NULL;
-    OSSL_DECODER_CTX *dctx =
-        OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", NULL, keytype, 0,
-                                      testctx, testpropq);
-
-    /* |pkey| will be NULL on error */
-    (void)OSSL_DECODER_from_data(dctx, pdata, &data_len);
-    OSSL_DECODER_CTX_free(dctx);
-    return pkey;
-}
-
-static EVP_PKEY *load_example_rsa_key(void)
-{
-    return load_example_key("RSA", kExampleRSAKeyDER,
-                            sizeof(kExampleRSAKeyDER));
-}
-
 #ifndef OPENSSL_NO_DSA
 static EVP_PKEY *load_example_dsa_key(void)
 {
     return load_example_key("DSA", kExampleDSAKeyDER,
                             sizeof(kExampleDSAKeyDER));
-}
-#endif
-
-#ifndef OPENSSL_NO_EC
-static EVP_PKEY *load_example_ec_key(void)
-{
-    return load_example_key("EC", kExampleECKeyDER,
-                            sizeof(kExampleECKeyDER));
 }
 #endif
 
@@ -2535,108 +2428,6 @@ static int test_X509_PUBKEY_dup(void)
 }
 #endif /* OPENSSL_NO_EC */
 
-/* Test getting and setting parameters on an EVP_PKEY_CTX */
-static int test_EVP_PKEY_CTX_get_set_params(EVP_PKEY *pkey)
-{
-    EVP_MD_CTX *mdctx = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
-    const OSSL_PARAM *params;
-    OSSL_PARAM ourparams[2], *param = ourparams, *param_md;
-    int ret = 0;
-    const EVP_MD *md;
-    char mdname[OSSL_MAX_NAME_SIZE];
-    char ssl3ms[48];
-
-    /* Initialise a sign operation */
-    ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, testpropq);
-    if (!TEST_ptr(ctx)
-            || !TEST_int_gt(EVP_PKEY_sign_init(ctx), 0))
-        goto err;
-
-    /*
-     * We should be able to query the parameters now.
-     */
-    params = EVP_PKEY_CTX_settable_params(ctx);
-    if (!TEST_ptr(params)
-        || !TEST_ptr(OSSL_PARAM_locate_const(params,
-                                             OSSL_SIGNATURE_PARAM_DIGEST)))
-        goto err;
-
-    params = EVP_PKEY_CTX_gettable_params(ctx);
-    if (!TEST_ptr(params)
-        || !TEST_ptr(OSSL_PARAM_locate_const(params,
-                                             OSSL_SIGNATURE_PARAM_ALGORITHM_ID))
-        || !TEST_ptr(OSSL_PARAM_locate_const(params,
-                                             OSSL_SIGNATURE_PARAM_DIGEST)))
-        goto err;
-
-    /*
-     * Test getting and setting params via EVP_PKEY_CTX_set_params() and
-     * EVP_PKEY_CTX_get_params()
-     */
-    strcpy(mdname, "SHA512");
-    param_md = param;
-    *param++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
-                                                mdname, 0);
-    *param++ = OSSL_PARAM_construct_end();
-
-    if (!TEST_true(EVP_PKEY_CTX_set_params(ctx, ourparams)))
-        goto err;
-
-    mdname[0] = '\0';
-    *param_md = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
-                                                 mdname, sizeof(mdname));
-    if (!TEST_true(EVP_PKEY_CTX_get_params(ctx, ourparams))
-            || !TEST_str_eq(mdname, "SHA512"))
-        goto err;
-
-    /*
-     * Test the TEST_PKEY_CTX_set_signature_md() and
-     * TEST_PKEY_CTX_get_signature_md() functions
-     */
-    if (!TEST_int_gt(EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()), 0)
-            || !TEST_int_gt(EVP_PKEY_CTX_get_signature_md(ctx, &md), 0)
-            || !TEST_ptr_eq(md, EVP_sha256()))
-        goto err;
-
-    /*
-     * Test getting MD parameters via an associated EVP_PKEY_CTX
-     */
-    mdctx = EVP_MD_CTX_new();
-    if (!TEST_ptr(mdctx)
-        || !TEST_true(EVP_DigestSignInit_ex(mdctx, NULL, "SHA1", testctx, testpropq,
-                                            pkey, NULL)))
-        goto err;
-
-    /*
-     * We now have an EVP_MD_CTX with an EVP_PKEY_CTX inside it. We should be
-     * able to obtain the digest's settable parameters from the provider.
-     */
-    params = EVP_MD_CTX_settable_params(mdctx);
-    if (!TEST_ptr(params)
-            || !TEST_int_eq(strcmp(params[0].key, OSSL_DIGEST_PARAM_SSL3_MS), 0)
-               /* The final key should be NULL */
-            || !TEST_ptr_null(params[1].key))
-        goto err;
-
-    param = ourparams;
-    memset(ssl3ms, 0, sizeof(ssl3ms));
-    *param++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
-                                                 ssl3ms, sizeof(ssl3ms));
-    *param++ = OSSL_PARAM_construct_end();
-
-    if (!TEST_true(EVP_MD_CTX_set_params(mdctx, ourparams)))
-        goto err;
-
-    ret = 1;
-
- err:
-    EVP_MD_CTX_free(mdctx);
-    EVP_PKEY_CTX_free(ctx);
-
-    return ret;
-}
-
 #ifndef OPENSSL_NO_DSA
 static int test_DSA_get_set_params(void)
 {
@@ -2704,109 +2495,6 @@ static int test_DSA_priv_pub(void)
 }
 
 #endif /* !OPENSSL_NO_DSA */
-
-static int test_RSA_get_set_params(void)
-{
-    OSSL_PARAM_BLD *bld = NULL;
-    OSSL_PARAM *params = NULL;
-    BIGNUM *n = NULL, *e = NULL, *d = NULL;
-    EVP_PKEY_CTX *pctx = NULL;
-    EVP_PKEY *pkey = NULL;
-    int ret = 0;
-
-    /*
-     * Setup the parameters for our RSA object. For our purposes they don't
-     * have to actually be *valid* parameters. We just need to set something.
-     */
-    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA", NULL))
-        || !TEST_ptr(bld = OSSL_PARAM_BLD_new())
-        || !TEST_ptr(n = BN_new())
-        || !TEST_ptr(e = BN_new())
-        || !TEST_ptr(d = BN_new()))
-        goto err;
-    if (!TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_N, n))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_E, e))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_D, d)))
-        goto err;
-    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
-        goto err;
-
-    if (!TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, EVP_PKEY_KEYPAIR,
-                                          params), 0))
-        goto err;
-
-    if (!TEST_ptr(pkey))
-        goto err;
-
-    ret = test_EVP_PKEY_CTX_get_set_params(pkey);
-
- err:
-    EVP_PKEY_free(pkey);
-    EVP_PKEY_CTX_free(pctx);
-    OSSL_PARAM_free(params);
-    OSSL_PARAM_BLD_free(bld);
-    BN_free(n);
-    BN_free(e);
-    BN_free(d);
-
-    return ret;
-}
-
-static int test_RSA_OAEP_set_get_params(void)
-{
-    int ret = 0;
-    EVP_PKEY *key = NULL;
-    EVP_PKEY_CTX *key_ctx = NULL;
-
-    if (nullprov != NULL)
-        return TEST_skip("Test does not support a non-default library context");
-
-    if (!TEST_ptr(key = load_example_rsa_key())
-        || !TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(0, key, 0)))
-        goto err;
-
-    {
-        int padding = RSA_PKCS1_OAEP_PADDING;
-        OSSL_PARAM params[4];
-
-        params[0] = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PAD_MODE, &padding);
-        params[1] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST,
-                                                     OSSL_DIGEST_NAME_SHA2_256, 0);
-        params[2] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST,
-                                                     OSSL_DIGEST_NAME_SHA1, 0);
-        params[3] = OSSL_PARAM_construct_end();
-
-        if (!TEST_int_gt(EVP_PKEY_encrypt_init_ex(key_ctx, params),0))
-            goto err;
-    }
-    {
-        OSSL_PARAM params[3];
-        char oaepmd[30] = { '\0' };
-        char mgf1md[30] = { '\0' };
-
-        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST,
-                                                     oaepmd, sizeof(oaepmd));
-        params[1] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST,
-                                                     mgf1md, sizeof(mgf1md));
-        params[2] = OSSL_PARAM_construct_end();
-
-        if (!TEST_true(EVP_PKEY_CTX_get_params(key_ctx, params)))
-            goto err;
-
-        if (!TEST_str_eq(oaepmd, OSSL_DIGEST_NAME_SHA2_256)
-            || !TEST_str_eq(mgf1md, OSSL_DIGEST_NAME_SHA1))
-            goto err;
-    }
-
-    ret = 1;
-
- err:
-    EVP_PKEY_free(key);
-    EVP_PKEY_CTX_free(key_ctx);
-
-    return ret;
-}
 
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 static int test_decrypt_null_chunks(void)
@@ -3447,53 +3135,6 @@ static int test_ecpub(int idx)
     return ret;
 }
 #endif
-
-static int test_EVP_rsa_pss_with_keygen_bits(void)
-{
-    int ret = 0;
-    EVP_PKEY_CTX *ctx = NULL;
-    EVP_PKEY *pkey = NULL;
-    EVP_MD *md;
-
-    md = EVP_MD_fetch(testctx, "sha256", testpropq);
-    ret = TEST_ptr(md)
-        && TEST_ptr((ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA-PSS", testpropq)))
-        && TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
-        && TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 512), 0)
-        && TEST_int_gt(EVP_PKEY_CTX_set_rsa_pss_keygen_md(ctx, md), 0)
-        && TEST_true(EVP_PKEY_keygen(ctx, &pkey));
-
-    EVP_MD_free(md);
-    EVP_PKEY_free(pkey);
-    EVP_PKEY_CTX_free(ctx);
-    return ret;
-}
-
-static int test_EVP_rsa_pss_set_saltlen(void)
-{
-    int ret = 0;
-    EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *pkey_ctx = NULL;
-    EVP_MD *sha256 = NULL;
-    EVP_MD_CTX *sha256_ctx = NULL;
-    int saltlen = 9999; /* buggy EVP_PKEY_CTX_get_rsa_pss_saltlen() didn't update this */
-    const int test_value = 32;
-
-    ret = TEST_ptr(pkey = load_example_rsa_key())
-        && TEST_ptr(sha256 = EVP_MD_fetch(testctx, "sha256", NULL))
-        && TEST_ptr(sha256_ctx = EVP_MD_CTX_new())
-        && TEST_true(EVP_DigestSignInit(sha256_ctx, &pkey_ctx, sha256, NULL, pkey))
-        && TEST_true(EVP_PKEY_CTX_set_rsa_padding(pkey_ctx, RSA_PKCS1_PSS_PADDING))
-        && TEST_int_gt(EVP_PKEY_CTX_set_rsa_pss_saltlen(pkey_ctx, test_value), 0)
-        && TEST_int_gt(EVP_PKEY_CTX_get_rsa_pss_saltlen(pkey_ctx, &saltlen), 0)
-        && TEST_int_eq(saltlen, test_value);
-
-    EVP_MD_CTX_free(sha256_ctx);
-    EVP_PKEY_free(pkey);
-    EVP_MD_free(sha256);
-
-    return ret;
-}
 
 static int success = 1;
 static void md_names(const char *name, void *vctx)
@@ -4792,8 +4433,6 @@ int setup_tests(void)
     ADD_TEST(test_DSA_get_set_params);
     ADD_TEST(test_DSA_priv_pub);
 #endif
-    ADD_TEST(test_RSA_get_set_params);
-    ADD_TEST(test_RSA_OAEP_set_get_params);
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_TEST(test_decrypt_null_chunks);
 #endif
@@ -4820,8 +4459,6 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_BF
     ADD_ALL_TESTS(test_evp_bf_default_keylen, 4);
 #endif
-    ADD_TEST(test_EVP_rsa_pss_with_keygen_bits);
-    ADD_TEST(test_EVP_rsa_pss_set_saltlen);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_ecpub, OSSL_NELEM(ecpub_nids));
 #endif

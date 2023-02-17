@@ -41,8 +41,6 @@ IF[{- !$disabled{tests} -}]
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test evp_libctx_test ossl_store_test \
           v3nametest v3ext punycode_test \
-          evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
-          evp_fetch_prov_test v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
           conf_include_test params_api_test params_conversion_test \
           constant_time_test safe_math_test verify_extra_test clienthellotest \
@@ -64,7 +62,7 @@ IF[{- !$disabled{tests} -}]
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
           provfetchtest prov_config_test rand_test ca_internals_test \
           bio_tfo_test membio_test bio_dgram_test list_test fips_version_test \
-          x509_test hpke_test pairwise_fail_test
+          x509_test hpke_test pairwise_fail_test evp_rsa_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -183,6 +181,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_extra_test]=evp_extra_test.c
   INCLUDE[evp_extra_test]=../include ../apps/include
   DEPEND[evp_extra_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[evp_rsa_test]=evp_rsa_test.c
+  INCLUDE[evp_rsa_test]=../include ../apps/include
+  DEPEND[evp_rsa_test]=../libcrypto.a libtestutil.a
 
   SOURCE[hpke_test]=hpke_test.c
   INCLUDE[hpke_test]=../include ../apps/include
