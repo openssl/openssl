@@ -34,8 +34,6 @@ int ossl_rsa_pss_params_30_copy(RSA_PSS_PARAMS_30 *to,
 int ossl_rsa_pss_params_30_is_unrestricted(const RSA_PSS_PARAMS_30 *rsa_pss_params);
 int ossl_rsa_pss_params_30_set_hashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
                                        int hashalg_nid);
-int ossl_rsa_pss_params_30_set_maskgenalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
-                                          int maskgenalg_nid);
 int ossl_rsa_pss_params_30_set_maskgenhashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
                                               int maskgenhashalg_nid);
 int ossl_rsa_pss_params_30_set_saltlen(RSA_PSS_PARAMS_30 *rsa_pss_params,
