@@ -241,7 +241,7 @@ static int test_EVP_rsa_keygen_pubexp(void)
     int ret = 0;
     EVP_PKEY_CTX *rsapssctx = NULL, *rsactx = NULL;
     EVP_PKEY *pkey = NULL;
-    EVP_MD *md;
+    EVP_MD *md = NULL;
     BIGNUM *exp = NULL, *zeroexp = NULL;
 
     ret = TEST_ptr(exp = BN_new())
@@ -283,7 +283,7 @@ static int test_EVP_rsa_pss_with_keygen_bits(void)
     int ret = 0;
     EVP_PKEY_CTX *rsapssctx = NULL, *rsactx = NULL;
     EVP_PKEY *pkey = NULL;
-    EVP_MD *md;
+    EVP_MD *md = NULL;
 
     ret = TEST_ptr(md = EVP_MD_fetch(testctx, "sha256", testpropq))
         /* Fail if calling a PSS operation on a RSA key */
@@ -337,7 +337,7 @@ static int test_EVP_rsa_pss_with_keygen_primes(void)
     int ret = 0;
     EVP_PKEY_CTX *ctx = NULL, *rsactx = NULL;
     EVP_PKEY *pkey = NULL;
-    EVP_MD *md;
+    EVP_MD *md = NULL;
 
     ret = TEST_ptr(md = EVP_MD_fetch(testctx, "sha256", testpropq))
         /* Fail if calling a PSS operation on a RSA key */
