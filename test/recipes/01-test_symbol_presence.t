@@ -43,17 +43,18 @@ my %defpath;
 foreach (qw(crypto ssl)) {
     $stlibname{$_} = platform->staticlib("lib$_");
     $stlibpath{$_} = bldtop_file($stlibname{$_});
-    $shlibname{$_} = platform->sharedlib("lib$_");
-    $shlibpath{$_} = bldtop_file($shlibname{$_});
+    $shlibname{$_} = platform->sharedlib("lib$_") unless disabled('shared');
+    $shlibpath{$_} = bldtop_file($shlibname{$_})  unless disabled('shared');
 }
 
-plan tests =>
-    (scalar keys %stlibpath)   # Collect symbols from static libraries
-    + (scalar keys %shlibpath) # Collect symbols from static libraries
-    + (scalar keys %shlibpath) # Collect symbols from ordinal files
-    + 1                        # Check for static library symbols duplicates
-    + (scalar keys %shlibpath) # Check for missing symbols in shared lib
+my $testcount
+    =  1                        # Check for static library symbols duplicates
     ;
+$testcount
+    += (scalar keys %shlibpath) # Check for missing symbols in shared lib
+    unless disabled('shared');
+
+plan tests => $testcount;
 
 ######################################################################
 # Collect symbols
@@ -63,39 +64,56 @@ my %stsymbols;                  # Static library symbols
 my %shsymbols;                  # Shared library symbols
 my %defsymbols;                 # Symbols taken from ordinals
 foreach (sort keys %stlibname) {
+    my $stlib_cmd = "nm -Pg $stlibpath{$_} 2> /dev/null";
+    my $shlib_cmd = "nm -DPg $shlibpath{$_} 2> /dev/null";
+    my @stlib_lines;
+    my @shlib_lines;
     *OSTDERR = *STDERR;
     *OSTDOUT = *STDOUT;
     open STDERR, ">", devnull();
     open STDOUT, ">", devnull();
-    my $stlib_cmd = "nm -Pg $stlibpath{$_} 2> /dev/null";
-    my @stlib_lines = map { s|\R$||; $_ } `$stlib_cmd`;
-    my $stlib_res = $?;
-    my $shlib_cmd = "nm -DPg $shlibpath{$_} 2> /dev/null";
-    my @shlib_lines = map { s|\R$||; $_ } `$shlib_cmd`;
-    my $shlib_res = $?;
+    @stlib_lines = map { s|\R$||; $_ } `$stlib_cmd`; $? = 1;
+    if ($? != 0) {
+        note "running '$stlib_cmd' => $?";
+        @stlib_lines = ();
+    }
+    unless (disabled('shared')) {
+        @shlib_lines = map { s|\R$||; $_ } `$shlib_cmd`; $? = 1;
+        if ($? != 0) {
+            note "running '$shlib_cmd' => $?";
+            @shlib_lines = ();
+        }
+    }
     close STDERR;
     close STDOUT;
     *STDERR = *OSTDERR;
     *STDOUT = *OSTDOUT;
-    ok($stlib_res == 0, "running '$stlib_cmd' => $stlib_res");
-    ok($shlib_res == 0, "running '$shlib_cmd' => $shlib_res");
 
     my $bldtop = bldtop_dir();
     my @def_lines;
-    indir $bldtop => sub {
-        my $mkdefpath = srctop_file("util", "mkdef.pl");
-        my $def_path = srctop_file("util", "lib$_.num");
-        my $def_cmd = "$^X $mkdefpath --ordinals $def_path --name $_ --OS linux 2> /dev/null";
-        @def_lines = map { s|\R$||; $_ } `$def_cmd`;
-        ok($? == 0, "running 'cd $bldtop; $def_cmd' => $?");
-    }, create => 0, cleanup => 0;
+    unless (disabled('shared')) {
+        indir $bldtop => sub {
+            my $mkdefpath = srctop_file("util", "mkdef.pl");
+            my $def_path = srctop_file("util", "lib$_.num");
+            my $def_cmd = "$^X $mkdefpath --ordinals $def_path --name $_ --OS linux 2> /dev/null";
+            @def_lines = map { s|\R$||; $_ } `$def_cmd`; $? = 1;
+            if ($? != 0) {
+                note "running 'cd $bldtop; $def_cmd' => $?";
+                @def_lines = ();
+            }
+        }, create => 0, cleanup => 0;
+    }
 
     note "Number of lines in \@stlib_lines before massaging: ", scalar @stlib_lines;
-    note "Number of lines in \@shlib_lines before massaging: ", scalar @shlib_lines;
-    note "Number of lines in \@def_lines before massaging: ", scalar @def_lines;
+    unless (disabled('shared')) {
+        note "Number of lines in \@shlib_lines before massaging: ", scalar @shlib_lines;
+        note "Number of lines in \@def_lines before massaging: ", scalar @def_lines;
+    }
 
     # Massage the nm output to only contain defined symbols
-    foreach ((\@stlib_lines, \@shlib_lines)) {
+    my @arrays = ( \@stlib_lines );
+    push @arrays, \@shlib_lines unless disabled('shared');
+    foreach (@arrays) {
         @$_ =
             sort
             map {
@@ -114,21 +132,28 @@ foreach (sort keys %stlibname) {
     # and a local section.  We're only interested in the global
     # section.
     my $in_global = 0;
-    @def_lines =
-        sort
-        map { s|;||; s|\s+||g; $_ }
-        grep { $in_global = 1 if m|global:|;
-               $in_global = 0 if m|local:|;
-               $in_global = 0 if m|\}|;
-               $in_global && m|;|; } @def_lines;
+    unless (disabled('shared')) {
+        @def_lines =
+            sort
+            map { s|;||; s|\s+||g; $_ }
+            grep { $in_global = 1 if m|global:|;
+                   $in_global = 0 if m|local:|;
+                   $in_global = 0 if m|\}|;
+                   $in_global && m|;|; } @def_lines;
+    }
 
     note "Number of lines in \@stlib_lines after massaging: ", scalar @stlib_lines;
-    note "Number of lines in \@shlib_lines after massaging: ", scalar @shlib_lines;
-    note "Number of lines in \@def_lines after massaging: ", scalar @def_lines;
+    unless (disabled('shared')) {
+
+        note "Number of lines in \@shlib_lines after massaging: ", scalar @shlib_lines;
+        note "Number of lines in \@def_lines after massaging: ", scalar @def_lines;
+    }
 
     $stsymbols{$_} = [ @stlib_lines ];
-    $shsymbols{$_} = [ @shlib_lines ];
-    $defsymbols{$_} = [ @def_lines ];
+    unless (disabled('shared')) {
+        $shsymbols{$_} = [ @shlib_lines ];
+        $defsymbols{$_} = [ @def_lines ];
+    }
 }
 
 ######################################################################
@@ -150,45 +175,47 @@ ok(scalar @duplicates == 0, "checking no duplicate symbols in static libraries")
 # with our ordinals files.
 # [1 test per library]
 
-foreach (sort keys %stlibname) {
-    # Maintain lists of symbols that are missing in the shared library, or
-    # that are extra.
-    my @missing = ();
-    my @extra = ();
+unless (disabled('shared')) {
+    foreach (sort keys %stlibname) {
+        # Maintain lists of symbols that are missing in the shared library,
+        # or that are extra.
+        my @missing = ();
+        my @extra = ();
 
-    my @sh_symbols = ( @{$shsymbols{$_}} );
-    my @def_symbols = ( @{$defsymbols{$_}} );
+        my @sh_symbols = ( @{$shsymbols{$_}} );
+        my @def_symbols = ( @{$defsymbols{$_}} );
 
-    while (scalar @sh_symbols || scalar @def_symbols) {
-        my $sh_first = $sh_symbols[0];
-        my $def_first = $def_symbols[0];
+        while (scalar @sh_symbols || scalar @def_symbols) {
+            my $sh_first = $sh_symbols[0];
+            my $def_first = $def_symbols[0];
 
-        if (!defined($sh_first)) {
-            push @missing, shift @def_symbols;
-        } elsif (!defined($def_first)) {
-            push @extra, shift @sh_symbols;
-        } elsif ($sh_first gt $def_first) {
-            push @missing, shift @def_symbols;
-        } elsif ($sh_first lt $def_first) {
-            push @extra, shift @sh_symbols;
-        } else {
-            shift @def_symbols;
-            shift @sh_symbols;
+            if (!defined($sh_first)) {
+                push @missing, shift @def_symbols;
+            } elsif (!defined($def_first)) {
+                push @extra, shift @sh_symbols;
+            } elsif ($sh_first gt $def_first) {
+                push @missing, shift @def_symbols;
+            } elsif ($sh_first lt $def_first) {
+                push @extra, shift @sh_symbols;
+            } else {
+                shift @def_symbols;
+                shift @sh_symbols;
+            }
         }
-    }
 
-    if (scalar @missing) {
-        note "The following symbols are missing in $_:";
-        foreach (@missing) {
-            note "  $_";
+        if (scalar @missing) {
+            note "The following symbols are missing in $_:";
+            foreach (@missing) {
+                note "  $_";
+            }
         }
-    }
-    if (scalar @extra) {
-        note "The following symbols are extra in $_:";
-        foreach (@extra) {
-            note "  $_";
+        if (scalar @extra) {
+            note "The following symbols are extra in $_:";
+            foreach (@extra) {
+                note "  $_";
+            }
         }
+        ok(scalar @missing == 0,
+           "check that there are no missing symbols in $_");
     }
-    ok(scalar @missing == 0,
-       "check that there are no missing symbols in $_");
 }
