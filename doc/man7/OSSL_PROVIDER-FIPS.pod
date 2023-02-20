@@ -404,6 +404,8 @@ want to operate in a FIPS approved manner.  The algorithms are:
 
 =item Triple DES CBC
 
+=item EdDSA
+
 =back
 
 =head1 SEE ALSO
