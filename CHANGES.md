@@ -225,8 +225,8 @@ OpenSSL 3.1
    backward compatibility purposes and the "fips=yes" property query
    must be used for all algorithm fetches to ensure FIPS compliance.
 
-   The algorithms that are included but not approved are Triple DES ECB
-   and Triple DES CBC.
+   The algorithms that are included but not approved are Triple DES ECB,
+   Triple DES CBC and EdDSA.
 
    *Paul Dale*
 
