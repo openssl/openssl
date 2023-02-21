@@ -171,6 +171,31 @@ void ossl_crypto_condvar_wait(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex)
     pthread_cond_wait(cv_p, mutex_p);
 }
 
+void ossl_crypto_condvar_wait_timeout(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex,
+                                      OSSL_TIME deadline)
+{
+    pthread_cond_t *cv_p = (pthread_cond_t *)cv;
+    pthread_mutex_t *mutex_p = (pthread_mutex_t *)mutex;
+
+    if (ossl_time_is_infinite(deadline)) {
+        /*
+         * No deadline. Some pthread implementations allow
+         * pthread_cond_timedwait to work the same as pthread_cond_wait when
+         * abstime is NULL, but it is unclear whether this is POSIXly correct.
+         */
+        pthread_cond_wait(cv_p, mutex_p);
+    } else {
+        struct timespec deadline_ts;
+
+        deadline_ts.tv_sec
+            = ossl_time2seconds(deadline);
+        deadline_ts.tv_nsec
+            = (ossl_time2ticks(deadline) % OSSL_TIME_SECOND) / OSSL_TIME_NS;
+
+        pthread_cond_timedwait(cv_p, mutex_p, &deadline_ts);
+    }
+}
+
 void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR *cv)
 {
     pthread_cond_t *cv_p;

@@ -35,6 +35,9 @@ typedef struct {
 /* One microsecond. */
 # define OSSL_TIME_US     (OSSL_TIME_MS     / 1000)
 
+/* One nanosecond. */
+# define OSSL_TIME_NS     (OSSL_TIME_US     / 1000)
+
 #define ossl_seconds2time(s) ossl_ticks2time((s) * OSSL_TIME_SECOND)
 #define ossl_time2seconds(t) (ossl_time2ticks(t) / OSSL_TIME_SECOND)
 #define ossl_ms2time(ms) ossl_ticks2time((ms) * OSSL_TIME_MS)
