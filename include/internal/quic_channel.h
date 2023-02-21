@@ -16,6 +16,7 @@
 # include "internal/quic_reactor.h"
 # include "internal/quic_statm.h"
 # include "internal/time.h"
+# include "internal/thread.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -103,8 +104,13 @@ typedef struct quic_channel_args_st {
      * channel. The instantiator of the channel is responsible for providing a
      * mutex as this makes it easier to handle instantiation and teardown of
      * channels in situations potentially requiring locking.
+     *
+     * Note that this is a MUTEX not a RWLOCK as it needs to be an OS mutex for
+     * compatibility with an OS's condition variable wait API, whereas RWLOCK
+     * may, depending on the build configuration, be implemented using an OS's
+     * mutex primitive or using its RW mutex primitive.
      */
-    CRYPTO_RWLOCK   *mutex;
+    CRYPTO_MUTEX    *mutex;
 } QUIC_CHANNEL_ARGS;
 
 typedef struct quic_channel_st QUIC_CHANNEL;
@@ -256,7 +262,7 @@ SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch);
  * time; it does not belong to the channel but rather is presumed to belong to
  * the owner of the channel.
  */
-CRYPTO_RWLOCK *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch);
+CRYPTO_MUTEX *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch);
 
 # endif
 

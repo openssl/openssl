@@ -112,14 +112,15 @@ static ossl_inline int expect_quic_conn(const QUIC_CONNECTION *qc)
  */
 static int quic_lock(QUIC_CONNECTION *qc)
 {
-    return CRYPTO_THREAD_write_lock(qc->mutex);
+    ossl_crypto_mutex_lock(qc->mutex);
+    return 1;
 }
 
 /* Precondition: Channel mutex is held (unchecked) */
 QUIC_NEEDS_LOCK
 static void quic_unlock(QUIC_CONNECTION *qc)
 {
-    CRYPTO_THREAD_unlock(qc->mutex);
+    ossl_crypto_mutex_unlock(qc->mutex);
 }
 
 
@@ -158,7 +159,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     if (qc->tls == NULL || (sc = SSL_CONNECTION_FROM_SSL(qc->tls)) == NULL)
          goto err;
 
-    if ((qc->mutex = CRYPTO_THREAD_lock_new()) == NULL)
+    if ((qc->mutex = ossl_crypto_mutex_new()) == NULL)
         goto err;
 
     qc->is_thread_assisted
@@ -200,7 +201,7 @@ void ossl_quic_free(SSL *s)
     /* Note: SSL_free calls OPENSSL_free(qc) for us */
 
     SSL_free(qc->tls);
-    CRYPTO_THREAD_lock_free(qc->mutex);
+    ossl_crypto_mutex_free(&qc->mutex);
 }
 
 /* SSL method init */
@@ -681,6 +682,7 @@ static int ensure_channel(QUIC_CONNECTION *qc)
     args.propq      = qc->ssl.ctx->propq;
     args.is_server  = 0;
     args.tls        = qc->tls;
+    args.mutex      = qc->mutex;
 
     qc->ch = ossl_quic_channel_new(&args);
     if (qc->ch == NULL)
@@ -697,20 +699,22 @@ static int ensure_channel(QUIC_CONNECTION *qc)
 QUIC_NEEDS_LOCK
 static int ensure_channel_and_start(QUIC_CONNECTION *qc)
 {
-    if (!ensure_channel(qc))
-        return 0;
+    if (!qc->started) {
+        if (!ensure_channel(qc))
+            return 0;
 
-    if (!configure_channel(qc)
-        || !ossl_quic_channel_start(qc->ch))
-        goto err;
-
-    qc->stream0 = ossl_quic_channel_get_stream_by_id(qc->ch, 0);
-    if (qc->stream0 == NULL)
-        goto err;
-
-    if (qc->is_thread_assisted)
-        if (!ossl_quic_thread_assist_init_start(&qc->thread_assist, qc->ch))
+        if (!configure_channel(qc)
+            || !ossl_quic_channel_start(qc->ch))
             goto err;
+
+        qc->stream0 = ossl_quic_channel_get_stream_by_id(qc->ch, 0);
+        if (qc->stream0 == NULL)
+            goto err;
+
+        if (qc->is_thread_assisted)
+            if (!ossl_quic_thread_assist_init_start(&qc->thread_assist, qc->ch))
+                goto err;
+    }
 
     qc->started = 1;
     return 1;
