@@ -115,10 +115,6 @@ static int ch_init(QUIC_CHANNEL *ch)
     qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
     ch->rx_max_udp_payload_size = qtx_args.mdpl;
 
-    ch->mutex = CRYPTO_THREAD_lock_new();
-    if (ch->mutex == NULL)
-        goto err;
-
     ch->qtx = ossl_qtx_new(&qtx_args);
     if (ch->qtx == NULL)
         goto err;
@@ -322,7 +318,6 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     ossl_qrx_free(ch->qrx);
     ossl_quic_demux_free(ch->demux);
     OPENSSL_free(ch->local_transport_params);
-    CRYPTO_THREAD_lock_free(ch->mutex);
 }
 
 QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
@@ -336,6 +331,7 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
     ch->propq       = args->propq;
     ch->is_server   = args->is_server;
     ch->tls         = args->tls;
+    ch->mutex       = args->mutex;
 
     if (!ch_init(ch)) {
         OPENSSL_free(ch);
@@ -451,16 +447,6 @@ QUIC_DEMUX *ossl_quic_channel_get0_demux(QUIC_CHANNEL *ch)
 CRYPTO_MUTEX *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch)
 {
     return ch->mutex;
-}
-
-int ossl_quic_channel_lock(QUIC_CHANNEL *ch)
-{
-    return ossl_crypto_mutex_lock(ch->mutex);
-}
-
-void ossl_quic_channel_unlock(QUIC_CHANNEL *ch)
-{
-    ossl_crypto_mutex_unlock(ch->mutex);
 }
 
 /*

@@ -50,6 +50,12 @@ struct quic_conn_st {
      */
     QUIC_CHANNEL                    *ch;
 
+    /*
+     * The mutex used to synchronise access to the QUIC_CHANNEL. We own this but
+     * provide it to the channel.
+     */
+    CRYPTO_RWLOCK                   *mutex;
+
     /* Our single bidirectional application data stream. */
     QUIC_STREAM                     *stream0;
 
