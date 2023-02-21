@@ -34,6 +34,12 @@ struct quic_channel_st {
     CRYPTO_RWLOCK                   *mutex;
 
     /*
+     * Callback used to get the current time.
+     */
+    OSSL_TIME                       (*now_cb)(void *arg);
+    void                            *now_cb_arg;
+
+    /*
      * The associated TLS 1.3 connection data. Used to provide the handshake
      * layer; its 'network' side is plugged into the crypto stream for each EL
      * (other than the 0-RTT EL).

@@ -94,6 +94,8 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     ch_args.tls         = srv->tls;
     ch_args.mutex       = srv->mutex;
     ch_args.is_server   = 1;
+    ch_args.now_cb      = srv->args.now_cb;
+    ch_args.now_cb_arg  = srv->args.now_cb_arg;
 
     if ((srv->ch = ossl_quic_channel_new(&ch_args)) == NULL)
         goto err;

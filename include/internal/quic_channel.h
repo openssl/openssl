@@ -111,6 +111,13 @@ typedef struct quic_channel_args_st {
      * mutex primitive or using its RW mutex primitive.
      */
     CRYPTO_MUTEX    *mutex;
+
+    /*
+     * Optional function pointer to use to retrieve the current time. If NULL,
+     * ossl_time_now() is used.
+     */
+    OSSL_TIME       (*now_cb)(void *arg);
+    void            *now_cb_arg;
 } QUIC_CHANNEL_ARGS;
 
 typedef struct quic_channel_st QUIC_CHANNEL;
