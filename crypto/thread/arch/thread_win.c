@@ -162,6 +162,44 @@ void ossl_crypto_condvar_wait(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex)
     SleepConditionVariableCS(cv_p, mutex_p, INFINITE);
 }
 
+void ossl_crypto_condvar_wait_timeout(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex,
+                                      OSSL_TIME deadline, int *timeout_expired)
+{
+    DWORD timeout;
+    CONDITION_VARIABLE *cv_p = (CONDITION_VARIABLE *)cv;
+    CRITICAL_SECTION *mutex_p = (CRITICAL_SECTION *)mutex;
+
+    if (ossl_time_is_infinite(deadline)) {
+        timeout = INFINITE;
+    } else {
+        OSSL_TIME now = ossl_time_now();
+        OSSL_TIME delta = ossl_time_subtract(deadline, now);
+        uint64_t ms;
+
+        if (ossl_time_is_zero(delta)) {
+            if (timeout_expired != NULL)
+                *timeout_expired = 1;
+
+            return;
+        }
+
+        ms = ossl_time2ms(delta);
+
+        /*
+         * Amount of time we want to wait is too long for the 32-bit argument to
+         * the Win32 API, so just wait as long as possible.
+         */
+        if (ms > (uint64_t)(INFINITE - 1))
+            timeout = INFINITE - 1;
+        else
+            timeout = (DWORD)ms;
+    }
+
+    if (!SleepConditionVariableCS(cv_p, mutex_p, timeout)
+        && timeout_expired != NULL)
+        *timeout_expired = 1;
+}
+
 void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR *cv)
 {
     CONDITION_VARIABLE *cv_p;
