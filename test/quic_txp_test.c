@@ -1206,7 +1206,7 @@ static void skip_padding(struct helper *h)
 
 static int run_script(const struct script_op *script)
 {
-    int testresult = 0, have_helper = 0;
+    int testresult = 0, have_helper = 0, sent_ack_eliciting = 0;
     struct helper h;
     const struct script_op *op;
 
@@ -1217,7 +1217,8 @@ static int run_script(const struct script_op *script)
     for (op = script; op->opcode != OPK_END; ++op) {
         switch (op->opcode) {
         case OPK_TXP_GENERATE:
-            if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0),
+            if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0,
+                                                              &sent_ack_eliciting),
                              TX_PACKETISER_RES_SENT_PKT))
                 goto err;
 
@@ -1225,7 +1226,8 @@ static int run_script(const struct script_op *script)
             ossl_qtx_flush_net(h.args.qtx);
             break;
         case OPK_TXP_GENERATE_NONE:
-            if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0),
+            if (!TEST_int_eq(ossl_quic_tx_packetiser_generate(h.txp, (int)op->arg0,
+                                                              &sent_ack_eliciting),
                              TX_PACKETISER_RES_NO_PKT))
                 goto err;
 

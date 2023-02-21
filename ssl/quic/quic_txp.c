@@ -320,7 +320,8 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                                int cc_can_send,
                                int is_last_in_dgram,
                                int dgram_contains_initial,
-                               int chosen_for_conn_close);
+                               int chosen_for_conn_close,
+                               int *sent_ack_eliciting);
 static size_t txp_determine_pn_len(OSSL_QUIC_TX_PACKETISER *txp);
 static int txp_determine_ppl_from_pl(OSSL_QUIC_TX_PACKETISER *txp,
                                      size_t pl,
@@ -335,7 +336,8 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
                                       size_t max_ppl,
                                       size_t pkt_overhead,
                                       QUIC_PKT_HDR *phdr,
-                                      int chosen_for_conn_close);
+                                      int chosen_for_conn_close,
+                                      int *sent_ack_eliciting);
 
 OSSL_QUIC_TX_PACKETISER *ossl_quic_tx_packetiser_new(const OSSL_QUIC_TX_PACKETISER_ARGS *args)
 {
@@ -499,7 +501,8 @@ int ossl_quic_tx_packetiser_has_pending(OSSL_QUIC_TX_PACKETISER *txp,
  * any ELs which do.
  */
 int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
-                                     uint32_t archetype)
+                                     uint32_t archetype,
+                                     int *sent_ack_eliciting)
 {
     uint32_t enc_level, conn_close_enc_level = QUIC_ENC_LEVEL_NUM;
     int have_pkt_for_el[QUIC_ENC_LEVEL_NUM], is_last_in_dgram, cc_can_send;
@@ -540,7 +543,8 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
         rc = txp_generate_for_el(txp, enc_level, archetype, cc_can_send,
                                  is_last_in_dgram,
                                  have_pkt_for_el[QUIC_ENC_LEVEL_INITIAL],
-                                 enc_level == conn_close_enc_level);
+                                 enc_level == conn_close_enc_level,
+                                 sent_ack_eliciting);
 
         if (rc != TXP_ERR_SUCCESS) {
             /*
@@ -888,7 +892,8 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
                                int cc_can_send,
                                int is_last_in_dgram,
                                int dgram_contains_initial,
-                               int chosen_for_conn_close)
+                               int chosen_for_conn_close,
+                               int *sent_ack_eliciting)
 {
     int must_pad = dgram_contains_initial && is_last_in_dgram;
     size_t min_dpl, min_pl, min_ppl, cmpl, cmppl, running_total;
@@ -1010,7 +1015,8 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
 
     return txp_generate_for_el_actual(txp, enc_level, archetype, min_ppl, cmppl,
                                       pkt_overhead, &phdr,
-                                      chosen_for_conn_close);
+                                      chosen_for_conn_close,
+                                      sent_ack_eliciting);
 }
 
 /* Determine how many bytes we should use for the encoded PN. */
@@ -1810,7 +1816,8 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
                                       size_t max_ppl,
                                       size_t pkt_overhead,
                                       QUIC_PKT_HDR *phdr,
-                                      int chosen_for_conn_close)
+                                      int chosen_for_conn_close,
+                                      int *sent_ack_eliciting)
 {
     int rc = TXP_ERR_SUCCESS;
     struct archetype_data a;
@@ -2223,6 +2230,9 @@ static int txp_generate_for_el_actual(OSSL_QUIC_TX_PACKETISER *txp,
             && probe_info->pto[pn_space] > 0)
             --probe_info->pto[pn_space];
     }
+
+    if (have_ack_eliciting)
+        *sent_ack_eliciting = 1;
 
     /* Done. */
     tx_helper_cleanup(&h);
