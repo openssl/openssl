@@ -23,8 +23,7 @@ static unsigned int assist_thread_main(void *arg)
     CRYPTO_MUTEX *m = ossl_quic_channel_get_mutex(qta->ch);
     QUIC_REACTOR *rtor;
 
-    if (!CRYPTO_THREAD_write_lock(m))
-        return 0;
+    ossl_crypto_mutex_lock(m);
 
     rtor = ossl_quic_channel_get_reactor(qta->ch);
 
@@ -52,7 +51,7 @@ static unsigned int assist_thread_main(void *arg)
         ossl_quic_reactor_tick(rtor, QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY);
     }
 
-    CRYPTO_THREAD_unlock(m);
+    ossl_crypto_mutex_unlock(m);
     return 1;
 }
 
@@ -92,12 +91,10 @@ int ossl_quic_thread_assist_stop_async(QUIC_THREAD_ASSIST *qta)
     return 1;
 }
 
-static void ignore_res(int x) {}
-
 int ossl_quic_thread_assist_wait_stopped(QUIC_THREAD_ASSIST *qta)
 {
     CRYPTO_THREAD_RETVAL rv;
-    CRYPTO_RWLOCK *m = ossl_quic_channel_get_mutex(qta->ch);
+    CRYPTO_MUTEX *m = ossl_quic_channel_get_mutex(qta->ch);
 
     if (qta->joined)
         return 1;
@@ -105,18 +102,16 @@ int ossl_quic_thread_assist_wait_stopped(QUIC_THREAD_ASSIST *qta)
     if (!ossl_quic_thread_assist_stop_async(qta))
         return 0;
 
-    CRYPTO_THREAD_unlock(m);
+    ossl_crypto_mutex_unlock(m);
 
     if (!ossl_crypto_thread_native_join(qta->t, &rv)) {
-        ignore_res(CRYPTO_THREAD_write_lock(m)); /* best effort */
+        ossl_crypto_mutex_lock(m);
         return 0;
     }
 
     qta->joined = 1;
 
-    if (!CRYPTO_THREAD_write_lock(m))
-        return 0;
-
+    ossl_crypto_mutex_lock(m);
     return 1;
 }
 
