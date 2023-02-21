@@ -54,9 +54,11 @@
  * To support thread assisted mode, QUIC_CHANNEL can be used by multiple
  * threads. **It is the caller's responsibility to ensure that the QUIC_CHANNEL
  * is only accessed (whether via its methods or via direct access to its state)
- * while the QUIC_CHANNEL mutex is held**, except for methods explicitly marked
- * as not requiring prior locking. See ossl_quic_channel_get_mutex() for more
- * information. This is an unchecked precondition.
+ * while the channel mutex is held**, except for methods explicitly marked as
+ * not requiring prior locking. This is an unchecked precondition.
+ *
+ * The instantiator of the channel is responsible for providing a suitable
+ * mutex which then serves as the channel mutex; see QUIC_CHANNEL_ARGS.
  */
 
 #  define QUIC_NEEDS_LOCK
@@ -70,10 +72,18 @@
 #  define QUIC_CHANNEL_STATE_TERMINATED                  4
 
 typedef struct quic_channel_args_st {
-    OSSL_LIB_CTX *libctx;
-    const char *propq;
-    int is_server;
-    SSL *tls;
+    OSSL_LIB_CTX    *libctx;
+    const char      *propq;
+    int             is_server;
+    SSL             *tls;
+
+    /*
+     * This must be a mutex the lifetime of which will exceed that of the
+     * channel. The instantiator of the channel is responsible for providing a
+     * mutex as this makes it easier to handle instantiation and teardown of
+     * channels in situations potentially requiring locking.
+     */
+    CRYPTO_RWLOCK   *mutex;
 } QUIC_CHANNEL_ARGS;
 
 typedef struct quic_channel_st QUIC_CHANNEL;
@@ -213,30 +223,19 @@ QUIC_DEMUX *ossl_quic_channel_get0_demux(QUIC_CHANNEL *ch);
 SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch);
 
 /*
- * Retreves the channel mutex, which can be used to synchronise access to
- * channel functions and internal data. In order to allow locks to be acquired
- * and released with the correct granularity, it is the caller's responsibility
- * to ensure this lock is held for write while calling any QUIC_CHANNEL method.
+ * Retrieves a pointer to the channel mutex which was provided at the time the
+ * channel was instantiated. In order to allow locks to be acquired and released
+ * with the correct granularity, it is the caller's responsibility to ensure
+ * this lock is held for write while calling any QUIC_CHANNEL method, except for
+ * methods explicitly designed otherwise.
  *
  * This method is thread safe and does not require prior locking. It can also be
- * called while the lock is already held.
+ * called while the lock is already held. Note that this is simply a convenience
+ * function to access the mutex which was passed to the channel at instantiation
+ * time; it does not belong to the channel but rather is presumed to belong to
+ * the owner of the channel.
  */
 CRYPTO_RWLOCK *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch);
-
-/*
- * Locks the channel mutex. It is roughly analagous to locking the mutex
- * returned by ossl_quic_channel_get_mutex() but might be able to avoid locking
- * where thread assisted mode is not being used, thus it is recommended that
- * these methods are used uniformly rather than locking the channel mutex
- * directly.
- *
- * This method is (obviously) thread safe and does not require prior locking. It
- * must not be called while the lock is already held.
- */
-int ossl_quic_channel_lock(QUIC_CHANNEL *ch);
-
-/* Unlocks the channel mutex. */
-void ossl_quic_channel_unlock(QUIC_CHANNEL *ch);
 
 # endif
 

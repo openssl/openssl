@@ -27,7 +27,9 @@ struct quic_channel_st {
 
     /*
      * Master synchronisation mutex used for thread assisted mode
-     * synchronisation.
+     * synchronisation. We don't own this; the instantiator of the channel
+     * passes it to us and is responsible for freeing it after channel
+     * destruction.
      */
     CRYPTO_RWLOCK                   *mutex;
 

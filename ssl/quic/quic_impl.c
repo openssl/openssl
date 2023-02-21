@@ -42,7 +42,7 @@ static int block_until_pred(QUIC_CONNECTION *qc,
 
     rtor = ossl_quic_channel_get_reactor(qc->ch);
     return ossl_quic_reactor_block_until_pred(rtor, pred, pred_arg, flags,
-                                              ossl_quic_channel_get_mutex(qc->ch));
+                                              qc->mutex);
 }
 
 /*
@@ -105,6 +105,25 @@ static ossl_inline int expect_quic_conn(const QUIC_CONNECTION *qc)
 }
 
 /*
+ * Ensures that the channel mutex is held for a method which touches channel
+ * state.
+ *
+ * Precondition: Channel mutex is not held (unchecked)
+ */
+static int quic_lock(QUIC_CONNECTION *qc)
+{
+    return CRYPTO_THREAD_write_lock(qc->mutex);
+}
+
+/* Precondition: Channel mutex is held (unchecked) */
+QUIC_NEEDS_LOCK
+static void quic_unlock(QUIC_CONNECTION *qc)
+{
+    CRYPTO_THREAD_unlock(qc->mutex);
+}
+
+
+/*
  * QUIC Front-End I/O API: Initialization
  * ======================================
  *
@@ -139,6 +158,9 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     if (qc->tls == NULL || (sc = SSL_CONNECTION_FROM_SSL(qc->tls)) == NULL)
          goto err;
 
+    if ((qc->mutex = CRYPTO_THREAD_lock_new()) == NULL)
+        goto err;
+
     /* Channel is not created yet. */
     qc->ssl_mode   = qc->ssl.ctx->mode;
     qc->last_error = SSL_ERROR_NONE;
@@ -147,6 +169,7 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     return ssl_base;
 
 err:
+    SSL_free(qc->tls);
     OPENSSL_free(qc);
     return NULL;
 }
@@ -169,6 +192,7 @@ void ossl_quic_free(SSL *s)
     /* Note: SSL_free calls OPENSSL_free(qc) for us */
 
     SSL_free(qc->tls);
+    CRYPTO_THREAD_lock_free(qc->mutex);
 }
 
 /* SSL method init */
@@ -601,7 +625,7 @@ static int configure_channel(QUIC_CONNECTION *qc)
     return 1;
 }
 
-QUIC_TODO_LOCK
+QUIC_NEEDS_LOCK
 static int ensure_channel(QUIC_CONNECTION *qc)
 {
     QUIC_CHANNEL_ARGS args = {0};
@@ -626,7 +650,7 @@ static int ensure_channel(QUIC_CONNECTION *qc)
  * via calls made to us from the application prior to starting a handshake
  * attempt.
  */
-QUIC_TODO_LOCK
+QUIC_NEEDS_LOCK
 static int ensure_channel_and_start(QUIC_CONNECTION *qc)
 {
     if (!ensure_channel(qc))
@@ -793,6 +817,7 @@ int ossl_quic_get_error(const QUIC_CONNECTION *qc, int i)
  *   - SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER.
  *
  */
+QUIC_NEEDS_LOCK
 static void quic_post_write(QUIC_CONNECTION *qc, int did_append, int do_tick)
 {
     /*
@@ -820,6 +845,7 @@ struct quic_write_again_args {
     size_t              total_written;
 };
 
+QUIC_NEEDS_LOCK
 static int quic_write_again(void *arg)
 {
     struct quic_write_again_args *args = arg;
@@ -847,6 +873,7 @@ static int quic_write_again(void *arg)
     return 0;
 }
 
+QUIC_NEEDS_LOCK
 static int quic_write_blocking(QUIC_CONNECTION *qc, const void *buf, size_t len,
                                size_t *written)
 {
@@ -915,6 +942,7 @@ static void aon_write_finish(QUIC_CONNECTION *qc)
     qc->aon_buf_len             = 0;
 }
 
+QUIC_NEEDS_LOCK
 static int quic_write_nonblocking_aon(QUIC_CONNECTION *qc, const void *buf,
                                       size_t len, size_t *written)
 {
@@ -1001,6 +1029,7 @@ static int quic_write_nonblocking_aon(QUIC_CONNECTION *qc, const void *buf,
     return QUIC_RAISE_NORMAL_ERROR(qc, SSL_ERROR_WANT_WRITE);
 }
 
+QUIC_NEEDS_LOCK
 static int quic_write_nonblocking_epw(QUIC_CONNECTION *qc, const void *buf, size_t len,
                                       size_t *written)
 {
@@ -1060,6 +1089,7 @@ struct quic_read_again_args {
     int             peek;
 };
 
+QUIC_NEEDS_LOCK
 static int quic_read_actual(QUIC_CONNECTION *qc,
                             QUIC_STREAM *stream,
                             void *buf, size_t buf_len,
@@ -1114,6 +1144,7 @@ static int quic_read_actual(QUIC_CONNECTION *qc,
     return 1;
 }
 
+QUIC_NEEDS_LOCK
 static int quic_read_again(void *arg)
 {
     struct quic_read_again_args *args = arg;
