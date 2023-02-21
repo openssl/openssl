@@ -255,6 +255,13 @@ static int ch_init(QUIC_CHANNEL *ch)
     if ((ch->qtls = ossl_quic_tls_new(&tls_args)) == NULL)
         goto err;
 
+    ch->rx_max_ack_delay        = QUIC_DEFAULT_MAX_ACK_DELAY;
+    ch->rx_ack_delay_exp        = QUIC_DEFAULT_ACK_DELAY_EXP;
+    ch->rx_active_conn_id_limit = QUIC_MIN_ACTIVE_CONN_ID_LIMIT;
+    ch->max_idle_timeout        = QUIC_DEFAULT_IDLE_TIMEOUT;
+    ch->tx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
+    ch->rx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
+
     /*
      * Determine the QUIC Transport Parameters and serialize the transport
      * parameters block. (For servers, we do this later as we must defer
@@ -263,12 +270,6 @@ static int ch_init(QUIC_CHANNEL *ch)
     if (!ch->is_server && !ch_generate_transport_params(ch))
         goto err;
 
-    ch->rx_max_ack_delay        = QUIC_DEFAULT_MAX_ACK_DELAY;
-    ch->rx_ack_delay_exp        = QUIC_DEFAULT_ACK_DELAY_EXP;
-    ch->rx_active_conn_id_limit = QUIC_MIN_ACTIVE_CONN_ID_LIMIT;
-    ch->max_idle_timeout        = QUIC_DEFAULT_IDLE_TIMEOUT;
-    ch->tx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
-    ch->rx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
     ch_update_idle(ch);
     ossl_quic_reactor_init(&ch->rtor, ch_tick, ch,
                            ch_determine_next_tick_deadline(ch));
@@ -971,7 +972,7 @@ static int ch_on_transport_params(const unsigned char *params,
                 goto malformed;
             }
 
-            if (v < ch->max_idle_timeout)
+            if (v > 0 && v < ch->max_idle_timeout)
                 ch->max_idle_timeout = v;
 
             ch_update_idle(ch);
