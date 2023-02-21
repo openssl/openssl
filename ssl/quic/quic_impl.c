@@ -161,6 +161,9 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     if ((qc->mutex = CRYPTO_THREAD_lock_new()) == NULL)
         goto err;
 
+    qc->is_thread_assisted
+        = (ssl_base->method == OSSL_QUIC_client_thread_method());
+
     /* Channel is not created yet. */
     qc->ssl_mode   = qc->ssl.ctx->mode;
     qc->last_error = SSL_ERROR_NONE;
@@ -185,6 +188,10 @@ void ossl_quic_free(SSL *s)
         return;
 
     quic_lock(qc); /* best effort */
+
+    if (qc->is_thread_assisted && qc->started)
+        ossl_quic_thread_assist_wait_stopped(&qc->thread_assist);
+
     ossl_quic_channel_free(qc->ch);
 
     BIO_free(qc->net_rbio);
@@ -694,21 +701,24 @@ static int ensure_channel_and_start(QUIC_CONNECTION *qc)
         return 0;
 
     if (!configure_channel(qc)
-        || !ossl_quic_channel_start(qc->ch)) {
-        ossl_quic_channel_free(qc->ch);
-        qc->ch = NULL;
-        return 0;
-    }
+        || !ossl_quic_channel_start(qc->ch))
+        goto err;
 
     qc->stream0 = ossl_quic_channel_get_stream_by_id(qc->ch, 0);
-    if (qc->stream0 == NULL) {
-        ossl_quic_channel_free(qc->ch);
-        qc->ch = NULL;
-        return 0;
-    }
+    if (qc->stream0 == NULL)
+        goto err;
+
+    if (qc->is_thread_assisted)
+        if (!ossl_quic_thread_assist_init_start(&qc->thread_assist, qc->ch))
+            goto err;
 
     qc->started = 1;
     return 1;
+
+err:
+    ossl_quic_channel_free(qc->ch);
+    qc->ch = NULL;
+    return 0;
 }
 
 QUIC_NEEDS_LOCK
