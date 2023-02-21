@@ -67,6 +67,10 @@ jobs:
             cc: clang-15,
             distro: ubuntu-22.04,
             llvm-ppa-name: jammy
+          }, {
+            cc: clang-16,
+            distro: ubuntu-22.04,
+            llvm-ppa-name: jammy
           }
         ]
     # We set per-compiler now to allow testing with both older and newer sets
