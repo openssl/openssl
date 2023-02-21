@@ -24,6 +24,16 @@
 #include "ssl_local.h"
 #include "ssl_cert_table.h"
 #include "internal/thread_once.h"
+#ifndef OPENSSL_NO_POSIX_IO
+# include <sys/stat.h>
+# ifdef _WIN32
+#  define stat _stat
+# endif
+#endif
+
+#ifndef S_ISDIR
+# define S_ISDIR(a) (((a) & S_IFMT) == S_IFDIR)
+#endif
 
 static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
                                          int op, int bits, int nid, void *other,
@@ -751,6 +761,7 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     while ((filename = OPENSSL_DIR_read(&d, dir))) {
         char buf[1024];
         int r;
+        struct stat st;
 
         if (strlen(dir) + strlen(filename) + 2 > sizeof(buf)) {
             ERR_raise(ERR_LIB_SSL, SSL_R_PATH_TOO_LONG);
@@ -761,6 +772,9 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 #else
         r = BIO_snprintf(buf, sizeof(buf), "%s/%s", dir, filename);
 #endif
+        /* Skip subdirectories */
+        if (!stat(buf, &st) && S_ISDIR(st.st_mode))
+            continue;
         if (r <= 0 || r >= (int)sizeof(buf))
             goto err;
         if (!SSL_add_file_cert_subjects_to_stack(stack, buf))
