@@ -176,6 +176,12 @@ struct quic_channel_st {
     OSSL_TIME                       idle_deadline;
 
     /*
+     * Deadline at which we should send an ACK-eliciting packet to ensure
+     * idle timeout does not occur.
+     */
+    OSSL_TIME                       ping_deadline;
+
+    /*
      * State tracking. QUIC connection-level state is best represented based on
      * whether various things have happened yet or not, rather than as an
      * explicit FSM. We do have a coarse state variable which tracks the basic
@@ -270,6 +276,13 @@ struct quic_channel_st {
      * Used to determine if we need to check our RX queues again.
      */
     unsigned int                    have_new_rx_secret      : 1;
+
+    /*
+     * Have we sent an ack-eliciting packet since the last successful packet
+     * reception? Used to determine when to bump idle timer (see RFC 9000 s.
+     * 10.1).
+     */
+    unsigned int                    have_sent_ack_eliciting_since_rx    : 1;
 };
 
 # endif

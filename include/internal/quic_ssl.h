@@ -73,6 +73,13 @@ void ossl_quic_conn_set_override_now_cb(SSL *s,
                                         OSSL_TIME (*now_cb)(void *arg),
                                         void *now_cb_arg);
 
+/*
+ * Condvar waiting in the assist thread doesn't support time faking as it relies
+ * on the OS's notion of time, thus this is used in test code to force a
+ * spurious wakeup instead.
+ */
+void ossl_quic_conn_force_assist_thread_wake(SSL *s);
+
 # endif
 
 #endif
