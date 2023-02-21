@@ -1499,145 +1499,145 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
         co_list = OPENSSL_malloc(sizeof(*co_list) * num_of_ciphers);
         if (co_list == NULL)
             return NULL;          /* Failure */
+    }
 
-        ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers,
-                                disabled_mkey, disabled_auth, disabled_enc,
-                                disabled_mac, co_list, &head, &tail);
+    ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers,
+                               disabled_mkey, disabled_auth, disabled_enc,
+                               disabled_mac, co_list, &head, &tail);
 
-        /* Now arrange all ciphers by preference. */
+    /* Now arrange all ciphers by preference. */
 
-        /*
-        * Everything else being equal, prefer ephemeral ECDH over other key
-        * exchange mechanisms.
-        * For consistency, prefer ECDSA over RSA (though this only matters if the
-        * server has both certificates, and is using the DEFAULT, or a client
-        * preference).
-        */
-        ssl_cipher_apply_rule(0, SSL_kECDHE, SSL_aECDSA, 0, 0, 0, 0, CIPHER_ADD,
-                            -1, &head, &tail);
-        ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head,
-                            &tail);
-        ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head,
-                            &tail);
+    /*
+     * Everything else being equal, prefer ephemeral ECDH over other key
+     * exchange mechanisms.
+     * For consistency, prefer ECDSA over RSA (though this only matters if the
+     * server has both certificates, and is using the DEFAULT, or a client
+     * preference).
+     */
+    ssl_cipher_apply_rule(0, SSL_kECDHE, SSL_aECDSA, 0, 0, 0, 0, CIPHER_ADD,
+                          -1, &head, &tail);
+    ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head,
+                          &tail);
+    ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head,
+                          &tail);
 
-        /* Within each strength group, we prefer GCM over CHACHA... */
-        ssl_cipher_apply_rule(0, 0, 0, SSL_AESGCM, 0, 0, 0, CIPHER_ADD, -1,
-                            &head, &tail);
-        ssl_cipher_apply_rule(0, 0, 0, SSL_CHACHA20, 0, 0, 0, CIPHER_ADD, -1,
-                            &head, &tail);
+    /* Within each strength group, we prefer GCM over CHACHA... */
+    ssl_cipher_apply_rule(0, 0, 0, SSL_AESGCM, 0, 0, 0, CIPHER_ADD, -1,
+                          &head, &tail);
+    ssl_cipher_apply_rule(0, 0, 0, SSL_CHACHA20, 0, 0, 0, CIPHER_ADD, -1,
+                          &head, &tail);
 
-        /*
-        * ...and generally, our preferred cipher is AES.
-        * Note that AEADs will be bumped to take preference after sorting by
-        * strength.
-        */
-        ssl_cipher_apply_rule(0, 0, 0, SSL_AES ^ SSL_AESGCM, 0, 0, 0, CIPHER_ADD,
-                            -1, &head, &tail);
+    /*
+     * ...and generally, our preferred cipher is AES.
+     * Note that AEADs will be bumped to take preference after sorting by
+     * strength.
+     */
+    ssl_cipher_apply_rule(0, 0, 0, SSL_AES ^ SSL_AESGCM, 0, 0, 0, CIPHER_ADD,
+                          -1, &head, &tail);
 
-        /* Temporarily enable everything else for sorting */
-        ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
+    /* Temporarily enable everything else for sorting */
+    ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
 
-        /* Low priority for MD5 */
-        ssl_cipher_apply_rule(0, 0, 0, 0, SSL_MD5, 0, 0, CIPHER_ORD, -1, &head,
-                            &tail);
+    /* Low priority for MD5 */
+    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_MD5, 0, 0, CIPHER_ORD, -1, &head,
+                          &tail);
 
-        /*
-        * Move anonymous ciphers to the end.  Usually, these will remain
-        * disabled. (For applications that allow them, they aren't too bad, but
-        * we prefer authenticated ciphers.)
-        */
-        ssl_cipher_apply_rule(0, 0, SSL_aNULL, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
-                            &tail);
+    /*
+     * Move anonymous ciphers to the end.  Usually, these will remain
+     * disabled. (For applications that allow them, they aren't too bad, but
+     * we prefer authenticated ciphers.)
+     */
+    ssl_cipher_apply_rule(0, 0, SSL_aNULL, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
+                          &tail);
 
-        ssl_cipher_apply_rule(0, SSL_kRSA, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
-                            &tail);
-        ssl_cipher_apply_rule(0, SSL_kPSK, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
-                            &tail);
+    ssl_cipher_apply_rule(0, SSL_kRSA, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
+                          &tail);
+    ssl_cipher_apply_rule(0, SSL_kPSK, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
+                          &tail);
 
-        /* RC4 is sort-of broken -- move to the end */
-        ssl_cipher_apply_rule(0, 0, 0, SSL_RC4, 0, 0, 0, CIPHER_ORD, -1, &head,
-                            &tail);
+    /* RC4 is sort-of broken -- move to the end */
+    ssl_cipher_apply_rule(0, 0, 0, SSL_RC4, 0, 0, 0, CIPHER_ORD, -1, &head,
+                          &tail);
 
-        /*
-        * Now sort by symmetric encryption strength.  The above ordering remains
-        * in force within each class
-        */
-        if (!ssl_cipher_strength_sort(&head, &tail)) {
-            OPENSSL_free(co_list);
-            return NULL;
-        }
+    /*
+     * Now sort by symmetric encryption strength.  The above ordering remains
+     * in force within each class
+     */
+    if (!ssl_cipher_strength_sort(&head, &tail)) {
+        OPENSSL_free(co_list);
+        return NULL;
+    }
 
-        /*
-        * Partially overrule strength sort to prefer TLS 1.2 ciphers/PRFs.
-        */
-        ssl_cipher_apply_rule(0, 0, 0, 0, 0, TLS1_2_VERSION, 0, CIPHER_BUMP, -1,
-                            &head, &tail);
+    /*
+     * Partially overrule strength sort to prefer TLS 1.2 ciphers/PRFs.
+     */
+    ssl_cipher_apply_rule(0, 0, 0, 0, 0, TLS1_2_VERSION, 0, CIPHER_BUMP, -1,
+                          &head, &tail);
 
-        /*
-        * Irrespective of strength, enforce the following order:
-        * (EC)DHE + AEAD > (EC)DHE > rest of AEAD > rest.
-        * Within each group, ciphers remain sorted by strength and previous
-        * preference, i.e.,
-        * 1) ECDHE > DHE
-        * 2) GCM > CHACHA
-        * 3) AES > rest
-        * 4) TLS 1.2 > legacy
-        *
-        * Because we now bump ciphers to the top of the list, we proceed in
-        * reverse order of preference.
-        */
-        ssl_cipher_apply_rule(0, 0, 0, 0, SSL_AEAD, 0, 0, CIPHER_BUMP, -1,
-                            &head, &tail);
-        ssl_cipher_apply_rule(0, SSL_kDHE | SSL_kECDHE, 0, 0, 0, 0, 0,
-                            CIPHER_BUMP, -1, &head, &tail);
-        ssl_cipher_apply_rule(0, SSL_kDHE | SSL_kECDHE, 0, 0, SSL_AEAD, 0, 0,
-                            CIPHER_BUMP, -1, &head, &tail);
+    /*
+     * Irrespective of strength, enforce the following order:
+     * (EC)DHE + AEAD > (EC)DHE > rest of AEAD > rest.
+     * Within each group, ciphers remain sorted by strength and previous
+     * preference, i.e.,
+     * 1) ECDHE > DHE
+     * 2) GCM > CHACHA
+     * 3) AES > rest
+     * 4) TLS 1.2 > legacy
+     *
+     * Because we now bump ciphers to the top of the list, we proceed in
+     * reverse order of preference.
+     */
+    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_AEAD, 0, 0, CIPHER_BUMP, -1,
+                          &head, &tail);
+    ssl_cipher_apply_rule(0, SSL_kDHE | SSL_kECDHE, 0, 0, 0, 0, 0,
+                          CIPHER_BUMP, -1, &head, &tail);
+    ssl_cipher_apply_rule(0, SSL_kDHE | SSL_kECDHE, 0, 0, SSL_AEAD, 0, 0,
+                          CIPHER_BUMP, -1, &head, &tail);
 
-        /* Now disable everything (maintaining the ordering!) */
-        ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
+    /* Now disable everything (maintaining the ordering!) */
+    ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
 
-        /*
-        * We also need cipher aliases for selecting based on the rule_str.
-        * There might be two types of entries in the rule_str: 1) names
-        * of ciphers themselves 2) aliases for groups of ciphers.
-        * For 1) we need the available ciphers and for 2) the cipher
-        * groups of cipher_aliases added together in one list (otherwise
-        * we would be happy with just the cipher_aliases table).
-        */
-        num_of_group_aliases = OSSL_NELEM(cipher_aliases);
-        num_of_alias_max = num_of_ciphers + num_of_group_aliases + 1;
-        ca_list = OPENSSL_malloc(sizeof(*ca_list) * num_of_alias_max);
-        if (ca_list == NULL) {
-            OPENSSL_free(co_list);
-            return NULL;          /* Failure */
-        }
-        ssl_cipher_collect_aliases(ca_list, num_of_group_aliases,
-                                disabled_mkey, disabled_auth, disabled_enc,
-                                disabled_mac, head);
+    /*
+     * We also need cipher aliases for selecting based on the rule_str.
+     * There might be two types of entries in the rule_str: 1) names
+     * of ciphers themselves 2) aliases for groups of ciphers.
+     * For 1) we need the available ciphers and for 2) the cipher
+     * groups of cipher_aliases added together in one list (otherwise
+     * we would be happy with just the cipher_aliases table).
+     */
+    num_of_group_aliases = OSSL_NELEM(cipher_aliases);
+    num_of_alias_max = num_of_ciphers + num_of_group_aliases + 1;
+    ca_list = OPENSSL_malloc(sizeof(*ca_list) * num_of_alias_max);
+    if (ca_list == NULL) {
+        OPENSSL_free(co_list);
+        return NULL;          /* Failure */
+    }
+    ssl_cipher_collect_aliases(ca_list, num_of_group_aliases,
+                               disabled_mkey, disabled_auth, disabled_enc,
+                               disabled_mac, head);
 
-        /*
-        * If the rule_string begins with DEFAULT, apply the default rule
-        * before using the (possibly available) additional rules.
-        */
-        ok = 1;
-        rule_p = rule_str;
-        if (HAS_PREFIX(rule_str, "DEFAULT")) {
-            ok = ssl_cipher_process_rulestr(OSSL_default_cipher_list(),
-                                            &head, &tail, ca_list, c);
-            rule_p += 7;
-            if (*rule_p == ':')
-                rule_p++;
-        }
+    /*
+     * If the rule_string begins with DEFAULT, apply the default rule
+     * before using the (possibly available) additional rules.
+     */
+    ok = 1;
+    rule_p = rule_str;
+    if (HAS_PREFIX(rule_str, "DEFAULT")) {
+        ok = ssl_cipher_process_rulestr(OSSL_default_cipher_list(),
+                                        &head, &tail, ca_list, c);
+        rule_p += 7;
+        if (*rule_p == ':')
+            rule_p++;
+    }
 
-        if (ok && (rule_p[0] != '\0'))
-            ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list, c);
+    if (ok && (rule_p[0] != '\0'))
+        ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list, c);
 
-        OPENSSL_free(ca_list);      /* Not needed anymore */
+    OPENSSL_free(ca_list);      /* Not needed anymore */
 
-        if (!ok) {                  /* Rule processing failure */
-            OPENSSL_free(co_list);
-            return NULL;
-        }
+    if (!ok) {                  /* Rule processing failure */
+        OPENSSL_free(co_list);
+        return NULL;
     }
 
     /*
