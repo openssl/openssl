@@ -711,44 +711,34 @@ static int ensure_channel_and_start(QUIC_CONNECTION *qc)
     return 1;
 }
 
-QUIC_TAKES_LOCK
-int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
+QUIC_NEEDS_LOCK
+static int quic_do_handshake(QUIC_CONNECTION *qc)
 {
     int ret;
 
-    if (!quic_lock(qc))
-        return -1;
-
-    if (qc->ch != NULL && ossl_quic_channel_is_handshake_complete(qc->ch)) {
+    if (qc->ch != NULL && ossl_quic_channel_is_handshake_complete(qc->ch))
         /* Handshake already completed. */
-        ret = 1;
-        goto out;
-    }
+        return 1;
 
-    if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch)) {
-        ret = QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
-        goto out;
-    }
+    if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch))
+        return QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
 
     if (BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC) {
         /* Peer address must have been set. */
         QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_REMOTE_PEER_ADDRESS_NOT_SET, NULL);
-        ret = -1; /* Non-protocol error */
-        goto out;
+        return -1; /* Non-protocol error */
     }
 
     if (qc->as_server) {
         /* TODO(QUIC): Server mode not currently supported */
         QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
-        ret = -1;
-        goto out; /* Non-protocol error */
+        return -1; /* Non-protocol error */
     }
 
     if (qc->net_rbio == NULL || qc->net_wbio == NULL) {
         /* Need read and write BIOs. */
         QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_BIO_NOT_SET, NULL);
-        ret = -1;
-        goto out; /* Non-protocol error */
+        return -1; /* Non-protocol error */
     }
 
     /*
@@ -757,15 +747,12 @@ int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
      */
     if (!ensure_channel_and_start(qc)) {
         QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
-        ret = -1;
-        goto out; /* Non-protocol error */
+        return -1; /* Non-protocol error */
     }
 
-    if (ossl_quic_channel_is_handshake_complete(qc->ch)) {
+    if (ossl_quic_channel_is_handshake_complete(qc->ch))
         /* The handshake is now done. */
-        ret = 1;
-        goto out;
-    }
+        return 1;
 
     if (blocking_mode(qc)) {
         /* In blocking mode, wait for the handshake to complete. */
@@ -776,34 +763,37 @@ int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
         ret = block_until_pred(qc, quic_handshake_wait, &args, 0);
         if (!ossl_quic_channel_is_active(qc->ch)) {
             QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
-            ret = 0;
-            goto out; /* Shutdown before completion */
+            return 0; /* Shutdown before completion */
         } else if (ret <= 0) {
             QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
-            ret = -1;
-            goto out; /* Non-protocol error */
+            return -1; /* Non-protocol error */
         }
 
         assert(ossl_quic_channel_is_handshake_complete(qc->ch));
-        ret = 1;
-        goto out;
+        return 1;
     } else {
         /* Try to advance the reactor. */
         ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch));
 
-        if (ossl_quic_channel_is_handshake_complete(qc->ch)) {
+        if (ossl_quic_channel_is_handshake_complete(qc->ch))
             /* The handshake is now done. */
-            ret = 1;
-            goto out;
-        }
+            return 1;
 
         /* Otherwise, indicate that the handshake isn't done yet. */
         QUIC_RAISE_NORMAL_ERROR(qc, SSL_ERROR_WANT_READ);
-        ret = -1;
-        goto out; /* Non-protocol error */
+        return -1; /* Non-protocol error */
     }
+}
 
-out:
+QUIC_TAKES_LOCK
+int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
+{
+    int ret;
+
+    if (!quic_lock(qc))
+        return -1;
+
+    ret = quic_do_handshake(qc);
     quic_unlock(qc);
     return ret;
 }
@@ -1128,7 +1118,7 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
      * If we haven't finished the handshake, try to advance it.
      * We don't accept writes until the handshake is completed.
      */
-    if (ossl_quic_do_handshake(qc) < 1) {
+    if (quic_do_handshake(qc) < 1) {
         ret = 0;
         goto out;
     }
@@ -1262,7 +1252,7 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
     }
 
     /* If we haven't finished the handshake, try to advance it. */
-    if (ossl_quic_do_handshake(qc) < 1) {
+    if (quic_do_handshake(qc) < 1) {
         ret = 0; /* ossl_quic_do_handshake raised error here */
         goto out;
     }
