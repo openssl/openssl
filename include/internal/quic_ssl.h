@@ -65,6 +65,14 @@ BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc);
 __owur int ossl_quic_conn_set_initial_peer_addr(QUIC_CONNECTION *qc,
                                                 const BIO_ADDR *peer_addr);
 
+/*
+ * Used to override ossl_time_now() for debug purposes. Must be called before
+ * connecting.
+ */
+void ossl_quic_conn_set_override_now_cb(SSL *s,
+                                        OSSL_TIME (*now_cb)(void *arg),
+                                        void *now_cb_arg);
+
 # endif
 
 #endif

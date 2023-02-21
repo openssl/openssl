@@ -246,6 +246,16 @@ int ossl_quic_clear(SSL *s)
     return 1;
 }
 
+void ossl_quic_conn_set_override_now_cb(SSL *s,
+                                        OSSL_TIME (*now_cb)(void *arg),
+                                        void *now_cb_arg)
+{
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    qc->override_now_cb     = now_cb;
+    qc->override_now_cb_arg = now_cb_arg;
+}
+
 /*
  * QUIC Front-End I/O API: Network BIO Configuration
  * =================================================
@@ -683,6 +693,8 @@ static int ensure_channel(QUIC_CONNECTION *qc)
     args.is_server  = 0;
     args.tls        = qc->tls;
     args.mutex      = qc->mutex;
+    args.now_cb     = qc->override_now_cb;
+    args.now_cb_arg = qc->override_now_cb_arg;
 
     qc->ch = ossl_quic_channel_new(&args);
     if (qc->ch == NULL)

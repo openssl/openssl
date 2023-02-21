@@ -133,7 +133,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     if (!ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
                              2  * 1024 * 1024,
                              10 * 1024 * 1024,
-                             get_time, NULL))
+                             get_time, ch))
         goto err;
 
     if (!ossl_statm_init(&ch->statm))
@@ -144,7 +144,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     if ((ch->cc_data = ch->cc_method->new(NULL, NULL, NULL)) == NULL)
         goto err;
 
-    if ((ch->ackm = ossl_ackm_new(get_time, NULL, &ch->statm,
+    if ((ch->ackm = ossl_ackm_new(get_time, ch, &ch->statm,
                                   ch->cc_method, ch->cc_data)) == NULL)
         goto err;
 
@@ -166,6 +166,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     txp_args.cc_method          = ch->cc_method;
     txp_args.cc_data            = ch->cc_data;
     txp_args.now                = get_time;
+    txp_args.now_arg            = ch;
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
         ch->crypto_send[pn_space] = ossl_quic_sstream_new(INIT_CRYPTO_BUF_LEN);
         if (ch->crypto_send[pn_space] == NULL)
@@ -180,7 +181,7 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     if ((ch->demux = ossl_quic_demux_new(/*BIO=*/NULL,
                                          /*Short CID Len=*/rx_short_cid_len,
-                                         get_time, NULL)) == NULL)
+                                         get_time, ch)) == NULL)
         goto err;
 
     /*
@@ -232,7 +233,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     if (!ossl_quic_rxfc_init(&ch->stream0->rxfc, &ch->conn_rxfc,
                              1 * 1024 * 1024,
                              5 * 1024 * 1024,
-                             get_time, NULL))
+                             get_time, ch))
         goto err;
 
     /* Plug in the TLS handshake layer. */
@@ -332,6 +333,8 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
     ch->is_server   = args->is_server;
     ch->tls         = args->tls;
     ch->mutex       = args->mutex;
+    ch->now_cb      = args->now_cb;
+    ch->now_cb_arg  = args->now_cb_arg;
 
     if (!ch_init(ch)) {
         OPENSSL_free(ch);
@@ -457,7 +460,12 @@ CRYPTO_MUTEX *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch)
 /* Used by various components. */
 static OSSL_TIME get_time(void *arg)
 {
-    return ossl_time_now();
+    QUIC_CHANNEL *ch = arg;
+
+    if (ch->now_cb == NULL)
+        return ossl_time_now();
+
+    return ch->now_cb(ch->now_cb_arg);
 }
 
 /* Used by QSM. */
@@ -1237,7 +1245,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
      * expired.
      */
     if (ossl_quic_channel_is_terminating(ch)) {
-        now = ossl_time_now();
+        now = get_time(ch);
 
         if (ossl_time_compare(now, ch->terminate_deadline) >= 0) {
             ch_on_terminating_timeout(ch);
@@ -1279,7 +1287,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
      * ACKM ACK generation deadline is polled by TXP, so we don't need to handle
      * it here.
      */
-    now = ossl_time_now();
+    now = get_time(ch);
     if (ossl_time_compare(now, ch->idle_deadline) >= 0) {
         /*
          * Idle timeout differs from normal protocol violation because we do not
@@ -1934,7 +1942,7 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
             ch->state = tcause->remote ? QUIC_CHANNEL_STATE_TERMINATING_DRAINING
                                        : QUIC_CHANNEL_STATE_TERMINATING_CLOSING;
             ch->terminate_deadline
-                = ossl_time_add(ossl_time_now(),
+                = ossl_time_add(get_time(ch),
                                 ossl_time_multiply(ossl_ackm_get_pto_duration(ch->ackm),
                                                    3));
 
@@ -2038,7 +2046,7 @@ static void ch_update_idle(QUIC_CHANNEL *ch)
     if (ch->max_idle_timeout == 0)
         ch->idle_deadline = ossl_time_infinite();
     else
-        ch->idle_deadline = ossl_time_add(ossl_time_now(),
+        ch->idle_deadline = ossl_time_add(get_time(ch),
             ossl_ms2time(ch->max_idle_timeout));
 }
 
