@@ -26,6 +26,12 @@ struct quic_channel_st {
     const char                      *propq;
 
     /*
+     * Master synchronisation mutex used for thread assisted mode
+     * synchronisation.
+     */
+    CRYPTO_RWLOCK                   *mutex;
+
+    /*
      * The associated TLS 1.3 connection data. Used to provide the handshake
      * layer; its 'network' side is plugged into the crypto stream for each EL
      * (other than the 0-RTT EL).
