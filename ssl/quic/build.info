@@ -12,3 +12,4 @@ SOURCE[$LIBSSL]=quic_reactor.c
 SOURCE[$LIBSSL]=quic_channel.c
 SOURCE[$LIBSSL]=quic_tserver.c
 SOURCE[$LIBSSL]=quic_tls.c
+SOURCE[$LIBSSL]=quic_thread_assist.c
