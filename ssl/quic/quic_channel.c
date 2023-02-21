@@ -67,6 +67,7 @@ static int ch_discard_el(QUIC_CHANNEL *ch,
                          uint32_t enc_level);
 static void ch_on_idle_timeout(QUIC_CHANNEL *ch);
 static void ch_update_idle(QUIC_CHANNEL *ch);
+static void ch_update_ping_deadline(QUIC_CHANNEL *ch);
 static void ch_raise_net_error(QUIC_CHANNEL *ch);
 static void ch_on_terminating_timeout(QUIC_CHANNEL *ch);
 static void ch_start_terminating(QUIC_CHANNEL *ch,
@@ -1305,6 +1306,13 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
     if (!ossl_time_is_zero(deadline) && ossl_time_compare(now, deadline) >= 0)
         ossl_ackm_on_timeout(ch->ackm);
 
+    /* If a ping is due, inform TXP. */
+    if (ossl_time_compare(now, ch->ping_deadline) >= 0) {
+        int pn_space = ossl_quic_enc_level_to_pn_space(ch->tx_enc_level);
+
+        ossl_quic_tx_packetiser_schedule_ack_eliciting(ch->txp, pn_space);
+    }
+
     /* Write any data to the network due to be sent. */
     ch_tx(ch);
 
@@ -1380,6 +1388,7 @@ static int ch_rx(QUIC_CHANNEL *ch)
         ossl_qrx_pkt_release(ch->qrx_pkt);
         ch->qrx_pkt = NULL;
 
+        ch->have_sent_ack_eliciting_since_rx = 0;
         handled_any = 1;
     }
 
@@ -1569,6 +1578,8 @@ undesirable:
 /* Try to generate packets and if possible, flush them to the network. */
 static int ch_tx(QUIC_CHANNEL *ch)
 {
+    int sent_ack_eliciting = 0;
+
     if (ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING) {
         /*
          * While closing, only send CONN_CLOSE if we've received more traffic
@@ -1590,10 +1601,24 @@ static int ch_tx(QUIC_CHANNEL *ch)
      * flush any queued packets which we already generated.
      */
     switch (ossl_quic_tx_packetiser_generate(ch->txp,
-                                             TX_PACKETISER_ARCHETYPE_NORMAL)) {
+                                             TX_PACKETISER_ARCHETYPE_NORMAL,
+                                             &sent_ack_eliciting)) {
     case TX_PACKETISER_RES_SENT_PKT:
         ch->have_sent_any_pkt = 1; /* Packet was sent */
+
+        /*
+         * RFC 9000 s. 10.1. 'An endpoint also restarts its idle timer when
+         * sending an ack-eliciting packet if no other ack-eliciting packets
+         * have been sentsince last receiving and processing a packet.'
+         */
+        if (sent_ack_eliciting && !ch->have_sent_ack_eliciting_since_rx) {
+            ch_update_idle(ch);
+            ch->have_sent_ack_eliciting_since_rx = 1;
+        }
+
+        ch_update_ping_deadline(ch);
         break;
+
     case TX_PACKETISER_RES_NO_PKT:
         break; /* No packet was sent */
     default:
@@ -1649,6 +1674,14 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
     else if (!ossl_time_is_infinite(ch->idle_deadline))
         deadline = ossl_time_min(deadline,
                                  ch->idle_deadline);
+
+    /*
+     * When do we need to send an ACK-eliciting packet to reset the idle
+     * deadline timer for the peer?
+     */
+    if (!ossl_time_is_infinite(ch->ping_deadline))
+        deadline = ossl_time_min(deadline,
+                                 ch->ping_deadline);
 
     return deadline;
 }
@@ -2049,6 +2082,30 @@ static void ch_update_idle(QUIC_CHANNEL *ch)
     else
         ch->idle_deadline = ossl_time_add(get_time(ch),
             ossl_ms2time(ch->max_idle_timeout));
+}
+
+/*
+ * Updates our ping deadline, which determines when we next generate a ping if
+ * we don't have any other ACK-eliciting frames to send.
+ */
+static void ch_update_ping_deadline(QUIC_CHANNEL *ch)
+{
+    if (ch->max_idle_timeout > 0) {
+        /*
+         * Maximum amount of time without traffic before we send a PING to
+         * keep the connection open. Usually we use max_idle_timeout/2, but
+         * ensure the period never exceeds 25 seconds to ensure NAT devices
+         * don't have their state time out (RFC 9000 s. 10.1.2).
+         */
+        OSSL_TIME max_span
+            = ossl_time_divide(ossl_ms2time(ch->max_idle_timeout), 2);
+
+        max_span = ossl_time_min(max_span, ossl_ms2time(25000));
+
+        ch->ping_deadline = ossl_time_add(get_time(ch), max_span);
+    } else {
+        ch->ping_deadline = ossl_time_infinite();
+    }
 }
 
 /* Called when the idle timeout expires. */

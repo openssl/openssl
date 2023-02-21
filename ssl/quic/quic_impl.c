@@ -256,6 +256,14 @@ void ossl_quic_conn_set_override_now_cb(SSL *s,
     qc->override_now_cb_arg = now_cb_arg;
 }
 
+void ossl_quic_conn_force_assist_thread_wake(SSL *s)
+{
+    QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
+
+    if (qc->is_thread_assisted && qc->started)
+        ossl_quic_thread_assist_notify_deadline_changed(&qc->thread_assist);
+}
+
 /*
  * QUIC Front-End I/O API: Network BIO Configuration
  * =================================================
