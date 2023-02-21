@@ -27,13 +27,9 @@ static int is_want(SSL *s, int ret)
     return ec == SSL_ERROR_WANT_READ || ec == SSL_ERROR_WANT_WRITE;
 }
 
-#define TEST_KIND_SIMPLE        0
-#define TEST_KIND_INJECT        1
-#define TEST_KIND_COUNT         2
-
 static unsigned char scratch_buf[2048];
 
-static int test_tserver(int test_kind)
+static int test_tserver_actual(int use_thread_assist, int use_inject)
 {
     int testresult = 0, ret;
     int s_fd = -1, c_fd = -1;
@@ -99,7 +95,7 @@ static int test_tserver(int test_kind)
 
     s_net_bio_own = NULL;
 
-    if (test_kind == TEST_KIND_INJECT) {
+    if (use_inject) {
         /*
          * In inject mode we create a dgram pair to feed to the QUIC client on
          * the read side. We don't feed anything to this, it is just a
@@ -125,7 +121,9 @@ static int test_tserver(int test_kind)
     if (!BIO_dgram_set_peer(c_net_bio, s_addr_))
         goto err;
 
-    if (!TEST_ptr(c_ctx = SSL_CTX_new(OSSL_QUIC_client_method())))
+    if (!TEST_ptr(c_ctx = SSL_CTX_new(use_thread_assist
+                                      ? OSSL_QUIC_client_thread_method()
+                                      : OSSL_QUIC_client_method())))
         goto err;
 
     if (!TEST_ptr(c_ssl = SSL_new(c_ctx)))
@@ -136,7 +134,7 @@ static int test_tserver(int test_kind)
         goto err;
 
     /* Takes ownership of our reference to the BIO. */
-    if (test_kind == TEST_KIND_INJECT) {
+    if (use_inject) {
         SSL_set0_rbio(c_ssl, c_pair_own);
         c_pair_own = NULL;
     } else {
@@ -259,7 +257,7 @@ static int test_tserver(int test_kind)
         SSL_tick(c_ssl);
         ossl_quic_tserver_tick(tserver);
 
-        if (test_kind == TEST_KIND_INJECT) {
+        if (use_inject) {
             BIO_MSG rmsg = {0};
             size_t msgs_processed = 0;
 
@@ -300,6 +298,18 @@ err:
     return testresult;
 }
 
+static int test_tserver(int idx)
+{
+    int use_thread_assist, use_inject;
+
+    use_thread_assist = idx % 2;
+    idx /= 2;
+
+    use_inject = idx % 2;
+
+    return test_tserver_actual(use_thread_assist, use_inject);
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -313,6 +323,6 @@ int setup_tests(void)
             || !TEST_ptr(keyfile = test_get_argument(1)))
         return 0;
 
-    ADD_ALL_TESTS(test_tserver, TEST_KIND_COUNT);
+    ADD_ALL_TESTS(test_tserver, 4);
     return 1;
 }
