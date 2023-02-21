@@ -450,7 +450,7 @@ int ossl_quic_tick(QUIC_CONNECTION *qc)
         return 1;
     }
 
-    ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch));
+    ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
     quic_unlock(qc);
     return 1;
 }
@@ -587,7 +587,7 @@ int ossl_quic_conn_shutdown(QUIC_CONNECTION *qc, uint64_t flags,
     if (blocking_mode(qc) && (flags & SSL_SHUTDOWN_FLAG_RAPID) == 0)
         block_until_pred(qc, quic_shutdown_wait, qc, 0);
     else
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch));
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
 
     ret = ossl_quic_channel_is_terminated(qc->ch);
     quic_unlock(qc);
@@ -783,7 +783,7 @@ static int quic_do_handshake(QUIC_CONNECTION *qc)
         return 1;
     } else {
         /* Try to advance the reactor. */
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch));
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
 
         if (ossl_quic_channel_is_handshake_complete(qc->ch))
             /* The handshake is now done. */
@@ -895,7 +895,7 @@ static void quic_post_write(QUIC_CONNECTION *qc, int did_append, int do_tick)
      * plus we should eventually consider Nagle's algorithm.
      */
     if (do_tick)
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch));
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
 }
 
 struct quic_write_again_args {
@@ -1282,7 +1282,7 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
          * Even though we succeeded, tick the reactor here to ensure we are
          * handling other aspects of the QUIC connection.
          */
-        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch));
+        ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch), 0);
         ret = 1;
     } else if (blocking_mode(qc)) {
         /*

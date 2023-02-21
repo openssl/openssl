@@ -49,7 +49,7 @@ static unsigned int assist_thread_main(void *arg)
         if (qta->teardown)
             break;
 
-        ossl_quic_reactor_tick(rtor);
+        ossl_quic_reactor_tick(rtor, QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY);
     }
 
     CRYPTO_THREAD_unlock(m);

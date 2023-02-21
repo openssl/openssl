@@ -14,7 +14,8 @@
  * ==========================
  */
 void ossl_quic_reactor_init(QUIC_REACTOR *rtor,
-                            void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg),
+                            void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
+                                            uint32_t flags),
                             void *tick_cb_arg,
                             OSSL_TIME initial_tick_deadline)
 {
@@ -63,7 +64,7 @@ OSSL_TIME ossl_quic_reactor_get_tick_deadline(QUIC_REACTOR *rtor)
     return rtor->tick_deadline;
 }
 
-int ossl_quic_reactor_tick(QUIC_REACTOR *rtor)
+int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags)
 {
     QUIC_TICK_RESULT res = {0};
 
@@ -74,7 +75,7 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor)
      * best effort. If something fatal happens with a connection we can report
      * it on the next actual application I/O call.
      */
-    rtor->tick_cb(&res, rtor->tick_cb_arg);
+    rtor->tick_cb(&res, rtor->tick_cb_arg, flags);
 
     rtor->net_read_desired  = res.net_read_desired;
     rtor->net_write_desired = res.net_write_desired;
@@ -315,7 +316,7 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
             flags &= ~SKIP_FIRST_TICK;
         else
             /* best effort */
-            ossl_quic_reactor_tick(rtor);
+            ossl_quic_reactor_tick(rtor, 0);
 
         if ((res = pred(pred_arg)) != 0)
             return res;
