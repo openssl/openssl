@@ -153,7 +153,7 @@ int ossl_quic_tserver_set_handshake_mutator(QUIC_TSERVER *srv,
 
 int ossl_quic_tserver_tick(QUIC_TSERVER *srv)
 {
-    ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(srv->ch));
+    ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(srv->ch), 0);
 
     if (ossl_quic_channel_is_active(srv->ch))
         srv->connected = 1;

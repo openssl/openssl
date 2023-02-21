@@ -31,7 +31,7 @@
 static void ch_rx_pre(QUIC_CHANNEL *ch);
 static int ch_rx(QUIC_CHANNEL *ch);
 static int ch_tx(QUIC_CHANNEL *ch);
-static void ch_tick(QUIC_TICK_RESULT *res, void *arg);
+static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
 static void ch_rx_handle_packet(QUIC_CHANNEL *ch);
 static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch);
 static int ch_retry(QUIC_CHANNEL *ch,
@@ -1207,10 +1207,11 @@ err:
  * at least everything network I/O related. Best effort - not allowed to fail
  * "loudly".
  */
-static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
+static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
 {
     OSSL_TIME now, deadline;
     QUIC_CHANNEL *ch = arg;
+    int channel_only = ((flags & QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY) != 0);
 
     /*
      * When we tick the QUIC connection, we do everything we need to do
@@ -1259,7 +1260,8 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
          * new outgoing data.
          */
         ch->have_new_rx_secret = 0;
-        ossl_quic_tls_tick(ch->qtls);
+        if (!channel_only)
+            ossl_quic_tls_tick(ch->qtls);
 
         /*
          * If the handshake layer gave us a new secret, we need to do RX again
@@ -1753,7 +1755,7 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     if (!ossl_quic_tls_tick(ch->qtls))
         return 0;
 
-    ossl_quic_reactor_tick(&ch->rtor); /* best effort */
+    ossl_quic_reactor_tick(&ch->rtor, 0); /* best effort */
     return 1;
 }
 
