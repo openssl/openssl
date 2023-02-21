@@ -46,6 +46,7 @@ void ossl_quic_set_accept_state(QUIC_CONNECTION *qc);
 __owur int ossl_quic_has_pending(const QUIC_CONNECTION *qc);
 __owur int ossl_quic_tick(QUIC_CONNECTION *qc);
 __owur int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc, struct timeval *tv);
+OSSL_TIME ossl_quic_get_tick_deadline(QUIC_CONNECTION *qc);
 __owur int ossl_quic_get_rpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *d);
 __owur int ossl_quic_get_wpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *d);
 __owur int ossl_quic_get_net_read_desired(QUIC_CONNECTION *qc);
