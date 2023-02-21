@@ -150,12 +150,21 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor);
  * the first call to pred() is skipped. This is useful if it is known that
  * ticking the reactor again will not be useful (e.g. because it has already
  * been done).
+ *
+ * This function assumes a write lock is held for the entire QUIC_CHANNEL. If
+ * mutex is non-NULL, it must be a lock currently held for write; it will be
+ * unlocked during any sleep, and then relocked for write afterwards.
+ *
+ * Precondition:   mutex is NULL or is held for write (unchecked)
+ * Postcondition:  mutex is NULL or is held for write (unless
+ *                   CRYPTO_THREAD_write_lock fails)
  */
 #define SKIP_FIRST_TICK     (1U << 0)
 
 int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                        int (*pred)(void *arg), void *pred_arg,
-                                       uint32_t flags);
+                                       uint32_t flags,
+                                       CRYPTO_RWLOCK *mutex);
 
 # endif
 
