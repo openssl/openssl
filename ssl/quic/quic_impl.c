@@ -39,7 +39,8 @@ static int block_until_pred(QUIC_CONNECTION *qc,
     assert(qc->ch != NULL);
 
     rtor = ossl_quic_channel_get_reactor(qc->ch);
-    return ossl_quic_reactor_block_until_pred(rtor, pred, pred_arg, flags);
+    return ossl_quic_reactor_block_until_pred(rtor, pred, pred_arg, flags,
+                                              ossl_quic_channel_get_mutex(qc->ch));
 }
 
 /*
