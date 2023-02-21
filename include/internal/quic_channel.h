@@ -59,6 +59,10 @@
  * information. This is an unchecked precondition.
  */
 
+#  define QUIC_NEEDS_LOCK
+#  define QUIC_TAKES_LOCK
+#  define QUIC_TODO_LOCK
+
 #  define QUIC_CHANNEL_STATE_IDLE                        0
 #  define QUIC_CHANNEL_STATE_ACTIVE                      1
 #  define QUIC_CHANNEL_STATE_TERMINATING_CLOSING         2

@@ -902,6 +902,7 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
     return 1;
 }
 
+QUIC_NEEDS_LOCK
 int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
 {
     PACKET pkt;
