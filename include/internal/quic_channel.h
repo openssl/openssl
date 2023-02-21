@@ -61,8 +61,29 @@
  * mutex which then serves as the channel mutex; see QUIC_CHANNEL_ARGS.
  */
 
+/*
+ * The function does not acquire the channel mutex and assumes it is already
+ * held by the calling thread.
+ *
+ * Any function tagged with this has the following precondition:
+ *
+ *   Precondition: must hold channel mutex (unchecked)
+ */
 #  define QUIC_NEEDS_LOCK
+
+/*
+ * The function acquires the channel mutex and releases it before returning in
+ * all circumstances.
+ *
+ * Any function tagged with this has the following precondition and
+ * postcondition:
+ *
+ *   Precondition: must not hold channel mutex (unchecked)
+ *   Postcondition: channel mutex is not held (by calling thread)
+ *
+ */
 #  define QUIC_TAKES_LOCK
+
 #  define QUIC_TODO_LOCK
 
 #  define QUIC_CHANNEL_STATE_IDLE                        0
