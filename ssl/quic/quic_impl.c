@@ -29,7 +29,9 @@ static int ensure_channel(QUIC_CONNECTION *qc);
  * Block until a predicate is met.
  *
  * Precondition: Must have a channel.
+ * Precondition: Must hold channel lock (unchecked).
  */
+QUIC_NEEDS_LOCK
 static int block_until_pred(QUIC_CONNECTION *qc,
                             int (*pred)(void *arg), void *pred_arg,
                             uint32_t flags)
@@ -150,6 +152,7 @@ err:
 }
 
 /* SSL_free */
+QUIC_TODO_LOCK
 void ossl_quic_free(SSL *s)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
@@ -404,6 +407,7 @@ static int blocking_mode(const QUIC_CONNECTION *qc)
 }
 
 /* SSL_tick; ticks the reactor. */
+QUIC_TODO_LOCK
 int ossl_quic_tick(QUIC_CONNECTION *qc)
 {
     if (qc->ch == NULL)
@@ -419,6 +423,7 @@ int ossl_quic_tick(QUIC_CONNECTION *qc)
  * the object should be ticked immediately and tv->tv_sec is set to -1 if no
  * timeout is currently active.
  */
+QUIC_TODO_LOCK
 int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc, struct timeval *tv)
 {
     OSSL_TIME deadline = ossl_time_infinite();
@@ -456,6 +461,7 @@ int ossl_quic_get_wpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *des
 }
 
 /* SSL_net_read_desired */
+QUIC_TODO_LOCK
 int ossl_quic_get_net_read_desired(QUIC_CONNECTION *qc)
 {
     if (qc->ch == NULL)
@@ -465,6 +471,7 @@ int ossl_quic_get_net_read_desired(QUIC_CONNECTION *qc)
 }
 
 /* SSL_net_write_desired */
+QUIC_TODO_LOCK
 int ossl_quic_get_net_write_desired(QUIC_CONNECTION *qc)
 {
     if (qc->ch == NULL)
@@ -495,6 +502,7 @@ static int quic_shutdown_wait(void *arg)
     return qc->ch == NULL || ossl_quic_channel_is_terminated(qc->ch);
 }
 
+QUIC_TODO_LOCK
 int ossl_quic_conn_shutdown(QUIC_CONNECTION *qc, uint64_t flags,
                             const SSL_SHUTDOWN_EX_ARGS *args,
                             size_t args_len)
@@ -593,6 +601,7 @@ static int configure_channel(QUIC_CONNECTION *qc)
     return 1;
 }
 
+QUIC_TODO_LOCK
 static int ensure_channel(QUIC_CONNECTION *qc)
 {
     QUIC_CHANNEL_ARGS args = {0};
@@ -617,6 +626,7 @@ static int ensure_channel(QUIC_CONNECTION *qc)
  * via calls made to us from the application prior to starting a handshake
  * attempt.
  */
+QUIC_TODO_LOCK
 static int ensure_channel_and_start(QUIC_CONNECTION *qc)
 {
     if (!ensure_channel(qc))
@@ -640,6 +650,7 @@ static int ensure_channel_and_start(QUIC_CONNECTION *qc)
     return 1;
 }
 
+QUIC_TODO_LOCK
 int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
 {
     int ret;
@@ -1004,6 +1015,7 @@ static int quic_write_nonblocking_epw(QUIC_CONNECTION *qc, const void *buf, size
     return 1;
 }
 
+QUIC_TODO_LOCK
 int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
 {
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
@@ -1124,6 +1136,7 @@ static int quic_read_again(void *arg)
     return 0; /* did not read anything, keep trying */
 }
 
+QUIC_TODO_LOCK
 static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek)
 {
     int res;
@@ -1195,6 +1208,7 @@ int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *bytes_read)
  * SSL_pending
  * -----------
  */
+QUIC_TODO_LOCK
 static size_t ossl_quic_pending_int(const QUIC_CONNECTION *qc)
 {
     size_t avail = 0;
@@ -1229,6 +1243,7 @@ int ossl_quic_has_pending(const QUIC_CONNECTION *qc)
  * SSL_stream_conclude
  * -------------------
  */
+QUIC_TODO_LOCK
 int ossl_quic_conn_stream_conclude(QUIC_CONNECTION *qc)
 {
     QUIC_STREAM *qs = qc->stream0;
