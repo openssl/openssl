@@ -24,6 +24,9 @@ struct quic_tserver_st {
      */
     QUIC_CHANNEL    *ch;
 
+    /* The mutex we give to the QUIC channel. */
+    CRYPTO_RWLOCK   *mutex;
+
     /* SSL_CTX for creating the underlying TLS connection */
     SSL_CTX *ctx;
 
@@ -67,6 +70,9 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
 
     srv->args = *args;
 
+    if ((srv->mutex = CRYPTO_THREAD_lock_new()) == NULL)
+        goto err;
+
     srv->ctx = SSL_CTX_new_ex(srv->args.libctx, srv->args.propq, TLS_method());
     if (srv->ctx == NULL)
         goto err;
@@ -86,6 +92,7 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     ch_args.libctx      = srv->args.libctx;
     ch_args.propq       = srv->args.propq;
     ch_args.tls         = srv->tls;
+    ch_args.mutex       = srv->mutex;
     ch_args.is_server   = 1;
 
     if ((srv->ch = ossl_quic_channel_new(&ch_args)) == NULL)
@@ -119,6 +126,7 @@ void ossl_quic_tserver_free(QUIC_TSERVER *srv)
     BIO_free(srv->args.net_wbio);
     SSL_free(srv->tls);
     SSL_CTX_free(srv->ctx);
+    CRYPTO_THREAD_lock_free(srv->mutex);
     OPENSSL_free(srv);
 }
 
