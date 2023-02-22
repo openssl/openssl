@@ -85,7 +85,7 @@ int ossl_quic_thread_assist_stop_async(QUIC_THREAD_ASSIST *qta)
 {
     if (!qta->teardown) {
         qta->teardown = 1;
-        ossl_crypto_condvar_broadcast(qta->cv);
+        ossl_crypto_condvar_signal(qta->cv);
     }
 
     return 1;
@@ -133,11 +133,7 @@ int ossl_quic_thread_assist_notify_deadline_changed(QUIC_THREAD_ASSIST *qta)
     if (qta->teardown)
         return 0;
 
-    /*
-     * Wake-one would be better here but as there is only one listening thread
-     * this does not actually matter.
-     */
-    ossl_crypto_condvar_broadcast(qta->cv);
+    ossl_crypto_condvar_signal(qta->cv);
     return 1;
 }
 

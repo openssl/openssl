@@ -62,7 +62,16 @@ void ossl_crypto_condvar_wait(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex)
 {
 }
 
+void ossl_crypto_condvar_wait_timeout(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex,
+                                      OSSL_TIME deadline)
+{
+}
+
 void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR *cv)
+{
+}
+
+void ossl_crypto_condvar_signal(CRYPTO_CONDVAR *cv)
 {
 }
 

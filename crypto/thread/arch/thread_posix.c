@@ -204,6 +204,14 @@ void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR *cv)
     pthread_cond_broadcast(cv_p);
 }
 
+void ossl_crypto_condvar_signal(CRYPTO_CONDVAR *cv)
+{
+    pthread_cond_t *cv_p;
+
+    cv_p = (pthread_cond_t *)cv;
+    pthread_cond_signal(cv_p);
+}
+
 void ossl_crypto_condvar_free(CRYPTO_CONDVAR **cv)
 {
     pthread_cond_t **cv_p;
