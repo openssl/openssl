@@ -75,9 +75,6 @@ void ossl_ffc_params_set0_j(FFC_PARAMS *d, BIGNUM *j)
 int ossl_ffc_params_set_seed(FFC_PARAMS *params,
                              const unsigned char *seed, size_t seedlen)
 {
-    if (params == NULL)
-        return 0;
-
     if (params->seed != NULL) {
         if (params->seed == seed)
             return 1;
@@ -125,11 +122,10 @@ void ossl_ffc_params_enable_flags(FFC_PARAMS *params, unsigned int flags,
         params->flags &= ~flags;
 }
 
-int ossl_ffc_set_digest(FFC_PARAMS *params, const char *alg, const char *props)
+void ossl_ffc_set_digest(FFC_PARAMS *params, const char *alg, const char *props)
 {
     params->mdname = alg;
     params->mdprops = props;
-    return 1;
 }
 
 int ossl_ffc_params_set_validate_params(FFC_PARAMS *params,
@@ -213,9 +209,6 @@ int ossl_ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *bld,
                       OSSL_PARAM params[])
 {
     int test_flags;
-
-    if (ffc == NULL)
-        return 0;
 
     if (ffc->p != NULL
         && !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_FFC_P, ffc->p))

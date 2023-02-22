@@ -28,8 +28,7 @@
 # define MIN_STRENGTH 80
 #endif
 
-static int dsa_keygen(DSA *dsa, int pairwise_test);
-static int dsa_keygen_pairwise_test(DSA *dsa, OSSL_CALLBACK *cb, void *cbarg);
+static int dsa_keygen(DSA *dsa);
 
 int DSA_generate_key(DSA *dsa)
 {
@@ -37,7 +36,7 @@ int DSA_generate_key(DSA *dsa)
     if (dsa->meth->dsa_keygen != NULL)
         return dsa->meth->dsa_keygen(dsa);
 #endif
-    return dsa_keygen(dsa, 0);
+    return dsa_keygen(dsa);
 }
 
 int ossl_dsa_generate_public_key(BN_CTX *ctx, const DSA *dsa,
@@ -59,6 +58,7 @@ err:
     return ret;
 }
 
+#ifdef FIPS_MODULE
 /*
  * Refer: FIPS 140-3 IG 10.3.A Additional Comment 1
  * Perform a KAT by duplicating the public key generation.
@@ -107,7 +107,44 @@ err:
     return ret;
 }
 
-static int dsa_keygen(DSA *dsa, int pairwise_test)
+/*
+ * FIPS 140-2 IG 9.9 AS09.33
+ * Perform a sign/verify operation.
+ */
+static int dsa_keygen_pairwise_test(DSA *dsa, OSSL_CALLBACK *cb, void *cbarg)
+{
+    int ret = 0;
+    unsigned char dgst[16] = {0};
+    unsigned int dgst_len = (unsigned int)sizeof(dgst);
+    DSA_SIG *sig = NULL;
+    OSSL_SELF_TEST *st = NULL;
+
+    st = OSSL_SELF_TEST_new(cb, cbarg);
+    if (st == NULL)
+        goto err;
+
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
+                           OSSL_SELF_TEST_DESC_PCT_DSA);
+
+    sig = DSA_do_sign(dgst, (int)dgst_len, dsa);
+    if (sig == NULL)
+        goto err;
+
+    OSSL_SELF_TEST_oncorrupt_byte(st, dgst);
+
+    if (DSA_do_verify(dgst, dgst_len, sig, dsa) != 1)
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_SELF_TEST_onend(st, ret);
+    OSSL_SELF_TEST_free(st);
+    DSA_SIG_free(sig);
+    return ret;
+}
+#endif /* FIPS_MODULE */
+
+static int dsa_keygen(DSA *dsa)
 {
     int ok = 0;
     BN_CTX *ctx = NULL;
@@ -151,12 +188,9 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
     dsa->priv_key = priv_key;
     dsa->pub_key = pub_key;
 
-#ifdef FIPS_MODULE
-    pairwise_test = 1;
-#endif /* FIPS_MODULE */
-
     ok = 1;
-    if (pairwise_test) {
+#ifdef FIPS_MODULE
+    {
         OSSL_CALLBACK *cb = NULL;
         void *cbarg = NULL;
 
@@ -173,6 +207,7 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
             return ok;
         }
     }
+#endif
     dsa->dirty_cnt++;
 
  err:
@@ -183,40 +218,4 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
     BN_CTX_free(ctx);
 
     return ok;
-}
-
-/*
- * FIPS 140-2 IG 9.9 AS09.33
- * Perform a sign/verify operation.
- */
-static int dsa_keygen_pairwise_test(DSA *dsa, OSSL_CALLBACK *cb, void *cbarg)
-{
-    int ret = 0;
-    unsigned char dgst[16] = {0};
-    unsigned int dgst_len = (unsigned int)sizeof(dgst);
-    DSA_SIG *sig = NULL;
-    OSSL_SELF_TEST *st = NULL;
-
-    st = OSSL_SELF_TEST_new(cb, cbarg);
-    if (st == NULL)
-        goto err;
-
-    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
-                           OSSL_SELF_TEST_DESC_PCT_DSA);
-
-    sig = DSA_do_sign(dgst, (int)dgst_len, dsa);
-    if (sig == NULL)
-        goto err;
-
-    OSSL_SELF_TEST_oncorrupt_byte(st, dgst);
-
-    if (DSA_do_verify(dgst, dgst_len, sig, dsa) != 1)
-        goto err;
-
-    ret = 1;
-err:
-    OSSL_SELF_TEST_onend(st, ret);
-    OSSL_SELF_TEST_free(st);
-    DSA_SIG_free(sig);
-    return ret;
 }

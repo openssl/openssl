@@ -735,10 +735,8 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         } else if (gctx->hindex != 0) {
             ossl_ffc_params_set_h(ffc, gctx->hindex);
         }
-        if (gctx->mdname != NULL) {
-            if (!ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops))
-                goto end;
-        }
+        if (gctx->mdname != NULL)
+            ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops);
         gctx->cb = osslcb;
         gctx->cbarg = cbarg;
         gencb = BN_GENCB_new();
