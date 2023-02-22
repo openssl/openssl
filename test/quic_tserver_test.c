@@ -19,6 +19,7 @@
 static const char msg1[] = "The quick brown fox jumped over the lazy dogs.";
 static char msg2[1024], msg3[1024];
 static OSSL_TIME fake_time;
+static CRYPTO_RWLOCK *fake_time_lock;
 
 static const char *certfile, *keyfile;
 
@@ -33,7 +34,15 @@ static unsigned char scratch_buf[2048];
 
 static OSSL_TIME fake_now(void *arg)
 {
-    return fake_time;
+    OSSL_TIME t;
+
+    if (!CRYPTO_THREAD_read_lock(fake_time_lock))
+        return ossl_time_zero();
+
+    t = fake_time;
+
+    CRYPTO_THREAD_unlock(fake_time_lock);
+    return t;
 }
 
 static OSSL_TIME real_now(void *arg)
@@ -286,9 +295,14 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
         if (c_start_idle_test && !c_done_idle_test) {
             /* This is more than our default idle timeout of 30s. */
             if (idle_units_done < 600) {
+                if (!TEST_true(CRYPTO_THREAD_write_lock(fake_time_lock)))
+                    goto err;
                 fake_time = ossl_time_add(fake_time, ossl_ms2time(100));
+                CRYPTO_THREAD_unlock(fake_time_lock);
+
                 ++idle_units_done;
                 ossl_quic_conn_force_assist_thread_wake(c_ssl);
+                OSSL_sleep(1); /* Ensure CPU scheduling for test purposes */
             } else {
                 c_done_idle_test = 1;
             }
@@ -395,6 +409,9 @@ int setup_tests(void)
 
     if (!TEST_ptr(certfile = test_get_argument(0))
             || !TEST_ptr(keyfile = test_get_argument(1)))
+        return 0;
+
+    if ((fake_time_lock = CRYPTO_THREAD_lock_new()) == NULL)
         return 0;
 
     ADD_TEST(test_tserver_simple);
