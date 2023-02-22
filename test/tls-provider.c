@@ -2148,9 +2148,6 @@ struct X509_pubkey_st {
     /* extra data for the callback, used by d2i_PUBKEY_ex */
     OSSL_LIB_CTX *libctx;
     char *propq;
-
-    /* Flag to force legacy keys */
-   unsigned int flag_force_legacy : 1;
 };
 
 ASN1_SEQUENCE(X509_PUBKEY_INTERNAL) = {
