@@ -587,10 +587,9 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     } else if (gctx->hindex != 0) {
         ossl_ffc_params_set_h(ffc, gctx->hindex);
     }
-    if (gctx->mdname != NULL) {
-        if (!ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops))
-            goto end;
-    }
+    if (gctx->mdname != NULL)
+        ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops);
+
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
 
          if (ossl_dsa_generate_ffc_parameters(dsa, gctx->gen_type,

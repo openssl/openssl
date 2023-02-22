@@ -345,13 +345,7 @@ FFC_PARAMS *ossl_dsa_get0_params(DSA *dsa)
 int ossl_dsa_ffc_params_fromdata(DSA *dsa, const OSSL_PARAM params[])
 {
     int ret;
-    FFC_PARAMS *ffc;
-
-    if (dsa == NULL)
-        return 0;
-    ffc = ossl_dsa_get0_params(dsa);
-    if (ffc == NULL)
-        return 0;
+    FFC_PARAMS *ffc = ossl_dsa_get0_params(dsa);
 
     ret = ossl_ffc_params_fromdata(ffc, params);
     if (ret)
