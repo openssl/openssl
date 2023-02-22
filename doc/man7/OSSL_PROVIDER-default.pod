@@ -223,6 +223,22 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =back
 
+=head2 Random Number Generation
+
+=over 4
+
+=item CTR-DRBG, see L<EVP_RAND-CTR-DRBG(7)>
+
+=item HASH-DRBG, see L<EVP_RAND-HASH-DRBG(7)>
+
+=item HMAC-DRBG, see L<EVP_RAND-HMAC-DRBG(7)>
+
+=item SEED-SRC,  see L<EVP_RAND-SEED-SRC(7)>
+
+=item TEST-RAND, see L<EVP_RAND-TEST-RAND(7)>
+
+=back
+
 =head2 Asymmetric Key Encoder
 
 The default provider also includes all of the encoding algorithms
