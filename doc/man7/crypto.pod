@@ -230,7 +230,7 @@ still be slower than passing the prefetched object directly.
 
 Fetching via a provider offers more flexibility, but it is slower than the
 old method, since it must search for the algorithm in all loaded providers,
-and then populate the method table using provider supplioed methods.
+and then populate the method table using provider supplied methods.
 Internally OpenSSL caches similar algorithms on the first fetch
 (so loading a digest caches all digests).
 
