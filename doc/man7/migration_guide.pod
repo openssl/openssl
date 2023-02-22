@@ -211,6 +211,8 @@ and L<OSSL_PROVIDER-FIPS(7)/Message Authentication Code (MAC)>.
 
 =head4 Algorithm Fetching
 
+Using calls to convenience functions such as EVP_sha256() and EVP_aes_256_gcm() may
+incur a performance penalty when using providers.
 Retrieving algorithms from providers involves searching for an algorithm by name.
 This is much slower than directly accessing a method table.
 It is recommended to prefetch algorithms if an algorithm is used many times.
