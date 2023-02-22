@@ -26,7 +26,7 @@ static DWORD __stdcall thread_start_thunk(LPVOID vthread)
     ossl_crypto_mutex_lock(thread->statelock);
     CRYPTO_THREAD_SET_STATE(thread, CRYPTO_THREAD_FINISHED);
     thread->retval = ret;
-    ossl_crypto_condvar_broadcast(thread->condvar);
+    ossl_crypto_condvar_signal(thread->condvar);
     ossl_crypto_mutex_unlock(thread->statelock);
 
     return 0;
@@ -142,6 +142,97 @@ void ossl_crypto_mutex_free(CRYPTO_MUTEX **mutex)
     *mutex = NULL;
 }
 
+static int determine_timeout(OSSL_TIME deadline, DWORD *w_timeout_p)
+{
+    OSSL_TIME now, delta;
+    uint64_t ms;
+
+    if (ossl_time_is_infinite(deadline)) {
+        *w_timeout_p = INFINITE;
+        return 1;
+    }
+
+    now = ossl_time_now();
+    delta = ossl_time_subtract(deadline, now);
+
+    if (ossl_time_is_zero(delta))
+        return 0;
+
+    ms = ossl_time2ms(delta);
+
+
+    /*
+     * Amount of time we want to wait is too long for the 32-bit argument to
+     * the Win32 API, so just wait as long as possible.
+     */
+    if (ms > (uint64_t)(INFINITE - 1))
+        *w_timeout_p = INFINITE - 1;
+    else
+        *w_timeout_p = (DWORD)ms;
+
+    return 1;
+}
+
+# if defined(OPENSSL_THREADS_WINNT_LEGACY)
+
+CRYPTO_CONDVAR *ossl_crypto_condvar_new(void)
+{
+    HANDLE h;
+
+    if ((h = CreateEventA(NULL, FALSE, FALSE, NULL)) == NULL)
+        return NULL;
+
+    return (CRYPTO_CONDVAR *)h;
+}
+
+void ossl_crypto_condvar_wait(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex)
+{
+    ossl_crypto_mutex_unlock(mutex);
+    WaitForSingleObject((HANDLE)cv, INFINITE);
+    ossl_crypto_mutex_lock(mutex);
+}
+
+void ossl_crypto_condvar_wait_timeout(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex,
+                                      OSSL_TIME deadline)
+{
+    DWORD timeout;
+
+    fprintf(stderr, "# wt\n"); fflush(stderr);
+    if (!determine_timeout(deadline, &timeout))
+        timeout = 1;
+
+    ossl_crypto_mutex_unlock(mutex);
+    WaitForSingleObject((HANDLE)cv, timeout);
+    fprintf(stderr, "# wtd\n"); fflush(stderr);
+    ossl_crypto_mutex_lock(mutex);
+    fprintf(stderr, "# wtd2\n"); fflush(stderr);
+}
+
+void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR *cv)
+{
+    /* Not supported */
+}
+
+void ossl_crypto_condvar_signal(CRYPTO_CONDVAR *cv)
+{
+    HANDLE *cv_p = (HANDLE *)cv;
+
+    SetEvent(cv_p);
+}
+
+void ossl_crypto_condvar_free(CRYPTO_CONDVAR **cv)
+{
+    HANDLE **cv_p;
+
+    cv_p = (HANDLE **)cv;
+    if (*cv_p != NULL)
+        CloseHandle(*cv_p);
+
+    *cv_p = NULL;
+}
+
+# else
+
 CRYPTO_CONDVAR *ossl_crypto_condvar_new(void)
 {
     CONDITION_VARIABLE *cv_p;
@@ -163,41 +254,16 @@ void ossl_crypto_condvar_wait(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex)
 }
 
 void ossl_crypto_condvar_wait_timeout(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex,
-                                      OSSL_TIME deadline, int *timeout_expired)
+                                      OSSL_TIME deadline)
 {
     DWORD timeout;
     CONDITION_VARIABLE *cv_p = (CONDITION_VARIABLE *)cv;
     CRITICAL_SECTION *mutex_p = (CRITICAL_SECTION *)mutex;
 
-    if (ossl_time_is_infinite(deadline)) {
-        timeout = INFINITE;
-    } else {
-        OSSL_TIME now = ossl_time_now();
-        OSSL_TIME delta = ossl_time_subtract(deadline, now);
-        uint64_t ms;
+    if (!determine_timeout(deadline, &timeout))
+        timeout = 1;
 
-        if (ossl_time_is_zero(delta)) {
-            if (timeout_expired != NULL)
-                *timeout_expired = 1;
-
-            return;
-        }
-
-        ms = ossl_time2ms(delta);
-
-        /*
-         * Amount of time we want to wait is too long for the 32-bit argument to
-         * the Win32 API, so just wait as long as possible.
-         */
-        if (ms > (uint64_t)(INFINITE - 1))
-            timeout = INFINITE - 1;
-        else
-            timeout = (DWORD)ms;
-    }
-
-    if (!SleepConditionVariableCS(cv_p, mutex_p, timeout)
-        && timeout_expired != NULL)
-        *timeout_expired = 1;
+    SleepConditionVariableCS(cv_p, mutex_p, timeout);
 }
 
 void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR *cv)
@@ -208,6 +274,14 @@ void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR *cv)
     WakeAllConditionVariable(cv_p);
 }
 
+void ossl_crypto_condvar_signal(CRYPTO_CONDVAR *cv)
+{
+    CONDITION_VARIABLE *cv_p;
+
+    cv_p = (CONDITION_VARIABLE *)cv;
+    WakeConditionVariable(cv_p);
+}
+
 void ossl_crypto_condvar_free(CRYPTO_CONDVAR **cv)
 {
     CONDITION_VARIABLE **cv_p;
@@ -215,6 +289,13 @@ void ossl_crypto_condvar_free(CRYPTO_CONDVAR **cv)
     cv_p = (CONDITION_VARIABLE **)cv;
     OPENSSL_free(*cv_p);
     *cv_p = NULL;
+}
+
+#endif
+
+void ossl_crypto_mem_barrier(void)
+{
+    MemoryBarrier();
 }
 
 #endif

@@ -25,6 +25,9 @@
     defined(_WIN32_WINNT)
 #  if _WIN32_WINNT >= 0x0600
 #   define OPENSSL_THREADS_WINNT
+#  elif _WIN32_WINNT >= 0x0501
+#   define OPENSSL_THREADS_WINNT
+#   define OPENSSL_THREADS_WINNT_LEGACY
 #  else
 #   define OPENSSL_THREADS_NONE
 #  endif
@@ -48,6 +51,7 @@ void ossl_crypto_condvar_wait(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex);
 void ossl_crypto_condvar_wait_timeout(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex,
                                       OSSL_TIME deadline);
 void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR *cv);
+void ossl_crypto_condvar_signal(CRYPTO_CONDVAR *cv);
 void ossl_crypto_condvar_free(CRYPTO_CONDVAR **cv);
 
 typedef uint32_t CRYPTO_THREAD_RETVAL;

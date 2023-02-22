@@ -110,6 +110,7 @@ SOURCE[../libcrypto]=$UTIL_COMMON \
         punycode.c passphrase.c sleep.c deterministic_nonce.c quic_vlint.c \
         time.c
 SOURCE[../providers/libfips.a]=$UTIL_COMMON
+SOURCE[../providers/libfips.a]=time.c
 
 SOURCE[../libcrypto]=$UPLINKSRC
 DEFINE[../libcrypto]=$UPLINKDEF

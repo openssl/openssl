@@ -324,9 +324,10 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
          * This is inefficient because we spin until things work without
          * blocking but this is just a test.
          */
-        if (!c_start_idle_test || c_done_idle_test)
+        if (!c_start_idle_test || c_done_idle_test) {
             /* Inhibit manual ticking during idle test to test TA mode. */
             SSL_tick(c_ssl);
+        }
 
         ossl_quic_tserver_tick(tserver);
 
