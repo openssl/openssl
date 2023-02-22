@@ -213,21 +213,26 @@ property string from the B<EVP_PKEY_CTX>.
 
 =head2 Performance
 
-If you perform the same operation many times then it is recommeded to use
-L</Explicit fetching>. An algorithm may be prefetched once initially,
-and then passed to any operations that are currently using L</Implicit fetching>.
-See an example of Explicit fecthing in L</USING ALGORITHMS IN APPLICATIONS>.
+If you perform the same operation many times then it is recommended to use
+L</Explicit fetching> to prefetch an algorithm once initially,
+and then pass this created object to any operations that are currently
+using L</Implicit fetching>.
+See an example of Explicit fetching in L</USING ALGORITHMS IN APPLICATIONS>.
+
+Prior to OpenSSL 3.0, constant method tables (such as EVP_sha256()) were used
+directly to access methods. If you pass one of these convenience functions
+to a operation the fixed methods are ignored, and only the name is used to
+internally fetch methods from a provider.
 
 If the prefetched object is not passed to operations, then any implicit
 fetch will use the internally cached prefetched object, but it will
 still be slower than passing the prefetched object directly.
 
-Prior to OpenSSL 3.0, constant method tables (such as EVP_sha256()) were used
-directly to access methods.
 Fetching via a provider offers more flexibility, but it is slower than the
 old method, since it must search for the algorithm in all loaded providers,
-and then build the method table. Internally OpenSSL caches similar algorithms
-on the first fetch (so loading a digest caches all digests).
+and then populate the method table using provider supplioed methods.
+Internally OpenSSL caches similar algorithms on the first fetch
+(so loading a digest caches all digests).
 
 The following methods can be used for prefetching:
 
