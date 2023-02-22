@@ -73,6 +73,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item RIPEMD160, see L<EVP_MD-RIPEMD160(7)>
 
+=item NULL, see L<EVP_MD-NULL(7)>
+
 =back
 
 =head2 Symmetric Ciphers
@@ -94,6 +96,8 @@ The OpenSSL default provider supports these operations and algorithms:
 =item ChaCha20, see L<EVP_CIPHER-CHACHA(7)>
 
 =item ChaCha20-Poly1305, see L<EVP_CIPHER-CHACHA(7)>
+
+=item NULL, see L<EVP_CIPHER-NULL(7)>
 
 =back
 
