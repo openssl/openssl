@@ -209,6 +209,13 @@ All new applications should use the new L<EVP_MAC(3)> interface.
 See also L<OSSL_PROVIDER-default(7)/Message Authentication Code (MAC)>
 and L<OSSL_PROVIDER-FIPS(7)/Message Authentication Code (MAC)>.
 
+=head4 Algorithm Fetching
+
+Retrieving algorithms from providers involves searching for an algorithm by name.
+This is much slower than directly accessing a method table.
+It is recommended to prefetch algorithms if an algorithm is used many times.
+See L<crypto(7)/Performance>, L<crypto(7)/Explicit fetching> and L<crypto(7)/Implicit fetching>.
+
 =head4 Support for Linux Kernel TLS
 
 In order to use KTLS, support for it must be compiled in using the
