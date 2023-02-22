@@ -233,12 +233,12 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
         /* If we have one, use a custom handler for this algorithm */
         ameth = EVP_PKEY_asn1_find(NULL, pknid);
         if (ameth != NULL && ameth->siginf_set != NULL
-                && ameth->siginf_set(siginf, alg, sig)) {
+                && ameth->siginf_set(siginf, alg, sig))
            break;
-        }
         if (pubkey != NULL) {
-            int secbits = EVP_PKEY_get_security_bits(pubkey);
+            int secbits;
 
+            secbits = EVP_PKEY_get_security_bits(pubkey);
             if (secbits != 0) {
                 siginf->secbits = secbits;
                 break;

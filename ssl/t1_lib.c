@@ -458,6 +458,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
+    OPENSSL_free(sinf->sigalg_name);
     sinf->sigalg_name = OPENSSL_strdup(p->data);
     if (sinf->sigalg_name == NULL)
         goto err;
@@ -467,6 +468,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
+    OPENSSL_free(sinf->name);
     sinf->name = OPENSSL_strdup(p->data);
     if (sinf->name == NULL)
         goto err;
@@ -495,6 +497,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
     } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
         goto err;
     } else {
+        OPENSSL_free(sinf->sigalg_oid);
         sinf->sigalg_oid = OPENSSL_strdup(p->data);
         if (sinf->sigalg_oid == NULL)
             goto err;
@@ -506,6 +509,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
     } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
         goto err;
     } else {
+        OPENSSL_free(sinf->sig_name);
         sinf->sig_name = OPENSSL_strdup(p->data);
         if (sinf->sig_name == NULL)
             goto err;
@@ -517,6 +521,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
     } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
         goto err;
     } else {
+        OPENSSL_free(sinf->sig_oid);
         sinf->sig_oid = OPENSSL_strdup(p->data);
         if (sinf->sig_oid == NULL)
             goto err;
@@ -528,6 +533,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
     } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
         goto err;
     } else {
+        OPENSSL_free(sinf->hash_name);
         sinf->hash_name = OPENSSL_strdup(p->data);
         if (sinf->hash_name == NULL)
             goto err;
@@ -539,6 +545,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
     } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
         goto err;
     } else {
+        OPENSSL_free(sinf->hash_oid);
         sinf->hash_oid = OPENSSL_strdup(p->data);
         if (sinf->hash_oid == NULL)
             goto err;
@@ -550,6 +557,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
     } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
         goto err;
     } else {
+        OPENSSL_free(sinf->keytype);
         sinf->keytype = OPENSSL_strdup(p->data);
         if (sinf->keytype == NULL)
             goto err;
@@ -561,6 +569,7 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
     } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
         goto err;
     } else {
+        OPENSSL_free(sinf->keytype_oid);
         sinf->keytype_oid = OPENSSL_strdup(p->data);
         if (sinf->keytype_oid == NULL)
             goto err;
