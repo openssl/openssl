@@ -190,8 +190,10 @@ void ossl_quic_free(SSL *s)
 
     quic_lock(qc); /* best effort */
 
-    if (qc->is_thread_assisted && qc->started)
+    if (qc->is_thread_assisted && qc->started) {
         ossl_quic_thread_assist_wait_stopped(&qc->thread_assist);
+        ossl_quic_thread_assist_cleanup(&qc->thread_assist);
+    }
 
     ossl_quic_channel_free(qc->ch);
 
