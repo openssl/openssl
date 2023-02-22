@@ -120,11 +120,10 @@ int ossl_quic_thread_assist_cleanup(QUIC_THREAD_ASSIST *qta)
     if (!ossl_assert(qta->joined))
         return 0;
 
-    ossl_crypto_condvar_free(qta->cv);
+    ossl_crypto_condvar_free(&qta->cv);
     ossl_crypto_thread_native_clean(qta->t);
 
     qta->ch     = NULL;
-    qta->cv     = NULL;
     qta->t      = NULL;
     return 1;
 }
