@@ -60,10 +60,6 @@ RFC 5246 section-6.2.3.1
 
 L<provider-cipher(7)>, L<OSSL_PROVIDER-default(7)>
 
-=head1 HISTORY
-
-The NULL cipher was added in OpenSSL version 3.0.
-
 =head1 COPYRIGHT
 
 Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
