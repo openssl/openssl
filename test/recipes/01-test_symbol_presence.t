@@ -32,7 +32,7 @@ note
     "platform, and that's perfectly fine.  This is mainly for developers\n",
     "on Unix to check that our shared libraries are consistent with the\n",
     "ordinals (util/*.num in the source tree), and that our static libraries\n",
-    "don't shared symbols, something that should be good enough a check for\n",
+    "don't share symbols, something that should be a good enough check for\n",
     "the other platforms as well.\n";
 
 my %stlibname;
@@ -72,13 +72,13 @@ foreach (sort keys %stlibname) {
     *OSTDOUT = *STDOUT;
     open STDERR, ">", devnull();
     open STDOUT, ">", devnull();
-    @stlib_lines = map { s|\R$||; $_ } `$stlib_cmd`; $? = 1;
+    @stlib_lines = map { s|\R$||; $_ } `$stlib_cmd`;
     if ($? != 0) {
         note "running '$stlib_cmd' => $?";
         @stlib_lines = ();
     }
     unless (disabled('shared')) {
-        @shlib_lines = map { s|\R$||; $_ } `$shlib_cmd`; $? = 1;
+        @shlib_lines = map { s|\R$||; $_ } `$shlib_cmd`;
         if ($? != 0) {
             note "running '$shlib_cmd' => $?";
             @shlib_lines = ();
@@ -96,7 +96,7 @@ foreach (sort keys %stlibname) {
             my $mkdefpath = srctop_file("util", "mkdef.pl");
             my $def_path = srctop_file("util", "lib$_.num");
             my $def_cmd = "$^X $mkdefpath --ordinals $def_path --name $_ --OS linux 2> /dev/null";
-            @def_lines = map { s|\R$||; $_ } `$def_cmd`; $? = 1;
+            @def_lines = map { s|\R$||; $_ } `$def_cmd`;
             if ($? != 0) {
                 note "running 'cd $bldtop; $def_cmd' => $?";
                 @def_lines = ();
