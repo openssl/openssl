@@ -1457,7 +1457,7 @@ static const uint16_t tls_default_sigalg[] = {
     0, /* SSL_PKEY_ED448 */
 };
 
-int ssl_setup_sig_algs(SSL_CTX *ctx)
+int ssl_setup_sigalgs(SSL_CTX *ctx)
 {
     size_t i, cache_idx, sigalgs_len;
     const SIGALG_LOOKUP *lu;

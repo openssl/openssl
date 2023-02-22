@@ -859,7 +859,7 @@ static void *xor_load(const void *reference, size_t reference_sz)
 static int xor_recreate(const unsigned char *kd1, const unsigned char *kd2) {
     int i;
 
-    for(i = 0; i < XOR_KEY_SIZE; i++) {
+    for (i = 0; i < XOR_KEY_SIZE; i++) {
         if ((kd1[i] & 0xff) != ((kd2[i] ^ private_constant[i]) & 0xff))
             return 0;
     }
@@ -872,7 +872,7 @@ static int xor_match(const void *keydata1, const void *keydata2, int selection)
     const XORKEY *key2 = keydata2;
     int ok = 1;
 
-    if (key1->tls_name && key2->tls_name)
+    if (key1->tls_name != NULL && key2->tls_name != NULL)
         ok = ok & (strcmp(key1->tls_name, key2->tls_name) == 0);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)  {
@@ -2476,7 +2476,7 @@ static void xorx_key_adjust(void *key, struct der2key_ctx_st *ctx)
         NULL,                                           \
         NULL,                                           \
         NULL,                                           \
-        (d2i_of_void *)xor_d2i_PUBKEY,                 \
+        (d2i_of_void *)xor_d2i_PUBKEY,                  \
         NULL,                                           \
         xorx_key_adjust,                                \
         (free_key_fn *)xor_freekey

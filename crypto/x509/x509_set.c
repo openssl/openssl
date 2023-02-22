@@ -238,6 +238,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
         }
         if (pubkey != NULL) {
             int secbits = EVP_PKEY_get_security_bits(pubkey);
+
             if (secbits != 0) {
                 siginf->secbits = secbits;
                 break;

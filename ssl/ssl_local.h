@@ -769,8 +769,6 @@ typedef struct tls_sigalg_info_st {
     unsigned int secbits;    /* Bits of security (from SP800-57) */
     int mintls;              /* Minimum TLS version, -1 unsupported */
     int maxtls;              /* Maximum TLS version (or 0 for undefined) */
-    int mindtls;             /* Minimum DTLS version, -1 unsupported */
-    int maxdtls;             /* Maximum DTLS version (or 0 for undefined) */
 } TLS_SIGALG_INFO;
 
 /*
@@ -2491,7 +2489,7 @@ __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL_CONNECTION *sc);
 __owur int ssl_x509err2alert(int type);
 void ssl_sort_cipher_list(void);
 int ssl_load_ciphers(SSL_CTX *ctx);
-__owur int ssl_setup_sig_algs(SSL_CTX *ctx);
+__owur int ssl_setup_sigalgs(SSL_CTX *ctx);
 int ssl_load_groups(SSL_CTX *ctx);
 int ssl_load_sigalgs(SSL_CTX *ctx);
 __owur int ssl_fill_hello_random(SSL_CONNECTION *s, int server,

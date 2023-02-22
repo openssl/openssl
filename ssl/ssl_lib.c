@@ -3813,7 +3813,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     }
 
     /* initialise sig algs */
-    if (!ssl_setup_sig_algs(ret)) {
+    if (!ssl_setup_sigalgs(ret)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
         goto err;
     }
