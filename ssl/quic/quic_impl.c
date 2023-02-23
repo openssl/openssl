@@ -110,10 +110,9 @@ static ossl_inline int expect_quic_conn(const QUIC_CONNECTION *qc)
  *
  * Precondition: Channel mutex is not held (unchecked)
  */
-static int quic_lock(QUIC_CONNECTION *qc)
+static void quic_lock(QUIC_CONNECTION *qc)
 {
     ossl_crypto_mutex_lock(qc->mutex);
-    return 1;
 }
 
 /* Precondition: Channel mutex is held (unchecked) */
@@ -188,7 +187,7 @@ void ossl_quic_free(SSL *s)
     if (!expect_quic_conn(qc))
         return;
 
-    quic_lock(qc); /* best effort */
+    quic_lock(qc);
 
     if (qc->is_thread_assisted && qc->started) {
         ossl_quic_thread_assist_wait_stopped(&qc->thread_assist);
@@ -463,8 +462,7 @@ static int blocking_mode(const QUIC_CONNECTION *qc)
 QUIC_TAKES_LOCK
 int ossl_quic_tick(QUIC_CONNECTION *qc)
 {
-    if (!quic_lock(qc))
-        return 0;
+    quic_lock(qc);
 
     if (qc->ch == NULL) {
         quic_unlock(qc);
@@ -487,8 +485,7 @@ int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc, struct timeval *tv)
 {
     OSSL_TIME deadline = ossl_time_infinite();
 
-    if (!quic_lock(qc))
-        return 0;
+    quic_lock(qc);
 
     if (qc->ch != NULL)
         deadline
@@ -530,8 +527,7 @@ int ossl_quic_get_net_read_desired(QUIC_CONNECTION *qc)
 {
     int ret;
 
-    if (!quic_lock(qc))
-        return 0;
+    quic_lock(qc);
 
     if (qc->ch == NULL)
         return 0;
@@ -547,8 +543,7 @@ int ossl_quic_get_net_write_desired(QUIC_CONNECTION *qc)
 {
     int ret;
 
-    if (!quic_lock(qc))
-        return 0;
+    quic_lock(qc);
 
     if (qc->ch == NULL)
         return 0;
@@ -587,8 +582,7 @@ int ossl_quic_conn_shutdown(QUIC_CONNECTION *qc, uint64_t flags,
 {
     int ret;
 
-    if (!quic_lock(qc))
-        return -1;
+    quic_lock(qc);
 
     if (!ensure_channel(qc)) {
         quic_unlock(qc);
@@ -826,8 +820,7 @@ int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
 {
     int ret;
 
-    if (!quic_lock(qc))
-        return -1;
+    quic_lock(qc);
 
     ret = quic_do_handshake(qc);
     quic_unlock(qc);
@@ -1142,8 +1135,7 @@ int ossl_quic_write(SSL *s, const void *buf, size_t len, size_t *written)
     if (!expect_quic_conn(qc))
         return 0;
 
-    if (!quic_lock(qc))
-        return 0;
+    quic_lock(qc);
 
     if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch)) {
         ret = QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
@@ -1279,8 +1271,7 @@ static int quic_read(SSL *s, void *buf, size_t len, size_t *bytes_read, int peek
     if (!expect_quic_conn(qc))
         return 0;
 
-    if (!quic_lock(qc))
-        return 0;
+    quic_lock(qc);
 
     if (qc->ch != NULL && ossl_quic_channel_is_term_any(qc->ch)) {
         ret = QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
@@ -1366,8 +1357,7 @@ static size_t ossl_quic_pending_int(const QUIC_CONNECTION *qc)
     if (!expect_quic_conn(qc))
         return 0;
 
-    if (!quic_lock((QUIC_CONNECTION *)qc))
-        return 0;
+    quic_lock((QUIC_CONNECTION *)qc);
 
     if (qc->stream0 == NULL || qc->stream0->rstream == NULL)
         /* Cannot raise errors here because we are const, just fail. */
@@ -1402,8 +1392,7 @@ int ossl_quic_conn_stream_conclude(QUIC_CONNECTION *qc)
 {
     QUIC_STREAM *qs = qc->stream0;
 
-    if (!quic_lock(qc))
-        return 0;
+    quic_lock(qc);
 
     if (qs == NULL || qs->sstream == NULL) {
         quic_unlock(qc);
