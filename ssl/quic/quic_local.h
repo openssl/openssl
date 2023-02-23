@@ -55,7 +55,7 @@ struct quic_conn_st {
      * The mutex used to synchronise access to the QUIC_CHANNEL. We own this but
      * provide it to the channel.
      */
-    CRYPTO_RWLOCK                   *mutex;
+    CRYPTO_MUTEX                    *mutex;
 
     /* Our single bidirectional application data stream. */
     QUIC_STREAM                     *stream0;

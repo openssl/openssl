@@ -30,7 +30,7 @@
  * SSL_tick() is called  on  time. This is not needed if the application always
  * has a call blocking to SSL_read() or SSL_write() (or another I/O function) on
  * a QUIC SSL object, but if the application goes for long periods of time
- * without makingany such call to a QUIC SSL object, libssl cannot ordinarily
+ * without making any such call to a QUIC SSL object, libssl cannot ordinarily
  * guarantee that QUIC timeout events will be serviced in a timely fashion.
  * Thread assisted  mode is therefore of use to applications which do not always
  * have an ongoing call to an I/O function on a QUIC SSL object but also do not

@@ -25,7 +25,7 @@ struct quic_tserver_st {
     QUIC_CHANNEL    *ch;
 
     /* The mutex we give to the QUIC channel. */
-    CRYPTO_RWLOCK   *mutex;
+    CRYPTO_MUTEX    *mutex;
 
     /* SSL_CTX for creating the underlying TLS connection */
     SSL_CTX *ctx;

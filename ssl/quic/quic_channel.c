@@ -1609,7 +1609,7 @@ static int ch_tx(QUIC_CHANNEL *ch)
         /*
          * RFC 9000 s. 10.1. 'An endpoint also restarts its idle timer when
          * sending an ack-eliciting packet if no other ack-eliciting packets
-         * have been sentsince last receiving and processing a packet.'
+         * have been sent since last receiving and processing a packet.'
          */
         if (sent_ack_eliciting && !ch->have_sent_ack_eliciting_since_rx) {
             ch_update_idle(ch);

@@ -133,7 +133,7 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags)
 static int poll_two_fds(int rfd, int rfd_want_read,
                         int wfd, int wfd_want_write,
                         OSSL_TIME deadline,
-                        CRYPTO_RWLOCK *mutex)
+                        CRYPTO_MUTEX *mutex)
 {
 #if defined(OPENSSL_SYS_WINDOWS) || !defined(POLLIN)
     fd_set rfd_set, wfd_set, efd_set;
@@ -282,7 +282,7 @@ static int poll_descriptor_to_fd(const BIO_POLL_DESCRIPTOR *d, int *fd)
 static int poll_two_descriptors(const BIO_POLL_DESCRIPTOR *r, int r_want_read,
                                 const BIO_POLL_DESCRIPTOR *w, int w_want_write,
                                 OSSL_TIME deadline,
-                                CRYPTO_RWLOCK *mutex)
+                                CRYPTO_MUTEX *mutex)
 {
     int rfd, wfd;
 
@@ -307,7 +307,7 @@ static int poll_two_descriptors(const BIO_POLL_DESCRIPTOR *r, int r_want_read,
 int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                        int (*pred)(void *arg), void *pred_arg,
                                        uint32_t flags,
-                                       CRYPTO_RWLOCK *mutex)
+                                       CRYPTO_MUTEX *mutex)
 {
     int res;
 
