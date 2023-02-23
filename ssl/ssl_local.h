@@ -2665,7 +2665,7 @@ __owur int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
 int dtls1_retransmit_buffered_messages(SSL_CONNECTION *s);
 void dtls1_clear_received_buffer(SSL_CONNECTION *s);
 void dtls1_clear_sent_buffer(SSL_CONNECTION *s);
-void dtls1_get_message_header(unsigned char *data,
+void dtls1_get_message_header(const unsigned char *data,
                               struct hm_header_st *msg_hdr);
 __owur OSSL_TIME dtls1_default_timeout(void);
 __owur OSSL_TIME *dtls1_get_timeout(SSL_CONNECTION *s, OSSL_TIME *timeleft);

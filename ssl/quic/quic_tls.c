@@ -332,7 +332,7 @@ static int quic_retry_write_records(OSSL_RECORD_LAYER *rl)
 }
 
 static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
-                            int *rversion, int *type, unsigned char **data,
+                            int *rversion, int *type, const unsigned char **data,
                             size_t *datalen, uint16_t *epoch,
                             unsigned char *seq_num)
 {
@@ -341,11 +341,7 @@ static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
 
     BIO_clear_retry_flags(rl->dummybio);
 
-    /*
-     * TODO(QUIC): Cast data to const, which should be safe....can read_record
-     * be modified to pass this as const to start with?
-     */
-    if (!rl->qtls->args.crypto_recv_rcd_cb((const unsigned char **)data, datalen,
+    if (!rl->qtls->args.crypto_recv_rcd_cb(data, datalen,
                                            rl->qtls->args.crypto_recv_rcd_cb_arg)) {
         QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;

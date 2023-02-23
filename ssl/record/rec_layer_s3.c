@@ -503,7 +503,8 @@ void ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr)
         s->rlayer.rrlmethod->release_record(s->rlayer.rrl, rr->rechandle);
     } else {
         /* We allocated the buffers for this record (only happens with DTLS) */
-        OPENSSL_free(rr->data);
+        OPENSSL_free(rr->allocdata);
+        rr->allocdata = NULL;
     }
     s->rlayer.curr_rec++;
 }
@@ -720,8 +721,9 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
                 if (rr->length == 0)
                     ssl_release_record(s, rr);
             } else {
+                /* TODO(RECLAYER) Casting away the const here is wrong! FIX ME */
                 if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
-                    OPENSSL_cleanse(&(rr->data[rr->off]), n);
+                    OPENSSL_cleanse((unsigned char *)&(rr->data[rr->off]), n);
                 rr->length -= n;
                 rr->off += n;
                 if (rr->length == 0)
@@ -784,8 +786,7 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
 
     if (rr->type == SSL3_RT_ALERT) {
         unsigned int alert_level, alert_descr;
-        unsigned char *alert_bytes = rr->data
-                                     + rr->off;
+        const unsigned char *alert_bytes = rr->data + rr->off;
         PACKET alert;
 
         if (!PACKET_buf_init(&alert, alert_bytes, rr->length)

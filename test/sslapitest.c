@@ -1708,7 +1708,7 @@ static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
-    void *zbuf;
+    const unsigned char *zbuf;
     SSL_CONNECTION *serversc;
     TLS_RECORD *rr;
 

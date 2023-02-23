@@ -459,7 +459,7 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl);
 int tls_get_alert_code(OSSL_RECORD_LAYER *rl);
 int tls_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio);
 int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
-                    int *type, unsigned char **data, size_t *datalen,
+                    int *type, const unsigned char **data, size_t *datalen,
                     uint16_t *epoch, unsigned char *seq_num);
 int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle);
 int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
