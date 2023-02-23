@@ -24,6 +24,12 @@ The MD2 algorithm which produces a 128-bit output from a given input.
 
 =back
 
+=head1 NOTES
+
+Developers should be aware of the negative performance implications of
+calling this function multiple times and should consider using
+L<EVP_MD_fetch(3)> instead.
+See L<crypto(7)/Performance> for further information.
 
 =head1 RETURN VALUES
 
