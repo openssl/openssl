@@ -32,9 +32,18 @@ typedef struct quic_tls_args_st {
     int (*crypto_send_cb)(const unsigned char *buf, size_t buf_len,
                           size_t *consumed, void *arg);
     void *crypto_send_cb_arg;
-    int (*crypto_recv_cb)(unsigned char *buf, size_t buf_len,
-                          size_t *bytes_read, void *arg);
-    void *crypto_recv_cb_arg;
+
+    /*
+     * Call to receive crypto stream data. A pointer to the underlying buffer
+     * is provided, and subsequently released to avoid unnecessary copying of
+     * data.
+     */
+    int (*crypto_recv_rcd_cb)(const unsigned char **buf, size_t *bytes_read,
+                              void *arg);
+    void *crypto_recv_rcd_cb_arg;
+    int (*crypto_release_rcd_cb)(size_t bytes_read, void *arg);
+    void *crypto_release_rcd_cb_arg;
+
 
     /* Called when a traffic secret is available for a given encryption level. */
     int (*yield_secret_cb)(uint32_t enc_level, int direction /* 0=RX, 1=TX */,
