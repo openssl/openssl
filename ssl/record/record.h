@@ -24,7 +24,12 @@ typedef struct tls_record_st {
     int version;
     int type;
     /* The data buffer containing bytes from the record */
-    unsigned char *data;
+    const unsigned char *data;
+    /*
+     * Buffer that we allocated to store data. If non NULL always the same as
+     * data (but non-const)
+     */
+    unsigned char *allocdata;
     /* Number of remaining to be read in the data buffer */
     size_t length;
     /* Offset into the data buffer where to start reading */

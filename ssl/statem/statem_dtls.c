@@ -1301,7 +1301,8 @@ static unsigned char *dtls1_write_message_header(SSL_CONNECTION *s,
     return p;
 }
 
-void dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
+void dtls1_get_message_header(const unsigned char *data, struct
+                              hm_header_st *msg_hdr)
 {
     memset(msg_hdr, 0, sizeof(*msg_hdr));
     msg_hdr->type = *(data++);

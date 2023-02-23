@@ -58,9 +58,10 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
 
     while ((item = pqueue_pop(d->buffered_app_data.q)) != NULL) {
         rec = (TLS_RECORD *)item->data;
+
         if (rl->s->options & SSL_OP_CLEANSE_PLAINTEXT)
-            OPENSSL_cleanse(rec->data, rec->length);
-        OPENSSL_free(rec->data);
+            OPENSSL_cleanse(rec->allocdata, rec->length);
+        OPENSSL_free(rec->allocdata);
         OPENSSL_free(item->data);
         pitem_free(item);
     }
@@ -99,7 +100,7 @@ static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
      * now. Copying data isn't good - but this should be infrequent so we
      * accept it here.
      */
-    rdata->data = OPENSSL_memdup(rec->data, rec->length);
+    rdata->data = rdata->allocdata = OPENSSL_memdup(rec->data, rec->length);
     if (rdata->data == NULL) {
         OPENSSL_free(rdata);
         pitem_free(item);
@@ -126,7 +127,7 @@ static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
 
     if (pqueue_insert(queue->q, item) == NULL) {
         /* Must be a duplicate so ignore it */
-        OPENSSL_free(rdata->data);
+        OPENSSL_free(rdata->allocdata);
         OPENSSL_free(rdata);
         pitem_free(item);
     }
@@ -349,8 +350,9 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             if (rr->length == 0)
                 ssl_release_record(sc, rr);
         } else {
+            /* TODO(RECLAYER): Casting away the const is wrong! FIX ME */
             if (sc->options & SSL_OP_CLEANSE_PLAINTEXT)
-                OPENSSL_cleanse(&(rr->data[rr->off]), n);
+                OPENSSL_cleanse((unsigned char *)&(rr->data[rr->off]), n);
             rr->length -= n;
             rr->off += n;
             if (rr->length == 0)
@@ -380,7 +382,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
     if (rr->type == SSL3_RT_ALERT) {
         unsigned int alert_level, alert_descr;
-        unsigned char *alert_bytes = rr->data + rr->off;
+        const unsigned char *alert_bytes = rr->data + rr->off;
         PACKET alert;
 
         if (!PACKET_buf_init(&alert, alert_bytes, rr->length)
