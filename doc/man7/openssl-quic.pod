@@ -15,7 +15,8 @@ QUIC functionality uses the standard SSL API. A QUIC connection is represented
 by an SSL object in the same way that a TLS connection is. Only minimal changes
 are needed to existing applications making use of the libssl APIs to make use of
 QUIC client functionality. To make use of QUIC, use the SSL method
-L<OSSL_QUIC_client_method(3)> with L<SSL_CTX_new(3)>.
+L<OSSL_QUIC_client_method(3)> or L<OSSL_QUIC_client_thread_method(3)> with
+L<SSL_CTX_new(3)>.
 
 When a QUIC connection is created, it has a single bidirectional stream
 associated with it. Calls to L<SSL_read(3)> and L<SSL_write(3)> on the QUIC
@@ -120,16 +121,17 @@ be read, and B<SSL_ERROR_WANT_WRITE> indicates that the stream's internal buffer
 is full.
 
 To determine if the QUIC implementation currently wishes to be informed of
-incoming network datagrams, use the new function L<SSL_want_net_read(3)>;
+incoming network datagrams, use the new function L<SSL_net_read_desired(3)>;
 likewise, to determine if the QUIC implementation currently wishes to be
 informed when it is possible to transmit network datagrams, use the new function
-L<SSL_want_net_write(3)>. Only applications which wish to manage their own event
+L<SSL_net_write_desired(3)>. Only applications which wish to manage their own event
 loops need to use these functions; see B<APPLICATION-DRIVEN EVENT LOOPS> for
 further discussion.
 
 =item
 
-The use of ALPN is mandatory when using QUIC.
+The use of ALPN is mandatory when using QUIC. For information on how to
+configure ALPN, see L<SSL_set_alpn_protos(3)>.
 
 =item
 
@@ -151,7 +153,7 @@ Record Padding and Fragmentation (L<SSL_set_block_padding(3)>, etc.)
 
 =item
 
-L<SSL_stateless(3)> and HelloRetryRequest support
+L<SSL_stateless(3)> support
 
 =item
 
@@ -351,7 +353,7 @@ transmitted and received datagrams via a L<BIO_s_dgram_pair(3)> or custom BIO.
 
 The former is preferred where possible as it reduces latency to the network,
 which enables QUIC to achieve higher performance and more accurate connection
-RTT estimation.
+round trip time (RTT) estimation.
 
 =item
 
@@ -422,9 +424,9 @@ a call to L<SSL_tick(3)>. L<SSL_get_wpoll_descriptor(3)> works in an analogous
 fashion for the underlying network write BIO.
 
 The poll descriptors provided by these functions need only be used when
-L<SSL_want_net_read(3)> and L<SSL_want_net_write(3)> return 1, respectively.
+L<SSL_net_read_desired(3)> and L<SSL_net_write_desired(3)> return 1, respectively.
 
-=item L<SSL_want_net_read(3)>, L<SSL_want_net_write(3)>
+=item L<SSL_net_read_desired(3)>, L<SSL_net_write_desired(3)>
 
 These functions facilitate operation in nonblocking mode and are used in
 conjunction with L<SSL_get_rpoll_descriptor(3)> and
@@ -611,7 +613,7 @@ synchronisation.
 
 =item
 
-It should call L<SSL_want_net_read(3)> and L<SSL_want_net_write(3)> to determine
+It should call L<SSL_net_read_desired(3)> and L<SSL_net_write_desired(3)> to determine
 whether the QUIC implementation is currently interested in readability and
 writability events on the underlying network BIO which was provided, and call
 L<SSL_get_tick_timeout(3)> to determine if any timeout event will become
@@ -626,12 +628,12 @@ It should wait until one of the following events occurs:
 =item
 
 The poll descriptor returned by L<SSL_get_rpoll_descriptor(3)> becomes readable
-(if L<SSL_want_net_read(3)> returned 1);
+(if L<SSL_net_read_desired(3)> returned 1);
 
 =item
 
 The poll descriptor returned by L<SSL_get_wpoll_descriptor(3)> becomes writable
-(if L<SSL_want_net_write(3)> returned 1);
+(if L<SSL_net_write_desired(3)> returned 1);
 
 =item
 
@@ -662,8 +664,8 @@ call to L<SSL_tick(3)> is performed after the specified timeout (if any).
 
 =head1 SEE ALSO
 
-L<SSL_tick(3)>, L<SSL_get_tick_timeout(3)>, L<SSL_want_net_read(3)>,
-L<SSL_want_net_write(3)>, L<SSL_get_rpoll_descriptor(3)>,
+L<SSL_tick(3)>, L<SSL_get_tick_timeout(3)>, L<SSL_net_read_desired(3)>,
+L<SSL_net_write_desired(3)>, L<SSL_get_rpoll_descriptor(3)>,
 L<SSL_get_wpoll_descriptor(3)>, L<SSL_set_blocking_mode(3)>,
 L<SSL_shutdown_ex(3)>, L<SSL_set_initial_peer_addr(3)>
 
