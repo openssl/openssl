@@ -56,7 +56,7 @@ changes to the semantics of existing APIs are as follows:
 
 =item
 
-Since QUIC uses UDP, L<SSL_set0_bio(3)>, L<SSL_set0_rbio(3)> and
+Since QUIC uses UDP, L<SSL_set_bio(3)>, L<SSL_set0_rbio(3)> and
 L<SSL_set0_wbio(3)> function as before, but must now receive a BIO with datagram
 semantics. There are broadly three options for applications to use as a network
 BIO:
@@ -70,7 +70,7 @@ L<BIO_s_socket(3)> and provides a UDP socket.
 
 =item
 
-L<BIO_s_datagram_pair(3)> provides BIO pair-like function but with datagram
+L<BIO_s_dgram_pair(3)> provides BIO pair-like function but with datagram
 semantics, and is recommended for existing applications which use a BIO pair or
 memory BIO to manage libssl's communication with the network.
 
@@ -86,7 +86,7 @@ L<BIO_sendmmsg(3)> and L<BIO_recvmmsg(3)> APIs must be supported.
 L<SSL_set_fd(3)>, L<SSL_set_rfd(3)> and L<SSL_set_wfd(3)> traditionally
 instantiate a L<BIO_s_socket(3)>. For QUIC, these functions instead instantiate
 a L<BIO_s_datagram(3)>. This is equivalent to instantiating a
-L<BIO_s_datagram(3)> and using L<SSL_set0_rbio(3)> and L<SSL_set_wbio(3)>.
+L<BIO_s_datagram(3)> and using L<SSL_set0_rbio(3)> and L<SSL_set0_wbio(3)>.
 
 =item
 
@@ -433,10 +433,10 @@ conjunction with L<SSL_get_rpoll_descriptor(3)> and
 L<SSL_get_wpoll_descriptor(3)> respectively. They determine whether the
 respective poll descriptor is currently relevant for the purposes of polling.
 
-=item L<SSL_set_initial_peer_addr(3)>, L<SSL_get_initial_peer_addr(3)>
+=item L<SSL_set_initial_peer_addr(3)>
 
-These functions can be used to set and retrieve the initial peer address for an
-outgoing QUIC connection. They must be used in the general case when creating an
+This functions can be used to set the initial peer address for an outgoing QUIC
+connection. This function must be used in the general case when creating an
 outgoing QUIC connection; however, the correct initial peer address can be
 autodetected in some cases. See L<SSL_set_initial_peer_addr(3)> for details.
 
