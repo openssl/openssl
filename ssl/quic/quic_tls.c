@@ -54,18 +54,12 @@ struct ossl_record_layer_st {
     OSSL_RECORD_TEMPLATE template;
 
     /*
-     * Temp buffer for storing received data (copied from the stream receive
-     * buffer)
-     */
-    unsigned char recbuf[SSL3_RT_MAX_PLAIN_LENGTH];
-
-    /*
      * If we hit an error, what alert code should be used
      */
     int alert;
 
-    /* Set if recbuf is populated with data */
-    unsigned int recread : 1;
+    /* Amount of crypto stream data we have received but not yet released  */
+    size_t recread;
 
     /* Callbacks */
     OSSL_FUNC_rlayer_msg_callback_fn *msg_callback;
@@ -348,11 +342,11 @@ static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
     BIO_clear_retry_flags(rl->dummybio);
 
     /*
-     * TODO(QUIC): There seems to be an unnecessary copy here. It would be
-     *             better to send back a ref direct to the underlying buffer
+     * TODO(QUIC): Cast data to const, which should be safe....can read_record
+     * be modified to pass this as const to start with?
      */
-    if (!rl->qtls->args.crypto_recv_cb(rl->recbuf, sizeof(rl->recbuf), datalen,
-                                       rl->qtls->args.crypto_recv_cb_arg)) {
+    if (!rl->qtls->args.crypto_recv_rcd_cb((const unsigned char **)data, datalen,
+                                           rl->qtls->args.crypto_recv_rcd_cb_arg)) {
         QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
     }
@@ -365,8 +359,7 @@ static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
     *rechandle = rl;
     *rversion = TLS1_3_VERSION;
     *type = SSL3_RT_HANDSHAKE;
-    *data = rl->recbuf;
-    rl->recread = 1;
+    rl->recread = *datalen;
     /* epoch/seq_num are not relevant for TLS */
 
     if (rl->msg_callback != NULL) {
@@ -399,10 +392,17 @@ static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
 
 static int quic_release_record(OSSL_RECORD_LAYER *rl, void *rechandle)
 {
-    if (!ossl_assert(rl->recread == 1) || !ossl_assert(rl == rechandle)) {
+    if (!ossl_assert(rl->recread > 0) || !ossl_assert(rl == rechandle)) {
         QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+
+    if (!rl->qtls->args.crypto_release_rcd_cb(rl->recread,
+                                              rl->qtls->args.crypto_release_rcd_cb_arg)) {
+        QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return OSSL_RECORD_RETURN_FATAL;
+    }
+
 
     rl->recread = 0;
     return 1;
@@ -602,7 +602,8 @@ QUIC_TLS *ossl_quic_tls_new(const QUIC_TLS_ARGS *args)
     QUIC_TLS *qtls;
 
     if (args->crypto_send_cb == NULL
-        || args->crypto_recv_cb == NULL) {
+        || args->crypto_recv_rcd_cb == NULL
+        || args->crypto_release_rcd_cb == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }

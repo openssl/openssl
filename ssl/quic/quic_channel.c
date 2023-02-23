@@ -57,8 +57,9 @@ static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
                                         const unsigned char *secret,
                                         size_t secret_len,
                                         void *arg);
-static int ch_on_crypto_recv(unsigned char *buf, size_t buf_len,
-                             size_t *bytes_read, void *arg);
+static int ch_on_crypto_recv_record(const unsigned char **buf,
+                                    size_t *bytes_read, void *arg);
+static int ch_on_crypto_release_record(size_t bytes_read, void *arg);
 static int crypto_ensure_empty(QUIC_RSTREAM *rstream);
 static int ch_on_crypto_send(const unsigned char *buf, size_t buf_len,
                              size_t *consumed, void *arg);
@@ -248,8 +249,10 @@ static int ch_init(QUIC_CHANNEL *ch)
     tls_args.s                          = ch->tls;
     tls_args.crypto_send_cb             = ch_on_crypto_send;
     tls_args.crypto_send_cb_arg         = ch;
-    tls_args.crypto_recv_cb             = ch_on_crypto_recv;
-    tls_args.crypto_recv_cb_arg         = ch;
+    tls_args.crypto_recv_rcd_cb         = ch_on_crypto_recv_record;
+    tls_args.crypto_recv_rcd_cb_arg     = ch;
+    tls_args.crypto_release_rcd_cb      = ch_on_crypto_release_record;
+    tls_args.crypto_release_rcd_cb_arg  = ch;
     tls_args.yield_secret_cb            = ch_on_handshake_yield_secret;
     tls_args.yield_secret_cb_arg        = ch;
     tls_args.got_transport_params_cb    = ch_on_transport_params;
@@ -534,8 +537,8 @@ static int crypto_ensure_empty(QUIC_RSTREAM *rstream)
     return avail == 0;
 }
 
-static int ch_on_crypto_recv(unsigned char *buf, size_t buf_len,
-                             size_t *bytes_read, void *arg)
+static int ch_on_crypto_recv_record(const unsigned char **buf,
+                                    size_t *bytes_read, void *arg)
 {
     QUIC_CHANNEL *ch = arg;
     QUIC_RSTREAM *rstream;
@@ -569,8 +572,20 @@ static int ch_on_crypto_recv(unsigned char *buf, size_t buf_len,
     if (rstream == NULL)
         return 0;
 
-    return ossl_quic_rstream_read(rstream, buf, buf_len, bytes_read,
-                                  &is_fin);
+    return ossl_quic_rstream_get_record(rstream, buf, bytes_read,
+                                        &is_fin);
+}
+
+static int ch_on_crypto_release_record(size_t bytes_read, void *arg)
+{
+    QUIC_CHANNEL *ch = arg;
+    QUIC_RSTREAM *rstream;
+
+    rstream = ch->crypto_recv[ossl_quic_enc_level_to_pn_space(ch->rx_enc_level)];
+    if (rstream == NULL)
+        return 0;
+
+    return ossl_quic_rstream_release_record(rstream, bytes_read);
 }
 
 static int ch_on_handshake_yield_secret(uint32_t enc_level, int direction,
