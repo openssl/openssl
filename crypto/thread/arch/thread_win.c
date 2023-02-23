@@ -197,15 +197,12 @@ void ossl_crypto_condvar_wait_timeout(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex,
 {
     DWORD timeout;
 
-    fprintf(stderr, "# wt\n"); fflush(stderr);
     if (!determine_timeout(deadline, &timeout))
         timeout = 1;
 
     ossl_crypto_mutex_unlock(mutex);
     WaitForSingleObject((HANDLE)cv, timeout);
-    fprintf(stderr, "# wtd\n"); fflush(stderr);
     ossl_crypto_mutex_lock(mutex);
-    fprintf(stderr, "# wtd2\n"); fflush(stderr);
 }
 
 void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR *cv)
