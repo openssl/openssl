@@ -31,7 +31,7 @@ struct quic_channel_st {
      * passes it to us and is responsible for freeing it after channel
      * destruction.
      */
-    CRYPTO_RWLOCK                   *mutex;
+    CRYPTO_MUTEX                    *mutex;
 
     /*
      * Callback used to get the current time.

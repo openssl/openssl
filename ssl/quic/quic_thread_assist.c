@@ -14,7 +14,7 @@
 #include "internal/thread_arch.h"
 #include "internal/quic_thread_assist.h"
 
-#if !defined(OPENSSL_NO_QUIC) && !defined(OPENSSL_NO_THREAD_POOL)
+#if !defined(OPENSSL_NO_QUIC) && defined(OPENSSL_THREADS)
 
 /* Main loop for the QUIC assist thread. */
 static unsigned int assist_thread_main(void *arg)
