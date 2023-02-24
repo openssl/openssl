@@ -166,6 +166,13 @@ external circumstances (see L<RAND(7)>), the operation will fail.
 The call to EVP_DigestSignFinal() internally finalizes a copy of the digest
 context. This means that calls to EVP_DigestSignUpdate() and
 EVP_DigestSignFinal() can be called later to digest and sign additional data.
+Applications may disable this behavior by setting the EVP_MD_CTX_FLAG_FINALISE
+context flag via L<EVP_MD_CTX_set_flags(3)>.
+
+Note that not all providers support continuation, in case the selected
+provider does not allow to duplicate contexts EVP_DigestSignFinal() will
+finalize the digest context and attempting to process additional data via
+EVP_DigestSignUpdate() will result in an error.
 
 EVP_DigestSignInit() and EVP_DigestSignInit_ex() functions can be called
 multiple times on a context and the parameters set by previous calls should be
