@@ -68,6 +68,11 @@ Since only a copy of the digest context is ever finalized the context must
 be cleaned up after use by calling EVP_MD_CTX_free() or a memory leak
 will occur.
 
+Note that not all providers allow for continuation, in case the selected
+provider does not allow to duplicate contexts EVP_VerifyFinal() will
+finalize the digest context and attempting to process additional data via
+EVP_VerifyUpdate() will result in an error.
+
 =head1 BUGS
 
 Older versions of this documentation wrongly stated that calls to
