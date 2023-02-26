@@ -29,14 +29,17 @@ L<EVP_MD_fetch(3)> or L<EVP_CIPHER_fetch(3)>, as well as with other
 functions that take a property query string, such as
 L<EVP_PKEY_CTX_new_from_name(3)>.
 
-It isn't mandatory to query for any of these properties, except to
-make sure to get implementations of this provider and none other.
+To be FIPS compliant, it is mandatory to include C<fips=yes> as
+part of all property queries.  This ensures that only FIPS approved
+implementations are used for cryptographic operations.  The C<fips=yes>
+query may also include other non-crypto support operations that
+are not in the FIPS provider, such as asymmetric key encoders, see
+L<OSSL_PROVIDER-default(7)/Asymmetric Key Management>.
 
-The C<fips=yes> property can be use to make sure only FIPS approved
-implementations are used for crypto operations.  This may also include
-other non-crypto support operations that are not in the FIPS provider,
-such as asymmetric key encoders,
-see L<OSSL_PROVIDER-default(7)/Asymmetric Key Management>.
+It is not mandatory to include C<provider=fips> as part of your property
+query.  Including C<provider=fips> in your property query guarantees
+that the OpenSSL FIPS provider is used for cryptographic operations
+rather than other FIPS capable providers.
 
 =head1 OPERATIONS AND ALGORITHMS
 
