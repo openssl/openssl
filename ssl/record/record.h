@@ -165,7 +165,7 @@ __owur int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
 int do_dtls1_write(SSL_CONNECTION *s, int type, const unsigned char *buf,
                    size_t len, size_t *written);
 void dtls1_increment_epoch(SSL_CONNECTION *s, int rw);
-void ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr);
+int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length);
 
 # define HANDLE_RLAYER_READ_RETURN(s, ret) \
     ossl_tls_handle_rlayer_return(s, 0, ret, OPENSSL_FILE, OPENSSL_LINE)

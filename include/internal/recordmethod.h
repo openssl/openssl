@@ -225,7 +225,8 @@ struct ossl_record_method_st {
      * filled in with the epoch and sequence number from the record.
      * An opaque record layer handle for the record is returned in |*rechandle|
      * which is used in a subsequent call to |release_record|. The buffer must
-     * remain available until release_record is called.
+     * remain available until all the bytes from record are released via one or
+     * more release_record calls.
      *
      * Internally the the OSSL_RECORD_METHOD the implementation may read/process
      * multiple records in one go and buffer them.
@@ -234,11 +235,12 @@ struct ossl_record_method_st {
                       int *type, const unsigned char **data, size_t *datalen,
                       uint16_t *epoch, unsigned char *seq_num);
     /*
-     * Release a buffer associated with a record previously read with
-     * read_record. Records are guaranteed to be released in the order that they
-     * are read.
+     * Release length bytes from a buffer associated with a record previously
+     * read with read_record. Once all the bytes from a record are released, the
+     * whole record and its associated buffer is released. Records are
+     * guaranteed to be released in the order that they are read.
      */
-    int (*release_record)(OSSL_RECORD_LAYER *rl, void *rechandle);
+    int (*release_record)(OSSL_RECORD_LAYER *rl, void *rechandle, size_t length);
 
     /*
      * In the event that a fatal error is returned from the functions above then

@@ -293,7 +293,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             /* SSLfatal() already called */
             return -1;
         }
-        ssl_release_record(sc, rr);
+        if (!ssl_release_record(sc, rr, 0))
+            return -1;
         goto start;
     }
 
@@ -302,7 +303,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * 'peek' mode)
      */
     if (sc->shutdown & SSL_RECEIVED_SHUTDOWN) {
-        ssl_release_record(sc, rr);
+        if (!ssl_release_record(sc, rr, 0))
+            return -1;
         sc->rwstate = SSL_NOTHING;
         return 0;
     }
@@ -335,8 +337,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
              * SSL_read() with a zero length buffer will eventually cause
              * SSL_pending() to report data as being available.
              */
-            if (rr->length == 0)
-                ssl_release_record(sc, rr);
+            if (rr->length == 0 && !ssl_release_record(sc, rr, 0))
+                return -1;
             return 0;
         }
 
@@ -347,16 +349,11 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
         memcpy(buf, &(rr->data[rr->off]), n);
         if (peek) {
-            if (rr->length == 0)
-                ssl_release_record(sc, rr);
+            if (rr->length == 0 && !ssl_release_record(sc, rr, 0))
+                return -1;
         } else {
-            /* TODO(RECLAYER): Casting away the const is wrong! FIX ME */
-            if (sc->options & SSL_OP_CLEANSE_PLAINTEXT)
-                OPENSSL_cleanse((unsigned char *)&(rr->data[rr->off]), n);
-            rr->length -= n;
-            rr->off += n;
-            if (rr->length == 0)
-                ssl_release_record(sc, rr);
+            if (!ssl_release_record(sc, rr, n))
+                return -1;
         }
 #ifndef OPENSSL_NO_SCTP
         /*
@@ -409,7 +406,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
         if (alert_level == SSL3_AL_WARNING) {
             sc->s3.warn_alert = alert_descr;
-            ssl_release_record(sc, rr);
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
 
             sc->rlayer.alert_count++;
             if (sc->rlayer.alert_count == MAX_WARN_ALERT_COUNT) {
@@ -444,7 +442,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                           SSL_AD_REASON_OFFSET + alert_descr,
                           "SSL alert number %d", alert_descr);
             sc->shutdown |= SSL_RECEIVED_SHUTDOWN;
-            ssl_release_record(sc, rr);
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
             SSL_CTX_remove_session(sc->session_ctx, sc->session);
             return 0;
         } else {
@@ -458,7 +457,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     if (sc->shutdown & SSL_SENT_SHUTDOWN) { /* but we have not received a
                                             * shutdown */
         sc->rwstate = SSL_NOTHING;
-        ssl_release_record(sc, rr);
+        if (!ssl_release_record(sc, rr, 0))
+            return -1;
         return 0;
     }
 
@@ -467,7 +467,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * We can't process a CCS now, because previous handshake messages
          * are still missing, so just drop it.
          */
-        ssl_release_record(sc, rr);
+        if (!ssl_release_record(sc, rr, 0))
+            return -1;
         goto start;
     }
 
@@ -483,7 +484,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          */
         if (rr->epoch != sc->rlayer.d->r_epoch
                 || rr->length < DTLS1_HM_HEADER_LENGTH) {
-            ssl_release_record(sc, rr);
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
             goto start;
         }
 
@@ -504,7 +506,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 if (ossl_statem_in_error(sc))
                     return -1;
             }
-            ssl_release_record(sc, rr);
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
             if (!(sc->mode & SSL_MODE_AUTO_RETRY)) {
                 if (!sc->rlayer.rrlmethod->unprocessed_read_pending(sc->rlayer.rrl)) {
                     /* no read-ahead left? */
