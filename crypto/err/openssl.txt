@@ -1,4 +1,4 @@
-# Copyright 1999-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2023 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -545,6 +545,7 @@ DSA_R_PARAMETER_ENCODING_ERROR:105:parameter encoding error
 DSA_R_P_NOT_PRIME:115:p not prime
 DSA_R_Q_NOT_PRIME:113:q not prime
 DSA_R_SEED_LEN_SMALL:110:seed_len is less than the length of q
+DSA_R_TOO_MANY_RETRIES:116:too many retries
 DSO_R_CTRL_FAILED:100:control command failed
 DSO_R_DSO_ALREADY_LOADED:110:dso already loaded
 DSO_R_EMPTY_FILE_STRUCTURE:113:empty file structure
