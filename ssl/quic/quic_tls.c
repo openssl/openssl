@@ -58,8 +58,11 @@ struct ossl_record_layer_st {
      */
     int alert;
 
-    /* Amount of crypto stream data we have received but not yet released  */
+    /* Amount of crypto stream data we read in the last call to quic_read_record */
     size_t recread;
+
+    /* Amount of crypto stream data read but not yet released */
+    size_t recunreleased;
 
     /* Callbacks */
     OSSL_FUNC_rlayer_msg_callback_fn *msg_callback;
@@ -336,7 +339,7 @@ static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
                             size_t *datalen, uint16_t *epoch,
                             unsigned char *seq_num)
 {
-    if (rl->recread != 0)
+    if (rl->recread != 0 || rl->recunreleased != 0)
         return OSSL_RECORD_RETURN_FATAL;
 
     BIO_clear_retry_flags(rl->dummybio);
@@ -355,7 +358,7 @@ static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
     *rechandle = rl;
     *rversion = TLS1_3_VERSION;
     *type = SSL3_RT_HANDSHAKE;
-    rl->recread = *datalen;
+    rl->recread = rl->recunreleased = *datalen;
     /* epoch/seq_num are not relevant for TLS */
 
     if (rl->msg_callback != NULL) {
@@ -386,12 +389,21 @@ static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
     return OSSL_RECORD_RETURN_SUCCESS;
 }
 
-static int quic_release_record(OSSL_RECORD_LAYER *rl, void *rechandle)
+static int quic_release_record(OSSL_RECORD_LAYER *rl, void *rechandle,
+                               size_t length)
 {
-    if (!ossl_assert(rl->recread > 0) || !ossl_assert(rl == rechandle)) {
+    if (!ossl_assert(rl->recread > 0)
+            || !ossl_assert(rl->recunreleased <= rl->recread)
+            || !ossl_assert(rl == rechandle)
+            || !ossl_assert(length <= rl->recunreleased)) {
         QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return OSSL_RECORD_RETURN_FATAL;
     }
+
+    rl->recunreleased -= length;
+
+    if (rl->recunreleased > 0)
+        return OSSL_RECORD_RETURN_SUCCESS;
 
     if (!rl->qtls->args.crypto_release_rcd_cb(rl->recread,
                                               rl->qtls->args.crypto_release_rcd_cb_arg)) {
@@ -399,9 +411,8 @@ static int quic_release_record(OSSL_RECORD_LAYER *rl, void *rechandle)
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-
     rl->recread = 0;
-    return 1;
+    return OSSL_RECORD_RETURN_SUCCESS;
 }
 
 static int quic_get_alert_code(OSSL_RECORD_LAYER *rl)

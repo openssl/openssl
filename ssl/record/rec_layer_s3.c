@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <errno.h>
+#include <assert.h>
 #include "../ssl_local.h"
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
@@ -496,17 +497,35 @@ int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
     return ret;
 }
 
-void ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr)
+int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length)
 {
+    assert(rr->length >= length);
     if (rr->rechandle != NULL) {
+        if (length == 0)
+            length = rr->length;
         /* The record layer allocated the buffers for this record */
-        s->rlayer.rrlmethod->release_record(s->rlayer.rrl, rr->rechandle);
-    } else {
+        if (HANDLE_RLAYER_READ_RETURN(s,
+                s->rlayer.rrlmethod->release_record(s->rlayer.rrl,
+                                                    rr->rechandle,
+                                                    length)) <= 0) {
+            /* RLAYER_fatal already called */
+            return 0;
+        }
+
+        if (length == rr->length)
+            s->rlayer.curr_rec++;
+    } else if (length == 0 || length == rr->length) {
         /* We allocated the buffers for this record (only happens with DTLS) */
         OPENSSL_free(rr->allocdata);
         rr->allocdata = NULL;
     }
-    s->rlayer.curr_rec++;
+    rr->length -= length;
+    if (rr->length > 0)
+        rr->off += length;
+    else
+        rr->off = 0;
+
+    return 1;
 }
 
 /*-
@@ -700,8 +719,8 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
              * SSL_read() with a zero length buffer will eventually cause
              * SSL_pending() to report data as being available.
              */
-            if (rr->length == 0)
-                ssl_release_record(s, rr);
+            if (rr->length == 0 && !ssl_release_record(s, rr, 0))
+                return -1;
 
             return 0;
         }
@@ -718,16 +737,11 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
             buf += n;
             if (peek) {
                 /* Mark any zero length record as consumed CVE-2016-6305 */
-                if (rr->length == 0)
-                    ssl_release_record(s, rr);
+                if (rr->length == 0 && !ssl_release_record(s, rr, 0))
+                    return -1;
             } else {
-                /* TODO(RECLAYER) Casting away the const here is wrong! FIX ME */
-                if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
-                    OPENSSL_cleanse((unsigned char *)&(rr->data[rr->off]), n);
-                rr->length -= n;
-                rr->off += n;
-                if (rr->length == 0)
-                    ssl_release_record(s, rr);
+                if (!ssl_release_record(s, rr, n))
+                    return -1;
             }
             if (rr->length == 0
                 || (peek && n == rr->length)) {
@@ -814,7 +828,8 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
         if ((!is_tls13 && alert_level == SSL3_AL_WARNING)
                 || (is_tls13 && alert_descr == SSL_AD_USER_CANCELLED)) {
             s->s3.warn_alert = alert_descr;
-            ssl_release_record(s, rr);
+            if (!ssl_release_record(s, rr, 0))
+                return -1;
 
             s->rlayer.alert_count++;
             if (s->rlayer.alert_count == MAX_WARN_ALERT_COUNT) {
@@ -841,7 +856,8 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
                           SSL_AD_REASON_OFFSET + alert_descr,
                           "SSL alert number %d", alert_descr);
             s->shutdown |= SSL_RECEIVED_SHUTDOWN;
-            ssl_release_record(s, rr);
+            if (!ssl_release_record(s, rr, 0))
+                return -1;
             SSL_CTX_remove_session(s->session_ctx, s->session);
             return 0;
         } else if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
@@ -876,7 +892,8 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
              * sent close_notify.
              */
             if (!SSL_CONNECTION_IS_TLS13(s)) {
-                ssl_release_record(s, rr);
+                if (!ssl_release_record(s, rr, 0))
+                    return -1;
 
                 if ((s->mode & SSL_MODE_AUTO_RETRY) != 0)
                     goto start;
@@ -895,7 +912,8 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
              * above.
              * No alert sent because we already sent close_notify
              */
-            ssl_release_record(s, rr);
+            if (!ssl_release_record(s, rr, 0))
+                return -1;
             SSLfatal(s, SSL_AD_NO_ALERT,
                      SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY);
             return -1;
@@ -918,12 +936,12 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
             n = rr->length; /* available bytes */
 
         /* now move 'n' bytes: */
-        memcpy(dest + *dest_len, rr->data + rr->off, n);
-        rr->off += n;
-        rr->length -= n;
-        *dest_len += n;
-        if (rr->length == 0)
-            ssl_release_record(s, rr);
+        if (n > 0) {
+            memcpy(dest + *dest_len, rr->data + rr->off, n);
+            *dest_len += n;
+            if (!ssl_release_record(s, rr, n))
+                return -1;
+        }
 
         if (*dest_len < dest_maxlen)
             goto start;     /* fragment was too small */
@@ -1027,7 +1045,8 @@ int ssl3_read_bytes(SSL *ssl, int type, int *recvd_type, unsigned char *buf,
                 /* SSLfatal() already called */
                 return -1;
             }
-            ssl_release_record(s, rr);
+            if (!ssl_release_record(s, rr, 0))
+                return -1;
             goto start;
         } else {
             SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);

@@ -1132,14 +1132,31 @@ int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
     return OSSL_RECORD_RETURN_SUCCESS;
 }
 
-int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle)
+int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle, size_t length)
 {
+    TLS_RL_RECORD *rec = &rl->rrec[rl->num_released];
+
     if (!ossl_assert(rl->num_released < rl->curr_rec)
-            || !ossl_assert(rechandle == &rl->rrec[rl->num_released])) {
+            || !ossl_assert(rechandle == rec)) {
         /* Should not happen */
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_INVALID_RECORD);
         return OSSL_RECORD_RETURN_FATAL;
     }
+
+    if (rec->length < length) {
+        /* Should not happen */
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return OSSL_RECORD_RETURN_FATAL;
+    }
+
+    if ((rl->options & SSL_OP_CLEANSE_PLAINTEXT) != 0)
+        OPENSSL_cleanse(rec->data + rec->off, length);
+
+    rec->off += length;
+    rec->length -= length;
+
+    if (rec->length > 0)
+        return OSSL_RECORD_RETURN_SUCCESS;
 
     rl->num_released++;
 
