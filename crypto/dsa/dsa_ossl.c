@@ -15,6 +15,9 @@
 #include "dsa_local.h"
 #include <openssl/asn1.h>
 
+#define MIN_DSA_SIGN_QBITS   128
+#define MAX_DSA_SIGN_RETRIES 8
+
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 static int dsa_sign_setup_no_digest(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
                                     BIGNUM **rp);
@@ -67,6 +70,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     int reason = ERR_R_BN_LIB;
     DSA_SIG *ret = NULL;
     int rv = 0;
+    int retries = 0;
 
     if (dsa->p == NULL || dsa->q == NULL || dsa->g == NULL) {
         reason = DSA_R_MISSING_PARAMETERS;
@@ -119,7 +123,10 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
      *   s := blind^-1 * k^-1 * (blind * m + blind * r * priv_key) mod q
      */
 
-    /* Generate a blinding value */
+    /*
+     * Generate a blinding value
+     * The size of q is tested in dsa_sign_setup() so there should not be an infinite loop here.
+     */
     do {
         if (!BN_priv_rand(blind, BN_num_bits(dsa->q) - 1,
                           BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
@@ -154,14 +161,19 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
         goto err;
 
     /*
-     * Redo if r or s is zero as required by FIPS 186-3: this is very
-     * unlikely.
+     * Redo if r or s is zero as required by FIPS 186-4: Section 4.6
+     * This is very unlikely.
+     * Limit the retries so there is no possibility of an infinite
+     * loop for bad domain parameter values.
      */
-    if (BN_is_zero(ret->r) || BN_is_zero(ret->s))
+    if (BN_is_zero(ret->r) || BN_is_zero(ret->s)) {
+        if (retries++ > MAX_DSA_SIGN_RETRIES) {
+            reason = DSA_R_TOO_MANY_RETRIES;
+            goto err;
+        }
         goto redo;
-
+    }
     rv = 1;
-
  err:
     if (rv == 0) {
         DSAerr(DSA_F_DSA_DO_SIGN, reason);
@@ -203,7 +215,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
         DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_MISSING_PRIVATE_KEY);
         return 0;
     }
-
     k = BN_new();
     l = BN_new();
     if (k == NULL || l == NULL)
@@ -218,7 +229,8 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     /* Preallocate space */
     q_bits = BN_num_bits(dsa->q);
     q_words = bn_get_top(dsa->q);
-    if (!bn_wexpand(k, q_words + 2)
+    if (q_bits < MIN_DSA_SIGN_QBITS
+        || !bn_wexpand(k, q_words + 2)
         || !bn_wexpand(l, q_words + 2))
         goto err;
 

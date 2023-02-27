@@ -2125,6 +2125,7 @@ DSA_R_NO_PARAMETERS_SET:107:no parameters set
 DSA_R_PARAMETER_ENCODING_ERROR:105:parameter encoding error
 DSA_R_Q_NOT_PRIME:113:q not prime
 DSA_R_SEED_LEN_SMALL:110:seed_len is less than the length of q
+DSA_R_TOO_MANY_RETRIES:116:too many retries
 DSO_R_CTRL_FAILED:100:control command failed
 DSO_R_DSO_ALREADY_LOADED:110:dso already loaded
 DSO_R_EMPTY_FILE_STRUCTURE:113:empty file structure

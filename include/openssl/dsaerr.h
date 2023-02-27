@@ -67,6 +67,7 @@ int ERR_load_DSA_strings(void);
 #  define DSA_R_PARAMETER_ENCODING_ERROR                   105
 #  define DSA_R_Q_NOT_PRIME                                113
 #  define DSA_R_SEED_LEN_SMALL                             110
+#  define DSA_R_TOO_MANY_RETRIES                           116
 
 # endif
 #endif
