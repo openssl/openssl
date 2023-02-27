@@ -37,8 +37,9 @@ are not in the FIPS provider, such as asymmetric key encoders, see
 L<OSSL_PROVIDER-default(7)/Asymmetric Key Management>.
 
 It is not mandatory to include C<provider=fips> as part of your property
-query.  Doing so guarantees that the OpenSSL FIPS provider is used for
-cryptographic operations rather than other FIPS capable providers.
+query.  Including C<provider=fips> in your property query guarantees
+that the OpenSSL FIPS provider is used for cryptographic operations
+rather than other FIPS capable providers.
 
 =head1 OPERATIONS AND ALGORITHMS
 
