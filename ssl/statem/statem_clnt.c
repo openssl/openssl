@@ -1899,7 +1899,8 @@ static WORK_STATE tls_post_process_server_rpk(SSL_CONNECTION *sc,
             && sc->rwstate == SSL_RETRY_VERIFY)
         return WORK_MORE_A;
 
-    if ((clu = ssl_cert_lookup_by_pkey(sc->session->peer_rpk, &certidx)) == NULL) {
+    if ((clu = ssl_cert_lookup_by_pkey(sc->session->peer_rpk, &certidx,
+                                       SSL_CONNECTION_GET_CTX(sc))) == NULL) {
         SSLfatal(sc, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return WORK_ERROR;
     }
