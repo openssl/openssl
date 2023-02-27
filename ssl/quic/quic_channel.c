@@ -347,6 +347,19 @@ void ossl_quic_channel_free(QUIC_CHANNEL *ch)
     OPENSSL_free(ch);
 }
 
+/* Set mutator callbacks for test framework support */
+int ossl_quic_channel_set_mutator(QUIC_CHANNEL *ch,
+                                  ossl_mutate_packet_cb mutatecb,
+                                  ossl_finish_mutate_cb finishmutatecb,
+                                  void *mutatearg)
+{
+    if (ch->qtx == NULL)
+        return 0;
+
+    ossl_qtx_set_mutator(ch->qtx, mutatecb, finishmutatecb, mutatearg);
+    return 1;
+}
+
 int ossl_quic_channel_get_peer_addr(QUIC_CHANNEL *ch, BIO_ADDR *peer_addr)
 {
     *peer_addr = ch->cur_peer_addr;
@@ -387,13 +400,19 @@ int ossl_quic_channel_is_active(const QUIC_CHANNEL *ch)
 
 int ossl_quic_channel_is_terminating(const QUIC_CHANNEL *ch)
 {
-    return ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING
-        || ch->state == QUIC_CHANNEL_STATE_TERMINATING_DRAINING;
+    if (ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING
+            || ch->state == QUIC_CHANNEL_STATE_TERMINATING_DRAINING)
+        return 1;
+
+    return 0;
 }
 
 int ossl_quic_channel_is_terminated(const QUIC_CHANNEL *ch)
 {
-    return ch->state == QUIC_CHANNEL_STATE_TERMINATED;
+    if (ch->state == QUIC_CHANNEL_STATE_TERMINATED)
+        return 1;
+
+    return 0;
 }
 
 int ossl_quic_channel_is_term_any(const QUIC_CHANNEL *ch)
@@ -402,9 +421,19 @@ int ossl_quic_channel_is_term_any(const QUIC_CHANNEL *ch)
         || ossl_quic_channel_is_terminated(ch);
 }
 
+QUIC_TERMINATE_CAUSE ossl_quic_channel_get_terminate_cause(const QUIC_CHANNEL *ch)
+{
+    return ch->terminate_cause;
+}
+
 int ossl_quic_channel_is_handshake_complete(const QUIC_CHANNEL *ch)
 {
     return ch->handshake_complete;
+}
+
+int ossl_quic_channel_is_handshake_confirmed(const QUIC_CHANNEL *ch)
+{
+    return ch->handshake_confirmed;
 }
 
 /*
@@ -587,12 +616,16 @@ static int ch_on_handshake_complete(void *arg)
     if (!ossl_assert(ch->tx_enc_level == QUIC_ENC_LEVEL_1RTT))
         return 0;
 
-    if (!ch->got_remote_transport_params)
+    if (!ch->got_remote_transport_params) {
         /*
          * Was not a valid QUIC handshake if we did not get valid transport
          * params.
          */
+        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
+                                               OSSL_QUIC_FRAME_TYPE_CRYPTO,
+                                               "no transport parameters received");
         return 0;
+    }
 
     /* Don't need transport parameters anymore. */
     OPENSSL_free(ch->local_transport_params);
@@ -2054,4 +2087,9 @@ static int ch_server_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     ch->state                   = QUIC_CHANNEL_STATE_ACTIVE;
     ch->doing_proactive_ver_neg = 0; /* not currently supported */
     return 1;
+}
+
+SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch)
+{
+    return ch->tls;
 }

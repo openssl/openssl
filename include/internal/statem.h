@@ -77,6 +77,14 @@ typedef enum {
     CON_FUNC_DONT_SEND
 } CON_FUNC_RETURN;
 
+typedef int (*ossl_statem_mutate_handshake_cb)(const unsigned char *msgin,
+                                               size_t inlen,
+                                               unsigned char **msgout,
+                                               size_t *outlen,
+                                               void *arg);
+
+typedef void (*ossl_statem_finish_mutate_handshake_cb)(void *arg);
+
 /*****************************************************************************
  *                                                                           *
  * This structure should be considered "opaque" to anything outside of the   *
@@ -106,6 +114,12 @@ struct ossl_statem_st {
     /* Should we skip the CertificateVerify message? */
     unsigned int no_cert_verify;
     int use_timer;
+
+    /* Test harness message mutator callbacks */
+    ossl_statem_mutate_handshake_cb mutate_handshake_cb;
+    ossl_statem_finish_mutate_handshake_cb finish_mutate_handshake_cb;
+    void *mutatearg;
+    unsigned int write_in_progress : 1;
 };
 typedef struct ossl_statem_st OSSL_STATEM;
 
@@ -115,6 +129,8 @@ typedef struct ossl_statem_st OSSL_STATEM;
  * state machine. Any libssl code may call these functions/macros            *
  *                                                                           *
  *****************************************************************************/
+
+typedef struct ssl_connection_st SSL_CONNECTION;
 
 __owur int ossl_statem_accept(SSL *s);
 __owur int ossl_statem_connect(SSL *s);
@@ -144,3 +160,8 @@ __owur int ossl_statem_export_early_allowed(SSL_CONNECTION *s);
 
 /* Flush the write BIO */
 int statem_flush(SSL_CONNECTION *s);
+
+int ossl_statem_set_mutator(SSL *s,
+                            ossl_statem_mutate_handshake_cb mutate_handshake_cb,
+                            ossl_statem_finish_mutate_handshake_cb finish_mutate_handshake_cb,
+                            void *mutatearg);

@@ -608,6 +608,7 @@ If the callback argument is not NULL it must point to a trust store.
 In this case the function checks that the newly enrolled certificate can be
 verified using this trust store and untrusted certificates from the I<ctx>,
 which have been augmented by the list of extraCerts received.
+During this verification, any certificate status checking is disabled.
 If the callback argument is NULL the function tries building an approximate
 chain as far as possible using the same untrusted certificates from the I<ctx>,
 and if this fails it takes the received extraCerts as fallback.

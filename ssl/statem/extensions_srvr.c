@@ -63,7 +63,7 @@ int tls_parse_ctos_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
                     s->s3.previous_client_finished_len);
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     if (ok) {
-        if (data[0] ^ s->s3.previous_client_finished[0] != 0xFF) {
+        if ((data[0] ^ s->s3.previous_client_finished[0]) != 0xFF) {
             ok = 0;
         }
     }

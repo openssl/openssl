@@ -9,7 +9,7 @@
 -}
 
 IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
-  PROGRAMS{noinst}=asn1 asn1parse bignum bndiv client conf crl server x509
+  PROGRAMS{noinst}=asn1 asn1parse bignum bndiv client conf crl server smime x509
   PROGRAMS{noinst}=punycode
   PROGRAMS{noinst}=v3name
 
@@ -71,8 +71,8 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 
   SOURCE[v3name]=v3name.c driver.c
   INCLUDE[v3name]=../include {- $ex_inc -}
-  DEPEND[v3name]=../libcrypto.a {- $ex_lib -}
-  
+  DEPEND[v3name]=../libcrypto.a {- $ex_lib -}  
+
   SOURCE[server]=server.c driver.c fuzz_rand.c
   INCLUDE[server]=../include {- $ex_inc -}
   DEPEND[server]=../libcrypto ../libssl {- $ex_lib -}
@@ -83,7 +83,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 ENDIF
 
 IF[{- !$disabled{tests} -}]
-  PROGRAMS{noinst}=asn1-test asn1parse-test bignum-test bndiv-test client-test conf-test crl-test server-test x509-test
+  PROGRAMS{noinst}=asn1-test asn1parse-test bignum-test bndiv-test client-test conf-test crl-test server-test smime-test x509-test
   PROGRAMS{noinst}=punycode-test
   PROGRAMS{noinst}=v3name-test
 
@@ -147,7 +147,7 @@ IF[{- !$disabled{tests} -}]
   SOURCE[v3name-test]=v3name.c test-corpus.c
   INCLUDE[v3name-test]=../include
   DEPEND[v3name-test]=../libcrypto.a
-  
+
   SOURCE[server-test]=server.c test-corpus.c fuzz_rand.c
   INCLUDE[server-test]=../include
   DEPEND[server-test]=../libcrypto ../libssl

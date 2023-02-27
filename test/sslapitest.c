@@ -9390,6 +9390,109 @@ static int test_pluggable_group(int idx)
 
     return testresult;
 }
+
+/*
+ * This function triggers encode, decode and sign functions
+ * of the artificial "xorhmacsig" algorithm implemented in tls-provider
+ * creating private key and certificate files for use in TLS testing.
+ */
+static int create_cert_key(int idx, char *certfilename, char *privkeyfilename)
+{
+    EVP_PKEY_CTX * evpctx = EVP_PKEY_CTX_new_from_name(libctx,
+                             (idx == 0) ? "xorhmacsig" : "xorhmacsha2sig", NULL);
+    EVP_PKEY *pkey = NULL;
+    X509 *x509 = X509_new();
+    X509_NAME *name = NULL;
+    BIO *keybio = NULL, *certbio = NULL;
+    int ret = 1;
+
+    if (!TEST_ptr(evpctx)
+        || !TEST_true(EVP_PKEY_keygen_init(evpctx))
+        || !TEST_true(EVP_PKEY_generate(evpctx, &pkey))
+        || !TEST_ptr(pkey)
+        || !TEST_ptr(x509)
+        || !TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(x509), 1))
+        || !TEST_true(X509_gmtime_adj(X509_getm_notBefore(x509), 0))
+        || !TEST_true(X509_gmtime_adj(X509_getm_notAfter(x509), 31536000L))
+        || !TEST_true(X509_set_pubkey(x509, pkey))
+        || !TEST_ptr(name = X509_get_subject_name(x509))
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "C",  MBSTRING_ASC,
+                           (unsigned char *)"CH", -1, -1, 0))
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "O",  MBSTRING_ASC,
+                           (unsigned char *)"test.org", -1, -1, 0))
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+                           (unsigned char *)"localhost", -1, -1, 0))
+        || !TEST_true(X509_set_issuer_name(x509, name))
+        || !TEST_true(X509_sign(x509, pkey, EVP_sha1()))
+        || !TEST_ptr(keybio = BIO_new_file(privkeyfilename, "wb"))
+        || !TEST_true(PEM_write_bio_PrivateKey(keybio, pkey, NULL, NULL, 0, NULL, NULL))
+        || !TEST_ptr(certbio = BIO_new_file(certfilename, "wb"))
+        || !TEST_true(PEM_write_bio_X509(certbio, x509)))
+        ret = 0;
+
+    EVP_PKEY_free(pkey);
+    X509_free(x509);
+    EVP_PKEY_CTX_free(evpctx);
+    BIO_free(keybio);
+    BIO_free(certbio);
+    return ret;
+}
+
+/*
+ * Test that signature algorithms loaded via the provider interface can
+ * correctly establish a TLS (1.3) connection.
+ * Test 0: Signature algorithm with built-in hashing functionality: "xorhmacsig"
+ * Test 1: Signature algorithm using external SHA2 hashing: "xorhmacsha2sig"
+ */
+static int test_pluggable_signature(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
+    OSSL_PROVIDER *defaultprov = OSSL_PROVIDER_load(libctx, "default");
+    char *certfilename = "tls-prov-cert.pem";
+    char *privkeyfilename = "tls-prov-key.pem";
+
+    /* create key and certificate for the different algorithm types */
+    if (!TEST_ptr(tlsprov)
+        || !TEST_true(create_cert_key(idx, certfilename, privkeyfilename)))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_3_VERSION,
+                                       TLS1_3_VERSION,
+                                       &sctx, &cctx, certfilename, privkeyfilename))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL)))
+        goto end;
+
+    /* This is necessary to pass minimal setup w/o other groups configured */
+    if (!TEST_true(SSL_set1_groups_list(serverssl, "xorgroup"))
+            || !TEST_true(SSL_set1_groups_list(clientssl, "xorgroup")))
+        goto end;
+
+    /*
+     * If this connection gets established, it must have been completed
+     * via the tls-provider-implemented "hmacsig" algorithm, testing
+     * both sign and verify functions during handshake.
+     */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    OSSL_PROVIDER_unload(tlsprov);
+    OSSL_PROVIDER_unload(defaultprov);
+
+    return testresult;
+}
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
@@ -10844,6 +10947,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_pluggable_group, 2);
+    ADD_ALL_TESTS(test_pluggable_signature, 2);
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_ssl_dup);

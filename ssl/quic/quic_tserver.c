@@ -122,6 +122,27 @@ void ossl_quic_tserver_free(QUIC_TSERVER *srv)
     OPENSSL_free(srv);
 }
 
+/* Set mutator callbacks for test framework support */
+int ossl_quic_tserver_set_plain_packet_mutator(QUIC_TSERVER *srv,
+                                               ossl_mutate_packet_cb mutatecb,
+                                               ossl_finish_mutate_cb finishmutatecb,
+                                               void *mutatearg)
+{
+    return ossl_quic_channel_set_mutator(srv->ch, mutatecb, finishmutatecb,
+                                         mutatearg);
+}
+
+int ossl_quic_tserver_set_handshake_mutator(QUIC_TSERVER *srv,
+                                            ossl_statem_mutate_handshake_cb mutate_handshake_cb,
+                                            ossl_statem_finish_mutate_handshake_cb finish_mutate_handshake_cb,
+                                            void *mutatearg)
+{
+    return ossl_statem_set_mutator(ossl_quic_channel_get0_ssl(srv->ch),
+                                   mutate_handshake_cb,
+                                   finish_mutate_handshake_cb,
+                                   mutatearg);
+}
+
 int ossl_quic_tserver_tick(QUIC_TSERVER *srv)
 {
     ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(srv->ch));
@@ -132,9 +153,26 @@ int ossl_quic_tserver_tick(QUIC_TSERVER *srv)
     return 1;
 }
 
-int ossl_quic_tserver_is_connected(QUIC_TSERVER *srv)
+/* Returns 1 if the server is in any terminating or terminated state */
+int ossl_quic_tserver_is_term_any(const QUIC_TSERVER *srv)
 {
-    return ossl_quic_channel_is_active(srv->ch);
+    return ossl_quic_channel_is_term_any(srv->ch);
+}
+
+QUIC_TERMINATE_CAUSE ossl_quic_tserver_get_terminate_cause(const QUIC_TSERVER *srv)
+{
+    return ossl_quic_channel_get_terminate_cause(srv->ch);
+}
+
+/* Returns 1 if the server is in a terminated state */
+int ossl_quic_tserver_is_terminated(const QUIC_TSERVER *srv)
+{
+    return ossl_quic_channel_is_terminated(srv->ch);
+}
+
+int ossl_quic_tserver_is_handshake_confirmed(const QUIC_TSERVER *srv)
+{
+    return ossl_quic_channel_is_handshake_confirmed(srv->ch);
 }
 
 int ossl_quic_tserver_read(QUIC_TSERVER *srv,

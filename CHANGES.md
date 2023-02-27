@@ -30,6 +30,15 @@ OpenSSL 3.2
 
    *Oliver Mihatsch*
 
+ * Added support for pluggable (provider-based) TLS signature algorithms.
+   This enables TLS 1.3 authentication operations with algorithms embedded
+   in providers not included by default in OpenSSL. In combination with
+   the already available pluggable KEM and X.509 support, this enables
+   for example suitable providers to deliver post-quantum or quantum-safe
+   cryptography to OpenSSL users.
+
+   *Michael Baentsch*
+
  * Added support for Hybrid Public Key Encryption (HPKE) as defined
    in RFC9180. HPKE is required for TLS Encrypted ClientHello (ECH),
    Message Layer Security (MLS) and other IETF specifications.
@@ -159,6 +168,13 @@ OpenSSL 3.2
 
    *David von Oheimb*
 
+ * `CMS_add0_cert()` and `CMS_add1_cert()` no more throw an error
+   if a certificate to be added is already present.
+ * `CMS_sign_ex()` and `CMS_sign()` now ignore any duplicate certificates
+   in their `certs` argument and no longer throw an error for them.
+
+   *David von Oheimb*
+
  * Fixed and extended `util/check-format.pl` for checking adherence to the
    coding style <https://www.openssl.org/policies/technical/coding-style.html>.
    The checks are meanwhile more complete and yield fewer false positives.
@@ -225,8 +241,8 @@ OpenSSL 3.1
    backward compatibility purposes and the "fips=yes" property query
    must be used for all algorithm fetches to ensure FIPS compliance.
 
-   The algorithms that are included but not approved are Triple DES ECB
-   and Triple DES CBC.
+   The algorithms that are included but not approved are Triple DES ECB,
+   Triple DES CBC and EdDSA.
 
    *Paul Dale*
 

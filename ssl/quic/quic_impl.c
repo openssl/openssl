@@ -1262,70 +1262,16 @@ int ossl_quic_renegotiate_check(SSL *ssl, int initok)
 }
 
 /*
- * This is the subset of TLS1.3 ciphers which can be used with QUIC and which we
- * actually support.
- *
- * TODO(QUIC): CCM support
+ * These functions define the TLSv1.2 (and below) ciphers that are supported by
+ * the SSL_METHOD. Since QUIC only supports TLSv1.3 we don't support any.
  */
-static SSL_CIPHER tls13_quic_ciphers[] = {
-    {
-        1,
-        TLS1_3_RFC_AES_128_GCM_SHA256,
-        TLS1_3_RFC_AES_128_GCM_SHA256,
-        TLS1_3_CK_AES_128_GCM_SHA256,
-        SSL_kANY,
-        SSL_aANY,
-        SSL_AES128GCM,
-        SSL_AEAD,
-        TLS1_3_VERSION, TLS1_3_VERSION,
-        0, 0,
-        SSL_HIGH,
-        SSL_HANDSHAKE_MAC_SHA256,
-        128,
-        128,
-    }, {
-        1,
-        TLS1_3_RFC_AES_256_GCM_SHA384,
-        TLS1_3_RFC_AES_256_GCM_SHA384,
-        TLS1_3_CK_AES_256_GCM_SHA384,
-        SSL_kANY,
-        SSL_aANY,
-        SSL_AES256GCM,
-        SSL_AEAD,
-        TLS1_3_VERSION, TLS1_3_VERSION,
-        0, 0,
-        SSL_HIGH,
-        SSL_HANDSHAKE_MAC_SHA384,
-        256,
-        256,
-    },
-    {
-        1,
-        TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
-        TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
-        TLS1_3_CK_CHACHA20_POLY1305_SHA256,
-        SSL_kANY,
-        SSL_aANY,
-        SSL_CHACHA20POLY1305,
-        SSL_AEAD,
-        TLS1_3_VERSION, TLS1_3_VERSION,
-        0, 0,
-        SSL_HIGH,
-        SSL_HANDSHAKE_MAC_SHA256,
-        256,
-        256,
-    }
-};
 
 int ossl_quic_num_ciphers(void)
 {
-    return OSSL_NELEM(tls13_quic_ciphers);
+    return 0;
 }
 
 const SSL_CIPHER *ossl_quic_get_cipher(unsigned int u)
 {
-    if (u >= OSSL_NELEM(tls13_quic_ciphers))
-        return NULL;
-
-    return &tls13_quic_ciphers[u];
+    return NULL;
 }

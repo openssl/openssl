@@ -76,7 +76,7 @@ typedef struct {
 
 /* Definitions needed for typechecking. */
 static OSSL_FUNC_kdf_newctx_fn kbkdf_new;
-static OSSL_FUNC_kdf_newctx_fn kbkdf_dup;
+static OSSL_FUNC_kdf_dupctx_fn kbkdf_dup;
 static OSSL_FUNC_kdf_freectx_fn kbkdf_free;
 static OSSL_FUNC_kdf_reset_fn kbkdf_reset;
 static OSSL_FUNC_kdf_derive_fn kbkdf_derive;

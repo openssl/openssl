@@ -1324,6 +1324,8 @@ static int evp_pkey_asn1_ctrl(EVP_PKEY *pkey, int op, int arg1, void *arg2)
 
 int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid)
 {
+    if (pkey == NULL)
+        return 0;
     return evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_DEFAULT_MD_NID, 0, pnid);
 }
 
@@ -1374,7 +1376,9 @@ int EVP_PKEY_digestsign_supports_digest(EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
 int EVP_PKEY_set1_encoded_public_key(EVP_PKEY *pkey, const unsigned char *pub,
                                      size_t publen)
 {
-    if (pkey != NULL && evp_pkey_is_provided(pkey))
+    if (pkey == NULL)
+        return 0;
+    if (evp_pkey_is_provided(pkey))
         return
             EVP_PKEY_set_octet_string_param(pkey,
                                             OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
@@ -1393,7 +1397,9 @@ size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub)
 {
     int rv;
 
-    if (pkey != NULL && evp_pkey_is_provided(pkey)) {
+    if (pkey == NULL)
+        return 0;
+    if (evp_pkey_is_provided(pkey)) {
         size_t return_size = OSSL_PARAM_UNMODIFIED;
         unsigned char *buf;
 
