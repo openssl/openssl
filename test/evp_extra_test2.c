@@ -387,6 +387,7 @@ static int test_dh_paramgen(void)
     EVP_PKEY_free(pkey);
     return ret;
 }
+
 #endif
 
 #ifndef OPENSSL_NO_EC
@@ -974,6 +975,47 @@ err:
     OSSL_PARAM_free(to_params);
     return ret;
 }
+
+/*
+ * Test that OSSL_PKEY_PARAM_FFC_DIGEST_PROPS is set properly when using fromdata
+ * This test:
+ *   checks for failure when the property query is bad (tstid == 0)
+ *   checks for success when the property query is valid (tstid == 1)
+ */
+static int test_dsa_fromdata_digest_prop(int tstid)
+{
+    EVP_PKEY_CTX *ctx = NULL, *gctx = NULL;
+    EVP_PKEY *pkey = NULL,  *pkey2 = NULL;
+    OSSL_PARAM params[4], *p = params;
+    int ret = 0;
+    int expected = (tstid == 0 ? 0 : 1);
+    unsigned int pbits = 512; /* minimum allowed for speed */
+
+    *p++ = OSSL_PARAM_construct_uint(OSSL_PKEY_PARAM_FFC_PBITS, &pbits);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST, "SHA512", 0);
+    /* Setting a bad prop query here should fail during paramgen - when it tries to do a fetch */
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST_PROPS,
+                                            tstid == 0 ? "provider=unknown" : "provider=default", 0);
+    *p++ = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(mainctx, "DSA", NULL))
+        || !TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEY_PARAMETERS, params), 1))
+        goto err;
+
+    if (!TEST_ptr(gctx = EVP_PKEY_CTX_new_from_pkey(mainctx, pkey, NULL))
+        || !TEST_int_eq(EVP_PKEY_paramgen_init(gctx), 1)
+        || !TEST_int_eq(EVP_PKEY_paramgen(gctx, &pkey2), expected))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey2);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(gctx);
+    return ret;
+}
 #endif /* OPENSSL_NO_DSA */
 
 static int test_pkey_todata_null(void)
@@ -1170,6 +1212,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(test_dsa_todata);
     ADD_TEST(test_dsa_tofrom_data_select);
+    ADD_ALL_TESTS(test_dsa_fromdata_digest_prop, 2);
 #endif
 #ifndef OPENSSL_NO_DH
     ADD_TEST(test_dh_tofrom_data_select);
