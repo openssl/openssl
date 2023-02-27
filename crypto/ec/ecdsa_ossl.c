@@ -14,6 +14,15 @@
 #include "crypto/bn.h"
 #include "ec_local.h"
 
+#define MIN_ECDSA_SIGN_ORDERBITS 64
+/*
+ * It is highly unlikely that a retry will happen,
+ * Multiple retries would indicate that something is wrong
+ * with the group parameters (which would normally only happen
+ * with a bad custom group).
+ */
+#define MAX_ECDSA_SIGN_RETRIES 8
+
 int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
                     unsigned char *sig, unsigned int *siglen,
                     const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey)
@@ -79,7 +88,9 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 
     /* Preallocate space */
     order_bits = BN_num_bits(order);
-    if (!BN_set_bit(k, order_bits)
+    /* Check the number of bits here so that an infinite loop is not possible */
+    if (order_bits < MIN_ECDSA_SIGN_ORDERBITS
+        || !BN_set_bit(k, order_bits)
         || !BN_set_bit(r, order_bits)
         || !BN_set_bit(X, order_bits))
         goto err;
@@ -156,6 +167,7 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
                                EC_KEY *eckey)
 {
     int ok = 0, i;
+    int retries = 0;
     BIGNUM *kinv = NULL, *s, *m = NULL;
     const BIGNUM *order, *ckinv;
     BN_CTX *ctx = NULL;
@@ -263,6 +275,11 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
              */
             if (in_kinv != NULL && in_r != NULL) {
                 ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, EC_R_NEED_NEW_SETUP_VALUES);
+                goto err;
+            }
+            /* Avoid infinite loops cause by invalid group parameters */
+            if (retries++ > MAX_ECDSA_SIGN_RETRIES) {
+                ECerr(ERR_LIB_EC, EC_R_TOO_MANY_RETRIES);
                 goto err;
             }
         } else {

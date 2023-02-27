@@ -369,6 +369,7 @@ static const ERR_STRING_DATA EC_str_reasons[] = {
     "random number generation failed"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_SHARED_INFO_ERROR), "shared info error"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_SLOT_FULL), "slot full"},
+    {ERR_PACK(ERR_LIB_EC, 0, EC_R_TOO_MANY_RETRIES), "too many retries"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_UNDEFINED_GENERATOR), "undefined generator"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_UNDEFINED_ORDER), "undefined order"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_UNKNOWN_COFACTOR), "unknown cofactor"},

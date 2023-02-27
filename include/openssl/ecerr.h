@@ -263,6 +263,7 @@ int ERR_load_EC_strings(void);
 #  define EC_R_RANDOM_NUMBER_GENERATION_FAILED             158
 #  define EC_R_SHARED_INFO_ERROR                           150
 #  define EC_R_SLOT_FULL                                   108
+#  define EC_R_TOO_MANY_RETRIES                            176
 #  define EC_R_UNDEFINED_GENERATOR                         113
 #  define EC_R_UNDEFINED_ORDER                             128
 #  define EC_R_UNKNOWN_COFACTOR                            164
