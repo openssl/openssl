@@ -33,7 +33,7 @@ my $provconfnew = bldtop_file("test", "temp.cnf");
 plan skip_all => "No TLS/SSL protocols are supported by this OpenSSL build"
     if alldisabled(grep { $_ ne "ssl3" } available_protocols("tls"));
 
-plan tests => 3;
+plan tests => 4;
 
 (undef, my $tmpfilename) = tempfile();
 
@@ -139,5 +139,7 @@ SKIP: {
     unlink $fipsmodcfgnew;
     unlink $provconfnew;
 }
+
+ok(run(test(["ssl_handshake_rtt_test"])),"running ssl_handshake_rtt_test");
 
 unlink $tmpfilename;

@@ -484,6 +484,8 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
             st->hand_state = TLS_ST_CW_COMP_CERT;
         else
             st->hand_state = TLS_ST_CW_CERT;
+
+        s->ts_msg_read = ossl_time_now();
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_PENDING_EARLY_DATA_END:
@@ -584,6 +586,7 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL_CONNECTION *s)
          * No transition at the end of writing because we don't know what
          * we will be sent
          */
+        s->ts_msg_write = ossl_time_now();
         return WRITE_TRAN_FINISHED;
 
     case TLS_ST_CR_SRVR_HELLO:
@@ -600,6 +603,7 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_EARLY_DATA:
+        s->ts_msg_write = ossl_time_now();
         return WRITE_TRAN_FINISHED;
 
     case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
@@ -607,6 +611,7 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CR_SRVR_DONE:
+        s->ts_msg_read = ossl_time_now();
         if (s->s3.tmp.cert_req)
             st->hand_state = TLS_ST_CW_CERT;
         else
