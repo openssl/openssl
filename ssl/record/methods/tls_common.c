@@ -802,6 +802,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
         }
     }
 
+    ERR_set_mark();
     enc_err = rl->funcs->cipher(rl, rr, num_recs, 0, macbufs, mac_size);
 
     /*-
@@ -813,6 +814,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     if (enc_err == 0) {
         if (rl->alert != SSL_AD_NO_ALERT) {
             /* RLAYERfatal() already got called */
+            ERR_clear_last_mark();
             goto end;
         }
         if (num_recs == 1
@@ -822,6 +824,12 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
              * Valid early_data that we cannot decrypt will fail here. We treat
              * it like an empty record.
              */
+
+            /*
+             * Remove any errors from the stack. Decryption failures are normal
+             * behaviour.
+             */
+            ERR_pop_to_mark();
 
             thisrr = &rr[0];
 
@@ -840,9 +848,12 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
             ret = 1;
             goto end;
         }
+        ERR_clear_last_mark();
         RLAYERfatal(rl, SSL_AD_BAD_RECORD_MAC,
                     SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
         goto end;
+    } else {
+        ERR_clear_last_mark();
     }
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "dec %lu\n", (unsigned long)rr[0].length);
