@@ -21,6 +21,7 @@
 #include "ec_local.h"
 #include "internal/deterministic_nonce.h"
 
+#define MIN_ECDSA_SIGN_ORDERBITS 64
 /*
  * It is highly unlikely that a retry will happen,
  * Multiple retries would indicate that something is wrong
@@ -166,7 +167,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     /* Preallocate space */
     order_bits = BN_num_bits(order);
     /* Check the number of bits here so that an infinite loop is not possible */
-    if (order_bits < 64
+    if (order_bits < MIN_ECDSA_SIGN_ORDERBITS
         || !BN_set_bit(k, order_bits)
         || !BN_set_bit(r, order_bits)
         || !BN_set_bit(X, order_bits))
