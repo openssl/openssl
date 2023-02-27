@@ -598,6 +598,7 @@ EC_R_POINT_IS_NOT_ON_CURVE:107:point is not on curve
 EC_R_RANDOM_NUMBER_GENERATION_FAILED:158:random number generation failed
 EC_R_SHARED_INFO_ERROR:150:shared info error
 EC_R_SLOT_FULL:108:slot full
+EC_R_TOO_MANY_RETRIES:176:too many retries
 EC_R_UNDEFINED_GENERATOR:113:undefined generator
 EC_R_UNDEFINED_ORDER:128:undefined order
 EC_R_UNKNOWN_COFACTOR:164:unknown cofactor
