@@ -4747,6 +4747,21 @@ const char *SSL_get_version(const SSL *s)
     return ssl_protocol_to_string(sc->version);
 }
 
+__owur int SSL_get_handshake_rtt(const SSL *s, uint64_t *rtt)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+
+    if (sc == NULL)
+        return -1;
+    if (sc->ts_msg_write.t <= 0 || sc->ts_msg_read.t <= 0)
+        return 0; /* data not (yet) available */
+    if (sc->ts_msg_read.t < sc->ts_msg_write.t)
+        return -1;
+
+    *rtt = ossl_time2us(ossl_time_subtract(sc->ts_msg_read, sc->ts_msg_write));
+    return 1;
+}
+
 static int dup_ca_names(STACK_OF(X509_NAME) **dst, STACK_OF(X509_NAME) *src)
 {
     STACK_OF(X509_NAME) *sk;

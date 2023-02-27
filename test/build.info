@@ -50,7 +50,7 @@ IF[{- !$disabled{tests} -}]
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bio_callback_test bio_memleak_test bio_core_test bio_dgram_test param_build_test \
-          bioprinttest sslapitest dtlstest sslcorrupttest \
+          bioprinttest sslapitest ssl_handshake_rtt_test dtlstest sslcorrupttest \
           bio_enc_test pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
           cipherbytes_test threadstest_fips threadpool_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test \
@@ -493,6 +493,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sslapitest]=sslapitest.c helpers/ssltestlib.c filterprov.c tls-provider.c
   INCLUDE[sslapitest]=../include ../apps/include ..
   DEPEND[sslapitest]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[ssl_handshake_rtt_test]=ssl_handshake_rtt_test.c helpers/ssltestlib.c
+  INCLUDE[ssl_handshake_rtt_test]=../include ../apps/include ..
+  DEPEND[ssl_handshake_rtt_test]=../libcrypto.a ../libssl.a libtestutil.a
 
   SOURCE[rpktest]=rpktest.c helpers/ssltestlib.c
   INCLUDE[rpktest]=../include ../apps/include ..

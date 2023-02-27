@@ -547,12 +547,14 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
 
     case TLS_ST_SW_FINISHED:
         st->hand_state = TLS_ST_EARLY_DATA;
+        s->ts_msg_write = ossl_time_now();
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_EARLY_DATA:
         return WRITE_TRAN_FINISHED;
 
     case TLS_ST_SR_FINISHED:
+        s->ts_msg_read = ossl_time_now();
         /*
          * Technically we have finished the handshake at this point, but we're
          * going to remain "in_init" for now and write out any session tickets
@@ -702,9 +704,11 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_SRVR_DONE:
+        s->ts_msg_write = ossl_time_now();
         return WRITE_TRAN_FINISHED;
 
     case TLS_ST_SR_FINISHED:
+        s->ts_msg_read = ossl_time_now();
         if (s->hit) {
             st->hand_state = TLS_ST_OK;
             return WRITE_TRAN_CONTINUE;

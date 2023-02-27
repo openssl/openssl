@@ -558,6 +558,7 @@ SSL_add_expected_rpk                    ?	3_2_0	EXIST::FUNCTION:
 d2i_SSL_SESSION_ex                      ?	3_2_0	EXIST::FUNCTION:
 SSL_is_tls                              ?	3_2_0	EXIST::FUNCTION:
 SSL_is_quic                             ?	3_2_0	EXIST::FUNCTION:
+SSL_get_handshake_rtt                   ?	3_2_0	EXIST::FUNCTION:
 SSL_new_stream                          ?	3_2_0	EXIST::FUNCTION:
 SSL_get0_connection                     ?	3_2_0	EXIST::FUNCTION:
 SSL_is_connection                       ?	3_2_0	EXIST::FUNCTION:

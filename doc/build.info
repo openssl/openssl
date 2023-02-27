@@ -2551,6 +2551,10 @@ DEPEND[html/man3/SSL_get_fd.html]=man3/SSL_get_fd.pod
 GENERATE[html/man3/SSL_get_fd.html]=man3/SSL_get_fd.pod
 DEPEND[man/man3/SSL_get_fd.3]=man3/SSL_get_fd.pod
 GENERATE[man/man3/SSL_get_fd.3]=man3/SSL_get_fd.pod
+DEPEND[html/man3/SSL_get_handshake_rtt.html]=man3/SSL_get_handshake_rtt.pod
+GENERATE[html/man3/SSL_get_handshake_rtt.html]=man3/SSL_get_handshake_rtt.pod
+DEPEND[man/man3/SSL_get_handshake_rtt.3]=man3/SSL_get_handshake_rtt.pod
+GENERATE[man/man3/SSL_get_handshake_rtt.3]=man3/SSL_get_handshake_rtt.pod
 DEPEND[html/man3/SSL_get_peer_cert_chain.html]=man3/SSL_get_peer_cert_chain.pod
 GENERATE[html/man3/SSL_get_peer_cert_chain.html]=man3/SSL_get_peer_cert_chain.pod
 DEPEND[man/man3/SSL_get_peer_cert_chain.3]=man3/SSL_get_peer_cert_chain.pod
@@ -3533,6 +3537,7 @@ html/man3/SSL_get_error.html \
 html/man3/SSL_get_event_timeout.html \
 html/man3/SSL_get_extms_support.html \
 html/man3/SSL_get_fd.html \
+html/man3/SSL_get_handshake_rtt.html \
 html/man3/SSL_get_peer_cert_chain.html \
 html/man3/SSL_get_peer_certificate.html \
 html/man3/SSL_get_peer_signature_nid.html \
@@ -4169,6 +4174,7 @@ man/man3/SSL_get_error.3 \
 man/man3/SSL_get_event_timeout.3 \
 man/man3/SSL_get_extms_support.3 \
 man/man3/SSL_get_fd.3 \
+man/man3/SSL_get_handshake_rtt.3 \
 man/man3/SSL_get_peer_cert_chain.3 \
 man/man3/SSL_get_peer_certificate.3 \
 man/man3/SSL_get_peer_signature_nid.3 \
