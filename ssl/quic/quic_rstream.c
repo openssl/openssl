@@ -199,6 +199,14 @@ int ossl_quic_rstream_get_record(QUIC_RSTREAM *qrs,
         return 1;
     }
 
+    /* if final empty frame, we drop it immediately */
+    if (qrs->head_range.end == qrs->head_range.start) {
+        if (!ossl_assert(*fin))
+            return 0;
+        if (!ossl_sframe_list_drop_frames(&qrs->fl, qrs->head_range.end))
+            return 0;
+    }
+
     rec_len_ = (size_t)(qrs->head_range.end - qrs->head_range.start);
 
     if (record_ == NULL && rec_len_ != 0) {
