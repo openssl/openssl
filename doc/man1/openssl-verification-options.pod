@@ -13,19 +13,22 @@ I<command>
 
 =head1 DESCRIPTION
 
-There are many situations where X.509 certificates are verified
+There are many situations where X.509 public-key certificates are verified
 within the OpenSSL libraries and in various OpenSSL commands.
+For checking certificates, the term I<validation> would actually be more
+adequate, but for historical reasons typically the term I<verification> is used.
 
 Certificate verification is implemented by L<X509_verify_cert(3)>.
-It is a complicated process consisting of a number of steps
+It is a complicated process consisting of several steps
 and depending on numerous options.
 The most important of them are detailed in the following sections.
 
-In a nutshell, a valid chain of certificates needs to be built up and verified
-starting from the I<target certificate> that is to be verified
-and ending in a certificate that due to some policy is trusted.
-Verification is done relative to the given I<purpose>, which is the intended use
-of the target certificate, such as SSL server, or by default for any purpose.
+In a nutshell, a valid chain of certificates needs to be built up and checked
+starting from the I<target certificate> that is to be validated and ending in a
+trust anchor, which usually is a certificate that due to some policy is trusted.
+Certificate validation can be done relatively to a given
+I<purpose> specifying the intended use of the target certificate,
+such as SSL server, or (by default) for any purpose.
 
 The details of how each OpenSSL command handles errors
 are documented on the specific command page.
@@ -41,22 +44,26 @@ a public key (with algorithm and any parameters) and an associated subject name
 that for some reason is considered trusted
 and thus is acceptable as the root of a chain of certificates.
 
-In practice, trust anchors are given in the form of (typically self-signed)
-certificates, where their essential fields are the subjectPublicKeyInfo and the
-subject distinguished name (DN), while the subject key identifier is optional.
+In practice, trust anchors are given in the form of certificates.
+Commonly they are self-signed root CA certificates.
+Their most essential fields are the subjectPublicKeyInfo and
+the subject distinguished name (DN), while the subject key identifier extension
+is generally optional but highly recommended to include in CA certificates.
 In addition to the requirements given in RFC 5280,
-OpenSSL checks the validity period of such certificates and takes the extended
-key usage (EKU) extension, if present, as a source of usage constraints.
-Any restrictions given by the (regular) key usage extension are ignored.
+OpenSSL checks the validity period of all certificates including trust anchors
+and makes use of further fields and extensions
+such as subject key identifier and extended key usage.
+The (regular) key usage extension is ignored for trust anchor certificates.
 
-In the most simple and common case, trust anchors are by default
-all self-signed "root" CA certificates that are placed in the I<trust store>,
+In the most simple and common case, trust anchors are by default all
+self-signed certificates that have been placed in the I<trust store>,
 which is a collection of certificates that are trusted for certain uses.
 This is akin to what is used in the trust stores of Mozilla Firefox,
 or Apple's and Microsoft's certificate stores, ...
 
-From the OpenSSL perspective, a trust anchor is a certificate
-that should be augmented with an explicit designation for which
+From the OpenSSL perspective, a trust anchor is a certificate that,
+in addition to any included extended key usage (EKU) X.509v3 extension,
+should be augmented locally with an explicit designation for which
 uses of a target certificate the certificate may serve as a trust anchor.
 In PEM encoding, this is indicated by the C<TRUSTED CERTIFICATE> string.
 Such a designation provides a set of positive trust attributes
@@ -64,7 +71,7 @@ explicitly stating trust for the listed purposes
 and/or a set of negative trust attributes
 explicitly rejecting the use for the listed purposes.
 The purposes are encoded using the values defined for the extended key usages
-(EKUs) that may be given in X.509 extensions of end-entity certificates.
+(EKUs) that may be included in X.509v3 certificate extensions.
 See also the L</Extended Key Usage> section below.
 
 The currently recognized uses are
@@ -82,7 +89,7 @@ if and only if all the following conditions hold:
 
 =item *
 
-It is an an element of the trust store.
+It is an element of the trust store.
 
 =item *
 
@@ -101,6 +108,11 @@ It is self-signed or the B<-partial_chain> option is given
 
 First, a certificate chain is built up starting from the target certificate
 and ending in a trust anchor.
+The goal is that for each certificate in the chain, except for the final
+element, the subject of the successor is the issuer of the former certificate.
+Since it happens rather often that the subject and issuer Distinguished Names
+qare not unique, the subject and issuer key identifier extensions, as far as
+present in the certificates, are used for precise and efficient matching.
 
 The chain is built up iteratively, looking up in turn a certificate that
 matches as an issuer of the current "subject" certificate as described below.
@@ -161,20 +173,21 @@ The first step is to check that each certificate is well-formed.
 Part of these checks are enabled only if the B<-x509_strict> option is given.
 
 The second step is to check the extensions of every untrusted certificate
-for consistency with the supplied purpose.
-If the B<-purpose> option is not given then no such checks are done
-except for SSL/TLS connection setup,
-where by default C<sslserver> or C<sslclient>, are checked.
-The target or "leaf" certificate, as well as any other untrusted certificates,
-must have extensions compatible with the specified purpose.
+for consistency with any given purpose.
+If the B<-purpose> option is not given
+then no such checks are done except for SSL/TLS connection setup,
+where by default C<sslserver> or C<sslclient> is checked.
+Each certificate must either not have an EKU extension,
+or the EKU extension must include B<anyExtendedKeyUsage>
+or the given required purpose.
 All certificates except the target or "leaf" must also be valid CA certificates.
 The precise extensions required are described in more detail in
 L<openssl-x509(1)/CERTIFICATE EXTENSIONS>.
 
 The third step is to check the trust settings on the last certificate
 (which typically is a self-signed root CA certificate).
-It must be trusted for the given use.
-For compatibility with previous versions of OpenSSL, a self-signed certificate
+It must be trusted for the given use (if specified).
+For compatibility, a self-signed certificate
 with no trust attributes is considered to be valid for all uses.
 
 The fourth, and final, step is to check the validity of the certificate chain.
@@ -510,8 +523,8 @@ Supported policy names include: B<default>, B<pkcs7>, B<smime_sign>,
 B<ssl_client>, B<ssl_server>.
 These mimics the combinations of purpose and trust settings used in SSL, CMS
 and S/MIME.
-The trust model is inferred from the purpose when not specified,
-so the B<-verify_name> options are functionally equivalent to the
+The trust model is inferred from the purpose when not
+specified, so the B<-verify_name> options are functionally equivalent to the
 corresponding B<-purpose> settings.
 
 =back
@@ -583,9 +596,10 @@ keyCertSign bit set if the keyUsage extension is present.
 
 =head3 Extended Key Usage
 
-The extKeyUsage (EKU) extension places additional restrictions on the
+The extented key usage (EKU) extension places additional restrictions on the
 certificate uses. If this extension is present (whether critical or not)
-the key can only be used for the purposes specified.
+the key must only be used for the purposes specified by the EKUs included there
+(or for all purposes if B<anyExtendedKeyUsage> is included in the extension).
 
 A complete description of each check is given below. The comments about
 basicConstraints and keyUsage and X.509v1 certificates above apply to B<all>
