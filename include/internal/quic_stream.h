@@ -357,10 +357,11 @@ int ossl_quic_rstream_available(QUIC_RSTREAM *qrs, size_t *avail, int *fin);
  * Sets *record to the beginning of the first readable stream data chunk and
  * *reclen to the size of the chunk. *fin is set to 1 if the end of the
  * chunk is the last of the stream data chunks.
- * If there is no record available *record is set to NULL and *rec_len to 0.
- * Returns 1 on success (including calls after end of the stream - in that
- * case *fin will be set to 1 and *rec_len to 0), 0 on error or if no
- * readable stream data chunk is available.
+ * If there is no record available *record is set to NULL and *rec_len to 0;
+ * ossl_quic_rstream_release_record() should not be called in that case.
+ * Returns 1 on success (including calls if no record is available, or
+ * after end of the stream - in that case *fin will be set to 1 and
+ * *rec_len to 0), 0 on error.
  * It is an error to call ossl_quic_rstream_get_record() multiple times
  * without calling ossl_quic_rstream_release_record() in between.
  */

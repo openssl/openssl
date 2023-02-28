@@ -145,7 +145,7 @@ static ossl_inline const unsigned char *ring_buf_get_ptr(const struct ring_buf *
 }
 
 /*
- * Retrieves data out of the read size of the ring buffer starting at the given
+ * Retrieves data out of the read side of the ring buffer starting at the given
  * logical offset. *buf is set to point to a contiguous span of bytes and
  * *buf_len is set to the number of contiguous bytes. After this function
  * returns, there may or may not be more bytes available at the logical offset

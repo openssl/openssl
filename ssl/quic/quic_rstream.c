@@ -193,9 +193,10 @@ int ossl_quic_rstream_get_record(QUIC_RSTREAM *qrs,
     size_t rec_len_, max_len;
 
     if (!ossl_sframe_list_lock_head(&qrs->fl, &qrs->head_range, &record_, fin)) {
+        /* No head frame to lock and return */
         *record = NULL;
         *rec_len = 0;
-        return 0;
+        return 1;
     }
 
     rec_len_ = (size_t)(qrs->head_range.end - qrs->head_range.start);

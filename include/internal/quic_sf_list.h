@@ -64,8 +64,8 @@ void ossl_sframe_list_destroy(SFRAME_LIST *fl);
 
 /*
  * Insert a stream frame data into the list.
- * The data covers an offset range range (start is inclusive,
- * end is exclusive).
+ * The data covers an offset range (range.start is inclusive,
+ * range.end is exclusive).
  * fin should be set if this is the final frame of the stream.
  * Returns an error if a frame cannot be inserted - due to
  * STREAM_FRAME allocation error, or in case of erroneous
@@ -79,8 +79,8 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
 /*
  * Iterator to peek at the contiguous frames at the beginning
  * of the frame list fl.
- * The *data covers an offset range range (start is inclusive,
- * end is exclusive).
+ * The *data covers an offset range (range.start is inclusive,
+ * range.end is exclusive).
  * *fin is set if this is the final frame of the stream.
  * Opaque iterator *iter can be used to peek at the subsequent
  * frame if there is any without any gap before it.
