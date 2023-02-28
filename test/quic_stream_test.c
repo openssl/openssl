@@ -328,17 +328,20 @@ static int test_single_copy_read(QUIC_RSTREAM *qrs,
 
     *readbytes = 0;
 
-    while (ossl_quic_rstream_get_record(qrs, &record, &rec_len, fin)) {
-        if (rec_len > 0) {
-            if (rec_len > size) {
-                rec_len = size;
-                *fin = 0;
-            }
-            memcpy(buf, record, rec_len);
-            size -= rec_len;
-            *readbytes += rec_len;
-            buf += rec_len;
+    for (;;) {
+        if (!ossl_quic_rstream_get_record(qrs, &record, &rec_len, fin))
+            return 0;
+        if (rec_len == 0)
+            break;
+        if (rec_len > size) {
+            rec_len = size;
+            *fin = 0;
         }
+        memcpy(buf, record, rec_len);
+        size -= rec_len;
+        *readbytes += rec_len;
+        buf += rec_len;
+
         if (!ossl_quic_rstream_release_record(qrs, rec_len))
             return 0;
         if (*fin || size == 0)
@@ -457,7 +460,7 @@ static int test_rstream_random(int idx)
     QUIC_RSTREAM *rstream = NULL;
     size_t i, read_off, queued_min, queued_max;
     const size_t data_size = 10000;
-    int r, s, fin;
+    int r, s, fin, fin_set = 0;
     int ret = 0;
     size_t readbytes = 0;
 
@@ -474,7 +477,7 @@ static int test_rstream_random(int idx)
         for (s = 0; s < 10; ++s) {
             size_t off = (r * 10 + s) * 10, size = 10;
 
-            if (test_random() % 5 == 0)
+            if (test_random() % 10 == 0)
                 /* drop packet */
                 continue;
 
@@ -529,9 +532,19 @@ static int test_rstream_random(int idx)
                                                          queued_max - read_off + 1))
                 || !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
                 goto err;
+        if (test_random() % 100 == 0) {
+            fin_set = 1;
+            /* Queue empty fin frame */
+            if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, data_size,
+                                                        NULL, 0, 1)))
+                goto err;
+        }
     }
 
-    TEST_info("Total read bytes: %zu", read_off);
+    TEST_info("Total read bytes: %zu Fin rcvd: %d", read_off, fin);
+
+    if (read_off == data_size && fin_set && !TEST_true(fin))
+        goto err;
 
     ret = 1;
 
