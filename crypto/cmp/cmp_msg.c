@@ -816,8 +816,10 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
     if ((certStatus = OSSL_CMP_CERTSTATUS_new()) == NULL)
         goto err;
     /* consume certStatus into msg right away so it gets deallocated with msg */
-    if (!sk_OSSL_CMP_CERTSTATUS_push(msg->body->value.certConf, certStatus))
+    if (sk_OSSL_CMP_CERTSTATUS_push(msg->body->value.certConf, certStatus) < 1) {
+        OSSL_CMP_CERTSTATUS_free(certStatus);
         goto err;
+    }
     /* set the ID of the certReq */
     if (!ASN1_INTEGER_set(certStatus->certReqId, OSSL_CMP_CERTREQID))
         goto err;
