@@ -20,8 +20,9 @@
      # to. You're welcome.
      sub dependmagic {
          my $target = shift;
+         my $help = shift;
 
-         return "$target: build_generated\n\t\$(MAKE) depend && \$(MAKE) _$target\n_$target";
+         return "$target: build_generated ## $help\n\t\$(MAKE) depend && \$(MAKE) _$target\n_$target";
      }
 
      our $COLUMNS = $ENV{COLUMNS};
@@ -504,15 +505,20 @@ LANG=C
 
 # The main targets ###################################################
 
-{- dependmagic('build_sw'); -}: build_libs_nodep build_modules_nodep build_programs_nodep link-utils
-{- dependmagic('build_libs'); -}: build_libs_nodep
-{- dependmagic('build_modules'); -}: build_modules_nodep
-{- dependmagic('build_programs'); -}: build_programs_nodep
+##@ Software
 
+{- dependmagic('build_sw', 'Build all the software (default target)'); -}: build_libs_nodep build_modules_nodep build_programs_nodep link-utils
+{- dependmagic('build_libs', 'Build the libraries libssl and libcrypto'); -}: build_libs_nodep
+{- dependmagic('build_modules', 'Build the modules (i.e. providers and engines)'); -}: build_modules_nodep
+{- dependmagic('build_programs', 'Build the openssl executables and scripts'); -}: build_programs_nodep
+
+all: build_sw build_docs ## Build software and documentation
+
+##@ Documentation
 build_generated_pods: $(GENERATED_PODS)
-build_docs: build_man_docs build_html_docs
-build_man_docs: $(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7)
-build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
+build_docs: build_man_docs build_html_docs ## Create documentation
+build_man_docs: $(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7) ## Create manpages
+build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7) ## Create HTML documentation
 
 build_generated: $(GENERATED_MANDATORY)
 build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
@@ -531,10 +537,14 @@ build_all_generated: $(GENERATED_MANDATORY) $(GENERATED) build_docs
 	@echo "         then make will fail..."
 	@ : {- output_on() if $disabled{makedepend}; "" -}
 
-all: build_sw build_docs
+##@ Help
+.PHONY: help
+help: ## Show this help screen
+	@$(PERL) $(SRCDIR)/util/help.pl $(SRCDIR)/Makefile
 
-test: tests
-{- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep link-utils run_tests
+##@ Testing
+test: tests ## Run tests (alias of "tests")
+{- dependmagic('tests', 'Run tests'); -}: build_programs_nodep build_modules_nodep link-utils run_tests
 run_tests:
 	@ : {- output_off() if $disabled{tests}; "" -}
 	( SRCTOP=$(SRCDIR) \
@@ -547,16 +557,14 @@ run_tests:
 	@echo "Tests are not supported with your chosen Configure options"
 	@ : {- output_on() if !$disabled{tests}; "" -}
 
-list-tests:
+list-tests: ## List available tests that can be invoked via "make test TESTS=<name>"
 	@ : {- output_off() if $disabled{tests}; "" -}
 	$(MAKE) run_tests TESTS=list
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@echo "Tests are not supported with your chosen Configure options"
 	@ : {- output_on() if !$disabled{tests}; "" -}
 
-install: install_sw install_ssldirs install_docs {- $disabled{fips} ? "" : "install_fips" -}
-
-uninstall: uninstall_docs uninstall_sw {- $disabled{fips} ? "" : "uninstall_fips" -}
+##@ Workspace cleaning
 
 libclean:
 	@set -e; for s in $(SHLIB_INFO); do \
@@ -581,7 +589,7 @@ libclean:
 	$(RM) $(LIBS)
 	$(RM) *{- platform->defext() -}
 
-clean: libclean
+clean: libclean ## Clean the workspace, keep the configuration
 	$(RM) $(HTMLDOCS1)
 	$(RM) $(HTMLDOCS3)
 	$(RM) $(HTMLDOCS5)
@@ -601,7 +609,7 @@ clean: libclean
 	$(RM) openssl.pc libcrypto.pc libssl.pc
 	-find . -type l \! -name '.*' -exec $(RM) {} \;
 
-distclean: clean
+distclean: clean ## Clean and remove the configuration
 	$(RM) include/openssl/configuration.h
 	$(RM) configdata.pm
 	$(RM) Makefile
@@ -614,14 +622,19 @@ depend: Makefile
 	@: {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
+##@ Installation
 
-install_sw: install_dev install_engines install_modules install_runtime
+install: install_sw install_ssldirs install_docs {- $disabled{fips} ? "" : "install_fips" -} ## Install software and documentation, create OpenSSL directories
 
-uninstall_sw: uninstall_runtime uninstall_modules uninstall_engines uninstall_dev
+uninstall: uninstall_docs uninstall_sw {- $disabled{fips} ? "" : "uninstall_fips" -} ## Uninstall software and documentation
 
-install_docs: install_man_docs install_html_docs
+install_sw: install_dev install_engines install_modules install_runtime ## Install just the software and libraries
 
-uninstall_docs: uninstall_man_docs uninstall_html_docs
+uninstall_sw: uninstall_runtime uninstall_modules uninstall_engines uninstall_dev ## Uninstall the software and libraries
+
+install_docs: install_man_docs install_html_docs ## Install manpages and HTML documentation
+
+uninstall_docs: uninstall_man_docs uninstall_html_docs ## Uninstall manpages and HTML documentation
 	$(RM) -r $(DESTDIR)$(DOCDIR)
 
 {- output_off() if $disabled{fips}; "" -}
@@ -1108,10 +1121,11 @@ uninstall_image_docs:
 	done
 
 # Developer targets (note: these are only available on Unix) #########
+##@ Code maintenence
 
 # It's important that generate_buildinfo comes after ordinals, as ordinals
 # is sensitive to build.info changes.
-update: generate errors ordinals generate_buildinfo
+update: generate errors ordinals generate_buildinfo ## Update errors, ordinals and build info
 
 .PHONY: generate generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
@@ -1122,7 +1136,7 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects \
 generate_buildinfo: generate_doc_buildinfo
 
 .PHONY: doc-nits md-nits
-doc-nits: build_generated_pods
+doc-nits: build_generated_pods ## Evaluate OpenSSL documentation
 	$(PERL) $(SRCDIR)/util/find-doc-nits -c -n -l -e
 
 # This uses "mdl", the markdownlint application, which is written in ruby.
@@ -1131,7 +1145,7 @@ doc-nits: build_generated_pods
 # Another option is at https://snapcraft.io/install/mdl/debian
 # Finally, there's a Node.js version, which we haven't tried, that
 # can be found at https://github.com/DavidAnson/markdownlint
-md-nits:
+md-nits: ## Evaluate markdown files via "mdl"
 	mdl -s util/markdownlint.rb .
 
 # Test coverage is a good idea for the future
@@ -1139,13 +1153,13 @@ md-nits:
 #	...
 
 .PHONY: lint
-lint:
+lint: ## Evaluate C code via "splint"
 	@( cd $(SRCDIR); \
            echo splint -DLINT -posixlib -preproc -D__gnuc_va_list=void \
 	   -I. -Iinclude -Iapps/include $(CRYPTOHEADERS) $(SSLHEADERS) $(SRCS) )
 
 .PHONY: check-format
-check-format:
+check-format: ## Evaluate C code according to OpenSSL coding standards
 	( cd $(SRCDIR); $(PERL) util/check-format.pl \
 			$(SRCS) \$(CRYPTOHEADERS) $(SSLHEADERS) )
 
