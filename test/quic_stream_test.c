@@ -460,7 +460,7 @@ static int test_rstream_random(int idx)
     QUIC_RSTREAM *rstream = NULL;
     size_t i, read_off, queued_min, queued_max;
     const size_t data_size = 10000;
-    int r, s, fin, fin_set = 0;
+    int r, s, fin = 0, fin_set = 0;
     int ret = 0;
     size_t readbytes = 0;
 
