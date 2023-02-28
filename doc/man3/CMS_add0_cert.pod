@@ -20,8 +20,8 @@ CMS_add0_cert, CMS_add1_cert, CMS_get1_certs, CMS_add0_crl, CMS_add1_crl, CMS_ge
 =head1 DESCRIPTION
 
 CMS_add0_cert() and CMS_add1_cert() add certificate I<cert> to I<cms>.
-This is used by L<CMS_sign_ex()> and L<CMS_sign()> and may be used before
-calling L<CMS_verify()> to help chain building in certificate validation.
+This is used by L<CMS_sign_ex(3)> and L<CMS_sign(3)> and may be used before
+calling L<CMS_verify(3)> to help chain building in certificate validation.
 I<cms> must be of type signed data or (authenticated) enveloped data.
 For signed data, such a certificate can be used when signing or verifying
 to fill in the signer certificate or to provide an extra CA certificate
@@ -32,7 +32,7 @@ CMS_get1_certs() returns all certificates in I<cms>.
 CMS_add0_crl() and CMS_add1_crl() add CRL I<crl> to I<cms>.
 I<cms> must be of type signed data or (authenticated) enveloped data.
 For signed data, such a CRL may be used in certificate validation
-with L<CMS_verify()>.
+with L<CMS_verify(3)>.
 It may be given both for inclusion when signing a CMS message
 and when verifying a signed CMS message.
 
