@@ -51,10 +51,8 @@ parameters:
 
 =item "security-checks" (B<OSSL_OSSL_PROV_PARAM_SECURITY_CHECKS>) <unsigned integer>
 
-=item "tls1-prf-ems-check" (B<OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK>) <unsigned integer>
-
-For further information refer to the L<openssl-fipsinstall(1)> options for
-B<-no_security_checks> and B<-ems_check>.
+For further information refer to the L<openssl-fipsinstall(1)> option
+B<-no_security_checks>.
 
 =back
 

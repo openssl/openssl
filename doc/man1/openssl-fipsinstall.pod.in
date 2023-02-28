@@ -175,9 +175,6 @@ Configure the module to enable a run-time Extended Master Secret (EMS) check
 when using the TLS1_PRF KDF algorithm. This check is disabled by default.
 See RFC 7627 for information related to EMS.
 
-This option is ignored if the compile time configuration option "no-fips-ems_check"
-is enabled.
-
 =item B<-self_test_onload>
 
 Do not write the two fields related to the "test status indicator" and

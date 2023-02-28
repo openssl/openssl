@@ -33,11 +33,7 @@ int ossl_securitycheck_enabled(OSSL_LIB_CTX *libctx)
 
 int ossl_tls1_prf_ems_check_enabled(OSSL_LIB_CTX *libctx)
 {
-#if !defined(OPENSSL_NO_FIPS_EMS_CHECK)
     return FIPS_tls_prf_ems_check(libctx);
-#else
-    return 0;
-#endif /* OPENSSL_NO_FIPS_EMS_CHECK */
 }
 
 int ossl_digest_rsa_sign_get_md_nid(OSSL_LIB_CTX *ctx, const EVP_MD *md,

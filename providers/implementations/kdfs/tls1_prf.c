@@ -170,9 +170,7 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
                                const OSSL_PARAM params[])
 {
     TLS1_PRF *ctx = (TLS1_PRF *)vctx;
-#if !defined(OPENSSL_NO_FIPS_EMS_CHECK)
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-#endif
 
     if (!ossl_prov_is_running() || !kdf_tls1_prf_set_ctx_params(ctx, params))
         return 0;
@@ -194,7 +192,6 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
         return 0;
     }
 
-#if !defined(OPENSSL_NO_FIPS_EMS_CHECK)
     /*
      * The seed buffer is prepended with a label.
      * If EMS mode is enforced then the label "master secret" is not allowed,
@@ -209,7 +206,6 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
             return 0;
         }
     }
-#endif
 
     return tls1_prf_alg(ctx->P_hash, ctx->P_sha1,
                         ctx->sec, ctx->seclen,
