@@ -532,7 +532,7 @@ static int test_rstream_random(int idx)
                                                          queued_max - read_off + 1))
                 || !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
                 goto err;
-        if (test_random() % 100 == 0) {
+        if (!fin_set && queued_max >= data_size - test_random() % 200) {
             fin_set = 1;
             /* Queue empty fin frame */
             if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, data_size,
@@ -543,8 +543,20 @@ static int test_rstream_random(int idx)
 
     TEST_info("Total read bytes: %zu Fin rcvd: %d", read_off, fin);
 
-    if (read_off == data_size && fin_set && !TEST_true(fin))
-        goto err;
+    if (read_off == data_size && fin_set && !fin) {
+        /* We might still receive the final empty frame */
+        if (idx % 2 == 0) {
+            if (!TEST_true(test_single_copy_read(rstream, read_buf, data_size,
+                                                 &readbytes, &fin)))
+                goto err;
+        } else if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
+                                                     data_size,
+                                                     &readbytes, &fin))) {
+            goto err;
+        }
+        if (!TEST_size_t_eq(readbytes, 0) || !TEST_true(fin))
+            goto err;
+    }
 
     ret = 1;
 
