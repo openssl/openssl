@@ -600,7 +600,7 @@ my @disable_cascades = (
                              "srtp", "ssl3-method", "ssl-trace",
                              "tfo",
                              "ts", "ui-console", "whirlpool",
-                             "fips-securitychecks"],
+                             "fips-securitychecks" ],
     sub { $config{processor} eq "386" }
                         => [ "sse2" ],
     "ssl"               => [ "ssl3" ],
