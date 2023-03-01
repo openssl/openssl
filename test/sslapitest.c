@@ -3395,6 +3395,29 @@ static SSL_SESSION *create_a_psk(SSL *ssl)
     return sess;
 }
 
+static int artificial_ticket_time = 0;
+
+static int ed_gen_cb(SSL *s, void *arg)
+{
+    SSL_SESSION *sess = SSL_get0_session(s);
+
+    if (sess == NULL)
+        return 0;
+
+    /*
+     * Artificially give the ticket some age. Just do it for the number of
+     * tickets we've been told to do.
+     */
+    if (artificial_ticket_time == 0)
+        return 1;
+    artificial_ticket_time--;
+
+    if (SSL_SESSION_set_time(sess, SSL_SESSION_get_time(sess) - 10) == 0)
+        return 0;
+
+    return 1;
+}
+
 /*
  * Helper method to setup objects for early data test. Caller frees objects on
  * error.
@@ -3402,12 +3425,17 @@ static SSL_SESSION *create_a_psk(SSL *ssl)
 static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
                                 SSL **serverssl, SSL_SESSION **sess, int idx)
 {
+    int artificial = (artificial_ticket_time > 0);
+
     if (*sctx == NULL
             && !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                               TLS_client_method(),
                                               TLS1_VERSION, 0,
                                               sctx, cctx, cert, privkey)))
         return 0;
+
+    if (artificial)
+        SSL_CTX_set_session_ticket_cb(*sctx, ed_gen_cb, NULL, NULL);
 
     if (!TEST_true(SSL_CTX_set_max_early_data(*sctx, SSL3_RT_MAX_PLAIN_LENGTH)))
         return 0;
@@ -3481,6 +3509,15 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
     SSL_free(*clientssl);
     *serverssl = *clientssl = NULL;
 
+    /*
+     * Artificially give the ticket some age to match the artificial age we
+     * gave it on the server side
+     */
+    if (artificial
+            && !TEST_long_gt(SSL_SESSION_set_time(*sess,
+                                                  SSL_SESSION_get_time(*sess) - 10), 0))
+        return 0;
+
     if (!TEST_true(create_ssl_objects(*sctx, *cctx, serverssl,
                                       clientssl, NULL, NULL))
             || !TEST_true(SSL_set_session(*clientssl, *sess)))
@@ -3499,9 +3536,15 @@ static int test_early_data_read_write(int idx)
     size_t readbytes, written, eoedlen, rawread, rawwritten;
     BIO *rbio;
 
+    /* Artificially give the next 2 tickets some age for non PSK sessions */
+    if (idx != 2)
+        artificial_ticket_time = 2;
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
-                                        &serverssl, &sess, idx)))
+                                        &serverssl, &sess, idx))) {
+        artificial_ticket_time = 0;
         goto end;
+    }
+    artificial_ticket_time = 0;
 
     /* Write and read some early data */
     if (!TEST_true(SSL_write_early_data(clientssl, MSG1, strlen(MSG1),

@@ -111,6 +111,7 @@ int ossl_ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[])
         if (p1 != NULL) {
             if (p1->data_type != OSSL_PARAM_UTF8_STRING)
                 goto err;
+            props = p1->data;
         }
         if (!ossl_ffc_set_digest(ffc, prm->data, props))
             goto err;
