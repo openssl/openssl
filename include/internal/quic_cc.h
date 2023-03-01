@@ -192,6 +192,7 @@ typedef struct ossl_cc_method_st {
 } OSSL_CC_METHOD;
 
 extern const OSSL_CC_METHOD ossl_cc_dummy_method;
+extern const OSSL_CC_METHOD ossl_cc_newreno_method;
 
 # endif
 
