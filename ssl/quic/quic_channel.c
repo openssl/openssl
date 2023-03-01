@@ -150,7 +150,7 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     ch->have_statm = 1;
     ch->cc_method = &ossl_cc_dummy_method;
-    if ((ch->cc_data = ch->cc_method->new(NULL, NULL, NULL)) == NULL)
+    if ((ch->cc_data = ch->cc_method->new(get_time, NULL)) == NULL)
         goto err;
 
     if ((ch->ackm = ossl_ackm_new(get_time, ch, &ch->statm,
@@ -1687,7 +1687,7 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
     if (ossl_quic_tx_packetiser_has_pending(ch->txp, TX_PACKETISER_ARCHETYPE_NORMAL,
                                             TX_PACKETISER_BYPASS_CC))
         deadline = ossl_time_min(deadline,
-                                 ch->cc_method->get_next_credit_time(ch->cc_data));
+                                 ch->cc_method->get_wakeup_deadline(ch->cc_data));
 
     /* Is the terminating timer armed? */
     if (ossl_quic_channel_is_terminating(ch))

@@ -98,7 +98,7 @@ static int helper_init(struct helper *h, size_t num_pkts)
     h->have_statm = 1;
 
     /* Initialise congestion controller. */
-    h->ccdata = ossl_cc_dummy_method.new(NULL, NULL, NULL);
+    h->ccdata = ossl_cc_dummy_method.new(fake_now, NULL);
     if (!TEST_ptr(h->ccdata))
         goto err;
 
