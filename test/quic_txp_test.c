@@ -153,7 +153,7 @@ static int helper_init(struct helper *h)
     h->have_statm = 1;
 
     h->cc_method = &ossl_cc_dummy_method;
-    if (!TEST_ptr(h->cc_data = h->cc_method->new(NULL, NULL, NULL)))
+    if (!TEST_ptr(h->cc_data = h->cc_method->new(fake_now, NULL)))
         goto err;
 
     if (!TEST_ptr(h->args.ackm = ossl_ackm_new(fake_now, NULL,

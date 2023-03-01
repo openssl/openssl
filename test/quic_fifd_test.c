@@ -318,7 +318,7 @@ static int test_fifd(int idx)
     cb_fail = 0;
 
     if (!TEST_true(ossl_statm_init(&info.statm))
-        || !TEST_ptr(info.ccdata = ossl_cc_dummy_method.new(NULL, NULL, NULL))
+        || !TEST_ptr(info.ccdata = ossl_cc_dummy_method.new(fake_now, NULL))
         || !TEST_ptr(info.ackm = ossl_ackm_new(fake_now, NULL,
                                                &info.statm,
                                                &ossl_cc_dummy_method,

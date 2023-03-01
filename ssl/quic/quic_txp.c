@@ -483,7 +483,8 @@ int ossl_quic_tx_packetiser_has_pending(OSSL_QUIC_TX_PACKETISER *txp,
     int cc_can_send;
 
     cc_can_send
-        = (bypass_cc || txp->args.cc_method->can_send(txp->args.cc_data));
+        = (bypass_cc
+           || txp->args.cc_method->get_tx_allowance(txp->args.cc_data) > 0);
 
     for (enc_level = QUIC_ENC_LEVEL_INITIAL;
          enc_level < QUIC_ENC_LEVEL_NUM;
@@ -512,7 +513,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
     /*
      * If CC says we cannot send we still may be able to send any queued probes.
      */
-    cc_can_send = txp->args.cc_method->can_send(txp->args.cc_data);
+    cc_can_send = (txp->args.cc_method->get_tx_allowance(txp->args.cc_data) > 0);
 
     for (enc_level = QUIC_ENC_LEVEL_INITIAL;
          enc_level < QUIC_ENC_LEVEL_NUM;
@@ -900,15 +901,8 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
     size_t mdpl, hdr_len, pkt_overhead, cc_limit;
     uint64_t cc_limit_;
     QUIC_PKT_HDR phdr;
-    OSSL_TIME time_since_last;
 
     /* Determine the limit CC imposes on what we can send. */
-    if (ossl_time_is_zero(txp->last_tx_time))
-        time_since_last = ossl_time_zero();
-    else
-        time_since_last = ossl_time_subtract(txp->args.now(txp->args.now_arg),
-                                             txp->last_tx_time);
-
     if (!cc_can_send) {
         /*
          * If we are called when we cannot send, this must be because we want
@@ -917,10 +911,7 @@ static int txp_generate_for_el(OSSL_QUIC_TX_PACKETISER *txp, uint32_t enc_level,
         cc_limit = SIZE_MAX;
     } else {
         /* Allow CC to clamp how much we can send. */
-        cc_limit_ = txp->args.cc_method->get_send_allowance(txp->args.cc_data,
-                                                            time_since_last,
-                                                            ossl_time_is_zero(time_since_last));
-
+        cc_limit_ = txp->args.cc_method->get_tx_allowance(txp->args.cc_data);
         cc_limit = (cc_limit_ > SIZE_MAX ? SIZE_MAX : (size_t)cc_limit_);
     }
 
