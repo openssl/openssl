@@ -75,9 +75,12 @@ EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OSSL_LIB_CTX *libctx,
     OSSL_DECODER_CTX *dctx = NULL;
     const ASN1_OBJECT *algoid = NULL;
     const char *keytype = NULL;
+    char keytypebuf[80];
 
-    if (PKCS8_pkey_get0(&algoid, NULL, NULL, NULL, p8))
-        keytype = OBJ_nid2sn(OBJ_obj2nid(algoid));
+    if (PKCS8_pkey_get0(&algoid, NULL, NULL, NULL, p8)) {
+        if (OBJ_obj2txt(keytypebuf, sizeof(keytypebuf), algoid, 0))
+            keytype = keytypebuf;
+    }
     /*
      * else we don't know the OID...carry on anyway to see if we may have a
      * decoder that can handle it anyway
