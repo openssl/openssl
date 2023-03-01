@@ -15,6 +15,7 @@
 #include <openssl/encoder.h>
 #include <openssl/decoder.h>
 #include "internal/provider.h"
+#include "internal/sizes.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
@@ -74,17 +75,11 @@ EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OSSL_LIB_CTX *libctx,
     size_t len;
     OSSL_DECODER_CTX *dctx = NULL;
     const ASN1_OBJECT *algoid = NULL;
-    const char *keytype = NULL;
-    char keytypebuf[80];
+    char keytype[OSSL_MAX_NAME_SIZE];
 
-    if (PKCS8_pkey_get0(&algoid, NULL, NULL, NULL, p8)) {
-        if (OBJ_obj2txt(keytypebuf, sizeof(keytypebuf), algoid, 0))
-            keytype = keytypebuf;
-    }
-    /*
-     * else we don't know the OID...carry on anyway to see if we may have a
-     * decoder that can handle it anyway
-     */
+    if (!PKCS8_pkey_get0(&algoid, NULL, NULL, NULL, p8)
+            || !OBJ_obj2txt(keytype, sizeof(keytype), algoid, 0))
+        return NULL;
 
     if ((encoded_len = i2d_PKCS8_PRIV_KEY_INFO(p8, &encoded_data)) <= 0
             || encoded_data == NULL)
