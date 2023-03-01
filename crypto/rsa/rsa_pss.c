@@ -334,15 +334,6 @@ int ossl_rsa_pss_params_30_set_hashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
     return 1;
 }
 
-int ossl_rsa_pss_params_30_set_maskgenalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
-                                          int maskgenalg_nid)
-{
-    if (rsa_pss_params == NULL)
-        return 0;
-    rsa_pss_params->mask_gen.algorithm_nid = maskgenalg_nid;
-    return 1;
-}
-
 int ossl_rsa_pss_params_30_set_maskgenhashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
                                               int maskgenhashalg_nid)
 {
