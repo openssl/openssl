@@ -1249,7 +1249,7 @@ void print_ssl_summary(SSL *s)
             BIO_printf(bio_err, "Signature type: %s\n", get_sigtype(nid));
         print_verify_detail(s, bio_err);
     } else {
-        BIO_puts(bio_err, "No peer certificate nor raw public key\n");
+        BIO_puts(bio_err, "No peer certificate or raw public key\n");
     }
 #ifndef OPENSSL_NO_EC
     ssl_print_point_formats(bio_err, s);

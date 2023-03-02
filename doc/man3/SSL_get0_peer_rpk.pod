@@ -58,6 +58,7 @@ The SSL_add_expected_rpk() function is a wrapper around
 L<SSL_dane_tlsa_add(3)>.
 When DANE is enabled, the configured TLSA records will be used to validate the
 peer's public key or certificate.
+If DANE is not enabled, then no validation will occur.
 
 =head1 RETURN VALUES
 
@@ -82,6 +83,8 @@ return one of the following values:
 L<SSL_CTX_dane_enable(3)>,
 L<SSL_CTX_set_options(3)>,
 L<SSL_dane_enable(3)>,
+L<SSL_get_verify_result(3)>,
+L<SSL_set_verify(3)>,
 L<SSL_use_certificate(3)>,
 L<X509_STORE_CTX_get0_rpk(3)>
 

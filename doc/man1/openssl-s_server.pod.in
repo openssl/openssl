@@ -877,6 +877,8 @@ provided a suitable key and public certificate pair is configured.
 Clients that don't support raw public keys or prefer to use X.509
 certificates can still elect to receive X.509 certificates as usual.
 
+Raw public keys are extracted from the configured certificate/private key.
+
 =item B<-enable_client_rpk>
 
 Enable support for receiving raw public keys (RFC7250) from the client.
@@ -884,6 +886,8 @@ Use of X.509 certificates by the client becomes optional, and clients that
 support raw public keys may elect to use them.
 Clients that don't support raw public keys or prefer to use X.509
 certificates can still elect to send X.509 certificates as usual.
+
+Raw public keys are extracted from the configured certificate/private key.
 
 =back
 

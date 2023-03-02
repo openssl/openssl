@@ -43,9 +43,9 @@ be used in the handshake.
 These extensions let each side know what its peer is able to accept.
 
 The client certificate type is sent from the client to the server to indicate
-what certificate types the client able to present.
+what certificate types the client is able to present.
 Values are configured in preference order.
-On the server, this setting determiones which certificate types the server is
+On the server, this setting determines which certificate types the server is
 willing to accept.
 The server ultimately chooses what type to request (if any) from the values
 that are mutually supported.
@@ -87,7 +87,7 @@ X.509 certificates are used in the handshake.
 
 Raw public keys may be used in place of certificates when specified in the
 certificate type and negotiated.
-Raw public keys have no subject, issuer, validity dates nor digital signature.
+Raw public keys have no subject, issuer, validity dates or digital signature.
 
 Use the L<SSL_get_negotiated_client_cert_type(3)> and
 L<SSL_get_negotiated_server_cert_type(3)> functions to get the negotiated cert
@@ -126,27 +126,10 @@ To use raw public keys on the server, set up the SSL_CTX and SSL as follows:
 
 To connect to this server, set the client SSL_CTX and SSL as follows:
 
- int verify_cb(int ok, X509_STORE_CTX *sctx)
- {
-     X509 *x509;
-     EVP_PKEY *rpk;
-
-     x509 = X509_STORE_CTX_get0_cert(sctx);
-     if (x509 != NULL) {
-        /* Verifying a certificate */
-     }
-     rpk = X509_STORE_CTX_get0_rpk(sctx);
-     if (rpk != NULL) {
-         /* Verifying a raw public key */
-     }
-     return ok;
- }
-
  /* Connect function */
 
  SSL_CTX *ctx;
  SSL *ssl;
- const char *nexthop_domain = "example.com";
  const char *dane_tlsa_domain = "smtp.example.com";
  unsigned char cert_type[] = { TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 };
  EVP_PKEY *rpk;
@@ -171,11 +154,9 @@ To connect to this server, set the client SSL_CTX and SSL as follows:
  if (!SSL_add_expected_rpk(ssl, rpk))
      /* error */
 
- /* Set a verify callback if desired */
- SSL_set_verify(ssl, SSL_VERIFY_PEER, verify_cb);
-
  /* Do SSL_connect() handshake and handle errors here */
 
+ /* Optional: verify the peer RPK */ 
  verify_result = SSL_get_verify_result(ssl);
  if (verify_result == X509_V_OK) {
      /* The server's raw public key matched the TLSA record */

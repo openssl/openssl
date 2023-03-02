@@ -64,6 +64,8 @@ both functions validate the target raw public key.
 In that case the number of possible checks is significantly reduced.
 The raw public key can be authenticated only via DANE TLSA records, either
 locally synthesised or obtained by the application from DNS.
+Raw public key DANE TLSA records may be added via L<SSL_add_expected_rpk(3)> or
+L<SSL_dane_tlsa_add(3)>.
 
 =head1 RETURN VALUES
 
@@ -86,7 +88,9 @@ X509_V_OK, likely because a verification callback function has waived the error.
 
 =head1 SEE ALSO
 
+L<SSL_add_expected_rpk(3)>,
 L<SSL_CTX_dane_enable(3)>,
+L<SSL_dane_tlsa_add(3)>,
 L<X509_STORE_CTX_new(3)>,
 L<X509_STORE_CTX_init(3)>,
 L<X509_STORE_CTX_init_rpk(3)>,
