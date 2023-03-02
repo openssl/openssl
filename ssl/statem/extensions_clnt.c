@@ -2021,18 +2021,18 @@ EXT_RETURN tls_construct_ctos_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
                                                X509 *x, size_t chainidx)
 {
     sc->ext.client_cert_type_ctos = 0;
-    if (sc->client_cert_type != NULL) {
-        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_client_cert_type)
-                || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_sub_memcpy_u8(pkt, sc->client_cert_type, sc->client_cert_type_len)
-                || !WPACKET_close(pkt)) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
-        sc->ext.client_cert_type_ctos = 1;
-        return EXT_RETURN_SENT;
+    if (sc->client_cert_type == NULL)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_client_cert_type)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u8(pkt, sc->client_cert_type, sc->client_cert_type_len)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
     }
-    return EXT_RETURN_NOT_SENT;
+    sc->ext.client_cert_type_ctos = 1;
+    return EXT_RETURN_SENT;
 }
 
 int tls_parse_stoc_client_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
@@ -2073,18 +2073,18 @@ EXT_RETURN tls_construct_ctos_server_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
                                                X509 *x, size_t chainidx)
 {
     sc->ext.server_cert_type_ctos = 0;
-    if (sc->server_cert_type != NULL) {
-        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_cert_type)
-                || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_sub_memcpy_u8(pkt, sc->server_cert_type, sc->server_cert_type_len)
-                || !WPACKET_close(pkt)) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
-        sc->ext.server_cert_type_ctos = 1;
-        return EXT_RETURN_SENT;
+    if (sc->server_cert_type == NULL)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_cert_type)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u8(pkt, sc->server_cert_type, sc->server_cert_type_len)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
     }
-    return EXT_RETURN_NOT_SENT;
+    sc->ext.server_cert_type_ctos = 1;
+    return EXT_RETURN_SENT;
 }
 
 int tls_parse_stoc_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,

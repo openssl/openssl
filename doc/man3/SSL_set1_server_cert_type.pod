@@ -19,10 +19,10 @@ SSL_CTX_get0_server_cert_type - certificate type (RFC7250) support
  int SSL_set1_server_cert_type(SSL *s, const unsigned char *val, size_t len);
  int SSL_CTX_set1_client_cert_type(SSL_CTX *ctx, const unsigned char *val, size_t len);
  int SSL_CTX_set1_server_cert_type(SSL_CTX *ctx, const unsigned char *val, size_t len);
- int SSL_get0_client_cert_type(SSL *s, unsigned char **val, size_t *len);
- int SSL_get0_server_cert_type(SSL *s, unsigned char **val, size_t *len);
- int SSL_CTX_get0_client_cert_type(SSL_CTX *ctx, unsigned char **val, size_t *len);
- int SSL_CTX_get0_server_cert_type(SSL_CTX *s, unsigned char **val, size_t *len);
+ int SSL_get0_client_cert_type(const SSL *s, unsigned char **val, size_t *len);
+ int SSL_get0_server_cert_type(const SSL *s, unsigned char **val, size_t *len);
+ int SSL_CTX_get0_client_cert_type(const SSL_CTX *ctx, unsigned char **val, size_t *len);
+ int SSL_CTX_get0_server_cert_type(const SSL_CTX *s, unsigned char **val, size_t *len);
 
 =head1 DESCRIPTION
 

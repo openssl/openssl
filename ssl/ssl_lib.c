@@ -7436,9 +7436,9 @@ int SSL_CTX_set1_server_cert_type(SSL_CTX *ctx, const unsigned char *val, size_t
                          val, len);
 }
 
-int SSL_get0_client_cert_type(SSL *s, unsigned char **t, size_t *len)
+int SSL_get0_client_cert_type(const SSL *s, unsigned char **t, size_t *len)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     if (t == NULL || len == NULL)
         return 0;
@@ -7448,9 +7448,9 @@ int SSL_get0_client_cert_type(SSL *s, unsigned char **t, size_t *len)
     return 1;
 }
 
-int SSL_get0_server_cert_type(SSL *s, unsigned char **t, size_t *len)
+int SSL_get0_server_cert_type(const SSL *s, unsigned char **t, size_t *len)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     if (t == NULL || len == NULL)
         return 0;
@@ -7460,7 +7460,7 @@ int SSL_get0_server_cert_type(SSL *s, unsigned char **t, size_t *len)
     return 1;
 }
 
-int SSL_CTX_get0_client_cert_type(SSL_CTX *ctx, unsigned char **t, size_t *len)
+int SSL_CTX_get0_client_cert_type(const SSL_CTX *ctx, unsigned char **t, size_t *len)
 {
     if (t == NULL || len == NULL)
         return 0;
@@ -7470,7 +7470,7 @@ int SSL_CTX_get0_client_cert_type(SSL_CTX *ctx, unsigned char **t, size_t *len)
     return 1;
 }
 
-int SSL_CTX_get0_server_cert_type(SSL_CTX *ctx, unsigned char **t, size_t *len)
+int SSL_CTX_get0_server_cert_type(const SSL_CTX *ctx, unsigned char **t, size_t *len)
 {
     if (t == NULL || len == NULL)
         return 0;
