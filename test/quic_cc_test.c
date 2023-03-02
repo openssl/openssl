@@ -371,6 +371,8 @@ static int test_simulate(void)
 
             allowance = ccm->get_tx_allowance(cc);
             sz = allowance > mdpl ? mdpl : allowance;
+            if (sz > SIZE_MAX)
+                sz = SIZE_MAX;
 
             /*
              * QUIC minimum packet sizes, etc. mean that in practice we will not
@@ -381,7 +383,7 @@ static int test_simulate(void)
 
             step_time(7);
 
-            if (!TEST_true(net_sim_send(&sim, sz)))
+            if (!TEST_true(net_sim_send(&sim, (size_t)sz)))
                 goto err;
 
             total_sent += sz;
