@@ -19,6 +19,9 @@ typedef struct ossl_cc_newreno_st {
     /* Unflushed state during multiple on-loss calls. */
     int         processing_loss; /* 1 if not flushed */
     OSSL_TIME   tx_time_of_last_loss;
+
+    /* Diagnostic state. */
+    int         in_congestion_recovery;
 } OSSL_CC_NEWRENO;
 
 #define MIN_MAX_INIT_WND_SIZE    14720  /* RFC 9002 s. 7.2 */
@@ -90,6 +93,7 @@ static void newreno_reset(OSSL_CC_DATA *cc)
 
     nr->processing_loss         = 0;
     nr->tx_time_of_last_loss    = ossl_time_zero();
+    nr->in_congestion_recovery  = 0;
 }
 
 static int newreno_set_option_uint(OSSL_CC_DATA *cc, uint32_t option_id,
@@ -132,6 +136,15 @@ static int newreno_get_option_uint(OSSL_CC_DATA *cc, uint32_t option_id,
         *value = nr->bytes_in_flight;
         return 1;
 
+    case OSSL_CC_OPTION_CUR_STATE:
+        if (nr->in_congestion_recovery)
+            *value = 'R';
+        else if (nr->cong_wnd < nr->slow_start_thresh)
+            *value = 'S';
+        else
+            *value = 'A';
+        return 1;
+
     default:
         return 0;
     }
@@ -149,6 +162,7 @@ static void newreno_cong(OSSL_CC_NEWRENO *nr, OSSL_TIME tx_time)
         return;
 
     /* Start a new recovery period. */
+    nr->in_congestion_recovery = 1;
     nr->cong_recovery_start_time = nr->now_cb(nr->now_cb_arg);
     nr->slow_start_thresh
         = (nr->cong_wnd * nr->k_loss_reduction_factor_num)
@@ -264,6 +278,7 @@ static int newreno_on_data_acked(OSSL_CC_DATA *cc,
     } else if (nr->cong_wnd < nr->slow_start_thresh) {
         /* When this condition is true we are in the Slow Start state. */
         nr->cong_wnd += info->tx_size;
+        nr->in_congestion_recovery = 0;
         return 1;
     } else {
         /* Otherwise, we are in the Congestion Avoidance state. */
@@ -277,6 +292,7 @@ static int newreno_on_data_acked(OSSL_CC_DATA *cc,
             nr->cong_wnd    += nr->max_dgram_size;
         }
 
+        nr->in_congestion_recovery = 0;
         return 1;
     }
 }
@@ -285,6 +301,11 @@ static int newreno_on_data_lost(OSSL_CC_DATA *cc,
                                 const OSSL_CC_LOSS_INFO *info)
 {
     OSSL_CC_NEWRENO *nr = (OSSL_CC_NEWRENO *)cc;
+
+    if (info->tx_size > nr->bytes_in_flight)
+        return 0;
+
+    nr->bytes_in_flight -= info->tx_size;
 
     if (!nr->processing_loss) {
 
