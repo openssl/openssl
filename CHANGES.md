@@ -237,6 +237,13 @@ OpenSSL 3.1
 
 ### Changes between 3.0 and 3.1.0 [xx XXX xxxx]
 
+ * Add FIPS provider configuration option to enforce the
+   Extended Master Secret (EMS) check during the TLS1_PRF KDF.
+   The option '-ems-check' can optionally be supplied to
+   'openssl fipinstall'.
+ 
+   *Shane Lontis*
+
  * The FIPS provider includes a few non-approved algorithms for
    backward compatibility purposes and the "fips=yes" property query
    must be used for all algorithm fetches to ensure FIPS compliance.

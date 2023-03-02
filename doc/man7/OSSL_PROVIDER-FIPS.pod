@@ -204,21 +204,6 @@ TEST-RAND is an unapproved algorithm.
 
 =back
 
-=head1 Provider Parameters
-
-See L<provider-base(7)/Provider parameters> for a list of base parameters.
-Additionally the OpenSSL FIPS provider also supports the following gettable
-parameters:
-
-=over 4
-
-=item "security-checks" (B<OSSL_OSSL_PROV_PARAM_SECURITY_CHECKS>) <unsigned integer>
-
-For further information refer to the L<openssl-fipsinstall(1)> option
-B<-no_security_checks>.
-
-=back
-
 =head1 SELF TESTING
 
 One of the requirements for the FIPS module is self testing. An optional callback
