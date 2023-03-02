@@ -539,6 +539,24 @@ int OSSL_DECODER_is_a(const OSSL_DECODER *decoder, const char *name)
     return 0;
 }
 
+static int resolve_name(OSSL_DECODER *decoder, const char *name)
+{
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(decoder->base.prov);
+    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+
+    return ossl_namemap_name2num(namemap, name);
+}
+
+int ossl_decoder_fast_is_a(OSSL_DECODER *decoder, const char *name, int *id_cache)
+{
+    int id = *id_cache;
+
+    if (id <= 0)
+        *id_cache = id = resolve_name(decoder, name);
+
+    return id > 0 && ossl_decoder_get_number(decoder) == id;
+}
+
 struct do_one_data_st {
     void (*user_fn)(OSSL_DECODER *decoder, void *arg);
     void *user_arg;

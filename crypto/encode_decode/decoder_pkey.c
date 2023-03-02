@@ -17,7 +17,9 @@
 #include <openssl/trace.h>
 #include "crypto/evp.h"
 #include "crypto/decoder.h"
+#include "crypto/evp/evp_local.h"
 #include "encoder_local.h"
+#include "internal/namemap.h"
 
 int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,
                                     const unsigned char *kstr,
@@ -195,53 +197,83 @@ static void decoder_clean_pkey_construct_arg(void *construct_data)
     }
 }
 
-static void collect_name(const char *name, void *arg)
-{
-    STACK_OF(OPENSSL_CSTRING) *names = arg;
-
-    sk_OPENSSL_CSTRING_push(names, name);
-}
-
-static void collect_keymgmt(EVP_KEYMGMT *keymgmt, void *arg)
-{
-    STACK_OF(EVP_KEYMGMT) *keymgmts = arg;
-
-    if (!EVP_KEYMGMT_up_ref(keymgmt) /* ref++ */)
-        return;
-    if (sk_EVP_KEYMGMT_push(keymgmts, keymgmt) <= 0) {
-        EVP_KEYMGMT_free(keymgmt);   /* ref-- */
-        return;
-    }
-}
-
-struct collect_decoder_data_st {
-    STACK_OF(OPENSSL_CSTRING) *names;
+struct collect_data_st {
+    OSSL_LIB_CTX *libctx;
     OSSL_DECODER_CTX *ctx;
 
-    int total;
-    unsigned int error_occurred:1;
+    const char *keytype; /* the keytype requested, if any */
+    int keytype_id; /* if keytype_resolved is set, keymgmt name_id; else 0 */
+    int sm2_id;     /* if keytype_resolved is set and EC, SM2 name_id; else 0 */
+    int total;      /* number of matching results */
+    char error_occurred;
+    char keytype_resolved;
+
+    STACK_OF(EVP_KEYMGMT) *keymgmts;
 };
 
-static void collect_decoder(OSSL_DECODER *decoder, void *arg)
+static void collect_decoder_keymgmt(EVP_KEYMGMT *keymgmt, OSSL_DECODER *decoder,
+                                    void *provctx, struct collect_data_st *data)
 {
-    struct collect_decoder_data_st *data = arg;
-    size_t i, end_i;
-    const OSSL_PROVIDER *prov = OSSL_DECODER_get0_provider(decoder);
-    void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
+    void *decoderctx = NULL;
+    OSSL_DECODER_INSTANCE *di = NULL;
 
-    if (data->error_occurred)
+    /*
+     * We already checked the EVP_KEYMGMT is applicable in check_keymgmt so we
+     * don't check it again here.
+     */
+
+    if (keymgmt->name_id != decoder->base.id)
+        /* Mismatch is not an error, continue. */
         return;
 
-    if (data->names == NULL) {
+    if ((decoderctx = decoder->newctx(provctx)) == NULL) {
         data->error_occurred = 1;
         return;
     }
 
+    if ((di = ossl_decoder_instance_new(decoder, decoderctx)) == NULL) {
+        decoder->freectx(decoderctx);
+        data->error_occurred = 1;
+        return;
+    }
+
+    OSSL_TRACE_BEGIN(DECODER) {
+        BIO_printf(trc_out,
+                   "(ctx %p) Checking out decoder %p:\n"
+                   "    %s with %s\n",
+                   (void *)data->ctx, (void *)decoder,
+                   OSSL_DECODER_get0_name(decoder),
+                   OSSL_DECODER_get0_properties(decoder));
+    } OSSL_TRACE_END(DECODER);
+
+    if (!ossl_decoder_ctx_add_decoder_inst(data->ctx, di)) {
+        ossl_decoder_instance_free(di);
+        data->error_occurred = 1;
+        return;
+    }
+
+    ++data->total;
+}
+
+static void collect_decoder(OSSL_DECODER *decoder, void *arg)
+{
+    struct collect_data_st *data = arg;
+    STACK_OF(EVP_KEYMGMT) *keymgmts = data->keymgmts;
+    size_t i, end_i;
+    EVP_KEYMGMT *keymgmt;
+    const OSSL_PROVIDER *prov;
+    void *provctx;
+
+    if (data->error_occurred)
+        return;
+
+    prov = OSSL_DECODER_get0_provider(decoder);
+    provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
+
     /*
-     * Either the caller didn't give a selection, or if they did,
-     * the decoder must tell us if it supports that selection to
-     * be accepted.  If the decoder doesn't have |does_selection|,
-     * it's seen as taking anything.
+     * Either the caller didn't give us a selection, or if they did, the decoder
+     * must tell us if it supports that selection to be accepted. If the decoder
+     * doesn't have |does_selection|, it's seen as taking anything.
      */
     if (decoder->does_selection != NULL
             && !decoder->does_selection(provctx, data->ctx->selection))
@@ -256,68 +288,101 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
                    OSSL_DECODER_get0_properties(decoder));
     } OSSL_TRACE_END(DECODER);
 
-    end_i = sk_OPENSSL_CSTRING_num(data->names);
-    for (i = 0; i < end_i; i++) {
-        const char *name = sk_OPENSSL_CSTRING_value(data->names, i);
+    end_i = sk_EVP_KEYMGMT_num(keymgmts);
+    for (i = 0; i < end_i; ++i) {
+        keymgmt = sk_EVP_KEYMGMT_value(keymgmts, i);
 
-        if (OSSL_DECODER_is_a(decoder, name)) {
-            void *decoderctx = NULL;
-            OSSL_DECODER_INSTANCE *di = NULL;
-
-            if ((decoderctx = decoder->newctx(provctx)) == NULL) {
-                data->error_occurred = 1;
-                return;
-            }
-            if ((di = ossl_decoder_instance_new(decoder, decoderctx)) == NULL) {
-                decoder->freectx(decoderctx);
-                data->error_occurred = 1;
-                return;
-            }
-
-            OSSL_TRACE_BEGIN(DECODER) {
-                BIO_printf(trc_out,
-                           "(ctx %p) Checking out decoder %p:\n"
-                           "    %s with %s\n",
-                           (void *)data->ctx, (void *)decoder,
-                           OSSL_DECODER_get0_name(decoder),
-                           OSSL_DECODER_get0_properties(decoder));
-            } OSSL_TRACE_END(DECODER);
-
-            if (!ossl_decoder_ctx_add_decoder_inst(data->ctx, di)) {
-                ossl_decoder_instance_free(di);
-                data->error_occurred = 1;
-                return;
-            }
-            data->total++;
-
-            /* Success */
+        collect_decoder_keymgmt(keymgmt, decoder, provctx, data);
+        if (data->error_occurred)
             return;
-        }
     }
-
-    /* Decoder not suitable - but not a fatal error */
-    data->error_occurred = 0;
 }
 
+/*
+ * Is this EVP_KEYMGMT applicable given the key type given in the call to
+ * ossl_decoder_ctx_setup_for_pkey (if any)?
+ */
+static int check_keymgmt(EVP_KEYMGMT *keymgmt, struct collect_data_st *data)
+{
+    /* If no keytype was specified, everything matches. */
+    if (data->keytype == NULL)
+        return 1;
+
+    if (!data->keytype_resolved) {
+        /* We haven't cached the IDs from the keytype string yet. */
+        OSSL_NAMEMAP *namemap = ossl_namemap_stored(data->libctx);
+        data->keytype_id = ossl_namemap_name2num(namemap, data->keytype);
+
+        /*
+         * If keytype is a value ambiguously used for both EC and SM2,
+         * collect the ID for SM2 as well.
+         */
+        if (data->keytype_id != 0
+            && (strcmp(data->keytype, "id-ecPublicKey") == 0
+                || strcmp(data->keytype, "1.2.840.10045.2.1") == 0))
+            data->sm2_id = ossl_namemap_name2num(namemap, "SM2");
+
+        /*
+         * If keytype_id is zero the name was not found, but we still
+         * set keytype_resolved to avoid trying all this again.
+         */
+        data->keytype_resolved = 1;
+    }
+
+    /* Specified keytype could not be resolved, so nothing matches. */
+    if (data->keytype_id == 0)
+        return 0;
+
+    /* Does not match the keytype specified, so skip. */
+    if (keymgmt->name_id != data->keytype_id
+        && keymgmt->name_id != data->sm2_id)
+        return 0;
+
+    return 1;
+}
+
+static void collect_keymgmt(EVP_KEYMGMT *keymgmt, void *arg)
+{
+    struct collect_data_st *data = arg;
+
+    if (!check_keymgmt(keymgmt, data))
+        return;
+
+    /*
+     * We have to ref EVP_KEYMGMT here because in the success case,
+     * data->keymgmts is referenced by the constructor we register in the
+     * OSSL_DECODER_CTX. The registered cleanup function
+     * (decoder_clean_pkey_construct_arg) unrefs every element of the stack and
+     * frees it.
+     */
+    if (!EVP_KEYMGMT_up_ref(keymgmt))
+        return;
+
+    if (sk_EVP_KEYMGMT_push(data->keymgmts, keymgmt) <= 0) {
+        EVP_KEYMGMT_free(keymgmt);
+        data->error_occurred = 1;
+    }
+}
+
+/*
+ * This function does the actual binding of decoders to the OSSL_DECODER_CTX. It
+ * searches for decoders matching 'keytype', which is a string like "RSA", "DH",
+ * etc. If 'keytype' is NULL, decoders for all keytypes are bound.
+ */
 int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
                                     EVP_PKEY **pkey, const char *keytype,
                                     OSSL_LIB_CTX *libctx,
                                     const char *propquery)
 {
-    struct decoder_pkey_data_st *process_data = NULL;
-    STACK_OF(OPENSSL_CSTRING) *names = NULL;
-    const char *input_type = ctx->start_input_type;
-    const char *input_structure = ctx->input_structure;
     int ok = 0;
-    int isecoid = 0;
-    int i, end;
-
-    if (keytype != NULL
-            && (strcmp(keytype, "id-ecPublicKey") == 0
-                || strcmp(keytype, "1.2.840.10045.2.1") == 0))
-        isecoid = 1;
+    struct decoder_pkey_data_st *process_data = NULL;
+    struct collect_data_st collect_data = { NULL };
+    STACK_OF(EVP_KEYMGMT) *keymgmts = NULL;
 
     OSSL_TRACE_BEGIN(DECODER) {
+        const char *input_type = ctx->start_input_type;
+        const char *input_structure = ctx->input_structure;
+
         BIO_printf(trc_out,
                    "(ctx %p) Looking for decoders producing %s%s%s%s%s%s\n",
                    (void *)ctx,
@@ -329,81 +394,67 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
                    input_structure != NULL ? input_structure : "");
     } OSSL_TRACE_END(DECODER);
 
+    /* Allocate data. */
     if ((process_data = OPENSSL_zalloc(sizeof(*process_data))) == NULL
         || (propquery != NULL
-            && (process_data->propq = OPENSSL_strdup(propquery)) == NULL)
-        || (process_data->keymgmts = sk_EVP_KEYMGMT_new_null()) == NULL
-        || (names = sk_OPENSSL_CSTRING_new_null()) == NULL) {
+            && (process_data->propq = OPENSSL_strdup(propquery)) == NULL)) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    process_data->object = (void **)pkey;
-    process_data->libctx = libctx;
-    process_data->selection = ctx->selection;
-
-    /* First, find all keymgmts to form goals */
-    EVP_KEYMGMT_do_all_provided(libctx, collect_keymgmt,
-                                process_data->keymgmts);
-
-    /* Then, we collect all the keymgmt names */
-    end = sk_EVP_KEYMGMT_num(process_data->keymgmts);
-    for (i = 0; i < end; i++) {
-        EVP_KEYMGMT *keymgmt = sk_EVP_KEYMGMT_value(process_data->keymgmts, i);
-
-        /*
-         * If the key type is given by the caller, we only use the matching
-         * KEYMGMTs, otherwise we use them all.
-         * We have to special case SM2 here because of its abuse of the EC OID.
-         * The EC OID can be used to identify an EC key or an SM2 key - so if
-         * we have seen that OID we try both key types
-         */
-        if (keytype == NULL
-                || EVP_KEYMGMT_is_a(keymgmt, keytype)
-                || (isecoid && EVP_KEYMGMT_is_a(keymgmt, "SM2"))) {
-            if (!EVP_KEYMGMT_names_do_all(keymgmt, collect_name, names)) {
-                ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-        }
+    /* Allocate our list of EVP_KEYMGMTs. */
+    keymgmts = sk_EVP_KEYMGMT_new_null();
+    if (keymgmts == NULL) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
+        goto err;
     }
 
+    process_data->object    = (void **)pkey;
+    process_data->libctx    = libctx;
+    process_data->selection = ctx->selection;
+    process_data->keymgmts  = keymgmts;
+
+    /*
+     * Enumerate all keymgmts into a stack.
+     *
+     * We could nest EVP_KEYMGMT_do_all_provided inside
+     * OSSL_DECODER_do_all_provided or vice versa but these functions become
+     * bottlenecks if called repeatedly, which is why we collect the
+     * EVP_KEYMGMTs into a stack here and call both functions only once.
+     *
+     * We resolve the keytype string to a name ID so we don't have to resolve it
+     * multiple times, avoiding repeated calls to EVP_KEYMGMT_is_a, which is a
+     * performance bottleneck. However, we do this lazily on the first call to
+     * collect_keymgmt made by EVP_KEYMGMT_do_all_provided, rather than do it
+     * upfront, as this ensures that the names for all loaded providers have
+     * been registered by the time we try to resolve the keytype string.
+     */
+    collect_data.ctx        = ctx;
+    collect_data.libctx     = libctx;
+    collect_data.keymgmts   = keymgmts;
+    collect_data.keytype    = keytype;
+    EVP_KEYMGMT_do_all_provided(libctx, collect_keymgmt, &collect_data);
+
+    if (collect_data.error_occurred)
+        goto err;
+
+    /* Enumerate all matching decoders. */
+    OSSL_DECODER_do_all_provided(libctx, collect_decoder, &collect_data);
+
+    if (collect_data.error_occurred)
+        goto err;
+
     OSSL_TRACE_BEGIN(DECODER) {
-        end = sk_OPENSSL_CSTRING_num(names);
         BIO_printf(trc_out,
-                   "    Found %d keytypes (possibly with duplicates)",
-                   end);
-        for (i = 0; i < end; i++)
-            BIO_printf(trc_out, "%s%s",
-                       i == 0 ? ": " : ", ",
-                       sk_OPENSSL_CSTRING_value(names, i));
-        BIO_printf(trc_out, "\n");
+                   "(ctx %p) Got %d decoders producing keys\n",
+                   (void *)ctx, collect_data.total);
     } OSSL_TRACE_END(DECODER);
 
     /*
-     * Finally, find all decoders that have any keymgmt of the collected
-     * keymgmt names
+     * Finish initializing the decoder context. If one or more decoders matched
+     * above then the number of decoders attached to the OSSL_DECODER_CTX will
+     * be nonzero. Else nothing was found and we do nothing.
      */
-    {
-        struct collect_decoder_data_st collect_decoder_data = { NULL, };
-
-        collect_decoder_data.names = names;
-        collect_decoder_data.ctx = ctx;
-        OSSL_DECODER_do_all_provided(libctx,
-                                     collect_decoder, &collect_decoder_data);
-        sk_OPENSSL_CSTRING_free(names);
-        names = NULL;
-
-        if (collect_decoder_data.error_occurred)
-            goto err;
-
-        OSSL_TRACE_BEGIN(DECODER) {
-            BIO_printf(trc_out,
-                       "(ctx %p) Got %d decoders producing keys\n",
-                       (void *)ctx, collect_decoder_data.total);
-        } OSSL_TRACE_END(DECODER);
-    }
-
     if (OSSL_DECODER_CTX_get_num_decoders(ctx) != 0) {
         if (!OSSL_DECODER_CTX_set_construct(ctx, decoder_construct_pkey)
             || !OSSL_DECODER_CTX_set_construct_data(ctx, process_data)
@@ -417,8 +468,6 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
     ok = 1;
  err:
     decoder_clean_pkey_construct_arg(process_data);
-    sk_OPENSSL_CSTRING_free(names);
-
     return ok;
 }
 
