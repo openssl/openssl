@@ -90,6 +90,20 @@ EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OSSL_LIB_CTX *libctx,
     selection = EVP_PKEY_KEYPAIR | EVP_PKEY_KEY_PARAMETERS;
     dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", "PrivateKeyInfo",
                                          keytype, selection, libctx, propq);
+
+    /* OSSL_DECODER_CTX_get_num_decoders() correctly handles a NULL argument */
+    if (OSSL_DECODER_CTX_get_num_decoders(dctx) == 0) {
+        OSSL_DECODER_CTX_free(dctx);
+
+        /*
+         * This could happen if OBJ_obj2txt() returned a text OID and the
+         * decoder has not got that OID as an alias. We fall back to a NULL
+         * keytype
+         */
+        dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", "PrivateKeyInfo",
+                                             NULL, selection, libctx, propq);
+    }
+
     if (dctx == NULL
         || !OSSL_DECODER_from_data(dctx, &p8_data, &len))
         /* try legacy */
