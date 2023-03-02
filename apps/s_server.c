@@ -3828,7 +3828,8 @@ static SSL_SESSION *get_session(SSL *ssl, const unsigned char *id, int idlen,
         if (idlen == (int)sess->idlen && !memcmp(sess->id, id, idlen)) {
             const unsigned char *p = sess->der;
             BIO_printf(bio_err, "Lookup session: cache hit\n");
-            return d2i_SSL_SESSION(NULL, &p, sess->derlen);
+            return d2i_SSL_SESSION_ex(NULL, &p, sess->derlen, app_get0_libctx(),
+                                      app_get0_propq());
         }
     }
     BIO_printf(bio_err, "Lookup session: cache miss\n");

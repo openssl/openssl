@@ -557,3 +557,4 @@ SSL_CTX_get0_server_cert_type           ?	3_2_0	EXIST::FUNCTION:
 SSL_get_negotiated_client_cert_type     ?	3_2_0	EXIST::FUNCTION:
 SSL_get_negotiated_server_cert_type     ?	3_2_0	EXIST::FUNCTION:
 SSL_add_expected_rpk                    ?	3_2_0	EXIST::FUNCTION:
+d2i_SSL_SESSION_ex                      ?	3_2_0	EXIST::FUNCTION:

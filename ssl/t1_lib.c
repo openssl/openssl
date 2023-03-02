@@ -2192,6 +2192,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
     SSL_HMAC *hctx = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     SSL_CTX *tctx = s->session_ctx;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (eticklen == 0) {
         /*
@@ -2263,7 +2264,6 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
             renew_ticket = 1;
     } else {
         EVP_CIPHER *aes256cbc = NULL;
-        SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
         /* Check key name matches */
         if (memcmp(etick, tctx->ext.tick_key_name,
@@ -2341,7 +2341,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
     slen += declen;
     p = sdec;
 
-    sess = d2i_SSL_SESSION(NULL, &p, slen);
+    sess = d2i_SSL_SESSION_ex(NULL, &p, slen, sctx->libctx, sctx->propq);
     slen -= p - sdec;
     OPENSSL_free(sdec);
     if (sess) {

@@ -1736,6 +1736,9 @@ __owur int SSL_has_matching_session_id(const SSL *s,
                                        unsigned int id_len);
 SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
                              long length);
+SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
+                                long length, OSSL_LIB_CTX *libctx,
+                                const char *propq);
 
 # ifdef OPENSSL_X509_H
 __owur X509 *SSL_get0_peer_certificate(const SSL *s);

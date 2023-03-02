@@ -257,6 +257,12 @@ static int ssl_session_memcpy(unsigned char *dst, size_t *pdstlen,
 SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
                              long length)
 {
+    return d2i_SSL_SESSION_ex(a, pp, length, NULL, NULL);
+}
+SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
+                                long length, OSSL_LIB_CTX *libctx,
+                                const char *propq)
+{
     long id;
     size_t tmpl;
     const unsigned char *p = *pp;
@@ -337,9 +343,10 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 
         /*
          * |data| is incremented; we don't want to lose original ptr
-         * No libctx/propq available, so use non-ex version
          */
-        ret->peer_rpk = d2i_PUBKEY(NULL, &data, as->peer_rpk->length);
+        ret->peer_rpk = d2i_PUBKEY_ex(NULL, &data, as->peer_rpk->length, libctx, propq);
+        if (ret->peer_rpk == NULL)
+            goto err;
     }
 
     if (!ssl_session_memcpy(ret->sid_ctx, &ret->sid_ctx_length,

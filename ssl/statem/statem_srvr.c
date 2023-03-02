@@ -3998,7 +3998,8 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
      * create a fresh copy (not shared with other threads) to clean up
      */
     const_p = senc;
-    sess = d2i_SSL_SESSION(NULL, &const_p, slen_full);
+    sess = d2i_SSL_SESSION_ex(NULL, &const_p, slen_full, sctx->libctx,
+                              sctx->propq);
     if (sess == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
