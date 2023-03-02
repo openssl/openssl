@@ -91,8 +91,7 @@ EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OSSL_LIB_CTX *libctx,
     dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", "PrivateKeyInfo",
                                          keytype, selection, libctx, propq);
 
-    /* OSSL_DECODER_CTX_get_num_decoders() correctly handles a NULL argument */
-    if (OSSL_DECODER_CTX_get_num_decoders(dctx) == 0) {
+    if (dctx != NULL && OSSL_DECODER_CTX_get_num_decoders(dctx) == 0) {
         OSSL_DECODER_CTX_free(dctx);
 
         /*
