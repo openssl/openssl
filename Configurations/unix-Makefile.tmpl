@@ -540,7 +540,7 @@ build_all_generated: $(GENERATED_MANDATORY) $(GENERATED) build_docs
 ##@ Help
 .PHONY: help
 help: ## Show this help screen
-	@$(PERL) $(SRCDIR)/util/help.pl $(SRCDIR)/Makefile
+	@$(PERL) $(SRCDIR)/util/help.pl $(BLDDIR)/Makefile
 
 ##@ Testing
 test: tests ## Run tests (alias of "tests")
