@@ -13,6 +13,7 @@
 #include <openssl/lhash.h>
 #include "crypto/lhash.h"
 #include "property_local.h"
+#include "crypto/context.h"
 
 /*
  * Property strings are a consolidation of all strings seen by the property
@@ -68,7 +69,7 @@ static void property_table_free(PROP_TABLE **pt)
     }
 }
 
-static void property_string_data_free(void *vpropdata)
+void ossl_property_string_data_free(void *vpropdata)
 {
     PROPERTY_STRING_DATA *propdata = vpropdata;
 
@@ -83,7 +84,7 @@ static void property_string_data_free(void *vpropdata)
     OPENSSL_free(propdata);
 }
 
-static void *property_string_data_new(OSSL_LIB_CTX *ctx) {
+void *ossl_property_string_data_new(OSSL_LIB_CTX *ctx) {
     PROPERTY_STRING_DATA *propdata = OPENSSL_zalloc(sizeof(*propdata));
 
     if (propdata == NULL)
@@ -106,15 +107,9 @@ static void *property_string_data_new(OSSL_LIB_CTX *ctx) {
     return propdata;
 
 err:
-    property_string_data_free(propdata);
+    ossl_property_string_data_free(propdata);
     return NULL;
 }
-
-static const OSSL_LIB_CTX_METHOD property_string_data_method = {
-    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    property_string_data_new,
-    property_string_data_free,
-};
 
 static PROPERTY_STRING *new_property_string(const char *s,
                                             OSSL_PROPERTY_IDX *pidx)
@@ -186,8 +181,7 @@ static const char *ossl_property_str(int name, OSSL_LIB_CTX *ctx,
 {
     struct find_str_st findstr;
     PROPERTY_STRING_DATA *propdata
-        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_PROPERTY_STRING_INDEX,
-                                &property_string_data_method);
+        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_PROPERTY_STRING_INDEX);
 
     if (propdata == NULL)
         return NULL;
@@ -211,8 +205,7 @@ OSSL_PROPERTY_IDX ossl_property_name(OSSL_LIB_CTX *ctx, const char *s,
                                      int create)
 {
     PROPERTY_STRING_DATA *propdata
-        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_PROPERTY_STRING_INDEX,
-                                &property_string_data_method);
+        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_PROPERTY_STRING_INDEX);
 
     if (propdata == NULL)
         return 0;
@@ -230,8 +223,7 @@ OSSL_PROPERTY_IDX ossl_property_value(OSSL_LIB_CTX *ctx, const char *s,
                                       int create)
 {
     PROPERTY_STRING_DATA *propdata
-        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_PROPERTY_STRING_INDEX,
-                                &property_string_data_method);
+        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_PROPERTY_STRING_INDEX);
 
     if (propdata == NULL)
         return 0;

@@ -23,6 +23,7 @@
 #include "prov/seeding.h"
 #include "self_test.h"
 #include "internal/core.h"
+#include "crypto/context.h"
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
@@ -79,7 +80,7 @@ typedef struct fips_global_st {
     const char *fips_security_check_option;
 } FIPS_GLOBAL;
 
-static void *fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 {
     FIPS_GLOBAL *fgbl = OPENSSL_zalloc(sizeof(*fgbl));
 
@@ -91,17 +92,10 @@ static void *fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     return fgbl;
 }
 
-static void fips_prov_ossl_ctx_free(void *fgbl)
+void ossl_fips_prov_ossl_ctx_free(void *fgbl)
 {
     OPENSSL_free(fgbl);
 }
-
-static const OSSL_LIB_CTX_METHOD fips_prov_ossl_ctx_method = {
-    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
-    fips_prov_ossl_ctx_new,
-    fips_prov_ossl_ctx_free,
-};
-
 
 /* Parameters we provide to the core */
 static const OSSL_PARAM fips_param_types[] = {
@@ -171,8 +165,7 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
     FIPS_GLOBAL *fgbl = ossl_lib_ctx_get_data(ossl_prov_ctx_get0_libctx(provctx),
-                                              OSSL_LIB_CTX_FIPS_PROV_INDEX,
-                                              &fips_prov_ossl_ctx_method);
+                                              OSSL_LIB_CTX_FIPS_PROV_INDEX);
 
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_NAME);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "OpenSSL FIPS Provider"))
@@ -209,8 +202,7 @@ static void set_self_test_cb(FIPS_GLOBAL *fgbl)
 static int fips_self_test(void *provctx)
 {
     FIPS_GLOBAL *fgbl = ossl_lib_ctx_get_data(ossl_prov_ctx_get0_libctx(provctx),
-                                              OSSL_LIB_CTX_FIPS_PROV_INDEX,
-                                              &fips_prov_ossl_ctx_method);
+                                              OSSL_LIB_CTX_FIPS_PROV_INDEX);
 
     set_self_test_cb(fgbl);
     return SELF_TEST_post(&fgbl->selftest_params, 1) ? 1 : 0;
@@ -667,8 +659,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
         goto err;
     }
 
-    if ((fgbl = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_FIPS_PROV_INDEX,
-                                      &fips_prov_ossl_ctx_method)) == NULL)
+    if ((fgbl = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_FIPS_PROV_INDEX)) == NULL)
         goto err;
 
     fgbl->handle = handle;
@@ -813,8 +804,7 @@ int ERR_pop_to_mark(void)
 const OSSL_CORE_HANDLE *FIPS_get_core_handle(OSSL_LIB_CTX *libctx)
 {
     FIPS_GLOBAL *fgbl = ossl_lib_ctx_get_data(libctx,
-                                              OSSL_LIB_CTX_FIPS_PROV_INDEX,
-                                              &fips_prov_ossl_ctx_method);
+                                              OSSL_LIB_CTX_FIPS_PROV_INDEX);
 
     if (fgbl == NULL)
         return NULL;
@@ -892,8 +882,7 @@ int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 int FIPS_security_check_enabled(OSSL_LIB_CTX *libctx)
 {
     FIPS_GLOBAL *fgbl = ossl_lib_ctx_get_data(libctx,
-                                              OSSL_LIB_CTX_FIPS_PROV_INDEX,
-                                              &fips_prov_ossl_ctx_method);
+                                              OSSL_LIB_CTX_FIPS_PROV_INDEX);
 
     return fgbl->fips_security_checks;
 }

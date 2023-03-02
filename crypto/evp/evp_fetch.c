@@ -23,24 +23,6 @@
 
 #define NAME_SEPARATOR ':'
 
-static void evp_method_store_free(void *vstore)
-{
-    ossl_method_store_free(vstore);
-}
-
-static void *evp_method_store_new(OSSL_LIB_CTX *ctx)
-{
-    return ossl_method_store_new(ctx);
-}
-
-
-static const OSSL_LIB_CTX_METHOD evp_method_store_method = {
-    /* We want evp_method_store to be cleaned up before the provider store */
-    OSSL_LIB_CTX_METHOD_PRIORITY_2,
-    evp_method_store_new,
-    evp_method_store_free,
-};
-
 /* Data to be passed through ossl_method_construct() */
 struct evp_method_data_st {
     OSSL_LIB_CTX *libctx;
@@ -79,8 +61,7 @@ static void *get_tmp_evp_method_store(void *data)
 
 static OSSL_METHOD_STORE *get_evp_method_store(OSSL_LIB_CTX *libctx)
 {
-    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_EVP_METHOD_STORE_INDEX,
-                                 &evp_method_store_method);
+    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_EVP_METHOD_STORE_INDEX);
 }
 
 static int reserve_evp_method_store(void *store, void *data)
