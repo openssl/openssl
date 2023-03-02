@@ -240,8 +240,8 @@ OpenSSL 3.1
  * Add FIPS provider configuration option to enforce the
    Extended Master Secret (EMS) check during the TLS1_PRF KDF.
    The option '-ems-check' can optionally be supplied to
-   'openssl fipinstall'.
- 
+   'openssl fipsinstall'.
+
    *Shane Lontis*
 
  * The FIPS provider includes a few non-approved algorithms for
