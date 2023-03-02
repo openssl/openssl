@@ -52,6 +52,9 @@ typedef struct ossl_cc_ecn_info_st {
 /* Diagnostic (read-only): current net bytes in flight. */
 #define OSSL_CC_OPTION_CUR_BYTES_IN_FLIGHT          4
 
+/* Diagnostic (read-only): method-specific state value. */
+#define OSSL_CC_OPTION_CUR_STATE                    5
+
 /*
  * Congestion control abstract interface.
  *
