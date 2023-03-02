@@ -921,7 +921,6 @@ static void ackm_on_pkts_lost(OSSL_ACKM *ackm, int pkt_space,
     const OSSL_ACKM_TX_PKT *p, *pnext;
     OSSL_RTT_INFO rtt;
     QUIC_PN largest_pn_lost = 0;
-    uint64_t num_bytes = 0;
     OSSL_CC_LOSS_INFO loss_info = {0};
     uint32_t flags = 0;
 
@@ -936,8 +935,6 @@ static void ackm_on_pkts_lost(OSSL_ACKM *ackm, int pkt_space,
 
             if (p->pkt_num > largest_pn_lost)
                 largest_pn_lost = p->pkt_num;
-
-            num_bytes += p->num_bytes;
         }
 
         if (!pseudo) {
