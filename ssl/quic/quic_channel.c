@@ -149,7 +149,7 @@ static int ch_init(QUIC_CHANNEL *ch)
         goto err;
 
     ch->have_statm = 1;
-    ch->cc_method = &ossl_cc_dummy_method;
+    ch->cc_method = &ossl_cc_newreno_method;
     if ((ch->cc_data = ch->cc_method->new(get_time, NULL)) == NULL)
         goto err;
 
