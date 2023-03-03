@@ -3531,13 +3531,6 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
     SSL_SESSION *new_sess = NULL;
     EVP_PKEY *peer_rpk = NULL;
 
-    /*
-     * To get this far we must have read encrypted data from the client. We no
-     * longer tolerate unencrypted alerts. This is ignored if less than TLSv1.3
-     */
-    if (sc->rlayer.rrlmethod->set_plain_alerts != NULL)
-        sc->rlayer.rrlmethod->set_plain_alerts(sc->rlayer.rrl, 0);
-
     if (!tls_process_rpk(sc, pkt, &peer_rpk)) {
         /* SSLfatal already called */
         goto err;
@@ -3631,15 +3624,15 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
     SSL_SESSION *new_sess = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    if (s->ext.client_cert_type == TLSEXT_cert_type_rpk)
-        return tls_process_client_rpk(s, pkt);
-
     /*
      * To get this far we must have read encrypted data from the client. We no
      * longer tolerate unencrypted alerts. This is ignored if less than TLSv1.3
      */
     if (s->rlayer.rrlmethod->set_plain_alerts != NULL)
         s->rlayer.rrlmethod->set_plain_alerts(s->rlayer.rrl, 0);
+
+    if (s->ext.client_cert_type == TLSEXT_cert_type_rpk)
+        return tls_process_client_rpk(s, pkt);
 
     if (s->ext.client_cert_type != TLSEXT_cert_type_x509) {
         SSLfatal(s, SSL_AD_UNSUPPORTED_CERTIFICATE,
