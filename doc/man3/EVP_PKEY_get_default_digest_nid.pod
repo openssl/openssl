@@ -30,6 +30,50 @@ are keys with a B<EVP_PKEY_ASN1_METHOD>; these keys have typically
 been loaded from engines, or created with L<EVP_PKEY_assign_RSA(3)> or
 similar.
 
+=head1 PARAMETERS
+
+EVP_PKEY_get_default_digest_name() uses these <OSSL_PARAM(3)> key to ask the
+provider for the values it seeks:
+
+=over 4
+
+=item "mandatory-digest" (B<OSSL_PKEY_PARAM_MANDATORY_DIGEST>) <UTF8 string>
+
+When the providers responds to this, the return value from
+EVP_PKEY_get_default_digest_name() will be 2.
+
+If the value from the provider is C<""> or C<"UNDEF">,
+EVP_PKEY_get_default_digest_name() will place the string C<"UNDEF"> into
+I<mdname>.  This means that no digest should be used with the signature
+operation.
+
+=item "default-digest" (B<OSSL_PKEY_PARAM_DEFAULT_DIGEST>) <UTF8 string>
+
+When the providers responds to this, the return value from
+EVP_PKEY_get_default_digest_name() will be 1.
+
+If the value from the provider is C<""> or C<"UNDEF">,
+EVP_PKEY_get_default_digest_name() will place the string C<"UNDEF"> into
+I<mdname>.  This means that no digest has to be used with the signature
+operation.
+
+=back
+
+=head1 CONTROLS
+
+EVP_PKEY_get_default_digest_nid() uses the following control to query for
+the mandatory / default digest NID for the signature operation:
+
+=over 4
+
+=item ASN1_PKEY_CTRL_DEFAULT_MD_NID
+
+=back
+
+The L<EVP_PKEY_ASN1_METHOD(3)> pkey_ctrl() method receives I<pnid> and is
+fully responsible for filling that in with the correct NID, as well as
+returning the value that EVP_PKEY_get_default_digest_nid() should return.
+
 =head1 NOTES
 
 For all current standard OpenSSL public key algorithms SHA256 is returned.
