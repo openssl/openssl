@@ -2049,6 +2049,11 @@ int tls_parse_stoc_client_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
         SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
+    /* We did not send/ask for this */
+    if (!ossl_assert(sc->ext.client_cert_type_ctos)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
     /* We don't have this enabled */
     if (sc->client_cert_type == NULL) {
         SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -2093,6 +2098,11 @@ int tls_parse_stoc_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
         return 0;
     }
     if (!PACKET_get_1(pkt, &type)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* We did not send/ask for this */
+    if (!ossl_assert(sc->ext.server_cert_type_ctos)) {
         SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
