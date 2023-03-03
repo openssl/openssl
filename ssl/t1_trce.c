@@ -1323,10 +1323,9 @@ static int ssl_print_raw_public_key(BIO *bio, const SSL *ssl, int server,
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "raw_public_key, length=%d\n", (int)clen);
 
-    pkey = d2i_PUBKEY_ex(NULL, &msg, clen, ssl->ctx->libctx, NULL);
-    if (pkey == NULL) {
+    pkey = d2i_PUBKEY_ex(NULL, &msg, clen, ssl->ctx->libctx, ssl->ctx->propq);
+    if (pkey == NULL)
         return 0;
-    }
     EVP_PKEY_print_public(bio, pkey, indent + 2, NULL);
     EVP_PKEY_free(pkey);
     *pmsg += clen + 3;

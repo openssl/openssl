@@ -1269,17 +1269,14 @@ int tls_process_rpk(SSL_CONNECTION *sc, PACKET *pkt, EVP_PKEY **peer_rpk)
             SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_LENGTH);
             goto err;
         }
-        if (!PACKET_get_length_prefixed_2(pkt, &extensions)) {
-            SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_LENGTH);
+        if (!PACKET_as_length_prefixed_2(pkt, &extensions)
+                || PACKET_remaining(pkt) != 0) {
+            SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
             goto err;
         }
         if (!tls_collect_extensions(sc, &extensions, SSL_EXT_TLS1_3_RAW_PUBLIC_KEY,
                                     &rawexts, NULL, 1)) {
             /* SSLfatal already called */
-            goto err;
-        }
-        if (PACKET_remaining(pkt) != 0) {
-            SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
             goto err;
         }
         /* chain index is always zero and fin always 1 for RPK */
@@ -1290,7 +1287,7 @@ int tls_process_rpk(SSL_CONNECTION *sc, PACKET *pkt, EVP_PKEY **peer_rpk)
         }
     }
     ret = 1;
-    if (peer_rpk) {
+    if (peer_rpk != NULL) {
         *peer_rpk = pkey;
         pkey = NULL;
     }

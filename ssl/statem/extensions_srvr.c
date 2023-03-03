@@ -1961,22 +1961,23 @@ EXT_RETURN tls_construct_stoc_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
      * Note: only supposed to send this if we are going to do a cert request,
      * but TLSv1.3 could do a PHA request if the client supports it
      */
-    if ((send_certificate_request(sc) || sc->post_handshake_auth == SSL_PHA_EXT_RECEIVED)
-            && sc->ext.client_cert_type_ctos
-            && sc->client_cert_type != NULL) {
-        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_client_cert_type)
-                || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_put_bytes_u8(pkt, sc->ext.client_cert_type)
-                || !WPACKET_close(pkt)) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
-        return EXT_RETURN_SENT;
+    if ((!send_certificate_request(sc) && sc->post_handshake_auth != SSL_PHA_EXT_RECEIVED)
+            || !sc->ext.client_cert_type_ctos
+            || sc->client_cert_type == NULL) {
+        /* if we don't send it, reset to TLSEXT_cert_type_x509 */
+        sc->ext.client_cert_type_ctos = 0;
+        sc->ext.client_cert_type = TLSEXT_cert_type_x509;
+        return EXT_RETURN_NOT_SENT;
     }
-    /* if we don't send it, reset to TLSEXT_cert_type_x509 */
-    sc->ext.client_cert_type_ctos = 0;
-    sc->ext.client_cert_type = TLSEXT_cert_type_x509;
-    return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_client_cert_type)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u8(pkt, sc->ext.client_cert_type)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    return EXT_RETURN_SENT;
 }
 
 /* One of |pref|, |other| is configured and the values are sanitized */
@@ -2043,20 +2044,21 @@ EXT_RETURN tls_construct_stoc_server_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
         sc->ext.server_cert_type_ctos = 0;
         return EXT_RETURN_NOT_SENT;
     }
-    if (sc->ext.server_cert_type_ctos && sc->server_cert_type != NULL) {
-        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_cert_type)
-                || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_put_bytes_u8(pkt, sc->ext.server_cert_type)
-                || !WPACKET_close(pkt)) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
-        return EXT_RETURN_SENT;
+    if (!sc->ext.server_cert_type_ctos || sc->server_cert_type == NULL) {
+        /* if we don't send it, reset to TLSEXT_cert_type_x509 */
+        sc->ext.server_cert_type_ctos = 0;
+        sc->ext.server_cert_type = TLSEXT_cert_type_x509;
+        return EXT_RETURN_NOT_SENT;
     }
-    /* if we don't send it, reset to TLSEXT_cert_type_x509 */
-    sc->ext.server_cert_type_ctos = 0;
-    sc->ext.server_cert_type = TLSEXT_cert_type_x509;
-    return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_cert_type)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u8(pkt, sc->ext.server_cert_type)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    return EXT_RETURN_SENT;
 }
 
 int tls_parse_ctos_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
