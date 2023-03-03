@@ -86,12 +86,13 @@ static int rpk_verify_server_cb(int ok, X509_STORE_CTX *ctx)
  * idx = 12 - simple resumption, no ticket
  * idx = 13 - resumption with client authentication
  * idx = 14 - resumption with client authentication, no ticket
+ * idx = 15 - like 0, but use non-default libctx
  *
- * 15 * 2 * 4 * 2 * 2 * 2 * 2 = 1920 tests
+ * 16 * 2 * 4 * 2 * 2 * 2 * 2 = 2048 tests
  */
 static int test_rpk(int idx)
 {
-# define RPK_TESTS 15
+# define RPK_TESTS 16
 # define RPK_DIMS (2 * 4 * 2 * 2 * 2 * 2)
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -113,6 +114,7 @@ static int test_rpk(int idx)
     int resumption = 0;
     long server_verify_result = 0;
     long client_verify_result = 0;
+    OSSL_LIB_CTX *libctx = NULL;
 
     if (!TEST_int_le(idx, RPK_TESTS * RPK_DIMS))
         return 0;
@@ -209,7 +211,13 @@ static int test_rpk(int idx)
         goto end;
     }
 
-    if (!TEST_true(create_ssl_ctx_pair(NULL,
+    if (idx == 15) {
+        libctx = OSSL_LIB_CTX_new();
+        if (libctx == NULL)
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx,
                                        TLS_server_method(), TLS_client_method(),
                                        tls_version, tls_version,
                                        &sctx, &cctx, NULL, NULL)))
@@ -433,6 +441,10 @@ static int test_rpk(int idx)
         client_auth = 1;
         resumption = 1;
         break;
+    case 15:
+        if (!TEST_true(SSL_add_expected_rpk(clientssl, pkey)))
+            goto end;
+        break;
     }
 
     ret = create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE);
@@ -612,6 +624,7 @@ static int test_rpk(int idx)
     X509_free(x509);
     X509_free(other_x509);
     X509_free(root_x509);
+    OSSL_LIB_CTX_free(libctx);
 
     if (testresult == 0) {
         TEST_info("idx_ss_rpk=%d, idx_sc_rpk=%d, idx_cs_rpk=%d, idx_cc_rpk=%d, idx_cert=%d, idx_prot=%d, idx=%d",
