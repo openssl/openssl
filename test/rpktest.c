@@ -32,6 +32,7 @@ static char *cert448 = NULL;
 static char *privkey448 = NULL;
 static char *cert25519 = NULL;
 static char *privkey25519 = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 
 static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 };
 static const unsigned char SID_CTX[] = { 'r', 'p', 'k' };
@@ -114,7 +115,7 @@ static int test_rpk(int idx)
     int resumption = 0;
     long server_verify_result = 0;
     long client_verify_result = 0;
-    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_LIB_CTX *test_libctx = NULL;
 
     if (!TEST_int_le(idx, RPK_TESTS * RPK_DIMS))
         return 0;
@@ -211,13 +212,10 @@ static int test_rpk(int idx)
         goto end;
     }
 
-    if (idx == 15) {
-        libctx = OSSL_LIB_CTX_new();
-        if (libctx == NULL)
-            goto end;
-    }
+    if (idx == 15)
+        test_libctx = libctx;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx,
+    if (!TEST_true(create_ssl_ctx_pair(test_libctx,
                                        TLS_server_method(), TLS_client_method(),
                                        tls_version, tls_version,
                                        &sctx, &cctx, NULL, NULL)))
@@ -624,7 +622,6 @@ static int test_rpk(int idx)
     X509_free(x509);
     X509_free(other_x509);
     X509_free(root_x509);
-    OSSL_LIB_CTX_free(libctx);
 
     if (testresult == 0) {
         TEST_info("idx_ss_rpk=%d, idx_sc_rpk=%d, idx_cs_rpk=%d, idx_cc_rpk=%d, idx_cert=%d, idx_prot=%d, idx=%d",
@@ -729,6 +726,10 @@ int setup_tests(void)
     if (privkey2 == NULL)
         goto err;
 
+    libctx = OSSL_LIB_CTX_new();
+    if (libctx == NULL)
+        goto err;
+
     ADD_TEST(test_rpk_api);
     ADD_ALL_TESTS(test_rpk, RPK_TESTS * RPK_DIMS);
     return 1;
@@ -748,4 +749,5 @@ void cleanup_tests(void)
     OPENSSL_free(privkey448);
     OPENSSL_free(cert25519);
     OPENSSL_free(privkey25519);
+    OSSL_LIB_CTX_free(libctx);
  }
