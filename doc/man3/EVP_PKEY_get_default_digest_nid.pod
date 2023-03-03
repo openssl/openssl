@@ -32,32 +32,9 @@ similar.
 
 =head1 PARAMETERS
 
-EVP_PKEY_get_default_digest_name() uses these <OSSL_PARAM(3)> key to ask the
-provider for the values it seeks:
-
-=over 4
-
-=item "mandatory-digest" (B<OSSL_PKEY_PARAM_MANDATORY_DIGEST>) <UTF8 string>
-
-When the providers responds to this, the return value from
-EVP_PKEY_get_default_digest_name() will be 2.
-
-If the value from the provider is C<""> or C<"UNDEF">,
-EVP_PKEY_get_default_digest_name() will place the string C<"UNDEF"> into
-I<mdname>.  This means that no digest should be used with the signature
-operation.
-
-=item "default-digest" (B<OSSL_PKEY_PARAM_DEFAULT_DIGEST>) <UTF8 string>
-
-When the providers responds to this, the return value from
-EVP_PKEY_get_default_digest_name() will be 1.
-
-If the value from the provider is C<""> or C<"UNDEF">,
-EVP_PKEY_get_default_digest_name() will place the string C<"UNDEF"> into
-I<mdname>.  This means that no digest has to be used with the signature
-operation.
-
-=back
+EVP_PKEY_get_default_digest_name() uses <OSSL_PARAM(3)> parameters key to
+ask the provider for the values it seeks,
+see L<provider-keymgmt(7)/Common Information Parameters>.
 
 =head1 CONTROLS
 
