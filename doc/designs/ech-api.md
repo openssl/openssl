@@ -54,6 +54,18 @@ It remains to be seen whether support for draft-13 will still be needed once
 the RFC is published. (Most implementaions have ECH turned off except if the
 user has changed some flag or config option.)
 
+OpenSSL supports custom extensions (via ``SSL_CTX_add_custom_ext()``) so that
+extension values are supplied and parsed by client and server applications via
+a callback.  The ECH specification of course doesn't deal with such
+implementation matters, but comprehensive ECH support for such custom
+extensions could quickly become complex. At present, in the absence of evidence
+of sensitive custom extension values, we handle all such extensions by using
+the ECH compression mechanism.  That means we require no API changes, only make
+one call to the application callbacks and get interoperability, but that such
+extension values remain visible to network observers. That could change if some
+custom value turns out to be sensitive such that we'd prefer to not include it
+in the outer CH.
+
 Server-side APIs
 ----------------
 
