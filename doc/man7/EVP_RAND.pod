@@ -201,15 +201,12 @@ entropy from a live entropy source (section 5.5.2 of [NIST SP 800-90C]).
 It is up to the user to ensure that a live entropy source is configured
 and is being used.
 
-For the three shared DRBGs (and only for these) there is another way to
-reseed them manually:
-If L<RAND_add(3)> is called with a positive I<randomness> argument
-(or L<RAND_seed(3)>), then this will immediately reseed the <primary> DRBG.
-The <public> and <private> DRBG will detect this on their next generate
-call and reseed, pulling randomness from <primary>.
-
-The last feature has been added to support the common practice used with
-previous OpenSSL versions to call RAND_add() before calling RAND_bytes().
+For the <primary> DRBG, calling L<RAND_add(3)> (or L<RAND_seed(3)>) will
+immediately reseed the DRBG.
+The <public> and <private> DRBGs will pick up the new randomness on
+their next reseeding.
+This supports the common practice, used with previous OpenSSL versions,
+to call L<RAND_add(3)> before calling L<RAND_bytes(3)> for the first time.
 
 
 =head2 Entropy Input and Additional Data
