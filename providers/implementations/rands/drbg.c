@@ -658,9 +658,6 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
             || now - drbg->reseed_time >= drbg->reseed_time_interval)
             reseed_required = 1;
     }
-    if (drbg->parent != NULL
-            && get_parent_reseed_count(drbg) != drbg->parent_reseed_counter)
-        reseed_required = 1;
 
     if (reseed_required || prediction_resistance) {
         if (!ossl_prov_drbg_reseed(drbg, prediction_resistance, NULL, 0,

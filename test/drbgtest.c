@@ -245,17 +245,13 @@ static int test_drbg_reseed(int expect_success,
 
     if (expect_public_reseed >= 0) {
         /* Test whether public DRBG was reseeded as expected */
-        if (!TEST_int_ge(reseed_counter(public), public_reseed)
-                || !TEST_uint_ge(reseed_counter(public),
-                                 reseed_counter(primary)))
+        if (!TEST_int_ge(reseed_counter(public), public_reseed))
             return 0;
     }
 
     if (expect_private_reseed >= 0) {
-        /* Test whether public DRBG was reseeded as expected */
-        if (!TEST_int_ge(reseed_counter(private), private_reseed)
-                || !TEST_uint_ge(reseed_counter(private),
-                                 reseed_counter(primary)))
+        /* Test whether private DRBG was reseeded as expected */
+        if (!TEST_int_ge(reseed_counter(private), private_reseed))
             return 0;
     }
 
@@ -850,7 +846,8 @@ static int test_rand_prediction_resistance(void)
         goto err;
 
     /*
-     * During a normal generate, only the last DRBG should be reseed */
+     * During a normal generate, none of the DRBGs should be reseed
+     */
     inc_reseed_counter(y);
     xreseed = reseed_counter(x);
     yreseed = reseed_counter(y);
@@ -858,7 +855,7 @@ static int test_rand_prediction_resistance(void)
     if (!TEST_true(EVP_RAND_generate(z, buf1, sizeof(buf1), 0, 0, NULL, 0))
         || !TEST_int_eq(reseed_counter(x), xreseed)
         || !TEST_int_eq(reseed_counter(y), yreseed)
-        || !TEST_int_gt(reseed_counter(z), zreseed))
+        || !TEST_int_eq(reseed_counter(z), zreseed))
         goto err;
 
     /*
