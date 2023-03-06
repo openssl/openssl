@@ -14,7 +14,6 @@
 # include <openssl/core_dispatch.h>
 # include <openssl/core_names.h>
 # include <openssl/params.h>
-# include "internal/tsan_assist.h"
 # include "internal/nelem.h"
 # include "internal/numbers.h"
 # include "prov/provider_ctx.h"
@@ -145,19 +144,6 @@ struct prov_drbg_st {
      * This value is ignored if it is zero.
      */
     time_t reseed_time_interval;
-    /*
-     * Counts the number of reseeds since instantiation.
-     * This value is ignored if it is zero.
-     *
-     * This counter is used only for seed propagation from the <master> DRBG
-     * to its two children, the <public> and <private> DRBG. This feature is
-     * very special and its sole purpose is to ensure that any randomness which
-     * is added by PROV_add() or PROV_seed() will have an immediate effect on
-     * the output of PROV_bytes() resp. PROV_priv_bytes().
-     */
-    TSAN_QUALIFIER unsigned int reseed_counter;
-    unsigned int reseed_next_counter;
-    unsigned int parent_reseed_counter;
 
     size_t seedlen;
     DRBG_STATUS state;

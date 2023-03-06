@@ -107,29 +107,6 @@ static int get_parent_strength(PROV_DRBG *drbg, unsigned int *str)
     return 1;
 }
 
-static unsigned int get_parent_reseed_count(PROV_DRBG *drbg)
-{
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    void *parent = drbg->parent;
-    unsigned int r = 0;
-
-    *params = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_COUNTER, &r);
-    if (!ossl_drbg_lock_parent(drbg)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOCK_PARENT);
-        goto err;
-    }
-    if (!drbg->parent_get_ctx_params(parent, params))
-        r = 0;
-    ossl_drbg_unlock_parent(drbg);
-    return r;
-
- err:
-    r = tsan_load(&drbg->reseed_counter) - 2;
-    if (r == 0)
-        r = UINT_MAX;
-    return r;
-}
-
 /*
  * Implements the get_entropy() callback
  *
@@ -433,13 +410,6 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
 #endif
     }
 
-    drbg->reseed_next_counter = tsan_load(&drbg->reseed_counter);
-    if (drbg->reseed_next_counter) {
-        drbg->reseed_next_counter++;
-        if (!drbg->reseed_next_counter)
-            drbg->reseed_next_counter = 1;
-    }
-
     entropylen = get_entropy(drbg, &entropy, min_entropy,
                              min_entropylen, max_entropylen,
                              prediction_resistance);
@@ -460,7 +430,6 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
     drbg->state = EVP_RAND_STATE_READY;
     drbg->generate_counter = 1;
     drbg->reseed_time = time(NULL);
-    tsan_store(&drbg->reseed_counter, drbg->reseed_next_counter);
 
  end:
     if (nonce != NULL)
@@ -536,13 +505,6 @@ int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
 
     drbg->state = EVP_RAND_STATE_ERROR;
 
-    drbg->reseed_next_counter = tsan_load(&drbg->reseed_counter);
-    if (drbg->reseed_next_counter) {
-        drbg->reseed_next_counter++;
-        if (!drbg->reseed_next_counter)
-            drbg->reseed_next_counter = 1;
-    }
-
     if (ent != NULL) {
 #ifdef FIPS_MODULE
         /*
@@ -583,9 +545,6 @@ int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
     drbg->state = EVP_RAND_STATE_READY;
     drbg->generate_counter = 1;
     drbg->reseed_time = time(NULL);
-    tsan_store(&drbg->reseed_counter, drbg->reseed_next_counter);
-    if (drbg->parent != NULL)
-        drbg->parent_reseed_counter = get_parent_reseed_count(drbg);
 
  end:
     cleanup_entropy(drbg, entropy, entropylen);
@@ -805,7 +764,6 @@ PROV_DRBG *ossl_rand_drbg_new
     drbg->max_perslen = DRBG_MAX_LENGTH;
     drbg->max_adinlen = DRBG_MAX_LENGTH;
     drbg->generate_counter = 1;
-    drbg->reseed_counter = 1;
     drbg->reseed_interval = RESEED_INTERVAL;
     drbg->reseed_time_interval = TIME_INTERVAL;
 
@@ -894,11 +852,6 @@ int ossl_drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL);
     if (p != NULL && !OSSL_PARAM_set_time_t(p, drbg->reseed_time_interval))
-        return 0;
-
-    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_RESEED_COUNTER);
-    if (p != NULL
-            && !OSSL_PARAM_set_uint(p, tsan_load(&drbg->reseed_counter)))
         return 0;
     return 1;
 }

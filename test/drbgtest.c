@@ -84,39 +84,9 @@ static int state(EVP_RAND_CTX *drbg)
     return EVP_RAND_get_state(drbg);
 }
 
-static unsigned int query_rand_uint(EVP_RAND_CTX *drbg, const char *name)
-{
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    unsigned int n;
-
-    *params = OSSL_PARAM_construct_uint(name, &n);
-    if (EVP_RAND_CTX_get_params(drbg, params))
-        return n;
-    return 0;
-}
-
-#define DRBG_UINT(name)                                 \
-    static unsigned int name(EVP_RAND_CTX *drbg)        \
-    {                                                   \
-        return query_rand_uint(drbg, #name);            \
-    }
-DRBG_UINT(reseed_counter)
-
 static PROV_DRBG *prov_rand(EVP_RAND_CTX *drbg)
 {
     return (PROV_DRBG *)drbg->algctx;
-}
-
-static void set_reseed_counter(EVP_RAND_CTX *drbg, unsigned int n)
-{
-    PROV_DRBG *p = prov_rand(drbg);
-
-    p->reseed_counter = n;
-}
-
-static void inc_reseed_counter(EVP_RAND_CTX *drbg)
-{
-    set_reseed_counter(drbg, reseed_counter(drbg) + 1);
 }
 
 static time_t reseed_time(EVP_RAND_CTX *drbg)
@@ -191,7 +161,6 @@ static int test_drbg_reseed(int expect_success,
 {
     time_t before_reseed, after_reseed;
     int expected_state = (expect_success ? DRBG_READY : DRBG_ERROR);
-    unsigned int primary_reseed, public_reseed, private_reseed;
     unsigned char dummy[RANDOM_SIZE];
 
     if (public_random == NULL)
@@ -200,18 +169,9 @@ static int test_drbg_reseed(int expect_success,
     if (private_random == NULL)
         private_random = dummy;
 
-    /*
-     * step 1: check preconditions
-     */
-
-    /* Test whether seed propagation is enabled */
-    if (!TEST_int_ne(primary_reseed = reseed_counter(primary), 0)
-        || !TEST_int_ne(public_reseed = reseed_counter(public), 0)
-        || !TEST_int_ne(private_reseed = reseed_counter(private), 0))
-        return 0;
 
     /*
-     * step 2: generate random output
+     * step 1: generate random output
      */
 
     if (reseed_when == 0)
@@ -219,16 +179,16 @@ static int test_drbg_reseed(int expect_success,
 
     /* Generate random output from the public and private DRBG */
     before_reseed = expect_primary_reseed == 1 ? reseed_when : 0;
-    if (!TEST_int_eq(rand_bytes((unsigned char*)public_random,
+    if (!TEST_int_eq(rand_bytes((unsigned char *)public_random,
                                 RANDOM_SIZE), expect_success)
-        || !TEST_int_eq(rand_priv_bytes((unsigned char*) private_random,
+        || !TEST_int_eq(rand_priv_bytes((unsigned char *) private_random,
                                         RANDOM_SIZE), expect_success))
         return 0;
     after_reseed = time(NULL);
 
 
     /*
-     * step 3: check postconditions
+     * step 2: check postconditions
      */
 
     /* Test whether reseeding succeeded as expected */
@@ -236,24 +196,6 @@ static int test_drbg_reseed(int expect_success,
         || !TEST_int_eq(state(public), expected_state)
         || !TEST_int_eq(state(private), expected_state))
         return 0;
-
-    if (expect_primary_reseed >= 0) {
-        /* Test whether primary DRBG was reseeded as expected */
-        if (!TEST_int_ge(reseed_counter(primary), primary_reseed))
-            return 0;
-    }
-
-    if (expect_public_reseed >= 0) {
-        /* Test whether public DRBG was reseeded as expected */
-        if (!TEST_int_ge(reseed_counter(public), public_reseed))
-            return 0;
-    }
-
-    if (expect_private_reseed >= 0) {
-        /* Test whether private DRBG was reseeded as expected */
-        if (!TEST_int_ge(reseed_counter(private), private_reseed))
-            return 0;
-    }
 
     if (expect_success == 1) {
         /* Test whether reseed time of primary DRBG is set correctly */
@@ -604,41 +546,6 @@ static int test_rand_reseed(void)
                                     0, 0, 0, 0)))
         goto error;
 
-    /*
-     * Test whether the public and private DRBG are both reseeded when their
-     * reseed counters differ from the primary's reseed counter.
-     */
-    inc_reseed_counter(primary);
-    if (!TEST_true(test_drbg_reseed(1,
-                                    primary, public, private,
-                                    NULL, NULL,
-                                    0, 1, 1, 0)))
-        goto error;
-
-    /*
-     * Test whether the public DRBG is reseeded when its reseed counter differs
-     * from the primary's reseed counter.
-     */
-    inc_reseed_counter(primary);
-    inc_reseed_counter(private);
-    if (!TEST_true(test_drbg_reseed(1,
-                                    primary, public, private,
-                                    NULL, NULL,
-                                    0, 1, 0, 0)))
-        goto error;
-
-    /*
-     * Test whether the private DRBG is reseeded when its reseed counter differs
-     * from the primary's reseed counter.
-     */
-    inc_reseed_counter(primary);
-    inc_reseed_counter(public);
-    if (!TEST_true(test_drbg_reseed(1,
-                                    primary, public, private,
-                                    NULL, NULL,
-                                    0, 0, 1, 0)))
-        goto error;
-
     /* fill 'randomness' buffer with some arbitrary data */
     memset(rand_add_buf, 'r', sizeof(rand_add_buf));
 
@@ -805,7 +712,7 @@ static int test_rand_prediction_resistance(void)
 {
     EVP_RAND_CTX *x = NULL, *y = NULL, *z = NULL;
     unsigned char buf1[51], buf2[sizeof(buf1)];
-    int ret = 0, xreseed, yreseed, zreseed;
+    int ret = 0;
 
     if (using_fips_rng())
         return TEST_skip("CRNGT cannot be disabled");
@@ -821,64 +728,18 @@ static int test_rand_prediction_resistance(void)
         goto err;
 
     /*
-     * During a normal reseed, only the last DRBG in the chain should
-     * be reseeded.
-     */
-    inc_reseed_counter(y);
-    xreseed = reseed_counter(x);
-    yreseed = reseed_counter(y);
-    zreseed = reseed_counter(z);
-    if (!TEST_true(EVP_RAND_reseed(z, 0, NULL, 0, NULL, 0))
-        || !TEST_int_eq(reseed_counter(x), xreseed)
-        || !TEST_int_eq(reseed_counter(y), yreseed)
-        || !TEST_int_gt(reseed_counter(z), zreseed))
-        goto err;
-
-    /*
      * When prediction resistance is requested, the request should be
      * propagated to the primary, so that the entire DRBG chain reseeds.
      */
-    zreseed = reseed_counter(z);
-    if (!TEST_true(EVP_RAND_reseed(z, 1, NULL, 0, NULL, 0))
-        || !TEST_int_gt(reseed_counter(x), xreseed)
-        || !TEST_int_gt(reseed_counter(y), yreseed)
-        || !TEST_int_gt(reseed_counter(z), zreseed))
-        goto err;
-
-    /*
-     * During a normal generate, none of the DRBGs should be reseed
-     */
-    inc_reseed_counter(y);
-    xreseed = reseed_counter(x);
-    yreseed = reseed_counter(y);
-    zreseed = reseed_counter(z);
-    if (!TEST_true(EVP_RAND_generate(z, buf1, sizeof(buf1), 0, 0, NULL, 0))
-        || !TEST_int_eq(reseed_counter(x), xreseed)
-        || !TEST_int_eq(reseed_counter(y), yreseed)
-        || !TEST_int_eq(reseed_counter(z), zreseed))
+    if (!TEST_true(EVP_RAND_reseed(z, 1, NULL, 0, NULL, 0)))
         goto err;
 
     /*
      * When a prediction resistant generate is requested, the request
      * should be propagated to the primary, reseeding the entire DRBG chain.
      */
-    zreseed = reseed_counter(z);
     if (!TEST_true(EVP_RAND_generate(z, buf2, sizeof(buf2), 0, 1, NULL, 0))
-        || !TEST_int_gt(reseed_counter(x), xreseed)
-        || !TEST_int_gt(reseed_counter(y), yreseed)
-        || !TEST_int_gt(reseed_counter(z), zreseed)
         || !TEST_mem_ne(buf1, sizeof(buf1), buf2, sizeof(buf2)))
-        goto err;
-
-    /* Verify that a normal reseed still only reseeds the last DRBG */
-    inc_reseed_counter(y);
-    xreseed = reseed_counter(x);
-    yreseed = reseed_counter(y);
-    zreseed = reseed_counter(z);
-    if (!TEST_true(EVP_RAND_reseed(z, 0, NULL, 0, NULL, 0))
-        || !TEST_int_eq(reseed_counter(x), xreseed)
-        || !TEST_int_eq(reseed_counter(y), yreseed)
-        || !TEST_int_gt(reseed_counter(z), zreseed))
         goto err;
 
     ret = 1;
