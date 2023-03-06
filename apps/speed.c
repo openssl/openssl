@@ -1266,11 +1266,9 @@ static int SIG_verify_loop(void *args)
     EVP_PKEY_CTX *ctx = tempargs->sig_verify_ctx[testnum];
     size_t sig_len = tempargs->sig_act_sig_len[testnum];
     unsigned char *sig = tempargs->sig_sig[testnum];
-    unsigned char md[SHA256_DIGEST_LENGTH];
+    unsigned char md[SHA256_DIGEST_LENGTH] = { 0 };
     size_t md_len = SHA256_DIGEST_LENGTH;
     int count;
-
-    memset(md, 0, md_len);
 
     for (count = 0; COND(kems_c[testnum][2]); count++) {
         int ret = EVP_PKEY_verify(ctx, sig, sig_len, md, md_len);
@@ -1983,7 +1981,7 @@ int speed_main(int argc, char **argv)
                        "Too many signatures registered. Change MAX_SIG_NUM.\n");
                 goto end;
             }
-	        for (i = 0; i < OSSL_NELEM(rsa_choices); i++) {
+            for (i = 0; i < OSSL_NELEM(rsa_choices); i++) {
                 sigs_doit[sigs_algs_len] = 1;
                 sigs_algname[sigs_algs_len++] = OPENSSL_strdup(rsa_choices[i].name);
 	        }
@@ -3579,6 +3577,17 @@ skip_hmac:
             char *name;
             OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
             int use_params = 0;
+            enum kem_type_t { RSA_KEM = 1, EC_KEM, X25519, X448 } kem_type;
+
+            if (strncmp(kem_name, "rsa", 3) == 0)
+                kem_type = RSA_KEM;
+            else if (strncmp(kem_name, "EC", 2) == 0)
+                kem_type = EC_KEM;
+            else if (strcmp(kem_name, "X25519") == 0)
+                kem_type = X25519;
+            else if (strcmp(kem_name, "X448") == 0)
+                kem_type = X448;
+            else kem_type = 0;
 
             if (ERR_peek_error()) {
                 BIO_printf(bio_err,
@@ -3586,12 +3595,12 @@ skip_hmac:
                 ERR_print_errors(bio_err);
             }
 
-            if (strncmp(kem_name, "rsa", 3) == 0) {
+            if (kem_type == RSA_KEM) {
                 bits = atoi(kem_name + 3);
                 params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
                                                         &bits);
                 use_params = 1;
-            } else if (strncmp(kem_name, "EC", 2) == 0) {
+            } else if (kem_type == EC_KEM) {
                 name = (char *)(kem_name + 2);
                 params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
                                                   name, 0);
@@ -3599,8 +3608,8 @@ skip_hmac:
             }
 
             kem_gen_ctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(),
-                                               (strncmp(kem_name, "rsa", 3) == 0) ? "RSA":
-                                                (strncmp(kem_name, "EC", 2) == 0) ? "EC":
+                                               (kem_type == RSA_KEM) ? "RSA":
+                                                (kem_type == EC_KEM) ? "EC":
                                                  kem_name,
                                                app_get0_propq());
 
@@ -3621,11 +3630,11 @@ skip_hmac:
                                                         app_get0_propq());
             if (kem_encaps_ctx == NULL
                 || EVP_PKEY_encapsulate_init(kem_encaps_ctx, NULL) <= 0
-                || (strncmp(kem_name, "rsa", 3) == 0
+                || (kem_type == RSA_KEM
                     && EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "RSASVE") <= 0)
-                || ((strncmp(kem_name, "EC", 2) == 0 
-                    || strcmp(kem_name, "X25519") == 0 
-                    || strcmp(kem_name, "X448") == 0 )
+                || ((kem_type == EC_KEM
+                    || kem_type == X25519
+                    || kem_type == X448)
                    && EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "DHKEM") <= 0)
                 || EVP_PKEY_encapsulate(kem_encaps_ctx, NULL, &out_len,
                                       NULL, &send_secret_len) <= 0) {
@@ -3651,11 +3660,11 @@ skip_hmac:
                                                         app_get0_propq());
             if (kem_decaps_ctx == NULL
                 || EVP_PKEY_decapsulate_init(kem_decaps_ctx, NULL) <= 0 
-                || (strncmp(kem_name, "rsa", 3) == 0
+                || (kem_type == RSA_KEM
                   && EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "RSASVE") <= 0)
-                || ((strncmp(kem_name, "EC", 2) == 0
-                     || strcmp(kem_name, "X25519") == 0
-                     || strcmp(kem_name, "X448") == 0)
+                || ((kem_type == EC_KEM
+                     || kem_type == X25519
+                     || kem_type == X448)
                   && EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "DHKEM") <= 0)
                 || EVP_PKEY_decapsulate(kem_decaps_ctx, NULL, &rcv_secret_len,
                                         out, out_len) <= 0) {
