@@ -727,6 +727,10 @@ static int test_rand_prediction_resistance(void)
         || !TEST_true(EVP_RAND_instantiate(z, 0, 0, NULL, 0, NULL)))
         goto err;
 
+    /* Fill the first buffer with random bytes */
+    if (!TEST_true(EVP_RAND_generate(z, buf1, sizeof(buf1), 0, 0, NULL, 0)))
+        goto err;
+
     /*
      * When prediction resistance is requested, the request should be
      * propagated to the primary, so that the entire DRBG chain reseeds.
