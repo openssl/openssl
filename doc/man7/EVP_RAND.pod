@@ -205,8 +205,14 @@ For the <primary> DRBG, calling L<RAND_add(3)> (or L<RAND_seed(3)>) will
 immediately reseed the DRBG.
 The <public> and <private> DRBGs will pick up the new randomness on
 their next reseeding.
-This supports the common practice, used with previous OpenSSL versions,
-to call L<RAND_add(3)> before calling L<RAND_bytes(3)> for the first time.
+This supports the common practice, used with previous OpenSSL versions, to
+call L<RAND_add(3)> before calling L<RAND_bytes(3)> for the first time.
+Note however, that contrary to the behaviour before version 3.0.9,
+a L<RAND_add(3)> call I<after> DRBG instantiation will not have an
+immediate effect on the output of the following L<RAND_bytes(3)> call.
+Consequently, it is best to call L<RAND_add(3)> as early as possible
+during application startup.
+
 
 
 =head2 Entropy Input and Additional Data
