@@ -193,6 +193,7 @@ void ossl_crypto_condvar_free(CRYPTO_CONDVAR **cv)
     *cv_p = NULL;
 }
 
+# if 0                           /* We don't use this anywhere */
 void ossl_crypto_mem_barrier(void)
 {
 # if defined(__clang__) || defined(__GNUC__)
@@ -228,5 +229,6 @@ void ossl_crypto_mem_barrier(void)
     __asm__ volatile("" : : : "memory");
 # endif
 }
+# endif
 
 #endif
