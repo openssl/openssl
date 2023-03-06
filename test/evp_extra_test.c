@@ -36,6 +36,7 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "crypto/evp.h"
+#include "fake_rsaprov.h"
 
 static OSSL_LIB_CTX *testctx = NULL;
 static char *testpropq = NULL;
@@ -4717,6 +4718,65 @@ static int test_ecx_not_private_key(int tst)
 }
 #endif /* OPENSSL_NO_EC */
 
+static int test_sign_continuation(void)
+{
+    OSSL_PROVIDER *fake_rsa = NULL;
+    int testresult = 0;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_MD_CTX *mctx = NULL;
+    const char sigbuf[] = "To Be Signed";
+    unsigned char signature[256];
+    size_t siglen = 256;
+    static int nodupnum = 1;
+    static const OSSL_PARAM nodup_params[] = {
+        OSSL_PARAM_int("NO_DUP", &nodupnum),
+        OSSL_PARAM_END
+    };
+
+    if (!TEST_ptr(fake_rsa = fake_rsa_start(testctx)))
+        return 0;
+
+    /* Construct a pkey using precise propq to use our provider */
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA",
+                                                    "provider=fake-rsa"))
+        || !TEST_true(EVP_PKEY_fromdata_init(pctx))
+        || !TEST_true(EVP_PKEY_fromdata(pctx, &pkey, EVP_PKEY_KEYPAIR, NULL))
+        || !TEST_ptr(pkey))
+        goto end;
+
+    /* First test it continues (classic behavior) */
+    if (!TEST_ptr(mctx = EVP_MD_CTX_new())
+        || !TEST_true(EVP_DigestSignInit_ex(mctx, NULL, NULL, testctx,
+                                            NULL, pkey, NULL))
+        || !TEST_true(EVP_DigestSignUpdate(mctx, sigbuf, sizeof(sigbuf)))
+        || !TEST_true(EVP_DigestSignFinal(mctx, signature, &siglen))
+        || !TEST_true(EVP_DigestSignUpdate(mctx, sigbuf, sizeof(sigbuf)))
+        || !TEST_true(EVP_DigestSignFinal(mctx, signature, &siglen)))
+        goto end;
+
+    EVP_MD_CTX_free(mctx);
+
+    /* try again but failing the continuation */
+    if (!TEST_ptr(mctx = EVP_MD_CTX_new())
+        || !TEST_true(EVP_DigestSignInit_ex(mctx, NULL, NULL, testctx,
+                                            NULL, pkey, nodup_params))
+        || !TEST_true(EVP_DigestSignUpdate(mctx, sigbuf, sizeof(sigbuf)))
+        || !TEST_true(EVP_DigestSignFinal(mctx, signature, &siglen))
+        || !TEST_false(EVP_DigestSignUpdate(mctx, sigbuf, sizeof(sigbuf)))
+        || !TEST_false(EVP_DigestSignFinal(mctx, signature, &siglen)))
+        goto end;
+
+    testresult = 1;
+
+end:
+    EVP_MD_CTX_free(mctx);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(pctx);
+    fake_rsa_finish(fake_rsa);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -4857,6 +4917,8 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_ecx_not_private_key, OSSL_NELEM(keys));
 #endif
+
+    ADD_TEST(test_sign_continuation);
 
     return 1;
 }
