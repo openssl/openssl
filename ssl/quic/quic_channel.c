@@ -436,6 +436,11 @@ int ossl_quic_channel_is_handshake_confirmed(const QUIC_CHANNEL *ch)
     return ch->handshake_confirmed;
 }
 
+QUIC_DEMUX *ossl_quic_channel_get0_demux(QUIC_CHANNEL *ch)
+{
+    return ch->demux;
+}
+
 /*
  * QUIC Channel: Callbacks from Miscellaneous Subsidiary Components
  * ================================================================
