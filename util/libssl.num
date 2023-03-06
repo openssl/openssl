@@ -543,3 +543,4 @@ SSL_net_read_desired                    ?	3_2_0	EXIST::FUNCTION:
 SSL_net_write_desired                   ?	3_2_0	EXIST::FUNCTION:
 SSL_shutdown_ex                         ?	3_2_0	EXIST::FUNCTION:
 SSL_stream_conclude                     ?	3_2_0	EXIST::FUNCTION:
+SSL_inject_net_dgram                    ?	3_2_0	EXIST::FUNCTION:QUIC

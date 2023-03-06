@@ -2257,6 +2257,12 @@ __owur int SSL_net_write_desired(SSL *s);
 __owur int SSL_set_blocking_mode(SSL *s, int blocking);
 __owur int SSL_get_blocking_mode(SSL *s);
 __owur int SSL_set_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr);
+# ifndef OPENSSL_NO_QUIC
+__owur int SSL_inject_net_dgram(SSL *s, const unsigned char *buf,
+                                size_t buf_len,
+                                const BIO_ADDR *peer,
+                                const BIO_ADDR *local);
+# endif
 
 typedef struct ssl_shutdown_ex_args_st {
     uint64_t    quic_error_code;
