@@ -352,6 +352,10 @@ retained for compatibility purposes:
 
 =item SSL_OP_EPHEMERAL_RSA
 
+=item SSL_OP_NETSCAPE_CA_DN_BUG
+
+=item SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG
+
 =back
 
 =head1 SECURE RENEGOTIATION
