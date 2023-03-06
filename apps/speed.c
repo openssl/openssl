@@ -1173,13 +1173,15 @@ static int KEM_keygen_loop(void *args)
     int count;
 
     for (count = 0; COND(kems_c[testnum][0]); count++) {
-        EVP_PKEY_keygen(ctx, &pkey);
-        /* runtime defined to quite some degree by randomness,
+        if (EVP_PKEY_keygen(ctx, &pkey) <= 0)
+            return -1;
+        /*
+         * runtime defined to quite some degree by randomness,
          * so performance overhead of _free doesn't impact
          * results significantly. In any case this test is
          * meant to permit relative algorithm performance
          * comparison.
-	 */
+         */
         EVP_PKEY_free(pkey);
         pkey = NULL;
     }
@@ -1197,7 +1199,8 @@ static int KEM_encaps_loop(void *args)
     int count;
 
     for (count = 0; COND(kems_c[testnum][1]); count++) {
-        EVP_PKEY_encapsulate(ctx, out, &out_len, secret, &secret_len);
+        if (EVP_PKEY_encapsulate(ctx, out, &out_len, secret, &secret_len) <= 0)
+            return -1;
     }
     return count;
 }
@@ -1213,7 +1216,8 @@ static int KEM_decaps_loop(void *args)
     int count;
 
     for (count = 0; COND(kems_c[testnum][2]); count++) {
-        EVP_PKEY_decapsulate(ctx, secret, &secret_len, out, out_len);
+        if (EVP_PKEY_decapsulate(ctx, secret, &secret_len, out, out_len) <= 0)
+            return -1;
     }
     return count;
 }
@@ -1249,6 +1253,7 @@ static int SIG_sign_loop(void *args)
     for (count = 0; COND(kems_c[testnum][1]); count++) {
         size_t sig_len = tempargs->sig_max_sig_len[testnum];
         int ret = EVP_PKEY_sign(ctx, sig, &sig_len, md, md_len);
+
         if (ret <= 0) {
             BIO_printf(bio_err, "SIG sign failure at count %d\n", count);
             ERR_print_errors(bio_err);
@@ -1272,6 +1277,7 @@ static int SIG_verify_loop(void *args)
 
     for (count = 0; COND(kems_c[testnum][2]); count++) {
         int ret = EVP_PKEY_verify(ctx, sig, sig_len, md, md_len);
+
         if (ret <= 0) {
             BIO_printf(bio_err, "SIG verify failure at count %d\n", count);
             ERR_print_errors(bio_err);
