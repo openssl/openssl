@@ -1423,8 +1423,8 @@ static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                  msg[0].data_len,
 #  endif
                  sysflags,
-                 msg[0].peer != NULL ? &msg[0].peer->sa : NULL,
-                 msg[0].peer != NULL ? sizeof(*msg[0].peer) : 0);
+                 msg[0].peer != NULL ? BIO_ADDR_sockaddr(msg[0].peer) : NULL,
+                 msg[0].peer != NULL ? BIO_ADDR_sockaddr_size(msg[0].peer) : 0);
     if (ret <= 0) {
         ERR_raise(ERR_LIB_SYS, get_last_socket_error());
         *num_processed = 0;
