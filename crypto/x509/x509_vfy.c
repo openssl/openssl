@@ -1673,13 +1673,15 @@ static int check_policy(X509_STORE_CTX *ctx)
         int i;
 
         /* Locate certificates with bad extensions and notify callback. */
-        for (i = 1; i < sk_X509_num(ctx->chain); i++) {
+        for (i = 0; i < sk_X509_num(ctx->chain); i++) {
             X509 *x = sk_X509_value(ctx->chain, i);
 
             CB_FAIL_IF((x->ex_flags & EXFLAG_INVALID_POLICY) != 0,
                        ctx, x, i, X509_V_ERR_INVALID_POLICY_EXTENSION);
         }
-        return 1;
+        /* Should not be able to get here */
+        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
     if (ret == X509_PCY_TREE_FAILURE) {
         ctx->current_cert = NULL;
