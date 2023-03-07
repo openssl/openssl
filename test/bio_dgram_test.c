@@ -175,11 +175,11 @@ static int test_bio_dgram_impl(int af, int use_local)
     if (!TEST_int_ge(fd2, 0))
         goto err;
 
-    if (!TEST_int_gt(BIO_bind(fd1, addr1, 0), 0))
+    if (BIO_bind(fd1, addr1, 0) <= 0
+        || BIO_bind(fd2, addr2, 0) <= 0) {
+        testresult = TEST_skip("BIO_bind() failed - assuming it's an unavailable address family");
         goto err;
-
-    if (!TEST_int_gt(BIO_bind(fd2, addr2, 0), 0))
-        goto err;
+    }
 
     info1.addr = addr1;
     if (!TEST_int_gt(BIO_sock_info(fd1, BIO_SOCK_INFO_ADDRESS, &info1), 0))
