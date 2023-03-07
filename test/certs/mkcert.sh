@@ -119,11 +119,12 @@ genca() {
     local OPTIND=1
     local purpose=
 
-    while getopts p: o
+    while getopts p:c: o
     do
         case $o in
         p) purpose="$OPTARG";;
-        *) echo "Usage: $0 genca [-p EKU] cn keyname certname cakeyname cacertname" >&2
+        c) certpol="$OPTARG";;
+        *) echo "Usage: $0 genca [-p EKU][-c policyoid] cn keyname certname cakeyname cacertname" >&2
            return 1;;
         esac
     done
@@ -146,6 +147,10 @@ genca() {
     if [ -n "$NC" ]; then
         exts=$(printf "%s\nnameConstraints = %s\n" "$exts" "$NC")
     fi
+    if [ -n "$certpol" ]; then
+        exts=$(printf "%s\ncertificatePolicies = %s\n" "$exts" "$certpol")
+    fi
+
     csr=$(req "$key" "CN = $cn") || return 1
     echo "$csr" |
         cert "$cert" "$exts" -CA "${cacert}.pem" -CAkey "${cakey}.pem" \
