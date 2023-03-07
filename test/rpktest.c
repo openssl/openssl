@@ -33,6 +33,7 @@ static char *privkey448 = NULL;
 static char *cert25519 = NULL;
 static char *privkey25519 = NULL;
 static OSSL_LIB_CTX *libctx = NULL;
+static OSSL_PROVIDER *defctxnull = NULL;
 
 static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 };
 static const unsigned char SID_CTX[] = { 'r', 'p', 'k' };
@@ -212,9 +213,12 @@ static int test_rpk(int idx)
         goto end;
     }
 
-    if (idx == 15)
+    if (idx == 15) {
         test_libctx = libctx;
-
+        defctxnull = OSSL_PROVIDER_load(NULL, "null");
+        if (defctxnull == NULL)
+            goto end;
+    }
     if (!TEST_true(create_ssl_ctx_pair(test_libctx,
                                        TLS_server_method(), TLS_client_method(),
                                        tls_version, tls_version,
@@ -613,6 +617,8 @@ static int test_rpk(int idx)
     testresult = 1;
 
  end:
+    OSSL_PROVIDER_unload(defctxnull);
+    defctxnull = NULL;
     SSL_SESSION_free(client_sess);
     SSL_SESSION_free(server_sess);
     SSL_free(serverssl);
