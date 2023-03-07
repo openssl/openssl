@@ -27,12 +27,19 @@ static int is_want(SSL *s, int ret)
     return ec == SSL_ERROR_WANT_READ || ec == SSL_ERROR_WANT_WRITE;
 }
 
-static int test_tserver(void)
+#define TEST_KIND_SIMPLE        0
+#define TEST_KIND_INJECT        1
+#define TEST_KIND_COUNT         2
+
+static unsigned char scratch_buf[2048];
+
+static int test_tserver(int test_kind)
 {
     int testresult = 0, ret;
     int s_fd = -1, c_fd = -1;
     BIO *s_net_bio = NULL, *s_net_bio_own = NULL;
     BIO *c_net_bio = NULL, *c_net_bio_own = NULL;
+    BIO *c_pair_own = NULL, *s_pair_own = NULL;
     QUIC_TSERVER_ARGS tserver_args = {0};
     QUIC_TSERVER *tserver = NULL;
     BIO_ADDR *s_addr_ = NULL;
@@ -92,6 +99,18 @@ static int test_tserver(void)
 
     s_net_bio_own = NULL;
 
+    if (test_kind == TEST_KIND_INJECT) {
+        /*
+         * In inject mode we create a dgram pair to feed to the QUIC client on
+         * the read side. We don't feed anything to this, it is just a
+         * placeholder to give the client something which never returns any
+         * datagrams..
+         */
+        if (!TEST_true(BIO_new_bio_dgram_pair(&c_pair_own, 5000,
+                                              &s_pair_own, 5000)))
+            goto err;
+    }
+
     /* Setup test client. */
     c_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
     if (!TEST_int_ge(c_fd, 0))
@@ -117,12 +136,17 @@ static int test_tserver(void)
         goto err;
 
     /* Takes ownership of our reference to the BIO. */
-    SSL_set0_rbio(c_ssl, c_net_bio);
+    if (test_kind == TEST_KIND_INJECT) {
+        SSL_set0_rbio(c_ssl, c_pair_own);
+        c_pair_own = NULL;
+    } else {
+        SSL_set0_rbio(c_ssl, c_net_bio);
 
-    /* Get another reference to be transferred in the SSL_set0_wbio call. */
-    if (!TEST_true(BIO_up_ref(c_net_bio))) {
-        c_net_bio_own = NULL; /* SSL_free will free the first reference. */
-        goto err;
+        /* Get another reference to be transferred in the SSL_set0_wbio call. */
+        if (!TEST_true(BIO_up_ref(c_net_bio))) {
+            c_net_bio_own = NULL; /* SSL_free will free the first reference. */
+            goto err;
+        }
     }
 
     SSL_set0_wbio(c_ssl, c_net_bio);
@@ -234,6 +258,29 @@ static int test_tserver(void)
          */
         SSL_tick(c_ssl);
         ossl_quic_tserver_tick(tserver);
+
+        if (test_kind == TEST_KIND_INJECT) {
+            BIO_MSG rmsg = {0};
+            size_t msgs_processed = 0;
+
+            for (;;) {
+                /*
+                 * Manually spoonfeed received datagrams from the real BIO_dgram
+                 * into QUIC via the injection interface, thereby testing the
+                 * injection interface.
+                 */
+                rmsg.data       = scratch_buf;
+                rmsg.data_len   = sizeof(scratch_buf);
+
+                if (!BIO_recvmmsg(c_net_bio, &rmsg, sizeof(rmsg), 1, 0, &msgs_processed)
+                    || msgs_processed == 0 || rmsg.data_len == 0)
+                    break;
+
+                if (!TEST_true(SSL_inject_net_dgram(c_ssl, rmsg.data, rmsg.data_len,
+                                                    NULL, NULL)))
+                    goto err;
+            }
+        }
     }
 
     testresult = 1;
@@ -244,6 +291,8 @@ err:
     BIO_ADDR_free(s_addr_);
     BIO_free(s_net_bio_own);
     BIO_free(c_net_bio_own);
+    BIO_free(c_pair_own);
+    BIO_free(s_pair_own);
     if (s_fd >= 0)
         BIO_closesocket(s_fd);
     if (c_fd >= 0)
@@ -264,6 +313,6 @@ int setup_tests(void)
             || !TEST_ptr(keyfile = test_get_argument(1)))
         return 0;
 
-    ADD_TEST(test_tserver);
+    ADD_ALL_TESTS(test_tserver, TEST_KIND_COUNT);
     return 1;
 }

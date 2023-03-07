@@ -2583,6 +2583,10 @@ DEPEND[html/man3/SSL_in_init.html]=man3/SSL_in_init.pod
 GENERATE[html/man3/SSL_in_init.html]=man3/SSL_in_init.pod
 DEPEND[man/man3/SSL_in_init.3]=man3/SSL_in_init.pod
 GENERATE[man/man3/SSL_in_init.3]=man3/SSL_in_init.pod
+DEPEND[html/man3/SSL_inject_net_dgram.html]=man3/SSL_inject_net_dgram.pod
+GENERATE[html/man3/SSL_inject_net_dgram.html]=man3/SSL_inject_net_dgram.pod
+DEPEND[man/man3/SSL_inject_net_dgram.3]=man3/SSL_inject_net_dgram.pod
+GENERATE[man/man3/SSL_inject_net_dgram.3]=man3/SSL_inject_net_dgram.pod
 DEPEND[html/man3/SSL_key_update.html]=man3/SSL_key_update.pod
 GENERATE[html/man3/SSL_key_update.html]=man3/SSL_key_update.pod
 DEPEND[man/man3/SSL_key_update.3]=man3/SSL_key_update.pod
@@ -3489,6 +3493,7 @@ html/man3/SSL_get_verify_result.html \
 html/man3/SSL_get_version.html \
 html/man3/SSL_group_to_name.html \
 html/man3/SSL_in_init.html \
+html/man3/SSL_inject_net_dgram.html \
 html/man3/SSL_key_update.html \
 html/man3/SSL_library_init.html \
 html/man3/SSL_load_client_CA_file.html \
@@ -4112,6 +4117,7 @@ man/man3/SSL_get_verify_result.3 \
 man/man3/SSL_get_version.3 \
 man/man3/SSL_group_to_name.3 \
 man/man3/SSL_in_init.3 \
+man/man3/SSL_inject_net_dgram.3 \
 man/man3/SSL_key_update.3 \
 man/man3/SSL_library_init.3 \
 man/man3/SSL_load_client_CA_file.3 \
