@@ -362,7 +362,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
      * of another AlgorithmIdentifier.
      */
     penclen = i2d_X509_ALGOR(wrap_alg, &penc);
-    if (penc == NULL || penclen <= 0)
+    if (penclen <= 0)
         goto err;
     wrap_str = ASN1_STRING_new();
     if (wrap_str == NULL)
