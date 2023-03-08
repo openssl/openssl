@@ -2031,6 +2031,10 @@ int tls_parse_ctos_client_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
     if (sc->ext.client_cert_type_ctos)
         return 1;
 
+    /* Not going to be doing client auth, so ignore the extension */
+    if (!send_certificate_request(sc) && sc->post_handshake_auth != SSL_PHA_EXT_RECEIVED)
+        return 1;
+
     /* Did not receive an acceptable cert type */
     SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE, SSL_R_BAD_EXTENSION);
     return 0;
