@@ -806,15 +806,20 @@ end_of_options:
     /*
      * EVP_PKEY_get_default_digest_name() returns 2 if the digest is
      * mandatory for this algorithm.
+     *
+     * That call may give back the name "UNDEF", which has these meanings:
+     *
+     * when def_ret == 2: the user MUST leave the digest unspecified
+     * when def_ret == 1: the user MAY leave the digest unspecified
      */
     if (def_ret == 2 && strcmp(def_dgst, "UNDEF") == 0) {
-        /* The signing algorithm requires there to be no digest */
         dgst = NULL;
     } else if (dgst == NULL
-               && (dgst = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL) {
+               && (dgst = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL
+               && strcmp(def_dgst, "UNDEF") != 0) {
         goto end;
     } else {
-        if (strcmp(dgst, "default") == 0) {
+        if (strcmp(dgst, "default") == 0 || strcmp(def_dgst, "UNDEF") == 0) {
             if (def_ret <= 0) {
                 BIO_puts(bio_err, "no default digest\n");
                 goto end;
