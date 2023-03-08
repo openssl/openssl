@@ -59,9 +59,14 @@ X509_POLICY_NODE *level_find_node(const X509_POLICY_LEVEL *level,
 X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
                                  X509_POLICY_DATA *data,
                                  X509_POLICY_NODE *parent,
-                                 X509_POLICY_TREE *tree)
+                                 X509_POLICY_TREE *tree,
+                                 int extra_data)
 {
     X509_POLICY_NODE *node;
+
+    /* Verify that the tree isn't too large.  This mitigates CVE-2023-0464 */
+    if (tree->node_maximum > 0 && tree->node_count >= tree->node_maximum)
+        return NULL;
 
     node = OPENSSL_zalloc(sizeof(*node));
     if (node == NULL) {
@@ -70,7 +75,7 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
     }
     node->data = data;
     node->parent = parent;
-    if (level) {
+    if (level != NULL) {
         if (OBJ_obj2nid(data->valid_policy) == NID_any_policy) {
             if (level->anyPolicy)
                 goto node_error;
@@ -90,7 +95,7 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
         }
     }
 
-    if (tree) {
+    if (extra_data) {
         if (tree->extra_data == NULL)
             tree->extra_data = sk_X509_POLICY_DATA_new_null();
         if (tree->extra_data == NULL){
@@ -103,6 +108,7 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
         }
     }
 
+    tree->node_count++;
     if (parent)
         parent->nchild++;
 
