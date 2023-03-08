@@ -734,7 +734,7 @@ L<openssl-cms(1)>
 
 =head1 HISTORY
 
-This B<-trusted_first> option is always enabled since since OpenSSL 1.1.0.
+Since OpenSSL 1.1.0, the B<-trusted_first> option is always enabled.
 
 The checks enabled by B<-x509_strict> have been extended in OpenSSL 3.0.
 
