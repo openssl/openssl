@@ -685,7 +685,7 @@ must be present.
 For the target certificate special checks apply; see L<OCSP_basic_verify(3)>.
 For all other certificates the normal CA checks apply.
 
-=item B<Time Stamp signing>
+=item B<TimesStamp signing>
 
 For the target certificate the following checks apply.
 If the keyUsage extension is present, it must have the digitalSignature
