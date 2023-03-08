@@ -18,8 +18,8 @@ EVP_PKEY_get_default_digest_nid, EVP_PKEY_get_default_digest_name
 EVP_PKEY_get_default_digest_name() fills in the default message digest
 name for the public key signature operations associated with key
 I<pkey> into I<mdname>, up to at most I<mdname_sz> bytes including the
-ending NUL byte.  The name could be C<"UNDEF">, signifying that no digest
-should be used.
+ending NUL byte.  The name could be C<"UNDEF">, signifying that a digest
+must (for return value 2) or may (for return value 1) be left unspecified.
 
 EVP_PKEY_get_default_digest_nid() sets I<pnid> to the default message
 digest NID for the public key signature operations associated with key
