@@ -30,6 +30,10 @@
 #define SIZE    (512)
 #define BSIZE   (8*1024)
 
+#define PBKDF2_ITER_DEFAULT     10000
+#define STR(a) XSTR(a)
+#define XSTR(a) #a
+
 static int set_hex(const char *in, unsigned char *out, int size);
 static void show_ciphers(const OBJ_NAME *name, void *bio_);
 
@@ -88,8 +92,13 @@ const OPTIONS enc_options[] = {
     {"S", OPT_UPPER_S, 's', "Salt, in hex"},
     {"iv", OPT_IV, 's', "IV in hex"},
     {"md", OPT_MD, 's', "Use specified digest to create a key from the passphrase"},
-    {"iter", OPT_ITER, 'p', "Specify the iteration count and force use of PBKDF2"},
-    {"pbkdf2", OPT_PBKDF2, '-', "Use password-based key derivation function 2"},
+    {"iter", OPT_ITER, 'p',
+     "Specify the iteration count and force the use of PBKDF2"},
+    {OPT_MORE_STR, 0, 0, "Default: " STR(PBKDF2_ITER_DEFAULT)},
+    {"pbkdf2", OPT_PBKDF2, '-',
+     "Use password-based key derivation function 2 (PBKDF2)"},
+    {OPT_MORE_STR, 0, 0,
+     "Use -iter to change the iteration count from " STR(PBKDF2_ITER_DEFAULT)},
     {"none", OPT_NONE, '-', "Don't encrypt"},
 #ifndef OPENSSL_NO_ZLIB
     {"z", OPT_Z, '-', "Compress or decompress encrypted data using zlib"},
@@ -287,7 +296,7 @@ int enc_main(int argc, char **argv)
         case OPT_PBKDF2:
             pbkdf2 = 1;
             if (iter == 0)    /* do not overwrite a chosen value */
-                iter = 10000;
+                iter = PBKDF2_ITER_DEFAULT;
             break;
         case OPT_NONE:
             cipher = NULL;
