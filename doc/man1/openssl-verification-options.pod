@@ -48,7 +48,7 @@ In practice, trust anchors are given in the form of certificates.
 Commonly they are self-signed root CA certificates.
 Their most essential fields are the subjectPublicKeyInfo and
 the subject distinguished name (DN), while the subject key identifier extension
-is generally optional but highly recommended to include in CA certificates.
+is generally optional but highly recommended to be included in CA certificates.
 In addition to the requirements given in RFC 5280,
 OpenSSL checks the validity period of all certificates including trust anchors
 and makes use of further fields and extensions
@@ -108,13 +108,13 @@ It is self-signed or the B<-partial_chain> option is given
 
 First, a certificate chain is built up starting from the target certificate
 and ending in a trust anchor.
-The goal is that for each certificate in the chain, except for the final
-element, the subject of the successor is the issuer of the former certificate.
-Since it happens rather often that the subject and issuer Distinguished Names
-qare not unique, the subject and issuer key identifier extensions, as far as
-present in the certificates, are used for precise and efficient matching.
+The goal is that for each certificate in the chain, except for the final one,
+the subject of the successor is the issuer of the former certificate.
+Since it often happens that the subject and issuer Distinguished Names
+are not unique, the subject and issuer key identifier extensions,
+if present in the certificates, are used for precise and efficient matching.
 
-The chain is built up iteratively, looking up in turn a certificate that
+The chain is built up iteratively, looking up each certificate in turn that
 matches as an issuer of the current "subject" certificate as described below.
 If there is such a certificate, the first one found that has a suitable validity
 period or otherwise has the latest expiration date of all matching certificates.
@@ -186,7 +186,7 @@ in the L</Certificate Extensions> section below.
 
 The third step is to check the trust settings on the last certificate
 (which typically is a self-signed root CA certificate).
-It must be trusted for the given use (if specified).
+If specified, it must be trusted for the given use.
 For compatibility, a self-signed certificate
 with no trust attributes is considered to be valid for all uses.
 
@@ -429,7 +429,7 @@ before any certificates specified via B<-untrusted>.
 
 =item B<-no_alt_chains>
 
-Since B<-trusted_first> always on, this option has no effect.
+Since B<-trusted_first> is always on, this option has no effect.
 
 =item B<-trusted> I<file>
 
@@ -577,6 +577,10 @@ This option has no effect and is retained for backward compatibility only.
 Options like B<-purpose> and B<-verify_name> trigger the processing of specific
 certificate extensions, which determine what certificates can be used for.
 
+The follwing two subsections on the B<basicConstraints> and <keyUsage>
+extensions and on X.509v1 certificates apply to B<all> CA certificates
+regardless of any required purpose.
+
 =head3 Basic Constraints
 
 The basicConstraints extension CA flag is used to determine whether the
@@ -596,6 +600,8 @@ is presently supported, but this could change in the future.
 If the keyUsage extension is present then additional restraints are
 made on the uses of the certificate. A CA certificate B<must> have the
 keyCertSign bit set if the keyUsage extension is present.
+Further restrictions are checked depending on the required purpose, if any;
+for details see the list given in the next subsection.
 
 =head3 Extended Key Usage
 
