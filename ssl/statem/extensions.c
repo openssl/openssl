@@ -1912,7 +1912,7 @@ static int init_server_cert_type(SSL_CONNECTION *sc, unsigned int context)
 {
     /* Only reset when parsing client hello */
     if (sc->server) {
-        sc->ext.server_cert_type_ctos = 0;
+        sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         sc->ext.server_cert_type = TLSEXT_cert_type_x509;
     }
     return 1;
@@ -1922,7 +1922,7 @@ static int init_client_cert_type(SSL_CONNECTION *sc, unsigned int context)
 {
     /* Only reset when parsing client hello */
     if (sc->server) {
-        sc->ext.client_cert_type_ctos = 0;
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         sc->ext.client_cert_type = TLSEXT_cert_type_x509;
     }
     return 1;

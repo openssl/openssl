@@ -1954,18 +1954,27 @@ EXT_RETURN tls_construct_stoc_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
                                                X509 *x, size_t chainidx)
 {
     if (sc->ext.client_cert_type == TLSEXT_cert_type_x509) {
-        sc->ext.client_cert_type_ctos = 0;
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         return EXT_RETURN_NOT_SENT;
     }
+
+    if (sc->ext.client_cert_type_ctos == OSSL_CERT_TYPE_CTOS_ERROR
+        && (send_certificate_request(sc)
+            || sc->post_handshake_auth == SSL_PHA_EXT_RECEIVED)) {
+        /* Did not receive an acceptable cert type - and doing client auth */
+        SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE, SSL_R_BAD_EXTENSION);
+        return EXT_RETURN_FAIL;
+    }
+
     /*
      * Note: only supposed to send this if we are going to do a cert request,
      * but TLSv1.3 could do a PHA request if the client supports it
      */
     if ((!send_certificate_request(sc) && sc->post_handshake_auth != SSL_PHA_EXT_RECEIVED)
-            || !sc->ext.client_cert_type_ctos
+            || sc->ext.client_cert_type_ctos != OSSL_CERT_TYPE_CTOS_GOOD
             || sc->client_cert_type == NULL) {
         /* if we don't send it, reset to TLSEXT_cert_type_x509 */
-        sc->ext.client_cert_type_ctos = 0;
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         sc->ext.client_cert_type = TLSEXT_cert_type_x509;
         return EXT_RETURN_NOT_SENT;
     }
@@ -1990,10 +1999,10 @@ static int reconcile_cert_type(const unsigned char *pref, size_t pref_len,
     for (i = 0; i < pref_len; i++) {
         if (memchr(other, pref[i], other_len) != NULL) {
             *chosen_cert_type = pref[i];
-            return 1;
+            return OSSL_CERT_TYPE_CTOS_GOOD;
         }
     }
-    return 0;
+    return OSSL_CERT_TYPE_CTOS_ERROR;
 }
 
 int tls_parse_ctos_client_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
@@ -2006,20 +2015,23 @@ int tls_parse_ctos_client_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
 
     /* Ignore the extension */
     if (sc->client_cert_type == NULL) {
-        sc->ext.client_cert_type_ctos = 0;
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         sc->ext.client_cert_type = TLSEXT_cert_type_x509;
         return 1;
     }
 
     if (!PACKET_as_length_prefixed_1(pkt, &supported_cert_types)) {
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_ERROR;
         SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
     if ((len = PACKET_remaining(&supported_cert_types)) == 0) {
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_ERROR;
         SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
     if (!PACKET_get_bytes(&supported_cert_types, &data, len)) {
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_ERROR;
         SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
@@ -2028,16 +2040,8 @@ int tls_parse_ctos_client_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
                                                         sc->client_cert_type, sc->client_cert_type_len,
                                                         &sc->ext.client_cert_type);
 
-    if (sc->ext.client_cert_type_ctos)
-        return 1;
-
-    /* Not going to be doing client auth, so ignore the extension */
-    if (!send_certificate_request(sc) && sc->post_handshake_auth != SSL_PHA_EXT_RECEIVED)
-        return 1;
-
-    /* Did not receive an acceptable cert type */
-    SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE, SSL_R_BAD_EXTENSION);
-    return 0;
+    /* Ignore the error until sending - so we can check cert auth*/
+    return 1;
 }
 
 EXT_RETURN tls_construct_stoc_server_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
@@ -2045,12 +2049,13 @@ EXT_RETURN tls_construct_stoc_server_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
                                                X509 *x, size_t chainidx)
 {
     if (sc->ext.server_cert_type == TLSEXT_cert_type_x509) {
-        sc->ext.server_cert_type_ctos = 0;
+        sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         return EXT_RETURN_NOT_SENT;
     }
-    if (!sc->ext.server_cert_type_ctos || sc->server_cert_type == NULL) {
+    if (sc->ext.server_cert_type_ctos != OSSL_CERT_TYPE_CTOS_GOOD
+            || sc->server_cert_type == NULL) {
         /* if we don't send it, reset to TLSEXT_cert_type_x509 */
-        sc->ext.server_cert_type_ctos = 0;
+        sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         sc->ext.server_cert_type = TLSEXT_cert_type_x509;
         return EXT_RETURN_NOT_SENT;
     }
@@ -2075,7 +2080,7 @@ int tls_parse_ctos_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
 
     /* Ignore the extension */
     if (sc->server_cert_type == NULL) {
-        sc->ext.server_cert_type_ctos = 0;
+        sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
         sc->ext.server_cert_type = TLSEXT_cert_type_x509;
         return 1;
     }
@@ -2097,7 +2102,7 @@ int tls_parse_ctos_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
     sc->ext.server_cert_type_ctos = reconcile_cert_type(sc->server_cert_type, sc->server_cert_type_len,
                                                         data, len,
                                                         &sc->ext.server_cert_type);
-    if (sc->ext.server_cert_type_ctos)
+    if (sc->ext.server_cert_type_ctos == OSSL_CERT_TYPE_CTOS_GOOD)
         return 1;
 
     /* Did not receive an acceptable cert type */

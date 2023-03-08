@@ -371,6 +371,11 @@
 #define CERT_PRIVATE_KEY        2
 */
 
+/* Certificate Type State */
+# define OSSL_CERT_TYPE_CTOS_ERROR   0
+# define OSSL_CERT_TYPE_CTOS_NONE    1
+# define OSSL_CERT_TYPE_CTOS_GOOD    2
+
 /* Post-Handshake Authentication state */
 typedef enum {
     SSL_PHA_NONE = 0,

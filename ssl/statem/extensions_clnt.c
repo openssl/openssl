@@ -2020,7 +2020,7 @@ EXT_RETURN tls_construct_ctos_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
                                                unsigned int context,
                                                X509 *x, size_t chainidx)
 {
-    sc->ext.client_cert_type_ctos = 0;
+    sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
     if (sc->client_cert_type == NULL)
         return EXT_RETURN_NOT_SENT;
 
@@ -2031,7 +2031,7 @@ EXT_RETURN tls_construct_ctos_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
         SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
-    sc->ext.client_cert_type_ctos = 1;
+    sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_GOOD;
     return EXT_RETURN_SENT;
 }
 
@@ -2050,7 +2050,7 @@ int tls_parse_stoc_client_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
         return 0;
     }
     /* We did not send/ask for this */
-    if (!ossl_assert(sc->ext.client_cert_type_ctos)) {
+    if (!ossl_assert(sc->ext.client_cert_type_ctos == OSSL_CERT_TYPE_CTOS_GOOD)) {
         SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
@@ -2072,7 +2072,7 @@ EXT_RETURN tls_construct_ctos_server_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
                                                unsigned int context,
                                                X509 *x, size_t chainidx)
 {
-    sc->ext.server_cert_type_ctos = 0;
+    sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
     if (sc->server_cert_type == NULL)
         return EXT_RETURN_NOT_SENT;
 
@@ -2083,7 +2083,7 @@ EXT_RETURN tls_construct_ctos_server_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
         SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
-    sc->ext.server_cert_type_ctos = 1;
+    sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_GOOD;
     return EXT_RETURN_SENT;
 }
 
@@ -2102,7 +2102,7 @@ int tls_parse_stoc_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
         return 0;
     }
     /* We did not send/ask for this */
-    if (!ossl_assert(sc->ext.server_cert_type_ctos)) {
+    if (!ossl_assert(sc->ext.server_cert_type_ctos == OSSL_CERT_TYPE_CTOS_GOOD)) {
         SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
