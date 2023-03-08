@@ -372,9 +372,9 @@
 */
 
 /* Certificate Type State */
-# define OSSL_CERT_TYPE_CTOS_ERROR   0
-# define OSSL_CERT_TYPE_CTOS_NONE    1
-# define OSSL_CERT_TYPE_CTOS_GOOD    2
+# define OSSL_CERT_TYPE_CTOS_NONE    0
+# define OSSL_CERT_TYPE_CTOS_GOOD    1
+# define OSSL_CERT_TYPE_CTOS_ERROR   2
 
 /* Post-Handshake Authentication state */
 typedef enum {
