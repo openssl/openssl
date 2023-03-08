@@ -809,8 +809,8 @@ end_of_options:
      *
      * That call may give back the name "UNDEF", which has these meanings:
      *
-     * when def_ret == 2: the user MUST NOT specify a digest
-     * when def_ret == 1: the user MAY not specify a digest
+     * when def_ret == 2: the user MUST leave the digest unspecified
+     * when def_ret == 1: the user MAY leave the digest unspecified
      */
     if (def_ret == 2 && strcmp(def_dgst, "UNDEF") == 0) {
         dgst = NULL;
