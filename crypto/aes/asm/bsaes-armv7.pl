@@ -1447,7 +1447,7 @@ ossl_bsaes_ctr32_encrypt_blocks:
 .align	2
 0:	add	r12, $key, #248
 	vld1.8	{@XMM[0]}, [$ctr]		@ load counter
-	adrl	$ctr, .LREVM0SR			@ borrow $ctr
+	add	$ctr, $const, #.LREVM0SR-.LM0	@ borrow $ctr
 	vldmia	r12, {@XMM[4]}			@ load round0 key
 	sub	sp, #0x10			@ place for adjusted round0 key
 #endif
