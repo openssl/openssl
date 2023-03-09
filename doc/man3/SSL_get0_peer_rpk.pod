@@ -56,8 +56,8 @@ private key.
 
 The SSL_add_expected_rpk() function is a wrapper around
 L<SSL_dane_tlsa_add(3)>.
-When DANE is enabled, the configured TLSA records will be used to validate the
-peer's public key or certificate.
+When DANE is enabled via L<SSL_dane_enable(3)>, the configured TLSA records
+will be used to validate the peer's public key or certificate.
 If DANE is not enabled, then no validation will occur.
 
 =head1 RETURN VALUES

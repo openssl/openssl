@@ -3086,7 +3086,7 @@ static int dane_verify_rpk(X509_STORE_CTX *ctx)
     ctx->error_depth = 0;
 
     if (matched < 0) {
-        ctx->error = X509_V_ERR_OUT_OF_MEM;
+        ctx->error = X509_V_ERR_UNSPECIFIED;
         return -1;
     }
 

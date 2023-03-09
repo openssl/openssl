@@ -1333,7 +1333,7 @@ unsigned long tls_output_rpk(SSL_CONNECTION *sc, WPACKET *pkt, CERT_PKEY *cpk)
     }
 
     if (pdata_len <= 0) {
-        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_BUF_LIB);
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 

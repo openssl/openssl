@@ -216,7 +216,7 @@ static int test_rpk(int idx)
     if (idx == 15) {
         test_libctx = libctx;
         defctxnull = OSSL_PROVIDER_load(NULL, "null");
-        if (defctxnull == NULL)
+        if (!TEST_ptr(defctxnull))
             goto end;
     }
     if (!TEST_true(create_ssl_ctx_pair(test_libctx,
