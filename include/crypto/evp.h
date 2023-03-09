@@ -21,6 +21,7 @@
  * values in evp.h
  */
 #define EVP_MD_CTX_FLAG_KEEP_PKEY_CTX   0x0400
+#define EVP_MD_CTX_FLAG_FINALISED       0x0800
 
 #define evp_pkey_ctx_is_legacy(ctx)                             \
     ((ctx)->keymgmt == NULL)
