@@ -181,7 +181,8 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
     }
 #endif
 
-    EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
+    EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_CLEANED
+                                | EVP_MD_CTX_FLAG_FINALISED);
 
     if (type != NULL) {
         ctx->reqdigest = type;
@@ -387,6 +388,11 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
     if (count == 0)
         return 1;
 
+    if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
+        return 0;
+    }
+
     if (ctx->pctx != NULL
             && EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx->pctx)
             && ctx->pctx->op.sig.algctx != NULL) {
@@ -453,7 +459,14 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
         return 0;
     }
 
+    if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+        return 0;
+    }
+
     ret = ctx->digest->dfinal(ctx->algctx, md, &size, mdsize);
+
+    ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
 
     if (isize != NULL) {
         if (size <= UINT_MAX) {
@@ -499,11 +512,18 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
         return 0;
     }
 
+    if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+        return 0;
+    }
+
     params[i++] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &size);
     params[i++] = OSSL_PARAM_construct_end();
 
     if (EVP_MD_CTX_set_params(ctx, params) > 0)
         ret = ctx->digest->dfinal(ctx->algctx, md, &size, size);
+
+    ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
 
     return ret;
 
