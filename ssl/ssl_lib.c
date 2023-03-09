@@ -4290,34 +4290,19 @@ void ssl_set_masks(SSL_CONNECTION *s)
      * You can do anything with an RPK key, since there's no cert to restrict it
      * But we need to check for private keys
      */
-    if (tls12_rpk_and_privkey(s, SSL_PKEY_RSA)) {
+    if (pvalid[SSL_PKEY_RSA] & CERT_PKEY_RPK) {
         mask_a |= SSL_aRSA;
         mask_k |= SSL_kRSA;
     }
-    if (tls12_rpk_and_privkey(s, SSL_PKEY_RSA_PSS_SIGN)) {
-        if (TLS1_get_version(&s->ssl) == TLS1_2_VERSION)
-            mask_a |= SSL_aRSA;
-    }
-    if (tls12_rpk_and_privkey(s, SSL_PKEY_DSA_SIGN))
-        mask_a |= SSL_aDSS;
-    if (tls12_rpk_and_privkey(s, SSL_PKEY_ECC))
+    if (pvalid[SSL_PKEY_ECC] & CERT_PKEY_RPK)
         mask_a |= SSL_aECDSA;
-    if (tls12_rpk_and_privkey(s, SSL_PKEY_ED25519)
-        || tls12_rpk_and_privkey(s, SSL_PKEY_ED448)) {
-        if (TLS1_get_version(&s->ssl) == TLS1_2_VERSION)
+    if (TLS1_get_version(&s->ssl) == TLS1_2_VERSION) {
+        if (pvalid[SSL_PKEY_RSA_PSS_SIGN] & CERT_PKEY_RPK)
+            mask_a |= SSL_aRSA;
+        if (pvalid[SSL_PKEY_ED25519] & CERT_PKEY_RPK
+                || pvalid[SSL_PKEY_ED448] & CERT_PKEY_RPK)
             mask_a |= SSL_aECDSA;
     }
-#ifndef OPENSSL_NO_GOST
-    if (tls12_rpk_and_privkey(s, SSL_PKEY_GOST01)) {
-        mask_k |= SSL_kGOST;
-        mask_a |= SSL_aGOST01;
-    }
-    if (tls12_rpk_and_privkey(s, SSL_PKEY_GOST12_256)
-        || tls12_rpk_and_privkey(s, SSL_PKEY_GOST12_512)) {
-        mask_k |= SSL_kGOST | SSL_kGOST18;
-        mask_a |= SSL_aGOST12;
-    }
-#endif
 
     /*
      * An ECC certificate may be usable for ECDH and/or ECDSA cipher suites

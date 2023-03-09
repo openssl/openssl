@@ -3048,9 +3048,15 @@ int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
     uint32_t *pvalid;
     unsigned int suiteb_flags = tls1_suiteb(s);
 
-    /* idx == -1 means checking server chains */
+    /*
+     * Meaning of idx:
+     * idx == -1 means SSL_check_chain() invocation
+     * idx == -2 means checking client certificate chains
+     * idx >= 0 means checking SSL_PKEY index
+     *
+     * For RPK, where there may be no cert, we ignore -1
+     */
     if (idx != -1) {
-        /* idx == -2 means checking client certificate chains */
         if (idx == -2) {
             cpk = c->key;
             idx = (int)(cpk - c->pkeys);
@@ -3061,13 +3067,19 @@ int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
         pk = cpk->privatekey;
         chain = cpk->chain;
         strict_mode = c->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT;
+        if (tls12_rpk_and_privkey(s, idx)) {
+            if (EVP_PKEY_is_a(pk, "EC") && !tls1_check_pkey_comp(s, pk))
+                return 0;
+            *pvalid = rv = CERT_PKEY_RPK;
+            return rv;
+        }
         /* If no cert or key, forget it */
-        if (!x || !pk)
+        if (x == NULL || pk == NULL)
             goto end;
     } else {
         size_t certidx;
 
-        if (!x || !pk)
+        if (x == NULL || pk == NULL)
             return 0;
 
         if (ssl_cert_lookup_by_pkey(pk, &certidx,
@@ -3489,7 +3501,7 @@ static int tls12_get_cert_sigalg_idx(const SSL_CONNECTION *s,
 
     /* If doing RPK, the CERT_PKEY won't be "valid" */
     if (tls12_rpk_and_privkey(s, sig_idx))
-        return sig_idx;
+        return  s->s3.tmp.valid_flags[sig_idx] & CERT_PKEY_RPK ? sig_idx : -1;
 
     return s->s3.tmp.valid_flags[sig_idx] & CERT_PKEY_VALID ? sig_idx : -1;
 }

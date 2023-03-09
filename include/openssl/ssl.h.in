@@ -568,6 +568,8 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 # define CERT_PKEY_CERT_TYPE     0x400
 /* Cert chain suitable to Suite B */
 # define CERT_PKEY_SUITEB        0x800
+/* Cert pkey valid for raw public key use */
+# define CERT_PKEY_RPK           0x1000
 
 # define SSL_CONF_FLAG_CMDLINE           0x1
 # define SSL_CONF_FLAG_FILE              0x2
