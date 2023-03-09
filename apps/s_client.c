@@ -487,8 +487,8 @@ typedef enum OPTION_choice {
 #endif
     OPT_SSL3, OPT_SSL_CONFIG,
     OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
-    OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM, OPT_PASS,
-    OPT_CERT_CHAIN, OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN,
+    OPT_DTLS1_2, OPT_QUIC, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM,
+    OPT_PASS, OPT_CERT_CHAIN, OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN,
     OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
     OPT_CAFILE, OPT_NOCAFILE, OPT_CHAINCAFILE, OPT_VERIFYCAFILE,
@@ -681,6 +681,7 @@ const OPTIONS s_client_options[] = {
 #endif
 #ifndef OPENSSL_NO_DTLS
     {"dtls", OPT_DTLS, '-', "Use any version of DTLS"},
+    {"quic", OPT_QUIC, '-', "Use QUIC"},
     {"timeout", OPT_TIMEOUT, '-',
      "Enable send/receive timeout on DTLS connections"},
     {"mtu", OPT_MTU, 'p', "Set the link layer MTU"},
@@ -792,7 +793,8 @@ static const OPT_PAIR services[] = {
 
 #define IS_PROT_FLAG(o) \
  (o == OPT_SSL3 || o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
-  || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2)
+  || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2 \
+  || o == OPT_QUIC)
 
 /* Free |*dest| and optionally set it to a copy of |source|. */
 static void freeandcopy(char **dest, const char *source)
@@ -882,6 +884,7 @@ int s_client_main(int argc, char **argv)
     int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM, protocol = 0;
     int starttls_proto = PROTO_OFF, crl_format = FORMAT_UNDEF, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
+    int first_loop;
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
     int at_eof = 0;
 #endif
@@ -937,9 +940,8 @@ int s_client_main(int argc, char **argv)
 #endif
     BIO *bio_c_msg = NULL;
     const char *keylog_file = NULL, *early_data_file = NULL;
-#ifndef OPENSSL_NO_DTLS
     int isdtls = 0;
-#endif
+    int isquic = 0;
     char *psksessf = NULL;
     int enable_pha = 0;
     int enable_client_rpk = 0;
@@ -951,7 +953,7 @@ int s_client_main(int argc, char **argv)
     int enable_ktls = 0;
 #endif
     int tfo = 0;
-    BIO_ADDR *tfo_addr = NULL;
+    BIO_ADDR *peer_addr = NULL;
     struct user_data_st user_data;
 
     FD_ZERO(&readfds);
@@ -1280,6 +1282,9 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DTLS
             isdtls = 0;
 #endif
+#ifndef OPENSS_NO_QUIC
+            isquic = 0;
+#endif
             break;
         case OPT_TLS1_3:
             min_version = TLS1_3_VERSION;
@@ -1287,6 +1292,9 @@ int s_client_main(int argc, char **argv)
             socket_type = SOCK_STREAM;
 #ifndef OPENSSL_NO_DTLS
             isdtls = 0;
+#endif
+#ifndef OPENSS_NO_QUIC
+            isquic = 0;
 #endif
             break;
         case OPT_TLS1_2:
@@ -1296,6 +1304,9 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DTLS
             isdtls = 0;
 #endif
+#ifndef OPENSS_NO_QUIC
+            isquic = 0;
+#endif
             break;
         case OPT_TLS1_1:
             min_version = TLS1_1_VERSION;
@@ -1303,6 +1314,9 @@ int s_client_main(int argc, char **argv)
             socket_type = SOCK_STREAM;
 #ifndef OPENSSL_NO_DTLS
             isdtls = 0;
+#endif
+#ifndef OPENSS_NO_QUIC
+            isquic = 0;
 #endif
             break;
         case OPT_TLS1:
@@ -1312,12 +1326,18 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DTLS
             isdtls = 0;
 #endif
+#ifndef OPENSS_NO_QUIC
+            isquic = 0;
+#endif
             break;
         case OPT_DTLS:
 #ifndef OPENSSL_NO_DTLS
             meth = DTLS_client_method();
             socket_type = SOCK_DGRAM;
             isdtls = 1;
+# ifndef OPENSS_NO_QUIC
+            isquic = 0;
+# endif
 #endif
             break;
         case OPT_DTLS1:
@@ -1327,6 +1347,9 @@ int s_client_main(int argc, char **argv)
             max_version = DTLS1_VERSION;
             socket_type = SOCK_DGRAM;
             isdtls = 1;
+# ifndef OPENSS_NO_QUIC
+            isquic = 0;
+# endif
 #endif
             break;
         case OPT_DTLS1_2:
@@ -1336,6 +1359,22 @@ int s_client_main(int argc, char **argv)
             max_version = DTLS1_2_VERSION;
             socket_type = SOCK_DGRAM;
             isdtls = 1;
+# ifndef OPENSS_NO_QUIC
+            isquic = 0;
+# endif
+#endif
+            break;
+        case OPT_QUIC:
+#ifndef OPENSSL_NO_QUIC
+            meth = OSSL_QUIC_client_method();
+            /* TODO(QUIC): What should these values be for QUIC? */
+            min_version = TLS1_3_VERSION;
+            max_version = TLS1_3_VERSION;
+            socket_type = SOCK_DGRAM;
+# ifndef OPENSSL_NO_DTLS
+            isdtls = 0;
+# endif
+            isquic = 1;
 #endif
             break;
         case OPT_SCTP:
@@ -2121,24 +2160,38 @@ int s_client_main(int argc, char **argv)
         goto end;
     }
 #endif
+#ifndef OPENSSL_NO_QUIC
+    if (isquic && tfo) {
+        BIO_printf(bio_err, "%s: QUIC does not support the -tfo option\n", prog);
+        goto end;
+    }
+#endif
 
     if (tfo)
         BIO_printf(bio_c_out, "Connecting via TFO\n");
  re_start:
     if (init_client(&sock, host, port, bindhost, bindport, socket_family,
-                    socket_type, protocol, tfo, &tfo_addr) == 0) {
+                    socket_type, protocol, tfo, !isquic, &peer_addr) == 0) {
         BIO_printf(bio_err, "connect:errno=%d\n", get_last_socket_error());
         BIO_closesocket(sock);
         goto end;
     }
     BIO_printf(bio_c_out, "CONNECTED(%08X)\n", sock);
 
-    if (c_nbio) {
+    /*
+     * QUIC always uses a non-blocking socket - and we have to switch on
+     * non-blocking mode at the SSL level
+     */
+    if (c_nbio || isquic) {
         if (!BIO_socket_nbio(sock, 1)) {
             ERR_print_errors(bio_err);
             goto end;
         }
-        BIO_printf(bio_c_out, "Turned on non blocking io\n");
+        if (c_nbio) {
+            if (isquic && !SSL_set_blocking_mode(con, 0))
+                goto end;
+            BIO_printf(bio_c_out, "Turned on non blocking io\n");
+        }
     }
 #ifndef OPENSSL_NO_DTLS
     if (isdtls) {
@@ -2199,6 +2252,15 @@ int s_client_main(int argc, char **argv)
         }
     } else
 #endif /* OPENSSL_NO_DTLS */
+#ifndef OPENSSL_NO_QUIC
+    if (isquic) {
+        sbio = BIO_new_dgram(sock, BIO_NOCLOSE);
+        if (!SSL_set_initial_peer_addr(con, peer_addr)) {
+            BIO_printf(bio_err, "Failed to set the inital peer address\n");
+            goto shut;
+        }
+    } else
+#endif
         sbio = BIO_new_socket(sock, BIO_NOCLOSE);
 
     if (sbio == NULL) {
@@ -2209,10 +2271,10 @@ int s_client_main(int argc, char **argv)
     }
 
     /* Now that we're using a BIO... */
-    if (tfo_addr != NULL)
-        (void)BIO_set_conn_address(sbio, tfo_addr);
-    if (tfo)
+    if (tfo) {
+        (void)BIO_set_conn_address(sbio, peer_addr);
         (void)BIO_set_tfo(sbio, 1);
+    }
 
     if (nbio_test) {
         BIO *test;
@@ -2266,6 +2328,7 @@ int s_client_main(int argc, char **argv)
     tty_on = 0;
     read_ssl = 1;
     write_ssl = 1;
+    first_loop = 1;
 
     cbuf_len = 0;
     cbuf_off = 0;
@@ -2841,10 +2904,23 @@ int s_client_main(int argc, char **argv)
         FD_ZERO(&readfds);
         FD_ZERO(&writefds);
 
-        if (SSL_is_dtls(con) && DTLSv1_get_timeout(con, &timeout))
-            timeoutp = &timeout;
-        else
+        if ((isdtls || isquic) && SSL_get_tick_timeout(con, &timeout)) {
+            /*
+             * TODO(QUIC): The need to do this seems like an unintended
+             * consequence of the SSL_get_tick_timeout() design. You cannot
+             * call select with the returned timeout if tv_sec < 0 because it
+             * errors out. Possibly SSL_get_tick_timeout() should return 0 if
+             * tv_sec < 0 to make it easier to detect this? Or alternatively
+             * make it work the same way that DTLSv1_get_timeout() did which
+             * would make SSL_get_tick_timeout() a drop in replacement
+             */
+            if (timeout.tv_sec < 0)
+                timeoutp = NULL;
+            else
+                timeoutp = &timeout;
+        } else {
             timeoutp = NULL;
+        }
 
         if (!SSL_is_init_finished(con) && SSL_total_renegotiations(con) == 0
                 && SSL_get_key_update_type(con) == SSL_KEY_UPDATE_NONE) {
@@ -2928,15 +3004,26 @@ int s_client_main(int argc, char **argv)
                     openssl_fdset(fileno_stdout(), &writefds);
 #endif
             }
-            if (read_ssl)
+
+            /*
+             * Note that for QUIC we never actually check FD_ISSET() for the
+             * underlying network fds. We just rely on select waking up when
+             * they become readable/writeable and then SSL_tick() doing the
+             * right thing.
+             */
+            if ((!isquic && read_ssl)
+                    || (isquic && SSL_net_read_desired(con)))
                 openssl_fdset(SSL_get_fd(con), &readfds);
-            if (write_ssl)
+            if ((!isquic && write_ssl)
+                    || (isquic && (first_loop || SSL_net_write_desired(con))))
                 openssl_fdset(SSL_get_fd(con), &writefds);
 #else
             if (!tty_on || !write_tty) {
-                if (read_ssl)
+                if ((!isquic && read_ssl)
+                        || (isquic && SSL_net_read_desired(con)))
                     openssl_fdset(SSL_get_fd(con), &readfds);
-                if (write_ssl)
+                if ((!isquic && write_ssl)
+                        || (isquic && (first_loop || SSL_net_write_desired(con))))
                     openssl_fdset(SSL_get_fd(con), &writefds);
             }
 #endif
@@ -2980,10 +3067,17 @@ int s_client_main(int argc, char **argv)
             }
         }
 
-        if (SSL_is_dtls(con) && DTLSv1_handle_timeout(con) > 0)
-            BIO_printf(bio_err, "TIMEOUT occurred\n");
+        if (timeoutp != NULL) {
+            SSL_tick(con);
+            if (isdtls
+                    && !FD_ISSET(SSL_get_fd(con), &readfds)
+                    && !FD_ISSET(SSL_get_fd(con), &writefds))
+                BIO_printf(bio_err, "TIMEOUT occurred\n");
+        }
 
-        if (!ssl_pending && FD_ISSET(SSL_get_fd(con), &writefds)) {
+        if (!ssl_pending
+                && ((!isquic && FD_ISSET(SSL_get_fd(con), &writefds))
+                    || (isquic && (cbuf_len > 0 || first_loop)))) {
             k = SSL_write(con, &(cbuf[cbuf_off]), (unsigned int)cbuf_len);
             switch (SSL_get_error(con, k)) {
             case SSL_ERROR_NONE:
@@ -3076,7 +3170,8 @@ int s_client_main(int argc, char **argv)
                 read_ssl = 1;
                 write_tty = 0;
             }
-        } else if (ssl_pending || FD_ISSET(SSL_get_fd(con), &readfds)) {
+        } else if (ssl_pending
+                   || (!isquic && FD_ISSET(SSL_get_fd(con), &readfds))) {
 #ifdef RENEG
             {
                 static int iiii;
@@ -3187,9 +3282,9 @@ int s_client_main(int argc, char **argv)
                 ret = 0;
                 goto shut;
             }
-            write_ssl = 1;
             read_tty = 0;
         }
+        first_loop = 0;
     }
 
  shut:
@@ -3243,7 +3338,7 @@ int s_client_main(int argc, char **argv)
     OPENSSL_free(srp_arg.srppassin);
 #endif
     OPENSSL_free(sname_alloc);
-    BIO_ADDR_free(tfo_addr);
+    BIO_ADDR_free(peer_addr);
     OPENSSL_free(connectstr);
     OPENSSL_free(bindstr);
     OPENSSL_free(bindhost);
