@@ -760,7 +760,7 @@ int OPENSSL_atexit(void (*handler)(void))
         union {
             void *sym;
             void (*func)(void);
-        } handlersym;
+        } handlersym = { 0 };
 
         handlersym.func = handler;
 # if defined(DSO_WIN32) && !defined(_WIN32_WCE)
