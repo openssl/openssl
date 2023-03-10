@@ -111,8 +111,8 @@ OSSL_CMP_CTX_set1_senderNonce
  int OSSL_CMP_CTX_set1_pkey(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey);
  int OSSL_CMP_CTX_set1_referenceValue(OSSL_CMP_CTX *ctx,
                                       const unsigned char *ref, int len);
- int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx, const unsigned char *sec,
-                                   const int len);
+ int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx,
+                                   const unsigned char *sec, const int len);
 
  /* CMP message header and extra certificates: */
  int OSSL_CMP_CTX_set1_recipient(OSSL_CMP_CTX *ctx, const X509_NAME *name);
@@ -464,7 +464,7 @@ OSSL_CMP_CTX_build_cert_chain() builds a certificate chain for the CMP signer
 certificate previously set in the I<ctx>. It adds the optional I<candidates>,
 a list of intermediate CA certs that may already constitute the targeted chain,
 to the untrusted certs that may already exist in the I<ctx>.
-Then the function uses this augumented set of certs for chain construction.
+Then the function uses this augmented set of certs for chain construction.
 If I<own_trusted> is NULL it builds the chain as far down as possible and
 ignores any verification errors. Else the CMP signer certificate must be
 verifiable where the chain reaches a trust anchor contained in I<own_trusted>.
