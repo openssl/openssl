@@ -537,7 +537,8 @@ long ossl_quic_ctrl(SSL *s, int cmd, long larg, void *parg)
         qc->ssl_mode &= ~(uint32_t)larg;
         return qc->ssl_mode;
     default:
-        return 0;
+        /* Probably a TLS related ctrl. Defer to our internal SSL object */
+        return SSL_ctrl(qc->tls, cmd, larg, parg);
     }
 }
 
