@@ -457,8 +457,8 @@ int OSSL_CMP_CTX_set1_referenceValue(OSSL_CMP_CTX *ctx,
 }
 
 /* Set or clear the password to be used for protecting messages with PBMAC */
-int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx, const unsigned char *sec,
-                                  const int len)
+int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx,
+                                  const unsigned char *sec, int len)
 {
     ASN1_OCTET_STRING *secretValue = NULL;
     if (ctx == NULL) {
