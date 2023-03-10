@@ -1223,7 +1223,7 @@ size_t ossl_statem_server_max_message_size(SSL_CONNECTION *s)
         return CLIENT_KEY_EXCH_MAX_LENGTH;
 
     case TLS_ST_SR_CERT_VRFY:
-        return SSL3_RT_MAX_PLAIN_LENGTH;
+        return CERTIFICATE_VERIFY_MAX_LENGTH;
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
     case TLS_ST_SR_NEXT_PROTO:
