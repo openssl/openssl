@@ -1019,13 +1019,9 @@ _bsaes_key_convert:
 //   No output registers, usual AAPCS64 register preservation
 ossl_bsaes_cbc_encrypt:
         cmp     x2, #128
-#ifdef __APPLE__
         bhs     .Lcbc_do_bsaes
         b       AES_cbc_encrypt
 .Lcbc_do_bsaes:
-#else
-        blo     AES_cbc_encrypt
-#endif
 
         // it is up to the caller to make sure we are called with enc == 0
 
