@@ -31,6 +31,9 @@
 /* Max ServerHello size permitted by RFC 8446 */
 #define SERVER_HELLO_MAX_LENGTH         65607
 
+/* Max CertificateVerify size permitted by RFC 8446 */
+#define CERTIFICATE_VERIFY_MAX_LENGTH   65538
+
 /* Max should actually be 36 but we are generous */
 #define FINISHED_MAX_LENGTH             64
 
