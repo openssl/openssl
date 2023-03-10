@@ -652,7 +652,7 @@ int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
 
     if (BIO_ADDR_family(&qc->init_peer_addr) == AF_UNSPEC) {
         /* Peer address must have been set. */
-        QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+        QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_REMOTE_PEER_ADDRESS_NOT_SET, NULL);
         return -1; /* Non-protocol error */
     }
 
@@ -664,7 +664,7 @@ int ossl_quic_do_handshake(QUIC_CONNECTION *qc)
 
     if (qc->net_rbio == NULL || qc->net_wbio == NULL) {
         /* Need read and write BIOs. */
-        QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_PASSED_INVALID_ARGUMENT, NULL);
+        QUIC_RAISE_NON_NORMAL_ERROR(qc, SSL_R_BIO_NOT_SET, NULL);
         return -1; /* Non-protocol error */
     }
 
