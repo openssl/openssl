@@ -1493,6 +1493,7 @@ SSL_R_RECORDS_NOT_RELEASED:321:records not released
 SSL_R_RECORD_LAYER_FAILURE:313:record layer failure
 SSL_R_RECORD_LENGTH_MISMATCH:213:record length mismatch
 SSL_R_RECORD_TOO_SMALL:298:record too small
+SSL_R_REMOTE_PEER_ADDRESS_NOT_SET:346:remote peer address not set
 SSL_R_RENEGOTIATE_EXT_TOO_LONG:335:renegotiate ext too long
 SSL_R_RENEGOTIATION_ENCODING_ERR:336:renegotiation encoding err
 SSL_R_RENEGOTIATION_MISMATCH:337:renegotiation mismatch
