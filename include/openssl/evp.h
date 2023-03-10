@@ -1774,6 +1774,10 @@ int EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
 const OSSL_PARAM *EVP_KEYMGMT_gettable_params(const EVP_KEYMGMT *keymgmt);
 const OSSL_PARAM *EVP_KEYMGMT_settable_params(const EVP_KEYMGMT *keymgmt);
 const OSSL_PARAM *EVP_KEYMGMT_gen_settable_params(const EVP_KEYMGMT *keymgmt);
+const OSSL_PARAM *EVP_KEYMGMT_importable_params(const EVP_KEYMGMT *keymgmt,
+                                                int selection);
+const OSSL_PARAM *EVP_KEYMGMT_exportable_params(const EVP_KEYMGMT *keymgmt,
+                                                int selection);
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);

@@ -486,6 +486,12 @@ const OSSL_PARAM *evp_keymgmt_import_types(const EVP_KEYMGMT *keymgmt,
     return keymgmt->import_types(selection);
 }
 
+const OSSL_PARAM *EVP_KEYMGMT_importable_params(const EVP_KEYMGMT *keymgmt,
+                                                int selection)
+{
+    return evp_keymgmt_import_types(keymgmt, selection);
+}
+
 int evp_keymgmt_export(const EVP_KEYMGMT *keymgmt, void *keydata,
                        int selection, OSSL_CALLBACK *param_cb, void *cbarg)
 {
@@ -504,6 +510,12 @@ const OSSL_PARAM *evp_keymgmt_export_types(const EVP_KEYMGMT *keymgmt,
     if (keymgmt->export_types == NULL)
         return NULL;
     return keymgmt->export_types(selection);
+}
+
+const OSSL_PARAM *EVP_KEYMGMT_exportable_params(const EVP_KEYMGMT *keymgmt,
+                                                int selection)
+{
+    return evp_keymgmt_export_types(keymgmt, selection);
 }
 
 void *evp_keymgmt_dup(const EVP_KEYMGMT *keymgmt, const void *keydata_from,
