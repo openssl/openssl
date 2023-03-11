@@ -314,7 +314,8 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
 
     if (keytype != NULL
             && (strcmp(keytype, "id-ecPublicKey") == 0
-                || strcmp(keytype, "1.2.840.10045.2.1") == 0))
+                || strcmp(keytype, "1.2.840.10045.2.1") == 0
+                || strcmp(keytype, "EC") == 0))
         isecoid = 1;
 
     OSSL_TRACE_BEGIN(DECODER) {
