@@ -55,7 +55,6 @@ static int aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
         GCM_HW_SET_KEY_CTR_FN(ks, AES_set_encrypt_key, AES_encrypt, NULL);
 # endif /* AES_CTR_ASM */
     }
-    ctx->key_set = 1;
     return 1;
 }
 
