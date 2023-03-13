@@ -786,10 +786,27 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                                       CMP_R_TRANSACTIONID_UNMATCHED))
         return 0;
 
+    /*
+     * enable clearing irrelevant errors in attempts to validate recipient nonce
+     * in case of delayed delivery.
+     */
+    (void)ERR_set_mark();
     /* compare received nonce with the one we sent */
     if (!check_transactionID_or_nonce(ctx->senderNonce, hdr->recipNonce,
-                                      CMP_R_RECIPNONCE_UNMATCHED))
-        return 0;
+                                      CMP_R_RECIPNONCE_UNMATCHED)) {
+        /* check if we are polling and received final response */
+        if (ctx->first_senderNonce == NULL
+            || OSSL_CMP_MSG_get_bodytype(msg) == OSSL_CMP_PKIBODY_POLLREP
+            /* compare received nonce with our sender nonce at poll start */
+            || !check_transactionID_or_nonce(ctx->first_senderNonce,
+                                             hdr->recipNonce,
+                                             CMP_R_RECIPNONCE_UNMATCHED)) {
+            (void)ERR_clear_last_mark();
+            return 0;
+        }
+    }
+    /* discard any intermediate error while trying to check recipient nonce */
+    (void)ERR_pop_to_mark();
 
     /* if not yet present, learn transactionID */
     if (ctx->transactionID == NULL
