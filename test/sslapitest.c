@@ -1172,7 +1172,7 @@ static int execute_test_ktls(int cis_ktls, int sis_ktls,
     int rx_supported;
     SSL_CONNECTION *clientsc, *serversc;
 
-    if (!TEST_true(create_test_sockets(&cfd, &sfd)))
+    if (!TEST_true(create_test_sockets(&cfd, &sfd, SOCK_STREAM, NULL)))
         goto end;
 
     /* Skip this test if the platform does not support ktls */
@@ -1317,7 +1317,7 @@ static int execute_test_ktls_sendfile(int tls_version, const char *cipher,
     buf = OPENSSL_zalloc(SENDFILE_SZ);
     buf_dst = OPENSSL_zalloc(SENDFILE_SZ);
     if (!TEST_ptr(buf) || !TEST_ptr(buf_dst)
-        || !TEST_true(create_test_sockets(&cfd, &sfd)))
+        || !TEST_true(create_test_sockets(&cfd, &sfd, SOCK_STREAM, NULL)))
         goto end;
 
     /* Skip this test if the platform does not support ktls */

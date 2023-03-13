@@ -71,7 +71,7 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   IF[{- !$disabled{quic} -}]
-    PROGRAMS{noinst}=priority_queue_test event_queue_test quicfaultstest
+    PROGRAMS{noinst}=priority_queue_test event_queue_test quicfaultstest quicapitest
   ENDIF
 
   IF[{- !$disabled{comp} && (!$disabled{brotli} || !$disabled{zstd} || !$disabled{zlib}) -}]
@@ -799,9 +799,13 @@ IF[{- !$disabled{tests} -}]
       INCLUDE[event_queue_test]=../include ../apps/include
       DEPEND[event_queue_test]=../libcrypto ../libssl.a libtestutil.a
 
-      SOURCE[quicfaultstest]=quicfaultstest.c helpers/quictestlib.c
+      SOURCE[quicfaultstest]=quicfaultstest.c helpers/ssltestlib.c helpers/quictestlib.c
       INCLUDE[quicfaultstest]=../include ../apps/include ..
       DEPEND[quicfaultstest]=../libcrypto.a ../libssl.a libtestutil.a
+
+      SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c helpers/quictestlib.c
+      INCLUDE[quicapitest]=../include ../apps/include
+      DEPEND[quicapitest]=../libcrypto.a ../libssl.a libtestutil.a
     ENDIF
 
     SOURCE[dhtest]=dhtest.c
@@ -1069,14 +1073,10 @@ ENDIF
   ENDIF
 
   IF[{- !$disabled{'quic'} -}]
-    PROGRAMS{noinst}=quicapitest quic_wire_test quic_ackm_test quic_record_test
+    PROGRAMS{noinst}=quic_wire_test quic_ackm_test quic_record_test
     PROGRAMS{noinst}=quic_fc_test quic_stream_test quic_cfq_test quic_txpim_test
     PROGRAMS{noinst}=quic_fifd_test quic_txp_test quic_tserver_test
   ENDIF
-
-  SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c
-  INCLUDE[quicapitest]=../include ../apps/include
-  DEPEND[quicapitest]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[quic_ackm_test]=quic_ackm_test.c
   INCLUDE[quic_ackm_test]=../include ../apps/include
