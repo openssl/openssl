@@ -982,7 +982,7 @@ int EVP_PKEY_type(int type)
 
 int EVP_PKEY_get_id(const EVP_PKEY *pkey)
 {
-    return pkey->type;
+    return pkey->type > 0 ? pkey->type : NID_undef;
 }
 
 int EVP_PKEY_get_base_id(const EVP_PKEY *pkey)
