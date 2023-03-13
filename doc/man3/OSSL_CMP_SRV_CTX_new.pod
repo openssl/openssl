@@ -12,7 +12,10 @@ OSSL_CMP_SRV_certConf_cb_t,
 OSSL_CMP_SRV_genm_cb_t,
 OSSL_CMP_SRV_error_cb_t,
 OSSL_CMP_SRV_pollReq_cb_t,
+OSSL_CMP_SRV_reset_transaction_cb_t,
+OSSL_CMP_SRV_delayed_delivery_cb_t,
 OSSL_CMP_SRV_CTX_init,
+OSSL_CMP_SRV_CTX_setup_polling,
 OSSL_CMP_SRV_CTX_get0_cmp_ctx,
 OSSL_CMP_SRV_CTX_get0_custom_ctx,
 OSSL_CMP_SRV_CTX_set_send_unprotected_errors,
@@ -64,6 +67,9 @@ OSSL_CMP_SRV_CTX_set_grant_implicit_confirm
                                           int certReqId,
                                           OSSL_CMP_MSG **certReq,
                                           int64_t *check_after);
+ typedef int (*OSSL_CMP_SRV_reset_transaction_cb_t)(OSSL_CMP_SRV_CTX *srv_ctx);
+ typedef int (*OSSL_CMP_SRV_delayed_delivery_cb_t)(OSSL_CMP_SRV_CTX *srv_ctx,
+                                                  const OSSL_CMP_MSG *req);
  int OSSL_CMP_SRV_CTX_init(OSSL_CMP_SRV_CTX *srv_ctx, void *custom_ctx,
                            OSSL_CMP_SRV_cert_request_cb_t process_cert_request,
                            OSSL_CMP_SRV_rr_cb_t process_rr,
@@ -71,6 +77,9 @@ OSSL_CMP_SRV_CTX_set_grant_implicit_confirm
                            OSSL_CMP_SRV_error_cb_t process_error,
                            OSSL_CMP_SRV_certConf_cb_t process_certConf,
                            OSSL_CMP_SRV_pollReq_cb_t process_pollReq);
+ int OSSL_CMP_SRV_CTX_setup_polling(OSSL_CMP_SRV_CTX *srv_ctx,
+                                    OSSL_CMP_SRV_reset_transaction_cb_t reset_transaction,
+                                    OSSL_CMP_SRV_delayed_delivery_cb_t delayed_delivery);
 
  OSSL_CMP_CTX *OSSL_CMP_SRV_CTX_get0_cmp_ctx(const OSSL_CMP_SRV_CTX *srv_ctx);
  void *OSSL_CMP_SRV_CTX_get0_custom_ctx(const OSSL_CMP_SRV_CTX *srv_ctx);
@@ -112,6 +121,9 @@ general messages, error messages, and poll requests.
 All arguments except I<srv_ctx> may be NULL.
 If a callback for some message type is not given this means that the respective
 type of CMP message is not supported by the server.
+
+OSSL_CMP_SRV_CTX_setup_polling() sets in the given I<srv_ctx> callback functions
+for reseting transaction and intitiating delayed delivery.
 
 OSSL_CMP_SRV_CTX_get0_cmp_ctx() returns the B<OSSL_CMP_CTX> from the I<srv_ctx>.
 

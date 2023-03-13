@@ -32,6 +32,8 @@ struct ossl_cmp_srv_ctx_st
     OSSL_CMP_SRV_error_cb_t process_error;
     OSSL_CMP_SRV_certConf_cb_t process_certConf;
     OSSL_CMP_SRV_pollReq_cb_t process_pollReq;
+    OSSL_CMP_SRV_reset_transaction_cb_t reset_transaction;
+    OSSL_CMP_SRV_delayed_delivery_cb_t delayed_delivery;
 
     int sendUnprotectedErrors; /* Send error and rejection msgs unprotected */
     int acceptUnprotected;     /* Accept requests with no/invalid prot. */
@@ -86,6 +88,19 @@ int OSSL_CMP_SRV_CTX_init(OSSL_CMP_SRV_CTX *srv_ctx, void *custom_ctx,
     srv_ctx->process_error = process_error;
     srv_ctx->process_certConf = process_certConf;
     srv_ctx->process_pollReq = process_pollReq;
+    return 1;
+}
+
+int OSSL_CMP_SRV_CTX_setup_polling(OSSL_CMP_SRV_CTX *srv_ctx,
+                                   OSSL_CMP_SRV_reset_transaction_cb_t reset_transaction,
+                                   OSSL_CMP_SRV_delayed_delivery_cb_t delayed_delivery)
+{
+    if (srv_ctx == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    srv_ctx->reset_transaction = reset_transaction;
+    srv_ctx->delayed_delivery = delayed_delivery;
     return 1;
 }
 
@@ -147,6 +162,32 @@ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
     }
     srv_ctx->grantImplicitConfirm = val != 0;
     return 1;
+}
+
+/* Return error msg with waiting status if polling is initiated, else NULL. */
+static OSSL_CMP_MSG *delayed_delivery(OSSL_CMP_SRV_CTX *srv_ctx,
+                                      const OSSL_CMP_MSG *req)
+{
+    OSSL_CMP_MSG *msg = NULL;
+    OSSL_CMP_PKISI *si = NULL;
+    int ret;
+
+    if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL
+                     && srv_ctx->delayed_delivery != NULL))
+        return NULL;
+
+    ret = srv_ctx->delayed_delivery(srv_ctx, req);
+    if (ret == 0 || !ossl_assert(ret != -1))
+        return NULL;
+
+    if ((si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_waiting, 0, NULL))
+        == NULL)
+        return NULL;
+
+    msg = ossl_cmp_error_new(srv_ctx->ctx, si, 0,
+                             NULL, srv_ctx->sendUnprotectedErrors);
+    OSSL_CMP_PKISI_free(si);
+    return msg;
 }
 
 /*
@@ -387,13 +428,66 @@ static OSSL_CMP_MSG *process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
     return msg;
 }
 
+/* pollreq should be handled separately, to avoid recursive call */
+static OSSL_CMP_MSG *process_non_polling_request(OSSL_CMP_SRV_CTX *srv_ctx,
+                                                 const OSSL_CMP_MSG *req)
+{
+    OSSL_CMP_MSG *rsp = NULL;
+
+    if (!ossl_assert(srv_ctx != NULL && srv_ctx->ctx != NULL && req != NULL
+                     && req->body != NULL))
+        return NULL;
+
+    switch (OSSL_CMP_MSG_get_bodytype(req)) {
+    case OSSL_CMP_PKIBODY_IR:
+    case OSSL_CMP_PKIBODY_CR:
+    case OSSL_CMP_PKIBODY_P10CR:
+    case OSSL_CMP_PKIBODY_KUR:
+        if (srv_ctx->process_cert_request == NULL)
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        else
+            rsp = process_cert_request(srv_ctx, req);
+        break;
+    case OSSL_CMP_PKIBODY_RR:
+        if (srv_ctx->process_rr == NULL)
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        else
+            rsp = process_rr(srv_ctx, req);
+        break;
+    case OSSL_CMP_PKIBODY_GENM:
+        if (srv_ctx->process_genm == NULL)
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        else
+            rsp = process_genm(srv_ctx, req);
+        break;
+    case OSSL_CMP_PKIBODY_ERROR:
+        if (srv_ctx->process_error == NULL)
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        else
+            rsp = process_error(srv_ctx, req);
+        break;
+    case OSSL_CMP_PKIBODY_CERTCONF:
+        if (srv_ctx->process_certConf == NULL)
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        else
+            rsp = process_certConf(srv_ctx, req);
+        break;
+    default:
+        /* Other request message types are not supported */
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
+        break;
+    }
+
+    return rsp;
+}
+
 static OSSL_CMP_MSG *process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
                                      const OSSL_CMP_MSG *req)
 {
     OSSL_CMP_POLLREQCONTENT *prc;
     OSSL_CMP_POLLREQ *pr;
     int certReqId;
-    OSSL_CMP_MSG *certReq;
+    OSSL_CMP_MSG *orig_req;
     int64_t check_after = 0;
     OSSL_CMP_MSG *msg = NULL;
 
@@ -413,12 +507,12 @@ static OSSL_CMP_MSG *process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
         return NULL;
     }
     if (!srv_ctx->process_pollReq(srv_ctx, req, certReqId,
-                                  &certReq, &check_after))
+                                  &orig_req, &check_after))
         return NULL;
 
-    if (certReq != NULL) {
-        msg = process_cert_request(srv_ctx, certReq);
-        OSSL_CMP_MSG_free(certReq);
+    if (orig_req != NULL) {
+        msg = process_non_polling_request(srv_ctx, orig_req);
+        OSSL_CMP_MSG_free(orig_req);
     } else {
         if ((msg = ossl_cmp_pollRep_new(srv_ctx->ctx, certReqId,
                                         check_after)) == NULL)
@@ -509,6 +603,10 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         if (!OSSL_CMP_CTX_set1_transactionID(ctx, NULL)
                 || !OSSL_CMP_CTX_set1_senderNonce(ctx, NULL))
             goto err;
+
+        if (srv_ctx->reset_transaction != NULL)
+            (void)srv_ctx->reset_transaction(srv_ctx);
+
         break;
     default:
         /* transactionID should be already initialized */
@@ -528,50 +626,17 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     if (!req_verified)
         goto err;
 
-    switch (req_type) {
-    case OSSL_CMP_PKIBODY_IR:
-    case OSSL_CMP_PKIBODY_CR:
-    case OSSL_CMP_PKIBODY_P10CR:
-    case OSSL_CMP_PKIBODY_KUR:
-        if (srv_ctx->process_cert_request == NULL)
-            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
-        else
-            rsp = process_cert_request(srv_ctx, req);
-        break;
-    case OSSL_CMP_PKIBODY_RR:
-        if (srv_ctx->process_rr == NULL)
-            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
-        else
-            rsp = process_rr(srv_ctx, req);
-        break;
-    case OSSL_CMP_PKIBODY_GENM:
-        if (srv_ctx->process_genm == NULL)
-            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
-        else
-            rsp = process_genm(srv_ctx, req);
-        break;
-    case OSSL_CMP_PKIBODY_ERROR:
-        if (srv_ctx->process_error == NULL)
-            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
-        else
-            rsp = process_error(srv_ctx, req);
-        break;
-    case OSSL_CMP_PKIBODY_CERTCONF:
-        if (srv_ctx->process_certConf == NULL)
-            ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
-        else
-            rsp = process_certConf(srv_ctx, req);
-        break;
-    case OSSL_CMP_PKIBODY_POLLREQ:
+    if (req_type == OSSL_CMP_PKIBODY_POLLREQ) {
         if (srv_ctx->process_pollReq == NULL)
             ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
         else
             rsp = process_pollReq(srv_ctx, req);
-        break;
-    default:
-        /* Other request message types are not supported */
-        ERR_raise(ERR_LIB_CMP, CMP_R_UNEXPECTED_PKIBODY);
-        break;
+    } else {
+        if (srv_ctx->delayed_delivery != NULL
+            && (rsp = delayed_delivery(srv_ctx, req)) != NULL) {
+            goto err;
+        }
+        rsp = process_non_polling_request(srv_ctx, req);
     }
 
  err:
@@ -627,15 +692,22 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
             break;
         /* fall through */
 
+    case OSSL_CMP_PKIBODY_ERROR:
+        if (rsp != NULL
+            && ossl_cmp_is_error_with_waiting(rsp))
+            break;
+        /* fall through */
+
     case OSSL_CMP_PKIBODY_RP:
     case OSSL_CMP_PKIBODY_PKICONF:
     case OSSL_CMP_PKIBODY_GENP:
-    case OSSL_CMP_PKIBODY_ERROR:
         /* Other terminating response message types are not supported */
         /* Prepare for next transaction, ignoring any errors here: */
         (void)OSSL_CMP_CTX_set1_transactionID(ctx, NULL);
         (void)OSSL_CMP_CTX_set1_senderNonce(ctx, NULL);
         ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
+        if (srv_ctx->reset_transaction != NULL)
+            (void)srv_ctx->reset_transaction(srv_ctx);
 
     default: /* not closing transaction in other cases */
         break;
