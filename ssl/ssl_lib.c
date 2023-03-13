@@ -1829,7 +1829,16 @@ int SSL_has_pending(const SSL *s)
      * That data may not result in any application data, or we may fail to parse
      * the records for some reason.
      */
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc;
+#ifndef OPENSSL_NO_QUIC
+    const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
+
+    if (qc != NULL)
+        return ossl_quic_has_pending(qc);
+#endif
+
+
+    sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     /* Check buffered app data if any first */
     if (SSL_CONNECTION_IS_DTLS(sc)) {

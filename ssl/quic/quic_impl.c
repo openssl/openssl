@@ -1194,9 +1194,8 @@ int ossl_quic_peek(SSL *s, void *buf, size_t len, size_t *bytes_read)
  * SSL_pending
  * -----------
  */
-size_t ossl_quic_pending(const SSL *s)
+static size_t ossl_quic_pending_int(const QUIC_CONNECTION *qc)
 {
-    const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
     size_t avail = 0;
     int fin = 0;
 
@@ -1211,6 +1210,18 @@ size_t ossl_quic_pending(const SSL *s)
         return 0;
 
     return avail;
+}
+
+size_t ossl_quic_pending(const SSL *s)
+{
+    const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
+
+    return ossl_quic_pending_int(qc);
+}
+
+int ossl_quic_has_pending(const QUIC_CONNECTION *qc)
+{
+    return ossl_quic_pending_int(qc) > 0;
 }
 
 /*
