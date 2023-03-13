@@ -13,68 +13,79 @@
 #include <openssl/opensslconf.h>
 #include <openssl/quic.h>
 
-#include "helpers/ssltestlib.h"
+#include "helpers/quictestlib.h"
 #include "testutil.h"
 #include "testutil/output.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *defctxnull = NULL;
+static char *certsdir = NULL;
+static char *cert = NULL;
+static char *privkey = NULL;
 
 static int is_fips = 0;
 
-#if 0
-/* TODO(QUIC): Temporarily disabled during front-end I/O API finalization. */
-
 /*
  * Test that we read what we've written.
+ * Test 0: Non-blocking
+ * Test 1: Blocking
  */
-static int test_quic_write_read(void)
+static int test_quic_write_read(int idx)
 {
-    SSL_CTX *cctx = NULL, *sctx = NULL;
-    SSL *clientquic = NULL, *serverquic = NULL;
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
     int j, ret = 0;
-    char buf[20];
+    unsigned char buf[20];
     static char *msg = "A test message";
     size_t msglen = strlen(msg);
     size_t numbytes = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, OSSL_QUIC_server_method(),
-                                       OSSL_QUIC_client_method(),
-                                       0,
-                                       0,
-                                       &sctx, &cctx, NULL, NULL))
-            || !TEST_true(create_ssl_objects(sctx, cctx, &serverquic, &clientquic,
-                                             NULL, NULL))
-            || !TEST_true(create_bare_ssl_connection(serverquic, clientquic,
-                                                     SSL_ERROR_NONE, 0, 0)))
+    if (idx == 1 && !qtest_supports_blocking())
+        return TEST_skip("Blocking tests not supported in this build");
+
+    if (!TEST_ptr(cctx)
+            || !TEST_true(qtest_create_quic_objects(libctx, cctx, cert, privkey,
+                                                    idx, &qtserv, &clientquic,
+                                                    NULL))
+            || !TEST_true(SSL_set_tlsext_host_name(clientquic, "localhost"))
+            || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto end;
 
     for (j = 0; j < 2; j++) {
         /* Check that sending and receiving app data is ok */
-        if (!TEST_true(SSL_write_ex(clientquic, msg, msglen, &numbytes))
-                || !TEST_true(SSL_read_ex(serverquic, buf, sizeof(buf),
-                                          &numbytes))
+        if (!TEST_true(SSL_write_ex(clientquic, msg, msglen, &numbytes)))
+            goto end;
+        ossl_quic_tserver_tick(qtserv);
+        if (!TEST_true(ossl_quic_tserver_read(qtserv, buf, sizeof(buf),
+                                                     &numbytes))
                 || !TEST_mem_eq(buf, numbytes, msg, msglen))
             goto end;
 
-        if (!TEST_true(SSL_write_ex(serverquic, msg, msglen, &numbytes))
-                || !TEST_true(SSL_read_ex(clientquic, buf, sizeof(buf),
-                                          &numbytes))
+        if (!TEST_true(ossl_quic_tserver_write(qtserv, (unsigned char *)msg,
+                                               msglen, &numbytes)))
+            goto end;
+        ossl_quic_tserver_tick(qtserv);
+        SSL_tick(clientquic);
+        if (!TEST_true(SSL_has_pending(clientquic))
+                || !TEST_int_eq(SSL_pending(clientquic), msglen)
+                || !TEST_true(SSL_read_ex(clientquic, buf, sizeof(buf), &numbytes))
                 || !TEST_mem_eq(buf, numbytes, msg, msglen))
             goto end;
     }
 
+    if (!TEST_true(qtest_shutdown(qtserv, clientquic)))
+        goto end;
+
     ret = 1;
 
  end:
-    SSL_free(serverquic);
+    ossl_quic_tserver_free(qtserv);
     SSL_free(clientquic);
-    SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
 
     return ret;
 }
-#endif
 
 /* Test that a vanilla QUIC SSL object has the expected ciphersuites available */
 static int test_ciphersuites(void)
@@ -144,43 +155,54 @@ int setup_tests(void)
      */
     if (!TEST_false(OSSL_PROVIDER_available(NULL, "default"))
             || !TEST_false(OSSL_PROVIDER_available(NULL, "fips")))
-        return 0;
+        goto err;
 
     if (!test_skip_common_options()) {
         TEST_error("Error parsing test options\n");
-        return 0;
+        goto err;
     }
 
     if (!TEST_ptr(modulename = test_get_argument(0))
-            || !TEST_ptr(configfile = test_get_argument(1)))
-        return 0;
+            || !TEST_ptr(configfile = test_get_argument(1))
+            || !TEST_ptr(certsdir = test_get_argument(2)))
+        goto err;
 
     if (!TEST_true(OSSL_LIB_CTX_load_config(libctx, configfile)))
-        return 0;
+        goto err;
 
     /* Check we have the expected provider available */
     if (!TEST_true(OSSL_PROVIDER_available(libctx, modulename)))
-        return 0;
+        goto err;
 
     /* Check the default provider is not available */
     if (strcmp(modulename, "default") != 0
             && !TEST_false(OSSL_PROVIDER_available(libctx, "default")))
-        return 0;
+        goto err;
 
     if (strcmp(modulename, "fips") == 0)
         is_fips = 1;
 
-    /* TODO(QUIC): Temporarily disabled during front-end I/O API finalization. */
-#if 0
-    ADD_TEST(test_quic_write_read);
-#endif
+    cert = test_mk_file_path(certsdir, "servercert.pem");
+    if (cert == NULL)
+        goto err;
+
+    privkey = test_mk_file_path(certsdir, "serverkey.pem");
+    if (privkey == NULL)
+        goto err;
+
+    ADD_ALL_TESTS(test_quic_write_read, 2);
     ADD_TEST(test_ciphersuites);
 
     return 1;
+ err:
+    cleanup_tests();
+    return 0;
 }
 
 void cleanup_tests(void)
 {
+    OPENSSL_free(cert);
+    OPENSSL_free(privkey);
     OSSL_PROVIDER_unload(defctxnull);
     OSSL_LIB_CTX_free(libctx);
 }

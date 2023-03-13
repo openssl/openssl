@@ -13,16 +13,11 @@
 #include "ssltestlib.h"
 #include "../testutil.h"
 
-#ifdef OPENSSL_SYS_UNIX
-# include <unistd.h>
-# ifndef OPENSSL_NO_KTLS
-#  include <netinet/in.h>
-#  include <netinet/in.h>
-#  include <arpa/inet.h>
-#  include <sys/socket.h>
-#  include <unistd.h>
-#  include <fcntl.h>
-# endif
+#if (!defined(OPENSSL_NO_KTLS) || !defined(OPENSSL_NO_QUIC)) && !defined(OPENSSL_NO_POSIX_IO)
+# include <netinet/in.h>
+# include <arpa/inet.h>
+# include <sys/socket.h>
+# include <fcntl.h>
 #endif
 
 static int tls_dump_new(BIO *bi);
@@ -879,7 +874,7 @@ int create_ssl_ctx_pair(OSSL_LIB_CTX *libctx, const SSL_METHOD *sm,
 
 #define MAXLOOPS    1000000
 
-#if !defined(OPENSSL_NO_KTLS) && !defined(OPENSSL_NO_SOCK)
+#if (!defined(OPENSSL_NO_KTLS) || !defined(OPENSSL_NO_QUIC)) && !defined(OPENSSL_NO_POSIX_IO)
 static int set_nb(int fd)
 {
     int flags;
@@ -891,7 +886,7 @@ static int set_nb(int fd)
     return flags;
 }
 
-int create_test_sockets(int *cfdp, int *sfdp)
+int create_test_sockets(int *cfdp, int *sfdp, int socktype, BIO_ADDR *saddr)
 {
     struct sockaddr_in sin;
     const char *host = "127.0.0.1";
@@ -903,7 +898,7 @@ int create_test_sockets(int *cfdp, int *sfdp)
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = inet_addr(host);
 
-    afd = socket(AF_INET, SOCK_STREAM, 0);
+    afd = socket(AF_INET, socktype, 0);
     if (afd < 0)
         return 0;
 
@@ -913,15 +908,30 @@ int create_test_sockets(int *cfdp, int *sfdp)
     if (getsockname(afd, (struct sockaddr*)&sin, &slen) < 0)
         goto out;
 
-    if (listen(afd, 1) < 0)
+    if (saddr != NULL
+            && !BIO_ADDR_rawmake(saddr, sin.sin_family, &sin.sin_addr,
+                                 sizeof(sin.sin_addr), sin.sin_port))
         goto out;
 
-    cfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (socktype == SOCK_STREAM && listen(afd, 1) < 0)
+        goto out;
+
+    cfd = socket(AF_INET, socktype, 0);
     if (cfd < 0)
         goto out;
 
     if (set_nb(afd) == -1)
         goto out;
+
+    /*
+     * If a DGRAM socket then we don't call "accept" or "connect" - so act like
+     * we already called them.
+     */
+    if (socktype == SOCK_DGRAM) {
+        cfd_connected = 1;
+        sfd = afd;
+        afd = -1;
+    }
 
     while (sfd == -1 || !cfd_connected) {
         sfd = accept(afd, NULL, 0);
@@ -950,7 +960,7 @@ success:
     if (afd != -1)
         close(afd);
     return ret;
-}
+} /* (!defined(OPENSSL_NO_KTLS) || !defined(OPENSSL_NO_QUIC)) && !defined(OPENSSL_NO_POSIX_IO) */
 
 int create_ssl_objects2(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
                           SSL **cssl, int sfd, int cfd)

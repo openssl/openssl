@@ -8,9 +8,14 @@
  */
 
 #include <assert.h>
+#include <openssl/configuration.h>
 #include <openssl/bio.h>
 #include "quictestlib.h"
+#include "ssltestlib.h"
 #include "../testutil.h"
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+# include "../threadstest.h"
+#endif
 #include "internal/quic_wire_pkt.h"
 #include "internal/quic_record_tx.h"
 #include "internal/quic_error.h"
@@ -61,8 +66,9 @@ static void handshake_finish(void *arg);
 
 static BIO_METHOD *get_bio_method(void);
 
-int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
-                              QUIC_TSERVER **qtserv, SSL **cssl,
+int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
+                              char *certfile, char *keyfile,
+                              int block, QUIC_TSERVER **qtserv, SSL **cssl,
                               QTEST_FAULT **fault)
 {
     /* ALPN value as recognised by QUIC_TSERVER */
@@ -79,28 +85,54 @@ int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
     if (!TEST_ptr(*cssl))
         return 0;
 
-    if (!TEST_true(SSL_set_blocking_mode(*cssl, 0)))
-        goto err;
-
     /* SSL_set_alpn_protos returns 0 for success! */
     if (!TEST_false(SSL_set_alpn_protos(*cssl, alpn, sizeof(alpn))))
         goto err;
 
-    if (!TEST_true(BIO_new_bio_dgram_pair(&cbio, 0, &sbio, 0)))
-        goto err;
-
-    if (!TEST_true(BIO_dgram_set_caps(cbio, BIO_DGRAM_CAP_HANDLES_DST_ADDR))
-            || !TEST_true(BIO_dgram_set_caps(sbio, BIO_DGRAM_CAP_HANDLES_DST_ADDR)))
-        goto err;
-
-    SSL_set_bio(*cssl, cbio, cbio);
-
     if (!TEST_ptr(peeraddr = BIO_ADDR_new()))
         goto err;
 
-    /* Dummy server address */
-    if (!TEST_true(BIO_ADDR_rawmake(peeraddr, AF_INET, &ina, sizeof(ina),
-                                    htons(0))))
+    if (block) {
+#if !defined(OPENSSL_NO_POSIX_IO)
+        int cfd, sfd;
+
+        /*
+         * For blocking mode we need to create actual sockets rather than doing
+         * everything in memory
+         */
+        if (!TEST_true(create_test_sockets(&cfd, &sfd, SOCK_DGRAM, peeraddr)))
+            goto err;
+        cbio = BIO_new_dgram(cfd, 1);
+        if (!TEST_ptr(cbio)) {
+            close(cfd);
+            close(sfd);
+            goto err;
+        }
+        sbio = BIO_new_dgram(sfd, 1);
+        if (!TEST_ptr(sbio)) {
+            close(sfd);
+            goto err;
+        }
+#else
+        goto err;
+#endif
+    } else {
+        if (!TEST_true(BIO_new_bio_dgram_pair(&cbio, 0, &sbio, 0)))
+            goto err;
+
+        if (!TEST_true(BIO_dgram_set_caps(cbio, BIO_DGRAM_CAP_HANDLES_DST_ADDR))
+                || !TEST_true(BIO_dgram_set_caps(sbio, BIO_DGRAM_CAP_HANDLES_DST_ADDR)))
+            goto err;
+
+        /* Dummy server address */
+        if (!TEST_true(BIO_ADDR_rawmake(peeraddr, AF_INET, &ina, sizeof(ina),
+                                        htons(0))))
+            goto err;
+    }
+
+    SSL_set_bio(*cssl, cbio, cbio);
+
+    if (!TEST_true(SSL_set_blocking_mode(*cssl, block)))
         goto err;
 
     if (!TEST_true(SSL_set_initial_peer_addr(*cssl, peeraddr)))
@@ -121,6 +153,7 @@ int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
     if (!TEST_ptr(BIO_push(fisbio, sbio)))
         goto err;
 
+    tserver_args.libctx = libctx;
     tserver_args.net_rbio = sbio;
     tserver_args.net_wbio = fisbio;
 
@@ -144,6 +177,7 @@ int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
     BIO_free(fisbio);
     BIO_free(sbio);
     SSL_free(*cssl);
+    *cssl = NULL;
     ossl_quic_tserver_free(*qtserv);
     if (fault != NULL)
         OPENSSL_free(*fault);
@@ -151,12 +185,59 @@ int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
     return 0;
 }
 
+int qtest_supports_blocking(void)
+{
+#if !defined(OPENSSL_NO_POSIX_IO) && defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+    return 1;
+#else
+    return 0;
+#endif
+}
+
 #define MAXLOOPS    1000
+
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+static int globserverret = 0;
+static QUIC_TSERVER *globtserv;
+
+static void run_server_thread(void)
+{
+    /*
+     * This will operate in a busy loop because the server does not block,
+     * but should be acceptable because it is local and we expect this to be
+     * fast
+     */
+    globserverret = qtest_create_quic_connection(globtserv, NULL);
+}
+#endif
 
 int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
 {
     int retc = -1, rets = 0, err, abortctr = 0, ret = 0;
     int clienterr = 0, servererr = 0;
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+    thread_t t;
+#endif
+
+    if (clientssl == NULL) {
+        retc = 1;
+    } else if (SSL_get_blocking_mode(clientssl) > 0) {
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+        /*
+         * clientssl is blocking. We will need a thread to complete the
+         * connection
+         */
+        globtserv = qtserv;
+        if (!TEST_true(run_thread(&t, run_server_thread)))
+            goto err;
+
+        qtserv = NULL;
+        rets = 1;
+#else
+        TEST_error("No thread support in this build");
+        goto err;
+#endif
+    }
 
     do {
         err = SSL_ERROR_WANT_WRITE;
@@ -191,16 +272,35 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
         if (clienterr && servererr)
             goto err;
 
-        if (++abortctr == MAXLOOPS) {
+        if (clientssl != NULL && ++abortctr == MAXLOOPS) {
             TEST_info("No progress made");
             goto err;
         }
     } while ((retc <= 0 && !clienterr) || (rets <= 0 && !servererr));
 
+    if (qtserv == NULL && rets > 0) {
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+        if (!TEST_true(wait_for_thread(t)) || !TEST_true(globserverret))
+            goto err;
+#else
+        TEST_error("Should not happen");
+        goto err;
+#endif
+    }
+
     if (!clienterr && !servererr)
         ret = 1;
  err:
     return ret;
+}
+
+int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl)
+{
+    /* Busy loop in non-blocking mode. It should be quick because its local */
+    while (SSL_shutdown(clientssl) != 1)
+        ossl_quic_tserver_tick(qtserv);
+
+    return 1;
 }
 
 int qtest_check_server_transport_err(QUIC_TSERVER *qtserv, uint64_t code)

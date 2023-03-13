@@ -34,8 +34,8 @@ static int test_basic(void)
     if (!TEST_ptr(cctx))
         goto err;
 
-    if (!TEST_true(qtest_create_quic_objects(cctx, cert, privkey, &qtserv,
-                                             &cssl, NULL)))
+    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, cert, privkey, 0,
+                                             &qtserv, &cssl, NULL)))
         goto err;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
@@ -103,8 +103,8 @@ static int test_unknown_frame(void)
     if (!TEST_ptr(cctx))
         goto err;
 
-    if (!TEST_true(qtest_create_quic_objects(cctx, cert, privkey, &qtserv,
-                                             &cssl, &fault)))
+    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, cert, privkey, 0,
+                                             &qtserv, &cssl, &fault)))
         goto err;
 
     if (!TEST_true(qtest_create_quic_connection(qtserv, cssl)))
@@ -189,8 +189,8 @@ static int test_no_transport_params(void)
     if (!TEST_ptr(cctx))
         goto err;
 
-    if (!TEST_true(qtest_create_quic_objects(cctx, cert, privkey, &qtserv,
-                                             &cssl, &fault)))
+    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, cert, privkey, 0,
+                                             &qtserv, &cssl, &fault)))
         goto err;
 
     if (!TEST_true(qtest_fault_set_hand_enc_ext_listener(fault,
@@ -267,8 +267,8 @@ static int test_corrupted_data(int idx)
     if (!TEST_ptr(cctx))
         goto err;
 
-    if (!TEST_true(qtest_create_quic_objects(cctx, cert, privkey, &qtserv,
-                                             &cssl, &fault)))
+    if (!TEST_true(qtest_create_quic_objects(NULL, cctx, cert, privkey, 0,
+                                             &qtserv, &cssl, &fault)))
         goto err;
 
     if (idx == 0) {

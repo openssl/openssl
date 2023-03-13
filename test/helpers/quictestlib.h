@@ -27,9 +27,10 @@ typedef struct qtest_fault_encrypted_extensions {
 /*
  * Given an SSL_CTX for the client and filenames for the server certificate and
  * keyfile, create a server and client instances as well as a fault injector
- * instance
+ * instance. |block| indicates whether we are using blocking mode or not.
  */
-int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
+int qtest_create_quic_objects(OSSL_LIB_CTX *libctx, SSL_CTX *clientctx,
+                              char *certfile, char *keyfile, int block,
                               QUIC_TSERVER **qtserv, SSL **cssl,
                               QTEST_FAULT **fault);
 
@@ -38,11 +39,19 @@ int qtest_create_quic_objects(SSL_CTX *clientctx, char *certfile, char *keyfile,
  */
 void qtest_fault_free(QTEST_FAULT *fault);
 
+/* Returns 1 if the quictestlib supports blocking tests */
+int qtest_supports_blocking(void);
+
 /*
  * Run the TLS handshake to create a QUIC connection between the client and
  * server.
  */
 int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl);
+
+/*
+ * Shutdown the client SSL object gracefully
+ */
+int qtest_shutdown(QUIC_TSERVER *qtserv, SSL *clientssl);
 
 /*
  * Confirm that the server has received the given transport error code.
