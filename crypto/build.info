@@ -99,7 +99,8 @@ $UTIL_COMMON=\
         cryptlib.c params.c params_from_text.c bsearch.c ex_data.c o_str.c \
         threads_pthread.c threads_win.c threads_none.c initthread.c \
         context.c sparse_array.c asn1_dsa.c packet.c param_build.c \
-        param_build_set.c der_writer.c threads_lib.c params_dup.c
+        param_build_set.c der_writer.c threads_lib.c params_dup.c \
+        time.c
 
 SHARED_SOURCE[../libssl]=sparse_array.c
 
@@ -110,7 +111,6 @@ SOURCE[../libcrypto]=$UTIL_COMMON \
         punycode.c passphrase.c sleep.c deterministic_nonce.c quic_vlint.c \
         time.c
 SOURCE[../providers/libfips.a]=$UTIL_COMMON
-SOURCE[../providers/libfips.a]=time.c
 
 SOURCE[../libcrypto]=$UPLINKSRC
 DEFINE[../libcrypto]=$UPLINKDEF
