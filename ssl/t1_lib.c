@@ -1855,7 +1855,7 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
     }
     lu = tls1_lookup_sigalg(s, sig);
     /* if this sigalg is loaded, set so far unknown pkeyid to its sig NID */
-    if ((pkeyid == -1) && (lu != NULL))
+    if ((pkeyid == EVP_PKEY_KEYMGMT) && (lu != NULL))
         pkeyid = lu->sig;
 
     /* Should never happen */
