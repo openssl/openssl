@@ -510,7 +510,7 @@ int ossl_quic_conn_shutdown(QUIC_CONNECTION *qc, uint64_t flags,
         return 1;
 
     if (blocking_mode(qc) && (flags & SSL_SHUTDOWN_FLAG_RAPID) == 0)
-        block_until_pred(qc, quic_shutdown_wait, NULL, 0);
+        block_until_pred(qc, quic_shutdown_wait, qc, 0);
     else
         ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(qc->ch));
 
