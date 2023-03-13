@@ -1200,3 +1200,13 @@ int i2d_OSSL_CMP_MSG_bio(BIO *bio, const OSSL_CMP_MSG *msg)
 {
     return ASN1_i2d_bio_of(OSSL_CMP_MSG, i2d_OSSL_CMP_MSG, bio, msg);
 }
+
+int ossl_cmp_is_error_with_waiting(const OSSL_CMP_MSG *msg)
+{
+    if (!ossl_assert(msg != NULL))
+        return 0;
+
+    return (OSSL_CMP_MSG_get_bodytype(msg) == OSSL_CMP_PKIBODY_ERROR
+            && ossl_cmp_pkisi_get_status(msg->body->value.error->pKIStatusInfo)
+            == OSSL_CMP_PKISTATUS_waiting);
+}
