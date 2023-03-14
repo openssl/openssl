@@ -12,7 +12,7 @@ all: rsa_encrypt
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
-rsa_encrypt_ec: rsa_encrypt.o
+rsa_encrypt: rsa_encrypt.o
 
 test: ;
 
