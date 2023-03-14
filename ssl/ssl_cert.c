@@ -106,14 +106,17 @@ CERT *ssl_cert_dup(CERT *cert)
 
     ret->ssl_pkey_num = cert->ssl_pkey_num;
     ret->pkeys = OPENSSL_zalloc(ret->ssl_pkey_num * sizeof(CERT_PKEY));
-    if (ret->pkeys == NULL)
+    if (ret->pkeys == NULL) {
+        OPENSSL_free(ret);
         return NULL;
+    }
 
     ret->references = 1;
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        OPENSSL_free(ret->pkeys);
         OPENSSL_free(ret);
         return NULL;
     }
