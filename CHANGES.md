@@ -22,7 +22,7 @@ OpenSSL Releases
 OpenSSL 3.1
 -----------
 
-### Changes between 3.0 and 3.1.0 [xx XXX xxxx]
+### Changes between 3.0 and 3.1.0 [14 Mar 2023]
 
  * Add FIPS provider configuration option to enforce the
    Extended Master Secret (EMS) check during the TLS1_PRF KDF.
