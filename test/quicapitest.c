@@ -77,13 +77,18 @@ static int test_quic_write_read(int idx)
                                                msglen, &numbytes)))
             goto end;
         ossl_quic_tserver_tick(qtserv);
-        if (idx == 1 && !TEST_true(wait_until_sock_readable(csock)))
-            goto end;
         SSL_tick(clientquic);
-        if (!TEST_true(SSL_has_pending(clientquic))
-                || !TEST_int_eq(SSL_pending(clientquic), msglen)
-                || !TEST_true(SSL_read_ex(clientquic, buf, sizeof(buf), &numbytes))
-                || !TEST_mem_eq(buf, numbytes, msg, msglen))
+        /*
+         * In blocking mode the SSL_read_ex call will block until the socket is
+         * readable and has our data. In non-blocking mode we're doing everything
+         * in memory, so it should be immediately available
+         */
+        if (!TEST_true(SSL_read_ex(clientquic, buf, 1, &numbytes))
+                || !TEST_size_t_eq(numbytes, 1)
+                || !TEST_true(SSL_has_pending(clientquic))
+                || !TEST_int_eq(SSL_pending(clientquic), msglen - 1)
+                || !TEST_true(SSL_read_ex(clientquic, buf + 1, sizeof(buf) - 1, &numbytes))
+                || !TEST_mem_eq(buf, numbytes + 1, msg, msglen))
             goto end;
     }
 
