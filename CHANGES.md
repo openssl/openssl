@@ -240,7 +240,18 @@ OpenSSL 3.2
 OpenSSL 3.1
 -----------
 
-### Changes between 3.0 and 3.1.0 [xx XXX xxxx]
+### Changes between 3.1.0 and 3.1.1 [xx XXX xxxx]
+
+ * Limited the number of nodes created in a policy tree to mitigate
+   against CVE-2023-0464.  The default limit is set to 1000 nodes, which
+   should be sufficient for most installations.  If required, the limit
+   can be adjusted by setting the OPENSSL_POLICY_TREE_NODES_MAX build
+   time define to a desired maximum number of nodes or zero to allow
+   unlimited growth.
+
+   *Paul Dale*
+
+### Changes between 3.0 and 3.1.0 [14 Mar 2023]
 
  * Add FIPS provider configuration option to enforce the
    Extended Master Secret (EMS) check during the TLS1_PRF KDF.
