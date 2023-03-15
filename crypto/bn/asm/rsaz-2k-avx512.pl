@@ -44,12 +44,12 @@ if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
     $avx512ifma = ($1>=2.26);
 }
 
-if (!$avx512 && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
+if (!$avx512ifma && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
        `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)(?:\.([0-9]+))?/) {
     $avx512ifma = ($1==2.11 && $2>=8) + ($1>=2.12);
 }
 
-if (!$avx512 && `$ENV{CC} -v 2>&1`
+if (!$avx512ifma && `$ENV{CC} -v 2>&1`
     =~ /(Apple)?\s*((?:clang|LLVM) version|.*based on LLVM) ([0-9]+)\.([0-9]+)\.([0-9]+)?/) {
     my $ver = $3 + $4/100.0 + $5/10000.0; # 3.1.0->3.01, 3.10.1->3.1001
     if ($1) {
