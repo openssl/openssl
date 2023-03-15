@@ -11,6 +11,7 @@
 # define OSSL_QUIC_TSERVER_H
 
 # include <openssl/ssl.h>
+# include <openssl/bio.h>
 # include "internal/quic_stream.h"
 # include "internal/quic_channel.h"
 # include "internal/statem.h"
@@ -108,6 +109,8 @@ int ossl_quic_tserver_write(QUIC_TSERVER *srv,
  * Signals normal end of the stream.
  */
 int ossl_quic_tserver_conclude(QUIC_TSERVER *srv);
+
+BIO *ossl_quic_tserver_get0_rbio(QUIC_TSERVER *srv);
 
 # endif
 

@@ -16,12 +16,7 @@
 
 #if (!defined(OPENSSL_NO_KTLS) || !defined(OPENSSL_NO_QUIC)) && !defined(OPENSSL_NO_POSIX_IO) && !defined(OPENSSL_NO_SOCK)
 # define OSSL_USE_SOCKETS 1
-# if !defined(_WIN32)
-   /* On Windows we should already have everyting we need via e_os.h */
-#  include <netinet/in.h>
-#  include <arpa/inet.h>
-#  include <sys/socket.h>
-# endif
+# include "internal/sockets.h"
 # include <openssl/bio.h>
 #endif
 
@@ -880,6 +875,23 @@ int create_ssl_ctx_pair(OSSL_LIB_CTX *libctx, const SSL_METHOD *sm,
 #define MAXLOOPS    1000000
 
 #if defined(OSSL_USE_SOCKETS)
+int wait_until_sock_readable(int sock)
+{
+    fd_set readfds;
+    struct timeval timeout;
+    int width;
+
+    width = sock + 1;
+    FD_ZERO(&readfds);
+    openssl_fdset(sock, &readfds);
+    timeout.tv_sec = 10; /* give up after 10 seconds */
+    timeout.tv_usec = 0;
+
+    select(width, &readfds, NULL, NULL, &timeout);
+
+    return FD_ISSET(sock, &readfds);
+}
+
 int create_test_sockets(int *cfdp, int *sfdp, int socktype, BIO_ADDR *saddr)
 {
     struct sockaddr_in sin;
@@ -954,7 +966,7 @@ success:
     if (afd != -1)
         close(afd);
     return ret;
-} /* defined(OSSL_USE_SOCKETS) */
+}
 
 int create_ssl_objects2(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
                           SSL **cssl, int sfd, int cfd)
@@ -988,7 +1000,7 @@ int create_ssl_objects2(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
     BIO_free(c_to_s_bio);
     return 0;
 }
-#endif
+#endif /* defined(OSSL_USE_SOCKETS) */
 
 /*
  * NOTE: Transfers control of the BIOs - this function will free them on error

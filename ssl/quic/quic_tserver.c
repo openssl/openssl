@@ -262,3 +262,8 @@ int ossl_quic_tserver_conclude(QUIC_TSERVER *srv)
     ossl_quic_tserver_tick(srv);
     return 1;
 }
+
+BIO *ossl_quic_tserver_get0_rbio(QUIC_TSERVER *srv)
+{
+    return srv->args.net_rbio;
+}

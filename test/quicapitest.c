@@ -13,6 +13,7 @@
 #include <openssl/opensslconf.h>
 #include <openssl/quic.h>
 
+#include "helpers/ssltestlib.h"
 #include "helpers/quictestlib.h"
 #include "testutil.h"
 #include "testutil/output.h"
@@ -40,6 +41,7 @@ static int test_quic_write_read(int idx)
     static char *msg = "A test message";
     size_t msglen = strlen(msg);
     size_t numbytes = 0;
+    int ssock = 0, csock = 0;
 
     if (idx == 1 && !qtest_supports_blocking())
         return TEST_skip("Blocking tests not supported in this build");
@@ -52,9 +54,18 @@ static int test_quic_write_read(int idx)
             || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto end;
 
+    if (idx == 1) {
+        if (!TEST_true(BIO_get_fd(ossl_quic_tserver_get0_rbio(qtserv), &ssock)))
+            goto end;
+        if (!TEST_int_gt(csock = SSL_get_rfd(clientquic), 0))
+            goto end;
+    }
+
     for (j = 0; j < 2; j++) {
         /* Check that sending and receiving app data is ok */
         if (!TEST_true(SSL_write_ex(clientquic, msg, msglen, &numbytes)))
+            goto end;
+        if (idx == 1 && !TEST_true(wait_until_sock_readable(ssock)))
             goto end;
         ossl_quic_tserver_tick(qtserv);
         if (!TEST_true(ossl_quic_tserver_read(qtserv, buf, sizeof(buf),
@@ -66,6 +77,8 @@ static int test_quic_write_read(int idx)
                                                msglen, &numbytes)))
             goto end;
         ossl_quic_tserver_tick(qtserv);
+        if (idx == 1 && !TEST_true(wait_until_sock_readable(csock)))
+            goto end;
         SSL_tick(clientquic);
         if (!TEST_true(SSL_has_pending(clientquic))
                 || !TEST_int_eq(SSL_pending(clientquic), msglen)
