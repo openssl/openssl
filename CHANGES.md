@@ -30,7 +30,14 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.8 and 3.0.9 [xx XXX xxxx]
 
- * none yet
+ * Limited the number of nodes created in a policy tree to mitigate
+   against CVE-2023-0464.  The default limit is set to 1000 nodes, which
+   should be sufficient for most installations.  If required, the limit
+   can be adjusted by setting the OPENSSL_POLICY_TREE_NODES_MAX build
+   time define to a desired maximum number of nodes or zero to allow
+   unlimited growth.
+
+   *Paul Dale*
 
 ### Changes between 3.0.7 and 3.0.8 [7 Feb 2023]
 
