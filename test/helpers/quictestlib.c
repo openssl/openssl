@@ -219,7 +219,17 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
     thread_t t;
 #endif
 
-    if (clientssl == NULL) {
+    /*
+     * Pointless initialisation of t to avoid bogus compiler warnings about
+     * using t uninitialised. Unfortunately there are no well known values
+     * for pthread_t with which to initialise it, so we have to do it like
+     * this instead
+     */
+    memset(&t, 0, sizeof(t));
+
+    if (!TEST_ptr(qtserv)) {
+        goto err;
+    } else if (clientssl == NULL) {
         retc = 1;
     } else if (SSL_get_blocking_mode(clientssl) > 0) {
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)

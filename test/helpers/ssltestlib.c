@@ -9,15 +9,20 @@
 
 #include <string.h>
 
+#include "internal/e_os.h"
 #include "internal/nelem.h"
 #include "ssltestlib.h"
 #include "../testutil.h"
 
-#if (!defined(OPENSSL_NO_KTLS) || !defined(OPENSSL_NO_QUIC)) && !defined(OPENSSL_NO_POSIX_IO)
-# include <netinet/in.h>
-# include <arpa/inet.h>
-# include <sys/socket.h>
-# include <fcntl.h>
+#if (!defined(OPENSSL_NO_KTLS) || !defined(OPENSSL_NO_QUIC)) && !defined(OPENSSL_NO_POSIX_IO) && !defined(OPENSSL_NO_SOCK)
+# define OSSL_USE_SOCKETS 1
+# if !defined(_WIN32)
+   /* On Windows we should already have everyting we need via e_os.h */
+#  include <netinet/in.h>
+#  include <arpa/inet.h>
+#  include <sys/socket.h>
+# endif
+# include <openssl/bio.h>
 #endif
 
 static int tls_dump_new(BIO *bi);
@@ -874,18 +879,7 @@ int create_ssl_ctx_pair(OSSL_LIB_CTX *libctx, const SSL_METHOD *sm,
 
 #define MAXLOOPS    1000000
 
-#if (!defined(OPENSSL_NO_KTLS) || !defined(OPENSSL_NO_QUIC)) && !defined(OPENSSL_NO_POSIX_IO)
-static int set_nb(int fd)
-{
-    int flags;
-
-    flags = fcntl(fd, F_GETFL, 0);
-    if (flags == -1)
-        return flags;
-    flags = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-    return flags;
-}
-
+#if defined(OSSL_USE_SOCKETS)
 int create_test_sockets(int *cfdp, int *sfdp, int socktype, BIO_ADDR *saddr)
 {
     struct sockaddr_in sin;
@@ -920,7 +914,7 @@ int create_test_sockets(int *cfdp, int *sfdp, int socktype, BIO_ADDR *saddr)
     if (cfd < 0)
         goto out;
 
-    if (set_nb(afd) == -1)
+    if (!BIO_socket_nbio(afd, 1))
         goto out;
 
     /*
@@ -944,7 +938,7 @@ int create_test_sockets(int *cfdp, int *sfdp, int socktype, BIO_ADDR *saddr)
             cfd_connected = 1;
     }
 
-    if (set_nb(cfd) == -1 || set_nb(sfd) == -1)
+    if (!BIO_socket_nbio(cfd, 1) || !BIO_socket_nbio(sfd, 1))
         goto out;
     ret = 1;
     *cfdp = cfd;
@@ -960,7 +954,7 @@ success:
     if (afd != -1)
         close(afd);
     return ret;
-} /* (!defined(OPENSSL_NO_KTLS) || !defined(OPENSSL_NO_QUIC)) && !defined(OPENSSL_NO_POSIX_IO) */
+} /* defined(OSSL_USE_SOCKETS) */
 
 int create_ssl_objects2(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
                           SSL **cssl, int sfd, int cfd)
