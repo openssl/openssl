@@ -14,7 +14,7 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 #
 # Specific modes and adaptation for Linux kernel by Ard Biesheuvel
-# of Linaro. Permission to use under GPL terms is granted.
+# of Linaro.
 # ====================================================================
 
 # Bit-sliced AES for ARM NEON
