@@ -277,16 +277,16 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
         /* Set the key */
         size_t enckeylen;
 
-        penclen = EVP_PKEY_get1_encoded_public_key(pkey, &penc);
-        if (penclen > INT_MAX || penclen == 0)
+        enckeylen = EVP_PKEY_get1_encoded_public_key(pkey, &penc);
+        if (enckeylen > INT_MAX || enckeylen == 0)
             goto err;
-        ASN1_STRING_set0(pubkey, penc, penclen);
+        ASN1_STRING_set0(pubkey, penc, (int)enckeylen);
         pubkey->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
         pubkey->flags |= ASN1_STRING_FLAG_BITS_LEFT;
 
         penc = NULL;
-        X509_ALGOR_set0(talg, OBJ_nid2obj(NID_X9_62_id_ecPublicKey),
-                        V_ASN1_UNDEF, NULL);
+        (void)X509_ALGOR_set0(talg, OBJ_nid2obj(NID_X9_62_id_ecPublicKey),
+                              V_ASN1_UNDEF, NULL); /* cannot fail */
     }
 
     /* See if custom parameters set */
