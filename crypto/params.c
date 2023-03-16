@@ -36,7 +36,7 @@
 #define err_unsupported_real  \
     ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_PARAM_UNSUPPORTED_FLOATING_POINT_FORMAT)
 #define err_invalid_argument  \
-   ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT) 
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT)
 
 /*
  * Return the number of bits in the mantissa of a double.  This is used to
