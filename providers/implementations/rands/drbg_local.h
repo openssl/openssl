@@ -251,4 +251,7 @@ size_t ossl_crngt_get_entropy(PROV_DRBG *drbg,
 void ossl_crngt_cleanup_entropy(PROV_DRBG *drbg,
                                 unsigned char *out, size_t outlen);
 
+/* Confirm digest is allowed to be used with a DRBG */
+int ossl_drbg_verify_digest(ossl_unused OSSL_LIB_CTX *libctx, const EVP_MD *md);
+
 #endif

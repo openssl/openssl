@@ -363,22 +363,15 @@ static int drbg_hmac_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (!ossl_prov_digest_load_from_params(&hmac->digest, params, libctx))
         return 0;
 
-    /*
-     * Confirm digest is allowed. We allow all digests that are not XOF
-     * (such as SHAKE).  In FIPS mode, the fetch will fail for non-approved
-     * digests.
-     */
     md = ossl_prov_digest_md(&hmac->digest);
-    if (md != NULL && (EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
-        return 0;
-    }
+    if (md != NULL && !ossl_drbg_verify_digest(libctx, md))
+        return 0;   /* Error already raised for us */
 
     if (!ossl_prov_macctx_load_from_params(&hmac->ctx, params,
                                            NULL, NULL, NULL, libctx))
         return 0;
 
-    if (hmac->ctx != NULL) {
+    if (md != NULL && hmac->ctx != NULL) {
         /* These are taken from SP 800-90 10.1 Table 2 */
         hmac->blocklen = EVP_MD_get_size(md);
         /* See SP800-57 Part1 Rev4 5.6.1 Table 3 */
