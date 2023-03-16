@@ -410,3 +410,21 @@ jobs:
         default: true
     - name: test external pyca
       run: make test TESTS="test_external_pyca" VERBOSE=1
+
+  external-test-cf-quiche:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - name: Configure OpenSSL
+      run: ./config --banner=Configured --strict-warnings enable-external-tests enable-quic && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: default
+        toolchain: stable
+        default: true
+    - name: test external Cloudflare quiche
+      run: make test TESTS="test_external_cf_quiche" VERBOSE=1
