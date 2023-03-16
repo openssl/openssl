@@ -58,6 +58,43 @@ typedef unsigned int u_int;
 #define BUFSIZZ 1024*8
 #define S_CLIENT_IRC_READ_TIMEOUT 8
 
+#define USER_DATA_MODE_NONE     0
+#define USER_DATA_MODE_BASIC    1
+#define USER_DATA_MODE_ADVANCED 2
+
+#define USER_DATA_PROCESS_BAD_ARGUMENT 0
+#define USER_DATA_PROCESS_SHUT         1
+#define USER_DATA_PROCESS_RESTART      2
+#define USER_DATA_PROCESS_NO_DATA      3
+#define USER_DATA_PROCESS_CONTINUE     4
+
+struct user_data_st {
+    /* SSL connection we are processing commands for */
+    SSL *con;
+
+    /* Buffer where we are storing data supplied by the user */
+    char *buf;
+
+    /* Allocated size of the buffer */
+    size_t bufmax;
+
+    /* Amount of the buffer actually used */
+    size_t buflen;
+
+    /* Current location in the buffer where we will read from next*/
+    size_t bufoff;
+
+    /* The mode we are using for processing commands */
+    int mode;
+};
+
+static void user_data_init(struct user_data_st *user_data, SSL *con, char *buf,
+                           size_t bufmax, int mode);
+static int user_data_add(struct user_data_st *user_data, size_t i);
+static int user_data_process(struct user_data_st *user_data, size_t *len,
+                             size_t *off);
+static int user_data_has_data(struct user_data_st *user_data);
+
 static char *prog;
 static int c_debug = 0;
 static int c_showcerts = 0;
@@ -464,8 +501,8 @@ typedef enum OPTION_choice {
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM, OPT_IGNORE_UNEXPECTED_EOF,
-    OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY, OPT_PROXY_USER, OPT_PROXY_PASS,
-    OPT_DANE_TLSA_DOMAIN,
+    OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_ADV, OPT_PROXY, OPT_PROXY_USER,
+    OPT_PROXY_PASS, OPT_DANE_TLSA_DOMAIN,
 #ifndef OPENSSL_NO_CT
     OPT_CT, OPT_NOCT, OPT_CTLOG_FILE,
 #endif
@@ -607,6 +644,7 @@ const OPTIONS s_client_options[] = {
 #endif
     {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
     {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
+    {"adv", OPT_ADV, '-', "Advanced command mode"},
     {"servername", OPT_SERVERNAME, 's',
      "Set TLS extension servername (SNI) in ClientHello (default)"},
     {"noservername", OPT_NOSERVERNAME, '-',
@@ -832,14 +870,15 @@ int s_client_main(int argc, char **argv)
     struct timeval timeout, *timeoutp;
     fd_set readfds, writefds;
     int noCApath = 0, noCAfile = 0, noCAstore = 0;
-    int build_chain = 0, cbuf_len, cbuf_off, cert_format = FORMAT_UNDEF;
+    int build_chain = 0, cert_format = FORMAT_UNDEF;
+    size_t cbuf_len, cbuf_off;
     int key_format = FORMAT_UNDEF, crlf = 0, full_log = 1, mbuf_len = 0;
     int prexit = 0;
     int nointeractive = 0;
     int sdebug = 0;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
     int ret = 1, in_init = 1, i, nbio_test = 0, sock = -1, k, width, state = 0;
-    int sbuf_len, sbuf_off, cmdletters = 1;
+    int sbuf_len, sbuf_off, cmdmode = USER_DATA_MODE_BASIC;
     int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM, protocol = 0;
     int starttls_proto = PROTO_OFF, crl_format = FORMAT_UNDEF, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
@@ -913,6 +952,7 @@ int s_client_main(int argc, char **argv)
 #endif
     int tfo = 0;
     BIO_ADDR *tfo_addr = NULL;
+    struct user_data_st user_data;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1110,7 +1150,10 @@ int s_client_main(int argc, char **argv)
             c_nbio = 1;
             break;
         case OPT_NOCMDS:
-            cmdletters = 0;
+            cmdmode = USER_DATA_MODE_NONE;
+            break;
+        case OPT_ADV:
+            cmdmode = USER_DATA_MODE_ADVANCED;
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 1);
@@ -1522,6 +1565,9 @@ int s_client_main(int argc, char **argv)
     }
     if (!app_RAND_load())
         goto end;
+
+    if (c_ign_eof)
+        cmdmode = USER_DATA_MODE_NONE;
 
     if (count4or6 >= 2) {
         BIO_printf(bio_err, "%s: Can't use both -4 and -6\n", prog);
@@ -2790,6 +2836,7 @@ int s_client_main(int argc, char **argv)
         BIO_free(edfile);
     }
 
+    user_data_init(&user_data, con, cbuf, BUFSIZZ, cmdmode);
     for (;;) {
         FD_ZERO(&readfds);
         FD_ZERO(&writefds);
@@ -2833,6 +2880,35 @@ int s_client_main(int argc, char **argv)
                     goto re_start;
                 }
             }
+        }
+
+        if (!write_ssl) {
+            do {
+                switch (user_data_process(&user_data, &cbuf_len, &cbuf_off)) {
+                default:
+                    BIO_printf(bio_err, "ERROR\n");
+                    /* fall through */
+                case USER_DATA_PROCESS_SHUT:
+                    ret = 0;
+                    goto shut;
+
+                case USER_DATA_PROCESS_RESTART:
+                    goto re_start;
+
+                case USER_DATA_PROCESS_NO_DATA:
+                    break;
+
+                case USER_DATA_PROCESS_CONTINUE:
+                    write_ssl = 1;
+                    break;
+                }
+            } while (!write_ssl
+                     && cbuf_len == 0
+                     && user_data_has_data(&user_data));
+            if (cbuf_len > 0)
+                read_tty = 0;
+            else
+                read_tty = 1;
         }
 
         ssl_pending = read_ssl && SSL_has_pending(con);
@@ -2916,7 +2992,7 @@ int s_client_main(int argc, char **argv)
                 if (k <= 0)
                     goto end;
                 /* we have done a  write(con,NULL,0); */
-                if (cbuf_len <= 0) {
+                if (cbuf_len == 0) {
                     read_tty = 1;
                     write_ssl = 0;
                 } else {        /* if (cbuf_len > 0) */
@@ -3102,41 +3178,15 @@ int s_client_main(int argc, char **argv)
                 at_eof = 1;
 #endif
 
-            if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q' && cmdletters))) {
+            if (!c_ign_eof && i <= 0) {
                 BIO_printf(bio_err, "DONE\n");
                 ret = 0;
                 goto shut;
             }
-
-            if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'C' && cmdletters))) {
-                cbuf_len = 0;
-                BIO_printf(bio_c_out,
-                           "RECONNECTING\n");
-                do_ssl_shutdown(con);
-                SSL_set_connect_state(con);
-                BIO_closesocket(SSL_get_fd(con));
-                goto re_start;
+            if (i > 0 && !user_data_add(&user_data, i)) {
+                ret = 0;
+                goto shut;
             }
-
-            if ((!c_ign_eof) && (cbuf[0] == 'R' && cmdletters)) {
-                BIO_printf(bio_err, "RENEGOTIATING\n");
-                SSL_renegotiate(con);
-                cbuf_len = 0;
-            } else if (!c_ign_eof && (cbuf[0] == 'K' || cbuf[0] == 'k')
-                    && cmdletters) {
-                BIO_printf(bio_err, "KEYUPDATE\n");
-                SSL_key_update(con,
-                               cbuf[0] == 'K' ? SSL_KEY_UPDATE_REQUESTED
-                                              : SSL_KEY_UPDATE_NOT_REQUESTED);
-                cbuf_len = 0;
-            } else {
-                cbuf_len = i;
-                cbuf_off = 0;
-#ifdef CHARSET_EBCDIC
-                ebcdic2ascii(cbuf, cbuf, i);
-#endif
-            }
-
             write_ssl = 1;
             read_tty = 0;
         }
@@ -3645,5 +3695,248 @@ static int is_dNS_name(const char *host)
     isdnsname &= !all_numeric && !(label_length == MAX_LABEL_LENGTH);
 
     return isdnsname;
+}
+
+static void user_data_init(struct user_data_st *user_data, SSL *con, char *buf,
+                           size_t bufmax, int mode)
+{
+    user_data->con = con;
+    user_data->buf = buf;
+    user_data->bufmax = bufmax;
+    user_data->buflen = 0;
+    user_data->bufoff = 0;
+    user_data->mode = mode;
+}
+
+static int user_data_add(struct user_data_st *user_data, size_t i)
+{
+    if (user_data->buflen != 0 || i > user_data->bufmax - 1)
+        return 0;
+
+    user_data->buflen = i;
+    user_data->bufoff = 0;
+
+    return 1;
+}
+
+#define USER_COMMAND_HELP        0
+#define USER_COMMAND_QUIT        1
+#define USER_COMMAND_RECONNECT   2
+#define USER_COMMAND_RENEGOTIATE 3
+#define USER_COMMAND_KEY_UPDATE  4
+
+static int user_data_execute(struct user_data_st *user_data, int cmd, char *arg)
+{
+    switch (cmd) {
+    case USER_COMMAND_HELP:
+        /* This only ever occurs in advanced mode, so just emit advanced help */
+        BIO_printf(bio_err, "Enter text to send to the peer followed by <enter>\n");
+        BIO_printf(bio_err, "To issue a command insert {cmd} or {cmd:arg} anywhere in the text\n");
+        BIO_printf(bio_err, "Entering {{ will send { to the peer\n");
+        BIO_printf(bio_err, "The following commands are available\n");
+        BIO_printf(bio_err, "  {help}: Get this help text\n");
+        BIO_printf(bio_err, "  {quit}: Close the connection to the peer\n");
+        BIO_printf(bio_err, "  {reconnect}: Reconnect to the peer\n");
+        if (SSL_version(user_data->con) == TLS1_3_VERSION) {
+            BIO_printf(bio_err, "  {keyup:req|noreq}: Send a Key Update message\n");
+            BIO_printf(bio_err, "                     Arguments:\n");
+            BIO_printf(bio_err, "                     req   = peer update requested (default)\n");
+            BIO_printf(bio_err, "                     noreq = peer update not requested\n");
+        } else {
+            BIO_printf(bio_err, "  {reneg}: Attempt to renegotiate\n");
+        }
+        BIO_printf(bio_err, "\n");
+        return USER_DATA_PROCESS_NO_DATA;
+
+    case USER_COMMAND_QUIT:
+        BIO_printf(bio_err, "DONE\n");
+        return USER_DATA_PROCESS_SHUT;
+
+    case USER_COMMAND_RECONNECT:
+        BIO_printf(bio_err, "RECONNECTING\n");
+        do_ssl_shutdown(user_data->con);
+        SSL_set_connect_state(user_data->con);
+        BIO_closesocket(SSL_get_fd(user_data->con));
+        return USER_DATA_PROCESS_RESTART;
+
+    case USER_COMMAND_RENEGOTIATE:
+        BIO_printf(bio_err, "RENEGOTIATING\n");
+        if (!SSL_renegotiate(user_data->con))
+            break;
+        return USER_DATA_PROCESS_CONTINUE;
+
+    case USER_COMMAND_KEY_UPDATE: {
+            int updatetype;
+
+            if (OPENSSL_strcasecmp(arg, "req") == 0)
+                updatetype = SSL_KEY_UPDATE_REQUESTED;
+            else if (OPENSSL_strcasecmp(arg, "noreq") == 0)
+                updatetype = SSL_KEY_UPDATE_NOT_REQUESTED;
+            else
+                return USER_DATA_PROCESS_BAD_ARGUMENT;
+            BIO_printf(bio_err, "KEYUPDATE\n");
+            if (!SSL_key_update(user_data->con, updatetype))
+                break;
+            return USER_DATA_PROCESS_CONTINUE;
+        }
+    default:
+        break;
+    }
+
+    BIO_printf(bio_err, "ERROR\n");
+    ERR_print_errors(bio_err);
+
+    return USER_DATA_PROCESS_SHUT;
+}
+
+static int user_data_process(struct user_data_st *user_data, size_t *len,
+                             size_t *off)
+{
+    char *buf_start = user_data->buf + user_data->bufoff;
+    size_t outlen = user_data->buflen;
+
+    if (user_data->buflen == 0) {
+        *len = 0;
+        *off = 0;
+        return USER_DATA_PROCESS_NO_DATA;
+    }
+
+    if (user_data->mode == USER_DATA_MODE_BASIC) {
+        switch (buf_start[0]) {
+        case 'Q':
+            user_data->buflen = user_data->bufoff = *len = *off = 0;
+            return user_data_execute(user_data, USER_COMMAND_QUIT, NULL);
+
+        case 'C':
+            user_data->buflen = user_data->bufoff = *len = *off = 0;
+            return user_data_execute(user_data, USER_COMMAND_RECONNECT, NULL);
+
+        case 'R':
+            user_data->buflen = user_data->bufoff = *len = *off = 0;
+            return user_data_execute(user_data, USER_COMMAND_RENEGOTIATE, NULL);
+
+        case 'K':
+        case 'k':
+            user_data->buflen = user_data->bufoff = *len = *off = 0;
+            return user_data_execute(user_data, USER_COMMAND_KEY_UPDATE,
+                                     buf_start[0] == 'K' ? "req" : "noreq");
+        default:
+            break;
+        }
+    } else if (user_data->mode == USER_DATA_MODE_ADVANCED) {
+        char *cmd_start = buf_start;
+
+        cmd_start[outlen] = '\0';
+        do {
+            cmd_start = strstr(cmd_start, "{");
+            if (cmd_start == buf_start && *(cmd_start + 1) == '{') {
+                /* The "{" is escaped, so skip it */
+                cmd_start += 2;
+                buf_start++;
+                user_data->bufoff++;
+                user_data->buflen--;
+                outlen--;
+                continue;
+            }
+        } while(0);
+
+        if (cmd_start == buf_start) {
+            /* Command detected */
+            char *cmd_end = strstr(cmd_start, "}");
+            char *arg_start;
+            int cmd = -1, ret = USER_DATA_PROCESS_NO_DATA;
+            size_t oldoff;
+
+            if (cmd_end == NULL) {
+                /* Malformed command */
+                cmd_start[outlen - 1] = '\0';
+                BIO_printf(bio_err,
+                           "ERROR PROCESSING COMMAND. REST OF LINE IGNORED: %s\n",
+                           cmd_start);
+                user_data->buflen = user_data->bufoff = *len = *off = 0;
+                return USER_DATA_PROCESS_NO_DATA;
+            }
+            *cmd_end = '\0';
+            arg_start = strstr(cmd_start, ":");
+            if (arg_start != NULL) {
+                *arg_start = '\0';
+                arg_start++;
+            }
+            /* Skip over the { */
+            cmd_start++;
+            /*
+             * Now we have cmd_start pointing to a NUL terminated string for
+             * the command, and arg_start either being NULL or pointing to a
+             * NUL terminated string for the argument.
+             */
+            if (OPENSSL_strcasecmp(cmd_start, "help") == 0) {
+                cmd = USER_COMMAND_HELP;
+            } else if (OPENSSL_strcasecmp(cmd_start, "quit") == 0) {
+                cmd = USER_COMMAND_QUIT;
+            } else if (OPENSSL_strcasecmp(cmd_start, "reconnect") == 0) {
+                cmd = USER_COMMAND_RECONNECT;
+            } else if (SSL_version(user_data->con) == TLS1_3_VERSION) {
+                if (OPENSSL_strcasecmp(cmd_start, "keyup") == 0) {
+                    cmd = USER_COMMAND_KEY_UPDATE;
+                    if (arg_start == NULL)
+                        arg_start = "req";
+                }
+            } else {
+                /* (D)TLSv1.2 or below */
+                if (OPENSSL_strcasecmp(cmd_start, "reneg") == 0)
+                    cmd = USER_COMMAND_RENEGOTIATE;
+            }
+            if (cmd == -1) {
+                BIO_printf(bio_err, "UNRECOGNISED COMMAND (IGNORED): %s\n",
+                           cmd_start);
+            } else {
+                ret = user_data_execute(user_data, cmd, arg_start);
+                if (ret == USER_DATA_PROCESS_BAD_ARGUMENT) {
+                    BIO_printf(bio_err, "BAD ARGUMENT (COMMAND IGNORED): %s\n",
+                               arg_start);
+                    ret = USER_DATA_PROCESS_NO_DATA;
+                }
+            }
+            oldoff = user_data->bufoff;
+            user_data->bufoff = (cmd_end - user_data->buf) + 1;
+            user_data->buflen -= user_data->bufoff - oldoff;
+            if (user_data->buf + 1 == cmd_start
+                    && user_data->buflen == 1
+                    && user_data->buf[user_data->bufoff] == '\n') {
+                /*
+                 * This command was the only thing on the whole line. We
+                 * supress the final `\n`
+                 */
+                user_data->bufoff = 0;
+                user_data->buflen = 0;
+            }
+            *len = *off = 0;
+            return ret;
+        } else if (cmd_start != NULL) {
+            /*
+             * There is a command on this line, but its not at the start. Output
+             * the start of the line, and we'll process the command next time
+             * we call this function
+             */
+            outlen = cmd_start - buf_start;
+        }
+    }
+
+#ifdef CHARSET_EBCDIC
+    ebcdic2ascii(buf_start, buf_start, outlen);
+#endif
+    *len = outlen;
+    *off = user_data->bufoff;
+    user_data->buflen -= outlen;
+    if (user_data->buflen == 0)
+        user_data->bufoff = 0;
+    else
+        user_data->bufoff += outlen;
+    return USER_DATA_PROCESS_CONTINUE;
+}
+
+static int user_data_has_data(struct user_data_st *user_data)
+{
+    return user_data->buflen > 0;
 }
 #endif                          /* OPENSSL_NO_SOCK */
