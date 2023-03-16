@@ -22,6 +22,7 @@ B<openssl fipsinstall>
 [B<-no_conditional_errors>]
 [B<-no_security_checks>]
 [B<-ems_check>]
+[B<-no_drbg_truncated_digests>]
 [B<-self_test_onload>]
 [B<-self_test_oninstall>]
 [B<-corrupt_desc> I<selftest_description>]
@@ -174,6 +175,11 @@ turn off the check at compile time.
 Configure the module to enable a run-time Extended Master Secret (EMS) check
 when using the TLS1_PRF KDF algorithm. This check is disabled by default.
 See RFC 7627 for information related to EMS.
+
+=item B<-no_drbg_truncated_digests>
+
+Configure the module to not allow truncated digests to be used with Hash and
+HMAC DRBGs.  See FIPS 140-3 IG D.R for details.
 
 =item B<-self_test_onload>
 
