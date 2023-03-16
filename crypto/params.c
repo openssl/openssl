@@ -283,7 +283,7 @@ int OSSL_PARAM_set_int(OSSL_PARAM *p, int val)
     }
 #endif
 
-    if (val == NULL || p == NULL) {
+    if (p == NULL) {
         err_null_argument;
         return 0;
     }
@@ -332,7 +332,7 @@ int OSSL_PARAM_set_uint(OSSL_PARAM *p, unsigned int val)
     }
 #endif
 
-    if (val == NULL || p == NULL) {
+    if (p == NULL) {
         err_null_argument;
         return 0;
     }
@@ -382,7 +382,7 @@ int OSSL_PARAM_set_long(OSSL_PARAM *p, long int val)
     }
 #endif
 
-    if (val == NULL || p == NULL) {
+    if (p == NULL) {
         err_null_argument;
         return 0;
     }
@@ -431,7 +431,7 @@ int OSSL_PARAM_set_ulong(OSSL_PARAM *p, unsigned long int val)
     }
 #endif
 
-    if (val == NULL || p == NULL) {
+    if (p == NULL) {
         err_null_argument;
         return 0;
     }
