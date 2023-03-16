@@ -126,13 +126,13 @@ static int poll_two_fds(int rfd, int rfd_want_read,
                         int wfd, int wfd_want_write,
                         OSSL_TIME deadline)
 {
-#if defined(OSSL_SYS_WINDOWS) || !defined(POLLIN)
+#if defined(OPENSSL_SYS_WINDOWS) || !defined(POLLIN)
     fd_set rfd_set, wfd_set, efd_set;
     OSSL_TIME now, timeout;
     struct timeval tv, *ptv;
     int maxfd, pres;
 
-# ifndef OSSL_SYS_WINDOWS
+# ifndef OPENSSL_SYS_WINDOWS
     /*
      * On Windows there is no relevant limit to the magnitude of a fd value (see
      * above). On *NIX the fd_set uses a bitmap and we must check the limit.
@@ -235,11 +235,12 @@ static int poll_two_fds(int rfd, int rfd_want_read,
 static int poll_descriptor_to_fd(const BIO_POLL_DESCRIPTOR *d, int *fd)
 {
     if (d == NULL || d->type == BIO_POLL_DESCRIPTOR_TYPE_NONE) {
-        *fd = -1;
+        *fd = INVALID_SOCKET;
         return 1;
     }
 
-    if (d->type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD || d->value.fd < 0)
+    if (d->type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD
+            || d->value.fd == INVALID_SOCKET)
         return 0;
 
     *fd = d->value.fd;
