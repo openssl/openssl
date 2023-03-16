@@ -199,6 +199,7 @@ int qtest_supports_blocking(void)
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
 static int globserverret = 0;
 static QUIC_TSERVER *globtserv;
+static thread_t thread_zero;
 
 static void run_server_thread(void)
 {
@@ -216,16 +217,12 @@ int qtest_create_quic_connection(QUIC_TSERVER *qtserv, SSL *clientssl)
     int retc = -1, rets = 0, err, abortctr = 0, ret = 0;
     int clienterr = 0, servererr = 0;
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
-    thread_t t;
-#endif
-
     /*
-     * Pointless initialisation of t to avoid bogus compiler warnings about
-     * using t uninitialised. Unfortunately there are no well known values
-     * for pthread_t with which to initialise it, so we have to do it like
-     * this instead
+     * Pointless initialisation to avoid bogus compiler warnings about using
+     * t uninitialised
      */
-    memset(&t, 0, sizeof(t));
+    thread_t t = thread_zero;
+#endif
 
     if (!TEST_ptr(qtserv)) {
         goto err;

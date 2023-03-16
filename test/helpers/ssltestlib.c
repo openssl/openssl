@@ -904,8 +904,9 @@ int create_test_sockets(int *cfdp, int *sfdp, int socktype, BIO_ADDR *saddr)
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = inet_addr(host);
 
-    afd = socket(AF_INET, socktype, 0);
-    if (afd < 0)
+    afd = BIO_socket(AF_INET, socktype,
+                     socktype == SOCK_STREAM ? IPPROTO_TCP : IPPROTO_UDP, 0);
+    if (afd == INVALID_SOCKET)
         return 0;
 
     if (bind(afd, (struct sockaddr*)&sin, sizeof(sin)) < 0)
@@ -922,8 +923,9 @@ int create_test_sockets(int *cfdp, int *sfdp, int socktype, BIO_ADDR *saddr)
     if (socktype == SOCK_STREAM && listen(afd, 1) < 0)
         goto out;
 
-    cfd = socket(AF_INET, socktype, 0);
-    if (cfd < 0)
+    cfd = BIO_socket(AF_INET, socktype,
+                     socktype == SOCK_STREAM ? IPPROTO_TCP : IPPROTO_UDP, 0);
+    if (cfd == INVALID_SOCKET)
         goto out;
 
     if (!BIO_socket_nbio(afd, 1))
