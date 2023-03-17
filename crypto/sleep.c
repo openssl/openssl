@@ -81,6 +81,7 @@ static void ossl_sleep_secs(uint64_t secs)
     unsigned int i;
 
     uint_times = (unsigned int)(secs >> (8 * sizeof(unsigned int)));
+    secs &= (unsigned int)-1;
     if (uint_times > 0) {
         for (i = uint_times; i-- > 0;)
             sleep((unsigned int)-1);
@@ -91,6 +92,9 @@ static void ossl_sleep_secs(uint64_t secs)
          */
         sleep(uint_times);
     }
+
+    /* Now, sleep the remaining seconds */
+    sleep((unsigned int)secs);
 }
 
 static void ossl_sleep_millis(uint64_t millis)
