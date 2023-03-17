@@ -48,11 +48,11 @@ void OSSL_sleep(uint64_t millis)
      * Windows' Sleep() takes a DWORD argument, which is smaller than
      * a uint64_t, so we need to limit it to 49 days, which should be enough.
      */
-    DWORD milliseconds = (DWORD)-1;
+    DWORD limited_millis = (DWORD)-1;
 
-    if (millis < milliseconds)
-        milliseconds = (DWORD)millis;
-    Sleep(milliseconds);
+    if (millis < limited_millis)
+        limited_millis = (DWORD)millis;
+    Sleep(limited_millis);
 }
 
 #else
@@ -66,11 +66,11 @@ static void ossl_sleep_secs(uint64_t secs)
      * a uint64_t, so it needs to be limited to 136 years which
      * should be enough even for Sleeping Beauty.
      */
-    unsigned int seconds = UINT_MAX;
+    unsigned int limited_secs = UINT_MAX;
 
-    if (secs < seconds)
-        seconds = (unsigned int)secs;
-    sleep(seconds);
+    if (secs < limited_secs)
+        limited_secs = (unsigned int)secs;
+    sleep(limited_secs);
 }
 
 static void ossl_sleep_millis(uint64_t millis)
