@@ -156,7 +156,6 @@ typedef struct {
 
 typedef struct {
     void *provctx;
-    uint8_t *out;
     uint32_t outlen;
     uint8_t *pwd;
     uint32_t pwdlen;
@@ -259,7 +258,7 @@ static ossl_inline int fill_memory_blocks(KDF_ARGON2 *ctx);
 
 static void initial_hash(uint8_t *blockhash, KDF_ARGON2 *ctx);
 static int initialize(KDF_ARGON2 *ctx);
-static void finalize(const KDF_ARGON2 *ctx);
+static void finalize(const KDF_ARGON2 *ctx, void *out);
 
 static int blake2b(EVP_MD *md, EVP_MAC *mac, void *out, size_t outlen,
                    const void *in, size_t inlen, const void *key,
@@ -755,7 +754,7 @@ static int initialize(KDF_ARGON2 *ctx)
     return 1;
 }
 
-static void finalize(const KDF_ARGON2 *ctx)
+static void finalize(const KDF_ARGON2 *ctx, void *out)
 {
     BLOCK blockhash;
     uint8_t blockhash_bytes[ARGON2_BLOCK_SIZE];
@@ -775,7 +774,7 @@ static void finalize(const KDF_ARGON2 *ctx)
 
     /* Hash the result */
     store_block(blockhash_bytes, &blockhash);
-    blake2b_long(ctx->md, ctx->mac, ctx->out, ctx->outlen, blockhash_bytes,
+    blake2b_long(ctx->md, ctx->mac, out, ctx->outlen, blockhash_bytes,
                  ARGON2_BLOCK_SIZE);
     OPENSSL_cleanse(blockhash.v, ARGON2_BLOCK_SIZE);
     OPENSSL_cleanse(blockhash_bytes, ARGON2_BLOCK_SIZE);
@@ -990,9 +989,6 @@ static void kdf_argon2_free(void *vctx)
     if (ctx == NULL)
         return;
 
-    if (ctx->out != NULL)
-        OPENSSL_clear_free(ctx->out, ctx->outlen);
-
     if (ctx->pwd != NULL)
         OPENSSL_clear_free(ctx->pwd, ctx->pwdlen);
 
@@ -1004,6 +1000,9 @@ static void kdf_argon2_free(void *vctx)
 
     if (ctx->ad != NULL)
         OPENSSL_clear_free(ctx->ad, ctx->adlen);
+
+    EVP_MD_free(ctx->md);
+    EVP_MAC_free(ctx->mac);
 
     OPENSSL_free(ctx->propq);
 
@@ -1023,16 +1022,17 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
     if (!ossl_prov_is_running() || !kdf_argon2_set_ctx_params(vctx, params))
         return 0;
 
-    ctx->mac = EVP_MAC_fetch(ctx->libctx, "blake2bmac", ctx->propq);
+    if (ctx->mac == NULL)
+        ctx->mac = EVP_MAC_fetch(ctx->libctx, "blake2bmac", ctx->propq);
     if (ctx->mac == NULL) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_MAC,
                        "cannot fetch blake2bmac");
         return 0;
     }
 
-    ctx->md = EVP_MD_fetch(ctx->libctx, "blake2b512", ctx->propq);
+    if (ctx->md == NULL)
+        ctx->md = EVP_MD_fetch(ctx->libctx, "blake2b512", ctx->propq);
     if (ctx->md == NULL) {
-        EVP_MAC_free(ctx->mac);
         ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST,
                        "canot fetch blake2b512");
         return 0;
@@ -1040,15 +1040,16 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
 
     if (ctx->salt == NULL || ctx->saltlen == 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SALT);
-        goto fail2;
+        return 0;
     }
 
     if (outlen != ctx->outlen) {
         if (OSSL_PARAM_locate((OSSL_PARAM *)params, "size") != NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
-            goto fail2;
+            return 0;
         }
-        kdf_argon2_ctx_set_out_length(ctx, (uint32_t) outlen);
+        if (!kdf_argon2_ctx_set_out_length(ctx, (uint32_t) outlen))
+            return 0;
     }
 
     switch (ctx->type) {
@@ -1058,7 +1059,7 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
         break;
     default:
         ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_MODE, "invalid Argon2 type");
-        goto fail2;
+        return 0;
     }
 
     if (ctx->threads > 1) {
@@ -1066,36 +1067,28 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
         ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_THREAD_POOL_SIZE,
                        "requested %u threads, single-threaded mode supported only",
                        ctx->threads);
-        goto fail2;
+        return 0;
 # else
         if (ctx->threads > ossl_get_avail_threads(ctx->libctx)) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_THREAD_POOL_SIZE,
                            "requested %u threads, available: 1",
                            ossl_get_avail_threads(ctx->libctx));
-            goto fail2;
+            return 0;
         }
 # endif
         if (ctx->threads > ctx->lanes) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_THREAD_POOL_SIZE,
                            "requested more threads (%u) than lanes (%u)",
                            ctx->threads, ctx->lanes);
-            goto fail2;
+            return 0;
         }
     }
 
     if (ctx->m_cost < 8 * ctx->lanes) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_MEMORY_SIZE,
                        "m_cost must be greater or equal than 8 times the number of lanes");
-        goto fail2;
+        return 0;
     }
-
-    if (ctx->type != ARGON2_D)
-        ctx->out = OPENSSL_secure_zalloc(ctx->outlen + 1);
-    else
-        ctx->out = OPENSSL_zalloc(ctx->outlen + 1);
-
-    if (ctx->out == NULL)
-        goto fail2;
 
     memory_blocks = ctx->m_cost;
     if (memory_blocks < 2 * ARGON2_SYNC_POINTS * ctx->lanes)
@@ -1112,31 +1105,14 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
     ctx->lane_length = segment_length * ARGON2_SYNC_POINTS;
 
     if (initialize(ctx) != 1)
-        goto fail3;
+        return 0;
 
     if (fill_memory_blocks(ctx) != 1)
-        goto fail3;
+        return 0;
 
-    finalize(ctx);
-    memcpy(out, ctx->out, outlen);
-
-    EVP_MAC_free(ctx->mac);
-    EVP_MD_free(ctx->md);
+    finalize(ctx, out);
 
     return 1;
-
-fail3:
-    if (ctx->type != ARGON2_D)
-        OPENSSL_secure_clear_free(ctx->out, ctx->outlen + 1);
-    else
-        OPENSSL_clear_free(ctx->out, ctx->outlen + 1);
-    ctx->out = NULL;
-
-fail2:
-    EVP_MD_free(ctx->md);
-    EVP_MAC_free(ctx->mac);
-
-    return 0;
 }
 
 static void kdf_argon2_reset(void *vctx)
@@ -1149,8 +1125,10 @@ static void kdf_argon2_reset(void *vctx)
     type = ctx->type;
     libctx = ctx->libctx;
 
-    if (ctx->out != NULL)
-        OPENSSL_clear_free(ctx->out, ctx->outlen);
+    EVP_MD_free(ctx->md);
+    EVP_MAC_free(ctx->mac);
+
+    OPENSSL_free(ctx->propq);
 
     if (ctx->pwd != NULL)
         OPENSSL_clear_free(ctx->pwd, ctx->pwdlen);
@@ -1408,6 +1386,10 @@ static int set_property_query(KDF_ARGON2 *ctx, const char *propq)
         if (ctx->propq == NULL)
             return 0;
     }
+    EVP_MD_free(ctx->md);
+    ctx->md = NULL;
+    EVP_MAC_free(ctx->mac);
+    ctx->mac = NULL;
     return 1;
 }
 
