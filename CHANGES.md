@@ -250,6 +250,13 @@ OpenSSL 3.1
 
 ### Changes between 3.1.0 and 3.1.1 [xx XXX xxxx]
 
+ * Add FIPS provider configuration option to disallow the use of
+   truncated digests with Hash and HMAC DRBGs (q.v. FIPS 140-3 IG D.R.).
+   The option '-no_drbg_truncated_digests' can optionally be
+   supplied to 'openssl fipsinstall'.
+
+   *Paul Dale*
+
  * Corrected documentation of X509_VERIFY_PARAM_add0_policy() to mention
    that it does not enable policy checking. Thanks to David Benjamin for
    discovering this issue.
