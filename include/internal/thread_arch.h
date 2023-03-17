@@ -117,6 +117,4 @@ int ossl_crypto_thread_native_exit(void);
 int ossl_crypto_thread_native_is_self(CRYPTO_THREAD *thread);
 int ossl_crypto_thread_native_clean(CRYPTO_THREAD *thread);
 
-void ossl_crypto_mem_barrier(void);
-
 #endif /* OSSL_INTERNAL_THREAD_ARCH_H */

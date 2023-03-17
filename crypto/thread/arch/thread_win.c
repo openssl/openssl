@@ -179,9 +179,4 @@ void ossl_crypto_condvar_free(CRYPTO_CONDVAR **cv)
     *cv_p = NULL;
 }
 
-void ossl_crypto_mem_barrier(void)
-{
-    MemoryBarrier();
-}
-
 #endif
