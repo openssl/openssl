@@ -75,6 +75,8 @@ use constant {
     EXT_USE_SRTP => 14,
     EXT_ALPN => 16,
     EXT_SCT => 18,
+    EXT_CLIENT_CERT_TYPE => 19,
+    EXT_SERVER_CERT_TYPE => 20,
     EXT_PADDING => 21,
     EXT_ENCRYPT_THEN_MAC => 22,
     EXT_EXTENDED_MASTER_SECRET => 23,

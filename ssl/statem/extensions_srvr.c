@@ -1953,17 +1953,17 @@ EXT_RETURN tls_construct_stoc_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
                                                unsigned int context,
                                                X509 *x, size_t chainidx)
 {
-    if (sc->ext.client_cert_type == TLSEXT_cert_type_x509) {
-        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
-        return EXT_RETURN_NOT_SENT;
-    }
-
     if (sc->ext.client_cert_type_ctos == OSSL_CERT_TYPE_CTOS_ERROR
         && (send_certificate_request(sc)
             || sc->post_handshake_auth == SSL_PHA_EXT_RECEIVED)) {
         /* Did not receive an acceptable cert type - and doing client auth */
         SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE, SSL_R_BAD_EXTENSION);
         return EXT_RETURN_FAIL;
+    }
+
+    if (sc->ext.client_cert_type == TLSEXT_cert_type_x509) {
+        sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
+        return EXT_RETURN_NOT_SENT;
     }
 
     /*
