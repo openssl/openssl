@@ -27,6 +27,7 @@ extern "C" {
 #define OSSL_PROV_PARAM_STATUS             "status"              /* uint */
 #define OSSL_PROV_PARAM_SECURITY_CHECKS    "security-checks"     /* uint */
 #define OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK "tls1-prf-ems-check"  /* uint */
+#define OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST  "drbg-no-trunc-md"    /* uint */
 
 /* Self test callback parameters */
 #define OSSL_PROV_PARAM_SELF_TEST_PHASE  "st-phase" /* utf8_string */
