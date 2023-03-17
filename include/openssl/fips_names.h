@@ -49,6 +49,7 @@ extern "C" {
 
 /*
  * A boolean that determines if the runtime FIPS security checks are performed.
+ * This is enabled by default.
  * Type: OSSL_PARAM_UTF8_STRING
  */
 # define OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS "security-checks"
@@ -56,10 +57,18 @@ extern "C" {
 /*
  * A boolean that determines if the runtime FIPS check for TLS1_PRF EMS is performed.
  * This is disabled by default.
- *
  * Type: OSSL_PARAM_UTF8_STRING
  */
 # define OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK "tls1-prf-ems-check"
+
+/*
+ * A boolean that determines if truncated digests can be used with Hash and HMAC
+ * DRBGs.  FIPS 140-3 IG D.R disallows such use for efficiency rather than
+ * security reasons.
+ * This is disabled by default.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_DRBG_TRUNC_DIGEST  "drbg-no-trunc-md"
 
 # ifdef __cplusplus
 }
