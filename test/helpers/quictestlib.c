@@ -199,7 +199,7 @@ int qtest_supports_blocking(void)
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
 static int globserverret = 0;
 static QUIC_TSERVER *globtserv;
-static thread_t thread_zero;
+static const thread_t thread_zero;
 
 static void run_server_thread(void)
 {
