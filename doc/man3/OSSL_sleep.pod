@@ -14,8 +14,13 @@ OSSL_sleep - delay execution for a specified number of milliseconds
 
 OSSL_sleep() is a convenience function to delay execution of the calling
 thread for (at least) I<millis> milliseconds.  The delay is not guaranteed;
-it may be affected by system activity, by the time spent processing the call
-or by system timer granularity.
+it may be affected by system activity, by the time spent processing the call,
+limitation on the underlying system call parameter size or by system timer
+granularity.
+
+In particular on Windows the maximum amount of time it will sleep is
+49 days and on systems where the regular sleep(3) is used as the underlying
+system call the maximum sleep time is about 136 years.
 
 =head1 RETURN VALUES
 
