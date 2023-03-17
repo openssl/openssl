@@ -8090,7 +8090,7 @@ static int test_ticket_callbacks(int tst)
     gen_tick_called = dec_tick_called = tick_key_cb_called = 0;
 
     /* Which tests the ticket key callback should request renewal for */
-    
+
     if (tst == 10 || tst == 11 || tst == 16 || tst == 17)
         tick_key_renew = 1;
     else if (tst == 12 || tst == 13 || tst == 18 || tst == 19)
@@ -9558,9 +9558,12 @@ static int create_cert_key(int idx, char *certfilename, char *privkeyfilename)
  * correctly establish a TLS (1.3) connection.
  * Test 0: Signature algorithm with built-in hashing functionality: "xorhmacsig"
  * Test 1: Signature algorithm using external SHA2 hashing: "xorhmacsha2sig"
+ * Test 2: Test 0 using RPK
+ * Test 3: Test 1 using RPK
  */
 static int test_pluggable_signature(int idx)
 {
+    static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 };
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
@@ -9568,10 +9571,12 @@ static int test_pluggable_signature(int idx)
     OSSL_PROVIDER *defaultprov = OSSL_PROVIDER_load(libctx, "default");
     char *certfilename = "tls-prov-cert.pem";
     char *privkeyfilename = "tls-prov-key.pem";
+    int sigidx = idx % 2;
+    int rpkidx = idx / 2;
 
     /* create key and certificate for the different algorithm types */
     if (!TEST_ptr(tlsprov)
-        || !TEST_true(create_cert_key(idx, certfilename, privkeyfilename)))
+        || !TEST_true(create_cert_key(sigidx, certfilename, privkeyfilename)))
         goto end;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
@@ -9582,6 +9587,13 @@ static int test_pluggable_signature(int idx)
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL)))
         goto end;
+
+    /* Enable RPK for server cert */
+    if (rpkidx) {
+        if (!TEST_true(SSL_set1_server_cert_type(serverssl, cert_type_rpk, sizeof(cert_type_rpk)))
+                || !TEST_true(SSL_set1_server_cert_type(clientssl, cert_type_rpk, sizeof(cert_type_rpk))))
+            goto end;
+    }
 
     /* This is necessary to pass minimal setup w/o other groups configured */
     if (!TEST_true(SSL_set1_groups_list(serverssl, "xorgroup"))
@@ -9594,6 +9606,10 @@ static int test_pluggable_signature(int idx)
      * both sign and verify functions during handshake.
      */
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* If using RPK, make sure we got one */
+    if (rpkidx && !TEST_long_eq(SSL_get_verify_result(clientssl), X509_V_ERR_RPK_UNTRUSTED))
         goto end;
 
     testresult = 1;
@@ -11083,7 +11099,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_pluggable_group, 2);
-    ADD_ALL_TESTS(test_pluggable_signature, 2);
+    ADD_ALL_TESTS(test_pluggable_signature, 4);
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_ssl_dup);
