@@ -234,7 +234,8 @@ resource records or in the equivalent zone file presentation format.
 
 ``ossl_ech_find_echconfigs()`` attempts to find and return the (possibly empty)
 set of ECHConfig values from a buffer containing one of the encoded forms
-described above.
+described above. Each successfully returned ECHConfigList will have 
+exactly one ECHConfig, i.e., a single public value.
 
 ```c
 int ossl_ech_find_echconfigs(int *num_echs,
@@ -245,11 +246,16 @@ int ossl_ech_find_echconfigs(int *num_echs,
 ``ossl_ech_find_echconfigs()`` returns the number of ECHConfig values from the
 input (``val``/``len``) successfully decoded  in the ``num_echs`` output.  If
 no ECHConfig values values are encountered (which can happen for good HTTPS RR
-values) then ``num_echs`` will be zero but the function return 1.  After a call
-to ``ossl_ech_find_echconfigs()``, the application can make a sequence of calls
-to ``SSL_ech_set1_echconfig()`` for each of the ECHConfig values found.  (The
-various output buffers must be freed by the client afterwards, see the example
-code in
+values) then ``num_echs`` will be zero but the function return 1. If the
+input contains more than one (syntactically correct) ECHConfig, then only
+those that contain locally supported options (e.g. AEAD ciphers) will be
+returned. If no ECHConfig found has supported options then none will be
+returned and the function will return 0.
+
+After a call to ``ossl_ech_find_echconfigs()``, the application can make a
+sequence of calls to ``SSL_ech_set1_echconfig()`` for each of the ECHConfig
+values found.  (The various output buffers must be freed by the client
+afterwards, see the example code in
 [``test/ech_test.c``](https://github.com/sftcd/openssl/blob/ECH-draft-13c/test/ech_test.c).)
 
 Clients can additionally more directly control the values to be used for inner
@@ -273,7 +279,7 @@ client can detect this situation via the ``SSL_ech_get_status()`` API and
 can access the retry config value via:
 
 ```c
-int SSL_ech_get_retry_config(SSL *s, const unsigned char **ec, size_t *eclen);
+int SSL_ech_get_retry_config(SSL *s, unsigned char **ec, size_t *eclen);
 ```
 
 Clients that need fine control over which ECHConfig (from those available) will
