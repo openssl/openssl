@@ -13,7 +13,7 @@ IF[{- !$disabled{asm} -}]
   $CHACHAASM_aarch64=chacha-armv8.S chacha-armv8-sve.S
 
   $CHACHAASM_ppc32=chacha_ppc.c chacha-ppc.s
-  IF[{- $target{sys_id} ne "AIX" -}]
+  IF[{- $target{sys_id} ne "AIX" && $target{sys_id} ne "MACOSX" -}]
     $CHACHAASM_ppc32=chacha_ppc.c chacha-ppc.s chachap10-ppc.s
   ENDIF
   $CHACHAASM_ppc64=$CHACHAASM_ppc32

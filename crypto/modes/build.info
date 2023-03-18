@@ -33,7 +33,7 @@ IF[{- !$disabled{asm} -}]
   $MODESDEF_parisc20_64=$MODESDEF_parisc11
 
   $MODESASM_ppc32=ghashp8-ppc.s
-  IF[{- $target{sys_id} ne "AIX" -}]
+  IF[{- $target{sys_id} ne "AIX" && $target{sys_id} ne "MACOSX" -}]
     $MODESASM_ppc32=ghashp8-ppc.s aes-gcm-ppc.s
   ENDIF
   $MODESDEF_ppc32=
