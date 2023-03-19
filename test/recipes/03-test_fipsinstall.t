@@ -24,7 +24,7 @@ use platform;
 
 plan skip_all => "Test only supported in a fips build" if disabled("fips");
 
-plan tests => 31;
+plan tests => 34;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 my $fipskey = $ENV{FIPSKEY} // config('FIPSKEY') // '00';
@@ -78,6 +78,22 @@ sub replace_parent_line_file {
     my $rep = "$value";
     return replace_line_file_internal(srctop_file("test", 'fips.cnf'),
                                       $srch, $rep, $outfile);
+}
+
+# Check if the specified pattern occurs in the given file
+# Returns 1 if the pattern is found and 0 if not
+sub find_line_file {
+    my ($key, $file) = @_;
+
+    open(my $in, $file) or return -1;
+    while (my $line = <$in>) {
+        if ($line =~ /$key/) {
+            close($in);
+            return 1;
+        }
+    }
+    close($in);
+    return 0;
 }
 
 # fail if no module name
@@ -351,3 +367,16 @@ SKIP: {
                 '-ems_check'])),
        "fipsinstall fails when attempting to run self tests on install");
 }
+
+ok(find_line_file('drbg-no-trunc-md = 0', 'fips.cnf') == 1,
+   'fipsinstall defaults to not banning truncated digests with DRBGs');
+
+ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
+           '-provider_name', 'fips', '-mac_name', 'HMAC',
+           '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+           '-section_name', 'fips_sect', '-no_drbg_truncated_digests'])),
+   "fipsinstall knows about allowing truncated digests in DRBGs");
+
+ok(find_line_file('drbg-no-trunc-md = 1', 'fips.cnf') == 1,
+   'fipsinstall will allow option for truncated digests with DRBGs');
+
