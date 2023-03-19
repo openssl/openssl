@@ -1025,7 +1025,6 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
 
     ctx->mac = EVP_MAC_fetch(ctx->libctx, "blake2bmac", ctx->propq);
     if (ctx->mac == NULL) {
-        OPENSSL_free(ctx);
         ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_MAC,
                        "cannot fetch blake2bmac");
         return 0;
@@ -1034,7 +1033,6 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
     ctx->md = EVP_MD_fetch(ctx->libctx, "blake2b512", ctx->propq);
     if (ctx->md == NULL) {
         EVP_MAC_free(ctx->mac);
-        OPENSSL_free(ctx);
         ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST,
                        "canot fetch blake2b512");
         return 0;
