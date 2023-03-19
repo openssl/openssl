@@ -1034,7 +1034,6 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
     ctx->md = EVP_MD_fetch(ctx->libctx, "blake2b512", ctx->propq);
     if (ctx->md == NULL) {
         EVP_MAC_free(ctx->mac);
-        ctx->mac = NULL;
         ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST,
                        "canot fetch blake2b512");
         return 0;
