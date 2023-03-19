@@ -14,7 +14,7 @@ scheme that allows the inner CH to refer to extensions from the outer CH where
 the same value would otherwise be present in both.
 
 ECH makes use of [HPKE](https://datatracker.ietf.org/doc/rfc9180/) for the
-encryption of the inner CH. HPKE code was merged to the master branch in 
+encryption of the inner CH. HPKE code was merged to the master branch in
 November 2022.
 
 The current APIs implemented in this fork are also documented
@@ -41,7 +41,7 @@ in August 2021.  The latest draft can be found
 Once browsers and others have done sufficient testing the plan is to
 proceed to publishing ECH as an RFC. That will likely include a change
 of version code-points which have been tracking Internet-Draft version
-numbers during the course of spec development. 
+numbers during the course of spec development.
 
 The current version used is 0xfe0d where the 0d reflects draft-13 with
 the following symbol defined for this version:
@@ -83,7 +83,7 @@ the ``openssl ech`` command documented
 
 The ECHConfigList structure contains the ECH public value (an ECC public key)
 and other ECH related information, mainly the ``public_name`` that will be used
-as the SNI value in outer CH messages. 
+as the SNI value in outer CH messages.
 
 ```c
 int ossl_ech_make_echconfig(unsigned char *echconfig, size_t *echconfiglen,
@@ -95,7 +95,7 @@ int ossl_ech_make_echconfig(unsigned char *echconfig, size_t *echconfiglen,
 
 The ``echconfig`` and ``priv`` buffer outputs are allocated by the caller
 with the allocated size on input and the used-size on output. On output,
-the ``echconfig`` contains the base64 encoded ECHConfigList and the 
+the ``echconfig`` contains the base64 encoded ECHConfigList and the
 ``priv`` value contains the PEM encoded PKCS#8 private value.
 
 The ``ekversion`` should be 0xfe0d or 13 for the current version.
@@ -133,7 +133,7 @@ re-load keys without complicating their configuration file handling.
 
 Cloudflare's test ECH service rotates published ECH public keys hourly
 (re-verified on 2023-01-26). We expect other services to do similarly (and do
-so for some of our test services at defo.ie). 
+so for some of our test services at defo.ie).
 
 ```c
 int SSL_CTX_ech_server_enable_file(SSL_CTX *ctx, const char *file);
@@ -201,7 +201,7 @@ reason.
 [RFC8701](https://datatracker.ietf.org/doc/html/rfc8701) and is a mechanism
 intended to discourage protocol ossification that can be used for ECH.
 (GREASE'd ECH may turn out to be important as a step towards widespread
-deployment of ECH.) 
+deployment of ECH.)
 
 Client-side APIs
 ----------------
@@ -230,11 +230,11 @@ application or (more likely) have been retrieved from DNS resource records by
 the application. ECHConfig values may be provided in various encodings (base64,
 ascii hex or binary) each of which may suit different applications.  ECHConfig
 values may also be provided embedded in the DNS wire encoding of HTTPS or SVCB
-resource records or in the equivalent zone file presentation format.  
+resource records or in the equivalent zone file presentation format.
 
 ``ossl_ech_find_echconfigs()`` attempts to find and return the (possibly empty)
 set of ECHConfig values from a buffer containing one of the encoded forms
-described above. Each successfully returned ECHConfigList will have 
+described above. Each successfully returned ECHConfigList will have
 exactly one ECHConfig, i.e., a single public value.
 
 ```c
@@ -272,7 +272,7 @@ int SSL_CTX_ech_set_outer_alpn_protos(SSL *s, const unsigned char *protos,
                                       unsigned int protos_len);
 ```
 
-If a client attempts ECH but that fails, or sends an ECH-GREASE'd CH, to 
+If a client attempts ECH but that fails, or sends an ECH-GREASE'd CH, to
 an ECH-supporting server, then that server may return an ECH "retry-config"
 value that the client could choose to use in a subsequent connection. The
 client can detect this situation via the ``SSL_ech_get_status()`` API and
@@ -354,7 +354,6 @@ values. (They aren't allocated or free'd by the caller.)
 
 The function returns one of the status values above.
 
-
 Call-backs and options
 ----------------------
 
@@ -397,7 +396,7 @@ BoringSSL APIs
 --------------
 
 Brief descriptions of boringssl APIs are below together with initial comments
-comparing those to the above. (It may be useful to consider the extent to 
+comparing those to the above. (It may be useful to consider the extent to
 which it is useful to make OpenSSL and boring APIs resemble one another.)
 
 Just as our implementation is under development, boring's ``include/openssl/ssl.h``
@@ -447,7 +446,6 @@ These APIs also expose HPKE to the application via ``EVP_HPKE_KEY`` which is
 defined in ``include/openssl/hpke.h``. HPKE handling differs quite a bit from
 the HPKE APIs merged to OpenSSL.
 
-
 ```c
 OPENSSL_EXPORT int SSL_marshal_ech_config(uint8_t **out, size_t *out_len,
                                           uint8_t config_id,
@@ -486,4 +484,3 @@ OPENSSL_EXPORT int SSL_ech_accepted(const SSL *ssl);
 ```
 
 That seems to be a subset of ``SSL_ech_get_status()``.
-
