@@ -40,6 +40,7 @@ typedef enum OPTION_choice {
     OPT_NO_CONDITIONAL_ERRORS,
     OPT_NO_SECURITY_CHECKS,
     OPT_TLS_PRF_EMS_CHECK,
+    OPT_DISALLOW_DRGB_TRUNC_DIGEST,
     OPT_SELF_TEST_ONLOAD, OPT_SELF_TEST_ONINSTALL
 } OPTION_CHOICE;
 
@@ -63,14 +64,16 @@ const OPTIONS fipsinstall_options[] = {
      "Forces self tests to run once on module installation"},
     {"ems_check", OPT_TLS_PRF_EMS_CHECK, '-',
      "Enable the run-time FIPS check for EMS during TLS1_PRF"},
+    {"no_drbg_truncated_digests", OPT_DISALLOW_DRGB_TRUNC_DIGEST, '-',
+     "Disallow truncated digests with Hash and HMAC DRBGs"},
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input config file, used when verifying"},
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output config file, used when generating"},
     {"mac_name", OPT_MAC_NAME, 's', "MAC name"},
-    {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form. "
-                                "See 'PARAMETER NAMES' in the EVP_MAC_ docs"},
+    {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form."},
+    {OPT_MORE_STR, 0, 0, "See 'PARAMETER NAMES' in the EVP_MAC_ docs"},
     {"noout", OPT_NO_LOG, '-', "Disable logging of self test events"},
     {"corrupt_desc", OPT_CORRUPT_DESC, 's', "Corrupt a self test by description"},
     {"corrupt_type", OPT_CORRUPT_TYPE, 's', "Corrupt a self test by type"},
@@ -176,6 +179,7 @@ static int write_config_fips_section(BIO *out, const char *section,
                                      int conditional_errors,
                                      int security_checks,
                                      int ems_check,
+                                     int drgb_no_trunc_dgst,
                                      unsigned char *install_mac,
                                      size_t install_mac_len)
 {
@@ -191,6 +195,8 @@ static int write_config_fips_section(BIO *out, const char *section,
                       security_checks ? "1" : "0") <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK,
                       ems_check ? "1" : "0") <= 0
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST,
+                      drgb_no_trunc_dgst ? "1" : "0") <= 0
         || !print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
                       module_mac_len))
         goto end;
@@ -213,7 +219,8 @@ static CONF *generate_config_and_load(const char *prov_name,
                                       size_t module_mac_len,
                                       int conditional_errors,
                                       int security_checks,
-                                      int ems_check)
+                                      int ems_check,
+                                      int drgb_no_trunc_dgst)
 {
     BIO *mem_bio = NULL;
     CONF *conf = NULL;
@@ -227,6 +234,7 @@ static CONF *generate_config_and_load(const char *prov_name,
                                        conditional_errors,
                                        security_checks,
                                        ems_check,
+                                       drgb_no_trunc_dgst,
                                        NULL, 0))
         goto end;
 
@@ -324,7 +332,8 @@ int fipsinstall_main(int argc, char **argv)
 {
     int ret = 1, verify = 0, gotkey = 0, gotdigest = 0, self_test_onload = 1;
     int enable_conditional_errors = 1, enable_security_checks = 1;
-    int enable_tls_prf_ems_check = 0; /* This is off by default */
+    int enable_tls_prf_ems_check = 0;   /* This is off by default */
+    int enable_drgb_no_trunc_dgst = 0;  /* This is off by default */
     const char *section_name = "fips_sect";
     const char *mac_name = "HMAC";
     const char *prov_name = "fips";
@@ -372,6 +381,9 @@ opthelp:
             break;
         case OPT_TLS_PRF_EMS_CHECK:
             enable_tls_prf_ems_check = 1;
+            break;
+        case OPT_DISALLOW_DRGB_TRUNC_DIGEST:
+            enable_drgb_no_trunc_dgst = 1;
             break;
         case OPT_QUIET:
             quiet = 1;
@@ -534,7 +546,8 @@ opthelp:
                                         module_mac_len,
                                         enable_conditional_errors,
                                         enable_security_checks,
-                                        enable_tls_prf_ems_check);
+                                        enable_tls_prf_ems_check,
+                                        enable_drgb_no_trunc_dgst);
         if (conf == NULL)
             goto end;
         if (!load_fips_prov_and_run_self_test(prov_name))
@@ -552,6 +565,7 @@ opthelp:
                                        enable_conditional_errors,
                                        enable_security_checks,
                                        enable_tls_prf_ems_check,
+                                       enable_drgb_no_trunc_dgst,
                                        install_mac, install_mac_len))
             goto end;
         if (!quiet)
