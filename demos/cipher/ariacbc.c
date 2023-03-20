@@ -169,10 +169,10 @@ err:
 int main(int argc, char **argv)
 {
     if (!aria_cbc_encrypt())
-       return 1;
+        return EXIT_FAILURE;
 
     if (!aria_cbc_decrypt())
-        return 1;
+        return EXIT_FAILURE;
 
-    return 0;
+    return EXIT_SUCCESS;
 }

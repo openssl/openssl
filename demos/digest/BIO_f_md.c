@@ -36,15 +36,14 @@
 
 int main(int argc, char * argv[])
 {
-    int result = 1;
+    int ret = EXIT_FAILURE;
     OSSL_LIB_CTX *library_context = NULL;
     BIO *input = NULL;
-    BIO *bio_digest = NULL;
+    BIO *bio_digest = NULL, *reading = NULL;
     EVP_MD *md = NULL;
     unsigned char buffer[512];
-    size_t readct, writect;
     size_t digest_size;
-    char *digest_value=NULL;
+    char *digest_value = NULL;
     int j;
 
     input = BIO_new_fd(fileno(stdin), 1);
@@ -89,7 +88,7 @@ int main(int argc, char * argv[])
      * We will use BIO chaining so that as we read, the digest gets updated
      * See the man page for BIO_push
      */
-    BIO *reading = BIO_push(bio_digest, input);
+    reading = BIO_push(bio_digest, input);
 
     while (BIO_read(reading, buffer, sizeof(buffer)) > 0)
         ;
@@ -106,10 +105,10 @@ int main(int argc, char * argv[])
         fprintf(stdout, "%02x", (unsigned char)digest_value[j]);
     }
     fprintf(stdout, "\n");
-    result = 0;
+    ret = EXIT_SUCCESS;
 
 cleanup:
-    if (result != 0) 
+    if (ret != EXIT_SUCCESS)
         ERR_print_errors_fp(stderr);
 
     OPENSSL_free(digest_value);
@@ -118,5 +117,5 @@ cleanup:
     EVP_MD_free(md);
     OSSL_LIB_CTX_free(library_context);
 
-    return result;
+    return ret;
 }

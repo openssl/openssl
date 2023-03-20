@@ -45,7 +45,7 @@ cleanup:
 
 int main(int argc, char **argv)
 {
-    int rv = EXIT_FAILURE;
+    int ret = EXIT_FAILURE;
     OSSL_LIB_CTX *libctx = NULL;
     const char *propq = NULL;
     EVP_PKEY *dsaparamskey = NULL;
@@ -74,10 +74,10 @@ int main(int argc, char **argv)
     if (!dsa_print_key(dsakey, 1, libctx, propq))
         goto cleanup;
 
-    rv = EXIT_SUCCESS;
+    ret = EXIT_SUCCESS;
 cleanup:
     EVP_PKEY_free(dsakey);
     EVP_PKEY_free(dsaparamskey);
     EVP_PKEY_CTX_free(ctx);
-    return rv;
+    return ret;
 }

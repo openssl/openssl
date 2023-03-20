@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     X509 *scert = NULL;
     EVP_PKEY *skey = NULL;
     CMS_ContentInfo *cms = NULL;
-    int ret = 1;
+    int ret = EXIT_FAILURE;
 
     /*
      * For simple S/MIME signing use CMS_DETACHED. On OpenSSL 1.0.0 only: for
@@ -69,11 +69,9 @@ int main(int argc, char **argv)
     if (!SMIME_write_CMS(out, cms, in, flags))
         goto err;
 
-    ret = 0;
-
+    ret = EXIT_SUCCESS;
  err:
-
-    if (ret) {
+    if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Signing Data\n");
         ERR_print_errors_fp(stderr);
     }

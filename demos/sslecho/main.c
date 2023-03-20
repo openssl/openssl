@@ -124,7 +124,7 @@ void usage()
     printf("       --or--\n");
     printf("       sslecho c ip\n");
     printf("       c=client, s=server, ip=dotted ip of server\n");
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 
 int main(int argc, char **argv)
@@ -328,7 +328,7 @@ int main(int argc, char **argv)
             ERR_print_errors_fp(stderr);
         }
     }
-    exit:
+exit:
     /* Close up */
     if (ssl != NULL) {
         SSL_shutdown(ssl);
@@ -346,5 +346,5 @@ int main(int argc, char **argv)
 
     printf("sslecho exiting\n");
 
-    return 0;
+    return EXIT_SUCCESS;
 }

@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     X509 *rcert = NULL;
     STACK_OF(X509) *recips = NULL;
     CMS_ContentInfo *cms = NULL;
-    int ret = 1;
+    int ret = EXIT_FAILURE;
 
     int flags = CMS_STREAM | CMS_DETACHED;
 
@@ -77,11 +77,9 @@ int main(int argc, char **argv)
     if (!PEM_write_bio_CMS(out, cms))
         goto err;
 
-    ret = 0;
-
+    ret = EXIT_SUCCESS;
  err:
-
-    if (ret) {
+    if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Encrypting Data\n");
         ERR_print_errors_fp(stderr);
     }
