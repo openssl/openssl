@@ -104,7 +104,7 @@ static int test_tserver(int test_kind)
          * In inject mode we create a dgram pair to feed to the QUIC client on
          * the read side. We don't feed anything to this, it is just a
          * placeholder to give the client something which never returns any
-         * datagrams..
+         * datagrams.
          */
         if (!TEST_true(BIO_new_bio_dgram_pair(&c_pair_own, 5000,
                                               &s_pair_own, 5000)))
