@@ -32,7 +32,7 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS dsaparam_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [numbits]\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [numbits] [numqbits]\n"},
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -57,8 +57,8 @@ const OPTIONS dsaparam_options[] = {
     OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
-    {"numbits", 0, 0, "Number of bits if generating parameters (optional)"},
-    {"numqbits", 0, 0, "Number of bits in the subprime parameter q if generating parameters (optional)"},
+    {"numbits", 0, 0, "Number of bits if generating parameters or key (optional)"},
+    {"numqbits", 0, 0, "Number of bits in the subprime parameter q if generating parameters or key (optional)"},
     {NULL}
 };
 
@@ -249,4 +249,3 @@ int dsaparam_main(int argc, char **argv)
     release_engine(e);
     return ret;
 }
-
