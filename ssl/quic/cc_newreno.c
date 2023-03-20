@@ -1,5 +1,8 @@
 #include "internal/quic_cc.h"
 #include "internal/quic_types.h"
+#include "internal/safe_math.h"
+
+OSSL_SAFE_MATH_UNSIGNED(u64, uint64_t)
 
 typedef struct ossl_cc_newreno_st {
     /* Dependencies. */
@@ -157,6 +160,8 @@ static int newreno_in_cong_recovery(OSSL_CC_NEWRENO *nr, OSSL_TIME tx_time)
 
 static void newreno_cong(OSSL_CC_NEWRENO *nr, OSSL_TIME tx_time)
 {
+    int err = 0;
+
     /* No reaction if already in a recovery period. */
     if (newreno_in_cong_recovery(nr, tx_time))
         return;
@@ -164,9 +169,16 @@ static void newreno_cong(OSSL_CC_NEWRENO *nr, OSSL_TIME tx_time)
     /* Start a new recovery period. */
     nr->in_congestion_recovery = 1;
     nr->cong_recovery_start_time = nr->now_cb(nr->now_cb_arg);
+
+    /* slow_start_thresh = cong_wnd * loss_reduction_factor */
     nr->slow_start_thresh
-        = (nr->cong_wnd * nr->k_loss_reduction_factor_num)
-          / nr->k_loss_reduction_factor_den;
+        = safe_muldiv_u64(nr->cong_wnd,
+                          nr->k_loss_reduction_factor_num,
+                          nr->k_loss_reduction_factor_den,
+                          &err);
+
+    if (err)
+        nr->slow_start_thresh = UINT64_MAX;
 
     nr->cong_wnd = nr->slow_start_thresh;
     if (nr->cong_wnd < nr->k_min_wnd)
@@ -231,7 +243,7 @@ static int newreno_is_cong_limited(OSSL_CC_NEWRENO *nr)
      * have consumed half of our window.
      */
     return (nr->cong_wnd < nr->slow_start_thresh && wnd_rem <= nr->cong_wnd / 2)
-        || wnd_rem <= 3 * nr->max_dgram_size;
+           || wnd_rem <= 3 * nr->max_dgram_size;
 }
 
 static int newreno_on_data_acked(OSSL_CC_DATA *cc,
