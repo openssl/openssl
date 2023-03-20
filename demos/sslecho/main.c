@@ -322,7 +322,7 @@ int main(int argc, char **argv)
             ERR_print_errors_fp(stderr);
         }
     }
-    exit:
+exit:
     /* Close up */
     if (ssl != NULL) {
         SSL_shutdown(ssl);

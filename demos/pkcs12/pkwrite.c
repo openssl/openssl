@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     if (!p12) {
         fprintf(stderr, "Error creating PKCS#12 structure\n");
         ERR_print_errors_fp(stderr);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     if ((fp = fopen(argv[4], "wb")) == NULL) {
         fprintf(stderr, "Error opening file %s\n", argv[4]);

@@ -84,7 +84,7 @@ cleanup:
  */
 static int get_key_values(EVP_PKEY *pkey)
 {
-    int result = 0;
+    int ret = 0;
     char out_curvename[80];
     unsigned char out_pubkey[80];
     unsigned char out_privkey[80];
@@ -122,11 +122,11 @@ static int get_key_values(EVP_PKEY *pkey)
     fprintf(stdout, "Private Key:\n");
     BIO_dump_indent_fp(stdout, out_privkey, out_privkey_len, 2);
 
-    result = 1;
+    ret = 1;
 cleanup:
     /* Zeroize the private key data when we free it */
     BN_clear_free(out_priv);
-    return result;
+    return ret;
 }
 
 int main(void)
@@ -147,7 +147,7 @@ int main(void)
      */
     ret = EXIT_SUCCESS;
 cleanup:
-    if (ret == EXIT_FAILURE)
+    if (ret != EXIT_SUCCESS)
         ERR_print_errors_fp(stderr);
 
     EVP_PKEY_free(pkey);

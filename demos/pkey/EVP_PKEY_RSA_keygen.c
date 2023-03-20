@@ -123,7 +123,7 @@ static EVP_PKEY *generate_rsa_key_short(OSSL_LIB_CTX *libctx, unsigned int bits)
  */
 static int dump_key(const EVP_PKEY *pkey)
 {
-    int rv = 0;
+    int ret = 0;
     int bits = 0;
     BIGNUM *n = NULL, *e = NULL, *d = NULL, *p = NULL, *q = NULL;
 
@@ -227,19 +227,19 @@ static int dump_key(const EVP_PKEY *pkey)
         goto cleanup;
     }
 
-    rv = 1;
+    ret = 1;
 cleanup:
     BN_free(n); /* not secret */
     BN_free(e); /* not secret */
     BN_clear_free(d); /* secret - scrub before freeing */
     BN_clear_free(p); /* secret - scrub before freeing */
     BN_clear_free(q); /* secret - scrub before freeing */
-    return rv;
+    return ret;
 }
 
 int main(int argc, char **argv)
 {
-    int rv = EXIT_FAILURE;
+    int ret = EXIT_FAILURE;
     OSSL_LIB_CTX *libctx = NULL;
     EVP_PKEY *pkey = NULL;
     unsigned int bits = 4096;
@@ -281,9 +281,9 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-    rv = EXIT_SUCCESS;
+    ret = EXIT_SUCCESS;
 cleanup:
     EVP_PKEY_free(pkey);
     OSSL_LIB_CTX_free(libctx);
-    return rv;
+    return ret;
 }

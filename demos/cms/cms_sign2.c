@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
     ret = EXIT_SUCCESS;
  err:
-    if (ret == EXIT_FAILURE) {
+    if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Signing Data\n");
         ERR_print_errors_fp(stderr);
     }

@@ -59,7 +59,7 @@ static const unsigned char expected_output[] = {
 
 int main(int argc, char **argv)
 {
-    int rv = EXIT_FAILURE;
+    int ret = EXIT_FAILURE;
     EVP_KDF *kdf = NULL;
     EVP_KDF_CTX *kctx = NULL;
     unsigned char out[64];
@@ -111,10 +111,10 @@ int main(int argc, char **argv)
         goto end;
     }
 
-    rv = EXIT_SUCCESS;
+    ret = EXIT_SUCCESS;
 end:
     EVP_KDF_CTX_free(kctx);
     EVP_KDF_free(kdf);
     OSSL_LIB_CTX_free(library_context);
-    return rv;
+    return ret;
 }

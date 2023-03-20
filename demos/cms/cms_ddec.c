@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 
  err:
 
-    if (ret == EXIT_FAILURE) {
+    if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Decrypting Data\n");
         ERR_print_errors_fp(stderr);
     }
