@@ -173,10 +173,10 @@ The first step is to check that each certificate is well-formed.
 Part of these checks are enabled only if the B<-x509_strict> option is given.
 
 The second step is to check the extensions of every untrusted certificate
-for consistency with any purpose required.
+for consistency with the given required purpose.
 If the B<-purpose> option is not given
 then no such checks are done except for SSL/TLS connection setup,
-where by default C<sslserver> or C<sslclient> is checked.
+where by default the purpose C<sslserver> or C<sslclient> is checked.
 All certificates except the target or "leaf" must also be valid CA certificates.
 The precise extensions required are described in detail
 in the L</Certificate Extensions> section below.
@@ -485,6 +485,8 @@ with TLS server or TLS client use, respectively.
 While IETF RFC 5280 says that B<id-kp-serverAuth> and B<id-kp-clientAuth>
 are only for WWW use, in practice they are used for all kinds of TLS clients
 and servers, and this is what OpenSSL assumes as well.
+
+For details on the checks performed see the L</Certificate Extensions> section.
 
 =item B<-verify_depth> I<num>
 
