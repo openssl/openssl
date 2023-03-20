@@ -571,7 +571,7 @@ Options like B<-purpose> lead to checking specific certificate extensions,
 which determine what the target certificate and intermediate CA certificates
 can be used for.
 
-The follwing two subsections on the B<basicConstraints> and <keyUsage>
+The following two subsections on the B<basicConstraints> and <keyUsage>
 extensions and on X.509v1 certificates apply to B<all> CA certificates
 regardless of any required purpose.
 
@@ -685,7 +685,7 @@ must be present.
 For the target certificate special checks apply; see L<OCSP_basic_verify(3)>.
 For all other certificates the normal CA checks apply.
 
-=item B<TimesStamp signing>
+=item B<Timestamp signing>
 
 For the target certificate the following checks apply.
 If the keyUsage extension is present, it must have the digitalSignature
@@ -702,7 +702,7 @@ The keyUsage extension must be present and marked critical
 and must have the digitalSignature bit set,
 while the keyCertSign and crlSign bits must not be set.
 Also the extendedKeyUsage extension must be present. It must include the
-B<codeSigning> OID and must not include the B<anyExtendedKeyUsage> and
+B<codeSigning> OID and must not include the B<anyExtendedKeyUsage> or
 B<serverAuth> ("web server authentication") EKUs.
 
 For all other certificates the normal CA checks apply.
