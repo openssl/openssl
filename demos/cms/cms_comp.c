@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
     CMS_ContentInfo *cms = NULL;
-    int ret = 1;
+    int ret = EXIT_FAILURE;
 
     /*
      * On OpenSSL 1.0.0+ only:
@@ -48,11 +48,11 @@ int main(int argc, char **argv)
     if (!SMIME_write_CMS(out, cms, in, flags))
         goto err;
 
-    ret = 0;
+    ret = EXIT_SUCCESS;
 
  err:
 
-    if (ret) {
+    if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Compressing Data\n");
         ERR_print_errors_fp(stderr);
     }

@@ -43,7 +43,7 @@ static const char *propq = NULL;
 
 int main(int argc, char **argv)
 {
-    int rv = 1;
+    int ret = EXIT_FAILURE;
     OSSL_LIB_CTX *libctx = NULL;
     EVP_MD *md = NULL;
     EVP_MD_CTX *ctx = NULL;
@@ -122,11 +122,11 @@ int main(int argc, char **argv)
         }
     }
 
-    rv = 0;
+    ret = EXIT_SUCCESS;
 end:
     OPENSSL_free(digest);
     EVP_MD_CTX_free(ctx);
     EVP_MD_free(md);
     OSSL_LIB_CTX_free(libctx);
-    return rv;
+    return ret;
 }

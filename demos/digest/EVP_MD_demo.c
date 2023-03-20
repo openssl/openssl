@@ -79,7 +79,7 @@ const unsigned char known_answer[] = {
 int demonstrate_digest(void)
 {
     OSSL_LIB_CTX *library_context;
-    int result = 0;
+    int ret = 0;
     const char *option_properties = NULL;
     EVP_MD *message_digest = NULL;
     EVP_MD_CTX *digest_context = NULL;
@@ -161,12 +161,11 @@ int demonstrate_digest(void)
         fprintf(stdout, "\nDigest does not match known answer\n");
     } else {
         fprintf(stdout, "Digest computed properly.\n");
-        result = 1;
+        ret = 1;
     }
 
-
 cleanup:
-    if (result != 1)
+    if (ret != 1)
         ERR_print_errors_fp(stderr);
     /* OpenSSL free functions will ignore NULL arguments */
     EVP_MD_CTX_free(digest_context);
@@ -174,10 +173,10 @@ cleanup:
     EVP_MD_free(message_digest);
 
     OSSL_LIB_CTX_free(library_context);
-    return result;
+    return ret;
 }
 
 int main(void)
 {
-    return demonstrate_digest() == 0;
+    return demonstrate_digest() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -219,10 +219,10 @@ err:
 int main(int argc, char **argv)
 {
     if (!aes_gcm_encrypt())
-        return 1;
+        return EXIT_FAILURE;
 
     if (!aes_gcm_decrypt())
-        return 1;
+        return EXIT_FAILURE;
 
-    return 0;
+    return EXIT_SUCCESS;
 }

@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     X509 *rcert = NULL;
     STACK_OF(X509) *recips = NULL;
     PKCS7 *p7 = NULL;
-    int ret = 1;
+    int ret = EXIT_FAILURE;
 
     /*
      * On OpenSSL 0.9.9 only:
@@ -73,10 +73,10 @@ int main(int argc, char **argv)
     if (!SMIME_write_PKCS7(out, p7, in, flags))
         goto err;
 
-    ret = 0;
+    ret = EXIT_SUCCESS;
 
  err:
-    if (ret) {
+    if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Encrypting Data\n");
         ERR_print_errors_fp(stderr);
     }

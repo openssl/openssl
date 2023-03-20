@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
     CMS_ContentInfo *cms = NULL;
-    int ret = 1;
+    int ret = EXIT_FAILURE;
 
     OpenSSL_add_all_algorithms();
     ERR_load_crypto_strings();
@@ -42,11 +42,9 @@ int main(int argc, char **argv)
     if (!CMS_uncompress(cms, out, NULL, 0))
         goto err;
 
-    ret = 0;
-
+    ret = EXIT_SUCCESS;
  err:
-
-    if (ret) {
+    if (ret != EXIT_SUCCESS) {
         fprintf(stderr, "Error Uncompressing Data\n");
         ERR_print_errors_fp(stderr);
     }

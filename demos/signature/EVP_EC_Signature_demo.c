@@ -70,7 +70,7 @@ static EVP_PKEY *get_key(OSSL_LIB_CTX *libctx, const char *propq, int public)
 static int demo_sign(OSSL_LIB_CTX *libctx,  const char *sig_name,
                      size_t *sig_out_len, unsigned char **sig_out_value)
 {
-    int result = 0, public = 0;
+    int ret = 0, public = 0;
     size_t sig_len;
     unsigned char *sig_value = NULL;
     const char *propq = NULL;
@@ -136,21 +136,21 @@ static int demo_sign(OSSL_LIB_CTX *libctx,  const char *sig_name,
     fprintf(stdout, "Generating signature:\n");
     BIO_dump_indent_fp(stdout, sig_value, sig_len, 2);
     fprintf(stdout, "\n");
-    result = 1;
+    ret = 1;
 
 cleanup:
     /* OpenSSL free functions will ignore NULL arguments */
-    if (!result)
+    if (!ret)
         OPENSSL_free(sig_value);
     EVP_PKEY_free(priv_key);
     EVP_MD_CTX_free(sign_context);
-    return result;
+    return ret;
 }
 
 static int demo_verify(OSSL_LIB_CTX *libctx, const char *sig_name,
                        size_t sig_len, unsigned char *sig_value)
 {
-    int result = 0, public = 1;
+    int ret = 0, public = 1;
     const char *propq = NULL;
     EVP_MD_CTX *verify_context = NULL;
     EVP_PKEY *pub_key = NULL;
@@ -193,13 +193,13 @@ static int demo_verify(OSSL_LIB_CTX *libctx, const char *sig_name,
         goto cleanup;
     }
     fprintf(stdout, "Signature verified.\n");
-    result = 1;
+    ret = 1;
 
 cleanup:
     /* OpenSSL free functions will ignore NULL arguments */
     EVP_PKEY_free(pub_key);
     EVP_MD_CTX_free(verify_context);
-    return result;
+    return ret;
 }
 
 int main(void)
@@ -208,7 +208,7 @@ int main(void)
     const char *sig_name = "SHA3-512";
     size_t sig_len = 0;
     unsigned char *sig_value = NULL;
-    int result = 0;
+    int ret = EXIT_FAILURE;
 
     libctx = OSSL_LIB_CTX_new();
     if (libctx == NULL) {
@@ -223,13 +223,13 @@ int main(void)
         fprintf(stderr, "demo_verify failed.\n");
         goto cleanup;
     }
-    result = 1;
+    ret = EXIT_SUCCESS;
 
 cleanup:
-    if (result != 1)
+    if (ret != EXIT_SUCCESS)
         ERR_print_errors_fp(stderr);
     /* OpenSSL free functions will ignore NULL arguments */
     OSSL_LIB_CTX_free(libctx);
     OPENSSL_free(sig_value);
-    return result == 0;
+    return ret;
 }
