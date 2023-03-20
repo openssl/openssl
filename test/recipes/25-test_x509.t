@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 29;
+plan tests => 33;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -70,17 +70,24 @@ my $extfile = srctop_file("test", "v3_ca_exts.cnf");
 my $pkey = srctop_file(@certs, "ca-key.pem"); # issuer private key
 my $pubkey = "ca-pubkey.pem"; # the corresponding issuer public key
 # use any (different) key for signing our self-issued cert:
-my $signkey = srctop_file(@certs, "serverkey.pem");
+my $key = srctop_file(@certs, "serverkey.pem");
 my $selfout = "self-issued.out";
 my $testcert = srctop_file(@certs, "ee-cert.pem");
 ok(run(app(["openssl", "pkey", "-in", $pkey, "-pubout", "-out", $pubkey]))
-&& run(app(["openssl", "x509", "-new", "-force_pubkey", $pubkey,
-            "-subj", $subj, "-extfile", $extfile,
-            "-signkey", $signkey, "-out", $selfout]))
+&& run(app(["openssl", "x509", "-new", "-force_pubkey", $pubkey, "-subj", $subj,
+            "-extfile", $extfile, "-key", $key, "-out", $selfout]))
 && run(app(["openssl", "verify", "-no_check_time",
             "-trusted", $selfout, "-partial_chain", $testcert])));
 # not unlinking $pubkey
 # not unlinking $selfout
+
+# simple way of directly producing a CA-signed cert with private/pubkey input
+my $ca = srctop_file(@certs, "ca-cert.pem"); # issuer cert
+my $caout = "ca-issued.out";
+ok(run(app(["openssl", "x509", "-new", "-force_pubkey", $key, "-subj", "/CN=EE",
+            "-extfile", $extfile, "-CA", $ca, "-CAkey", $pkey, "-out", $caout]))
+&& run(app(["openssl", "verify", "-no_check_time",
+            "-trusted", $ca, "-partial_chain", $caout])));
 
 subtest 'x509 -- x.509 v1 certificate' => sub {
     tconversion( -type => 'x509', -prefix => 'x509v1',
@@ -201,6 +208,11 @@ ok(run(app(["openssl", "x509", "-req", "-text", "-CAcreateserial",
             "-in", $b_csr, "-out", $b_cert])));
 # Verify issuer is CA
 ok(get_issuer($b_cert) =~ /CN=ca.example.com/);
+
+# although no explicit extensions given:
+has_version($b_cert, 3);
+has_SKID($b_cert, 1);
+has_AKID($b_cert, 1);
 
 SKIP: {
     skip "EC is not supported by this OpenSSL build", 1

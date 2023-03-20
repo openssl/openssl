@@ -11,12 +11,14 @@
 # define OSSL_INTERNAL_QUIC_STREAM_MAP_H
 # pragma once
 
-#include "internal/e_os.h"
-#include "internal/time.h"
-#include "internal/quic_types.h"
-#include "internal/quic_stream.h"
-#include "internal/quic_fc.h"
-#include <openssl/lhash.h>
+# include "internal/e_os.h"
+# include "internal/time.h"
+# include "internal/quic_types.h"
+# include "internal/quic_stream.h"
+# include "internal/quic_fc.h"
+# include <openssl/lhash.h>
+
+# ifndef OPENSSL_NO_QUIC
 
 /*
  * QUIC Stream
@@ -61,24 +63,29 @@ struct quic_stream_st {
     uint64_t        txp_txfc_new_credit_consumed;
 
     QUIC_SSTREAM    *sstream;   /* NULL if RX-only */
-    void            *rstream;   /* NULL if TX only (placeholder) */
+    QUIC_RSTREAM    *rstream;   /* NULL if TX only */
     QUIC_TXFC       txfc;       /* NULL if RX-only */
     QUIC_RXFC       rxfc;       /* NULL if TX-only */
     unsigned int    type   : 8; /* QUIC_STREAM_INITIATOR_*, QUIC_STREAM_DIR_* */
     unsigned int    active : 1;
 
     /*
-     * Has STOP_SENDING been requested? Note that this is not the same as
-     * want_stop_sending below, as a STOP_SENDING frame may already have been
+     * Has STOP_SENDING been requested (by us)? Note that this is not the same
+     * as want_stop_sending below, as a STOP_SENDING frame may already have been
      * sent and fully acknowledged.
      */
     unsigned int    stop_sending            : 1;
 
     /*
-     * Has RESET_STREAM been requested? Works identically to STOP_SENDING for
-     * transmission purposes.
+     * Has RESET_STREAM been requested (by us)? Works identically to
+     * STOP_SENDING for transmission purposes.
      */
     unsigned int    reset_stream            : 1;
+
+    /* Has our peer sent a STOP_SENDING frame? */
+    unsigned int    peer_stop_sending       : 1;
+    /* Has our peer sent a RESET_STREAM frame? */
+    unsigned int    peer_reset_stream       : 1;
 
     /* Temporary flags used by TXP. */
     unsigned int    txp_sent_fc             : 1;
@@ -91,6 +98,9 @@ struct quic_stream_st {
     unsigned int    want_max_stream_data    : 1; /* used for regen only */
     unsigned int    want_stop_sending       : 1; /* used for gen or regen */
     unsigned int    want_reset_stream       : 1; /* used for gen or regen */
+
+    /* A FIN has been retired from the rstream buffer. */
+    unsigned int    recv_fin_retired        : 1;
 };
 
 /*
@@ -121,9 +131,26 @@ typedef struct quic_stream_map_st {
     QUIC_STREAM_LIST_NODE   active_list;
     size_t                  rr_stepping, rr_counter;
     QUIC_STREAM             *rr_cur;
+    uint64_t                (*get_stream_limit_cb)(int uni, void *arg);
+    void                    *get_stream_limit_cb_arg;
 } QUIC_STREAM_MAP;
 
-int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm);
+/*
+ * get_stream_limit is a callback which is called to retrieve the current stream
+ * limit for streams created by us. This mechanism is not used for
+ * peer-initiated streams. If a stream's stream ID is x, a stream is allowed if
+ * (x >> 2) < returned limit value; i.e., the returned value is exclusive.
+ *
+ * If uni is 1, get the limit for locally-initiated unidirectional streams, else
+ * get the limit for locally-initiated bidirectional streams.
+ *
+ * If the callback is NULL, stream limiting is not applied.
+ * Stream limiting is used to determine if frames can currently be produced for
+ * a stream.
+ */
+int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
+                              uint64_t (*get_stream_limit_cb)(int uni, void *arg),
+                              void *get_stream_limit_cb_arg);
 
 /*
  * Any streams still in the map will be released as though
@@ -228,5 +255,7 @@ void ossl_quic_stream_iter_init(QUIC_STREAM_ITER *it, QUIC_STREAM_MAP *qsm,
  * list is reached, it->stream will be NULL after calling this.
  */
 void ossl_quic_stream_iter_next(QUIC_STREAM_ITER *it);
+
+# endif
 
 #endif

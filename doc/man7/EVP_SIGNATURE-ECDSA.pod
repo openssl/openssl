@@ -36,6 +36,8 @@ EVP_PKEY_CTX_get_params().
 
 =item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <UTF8 string>
 
+=item "nonce-type" (B<OSSL_SIGNATURE_PARAM_NONCE_TYPE>) <unsigned integer>
+
 The parameters are described in L<provider-signature(7)>.
 
 =back

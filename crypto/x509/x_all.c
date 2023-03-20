@@ -63,6 +63,9 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0
+            && !X509_set_version(x, X509_VERSION_3))
+        return 0;
 
     /*
      * Setting the modified flag before signing it. This makes the cached
@@ -83,6 +86,9 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0
+            && !X509_set_version(x, X509_VERSION_3))
+        return 0;
     x->cert_info.enc.modified = 1;
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
                               &x->cert_info.signature,
@@ -282,7 +288,8 @@ X509_REQ *d2i_X509_REQ_bio(BIO *bp, X509_REQ **req)
         propq = (*req)->propq;
     }
 
-    return ASN1_item_d2i_bio_ex(ASN1_ITEM_rptr(X509_REQ), bp, req, libctx, propq);
+    return
+        ASN1_item_d2i_bio_ex(ASN1_ITEM_rptr(X509_REQ), bp, req, libctx, propq);
 }
 
 int i2d_X509_REQ_bio(BIO *bp, const X509_REQ *req)
@@ -575,15 +582,17 @@ int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
         memcpy(md, data->sha1_hash, sizeof(data->sha1_hash));
         return 1;
     }
-    return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_CRL), type, (char *)data,
-                                    md, len, data->libctx, data->propq);
+    return
+        ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_CRL), type, (char *)data,
+                                 md, len, data->libctx, data->propq);
 }
 
 int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type,
                     unsigned char *md, unsigned int *len)
 {
-    return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_REQ), type, (char *)data,
-                                    md, len, data->libctx, data->propq);
+    return
+        ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_REQ), type, (char *)data,
+                                 md, len, data->libctx, data->propq);
 }
 
 int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,

@@ -1068,6 +1068,9 @@ int OSSL_PARAM_set_BN(OSSL_PARAM *p, const BIGNUM *val)
     /* We add 1 byte for signed numbers, to make space for a sign extension */
     if (p->data_type == OSSL_PARAM_INTEGER)
         bytes++;
+    /* We make sure that at least one byte is used, so zero is properly set */
+    if (bytes == 0)
+        bytes++;
 
     p->return_size = bytes;
     if (p->data == NULL)

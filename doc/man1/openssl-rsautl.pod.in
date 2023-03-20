@@ -76,7 +76,9 @@ See L<openssl-format-options(1)> for details.
 
 =item B<-pubin>
 
-The input file is an RSA public key.
+By default a private key is read from the key input.
+With this option a public key is read instead.
+If the input contains no public key but a private key, its public part is used.
 
 =item B<-certin>
 

@@ -103,7 +103,8 @@ static const PROV_CIPHER_HW aes_t4_ocb = {                                     \
 # define PROV_CIPHER_HW_select()                                               \
     if (SPARC_AES_CAPABLE)                                                     \
         return &aes_t4_ocb;
-#elif defined(RV64I_ZKND_ZKNE_CAPABLE)
+
+#elif defined(__riscv) && __riscv_xlen == 64
 
 static int cipher_hw_aes_ocb_rv64i_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
                                                      const unsigned char *key,
@@ -122,9 +123,10 @@ static const PROV_CIPHER_HW aes_rv64i_zknd_zkne_ocb = {                        \
     NULL                                                                       \
 };
 # define PROV_CIPHER_HW_select()                                               \
-    if (RV64I_ZKND_ZKNE_CAPABLE)                                               \
+    if (RISCV_HAS_ZKND_AND_ZKNE())                                             \
         return &aes_rv64i_zknd_zkne_ocb;
-#elif defined(RV32I_ZBKB_ZKND_ZKNE_CAPABLE) && defined(RV32I_ZKND_ZKNE_CAPABLE)
+
+#elif defined(__riscv) && __riscv_xlen == 32
 
 static int cipher_hw_aes_ocb_rv32i_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
                                                      const unsigned char *key,
@@ -158,9 +160,9 @@ static const PROV_CIPHER_HW aes_rv32i_zbkb_zknd_zkne_ocb = {                   \
     NULL                                                                       \
 };
 # define PROV_CIPHER_HW_select()                                               \
-    if (RV32I_ZBKB_ZKND_ZKNE_CAPABLE)                                          \
+    if (RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE())                                    \
         return &aes_rv32i_zbkb_zknd_zkne_ocb;                                  \
-    if (RV32I_ZKND_ZKNE_CAPABLE)                                               \
+    if (RISCV_HAS_ZKND_AND_ZKNE())                                             \
         return &aes_rv32i_zknd_zkne_ocb;
 #else
 # define PROV_CIPHER_HW_declare()

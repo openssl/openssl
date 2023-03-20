@@ -440,11 +440,24 @@ static BIGNUM *bin2bn(const unsigned char *s, int len, BIGNUM *ret,
     unsigned int n;
     BIGNUM *bn = NULL;
 
+    /* Negative length is not acceptable */
+    if (len < 0)
+        return NULL;
+
     if (ret == NULL)
         ret = bn = BN_new();
     if (ret == NULL)
         return NULL;
     bn_check_top(ret);
+
+    /*
+     * If the input has no bits, the number is considered zero.
+     * This makes calls with s==NULL and len==0 safe.
+     */
+    if (len == 0) {
+        BN_clear(ret);
+        return ret;
+    }
 
     /*
      * The loop that does the work iterates from least to most

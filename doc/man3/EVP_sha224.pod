@@ -45,6 +45,12 @@ their outputs are of the same size.
 
 =back
 
+=head1 NOTES
+
+Developers should be aware of the negative performance implications of
+calling these functions multiple times and should consider using
+L<EVP_MD_fetch(3)> instead.
+See L<crypto(7)/Performance> for further information.
 
 =head1 RETURN VALUES
 

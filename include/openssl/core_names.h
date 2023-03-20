@@ -21,11 +21,12 @@ extern "C" {
 #define OSSL_PROV_PARAM_CORE_MODULE_FILENAME "module-filename" /* utf8_ptr */
 
 /* Well known parameter names that Providers can define */
-#define OSSL_PROV_PARAM_NAME            "name"                /* utf8_ptr */
-#define OSSL_PROV_PARAM_VERSION         "version"             /* utf8_ptr */
-#define OSSL_PROV_PARAM_BUILDINFO       "buildinfo"           /* utf8_ptr */
-#define OSSL_PROV_PARAM_STATUS          "status"              /* uint */
-#define OSSL_PROV_PARAM_SECURITY_CHECKS "security-checks"     /* uint */
+#define OSSL_PROV_PARAM_NAME               "name"                /* utf8_ptr */
+#define OSSL_PROV_PARAM_VERSION            "version"             /* utf8_ptr */
+#define OSSL_PROV_PARAM_BUILDINFO          "buildinfo"           /* utf8_ptr */
+#define OSSL_PROV_PARAM_STATUS             "status"              /* uint */
+#define OSSL_PROV_PARAM_SECURITY_CHECKS    "security-checks"     /* uint */
+#define OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK "tls1-prf-ems-check"  /* uint */
 
 /* Self test callback parameters */
 #define OSSL_PROV_PARAM_SELF_TEST_PHASE  "st-phase" /* utf8_string */
@@ -232,6 +233,12 @@ extern "C" {
 #define OSSL_KDF_PARAM_X942_USE_KEYBITS     "use-keybits"
 #define OSSL_KDF_PARAM_HMACDRBG_ENTROPY     "entropy"
 #define OSSL_KDF_PARAM_HMACDRBG_NONCE       "nonce"
+#define OSSL_KDF_PARAM_THREADS        "threads"     /* uint32_t */
+#define OSSL_KDF_PARAM_EARLY_CLEAN    "early_clean" /* uint32_t */
+#define OSSL_KDF_PARAM_ARGON2_AD      "ad"          /* octet string */
+#define OSSL_KDF_PARAM_ARGON2_LANES   "lanes"       /* uint32_t */
+#define OSSL_KDF_PARAM_ARGON2_MEMCOST "memcost"     /* uint32_t */
+#define OSSL_KDF_PARAM_ARGON2_VERSION "version"     /* uint32_t */
 
 /* Known KDF names */
 #define OSSL_KDF_NAME_HKDF           "HKDF"
@@ -467,6 +474,8 @@ extern "C" {
     OSSL_PKEY_PARAM_MGF1_PROPERTIES
 #define OSSL_SIGNATURE_PARAM_DIGEST_SIZE        OSSL_PKEY_PARAM_DIGEST_SIZE
 #define OSSL_SIGNATURE_PARAM_NONCE_TYPE         "nonce-type"
+#define OSSL_SIGNATURE_PARAM_INSTANCE           "instance"
+#define OSSL_SIGNATURE_PARAM_CONTEXT_STRING     "context-string"
 
 /* Asym cipher parameters */
 #define OSSL_ASYM_CIPHER_PARAM_DIGEST                   OSSL_PKEY_PARAM_DIGEST
@@ -537,6 +546,21 @@ extern "C" {
 #define OSSL_CAPABILITY_TLS_GROUP_MAX_TLS           "tls-max-tls"
 #define OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS          "tls-min-dtls"
 #define OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS          "tls-max-dtls"
+
+/* TLS-SIGALG Capability */
+#define OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME         "tls-sigalg-iana-name"
+#define OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT        "tls-sigalg-code-point"
+#define OSSL_CAPABILITY_TLS_SIGALG_NAME              "tls-sigalg-name"
+#define OSSL_CAPABILITY_TLS_SIGALG_OID               "tls-sigalg-oid"
+#define OSSL_CAPABILITY_TLS_SIGALG_SIG_NAME          "tls-sigalg-sig-name"
+#define OSSL_CAPABILITY_TLS_SIGALG_SIG_OID           "tls-sigalg-sig-oid"
+#define OSSL_CAPABILITY_TLS_SIGALG_HASH_NAME         "tls-sigalg-hash-name"
+#define OSSL_CAPABILITY_TLS_SIGALG_HASH_OID          "tls-sigalg-hash-oid"
+#define OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE           "tls-sigalg-keytype"
+#define OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_OID       "tls-sigalg-keytype-oid"
+#define OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS     "tls-sigalg-sec-bits"
+#define OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS           "tls-min-tls"
+#define OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS           "tls-max-tls"
 
 /*-
  * storemgmt parameters

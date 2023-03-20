@@ -22,6 +22,15 @@
  * outside; this file e_os.h is not part of the exported interface.
  */
 
+/* ossl_static_assert_type_eq: gcc-only variable type static assertion */
+# if defined(__GNUC__) && !defined(__clang__)
+#  define ossl_static_assert_type_eq(type, x)                                \
+        _Static_assert((__builtin_types_compatible_p(type, __typeof__(x))),  \
+                        #x " type check failed, expected: " #type)
+# else
+#  define ossl_static_assert_type_eq(type, x)
+# endif
+
 # if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
 #  define NO_CHMOD
 #  define NO_SYSLOG

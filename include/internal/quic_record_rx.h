@@ -16,6 +16,8 @@
 # include "internal/quic_record_util.h"
 # include "internal/quic_demux.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * QUIC Record Layer - RX
  * ======================
@@ -162,12 +164,14 @@ int ossl_qrx_remove_dst_conn_id(OSSL_QRX *qrx,
  * secret_len is the length of the secret buffer in bytes. The buffer must be
  * sized correctly to the chosen suite, else the function fails.
  *
- * This function can only be called once for a given EL. Subsequent calls fail,
- * as do calls made after a corresponding call to ossl_qrx_discard_enc_level for
- * that EL. The secret for a EL cannot be changed after it is set because QUIC
- * has no facility for introducing additional key material after an EL is setup.
- * QUIC key updates are managed semi-automatically by the QRX but do require
- * some caller handling (see below).
+ * This function can only be called once for a given EL, except for the INITIAL
+ * EL, which can need rekeying when a connection retry occurs. Subsequent calls
+ * for non-INITIAL ELs fail, as do calls made after a corresponding call to
+ * ossl_qrx_discard_enc_level for that EL. The secret for a non-INITIAL EL
+ * cannot be changed after it is set because QUIC has no facility for
+ * introducing additional key material after an EL is setup. QUIC key updates
+ * are managed semi-automatically by the QRX but do require some caller handling
+ * (see below).
  *
  * md is for internal use and should be NULL.
  *
@@ -197,9 +201,6 @@ int ossl_qrx_discard_enc_level(OSSL_QRX *qrx, uint32_t enc_level);
 
 /* Information about a received packet. */
 typedef struct ossl_qrx_pkt_st {
-    /* Opaque handle to be passed to ossl_qrx_release_pkt. */
-    void               *handle;
-
     /*
      * Points to a logical representation of the decoded QUIC packet header. The
      * data and len fields point to the decrypted QUIC payload (i.e., to a
@@ -236,26 +237,35 @@ typedef struct ossl_qrx_pkt_st {
      * using a now() function.
      */
     OSSL_TIME           time;
+
+    /* The QRX which was used to receive the packet. */
+    OSSL_QRX            *qrx;
 } OSSL_QRX_PKT;
 
 /*
  * Tries to read a new decrypted packet from the QRX.
  *
- * On success, all fields of *pkt are filled and 1 is returned.
- * Else, returns 0.
+ * On success, *pkt points to a OSSL_QRX_PKT structure. The structure should be
+ * freed when no longer needed by calling ossl_qrx_pkt_release(). The structure
+ * is refcounted; to gain extra references, call ossl_qrx_pkt_up_ref(). This
+ * will cause a corresponding number of calls to ossl_qrx_pkt_release() to be
+ * ignored.
  *
- * The resources referenced by pkt->hdr, pkt->hdr->data and pkt->peer will
- * remain allocated at least until the user frees them by calling
- * ossl_qrx_release_pkt, which must be called once you are done with the packet.
+ * The resources referenced by (*pkt)->hdr, (*pkt)->hdr->data and (*pkt)->peer
+ * have the same lifetime as *pkt.
+ *
+ * Returns 1 on success and 0 on failure.
  */
-int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT *pkt);
+int ossl_qrx_read_pkt(OSSL_QRX *qrx, OSSL_QRX_PKT **pkt);
 
 /*
- * Release the resources pointed to by an OSSL_QRX_PKT returned by
- * ossl_qrx_read_pkt. Pass the opaque value pkt->handle returned in the
- * structure.
+ * Decrement the reference count for the given packet and frees it if the
+ * reference count drops to zero. No-op if pkt is NULL.
  */
-void ossl_qrx_release_pkt(OSSL_QRX *qrx, void *handle);
+void ossl_qrx_pkt_release(OSSL_QRX_PKT *pkt);
+
+/* Increments the reference count for the given packet. */
+void ossl_qrx_pkt_up_ref(OSSL_QRX_PKT *pkt);
 
 /*
  * Returns 1 if there are any already processed (i.e. decrypted) packets waiting
@@ -310,6 +320,15 @@ typedef int (ossl_qrx_early_validation_cb)(QUIC_PN pn, int pn_space,
 int ossl_qrx_set_early_validation_cb(OSSL_QRX *qrx,
                                      ossl_qrx_early_validation_cb *cb,
                                      void *cb_arg);
+
+/*
+ * Forcibly injects a URXE which has been issued by the DEMUX into the QRX for
+ * processing. This can be used to pass a received datagram to the QRX if it
+ * would not be correctly routed to the QRX via standard DCID-based routing; for
+ * example, when handling an incoming Initial packet which is attempting to
+ * establish a new connection.
+ */
+void ossl_qrx_inject_urxe(OSSL_QRX *qrx, QUIC_URXE *e);
 
 /*
  * Key Update (RX)
@@ -523,5 +542,7 @@ uint64_t ossl_qrx_get_cur_forged_pkt_count(OSSL_QRX *qrx);
  */
 uint64_t ossl_qrx_get_max_forged_pkt_count(OSSL_QRX *qrx,
                                            uint32_t enc_level);
+
+# endif
 
 #endif

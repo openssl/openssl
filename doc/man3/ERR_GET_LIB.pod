@@ -42,6 +42,14 @@ The library number, reason code, and whether the error
 is fatal, respectively.
 Starting with OpenSSL 3.0.0, the function code is always set to zero.
 
+=head1 NOTES
+
+Applications should not make control flow decisions based on specific error
+codes. Error codes are subject to change at any time (even in patch releases of
+OpenSSL). A particular error code can only be considered meaningful for control
+flow decisions if it is explicitly documented as such. New failure codes may
+still appear at any time.
+
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>

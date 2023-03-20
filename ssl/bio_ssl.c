@@ -385,6 +385,14 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_SET_CALLBACK:
         ret = 0; /* use callback ctrl */
         break;
+    case BIO_CTRL_GET_RPOLL_DESCRIPTOR:
+        if (!SSL_get_rpoll_descriptor(ssl, (BIO_POLL_DESCRIPTOR *)ptr))
+            ret = 0;
+        break;
+    case BIO_CTRL_GET_WPOLL_DESCRIPTOR:
+        if (!SSL_get_wpoll_descriptor(ssl, (BIO_POLL_DESCRIPTOR *)ptr))
+            ret = 0;
+        break;
     default:
         ret = BIO_ctrl(sc->rbio, cmd, num, ptr);
         break;

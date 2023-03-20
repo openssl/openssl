@@ -13,6 +13,8 @@
 # include <openssl/ssl.h>
 # include "internal/time.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * TX Flow Controller (TXFC)
  * =========================
@@ -250,5 +252,7 @@ int ossl_quic_rxfc_has_cwm_changed(QUIC_RXFC *rxfc, int clear);
  *   The peer attempted to change the stream length after ending the stream.
  */
 int ossl_quic_rxfc_get_error(QUIC_RXFC *rxfc, int clear);
+
+# endif
 
 #endif

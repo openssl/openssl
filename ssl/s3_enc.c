@@ -146,8 +146,8 @@ int ssl3_change_cipher_state(SSL_CONNECTION *s, int which)
     if (!ssl_set_new_record_layer(s, SSL3_VERSION,
                                   direction,
                                   OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                                  key, key_len, iv, iv_len, mac_secret,
-                                  md_len, ciph, 0, NID_undef, md, comp)) {
+                                  NULL, 0, key, key_len, iv, iv_len, mac_secret,
+                                  md_len, ciph, 0, NID_undef, md, comp, NULL)) {
         /* SSLfatal already called */
         goto err;
     }

@@ -1,6 +1,8 @@
 #include "internal/quic_vlint.h"
 #include "internal/e_os.h"
 
+#ifndef OPENSSL_NO_QUIC
+
 void ossl_quic_vlint_encode_n(uint8_t *buf, uint64_t v, int n)
 {
     if (n == 1) {
@@ -75,3 +77,5 @@ int ossl_quic_vlint_decode(const unsigned char *buf, size_t buf_len, uint64_t *v
     *v = x;
     return dec_len;
 }
+
+#endif

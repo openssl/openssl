@@ -651,7 +651,7 @@ static int check_transactionID_or_nonce(ASN1_OCTET_STRING *expected,
 
         expected_str = i2s_ASN1_OCTET_STRING(NULL, expected);
         actual_str = actual == NULL ? NULL: i2s_ASN1_OCTET_STRING(NULL, actual);
-        ERR_raise_data(ERR_LIB_CMP, CMP_R_TRANSACTIONID_UNMATCHED,
+        ERR_raise_data(ERR_LIB_CMP, reason,
                        "expected = %s, actual = %s",
                        expected_str == NULL ? "?" : expected_str,
                        actual == NULL ? "(none)" :
@@ -775,6 +775,11 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                                       CMP_R_RECIPNONCE_UNMATCHED))
         return 0;
 
+    /* if not yet present, learn transactionID */
+    if (ctx->transactionID == NULL
+        && !OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID))
+        return 0;
+
     /*
      * RFC 4210 section 5.1.1 states: the recipNonce is copied from
      * the senderNonce of the previous message in the transaction.
@@ -782,11 +787,6 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      */
     if (!ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce))
         return 0;
-
-    /* if not yet present, learn transactionID */
-    if (ctx->transactionID == NULL
-        && !OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID))
-        return -1;
 
     /*
      * Store any provided extraCerts in ctx for future use,
@@ -798,7 +798,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                         /* this allows self-signed certs */
                         X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
                         | X509_ADD_FLAG_PREPEND))
-        return -1;
+        return 0;
 
     if (ossl_cmp_hdr_get_protection_nid(hdr) == NID_id_PasswordBasedMAC) {
         /*

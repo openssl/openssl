@@ -298,10 +298,15 @@ static int def_generate_session_id(SSL *ssl, unsigned char *id,
                                    unsigned int *id_len)
 {
     unsigned int retry = 0;
-    do
+    do {
         if (RAND_bytes_ex(ssl->ctx->libctx, id, *id_len, 0) <= 0)
             return 0;
-    while (SSL_has_matching_session_id(ssl, id, *id_len) &&
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        if (retry > 0) {
+            id[0]++;
+        }
+#endif
+    } while (SSL_has_matching_session_id(ssl, id, *id_len) &&
            (++retry < MAX_SESS_ID_ATTEMPTS)) ;
     if (retry < MAX_SESS_ID_ATTEMPTS)
         return 1;
@@ -854,8 +859,8 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
         return 0;
 
     ssl_clear_bad_session(sc);
-    if (s->ctx->method != s->method) {
-        if (!SSL_set_ssl_method(s, s->ctx->method))
+    if (s->defltmeth != s->method) {
+        if (!SSL_set_ssl_method(s, s->defltmeth))
             return 0;
     }
 

@@ -12,6 +12,8 @@
 #include "openssl/params.h"
 #include "internal/time.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 typedef struct ossl_cc_data_st *OSSL_CC_DATA;
 
 typedef struct ossl_cc_method_st {
@@ -82,6 +84,12 @@ typedef struct ossl_cc_method_st {
     uint64_t (*get_bytes_in_flight_max)(OSSL_CC_DATA *ccdata);
 
     /*
+     * Returns the next time at which the CC will release more budget for
+     * sending, or ossl_time_infinite().
+     */
+    OSSL_TIME (*get_next_credit_time)(OSSL_CC_DATA *ccdata);
+
+    /*
      * To be called when a packet with retransmittable data was sent.
      * |num_retransmittable_bytes| is the number of bytes sent
      * in the packet that are retransmittable.
@@ -146,5 +154,7 @@ typedef struct ossl_cc_method_st {
 } OSSL_CC_METHOD;
 
 extern const OSSL_CC_METHOD ossl_cc_dummy_method;
+
+# endif
 
 #endif

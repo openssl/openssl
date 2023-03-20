@@ -21,6 +21,8 @@
 # include "internal/bio_addr.h"
 # include "internal/time.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * QUIC TX Packetiser
  * ==================
@@ -87,6 +89,19 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
                                      uint32_t archetype);
 
 /*
+ * Returns 1 if one or more packets would be generated if
+ * ossl_quic_tx_packetiser_generate were called.
+ *
+ * If TX_PACKETISER_BYPASS_CC is set in flags, congestion control is
+ * ignored for the purposes of making this determination.
+ */
+#define TX_PACKETISER_BYPASS_CC   (1U << 0)
+
+int ossl_quic_tx_packetiser_has_pending(OSSL_QUIC_TX_PACKETISER *txp,
+                                        uint32_t archetype,
+                                        uint32_t flags);
+
+/*
  * Set the token used in Initial packets. The callback is called when the buffer
  * is no longer needed; for example, when the TXP is freed or when this function
  * is called again with a new buffer.
@@ -121,6 +136,14 @@ int ossl_quic_tx_packetiser_set_peer(OSSL_QUIC_TX_PACKETISER *txp,
 int ossl_quic_tx_packetiser_discard_enc_level(OSSL_QUIC_TX_PACKETISER *txp,
                                               uint32_t enc_level);
 
+/*
+ * Informs the TX packetiser that the handshake is complete. The TX packetiser
+ * will not send 1-RTT application data until the handshake is complete,
+ * as the authenticity of the peer is not confirmed until the handshake
+ * complete event occurs.
+ */
+void ossl_quic_tx_packetiser_notify_handshake_complete(OSSL_QUIC_TX_PACKETISER *txp);
+
 /* Asks the TXP to generate a HANDSHAKE_DONE frame in the next 1-RTT packet. */
 void ossl_quic_tx_packetiser_schedule_handshake_done(OSSL_QUIC_TX_PACKETISER *txp);
 
@@ -137,5 +160,7 @@ void ossl_quic_tx_packetiser_schedule_ack_eliciting(OSSL_QUIC_TX_PACKETISER *txp
  */
 int ossl_quic_tx_packetiser_schedule_conn_close(OSSL_QUIC_TX_PACKETISER *txp,
                                                 const OSSL_QUIC_FRAME_CONN_CLOSE *f);
+
+# endif
 
 #endif

@@ -167,8 +167,9 @@ issue the following commands to build OpenSSL.
 As mentioned in the [Choices](#choices) section, you need to pick one
 of the four Configure targets in the first command.
 
-Most likely you will be using the `VC-WIN64A` target for 64bit Windows
-binaries (AMD64) or `VC-WIN32` for 32bit Windows binaries (X86).
+Most likely you will be using the `VC-WIN64A`/`VC-WIN64A-HYBRIDCRT` target for
+64bit Windows binaries (AMD64) or `VC-WIN32`/`VC-WIN32-HYBRIDCRT` for 32bit
+Windows binaries (X86).
 The other two options are `VC-WIN64I` (Intel IA64, Itanium) and
 `VC-CE` (Windows CE) are rather uncommon nowadays.
 
@@ -234,9 +235,8 @@ and issue the following command.
 
     $ nmake install
 
-The easiest way to elevate the Command Prompt is to press and hold down
-the both the `<CTRL>` and `<SHIFT>` key while clicking the menu item in the
-task menu.
+The easiest way to elevate the Command Prompt is to press and hold down both
+the `<CTRL>` and `<SHIFT>` keys while clicking the menu item in the task menu.
 
 The default installation location is
 
@@ -1304,6 +1304,14 @@ Unix-like systems.
 and `descrip.mms` on OpenVMS) from a suitable template in `Configurations/`,
 and defines various macros in `include/openssl/configuration.h` (generated
 from `include/openssl/configuration.h.in`.
+
+If none of the generated build files suit your purpose, it's possible to
+write your own build file template and give its name through the environment
+variable `BUILDFILE`.  For example, Ninja build files could be supported by
+writing `Configurations/build.ninja.tmpl` and then configure with `BUILDFILE`
+set like this (Unix syntax shown, you'll have to adapt for other platforms):
+
+    $ BUILDFILE=build.ninja perl Configure [options...]
 
 ### Out of Tree Builds
 

@@ -115,8 +115,9 @@ This option prints out the value of the public key component of the key.
 
 =item B<-pubin>
 
-By default, a private key is read from the input file. With this option a
-public key is read instead.
+By default, a private key is read from the input.
+With this option a public key is read instead.
+If the input contains no public key but a private key, its public part is used.
 
 =item B<-pubout>
 

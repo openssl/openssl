@@ -490,6 +490,16 @@ int BIO_recvmmsg(BIO *b, BIO_MSG *msg,
     return ret;
 }
 
+int BIO_get_rpoll_descriptor(BIO *b, BIO_POLL_DESCRIPTOR *desc)
+{
+    return BIO_ctrl(b, BIO_CTRL_GET_RPOLL_DESCRIPTOR, 0, desc);
+}
+
+int BIO_get_wpoll_descriptor(BIO *b, BIO_POLL_DESCRIPTOR *desc)
+{
+    return BIO_ctrl(b, BIO_CTRL_GET_WPOLL_DESCRIPTOR, 0, desc);
+}
+
 int BIO_puts(BIO *b, const char *buf)
 {
     int ret;
@@ -876,7 +886,7 @@ BIO *BIO_dup_chain(BIO *in)
         /* This will let SSL_s_sock() work with stdin/stdout */
         new_bio->num = bio->num;
 
-        if (!BIO_dup_state(bio, (char *)new_bio)) {
+        if (BIO_dup_state(bio, (char *)new_bio) <= 0) {
             BIO_free(new_bio);
             goto err;
         }

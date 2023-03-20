@@ -50,7 +50,7 @@ static int asn1_print_info(BIO *bp, long offset, int depth, int hl, long len,
             pop_f_prefix = 1;
         }
         saved_indent = BIO_get_indent(bp);
-        if (BIO_set_prefix(bp, str) <= 0 || BIO_set_indent(bp, indent) < 0)
+        if (BIO_set_prefix(bp, str) <= 0 || BIO_set_indent(bp, indent) <= 0)
             goto err;
     }
 

@@ -91,13 +91,18 @@ static int cmp_stream(const QUIC_STREAM *a, const QUIC_STREAM *b)
     return 0;
 }
 
-int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm)
+int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
+                              uint64_t (*get_stream_limit_cb)(int uni, void *arg),
+                              void *get_stream_limit_cb_arg)
 {
     qsm->map = lh_QUIC_STREAM_new(hash_stream, cmp_stream);
     qsm->active_list.prev = qsm->active_list.next = &qsm->active_list;
     qsm->rr_stepping = 1;
     qsm->rr_counter  = 0;
     qsm->rr_cur      = NULL;
+
+    qsm->get_stream_limit_cb        = get_stream_limit_cb;
+    qsm->get_stream_limit_cb_arg    = get_stream_limit_cb_arg;
     return 1;
 }
 
@@ -153,6 +158,9 @@ void ossl_quic_stream_map_release(QUIC_STREAM_MAP *qsm, QUIC_STREAM *stream)
 
     ossl_quic_sstream_free(stream->sstream);
     stream->sstream = NULL;
+
+    ossl_quic_rstream_free(stream->rstream);
+    stream->rstream = NULL;
 
     lh_QUIC_STREAM_delete(qsm->map, stream);
     OPENSSL_free(stream);
@@ -233,13 +241,29 @@ static int stream_has_data_to_send(QUIC_STREAM *s)
 
 void ossl_quic_stream_map_update_state(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
 {
-    int should_be_active
-        = (s->rstream != NULL
-           && (s->want_max_stream_data
-               || ossl_quic_rxfc_has_cwm_changed(&s->rxfc, 0)))
-        || s->want_stop_sending
-        || s->want_reset_stream
-        || stream_has_data_to_send(s);
+    int should_be_active, allowed_by_stream_limit = 1;
+
+    if (qsm->get_stream_limit_cb != NULL
+        && (s->type & QUIC_STREAM_INITIATOR_CLIENT) != 0) {
+        int uni = ((s->type & QUIC_STREAM_DIR_UNI) != 0);
+        uint64_t stream_limit, stream_ordinal = s->id >> 2;
+
+        stream_limit
+            = qsm->get_stream_limit_cb(uni, qsm->get_stream_limit_cb_arg);
+
+        allowed_by_stream_limit = (stream_ordinal < stream_limit);
+    }
+
+    should_be_active
+        = allowed_by_stream_limit
+        && !s->peer_stop_sending
+        && !s->peer_reset_stream
+        && ((s->rstream != NULL
+            && (s->want_max_stream_data
+                || ossl_quic_rxfc_has_cwm_changed(&s->rxfc, 0)))
+            || s->want_stop_sending
+            || s->want_reset_stream
+            || stream_has_data_to_send(s));
 
     if (should_be_active)
         stream_map_mark_active(qsm, s);

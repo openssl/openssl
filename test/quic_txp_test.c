@@ -55,7 +55,7 @@ struct helper {
     QUIC_DEMUX                      *demux;
     OSSL_QRX                        *qrx;
     OSSL_QRX_ARGS                   qrx_args;
-    OSSL_QRX_PKT                    qrx_pkt;
+    OSSL_QRX_PKT                    *qrx_pkt;
     PACKET                          pkt;
     uint64_t                        frame_type;
     union {
@@ -80,8 +80,8 @@ static void helper_cleanup(struct helper *h)
     size_t i;
     uint32_t pn_space;
 
-    if (h->qrx_pkt.handle != NULL)
-        ossl_qrx_release_pkt(h->qrx, h->qrx_pkt.handle);
+    ossl_qrx_pkt_release(h->qrx_pkt);
+    h->qrx_pkt = NULL;
 
     for (pn_space = QUIC_PN_SPACE_INITIAL;
          pn_space < QUIC_PN_SPACE_NUM;
@@ -162,7 +162,7 @@ static int helper_init(struct helper *h)
                                                h->cc_data)))
         goto err;
 
-    if (!TEST_true(ossl_quic_stream_map_init(&h->qsm)))
+    if (!TEST_true(ossl_quic_stream_map_init(&h->qsm, NULL, NULL)))
         goto err;
 
     h->have_qsm = 1;
@@ -183,7 +183,7 @@ static int helper_init(struct helper *h)
     if (!TEST_ptr(h->txp = ossl_quic_tx_packetiser_new(&h->args)))
         goto err;
 
-    if (!TEST_ptr(h->demux = ossl_quic_demux_new(h->bio2, 8, 1200,
+    if (!TEST_ptr(h->demux = ossl_quic_demux_new(h->bio2, 8,
                                                  fake_now, NULL)))
         goto err;
 
@@ -227,6 +227,7 @@ err:
 #define OPK_RESET_STREAM            19  /* Mark stream for RESET_STREAM */
 #define OPK_CONN_TXFC_BUMP          20  /* Bump connection TXFC CWM */
 #define OPK_STREAM_TXFC_BUMP        21  /* Bump stream TXFC CWM */
+#define OPK_HANDSHAKE_COMPLETE      22  /* Mark handshake as complete */
 
 struct script_op {
     uint32_t opcode;
@@ -280,6 +281,8 @@ struct script_op {
     { OPK_CONN_TXFC_BUMP, (cwm) },
 #define OP_STREAM_TXFC_BUMP(id, cwm) \
     { OPK_STREAM_TXFC_BUMP, (cwm), (id) },
+#define OP_HANDSHAKE_COMPLETE() \
+    { OPK_HANDSHAKE_COMPLETE },
 
 static int schedule_handshake_done(struct helper *h)
 {
@@ -601,6 +604,7 @@ static int check_stream_9(struct helper *h)
 
 static const struct script_op script_9[] = {
     OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1)
+    OP_HANDSHAKE_COMPLETE()
     OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
     OP_STREAM_NEW(42)
     OP_STREAM_SEND(42, stream_9)
@@ -909,6 +913,7 @@ static int check_stream_10d(struct helper *h)
 
 static const struct script_op script_10[] = {
     OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1)
+    OP_HANDSHAKE_COMPLETE()
     OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
     OP_STREAM_NEW(42)
     OP_STREAM_NEW(43)
@@ -982,6 +987,7 @@ static int check_stream_12(struct helper *h)
 
 static const struct script_op script_12[] = {
     OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1)
+    OP_HANDSHAKE_COMPLETE()
     OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
     OP_STREAM_NEW(42)
     OP_STOP_SENDING(42, 4568)
@@ -1014,6 +1020,7 @@ static ossl_unused int check_stream_13(struct helper *h)
 
 static const struct script_op script_13[] = {
     OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1)
+    OP_HANDSHAKE_COMPLETE()
     OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
     OP_STREAM_NEW(42)
     OP_CONN_TXFC_BUMP(8)
@@ -1065,6 +1072,7 @@ static int check_14(struct helper *h)
 
 static const struct script_op script_14[] = {
     OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1)
+    OP_HANDSHAKE_COMPLETE()
     OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
     OP_CHECK(gen_conn_close)
     OP_TXP_GENERATE(TX_PACKETISER_ARCHETYPE_NORMAL)
@@ -1075,6 +1083,93 @@ static const struct script_op script_14[] = {
     OP_CHECK(check_14)
     OP_EXPECT_NO_FRAME()
     OP_RX_PKT_NONE()
+    OP_END
+};
+
+/* 15. INITIAL, Anti-Deadlock Probe Simulation */
+static int gen_probe_initial(struct helper *h)
+{
+    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(h->args.ackm);
+
+    /*
+     * Pretend the ACKM asked for an anti-deadlock Initial probe.
+     * We test output of this in the ACKM unit tests.
+     */
+    ++probe->anti_deadlock_initial;
+    return 1;
+}
+
+static const struct script_op script_15[] = {
+    OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM, secret_1)
+    OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
+    OP_CHECK(gen_probe_initial)
+    OP_TXP_GENERATE(TX_PACKETISER_ARCHETYPE_NORMAL)
+    OP_RX_PKT()
+    OP_EXPECT_DGRAM_LEN(1200, 1200)
+    OP_NEXT_FRAME()
+    OP_EXPECT_FRAME(OSSL_QUIC_FRAME_TYPE_PING)
+    OP_EXPECT_NO_FRAME()
+    OP_RX_PKT_NONE()
+    OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
+    OP_END
+};
+
+/* 16. HANDSHAKE, Anti-Deadlock Probe Simulation */
+static int gen_probe_handshake(struct helper *h)
+{
+    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(h->args.ackm);
+
+    /*
+     * Pretend the ACKM asked for an anti-deadlock Handshake probe.
+     * We test output of this in the ACKM unit tests.
+     */
+    ++probe->anti_deadlock_handshake;
+    return 1;
+}
+
+static const struct script_op script_16[] = {
+    OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
+    OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM, secret_1)
+    OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
+    OP_CHECK(gen_probe_handshake)
+    OP_TXP_GENERATE(TX_PACKETISER_ARCHETYPE_NORMAL)
+    OP_RX_PKT()
+    OP_EXPECT_DGRAM_LEN(21, 512)
+    OP_NEXT_FRAME()
+    OP_EXPECT_FRAME(OSSL_QUIC_FRAME_TYPE_PING)
+    OP_EXPECT_NO_FRAME()
+    OP_RX_PKT_NONE()
+    OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
+    OP_END
+};
+
+/* 17. 1-RTT, Probe Simulation */
+static int gen_probe_1rtt(struct helper *h)
+{
+    OSSL_ACKM_PROBE_INFO *probe = ossl_ackm_get0_probe_request(h->args.ackm);
+
+    /*
+     * Pretend the ACKM asked for a 1-RTT PTO probe.
+     * We test output of this in the ACKM unit tests.
+     */
+    ++probe->pto[QUIC_PN_SPACE_APP];
+    return 1;
+}
+
+static const struct script_op script_17[] = {
+    OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
+    OP_DISCARD_EL(QUIC_ENC_LEVEL_HANDSHAKE)
+    OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1)
+    OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
+    OP_CHECK(gen_probe_1rtt)
+    OP_TXP_GENERATE(TX_PACKETISER_ARCHETYPE_NORMAL)
+    OP_RX_PKT()
+    OP_EXPECT_DGRAM_LEN(21, 512)
+    OP_NEXT_FRAME()
+    OP_EXPECT_FRAME(OSSL_QUIC_FRAME_TYPE_PING)
+    OP_EXPECT_NO_FRAME()
+    OP_RX_PKT_NONE()
+    OP_TXP_GENERATE_NONE(TX_PACKETISER_ARCHETYPE_NORMAL)
     OP_END
 };
 
@@ -1092,7 +1187,10 @@ static const struct script_op *const scripts[] = {
     script_11,
     script_12,
     script_13,
-    script_14
+    script_14,
+    script_15,
+    script_16,
+    script_17
 };
 
 static void skip_padding(struct helper *h)
@@ -1134,13 +1232,13 @@ static int run_script(const struct script_op *script)
             break;
         case OPK_RX_PKT:
             ossl_quic_demux_pump(h.demux);
-            if (h.qrx_pkt.handle != NULL)
-                ossl_qrx_release_pkt(h.qrx, h.qrx_pkt.handle);
+            ossl_qrx_pkt_release(h.qrx_pkt);
+            h.qrx_pkt = NULL;
             if (!TEST_true(ossl_qrx_read_pkt(h.qrx, &h.qrx_pkt)))
                 goto err;
             if (!TEST_true(PACKET_buf_init(&h.pkt,
-                                           h.qrx_pkt.hdr->data,
-                                           h.qrx_pkt.hdr->len)))
+                                           h.qrx_pkt->hdr->data,
+                                           h.qrx_pkt->hdr->len)))
                 goto err;
             h.frame_type = UINT64_MAX;
             break;
@@ -1151,8 +1249,8 @@ static int run_script(const struct script_op *script)
             h.frame_type = UINT64_MAX;
             break;
         case OPK_EXPECT_DGRAM_LEN:
-            if (!TEST_size_t_ge(h.qrx_pkt.datagram_len, (size_t)op->arg0)
-                || !TEST_size_t_le(h.qrx_pkt.datagram_len, (size_t)op->arg1))
+            if (!TEST_size_t_ge(h.qrx_pkt->datagram_len, (size_t)op->arg0)
+                || !TEST_size_t_le(h.qrx_pkt->datagram_len, (size_t)op->arg1))
                 goto err;
             break;
         case OPK_EXPECT_FRAME:
@@ -1160,12 +1258,12 @@ static int run_script(const struct script_op *script)
                 goto err;
             break;
         case OPK_EXPECT_INITIAL_TOKEN:
-            if (!TEST_mem_eq(h.qrx_pkt.hdr->token, h.qrx_pkt.hdr->token_len,
+            if (!TEST_mem_eq(h.qrx_pkt->hdr->token, h.qrx_pkt->hdr->token_len,
                              op->buf, (size_t)op->arg0))
                 goto err;
             break;
         case OPK_EXPECT_HDR:
-            if (!TEST_true(cmp_pkt_hdr(h.qrx_pkt.hdr, op->buf,
+            if (!TEST_true(cmp_pkt_hdr(h.qrx_pkt->hdr, op->buf,
                                        NULL, 0, 0)))
                 goto err;
             break;
@@ -1398,6 +1496,9 @@ static int run_script(const struct script_op *script)
 
                 ossl_quic_stream_map_update_state(h.args.qsm, s);
             }
+            break;
+        case OPK_HANDSHAKE_COMPLETE:
+            ossl_quic_tx_packetiser_notify_handshake_complete(h.txp);
             break;
         default:
             TEST_error("bad opcode");

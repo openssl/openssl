@@ -36,6 +36,23 @@ const unsigned char hrrrandom[] = {
     0x07, 0x9e, 0x09, 0xe2, 0xc8, 0xa8, 0x33, 0x9c
 };
 
+int ossl_statem_set_mutator(SSL *s,
+                            ossl_statem_mutate_handshake_cb mutate_handshake_cb,
+                            ossl_statem_finish_mutate_handshake_cb finish_mutate_handshake_cb,
+                            void *mutatearg)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    sc->statem.mutate_handshake_cb = mutate_handshake_cb;
+    sc->statem.mutatearg = mutatearg;
+    sc->statem.finish_mutate_handshake_cb = finish_mutate_handshake_cb;
+
+    return 1;
+}
+
 /*
  * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
  * SSL3_RT_CHANGE_CIPHER_SPEC)
@@ -45,6 +62,32 @@ int ssl3_do_write(SSL_CONNECTION *s, int type)
     int ret;
     size_t written = 0;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
+    /*
+     * If we're running the test suite then we may need to mutate the message
+     * we've been asked to write. Does not happen in normal operation.
+     */
+    if (s->statem.mutate_handshake_cb != NULL
+            && !s->statem.write_in_progress
+            && type == SSL3_RT_HANDSHAKE
+            && s->init_num >= SSL3_HM_HEADER_LENGTH) {
+        unsigned char *msg;
+        size_t msglen;
+
+        if (!s->statem.mutate_handshake_cb((unsigned char *)s->init_buf->data,
+                                           s->init_num,
+                                           &msg, &msglen,
+                                           s->statem.mutatearg))
+            return -1;
+        if (msglen < SSL3_HM_HEADER_LENGTH
+                || !BUF_MEM_grow(s->init_buf, msglen))
+            return -1;
+        memcpy(s->init_buf->data, msg, msglen);
+        s->init_num = msglen;
+        s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
+        s->statem.finish_mutate_handshake_cb(s->statem.mutatearg);
+        s->statem.write_in_progress = 1;
+    }
 
     ret = ssl3_write_bytes(ssl, type, &s->init_buf->data[s->init_off],
                            s->init_num, &written);
@@ -65,6 +108,7 @@ int ssl3_do_write(SSL_CONNECTION *s, int type)
                                  written))
                 return -1;
     if (written == s->init_num) {
+        s->statem.write_in_progress = 0;
         if (s->msg_callback)
             s->msg_callback(1, s->version, type, s->init_buf->data,
                             (size_t)(s->init_off + s->init_num), ssl,
@@ -424,7 +468,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    if (ssl_cert_lookup_by_pkey(pkey, NULL) == NULL) {
+    if (ssl_cert_lookup_by_pkey(pkey, NULL, sctx) == NULL) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE);
         goto err;
@@ -787,6 +831,7 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
     size_t md_len;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     int was_first = SSL_IS_FIRST_HANDSHAKE(s);
+    int ok;
 
 
     /* This is a real handshake so make sure we clean it up at the end */
@@ -831,8 +876,16 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
         return MSG_PROCESS_ERROR;
     }
 
-    if (CRYPTO_memcmp(PACKET_data(pkt), s->s3.tmp.peer_finish_md,
-                      md_len) != 0) {
+    ok = CRYPTO_memcmp(PACKET_data(pkt), s->s3.tmp.peer_finish_md,
+                       md_len);
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (ok != 0) {
+        if ((PACKET_data(pkt)[0] ^ s->s3.tmp.peer_finish_md[0]) != 0xFF) {
+            ok = 0;
+        }
+    }
+#endif
+    if (ok != 0) {
         SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_DIGEST_CHECK_FAILED);
         return MSG_PROCESS_ERROR;
     }
@@ -1549,7 +1602,7 @@ static int ssl_method_error(const SSL_CONNECTION *s, const SSL_METHOD *method)
  */
 static int is_tls13_capable(const SSL_CONNECTION *s)
 {
-    int i;
+    size_t i;
     int curve;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
@@ -1572,7 +1625,8 @@ static int is_tls13_capable(const SSL_CONNECTION *s)
     if (s->psk_find_session_cb != NULL || s->cert->cert_cb != NULL)
         return 1;
 
-    for (i = 0; i < SSL_PKEY_NUM; i++) {
+    /* All provider-based sig algs are required to support at least TLS1.3 */
+    for (i = 0; i < s->ssl_pkey_num; i++) {
         /* Skip over certs disallowed for TLSv1.3 */
         switch (i) {
         case SSL_PKEY_DSA_SIGN:
@@ -1657,23 +1711,23 @@ int ssl_check_version_downgrade(SSL_CONNECTION *s)
 {
     const version_info *vent;
     const version_info *table;
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     /*
      * Check that the current protocol is the highest enabled version
-     * (according to s->ctx->method, as version negotiation may have changed
+     * (according to ssl->defltmethod, as version negotiation may have changed
      * s->method).
      */
-    if (s->version == sctx->method->version)
+    if (s->version == ssl->defltmeth->version)
         return 1;
 
     /*
      * Apparently we're using a version-flexible SSL_METHOD (not at its
      * highest protocol version).
      */
-    if (sctx->method->version == TLS_method()->version)
+    if (ssl->defltmeth->version == TLS_method()->version)
         table = tls_version_table;
-    else if (sctx->method->version == DTLS_method()->version)
+    else if (ssl->defltmeth->version == DTLS_method()->version)
         table = dtls_version_table;
     else {
         /* Unexpected state; fail closed. */

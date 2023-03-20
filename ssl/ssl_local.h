@@ -27,9 +27,8 @@
 # include <openssl/async.h>
 # include <openssl/symhacks.h>
 # include <openssl/ct.h>
-# include "record/record.h"
-# include "record/recordmethod.h"
-# include "statem/statem.h"
+# include "internal/recordmethod.h"
+# include "internal/statem.h"
 # include "internal/packet.h"
 # include "internal/dane.h"
 # include "internal/refcount.h"
@@ -37,101 +36,12 @@
 # include "internal/bio.h"
 # include "internal/ktls.h"
 # include "internal/time.h"
+# include "record/record.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
 #  define OPENSSL_EXTERN OPENSSL_EXPORT
 # endif
-
-# define c2l(c,l)        (l = ((unsigned long)(*((c)++)))     , \
-                         l|=(((unsigned long)(*((c)++)))<< 8), \
-                         l|=(((unsigned long)(*((c)++)))<<16), \
-                         l|=(((unsigned long)(*((c)++)))<<24))
-
-/* NOTE - c is not incremented as per c2l */
-# define c2ln(c,l1,l2,n) { \
-                        c+=n; \
-                        l1=l2=0; \
-                        switch (n) { \
-                        case 8: l2 =((unsigned long)(*(--(c))))<<24; \
-                        case 7: l2|=((unsigned long)(*(--(c))))<<16; \
-                        case 6: l2|=((unsigned long)(*(--(c))))<< 8; \
-                        case 5: l2|=((unsigned long)(*(--(c))));     \
-                        case 4: l1 =((unsigned long)(*(--(c))))<<24; \
-                        case 3: l1|=((unsigned long)(*(--(c))))<<16; \
-                        case 2: l1|=((unsigned long)(*(--(c))))<< 8; \
-                        case 1: l1|=((unsigned long)(*(--(c))));     \
-                                } \
-                        }
-
-# define l2c(l,c)        (*((c)++)=(unsigned char)(((l)    )&0xff), \
-                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>24)&0xff))
-
-# define n2l(c,l)        (l =((unsigned long)(*((c)++)))<<24, \
-                         l|=((unsigned long)(*((c)++)))<<16, \
-                         l|=((unsigned long)(*((c)++)))<< 8, \
-                         l|=((unsigned long)(*((c)++))))
-
-# define n2l8(c,l)       (l =((uint64_t)(*((c)++)))<<56, \
-                         l|=((uint64_t)(*((c)++)))<<48, \
-                         l|=((uint64_t)(*((c)++)))<<40, \
-                         l|=((uint64_t)(*((c)++)))<<32, \
-                         l|=((uint64_t)(*((c)++)))<<24, \
-                         l|=((uint64_t)(*((c)++)))<<16, \
-                         l|=((uint64_t)(*((c)++)))<< 8, \
-                         l|=((uint64_t)(*((c)++))))
-
-
-# define l2n(l,c)        (*((c)++)=(unsigned char)(((l)>>24)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-                         *((c)++)=(unsigned char)(((l)    )&0xff))
-
-# define l2n6(l,c)       (*((c)++)=(unsigned char)(((l)>>40)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>32)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>24)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-                         *((c)++)=(unsigned char)(((l)    )&0xff))
-
-# define l2n8(l,c)       (*((c)++)=(unsigned char)(((l)>>56)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>48)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>40)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>32)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>24)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-                         *((c)++)=(unsigned char)(((l)    )&0xff))
-
-/* NOTE - c is not incremented as per l2c */
-# define l2cn(l1,l2,c,n) { \
-                        c+=n; \
-                        switch (n) { \
-                        case 8: *(--(c))=(unsigned char)(((l2)>>24)&0xff); \
-                        case 7: *(--(c))=(unsigned char)(((l2)>>16)&0xff); \
-                        case 6: *(--(c))=(unsigned char)(((l2)>> 8)&0xff); \
-                        case 5: *(--(c))=(unsigned char)(((l2)    )&0xff); \
-                        case 4: *(--(c))=(unsigned char)(((l1)>>24)&0xff); \
-                        case 3: *(--(c))=(unsigned char)(((l1)>>16)&0xff); \
-                        case 2: *(--(c))=(unsigned char)(((l1)>> 8)&0xff); \
-                        case 1: *(--(c))=(unsigned char)(((l1)    )&0xff); \
-                                } \
-                        }
-
-# define n2s(c,s)        ((s=(((unsigned int)((c)[0]))<< 8)| \
-                             (((unsigned int)((c)[1]))    )),(c)+=2)
-# define s2n(s,c)        (((c)[0]=(unsigned char)(((s)>> 8)&0xff), \
-                           (c)[1]=(unsigned char)(((s)    )&0xff)),(c)+=2)
-
-# define n2l3(c,l)       ((l =(((unsigned long)((c)[0]))<<16)| \
-                              (((unsigned long)((c)[1]))<< 8)| \
-                              (((unsigned long)((c)[2]))    )),(c)+=3)
-
-# define l2n3(l,c)       (((c)[0]=(unsigned char)(((l)>>16)&0xff), \
-                           (c)[1]=(unsigned char)(((l)>> 8)&0xff), \
-                           (c)[2]=(unsigned char)(((l)    )&0xff)),(c)+=3)
 
 # define TLS_MAX_VERSION_INTERNAL TLS1_3_VERSION
 # define DTLS_MAX_VERSION_INTERNAL DTLS1_2_VERSION
@@ -845,6 +755,31 @@ typedef struct tls_group_info_st {
     char is_kem;             /* Mode for this Group: 0 is KEX, 1 is KEM */
 } TLS_GROUP_INFO;
 
+typedef struct tls_sigalg_info_st {
+    char *name;              /* name as in IANA TLS specs */
+    uint16_t code_point;     /* IANA-specified code point of sigalg-name */
+    char *sigalg_name;       /* (combined) sigalg name */
+    char *sigalg_oid;        /* (combined) sigalg OID */
+    char *sig_name;          /* pure signature algorithm name */
+    char *sig_oid;           /* pure signature algorithm OID */
+    char *hash_name;         /* hash algorithm name */
+    char *hash_oid;          /* hash algorithm OID */
+    char *keytype;           /* keytype name */
+    char *keytype_oid;       /* keytype OID */
+    unsigned int secbits;    /* Bits of security (from SP800-57) */
+    int mintls;              /* Minimum TLS version, -1 unsupported */
+    int maxtls;              /* Maximum TLS version (or 0 for undefined) */
+} TLS_SIGALG_INFO;
+
+/*
+ * Structure containing table entry of certificate info corresponding to
+ * CERT_PKEY entries
+ */
+typedef struct {
+    int nid; /* NID of public key algorithm */
+    uint32_t amask; /* authmask corresponding to key type */
+} SSL_CERT_LOOKUP;
+
 /* flags values */
 # define TLS_GROUP_TYPE             0x0000000FU /* Mask for group type */
 # define TLS_GROUP_CURVE_PRIME      0x00000001U
@@ -991,6 +926,7 @@ struct ssl_ctx_st {
     size_t max_cert_list;
 
     struct cert_st /* CERT */ *cert;
+    SSL_CERT_LOOKUP *ssl_cert_info;
     int read_ahead;
 
     /* callback that allows applications to peek at protocol messages */
@@ -1210,12 +1146,19 @@ struct ssl_ctx_st {
     const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX];
     size_t ssl_mac_secret_size[SSL_MD_NUM_IDX];
 
+    size_t tls12_sigalgs_len;
     /* Cache of all sigalgs we know and whether they are available or not */
     struct sigalg_lookup_st *sigalg_lookup_cache;
+    /* List of all sigalgs (code points) available, incl. from providers */
+    uint16_t *tls12_sigalgs;
 
     TLS_GROUP_INFO *group_list;
     size_t group_list_len;
     size_t group_list_max_len;
+
+    TLS_SIGALG_INFO *sigalg_list;
+    size_t sigalg_list_len;
+    size_t sigalg_list_max_len;
 
     /* masks of disabled algorithms */
     uint32_t disabled_enc_mask;
@@ -1238,6 +1181,7 @@ typedef struct cert_pkey_st CERT_PKEY;
 struct ssl_st {
     int type;
     SSL_CTX *ctx;
+    const SSL_METHOD *defltmeth;
     const SSL_METHOD *method;
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
@@ -1248,10 +1192,6 @@ struct ssl_st {
 struct ssl_connection_st {
     /* type identifier and common data */
     struct ssl_st ssl;
-#ifndef OPENSSL_NO_QUIC
-    /* pointer to parent SSL of QUIC_CONNECTION or self */
-    struct ssl_st *user_ssl;
-#endif
     /*
      * protocol version (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION,
      * DTLS1_VERSION)
@@ -1303,6 +1243,8 @@ struct ssl_connection_st {
     size_t init_num;               /* amount read/written */
     size_t init_off;               /* amount read/written */
 
+    size_t ssl_pkey_num;
+
     struct {
         long flags;
         unsigned char server_random[SSL3_RANDOM_SIZE];
@@ -1337,6 +1279,7 @@ struct ssl_connection_st {
         int total_renegotiations;
         int num_renegotiations;
         int in_read_app_data;
+
         struct {
             /* actually only need to be 16+20 for SSLv3 and 12 for TLS */
             unsigned char finish_md[EVP_MAX_MD_SIZE * 2];
@@ -1400,7 +1343,7 @@ struct ssl_connection_st {
              * SSL session: e.g. appropriate curve, signature algorithms etc.
              * If zero it can't be used at all.
              */
-            uint32_t valid_flags[SSL_PKEY_NUM];
+            uint32_t *valid_flags;
             /*
              * For servers the following masks are for the key and auth algorithms
              * that are supported by the certs below. For clients they are masks of
@@ -1841,6 +1784,7 @@ struct ssl_connection_st {
 # define SSL_CONNECTION_FROM_CONST_SSL_ONLY(ssl) \
     SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
 # define SSL_CONNECTION_GET_CTX(sc) ((sc)->ssl.ctx)
+# define SSL_CONNECTION_GET_SSL(sc) (&(sc)->ssl)
 # ifndef OPENSSL_NO_QUIC
 #  include "quic/quic_local.h"
 #  define SSL_CONNECTION_FROM_SSL_int(ssl, c)                      \
@@ -1854,13 +1798,11 @@ struct ssl_connection_st {
     SSL_CONNECTION_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)
 #  define SSL_CONNECTION_FROM_CONST_SSL(ssl) \
     SSL_CONNECTION_FROM_SSL_int(ssl, const)
-#  define SSL_CONNECTION_GET_SSL(sc) ((sc)->user_ssl)
 # else
 #  define SSL_CONNECTION_FROM_SSL(ssl) \
     SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, SSL_CONNECTION_NO_CONST)
 #  define SSL_CONNECTION_FROM_CONST_SSL(ssl) \
     SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
-#  define SSL_CONNECTION_GET_SSL(sc) (&(sc)->ssl)
 # endif
 
 /*
@@ -1887,15 +1829,6 @@ typedef struct sigalg_lookup_st {
     /* Whether this signature algorithm is actually available for use */
     int enabled;
 } SIGALG_LOOKUP;
-
-/*
- * Structure containing table entry of certificate info corresponding to
- * CERT_PKEY entries
- */
-typedef struct {
-    int nid; /* NID of public key algorithm */
-    uint32_t amask; /* authmask corresponding to key type */
-} SSL_CERT_LOOKUP;
 
 /* DTLS structures */
 
@@ -2094,7 +2027,8 @@ typedef struct cert_st {
     int dh_tmp_auto;
     /* Flags related to certificates */
     uint32_t cert_flags;
-    CERT_PKEY pkeys[SSL_PKEY_NUM];
+    CERT_PKEY *pkeys;
+    size_t ssl_pkey_num;
     /* Custom certificate types sent in certificate request message. */
     uint8_t *ctype;
     size_t ctype_len;
@@ -2449,7 +2383,7 @@ const char *ssl_protocol_to_string(int version);
 /* Returns true if certificate and private key for 'idx' are present */
 static ossl_inline int ssl_has_cert(const SSL_CONNECTION *s, int idx)
 {
-    if (idx < 0 || idx >= SSL_PKEY_NUM)
+    if (idx < 0 || idx >= (int)s->ssl_pkey_num)
         return 0;
     return s->cert->pkeys[idx].x509 != NULL
         && s->cert->pkeys[idx].privatekey != NULL;
@@ -2465,7 +2399,9 @@ static ossl_inline void tls1_get_peer_groups(SSL_CONNECTION *s,
 
 # ifndef OPENSSL_UNIT_TEST
 
-__owur int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, int type);
+__owur int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, const SSL_METHOD *method,
+                         int type);
+__owur SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method);
 __owur SSL *ossl_ssl_connection_new(SSL_CTX *ctx);
 void ossl_ssl_connection_free(SSL *ssl);
 __owur int ossl_ssl_connection_reset(SSL *ssl);
@@ -2473,7 +2409,7 @@ __owur int ossl_ssl_connection_reset(SSL *ssl);
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
 __owur int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written);
 int ssl_clear_bad_session(SSL_CONNECTION *s);
-__owur CERT *ssl_cert_new(void);
+__owur CERT *ssl_cert_new(size_t ssl_pkey_num);
 __owur CERT *ssl_cert_dup(CERT *cert);
 void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
@@ -2536,10 +2472,11 @@ __owur int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid,
                             void *other);
 int ssl_get_security_level_bits(const SSL *s, const SSL_CTX *ctx, int *levelp);
 
-__owur int ssl_cert_lookup_by_nid(int nid, size_t *pidx);
-__owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,
-                                                      size_t *pidx);
-__owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx);
+__owur int ssl_cert_lookup_by_nid(int nid, size_t *pidx, SSL_CTX *ctx);
+__owur SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,
+                                                size_t *pidx,
+                                                SSL_CTX *ctx);
+__owur SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx, SSL_CTX *ctx);
 
 int ssl_undefined_function(SSL *s);
 __owur int ssl_undefined_void_function(void);
@@ -2552,8 +2489,9 @@ __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL_CONNECTION *sc);
 __owur int ssl_x509err2alert(int type);
 void ssl_sort_cipher_list(void);
 int ssl_load_ciphers(SSL_CTX *ctx);
-__owur int ssl_setup_sig_algs(SSL_CTX *ctx);
+__owur int ssl_setup_sigalgs(SSL_CTX *ctx);
 int ssl_load_groups(SSL_CTX *ctx);
+int ssl_load_sigalgs(SSL_CTX *ctx);
 __owur int ssl_fill_hello_random(SSL_CONNECTION *s, int server,
                                  unsigned char *field, size_t len,
                                  DOWNGRADE dgrd);
@@ -2842,6 +2780,7 @@ __owur int ssl_handshake_hash(SSL_CONNECTION *s,
                               unsigned char *out, size_t outlen,
                               size_t *hashlen);
 __owur const EVP_MD *ssl_md(SSL_CTX *ctx, int idx);
+int ssl_get_md_idx(int md_nid);
 __owur const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s);
 __owur const EVP_MD *ssl_prf_md(SSL_CONNECTION *s);
 
@@ -2892,6 +2831,14 @@ custom_ext_method *custom_ext_find(const custom_ext_methods *exts,
 
 void custom_ext_init(custom_ext_methods *meths);
 
+int ossl_tls_add_custom_ext_intern(SSL_CTX *ctx, custom_ext_methods *exts,
+                                   ENDPOINT role, unsigned int ext_type,
+                                   unsigned int context,
+                                   SSL_custom_ext_add_cb_ex add_cb,
+                                   SSL_custom_ext_free_cb_ex free_cb,
+                                   void *add_arg,
+                                   SSL_custom_ext_parse_cb_ex parse_cb,
+                                   void *parse_arg);
 __owur int custom_ext_parse(SSL_CONNECTION *s, unsigned int context,
                             unsigned int ext_type,
                             const unsigned char *ext_data, size_t ext_size,
@@ -2981,5 +2928,9 @@ static ossl_unused ossl_inline void ssl_tsan_counter(const SSL_CTX *ctx,
 
 int ossl_comp_has_alg(int a);
 size_t ossl_calculate_comp_expansion(int alg, size_t length);
+
+void ossl_ssl_set_custom_record_layer(SSL_CONNECTION *s,
+                                      const OSSL_RECORD_METHOD *meth,
+                                      void *rlarg);
 
 #endif

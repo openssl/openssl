@@ -13,7 +13,7 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/catfile/;
 use File::Compare qw/compare_text compare/;
-use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_dir bldtop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_dir bldtop_file with data_file/;
 
 use OpenSSL::Test::Utils;
 
@@ -50,7 +50,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 16;
+plan tests => 20;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -655,7 +655,7 @@ my @smime_cms_param_tests_autodigestmax = (
         "-keyopt", "rsa_padding_mode:pss", "-keyopt", "rsa_pss_saltlen:auto-digestmax",
         "-out", "{output}.cms" ],
       # digest is SHA-512, which produces 64, bytes of output, but an RSA-PSS
-      # signature with a 1024 bit RSA key can only accomodate 62
+      # signature with a 1024 bit RSA key can only accommodate 62
       sub { my %opts = @_; rsapssSaltlen("$opts{output}.cms") == 62; },
       [ "{cmd2}", @defaultprov, "-verify", "-in", "{output}.cms", "-inform", "PEM",
         "-CAfile", $smroot, "-out", "{output}.txt" ],
@@ -826,7 +826,7 @@ sub rsapssSaltlen {
   my $pssparam_offset = -1;
   while ($_ = shift @asn1parse) {
     chomp;
-    next unless /:rsassaPss$/;
+    next unless /:rsassaPss/;
     # This line contains :rsassaPss, the next line contains a raw dump of the
     # RSA_PSS_PARAMS sequence; obtain its offset
     $_ = shift @asn1parse;
@@ -852,7 +852,7 @@ sub rsapssSaltlen {
   # This assumes the salt length is the last field, which may possibly be
   # incorrect if there is a non-standard trailer field, but there almost never
   # is in PSS.
-  if ($pssparam[-1] =~ /prim:\s+INTEGER\s+:([A-Fa-f0-9]+)$/) {
+  if ($pssparam[-1] =~ /prim:\s+INTEGER\s+:([A-Fa-f0-9]+)/) {
     $saltlen = hex($1);
   }
 
@@ -884,6 +884,24 @@ subtest "CMS Check that bad attributes fail when verifying signers\n" => sub {
                      catfile($datadir, $name), "-inform", "DER", "-CAfile",
                      $smroot, "-out", $out ])),
             $name);
+    }
+};
+
+subtest "CMS Check that bad encryption algorithm fails\n" => sub {
+    plan tests => 1;
+
+    SKIP: {
+        skip "DES or Legacy isn't supported in this build", 1
+            if disabled("des") || disabled("legacy");
+
+        my $out = "smtst.txt";
+
+        ok(!run(app(["openssl", "cms", @legacyprov, "-encrypt",
+                    "-in", $smcont,
+                    "-stream", "-recip", $smrsa1,
+                    "-des-ede3",
+                    "-out", $out ])),
+           "Decrypt message from OpenSSL 1.1.1");
     }
 };
 
@@ -1061,6 +1079,25 @@ subtest "CMS code signing test" => sub {
        "fail verify CMS signature with code signing certificate for purpose smime_sign");
 };
 
+# Test case for missing MD algorithm (must not segfault)
+
+with({ exit_checker => sub { return shift == 4; } },
+    sub {
+        ok(run(app(['openssl', 'smime', '-verify', '-noverify',
+                    '-inform', 'PEM',
+                    '-in', data_file("pkcs7-md4.pem"),
+                   ])),
+            "Check failure of EVP_DigestInit in PKCS7 signed is handled");
+
+        ok(run(app(['openssl', 'smime', '-decrypt',
+                    '-inform', 'PEM',
+                    '-in', data_file("pkcs7-md4-encrypted.pem"),
+                    '-recip', srctop_file("test", "certs", "ee-cert.pem"),
+                    '-inkey', srctop_file("test", "certs", "ee-key.pem")
+                   ])),
+            "Check failure of EVP_DigestInit in PKCS7 signedAndEnveloped is handled");
+    });
+
 sub check_availability {
     my $tnam = shift;
 
@@ -1092,3 +1129,14 @@ ok(!run(app(['openssl', 'cms', '-verify',
                                 "SignedInvalidMappingFromanyPolicyTest7.eml")
             ])),
    "issue#19643");
+
+# Check that we get the expected failure return code
+with({ exit_checker => sub { return shift == 6; } },
+    sub {
+        ok(run(app(['openssl', 'cms', '-encrypt',
+                    '-in', srctop_file("test", "smcont.txt"),
+                    '-aes128', '-stream', '-recip',
+                    srctop_file("test/smime-certs", "badrsa.pem"),
+                   ])),
+            "Check failure during BIO setup with -stream is handled correctly");
+    });

@@ -106,7 +106,7 @@ push @methods, [ @prov_method ];
 push @methods, [qw(-engine loader_attic)]
     unless disabled('loadereng');
 
-my $n = scalar @methods
+my $n = 2 + scalar @methods
     * ( (3 * scalar @noexist_files)
         + (6 * scalar @src_files)
         + (2 * scalar @data_files)
@@ -130,6 +130,14 @@ if ($do_test_ossltest_store) {
 plan skip_all => "No plan" if $n == 0;
 
 plan tests => $n;
+
+my $test_x509 = srctop_file('test', 'testx509.pem');
+
+ok(run(app(["openssl", "storeutl",  "-crls", $test_x509])),
+   "storeutil with -crls option");
+
+ok(!run(app(["openssl", "storeutl", $test_x509, "-crls"])),
+   "storeutil with extra parameter (at end) should fail");
 
 indir "store_$$" => sub {
     if ($do_test_ossltest_store) {
@@ -402,7 +410,7 @@ sub init {
                       }, grep(/-key-pkcs8-pbes2-sha256\.pem$/, @generated_files))
             # *-cert.pem (intermediary for the .p12 inits)
             && run(app(["openssl", "req", "-x509", @std_args,
-                        "-config", $cnf, "-noenc",
+                        "-config", $cnf, "-reqexts", "v3_ca", "-noenc",
                         "-key", $cakey, "-out", "cacert.pem"]))
             && runall(sub {
                           my $srckey = shift;

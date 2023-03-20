@@ -41,3 +41,5 @@ struct pkcs12_bag_st {
         ASN1_TYPE *other;       /* Secret or other bag */
     } value;
 };
+
+const PKCS7_CTX *ossl_pkcs12_get0_pkcs7ctx(const PKCS12 *p12);

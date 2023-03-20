@@ -80,6 +80,7 @@ Edit the config file to add the following lines near the beginning:
 
     [openssl_init]
     providers = provider_sect
+    alg_section = algorithm_sect
 
     [provider_sect]
     fips = fips_sect
@@ -87,6 +88,9 @@ Edit the config file to add the following lines near the beginning:
 
     [base_sect]
     activate = 1
+
+    [algorithm_sect]
+    default_properties = fips=yes
 
 Obviously the include file location above should match the path and name of the
 FIPS module config file that you installed earlier.
@@ -331,6 +335,14 @@ base providers. The other library context will just use the default provider.
         goto err;
 
     /*
+     * Set the default property query on the FIPS library context to
+     * ensure that only FIPS algorithms can be used.  There are a few non-FIPS
+     * approved algorithms in the FIPS provider for backward compatibility reasons.
+     */
+    if (!EVP_set_default_properties(fips_libctx, "fips=yes"))
+        goto err;
+
+    /*
      * We don't need to do anything special to load the default
      * provider into nonfips_libctx. This happens automatically if no
      * other providers are loaded.
@@ -419,7 +431,7 @@ contexts.
      * We assume that a nondefault library context with the FIPS
      * provider loaded has been created called fips_libctx.
      */
-    SSL_CTX *fips_ssl_ctx = SSL_CTX_new_ex(fips_libctx, NULL, TLS_method());
+    SSL_CTX *fips_ssl_ctx = SSL_CTX_new_ex(fips_libctx, "fips=yes", TLS_method());
     /*
      * We assume that a nondefault library context with the default
      * provider loaded has been created called non_fips_libctx.
@@ -456,6 +468,22 @@ use L<EVP_MD_get0_provider(3)>.
 To extract the name from the B<OSSL_PROVIDER>, use
 L<OSSL_PROVIDER_get0_name(3)>.
 
+=head1 NOTES
+
+The FIPS provider in OpenSSL 3.1 includes some non-FIPS validated algorithms,
+consequently the property query C<fips=yes> is mandatory for applications that
+want to operate in a FIPS approved manner.  The algorithms are:
+
+=over 4
+
+=item Triple DES ECB
+
+=item Triple DES CBC
+
+=item EdDSA
+
+=back
+
 =head1 SEE ALSO
 
 L<migration_guide(7)>, L<crypto(7)>, L<fips_config(5)>
@@ -464,6 +492,10 @@ L<migration_guide(7)>, L<crypto(7)>, L<fips_config(5)>
 
 The FIPS module guide was created for use with the new FIPS provider
 in OpenSSL 3.0.
+
+OpenSSL 3.0 includes a FIPS 140-2 approved FIPS provider.
+
+OpenSSL 3.1 includes a FIPS 140-3 approved FIPS provider.
 
 =head1 COPYRIGHT
 

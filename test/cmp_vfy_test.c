@@ -175,6 +175,7 @@ static int test_validate_msg_mac_alg_protection_ok(void)
     return test_validate_msg_mac_alg_protection(0, 0);
 }
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_mac_alg_protection_missing(void)
 {
     return test_validate_msg_mac_alg_protection(1, 0);
@@ -185,7 +186,6 @@ static int test_validate_msg_mac_alg_protection_wrong(void)
     return test_validate_msg_mac_alg_protection(0, 1);
 }
 
-#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_mac_alg_protection_bad(void)
 {
     const unsigned char sec_bad[] = {
@@ -274,10 +274,12 @@ static int test_validate_msg_signature_srvcert(int bad_sig, int miss, int wrong)
     return result;
 }
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_signature_srvcert_missing(void)
 {
     return test_validate_msg_signature_srvcert(0, 1, 0);
 }
+#endif
 
 static int test_validate_msg_signature_srvcert_wrong(void)
 {

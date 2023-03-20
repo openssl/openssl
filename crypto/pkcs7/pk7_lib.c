@@ -415,6 +415,8 @@ PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey,
 
 static STACK_OF(X509) *pkcs7_get_signer_certs(const PKCS7 *p7)
 {
+    if (p7->d.ptr == NULL)
+        return NULL;
     if (PKCS7_type_is_signed(p7))
         return p7->d.sign->cert;
     if (PKCS7_type_is_signedAndEnveloped(p7))
@@ -424,6 +426,8 @@ static STACK_OF(X509) *pkcs7_get_signer_certs(const PKCS7 *p7)
 
 static STACK_OF(PKCS7_RECIP_INFO) *pkcs7_get_recipient_info(const PKCS7 *p7)
 {
+    if (p7->d.ptr == NULL)
+        return NULL;
     if (PKCS7_type_is_signedAndEnveloped(p7))
         return p7->d.signed_and_enveloped->recipientinfo;
     if (PKCS7_type_is_enveloped(p7))
@@ -441,12 +445,16 @@ void ossl_pkcs7_resolve_libctx(PKCS7 *p7)
     const PKCS7_CTX *ctx = ossl_pkcs7_get0_ctx(p7);
     OSSL_LIB_CTX *libctx = ossl_pkcs7_ctx_get0_libctx(ctx);
     const char *propq = ossl_pkcs7_ctx_get0_propq(ctx);
-    STACK_OF(PKCS7_RECIP_INFO) *rinfos = pkcs7_get_recipient_info(p7);
-    STACK_OF(PKCS7_SIGNER_INFO) *sinfos = PKCS7_get_signer_info(p7);
-    STACK_OF(X509) *certs = pkcs7_get_signer_certs(p7);
+    STACK_OF(PKCS7_RECIP_INFO) *rinfos;
+    STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
+    STACK_OF(X509) *certs;
 
-    if (ctx == NULL)
+    if (ctx == NULL || p7->d.ptr == NULL)
         return;
+
+    rinfos = pkcs7_get_recipient_info(p7);
+    sinfos = PKCS7_get_signer_info(p7);
+    certs = pkcs7_get_signer_certs(p7);
 
     for (i = 0; i < sk_X509_num(certs); i++)
         ossl_x509_set0_libctx(sk_X509_value(certs, i), libctx, propq);

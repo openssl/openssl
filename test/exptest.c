@@ -49,7 +49,7 @@ static int test_mod_exp_zero(void)
     BIGNUM *r = NULL;
     BN_ULONG one_word = 1;
     BN_CTX *ctx = BN_CTX_new();
-    int ret = 1, failed = 0;
+    int ret = 0, failed = 0;
     BN_MONT_CTX *mont = NULL;
 
     if (!TEST_ptr(m = BN_new())
@@ -100,17 +100,26 @@ static int test_mod_exp_zero(void)
 
     ERR_set_mark();
     /* mont is not set but passed in */
-    if (!TEST_false(BN_mod_exp_mont_consttime(r, a, p, m, ctx, mont)))
+    if (!TEST_false(BN_mod_exp_mont_consttime(r, p, a, m, ctx, mont)))
+        goto err;
+    if (!TEST_false(BN_mod_exp_mont(r, p, a, m, ctx, mont)))
         goto err;
     ERR_pop_to_mark();
 
     if (!TEST_true(BN_MONT_CTX_set(mont, m, ctx)))
         goto err;
 
-    if (!TEST_true(BN_mod_exp_mont_consttime(r, a, p, m, ctx, mont)))
+    /* we compute 0 ** a mod 1 here, to execute code that uses mont */
+    if (!TEST_true(BN_mod_exp_mont_consttime(r, p, a, m, ctx, mont)))
         goto err;
 
     if (!TEST_true(a_is_zero_mod_one("BN_mod_exp_mont_consttime", r, a)))
+        failed = 1;
+
+    if (!TEST_true(BN_mod_exp_mont(r, p, a, m, ctx, mont)))
+        goto err;
+
+    if (!TEST_true(a_is_zero_mod_one("BN_mod_exp_mont", r, a)))
         failed = 1;
 
     /*

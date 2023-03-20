@@ -85,7 +85,7 @@ static const size_t max_nodes =
  *
  * We use an expansion factor of 8 / 5 = 1.6
  */
-static ossl_inline int compute_pqueue_growth(size_t target, size_t current)
+static ossl_inline size_t compute_pqueue_growth(size_t target, size_t current)
 {
     int err = 0;
 

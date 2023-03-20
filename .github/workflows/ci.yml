@@ -51,6 +51,8 @@ jobs:
       run: make -s build_generated
     - name: make doc-nits
       run: make doc-nits
+    - name: make help
+      run: make help
     - name: make md-nits
       run: |
           sudo gem install mdl
@@ -397,7 +399,7 @@ jobs:
     - name: make
       run: make -s -j4
     - name: Setup Python
-      uses: actions/setup-python@v4.3.1
+      uses: actions/setup-python@v4.5.0
       with:
         python-version: ${{ matrix.PYTHON }}
     - uses: actions-rs/toolchain@v1

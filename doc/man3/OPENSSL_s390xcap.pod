@@ -25,7 +25,7 @@ processed from left to right (whitespace is ignored):
 
  OPENSSL_s390xcap="<tok1>;<tok2>;..."
 
-There are three types of tokens:
+There are four types of tokens:
 
 =over 4
 
@@ -50,6 +50,11 @@ and B<kdsa>.
 Store-facility-list-extended (stfle) followed by three 64-bit masks. The
 part of the environment variable's mask corresponding to the stfle
 instruction is set to the specified 192-bit mask.
+
+=item nocex
+
+Deactivate modular exponentiation and CRT operation offloading to
+Crypto Express Adapters.
 
 =back
 

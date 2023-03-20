@@ -240,7 +240,7 @@ The negotiated TLS protocol version.
 Gets of sets the use of the implicit rejection mechanism for RSA PKCS#1 v1.5
 decryption. When set (non zero value), the decryption API will return
 a deterministically random value if the PKCS#1 v1.5 padding check fails.
-This makes explotation of the Bleichenbacher significantly harder, even
+This makes exploitation of the Bleichenbacher significantly harder, even
 if the code using the RSA decryption API is not implemented in side-channel
 free manner. Set by default.
 

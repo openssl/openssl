@@ -18,6 +18,8 @@
 
 # if defined(OPENSSL_THREADS) && defined(OPENSSL_SYS_UNIX)
 #  define OPENSSL_THREADS_POSIX
+# elif defined(OPENSSL_THREADS) && defined(OPENSSL_SYS_VMS)
+#  define OPENSSL_THREADS_POSIX
 # elif defined(OPENSSL_THREADS) && defined(OPENSSL_SYS_WINDOWS) && \
     defined(_WIN32_WINNT)
 #  if _WIN32_WINNT >= 0x0600

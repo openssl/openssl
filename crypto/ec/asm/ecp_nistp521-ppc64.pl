@@ -140,6 +140,7 @@ ___
 }
 
 $code.=<<___;
+.machine	"any"
 .text
 
 ___

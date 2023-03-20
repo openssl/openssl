@@ -161,6 +161,13 @@ BIO_dgram_set_caps                      define
 BIO_dgram_get_effective_caps            define
 BIO_dgram_get_mtu                       define
 BIO_dgram_set_mtu                       define
+BIO_ctrl_dgram_connect                  define
+BIO_ctrl_set_connected                  define
+BIO_dgram_get_mtu_overhead              define
+BIO_dgram_get_peer                      define
+BIO_dgram_set_peer                      define
+BIO_dgram_recv_timedout                 define
+BIO_dgram_send_timedout                 define
 BIO_do_accept                           define
 BIO_do_connect                          define
 BIO_do_handshake                        define
@@ -257,6 +264,8 @@ DES_ede2_cfb64_encrypt                  define
 DES_ede2_ofb64_encrypt                  define
 DTLS_get_link_min_mtu                   define
 DTLS_set_link_mtu                       define
+DTLSv1_get_timeout                      define
+DTLSv1_handle_timeout                   define
 ENGINE_cleanup                          define deprecated 1.1.0
 ERR_FATAL_ERROR                         define
 ERR_GET_LIB                             define

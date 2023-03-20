@@ -181,6 +181,7 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
         return 0;
 
     hdr->partial = partial;
+    hdr->unused  = 0;
 
     if ((b0 & 0x80) == 0) {
         /* Short header. */
@@ -353,6 +354,9 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
                 /* Retry packets are always fully decoded. */
                 hdr->partial    = 0;
 
+                /* Unused bits in Retry header. */
+                hdr->unused     = b0 & 0x0f;
+
                 /* Fields not used in Retry packets. */
                 memset(hdr->pn, 0, sizeof(hdr->pn));
 
@@ -490,6 +494,8 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
             b0 |= 0x40; /* fixed */
         if (ossl_quic_pkt_type_has_pn(hdr->type))
             b0 |= hdr->pn_len - 1;
+        if (hdr->type == QUIC_PKT_TYPE_RETRY)
+            b0 |= hdr->unused;
 
         if (!WPACKET_put_bytes_u8(pkt, b0)
             || !WPACKET_put_bytes_u32(pkt, hdr->version)
@@ -503,7 +509,7 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
 
         if (hdr->type == QUIC_PKT_TYPE_VERSION_NEG
             || hdr->type == QUIC_PKT_TYPE_RETRY) {
-            if (!WPACKET_reserve_bytes(pkt, hdr->len, NULL))
+            if (hdr->len > 0 && !WPACKET_reserve_bytes(pkt, hdr->len, NULL))
                 return 0;
 
             return 1;
@@ -521,7 +527,7 @@ int ossl_quic_wire_encode_pkt_hdr(WPACKET *pkt,
             return 0;
     }
 
-    if (!WPACKET_reserve_bytes(pkt, hdr->len, NULL))
+    if (hdr->len > 0 && !WPACKET_reserve_bytes(pkt, hdr->len, NULL))
         return 0;
 
     off_sample = off_pn + 4;
@@ -744,4 +750,127 @@ int ossl_quic_wire_encode_pkt_hdr_pn(QUIC_PN pn,
     }
 
     return 1;
+}
+
+int ossl_quic_validate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
+                                           const char *propq,
+                                           const QUIC_PKT_HDR *hdr,
+                                           const QUIC_CONN_ID *client_initial_dcid)
+{
+    unsigned char expected_tag[QUIC_RETRY_INTEGRITY_TAG_LEN];
+    const unsigned char *actual_tag;
+
+    if (hdr == NULL || hdr->len < QUIC_RETRY_INTEGRITY_TAG_LEN)
+        return 0;
+
+    if (!ossl_quic_calculate_retry_integrity_tag(libctx, propq,
+                                                 hdr, client_initial_dcid,
+                                                 expected_tag))
+        return 0;
+
+    actual_tag = hdr->data + hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN;
+
+    return !CRYPTO_memcmp(expected_tag, actual_tag,
+                          QUIC_RETRY_INTEGRITY_TAG_LEN);
+}
+
+/* RFC 9001 s. 5.8 */
+static const unsigned char retry_integrity_key[] = {
+    0xbe, 0x0c, 0x69, 0x0b, 0x9f, 0x66, 0x57, 0x5a,
+    0x1d, 0x76, 0x6b, 0x54, 0xe3, 0x68, 0xc8, 0x4e
+};
+
+static const unsigned char retry_integrity_nonce[] = {
+    0x46, 0x15, 0x99, 0xd3, 0x5d, 0x63, 0x2b, 0xf2,
+    0x23, 0x98, 0x25, 0xbb
+};
+
+int ossl_quic_calculate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
+                                            const char *propq,
+                                            const QUIC_PKT_HDR *hdr,
+                                            const QUIC_CONN_ID *client_initial_dcid,
+                                            unsigned char *tag)
+{
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *cctx = NULL;
+    int ok = 0, l = 0, l2 = 0, wpkt_valid = 0;
+    WPACKET wpkt;
+    /* Worst case length of the Retry Psuedo-Packet header is 68 bytes. */
+    unsigned char buf[128];
+    QUIC_PKT_HDR hdr2;
+    size_t hdr_enc_len = 0;
+
+    if (hdr->type != QUIC_PKT_TYPE_RETRY || hdr->version == 0
+        || hdr->len < QUIC_RETRY_INTEGRITY_TAG_LEN
+        || hdr->data == NULL
+        || client_initial_dcid == NULL || tag == NULL
+        || client_initial_dcid->id_len > QUIC_MAX_CONN_ID_LEN)
+        goto err;
+
+    /*
+     * Do not reserve packet body in WPACKET. Retry packet header
+     * does not contain a Length field so this does not affect
+     * the serialized packet header.
+     */
+    hdr2 = *hdr;
+    hdr2.len = 0;
+
+    /* Assemble retry psuedo-packet. */
+    if (!WPACKET_init_static_len(&wpkt, buf, sizeof(buf), 0))
+        goto err;
+
+    wpkt_valid = 1;
+
+    /* Prepend original DCID to the packet. */
+    if (!WPACKET_put_bytes_u8(&wpkt, client_initial_dcid->id_len)
+        || !WPACKET_memcpy(&wpkt, client_initial_dcid->id,
+                           client_initial_dcid->id_len))
+        goto err;
+
+    /* Encode main retry header. */
+    if (!ossl_quic_wire_encode_pkt_hdr(&wpkt, hdr2.dst_conn_id.id_len,
+                                       &hdr2, NULL))
+        goto err;
+
+    if (!WPACKET_get_total_written(&wpkt, &hdr_enc_len))
+        return 0;
+
+    /* Create and initialise cipher context. */
+    /* TODO(QUIC): Cipher fetch caching. */
+    if ((cipher = EVP_CIPHER_fetch(libctx, "AES-128-GCM", propq)) == NULL)
+        goto err;
+
+    if ((cctx = EVP_CIPHER_CTX_new()) == NULL)
+        goto err;
+
+    if (!EVP_CipherInit_ex(cctx, cipher, NULL,
+                           retry_integrity_key, retry_integrity_nonce, /*enc=*/1))
+        goto err;
+
+    /* Feed packet header as AAD data. */
+    if (EVP_CipherUpdate(cctx, NULL, &l, buf, hdr_enc_len) != 1)
+        return 0;
+
+    /* Feed packet body as AAD data. */
+    if (EVP_CipherUpdate(cctx, NULL, &l, hdr->data,
+                         hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN) != 1)
+        return 0;
+
+    /* Finalise and get tag. */
+    if (EVP_CipherFinal_ex(cctx, NULL, &l2) != 1)
+        return 0;
+
+    if (EVP_CIPHER_CTX_ctrl(cctx, EVP_CTRL_AEAD_GET_TAG,
+                            QUIC_RETRY_INTEGRITY_TAG_LEN,
+                            tag) != 1)
+        return 0;
+
+    ok = 1;
+err:
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(cctx);
+    if (wpkt_valid)
+        WPACKET_finish(&wpkt);
+
+    return ok;
 }

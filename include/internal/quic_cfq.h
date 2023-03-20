@@ -13,6 +13,8 @@
 # include <openssl/ssl.h>
 # include "internal/quic_types.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 /*
  * QUIC Control Frame Queue Item
  * =============================
@@ -33,8 +35,8 @@ struct quic_cfq_item_st {
     /* All other fields are private; use ossl_quic_cfq_item_* accessors. */
 };
 
-#define QUIC_CFQ_STATE_NEW      0
-#define QUIC_CFQ_STATE_TX       1
+#  define QUIC_CFQ_STATE_NEW      0
+#  define QUIC_CFQ_STATE_TX       1
 
 /* Returns the frame type of a CFQ item. */
 uint64_t ossl_quic_cfq_item_get_frame_type(const QUIC_CFQ_ITEM *item);
@@ -137,5 +139,7 @@ QUIC_CFQ_ITEM *ossl_quic_cfq_get_priority_head(const QUIC_CFQ *cfq,
  */
 QUIC_CFQ_ITEM *ossl_quic_cfq_item_get_priority_next(const QUIC_CFQ_ITEM *item,
                                                     uint32_t pn_space);
+
+# endif
 
 #endif

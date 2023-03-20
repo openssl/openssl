@@ -229,11 +229,17 @@
   }
   foreach (grep /\[\.ssl\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);
-      # Most of the files in [.ssl.record.methods] include "ssl_local.h"
-      # which includes things like "record/record.h".  Adding "./" as an
-      # inclusion directory helps making this sort of header from these
-      # directories.
+      # Most of the files in [.ssl] include "ssl_local.h" which includes things
+      # like "record/record.h".  Adding "./" as an inclusion directory helps
+      # making this sort of header from these directories.
       push @{$unified_info{includes_extra}->{$obj}}, qw(./);
+  }
+  foreach (grep /\[\.ssl\].*?ssl_lib\.o$/, keys %{$unified_info{sources}}) {
+      my $obj = platform->obj($_);
+      # Some files in [.ssl] include "quic/quic_local.h", which in turn
+      # includes "../ssl_local.h".  Adding "./quic" as an inclusion directory
+      # helps making this sort of header from these directories.
+      push @{$unified_info{includes_extra}->{$obj}}, qw(./quic);
   }
   foreach (grep /\[\.ssl\.(?:record|statem)\].*?\.o$/, keys %{$unified_info{sources}}) {
       my $obj = platform->obj($_);

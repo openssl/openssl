@@ -18,6 +18,7 @@
 #include "internal/nelem.h"
 #include "internal/refcount.h"
 #include "crypto/cryptlib.h"
+#include "crypto/ctype.h"
 
 #ifndef OPENSSL_NO_TRACE
 
@@ -118,17 +119,16 @@ struct trace_category_st {
 };
 #define TRACE_CATEGORY_(name)       { #name, OSSL_TRACE_CATEGORY_##name }
 
-static const struct trace_category_st trace_categories[] = {
+static const struct trace_category_st
+    trace_categories[OSSL_TRACE_CATEGORY_NUM] = {
     TRACE_CATEGORY_(ALL),
     TRACE_CATEGORY_(TRACE),
     TRACE_CATEGORY_(INIT),
     TRACE_CATEGORY_(TLS),
     TRACE_CATEGORY_(TLS_CIPHER),
     TRACE_CATEGORY_(CONF),
-#ifndef OPENSSL_NO_ENGINE
     TRACE_CATEGORY_(ENGINE_TABLE),
     TRACE_CATEGORY_(ENGINE_REF_COUNT),
-#endif
     TRACE_CATEGORY_(PKCS5V2),
     TRACE_CATEGORY_(PKCS12_KEYGEN),
     TRACE_CATEGORY_(PKCS12_DECRYPT),
@@ -144,22 +144,16 @@ static const struct trace_category_st trace_categories[] = {
 
 const char *OSSL_trace_get_category_name(int num)
 {
-    size_t i;
-
+    if (num < 0 || (size_t)num >= OSSL_NELEM(trace_categories))
+        return NULL;
     /*
      * Partial check that OSSL_TRACE_CATEGORY_... macros
      * are synced with trace_categories array
      */
-#ifndef OPENSSL_NO_ENGINE
-    if (!ossl_assert(OSSL_TRACE_CATEGORY_NUM == OSSL_NELEM(trace_categories)))
+    if (!ossl_assert(trace_categories[num].name != NULL)
+        || !ossl_assert(trace_categories[num].num == num))
         return NULL;
-#endif
-
-    for (i = 0; i < OSSL_NELEM(trace_categories); i++)
-        if (trace_categories[i].num == num)
-            return trace_categories[i].name;
-
-    return NULL; /* not found */
+    return trace_categories[num].name;
 }
 
 int OSSL_trace_get_category_num(const char *name)
@@ -295,11 +289,6 @@ static int set_trace_data(int category, int type, BIO **channel,
     }
 
     /* Before running callbacks are done, set new data where appropriate */
-    if (channel != NULL && *channel != NULL) {
-        trace_channels[category].type = type;
-        trace_channels[category].bio = *channel;
-    }
-
     if (prefix != NULL && *prefix != NULL) {
         if ((curr_prefix = OPENSSL_strdup(*prefix)) == NULL)
             return 0;
@@ -310,6 +299,15 @@ static int set_trace_data(int category, int type, BIO **channel,
         if ((curr_suffix = OPENSSL_strdup(*suffix)) == NULL)
             return 0;
         trace_channels[category].suffix = curr_suffix;
+    }
+
+    if (channel != NULL && *channel != NULL) {
+        trace_channels[category].type = type;
+        trace_channels[category].bio = *channel;
+        /*
+         * This must not be done before setting prefix/suffix,
+         * as those may fail, and then the caller is mislead to free *channel.
+         */
     }
 
     /* Finally, run the attach callback on the new data */
@@ -532,4 +530,28 @@ void OSSL_trace_end(int category, BIO * channel)
         CRYPTO_THREAD_unlock(trace_lock);
     }
 #endif
+}
+
+int OSSL_trace_string(BIO *out, int text, int full,
+                      const unsigned char *data, size_t size)
+{
+    unsigned char buf[OSSL_TRACE_STRING_MAX + 1];
+    int len, i;
+
+    if (!full && size > OSSL_TRACE_STRING_MAX) {
+        BIO_printf(out, "[len %zu limited to %d]: ",
+                   size, OSSL_TRACE_STRING_MAX);
+        len = OSSL_TRACE_STRING_MAX;
+    } else {
+        len = (int)size;
+    }
+    if (!text) { /* mask control characters while preserving newlines */
+        for (i = 0; i < len; i++, data++)
+            buf[i] = (char)*data != '\n' && ossl_iscntrl((int)*data)
+                ? ' ' : *data;
+        if (len == 0 || data[-1] != '\n')
+            buf[len++] = '\n';
+        data = buf;
+    }
+    return BIO_printf(out, "%.*s", len, data);
 }

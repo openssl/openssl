@@ -154,9 +154,12 @@ The lexical syntax in EBNF is given by:
  Value          ::= NumberLiteral | StringLiteral
  StringLiteral  ::= QuotedString | UnquotedString
  QuotedString   ::= '"' [^"]* '"' | "'" [^']* "'"
- UnquotedString ::= [^{space},]+
+ UnquotedString ::= [A-Za-z] [^{space},]+
  NumberLiteral  ::= '0' ( [0-7]* | 'x' [0-9A-Fa-f]+ ) | '-'? [1-9] [0-9]+
- PropertyName   ::= [A-Z] [A-Z0-9_]* ( '.' [A-Z] [A-Z0-9_]* )*
+ PropertyName   ::= [A-Za-z] [A-Za-z0-9_]* ( '.' [A-Za-z] [A-Za-z0-9_]* )*
+
+The flavour of EBNF being used is defined by:
+L<https://www.w3.org/TR/2010/REC-xquery-20101214/#EBNFNotation>.
 
 =head1 HISTORY
 

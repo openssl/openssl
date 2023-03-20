@@ -225,7 +225,7 @@ The above states and their substates are defined as follows:
 We express this state machine in more concrete form in the form of a table,
 which makes the available transitions clear:
 
-† Except where superceded by a more specific transition
+† Except where superseded by a more specific transition
 
 ε means “where no other transition is applicable”.
 

@@ -481,7 +481,8 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
         return 0;
     }
 
-    if (!PKCS7_type_is_enveloped(p7)) {
+    if (!PKCS7_type_is_enveloped(p7)
+        && !PKCS7_type_is_signedAndEnveloped(p7)) {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_WRONG_CONTENT_TYPE);
         return 0;
     }

@@ -945,6 +945,16 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         *(int *)ptr = data->local_addr_enabled;
         break;
 
+    case BIO_CTRL_GET_RPOLL_DESCRIPTOR:
+    case BIO_CTRL_GET_WPOLL_DESCRIPTOR:
+        {
+            BIO_POLL_DESCRIPTOR *pd = ptr;
+
+            pd->type        = BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD;
+            pd->value.fd    = b->num;
+        }
+        break;
+
     default:
         ret = 0;
         break;
@@ -1413,8 +1423,8 @@ static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                  msg[0].data_len,
 #  endif
                  sysflags,
-                 msg[0].peer != NULL ? &msg[0].peer->sa : NULL,
-                 msg[0].peer != NULL ? sizeof(*msg[0].peer) : 0);
+                 msg[0].peer != NULL ? BIO_ADDR_sockaddr(msg[0].peer) : NULL,
+                 msg[0].peer != NULL ? BIO_ADDR_sockaddr_size(msg[0].peer) : 0);
     if (ret <= 0) {
         ERR_raise(ERR_LIB_SYS, get_last_socket_error());
         *num_processed = 0;

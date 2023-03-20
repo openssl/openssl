@@ -254,7 +254,7 @@ Input = 550AF55A2904E7B9762352F8FB7FA235A9CB053AACB2D5FCB8CA48453CB2EE3619746C70
 Output = "Hello World"
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # Note: disable the Bleichenbacher workaround to see if it passes
 Decrypt = RSA-2048
 Ctrl = rsa_pkcs1_implicit_rejection:0
@@ -262,7 +262,7 @@ Input = 550AF55A2904E7B9762352F8FB7FA235A9CB053AACB2D5FCB8CA48453CB2EE3619746C70
 Output = "Hello World"
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # Corrupted ciphertext
 # Note: output is generated synthethically by the Bleichenbacher workaround
 Decrypt = RSA-2048
@@ -270,7 +270,7 @@ Input = 550AF55A2904E7B9762352F8FB7FA235A9CB053AACB2D5FCB8CA48453CB2EE3619746C70
 Output = 4cbb988d6a46228379132b0b5f8c249b3860043848c93632fb982c807c7c82fffc7a9ef83f4908f890373ac181ffea6381e103bcaa27e65638b6ecebef38b59ed4226a9d12af675cfcb634d8c40e7a7aff
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # Corrupted ciphertext
 # Note: disable the Bleichenbacher workaround to see if it fails
 Decrypt = RSA-2048
@@ -350,28 +350,28 @@ Input = 8bfe264e85d3bdeaa6b8851b8e3b956ee3d226fd3f69063a86880173a273d9f283b2eebd
 Output = "lorem ipsum dolor sit amet"
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # a random negative test case decrypting to empty
 Decrypt = RSA-2048-2
 Input = 20aaa8adbbc593a924ba1c5c7990b5c2242ae4b99d0fe636a19a4cf754edbcee774e472fe028160ed42634f8864900cb514006da642cae6ae8c7d087caebcfa6dad1551301e130344989a1d462d4164505f6393933450c67bc6d39d8f5160907cabc251b737925a1cf21e5c6aa5781b7769f6a2a583d97cce008c0f8b6add5f0b2bd80bee60237aa39bb20719fe75749f4bc4e42466ef5a861ae3a92395c7d858d430bfe38040f445ea93fa2958b503539800ffa5ce5f8cf51fa8171a91f36cb4f4575e8de6b4d3f096ee140b938fd2f50ee13f0d050222e2a72b0a3069ff3a6738e82c87090caa5aed4fcbe882c49646aa250b98f12f83c8d528113614a29e7
 Output =
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # invalid decrypting to max length message
 Decrypt = RSA-2048-2
 Input = 48cceab10f39a4db32f60074feea473cbcdb7accf92e150417f76b44756b190e843e79ec12aa85083a21f5437e7bad0a60482e601198f9d86923239c8786ee728285afd0937f7dde12717f28389843d7375912b07b991f4fdb0190fced8ba665314367e8c5f9d2981d0f5128feeb46cb50fc237e64438a86df198dd0209364ae3a842d77532b66b7ef263b83b1541ed671b120dfd660462e2107a4ee7b964e734a7bd68d90dda61770658a3c242948532da32648687e0318286473f675b412d6468f013f14d760a358dfcad3cda2afeec5e268a37d250c37f722f468a70dfd92d7294c3c1ee1e7f8843b7d16f9f37ef35748c3ae93aa155cdcdfeb4e78567303
 Output = 22d850137b9eebe092b24f602dc5bb7918c16bd89ddbf20467b119d205f9c2e4bd7d2592cf1e532106e0f33557565923c73a02d4f09c0c22bea89148183e60317f7028b3aa1f261f91c979393101d7e15f4067e63979b32751658ef769610fe97cf9cef3278b3117d384051c3b1d82c251c2305418c8f6840530e631aad63e70e20e025bcd8efb54c92ec6d3b106a2f8e64eeff7d38495b0fc50c97138af4b1c0a67a1c4e27b077b8439332edfa8608dfeae653cd6a628ac550395f7e74390e42c11682234870925eeaa1fa71b76cf1f2ee3bda69f6717033ff8b7c95c9799e7a3bea5e7e4a1c359772fb6b1c6e6c516661dfe30c3
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # invalid decrypting to message with length specified by second to last value from PRF
 Decrypt = RSA-2048-2
 Input = 1439e08c3f84c1a7fec74ce07614b20e01f6fa4e8c2a6cffdc3520d8889e5d9a950c6425798f85d4be38d300ea5695f13ecd4cb389d1ff5b82484b494d6280ab7fa78e645933981cb934cce8bfcd114cc0e6811eefa47aae20af638a1cd163d2d3366186d0a07df0c81f6c9f3171cf3561472e98a6006bf75ddb457bed036dcce199369de7d94ef2c68e8467ee0604eea2b3009479162a7891ba5c40cab17f49e1c438cb6eaea4f76ce23cce0e483ff0e96fa790ea15be67671814342d0a23f4a20262b6182e72f3a67cd289711503c85516a9ed225422f98b116f1ab080a80abd6f0216df88d8cfd67c139243be8dd78502a7aaf6bc99d7da71bcdf627e7354
 Output = 0f9b
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # invalid decrypting to message with length specified by third to last value from PRF
 Decrypt = RSA-2048-2
 Input = 1690ebcceece2ce024f382e467cf8510e74514120937978576caf684d4a02ad569e8d76cbe365a060e00779de2f0865ccf0d923de3b4783a4e2c74f422e2f326086c390b658ba47f31ab013aa80f468c71256e5fa5679b24e83cd82c3d1e05e398208155de2212993cd2b8bab6987cf4cc1293f19909219439d74127545e9ed8a706961b8ee2119f6bfacafbef91b75a789ba65b8b833bc6149cf49b5c4d2c6359f62808659ba6541e1cd24bf7f7410486b5103f6c0ea29334ea6f4975b17387474fe920710ea61568d7b7c0a7916acf21665ad5a31c4eabcde44f8fb6120d8457afa1f3c85d517cda364af620113ae5a3c52a048821731922737307f77a1081
@@ -413,14 +413,14 @@ Input = 1ea0b50ca65203d0a09280d39704b24fe6e47800189db5033f202761a78bafb270c5e25a
 Output = "lorem ipsum"
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # a random negative test that generates an 11 byte long message
 Decrypt = RSA-2048-2
 Input = 5f02f4b1f46935c742ebe62b6f05aa0a3286aab91a49b34780adde6410ab46f7386e05748331864ac98e1da63686e4babe3a19ed40a7f5ceefb89179596aab07ab1015e03b8f825084dab028b6731288f2e511a4b314b6ea3997d2e8fe2825cef8897cbbdfb6c939d441d6e04948414bb69e682927ef8576c9a7090d4aad0e74c520d6d5ce63a154720f00b76de8cc550b1aa14f016d63a7b6d6eaa1f7dbe9e50200d3159b3d099c900116bf4eba3b94204f18b1317b07529751abf64a26b0a0bf1c8ce757333b3d673211b67cc0653f2fe2620d57c8b6ee574a0323a167eab1106d9bc7fd90d415be5f1e9891a0e6c709f4fc0404e8226f8477b4e939b36eb2
 Output = af9ac70191c92413cb9f2d
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # an otherwise correct plaintext, but with wrong first byte
 # (0x01 instead of 0x00), generates a random 11 byte long plaintext
 Decrypt = RSA-2048-2
@@ -428,7 +428,7 @@ Input = 9b2ec9c0c917c98f1ad3d0119aec6be51ae3106e9af1914d48600ab6a2c0c0c8ae02a2dc
 Output = a1f8c9255c35cfba403ccc
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # an otherwise correct plaintext, but with wrong second byte
 # (0x01 instead of 0x02), generates a random 11 byte long plaintext
 Decrypt = RSA-2048-2
@@ -436,7 +436,7 @@ Input = 782c2b59a21a511243820acedd567c136f6d3090c115232a82a5efb0b178285f55b5ec2d
 Output = e6d700309ca0ed62452254
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # an invalid ciphertext, with a zero byte in first byte of
 # ciphertext, decrypts to a random 11 byte long synthethic
 # plaintext
@@ -445,7 +445,7 @@ Input = 0096136621faf36d5290b16bd26295de27f895d1faa51c800dafce73d001d60796cd4e2a
 Output = ba27b1842e7c21c0e7ef6a
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # an invalid ciphertext, with a zero byte removed from first byte of
 # ciphertext, decrypts to a random 11 byte long synthethic
 # plaintext
@@ -454,7 +454,7 @@ Input = 96136621faf36d5290b16bd26295de27f895d1faa51c800dafce73d001d60796cd4e2ac3
 Output = ba27b1842e7c21c0e7ef6a
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # an invalid ciphertext, with two zero bytes in first bytes of
 # ciphertext, decrypts to a random 11 byte long synthethic
 # plaintext
@@ -463,7 +463,7 @@ Input = 0000587cccc6b264bdfe0dc2149a988047fa921801f3502ea64624c510c6033d2f427e3f
 Output = d5cf555b1d6151029a429a
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # an invalid ciphertext, with two zero bytes removed from first bytes of
 # ciphertext, decrypts to a random 11 byte long synthethic
 # plaintext
@@ -472,7 +472,7 @@ Input = 587cccc6b264bdfe0dc2149a988047fa921801f3502ea64624c510c6033d2f427e3f136c
 Output = d5cf555b1d6151029a429a
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # and invalid ciphertext, otherwise valid but starting with 000002, decrypts
 # to random 11 byte long synthethic plaintext
 Decrypt = RSA-2048-2
@@ -480,7 +480,7 @@ Input = 1786550ce8d8433052e01ecba8b76d3019f1355b212ac9d0f5191b023325a7e7714b7802
 Output = 3d4a054d9358209e9cbbb9
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # negative test with otherwise valid padding but a zero byte in first byte
 # of padding
 Decrypt = RSA-2048-2
@@ -488,15 +488,15 @@ Input = 179598823812d2c58a7eb50521150a48bcca8b4eb53414018b6bca19f4801456c5e36a94
 Output = 1f037dd717b07d3e7f7359
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
-# negative test with otherwise valid padding but a zero byte at the eigth
+FIPSversion = >=3.2.0
+# negative test with otherwise valid padding but a zero byte at the eighth
 # byte of padding
 Decrypt = RSA-2048-2
 Input = a7a340675a82c30e22219a55bc07cdf36d47d01834c1834f917f18b517419ce9de2a96460e745024436470ed85e94297b283537d52189c406a3f533cb405cc6a9dba46b482ce98b6e3dd52d8fce2237425617e38c11fbc46b61897ef200d01e4f25f5f6c4c5b38cd0de38ba11908b86595a8036a08a42a3d05b79600a97ac18ba368a08d6cf6ccb624f6e8002afc75599fba4de3d4f3ba7d208391ebe8d21f8282b18e2c10869eb2702e68f9176b42b0ddc9d763f0c86ba0ff92c957aaeab76d9ab8da52ea297ec11d92d770146faa1b300e0f91ef969b53e7d2907ffc984e9a9c9d11fb7d6cba91972059b46506b035efec6575c46d7114a6b935864858445f
 Output = 63cb0bf65fc8255dd29e17
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # negative test with an otherwise valid plaintext but with missing separator
 # byte
 Decrypt = RSA-2048-2
@@ -551,7 +551,7 @@ PrivPubKeyPair = RSA-2049:RSA-2049-PUBLIC
 # RSA decrypt
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # malformed that generates length specified by 3rd last value from PRF
 Decrypt = RSA-2049
 Input = 00b26f6404b82649629f2704494282443776929122e279a9cf30b0c6fe8122a0a9042870d97cc8ef65490fe58f031eb2442352191f5fbc311026b5147d32df914599f38b825ebb824af0d63f2d541a245c5775d1c4b78630e4996cc5fe413d38455a776cf4edcc0aa7fccb31c584d60502ed2b77398f536e137ff7ba6430e9258e21c2db5b82f5380f566876110ac4c759178900fbad7ab70ea07b1daf7a1639cbb4196543a6cbe8271f35dddb8120304f6eef83059e1c5c5678710f904a6d760c4d1d8ad076be17904b9e69910040b47914a0176fb7eea0c06444a6c4b86d674d19a556a1de5490373cb01ce31bbd15a5633362d3d2cd7d4af1b4c5121288b894
@@ -583,21 +583,21 @@ Input = f36da3b72d8ff6ded74e7efd08c01908f3f5f0de7b55eab92b5f875190809c39d4162e1e
 Output = "lorem ipsum"
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # a random negative test case that generates an 11 byte long message
 Decrypt = RSA-2049
 Input = 00f910200830fc8fff478e99e145f1474b312e2512d0f90b8cef77f8001d09861688c156d1cbaf8a8957f7ebf35f724466952d0524cad48aad4fba1e45ce8ea27e8f3ba44131b7831b62d60c0762661f4c1d1a88cd06263a259abf1ba9e6b0b172069afb86a7e88387726f8ab3adb30bfd6b3f6be6d85d5dfd044e7ef052395474a9cbb1c3667a92780b43a22693015af6c513041bdaf87d43b24ddd244e791eeaea1066e1f4917117b3a468e22e0f7358852bb981248de4d720add2d15dccba6280355935b67c96f9dcb6c419cc38ab9f6fba2d649ef2066e0c34c9f788ae49babd9025fa85b21113e56ce4f43aa134c512b030dd7ac7ce82e76f0be9ce09ebca
 Output = 1189b6f5498fd6df532b00
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # otherwise correct plaintext, but with wrong first byte (0x01 instead of 0x00)
 Decrypt = RSA-2049
 Input = 002c9ddc36ba4cf0038692b2d3a1c61a4bb3786a97ce2e46a3ba74d03158aeef456ce0f4db04dda3fe062268a1711250a18c69778a6280d88e133a16254e1f0e30ce8dac9b57d2e39a2f7d7be3ee4e08aec2fdbe8dadad7fdbf442a29a8fb40857407bf6be35596b8eefb5c2b3f58b894452c2dc54a6123a1a38d642e23751746597e08d71ac92704adc17803b19e131b4d1927881f43b0200e6f95658f559f912c889b4cd51862784364896cd6e8618f485a992f82997ad6a0917e32ae5872eaf850092b2d6c782ad35f487b79682333c1750c685d7d32ab3e1538f31dcaa5e7d5d2825875242c83947308dcf63ba4bfff20334c9c140c837dbdbae7a8dee72ff
 Output = f6d0f5b78082fe61c04674
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # otherwise correct plaintext, but with wrong second byte (0x01 instead of 0x02)
 Decrypt = RSA-2049
 Input = 00c5d77826c1ab7a34d6390f9d342d5dbe848942e2618287952ba0350d7de6726112e9cebc391a0fae1839e2bf168229e3e0d71d4161801509f1f28f6e1487ca52df05c466b6b0a6fbbe57a3268a970610ec0beac39ec0fa67babce1ef2a86bf77466dc127d7d0d2962c20e66593126f276863cd38dc6351428f884c1384f67cad0a0ffdbc2af16711fb68dc559b96b37b4f04cd133ffc7d79c43c42ca4948fa895b9daeb853150c8a5169849b730cc77d68b0217d6c0e3dbf38d751a1998186633418367e7576530566c23d6d4e0da9b038d0bb5169ce40133ea076472d055001f0135645940fd08ea44269af2604c8b1ba225053d6db9ab43577689401bdc0f3
@@ -661,14 +661,14 @@ ooCElYcob01/JWzoXl61Z5sdrMH5CVZJty5foHKusAN5AgMBAAE=
 PrivPubKeyPair = RSA-3072:RSA-3072-PUBLIC
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # a random invalid ciphertext that generates an empty synthethic one
 Decrypt = RSA-3072
 Input = 5e956cd9652f4a2ece902931013e09662b6a9257ad1e987fb75f73a0606df2a4b04789770820c2e02322c4e826f767bd895734a01e20609c3be4517a7a2a589ea1cdc137beb73eb38dac781b52e863de9620f79f9b90fd5b953651fcbfef4a9f1cc07421d511a87dd6942caab6a5a0f4df473e62defb529a7de1509ab99c596e1dff1320402298d8be73a896cc86c38ae3f2f576e9ea70cc28ad575cb0f854f0be43186baa9c18e29c47c6ca77135db79c811231b7c1730955887d321fdc06568382b86643cf089b10e35ab23e827d2e5aa7b4e99ff2e914f302351819eb4d1693243b35f8bf1d42d08f8ec4acafa35f747a4a975a28643ec630d8e4fa5be59d81995660a14bb64c1fea5146d6b11f92da6a3956dd5cb5e0d747cf2ea23f81617769185336263d46ef4c144b754de62a6337342d6c85a95f19f015724546ee3fc4823eca603dbc1dc01c2d5ed50bd72d8e96df2dc048edde0081284068283fc5e73a6139851abf2f29977d0b3d160c883a42a37efba1be05c1a0b1741d7ddf59
 Output =
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # a random invalid that has PRF output with a length one byte too long
 # in the last value
 Decrypt = RSA-3072
@@ -676,7 +676,7 @@ Input = 7db0390d75fcf9d4c59cf27b264190d856da9abd11e92334d0e5f71005cfed865a711dfa
 Output = 56a3bea054e01338be9b7d7957539c
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # a random invalid that generates a synthethic of maximum size
 Decrypt = RSA-3072
 Input = 1715065322522dff85049800f6a29ab5f98c465020467414b2a44127fe9446da47fa18047900f99afe67c2df6f50160bb8e90bff296610fde632b3859d4d0d2e644f23835028c46cca01b84b88231d7e03154edec6627bcba23de76740d839851fa12d74c8f92e540c73fe837b91b7d699b311997d5f0f7864c486d499c3a79c111faaacbe4799597a25066c6200215c3d158f3817c1aa57f18bdaad0be1658da9da93f5cc6c3c4dd72788af57adbb6a0c26f42d32d95b8a4f95e8c6feb2f8a5d53b19a50a0b7cbc25e055ad03e5ace8f3f7db13e57759f67b65d143f08cca15992c6b2aae643390483de111c2988d4e76b42596266005103c8de6044fb7398eb3c28a864fa672de5fd8774510ff45e05969a11a4c7d3f343e331190d2dcf24fb9154ba904dc94af98afc5774a9617d0418fe6d13f8245c7d7626c176138dd698a23547c25f27c2b98ea4d8a45c7842b81888e4cc14e5b72e9cf91f56956c93dbf2e5f44a8282a7813157fc481ff1371a0f66b31797e81ebdb09a673d4db96d6
@@ -708,14 +708,14 @@ Input = 1ec97ac981dfd9dcc7a7389fdfa9d361141dac80c23a060410d472c16094e6cdffc0c368
 Output = "forty two"
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # a random negative test case that generates a 9 byte long message
 Decrypt = RSA-3072
 Input = 5c8555f5cef627c15d37f85c7f5fd6e499264ea4b8e3f9112023aeb722eb38d8eac2be3751fd5a3785ab7f2d59fa3728e5be8c3de78a67464e30b21ee23b5484bb3cd06d0e1c6ad25649c8518165653eb80488bfb491b20c04897a6772f69292222fc5ef50b5cf9efc6d60426a449b6c489569d48c83488df629d695653d409ce49a795447fcec2c58a1a672e4a391401d428baaf781516e11e323d302fcf20f6eab2b2dbe53a48c987e407c4d7e1cb41131329138313d330204173a4f3ff06c6fadf970f0ed1005d0b27e35c3d11693e0429e272d583e57b2c58d24315c397856b34485dcb077665592b747f889d34febf2be8fce66c265fd9fc3575a6286a5ce88b4b413a08efc57a07a8f57a999605a837b0542695c0d189e678b53662ecf7c3d37d9dbeea585eebfaf79141118e06762c2381fe27ca6288edddc19fd67cd64f16b46e06d8a59ac530f22cd83cc0bc4e37feb52015cbb2283043ccf5e78a4eb7146827d7a466b66c8a4a4826c1bad68123a7f2d00fc1736525ff90c058f56
 Output = 257906ca6de8307728
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # a random negative test case that generates a 9 byte long message based on
 # second to last value from PRF
 Decrypt = RSA-3072
@@ -723,7 +723,7 @@ Input = 758c215aa6acd61248062b88284bf43c13cb3b3d02410be4238607442f1c0216706e21a0
 Output = 043383c929060374ed
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # a random negative test that generates message based on 3rd last value from
 # PRF
 Decrypt = RSA-3072
@@ -731,35 +731,35 @@ Input = 7b22d5e62d287968c6622171a1f75db4b0fd15cdf3134a1895d235d56f8d8fe619f2bf48
 Output = 70263fa6050534b9e0
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # an otherwise valid plaintext, but with wrong first byte (0x01 instead of 0x00)
 Decrypt = RSA-3072
 Input = 6db80adb5ff0a768caf1378ecc382a694e7d1bde2eff4ba12c48aaf794ded7a994a5b2b57acec20dbec4ae385c9dd531945c0f197a5496908725fc99d88601a17d3bb0b2d38d2c1c3100f39955a4cb3dbed5a38bf900f23d91e173640e4ec655c84fdfe71fcdb12a386108fcf718c9b7af37d39703e882436224c877a2235e8344fba6c951eb7e2a4d1d1de81fb463ac1b880f6cc0e59ade05c8ce35179ecd09546731fc07b141d3d6b342a97ae747e61a9130f72d37ac5a2c30215b6cbd66c7db893810df58b4c457b4b54f34428247d584e0fa71062446210db08254fb9ead1ba1a393c724bd291f0cf1a7143f32df849051dc896d7d176fef3b57ab6dffd626d0c3044e9edb2e3d012ace202d2581df01bec7e9aa0727a6650dd373d374f0bc0f4a611f8139dfe97d63e70c6188f4df5b672e47c51d8aa567097293fbff127c75ec690b43407578b73c85451710a0cece58fd497d7f7bd36a8a92783ef7dc6265dff52aac8b70340b996508d39217f2783ce6fc91a1cc94bb2ac487b84f62
 Output = 6d8d3a094ff3afff4c
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # an otherwise valid plaintext, but with wrong second byte (0x01 instead of 0x02)
 Decrypt = RSA-3072
 Input = 417328c034458563079a4024817d0150340c34e25ae16dcad690623f702e5c748a6ebb3419ff48f486f83ba9df35c05efbd7f40613f0fc996c53706c30df6bba6dcd4a40825f96133f3c21638a342bd4663dffbd0073980dac47f8c1dd8e97ce1412e4f91f2a8adb1ac2b1071066efe8d718bbb88ca4a59bd61500e826f2365255a409bece0f972df97c3a55e09289ef5fa815a2353ef393fd1aecfc888d611c16aec532e5148be15ef1bf2834b8f75bb26db08b66d2baad6464f8439d1986b533813321dbb180080910f233bcc4dd784fb21871aef41be08b7bfad4ecc3b68f228cb5317ac6ec1227bc7d0e452037ba918ee1da9fdb8393ae93b1e937a8d4691a17871d5092d2384b6190a53df888f65b951b05ed4ad57fe4b0c6a47b5b22f32a7f23c1a234c9feb5d8713d949686760680da4db454f4acad972470033472b9864d63e8d23eefc87ebcf464ecf33f67fbcdd48eab38c5292586b36aef5981ed2fa07b2f9e23fc57d9eb71bfff4111c857e9fff23ceb31e72592e70c874b4936
 Output = c6ae80ffa80bc184b0
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # an otherwise valid plaintext, but with zero byte in first byte of padding
 Decrypt = RSA-3072
 Input = 8542c626fe533467acffcd4e617692244c9b5a3bf0a215c5d64891ced4bf4f9591b4b2aedff9843057986d81631b0acb3704ec2180e5696e8bd15b217a0ec36d2061b0e2182faa3d1c59bd3f9086a10077a3337a3f5da503ec3753535ffd25b837a12f2541afefd0cffb0224b8f874e4bed13949e105c075ed44e287c5ae03b155e06b90ed247d2c07f1ef3323e3508cce4e4074606c54172ad74d12f8c3a47f654ad671104bf7681e5b061862747d9afd37e07d8e0e2291e01f14a95a1bb4cbb47c304ef067595a3947ee2d722067e38a0f046f43ec29cac6a8801c6e3e9a2331b1d45a7aa2c6af3205be382dd026e389614ee095665a611ab2e8dced2ee1c9d08ac9de11aef5b3803fc9a9ce8231ec87b5fed386fb92ee3db995a89307bcba844bd0a691c29ae51216e949dfc813133cb06a07265fd807bcb3377f6adb0a481d9b7f442003115895939773e6b95371c4febef29edae946fa245e7c50729e2e558cfaad773d1fd5f67b457a6d9d17a847c6fcbdb103a86f35f228cefc06cea0
 Output = a8a9301daa01bb25c7
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # an otherwise valid plaintext, but with zero byte in eight byte of padding
 Decrypt = RSA-3072
 Input = 449dfa237a70a99cb0351793ec8677882021c2aa743580bf6a0ea672055cffe8303ac42855b1d1f3373aae6af09cb9074180fc963e9d1478a4f98b3b4861d3e7f0aa8560cf603711f139db77667ca14ba3a1acdedfca9ef4603d6d7eb0645bfc805304f9ad9d77d34762ce5cd84bd3ec9d35c30e3be72a1e8d355d5674a141b5530659ad64ebb6082e6f73a80832ab6388912538914654d34602f4b3b1c78589b4a5d964b2efcca1dc7004c41f6cafcb5a7159a7fc7c0398604d0edbd4c8f4f04067da6a153a05e7cbeea13b5ee412400ef7d4f3106f4798da707ec37a11286df2b7a204856d5ff773613fd1e453a7114b78e347d3e8078e1cb3276b3562486ba630bf719697e0073a123c3e60ebb5c7a1ccff4279faffa2402bc1109f8d559d6766e73591943dfcf25ba10c3762f02af85187799b8b4b135c3990793a6fd32642f1557405ba55cc7cf7336a0e967073c5fa50743f9cc5e3017c172d9898d2af83345e71b3e0c22ab791eacb6484a32ec60ebc226ec9deaee91b1a0560c2b571
 Output = 6c716fe01d44398018
 
 # The old FIPS provider doesn't include the workaround (#13817)
-FIPSversion = >3.0.0
+FIPSversion = >=3.2.0
 # an otherwise valid plaintext, but with null separator missing
 Decrypt = RSA-3072
 Input = a7a5c99e50da48769ecb779d9abe86ef9ec8c38c6f43f17c7f2d7af608a4a1bd6cf695b47e97c191c61fb5a27318d02f495a176b9fae5a55b5d3fabd1d8aae4957e3879cb0c60f037724e11be5f30f08fc51c033731f14b44b414d11278cd3dba7e1c8bfe208d2b2bb7ec36366dacb6c88b24cd79ab394adf19dbbc21dfa5788bacbadc6a62f79cf54fd8cf585c615b5c0eb94c35aa9de25321c8ffefb8916bbaa2697cb2dd82ee98939df9b6704cee77793edd2b4947d82e00e5749664970736c59a84197bd72b5c71e36aae29cd39af6ac73a368edbc1ca792e1309f442aafcd77c992c88f8e4863149f221695cb7b0236e75b2339a02c4ea114854372c306b9412d8eedb600a31532002f2cea07b4df963a093185e4607732e46d753b540974fb5a5c3f9432df22e85bb17611370966c5522fd23f2ad3484341ba7fd8885fc8e6d379a611d13a2aca784fba2073208faad2137bf1979a0fa146c1880d4337db3274269493bab44a1bcd0681f7227ffdf589c2e925ed9d36302509d1109ba4

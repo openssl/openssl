@@ -113,6 +113,11 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   include <sys/select.h>
 #  endif
 
+#  ifdef OPENSSL_SYS_UNIX
+#    include <sys/poll.h>
+#    include <errno.h>
+#  endif
+
 #  ifndef VMS
 #   include <sys/ioctl.h>
 #  else
@@ -154,12 +159,15 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 
 # define get_last_socket_error() errno
 # define clear_socket_error()    errno=0
+# define get_last_socket_error_is_eintr() (get_last_socket_error() == EINTR)
 
 # if defined(OPENSSL_SYS_WINDOWS)
 #  undef get_last_socket_error
 #  undef clear_socket_error
+#  undef get_last_socket_error_is_eintr
 #  define get_last_socket_error() WSAGetLastError()
 #  define clear_socket_error()    WSASetLastError(0)
+#  define get_last_socket_error_is_eintr() (get_last_socket_error() == WSAEINTR)
 #  define readsocket(s,b,n)       recv((s),(b),(n),0)
 #  define writesocket(s,b,n)      send((s),(b),(n),0)
 # elif defined(__DJGPP__)

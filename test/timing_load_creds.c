@@ -20,6 +20,7 @@
 # include <openssl/err.h>
 # include <openssl/bio.h>
 # include "internal/e_os.h"
+# if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
 
 # ifndef timersub
 /* struct timeval * subtraction; a must be greater than or equal to b */
@@ -27,10 +28,10 @@
      do {                                                             \
          (res)->tv_sec = (a)->tv_sec - (b)->tv_sec;                   \
          if ((a)->tv_usec < (b)->tv_usec) {                           \
-             (res)->tv_usec = (a)->tv_usec + 1000000 - (b)->tv_usec); \
+             (res)->tv_usec = (a)->tv_usec + 1000000 - (b)->tv_usec;  \
              --(res)->tv_sec;                                         \
          } else {                                                     \
-             (res)->tv_usec = (a)->tv_usec - (b)->tv_usec);           \
+             (res)->tv_usec = (a)->tv_usec - (b)->tv_usec;            \
          }                                                            \
      } while(0)
 # endif
@@ -90,11 +91,12 @@ static void usage(void)
     fprintf(stderr, "          p for private key\n");
     exit(EXIT_FAILURE);
 }
+# endif
 #endif
 
 int main(int ac, char **av)
 {
-#ifdef OPENSSL_SYS_UNIX
+#if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
     int i, debug = 0, count = 100, what = 'c';
     struct stat sb;
     FILE *fp;
@@ -206,13 +208,8 @@ int main(int ac, char **av)
     OPENSSL_free(contents);
     return EXIT_SUCCESS;
 #else
-# if defined(OPENSSL_SYS_WINDOWS)
-    fprintf(stderr, "This tool is not supported on Windows\n");
-# elif defined(OPENSSL_SYS_VMS)
-    fprintf(stderr, "This tool is not supported on VMS\n");
-# else
-    fprintf(stderr, "This tool is not supported on this platform\n");
-# endif
+    fprintf(stderr,
+            "This tool is not supported on this platform for lack of POSIX1.2001 support\n");
     exit(EXIT_FAILURE);
 #endif
 }

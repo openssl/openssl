@@ -7,6 +7,7 @@ OSSL_TRACE_BEGIN, OSSL_TRACE_END, OSSL_TRACE_CANCEL,
 OSSL_TRACE, OSSL_TRACE1, OSSL_TRACE2, OSSL_TRACE3, OSSL_TRACE4,
 OSSL_TRACE5, OSSL_TRACE6, OSSL_TRACE7, OSSL_TRACE8, OSSL_TRACE9,
 OSSL_TRACEV,
+OSSL_TRACE_STRING, OSSL_TRACE_STRING_MAX, OSSL_trace_string,
 OSSL_TRACE_ENABLED
 - OpenSSL Tracing API
 
@@ -38,6 +39,11 @@ OSSL_TRACE_ENABLED
  OSSL_TRACE2(category, format, arg1, arg2)
  ...
  OSSL_TRACE9(category, format, arg1, ..., arg9)
+ OSSL_TRACE_STRING(category, text, full, data, len)
+
+ #define OSSL_TRACE_STRING_MAX 80
+ int OSSL_trace_string(BIO *out, int text, int full,
+                       const unsigned char *data, size_t size);
 
  /* check whether a trace category is enabled */
  if (OSSL_TRACE_ENABLED(category)) {
@@ -102,6 +108,12 @@ is I<mandatory>.
 The result of trying to produce tracing output outside of such
 sections is undefined.
 
+OSSL_trace_string() outputs I<data> of length I<size> as a string on BIO I<out>.
+If I<text> is 0, the function masks any included control characters apart from
+newlines and makes sure for nonempty input that the output ends with a newline.
+Unless I<full> is nonzero, the length is limited (with a suitable warning)
+to B<OSSL_TRACE_STRING_MAX> characters, which currently is 80.
+
 =head2 Macros
 
 There are a number of convenience macros defined, to make tracing
@@ -165,12 +177,21 @@ printf-style trace output with n format field arguments (n=1,...,9).
 It expands to:
 
  OSSL_TRACE_BEGIN(category) {
-     BIO_printf(trc_out, format, arg1, ..., argN)
+     BIO_printf(trc_out, format, arg1, ..., argN);
  } OSSL_TRACE_END(category)
 
 Internally, all one-shot macros are implemented using a generic OSSL_TRACEV()
 macro, since C90 does not support variadic macros. This helper macro has a rather
 weird synopsis and should not be used directly.
+
+The macro call C<OSSL_TRACE_STRING(category, text, full, data, len)>
+outputs I<data> of length I<size> as a string
+if tracing for the given I<category> is enabled.
+It expands to:
+
+ OSSL_TRACE_BEGIN(category) {
+     OSSL_trace_string(trc_out, text, full, data, len);
+ } OSSL_TRACE_END(category)
 
 The OSSL_TRACE_ENABLED() macro can be used to conditionally execute some code
 only if a specific trace category is enabled.
@@ -279,6 +300,8 @@ operational and enabled, otherwise 0.
 OSSL_trace_begin() returns a B<BIO> pointer if the given I<type> is enabled,
 otherwise NULL.
 
+OSSL_trace_string() returns the number of characters emitted, or -1 on error.
+
 =head1 SEE ALSO
 
 L<OSSL_trace_set_channel(3)>, L<OSSL_trace_set_callback(3)>
@@ -286,6 +309,9 @@ L<OSSL_trace_set_channel(3)>, L<OSSL_trace_set_callback(3)>
 =head1 HISTORY
 
 The OpenSSL Tracing API was added in OpenSSL 3.0.
+
+OSSL_TRACE_STRING(), OSSL_TRACE_STRING_MAX, and OSSL_trace_string
+were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

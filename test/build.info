@@ -64,14 +64,14 @@ IF[{- !$disabled{tests} -}]
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
           provfetchtest prov_config_test rand_test ca_internals_test \
           bio_tfo_test membio_test bio_dgram_test list_test fips_version_test \
-          x509_test hpke_test
+          x509_test hpke_test pairwise_fail_test nodefltctxtest
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
   ENDIF
 
   IF[{- !$disabled{quic} -}]
-    PROGRAMS{noinst}=priority_queue_test event_queue_test
+    PROGRAMS{noinst}=priority_queue_test event_queue_test quicfaultstest quicapitest
   ENDIF
 
   IF[{- !$disabled{comp} && (!$disabled{brotli} || !$disabled{zstd} || !$disabled{zlib}) -}]
@@ -92,7 +92,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[sanitytest]=sanitytest.c
   INCLUDE[sanitytest]=../include ../apps/include
-  DEPEND[sanitytest]=../libcrypto libtestutil.a
+  DEPEND[sanitytest]=../libcrypto.a libtestutil.a
 
   SOURCE[rand_test]=rand_test.c
   INCLUDE[rand_test]=../include ../apps/include
@@ -180,7 +180,7 @@ IF[{- !$disabled{tests} -}]
     DEFINE[evp_test]=NO_LEGACY_MODULE
   ENDIF
 
-  SOURCE[evp_extra_test]=evp_extra_test.c
+  SOURCE[evp_extra_test]=evp_extra_test.c fake_rsaprov.c
   INCLUDE[evp_extra_test]=../include ../apps/include
   DEPEND[evp_extra_test]=../libcrypto.a libtestutil.a
 
@@ -227,6 +227,14 @@ IF[{- !$disabled{tests} -}]
   SOURCE[provider_status_test]=provider_status_test.c
   INCLUDE[provider_status_test]=../include ../apps/include
   DEPEND[provider_status_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[pairwise_fail_test]=pairwise_fail_test.c
+  INCLUDE[pairwise_fail_test]=../include ../apps/include
+  DEPEND[pairwise_fail_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[nodefltctxtest]=nodefltctxtest.c
+  INCLUDE[nodefltctxtest]=../include ../apps/include
+  DEPEND[nodefltctxtest]=../libcrypto.a libtestutil.a
 
   SOURCE[evp_pkey_dhkem_test]=evp_pkey_dhkem_test.c
   INCLUDE[evp_pkey_dhkem_test]=../include ../apps/include
@@ -319,6 +327,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[quic_txp_test]=quic_txp_test.c
   INCLUDE[quic_txp_test]=../include ../apps/include
   DEPEND[quic_txp_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+  SOURCE[quic_tserver_test]=quic_tserver_test.c
+  INCLUDE[quic_tserver_test]=../include ../apps/include
+  DEPEND[quic_tserver_test]=../libcrypto.a ../libssl.a libtestutil.a
 
   SOURCE[asynctest]=asynctest.c
   INCLUDE[asynctest]=../include ../apps/include
@@ -786,6 +798,14 @@ IF[{- !$disabled{tests} -}]
       SOURCE[event_queue_test]=event_queue_test.c
       INCLUDE[event_queue_test]=../include ../apps/include
       DEPEND[event_queue_test]=../libcrypto ../libssl.a libtestutil.a
+
+      SOURCE[quicfaultstest]=quicfaultstest.c helpers/ssltestlib.c helpers/quictestlib.c
+      INCLUDE[quicfaultstest]=../include ../apps/include ..
+      DEPEND[quicfaultstest]=../libcrypto.a ../libssl.a libtestutil.a
+
+      SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c helpers/quictestlib.c
+      INCLUDE[quicapitest]=../include ../apps/include
+      DEPEND[quicapitest]=../libcrypto.a ../libssl.a libtestutil.a
     ENDIF
 
     SOURCE[dhtest]=dhtest.c
@@ -1053,12 +1073,10 @@ ENDIF
   ENDIF
 
   IF[{- !$disabled{'quic'} -}]
-    PROGRAMS{noinst}=quicapitest quic_wire_test quic_ackm_test quic_record_test quic_fc_test quic_stream_test quic_cfq_test quic_txpim_test quic_fifd_test quic_txp_test
+    PROGRAMS{noinst}=quic_wire_test quic_ackm_test quic_record_test
+    PROGRAMS{noinst}=quic_fc_test quic_stream_test quic_cfq_test quic_txpim_test
+    PROGRAMS{noinst}=quic_fifd_test quic_txp_test quic_tserver_test
   ENDIF
-
-  SOURCE[quicapitest]=quicapitest.c helpers/ssltestlib.c
-  INCLUDE[quicapitest]=../include ../apps/include
-  DEPEND[quicapitest]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[quic_ackm_test]=quic_ackm_test.c
   INCLUDE[quic_ackm_test]=../include ../apps/include

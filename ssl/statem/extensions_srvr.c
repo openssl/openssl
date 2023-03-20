@@ -44,6 +44,7 @@ int tls_parse_ctos_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
 {
     unsigned int ilen;
     const unsigned char *data;
+    int ok;
 
     /* Parse the length byte */
     if (!PACKET_get_1(pkt, &ilen)
@@ -58,8 +59,16 @@ int tls_parse_ctos_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
-    if (memcmp(data, s->s3.previous_client_finished,
-               s->s3.previous_client_finished_len)) {
+    ok = memcmp(data, s->s3.previous_client_finished,
+                    s->s3.previous_client_finished_len);
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (ok) {
+        if ((data[0] ^ s->s3.previous_client_finished[0]) != 0xFF) {
+            ok = 0;
+        }
+    }
+#endif
+    if (ok) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_RENEGOTIATION_MISMATCH);
         return 0;
     }
@@ -1146,16 +1155,18 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 continue;
             }
 
-            age = ossl_time_subtract(ossl_seconds2time(ticket_agel),
-                                     ossl_seconds2time(sess->ext.tick_age_add));
+            age = ossl_time_subtract(ossl_ms2time(ticket_agel),
+                                     ossl_ms2time(sess->ext.tick_age_add));
             t = ossl_time_subtract(ossl_time_now(), sess->time);
 
             /*
-             * Beause we use second granuality, it could appear that
-             * the client's ticket age is longer than ours (our ticket
-             * age calculation should always be slightly longer than the
-             * client's due to the network latency).  Therefore we add
-             * 1000ms to our age calculation to adjust for rounding errors.
+             * Although internally we use OSS_TIME which has ns granularity,
+             * when SSL_SESSION structures are serialised/deserialised we use
+             * second granularity for the sess->time field. Therefore it could
+             * appear that the client's ticket age is longer than ours (our
+             * ticket age calculation should always be slightly longer than the
+             * client's due to the network latency). Therefore we add 1000ms to
+             * our age calculation to adjust for rounding errors.
              */
             expire = ossl_time_add(t, ossl_ms2time(1000));
 

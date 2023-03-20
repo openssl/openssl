@@ -382,8 +382,12 @@ unsigned char *ossl_quic_wire_encode_transport_param_bytes(WPACKET *pkt,
     unsigned char *b = NULL;
 
     if (!WPACKET_quic_write_vlint(pkt, id)
-            || !WPACKET_quic_write_vlint(pkt, value_len)
-            || !WPACKET_allocate_bytes(pkt, value_len, (unsigned char **)&b))
+        || !WPACKET_quic_write_vlint(pkt, value_len))
+        return NULL;
+
+    if (value_len == 0)
+        b = WPACKET_get_curr(pkt);
+    else if (!WPACKET_allocate_bytes(pkt, value_len, (unsigned char **)&b))
         return NULL;
 
     if (value != NULL)
@@ -399,6 +403,21 @@ int ossl_quic_wire_encode_transport_param_int(WPACKET *pkt,
     if (!WPACKET_quic_write_vlint(pkt, id)
             || !WPACKET_quic_write_vlint(pkt, ossl_quic_vlint_encode_len(value))
             || !WPACKET_quic_write_vlint(pkt, value))
+        return 0;
+
+    return 1;
+}
+
+int ossl_quic_wire_encode_transport_param_cid(WPACKET *wpkt,
+                                              uint64_t id,
+                                              const QUIC_CONN_ID *cid)
+{
+    if (cid->id_len > QUIC_MAX_CONN_ID_LEN)
+        return 0;
+
+    if (ossl_quic_wire_encode_transport_param_bytes(wpkt, id,
+                                                    cid->id,
+                                                    cid->id_len) == NULL)
         return 0;
 
     return 1;
@@ -843,8 +862,9 @@ const unsigned char *ossl_quic_wire_decode_transport_param_bytes(PACKET *pkt,
 {
     uint64_t len_;
     const unsigned char *b = NULL;
+    uint64_t id_;
 
-    if (!PACKET_get_quic_vlint(pkt, id)
+    if (!PACKET_get_quic_vlint(pkt, &id_)
             || !PACKET_get_quic_vlint(pkt, &len_))
         return NULL;
 
@@ -853,6 +873,8 @@ const unsigned char *ossl_quic_wire_decode_transport_param_bytes(PACKET *pkt,
         return NULL;
 
     *len = (size_t)len_;
+    if (id != NULL)
+        *id = id_;
     return b;
 }
 
@@ -871,4 +893,20 @@ int ossl_quic_wire_decode_transport_param_int(PACKET *pkt,
         return 0;
 
    return 1;
+}
+
+int ossl_quic_wire_decode_transport_param_cid(PACKET *pkt,
+                                              uint64_t *id,
+                                              QUIC_CONN_ID *cid)
+{
+    const unsigned char *body;
+    size_t len = 0;
+
+    body = ossl_quic_wire_decode_transport_param_bytes(pkt, id, &len);
+    if (body == NULL || len > QUIC_MAX_CONN_ID_LEN)
+        return 0;
+
+    cid->id_len = (unsigned char)len;
+    memcpy(cid->id, body, cid->id_len);
+    return 1;
 }

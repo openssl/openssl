@@ -27,11 +27,12 @@ plan tests =>
     + 1;                        # quicapitest with default provider
 
 ok(run(test(["quicapitest", "default",
-             srctop_file("test", "default.cnf")])),
+             srctop_file("test", "default.cnf"), srctop_dir("test", "certs")])),
              "running quicapitest");
 
 unless ($no_fips) {
     ok(run(test(["quicapitest", "fips",
-                 srctop_file("test", "fips-and-base.cnf")])),
+                 srctop_file("test", "fips-and-base.cnf"),
+                 srctop_dir("test", "certs")])),
                  "running quicapitest");
 }

@@ -337,7 +337,7 @@ static int min_max_proto(SSL_CONF_CTX *cctx, const char *value, int *bound)
     if (cctx->ctx != NULL)
         method_version = cctx->ctx->method->version;
     else if (cctx->ssl != NULL)
-        method_version = cctx->ssl->ctx->method->version;
+        method_version = cctx->ssl->defltmeth->version;
     else
         return 0;
     if ((new_version = protocol_from_string(value)) < 0)
@@ -401,6 +401,7 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL_INV("TxCertificateCompression", SSL_OP_NO_TX_CERTIFICATE_COMPRESSION),
         SSL_FLAG_TBL_INV("RxCertificateCompression", SSL_OP_NO_RX_CERTIFICATE_COMPRESSION),
         SSL_FLAG_TBL("KTLSTxZerocopySendfile", SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE),
+        SSL_FLAG_TBL("IgnoreUnexpectedEOF", SSL_OP_IGNORE_UNEXPECTED_EOF),
     };
     if (value == NULL)
         return -3;

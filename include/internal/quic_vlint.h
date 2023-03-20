@@ -11,7 +11,9 @@
 # define OSSL_INTERNAL_QUIC_VLINT_H
 # pragma once
 
-#include "internal/e_os.h"
+# include "internal/e_os.h"
+
+# ifndef OPENSSL_NO_QUIC
 
 /* The smallest value requiring a 1, 2, 4, or 8-byte representation. */
 #define OSSL_QUIC_VLINT_1B_MIN 0
@@ -119,5 +121,7 @@ uint64_t ossl_quic_vlint_decode_unchecked(const unsigned char *buf);
  * Precondition: v (unchecked)
  */
 int ossl_quic_vlint_decode(const unsigned char *buf, size_t buf_len, uint64_t *v);
+
+# endif
 
 #endif

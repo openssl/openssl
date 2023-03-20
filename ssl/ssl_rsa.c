@@ -17,8 +17,8 @@
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 
-static int ssl_set_cert(CERT *c, X509 *x509);
-static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
+static int ssl_set_cert(CERT *c, X509 *x509, SSL_CTX *ctx);
+static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey, SSL_CTX *ctx);
 
 #define  SYNTHV1CONTEXT     (SSL_EXT_TLS1_2_AND_BELOW_ONLY \
                              | SSL_EXT_CLIENT_HELLO \
@@ -47,7 +47,7 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
         return 0;
     }
 
-    return ssl_set_cert(sc->cert, x);
+    return ssl_set_cert(sc->cert, x, SSL_CONNECTION_GET_CTX(sc));
 }
 
 int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
@@ -128,11 +128,11 @@ int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
     return ret;
 }
 
-static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
+static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey, SSL_CTX *ctx)
 {
     size_t i;
 
-    if (ssl_cert_lookup_by_pkey(pkey, &i) == NULL) {
+    if (ssl_cert_lookup_by_pkey(pkey, &i, ctx) == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return 0;
     }
@@ -160,7 +160,7 @@ int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    ret = ssl_set_pkey(sc->cert, pkey);
+    ret = ssl_set_pkey(sc->cert, pkey, SSL_CONNECTION_GET_CTX(sc));
     return ret;
 }
 
@@ -243,10 +243,10 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
         ERR_raise(ERR_LIB_SSL, rv);
         return 0;
     }
-    return ssl_set_cert(ctx->cert, x);
+    return ssl_set_cert(ctx->cert, x, ctx);
 }
 
-static int ssl_set_cert(CERT *c, X509 *x)
+static int ssl_set_cert(CERT *c, X509 *x, SSL_CTX *ctx)
 {
     EVP_PKEY *pkey;
     size_t i;
@@ -257,7 +257,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
         return 0;
     }
 
-    if (ssl_cert_lookup_by_pkey(pkey, &i) == NULL) {
+    if (ssl_cert_lookup_by_pkey(pkey, &i, ctx) == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return 0;
     }
@@ -371,7 +371,7 @@ int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    return ssl_set_pkey(ctx->cert, pkey);
+    return ssl_set_pkey(ctx->cert, pkey, ctx);
 }
 
 int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
@@ -1010,7 +1010,7 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
             goto out;
         }
     }
-    if (ssl_cert_lookup_by_pkey(pubkey, &i) == NULL) {
+    if (ssl_cert_lookup_by_pkey(pubkey, &i, ctx) == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         goto out;
     }

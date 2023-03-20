@@ -196,8 +196,25 @@ int ossl_qrl_enc_level_set_provide_secret(OSSL_QRL_ENC_LEVEL_SET *els,
     const char *md_name = ossl_qrl_get_suite_md_name(suite_id);
     size_t hpr_key_len, init_keyslot;
 
-    if (el == NULL || el->state != QRL_EL_STATE_UNPROV || md_name == NULL
-        || init_key_phase_bit > 1 || is_tx < 0 || is_tx > 1)
+    if (el == NULL
+        || md_name == NULL
+        || init_key_phase_bit > 1 || is_tx < 0 || is_tx > 1
+        || (init_key_phase_bit > 0 && enc_level != QUIC_ENC_LEVEL_1RTT))
+        return 0;
+
+    if (enc_level == QUIC_ENC_LEVEL_INITIAL
+        && el->state == QRL_EL_STATE_PROV_NORMAL) {
+        /*
+         * Sometimes the INITIAL EL needs to be reprovisioned, namely if a
+         * connection retry occurs. Exceptionally, if the caller wants to
+         * reprovision the INITIAL EL, tear it down as usual and then override
+         * the state so it can be provisioned again.
+         */
+        ossl_qrl_enc_level_set_discard(els, enc_level);
+        el->state = QRL_EL_STATE_UNPROV;
+    }
+
+    if (el->state != QRL_EL_STATE_UNPROV)
         return 0;
 
     init_keyslot = is_tx ? 0 : init_key_phase_bit;

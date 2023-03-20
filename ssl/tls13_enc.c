@@ -678,8 +678,9 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
 
     if (!ssl_set_new_record_layer(s, s->version,
                                   direction,
-                                  level, key, keylen, iv, ivlen, NULL, 0,
-                                  cipher, taglen, NID_undef, NULL, NULL)) {
+                                  level, secret, hashlen, key, keylen, iv,
+                                  ivlen, NULL, 0, cipher, taglen, NID_undef,
+                                  NULL, NULL, md)) {
         /* SSLfatal already called */
         goto err;
     }
@@ -736,9 +737,9 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     if (!ssl_set_new_record_layer(s, s->version,
                             direction,
                             OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
-                            key, keylen, iv, ivlen, NULL, 0,
+                            insecret, hashlen, key, keylen, iv, ivlen, NULL, 0,
                             s->s3.tmp.new_sym_enc, taglen, NID_undef, NULL,
-                            NULL)) {
+                            NULL, md)) {
         /* SSLfatal already called */
         goto err;
     }
