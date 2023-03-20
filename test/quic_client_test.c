@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -28,7 +28,7 @@ static int is_want(SSL *s, int ret)
 static int test_quic_client(void)
 {
     int testresult = 0, ret;
-    int c_fd = -1;
+    int c_fd = INVALID_SOCKET;
     BIO *c_net_bio = NULL, *c_net_bio_own = NULL;
     BIO_ADDR *s_addr_ = NULL;
     struct in_addr ina = {0};
@@ -44,7 +44,7 @@ static int test_quic_client(void)
 
     /* Setup test client. */
     c_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
-    if (!TEST_int_ge(c_fd, 0))
+    if (!TEST_int_ne(c_fd, INVALID_SOCKET))
         goto err;
 
     if (!TEST_true(BIO_socket_nbio(c_fd, 1)))
@@ -157,7 +157,7 @@ err:
     SSL_CTX_free(c_ctx);
     BIO_ADDR_free(s_addr_);
     BIO_free(c_net_bio_own);
-    if (c_fd >= 0)
+    if (c_fd != INVALID_SOCKET)
         BIO_closesocket(c_fd);
     return testresult;
 }
