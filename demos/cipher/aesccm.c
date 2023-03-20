@@ -229,10 +229,10 @@ err:
 int main(int argc, char **argv)
 {
     if (!aes_ccm_encrypt())
-        return 1;
+        return EXIT_FAILURE;
 
     if (!aes_ccm_decrypt())
-        return 1;
+        return EXIT_FAILURE;
 
-    return 0;
+    return EXIT_SUCCESS;
 }

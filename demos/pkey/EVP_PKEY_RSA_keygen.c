@@ -123,7 +123,7 @@ static EVP_PKEY *generate_rsa_key_short(OSSL_LIB_CTX *libctx, unsigned int bits)
  */
 static int dump_key(const EVP_PKEY *pkey)
 {
-    int rv = 0;
+    int ret = 0;
     int bits = 0;
     BIGNUM *n = NULL, *e = NULL, *d = NULL, *p = NULL, *q = NULL;
 
@@ -227,19 +227,19 @@ static int dump_key(const EVP_PKEY *pkey)
         goto cleanup;
     }
 
-    rv = 1;
+    ret = 1;
 cleanup:
     BN_free(n); /* not secret */
     BN_free(e); /* not secret */
     BN_clear_free(d); /* secret - scrub before freeing */
     BN_clear_free(p); /* secret - scrub before freeing */
     BN_clear_free(q); /* secret - scrub before freeing */
-    return rv;
+    return ret;
 }
 
 int main(int argc, char **argv)
 {
-    int rv = 1;
+    int ret = EXIT_FAILURE;
     OSSL_LIB_CTX *libctx = NULL;
     EVP_PKEY *pkey = NULL;
     unsigned int bits = 4096;
@@ -256,7 +256,7 @@ int main(int argc, char **argv)
         bits_i = atoi(argv[1]);
         if (bits < 512) {
             fprintf(stderr, "Invalid RSA key size\n");
-            return 1;
+            return EXIT_FAILURE;
         }
 
         bits = (unsigned int)bits_i;
@@ -281,9 +281,9 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-    rv = 0;
+    ret = EXIT_SUCCESS;
 cleanup:
     EVP_PKEY_free(pkey);
     OSSL_LIB_CTX_free(libctx);
-    return rv;
+    return ret;
 }
