@@ -492,6 +492,8 @@ While IETF RFC 5280 says that B<id-kp-serverAuth> and B<id-kp-clientAuth>
 are only for WWW use, in practice they are used for all kinds of TLS clients
 and servers, and this is what OpenSSL assumes as well.
 
+For details on the checks performed see the L</Certificate Extensions> section.
+
 =item B<-verify_depth> I<num>
 
 Limit the certificate chain to I<num> intermediate CA certificates.
