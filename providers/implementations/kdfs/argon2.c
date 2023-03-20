@@ -307,7 +307,7 @@ static ossl_inline uint64_t rotr64(const uint64_t w, const unsigned int c)
 
 static ossl_inline uint64_t mul_lower(uint64_t x, uint64_t y)
 {
-    const uint64_t m = UINT64_C(0xFFFFFFFF);
+    const uint64_t m = 0xFFFFFFFFUL;
     return (x & m) * (y & m);
 }
 
