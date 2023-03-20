@@ -135,7 +135,7 @@ ok(run(app([ 'openssl', 'dsaparam',
              '-text',
              '3072',
              ])),
-   "dsaparam -genkey DSA 10307224 with default qbits");
+   "dsaparam -genkey DSA 3072 with default qbits");
 
 ok(run(app([ 'openssl', 'dsaparam',
              '-genkey',
