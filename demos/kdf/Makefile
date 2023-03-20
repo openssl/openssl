@@ -7,7 +7,9 @@ CFLAGS = -I../../include -g
 LDFLAGS = -L../..
 LDLIBS = -lcrypto
 
-all: hkdf pbkdf2 scrypt argon2
+TESTS=hkdf pbkdf2 scrypt argon2
+
+all: $(TESTS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
@@ -15,8 +17,16 @@ all: hkdf pbkdf2 scrypt argon2
 hkdf: hkdf.o
 pbkdf2: pbkdf2.o
 scrypt: scrypt.o
-
-test: ;
+argon2: argon2.o
 
 clean:
-	$(RM) *.o hkdf pbkdf2 scrypt argon2
+	$(RM) *.o $(TESTS)
+
+.PHONY: test
+test: all
+	@echo "\nKDF tests:"
+	@ : 
+	@set -e; for tst in $(TESTS); do \
+		echo "\n"$$tst;  \
+		./$$tst; \
+	done

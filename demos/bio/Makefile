@@ -17,6 +17,7 @@ CFLAGS = $(OPENSSL_INCS_LOCATION)
 LDFLAGS = $(OPENSSL_LIBS_LOCATION) -lssl -lcrypto $(EX_LIBS)
 
 all: client-arg client-conf saccept sconnect server-arg server-cmod server-conf
+test: client-arg client-conf saccept sconnect server-arg server-cmod server-conf
 
 client-arg: client-arg.o
 client-conf: client-conf.o

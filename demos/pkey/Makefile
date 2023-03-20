@@ -12,8 +12,10 @@ CFLAGS = -I../../include -g -Wall
 LDFLAGS = -L../..
 LDLIBS = -lcrypto
 
-all: EVP_PKEY_EC_keygen EVP_PKEY_RSA_keygen EVP_PKEY_DSA_keygen \
-	 EVP_PKEY_DSA_paramgen EVP_PKEY_DSA_paramvalidate EVP_PKEY_DSA_paramfromdata \
+TESTS=EVP_PKEY_EC_keygen EVP_PKEY_RSA_keygen EVP_PKEY_DSA_keygen \
+EVP_PKEY_DSA_paramgen EVP_PKEY_DSA_paramvalidate EVP_PKEY_DSA_paramfromdata
+
+all: $(TESTS)
 
 %.o: %.c dsa.inc
 	$(CC) $(CFLAGS) -c $<
@@ -30,8 +32,14 @@ EVP_PKEY_DSA_paramvalidate: EVP_PKEY_DSA_paramvalidate.o
 
 EVP_PKEY_DSA_paramfromdata: EVP_PKEY_DSA_paramfromdata.o
 
-test: ;
-
 clean:
-	$(RM) *.o EVP_PKEY_EC_keygen EVP_PKEY_RSA_keygen EVP_PKEY_DSA_keygen \
-	      EVP_PKEY_DSA_paramgen EVP_PKEY_DSA_paramfromdata EVP_PKEY_DSA_paramvalidate
+	$(RM) *.o $(TESTS)
+
+.PHONY: test
+test: all
+	@echo "\nPKEY tests:"
+	@ : 
+	@set -e; for tst in $(TESTS); do \
+		echo "\n"$$tst;  \
+		./$$tst; \
+	done
