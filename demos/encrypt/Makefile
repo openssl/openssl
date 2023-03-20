@@ -7,14 +7,22 @@ CFLAGS = -I../../include -g
 LDFLAGS = -L../..
 LDLIBS = -lcrypto
 
-all: rsa_encrypt
+TESTS=rsa_encrypt
+
+all: $(TESTS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
 rsa_encrypt: rsa_encrypt.o
 
-test: ;
-
 clean:
-	$(RM) *.o rsa_encrypt
+	$(RM) *.o $(TESTS)
+
+.PHONY: test
+test: all
+	@echo "\nEncrypt tests:"
+	@set -e; for tst in $(TESTS); do \
+		echo "\n"$$tst; \
+		LD_LIBRARY_PATH=../.. ./$$tst; \
+	done

@@ -13,7 +13,9 @@
 CFLAGS = $(OPENSSL_INCS_LOCATION)
 LDFLAGS = $(OPENSSL_LIBS_LOCATION) -lssl -lcrypto
 
-all: aesccm aesgcm aeskeywrap ariacbc
+TESTS=aesccm aesgcm aeskeywrap ariacbc
+
+all: $(TESTS)
 
 aesccm: aesccm.o
 aesgcm: aesgcm.o
@@ -25,3 +27,11 @@ aesccm aesgcm aeskeywrap ariacbc:
 
 clean:
 	$(RM) aesccm aesgcm aeskeywrap ariacbc *.o
+
+.PHONY: test
+test: all
+	@echo "\nCipher tests:"
+	@set -e; for tst in $(TESTS); do \
+		echo "\n"$$tst; \
+		LD_LIBRARY_PATH=../.. ./$$tst; \
+	done
