@@ -267,12 +267,12 @@ int main(int argc, char **argv)
     /* Test X25519 key exchange with known result. */
     printf("Key exchange using known answer (deterministic):\n");
     if (keyexch_x25519(1) == 0)
-        return 1;
+        return EXIT_FAILURE;
 
     /* Test X25519 key exchange with random keys. */
     printf("Key exchange using random keys:\n");
     if (keyexch_x25519(0) == 0)
-        return 1;
+        return EXIT_FAILURE;
 
-    return 0;
+    return EXIT_SUCCESS;
 }

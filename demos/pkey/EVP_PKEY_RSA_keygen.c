@@ -239,7 +239,7 @@ cleanup:
 
 int main(int argc, char **argv)
 {
-    int rv = 1;
+    int rv = EXIT_FAILURE;
     OSSL_LIB_CTX *libctx = NULL;
     EVP_PKEY *pkey = NULL;
     unsigned int bits = 4096;
@@ -256,7 +256,7 @@ int main(int argc, char **argv)
         bits_i = atoi(argv[1]);
         if (bits < 512) {
             fprintf(stderr, "Invalid RSA key size\n");
-            return 1;
+            return EXIT_FAILURE;
         }
 
         bits = (unsigned int)bits_i;
@@ -281,7 +281,7 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-    rv = 0;
+    rv = EXIT_SUCCESS;
 cleanup:
     EVP_PKEY_free(pkey);
     OSSL_LIB_CTX_free(libctx);

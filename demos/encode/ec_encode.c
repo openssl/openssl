@@ -173,7 +173,7 @@ cleanup:
 
 int main(int argc, char **argv)
 {
-    int rv = 1;
+    int rv = EXIT_FAILURE;
     OSSL_LIB_CTX *libctx = NULL;
     EVP_PKEY *pkey = NULL;
     const char *passphrase_in = NULL, *passphrase_out = NULL;
@@ -197,7 +197,7 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-    rv = 0;
+    rv = EXIT_SUCCESS;
 cleanup:
     EVP_PKEY_free(pkey);
     OSSL_LIB_CTX_free(libctx);

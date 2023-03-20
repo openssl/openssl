@@ -208,7 +208,7 @@ int main(void)
     const char *sig_name = "SHA3-512";
     size_t sig_len = 0;
     unsigned char *sig_value = NULL;
-    int result = 0;
+    int result = EXIT_FAILURE;
 
     libctx = OSSL_LIB_CTX_new();
     if (libctx == NULL) {
@@ -223,13 +223,13 @@ int main(void)
         fprintf(stderr, "demo_verify failed.\n");
         goto cleanup;
     }
-    result = 1;
+    result = EXIT_SUCCESS;
 
 cleanup:
-    if (result != 1)
+    if (result == EXIT_FAILURE)
         ERR_print_errors_fp(stderr);
     /* OpenSSL free functions will ignore NULL arguments */
     OSSL_LIB_CTX_free(libctx);
     OPENSSL_free(sig_value);
-    return result == 0;
+    return result;
 }

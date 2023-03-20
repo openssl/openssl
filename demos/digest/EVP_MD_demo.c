@@ -179,5 +179,5 @@ cleanup:
 
 int main(void)
 {
-    return demonstrate_digest() == 0;
+    return demonstrate_digest() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

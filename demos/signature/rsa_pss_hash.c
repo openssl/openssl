@@ -170,7 +170,7 @@ end:
 
 int main(int argc, char **argv)
 {
-    int rv = 1;
+    int rv = EXIT_FAILURE;
     OSSL_LIB_CTX *libctx = NULL;
     unsigned char *sig = NULL;
     size_t sig_len = 0;
@@ -181,7 +181,7 @@ int main(int argc, char **argv)
     if (verify(libctx, sig, sig_len) == 0)
         goto end;
 
-    rv = 0;
+    rv = EXIT_SUCCESS;
 end:
     OPENSSL_free(sig);
     OSSL_LIB_CTX_free(libctx);

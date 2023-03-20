@@ -123,12 +123,14 @@ cleanup:
 
 int main(void)
 {
-    int result = 1;
+    int result = EXIT_FAILURE;
     BIO *input = BIO_new_fd(fileno(stdin), 1);
 
     if (input != NULL) {
-        result = demonstrate_digest(input);
+        result = (demonstrate_digest(input) ? EXIT_SUCCESS : EXIT_FAILURE);
         BIO_free(input);
     }
+    if (result == EXIT_FAILURE)
+        ERR_print_errors_fp(stderr);
     return result;
 }

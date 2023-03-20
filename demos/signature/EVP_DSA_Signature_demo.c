@@ -268,7 +268,7 @@ end:
 
 int main(void)
 {
-    int result = 0;
+    int result = EXIT_FAILURE;
     OSSL_LIB_CTX *libctx = NULL;
     EVP_PKEY *params = NULL;
     EVP_PKEY *pkey = NULL;
@@ -301,9 +301,9 @@ int main(void)
     if (demo_verify(libctx, sig_len, sig_value, public_key) != 1)
         goto end;
 
-    result = 1;
+    result = EXIT_SUCCESS;
 end:
-    if (result != 1)
+    if (result == EXIT_FAILURE)
         ERR_print_errors_fp(stderr);
 
     OPENSSL_free(sig_value);
@@ -313,5 +313,5 @@ end:
     OSSL_PARAM_free(keypair);
     OSSL_LIB_CTX_free(libctx);
 
-    return result ? 0 : 1;
+    return result;
 }

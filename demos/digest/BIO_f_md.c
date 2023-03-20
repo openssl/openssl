@@ -36,7 +36,7 @@
 
 int main(int argc, char * argv[])
 {
-    int result = 1;
+    int result = EXIT_FAILURE;
     OSSL_LIB_CTX *library_context = NULL;
     BIO *input = NULL;
     BIO *bio_digest = NULL;
@@ -106,10 +106,10 @@ int main(int argc, char * argv[])
         fprintf(stdout, "%02x", (unsigned char)digest_value[j]);
     }
     fprintf(stdout, "\n");
-    result = 0;
+    result = EXIT_SUCCESS;
 
 cleanup:
-    if (result != 0) 
+    if (result == EXIT_FAILURE)
         ERR_print_errors_fp(stderr);
 
     OPENSSL_free(digest_value);

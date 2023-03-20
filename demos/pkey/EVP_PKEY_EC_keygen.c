@@ -131,7 +131,7 @@ cleanup:
 
 int main(void)
 {
-    int result = 0;
+    int ret = EXIT_FAILURE;
     EVP_PKEY *pkey;
 
     pkey = do_ec_keygen();
@@ -145,11 +145,11 @@ int main(void)
      * At this point we can write out the generated key using
      * i2d_PrivateKey() and i2d_PublicKey() if required.
      */
-    result = 1;
+    ret = EXIT_SUCCESS;
 cleanup:
-    if (result != 1)
+    if (ret == EXIT_FAILURE)
         ERR_print_errors_fp(stderr);
 
     EVP_PKEY_free(pkey);
-    return result == 0;
+    return ret;
 }

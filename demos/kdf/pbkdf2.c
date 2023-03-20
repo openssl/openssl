@@ -57,7 +57,7 @@ static const unsigned char expected_output[] = {
 
 int main(int argc, char **argv)
 {
-    int rv = 1;
+    int rv = EXIT_FAILURE;
     EVP_KDF *kdf = NULL;
     EVP_KDF_CTX *kctx = NULL;
     unsigned char out[64];
@@ -108,7 +108,7 @@ int main(int argc, char **argv)
         goto end;
     }
 
-    rv = 0;
+    rv = EXIT_SUCCESS;
 end:
     EVP_KDF_CTX_free(kctx);
     EVP_KDF_free(kdf);
