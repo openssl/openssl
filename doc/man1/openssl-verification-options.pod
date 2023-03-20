@@ -577,7 +577,7 @@ This option has no effect and is retained for backward compatibility only.
 Options like B<-purpose> and B<-verify_name> trigger the processing of specific
 certificate extensions, which determine what certificates can be used for.
 
-The follwing two subsections on the B<basicConstraints> and <keyUsage>
+The following two subsections on the B<basicConstraints> and <keyUsage>
 extensions and on X.509v1 certificates apply to B<all> CA certificates
 regardless of any required purpose.
 
