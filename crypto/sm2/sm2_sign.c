@@ -454,7 +454,7 @@ int ossl_sm2_internal_sign(const unsigned char *dgst, int dgstlen,
         goto done;
     }
 
-    sigleni = i2d_ECDSA_SIG(s, &sig);
+    sigleni = i2d_ECDSA_SIG(s, sig != NULL ? &sig : NULL);
     if (sigleni < 0) {
        ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
        goto done;
