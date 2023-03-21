@@ -242,6 +242,13 @@ OpenSSL 3.1
 
 ### Changes between 3.1.0 and 3.1.1 [xx XXX xxxx]
 
+ * Corrected documentation of X509_VERIFY_PARAM_add0_policy() to mention
+   that it does not enable policy checking. Thanks to David Benjamin for
+   discovering this issue.
+   ([CVE-2023-0466])
+
+   *Tomáš Mráz*
+
  * Fixed an issue where invalid certificate policies in leaf certificates are
    silently ignored by OpenSSL and other certificate policy checks are skipped
    for that certificate. A malicious CA could use this to deliberately assert
@@ -19901,6 +19908,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2023-0466]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0466
 [CVE-2023-0465]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0465
 [CVE-2023-0464]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0464
 [CVE-2023-0401]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0401
