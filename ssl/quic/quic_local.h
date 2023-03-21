@@ -66,10 +66,10 @@ struct quic_conn_st {
     /* Initial peer L4 address. */
     BIO_ADDR                        init_peer_addr;
 
-#ifndef OPENSSL_NO_QUIC_THREAD_ASSIST
+#  ifndef OPENSSL_NO_QUIC_THREAD_ASSIST
     /* Manages thread for QUIC thread assisted mode. */
     QUIC_THREAD_ASSIST              thread_assist;
-#endif
+#  endif
 
     /* If non-NULL, used instead of ossl_time_now(). Used for testing. */
     OSSL_TIME                       (*override_now_cb)(void *arg);

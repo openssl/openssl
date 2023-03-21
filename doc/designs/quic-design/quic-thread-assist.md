@@ -1,7 +1,7 @@
 QUIC Thread Assisted Mode Synchronisation Requirements
 ======================================================
 
-In thread assisted mode, we spin up a background thread to ensure that periodic
+In thread assisted mode, we create a background thread to ensure that periodic
 QUIC processing is handled in a timely fashion regardless of whether an
 application is frequently calling (or blocked in) SSL API I/O functions.
 

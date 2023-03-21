@@ -160,7 +160,6 @@ static int determine_timeout(OSSL_TIME deadline, DWORD *w_timeout_p)
 
     ms = ossl_time2ms(delta);
 
-
     /*
      * Amount of time we want to wait is too long for the 32-bit argument to
      * the Win32 API, so just wait as long as possible.
@@ -288,7 +287,7 @@ void ossl_crypto_condvar_free(CRYPTO_CONDVAR **cv)
     *cv_p = NULL;
 }
 
-#endif
+# endif
 
 void ossl_crypto_mem_barrier(void)
 {

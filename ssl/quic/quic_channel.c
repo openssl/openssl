@@ -28,6 +28,13 @@
 #define INIT_CRYPTO_BUF_LEN     8192
 #define INIT_APP_BUF_LEN        8192
 
+/*
+ * Interval before we force a PING to ensure NATs don't timeout. This is based
+ * on the lowest commonly seen value of 30 seconds as cited in  RFC 9000 s.
+ * 10.1.2.
+ */
+#define MAX_NAT_INTERVAL (ossl_ms2time(25000))
+
 static void ch_rx_pre(QUIC_CHANNEL *ch);
 static int ch_rx(QUIC_CHANNEL *ch);
 static int ch_tx(QUIC_CHANNEL *ch);
@@ -1221,7 +1228,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
 {
     OSSL_TIME now, deadline;
     QUIC_CHANNEL *ch = arg;
-    int channel_only = ((flags & QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY) != 0);
+    int channel_only = (flags & QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY) != 0;
 
     /*
      * When we tick the QUIC connection, we do everything we need to do
@@ -2092,15 +2099,15 @@ static void ch_update_ping_deadline(QUIC_CHANNEL *ch)
 {
     if (ch->max_idle_timeout > 0) {
         /*
-         * Maximum amount of time without traffic before we send a PING to
-         * keep the connection open. Usually we use max_idle_timeout/2, but
-         * ensure the period never exceeds 25 seconds to ensure NAT devices
-         * don't have their state time out (RFC 9000 s. 10.1.2).
+         * Maximum amount of time without traffic before we send a PING to keep
+         * the connection open. Usually we use max_idle_timeout/2, but ensure
+         * the period never exceeds the assumed NAT interval to ensure NAT
+         * devices don't have their state time out (RFC 9000 s. 10.1.2).
          */
         OSSL_TIME max_span
             = ossl_time_divide(ossl_ms2time(ch->max_idle_timeout), 2);
 
-        max_span = ossl_time_min(max_span, ossl_ms2time(25000));
+        max_span = ossl_time_min(max_span, MAX_NAT_INTERVAL);
 
         ch->ping_deadline = ossl_time_add(get_time(ch), max_span);
     } else {
