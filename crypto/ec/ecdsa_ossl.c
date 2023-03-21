@@ -75,7 +75,7 @@ int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
         *siglen = 0;
         return 0;
     }
-    *siglen = i2d_ECDSA_SIG(s, &sig);
+    *siglen = i2d_ECDSA_SIG(s, sig != NULL ? &sig : NULL);
     ECDSA_SIG_free(s);
     return 1;
 }
