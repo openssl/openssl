@@ -299,8 +299,8 @@ ASN1_OBJECT *OBJ_nid2obj(int n)
     ADDED_OBJ ad, *adp = NULL;
     ASN1_OBJECT ob;
 
-    if (n >= 0 && n < NUM_NID
-        && (n == NID_undef || nid_objs[n].nid != NID_undef))
+    if (n == NID_undef
+        || (n > 0 && n < NUM_NID && nid_objs[n].nid != NID_undef))
         return (ASN1_OBJECT *)&(nid_objs[n]);
 
     ad.type = ADDED_NID;
