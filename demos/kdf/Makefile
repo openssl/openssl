@@ -25,8 +25,7 @@ clean:
 .PHONY: test
 test: all
 	@echo "\nKDF tests:"
-	@ : 
 	@set -e; for tst in $(TESTS); do \
-		echo "\n"$$tst;  \
+		echo "\n"$$tst; \
 		./$$tst; \
 	done

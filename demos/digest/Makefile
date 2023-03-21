@@ -23,9 +23,8 @@ BIO_f_md: BIO_f_md.o
 # Since some of these tests use stdin we use the source file as stdin when running the exes
 test: all
 	@echo "\nDigest tests:"
-	@ : 
 	@set -e; for tst in $(TESTS); do \
-		echo "\n"$$tst;  \
+		echo "\n"$$tst; \
 		cat $$tst.c | ./$$tst; \
 	done
 

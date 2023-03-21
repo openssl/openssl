@@ -1,16 +1,14 @@
-MODULES= bio digest encode encrypt kdf keyexch mac pkcs12 pkey signature sslecho
+MODULES=bio digest encode encrypt kdf keyexch mac pkcs12 pkey signature sslecho
+
 all:
-	@ : 
 	@set -e; for i in $(MODULES); do \
-		( cd $$i; ${MAKE} all); \
+		${MAKE} -C $$i all; \
 	done
 clean:
-	@ : 
 	@set -e; for i in $(MODULES); do \
-		( cd $$i; ${MAKE} clean); \
+		${MAKE} -C $$i clean; \
 	done
 test:
-	@ : 
 	@set -e; for i in $(MODULES); do \
-		( cd $$i; ${MAKE} test); \
+		${MAKE} -C $$i test; \
 	done

@@ -31,7 +31,6 @@ clean:
 .PHONY: test
 test: all
 	@echo "\nCipher tests:"
-	@ : 
 	@set -e; for tst in $(TESTS); do \
 		echo "\n"$$tst; \
 		./$$tst; \

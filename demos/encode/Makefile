@@ -16,7 +16,7 @@ all: $(TESTS)
 
 %_encode: %_encode.o
 
-test: ;
+test:
 
 clean:
 	$(RM) *.o $(TESTS)
