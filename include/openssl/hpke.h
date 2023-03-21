@@ -147,5 +147,17 @@ int OSSL_HPKE_str2suite(const char *str, OSSL_HPKE_SUITE *suite);
 size_t OSSL_HPKE_get_ciphertext_size(OSSL_HPKE_SUITE suite, size_t clearlen);
 size_t OSSL_HPKE_get_public_encap_size(OSSL_HPKE_SUITE suite);
 size_t OSSL_HPKE_get_recommended_ikmelen(OSSL_HPKE_SUITE suite);
+int OSSL_HPKE_seal_base(OSSL_HPKE_SUITE suite,
+                        const unsigned char *reciever, size_t receiverlen,
+                        const unsigned char *pt, size_t ptlen,
+                        const unsigned char *aad, size_t aadlen,
+                        unsigned char **box, size_t *boxlen,
+                        OSSL_LIB_CTX *libctx, const char *propq);
+int OSSL_HPKE_open_base(OSSL_HPKE_SUITE suite,
+                        EVP_PKEY *recippriv,
+                        const unsigned char *box, size_t boxlen,
+                        const unsigned char *aad, size_t aadlen,
+                        unsigned char **ptx, size_t *ptlen,
+                        OSSL_LIB_CTX *libctx, const char *propq);
 
 #endif

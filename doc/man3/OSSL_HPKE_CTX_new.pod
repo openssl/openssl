@@ -11,7 +11,8 @@ OSSL_HPKE_get_ciphertext_size, OSSL_HPKE_get_public_encap_size,
 OSSL_HPKE_get_recommended_ikmelen,
 OSSL_HPKE_CTX_set1_psk, OSSL_HPKE_CTX_set1_ikme,
 OSSL_HPKE_CTX_set1_authpriv, OSSL_HPKE_CTX_set1_authpub,
-OSSL_HPKE_CTX_get_seq, OSSL_HPKE_CTX_set_seq
+OSSL_HPKE_CTX_get_seq, OSSL_HPKE_CTX_set_seq,
+OSSL_HPKE_seal_base, OSSL_HPKE_open_base
 - Hybrid Public Key Encryption (HPKE) functions
 
 =head1 SYNOPSIS
@@ -73,6 +74,19 @@ OSSL_HPKE_CTX_get_seq, OSSL_HPKE_CTX_set_seq
                                 OSSL_HPKE_SUITE *suite,
                                 unsigned char *enc, size_t *enclen,
                                 unsigned char *ct, size_t ctlen);
+
+ int OSSL_HPKE_seal_base(OSSL_HPKE_SUITE suite,
+                       const unsigned char *reciever, size_t receiverlen,
+                       const unsigned char *pt, size_t ptlen,
+                       const unsigned char *aad, size_t aadlen,
+                       unsigned char **box, size_t *boxlen,
+                       OSSL_LIB_CTX *libctx, const char *propq);
+ int OSSL_HPKE_open_base(OSSL_HPKE_SUITE suite,
+                       EVP_PKEY *recippriv,
+                       const unsigned char *box, size_t boxlen,
+                       const unsigned char *aad, size_t aadlen,
+                       unsigned char **ptx, size_t *ptlen,
+                       OSSL_LIB_CTX *libctx, const char *propq);
 
  int OSSL_HPKE_str2suite(const char *str, OSSL_HPKE_SUITE *suite);
  size_t OSSL_HPKE_get_ciphertext_size(OSSL_HPKE_SUITE suite, size_t clearlen);
@@ -454,6 +468,16 @@ codepoints. Valid (case-insensitive) names are:
 "aes-gcm-128", "aes-gcm-256" and "chacha20-poly1305" for AEAD.
 String variants of the numbers listed in L</OSSL_HPKE_SUITE Identifiers>
 can also be used.
+
+=head2 High-level functions
+
+OSSL_HPKE_BOX_seal() calls OSSL_HPKE_encap and OSSL_HPKE_seal, and serializes the
+outputs into a newly allocated buffer, whose address is returned in box and sets boxlen
+accordingly. It is the caller's responsibility to free I<*box>.
+
+OSSL_HPKE_BOX_open() calls OSSL_HPKE_decap and OSSL_HPKE_open, and returns a
+newly allocated copy of the plaintext in ptx, and sets ptlen to the length. It is
+the caller's responsibility to free I<*ptx>.
 
 =head1 RETURN VALUES
 

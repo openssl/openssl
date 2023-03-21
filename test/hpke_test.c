@@ -419,6 +419,74 @@ static int x25519kdfsha256_hkdfsha256_aes128gcm_psk_test(void)
                        exportdata, OSSL_NELEM(exportdata));
 }
 
+static int test_hpke_highlevel(void)
+{
+    OSSL_LIB_CTX *libctx = testctx;
+    const char *propq = testpropq;
+    EVP_PKEY *priv = NULL;
+    unsigned char pub[OSSL_HPKE_TSTSIZE];
+    size_t publen = sizeof(pub);
+    unsigned char aad[OSSL_HPKE_TSTSIZE];
+    OSSL_HPKE_SUITE suite = OSSL_HPKE_SUITE_DEFAULT;
+    unsigned char *box = NULL;
+    size_t boxlen;
+    unsigned char *opened = NULL;
+    size_t openedlen;
+    int ret  = 0;
+    if (!TEST_true(OSSL_HPKE_keygen(suite, pub, &publen, &priv, NULL, 0, libctx, propq)))
+        goto end;
+	if (!TEST_true(OSSL_HPKE_seal_base(suite, pub, publen, pt, sizeof(pt), NULL, 0, &box, &boxlen, libctx, propq)))
+        goto end;
+	if (!TEST_true(OSSL_HPKE_open_base(suite, priv, box, boxlen, NULL, 0, &opened, &openedlen, libctx, propq)))
+        goto end;
+    if (!TEST_true(TEST_mem_eq(opened, openedlen, pt, sizeof(pt))))
+        goto end;
+    /* Test rejection of modified boxes. */
+    box[boxlen-8] = 0x00;
+    if (!TEST_false(OSSL_HPKE_open_base(suite, priv, box, boxlen, NULL, 0, &opened, &openedlen, libctx, propq)))
+        goto end;
+    /* Test rejection of invalid arguments. */
+    if (!TEST_false(OSSL_HPKE_open_base(suite, priv, box, boxlen, NULL, 0, NULL, &openedlen, libctx, propq)))
+        goto end;
+    if (!TEST_false(OSSL_HPKE_open_base(suite, priv, box, boxlen, NULL, 0, &opened, NULL, libctx, propq)))
+        goto end;
+    if (!TEST_false(OSSL_HPKE_open_base(suite, priv, box, boxlen, NULL, 0, &opened, &openedlen, libctx, propq)))
+        goto end;
+    if (!TEST_false(OSSL_HPKE_seal_base(suite, pub, publen, pt, sizeof(pt), NULL, 0, NULL, &boxlen, libctx, propq)))
+        goto end;
+    if (!TEST_false(OSSL_HPKE_seal_base(suite, pub, publen, pt, sizeof(pt), NULL, 0, &box, NULL, libctx, propq)))
+        goto end;
+    if (!TEST_false(OSSL_HPKE_seal_base(suite, pub, publen, pt, sizeof(pt), NULL, 0, &box, &boxlen, libctx, propq)))
+        goto end;
+    OPENSSL_free(box);
+    OPENSSL_free(opened);
+    box = NULL;
+    opened = NULL;
+    boxlen = 0;
+    openedlen = 0;
+    /* Test with aad */
+    memset(aad, 'a', sizeof(aad));
+    if (!TEST_true(OSSL_HPKE_seal_base(suite, pub, publen, pt, sizeof(pt), aad, sizeof(aad), &box, &boxlen, libctx, propq)))
+        goto end;
+	if (!TEST_true(OSSL_HPKE_open_base(suite, priv, box, boxlen, aad, sizeof(aad), &opened, &openedlen, libctx, propq)))
+        goto end;
+    if (!TEST_true(TEST_mem_eq(opened, openedlen, pt, sizeof(pt))))
+        goto end;
+    OPENSSL_free(opened);
+    opened = NULL;
+    openedlen = 0;
+    aad[0] = 'b';
+    /* Test mismatch in aad */
+    if (!TEST_false(OSSL_HPKE_open_base(suite, priv, box, boxlen, aad, sizeof(aad), &opened, &openedlen, libctx, propq)))
+        goto end;
+    ret = 1;
+ end:
+    EVP_PKEY_free(priv);
+    OPENSSL_free(box);
+    OPENSSL_free(opened);
+    return ret;
+}
+
 static const unsigned char second_ikme[] = {
     0x72, 0x68, 0x60, 0x0d, 0x40, 0x3f, 0xce, 0x43,
     0x15, 0x61, 0xae, 0xf5, 0x83, 0xee, 0x16, 0x13,
@@ -1960,6 +2028,7 @@ int setup_tests(void)
     ADD_TEST(test_hpke_oddcalls);
     ADD_TEST(test_hpke_compressed);
     ADD_TEST(test_hpke_noncereuse);
+    ADD_TEST(test_hpke_highlevel);
     return 1;
 }
 

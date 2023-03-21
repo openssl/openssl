@@ -5513,3 +5513,5 @@ ASN1_item_unpack_ex                     ?	3_2_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get1_cert_ex             ?	3_2_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get1_crl_ex              ?	3_2_0	EXIST::FUNCTION:
 EC_GROUP_to_params                      ?	3_2_0	EXIST::FUNCTION:EC
+OSSL_HPKE_seal_base                     ?	3_2_0	EXIST::FUNCTION:
+OSSL_HPKE_open_base                     ?	3_2_0	EXIST::FUNCTION:

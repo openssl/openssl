@@ -1,5 +1,5 @@
 LIBS=../../libcrypto
 
-$COMMON=hpke_util.c hpke.c
+$COMMON=hpke_util.c hpke.c hpke_highlevel.c
 
 SOURCE[../../libcrypto]=$COMMON
