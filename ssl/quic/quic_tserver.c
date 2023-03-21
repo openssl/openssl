@@ -70,7 +70,7 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
 
     srv->args = *args;
 
-    if ((srv->mutex = CRYPTO_THREAD_lock_new()) == NULL)
+    if ((srv->mutex = ossl_crypto_mutex_new()) == NULL)
         goto err;
 
     srv->ctx = SSL_CTX_new_ex(srv->args.libctx, srv->args.propq, TLS_method());
@@ -111,8 +111,10 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     return srv;
 
 err:
-    if (srv != NULL)
+    if (srv != NULL) {
         ossl_quic_channel_free(srv->ch);
+        ossl_crypto_mutex_free(&srv->mutex);
+    }
 
     OPENSSL_free(srv);
     return NULL;
@@ -128,7 +130,7 @@ void ossl_quic_tserver_free(QUIC_TSERVER *srv)
     BIO_free(srv->args.net_wbio);
     SSL_free(srv->tls);
     SSL_CTX_free(srv->ctx);
-    CRYPTO_THREAD_lock_free(srv->mutex);
+    ossl_crypto_mutex_free(&srv->mutex);
     OPENSSL_free(srv);
 }
 

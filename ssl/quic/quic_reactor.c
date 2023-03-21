@@ -176,7 +176,7 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         return 0;
 
     if (mutex != NULL)
-        CRYPTO_THREAD_unlock(mutex);
+        ossl_crypto_mutex_unlock(mutex);
 
     do {
         /*
@@ -200,8 +200,8 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         pres = select(maxfd + 1, &rfd_set, &wfd_set, &efd_set, ptv);
     } while (pres == -1 && get_last_socket_error_is_eintr());
 
-    if (mutex != NULL && !CRYPTO_THREAD_write_lock(mutex))
-        return 0;
+    if (mutex != NULL)
+        ossl_crypto_mutex_lock(mutex);
 
     return pres < 0 ? 0 : 1;
 #else
@@ -233,7 +233,7 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         return 0;
 
     if (mutex != NULL)
-        CRYPTO_THREAD_unlock(mutex);
+        ossl_crypto_mutex_unlock(mutex);
 
     do {
         if (ossl_time_is_infinite(deadline)) {
@@ -247,8 +247,8 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         pres = poll(pfds, npfd, timeout_ms);
     } while (pres == -1 && get_last_socket_error_is_eintr());
 
-    if (mutex != NULL && !CRYPTO_THREAD_write_lock(mutex))
-        return 0;
+    if (mutex != NULL)
+        ossl_crypto_mutex_lock(mutex);
 
     return pres < 0 ? 0 : 1;
 #endif

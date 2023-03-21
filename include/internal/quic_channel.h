@@ -81,7 +81,6 @@
  *
  *   Precondition: must not hold channel mutex (unchecked)
  *   Postcondition: channel mutex is not held (by calling thread)
- *
  */
 #  define QUIC_TAKES_LOCK
 

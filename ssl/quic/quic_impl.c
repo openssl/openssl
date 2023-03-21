@@ -202,7 +202,7 @@ void ossl_quic_free(SSL *s)
     /* Note: SSL_free calls OPENSSL_free(qc) for us */
 
     SSL_free(qc->tls);
-    ossl_crypto_mutex_free(&qc->mutex);
+    ossl_crypto_mutex_free(&qc->mutex); /* freed while still locked */
 }
 
 /* SSL method init */
@@ -529,8 +529,10 @@ int ossl_quic_get_net_read_desired(QUIC_CONNECTION *qc)
 
     quic_lock(qc);
 
-    if (qc->ch == NULL)
+    if (qc->ch == NULL) {
+        quic_unlock(qc);
         return 0;
+    }
 
     ret = ossl_quic_reactor_net_read_desired(ossl_quic_channel_get_reactor(qc->ch));
     quic_unlock(qc);
@@ -545,8 +547,10 @@ int ossl_quic_get_net_write_desired(QUIC_CONNECTION *qc)
 
     quic_lock(qc);
 
-    if (qc->ch == NULL)
+    if (qc->ch == NULL) {
+        quic_unlock(qc);
         return 0;
+    }
 
     ret = ossl_quic_reactor_net_write_desired(ossl_quic_channel_get_reactor(qc->ch));
     quic_unlock(qc);

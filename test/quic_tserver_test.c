@@ -374,29 +374,20 @@ err:
 
 static int test_tserver(int idx)
 {
-    int use_thread_assist, use_inject;
+    int thread_assisted, use_fake_time, use_inject;
 
-    use_thread_assist = idx % 2;
+    thread_assisted = idx % 2;
     idx /= 2;
 
     use_inject = idx % 2;
+    idx /= 2;
 
-    return test_tserver_actual(use_thread_assist, use_inject);
-}
+    use_fake_time = idx % 2;
 
-static int test_tserver_simple(void)
-{
-    return do_test(/*thread_assisted=*/0, /*fake_time=*/0, /*use_inject=*/0);
-}
+    if (use_fake_time && !thread_assisted)
+        return 1;
 
-static int test_tserver_thread(void)
-{
-    return do_test(/*thread_assisted=*/1, /*fake_time=*/0, /*use_inject=*/0);
-}
-
-static int test_tserver_thread_fake_time(void)
-{
-    return do_test(/*thread_assisted=*/1, /*fake_time=*/1, /*use_inject=*/0);
+    return do_test(thread_assisted, use_fake_time, use_inject);
 }
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -415,8 +406,6 @@ int setup_tests(void)
     if ((fake_time_lock = CRYPTO_THREAD_lock_new()) == NULL)
         return 0;
 
-    ADD_TEST(test_tserver_simple);
-    ADD_TEST(test_tserver_thread);
-    ADD_TEST(test_tserver_thread_fake_time);
+    ADD_ALL_TESTS(test_tserver, 2 * 2 * 2);
     return 1;
 }
