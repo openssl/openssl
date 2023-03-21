@@ -86,6 +86,9 @@ struct user_data_st {
 
     /* The mode we are using for processing commands */
     int mode;
+
+    /* Whether FIN has ben sent on the stream */
+    int isfin;
 };
 
 static void user_data_init(struct user_data_st *user_data, SSL *con, char *buf,
@@ -940,8 +943,7 @@ int s_client_main(int argc, char **argv)
 #endif
     BIO *bio_c_msg = NULL;
     const char *keylog_file = NULL, *early_data_file = NULL;
-    int isdtls = 0;
-    int isquic = 0;
+    int isdtls = 0, isquic = 0;
     char *psksessf = NULL;
     int enable_pha = 0;
     int enable_client_rpk = 0;
@@ -3800,6 +3802,7 @@ static void user_data_init(struct user_data_st *user_data, SSL *con, char *buf,
     user_data->buflen = 0;
     user_data->bufoff = 0;
     user_data->mode = mode;
+    user_data->isfin = 0;
 }
 
 static int user_data_add(struct user_data_st *user_data, size_t i)
@@ -3818,6 +3821,7 @@ static int user_data_add(struct user_data_st *user_data, size_t i)
 #define USER_COMMAND_RECONNECT   2
 #define USER_COMMAND_RENEGOTIATE 3
 #define USER_COMMAND_KEY_UPDATE  4
+#define USER_COMMAND_FIN         5
 
 static int user_data_execute(struct user_data_st *user_data, int cmd, char *arg)
 {
@@ -3831,7 +3835,9 @@ static int user_data_execute(struct user_data_st *user_data, int cmd, char *arg)
         BIO_printf(bio_err, "  {help}: Get this help text\n");
         BIO_printf(bio_err, "  {quit}: Close the connection to the peer\n");
         BIO_printf(bio_err, "  {reconnect}: Reconnect to the peer\n");
-        if (SSL_version(user_data->con) == TLS1_3_VERSION) {
+        if (SSL_is_quic(user_data->con)) {
+            BIO_printf(bio_err, "  {fin}: Send FIN on the stream. No further writing is possible\n");
+        } else if(SSL_version(user_data->con) == TLS1_3_VERSION) {
             BIO_printf(bio_err, "  {keyup:req|noreq}: Send a Key Update message\n");
             BIO_printf(bio_err, "                     Arguments:\n");
             BIO_printf(bio_err, "                     req   = peer update requested (default)\n");
@@ -3873,6 +3879,13 @@ static int user_data_execute(struct user_data_st *user_data, int cmd, char *arg)
                 break;
             return USER_DATA_PROCESS_CONTINUE;
         }
+
+    case USER_COMMAND_FIN:
+        if (!SSL_stream_conclude(user_data->con, 0))
+            break;
+        user_data->isfin = 1;
+        return USER_DATA_PROCESS_NO_DATA;
+
     default:
         break;
     }
@@ -3970,7 +3983,10 @@ static int user_data_process(struct user_data_st *user_data, size_t *len,
                 cmd = USER_COMMAND_QUIT;
             } else if (OPENSSL_strcasecmp(cmd_start, "reconnect") == 0) {
                 cmd = USER_COMMAND_RECONNECT;
-            } else if (SSL_version(user_data->con) == TLS1_3_VERSION) {
+            } else if(SSL_is_quic(user_data->con)) {
+                if (OPENSSL_strcasecmp(cmd_start, "fin") == 0)
+                    cmd = USER_COMMAND_FIN;
+            } if (SSL_version(user_data->con) == TLS1_3_VERSION) {
                 if (OPENSSL_strcasecmp(cmd_start, "keyup") == 0) {
                     cmd = USER_COMMAND_KEY_UPDATE;
                     if (arg_start == NULL)
@@ -4015,6 +4031,11 @@ static int user_data_process(struct user_data_st *user_data, size_t *len,
              */
             outlen = cmd_start - buf_start;
         }
+    }
+
+    if (user_data->isfin) {
+        user_data->buflen = user_data->bufoff = *len = *off = 0;
+        return USER_DATA_PROCESS_NO_DATA;
     }
 
 #ifdef CHARSET_EBCDIC
