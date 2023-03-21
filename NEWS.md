@@ -20,7 +20,7 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 3.0.8 and OpenSSL 3.0.9 [under development]
 
-  * none
+  * Fixed documentation of X509_VERIFY_PARAM_add0_policy() ([CVE-2023-0466])
 
 ### Major changes between OpenSSL 3.0.7 and OpenSSL 3.0.8 [7 Feb 2023]
 
@@ -1434,6 +1434,7 @@ OpenSSL 0.9.x
   * Support for various new platforms
 
 <!-- Links -->
+[CVE-2023-0466]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0466
 [CVE-2023-0401]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0401
 [CVE-2023-0286]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0286
 [CVE-2023-0217]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0217

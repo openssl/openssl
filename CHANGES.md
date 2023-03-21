@@ -30,6 +30,13 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.8 and 3.0.9 [xx XXX xxxx]
 
+ * Corrected documentation of X509_VERIFY_PARAM_add0_policy() to mention
+   that it does not enable policy checking. Thanks to David Benjamin for
+   discovering this issue.
+   ([CVE-2023-0466])
+
+   *Tomáš Mráz*
+
  * Limited the number of nodes created in a policy tree to mitigate
    against CVE-2023-0464.  The default limit is set to 1000 nodes, which
    should be sufficient for most installations.  If required, the limit
@@ -19589,6 +19596,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2023-0466]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0466
 [CVE-2023-0401]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0401
 [CVE-2023-0286]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0286
 [CVE-2023-0217]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0217
