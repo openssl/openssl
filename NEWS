@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.1.1t and OpenSSL 1.1.1u [under development]
 
-      o
+      o Fixed documentation of X509_VERIFY_PARAM_add0_policy() (CVE-2023-0466)
 
   Major changes between OpenSSL 1.1.1s and OpenSSL 1.1.1t [7 Feb 2023]
 
