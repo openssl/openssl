@@ -150,7 +150,7 @@ ok(run(app([ 'openssl', 'dsaparam',
              '2048', '256',
              ])),
    "dsaparam -genkey DSA 2048 with 256 qbits");
-
+# genkey test for 3072 bits keys were removed to speed up the tests
 
 unless ($no_fips) {
     my $provconf = srctop_file("test", "fips-and-base.cnf");
