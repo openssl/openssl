@@ -313,7 +313,23 @@ static int test_builtin(int n)
     OPENSSL_free(sig);
     return ret;
 }
-#endif
+
+static int test_ecdsa_sig_NULL(void)
+{
+    int ret;
+    unsigned int siglen;
+    unsigned char dgst[128] = { 0 };
+    EC_KEY *eckey = NULL;
+
+    ret = TEST_ptr(eckey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1))
+          && TEST_int_eq(EC_KEY_generate_key(eckey), 1)
+          && TEST_int_eq(ECDSA_sign(0, dgst, sizeof(dgst), NULL, &siglen, eckey), 1)
+          && TEST_int_gt(siglen, 0);
+    EC_KEY_free(eckey);
+    return ret;
+}
+
+#endif /* OPENSSL_NO_EC */
 
 int setup_tests(void)
 {
@@ -326,6 +342,7 @@ int setup_tests(void)
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         return 0;
     ADD_ALL_TESTS(test_builtin, crv_len);
+    ADD_TEST(test_ecdsa_sig_NULL);
     ADD_ALL_TESTS(x9_62_tests, OSSL_NELEM(ecdsa_cavs_kats));
 #endif
     return 1;

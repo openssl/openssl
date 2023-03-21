@@ -422,7 +422,7 @@ int sm2_sign(const unsigned char *dgst, int dgstlen,
 
     s = sm2_sig_gen(eckey, e);
 
-    sigleni = i2d_ECDSA_SIG(s, &sig);
+    sigleni = i2d_ECDSA_SIG(s, sig != NULL ? &sig : NULL);
     if (sigleni < 0) {
        SM2err(SM2_F_SM2_SIGN, ERR_R_INTERNAL_ERROR);
        goto done;
