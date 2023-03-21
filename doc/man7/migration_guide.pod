@@ -1813,6 +1813,19 @@ See L</Deprecated low-level key object getters and setters>
 
 =item *
 
+EVP_PKEY_id()
+
+This function was previously used to reliably return the NID of
+an EVP_PKEY object, e.g., to look up the name of the algorithm of
+such EVP_PKEY by calling L<OBJ_nid2sn(3)>. With the introduction
+of L<provider(7)>s EVP_PKEY_id() or its new equivalent
+L<EVP_PKEY_get_id(3)> might now also return the value -1 indicating
+the use of a provider to implement the EVP_PKEY object.
+Therefore, the use of L<EVP_PKEY_get0_type_name(3)> is recommended
+for retrieving the name of the EVP_PKEY algorithm.
+
+=item *
+
 EVP_PKEY_set1_tls_encodedpoint() EVP_PKEY_get1_tls_encodedpoint()
 
 These functions were previously used by libssl to set or get an encoded public
