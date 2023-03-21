@@ -168,6 +168,10 @@ foreach (sort keys %stlibname) {
     }
 }
 my @duplicates = sort grep { $symbols{$_} > 1 } keys %symbols;
+if (@duplicates) {
+    note "Duplicates:";
+    note join('\n', @duplicates);
+}
 ok(scalar @duplicates == 0, "checking no duplicate symbols in static libraries");
 
 ######################################################################
