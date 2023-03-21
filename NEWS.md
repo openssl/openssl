@@ -35,7 +35,11 @@ OpenSSL 3.2
 OpenSSL 3.1
 -----------
 
-### Major changes between OpenSSL 3.0 and OpenSSL 3.1.0 [under development]
+### Major changes between OpenSSL 3.1.0 and OpenSSL 3.1.1 [under development]
+
+  * Fixed documentation of X509_VERIFY_PARAM_add0_policy() ([CVE-2023-0466])
+
+### Major changes between OpenSSL 3.0 and OpenSSL 3.1.0 [14 Mar 2023]
 
   * SSL 3, TLS 1.0, TLS 1.1, and DTLS 1.0 only work at security level 0.
   * Performance enhancements and new platform support including new
@@ -1458,6 +1462,7 @@ OpenSSL 0.9.x
   * Support for various new platforms
 
 <!-- Links -->
+[CVE-2023-0466]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0466
 [CVE-2023-0401]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0401
 [CVE-2023-0286]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0286
 [CVE-2023-0217]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0217
