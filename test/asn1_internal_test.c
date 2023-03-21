@@ -254,6 +254,16 @@ static int test_obj_create(void)
     return 1;
 }
 
+static int test_obj_nid_undef(void)
+{
+    if (!TEST_ptr(OBJ_nid2obj(NID_undef))
+        || !TEST_ptr(OBJ_nid2sn(NID_undef))
+        || !TEST_ptr(OBJ_nid2ln(NID_undef)))
+        return 0;
+
+    return 1;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
@@ -261,5 +271,6 @@ int setup_tests(void)
     ADD_TEST(test_empty_nonoptional_content);
     ADD_TEST(test_unicode_range);
     ADD_TEST(test_obj_create);
+    ADD_TEST(test_obj_nid_undef);
     return 1;
 }
