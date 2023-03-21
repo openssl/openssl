@@ -22,7 +22,7 @@
  * only VC++ 2008 or earlier x86 compilers.
  */
 
-#if (defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER <= 1500)
+#if (defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER <= 1600)
 # define NO_INTERLOCKEDOR64
 #endif
 
