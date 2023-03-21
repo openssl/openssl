@@ -374,6 +374,10 @@ static int test_dsa_sig_infinite_loop(void)
     if (!TEST_int_le(DSA_size(dsa), sizeof(signature)))
         goto err;
 
+    /* Test passing signature as NULL */
+    if (!TEST_true(DSA_sign(0, msg, sizeof(msg), NULL, &signature_len, dsa)))
+        goto err;
+
     if (!TEST_true(DSA_sign(0, msg, sizeof(msg), signature, &signature_len, dsa)))
         goto err;
 
@@ -408,6 +412,80 @@ err:
     return ret;
 }
 
+static int test_dsa_sig_neg_param(void)
+{
+    int ret = 0, setpqg = 0;
+    DSA *dsa = NULL;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *priv = NULL, *pub = NULL;
+    const unsigned char msg[] = { 0x00 };
+    unsigned int signature_len;
+    unsigned char signature[64];
+
+    static unsigned char out_priv[] = {
+        0x17, 0x00, 0xb2, 0x8d, 0xcb, 0x24, 0xc9, 0x98,
+        0xd0, 0x7f, 0x1f, 0x83, 0x1a, 0xa1, 0xc4, 0xa4,
+        0xf8, 0x0f, 0x7f, 0x12
+    };
+    static unsigned char out_pub[] = {
+        0x04, 0x72, 0xee, 0x8d, 0xaa, 0x4d, 0x89, 0x60,
+        0x0e, 0xb2, 0xd4, 0x38, 0x84, 0xa2, 0x2a, 0x60,
+        0x5f, 0x67, 0xd7, 0x9e, 0x24, 0xdd, 0xe8, 0x50,
+        0xf2, 0x23, 0x71, 0x55, 0x53, 0x94, 0x0d, 0x6b,
+        0x2e, 0xcd, 0x30, 0xda, 0x6f, 0x1e, 0x2c, 0xcf,
+        0x59, 0xbe, 0x05, 0x6c, 0x07, 0x0e, 0xc6, 0x38,
+        0x05, 0xcb, 0x0c, 0x44, 0x0a, 0x08, 0x13, 0xb6,
+        0x0f, 0x14, 0xde, 0x4a, 0xf6, 0xed, 0x4e, 0xc3
+    };
+    if (!TEST_ptr(p = BN_bin2bn(out_p, sizeof(out_p), NULL))
+        || !TEST_ptr(q = BN_bin2bn(out_q, sizeof(out_q), NULL))
+        || !TEST_ptr(g = BN_bin2bn(out_g, sizeof(out_g), NULL))
+        || !TEST_ptr(pub = BN_bin2bn(out_pub, sizeof(out_pub), NULL))
+        || !TEST_ptr(priv = BN_bin2bn(out_priv, sizeof(out_priv), NULL))
+        || !TEST_ptr(dsa = DSA_new()))
+        goto err;
+
+    if (!TEST_true(DSA_set0_pqg(dsa, p, q, g)))
+        goto err;
+    setpqg = 1;
+
+    if (!TEST_true(DSA_set0_key(dsa, pub, priv)))
+        goto err;
+    pub = priv = NULL;
+
+    BN_set_negative(p, 1);
+    if (!TEST_false(DSA_sign(0, msg, sizeof(msg), signature, &signature_len, dsa)))
+        goto err;
+
+    BN_set_negative(p, 0);
+    BN_set_negative(q, 1);
+    if (!TEST_false(DSA_sign(0, msg, sizeof(msg), signature, &signature_len, dsa)))
+        goto err;
+
+    BN_set_negative(q, 0);
+    BN_set_negative(g, 1);
+    if (!TEST_false(DSA_sign(0, msg, sizeof(msg), signature, &signature_len, dsa)))
+        goto err;
+
+    BN_set_negative(p, 1);
+    BN_set_negative(q, 1);
+    BN_set_negative(g, 1);
+    if (!TEST_false(DSA_sign(0, msg, sizeof(msg), signature, &signature_len, dsa)))
+        goto err;
+
+    ret = 1;
+err:
+    BN_free(pub);
+    BN_free(priv);
+
+    if (setpqg == 0) {
+        BN_free(g);
+        BN_free(q);
+        BN_free(p);
+    }
+    DSA_free(dsa);
+    return ret;
+}
+
 #endif /* OPENSSL_NO_DSA */
 
 int setup_tests(void)
@@ -416,6 +494,7 @@ int setup_tests(void)
     ADD_TEST(dsa_test);
     ADD_TEST(dsa_keygen_test);
     ADD_TEST(test_dsa_sig_infinite_loop);
+    ADD_TEST(test_dsa_sig_neg_param);
     ADD_ALL_TESTS(test_dsa_default_paramgen_validate, 2);
 #endif
     return 1;

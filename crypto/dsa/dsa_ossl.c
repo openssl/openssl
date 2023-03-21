@@ -224,7 +224,10 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     /* Reject obviously invalid parameters */
     if (BN_is_zero(dsa->params.p)
         || BN_is_zero(dsa->params.q)
-        || BN_is_zero(dsa->params.g)) {
+        || BN_is_zero(dsa->params.g)
+        || BN_is_negative(dsa->params.p)
+        || BN_is_negative(dsa->params.q)
+        || BN_is_negative(dsa->params.g)) {
         ERR_raise(ERR_LIB_DSA, DSA_R_INVALID_PARAMETERS);
         return 0;
     }
