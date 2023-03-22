@@ -146,8 +146,7 @@ EVP_PKEY_get_id(), EVP_PKEY_get_base_id(), EVP_PKEY_type()
 For EVP_PKEY key type checking purposes, L<EVP_PKEY_is_a(3)> is more generic.
 
 For purposes of retrieving the name of the B<EVP_PKEY> the function
-L<EVP_PKEY_get0_type_name(3)> is more generally useful, particularly if
-the PKEY is implemented in a L<provider(7)>.
+L<EVP_PKEY_get0_type_name(3)> is more generally useful.
 
 The keys returned from the functions EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(),
 EVP_PKEY_get0_DH() and EVP_PKEY_get0_EC_KEY() were changed to have a "const"
