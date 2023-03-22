@@ -65,13 +65,21 @@ static int test_quic_write_read(int idx)
         /* Check that sending and receiving app data is ok */
         if (!TEST_true(SSL_write_ex(clientquic, msg, msglen, &numbytes)))
             goto end;
-        if (idx == 1 && !TEST_true(wait_until_sock_readable(ssock)))
-            goto end;
-        ossl_quic_tserver_tick(qtserv);
-        if (!TEST_true(ossl_quic_tserver_read(qtserv, buf, sizeof(buf),
-                                                     &numbytes))
-                || !TEST_mem_eq(buf, numbytes, msg, msglen))
-            goto end;
+        if (idx == 1) {
+            do {
+                if (!TEST_true(wait_until_sock_readable(ssock)))
+                    goto end;
+
+                ossl_quic_tserver_tick(qtserv);
+
+                if (!TEST_true(ossl_quic_tserver_read(qtserv, buf, sizeof(buf),
+                                                      &numbytes)))
+                    goto end;
+            } while (numbytes == 0);
+
+            if (!TEST_mem_eq(buf, numbytes, msg, msglen))
+                goto end;
+        }
 
         if (!TEST_true(ossl_quic_tserver_write(qtserv, (unsigned char *)msg,
                                                msglen, &numbytes)))
