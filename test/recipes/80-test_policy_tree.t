@@ -18,6 +18,8 @@ use OpenSSL::Glob;
 
 setup("test_policy_tree");
 
+plan skip_all => "No EC support" if disabled("ec");
+
 plan tests => 2;
 
 # The small pathological tree is expected to work
