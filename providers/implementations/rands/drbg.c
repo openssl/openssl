@@ -21,6 +21,7 @@
 #include "crypto/rand_pool.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "prov/fipscommon.h"
 #include "crypto/context.h"
 
 /*
@@ -934,7 +935,6 @@ int ossl_drbg_verify_digest(ossl_unused OSSL_LIB_CTX *libctx, const EVP_MD *md)
         "SHA3-256", "SHA3-512",     /* non-truncated SHA3 allowed */
     };
     size_t i;
-    extern int FIPS_restricted_drbg_digests_enabled(OSSL_LIB_CTX *libctx);
 
     if (FIPS_restricted_drbg_digests_enabled(libctx)) {
         for (i = 0; i < OSSL_NELEM(allowed_digests); i++)

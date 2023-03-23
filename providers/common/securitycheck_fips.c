@@ -18,9 +18,7 @@
 #include <openssl/core_names.h>
 #include <openssl/obj_mac.h>
 #include "prov/securitycheck.h"
-
-int FIPS_security_check_enabled(OSSL_LIB_CTX *libctx);
-int FIPS_tls_prf_ems_check(OSSL_LIB_CTX *libctx);
+#include "prov/fipscommon.h"
 
 int ossl_securitycheck_enabled(OSSL_LIB_CTX *libctx)
 {
