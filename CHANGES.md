@@ -242,12 +242,22 @@ OpenSSL 3.1
 
 ### Changes between 3.1.0 and 3.1.1 [xx XXX xxxx]
 
+ * Fixed an issue where invalid certificate policies in leaf certificates are
+   silently ignored by OpenSSL and other certificate policy checks are skipped
+   for that certificate. A malicious CA could use this to deliberately assert
+   invalid certificate policies in order to circumvent policy checking on the
+   certificate altogether.
+   ([CVE-2023-0465])
+
+   *Matt Caswell*
+
  * Limited the number of nodes created in a policy tree to mitigate
    against CVE-2023-0464.  The default limit is set to 1000 nodes, which
    should be sufficient for most installations.  If required, the limit
    can be adjusted by setting the OPENSSL_POLICY_TREE_NODES_MAX build
    time define to a desired maximum number of nodes or zero to allow
    unlimited growth.
+   ([CVE-2023-0464])
 
    *Paul Dale*
 
@@ -19891,6 +19901,8 @@ ndif
 
 <!-- Links -->
 
+[CVE-2023-0465]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0465
+[CVE-2023-0464]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0464
 [CVE-2023-0401]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0401
 [CVE-2023-0286]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0286
 [CVE-2023-0217]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0217
