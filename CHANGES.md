@@ -25,6 +25,13 @@ OpenSSL 3.2
 
 ### Changes between 3.1 and 3.2 [xx XXX xxxx]
 
+ * Added the "-quic" option to s_client to enable connectivity to QUIC servers.
+   QUIC requires the use of ALPN, so this must be specified via the "-alpn"
+   option. Use of the "advanced" s_client command command via the "-adv" option
+   is recommended.
+
+   *Matt Caswell*
+
  * Reworked the Fix for the Timing Oracle in RSA Decryption ([CVE-2022-4304]).
    The previous fix for this timing side channel turned out to cause
    a severe 2-3x performance regression in the typical use case
