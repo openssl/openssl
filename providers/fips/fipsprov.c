@@ -21,6 +21,7 @@
 #include "prov/providercommon.h"
 #include "prov/provider_util.h"
 #include "prov/seeding.h"
+#include "prov/fipscommon.h"
 #include "internal/nelem.h"
 #include "self_test.h"
 #include "crypto/context.h"
@@ -932,7 +933,6 @@ int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 }
 
 #define FIPS_FEATURE_CHECK(fname, field)                                    \
-    int fname(OSSL_LIB_CTX *libctx);                                        \
     int fname(OSSL_LIB_CTX *libctx)                                         \
     {                                                                       \
         FIPS_GLOBAL *fgbl =                                                 \
