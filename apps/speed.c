@@ -1944,11 +1944,10 @@ int speed_main(int argc, char **argv)
                 kems_doit[kems_algs_len] = 1;
                 kems_algname[kems_algs_len++] = OPENSSL_strdup(rsa_choices[i].name);
             }
-        }
-        else if (strcmp(EVP_KEM_get0_name(kem), "EC") == 0) {
+        } else if (strcmp(EVP_KEM_get0_name(kem), "EC") == 0) {
             if (kems_algs_len + 3 >= MAX_KEM_NUM) {
                 BIO_printf(bio_err,
-                       "Too many KEMs registered. Change MAX_KEM_NUM.\n");
+                           "Too many KEMs registered. Change MAX_KEM_NUM.\n");
                 goto end;
             }
             kems_doit[kems_algs_len] = 1;
@@ -1957,11 +1956,10 @@ int speed_main(int argc, char **argv)
             kems_algname[kems_algs_len++] = OPENSSL_strdup("ECP-384");
             kems_doit[kems_algs_len] = 1;
             kems_algname[kems_algs_len++] = OPENSSL_strdup("ECP-521");
-        }
-        else {
+        } else {
             if (kems_algs_len + 1 >= MAX_KEM_NUM) {
                 BIO_printf(bio_err,
-                       "Too many KEMs registered. Change MAX_KEM_NUM.\n");
+                           "Too many KEMs registered. Change MAX_KEM_NUM.\n");
                 goto end;
             }
             kems_doit[kems_algs_len] = 1;
@@ -1984,18 +1982,18 @@ int speed_main(int argc, char **argv)
         if (strcmp(sig_name, "RSA") == 0) {
             if (sigs_algs_len + OSSL_NELEM(rsa_choices) >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
-                       "Too many signatures registered. Change MAX_SIG_NUM.\n");
+                           "Too many signatures registered. Change MAX_SIG_NUM.\n");
                 goto end;
             }
             for (i = 0; i < OSSL_NELEM(rsa_choices); i++) {
                 sigs_doit[sigs_algs_len] = 1;
                 sigs_algname[sigs_algs_len++] = OPENSSL_strdup(rsa_choices[i].name);
-	        }
+            }
         }
         else if (strcmp(sig_name, "DSA") == 0) {
             if (sigs_algs_len + DSA_NUM >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
-                       "Too many signatures registered. Change MAX_SIG_NUM.\n");
+                           "Too many signatures registered. Change MAX_SIG_NUM.\n");
                 goto end;
             }
             for (i = 0; i < DSA_NUM; i++) {
@@ -2014,7 +2012,7 @@ int speed_main(int argc, char **argv)
                  strcmp(sig_name, "SM2")) { /* skip alg */
             if (sigs_algs_len + 1 >= MAX_SIG_NUM) {
                 BIO_printf(bio_err,
-                       "Too many signatures registered. Change MAX_SIG_NUM.\n");
+                           "Too many signatures registered. Change MAX_SIG_NUM.\n");
                 goto end;
             }
             /* activate this provider algorithm */
@@ -2032,7 +2030,7 @@ int speed_main(int argc, char **argv)
 
     for (; *argv; argv++) {
         const char *algo = *argv;
-	int algo_found = 0;
+        int algo_found = 0;
 
         if (opt_found(algo, doit_choices, &i)) {
             doit[i] = 1;
@@ -2160,18 +2158,24 @@ int speed_main(int argc, char **argv)
     if (kems_algs_len > 0) {
         int maxcnt = get_max(kems_doit, kems_algs_len);
 
-        if (maxcnt > 1) /* some algs explicitly selected */
-            for (i = 0; i < kems_algs_len; i++)
+        if (maxcnt > 1) {
+            /* some algs explicitly selected */
+            for (i = 0; i < kems_algs_len; i++) {
                 /* disable the rest */
                 kems_doit[i]--;
+            }
+        }
     }
     if (sigs_algs_len > 0) {
         int maxcnt = get_max(sigs_doit, sigs_algs_len);
 
-        if (maxcnt > 1) /* some algs explicitly selected */
-            for (i = 0; i < sigs_algs_len; i++)
+        if (maxcnt > 1) {
+            /* some algs explicitly selected */
+            for (i = 0; i < sigs_algs_len; i++) {
                 /* disable the rest */
                 sigs_doit[i]--;
+            }
+        }
     }
     if (multiblock) {
         if (evp_cipher == NULL) {
@@ -3583,16 +3587,16 @@ skip_hmac:
             char *name;
             OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
             int use_params = 0;
-            enum kem_type_t { RSA_KEM = 1, EC_KEM, X25519, X448 } kem_type;
+            enum kem_type_t { KEM_RSA = 1, KEM_EC, KEM_X25519, KEM_X448 } kem_type;
 
             if (strncmp(kem_name, "rsa", 3) == 0)
-                kem_type = RSA_KEM;
+                kem_type = KEM_RSA;
             else if (strncmp(kem_name, "EC", 2) == 0)
-                kem_type = EC_KEM;
+                kem_type = KEM_EC;
             else if (strcmp(kem_name, "X25519") == 0)
-                kem_type = X25519;
+                kem_type = KEM_X25519;
             else if (strcmp(kem_name, "X448") == 0)
-                kem_type = X448;
+                kem_type = KEM_X448;
             else kem_type = 0;
 
             if (ERR_peek_error()) {
@@ -3601,12 +3605,12 @@ skip_hmac:
                 ERR_print_errors(bio_err);
             }
 
-            if (kem_type == RSA_KEM) {
+            if (kem_type == KEM_RSA) {
                 bits = atoi(kem_name + 3);
                 params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS,
                                                         &bits);
                 use_params = 1;
-            } else if (kem_type == EC_KEM) {
+            } else if (kem_type == KEM_EC) {
                 name = (char *)(kem_name + 2);
                 params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
                                                   name, 0);
@@ -3614,8 +3618,8 @@ skip_hmac:
             }
 
             kem_gen_ctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(),
-                                               (kem_type == RSA_KEM) ? "RSA":
-                                                (kem_type == EC_KEM) ? "EC":
+                                               (kem_type == KEM_RSA) ? "RSA":
+                                                (kem_type == KEM_EC) ? "EC":
                                                  kem_name,
                                                app_get0_propq());
 
@@ -3636,11 +3640,11 @@ skip_hmac:
                                                         app_get0_propq());
             if (kem_encaps_ctx == NULL
                 || EVP_PKEY_encapsulate_init(kem_encaps_ctx, NULL) <= 0
-                || (kem_type == RSA_KEM
+                || (kem_type == KEM_RSA
                     && EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "RSASVE") <= 0)
-                || ((kem_type == EC_KEM
-                    || kem_type == X25519
-                    || kem_type == X448)
+                || ((kem_type == KEM_EC
+                    || kem_type == KEM_X25519
+                    || kem_type == KEM_X448)
                    && EVP_PKEY_CTX_set_kem_op(kem_encaps_ctx, "DHKEM") <= 0)
                 || EVP_PKEY_encapsulate(kem_encaps_ctx, NULL, &out_len,
                                       NULL, &send_secret_len) <= 0) {
@@ -3666,11 +3670,11 @@ skip_hmac:
                                                         app_get0_propq());
             if (kem_decaps_ctx == NULL
                 || EVP_PKEY_decapsulate_init(kem_decaps_ctx, NULL) <= 0 
-                || (kem_type == RSA_KEM
+                || (kem_type == KEM_RSA
                   && EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "RSASVE") <= 0)
-                || ((kem_type == EC_KEM
-                     || kem_type == X25519
-                     || kem_type == X448)
+                || ((kem_type == KEM_EC
+                     || kem_type == KEM_X25519
+                     || kem_type == KEM_X448)
                   && EVP_PKEY_CTX_set_kem_op(kem_decaps_ctx, "DHKEM") <= 0)
                 || EVP_PKEY_decapsulate(kem_decaps_ctx, NULL, &rcv_secret_len,
                                         out, out_len) <= 0) {
@@ -3808,7 +3812,7 @@ skip_hmac:
 
             if (sig_gen_ctx == NULL)
                 sig_gen_ctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(),
-                                      (strncmp(sig_name, "rsa", 3) == 0)?"RSA":sig_name,
+                                      (strncmp(sig_name, "rsa", 3) == 0) ? "RSA" : sig_name,
                                       app_get0_propq());
 
             if (!sig_gen_ctx || EVP_PKEY_keygen_init(sig_gen_ctx) <= 0
@@ -3831,14 +3835,14 @@ skip_hmac:
             if (sig_sign_ctx == NULL
                 || EVP_PKEY_sign_init(sig_sign_ctx) <= 0
                 || (strncmp(sig_name, "rsa", 3) == 0
-                  && (EVP_PKEY_CTX_set_rsa_padding(sig_sign_ctx,
-                                               RSA_PKCS1_PADDING)  <= 0))
+                    && (EVP_PKEY_CTX_set_rsa_padding(sig_sign_ctx,
+                                                     RSA_PKCS1_PADDING) <= 0))
                 || EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len,
                                       md, md_len) <= 0) {
-                BIO_printf(bio_err,
-                           "Error while initializing signing data structs for %s.\n",
-                           sig_name);
-                goto sig_err_break;
+                    BIO_printf(bio_err,
+                               "Error while initializing signing data structs for %s.\n",
+                               sig_name);
+                    goto sig_err_break;
             }
             sig = app_malloc(sig_len = max_sig_len, "signature buffer");
             if (sig == NULL) {
@@ -4130,6 +4134,7 @@ skip_hmac:
     testnum = 1;
     for (k = 0; k < sigs_algs_len; k++) {
         const char *sig_name = sigs_algname[k];
+
         if (!sigs_doit[k] || !do_sigs)
             continue;
         if (testnum && !mr) {
