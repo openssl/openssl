@@ -1334,13 +1334,11 @@ int OSSL_HPKE_suite_check(OSSL_HPKE_SUITE suite)
     return hpke_suite_check(suite, NULL, NULL, NULL);
 }
 
-int OSSL_HPKE_get_grease_value(OSSL_LIB_CTX *libctx, const char *propq,
-                               const OSSL_HPKE_SUITE *suite_in,
+int OSSL_HPKE_get_grease_value(const OSSL_HPKE_SUITE *suite_in,
                                OSSL_HPKE_SUITE *suite,
-                               unsigned char *enc,
-                               size_t *enclen,
-                               unsigned char *ct,
-                               size_t ctlen)
+                               unsigned char *enc, size_t *enclen,
+                               unsigned char *ct, size_t ctlen,
+                               OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_HPKE_SUITE chosen;
     size_t plen = 0;
