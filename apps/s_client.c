@@ -3696,7 +3696,6 @@ static int is_dNS_name(const char *host)
 
     return isdnsname;
 }
-#endif                          /* OPENSSL_NO_SOCK */
 
 static void user_data_init(struct user_data_st *user_data, SSL *con, char *buf,
                            size_t bufmax, int mode)
@@ -3769,13 +3768,12 @@ static int user_data_execute(struct user_data_st *user_data, int cmd, char *arg)
     case USER_COMMAND_KEY_UPDATE: {
             int updatetype;
 
-            if (OPENSSL_strcasecmp(arg, "req") == 0) {
+            if (OPENSSL_strcasecmp(arg, "req") == 0)
                 updatetype = SSL_KEY_UPDATE_REQUESTED;
-            } else if (OPENSSL_strcasecmp(arg, "noreq") == 0) {
+            else if (OPENSSL_strcasecmp(arg, "noreq") == 0)
                 updatetype = SSL_KEY_UPDATE_NOT_REQUESTED;
-            } else {
+            else
                 return USER_DATA_PROCESS_BAD_ARGUMENT;
-            }
             BIO_printf(bio_err, "KEYUPDATE\n");
             if (!SSL_key_update(user_data->con, updatetype))
                 break;
@@ -3941,3 +3939,4 @@ static int user_data_has_data(struct user_data_st *user_data)
 {
     return user_data->buflen > 0;
 }
+#endif                          /* OPENSSL_NO_SOCK */
