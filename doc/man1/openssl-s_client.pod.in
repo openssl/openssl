@@ -857,7 +857,7 @@ I<localhost> on port I<4433>.
 
 =back
 
-=head1 CONNECTED COMMANDS (Basic)
+=head1 CONNECTED COMMANDS (BASIC)
 
 If a connection is established with an SSL/TLS server then any data received
 from the server is displayed and any key presses will be sent to the
@@ -894,7 +894,7 @@ Send a key update message to the server and request one back (TLSv1.3 only)
 
 =back
 
-=head1 CONNECTED COMMANDS (Advanced)
+=head1 CONNECTED COMMANDS (ADVANCED)
 
 If B<-adv> has been given then "advanced" command mode is entered. As with basic
 mode, if a connection is established with an SSL/TLS server then any data
@@ -939,6 +939,8 @@ to update its keys. The default is "req".
 =item B<reneg>
 
 Initiate a renegotiation with the server. (D)TLSv1.2 or below only.
+
+=back
 
 =head1 NOTES
 
