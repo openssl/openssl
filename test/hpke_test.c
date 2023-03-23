@@ -1260,16 +1260,18 @@ static int test_hpke_grease(void)
     /* GREASEing */
     /* check too short for public value */
     g_pub_len = 10;
-    if (TEST_false(OSSL_HPKE_get_grease_value(testctx, NULL, NULL, &g_suite,
+    if (TEST_false(OSSL_HPKE_get_grease_value(NULL, &g_suite,
                                               g_pub, &g_pub_len,
-                                              g_cipher, g_cipher_len)) != 1) {
+                                              g_cipher, g_cipher_len,
+                                              testctx, NULL)) != 1) {
         overallresult = 0;
     }
     /* reset to work */
     g_pub_len = OSSL_HPKE_TSTSIZE;
-    if (TEST_true(OSSL_HPKE_get_grease_value(testctx, NULL, NULL, &g_suite,
+    if (TEST_true(OSSL_HPKE_get_grease_value(NULL, &g_suite,
                                              g_pub, &g_pub_len,
-                                             g_cipher, g_cipher_len)) != 1) {
+                                             g_cipher, g_cipher_len,
+                                             testctx, NULL)) != 1) {
         overallresult = 0;
     }
     /* expansion */
@@ -1630,36 +1632,41 @@ static int test_hpke_random_suites(void)
     size_t ctlen = sizeof(ct);
 
     /* test with NULL/0 inputs */
-    if (!TEST_false(OSSL_HPKE_get_grease_value(testctx, NULL, NULL, NULL,
-                                               NULL, NULL, NULL, 0)))
+    if (!TEST_false(OSSL_HPKE_get_grease_value(NULL, NULL,
+                                               NULL, NULL, NULL, 0,
+                                               testctx, NULL)))
         return 0;
     enclen = 10;
-    if (!TEST_false(OSSL_HPKE_get_grease_value(testctx, NULL, &def_suite,
-                                               &suite2, enc, &enclen,
-                                               ct, ctlen)))
+    if (!TEST_false(OSSL_HPKE_get_grease_value(&def_suite, &suite2,
+                                               enc, &enclen, ct, ctlen,
+                                               testctx, NULL)))
         return 0;
 
     enclen = sizeof(enc); /* reset, 'cause get_grease() will have set */
     /* test with a should-be-good suite */
-    if (!TEST_true(OSSL_HPKE_get_grease_value(testctx, NULL, &def_suite,
-                                              &suite2, enc, &enclen,
-                                              ct, ctlen)))
+    if (!TEST_true(OSSL_HPKE_get_grease_value(&def_suite, &suite2,
+                                              enc, &enclen, ct, ctlen,
+                                              testctx, NULL)))
         return 0;
     /* no suggested suite */
     enclen = sizeof(enc); /* reset, 'cause get_grease() will have set */
-    if (!TEST_true(OSSL_HPKE_get_grease_value(testctx, NULL, NULL, &suite2,
-                                              enc, &enclen, ct, ctlen)))
+    if (!TEST_true(OSSL_HPKE_get_grease_value(NULL, &suite2,
+                                              enc, &enclen,
+                                              ct, ctlen,
+                                              testctx, NULL)))
         return 0;
     /* suggested suite with P-521, just to be sure we hit long values */
     enclen = sizeof(enc); /* reset, 'cause get_grease() will have set */
     suite.kem_id = OSSL_HPKE_KEM_ID_P521;
-    if (!TEST_true(OSSL_HPKE_get_grease_value(testctx, NULL, &suite, &suite2,
-                                              enc, &enclen, ct, ctlen)))
+    if (!TEST_true(OSSL_HPKE_get_grease_value(&suite, &suite2,
+                                              enc, &enclen, ct, ctlen,
+                                              testctx, NULL)))
         return 0;
     enclen = sizeof(enc);
     ctlen = 2; /* too-short cttext (can't fit an aead tag) */
-    if (!TEST_false(OSSL_HPKE_get_grease_value(testctx, NULL, NULL, &suite2,
-                                               enc, &enclen, ct, ctlen)))
+    if (!TEST_false(OSSL_HPKE_get_grease_value(NULL, &suite2,
+                                               enc, &enclen, ct, ctlen,
+                                               testctx, NULL)))
         return 0;
 
     ctlen = sizeof(ct);
@@ -1667,20 +1674,23 @@ static int test_hpke_random_suites(void)
 
     suite.kem_id = OSSL_HPKE_KEM_ID_X25519; /* back to default */
     suite.aead_id = 0x1234; /* bad aead */
-    if (!TEST_false(OSSL_HPKE_get_grease_value(testctx, NULL, &suite, &suite2,
-                                               enc, &enclen, ct, ctlen)))
+    if (!TEST_false(OSSL_HPKE_get_grease_value(&suite, &suite2,
+                                               enc, &enclen, ct, ctlen,
+                                               testctx, NULL)))
         return 0;
     enclen = sizeof(enc);
     suite.aead_id = def_suite.aead_id; /* good aead */
     suite.kdf_id = 0x3451; /* bad kdf */
-    if (!TEST_false(OSSL_HPKE_get_grease_value(testctx, NULL, &suite, &suite2,
-                                               enc, &enclen, ct, ctlen)))
+    if (!TEST_false(OSSL_HPKE_get_grease_value(&suite, &suite2,
+                                               enc, &enclen, ct, ctlen,
+                                               testctx, NULL)))
         return 0;
     enclen = sizeof(enc);
     suite.kdf_id = def_suite.kdf_id; /* good kdf */
     suite.kem_id = 0x4517; /* bad kem */
-    if (!TEST_false(OSSL_HPKE_get_grease_value(testctx, NULL, &suite, &suite2,
-                                               enc, &enclen, ct, ctlen)))
+    if (!TEST_false(OSSL_HPKE_get_grease_value(&suite, &suite2,
+                                               enc, &enclen, ct, ctlen,
+                                               testctx, NULL)))
         return 0;
     return 1;
 }
