@@ -2173,6 +2173,10 @@ int s_client_main(int argc, char **argv)
         BIO_printf(bio_err, "%s: QUIC does not support the -tfo option\n", prog);
         goto end;
     }
+    if (isquic && alpn_in == NULL) {
+        BIO_printf(bio_err, "%s: QUIC requires ALPN to be specified (e.g. \"h3\" for HTTP/3) via the -alpn option\n", prog);
+        goto end;
+    }
 #endif
 
     if (tfo)
