@@ -216,11 +216,12 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
         isneg = 0;
     }
 
-    if (value[0] == '0' && ((value[1] == 'x') || (value[1] == 'X'))) {
-        value += 2;
-        ishex = 1;
-    } else {
-        ishex = 0;
+    ishex = 0;
+    if (strlen(value) > 2) {
+        if (value[0] == '0' && ((value[1] == 'x') || (value[1] == 'X'))) {
+            value += 2;
+            ishex = 1;
+        }
     }
 
     if (ishex)
