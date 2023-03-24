@@ -283,6 +283,7 @@ id-smime-ct 36		: id-ct-resourceTaggedAttest
 id-smime-ct 47		: id-ct-geofeedCSVwithCRLF
 id-smime-ct 48		: id-ct-signedChecklist
 id-smime-ct 49		: id-ct-ASPA
+id-smime-ct 50		: id-ct-signedTAL
 
 # S/MIME Attributes
 id-smime-aa 1		: id-smime-aa-receiptRequest
@@ -1610,6 +1611,7 @@ sm-scheme 104 6         : SM4-CFB8            : sm4-cfb8
 sm-scheme 104 7         : SM4-CTR             : sm4-ctr
 sm-scheme 104 8         : SM4-GCM             : sm4-gcm
 sm-scheme 104 9         : SM4-CCM             : sm4-ccm
+sm-scheme 104 10        : SM4-XTS             : sm4-xts
 
 # There is no OID that just denotes "HMAC" oddly enough...
 
@@ -1642,12 +1644,18 @@ ISO-US 10046 2 1	: dhpublicnumber		: X9.42 DH
 1 3 36 3 3 2 8 1 1 5 : brainpoolP224r1
 1 3 36 3 3 2 8 1 1 6 : brainpoolP224t1
 1 3 36 3 3 2 8 1 1 7 : brainpoolP256r1
+# Alternate NID to represent the TLSv1.3 brainpoolP256r1 group
+                     : brainpoolP256r1tls13
 1 3 36 3 3 2 8 1 1 8 : brainpoolP256t1
 1 3 36 3 3 2 8 1 1 9 : brainpoolP320r1
 1 3 36 3 3 2 8 1 1 10 : brainpoolP320t1
 1 3 36 3 3 2 8 1 1 11 : brainpoolP384r1
+# Alternate NID to represent the TLSv1.3 brainpoolP384r1 group
+                      : brainpoolP384r1tls13
 1 3 36 3 3 2 8 1 1 12 : brainpoolP384t1
 1 3 36 3 3 2 8 1 1 13 : brainpoolP512r1
+# Alternate NID to represent the TLSv1.3 brainpoolP512r1 group
+                      : brainpoolP512r1tls13
 1 3 36 3 3 2 8 1 1 14 : brainpoolP512t1
 
 # ECDH schemes from RFC5753
@@ -1795,3 +1803,7 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
 joint-iso-itu-t 16 840 1 113894 : oracle-organization : Oracle organization
 # Jdk trustedKeyUsage attribute
 oracle 746875 1 1 : oracle-jdk-trustedkeyusage : Trusted key usage (Oracle)
+
+# NID for compression
+                            : brotli : Brotli compression
+			    : zstd : Zstandard compression

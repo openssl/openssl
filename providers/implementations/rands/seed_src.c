@@ -53,10 +53,8 @@ static void *seed_src_new(void *provctx, void *parent,
     }
 
     s = OPENSSL_zalloc(sizeof(*s));
-    if (s == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (s == NULL)
         return NULL;
-    }
 
     s->provctx = provctx;
     s->state = EVP_RAND_STATE_UNINITIALISED;
@@ -106,7 +104,7 @@ static int seed_src_generate(void *vseed, unsigned char *out, size_t outlen,
 
     pool = ossl_rand_pool_new(strength, 1, outlen, outlen);
     if (pool == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_RAND_LIB);
         return 0;
     }
 
@@ -197,10 +195,8 @@ static size_t seed_get_seed(void *vseed, unsigned char **pout,
     }
 
     p = OPENSSL_secure_malloc(bytes_needed);
-    if (p == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (p == NULL)
         return 0;
-    }
     if (seed_src_generate(vseed, p, bytes_needed, 0, prediction_resistance,
                           adin, adin_len) != 0) {
         *pout = p;

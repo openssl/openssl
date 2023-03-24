@@ -1281,3 +1281,10 @@ id_aa_ets_archiveTimestampV2		1280
 hmacWithSM3		1281
 oracle		1282
 oracle_jdk_trustedkeyusage		1283
+id_ct_signedTAL		1284
+brainpoolP256r1tls13		1285
+brainpoolP384r1tls13		1286
+brainpoolP512r1tls13		1287
+brotli		1288
+zstd		1289
+sm4_xts		1290

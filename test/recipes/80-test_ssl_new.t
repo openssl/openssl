@@ -42,7 +42,7 @@ if (defined $ENV{SSL_TESTS}) {
     @conf_srcs = glob(srctop_file("test", "ssl-tests", "*.cnf.in"));
     # We hard-code the number of tests to double-check that the globbing above
     # finds all files as expected.
-    plan tests => 31;
+    plan tests => 32;
 }
 map { s/;.*// } @conf_srcs if $^O eq "VMS";
 my @conf_files = map { basename($_, ".in") } @conf_srcs;
@@ -93,6 +93,7 @@ my %conf_dependent_tests = (
   "27-ticket-appdata.cnf" => !$is_default_tls,
   "28-seclevel.cnf" => disabled("tls1_2") || $no_ec,
   "30-extended-master-secret.cnf" => disabled("tls1_2"),
+  "32-compressed-certificate.cnf" => disabled("comp") || disabled("tls1_3"),
 );
 
 # Add your test here if it should be skipped for some compile-time
@@ -127,7 +128,9 @@ my %skip = (
   "25-cipher.cnf" => disabled("ec") || disabled("tls1_2"),
   "26-tls13_client_auth.cnf" => disabled("tls1_3") || ($no_ec && $no_dh),
   "29-dtls-sctp-label-bug.cnf" => disabled("sctp") || disabled("sock"),
-  "31-quic.cnf" => $no_quic || $no_ec
+  # TODO(QUIC): Temporarily disabled during finalization of front-end API.
+  "31-quic.cnf" => 1 || $no_quic || $no_ec,
+  "32-compressed-certificate.cnf" => disabled("comp") || disabled("tls1_3"),
 );
 
 foreach my $conf (@conf_files) {

@@ -254,10 +254,8 @@ static int ossl_obj_add_object(const ASN1_OBJECT *obj, int lock)
             || (o->sn != NULL
                 && (ao[ADDED_SNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
             || (o->ln != NULL
-                && (ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)) {
-        ERR_raise(ERR_LIB_OBJ, ERR_R_MALLOC_FAILURE);
+                && (ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL))
         goto err2;
-    }
 
     if (!ossl_obj_write_lock(lock)) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
@@ -266,7 +264,7 @@ static int ossl_obj_add_object(const ASN1_OBJECT *obj, int lock)
     if (added == NULL) {
         added = lh_ADDED_OBJ_new(added_obj_hash, added_obj_cmp);
         if (added == NULL) {
-            ERR_raise(ERR_LIB_OBJ, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_OBJ, ERR_R_CRYPTO_LIB);
             goto err;
         }
     }
@@ -301,9 +299,8 @@ ASN1_OBJECT *OBJ_nid2obj(int n)
     ADDED_OBJ ad, *adp = NULL;
     ASN1_OBJECT ob;
 
-    if (n == NID_undef)
-        return NULL;
-    if (n >= 0 && n < NUM_NID && nid_objs[n].nid != NID_undef)
+    if (n == NID_undef
+        || (n > 0 && n < NUM_NID && nid_objs[n].nid != NID_undef))
         return (ASN1_OBJECT *)&(nid_objs[n]);
 
     ad.type = ADDED_NID;
@@ -420,10 +417,8 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
     if (j < 0)
         return NULL;
 
-    if ((buf = OPENSSL_malloc(j)) == NULL) {
-        ERR_raise(ERR_LIB_OBJ, ERR_R_MALLOC_FAILURE);
+    if ((buf = OPENSSL_malloc(j)) == NULL)
         return NULL;
-    }
 
     p = buf;
     /* Write out tag+length */
@@ -733,6 +728,12 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     ASN1_OBJECT *tmpoid = NULL;
     int ok = 0;
 
+    /* With no arguments at all, nothing can be done */
+    if (oid == NULL && sn == NULL && ln == NULL) {
+        ERR_raise(ERR_LIB_OBJ, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
     /* Check to see if short or long name already present */
     if ((sn != NULL && OBJ_sn2nid(sn) != NID_undef)
             || (ln != NULL && OBJ_ln2nid(ln) != NID_undef)) {
@@ -740,10 +741,15 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
         return 0;
     }
 
-    /* Convert numerical OID string to an ASN1_OBJECT structure */
-    tmpoid = OBJ_txt2obj(oid, 1);
-    if (tmpoid == NULL)
-        return 0;
+    if (oid != NULL) {
+        /* Convert numerical OID string to an ASN1_OBJECT structure */
+        tmpoid = OBJ_txt2obj(oid, 1);
+        if (tmpoid == NULL)
+            return 0;
+    } else {
+        /* Create a no-OID ASN1_OBJECT */
+        tmpoid = ASN1_OBJECT_new();
+    }
 
     if (!ossl_obj_write_lock(1)) {
         ERR_raise(ERR_LIB_OBJ, ERR_R_UNABLE_TO_GET_WRITE_LOCK);
@@ -752,7 +758,8 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     }
 
     /* If NID is not NID_undef then object already exists */
-    if (ossl_obj_obj2nid(tmpoid, 0) != NID_undef) {
+    if (oid != NULL
+        && ossl_obj_obj2nid(tmpoid, 0) != NID_undef) {
         ERR_raise(ERR_LIB_OBJ, OBJ_R_OID_EXISTS);
         goto err;
     }

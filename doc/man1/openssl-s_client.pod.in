@@ -83,6 +83,8 @@ B<openssl> B<s_client>
 [B<-read_buf>]
 [B<-ignore_unexpected_eof>]
 [B<-bugs>]
+[B<-no_tx_cert_comp>]
+[B<-no_rx_cert_comp>]
 [B<-comp>]
 [B<-no_comp>]
 [B<-brief>]
@@ -601,6 +603,14 @@ For more information on shutting down a connection, see L<SSL_shutdown(3)>.
 There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
+=item B<-no_tx_cert_comp>
+
+Disables support for sending TLSv1.3 compressed certificates.
+
+=item B<-no_rx_cert_comp>
+
+Disables support for receiving TLSv1.3 compressed certificate.
+
 =item B<-comp>
 
 Enables support for SSL/TLS compression.
@@ -781,8 +791,8 @@ deprecated.
 =item B<-ktls>
 
 Enable Kernel TLS for sending and receiving.
-This option was introduced in OpenSSL 3.1.0.
-Kernel TLS is off by default as of OpenSSL 3.1.0.
+This option was introduced in OpenSSL 3.2.0.
+Kernel TLS is off by default as of OpenSSL 3.2.0.
 
 =item B<-tfo>
 
@@ -930,7 +940,9 @@ The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
-The -tfo option was added in OpenSSL 3.1.
+
+The B<-tfo>, B<-no_tx_cert_comp>, and B<-no_rx_cert_comp> options were added
+in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

@@ -12,6 +12,8 @@
 #include "openssl/params.h"
 #include "internal/time.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 typedef struct ossl_cc_data_st *OSSL_CC_DATA;
 
 typedef struct ossl_cc_method_st {
@@ -72,14 +74,20 @@ typedef struct ossl_cc_method_st {
      * |time_valid| is 1 if the |time_since_last_send| holds
      * a meaningful value, 0 otherwise.
      */
-    size_t (*get_send_allowance)(OSSL_CC_DATA *ccdata,
-                                 OSSL_TIME time_since_last_send,
-                                 int time_valid);
+    uint64_t (*get_send_allowance)(OSSL_CC_DATA *ccdata,
+                                   OSSL_TIME time_since_last_send,
+                                   int time_valid);
 
     /*
      * Returns the maximum number of bytes allowed to be in flight.
      */
-    size_t (*get_bytes_in_flight_max)(OSSL_CC_DATA *ccdata);
+    uint64_t (*get_bytes_in_flight_max)(OSSL_CC_DATA *ccdata);
+
+    /*
+     * Returns the next time at which the CC will release more budget for
+     * sending, or ossl_time_infinite().
+     */
+    OSSL_TIME (*get_next_credit_time)(OSSL_CC_DATA *ccdata);
 
     /*
      * To be called when a packet with retransmittable data was sent.
@@ -88,7 +96,7 @@ typedef struct ossl_cc_method_st {
      * Returns 1 on success, 0 otherwise.
      */
     int (*on_data_sent)(OSSL_CC_DATA *ccdata,
-                        size_t num_retransmittable_bytes);
+                        uint64_t num_retransmittable_bytes);
 
     /*
      * To be called when retransmittable data was invalidated.
@@ -101,7 +109,7 @@ typedef struct ossl_cc_method_st {
      * otherwise.
      */
     int (*on_data_invalidated)(OSSL_CC_DATA *ccdata,
-                               size_t num_retransmittable_bytes);
+                               uint64_t num_retransmittable_bytes);
 
     /*
      * To be called when sent data was acked.
@@ -116,7 +124,7 @@ typedef struct ossl_cc_method_st {
     int (*on_data_acked)(OSSL_CC_DATA *ccdata,
                          OSSL_TIME time_now,
                          uint64_t last_pn_acked,
-                         size_t num_retransmittable_bytes);
+                         uint64_t num_retransmittable_bytes);
 
     /*
      * To be called when sent data is considered lost.
@@ -132,7 +140,7 @@ typedef struct ossl_cc_method_st {
     void (*on_data_lost)(OSSL_CC_DATA *ccdata,
                          uint64_t largest_pn_lost,
                          uint64_t largest_pn_sent,
-                         size_t num_retransmittable_bytes,
+                         uint64_t num_retransmittable_bytes,
                          int persistent_congestion);
 
     /*
@@ -146,5 +154,7 @@ typedef struct ossl_cc_method_st {
 } OSSL_CC_METHOD;
 
 extern const OSSL_CC_METHOD ossl_cc_dummy_method;
+
+# endif
 
 #endif

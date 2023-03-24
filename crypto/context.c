@@ -37,6 +37,9 @@ struct ossl_lib_ctx_st {
     OSSL_METHOD_STORE *store_loader_store;
     void *self_test_cb;
 #endif
+#if defined(OPENSSL_THREADS)
+    void *threads;
+#endif
     void *rand_crngt;
 #ifdef FIPS_MODULE
     void *thread_event_handler;
@@ -171,6 +174,12 @@ static int context_init(OSSL_LIB_CTX *ctx)
         goto err;
 #endif
 
+#ifndef OPENSSL_NO_THREAD_POOL
+    ctx->threads = ossl_threads_ctx_new(ctx);
+    if (ctx->threads == NULL)
+        goto err;
+#endif
+
     /* Low priority. */
 #ifndef FIPS_MODULE
     ctx->child_provider = ossl_child_prov_ctx_new(ctx);
@@ -296,6 +305,13 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
     if (ctx->fips_prov != NULL) {
         ossl_fips_prov_ossl_ctx_free(ctx->fips_prov);
         ctx->fips_prov = NULL;
+    }
+#endif
+
+#ifndef OPENSSL_NO_THREAD_POOL
+    if (ctx->threads != NULL) {
+        ossl_threads_ctx_free(ctx->threads);
+        ctx->threads = NULL;
     }
 #endif
 
@@ -456,6 +472,15 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx)
 
     return NULL;
 }
+
+void ossl_release_default_drbg_ctx(void)
+{
+    /* early release of the DRBG in global default libctx */
+    if (default_context_int.drbg != NULL) {
+        ossl_rand_ctx_free(default_context_int.drbg);
+        default_context_int.drbg = NULL;
+    }
+}
 #endif
 
 OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx)
@@ -525,6 +550,10 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
         return ctx->store_loader_store;
     case OSSL_LIB_CTX_SELF_TEST_CB_INDEX:
         return ctx->self_test_cb;
+#endif
+#ifndef OPENSSL_NO_THREAD_POOL
+    case OSSL_LIB_CTX_THREAD_INDEX:
+        return ctx->threads;
 #endif
 
     case OSSL_LIB_CTX_RAND_CRNGT_INDEX: {

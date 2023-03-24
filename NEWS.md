@@ -7,6 +7,7 @@ release. For more details please read the CHANGES file.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 3.2](#openssl-32)
  - [OpenSSL 3.1](#openssl-31)
  - [OpenSSL 3.0](#openssl-30)
  - [OpenSSL 1.1.1](#openssl-111)
@@ -16,19 +17,65 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 3.1
+OpenSSL 3.2
 -----------
 
-### Major changes between OpenSSL 3.0 and OpenSSL 3.1 [under development]
+### Major changes between OpenSSL 3.1 and OpenSSL 3.2 [under development]
 
+  * Added support for certificate compression (RFC8879), including
+    library support for Brotli and Zstandard compression.
   * Subject or issuer names in X.509 objects are now displayed as UTF-8 strings
     by default.
   * TCP Fast Open (RFC7413) support is available on Linux, macOS, and FreeBSD
     where enabled and supported.
+  * Full support for provider-based/pluggable signature algorithms in TLS 1.3
+    operations as well as X.509 data structure support. With a suitable provider
+    this fully enables use of post-quantum/quantum-safe cryptography.
+
+OpenSSL 3.1
+-----------
+
+### Major changes between OpenSSL 3.0 and OpenSSL 3.1.0 [under development]
+
   * SSL 3, TLS 1.0, TLS 1.1, and DTLS 1.0 only work at security level 0.
+  * Performance enhancements and new platform support including new
+    assembler code algorithm implementations.
+  * Deprecated LHASH statistics functions.
+  * FIPS 140-3 compliance changes.
 
 OpenSSL 3.0
 -----------
+
+### Major changes between OpenSSL 3.0.7 and OpenSSL 3.0.8 [7 Feb 2023]
+
+  * Fixed NULL dereference during PKCS7 data verification ([CVE-2023-0401])
+  * Fixed X.400 address type confusion in X.509 GeneralName ([CVE-2023-0286])
+  * Fixed NULL dereference validating DSA public key ([CVE-2023-0217])
+  * Fixed Invalid pointer dereference in d2i_PKCS7 functions ([CVE-2023-0216])
+  * Fixed Use-after-free following BIO_new_NDEF ([CVE-2023-0215])
+  * Fixed Double free after calling PEM_read_bio_ex ([CVE-2022-4450])
+  * Fixed Timing Oracle in RSA Decryption ([CVE-2022-4304])
+  * Fixed X.509 Name Constraints Read Buffer Overflow ([CVE-2022-4203])
+  * Fixed X.509 Policy Constraints Double Locking ([CVE-2022-3996])
+
+### Major changes between OpenSSL 3.0.6 and OpenSSL 3.0.7 [1 Nov 2022]
+
+  * Added RIPEMD160 to the default provider.
+  * Fixed regressions introduced in 3.0.6 version.
+  * Fixed two buffer overflows in punycode decoding functions.
+    ([CVE-2022-3786]) and ([CVE-2022-3602])
+
+### Major changes between OpenSSL 3.0.5 and OpenSSL 3.0.6 [11 Oct 2022]
+
+  * Fix for custom ciphers to prevent accidental use of NULL encryption
+    ([CVE-2022-3358])
+
+### Major changes between OpenSSL 3.0.4 and OpenSSL 3.0.5 [5 Jul 2022]
+
+  * Fixed heap memory corruption with RSA private key operation
+    ([CVE-2022-2274])
+  * Fixed AES OCB failure to encrypt some bytes on 32-bit x86 platforms
+    ([CVE-2022-2097])
 
 ### Major changes between OpenSSL 3.0.3 and OpenSSL 3.0.4 [21 Jun 2022]
 
@@ -47,24 +94,24 @@ OpenSSL 3.0
   * Fix a bug in the OPENSSL_LH_flush() function that breaks reuse of the memory
     occuppied by the removed hash table entries ([CVE-2022-1473])
 
-### Major changes between OpenSSL 3.0.1 and OpenSSL 3.0.2
+### Major changes between OpenSSL 3.0.1 and OpenSSL 3.0.2 [15 Mar 2022]
 
   * Fixed a bug in the BN_mod_sqrt() function that can cause it to loop forever
     for non-prime moduli ([CVE-2022-0778])
 
-### Major changes between OpenSSL 3.0.0 and OpenSSL 3.0.1
+### Major changes between OpenSSL 3.0.0 and OpenSSL 3.0.1 [14 Dec 2021]
 
   * Fixed invalid handling of X509_verify_cert() internal errors in libssl
     ([CVE-2021-4044])
   * Allow fetching an operation from the provider that owns an unexportable key
     as a fallback if that is still allowed by the property query.
 
-### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0
+### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0.0 [7 sep 2021]
 
   * Enhanced 'openssl list' with many new options.
   * Added migration guide to man7.
   * Implemented support for fully "pluggable" TLSv1.3 groups.
-  * Added suport for Kernel TLS (KTLS).
+  * Added support for Kernel TLS (KTLS).
   * Changed the license to the Apache License v2.0.
   * Moved all variations of the EVP ciphers CAST5, BF, IDEA, SEED, RC2,
     RC4, RC5, and DES to the legacy provider.
@@ -107,7 +154,7 @@ OpenSSL 3.0
   * Deprecated ERR_put_error(), ERR_get_error_line(), ERR_get_error_line_data(),
     ERR_peek_error_line_data(), ERR_peek_last_error_line_data() and
     ERR_func_error_string().
-  * Added OSSL_PROVIDER_available(), to check provider availibility.
+  * Added OSSL_PROVIDER_available(), to check provider availability.
   * Added 'openssl mac' that uses the EVP_MAC API.
   * Added 'openssl kdf' that uses the EVP_KDF API.
   * Add OPENSSL_info() and 'openssl info' to get built-in data.
@@ -1411,7 +1458,17 @@ OpenSSL 0.9.x
   * Support for various new platforms
 
 <!-- Links -->
-
+[CVE-2023-0401]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0401
+[CVE-2023-0286]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0286
+[CVE-2023-0217]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0217
+[CVE-2023-0216]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0216
+[CVE-2023-0215]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0215
+[CVE-2022-4450]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-4450
+[CVE-2022-4304]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-4304
+[CVE-2022-4203]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-4203
+[CVE-2022-3996]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-3996
+[CVE-2022-2274]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2274
+[CVE-2022-2097]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2097
 [CVE-2020-1971]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1971
 [CVE-2020-1967]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1967
 [CVE-2019-1563]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1563

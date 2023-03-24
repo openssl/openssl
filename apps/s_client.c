@@ -15,6 +15,7 @@
 #include <string.h>
 #include <errno.h>
 #include <openssl/e_os2.h>
+#include "internal/nelem.h"
 
 #ifndef OPENSSL_NO_SOCK
 
@@ -1962,7 +1963,7 @@ int s_client_main(int argc, char **argv)
 
     /*
      * In TLSv1.3 NewSessionTicket messages arrive after the handshake and can
-     * come at any time. Therefore we use a callback to write out the session
+     * come at any time. Therefore, we use a callback to write out the session
      * when we know about it. This approach works for < TLSv1.3 as well.
      */
     SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT
@@ -2848,7 +2849,7 @@ int s_client_main(int argc, char **argv)
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
             /*
              * Under Windows/DOS we make the assumption that we can always
-             * write to the tty: therefore if we need to write to the tty we
+             * write to the tty: therefore, if we need to write to the tty we
              * just fall through. Otherwise we timeout the select every
              * second and see if there are any keypresses. Note: this is a
              * hack, in a proper Windows application we wouldn't do this.
@@ -3079,6 +3080,16 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_err, "DONE\n");
                 ret = 0;
                 goto shut;
+            }
+
+            if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'C' && cmdletters))) {
+                cbuf_len = 0;
+                BIO_printf(bio_c_out,
+                           "RECONNECTING\n");
+                do_ssl_shutdown(con);
+                SSL_set_connect_state(con);
+                BIO_closesocket(SSL_get_fd(con));
+                goto re_start;
             }
 
             if ((!c_ign_eof) && (cbuf[0] == 'R' && cmdletters)) {
@@ -3383,7 +3394,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         /*
          * We also print the verify results when we dump session information,
          * but in TLSv1.3 we may not get that right away (or at all) depending
-         * on when we get a NewSessionTicket. Therefore we print it now as well.
+         * on when we get a NewSessionTicket. Therefore, we print it now as well.
          */
         verify_result = SSL_get_verify_result(s);
         BIO_printf(bio, "Verify return code: %ld (%s)\n", verify_result,

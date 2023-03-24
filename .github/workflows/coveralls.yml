@@ -7,7 +7,7 @@
 
 name: Coverage
 
-#Run once a day
+# Run once a day
 on:
   schedule:
     - cron:  '49 0 * * *'
@@ -18,26 +18,47 @@ permissions:
 jobs:
   coverage:
     permissions:
-      checks: write  # for coverallsapp/github-action to create new checks
-      contents: read  # for actions/checkout to fetch code
+      checks: write     # for coverallsapp/github-action to create new checks
+      contents: read    # for actions/checkout to fetch code
+    strategy:
+      fail-fast: false
+      matrix:
+        branches: [
+          {
+            branch: OpenSSL_1_1_1-stable
+          }, {
+            branch: openssl-3.1,
+            extra_config: enable-fips
+          }, {
+            branch: openssl-3.0,
+            extra_config: enable-fips
+          }, {
+            branch: master,
+            extra_config: no-afalgeng enable-fips enable-tfo enable-quic
+          }
+        ]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
+        ref: ${{ matrix.branches.branch }}
+    - name: cache commit id
+      run: |
+        echo "githubid=`/usr/bin/git log -1 --format='%H'`" >>$GITHUB_ENV
     - name: package installs
       run: |
         sudo apt-get update
         sudo apt-get -yq install lcov
         sudo apt-get -yq install bison gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python3 python3-paste python3-pyrad slapd tcsh python3-virtualenv virtualenv python3-kdcproxy
-    - name: install cpanm and Test2::V0 for gost_engine testing
+    - name: install Test2::V0 for gost_engine testing
       uses: perl-actions/install-with-cpanm@v1
       with:
         install: Test2::V0
     - name: setup hostname workaround
       run: sudo hostname localhost
     - name: config
-      run: CC=gcc ./config --banner=Configured --debug --coverage no-asm no-afalgeng enable-fips enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests enable-tfo enable-quic -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+      run: CC=gcc ./config --debug --coverage ${{ matrix.branches.extra_config }} no-asm enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -47,7 +68,9 @@ jobs:
     - name: generate coverage info
       run: lcov -d . -c -o ./lcov.info
     - name: Coveralls upload
-      uses: coverallsapp/github-action@v1.1.2
+      uses: coverallsapp/github-action@v1.2.4
       with:
         github-token: ${{ secrets.github_token }}
+        git-branch: ${{ matrix.branches.branch }}
+        git-commit: ${{ env.githubid }}
         path-to-lcov: ./lcov.info

@@ -92,6 +92,8 @@ B<openssl> B<s_server>
 [B<-naccept> I<+int>]
 [B<-read_buf> I<+int>]
 [B<-bugs>]
+[B<-no_tx_cert_comp>]
+[B<-no_rx_cert_comp>]
 [B<-no_comp>]
 [B<-comp>]
 [B<-no_ticket>]
@@ -130,6 +132,7 @@ B<openssl> B<s_server>
 [B<-alpn> I<val>]
 [B<-ktls>]
 [B<-sendfile>]
+[B<-zerocopy_sendfile>]
 [B<-keylogfile> I<outfile>]
 [B<-recv_max_early_data> I<int>]
 [B<-max_early_data> I<int>]
@@ -139,6 +142,7 @@ B<openssl> B<s_server>
 [B<-no_anti_replay>]
 [B<-num_tickets>]
 [B<-tfo>]
+[B<-cert_comp>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
@@ -604,6 +608,14 @@ further information).
 There are several known bugs in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
+=item B<-no_tx_cert_comp>
+
+Disables support for sending TLSv1.3 compressed certificates.
+
+=item B<-no_rx_cert_comp>
+
+Disables support for receiving TLSv1.3 compressed certificates.
+
 =item B<-no_comp>
 
 Disable negotiation of TLS compression.
@@ -771,8 +783,8 @@ The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
 =item B<-ktls>
 
 Enable Kernel TLS for sending and receiving.
-This option was introduced in OpenSSL 3.1.0.
-Kernel TLS is off by default as of OpenSSL 3.1.0.
+This option was introduced in OpenSSL 3.2.0.
+Kernel TLS is off by default as of OpenSSL 3.2.0.
 
 =item B<-sendfile>
 
@@ -780,6 +792,15 @@ If this option is set and KTLS is enabled, SSL_sendfile() will be used
 instead of BIO_write() to send the HTTP response requested by a client.
 This option is only valid when B<-ktls> along with B<-WWW> or B<-HTTP>
 are specified.
+
+=item B<-zerocopy_sendfile>
+
+If this option is set, SSL_sendfile() will use the zerocopy TX mode, which gives
+a performance boost when used with KTLS hardware offload. Note that invalid
+TLS records might be transmitted if the file is changed while being sent.
+This option depends on B<-sendfile>; when used alone, B<-sendfile> is implied,
+and a warning is shown. Note that KTLS sendfile on FreeBSD always runs in the
+zerocopy mode.
 
 =item B<-keylogfile> I<outfile>
 
@@ -820,6 +841,9 @@ data that was sent will be rejected.
 
 Enable acceptance of TCP Fast Open (RFC7413) connections.
 
+=item B<-cert_comp>
+
+Pre-compresses certificates (RFC8879) that will be sent during the handshake.
 
 {- $OpenSSL::safe::opt_name_item -}
 
@@ -947,7 +971,8 @@ The
 The B<-srpvfile>, B<-srpuserseed>, and B<-engine>
 option were deprecated in OpenSSL 3.0.
 
-The -tfo option was added in OpenSSL 3.1.
+The B<-tfo>, B<-no_tx_cert_comp>, and B<-no_rx_cert_comp> options were added
+in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

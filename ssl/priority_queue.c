@@ -85,7 +85,7 @@ static const size_t max_nodes =
  *
  * We use an expansion factor of 8 / 5 = 1.6
  */
-static ossl_inline int compute_pqueue_growth(size_t target, size_t current)
+static ossl_inline size_t compute_pqueue_growth(size_t target, size_t current)
 {
     int err = 0;
 
@@ -305,17 +305,13 @@ int ossl_pqueue_reserve(OSSL_PQUEUE *pq, size_t n)
     }
 
     h = OPENSSL_realloc(pq->heap, new_max * sizeof(*pq->heap));
-    if (h == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (h == NULL)
         return 0;
-    }
     pq->heap = h;
 
     e = OPENSSL_realloc(pq->elements, new_max * sizeof(*pq->elements));
-    if (e == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (e == NULL)
         return 0;
-    }
     pq->elements = e;
 
     pq->hmax = new_max;
@@ -331,10 +327,8 @@ OSSL_PQUEUE *ossl_pqueue_new(int (*compare)(const void *, const void *))
         return NULL;
 
     pq = OPENSSL_malloc(sizeof(*pq));
-    if (pq == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (pq == NULL)
         return NULL;
-    }
     pq->compare = compare;
     pq->hmax = min_nodes;
     pq->htop = 0;
@@ -343,7 +337,6 @@ OSSL_PQUEUE *ossl_pqueue_new(int (*compare)(const void *, const void *))
     pq->elements = OPENSSL_malloc(sizeof(*pq->elements) * min_nodes);
     if (pq->heap == NULL || pq->elements == NULL) {
         ossl_pqueue_free(pq);
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     pqueue_add_freelist(pq, 0);

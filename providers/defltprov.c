@@ -153,6 +153,10 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { PROV_NAMES_MD5_SHA1, "provider=default", ossl_md5_sha1_functions },
 #endif /* OPENSSL_NO_MD5 */
 
+#ifndef OPENSSL_NO_RMD160
+    { PROV_NAMES_RIPEMD_160, "provider=default", ossl_ripemd160_functions },
+#endif /* OPENSSL_NO_RMD160 */
+
     { PROV_NAMES_NULL, "provider=default", ossl_nullmd_functions },
     { NULL, NULL, NULL }
 };
@@ -300,6 +304,7 @@ static const OSSL_ALGORITHM_CAPABLE deflt_ciphers[] = {
     ALG(PROV_NAMES_SM4_CTR, ossl_sm4128ctr_functions),
     ALG(PROV_NAMES_SM4_OFB, ossl_sm4128ofb128_functions),
     ALG(PROV_NAMES_SM4_CFB, ossl_sm4128cfb128_functions),
+    ALG(PROV_NAMES_SM4_XTS, ossl_sm4128xts_functions),
 #endif /* OPENSSL_NO_SM4 */
 #ifndef OPENSSL_NO_CHACHA
     ALG(PROV_NAMES_ChaCha20, ossl_chacha20_functions),
@@ -348,6 +353,13 @@ static const OSSL_ALGORITHM deflt_kdfs[] = {
     { PROV_NAMES_SCRYPT, "provider=default", ossl_kdf_scrypt_functions },
 #endif
     { PROV_NAMES_KRB5KDF, "provider=default", ossl_kdf_krb5kdf_functions },
+    { PROV_NAMES_HMAC_DRBG_KDF, "provider=default",
+      ossl_kdf_hmac_drbg_functions },
+#ifndef OPENSSL_NO_ARGON2
+    { PROV_NAMES_ARGON2I, "provider=default", ossl_kdf_argon2i_functions },
+    { PROV_NAMES_ARGON2D, "provider=default", ossl_kdf_argon2d_functions },
+    { PROV_NAMES_ARGON2ID, "provider=default", ossl_kdf_argon2id_functions },
+#endif
     { NULL, NULL, NULL }
 };
 

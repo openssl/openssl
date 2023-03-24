@@ -146,10 +146,8 @@ static void *aes_xts_dupctx(void *vctx)
             return NULL;
     }
     ret = OPENSSL_malloc(sizeof(*ret));
-    if (ret == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (ret == NULL)
         return NULL;
-    }
     in->base.hw->copyctx(&ret->base, &in->base);
     return ret;
 }

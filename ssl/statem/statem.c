@@ -116,6 +116,11 @@ int SSL_in_before(const SSL *s)
         && (sc->statem.state == MSG_FLOW_UNINITED);
 }
 
+OSSL_HANDSHAKE_STATE ossl_statem_get_state(SSL_CONNECTION *s)
+{
+    return s != NULL ? s->statem.hand_state : TLS_ST_BEFORE;
+}
+
 /*
  * Clear the state machine state and reset back to MSG_FLOW_UNINITED
  */
@@ -143,8 +148,7 @@ void ossl_statem_send_fatal(SSL_CONNECTION *s, int al)
       return;
     ossl_statem_set_in_init(s, 1);
     s->statem.state = MSG_FLOW_ERROR;
-    if (al != SSL_AD_NO_ALERT
-            && s->statem.enc_write_state != ENC_WRITE_STATE_INVALID)
+    if (al != SSL_AD_NO_ALERT)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
 }
 
@@ -435,10 +439,6 @@ static int state_machine(SSL_CONNECTION *s, int server)
             buf = NULL;
         }
 
-        if (!ssl3_setup_buffers(s)) {
-            SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
-            goto end;
-        }
         s->init_num = 0;
 
         /*

@@ -13,6 +13,8 @@
 # include <openssl/ssl.h>
 # include "internal/quic_types.h"
 
+# ifndef OPENSSL_NO_QUIC
+
 struct ossl_qrx_st;
 struct ossl_qtx_st;
 
@@ -108,5 +110,7 @@ uint64_t ossl_qrl_get_suite_max_pkt(uint32_t suite_id);
  * for a given suite or 0 if suite ID is invalid.
  */
 uint64_t ossl_qrl_get_suite_max_forged_pkt(uint32_t suite_id);
+
+# endif
 
 #endif

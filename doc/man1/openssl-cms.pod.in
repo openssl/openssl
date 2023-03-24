@@ -911,7 +911,7 @@ The B<-nameopt> option was added in OpenSSL 3.0.0.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
-The B<-digest> option was added in OpenSSL 3.1.
+The B<-digest> option was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

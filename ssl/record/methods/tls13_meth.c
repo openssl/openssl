@@ -21,10 +21,11 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                   size_t taglen,
                                   int mactype,
                                   const EVP_MD *md,
-                                  const SSL_COMP *comp)
+                                  COMP_METHOD *comp)
 {
     EVP_CIPHER_CTX *ciph_ctx;
     int mode;
+    int enc = (rl->direction == OSSL_RECORD_DIRECTION_WRITE) ? 1 : 0;
 
     if (ivlen > sizeof(rl->iv)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -38,17 +39,15 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_FATAL;
     }
 
-    rl->taglen = taglen;
-
     mode = EVP_CIPHER_get_mode(ciph);
 
-    if (EVP_DecryptInit_ex(ciph_ctx, ciph, NULL, NULL, NULL) <= 0
+    if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL, enc) <= 0
         || EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen,
                                NULL) <= 0
         || (mode == EVP_CIPH_CCM_MODE
             && EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG, taglen,
                                    NULL) <= 0)
-        || EVP_DecryptInit_ex(ciph_ctx, NULL, NULL, key, NULL) <= 0) {
+        || EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, enc) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
     }
@@ -56,8 +55,9 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     return OSSL_RECORD_RETURN_SUCCESS;
 }
 
-static int tls13_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
-                        int sending, SSL_MAC_BUF *mac, size_t macsize)
+static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
+                        size_t n_recs, int sending, SSL_MAC_BUF *mac,
+                        size_t macsize)
 {
     EVP_CIPHER_CTX *ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH], recheader[SSL3_RT_HEADER_LENGTH];
@@ -65,7 +65,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
     unsigned char *staticiv;
     unsigned char *seq = rl->sequence;
     int lenu, lenf;
-    SSL3_RECORD *rec = &recs[0];
+    TLS_RL_RECORD *rec = &recs[0];
     WPACKET wpkt;
     const EVP_CIPHER *cipher;
     int mode;
@@ -121,14 +121,8 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
     for (loop = 0; loop < SEQ_NUM_SIZE; loop++)
         iv[offset + loop] = staticiv[offset + loop] ^ seq[loop];
 
-    /* Increment the sequence counter */
-    for (loop = SEQ_NUM_SIZE; loop > 0; loop--) {
-        ++seq[loop - 1];
-        if (seq[loop - 1] != 0)
-            break;
-    }
-    if (loop == 0) {
-        /* Sequence has wrapped */
+    if (!tls_increment_sequence_ctr(rl)) {
+        /* RLAYERfatal already called */
         return 0;
     }
 
@@ -181,7 +175,8 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *recs, size_t n_recs,
     return 1;
 }
 
-static int tls13_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+static int tls13_validate_record_header(OSSL_RECORD_LAYER *rl,
+                                        TLS_RL_RECORD *rec)
 {
     if (rec->type != SSL3_RT_APPLICATION_DATA
             && (rec->type != SSL3_RT_CHANGE_CIPHER_SPEC
@@ -204,7 +199,7 @@ static int tls13_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     return 1;
 }
 
-static int tls13_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+static int tls13_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
     /* Skip this if we've received a plaintext alert */
     if (rec->type != SSL3_RT_ALERT) {
@@ -238,6 +233,76 @@ static int tls13_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     return 1;
 }
 
+static unsigned int tls13_get_record_type(OSSL_RECORD_LAYER *rl,
+                                          OSSL_RECORD_TEMPLATE *template)
+{
+    if (rl->allow_plain_alerts && template->type == SSL3_RT_ALERT)
+        return  SSL3_RT_ALERT;
+
+    /*
+     * Aside from the above case we always use the application data record type
+     * when encrypting in TLSv1.3. The "inner" record type encodes the "real"
+     * record type from the template.
+     */
+    return SSL3_RT_APPLICATION_DATA;
+}
+
+static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
+                                    OSSL_RECORD_TEMPLATE *thistempl,
+                                    WPACKET *thispkt,
+                                    TLS_RL_RECORD *thiswr)
+{
+    size_t rlen;
+
+    /* Nothing to be done in the case of a plaintext alert */
+    if (rl->allow_plain_alerts && thistempl->type != SSL3_RT_ALERT)
+        return 1;
+
+    if (!WPACKET_put_bytes_u8(thispkt, thistempl->type)) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    TLS_RL_RECORD_add_length(thiswr, 1);
+
+    /* Add TLS1.3 padding */
+    rlen = TLS_RL_RECORD_get_length(thiswr);
+    if (rlen < rl->max_frag_len) {
+        size_t padding = 0;
+        size_t max_padding = rl->max_frag_len - rlen;
+
+        if (rl->padding != NULL) {
+            padding = rl->padding(rl->cbarg, thistempl->type, rlen);
+        } else if (rl->block_padding > 0) {
+            size_t mask = rl->block_padding - 1;
+            size_t remainder;
+
+            /* optimize for power of 2 */
+            if ((rl->block_padding & mask) == 0)
+                remainder = rlen & mask;
+            else
+                remainder = rlen % rl->block_padding;
+            /* don't want to add a block of padding if we don't have to */
+            if (remainder == 0)
+                padding = 0;
+            else
+                padding = rl->block_padding - remainder;
+        }
+        if (padding > 0) {
+            /* do not allow the record to exceed max plaintext length */
+            if (padding > max_padding)
+                padding = max_padding;
+            if (!WPACKET_memset(thispkt, 0, padding)) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
+                            ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+            TLS_RL_RECORD_add_length(thiswr, padding);
+        }
+    }
+
+    return 1;
+}
+
 struct record_functions_st tls_1_3_funcs = {
     tls13_set_crypto_state,
     tls13_cipher,
@@ -248,5 +313,13 @@ struct record_functions_st tls_1_3_funcs = {
     tls13_validate_record_header,
     tls13_post_process_record,
     tls_get_max_records_default,
-    tls_write_records_default
+    tls_write_records_default,
+    tls_allocate_write_buffers_default,
+    tls_initialise_write_packets_default,
+    tls13_get_record_type,
+    tls_prepare_record_header_default,
+    tls13_add_record_padding,
+    tls_prepare_for_encryption_default,
+    tls_post_encryption_processing_default,
+    NULL
 };

@@ -145,10 +145,8 @@ int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
     }
 
     mods = OPENSSL_zalloc(sizeof(*mods) * NUMPRIMES);
-    if (mods == NULL) {
-        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+    if (mods == NULL)
         return 0;
-    }
 
     BN_CTX_start(ctx);
     t = BN_CTX_get(ctx);
@@ -252,6 +250,17 @@ int ossl_bn_check_prime(const BIGNUM *w, int checks, BN_CTX *ctx,
     return bn_is_prime_int(w, checks, ctx, do_trial_division, cb);
 }
 
+/*
+ * Use this only for key generation.
+ * It always uses trial division. The number of checks
+ * (MR rounds) passed in is used without being clamped to a minimum value.
+ */
+int ossl_bn_check_generated_prime(const BIGNUM *w, int checks, BN_CTX *ctx,
+                                  BN_GENCB *cb)
+{
+    return bn_is_prime_int(w, checks, ctx, 1, cb);
+}
+
 int BN_check_prime(const BIGNUM *p, BN_CTX *ctx, BN_GENCB *cb)
 {
     return ossl_bn_check_prime(p, 0, ctx, 1, cb);
@@ -308,9 +317,10 @@ static int bn_is_prime_int(const BIGNUM *w, int checks, BN_CTX *ctx,
         goto err;
 #endif
 
-    ret = ossl_bn_miller_rabin_is_prime(w, checks, ctx, cb, 0, &status);
-    if (!ret)
+    if (!ossl_bn_miller_rabin_is_prime(w, checks, ctx, cb, 0, &status)) {
+        ret = -1;
         goto err;
+    }
     ret = (status == BN_PRIMETEST_PROBABLY_PRIME);
 err:
 #ifndef FIPS_MODULE

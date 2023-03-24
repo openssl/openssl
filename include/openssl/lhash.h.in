@@ -97,16 +97,16 @@ unsigned long OPENSSL_LH_get_down_load(const OPENSSL_LHASH *lh);
 void OPENSSL_LH_set_down_load(OPENSSL_LHASH *lh, unsigned long down_load);
 
 # ifndef OPENSSL_NO_STDIO
-#  ifndef OPENSSL_NO_DEPRECATED_3_1
-OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp);
-OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_node_stats(const OPENSSL_LHASH *lh, FILE *fp);
-OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp);
+#  ifndef OPENSSL_NO_DEPRECATED_3_2
+OSSL_DEPRECATEDIN_3_2 void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp);
+OSSL_DEPRECATEDIN_3_2 void OPENSSL_LH_node_stats(const OPENSSL_LHASH *lh, FILE *fp);
+OSSL_DEPRECATEDIN_3_2 void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp);
 #  endif
 # endif
-# ifndef OPENSSL_NO_DEPRECATED_3_1
-OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
-OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
-OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
+# ifndef OPENSSL_NO_DEPRECATED_3_2
+OSSL_DEPRECATEDIN_3_2 void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
+OSSL_DEPRECATEDIN_3_2 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
+OSSL_DEPRECATEDIN_3_2 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 # endif
 
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
@@ -181,7 +181,7 @@ OSSL_DEPRECATEDIN_3_1 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *
     } \
     LHASH_OF(type)
 
-# ifndef OPENSSL_NO_DEPRECATED_3_1
+# ifndef OPENSSL_NO_DEPRECATED_3_2
 #  define DEFINE_LHASH_OF_DEPRECATED(type) \
     static ossl_unused ossl_inline void \
     lh_##type##_node_stats_bio(const LHASH_OF(type) *lh, BIO *out) \

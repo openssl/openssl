@@ -37,6 +37,8 @@ const char *SSL_state_string_long(const SSL *s)
         return "SSLv3/TLS read server hello";
     case TLS_ST_CR_CERT:
         return "SSLv3/TLS read server certificate";
+    case TLS_ST_CR_COMP_CERT:
+        return "TLSv1.3 read server compressed certificate";
     case TLS_ST_CR_KEY_EXCH:
         return "SSLv3/TLS read server key exchange";
     case TLS_ST_CR_CERT_REQ:
@@ -47,6 +49,8 @@ const char *SSL_state_string_long(const SSL *s)
         return "SSLv3/TLS read server done";
     case TLS_ST_CW_CERT:
         return "SSLv3/TLS write client certificate";
+    case TLS_ST_CW_COMP_CERT:
+        return "TLSv1.3 write client compressed certificate";
     case TLS_ST_CW_KEY_EXCH:
         return "SSLv3/TLS write client key exchange";
     case TLS_ST_CW_CERT_VRFY:
@@ -71,6 +75,8 @@ const char *SSL_state_string_long(const SSL *s)
         return "SSLv3/TLS write server hello";
     case TLS_ST_SW_CERT:
         return "SSLv3/TLS write certificate";
+    case TLS_ST_SW_COMP_CERT:
+        return "TLSv1.3 write server compressed certificate";
     case TLS_ST_SW_KEY_EXCH:
         return "SSLv3/TLS write key exchange";
     case TLS_ST_SW_CERT_REQ:
@@ -81,6 +87,8 @@ const char *SSL_state_string_long(const SSL *s)
         return "SSLv3/TLS write server done";
     case TLS_ST_SR_CERT:
         return "SSLv3/TLS read client certificate";
+    case TLS_ST_SR_COMP_CERT:
+        return "TLSv1.3 read client compressed certificate";
     case TLS_ST_SR_KEY_EXCH:
         return "SSLv3/TLS read client key exchange";
     case TLS_ST_SR_CERT_VRFY:
@@ -150,6 +158,8 @@ const char *SSL_state_string(const SSL *s)
         return "TRSH";
     case TLS_ST_CR_CERT:
         return "TRSC";
+    case TLS_ST_CR_COMP_CERT:
+        return "TRSCC";
     case TLS_ST_CR_KEY_EXCH:
         return "TRSKE";
     case TLS_ST_CR_CERT_REQ:
@@ -158,6 +168,8 @@ const char *SSL_state_string(const SSL *s)
         return "TRSD";
     case TLS_ST_CW_CERT:
         return "TWCC";
+    case TLS_ST_CW_COMP_CERT:
+        return "TWCCC";
     case TLS_ST_CW_KEY_EXCH:
         return "TWCKE";
     case TLS_ST_CW_CERT_VRFY:
@@ -182,6 +194,8 @@ const char *SSL_state_string(const SSL *s)
         return "TWSH";
     case TLS_ST_SW_CERT:
         return "TWSC";
+    case TLS_ST_SW_COMP_CERT:
+        return "TWSCC";
     case TLS_ST_SW_KEY_EXCH:
         return "TWSKE";
     case TLS_ST_SW_CERT_REQ:
@@ -190,6 +204,8 @@ const char *SSL_state_string(const SSL *s)
         return "TWSD";
     case TLS_ST_SR_CERT:
         return "TRCC";
+    case TLS_ST_SR_COMP_CERT:
+        return "TRCCC";
     case TLS_ST_SR_KEY_EXCH:
         return "TRCKE";
     case TLS_ST_SR_CERT_VRFY:

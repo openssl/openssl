@@ -387,7 +387,7 @@ static int default_fixup_args(enum state state,
 {
     int ret;
 
-    if ((ret = default_check(state, translation, ctx)) < 0)
+    if ((ret = default_check(state, translation, ctx)) <= 0)
         return ret;
 
     switch (state) {
@@ -458,11 +458,9 @@ static int default_fixup_args(enum state state,
             if (ctx->p2 != NULL) {
                 if (ctx->action_type == SET) {
                     ctx->buflen = BN_num_bytes(ctx->p2);
-                    if ((ctx->allocated_buf =
-                         OPENSSL_malloc(ctx->buflen)) == NULL) {
-                        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                    if ((ctx->allocated_buf
+                         = OPENSSL_malloc(ctx->buflen)) == NULL)
                         return 0;
-                    }
                     if (BN_bn2nativepad(ctx->p2,
                                          ctx->allocated_buf, ctx->buflen) < 0) {
                         OPENSSL_free(ctx->allocated_buf);
@@ -1955,6 +1953,32 @@ IMPL_GET_RSA_PAYLOAD_COEFFICIENT(7)
 IMPL_GET_RSA_PAYLOAD_COEFFICIENT(8)
 IMPL_GET_RSA_PAYLOAD_COEFFICIENT(9)
 
+static int fix_group_ecx(enum state state,
+                         const struct translation_st *translation,
+                         struct translation_ctx_st *ctx)
+{
+    const char *value = NULL;
+
+    switch (state) {
+    case PRE_PARAMS_TO_CTRL:
+        if (!EVP_PKEY_CTX_IS_GEN_OP(ctx->pctx))
+            return 0;
+        ctx->action_type = NONE;
+        return 1;
+    case POST_PARAMS_TO_CTRL:
+        if (OSSL_PARAM_get_utf8_string_ptr(ctx->params, &value) == 0 ||
+            OPENSSL_strcasecmp(ctx->pctx->keytype, value) != 0) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
+            ctx->p1 = 0;
+            return 0;
+        }
+        ctx->p1 = 1;
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 /*-
  * The translation table itself
  * ============================
@@ -2177,6 +2201,12 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
       EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL, NULL, NULL,
       OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL, OSSL_PARAM_OCTET_STRING, NULL },
 
+    { SET, EVP_PKEY_RSA, 0, EVP_PKEY_OP_TYPE_CRYPT,
+      EVP_PKEY_CTRL_RSA_IMPLICIT_REJECTION, NULL,
+      "rsa_pkcs1_implicit_rejection",
+      OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION, OSSL_PARAM_UNSIGNED_INTEGER,
+      NULL },
+
     { SET, EVP_PKEY_RSA_PSS, 0, EVP_PKEY_OP_TYPE_GEN,
       EVP_PKEY_CTRL_MD, "rsa_pss_keygen_md", NULL,
       OSSL_ALG_PARAM_DIGEST, OSSL_PARAM_UTF8_STRING, fix_md },
@@ -2274,6 +2304,15 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
     { GET, -1, -1, EVP_PKEY_OP_TYPE_SIG,
       EVP_PKEY_CTRL_GET_MD, NULL, NULL,
       OSSL_SIGNATURE_PARAM_DIGEST, OSSL_PARAM_UTF8_STRING, fix_md },
+
+    /*-
+     * ECX
+     * ===
+     */
+    { SET, EVP_PKEY_X25519, EVP_PKEY_X25519, EVP_PKEY_OP_KEYGEN, -1, NULL, NULL,
+      OSSL_PKEY_PARAM_GROUP_NAME, OSSL_PARAM_UTF8_STRING, fix_group_ecx },
+    { SET, EVP_PKEY_X448, EVP_PKEY_X448, EVP_PKEY_OP_KEYGEN, -1, NULL, NULL,
+      OSSL_PKEY_PARAM_GROUP_NAME, OSSL_PARAM_UTF8_STRING, fix_group_ecx },
 };
 
 static const struct translation_st evp_pkey_translations[] = {
@@ -2485,7 +2524,7 @@ lookup_translation(struct translation_st *tmpl,
             tmpl->ctrl_hexstr = ctrl_hexstr;
         } else if (tmpl->param_key != NULL) {
             /*
-             * Search criteria that originates from a OSSL_PARAM setter or
+             * Search criteria that originates from an OSSL_PARAM setter or
              * getter.
              *
              * Ctrls were fundamentally bidirectional, with only the ctrl
@@ -2692,7 +2731,7 @@ static int evp_pkey_ctx_setget_params_to_ctrl(EVP_PKEY_CTX *pctx,
 
         ret = fixup(PRE_PARAMS_TO_CTRL, translation, &ctx);
 
-        if (ret > 0 && action_type != NONE)
+        if (ret > 0 && ctx.action_type != NONE)
             ret = EVP_PKEY_CTX_ctrl(pctx, keytype, optype,
                                     ctx.ctrl_cmd, ctx.p1, ctx.p2);
 

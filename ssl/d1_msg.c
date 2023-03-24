@@ -48,13 +48,13 @@ int dtls1_dispatch_alert(SSL *ssl)
     if (s == NULL)
         return 0;
 
-    s->s3.alert_dispatch = 0;
+    s->s3.alert_dispatch = SSL_ALERT_DISPATCH_NONE;
 
     memset(buf, 0, sizeof(buf));
     *ptr++ = s->s3.send_alert[0];
     *ptr++ = s->s3.send_alert[1];
 
-    i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), 0, &written);
+    i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), &written);
     if (i <= 0) {
         s->s3.alert_dispatch = 1;
         /* fprintf(stderr, "not done with alert\n"); */

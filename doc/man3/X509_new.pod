@@ -92,7 +92,7 @@ L<X509_verify_cert(3)>
 
 X509_new_ex() was added in OpenSSL 3.0.
 
-OSSL_STACK_OF_X509_free() was added in OpenSSL 3.1.
+OSSL_STACK_OF_X509_free() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

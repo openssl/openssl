@@ -54,7 +54,7 @@ static int dsa_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
 
     } else if ((ptype == V_ASN1_NULL) || (ptype == V_ASN1_UNDEF)) {
         if ((dsa = DSA_new()) == NULL) {
-            ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_DSA, ERR_R_DSA_LIB);
             goto err;
         }
     } else {
@@ -101,12 +101,12 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
         && dsa->params.g != NULL) {
         str = ASN1_STRING_new();
         if (str == NULL) {
-            ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_DSA, ERR_R_ASN1_LIB);
             goto err;
         }
         str->length = i2d_DSAparams(dsa, &str->data);
         if (str->length <= 0) {
-            ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_DSA, ERR_R_ASN1_LIB);
             goto err;
         }
         ptype = V_ASN1_SEQUENCE;
@@ -116,7 +116,7 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     pubint = BN_to_ASN1_INTEGER(dsa->pub_key, NULL);
 
     if (pubint == NULL) {
-        ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSA, ERR_R_ASN1_LIB);
         goto err;
     }
 
@@ -124,7 +124,7 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     ASN1_INTEGER_free(pubint);
 
     if (penclen <= 0) {
-        ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSA, ERR_R_ASN1_LIB);
         goto err;
     }
 
@@ -175,13 +175,13 @@ static int dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     params = ASN1_STRING_new();
 
     if (params == NULL) {
-        ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSA, ERR_R_ASN1_LIB);
         goto err;
     }
 
     params->length = i2d_DSAparams(pkey->pkey.dsa, &params->data);
     if (params->length <= 0) {
-        ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSA, ERR_R_ASN1_LIB);
         goto err;
     }
     params->type = V_ASN1_SEQUENCE;
@@ -483,7 +483,7 @@ static int dsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     DSA *dsa = ossl_dsa_new(pctx->libctx);
 
     if (dsa == NULL) {
-        ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSA, ERR_R_DSA_LIB);
         return 0;
     }
 

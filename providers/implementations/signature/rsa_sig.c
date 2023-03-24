@@ -182,15 +182,14 @@ static void *rsa_newctx(void *provctx, const char *propq)
         || (propq != NULL
             && (propq_copy = OPENSSL_strdup(propq)) == NULL)) {
         OPENSSL_free(prsactx);
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     prsactx->libctx = PROV_LIBCTX_OF(provctx);
     prsactx->flag_allow_md = 1;
     prsactx->propq = propq_copy;
-    /* Maximum for sign, auto for verify */
-    prsactx->saltlen = RSA_PSS_SALTLEN_AUTO;
+    /* Maximum up to digest length for sign, auto for verify */
+    prsactx->saltlen = RSA_PSS_SALTLEN_AUTO_DIGEST_MAX;
     prsactx->min_saltlen = -1;
     return prsactx;
 }
@@ -198,13 +197,27 @@ static void *rsa_newctx(void *provctx, const char *propq)
 static int rsa_pss_compute_saltlen(PROV_RSA_CTX *ctx)
 {
     int saltlen = ctx->saltlen;
+    int saltlenMax = -1;
 
+    /* FIPS 186-4 section 5 "The RSA Digital Signature Algorithm", subsection
+     * 5.5 "PKCS #1" says: "For RSASSA-PSS […] the length (in bytes) of the
+     * salt (sLen) shall satisfy 0 <= sLen <= hLen, where hLen is the length of
+     * the hash function output block (in bytes)."
+     *
+     * Provide a way to use at most the digest length, so that the default does
+     * not violate FIPS 186-4. */
     if (saltlen == RSA_PSS_SALTLEN_DIGEST) {
         saltlen = EVP_MD_get_size(ctx->md);
-    } else if (saltlen == RSA_PSS_SALTLEN_AUTO || saltlen == RSA_PSS_SALTLEN_MAX) {
+    } else if (saltlen == RSA_PSS_SALTLEN_AUTO_DIGEST_MAX) {
+        saltlen = RSA_PSS_SALTLEN_MAX;
+        saltlenMax = EVP_MD_get_size(ctx->md);
+    }
+    if (saltlen == RSA_PSS_SALTLEN_MAX || saltlen == RSA_PSS_SALTLEN_AUTO) {
         saltlen = RSA_size(ctx->rsa) - EVP_MD_get_size(ctx->md) - 2;
         if ((RSA_bits(ctx->rsa) & 0x7) == 1)
             saltlen--;
+        if (saltlenMax >= 0 && saltlen > saltlenMax)
+            saltlen = saltlenMax;
     }
     if (saltlen < 0) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
@@ -230,7 +243,7 @@ static unsigned char *rsa_generate_signature_aid(PROV_RSA_CTX *ctx,
     int ret;
 
     if (!WPACKET_init_der(&pkt, aid_buf, buf_len)) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -408,8 +421,8 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa,
 
     prsactx->operation = operation;
 
-    /* Maximum for sign, auto for verify */
-    prsactx->saltlen = RSA_PSS_SALTLEN_AUTO;
+    /* Maximize up to digest length for sign, auto for verify */
+    prsactx->saltlen = RSA_PSS_SALTLEN_AUTO_DIGEST_MAX;
     prsactx->min_saltlen = -1;
 
     switch (RSA_test_flags(prsactx->rsa, RSA_FLAG_TYPE_MASK)) {
@@ -484,10 +497,8 @@ static int setup_tbuf(PROV_RSA_CTX *ctx)
 {
     if (ctx->tbuf != NULL)
         return 1;
-    if ((ctx->tbuf = OPENSSL_malloc(RSA_size(ctx->rsa))) == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if ((ctx->tbuf = OPENSSL_malloc(RSA_size(ctx->rsa))) == NULL)
         return 0;
-    }
     return 1;
 }
 
@@ -568,7 +579,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
                 return 0;
             }
             if (!setup_tbuf(prsactx)) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_PROV, ERR_R_PROV_LIB);
                 return 0;
             }
             memcpy(prsactx->tbuf, tbs, tbslen);
@@ -823,14 +834,17 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
             return 0;
         }
     } else {
+        int ret;
+
         if (!setup_tbuf(prsactx))
             return 0;
-        rslen = RSA_public_decrypt(siglen, sig, prsactx->tbuf, prsactx->rsa,
-                                   prsactx->pad_mode);
-        if (rslen == 0) {
+        ret = RSA_public_decrypt(siglen, sig, prsactx->tbuf, prsactx->rsa,
+                                 prsactx->pad_mode);
+        if (ret <= 0) {
             ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
             return 0;
         }
+        rslen = (size_t)ret;
     }
 
     if ((rslen != tbslen) || memcmp(tbs, prsactx->tbuf, rslen))
@@ -986,10 +1000,8 @@ static void *rsa_dupctx(void *vprsactx)
         return NULL;
 
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
-    if (dstctx == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (dstctx == NULL)
         return NULL;
-    }
 
     *dstctx = *srcctx;
     dstctx->rsa = NULL;
@@ -1106,6 +1118,9 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
                 break;
             case RSA_PSS_SALTLEN_AUTO:
                 value = OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO;
+                break;
+            case RSA_PSS_SALTLEN_AUTO_DIGEST_MAX:
+                value = OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO_DIGEST_MAX;
                 break;
             default:
                 {
@@ -1270,6 +1285,8 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
                 saltlen = RSA_PSS_SALTLEN_MAX;
             else if (strcmp(p->data, OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO) == 0)
                 saltlen = RSA_PSS_SALTLEN_AUTO;
+            else if (strcmp(p->data, OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO_DIGEST_MAX) == 0)
+                saltlen = RSA_PSS_SALTLEN_AUTO_DIGEST_MAX;
             else
                 saltlen = atoi(p->data);
             break;
@@ -1278,11 +1295,11 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         }
 
         /*
-         * RSA_PSS_SALTLEN_MAX seems curiously named in this check.
-         * Contrary to what it's name suggests, it's the currently
-         * lowest saltlen number possible.
+         * RSA_PSS_SALTLEN_AUTO_DIGEST_MAX seems curiously named in this check.
+         * Contrary to what it's name suggests, it's the currently lowest
+         * saltlen number possible.
          */
-        if (saltlen < RSA_PSS_SALTLEN_MAX) {
+        if (saltlen < RSA_PSS_SALTLEN_AUTO_DIGEST_MAX) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH);
             return 0;
         }
@@ -1290,6 +1307,7 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         if (rsa_pss_restricted(prsactx)) {
             switch (saltlen) {
             case RSA_PSS_SALTLEN_AUTO:
+            case RSA_PSS_SALTLEN_AUTO_DIGEST_MAX:
                 if (prsactx->operation == EVP_PKEY_OP_VERIFY) {
                     ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH,
                                    "Cannot use autodetected salt length");

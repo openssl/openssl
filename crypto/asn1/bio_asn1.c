@@ -100,10 +100,8 @@ static int asn1_bio_new(BIO *b)
 {
     BIO_ASN1_BUF_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    if (ctx == NULL)
         return 0;
-    }
     if (!asn1_bio_init(ctx, DEFAULT_ASN1_BUF_SIZE)) {
         OPENSSL_free(ctx);
         return 0;
@@ -116,10 +114,12 @@ static int asn1_bio_new(BIO *b)
 
 static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size)
 {
-    if (size <= 0 || (ctx->buf = OPENSSL_malloc(size)) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    if (size <= 0) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
+    if ((ctx->buf = OPENSSL_malloc(size)) == NULL)
+        return 0;
     ctx->bufsize = size;
     ctx->asn1_class = V_ASN1_UNIVERSAL;
     ctx->asn1_tag = V_ASN1_OCTET_STRING;
@@ -172,7 +172,7 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
         case ASN1_STATE_START:
             if (!asn1_bio_setup_ex(b, ctx, ctx->prefix,
                                    ASN1_STATE_PRE_COPY, ASN1_STATE_HEADER))
-                return 0;
+                return -1;
             break;
 
             /* Copy any pre data first */
@@ -189,7 +189,7 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
         case ASN1_STATE_HEADER:
             ctx->buflen = ASN1_object_size(0, inl, ctx->asn1_tag) - inl;
             if (!ossl_assert(ctx->buflen <= ctx->bufsize))
-                return 0;
+                return -1;
             p = ctx->buf;
             ASN1_put_object(&p, 0, inl, ctx->asn1_tag, ctx->asn1_class);
             ctx->copylen = inl;

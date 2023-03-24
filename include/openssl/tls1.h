@@ -134,6 +134,9 @@ extern "C" {
 /* ExtensionType value from RFC7627 */
 # define TLSEXT_TYPE_extended_master_secret      23
 
+/* ExtensionType value from RFC8879 */
+# define TLSEXT_TYPE_compress_certificate        27
+
 /* ExtensionType value from RFC4507 */
 # define TLSEXT_TYPE_session_ticket              35
 
@@ -147,6 +150,7 @@ extern "C" {
 # define TLSEXT_TYPE_post_handshake_auth         49
 # define TLSEXT_TYPE_signature_algorithms_cert   50
 # define TLSEXT_TYPE_key_share                   51
+# define TLSEXT_TYPE_quic_transport_parameters   57
 
 /* Temporary extension type */
 # define TLSEXT_TYPE_renegotiate                 0xff01
@@ -194,6 +198,15 @@ extern "C" {
 /* Total number of different digest algorithms */
 
 # define TLSEXT_hash_num                                 10
+
+/* Possible compression values from RFC8879 */
+/* Not defined in RFC8879, but used internally for no-compression */
+# define TLSEXT_comp_cert_none                            0
+# define TLSEXT_comp_cert_zlib                            1
+# define TLSEXT_comp_cert_brotli                          2
+# define TLSEXT_comp_cert_zstd                            3
+/* one more than the number of defined values - used as size of 0-terminated array */
+# define TLSEXT_comp_cert_limit                           4
 
 /* Flag set for unrecognised algorithms */
 # define TLSEXT_nid_unknown                              0x1000000

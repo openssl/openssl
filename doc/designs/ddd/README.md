@@ -25,7 +25,7 @@ usage patterns and with reference to the impact on existing applications.
 
 As such, these demos are maintained in the OpenSSL repository because they are
 useful both to current and any future proposed API changes. The set of demos may
-be expanded over time, and the demos in this directory at any one time consitute
+be expanded over time, and the demos in this directory at any one time constitute
 a present body of understanding of API usage patterns, which can be used to plan
 API changes.
 
@@ -54,7 +54,7 @@ Background
 ----------
 
 These demos were developed after analysis of the following open source
-applications to determine libssl API usage patterns. The modally occuring usage
+applications to determine libssl API usage patterns. The modally occurring usage
 patterns were determined and used to determine categories into which to classify
 the applications:
 

@@ -18,6 +18,8 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/cmac.h>
+#include <openssl/err.h>
+#include <openssl/proverr.h>
 
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
@@ -195,8 +197,16 @@ static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
-    if (!ossl_prov_cipher_load_from_params(&macctx->cipher, params, ctx))
-        return 0;
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_CIPHER)) != NULL) {
+        if (!ossl_prov_cipher_load_from_params(&macctx->cipher, params, ctx))
+            return 0;
+
+        if (EVP_CIPHER_get_mode(ossl_prov_cipher_cipher(&macctx->cipher))
+            != EVP_CIPH_CBC_MODE) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);
+            return 0;
+        }
+    }
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)

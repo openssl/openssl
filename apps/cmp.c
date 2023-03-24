@@ -373,7 +373,7 @@ const OPTIONS cmp_options[] = {
 
     OPT_SECTION("Server authentication"),
     {"trusted", OPT_TRUSTED, 's',
-     "Certificates to trust as chain roots when verifying signed CMP responses"},
+     "Certificates to use as trust anchors when verifying signed CMP responses"},
     {OPT_MORE_STR, 0, 0, "unless -srvcert is given"},
     {"untrusted", OPT_UNTRUSTED, 's',
      "Intermediate CA certs for chain construction for CMP/TLS/enrolled certs"},
@@ -421,7 +421,7 @@ const OPTIONS cmp_options[] = {
     {OPT_MORE_STR, 0, 0,
      "This can be used as the default CMP signer cert chain to include"},
     {"unprotected_requests", OPT_UNPROTECTED_REQUESTS, '-',
-     "Send messages without CMP-level protection"},
+     "Send request messages without CMP-level protection"},
 
     OPT_SECTION("Credentials format"),
     {"certform", OPT_CERTFORM, 's',
@@ -1109,7 +1109,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
         goto err;
 
     if (opt_send_error)
-        (void)ossl_cmp_mock_srv_set_send_error(srv_ctx, 1);
+        (void)ossl_cmp_mock_srv_set_sendError(srv_ctx, 1);
 
     if (opt_send_unprotected)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_UNPROTECTED_SEND, 1);
@@ -1274,7 +1274,9 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
                 /* disable any cert status/revocation checking etc. */
                 X509_VERIFY_PARAM_clear_flags(tls_vpm,
                                               ~(X509_V_FLAG_USE_CHECK_TIME
-                                                | X509_V_FLAG_NO_CHECK_TIME));
+                                                | X509_V_FLAG_NO_CHECK_TIME
+                                                | X509_V_FLAG_PARTIAL_CHAIN
+                                                | X509_V_FLAG_POLICY_CHECK));
             }
             CMP_debug("trying to build cert chain for own TLS cert");
             if (SSL_CTX_build_cert_chain(ssl_ctx,
@@ -1989,7 +1991,7 @@ static int write_cert(BIO *bio, X509 *cert)
  * where DER does not make much sense for writing more than one cert!
  * Returns number of written certificates on success, -1 on error.
  */
-static int save_free_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs,
+static int save_free_certs(STACK_OF(X509) *certs,
                            const char *file, const char *desc)
 {
     BIO *bio = NULL;
@@ -2028,24 +2030,28 @@ static int save_free_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs,
     return n;
 }
 
-static int delete_certfile(const char *file, const char *desc)
+static int delete_file(const char *file, const char *desc)
 {
     if (file == NULL)
         return 1;
 
     if (unlink(file) != 0 && errno != ENOENT) {
-        CMP_err2("Failed to delete %s, which should be done to indicate there is no %s cert",
+        CMP_err2("Failed to delete %s, which should be done to indicate there is no %s",
                  file, desc);
         return 0;
     }
     return 1;
 }
 
-static int save_cert(OSSL_CMP_CTX *ctx, X509 *cert,
-                     const char *file, const char *desc)
+static int save_cert_or_delete(X509 *cert, const char *file, const char *desc)
 {
-    if (file == NULL || cert == NULL) {
+    if (file == NULL)
         return 1;
+    if (cert == NULL) {
+        char desc_cert[80];
+
+        BIO_snprintf(desc_cert, sizeof(desc_cert), "%s certificate", desc);
+        return delete_file(file, desc_cert);
     } else {
         STACK_OF(X509) *certs = sk_X509_new_null();
 
@@ -2053,7 +2059,7 @@ static int save_cert(OSSL_CMP_CTX *ctx, X509 *cert,
             sk_X509_free(certs);
             return 0;
         }
-        return save_free_certs(ctx, certs, file, desc) >= 0;
+        return save_free_certs(certs, file, desc) >= 0;
     }
 }
 
@@ -2688,7 +2694,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx)
                                        prog, 0, 0);
         if (ret == 0) { /* no request yet */
             if (retry) {
-                ossl_sleep(1000);
+                OSSL_sleep(1000);
                 retry = 0;
                 continue;
             }
@@ -2731,7 +2737,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx)
             (void)OSSL_CMP_CTX_set1_senderNonce(srv_cmp_ctx, NULL);
         }
         if (!ret || !keep_alive
-            || OSSL_CMP_CTX_get_status(srv_cmp_ctx) == -1
+            || OSSL_CMP_CTX_get_status(srv_cmp_ctx) != OSSL_CMP_PKISTATUS_trans
             /* transaction closed by OSSL_CMP_CTX_server_perform() */) {
             BIO_free_all(cbio);
             cbio = NULL;
@@ -2743,6 +2749,35 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx)
     return ret;
 }
 #endif
+
+static void print_status(void)
+{
+    /* print PKIStatusInfo */
+    int status = OSSL_CMP_CTX_get_status(cmp_ctx);
+    char *buf = app_malloc(OSSL_CMP_PKISI_BUFLEN, "PKIStatusInfo buf");
+    const char *string =
+        OSSL_CMP_CTX_snprint_PKIStatus(cmp_ctx, buf, OSSL_CMP_PKISI_BUFLEN);
+    const char *from = "", *server = "";
+
+#ifndef OPENSSL_NO_SOCK
+    if (opt_server != NULL) {
+        from = " from ";
+        server = opt_server;
+    }
+#endif
+    CMP_print(bio_err,
+              status == OSSL_CMP_PKISTATUS_accepted
+              ? OSSL_CMP_LOG_INFO :
+              status == OSSL_CMP_PKISTATUS_rejection
+              || status == OSSL_CMP_PKISTATUS_waiting
+              ? OSSL_CMP_LOG_ERR : OSSL_CMP_LOG_WARNING,
+              status == OSSL_CMP_PKISTATUS_accepted ? "info" :
+              status == OSSL_CMP_PKISTATUS_rejection ? "server error" :
+              status == OSSL_CMP_PKISTATUS_waiting ? "internal error"
+              : "warning", "received%s%s %s", from, server,
+              string != NULL ? string : "<unknown PKIStatus>");
+    OPENSSL_free(buf);
+}
 
 int cmp_main(int argc, char **argv)
 {
@@ -2829,13 +2864,6 @@ int cmp_main(int argc, char **argv)
         goto err;
 
     ret = 0;
-    if (!delete_certfile(opt_srvcertout, "validated server")
-        || !delete_certfile(opt_certout, "enrolled")
-        || save_free_certs(NULL, NULL, opt_extracertsout, "extra") < 0
-        || save_free_certs(NULL, NULL, opt_cacertsout, "CA") < 0
-        || save_free_certs(NULL, NULL, opt_chainout, "chain") < 0)
-        goto err;
-
     if (!app_RAND_load())
         goto err;
 
@@ -2982,57 +3010,28 @@ int cmp_main(int argc, char **argv)
         default:
             break;
         }
-        if (OSSL_CMP_CTX_get_status(cmp_ctx) < 0)
+        if (OSSL_CMP_CTX_get_status(cmp_ctx) < OSSL_CMP_PKISTATUS_accepted) {
+            ret = 0;
             goto err; /* we got no response, maybe even did not send request */
-
-        {
-            /* print PKIStatusInfo */
-            int status = OSSL_CMP_CTX_get_status(cmp_ctx);
-            char *buf = app_malloc(OSSL_CMP_PKISI_BUFLEN, "PKIStatusInfo buf");
-            const char *string =
-                OSSL_CMP_CTX_snprint_PKIStatus(cmp_ctx, buf,
-                                               OSSL_CMP_PKISI_BUFLEN);
-            const char *from = "", *server = "";
-
-#ifndef OPENSSL_NO_SOCK
-            if (opt_server != NULL) {
-                from = " from ";
-                server = opt_server;
-            }
-#endif
-            CMP_print(bio_err,
-                      status == OSSL_CMP_PKISTATUS_accepted
-                      ? OSSL_CMP_LOG_INFO :
-                      status == OSSL_CMP_PKISTATUS_rejection
-                      || status == OSSL_CMP_PKISTATUS_waiting
-                      ? OSSL_CMP_LOG_ERR : OSSL_CMP_LOG_WARNING,
-                      status == OSSL_CMP_PKISTATUS_accepted ? "info" :
-                      status == OSSL_CMP_PKISTATUS_rejection ? "server error" :
-                      status == OSSL_CMP_PKISTATUS_waiting ? "internal error"
-                                                           : "warning",
-                      "received%s%s %s", from, server,
-                      string != NULL ? string : "<unknown PKIStatus>");
-            OPENSSL_free(buf);
         }
-
-        if (save_free_certs(cmp_ctx, OSSL_CMP_CTX_get1_extraCertsIn(cmp_ctx),
-                            opt_extracertsout, "extra") < 0)
+        print_status();
+        if (!save_cert_or_delete(OSSL_CMP_CTX_get0_validatedSrvCert(cmp_ctx),
+                                 opt_srvcertout, "validated server"))
             ret = 0;
         if (!ret)
             goto err;
         ret = 0;
-        if (!save_cert(cmp_ctx, OSSL_CMP_CTX_get0_validatedSrvCert(cmp_ctx),
-                       opt_srvcertout, "validated server"))
+        if (save_free_certs(OSSL_CMP_CTX_get1_extraCertsIn(cmp_ctx),
+                            opt_extracertsout, "extra") < 0)
             goto err;
-        if (save_free_certs(cmp_ctx, OSSL_CMP_CTX_get1_caPubs(cmp_ctx),
-                            opt_cacertsout, "CA") < 0)
-            goto err;
-        if (!save_cert(cmp_ctx, newcert, opt_certout, "enrolled"))
-            goto err;
-        if (save_free_certs(cmp_ctx, OSSL_CMP_CTX_get1_newChain(cmp_ctx),
-                            opt_chainout, "chain") < 0)
-            goto err;
-
+        if (newcert != NULL && (opt_cmd == CMP_IR || opt_cmd == CMP_CR
+                                || opt_cmd == CMP_KUR || opt_cmd == CMP_P10CR))
+            if (!save_cert_or_delete(newcert, opt_certout, "newly enrolled")
+                || save_free_certs(OSSL_CMP_CTX_get1_newChain(cmp_ctx),
+                                   opt_chainout, "chain") < 0
+                || save_free_certs(OSSL_CMP_CTX_get1_caPubs(cmp_ctx),
+                                   opt_cacertsout, "CA") < 0)
+                goto err;
         if (!OSSL_CMP_CTX_reinit(cmp_ctx))
             goto err;
     }

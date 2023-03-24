@@ -219,7 +219,8 @@ ENGINE *ENGINE_get_first(void)
     ENGINE *ret;
 
     if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
-        ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
+        /* Maybe this should be raised in do_engine_lock_init() */
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -239,7 +240,8 @@ ENGINE *ENGINE_get_last(void)
     ENGINE *ret;
 
     if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
-        ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
+        /* Maybe this should be raised in do_engine_lock_init() */
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -378,7 +380,8 @@ ENGINE *ENGINE_by_id(const char *id)
     ENGINE_load_builtin_engines();
 
     if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
-        ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
+        /* Maybe this should be raised in do_engine_lock_init() */
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 

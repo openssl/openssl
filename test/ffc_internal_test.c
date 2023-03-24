@@ -510,6 +510,27 @@ static int ffc_public_validate_test(void)
     if (!TEST_true(ossl_ffc_validate_public_key(params, pub, &res)))
         goto err;
 
+    /* Fail if params is NULL */
+    if (!TEST_false(ossl_ffc_validate_public_key(NULL, pub, &res)))
+        goto err;
+    if (!TEST_int_eq(FFC_ERROR_PASSED_NULL_PARAM, res))
+        goto err;
+    res = -1;
+    /* Fail if pubkey is NULL */
+    if (!TEST_false(ossl_ffc_validate_public_key(params, NULL, &res)))
+        goto err;
+    if (!TEST_int_eq(FFC_ERROR_PASSED_NULL_PARAM, res))
+        goto err;
+    res = -1;
+
+    BN_free(params->p);
+    params->p = NULL;
+    /* Fail if params->p is NULL */
+    if (!TEST_false(ossl_ffc_validate_public_key(params, pub, &res)))
+        goto err;
+    if (!TEST_int_eq(FFC_ERROR_PASSED_NULL_PARAM, res))
+        goto err;
+
     ret = 1;
 err:
     DH_free(dh);
@@ -565,6 +586,16 @@ static int ffc_private_validate_test(void)
         goto err;
     /* Pass if priv key <= upper - 1 */
     if (!TEST_true(ossl_ffc_validate_private_key(params->q, priv, &res)))
+        goto err;
+
+    if (!TEST_false(ossl_ffc_validate_private_key(NULL, priv, &res)))
+        goto err;
+    if (!TEST_int_eq(FFC_ERROR_PASSED_NULL_PARAM, res))
+        goto err;
+    res = -1;
+    if (!TEST_false(ossl_ffc_validate_private_key(params->q, NULL, &res)))
+        goto err;
+    if (!TEST_int_eq(FFC_ERROR_PASSED_NULL_PARAM, res))
         goto err;
 
     ret = 1;

@@ -82,10 +82,8 @@ BIO *BIO_new_ex(OSSL_LIB_CTX *libctx, const BIO_METHOD *method)
 {
     BIO *bio = OPENSSL_zalloc(sizeof(*bio));
 
-    if (bio == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+    if (bio == NULL)
         return NULL;
-    }
 
     bio->libctx = libctx;
     bio->method = method;
@@ -97,7 +95,7 @@ BIO *BIO_new_ex(OSSL_LIB_CTX *libctx, const BIO_METHOD *method)
 
     bio->lock = CRYPTO_THREAD_lock_new();
     if (bio->lock == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_CRYPTO_LIB);
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
         goto err;
     }
@@ -492,6 +490,16 @@ int BIO_recvmmsg(BIO *b, BIO_MSG *msg,
     return ret;
 }
 
+int BIO_get_rpoll_descriptor(BIO *b, BIO_POLL_DESCRIPTOR *desc)
+{
+    return BIO_ctrl(b, BIO_CTRL_GET_RPOLL_DESCRIPTOR, 0, desc);
+}
+
+int BIO_get_wpoll_descriptor(BIO *b, BIO_POLL_DESCRIPTOR *desc)
+{
+    return BIO_ctrl(b, BIO_CTRL_GET_WPOLL_DESCRIPTOR, 0, desc);
+}
+
 int BIO_puts(BIO *b, const char *buf)
 {
     int ret;
@@ -878,7 +886,7 @@ BIO *BIO_dup_chain(BIO *in)
         /* This will let SSL_s_sock() work with stdin/stdout */
         new_bio->num = bio->num;
 
-        if (!BIO_dup_state(bio, (char *)new_bio)) {
+        if (BIO_dup_state(bio, (char *)new_bio) <= 0) {
             BIO_free(new_bio);
             goto err;
         }
@@ -951,7 +959,7 @@ void bio_cleanup(void)
     bio_type_lock = NULL;
 }
 
-/* Internal variant of the below BIO_wait() not calling BIOerr() */
+/* Internal variant of the below BIO_wait() not calling ERR_raise(...) */
 static int bio_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
 {
 #ifndef OPENSSL_NO_SOCK
@@ -980,7 +988,7 @@ static int bio_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
         if ((unsigned long)sec_diff * 1000 < nap_milliseconds)
             nap_milliseconds = (unsigned int)sec_diff * 1000;
     }
-    ossl_sleep(nap_milliseconds);
+    OSSL_sleep(nap_milliseconds);
     return 1;
 }
 
@@ -989,7 +997,7 @@ static int bio_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
  * Succeed immediately if max_time == 0.
  * If sockets are not available support polling: succeed after waiting at most
  * the number of nap_milliseconds in order to avoid a tight busy loop.
- * Call BIOerr(...) on timeout or error.
+ * Call ERR_raise(ERR_LIB_BIO, ...) on timeout or error.
  * Returns -1 on error, 0 on timeout, and 1 on success.
  */
 int BIO_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)

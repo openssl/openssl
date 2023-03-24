@@ -152,14 +152,14 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
     k = BN_secure_new();
     sig = ECDSA_SIG_new();
     if (k == NULL || sig == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_ECDSA_LIB);
         goto ret;
     }
 
     sig->r = BN_new();
     sig->s = BN_new();
     if (sig->r == NULL || sig->s == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 
@@ -247,7 +247,7 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
 
     ctx = BN_CTX_new_ex(group->libctx);
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         return -1;
     }
 
@@ -256,7 +256,7 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
     if (x == NULL || y == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 

@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_RAND, EVP_RAND_fetch, EVP_RAND_free, EVP_RAND_up_ref, EVP_RAND_CTX,
-EVP_RAND_CTX_new, EVP_RAND_CTX_free, EVP_RAND_instantiate,
+EVP_RAND_CTX_new, EVP_RAND_CTX_free, EVP_RAND_CTX_up_ref, EVP_RAND_instantiate,
 EVP_RAND_uninstantiate, EVP_RAND_generate, EVP_RAND_reseed, EVP_RAND_nonce,
 EVP_RAND_enable_locking, EVP_RAND_verify_zeroization, EVP_RAND_get_strength,
 EVP_RAND_get_state,
@@ -30,6 +30,7 @@ EVP_RAND_STATE_ERROR - EVP RAND routines
  void EVP_RAND_free(EVP_RAND *rand);
  EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, EVP_RAND_CTX *parent);
  void EVP_RAND_CTX_free(EVP_RAND_CTX *ctx);
+ int EVP_RAND_CTX_up_ref(EVP_RAND_CTX *ctx);
  EVP_RAND *EVP_RAND_CTX_get0_rand(EVP_RAND_CTX *ctx);
  int EVP_RAND_get_params(EVP_RAND *rand, OSSL_PARAM params[]);
  int EVP_RAND_CTX_get_params(EVP_RAND_CTX *ctx, OSSL_PARAM params[]);
@@ -186,26 +187,23 @@ simply ignored.
 Also, what happens when a needed parameter isn't passed down is
 defined by the implementation.
 
-EVP_RAND_gettable_params() returns an B<OSSL_PARAM> array that describes
+EVP_RAND_gettable_params() returns an L<OSSL_PARAM(3)> array that describes
 the retrievable and settable parameters.  EVP_RAND_gettable_params() returns
-parameters that can be used with EVP_RAND_get_params().  See L<OSSL_PARAM(3)>
-for the use of B<OSSL_PARAM> as a parameter descriptor.
+parameters that can be used with EVP_RAND_get_params().
 
 EVP_RAND_gettable_ctx_params() and EVP_RAND_CTX_gettable_params() return
-constant B<OSSL_PARAM> arrays that describe the retrievable parameters that
+constant L<OSSL_PARAM(3)> arrays that describe the retrievable parameters that
 can be used with EVP_RAND_CTX_get_params().  EVP_RAND_gettable_ctx_params()
 returns the parameters that can be retrieved from the algorithm, whereas
 EVP_RAND_CTX_gettable_params() returns the parameters that can be retrieved
-in the context's current state.  See L<OSSL_PARAM(3)> for the use of
-B<OSSL_PARAM> as a parameter descriptor.
+in the context's current state.
 
 EVP_RAND_settable_ctx_params() and EVP_RAND_CTX_settable_params() return
-constant B<OSSL_PARAM> arrays that describe the settable parameters that
+constant L<OSSL_PARAM(3)> arrays that describe the settable parameters that
 can be used with EVP_RAND_CTX_set_params().  EVP_RAND_settable_ctx_params()
 returns the parameters that can be retrieved from the algorithm, whereas
 EVP_RAND_CTX_settable_params() returns the parameters that can be retrieved
-in the context's current state.  See L<OSSL_PARAM(3)> for the use of
-B<OSSL_PARAM> as a parameter descriptor.
+in the context's current state.
 
 =head2 Information functions
 
@@ -335,6 +333,18 @@ or the properties in the case of B<OSSL_RAND_PARAM_PROPERTIES>.
 
 =head1 NOTES
 
+The use of a nonzero value for the I<prediction_resistance> argument to
+EVP_RAND_instantiate(), EVP_RAND_generate() or EVP_RAND_reseed() should
+be used sparingly.  In the default setup, this will cause all public and
+private DRBGs to be reseeded on next use.  Since, by default, public and
+private DRBGs are allocated on a per thread basis, this can result in
+significant overhead for highly multi-threaded applications.  For normal
+use-cases, the default "reseed_requests" and "reseed_time_interval"
+thresholds ensure sufficient prediction resistance over time and you
+can reduce those values if you think they are too high.  Explicitly
+requesting prediction resistance is intended for more special use-cases
+like generating long-term secrets.
+
 An B<EVP_RAND_CTX> needs to have locking enabled if it acts as the parent of
 more than one child and the children can be accessed concurrently.  This must
 be done by explicitly calling EVP_RAND_enable_locking().
@@ -367,6 +377,8 @@ B<EVP_RAND_CTX> structure or NULL if an error occurred.
 
 EVP_RAND_CTX_free() does not return a value.
 
+EVP_RAND_CTX_up_ref() returns 1 on success, 0 on error.
+
 EVP_RAND_nonce() returns the length of the nonce.
 
 EVP_RAND_get_strength() returns the strength of the random number generator
@@ -393,7 +405,9 @@ L<life_cycle-rand(7)>
 
 =head1 HISTORY
 
-This functionality was added to OpenSSL 3.0.
+EVP_RAND_CTX_up_ref() was added in OpenSSL 3.1.
+
+The remaining functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

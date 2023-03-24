@@ -14,3 +14,10 @@ IF[{- !$disabled{'deprecated-3.0'} -}]
 ENDIF
 
 SOURCE[../../../providers/libdefault.a ../../../providers/libfips.a]=ssl3_cbc.c
+
+# For shared builds we need to include the sources needed in providers
+# (tls_pad.c) in libssl as well.
+SHARED_SOURCE[../../../libssl]=tls_pad.c
+
+SOURCE[../../../providers/libcommon.a]=tls_pad.c
+

@@ -84,10 +84,8 @@ X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
     X509_VERIFY_PARAM *param;
 
     param = OPENSSL_zalloc(sizeof(*param));
-    if (param == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+    if (param == NULL)
         return NULL;
-    }
     param->trust = X509_TRUST_DEFAULT;
     /* param->inh_flags = X509_VP_FLAG_DEFAULT; */
     param->depth = -1;

@@ -223,7 +223,7 @@ int rsa_main(int argc, char **argv)
 
     if (!opt_cipher(ciphername, &enc))
         goto opthelp;
-    private = (text && !pubin) || (!pubout && !noout) ? 1 : 0;
+    private = (text && !pubin) || (!pubout && !noout);
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");

@@ -256,17 +256,13 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         ok = 1;
         if (name != NULL) {
             entry.name = OPENSSL_strdup(name);
-            if (entry.name == NULL) {
-                ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+            if (entry.name == NULL)
                 ok = 0;
-            }
         }
         if (ok && path != NULL) {
             entry.path = OPENSSL_strdup(path);
-            if (entry.path == NULL) {
-                ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+            if (entry.path == NULL)
                 ok = 0;
-            }
         }
         if (ok)
             ok = provider_conf_params(NULL, &entry, NULL, value, cnf);

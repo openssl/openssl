@@ -43,10 +43,8 @@ extern "C" {
 # define OSSL_TRACE_CATEGORY_TLS                 3
 # define OSSL_TRACE_CATEGORY_TLS_CIPHER          4
 # define OSSL_TRACE_CATEGORY_CONF                5
-# ifndef OPENSSL_NO_ENGINE
-#  define OSSL_TRACE_CATEGORY_ENGINE_TABLE       6
-#  define OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT   7
-# endif
+# define OSSL_TRACE_CATEGORY_ENGINE_TABLE        6
+# define OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT    7
 # define OSSL_TRACE_CATEGORY_PKCS5V2             8
 # define OSSL_TRACE_CATEGORY_PKCS12_KEYGEN       9
 # define OSSL_TRACE_CATEGORY_PKCS12_DECRYPT     10
@@ -306,6 +304,14 @@ void OSSL_trace_end(int category, BIO *channel);
     OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8))
 # define OSSL_TRACE9(category, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) \
     OSSL_TRACEV(category, (trc_out, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9))
+
+#define OSSL_TRACE_STRING_MAX 80
+int OSSL_trace_string(BIO *out, int text, int full,
+                      const unsigned char *data, size_t size);
+#define OSSL_TRACE_STRING(category, text, full, data, len) \
+    OSSL_TRACE_BEGIN(category) { \
+        OSSL_trace_string(trc_out, text, full, data, len);  \
+    } OSSL_TRACE_END(category)
 
 # ifdef  __cplusplus
 }

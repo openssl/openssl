@@ -273,7 +273,7 @@ int main(int argc, char **argv)
         /* Create client SSL structure using dedicated client socket */
         ssl = SSL_new(ssl_ctx);
         SSL_set_fd(ssl, client_skt);
-        /* Set host name for SNI */
+        /* Set hostname for SNI */
         SSL_set_tlsext_host_name(ssl, rem_server_ip);
         /* Configure server hostname check */
         SSL_set1_host(ssl, rem_server_ip);

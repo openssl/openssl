@@ -58,10 +58,8 @@ int bn_mod_add_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 
     if (mtop > sizeof(storage) / sizeof(storage[0])) {
         tp = OPENSSL_malloc(mtop * sizeof(BN_ULONG));
-        if (tp == NULL) {
-            ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        if (tp == NULL)
             return 0;
-        }
     }
 
     ap = a->d != NULL ? a->d : tp;

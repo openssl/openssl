@@ -22,12 +22,12 @@ jobs:
           - windows-2022
         platform:
           - arch: win64
-            config: VC-WIN64A enable-fips
+            config: enable-fips enable-quic
           - arch: win32
-            config: VC-WIN32 --strict-warnings no-fips
+            config: --strict-warnings no-fips enable-quic
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{ matrix.platform.arch }}
@@ -63,7 +63,7 @@ jobs:
           - windows-2022
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: shogo82148/actions-setup-perl@v1
     - name: prepare the build directory
@@ -87,7 +87,7 @@ jobs:
           - windows-2022
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: shogo82148/actions-setup-perl@v1
     - name: prepare the build directory
@@ -95,7 +95,7 @@ jobs:
     - name: config
       working-directory: _build
       run: |
-        perl ..\Configure --banner=Configured no-makedepend no-bulk no-deprecated no-fips no-asm -DOPENSSL_SMALL_FOOTPRINT VC-WIN64A
+        perl ..\Configure --banner=Configured no-makedepend no-bulk no-deprecated no-fips no-asm -DOPENSSL_SMALL_FOOTPRINT
         perl configdata.pm --dump
     - name: build
       working-directory: _build

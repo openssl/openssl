@@ -20,10 +20,8 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 {
     DTLS_RECORD_LAYER *d;
 
-    if ((d = OPENSSL_malloc(sizeof(*d))) == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if ((d = OPENSSL_malloc(sizeof(*d))) == NULL)
         return 0;
-    }
 
     rl->d = d;
 
@@ -72,28 +70,7 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     d->buffered_app_data.q = buffered_app_data;
 }
 
-void DTLS_RECORD_LAYER_set_saved_w_epoch(RECORD_LAYER *rl, unsigned short e)
-{
-    if (e == rl->d->w_epoch - 1) {
-        memcpy(rl->d->curr_write_sequence,
-               rl->write_sequence, sizeof(rl->write_sequence));
-        memcpy(rl->write_sequence,
-               rl->d->last_write_sequence, sizeof(rl->write_sequence));
-    } else if (e == rl->d->w_epoch + 1) {
-        memcpy(rl->d->last_write_sequence,
-               rl->write_sequence, sizeof(unsigned char[8]));
-        memcpy(rl->write_sequence,
-               rl->d->curr_write_sequence, sizeof(rl->write_sequence));
-    }
-    rl->d->w_epoch = e;
-}
-
-void DTLS_RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, unsigned char *seq)
-{
-    memcpy(rl->write_sequence, seq, SEQ_NUM_SIZE);
-}
-
-int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
+static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
 {
     TLS_RECORD *rdata;
     pitem *item;
@@ -126,7 +103,7 @@ int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
     if (rdata->data == NULL) {
         OPENSSL_free(rdata);
         pitem_free(item);
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         return -1;
     }
     /*
@@ -139,10 +116,10 @@ int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
 
 #ifndef OPENSSL_NO_SCTP
     /* Store bio_dgram_sctp_rcvinfo struct */
-    if (BIO_dgram_is_sctp(SSL_get_rbio(ssl)) &&
-        (SSL_get_state(ssl) == TLS_ST_SR_FINISHED
-         || SSL_get_state(ssl) == TLS_ST_CR_FINISHED)) {
-        BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_SCTP_GET_RCVINFO,
+    if (BIO_dgram_is_sctp(s->rbio) &&
+        (ossl_statem_get_state(s) == TLS_ST_SR_FINISHED
+         || ossl_statem_get_state(s) == TLS_ST_CR_FINISHED)) {
+        BIO_ctrl(s->rbio, BIO_CTRL_DGRAM_SCTP_GET_RCVINFO,
                  sizeof(rdata->recordinfo), &rdata->recordinfo);
     }
 #endif
@@ -177,9 +154,9 @@ static void dtls_unbuffer_record(SSL_CONNECTION *s)
 
 #ifndef OPENSSL_NO_SCTP
         /* Restore bio_dgram_sctp_rcvinfo struct */
-        if (BIO_dgram_is_sctp(SSL_get_rbio(s))) {
-            BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SCTP_SET_RCVINFO,
-                        sizeof(rdata->recordinfo), &rdata->recordinfo);
+        if (BIO_dgram_is_sctp(s->rbio)) {
+            BIO_ctrl(s->rbio, BIO_CTRL_DGRAM_SCTP_SET_RCVINFO,
+                     sizeof(rdata->recordinfo), &rdata->recordinfo);
         }
 #endif
 
@@ -341,8 +318,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * make sure that we are not getting application data when we are
          * doing a handshake for the first time
          */
-        if (SSL_in_init(s) && (type == SSL3_RT_APPLICATION_DATA) &&
-            (sc->enc_read_ctx == NULL)) {
+        if (SSL_in_init(s) && (type == SSL3_RT_APPLICATION_DATA)
+                && (SSL_IS_FIRST_HANDSHAKE(sc))) {
             SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE,
                      SSL_R_APP_DATA_IN_HANDSHAKE);
             return -1;
@@ -631,122 +608,27 @@ int dtls1_write_bytes(SSL_CONNECTION *s, int type, const void *buf,
         return -1;
     }
     s->rwstate = SSL_NOTHING;
-    i = do_dtls1_write(s, type, buf, len, 0, written);
+    i = do_dtls1_write(s, type, buf, len, written);
     return i;
 }
 
-/*
- * TODO(RECLAYER): Temporary copy of the old ssl3_write_pending() function now
- * replaced by tls_retry_write_records(). Needs to be removed when the DTLS code
- * is converted
- */
-/* if SSL3_BUFFER_get_left() != 0, we need to call this
- *
- * Return values are as per SSL_write()
- */
-static int ssl3_write_pending(SSL_CONNECTION *s, int type,
-                              const unsigned char *buf, size_t len,
-                              size_t *written)
+int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
+                   size_t len, size_t *written)
 {
     int i;
-    SSL3_BUFFER *wb = s->rlayer.wbuf;
-    size_t currbuf = 0;
-    size_t tmpwrit = 0;
-
-    if ((s->rlayer.wpend_tot > len)
-        || (!(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)
-            && (s->rlayer.wpend_buf != buf))
-        || (s->rlayer.wpend_type != type)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_WRITE_RETRY);
-        return -1;
-    }
-
-    for (;;) {
-        clear_sys_error();
-        if (s->wbio != NULL) {
-            s->rwstate = SSL_WRITING;
-
-            /*
-             * To prevent coalescing of control and data messages,
-             * such as in buffer_write, we flush the BIO
-             */
-            if (BIO_get_ktls_send(s->wbio) && type != SSL3_RT_APPLICATION_DATA) {
-                i = BIO_flush(s->wbio);
-                if (i <= 0)
-                    return i;
-                BIO_set_ktls_ctrl_msg(s->wbio, type);
-            }
-            i = BIO_write(s->wbio, (char *)
-                          &(SSL3_BUFFER_get_buf(&wb[currbuf])
-                            [SSL3_BUFFER_get_offset(&wb[currbuf])]),
-                          (unsigned int)SSL3_BUFFER_get_left(&wb[currbuf]));
-            if (i >= 0)
-                tmpwrit = i;
-        } else {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BIO_NOT_SET);
-            i = -1;
-        }
-
-        /*
-         * When an empty fragment is sent on a connection using KTLS,
-         * it is sent as a write of zero bytes.  If this zero byte
-         * write succeeds, i will be 0 rather than a non-zero value.
-         * Treat i == 0 as success rather than an error for zero byte
-         * writes to permit this case.
-         */
-        if (i >= 0 && tmpwrit == SSL3_BUFFER_get_left(&wb[currbuf])) {
-            SSL3_BUFFER_set_left(&wb[currbuf], 0);
-            SSL3_BUFFER_add_offset(&wb[currbuf], tmpwrit);
-            s->rwstate = SSL_NOTHING;
-            *written = s->rlayer.wpend_ret;
-            return 1;
-        } else if (i <= 0) {
-            if (SSL_CONNECTION_IS_DTLS(s)) {
-                /*
-                 * For DTLS, just drop it. That's kind of the whole point in
-                 * using a datagram service
-                 */
-                SSL3_BUFFER_set_left(&wb[currbuf], 0);
-            }
-            return i;
-        }
-        SSL3_BUFFER_add_offset(&wb[currbuf], tmpwrit);
-        SSL3_BUFFER_sub_left(&wb[currbuf], tmpwrit);
-    }
-}
-
-int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
-                   size_t len, int create_empty_fragment, size_t *written)
-{
-    unsigned char *p, *pseq;
-    int i, mac_size, clear = 0;
-    size_t prefix_len = 0;
-    int eivlen;
-    SSL3_RECORD wr;
-    SSL3_BUFFER *wb;
-    SSL_SESSION *sess;
+    OSSL_RECORD_TEMPLATE tmpl;
     SSL *s = SSL_CONNECTION_GET_SSL(sc);
-
-    wb = &sc->rlayer.wbuf[0];
-
-    /*
-     * DTLS writes whole datagrams, so there can't be anything left in
-     * the buffer.
-     */
-    if (!ossl_assert(SSL3_BUFFER_get_left(wb) == 0)) {
-        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
+    int ret;
 
     /* If we have an alert to send, lets send it */
-    if (sc->s3.alert_dispatch) {
+    if (sc->s3.alert_dispatch > 0) {
         i = s->method->ssl_dispatch_alert(s);
         if (i <= 0)
             return i;
         /* if it went, fall through and send more stuff */
     }
 
-    if (len == 0 && !create_empty_fragment)
+    if (len == 0)
         return 0;
 
     if (len > ssl_get_max_send_fragment(sc)) {
@@ -754,183 +636,31 @@ int do_dtls1_write(SSL_CONNECTION *sc, int type, const unsigned char *buf,
         return 0;
     }
 
-    sess = sc->session;
-
-    if ((sess == NULL)
-            || (sc->enc_write_ctx == NULL)
-            || (EVP_MD_CTX_get0_md(sc->write_hash) == NULL))
-        clear = 1;
-
-    if (clear)
-        mac_size = 0;
-    else {
-        mac_size = EVP_MD_CTX_get_size(sc->write_hash);
-        if (mac_size < 0) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR,
-                     SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
-            return -1;
-        }
-    }
-
-    p = SSL3_BUFFER_get_buf(wb) + prefix_len;
-
-    /* write the header */
-
-    *(p++) = type & 0xff;
-    SSL3_RECORD_set_type(&wr, type);
+    tmpl.type = type;
     /*
      * Special case: for hello verify request, client version 1.0 and we
      * haven't decided which version to use yet send back using version 1.0
      * header: otherwise some clients will ignore it.
      */
-    if (s->method->version == DTLS_ANY_VERSION &&
-        sc->max_proto_version != DTLS1_BAD_VER) {
-        *(p++) = DTLS1_VERSION >> 8;
-        *(p++) = DTLS1_VERSION & 0xff;
-    } else {
-        *(p++) = sc->version >> 8;
-        *(p++) = sc->version & 0xff;
-    }
+    if (s->method->version == DTLS_ANY_VERSION
+            && sc->max_proto_version != DTLS1_BAD_VER)
+        tmpl.version = DTLS1_VERSION;
+    else
+        tmpl.version = sc->version;
+    tmpl.buf = buf;
+    tmpl.buflen = len;
 
-    /* field where we are to write out packet epoch, seq num and len */
-    pseq = p;
-    p += 10;
+    ret = HANDLE_RLAYER_WRITE_RETURN(sc,
+              sc->rlayer.wrlmethod->write_records(sc->rlayer.wrl, &tmpl, 1));
 
-    /* Explicit IV length, block ciphers appropriate version flag */
-    if (sc->enc_write_ctx) {
-        int mode = EVP_CIPHER_CTX_get_mode(sc->enc_write_ctx);
-        if (mode == EVP_CIPH_CBC_MODE) {
-            eivlen = EVP_CIPHER_CTX_get_iv_length(sc->enc_write_ctx);
-            if (eivlen < 0) {
-                SSLfatal(sc, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
-                return -1;
-            }
-            if (eivlen <= 1)
-                eivlen = 0;
-        }
-        /* Need explicit part of IV for GCM mode */
-        else if (mode == EVP_CIPH_GCM_MODE)
-            eivlen = EVP_GCM_TLS_EXPLICIT_IV_LEN;
-        else if (mode == EVP_CIPH_CCM_MODE)
-            eivlen = EVP_CCM_TLS_EXPLICIT_IV_LEN;
-        else
-            eivlen = 0;
-    } else
-        eivlen = 0;
+    if (ret > 0)
+        *written = (int)len;
 
-    /* lets setup the record stuff. */
-    SSL3_RECORD_set_data(&wr, p + eivlen); /* make room for IV in case of CBC */
-    SSL3_RECORD_set_length(&wr, len);
-    SSL3_RECORD_set_input(&wr, (unsigned char *)buf);
-
-    /*
-     * we now 'read' from wr.input, wr.length bytes into wr.data
-     */
-
-    /* first we compress */
-    if (sc->compress != NULL) {
-        if (!ssl3_do_compress(sc, &wr)) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, SSL_R_COMPRESSION_FAILURE);
-            return -1;
-        }
-    } else {
-        memcpy(SSL3_RECORD_get_data(&wr), SSL3_RECORD_get_input(&wr),
-               SSL3_RECORD_get_length(&wr));
-        SSL3_RECORD_reset_input(&wr);
-    }
-
-    /*
-     * we should still have the output to wr.data and the input from
-     * wr.input.  Length should be wr.length. wr.data still points in the
-     * wb->buf
-     */
-
-    if (!SSL_WRITE_ETM(sc) && mac_size != 0) {
-        if (!s->method->ssl3_enc->mac(sc, &wr,
-                                      &(p[SSL3_RECORD_get_length(&wr) + eivlen]),
-                                      1)) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return -1;
-        }
-        SSL3_RECORD_add_length(&wr, mac_size);
-    }
-
-    /* this is true regardless of mac size */
-    SSL3_RECORD_set_data(&wr, p);
-    SSL3_RECORD_reset_input(&wr);
-
-    if (eivlen)
-        SSL3_RECORD_add_length(&wr, eivlen);
-
-    if (s->method->ssl3_enc->enc(sc, &wr, 1, 1, NULL, mac_size) < 1) {
-        if (!ossl_statem_in_error(sc)) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        }
-        return -1;
-    }
-
-    if (SSL_WRITE_ETM(sc) && mac_size != 0) {
-        if (!s->method->ssl3_enc->mac(sc, &wr,
-                                      &(p[SSL3_RECORD_get_length(&wr)]), 1)) {
-            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return -1;
-        }
-        SSL3_RECORD_add_length(&wr, mac_size);
-    }
-
-    /* record length after mac and block padding */
-
-    /* there's only one epoch between handshake and app data */
-
-    s2n(sc->rlayer.d->w_epoch, pseq);
-
-    memcpy(pseq, &(sc->rlayer.write_sequence[2]), 6);
-    pseq += 6;
-    s2n(SSL3_RECORD_get_length(&wr), pseq);
-
-    if (sc->msg_callback)
-        sc->msg_callback(1, 0, SSL3_RT_HEADER, pseq - DTLS1_RT_HEADER_LENGTH,
-                         DTLS1_RT_HEADER_LENGTH, s, sc->msg_callback_arg);
-
-    /*
-     * we should now have wr.data pointing to the encrypted data, which is
-     * wr->length long
-     */
-    SSL3_RECORD_set_type(&wr, type); /* not needed but helps for debugging */
-    SSL3_RECORD_add_length(&wr, DTLS1_RT_HEADER_LENGTH);
-
-    ssl3_record_sequence_update(&(sc->rlayer.write_sequence[0]));
-
-    if (create_empty_fragment) {
-        /*
-         * we are in a recursive call; just return the length, don't write
-         * out anything here
-         */
-        *written = wr.length;
-        return 1;
-    }
-
-    /* now let's set up wb */
-    SSL3_BUFFER_set_left(wb, prefix_len + SSL3_RECORD_get_length(&wr));
-    SSL3_BUFFER_set_offset(wb, 0);
-
-    /*
-     * memorize arguments so that ssl3_write_pending can detect bad write
-     * retries later
-     */
-    sc->rlayer.wpend_tot = len;
-    sc->rlayer.wpend_buf = buf;
-    sc->rlayer.wpend_type = type;
-    sc->rlayer.wpend_ret = len;
-
-    /* we now just need to write the buffer. Calls SSLfatal() as required. */
-    return ssl3_write_pending(sc, type, buf, len, written);
+    return ret;
 }
 
-void dtls1_reset_seq_numbers(SSL_CONNECTION *s, int rw)
+void dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
 {
-    unsigned char *seq;
-
     if (rw & SSL3_CC_READ) {
         s->rlayer.d->r_epoch++;
 
@@ -940,10 +670,6 @@ void dtls1_reset_seq_numbers(SSL_CONNECTION *s, int rw)
          */
         dtls1_clear_received_buffer(s);
     } else {
-        seq = s->rlayer.write_sequence;
-        memcpy(s->rlayer.d->last_write_sequence, seq,
-               sizeof(s->rlayer.write_sequence));
         s->rlayer.d->w_epoch++;
-        memset(seq, 0, sizeof(s->rlayer.write_sequence));
     }
 }

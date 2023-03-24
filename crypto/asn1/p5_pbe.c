@@ -34,13 +34,14 @@ int PKCS5_pbe_set0_algor_ex(X509_ALGOR *algor, int alg, int iter,
 
     pbe = PBEPARAM_new();
     if (pbe == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        /* ERR_R_ASN1_LIB, because PBEPARAM_new() is defined in crypto/asn1 */
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         goto err;
     }
     if (iter <= 0)
         iter = PKCS5_DEFAULT_ITER;
     if (!ASN1_INTEGER_set(pbe->iter, iter)) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         goto err;
     }
     if (!saltlen)
@@ -49,10 +50,8 @@ int PKCS5_pbe_set0_algor_ex(X509_ALGOR *algor, int alg, int iter,
         goto err;
 
     sstr = OPENSSL_malloc(saltlen);
-    if (sstr == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    if (sstr == NULL)
         goto err;
-    }
     if (salt)
         memcpy(sstr, salt, saltlen);
     else if (RAND_bytes_ex(ctx, sstr, saltlen, 0) <= 0)
@@ -62,7 +61,7 @@ int PKCS5_pbe_set0_algor_ex(X509_ALGOR *algor, int alg, int iter,
     sstr = NULL;
 
     if (!ASN1_item_pack(pbe, ASN1_ITEM_rptr(PBEPARAM), &pbe_str)) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         goto err;
     }
 
@@ -94,7 +93,7 @@ X509_ALGOR *PKCS5_pbe_set_ex(int alg, int iter,
     X509_ALGOR *ret;
     ret = X509_ALGOR_new();
     if (ret == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_X509_LIB);
         return NULL;
     }
 

@@ -119,7 +119,6 @@ int async_fibre_makecontext(async_fibre *fibre)
             makecontext(&fibre->fibre, async_start_func, 0);
             return 1;
         }
-        ERR_raise(ERR_LIB_ASYNC, ERR_R_MALLOC_FAILURE);
     } else {
         fibre->fibre.uc_stack.ss_sp = NULL;
     }

@@ -93,7 +93,7 @@ cleanup:
 }
 
 /*
- * Store a RSA public or private key to a file using PEM encoding.
+ * Store an RSA public or private key to a file using PEM encoding.
  *
  * If a passphrase is supplied, the file is encrypted, otherwise
  * it is unencrypted.

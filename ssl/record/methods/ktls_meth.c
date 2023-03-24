@@ -15,51 +15,10 @@
 #include "recmethod_local.h"
 #include "internal/ktls.h"
 
+static struct record_functions_st ossl_ktls_funcs;
+
 #if defined(__FreeBSD__)
 # include "crypto/cryptodev.h"
-
-/*
- * TODO(RECLAYER): This is essentially a copy of ktls_int_check_supported_cipher
- * but using an SSL object instead of an OSSL_RECORD_LAYER object. Once
- * the write side has been moved to the record layer this can be deleted
- */
-int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
-                                const EVP_MD *md, size_t taglen)
-{
-
-    switch (s->version) {
-    case TLS1_VERSION:
-    case TLS1_1_VERSION:
-    case TLS1_2_VERSION:
-    case TLS1_3_VERSION:
-        break;
-    default:
-        return 0;
-    }
-
-    if (EVP_CIPHER_is_a(c, "AES-128-GCM")
-            || EVP_CIPHER_is_a(c, "AES-256-GCM")
-# ifdef OPENSSL_KTLS_CHACHA20_POLY1305
-            || EVP_CIPHER_is_a(c, "CHACHA20-POLY1305")
-# endif
-       )
-        return 1;
-
-    if (!EVP_CIPHER_is_a(c, "AES-128-CBC")
-            && !EVP_CIPHER_is_a(c, "AES-256-CBC"))
-        return 0;
-
-    if (s->ext.use_etm)
-        return 0;
-
-    if (md == NULL
-            || EVP_MD_is_a(md, "SHA1")
-            || EVP_MD_is_a(md, "SHA2-256")
-            || EVP_MD_is_a(md, "SHA2-384"))
-        return 1;
-
-    return 0;
-}
 
 /*-
  * Check if a given cipher is supported by the KTLS interface.
@@ -76,7 +35,9 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
     case TLS1_VERSION:
     case TLS1_1_VERSION:
     case TLS1_2_VERSION:
+#ifdef OPENSSL_KTLS_TLS13
     case TLS1_3_VERSION:
+#endif
         break;
     default:
         return 0;
@@ -109,6 +70,7 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
 }
 
 /* Function to configure kernel TLS structure */
+static
 int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c,
                           EVP_MD *md, void *rl_sequence,
                           ktls_crypto_info_t *crypto_info, int is_tx,
@@ -163,51 +125,6 @@ int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c
 #endif                         /* __FreeBSD__ */
 
 #if defined(OPENSSL_SYS_LINUX)
-
-/*
- * TODO(RECLAYER): This is essentially a copy of ktls_int_check_supported_cipher
- * but using an SSL object instead of an OSSL_RECORD_LAYER object. Once
- * the write side has been moved to the record layer this can be deleted
- */
-int ktls_check_supported_cipher(const SSL_CONNECTION *s, const EVP_CIPHER *c,
-                                const EVP_MD *md, size_t taglen)
-{
-    switch (s->version) {
-    case TLS1_2_VERSION:
-    case TLS1_3_VERSION:
-        break;
-    default:
-        return 0;
-    }
-
-    /*
-     * Check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128
-     * or Chacha20-Poly1305
-     */
-# ifdef OPENSSL_KTLS_AES_CCM_128
-    if (EVP_CIPHER_is_a(c, "AES-128-CCM")) {
-        if (s->version == TLS_1_3_VERSION /* broken on 5.x kernels */
-            || taglen != EVP_CCM_TLS_TAG_LEN)
-            return 0;
-        return 1;
-    } else
-# endif
-    if (0
-# ifdef OPENSSL_KTLS_AES_GCM_128
-        || EVP_CIPHER_is_a(c, "AES-128-GCM")
-# endif
-# ifdef OPENSSL_KTLS_AES_GCM_256
-        || EVP_CIPHER_is_a(c, "AES-256-GCM")
-# endif
-# ifdef OPENSSL_KTLS_CHACHA20_POLY1305
-        || EVP_CIPHER_is_a(c, "ChaCha20-Poly1305")
-# endif
-        ) {
-        return 1;
-    }
-    return 0;
-}
-
 /* Function to check supported ciphers in Linux */
 static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
                                            const EVP_CIPHER *c,
@@ -216,7 +133,9 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
 {
     switch (rl->version) {
     case TLS1_2_VERSION:
+#ifdef OPENSSL_KTLS_TLS13
     case TLS1_3_VERSION:
+#endif
         break;
     default:
         return 0;
@@ -228,8 +147,7 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
      */
 # ifdef OPENSSL_KTLS_AES_CCM_128
     if (EVP_CIPHER_is_a(c, "AES-128-CCM")) {
-        if (rl->version == TLS_1_3_VERSION /* broken on 5.x kernels */
-            || taglen != EVP_CCM_TLS_TAG_LEN)
+        if (taglen != EVP_CCM_TLS_TAG_LEN)
             return 0;
         return 1;
     } else
@@ -251,6 +169,7 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
 }
 
 /* Function to configure kernel TLS structure */
+static
 int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CIPHER *c,
                           const EVP_MD *md, void *rl_sequence,
                           ktls_crypto_info_t *crypto_info, int is_tx,
@@ -375,7 +294,7 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                  size_t taglen,
                                  int mactype,
                                  const EVP_MD *md,
-                                 const SSL_COMP *comp)
+                                 COMP_METHOD *comp)
 {
     ktls_crypto_info_t crypto_info;
 
@@ -389,16 +308,8 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
 
     /* ktls supports only the maximum fragment size */
-    if (rl->max_frag_len > 0 && rl->max_frag_len != SSL3_RT_MAX_PLAIN_LENGTH)
+    if (rl->max_frag_len != SSL3_RT_MAX_PLAIN_LENGTH)
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
-#if 0
-    /*
-     * TODO(RECLAYER): We will need to reintroduce the check of the send
-     * fragment for KTLS once we do the record write side implementation
-     */
-    if (ssl_get_max_send_fragment(s) != SSL3_RT_MAX_PLAIN_LENGTH)
-        return OSSL_RECORD_RETURN_NON_FATAL_ERR;
-#endif
 
     /* check that cipher is supported */
     if (!ktls_int_check_supported_cipher(rl, ciph, md, taglen))
@@ -422,6 +333,14 @@ static int ktls_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
 
     if (!BIO_set_ktls(rl->bio, &crypto_info, rl->direction))
         return OSSL_RECORD_RETURN_NON_FATAL_ERR;
+
+    if (rl->direction == OSSL_RECORD_DIRECTION_WRITE &&
+        (rl->options & SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE) != 0)
+        /* Ignore errors. The application opts in to using the zerocopy
+         * optimization. If the running kernel doesn't support it, just
+         * continue without the optimization.
+         */
+        BIO_set_ktls_tx_zerocopy_sendfile(rl->bio);
 
     return OSSL_RECORD_RETURN_SUCCESS;
 }
@@ -455,13 +374,14 @@ static int ktls_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
     return ret;
 }
 
-static int ktls_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs,
-                       int sending, SSL_MAC_BUF *mac, size_t macsize)
+static int ktls_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *inrecs,
+                       size_t n_recs, int sending, SSL_MAC_BUF *mac,
+                       size_t macsize)
 {
     return 1;
 }
 
-static int ktls_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+static int ktls_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
     if (rec->rec_version != TLS1_2_VERSION) {
         RLAYERfatal(rl, SSL_AD_DECODE_ERROR, SSL_R_WRONG_VERSION_NUMBER);
@@ -471,7 +391,7 @@ static int ktls_validate_record_header(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     return 1;
 }
 
-static int ktls_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
+static int ktls_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
     if (rl->version == TLS1_3_VERSION)
         return tls13_common_post_process_record(rl, rec);
@@ -479,30 +399,19 @@ static int ktls_post_process_record(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec)
     return 1;
 }
 
-static struct record_functions_st ossl_ktls_funcs = {
-    ktls_set_crypto_state,
-    ktls_cipher,
-    NULL,
-    tls_default_set_protocol_version,
-    ktls_read_n,
-    tls_get_more_records,
-    ktls_validate_record_header,
-    ktls_post_process_record,
-    tls_get_max_records_default,
-    tls_write_records_default
-};
-
 static int
 ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                       int role, int direction, int level, uint16_t epoch,
+                      unsigned char *secret, size_t secretlen,
                       unsigned char *key, size_t keylen, unsigned char *iv,
                       size_t ivlen, unsigned char *mackey, size_t mackeylen,
                       const EVP_CIPHER *ciph, size_t taglen,
                       int mactype,
-                      const EVP_MD *md, const SSL_COMP *comp, BIO *prev,
-                      BIO *transport, BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
+                      const EVP_MD *md, COMP_METHOD *comp,
+                      const EVP_MD *kdfdigest, BIO *prev, BIO *transport,
+                      BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
                       const OSSL_PARAM *settings, const OSSL_PARAM *options,
-                      const OSSL_DISPATCH *fns, void *cbarg,
+                      const OSSL_DISPATCH *fns, void *cbarg, void *rlarg,
                       OSSL_RECORD_LAYER **retrl)
 {
     int ret;
@@ -518,12 +427,6 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     (*retrl)->funcs = &ossl_ktls_funcs;
 
-    /*
-     * TODO(RECLAYER): We're not ready to set the crypto state for the write
-     * record layer. Fix this once we are
-     */
-    if (direction == OSSL_RECORD_DIRECTION_WRITE)
-        return 1;
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, key, keylen, iv,
                                             ivlen, mackey, mackeylen, ciph,
                                             taglen, mactype, md, comp);
@@ -541,15 +444,150 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     return ret;
 }
 
+static int ktls_allocate_write_buffers(OSSL_RECORD_LAYER *rl,
+                                       OSSL_RECORD_TEMPLATE *templates,
+                                       size_t numtempl, size_t *prefix)
+{
+    if (!ossl_assert(numtempl == 1))
+        return 0;
+
+    /*
+     * We just use the end application buffer in the case of KTLS, so nothing
+     * to do. We pretend we set up one buffer.
+     */
+    rl->numwpipes = 1;
+
+    return 1;
+}
+
+static int ktls_initialise_write_packets(OSSL_RECORD_LAYER *rl,
+                                         OSSL_RECORD_TEMPLATE *templates,
+                                         size_t numtempl,
+                                         OSSL_RECORD_TEMPLATE *prefixtempl,
+                                         WPACKET *pkt,
+                                         TLS_BUFFER *bufs,
+                                         size_t *wpinited)
+{
+    TLS_BUFFER *wb;
+
+    /*
+     * We just use the application buffer directly and don't use any WPACKET
+     * structures
+     */
+    wb = &bufs[0];
+    wb->type = templates[0].type;
+
+    /*
+    * ktls doesn't modify the buffer, but to avoid a warning we need
+    * to discard the const qualifier.
+    * This doesn't leak memory because the buffers have never been allocated
+    * with KTLS
+    */
+    TLS_BUFFER_set_buf(wb, (unsigned char *)templates[0].buf);
+    TLS_BUFFER_set_offset(wb, 0);
+    TLS_BUFFER_set_app_buffer(wb, 1);
+
+    return 1;
+}
+
+static int ktls_prepare_record_header(OSSL_RECORD_LAYER *rl,
+                                      WPACKET *thispkt,
+                                      OSSL_RECORD_TEMPLATE *templ,
+                                      unsigned int rectype,
+                                      unsigned char **recdata)
+{
+    /* The kernel writes the record header, so nothing to do */
+    *recdata = NULL;
+
+    return 1;
+}
+
+static int ktls_prepare_for_encryption(OSSL_RECORD_LAYER *rl,
+                                       size_t mac_size,
+                                       WPACKET *thispkt,
+                                       TLS_RL_RECORD *thiswr)
+{
+    /* No encryption, so nothing to do */
+    return 1;
+}
+
+static int ktls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
+                                           size_t mac_size,
+                                           OSSL_RECORD_TEMPLATE *templ,
+                                           WPACKET *thispkt,
+                                           TLS_RL_RECORD *thiswr)
+{
+    /* The kernel does anything that is needed, so nothing to do here */
+    return 1;
+}
+
+static int ktls_prepare_write_bio(OSSL_RECORD_LAYER *rl, int type)
+{
+    /*
+     * To prevent coalescing of control and data messages,
+     * such as in buffer_write, we flush the BIO
+     */
+    if (type != SSL3_RT_APPLICATION_DATA) {
+        int ret, i = BIO_flush(rl->bio);
+
+        if (i <= 0) {
+            if (BIO_should_retry(rl->bio))
+                ret = OSSL_RECORD_RETURN_RETRY;
+            else
+                ret = OSSL_RECORD_RETURN_FATAL;
+            return ret;
+        }
+        BIO_set_ktls_ctrl_msg(rl->bio, type);
+    }
+
+    return OSSL_RECORD_RETURN_SUCCESS;
+}
+
+static int ktls_alloc_buffers(OSSL_RECORD_LAYER *rl)
+{
+    /* We use the application buffer directly for writing */
+    if (rl->direction == OSSL_RECORD_DIRECTION_WRITE)
+        return 1;
+
+    return tls_alloc_buffers(rl);
+}
+
+static int ktls_free_buffers(OSSL_RECORD_LAYER *rl)
+{
+    /* We use the application buffer directly for writing */
+    if (rl->direction == OSSL_RECORD_DIRECTION_WRITE)
+        return 1;
+
+    return tls_free_buffers(rl);
+}
+
+static struct record_functions_st ossl_ktls_funcs = {
+    ktls_set_crypto_state,
+    ktls_cipher,
+    NULL,
+    tls_default_set_protocol_version,
+    ktls_read_n,
+    tls_get_more_records,
+    ktls_validate_record_header,
+    ktls_post_process_record,
+    tls_get_max_records_default,
+    tls_write_records_default,
+    ktls_allocate_write_buffers,
+    ktls_initialise_write_packets,
+    NULL,
+    ktls_prepare_record_header,
+    NULL,
+    ktls_prepare_for_encryption,
+    ktls_post_encryption_processing,
+    ktls_prepare_write_bio
+};
+
 const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     ktls_new_record_layer,
     tls_free,
-    tls_reset,
     tls_unprocessed_read_pending,
     tls_processed_read_pending,
     tls_app_data_pending,
-    tls_write_pending,
-    tls_get_max_record_len,
     tls_get_max_records,
     tls_write_records,
     tls_retry_write_records,
@@ -563,5 +601,11 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_set_max_pipelines,
     NULL,
     tls_get_state,
-    tls_set_options
+    tls_set_options,
+    tls_get_compression,
+    tls_set_max_frag_len,
+    NULL,
+    tls_increment_sequence_ctr,
+    ktls_alloc_buffers,
+    ktls_free_buffers
 };

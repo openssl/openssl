@@ -329,6 +329,7 @@ static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
             ossl_cmp_certrepmessage_get0_certresponse(msg->body->value.ip,
                                                       OSSL_CMP_CERTREQID);
         X509 *newcrt = ossl_cmp_certresponse_get1_cert(crep, ctx, pkey);
+
         /*
          * maybe better use get_cert_status() from cmp_client.c, which catches
          * errors
@@ -421,6 +422,7 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                                      : "no trusted store");
     } else {
         STACK_OF(X509) *trusted = X509_STORE_get1_all_certs(ctx->trusted);
+
         ret = check_msg_with_certs(ctx, trusted,
                                    mode_3gpp ? "self-issued extraCerts"
                                              : "certs in trusted store",
@@ -454,6 +456,7 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     if (sender == NULL || msg->body == NULL)
         return 0; /* other NULL cases already have been checked */
     if (sender->type != GEN_DIRNAME) {
+        /* So far, only X509_NAME is supported */
         ERR_raise(ERR_LIB_CMP, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);
         return 0;
     }
@@ -562,8 +565,9 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         /* 5.1.3.1.  Shared Secret Information */
     case NID_id_PasswordBasedMAC:
         if (ctx->secretValue == NULL) {
-            ossl_cmp_warn(ctx, "no secret available for verifying PBM-based CMP message protection");
-            return 1;
+            ossl_cmp_info(ctx, "no secret available for verifying PBM-based CMP message protection");
+            ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_SECRET);
+            return 0;
         }
         if (verify_PBMAC(ctx, msg)) {
             /*
@@ -613,12 +617,13 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         scrt = ctx->srvCert;
         if (scrt == NULL) {
             if (ctx->trusted == NULL) {
-                ossl_cmp_warn(ctx, "no trust store nor pinned server cert available for verifying signature-based CMP message protection");
-                return 1;
+                ossl_cmp_info(ctx, "no trust store nor pinned server cert available for verifying signature-based CMP message protection");
+                ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_TRUST_ANCHOR);
+                return 0;
             }
             if (check_msg_find_cert(ctx, msg)) {
                 ossl_cmp_debug(ctx,
-                               "sucessfully validated signature-based CMP message protection using trust store");
+                               "successfully validated signature-based CMP message protection using trust store");
                 return 1;
             }
         } else { /* use pinned sender cert */
@@ -646,7 +651,7 @@ static int check_transactionID_or_nonce(ASN1_OCTET_STRING *expected,
 
         expected_str = i2s_ASN1_OCTET_STRING(NULL, expected);
         actual_str = actual == NULL ? NULL: i2s_ASN1_OCTET_STRING(NULL, actual);
-        ERR_raise_data(ERR_LIB_CMP, CMP_R_TRANSACTIONID_UNMATCHED,
+        ERR_raise_data(ERR_LIB_CMP, reason,
                        "expected = %s, actual = %s",
                        expected_str == NULL ? "?" : expected_str,
                        actual == NULL ? "(none)" :
@@ -770,6 +775,11 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                                       CMP_R_RECIPNONCE_UNMATCHED))
         return 0;
 
+    /* if not yet present, learn transactionID */
+    if (ctx->transactionID == NULL
+        && !OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID))
+        return 0;
+
     /*
      * RFC 4210 section 5.1.1 states: the recipNonce is copied from
      * the senderNonce of the previous message in the transaction.
@@ -777,11 +787,6 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      */
     if (!ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce))
         return 0;
-
-    /* if not yet present, learn transactionID */
-    if (ctx->transactionID == NULL
-        && !OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID))
-        return -1;
 
     /*
      * Store any provided extraCerts in ctx for future use,
@@ -793,7 +798,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                         /* this allows self-signed certs */
                         X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
                         | X509_ADD_FLAG_PREPEND))
-        return -1;
+        return 0;
 
     if (ossl_cmp_hdr_get_protection_nid(hdr) == NID_id_PasswordBasedMAC) {
         /*

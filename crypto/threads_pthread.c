@@ -47,10 +47,9 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 # ifdef USE_RWLOCK
     CRYPTO_RWLOCK *lock;
 
-    if ((lock = OPENSSL_zalloc(sizeof(pthread_rwlock_t))) == NULL) {
+    if ((lock = CRYPTO_zalloc(sizeof(pthread_rwlock_t), NULL, 0)) == NULL)
         /* Don't set error, to avoid recursion blowup. */
         return NULL;
-    }
 
     if (pthread_rwlock_init(lock, NULL) != 0) {
         OPENSSL_free(lock);
@@ -60,10 +59,9 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
     pthread_mutexattr_t attr;
     CRYPTO_RWLOCK *lock;
 
-    if ((lock = OPENSSL_zalloc(sizeof(pthread_mutex_t))) == NULL) {
+    if ((lock = CRYPTO_zalloc(sizeof(pthread_mutex_t), NULL, 0)) == NULL)
         /* Don't set error, to avoid recursion blowup. */
         return NULL;
-    }
 
     /*
      * We don't use recursive mutexes, but try to catch errors if we do.

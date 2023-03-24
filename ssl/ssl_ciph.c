@@ -820,8 +820,9 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
     OSSL_TRACE_BEGIN(TLS_CIPHER) {
         BIO_printf(trc_out,
                    "Applying rule %d with %08x/%08x/%08x/%08x/%08x %08x (%d)\n",
-                   rule, alg_mkey, alg_auth, alg_enc, alg_mac, min_tls,
-                   algo_strength, strength_bits);
+                   rule, (unsigned int)alg_mkey, (unsigned int)alg_auth,
+                   (unsigned int)alg_enc, (unsigned int)alg_mac, min_tls,
+                   (unsigned int)algo_strength, (int)strength_bits);
     }
 
     if (rule == CIPHER_DEL || rule == CIPHER_BUMP)
@@ -865,9 +866,13 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
                 BIO_printf(trc_out,
                            "\nName: %s:"
                            "\nAlgo = %08x/%08x/%08x/%08x/%08x Algo_strength = %08x\n",
-                           cp->name, cp->algorithm_mkey, cp->algorithm_auth,
-                           cp->algorithm_enc, cp->algorithm_mac, cp->min_tls,
-                           cp->algo_strength);
+                           cp->name,
+                           (unsigned int)cp->algorithm_mkey,
+                           (unsigned int)cp->algorithm_auth,
+                           (unsigned int)cp->algorithm_enc,
+                           (unsigned int)cp->algorithm_mac,
+                           cp->min_tls,
+                           (unsigned int)cp->algo_strength);
             }
             if (cipher_id != 0 && (cipher_id != cp->id))
                 continue;
@@ -965,10 +970,8 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
     }
 
     number_uses = OPENSSL_zalloc(sizeof(int) * (max_strength_bits + 1));
-    if (number_uses == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (number_uses == NULL)
         return 0;
-    }
 
     /*
      * Now find the strength_bits values actually used
@@ -1064,9 +1067,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                  * alphanumeric, so we call this an error.
                  */
                 ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_COMMAND);
-                retval = found = 0;
-                l++;
-                break;
+                return 0;
             }
 
             if (rule == CIPHER_SPECIAL) {
@@ -1494,10 +1495,10 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
      */
     num_of_ciphers = ssl_method->num_ciphers();
 
-    co_list = OPENSSL_malloc(sizeof(*co_list) * num_of_ciphers);
-    if (co_list == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
-        return NULL;          /* Failure */
+    if (num_of_ciphers > 0) {
+        co_list = OPENSSL_malloc(sizeof(*co_list) * num_of_ciphers);
+        if (co_list == NULL)
+            return NULL;          /* Failure */
     }
 
     ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers,
@@ -1609,7 +1610,6 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
     ca_list = OPENSSL_malloc(sizeof(*ca_list) * num_of_alias_max);
     if (ca_list == NULL) {
         OPENSSL_free(co_list);
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return NULL;          /* Failure */
     }
     ssl_cipher_collect_aliases(ca_list, num_of_group_aliases,
@@ -1711,10 +1711,8 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
     if (buf == NULL) {
         len = 128;
-        if ((buf = OPENSSL_malloc(len)) == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        if ((buf = OPENSSL_malloc(len)) == NULL)
             return NULL;
-        }
     } else if (len < 128) {
         return NULL;
     }
@@ -2056,10 +2054,8 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
     }
 
     comp = OPENSSL_malloc(sizeof(*comp));
-    if (comp == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+    if (comp == NULL)
         return 1;
-    }
 
     comp->id = id;
     comp->method = cm;
@@ -2071,7 +2067,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
     }
     if (ssl_comp_methods == NULL || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
         OPENSSL_free(comp);
-        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         return 1;
     }
     return 0;
@@ -2159,6 +2155,16 @@ int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
     return ssl_cipher_table_auth[i].nid;
 }
 
+int ssl_get_md_idx(int md_nid) {
+    int i;
+
+    for(i = 0; i < SSL_MD_NUM_IDX; i++) {
+        if (md_nid == ssl_cipher_table_mac[i].nid)
+            return i;
+    }
+    return -1;
+}
+
 const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c)
 {
     int idx = c->algorithm2 & SSL_HANDSHAKE_MAC_MASK;
@@ -2227,8 +2233,13 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
 
 int ssl_cert_is_disabled(SSL_CTX *ctx, size_t idx)
 {
-    const SSL_CERT_LOOKUP *cl = ssl_cert_lookup_by_idx(idx);
+    SSL_CERT_LOOKUP *cl;
 
+    /* A provider-loaded key type is always enabled */
+    if (idx >= SSL_PKEY_NUM)
+        return 0;
+
+    cl = ssl_cert_lookup_by_idx(idx, ctx);
     if (cl == NULL || (cl->amask & ctx->disabled_auth_mask) != 0)
         return 1;
     return 0;

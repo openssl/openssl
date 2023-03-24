@@ -612,7 +612,7 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_get_flags(const ENGINE *e);
  */
 
 /*
- * Initialise a engine type for use (or up its reference count if it's
+ * Initialise an engine type for use (or up its reference count if it's
  * already in use). This will fail if the engine is not currently operational
  * and cannot initialise.
  */
@@ -620,7 +620,7 @@ OSSL_DEPRECATEDIN_3_0 int ENGINE_get_flags(const ENGINE *e);
 OSSL_DEPRECATEDIN_3_0 int ENGINE_init(ENGINE *e);
 #  endif
 /*
- * Free a functional reference to a engine type. This does not require a
+ * Free a functional reference to an engine type. This does not require a
  * corresponding call to ENGINE_free as it also releases a structural
  * reference.
  */

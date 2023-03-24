@@ -34,7 +34,8 @@ static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
 static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip);
 
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc);
-static int nc_match_single(GENERAL_NAME *sub, GENERAL_NAME *gen);
+static int nc_match_single(int effective_type, GENERAL_NAME *sub,
+                           GENERAL_NAME *gen);
 static int nc_dn(const X509_NAME *sub, const X509_NAME *nm);
 static int nc_dns(ASN1_IA5STRING *sub, ASN1_IA5STRING *dns);
 static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
@@ -134,8 +135,10 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
     GENERAL_SUBTREE *sub = NULL;
 
     ncons = NAME_CONSTRAINTS_new();
-    if (ncons == NULL)
-        goto memerr;
+    if (ncons == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+        goto err;
+    }
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         val = sk_CONF_VALUE_value(nval, i);
         if (HAS_PREFIX(val->name, "permitted") && val->name[9]) {
@@ -150,21 +153,25 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
         }
         tval.value = val->value;
         sub = GENERAL_SUBTREE_new();
-        if (sub == NULL)
-            goto memerr;
-        if (!v2i_GENERAL_NAME_ex(sub->base, method, ctx, &tval, 1))
+        if (sub == NULL) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
             goto err;
+        }
+        if (!v2i_GENERAL_NAME_ex(sub->base, method, ctx, &tval, 1)) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
+            goto err;
+        }
         if (*ptree == NULL)
             *ptree = sk_GENERAL_SUBTREE_new_null();
-        if (*ptree == NULL || !sk_GENERAL_SUBTREE_push(*ptree, sub))
-            goto memerr;
+        if (*ptree == NULL || !sk_GENERAL_SUBTREE_push(*ptree, sub)) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
+            goto err;
+        }
         sub = NULL;
     }
 
     return ncons;
 
- memerr:
-    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
  err:
     NAME_CONSTRAINTS_free(ncons);
     GENERAL_SUBTREE_free(sub);
@@ -434,7 +441,7 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
         ne = X509_NAME_get_entry(nm, i);
         cn = X509_NAME_ENTRY_get_data(ne);
 
-        /* Only process attributes that look like host names */
+        /* Only process attributes that look like hostnames */
         if ((r = cn2dnsid(cn, &idval, &idlen)) != X509_V_OK)
             return r;
         if (idlen == 0)
@@ -475,14 +482,17 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 {
     GENERAL_SUBTREE *sub;
     int i, r, match = 0;
+    int effective_type = gen->type;
+
     /*
      * We need to compare not gen->type field but an "effective" type because
      * the otherName field may contain EAI email address treated specially
      * according to RFC 8398, section 6
      */
-    int effective_type = ((gen->type == GEN_OTHERNAME) &&
-                          (OBJ_obj2nid(gen->d.otherName->type_id) ==
-                           NID_id_on_SmtpUTF8Mailbox)) ? GEN_EMAIL : gen->type;
+    if (effective_type == GEN_OTHERNAME &&
+        (OBJ_obj2nid(gen->d.otherName->type_id) == NID_id_on_SmtpUTF8Mailbox)) {
+        effective_type = GEN_EMAIL;
+    }
 
     /*
      * Permitted subtrees: if any subtrees exist of matching the type at
@@ -491,7 +501,10 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_SUBTREE_num(nc->permittedSubtrees); i++) {
         sub = sk_GENERAL_SUBTREE_value(nc->permittedSubtrees, i);
-        if (effective_type != sub->base->type)
+        if (effective_type != sub->base->type
+            || (effective_type == GEN_OTHERNAME &&
+                OBJ_cmp(gen->d.otherName->type_id,
+                        sub->base->d.otherName->type_id) != 0))
             continue;
         if (!nc_minmax_valid(sub))
             return X509_V_ERR_SUBTREE_MINMAX;
@@ -500,7 +513,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
             continue;
         if (match == 0)
             match = 1;
-        r = nc_match_single(gen, sub->base);
+        r = nc_match_single(effective_type, gen, sub->base);
         if (r == X509_V_OK)
             match = 2;
         else if (r != X509_V_ERR_PERMITTED_VIOLATION)
@@ -514,12 +527,15 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_SUBTREE_num(nc->excludedSubtrees); i++) {
         sub = sk_GENERAL_SUBTREE_value(nc->excludedSubtrees, i);
-        if (effective_type != sub->base->type)
+        if (effective_type != sub->base->type
+            || (effective_type == GEN_OTHERNAME &&
+                OBJ_cmp(gen->d.otherName->type_id,
+                        sub->base->d.otherName->type_id) != 0))
             continue;
         if (!nc_minmax_valid(sub))
             return X509_V_ERR_SUBTREE_MINMAX;
 
-        r = nc_match_single(gen, sub->base);
+        r = nc_match_single(effective_type, gen, sub->base);
         if (r == X509_V_OK)
             return X509_V_ERR_EXCLUDED_VIOLATION;
         else if (r != X509_V_ERR_PERMITTED_VIOLATION)
@@ -531,15 +547,22 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
 }
 
-static int nc_match_single(GENERAL_NAME *gen, GENERAL_NAME *base)
+static int nc_match_single(int effective_type, GENERAL_NAME *gen,
+                           GENERAL_NAME *base)
 {
     switch (gen->type) {
     case GEN_OTHERNAME:
-        /*
-         * We are here only when we have SmtpUTF8 name,
-         * so we match the value of othername with base->d.rfc822Name
-         */
-        return nc_email_eai(gen->d.otherName->value, base->d.rfc822Name);
+        switch (effective_type) {
+        case GEN_EMAIL:
+            /*
+             * We are here only when we have SmtpUTF8 name,
+             * so we match the value of othername with base->d.rfc822Name
+             */
+            return nc_email_eai(gen->d.otherName->value, base->d.rfc822Name);
+
+        default:
+            return X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE;
+        }
 
     case GEN_DIRNAME:
         return nc_dn(gen->d.directoryName, base->d.directoryName);
@@ -626,7 +649,7 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
     const char *emlptr;
     const char *emlat;
     char ulabel[256];
-    size_t size = sizeof(ulabel) - 1;
+    size_t size = sizeof(ulabel);
     int ret = X509_V_OK;
     size_t emlhostlen;
 
@@ -653,18 +676,16 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
         goto end;
     }
 
-    memset(ulabel, 0, sizeof(ulabel));
     /* Special case: initial '.' is RHS match */
     if (*baseptr == '.') {
         ulabel[0] = '.';
-        size -= 1;
-        if (ossl_a2ulabel(baseptr, ulabel + 1, &size) <= 0) {
+        if (ossl_a2ulabel(baseptr, ulabel + 1, size - 1) <= 0) {
             ret = X509_V_ERR_UNSPECIFIED;
             goto end;
         }
 
         if ((size_t)eml->length > strlen(ulabel)) {
-            emlptr += eml->length - (strlen(ulabel));
+            emlptr += eml->length - strlen(ulabel);
             /* X509_V_OK */
             if (ia5ncasecmp(ulabel, emlptr, strlen(ulabel)) == 0)
                 goto end;
@@ -673,7 +694,7 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
         goto end;
     }
 
-    if (ossl_a2ulabel(baseptr, ulabel, &size) <= 0) {
+    if (ossl_a2ulabel(baseptr, ulabel, size) <= 0) {
         ret = X509_V_ERR_UNSPECIFIED;
         goto end;
     }

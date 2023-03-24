@@ -41,9 +41,9 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
 
     if (buf == NULL) {
         if ((b = BUF_MEM_new()) == NULL)
-            goto err;
+            goto buferr;
         if (!BUF_MEM_grow(b, 200))
-            goto err;
+            goto buferr;
         b->data[0] = '\0';
         len = 200;
     } else if (len == 0) {
@@ -124,7 +124,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         }
         if (b != NULL) {
             if (!BUF_MEM_grow(b, l + 1))
-                goto err;
+                goto buferr;
             p = &(b->data[lold]);
         } else if (l > len) {
             break;
@@ -179,8 +179,8 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
     if (i == 0)
         *p = '\0';
     return p;
- err:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+ buferr:
+    ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
  end:
     BUF_MEM_free(b);
     return NULL;

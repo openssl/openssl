@@ -11,19 +11,21 @@
 # define OSSL_QUIC_WIRE_PKT_H
 
 # include <openssl/ssl.h>
-# include "internal/packet.h"
+# include "internal/packet_quic.h"
 # include "internal/quic_types.h"
 
-# define QUIC_VERSION_NONE   ((uint32_t)0)   /* Used for version negotiation */
-# define QUIC_VERSION_1      ((uint32_t)1)   /* QUIC v1 */
+# ifndef OPENSSL_NO_QUIC
+
+#  define QUIC_VERSION_NONE   ((uint32_t)0)   /* Used for version negotiation */
+#  define QUIC_VERSION_1      ((uint32_t)1)   /* QUIC v1 */
 
 /* QUIC logical packet type. These do not match wire values. */
-# define QUIC_PKT_TYPE_INITIAL        1
-# define QUIC_PKT_TYPE_0RTT           2
-# define QUIC_PKT_TYPE_HANDSHAKE      3
-# define QUIC_PKT_TYPE_RETRY          4
-# define QUIC_PKT_TYPE_1RTT           5
-# define QUIC_PKT_TYPE_VERSION_NEG    6
+#  define QUIC_PKT_TYPE_INITIAL        1
+#  define QUIC_PKT_TYPE_0RTT           2
+#  define QUIC_PKT_TYPE_HANDSHAKE      3
+#  define QUIC_PKT_TYPE_RETRY          4
+#  define QUIC_PKT_TYPE_1RTT           5
+#  define QUIC_PKT_TYPE_VERSION_NEG    6
 
 /*
  * Determine encryption level from packet type. Returns QUIC_ENC_LEVEL_NUM if
@@ -43,6 +45,23 @@ ossl_quic_pkt_type_to_enc_level(uint32_t pkt_type)
             return QUIC_ENC_LEVEL_1RTT;
         default:
             return QUIC_ENC_LEVEL_NUM;
+    }
+}
+
+static ossl_inline ossl_unused uint32_t
+ossl_quic_enc_level_to_pkt_type(uint32_t enc_level)
+{
+    switch (enc_level) {
+        case QUIC_ENC_LEVEL_INITIAL:
+            return QUIC_PKT_TYPE_INITIAL;
+        case QUIC_ENC_LEVEL_HANDSHAKE:
+            return QUIC_PKT_TYPE_HANDSHAKE;
+        case QUIC_ENC_LEVEL_0RTT:
+            return QUIC_PKT_TYPE_0RTT;
+        case QUIC_ENC_LEVEL_1RTT:
+            return QUIC_PKT_TYPE_1RTT;
+        default:
+            return UINT32_MAX;
     }
 }
 
@@ -103,9 +122,9 @@ ossl_quic_pkt_type_must_be_last(uint32_t pkt_type)
  * Smallest possible QUIC packet size as per RFC (aside from version negotiation
  * packets).
  */
-#define QUIC_MIN_VALID_PKT_LEN_CRYPTO      21
-#define QUIC_MIN_VALID_PKT_LEN_VERSION_NEG  7
-#define QUIC_MIN_VALID_PKT_LEN              QUIC_MIN_VALID_PKT_LEN_VERSION_NEG
+#  define QUIC_MIN_VALID_PKT_LEN_CRYPTO      21
+#  define QUIC_MIN_VALID_PKT_LEN_VERSION_NEG  7
+#  define QUIC_MIN_VALID_PKT_LEN              QUIC_MIN_VALID_PKT_LEN_VERSION_NEG
 
 typedef struct quic_pkt_hdr_ptrs_st QUIC_PKT_HDR_PTRS;
 
@@ -125,9 +144,9 @@ typedef struct quic_hdr_protector_st {
     uint32_t            cipher_id;
 } QUIC_HDR_PROTECTOR;
 
-# define QUIC_HDR_PROT_CIPHER_AES_128    1
-# define QUIC_HDR_PROT_CIPHER_AES_256    2
-# define QUIC_HDR_PROT_CIPHER_CHACHA     3
+#  define QUIC_HDR_PROT_CIPHER_AES_128    1
+#  define QUIC_HDR_PROT_CIPHER_AES_256    2
+#  define QUIC_HDR_PROT_CIPHER_CHACHA     3
 
 /*
  * Initialises a header protector.
@@ -304,6 +323,14 @@ typedef struct quic_pkt_hdr_st {
      * encoding unless encoding a Version Negotiation packet.
      */
     unsigned int    fixed       :1;
+
+    /*
+     * The unused bits in the low 4 bits of a Retry packet header's first byte.
+     * This is used to ensure that Retry packets have the same bit-for-bit
+     * representation in their header when decoding and encoding them again.
+     * This is necessary to validate Retry packet headers.
+     */
+    unsigned int    unused      :4;
 
     /* [L] Version field. Valid if (type != 1RTT). */
     uint32_t        version;
@@ -520,4 +547,53 @@ int ossl_quic_wire_determine_pn_len(QUIC_PN pn, QUIC_PN largest_acked);
 int ossl_quic_wire_encode_pkt_hdr_pn(QUIC_PN pn,
                                      unsigned char *enc_pn,
                                      size_t enc_pn_len);
+
+/*
+ * Retry Integrity Tags
+ * ====================
+ */
+
+#  define QUIC_RETRY_INTEGRITY_TAG_LEN    16
+
+/*
+ * Validate a retry integrity tag. Returns 1 if the tag is valid.
+ *
+ * Must be called on a hdr with a type of QUIC_PKT_TYPE_RETRY with a valid data
+ * pointer.
+ *
+ * client_initial_dcid must be the original DCID used by the client in its first
+ * Initial packet, as this is used to calculate the Retry Integrity Tag.
+ *
+ * Returns 0 if the tag is invalid, if called on any other type of packet or if
+ * the body is too short.
+ */
+int ossl_quic_validate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
+                                           const char *propq,
+                                           const QUIC_PKT_HDR *hdr,
+                                           const QUIC_CONN_ID *client_initial_dcid);
+
+/*
+ * Calculates a retry integrity tag. Returns 0 on error, for example if hdr does
+ * not have a type of QUIC_PKT_TYPE_RETRY.
+ *
+ * client_initial_dcid must be the original DCID used by the client in its first
+ * Initial packet, as this is used to calculate the Retry Integrity Tag.
+ *
+ * tag must point to a buffer of QUIC_RETRY_INTEGRITY_TAG_LEN bytes in size.
+ *
+ * Note that hdr->data must point to the Retry packet body, and hdr->len must
+ * include the space for the Retry Integrity Tag. (This means that you can
+ * easily fill in a tag in a Retry packet you are generating by calling this
+ * function and passing (hdr->data + hdr->len - QUIC_RETRY_INTEGRITY_TAG_LEN) as
+ * the tag argument.) This function fails if hdr->len is too short to contain a
+ * Retry Integrity Tag.
+ */
+int ossl_quic_calculate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
+                                            const char *propq,
+                                            const QUIC_PKT_HDR *hdr,
+                                            const QUIC_CONN_ID *client_initial_dcid,
+                                            unsigned char *tag);
+
+# endif
+
 #endif

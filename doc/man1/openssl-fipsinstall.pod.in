@@ -21,7 +21,9 @@ B<openssl fipsinstall>
 [B<-quiet>]
 [B<-no_conditional_errors>]
 [B<-no_security_checks>]
+[B<-ems_check>]
 [B<-self_test_onload>]
+[B<-self_test_oninstall>]
 [B<-corrupt_desc> I<selftest_description>]
 [B<-corrupt_type> I<selftest_type>]
 [B<-config> I<parent_config>]
@@ -164,6 +166,15 @@ fails as described above.
 
 Configure the module to not perform run-time security checks as described above.
 
+Enabling the configuration option "no-fips-securitychecks" provides another way to
+turn off the check at compile time.
+
+=item B<-ems_check>
+
+Configure the module to enable a run-time Extended Master Secret (EMS) check
+when using the TLS1_PRF KDF algorithm. This check is disabled by default.
+See RFC 7627 for information related to EMS.
+
 =item B<-self_test_onload>
 
 Do not write the two fields related to the "test status indicator" and
@@ -173,6 +184,14 @@ used for cross compiling, since the self tests need to run at least once on each
 target machine. Once the self tests have run on the target machine the user
 could possibly then add the 2 fields into the configuration using some other
 mechanism.
+
+This is the default.
+
+=item B<-self_test_oninstall>
+
+The converse of B<-self_test_oninstall>.  The two fields related to the
+"test status indicator" and "MAC status indicator" are written to the
+output configuration file.
 
 =item B<-quiet>
 
@@ -208,6 +227,11 @@ has a chance to set up its own self test callback. As a result of this the self
 test output and the options B<-corrupt_desc> and B<-corrupt_type> will be ignored.
 For normal usage the base configuration file should use the default provider
 when generating the fips configuration file.
+
+The B<-self_test_oninstall> option was added and the
+B<-self_test_onload> option was made the default in OpenSSL 3.1.
+
+The command and all remaining options were added in OpenSSL 3.0.
 
 =head1 EXAMPLES
 

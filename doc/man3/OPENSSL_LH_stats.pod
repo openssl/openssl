@@ -16,7 +16,7 @@ OPENSSL_LH_node_stats_bio, OPENSSL_LH_node_usage_stats_bio - LHASH statistics
  void OPENSSL_LH_node_stats_bio(LHASH *table, BIO *out);
  void OPENSSL_LH_node_usage_stats_bio(LHASH *table, BIO *out);
 
-The following functions have been deprecated since OpenSSL 3.1, and can be
+The following functions have been deprecated since OpenSSL 3.2, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
 see L<openssl_user_macros(7)>:
 
@@ -62,7 +62,7 @@ L<OPENSSL_LH_COMPFUNC(3)/NOTE> for more details about the locks required
 when using the LHASH data structure.
 
 The functions OPENSSH_LH_stats() and OPENSSH_LH_stats_bio() were deprecated in
-version 3.1.
+version 3.2.
 
 =head1 SEE ALSO
 

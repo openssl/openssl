@@ -130,6 +130,9 @@ it is supported for embedded data in OpenSSL 1.0.0 and later.
 
 The CMS_sign_ex() method was added in OpenSSL 3.0.
 
+Since OpenSSL 3.2, CMS_sign_ex() and CMS_sign() ignore any duplicate
+certificates in their I<certs> argument and no longer throw an error for them.
+
 =head1 COPYRIGHT
 
 Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.

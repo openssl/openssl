@@ -178,6 +178,7 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
     custom_ext_method *meth;
     size_t i;
     int al;
+    int for_comp = (context & SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION) != 0;
 
     for (i = 0; i < exts->meths_count; i++) {
         const unsigned char *out = NULL;
@@ -211,7 +212,8 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                                          meth->add_arg);
 
             if (cb_retval < 0) {
-                SSLfatal(s, al, SSL_R_CALLBACK_FAILED);
+                if (!for_comp)
+                    SSLfatal(s, al, SSL_R_CALLBACK_FAILED);
                 return 0;       /* error */
             }
             if (cb_retval == 0)
@@ -222,7 +224,8 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || (outlen > 0 && !WPACKET_memcpy(pkt, out, outlen))
                 || !WPACKET_close(pkt)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
@@ -230,7 +233,8 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
              * We can't send duplicates: code logic should prevent this.
              */
             if (!ossl_assert((meth->ext_flags & SSL_EXT_FLAG_SENT) == 0)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                if (!for_comp)
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
             /*
@@ -340,16 +344,15 @@ int SSL_CTX_has_client_custom_ext(const SSL_CTX *ctx, unsigned int ext_type)
                            NULL) != NULL;
 }
 
-static int add_custom_ext_intern(SSL_CTX *ctx, ENDPOINT role,
-                                 unsigned int ext_type,
-                                 unsigned int context,
-                                 SSL_custom_ext_add_cb_ex add_cb,
-                                 SSL_custom_ext_free_cb_ex free_cb,
-                                 void *add_arg,
-                                 SSL_custom_ext_parse_cb_ex parse_cb,
-                                 void *parse_arg)
+int ossl_tls_add_custom_ext_intern(SSL_CTX *ctx, custom_ext_methods *exts,
+                                   ENDPOINT role, unsigned int ext_type,
+                                   unsigned int context,
+                                   SSL_custom_ext_add_cb_ex add_cb,
+                                   SSL_custom_ext_free_cb_ex free_cb,
+                                   void *add_arg,
+                                   SSL_custom_ext_parse_cb_ex parse_cb,
+                                   void *parse_arg)
 {
-    custom_ext_methods *exts = &ctx->cert->custext;
     custom_ext_method *meth, *tmp;
 
     /*
@@ -359,6 +362,9 @@ static int add_custom_ext_intern(SSL_CTX *ctx, ENDPOINT role,
     if (add_cb == NULL && free_cb != NULL)
         return 0;
 
+    if (exts == NULL)
+        exts = &ctx->cert->custext;
+
 #ifndef OPENSSL_NO_CT
     /*
      * We don't want applications registering callbacks for SCT extensions
@@ -367,6 +373,7 @@ static int add_custom_ext_intern(SSL_CTX *ctx, ENDPOINT role,
      */
     if (ext_type == TLSEXT_TYPE_signed_certificate_timestamp
             && (context & SSL_EXT_CLIENT_HELLO) != 0
+            && ctx != NULL
             && SSL_CTX_ct_is_enabled(ctx))
         return 0;
 #endif
@@ -431,13 +438,13 @@ static int add_old_custom_ext(SSL_CTX *ctx, ENDPOINT role,
     parse_cb_wrap->parse_arg = parse_arg;
     parse_cb_wrap->parse_cb = parse_cb;
 
-    ret = add_custom_ext_intern(ctx, role, ext_type,
-                                context,
-                                custom_ext_add_old_cb_wrap,
-                                custom_ext_free_old_cb_wrap,
-                                add_cb_wrap,
-                                custom_ext_parse_old_cb_wrap,
-                                parse_cb_wrap);
+    ret = ossl_tls_add_custom_ext_intern(ctx, NULL, role, ext_type,
+                                         context,
+                                         custom_ext_add_old_cb_wrap,
+                                         custom_ext_free_old_cb_wrap,
+                                         add_cb_wrap,
+                                         custom_ext_parse_old_cb_wrap,
+                                         parse_cb_wrap);
 
     if (!ret) {
         OPENSSL_free(add_cb_wrap);
@@ -483,8 +490,9 @@ int SSL_CTX_add_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
                            void *add_arg,
                            SSL_custom_ext_parse_cb_ex parse_cb, void *parse_arg)
 {
-    return add_custom_ext_intern(ctx, ENDPOINT_BOTH, ext_type, context, add_cb,
-                                 free_cb, add_arg, parse_cb, parse_arg);
+    return ossl_tls_add_custom_ext_intern(ctx, NULL, ENDPOINT_BOTH, ext_type,
+                                          context, add_cb, free_cb, add_arg,
+                                          parse_cb, parse_arg);
 }
 
 int SSL_extension_supported(unsigned int ext_type)
@@ -525,6 +533,7 @@ int SSL_extension_supported(unsigned int ext_type)
     case TLSEXT_TYPE_certificate_authorities:
     case TLSEXT_TYPE_psk:
     case TLSEXT_TYPE_post_handshake_auth:
+    case TLSEXT_TYPE_compress_certificate:
         return 1;
     default:
         return 0;

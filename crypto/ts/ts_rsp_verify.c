@@ -178,7 +178,7 @@ static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
     *chain = NULL;
     cert_ctx = X509_STORE_CTX_new();
     if (cert_ctx == NULL) {
-        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_X509_LIB);
         goto err;
     }
     if (!X509_STORE_CTX_init(cert_ctx, store, signer, untrusted))
@@ -278,7 +278,7 @@ int TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token)
 }
 
 /*-
- * Verifies whether the 'token' contains a valid time stamp token
+ * Verifies whether the 'token' contains a valid timestamp token
  * with regards to the settings of the context. Only those checks are
  * carried out that are specified in the context:
  *      - Verifies the signature of the TS_TST_INFO.
@@ -451,14 +451,12 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
     if (length < 0)
         goto err;
     *imprint_len = length;
-    if ((*imprint = OPENSSL_malloc(*imprint_len)) == NULL) {
-        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+    if ((*imprint = OPENSSL_malloc(*imprint_len)) == NULL)
         goto err;
-    }
 
     md_ctx = EVP_MD_CTX_new();
     if (md_ctx == NULL) {
-        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_EVP_LIB);
         goto err;
     }
     if (!EVP_DigestInit(md_ctx, md))

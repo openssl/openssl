@@ -59,7 +59,7 @@ static char *file_get_pass(const UI_METHOD *ui_method, char *pass,
     char *prompt = NULL;
 
     if (ui == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        ATTICerr(0, ERR_R_UI_LIB);
         return NULL;
     }
 
@@ -68,7 +68,7 @@ static char *file_get_pass(const UI_METHOD *ui_method, char *pass,
     UI_add_user_data(ui, data);
 
     if ((prompt = UI_construct_prompt(ui, desc, info)) == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        ATTICerr(0, ERR_R_UI_LIB);
         pass = NULL;
     } else if (UI_add_input_string(ui, prompt, UI_INPUT_FLAG_DEFAULT_PWD,
                                     pass, 0, maxsize - 1) <= 0) {
@@ -190,9 +190,10 @@ static OSSL_STORE_INFO *new_EMBEDDED(const char *new_pem_name,
     OSSL_STORE_INFO *info = NULL;
     struct embedded_st *data = NULL;
 
-    if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL
-        || (info = OSSL_STORE_INFO_new(STORE_INFO_EMBEDDED, data)) == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+    if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL)
+        return NULL;
+    if ((info = OSSL_STORE_INFO_new(STORE_INFO_EMBEDDED, data)) == NULL) {
+        ATTICerr(0, ERR_R_OSSL_STORE_LIB);
         OPENSSL_free(data);
         return NULL;
     }
@@ -202,7 +203,6 @@ static OSSL_STORE_INFO *new_EMBEDDED(const char *new_pem_name,
         new_pem_name == NULL ? NULL : OPENSSL_strdup(new_pem_name);
 
     if (new_pem_name != NULL && data->pem_name == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
         store_info_free(info);
         info = NULL;
     }
@@ -223,7 +223,7 @@ static OSSL_STORE_INFO *new_EMBEDDED(const char *new_pem_name,
 /*-
  * The try_decode function is called to check if the blob of data can
  * be used by this handler, and if it can, decodes it into a supported
- * OpenSSL type and returns a OSSL_STORE_INFO with the decoded data.
+ * OpenSSL type and returns an OSSL_STORE_INFO with the decoded data.
  * Input:
  *    pem_name:     If this blob comes from a PEM file, this holds
  *                  the PEM name.  If it comes from another type of
@@ -251,7 +251,7 @@ static OSSL_STORE_INFO *new_EMBEDDED(const char *new_pem_name,
  *    libctx:       The library context to be used if applicable
  *    propq:        The property query string for any algorithm fetches
  * Output:
- *    a OSSL_STORE_INFO
+ *    an OSSL_STORE_INFO
  */
 typedef OSSL_STORE_INFO *(*file_try_decode_fn)(const char *pem_name,
                                                const char *pem_header,
@@ -458,7 +458,7 @@ static OSSL_STORE_INFO *try_decode_PKCS8Encrypted(const char *pem_name,
     *matchcount = 1;
 
     if ((mem = BUF_MEM_new()) == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        ATTICerr(0, ERR_R_BUF_LIB);
         goto nop8;
     }
 
@@ -481,7 +481,7 @@ static OSSL_STORE_INFO *try_decode_PKCS8Encrypted(const char *pem_name,
 
     store_info = new_EMBEDDED(PEM_STRING_PKCS8INF, mem);
     if (store_info == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        ATTICerr(0, ERR_R_OSSL_STORE_LIB);
         goto nop8;
     }
 
@@ -1022,15 +1022,11 @@ static OSSL_STORE_LOADER_CTX *file_open_ex
     /* Successfully found a working path */
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
-    if (ctx == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+    if (ctx == NULL)
         return NULL;
-    }
     ctx->uri = OPENSSL_strdup(uri);
-    if (ctx->uri == NULL) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
+    if (ctx->uri == NULL)
         goto err;
-    }
 
     if (S_ISDIR(st.st_mode)) {
         ctx->type = is_dir;
@@ -1050,10 +1046,8 @@ static OSSL_STORE_LOADER_CTX *file_open_ex
     }
     if (propq != NULL) {
         ctx->propq = OPENSSL_strdup(propq);
-        if (ctx->propq == NULL) {
-            ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        if (ctx->propq == NULL)
             goto err;
-        }
     }
     ctx->libctx = libctx;
 
@@ -1079,7 +1073,6 @@ static OSSL_STORE_LOADER_CTX *file_attach
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL
         || (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL)) {
-        ATTICerr(0, ERR_R_MALLOC_FAILURE);
         OSSL_STORE_LOADER_CTX_free(ctx);
         return NULL;
     }
@@ -1184,10 +1177,8 @@ static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
             OPENSSL_zalloc(sizeof(*matching_handlers)
                            * OSSL_NELEM(file_handlers));
 
-        if (matching_handlers == NULL) {
-            ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        if (matching_handlers == NULL)
             goto err;
-        }
 
         *matchcount = 0;
         for (i = 0; i < OSSL_NELEM(file_handlers); i++) {
@@ -1429,10 +1420,8 @@ static int file_name_to_uri(OSSL_STORE_LOADER_CTX *ctx, const char *name,
             + strlen(name) + 1 /* \0 */;
 
         *data = OPENSSL_zalloc(calculated_length);
-        if (*data == NULL) {
-            ATTICerr(0, ERR_R_MALLOC_FAILURE);
+        if (*data == NULL)
             return 0;
-        }
 
         OPENSSL_strlcat(*data, ctx->uri, calculated_length);
         OPENSSL_strlcat(*data, pathsep, calculated_length);

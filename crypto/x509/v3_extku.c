@@ -79,7 +79,7 @@ static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,
 
     extku = sk_ASN1_OBJECT_new_reserve(NULL, num);
     if (extku == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
         sk_ASN1_OBJECT_free(extku);
         return NULL;
     }

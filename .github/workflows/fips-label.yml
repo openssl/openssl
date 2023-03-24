@@ -25,10 +25,10 @@ jobs:
     steps:
       - name: 'Download artifact'
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
-        uses: actions/github-script@v4
+        uses: actions/github-script@v6
         with:
           script: |
-            var artifacts = await github.actions.listWorkflowRunArtifacts({
+            var artifacts = await github.rest.actions.listWorkflowRunArtifacts({
                owner: context.repo.owner,
                repo: context.repo.repo,
                run_id: ${{github.event.workflow_run.id }},
@@ -36,7 +36,7 @@ jobs:
             var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
               return artifact.name == "fips_checksum"
             })[0];
-            var download = await github.actions.downloadArtifact({
+            var download = await github.rest.actions.downloadArtifact({
                owner: context.repo.owner,
                repo: context.repo.repo,
                artifact_id: matchArtifact.id,
@@ -48,21 +48,21 @@ jobs:
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
       - name: 'Check artifact and apply'
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
-        uses: actions/github-script@v4
+        uses: actions/github-script@v6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             var fs = require('fs');
             var pr_num = Number(fs.readFileSync('./pr_num'));
             if ( fs.existsSync('./fips_changed') ) {
-              github.issues.addLabels({
+              github.rest.issues.addLabels({
                 issue_number: pr_num,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 labels: ['severity: fips change']
               });
             } else if ( fs.existsSync('./fips_unchanged') ) {
-              var labels = await github.issues.listLabelsOnIssue({
+              var labels = await github.rest.issues.listLabelsOnIssue({
                 issue_number: pr_num,
                 owner: context.repo.owner,
                 repo: context.repo.repo
@@ -70,7 +70,7 @@ jobs:
 
               for ( var label in labels.data ) {
                 if (labels.data[label].name == 'severity: fips change') {
-                  github.issues.removeLabel({
+                  github.rest.issues.removeLabel({
                     issue_number: pr_num,
                     owner: context.repo.owner,
                     repo: context.repo.repo,

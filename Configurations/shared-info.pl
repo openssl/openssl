@@ -40,6 +40,12 @@ my %shared_info;
         };
     },
     'bsd-gcc-shared' => sub { return $shared_info{'linux-shared'}; },
+    'bsd-gcc-nodef-shared' => sub { 
+        return {
+            %{$shared_info{'gnu-shared'}},
+            shared_defflags     => '-Wl,--version-script=',
+        };
+    },
     'darwin-shared' => {
         module_ldflags        => '-bundle',
         shared_ldflag         => '-dynamiclib -current_version $(SHLIB_VERSION_NUMBER) -compatibility_version $(SHLIB_VERSION_NUMBER)',

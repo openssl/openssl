@@ -14,7 +14,7 @@ To request new features or report bugs, please open an issue on GitHub
 To submit a patch, please open a pull request on GitHub.  If you are thinking
 of making a large contribution, open an issue for it before starting work,
 to get comments from the community.  Someone may be already working on
-the same thing or there may be reasons why that feature isn't implemented.
+the same thing, or there may be reasons why that feature isn't implemented.
 
 To make it easier to review and accept your pull request, please follow these
 guidelines:
@@ -54,7 +54,7 @@ guidelines:
     (usually by rebasing) before it will be acceptable.
 
  4. Patches should follow our [coding style] and compile without warnings.
-    Where `gcc` or `clang` is available you should use the
+    Where `gcc` or `clang` is available, you should use the
     `--strict-warnings` `Configure` option.  OpenSSL compiles on many varied
     platforms: try to ensure you only use portable features.  Clean builds via
     GitHub Actions and AppVeyor are required, and they are started automatically

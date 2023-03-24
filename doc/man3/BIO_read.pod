@@ -42,7 +42,7 @@ if present in the input data.
 On binary input there may be NUL characters within the string;
 in this case the return value (if nonnegative) may give an incorrect length.
 
-BIO_get_line() attempts to read from BIO <b> a line of data up to the next '\n'
+BIO_get_line() attempts to read from BIO I<b> a line of data up to the next '\n'
 or the maximum length I<size-1> is reached and places the data in I<buf>.
 The returned string is always NUL-terminated and the '\n' is preserved
 if present in the input data.

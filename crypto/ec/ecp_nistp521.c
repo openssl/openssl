@@ -782,7 +782,6 @@ static void felem_inv(felem out, const felem in)
     felem_reduce(ftmp3, tmp);   /* 2^7 - 2^3 */
     felem_square(tmp, ftmp3);
     felem_reduce(ftmp3, tmp);   /* 2^8 - 2^4 */
-    felem_assign(ftmp4, ftmp3);
     felem_mul(tmp, ftmp3, ftmp);
     felem_reduce(ftmp4, tmp);   /* 2^8 - 2^1 */
     felem_square(tmp, ftmp4);
@@ -843,9 +842,9 @@ static void felem_inv(felem out, const felem in)
         felem_reduce(ftmp3, tmp); /* 2^521 - 2^9 */
     }
     felem_mul(tmp, ftmp3, ftmp4);
-    felem_reduce(ftmp3, tmp);   /* 2^512 - 2^2 */
+    felem_reduce(ftmp3, tmp);   /* 2^521 - 2^2 */
     felem_mul(tmp, ftmp3, in);
-    felem_reduce(out, tmp);     /* 2^512 - 3 */
+    felem_reduce(out, tmp);     /* 2^521 - 3 */
 }
 
 /* This is 2^521-1, expressed as an felem */
@@ -1742,16 +1741,14 @@ static NISTP521_PRE_COMP *nistp521_pre_comp_new(void)
 {
     NISTP521_PRE_COMP *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if (ret == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+    if (ret == NULL)
         return ret;
-    }
 
     ret->references = 1;
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_CRYPTO_LIB);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -1992,10 +1989,8 @@ int ossl_ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
             tmp_felems =
                 OPENSSL_malloc(sizeof(*tmp_felems) * (num_points * 17 + 1));
         if ((secrets == NULL) || (pre_comp == NULL)
-            || (mixed && (tmp_felems == NULL))) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            || (mixed && (tmp_felems == NULL)))
             goto err;
-        }
 
         /*
          * we treat NULL scalars as 0, and NULL points as points at infinity,

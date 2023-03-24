@@ -59,6 +59,54 @@ err:
     return ret;
 }
 
+/*
+ * Refer: FIPS 140-3 IG 10.3.A Additional Comment 1
+ * Perform a KAT by duplicating the public key generation.
+ *
+ * NOTE: This issue requires a background understanding, provided in a separate
+ * document; the current IG 10.3.A AC1 is insufficient regarding the PCT for
+ * the key agreement scenario.
+ *
+ * Currently IG 10.3.A requires PCT in the mode of use prior to use of the
+ * key pair, citing the PCT defined in the associated standard. For key
+ * agreement, the only PCT defined in SP 800-56A is that of Section 5.6.2.4:
+ * the comparison of the original public key to a newly calculated public key.
+ */
+static int dsa_keygen_knownanswer_test(DSA *dsa, BN_CTX *ctx,
+                                       OSSL_CALLBACK *cb, void *cbarg)
+{
+    int len, ret = 0;
+    OSSL_SELF_TEST *st = NULL;
+    unsigned char bytes[512] = {0};
+    BIGNUM *pub_key2 = BN_new();
+
+    if (pub_key2 == NULL)
+        return 0;
+
+    st = OSSL_SELF_TEST_new(cb, cbarg);
+    if (st == NULL)
+        goto err;
+
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT_KAT,
+                               OSSL_SELF_TEST_DESC_PCT_DSA);
+
+    if (!ossl_dsa_generate_public_key(ctx, dsa, dsa->priv_key, pub_key2))
+        goto err;
+
+    if (BN_num_bytes(pub_key2) > (int)sizeof(bytes))
+        goto err;
+    len = BN_bn2bin(pub_key2, bytes);
+    OSSL_SELF_TEST_oncorrupt_byte(st, bytes);
+    if (BN_bin2bn(bytes, len, pub_key2) != NULL)
+        ret = !BN_cmp(dsa->pub_key, pub_key2);
+
+err:
+    OSSL_SELF_TEST_onend(st, ret);
+    OSSL_SELF_TEST_free(st);
+    BN_free(pub_key2);
+    return ret;
+}
+
 static int dsa_keygen(DSA *dsa, int pairwise_test)
 {
     int ok = 0;
@@ -113,7 +161,8 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
         void *cbarg = NULL;
 
         OSSL_SELF_TEST_get_callback(dsa->libctx, &cb, &cbarg);
-        ok = dsa_keygen_pairwise_test(dsa, cb, cbarg);
+        ok = dsa_keygen_pairwise_test(dsa, cb, cbarg)
+             && dsa_keygen_knownanswer_test(dsa, ctx, cb, cbarg);
         if (!ok) {
             ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
             BN_free(dsa->pub_key);

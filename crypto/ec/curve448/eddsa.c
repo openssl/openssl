@@ -61,12 +61,8 @@ static c448_error_t hash_init_with_dom(OSSL_LIB_CTX *ctx, EVP_MD_CTX *hashctx,
                                        size_t context_len,
                                        const char *propq)
 {
-#ifdef CHARSET_EBCDIC
-    const char dom_s[] = {0x53, 0x69, 0x67, 0x45,
-                          0x64, 0x34, 0x34, 0x38, 0x00};
-#else
-    const char dom_s[] = "SigEd448";
-#endif
+    /* ASCII: "SigEd448", in hex for EBCDIC compatibility */
+    const char dom_s[] = "\x53\x69\x67\x45\x64\x34\x34\x38";
     uint8_t dom[2];
     EVP_MD *shake256 = NULL;
 
@@ -82,7 +78,7 @@ static c448_error_t hash_init_with_dom(OSSL_LIB_CTX *ctx, EVP_MD_CTX *hashctx,
         return C448_FAILURE;
 
     if (!EVP_DigestInit_ex(hashctx, shake256, NULL)
-            || !EVP_DigestUpdate(hashctx, dom_s, strlen(dom_s))
+            || !EVP_DigestUpdate(hashctx, dom_s, sizeof(dom_s)-1)
             || !EVP_DigestUpdate(hashctx, dom, sizeof(dom))
             || !EVP_DigestUpdate(hashctx, context, context_len)) {
         EVP_MD_free(shake256);
@@ -373,45 +369,27 @@ ossl_c448_ed448_verify_prehash(
 }
 
 int
-ossl_ed448_sign(OSSL_LIB_CTX *ctx, uint8_t *out_sig, const uint8_t *message,
-                size_t message_len, const uint8_t public_key[57],
-                const uint8_t private_key[57], const uint8_t *context,
-                size_t context_len, const char *propq)
+ossl_ed448_sign(OSSL_LIB_CTX *ctx, uint8_t *out_sig,
+                const uint8_t *message, size_t message_len,
+                const uint8_t public_key[57], const uint8_t private_key[57],
+                const uint8_t *context, size_t context_len,
+                const uint8_t phflag, const char *propq)
 {
     return ossl_c448_ed448_sign(ctx, out_sig, private_key, public_key, message,
-                                message_len, 0, context, context_len,
+                                message_len, phflag, context, context_len,
                                 propq) == C448_SUCCESS;
 }
 
 int
-ossl_ed448_verify(OSSL_LIB_CTX *ctx, const uint8_t *message, size_t message_len,
+ossl_ed448_verify(OSSL_LIB_CTX *ctx,
+                  const uint8_t *message, size_t message_len,
                   const uint8_t signature[114], const uint8_t public_key[57],
-                  const uint8_t *context, size_t context_len, const char *propq)
+                  const uint8_t *context, size_t context_len,
+                  const uint8_t phflag, const char *propq)
 {
     return ossl_c448_ed448_verify(ctx, signature, public_key, message,
-                                  message_len, 0, context, (uint8_t)context_len,
+                                  message_len, phflag, context, (uint8_t)context_len,
                                   propq) == C448_SUCCESS;
-}
-
-int
-ossl_ed448ph_sign(OSSL_LIB_CTX *ctx, uint8_t *out_sig, const uint8_t hash[64],
-                  const uint8_t public_key[57], const uint8_t private_key[57],
-                  const uint8_t *context, size_t context_len, const char *propq)
-{
-    return ossl_c448_ed448_sign_prehash(ctx, out_sig, private_key, public_key,
-                                        hash, context, context_len,
-                                        propq) == C448_SUCCESS;
-}
-
-int
-ossl_ed448ph_verify(OSSL_LIB_CTX *ctx, const uint8_t hash[64],
-                    const uint8_t signature[114], const uint8_t public_key[57],
-                    const uint8_t *context, size_t context_len,
-                    const char *propq)
-{
-    return ossl_c448_ed448_verify_prehash(ctx, signature, public_key, hash,
-                                          context, (uint8_t)context_len,
-                                          propq) == C448_SUCCESS;
 }
 
 int

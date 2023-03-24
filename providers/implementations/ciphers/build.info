@@ -25,6 +25,7 @@ $SM4_GOAL=../../libdefault.a
 $CHACHA_GOAL=../../libdefault.a
 $CHACHAPOLY_GOAL=../../libdefault.a
 $SIV_GOAL=../../libdefault.a
+$SIV_GCM_GOAL=../../libdefault.a
 
 IF[{- !$disabled{asm} -}]
   $GHASHDEF_x86=GHASH_ASM
@@ -98,10 +99,11 @@ SOURCE[$AES_GOAL]=\
 SOURCE[$AES_GOAL]=cipher_aes_xts_fips.c
 
 IF[{- !$disabled{siv} -}]
-  DEFINE[$SIV_GOAL]=$GHASHDEF
-  SOURCE[$SIV_GOAL]=\
-      cipher_aes_siv.c cipher_aes_siv_hw.c \
-      cipher_aes_gcm_siv.c cipher_aes_gcm_siv_hw.c cipher_aes_gcm_siv_polyval.c
+  DEFINE[$SIV_GCM_GOAL]=$GHASHDEF
+  SOURCE[$SIV_GCM_GOAL]=\
+        cipher_aes_gcm_siv.c cipher_aes_gcm_siv_hw.c \
+        cipher_aes_gcm_siv_polyval.c
+  SOURCE[$SIV_GOAL]=cipher_aes_siv.c cipher_aes_siv_hw.c
 ENDIF
 
 IF[{- !$disabled{des} -}]
@@ -153,7 +155,9 @@ IF[{- !$disabled{sm4} -}]
   SOURCE[$SM4_GOAL]=\
       cipher_sm4.c cipher_sm4_hw.c \
       cipher_sm4_gcm.c cipher_sm4_gcm_hw.c \
-      cipher_sm4_ccm.c cipher_sm4_ccm_hw.c
+      cipher_sm4_ccm.c cipher_sm4_ccm_hw.c \
+      cipher_sm4_xts.c cipher_sm4_xts_hw.c
+
 ENDIF
 
 IF[{- !$disabled{ocb} -}]

@@ -39,7 +39,7 @@ static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_
     int i;
 
     if (ist == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         return NULL;
     }
     for (i = 0; i < sk_CONF_VALUE_num(nval); ++i) {
@@ -51,7 +51,7 @@ static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_
         if (strcmp(cnf->name, "signTool") == 0) {
             ist->signTool = ASN1_UTF8STRING_new();
             if (ist->signTool == NULL) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 ISSUER_SIGN_TOOL_free(ist);
                 return NULL;
             }
@@ -59,7 +59,7 @@ static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_
         } else if (strcmp(cnf->name, "cATool") == 0) {
             ist->cATool = ASN1_UTF8STRING_new();
             if (ist->cATool == NULL) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 ISSUER_SIGN_TOOL_free(ist);
                 return NULL;
             }
@@ -67,7 +67,7 @@ static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_
         } else if (strcmp(cnf->name, "signToolCert") == 0) {
             ist->signToolCert = ASN1_UTF8STRING_new();
             if (ist->signToolCert == NULL) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 ISSUER_SIGN_TOOL_free(ist);
                 return NULL;
             }
@@ -75,7 +75,7 @@ static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_
         } else if (strcmp(cnf->name, "cAToolCert") == 0) {
             ist->cAToolCert = ASN1_UTF8STRING_new();
             if (ist->cAToolCert == NULL) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 ISSUER_SIGN_TOOL_free(ist);
                 return NULL;
             }

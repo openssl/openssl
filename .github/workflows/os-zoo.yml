@@ -15,6 +15,43 @@ permissions:
   contents: read
 
 jobs:
+  # This has to be a separate job, it seems, because we want to use a
+  # container for it.
+  unix-container:
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['alpine:edge', 'alpine:latest']
+        cc: ['gcc', 'clang']
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
+    steps:
+    - name: install packages
+      run: |
+        apk --no-cache add build-base perl linux-headers ${{ matrix.cc }}
+
+    - uses: actions/checkout@v3
+
+    - name: config
+      run: |
+        cc="${{ matrix.cc }}"
+
+        extra_cflags=""
+        if [[ ${cc} == "clang" ]] ; then
+          # https://www.openwall.com/lists/musl/2022/02/16/14
+          extra_cflags="-Wno-sign-compare"
+        fi
+
+        CC=${{ matrix.cc }} ./config --banner=Configured no-shared \
+            -Wall -Werror enable-fips --strict-warnings -DOPENSSL_USE_IPV6=0 ${extra_cflags}
+
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
   unix:
     strategy:
       fail-fast: false
@@ -27,7 +64,7 @@ jobs:
         ]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: config
       run: |
         CC=${{ matrix.zoo.cc }} ./config --banner=Configured \
@@ -48,7 +85,7 @@ jobs:
         ]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: ilammy/setup-nasm@v1
     - uses: shogo82148/actions-setup-perl@v1

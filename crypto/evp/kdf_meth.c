@@ -65,7 +65,7 @@ static void *evp_kdf_from_algorithm(int name_id,
     int fnkdfcnt = 0, fnctxcnt = 0;
 
     if ((kdf = evp_kdf_new()) == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         return NULL;
     }
     kdf->name_id = name_id;

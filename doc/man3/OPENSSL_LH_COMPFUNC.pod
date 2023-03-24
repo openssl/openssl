@@ -280,7 +280,7 @@ L<OPENSSL_LH_stats(3)>
 In OpenSSL 1.0.0, the lhash interface was revamped for better
 type checking.
 
-In OpenSSL 3.1, B<DEFINE_LHASH_OF_EX>() was introduced and B<DEFINE_LHASH_OF>()
+In OpenSSL 3.2, B<DEFINE_LHASH_OF_EX>() was introduced and B<DEFINE_LHASH_OF>()
 was deprecated.
 
 =head1 COPYRIGHT

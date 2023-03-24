@@ -92,6 +92,9 @@ options supported depends on the public key algorithm used and its
 implementation. See L</KEY GENERATION OPTIONS> and
 L</PARAMETER GENERATION OPTIONS> below for more details.
 
+To list the possible I<opt> values for an algorithm use:
+B<openssl> B<genpkey> -algorithm XXX -help
+
 =item B<-genparam>
 
 Generate a set of parameters instead of a private key. If used this option must

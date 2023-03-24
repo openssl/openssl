@@ -62,6 +62,7 @@ typedef struct {
     unsigned char *salt;
     size_t salt_len;
     size_t out_len; /* optional KMAC parameter */
+    int is_kmac;
 } KDF_SSKDF;
 
 #define SSKDF_MAX_INLEN (1<<30)
@@ -290,9 +291,8 @@ static void *sskdf_new(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
-    ctx->provctx = provctx;
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL)
+        ctx->provctx = provctx;
     return ctx;
 }
 
@@ -341,6 +341,7 @@ static void *sskdf_dup(void *vctx)
                 || !ossl_prov_digest_copy(&dest->digest, &src->digest))
             goto err;
         dest->out_len = src->out_len;
+        dest->is_kmac = src->is_kmac;
     }
     return dest;
 
@@ -362,8 +363,12 @@ static int sskdf_set_buffer(unsigned char **out, size_t *out_len,
 static size_t sskdf_size(KDF_SSKDF *ctx)
 {
     int len;
-    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+    const EVP_MD *md = NULL;
 
+    if (ctx->is_kmac)
+        return SIZE_MAX;
+
+    md = ossl_prov_digest_md(&ctx->digest);
     if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
@@ -403,8 +408,7 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen,
             default_salt_len = EVP_MD_get_size(md);
             if (default_salt_len <= 0)
                 return 0;
-        } else if (EVP_MAC_is_a(mac, OSSL_MAC_NAME_KMAC128)
-                   || EVP_MAC_is_a(mac, OSSL_MAC_NAME_KMAC256)) {
+        } else if (ctx->is_kmac) {
             /* H(x) = KMACzzz(x, salt, custom) */
             custom = kmac_custom_str;
             custom_len = sizeof(kmac_custom_str);
@@ -419,10 +423,8 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen,
         /* If no salt is set then use a default_salt of zeros */
         if (ctx->salt == NULL || ctx->salt_len <= 0) {
             ctx->salt = OPENSSL_zalloc(default_salt_len);
-            if (ctx->salt == NULL) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            if (ctx->salt == NULL)
                 return 0;
-            }
             ctx->salt_len = default_salt_len;
         }
         ret = SSKDF_mac_kdm(ctx->macctx,
@@ -482,12 +484,20 @@ static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
-    if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
-        return 0;
-
     if (!ossl_prov_macctx_load_from_params(&ctx->macctx, params,
                                            NULL, NULL, NULL, libctx))
         return 0;
+   if (ctx->macctx != NULL) {
+        if (EVP_MAC_is_a(EVP_MAC_CTX_get0_mac(ctx->macctx),
+                         OSSL_MAC_NAME_KMAC128)
+            || EVP_MAC_is_a(EVP_MAC_CTX_get0_mac(ctx->macctx),
+                            OSSL_MAC_NAME_KMAC256)) {
+            ctx->is_kmac = 1;
+        }
+   }
+
+   if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))
+       return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SECRET)) != NULL
         || (p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL)

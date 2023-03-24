@@ -95,22 +95,24 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
     }
 
     if (*x == NULL) {
-        if ((sk = sk_X509_ATTRIBUTE_new_null()) == NULL)
+        if ((sk = sk_X509_ATTRIBUTE_new_null()) == NULL) {
+            ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
             goto err;
+        }
     } else {
         sk = *x;
     }
 
     if ((new_attr = X509_ATTRIBUTE_dup(attr)) == NULL)
-        goto err2;
-    if (!sk_X509_ATTRIBUTE_push(sk, new_attr))
         goto err;
+    if (!sk_X509_ATTRIBUTE_push(sk, new_attr)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
     if (*x == NULL)
         *x = sk;
     return sk;
  err:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
- err2:
     X509_ATTRIBUTE_free(new_attr);
     if (*x == NULL)
         sk_X509_ATTRIBUTE_free(sk);
@@ -223,7 +225,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
 
     if (attr == NULL || *attr == NULL) {
         if ((ret = X509_ATTRIBUTE_new()) == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
             return NULL;
         }
     } else {
@@ -293,10 +295,11 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
         }
         atype = stmp->type;
     } else if (len != -1) {
-        if ((stmp = ASN1_STRING_type_new(attrtype)) == NULL)
+        if ((stmp = ASN1_STRING_type_new(attrtype)) == NULL
+            || !ASN1_STRING_set(stmp, data, len)) {
+            ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
             goto err;
-        if (!ASN1_STRING_set(stmp, data, len))
-            goto err;
+        }
         atype = attrtype;
     }
     /*
@@ -308,20 +311,25 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
         ASN1_STRING_free(stmp);
         return 1;
     }
-    if ((ttmp = ASN1_TYPE_new()) == NULL)
+    if ((ttmp = ASN1_TYPE_new()) == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
         goto err;
+    }
     if (len == -1 && (attrtype & MBSTRING_FLAG) == 0) {
-        if (!ASN1_TYPE_set1(ttmp, attrtype, data))
+        if (!ASN1_TYPE_set1(ttmp, attrtype, data)) {
+            ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
             goto err;
+        }
     } else {
         ASN1_TYPE_set(ttmp, atype, stmp);
         stmp = NULL;
     }
-    if (!sk_ASN1_TYPE_push(attr->set, ttmp))
+    if (!sk_ASN1_TYPE_push(attr->set, ttmp)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
+    }
     return 1;
  err:
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
     ASN1_TYPE_free(ttmp);
     ASN1_STRING_free(stmp);
     return 0;

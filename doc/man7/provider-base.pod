@@ -116,13 +116,13 @@ provider-base
 =head1 DESCRIPTION
 
 All "functions" mentioned here are passed as function pointers between
-F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays, in the call
+F<libcrypto> and the provider in L<OSSL_DISPATCH(3)> arrays, in the call
 of the provider initialization function.  See L<provider(7)/Provider>
 for a description of the initialization function. They are known as "upcalls".
 
 All these "functions" have a corresponding function type definition
 named B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the
-function pointer from a B<OSSL_DISPATCH> element named
+function pointer from a L<OSSL_DISPATCH(3)> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" core_gettable_params() has these:
 
@@ -131,10 +131,10 @@ For example, the "function" core_gettable_params() has these:
  static ossl_inline OSSL_NAME_core_gettable_params_fn
      OSSL_FUNC_core_gettable_params(const OSSL_DISPATCH *opf);
 
-B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
+L<OSSL_DISPATCH(3)> arrays are indexed by numbers that are provided as
 macros in L<openssl-core_dispatch.h(7)>, as follows:
 
-For I<in> (the B<OSSL_DISPATCH> array passed from F<libcrypto> to the
+For I<in> (the L<OSSL_DISPATCH(3)> array passed from F<libcrypto> to the
 provider):
 
  core_gettable_params           OSSL_FUNC_CORE_GETTABLE_PARAMS
@@ -182,7 +182,7 @@ provider):
  provider_up_ref                OSSL_FUNC_PROVIDER_UP_REF
  provider_free                  OSSL_FUNC_PROVIDER_FREE
 
-For I<*out> (the B<OSSL_DISPATCH> array passed from the provider to
+For I<*out> (the L<OSSL_DISPATCH(3)> array passed from the provider to
 F<libcrypto>):
 
  provider_teardown              OSSL_FUNC_PROVIDER_TEARDOWN
@@ -197,7 +197,7 @@ F<libcrypto>):
 =head2 Core functions
 
 core_gettable_params() returns a constant array of descriptor
-B<OSSL_PARAM>, for parameters that core_get_params() can handle.
+L<OSSL_PARAM(3)>, for parameters that core_get_params() can handle.
 
 core_get_params() retrieves parameters from the core for the given I<handle>.
 See L</Core parameters> below for a description of currently known
@@ -288,7 +288,7 @@ BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_write_ex(), BIO_up_ref(),
 BIO_free(), BIO_vprintf(), BIO_vsnprintf(), BIO_gets(), BIO_puts(),
 BIO_ctrl(), OPENSSL_cleanse() and
 OPENSSL_hexstr2buf() correspond exactly to the public functions with
-the same name.  As a matter of fact, the pointers in the B<OSSL_DISPATCH>
+the same name.  As a matter of fact, the pointers in the L<OSSL_DISPATCH(3)>
 array are typically direct pointers to those public functions. Note that the BIO
 functions take an B<OSSL_CORE_BIO> type rather than the standard B<BIO>
 type. This is to ensure that a provider does not mix BIOs from the core
@@ -370,13 +370,13 @@ from the core's provider store.
 It must free the passed I<provctx>.
 
 provider_gettable_params() should return a constant array of
-descriptor B<OSSL_PARAM>, for parameters that provider_get_params()
+descriptor L<OSSL_PARAM(3)>, for parameters that provider_get_params()
 can handle.
 
-provider_get_params() should process the B<OSSL_PARAM> array
+provider_get_params() should process the L<OSSL_PARAM(3)> array
 I<params>, setting the values of the parameters it understands.
 
-provider_query_operation() should return a constant B<OSSL_ALGORITHM>
+provider_query_operation() should return a constant L<OSSL_ALGORITHM(3)>
 that corresponds to the given I<operation_id>.
 It should indicate if the core may store a reference to this array by
 setting I<*no_store> to 0 (core may store a reference) or 1 (core may
@@ -387,13 +387,13 @@ provider_query_operation() is no longer directly required and that the function
 pointers have been copied.  The I<operation_id> should match that passed to
 provider_query_operation() and I<algs> should be its return value.
 
-provider_get_reason_strings() should return a constant B<OSSL_ITEM>
+provider_get_reason_strings() should return a constant L<OSSL_ITEM(3)>
 array that provides reason strings for reason codes the provider may
 use when reporting errors using core_put_error().
 
 The provider_get_capabilities() function should call the callback I<cb> passing
-it a set of B<OSSL_PARAM>s and the caller supplied argument I<arg>. The
-B<OSSL_PARAM>s should provide details about the capability with the name given
+it a set of L<OSSL_PARAM(3)>s and the caller supplied argument I<arg>. The
+L<OSSL_PARAM(3)>s should provide details about the capability with the name given
 in the I<capability> argument relevant for the provider context I<provctx>. If a
 provider supports multiple capabilities with the given name then it may call the
 callback multiple times (one for each capability). Capabilities can be useful for
@@ -607,6 +607,129 @@ or maximum. A -1 indicates that the group should not be used in that protocol.
 
 =back
 
+=head3 "TLS-SIGALG" Capability
+
+The "TLS-SIGALG" capability can be queried by libssl to discover the list of
+TLS signature algorithms that a provider can support. Each signature supported
+can be used for client- or server-authentication in addition to the built-in
+signature algorithms.
+TLS1.3 clients can advertise the list of TLS signature algorithms they support
+in the signature_algorithms extension, and TLS servers can select an algorithm
+from the offered list that they also support. In this way a provider can add
+to the list of signature algorithms that libssl already supports with
+additional ones.
+
+Each TLS signature algorithm that a provider supports should be described via
+the callback passed in through the provider_get_capabilities function. Each
+algorithm can have the following details supplied:
+
+=over 4
+
+=item "iana-name" (B<OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME>) <UTF8 string>
+
+The name of the signature algorithm as given in the IANA TLS Signature Scheme
+registry as "Description":
+L<https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-signaturescheme>.
+This value must be supplied.
+
+=item "iana-code-point" (B<OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT>) <unsigned integer>
+
+The TLS algorithm ID value as given in the IANA TLS SignatureScheme registry.
+This value must be supplied.
+
+=item "sigalg-name" (B<OSSL_CAPABILITY_TLS_SIGALG_NAME>) <UTF8 string>
+
+A name for the full (possibly composite hash-and-signature) signature
+algorithm.
+The provider may, but is not obligated to, provide a signature implementation
+with this name; if it doesn't, this is assumed to be a composite of a pure
+signature algorithm and a hash algorithm, which must be given with the
+parameters "sig-name" and "hash-name".
+This value must be supplied.
+
+=item "sigalg-oid" (B<OSSL_CAPABILITY_TLS_SIGALG_OID>) <UTF8 string>
+
+The OID of the "sigalg-name" algorithm in canonical numeric text form. If
+this parameter is given, OBJ_create() will be used to create an OBJ and
+a NID for this OID, using the "sigalg-name" parameter for its (short) name.
+Otherwise, it's assumed to already exist in the object database, possibly
+done by the provider with the core_obj_create() upcall.
+This value is optional.
+
+=item "sig-name" (B<OSSL_CAPABILITY_TLS_SIGALG_SIG_NAME>) <UTF8 string>
+
+The name of the pure signature algorithm that is part of a composite
+"sigalg-name". If "sigalg-name" is implemented by the provider, this
+parameter is redundant and must not be given.
+This value is optional.
+
+=item "sig-oid" (B<OSSL_CAPABILITY_TLS_SIGALG_SIG_OID>) <UTF8 string>
+
+The OID of the "sig-name" algorithm in canonical numeric text form. If
+this parameter is given, OBJ_create() will be used to create an OBJ and
+a NID for this OID, using the "sig-name" parameter for its (short) name.
+Otherwise, it is assumed to already exist in the object database. This
+can be done by the provider using the core_obj_create() upcall.
+This value is optional.
+
+=item "hash-name" (B<OSSL_CAPABILITY_TLS_SIGALG_HASH_NAME>) <UTF8 string>
+
+The name of the hash algorithm that is part of a composite "sigalg-name".
+If "sigalg-name" is implemented by the provider, this parameter is redundant
+and must not be given.
+This value is optional.
+
+=item "hash-oid" (B<OSSL_CAPABILITY_TLS_SIGALG_HASH_OID>) <UTF8 string>
+
+The OID of the "hash-name" algorithm in canonical numeric text form. If
+this parameter is given, OBJ_create() will be used to create an OBJ and
+a NID for this OID, using the "hash-name" parameter for its (short) name.
+Otherwise, it's assumed to already exist in the object database, possibly
+done by the provider with the core_obj_create() upcall.
+This value is optional.
+
+=item "key-type" (B<OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE>) <UTF8 string>
+
+The key type of the public key of applicable certificates. If this parameter
+isn't present, it's assumed to be the same as "sig-name" if that's present,
+otherwise "sigalg-name".
+This value is optional.
+
+=item "key-type-oid" (B<OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_OID>) <UTF8 string>
+
+The OID of the "key-type" in canonical numeric text form. If
+this parameter is given, OBJ_create() will be used to create an OBJ and
+a NID for this OID, using the "key-type" parameter for its (short) name.
+Otherwise, it's assumed to already exist in the object database, possibly
+done by the provider with the core_obj_create() upcall.
+This value is optional.
+
+=item "sec-bits" (B<OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS>) <unsigned integer>
+
+The number of bits of security offered by keys of this algorithm. The number
+of bits should be comparable with the ones given in table 2 and 3 of the NIST
+SP800-57 document. This number is used to determine the security strength of
+the algorithm if no digest algorithm has been registered that otherwise
+defines the security strength. If the signature algorithm implements its own
+digest internally, this value needs to be set to properly reflect the overall
+security strength.
+This value must be supplied.
+
+=item "tls-min-tls" (B<OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS>) <integer>
+
+=item "tls-max-tls" (B<OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS>) <integer>
+
+These parameters can be used to describe the minimum and maximum TLS
+versions supported by the signature algorithm. The values equate to the
+on-the-wire encoding of the various TLS versions. For example TLSv1.3 is
+0x0304 (772 decimal), and TLSv1.2 is 0x0303 (771 decimal). A 0 indicates that
+there is no defined minimum or maximum. A -1 indicates that the signature
+algorithm should not be used in that protocol.
+Presently values representing anything other than TLS1.3 mean that the
+complete algorithm is ignored.
+
+=back
+
 =head1 NOTES
 
 The core_obj_create() and core_obj_add_sigid() functions were not thread safe
@@ -782,7 +905,7 @@ This relies on a few things existing in F<openssl/core_dispatch.h>:
 
  #define OSSL_FUNC_BAR_FREECTX     2
  typedef void (OSSL_FUNC_bar_freectx_fn)(void *ctx);
- static ossl_inline OSSL_FUNC_bar_newctx(const OSSL_DISPATCH *opf)
+ static ossl_inline OSSL_FUNC_bar_freectx(const OSSL_DISPATCH *opf)
  { return (OSSL_FUNC_bar_freectx_fn *)opf->function; }
 
  #define OSSL_FUNC_BAR_INIT        3

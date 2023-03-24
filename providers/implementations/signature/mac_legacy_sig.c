@@ -60,10 +60,8 @@ static void *mac_newctx(void *provctx, const char *propq, const char *macname)
         return NULL;
 
     pmacctx->libctx = PROV_LIBCTX_OF(provctx);
-    if (propq != NULL && (pmacctx->propq = OPENSSL_strdup(propq)) == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (propq != NULL && (pmacctx->propq = OPENSSL_strdup(propq)) == NULL)
         goto err;
-    }
 
     mac = EVP_MAC_fetch(pmacctx->libctx, macname, propq);
     if (mac == NULL)

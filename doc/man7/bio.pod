@@ -54,7 +54,7 @@ a filter BIO with I<BIO_f_>.
 =head2 TCP Fast Open
 
 TCP Fast Open (RFC7413), abbreviated "TFO", is supported by the BIO
-interface since OpenSSL 3.1. TFO is supported in the following operating systems:
+interface since OpenSSL 3.2. TFO is supported in the following operating systems:
 
 =over 4
 

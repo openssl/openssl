@@ -41,6 +41,7 @@ typedef struct mpitest_st {
 
 static const int NUM0 = 100;           /* number of tests */
 static const int NUM1 = 50;            /* additional tests for some functions */
+static const int NUM_PRIME_TESTS = 20;
 static BN_CTX *ctx;
 
 /*
@@ -2218,6 +2219,74 @@ static int test_mpi(int i)
     return st;
 }
 
+static int test_bin2zero(void)
+{
+    unsigned char input[] = { 0 };
+    BIGNUM *zbn = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(zbn = BN_new()))
+        goto err;
+
+#define zerotest(fn)                           \
+    if (!TEST_ptr(fn(input, 1, zbn))    \
+        || !TEST_true(BN_is_zero(zbn))   \
+        || !TEST_ptr(fn(input, 0, zbn)) \
+        || !TEST_true(BN_is_zero(zbn))   \
+        || !TEST_ptr(fn(NULL, 0, zbn))  \
+        || !TEST_true(BN_is_zero(zbn)))  \
+        goto err
+
+    zerotest(BN_bin2bn);
+    zerotest(BN_signed_bin2bn);
+    zerotest(BN_lebin2bn);
+    zerotest(BN_signed_lebin2bn);
+#undef zerotest
+
+    ret = 1;
+ err:
+    BN_free(zbn);
+    return ret;
+}
+
+static int test_bin2bn_lengths(void)
+{
+    unsigned char input[] = { 1, 2 };
+    BIGNUM *bn_be = NULL, *bn_expected_be = NULL;
+    BIGNUM *bn_le = NULL, *bn_expected_le = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(bn_be = BN_new())
+        || !TEST_ptr(bn_expected_be = BN_new())
+        || !TEST_true(BN_set_word(bn_expected_be, 0x102))
+        || !TEST_ptr(bn_le = BN_new())
+        || !TEST_ptr(bn_expected_le = BN_new())
+        || !TEST_true(BN_set_word(bn_expected_le, 0x201)))
+        goto err;
+
+#define lengthtest(fn, e)                                       \
+    if (!TEST_ptr_null(fn(input, -1, bn_##e))                   \
+        || !TEST_ptr(fn(input, 0, bn_##e))                      \
+        || !TEST_true(BN_is_zero(bn_##e))                       \
+        || !TEST_ptr(fn(input, 2, bn_##e))                      \
+        || !TEST_int_eq(BN_cmp(bn_##e, bn_expected_##e), 0))    \
+        goto err
+
+    lengthtest(BN_bin2bn, be);
+    lengthtest(BN_signed_bin2bn, be);
+    lengthtest(BN_lebin2bn, le);
+    lengthtest(BN_signed_lebin2bn, le);
+#undef lengthtest
+
+    ret = 1;
+ err:
+    BN_free(bn_be);
+    BN_free(bn_expected_be);
+    BN_free(bn_le);
+    BN_free(bn_expected_le);
+    return ret;
+}
+
 static int test_rand(void)
 {
     BIGNUM *bn = NULL;
@@ -2722,6 +2791,25 @@ static int test_ctx_consttime_flag(void)
     return st;
 }
 
+static int test_coprime(void)
+{
+    BIGNUM *a = NULL, *b = NULL;
+    int ret = 0;
+
+    ret = TEST_ptr(a = BN_new())
+          && TEST_ptr(b = BN_new())
+          && TEST_true(BN_set_word(a, 66))
+          && TEST_true(BN_set_word(b, 99))
+          && TEST_int_eq(BN_are_coprime(a, b, ctx), 0)
+          && TEST_int_eq(BN_are_coprime(b, a, ctx), 0)
+          && TEST_true(BN_set_word(a, 67))
+          && TEST_int_eq(BN_are_coprime(a, b, ctx), 1)
+          && TEST_int_eq(BN_are_coprime(b, a, ctx), 1);
+    BN_free(a);
+    BN_free(b);
+    return ret;
+}
+
 static int test_gcd_prime(void)
 {
     BIGNUM *a = NULL, *b = NULL, *gcd = NULL;
@@ -2734,11 +2822,12 @@ static int test_gcd_prime(void)
 
     if (!TEST_true(BN_generate_prime_ex(a, 1024, 0, NULL, NULL, NULL)))
             goto err;
-    for (i = 0; i < NUM0; i++) {
+    for (i = 0; i < NUM_PRIME_TESTS; i++) {
         if (!TEST_true(BN_generate_prime_ex(b, 1024, 0,
                                             NULL, NULL, NULL))
                 || !TEST_true(BN_gcd(gcd, a, b, ctx))
-                || !TEST_true(BN_is_one(gcd)))
+                || !TEST_true(BN_is_one(gcd))
+                || !TEST_true(BN_are_coprime(a, b, ctx)))
             goto err;
     }
 
@@ -3192,6 +3281,8 @@ int setup_tests(void)
         ADD_TEST(test_dec2bn);
         ADD_TEST(test_hex2bn);
         ADD_TEST(test_asc2bn);
+        ADD_TEST(test_bin2zero);
+        ADD_TEST(test_bin2bn_lengths);
         ADD_ALL_TESTS(test_mpi, (int)OSSL_NELEM(kMPITests));
         ADD_ALL_TESTS(test_bn2signed, (int)OSSL_NELEM(kSignedTests_BE));
         ADD_TEST(test_negzero);
@@ -3216,6 +3307,7 @@ int setup_tests(void)
         ADD_ALL_TESTS(test_is_prime, (int)OSSL_NELEM(primes));
         ADD_ALL_TESTS(test_not_prime, (int)OSSL_NELEM(not_primes));
         ADD_TEST(test_gcd_prime);
+        ADD_TEST(test_coprime);
         ADD_ALL_TESTS(test_mod_exp, (int)OSSL_NELEM(ModExpTests));
         ADD_ALL_TESTS(test_mod_exp_consttime, (int)OSSL_NELEM(ModExpTests));
         ADD_TEST(test_mod_exp2_mont);

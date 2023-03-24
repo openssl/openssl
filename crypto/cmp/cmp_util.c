@@ -100,8 +100,8 @@ const char *ossl_cmp_log_parse_metadata(const char *buf,
                     *file = OPENSSL_strndup(p_file, p_line - 1 - p_file);
                     /* no real problem if OPENSSL_strndup() returns NULL */
                     *line = (int)line_number;
-                    msg = strchr(p_level, ':') + 1;
-                    if (*msg == ' ')
+                    msg = strchr(p_level, ':');
+                    if (msg != NULL && *++msg == ' ')
                         msg++;
                 }
             }
@@ -189,7 +189,7 @@ void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
                 BIO_free(bio);
             }
 #else
-            /* ERR_raise(ERR_LIB_CMP, CMP_R_NO_STDIO) makes no sense during error printing */
+            /* ERR_raise(..., CMP_R_NO_STDIO) would make no sense here */
 #endif
         } else {
             if (log_fn(component, file, line, OSSL_CMP_LOG_ERR, msg) <= 0)
@@ -243,6 +243,7 @@ int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
                                     const ASN1_OCTET_STRING *src)
 {
     ASN1_OCTET_STRING *new;
+
     if (tgt == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;

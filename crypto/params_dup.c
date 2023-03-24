@@ -37,11 +37,8 @@ static int ossl_param_buf_alloc(OSSL_PARAM_BUF *out, size_t extra_blocks,
     size_t sz = OSSL_PARAM_ALIGN_SIZE * (extra_blocks + out->blocks);
 
     out->alloc = is_secure ? OPENSSL_secure_zalloc(sz) : OPENSSL_zalloc(sz);
-    if (out->alloc == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, is_secure ? CRYPTO_R_SECURE_MALLOC_FAILURE
-                                            : ERR_R_MALLOC_FAILURE);
+    if (out->alloc == NULL)
         return 0;
-    }
     out->alloc_sz = sz;
     out->cur = out->alloc + extra_blocks;
     return 1;
@@ -185,10 +182,8 @@ OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2)
 
    /* Allocate enough space to store the merged parameters */
     params = OPENSSL_zalloc((list1_sz + list2_sz + 1) * sizeof(*p1));
-    if (params == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+    if (params == NULL)
         return NULL;
-    }
     dst = params;
     p1cur = list1;
     p2cur = list2;

@@ -35,11 +35,3 @@ int ossl_eckem_modename2id(const char *name)
     }
     return KEM_MODE_UNDEFINED;
 }
-
-/* suiteid = concat("KEM", I2OSP(kem_id, 2)) */
-void ossl_dhkem_getsuiteid(unsigned char suiteid[5], uint16_t kemid)
-{
-    memcpy(suiteid, "KEM", 3);
-    suiteid[3] = kemid >> 8;
-    suiteid[4] = kemid & 0xFF;
-}

@@ -2,13 +2,22 @@
 
 =head1 NAME
 
-SSL_shutdown - shut down a TLS/SSL connection
+SSL_shutdown, SSL_shutdown_ex - shut down a TLS/SSL or QUIC connection
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
  int SSL_shutdown(SSL *ssl);
+
+ typedef struct ssl_shutdown_ex_args_st {
+     uint64_t    quic_error_code;
+     const char  *quic_reason;
+ } SSL_SHUTDOWN_EX_ARGS;
+
+ __owur int SSL_shutdown_ex(SSL *ssl, uint64_t flags,
+                            const SSL_SHUTDOWN_EX_ARGS *args,
+                            size_t args_len);
 
 =head1 DESCRIPTION
 
@@ -88,6 +97,36 @@ will result in an error being generated.
 The error can be ignored using the B<SSL_OP_IGNORE_UNEXPECTED_EOF>.
 For more information see L<SSL_CTX_set_options(3)>.
 
+SSL_shutdown_ex() is an extended version of SSL_shutdown(). If non-NULL, I<args>
+must point to a B<SSL_SHUTDOWN_EX_ARGS> structure and I<args_len> must be set to
+C<sizeof(SSL_SHUTDOWN_EX_ARGS)>. The B<SSL_SHUTDOWN_EX_ARGS> structure must be
+zero-initialized. If I<args> is NULL, the behaviour is the same as passing a
+zero-initialised B<SSL_SHUTDOWN_EX_ARGS> structure. When used with a non-QUIC
+SSL object, the arguments are ignored and the call functions identically to
+SSL_shutdown().
+
+=begin comment
+
+TODO(QUIC): Once streams are implemented, revise this text
+
+=end comment
+
+When used with a QUIC connection SSL object, SSL_shutdown_ex() initiates a QUIC
+immediate close. The I<quic_error_code> field can be used to specify a 62-bit
+application error code to be signalled via QUIC. The value specified must be in
+the range [0, 2**62-1], else this call fails. I<quic_reason> may optionally
+specify a zero-terminated reason string to be signalled to the peer. If a reason
+is not specified, a zero-length string is used as the reason. The reason string
+is copied and need not remain allocated after the call to the function returns.
+Reason strings are bounded by the path MTU and may be silently truncated if they
+are too long to fit in a QUIC packet. The arguments are only used on the first
+call to SSL_shutdown_ex() for a given QUIC connection SSL object.
+
+When using QUIC, how an application uses SSL_shutdown() or SSL_shutdown_ex() has
+implications for whether QUIC closes a connection in an RFC-compliant manner.
+For discussion of these issues, and for discussion of the I<flags> argument, see
+B<QUIC-SPECIFIC SHUTDOWN CONSIDERATIONS> below.
+
 =head2 First to close the connection
 
 When the application is the first party to send the close_notify
@@ -125,26 +164,95 @@ If successful, SSL_shutdown() will return 1.
 Whether SSL_RECEIVED_SHUTDOWN is already set can be checked using the
 SSL_get_shutdown() (see also L<SSL_set_shutdown(3)> call.
 
+=head1 QUIC-SPECIFIC SHUTDOWN CONSIDERATIONS
+
+When using QUIC, SSL_shutdown() or SSL_shutdown_ex() causes any data written to
+a stream which has not yet been sent to the peer to be written before the
+shutdown process is considered complete. An exception to this is streams which
+terminated in a non-normal fashion, for example due to a stream reset; only
+streams which are non-terminated or which terminated in a normal fashion have
+their pending send buffers flushed in this manner. This behaviour can be skipped
+by setting the B<SSL_SHUTDOWN_FLAG_NO_STREAM_FLUSH> flag; in this case, data
+remaining in stream send buffers may not be transmitted to the peer. This flag
+may be used when a non-normal application condition has occurred and the
+delivery of data written to streams via L<SSL_write(3)> is no longer relevant.
+
+Aspects of how QUIC handles connection closure must be taken into account by
+applications. Ordinarily, QUIC expects a connection to continue to be serviced
+for a substantial period of time after it is nominally closed. This is necessary
+to ensure that any connection closure notification sent to the peer was
+successfully received. However, a consequence of this is that a fully
+RFC-compliant QUIC connection closure process could take of the order of
+seconds. This may be unsuitable for some applications, such as short-lived
+processes which need to exit immediately after completing an application-layer
+transaction.
+
+As such, there are two shutdown modes available to users of QUIC connection SSL
+objects:
+
+=over 4
+
+=item RFC compliant shutdown mode
+
+This is the default behaviour. The shutdown process may take a period of time up
+to three times the current estimated RTT to the peer. It is possible for the
+closure process to complete much faster in some circumstances but this cannot be
+relied upon.
+
+In blocking mode, the function will return once the closure process is complete.
+In nonblocking mode, SSL_shutdown_ex() should be called until it returns 1,
+indicating the closure process is complete and the connection is now fully shut
+down.
+
+=item Rapid shutdown mode
+
+In this mode, the peer is notified of connection closure on a best effort basis
+by sending a single QUIC packet. If that QUIC packet is lost, the peer will not
+know that the connection has terminated until the negotiated idle timeout (if
+any) expires.
+
+This will generally return 0 on success, indicating that the connection has not
+yet been fully shut down (unless it has already done so, in which case it will
+return 1).
+
+=back
+
+If B<SSL_SHUTDOWN_FLAG_RAPID> is specified in I<flags>, a rapid shutdown is
+performed, otherwise an RFC-compliant shutdown is performed.
+
+If an application calls SSL_shutdown_ex() with B<SSL_SHUTDOWN_FLAG_RAPID>, an
+application can subsequently change its mind about performing a rapid shutdown
+by making a subsequent call to SSL_shutdown_ex() without the flag set.
+
 =head1 RETURN VALUES
 
-The following return values can occur:
+For both SSL_shutdown() and SSL_shutdown_ex() the following return values can occur:
 
 =over 4
 
 =item Z<>0
 
-The shutdown is not yet finished: the close_notify was sent but the peer
-did not send it back yet.
-Call SSL_read() to do a bidirectional shutdown.
+The shutdown process is ongoing and has not yet completed.
 
-Unlike most other function, returning 0 does not indicate an error.
-L<SSL_get_error(3)> should not get called, it may misleadingly
-indicate an error even though no error occurred.
+For TLS and DTLS, this means that a close_notify alert has been sent but the
+peer has not yet replied in turn with its own close_notify.
+
+For QUIC connection SSL objects, a CONNECTION_CLOSE frame may have been
+sent but the connection closure process has not yet completed.
+
+Unlike most other functions, returning 0 does not indicate an error.
+L<SSL_get_error(3)> should not be called; it may misleadingly indicate an error
+even though no error occurred.
 
 =item Z<>1
 
-The shutdown was successfully completed. The close_notify alert was sent
-and the peer's close_notify alert was received.
+The shutdown was successfully completed.
+
+For TLS and DTLS, this means that a close_notify alert was sent and the peer's
+close_notify alert was received.
+
+For QUIC connection SSL objects, this means that the connection closure process
+has completed.
 
 =item E<lt>0
 
@@ -164,6 +272,10 @@ L<SSL_accept(3)>, L<SSL_set_shutdown(3)>,
 L<SSL_CTX_set_quiet_shutdown(3)>, L<SSL_CTX_set_options(3)>
 L<SSL_clear(3)>, L<SSL_free(3)>,
 L<ssl(7)>, L<bio(7)>
+
+=head1 HISTORY
+
+The SSL_shutdown_ex() function was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

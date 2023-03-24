@@ -28,7 +28,7 @@ PKCS7 *PKCS7_sign_ex(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
     int i;
 
     if ((p7 = PKCS7_new_ex(libctx, propq)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_PKCS7_LIB);
         return NULL;
     }
 
@@ -77,7 +77,7 @@ int PKCS7_final(PKCS7 *p7, BIO *data, int flags)
     int ret = 0;
 
     if ((p7bio = PKCS7_dataInit(p7, NULL)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_PKCS7_LIB);
         return 0;
     }
 
@@ -144,7 +144,7 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
         /* Add SMIMECapabilities */
         if (!(flags & PKCS7_NOSMIMECAP)) {
             if ((smcap = sk_X509_ALGOR_new_null()) == NULL) {
-                ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_PKCS7, ERR_R_CRYPTO_LIB);
                 goto err;
             }
             if (!add_cipher_smcap(smcap, NID_aes_256_cbc, -1)
@@ -306,7 +306,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 
     if (flags & PKCS7_TEXT) {
         if ((tmpout = BIO_new(BIO_s_mem())) == NULL) {
-            ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PKCS7, ERR_R_BIO_LIB);
             goto err;
         }
         BIO_set_mem_eof_return(tmpout, 0);
@@ -314,10 +314,8 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
         tmpout = out;
 
     /* We now have to 'read' from p7bio to calculate digests etc. */
-    if ((buf = OPENSSL_malloc(BUFFERSIZE)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+    if ((buf = OPENSSL_malloc(BUFFERSIZE)) == NULL)
         goto err;
-    }
     for (;;) {
         i = BIO_read(p7bio, buf, BUFFERSIZE);
         if (i <= 0)
@@ -389,7 +387,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
     }
 
     if ((signers = sk_X509_new_null()) == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -432,7 +430,7 @@ PKCS7 *PKCS7_encrypt_ex(STACK_OF(X509) *certs, BIO *in,
     X509 *x509;
 
     if ((p7 = PKCS7_new_ex(libctx, propq)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_PKCS7_LIB);
         return NULL;
     }
 
@@ -483,7 +481,8 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
         return 0;
     }
 
-    if (!PKCS7_type_is_enveloped(p7)) {
+    if (!PKCS7_type_is_enveloped(p7)
+        && !PKCS7_type_is_signedAndEnveloped(p7)) {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_WRONG_CONTENT_TYPE);
         return 0;
     }
@@ -503,12 +502,12 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
         BIO *tmpbuf, *bread;
         /* Encrypt BIOs can't do BIO_gets() so add a buffer BIO */
         if ((tmpbuf = BIO_new(BIO_f_buffer())) == NULL) {
-            ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PKCS7, ERR_R_BIO_LIB);
             BIO_free_all(tmpmem);
             return 0;
         }
         if ((bread = BIO_push(tmpbuf, tmpmem)) == NULL) {
-            ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PKCS7, ERR_R_BIO_LIB);
             BIO_free_all(tmpbuf);
             BIO_free_all(tmpmem);
             return 0;
@@ -521,10 +520,8 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
         BIO_free_all(bread);
         return ret;
     }
-    if ((buf = OPENSSL_malloc(BUFFERSIZE)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+    if ((buf = OPENSSL_malloc(BUFFERSIZE)) == NULL)
         goto err;
-    }
     for (;;) {
         i = BIO_read(tmpmem, buf, BUFFERSIZE);
         if (i <= 0) {

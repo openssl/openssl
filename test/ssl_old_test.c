@@ -1314,17 +1314,15 @@ int main(int argc, char *argv[])
     if (comp == COMP_ZLIB)
         cm = COMP_zlib();
     if (cm != NULL) {
-        if (COMP_get_type(cm) != NID_undef) {
-            if (SSL_COMP_add_compression_method(comp, cm) != 0) {
-                fprintf(stderr, "Failed to add compression method\n");
-                ERR_print_errors_fp(stderr);
-            }
-        } else {
-            fprintf(stderr,
-                    "Warning: %s compression not supported\n",
-                    comp == COMP_ZLIB ? "zlib" : "unknown");
+        if (SSL_COMP_add_compression_method(comp, cm) != 0) {
+            fprintf(stderr, "Failed to add compression method\n");
             ERR_print_errors_fp(stderr);
         }
+    } else {
+        fprintf(stderr,
+                "Warning: %s compression not supported\n",
+                comp == COMP_ZLIB ? "zlib" : "unknown");
+        ERR_print_errors_fp(stderr);
     }
     ssl_comp_methods = SSL_COMP_get_compression_methods();
     n = sk_SSL_COMP_num(ssl_comp_methods);

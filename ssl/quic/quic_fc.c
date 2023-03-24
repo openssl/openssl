@@ -230,7 +230,11 @@ static int rxfc_cwm_bump_desired(QUIC_RXFC *rxfc)
          */
         threshold = rxfc->cur_window_size / 2;
 
-    return window_rem <= threshold;
+    /*
+     * No point emitting a new MAX_STREAM_DATA frame if the stream has a final
+     * size.
+     */
+    return !rxfc->is_fin && window_rem <= threshold;
 }
 
 static int rxfc_should_bump_window_size(QUIC_RXFC *rxfc, OSSL_TIME rtt)

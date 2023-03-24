@@ -446,6 +446,7 @@ const char *ssl_ct_validation_name(ssl_ct_validation_t mode)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, resumption_expected)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_SERVER_CONF, server, broken_session_ticket)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, use_sctp)
+IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, compress_certificates)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, enable_client_sctp_label_bug)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, enable_server_sctp_label_bug)
 
@@ -533,6 +534,17 @@ __owur static int parse_expected_key_type(int *ptype, const char *value)
     if (nid == NID_undef)
         nid = EC_curve_nist2nid(value);
 #endif
+    switch (nid) {
+    case NID_brainpoolP256r1tls13:
+        nid = NID_brainpoolP256r1;
+        break;
+    case NID_brainpoolP384r1tls13:
+        nid = NID_brainpoolP384r1;
+        break;
+    case NID_brainpoolP512r1tls13:
+        nid = NID_brainpoolP512r1;
+        break;
+    }
     if (nid == NID_undef)
         return 0;
     *ptype = nid;
@@ -675,6 +687,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ExpectedClientSignType", &parse_expected_client_sign_type },
     { "ExpectedClientCANames", &parse_expected_client_ca_names },
     { "UseSCTP", &parse_test_use_sctp },
+    { "CompressCertificates", &parse_test_compress_certificates },
     { "EnableClientSCTPLabelBug", &parse_test_enable_client_sctp_label_bug },
     { "EnableServerSCTPLabelBug", &parse_test_enable_server_sctp_label_bug },
     { "ExpectedCipher", &parse_test_expected_cipher },

@@ -5,7 +5,9 @@
 CRYPTO_THREAD_run_once,
 CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock,
 CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free,
-CRYPTO_atomic_add, CRYPTO_atomic_or, CRYPTO_atomic_load - OpenSSL thread support
+CRYPTO_atomic_add, CRYPTO_atomic_or, CRYPTO_atomic_load,
+OSSL_set_max_threads, OSSL_get_max_threads,
+OSSL_get_thread_support_flags - OpenSSL thread support
 
 =head1 SYNOPSIS
 
@@ -24,6 +26,10 @@ CRYPTO_atomic_add, CRYPTO_atomic_or, CRYPTO_atomic_load - OpenSSL thread support
  int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
                       CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock);
+
+ int OSSL_set_max_threads(OSSL_LIB_CTX *ctx, uint64_t max_threads);
+ uint64_t OSSL_get_max_threads(OSSL_LIB_CTX *ctx);
+ uint32_t OSSL_get_thread_support_flags(void);
 
 =head1 DESCRIPTION
 
@@ -98,6 +104,16 @@ read by CRYPTO_atomic_load() then CRYPTO_atomic_load() must be the only way that
 the variable is read. If atomic operations are not supported and I<lock> is
 NULL, then the function will fail.
 
+=item *
+
+OSSL_set_max_threads() sets the maximum number of threads to be used by the
+thread pool. If the argument is 0, thread pooling is disabled. OpenSSL will
+not create any threads and existing threads in the thread pool will be torn
+down. The maximum thread count is a limit, not a target. Threads will not be
+spawned unless (and until) there is demand. Thread polling is disabled by
+default. To enable threading you must call OSSL_set_max_threads() explicitly.
+Under no circumstances is this done for you.
+
 =back
 
 =head1 RETURN VALUES
@@ -107,6 +123,15 @@ CRYPTO_THREAD_run_once() returns 1 on success, or 0 on error.
 CRYPTO_THREAD_lock_new() returns the allocated lock, or NULL on error.
 
 CRYPTO_THREAD_lock_free() returns no value.
+
+OSSL_set_max_threads() returns 1 on success and 0 on failure. Returns failure
+if OpenSSL-managed thread pooling is not supported (for example, if it is not
+supported on the current platform, or because OpenSSL is not built with the
+necessary support).
+
+OSSL_get_max_threads() returns the maximum number of threads currently allowed
+to be used by the thread pool. If thread pooling is disabled or not available,
+returns 0.
 
 The other functions return 1 on success, or 0 on error.
 

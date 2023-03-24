@@ -340,10 +340,8 @@ static void *aes_ocb_dupctx(void *vctx)
         return NULL;
 
     ret = OPENSSL_malloc(sizeof(*ret));
-    if (ret == NULL) {
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    if (ret == NULL)
         return NULL;
-    }
     *ret = *in;
     if (!aes_generic_ocb_copy_ctx(ret, in)) {
         OPENSSL_free(ret);

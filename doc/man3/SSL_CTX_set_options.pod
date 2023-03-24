@@ -175,6 +175,16 @@ by the kernel directly and not via any available OpenSSL Providers. This might
 be undesirable if, for example, the application requires all cryptographic
 operations to be performed by the FIPS provider.
 
+=item SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE
+
+With this option, sendfile() will use the zerocopy mode, which gives a
+performance boost when used with KTLS hardware offload. Note that invalid TLS
+records might be transmitted if the file is changed while being sent. This
+option has no effect if B<SSL_OP_ENABLE_KTLS> is not enabled.
+
+This option only applies to Linux. KTLS sendfile on FreeBSD doesn't offer an
+option to disable zerocopy and always runs in this mode.
+
 =item SSL_OP_ENABLE_MIDDLEBOX_COMPAT
 
 If set then dummy Change Cipher Spec (CCS) messages are sent in TLSv1.3. This
@@ -213,6 +223,22 @@ mitigate the replay risks in other ways and in such cases the built in OpenSSL
 functionality is not required. Those applications can turn this feature off by
 setting this option. This is a server-side opton only. It is ignored by
 clients.
+
+=item SSL_OP_NO_TX_CERTIFICATE_COMPRESSION
+
+Normally clients and servers will transparently attempt to negotiate the
+RFC8879 certificate compression option on TLSv1.3 connections.
+
+If this option is set, the certificate compression extension is ignored
+upon receipt and compressed certificates will not be sent to the peer.
+
+=item SSL_OP_NO_RX_CERTIFICATE_COMPRESSION
+
+Normally clients and servers will transparently attempt to negotiate the
+RFC8879 certificate compression option on TLSv1.3 connections.
+
+If this option is set, the certificate compression extension will not be sent
+and compressed certificates will not be accepted from the peer.
 
 =item SSL_OP_NO_COMPRESSION
 
@@ -351,6 +377,10 @@ retained for compatibility purposes:
 =item SSL_OP_SINGLE_ECDH_USE
 
 =item SSL_OP_EPHEMERAL_RSA
+
+=item SSL_OP_NETSCAPE_CA_DN_BUG
+
+=item SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG
 
 =back
 

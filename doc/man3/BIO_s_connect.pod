@@ -28,7 +28,7 @@ BIO_set_nbio, BIO_do_connect - connect BIO
 
  long BIO_set_nbio(BIO *b, long n);
 
- int BIO_do_connect(BIO *b);
+ long BIO_do_connect(BIO *b);
 
 =head1 DESCRIPTION
 
@@ -199,7 +199,7 @@ BIO_set_conn_int_port(), BIO_get_conn_int_port(), BIO_set_conn_ip(), and BIO_get
 were removed in OpenSSL 1.1.0.
 Use BIO_set_conn_address() and BIO_get_conn_address() instead.
 
-Connect BIOs support BIO_gets() since OpenSSL 3.1.
+Connect BIOs support BIO_gets() since OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

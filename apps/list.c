@@ -1286,6 +1286,9 @@ static void list_engines(void)
 static void list_disabled(void)
 {
     BIO_puts(bio_out, "Disabled algorithms:\n");
+#ifdef OPENSSL_NO_ARGON2
+    BIO_puts(bio_out, "ARGON2\n");
+#endif
 #ifdef OPENSSL_NO_ARIA
     BIO_puts(bio_out, "ARIA\n");
 #endif
@@ -1421,8 +1424,14 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_WHIRLPOOL
     BIO_puts(bio_out, "WHIRLPOOL\n");
 #endif
-#ifndef ZLIB
+#ifdef OPENSSL_NO_ZLIB
     BIO_puts(bio_out, "ZLIB\n");
+#endif
+#ifdef OPENSSL_NO_BROTLI
+    BIO_puts(bio_out, "BROTLI\n");
+#endif
+#ifdef OPENSSL_NO_ZSTD
+    BIO_puts(bio_out, "ZSTD\n");
 #endif
 }
 
@@ -1476,7 +1485,7 @@ const OPTIONS list_options[] = {
     "List of cipher commands (deprecated)"},
 #endif
     {"cipher-algorithms", OPT_CIPHER_ALGORITHMS, '-',
-     "List of cipher algorithms"},
+     "List of symmetric cipher algorithms"},
     {"encoders", OPT_ENCODERS, '-', "List of encoding methods" },
     {"decoders", OPT_DECODERS, '-', "List of decoding methods" },
     {"key-managers", OPT_KEYMANAGERS, '-', "List of key managers" },
@@ -1515,6 +1524,7 @@ int list_main(int argc, char **argv)
     char *prog;
     HELPLIST_CHOICE o;
     int one = 0, done = 0;
+    int print_newline = 0;
     struct {
         unsigned int commands:1;
         unsigned int all_algorithms:1;
@@ -1656,77 +1666,94 @@ opthelp:
     if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
+#define MAYBE_ADD_NL(cmd) \
+    do { \
+        if (print_newline++) { \
+            BIO_printf(bio_out, "\n"); \
+        } \
+        cmd; \
+    } while(0)
+
     if (todo.commands)
-        list_type(FT_general, one);
+        MAYBE_ADD_NL(list_type(FT_general, one));
     if (todo.all_algorithms) {
+        MAYBE_ADD_NL({});
+
         BIO_printf(bio_out, "Digests:\n");
         list_digests(" ");
-        BIO_printf(bio_out, "Symmetric Ciphers:\n");
+        BIO_printf(bio_out, "\nSymmetric Ciphers:\n");
         list_ciphers(" ");
+        BIO_printf(bio_out, "\n");
         list_kdfs();
+        BIO_printf(bio_out, "\n");
         list_macs();
 
-        BIO_printf(bio_out, "Provided Asymmetric Encryption:\n");
+        BIO_printf(bio_out, "\nProvided Asymmetric Encryption:\n");
         list_asymciphers();
-        BIO_printf(bio_out, "Provided Key Exchange:\n");
+        BIO_printf(bio_out, "\nProvided Key Exchange:\n");
         list_keyexchanges();
-        BIO_printf(bio_out, "Provided Signatures:\n");
+        BIO_printf(bio_out, "\nProvided Signatures:\n");
         list_signatures();
-        BIO_printf(bio_out, "Provided Key encapsulation:\n");
+        BIO_printf(bio_out, "\nProvided Key encapsulation:\n");
         list_kems();
-        BIO_printf(bio_out, "Provided Key managers:\n");
+        BIO_printf(bio_out, "\nProvided Key managers:\n");
         list_keymanagers();
 
+        BIO_printf(bio_out, "\n");
         list_encoders();
+        BIO_printf(bio_out, "\n");
         list_decoders();
+        BIO_printf(bio_out, "\n");
         list_store_loaders();
     }
     if (todo.random_instances)
-        list_random_instances();
+        MAYBE_ADD_NL(list_random_instances());
     if (todo.random_generators)
-        list_random_generators();
+        MAYBE_ADD_NL(list_random_generators());
     if (todo.digest_commands)
-        list_type(FT_md, one);
+        MAYBE_ADD_NL(list_type(FT_md, one));
     if (todo.digest_algorithms)
-        list_digests("");
+        MAYBE_ADD_NL(list_digests(""));
     if (todo.kdf_algorithms)
-        list_kdfs();
+        MAYBE_ADD_NL(list_kdfs());
     if (todo.mac_algorithms)
-        list_macs();
+        MAYBE_ADD_NL(list_macs());
     if (todo.cipher_commands)
-        list_type(FT_cipher, one);
+        MAYBE_ADD_NL(list_type(FT_cipher, one));
     if (todo.cipher_algorithms)
-        list_ciphers("");
+        MAYBE_ADD_NL(list_ciphers(""));
     if (todo.encoder_algorithms)
-        list_encoders();
+        MAYBE_ADD_NL(list_encoders());
     if (todo.decoder_algorithms)
-        list_decoders();
+        MAYBE_ADD_NL(list_decoders());
     if (todo.keymanager_algorithms)
-        list_keymanagers();
+        MAYBE_ADD_NL(list_keymanagers());
     if (todo.signature_algorithms)
-        list_signatures();
+        MAYBE_ADD_NL(list_signatures());
     if (todo.asym_cipher_algorithms)
-        list_asymciphers();
+        MAYBE_ADD_NL(list_asymciphers());
     if (todo.keyexchange_algorithms)
-        list_keyexchanges();
+        MAYBE_ADD_NL(list_keyexchanges());
     if (todo.kem_algorithms)
-        list_kems();
+        MAYBE_ADD_NL(list_kems());
     if (todo.pk_algorithms)
-        list_pkey();
+        MAYBE_ADD_NL(list_pkey());
     if (todo.pk_method)
-        list_pkey_meth();
+        MAYBE_ADD_NL(list_pkey_meth());
     if (todo.store_loaders)
-        list_store_loaders();
+        MAYBE_ADD_NL(list_store_loaders());
     if (todo.provider_info)
-        list_provider_info();
+        MAYBE_ADD_NL(list_provider_info());
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     if (todo.engines)
-        list_engines();
+        MAYBE_ADD_NL(list_engines());
 #endif
     if (todo.disabled)
-        list_disabled();
+        MAYBE_ADD_NL(list_disabled());
     if (todo.objects)
-        list_objects();
+        MAYBE_ADD_NL(list_objects());
+
+#undef MAYBE_ADD_NL
 
     if (!done)
         goto opthelp;

@@ -57,13 +57,10 @@ static int linebuffer_new(BIO *bi)
 {
     BIO_LINEBUFFER_CTX *ctx;
 
-    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL)
         return 0;
-    }
     ctx->obuf = OPENSSL_malloc(DEFAULT_LINEBUFFER_SIZE);
     if (ctx->obuf == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ctx);
         return 0;
     }
@@ -237,7 +234,7 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         if ((obs > DEFAULT_LINEBUFFER_SIZE) && (obs != ctx->obuf_size)) {
             p = OPENSSL_malloc((size_t)obs);
             if (p == NULL)
-                goto malloc_error;
+                return 0;
         }
         if (ctx->obuf != p) {
             if (ctx->obuf_len > obs) {
@@ -284,7 +281,7 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DUP:
         dbio = (BIO *)ptr;
-        if (!BIO_set_write_buffer_size(dbio, ctx->obuf_size))
+        if (BIO_set_write_buffer_size(dbio, ctx->obuf_size) <= 0)
             ret = 0;
         break;
     default:
@@ -294,9 +291,6 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     }
     return ret;
- malloc_error:
-    ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
-    return 0;
 }
 
 static long linebuffer_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)

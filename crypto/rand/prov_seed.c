@@ -22,7 +22,7 @@ size_t ossl_rand_get_entropy(ossl_unused const OSSL_CORE_HANDLE *handle,
 
     pool = ossl_rand_pool_new(entropy, 1, min_len, max_len);
     if (pool == NULL) {
-        ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RAND, ERR_R_RAND_LIB);
         return 0;
     }
 
@@ -53,7 +53,7 @@ size_t ossl_rand_get_nonce(ossl_unused const OSSL_CORE_HANDLE *handle,
 
     pool = ossl_rand_pool_new(0, 0, min_len, max_len);
     if (pool == NULL) {
-        ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RAND, ERR_R_RAND_LIB);
         return 0;
     }
 

@@ -63,6 +63,14 @@ jobs:
           }, {
             cc: clang-14,
             distro: ubuntu-22.04
+          }, {
+            cc: clang-15,
+            distro: ubuntu-22.04,
+            llvm-ppa-name: jammy
+          }, {
+            cc: clang-16,
+            distro: ubuntu-22.04,
+            llvm-ppa-name: jammy
           }
         ]
     # We set per-compiler now to allow testing with both older and newer sets
@@ -72,9 +80,30 @@ jobs:
     steps:
     - name: install packages
       run: |
+        llvm_ppa_name="${{ matrix.zoo.llvm-ppa-name }}"
+
+        # In the Matrix above, we set llvm-ppa-name if an LLVM version isn't
+        # part of the Ubuntu version we're using. See https://apt.llvm.org/.
+        if [[ -n ${llvm_ppa_name} ]] ; then
+            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key |\
+                gpg --dearmor |\
+                sudo tee /usr/share/keyrings/llvm-snapshot.gpg.key > /dev/null
+
+            clang_version="${{ matrix.zoo.cc }}"
+            clang_version="${clang_version/clang-}"
+
+            echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] http://apt.llvm.org/${{ matrix.zoo.llvm-ppa-name }}/ llvm-toolchain-${{ matrix.zoo.llvm-ppa-name }}-${clang_version} main" \
+                | sudo tee /etc/apt/sources.list.d/llvm.list
+            echo "deb-src [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] http://apt.llvm.org/${{ matrix.zoo.llvm-ppa-name }}/ llvm-toolchain-${{ matrix.zoo.llvm-ppa-name }}-${clang_version} main" \
+                | sudo tee -a /etc/apt/sources.list.d/llvm.list
+
+            cat /etc/apt/sources.list.d/llvm.list
+        fi
+
         sudo apt-get update
-        sudo apt-get -yq --force-yes install ${{ matrix.zoo.cc }}
-    - uses: actions/checkout@v2
+        sudo apt-get -y install ${{ matrix.zoo.cc }}
+
+    - uses: actions/checkout@v3
 
     - name: config
       run: |

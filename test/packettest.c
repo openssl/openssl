@@ -7,18 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/packet.h"
+#include "internal/packet_quic.h"
 #include "testutil.h"
 
 #define BUF_LEN 255
 
-static unsigned char smbuf[BUF_LEN];
+static unsigned char smbuf[BUF_LEN + 1];
 
 static int test_PACKET_remaining(void)
 {
     PACKET pkt;
 
-    if (!TEST_true(PACKET_buf_init(&pkt, smbuf, sizeof(smbuf)))
+    if (!TEST_true(PACKET_buf_init(&pkt, smbuf, BUF_LEN))
             || !TEST_size_t_eq(PACKET_remaining(&pkt), BUF_LEN)
             || !TEST_true(PACKET_forward(&pkt, BUF_LEN - 1))
             || !TEST_size_t_eq(PACKET_remaining(&pkt), 1)
@@ -33,7 +33,7 @@ static int test_PACKET_end(void)
 {
     PACKET pkt;
 
-    if (!TEST_true(PACKET_buf_init(&pkt, smbuf, sizeof(smbuf)))
+    if (!TEST_true(PACKET_buf_init(&pkt, smbuf, BUF_LEN))
             || !TEST_size_t_eq(PACKET_remaining(&pkt), BUF_LEN)
             || !TEST_ptr_eq(PACKET_end(&pkt), smbuf + BUF_LEN)
             || !TEST_true(PACKET_forward(&pkt, BUF_LEN - 1))
@@ -465,6 +465,8 @@ static int test_PACKET_as_length_prefixed_2(void)
     return 1;
 }
 
+#ifndef OPENSSL_NO_QUIC
+
 static int test_PACKET_get_quic_vlint(void)
 {
     struct quic_test_case {
@@ -569,6 +571,8 @@ static int test_PACKET_get_quic_length_prefixed(void)
     return 1;
 }
 
+#endif
+
 int setup_tests(void)
 {
     unsigned int i;
@@ -599,7 +603,9 @@ int setup_tests(void)
     ADD_TEST(test_PACKET_get_length_prefixed_3);
     ADD_TEST(test_PACKET_as_length_prefixed_1);
     ADD_TEST(test_PACKET_as_length_prefixed_2);
+#ifndef OPENSSL_NO_QUIC
     ADD_TEST(test_PACKET_get_quic_vlint);
     ADD_TEST(test_PACKET_get_quic_length_prefixed);
+#endif
     return 1;
 }

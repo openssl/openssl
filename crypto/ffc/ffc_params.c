@@ -182,6 +182,8 @@ int ossl_ffc_params_copy(FFC_PARAMS *dst, const FFC_PARAMS *src)
         || !ffc_bn_cpy(&dst->j, src->j))
         return 0;
 
+    dst->mdname = src->mdname;
+    dst->mdprops = src->mdprops;
     OPENSSL_free(dst->seed);
     dst->seedlen = src->seedlen;
     if (src->seed != NULL) {

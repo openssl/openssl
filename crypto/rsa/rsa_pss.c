@@ -61,11 +61,12 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
      *      -1      sLen == hLen
      *      -2      salt length is autorecovered from signature
      *      -3      salt length is maximized
+     *      -4      salt length is autorecovered from signature
      *      -N      reserved
      */
     if (sLen == RSA_PSS_SALTLEN_DIGEST) {
         sLen = hLen;
-    } else if (sLen < RSA_PSS_SALTLEN_MAX) {
+    } else if (sLen < RSA_PSS_SALTLEN_AUTO_DIGEST_MAX) {
         ERR_raise(ERR_LIB_RSA, RSA_R_SLEN_CHECK_FAILED);
         goto err;
     }
@@ -97,10 +98,8 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
     maskedDBLen = emLen - hLen - 1;
     H = EM + maskedDBLen;
     DB = OPENSSL_malloc(maskedDBLen);
-    if (DB == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+    if (DB == NULL)
         goto err;
-    }
     if (PKCS1_MGF1(DB, maskedDBLen, H, hLen, mgf1Hash) < 0)
         goto err;
     for (i = 0; i < maskedDBLen; i++)
@@ -112,7 +111,9 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         ERR_raise(ERR_LIB_RSA, RSA_R_SLEN_RECOVERY_FAILED);
         goto err;
     }
-    if (sLen != RSA_PSS_SALTLEN_AUTO && (maskedDBLen - i) != sLen) {
+    if (sLen != RSA_PSS_SALTLEN_AUTO
+            && sLen != RSA_PSS_SALTLEN_AUTO_DIGEST_MAX
+            && (maskedDBLen - i) != sLen) {
         ERR_raise_data(ERR_LIB_RSA, RSA_R_SLEN_CHECK_FAILED,
                        "expected: %d retrieved: %d", sLen,
                        maskedDBLen - i);
@@ -160,6 +161,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     int hLen, maskedDBLen, MSBits, emLen;
     unsigned char *H, *salt = NULL, *p;
     EVP_MD_CTX *ctx = NULL;
+    int sLenMax = -1;
 
     if (mgf1Hash == NULL)
         mgf1Hash = Hash;
@@ -172,13 +174,25 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
      *      -1      sLen == hLen
      *      -2      salt length is maximized
      *      -3      same as above (on signing)
+     *      -4      salt length is min(hLen, maximum salt length)
      *      -N      reserved
      */
+    /* FIPS 186-4 section 5 "The RSA Digital Signature Algorithm", subsection
+     * 5.5 "PKCS #1" says: "For RSASSA-PSS […] the length (in bytes) of the
+     * salt (sLen) shall satisfy 0 <= sLen <= hLen, where hLen is the length of
+     * the hash function output block (in bytes)."
+     *
+     * Provide a way to use at most the digest length, so that the default does
+     * not violate FIPS 186-4. */
     if (sLen == RSA_PSS_SALTLEN_DIGEST) {
         sLen = hLen;
-    } else if (sLen == RSA_PSS_SALTLEN_MAX_SIGN) {
+    } else if (sLen == RSA_PSS_SALTLEN_MAX_SIGN
+            || sLen == RSA_PSS_SALTLEN_AUTO) {
         sLen = RSA_PSS_SALTLEN_MAX;
-    } else if (sLen < RSA_PSS_SALTLEN_MAX) {
+    } else if (sLen == RSA_PSS_SALTLEN_AUTO_DIGEST_MAX) {
+        sLen = RSA_PSS_SALTLEN_MAX;
+        sLenMax = hLen;
+    } else if (sLen < RSA_PSS_SALTLEN_AUTO_DIGEST_MAX) {
         ERR_raise(ERR_LIB_RSA, RSA_R_SLEN_CHECK_FAILED);
         goto err;
     }
@@ -195,16 +209,16 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     }
     if (sLen == RSA_PSS_SALTLEN_MAX) {
         sLen = emLen - hLen - 2;
+        if (sLenMax >= 0 && sLen > sLenMax)
+            sLen = sLenMax;
     } else if (sLen > emLen - hLen - 2) {
         ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         goto err;
     }
     if (sLen > 0) {
         salt = OPENSSL_malloc(sLen);
-        if (salt == NULL) {
-            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
+        if (salt == NULL)
             goto err;
-        }
         if (RAND_bytes_ex(rsa->libctx, salt, sLen, 0) <= 0)
             goto err;
     }
@@ -317,15 +331,6 @@ int ossl_rsa_pss_params_30_set_hashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
     if (rsa_pss_params == NULL)
         return 0;
     rsa_pss_params->hash_algorithm_nid = hashalg_nid;
-    return 1;
-}
-
-int ossl_rsa_pss_params_30_set_maskgenalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
-                                          int maskgenalg_nid)
-{
-    if (rsa_pss_params == NULL)
-        return 0;
-    rsa_pss_params->mask_gen.algorithm_nid = maskgenalg_nid;
     return 1;
 }
 

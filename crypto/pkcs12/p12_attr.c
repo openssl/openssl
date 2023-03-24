@@ -120,10 +120,10 @@ PKCS12_SAFEBAG_get0_attrs(const PKCS12_SAFEBAG *bag)
     return bag->attrib;
 }
 
-void PKCS12_SAFEBAG_set0_attrs(PKCS12_SAFEBAG *bag, const STACK_OF(X509_ATTRIBUTE) *attrs)
+void PKCS12_SAFEBAG_set0_attrs(PKCS12_SAFEBAG *bag, STACK_OF(X509_ATTRIBUTE) *attrs)
 {
     if (bag->attrib != attrs)
        sk_X509_ATTRIBUTE_free(bag->attrib);
 
-    bag->attrib = (STACK_OF(X509_ATTRIBUTE*))attrs;
+    bag->attrib = attrs;
 }

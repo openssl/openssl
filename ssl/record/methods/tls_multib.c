@@ -24,17 +24,14 @@ static int tls_is_multiblock_capable(OSSL_RECORD_LAYER *rl, int type,
                                      size_t len, size_t fraglen)
 {
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
-    /* TODO(RECLAYER): REMOVE ME */
-    SSL_CONNECTION *s = rl->cbarg;
-
     if (type == SSL3_RT_APPLICATION_DATA
             && len >= 4 * fraglen
-            && s->compress == NULL
+            && rl->compctx == NULL
             && rl->msg_callback == NULL
             && !rl->use_etm
             && RLAYER_USE_EXPLICIT_IV(rl)
-            && !BIO_get_ktls_send(s->wbio)
-            && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx))
+            && !BIO_get_ktls_send(rl->bio)
+            && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(rl->enc_ctx))
                 & EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) != 0)
         return 1;
 #endif
@@ -72,9 +69,7 @@ static int tls_write_records_multiblock_int(OSSL_RECORD_LAYER *rl,
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
     size_t i;
     size_t totlen;
-    SSL3_BUFFER *wb;
-    /* TODO(RECLAYER): Remove me */
-    SSL_CONNECTION *s = rl->cbarg;
+    TLS_BUFFER *wb;
     unsigned char aad[13];
     EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
     size_t packlen;
@@ -113,9 +108,9 @@ static int tls_write_records_multiblock_int(OSSL_RECORD_LAYER *rl,
      * multiblock write in the call to tls_setup_write_buffer() - the different
      * buffer sizes will be spotted and the buffer reallocated.
      */
-    packlen = EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
-                                    EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE,
-                                    (int)templates[0].buflen, NULL);
+    packlen = EVP_CIPHER_CTX_ctrl(rl->enc_ctx,
+                                  EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE,
+                                  (int)templates[0].buflen, NULL);
     packlen *= numtempl;
     if (!tls_setup_write_buffer(rl, 1, packlen, packlen)) {
         /* RLAYERfatal() already called */
@@ -124,7 +119,7 @@ static int tls_write_records_multiblock_int(OSSL_RECORD_LAYER *rl,
     wb = &rl->wbuf[0];
 
     mb_param.interleave = numtempl;
-    memcpy(aad, s->rlayer.write_sequence, 8);
+    memcpy(aad, rl->sequence, 8);
     aad[8] = templates[0].type;
     aad[9] = (unsigned char)(templates[0].version >> 8);
     aad[10] = (unsigned char)(templates[0].version);
@@ -134,9 +129,9 @@ static int tls_write_records_multiblock_int(OSSL_RECORD_LAYER *rl,
     mb_param.inp = aad;
     mb_param.len = totlen;
 
-    packleni = EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
-                                    EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
-                                    sizeof(mb_param), &mb_param);
+    packleni = EVP_CIPHER_CTX_ctrl(rl->enc_ctx,
+                                   EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
+                                   sizeof(mb_param), &mb_param);
     packlen = (size_t)packleni;
     if (packleni <= 0 || packlen > wb->len) { /* never happens */
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -147,17 +142,17 @@ static int tls_write_records_multiblock_int(OSSL_RECORD_LAYER *rl,
     mb_param.inp = templates[0].buf;
     mb_param.len = totlen;
 
-    if (EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
+    if (EVP_CIPHER_CTX_ctrl(rl->enc_ctx,
                             EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
                             sizeof(mb_param), &mb_param) <= 0) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return -1;
     }
 
-    s->rlayer.write_sequence[7] += mb_param.interleave;
-    if (s->rlayer.write_sequence[7] < mb_param.interleave) {
+    rl->sequence[7] += mb_param.interleave;
+    if (rl->sequence[7] < mb_param.interleave) {
         int j = 6;
-        while (j >= 0 && (++s->rlayer.write_sequence[j--]) == 0) ;
+        while (j >= 0 && (++rl->sequence[j--]) == 0) ;
     }
 
     wb->offset = 0;

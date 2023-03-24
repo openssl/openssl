@@ -527,7 +527,10 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     long ret = 1;
     int *ip;
     bio_dgram_data *data = NULL;
+# ifndef __DJGPP__
+    /* There are currently no cases where this is used on djgpp/watt32. */
     int sockopt_val = 0;
+# endif
     int d_errno;
 # if defined(OPENSSL_SYS_LINUX) && (defined(IP_MTU_DISCOVER) || defined(IP_MTU))
     socklen_t sockopt_len;      /* assume that system supporting IP_MTU is
@@ -765,7 +768,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling getsockopt()");
             } else {
-                OPENSSL_assert(sz <= sizeof(struct timeval));
+                OPENSSL_assert((size_t)sz <= sizeof(struct timeval));
                 ret = (int)sz;
             }
 #  endif
@@ -816,7 +819,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling getsockopt()");
             } else {
-                OPENSSL_assert(sz <= sizeof(struct timeval));
+                OPENSSL_assert((size_t)sz <= sizeof(struct timeval));
                 ret = (int)sz;
             }
 #  endif
@@ -847,22 +850,22 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 # endif
     case BIO_CTRL_DGRAM_SET_DONT_FRAG:
-        sockopt_val = num ? 1 : 0;
-
         switch (data->peer.sa.sa_family) {
         case AF_INET:
 # if defined(IP_DONTFRAG)
+            sockopt_val = num ? 1 : 0;
             if ((ret = setsockopt(b->num, IPPROTO_IP, IP_DONTFRAG,
                                   &sockopt_val, sizeof(sockopt_val))) < 0)
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling setsockopt()");
 # elif defined(OPENSSL_SYS_LINUX) && defined(IP_MTU_DISCOVER) && defined (IP_PMTUDISC_PROBE)
-            if ((sockopt_val = num ? IP_PMTUDISC_PROBE : IP_PMTUDISC_DONT),
-                (ret = setsockopt(b->num, IPPROTO_IP, IP_MTU_DISCOVER,
+            sockopt_val = num ? IP_PMTUDISC_PROBE : IP_PMTUDISC_DONT;
+            if ((ret = setsockopt(b->num, IPPROTO_IP, IP_MTU_DISCOVER,
                                   &sockopt_val, sizeof(sockopt_val))) < 0)
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling setsockopt()");
 # elif defined(OPENSSL_SYS_WINDOWS) && defined(IP_DONTFRAGMENT)
+            sockopt_val = num ? 1 : 0;
             if ((ret = setsockopt(b->num, IPPROTO_IP, IP_DONTFRAGMENT,
                                   (const char *)&sockopt_val,
                                   sizeof(sockopt_val))) < 0)
@@ -875,6 +878,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 # if OPENSSL_USE_IPV6
         case AF_INET6:
 #  if defined(IPV6_DONTFRAG)
+            sockopt_val = num ? 1 : 0;
             if ((ret = setsockopt(b->num, IPPROTO_IPV6, IPV6_DONTFRAG,
                                   (const void *)&sockopt_val,
                                   sizeof(sockopt_val))) < 0)
@@ -882,8 +886,8 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                                "calling setsockopt()");
 
 #  elif defined(OPENSSL_SYS_LINUX) && defined(IPV6_MTUDISCOVER)
-            if ((sockopt_val = num ? IP_PMTUDISC_PROBE : IP_PMTUDISC_DONT),
-                (ret = setsockopt(b->num, IPPROTO_IPV6, IPV6_MTU_DISCOVER,
+            sockopt_val = num ? IP_PMTUDISC_PROBE : IP_PMTUDISC_DONT;
+            if ((ret = setsockopt(b->num, IPPROTO_IPV6, IPV6_MTU_DISCOVER,
                                   &sockopt_val, sizeof(sockopt_val))) < 0)
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling setsockopt()");
@@ -939,6 +943,16 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 
     case BIO_CTRL_DGRAM_GET_LOCAL_ADDR_ENABLE:
         *(int *)ptr = data->local_addr_enabled;
+        break;
+
+    case BIO_CTRL_GET_RPOLL_DESCRIPTOR:
+    case BIO_CTRL_GET_WPOLL_DESCRIPTOR:
+        {
+            BIO_POLL_DESCRIPTOR *pd = ptr;
+
+            pd->type        = BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD;
+            pd->value.fd    = b->num;
+        }
         break;
 
     default:
@@ -1409,8 +1423,8 @@ static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                  msg[0].data_len,
 #  endif
                  sysflags,
-                 msg[0].peer != NULL ? &msg[0].peer->sa : NULL,
-                 msg[0].peer != NULL ? sizeof(*msg[0].peer) : 0);
+                 msg[0].peer != NULL ? BIO_ADDR_sockaddr(msg[0].peer) : NULL,
+                 msg[0].peer != NULL ? BIO_ADDR_sockaddr_size(msg[0].peer) : 0);
     if (ret <= 0) {
         ERR_raise(ERR_LIB_SYS, get_last_socket_error());
         *num_processed = 0;
@@ -1820,10 +1834,8 @@ static int dgram_sctp_new(BIO *bi)
 
     bi->init = 0;
     bi->num = 0;
-    if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+    if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL)
         return 0;
-    }
 #  ifdef SCTP_PR_SCTP_NONE
     data->prinfo.pr_policy = SCTP_PR_SCTP_NONE;
 #  endif
@@ -2058,10 +2070,8 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
             optlen =
                 (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
             authchunks = OPENSSL_malloc(optlen);
-            if (authchunks == NULL) {
-                ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
+            if (authchunks == NULL)
                 return -1;
-            }
             memset(authchunks, 0, optlen);
             ii = getsockopt(b->num, IPPROTO_SCTP, SCTP_PEER_AUTH_CHUNKS,
                             authchunks, &optlen);

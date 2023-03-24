@@ -9,21 +9,15 @@
 
 #include <string.h>
 
+#include "internal/e_os.h"
 #include "internal/nelem.h"
 #include "ssltestlib.h"
 #include "../testutil.h"
-#include "internal/e_os.h" /* for ossl_sleep() etc. */
 
-#ifdef OPENSSL_SYS_UNIX
-# include <unistd.h>
-# ifndef OPENSSL_NO_KTLS
-#  include <netinet/in.h>
-#  include <netinet/in.h>
-#  include <arpa/inet.h>
-#  include <sys/socket.h>
-#  include <unistd.h>
-#  include <fcntl.h>
-# endif
+#if (!defined(OPENSSL_NO_KTLS) || !defined(OPENSSL_NO_QUIC)) && !defined(OPENSSL_NO_POSIX_IO) && !defined(OPENSSL_NO_SOCK)
+# define OSSL_USE_SOCKETS 1
+# include "internal/sockets.h"
+# include <openssl/bio.h>
 #endif
 
 static int tls_dump_new(BIO *bi);
@@ -350,8 +344,7 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
     unsigned int seq, offset, len, epoch;
 
     BIO_clear_retry_flags(bio);
-    if (sk_MEMPACKET_num(ctx->pkts) <= 0
-        || (thispkt = sk_MEMPACKET_value(ctx->pkts, 0)) == NULL
+    if ((thispkt = sk_MEMPACKET_value(ctx->pkts, 0)) == NULL
         || thispkt->num != ctx->currpkt) {
         /* Probably run out of data */
         BIO_set_retry_read(bio);
@@ -604,9 +597,8 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
             ctx->lastpkt++;
             do {
                 i++;
-                if (i < sk_MEMPACKET_num(ctx->pkts)
-                        && (nextpkt = sk_MEMPACKET_value(ctx->pkts, i)) != NULL
-                        && nextpkt->num == ctx->lastpkt)
+                nextpkt = sk_MEMPACKET_value(ctx->pkts, i);
+                if (nextpkt != NULL && nextpkt->num == ctx->lastpkt)
                     ctx->lastpkt++;
                 else
                     return inl;
@@ -882,19 +874,25 @@ int create_ssl_ctx_pair(OSSL_LIB_CTX *libctx, const SSL_METHOD *sm,
 
 #define MAXLOOPS    1000000
 
-#if !defined(OPENSSL_NO_KTLS) && !defined(OPENSSL_NO_SOCK)
-static int set_nb(int fd)
+#if defined(OSSL_USE_SOCKETS)
+int wait_until_sock_readable(int sock)
 {
-    int flags;
+    fd_set readfds;
+    struct timeval timeout;
+    int width;
 
-    flags = fcntl(fd, F_GETFL, 0);
-    if (flags == -1)
-        return flags;
-    flags = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-    return flags;
+    width = sock + 1;
+    FD_ZERO(&readfds);
+    openssl_fdset(sock, &readfds);
+    timeout.tv_sec = 10; /* give up after 10 seconds */
+    timeout.tv_usec = 0;
+
+    select(width, &readfds, NULL, NULL, &timeout);
+
+    return FD_ISSET(sock, &readfds);
 }
 
-int create_test_sockets(int *cfdp, int *sfdp)
+int create_test_sockets(int *cfdp, int *sfdp, int socktype, BIO_ADDR *saddr)
 {
     struct sockaddr_in sin;
     const char *host = "127.0.0.1";
@@ -906,8 +904,9 @@ int create_test_sockets(int *cfdp, int *sfdp)
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = inet_addr(host);
 
-    afd = socket(AF_INET, SOCK_STREAM, 0);
-    if (afd < 0)
+    afd = BIO_socket(AF_INET, socktype,
+                     socktype == SOCK_STREAM ? IPPROTO_TCP : IPPROTO_UDP, 0);
+    if (afd == INVALID_SOCKET)
         return 0;
 
     if (bind(afd, (struct sockaddr*)&sin, sizeof(sin)) < 0)
@@ -916,15 +915,31 @@ int create_test_sockets(int *cfdp, int *sfdp)
     if (getsockname(afd, (struct sockaddr*)&sin, &slen) < 0)
         goto out;
 
-    if (listen(afd, 1) < 0)
+    if (saddr != NULL
+            && !BIO_ADDR_rawmake(saddr, sin.sin_family, &sin.sin_addr,
+                                 sizeof(sin.sin_addr), sin.sin_port))
         goto out;
 
-    cfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (cfd < 0)
+    if (socktype == SOCK_STREAM && listen(afd, 1) < 0)
         goto out;
 
-    if (set_nb(afd) == -1)
+    cfd = BIO_socket(AF_INET, socktype,
+                     socktype == SOCK_STREAM ? IPPROTO_TCP : IPPROTO_UDP, 0);
+    if (cfd == INVALID_SOCKET)
         goto out;
+
+    if (!BIO_socket_nbio(afd, 1))
+        goto out;
+
+    /*
+     * If a DGRAM socket then we don't call "accept" or "connect" - so act like
+     * we already called them.
+     */
+    if (socktype == SOCK_DGRAM) {
+        cfd_connected = 1;
+        sfd = afd;
+        afd = -1;
+    }
 
     while (sfd == -1 || !cfd_connected) {
         sfd = accept(afd, NULL, 0);
@@ -937,7 +952,7 @@ int create_test_sockets(int *cfdp, int *sfdp)
             cfd_connected = 1;
     }
 
-    if (set_nb(cfd) == -1 || set_nb(sfd) == -1)
+    if (!BIO_socket_nbio(cfd, 1) || !BIO_socket_nbio(sfd, 1))
         goto out;
     ret = 1;
     *cfdp = cfd;
@@ -987,7 +1002,7 @@ int create_ssl_objects2(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
     BIO_free(c_to_s_bio);
     return 0;
 }
-#endif
+#endif /* defined(OSSL_USE_SOCKETS) */
 
 /*
  * NOTE: Transfers control of the BIOs - this function will free them on error
@@ -1164,7 +1179,7 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
              * give the DTLS timer a chance to do something. We only do this for
              * the first few times to prevent hangs.
              */
-            ossl_sleep(50);
+            OSSL_sleep(50);
         }
     } while (retc <=0 || rets <= 0);
 

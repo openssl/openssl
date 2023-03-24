@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2022 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -248,7 +248,7 @@ if ( ! $reindex && $statefile ) {
 
 # Scan each C source file and look for reason codes.  This is done by
 # looking for strings that "look like" reason codes: basically anything
-# consisting of all upper case and numerics which _R_ in it and which has
+# consisting of all uppercase and numerics which _R_ in it and which has
 # the name of an error library at the start.  Should there be anything else,
 # such as a type name, we add exceptions here.
 # If a code doesn't exist in list compiled from headers then mark it
@@ -450,6 +450,7 @@ EOF
         } else {
             print OUT <<"EOF";
 # define ${lib}err(f, r) ERR_${lib}_error(0, (r), OPENSSL_FILE, OPENSSL_LINE)
+# define ERR_R_${lib}_LIB ERR_${lib}_lib()
 
 EOF
             if ( ! $static ) {
@@ -629,6 +630,13 @@ ${st}void ERR_${lib}_error(int function, int reason, const char *file, int line)
     ERR_raise(lib_code, reason);
     ERR_set_debug(file, line, NULL);
 }
+
+${st}int ERR_${lib}_lib(void)
+{
+    if (lib_code == 0)
+        lib_code = ERR_get_next_error_library();
+    return lib_code;
+}
 EOF
 
         }
@@ -682,7 +690,7 @@ EOF
         my $short = "$i:$rcodes{$i}:";
         my $t = exists $strings{$i} ? "$strings{$i}" : "";
         $t = "\\\n\t" . $t if length($short) + length($t) > 80;
-        print OUT "$short$t\n" if !exists $rextra{$i};
+        print OUT "$short$t\n";
     }
     close(OUT);
     if ( $skippedstate ) {

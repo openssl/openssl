@@ -57,14 +57,18 @@ X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
         goto err;
     }
 
-    if ((pbe2 = PBE2PARAM_new()) == NULL)
-        goto merr;
+    if ((pbe2 = PBE2PARAM_new()) == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+        goto err;
+    }
 
     /* Setup the AlgorithmIdentifier for the encryption scheme */
     scheme = pbe2->encryption;
     scheme->algorithm = OBJ_nid2obj(alg_nid);
-    if ((scheme->parameter = ASN1_TYPE_new()) == NULL)
-        goto merr;
+    if ((scheme->parameter = ASN1_TYPE_new()) == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+        goto err;
+    }
 
     /* Create random IV */
     ivlen = EVP_CIPHER_get_iv_length(cipher);
@@ -76,8 +80,10 @@ X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
     }
 
     ctx = EVP_CIPHER_CTX_new();
-    if (ctx == NULL)
-        goto merr;
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
+        goto err;
+    }
 
     /* Dummy cipherinit to just setup the IV, and PRF */
     if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, iv, 0))
@@ -113,29 +119,32 @@ X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
     pbe2->keyfunc = PKCS5_pbkdf2_set_ex(iter, salt, saltlen, prf_nid, keylen,
                                         libctx);
 
-    if (pbe2->keyfunc == NULL)
-        goto merr;
+    if (pbe2->keyfunc == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+        goto err;
+    }
 
     /* Now set up top level AlgorithmIdentifier */
 
-    if ((ret = X509_ALGOR_new()) == NULL)
-        goto merr;
+    if ((ret = X509_ALGOR_new()) == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_X509_LIB);
+        goto err;
+    }
 
     ret->algorithm = OBJ_nid2obj(NID_pbes2);
 
     /* Encode PBE2PARAM into parameter */
 
     if (!ASN1_TYPE_pack_sequence(ASN1_ITEM_rptr(PBE2PARAM), pbe2,
-                                 &ret->parameter))
-         goto merr;
+                                 &ret->parameter)) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+        goto err;
+    }
 
     PBE2PARAM_free(pbe2);
     pbe2 = NULL;
 
     return ret;
-
- merr:
-    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
 
  err:
     EVP_CIPHER_CTX_free(ctx);
@@ -170,69 +179,89 @@ X509_ALGOR *PKCS5_pbkdf2_set_ex(int iter, unsigned char *salt, int saltlen,
     PBKDF2PARAM *kdf = NULL;
     ASN1_OCTET_STRING *osalt = NULL;
 
-    if ((kdf = PBKDF2PARAM_new()) == NULL)
-        goto merr;
-    if ((osalt = ASN1_OCTET_STRING_new()) == NULL)
-        goto merr;
+    if ((kdf = PBKDF2PARAM_new()) == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+        goto err;
+    }
+    if ((osalt = ASN1_OCTET_STRING_new()) == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+        goto err;
+    }
 
     kdf->salt->value.octet_string = osalt;
     kdf->salt->type = V_ASN1_OCTET_STRING;
 
-    if (saltlen < 0)
-        goto merr;
+    if (saltlen < 0) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
     if (saltlen == 0)
         saltlen = PKCS5_SALT_LEN;
     if ((osalt->data = OPENSSL_malloc(saltlen)) == NULL)
-        goto merr;
+        goto err;
+
 
     osalt->length = saltlen;
 
-    if (salt)
+    if (salt) {
         memcpy(osalt->data, salt, saltlen);
-    else if (RAND_bytes_ex(libctx, osalt->data, saltlen, 0) <= 0)
-        goto merr;
+    } else if (RAND_bytes_ex(libctx, osalt->data, saltlen, 0) <= 0) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_RAND_LIB);
+        goto err;
+    }
 
     if (iter <= 0)
         iter = PKCS5_DEFAULT_ITER;
 
-    if (!ASN1_INTEGER_set(kdf->iter, iter))
-        goto merr;
+    if (!ASN1_INTEGER_set(kdf->iter, iter)) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+        goto err;
+    }
 
     /* If have a key len set it up */
 
     if (keylen > 0) {
-        if ((kdf->keylength = ASN1_INTEGER_new()) == NULL)
-            goto merr;
-        if (!ASN1_INTEGER_set(kdf->keylength, keylen))
-            goto merr;
+        if ((kdf->keylength = ASN1_INTEGER_new()) == NULL) {
+            ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+            goto err;
+        }
+        if (!ASN1_INTEGER_set(kdf->keylength, keylen)) {
+            ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+            goto err;
+        }
     }
 
     /* prf can stay NULL if we are using hmacWithSHA1 */
     if (prf_nid > 0 && prf_nid != NID_hmacWithSHA1) {
         kdf->prf = ossl_X509_ALGOR_from_nid(prf_nid, V_ASN1_NULL, NULL);
-        if (kdf->prf == NULL)
-            goto merr;
+        if (kdf->prf == NULL) {
+            ERR_raise(ERR_LIB_ASN1, ERR_R_X509_LIB);
+            goto err;
+        }
     }
 
     /* Finally setup the keyfunc structure */
 
     keyfunc = X509_ALGOR_new();
-    if (keyfunc == NULL)
-        goto merr;
+    if (keyfunc == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_X509_LIB);
+        goto err;
+    }
 
     keyfunc->algorithm = OBJ_nid2obj(NID_id_pbkdf2);
 
     /* Encode PBKDF2PARAM into parameter of pbe2 */
 
     if (!ASN1_TYPE_pack_sequence(ASN1_ITEM_rptr(PBKDF2PARAM), kdf,
-                                 &keyfunc->parameter))
-         goto merr;
+                                 &keyfunc->parameter)) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
+        goto err;
+    }
 
     PBKDF2PARAM_free(kdf);
     return keyfunc;
 
- merr:
-    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+ err:
     PBKDF2PARAM_free(kdf);
     X509_ALGOR_free(keyfunc);
     return NULL;

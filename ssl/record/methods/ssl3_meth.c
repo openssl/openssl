@@ -9,6 +9,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
+#include "internal/ssl3_cbc.h"
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"
@@ -21,9 +22,10 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
                                  size_t taglen,
                                  int mactype,
                                  const EVP_MD *md,
-                                 const SSL_COMP *comp)
+                                 COMP_METHOD *comp)
 {
     EVP_CIPHER_CTX *ciph_ctx;
+    int enc = (rl->direction == OSSL_RECORD_DIRECTION_WRITE) ? 1 : 0;
 
     if (md == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -41,17 +43,23 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
     }
+
+    if ((md != NULL && EVP_DigestInit_ex(rl->md_ctx, md, NULL) <= 0)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return OSSL_RECORD_RETURN_FATAL;
+    }
+
 #ifndef OPENSSL_NO_COMP
     if (comp != NULL) {
-        rl->expand = COMP_CTX_new(comp->method);
-        if (rl->expand == NULL) {
+        rl->compctx = COMP_CTX_new(comp);
+        if (rl->compctx == NULL) {
             ERR_raise(ERR_LIB_SSL, SSL_R_COMPRESSION_LIBRARY_ERROR);
             return OSSL_RECORD_RETURN_FATAL;
         }
     }
 #endif
 
-    if (!EVP_DecryptInit_ex(ciph_ctx, ciph, NULL, key, iv)) {
+    if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, iv, enc)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
     }
@@ -80,10 +88,11 @@ static int ssl3_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
  *    0: if the record is publicly invalid, or an internal error
  *    1: Success or Mac-then-encrypt decryption failed (MAC will be randomised)
  */
-static int ssl3_cipher(OSSL_RECORD_LAYER *rl, SSL3_RECORD *inrecs, size_t n_recs,
-                       int sending, SSL_MAC_BUF *mac, size_t macsize)
+static int ssl3_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *inrecs,
+                       size_t n_recs, int sending, SSL_MAC_BUF *mac,
+                       size_t macsize)
 {
-    SSL3_RECORD *rec;
+    TLS_RL_RECORD *rec;
     EVP_CIPHER_CTX *ds;
     size_t l, i;
     size_t bs;
@@ -199,7 +208,7 @@ static const unsigned char ssl3_pad_2[48] = {
     0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c
 };
 
-static int ssl3_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
+static int ssl3_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md,
                     int sending)
 {
     unsigned char *mac_sec, *seq = rl->sequence;
@@ -213,7 +222,7 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
     hash = rl->md_ctx;
 
     t = EVP_MD_CTX_get_size(hash);
-    if (t < 0)
+    if (t <= 0)
         return 0;
     md_size = t;
     npad = (48 / md_size) * md_size;
@@ -289,7 +298,9 @@ static int ssl3_mac(OSSL_RECORD_LAYER *rl, SSL3_RECORD *rec, unsigned char *md,
         EVP_MD_CTX_free(md_ctx);
     }
 
-    ssl3_record_sequence_update(seq);
+    if (!tls_increment_sequence_ctr(rl))
+        return 0;
+
     return 1;
 }
 
@@ -303,5 +314,14 @@ struct record_functions_st ssl_3_0_funcs = {
     tls_default_validate_record_header,
     tls_default_post_process_record,
     tls_get_max_records_default,
-    tls_write_records_default
+    tls_write_records_default,
+    /* These 2 functions are defined in tls1_meth.c */
+    tls1_allocate_write_buffers,
+    tls1_initialise_write_packets,
+    NULL,
+    tls_prepare_record_header_default,
+    NULL,
+    tls_prepare_for_encryption_default,
+    tls_post_encryption_processing_default,
+    NULL
 };

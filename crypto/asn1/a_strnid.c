@@ -159,10 +159,8 @@ static ASN1_STRING_TABLE *stable_get(int nid)
     tmp = ASN1_STRING_TABLE_get(nid);
     if (tmp != NULL && tmp->flags & STABLE_FLAGS_MALLOC)
         return tmp;
-    if ((rv = OPENSSL_zalloc(sizeof(*rv))) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    if ((rv = OPENSSL_zalloc(sizeof(*rv))) == NULL)
         return NULL;
-    }
     if (!sk_ASN1_STRING_TABLE_push(stable, rv)) {
         OPENSSL_free(rv);
         return NULL;
@@ -190,7 +188,7 @@ int ASN1_STRING_TABLE_add(int nid,
 
     tmp = stable_get(nid);
     if (tmp == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         return 0;
     }
     if (minsize >= 0)

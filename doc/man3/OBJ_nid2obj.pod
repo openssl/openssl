@@ -89,7 +89,8 @@ OBJ_dup() returns a copy of I<o>.
 OBJ_create() adds a new object to the internal table. I<oid> is the
 numerical form of the object, I<sn> the short name and I<ln> the
 long name. A new NID is returned for the created object in case of
-success and NID_undef in case of failure.
+success and NID_undef in case of failure.  Any of I<oid>, I<sn> and
+I<ln> may be NULL, but not all at once.
 
 OBJ_length() returns the size of the content octets of I<obj>.
 

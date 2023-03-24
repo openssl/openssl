@@ -337,7 +337,7 @@ static int min_max_proto(SSL_CONF_CTX *cctx, const char *value, int *bound)
     if (cctx->ctx != NULL)
         method_version = cctx->ctx->method->version;
     else if (cctx->ssl != NULL)
-        method_version = cctx->ssl->ctx->method->version;
+        method_version = cctx->ssl->defltmeth->version;
     else
         return 0;
     if ((new_version = protocol_from_string(value)) < 0)
@@ -397,7 +397,11 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL_INV("ExtendedMasterSecret", SSL_OP_NO_EXTENDED_MASTER_SECRET),
         SSL_FLAG_TBL_INV("CANames", SSL_OP_DISABLE_TLSEXT_CA_NAMES),
         SSL_FLAG_TBL("KTLS", SSL_OP_ENABLE_KTLS),
-        SSL_FLAG_TBL_CERT("StrictCertCheck", SSL_CERT_FLAG_TLS_STRICT)
+        SSL_FLAG_TBL_CERT("StrictCertCheck", SSL_CERT_FLAG_TLS_STRICT),
+        SSL_FLAG_TBL_INV("TxCertificateCompression", SSL_OP_NO_TX_CERTIFICATE_COMPRESSION),
+        SSL_FLAG_TBL_INV("RxCertificateCompression", SSL_OP_NO_RX_CERTIFICATE_COMPRESSION),
+        SSL_FLAG_TBL("KTLSTxZerocopySendfile", SSL_OP_ENABLE_KTLS_TX_ZEROCOPY_SENDFILE),
+        SSL_FLAG_TBL("IgnoreUnexpectedEOF", SSL_OP_IGNORE_UNEXPECTED_EOF),
     };
     if (value == NULL)
         return -3;
@@ -707,6 +711,10 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_SWITCH("bugs", 0),
     SSL_CONF_CMD_SWITCH("no_comp", 0),
     SSL_CONF_CMD_SWITCH("comp", 0),
+    SSL_CONF_CMD_SWITCH("no_tx_cert_comp", 0),
+    SSL_CONF_CMD_SWITCH("tx_cert_comp", 0),
+    SSL_CONF_CMD_SWITCH("no_rx_cert_comp", 0),
+    SSL_CONF_CMD_SWITCH("rx_cert_comp", 0),
     SSL_CONF_CMD_SWITCH("ecdh_single", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("no_ticket", 0),
     SSL_CONF_CMD_SWITCH("serverpref", SSL_CONF_FLAG_SERVER),
@@ -787,6 +795,10 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
     {SSL_OP_ALL, 0},            /* bugs */
     {SSL_OP_NO_COMPRESSION, 0}, /* no_comp */
     {SSL_OP_NO_COMPRESSION, SSL_TFLAG_INV}, /* comp */
+    {SSL_OP_NO_TX_CERTIFICATE_COMPRESSION, 0}, /* no_tx_cert_comp */
+    {SSL_OP_NO_TX_CERTIFICATE_COMPRESSION, SSL_TFLAG_INV}, /* tx_cert_comp */
+    {SSL_OP_NO_RX_CERTIFICATE_COMPRESSION, 0}, /* no_rx_cert_comp */
+    {SSL_OP_NO_RX_CERTIFICATE_COMPRESSION, SSL_TFLAG_INV}, /* rx_cert_comp */
     {SSL_OP_SINGLE_ECDH_USE, 0}, /* ecdh_single */
     {SSL_OP_NO_TICKET, 0},      /* no_ticket */
     {SSL_OP_CIPHER_SERVER_PREFERENCE, 0}, /* serverpref */

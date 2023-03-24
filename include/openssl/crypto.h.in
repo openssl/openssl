@@ -529,6 +529,8 @@ void OSSL_LIB_CTX_free(OSSL_LIB_CTX *);
 OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void);
 OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx);
 
+void OSSL_sleep(uint64_t millis);
+
 # ifdef  __cplusplus
 }
 # endif

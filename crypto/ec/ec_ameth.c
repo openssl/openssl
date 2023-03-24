@@ -42,7 +42,6 @@ static int eckey_param2type(int *pptype, void **ppval, const EC_KEY *ec_key)
         ASN1_OBJECT *asn1obj = OBJ_nid2obj(nid);
 
         if (asn1obj == NULL || OBJ_length(asn1obj) == 0) {
-            ASN1_OBJECT_free(asn1obj);
             ERR_raise(ERR_LIB_EC, EC_R_MISSING_OID);
             return 0;
         }
@@ -92,9 +91,7 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
                                ptype, pval, penc, penclen))
         return 1;
  err:
-    if (ptype == V_ASN1_OBJECT)
-        ASN1_OBJECT_free(pval);
-    else
+    if (ptype == V_ASN1_SEQUENCE)
         ASN1_STRING_free(pval);
     OPENSSL_free(penc);
     return 0;
@@ -187,19 +184,22 @@ static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     eplen = i2d_ECPrivateKey(&ec_key, &ep);
     if (eplen <= 0) {
         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
-        ASN1_STRING_free(pval);
-        return 0;
+        goto err;
     }
 
     if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_X9_62_id_ecPublicKey), 0,
                          ptype, pval, ep, eplen)) {
-        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
-        ASN1_STRING_free(pval);
+        ERR_raise(ERR_LIB_EC, ERR_R_ASN1_LIB);
         OPENSSL_clear_free(ep, eplen);
-        return 0;
+        goto err;
     }
 
     return 1;
+
+ err:
+    if (ptype == V_ASN1_SEQUENCE)
+        ASN1_STRING_free(pval);
+    return 0;
 }
 
 static int int_ec_size(const EVP_PKEY *pkey)
@@ -513,8 +513,10 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
 
     if (pub_point != NULL) {
         /* convert pub_point to a octet string according to the SECG standard */
+        point_conversion_form_t format = EC_KEY_get_conv_form(eckey);
+
         if ((pub_key_buflen = EC_POINT_point2buf(ecg, pub_point,
-                                                 POINT_CONVERSION_COMPRESSED,
+                                                 format,
                                                  &pub_key_buf, bnctx)) == 0
             || !OSSL_PARAM_BLD_push_octet_string(tmpl,
                                                  OSSL_PKEY_PARAM_PUB_KEY,
@@ -611,7 +613,7 @@ static int ec_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     EC_KEY *ec = EC_KEY_new_ex(pctx->libctx, pctx->propquery);
 
     if (ec == NULL) {
-        ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         return 0;
     }
 

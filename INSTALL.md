@@ -19,7 +19,7 @@ Table of Contents
    - [Build Type](#build-type)
    - [Directories](#directories)
    - [Compiler Warnings](#compiler-warnings)
-   - [ZLib Flags](#zlib-flags)
+   - [Compression Algorithm Flags](#compression-algorithm-flags)
    - [Seeding the Random Generator](#seeding-the-random-generator)
    - [Setting the FIPS HMAC key](#setting-the-FIPS-HMAC-key)
    - [Enable and Disable Features](#enable-and-disable-features)
@@ -167,8 +167,9 @@ issue the following commands to build OpenSSL.
 As mentioned in the [Choices](#choices) section, you need to pick one
 of the four Configure targets in the first command.
 
-Most likely you will be using the `VC-WIN64A` target for 64bit Windows
-binaries (AMD64) or `VC-WIN32` for 32bit Windows binaries (X86).
+Most likely you will be using the `VC-WIN64A`/`VC-WIN64A-HYBRIDCRT` target for
+64bit Windows binaries (AMD64) or `VC-WIN32`/`VC-WIN32-HYBRIDCRT` for 32bit
+Windows binaries (X86).
 The other two options are `VC-WIN64I` (Intel IA64, Itanium) and
 `VC-CE` (Windows CE) are rather uncommon nowadays.
 
@@ -234,9 +235,8 @@ and issue the following command.
 
     $ nmake install
 
-The easiest way to elevate the Command Prompt is to press and hold down
-the both the `<CTRL>` and `<SHIFT>` key while clicking the menu item in the
-task menu.
+The easiest way to elevate the Command Prompt is to press and hold down both
+the `<CTRL>` and `<SHIFT>` keys while clicking the menu item in the task menu.
 
 The default installation location is
 
@@ -382,8 +382,39 @@ for OpenSSL development.  It only works when using gcc or clang as the compiler.
 If you are developing a patch for OpenSSL then it is recommended that you use
 this option where possible.
 
-ZLib Flags
-----------
+Compression Algorithm Flags
+---------------------------
+
+### with-brotli-include
+
+    --with-brotli-include=DIR
+
+The directory for the location of the brotli include files (i.e. the location
+of the **brotli** include directory).  This option is only necessary if
+[enable-brotli](#enable-brotli) is used and the include files are not already
+on the system include path.
+
+### with-brotli-lib
+
+    --with-brotli-lib=LIB
+
+**On Unix**: this is the directory containing the brotli libraries.
+If not provided, the system library path will be used.
+
+The names of the libraries are:
+
+* libbrotlicommon.a or libbrotlicommon.so
+* libbrotlidec.a or libbrotlidec.so
+* libbrotlienc.a or libbrotlienc.so
+
+**On Windows:** this is the directory containing the brotli libraries.
+If not provided, the system library path will be used.
+
+The names of the libraries are:
+
+* brotlicommon.lib
+* brotlidec.lib
+* brotlienc.lib
 
 ### with-zlib-include
 
@@ -408,6 +439,32 @@ then this flag is optional and defaults to `ZLIB1` if not provided.
 **On VMS:** this is the filename of the zlib library (with or without a path).
 This flag is optional and if not provided then `GNV$LIBZSHR`, `GNV$LIBZSHR32`
 or `GNV$LIBZSHR64` is used by default depending on the pointer size chosen.
+
+### with-zstd-include
+
+    --with-zstd-include=DIR
+
+The directory for the location of the Zstd include file. This option is only
+necessary if [enable-std](#enable-zstd) is used and the include file is not
+already on the system include path.
+
+OpenSSL requires Zstd 1.4 or greater. The Linux kernel source contains a
+*zstd.h* file that is not compatible with the 1.4.x Zstd distribution, the
+compilation will generate an error if the Linux *zstd.h* is included before
+(or instead of) the Zstd distribution header.
+
+### with-zstd-lib
+
+    --with-zstd-lib=LIB
+
+**On Unix**: this is the directory containing the Zstd library.
+If not provided the system library path will be used.
+
+**On Windows:** this is the filename of the Zstd library (with or
+without a path).  This flag must be provided if the
+[enable-zstd-dynamic](#enable-zstd-dynamic) option is not also used.
+If `zstd-dynamic` is used then this flag is optional and defaults
+to `LIBZSTD` if not provided.
 
 Seeding the Random Generator
 ----------------------------
@@ -555,6 +612,17 @@ Don't automatically load all libcrypto/libssl error strings.
 Typically OpenSSL will automatically load human readable error strings.  For a
 statically linked application this may be undesirable if small executable size
 is an objective.
+
+### enable-brotli
+
+Build with support for brotli compression/decompression.
+
+### enable-brotli-dynamic
+
+Like the enable-brotli option, but has OpenSSL load the brotli library dynamically
+when needed.
+
+This is only supported on systems where loading of shared libraries is supported.
 
 ### no-autoload-config
 
@@ -899,6 +967,27 @@ will usually require additional system-dependent options!
 
 See [Notes on multi-threading](#notes-on-multi-threading) below.
 
+### no-thread-pool
+
+Don't build with support for thread pool functionality.
+
+### thread-pool
+
+Build with thread pool functionality. If enabled, OpenSSL algorithms may
+use the thread pool to perform parallel computation. This option in itself
+does not enable OpenSSL to spawn new threads. Currently the only supported
+thread pool mechanism is the default thread pool.
+
+### no-default-thread-pool
+
+Don't build with support for default thread pool functionality.
+
+### default-thread-pool
+
+Build with default thread pool functionality. If enabled, OpenSSL may create
+and manage threads up to a maximum number of threads authorized by the
+application. Supported on POSIX compliant platforms and Windows.
+
 ### enable-trace
 
 Build with support for the integrated tracing api.
@@ -947,6 +1036,17 @@ Build with support for zlib compression/decompression.
 ### zlib-dynamic
 
 Like the zlib option, but has OpenSSL load the zlib library dynamically
+when needed.
+
+This is only supported on systems where loading of shared libraries is supported.
+
+### enable-zstd
+
+Build with support for Zstd compression/decompression.
+
+### enable-zstd-dynamic
+
+Like the enable-zstd option, but has OpenSSL load the Zstd library dynamically
 when needed.
 
 This is only supported on systems where loading of shared libraries is supported.
@@ -1020,7 +1120,7 @@ below and how these flags interact with those variables.
 
 Additional options that are not otherwise recognised are passed through as
 they are to the compiler as well.  Unix-style options beginning with a
-`-` or `+` and Windows-style options beginning with a `/` are recognized.
+`-` or `+` and Windows-style options beginning with a `/` are recognised.
 Again, consult your compiler documentation.
 
 If the option contains arguments separated by spaces, then the URL-style
@@ -1204,6 +1304,14 @@ Unix-like systems.
 and `descrip.mms` on OpenVMS) from a suitable template in `Configurations/`,
 and defines various macros in `include/openssl/configuration.h` (generated
 from `include/openssl/configuration.h.in`.
+
+If none of the generated build files suit your purpose, it's possible to
+write your own build file template and give its name through the environment
+variable `BUILDFILE`.  For example, Ninja build files could be supported by
+writing `Configurations/build.ninja.tmpl` and then configure with `BUILDFILE`
+set like this (Unix syntax shown, you'll have to adapt for other platforms):
+
+    $ BUILDFILE=build.ninja perl Configure [options...]
 
 ### Out of Tree Builds
 

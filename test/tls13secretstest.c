@@ -157,10 +157,6 @@ const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s)
     return EVP_sha256();
 }
 
-void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
-{
-}
-
 int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
                                      const EVP_CIPHER **enc)
 {
@@ -222,12 +218,13 @@ void ssl_evp_md_free(const EVP_MD *md)
 }
 
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version, int direction,
-                             int level, unsigned char *key, size_t keylen,
+                             int level, unsigned char *secret, size_t secretlen,
+                             unsigned char *key, size_t keylen,
                              unsigned char *iv,  size_t ivlen,
                              unsigned char *mackey, size_t mackeylen,
                              const EVP_CIPHER *ciph, size_t taglen,
                              int mactype, const EVP_MD *md,
-                             const SSL_COMP *comp)
+                             const SSL_COMP *comp, const EVP_MD *kdfdigest)
 {
     return 0;
 }

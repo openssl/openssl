@@ -59,18 +59,21 @@ X509_POLICY_NODE *ossl_policy_level_find_node(const X509_POLICY_LEVEL *level,
 X509_POLICY_NODE *ossl_policy_level_add_node(X509_POLICY_LEVEL *level,
                                              X509_POLICY_DATA *data,
                                              X509_POLICY_NODE *parent,
-                                             X509_POLICY_TREE *tree)
+                                             X509_POLICY_TREE *tree,
+                                             int extra_data)
 {
     X509_POLICY_NODE *node;
 
-    node = OPENSSL_zalloc(sizeof(*node));
-    if (node == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    /* Verify that the tree isn't too large.  This mitigates CVE-2023-0464 */
+    if (tree->node_maximum > 0 && tree->node_count >= tree->node_maximum)
         return NULL;
-    }
+
+    node = OPENSSL_zalloc(sizeof(*node));
+    if (node == NULL)
+        return NULL;
     node->data = data;
     node->parent = parent;
-    if (level) {
+    if (level != NULL) {
         if (OBJ_obj2nid(data->valid_policy) == NID_any_policy) {
             if (level->anyPolicy)
                 goto node_error;
@@ -80,29 +83,30 @@ X509_POLICY_NODE *ossl_policy_level_add_node(X509_POLICY_LEVEL *level,
             if (level->nodes == NULL)
                 level->nodes = ossl_policy_node_cmp_new();
             if (level->nodes == NULL) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_X509_LIB);
                 goto node_error;
             }
             if (!sk_X509_POLICY_NODE_push(level->nodes, node)) {
-                ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
                 goto node_error;
             }
         }
     }
 
-    if (tree) {
+    if (extra_data) {
         if (tree->extra_data == NULL)
             tree->extra_data = sk_X509_POLICY_DATA_new_null();
         if (tree->extra_data == NULL) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto node_error;
         }
         if (!sk_X509_POLICY_DATA_push(tree->extra_data, data)) {
-            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
             goto node_error;
         }
     }
 
+    tree->node_count++;
     if (parent)
         parent->nchild++;
 

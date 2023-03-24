@@ -12,6 +12,7 @@
 #include <openssl/e_os2.h>
 #include "crypto/punycode.h"
 #include "internal/common.h" /* for HAS_PREFIX */
+#include "internal/packet.h" /* for WPACKET */
 
 static const unsigned int base = 36;
 static const unsigned int tmin = 1;
@@ -123,7 +124,6 @@ int ossl_punycode_decode(const char *pEncoded, const size_t enc_len,
     unsigned int bias = initial_bias;
     size_t processed_in = 0, written_out = 0;
     unsigned int max_out = *pout_length;
-
     unsigned int basic_count = 0;
     unsigned int loop;
 
@@ -181,11 +181,11 @@ int ossl_punycode_decode(const char *pEncoded, const size_t enc_len,
         n = n + i / (written_out + 1);
         i %= (written_out + 1);
 
-        if (written_out > max_out)
+        if (written_out >= max_out)
             return 0;
 
         memmove(pDecoded + i + 1, pDecoded + i,
-                (written_out - i) * sizeof *pDecoded);
+                (written_out - i) * sizeof(*pDecoded));
         pDecoded[i] = n;
         i++;
         written_out++;
@@ -240,12 +240,12 @@ static int codepoint2utf8(unsigned char *out, unsigned long utf)
 
 /*-
  * Return values:
- * 1 - ok, *outlen contains valid buf length
- * 0 - ok but buf was too short, *outlen contains valid buf length
- * -1 - bad string passed
+ * 1 - ok
+ * 0 - ok but buf was too short
+ * -1 - bad string passed or other error
  */
 
-int ossl_a2ulabel(const char *in, char *out, size_t *outlen)
+int ossl_a2ulabel(const char *in, char *out, size_t outlen)
 {
     /*-
      * Domain name has some parts consisting of ASCII chars joined with dot.
@@ -253,57 +253,44 @@ int ossl_a2ulabel(const char *in, char *out, size_t *outlen)
      * If it does not start with xn--,    it becomes U-label as is.
      * Otherwise we try to decode it.
      */
-    char *outptr = out;
     const char *inptr = in;
-    size_t size = 0;
     int result = 1;
-
+    unsigned int i;
     unsigned int buf[LABEL_BUF_SIZE];      /* It's a hostname */
-    if (out == NULL)
-        result = 0;
+    WPACKET pkt;
+
+    /* Internal API, so should not fail */
+    if (!ossl_assert(out != NULL))
+        return -1;
+
+    if (!WPACKET_init_static_len(&pkt, (unsigned char *)out, outlen, 0))
+        return -1;
 
     while (1) {
         char *tmpptr = strchr(inptr, '.');
-        size_t delta = (tmpptr) ? (size_t)(tmpptr - inptr) : strlen(inptr);
+        size_t delta = tmpptr != NULL ? (size_t)(tmpptr - inptr) : strlen(inptr);
 
         if (!HAS_PREFIX(inptr, "xn--")) {
-            size += delta + 1;
-
-            if (size >= *outlen - 1)
+            if (!WPACKET_memcpy(&pkt, inptr, delta))
                 result = 0;
-
-            if (result > 0) {
-                memcpy(outptr, inptr, delta + 1);
-                outptr += delta + 1;
-            }
         } else {
             unsigned int bufsize = LABEL_BUF_SIZE;
-            unsigned int i;
 
-            if (ossl_punycode_decode(inptr + 4, delta - 4, buf, &bufsize) <= 0)
-                return -1;
+            if (ossl_punycode_decode(inptr + 4, delta - 4, buf, &bufsize) <= 0) {
+                result = -1;
+                goto end;
+            }
 
             for (i = 0; i < bufsize; i++) {
                 unsigned char seed[6];
                 size_t utfsize = codepoint2utf8(seed, buf[i]);
-                if (utfsize == 0)
-                    return -1;
 
-                size += utfsize;
-                if (size >= *outlen - 1)
-                    result = 0;
-
-                if (result > 0) {
-                    memcpy(outptr, seed, utfsize);
-                    outptr += utfsize;
+                if (utfsize == 0) {
+                    result = -1;
+                    goto end;
                 }
-            }
 
-            if (tmpptr != NULL) {
-                *outptr = '.';
-                outptr++;
-                size++;
-                if (size >= *outlen - 1)
+                if (!WPACKET_memcpy(&pkt, seed, utfsize))
                     result = 0;
             }
         }
@@ -311,28 +298,15 @@ int ossl_a2ulabel(const char *in, char *out, size_t *outlen)
         if (tmpptr == NULL)
             break;
 
+        if (!WPACKET_put_bytes_u8(&pkt, '.'))
+            result = 0;
+
         inptr = tmpptr + 1;
     }
 
+    if (!WPACKET_put_bytes_u8(&pkt, '\0'))
+        result = 0;
+ end:
+    WPACKET_cleanup(&pkt);
     return result;
-}
-
-/*-
- * a MUST be A-label
- * u MUST be U-label
- * Returns 0 if compared values are equal
- * 1 if not
- * -1 in case of errors
- */
-
-int ossl_a2ucompare(const char *a, const char *u)
-{
-    char a_ulabel[LABEL_BUF_SIZE];
-    size_t a_size = sizeof(a_ulabel);
-
-    if (ossl_a2ulabel(a, a_ulabel, &a_size) <= 0) {
-        return -1;
-    }
-
-    return (strcmp(a_ulabel, u) == 0) ? 0 : 1;
 }

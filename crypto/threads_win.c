@@ -22,7 +22,7 @@
  * only VC++ 2008 or earlier x86 compilers.
  */
 
-#if (defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER <= 1500)
+#if (defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER <= 1600)
 # define NO_INTERLOCKEDOR64
 #endif
 
@@ -43,16 +43,16 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 # ifdef USE_RWLOCK
     CRYPTO_win_rwlock *rwlock;
 
-    if ((lock = OPENSSL_zalloc(sizeof(CRYPTO_win_rwlock))) == NULL)
+    if ((lock = CRYPTO_zalloc(sizeof(CRYPTO_win_rwlock), NULL, 0)) == NULL)
+        /* Don't set error, to avoid recursion blowup. */
         return NULL;
     rwlock = lock;
     InitializeSRWLock(&rwlock->lock);
 # else
 
-    if ((lock = OPENSSL_zalloc(sizeof(CRITICAL_SECTION))) == NULL) {
+    if ((lock = CRYPTO_zalloc(sizeof(CRITICAL_SECTION), NULL, 0)) == NULL)
         /* Don't set error, to avoid recursion blowup. */
         return NULL;
-    }
 
 #  if !defined(_WIN32_WCE)
     /* 0x400 is the spin count value suggested in the documentation */

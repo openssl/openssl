@@ -159,7 +159,7 @@ int PKCS5_v2_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     /* Fixup cipher based on AlgorithmIdentifier */
     if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, en_de))
         goto err;
-    if (EVP_CIPHER_asn1_to_param(ctx, pbe2->encryption->parameter) < 0) {
+    if (EVP_CIPHER_asn1_to_param(ctx, pbe2->encryption->parameter) <= 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_CIPHER_PARAMETER_ERROR);
         goto err;
     }

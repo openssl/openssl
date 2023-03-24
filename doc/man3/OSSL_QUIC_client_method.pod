@@ -42,7 +42,7 @@ L<SSL_CTX_new_ex(3)>
 =head1 HISTORY
 
 OSSL_QUIC_client_method(), OSSL_QUIC_client_thread_method(), and
-OSSL_QUIC_server_method() were added in OpenSSL 3.1.
+OSSL_QUIC_server_method() were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

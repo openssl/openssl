@@ -32,7 +32,10 @@ IF[{- !$disabled{asm} -}]
   $MODESASM_parisc20_64=$MODESASM_parisc11
   $MODESDEF_parisc20_64=$MODESDEF_parisc11
 
-  $MODESASM_ppc32=ghashp8-ppc.s aes-gcm-ppc.s
+  $MODESASM_ppc32=ghashp8-ppc.s
+  IF[{- $target{sys_id} ne "AIX" && $target{sys_id} ne "MACOSX" -}]
+    $MODESASM_ppc32=ghashp8-ppc.s aes-gcm-ppc.s
+  ENDIF
   $MODESDEF_ppc32=
   $MODESASM_ppc64=$MODESASM_ppc32
   $MODESDEF_ppc64=$MODESDEF_ppc32
@@ -52,7 +55,7 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 $COMMON=cbc128.c ctr128.c cfb128.c ofb128.c gcm128.c ccm128.c xts128.c \
-        wrap128.c $MODESASM
+        wrap128.c xts128gb.c $MODESASM
 SOURCE[../../libcrypto]=$COMMON \
         cts128.c ocb128.c siv128.c
 SOURCE[../../providers/libfips.a]=$COMMON

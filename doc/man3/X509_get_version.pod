@@ -22,13 +22,13 @@ certificate request or CRL version
 =head1 DESCRIPTION
 
 X509_get_version() returns the numerical value of the version field of
-certificate B<x>. These correspond to the constants B<X509_VERSION_1>,
+certificate I<x>. These correspond to the constants B<X509_VERSION_1>,
 B<X509_VERSION_2>, and B<X509_VERSION_3>. Note: the values of these constants
 are defined by standards (X.509 et al) to be one less than the certificate
 version. So B<X509_VERSION_3> has value 2 and B<X509_VERSION_1> has value 0.
 
 X509_set_version() sets the numerical value of the version field of certificate
-B<x> to B<version>.
+I<x> to I<version>.
 
 Similarly X509_REQ_get_version(), X509_REQ_set_version(),
 X509_CRL_get_version() and X509_CRL_set_version() get and set the version

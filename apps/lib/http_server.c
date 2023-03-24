@@ -65,7 +65,7 @@ static void killall(int ret, pid_t *kidpids)
         if (kidpids[i] != 0)
             (void)kill(kidpids[i], SIGTERM);
     OPENSSL_free(kidpids);
-    ossl_sleep(1000);
+    OSSL_sleep(1000);
     exit(ret);
 }
 
@@ -141,7 +141,7 @@ void spawn_loop(const char *prog)
                                   "child process: %ld, term signal %d%s",
                                   (long)fpid, WTERMSIG(status), dumped);
                     }
-                    ossl_sleep(1000);
+                    OSSL_sleep(1000);
                 }
                 break;
             } else if (errno != EINTR) {
@@ -156,7 +156,7 @@ void spawn_loop(const char *prog)
         switch (fpid = fork()) {
         case -1: /* error */
             /* System critically low on memory, pause and try again later */
-            ossl_sleep(30000);
+            OSSL_sleep(30000);
             break;
         case 0: /* child */
             OPENSSL_free(kidpids);
@@ -506,12 +506,12 @@ int http_server_send_asn1_resp(const char *prog, BIO *cbio, int keep_alive,
                                const ASN1_ITEM *it, const ASN1_VALUE *resp)
 {
     char buf[200], *p;
-    int ret = snprintf(buf, sizeof(buf), HTTP_1_0" 200 OK\r\n%s"
-                       "Content-type: %s\r\n"
-                       "Content-Length: %d\r\n",
-                       keep_alive ? "Connection: keep-alive\r\n" : "",
-                       content_type,
-                       ASN1_item_i2d(resp, NULL, it));
+    int ret = BIO_snprintf(buf, sizeof(buf), HTTP_1_0" 200 OK\r\n%s"
+                           "Content-type: %s\r\n"
+                           "Content-Length: %d\r\n",
+                           keep_alive ? "Connection: keep-alive\r\n" : "",
+                           content_type,
+                           ASN1_item_i2d(resp, NULL, it));
 
     if (ret < 0 || (size_t)ret >= sizeof(buf))
         return 0;
@@ -532,9 +532,9 @@ int http_server_send_status(const char *prog, BIO *cbio,
                             int status, const char *reason)
 {
     char buf[200];
-    int ret = snprintf(buf, sizeof(buf), HTTP_1_0" %d %s\r\n\r\n",
-                       /* This implicitly cancels keep-alive */
-                       status, reason);
+    int ret = BIO_snprintf(buf, sizeof(buf), HTTP_1_0" %d %s\r\n\r\n",
+                           /* This implicitly cancels keep-alive */
+                           status, reason);
 
     if (ret < 0 || (size_t)ret >= sizeof(buf))
         return 0;

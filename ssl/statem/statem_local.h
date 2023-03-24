@@ -31,11 +31,19 @@
 /* Max ServerHello size permitted by RFC 8446 */
 #define SERVER_HELLO_MAX_LENGTH         65607
 
+/* Max CertificateVerify size permitted by RFC 8446 */
+#define CERTIFICATE_VERIFY_MAX_LENGTH   65539
+
 /* Max should actually be 36 but we are generous */
 #define FINISHED_MAX_LENGTH             64
 
 /* Dummy message type */
 #define SSL3_MT_DUMMY   -1
+
+/* Invalid extension ID for non-supported extensions */
+#define TLSEXT_TYPE_invalid            0x10000
+#define TLSEXT_TYPE_out_of_range       0x10001
+unsigned int ossl_get_extension_type(size_t idx);
 
 extern const unsigned char hrrrandom[];
 
@@ -124,6 +132,13 @@ __owur WORK_STATE tls_finish_handshake(SSL_CONNECTION *s, WORK_STATE wst,
                                        int clearbufs, int stop);
 __owur WORK_STATE dtls_wait_for_dry(SSL_CONNECTION *s);
 
+#ifndef OPENSSL_NO_COMP_ALG
+__owur MSG_PROCESS_RETURN tls13_process_compressed_certificate(SSL_CONNECTION *sc,
+                                                               PACKET *pkt,
+                                                               PACKET *tmppkt,
+                                                               BUF_MEM *buf);
+#endif
+
 /* some client-only functions */
 __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
                                                   WPACKET *pkt);
@@ -144,6 +159,10 @@ __owur WORK_STATE tls_prepare_client_certificate(SSL_CONNECTION *s,
                                                  WORK_STATE wst);
 __owur CON_FUNC_RETURN tls_construct_client_certificate(SSL_CONNECTION *s,
                                                         WPACKET *pkt);
+#ifndef OPENSSL_NO_COMP_ALG
+__owur CON_FUNC_RETURN tls_construct_client_compressed_certificate(SSL_CONNECTION *sc,
+                                                                   WPACKET *pkt);
+#endif
 __owur int ssl_do_client_cert_cb(SSL_CONNECTION *s, X509 **px509,
                                  EVP_PKEY **ppkey);
 __owur CON_FUNC_RETURN tls_construct_client_key_exchange(SSL_CONNECTION *s,
@@ -158,6 +177,10 @@ __owur MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
                                                          PACKET *pkt);
 __owur WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
                                                       WORK_STATE wst);
+#ifndef OPENSSL_NO_COMP_ALG
+__owur MSG_PROCESS_RETURN tls_process_server_compressed_certificate(SSL_CONNECTION *sc,
+                                                                    PACKET *pkt);
+#endif
 __owur int ssl3_check_cert_and_algorithm(SSL_CONNECTION *s);
 #ifndef OPENSSL_NO_NEXTPROTONEG
 __owur CON_FUNC_RETURN tls_construct_next_proto(SSL_CONNECTION *s, WPACKET *pkt);
@@ -178,6 +201,10 @@ __owur CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
                                                            WPACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_server_certificate(SSL_CONNECTION *s,
                                                         WPACKET *pkt);
+#ifndef OPENSSL_NO_COMP_ALG
+__owur CON_FUNC_RETURN tls_construct_server_compressed_certificate(SSL_CONNECTION *sc,
+                                                                   WPACKET *pkt);
+#endif
 __owur CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
                                                          WPACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_certificate_request(SSL_CONNECTION *s,
@@ -186,6 +213,10 @@ __owur CON_FUNC_RETURN tls_construct_server_done(SSL_CONNECTION *s,
                                                  WPACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
                                                          PACKET *pkt);
+#ifndef OPENSSL_NO_COMP_ALG
+__owur MSG_PROCESS_RETURN tls_process_client_compressed_certificate(SSL_CONNECTION *sc,
+                                                                    PACKET *pkt);
+#endif
 __owur MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL_CONNECTION *s,
                                                           PACKET *pkt);
 __owur WORK_STATE tls_post_process_client_key_exchange(SSL_CONNECTION *s,

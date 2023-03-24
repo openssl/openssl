@@ -32,6 +32,8 @@ jobs:
           enable-ssl-trace,
           no-tests,
           no-threads,
+          no-thread-pool,
+          no-default-thread-pool,
           no-tls,
           no-tls1_2,
           no-tls1_3,
@@ -41,7 +43,7 @@ jobs:
         ]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: config
       run: CC=clang ./config --banner=Configured --strict-warnings ${{ matrix.opt }}
     - name: config dump

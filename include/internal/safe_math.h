@@ -183,7 +183,7 @@
                                                                type b,       \
                                                                int *err)     \
     {                                                                        \
-        if (a > max / b)                                                     \
+        if (b != 0 && a > max / b)                                           \
             *err |= 1;                                                       \
         return a * b;                                                        \
     }

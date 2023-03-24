@@ -35,6 +35,12 @@ SKIP: {
                       '-v2', 'sm4', '-v2prf', 'hmacWithSM3']))),
                       "Convert from PKCS#5 v2.0 format to PKCS#8 unencrypted format");
 
-    is_nofips(compare_text(srctop_file('test', 'certs', 'sm2.key'), 'sm2.key'), 0,
-              "compare test/certs/sm2.key to sm2.key")
+    is_nofips(compare_text(srctop_file('test', 'certs', 'sm2.key'), 'sm2.key',
+        sub {
+            my $in1 = $_[0];
+            my $in2 = $_[1];
+            $in1 =~ s/\r\n/\n/g;
+            $in2 =~ s/\r\n/\n/g;
+            $in1 ne $in2
+        }), 0, "compare test/certs/sm2.key to sm2.key")
 }

@@ -67,7 +67,7 @@ uses the value returned by X509_get_default_cert_dir()).
 =head1 NOTES
 
 X509_get_default_cert_uri(), X509_get_default_cert_uri_env() and
-X509_get_default_cert_path_env() were introduced in OpenSSL 3.1. Prior to this
+X509_get_default_cert_path_env() were introduced in OpenSSL 3.2. Prior to this
 release, store URIs were expressed via the environment variable returned by
 X509_get_default_cert_dir_env(); this environment variable could be used to
 specify either a list of directories or a store URI. This creates an ambiguity
@@ -99,7 +99,7 @@ L<SSL_CTX_load_verify_locations(3)>
 =head1 HISTORY
 
 X509_get_default_cert_uri(), X509_get_default_cert_path_env() and
-X509_get_default_cert_uri_env() were introduced in OpenSSL 3.1.
+X509_get_default_cert_uri_env() were introduced in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

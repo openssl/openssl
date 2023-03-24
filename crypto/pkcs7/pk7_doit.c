@@ -84,7 +84,11 @@ static int pkcs7_bio_add_digest(BIO **pbio, X509_ALGOR *alg,
     }
     (void)ERR_pop_to_mark();
 
-    BIO_set_md(btmp, md);
+    if (BIO_set_md(btmp, md) <= 0) {
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_BIO_LIB);
+        EVP_MD_free(fetched);
+        goto err;
+    }
     EVP_MD_free(fetched);
     if (*pbio == NULL)
         *pbio = btmp;
@@ -127,11 +131,8 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
         goto err;
 
     ek = OPENSSL_malloc(eklen);
-
-    if (ek == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+    if (ek == NULL)
         goto err;
-    }
 
     if (EVP_PKEY_encrypt(pctx, ek, &eklen, key, keylen) <= 0)
         goto err;
@@ -166,16 +167,20 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
     if (EVP_PKEY_decrypt_init(pctx) <= 0)
         goto err;
 
+    if (EVP_PKEY_is_a(pkey, "RSA"))
+        /* upper layer pkcs7 code incorrectly assumes that a successful RSA
+         * decryption means that the key matches ciphertext (which never
+         * was the case, implicit rejection or not), so to make it work
+         * disable implicit rejection for RSA keys */
+        EVP_PKEY_CTX_ctrl_str(pctx, "rsa_pkcs1_implicit_rejection", "0");
+
     if (EVP_PKEY_decrypt(pctx, NULL, &eklen,
                          ri->enc_key->data, ri->enc_key->length) <= 0)
         goto err;
 
     ek = OPENSSL_malloc(eklen);
-
-    if (ek == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+    if (ek == NULL)
         goto err;
-    }
 
     if (EVP_PKEY_decrypt(pctx, ek, &eklen,
                          ri->enc_key->data, ri->enc_key->length) <= 0
@@ -330,7 +335,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
                 if (xalg->parameter == NULL)
                     goto err;
             }
-            if (EVP_CIPHER_param_to_asn1(ctx, xalg->parameter) < 0)
+            if (EVP_CIPHER_param_to_asn1(ctx, xalg->parameter) <= 0)
                 goto err;
         }
 
@@ -522,7 +527,11 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
             }
             (void)ERR_pop_to_mark();
 
-            BIO_set_md(btmp, md);
+            if (BIO_set_md(btmp, md) <= 0) {
+                EVP_MD_free(evp_md);
+                ERR_raise(ERR_LIB_PKCS7, ERR_R_BIO_LIB);
+                goto err;
+            }
             EVP_MD_free(evp_md);
             if (out == NULL)
                 out = btmp;
@@ -588,7 +597,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         BIO_get_cipher_ctx(etmp, &evp_ctx);
         if (EVP_CipherInit_ex(evp_ctx, cipher, NULL, NULL, NULL, 0) <= 0)
             goto err;
-        if (EVP_CIPHER_asn1_to_param(evp_ctx, enc_alg->parameter) < 0)
+        if (EVP_CIPHER_asn1_to_param(evp_ctx, enc_alg->parameter) <= 0)
             goto err;
         /* Generate random key as MMA defence */
         len = EVP_CIPHER_CTX_get_key_length(evp_ctx);
@@ -694,7 +703,7 @@ static int do_pkcs7_signed_attrib(PKCS7_SIGNER_INFO *si, EVP_MD_CTX *mctx)
     /* Add signing time if not already present */
     if (!PKCS7_get_signed_attribute(si, NID_pkcs9_signingTime)) {
         if (!PKCS7_add0_attrib_signing_time(si, NULL)) {
-            ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PKCS7, ERR_R_PKCS7_LIB);
             return 0;
         }
     }
@@ -705,7 +714,7 @@ static int do_pkcs7_signed_attrib(PKCS7_SIGNER_INFO *si, EVP_MD_CTX *mctx)
         return 0;
     }
     if (!PKCS7_add1_attrib_digest(si, md_data, md_len)) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_PKCS7_LIB);
         return 0;
     }
 
@@ -742,7 +751,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 
     ctx_tmp = EVP_MD_CTX_new();
     if (ctx_tmp == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_EVP_LIB);
         return 0;
     }
 
@@ -760,7 +769,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
         if (os == NULL) {
             os = ASN1_OCTET_STRING_new();
             if (os == NULL) {
-                ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_PKCS7, ERR_R_ASN1_LIB);
                 goto err;
             }
             p7->d.signed_and_enveloped->enc_data->enc_data = os;
@@ -772,7 +781,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
         if (os == NULL) {
             os = ASN1_OCTET_STRING_new();
             if (os == NULL) {
-                ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_PKCS7, ERR_R_ASN1_LIB);
                 goto err;
             }
             p7->d.enveloped->enc_data->enc_data = os;
@@ -911,7 +920,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 
     mctx = EVP_MD_CTX_new();
     if (mctx == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -1027,7 +1036,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 
     mdc_tmp = EVP_MD_CTX_new();
     if (mdc_tmp == NULL) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_EVP_LIB);
         goto err;
     }
 

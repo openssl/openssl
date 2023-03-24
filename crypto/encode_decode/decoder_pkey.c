@@ -395,17 +395,16 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
     } OSSL_TRACE_END(DECODER);
 
     /* Allocate data. */
-    if ((process_data = OPENSSL_zalloc(sizeof(*process_data))) == NULL
-        || (propquery != NULL
-            && (process_data->propq = OPENSSL_strdup(propquery)) == NULL)) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
+    if ((process_data = OPENSSL_zalloc(sizeof(*process_data))) == NULL)
         goto err;
-    }
+    if ((propquery != NULL
+            && (process_data->propq = OPENSSL_strdup(propquery)) == NULL))
+        goto err;
 
     /* Allocate our list of EVP_KEYMGMTs. */
     keymgmts = sk_EVP_KEYMGMT_new_null();
     if (keymgmts == NULL) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
@@ -481,7 +480,7 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
     OSSL_DECODER_CTX *ctx = NULL;
 
     if ((ctx = OSSL_DECODER_CTX_new()) == NULL) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_OSSL_DECODER_LIB);
         return NULL;
     }
 

@@ -71,6 +71,11 @@ B<openssl> B<ca>
 
 This command emulates a CA application.
 See the B<WARNINGS> especially when considering to use it productively.
+
+It generates certificates bearing X.509 version 3.
+Unless specified otherwise,
+key identifier extensions are included as described in L<x509v3_config(5)>.
+
 It can be used to sign certificate requests (CSRs) in a variety of forms
 and generate certificate revocation lists (CRLs).
 It also maintains a text database of issued certificates and their status.
@@ -287,8 +292,7 @@ and all certificates will be certified automatically.
 The section of the configuration file containing certificate extensions
 to be added when a certificate is issued (defaults to B<x509_extensions>
 unless the B<-extfile> option is used).
-If no X.509 extensions are specified then a V1 certificate is created,
-else a V3 certificate is created.
+
 See the L<x509v3_config(5)> manual page for details of the
 extension section format.
 
@@ -832,6 +836,9 @@ The B<-multivalue-rdn> option has become obsolete in OpenSSL 3.0.0 and
 has no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
+
+Since OpenSSL 3.2, generated certificates bear X.509 version 3,
+and key identifier extensions are included by default.
 
 =head1 SEE ALSO
 

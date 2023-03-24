@@ -69,6 +69,7 @@ extern "C" {
 # endif
 # define BIO_TYPE_CORE_TO_PROV   (25|BIO_TYPE_SOURCE_SINK)
 # define BIO_TYPE_DGRAM_PAIR     (26|BIO_TYPE_SOURCE_SINK)
+# define BIO_TYPE_DGRAM_MEM      (27|BIO_TYPE_SOURCE_SINK)
 
 #define BIO_TYPE_START           128
 
@@ -182,6 +183,14 @@ extern "C" {
 # define BIO_CTRL_DGRAM_GET_NO_TRUNC            88
 # define BIO_CTRL_DGRAM_SET_NO_TRUNC            89
 
+/*
+ * internal BIO:
+ * # define BIO_CTRL_SET_KTLS_TX_ZEROCOPY_SENDFILE 90
+ */
+
+# define BIO_CTRL_GET_RPOLL_DESCRIPTOR          90
+# define BIO_CTRL_GET_WPOLL_DESCRIPTOR          91
+
 # define BIO_DGRAM_CAP_NONE                 0U
 # define BIO_DGRAM_CAP_HANDLES_SRC_ADDR     (1U << 0)
 # define BIO_DGRAM_CAP_HANDLES_DST_ADDR     (1U << 1)
@@ -225,7 +234,7 @@ extern "C" {
 # define BIO_FLAGS_NONCLEAR_RST  0x400
 # define BIO_FLAGS_IN_EOF        0x800
 
-/* the BIO FLAGS values 0x1000 to 0x4000 are reserved for internal KTLS flags */
+/* the BIO FLAGS values 0x1000 to 0x8000 are reserved for internal KTLS flags */
 
 typedef union bio_addr_st BIO_ADDR;
 typedef struct bio_addrinfo_st BIO_ADDRINFO;
@@ -371,6 +380,18 @@ typedef struct bio_mmsg_cb_args_st {
     uint64_t    flags;
     size_t     *msgs_processed;
 } BIO_MMSG_CB_ARGS;
+
+#define BIO_POLL_DESCRIPTOR_TYPE_NONE       0
+#define BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD    1
+#define BIO_POLL_DESCRIPTOR_CUSTOM_START    8192
+
+typedef struct bio_poll_descriptor_st {
+    int type;
+    union {
+        int     fd;
+        void    *custom;
+    } value;
+} BIO_POLL_DESCRIPTOR;
 
 /*
  * #define BIO_CONN_get_param_hostname BIO_ctrl
@@ -685,6 +706,8 @@ int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written);
 __owur int BIO_sendmmsg(BIO *b, BIO_MSG *msg,
                         size_t stride, size_t num_msg, uint64_t flags,
                         size_t *msgs_processed);
+__owur int BIO_get_rpoll_descriptor(BIO *b, BIO_POLL_DESCRIPTOR *desc);
+__owur int BIO_get_wpoll_descriptor(BIO *b, BIO_POLL_DESCRIPTOR *desc);
 int BIO_puts(BIO *bp, const char *buf);
 int BIO_indent(BIO *b, int indent, int max);
 long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
@@ -708,7 +731,9 @@ int BIO_nwrite0(BIO *bio, char **buf);
 int BIO_nwrite(BIO *bio, char **buf, int num);
 
 const BIO_METHOD *BIO_s_mem(void);
+# ifndef OPENSSL_NO_DGRAM
 const BIO_METHOD *BIO_s_dgram_mem(void);
+# endif
 const BIO_METHOD *BIO_s_secmem(void);
 BIO *BIO_new_mem_buf(const void *buf, int len);
 # ifndef OPENSSL_NO_SOCK
@@ -870,6 +895,7 @@ void BIO_copy_next_retry(BIO *b);
 
 # define ossl_bio__attr__(x)
 # if defined(__GNUC__) && defined(__STDC_VERSION__) \
+    && !defined(__MINGW32__) && !defined(__MINGW64__) \
     && !defined(__APPLE__)
     /*
      * Because we support the 'z' modifier, which made its appearance in C99,

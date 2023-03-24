@@ -314,7 +314,6 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
         str->data = OPENSSL_realloc(c, len + 1);
 #endif
         if (str->data == NULL) {
-            ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
             str->data = c;
             return 0;
         }
@@ -354,10 +353,8 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
     ASN1_STRING *ret;
 
     ret = OPENSSL_zalloc(sizeof(*ret));
-    if (ret == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    if (ret == NULL)
         return NULL;
-    }
     ret->type = type;
     return ret;
 }

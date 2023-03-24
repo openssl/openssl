@@ -9,7 +9,7 @@ PKCS12_SAFEBAG_set0_attrs
 
  #include <openssl/pkcs12.h>
 
- void PKCS12_SAFEBAG_set0_attrs(PKCS12_SAFEBAG *bag, const STACK_OF(X509_ATTRIBUTE) *attrs);
+ void PKCS12_SAFEBAG_set0_attrs(PKCS12_SAFEBAG *bag, STACK_OF(X509_ATTRIBUTE) *attrs);
 
 =head1 DESCRIPTION
 

@@ -42,7 +42,7 @@ int bn_mul_mont_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     int num = mont->N.top;
 
 #if defined(OPENSSL_BN_ASM_MONT) && defined(MONT_WORD)
-    if (num > 1 && a->top == num && b->top == num) {
+    if (num > 1 && num <= BN_SOFT_LIMIT && a->top == num && b->top == num) {
         if (bn_wexpand(r, num) == NULL)
             return 0;
         if (bn_mul_mont(r->d, a->d, b->d, mont->N.d, mont->n0, num)) {
@@ -229,10 +229,8 @@ BN_MONT_CTX *BN_MONT_CTX_new(void)
 {
     BN_MONT_CTX *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
-        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         return NULL;
-    }
 
     BN_MONT_CTX_init(ret);
     ret->flags = BN_FLG_MALLOCED;

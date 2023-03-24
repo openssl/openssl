@@ -24,10 +24,11 @@ use platform;
 
 plan skip_all => "Test only supported in a fips build" if disabled("fips");
 
-plan tests => 29;
+plan tests => 31;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 my $fipskey = $ENV{FIPSKEY} // config('FIPSKEY') // '00';
+my $provconf = srctop_file("test", "fips-and-base.cnf");
 
 # Read in a text $infile and replace the regular expression in $srch with the
 # value in $repl and output to a new file $outfile.
@@ -226,10 +227,33 @@ SKIP: {
        "fipsinstall fails when the kas result is corrupted");
 }
 
-# corrupt a Signature test
+# corrupt a Signature test - 140-3 requires a known answer test
 SKIP: {
     skip "Skipping Signature DSA corruption test because of no dsa in this build", 1
         if disabled("dsa");
+
+    run(test(["fips_version_test", "-config", $provconf, ">=3.1.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version is too old for KAT DSA signature test", 1
+        if !$exit;
+    ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+                '-section_name', 'fips_sect', '-self_test_oninstall',
+                '-corrupt_desc', 'DSA',
+                '-corrupt_type', 'KAT_Signature'])),
+       "fipsinstall fails when the signature result is corrupted");
+}
+
+# corrupt a Signature test - 140-2 allows a pairwise consistency test
+SKIP: {
+    skip "Skipping Signature DSA corruption test because of no dsa in this build", 1
+        if disabled("dsa");
+
+    run(test(["fips_version_test", "-config", $provconf, "<3.1.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version is too new for PCT DSA signature test", 1
+        if !$exit;
     ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
                 '-provider_name', 'fips', '-mac_name', 'HMAC',
                 '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
@@ -262,24 +286,31 @@ ok(replace_parent_line_file('fips_no_module_mac.cnf',
                 '-config', 'fips_parent_no_module_mac.cnf'])),
    "verify load config fail no module mac");
 
-ok(replace_parent_line_file('fips_no_install_mac.cnf',
-                            'fips_parent_no_install_mac.cnf')
-   && !run(app(['openssl', 'fipsinstall',
-                '-config', 'fips_parent_no_install_mac.cnf'])),
-   "verify load config fail no install mac");
+SKIP: {
+    run(test(["fips_version_test", "-config", $provconf, "<3.1.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version doesn't support self test indicator", 3
+        if !$exit;
 
-ok(replace_parent_line_file('fips_bad_indicator.cnf',
-                            'fips_parent_bad_indicator.cnf')
-   && !run(app(['openssl', 'fipsinstall',
-                '-config', 'fips_parent_bad_indicator.cnf'])),
-   "verify load config fail bad indicator");
+    ok(replace_parent_line_file('fips_no_install_mac.cnf',
+                                'fips_parent_no_install_mac.cnf')
+       && !run(app(['openssl', 'fipsinstall',
+                    '-config', 'fips_parent_no_install_mac.cnf'])),
+       "verify load config fail no install mac");
+
+    ok(replace_parent_line_file('fips_bad_indicator.cnf',
+                                'fips_parent_bad_indicator.cnf')
+       && !run(app(['openssl', 'fipsinstall',
+                    '-config', 'fips_parent_bad_indicator.cnf'])),
+       "verify load config fail bad indicator");
 
 
-ok(replace_parent_line_file('fips_bad_install_mac.cnf',
-                            'fips_parent_bad_install_mac.cnf')
-   && !run(app(['openssl', 'fipsinstall',
-                '-config', 'fips_parent_bad_install_mac.cnf'])),
-   "verify load config fail bad install mac");
+    ok(replace_parent_line_file('fips_bad_install_mac.cnf',
+                                'fips_parent_bad_install_mac.cnf')
+       && !run(app(['openssl', 'fipsinstall',
+                    '-config', 'fips_parent_bad_install_mac.cnf'])),
+       "verify load config fail bad install mac");
+}
 
 ok(replace_parent_line_file('fips_bad_module_mac.cnf',
                             'fips_parent_bad_module_mac.cnf')
@@ -287,17 +318,36 @@ ok(replace_parent_line_file('fips_bad_module_mac.cnf',
                 '-config', 'fips_parent_bad_module_mac.cnf'])),
    "verify load config fail bad module mac");
 
+SKIP: {
+    run(test(["fips_version_test", "-config", $provconf, "<3.1.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version doesn't support self test indicator", 3
+        if !$exit;
 
-my $stconf = "fipsmodule_selftest.cnf";
+    my $stconf = "fipsmodule_selftest.cnf";
 
-ok(run(app(['openssl', 'fipsinstall', '-out', $stconf,
-            '-module', $infile, '-self_test_onload'])),
-       "fipsinstall config saved without self test indicator");
+    ok(run(app(['openssl', 'fipsinstall', '-out', $stconf,
+                '-module', $infile, '-self_test_onload'])),
+           "fipsinstall config saved without self test indicator");
 
-ok(!run(app(['openssl', 'fipsinstall', '-in', $stconf,
-             '-module', $infile, '-verify'])),
-        "fipsinstall config verify fails without self test indicator");
+    ok(!run(app(['openssl', 'fipsinstall', '-in', $stconf,
+                 '-module', $infile, '-verify'])),
+            "fipsinstall config verify fails without self test indicator");
 
-ok(run(app(['openssl', 'fipsinstall', '-in', $stconf,
-            '-module', $infile, '-self_test_onload', '-verify'])),
-       "fipsinstall config verify passes when self test indicator is not present");
+    ok(run(app(['openssl', 'fipsinstall', '-in', $stconf,
+                '-module', $infile, '-self_test_onload', '-verify'])),
+           "fipsinstall config verify passes when self test indicator is not present");
+}
+
+SKIP: {
+    run(test(["fips_version_test", "-config", $provconf, ">=3.1.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version can run self tests on install", 1
+        if !$exit;
+    ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+                '-section_name', 'fips_sect', '-self_test_oninstall',
+                '-ems_check'])),
+       "fipsinstall fails when attempting to run self tests on install");
+}

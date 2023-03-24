@@ -11,8 +11,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "internal/nelem.h"
-
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -796,6 +794,7 @@ static int test_set0_attrs(void)
     return end_pkcs12_builder(pb);
 
 err:
+    (void)end_pkcs12_builder(pb);
     return 0;
 }
 

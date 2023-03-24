@@ -30,8 +30,24 @@ jobs:
         #          to never run the tests, otherwise its value is passed to
         #          the "make test" command to allow selective disabling of
         #          tests.
+        #   qemucpu: optional; string that describes CPU properties.
+        #            The string will be used to set the QEMU_CPU variable.
+        #   opensslcapsname: optional; string that describes the postfix of the
+        #                    OpenSSL environment variable that defines CPU
+        #                    capabilities. E.g. "foo" will result in an
+        #                    environment variable with the name OPENSSL_foo.
+        #   opensslcaps: optional; if opensslcapsname (see above) is set, then
+        #                this string will be used as content for the OpenSSL
+        #                capabilities variable.
+        #   ppa:   Launchpad PPA repository to download packages from.
         platform: [
           {
+            arch: i386-pc-msdosdjgpp,
+            libs: libc-djgpp-dev libwatt-djgpp-dev djgpp-utils,
+            target: no-threads 386 DJGPP,
+            tests: none,
+            ppa: jwt27/djgpp-toolchain
+          }, {
             arch: aarch64-linux-gnu,
             libs: libc6-dev-arm64-cross,
             target: linux-aarch64
@@ -58,7 +74,7 @@ jobs:
           }, {
             arch: m68k-linux-gnu,
             libs: libc6-dev-m68k-cross,
-            target: -static -m68040 linux-latomic,
+            target: -static -m68040 linux-latomic -Wno-stringop-overflow,
             fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
@@ -91,7 +107,7 @@ jobs:
           }, {
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
-            target: linux64-s390x
+            target: linux64-s390x -Wno-stringop-overflow
           }, {
             arch: sh4-linux-gnu,
             libs: libc6-dev-sh4-cross,
@@ -110,7 +126,7 @@ jobs:
           }, {
             arch: m68k-linux-gnu,
             libs: libc6-dev-m68k-cross,
-            target: -mcfv4e linux-latomic,
+            target: -mcfv4e linux-latomic -Wno-stringop-overflow,
             tests: none
           }, {
             arch: mips-linux-gnu,
@@ -134,13 +150,17 @@ jobs:
         ]
     runs-on: ubuntu-latest
     steps:
+    - name: install package repository
+      if: matrix.platform.ppa != ''
+      run: |
+        sudo add-apt-repository ppa:${{ matrix.platform.ppa }}
     - name: install packages
       run: |
         sudo apt-get update
         sudo apt-get -yq --force-yes install \
             gcc-${{ matrix.platform.arch }} \
             ${{ matrix.platform.libs }}
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: config with FIPS
       if: matrix.platform.fips != 'no'
@@ -163,6 +183,15 @@ jobs:
     - name: install qemu
       if: github.event_name == 'push' && matrix.platform.tests != 'none'
       run: sudo apt-get -yq --force-yes install qemu-user
+
+    - name: Set QEMU environment
+      if: github.event_name == 'push' && matrix.platform.qemucpu != ''
+      run: echo "QEMU_CPU=${{ matrix.platform.qemucpu }}" >> $GITHUB_ENV
+
+    - name: Set OpenSSL caps environment
+      if: github.event_name == 'push' && matrix.platform.opensslcapsname != ''
+      run: echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=\
+                 ${{ matrix.platform.opensslcaps }}" >> $GITHUB_ENV
 
     - name: make all tests
       if: github.event_name == 'push' && matrix.platform.tests == ''

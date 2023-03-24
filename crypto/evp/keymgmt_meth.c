@@ -21,10 +21,11 @@ static void *keymgmt_new(void)
 {
     EVP_KEYMGMT *keymgmt = NULL;
 
-    if ((keymgmt = OPENSSL_zalloc(sizeof(*keymgmt))) == NULL
-        || (keymgmt->lock = CRYPTO_THREAD_lock_new()) == NULL) {
+    if ((keymgmt = OPENSSL_zalloc(sizeof(*keymgmt))) == NULL)
+        return NULL;
+    if ((keymgmt->lock = CRYPTO_THREAD_lock_new()) == NULL) {
         EVP_KEYMGMT_free(keymgmt);
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         return NULL;
     }
 
@@ -42,6 +43,7 @@ static void *keymgmt_from_algorithm(int name_id,
     int setparamfncnt = 0, getparamfncnt = 0;
     int setgenparamfncnt = 0;
     int importfncnt = 0, exportfncnt = 0;
+    int importtypesfncnt = 0, exporttypesfncnt = 0;
 
     if ((keymgmt = keymgmt_new()) == NULL)
         return NULL;
@@ -153,8 +155,18 @@ static void *keymgmt_from_algorithm(int name_id,
             break;
         case OSSL_FUNC_KEYMGMT_IMPORT_TYPES:
             if (keymgmt->import_types == NULL) {
-                importfncnt++;
+                if (importtypesfncnt == 0)
+                    importfncnt++;
+                importtypesfncnt++;
                 keymgmt->import_types = OSSL_FUNC_keymgmt_import_types(fns);
+            }
+            break;
+        case OSSL_FUNC_KEYMGMT_IMPORT_TYPES_EX:
+            if (keymgmt->import_types_ex == NULL) {
+                if (importtypesfncnt == 0)
+                    importfncnt++;
+                importtypesfncnt++;
+                keymgmt->import_types_ex = OSSL_FUNC_keymgmt_import_types_ex(fns);
             }
             break;
         case OSSL_FUNC_KEYMGMT_EXPORT:
@@ -165,8 +177,18 @@ static void *keymgmt_from_algorithm(int name_id,
             break;
         case OSSL_FUNC_KEYMGMT_EXPORT_TYPES:
             if (keymgmt->export_types == NULL) {
-                exportfncnt++;
+                if (exporttypesfncnt == 0)
+                    exportfncnt++;
+                exporttypesfncnt++;
                 keymgmt->export_types = OSSL_FUNC_keymgmt_export_types(fns);
+            }
+            break;
+        case OSSL_FUNC_KEYMGMT_EXPORT_TYPES_EX:
+            if (keymgmt->export_types_ex == NULL) {
+                if (exporttypesfncnt == 0)
+                    exportfncnt++;
+                exporttypesfncnt++;
+                keymgmt->export_types_ex = OSSL_FUNC_keymgmt_export_types_ex(fns);
             }
             break;
         }
@@ -455,6 +477,10 @@ int evp_keymgmt_import(const EVP_KEYMGMT *keymgmt, void *keydata,
 const OSSL_PARAM *evp_keymgmt_import_types(const EVP_KEYMGMT *keymgmt,
                                            int selection)
 {
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_get0_provider(keymgmt));
+
+    if (keymgmt->import_types_ex != NULL)
+        return keymgmt->import_types_ex(provctx, selection);
     if (keymgmt->import_types == NULL)
         return NULL;
     return keymgmt->import_types(selection);
@@ -471,6 +497,10 @@ int evp_keymgmt_export(const EVP_KEYMGMT *keymgmt, void *keydata,
 const OSSL_PARAM *evp_keymgmt_export_types(const EVP_KEYMGMT *keymgmt,
                                            int selection)
 {
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_get0_provider(keymgmt));
+
+    if (keymgmt->export_types_ex != NULL)
+        return keymgmt->export_types_ex(provctx, selection);
     if (keymgmt->export_types == NULL)
         return NULL;
     return keymgmt->export_types(selection);

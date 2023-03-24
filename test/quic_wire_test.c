@@ -119,9 +119,17 @@ static int encode_case_3_dec(PACKET *pkt, ossl_ssize_t fail)
     if (!TEST_uint64_t_eq(total_ranges, peek_total_ranges))
         return 0;
 
-    if (!TEST_mem_eq(f.ack_ranges, f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE),
+    if (!TEST_uint64_t_le(f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE),
+                          SIZE_MAX)
+        || !TEST_uint64_t_le(encode_case_3_f.num_ack_ranges
+                             * sizeof(OSSL_QUIC_ACK_RANGE),
+                             SIZE_MAX))
+        return 0;
+
+    if (!TEST_mem_eq(f.ack_ranges,
+                     (size_t)f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE),
                      encode_case_3_f.ack_ranges,
-                     encode_case_3_f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE)))
+                     (size_t)encode_case_3_f.num_ack_ranges * sizeof(OSSL_QUIC_ACK_RANGE)))
         return 0;
 
     if (!TEST_uint64_t_eq(ossl_time2ticks(f.delay_time),
@@ -262,7 +270,11 @@ static int encode_case_6_dec(PACKET *pkt, ossl_ssize_t fail)
     if (!TEST_uint64_t_eq(f.offset, 0x1234))
         return 0;
 
-    if (!TEST_mem_eq(f.data, f.len, encode_case_6_data, sizeof(encode_case_6_data)))
+    if (!TEST_uint64_t_le(f.len, SIZE_MAX))
+        return 0;
+
+    if (!TEST_mem_eq(f.data, (size_t)f.len,
+                     encode_case_6_data, sizeof(encode_case_6_data)))
         return 0;
 
     return 1;
@@ -352,7 +364,10 @@ static int encode_case_8_dec(PACKET *pkt, ossl_ssize_t fail)
     if (fail >= 0)
         return 1;
 
-    if (!TEST_mem_eq(f.data, f.len,
+    if (!TEST_uint64_t_le(f.len, SIZE_MAX))
+        return 0;
+
+    if (!TEST_mem_eq(f.data, (size_t)f.len,
                      encode_case_8_data, sizeof(encode_case_8_data)))
         return 0;
 
@@ -404,7 +419,10 @@ static int encode_case_9_dec(PACKET *pkt, ossl_ssize_t fail)
     if (fail >= 0)
         return 1;
 
-    if (!TEST_mem_eq(f.data, f.len,
+    if (!TEST_uint64_t_le(f.len, SIZE_MAX))
+        return 0;
+
+    if (!TEST_mem_eq(f.data, (size_t)f.len,
                      encode_case_9_data, sizeof(encode_case_9_data)))
         return 0;
 
@@ -868,7 +886,7 @@ static const OSSL_QUIC_FRAME_CONN_CLOSE encode_case_20_f = {
     0,
     0x1234,
     0x9781,
-    encode_case_20_reason,
+    (char *)encode_case_20_reason,
     sizeof(encode_case_20_reason)
 };
 
@@ -1419,10 +1437,66 @@ err:
     return testresult;
 }
 
+/* RFC 9001 s. A.4 */
+static const QUIC_CONN_ID retry_orig_dcid = {
+    8, { 0x83, 0x94, 0xc8, 0xf0, 0x3e, 0x51, 0x57, 0x08 }
+};
+
+static const unsigned char retry_encoded[] = {
+  0xff,                                                 /* Long Header, Retry */
+  0x00, 0x00, 0x00, 0x01,                               /* Version 1 */
+  0x00,                                                 /* DCID */
+  0x08, 0xf0, 0x67, 0xa5, 0x50, 0x2a, 0x42, 0x62, 0xb5, /* SCID */
+
+  /* Retry Token */
+  0x74, 0x6f, 0x6b, 0x65, 0x6e,
+
+  /* Retry Integrity Tag */
+  0x04, 0xa2, 0x65, 0xba, 0x2e, 0xff, 0x4d, 0x82, 0x90, 0x58, 0xfb, 0x3f, 0x0f,
+  0x24, 0x96, 0xba
+};
+
+static int test_wire_retry_integrity_tag(void)
+{
+    int testresult = 0;
+    PACKET pkt = {0};
+    QUIC_PKT_HDR hdr = {0};
+    unsigned char got_tag[QUIC_RETRY_INTEGRITY_TAG_LEN] = {0};
+
+    if (!TEST_true(PACKET_buf_init(&pkt, retry_encoded, sizeof(retry_encoded))))
+        goto err;
+
+    if (!TEST_true(ossl_quic_wire_decode_pkt_hdr(&pkt, 0, 0, &hdr, NULL)))
+        goto err;
+
+    if (!TEST_int_eq(hdr.type, QUIC_PKT_TYPE_RETRY))
+        goto err;
+
+    if (!TEST_true(ossl_quic_calculate_retry_integrity_tag(NULL, NULL, &hdr,
+                                                           &retry_orig_dcid,
+                                                           got_tag)))
+        goto err;
+
+    if (!TEST_mem_eq(got_tag, sizeof(got_tag),
+                     retry_encoded + sizeof(retry_encoded)
+                        - QUIC_RETRY_INTEGRITY_TAG_LEN,
+                     QUIC_RETRY_INTEGRITY_TAG_LEN))
+        goto err;
+
+    if (!TEST_true(ossl_quic_validate_retry_integrity_tag(NULL, NULL, &hdr,
+                                                          &retry_orig_dcid)))
+        goto err;
+
+    testresult = 1;
+err:
+    return testresult;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_wire_encode,     OSSL_NELEM(encode_cases));
     ADD_ALL_TESTS(test_wire_ack,        OSSL_NELEM(ack_cases));
     ADD_ALL_TESTS(test_wire_pkt_hdr_pn, OSSL_NELEM(pn_tests));
+    ADD_TEST(test_wire_retry_integrity_tag);
     return 1;
 }

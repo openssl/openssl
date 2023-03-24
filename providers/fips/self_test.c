@@ -15,6 +15,7 @@
 #include <openssl/fipskey.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#include <openssl/rand.h>
 #include "internal/e_os.h"
 #include "prov/providercommon.h"
 
@@ -173,6 +174,64 @@ DEP_FINI_ATTRIBUTE void cleanup(void)
 #endif
 
 /*
+ * We need an explicit HMAC-SHA-256 KAT even though it is also
+ * checked as part of the KDF KATs.  Refer IG 10.3.
+ */
+static const unsigned char hmac_kat_pt[] = {
+    0xdd, 0x0c, 0x30, 0x33, 0x35, 0xf9, 0xe4, 0x2e,
+    0xc2, 0xef, 0xcc, 0xbf, 0x07, 0x95, 0xee, 0xa2
+};
+static const unsigned char hmac_kat_key[] = {
+    0xf4, 0x55, 0x66, 0x50, 0xac, 0x31, 0xd3, 0x54,
+    0x61, 0x61, 0x0b, 0xac, 0x4e, 0xd8, 0x1b, 0x1a,
+    0x18, 0x1b, 0x2d, 0x8a, 0x43, 0xea, 0x28, 0x54,
+    0xcb, 0xae, 0x22, 0xca, 0x74, 0x56, 0x08, 0x13
+};
+static const unsigned char hmac_kat_digest[] = {
+    0xf5, 0xf5, 0xe5, 0xf2, 0x66, 0x49, 0xe2, 0x40,
+    0xfc, 0x9e, 0x85, 0x7f, 0x2b, 0x9a, 0xbe, 0x28,
+    0x20, 0x12, 0x00, 0x92, 0x82, 0x21, 0x3e, 0x51,
+    0x44, 0x5d, 0xe3, 0x31, 0x04, 0x01, 0x72, 0x6b
+};
+
+static int integrity_self_test(OSSL_SELF_TEST *ev, OSSL_LIB_CTX *libctx)
+{
+    int ok = 0;
+    unsigned char out[EVP_MAX_MD_SIZE];
+    size_t out_len = 0;
+
+    OSSL_PARAM   params[2];
+    EVP_MAC     *mac = EVP_MAC_fetch(libctx, MAC_NAME, NULL);
+    EVP_MAC_CTX *ctx = EVP_MAC_CTX_new(mac);
+
+    OSSL_SELF_TEST_onbegin(ev, OSSL_SELF_TEST_TYPE_KAT_INTEGRITY,
+                               OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);
+
+    params[0] = OSSL_PARAM_construct_utf8_string("digest", DIGEST_NAME, 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (ctx == NULL
+            || mac == NULL
+            || !EVP_MAC_init(ctx, hmac_kat_key, sizeof(hmac_kat_key), params)
+            || !EVP_MAC_update(ctx, hmac_kat_pt, sizeof(hmac_kat_pt))
+            || !EVP_MAC_final(ctx, out, &out_len, MAX_MD_SIZE))
+        goto err;
+
+    /* Optional corruption */
+    OSSL_SELF_TEST_oncorrupt_byte(ev, out);
+
+    if (out_len != sizeof(hmac_kat_digest)
+            || memcmp(out, hmac_kat_digest, out_len) != 0)
+        goto err;
+    ok = 1;
+err:
+    OSSL_SELF_TEST_onend(ev, ok);
+    EVP_MAC_free(mac);
+    EVP_MAC_CTX_free(ctx);
+    return ok;
+}
+
+/*
  * Calculate the HMAC SHA256 of data read using a BIO and read_cb, and verify
  * the result matches the expected value.
  * Return 1 if verified, or 0 if it fails.
@@ -189,6 +248,9 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
     EVP_MAC *mac = NULL;
     EVP_MAC_CTX *ctx = NULL;
     OSSL_PARAM params[2], *p = params;
+
+    if (!integrity_self_test(ev, libctx))
+        goto err;
 
     OSSL_SELF_TEST_onbegin(ev, event_type, OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);
 
@@ -246,6 +308,8 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     unsigned char *indicator_checksum = NULL;
     int loclstate;
     OSSL_SELF_TEST *ev = NULL;
+    EVP_RAND *testrand = NULL;
+    EVP_RAND_CTX *rng;
 
     if (!RUN_ONCE(&fips_self_test_init, do_fips_self_test_init))
         return 0;
@@ -355,8 +419,20 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
             goto end;
         }
     }
+
+    /* Verify that the RNG has been restored properly */
+    testrand = EVP_RAND_fetch(st->libctx, "TEST-RAND", NULL);
+    if (testrand == NULL
+            || (rng = RAND_get0_private(st->libctx)) == NULL
+            || strcmp(EVP_RAND_get0_name(EVP_RAND_CTX_get0_rand(rng)),
+                      EVP_RAND_get0_name(testrand)) == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
+        goto end;
+    }
+
     ok = 1;
 end:
+    EVP_RAND_free(testrand);
     OSSL_SELF_TEST_free(ev);
     OPENSSL_free(module_checksum);
     OPENSSL_free(indicator_checksum);

@@ -17,7 +17,7 @@
 #include <openssl/comp.h>
 #include "cms_local.h"
 
-#ifdef ZLIB
+#ifndef OPENSSL_NO_ZLIB
 
 /* CMS CompressedData Utilities */
 

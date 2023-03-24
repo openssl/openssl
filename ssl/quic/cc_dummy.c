@@ -44,32 +44,38 @@ static int dummy_can_send(OSSL_CC_DATA *cc)
     return 1;
 }
 
-static size_t dummy_get_send_allowance(OSSL_CC_DATA *cc,
+static uint64_t dummy_get_send_allowance(OSSL_CC_DATA *cc,
                                        OSSL_TIME time_since_last_send,
                                        int time_valid)
 {
     return SIZE_MAX;
 }
 
-static size_t dummy_get_bytes_in_flight_max(OSSL_CC_DATA *cc)
+static uint64_t dummy_get_bytes_in_flight_max(OSSL_CC_DATA *cc)
 {
     return SIZE_MAX;
 }
 
-static int dummy_on_data_sent(OSSL_CC_DATA *cc, size_t num_retransmittable_bytes)
+static OSSL_TIME dummy_get_next_credit_time(OSSL_CC_DATA *cc_data)
+{
+    return ossl_time_infinite();
+}
+
+static int dummy_on_data_sent(OSSL_CC_DATA *cc,
+                              uint64_t num_retransmittable_bytes)
 {
     return 1;
 }
 
 static int dummy_on_data_invalidated(OSSL_CC_DATA *cc,
-                                     size_t num_retransmittable_bytes)
+                                     uint64_t num_retransmittable_bytes)
 {
     return 1;
 }
 
 static int dummy_on_data_acked(OSSL_CC_DATA *cc, OSSL_TIME time_now,
                                uint64_t last_pn_acked,
-                               size_t num_retransmittable_bytes)
+                               uint64_t num_retransmittable_bytes)
 {
     return 1;
 }
@@ -77,7 +83,7 @@ static int dummy_on_data_acked(OSSL_CC_DATA *cc, OSSL_TIME time_now,
 static void dummy_on_data_lost(OSSL_CC_DATA *cc,
                               uint64_t largest_pn_lost,
                               uint64_t largest_pn_sent,
-                              size_t num_retransmittable_bytes,
+                              uint64_t num_retransmittable_bytes,
                               int persistent_congestion)
 {
 
@@ -98,6 +104,7 @@ const OSSL_CC_METHOD ossl_cc_dummy_method = {
     dummy_can_send,
     dummy_get_send_allowance,
     dummy_get_bytes_in_flight_max,
+    dummy_get_next_credit_time,
     dummy_on_data_sent,
     dummy_on_data_invalidated,
     dummy_on_data_acked,

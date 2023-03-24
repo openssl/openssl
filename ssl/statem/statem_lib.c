@@ -36,6 +36,23 @@ const unsigned char hrrrandom[] = {
     0x07, 0x9e, 0x09, 0xe2, 0xc8, 0xa8, 0x33, 0x9c
 };
 
+int ossl_statem_set_mutator(SSL *s,
+                            ossl_statem_mutate_handshake_cb mutate_handshake_cb,
+                            ossl_statem_finish_mutate_handshake_cb finish_mutate_handshake_cb,
+                            void *mutatearg)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    sc->statem.mutate_handshake_cb = mutate_handshake_cb;
+    sc->statem.mutatearg = mutatearg;
+    sc->statem.finish_mutate_handshake_cb = finish_mutate_handshake_cb;
+
+    return 1;
+}
+
 /*
  * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
  * SSL3_RT_CHANGE_CIPHER_SPEC)
@@ -45,6 +62,32 @@ int ssl3_do_write(SSL_CONNECTION *s, int type)
     int ret;
     size_t written = 0;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
+    /*
+     * If we're running the test suite then we may need to mutate the message
+     * we've been asked to write. Does not happen in normal operation.
+     */
+    if (s->statem.mutate_handshake_cb != NULL
+            && !s->statem.write_in_progress
+            && type == SSL3_RT_HANDSHAKE
+            && s->init_num >= SSL3_HM_HEADER_LENGTH) {
+        unsigned char *msg;
+        size_t msglen;
+
+        if (!s->statem.mutate_handshake_cb((unsigned char *)s->init_buf->data,
+                                           s->init_num,
+                                           &msg, &msglen,
+                                           s->statem.mutatearg))
+            return -1;
+        if (msglen < SSL3_HM_HEADER_LENGTH
+                || !BUF_MEM_grow(s->init_buf, msglen))
+            return -1;
+        memcpy(s->init_buf->data, msg, msglen);
+        s->init_num = msglen;
+        s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
+        s->statem.finish_mutate_handshake_cb(s->statem.mutatearg);
+        s->statem.write_in_progress = 1;
+    }
 
     ret = ssl3_write_bytes(ssl, type, &s->init_buf->data[s->init_off],
                            s->init_num, &written);
@@ -65,6 +108,7 @@ int ssl3_do_write(SSL_CONNECTION *s, int type)
                                  written))
                 return -1;
     if (written == s->init_num) {
+        s->statem.write_in_progress = 0;
         if (s->msg_callback)
             s->msg_callback(1, s->version, type, s->init_buf->data,
                             (size_t)(s->init_off + s->init_num), ssl,
@@ -294,7 +338,7 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
 
     mctx = EVP_MD_CTX_new();
     if (mctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -413,7 +457,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (mctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -424,7 +468,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    if (ssl_cert_lookup_by_pkey(pkey, NULL) == NULL) {
+    if (ssl_cert_lookup_by_pkey(pkey, NULL, sctx) == NULL) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE);
         goto err;
@@ -442,7 +486,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
             goto err;
         }
     } else if (!tls1_set_peer_legacy_sigalg(s, pkey)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_R_LEGACY_SIGALG_DISALLOWED_OR_UNSUPPORTED);
             goto err;
     }
 
@@ -501,10 +546,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
         if (pktype == NID_id_GostR3410_2001
             || pktype == NID_id_GostR3410_2012_256
             || pktype == NID_id_GostR3410_2012_512) {
-            if ((gost_data = OPENSSL_malloc(len)) == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            if ((gost_data = OPENSSL_malloc(len)) == NULL)
                 goto err;
-            }
             BUF_reverse(gost_data, data, len);
             data = gost_data;
         }
@@ -764,7 +807,7 @@ MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL_CONNECTION *s,
     }
 
     if (SSL_CONNECTION_IS_DTLS(s)) {
-        dtls1_reset_seq_numbers(s, SSL3_CC_READ);
+        dtls1_increment_epoch(s, SSL3_CC_READ);
 
         if (s->version == DTLS1_BAD_VER)
             s->d1->handshake_read_seq++;
@@ -788,6 +831,7 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
     size_t md_len;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     int was_first = SSL_IS_FIRST_HANDSHAKE(s);
+    int ok;
 
 
     /* This is a real handshake so make sure we clean it up at the end */
@@ -832,8 +876,16 @@ MSG_PROCESS_RETURN tls_process_finished(SSL_CONNECTION *s, PACKET *pkt)
         return MSG_PROCESS_ERROR;
     }
 
-    if (CRYPTO_memcmp(PACKET_data(pkt), s->s3.tmp.peer_finish_md,
-                      md_len) != 0) {
+    ok = CRYPTO_memcmp(PACKET_data(pkt), s->s3.tmp.peer_finish_md,
+                       md_len);
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (ok != 0) {
+        if ((PACKET_data(pkt)[0] ^ s->s3.tmp.peer_finish_md[0]) != 0xFF) {
+            ok = 0;
+        }
+    }
+#endif
+    if (ok != 0) {
         SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_DIGEST_CHECK_FAILED);
         return MSG_PROCESS_ERROR;
     }
@@ -908,25 +960,30 @@ CON_FUNC_RETURN tls_construct_change_cipher_spec(SSL_CONNECTION *s, WPACKET *pkt
 
 /* Add a certificate to the WPACKET */
 static int ssl_add_cert_to_wpacket(SSL_CONNECTION *s, WPACKET *pkt,
-                                   X509 *x, int chain)
+                                   X509 *x, int chain, int for_comp)
 {
     int len;
     unsigned char *outbytes;
+    int context = SSL_EXT_TLS1_3_CERTIFICATE;
+
+    if (for_comp)
+        context |= SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION;
 
     len = i2d_X509(x, NULL);
     if (len < 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_BUF_LIB);
+        if (!for_comp)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_BUF_LIB);
         return 0;
     }
     if (!WPACKET_sub_allocate_bytes_u24(pkt, len, &outbytes)
             || i2d_X509(x, &outbytes) != len) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        if (!for_comp)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
-    if (SSL_CONNECTION_IS_TLS13(s)
-            && !tls_construct_extensions(s, pkt, SSL_EXT_TLS1_3_CERTIFICATE, x,
-                                         chain)) {
+    if ((SSL_CONNECTION_IS_TLS13(s) || for_comp)
+            && !tls_construct_extensions(s, pkt, context, x, chain)) {
         /* SSLfatal() already called */
         return 0;
     }
@@ -935,7 +992,7 @@ static int ssl_add_cert_to_wpacket(SSL_CONNECTION *s, WPACKET *pkt,
 }
 
 /* Add certificate chain to provided WPACKET */
-static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk)
+static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, int for_comp)
 {
     int i, chain_count;
     X509 *x;
@@ -969,12 +1026,14 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk)
                                                        sctx->propq);
 
         if (xs_ctx == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_X509_LIB);
             return 0;
         }
         if (!X509_STORE_CTX_init(xs_ctx, chain_store, x, NULL)) {
             X509_STORE_CTX_free(xs_ctx);
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_X509_LIB);
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_X509_LIB);
             return 0;
         }
         /*
@@ -996,14 +1055,15 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk)
             ERR_raise(ERR_LIB_SSL, SSL_R_CA_MD_TOO_WEAK);
 #endif
             X509_STORE_CTX_free(xs_ctx);
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, i);
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, i);
             return 0;
         }
         chain_count = sk_X509_num(chain);
         for (i = 0; i < chain_count; i++) {
             x = sk_X509_value(chain, i);
 
-            if (!ssl_add_cert_to_wpacket(s, pkt, x, i)) {
+            if (!ssl_add_cert_to_wpacket(s, pkt, x, i, for_comp)) {
                 /* SSLfatal() already called */
                 X509_STORE_CTX_free(xs_ctx);
                 return 0;
@@ -1013,16 +1073,17 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk)
     } else {
         i = ssl_security_cert_chain(s, extra_certs, x, 0);
         if (i != 1) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, i);
+            if (!for_comp)
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, i);
             return 0;
         }
-        if (!ssl_add_cert_to_wpacket(s, pkt, x, 0)) {
+        if (!ssl_add_cert_to_wpacket(s, pkt, x, 0, for_comp)) {
             /* SSLfatal() already called */
             return 0;
         }
         for (i = 0; i < sk_X509_num(extra_certs); i++) {
             x = sk_X509_value(extra_certs, i);
-            if (!ssl_add_cert_to_wpacket(s, pkt, x, i + 1)) {
+            if (!ssl_add_cert_to_wpacket(s, pkt, x, i + 1, for_comp)) {
                 /* SSLfatal() already called */
                 return 0;
             }
@@ -1032,18 +1093,20 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk)
 }
 
 unsigned long ssl3_output_cert_chain(SSL_CONNECTION *s, WPACKET *pkt,
-                                     CERT_PKEY *cpk)
+                                     CERT_PKEY *cpk, int for_comp)
 {
     if (!WPACKET_start_sub_packet_u24(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        if (!for_comp)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
-    if (!ssl_add_cert_chain(s, pkt, cpk))
+    if (!ssl_add_cert_chain(s, pkt, cpk, for_comp))
         return 0;
 
     if (!WPACKET_close(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        if (!for_comp)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -1539,7 +1602,7 @@ static int ssl_method_error(const SSL_CONNECTION *s, const SSL_METHOD *method)
  */
 static int is_tls13_capable(const SSL_CONNECTION *s)
 {
-    int i;
+    size_t i;
     int curve;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
@@ -1562,7 +1625,8 @@ static int is_tls13_capable(const SSL_CONNECTION *s)
     if (s->psk_find_session_cb != NULL || s->cert->cert_cb != NULL)
         return 1;
 
-    for (i = 0; i < SSL_PKEY_NUM; i++) {
+    /* All provider-based sig algs are required to support at least TLS1.3 */
+    for (i = 0; i < s->ssl_pkey_num; i++) {
         /* Skip over certs disallowed for TLSv1.3 */
         switch (i) {
         case SSL_PKEY_DSA_SIGN:
@@ -1647,23 +1711,23 @@ int ssl_check_version_downgrade(SSL_CONNECTION *s)
 {
     const version_info *vent;
     const version_info *table;
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     /*
      * Check that the current protocol is the highest enabled version
-     * (according to s->ctx->method, as version negotiation may have changed
+     * (according to ssl->defltmethod, as version negotiation may have changed
      * s->method).
      */
-    if (s->version == sctx->method->version)
+    if (s->version == ssl->defltmeth->version)
         return 1;
 
     /*
      * Apparently we're using a version-flexible SSL_METHOD (not at its
      * highest protocol version).
      */
-    if (sctx->method->version == TLS_method()->version)
+    if (ssl->defltmeth->version == TLS_method()->version)
         table = tls_version_table;
-    else if (sctx->method->version == DTLS_method()->version)
+    else if (ssl->defltmeth->version == DTLS_method()->version)
         table = dtls_version_table;
     else {
         /* Unexpected state; fail closed. */
@@ -2224,14 +2288,8 @@ int check_in_list(SSL_CONNECTION *s, uint16_t group_id, const uint16_t *groups,
     if (groups == NULL || num_groups == 0)
         return 0;
 
-    if (checkallow == 1)
-        group_id = ssl_group_id_tls13_to_internal(group_id);
-
     for (i = 0; i < num_groups; i++) {
         uint16_t group = groups[i];
-
-        if (checkallow == 2)
-            group = ssl_group_id_tls13_to_internal(group);
 
         if (group_id == group
                 && (!checkallow
@@ -2310,7 +2368,7 @@ int parse_ca_names(SSL_CONNECTION *s, PACKET *pkt)
     PACKET cadns;
 
     if (ca_sk == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         goto err;
     }
     /* get the CA RDNs */
@@ -2340,7 +2398,7 @@ int parse_ca_names(SSL_CONNECTION *s, PACKET *pkt)
         }
 
         if (!sk_X509_NAME_push(ca_sk, xn)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
         }
         xn = NULL;
@@ -2418,7 +2476,7 @@ size_t construct_key_exchange_tbs(SSL_CONNECTION *s, unsigned char **ptbs,
     unsigned char *tbs = OPENSSL_malloc(tbslen);
 
     if (tbs == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         return 0;
     }
     memcpy(tbs, s->s3.client_random, SSL3_RANDOM_SIZE);
@@ -2474,3 +2532,76 @@ int tls13_restore_handshake_digest_for_pha(SSL_CONNECTION *s)
     }
     return 1;
 }
+
+#ifndef OPENSSL_NO_COMP_ALG
+MSG_PROCESS_RETURN tls13_process_compressed_certificate(SSL_CONNECTION *sc,
+                                                        PACKET *pkt,
+                                                        PACKET *tmppkt,
+                                                        BUF_MEM *buf)
+{
+    MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
+    int comp_alg;
+    COMP_METHOD *method = NULL;
+    COMP_CTX *comp = NULL;
+    size_t expected_length;
+    size_t comp_length;
+    int i;
+    int found = 0;
+
+    if (buf == NULL) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    if (!PACKET_get_net_2(pkt, (unsigned int*)&comp_alg)) {
+        SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    /* If we have a prefs list, make sure the algorithm is in it */
+    if (sc->cert_comp_prefs[0] != TLSEXT_comp_cert_none) {
+        for (i = 0; sc->cert_comp_prefs[i] != TLSEXT_comp_cert_none; i++) {
+            if (sc->cert_comp_prefs[i] == comp_alg) {
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, SSL_R_BAD_COMPRESSION_ALGORITHM);
+            goto err;
+        }
+    }
+    if (!ossl_comp_has_alg(comp_alg)) {
+        SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, SSL_R_BAD_COMPRESSION_ALGORITHM);
+        goto err;
+    }
+    switch (comp_alg) {
+    case TLSEXT_comp_cert_zlib:
+        method = COMP_zlib_oneshot();
+        break;
+    case TLSEXT_comp_cert_brotli:
+        method = COMP_brotli_oneshot();
+        break;
+    case TLSEXT_comp_cert_zstd:
+        method = COMP_zstd_oneshot();
+        break;
+    default:
+        SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, SSL_R_BAD_COMPRESSION_ALGORITHM);
+        goto err;
+    }
+
+    if ((comp = COMP_CTX_new(method)) == NULL
+        || !PACKET_get_net_3_len(pkt, &expected_length)
+        || !PACKET_get_net_3_len(pkt, &comp_length)
+        || PACKET_remaining(pkt) != comp_length
+        || !BUF_MEM_grow(buf, expected_length)
+        || !PACKET_buf_init(tmppkt, (unsigned char *)buf->data, expected_length)
+        || COMP_expand_block(comp, (unsigned char *)buf->data, expected_length,
+                             (unsigned char*)PACKET_data(pkt), comp_length) != (int)expected_length) {
+        SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, SSL_R_BAD_DECOMPRESSION);
+        goto err;
+    }
+    ret = MSG_PROCESS_CONTINUE_PROCESSING;
+ err:
+    COMP_CTX_free(comp);
+    return ret;
+}
+#endif

@@ -12,6 +12,7 @@
 #ifndef OPENSSL_NO_SSL_TRACE
 
 /* Packet trace support for OpenSSL */
+#include "internal/nelem.h"
 
 typedef struct {
     int num;
@@ -97,6 +98,7 @@ static const ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
     {SSL3_MT_SUPPLEMENTAL_DATA, "SupplementalData"},
     {SSL3_MT_KEY_UPDATE, "KeyUpdate"},
+    {SSL3_MT_COMPRESSED_CERTIFICATE, "CompressedCertificate"},
 # ifndef OPENSSL_NO_NEXTPROTONEG
     {SSL3_MT_NEXT_PROTO, "NextProto"},
 # endif
@@ -478,6 +480,7 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_padding, "padding"},
     {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"},
+    {TLSEXT_TYPE_compress_certificate, "compress_certificate"},
     {TLSEXT_TYPE_session_ticket, "session_ticket"},
     {TLSEXT_TYPE_psk, "psk"},
     {TLSEXT_TYPE_early_data, "early_data"},
@@ -525,6 +528,9 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {28, "brainpoolP512r1"},
     {29, "ecdh_x25519"},
     {30, "ecdh_x448"},
+    {31, "brainpoolP256r1tls13"},
+    {32, "brainpoolP384r1tls13"},
+    {33, "brainpoolP512r1tls13"},
     {34, "GC256A"},
     {35, "GC256B"},
     {36, "GC256C"},
@@ -612,6 +618,13 @@ static const ssl_trace_tbl ssl_psk_kex_modes_tbl[] = {
 static const ssl_trace_tbl ssl_key_update_tbl[] = {
     {SSL_KEY_UPDATE_NOT_REQUESTED, "update_not_requested"},
     {SSL_KEY_UPDATE_REQUESTED, "update_requested"}
+};
+
+static const ssl_trace_tbl ssl_comp_cert_tbl[] = {
+    {TLSEXT_comp_cert_none, "none"},
+    {TLSEXT_comp_cert_zlib, "zlib"},
+    {TLSEXT_comp_cert_brotli, "brotli"},
+    {TLSEXT_comp_cert_zstd, "zstd"}
 };
 
 static void ssl_print_hex(BIO *bio, int indent, const char *name,
@@ -718,6 +731,14 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
     BIO_printf(bio, "extension_type=%s(%d), length=%d\n",
                ssl_trace_str(extype, ssl_exts_tbl), extype, (int)extlen);
     switch (extype) {
+    case TLSEXT_TYPE_compress_certificate:
+        if (extlen < 1)
+            return 0;
+        xlen = ext[0];
+        if (extlen != xlen + 1)
+            return 0;
+        return ssl_trace_list(bio, indent + 2, ext + 1, xlen, 2, ssl_comp_cert_tbl);
+
     case TLSEXT_TYPE_max_fragment_length:
         if (extlen < 1)
             return 0;
@@ -886,7 +907,7 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
                          | ((unsigned int)ext[2] << 8)
                          | (unsigned int)ext[3];
         BIO_indent(bio, indent + 2, 80);
-        BIO_printf(bio, "max_early_data=%u\n", max_early_data);
+        BIO_printf(bio, "max_early_data=%u\n", (unsigned int)max_early_data);
         break;
 
     default:
@@ -1284,6 +1305,77 @@ static int ssl_print_certificates(BIO *bio, const SSL_CONNECTION *sc, int server
     return 1;
 }
 
+static int ssl_print_compressed_certificates(BIO *bio, const SSL_CONNECTION *sc,
+                                             int server, int indent,
+                                             const unsigned char *msg,
+                                             size_t msglen)
+{
+    size_t uclen;
+    size_t clen;
+    unsigned int alg;
+    int ret = 1;
+#ifndef OPENSSL_NO_COMP_ALG
+    COMP_METHOD *method;
+    COMP_CTX *comp = NULL;
+    unsigned char* ucdata = NULL;
+#endif
+
+    if (msglen < 8)
+        return 0;
+
+    alg = (msg[0] << 8) | msg[1];
+    uclen = (msg[2] << 16) | (msg[3] << 8) | msg[4];
+    clen = (msg[5] << 16) | (msg[6] << 8) | msg[7];
+    if (msglen != clen + 8)
+        return 0;
+
+    msg += 8;
+    BIO_indent(bio, indent, 80);
+    BIO_printf(bio, "Compression type=%s (0x%04x)\n", ssl_trace_str(alg, ssl_comp_cert_tbl), alg);
+    BIO_indent(bio, indent, 80);
+    BIO_printf(bio, "Uncompressed length=%d\n", (int)uclen);
+    BIO_indent(bio, indent, 80);
+    if (clen > 0)
+        BIO_printf(bio, "Compressed length=%d, Ratio=%f:1\n", (int)clen, (float)uclen / (float)clen);
+    else
+        BIO_printf(bio, "Compressed length=%d, Ratio=unknown\n", (int)clen);
+
+    BIO_dump_indent(bio, (const char *)msg, clen, indent);
+
+#ifndef OPENSSL_NO_COMP_ALG
+    if (!ossl_comp_has_alg(alg))
+        return 0;
+
+    /* Check against certificate maximum size (coverity) */
+    if (uclen == 0 || uclen > 0xFFFFFF || (ucdata = OPENSSL_malloc(uclen)) == NULL)
+        return 0;
+
+    switch (alg) {
+    case TLSEXT_comp_cert_zlib:
+        method = COMP_zlib();
+        break;
+    case TLSEXT_comp_cert_brotli:
+        method = COMP_brotli_oneshot();
+        break;
+    case TLSEXT_comp_cert_zstd:
+        method = COMP_zstd_oneshot();
+        break;
+    default:
+        goto err;
+    }
+
+    if ((comp = COMP_CTX_new(method)) == NULL
+            || COMP_expand_block(comp, ucdata, uclen, (unsigned char*)msg, clen) != (int)uclen)
+        goto err;
+
+    ret = ssl_print_certificates(bio, sc, server, indent, ucdata, uclen);
+ err:
+    COMP_CTX_free(comp);
+    OPENSSL_free(ucdata);
+#endif
+    return ret;
+}
+
 static int ssl_print_cert_request(BIO *bio, int indent, const SSL_CONNECTION *sc,
                                   const unsigned char *msg, size_t msglen)
 {
@@ -1480,6 +1572,11 @@ static int ssl_print_handshake(BIO *bio, const SSL_CONNECTION *sc, int server,
 
     case SSL3_MT_CERTIFICATE:
         if (!ssl_print_certificates(bio, sc, server, indent + 2, msg, msglen))
+            return 0;
+        break;
+
+    case SSL3_MT_COMPRESSED_CERTIFICATE:
+        if (!ssl_print_compressed_certificates(bio, sc, server, indent + 2, msg, msglen))
             return 0;
         break;
 

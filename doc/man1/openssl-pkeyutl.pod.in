@@ -108,7 +108,9 @@ See L<openssl-format-options(1)> for details.
 
 =item B<-pubin>
 
-The input file is a public key.
+By default a private key is read from the key input.
+With this option a public key is read instead.
+If the input contains no public key but a private key, its public part is used.
 
 =item B<-certin>
 
@@ -240,6 +242,11 @@ signed or verified directly instead of using a B<DigestInfo> structure. If a
 digest is set then the a B<DigestInfo> structure is used and its the length
 must correspond to the digest type.
 
+Note, for B<pkcs1> padding, as a protection against Bleichenbacher attack,
+the decryption will not fail in case of padding check failures. Use B<none>
+and manual inspection of the decrypted message to verify if the decrypted
+value has correct PKCS#1 v1.5 padding.
+
 For B<oaep> mode only encryption and decryption is supported.
 
 For B<x931> if the digest type is set it is used to format the block data
@@ -266,6 +273,16 @@ explicitly set in PSS mode then the signing digest is used.
 
 Sets the digest used for the OAEP hash function. If not explicitly set then
 SHA1 is used.
+
+=item B<rsa_pkcs1_implicit_rejection:>I<flag>
+
+Disables (when set to 0) or enables (when set to 1) the use of implicit
+rejection with PKCS#1 v1.5 decryption. When enabled (the default), as a
+protection against Bleichenbacher attack, the library will generate a
+deterministic random plaintext that it will return to the caller in case
+of padding check failure.
+When disabled, it's the callers' responsibility to handle the returned
+errors in a side-channel free manner.
 
 =back
 

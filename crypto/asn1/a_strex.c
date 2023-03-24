@@ -282,10 +282,8 @@ static int do_dump(unsigned long lflags, char_io *io_ch, void *arg,
     der_len = i2d_ASN1_TYPE(&t, NULL);
     if (der_len <= 0)
         return -1;
-    if ((der_buf = OPENSSL_malloc(der_len)) == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    if ((der_buf = OPENSSL_malloc(der_len)) == NULL)
         return -1;
-    }
     p = der_buf;
     i2d_ASN1_TYPE(&t, &p);
     outlen = do_hex_dump(io_ch, arg, der_buf, der_len);
