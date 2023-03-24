@@ -1419,23 +1419,33 @@ int ossl_quic_conn_stream_conclude(QUIC_CONNECTION *qc)
  * SSL_inject_net_dgram
  * --------------------
  */
+QUIC_TAKES_LOCK
 int SSL_inject_net_dgram(SSL *s, const unsigned char *buf,
                          size_t buf_len,
                          const BIO_ADDR *peer,
                          const BIO_ADDR *local)
 {
+    int ret;
     QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_SSL(s);
     QUIC_DEMUX *demux;
 
     if (!expect_quic_conn(qc))
         return 0;
 
-    if (qc->ch == NULL)
-        return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
-                                           NULL);
+    quic_lock(qc);
+
+    if (qc->ch == NULL) {
+        ret = QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
+                                          NULL);
+        goto err;
+    }
 
     demux = ossl_quic_channel_get0_demux(qc->ch);
-    return ossl_quic_demux_inject(demux, buf, buf_len, peer, local);
+    ret = ossl_quic_demux_inject(demux, buf, buf_len, peer, local);
+
+err:
+    quic_unlock(qc);
+    return ret;
 }
 
 /*
