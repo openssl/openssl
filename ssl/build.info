@@ -33,13 +33,4 @@ ENDIF
 
 IF[{- !$disabled{quic} -}]
   SOURCE[../libssl]=priority_queue.c event_queue.c
-
-  IF[{- !$disabled{'thread-pool'} -}]
-    SHARED_SOURCE[../libssl]=\
-      ../crypto/thread/arch/thread_posix.c \
-      ../crypto/thread/arch/thread_win.c \
-      ../crypto/thread/arch/thread_none.c \
-      ../crypto/thread/arch.c
-  ENDIF
-
 ENDIF
