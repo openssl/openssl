@@ -360,8 +360,9 @@ static const OPT_PAIR doit_choices[] = {
 
 static double results[ALGOR_NUM][SIZE_NUM];
 
-enum { R_DSA_1024, R_DSA_2048, DSA_NUM };
+enum { R_DSA_512, R_DSA_1024, R_DSA_2048, DSA_NUM };
 static const OPT_PAIR dsa_choices[DSA_NUM] = {
+    {"dsa512", R_DSA_512},
     {"dsa1024", R_DSA_1024},
     {"dsa2048", R_DSA_2048}
 };
@@ -1693,7 +1694,7 @@ int speed_main(int argc, char **argv)
     uint8_t ffdh_doit[FFDH_NUM] = { 0 };
 
 #endif /* OPENSSL_NO_DH */
-    static const unsigned int dsa_bits[DSA_NUM] = { 1024, 2048 };
+    static const unsigned int dsa_bits[DSA_NUM] = { 512, 1024, 2048 };
     uint8_t dsa_doit[DSA_NUM] = { 0 };
     /*
      * We only test over the following curves as they are representative, To
@@ -3838,7 +3839,7 @@ skip_hmac:
                     && (EVP_PKEY_CTX_set_rsa_padding(sig_sign_ctx,
                                                      RSA_PKCS1_PADDING) <= 0))
                 || EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len,
-                                      md, md_len) <= 0) {
+                                 md, md_len) <= 0) {
                     BIO_printf(bio_err,
                                "Error while initializing signing data structs for %s.\n",
                                sig_name);
