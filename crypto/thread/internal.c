@@ -87,7 +87,7 @@ int ossl_crypto_thread_join(void *vhandle, CRYPTO_THREAD_RETVAL *retval)
 
     ossl_crypto_mutex_lock(tdata->lock);
     tdata->active_threads--;
-    ossl_crypto_condvar_broadcast(tdata->cond_finished);
+    ossl_crypto_condvar_signal(tdata->cond_finished);
     ossl_crypto_mutex_unlock(tdata->lock);
     return 1;
 }
