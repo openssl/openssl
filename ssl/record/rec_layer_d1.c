@@ -1011,13 +1011,11 @@ DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
         return &s->rlayer.d->bitmap;
 
     /*
-     * Only HM and ALERT messages can be from the next epoch and only if we
-     * have already processed all of the unprocessed records from the last
-     * epoch
+     * We can only handle messages from the next epoch if we have already
+     * processed all of the unprocessed records from the previous epoch
      */
-    else if (rr->epoch == (unsigned long)(s->rlayer.d->r_epoch + 1) &&
-             s->rlayer.d->unprocessed_rcds.epoch != s->rlayer.d->r_epoch &&
-             (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ALERT)) {
+    else if (rr->epoch == (unsigned long)(s->rlayer.d->r_epoch + 1)
+             && s->rlayer.d->unprocessed_rcds.epoch != s->rlayer.d->r_epoch) {
         *is_next_epoch = 1;
         return &s->rlayer.d->next_bitmap;
     }
