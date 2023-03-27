@@ -90,13 +90,11 @@ static DTLS_BITMAP *dtls_get_bitmap(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rr,
         return &rl->bitmap;
 
     /*
-     * Only HM and ALERT messages can be from the next epoch and only if we
-     * have already processed all of the unprocessed records from the last
-     * epoch
+     * We can only handle messages from the next epoch if we have already
+     * processed all of the unprocessed records from the previous epoch
      */
     else if (rr->epoch == (unsigned long)(rl->epoch + 1)
-             && rl->unprocessed_rcds.epoch != rl->epoch
-             && (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ALERT)) {
+             && rl->unprocessed_rcds.epoch != rl->epoch) {
         *is_next_epoch = 1;
         return &rl->next_bitmap;
     }
