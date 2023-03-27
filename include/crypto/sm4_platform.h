@@ -12,9 +12,8 @@
 # pragma once
 
 # if defined(OPENSSL_CPUID_OBJ)
-#  if (defined(__arm__) || defined(__arm) || defined(__aarch64__))
+#  if defined(__aarch64__)
 #   include "arm_arch.h"
-#   if __ARM_MAX_ARCH__>=8
 extern unsigned int OPENSSL_arm_midr;
 static inline int vpsm4_capable(void)
 {
@@ -27,19 +26,18 @@ static inline int vpsm4_ex_capable(void)
     return (OPENSSL_armcap_P & ARMV8_CPUID) &&
             (MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, HISI_CPU_IMP, HISI_CPU_PART_KP920));
 }
-#    if defined(VPSM4_ASM)
-#     define VPSM4_CAPABLE vpsm4_capable()
-#     define VPSM4_EX_CAPABLE vpsm4_ex_capable()
-#    endif
-#    define HWSM4_CAPABLE (OPENSSL_armcap_P & ARMV8_SM4)
-#    define HWSM4_set_encrypt_key sm4_v8_set_encrypt_key
-#    define HWSM4_set_decrypt_key sm4_v8_set_decrypt_key
-#    define HWSM4_encrypt sm4_v8_encrypt
-#    define HWSM4_decrypt sm4_v8_decrypt
-#    define HWSM4_cbc_encrypt sm4_v8_cbc_encrypt
-#    define HWSM4_ecb_encrypt sm4_v8_ecb_encrypt
-#    define HWSM4_ctr32_encrypt_blocks sm4_v8_ctr32_encrypt_blocks
+#   if defined(VPSM4_ASM)
+#    define VPSM4_CAPABLE vpsm4_capable()
+#    define VPSM4_EX_CAPABLE vpsm4_ex_capable()
 #   endif
+#   define HWSM4_CAPABLE (OPENSSL_armcap_P & ARMV8_SM4)
+#   define HWSM4_set_encrypt_key sm4_v8_set_encrypt_key
+#   define HWSM4_set_decrypt_key sm4_v8_set_decrypt_key
+#   define HWSM4_encrypt sm4_v8_encrypt
+#   define HWSM4_decrypt sm4_v8_decrypt
+#   define HWSM4_cbc_encrypt sm4_v8_cbc_encrypt
+#   define HWSM4_ecb_encrypt sm4_v8_ecb_encrypt
+#   define HWSM4_ctr32_encrypt_blocks sm4_v8_ctr32_encrypt_blocks
 #  endif
 # endif /* OPENSSL_CPUID_OBJ */
 
