@@ -25,9 +25,7 @@
 #endif
 #include "arm_arch.h"
 
-#ifdef __aarch64__
 unsigned int OPENSSL_armcap_P = 0;
-#endif
 unsigned int OPENSSL_arm_midr = 0;
 unsigned int OPENSSL_armv8_rsa_neonized = 0;
 
