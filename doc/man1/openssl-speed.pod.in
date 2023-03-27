@@ -146,6 +146,8 @@ supported by third party providers with the C<openssl speed> command.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
+DSA512 was removed in OpenSSL 3.2.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
