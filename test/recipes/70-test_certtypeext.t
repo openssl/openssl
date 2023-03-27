@@ -23,9 +23,8 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
-plan skip_all => "$test_name needs TLS enabled"
-    if alldisabled(available_protocols("tls"))
-       || (!disabled("tls1_3") && disabled("tls1_2"));
+plan skip_all => "$test_name needs TLSv1.2 enabled"
+    if disabled("tls1_2");
 
 my $proxy = TLSProxy::Proxy->new(
     \&certtype_filter,
@@ -40,14 +39,14 @@ use constant {
     NO_CERT_TYPE => 2
 };
 my $testtype;
-plan tests => 4;
 
 # Test 1: Just do a verify without cert type
 $proxy->clear();
 $proxy->clientflags("-tls1_2 -cert ".srctop_file("apps", "server.pem"));
 $proxy->serverflags("-verify 4");
 $testtype = NO_CERT_TYPE;
-$proxy->start();
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 4;
 ok(TLSProxy::Message->success, "Simple verify");
 
 # Test 2: Set a bogus server cert type
