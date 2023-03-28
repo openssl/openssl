@@ -67,6 +67,7 @@ struct ecx_key_st {
     OSSL_LIB_CTX *libctx;
     char *propq;
     unsigned int haspubkey:1;
+    unsigned char genbyengine:1;
     unsigned char pubkey[MAX_KEYLEN];
     unsigned char *privkey;
     size_t keylen;
