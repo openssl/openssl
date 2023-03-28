@@ -125,14 +125,14 @@ static int net_sim_init(struct net_sim *s,
     return 1;
 }
 
+static void do_free(NET_PKT *pkt)
+{
+    OPENSSL_free(pkt);
+}
+
 static void net_sim_cleanup(struct net_sim *s)
 {
-    NET_PKT *pkt;
-
-    while ((pkt = ossl_pqueue_NET_PKT_pop(s->pkts)) != NULL)
-        OPENSSL_free(pkt);
-
-    ossl_pqueue_NET_PKT_free(s->pkts);
+    ossl_pqueue_NET_PKT_pop_free(s->pkts, do_free);
 }
 
 static int net_sim_process(struct net_sim *s, size_t skip_forward);
@@ -221,7 +221,7 @@ static int net_sim_process_one(struct net_sim *s, int skip_forward)
     if (ossl_time_compare(fake_time, pkt->determination_time) < 0)
         return 2;
 
-    if (!ossl_assert(!pkt->success || pkt->arrived))
+    if (!TEST_true(!pkt->success || pkt->arrived))
         return 0;
 
     if (!pkt->success) {
