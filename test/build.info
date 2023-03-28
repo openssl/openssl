@@ -324,11 +324,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[quic_txpim_test]=../include ../apps/include
   DEPEND[quic_txpim_test]=../libcrypto.a ../libssl.a libtestutil.a
 
-  SOURCE[quic_fifd_test]=quic_fifd_test.c
+  SOURCE[quic_fifd_test]=quic_fifd_test.c cc_dummy.c
   INCLUDE[quic_fifd_test]=../include ../apps/include
   DEPEND[quic_fifd_test]=../libcrypto.a ../libssl.a libtestutil.a
 
-  SOURCE[quic_txp_test]=quic_txp_test.c
+  SOURCE[quic_txp_test]=quic_txp_test.c cc_dummy.c
   INCLUDE[quic_txp_test]=../include ../apps/include
   DEPEND[quic_txp_test]=../libcrypto.a ../libssl.a libtestutil.a
 
@@ -1091,7 +1091,7 @@ ENDIF
     PROGRAMS{noinst}=quic_client_test quic_cc_test
   ENDIF
 
-  SOURCE[quic_ackm_test]=quic_ackm_test.c
+  SOURCE[quic_ackm_test]=quic_ackm_test.c cc_dummy.c
   INCLUDE[quic_ackm_test]=../include ../apps/include
   DEPEND[quic_ackm_test]=../libcrypto.a ../libssl.a libtestutil.a
 
