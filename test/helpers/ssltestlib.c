@@ -400,13 +400,13 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
     }
 
     memcpy(out, thispkt->data, outl);
-
     mempacket_free(thispkt);
     return outl;
 }
 
 /*
- * Look for records from different epochs and swap them around
+ * Look for records from different epochs in the last datagram and swap them
+ * around
  */
 int mempacket_swap_epoch(BIO *bio)
 {
@@ -487,36 +487,39 @@ int mempacket_swap_epoch(BIO *bio)
     return 0;
 }
 
-/* Take the last and penultimate packets and swap them around */
-int mempacket_swap_recent(BIO *bio)
+/* Move packet from position s to position d in the list (d < s) */
+int mempacket_move_packet(BIO *bio, int d, int s)
 {
     MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
     MEMPACKET *thispkt;
     int numpkts = sk_MEMPACKET_num(ctx->pkts);
+    int i;
 
-    /* We need at least 2 packets to be able to swap them */
-    if (numpkts <= 1)
+    if (d >= s)
         return 0;
 
-    /* Get the penultimate packet */
-    thispkt = sk_MEMPACKET_value(ctx->pkts, numpkts - 2);
+    /* We need at least s + 1 packets to be able to swap them */
+    if (numpkts <= s)
+        return 0;
+
+    /* Get the packet at position s */
+    thispkt = sk_MEMPACKET_value(ctx->pkts, s);
     if (thispkt == NULL)
         return 0;
 
-    if (sk_MEMPACKET_delete(ctx->pkts, numpkts - 2) != thispkt)
+    /* Remove and re-add it */
+    if (sk_MEMPACKET_delete(ctx->pkts, s) != thispkt)
         return 0;
 
-    /* Re-add it to the end of the list */
-    thispkt->num++;
-    if (sk_MEMPACKET_insert(ctx->pkts, thispkt, numpkts - 1) <= 0)
+    thispkt->num -= (s - d);
+    if (sk_MEMPACKET_insert(ctx->pkts, thispkt, d) <= 0)
         return 0;
 
-    /* We also have to adjust the packet number of the other packet */
-    thispkt = sk_MEMPACKET_value(ctx->pkts, numpkts - 2);
-    if (thispkt == NULL)
-        return 0;
-    thispkt->num--;
-
+    /* Increment the packet numbers for moved packets */
+    for (i = d + 1; i <= s; i++) {
+        thispkt = sk_MEMPACKET_value(ctx->pkts, i);
+        thispkt->num++;
+    }
     return 1;
 }
 
