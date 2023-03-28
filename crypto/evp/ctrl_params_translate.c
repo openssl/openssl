@@ -1649,22 +1649,26 @@ static int get_payload_public_key_ec(enum state state,
 #ifndef OPENSSL_NO_EC
     EVP_PKEY *pkey = ctx->p2;
     const EC_KEY *eckey = EVP_PKEY_get0_EC_KEY(pkey);
-    BN_CTX *bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eckey));
-    const EC_POINT *point = EC_KEY_get0_public_key(eckey);
-    const EC_GROUP *ecg = EC_KEY_get0_group(eckey);
+    BN_CTX *bnctx;
+    const EC_POINT *point;
+    const EC_GROUP *ecg;
     BIGNUM *x = NULL;
     BIGNUM *y = NULL;
     int ret = 0;
-
-    if (bnctx == NULL)
-        return 0;
 
     ctx->p2 = NULL;
 
     if (eckey == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEY_TYPE);
-        goto out;
+        return 0;
     }
+
+    bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eckey));
+    if (bnctx == NULL)
+        return 0;
+
+    point = EC_KEY_get0_public_key(eckey);
+    ecg = EC_KEY_get0_group(eckey);
 
     /* Caller should have requested a BN, fail if not */
     if (ctx->params->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
