@@ -469,84 +469,13 @@ static int test_just_finished(void)
 }
 
 /*
- * Test that swapping a record from the next epoch into the current epoch still
- * works. Libssl should buffer the record until it needs it.
+ * Test that swapping later records before Finished or CCS still works
+ * Test 0: Test receiving a handshake record early from next epoch on server side
+ * Test 1: Test receiving a handshake record early from next epoch on client side
+ * Test 2: Test receiving an app data record early from next epoch on client side
+ * Test 3: Test receiving an app data before Finished on client side
  */
-static int test_swap_epoch(void)
-{
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *sssl = NULL, *cssl = NULL;
-    int testresult = 0;
-    BIO *bio;
-
-    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
-                                       DTLS_client_method(),
-                                       DTLS1_VERSION, 0,
-                                       &sctx, &cctx, cert, privkey)))
-        return 0;
-
-#ifndef OPENSSL_NO_DTLS1_2
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA")))
-        goto end;
-#else
-    /* Default sigalgs are SHA1 based in <DTLS1.2 which is in security level 0 */
-    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "AES128-SHA:@SECLEVEL=0"))
-            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
-                                                  "AES128-SHA:@SECLEVEL=0")))
-        goto end;
-#endif
-
-
-    /* BIO is freed by create_ssl_connection on error */
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl,
-                                      NULL, NULL)))
-        goto end;
-
-    /* Send flight 1: ClientHello */
-    if (!TEST_int_le(SSL_connect(cssl), 0))
-        goto end;
-
-    /* Recv flight 1, send flight 2: ServerHello, Certificate, ServerHelloDone */
-    if (!TEST_int_le(SSL_accept(sssl), 0))
-        goto end;
-
-    /* Recv flight 2, send flight 3: ClientKeyExchange, CCS, Finished */
-    if (!TEST_int_le(SSL_connect(cssl), 0))
-        goto end;
-
-    bio = SSL_get_wbio(cssl);
-    if (!TEST_ptr(bio)
-            || !TEST_true(mempacket_swap_epoch(bio)))
-        goto end;
-
-    /*
-     * Recv flight 3, send flight 4: CCS, Finished.
-     * This should work in a single call because we have all the messages we
-     * need. Even though we had out of order packets, the record for the next
-     * epoch that we read early should be buffered and used later.
-     */
-    if (!TEST_int_gt(SSL_accept(sssl), 0))
-        goto end;
-
-
-    /* Recv flight 4 */
-    if (!TEST_int_gt(SSL_connect(cssl), 0))
-        goto end;
-
-    testresult = 1;
- end:
-    SSL_free(cssl);
-    SSL_free(sssl);
-    SSL_CTX_free(cctx);
-    SSL_CTX_free(sctx);
-    return testresult;
-}
-
-/*
- * Test that swapping an app data record so that it is received before the
- * Finished message still works.
- */
-static int test_swap_app_data(void)
+static int test_swap_records(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *sssl = NULL, *cssl = NULL;
@@ -588,18 +517,39 @@ static int test_swap_app_data(void)
     if (!TEST_int_le(SSL_connect(cssl), 0))
         goto end;
 
-    /* Recv flight 3, send flight 4: datagram 1(NST, CCS) datagram 2(Finished) */
+    if (idx == 0) {
+        /* Swap Finished and CCS within the datagram */
+        bio = SSL_get_wbio(cssl);
+        if (!TEST_ptr(bio)
+                || !TEST_true(mempacket_swap_epoch(bio)))
+            goto end;
+    }
+
+    /* Recv flight 3, send flight 4: datagram 0(NST, CCS) datagram 1(Finished) */
     if (!TEST_int_gt(SSL_accept(sssl), 0))
         goto end;
 
-    /* Send flight 5: app data */
+    /* Send flight 4 (cont'd): datagram 2(app data) */
     if (!TEST_int_eq(SSL_write(sssl, msg, sizeof(msg)), (int)sizeof(msg)))
         goto end;
 
     bio = SSL_get_wbio(sssl);
-    if (!TEST_ptr(bio)
-            || !TEST_true(mempacket_swap_recent(bio)))
+    if (!TEST_ptr(bio))
         goto end;
+    if (idx == 1) {
+        /* Finished comes before NST/CCS */
+        if (!TEST_true(mempacket_move_packet(bio, 0, 1)))
+            goto end;
+    } else if (idx == 2) {
+        /* App data comes before NST/CCS */
+        if (!TEST_true(mempacket_move_packet(bio, 0, 2)))
+            goto end;
+    } else if (idx == 3) {
+        /* App data comes before Finished */
+        bio = SSL_get_wbio(sssl);
+        if (!TEST_true(mempacket_move_packet(bio, 1, 2)))
+            goto end;
+    }
 
     /*
      * Recv flight 4 (datagram 1): NST, CCS, + flight 5: app data
@@ -608,15 +558,22 @@ static int test_swap_app_data(void)
     if (!TEST_int_gt(SSL_connect(cssl), 0))
         goto end;
 
-    /* The app data should be buffered already */
-    if (!TEST_int_eq(SSL_pending(cssl), (int)sizeof(msg))
-            || !TEST_true(SSL_has_pending(cssl)))
-        goto end;
+    if (idx == 0 || idx == 1) {
+        /* App data was not received early, so it should not be pending */
+        if (!TEST_int_eq(SSL_pending(cssl), 0)
+                || !TEST_false(SSL_has_pending(cssl)))
+            goto end;
+
+    } else {
+        /* We received the app data early so it should be buffered already */
+        if (!TEST_int_eq(SSL_pending(cssl), (int)sizeof(msg))
+                || !TEST_true(SSL_has_pending(cssl)))
+            goto end;
+    }
 
     /*
-     * Recv flight 5 (app data)
-     * We already buffered this so it should be available.
-     */
+    * Recv flight 5 (app data)
+    */
     if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
         goto end;
 
@@ -699,8 +656,7 @@ int setup_tests(void)
     ADD_TEST(test_cookie);
     ADD_TEST(test_dtls_duplicate_records);
     ADD_TEST(test_just_finished);
-    ADD_TEST(test_swap_epoch);
-    ADD_TEST(test_swap_app_data);
+    ADD_ALL_TESTS(test_swap_records, 4);
     ADD_TEST(test_listen);
 
     return 1;
