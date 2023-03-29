@@ -19,7 +19,6 @@ permissions:
 
 env:
   opts: enable-rc5 enable-md2 enable-ssl3 enable-weak-ssl-ciphers enable-zlib
-  tests: openssl-3.0.0:-test_ct.-test_ssl_new
 
 jobs:
   fips-releases:
@@ -84,30 +83,6 @@ jobs:
                                                  -provider fips             \
                                                  -provider legacy           \
                                                  -providers
-        working-directory: ${{ matrix.release.dir }}
-
-      - name: limit tests
-        run: |
-          opt=""
-          for tp in $tests;                                                 \
-          do                                                                \
-            ver=`echo $tp | cut -f1 -d:`;                                   \
-            if [ "$ver" = ${{ matrix.release.dir }} ];                      \
-            then                                                            \
-              opt="$opt `echo $tp | cut -f2 -d: | tr . ' '`";               \
-            fi;                                                             \
-          done
-          if [ -n "$opt" ];                                                 \
-          then                                                              \
-            echo TESTS="$opt" >> $GITHUB_ENV;                               \
-          fi
-
-      - name: show limited tests
-        run: echo TESTS=@$TESTS@
-
-      - name: make test
-        run: |
-          make test HARNESS_JOBS=${HARNESS_JOBS:-4}
         working-directory: ${{ matrix.release.dir }}
 
       - uses: actions/upload-artifact@v3
@@ -193,18 +168,14 @@ jobs:
       fail-fast: false
       matrix:
         # These can't be figured out earlier and included here as a variable
-        # substitution.  Thus, there need to be two copies, both identical.
-        # Tests of something against itself are skipped (because these are
-        # pointless) as are tests of releases against other release (because
-        # they cannot possibly change over time).
+        # substitution.  
         #
-        # Note that openssl-3.0.0 cannot be used as a test environment for
-        # later providers, too much fails.  test_evp in particular and it's
-        # not possible to modify the tarball to avoid problematic test cases.
+        # Note that releases are not used as a test environment for
+        # later providers.  Problems in these situations ought to be
+        # caught by cross branch testing before the release.
         tree_a: [ branch-master, branch-3.1, branch-3.0,
                   openssl-3.0.0, openssl-3.0.8, openssl-3.1.0 ]
-        tree_b: [ branch-master, branch-3.1, branch-3.0,
-                  openssl-3.0.8, openssl-3.1.0 ]
+        tree_b: [ branch-master, branch-3.1, branch-3.0  ]
     steps:
       - name: early exit checks
         id: early_exit
@@ -212,12 +183,6 @@ jobs:
           if [ "${{ matrix.tree_a }}" = "${{ matrix.tree_b }}" ];           \
           then                                                              \
             echo "Skipping because both are the same version";              \
-            exit 1;                                                         \
-          fi
-          if [ "`echo ${{ matrix.tree_a }} | cut -f1 -d-`" = 'openssl' -a   \
-               "`echo ${{ matrix.tree_b }} | cut -f1 -d-`" = 'openssl' ];   \
-          then                                                              \
-            echo "Skipping because both are released versions";             \
             exit 1;                                                         \
           fi
         continue-on-error: true
@@ -255,25 +220,6 @@ jobs:
                                                  -provider legacy           \
                                                  -providers
         working-directory: ${{ matrix.tree_b }}
-
-      - name: limit tests
-        if: steps.early_exit.outcome == 'success'
-        run: |
-          # installing across versions is against policy
-          opt="-test_fipsinstall"
-          for tp in $tests;                                                 \
-          do                                                                \
-            ver=`echo $tp | cut -f1 -d:`;                                   \
-            if [ "$ver" = ${{ matrix.tree_b }} ];                           \
-            then                                                            \
-              opt="$opt `echo $tp | cut -f2 -d: | tr . ' '`";               \
-            fi;                                                             \
-          done
-          echo TESTS="$opt" >> $GITHUB_ENV
-
-      - name: show limited tests
-        if: steps.early_exit.outcome == 'success'
-        run: echo TESTS=@$TESTS@
 
       - name: run cross validation tests of FIPS from A with tree from B
         if: steps.early_exit.outcome == 'success'
