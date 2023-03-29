@@ -29,7 +29,7 @@ designs and the relevant design decisions.
       - [`SSL_get_[rw]fd`](#-ssl-get--rw-fd-)
       - [`SSL_CTRL_MODE`, `SSL_CTRL_CLEAR_MODE`](#-ssl-ctrl-mode----ssl-ctrl-clear-mode-)
       - [SSL Modes](#ssl-modes)
-    + [New APIs](#new-apis)
+    + [New APIs for Single-Stream Operation](#new-apis-for-single-stream-operation)
       - [`SSL_tick`](#-ssl-tick-)
       - [`SSL_get_tick_timeout`](#-ssl-get-tick-timeout-)
       - [`SSL_set_blocking_mode`, `SSL_get_blocking_mode`](#-ssl-set-blocking-mode----ssl-get-blocking-mode-)
@@ -43,6 +43,7 @@ designs and the relevant design decisions.
       - [`SSL_get_stream_state`](#-ssl-get-stream-state-)
       - [`SSL_get_stream_error_code`](#-ssl-get-stream-error-code-)
       - [`SSL_get_conn_close_info`](#-ssl-get-conn-close-info-)
+    + [New APIs for Multi-Stream Operation](#new-apis-for-multi-stream-operation)
     + [Future APIs](#future-apis)
   * [BIO Objects](#bio-objects)
     + [Existing APIs](#existing-apis-1)
@@ -60,7 +61,6 @@ designs and the relevant design decisions.
       - [`BIO_s_dgram_mem`](#-bio-s-dgram-mem-)
       - [`BIO_err_is_non_fatal`](#-bio-err-is-non-fatal-)
   * [Q & A](#q---a)
-  * [Implementation Status](#implementation-status)
 
 Overview and Implementation Status
 ----------------------------------
@@ -411,7 +411,7 @@ Should not require any changes.
 
 - `SSL_MODE_ASYNC`: TBD.
 
-### New APIs
+### New APIs for Single-Stream Operation
 
 TBD: Should any of these be implemented as ctrls rather than actual functions?
 
@@ -817,6 +817,219 @@ reason string in bytes.
 `info->is_transport` is 1 if the connection closure was initiated by QUIC, and 0
 if it was initiated by the application. The namespace of `info->error_code` is
 determined by this parameter.
+
+### New APIs for Multi-Stream Operation
+
+The above new APIs are built on constructively to facilitate multi-stream
+operation.
+
+The concept of a QUIC stream SSL object is introduced. A QUIC SSL object is
+either a QUIC connection SSL object or a QUIC stream SSL object. A QUIC stream
+SSL object belongs to a QUIC connection SSL object. A QUIC connection SSL object
+may or may not have an associated default stream. There may only be at most one
+default stream for a QUIC connection SSL object. Reading or writing application
+data to a QUIC connection SSL object with a default stream is equivalent to
+reading or writing to that stream. It is an error to attempt to read or write
+application data, or perform other stream-specific operations, on a QUIC
+connection SSL object without a default stream associated.
+
+#### Notes on Multi-Threaded Operation
+
+Initially these APIs will not be thread safe over the same connection, but in
+the longer term we intend to support multiple threads using different QUIC
+stream SSL objects on different threads over the same connection without the
+application having to do any locking. This is referred to as multi-stream
+multi-thread (MSMT) operation. Only APIs explicitly denoted below will
+eventually be MSMT-safe.
+
+#### Notes on Blocking
+
+The blocking mode can be configured on each SSL object individually. When a QUIC
+stream SSL object is created it inherits its blocking state from the currently
+configured blocking state of the QUIC connection SSL object at the  time the
+stream is created. This can be changed independently. For example, a QUIC
+connection SSL object can be in blokcing mode to allow for blocking
+`SSL_accept_stream` calls, yet have some or all QUIC stream SSL objects be in
+non-blocking mode concurrently.
+
+#### Notes on Application-Level Polling
+
+An API may be added in the future to allow applications to poll multiple QUIC
+connection SSL objects efficiently for new stream and stream readability events.
+This is not yet urgent but will be more relevant for concurrent server
+applications.
+
+#### `SSL_get0_connection`
+
+```c
+/*
+ * Get the SSL object representing the connection associated with this object.
+ *
+ * If the SSL object represents a non-QUIC method or a QUIC connection, this
+ * returns the same object passed.
+ *
+ * If the SSL object represents a QUIC stream returns the QUIC connection
+ * object.
+ */
+SSL *SSL_get0_connection(SSL *ssl);
+```
+
+#### `SSL_is_connection`
+
+```c
+/*
+ * Returns 1 if the object represents a connection. This always returns 1 for
+ * non-QUIC methods, but returns 0 for SSL objects for QUIC streams which are
+ * not also the QUIC connection object.
+ *
+ * This is exactly equivalent to (SSL_get0_connection(ssl) == ssl).
+ */
+int SSL_is_connection(SSL *ssl);
+```
+
+#### `SSL_get_stream_type`
+
+```c
+/*
+ * If the object represents a stream, returns a SSL_STREAM_TYPE value
+ * designating whether the stream can be used for transmission, reception,
+ * or both.
+ *
+ * This always returns SSL_STREAM_TYPE_BIDI for non-QUIC methods.
+ *
+ * It returns SSL_STREAM_TYPE_NONE for a QUIC connection object if it
+ * does not have a default stream.
+ */
+#define SSL_STREAM_TYPE_NONE    0
+#define SSL_STREAM_TYPE_READ    1
+#define SSL_STREAM_TYPE_WRITE   2
+#define SSL_STREAM_TYPE_BIDI    (SSL_STREAM_TYPE_READ | SSL_STREAM_TYPE_WRITE)
+__owur int SSL_get_stream_type(SSL *ssl);
+```
+
+#### `SSL_get_stream_id`
+
+```c
+/*
+ * QUIC: Returns the unique stream ID for the stream, an integer in range [0,
+ * 2**62-1]. If called on a QUIC connection, returns the unique stream ID for
+ * the default stream if there is one, and otherwise returns 0.
+ *
+ * TLS, DTLS: Returns 0.
+ */
+__owur uint64_t SSL_get_stream_id(SSL *ssl);
+```
+
+#### `SSL_new_stream`
+
+```c
+/*
+ * Create a new SSL object representing a single additional stream.
+ *
+ * There is no need to call SSL_connect on the resulting object, and
+ * any such call is a no-op.
+ *
+ * For QUIC:
+ *   Creates a new stream. Must be called only on a QUIC connection SSL object.
+ *   Can be used on client or server. If the SSL_FLAG_UNI flag is set, the
+ *   created stream is unidirectional, otherwise it is bidirectional.
+ *
+ *   To be MSMT-safe.
+ *
+ * For TLS and DTLS SSL objects:
+ *   Always fails.
+ */
+#define SSL_FLAG_UNI    1
+
+SSL *SSL_new_stream(SSL *ssl, uint64_t flags);
+```
+
+#### `SSL_accept_stream`
+
+```c
+/*
+ * Create a new SSL object representing an additional stream which has created
+ * by the peer.
+ *
+ * There is no need to call SSL_accept on the resulting object, and
+ * any such call is a no-op.
+ *
+ * For QUIC:
+ *   Must be called only on a QUIC connection SSL object. Fails if called on a
+ *   stream object. Checks if a new stream has been created by the peer. If it
+ *   has, creates a new SSL object to represent it and returns it. Otherwise,
+ *   returns NULL.
+ *
+ * For all other methods:
+ *   Returns NULL.
+ *
+ * The flags argument is unused and should be set to zero.
+ *
+ * To be MSMT-safe (i.e., can be called from multiple threads).
+ *
+ * If the QUIC connection SSL object is configured in blocking mode, this
+ * function will block unless the SSL_ACCEPT_STREAM_NO_BLOCK flag is passed.
+ */
+#define SSL_ACCEPT_STREAM_NO_BLOCK      1
+
+SSL *SSL_accept_stream(SSL *ssl, uint64_t flags);
+```
+
+#### `SSL_get_accept_stream_queue_len`
+
+```c
+/*
+ * Determine the number of streams waiting to be returned on a subsequent call
+ * to SSL_accept_stream. If this returns a non-zero value, SSL_accept_stream is
+ * guaranteed to work. Returns 0 for non-QUIC objects, or for QUIC stream
+ * objects.
+ *
+ * To be MSMT-safe.
+ */
+int SSL_get_accept_stream_queue_len(SSL *ssl);
+```
+
+#### `SSL_set_default_stream_type`
+
+```c
+/*
+ * Set a SSL_STREAM_TYPE value which determines the type of the default stream.
+ * The default value for QUIC methods is SSL_STREAM_TYPE_BIDI.
+ *
+ * This must be set before connecting. It is an error to try to set it to
+ * anything other than SSL_STREAM_TYPE_BIDI for non-QUIC methods (or
+ * we could just have this always fail on non-QUIC methods).
+ *
+ * If this is set to SSL_STREAM_TYPE_NONE, no default stream is created
+ * at connection time and the initial connection object does not represent
+ * a stream. Calls to SSL_read()/SSL_write() on this object fail. Streams
+ * must be created using SSL_new_stream() or SSL_accept_stream().
+ */
+__owur int SSL_set_default_stream_type(SSL *ssl, int type);
+```
+
+#### `SSL_detach_stream`
+
+```c
+/*
+ * Detaches a default stream from a QUIC connection object. If the
+ * QUIC connection object does not contain a default stream, returns NULL.
+ * After calling this, calling SSL_get_stream_type on the connection object
+ * returns SSL_STREAM_TYPE_NONE. Always returns NULL for non-QUIC connections.
+ */
+SSL *SSL_detach_stream(SSL *ssl);
+```
+
+#### `SSL_attach_stream`
+
+```c
+/*
+ * Attaches a default stream to a QUIC connection object. If the conn object is
+ * not a QUIC connection object, or already has a default stream, this function
+ * fails. The stream must belong to the same connection, or this function fails.
+ */
+__owur int SSL_attach_stream(SSL *conn, SSL *stream);
+```
 
 ### Future APIs
 
