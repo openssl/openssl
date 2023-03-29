@@ -162,6 +162,45 @@ static int test_ciphersuites(void)
     return testresult;
 }
 
+/*
+ * Test that SSL_version, SSL_get_version, SSL_is_quic, SSL_is_tls and
+ * SSL_is_dtls return the expected results for a QUIC connection. Compare with
+ * test_version() in sslapitest.c which does the same thing for TLS/DTLS
+ * connections.
+ */
+static int test_version(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(cctx)
+            || !TEST_true(qtest_create_quic_objects(libctx, cctx, cert, privkey,
+                                                    0, &qtserv, &clientquic,
+                                                    NULL))
+            || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+
+    if (!TEST_int_eq(SSL_version(clientquic), OSSL_QUIC1_VERSION)
+            || !TEST_str_eq(SSL_get_version(clientquic), "QUICv1"))
+        goto err;
+
+    if (!TEST_true(SSL_is_quic(clientquic))
+            || !TEST_false(SSL_is_tls(clientquic))
+            || !TEST_false(SSL_is_dtls(clientquic)))
+        goto err;
+
+
+    testresult = 1;
+ err:
+    ossl_quic_tserver_free(qtserv);
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("provider config\n")
 
 int setup_tests(void)
@@ -218,6 +257,7 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_quic_write_read, 2);
     ADD_TEST(test_ciphersuites);
+    ADD_TEST(test_version);
 
     return 1;
  err:
