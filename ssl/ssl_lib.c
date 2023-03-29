@@ -928,10 +928,39 @@ int SSL_is_dtls(const SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
+#ifndef OPENSSL_NO_QUIC
+    if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_STREAM)
+        return 0;
+#endif
+
     if (sc == NULL)
         return 0;
 
     return SSL_CONNECTION_IS_DTLS(sc) ? 1 : 0;
+}
+
+int SSL_is_tls(const SSL *s)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+#ifndef OPENSSL_NO_QUIC
+    if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_STREAM)
+        return 0;
+#endif
+
+    if (sc == NULL)
+        return 0;
+
+    return SSL_CONNECTION_IS_DTLS(sc) ? 0 : 1;
+}
+
+int SSL_is_quic(const SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_STREAM)
+        return 1;
+#endif
+    return 0;
 }
 
 int SSL_up_ref(SSL *s)
@@ -4741,6 +4770,12 @@ const char *SSL_get_version(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
+#ifndef OPENSSL_NO_QUIC
+    /* We only support QUICv1 - so if its QUIC its QUICv1 */
+    if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_STREAM)
+        return "QUICv1";
+#endif
+
     if (sc == NULL)
         return NULL;
 
@@ -5077,6 +5112,11 @@ int SSL_version(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
+#ifndef OPENSSL_NO_QUIC
+    /* We only support QUICv1 - so if its QUIC its QUICv1 */
+    if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_STREAM)
+        return OSSL_QUIC1_VERSION;
+#endif
     /* TODO(QUIC): Do we want to report QUIC version this way instead? */
     if (sc == NULL)
         return 0;
