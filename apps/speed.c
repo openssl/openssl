@@ -3691,7 +3691,7 @@ skip_hmac:
                 goto kem_err_break;
             }
             if (EVP_PKEY_decapsulate(kem_decaps_ctx, rcv_secret,
-                                      &rcv_secret_len, out, out_len) <= 0
+                                     &rcv_secret_len, out, out_len) <= 0
                 || rcv_secret_len != send_secret_len
                 || memcmp(send_secret, rcv_secret, send_secret_len)) {
                 BIO_printf(bio_err, "Decaps error for %s.\n", kem_name);
@@ -3727,7 +3727,7 @@ skip_hmac:
             kems_results[testnum][0] = (double)count / d;
             op_count = count;
             kskey_print_message(kem_name, "encaps", kems_c[testnum][1],
-                                 seconds.kem);
+                                seconds.kem);
             Time_F(START);
             count =
                 run_benchmark(async_jobs, KEM_encaps_loop, loopargs);
@@ -3739,7 +3739,7 @@ skip_hmac:
             kems_results[testnum][1] = (double)count / d;
             op_count = count;
             kskey_print_message(kem_name, "decaps", kems_c[testnum][2],
-                                 seconds.kem);
+                                seconds.kem);
             Time_F(START);
             count =
                 run_benchmark(async_jobs, KEM_decaps_loop, loopargs);
@@ -3850,8 +3850,7 @@ skip_hmac:
                 BIO_printf(bio_err, "MemAlloc error in sign for %s.\n", sig_name);
                 goto sig_err_break;
             }
-            if (EVP_PKEY_sign(sig_sign_ctx, sig, &sig_len,
-                                     md, md_len) <= 0) {
+            if (EVP_PKEY_sign(sig_sign_ctx, sig, &sig_len, md, md_len) <= 0) {
                 BIO_printf(bio_err, "Signing error for %s.\n", sig_name);
                 goto sig_err_break;
             }
@@ -3864,14 +3863,13 @@ skip_hmac:
                 || EVP_PKEY_verify_init(sig_verify_ctx) <= 0
                 || (strncmp(sig_name, "rsa", 3) == 0
                   && (EVP_PKEY_CTX_set_rsa_padding(sig_verify_ctx,
-                                               RSA_PKCS1_PADDING) <= 0))) {
+                                                   RSA_PKCS1_PADDING) <= 0))) {
                 BIO_printf(bio_err,
                            "Error while initializing verify data structs for %s.\n",
                            sig_name);
                 goto sig_err_break;
             }
-            if (EVP_PKEY_verify(sig_verify_ctx, sig, sig_len,
-                                      md, md_len) <= 0) {
+            if (EVP_PKEY_verify(sig_verify_ctx, sig, sig_len, md, md_len) <= 0) {
                 BIO_printf(bio_err, "Verify error for %s.\n", sig_name);
                 goto sig_err_break;
             }
@@ -3895,11 +3893,9 @@ skip_hmac:
         }
 
         if (sig_checks != 0) {
-            kskey_print_message(sig_name, "keygen", sigs_c[testnum][0],
-                                 seconds.sig);
+            kskey_print_message(sig_name, "keygen", sigs_c[testnum][0], seconds.sig);
             Time_F(START);
-            count =
-                run_benchmark(async_jobs, SIG_keygen_loop, loopargs);
+            count = run_benchmark(async_jobs, SIG_keygen_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R16:%ld:%s:%.2f\n" :
@@ -3933,9 +3929,8 @@ skip_hmac:
             sigs_results[testnum][2] = (double)count / d;
             op_count = count;
         }
-        if (op_count <= 1) {
+        if (op_count <= 1)
             stop_it(sigs_doit, testnum);
-        }
     }
 
 #ifndef NO_FORK
