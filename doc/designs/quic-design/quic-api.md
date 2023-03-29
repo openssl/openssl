@@ -29,7 +29,7 @@ designs and the relevant design decisions.
       - [`SSL_get_[rw]fd`](#-ssl-get--rw-fd-)
       - [`SSL_CTRL_MODE`, `SSL_CTRL_CLEAR_MODE`](#-ssl-ctrl-mode----ssl-ctrl-clear-mode-)
       - [SSL Modes](#ssl-modes)
-    + [New APIs](#new-apis)
+    + [New APIs for Single-Stream Operation](#new-apis-for-single-stream-operation)
       - [`SSL_tick`](#-ssl-tick-)
       - [`SSL_get_tick_timeout`](#-ssl-get-tick-timeout-)
       - [`SSL_set_blocking_mode`, `SSL_get_blocking_mode`](#-ssl-set-blocking-mode----ssl-get-blocking-mode-)
@@ -41,8 +41,23 @@ designs and the relevant design decisions.
       - [`SSL_stream_conclude`](#-ssl-stream-conclude-)
       - [`SSL_stream_reset`](#-ssl-stream-reset-)
       - [`SSL_get_stream_state`](#-ssl-get-stream-state-)
-      - [`SSL_get_stream_error_code`](#-ssl-get-stream-error-code-)
+      - [`SSL_get_stream_read_error_code`, `SSL_get_stream_write_error_code`](#-ssl-get-stream-read-error-code----ssl-get-stream-write-error-code-)
       - [`SSL_get_conn_close_info`](#-ssl-get-conn-close-info-)
+    + [New APIs for Multi-Stream Operation](#new-apis-for-multi-stream-operation)
+      - [Notes on Multi-Threaded Operation](#notes-on-multi-threaded-operation)
+      - [Notes on Blocking](#notes-on-blocking)
+      - [Notes on Application-Level Polling](#notes-on-application-level-polling)
+      - [`SSL_get0_connection`](#-ssl-get0-connection-)
+      - [`SSL_is_connection`](#-ssl-is-connection-)
+      - [`SSL_get_stream_type`](#-ssl-get-stream-type-)
+      - [`SSL_get_stream_id`](#-ssl-get-stream-id-)
+      - [`SSL_new_stream`](#-ssl-new-stream-)
+      - [`SSL_accept_stream`](#-ssl-accept-stream-)
+      - [`SSL_get_accept_stream_queue_len`](#-ssl-get-accept-stream-queue-len-)
+      - [`SSL_set_incoming_stream_reject_policy`](#-ssl-set-incoming-stream-reject-policy-)
+      - [`SSL_set_default_stream_mode`](#-ssl-set-default-stream-mode-)
+      - [`SSL_detach_stream`](#-ssl-detach-stream-)
+      - [`SSL_attach_stream`](#-ssl-attach-stream-)
     + [Future APIs](#future-apis)
   * [BIO Objects](#bio-objects)
     + [Existing APIs](#existing-apis-1)
@@ -50,7 +65,7 @@ designs and the relevant design decisions.
       - [`BIO_new_bio_pair`](#-bio-new-bio-pair-)
       - [Interactions with `BIO_f_buffer`](#interactions-with--bio-f-buffer-)
       - [MTU Signalling](#mtu-signalling)
-    + [New APIs](#new-apis-1)
+    + [New APIs](#new-apis)
       - [`BIO_sendmmsg` and `BIO_recvmmsg`](#-bio-sendmmsg--and--bio-recvmmsg-)
       - [Truncation Mode](#truncation-mode)
       - [Capability Negotiation](#capability-negotiation)
@@ -60,7 +75,6 @@ designs and the relevant design decisions.
       - [`BIO_s_dgram_mem`](#-bio-s-dgram-mem-)
       - [`BIO_err_is_non_fatal`](#-bio-err-is-non-fatal-)
   * [Q & A](#q---a)
-  * [Implementation Status](#implementation-status)
 
 Overview and Implementation Status
 ----------------------------------
@@ -149,6 +163,9 @@ Each API listed below has an information table with the following fields:
       Fails on a QUIC stream SSL object.
 
     - **CS:** Not handshake-layer related. Can be used on any QUIC SSL object.
+
+    - **S**: Requires a QUIC stream SSL object or a QUIC connection SSL object
+      with a default stream attached.
 
 ### Existing APIs
 
@@ -411,7 +428,7 @@ Should not require any changes.
 
 - `SSL_MODE_ASYNC`: TBD.
 
-### New APIs
+### New APIs for Single-Stream Operation
 
 TBD: Should any of these be implemented as ctrls rather than actual functions?
 
@@ -721,6 +738,22 @@ no-ops. This is considered a success case.
  * stream.
  */
 #define SSL_STREAM_STATE_NONE                   0
+
+/*
+ * The read or write part of the stream is still available and has not been
+ * terminated in a normal or non-normal manner.
+ */
+#define SSL_STREAM_STATE_OK                     1
+
+/*
+ * The stream is a unidirectional stream and this direction cannot be used; for
+ * example, a remotely initiated unidirectional stream where
+ * SSL_get_stream_write_state is called, or a locally initiated unidirectional
+ * stream where SSL_get_stream_read_state is
+ called.
+ */
+#define SSL_STREAM_STATE_WRONG_DIR              2
+
 /*
  * The read or write part of the stream has been finished in a normal manner.
  *
@@ -732,17 +765,32 @@ no-ops. This is considered a success case.
  * already indicated the end of the stream by calling SSL_stream_conclude,
  * and that future calls to SSL_write will fail.
  */
-#define SSL_STREAM_STATE_FINISHED               1
+#define SSL_STREAM_STATE_FINISHED               3
 
 /*
  * The stream was reset by the local party.
+ *
+ * For SSL_get_stream_read_state, this means that the stream was aborted using a
+ * locally transmitted STOP_SENDING frame. Attempts to read from the stream via
+ * SSL_read will fail, though SSL_read may allow any  residual data waiting to
+ * be  read to be  read first.
+ *
+ * For SSL_get_stream_write_state, this means that the stream was aborted
+ * using a locally transmitted RESET_STREAM frame. Attempts to write to
+ * the stream will fail.
  */
-#define SSL_STREAM_STATE_RESET_LOCAL            2
+#define SSL_STREAM_STATE_RESET_LOCAL            4
 
 /*
  * The stream was reset by the remote party.
+ *
+ * For SSL_get_stream_read_state, this means the peer sent a STREAM_RESET
+ * frame for the stream.
+ *
+ * For SSL_get_stream_write_state, this means the peer sent a STOP_SENDING
+ * frame for the stream.
  */
-#define SSL_STREAM_STATE_RESET_REMOTE           3
+#define SSL_STREAM_STATE_RESET_REMOTE           5
 
 /*
  * The underlying connection supporting the stream has closed or otherwise
@@ -755,7 +803,7 @@ no-ops. This is considered a success case.
  * For SSL_get_stream_write_state, this means that attempts to write to the
  * stream will fail.
  */
-#define SSL_STREAM_STATE_CONN_CLOSED            4
+#define SSL_STREAM_STATE_CONN_CLOSED            6
 
 int SSL_get_stream_read_state(SSL *ssl);
 int SSL_get_stream_write_state(SSL *ssl);
@@ -765,22 +813,31 @@ This API allows the current state of a stream to be queried. This allows an
 application to determine whether a stream is still usable and why a stream has
 reached an error state.
 
-#### `SSL_get_stream_error_code`
+#### `SSL_get_stream_read_error_code`, `SSL_get_stream_write_error_code`
 
 | Semantics | `SSL_get_error` | Can Tick? | CSHL          |
 | --------- | ------------- | --------- | ------------- |
 | New       | Never         | No        | S             |
 
 ```c
-int SSL_get_stream_error_code(SSL *ssl, uint64_t *app_error_code);
+int SSL_get_stream_read_error_code(SSL *ssl, uint64_t *app_error_code);
+int SSL_get_stream_write_error_code(SSL *ssl, uint64_t *app_error_code);
 ```
+
+`SSL_get_stream_read_error_code` gets the error code for the read part of the
+stream.
+
+`SSL_get_stream_write_error_code` gets the error code for the write part of
+the stream.
 
 If a stream has been terminated normally, returns 0.
 
 If a stream has been terminated non-normally, returns 1 and writes the
 applicable application error code to `*app_error_code`.
 
-If a stream is still healthy, returns -1.
+If a stream is still healthy, or was healthy at the time the connection was
+closed, or the respective part of the stream does not exist (e.g. for a
+unidirectional stream), returns -1.
 
 #### `SSL_get_conn_close_info`
 
@@ -804,7 +861,8 @@ int SSL_get_conn_close_info(SSL *ssl,
 
 If a connection is still healthy, returns 0. Otherwise, fills `*info` with
 information about the error causing connection termination and returns 1.
-`info_len` must be set to `sizeof(*info)`.
+`info_len` must be set to `sizeof(*info)`. Returns -1 if called on a non-QUIC
+SSL object or if the connection status cannot be determined.
 
 `info->reason` is set to point to a buffer containing a reason string. The
 buffer is valid for the lifetime of the SSL object. The reason string will
@@ -817,6 +875,340 @@ reason string in bytes.
 `info->is_transport` is 1 if the connection closure was initiated by QUIC, and 0
 if it was initiated by the application. The namespace of `info->error_code` is
 determined by this parameter.
+
+### New APIs for Multi-Stream Operation
+
+The above new APIs are built on constructively to facilitate multi-stream
+operation.
+
+The concept of a QUIC stream SSL object is introduced. A QUIC SSL object is
+either a QUIC connection SSL object or a QUIC stream SSL object. A QUIC stream
+SSL object belongs to a QUIC connection SSL object. A QUIC connection SSL object
+may or may not have an associated default stream. There may only be at most one
+default stream for a QUIC connection SSL object. Reading or writing application
+data to a QUIC connection SSL object with a default stream is equivalent to
+reading or writing to that stream. It is an error to attempt to read or write
+application data, or perform other stream-specific operations, on a QUIC
+connection SSL object without a default stream associated.
+
+#### Notes on Multi-Threaded Operation
+
+Initially these APIs will not be thread safe over the same connection, but in
+the longer term we intend to support multiple threads using different QUIC
+stream SSL objects on different threads over the same connection without the
+application having to do any locking. This is referred to as multi-stream
+multi-thread (MSMT) operation. Only APIs explicitly denoted below will
+eventually be MSMT-safe.
+
+#### Notes on Blocking
+
+The blocking mode can be configured on each SSL object individually. When a QUIC
+stream SSL object is created it inherits its blocking state from the currently
+configured blocking state of the QUIC connection SSL object at the time the
+stream is created. This can be changed independently. For example, a QUIC
+connection SSL object can be in blocking mode to allow for blocking
+`SSL_accept_stream` calls, yet have some or all QUIC stream SSL objects be in
+non-blocking mode concurrently.
+
+#### Notes on Application-Level Polling
+
+An API may be added in the future to allow applications to poll multiple QUIC
+connection SSL objects efficiently for new stream and stream readability events.
+This is not yet urgent but will be more relevant for concurrent server
+applications.
+
+#### `SSL_get0_connection`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | No        | CS            |
+
+```c
+/*
+ * Get the SSL object representing the connection associated with this object.
+ *
+ * If the SSL object represents a non-QUIC method or a QUIC connection, this
+ * returns the same object passed.
+ *
+ * If the SSL object represents a QUIC stream returns the QUIC connection
+ * object.
+ */
+SSL *SSL_get0_connection(SSL *ssl);
+```
+
+#### `SSL_is_connection`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | No        | CS            |
+
+```c
+/*
+ * Returns 1 if the object represents a connection. This always returns 1 for
+ * non-QUIC methods, but returns 0 for SSL objects for QUIC streams which are
+ * not also the QUIC connection object.
+ *
+ * This is exactly equivalent to (SSL_get0_connection(ssl) == ssl).
+ */
+int SSL_is_connection(SSL *ssl);
+```
+
+#### `SSL_get_stream_type`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | No        | S             |
+
+```c
+/*
+ * If the object represents a stream, returns a SSL_STREAM_TYPE value
+ * designating whether the stream can be used for transmission, reception,
+ * or both.
+ *
+ * This always returns SSL_STREAM_TYPE_BIDI for non-QUIC methods.
+ *
+ * It returns SSL_STREAM_TYPE_NONE for a QUIC connection object if it
+ * does not have a default stream.
+ */
+#define SSL_STREAM_TYPE_NONE    0
+#define SSL_STREAM_TYPE_READ    1
+#define SSL_STREAM_TYPE_WRITE   2
+#define SSL_STREAM_TYPE_BIDI    (SSL_STREAM_TYPE_READ | SSL_STREAM_TYPE_WRITE)
+__owur int SSL_get_stream_type(SSL *ssl);
+```
+
+#### `SSL_get_stream_id`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | No        | S             |
+
+```c
+/*
+ * QUIC: Returns the unique stream ID for the stream, an integer in range [0, 2**62-1],
+ * or UINT64_MAX if the stream ID is not available. If called on a QUIC
+ * connection, returns the unique stream ID for the default stream if there is
+ * one, and otherwise returns UINT64_MAX.
+ *
+ * TLS, DTLS: Returns UINT64_MAX.
+ */
+__owur uint64_t SSL_get_stream_id(SSL *ssl);
+```
+
+#### `SSL_new_stream`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | No        | C             |
+
+```c
+/*
+ * Create a new SSL object representing a single additional stream.
+ *
+ * There is no need to call SSL_connect on the resulting object, and
+ * any such call is a no-op.
+ *
+ * For QUIC:
+ *   Creates a new stream. Must be called only on a QUIC connection SSL object.
+ *   Can be used on client or server. If the SSL_STREAM_FLAG_UNI flag is set,
+ *   the created stream is unidirectional, otherwise it is bidirectional.
+ *
+ *   To be MSMT-safe.
+ *
+ * For TLS and DTLS SSL objects:
+ *   Always fails.
+ */
+#define SSL_STREAM_FLAG_UNI    1
+
+SSL *SSL_new_stream(SSL *ssl, uint64_t flags);
+```
+
+#### `SSL_accept_stream`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | Yes       | C             |
+
+```c
+/*
+ * Create a new SSL object representing an additional stream which was created
+ * by the peer.
+ *
+ * There is no need to call SSL_accept on the resulting object, and
+ * any such call is a no-op.
+ *
+ * For QUIC:
+ *   Must be called only on a QUIC connection SSL object. Fails if called on a
+ *   stream object. Checks if a new stream has been created by the peer. If it
+ *   has, creates a new SSL object to represent it and returns it. Otherwise,
+ *   returns NULL. If multiple streams are available to be accepted, the oldest
+ *   stream (that is, the stream with the lowest stream ID) is accepted.
+ *
+ * For all other methods:
+ *   Returns NULL.
+ *
+ * The flags argument is unused and should be set to zero.
+ *
+ * To be MSMT-safe (i.e., can be called from multiple threads).
+ *
+ * If the QUIC connection SSL object is configured in blocking mode, this
+ * function will block unless the SSL_ACCEPT_STREAM_NO_BLOCK flag is passed.
+ *
+ * This function returns NULL if the effective incoming stream reject policy is
+ * `REJECT`.
+ */
+#define SSL_ACCEPT_STREAM_NO_BLOCK      1
+
+SSL *SSL_accept_stream(SSL *ssl, uint64_t flags);
+```
+
+#### `SSL_get_accept_stream_queue_len`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | No        | C             |
+
+```c
+/*
+ * Determine the number of streams waiting to be returned on a subsequent call
+ * to SSL_accept_stream. If this returns a non-zero value, the next call to
+ * SSL_accept_stream (on any thread) is guaranteed to work. Returns 0 for
+ * non-QUIC objects, or for QUIC stream objects.
+ *
+ * To be MSMT-safe.
+ */
+size_t SSL_get_accept_stream_queue_len(SSL *ssl);
+```
+
+#### `SSL_set_incoming_stream_reject_policy`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | No        | C             |
+
+```c
+/*
+ * Sets the policy for incoming streams. If `policy` is `AUTO` (the default):
+ *
+ *   - if `SSL_detach_stream` has been used, this is equivalent to `ACCEPT`;
+ *
+ *   - otherwise, if the default stream mode is
+ *     `SSL_DEFAULT_STREAM_MODE_AUTO_BIDI` or
+ *     `SSL_DEFAULT_STREAM_MODE_AUTO_UNI`, this is equivalent to `REJECT`;
+ *
+ *   - otherwise, this is equivalent to `ACCEPT`.
+ *
+ * If configured to `ACCEPT`, incoming streams are placed on the accept queue
+ * for application consumption. `aec` is ignored in this case.
+ *
+ * If configured to `REJECT`, incoming streams automatically have both their
+ * receiving and sending parts handled via non-normal termination. `aec` is an
+ * application error code used for the `STOP_SENDING` and `RESET_STREAM` frames
+ * used for the purposes of this termination. The default AEC value used if this
+ * function is never called is 0.
+ */
+#define SSL_INCOMING_STREAM_REJECT_POLICY_AUTO      0
+#define SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT    1
+#define SSL_INCOMING_STREAM_REJECT_POLICY_REJECT    2
+
+int SSL_set_incoming_stream_reject_policy(SSL *ssl, int policy, uint64_t aec);
+```
+
+#### `SSL_set_default_stream_mode`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | No        | C             |
+
+```c
+/*
+ * Used to control single stream operation. Calling this function determines the
+ * nature of the default stream which will automatically be created on the QUIC
+ * connection SSL object.
+ *
+ * The default mode is `SSL_DEFAULT_STREAM_MODE_AUTO_BIDI`.
+ *
+ * The modes are as follows:
+ *
+ *   - `SSL_DEFAULT_STREAM_MODE_NONE`: No default stream will ever be created.
+ *     The application is assumed to understand multi-stream operation.
+ *     Remotely-initiated streams are placed in the accept queue for application
+ *     consumption. `SSL_read` and `SSL_write` calls must be made on a QUIC
+ *     stream SSL object, not the QUIC connection SSL object, as no default
+ *     stream will be associated with it.
+ *
+ *   - `SSL_DEFAULT_STREAM_MODE_AUTO_BIDI`: "First stream wins" mode of
+ *     operation for single-stream usage. If `SSL_write` is called before the
+ *     peer opens a remotely-initiated stream, a locally-initiated bidirectional
+ *     stream is created and bound as the default stream. If the peer opens a
+ *     remotely-initiated stream before the local application calls `SSL_write`
+ *     (with `len > 0`) for the first time, that stream is bound as the default
+ *     stream, which may be bidirectional or unidirectional; if it is
+ *     unidirectional, calls to `SSL_write` will fail. Attempts to create
+ *     additional streams by the peer are automatically rejected unless
+ *     the application opts in (API TBD).
+ *
+ *   - `SSL_DEFAULT_STREAM_MODE_AUTO_UNI`: "First stream wins" mode of
+ *     operation for single-stream usage, with a unidirectional stream. This
+ *     functions identically to `SSL_DEFAULT_STREAM_MODE_AUTO_BIDI`, but if the
+ *     local application calls `SSL_write` prior to the peer creating a
+ *     remotely-initiated stream, a unidirectional TX-only stream is created and
+ *     bound as the default stream. Thereafter, calls to `SSL_read` will fail.
+ *     If the peer creates a remotely-initiated stream prior to the first call
+ *     to `SSL_write` (with `len > 0`), that stream will be bound as the default
+ *     stream; note that a bidirectional stream may be bound in this case.
+ *     Attempts to create additional streams by the peer are automatically
+ *     rejected unless the application opts in (API TBD).
+ *
+ * This function must be called before a default stream object is created, for
+ * example before initiating a connection. If the function is too late to have
+ * an effect, this function fails and returns 0. To switch to multi-stream
+ * operation after a default stream has been created, use `SSL_detach_stream`.
+ */
+#define SSL_DEFAULT_STREAM_MODE_NONE                0
+#define SSL_DEFAULT_STREAM_MODE_AUTO_BIDI           1
+#define SSL_DEFAULT_STREAM_MODE_AUTO_UNI            2
+
+__owur int SSL_set_default_stream_mode(SSL *ssl, uint32_t mode);
+```
+
+#### `SSL_detach_stream`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | No        | C             |
+
+```c
+/*
+ * Detaches a default stream from a QUIC connection object. If the
+ * QUIC connection object does not contain a default stream, returns NULL.
+ * After calling this, calling SSL_get_stream_type on the connection object
+ * returns SSL_STREAM_TYPE_NONE. Always returns NULL for non-QUIC connections.
+ *
+ * Calling this function automatically inhibits default stream creation;
+ * though, after calling this function, a QUIC connection SSL object will no
+ * longer have a stream attached to it, calling SSL_read or SSL_write on
+ * that QUIC connection SSL object will not automatically create a new
+ * default stream. Default stream creation only occurs at most a single time per
+ * connection.
+ */
+SSL *SSL_detach_stream(SSL *ssl);
+```
+
+#### `SSL_attach_stream`
+
+| Semantics | `SSL_get_error` | Can Tick? | CSHL          |
+| --------- | ------------- | --------- | ------------- |
+| New       | Never         | No        | C             |
+
+```c
+/*
+ * Attaches a default stream to a QUIC connection object. If the conn object is
+ * not a QUIC connection object, or already has a default stream, this function
+ * fails. The stream must belong to the same connection, or this function fails.
+ */
+__owur int SSL_attach_stream(SSL *conn, SSL *stream);
+```
 
 ### Future APIs
 
@@ -1192,3 +1584,119 @@ calls.
 **Q. How should `STOP_SENDING` be supported?**
 
 TODO: Determine how `STOP_SENDING` should be supported.
+
+**Q. Can data be received on a locally initiated bidirectional stream before any
+data is sent on that stream?**
+
+This is an interesting question without a clear answer to be found in the QUIC
+RFCs. A close reading of RFC 9000 suggests that the answer is, in principle,
+yes; however the RFC also grants explicit permission to make design choices in
+implementations which would preclude this:
+
+>An implementation might choose to defer allocating a stream ID to a stream until
+>it sends the first STREAM frame and enters this state, which can allow for
+>better stream prioritization.
+
+If an ID has not been allocated to a stream, obviously incoming data cannot be
+addressed to it. However, supposing that an implementation does not do this,
+RFC 9000 seems basically clear that it is valid for an application to create a
+stream locally, then receive data on it before sending anything:
+
+>The sending part of a stream that the endpoint initiates (types 0 and 2 for
+>clients, 1 and 3 for servers) is opened by the application. The "Ready"
+>state represents a newly created stream that is able to accept data from the
+>application.
+>
+>[...]
+>
+>For a bidirectional stream, the receiving part enters the "Recv" state when
+>the sending part initiated by the endpoint (type 0 for a client, type 1 for
+>a server) enters the "Ready" state.
+
+A peer is not generally notified of the creation of a stream which has not sent
+any data yet, since the creation of a stream is signalled only implicitly via
+the transmission of data in `STREAM` frames. However, a zero-length STREAM frame
+could presumably be used to effect such a notification. RFC 9000 contains no
+specific discussion of this possibility but does not preclude it. As such, in
+order to receive data on a locally-initiated bidirectional stream before sending
+any data on that stream, it would be necessary to either
+
+- Use a QUIC implementation which signals a bidirectional stream which has
+  not yet sent any data via a zero-length stream frame, or
+
+- Use an application protocol which can inform the peer of the stream ID
+  of the created stream in some application protocol-specific way.
+  This is somewhat less plausible because it would require an API between
+  the application and its QUIC library to inform the QUIC library
+  that the peer has in fact created a stream with a given ID and to
+  take its word for it. This is unlikely to be commonly available, especially as
+  application errors in usage of such an API would lead to internal
+  inconsistencies in QUIC connection state.
+
+Of course this discussion is somewhat esoteric as it is unclear why an
+application would want to create a locally-initiated stream and then have the
+peer transmit on it first, rather than simply use a remotely-initiated stream.
+Thus this discussion of this edge case is more of a curiosity, however for
+completeness it needs to be thought about in the API design.
+
+**Q. How should single-stream operation support locally and remotely-initiated
+streams?**
+
+Note that the ID of a stream depends on whether it is bidirectional and whether
+it is initiated by the client or server. Therefore, in single stream operation,
+it is necessary to know whether single-stream QUIC is being used with
+client-initiated or server-initiated stream initiation, and whether a
+bidirectional or unidirectional stream is being used; otherwise, we do not know
+which stream ID to bind to.
+
+The object of single stream operation is to support simple uses cases for simple
+applications. There seems no need to support esoteric usage of streams such as
+receiving first on a locally initiated stream here, thus we avoid supporting
+this to simplify the API.
+
+As such, an application which calls `SSL_write` on a QUIC connection SSL object
+before it calls `SSL_read` by definition is using a locally-initiated stream,
+and an application which does the opposite is using a remotely-initiated stream.
+We can use the ordering of initial calls to `SSL_read` and `SSL_write` to infer
+the desired stream type.
+
+Supporting locally-initiated streams (`SSL_write` called first) is simple;
+we automatically create the stream and queue data for transmission.
+
+Supporting remotely-initiated streams (`SSL_read` called first) is a little
+stranger. We could create the stream with the correct ID when cued to by the
+initial call to `SSL_read` implying use of a remotely-initiated stream. However,
+this would mean we are creating state tracking a remotely-initiated stream
+before the peer has signalled it. This would work in the happy case where the
+client is connected to a compatible server but may result in strange
+inconsistencies of QUIC internal state if a client is accidentially connected to
+an incompatible peer. Since the peer ought to be the authority on the streams it
+creates, this seems like an undesirable approach.
+
+Ergo, creation of a default remotely-initiated stream needs to be deferred
+until the *peer* signals such a stream.
+
+This leads naturally to a "first stream wins" model of implementation:
+
+- When a QUIC connection SSL object is created, default stream mode is
+  enabled, meaning that a default stream will be bound to the QUIC connection
+  SSL object at the earliest available opportunity. However, no default
+  stream is bound yet.
+
+- One of the following events happened — whichever happens first wins:
+
+  - The local application calls `SSL_write()` (`len > 0`). A locally-initiated
+    stream with ordinal 0 is created. The stream is bidirectional by default but
+    this can be changed. This stream is bound as the default stream.
+
+  - The peer creates a stream. This stream is bound as the default stream.
+
+If the local application calls `SSL_read()` before either of the above
+occur, `SSL_read()` fails as though no data is available until one
+of the above events occurs.
+
+Once one of the above events occurs, any additional stream created by the peer
+is automatically terminated using both `STOP_SENDING` and `STREAM_RESET` frames
+(to terminate both the receiving and sending parts respectively) and there is no
+API-visible effect to the local application (unless the application explicitly
+opts into supporting additional streams).

@@ -87,6 +87,9 @@ Notes:
 - †9: QUIC always uses AES-128-GCM initially. We need to determine when and
   what ciphers we report as being in use.
 - †10: Not supporting async for now.
+- †11: Since these functions only configure cipher suite lists used for TLSv1.2,
+  which is never used for QUIC, they do not require changes, and we can allow
+  applications to configure these lists freely, as they will be ignored.
 
 | API Item | Cat. | Sema. | Appl. | Impl. Req. | Status |
 |----------|----------|-----------|---------------|----------------|--------|
@@ -140,7 +143,7 @@ Notes:
 | `SSL_CTX_up_ref` | Object | 🟩U | 🟩A | 🟩NC | 🟢Done |
 | `SSL_CTX_free` | Object | 🟩U | 🟩A | 🟩NC | 🟢Done |
 | `SSL_new` | Object | 🟩U | 🟩A | 🟧QSI | 🟢Done |
-| `SSL_dup` | Object | 🟩U | 🟩A | 🟧QSI | 🟠Design TBD |
+| `SSL_dup` | Object | 🟩U | 🟩A | 🟥FC | 🟢Done |
 | `SSL_up_ref` | Object | 🟩U | 🟩A | 🟩NC | 🟢Done |
 | `SSL_free` | Object | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_is_dtls` | Object | 🟩U | 🟩A | 🟩NC | 🟢Done |
@@ -153,28 +156,27 @@ Notes:
 | **⇒ Method Manipulation** | |
 | `SSL_CTX_get_ssl_method` | Object | 🟩U | 🟩A | 🟩NC | 🟢Done |
 | `SSL_get_ssl_method` | Object | 🟩U | 🟩A | 🟩NC | 🟢Done |
-| `SSL_CTX_set_ssl_method` | Object | 🟥TBD | 🟩A | 🟧QSI | 🟠Design TBD |
-| `SSL_set_ssl_method` | Object | 🟥TBD | 🟩A | 🟧QSI | 🟠Design TBD |
+| `SSL_set_ssl_method` | Object | 🟥TBD | 🟩A | 🟧QSI | 🟢Done |
 | **⇒ SRTP** | |
-| `SSL_get_selected_srtp_profile` | HL | 🟩U | 🟥FC | 🟨C\* | 🟡TODO |
-| `SSL_get_srtp_profiles` | HL | 🟩U | 🟥FC | 🟨C\* | 🟡TODO |
-| `SSL_CTX_set_tlsext_use_srtp` | HL | 🟩U | 🟥FC | 🟨C\* | 🟡TODO |
-| `SSL_set_tlsext_use_srtp` | HL | 🟩U | 🟥FC | 🟨C\* | 🟡TODO |
+| `SSL_get_selected_srtp_profile` | HL | 🟩U | 🟧NO | 🟨C\* | 🟢Done |
+| `SSL_get_srtp_profiles` | HL | 🟩U | 🟧NO | 🟨C\* | 🟢Done |
+| `SSL_CTX_set_tlsext_use_srtp` | HL | 🟩U | 🟥FC | 🟨C\* | 🟢Done |
+| `SSL_set_tlsext_use_srtp` | HL | 🟩U | 🟥FC | 🟩NC\* | 🟢Done |
 | **⇒ Ciphersuite Configuration** | |
-| `SSL_CTX_set_cipher_list` | HL | 🟩U | 🟩A | 🟨C\* †1 | 🟡TODO |
-| `SSL_CTX_set_ciphersuites` | HL | 🟩U | 🟩A | 🟨C\* †1 | 🟡TODO |
-| `SSL_CTX_get_ciphers` | HL | 🟩U | 🟩A | 🟨C\* †1 | 🟡TODO |
-| `SSL_set_ciphersuites` | HL | 🟩U | 🟩A | 🟨C\* †1 | 🟡TODO |
-| `SSL_get1_supported_ciphers` | HL | 🟩U | 🟩A | 🟨C\* †1 | 🟡TODO |
-| `SSL_bytes_to_cipher_list` | HL | 🟩U | 🟩A | 🟨C\* †1 | 🟡TODO |
-| `SSL_get_ciphers` | HL | 🟩U | 🟩A | 🟨C\* †1 | 🟡TODO |
-| `SSL_get_cipher_list` | HL | 🟩U | 🟩A | 🟨C\* †1 | 🟡TODO |
-| `SSL_set_cipher_list` | HL | 🟩U | 🟩A | 🟨C\* †1 | 🟡TODO |
+| `SSL_CTX_set_cipher_list` | HL | 🟩U | 🟩A | 🟩NC\* †11 | 🟢Done |
+| `SSL_CTX_set_ciphersuites` | HL | 🟩U | 🟩A | 🟨C\* †1 | 🟢Done |
+| `SSL_CTX_get_ciphers` | HL | 🟩U | 🟩A |🟩NC\* | 🟢Done |
+| `SSL_set_ciphersuites` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
+| `SSL_get1_supported_ciphers` | HL | 🟩U | 🟩A | 🟨C\* †1 | 🟢Done |
+| `SSL_bytes_to_cipher_list` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
+| `SSL_get_ciphers` | HL | 🟩U | 🟩A |  🟩NC\* | 🟢Done |
+| `SSL_get_cipher_list` | HL | 🟩U | 🟩A | 🟩NC\* †11 | 🟢Done |
+| `SSL_set_cipher_list` | HL | 🟩U | 🟩A | 🟩NC\* †11 | 🟢Done |
 | **⇒ Negotiated Ciphersuite Queries** | |
-| `SSL_get_current_cipher` | HL | 🟩U | 🟩A | 🟨C\* †9 | 🟠Design TBD |
-| `SSL_get_pending_cipher` | HL | 🟩U | 🟩A | 🟨C\* †9 | 🟠Design TBD |
-| `SSL_get_shared_ciphers` | HL | 🟩U | 🟩A | 🟨C\* †9 | 🟠Design TBD |
-| `SSL_get_client_ciphers` | HL | 🟩U | 🟩A | 🟨C\* †9 | 🟠Design TBD |
+| `SSL_get_current_cipher` | HL | 🟩U | 🟩A |🟩NC\* †9 | 🟢Done |
+| `SSL_get_pending_cipher` | HL | 🟩U | 🟩A | 🟩NC\* †9 | 🟢Done |
+| `SSL_get_shared_ciphers` | HL | 🟩U | 🟩A | 🟩NC\* †9 | 🟢Done |
+| `SSL_get_client_ciphers` | HL | 🟩U | 🟩A | 🟩NC\* †9 | 🟢Done |
 | `SSL_get_current_compression` | HL | 🟩U | 🟩A | 🟩HLNC | 🟢Done |
 | `SSL_get_current_expansion` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | `SSL_get_shared_sigalgs` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
@@ -191,9 +193,9 @@ Notes:
 | `SSL_get0_alpn_selected` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
 | `SSL_CTX_set_alpn_protos` | HL | 🟩U | 🟩A | 🟨C\* †2 | 🟡TODO |
 | **⇒ NPN** | †3 |
-| `SSL_CTX_set_next_proto_select_cb` | HL | 🟩U | 🟥FC | 🟨C\* †3 | 🟡TODO |
-| `SSL_CTX_set_next_protos_advertised_cb` | HL | 🟩U | 🟥FC | 🟨C\* †3 | 🟡TODO |
-| `SSL_get0_next_proto_negotiated` | HL | 🟩U | 🟥FC | 🟨C\* †3 | 🟡TODO |
+| `SSL_CTX_set_next_proto_select_cb` | HL | 🟩U | 🟥FC | 🟨C\* †3 | 🟢Done |
+| `SSL_CTX_set_next_protos_advertised_cb` | HL | 🟩U | 🟥FC | 🟨C\* †3 | 🟢Done |
+| `SSL_get0_next_proto_negotiated` | HL | 🟩U | 🟥FC | 🟩NC\* †3 | 🟢Done |
 | **⇒ Narrow Waist Interface** | †4 |
 | `SSL_CTX_ctrl` | Object | 🟩U | 🟩A | 🟩NC\* †4 | 🟢Done |
 | `SSL_ctrl` | Object | 🟩U | 🟩A | 🟩NC\* †4 | 🟢Done |
@@ -394,11 +396,11 @@ Notes:
 | `SSL_renegotiate_abbreviated` | HL | 🟩U | 🟥FC | 🟩NC\* †5 | 🟢Done |
 | `SSL_renegotiate_pending` | HL | 🟩U | 🟧NO | 🟩NC\* †5 | 🟢Done |
 | **⇒ Options** | |
-| `SSL_CTX_clear_options` | HL | 🟩U | 🟩A | 🟨C\* | 🟠Design TBD |
-| `SSL_CTX_set_options` | HL | 🟩U | 🟩A | 🟨C\* | 🟠Design TBD |
+| `SSL_CTX_clear_options` | HL | 🟩U | 🟩A | 🟨C\* | 🟢Done |
+| `SSL_CTX_set_options` | HL | 🟩U | 🟩A | 🟨C\* | 🟢Done |
 | `SSL_CTX_get_options` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
-| `SSL_clear_options` | HL | 🟩U | 🟩A | 🟨C\* | 🟠Design TBD |
-| `SSL_set_options` | HL | 🟩U | 🟩A | 🟨C\* | 🟠Design TBD |
+| `SSL_clear_options` | HL | 🟩U | 🟩A | 🟨C\* | 🟢Done |
+| `SSL_set_options` | HL | 🟩U | 🟩A | 🟨C\* | 🟢Done |
 | `SSL_get_options` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | **⇒ Configuration** | |
 | `SSL_CONF_CTX_new` | Global | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
@@ -519,7 +521,7 @@ Notes:
 | `SSL_set_num_tickets` | HL | 🟩U | 🟩A | 🟩NC\* †7 | 🟢Done |
 | `SSL_CTX_get_num_tickets` | HL | 🟩U | 🟩A | 🟩NC\* †7 | 🟢Done |
 | `SSL_CTX_set_num_tickets` | HL | 🟩U | 🟩A | 🟩NC\* †7 | 🟢Done |
-| `SSL_new_session_ticket` | HL | 🟩U | 🟩A | 🟨C\* | 🟡TODO |
+| `SSL_new_session_ticket` | HL | 🟩U | 🟩A | 🟩NC\* †7 | 🟢Done |
 | `SSL_set_session_ticket_ext` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | `SSL_set_session_ticket_ext_cb` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | `SSL_CTX_set_tlsext_ticket_key_evp_cb` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
@@ -559,9 +561,9 @@ Notes:
 | `SSL_CTX_use_serverinfo_ex` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | `SSL_CTX_use_serverinfo_file` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | **⇒ Post-Handshake Authentication** | |
-| `SSL_verify_client_post_handshake` | HL | 🟩U | 🟥FC | 🟨C* †8 | 🟡TODO |
-| `SSL_CTX_set_post_handshake_auth` | HL | 🟩U | 🟥FC | 🟨C* †8 | 🟡TODO |
-| `SSL_set_post_handshake_auth` | HL | 🟩U | 🟥FC | 🟨C* †8 | 🟡TODO |
+| `SSL_verify_client_post_handshake` | HL | 🟩U | 🟥FC | 🟨C* †8 | 🟢Done |
+| `SSL_CTX_set_post_handshake_auth` | HL | 🟩U | 🟥FC | 🟨C* †8 | 🟢Done |
+| `SSL_set_post_handshake_auth` | HL | 🟩U | 🟥FC | 🟨C* †8 | 🟢Done |
 | **⇒ DH Parameters** | |
 | `SSL_CTX_set_dh_auto` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | `SSL_set_dh_auto` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
@@ -576,23 +578,23 @@ Notes:
 | `SSL_in_before` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | `SSL_is_init_finished` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | `SSL_get_state` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
-| `SSL_rstate_string` | HL | 🟩U | 🟩A | 🟧QSI | 🟠Design TBD |
-| `SSL_rstate_string_long` | HL | 🟩U | 🟩A | 🟧QSI | 🟠Design TBD |
-| `SSL_state_string` | HL | 🟩U | 🟩A | 🟧QSI | 🟠Design TBD |
-| `SSL_state_string_long` | HL | 🟩U | 🟩A | 🟧QSI | 🟠Design TBD |
+| `SSL_rstate_string` | HL | 🟩U | 🟩A | 🟧QSI | 🟢Done |
+| `SSL_rstate_string_long` | HL | 🟩U | 🟩A | 🟧QSI | 🟢Done |
+| `SSL_state_string` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
+| `SSL_state_string_long` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | **⇒ Data Path and CSSM** | |
 | `SSL_set_connect_state` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_set_accept_state` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟢Done |
-| `SSL_is_server` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟡TODO |
+| `SSL_is_server` | CSSM | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | `SSL_peek` | ADP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_peek_ex` | ADP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_read` | ADP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_read_ex` | ADP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_write` | ADP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_write_ex` | ADP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
-| `SSL_sendfile` | ADP | 🟩U | 🟩A | 🟧QSI | 🟠Design TBD |
-| `SSL_pending` | ADP | 🟩U | 🟩A | 🟧QSI | 🟠Design TBD |
-| `SSL_has_pending` | ADP | TBD | 🟩A | 🟧QSI | 🟠Design TBD |
+| `SSL_sendfile` | ADP | 🟩U | 🟥FC | 🟩NC\* | 🟢Done |
+| `SSL_pending` | ADP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
+| `SSL_has_pending` | ADP | TBD | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_accept` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_connect` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_do_handshake` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟢Done |
@@ -605,15 +607,15 @@ Notes:
 | `SSL_get_rfd` | NDP | 🟩U | 🟩A | 🟩NC | 🟢Done |
 | `SSL_get_wfd` | NDP | 🟩U | 🟩A | 🟩NC | 🟢Done |
 | `SSL_get_fd` | NDP | 🟩U | 🟩A | 🟩NC | 🟢Done |
-| `SSL_set_rfd` | NDP | 🟧C | 🟩A | 🟧QSI | 🟡TODO |
-| `SSL_set_wfd` | NDP | 🟧C | 🟩A | 🟧QSI | 🟡TODO |
-| `SSL_set_fd` | NDP | 🟩U | 🟩A | 🟧QSI | 🟡TODO |
-| `SSL_key_update` | RL | 🟩U | 🟩A | 🟧QSI | 🟠Design TBD |
-| `SSL_get_key_update_type` | RL | 🟩U | 🟩A | 🟧QSI | 🟠Design TBD |
-| `SSL_clear`  (connection) | CSSM | TBD | 🟩A | 🟧QSI | 🟡TODO |
+| `SSL_set_rfd` | NDP | 🟧C | 🟩A | 🟧QSI | 🟢Done |
+| `SSL_set_wfd` | NDP | 🟧C | 🟩A | 🟧QSI | 🟢Done |
+| `SSL_set_fd` | NDP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
+| `SSL_key_update` | RL | 🟩U | 🟩A | 🟧QSI | 🟢Done |
+| `SSL_get_key_update_type` | RL | 🟩U | 🟩A | 🟧QSI | 🟢Done |
+| `SSL_clear`  (connection) | CSSM | TBD | 🟩A | 🟥FC | 🟢Done |
 | `SSL_clear`  (stream) | CSSM | TBD | 🟩A | 🟧QSI | 🟠Design TBD |
 | `SSL_shutdown` | CSSM | 🟧C | 🟩A | 🟧QSI | 🟡TODO |
-| `SSL_want` | ADP | 🟧C | 🟩A | 🟧QSI | 🟡TODO |
+| `SSL_want` | ADP | 🟧C | 🟩A | 🟧QSI | 🟢Done |
 | `BIO_new_ssl_connect` | Global | 🟩U | 🟩A | 🟧QSI | 🟡TODO |
 | `BIO_new_buffer_ssl_connect` | Global | 🟩U | 🟦U | 🟧QSI | 🟡TODO |
 | `SSL_get_shutdown` | CSSM | 🟩U | 🟩A | 🟧QSI | 🟠Design TBD |
@@ -632,17 +634,31 @@ Notes:
 | `SSL_shutdown_ex` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_stream_conclude` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_stream_reset` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_get_stream_state` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
-| `SSL_get_stream_error_code` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_get_stream_read_state` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_get_stream_write_state` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_get_stream_read_error_code` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_get_stream_write_error_code` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | `SSL_get_conn_close_info` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| **⇒ New APIs for Multi-Stream** | |
+| `SSL_get0_connection` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_is_connection` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_get_stream_id` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_get_stream_type` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_new_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_accept_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_get_accept_stream_queue_len` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_set_default_stream_mode` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_set_incoming_stream_reject_policy` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_detach_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
+| `SSL_attach_stream` | CSSM | 🟦N | 🟩A | 🟥QSA | 🟡TODO |
 | **⇒ Currently Not Supported** | |
-| `SSL_copy_session_id` | Special | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `BIO_ssl_copy_session_id` | Special | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTX_set_quiet_shutdown` | CSSM | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTX_get_quiet_shutdown` | CSSM | 🟩U | 🟧NO | 🟨C* | 🟡TODO |
-| `SSL_set_quiet_shutdown` | CSSM | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_get_quiet_shutdown` | CSSM | 🟩U | 🟧NO | 🟨C* | 🟡TODO |
-| `SSL_CTX_set_ssl_version` | HL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
+| `SSL_copy_session_id` | Special | 🟩U | 🟥FC | 🟨C* | 🟢Done |
+| `BIO_ssl_copy_session_id` | Special | 🟩U | 🟥FC | 🟨C* | 🟢Done |
+| `SSL_CTX_set_quiet_shutdown` | CSSM | 🟩U | 🟦U | 🟩NC | 🟢Done |
+| `SSL_CTX_get_quiet_shutdown` | CSSM | 🟩U | 🟦U | 🟩NC | 🟢Done |
+| `SSL_set_quiet_shutdown` | CSSM | 🟩U | 🟥FC | 🟨C | 🟢Done |
+| `SSL_get_quiet_shutdown` | CSSM | 🟩U | 🟧NO | 🟨C | 🟢Done |
+| `SSL_CTX_set_ssl_version` | HL | 🟩U | 🟥FC | 🟨C | 🟢Done |
 | **⇒ Async** | |
 | `SSL_CTX_set_async_callback` | Async | 🟩U | 🟧NO | 🟩NC* †10 | 🟢Done |
 | `SSL_set_async_callback` | Async | 🟩U | 🟧NO | 🟩NC* †10 | 🟢Done |
@@ -653,67 +669,67 @@ Notes:
 | `SSL_get_all_async_fds` | Async | 🟩U | 🟧NO | 🟩NC* †10 | 🟢Done |
 | `SSL_get_changed_async_fds` | Async | 🟩U | 🟧NO | 🟩NC* †10 | 🟢Done |
 | **⇒ Readahead** | |
-| `SSL_CTX_get_default_read_ahead` | RL | 🟩U | 🟧NO | 🟨C* | 🟡TODO |
-| `SSL_CTX_get_read_ahead` | RL | 🟩U | 🟧NO | 🟨C* | 🟡TODO |
-| `SSL_CTX_set_read_ahead` | RL | 🟩U | 🟧NO | 🟨C* | 🟡TODO |
-| `SSL_get_read_ahead` | RL | 🟩U | 🟧NO | 🟨C* | 🟡TODO |
-| `SSL_set_read_ahead` | RL | 🟩U | 🟧NO | 🟨C* | 🟡TODO |
-| `SSL_CTX_set_default_read_buffer_len` | RL | 🟩U | 🟧NO | 🟨C* | 🟡TODO |
-| `SSL_set_default_read_buffer_len` | RL | 🟩U | 🟧NO | 🟨C* | 🟡TODO |
+| `SSL_CTX_get_default_read_ahead` | RL | 🟩U | 🟧NO | 🟩NC* | 🟢Done |
+| `SSL_CTX_get_read_ahead` | RL | 🟩U | 🟧NO | 🟩NC* |🟢Done  |
+| `SSL_CTX_set_read_ahead` | RL | 🟩U | 🟧NO | 🟨C* |🟢Done  |
+| `SSL_get_read_ahead` | RL | 🟩U | 🟧NO | 🟨C* |🟢Done |
+| `SSL_set_read_ahead` | RL | 🟩U | 🟧NO | 🟨C* | 🟢Done |
+| `SSL_CTX_set_default_read_buffer_len` | RL | 🟩U | 🟧NO | 🟩NC* | 🟢Done |
+| `SSL_set_default_read_buffer_len` | RL | 🟩U | 🟧NO | 🟨C* | 🟢Done |
 | **⇒ Record Padding and Fragmentation** | |
-| `SSL_CTX_set_record_padding_callback` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_set_record_padding_callback` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTX_get_record_padding_callback_arg` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTX_set_record_padding_callback_arg` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_get_record_padding_callback_arg` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_set_record_padding_callback_arg` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTX_set_block_padding` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_set_block_padding` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTX_set_tlsext_max_fragment_length` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_set_tlsext_max_fragment_length` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
+| `SSL_CTX_set_record_padding_callback` | RL | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
+| `SSL_set_record_padding_callback` | RL | 🟩U | 🟥FC | 🟨C* | 🟢Done |
+| `SSL_CTX_get_record_padding_callback_arg` | RL | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
+| `SSL_CTX_set_record_padding_callback_arg` | RL | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
+| `SSL_get_record_padding_callback_arg` | RL | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
+| `SSL_set_record_padding_callback_arg` | RL | 🟩U | 🟥FC |🟩NC* | 🟢Done |
+| `SSL_CTX_set_block_padding` | RL | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
+| `SSL_set_block_padding` | RL | 🟩U | 🟥FC | 🟨C* | 🟢Done |
+| `SSL_CTX_set_tlsext_max_fragment_length` | RL | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
+| `SSL_set_tlsext_max_fragment_length` | RL | 🟩U | 🟥FC | 🟨C* | 🟢Done |
 | **⇒ Stateless/HelloRetryRequest** | |
-| `SSL_stateless` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTX_set_stateless_cookie_generate_cb` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTX_set_stateless_cookie_verify_cb` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
+| `SSL_stateless` | RL | 🟩U | 🟥FC | 🟨C* | 🟢Done |
+| `SSL_CTX_set_stateless_cookie_generate_cb` | RL | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
+| `SSL_CTX_set_stateless_cookie_verify_cb` | RL | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
 | **⇒ Early Data/0-RTT** | |
-| `SSL_CTX_set_allow_early_data_cb` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_set_allow_early_data_cb` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTX_get_recv_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTX_set_recv_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_get_recv_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_set_recv_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTX_get_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTX_set_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_get_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_set_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_read_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_write_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_get_early_data_status` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
+| `SSL_CTX_set_allow_early_data_cb` | 0-RTT | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
+| `SSL_set_allow_early_data_cb` | 0-RTT | 🟩U | 🟥FC | 🟨C* |🟢Done  |
+| `SSL_CTX_get_recv_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
+| `SSL_CTX_set_recv_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
+| `SSL_get_recv_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
+| `SSL_set_recv_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟢Done |
+| `SSL_CTX_get_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟩NC* | 🟢Done  |
+| `SSL_CTX_set_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
+| `SSL_get_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
+| `SSL_set_max_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟢Done  |
+| `SSL_read_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟢Done |
+| `SSL_write_early_data` | 0-RTT | 🟩U | 🟥FC | 🟨C* | 🟢Done |
+| `SSL_get_early_data_status` | 0-RTT | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
 | **⇒ Miscellaneous** | |
 | `DTLSv1_listen` | RL | 🟩U | 🟦U | 🟩NC | 🟢Done |
 | `DTLS_set_timer_cb` | NDP | 🟩U | 🟦U | 🟩NC | 🟢Done |
 | `DTLS_get_data_mtu` | NDP | 🟩U | 🟦U | 🟩NC | 🟢Done |
 | `SSL_get_ex_data_X509_STORE_CTX_idx` | Global | 🟩U | 🟦U | 🟩NC | 🟢Done |
 | `BIO_ssl_shutdown` | Global | 🟩U | 🟩A | 🟩NC | 🟢Done |
-| `SSL_alloc_buffers` | HL | 🟩U | 🟩A | 🟨C\* | 🟠Design TBD |
-| `SSL_free_buffers` | HL | 🟩U | 🟩A | 🟨C\* | 🟠Design TBD |
+| `SSL_alloc_buffers` | HL | 🟩U | 🟩A | 🟨C\* | 🟢Done |
+| `SSL_free_buffers` | HL | 🟩U | 🟩A | 🟨C\* | 🟢Done |
 | `SSL_trace` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | `SSL_set_debug` | HL | 🟩U | 🟩A | 🟩NC\* | 🟢Done |
 | **⇒ Controls** | |
-| `SSL_CTRL_MODE` | Special | 🟩U | 🟩A | 🟧QSI | 🟡TODO |
-| `SSL_CTRL_CLEAR_MODE` | Special | 🟩U | 🟩A | 🟧QSI | 🟡TODO |
+| `SSL_CTRL_MODE` | Special | 🟩U | 🟩A | 🟧QSI | 🟢Done |
+| `SSL_CTRL_CLEAR_MODE` | Special | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS` | HL | 🟩U | 🟧NO | 🟩NC* | 🟢Done |
 | `SSL_CTRL_GET_NUM_RENEGOTIATIONS` | HL | 🟩U | 🟧NO | 🟩NC* | 🟢Done |
 | `SSL_CTRL_GET_TOTAL_RENEGOTIATIONS` | HL | 🟩U | 🟧NO | 🟩NC* | 🟢Done |
 | `SSL_CTRL_GET_RI_SUPPORT` | HL | 🟩U | 🟧NO | 🟩NC* | 🟢Done |
 | `SSL_CTRL_GET_READ_AHEAD` | HL | 🟩U | 🟧NO | 🟩NC* | 🟢Done |
-| `SSL_CTRL_SET_READ_AHEAD` | HL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTRL_SET_MAX_PIPELINES` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTRL_SET_MAX_SEND_FRAGMENT` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
-| `SSL_CTRL_SET_SPLIT_SEND_FRAGMENT` | RL | 🟩U | 🟥FC | 🟨C* | 🟡TODO |
+| `SSL_CTRL_SET_READ_AHEAD` | HL | 🟩U | 🟥FC | 🟨C* |🟢Done |
+| `SSL_CTRL_SET_MAX_PIPELINES` | RL | 🟩U | 🟥FC | 🟨C* | 🟢Done |
+| `SSL_CTRL_SET_MAX_SEND_FRAGMENT` | RL | 🟩U | 🟥FC | 🟨C* | 🟢Done |
+| `SSL_CTRL_SET_SPLIT_SEND_FRAGMENT` | RL | 🟩U | 🟥FC | 🟨C* | 🟢Done |
 | `SSL_CTRL_SET_MTU` | RL | 🟩U | 🟥FC | 🟩NC* | 🟢Done |
-| `SSL_CTRL_SET_MAX_PROTO_VERSION` | HL | 🟩U | 🟩A | 🟨C* | 🟡TODO |
-| `SSL_CTRL_SET_MIN_PROTO_VERSION` | HL | 🟩U | 🟩A | 🟨C* | 🟡TODO |
+| `SSL_CTRL_SET_MAX_PROTO_VERSION` | HL | 🟩U | 🟩A | 🟨C* | 🟢Done |
+| `SSL_CTRL_SET_MIN_PROTO_VERSION` | HL | 🟩U | 🟩A | 🟩NC* | 🟢Done |
 | `SSL_CTRL_GET_MAX_PROTO_VERSION` | HL | 🟩U | 🟩A | 🟩NC* | 🟢Done |
 | `SSL_CTRL_GET_MIN_PROTO_VERSION` | HL | 🟩U | 🟩A | 🟩NC* | 🟢Done |
 | `SSL_CTRL_BUILD_CERT_CHAIN` | HL | 🟩U | 🟩A | 🟩NC* | 🟢Done |
@@ -810,5 +826,170 @@ Notes:
 | `SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER` | ADP | 🟩U | 🟩A | 🟧QSI | 🟢Done |
 | `SSL_MODE_RELEASE_BUFFERS` | ADP | 🟩U | 🟧NO | 🟩NC | 🟢Done |
 | `SSL_MODE_ASYNC` | ADP | 🟩U | 🟧NO | 🟩NC | 🟢Done |
-| `SSL_MODE_AUTO_RETRY` | ADP | TBD | TBD | TBD | 🔴Pending Triage |
-| `SSL_MODE_SEND_FALLBACK_SCSV` | HL | 🟩U | 🟩A | 🟨C\* | 🟡TODO |
+| `SSL_MODE_AUTO_RETRY` | ADP | 🟩U | 🟧NO | 🟩NC | 🟢Done |
+| `SSL_MODE_SEND_FALLBACK_SCSV` | HL | 🟩U | 🟩U | 🟩NC | 🟢Done |
+
+Q&A For TLS-Related Calls
+-------------------------
+
+### What should `SSL_get_current_cipher`, `SSL_get_pending_cipher`, etc. do?
+
+QUIC always uses AES-128-GCM for Initial packets. At this time the handshake
+layer has not negotiated a ciphersuite so it has no “current” cipher. We could
+return AES-128-GCM here, but it seems reasonable to just return NULL as the
+encryption is mostly for protection against accidential modification and not
+“real” encryption. From the perspective of the Handshake layer encryption is not
+active yet. An application using QUIC can always interpret NULL as meaning
+AES-128-GCM is being used if needed as this is implied by using QUIC.
+
+### What should `SSL_CTX_set_cipher_list` do?
+
+Since this function configures the cipher list for TLSv1.2 and below only, there
+is no need to restrict it as TLSv1.3 is required for QUIC. For the sake of
+application compatibility, applications can still configure the TLSv1.2 cipher
+list; it will always be ignored.
+
+### What should `SSL_get_current_cipher` and similar do?
+
+QUIC always uses AES-128-GCM encryption initially, so we could either return
+AES-128-GCM where the handshake has not yet negotiated another algorithm or
+return NULL here.
+
+A. We return NULL here, because it allows applications to detect if a
+ciphersuite has been negotiated and NULL can be used to infer that Initial
+encryption is still being used. This also minimises the changes needed to the
+implementation.
+
+### What SSL options should be supported?
+
+Options we explicitly want to support:
+
+- `SSL_OP_CIPHER_SERVER_PREFERENCE`
+- `SSL_OP_DISABLE_TLSEXT_CA_NAMES`
+- `SSL_OP_NO_TX_CERTIFICATE_COMPRESSION`
+- `SSL_OP_NO_RX_CERTIFICATE_COMPRESSION`
+- `SSL_OP_PRIORITIZE_CHACHA`
+- `SSL_OP_NO_TICKET`
+
+Options we do not yet support but could support in the future, currently no-ops:
+
+- `SSL_OP_CLEANSE_PLAINTEXT`
+- `SSL_OP_NO_QUERY_MTU`
+- `SSL_OP_NO_ANTI_REPLAY`
+
+The following options must be explicitly forbidden:
+
+- `SSL_OP_NO_TLSv1_3` — TLSv1.3 is required for QUIC
+- `SSL_OP_ENABLE_MIDDLEBOX_COMPAT` — forbidden by QUIC RFCs
+- `SSL_OP_ENABLE_KTLS` — not currently supported for QUIC
+- `SSL_OP_SAFARI_ECDHE_ECDSA_BUG`
+- `SSL_OP_TLSEXT_PADDING`
+- `SSL_OP_TLS_ROLLBACK_BUG`
+- `SSL_OP_IGNORE_UNEXPECTED_EOF`
+- `SSL_OP_ALLOW_NO_DHE_KEX`
+
+The following options are ignored for TLSv1.3 or otherwise not applicable and
+may therefore be settable but ignored. We take this approach on the grounds
+that it is harmless and applications might want to see that options have been
+correctly set for protocols unrelated to QUIC.
+
+- `SSL_OP_CRYPTOPRO_TLSEXT_BUG`
+- `SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS`
+- `SSL_OP_ALLOW_CLIENT_RENEGOTIATION`
+- `SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION`
+- `SSL_OP_CISCO_ANYCONNECT`
+- `SSL_OP_COOKIE_EXCHANGE`
+- `SSL_OP_LEGACY_SERVER_CONNECT`
+- `SSL_OP_NO_COMPRESSION`
+- `SSL_OP_NO_ENCRYPT_THEN_MAC`
+- `SSL_OP_NO_EXTENDED_MASTER_SECRET`
+- `SSL_OP_NO_RENEGOTIATION`
+- `SSL_OP_NO_RESSION_RESUMPTION_ON_NEGOTIATION`
+- `SSL_OP_NO_SSLv3`
+- `SSL_OP_NO_TLSv1`
+- `SSL_OP_NO_TLSv1_1`
+- `SSL_OP_NO_TLSv1_2`
+- `SSL_OP_NO_DTLSv1`
+- `SSL_OP_NO_DTLSv1_2`
+
+### What should `SSL_rstate_string` and `SSL_state_string` do?
+
+SSL_state_string is highly handshake layer specific, so it makes sense to just
+forward to the handshake layer.
+
+SSL_rstate_string is record layer specific. A cursory evaluation of usage via
+GitHub code search did not appear to identify much usage of this function other
+than for debug output; i.e., there seems to be little usage of this in a way
+that depends on the output for the purposes of control flow. Since there is not
+really any direct correspondence to the QUIC record layer, we conservatively
+define the output of this function as "unknown".
+
+TODO: forbid NPN
+TODO: enforce TLSv1.3
+TODO: forbid PHA            - DONE
+TODO: forbid middlebox compat mode in a deeper way?
+TODO: new_session_ticket doesn't need modifying as such, but ticket machinery
+      will
+
+### What should `SSL_pending` and `SSL_has_pending` do?
+
+`SSL_pending` traditionally yields the number of bytes buffered inside a SSL
+object available for immediate reading. For QUIC, we can just make this report
+the current size of the receive stream buffer.
+
+`SSL_has_pending` returns a boolean value indicating whether there is processed
+or unprocessed incoming data pending. There is no direct correspondence to
+QUIC, so there are various implementation options:
+
+- `SSL_pending() > 0`
+- `SSL_pending() > 0 || pending URXEs or RXEs exist`
+
+The latter can probably be viewed as more of a direct correspondence to the
+design intent of the API, so we go with this.
+
+### What should `SSL_alloc_buffers` and `SSL_free_buffers` do?
+
+These do not really correspond to our internal architecture for QUIC. Since
+internal buffers are always available, `SSL_alloc_buffers` can simply always
+return 1. `SSL_free_buffers` can always return 0, as though the buffers are in
+use, which they generally will be.
+
+### What should `SSL_key_update` and `SSL_get_key_update_type`?
+
+`SSL_key_update` can trigger a TX record layer key update, which will cause the
+peer to respond with a key update in turn. The update occurs asynchronously
+at next transmission, not immediately.
+
+`SSL_get_key_update_type` returns an enumerated value which is only relevant to
+the TLSv1.3 protocol; for QUIC, it will always return `SSL_KEY_UPDATE_NONE`.
+
+### What should `SSL_MODE_AUTO_RETRY` do?
+
+The absence of `SSL_MODE_AUTO_RETRY` causes `SSL_read`/`SSL_write` on a normal
+TLS connection to potentially return due to internal handshake message
+processing. This does not really make sense for our QUIC implementation,
+therefore we always act as though `SSL_MODE_AUTO_RETRY` is on, and this mode is
+ignored.
+
+### What should `SSL_MODE_SEND_FALLBACK_SCSV` do?
+
+This is not relevant to QUIC because this functionality relates to protocol
+version downgrade attack protection and QUIC only supports TLSv1.3. Thus,
+it is ignored.
+
+### What should `SSL_CTX_set_ssl_version` do?
+
+This is a deprecated function, so it needn't be supported for QUIC. Fail closed.
+
+### What should `SSL_set_ssl_method` do?
+
+For now we can avoid supporting this for QUIC. Supporting this would be rather
+hairy.
+
+### What should `SSL_set_shutdown` do?
+
+TBD.
+
+### What should `SSL_dup` and `SSL_clear` do?
+
+These may be tricky to support. Currently they are blocked.
