@@ -38,7 +38,7 @@ size_t OPENSSL_instrument_bus2(unsigned int *out, size_t cnt, size_t max)
 static void strtoupper(char *str)
 {
     for (char *x = str; *x; ++x)
-        *x = toupper(*x);
+        *x = toupper((unsigned char)*x);
 }
 
 /* parse_env() parses a RISC-V architecture string. An example of such a string
