@@ -2049,10 +2049,11 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
 
     valid_tls = version >= SSL3_VERSION && version <= TLS_MAX_VERSION_INTERNAL;
     valid_dtls =
-        DTLS_VERSION_LE(version, DTLS_MAX_VERSION_INTERNAL) &&
-        DTLS_VERSION_GE(version, DTLS1_BAD_VER);
+        (version == DTLS1_BAD_VER)
+        || (DTLS_VERSION_LE(version, DTLS_MAX_VERSION_INTERNAL)
+            && DTLS_VERSION_GE(version, DTLS1_VERSION));
 
-    if (!valid_tls && !valid_dtls)
+    if (!valid_tls && !valid_dtls && version != OSSL_QUIC1_VERSION)
         return 0;
 
     /*-
@@ -2082,7 +2083,15 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
         if (valid_dtls)
             *bound = version;
         break;
+
+#ifndef OPENSSL_NO_QUIC
+    case OSSL_QUIC_ANY_VERSION:
+        if (version == OSSL_QUIC1_VERSION)
+            *bound = version;
+        break;
+#endif
     }
+
     return 1;
 }
 

@@ -421,29 +421,64 @@ static int dane_tlsa_add(SSL_DANE *dane,
     return 1;
 }
 
+#define PROTOCOL_TLS    0
+#define PROTOCOL_DTLS   1
+#define PROTOCOL_QUIC   2
+
+static int get_protocol(const SSL_METHOD *meth)
+{
+    /* Check all the non-deprecated commonly used methods first */
+    if (meth == TLS_method()
+            || meth == TLS_server_method()
+            || meth == TLS_client_method())
+        return PROTOCOL_TLS;
+
+#ifndef OPENSSL_NO_DTLS
+    if (meth == DTLS_method()
+            || meth == DTLS_server_method()
+            || meth == DTLS_client_method())
+        return PROTOCOL_DTLS;
+#endif
+
+#ifndef OPENSSL_NO_QUIC
+    if (meth == OSSL_QUIC_client_method()
+            || meth == OSSL_QUIC_client_thread_method()
+            || meth == OSSL_QUIC_server_method())
+        return PROTOCOL_QUIC;
+#endif
+
+    /* Must be a deprecated method, so start checking those next */
+
+    if (0
+#ifndef OPENSSL_NO_DTLS1_2_METHOD
+            || meth == dtlsv1_2_method()
+            || meth == dtlsv1_2_server_method()
+            || meth == dtlsv1_2_client_method()
+#endif
+#ifndef OPENSSL_NO_DTLS1_2_METHOD
+            || meth == dtlsv1_method()
+            || meth == dtlsv1_server_method()
+            || meth == dtlsv1_client_method()
+#endif
+            )
+        return PROTOCOL_DTLS;
+
+    /* Anything else must be TLS */
+    return PROTOCOL_TLS;
+}
+
 /*
  * Return 0 if there is only one version configured and it was disabled
  * at configure time.  Return 1 otherwise.
  */
-static int ssl_check_allowed_versions(int min_version, int max_version)
+static int ssl_check_allowed_versions(const SSL_METHOD *meth, int min_version,
+                                      int max_version)
 {
-    int minisdtls = 0, maxisdtls = 0;
+    int prot;
 
-    /* Figure out if we're doing DTLS versions or TLS versions */
-    if (min_version == DTLS1_BAD_VER
-        || min_version >> 8 == DTLS1_VERSION_MAJOR)
-        minisdtls = 1;
-    if (max_version == DTLS1_BAD_VER
-        || max_version >> 8 == DTLS1_VERSION_MAJOR)
-        maxisdtls = 1;
-    /* A wildcard version of 0 could be DTLS or TLS. */
-    if ((minisdtls && !maxisdtls && max_version != 0)
-        || (maxisdtls && !minisdtls && min_version != 0)) {
-        /* Mixing DTLS and TLS versions will lead to sadness; deny it. */
-        return 0;
-    }
+    prot = get_protocol(meth);
 
-    if (minisdtls || maxisdtls) {
+    if (prot == PROTOCOL_DTLS) {
         /* Do DTLS version checks. */
         if (min_version == 0)
             /* Ignore DTLS1_BAD_VER */
@@ -459,6 +494,12 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
             min_version = DTLS1_2_VERSION;
 #endif
         /* Done massaging versions; do the check. */
+
+        /* Ignore invalid versions */
+        if (DTLS_VERSION_LT(min_version, DTLS1_VERSION)
+                || DTLS_VERSION_GT(max_version, DTLS_MAX_VERSION_INTERNAL))
+            return 1;
+
         if (0
 #ifdef OPENSSL_NO_DTLS1
             || (DTLS_VERSION_GE(min_version, DTLS1_VERSION)
@@ -470,7 +511,7 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
 #endif
             )
             return 0;
-    } else {
+    } else if (prot == PROTOCOL_TLS) {
         /* Regular TLS version checks. */
         if (min_version == 0)
             min_version = SSL3_VERSION;
@@ -509,6 +550,12 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
             min_version = TLS1_3_VERSION;
 #endif
         /* Done massaging versions; do the check. */
+
+        /* Ignore invalid versions */
+        if (min_version < SSL3_VERSION
+                || max_version > TLS_MAX_VERSION_INTERNAL)
+            return 1;
+
         if (0
 #ifdef OPENSSL_NO_SSL3
             || (min_version <= SSL3_VERSION && SSL3_VERSION <= max_version)
@@ -528,6 +575,7 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
             )
             return 0;
     }
+
     return 1;
 }
 
@@ -2954,13 +3002,15 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         else
             return 0;
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
-        return ssl_check_allowed_versions(larg, sc->max_proto_version)
+        return ssl_check_allowed_versions(s->defltmeth, larg,
+                                          sc->max_proto_version)
                && ssl_set_version_bound(s->defltmeth->version, (int)larg,
                                         &sc->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
         return sc->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
-        return ssl_check_allowed_versions(sc->min_proto_version, larg)
+        return ssl_check_allowed_versions(s->defltmeth, sc->min_proto_version,
+                                          larg)
                && ssl_set_version_bound(s->defltmeth->version, (int)larg,
                                         &sc->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:
@@ -3108,13 +3158,15 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_CLEAR_CERT_FLAGS:
         return (ctx->cert->cert_flags &= ~larg);
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
-        return ssl_check_allowed_versions(larg, ctx->max_proto_version)
+        return ssl_check_allowed_versions(ctx->method, larg,
+                                          ctx->max_proto_version)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
         return ctx->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
-        return ssl_check_allowed_versions(ctx->min_proto_version, larg)
+        return ssl_check_allowed_versions(ctx->method, ctx->min_proto_version,
+                                          larg)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:

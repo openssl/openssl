@@ -318,7 +318,8 @@ static int protocol_from_string(const char *value)
         {"TLSv1.2", TLS1_2_VERSION},
         {"TLSv1.3", TLS1_3_VERSION},
         {"DTLSv1", DTLS1_VERSION},
-        {"DTLSv1.2", DTLS1_2_VERSION}
+        {"DTLSv1.2", DTLS1_2_VERSION},
+        {"QUICv1", OSSL_QUIC1_VERSION}
     };
     size_t i;
     size_t n = OSSL_NELEM(versions);
