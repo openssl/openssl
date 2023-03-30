@@ -487,8 +487,11 @@ static void show_digests(const OBJ_NAME *name, void *arg)
 
     /* Filter out message digests that we cannot use */
     md = EVP_MD_fetch(app_get0_libctx(), name->name, app_get0_propq());
-    if (md == NULL)
-        return;
+    if (md == NULL) {
+        md = EVP_get_digestbyname(name->name);
+        if (md == NULL)
+            return;
+    }
 
     BIO_printf(dec->bio, "-%-25s", name->name);
     if (++dec->n == 3) {
