@@ -24,9 +24,11 @@
 #include "prov/providercommon.h"
 #include "prov/bio.h"
 #include "file_store_local.h"
+
 #ifdef __CYGWIN__
-# include <windows.h>
+#include <Windows.h>
 #endif
+
 #include <wincrypt.h>
 
 enum {

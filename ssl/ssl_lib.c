@@ -819,7 +819,6 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     s->ext.ocsp.ids = NULL;
     s->ext.ocsp.exts = NULL;
     s->ext.ocsp.resp = NULL;
-    s->ext.ocsp.resp_len = 0;
     SSL_CTX_up_ref(ctx);
     s->session_ctx = ctx;
     if (ctx->ext.ecpointformats) {
@@ -1446,12 +1445,12 @@ void ossl_ssl_connection_free(SSL *ssl)
     sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
 #ifndef OPENSSL_NO_OCSP
     sk_OCSP_RESPID_pop_free(s->ext.ocsp.ids, OCSP_RESPID_free);
+    sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp, OCSP_RESPONSE_free);
 #endif
 #ifndef OPENSSL_NO_CT
     SCT_LIST_free(s->scts);
     OPENSSL_free(s->ext.scts);
 #endif
-    OPENSSL_free(s->ext.ocsp.resp);
     OPENSSL_free(s->ext.alpn);
     OPENSSL_free(s->ext.tls13_cookie);
     if (s->clienthello != NULL)
@@ -6300,41 +6299,40 @@ static int ct_extract_ocsp_response_scts(SSL_CONNECTION *s)
 {
 # ifndef OPENSSL_NO_OCSP
     int scts_extracted = 0;
-    const unsigned char *p;
     OCSP_BASICRESP *br = NULL;
     OCSP_RESPONSE *rsp = NULL;
     STACK_OF(SCT) *scts = NULL;
-    int i;
+    int i, j;
 
-    if (s->ext.ocsp.resp == NULL || s->ext.ocsp.resp_len == 0)
+    if (s->ext.ocsp.resp == NULL)
         goto err;
 
-    p = s->ext.ocsp.resp;
-    rsp = d2i_OCSP_RESPONSE(NULL, &p, (int)s->ext.ocsp.resp_len);
-    if (rsp == NULL)
-        goto err;
-
-    br = OCSP_response_get1_basic(rsp);
-    if (br == NULL)
-        goto err;
-
-    for (i = 0; i < OCSP_resp_count(br); ++i) {
-        OCSP_SINGLERESP *single = OCSP_resp_get0(br, i);
-
-        if (single == NULL)
-            continue;
-
-        scts =
-            OCSP_SINGLERESP_get1_ext_d2i(single, NID_ct_cert_scts, NULL, NULL);
-        scts_extracted =
-            ct_move_scts(&s->scts, scts, SCT_SOURCE_OCSP_STAPLED_RESPONSE);
-        if (scts_extracted < 0)
+    for (j=0; j<sk_OCSP_RESPONSE_num(s->ext.ocsp.resp); j++) {
+        rsp = sk_OCSP_RESPONSE_value(s->ext.ocsp.resp, j);
+        if (rsp == NULL)
             goto err;
+
+        br = OCSP_response_get1_basic(rsp);
+        if (br == NULL)
+            goto err;
+
+        for (i = 0; i < OCSP_resp_count(br); ++i) {
+            OCSP_SINGLERESP *single = OCSP_resp_get0(br, i);
+
+            if (single == NULL)
+                continue;
+
+            scts =
+                OCSP_SINGLERESP_get1_ext_d2i(single, NID_ct_cert_scts, NULL, NULL);
+            scts_extracted =
+                ct_move_scts(&s->scts, scts, SCT_SOURCE_OCSP_STAPLED_RESPONSE);
+            if (scts_extracted < 0)
+                goto err;
+        }
     }
  err:
     SCT_LIST_free(scts);
     OCSP_BASICRESP_free(br);
-    OCSP_RESPONSE_free(rsp);
     return scts_extracted;
 # else
     /* Behave as if no OCSP response exists */
