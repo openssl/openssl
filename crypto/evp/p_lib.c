@@ -2176,12 +2176,11 @@ int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
         goto err;
     ret = OSSL_PARAM_get_BN(params, bn);
 err:
-    if (buf) {
-        if (OSSL_PARAM_modified(params)) {
+    if (buf != NULL) {
+        if (OSSL_PARAM_modified(params))
             OPENSSL_clear_free(buf, buf_sz);
-        } else {
+        else
             OPENSSL_free(buf);
-        }
     } else if (OSSL_PARAM_modified(params)) {
         OPENSSL_cleanse(buffer, params[0].data_size);
     }
