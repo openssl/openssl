@@ -480,7 +480,8 @@ typedef enum OPTION_choice {
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BRIEF, OPT_PREXIT, OPT_NO_INTERACTIVE, OPT_CRLF, OPT_QUIET, OPT_NBIO,
     OPT_SSL_CLIENT_ENGINE, OPT_IGN_EOF, OPT_NO_IGN_EOF,
-    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_WDEBUG,
+    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_OCSP_CHECK,
+    OPT_STATUS_OCSP_CHECK_ALL, OPT_WDEBUG,
     OPT_MSG, OPT_MSGFILE, OPT_ENGINE, OPT_TRACE, OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE, OPT_SHOWCERTS, OPT_NBIO_TEST, OPT_STATE,
     OPT_PSK_IDENTITY, OPT_PSK, OPT_PSK_SESS,
@@ -658,6 +659,10 @@ const OPTIONS s_client_options[] = {
      "Do not treat lack of close_notify from a peer as an error"},
 #ifndef OPENSSL_NO_OCSP
     {"status", OPT_STATUS, '-', "Request certificate status from server"},
+    {"ocsp_check", OPT_STATUS_OCSP_CHECK, '-',
+     "check leaf certificate revocation with OCSP response"},
+    {"ocsp_check_all", OPT_STATUS_OCSP_CHECK_ALL, '-',
+     "check full chain revocation with OCSP response"},
 #endif
     {"serverinfo", OPT_SERVERINFO, 's',
      "types  Send empty ClientHello extensions (comma-separated numbers)"},
@@ -1195,6 +1200,20 @@ int s_client_main(int argc, char **argv)
         case OPT_STATUS:
 #ifndef OPENSSL_NO_OCSP
             c_status_req = 1;
+#endif
+            break;
+        case OPT_STATUS_OCSP_CHECK:
+#ifndef OPENSSL_NO_OCSP
+            X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_OCSP_CHECK);
+            vpmtouched++;
+#endif
+            break;
+        case OPT_STATUS_OCSP_CHECK_ALL:
+#ifndef OPENSSL_NO_OCSP
+            X509_VERIFY_PARAM_set_flags(vpm,
+                                        X509_V_FLAG_OCSP_CHECK |
+                                        X509_V_FLAG_OCSP_CHECK_ALL);
+            vpmtouched++;
 #endif
             break;
         case OPT_WDEBUG:
@@ -3611,25 +3630,27 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 # ifndef OPENSSL_NO_OCSP
 static int ocsp_resp_cb(SSL *s, void *arg)
 {
-    const unsigned char *p;
-    int len;
+    int len, i;
+    STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     OCSP_RESPONSE *rsp;
-    len = SSL_get_tlsext_status_ocsp_resp(s, &p);
+    SSL_get_tlsext_status_ocsp_resp(s, &sk_resp);
     BIO_puts(arg, "OCSP response: ");
-    if (p == NULL) {
+    if (sk_resp == NULL) {
         BIO_puts(arg, "no response sent\n");
         return 1;
     }
-    rsp = d2i_OCSP_RESPONSE(NULL, &p, len);
-    if (rsp == NULL) {
-        BIO_puts(arg, "response parse error\n");
-        BIO_dump_indent(arg, (char *)p, len, 4);
-        return 0;
+    len = sk_OCSP_RESPONSE_num(sk_resp);
+    BIO_printf(arg, "number of responses: %d", len);
+    for (i=0; i<len; i++) {
+        rsp = sk_OCSP_RESPONSE_value(sk_resp, i);
+        if (rsp == NULL) {
+            BIO_puts(arg, "response parse error\n");
+            return 0;
+        }
+        BIO_puts(arg, "\n======================================\n");
+        OCSP_RESPONSE_print(arg, rsp, 0);
+        BIO_puts(arg, "======================================\n");
     }
-    BIO_puts(arg, "\n======================================\n");
-    OCSP_RESPONSE_print(arg, rsp, 0);
-    BIO_puts(arg, "======================================\n");
-    OCSP_RESPONSE_free(rsp);
     return 1;
 }
 # endif

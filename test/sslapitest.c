@@ -108,7 +108,7 @@ static size_t client_log_buffer_index = 0;
 static int error_writing_log = 0;
 
 #ifndef OPENSSL_NO_OCSP
-static const unsigned char orespder[] = "Dummy OCSP Response";
+static OCSP_RESPONSE *dummy_ocsp_resp = NULL;
 static int ocsp_server_called = 0;
 static int ocsp_client_called = 0;
 
@@ -1845,8 +1845,8 @@ static int test_cleanse_plaintext(void)
 #ifndef OPENSSL_NO_OCSP
 static int ocsp_server_cb(SSL *s, void *arg)
 {
+    STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     int *argi = (int *)arg;
-    unsigned char *copy = NULL;
     STACK_OF(OCSP_RESPID) *ids = NULL;
     OCSP_RESPID *id = NULL;
 
@@ -1863,14 +1863,15 @@ static int ocsp_server_cb(SSL *s, void *arg)
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
 
-    if (!TEST_ptr(copy = OPENSSL_memdup(orespder, sizeof(orespder))))
-        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, NULL);
 
-    if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, copy,
-                                                   sizeof(orespder)))) {
-        OPENSSL_free(copy);
+    sk_resp = sk_OCSP_RESPONSE_new_null();
+    sk_OCSP_RESPONSE_insert(sk_resp, dummy_ocsp_resp, -1);
+
+    if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, sk_resp, 0))) {
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
+
     ocsp_server_called = 1;
     return SSL_TLSEXT_ERR_OK;
 }
@@ -1878,15 +1879,31 @@ static int ocsp_server_cb(SSL *s, void *arg)
 static int ocsp_client_cb(SSL *s, void *arg)
 {
     int *argi = (int *)arg;
-    const unsigned char *respderin;
-    size_t len;
+    int len, i;
+    STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
+    OCSP_RESPONSE *rsp;
 
     if (*argi != 1 && *argi != 2)
         return 0;
 
-    len = SSL_get_tlsext_status_ocsp_resp(s, &respderin);
-    if (!TEST_mem_eq(orespder, len, respderin, len))
+    SSL_get_tlsext_status_ocsp_resp(s, &sk_resp);
+
+    if (sk_resp == NULL)
         return 0;
+
+    len = sk_OCSP_RESPONSE_num(sk_resp);
+
+    if (len != 1) {
+        return 0;
+    }
+
+    rsp = sk_OCSP_RESPONSE_value(sk_resp, 0);
+
+    i = OCSP_response_status(rsp);
+
+    if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
+        return 0;
+    }
 
     ocsp_client_called = 1;
     return 1;

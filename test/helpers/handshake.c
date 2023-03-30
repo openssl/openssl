@@ -13,6 +13,7 @@
 #include <openssl/x509_vfy.h>
 #include <openssl/ssl.h>
 #include <openssl/core_names.h>
+#include <openssl/ocsp.h>
 
 #include "../../ssl/ssl_local.h"
 #include "internal/sockets.h"
@@ -264,39 +265,60 @@ static int client_hello_nov12_cb(SSL *s, int *al, void *arg)
     return SSL_CLIENT_HELLO_SUCCESS;
 }
 
-static unsigned char dummy_ocsp_resp_good_val = 0xff;
-static unsigned char dummy_ocsp_resp_bad_val = 0xfe;
+#ifndef OPENSSL_NO_OCSP
+static OCSP_RESPONSE *dummy_ocsp_resp = NULL;
+#endif
 
 static int server_ocsp_cb(SSL *s, void *arg)
 {
-    unsigned char *resp;
+#ifndef OPENSSL_NO_OCSP
+    STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
 
-    resp = OPENSSL_malloc(1);
-    if (resp == NULL)
-        return SSL_TLSEXT_ERR_ALERT_FATAL;
     /*
      * For the purposes of testing we just send back a dummy OCSP response
      */
-    *resp = *(unsigned char *)arg;
-    if (!SSL_set_tlsext_status_ocsp_resp(s, resp, 1)) {
-        OPENSSL_free(resp);
+    sk_resp = (STACK_OF(OCSP_RESPONSE) *)arg;
+    if (!SSL_set_tlsext_status_ocsp_resp(s, sk_resp, 0)) {
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
+#endif    
 
     return SSL_TLSEXT_ERR_OK;
 }
 
 static int client_ocsp_cb(SSL *s, void *arg)
 {
-    const unsigned char *resp;
-    int len;
+#ifndef OPENSSL_NO_OCSP
+    int len, i;
+    STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
+    OCSP_RESPONSE *rsp;
 
-    len = SSL_get_tlsext_status_ocsp_resp(s, &resp);
-    if (len != 1 || *resp != dummy_ocsp_resp_good_val)
+
+    SSL_get_tlsext_status_ocsp_resp(s, &sk_resp);
+
+
+    if (sk_resp == NULL) {
+        BIO_puts(arg, "no response sent\n");
         return 0;
+    }
 
+    len = sk_OCSP_RESPONSE_num(sk_resp);
+
+    if (len != 1) {
+        return 0;
+    }
+
+    rsp = sk_OCSP_RESPONSE_value(sk_resp, 0);
+
+    i = OCSP_response_status(rsp);
+
+
+    if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL)
+        return 0;
+#endif
     return 1;
 }
+
 
 static int verify_reject_cb(X509_STORE_CTX *ctx, void *arg) {
     X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
@@ -493,6 +515,10 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     unsigned char *ticket_keys;
     size_t ticket_key_len;
 
+#ifndef OPENSSL_NO_OCSP
+    STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
+#endif
+
     if (!TEST_int_eq(SSL_CTX_set_max_send_fragment(server_ctx,
                                                    test->max_fragment_size), 1))
         goto err;
@@ -563,9 +589,17 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         SSL_CTX_set_tlsext_status_cb(client_ctx, client_ocsp_cb);
         SSL_CTX_set_tlsext_status_arg(client_ctx, NULL);
         SSL_CTX_set_tlsext_status_cb(server_ctx, server_ocsp_cb);
-        SSL_CTX_set_tlsext_status_arg(server_ctx,
-            ((extra->server.cert_status == SSL_TEST_CERT_STATUS_GOOD_RESPONSE)
-            ? &dummy_ocsp_resp_good_val : &dummy_ocsp_resp_bad_val));
+#ifndef OPENSSL_NO_OCSP
+        sk_resp = sk_OCSP_RESPONSE_new_null();
+        if (extra->server.cert_status == SSL_TEST_CERT_STATUS_GOOD_RESPONSE) {
+            dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, NULL);
+
+        } else {
+            dummy_ocsp_resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, NULL);
+        }
+        sk_OCSP_RESPONSE_insert(sk_resp, dummy_ocsp_resp, -1);
+        SSL_CTX_set_tlsext_status_arg(server_ctx, sk_resp);
+#endif        
     }
 
     /*

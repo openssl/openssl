@@ -469,8 +469,8 @@ static tlsextstatusctx tlscstatp = { -1 };
  * the OCSP certificate IDs and minimise the number of OCSP responses by caching
  * them until they were considered "expired".
  */
-static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
-                                        OCSP_RESPONSE **resp)
+static int get_ocsp_resp_from_responder_single(SSL *s, X509* x, tlsextstatusctx *srctx,
+                                               OCSP_RESPONSE **resp)
 {
     char *host = NULL, *port = NULL, *path = NULL;
     char *proxy = NULL, *no_proxy = NULL;
@@ -487,6 +487,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     STACK_OF(X509_EXTENSION) *exts;
     int ret = SSL_TLSEXT_ERR_NOACK;
     int i;
+    *resp = NULL;
 
     /* Build up OCSP query from server certificate */
     x = SSL_get_certificate(s);
@@ -586,6 +587,47 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     return ret;
 }
 
+static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
+                                        STACK_OF(OCSP_RESPONSE) **sk_resp)
+{
+    X509 *x = NULL;
+    int ret = SSL_TLSEXT_ERR_NOACK;
+    int i;
+    int len = 1;
+    STACK_OF(X509) *server_certs = NULL;
+    OCSP_RESPONSE *resp = NULL;
+
+    if (*sk_resp != NULL) {
+        sk_OCSP_RESPONSE_pop_free(*sk_resp, OCSP_RESPONSE_free);
+    }
+    *sk_resp = sk_OCSP_RESPONSE_new_null();
+
+    SSL_get0_chain_certs(s, &server_certs);
+    if (server_certs != NULL)
+        /* certificate chain is available */
+        len = sk_X509_num(server_certs);
+    else
+        /* certificate chain is not available, set len to 1 for server certificate */
+        len = 1;
+    for (i = -1; i < len-1; i++) {
+        if (i == -1) {
+            /* get OCSP response for server certificate first */
+            x = SSL_get_certificate(s);
+        } else {
+            /* for each certificate in chain (except root) get the OCSP response */
+            x = sk_X509_value(server_certs, i);
+        }
+
+        resp = NULL;
+        ret = get_ocsp_resp_from_responder_single(s, x, srctx, &resp);
+        if (resp != NULL && ret == SSL_TLSEXT_ERR_OK) {
+            sk_OCSP_RESPONSE_insert(*sk_resp, resp, -1);
+ 	    }
+    }
+
+    return SSL_TLSEXT_ERR_OK;
+}
+
 /*
  * Certificate Status callback. This is called when a client includes a
  * certificate status request extension. The response is either obtained from a
@@ -595,9 +637,9 @@ static int cert_status_cb(SSL *s, void *arg)
 {
     tlsextstatusctx *srctx = arg;
     OCSP_RESPONSE *resp = NULL;
-    unsigned char *rspder = NULL;
-    int rspderlen;
+    STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+    int i;
 
     if (srctx->verbose)
         BIO_puts(bio_err, "cert_status: callback called\n");
@@ -614,20 +656,25 @@ static int cert_status_cb(SSL *s, void *arg)
             BIO_puts(bio_err, "cert_status: Error reading OCSP response\n");
             goto err;
         }
+
+		sk_resp = sk_OCSP_RESPONSE_new_null();
+
+        sk_OCSP_RESPONSE_insert(sk_resp, resp, -1);
     } else {
-        ret = get_ocsp_resp_from_responder(s, srctx, &resp);
+        ret = get_ocsp_resp_from_responder(s, srctx, &sk_resp);
         if (ret != SSL_TLSEXT_ERR_OK)
             goto err;
     }
 
-    rspderlen = i2d_OCSP_RESPONSE(resp, &rspder);
-    if (rspderlen <= 0)
-        goto err;
-
-    SSL_set_tlsext_status_ocsp_resp(s, rspder, rspderlen);
+    SSL_set_tlsext_status_ocsp_resp(s, sk_resp, 0);
     if (srctx->verbose) {
         BIO_puts(bio_err, "cert_status: ocsp response sent:\n");
-        OCSP_RESPONSE_print(bio_err, resp, 2);
+        for (i=0; i<sk_OCSP_RESPONSE_num(sk_resp); i++) {
+            resp = sk_OCSP_RESPONSE_value(sk_resp, i);
+            if (resp != NULL) {
+                OCSP_RESPONSE_print(bio_err, resp, 2);
+            }
+        }
     }
 
     ret = SSL_TLSEXT_ERR_OK;
@@ -635,8 +682,6 @@ static int cert_status_cb(SSL *s, void *arg)
  err:
     if (ret != SSL_TLSEXT_ERR_OK)
         ERR_print_errors(bio_err);
-
-    OCSP_RESPONSE_free(resp);
 
     return ret;
 }
