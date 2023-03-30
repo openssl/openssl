@@ -13,7 +13,7 @@
 # include <process.h>
 # include <windows.h>
 
-static DWORD __stdcall thread_start_thunk(LPVOID vthread)
+static unsigned __stdcall thread_start_thunk(LPVOID vthread)
 {
     CRYPTO_THREAD *thread;
     CRYPTO_THREAD_RETVAL ret;
