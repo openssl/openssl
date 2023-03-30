@@ -1469,14 +1469,8 @@ int tls_parse_stoc_status_request(SSL_CONNECTION *s, PACKET *pkt,
     }
 
     if (SSL_CONNECTION_IS_TLS13(s)) {
-        /* We only know how to handle this if it's for the first Certificate in
-         * the chain. We ignore any other responses.
-         */
-        if (chainidx != 0)
-            return 1;
-
         /* SSLfatal() already called */
-        return tls_process_cert_status_body(s, pkt);
+        return tls_process_cert_status_body(s, chainidx, pkt);
     }
 
     /* Set flag to expect CertificateStatus message */
