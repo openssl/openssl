@@ -110,6 +110,8 @@ B<openssl> B<s_client>
 [B<-sess_in> I<filename>]
 [B<-serverinfo> I<types>]
 [B<-status>]
+[B<-ocsp_check>]
+[B<-ocsp_check_all>]
 [B<-alpn> I<protocols>]
 [B<-nextprotoneg> I<protocols>]
 [B<-ct>]
@@ -735,6 +737,17 @@ file.
 
 Sends a certificate status request to the server (OCSP stapling). The server
 response (if any) is printed out.
+
+=item B<-ocsp_check>
+
+Checks end entity certificate validity with a OCSP response provided in the
+TLS handshake (OCSP stapling). If no valid OCSP response can be found no error
+occurs and the client should attempt to check to validity with a CRL.
+
+=item B<-ocsp_check_all>
+
+Checks the validity of B<all> certificates in the chain by attempting
+to look up valid OCSP responses.
 
 =item B<-alpn> I<protocols>, B<-nextprotoneg> I<protocols>
 

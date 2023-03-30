@@ -27,6 +27,7 @@
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include "internal/cryptlib.h"
+#include <openssl/ocsp.h>
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
                                                              PACKET *pkt);
@@ -2862,40 +2863,64 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
  * In TLSv1.3 this is called from the extensions code, otherwise it is used to
  * parse a separate message. Returns 1 on success or 0 on failure
  */
-int tls_process_cert_status_body(SSL_CONNECTION *s, PACKET *pkt)
+int tls_process_cert_status_body(SSL_CONNECTION *s, size_t chainidx, PACKET *pkt)
 {
-    size_t resplen;
     unsigned int type;
+#ifndef OPENSSL_NO_OCSP
+    size_t resplen;
+    unsigned char* respder;
+    OCSP_RESPONSE *resp = NULL;
+    const unsigned char *p;
+#endif
 
     if (!PACKET_get_1(pkt, &type)
         || type != TLSEXT_STATUSTYPE_ocsp) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_UNSUPPORTED_STATUS_TYPE);
         return 0;
     }
-    if (!PACKET_get_net_3_len(pkt, &resplen)
-        || PACKET_remaining(pkt) != resplen) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-        return 0;
+    
+#ifndef OPENSSL_NO_OCSP
+    if(s->ext.ocsp.resp == NULL) {
+        s->ext.ocsp.resp = sk_OCSP_RESPONSE_new_null();
     }
-    s->ext.ocsp.resp = OPENSSL_malloc(resplen);
-    if (s->ext.ocsp.resp == NULL) {
-        s->ext.ocsp.resp_len = 0;
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
-        return 0;
+    if (!SSL_CONNECTION_IS_TLS13(s) && type == TLSEXT_STATUSTYPE_ocsp) {
+        sk_OCSP_RESPONSE_pop_free(s->ext.ocsp.resp, OCSP_RESPONSE_free);
+        s->ext.ocsp.resp = sk_OCSP_RESPONSE_new_null();
     }
-    s->ext.ocsp.resp_len = resplen;
-    if (!PACKET_copy_bytes(pkt, s->ext.ocsp.resp, resplen)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-        return 0;
-    }
+    if (SSL_CONNECTION_IS_TLS13(s) || type == TLSEXT_STATUSTYPE_ocsp) {
+        if(PACKET_remaining(pkt) > 0) {
+            if (!PACKET_get_net_3_len(pkt, &resplen)
+                || PACKET_remaining(pkt) != resplen) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+                return 0;
+            }
 
+            if (resplen > 0) {
+                respder = OPENSSL_malloc(resplen);
+                if (!PACKET_copy_bytes(pkt, respder, resplen)) {
+                    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+                    return 0;
+                }
+                p = respder;
+                resp = d2i_OCSP_RESPONSE(NULL, &p, resplen);
+                if (resp == NULL) {            
+                    SSLfatal(s, TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE, 
+                    SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE);
+                    return 0;
+                }
+                sk_OCSP_RESPONSE_insert(s->ext.ocsp.resp, resp, chainidx);
+                OPENSSL_free(respder);
+            }
+        }
+    }
+#endif
     return 1;
 }
 
 
 MSG_PROCESS_RETURN tls_process_cert_status(SSL_CONNECTION *s, PACKET *pkt)
 {
-    if (!tls_process_cert_status_body(s, pkt)) {
+    if (!tls_process_cert_status_body(s, 0, pkt)) {
         /* SSLfatal() already called */
         return MSG_PROCESS_ERROR;
     }

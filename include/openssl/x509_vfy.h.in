@@ -29,6 +29,7 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #  include <openssl/x509.h>
 # endif
 
+# include <openssl/ocsp.h>
 # include <openssl/opensslconf.h>
 # include <openssl/lhash.h>
 # include <openssl/bio.h>
@@ -316,6 +317,13 @@ X509_LOOKUP_ctrl_ex((x), X509_L_ADD_STORE, (name), 0, NULL,           \
 # define X509_V_ERR_EC_KEY_EXPLICIT_PARAMS               94
 # define X509_V_ERR_RPK_UNTRUSTED                        95
 
+/* additional OCSP status errors */
+# define X509_V_ERR_OCSP_INVALID                         96
+# define X509_V_ERR_OCSP_SIGNATURE_FAILURE               97
+# define X509_V_ERR_OCSP_NOT_YET_VALID                   98
+# define X509_V_ERR_OCSP_HAS_EXPIRED                     99
+# define X509_V_ERR_OCSP_NO_RESPONSE                    100
+
 /* Certificate verify flags */
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define X509_V_FLAG_CB_ISSUER_CHECK             0x0   /* Deprecated */
@@ -366,6 +374,11 @@ X509_LOOKUP_ctrl_ex((x), X509_L_ADD_STORE, (name), 0, NULL,           \
 # define X509_V_FLAG_NO_ALT_CHAINS               0x100000
 /* Do not check certificate/CRL validity against current time */
 # define X509_V_FLAG_NO_CHECK_TIME               0x200000
+
+/* Verify OCSP stapling response for server certificate */
+# define X509_V_FLAG_OCSP_CHECK                   0x400000
+/* Verify OCSP stapling responses for whole chain */
+# define X509_V_FLAG_OCSP_CHECK_ALL               0x800000
 
 # define X509_VP_FLAG_DEFAULT                    0x1
 # define X509_VP_FLAG_OVERWRITE                  0x2
@@ -675,6 +688,9 @@ void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *target);
 void X509_STORE_CTX_set0_rpk(X509_STORE_CTX *ctx, EVP_PKEY *target);
 void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *c, STACK_OF(X509) *sk);
 void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk);
+#ifndef OPENSSL_NO_OCSP
+void X509_STORE_CTX_set_ocsp_resp(X509_STORE_CTX *c, STACK_OF(OCSP_RESPONSE) *sk);
+#endif
 int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose);
 int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust);
 int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,

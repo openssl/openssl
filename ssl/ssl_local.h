@@ -27,6 +27,7 @@
 # include <openssl/async.h>
 # include <openssl/symhacks.h>
 # include <openssl/ct.h>
+# include <openssl/ocsp.h>
 # include "internal/recordmethod.h"
 # include "internal/statem.h"
 # include "internal/packet.h"
@@ -1591,8 +1592,7 @@ struct ssl_connection_st {
             STACK_OF(OCSP_RESPID) *ids;
             X509_EXTENSIONS *exts;
             /* OCSP response received or to be sent */
-            unsigned char *resp;
-            size_t resp_len;
+            STACK_OF(OCSP_RESPONSE) *resp;
         } ocsp;
 
         /* RFC4507 session ticket expected to be received or sent */
@@ -2523,6 +2523,7 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg);
 
 __owur int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk);
 __owur int ssl_verify_rpk(SSL_CONNECTION *s, EVP_PKEY *rpk);
+__owur int ssl_verify_ocsp(SSL *s, STACK_OF(X509) *sk);
 __owur int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
                                    int ref);

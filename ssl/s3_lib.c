@@ -20,6 +20,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
+#include <openssl/ocsp.h>
 
 #define TLS13_NUM_CIPHERS       OSSL_NELEM(tls13_ciphers)
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
@@ -3574,16 +3575,11 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP:
-        *(unsigned char **)parg = sc->ext.ocsp.resp;
-        if (sc->ext.ocsp.resp_len == 0
-                || sc->ext.ocsp.resp_len > LONG_MAX)
-            return -1;
-        return (long)sc->ext.ocsp.resp_len;
+        *(STACK_OF(OCSP_RESPONSE) **)parg = sc->ext.ocsp.resp;
+        return 1;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP:
-        OPENSSL_free(sc->ext.ocsp.resp);
-        sc->ext.ocsp.resp = parg;
-        sc->ext.ocsp.resp_len = larg;
+        sc->ext.ocsp.resp = (STACK_OF(OCSP_RESPONSE) *)parg;
         ret = 1;
         break;
 
