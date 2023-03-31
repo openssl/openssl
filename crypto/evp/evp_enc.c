@@ -1082,6 +1082,11 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 
     switch (type) {
     case EVP_CTRL_SET_KEY_LENGTH:
+        if (arg < 0)
+            return 0;
+        if (ctx->key_len == arg)
+            /* Skip calling into provider if unchanged. */
+            return 1;
         params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &sz);
         ctx->key_len = -1;
         break;
@@ -1107,6 +1112,9 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
     case EVP_CTRL_AEAD_SET_IVLEN:
         if (arg < 0)
             return 0;
+        if (ctx->iv_len == arg)
+            /* Skip calling into provider if unchanged. */
+            return 1;
         params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &sz);
         ctx->iv_len = -1;
         break;
