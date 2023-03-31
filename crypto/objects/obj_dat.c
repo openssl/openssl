@@ -65,9 +65,6 @@ static ossl_inline void objs_free_locks(void)
 
 DEFINE_RUN_ONCE_STATIC(obj_lock_initialise)
 {
-    /* Make sure we've loaded config before checking for any "added" objects */
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
-
     ossl_obj_lock = CRYPTO_THREAD_lock_new();
     if (ossl_obj_lock == NULL)
         return 0;
@@ -84,6 +81,8 @@ DEFINE_RUN_ONCE_STATIC(obj_lock_initialise)
 
 static ossl_inline int ossl_init_added_lock(void)
 {
+    /* Make sure we've loaded config before checking for any "added" objects */
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
     return RUN_ONCE(&ossl_obj_lock_init, obj_lock_initialise);
 }
 
