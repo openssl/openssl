@@ -10910,6 +10910,14 @@ static int test_version(int idx)
         return 1;
     }
 
+    if (is_fips
+            && (version == SSL3_VERSION
+                || version == TLS1_VERSION
+                || version == DTLS1_VERSION)) {
+        TEST_skip("Protocol version not supported with FIPS");
+        return 1;
+    }
+
 #if !defined(OPENSSL_NO_DTLS)
     if (version == DTLS1_VERSION || version == DTLS1_2_VERSION) {
         servmeth = DTLS_server_method();
