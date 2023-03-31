@@ -979,7 +979,7 @@ static void *evp_md_from_algorithm(int name_id,
     int fncnt = 0;
 
     /* EVP_MD_fetch() will set the legacy NID if available */
-    if ((md = evp_md_new()) == NULL) {
+    if (fns == NULL || ((md = evp_md_new()) == NULL)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         return NULL;
     }

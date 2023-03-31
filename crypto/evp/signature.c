@@ -48,7 +48,7 @@ static void *evp_signature_from_algorithm(int name_id,
     int digsignfncnt = 0, digverifyfncnt = 0;
     int gparamfncnt = 0, sparamfncnt = 0, gmdparamfncnt = 0, smdparamfncnt = 0;
 
-    if ((signature = evp_signature_new(prov)) == NULL) {
+    if (fns == NULL || ((signature = evp_signature_new(prov)) == NULL)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         goto err;
     }

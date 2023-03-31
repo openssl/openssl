@@ -206,7 +206,7 @@ static void *encoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
     const OSSL_DISPATCH *fns = algodef->implementation;
     OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
 
-    if ((encoder = ossl_encoder_new()) == NULL)
+    if (fns == NULL || ((encoder = ossl_encoder_new()) == NULL))
         return NULL;
     encoder->base.id = id;
     if ((encoder->base.name = ossl_algorithm_get1_first_name(algodef)) == NULL) {

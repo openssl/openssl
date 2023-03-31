@@ -123,7 +123,7 @@ static void *evp_rand_from_algorithm(int name_id,
     int fnzeroizecnt = 0;
 #endif
 
-    if ((rand = evp_rand_new()) == NULL) {
+    if (fns == NULL || ((rand = evp_rand_new()) == NULL)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         return NULL;
     }

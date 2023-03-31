@@ -45,7 +45,7 @@ static void *keymgmt_from_algorithm(int name_id,
     int importfncnt = 0, exportfncnt = 0;
     int importtypesfncnt = 0, exporttypesfncnt = 0;
 
-    if ((keymgmt = keymgmt_new()) == NULL)
+    if (fns == NULL || ((keymgmt = keymgmt_new()) == NULL))
         return NULL;
 
     keymgmt->name_id = name_id;

@@ -1525,7 +1525,7 @@ static void *evp_cipher_from_algorithm(const int name_id,
     EVP_CIPHER *cipher = NULL;
     int fnciphcnt = 0, fnctxcnt = 0;
 
-    if ((cipher = evp_cipher_new()) == NULL) {
+    if (fns == NULL || ((cipher = evp_cipher_new()) == NULL)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         return NULL;
     }

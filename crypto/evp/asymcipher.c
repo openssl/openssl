@@ -328,7 +328,7 @@ static void *evp_asym_cipher_from_algorithm(int name_id,
     int ctxfncnt = 0, encfncnt = 0, decfncnt = 0;
     int gparamfncnt = 0, sparamfncnt = 0;
 
-    if ((cipher = evp_asym_cipher_new(prov)) == NULL) {
+    if (fns == NULL || ((cipher = evp_asym_cipher_new(prov)) == NULL)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         goto err;
     }

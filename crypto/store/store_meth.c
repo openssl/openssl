@@ -179,7 +179,7 @@ static void *loader_from_algorithm(int scheme_id, const OSSL_ALGORITHM *algodef,
     OSSL_STORE_LOADER *loader = NULL;
     const OSSL_DISPATCH *fns = algodef->implementation;
 
-    if ((loader = new_loader(prov)) == NULL)
+    if (fns == NULL || ((loader = new_loader(prov)) == NULL))
         return NULL;
     loader->scheme_id = scheme_id;
     loader->propdef = algodef->property_definition;

@@ -46,7 +46,7 @@ static void *evp_keyexch_from_algorithm(int name_id,
     EVP_KEYEXCH *exchange = NULL;
     int fncnt = 0, sparamfncnt = 0, gparamfncnt = 0;
 
-    if ((exchange = evp_keyexch_new(prov)) == NULL) {
+    if (fns == NULL || ((exchange = evp_keyexch_new(prov)) == NULL)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         goto err;
     }

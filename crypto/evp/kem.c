@@ -299,7 +299,7 @@ static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
     int ctxfncnt = 0, encfncnt = 0, decfncnt = 0;
     int gparamfncnt = 0, sparamfncnt = 0;
 
-    if ((kem = evp_kem_new(prov)) == NULL) {
+    if (fns == NULL || ((kem = evp_kem_new(prov)) == NULL)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         goto err;
     }

@@ -206,7 +206,7 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
     const OSSL_DISPATCH *fns = algodef->implementation;
     OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
 
-    if ((decoder = ossl_decoder_new()) == NULL)
+    if (fns == NULL || ((decoder = ossl_decoder_new()) == NULL))
         return NULL;
     decoder->base.id = id;
     if ((decoder->base.name = ossl_algorithm_get1_first_name(algodef)) == NULL) {

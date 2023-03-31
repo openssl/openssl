@@ -65,7 +65,7 @@ static void *evp_mac_from_algorithm(int name_id,
     EVP_MAC *mac = NULL;
     int fnmaccnt = 0, fnctxcnt = 0;
 
-    if ((mac = evp_mac_new()) == NULL) {
+    if (fns == NULL || ((mac = evp_mac_new()) == NULL)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         return NULL;
     }
