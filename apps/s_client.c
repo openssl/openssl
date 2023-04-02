@@ -3827,18 +3827,15 @@ static int user_data_process(struct user_data_st *user_data, size_t *len,
         char *cmd_start = buf_start;
 
         cmd_start[outlen] = '\0';
-        do {
-            cmd_start = strstr(cmd_start, "{");
-            if (cmd_start == buf_start && *(cmd_start + 1) == '{') {
-                /* The "{" is escaped, so skip it */
-                cmd_start += 2;
-                buf_start++;
-                user_data->bufoff++;
-                user_data->buflen--;
-                outlen--;
-                continue;
-            }
-        } while(0);
+        cmd_start = strstr(cmd_start, "{");
+        if (cmd_start == buf_start && *(cmd_start + 1) == '{') {
+            /* The "{" is escaped, so skip it */
+            cmd_start += 2;
+            buf_start++;
+            user_data->bufoff++;
+            user_data->buflen--;
+            outlen--;
+        }
 
         if (cmd_start == buf_start) {
             /* Command detected */
