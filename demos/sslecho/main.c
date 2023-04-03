@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <signal.h>
 
 static const int server_port = 4433;
 
@@ -151,6 +152,9 @@ int main(int argc, char **argv)
     struct sockaddr_in addr;
     unsigned int addr_len = sizeof(addr);
 
+	/* ignore SIGPIPE so that server can continue running when client pipe closes abruptly */
+	sigaction(SIGPIPE, &(struct sigaction){.sa_handler=SIG_IGN}, NULL); 
+
     /* Splash */
     printf("\nsslecho : Simple Echo Client/Server (OpenSSL 3.0.1-dev) : %s : %s\n\n", __DATE__,
     __TIME__);
@@ -217,8 +221,10 @@ int main(int argc, char **argv)
                     /* Get message from client; will fail if client closes connection */
                     if ((rxlen = SSL_read(ssl, rxbuf, rxcap)) <= 0) {
                         if (rxlen == 0) {
-                            printf("Client closed connection\n");
-                        }
+                            printf("Client closed connection \n");
+                        } else {
+							printf("SSL_read returned %d\n", rxlen);
+						}
                         ERR_print_errors_fp(stderr);
                         break;
                     }
