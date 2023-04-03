@@ -153,7 +153,7 @@ int main(int argc, char **argv)
     unsigned int addr_len = sizeof(addr);
 
     /* ignore SIGPIPE so that server can continue running when client pipe closes abruptly */
-    sigaction(SIGPIPE, &(struct sigaction){.sa_handler=SIG_IGN}, NULL); 
+    signal(SIGPIPE, SIG_IGN);
 
     /* Splash */
     printf("\nsslecho : Simple Echo Client/Server (OpenSSL 3.0.1-dev) : %s : %s\n\n", __DATE__,
