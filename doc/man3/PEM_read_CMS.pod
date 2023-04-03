@@ -122,8 +122,7 @@ B<PEM_read_I<TYPE>>() and B<PEM_read_bio_I<TYPE>>() return a pointer to an
 allocated object, which should be released by calling B<I<TYPE>_free>(), or
 NULL on error.
 
-B<PEM_write_I<TYPE>>() and B<PEM_write_bio_I<TYPE>>() return the number of bytes
-written or zero on error.
+B<PEM_write_I<TYPE>>() and B<PEM_write_bio_I<TYPE>>() return 1 for success or 0 for failure.
 
 =head1 SEE ALSO
 
