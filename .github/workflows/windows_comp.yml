@@ -23,6 +23,8 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: ilammy/setup-nasm@v1
     - name: prepare the build directory
@@ -48,6 +50,8 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: ilammy/setup-nasm@v1
     - name: prepare the build directory

@@ -32,6 +32,8 @@ jobs:
         apk --no-cache add build-base perl linux-headers ${{ matrix.cc }}
 
     - uses: actions/checkout@v3
+      with:
+        submodules: true
 
     - name: config
       run: |
@@ -65,6 +67,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: |
         CC=${{ matrix.zoo.cc }} ./config --banner=Configured \
@@ -86,6 +90,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: ilammy/setup-nasm@v1
     - uses: shogo82148/actions-setup-perl@v1

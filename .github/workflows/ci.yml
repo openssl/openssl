@@ -32,6 +32,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
+        submodules: true
     - name: config
       run: ./config --banner=Configured --strict-warnings enable-fips enable-quic && perl configdata.pm --dump
     - name: make build_generated
@@ -45,6 +46,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config --banner=Configured --strict-warnings enable-fips enable-quic && perl configdata.pm --dump
     - name: make build_generated
@@ -74,6 +77,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: localegen
       run: sudo locale-gen tr_TR.UTF-8
     - name: config
@@ -87,6 +92,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: CC=clang ./config --banner=Configured no-fips --strict-warnings && perl configdata.pm --dump
     - name: make
@@ -98,6 +105,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config --banner=Configured --strict-warnings no-bulk no-pic no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
     - name: make
@@ -109,6 +118,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config --banner=Configured --strict-warnings no-deprecated enable-fips enable-quic && perl configdata.pm --dump
     - name: make
@@ -123,6 +134,8 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config --banner=Configured --strict-warnings no-shared no-fips && perl configdata.pm --dump
     - name: make
@@ -134,6 +147,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config --banner=Configured --debug enable-asan enable-ubsan no-cached-fetch no-fips no-dtls no-tls1 no-tls1-method no-tls1_1 no-tls1_1-method no-async && perl configdata.pm --dump
     - name: make
@@ -145,6 +160,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips enable-quic -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION && perl configdata.pm --dump
     - name: make
@@ -156,6 +173,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       # --debug -O1 is to produce a debug build that runs in a reasonable amount of time
       run: CC=clang ./config --banner=Configured --debug -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips enable-quic && perl configdata.pm --dump
@@ -168,6 +187,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: CC=clang ./config --banner=Configured no-fips --strict-warnings -fsanitize=thread && perl configdata.pm --dump
     - name: make
@@ -179,6 +200,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: modprobe tls
       run: sudo modprobe tls
     - name: config
@@ -192,6 +215,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: modprobe tls
       run: sudo modprobe tls
     - name: config
@@ -210,6 +235,8 @@ jobs:
         sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install brotli libbrotli1 libbrotli-dev
     - name: checkout openssl
       uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config enable-comp enable-brotli enable-brotli-dynamic && perl configdata.pm --dump
     - name: make
@@ -226,6 +253,8 @@ jobs:
         sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install zstd libzstd1 libzstd-dev
     - name: checkout openssl
       uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config enable-comp enable-zstd enable-zstd-dynamic && perl configdata.pm --dump
     - name: make
@@ -243,6 +272,8 @@ jobs:
         sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install zstd libzstd1 libzstd-dev
     - name: checkout openssl
       uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config enable-comp enable-brotli enable-brotli-dynamic enable-zstd enable-zstd-dynamic && perl configdata.pm --dump
     - name: make
@@ -259,6 +290,8 @@ jobs:
         sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install brotli libbrotli1 libbrotli-dev
     - name: checkout openssl
       uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-brotli -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -DPEDANTIC && perl configdata.pm --dump
     - name: make
@@ -275,6 +308,8 @@ jobs:
         sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install zstd libzstd1 libzstd-dev
     - name: checkout openssl
       uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config --banner=Configured --debug enable-asan enable-ubsan enable-comp enable-zstd -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -DPEDANTIC && perl configdata.pm --dump
     - name: make
@@ -286,6 +321,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config --banner=Configured --strict-warnings no-legacy enable-fips enable-quic && perl configdata.pm --dump
     - name: make
@@ -297,6 +334,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config --banner=Configured -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-fips && perl configdata.pm --dump
     - name: make
@@ -311,6 +350,8 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: CC=gcc ./config --banner=Configured enable-tfo enable-quic --strict-warnings && perl configdata.pm --dump
     - name: make
@@ -322,6 +363,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: config
       run: ./config --banner=Configured no-asm no-makedepend enable-buildtest-c++ enable-fips --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
     - name: make
@@ -336,6 +379,8 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - name: extra preparations
       run: |
         mkdir ./build

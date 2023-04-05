@@ -28,6 +28,8 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: ${{ matrix.platform.arch }}
@@ -64,6 +66,8 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: shogo82148/actions-setup-perl@v1
     - name: prepare the build directory
@@ -88,6 +92,8 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
     - uses: ilammy/msvc-dev-cmd@v1
     - uses: shogo82148/actions-setup-perl@v1
     - name: prepare the build directory
