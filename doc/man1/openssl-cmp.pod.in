@@ -24,7 +24,6 @@ Certificate enrollment options:
 [B<-newkey> I<filename>|I<uri>]
 [B<-newkeypass> I<arg>]
 [B<-subject> I<name>]
-[B<-issuer> I<name>]
 [B<-days> I<number>]
 [B<-reqexts> I<name>]
 [B<-sans> I<spec>]
@@ -43,6 +42,8 @@ Certificate enrollment options:
 Certificate enrollment and revocation options:
 
 [B<-oldcert> I<filename>|I<uri>]
+[B<-issuer> I<name>]
+[B<-serial> I<number>]
 [B<-revreason> I<number>]
 
 Message transfer options:
@@ -292,18 +293,6 @@ Example:
 
 C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
-=item B<-issuer> I<name>
-
-X.509 Distinguished Name (DN) use as issuer field
-in the requested certificate template in IR/CR/KUR messages.
-If the NULL-DN (C</>) is given then no issuer is placed in the template.
-
-If provided and neither B<-recipient> nor B<-srvcert> is given,
-the issuer DN is used as fallback recipient of outgoing CMP messages.
-
-The argument must be formatted as I</type0=value0/type1=value1/type2=...>.
-For details see the description of the B<-subject> option.
-
 =item B<-days> I<number>
 
 Number of days the new certificate is requested to be valid for, counting from
@@ -421,6 +410,7 @@ The certificate to be updated (i.e., renewed or re-keyed) in Key Update Request
 For KUR the certificate to be updated defaults to B<-cert>,
 and the resulting certificate is called I<reference certificate>.
 For RR the certificate to be revoked can also be specified using B<-csr>.
+B<-oldcert> and B<-csr> is ignored if B<-issuer> and B<-serial> is provided.
 
 The reference certificate, if any, is also used for
 deriving default subject DN and Subject Alternative Names and the
@@ -429,6 +419,23 @@ Its public key is used as a fallback in the template of certification requests.
 Its subject is used as sender of outgoing messages if B<-cert> is not given.
 Its issuer is used as default recipient in CMP message headers
 if neither B<-recipient>, B<-srvcert>, nor B<-issuer> is given.
+
+=item B<-issuer> I<name>
+
+X.509 Distinguished Name (DN) use as issuer field
+in the requested certificate template in IR/CR/KUR/RR messages.
+If the NULL-DN (C</>) is given then no issuer is placed in the template.
+
+If provided and neither B<-recipient> nor B<-srvcert> is given,
+the issuer DN is used as fallback recipient of outgoing CMP messages.
+
+The argument must be formatted as I</type0=value0/type1=value1/type2=...>.
+For details see the description of the B<-subject> option.
+
+=item B<-serial> I<number>
+
+Specify the Serial number of certificate to be revoked in revocation request.
+The serial number can be decimal or hex (if preceded by C<0x>)
 
 =item B<-revreason> I<number>
 

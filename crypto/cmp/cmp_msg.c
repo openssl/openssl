@@ -518,27 +518,38 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
 OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx)
 {
     OSSL_CMP_MSG *msg = NULL;
+    const X509_NAME *issuer = NULL;
+    const X509_NAME *subject = NULL;
+    const ASN1_INTEGER *serialNumber = NULL;
+    EVP_PKEY *pubkey = NULL;
     OSSL_CMP_REVDETAILS *rd;
     int ret;
 
-    if (!ossl_assert(ctx != NULL && (ctx->oldCert != NULL
-                                     || ctx->p10CSR != NULL)))
+    if (!ossl_assert(ctx != NULL
+                     && (ctx->oldCert != NULL || ctx->p10CSR != NULL
+                         || (ctx->serialNumber != NULL && ctx->issuer != NULL))))
         return NULL;
 
     if ((rd = OSSL_CMP_REVDETAILS_new()) == NULL)
         goto err;
 
+    if (ctx->serialNumber != NULL && ctx->issuer != NULL) {
+        issuer = ctx->issuer;
+        serialNumber = ctx->serialNumber;
+    } else if (ctx->oldCert != NULL) {
+        issuer = X509_get_issuer_name(ctx->oldCert);
+        serialNumber = X509_get0_serialNumber(ctx->oldCert);
+    } else if (ctx->p10CSR != NULL) {
+        pubkey = X509_REQ_get0_pubkey(ctx->p10CSR);
+        subject = X509_REQ_get_subject_name(ctx->p10CSR);
+    }
+    else {
+        goto err;
+    }
+
     /* Fill the template from the contents of the certificate to be revoked */
-    ret = ctx->oldCert != NULL
-        ? OSSL_CRMF_CERTTEMPLATE_fill(rd->certDetails,
-                                      NULL /* pubkey would be redundant */,
-                                      NULL /* subject would be redundant */,
-                                      X509_get_issuer_name(ctx->oldCert),
-                                      X509_get0_serialNumber(ctx->oldCert))
-        : OSSL_CRMF_CERTTEMPLATE_fill(rd->certDetails,
-                                      X509_REQ_get0_pubkey(ctx->p10CSR),
-                                      X509_REQ_get_subject_name(ctx->p10CSR),
-                                      NULL, NULL);
+    ret = OSSL_CRMF_CERTTEMPLATE_fill(rd->certDetails, pubkey, subject,
+                                      issuer, serialNumber);
     if (!ret)
         goto err;
 

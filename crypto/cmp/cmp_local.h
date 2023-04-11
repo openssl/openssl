@@ -103,7 +103,8 @@ struct ossl_cmp_ctx_st {
     /* certificate template */
     EVP_PKEY *newPkey; /* explicit new private/public key for cert enrollment */
     int newPkey_priv; /* flag indicating if newPkey contains private key */
-    X509_NAME *issuer; /* issuer name to used in cert template */
+    X509_NAME *issuer; /* issuer name to used in cert template, also in rr */
+    ASN1_INTEGER *serialNumber; /* certificate serial number to use in rr */
     int days; /* Number of days new certificates are asked to be valid for */
     X509_NAME *subjectName; /* subject name to be used in cert template */
     STACK_OF(GENERAL_NAME) *subjectAltNames; /* to add to the cert template */

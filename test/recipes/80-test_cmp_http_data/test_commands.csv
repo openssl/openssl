@@ -33,15 +33,23 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 1, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
 1,revreason AACompromise, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,10
 1, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
-1, --- use csr for revocation ----, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,, -revreason,0, -csr,csr.pem
-1, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
-0,without oldcert, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,,BLANK,
-0,oldcert file nonexistent, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,idontexist,BLANK,
-0,empty oldcert file, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,empty.txt,BLANK,
-0,oldcert and key do not match, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,trusted.crt, -revreason,0
 0,revreason 11 (invalid), -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,11
 0,revreason string, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,abc
 0,revreason out of integer range, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,010000000000000000000
+1,use csr for revocation, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,, -revreason,0, -csr,csr.pem
+1, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+1,use issuer and serial for revocation, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,, -revreason,-1,BLANK,,, -expect_sender,"""",-issuer,/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=subinterCA,-serial,0xA44DB0329A714A8D
+1, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+0,use issuer but no serial for revocation, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,, -revreason,-1,BLANK,,, -expect_sender,"""",-issuer,/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=subinterCA,BLANK,
+0,use serial but no issuer for revocation, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,, -revreason,-1,BLANK,,, -expect_sender,"""", -issuer, """", -serial, 0xA44DB0329A714A8D
+0,wrong issuer for revocation, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,, -revreason,-1,BLANK,,, -expect_sender,"""", -issuer, /C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=wrongCA, -serial, 0xA44DB0329A714A8D
+0,bad issuer DN for revocation, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,, -revreason,-1,BLANK,,, -expect_sender,"""", -issuer, "'XYZ'", -serial, 0xA44DB0329A714A8D
+0,wrong serial for revocation, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,, -revreason,-1,BLANK,,, -expect_sender,"""", -issuer, /C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=subinterCA, -serial, 0xA44DB0329A714A00
+0,bad serial for revocation, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,, -revreason,-1,BLANK,,, -expect_sender,"""", -issuer, /C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=subinterCA, -serial, xyz
+0,rr without oldcert/csr/issuer/serial, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+0,rr with oldcert file nonexistent, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,idontexist,BLANK,
+0,rr with empty oldcert file, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,empty.txt,BLANK,
+0,rr where oldcert and key do not match, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,trusted.crt, -revreason,0
 ,,,,,,,,,,,,,,,,,
 1,ir + infotype, -section,, -cmd,ir,,BLANK,,, -infotype,signKeyPairTypes,,BLANK,,BLANK,
 1,genm without -infotype, -section,, -cmd,genm,,BLANK,,, BLANK,,,BLANK,,BLANK,

@@ -776,7 +776,8 @@ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
         return 0;
     }
     ctx->status = OSSL_CMP_PKISTATUS_request;
-    if (ctx->oldCert == NULL && ctx->p10CSR == NULL) {
+    if (ctx->oldCert == NULL && ctx->p10CSR == NULL
+        && (ctx->serialNumber == NULL || ctx->issuer == NULL)) {
         ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_REFERENCE_CERT);
         return 0;
     }
