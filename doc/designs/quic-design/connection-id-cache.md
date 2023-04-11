@@ -177,12 +177,12 @@ QUIC_ROUTE_TABLE *ossl_quic_route_get_route_table(const QUIC_ROUTE *route);
 /*
  * Extract the sequence number from a route
  */
-uint64_t ossl_quic_route_get_sequence_number(const QUIC_ROUTE *route)
+uint64_t ossl_quic_route_get_sequence_number(const QUIC_ROUTE *route);
 
 /*
  * Query if a route has been retired or not
  */
-int ossl_quic_route_is_retired(const QUIC_ROUTE *route)
+int ossl_quic_route_is_retired(const QUIC_ROUTE *route);
 ```
 
 ### Route update
