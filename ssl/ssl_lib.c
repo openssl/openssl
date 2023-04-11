@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -712,13 +712,16 @@ int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, const SSL_METHOD *method, int type)
     if (ssl->lock == NULL)
         return 0;
 
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, ssl, &ssl->ex_data)) {
+        CRYPTO_THREAD_lock_free(ssl->lock);
+        ssl->lock = NULL;
+        return 0;
+    }
+
     SSL_CTX_up_ref(ctx);
     ssl->ctx = ctx;
 
     ssl->defltmeth = ssl->method = method;
-
-    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, ssl, &ssl->ex_data))
-        return 0;
 
     return 1;
 }
@@ -736,6 +739,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
     if (!ossl_ssl_init(ssl, ctx, method, SSL_TYPE_SSL_CONNECTION)) {
         OPENSSL_free(s);
         s = NULL;
+        ssl = NULL;
         goto sslerr;
     }
 
@@ -879,6 +883,20 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
 #ifndef OPENSSL_NO_COMP_ALG
     memcpy(s->cert_comp_prefs, ctx->cert_comp_prefs, sizeof(s->cert_comp_prefs));
 #endif
+    if (ctx->client_cert_type != NULL) {
+        s->client_cert_type = OPENSSL_memdup(ctx->client_cert_type,
+                                             ctx->client_cert_type_len);
+        if (s->client_cert_type == NULL)
+            goto sslerr;
+        s->client_cert_type_len = ctx->client_cert_type_len;
+    }
+    if (ctx->server_cert_type != NULL) {
+        s->server_cert_type = OPENSSL_memdup(ctx->server_cert_type,
+                                             ctx->server_cert_type_len);
+        if (s->server_cert_type == NULL)
+            goto sslerr;
+        s->server_cert_type_len = ctx->server_cert_type_len;
+    }
 
 #ifndef OPENSSL_NO_CT
     if (!SSL_set_ct_validation_callback(ssl, ctx->ct_validation_callback,
@@ -886,6 +904,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, const SSL_METHOD *method)
         goto sslerr;
 #endif
 
+    s->ssl_pkey_num = SSL_PKEY_NUM + ctx->sigalg_list_len;
     return ssl;
  cerr:
     ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
@@ -909,10 +928,39 @@ int SSL_is_dtls(const SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
+#ifndef OPENSSL_NO_QUIC
+    if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_STREAM)
+        return 0;
+#endif
+
     if (sc == NULL)
         return 0;
 
     return SSL_CONNECTION_IS_DTLS(sc) ? 1 : 0;
+}
+
+int SSL_is_tls(const SSL *s)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+#ifndef OPENSSL_NO_QUIC
+    if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_STREAM)
+        return 0;
+#endif
+
+    if (sc == NULL)
+        return 0;
+
+    return SSL_CONNECTION_IS_DTLS(sc) ? 0 : 1;
+}
+
+int SSL_is_quic(const SSL *s)
+{
+#ifndef OPENSSL_NO_QUIC
+    if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_STREAM)
+        return 1;
+#endif
+    return 0;
 }
 
 int SSL_up_ref(SSL *s)
@@ -1403,6 +1451,9 @@ void ossl_ssl_connection_free(SSL *ssl)
     sk_X509_NAME_pop_free(s->ca_names, X509_NAME_free);
     sk_X509_NAME_pop_free(s->client_ca_names, X509_NAME_free);
 
+    OPENSSL_free(s->client_cert_type);
+    OPENSSL_free(s->server_cert_type);
+
     OSSL_STACK_OF_X509_free(s->verified_chain);
 
     if (ssl->method != NULL)
@@ -1428,6 +1479,7 @@ void ossl_ssl_connection_free(SSL *ssl)
     s->wbio = NULL;
     BIO_free_all(s->rbio);
     s->rbio = NULL;
+    OPENSSL_free(s->s3.tmp.valid_flags);
 }
 
 void SSL_set0_rbio(SSL *s, BIO *rbio)
@@ -1823,7 +1875,16 @@ int SSL_has_pending(const SSL *s)
      * That data may not result in any application data, or we may fail to parse
      * the records for some reason.
      */
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc;
+#ifndef OPENSSL_NO_QUIC
+    const QUIC_CONNECTION *qc = QUIC_CONNECTION_FROM_CONST_SSL(s);
+
+    if (qc != NULL)
+        return ossl_quic_has_pending(qc);
+#endif
+
+
+    sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     /* Check buffered app data if any first */
     if (SSL_CONNECTION_IS_DTLS(sc)) {
@@ -3774,10 +3835,6 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     ret->session_timeout = meth->get_timeout();
     ret->max_cert_list = SSL_MAX_CERT_LIST_DEFAULT;
     ret->verify_mode = SSL_VERIFY_NONE;
-    if ((ret->cert = ssl_cert_new()) == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
-        goto err;
-    }
 
     ret->sessions = lh_SSL_SESSION_new(ssl_session_hash, ssl_session_cmp);
     if (ret->sessions == NULL) {
@@ -3798,16 +3855,34 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
 #endif
 
     /* initialize cipher/digest methods table */
-    if (!ssl_load_ciphers(ret))
+    if (!ssl_load_ciphers(ret)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
         goto err;
-    /* initialise sig algs */
-    if (!ssl_setup_sig_algs(ret))
-        goto err;
+    }
 
-    if (!ssl_load_groups(ret))
+    if (!ssl_load_groups(ret)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
         goto err;
+    }
+
+    /* load provider sigalgs */
+    if (!ssl_load_sigalgs(ret)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+        goto err;
+    }
+
+    /* initialise sig algs */
+    if (!ssl_setup_sigalgs(ret)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+        goto err;
+    }
 
     if (!SSL_CTX_set_ciphersuites(ret, OSSL_default_ciphersuites())) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+        goto err;
+    }
+
+    if ((ret->cert = ssl_cert_new(SSL_PKEY_NUM + ret->sigalg_list_len)) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
         goto err;
     }
@@ -4053,8 +4128,25 @@ void SSL_CTX_free(SSL_CTX *a)
         OPENSSL_free(a->group_list[j].algorithm);
     }
     OPENSSL_free(a->group_list);
+    for (j = 0; j < a->sigalg_list_len; j++) {
+        OPENSSL_free(a->sigalg_list[j].name);
+        OPENSSL_free(a->sigalg_list[j].sigalg_name);
+        OPENSSL_free(a->sigalg_list[j].sigalg_oid);
+        OPENSSL_free(a->sigalg_list[j].sig_name);
+        OPENSSL_free(a->sigalg_list[j].sig_oid);
+        OPENSSL_free(a->sigalg_list[j].hash_name);
+        OPENSSL_free(a->sigalg_list[j].hash_oid);
+        OPENSSL_free(a->sigalg_list[j].keytype);
+        OPENSSL_free(a->sigalg_list[j].keytype_oid);
+    }
+    OPENSSL_free(a->sigalg_list);
+    OPENSSL_free(a->ssl_cert_info);
 
     OPENSSL_free(a->sigalg_lookup_cache);
+    OPENSSL_free(a->tls12_sigalgs);
+
+    OPENSSL_free(a->client_cert_type);
+    OPENSSL_free(a->server_cert_type);
 
     CRYPTO_THREAD_lock_free(a->lock);
 #ifdef TSAN_REQUIRES_LOCKING
@@ -4222,6 +4314,24 @@ void ssl_set_masks(SSL_CONNECTION *s)
     }
 
     mask_a |= SSL_aNULL;
+
+    /*
+     * You can do anything with an RPK key, since there's no cert to restrict it
+     * But we need to check for private keys
+     */
+    if (pvalid[SSL_PKEY_RSA] & CERT_PKEY_RPK) {
+        mask_a |= SSL_aRSA;
+        mask_k |= SSL_kRSA;
+    }
+    if (pvalid[SSL_PKEY_ECC] & CERT_PKEY_RPK)
+        mask_a |= SSL_aECDSA;
+    if (TLS1_get_version(&s->ssl) == TLS1_2_VERSION) {
+        if (pvalid[SSL_PKEY_RSA_PSS_SIGN] & CERT_PKEY_RPK)
+            mask_a |= SSL_aRSA;
+        if (pvalid[SSL_PKEY_ED25519] & CERT_PKEY_RPK
+                || pvalid[SSL_PKEY_ED448] & CERT_PKEY_RPK)
+            mask_a |= SSL_aECDSA;
+    }
 
     /*
      * An ECC certificate may be usable for ECDH and/or ECDSA cipher suites
@@ -4660,6 +4770,12 @@ const char *SSL_get_version(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
+#ifndef OPENSSL_NO_QUIC
+    /* We only support QUICv1 - so if its QUIC its QUICv1 */
+    if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_STREAM)
+        return "QUICv1";
+#endif
+
     if (sc == NULL)
         return NULL;
 
@@ -4996,6 +5112,11 @@ int SSL_version(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
+#ifndef OPENSSL_NO_QUIC
+    /* We only support QUICv1 - so if its QUIC its QUICv1 */
+    if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_STREAM)
+        return OSSL_QUIC1_VERSION;
+#endif
     /* TODO(QUIC): Do we want to report QUIC version this way instead? */
     if (sc == NULL)
         return 0;
@@ -7210,4 +7331,176 @@ int SSL_stream_conclude(SSL *ssl, uint64_t flags)
 #else
     return 0;
 #endif
+}
+
+int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk)
+{
+    unsigned char *data = NULL;
+    SSL_DANE *dane = SSL_get0_dane(s);
+    int ret;
+
+    if (dane == NULL || dane->dctx == NULL)
+        return 0;
+    if ((ret = i2d_PUBKEY(rpk, &data)) <= 0)
+        return 0;
+
+    ret = SSL_dane_tlsa_add(s, DANETLS_USAGE_DANE_EE,
+                            DANETLS_SELECTOR_SPKI,
+                            DANETLS_MATCHING_FULL,
+                            data, (size_t)ret) > 0;
+    OPENSSL_free(data);
+    return ret;
+}
+
+EVP_PKEY *SSL_get0_peer_rpk(const SSL *s)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL || sc->session == NULL)
+        return NULL;
+    return sc->session->peer_rpk;
+}
+
+int SSL_get_negotiated_client_cert_type(const SSL *s)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    return sc->ext.client_cert_type;
+}
+
+int SSL_get_negotiated_server_cert_type(const SSL *s)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    return sc->ext.server_cert_type;
+}
+
+static int validate_cert_type(const unsigned char *val, size_t len)
+{
+    size_t i;
+    int saw_rpk = 0;
+    int saw_x509 = 0;
+
+    if (val == NULL && len == 0)
+        return 1;
+
+    if (val == NULL || len == 0)
+        return 0;
+
+    for (i = 0; i < len; i++) {
+        switch (val[i]) {
+        case TLSEXT_cert_type_rpk:
+            if (saw_rpk)
+                return 0;
+            saw_rpk = 1;
+            break;
+        case TLSEXT_cert_type_x509:
+            if (saw_x509)
+                return 0;
+            saw_x509 = 1;
+            break;
+        case TLSEXT_cert_type_pgp:
+        case TLSEXT_cert_type_1609dot2:
+        default:
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int set_cert_type(unsigned char **cert_type,
+                         size_t *cert_type_len,
+                         const unsigned char *val,
+                         size_t len)
+{
+    unsigned char *tmp = NULL;
+
+    if (!validate_cert_type(val, len))
+        return 0;
+
+    if (val != NULL && (tmp = OPENSSL_memdup(val, len)) == NULL)
+        return 0;
+
+    OPENSSL_free(*cert_type);
+    *cert_type = tmp;
+    *cert_type_len = len;
+    return 1;
+}
+
+int SSL_set1_client_cert_type(SSL *s, const unsigned char *val, size_t len)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    return set_cert_type(&sc->client_cert_type, &sc->client_cert_type_len,
+                         val, len);
+}
+
+int SSL_set1_server_cert_type(SSL *s, const unsigned char *val, size_t len)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    return set_cert_type(&sc->server_cert_type, &sc->server_cert_type_len,
+                         val, len);
+}
+
+int SSL_CTX_set1_client_cert_type(SSL_CTX *ctx, const unsigned char *val, size_t len)
+{
+    return set_cert_type(&ctx->client_cert_type, &ctx->client_cert_type_len,
+                         val, len);
+}
+
+int SSL_CTX_set1_server_cert_type(SSL_CTX *ctx, const unsigned char *val, size_t len)
+{
+    return set_cert_type(&ctx->server_cert_type, &ctx->server_cert_type_len,
+                         val, len);
+}
+
+int SSL_get0_client_cert_type(const SSL *s, unsigned char **t, size_t *len)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+
+    if (t == NULL || len == NULL)
+        return 0;
+
+    *t = sc->client_cert_type;
+    *len = sc->client_cert_type_len;
+    return 1;
+}
+
+int SSL_get0_server_cert_type(const SSL *s, unsigned char **t, size_t *len)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+
+    if (t == NULL || len == NULL)
+        return 0;
+
+    *t = sc->server_cert_type;
+    *len = sc->server_cert_type_len;
+    return 1;
+}
+
+int SSL_CTX_get0_client_cert_type(const SSL_CTX *ctx, unsigned char **t, size_t *len)
+{
+    if (t == NULL || len == NULL)
+        return 0;
+
+    *t = ctx->client_cert_type;
+    *len = ctx->client_cert_type_len;
+    return 1;
+}
+
+int SSL_CTX_get0_server_cert_type(const SSL_CTX *ctx, unsigned char **t, size_t *len)
+{
+    if (t == NULL || len == NULL)
+        return 0;
+
+    *t = ctx->server_cert_type;
+    *len = ctx->server_cert_type_len;
+    return 1;
 }

@@ -660,7 +660,7 @@ $code.=<<___;
 .asciz	"SHA512 block transform for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
-.comm	OPENSSL_armcap_P,4,4
+.extern	OPENSSL_armcap_P
 #endif
 ___
 

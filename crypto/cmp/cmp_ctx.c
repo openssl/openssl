@@ -424,8 +424,8 @@ int OSSL_CMP_CTX_set1_referenceValue(OSSL_CMP_CTX *ctx,
 }
 
 /* Set or clear the password to be used for protecting messages with PBMAC */
-int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx, const unsigned char *sec,
-                                  int len)
+int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx,
+                                  const unsigned char *sec, int len)
 {
     ASN1_OCTET_STRING *secretValue = NULL;
 
@@ -602,13 +602,13 @@ DEFINE_OSSL_set1_up_ref(ossl_cmp_ctx, validatedSrvCert, X509)
  */
 DEFINE_OSSL_set1_up_ref(OSSL_CMP_CTX, srvCert, X509)
 
-/* Set the X509 name of the recipient. Set in the PKIHeader */
+/* Set the X509 name of the recipient to be placed in the PKIHeader */
 DEFINE_OSSL_CMP_CTX_set1(recipient, X509_NAME)
 
 /* Store the X509 name of the expected sender in the PKIHeader of responses */
 DEFINE_OSSL_CMP_CTX_set1(expected_sender, X509_NAME)
 
-/* Set the X509 name of the issuer. Set in the PKIHeader */
+/* Set the X509 name of the issuer to be placed in the certTemplate */
 DEFINE_OSSL_CMP_CTX_set1(issuer, X509_NAME)
 
 /*

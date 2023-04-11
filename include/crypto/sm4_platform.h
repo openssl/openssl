@@ -12,29 +12,32 @@
 # pragma once
 
 # if defined(OPENSSL_CPUID_OBJ)
-#  if (defined(__arm__) || defined(__arm) || defined(__aarch64__))
+#  if defined(__aarch64__)
 #   include "arm_arch.h"
-#   if __ARM_MAX_ARCH__>=8
 extern unsigned int OPENSSL_arm_midr;
 static inline int vpsm4_capable(void)
 {
     return (OPENSSL_armcap_P & ARMV8_CPUID) &&
             (MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V1) ||
-             MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N1) ||
-             MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, HISI_CPU_IMP, HISI_CPU_PART_KP920));
+             MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N1));
 }
-#    if defined(VPSM4_ASM)
-#     define VPSM4_CAPABLE vpsm4_capable()
-#    endif
-#    define HWSM4_CAPABLE (OPENSSL_armcap_P & ARMV8_SM4)
-#    define HWSM4_set_encrypt_key sm4_v8_set_encrypt_key
-#    define HWSM4_set_decrypt_key sm4_v8_set_decrypt_key
-#    define HWSM4_encrypt sm4_v8_encrypt
-#    define HWSM4_decrypt sm4_v8_decrypt
-#    define HWSM4_cbc_encrypt sm4_v8_cbc_encrypt
-#    define HWSM4_ecb_encrypt sm4_v8_ecb_encrypt
-#    define HWSM4_ctr32_encrypt_blocks sm4_v8_ctr32_encrypt_blocks
+static inline int vpsm4_ex_capable(void)
+{
+    return (OPENSSL_armcap_P & ARMV8_CPUID) &&
+            (MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, HISI_CPU_IMP, HISI_CPU_PART_KP920));
+}
+#   if defined(VPSM4_ASM)
+#    define VPSM4_CAPABLE vpsm4_capable()
+#    define VPSM4_EX_CAPABLE vpsm4_ex_capable()
 #   endif
+#   define HWSM4_CAPABLE (OPENSSL_armcap_P & ARMV8_SM4)
+#   define HWSM4_set_encrypt_key sm4_v8_set_encrypt_key
+#   define HWSM4_set_decrypt_key sm4_v8_set_decrypt_key
+#   define HWSM4_encrypt sm4_v8_encrypt
+#   define HWSM4_decrypt sm4_v8_decrypt
+#   define HWSM4_cbc_encrypt sm4_v8_cbc_encrypt
+#   define HWSM4_ecb_encrypt sm4_v8_ecb_encrypt
+#   define HWSM4_ctr32_encrypt_blocks sm4_v8_ctr32_encrypt_blocks
 #  endif
 # endif /* OPENSSL_CPUID_OBJ */
 
@@ -56,7 +59,7 @@ void HWSM4_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
                                 const unsigned char ivec[16]);
 # endif /* HWSM4_CAPABLE */
 
-#ifdef VPSM4_CAPABLE
+# ifdef VPSM4_CAPABLE
 int vpsm4_set_encrypt_key(const unsigned char *userKey, SM4_KEY *key);
 int vpsm4_set_decrypt_key(const unsigned char *userKey, SM4_KEY *key);
 void vpsm4_encrypt(const unsigned char *in, unsigned char *out,
@@ -72,7 +75,37 @@ void vpsm4_ecb_encrypt(const unsigned char *in, unsigned char *out,
 void vpsm4_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
                                 size_t len, const void *key,
                                 const unsigned char ivec[16]);
+void vpsm4_xts_encrypt(const unsigned char *in, unsigned char *out,
+                       size_t len, const SM4_KEY *key1, const SM4_KEY *key2,
+                       const unsigned char ivec[16], const int enc);
+void vpsm4_xts_encrypt_gb(const unsigned char *in, unsigned char *out,
+                          size_t len, const SM4_KEY *key1, const SM4_KEY *key2,
+                          const unsigned char ivec[16], const int enc);
 # endif /* VPSM4_CAPABLE */
 
+# ifdef VPSM4_EX_CAPABLE
+int vpsm4_ex_set_encrypt_key(const unsigned char *userKey, SM4_KEY *key);
+int vpsm4_ex_set_decrypt_key(const unsigned char *userKey, SM4_KEY *key);
+void vpsm4_ex_encrypt(const unsigned char *in, unsigned char *out,
+                      const SM4_KEY *key);
+void vpsm4_ex_decrypt(const unsigned char *in, unsigned char *out,
+                      const SM4_KEY *key);
+void vpsm4_ex_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                          size_t length, const SM4_KEY *key,
+                          unsigned char *ivec, const int enc);
+void vpsm4_ex_ecb_encrypt(const unsigned char *in, unsigned char *out,
+                          size_t length, const SM4_KEY *key,
+                          const int enc);
+void vpsm4_ex_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
+                                   size_t len, const void *key,
+                                   const unsigned char ivec[16]);
+void vpsm4_ex_xts_encrypt(const unsigned char *in, unsigned char *out,
+                          size_t len, const SM4_KEY *key1, const SM4_KEY *key2,
+                          const unsigned char ivec[16], const int enc);
+void vpsm4_ex_xts_encrypt_gb(const unsigned char *in, unsigned char *out,
+                             size_t len, const SM4_KEY *key1,
+                             const SM4_KEY *key2, const unsigned char ivec[16],
+                             const int enc);
+# endif /* VPSM4_EX_CAPABLE */
 
 #endif /* OSSL_SM4_PLATFORM_H */

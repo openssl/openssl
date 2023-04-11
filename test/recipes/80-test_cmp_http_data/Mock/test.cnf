@@ -12,21 +12,20 @@ policies = certificatePolicies
 #policy_oids_critical = 1
 #verbosity = 7
 
-############################# server configurations
+############################# server-dependent configurations
 
 [Mock] # the built-in OpenSSL CMP mock server
-no_check_time = 1
+# no_check_time = 1
 server_host = 127.0.0.1 # localhost
-# server_port = 0 means that the port is determined by the server
-server_port = 0
+server_port = 0 # 0 means that the port is determined by the server
 server_tls = $server_port
 server_cert = server.crt
 server = $server_host:$server_port
 server_path = pkix/
 path = $server_path
-ca_dn = /O=openssl_cmp
+ca_dn = /CN=Root CA
 recipient = $ca_dn
-server_dn = /O=openssl_cmp
+server_dn = /CN=server.example
 expect_sender = $server_dn
 subject = "/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=leaf"
 newkey = signer.key

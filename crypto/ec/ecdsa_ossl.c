@@ -21,6 +21,15 @@
 #include "ec_local.h"
 #include "internal/deterministic_nonce.h"
 
+#define MIN_ECDSA_SIGN_ORDERBITS 64
+/*
+ * It is highly unlikely that a retry will happen,
+ * Multiple retries would indicate that something is wrong
+ * with the group parameters (which would normally only happen
+ * with a bad custom group).
+ */
+#define MAX_ECDSA_SIGN_RETRIES 8
+
 static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
                             BIGNUM **kinvp, BIGNUM **rp,
                             const unsigned char *dgst, int dlen,
@@ -73,7 +82,7 @@ int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
         *siglen = 0;
         return 0;
     }
-    *siglen = i2d_ECDSA_SIG(s, &sig);
+    *siglen = i2d_ECDSA_SIG(s, sig != NULL ? &sig : NULL);
     ECDSA_SIG_free(s);
     return 1;
 }
@@ -97,7 +106,7 @@ int ossl_ecdsa_deterministic_sign(const unsigned char *dgst, int dlen,
     if (s == NULL)
         goto end;
 
-    *siglen = i2d_ECDSA_SIG(s, &sig);
+    *siglen = i2d_ECDSA_SIG(s, sig != NULL ? &sig : NULL);
     ECDSA_SIG_free(s);
     ret = 1;
 end:
@@ -157,13 +166,15 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 
     /* Preallocate space */
     order_bits = BN_num_bits(order);
-    if (!BN_set_bit(k, order_bits)
+    /* Check the number of bits here so that an infinite loop is not possible */
+    if (order_bits < MIN_ECDSA_SIGN_ORDERBITS
+        || !BN_set_bit(k, order_bits)
         || !BN_set_bit(r, order_bits)
         || !BN_set_bit(X, order_bits))
         goto err;
 
     do {
-        /* get random or determinstic value of k */
+        /* get random or deterministic value of k */
         do {
             int res = 0;
 
@@ -243,6 +254,7 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
                                       EC_KEY *eckey)
 {
     int ok = 0, i;
+    int retries = 0;
     BIGNUM *kinv = NULL, *s, *m = NULL;
     const BIGNUM *order, *ckinv;
     BN_CTX *ctx = NULL;
@@ -351,6 +363,11 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
              */
             if (in_kinv != NULL && in_r != NULL) {
                 ERR_raise(ERR_LIB_EC, EC_R_NEED_NEW_SETUP_VALUES);
+                goto err;
+            }
+            /* Avoid infinite loops cause by invalid group parameters */
+            if (retries++ > MAX_ECDSA_SIGN_RETRIES) {
+                ERR_raise(ERR_LIB_EC, EC_R_TOO_MANY_RETRIES);
                 goto err;
             }
         } else {

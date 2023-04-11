@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -2013,5 +2013,109 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt,
         s->ext.early_data_ok = 0;
 #endif
 
+    return 1;
+}
+
+EXT_RETURN tls_construct_ctos_client_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
+                                               unsigned int context,
+                                               X509 *x, size_t chainidx)
+{
+    sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
+    if (sc->client_cert_type == NULL)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_client_cert_type)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u8(pkt, sc->client_cert_type, sc->client_cert_type_len)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    sc->ext.client_cert_type_ctos = OSSL_CERT_TYPE_CTOS_GOOD;
+    return EXT_RETURN_SENT;
+}
+
+int tls_parse_stoc_client_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
+                                    unsigned int context,
+                                    X509 *x, size_t chainidx)
+{
+    unsigned int type;
+
+    if (PACKET_remaining(pkt) != 1) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (!PACKET_get_1(pkt, &type)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* We did not send/ask for this */
+    if (!ossl_assert(sc->ext.client_cert_type_ctos == OSSL_CERT_TYPE_CTOS_GOOD)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* We don't have this enabled */
+    if (sc->client_cert_type == NULL) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* Given back a value we didn't configure */
+    if (memchr(sc->client_cert_type, type, sc->client_cert_type_len) == NULL) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_VALUE);
+        return 0;
+    }
+    sc->ext.client_cert_type = type;
+    return 1;
+}
+
+EXT_RETURN tls_construct_ctos_server_cert_type(SSL_CONNECTION *sc, WPACKET *pkt,
+                                               unsigned int context,
+                                               X509 *x, size_t chainidx)
+{
+    sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_NONE;
+    if (sc->server_cert_type == NULL)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_cert_type)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u8(pkt, sc->server_cert_type, sc->server_cert_type_len)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    sc->ext.server_cert_type_ctos = OSSL_CERT_TYPE_CTOS_GOOD;
+    return EXT_RETURN_SENT;
+}
+
+int tls_parse_stoc_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
+                                    unsigned int context,
+                                    X509 *x, size_t chainidx)
+{
+    unsigned int type;
+
+    if (PACKET_remaining(pkt) != 1) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (!PACKET_get_1(pkt, &type)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* We did not send/ask for this */
+    if (!ossl_assert(sc->ext.server_cert_type_ctos == OSSL_CERT_TYPE_CTOS_GOOD)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* We don't have this enabled */
+    if (sc->server_cert_type == NULL) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* Given back a value we didn't configure */
+    if (memchr(sc->server_cert_type, type, sc->server_cert_type_len) == NULL) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_VALUE);
+        return 0;
+    }
+    sc->ext.server_cert_type = type;
     return 1;
 }

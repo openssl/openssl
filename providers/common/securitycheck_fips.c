@@ -18,8 +18,7 @@
 #include <openssl/core_names.h>
 #include <openssl/obj_mac.h>
 #include "prov/securitycheck.h"
-
-int FIPS_security_check_enabled(OSSL_LIB_CTX *libctx);
+#include "prov/fipscommon.h"
 
 int ossl_securitycheck_enabled(OSSL_LIB_CTX *libctx)
 {
@@ -28,6 +27,11 @@ int ossl_securitycheck_enabled(OSSL_LIB_CTX *libctx)
 #else
     return 0;
 #endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
+}
+
+int ossl_tls1_prf_ems_check_enabled(OSSL_LIB_CTX *libctx)
+{
+    return FIPS_tls_prf_ems_check(libctx);
 }
 
 int ossl_digest_rsa_sign_get_md_nid(OSSL_LIB_CTX *ctx, const EVP_MD *md,

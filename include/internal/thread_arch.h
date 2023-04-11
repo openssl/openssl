@@ -11,6 +11,7 @@
 # define OSSL_INTERNAL_THREAD_ARCH_H
 # include <openssl/configuration.h>
 # include <openssl/e_os2.h>
+# include "internal/time.h"
 
 # if defined(_WIN32)
 #  include <windows.h>
@@ -18,10 +19,15 @@
 
 # if defined(OPENSSL_THREADS) && defined(OPENSSL_SYS_UNIX)
 #  define OPENSSL_THREADS_POSIX
+# elif defined(OPENSSL_THREADS) && defined(OPENSSL_SYS_VMS)
+#  define OPENSSL_THREADS_POSIX
 # elif defined(OPENSSL_THREADS) && defined(OPENSSL_SYS_WINDOWS) && \
     defined(_WIN32_WINNT)
 #  if _WIN32_WINNT >= 0x0600
 #   define OPENSSL_THREADS_WINNT
+#  elif _WIN32_WINNT >= 0x0501
+#   define OPENSSL_THREADS_WINNT
+#   define OPENSSL_THREADS_WINNT_LEGACY
 #  else
 #   define OPENSSL_THREADS_NONE
 #  endif
@@ -42,7 +48,10 @@ void ossl_crypto_mutex_free(CRYPTO_MUTEX **mutex);
 
 CRYPTO_CONDVAR *ossl_crypto_condvar_new(void);
 void ossl_crypto_condvar_wait(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex);
+void ossl_crypto_condvar_wait_timeout(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex,
+                                      OSSL_TIME deadline);
 void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR *cv);
+void ossl_crypto_condvar_signal(CRYPTO_CONDVAR *cv);
 void ossl_crypto_condvar_free(CRYPTO_CONDVAR **cv);
 
 typedef uint32_t CRYPTO_THREAD_RETVAL;
@@ -114,7 +123,5 @@ int ossl_crypto_thread_native_perform_join(CRYPTO_THREAD *thread,
 int ossl_crypto_thread_native_exit(void);
 int ossl_crypto_thread_native_is_self(CRYPTO_THREAD *thread);
 int ossl_crypto_thread_native_clean(CRYPTO_THREAD *thread);
-
-void ossl_crypto_mem_barrier(void);
 
 #endif /* OSSL_INTERNAL_THREAD_ARCH_H */

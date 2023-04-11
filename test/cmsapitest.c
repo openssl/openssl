@@ -88,6 +88,19 @@ static int test_encrypt_decrypt_aes_256_gcm(void)
     return test_encrypt_decrypt(EVP_aes_256_gcm());
 }
 
+static int test_CMS_add1_cert(void)
+{
+    CMS_ContentInfo *cms = NULL;
+    int ret = 0;
+
+    ret = TEST_ptr(cms = CMS_ContentInfo_new())
+        && TEST_ptr(CMS_add1_signer(cms, cert, privkey, NULL, 0))
+        && TEST_true(CMS_add1_cert(cms, cert)); /* add cert again */
+
+    CMS_ContentInfo_free(cms);
+    return ret;
+}
+
 static int test_d2i_CMS_bio_NULL(void)
 {
     BIO *bio, *content = NULL;
@@ -413,6 +426,7 @@ int setup_tests(void)
     ADD_TEST(test_encrypt_decrypt_aes_128_gcm);
     ADD_TEST(test_encrypt_decrypt_aes_192_gcm);
     ADD_TEST(test_encrypt_decrypt_aes_256_gcm);
+    ADD_TEST(test_CMS_add1_cert);
     ADD_TEST(test_d2i_CMS_bio_NULL);
     ADD_ALL_TESTS(test_d2i_CMS_decode, 2);
     return 1;

@@ -36,6 +36,7 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "crypto/evp.h"
+#include "fake_rsaprov.h"
 
 static OSSL_LIB_CTX *testctx = NULL;
 static char *testpropq = NULL;
@@ -1031,6 +1032,65 @@ static int test_EC_priv_pub(void)
     return ret;
 }
 
+/* Also test that we can read the EC PUB affine coordinates */
+static int test_evp_get_ec_pub(void)
+{
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+    unsigned char *pad = NULL;
+    EVP_PKEY *keypair = NULL;
+    BIGNUM *priv = NULL;
+    BIGNUM *x = NULL;
+    BIGNUM *y = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(priv = BN_bin2bn(ec_priv, sizeof(ec_priv), NULL)))
+        goto err;
+
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+        || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld,
+                                                      OSSL_PKEY_PARAM_GROUP_NAME,
+                                                      "P-256", 0))
+        || !TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
+                                                       OSSL_PKEY_PARAM_PUB_KEY,
+                                                       ec_pub, sizeof(ec_pub)))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY,
+                                             priv)))
+        goto err;
+
+    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
+        || !TEST_ptr(keypair = make_key_fromdata("EC", params)))
+        goto err;
+
+    if (!test_selection(keypair, EVP_PKEY_KEYPAIR))
+        goto err;
+
+    if (!EVP_PKEY_get_bn_param(keypair, OSSL_PKEY_PARAM_EC_PUB_X, &x)
+        || !EVP_PKEY_get_bn_param(keypair, OSSL_PKEY_PARAM_EC_PUB_Y, &y))
+        goto err;
+
+    if (!TEST_ptr(pad = OPENSSL_zalloc(sizeof(ec_pub))))
+        goto err;
+
+    pad[0] = ec_pub[0];
+    BN_bn2bin(x, &pad[1]);
+    BN_bn2bin(y, &pad[33]);
+    if (!TEST_true(memcmp(ec_pub, pad, sizeof(ec_pub)) == 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_BLD_free(bld);
+    EVP_PKEY_free(keypair);
+    OPENSSL_free(pad);
+    BN_free(priv);
+    BN_free(x);
+    BN_free(y);
+    return ret;
+}
+
 /* Test that using a legacy EC key with only a private key in it works */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 static int test_EC_priv_only_legacy(void)
@@ -1091,6 +1151,76 @@ static int test_EC_priv_only_legacy(void)
     EVP_PKEY_free(pkey);
     EC_KEY_free(eckey);
     BN_free(priv);
+
+    return ret;
+}
+
+static int test_evp_get_ec_pub_legacy(void)
+{
+    OSSL_LIB_CTX *libctx = NULL;
+    unsigned char *pad = NULL;
+    EVP_PKEY *pkey = NULL;
+    EC_KEY *eckey = NULL;
+    BIGNUM *priv = NULL;
+    BIGNUM *x = NULL;
+    BIGNUM *y = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new()))
+        goto err;
+
+    /* Create the legacy key */
+    if (!TEST_ptr(eckey = EC_KEY_new_by_curve_name_ex(libctx, NULL,
+                                                      NID_X9_62_prime256v1)))
+        goto err;
+
+    if (!TEST_ptr(priv = BN_bin2bn(ec_priv, sizeof(ec_priv), NULL)))
+        goto err;
+
+    if (!TEST_true(EC_KEY_set_private_key(eckey, priv)))
+        goto err;
+
+    if (!TEST_ptr(x = BN_bin2bn(&ec_pub[1], 32, NULL)))
+        goto err;
+
+    if (!TEST_ptr(y = BN_bin2bn(&ec_pub[33], 32, NULL)))
+        goto err;
+
+    if (!TEST_true(EC_KEY_set_public_key_affine_coordinates(eckey, x, y)))
+        goto err;
+
+    if (!TEST_ptr(pkey = EVP_PKEY_new()))
+        goto err;
+
+    /* Transfer the legacy key */
+    if (!TEST_true(EVP_PKEY_assign_EC_KEY(pkey, eckey)))
+        goto err;
+    eckey = NULL;
+
+    if (!TEST_true(EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_EC_PUB_X, &x))
+        || !TEST_true(EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_EC_PUB_Y, &y)))
+        goto err;
+
+    if (!TEST_ptr(pad = OPENSSL_zalloc(sizeof(ec_pub))))
+        goto err;
+
+    pad[0] = ec_pub[0];
+    BN_bn2bin(x, &pad[1]);
+    BN_bn2bin(y, &pad[33]);
+
+    if (!TEST_true(memcmp(ec_pub, pad, sizeof(ec_pub)) == 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    OSSL_LIB_CTX_free(libctx);
+    EVP_PKEY_free(pkey);
+    EC_KEY_free(eckey);
+    OPENSSL_free(pad);
+    BN_free(priv);
+    BN_free(x);
+    BN_free(y);
 
     return ret;
 }
@@ -4717,6 +4847,65 @@ static int test_ecx_not_private_key(int tst)
 }
 #endif /* OPENSSL_NO_EC */
 
+static int test_sign_continuation(void)
+{
+    OSSL_PROVIDER *fake_rsa = NULL;
+    int testresult = 0;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_MD_CTX *mctx = NULL;
+    const char sigbuf[] = "To Be Signed";
+    unsigned char signature[256];
+    size_t siglen = 256;
+    static int nodupnum = 1;
+    static const OSSL_PARAM nodup_params[] = {
+        OSSL_PARAM_int("NO_DUP", &nodupnum),
+        OSSL_PARAM_END
+    };
+
+    if (!TEST_ptr(fake_rsa = fake_rsa_start(testctx)))
+        return 0;
+
+    /* Construct a pkey using precise propq to use our provider */
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA",
+                                                    "provider=fake-rsa"))
+        || !TEST_true(EVP_PKEY_fromdata_init(pctx))
+        || !TEST_true(EVP_PKEY_fromdata(pctx, &pkey, EVP_PKEY_KEYPAIR, NULL))
+        || !TEST_ptr(pkey))
+        goto end;
+
+    /* First test it continues (classic behavior) */
+    if (!TEST_ptr(mctx = EVP_MD_CTX_new())
+        || !TEST_true(EVP_DigestSignInit_ex(mctx, NULL, NULL, testctx,
+                                            NULL, pkey, NULL))
+        || !TEST_true(EVP_DigestSignUpdate(mctx, sigbuf, sizeof(sigbuf)))
+        || !TEST_true(EVP_DigestSignFinal(mctx, signature, &siglen))
+        || !TEST_true(EVP_DigestSignUpdate(mctx, sigbuf, sizeof(sigbuf)))
+        || !TEST_true(EVP_DigestSignFinal(mctx, signature, &siglen)))
+        goto end;
+
+    EVP_MD_CTX_free(mctx);
+
+    /* try again but failing the continuation */
+    if (!TEST_ptr(mctx = EVP_MD_CTX_new())
+        || !TEST_true(EVP_DigestSignInit_ex(mctx, NULL, NULL, testctx,
+                                            NULL, pkey, nodup_params))
+        || !TEST_true(EVP_DigestSignUpdate(mctx, sigbuf, sizeof(sigbuf)))
+        || !TEST_true(EVP_DigestSignFinal(mctx, signature, &siglen))
+        || !TEST_false(EVP_DigestSignUpdate(mctx, sigbuf, sizeof(sigbuf)))
+        || !TEST_false(EVP_DigestSignFinal(mctx, signature, &siglen)))
+        goto end;
+
+    testresult = 1;
+
+end:
+    EVP_MD_CTX_free(mctx);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(pctx);
+    fake_rsa_finish(fake_rsa);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -4805,8 +4994,10 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EC_priv_pub);
+    ADD_TEST(test_evp_get_ec_pub);
 # ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_EC_priv_only_legacy);
+    ADD_TEST(test_evp_get_ec_pub_legacy);
 # endif
 #endif
     ADD_ALL_TESTS(test_keygen_with_empty_template, 2);
@@ -4857,6 +5048,8 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_ecx_not_private_key, OSSL_NELEM(keys));
 #endif
+
+    ADD_TEST(test_sign_continuation);
 
     return 1;
 }

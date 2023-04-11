@@ -28,7 +28,7 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
     ($no_fips ? 0 : 2)          # FIPS related tests
-    + 11;
+    + 18;
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-algorithm', 'DSA',
@@ -106,6 +106,51 @@ ok(run(app([ 'openssl', 'genpkey',
 ok(!run(app([ 'openssl', 'genpkey',
               '-algorithm', 'DSA'])),
    "genpkey DSA with no params should fail");
+
+ok(run(app(["openssl", "gendsa", "-verbose",
+            'dsagen.pem'])),
+    "gendsa with -verbose option and dsagen parameter");
+
+ok(!run(app(["openssl", "gendsa",
+             'dsagen.pem', "-verbose"])),
+   "gendsa with extra parameter (at end) should fail");
+
+# test key generation with dsaparam tool
+ok(run(app([ 'openssl', 'dsaparam',
+             '-genkey',
+             '-text',
+             '1024',
+             ])),
+   "dsaparam -genkey DSA 1024 with default qbits");
+
+ok(run(app([ 'openssl', 'dsaparam',
+             '-genkey',
+             '-text',
+             '2048',
+             ])),
+   "dsaparam -genkey DSA 2048 with default qbits");
+
+ok(run(app([ 'openssl', 'dsaparam',
+             '-genkey',
+             '-text',
+             '1024', '160',
+             ])),
+   "dsaparam -genkey DSA 1024 with 160 qbits");
+
+ok(run(app([ 'openssl', 'dsaparam',
+             '-genkey',
+             '-text',
+             '2048', '224',
+             ])),
+   "dsaparam -genkey DSA 2048 with 224 qbits");
+
+ok(run(app([ 'openssl', 'dsaparam',
+             '-genkey',
+             '-text',
+             '2048', '256',
+             ])),
+   "dsaparam -genkey DSA 2048 with 256 qbits");
+# genkey test for 3072 bits keys were removed to speed up the tests
 
 unless ($no_fips) {
     my $provconf = srctop_file("test", "fips-and-base.cnf");

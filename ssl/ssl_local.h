@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -27,9 +27,8 @@
 # include <openssl/async.h>
 # include <openssl/symhacks.h>
 # include <openssl/ct.h>
-# include "record/record.h"
 # include "internal/recordmethod.h"
-# include "statem/statem.h"
+# include "internal/statem.h"
 # include "internal/packet.h"
 # include "internal/dane.h"
 # include "internal/refcount.h"
@@ -37,101 +36,12 @@
 # include "internal/bio.h"
 # include "internal/ktls.h"
 # include "internal/time.h"
+# include "record/record.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
 #  define OPENSSL_EXTERN OPENSSL_EXPORT
 # endif
-
-# define c2l(c,l)        (l = ((unsigned long)(*((c)++)))     , \
-                         l|=(((unsigned long)(*((c)++)))<< 8), \
-                         l|=(((unsigned long)(*((c)++)))<<16), \
-                         l|=(((unsigned long)(*((c)++)))<<24))
-
-/* NOTE - c is not incremented as per c2l */
-# define c2ln(c,l1,l2,n) { \
-                        c+=n; \
-                        l1=l2=0; \
-                        switch (n) { \
-                        case 8: l2 =((unsigned long)(*(--(c))))<<24; \
-                        case 7: l2|=((unsigned long)(*(--(c))))<<16; \
-                        case 6: l2|=((unsigned long)(*(--(c))))<< 8; \
-                        case 5: l2|=((unsigned long)(*(--(c))));     \
-                        case 4: l1 =((unsigned long)(*(--(c))))<<24; \
-                        case 3: l1|=((unsigned long)(*(--(c))))<<16; \
-                        case 2: l1|=((unsigned long)(*(--(c))))<< 8; \
-                        case 1: l1|=((unsigned long)(*(--(c))));     \
-                                } \
-                        }
-
-# define l2c(l,c)        (*((c)++)=(unsigned char)(((l)    )&0xff), \
-                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>24)&0xff))
-
-# define n2l(c,l)        (l =((unsigned long)(*((c)++)))<<24, \
-                         l|=((unsigned long)(*((c)++)))<<16, \
-                         l|=((unsigned long)(*((c)++)))<< 8, \
-                         l|=((unsigned long)(*((c)++))))
-
-# define n2l8(c,l)       (l =((uint64_t)(*((c)++)))<<56, \
-                         l|=((uint64_t)(*((c)++)))<<48, \
-                         l|=((uint64_t)(*((c)++)))<<40, \
-                         l|=((uint64_t)(*((c)++)))<<32, \
-                         l|=((uint64_t)(*((c)++)))<<24, \
-                         l|=((uint64_t)(*((c)++)))<<16, \
-                         l|=((uint64_t)(*((c)++)))<< 8, \
-                         l|=((uint64_t)(*((c)++))))
-
-
-# define l2n(l,c)        (*((c)++)=(unsigned char)(((l)>>24)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-                         *((c)++)=(unsigned char)(((l)    )&0xff))
-
-# define l2n6(l,c)       (*((c)++)=(unsigned char)(((l)>>40)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>32)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>24)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-                         *((c)++)=(unsigned char)(((l)    )&0xff))
-
-# define l2n8(l,c)       (*((c)++)=(unsigned char)(((l)>>56)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>48)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>40)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>32)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>24)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-                         *((c)++)=(unsigned char)(((l)    )&0xff))
-
-/* NOTE - c is not incremented as per l2c */
-# define l2cn(l1,l2,c,n) { \
-                        c+=n; \
-                        switch (n) { \
-                        case 8: *(--(c))=(unsigned char)(((l2)>>24)&0xff); \
-                        case 7: *(--(c))=(unsigned char)(((l2)>>16)&0xff); \
-                        case 6: *(--(c))=(unsigned char)(((l2)>> 8)&0xff); \
-                        case 5: *(--(c))=(unsigned char)(((l2)    )&0xff); \
-                        case 4: *(--(c))=(unsigned char)(((l1)>>24)&0xff); \
-                        case 3: *(--(c))=(unsigned char)(((l1)>>16)&0xff); \
-                        case 2: *(--(c))=(unsigned char)(((l1)>> 8)&0xff); \
-                        case 1: *(--(c))=(unsigned char)(((l1)    )&0xff); \
-                                } \
-                        }
-
-# define n2s(c,s)        ((s=(((unsigned int)((c)[0]))<< 8)| \
-                             (((unsigned int)((c)[1]))    )),(c)+=2)
-# define s2n(s,c)        (((c)[0]=(unsigned char)(((s)>> 8)&0xff), \
-                           (c)[1]=(unsigned char)(((s)    )&0xff)),(c)+=2)
-
-# define n2l3(c,l)       ((l =(((unsigned long)((c)[0]))<<16)| \
-                              (((unsigned long)((c)[1]))<< 8)| \
-                              (((unsigned long)((c)[2]))    )),(c)+=3)
-
-# define l2n3(l,c)       (((c)[0]=(unsigned char)(((l)>>16)&0xff), \
-                           (c)[1]=(unsigned char)(((l)>> 8)&0xff), \
-                           (c)[2]=(unsigned char)(((l)    )&0xff)),(c)+=3)
 
 # define TLS_MAX_VERSION_INTERNAL TLS1_3_VERSION
 # define DTLS_MAX_VERSION_INTERNAL DTLS1_2_VERSION
@@ -461,6 +371,11 @@
 #define CERT_PRIVATE_KEY        2
 */
 
+/* Certificate Type State */
+# define OSSL_CERT_TYPE_CTOS_NONE    0
+# define OSSL_CERT_TYPE_CTOS_GOOD    1
+# define OSSL_CERT_TYPE_CTOS_ERROR   2
+
 /* Post-Handshake Authentication state */
 typedef enum {
     SSL_PHA_NONE = 0,
@@ -600,6 +515,8 @@ struct ssl_session_st {
      * to disable session caching and tickets.
      */
     int not_resumable;
+    /* Peer raw public key, if available */
+    EVP_PKEY *peer_rpk;
     /* This is the cert and type for the other end. */
     X509 *peer;
     /* Certificate chain peer sent. */
@@ -774,6 +691,8 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_extended_master_secret,
     TLSEXT_IDX_signature_algorithms_cert,
     TLSEXT_IDX_post_handshake_auth,
+    TLSEXT_IDX_client_cert_type,
+    TLSEXT_IDX_server_cert_type,
     TLSEXT_IDX_signature_algorithms,
     TLSEXT_IDX_supported_versions,
     TLSEXT_IDX_psk_kex_modes,
@@ -844,6 +763,31 @@ typedef struct tls_group_info_st {
     int maxdtls;             /* Maximum DTLS version (or 0 for undefined) */
     char is_kem;             /* Mode for this Group: 0 is KEX, 1 is KEM */
 } TLS_GROUP_INFO;
+
+typedef struct tls_sigalg_info_st {
+    char *name;              /* name as in IANA TLS specs */
+    uint16_t code_point;     /* IANA-specified code point of sigalg-name */
+    char *sigalg_name;       /* (combined) sigalg name */
+    char *sigalg_oid;        /* (combined) sigalg OID */
+    char *sig_name;          /* pure signature algorithm name */
+    char *sig_oid;           /* pure signature algorithm OID */
+    char *hash_name;         /* hash algorithm name */
+    char *hash_oid;          /* hash algorithm OID */
+    char *keytype;           /* keytype name */
+    char *keytype_oid;       /* keytype OID */
+    unsigned int secbits;    /* Bits of security (from SP800-57) */
+    int mintls;              /* Minimum TLS version, -1 unsupported */
+    int maxtls;              /* Maximum TLS version (or 0 for undefined) */
+} TLS_SIGALG_INFO;
+
+/*
+ * Structure containing table entry of certificate info corresponding to
+ * CERT_PKEY entries
+ */
+typedef struct {
+    int nid; /* NID of public key algorithm */
+    uint32_t amask; /* authmask corresponding to key type */
+} SSL_CERT_LOOKUP;
 
 /* flags values */
 # define TLS_GROUP_TYPE             0x0000000FU /* Mask for group type */
@@ -991,6 +935,7 @@ struct ssl_ctx_st {
     size_t max_cert_list;
 
     struct cert_st /* CERT */ *cert;
+    SSL_CERT_LOOKUP *ssl_cert_info;
     int read_ahead;
 
     /* callback that allows applications to peek at protocol messages */
@@ -1210,12 +1155,19 @@ struct ssl_ctx_st {
     const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX];
     size_t ssl_mac_secret_size[SSL_MD_NUM_IDX];
 
+    size_t tls12_sigalgs_len;
     /* Cache of all sigalgs we know and whether they are available or not */
     struct sigalg_lookup_st *sigalg_lookup_cache;
+    /* List of all sigalgs (code points) available, incl. from providers */
+    uint16_t *tls12_sigalgs;
 
     TLS_GROUP_INFO *group_list;
     size_t group_list_len;
     size_t group_list_max_len;
+
+    TLS_SIGALG_INFO *sigalg_list;
+    size_t sigalg_list_len;
+    size_t sigalg_list_max_len;
 
     /* masks of disabled algorithms */
     uint32_t disabled_enc_mask;
@@ -1227,6 +1179,12 @@ struct ssl_ctx_st {
     /* certificate compression preferences */
     int cert_comp_prefs[TLSEXT_comp_cert_limit];
 #endif
+
+    /* Certificate Type stuff - for RPK vs X.509 */
+    unsigned char *client_cert_type;
+    size_t client_cert_type_len;
+    unsigned char *server_cert_type;
+    size_t server_cert_type_len;
 };
 
 typedef struct cert_pkey_st CERT_PKEY;
@@ -1300,6 +1258,8 @@ struct ssl_connection_st {
     size_t init_num;               /* amount read/written */
     size_t init_off;               /* amount read/written */
 
+    size_t ssl_pkey_num;
+
     struct {
         long flags;
         unsigned char server_random[SSL3_RANDOM_SIZE];
@@ -1334,6 +1294,7 @@ struct ssl_connection_st {
         int total_renegotiations;
         int num_renegotiations;
         int in_read_app_data;
+
         struct {
             /* actually only need to be 16+20 for SSLv3 and 12 for TLS */
             unsigned char finish_md[EVP_MAX_MD_SIZE * 2];
@@ -1397,7 +1358,7 @@ struct ssl_connection_st {
              * SSL session: e.g. appropriate curve, signature algorithms etc.
              * If zero it can't be used at all.
              */
-            uint32_t valid_flags[SSL_PKEY_NUM];
+            uint32_t *valid_flags;
             /*
              * For servers the following masks are for the key and auth algorithms
              * that are supported by the certs below. For clients they are masks of
@@ -1705,6 +1666,11 @@ struct ssl_connection_st {
         int compress_certificate_from_peer[TLSEXT_comp_cert_limit];
         /* indicate that we sent the extension, so we'll accept it */
         int compress_certificate_sent;
+
+        uint8_t client_cert_type;
+        uint8_t client_cert_type_ctos;
+        uint8_t server_cert_type;
+        uint8_t server_cert_type_ctos;
     } ext;
 
     /*
@@ -1825,6 +1791,12 @@ struct ssl_connection_st {
     /* certificate compression preferences */
     int cert_comp_prefs[TLSEXT_comp_cert_limit];
 #endif
+
+    /* Certificate Type stuff - for RPK vs X.509 */
+    unsigned char *client_cert_type;
+    size_t client_cert_type_len;
+    unsigned char *server_cert_type;
+    size_t server_cert_type_len;
 };
 
 # define SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, c) \
@@ -1883,15 +1855,6 @@ typedef struct sigalg_lookup_st {
     /* Whether this signature algorithm is actually available for use */
     int enabled;
 } SIGALG_LOOKUP;
-
-/*
- * Structure containing table entry of certificate info corresponding to
- * CERT_PKEY entries
- */
-typedef struct {
-    int nid; /* NID of public key algorithm */
-    uint32_t amask; /* authmask corresponding to key type */
-} SSL_CERT_LOOKUP;
 
 /* DTLS structures */
 
@@ -2090,7 +2053,8 @@ typedef struct cert_st {
     int dh_tmp_auto;
     /* Flags related to certificates */
     uint32_t cert_flags;
-    CERT_PKEY pkeys[SSL_PKEY_NUM];
+    CERT_PKEY *pkeys;
+    size_t ssl_pkey_num;
     /* Custom certificate types sent in certificate request message. */
     uint8_t *ctype;
     size_t ctype_len;
@@ -2442,11 +2406,47 @@ struct openssl_ssl_test_functions {
 
 const char *ssl_protocol_to_string(int version);
 
+static ossl_inline int tls12_rpk_and_privkey(const SSL_CONNECTION *sc, int idx)
+{
+    /*
+     * This is to check for special cases when using RPK with just
+     * a private key, and NO CERTIFICATE
+     */
+    return ((sc->server && sc->ext.server_cert_type == TLSEXT_cert_type_rpk)
+            || (!sc->server && sc->ext.client_cert_type == TLSEXT_cert_type_rpk))
+        && sc->cert->pkeys[idx].privatekey != NULL
+        && sc->cert->pkeys[idx].x509 == NULL;
+}
+
+static ossl_inline int ssl_has_cert_type(const SSL_CONNECTION *sc, unsigned char ct)
+{
+    unsigned char *ptr;
+    size_t len;
+
+    if (sc->server) {
+        ptr = sc->server_cert_type;
+        len = sc->server_cert_type_len;
+    } else {
+        ptr = sc->client_cert_type;
+        len = sc->client_cert_type_len;
+    }
+
+    if (ptr == NULL)
+        return 0;
+
+    return memchr(ptr, ct, len) != NULL;
+}
+
 /* Returns true if certificate and private key for 'idx' are present */
 static ossl_inline int ssl_has_cert(const SSL_CONNECTION *s, int idx)
 {
-    if (idx < 0 || idx >= SSL_PKEY_NUM)
+    if (idx < 0 || idx >= (int)s->ssl_pkey_num)
         return 0;
+
+    /* If RPK is enabled for this SSL... only require private key */
+    if (ssl_has_cert_type(s, TLSEXT_cert_type_rpk))
+        return s->cert->pkeys[idx].privatekey != NULL;
+
     return s->cert->pkeys[idx].x509 != NULL
         && s->cert->pkeys[idx].privatekey != NULL;
 }
@@ -2471,7 +2471,7 @@ __owur int ossl_ssl_connection_reset(SSL *ssl);
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
 __owur int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written);
 int ssl_clear_bad_session(SSL_CONNECTION *s);
-__owur CERT *ssl_cert_new(void);
+__owur CERT *ssl_cert_new(size_t ssl_pkey_num);
 __owur CERT *ssl_cert_dup(CERT *cert);
 void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
@@ -2523,6 +2523,7 @@ __owur int ssl_cert_set_current(CERT *c, long arg);
 void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg);
 
 __owur int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk);
+__owur int ssl_verify_rpk(SSL_CONNECTION *s, EVP_PKEY *rpk);
 __owur int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
                                    int ref);
@@ -2534,10 +2535,11 @@ __owur int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid,
                             void *other);
 int ssl_get_security_level_bits(const SSL *s, const SSL_CTX *ctx, int *levelp);
 
-__owur int ssl_cert_lookup_by_nid(int nid, size_t *pidx);
-__owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,
-                                                      size_t *pidx);
-__owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx);
+__owur int ssl_cert_lookup_by_nid(int nid, size_t *pidx, SSL_CTX *ctx);
+__owur SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,
+                                                size_t *pidx,
+                                                SSL_CTX *ctx);
+__owur SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx, SSL_CTX *ctx);
 
 int ssl_undefined_function(SSL *s);
 __owur int ssl_undefined_void_function(void);
@@ -2550,8 +2552,9 @@ __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL_CONNECTION *sc);
 __owur int ssl_x509err2alert(int type);
 void ssl_sort_cipher_list(void);
 int ssl_load_ciphers(SSL_CTX *ctx);
-__owur int ssl_setup_sig_algs(SSL_CTX *ctx);
+__owur int ssl_setup_sigalgs(SSL_CTX *ctx);
 int ssl_load_groups(SSL_CTX *ctx);
+int ssl_load_sigalgs(SSL_CTX *ctx);
 __owur int ssl_fill_hello_random(SSL_CONNECTION *s, int server,
                                  unsigned char *field, size_t len,
                                  DOWNGRADE dgrd);
@@ -2840,6 +2843,7 @@ __owur int ssl_handshake_hash(SSL_CONNECTION *s,
                               unsigned char *out, size_t outlen,
                               size_t *hashlen);
 __owur const EVP_MD *ssl_md(SSL_CTX *ctx, int idx);
+int ssl_get_md_idx(int md_nid);
 __owur const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s);
 __owur const EVP_MD *ssl_prf_md(SSL_CONNECTION *s);
 

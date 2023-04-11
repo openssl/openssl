@@ -16,6 +16,8 @@ B<openssl speed>
 [B<-cmac> I<algo>]
 [B<-mb>]
 [B<-aead>]
+[B<-kem-algorithms>]
+[B<-signature-algorithms>]
 [B<-multi> I<num>]
 [B<-async_jobs> I<num>]
 [B<-misalign> I<num>]
@@ -97,6 +99,14 @@ Enable multi-block mode on EVP-named cipher.
 
 Benchmark EVP-named AEAD cipher in TLS-like sequence.
 
+=item B<-kem-algorithms>
+
+Benchmark KEM algorithms: key generation, encapsulation, decapsulation.
+
+=item B<-signature-algorithms>
+
+Benchmark signature algorithms: key generation, signature, verification.
+
 =item B<-primes> I<num>
 
 Generate a I<num>-prime RSA key and use it to run the benchmarks. This option
@@ -145,6 +155,8 @@ supported by third party providers with the C<openssl speed> command.
 =head1 HISTORY
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
+
+DSA512 was removed in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

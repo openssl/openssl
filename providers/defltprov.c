@@ -355,6 +355,11 @@ static const OSSL_ALGORITHM deflt_kdfs[] = {
     { PROV_NAMES_KRB5KDF, "provider=default", ossl_kdf_krb5kdf_functions },
     { PROV_NAMES_HMAC_DRBG_KDF, "provider=default",
       ossl_kdf_hmac_drbg_functions },
+#ifndef OPENSSL_NO_ARGON2
+    { PROV_NAMES_ARGON2I, "provider=default", ossl_kdf_argon2i_functions },
+    { PROV_NAMES_ARGON2D, "provider=default", ossl_kdf_argon2d_functions },
+    { PROV_NAMES_ARGON2ID, "provider=default", ossl_kdf_argon2id_functions },
+#endif
     { NULL, NULL, NULL }
 };
 

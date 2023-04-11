@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -99,6 +99,9 @@ static int use_sendfile = 0;
 static int use_zc_sendfile = 0;
 
 static const char *session_id_prefix = NULL;
+
+static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 };
+static int enable_client_rpk = 0;
 
 #ifndef OPENSSL_NO_DTLS
 static int enable_timeouts = 0;
@@ -229,6 +232,7 @@ static int psk_find_session_cb(SSL *ssl, const unsigned char *identity,
             || !SSL_SESSION_set_cipher(tmpsess, cipher)
             || !SSL_SESSION_set_protocol_version(tmpsess, SSL_version(ssl))) {
         OPENSSL_free(key);
+        SSL_SESSION_free(tmpsess);
         return 0;
     }
     OPENSSL_free(key);
@@ -719,6 +723,8 @@ typedef enum OPTION_choice {
     OPT_HTTP_SERVER_BINMODE, OPT_NOCANAMES, OPT_IGNORE_UNEXPECTED_EOF, OPT_KTLS,
     OPT_USE_ZC_SENDFILE,
     OPT_TFO, OPT_CERT_COMP,
+    OPT_ENABLE_SERVER_RPK,
+    OPT_ENABLE_CLIENT_RPK,
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -970,7 +976,8 @@ const OPTIONS s_server_options[] = {
     {"sendfile", OPT_SENDFILE, '-', "Use sendfile to response file with -WWW"},
     {"zerocopy_sendfile", OPT_USE_ZC_SENDFILE, '-', "Use zerocopy mode of KTLS sendfile"},
 #endif
-
+    {"enable_server_rpk", OPT_ENABLE_SERVER_RPK, '-', "Enable raw public keys (RFC7250) from the server"},
+    {"enable_client_rpk", OPT_ENABLE_CLIENT_RPK, '-', "Enable raw public keys (RFC7250) from the client"},
     OPT_R_OPTIONS,
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
@@ -1068,6 +1075,7 @@ int s_server_main(int argc, char *argv[])
 #endif
     int tfo = 0;
     int cert_comp = 0;
+    int enable_server_rpk = 0;
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1674,6 +1682,12 @@ int s_server_main(int argc, char *argv[])
         case OPT_CERT_COMP:
             cert_comp = 1;
             break;
+        case OPT_ENABLE_SERVER_RPK:
+            enable_server_rpk = 1;
+            break;
+        case OPT_ENABLE_CLIENT_RPK:
+            enable_client_rpk = 1;
+            break;
         }
     }
 
@@ -2273,6 +2287,16 @@ int s_server_main(int argc, char *argv[])
         if (ctx2 != NULL && !SSL_CTX_compress_certs(ctx2, 0))
             BIO_printf(bio_s_out, "Error compressing certs on ctx2\n");
     }
+    if (enable_server_rpk)
+        if (!SSL_CTX_set1_server_cert_type(ctx, cert_type_rpk, sizeof(cert_type_rpk))) {
+            BIO_printf(bio_s_out, "Error setting server certificate types\n");
+            goto end;
+        }
+    if (enable_client_rpk)
+        if (!SSL_CTX_set1_client_cert_type(ctx, cert_type_rpk, sizeof(cert_type_rpk))) {
+            BIO_printf(bio_s_out, "Error setting server certificate types\n");
+            goto end;
+        }
 
     if (rev)
         server_cb = rev_body;
@@ -3023,6 +3047,19 @@ static void print_connection_info(SSL *con)
         PEM_write_bio_X509(bio_s_out, peer);
         dump_cert_text(bio_s_out, peer);
         peer = NULL;
+    }
+    /* Only display RPK information if configured */
+    if (SSL_get_negotiated_server_cert_type(con) == TLSEXT_cert_type_rpk)
+        BIO_printf(bio_s_out, "Server-to-client raw public key negotiated\n");
+    if (SSL_get_negotiated_client_cert_type(con) == TLSEXT_cert_type_rpk)
+        BIO_printf(bio_s_out, "Client-to-server raw public key negotiated\n");
+    if (enable_client_rpk) {
+        EVP_PKEY *client_rpk = SSL_get0_peer_rpk(con);
+
+        if (client_rpk != NULL) {
+            BIO_printf(bio_s_out, "Client raw public key\n");
+            EVP_PKEY_print_public(bio_s_out, client_rpk, 2, NULL);
+        }
     }
 
     if (SSL_get_shared_ciphers(con, buf, sizeof(buf)) != NULL)
@@ -3791,7 +3828,8 @@ static SSL_SESSION *get_session(SSL *ssl, const unsigned char *id, int idlen,
         if (idlen == (int)sess->idlen && !memcmp(sess->id, id, idlen)) {
             const unsigned char *p = sess->der;
             BIO_printf(bio_err, "Lookup session: cache hit\n");
-            return d2i_SSL_SESSION(NULL, &p, sess->derlen);
+            return d2i_SSL_SESSION_ex(NULL, &p, sess->derlen, app_get0_libctx(),
+                                      app_get0_propq());
         }
     }
     BIO_printf(bio_err, "Lookup session: cache miss\n");

@@ -1,4 +1,4 @@
-# Copyright 1999-2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2023 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -545,6 +545,7 @@ DSA_R_PARAMETER_ENCODING_ERROR:105:parameter encoding error
 DSA_R_P_NOT_PRIME:115:p not prime
 DSA_R_Q_NOT_PRIME:113:q not prime
 DSA_R_SEED_LEN_SMALL:110:seed_len is less than the length of q
+DSA_R_TOO_MANY_RETRIES:116:too many retries
 DSO_R_CTRL_FAILED:100:control command failed
 DSO_R_DSO_ALREADY_LOADED:110:dso already loaded
 DSO_R_EMPTY_FILE_STRUCTURE:113:empty file structure
@@ -628,6 +629,7 @@ EC_R_POINT_IS_NOT_ON_CURVE:107:point is not on curve
 EC_R_RANDOM_NUMBER_GENERATION_FAILED:158:random number generation failed
 EC_R_SHARED_INFO_ERROR:150:shared info error
 EC_R_SLOT_FULL:108:slot full
+EC_R_TOO_MANY_RETRIES:176:too many retries
 EC_R_UNDEFINED_GENERATOR:113:undefined generator
 EC_R_UNDEFINED_ORDER:128:undefined order
 EC_R_UNKNOWN_COFACTOR:164:unknown cofactor
@@ -1004,6 +1006,7 @@ PROV_R_BN_ERROR:160:bn error
 PROV_R_CIPHER_OPERATION_FAILED:102:cipher operation failed
 PROV_R_DERIVATION_FUNCTION_INIT_FAILED:205:derivation function init failed
 PROV_R_DIGEST_NOT_ALLOWED:174:digest not allowed
+PROV_R_EMS_NOT_ENABLED:233:ems not enabled
 PROV_R_ENTROPY_SOURCE_STRENGTH_TOO_WEAK:186:entropy source strength too weak
 PROV_R_ERROR_INSTANTIATING_DRBG:188:error instantiating drbg
 PROV_R_ERROR_RETRIEVING_ENTROPY:189:error retrieving entropy
@@ -1040,6 +1043,7 @@ PROV_R_INVALID_KDF:232:invalid kdf
 PROV_R_INVALID_KEY:158:invalid key
 PROV_R_INVALID_KEY_LENGTH:105:invalid key length
 PROV_R_INVALID_MAC:151:invalid mac
+PROV_R_INVALID_MEMORY_SIZE:235:invalid memory size
 PROV_R_INVALID_MGF1_MD:167:invalid mgf1 md
 PROV_R_INVALID_MODE:125:invalid mode
 PROV_R_INVALID_OUTPUT_LENGTH:217:invalid output length
@@ -1051,6 +1055,7 @@ PROV_R_INVALID_SIGNATURE_SIZE:179:invalid signature size
 PROV_R_INVALID_STATE:212:invalid state
 PROV_R_INVALID_TAG:110:invalid tag
 PROV_R_INVALID_TAG_LENGTH:118:invalid tag length
+PROV_R_INVALID_THREAD_POOL_SIZE:234:invalid thread pool size
 PROV_R_INVALID_UKM_LENGTH:200:invalid ukm length
 PROV_R_INVALID_X931_DIGEST:170:invalid x931 digest
 PROV_R_IN_ERROR_STATE:192:in error state
@@ -1275,6 +1280,7 @@ SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT:272:\
 	attempt to reuse session in different context
 SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE:158:\
 	at least (D)TLS 1.2 needed in Suite B mode
+SSL_R_BAD_CERTIFICATE:348:bad certificate
 SSL_R_BAD_CHANGE_CIPHER_SPEC:103:bad change cipher spec
 SSL_R_BAD_CIPHER:186:bad cipher
 SSL_R_BAD_COMPRESSION_ALGORITHM:326:bad compression algorithm
@@ -1364,6 +1370,7 @@ SSL_R_DUPLICATE_COMPRESSION_ID:309:duplicate compression id
 SSL_R_ECC_CERT_NOT_FOR_SIGNING:318:ecc cert not for signing
 SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE:374:ecdh required for suiteb mode
 SSL_R_EE_KEY_TOO_SMALL:399:ee key too small
+SSL_R_EMPTY_RAW_PUBLIC_KEY:349:empty raw public key
 SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST:354:empty srtp protection profile list
 SSL_R_ENCRYPTED_LENGTH_TOO_LONG:150:encrypted length too long
 SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST:151:error in received cipher list
@@ -1399,6 +1406,7 @@ SSL_R_INVALID_CT_VALIDATION_TYPE:212:invalid ct validation type
 SSL_R_INVALID_KEY_UPDATE_TYPE:120:invalid key update type
 SSL_R_INVALID_MAX_EARLY_DATA:174:invalid max early data
 SSL_R_INVALID_NULL_CMD_NAME:385:invalid null cmd name
+SSL_R_INVALID_RAW_PUBLIC_KEY:350:invalid raw public key
 SSL_R_INVALID_RECORD:317:invalid record
 SSL_R_INVALID_SEQUENCE_NUMBER:402:invalid sequence number
 SSL_R_INVALID_SERVERINFO_DATA:388:invalid serverinfo data
@@ -1488,6 +1496,7 @@ SSL_R_RECORDS_NOT_RELEASED:321:records not released
 SSL_R_RECORD_LAYER_FAILURE:313:record layer failure
 SSL_R_RECORD_LENGTH_MISMATCH:213:record length mismatch
 SSL_R_RECORD_TOO_SMALL:298:record too small
+SSL_R_REMOTE_PEER_ADDRESS_NOT_SET:346:remote peer address not set
 SSL_R_RENEGOTIATE_EXT_TOO_LONG:335:renegotiate ext too long
 SSL_R_RENEGOTIATION_ENCODING_ERR:336:renegotiation encoding err
 SSL_R_RENEGOTIATION_MISMATCH:337:renegotiation mismatch
@@ -1606,6 +1615,7 @@ SSL_R_VERSION_TOO_LOW:396:version too low
 SSL_R_WRONG_CERTIFICATE_TYPE:383:wrong certificate type
 SSL_R_WRONG_CIPHER_RETURNED:261:wrong cipher returned
 SSL_R_WRONG_CURVE:378:wrong curve
+SSL_R_WRONG_RPK_TYPE:351:wrong rpk type
 SSL_R_WRONG_SIGNATURE_LENGTH:264:wrong signature length
 SSL_R_WRONG_SIGNATURE_SIZE:265:wrong signature size
 SSL_R_WRONG_SIGNATURE_TYPE:370:wrong signature type

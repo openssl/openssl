@@ -25,3 +25,10 @@
 [submodule "oqs-provider"]
 	path = oqs-provider
 	url = https://github.com/open-quantum-safe/oqs-provider.git
+[submodule "cloudflare-quiche"]
+	path = cloudflare-quiche
+	url = https://github.com/cloudflare/quiche
+[submodule "fuzz/corpora"]
+	path = fuzz/corpora
+	url = https://github.com/openssl/fuzz-corpora
+	branch = main

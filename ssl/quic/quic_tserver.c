@@ -24,6 +24,9 @@ struct quic_tserver_st {
      */
     QUIC_CHANNEL    *ch;
 
+    /* The mutex we give to the QUIC channel. */
+    CRYPTO_MUTEX    *mutex;
+
     /* SSL_CTX for creating the underlying TLS connection */
     SSL_CTX *ctx;
 
@@ -67,6 +70,9 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
 
     srv->args = *args;
 
+    if ((srv->mutex = ossl_crypto_mutex_new()) == NULL)
+        goto err;
+
     srv->ctx = SSL_CTX_new_ex(srv->args.libctx, srv->args.propq, TLS_method());
     if (srv->ctx == NULL)
         goto err;
@@ -86,7 +92,10 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     ch_args.libctx      = srv->args.libctx;
     ch_args.propq       = srv->args.propq;
     ch_args.tls         = srv->tls;
+    ch_args.mutex       = srv->mutex;
     ch_args.is_server   = 1;
+    ch_args.now_cb      = srv->args.now_cb;
+    ch_args.now_cb_arg  = srv->args.now_cb_arg;
 
     if ((srv->ch = ossl_quic_channel_new(&ch_args)) == NULL)
         goto err;
@@ -102,8 +111,10 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
     return srv;
 
 err:
-    if (srv != NULL)
+    if (srv != NULL) {
         ossl_quic_channel_free(srv->ch);
+        ossl_crypto_mutex_free(&srv->mutex);
+    }
 
     OPENSSL_free(srv);
     return NULL;
@@ -119,12 +130,34 @@ void ossl_quic_tserver_free(QUIC_TSERVER *srv)
     BIO_free(srv->args.net_wbio);
     SSL_free(srv->tls);
     SSL_CTX_free(srv->ctx);
+    ossl_crypto_mutex_free(&srv->mutex);
     OPENSSL_free(srv);
+}
+
+/* Set mutator callbacks for test framework support */
+int ossl_quic_tserver_set_plain_packet_mutator(QUIC_TSERVER *srv,
+                                               ossl_mutate_packet_cb mutatecb,
+                                               ossl_finish_mutate_cb finishmutatecb,
+                                               void *mutatearg)
+{
+    return ossl_quic_channel_set_mutator(srv->ch, mutatecb, finishmutatecb,
+                                         mutatearg);
+}
+
+int ossl_quic_tserver_set_handshake_mutator(QUIC_TSERVER *srv,
+                                            ossl_statem_mutate_handshake_cb mutate_handshake_cb,
+                                            ossl_statem_finish_mutate_handshake_cb finish_mutate_handshake_cb,
+                                            void *mutatearg)
+{
+    return ossl_statem_set_mutator(ossl_quic_channel_get0_ssl(srv->ch),
+                                   mutate_handshake_cb,
+                                   finish_mutate_handshake_cb,
+                                   mutatearg);
 }
 
 int ossl_quic_tserver_tick(QUIC_TSERVER *srv)
 {
-    ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(srv->ch));
+    ossl_quic_reactor_tick(ossl_quic_channel_get_reactor(srv->ch), 0);
 
     if (ossl_quic_channel_is_active(srv->ch))
         srv->connected = 1;
@@ -135,6 +168,28 @@ int ossl_quic_tserver_tick(QUIC_TSERVER *srv)
 int ossl_quic_tserver_is_connected(QUIC_TSERVER *srv)
 {
     return ossl_quic_channel_is_active(srv->ch);
+}
+
+/* Returns 1 if the server is in any terminating or terminated state */
+int ossl_quic_tserver_is_term_any(const QUIC_TSERVER *srv)
+{
+    return ossl_quic_channel_is_term_any(srv->ch);
+}
+
+QUIC_TERMINATE_CAUSE ossl_quic_tserver_get_terminate_cause(const QUIC_TSERVER *srv)
+{
+    return ossl_quic_channel_get_terminate_cause(srv->ch);
+}
+
+/* Returns 1 if the server is in a terminated state */
+int ossl_quic_tserver_is_terminated(const QUIC_TSERVER *srv)
+{
+    return ossl_quic_channel_is_terminated(srv->ch);
+}
+
+int ossl_quic_tserver_is_handshake_confirmed(const QUIC_TSERVER *srv)
+{
+    return ossl_quic_channel_is_handshake_confirmed(srv->ch);
 }
 
 int ossl_quic_tserver_read(QUIC_TSERVER *srv,
@@ -223,4 +278,9 @@ int ossl_quic_tserver_conclude(QUIC_TSERVER *srv)
 
     ossl_quic_tserver_tick(srv);
     return 1;
+}
+
+BIO *ossl_quic_tserver_get0_rbio(QUIC_TSERVER *srv)
+{
+    return srv->args.net_rbio;
 }

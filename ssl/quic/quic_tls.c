@@ -694,10 +694,15 @@ int ossl_quic_tls_tick(QUIC_TLS *qtls)
          */
         SSL_set_bio(qtls->args.s, nullbio, nullbio);
 
-        if (qtls->args.is_server)
+        if (qtls->args.is_server) {
             SSL_set_accept_state(qtls->args.s);
-        else
+            if (!SSL_set_num_tickets(qtls->args.s, 0)) {
+                qtls->inerror = 1;
+                return 0;
+            }
+        } else {
             SSL_set_connect_state(qtls->args.s);
+        }
 
         qtls->configured = 1;
     }

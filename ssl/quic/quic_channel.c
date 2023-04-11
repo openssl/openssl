@@ -28,10 +28,17 @@
 #define INIT_CRYPTO_BUF_LEN     8192
 #define INIT_APP_BUF_LEN        8192
 
+/*
+ * Interval before we force a PING to ensure NATs don't timeout. This is based
+ * on the lowest commonly seen value of 30 seconds as cited in  RFC 9000 s.
+ * 10.1.2.
+ */
+#define MAX_NAT_INTERVAL (ossl_ms2time(25000))
+
 static void ch_rx_pre(QUIC_CHANNEL *ch);
 static int ch_rx(QUIC_CHANNEL *ch);
 static int ch_tx(QUIC_CHANNEL *ch);
-static void ch_tick(QUIC_TICK_RESULT *res, void *arg);
+static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
 static void ch_rx_handle_packet(QUIC_CHANNEL *ch);
 static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch);
 static int ch_retry(QUIC_CHANNEL *ch,
@@ -67,6 +74,7 @@ static int ch_discard_el(QUIC_CHANNEL *ch,
                          uint32_t enc_level);
 static void ch_on_idle_timeout(QUIC_CHANNEL *ch);
 static void ch_update_idle(QUIC_CHANNEL *ch);
+static void ch_update_ping_deadline(QUIC_CHANNEL *ch);
 static void ch_raise_net_error(QUIC_CHANNEL *ch);
 static void ch_on_terminating_timeout(QUIC_CHANNEL *ch);
 static void ch_start_terminating(QUIC_CHANNEL *ch,
@@ -111,6 +119,7 @@ static int ch_init(QUIC_CHANNEL *ch)
         goto err;
 
     /* We plug in a network write BIO to the QTX later when we get one. */
+    qtx_args.libctx = ch->libctx;
     qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
     ch->rx_max_udp_payload_size = qtx_args.mdpl;
 
@@ -132,7 +141,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     if (!ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
                              2  * 1024 * 1024,
                              10 * 1024 * 1024,
-                             get_time, NULL))
+                             get_time, ch))
         goto err;
 
     if (!ossl_statm_init(&ch->statm))
@@ -143,7 +152,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     if ((ch->cc_data = ch->cc_method->new(NULL, NULL, NULL)) == NULL)
         goto err;
 
-    if ((ch->ackm = ossl_ackm_new(get_time, NULL, &ch->statm,
+    if ((ch->ackm = ossl_ackm_new(get_time, ch, &ch->statm,
                                   ch->cc_method, ch->cc_data)) == NULL)
         goto err;
 
@@ -165,6 +174,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     txp_args.cc_method          = ch->cc_method;
     txp_args.cc_data            = ch->cc_data;
     txp_args.now                = get_time;
+    txp_args.now_arg            = ch;
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
         ch->crypto_send[pn_space] = ossl_quic_sstream_new(INIT_CRYPTO_BUF_LEN);
         if (ch->crypto_send[pn_space] == NULL)
@@ -179,7 +189,7 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     if ((ch->demux = ossl_quic_demux_new(/*BIO=*/NULL,
                                          /*Short CID Len=*/rx_short_cid_len,
-                                         get_time, NULL)) == NULL)
+                                         get_time, ch)) == NULL)
         goto err;
 
     /*
@@ -192,6 +202,7 @@ static int ch_init(QUIC_CHANNEL *ch)
                                             ch_default_packet_handler,
                                             ch);
 
+    qrx_args.libctx             = ch->libctx;
     qrx_args.demux              = ch->demux;
     qrx_args.short_conn_id_len  = rx_short_cid_len;
     qrx_args.max_deferred       = 32;
@@ -208,7 +219,7 @@ static int ch_init(QUIC_CHANNEL *ch)
         goto err;
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
-        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL);
+        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL, 0);
         if (ch->crypto_recv[pn_space] == NULL)
             goto err;
     }
@@ -221,7 +232,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     if ((ch->stream0->sstream = ossl_quic_sstream_new(INIT_APP_BUF_LEN)) == NULL)
         goto err;
 
-    if ((ch->stream0->rstream = ossl_quic_rstream_new(NULL, NULL)) == NULL)
+    if ((ch->stream0->rstream = ossl_quic_rstream_new(NULL, NULL, 0)) == NULL)
         goto err;
 
     if (!ossl_quic_txfc_init(&ch->stream0->txfc, &ch->conn_txfc))
@@ -230,7 +241,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     if (!ossl_quic_rxfc_init(&ch->stream0->rxfc, &ch->conn_rxfc,
                              1 * 1024 * 1024,
                              5 * 1024 * 1024,
-                             get_time, NULL))
+                             get_time, ch))
         goto err;
 
     /* Plug in the TLS handshake layer. */
@@ -252,6 +263,13 @@ static int ch_init(QUIC_CHANNEL *ch)
     if ((ch->qtls = ossl_quic_tls_new(&tls_args)) == NULL)
         goto err;
 
+    ch->rx_max_ack_delay        = QUIC_DEFAULT_MAX_ACK_DELAY;
+    ch->rx_ack_delay_exp        = QUIC_DEFAULT_ACK_DELAY_EXP;
+    ch->rx_active_conn_id_limit = QUIC_MIN_ACTIVE_CONN_ID_LIMIT;
+    ch->max_idle_timeout        = QUIC_DEFAULT_IDLE_TIMEOUT;
+    ch->tx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
+    ch->rx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
+
     /*
      * Determine the QUIC Transport Parameters and serialize the transport
      * parameters block. (For servers, we do this later as we must defer
@@ -260,12 +278,6 @@ static int ch_init(QUIC_CHANNEL *ch)
     if (!ch->is_server && !ch_generate_transport_params(ch))
         goto err;
 
-    ch->rx_max_ack_delay        = QUIC_DEFAULT_MAX_ACK_DELAY;
-    ch->rx_ack_delay_exp        = QUIC_DEFAULT_ACK_DELAY_EXP;
-    ch->rx_active_conn_id_limit = QUIC_MIN_ACTIVE_CONN_ID_LIMIT;
-    ch->max_idle_timeout        = QUIC_DEFAULT_IDLE_TIMEOUT;
-    ch->tx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
-    ch->rx_enc_level            = QUIC_ENC_LEVEL_INITIAL;
     ch_update_idle(ch);
     ossl_quic_reactor_init(&ch->rtor, ch_tick, ch,
                            ch_determine_next_tick_deadline(ch));
@@ -329,6 +341,9 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
     ch->propq       = args->propq;
     ch->is_server   = args->is_server;
     ch->tls         = args->tls;
+    ch->mutex       = args->mutex;
+    ch->now_cb      = args->now_cb;
+    ch->now_cb_arg  = args->now_cb_arg;
 
     if (!ch_init(ch)) {
         OPENSSL_free(ch);
@@ -345,6 +360,19 @@ void ossl_quic_channel_free(QUIC_CHANNEL *ch)
 
     ch_cleanup(ch);
     OPENSSL_free(ch);
+}
+
+/* Set mutator callbacks for test framework support */
+int ossl_quic_channel_set_mutator(QUIC_CHANNEL *ch,
+                                  ossl_mutate_packet_cb mutatecb,
+                                  ossl_finish_mutate_cb finishmutatecb,
+                                  void *mutatearg)
+{
+    if (ch->qtx == NULL)
+        return 0;
+
+    ossl_qtx_set_mutator(ch->qtx, mutatecb, finishmutatecb, mutatearg);
+    return 1;
 }
 
 int ossl_quic_channel_get_peer_addr(QUIC_CHANNEL *ch, BIO_ADDR *peer_addr)
@@ -387,13 +415,19 @@ int ossl_quic_channel_is_active(const QUIC_CHANNEL *ch)
 
 int ossl_quic_channel_is_terminating(const QUIC_CHANNEL *ch)
 {
-    return ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING
-        || ch->state == QUIC_CHANNEL_STATE_TERMINATING_DRAINING;
+    if (ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING
+            || ch->state == QUIC_CHANNEL_STATE_TERMINATING_DRAINING)
+        return 1;
+
+    return 0;
 }
 
 int ossl_quic_channel_is_terminated(const QUIC_CHANNEL *ch)
 {
-    return ch->state == QUIC_CHANNEL_STATE_TERMINATED;
+    if (ch->state == QUIC_CHANNEL_STATE_TERMINATED)
+        return 1;
+
+    return 0;
 }
 
 int ossl_quic_channel_is_term_any(const QUIC_CHANNEL *ch)
@@ -402,9 +436,29 @@ int ossl_quic_channel_is_term_any(const QUIC_CHANNEL *ch)
         || ossl_quic_channel_is_terminated(ch);
 }
 
+QUIC_TERMINATE_CAUSE ossl_quic_channel_get_terminate_cause(const QUIC_CHANNEL *ch)
+{
+    return ch->terminate_cause;
+}
+
 int ossl_quic_channel_is_handshake_complete(const QUIC_CHANNEL *ch)
 {
     return ch->handshake_complete;
+}
+
+int ossl_quic_channel_is_handshake_confirmed(const QUIC_CHANNEL *ch)
+{
+    return ch->handshake_confirmed;
+}
+
+QUIC_DEMUX *ossl_quic_channel_get0_demux(QUIC_CHANNEL *ch)
+{
+    return ch->demux;
+}
+
+CRYPTO_MUTEX *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch)
+{
+    return ch->mutex;
 }
 
 /*
@@ -415,7 +469,12 @@ int ossl_quic_channel_is_handshake_complete(const QUIC_CHANNEL *ch)
 /* Used by various components. */
 static OSSL_TIME get_time(void *arg)
 {
-    return ossl_time_now();
+    QUIC_CHANNEL *ch = arg;
+
+    if (ch->now_cb == NULL)
+        return ossl_time_now();
+
+    return ch->now_cb(ch->now_cb_arg);
 }
 
 /* Used by QSM. */
@@ -587,12 +646,16 @@ static int ch_on_handshake_complete(void *arg)
     if (!ossl_assert(ch->tx_enc_level == QUIC_ENC_LEVEL_1RTT))
         return 0;
 
-    if (!ch->got_remote_transport_params)
+    if (!ch->got_remote_transport_params) {
         /*
          * Was not a valid QUIC handshake if we did not get valid transport
          * params.
          */
+        ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_PROTOCOL_VIOLATION,
+                                               OSSL_QUIC_FRAME_TYPE_CRYPTO,
+                                               "no transport parameters received");
         return 0;
+    }
 
     /* Don't need transport parameters anymore. */
     OPENSSL_free(ch->local_transport_params);
@@ -917,7 +980,7 @@ static int ch_on_transport_params(const unsigned char *params,
                 goto malformed;
             }
 
-            if (v < ch->max_idle_timeout)
+            if (v > 0 && v < ch->max_idle_timeout)
                 ch->max_idle_timeout = v;
 
             ch_update_idle(ch);
@@ -1161,10 +1224,11 @@ err:
  * at least everything network I/O related. Best effort - not allowed to fail
  * "loudly".
  */
-static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
+static void ch_tick(QUIC_TICK_RESULT *res, void *arg, uint32_t flags)
 {
     OSSL_TIME now, deadline;
     QUIC_CHANNEL *ch = arg;
+    int channel_only = (flags & QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY) != 0;
 
     /*
      * When we tick the QUIC connection, we do everything we need to do
@@ -1190,7 +1254,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
      * expired.
      */
     if (ossl_quic_channel_is_terminating(ch)) {
-        now = ossl_time_now();
+        now = get_time(ch);
 
         if (ossl_time_compare(now, ch->terminate_deadline) >= 0) {
             ch_on_terminating_timeout(ch);
@@ -1213,7 +1277,8 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
          * new outgoing data.
          */
         ch->have_new_rx_secret = 0;
-        ossl_quic_tls_tick(ch->qtls);
+        if (!channel_only)
+            ossl_quic_tls_tick(ch->qtls);
 
         /*
          * If the handshake layer gave us a new secret, we need to do RX again
@@ -1231,7 +1296,7 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
      * ACKM ACK generation deadline is polled by TXP, so we don't need to handle
      * it here.
      */
-    now = ossl_time_now();
+    now = get_time(ch);
     if (ossl_time_compare(now, ch->idle_deadline) >= 0) {
         /*
          * Idle timeout differs from normal protocol violation because we do not
@@ -1247,6 +1312,13 @@ static void ch_tick(QUIC_TICK_RESULT *res, void *arg)
     deadline = ossl_ackm_get_loss_detection_deadline(ch->ackm);
     if (!ossl_time_is_zero(deadline) && ossl_time_compare(now, deadline) >= 0)
         ossl_ackm_on_timeout(ch->ackm);
+
+    /* If a ping is due, inform TXP. */
+    if (ossl_time_compare(now, ch->ping_deadline) >= 0) {
+        int pn_space = ossl_quic_enc_level_to_pn_space(ch->tx_enc_level);
+
+        ossl_quic_tx_packetiser_schedule_ack_eliciting(ch->txp, pn_space);
+    }
 
     /* Write any data to the network due to be sent. */
     ch_tx(ch);
@@ -1323,6 +1395,7 @@ static int ch_rx(QUIC_CHANNEL *ch)
         ossl_qrx_pkt_release(ch->qrx_pkt);
         ch->qrx_pkt = NULL;
 
+        ch->have_sent_ack_eliciting_since_rx = 0;
         handled_any = 1;
     }
 
@@ -1512,6 +1585,8 @@ undesirable:
 /* Try to generate packets and if possible, flush them to the network. */
 static int ch_tx(QUIC_CHANNEL *ch)
 {
+    int sent_ack_eliciting = 0;
+
     if (ch->state == QUIC_CHANNEL_STATE_TERMINATING_CLOSING) {
         /*
          * While closing, only send CONN_CLOSE if we've received more traffic
@@ -1533,10 +1608,24 @@ static int ch_tx(QUIC_CHANNEL *ch)
      * flush any queued packets which we already generated.
      */
     switch (ossl_quic_tx_packetiser_generate(ch->txp,
-                                             TX_PACKETISER_ARCHETYPE_NORMAL)) {
+                                             TX_PACKETISER_ARCHETYPE_NORMAL,
+                                             &sent_ack_eliciting)) {
     case TX_PACKETISER_RES_SENT_PKT:
         ch->have_sent_any_pkt = 1; /* Packet was sent */
+
+        /*
+         * RFC 9000 s. 10.1. 'An endpoint also restarts its idle timer when
+         * sending an ack-eliciting packet if no other ack-eliciting packets
+         * have been sent since last receiving and processing a packet.'
+         */
+        if (sent_ack_eliciting && !ch->have_sent_ack_eliciting_since_rx) {
+            ch_update_idle(ch);
+            ch->have_sent_ack_eliciting_since_rx = 1;
+        }
+
+        ch_update_ping_deadline(ch);
         break;
+
     case TX_PACKETISER_RES_NO_PKT:
         break; /* No packet was sent */
     default:
@@ -1592,6 +1681,14 @@ static OSSL_TIME ch_determine_next_tick_deadline(QUIC_CHANNEL *ch)
     else if (!ossl_time_is_infinite(ch->idle_deadline))
         deadline = ossl_time_min(deadline,
                                  ch->idle_deadline);
+
+    /*
+     * When do we need to send an ACK-eliciting packet to reset the idle
+     * deadline timer for the peer?
+     */
+    if (!ossl_time_is_infinite(ch->ping_deadline))
+        deadline = ossl_time_min(deadline,
+                                 ch->ping_deadline);
 
     return deadline;
 }
@@ -1707,7 +1804,7 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
     if (!ossl_quic_tls_tick(ch->qtls))
         return 0;
 
-    ossl_quic_reactor_tick(&ch->rtor); /* best effort */
+    ossl_quic_reactor_tick(&ch->rtor, 0); /* best effort */
     return 1;
 }
 
@@ -1886,7 +1983,7 @@ static void ch_start_terminating(QUIC_CHANNEL *ch,
             ch->state = tcause->remote ? QUIC_CHANNEL_STATE_TERMINATING_DRAINING
                                        : QUIC_CHANNEL_STATE_TERMINATING_CLOSING;
             ch->terminate_deadline
-                = ossl_time_add(ossl_time_now(),
+                = ossl_time_add(get_time(ch),
                                 ossl_time_multiply(ossl_ackm_get_pto_duration(ch->ackm),
                                                    3));
 
@@ -1990,8 +2087,32 @@ static void ch_update_idle(QUIC_CHANNEL *ch)
     if (ch->max_idle_timeout == 0)
         ch->idle_deadline = ossl_time_infinite();
     else
-        ch->idle_deadline = ossl_time_add(ossl_time_now(),
+        ch->idle_deadline = ossl_time_add(get_time(ch),
             ossl_ms2time(ch->max_idle_timeout));
+}
+
+/*
+ * Updates our ping deadline, which determines when we next generate a ping if
+ * we don't have any other ACK-eliciting frames to send.
+ */
+static void ch_update_ping_deadline(QUIC_CHANNEL *ch)
+{
+    if (ch->max_idle_timeout > 0) {
+        /*
+         * Maximum amount of time without traffic before we send a PING to keep
+         * the connection open. Usually we use max_idle_timeout/2, but ensure
+         * the period never exceeds the assumed NAT interval to ensure NAT
+         * devices don't have their state time out (RFC 9000 s. 10.1.2).
+         */
+        OSSL_TIME max_span
+            = ossl_time_divide(ossl_ms2time(ch->max_idle_timeout), 2);
+
+        max_span = ossl_time_min(max_span, MAX_NAT_INTERVAL);
+
+        ch->ping_deadline = ossl_time_add(get_time(ch), max_span);
+    } else {
+        ch->ping_deadline = ossl_time_infinite();
+    }
 }
 
 /* Called when the idle timeout expires. */
@@ -2054,4 +2175,9 @@ static int ch_server_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     ch->state                   = QUIC_CHANNEL_STATE_ACTIVE;
     ch->doing_proactive_ver_neg = 0; /* not currently supported */
     return 1;
+}
+
+SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch)
+{
+    return ch->tls;
 }

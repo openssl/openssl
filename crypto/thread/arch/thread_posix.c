@@ -171,12 +171,45 @@ void ossl_crypto_condvar_wait(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex)
     pthread_cond_wait(cv_p, mutex_p);
 }
 
+void ossl_crypto_condvar_wait_timeout(CRYPTO_CONDVAR *cv, CRYPTO_MUTEX *mutex,
+                                      OSSL_TIME deadline)
+{
+    pthread_cond_t *cv_p = (pthread_cond_t *)cv;
+    pthread_mutex_t *mutex_p = (pthread_mutex_t *)mutex;
+
+    if (ossl_time_is_infinite(deadline)) {
+        /*
+         * No deadline. Some pthread implementations allow
+         * pthread_cond_timedwait to work the same as pthread_cond_wait when
+         * abstime is NULL, but it is unclear whether this is POSIXly correct.
+         */
+        pthread_cond_wait(cv_p, mutex_p);
+    } else {
+        struct timespec deadline_ts;
+
+        deadline_ts.tv_sec
+            = ossl_time2seconds(deadline);
+        deadline_ts.tv_nsec
+            = (ossl_time2ticks(deadline) % OSSL_TIME_SECOND) / OSSL_TIME_NS;
+
+        pthread_cond_timedwait(cv_p, mutex_p, &deadline_ts);
+    }
+}
+
 void ossl_crypto_condvar_broadcast(CRYPTO_CONDVAR *cv)
 {
     pthread_cond_t *cv_p;
 
     cv_p = (pthread_cond_t *)cv;
     pthread_cond_broadcast(cv_p);
+}
+
+void ossl_crypto_condvar_signal(CRYPTO_CONDVAR *cv)
+{
+    pthread_cond_t *cv_p;
+
+    cv_p = (pthread_cond_t *)cv;
+    pthread_cond_signal(cv_p);
 }
 
 void ossl_crypto_condvar_free(CRYPTO_CONDVAR **cv)
@@ -191,42 +224,6 @@ void ossl_crypto_condvar_free(CRYPTO_CONDVAR **cv)
         pthread_cond_destroy(*cv_p);
     OPENSSL_free(*cv_p);
     *cv_p = NULL;
-}
-
-void ossl_crypto_mem_barrier(void)
-{
-# if defined(__clang__) || defined(__GNUC__)
-    __sync_synchronize();
-# elif !defined(OPENSSL_NO_ASM)
-#  if defined(__alpha__) /* Alpha */
-    __asm__ volatile("mb" : : : "memory");
-#  elif defined(__amd64__) || defined(__i386__) || defined(__i486__) \
-    || defined(__i586__)  || defined(__i686__) || defined(__i386) /* x86 */
-    __asm__ volatile("mfence" : : : "memory");
-#  elif defined(__arm__) || defined(__aarch64__) /* ARMv7, ARMv8 */
-    __asm__ volatile("dmb ish" : : : "memory");
-#  elif defined(__hppa__) /* PARISC */
-    __asm__ volatile("" : : : "memory");
-#  elif defined(__mips__) /* MIPS */
-    __asm__ volatile("sync" : : : "memory");
-#  elif defined(__powerpc__) || defined(__powerpc64__) /* power, ppc64, ppc64le */
-    __asm__ volatile("sync" : : : "memory");
-#  elif defined(__sparc__)
-    __asm__ volatile("ba,pt	%%xcc, 1f\n\t" \
-                     " membar	#Sync\n"   \
-                     "1:\n"                \
-                     : : : "memory");
-#  elif defined(__s390__) || defined(__s390x__) /* z */
-    __asm__ volatile("bcr 15,0" : : : "memory");
-#  elif defined(__riscv) || defined(__riscv__) /* riscv */
-    __asm__ volatile("fence iorw,iorw" : : : "memory");
-#  else /* others, compiler only */
-    __asm__ volatile("" : : : "memory");
-#  endif
-# else
-    /* compiler only barrier */
-    __asm__ volatile("" : : : "memory");
-# endif
 }
 
 #endif

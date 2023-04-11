@@ -8,13 +8,15 @@
  */
 #include "internal/quic_reactor.h"
 #include "internal/common.h"
+#include "internal/thread_arch.h"
 
 /*
  * Core I/O Reactor Framework
  * ==========================
  */
 void ossl_quic_reactor_init(QUIC_REACTOR *rtor,
-                            void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg),
+                            void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
+                                            uint32_t flags),
                             void *tick_cb_arg,
                             OSSL_TIME initial_tick_deadline)
 {
@@ -63,7 +65,7 @@ OSSL_TIME ossl_quic_reactor_get_tick_deadline(QUIC_REACTOR *rtor)
     return rtor->tick_deadline;
 }
 
-int ossl_quic_reactor_tick(QUIC_REACTOR *rtor)
+int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags)
 {
     QUIC_TICK_RESULT res = {0};
 
@@ -74,7 +76,7 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor)
      * best effort. If something fatal happens with a connection we can report
      * it on the next actual application I/O call.
      */
-    rtor->tick_cb(&res, rtor->tick_cb_arg);
+    rtor->tick_cb(&res, rtor->tick_cb_arg, flags);
 
     rtor->net_read_desired  = res.net_read_desired;
     rtor->net_write_desired = res.net_write_desired;
@@ -121,18 +123,26 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor)
  * Returns 0 on error and 1 on success. Timeout expiry is considered a success
  * condition. We don't elaborate our return values here because the way we are
  * actually using this doesn't currently care.
+ *
+ * If mutex is non-NULL, it is assumed to be held for write and is unlocked for
+ * the duration of the call.
+ *
+ * Precondition:   mutex is NULL or is held for write (unchecked)
+ * Postcondition:  mutex is NULL or is held for write (unless
+ *                   CRYPTO_THREAD_write_lock fails)
  */
 static int poll_two_fds(int rfd, int rfd_want_read,
                         int wfd, int wfd_want_write,
-                        OSSL_TIME deadline)
+                        OSSL_TIME deadline,
+                        CRYPTO_MUTEX *mutex)
 {
-#if defined(OSSL_SYS_WINDOWS) || !defined(POLLIN)
+#if defined(OPENSSL_SYS_WINDOWS) || !defined(POLLIN)
     fd_set rfd_set, wfd_set, efd_set;
     OSSL_TIME now, timeout;
     struct timeval tv, *ptv;
     int maxfd, pres;
 
-# ifndef OSSL_SYS_WINDOWS
+# ifndef OPENSSL_SYS_WINDOWS
     /*
      * On Windows there is no relevant limit to the magnitude of a fd value (see
      * above). On *NIX the fd_set uses a bitmap and we must check the limit.
@@ -165,6 +175,9 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         /* Do not block forever; should not happen. */
         return 0;
 
+    if (mutex != NULL)
+        ossl_crypto_mutex_unlock(mutex);
+
     do {
         /*
          * select expects a timeout, not a deadline, so do the conversion.
@@ -186,6 +199,9 @@ static int poll_two_fds(int rfd, int rfd_want_read,
 
         pres = select(maxfd + 1, &rfd_set, &wfd_set, &efd_set, ptv);
     } while (pres == -1 && get_last_socket_error_is_eintr());
+
+    if (mutex != NULL)
+        ossl_crypto_mutex_lock(mutex);
 
     return pres < 0 ? 0 : 1;
 #else
@@ -216,6 +232,9 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         /* Do not block forever; should not happen. */
         return 0;
 
+    if (mutex != NULL)
+        ossl_crypto_mutex_unlock(mutex);
+
     do {
         if (ossl_time_is_infinite(deadline)) {
             timeout_ms = -1;
@@ -228,6 +247,9 @@ static int poll_two_fds(int rfd, int rfd_want_read,
         pres = poll(pfds, npfd, timeout_ms);
     } while (pres == -1 && get_last_socket_error_is_eintr());
 
+    if (mutex != NULL)
+        ossl_crypto_mutex_lock(mutex);
+
     return pres < 0 ? 0 : 1;
 #endif
 }
@@ -235,11 +257,12 @@ static int poll_two_fds(int rfd, int rfd_want_read,
 static int poll_descriptor_to_fd(const BIO_POLL_DESCRIPTOR *d, int *fd)
 {
     if (d == NULL || d->type == BIO_POLL_DESCRIPTOR_TYPE_NONE) {
-        *fd = -1;
+        *fd = INVALID_SOCKET;
         return 1;
     }
 
-    if (d->type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD || d->value.fd < 0)
+    if (d->type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD
+            || d->value.fd == INVALID_SOCKET)
         return 0;
 
     *fd = d->value.fd;
@@ -249,10 +272,18 @@ static int poll_descriptor_to_fd(const BIO_POLL_DESCRIPTOR *d, int *fd)
 /*
  * Poll up to two abstract poll descriptors. Currently we only support
  * poll descriptors which represent FDs.
+ *
+ * If mutex is non-NULL, it is assumed be a lock currently held for write and is
+ * unlocked for the duration of any wait.
+ *
+ * Precondition:   mutex is NULL or is held for write (unchecked)
+ * Postcondition:  mutex is NULL or is held for write (unless
+ *                   CRYPTO_THREAD_write_lock fails)
  */
 static int poll_two_descriptors(const BIO_POLL_DESCRIPTOR *r, int r_want_read,
                                 const BIO_POLL_DESCRIPTOR *w, int w_want_write,
-                                OSSL_TIME deadline)
+                                OSSL_TIME deadline,
+                                CRYPTO_MUTEX *mutex)
 {
     int rfd, wfd;
 
@@ -260,12 +291,24 @@ static int poll_two_descriptors(const BIO_POLL_DESCRIPTOR *r, int r_want_read,
         || !poll_descriptor_to_fd(w, &wfd))
         return 0;
 
-    return poll_two_fds(rfd, r_want_read, wfd, w_want_write, deadline);
+    return poll_two_fds(rfd, r_want_read, wfd, w_want_write, deadline, mutex);
 }
 
+/*
+ * Block until a predicate function evaluates to true.
+ *
+ * If mutex is non-NULL, it is assumed be a lock currently held for write and is
+ * unlocked for the duration of any wait.
+ *
+ * Precondition:   Must hold channel write lock (unchecked)
+ * Precondition:   mutex is NULL or is held for write (unchecked)
+ * Postcondition:  mutex is NULL or is held for write (unless
+ *                   CRYPTO_THREAD_write_lock fails)
+ */
 int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                        int (*pred)(void *arg), void *pred_arg,
-                                       uint32_t flags)
+                                       uint32_t flags,
+                                       CRYPTO_MUTEX *mutex)
 {
     int res;
 
@@ -274,7 +317,7 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
             flags &= ~SKIP_FIRST_TICK;
         else
             /* best effort */
-            ossl_quic_reactor_tick(rtor);
+            ossl_quic_reactor_tick(rtor, 0);
 
         if ((res = pred(pred_arg)) != 0)
             return res;
@@ -283,7 +326,8 @@ int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                   ossl_quic_reactor_net_read_desired(rtor),
                                   ossl_quic_reactor_get_poll_w(rtor),
                                   ossl_quic_reactor_net_write_desired(rtor),
-                                  ossl_quic_reactor_get_tick_deadline(rtor)))
+                                  ossl_quic_reactor_get_tick_deadline(rtor),
+                                  mutex))
             /*
              * We don't actually care why the call succeeded (timeout, FD
              * readiness), we just call reactor_tick and start trying to do I/O

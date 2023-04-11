@@ -1,9 +1,16 @@
 LIBS=../../libcrypto
 
 IF[{- !$disabled{'thread-pool'} -}]
-  $THREADS=\
-        api.c internal.c arch.c \
+  $THREADS_ARCH=\
+        arch.c  \
         arch/thread_win.c arch/thread_posix.c arch/thread_none.c
+
+  $THREADS=\
+        api.c internal.c $THREADS_ARCH
+
+  IF[{- !$disabled{quic} -}]
+    SHARED_SOURCE[../../libssl]=$THREADS_ARCH
+  ENDIF
 ELSE
   $THREADS=api.c
 ENDIF

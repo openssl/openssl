@@ -198,8 +198,8 @@ static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
     if ((selection & DH_POSSIBLE_SELECTIONS) == 0)
         return 0;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
-        ok = ok && ossl_dh_params_fromdata(dh, params);
+    /* a key without parameters is meaningless */
+    ok = ok && ossl_dh_params_fromdata(dh, params);
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         int include_private =
@@ -735,10 +735,8 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         } else if (gctx->hindex != 0) {
             ossl_ffc_params_set_h(ffc, gctx->hindex);
         }
-        if (gctx->mdname != NULL) {
-            if (!ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops))
-                goto end;
-        }
+        if (gctx->mdname != NULL)
+            ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops);
         gctx->cb = osslcb;
         gctx->cbarg = cbarg;
         gencb = BN_GENCB_new();

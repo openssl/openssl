@@ -124,9 +124,9 @@ static int rsa_has(const void *keydata, int selection)
 
     /* OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS are always available even if empty */
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && (RSA_get0_e(rsa) != NULL);
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = ok && (RSA_get0_n(rsa) != NULL);
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        ok = ok && (RSA_get0_e(rsa) != NULL);
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ok && (RSA_get0_d(rsa) != NULL);
     return ok;

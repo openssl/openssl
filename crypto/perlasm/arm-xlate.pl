@@ -198,6 +198,16 @@ while(my $line=<>) {
 	}
     }
 
+    # ldr REG, #VALUE psuedo-instruction - avoid clang issue with Neon registers
+    #
+    if ($line =~ /^\s*ldr\s+([qd]\d\d?)\s*,\s*=(\w+)/i) {
+        # Immediate load via literal pool into qN or DN - clang max is 2^32-1
+        my ($reg, $value) = ($1, $2);
+        # If $value is hex, 0x + 8 hex chars = 10 chars total will be okay
+        # If $value is decimal, 2^32 - 1 = 4294967295 will be okay (also 10 chars)
+        die("$line: immediate load via literal pool into $reg: value too large for clang - redo manually") if length($value) > 10;
+    }
+
     print $line if ($line);
     print "\n";
 }

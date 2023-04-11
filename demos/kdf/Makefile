@@ -7,7 +7,7 @@ CFLAGS = -I../../include -g
 LDFLAGS = -L../..
 LDLIBS = -lcrypto
 
-all: hkdf pbkdf2 scrypt
+all: hkdf pbkdf2 scrypt argon2
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
@@ -19,4 +19,4 @@ scrypt: scrypt.o
 test: ;
 
 clean:
-	$(RM) *.o hkdf pbkdf2 scrypt
+	$(RM) *.o hkdf pbkdf2 scrypt argon2

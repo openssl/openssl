@@ -39,6 +39,8 @@ int EVP_SignFinal_ex(EVP_MD_CTX *ctx, unsigned char *sigret,
         rv = EVP_MD_CTX_copy_ex(tmp_ctx, ctx);
         if (rv)
             rv = EVP_DigestFinal_ex(tmp_ctx, m, &m_len);
+        else
+            rv = EVP_DigestFinal_ex(ctx, m, &m_len);
         EVP_MD_CTX_free(tmp_ctx);
         if (!rv)
             return 0;

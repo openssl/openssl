@@ -58,7 +58,7 @@ IF[{- !$disabled{asm} -}]
   IF[{- ($target{perlasm_scheme} // '') eq '31' -}]
     $BNASM_s390x=bn_asm.c s390x-mont.S
   ELSE
-    $BNASM_s390x=asm/s390x.S s390x-mont.S
+    $BNASM_s390x=asm/s390x.S s390x-mont.S bn_s390x.c
   ENDIF
   $BNDEF_s390x=OPENSSL_BN_ASM_MONT
   $BNASM_s390x_ec2m=s390x-gf2m.s

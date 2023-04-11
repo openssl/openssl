@@ -78,7 +78,7 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
 static int use_session_cb_cnt = 0;
 static int find_session_cb_cnt = 0;
 
-static SSL_SESSION *create_a_psk(SSL *ssl);
+static SSL_SESSION *create_a_psk(SSL *ssl, size_t mdsize);
 #endif
 
 static char *certsdir = NULL;
@@ -99,6 +99,7 @@ static char *tmpfilename = NULL;
 static char *dhfile = NULL;
 
 static int is_fips = 0;
+static int fips_ems_check = 0;
 
 #define LOG_BUFFER_SIZE 2048
 static char server_log_buffer[LOG_BUFFER_SIZE + 1] = {0};
@@ -796,7 +797,7 @@ static int test_no_ems(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
-    int testresult = 0;
+    int testresult = 0, status;
 
     if (!create_ssl_ctx_pair(libctx, TLS_server_method(), TLS_client_method(),
                              TLS1_VERSION, TLS1_2_VERSION,
@@ -812,19 +813,25 @@ static int test_no_ems(void)
         goto end;
     }
 
-    if (!create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)) {
-        printf("Creating SSL connection failed\n");
-        goto end;
-    }
-
-    if (SSL_get_extms_support(serverssl)) {
-        printf("Server reports Extended Master Secret support\n");
-        goto end;
-    }
-
-    if (SSL_get_extms_support(clientssl)) {
-        printf("Client reports Extended Master Secret support\n");
-        goto end;
+    status = create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE);
+    if (fips_ems_check) {
+        if (status == 1) {
+            printf("When FIPS uses the EMS check a connection that doesnt use EMS should fail\n");
+            goto end;
+        }
+    } else {
+        if (!status) {
+            printf("Creating SSL connection failed\n");
+            goto end;
+        }
+        if (SSL_get_extms_support(serverssl)) {
+            printf("Server reports Extended Master Secret support\n");
+            goto end;
+        }
+        if (SSL_get_extms_support(clientssl)) {
+            printf("Client reports Extended Master Secret support\n");
+            goto end;
+        }
     }
     testresult = 1;
 
@@ -1165,7 +1172,7 @@ static int execute_test_ktls(int cis_ktls, int sis_ktls,
     int rx_supported;
     SSL_CONNECTION *clientsc, *serversc;
 
-    if (!TEST_true(create_test_sockets(&cfd, &sfd)))
+    if (!TEST_true(create_test_sockets(&cfd, &sfd, SOCK_STREAM, NULL)))
         goto end;
 
     /* Skip this test if the platform does not support ktls */
@@ -1310,7 +1317,7 @@ static int execute_test_ktls_sendfile(int tls_version, const char *cipher,
     buf = OPENSSL_zalloc(SENDFILE_SZ);
     buf_dst = OPENSSL_zalloc(SENDFILE_SZ);
     if (!TEST_ptr(buf) || !TEST_ptr(buf_dst)
-        || !TEST_true(create_test_sockets(&cfd, &sfd)))
+        || !TEST_true(create_test_sockets(&cfd, &sfd, SOCK_STREAM, NULL)))
         goto end;
 
     /* Skip this test if the platform does not support ktls */
@@ -2673,7 +2680,7 @@ static int test_psk_tickets(void)
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                       NULL, NULL)))
         goto end;
-    clientpsk = serverpsk = create_a_psk(clientssl);
+    clientpsk = serverpsk = create_a_psk(clientssl, SHA384_DIGEST_LENGTH);
     if (!TEST_ptr(clientpsk))
         goto end;
     SSL_SESSION_up_ref(clientpsk);
@@ -3367,7 +3374,7 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
 #define TLS13_AES_128_CCM_8_SHA256_BYTES ((const unsigned char *)"\x13\05")
 
 
-static SSL_SESSION *create_a_psk(SSL *ssl)
+static SSL_SESSION *create_a_psk(SSL *ssl, size_t mdsize)
 {
     const SSL_CIPHER *cipher = NULL;
     const unsigned char key[] = {
@@ -3375,16 +3382,26 @@ static SSL_SESSION *create_a_psk(SSL *ssl)
         0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
         0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20,
         0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b,
-        0x2c, 0x2d, 0x2e, 0x2f
+        0x2c, 0x2d, 0x2e, 0x2f /* SHA384_DIGEST_LENGTH bytes */
     };
     SSL_SESSION *sess = NULL;
 
-    cipher = SSL_CIPHER_find(ssl, TLS13_AES_256_GCM_SHA384_BYTES);
+    if (mdsize == SHA384_DIGEST_LENGTH) {
+        cipher = SSL_CIPHER_find(ssl, TLS13_AES_256_GCM_SHA384_BYTES);
+    } else if (mdsize == SHA256_DIGEST_LENGTH) {
+        /*
+         * Any ciphersuite using SHA256 will do - it will be compatible with
+         * the actual ciphersuite selected as long as it too is based on SHA256
+         */
+        cipher = SSL_CIPHER_find(ssl, TLS13_AES_128_GCM_SHA256_BYTES);
+    } else {
+        /* Should not happen */
+        return NULL;
+    }
     sess = SSL_SESSION_new();
     if (!TEST_ptr(sess)
             || !TEST_ptr(cipher)
-            || !TEST_true(SSL_SESSION_set1_master_key(sess, key,
-                                                      sizeof(key)))
+            || !TEST_true(SSL_SESSION_set1_master_key(sess, key, mdsize))
             || !TEST_true(SSL_SESSION_set_cipher(sess, cipher))
             || !TEST_true(
                     SSL_SESSION_set_protocol_version(sess,
@@ -3395,19 +3412,48 @@ static SSL_SESSION *create_a_psk(SSL *ssl)
     return sess;
 }
 
+static int artificial_ticket_time = 0;
+
+static int ed_gen_cb(SSL *s, void *arg)
+{
+    SSL_SESSION *sess = SSL_get0_session(s);
+
+    if (sess == NULL)
+        return 0;
+
+    /*
+     * Artificially give the ticket some age. Just do it for the number of
+     * tickets we've been told to do.
+     */
+    if (artificial_ticket_time == 0)
+        return 1;
+    artificial_ticket_time--;
+
+    if (SSL_SESSION_set_time(sess, SSL_SESSION_get_time(sess) - 10) == 0)
+        return 0;
+
+    return 1;
+}
+
 /*
  * Helper method to setup objects for early data test. Caller frees objects on
  * error.
  */
 static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
-                                SSL **serverssl, SSL_SESSION **sess, int idx)
+                                SSL **serverssl, SSL_SESSION **sess, int idx,
+                                size_t mdsize)
 {
+    int artificial = (artificial_ticket_time > 0);
+
     if (*sctx == NULL
             && !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                               TLS_client_method(),
                                               TLS1_VERSION, 0,
                                               sctx, cctx, cert, privkey)))
         return 0;
+
+    if (artificial)
+        SSL_CTX_set_session_ticket_cb(*sctx, ed_gen_cb, NULL, NULL);
 
     if (!TEST_true(SSL_CTX_set_max_early_data(*sctx, SSL3_RT_MAX_PLAIN_LENGTH)))
         return 0;
@@ -3440,7 +3486,7 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
         return 0;
 
     if (idx == 2) {
-        clientpsk = create_a_psk(*clientssl);
+        clientpsk = create_a_psk(*clientssl, mdsize);
         if (!TEST_ptr(clientpsk)
                    /*
                     * We just choose an arbitrary value for max_early_data which
@@ -3481,6 +3527,15 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
     SSL_free(*clientssl);
     *serverssl = *clientssl = NULL;
 
+    /*
+     * Artificially give the ticket some age to match the artificial age we
+     * gave it on the server side
+     */
+    if (artificial
+            && !TEST_long_gt(SSL_SESSION_set_time(*sess,
+                                                  SSL_SESSION_get_time(*sess) - 10), 0))
+        return 0;
+
     if (!TEST_true(create_ssl_objects(*sctx, *cctx, serverssl,
                                       clientssl, NULL, NULL))
             || !TEST_true(SSL_set_session(*clientssl, *sess)))
@@ -3499,9 +3554,16 @@ static int test_early_data_read_write(int idx)
     size_t readbytes, written, eoedlen, rawread, rawwritten;
     BIO *rbio;
 
+    /* Artificially give the next 2 tickets some age for non PSK sessions */
+    if (idx != 2)
+        artificial_ticket_time = 2;
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
-                                        &serverssl, &sess, idx)))
+                                        &serverssl, &sess, idx,
+                                        SHA384_DIGEST_LENGTH))) {
+        artificial_ticket_time = 0;
         goto end;
+    }
+    artificial_ticket_time = 0;
 
     /* Write and read some early data */
     if (!TEST_true(SSL_write_early_data(clientssl, MSG1, strlen(MSG1),
@@ -3757,7 +3819,8 @@ static int test_early_data_replay_int(int idx, int usecb, int confopt)
     }
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
-                                        &serverssl, &sess, idx)))
+                                        &serverssl, &sess, idx,
+                                        SHA384_DIGEST_LENGTH)))
         goto end;
 
     /*
@@ -3847,6 +3910,16 @@ static int test_early_data_replay(int idx)
     return ret;
 }
 
+static const char *ciphersuites[] = {
+    "TLS_AES_128_CCM_8_SHA256",
+    "TLS_AES_128_GCM_SHA256",
+    "TLS_AES_256_GCM_SHA384",
+    "TLS_AES_128_CCM_SHA256",
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+    "TLS_CHACHA20_POLY1305_SHA256"
+#endif
+};
+
 /*
  * Helper function to test that a server attempting to read early data can
  * handle a connection from a client where the early data should be skipped.
@@ -3855,7 +3928,7 @@ static int test_early_data_replay(int idx)
  * testtype: 2 == HRR, invalid early_data sent after HRR
  * testtype: 3 == recv_max_early_data set to 0
  */
-static int early_data_skip_helper(int testtype, int idx)
+static int early_data_skip_helper(int testtype, int cipher, int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -3864,8 +3937,28 @@ static int early_data_skip_helper(int testtype, int idx)
     unsigned char buf[20];
     size_t readbytes, written;
 
+    if (is_fips && cipher == 4)
+        return 1;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                              TLS_client_method(),
+                                              TLS1_VERSION, 0,
+                                              &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (cipher == 0) {
+        SSL_CTX_set_security_level(sctx, 0);
+        SSL_CTX_set_security_level(cctx, 0);
+    }
+
+    if (!TEST_true(SSL_CTX_set_ciphersuites(sctx, ciphersuites[cipher]))
+            || !TEST_true(SSL_CTX_set_ciphersuites(cctx, ciphersuites[cipher])))
+        goto end;
+
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
-                                        &serverssl, &sess, idx)))
+                                        &serverssl, &sess, idx,
+                                        cipher == 2 ? SHA384_DIGEST_LENGTH
+                                                    : SHA256_DIGEST_LENGTH)))
         goto end;
 
     if (testtype == 1 || testtype == 2) {
@@ -3975,6 +4068,7 @@ static int early_data_skip_helper(int testtype, int idx)
         goto end;
     }
 
+    ERR_clear_error();
     /*
      * Should be able to send normal data despite rejection of early data. The
      * early_data should be skipped.
@@ -3985,6 +4079,13 @@ static int early_data_skip_helper(int testtype, int idx)
                             SSL_EARLY_DATA_REJECTED)
             || !TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
             || !TEST_mem_eq(buf, readbytes, MSG2, strlen(MSG2)))
+        goto end;
+
+    /*
+     * Failure to decrypt early data records should not leave spurious errors
+     * on the error stack
+     */
+    if (!TEST_long_eq(ERR_peek_error(), 0))
         goto end;
 
     testresult = 1;
@@ -4007,7 +4108,9 @@ static int early_data_skip_helper(int testtype, int idx)
  */
 static int test_early_data_skip(int idx)
 {
-    return early_data_skip_helper(0, idx);
+    return early_data_skip_helper(0,
+                                  idx % OSSL_NELEM(ciphersuites),
+                                  idx / OSSL_NELEM(ciphersuites));
 }
 
 /*
@@ -4016,7 +4119,9 @@ static int test_early_data_skip(int idx)
  */
 static int test_early_data_skip_hrr(int idx)
 {
-    return early_data_skip_helper(1, idx);
+    return early_data_skip_helper(1,
+                                  idx % OSSL_NELEM(ciphersuites),
+                                  idx / OSSL_NELEM(ciphersuites));
 }
 
 /*
@@ -4026,7 +4131,9 @@ static int test_early_data_skip_hrr(int idx)
  */
 static int test_early_data_skip_hrr_fail(int idx)
 {
-    return early_data_skip_helper(2, idx);
+    return early_data_skip_helper(2,
+                                  idx % OSSL_NELEM(ciphersuites),
+                                  idx / OSSL_NELEM(ciphersuites));
 }
 
 /*
@@ -4035,7 +4142,9 @@ static int test_early_data_skip_hrr_fail(int idx)
  */
 static int test_early_data_skip_abort(int idx)
 {
-    return early_data_skip_helper(3, idx);
+    return early_data_skip_helper(3,
+                                  idx % OSSL_NELEM(ciphersuites),
+                                  idx / OSSL_NELEM(ciphersuites));
 }
 
 /*
@@ -4052,7 +4161,8 @@ static int test_early_data_not_sent(int idx)
     size_t readbytes, written;
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
-                                        &serverssl, &sess, idx)))
+                                        &serverssl, &sess, idx,
+                                        SHA384_DIGEST_LENGTH)))
         goto end;
 
     /* Write some data - should block due to handshake with server */
@@ -4146,7 +4256,8 @@ static int test_early_data_psk(int idx)
 
     /* We always set this up with a final parameter of "2" for PSK */
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
-                                        &serverssl, &sess, 2)))
+                                        &serverssl, &sess, 2,
+                                        SHA384_DIGEST_LENGTH)))
         goto end;
 
     servalpn = "goodalpn";
@@ -4345,7 +4456,8 @@ static int test_early_data_psk_with_all_ciphers(int idx)
 
     /* We always set this up with a final parameter of "2" for PSK */
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
-                                        &serverssl, &sess, 2)))
+                                        &serverssl, &sess, 2,
+                                        SHA384_DIGEST_LENGTH)))
         goto end;
 
     if (idx == 4) {
@@ -4424,7 +4536,8 @@ static int test_early_data_not_expected(int idx)
     size_t readbytes, written;
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
-                                        &serverssl, &sess, idx)))
+                                        &serverssl, &sess, idx,
+                                        SHA384_DIGEST_LENGTH)))
         goto end;
 
     /* Write some early data */
@@ -4483,7 +4596,8 @@ static int test_early_data_tls1_2(int idx)
     size_t readbytes, written;
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
-                                        &serverssl, NULL, idx)))
+                                        &serverssl, NULL, idx,
+                                        SHA384_DIGEST_LENGTH)))
         goto end;
 
     /* Write some data - should block due to handshake with server */
@@ -6347,7 +6461,7 @@ static int test_export_key_mat_early(int idx)
     size_t readbytes, written;
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl,
-                                        &sess, idx)))
+                                        &sess, idx, SHA384_DIGEST_LENGTH)))
         goto end;
 
     /* Here writing 0 length early data is enough. */
@@ -7466,7 +7580,8 @@ static int test_info_callback(int tst)
 
         /* early_data tests */
         if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
-                                            &serverssl, &sess, 0)))
+                                            &serverssl, &sess, 0,
+                                            SHA384_DIGEST_LENGTH)))
             goto end;
 
         /* We don't actually need this reference */
@@ -7975,7 +8090,7 @@ static int test_ticket_callbacks(int tst)
     gen_tick_called = dec_tick_called = tick_key_cb_called = 0;
 
     /* Which tests the ticket key callback should request renewal for */
-    
+
     if (tst == 10 || tst == 11 || tst == 16 || tst == 17)
         tick_key_renew = 1;
     else if (tst == 12 || tst == 13 || tst == 18 || tst == 19)
@@ -9390,6 +9505,125 @@ static int test_pluggable_group(int idx)
 
     return testresult;
 }
+
+/*
+ * This function triggers encode, decode and sign functions
+ * of the artificial "xorhmacsig" algorithm implemented in tls-provider
+ * creating private key and certificate files for use in TLS testing.
+ */
+static int create_cert_key(int idx, char *certfilename, char *privkeyfilename)
+{
+    EVP_PKEY_CTX * evpctx = EVP_PKEY_CTX_new_from_name(libctx,
+                             (idx == 0) ? "xorhmacsig" : "xorhmacsha2sig", NULL);
+    EVP_PKEY *pkey = NULL;
+    X509 *x509 = X509_new();
+    X509_NAME *name = NULL;
+    BIO *keybio = NULL, *certbio = NULL;
+    int ret = 1;
+
+    if (!TEST_ptr(evpctx)
+        || !TEST_true(EVP_PKEY_keygen_init(evpctx))
+        || !TEST_true(EVP_PKEY_generate(evpctx, &pkey))
+        || !TEST_ptr(pkey)
+        || !TEST_ptr(x509)
+        || !TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(x509), 1))
+        || !TEST_true(X509_gmtime_adj(X509_getm_notBefore(x509), 0))
+        || !TEST_true(X509_gmtime_adj(X509_getm_notAfter(x509), 31536000L))
+        || !TEST_true(X509_set_pubkey(x509, pkey))
+        || !TEST_ptr(name = X509_get_subject_name(x509))
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "C",  MBSTRING_ASC,
+                           (unsigned char *)"CH", -1, -1, 0))
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "O",  MBSTRING_ASC,
+                           (unsigned char *)"test.org", -1, -1, 0))
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+                           (unsigned char *)"localhost", -1, -1, 0))
+        || !TEST_true(X509_set_issuer_name(x509, name))
+        || !TEST_true(X509_sign(x509, pkey, EVP_sha1()))
+        || !TEST_ptr(keybio = BIO_new_file(privkeyfilename, "wb"))
+        || !TEST_true(PEM_write_bio_PrivateKey(keybio, pkey, NULL, NULL, 0, NULL, NULL))
+        || !TEST_ptr(certbio = BIO_new_file(certfilename, "wb"))
+        || !TEST_true(PEM_write_bio_X509(certbio, x509)))
+        ret = 0;
+
+    EVP_PKEY_free(pkey);
+    X509_free(x509);
+    EVP_PKEY_CTX_free(evpctx);
+    BIO_free(keybio);
+    BIO_free(certbio);
+    return ret;
+}
+
+/*
+ * Test that signature algorithms loaded via the provider interface can
+ * correctly establish a TLS (1.3) connection.
+ * Test 0: Signature algorithm with built-in hashing functionality: "xorhmacsig"
+ * Test 1: Signature algorithm using external SHA2 hashing: "xorhmacsha2sig"
+ * Test 2: Test 0 using RPK
+ * Test 3: Test 1 using RPK
+ */
+static int test_pluggable_signature(int idx)
+{
+    static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 };
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
+    OSSL_PROVIDER *defaultprov = OSSL_PROVIDER_load(libctx, "default");
+    char *certfilename = "tls-prov-cert.pem";
+    char *privkeyfilename = "tls-prov-key.pem";
+    int sigidx = idx % 2;
+    int rpkidx = idx / 2;
+
+    /* create key and certificate for the different algorithm types */
+    if (!TEST_ptr(tlsprov)
+        || !TEST_true(create_cert_key(sigidx, certfilename, privkeyfilename)))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_3_VERSION,
+                                       TLS1_3_VERSION,
+                                       &sctx, &cctx, certfilename, privkeyfilename))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL)))
+        goto end;
+
+    /* Enable RPK for server cert */
+    if (rpkidx) {
+        if (!TEST_true(SSL_set1_server_cert_type(serverssl, cert_type_rpk, sizeof(cert_type_rpk)))
+                || !TEST_true(SSL_set1_server_cert_type(clientssl, cert_type_rpk, sizeof(cert_type_rpk))))
+            goto end;
+    }
+
+    /* This is necessary to pass minimal setup w/o other groups configured */
+    if (!TEST_true(SSL_set1_groups_list(serverssl, "xorgroup"))
+            || !TEST_true(SSL_set1_groups_list(clientssl, "xorgroup")))
+        goto end;
+
+    /*
+     * If this connection gets established, it must have been completed
+     * via the tls-provider-implemented "hmacsig" algorithm, testing
+     * both sign and verify functions during handshake.
+     */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* If using RPK, make sure we got one */
+    if (rpkidx && !TEST_long_eq(SSL_get_verify_result(clientssl), X509_V_ERR_RPK_UNTRUSTED))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    OSSL_PROVIDER_unload(tlsprov);
+    OSSL_PROVIDER_unload(defaultprov);
+
+    return testresult;
+}
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
@@ -10591,6 +10825,155 @@ end:
 }
 #endif /* !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE) */
 
+static int check_version_string(SSL *s, int version)
+{
+    const char *verstr = NULL;
+
+    switch (version) {
+    case SSL3_VERSION:
+        verstr = "SSLv3";
+        break;
+    case TLS1_VERSION:
+        verstr = "TLSv1";
+        break;
+    case TLS1_1_VERSION:
+        verstr = "TLSv1.1";
+        break;
+    case TLS1_2_VERSION:
+        verstr = "TLSv1.2";
+        break;
+    case TLS1_3_VERSION:
+        verstr = "TLSv1.3";
+        break;
+    case DTLS1_VERSION:
+        verstr = "DTLSv1";
+        break;
+    case DTLS1_2_VERSION:
+        verstr = "DTLSv1.2";
+    }
+
+    return TEST_str_eq(verstr, SSL_get_version(s));
+}
+
+/*
+ * Test that SSL_version, SSL_get_version, SSL_is_quic, SSL_is_tls and
+ * SSL_is_dtls return the expected results for a (D)TLS connection. Compare with
+ * test_version() in quicapitest.c which does the same thing for QUIC
+ * connections.
+ */
+static int test_version(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0, version;
+    const SSL_METHOD *servmeth = TLS_server_method();
+    const SSL_METHOD *clientmeth = TLS_client_method();
+
+    switch (idx) {
+#if !defined(OPENSSL_NO_SSL3)
+    case 0:
+        version = SSL3_VERSION;
+        break;
+#endif
+#if !defined(OPENSSL_NO_TLS1)
+    case 1:
+        version = TLS1_VERSION;
+        break;
+#endif
+#if !defined(OPENSSL_NO_TLS1_2)
+    case 2:
+        version = TLS1_2_VERSION;
+        break;
+#endif
+#if !defined(OSSL_NO_USABLE_TLS1_3)
+    case 3:
+        version = TLS1_3_VERSION;
+        break;
+#endif
+#if !defined(OPENSSL_NO_DTLS1)
+    case 4:
+        version = DTLS1_VERSION;
+        break;
+#endif
+#if !defined(OPENSSL_NO_DTLS1_2)
+    case 5:
+        version = DTLS1_2_VERSION;
+        break;
+#endif
+    /*
+     * NB we do not support QUIC in this test. That is covered by quicapitest.c
+     * We also don't support DTLS1_BAD_VER since we have no server support for
+     * that.
+     */
+    default:
+        TEST_skip("Unsupported protocol version");
+        return 1;
+    }
+
+    if (is_fips
+            && (version == SSL3_VERSION
+                || version == TLS1_VERSION
+                || version == DTLS1_VERSION)) {
+        TEST_skip("Protocol version not supported with FIPS");
+        return 1;
+    }
+
+#if !defined(OPENSSL_NO_DTLS)
+    if (version == DTLS1_VERSION || version == DTLS1_2_VERSION) {
+        servmeth = DTLS_server_method();
+        clientmeth = DTLS_client_method();
+    }
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, servmeth, clientmeth, version,
+                                       version, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                "DEFAULT:@SECLEVEL=0")))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_version(serverssl), version)
+            || !TEST_int_eq(SSL_version(clientssl), version)
+            || !TEST_true(check_version_string(serverssl, version))
+            || !TEST_true(check_version_string(clientssl, version)))
+        goto end;
+
+    if (version == DTLS1_VERSION || version == DTLS1_2_VERSION) {
+        if (!TEST_true(SSL_is_dtls(serverssl))
+                || !TEST_true(SSL_is_dtls(clientssl))
+                || !TEST_false(SSL_is_tls(serverssl))
+                || !TEST_false(SSL_is_tls(clientssl))
+                || !TEST_false(SSL_is_quic(serverssl))
+                || !TEST_false(SSL_is_quic(clientssl)))
+        goto end;
+    } else {
+        if (!TEST_true(SSL_is_tls(serverssl))
+                || !TEST_true(SSL_is_tls(clientssl))
+                || !TEST_false(SSL_is_dtls(serverssl))
+                || !TEST_false(SSL_is_dtls(clientssl))
+                || !TEST_false(SSL_is_quic(serverssl))
+                || !TEST_false(SSL_is_quic(clientssl)))
+        goto end;
+    }
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -10637,8 +11020,23 @@ int setup_tests(void)
             && !TEST_false(OSSL_PROVIDER_available(libctx, "default")))
         return 0;
 
-    if (strcmp(modulename, "fips") == 0)
+    if (strcmp(modulename, "fips") == 0) {
+        OSSL_PROVIDER *prov = NULL;
+        OSSL_PARAM params[2];
+
         is_fips = 1;
+
+        prov = OSSL_PROVIDER_load(libctx, "fips");
+        if (prov != NULL) {
+            /* Query the fips provider to check if the check ems option is enabled */
+            params[0] =
+                OSSL_PARAM_construct_int(OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK,
+                                         &fips_ems_check);
+            params[1] = OSSL_PARAM_construct_end();
+            OSSL_PROVIDER_get_params(prov, params);
+            OSSL_PROVIDER_unload(prov);
+        }
+    }
 
     /*
      * We add, but don't load the test "tls-provider". We'll load it when we
@@ -10713,6 +11111,12 @@ int setup_tests(void)
     if (privkey8192 == NULL)
         goto err;
 
+    if (fips_ems_check) {
+#ifndef OPENSSL_NO_TLS1_2
+        ADD_TEST(test_no_ems);
+#endif
+        return 1;
+    }
 #if !defined(OPENSSL_NO_KTLS) && !defined(OPENSSL_NO_SOCK)
 # if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_ktls, NUM_KTLS_TEST_CIPHERS * 4);
@@ -10760,16 +11164,16 @@ int setup_tests(void)
     ADD_TEST(test_ccs_change_cipher);
 #endif
 #ifndef OSSL_NO_USABLE_TLS1_3
-    ADD_ALL_TESTS(test_early_data_read_write, 3);
+    ADD_ALL_TESTS(test_early_data_read_write, 6);
     /*
      * We don't do replay tests for external PSK. Replay protection isn't used
      * in that scenario.
      */
     ADD_ALL_TESTS(test_early_data_replay, 2);
-    ADD_ALL_TESTS(test_early_data_skip, 3);
-    ADD_ALL_TESTS(test_early_data_skip_hrr, 3);
-    ADD_ALL_TESTS(test_early_data_skip_hrr_fail, 3);
-    ADD_ALL_TESTS(test_early_data_skip_abort, 3);
+    ADD_ALL_TESTS(test_early_data_skip, OSSL_NELEM(ciphersuites) * 3);
+    ADD_ALL_TESTS(test_early_data_skip_hrr, OSSL_NELEM(ciphersuites) * 3);
+    ADD_ALL_TESTS(test_early_data_skip_hrr_fail, OSSL_NELEM(ciphersuites) * 3);
+    ADD_ALL_TESTS(test_early_data_skip_abort, OSSL_NELEM(ciphersuites) * 3);
     ADD_ALL_TESTS(test_early_data_not_sent, 3);
     ADD_ALL_TESTS(test_early_data_psk, 8);
     ADD_ALL_TESTS(test_early_data_psk_with_all_ciphers, 5);
@@ -10844,6 +11248,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_pluggable_group, 2);
+    ADD_ALL_TESTS(test_pluggable_signature, 4);
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_ssl_dup);
@@ -10872,6 +11277,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DYNAMIC_ENGINE)
     ADD_ALL_TESTS(test_pipelining, 6);
 #endif
+    ADD_ALL_TESTS(test_version, 6);
     return 1;
 
  err:

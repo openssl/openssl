@@ -817,8 +817,10 @@ OSSL_CMP_MSG *ossl_cmp_certConf_new(OSSL_CMP_CTX *ctx, int fail_info,
     if ((certStatus = OSSL_CMP_CERTSTATUS_new()) == NULL)
         goto err;
     /* consume certStatus into msg right away so it gets deallocated with msg */
-    if (!sk_OSSL_CMP_CERTSTATUS_push(msg->body->value.certConf, certStatus))
+    if (sk_OSSL_CMP_CERTSTATUS_push(msg->body->value.certConf, certStatus) < 1) {
+        OSSL_CMP_CERTSTATUS_free(certStatus);
         goto err;
+    }
     /* set the ID of the certReq */
     if (!ASN1_INTEGER_set(certStatus->certReqId, OSSL_CMP_CERTREQID))
         goto err;
@@ -1092,6 +1094,20 @@ int OSSL_CMP_MSG_update_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         return 0;
     return msg->header->protectionAlg == NULL
             || ossl_cmp_msg_protect(ctx, msg);
+}
+
+int OSSL_CMP_MSG_update_recipNonce(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
+{
+    if (ctx == NULL || msg == NULL || msg->header == NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    if (ctx->recipNonce == NULL) /* nothing to do for 1st msg in transaction */
+        return 1;
+    if (!ossl_cmp_asn1_octet_string_set1(&msg->header->recipNonce,
+                                         ctx->recipNonce))
+        return 0;
+    return msg->header->protectionAlg == NULL || ossl_cmp_msg_protect(ctx, msg);
 }
 
 OSSL_CMP_MSG *OSSL_CMP_MSG_read(const char *file, OSSL_LIB_CTX *libctx,

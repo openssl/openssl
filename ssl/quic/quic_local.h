@@ -21,6 +21,7 @@
 # include "internal/quic_stream.h"
 # include "internal/quic_channel.h"
 # include "internal/quic_reactor.h"
+# include "internal/quic_thread_assist.h"
 # include "../ssl_local.h"
 
 # ifndef OPENSSL_NO_QUIC
@@ -50,6 +51,12 @@ struct quic_conn_st {
      */
     QUIC_CHANNEL                    *ch;
 
+    /*
+     * The mutex used to synchronise access to the QUIC_CHANNEL. We own this but
+     * provide it to the channel.
+     */
+    CRYPTO_MUTEX                    *mutex;
+
     /* Our single bidirectional application data stream. */
     QUIC_STREAM                     *stream0;
 
@@ -58,6 +65,15 @@ struct quic_conn_st {
 
     /* Initial peer L4 address. */
     BIO_ADDR                        init_peer_addr;
+
+#  ifndef OPENSSL_NO_QUIC_THREAD_ASSIST
+    /* Manages thread for QUIC thread assisted mode. */
+    QUIC_THREAD_ASSIST              thread_assist;
+#  endif
+
+    /* If non-NULL, used instead of ossl_time_now(). Used for testing. */
+    OSSL_TIME                       (*override_now_cb)(void *arg);
+    void                            *override_now_cb_arg;
 
     /* Have we started? */
     unsigned int                    started                 : 1;
@@ -74,6 +90,9 @@ struct quic_conn_st {
      * but track it here so we can reject a subsequent handshake call.
      */
     unsigned int                    as_server               : 1;
+
+    /* Are we using thread assisted mode? Never changes after init. */
+    unsigned int                    is_thread_assisted      : 1;
 
     /*
      * This state tracks SSL_write all-or-nothing (AON) write semantics

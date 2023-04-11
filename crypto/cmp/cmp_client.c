@@ -493,18 +493,46 @@ int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
     if (fail_info != 0) /* accept any error flagged by CMP core library */
         return fail_info;
 
-    ossl_cmp_debug(ctx, "trying to build chain for newly enrolled cert");
-    chain = X509_build_chain(cert, ctx->untrusted, out_trusted /* maybe NULL */,
-                             0, ctx->libctx, ctx->propq);
+    if (out_trusted == NULL) {
+        ossl_cmp_debug(ctx, "trying to build chain for newly enrolled cert");
+        chain = X509_build_chain(cert, ctx->untrusted, out_trusted,
+                                 0, ctx->libctx, ctx->propq);
+    } else {
+        X509_STORE_CTX *csc = X509_STORE_CTX_new_ex(ctx->libctx, ctx->propq);
+
+        ossl_cmp_debug(ctx, "validating newly enrolled cert");
+        if (csc == NULL)
+            goto err;
+        if (!X509_STORE_CTX_init(csc, out_trusted, cert, ctx->untrusted))
+            goto err;
+        /* disable any cert status/revocation checking etc. */
+        X509_VERIFY_PARAM_clear_flags(X509_STORE_CTX_get0_param(csc),
+                                      ~(X509_V_FLAG_USE_CHECK_TIME
+                                        | X509_V_FLAG_NO_CHECK_TIME
+                                        | X509_V_FLAG_PARTIAL_CHAIN
+                                        | X509_V_FLAG_POLICY_CHECK));
+        if (X509_verify_cert(csc) <= 0)
+            goto err;
+
+        if (!ossl_x509_add_certs_new(&chain,  X509_STORE_CTX_get0_chain(csc),
+                                     X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
+                                     | X509_ADD_FLAG_NO_SS)) {
+            sk_X509_free(chain);
+            chain = NULL;
+        }
+    err:
+        X509_STORE_CTX_free(csc);
+    }
+
     if (sk_X509_num(chain) > 0)
         X509_free(sk_X509_shift(chain)); /* remove leaf (EE) cert */
     if (out_trusted != NULL) {
         if (chain == NULL) {
-            ossl_cmp_err(ctx, "failed building chain for newly enrolled cert");
+            ossl_cmp_err(ctx, "failed to validate newly enrolled cert");
             fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_incorrectData;
         } else {
             ossl_cmp_debug(ctx,
-                           "succeeded building proper chain for newly enrolled cert");
+                           "success validating newly enrolled cert");
         }
     } else if (chain == NULL) {
         ossl_cmp_warn(ctx, "could not build approximate chain for newly enrolled cert, resorting to received extraCerts");
@@ -630,6 +658,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         ERR_raise_data(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_ACCEPTED,
                        "rejecting newly enrolled cert with subject: %s; %s",
                        subj, txt);
+        ctx->status = OSSL_CMP_PKISTATUS_rejection;
         ret = 0;
     }
     OPENSSL_free(subj);

@@ -76,6 +76,7 @@
 # define FFC_ERROR_NOT_SUITABLE_GENERATOR 0x08
 # define FFC_ERROR_PRIVKEY_TOO_SMALL      0x10
 # define FFC_ERROR_PRIVKEY_TOO_LARGE      0x20
+# define FFC_ERROR_PASSED_NULL_PARAM      0x40
 
 /*
  * Finite field cryptography (FFC) domain parameters are used by DH and DSA.
@@ -131,7 +132,7 @@ void ossl_ffc_params_set_h(FFC_PARAMS *params, int index);
 void ossl_ffc_params_set_flags(FFC_PARAMS *params, unsigned int flags);
 void ossl_ffc_params_enable_flags(FFC_PARAMS *params, unsigned int flags,
                                   int enable);
-int ossl_ffc_set_digest(FFC_PARAMS *params, const char *alg, const char *props);
+void ossl_ffc_set_digest(FFC_PARAMS *params, const char *alg, const char *props);
 
 int ossl_ffc_params_set_validate_params(FFC_PARAMS *params,
                                         const unsigned char *seed,

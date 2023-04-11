@@ -90,6 +90,10 @@ struct ossl_qtx_st {
      * confidentiality limit.
      */
     uint64_t                    epoch_pkt_count;
+
+    ossl_mutate_packet_cb mutatecb;
+    ossl_finish_mutate_cb finishmutatecb;
+    void *mutatearg;
 };
 
 /* Instantiates a new QTX. */
@@ -139,6 +143,15 @@ void ossl_qtx_free(OSSL_QTX *qtx)
         ossl_qrl_enc_level_set_discard(&qtx->el_set, i);
 
     OPENSSL_free(qtx);
+}
+
+/* Set mutator callbacks for test framework support */
+void ossl_qtx_set_mutator(OSSL_QTX *qtx, ossl_mutate_packet_cb mutatecb,
+                          ossl_finish_mutate_cb finishmutatecb, void *mutatearg)
+{
+    qtx->mutatecb       = mutatecb;
+    qtx->finishmutatecb = finishmutatecb;
+    qtx->mutatearg      = mutatearg;
 }
 
 int ossl_qtx_provide_secret(OSSL_QTX              *qtx,
@@ -414,7 +427,7 @@ int ossl_qtx_calculate_plaintext_payload_len(OSSL_QTX *qtx, uint32_t enc_level,
  */
 #define QTX_FAIL_INSUFFICIENT_LEN   (-2)
 
-static int qtx_write_hdr(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
+static int qtx_write_hdr(OSSL_QTX *qtx, const QUIC_PKT_HDR *hdr, TXE *txe,
                          QUIC_PKT_HDR_PTRS *ptrs)
 {
     WPACKET wpkt;
@@ -424,8 +437,8 @@ static int qtx_write_hdr(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
                                  txe->alloc_len - txe->data_len, 0))
         return 0;
 
-    if (!ossl_quic_wire_encode_pkt_hdr(&wpkt, pkt->hdr->dst_conn_id.id_len,
-                                       pkt->hdr, ptrs)
+    if (!ossl_quic_wire_encode_pkt_hdr(&wpkt, hdr->dst_conn_id.id_len,
+                                       hdr, ptrs)
         || !WPACKET_get_total_written(&wpkt, &l)) {
         WPACKET_finish(&wpkt);
         return 0;
@@ -534,6 +547,9 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
     QUIC_PKT_HDR_PTRS ptrs;
     unsigned char *hdr_start;
     OSSL_QRL_ENC_LEVEL *el = NULL;
+    QUIC_PKT_HDR *hdr;
+    const OSSL_QTX_IOVEC *iovec;
+    size_t num_iovec;
 
     /*
      * Determine if the packet needs encryption and the minimum conceivable
@@ -558,8 +574,25 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
         goto err;
     }
 
+    /* Set some fields in the header we are responsible for. */
+    if (pkt->hdr->type == QUIC_PKT_TYPE_1RTT)
+        pkt->hdr->key_phase = (unsigned char)(el->key_epoch & 1);
+
+    /* If we are running tests then mutate_packet may be non NULL */
+    if (qtx->mutatecb != NULL) {
+        if (!qtx->mutatecb(pkt->hdr, pkt->iovec, pkt->num_iovec, &hdr,
+                           &iovec, &num_iovec, qtx->mutatearg)) {
+            ret = QTX_FAIL_GENERIC;
+            goto err;
+        }
+    } else {
+        hdr = pkt->hdr;
+        iovec = pkt->iovec;
+        num_iovec = pkt->num_iovec;
+    }
+
     /* Walk the iovecs to determine actual input payload length. */
-    iovec_cur_init(&cur, pkt->iovec, pkt->num_iovec);
+    iovec_cur_init(&cur, iovec, num_iovec);
 
     if (cur.bytes_remaining == 0) {
         /* No zero-length payloads allowed. */
@@ -573,10 +606,10 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
                                 : cur.bytes_remaining;
 
     /* Determine header length. */
-    pkt->hdr->data  = NULL;
-    pkt->hdr->len   = payload_len;
-    pred_hdr_len = ossl_quic_wire_get_encoded_pkt_hdr_len(pkt->hdr->dst_conn_id.id_len,
-                                                          pkt->hdr);
+    hdr->data  = NULL;
+    hdr->len   = payload_len;
+    pred_hdr_len = ossl_quic_wire_get_encoded_pkt_hdr_len(hdr->dst_conn_id.id_len,
+                                                          hdr);
     if (pred_hdr_len == 0) {
         ret = QTX_FAIL_GENERIC;
         goto err;
@@ -590,14 +623,10 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
         goto err;
     }
 
-    /* Set some fields in the header we are responsible for. */
-    if (pkt->hdr->type == QUIC_PKT_TYPE_1RTT)
-        pkt->hdr->key_phase = (unsigned char)(el->key_epoch & 1);
-
-    if (ossl_quic_pkt_type_has_pn(pkt->hdr->type)) {
+    if (ossl_quic_pkt_type_has_pn(hdr->type)) {
         if (!ossl_quic_wire_encode_pkt_hdr_pn(pkt->pn,
-                                              pkt->hdr->pn,
-                                              pkt->hdr->pn_len)) {
+                                              hdr->pn,
+                                              hdr->pn_len)) {
             ret = QTX_FAIL_GENERIC;
             goto err;
         }
@@ -605,7 +634,7 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
 
     /* Append the header to the TXE. */
     hdr_start = txe_data(txe) + txe->data_len;
-    if (!qtx_write_hdr(qtx, pkt, txe, &ptrs)) {
+    if (!qtx_write_hdr(qtx, hdr, txe, &ptrs)) {
         ret = QTX_FAIL_GENERIC;
         goto err;
     }
@@ -638,6 +667,8 @@ static int qtx_write(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt, TXE *txe,
         assert(txe->data_len - orig_data_len == pkt_len);
     }
 
+    if (qtx->finishmutatecb != NULL)
+        qtx->finishmutatecb(qtx->mutatearg);
     return 1;
 
 err:
@@ -646,6 +677,8 @@ err:
      * TXE.
      */
     txe->data_len = orig_data_len;
+    if (qtx->finishmutatecb != NULL)
+        qtx->finishmutatecb(qtx->mutatearg);
     return ret;
 }
 

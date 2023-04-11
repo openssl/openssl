@@ -600,6 +600,9 @@ int ossl_quic_demux_inject(QUIC_DEMUX *demux,
     else
         BIO_ADDR_clear(&urxe->local);
 
+    urxe->time
+        = demux->now != NULL ? demux->now(demux->now_arg) : ossl_time_zero();
+
     /* Move from free list to pending list. */
     ossl_list_urxe_remove(&demux->urx_free, urxe);
     ossl_list_urxe_insert_tail(&demux->urx_pending, urxe);

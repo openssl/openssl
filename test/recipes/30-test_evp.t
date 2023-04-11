@@ -29,6 +29,7 @@ my $no_ec = disabled("ec");
 my $no_ec2m = disabled("ec2m");
 my $no_sm2 = disabled("sm2");
 my $no_siv = disabled("siv");
+my $no_argon2 = disabled("argon2");
 
 # Default config depends on if the legacy module is built or not
 my $defaultcnf = $no_legacy ? 'default.cnf' : 'default-and-legacy.cnf';
@@ -80,7 +81,6 @@ push @files, qw(
                 evppkey_kas.txt
                 evppkey_mismatch.txt
                ) unless $no_ec;
-push @files, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 
 # A list of tests that only run with the default provider
 # (i.e. The algorithms are not present in the fips provider)
@@ -125,7 +125,9 @@ push @defltfiles, qw(evppkey_brainpool.txt) unless $no_ec;
 push @defltfiles, qw(evppkey_ecdsa_rfc6979.txt) unless $no_ec;
 push @defltfiles, qw(evppkey_dsa_rfc6979.txt) unless $no_dsa;
 push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
+push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;
+push @defltfiles, qw(evpkdf_argon2.txt) unless $no_argon2;
 
 plan tests =>
     + (scalar(@configs) * scalar(@files))

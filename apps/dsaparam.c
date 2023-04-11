@@ -32,7 +32,7 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS dsaparam_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [numbits]\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [numbits] [numqbits]\n"},
 
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -57,7 +57,8 @@ const OPTIONS dsaparam_options[] = {
     OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
-    {"numbits", 0, 0, "Number of bits if generating parameters (optional)"},
+    {"numbits", 0, 0, "Number of bits if generating parameters or key (optional)"},
+    {"numqbits", 0, 0, "Number of bits in the subprime parameter q if generating parameters or key (optional)"},
     {NULL}
 };
 
@@ -67,7 +68,7 @@ int dsaparam_main(int argc, char **argv)
     BIO *out = NULL;
     EVP_PKEY *params = NULL, *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
-    int numbits = -1, num = 0, genkey = 0;
+    int numbits = -1, numqbits = -1, num = 0, genkey = 0;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, noout = 0;
     int ret = 1, i, text = 0, private = 0;
     char *infile = NULL, *outfile = NULL, *prog;
@@ -128,10 +129,15 @@ int dsaparam_main(int argc, char **argv)
         }
     }
 
-    /* Optional arg is bitsize. */
+    /* Optional args are bitsize and q bitsize. */
     argc = opt_num_rest();
     argv = opt_rest();
-    if (argc == 1) {
+    if (argc == 2) {
+        if (!opt_int(argv[0], &num) || num < 0)
+            goto opthelp;
+        if (!opt_int(argv[1], &numqbits) || numqbits < 0)
+            goto opthelp;
+    } else if (argc == 1) {
         if (!opt_int(argv[0], &num) || num < 0)
             goto opthelp;
     } else if (!opt_check_rest_arg(NULL)) {
@@ -177,6 +183,13 @@ int dsaparam_main(int argc, char **argv)
             BIO_printf(bio_err,
                        "Error, DSA key generation setting bit length failed\n");
             goto end;
+        }
+        if (numqbits > 0) {
+            if (EVP_PKEY_CTX_set_dsa_paramgen_q_bits(ctx, numqbits) <= 0) {
+                BIO_printf(bio_err,
+                        "Error, DSA key generation setting subprime bit length failed\n");
+                goto end;
+            }
         }
         params = app_paramgen(ctx, "DSA");
     } else {
@@ -236,4 +249,3 @@ int dsaparam_main(int argc, char **argv)
     release_engine(e);
     return ret;
 }
-

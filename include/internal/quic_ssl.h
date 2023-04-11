@@ -43,8 +43,10 @@ int ossl_quic_do_handshake(QUIC_CONNECTION *qc);
 void ossl_quic_set_connect_state(QUIC_CONNECTION *qc);
 void ossl_quic_set_accept_state(QUIC_CONNECTION *qc);
 
+__owur int ossl_quic_has_pending(const QUIC_CONNECTION *qc);
 __owur int ossl_quic_tick(QUIC_CONNECTION *qc);
 __owur int ossl_quic_get_tick_timeout(QUIC_CONNECTION *qc, struct timeval *tv);
+OSSL_TIME ossl_quic_get_tick_deadline(QUIC_CONNECTION *qc);
 __owur int ossl_quic_get_rpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *d);
 __owur int ossl_quic_get_wpoll_descriptor(QUIC_CONNECTION *qc, BIO_POLL_DESCRIPTOR *d);
 __owur int ossl_quic_get_net_read_desired(QUIC_CONNECTION *qc);
@@ -62,6 +64,21 @@ BIO *ossl_quic_conn_get_net_rbio(const QUIC_CONNECTION *qc);
 BIO *ossl_quic_conn_get_net_wbio(const QUIC_CONNECTION *qc);
 __owur int ossl_quic_conn_set_initial_peer_addr(QUIC_CONNECTION *qc,
                                                 const BIO_ADDR *peer_addr);
+
+/*
+ * Used to override ossl_time_now() for debug purposes. Must be called before
+ * connecting.
+ */
+void ossl_quic_conn_set_override_now_cb(SSL *s,
+                                        OSSL_TIME (*now_cb)(void *arg),
+                                        void *now_cb_arg);
+
+/*
+ * Condvar waiting in the assist thread doesn't support time faking as it relies
+ * on the OS's notion of time, thus this is used in test code to force a
+ * spurious wakeup instead.
+ */
+void ossl_quic_conn_force_assist_thread_wake(SSL *s);
 
 # endif
 

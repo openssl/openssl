@@ -31,13 +31,7 @@
 static int dh_ffc_params_fromdata(DH *dh, const OSSL_PARAM params[])
 {
     int ret;
-    FFC_PARAMS *ffc;
-
-    if (dh == NULL)
-        return 0;
-    ffc = ossl_dh_get0_params(dh);
-    if (ffc == NULL)
-        return 0;
+    FFC_PARAMS *ffc = ossl_dh_get0_params(dh);
 
     ret = ossl_ffc_params_fromdata(ffc, params);
     if (ret)

@@ -346,11 +346,170 @@ static int fake_rsa_sig_sign(void *ctx, unsigned char *sig,
     return 1;
 }
 
+#define FAKE_DGSTSGN_SIGN 0x01
+#define FAKE_DGSTSGN_VERIFY 0x02
+#define FAKE_DGSTSGN_UPDATED 0x04
+#define FAKE_DGSTSGN_FINALISED 0x08
+#define FAKE_DGSTSGN_NO_DUP 0xA0
+
+static void *fake_rsa_sig_dupctx(void *ctx)
+{
+    unsigned char *sigctx = ctx;
+    unsigned char *newctx;
+
+    if ((*sigctx & FAKE_DGSTSGN_NO_DUP) != 0)
+        return NULL;
+
+    if (!TEST_ptr(newctx = OPENSSL_zalloc(1)))
+        return NULL;
+
+    *newctx = *sigctx;
+    return newctx;
+}
+
+static int fake_rsa_dgstsgnvfy_init(void *ctx, unsigned char type,
+                                    void *provkey, const OSSL_PARAM params[])
+{
+    unsigned char *sigctx = ctx;
+    struct fake_rsa_keydata *keydata = provkey;
+
+    /* we must have a ctx */
+    if (!TEST_ptr(sigctx))
+        return 0;
+
+    /* we must have some initialized key */
+    if (!TEST_ptr(keydata) || !TEST_int_gt(keydata->status, 0))
+        return 0;
+
+    /* record that sign/verify init was called */
+    *sigctx = type;
+
+    if (params) {
+        const OSSL_PARAM *p;
+        int dup;
+        p = OSSL_PARAM_locate_const(params, "NO_DUP");
+        if (p != NULL) {
+            if (OSSL_PARAM_get_int(p, &dup)) {
+                *sigctx |= FAKE_DGSTSGN_NO_DUP;
+            }
+        }
+    }
+
+    return 1;
+}
+
+static int fake_rsa_dgstsgn_init(void *ctx, const char *mdname,
+                                 void *provkey, const OSSL_PARAM params[])
+{
+    return fake_rsa_dgstsgnvfy_init(ctx, FAKE_DGSTSGN_SIGN, provkey, params);
+}
+
+static int fake_rsa_dgstvfy_init(void *ctx, const char *mdname,
+                                 void *provkey, const OSSL_PARAM params[])
+{
+    return fake_rsa_dgstsgnvfy_init(ctx, FAKE_DGSTSGN_VERIFY, provkey, params);
+}
+
+static int fake_rsa_dgstsgnvfy_update(void *ctx, const unsigned char *data,
+                                      size_t datalen)
+{
+    unsigned char *sigctx = ctx;
+
+    /* we must have a ctx */
+    if (!TEST_ptr(sigctx))
+        return 0;
+
+    if (*sigctx == 0 || (*sigctx & FAKE_DGSTSGN_FINALISED) != 0)
+        return 0;
+
+    *sigctx |= FAKE_DGSTSGN_UPDATED;
+    return 1;
+}
+
+static int fake_rsa_dgstsgnvfy_final(void *ctx, unsigned char *sig,
+                                     size_t *siglen, size_t sigsize)
+{
+    unsigned char *sigctx = ctx;
+
+    /* we must have a ctx */
+    if (!TEST_ptr(sigctx))
+        return 0;
+
+    if (*sigctx == 0 || (*sigctx & FAKE_DGSTSGN_FINALISED) != 0)
+        return 0;
+
+    if ((*sigctx & FAKE_DGSTSGN_SIGN) != 0 && (siglen == NULL))
+        return 0;
+
+    if ((*sigctx & FAKE_DGSTSGN_VERIFY) != 0 && (siglen != NULL))
+        return 0;
+
+    /* this is sign op */
+    if (siglen) {
+        *siglen = 256;
+        /* record that the real sign operation was called */
+        if (sig != NULL) {
+            if (!TEST_int_ge(sigsize, *siglen))
+                return 0;
+            /* produce a fake signature */
+            memset(sig, 'a', *siglen);
+        }
+    }
+
+    /* simulate inability to duplicate context and finalise it */
+    if ((*sigctx & FAKE_DGSTSGN_NO_DUP) != 0) {
+        *sigctx |= FAKE_DGSTSGN_FINALISED;
+    }
+    return 1;
+}
+
+static int fake_rsa_dgstvfy_final(void *ctx, unsigned char *sig,
+                                  size_t siglen)
+{
+    return fake_rsa_dgstsgnvfy_final(ctx, sig, NULL, siglen);
+}
+
+static int fake_rsa_dgstsgn(void *ctx, unsigned char *sig, size_t *siglen,
+                            size_t sigsize, const unsigned char *tbs,
+                            size_t tbslen)
+{
+    if (!fake_rsa_dgstsgnvfy_update(ctx, tbs, tbslen))
+        return 0;
+
+    return fake_rsa_dgstsgnvfy_final(ctx, sig, siglen, sigsize);
+}
+
+static int fake_rsa_dgstvfy(void *ctx, unsigned char *sig, size_t siglen,
+                            const unsigned char *tbv, size_t tbvlen)
+{
+    if (!fake_rsa_dgstsgnvfy_update(ctx, tbv, tbvlen))
+        return 0;
+
+    return fake_rsa_dgstvfy_final(ctx, sig, siglen);
+}
+
 static const OSSL_DISPATCH fake_rsa_sig_funcs[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))fake_rsa_sig_newctx },
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))fake_rsa_sig_freectx },
     { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))fake_rsa_sig_sign_init },
     { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))fake_rsa_sig_sign },
+    { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))fake_rsa_sig_dupctx },
+    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
+        (void (*)(void))fake_rsa_dgstsgn_init },
+    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_UPDATE,
+        (void (*)(void))fake_rsa_dgstsgnvfy_update },
+    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_FINAL,
+        (void (*)(void))fake_rsa_dgstsgnvfy_final },
+    { OSSL_FUNC_SIGNATURE_DIGEST_SIGN,
+        (void (*)(void))fake_rsa_dgstsgn },
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,
+        (void (*)(void))fake_rsa_dgstvfy_init },
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE,
+        (void (*)(void))fake_rsa_dgstsgnvfy_update },
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL,
+        (void (*)(void))fake_rsa_dgstvfy_final },
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,
+        (void (*)(void))fake_rsa_dgstvfy },
     { 0, NULL }
 };
 

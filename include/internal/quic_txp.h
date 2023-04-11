@@ -81,12 +81,16 @@ void ossl_quic_tx_packetiser_free(OSSL_QUIC_TX_PACKETISER *txp);
  * Returns TX_PACKETISER_RES_FAILURE on failure (e.g. allocation error),
  * TX_PACKETISER_RES_NO_PKT if no packets were sent (e.g. because nothing wants
  * to send anything), and TX_PACKETISER_RES_SENT_PKT if packets were sent.
+ *
+ * If an ACK-eliciting packet was sent, 1 is written to *sent_ack_eliciting,
+ * otherwise *sent_ack_eliciting is unchanged.
  */
 #define TX_PACKETISER_RES_FAILURE   0
 #define TX_PACKETISER_RES_NO_PKT    1
 #define TX_PACKETISER_RES_SENT_PKT  2
 int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
-                                     uint32_t archetype);
+                                     uint32_t archetype,
+                                     int *sent_ack_eliciting);
 
 /*
  * Returns 1 if one or more packets would be generated if

@@ -12,11 +12,14 @@
 #include "internal/common.h"
 #include "internal/sockets.h"
 #include "internal/quic_tserver.h"
+#include "internal/quic_ssl.h"
 #include "internal/time.h"
 #include "testutil.h"
 
 static const char msg1[] = "The quick brown fox jumped over the lazy dogs.";
 static char msg2[1024], msg3[1024];
+static OSSL_TIME fake_time;
+static CRYPTO_RWLOCK *fake_time_lock;
 
 static const char *certfile, *keyfile;
 
@@ -27,12 +30,33 @@ static int is_want(SSL *s, int ret)
     return ec == SSL_ERROR_WANT_READ || ec == SSL_ERROR_WANT_WRITE;
 }
 
-static int test_tserver(void)
+static unsigned char scratch_buf[2048];
+
+static OSSL_TIME fake_now(void *arg)
+{
+    OSSL_TIME t;
+
+    if (!CRYPTO_THREAD_read_lock(fake_time_lock))
+        return ossl_time_zero();
+
+    t = fake_time;
+
+    CRYPTO_THREAD_unlock(fake_time_lock);
+    return t;
+}
+
+static OSSL_TIME real_now(void *arg)
+{
+    return ossl_time_now();
+}
+
+static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 {
     int testresult = 0, ret;
     int s_fd = -1, c_fd = -1;
     BIO *s_net_bio = NULL, *s_net_bio_own = NULL;
     BIO *c_net_bio = NULL, *c_net_bio_own = NULL;
+    BIO *c_pair_own = NULL, *s_pair_own = NULL;
     QUIC_TSERVER_ARGS tserver_args = {0};
     QUIC_TSERVER *tserver = NULL;
     BIO_ADDR *s_addr_ = NULL;
@@ -42,11 +66,15 @@ static int test_tserver(void)
     SSL *c_ssl = NULL;
     short port = 8186;
     int c_connected = 0, c_write_done = 0, c_begin_read = 0, s_read_done = 0;
-    int c_wait_eos = 0;
+    int c_wait_eos = 0, c_done_eos = 0;
+    int c_start_idle_test = 0, c_done_idle_test = 0;
     size_t l = 0, s_total_read = 0, s_total_written = 0, c_total_read = 0;
+    size_t idle_units_done = 0;
     int s_begin_write = 0;
     OSSL_TIME start_time;
     unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
+    OSSL_TIME (*now_cb)(void *arg) = use_fake_time ? fake_now : real_now;
+    size_t limit_ms = 1000;
 
     ina.s_addr = htonl(0x7f000001UL);
 
@@ -81,8 +109,12 @@ static int test_tserver(void)
     if (!BIO_up_ref(s_net_bio))
         goto err;
 
+    fake_time = ossl_ms2time(1000);
+
     tserver_args.net_rbio = s_net_bio;
     tserver_args.net_wbio = s_net_bio;
+    if (use_fake_time)
+        tserver_args.now_cb = fake_now;
 
     if (!TEST_ptr(tserver = ossl_quic_tserver_new(&tserver_args, certfile,
                                                   keyfile))) {
@@ -91,6 +123,18 @@ static int test_tserver(void)
     }
 
     s_net_bio_own = NULL;
+
+    if (use_inject) {
+        /*
+         * In inject mode we create a dgram pair to feed to the QUIC client on
+         * the read side. We don't feed anything to this, it is just a
+         * placeholder to give the client something which never returns any
+         * datagrams.
+         */
+        if (!TEST_true(BIO_new_bio_dgram_pair(&c_pair_own, 5000,
+                                              &s_pair_own, 5000)))
+            goto err;
+    }
 
     /* Setup test client. */
     c_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
@@ -106,23 +150,33 @@ static int test_tserver(void)
     if (!BIO_dgram_set_peer(c_net_bio, s_addr_))
         goto err;
 
-    if (!TEST_ptr(c_ctx = SSL_CTX_new(OSSL_QUIC_client_method())))
+    if (!TEST_ptr(c_ctx = SSL_CTX_new(use_thread_assist
+                                      ? OSSL_QUIC_client_thread_method()
+                                      : OSSL_QUIC_client_method())))
         goto err;
 
     if (!TEST_ptr(c_ssl = SSL_new(c_ctx)))
         goto err;
+
+    if (use_fake_time)
+        ossl_quic_conn_set_override_now_cb(c_ssl, fake_now, NULL);
 
     /* 0 is a success for SSL_set_alpn_protos() */
     if (!TEST_false(SSL_set_alpn_protos(c_ssl, alpn, sizeof(alpn))))
         goto err;
 
     /* Takes ownership of our reference to the BIO. */
-    SSL_set0_rbio(c_ssl, c_net_bio);
+    if (use_inject) {
+        SSL_set0_rbio(c_ssl, c_pair_own);
+        c_pair_own = NULL;
+    } else {
+        SSL_set0_rbio(c_ssl, c_net_bio);
 
-    /* Get another reference to be transferred in the SSL_set0_wbio call. */
-    if (!TEST_true(BIO_up_ref(c_net_bio))) {
-        c_net_bio_own = NULL; /* SSL_free will free the first reference. */
-        goto err;
+        /* Get another reference to be transferred in the SSL_set0_wbio call. */
+        if (!TEST_true(BIO_up_ref(c_net_bio))) {
+            c_net_bio_own = NULL; /* SSL_free will free the first reference. */
+            goto err;
+        }
     }
 
     SSL_set0_wbio(c_ssl, c_net_bio);
@@ -131,21 +185,23 @@ static int test_tserver(void)
     if (!TEST_true(SSL_set_blocking_mode(c_ssl, 0)))
         goto err;
 
-    start_time = ossl_time_now();
+    start_time = now_cb(NULL);
 
     for (;;) {
-        if (ossl_time_compare(ossl_time_subtract(ossl_time_now(), start_time),
-                              ossl_ms2time(1000)) >= 0) {
+        if (ossl_time_compare(ossl_time_subtract(now_cb(NULL), start_time),
+                              ossl_ms2time(limit_ms)) >= 0) {
             TEST_error("timeout while attempting QUIC server test");
             goto err;
         }
 
-        ret = SSL_connect(c_ssl);
-        if (!TEST_true(ret == 1 || is_want(c_ssl, ret)))
-            goto err;
+        if (!c_start_idle_test) {
+            ret = SSL_connect(c_ssl);
+            if (!TEST_true(ret == 1 || is_want(c_ssl, ret)))
+                goto err;
 
-        if (ret == 1)
-            c_connected = 1;
+            if (ret == 1)
+                c_connected = 1;
+        }
 
         if (c_connected && !c_write_done) {
             if (!TEST_int_eq(SSL_write(c_ssl, msg1, sizeof(msg1) - 1),
@@ -207,7 +263,7 @@ static int test_tserver(void)
             }
         }
 
-        if (c_wait_eos) {
+        if (c_wait_eos && !c_done_eos) {
             unsigned char c;
 
             ret = SSL_read_ex(c_ssl, &c, sizeof(c), &l);
@@ -223,17 +279,80 @@ static int test_tserver(void)
                                  SSL_ERROR_ZERO_RETURN))
                     goto err;
 
-                /* DONE */
-                break;
+                c_done_eos = 1;
+                if (use_thread_assist && use_fake_time) {
+                    if (!TEST_true(ossl_quic_tserver_is_connected(tserver)))
+                        goto err;
+                    c_start_idle_test = 1;
+                    limit_ms = 120000; /* extend time limit */
+                } else {
+                    /* DONE */
+                    break;
+                }
             }
+        }
+
+        if (c_start_idle_test && !c_done_idle_test) {
+            /* This is more than our default idle timeout of 30s. */
+            if (idle_units_done < 600) {
+                if (!TEST_true(CRYPTO_THREAD_write_lock(fake_time_lock)))
+                    goto err;
+                fake_time = ossl_time_add(fake_time, ossl_ms2time(100));
+                CRYPTO_THREAD_unlock(fake_time_lock);
+
+                ++idle_units_done;
+                ossl_quic_conn_force_assist_thread_wake(c_ssl);
+                OSSL_sleep(1); /* Ensure CPU scheduling for test purposes */
+            } else {
+                c_done_idle_test = 1;
+            }
+        }
+
+        if (c_done_idle_test) {
+            /*
+             * If we have finished the fake idling duration, the connection
+             * should still be healthy in TA mode.
+             */
+            if (!TEST_true(ossl_quic_tserver_is_connected(tserver)))
+                goto err;
+
+            /* DONE */
+            break;
         }
 
         /*
          * This is inefficient because we spin until things work without
          * blocking but this is just a test.
          */
-        SSL_tick(c_ssl);
+        if (!c_start_idle_test || c_done_idle_test) {
+            /* Inhibit manual ticking during idle test to test TA mode. */
+            SSL_tick(c_ssl);
+        }
+
         ossl_quic_tserver_tick(tserver);
+
+        if (use_inject) {
+            BIO_MSG rmsg = {0};
+            size_t msgs_processed = 0;
+
+            for (;;) {
+                /*
+                 * Manually spoonfeed received datagrams from the real BIO_dgram
+                 * into QUIC via the injection interface, thereby testing the
+                 * injection interface.
+                 */
+                rmsg.data       = scratch_buf;
+                rmsg.data_len   = sizeof(scratch_buf);
+
+                if (!BIO_recvmmsg(c_net_bio, &rmsg, sizeof(rmsg), 1, 0, &msgs_processed)
+                    || msgs_processed == 0 || rmsg.data_len == 0)
+                    break;
+
+                if (!TEST_true(SSL_inject_net_dgram(c_ssl, rmsg.data, rmsg.data_len,
+                                                    NULL, NULL)))
+                    goto err;
+            }
+        }
     }
 
     testresult = 1;
@@ -244,11 +363,31 @@ err:
     BIO_ADDR_free(s_addr_);
     BIO_free(s_net_bio_own);
     BIO_free(c_net_bio_own);
+    BIO_free(c_pair_own);
+    BIO_free(s_pair_own);
     if (s_fd >= 0)
         BIO_closesocket(s_fd);
     if (c_fd >= 0)
         BIO_closesocket(c_fd);
     return testresult;
+}
+
+static int test_tserver(int idx)
+{
+    int thread_assisted, use_fake_time, use_inject;
+
+    thread_assisted = idx % 2;
+    idx /= 2;
+
+    use_inject = idx % 2;
+    idx /= 2;
+
+    use_fake_time = idx % 2;
+
+    if (use_fake_time && !thread_assisted)
+        return 1;
+
+    return do_test(thread_assisted, use_fake_time, use_inject);
 }
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -264,6 +403,9 @@ int setup_tests(void)
             || !TEST_ptr(keyfile = test_get_argument(1)))
         return 0;
 
-    ADD_TEST(test_tserver);
+    if ((fake_time_lock = CRYPTO_THREAD_lock_new()) == NULL)
+        return 0;
+
+    ADD_ALL_TESTS(test_tserver, 2 * 2 * 2);
     return 1;
 }

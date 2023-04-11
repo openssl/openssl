@@ -568,7 +568,7 @@ BIO *BIO_new_accept(const char *str)
     ret = BIO_new(BIO_s_accept());
     if (ret == NULL)
         return NULL;
-    if (BIO_set_accept_name(ret, str))
+    if (BIO_set_accept_name(ret, str) > 0)
         return ret;
     BIO_free(ret);
     return NULL;

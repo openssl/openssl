@@ -199,8 +199,9 @@ static int dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
     if ((selection & DSA_POSSIBLE_SELECTIONS) == 0)
         return 0;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
-        ok = ok && ossl_dsa_ffc_params_fromdata(dsa, params);
+    /* a key without parameters is meaningless */
+    ok = ok && ossl_dsa_ffc_params_fromdata(dsa, params);
+
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         int include_private =
             selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
@@ -586,10 +587,9 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     } else if (gctx->hindex != 0) {
         ossl_ffc_params_set_h(ffc, gctx->hindex);
     }
-    if (gctx->mdname != NULL) {
-        if (!ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops))
-            goto end;
-    }
+    if (gctx->mdname != NULL)
+        ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops);
+
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
 
          if (ossl_dsa_generate_ffc_parameters(dsa, gctx->gen_type,

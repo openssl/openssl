@@ -60,6 +60,46 @@ static const char *in_pass = "";
 static int has_key = 0;
 static int has_cert = 0;
 static int has_ca = 0;
+
+static int changepass(PKCS12 *p12, EVP_PKEY *key, X509 *cert, STACK_OF(X509) *ca)
+{
+    int ret = 0;
+    PKCS12 *p12new = NULL;
+    EVP_PKEY *key2 = NULL;
+    X509 *cert2 = NULL;
+    STACK_OF(X509) *ca2 = NULL;
+    BIO *bio = NULL;
+
+    if (!TEST_true(PKCS12_newpass(p12, in_pass, "NEWPASS")))
+        goto err;
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
+        goto err;
+    if (!TEST_true(i2d_PKCS12_bio(bio, p12)))
+        goto err;
+    if (!TEST_ptr(p12new = PKCS12_init_ex(NID_pkcs7_data, testctx, "provider=default")))
+        goto err;
+    if (!TEST_ptr(d2i_PKCS12_bio(bio, &p12new)))
+        goto err;
+    if (!TEST_true(PKCS12_parse(p12new, "NEWPASS", &key2, &cert2, &ca2)))
+        goto err;
+    if (has_key) {
+        if (!TEST_ptr(key2) || !TEST_int_eq(EVP_PKEY_eq(key, key2), 1))
+            goto err;
+    }
+    if (has_cert) {
+        if (!TEST_ptr(cert2) || !TEST_int_eq(X509_cmp(cert, cert2), 0))
+            goto err;
+    }
+    ret = 1;
+err:
+    BIO_free(bio);
+    PKCS12_free(p12new);
+    EVP_PKEY_free(key2);
+    X509_free(cert2);
+    OSSL_STACK_OF_X509_free(ca2);
+    return ret;
+}
+
 static int pkcs12_parse_test(void)
 {
     int ret = 0;
@@ -82,8 +122,9 @@ static int pkcs12_parse_test(void)
             goto err;
         if ((has_ca && !TEST_ptr(ca)) || (!has_ca && !TEST_ptr_null(ca)))
             goto err;
+        if (has_key && !changepass(p12, key, cert, ca))
+            goto err;
     }
-
     ret = 1;
 err:
     PKCS12_free(p12);

@@ -85,7 +85,7 @@ typedef struct quic_reactor_st {
     BIO_POLL_DESCRIPTOR poll_r, poll_w;
     OSSL_TIME tick_deadline; /* ossl_time_infinite() if none currently applicable */
 
-    void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg);
+    void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg, uint32_t flags);
     void *tick_cb_arg;
 
     /*
@@ -97,7 +97,8 @@ typedef struct quic_reactor_st {
 } QUIC_REACTOR;
 
 void ossl_quic_reactor_init(QUIC_REACTOR *rtor,
-                            void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg),
+                            void (*tick_cb)(QUIC_TICK_RESULT *res, void *arg,
+                                            uint32_t flags),
                             void *tick_cb_arg,
                             OSSL_TIME initial_tick_deadline);
 
@@ -121,8 +122,13 @@ OSSL_TIME ossl_quic_reactor_get_tick_deadline(QUIC_REACTOR *rtor);
  * Do whatever work can be done, and as much work as can be done. This involves
  * e.g. seeing if we can read anything from the network (if we want to), seeing
  * if we can write anything to the network (if we want to), etc.
+ *
+ * If the CHANNEL_ONLY flag is set, this indicates that we should only
+ * touch state which is synchronised by the channel mutex.
  */
-int ossl_quic_reactor_tick(QUIC_REACTOR *rtor);
+#define QUIC_REACTOR_TICK_FLAG_CHANNEL_ONLY  (1U << 0)
+
+int ossl_quic_reactor_tick(QUIC_REACTOR *rtor, uint32_t flags);
 
 /*
  * Blocking I/O Adaptation Layer
@@ -150,12 +156,21 @@ int ossl_quic_reactor_tick(QUIC_REACTOR *rtor);
  * the first call to pred() is skipped. This is useful if it is known that
  * ticking the reactor again will not be useful (e.g. because it has already
  * been done).
+ *
+ * This function assumes a write lock is held for the entire QUIC_CHANNEL. If
+ * mutex is non-NULL, it must be a lock currently held for write; it will be
+ * unlocked during any sleep, and then relocked for write afterwards.
+ *
+ * Precondition:   mutex is NULL or is held for write (unchecked)
+ * Postcondition:  mutex is NULL or is held for write (unless
+ *                   CRYPTO_THREAD_write_lock fails)
  */
 #define SKIP_FIRST_TICK     (1U << 0)
 
 int ossl_quic_reactor_block_until_pred(QUIC_REACTOR *rtor,
                                        int (*pred)(void *arg), void *pred_arg,
-                                       uint32_t flags);
+                                       uint32_t flags,
+                                       CRYPTO_RWLOCK *mutex);
 
 # endif
 

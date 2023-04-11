@@ -42,8 +42,8 @@ except that the input is coming from the B<FILE> I<fp>.
 
 =head1 RETURN VALUES
 
-OSSL_DECODER_from_bio() and OSSL_DECODER_from_fp() return 1 on success, or 0
-on failure.
+OSSL_DECODER_from_bio(), OSSL_DECODER_from_data() and OSSL_DECODER_from_fp()
+return 1 on success, or 0 on failure.
 
 =head1 EXAMPLES
 

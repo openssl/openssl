@@ -2,7 +2,7 @@ LIBS=../../libcrypto
 
 IF[{- !$disabled{asm} -}]
   $SM4DEF_aarch64=SM4_ASM VPSM4_ASM
-  $SM4ASM_aarch64=sm4-armv8.S vpsm4-armv8.S
+  $SM4ASM_aarch64=sm4-armv8.S vpsm4-armv8.S vpsm4_ex-armv8.S
 
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
@@ -30,5 +30,7 @@ ENDIF
 
 GENERATE[sm4-armv8.S]=asm/sm4-armv8.pl
 GENERATE[vpsm4-armv8.S]=asm/vpsm4-armv8.pl
+GENERATE[vpsm4_ex-armv8.S]=asm/vpsm4_ex-armv8.pl
 INCLUDE[sm4-armv8.o]=..
 INCLUDE[vpsm4-armv8.o]=..
+INCLUDE[vpsm4_ex-armv8.o]=..

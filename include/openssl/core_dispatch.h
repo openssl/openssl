@@ -644,6 +644,14 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_export_types,
 OSSL_CORE_MAKE_FUNC(void *, keymgmt_dup,
                     (const void *keydata_from, int selection))
 
+/* Extended import and export functions */
+# define OSSL_FUNC_KEYMGMT_IMPORT_TYPES_EX            45
+# define OSSL_FUNC_KEYMGMT_EXPORT_TYPES_EX            46
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_import_types_ex,
+                    (void *provctx, int selection))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_export_types_ex,
+                    (void *provctx, int selection))
+
 /* Key Exchange */
 
 # define OSSL_FUNC_KEYEXCH_NEWCTX                      1

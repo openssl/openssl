@@ -9,6 +9,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
+#include "internal/ssl3_cbc.h"
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"

@@ -13,7 +13,7 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/catfile/;
 use File::Compare qw/compare_text compare/;
-use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_dir bldtop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_dir bldtop_file with data_file/;
 
 use OpenSSL::Test::Utils;
 
@@ -50,7 +50,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 17;
+plan tests => 20;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -1079,6 +1079,25 @@ subtest "CMS code signing test" => sub {
        "fail verify CMS signature with code signing certificate for purpose smime_sign");
 };
 
+# Test case for missing MD algorithm (must not segfault)
+
+with({ exit_checker => sub { return shift == 4; } },
+    sub {
+        ok(run(app(['openssl', 'smime', '-verify', '-noverify',
+                    '-inform', 'PEM',
+                    '-in', data_file("pkcs7-md4.pem"),
+                   ])),
+            "Check failure of EVP_DigestInit in PKCS7 signed is handled");
+
+        ok(run(app(['openssl', 'smime', '-decrypt',
+                    '-inform', 'PEM',
+                    '-in', data_file("pkcs7-md4-encrypted.pem"),
+                    '-recip', srctop_file("test", "certs", "ee-cert.pem"),
+                    '-inkey', srctop_file("test", "certs", "ee-key.pem")
+                   ])),
+            "Check failure of EVP_DigestInit in PKCS7 signedAndEnveloped is handled");
+    });
+
 sub check_availability {
     my $tnam = shift;
 
@@ -1110,3 +1129,14 @@ ok(!run(app(['openssl', 'cms', '-verify',
                                 "SignedInvalidMappingFromanyPolicyTest7.eml")
             ])),
    "issue#19643");
+
+# Check that we get the expected failure return code
+with({ exit_checker => sub { return shift == 6; } },
+    sub {
+        ok(run(app(['openssl', 'cms', '-encrypt',
+                    '-in', srctop_file("test", "smcont.txt"),
+                    '-aes128', '-stream', '-recip',
+                    srctop_file("test/smime-certs", "badrsa.pem"),
+                   ])),
+            "Check failure during BIO setup with -stream is handled correctly");
+    });

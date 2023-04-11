@@ -2483,6 +2483,10 @@ DEPEND[html/man3/SSL_free.html]=man3/SSL_free.pod
 GENERATE[html/man3/SSL_free.html]=man3/SSL_free.pod
 DEPEND[man/man3/SSL_free.3]=man3/SSL_free.pod
 GENERATE[man/man3/SSL_free.3]=man3/SSL_free.pod
+DEPEND[html/man3/SSL_get0_peer_rpk.html]=man3/SSL_get0_peer_rpk.pod
+GENERATE[html/man3/SSL_get0_peer_rpk.html]=man3/SSL_get0_peer_rpk.pod
+DEPEND[man/man3/SSL_get0_peer_rpk.3]=man3/SSL_get0_peer_rpk.pod
+GENERATE[man/man3/SSL_get0_peer_rpk.3]=man3/SSL_get0_peer_rpk.pod
 DEPEND[html/man3/SSL_get0_peer_scts.html]=man3/SSL_get0_peer_scts.pod
 GENERATE[html/man3/SSL_get0_peer_scts.html]=man3/SSL_get0_peer_scts.pod
 DEPEND[man/man3/SSL_get0_peer_scts.3]=man3/SSL_get0_peer_scts.pod
@@ -2583,6 +2587,10 @@ DEPEND[html/man3/SSL_in_init.html]=man3/SSL_in_init.pod
 GENERATE[html/man3/SSL_in_init.html]=man3/SSL_in_init.pod
 DEPEND[man/man3/SSL_in_init.3]=man3/SSL_in_init.pod
 GENERATE[man/man3/SSL_in_init.3]=man3/SSL_in_init.pod
+DEPEND[html/man3/SSL_inject_net_dgram.html]=man3/SSL_inject_net_dgram.pod
+GENERATE[html/man3/SSL_inject_net_dgram.html]=man3/SSL_inject_net_dgram.pod
+DEPEND[man/man3/SSL_inject_net_dgram.3]=man3/SSL_inject_net_dgram.pod
+GENERATE[man/man3/SSL_inject_net_dgram.3]=man3/SSL_inject_net_dgram.pod
 DEPEND[html/man3/SSL_key_update.html]=man3/SSL_key_update.pod
 GENERATE[html/man3/SSL_key_update.html]=man3/SSL_key_update.pod
 DEPEND[man/man3/SSL_key_update.3]=man3/SSL_key_update.pod
@@ -2623,6 +2631,10 @@ DEPEND[html/man3/SSL_set1_host.html]=man3/SSL_set1_host.pod
 GENERATE[html/man3/SSL_set1_host.html]=man3/SSL_set1_host.pod
 DEPEND[man/man3/SSL_set1_host.3]=man3/SSL_set1_host.pod
 GENERATE[man/man3/SSL_set1_host.3]=man3/SSL_set1_host.pod
+DEPEND[html/man3/SSL_set1_server_cert_type.html]=man3/SSL_set1_server_cert_type.pod
+GENERATE[html/man3/SSL_set1_server_cert_type.html]=man3/SSL_set1_server_cert_type.pod
+DEPEND[man/man3/SSL_set1_server_cert_type.3]=man3/SSL_set1_server_cert_type.pod
+GENERATE[man/man3/SSL_set1_server_cert_type.3]=man3/SSL_set1_server_cert_type.pod
 DEPEND[html/man3/SSL_set_async_callback.html]=man3/SSL_set_async_callback.pod
 GENERATE[html/man3/SSL_set_async_callback.html]=man3/SSL_set_async_callback.pod
 DEPEND[man/man3/SSL_set_async_callback.3]=man3/SSL_set_async_callback.pod
@@ -3464,6 +3476,7 @@ html/man3/SSL_do_handshake.html \
 html/man3/SSL_export_keying_material.html \
 html/man3/SSL_extension_supported.html \
 html/man3/SSL_free.html \
+html/man3/SSL_get0_peer_rpk.html \
 html/man3/SSL_get0_peer_scts.html \
 html/man3/SSL_get_SSL_CTX.html \
 html/man3/SSL_get_all_async_fds.html \
@@ -3489,6 +3502,7 @@ html/man3/SSL_get_verify_result.html \
 html/man3/SSL_get_version.html \
 html/man3/SSL_group_to_name.html \
 html/man3/SSL_in_init.html \
+html/man3/SSL_inject_net_dgram.html \
 html/man3/SSL_key_update.html \
 html/man3/SSL_library_init.html \
 html/man3/SSL_load_client_CA_file.html \
@@ -3499,6 +3513,7 @@ html/man3/SSL_read_early_data.html \
 html/man3/SSL_rstate_string.html \
 html/man3/SSL_session_reused.html \
 html/man3/SSL_set1_host.html \
+html/man3/SSL_set1_server_cert_type.html \
 html/man3/SSL_set_async_callback.html \
 html/man3/SSL_set_bio.html \
 html/man3/SSL_set_blocking_mode.html \
@@ -4087,6 +4102,7 @@ man/man3/SSL_do_handshake.3 \
 man/man3/SSL_export_keying_material.3 \
 man/man3/SSL_extension_supported.3 \
 man/man3/SSL_free.3 \
+man/man3/SSL_get0_peer_rpk.3 \
 man/man3/SSL_get0_peer_scts.3 \
 man/man3/SSL_get_SSL_CTX.3 \
 man/man3/SSL_get_all_async_fds.3 \
@@ -4112,6 +4128,7 @@ man/man3/SSL_get_verify_result.3 \
 man/man3/SSL_get_version.3 \
 man/man3/SSL_group_to_name.3 \
 man/man3/SSL_in_init.3 \
+man/man3/SSL_inject_net_dgram.3 \
 man/man3/SSL_key_update.3 \
 man/man3/SSL_library_init.3 \
 man/man3/SSL_load_client_CA_file.3 \
@@ -4122,6 +4139,7 @@ man/man3/SSL_read_early_data.3 \
 man/man3/SSL_rstate_string.3 \
 man/man3/SSL_session_reused.3 \
 man/man3/SSL_set1_host.3 \
+man/man3/SSL_set1_server_cert_type.3 \
 man/man3/SSL_set_async_callback.3 \
 man/man3/SSL_set_bio.3 \
 man/man3/SSL_set_blocking_mode.3 \
@@ -4265,6 +4283,10 @@ DEPEND[html/man7/EVP_CIPHER-IDEA.html]=man7/EVP_CIPHER-IDEA.pod
 GENERATE[html/man7/EVP_CIPHER-IDEA.html]=man7/EVP_CIPHER-IDEA.pod
 DEPEND[man/man7/EVP_CIPHER-IDEA.7]=man7/EVP_CIPHER-IDEA.pod
 GENERATE[man/man7/EVP_CIPHER-IDEA.7]=man7/EVP_CIPHER-IDEA.pod
+DEPEND[html/man7/EVP_CIPHER-NULL.html]=man7/EVP_CIPHER-NULL.pod
+GENERATE[html/man7/EVP_CIPHER-NULL.html]=man7/EVP_CIPHER-NULL.pod
+DEPEND[man/man7/EVP_CIPHER-NULL.7]=man7/EVP_CIPHER-NULL.pod
+GENERATE[man/man7/EVP_CIPHER-NULL.7]=man7/EVP_CIPHER-NULL.pod
 DEPEND[html/man7/EVP_CIPHER-RC2.html]=man7/EVP_CIPHER-RC2.pod
 GENERATE[html/man7/EVP_CIPHER-RC2.html]=man7/EVP_CIPHER-RC2.pod
 DEPEND[man/man7/EVP_CIPHER-RC2.7]=man7/EVP_CIPHER-RC2.pod
@@ -4285,6 +4307,10 @@ DEPEND[html/man7/EVP_CIPHER-SM4.html]=man7/EVP_CIPHER-SM4.pod
 GENERATE[html/man7/EVP_CIPHER-SM4.html]=man7/EVP_CIPHER-SM4.pod
 DEPEND[man/man7/EVP_CIPHER-SM4.7]=man7/EVP_CIPHER-SM4.pod
 GENERATE[man/man7/EVP_CIPHER-SM4.7]=man7/EVP_CIPHER-SM4.pod
+DEPEND[html/man7/EVP_KDF-ARGON2.html]=man7/EVP_KDF-ARGON2.pod
+GENERATE[html/man7/EVP_KDF-ARGON2.html]=man7/EVP_KDF-ARGON2.pod
+DEPEND[man/man7/EVP_KDF-ARGON2.7]=man7/EVP_KDF-ARGON2.pod
+GENERATE[man/man7/EVP_KDF-ARGON2.7]=man7/EVP_KDF-ARGON2.pod
 DEPEND[html/man7/EVP_KDF-HKDF.html]=man7/EVP_KDF-HKDF.pod
 GENERATE[html/man7/EVP_KDF-HKDF.html]=man7/EVP_KDF-HKDF.pod
 DEPEND[man/man7/EVP_KDF-HKDF.7]=man7/EVP_KDF-HKDF.pod
@@ -4429,6 +4455,10 @@ DEPEND[html/man7/EVP_MD-MDC2.html]=man7/EVP_MD-MDC2.pod
 GENERATE[html/man7/EVP_MD-MDC2.html]=man7/EVP_MD-MDC2.pod
 DEPEND[man/man7/EVP_MD-MDC2.7]=man7/EVP_MD-MDC2.pod
 GENERATE[man/man7/EVP_MD-MDC2.7]=man7/EVP_MD-MDC2.pod
+DEPEND[html/man7/EVP_MD-NULL.html]=man7/EVP_MD-NULL.pod
+GENERATE[html/man7/EVP_MD-NULL.html]=man7/EVP_MD-NULL.pod
+DEPEND[man/man7/EVP_MD-NULL.7]=man7/EVP_MD-NULL.pod
+GENERATE[man/man7/EVP_MD-NULL.7]=man7/EVP_MD-NULL.pod
 DEPEND[html/man7/EVP_MD-RIPEMD160.html]=man7/EVP_MD-RIPEMD160.pod
 GENERATE[html/man7/EVP_MD-RIPEMD160.html]=man7/EVP_MD-RIPEMD160.pod
 DEPEND[man/man7/EVP_MD-RIPEMD160.7]=man7/EVP_MD-RIPEMD160.pod
@@ -4759,11 +4789,13 @@ html/man7/EVP_CIPHER-CAST.html \
 html/man7/EVP_CIPHER-CHACHA.html \
 html/man7/EVP_CIPHER-DES.html \
 html/man7/EVP_CIPHER-IDEA.html \
+html/man7/EVP_CIPHER-NULL.html \
 html/man7/EVP_CIPHER-RC2.html \
 html/man7/EVP_CIPHER-RC4.html \
 html/man7/EVP_CIPHER-RC5.html \
 html/man7/EVP_CIPHER-SEED.html \
 html/man7/EVP_CIPHER-SM4.html \
+html/man7/EVP_KDF-ARGON2.html \
 html/man7/EVP_KDF-HKDF.html \
 html/man7/EVP_KDF-HMAC-DRBG.html \
 html/man7/EVP_KDF-KB.html \
@@ -4800,6 +4832,7 @@ html/man7/EVP_MD-MD4.html \
 html/man7/EVP_MD-MD5-SHA1.html \
 html/man7/EVP_MD-MD5.html \
 html/man7/EVP_MD-MDC2.html \
+html/man7/EVP_MD-NULL.html \
 html/man7/EVP_MD-RIPEMD160.html \
 html/man7/EVP_MD-SHA1.html \
 html/man7/EVP_MD-SHA2.html \
@@ -4888,11 +4921,13 @@ man/man7/EVP_CIPHER-CAST.7 \
 man/man7/EVP_CIPHER-CHACHA.7 \
 man/man7/EVP_CIPHER-DES.7 \
 man/man7/EVP_CIPHER-IDEA.7 \
+man/man7/EVP_CIPHER-NULL.7 \
 man/man7/EVP_CIPHER-RC2.7 \
 man/man7/EVP_CIPHER-RC4.7 \
 man/man7/EVP_CIPHER-RC5.7 \
 man/man7/EVP_CIPHER-SEED.7 \
 man/man7/EVP_CIPHER-SM4.7 \
+man/man7/EVP_KDF-ARGON2.7 \
 man/man7/EVP_KDF-HKDF.7 \
 man/man7/EVP_KDF-HMAC-DRBG.7 \
 man/man7/EVP_KDF-KB.7 \
@@ -4929,6 +4964,7 @@ man/man7/EVP_MD-MD4.7 \
 man/man7/EVP_MD-MD5-SHA1.7 \
 man/man7/EVP_MD-MD5.7 \
 man/man7/EVP_MD-MDC2.7 \
+man/man7/EVP_MD-NULL.7 \
 man/man7/EVP_MD-RIPEMD160.7 \
 man/man7/EVP_MD-SHA1.7 \
 man/man7/EVP_MD-SHA2.7 \

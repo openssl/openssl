@@ -310,22 +310,3 @@ int ossl_a2ulabel(const char *in, char *out, size_t outlen)
     WPACKET_cleanup(&pkt);
     return result;
 }
-
-/*-
- * a MUST be A-label
- * u MUST be U-label
- * Returns 0 if compared values are equal
- * 1 if not
- * -1 in case of errors
- */
-
-int ossl_a2ucompare(const char *a, const char *u)
-{
-    char a_ulabel[LABEL_BUF_SIZE + 1];
-    size_t a_size = sizeof(a_ulabel);
-
-    if (ossl_a2ulabel(a, a_ulabel, a_size) <= 0)
-        return -1;
-
-    return strcmp(a_ulabel, u) != 0;
-}

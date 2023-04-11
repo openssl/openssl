@@ -21,7 +21,21 @@
  * QUIC Record Layer - TX
  * ======================
  */
+typedef struct ossl_qtx_iovec_st {
+    const unsigned char    *buf;
+    size_t                  buf_len;
+} OSSL_QTX_IOVEC;
+
 typedef struct ossl_qtx_st OSSL_QTX;
+
+typedef int (*ossl_mutate_packet_cb)(const QUIC_PKT_HDR *hdrin,
+                                     const OSSL_QTX_IOVEC *iovecin, size_t numin,
+                                     QUIC_PKT_HDR **hdrout,
+                                     const OSSL_QTX_IOVEC **iovecout,
+                                     size_t *numout,
+                                     void *arg);
+
+typedef void (*ossl_finish_mutate_cb)(void *arg);
 
 typedef struct ossl_qtx_args_st {
     OSSL_LIB_CTX   *libctx;
@@ -39,6 +53,10 @@ OSSL_QTX *ossl_qtx_new(const OSSL_QTX_ARGS *args);
 
 /* Frees the QTX. */
 void ossl_qtx_free(OSSL_QTX *qtx);
+
+/* Set mutator callbacks for test framework support */
+void ossl_qtx_set_mutator(OSSL_QTX *qtx, ossl_mutate_packet_cb mutatecb,
+                          ossl_finish_mutate_cb finishmutatecb, void *mutatearg);
 
 /*
  * Secret Management
@@ -114,10 +132,6 @@ uint32_t ossl_qrl_get_suite_cipher_tag_len(uint32_t suite_id);
  * Packet Transmission
  * -------------------
  */
-typedef struct ossl_qtx_iovec_st {
-    const unsigned char    *buf;
-    size_t                  buf_len;
-} OSSL_QTX_IOVEC;
 
 typedef struct ossl_qtx_pkt_st {
     /* Logical packet header to be serialized. */

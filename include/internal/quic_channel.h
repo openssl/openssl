@@ -16,6 +16,7 @@
 # include "internal/quic_reactor.h"
 # include "internal/quic_statm.h"
 # include "internal/time.h"
+# include "internal/thread.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -47,7 +48,43 @@
  * demuxers). Since we only use server-side functionality for dummy test servers
  * for now, which only need to handle one connection at a time, this is not
  * currently modelled.
+ *
+ * Synchronisation
+ * ---------------
+ *
+ * To support thread assisted mode, QUIC_CHANNEL can be used by multiple
+ * threads. **It is the caller's responsibility to ensure that the QUIC_CHANNEL
+ * is only accessed (whether via its methods or via direct access to its state)
+ * while the channel mutex is held**, except for methods explicitly marked as
+ * not requiring prior locking. This is an unchecked precondition.
+ *
+ * The instantiator of the channel is responsible for providing a suitable
+ * mutex which then serves as the channel mutex; see QUIC_CHANNEL_ARGS.
  */
+
+/*
+ * The function does not acquire the channel mutex and assumes it is already
+ * held by the calling thread.
+ *
+ * Any function tagged with this has the following precondition:
+ *
+ *   Precondition: must hold channel mutex (unchecked)
+ */
+#  define QUIC_NEEDS_LOCK
+
+/*
+ * The function acquires the channel mutex and releases it before returning in
+ * all circumstances.
+ *
+ * Any function tagged with this has the following precondition and
+ * postcondition:
+ *
+ *   Precondition: must not hold channel mutex (unchecked)
+ *   Postcondition: channel mutex is not held (by calling thread)
+ */
+#  define QUIC_TAKES_LOCK
+
+#  define QUIC_TODO_LOCK
 
 #  define QUIC_CHANNEL_STATE_IDLE                        0
 #  define QUIC_CHANNEL_STATE_ACTIVE                      1
@@ -56,13 +93,61 @@
 #  define QUIC_CHANNEL_STATE_TERMINATED                  4
 
 typedef struct quic_channel_args_st {
-    OSSL_LIB_CTX *libctx;
-    const char *propq;
-    int is_server;
-    SSL *tls;
+    OSSL_LIB_CTX    *libctx;
+    const char      *propq;
+    int             is_server;
+    SSL             *tls;
+
+    /*
+     * This must be a mutex the lifetime of which will exceed that of the
+     * channel. The instantiator of the channel is responsible for providing a
+     * mutex as this makes it easier to handle instantiation and teardown of
+     * channels in situations potentially requiring locking.
+     *
+     * Note that this is a MUTEX not a RWLOCK as it needs to be an OS mutex for
+     * compatibility with an OS's condition variable wait API, whereas RWLOCK
+     * may, depending on the build configuration, be implemented using an OS's
+     * mutex primitive or using its RW mutex primitive.
+     */
+    CRYPTO_MUTEX    *mutex;
+
+    /*
+     * Optional function pointer to use to retrieve the current time. If NULL,
+     * ossl_time_now() is used.
+     */
+    OSSL_TIME       (*now_cb)(void *arg);
+    void            *now_cb_arg;
 } QUIC_CHANNEL_ARGS;
 
 typedef struct quic_channel_st QUIC_CHANNEL;
+
+/* Represents the cause for a connection's termination. */
+typedef struct quic_terminate_cause_st {
+    /*
+     * If we are in a TERMINATING or TERMINATED state, this is the error code
+     * associated with the error. This field is valid iff we are in the
+     * TERMINATING or TERMINATED states.
+     */
+    uint64_t                        error_code;
+
+    /*
+     * If terminate_app is set and this is nonzero, this is the frame type which
+     * caused the connection to be terminated.
+     */
+    uint64_t                        frame_type;
+
+    /* Is this error code in the transport (0) or application (1) space? */
+    unsigned int                    app : 1;
+
+    /*
+     * If set, the cause of the termination is a received CONNECTION_CLOSE
+     * frame. Otherwise, we decided to terminate ourselves and sent a
+     * CONNECTION_CLOSE frame (regardless of whether the peer later also sends
+     * one).
+     */
+    unsigned int                    remote : 1;
+} QUIC_TERMINATE_CAUSE;
+
 
 /*
  * Create a new QUIC channel using the given arguments. The argument structure
@@ -72,6 +157,12 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args);
 
 /* No-op if ch is NULL. */
 void ossl_quic_channel_free(QUIC_CHANNEL *ch);
+
+/* Set mutator callbacks for test framework support */
+int ossl_quic_channel_set_mutator(QUIC_CHANNEL *ch,
+                                  ossl_mutate_packet_cb mutatecb,
+                                  ossl_finish_mutate_cb finishmutatecb,
+                                  void *mutatearg);
 
 /*
  * Connection Lifecycle Events
@@ -153,10 +244,31 @@ QUIC_STREAM *ossl_quic_channel_get_stream_by_id(QUIC_CHANNEL *ch,
 
 /* Returns 1 if channel is terminating or terminated. */
 int ossl_quic_channel_is_term_any(const QUIC_CHANNEL *ch);
+QUIC_TERMINATE_CAUSE ossl_quic_channel_get_terminate_cause(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_terminating(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_terminated(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_active(const QUIC_CHANNEL *ch);
 int ossl_quic_channel_is_handshake_complete(const QUIC_CHANNEL *ch);
+int ossl_quic_channel_is_handshake_confirmed(const QUIC_CHANNEL *ch);
+
+QUIC_DEMUX *ossl_quic_channel_get0_demux(QUIC_CHANNEL *ch);
+
+SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch);
+
+/*
+ * Retrieves a pointer to the channel mutex which was provided at the time the
+ * channel was instantiated. In order to allow locks to be acquired and released
+ * with the correct granularity, it is the caller's responsibility to ensure
+ * this lock is held for write while calling any QUIC_CHANNEL method, except for
+ * methods explicitly designed otherwise.
+ *
+ * This method is thread safe and does not require prior locking. It can also be
+ * called while the lock is already held. Note that this is simply a convenience
+ * function to access the mutex which was passed to the channel at instantiation
+ * time; it does not belong to the channel but rather is presumed to belong to
+ * the owner of the channel.
+ */
+CRYPTO_MUTEX *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch);
 
 # endif
 

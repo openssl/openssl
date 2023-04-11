@@ -11,7 +11,10 @@
 # define OSSL_QUIC_TSERVER_H
 
 # include <openssl/ssl.h>
+# include <openssl/bio.h>
 # include "internal/quic_stream.h"
+# include "internal/quic_channel.h"
+# include "internal/statem.h"
 
 # ifndef OPENSSL_NO_QUIC
 
@@ -34,6 +37,8 @@ typedef struct quic_tserver_args_st {
     OSSL_LIB_CTX *libctx;
     const char *propq;
     BIO *net_rbio, *net_wbio;
+    OSSL_TIME (*now_cb)(void *arg);
+    void *now_cb_arg;
 } QUIC_TSERVER_ARGS;
 
 QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
@@ -41,11 +46,35 @@ QUIC_TSERVER *ossl_quic_tserver_new(const QUIC_TSERVER_ARGS *args,
 
 void ossl_quic_tserver_free(QUIC_TSERVER *srv);
 
+/* Set mutator callbacks for test framework support */
+int ossl_quic_tserver_set_plain_packet_mutator(QUIC_TSERVER *srv,
+                                               ossl_mutate_packet_cb mutatecb,
+                                               ossl_finish_mutate_cb finishmutatecb,
+                                               void *mutatearg);
+
+int ossl_quic_tserver_set_handshake_mutator(QUIC_TSERVER *srv,
+                                            ossl_statem_mutate_handshake_cb mutate_handshake_cb,
+                                            ossl_statem_finish_mutate_handshake_cb finish_mutate_handshake_cb,
+                                            void *mutatearg);
+
 /* Advances the state machine. */
 int ossl_quic_tserver_tick(QUIC_TSERVER *srv);
 
 /* Returns 1 if we have a (non-terminated) client. */
 int ossl_quic_tserver_is_connected(QUIC_TSERVER *srv);
+
+/*
+ * Returns 1 if we have finished the TLS handshake
+ */
+int ossl_quic_tserver_is_handshake_confirmed(const QUIC_TSERVER *srv);
+
+/* Returns 1 if the server is in any terminating or terminated state */
+int ossl_quic_tserver_is_term_any(const QUIC_TSERVER *srv);
+
+QUIC_TERMINATE_CAUSE ossl_quic_tserver_get_terminate_cause(const QUIC_TSERVER *srv);
+
+/* Returns 1 if the server is in a terminated state */
+int ossl_quic_tserver_is_terminated(const QUIC_TSERVER *srv);
 
 /*
  * Attempts to read from stream 0. Writes the number of bytes read to
@@ -86,6 +115,8 @@ int ossl_quic_tserver_write(QUIC_TSERVER *srv,
  * Signals normal end of the stream.
  */
 int ossl_quic_tserver_conclude(QUIC_TSERVER *srv);
+
+BIO *ossl_quic_tserver_get0_rbio(QUIC_TSERVER *srv);
 
 # endif
 

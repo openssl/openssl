@@ -373,7 +373,7 @@ const OPTIONS cmp_options[] = {
 
     OPT_SECTION("Server authentication"),
     {"trusted", OPT_TRUSTED, 's',
-     "Certificates to trust as chain roots when verifying signed CMP responses"},
+     "Certificates to use as trust anchors when verifying signed CMP responses"},
     {OPT_MORE_STR, 0, 0, "unless -srvcert is given"},
     {"untrusted", OPT_UNTRUSTED, 's',
      "Intermediate CA certs for chain construction for CMP/TLS/enrolled certs"},
@@ -421,7 +421,7 @@ const OPTIONS cmp_options[] = {
     {OPT_MORE_STR, 0, 0,
      "This can be used as the default CMP signer cert chain to include"},
     {"unprotected_requests", OPT_UNPROTECTED_REQUESTS, '-',
-     "Send messages without CMP-level protection"},
+     "Send request messages without CMP-level protection"},
 
     OPT_SECTION("Credentials format"),
     {"certform", OPT_CERTFORM, 's',
@@ -466,13 +466,16 @@ const OPTIONS cmp_options[] = {
      "Do not interactively prompt for input when a password is required etc."},
     {"repeat", OPT_REPEAT, 'p',
      "Invoke the transaction the given positive number of times. Default 1"},
-    {"reqin", OPT_REQIN, 's', "Take sequence of CMP requests from file(s)"},
+    {"reqin", OPT_REQIN, 's',
+     "Take sequence of CMP requests to send to server from file(s)"},
     {"reqin_new_tid", OPT_REQIN_NEW_TID, '-',
      "Use fresh transactionID for CMP requests read from -reqin"},
-    {"reqout", OPT_REQOUT, 's', "Save sequence of CMP requests to file(s)"},
+    {"reqout", OPT_REQOUT, 's',
+     "Save sequence of CMP requests created by the client to file(s)"},
     {"rspin", OPT_RSPIN, 's',
      "Process sequence of CMP responses provided in file(s), skipping server"},
-    {"rspout", OPT_RSPOUT, 's', "Save sequence of CMP responses to file(s)"},
+    {"rspout", OPT_RSPOUT, 's',
+     "Save sequence of received CMP responses to file(s)"},
 
     {"use_mock_srv", OPT_USE_MOCK_SRV, '-',
      "Use internal mock server at API level, bypassing socket-based HTTP"},
@@ -732,12 +735,12 @@ static int write_PKIMESSAGE(const OSSL_CMP_MSG *msg, char **filenames)
 }
 
 /* read DER-encoded OSSL_CMP_MSG from the specified file name item */
-static OSSL_CMP_MSG *read_PKIMESSAGE(char **filenames)
+static OSSL_CMP_MSG *read_PKIMESSAGE(const char *desc, char **filenames)
 {
     char *file;
     OSSL_CMP_MSG *ret;
 
-    if (filenames == NULL) {
+    if (filenames == NULL || desc == NULL) {
         CMP_err("NULL arg to read_PKIMESSAGE");
         return NULL;
     }
@@ -752,6 +755,8 @@ static OSSL_CMP_MSG *read_PKIMESSAGE(char **filenames)
     ret = OSSL_CMP_MSG_read(file, app_get0_libctx(), app_get0_propq());
     if (ret == NULL)
         CMP_err1("cannot read PKIMessage from file '%s'", file);
+    else
+        CMP_info2("%s %s", desc, file);
     return ret;
 }
 
@@ -772,7 +777,7 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
     if (opt_reqout != NULL && !write_PKIMESSAGE(req, &opt_reqout))
         goto err;
     if (opt_reqin != NULL && opt_rspin == NULL) {
-        if ((req_new = read_PKIMESSAGE(&opt_reqin)) == NULL)
+        if ((req_new = read_PKIMESSAGE("actually sending", &opt_reqin)) == NULL)
             goto err;
         /*-
          * The transaction ID in req_new read from opt_reqin may not be fresh.
@@ -782,12 +787,19 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
         if (opt_reqin_new_tid
                 && !OSSL_CMP_MSG_update_transactionID(ctx, req_new))
             goto err;
+
+        /*
+         * Except for first request, need to satisfy recipNonce check by server.
+         * Unfortunately requires re-protection if protection is required.
+         */
+        if (!OSSL_CMP_MSG_update_recipNonce(ctx, req_new))
+            goto err;
     }
 
     if (opt_rspin != NULL) {
-        res = read_PKIMESSAGE(&opt_rspin);
+        res = read_PKIMESSAGE("actually using", &opt_rspin);
     } else {
-        const OSSL_CMP_MSG *actual_req = opt_reqin != NULL ? req_new : req;
+        const OSSL_CMP_MSG *actual_req = req_new != NULL ? req_new : req;
 
         res = opt_use_mock_srv
             ? OSSL_CMP_CTX_server_perform(ctx, actual_req)
@@ -796,8 +808,8 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
     if (res == NULL)
         goto err;
 
-    if (opt_reqin != NULL || prev_opt_rspin != NULL) {
-        /* need to satisfy nonce and transactionID checks */
+    if (req_new != NULL || prev_opt_rspin != NULL) {
+        /* need to satisfy nonce and transactionID checks by client */
         ASN1_OCTET_STRING *nonce;
         ASN1_OCTET_STRING *tid;
 
@@ -1109,7 +1121,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
         goto err;
 
     if (opt_send_error)
-        (void)ossl_cmp_mock_srv_set_send_error(srv_ctx, 1);
+        (void)ossl_cmp_mock_srv_set_sendError(srv_ctx, 1);
 
     if (opt_send_unprotected)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_UNPROTECTED_SEND, 1);
@@ -1274,7 +1286,9 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
                 /* disable any cert status/revocation checking etc. */
                 X509_VERIFY_PARAM_clear_flags(tls_vpm,
                                               ~(X509_V_FLAG_USE_CHECK_TIME
-                                                | X509_V_FLAG_NO_CHECK_TIME));
+                                                | X509_V_FLAG_NO_CHECK_TIME
+                                                | X509_V_FLAG_PARTIAL_CHAIN
+                                                | X509_V_FLAG_POLICY_CHECK));
             }
             CMP_debug("trying to build cert chain for own TLS cert");
             if (SSL_CTX_build_cert_chain(ssl_ctx,

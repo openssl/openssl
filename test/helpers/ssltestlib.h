@@ -22,7 +22,8 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                                int read, int listen);
 int create_ssl_objects2(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
                        SSL **cssl, int sfd, int cfd);
-int create_test_sockets(int *cfd, int *sfd);
+int wait_until_sock_readable(int sock);
+int create_test_sockets(int *cfdp, int *sfdp, int socktype, BIO_ADDR *saddr);
 int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want);
 void shutdown_ssl_connection(SSL *serverssl, SSL *clientssl);
 
@@ -50,7 +51,7 @@ void bio_s_always_retry_free(void);
 #define MEMPACKET_CTRL_SET_DUPLICATE_REC    (4 << 15)
 
 int mempacket_swap_epoch(BIO *bio);
-int mempacket_swap_recent(BIO *bio);
+int mempacket_move_packet(BIO *bio, int d, int s);
 int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
                           int type);
 

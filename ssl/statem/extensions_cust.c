@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2023 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -193,6 +193,7 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
                         | SSL_EXT_TLS1_3_SERVER_HELLO
                         | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS
                         | SSL_EXT_TLS1_3_CERTIFICATE
+                        | SSL_EXT_TLS1_3_RAW_PUBLIC_KEY
                         | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST)) != 0) {
             /* Only send extensions present in ClientHello/CertificateRequest */
             if (!(meth->ext_flags & SSL_EXT_FLAG_RECEIVED))
@@ -534,6 +535,8 @@ int SSL_extension_supported(unsigned int ext_type)
     case TLSEXT_TYPE_psk:
     case TLSEXT_TYPE_post_handshake_auth:
     case TLSEXT_TYPE_compress_certificate:
+    case TLSEXT_TYPE_client_cert_type:
+    case TLSEXT_TYPE_server_cert_type:
         return 1;
     default:
         return 0;
