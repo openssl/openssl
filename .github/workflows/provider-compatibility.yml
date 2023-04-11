@@ -132,7 +132,7 @@ jobs:
       - name: config dump current
         run: ./configdata.pm --dump
         working-directory: ${{ matrix.branch.dir }}
-    
+
       - name: make branch
         run: make -s -j4
         working-directory: ${{ matrix.branch.dir }}
@@ -168,7 +168,7 @@ jobs:
       fail-fast: false
       matrix:
         # These can't be figured out earlier and included here as a variable
-        # substitution.  
+        # substitution.
         #
         # Note that releases are not used as a test environment for
         # later providers.  Problems in these situations ought to be
