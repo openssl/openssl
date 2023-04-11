@@ -15,7 +15,7 @@ OSSL_TIME ossl_time_now(void)
 {
     OSSL_TIME r;
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
     SYSTEMTIME st;
     union {
         unsigned __int64 ul;

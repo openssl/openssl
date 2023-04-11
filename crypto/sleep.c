@@ -39,7 +39,7 @@ void OSSL_sleep(uint64_t millis)
     usleep(millis * 1000);
 # endif
 }
-#elif defined(_WIN32)
+#elif defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
 # include <windows.h>
 
 void OSSL_sleep(uint64_t millis)
