@@ -358,7 +358,7 @@ int ssl_load_ciphers(SSL_CTX *ctx)
 
     /*
      * We ignore any errors from the fetches below. They are expected to fail
-     * if theose algorithms are not available.
+     * if these algorithms are not available.
      */
     ERR_set_mark();
     sig = EVP_SIGNATURE_fetch(ctx->libctx, "DSA", ctx->propq);
