@@ -43,6 +43,7 @@ OSSL_CMP_CTX_set1_extraCertsOut,
 OSSL_CMP_CTX_set0_newPkey,
 OSSL_CMP_CTX_get0_newPkey,
 OSSL_CMP_CTX_set1_issuer,
+OSSL_CMP_CTX_set1_serialNumber,
 OSSL_CMP_CTX_set1_subjectName,
 OSSL_CMP_CTX_push1_subjectAltName,
 OSSL_CMP_CTX_set0_reqExtensions,
@@ -133,6 +134,7 @@ OSSL_CMP_CTX_set1_senderNonce
  int OSSL_CMP_CTX_set0_newPkey(OSSL_CMP_CTX *ctx, int priv, EVP_PKEY *pkey);
  EVP_PKEY *OSSL_CMP_CTX_get0_newPkey(const OSSL_CMP_CTX *ctx, int priv);
  int OSSL_CMP_CTX_set1_issuer(OSSL_CMP_CTX *ctx, const X509_NAME *name);
+ int OSSL_CMP_CTX_set1_serialNumber(OSSL_CMP_CTX *ctx, const ASN1_INTEGER *sn);
  int OSSL_CMP_CTX_set1_subjectName(OSSL_CMP_CTX *ctx, const X509_NAME *name);
  int OSSL_CMP_CTX_push1_subjectAltName(OSSL_CMP_CTX *ctx,
                                        const GENERAL_NAME *name);
@@ -467,7 +469,7 @@ The reference counts of those certificates handled successfully are increased.
 OSSL_CMP_CTX_get0_untrusted() returns a pointer to the
 list of untrusted certs in I<ctx>, which may be empty if unset.
 
-OSSL_CMP_CTX_set1_cert() sets the CMP signer certificate
+OSSL_CMP_CTX_set1_cert() sets the CMP I<signer certificate>
 related to the private key used for CMP message protection.
 Therefore the public key of this I<cert> must correspond to
 the private key set before or thereafter via OSSL_CMP_CTX_set1_pkey().
@@ -556,6 +558,9 @@ private component then NULL is returned.
 OSSL_CMP_CTX_set1_issuer() sets the name of the intended issuer that
 will be set in the CertTemplate, i.e., the X509 name of the CA server.
 
+OSSL_CMP_CTX_set1_serialNumber() sets the serial number optionally used to
+select the certificate to be revoked in Revocation Requests (RR).
+
 OSSL_CMP_CTX_set1_subjectName() sets the subject DN that will be used in
 the CertTemplate structure when requesting a new cert. For Key Update Requests
 (KUR), it defaults to the subject DN of the reference certificate,
@@ -588,17 +593,22 @@ to the X509_EXTENSIONS of the requested certificate template.
 
 OSSL_CMP_CTX_set1_oldCert() sets the old certificate to be updated in
 Key Update Requests (KUR) or to be revoked in Revocation Requests (RR).
-It must be given for RR, else it defaults to the CMP signer certificate.
-The I<reference certificate> determined in this way, if any, is also used for
-deriving default subject DN, public key, Subject Alternative Names, and the
-default issuer entry in the requested certificate template of IR/CR/KUR.
+For RR, this is ignored if an issuer name and a serial number are provided using
+OSSL_CMP_CTX_set1_issuer() and OSSL_CMP_CTX_set1_serialNumber(), respectively.
+For IR/CR/KUR this sets the I<reference certificate>,
+which otherwise defaults to the CMP signer certificate.
+The I<reference certificate> determined this way, if any, is used for providing
+default public key, subject DN, Subject Alternative Names, and issuer DN entries
+in the requested certificate template of IR/CR/KUR messages.
+
 The subject of the reference certificate is used as the sender field value
 in CMP message headers.
 Its issuer is used as default recipient in CMP message headers.
 
 OSSL_CMP_CTX_set1_p10CSR() sets the PKCS#10 CSR to use in P10CR messages.
-If such a CSR is provided, its subject, public key, and extension fields are
-also used as fallback values for the certificate template of IR/CR/KUR messages.
+If such a CSR is provided, its subject and public key fields are also
+used as fallback values for the certificate template of IR/CR/KUR/RR messages,
+and any extensions included are added to the template of IR/CR/KUR messages.
 
 OSSL_CMP_CTX_push0_genm_ITAV() adds I<itav> to the stack in the I<ctx> which
 will be the body of a General Message sent with this context.
@@ -828,6 +838,8 @@ OSSL_CMP_CTX_reset_geninfo_ITAVs() was added in OpenSSL 3.0.8.
 
 OSSL_CMP_CTX_get0_libctx(), OSSL_CMP_CTX_get0_propq(), and
 OSSL_CMP_CTX_get0_validatedSrvCert() were added in OpenSSL 3.2.
+
+OSSL_CMP_CTX_set1_serialNumber() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

@@ -226,6 +226,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
 
     EVP_PKEY_free(ctx->newPkey);
     X509_NAME_free(ctx->issuer);
+    ASN1_INTEGER_free(ctx->serialNumber);
     X509_NAME_free(ctx->subjectName);
     sk_GENERAL_NAME_pop_free(ctx->subjectAltNames, GENERAL_NAME_free);
     X509_EXTENSIONS_free(ctx->reqExtensions);
@@ -611,6 +612,8 @@ DEFINE_OSSL_CMP_CTX_set1(expected_sender, X509_NAME)
 /* Set the X509 name of the issuer to be placed in the certTemplate */
 DEFINE_OSSL_CMP_CTX_set1(issuer, X509_NAME)
 
+/* Set the ASN1_INTEGER serial to be placed in the certTemplate for rr */
+DEFINE_OSSL_CMP_CTX_set1(serialNumber, ASN1_INTEGER)
 /*
  * Set the subject name that will be placed in the certificate
  * request. This will be the subject name on the received certificate.

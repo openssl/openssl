@@ -113,7 +113,6 @@ static int opt_infotype = NID_undef;
 static char *opt_newkey = NULL;
 static char *opt_newkeypass = NULL;
 static char *opt_subject = NULL;
-static char *opt_issuer = NULL;
 static int opt_days = 0;
 static char *opt_reqexts = NULL;
 static char *opt_sans = NULL;
@@ -131,6 +130,8 @@ static char *opt_chainout = NULL;
 
 /* certificate enrollment and revocation */
 static char *opt_oldcert = NULL;
+static char *opt_issuer = NULL;
+static char *opt_serial = NULL;
 static int opt_revreason = CRL_REASON_NONE;
 
 /* credentials format */
@@ -203,7 +204,7 @@ typedef enum OPTION_choice {
 
     OPT_CMD, OPT_INFOTYPE, OPT_GENINFO,
 
-    OPT_NEWKEY, OPT_NEWKEYPASS, OPT_SUBJECT, OPT_ISSUER,
+    OPT_NEWKEY, OPT_NEWKEYPASS, OPT_SUBJECT,
     OPT_DAYS, OPT_REQEXTS,
     OPT_SANS, OPT_SAN_NODEFAULT,
     OPT_POLICIES, OPT_POLICY_OIDS, OPT_POLICY_OIDS_CRITICAL,
@@ -211,7 +212,7 @@ typedef enum OPTION_choice {
     OPT_OUT_TRUSTED, OPT_IMPLICIT_CONFIRM, OPT_DISABLE_CONFIRM,
     OPT_CERTOUT, OPT_CHAINOUT,
 
-    OPT_OLDCERT, OPT_REVREASON,
+    OPT_OLDCERT, OPT_ISSUER, OPT_SERIAL, OPT_REVREASON,
 
 #ifndef OPENSSL_NO_SOCK
     OPT_SERVER, OPT_PROXY, OPT_NO_PROXY,
@@ -293,10 +294,6 @@ const OPTIONS cmp_options[] = {
      "For kur, default is subject of -csr arg or reference cert (see -oldcert)"},
     {OPT_MORE_STR, 0, 0,
      "this default is used for ir and cr only if no Subject Alt Names are set"},
-    {"issuer", OPT_ISSUER, 's',
-     "DN of the issuer to place in the requested certificate template"},
-    {OPT_MORE_STR, 0, 0,
-     "also used as recipient if neither -recipient nor -srvcert are given"},
     {"days", OPT_DAYS, 'N',
      "Requested validity time of the new certificate in number of days"},
     {"reqexts", OPT_REQEXTS, 's',
@@ -340,6 +337,12 @@ const OPTIONS cmp_options[] = {
      "also used as reference (defaulting to -cert) for subject DN and SANs."},
     {OPT_MORE_STR, 0, 0,
      "Issuer is used as recipient unless -recipient, -srvcert, or -issuer given"},
+    {"issuer", OPT_ISSUER, 's',
+     "DN of the issuer to place in the certificate template of ir/cr/kur/rr;"},
+    {OPT_MORE_STR, 0, 0,
+     "also used as recipient if neither -recipient nor -srvcert are given"},
+    {"serial", OPT_SERIAL, 's',
+     "Serial number of certificate to be revoked in revocation request (rr)"},
     {"revreason", OPT_REVREASON, 'n',
      "Reason code to include in revocation request (rr); possible values:"},
     {OPT_MORE_STR, 0, 0,
@@ -560,7 +563,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
 
     {&opt_cmd_s}, {&opt_infotype_s}, {&opt_geninfo},
 
-    {&opt_newkey}, {&opt_newkeypass}, {&opt_subject}, {&opt_issuer},
+    {&opt_newkey}, {&opt_newkeypass}, {&opt_subject},
     {(char **)&opt_days}, {&opt_reqexts},
     {&opt_sans}, {(char **)&opt_san_nodefault},
     {&opt_policies}, {&opt_policy_oids}, {(char **)&opt_policy_oids_critical},
@@ -569,7 +572,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {(char **)&opt_implicit_confirm}, {(char **)&opt_disable_confirm},
     {&opt_certout}, {&opt_chainout},
 
-    {&opt_oldcert}, {(char **)&opt_revreason},
+    {&opt_oldcert}, {&opt_issuer}, {&opt_serial}, {(char **)&opt_revreason},
 
 #ifndef OPENSSL_NO_SOCK
     {&opt_server}, {&opt_proxy}, {&opt_no_proxy},
@@ -1509,9 +1512,9 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 }
 
 /*
- * set up IR/CR/KUR/CertConf/RR specific parts of the OSSL_CMP_CTX
- * based on options from config file/CLI.
- * Returns pointer on success, NULL on error
+ * Set up IR/CR/P10CR/KUR/CertConf/RR/GENM specific parts of the OSSL_CMP_CTX
+ * based on options from CLI and/or config file.
+ * Returns 1 on success, 0 on error
  */
 static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 {
@@ -1524,6 +1527,8 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             && opt_cmd != CMP_RR && opt_cmd != CMP_GENM)
         CMP_warn("no -subject given; no -csr or -oldcert or -cert available for fallback");
 
+    if (!set_name(opt_issuer, OSSL_CMP_CTX_set1_issuer, ctx, "issuer"))
+        return 0;
     if (opt_cmd == CMP_IR || opt_cmd == CMP_CR || opt_cmd == CMP_KUR) {
         if (opt_newkey == NULL
             && opt_key == NULL && opt_csr == NULL && opt_oldcert == NULL) {
@@ -1548,8 +1553,7 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             CMP_err("-certout not given, nowhere to save newly enrolled certificate");
             return 0;
         }
-        if (!set_name(opt_subject, OSSL_CMP_CTX_set1_subjectName, ctx, "subject")
-                || !set_name(opt_issuer, OSSL_CMP_CTX_set1_issuer, ctx, "issuer"))
+        if (!set_name(opt_subject, OSSL_CMP_CTX_set1_subjectName, ctx, "subject"))
             return 0;
     } else {
         const char *msg = "option is ignored for commands other than 'ir', 'cr', and 'kur'";
@@ -1563,8 +1567,8 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
                 CMP_warn1("-subject %s since sender is taken from -ref or -cert", msg);
             }
         }
-        if (opt_issuer != NULL)
-            CMP_warn1("-issuer %s", msg);
+        if (opt_issuer != NULL && opt_cmd != CMP_RR)
+            CMP_warn1("-issuer %s and 'rr'", msg);
         if (opt_reqexts != NULL)
             CMP_warn1("-reqexts %s", msg);
         if (opt_san_nodefault)
@@ -1598,12 +1602,44 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
                       opt_subject, ref_cert != NULL ? ref_cert : opt_csr);
     }
     if (opt_cmd == CMP_RR) {
-        if (opt_oldcert == NULL && opt_csr == NULL) {
-            CMP_err("missing -oldcert for certificate to be revoked and no -csr given");
-            return 0;
+        if (opt_issuer == NULL && opt_serial == NULL) {
+            if (opt_oldcert == NULL && opt_csr == NULL) {
+                CMP_err("missing -oldcert or -issuer and -serial for certificate to be revoked and no -csr given");
+                return 0;
+            }
+            if (opt_oldcert != NULL && opt_csr != NULL)
+                CMP_warn("ignoring -csr since certificate to be revoked is given");
+        } else {
+#define OSSL_CMP_RR_MSG "since -issuer and -serial is given for command 'rr'"
+            if (opt_issuer == NULL || opt_serial == NULL) {
+                CMP_err("Must give both -issuer and -serial options or neither");
+                return 0;
+            }
+            if (opt_oldcert != NULL)
+                CMP_warn("Ignoring -oldcert " OSSL_CMP_RR_MSG);
+            if (opt_csr != NULL)
+                CMP_warn("Ignoring -csr " OSSL_CMP_RR_MSG);
         }
-        if (opt_oldcert != NULL && opt_csr != NULL)
-            CMP_warn("ignoring -csr since certificate to be revoked is given");
+        if (opt_serial != NULL) {
+            ASN1_INTEGER *sno;
+
+            if ((sno = s2i_ASN1_INTEGER(NULL, opt_serial)) == NULL) {
+                CMP_err1("cannot read serial number: '%s'", opt_serial);
+                return 0;
+            }
+            if (!OSSL_CMP_CTX_set1_serialNumber(ctx, sno)) {
+                ASN1_INTEGER_free(sno);
+                CMP_err("out of memory");
+                return 0;
+            }
+            ASN1_INTEGER_free(sno);
+        }
+        if (opt_revreason > CRL_REASON_NONE)
+            (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_REVOCATION_REASON,
+                                          opt_revreason);
+    } else {
+        if (opt_serial != NULL)
+            CMP_warn("Ignoring -serial for command other than 'rr'");
     }
     if (opt_cmd == CMP_P10CR && opt_csr == NULL) {
         CMP_err("missing PKCS#10 CSR for p10cr");
@@ -1769,9 +1805,6 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         }
     }
     cleanse(opt_keypass);
-    if (opt_revreason > CRL_REASON_NONE)
-        (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_REVOCATION_REASON,
-                                      opt_revreason);
 
     return 1;
 
@@ -2540,9 +2573,6 @@ static int get_opts(int argc, char **argv)
         case OPT_SUBJECT:
             opt_subject = opt_str();
             break;
-        case OPT_ISSUER:
-            opt_issuer = opt_str();
-            break;
         case OPT_DAYS:
             opt_days = opt_int_arg();
             break;
@@ -2601,6 +2631,12 @@ static int get_opts(int argc, char **argv)
                 CMP_err("invalid revreason. Valid values are -1 .. 6, 8 .. 10");
                 goto opthelp;
             }
+            break;
+        case OPT_ISSUER:
+            opt_issuer = opt_str();
+            break;
+        case OPT_SERIAL:
+            opt_serial = opt_arg();
             break;
         case OPT_CERTFORM:
             opt_certform_s = opt_str();

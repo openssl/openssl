@@ -101,7 +101,12 @@ a negative value as the I<req_type> argument then OSSL_CMP_try_certreq()
 aborts the CMP transaction by sending an error message to the server.
 
 OSSL_CMP_exec_RR_ses() requests the revocation of the certificate
-specified in the I<ctx> using L<OSSL_CMP_CTX_set1_oldCert(3)>.
+specified in the I<ctx> using the issuer DN and serial number set by
+OSSL_CMP_CTX_set1_issuer(3) and OSSL_CMP_CTX_set1_serialNumber(3), respectively,
+otherwise the issuer DN and serial number
+of the certificate set by L<OSSL_CMP_CTX_set1_oldCert(3)>,
+otherwise the subject DN and public key
+of the certificate signing request set by L<OSSL_CMP_CTX_set1_p10CSR(3)>.
 RFC 4210 is vague in which PKIStatus should be returned by the server.
 We take "accepted" and "grantedWithMods" as clear success and handle
 "revocationWarning" and "revocationNotification" just as warnings because CAs
