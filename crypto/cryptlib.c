@@ -12,7 +12,7 @@
 #include "crypto/cryptlib.h"
 #include <openssl/safestack.h>
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
 # include <tchar.h>
 # include <signal.h>
 # ifdef __WATCOMC__
@@ -256,7 +256,7 @@ void OPENSSL_die(const char *message, const char *file, int line)
 {
     OPENSSL_showfatal("%s:%d: OpenSSL internal error: %s\n",
                       file, line, message);
-#if !defined(_WIN32)
+#if !defined(_WIN32) || defined(OPENSSL_SYS_UEFI)
     abort();
 #else
     /*
