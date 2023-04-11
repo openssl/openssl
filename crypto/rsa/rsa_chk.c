@@ -122,13 +122,17 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
         ret = -1;
         goto err;
     }
+    if (!BN_div(m, NULL, l, m, ctx)) { /* remainder is 0 */
+        ret = -1;
+        goto err;
+    }
     for (idx = 0; idx < ex_primes; idx++) {
         pinfo = sk_RSA_PRIME_INFO_value(key->prime_infos, idx);
         if (!BN_sub(k, pinfo->r, BN_value_one())) {
             ret = -1;
             goto err;
         }
-        if (!BN_mul(l, l, k, ctx)) {
+        if (!BN_mul(l, m, k, ctx)) {
             ret = -1;
             goto err;
         }
@@ -136,12 +140,12 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
             ret = -1;
             goto err;
         }
+        if (!BN_div(m, NULL, l, m, ctx)) { /* remainder is 0 */
+            ret = -1;
+            goto err;
+        }
     }
-    if (!BN_div(k, NULL, l, m, ctx)) { /* remainder is 0 */
-        ret = -1;
-        goto err;
-    }
-    if (!BN_mod_mul(i, key->d, key->e, k, ctx)) {
+    if (!BN_mod_mul(i, key->d, key->e, m, ctx)) {
         ret = -1;
         goto err;
     }

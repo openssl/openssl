@@ -17,9 +17,14 @@ use OpenSSL::Test::Utils;
 
 setup("test_mp_rsa");
 
-plan tests => 31;
+plan tests => 32;
 
 ok(run(test(["rsa_mp_test"])), "running rsa multi prime test");
+
+ok(grep(/Key is valid/,
+        run(app(['openssl', 'pkey', '-noout', '-check', '-in',
+                 data_file('rsamplcm.pem')]), capture => 1)),
+   "checking lcm in key check");
 
 my $cleartext = data_file("plain_text");
 
