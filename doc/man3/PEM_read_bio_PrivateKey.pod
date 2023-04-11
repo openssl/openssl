@@ -335,7 +335,7 @@ I<klen> bytes at I<kstr> are used as the passphrase and I<cb> is
 ignored.
 
 If the I<cb> parameters is set to NULL and the I<u> parameter is not
-NULL then the I<u> parameter is interpreted as a NUL terminated string
+NULL then the I<u> parameter is interpreted as a NULL terminated string
 to use as the passphrase. If both I<cb> and I<u> are NULL then the
 default callback routine is used which will typically prompt for the
 passphrase on the current terminal with echoing turned off.
