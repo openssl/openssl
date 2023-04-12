@@ -846,9 +846,9 @@ eventually be MSMT-safe.
 
 The blocking mode can be configured on each SSL object individually. When a QUIC
 stream SSL object is created it inherits its blocking state from the currently
-configured blocking state of the QUIC connection SSL object at the  time the
+configured blocking state of the QUIC connection SSL object at the time the
 stream is created. This can be changed independently. For example, a QUIC
-connection SSL object can be in blokcing mode to allow for blocking
+connection SSL object can be in blocking mode to allow for blocking
 `SSL_accept_stream` calls, yet have some or all QUIC stream SSL objects be in
 non-blocking mode concurrently.
 
@@ -931,15 +931,15 @@ __owur uint64_t SSL_get_stream_id(SSL *ssl);
  *
  * For QUIC:
  *   Creates a new stream. Must be called only on a QUIC connection SSL object.
- *   Can be used on client or server. If the SSL_FLAG_UNI flag is set, the
- *   created stream is unidirectional, otherwise it is bidirectional.
+ *   Can be used on client or server. If the SSL_STREAM_FLAG_UNI flag is set,
+ *   the created stream is unidirectional, otherwise it is bidirectional.
  *
  *   To be MSMT-safe.
  *
  * For TLS and DTLS SSL objects:
  *   Always fails.
  */
-#define SSL_FLAG_UNI    1
+#define SSL_STREAM_FLAG_UNI    1
 
 SSL *SSL_new_stream(SSL *ssl, uint64_t flags);
 ```
@@ -948,7 +948,7 @@ SSL *SSL_new_stream(SSL *ssl, uint64_t flags);
 
 ```c
 /*
- * Create a new SSL object representing an additional stream which has created
+ * Create a new SSL object representing an additional stream which was created
  * by the peer.
  *
  * There is no need to call SSL_accept on the resulting object, and
@@ -958,7 +958,8 @@ SSL *SSL_new_stream(SSL *ssl, uint64_t flags);
  *   Must be called only on a QUIC connection SSL object. Fails if called on a
  *   stream object. Checks if a new stream has been created by the peer. If it
  *   has, creates a new SSL object to represent it and returns it. Otherwise,
- *   returns NULL.
+ *   returns NULL. If multiple streams are available to be accepted, the oldest
+ *   stream (that is, the stream with the lowest stream ID) is accepted.
  *
  * For all other methods:
  *   Returns NULL.
@@ -980,9 +981,9 @@ SSL *SSL_accept_stream(SSL *ssl, uint64_t flags);
 ```c
 /*
  * Determine the number of streams waiting to be returned on a subsequent call
- * to SSL_accept_stream. If this returns a non-zero value, SSL_accept_stream is
- * guaranteed to work. Returns 0 for non-QUIC objects, or for QUIC stream
- * objects.
+ * to SSL_accept_stream. If this returns a non-zero value, the next call to
+ * SSL_accept_stream (on any thread) is guaranteed to work. Returns 0 for
+ * non-QUIC objects, or for QUIC stream objects.
  *
  * To be MSMT-safe.
  */
