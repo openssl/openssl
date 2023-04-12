@@ -629,6 +629,8 @@ int X509v3_addr_add_range(IPAddrBlocks *addr,
 
     if (aors == NULL)
         return 0;
+    if (memcmp(min, max, length) > 0)
+        return 0;
     if (!make_addressRange(&aor, min, max, length))
         return 0;
     if (sk_IPAddressOrRange_push(aors, aor))
