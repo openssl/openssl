@@ -1841,3 +1841,16 @@ Ctrl.hexkey = hexkey:a9f4a2c5af839867f5db5a1e520ab3cca72a166ca60de512fd7fe7e64cf
 Ctrl.hexinfo = hexinfo:8e9db3335779db688bcfe096668d9c3bc64e193e3529c430e68d09d56c837dd6c0f94678f121a68ee1feea4735da85a49d34a5290aa39f7b40de435f
 Output = 6db880daac98b078ee389a2164252ded61322d661e2b49247ea921e544675d8f17af2bf66dd40d81
 
+# Test concat of multiple info (Uses existing test data, and just splits the info into separate fields)
+KDF = KBKDF
+Ctrl.mode = mode:COUNTER
+Ctrl.digest = digest:SHA512
+Ctrl.mac = mac:HMAC
+Ctrl.use-l = use-l:0
+Ctrl.use-separator = use-separator:0
+Ctrl.r = r:32
+Ctrl.hexkey = hexkey:a9f4a2c5af839867f5db5a1e520ab3cca72a166ca60de512fd7fe7e64cf94f92cf1d8b636175f293e003275e021018c3f0ede495997a505ec9a2afeb0495be57
+Ctrl.hexinfo = hexinfo:8e9db3335779db688bcfe096668d9c3bc64e193e3529c430e68d09d5
+Ctrl.hexinfo = hexinfo:6c837dd6c0f94678f121a68ee1feea4735da85a49d34a5290aa39f7b
+Ctrl.hexinfo = hexinfo:40de435f
+Output = 6db880daac98b078ee389a2164252ded61322d661e2b49247ea921e544675d8f17af2bf66dd40d81
