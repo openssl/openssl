@@ -45,6 +45,7 @@
 #include "prov/providercommon.h"
 
 #include "internal/e_os.h"
+#include "internal/params.h"
 
 #define ossl_min(a, b) ((a) < (b)) ? (a) : (b)
 
@@ -341,17 +342,6 @@ done:
     return ret;
 }
 
-static int kbkdf_set_buffer(unsigned char **out, size_t *out_len,
-                            const OSSL_PARAM *p)
-{
-    if (p->data == NULL || p->data_size == 0)
-        return 1;
-
-    OPENSSL_clear_free(*out, *out_len);
-    *out = NULL;
-    return OSSL_PARAM_get_octet_string(p, (void **)out, 0, out_len);
-}
-
 static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     KBKDF *ctx = (KBKDF *)vctx;
@@ -391,21 +381,22 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY);
-    if (p != NULL && !kbkdf_set_buffer(&ctx->ki, &ctx->ki_len, p))
+    if (ossl_param_get1_octet_string(params, OSSL_KDF_PARAM_KEY,
+                                     &ctx->ki, &ctx->ki_len) == 0)
+            return 0;
+
+    if (ossl_param_get1_octet_string(params, OSSL_KDF_PARAM_SALT,
+                                     &ctx->label, &ctx->label_len) == 0)
+            return 0;
+
+    if (ossl_param_get1_concat_octet_string(params, OSSL_KDF_PARAM_INFO,
+                                            &ctx->context, &ctx->context_len,
+                                            0) == 0)
         return 0;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SALT);
-    if (p != NULL && !kbkdf_set_buffer(&ctx->label, &ctx->label_len, p))
-        return 0;
-
-    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_INFO);
-    if (p != NULL && !kbkdf_set_buffer(&ctx->context, &ctx->context_len, p))
-        return 0;
-
-    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SEED);
-    if (p != NULL && !kbkdf_set_buffer(&ctx->iv, &ctx->iv_len, p))
-        return 0;
+    if (ossl_param_get1_octet_string(params, OSSL_KDF_PARAM_SEED,
+                                     &ctx->iv, &ctx->iv_len) == 0)
+            return 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KBKDF_USE_L);
     if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->use_l))
