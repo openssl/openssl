@@ -151,7 +151,7 @@ OpenSSL for production use.
 
 Use the following commands to build OpenSSL:
 
-    $ @config (or @config 32  or @config 64 for explicit 32 bit or 64 bit version respectively)
+    $ perl Configure
     $ mms
     $ mms test
 
@@ -263,7 +263,7 @@ On Unix:
 
 On OpenVMS:
 
-    $ @config --prefix=PROGRAM:[INSTALLS] --openssldir=SYS$MANAGER:[OPENSSL]
+    $ perl Configure --prefix=PROGRAM:[INSTALLS] --openssldir=SYS$MANAGER:[OPENSSL]
 
 Note: if you do add options to the configuration command, please make sure
 you've read more than just this Quick Start, such as relevant `NOTES-*` files,
@@ -1259,7 +1259,19 @@ the same.
 
 #### OpenVMS
 
-    $ @config [options...]
+    $ perl Configure [options...]
+    
+    On OpenVMS explicit versions for 32/64-bit pointers can be build. To do so you 
+    should use one of the following options:
+    on AXP:
+         vms-alpha  (default option)
+         vms-alpha-p32
+         vms-alpha-p64
+    on IA64:
+         vms-ia64 (default option)
+         vms-ia64-p32
+         vms-ia64-p64
+    on X86: not yet implemented)
 
 #### Windows
 
