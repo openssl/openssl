@@ -1342,7 +1342,7 @@ directory and invoking the configuration commands from there.
     $ set default sys$login:
     $ create/dir [.tmp.openssl-build]
     $ set default [.tmp.openssl-build]
-    $ @ perl D:[PATH.TO.OPENSSL.SOURCE]Configure [options...]
+    $ perl D:[PATH.TO.OPENSSL.SOURCE]Configure [options...]
 
 #### Windows example
 
