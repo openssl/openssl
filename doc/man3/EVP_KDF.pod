@@ -227,6 +227,12 @@ Some KDF implementations require a key.
 For those KDF implementations that support it, this octet string parameter
 sets the key.
 
+=item "info" (B<OSSL_KDF_PARAM_INFO>) <octet string>
+
+This parameter sets the info, fixed info, other info or shared info value.
+You can specify this parameter multiple times, and each instance will
+be concatenated to form the final value.
+
 =item "maclen" (B<OSSL_KDF_PARAM_MAC_SIZE>) <unsigned integer>
 
 Used by implementations that use a MAC with a variable output size (KMAC).
