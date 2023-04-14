@@ -151,7 +151,7 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                                int rid, int acceptRAVerified,
                                OSSL_LIB_CTX *libctx, const char *propq);
 OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm);
-const X509_PUBKEY
+X509_PUBKEY
 *OSSL_CRMF_CERTTEMPLATE_get0_publicKey(const OSSL_CRMF_CERTTEMPLATE *tmpl);
 const X509_NAME
 *OSSL_CRMF_CERTTEMPLATE_get0_subject(const OSSL_CRMF_CERTTEMPLATE *tmpl);

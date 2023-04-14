@@ -19,7 +19,7 @@ OSSL_CRMF_MSG_get_certReqId
  #include <openssl/crmf.h>
 
  OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm);
- const X509_PUBKEY
+ X509_PUBKEY
  *OSSL_CRMF_CERTTEMPLATE_get0_publicKey(const OSSL_CRMF_CERTTEMPLATE *tmpl);
  const X509_NAME
  *OSSL_CRMF_CERTTEMPLATE_get0_subject(const OSSL_CRMF_CERTTEMPLATE *tmpl);
@@ -90,6 +90,8 @@ RFC 4211
 =head1 HISTORY
 
 The OpenSSL CRMF support was added in OpenSSL 3.0.
+
+OSSL_CRMF_CERTTEMPLATE_get0_publicKey() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 

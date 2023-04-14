@@ -541,7 +541,7 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
     return 1;
 }
 
-const X509_PUBKEY
+X509_PUBKEY
 *OSSL_CRMF_CERTTEMPLATE_get0_publicKey(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
     return tmpl != NULL ? tmpl->publicKey : NULL;
