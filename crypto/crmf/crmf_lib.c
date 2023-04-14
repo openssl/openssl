@@ -547,7 +547,6 @@ X509_PUBKEY
     return tmpl != NULL ? tmpl->publicKey : NULL;
 }
 
-/* retrieves the serialNumber of the given cert template or NULL on error */
 const ASN1_INTEGER
 *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
@@ -560,7 +559,6 @@ const X509_NAME
     return tmpl != NULL ? tmpl->subject : NULL;
 }
 
-/* retrieves the issuer name of the given cert template or NULL on error */
 const X509_NAME
 *OSSL_CRMF_CERTTEMPLATE_get0_issuer(const OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
@@ -573,14 +571,12 @@ X509_EXTENSIONS
     return tmpl != NULL ? tmpl->extensions : NULL;
 }
 
-/* retrieves the issuer name of the given CertId or NULL on error */
 const X509_NAME *OSSL_CRMF_CERTID_get0_issuer(const OSSL_CRMF_CERTID *cid)
 {
     return cid != NULL && cid->issuer->type == GEN_DIRNAME ?
         cid->issuer->d.directoryName : NULL;
 }
 
-/* retrieves the serialNumber of the given CertId or NULL on error */
 const ASN1_INTEGER *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID
                                                        *cid)
 {
@@ -588,8 +584,8 @@ const ASN1_INTEGER *OSSL_CRMF_CERTID_get0_serialNumber(const OSSL_CRMF_CERTID
 }
 
 /*-
- * fill in certificate template.
- * Any value argument that is NULL will leave the respective field unchanged.
+ * Fill in the certificate template |tmpl|.
+ * Any other NULL argument will leave the respective field unchanged.
  */
 int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
                                 EVP_PKEY *pubkey,
