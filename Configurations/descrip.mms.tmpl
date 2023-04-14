@@ -13,6 +13,8 @@
   our $sover_dirname = sprintf "%02d%02d", split(/\./, $config{shlib_version_number});
   our $osslver = sprintf "%02d%02d", split(/\./, $config{version});
 
+  our $shlibvariant = $target{shlib_variant} || "";
+
   our $sourcedir = $config{sourcedir};
   our $builddir = $config{builddir};
   sub sourcefile {
