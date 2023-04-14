@@ -225,7 +225,7 @@ long dtls1_ctrl(SSL *ssl, int cmd, long larg, void *parg)
 
     switch (cmd) {
     case DTLS_CTRL_GET_TIMEOUT:
-        if (dtls1_get_timeout(s, &t) != 0) {
+        if (dtls1_get_timeout(s, &t)) {
             *(struct timeval *)parg = ossl_time_to_timeval(t);
             ret = 1;
         }
@@ -322,7 +322,7 @@ int dtls1_is_timer_expired(SSL_CONNECTION *s)
     OSSL_TIME timeleft;
 
     /* Get time left until timeout, return false if no timer running */
-    if (dtls1_get_timeout(s, &timeleft) == 0)
+    if (dtls1_get_timeout(s, &timeleft))
         return 0;
 
     /* Return false if timer is not expired yet */
@@ -346,7 +346,6 @@ void dtls1_stop_timer(SSL_CONNECTION *s)
     s->d1->timeout_num_alerts = 0;
     s->d1->next_timeout = ossl_time_zero();
     s->d1->timeout_duration_us = 1000000;
-    /* set s->d1->next_timeout into bio interface */
     dtls1_bio_set_next_timeout(s->rbio, s->d1);
     /* Clear retransmission buffer */
     dtls1_clear_sent_buffer(s);
