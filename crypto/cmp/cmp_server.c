@@ -58,7 +58,7 @@ OSSL_CMP_SRV_CTX *OSSL_CMP_SRV_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
 
     if ((ctx->ctx = OSSL_CMP_CTX_new(libctx, propq)) == NULL)
         goto err;
-    ctx->certReqId = OSSL_CMP_CERTREQID_NONE - 1;
+    ctx->certReqId = OSSL_CMP_CERTREQID_INVALID;
 
     /* all other elements are initialized to 0 or NULL, respectively */
     return ctx;

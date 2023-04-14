@@ -855,8 +855,9 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 # define OSSL_CMP_PKIBODY_POLLREP  26
 # define OSSL_CMP_PKIBODY_TYPE_MAX OSSL_CMP_PKIBODY_POLLREP
 /* certReqId for the first - and so far only - certificate request */
-# define OSSL_CMP_CERTREQID 0
-# define OSSL_CMP_CERTREQID_NONE -1
+# define OSSL_CMP_CERTREQID         0
+# define OSSL_CMP_CERTREQID_NONE    -1
+# define OSSL_CMP_CERTREQID_INVALID -2
 /* sequence id for the first - and so far only - revocation request */
 # define OSSL_CMP_REVREQSID 0
 int ossl_cmp_msg_set0_libctx(OSSL_CMP_MSG *msg, OSSL_LIB_CTX *libctx,
