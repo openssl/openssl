@@ -120,6 +120,20 @@ static void cert_comp_info_cb(const SSL *s, int where, int ret)
     }
 }
 
+static int add_grease(SSL_CTX *ctx)
+{
+    uint16_t values[] = { 0x0101, 0x0202, 0x0303, 0x1A1A, 0x2A2A };
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(values); i++) {
+        if (!TEST_true(SSL_CTX_add_grease_to_extension(ctx,
+                                                       TLSEXT_TYPE_compress_certificate,
+                                                       values[i])))
+            return 0;
+    }
+    return 1;
+}
+
 static int test_ssl_cert_comp(int test)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
@@ -163,6 +177,9 @@ static int test_ssl_cert_comp(int test)
                                        TLS_client_method(),
                                        TLS1_3_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!add_grease(sctx) || !add_grease(cctx))
         goto end;
     if (test == 3) {
         /* coverity[deadcode] */

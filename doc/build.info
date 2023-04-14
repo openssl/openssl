@@ -2235,6 +2235,10 @@ DEPEND[html/man3/SSL_CTX_add_session.html]=man3/SSL_CTX_add_session.pod
 GENERATE[html/man3/SSL_CTX_add_session.html]=man3/SSL_CTX_add_session.pod
 DEPEND[man/man3/SSL_CTX_add_session.3]=man3/SSL_CTX_add_session.pod
 GENERATE[man/man3/SSL_CTX_add_session.3]=man3/SSL_CTX_add_session.pod
+DEPEND[html/man3/SSL_CTX_clean_grease.html]=man3/SSL_CTX_clean_grease.pod
+GENERATE[html/man3/SSL_CTX_clean_grease.html]=man3/SSL_CTX_clean_grease.pod
+DEPEND[man/man3/SSL_CTX_clean_grease.3]=man3/SSL_CTX_clean_grease.pod
+GENERATE[man/man3/SSL_CTX_clean_grease.3]=man3/SSL_CTX_clean_grease.pod
 DEPEND[html/man3/SSL_CTX_config.html]=man3/SSL_CTX_config.pod
 GENERATE[html/man3/SSL_CTX_config.html]=man3/SSL_CTX_config.pod
 DEPEND[man/man3/SSL_CTX_config.3]=man3/SSL_CTX_config.pod
@@ -3604,6 +3608,7 @@ html/man3/SSL_CONF_cmd_argv.html \
 html/man3/SSL_CTX_add1_chain_cert.html \
 html/man3/SSL_CTX_add_extra_chain_cert.html \
 html/man3/SSL_CTX_add_session.html \
+html/man3/SSL_CTX_clean_grease.html \
 html/man3/SSL_CTX_config.html \
 html/man3/SSL_CTX_ctrl.html \
 html/man3/SSL_CTX_dane_enable.html \
@@ -4276,6 +4281,7 @@ man/man3/SSL_CONF_cmd_argv.3 \
 man/man3/SSL_CTX_add1_chain_cert.3 \
 man/man3/SSL_CTX_add_extra_chain_cert.3 \
 man/man3/SSL_CTX_add_session.3 \
+man/man3/SSL_CTX_clean_grease.3 \
 man/man3/SSL_CTX_config.3 \
 man/man3/SSL_CTX_ctrl.3 \
 man/man3/SSL_CTX_dane_enable.3 \

@@ -2880,6 +2880,14 @@ int SSL_set_quic_tls_transport_params(SSL *s,
 
 int SSL_set_quic_tls_early_data_enabled(SSL *s, int enabled);
 
+/* RFC 8701 GREASE support */
+
+int SSL_CTX_add_grease_to_extension(SSL_CTX *ctx, unsigned int extension, unsigned int value);
+int SSL_CTX_add_grease_to_ciphers(SSL_CTX *ctx, unsigned int value);
+int SSL_CTX_add_grease_extension(SSL_CTX *ctx, unsigned int extension, unsigned char *value,
+                                 size_t length);
+void SSL_CTX_clean_grease(SSL_CTX *ctx);
+
 # ifdef  __cplusplus
 }
 # endif

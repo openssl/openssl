@@ -2914,3 +2914,31 @@ MSG_PROCESS_RETURN tls13_process_compressed_certificate(SSL_CONNECTION *sc,
     return ret;
 }
 #endif
+
+int tls_add_grease16_to_packet(SSL_CONNECTION *s, WPACKET *pkt, unsigned int extension)
+{
+    SSL_CTX *ctx = SSL_CONNECTION_GET_CTX(s);
+    OSSL_GREASE *g;
+
+    for (g = ctx->grease; g != NULL; g = g->next) {
+        if (g->extension == extension) {
+            if (!WPACKET_put_bytes_u16(pkt, g->value & 0xFFFF))
+                return 0;
+        }
+    }
+    return 1;
+}
+
+int tls_add_grease8_to_packet(SSL_CONNECTION *s, WPACKET *pkt, unsigned int extension)
+{
+    SSL_CTX *ctx = SSL_CONNECTION_GET_CTX(s);
+    OSSL_GREASE *g;
+
+    for (g = ctx->grease; g != NULL; g = g->next) {
+        if (g->extension == extension) {
+            if (!WPACKET_put_bytes_u8(pkt, g->value & 0xFF))
+                return 0;
+        }
+    }
+    return 1;
+}

@@ -878,6 +878,13 @@ OpenSSL 3.2
 
    *Richard Levitte*
 
+ * Add support for RFC8701 GREASE. Extra values can be added to known
+   extensions and cipher lists in the ClientHello. Additional extensions can
+   also be added. This is intended for testing unknown values in extensions
+   and cipher lists, and not for implementing custom extensions or ciphers.
+
+   *Todd Short*
+
  * The BLAKE2b hash algorithm supports a configurable output length
    by setting the "size" parameter.
 

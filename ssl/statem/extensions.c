@@ -890,6 +890,25 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
         /* SSLfatal() already called */
         return 0;
     }
+    /* Add GREASE extensions */
+    if ((context & (SSL_EXT_CLIENT_HELLO
+                    | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST
+                    | SSL_EXT_TLS1_2_SERVER_HELLO
+                    | SSL_EXT_TLS1_3_SERVER_HELLO
+                    | SSL_EXT_TLS1_3_NEW_SESSION_TICKET)) != 0) {
+        SSL_CTX *ctx = SSL_CONNECTION_GET_CTX(s);
+        OSSL_GREASE *g;
+
+        for (g = ctx->grease; g != NULL; g = g->next) {
+            if (g->new_extension) {
+                if (!WPACKET_put_bytes_u16(pkt, g->extension)
+                        || !WPACKET_sub_memcpy_u16(pkt, g->data, g->length)) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+            }
+        }
+    }
 
     for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
         EXT_RETURN (*construct)(SSL_CONNECTION *s, WPACKET *pkt,
@@ -1813,7 +1832,8 @@ static EXT_RETURN tls_construct_compress_certificate(SSL_CONNECTION *sc, WPACKET
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_compress_certificate)
             || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_start_sub_packet_u8(pkt))
+            || !WPACKET_start_sub_packet_u8(pkt)
+            || !tls_add_grease16_to_packet(sc, pkt, TLSEXT_TYPE_compress_certificate))
         goto err;
 
     for (i = 0; sc->cert_comp_prefs[i] != TLSEXT_comp_cert_none; i++) {
