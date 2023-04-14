@@ -1189,6 +1189,8 @@ struct ssl_ctx_st {
     size_t client_cert_type_len;
     unsigned char *server_cert_type;
     size_t server_cert_type_len;
+
+    struct ossl_grease_st *grease;
 };
 
 typedef struct cert_pkey_st CERT_PKEY;
@@ -3062,5 +3064,18 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
 #define OSSL_QUIC_PERMITTED_OPTIONS             \
     (OSSL_QUIC_PERMITTED_OPTIONS_CONN |         \
      OSSL_QUIC_PERMITTED_OPTIONS_STREAM)
+
+/* EXTENSION < 0xFFFF is the actual extension value */
+#define OSSL_GREASE_CIPHER          0x10001
+
+struct ossl_grease_st {
+    struct ossl_grease_st *next;
+    unsigned int extension;
+    int new_extension;
+    unsigned int value;
+    unsigned char *data;
+    size_t length;
+};
+typedef struct ossl_grease_st OSSL_GREASE;
 
 #endif
