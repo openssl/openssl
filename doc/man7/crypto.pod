@@ -270,8 +270,8 @@ The following methods are used internally when performing operations:
 
 =back
 
-See L<OSSL_PROVIDER-default(7)>, <OSSL_PROVIDER-fips(7)> and
-<OSSL_PROVIDER-legacy(7)>for a list of algorithm names that
+See L<OSSL_PROVIDER-default(7)>, L<OSSL_PROVIDER-FIPS(7)> and
+L<OSSL_PROVIDER-legacy(7)> for a list of algorithm names that
 can be fetched.
 
 =head1 FETCHING EXAMPLES
