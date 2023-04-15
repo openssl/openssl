@@ -322,7 +322,7 @@ int dtls1_is_timer_expired(SSL_CONNECTION *s)
     OSSL_TIME timeleft;
 
     /* Get time left until timeout, return false if no timer running */
-    if (dtls1_get_timeout(s, &timeleft))
+    if (!dtls1_get_timeout(s, &timeleft))
         return 0;
 
     /* Return false if timer is not expired yet */
