@@ -26,7 +26,7 @@ int ossl_param_get1_octet_string(const OSSL_PARAM *params, const char *name,
  * *out will point to an allocated buffer on successful return.
  * Any existing allocation in *out is cleared and freed.
  *
- * Passing 0 for maxsize means unlimited size.
+ * Passing 0 for maxsize means unlimited size output.
  *
  * Returns 1 on success, 0 on failure and -1 if there are no matching params.
  *
@@ -34,5 +34,5 @@ int ossl_param_get1_octet_string(const OSSL_PARAM *params, const char *name,
  * doesn't return success.
  */
 int ossl_param_get1_concat_octet_string(const OSSL_PARAM *params, const char *name,
-                                        unsigned char **out, size_t *size,
+                                        unsigned char **out, size_t *out_len,
                                         size_t maxsize);

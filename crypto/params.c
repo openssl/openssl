@@ -1513,13 +1513,6 @@ int ossl_param_get1_octet_string(const OSSL_PARAM *params, const char *name,
     return 1;
 }
 
-/*
- * Use WPACKET to concat one or more fields into an output buffer of size *outlen.
- * If out is NULL then outlen is used to return the required buffer size.
- * p must point to a matching parameter on entry.
- *
- * Returns 1 on success, 0 on failure.
- */
 static int setbuf_fromparams(const OSSL_PARAM *p, const char *name,
                              unsigned char *out, size_t *outlen)
 {
@@ -1551,21 +1544,9 @@ err:
     return ret;
 }
 
-/*
- * Concatenate all of the matching params together.
- * *out will point to an allocated buffer on successful return.
- * Any existing allocation in *out is cleared and freed.
- *
- * Passing 0 for maxsize means unlimited size.
- *
- * Returns 1 on success, 0 on failure and -1 if there are no matching params.
- *
- * *out and *out_len are guaranteed to be untouched if this function
- * doesn't return success.
- */
 int ossl_param_get1_concat_octet_string(const OSSL_PARAM *params, const char *name,
                                         unsigned char **out,
-                                        size_t *out_len, size_t max_len)
+                                        size_t *out_len, size_t maxsize)
 {
     const OSSL_PARAM *p = OSSL_PARAM_locate_const(params, name);
     unsigned char *res;
@@ -1579,7 +1560,7 @@ int ossl_param_get1_concat_octet_string(const OSSL_PARAM *params, const char *na
         return 0;
 
     /* Check that it's not oversized */
-    if (max_len > 0 && sz > max_len)
+    if (maxsize > 0 && sz > maxsize)
         return 0;
 
     /* Special case zero length */
