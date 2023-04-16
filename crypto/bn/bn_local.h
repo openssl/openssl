@@ -364,24 +364,6 @@ struct bn_gencb_st {
 # define BN_MUL_LOW_RECURSIVE_SIZE_NORMAL        (32)/* 32 */
 # define BN_MONT_CTX_SET_SIZE_WORD               (64)/* 32 */
 
-/*
- * 2011-02-22 SMS. In various places, a size_t variable or a type cast to
- * size_t was used to perform integer-only operations on pointers.  This
- * failed on VMS with 64-bit pointers (CC /POINTER_SIZE = 64) because size_t
- * is still only 32 bits.  What's needed in these cases is an integer type
- * with the same size as a pointer, which size_t is not certain to be. The
- * only fix here is VMS-specific.
- */
-# if defined(OPENSSL_SYS_VMS)
-#  if __INITIAL_POINTER_SIZE == 64
-#   define PTR_SIZE_INT long long
-#  else                         /* __INITIAL_POINTER_SIZE == 64 */
-#   define PTR_SIZE_INT int
-#  endif                        /* __INITIAL_POINTER_SIZE == 64 [else] */
-# elif !defined(PTR_SIZE_INT)   /* defined(OPENSSL_SYS_VMS) */
-#  define PTR_SIZE_INT size_t
-# endif                         /* defined(OPENSSL_SYS_VMS) [else] */
-
 # if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) && !defined(PEDANTIC)
 /*
  * BN_UMULT_HIGH section.
