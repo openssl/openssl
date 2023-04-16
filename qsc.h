@@ -18,10 +18,12 @@
     { 0x2F3C, "p384_kyber768" }, \
     { 0x023D, "kyber1024" }, \
     { 0x2F3D, "p521_kyber1024" }, \
-    { 0x0238, "bikel1" }, \
-    { 0x2F38, "p256_bikel1" }, \
-    { 0x023B, "bikel3" }, \
-    { 0x2F3B, "p384_bikel3" }, \
+    { 0x0241, "bikel1" }, \
+    { 0x2F41, "p256_bikel1" }, \
+    { 0x0242, "bikel3" }, \
+    { 0x2F42, "p384_bikel3" }, \
+    { 0x0243, "bikel5" }, \
+    { 0x2F43, "p521_bikel5" }, \
     { 0x023E, "kyber90s512" }, \
     { 0x2F3E, "p256_kyber90s512" }, \
     { 0x023F, "kyber90s768" }, \
@@ -52,11 +54,11 @@
     { 0xfeab, "p384_dilithium3_aes" }, \
     { 0xfeac, "dilithium5_aes" }, \
     { 0xfead, "p521_dilithium5_aes" }, \
-    { 0xfe0b, "falcon512" }, \
-    { 0xfe0c, "p256_falcon512" }, \
-    { 0xfe0d, "rsa3072_falcon512" }, \
-    { 0xfe0e, "falcon1024" }, \
-    { 0xfe0f, "p521_falcon1024" }, \
+    { 0xfeae, "falcon512" }, \
+    { 0xfeaf, "p256_falcon512" }, \
+    { 0xfeb0, "rsa3072_falcon512" }, \
+    { 0xfeb1, "falcon1024" }, \
+    { 0xfeb2, "p521_falcon1024" }, \
     { 0xfe42, "sphincsharaka128frobust" }, \
     { 0xfe43, "p256_sphincsharaka128frobust" }, \
     { 0xfe44, "rsa3072_sphincsharaka128frobust" }, \
@@ -90,11 +92,11 @@
 	oid_add_from_string("p384_dilithium3_aes", "1.3.9999.2.11.3"); \
 	oid_add_from_string("dilithium5_aes", "1.3.6.1.4.1.2.267.11.8.7"); \
 	oid_add_from_string("p521_dilithium5_aes", "1.3.9999.2.11.4"); \
-	oid_add_from_string("falcon512", "1.3.9999.3.1"); \
-	oid_add_from_string("p256_falcon512", "1.3.9999.3.2"); \
-	oid_add_from_string("rsa3072_falcon512", "1.3.9999.3.3"); \
-	oid_add_from_string("falcon1024", "1.3.9999.3.4"); \
-	oid_add_from_string("p521_falcon1024", "1.3.9999.3.5"); \
+	oid_add_from_string("falcon512", "1.3.9999.3.6"); \
+	oid_add_from_string("p256_falcon512", "1.3.9999.3.7"); \
+	oid_add_from_string("rsa3072_falcon512", "1.3.9999.3.8"); \
+	oid_add_from_string("falcon1024", "1.3.9999.3.9"); \
+	oid_add_from_string("p521_falcon1024", "1.3.9999.3.10"); \
 	oid_add_from_string("sphincsharaka128frobust", "1.3.9999.6.1.1"); \
 	oid_add_from_string("p256_sphincsharaka128frobust", "1.3.9999.6.1.2"); \
 	oid_add_from_string("rsa3072_sphincsharaka128frobust", "1.3.9999.6.1.3"); \

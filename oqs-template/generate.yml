@@ -1,5 +1,5 @@
-# N.B: For interoperability, NIDS must match the curve IDs used in
-# https://docs.google.com/spreadsheets/d/12YarzaNv3XQNLnvDsWLlRKwtZFhRrDdWf36YlzwrPeg/edit#gid=0
+# This is the master document for ID interoperability for KEM IDs, p-hybrid KEM IDs, SIG (O)IDs
+# Next free plain KEM ID: 0x0244, p-hybrid: 0x2F44, X-hybrid: 0x2FB0
 kems:
   -
     family: 'FrodoKEM'
@@ -7,24 +7,40 @@ kems:
     nid: '0x0200'
     nid_hybrid: '0x2F00'
     oqs_alg: 'OQS_KEM_alg_frodokem_640_aes'
+    extra_nids:
+      current:
+        - hybrid_group: "x25519"
+          nid: '0x2F80'
   -
     family: 'FrodoKEM'
     name_group: 'frodo640shake'
     nid: '0x0201'
     nid_hybrid: '0x2F01'
     oqs_alg: 'OQS_KEM_alg_frodokem_640_shake'
+    extra_nids:
+      current:
+        - hybrid_group: "x25519"
+          nid: '0x2F81'
   -
     family: 'FrodoKEM'
     name_group: 'frodo976aes'
     nid: '0x0202'
     nid_hybrid: '0x2F02'
     oqs_alg: 'OQS_KEM_alg_frodokem_976_aes'
+    extra_nids:
+      current:
+        - hybrid_group: "x448"
+          nid: '0x2F82'
   -
     family: 'FrodoKEM'
     name_group: 'frodo976shake'
     nid: '0x0203'
     nid_hybrid: '0x2F03'
     oqs_alg: 'OQS_KEM_alg_frodokem_976_shake'
+    extra_nids:
+      current:
+        - hybrid_group: "x448"
+          nid: '0x2F83'
   -
     family: 'FrodoKEM'
     name_group: 'frodo1344aes'
@@ -93,6 +109,9 @@ kems:
     nid: '0x023C'
     nid_hybrid: '0x2F3C'
     extra_nids:
+      current:
+        - hybrid_group: "x448"
+          nid: '0x2F90'
       old:
         - implementation_version: NIST Round 2 submission
           nist-round: 2
@@ -152,28 +171,61 @@ kems:
   -
     family: 'BIKE'
     name_group: 'bikel1'
-    implementation_version: '4.1'
-    nid: '0x0238'
-    nid_hybrid: '0x2F38'
+    implementation_version: '5.1'
+    nid: '0x0241'
+    nid_hybrid: '0x2F41'
     oqs_alg: 'OQS_KEM_alg_bike_l1'
     extra_nids:
       current:
         - hybrid_group: "x25519"
+          nid: '0x2FAE'
+      old:
+        - implementation_version: NIST Round 3 submission
+          nist-round: 3
+          nid: '0x0238'
+        - implementation_version: NIST Round 3 submission
+          nist-round: 3
+          hybrid_group: x25519
           nid: '0x2F37'
-          implementation_version: '4.1'
+        - implementation_version: NIST Round 3 submission
+          nist-round: 3
+          hybrid_group: secp256_r1
+          nid: '0x2F38'
   -
     family: 'BIKE'
     name_group: 'bikel3'
-    implementation_version: '4.1'
-    nid: '0x023B'
-    nid_hybrid: '0x2F3B'
+    implementation_version: '5.1'
+    nid: '0x0242'
+    nid_hybrid: '0x2F42'
     oqs_alg: 'OQS_KEM_alg_bike_l3'
+    extra_nids:
+      current:
+        - hybrid_group: "x448"
+          nid: '0x2FAF'
+      old:
+        - implementation_version: NIST Round 3 submission
+          nist-round: 3
+          nid: '0x023B'
+        - implementation_version: NIST Round 3 submission
+          nist-round: 3
+          hybrid_group: secp384_r1
+          nid: '0x2F3B'
+  -
+    family: 'BIKE'
+    name_group: 'bikel5'
+    implementation_version: '5.1'
+    nid: '0x0243'
+    nid_hybrid: '0x2F43'
+    oqs_alg: 'OQS_KEM_alg_bike_l5'
   -
     family: 'CRYSTALS-Kyber'
     name_group: 'kyber90s512'
     nid: '0x023E'
     nid_hybrid: '0x2F3E'
     extra_nids:
+      current:
+        - hybrid_group: "x25519"
+          nid: '0x2FA9'
       old:
         - implementation_version: NIST Round 2 submission
           nist-round: 2
@@ -189,6 +241,9 @@ kems:
     nid: '0x023F'
     nid_hybrid: '0x2F3F'
     extra_nids:
+      current:
+        - hybrid_group: "x448"
+          nid: '0x2FAA'
       old:
         - implementation_version: NIST Round 2 submission
           nist-round: 2
@@ -219,12 +274,20 @@ kems:
     nid: '0x022C'
     nid_hybrid: '0x2F2C'
     oqs_alg: 'OQS_KEM_alg_hqc_128'
+    extra_nids:
+      current:
+        - hybrid_group: "x25519"
+          nid: '0x2FAC'
   -
     family: 'HQC'
     name_group: 'hqc192'
     nid: '0x022D'
     nid_hybrid: '0x2F2D'
     oqs_alg: 'OQS_KEM_alg_hqc_192'
+    extra_nids:
+      current:
+        - hybrid_group: "x448"
+          nid: '0x2FAD'
   -
     family: 'HQC'
     name_group: 'hqc256'
@@ -236,8 +299,7 @@ kem_nid_end: '0x0250'
 kem_nid_hybrid_end: '0x2FFF'
 # need to edit ssl_local.h macros IS_OQS_KEM_CURVEID and IS_OQS_KEM_HYBRID_CURVEID with the above _end values
 
-# N.B: For interoperability, code-points and OIDs must match those used in
-# https://docs.google.com/spreadsheets/d/12YarzaNv3XQNLnvDsWLlRKwtZFhRrDdWf36YlzwrPeg/edit#gid=0
+# Next free signature ID: 0xfeb3
 sigs:
   # -
     # iso (1)
@@ -285,6 +347,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_dilithium_2'
         oid: '1.3.6.1.4.1.2.267.7.4.4'
         code_point: '0xfea0'
+        supported_encodings: ['draft-uni-qsckeys-dilithium-00/sk-pk']
         enable: true
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -300,6 +363,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_dilithium_3'
         oid: '1.3.6.1.4.1.2.267.7.6.5'
         code_point: '0xfea3'
+        supported_encodings: ['draft-uni-qsckeys-dilithium-00/sk-pk']
         enable: true
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -311,6 +375,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_dilithium_5'
         oid: '1.3.6.1.4.1.2.267.7.8.7'
         code_point: '0xfea5'
+        supported_encodings: ['draft-uni-qsckeys-dilithium-00/sk-pk']
         enable: true
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
@@ -322,6 +387,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_dilithium_2_aes'
         oid: '1.3.6.1.4.1.2.267.11.4.4'
         code_point: '0xfea7'
+        supported_encodings: ['draft-uni-qsckeys-dilithium-00/sk-pk']
         enable: true
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -337,6 +403,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_dilithium_3_aes'
         oid: '1.3.6.1.4.1.2.267.11.6.5'
         code_point: '0xfeaa'
+        supported_encodings: ['draft-uni-qsckeys-dilithium-00/sk-pk']
         enable: true
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -348,6 +415,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_dilithium_5_aes'
         oid: '1.3.6.1.4.1.2.267.11.8.7'
         code_point: '0xfeac'
+        supported_encodings: ['draft-uni-qsckeys-dilithium-00/sk-pk']
         enable: true
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
@@ -364,28 +432,54 @@ sigs:
         name: 'falcon512'
         pretty_name: 'Falcon-512'
         oqs_meth: 'OQS_SIG_alg_falcon_512'
-        oid: '1.3.9999.3.1'
-        code_point: '0xfe0b'
+        oid: '1.3.9999.3.6'
+        code_point: '0xfeae'
+        supported_encodings: ['draft-uni-qsckeys-falcon-00/sk-pk']
         enable: true
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
-                    'oid': '1.3.9999.3.2',
-                    'code_point': '0xfe0c'},
+                    'oid': '1.3.9999.3.7',
+                    'code_point': '0xfeaf'},
                    {'name': 'rsa3072',
                     'pretty_name': 'RSA3072',
-                    'oid': '1.3.9999.3.3',
-                    'code_point': '0xfe0d'}]
+                    'oid': '1.3.9999.3.8',
+                    'code_point': '0xfeb0'}]
+        extra_nids:
+          old:
+            - implementation_version: NIST Round 3 submission
+              nist-round: 3
+              oid: '1.3.9999.3.1'
+              code_point: '0xfe0b'
+              mix_with: [{'name': 'p256',
+                          'pretty_name': 'ECDSA p256',
+                          'oid': '1.3.9999.3.2',
+                          'code_point': '0xfe0c'},
+                         {'name': 'rsa3072',
+                          'pretty_name': 'RSA3072',
+                          'oid': '1.3.9999.3.3',
+                          'code_point': '0xfe0d'}]
       -
         name: 'falcon1024'
         pretty_name: 'Falcon-1024'
         oqs_meth: 'OQS_SIG_alg_falcon_1024'
-        oid: '1.3.9999.3.4'
-        code_point: '0xfe0e'
+        oid: '1.3.9999.3.9'
+        code_point: '0xfeb1'
+        supported_encodings: ['draft-uni-qsckeys-falcon-00/sk-pk']
         enable: true
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
-                    'oid': '1.3.9999.3.5',
-                    'code_point': '0xfe0f'}]
+                    'oid': '1.3.9999.3.10',
+                    'code_point': '0xfeb2'}]
+        extra_nids:
+          old:
+            - implementation_version: NIST Round 3 submission
+              nist-round: 3
+              oid: '1.3.9999.3.4'
+              code_point: '0xfe0e'
+              mix_with: [{'name': 'p521',
+                          'pretty_name': 'ECDSA p521',
+                          'oid': '1.3.9999.3.5',
+                          'code_point': '0xfe0f'}]
   -
     family: 'SPHINCS-Haraka'
     variants:
@@ -395,6 +489,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_128f_robust'
         oid: '1.3.9999.6.1.1'
         code_point: '0xfe42'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: true
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -410,6 +505,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_128f_simple'
         oid: '1.3.9999.6.1.4'
         code_point: '0xfe45'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: true
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -425,6 +521,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_128s_robust'
         oid: '1.3.9999.6.1.7'
         code_point: '0xfe48'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -440,6 +537,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_128s_simple'
         oid: '1.3.9999.6.1.10'
         code_point: '0xfe4b'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -455,6 +553,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_192f_robust'
         oid: '1.3.9999.6.2.1'
         code_point: '0xfe4e'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -466,6 +565,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_192f_simple'
         oid: '1.3.9999.6.2.3'
         code_point: '0xfe50'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -477,6 +577,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_192s_robust'
         oid: '1.3.9999.6.2.5'
         code_point: '0xfe52'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -488,6 +589,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_192s_simple'
         oid: '1.3.9999.6.2.7'
         code_point: '0xfe54'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -499,6 +601,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_256f_robust'
         oid: '1.3.9999.6.3.1'
         code_point: '0xfe56'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
@@ -510,6 +613,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_256f_simple'
         oid: '1.3.9999.6.3.3'
         code_point: '0xfe58'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
@@ -521,6 +625,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_256s_robust'
         oid: '1.3.9999.6.3.5'
         code_point: '0xfe5a'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
@@ -532,6 +637,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_haraka_256s_simple'
         oid: '1.3.9999.6.3.7'
         code_point: '0xfe5c'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
@@ -546,6 +652,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_128f_robust'
         oid: '1.3.9999.6.4.1'
         code_point: '0xfe5e'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: true
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -561,6 +668,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_128f_simple'
         oid: '1.3.9999.6.4.4'
         code_point: '0xfe61'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -576,6 +684,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_128s_robust'
         oid: '1.3.9999.6.4.7'
         code_point: '0xfe64'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -591,6 +700,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_128s_simple'
         oid: '1.3.9999.6.4.10'
         code_point: '0xfe67'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: true
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -606,6 +716,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_192f_robust'
         oid: '1.3.9999.6.5.1'
         code_point: '0xfe6a'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -617,6 +728,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_192f_simple'
         oid: '1.3.9999.6.5.3'
         code_point: '0xfe6c'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -628,6 +740,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_192s_robust'
         oid: '1.3.9999.6.5.5'
         code_point: '0xfe6e'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -639,6 +752,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_192s_simple'
         oid: '1.3.9999.6.5.7'
         code_point: '0xfe70'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -650,6 +764,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_256f_robust'
         oid: '1.3.9999.6.6.1'
         code_point: '0xfe72'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
@@ -661,6 +776,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_256f_simple'
         oid: '1.3.9999.6.6.3'
         code_point: '0xfe74'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
@@ -672,6 +788,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_256s_robust'
         oid: '1.3.9999.6.6.5'
         code_point: '0xfe76'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
@@ -683,6 +800,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_sha256_256s_simple'
         oid: '1.3.9999.6.6.7'
         code_point: '0xfe78'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
@@ -697,6 +815,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_128f_robust'
         oid: '1.3.9999.6.7.1'
         code_point: '0xfe7a'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -712,6 +831,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_128f_simple'
         oid: '1.3.9999.6.7.4'
         code_point: '0xfe7d'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: true
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -727,6 +847,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_128s_robust'
         oid: '1.3.9999.6.7.7'
         code_point: '0xfe80'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -742,6 +863,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_128s_simple'
         oid: '1.3.9999.6.7.10'
         code_point: '0xfe83'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
@@ -757,6 +879,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_192f_robust'
         oid: '1.3.9999.6.8.1'
         code_point: '0xfe86'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -768,6 +891,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_192f_simple'
         oid: '1.3.9999.6.8.3'
         code_point: '0xfe88'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -779,6 +903,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_192s_robust'
         oid: '1.3.9999.6.8.5'
         code_point: '0xfe8a'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -790,6 +915,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_192s_simple'
         oid: '1.3.9999.6.8.7'
         code_point: '0xfe8c'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
@@ -801,6 +927,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_256f_robust'
         oid: '1.3.9999.6.9.1'
         code_point: '0xfe8e'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
@@ -812,6 +939,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_256f_simple'
         oid: '1.3.9999.6.9.3'
         code_point: '0xfe90'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
@@ -823,6 +951,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_256s_robust'
         oid: '1.3.9999.6.9.5'
         code_point: '0xfe92'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',
@@ -834,6 +963,7 @@ sigs:
         oqs_meth: 'OQS_SIG_alg_sphincs_shake256_256s_simple'
         oid: '1.3.9999.6.9.7'
         code_point: '0xfe94'
+        supported_encodings: ['draft-uni-qsckeys-sphincsplus-00/sk-pk']
         enable: false
         mix_with: [{'name': 'p521',
                     'pretty_name': 'ECDSA p521',

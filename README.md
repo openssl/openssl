@@ -75,7 +75,7 @@ If an algorithm is provided by liboqs but is not listed below, it might still be
 The following quantum-safe algorithms from liboqs are supported (assuming they have been enabled in liboqs):
 
 <!--- OQS_TEMPLATE_FRAGMENT_LIST_KEXS_START -->
-- **BIKE**: `bikel1`, `bikel3`
+- **BIKE**: `bikel1`, `bikel3`, `bikel5`
 - **CRYSTALS-Kyber**: `kyber512`, `kyber768`, `kyber1024`, `kyber90s512`, `kyber90s768`, `kyber90s1024`
 - **FrodoKEM**: `frodo640aes`, `frodo640shake`, `frodo976aes`, `frodo976shake`, `frodo1344aes`, `frodo1344shake`
 - **HQC**: `hqc128`, `hqc192`, `hqc256`†

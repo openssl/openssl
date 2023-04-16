@@ -519,8 +519,9 @@
   (nid == NID_kyber512 ? 0x023A : \
   (nid == NID_kyber768 ? 0x023C : \
   (nid == NID_kyber1024 ? 0x023D : \
-  (nid == NID_bikel1 ? 0x0238 : \
-  (nid == NID_bikel3 ? 0x023B : \
+  (nid == NID_bikel1 ? 0x0241 : \
+  (nid == NID_bikel3 ? 0x0242 : \
+  (nid == NID_bikel5 ? 0x0243 : \
   (nid == NID_kyber90s512 ? 0x023E : \
   (nid == NID_kyber90s768 ? 0x023F : \
   (nid == NID_kyber90s1024 ? 0x0240 : \
@@ -528,7 +529,7 @@
   (nid == NID_hqc192 ? 0x022D : \
   (nid == NID_hqc256 ? 0x022E : \
   0 \
-  )))))))))))))))))
+  ))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_CURVEID_END
 
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_START
@@ -542,8 +543,9 @@
     (nid == NID_p256_kyber512 ? 0x2F3A : \
     (nid == NID_p384_kyber768 ? 0x2F3C : \
     (nid == NID_p521_kyber1024 ? 0x2F3D : \
-    (nid == NID_p256_bikel1 ? 0x2F38 : \
-    (nid == NID_p384_bikel3 ? 0x2F3B : \
+    (nid == NID_p256_bikel1 ? 0x2F41 : \
+    (nid == NID_p384_bikel3 ? 0x2F42 : \
+    (nid == NID_p521_bikel5 ? 0x2F43 : \
     (nid == NID_p256_kyber90s512 ? 0x2F3E : \
     (nid == NID_p384_kyber90s768 ? 0x2F3F : \
     (nid == NID_p521_kyber90s1024 ? 0x2F40 : \
@@ -551,7 +553,7 @@
     (nid == NID_p384_hqc192 ? 0x2F2D : \
     (nid == NID_p521_hqc256 ? 0x2F2E : \
   0 \
-  )))))))))))))))))
+  ))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_END
 
   /* Returns the non-hybrid OQS KEM NID for a PQ or hybrid curve ID */
@@ -566,8 +568,9 @@
   (curveID == 0x023A || curveID == 0x2F3A ? NID_kyber512 : \
   (curveID == 0x023C || curveID == 0x2F3C ? NID_kyber768 : \
   (curveID == 0x023D || curveID == 0x2F3D ? NID_kyber1024 : \
-  (curveID == 0x0238 || curveID == 0x2F38 ? NID_bikel1 : \
-  (curveID == 0x023B || curveID == 0x2F3B ? NID_bikel3 : \
+  (curveID == 0x0241 || curveID == 0x2F41 ? NID_bikel1 : \
+  (curveID == 0x0242 || curveID == 0x2F42 ? NID_bikel3 : \
+  (curveID == 0x0243 || curveID == 0x2F43 ? NID_bikel5 : \
   (curveID == 0x023E || curveID == 0x2F3E ? NID_kyber90s512 : \
   (curveID == 0x023F || curveID == 0x2F3F ? NID_kyber90s768 : \
   (curveID == 0x0240 || curveID == 0x2F40 ? NID_kyber90s1024 : \
@@ -575,7 +578,7 @@
   (curveID == 0x022D || curveID == 0x2F2D ? NID_hqc192 : \
   (curveID == 0x022E || curveID == 0x2F2E ? NID_hqc256 : \
   0 \
-  )))))))))))))))))
+  ))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_NID_END
 
   /* Returns the hybrid OQS KEM NID for a hybrid curve ID */
@@ -590,8 +593,9 @@
     (curveID == 0x2F3A ? NID_p256_kyber512 : \
     (curveID == 0x2F3C ? NID_p384_kyber768 : \
     (curveID == 0x2F3D ? NID_p521_kyber1024 : \
-    (curveID == 0x2F38 ? NID_p256_bikel1 : \
-    (curveID == 0x2F3B ? NID_p384_bikel3 : \
+    (curveID == 0x2F41 ? NID_p256_bikel1 : \
+    (curveID == 0x2F42 ? NID_p384_bikel3 : \
+    (curveID == 0x2F43 ? NID_p521_bikel5 : \
     (curveID == 0x2F3E ? NID_p256_kyber90s512 : \
     (curveID == 0x2F3F ? NID_p384_kyber90s768 : \
     (curveID == 0x2F40 ? NID_p521_kyber90s1024 : \
@@ -599,7 +603,7 @@
     (curveID == 0x2F2D ? NID_p384_hqc192 : \
     (curveID == 0x2F2E ? NID_p521_hqc256 : \
   0 \
-  )))))))))))))))))
+  ))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_HYBRID_KEM_NID_END
 
 /* Returns true if the curve ID is for an OQS KEM */
@@ -624,6 +628,7 @@
   (nid == NID_kyber1024 ? OQS_KEM_alg_kyber_1024 : \
   (nid == NID_bikel1 ? OQS_KEM_alg_bike_l1 : \
   (nid == NID_bikel3 ? OQS_KEM_alg_bike_l3 : \
+  (nid == NID_bikel5 ? OQS_KEM_alg_bike_l5 : \
   (nid == NID_kyber90s512 ? OQS_KEM_alg_kyber_512_90s : \
   (nid == NID_kyber90s768 ? OQS_KEM_alg_kyber_768_90s : \
   (nid == NID_kyber90s1024 ? OQS_KEM_alg_kyber_1024_90s : \
@@ -631,7 +636,7 @@
   (nid == NID_hqc192 ? OQS_KEM_alg_hqc_192 : \
   (nid == NID_hqc256 ? OQS_KEM_alg_hqc_256 : \
   0 \
-  )))))))))))))))))
+  ))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_ALG_NAME_END
 
 /* Returns the classic curve ID for a given hybrid curve */
@@ -647,8 +652,9 @@
   (cid == 0x2F3A ?23: \
   (cid == 0x2F3C ?24: \
   (cid == 0x2F3D ?25: \
-  (cid == 0x2F38 ?23: \
-  (cid == 0x2F3B ?24: \
+  (cid == 0x2F41 ?23: \
+  (cid == 0x2F42 ?24: \
+  (cid == 0x2F43 ?25: \
   (cid == 0x2F3E ?23: \
   (cid == 0x2F3F ?24: \
   (cid == 0x2F40 ?25: \
@@ -656,7 +662,7 @@
   (cid == 0x2F2D ?24: \
   (cid == 0x2F2E ?25: \
   23 \
-  ))))))))))))))))))
+  )))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_MAP_HYBRID_END
 
 /* Returns the classical nid for an hybrid alg */
@@ -2335,11 +2341,11 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_p384_dilithium3_aes 0xfeab
 #define TLSEXT_SIGALG_dilithium5_aes 0xfeac
 #define TLSEXT_SIGALG_p521_dilithium5_aes 0xfead
-#define TLSEXT_SIGALG_falcon512 0xfe0b
-#define TLSEXT_SIGALG_p256_falcon512 0xfe0c
-#define TLSEXT_SIGALG_rsa3072_falcon512 0xfe0d
-#define TLSEXT_SIGALG_falcon1024 0xfe0e
-#define TLSEXT_SIGALG_p521_falcon1024 0xfe0f
+#define TLSEXT_SIGALG_falcon512 0xfeae
+#define TLSEXT_SIGALG_p256_falcon512 0xfeaf
+#define TLSEXT_SIGALG_rsa3072_falcon512 0xfeb0
+#define TLSEXT_SIGALG_falcon1024 0xfeb1
+#define TLSEXT_SIGALG_p521_falcon1024 0xfeb2
 #define TLSEXT_SIGALG_sphincsharaka128frobust 0xfe42
 #define TLSEXT_SIGALG_p256_sphincsharaka128frobust 0xfe43
 #define TLSEXT_SIGALG_rsa3072_sphincsharaka128frobust 0xfe44

@@ -14,11 +14,11 @@
 | dilithium3_aes **hybrid with** p384               | 3.1                      |            3 |                    3 | 0xfeab       | 1.3.9999.2.11.3          |
 | dilithium5_aes                                    | 3.1                      |            3 |                    5 | 0xfeac       | 1.3.6.1.4.1.2.267.11.8.7 |
 | dilithium5_aes **hybrid with** p521               | 3.1                      |            3 |                    5 | 0xfead       | 1.3.9999.2.11.4          |
-| falcon512                                         | v1.2                     |            3 |                    1 | 0xfe0b       | 1.3.9999.3.1             |
-| falcon512 **hybrid with** p256                    | v1.2                     |            3 |                    1 | 0xfe0c       | 1.3.9999.3.2             |
-| falcon512 **hybrid with** rsa3072                 | v1.2                     |            3 |                    1 | 0xfe0d       | 1.3.9999.3.3             |
-| falcon1024                                        | v1.2                     |            3 |                    5 | 0xfe0e       | 1.3.9999.3.4             |
-| falcon1024 **hybrid with** p521                   | v1.2                     |            3 |                    5 | 0xfe0f       | 1.3.9999.3.5             |
+| falcon512                                         | 20211101                 |            3 |                    1 | 0xfeae       | 1.3.9999.3.6             |
+| falcon512 **hybrid with** p256                    | 20211101                 |            3 |                    1 | 0xfeaf       | 1.3.9999.3.7             |
+| falcon512 **hybrid with** rsa3072                 | 20211101                 |            3 |                    1 | 0xfeb0       | 1.3.9999.3.8             |
+| falcon1024                                        | 20211101                 |            3 |                    5 | 0xfeb1       | 1.3.9999.3.9             |
+| falcon1024 **hybrid with** p521                   | 20211101                 |            3 |                    5 | 0xfeb2       | 1.3.9999.3.10            |
 | sphincsharaka128frobust                           | NIST Round 3 submission  |            3 |                    1 | 0xfe42       | 1.3.9999.6.1.1           |
 | sphincsharaka128frobust **hybrid with** p256      | NIST Round 3 submission  |            3 |                    1 | 0xfe43       | 1.3.9999.6.1.2           |
 | sphincsharaka128frobust **hybrid with** rsa3072   | NIST Round 3 submission  |            3 |                    1 | 0xfe44       | 1.3.9999.6.1.3           |

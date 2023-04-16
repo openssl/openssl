@@ -196,8 +196,9 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_kyber512, 128, TLS_CURVE_CUSTOM}, /* kyber512 (0x023A) */
     {NID_kyber768, 192, TLS_CURVE_CUSTOM}, /* kyber768 (0x023C) */
     {NID_kyber1024, 256, TLS_CURVE_CUSTOM}, /* kyber1024 (0x023D) */
-    {NID_bikel1, 128, TLS_CURVE_CUSTOM}, /* bikel1 (0x0238) */
-    {NID_bikel3, 192, TLS_CURVE_CUSTOM}, /* bikel3 (0x023B) */
+    {NID_bikel1, 128, TLS_CURVE_CUSTOM}, /* bikel1 (0x0241) */
+    {NID_bikel3, 192, TLS_CURVE_CUSTOM}, /* bikel3 (0x0242) */
+    {NID_bikel5, 256, TLS_CURVE_CUSTOM}, /* bikel5 (0x0243) */
     {NID_kyber90s512, 128, TLS_CURVE_CUSTOM}, /* kyber90s512 (0x023E) */
     {NID_kyber90s768, 192, TLS_CURVE_CUSTOM}, /* kyber90s768 (0x023F) */
     {NID_kyber90s1024, 256, TLS_CURVE_CUSTOM}, /* kyber90s1024 (0x0240) */
@@ -218,8 +219,9 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
  {NID_p256_kyber512, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + kyber512 hybrid (0x023A) */
  {NID_p384_kyber768, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + kyber768 hybrid (0x023C) */
  {NID_p521_kyber1024, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + kyber1024 hybrid (0x023D) */
- {NID_p256_bikel1, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + bikel1 hybrid (0x0238) */
- {NID_p384_bikel3, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + bikel3 hybrid (0x023B) */
+ {NID_p256_bikel1, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + bikel1 hybrid (0x0241) */
+ {NID_p384_bikel3, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + bikel3 hybrid (0x0242) */
+ {NID_p521_bikel5, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + bikel5 hybrid (0x0243) */
  {NID_p256_kyber90s512, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + kyber90s512 hybrid (0x023E) */
  {NID_p384_kyber90s768, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + kyber90s768 hybrid (0x023F) */
  {NID_p521_kyber90s1024, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + kyber90s1024 hybrid (0x0240) */
@@ -246,7 +248,7 @@ static const uint16_t eccurves_default[] = {
     0x2F00, /* OQS frodo640aes hybrid */
     0x2F01, /* OQS frodo640shake hybrid */
     0x2F3A, /* OQS kyber512 hybrid */
-    0x2F38, /* OQS bikel1 hybrid */
+    0x2F41, /* OQS bikel1 hybrid */
     0x2F3E, /* OQS kyber90s512 hybrid */
     0x2F2C, /* OQS hqc128 hybrid */
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_END
@@ -285,10 +287,12 @@ static const uint16_t oqs_all_tls13_server_groups[] = {
     0x2F3C, /* OQS kyber768 hybrid */
     0x023D, /* kyber1024 */
     0x2F3D, /* OQS kyber1024 hybrid */
-    0x0238, /* bikel1 */
-    0x2F38, /* OQS bikel1 hybrid */
-    0x023B, /* bikel3 */
-    0x2F3B, /* OQS bikel3 hybrid */
+    0x0241, /* bikel1 */
+    0x2F41, /* OQS bikel1 hybrid */
+    0x0242, /* bikel3 */
+    0x2F42, /* OQS bikel3 hybrid */
+    0x0243, /* bikel5 */
+    0x2F43, /* OQS bikel5 hybrid */
     0x023E, /* kyber90s512 */
     0x2F3E, /* OQS kyber90s512 hybrid */
     0x023F, /* kyber90s768 */

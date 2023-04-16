@@ -1699,6 +1699,8 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
  : p256_bikel1 : p256_bikel1
  : bikel3 : bikel3
  : p384_bikel3 : p384_bikel3
+ : bikel5 : bikel5
+ : p521_bikel5 : p521_bikel5
  : kyber90s512 : kyber90s512
  : p256_kyber90s512 : p256_kyber90s512
  : kyber90s768 : kyber90s768
@@ -1728,11 +1730,11 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
 1 3 9999 2 11 3 : p384_dilithium3_aes : p384_dilithium3_aes
 1 3 6 1 4 1 2 267 11 8 7 : dilithium5_aes : dilithium5_aes
 1 3 9999 2 11 4 : p521_dilithium5_aes : p521_dilithium5_aes
-1 3 9999 3 1 : falcon512 : falcon512
-1 3 9999 3 2 : p256_falcon512 : p256_falcon512
-1 3 9999 3 3 : rsa3072_falcon512 : rsa3072_falcon512
-1 3 9999 3 4 : falcon1024 : falcon1024
-1 3 9999 3 5 : p521_falcon1024 : p521_falcon1024
+1 3 9999 3 6 : falcon512 : falcon512
+1 3 9999 3 7 : p256_falcon512 : p256_falcon512
+1 3 9999 3 8 : rsa3072_falcon512 : rsa3072_falcon512
+1 3 9999 3 9 : falcon1024 : falcon1024
+1 3 9999 3 10 : p521_falcon1024 : p521_falcon1024
 1 3 9999 6 1 1 : sphincsharaka128frobust : sphincsharaka128frobust
 1 3 9999 6 1 2 : p256_sphincsharaka128frobust : p256_sphincsharaka128frobust
 1 3 9999 6 1 3 : rsa3072_sphincsharaka128frobust : rsa3072_sphincsharaka128frobust

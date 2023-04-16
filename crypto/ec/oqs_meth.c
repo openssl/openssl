@@ -126,6 +126,7 @@ int oqssl_kem_nids_list[] = {
         NID_kyber1024,
         NID_bikel1,
         NID_bikel3,
+        NID_bikel5,
         NID_kyber90s512,
         NID_kyber90s768,
         NID_kyber90s1024,
@@ -242,6 +243,9 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_bikel3:
     case NID_p384_bikel3:
       return OQS_KEM_alg_bike_l3;
+    case NID_bikel5:
+    case NID_p521_bikel5:
+      return OQS_KEM_alg_bike_l5;
     case NID_kyber90s512:
     case NID_p256_kyber90s512:
       return OQS_KEM_alg_kyber_512_90s;
