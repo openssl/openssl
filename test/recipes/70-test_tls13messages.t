@@ -362,7 +362,7 @@ SKIP: {
 #Test 15: HRR Handshake
 $proxy->clear();
 $proxy->clientflags("-no_rx_cert_comp");
-$proxy->serverflags("-no_rx_cert_comp -curves P-256");
+$proxy->serverflags("-no_rx_cert_comp -curves P-384");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::HRR_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
@@ -372,7 +372,7 @@ checkhandshake($proxy, checkhandshake::HRR_HANDSHAKE,
 #Test 16: Resumption handshake with HRR
 $proxy->clear();
 $proxy->clientflags("-no_rx_cert_comp -sess_in ".$session);
-$proxy->serverflags("-no_rx_cert_comp -curves P-256");
+$proxy->serverflags("-no_rx_cert_comp -curves P-384");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
                (checkhandshake::DEFAULT_EXTENSIONS
@@ -383,7 +383,7 @@ checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
 
 #Test 17: Acceptable but non preferred key_share
 $proxy->clear();
-$proxy->clientflags("-no_rx_cert_comp -curves P-256");
+$proxy->clientflags("-no_rx_cert_comp -curves P-384");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS

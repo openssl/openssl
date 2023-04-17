@@ -41,7 +41,8 @@ my @pubkeys =
     (
      'testrsapub',
      disabled('dsa') ? () : 'testdsapub',
-     disabled('ec') ? () : qw(testecpub-p256 tested25519pub tested448pub)
+     disabled('ec') ? () : qw(testecpub-p256),
+     disabled('ecx') ? () : qw(tested25519pub tested448pub)
     );
 my @certs = sort keys %certs_info;
 

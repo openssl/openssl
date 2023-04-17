@@ -18,7 +18,8 @@ my @algs = ();
 push @algs, qw(RSA) unless disabled("rsa");
 push @algs, qw(DSA) unless disabled("dsa");
 push @algs, qw(DH DHX) unless disabled("dh");
-push @algs, qw(EC X25519 X448) unless disabled("ec");
+push @algs, qw(EC) unless disabled("ec");
+push @algs, qw(X25519 X448) unless disabled("ecx");
 push @algs, qw(SM2) unless disabled("sm2");
 
 plan tests => scalar(@algs);

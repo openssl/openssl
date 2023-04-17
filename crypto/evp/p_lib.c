@@ -872,7 +872,7 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 }
 # endif /*  OPENSSL_NO_DSA */
 
-# ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_ECX
 static const ECX_KEY *evp_pkey_get0_ECX_KEY(const EVP_PKEY *pkey, int type)
 {
     if (EVP_PKEY_get_base_id(pkey) != type) {
@@ -901,7 +901,7 @@ IMPLEMENT_ECX_VARIANT(X448)
 IMPLEMENT_ECX_VARIANT(ED25519)
 IMPLEMENT_ECX_VARIANT(ED448)
 
-# endif
+# endif /* OPENSSL_NO_ECX */
 
 # if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 

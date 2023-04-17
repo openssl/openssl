@@ -156,6 +156,7 @@ static int test_rpk(int idx)
             privkey_file = privkey2;
             other_cert_file = cert;
             break;
+# ifndef OPENSSL_NO_ECX
         case 2:
             /* use Ed448 */
             cert_file = cert448;
@@ -168,6 +169,7 @@ static int test_rpk(int idx)
             privkey_file = privkey25519;
             other_cert_file = cert;
             break;
+# endif
 #endif
         default:
             testresult = TEST_skip("EDCSA disabled");

@@ -269,7 +269,7 @@ checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
 #        initial key_share. Should resume with a key_share following an HRR
 $proxy->clear();
 $proxy->clientflags("-no_rx_cert_comp -sess_in ".$session);
-$proxy->serverflags("-no_rx_cert_comp -curves P-256");
+$proxy->serverflags("-no_rx_cert_comp -curves P-384");
 $testtype = BOTH_KEX_MODES;
 $proxy->start();
 checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
@@ -285,7 +285,7 @@ checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
 #        key_share. Should resume with a key_share following an HRR
 $proxy->clear();
 $proxy->clientflags("-no_rx_cert_comp -sess_in ".$session);
-$proxy->serverflags("-no_rx_cert_comp -curves P-256");
+$proxy->serverflags("-no_rx_cert_comp -curves P-384");
 $testtype = DHE_KEX_MODE_ONLY;
 $proxy->start();
 checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,

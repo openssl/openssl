@@ -231,12 +231,14 @@ static const unsigned char kExampleECKey2DER[] = {
     0x96, 0x69, 0xE0, 0x04, 0xCB, 0x89, 0x0B, 0x42
 };
 
+# ifndef OPENSSL_NO_ECX
 static const unsigned char kExampleECXKey2DER[] = {
     0x30, 0x2E, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x6e,
     0x04, 0x22, 0x04, 0x20, 0xc8, 0xa9, 0xd5, 0xa9, 0x10, 0x91, 0xad, 0x85,
     0x1c, 0x66, 0x8b, 0x07, 0x36, 0xc1, 0xc9, 0xa0, 0x29, 0x36, 0xc0, 0xd3,
     0xad, 0x62, 0x67, 0x08, 0x58, 0x08, 0x80, 0x47, 0xba, 0x05, 0x74, 0x75
 };
+# endif
 #endif
 
 typedef struct APK_DATA_st {
@@ -249,7 +251,9 @@ static APK_DATA keydata[] = {
     {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), EVP_PKEY_RSA},
     {kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8), EVP_PKEY_RSA},
 #ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_ECX
     {kExampleECXKey2DER, sizeof(kExampleECXKey2DER), EVP_PKEY_X25519},
+# endif
     {kExampleECKeyDER, sizeof(kExampleECKeyDER), EVP_PKEY_EC},
     {kExampleECKey2DER, sizeof(kExampleECKey2DER), EVP_PKEY_EC},
 #endif
@@ -487,6 +491,7 @@ static int test_ec_tofrom_data_select(void)
     return ret;
 }
 
+# ifndef OPENSSL_NO_ECX
 static int test_ecx_tofrom_data_select(void)
 {
     int ret;
@@ -497,6 +502,7 @@ static int test_ecx_tofrom_data_select(void)
     EVP_PKEY_free(key);
     return ret;
 }
+# endif
 #endif
 
 #ifndef OPENSSL_NO_SM2
@@ -1333,7 +1339,9 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 2);
     ADD_TEST(test_ec_tofrom_data_select);
+# ifndef OPENSSL_NO_ECX
     ADD_TEST(test_ecx_tofrom_data_select);
+# endif
     ADD_TEST(test_ec_d2i_i2d_pubkey);
 #else
     ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 1);

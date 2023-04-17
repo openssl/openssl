@@ -47,13 +47,16 @@ static const char *dhkem_supported_curves[] = {
     "P-256",
     "P-384",
     "P-521",
+#ifndef OPENSSL_NO_ECX
     "X25519",
-    "X448"
+    "X448",
+#endif
 };
 
 /* TEST vectors extracted from RFC 9180 */
 
 /* Base test values */
+#ifndef OPENSSL_NO_ECX
 static const unsigned char x25519_ikme[] = {
     0x72, 0x68, 0x60, 0x0d, 0x40, 0x3f, 0xce, 0x43,
     0x15, 0x61, 0xae, 0xf5, 0x83, 0xee, 0x16, 0x13,
@@ -139,6 +142,7 @@ static const unsigned char x25519_auth_expected_secret[] = {
     0xe4, 0x4e, 0x2b, 0xeb, 0xc8, 0x1f, 0x84, 0x60,
     0x86, 0x77, 0x95, 0x8c, 0x0d, 0x44, 0x48, 0xa7
 };
+#endif
 
 static const unsigned char p256_ikme[] = {
     0x42, 0x70, 0xe5, 0x4f, 0xfd, 0x08, 0xd7, 0x9d,
@@ -451,6 +455,7 @@ static const TEST_ENCAPDATA ec_encapdata[] = {
         p256_expected_enc, sizeof(p256_expected_enc),
         p256_expected_secret, sizeof(p256_expected_secret),
     },
+#ifndef OPENSSL_NO_ECX
     {
         "X25519",
         x25519_ikme, sizeof(x25519_ikme),
@@ -459,6 +464,7 @@ static const TEST_ENCAPDATA ec_encapdata[] = {
         x25519_expected_enc, sizeof(x25519_expected_enc),
         x25519_expected_secret, sizeof(x25519_expected_secret),
     },
+#endif
     {
         "P-521",
         p521_ikme, sizeof(p521_ikme),
@@ -477,6 +483,7 @@ static const TEST_ENCAPDATA ec_encapdata[] = {
         p521_auth_ikms_pub, sizeof(p521_auth_ikms_pub),
         p521_auth_ikms_priv, sizeof(p521_auth_ikms_priv)
     },
+#ifndef OPENSSL_NO_ECX
     {
         "X25519",
         x25519_auth_ikme, sizeof(x25519_auth_ikme),
@@ -487,9 +494,11 @@ static const TEST_ENCAPDATA ec_encapdata[] = {
         x25519_auth_spub, sizeof(x25519_auth_spub),
         x25519_auth_spriv, sizeof(x25519_auth_spriv)
     }
+#endif
 };
 
 /* Test vector from https://github.com/cfrg/draft-irtf-cfrg-hpke */
+#ifndef OPENSSL_NO_ECX
 static const unsigned char x448_ikmr[] = {
     0xd4, 0x5d, 0x16, 0x52, 0xdf, 0x74, 0x92, 0x0a,
     0xbf, 0x94, 0xa2, 0x88, 0x3c, 0x83, 0x05, 0x0f,
@@ -532,6 +541,7 @@ static const TEST_DERIVEKEY_DATA ecx_derivekey_data[] = {
       x448_ikmr_priv, sizeof(x448_ikmr_priv)
     },
 };
+#endif
 
 /*
  * Helper function to create a EC or ECX private key from bytes.

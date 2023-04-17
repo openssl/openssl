@@ -321,7 +321,7 @@ static int test_tls13ccs(int tst)
             goto err;
 # endif
 #else
-        if (!TEST_true(SSL_CTX_set1_groups_list(sctx, "P-256")))
+        if (!TEST_true(SSL_CTX_set1_groups_list(sctx, "P-384")))
             goto err;
 #endif
     }
