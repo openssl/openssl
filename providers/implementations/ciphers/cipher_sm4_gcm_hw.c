@@ -40,7 +40,7 @@ static int sm4_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 
 #ifdef VPSM4_EX_CAPABLE
     if (VPSM4_EX_CAPABLE) {
-        SM4_GCM_HW_SET_KEY_CTR_FN(ks, vpsm4_ex_set_decrypt_key, vpsm4_ex_encrypt,
+        SM4_GCM_HW_SET_KEY_CTR_FN(ks, vpsm4_ex_set_encrypt_key, vpsm4_ex_encrypt,
                                   vpsm4_ex_ctr32_encrypt_blocks);
     } else
 #endif /* VPSM4_EX_CAPABLE */
