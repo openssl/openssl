@@ -270,6 +270,15 @@ OpenSSL 3.1
 
 ### Changes between 3.1.0 and 3.1.1 [xx XXX xxxx]
 
+ * Fixed buffer overread in AES-XTS decryption on ARM 64 bit platforms which
+   happens if the buffer size is 4 mod 5. This can trigger a crash of an
+   application using AES-XTS decryption if the memory just after the buffer
+   being decrypted is not mapped.
+   Thanks to Anton Romanov (Amazon) for discovering the issue.
+   ([CVE-2023-1255])
+
+   *Nevine Ebeid*
+
  * Add FIPS provider configuration option to disallow the use of
    truncated digests with Hash and HMAC DRBGs (q.v. FIPS 140-3 IG D.R.).
    The option '-no_drbg_truncated_digests' can optionally be
@@ -19943,6 +19952,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2023-1255]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-1255
 [CVE-2023-0466]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0466
 [CVE-2023-0465]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0465
 [CVE-2023-0464]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0464
