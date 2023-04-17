@@ -300,10 +300,12 @@ extern const OSSL_DISPATCH ossl_dhx_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_dsa_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_rsa_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[];
+#ifndef OPENSSL_NO_ECX
 extern const OSSL_DISPATCH ossl_x25519_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_x448_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_ed25519_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_ed448_keymgmt_functions[];
+#endif
 extern const OSSL_DISPATCH ossl_ec_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_kdf_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_mac_legacy_keymgmt_functions[];

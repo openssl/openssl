@@ -748,7 +748,7 @@ static int ec_pki_priv_to_der(const void *veckey, unsigned char **pder)
 
 /* ---------------------------------------------------------------------- */
 
-#ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_ECX
 # define prepare_ecx_params NULL
 
 static int ecx_spki_pub_to_der(const void *vecxkey, unsigned char **pder)
@@ -1391,6 +1391,7 @@ MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, PrivateKeyInfo, pem);
 MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, pem);
 # endif
+# ifndef OPENSSL_NO_ECX
 MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, EncryptedPrivateKeyInfo, der);
 MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, EncryptedPrivateKeyInfo, pem);
 MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, PrivateKeyInfo, der);
@@ -1415,6 +1416,7 @@ MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, PrivateKeyInfo, der);
 MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, PrivateKeyInfo, pem);
 MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, SubjectPublicKeyInfo, pem);
+# endif
 #endif
 
 /*

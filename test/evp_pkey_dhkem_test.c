@@ -699,6 +699,7 @@ static int test_ec_invalid_decap_enc_buffer(void)
                                                enc, t->expected_enclen), 0);
 }
 
+#ifndef OPENSSL_NO_ECX
 /* ECX specific tests */
 
 /* Perform ECX DHKEM KATs */
@@ -780,6 +781,7 @@ static int test_ed_curve_unsupported(void)
     EVP_PKEY_CTX_free(ctx);
     return ret;
 }
+#endif
 
 int setup_tests(void)
 {
@@ -797,20 +799,25 @@ int setup_tests(void)
     if (!TEST_ptr(rkey[TEST_KEYTYPE_P256] = EVP_PKEY_Q_keygen(libctx, NULL,
                                                               "EC", "P-256")))
         goto err;
+#ifndef OPENSSL_NO_ECX
     if (!TEST_ptr(rkey[TEST_KEYTYPE_X25519] = EVP_PKEY_Q_keygen(libctx, NULL,
                                                                 "X25519")))
         goto err;
+#endif
     if (!TEST_ptr(rctx[TEST_KEYTYPE_P256] =
                       EVP_PKEY_CTX_new_from_pkey(libctx,
                                                  rkey[TEST_KEYTYPE_P256], NULL)))
        goto err;
+#ifndef OPENSSL_NO_ECX
     if (!TEST_ptr(rctx[TEST_KEYTYPE_X25519] =
                       EVP_PKEY_CTX_new_from_pkey(libctx,
                                                  rkey[TEST_KEYTYPE_X25519], NULL)))
        goto err;
+#endif
 
     ADD_ALL_TESTS(test_dhkem_encapsulate, OSSL_NELEM(ec_encapdata));
     ADD_ALL_TESTS(test_dhkem_decapsulate, OSSL_NELEM(ec_encapdata));
+#ifndef OPENSSL_NO_ECX
     ADD_ALL_TESTS(test_settables, TEST_KEYTYPES_P256_X25519);
     ADD_ALL_TESTS(test_init_multiple, TEST_KEYTYPES_P256_X25519);
 
@@ -824,7 +831,21 @@ int setup_tests(void)
                   TEST_KEM_ENCAP_DECAP * TEST_KEYTYPES_P256_X25519);
     ADD_ALL_TESTS(test_noauthpublic,
                   TEST_KEM_ENCAP_DECAP * TEST_KEYTYPES_P256_X25519);
+#else
+    ADD_ALL_TESTS(test_settables, TEST_KEYTYPE_P256);
+    ADD_ALL_TESTS(test_init_multiple, TEST_KEYTYPE_P256);
 
+    ADD_ALL_TESTS(test_auth_key_type_mismatch, TEST_KEYTYPE_P256);
+    ADD_ALL_TESTS(test_no_operation_set, TEST_KEYTYPE_P256);
+    ADD_ALL_TESTS(test_ikm_small, TEST_KEYTYPE_P256);
+    ADD_ALL_TESTS(test_input_size_small, TEST_KEYTYPE_P256);
+    ADD_ALL_TESTS(test_null_params, TEST_KEYTYPE_P256);
+    ADD_ALL_TESTS(test_set_params, TEST_KEYTYPE_P256);
+    ADD_ALL_TESTS(test_nopublic,
+                  TEST_KEM_ENCAP_DECAP * TEST_KEYTYPE_P256);
+    ADD_ALL_TESTS(test_noauthpublic,
+                  TEST_KEM_ENCAP_DECAP * TEST_KEYTYPE_P256);
+#endif
     /* EC Specific tests */
     ADD_ALL_TESTS(test_ec_dhkem_derivekey, OSSL_NELEM(ec_derivekey_data));
     ADD_ALL_TESTS(test_ec_noikme,
@@ -840,9 +861,11 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ec_badauth, TEST_KEM_ENCAP_DECAP);
 
     /* ECX specific tests */
+#ifndef OPENSSL_NO_ECX
     ADD_ALL_TESTS(test_ecx_dhkem_derivekey, OSSL_NELEM(ecx_derivekey_data));
     ADD_TEST(test_ecx_auth_key_curve_mismatch);
     ADD_TEST(test_ed_curve_unsupported);
+#endif
     return 1;
 err:
     return 0;

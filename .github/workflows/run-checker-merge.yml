@@ -29,6 +29,7 @@ jobs:
           no-unit-test,
           enable-weak-ssl-ciphers,
           enable-zlib,
+          no-ecx,
         ]
     runs-on: ubuntu-latest
     steps:

@@ -58,7 +58,7 @@ $proxy->clear();
 if (disabled("ec")) {
     $proxy->serverflags("-curves ffdhe3072");
 } else {
-    $proxy->serverflags("-curves P-256");
+    $proxy->serverflags("-curves P-384");
 }
 $proxy->ciphersuitess("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
 $testtype = CHANGE_CH1_CIPHERSUITE;

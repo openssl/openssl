@@ -7,5 +7,8 @@ $EC_KEM_GOAL=../../libdefault.a
 SOURCE[$RSA_KEM_GOAL]=rsa_kem.c
 
 IF[{- !$disabled{ec} -}]
-  SOURCE[$EC_KEM_GOAL]=ecx_kem.c kem_util.c ec_kem.c
+  SOURCE[$EC_KEM_GOAL]=kem_util.c ec_kem.c
+  IF[{- !$disabled{ecx} -}]
+    SOURCE[$EC_KEM_GOAL]=ecx_kem.c
+  ENDIF
 ENDIF

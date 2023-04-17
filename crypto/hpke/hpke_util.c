@@ -66,12 +66,14 @@ static const OSSL_HPKE_KEM_INFO hpke_kem_tab[] = {
       LN_sha384, SHA384_DIGEST_LENGTH, 97, 97, 48, 0xFF },
     { OSSL_HPKE_KEM_ID_P521, "EC", OSSL_HPKE_KEMSTR_P521,
       LN_sha512, SHA512_DIGEST_LENGTH, 133, 133, 66, 0x01 },
+# ifndef OPENSSL_NO_ECX
     { OSSL_HPKE_KEM_ID_X25519, OSSL_HPKE_KEMSTR_X25519, NULL,
       LN_sha256, SHA256_DIGEST_LENGTH,
       X25519_KEYLEN, X25519_KEYLEN, X25519_KEYLEN, 0x00 },
     { OSSL_HPKE_KEM_ID_X448, OSSL_HPKE_KEMSTR_X448, NULL,
       LN_sha512, SHA512_DIGEST_LENGTH,
       X448_KEYLEN, X448_KEYLEN, X448_KEYLEN, 0x00 }
+# endif
 #else
     { OSSL_HPKE_KEM_ID_RESERVED, NULL, NULL, NULL, 0, 0, 0, 0, 0x00 }
 #endif
@@ -122,10 +124,12 @@ static const synonymttab_t kemstrtab[] = {
      {OSSL_HPKE_KEMSTR_P384, "0x11", "0x11", "17" }},
     {OSSL_HPKE_KEM_ID_P521,
      {OSSL_HPKE_KEMSTR_P521, "0x12", "0x12", "18" }},
+# ifndef OPENSSL_NO_ECX
     {OSSL_HPKE_KEM_ID_X25519,
      {OSSL_HPKE_KEMSTR_X25519, "0x20", "0x20", "32" }},
     {OSSL_HPKE_KEM_ID_X448,
      {OSSL_HPKE_KEMSTR_X448, "0x21", "0x21", "33" }}
+# endif
 };
 static const synonymttab_t kdfstrtab[] = {
     {OSSL_HPKE_KDF_ID_HKDF_SHA256,

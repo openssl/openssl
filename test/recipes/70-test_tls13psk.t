@@ -66,7 +66,7 @@ $proxy->clientflags("-sess_in ".$session);
 if (disabled("ec")) {
     $proxy->serverflags("-curves ffdhe3072");
 } else {
-    $proxy->serverflags("-curves P-256");
+    $proxy->serverflags("-curves P-384");
 }
 $proxy->filter(undef);
 $proxy->start();
@@ -85,7 +85,7 @@ $proxy->filter(\&modify_psk_filter);
 if (disabled("ec")) {
     $proxy->serverflags("-curves ffdhe3072");
 } else {
-    $proxy->serverflags("-curves P-256");
+    $proxy->serverflags("-curves P-384");
 }
 $proxy->ciphersuitesc("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
 $proxy->ciphersuitess("TLS_AES_256_GCM_SHA384");

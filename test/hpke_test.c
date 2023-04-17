@@ -259,6 +259,7 @@ static const unsigned char ksinfo[] = {
     0x20, 0x47, 0x72, 0x65, 0x63, 0x69, 0x61, 0x6e,
     0x20, 0x55, 0x72, 0x6e
 };
+#ifndef OPENSSL_NO_ECX
 /*
  * static const char *pskid = "Ennyn Durin aran Moria";
  */
@@ -544,6 +545,7 @@ static int x25519kdfsha256_hkdfsha256_aes128gcm_base_test(void)
     return do_testhpke(&basedata, aeaddata, OSSL_NELEM(aeaddata),
                        exportdata, OSSL_NELEM(exportdata));
 }
+#endif
 
 static const unsigned char third_ikme[] = {
     0x42, 0x70, 0xe5, 0x4f, 0xfd, 0x08, 0xd7, 0x9d,
@@ -681,6 +683,7 @@ static int P256kdfsha256_hkdfsha256_aes128gcm_base_test(void)
                        exportdata, OSSL_NELEM(exportdata));
 }
 
+#ifndef OPENSSL_NO_ECX
 static const unsigned char fourth_ikme[] = {
     0x55, 0xbc, 0x24, 0x5e, 0xe4, 0xef, 0xda, 0x25,
     0xd3, 0x8f, 0x2d, 0x54, 0xd5, 0xbb, 0x66, 0x65,
@@ -771,6 +774,7 @@ static int export_only_test(void)
     return do_testhpke(&basedata, NULL, 0,
                        exportdata, OSSL_NELEM(exportdata));
 }
+#endif
 
 /*
  * Randomly toss a coin
@@ -788,8 +792,10 @@ static uint16_t hpke_kem_list[] = {
     OSSL_HPKE_KEM_ID_P256,
     OSSL_HPKE_KEM_ID_P384,
     OSSL_HPKE_KEM_ID_P521,
+#ifndef OPENSSL_NO_ECX
     OSSL_HPKE_KEM_ID_X25519,
     OSSL_HPKE_KEM_ID_X448
+#endif
 };
 static uint16_t hpke_kdf_list[] = {
     OSSL_HPKE_KDF_ID_HKDF_SHA256,
@@ -817,9 +823,15 @@ static const char *mode_str_list[] = {
     "base", "psk", "auth", "pskauth"
 };
 static const char *kem_str_list[] = {
+#ifndef OPENSSL_NO_ECX
     "P-256", "P-384", "P-521", "x25519", "x448",
     "0x10", "0x11", "0x12", "0x20", "0x21",
     "16", "17", "18", "32", "33"
+#else
+    "P-256", "P-384", "P-521",
+    "0x10", "0x11", "0x12",
+    "16", "17", "18"
+#endif
 };
 static const char *kdf_str_list[] = {
     "hkdf-sha256", "hkdf-sha384", "hkdf-sha512",
@@ -1532,6 +1544,7 @@ end:
     return erv;
 }
 
+#ifndef OPENSSL_NO_ECX
 /* from RFC 9180 Appendix A.1.1 */
 static const unsigned char ikm25519[] = {
     0x72, 0x68, 0x60, 0x0d, 0x40, 0x3f, 0xce, 0x43,
@@ -1545,6 +1558,7 @@ static const unsigned char pub25519[] = {
     0x1d, 0x12, 0x53, 0xb6, 0xd4, 0xea, 0x6d, 0x44,
     0xc1, 0x50, 0xf7, 0x41, 0xf1, 0xbf, 0x44, 0x31
 };
+#endif
 
 /* from RFC9180 Appendix A.3.1 */
 static const unsigned char ikmp256[] = {
@@ -1736,11 +1750,13 @@ static int test_hpke_ikms(void)
 {
     int res = 1;
 
+#ifndef OPENSSL_NO_ECX
     res = test_hpke_one_ikm_gen(OSSL_HPKE_KEM_ID_X25519,
                                 ikm25519, sizeof(ikm25519),
                                 pub25519, sizeof(pub25519));
     if (res != 1)
         return res;
+#endif
 
     res = test_hpke_one_ikm_gen(OSSL_HPKE_KEM_ID_P521,
                                 ikmp521, sizeof(ikmp521),
@@ -1957,10 +1973,12 @@ int setup_tests(void)
 
     if (!test_get_libctx(&testctx, &nullprov, NULL, &deflprov, "default"))
         return 0;
+#ifndef OPENSSL_NO_ECX
+    ADD_TEST(export_only_test);
     ADD_TEST(x25519kdfsha256_hkdfsha256_aes128gcm_base_test);
     ADD_TEST(x25519kdfsha256_hkdfsha256_aes128gcm_psk_test);
+#endif
     ADD_TEST(P256kdfsha256_hkdfsha256_aes128gcm_base_test);
-    ADD_TEST(export_only_test);
     ADD_TEST(test_hpke_export);
     ADD_TEST(test_hpke_modes_suites);
     ADD_TEST(test_hpke_suite_strs);

@@ -835,6 +835,7 @@ int i2d_EC_PUBKEY(const EC_KEY *a, unsigned char **pp)
     return ret;
 }
 
+# ifndef OPENSSL_NO_ECX
 ECX_KEY *ossl_d2i_ED25519_PUBKEY(ECX_KEY **a,
                                  const unsigned char **pp, long length)
 {
@@ -1002,6 +1003,7 @@ int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp)
     return ret;
 }
 
+# endif /* OPENSSL_NO_ECX */ 
 #endif
 
 void X509_PUBKEY_set0_public_key(X509_PUBKEY *pub,
