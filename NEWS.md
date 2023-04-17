@@ -21,6 +21,8 @@ OpenSSL 3.1
 
 ### Major changes between OpenSSL 3.1.0 and OpenSSL 3.1.1 [under development]
 
+  * Fixed buffer overread in AES-XTS decryption on ARM 64 bit platforms
+    ([CVE-2023-1255])
   * Fixed documentation of X509_VERIFY_PARAM_add0_policy() ([CVE-2023-0466])
   * Fixed handling of invalid certificate policies in leaf certificates
     ([CVE-2023-0465])
@@ -1449,6 +1451,7 @@ OpenSSL 0.9.x
   * Support for various new platforms
 
 <!-- Links -->
+[CVE-2023-1255]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-1255
 [CVE-2023-0466]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0466
 [CVE-2023-0465]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0465
 [CVE-2023-0464]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0464
