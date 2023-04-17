@@ -30,6 +30,15 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.8 and 3.0.9 [xx XXX xxxx]
 
+ * Fixed buffer overread in AES-XTS decryption on ARM 64 bit platforms which
+   happens if the buffer size is 4 mod 5. This can trigger a crash of an
+   application using AES-XTS decryption if the memory just after the buffer
+   being decrypted is not mapped.
+   Thanks to Anton Romanov (Amazon) for discovering the issue.
+   ([CVE-2023-1255])
+
+   *Nevine Ebeid*
+
  * Reworked the Fix for the Timing Oracle in RSA Decryption ([CVE-2022-4304]).
    The previous fix for this timing side channel turned out to cause
    a severe 2-3x performance regression in the typical use case
@@ -19617,6 +19626,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2023-1255]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-1255
 [CVE-2023-0466]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0466
 [CVE-2023-0465]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0465
 [CVE-2023-0464]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0464
