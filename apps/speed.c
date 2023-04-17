@@ -469,6 +469,7 @@ static const OPT_PAIR ecdh_choices[EC_NUM] = {
 static double ecdh_results[EC_NUM][1];      /* 1 op: derivation */
 static double ecdsa_results[ECDSA_NUM][2];  /* 2 ops: sign then verify */
 
+#ifndef OPENSSL_NO_EDWARD
 enum { R_EC_Ed25519, R_EC_Ed448, EdDSA_NUM };
 static const OPT_PAIR eddsa_choices[EdDSA_NUM] = {
     {"ed25519", R_EC_Ed25519},
@@ -476,6 +477,7 @@ static const OPT_PAIR eddsa_choices[EdDSA_NUM] = {
 
 };
 static double eddsa_results[EdDSA_NUM][2];    /* 2 ops: sign then verify */
+#endif /* OPENSSL_NO_EDWARD */
 
 #ifndef OPENSSL_NO_SM2
 enum { R_EC_CURVESM2, SM2_NUM };
@@ -517,8 +519,10 @@ typedef struct loopargs_st {
     EVP_PKEY_CTX *ecdsa_sign_ctx[ECDSA_NUM];
     EVP_PKEY_CTX *ecdsa_verify_ctx[ECDSA_NUM];
     EVP_PKEY_CTX *ecdh_ctx[EC_NUM];
+#ifndef OPENSSL_NO_EDWARD
     EVP_MD_CTX *eddsa_ctx[EdDSA_NUM];
     EVP_MD_CTX *eddsa_ctx2[EdDSA_NUM];
+#endif /* OPENSSL_NO_EDWARD */
 #ifndef OPENSSL_NO_SM2
     EVP_MD_CTX *sm2_ctx[SM2_NUM];
     EVP_MD_CTX *sm2_vfy_ctx[SM2_NUM];
@@ -1062,6 +1066,7 @@ static int ECDH_EVP_derive_key_loop(void *args)
     return count;
 }
 
+#ifndef OPENSSL_NO_EDWARD
 static long eddsa_c[EdDSA_NUM][2];
 static int EdDSA_sign_loop(void *args)
 {
@@ -1104,6 +1109,7 @@ static int EdDSA_verify_loop(void *args)
     }
     return count;
 }
+#endif /* OPENSSL_NO_EDWARD */
 
 #ifndef OPENSSL_NO_SM2
 static long sm2_c[SM2_NUM][2];
@@ -1742,11 +1748,13 @@ int speed_main(int argc, char **argv)
         {"X25519", NID_X25519, 253},
         {"X448", NID_X448, 448}
     };
+#ifndef OPENSSL_NO_EDWARD
     static const EC_CURVE ed_curves[EdDSA_NUM] = {
         /* EdDSA */
         {"Ed25519", NID_ED25519, 253, 64},
         {"Ed448", NID_ED448, 456, 114}
     };
+#endif /* OPENSSL_NO_EDWARD */
 #ifndef OPENSSL_NO_SM2
     static const EC_CURVE sm2_curves[SM2_NUM] = {
         /* SM2 */
@@ -1756,7 +1764,9 @@ int speed_main(int argc, char **argv)
 #endif
     uint8_t ecdsa_doit[ECDSA_NUM] = { 0 };
     uint8_t ecdh_doit[EC_NUM] = { 0 };
+#ifndef OPENSSL_NO_EDWARD
     uint8_t eddsa_doit[EdDSA_NUM] = { 0 };
+#endif /* OPENSSL_NO_EDWARD */
 
     uint8_t kems_doit[MAX_KEM_NUM] = { 0 };
     uint8_t sigs_doit[MAX_SIG_NUM] = { 0 };
@@ -1765,6 +1775,7 @@ int speed_main(int argc, char **argv)
     uint8_t do_sigs = 0;
 
     /* checks declared curves against choices list. */
+#ifndef OPENSSL_NO_EDWARD
     OPENSSL_assert(ed_curves[EdDSA_NUM - 1].nid == NID_ED448);
     OPENSSL_assert(strcmp(eddsa_choices[EdDSA_NUM - 1].name, "ed448") == 0);
 
@@ -1773,6 +1784,7 @@ int speed_main(int argc, char **argv)
 
     OPENSSL_assert(ec_curves[ECDSA_NUM - 1].nid == NID_brainpoolP512t1);
     OPENSSL_assert(strcmp(ecdsa_choices[ECDSA_NUM - 1].name, "ecdsabrp512t1") == 0);
+#endif /* OPENSSL_NO_EDWARD */
 
 #ifndef OPENSSL_NO_SM2
     OPENSSL_assert(sm2_curves[SM2_NUM - 1].nid == NID_sm2);
@@ -2118,6 +2130,7 @@ int speed_main(int argc, char **argv)
                 algo_found = 1;
             }
         }
+#ifndef OPENSSL_NO_EDWARD
         if (strcmp(algo, "eddsa") == 0) {
             memset(eddsa_doit, 1, sizeof(eddsa_doit));
             algo_found = 1;
@@ -2126,6 +2139,7 @@ int speed_main(int argc, char **argv)
             eddsa_doit[i] = 2;
             algo_found = 1;
         }
+#endif /* OPENSSL_NO_EDWARD */
 #ifndef OPENSSL_NO_SM2
         if (strcmp(algo, "sm2") == 0) {
             memset(sm2_doit, 1, sizeof(sm2_doit));
@@ -2306,9 +2320,11 @@ int speed_main(int argc, char **argv)
         memset(ffdh_doit, 1, sizeof(ffdh_doit));
 #endif
         memset(dsa_doit, 1, sizeof(dsa_doit));
+#ifndef OPENSSL_NO_EDWARD
         memset(ecdsa_doit, 1, sizeof(ecdsa_doit));
         memset(ecdh_doit, 1, sizeof(ecdh_doit));
         memset(eddsa_doit, 1, sizeof(eddsa_doit));
+#endif /* OPENSSL_NO_EDWARD */
 #ifndef OPENSSL_NO_SM2
         memset(sm2_doit, 1, sizeof(sm2_doit));
 #endif
@@ -3145,6 +3161,7 @@ skip_hmac:
         }
     }
 
+#ifndef OPENSSL_NO_EDWARD
     for (testnum = 0; testnum < EdDSA_NUM; testnum++) {
         int st = 1;
         EVP_PKEY *ed_pkey = NULL;
@@ -3259,6 +3276,7 @@ skip_hmac:
             }
         }
     }
+#endif /* OPENSSL_NO_EDWARD */
 
 #ifndef OPENSSL_NO_SM2
     for (testnum = 0; testnum < SM2_NUM; testnum++) {
@@ -4052,6 +4070,7 @@ skip_hmac:
                    1.0 / ecdh_results[k][0], ecdh_results[k][0]);
     }
 
+#ifndef OPENSSL_NO_EDWARD
     testnum = 1;
     for (k = 0; k < OSSL_NELEM(eddsa_doit); k++) {
         if (!eddsa_doit[k])
@@ -4071,6 +4090,7 @@ skip_hmac:
                    1.0 / eddsa_results[k][0], 1.0 / eddsa_results[k][1],
                    eddsa_results[k][0], eddsa_results[k][1]);
     }
+#endif /* OPENSSL_NO_EDWARD */
 
 #ifndef OPENSSL_NO_SM2
     testnum = 1;
@@ -4186,10 +4206,12 @@ skip_hmac:
         }
         for (k = 0; k < EC_NUM; k++)
             EVP_PKEY_CTX_free(loopargs[i].ecdh_ctx[k]);
+#ifndef OPENSSL_NO_EDWARD
         for (k = 0; k < EdDSA_NUM; k++) {
             EVP_MD_CTX_free(loopargs[i].eddsa_ctx[k]);
             EVP_MD_CTX_free(loopargs[i].eddsa_ctx2[k]);
         }
+#endif /* OPENSSL_NO_EDWARD */
 #ifndef OPENSSL_NO_SM2
         for (k = 0; k < SM2_NUM; k++) {
             EVP_PKEY_CTX *pctx = NULL;
@@ -4447,6 +4469,7 @@ static int do_multi(int multi, int size_num)
                     d = atof(sstrsep(&p, sep));
                     ecdh_results[k][0] += d;
                 }
+# ifndef OPENSSL_NO_EDWARD
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F6:")) {
                 tk = sstrsep(&p, sep);
                 if (strtoint(tk, 0, OSSL_NELEM(eddsa_results), &k)) {
@@ -4459,6 +4482,7 @@ static int do_multi(int multi, int size_num)
                     d = atof(sstrsep(&p, sep));
                     eddsa_results[k][1] += d;
                 }
+# endif /* OPENSSL_NO_EDWARD */
 # ifndef OPENSSL_NO_SM2
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F7:")) {
                 tk = sstrsep(&p, sep);

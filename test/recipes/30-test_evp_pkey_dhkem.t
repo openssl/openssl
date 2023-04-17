@@ -13,6 +13,6 @@ use OpenSSL::Test::Utils;
 
 setup("test_evp_pkey_dhkem");
 
-plan skip_all => "This test is unsupported in a no-ec build" if disabled("ec");
+plan skip_all => "This test is unsupported in a no-ec or no-edward build" if (disabled("ec") || disabled("edward"));
 
 simple_test("test_evp_pkey_dhkem", "evp_pkey_dhkem_test");

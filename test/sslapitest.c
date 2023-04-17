@@ -3963,7 +3963,7 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
 
     if (testtype == 1 || testtype == 2) {
         /* Force an HRR to occur */
-#if defined(OPENSSL_NO_EC)
+#if (defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_EDWARD))
         if (!TEST_true(SSL_set1_groups_list(serverssl, "ffdhe3072")))
             goto end;
 #else
@@ -4890,7 +4890,11 @@ static int test_ciphersuite_change(void)
  */
 # ifndef OPENSSL_NO_EC
 static int ecdhe_kexch_groups[] = {NID_X9_62_prime256v1, NID_secp384r1,
-                                   NID_secp521r1, NID_X25519, NID_X448};
+                                   NID_secp521r1,
+#  ifndef OPENSSL_NO_EDWARD
+                                   NID_X25519, NID_X448
+#  endif
+                                   };
 # endif
 # ifndef OPENSSL_NO_DH
 static int ffdhe_kexch_groups[] = {NID_ffdhe2048, NID_ffdhe3072, NID_ffdhe4096,
@@ -4931,6 +4935,7 @@ static int test_key_exchange(int idx)
             kexch_alg = NID_secp521r1;
             kexch_name0 = "secp521r1";
             break;
+#  ifndef OPENSSL_NO_EDWARD
         case 4:
             kexch_alg = NID_X25519;
             kexch_name0 = "x25519";
@@ -4939,6 +4944,7 @@ static int test_key_exchange(int idx)
             kexch_alg = NID_X448;
             kexch_name0 = "x448";
             break;
+#  endif
 # endif
 # ifndef OPENSSL_NO_DH
 # ifndef OPENSSL_NO_TLS1_2
@@ -5575,7 +5581,7 @@ static int test_tls13_psk(int idx)
         goto end;
 
     /* Force an HRR */
-#if defined(OPENSSL_NO_EC)
+#if (defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_EDWARD))
     if (!TEST_true(SSL_set1_groups_list(serverssl, "ffdhe3072")))
         goto end;
 #else
@@ -9345,8 +9351,13 @@ static int test_sigalgs_available(int idx)
         } else {
             if (!TEST_true(filter_provider_set_filter(OSSL_OP_SIGNATURE,
                                                       "ECDSA"))
+# ifdef OPENSSL_NO_EDWARD
+                    || !TEST_true(filter_provider_set_filter(OSSL_OP_KEYMGMT, "EC"))
+# else
                     || !TEST_true(filter_provider_set_filter(OSSL_OP_KEYMGMT,
-                                                             "EC:X25519:X448")))
+                                                             "EC:X25519:X448"))
+# endif
+                )
                 goto end;
         }
 

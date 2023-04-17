@@ -61,8 +61,8 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLS1.3 enabled"
     if disabled("tls1_3");
 
-plan skip_all => "$test_name needs EC or DH enabled"
-    if disabled("ec") && disabled("dh");
+plan skip_all => "$test_name needs EC EDWARD or DH enabled"
+    if (disabled("ec") || disabled("edward")) && disabled("dh");
 
 my $proxy = TLSProxy::Proxy->new(
     undef,
@@ -78,7 +78,7 @@ my $proxy = TLSProxy::Proxy->new(
 $testtype = EMPTY_EXTENSION;
 $direction = CLIENT_TO_SERVER;
 $proxy->filter(\&modify_key_shares_filter);
-if (disabled("ec")) {
+if (disabled("ec") || disabled("edward")) {
     $proxy->serverflags("-groups ffdhe3072");
 } else {
     $proxy->serverflags("-groups P-256");
@@ -103,7 +103,7 @@ ok(TLSProxy::Message->fail(), "Missing key_shares extension");
 #        HelloRetryRequest
 $proxy->clear();
 $proxy->filter(undef);
-if (disabled("ec")) {
+if (disabled("ec") || disabled("edward")) {
     $proxy->serverflags("-groups ffdhe3072");
 } else {
     $proxy->serverflags("-groups P-256");
@@ -114,12 +114,12 @@ ok(TLSProxy::Message->success(), "No initial acceptable key_shares");
 #Test 5: No acceptable key_shares and no shared groups should fail
 $proxy->clear();
 $proxy->filter(undef);
-if (disabled("ec")) {
+if (disabled("ec") || disabled("edward")) {
     $proxy->serverflags("-groups ffdhe2048");
 } else {
     $proxy->serverflags("-groups P-256");
 }
-if (disabled("ec")) {
+if (disabled("ec") || disabled("edward")) {
     $proxy->clientflags("-groups ffdhe3072");
 } else {
     $proxy->clientflags("-groups P-384");
@@ -130,7 +130,7 @@ ok(TLSProxy::Message->fail(), "No acceptable key_shares");
 #Test 6: A non preferred but acceptable key_share should succeed
 $proxy->clear();
 $proxy->clientflags("-curves P-256");
-if (disabled("ec")) {
+if (disabled("ec") || disabled("edward")) {
     $proxy->clientflags("-groups ffdhe3072");
 } else {
     $proxy->clientflags("-groups P-256");
@@ -140,7 +140,7 @@ ok(TLSProxy::Message->success(), "Non preferred key_share");
 $proxy->filter(\&modify_key_shares_filter);
 
 SKIP: {
-    skip "No ec support in this OpenSSL build", 1 if disabled("ec");
+    skip "No ec support in this OpenSSL build", 1 if disabled("ec") || disabled("edward");
 
     #Test 7: An acceptable key_share after a list of non-acceptable ones should
     #succeed
@@ -186,13 +186,13 @@ $proxy->clear();
 $direction = SERVER_TO_CLIENT;
 $testtype = LOOK_ONLY;
 $selectedgroupid = 0;
-if (disabled("ec")) {
+if (disabled("ec") || disabled("edward")) {
     $proxy->clientflags("-groups ffdhe3072:ffdhe2048");
 } else {
     $proxy->clientflags("-groups P-256:X25519");
 }
 $proxy->start();
-if (disabled("ec")) {
+if (disabled("ec") || disabled("edward")) {
     ok(TLSProxy::Message->success() && ($selectedgroupid == FFDHE3072),
        "Multiple acceptable key_shares");
 } else {
@@ -202,13 +202,13 @@ if (disabled("ec")) {
 
 #Test 14: Multiple acceptable key_shares - we choose the first one (part 2)
 $proxy->clear();
-if (disabled("ec")) {
+if (disabled("ec") || disabled("edward")) {
     $proxy->clientflags("-curves ffdhe2048:ffdhe3072");
 } else {
     $proxy->clientflags("-curves X25519:P-256");
 }
 $proxy->start();
-if (disabled("ec")) {
+if (disabled("ec") || disabled("edward")) {
     ok(TLSProxy::Message->success() && ($selectedgroupid == FFDHE2048),
        "Multiple acceptable key_shares (part 2)");
 } else {
@@ -219,7 +219,7 @@ if (disabled("ec")) {
 #Test 15: Server sends key_share that wasn't offered should fail
 $proxy->clear();
 $testtype = SELECT_X25519;
-if (disabled("ec")) {
+if (disabled("ec") || disabled("edward")) {
     $proxy->clientflags("-groups ffdhe3072");
 } else {
     $proxy->clientflags("-groups P-256");
@@ -281,7 +281,7 @@ SKIP: {
 $proxy->clear();
 $direction = SERVER_TO_CLIENT;
 $testtype = NO_KEY_SHARES_IN_HRR;
-if (disabled("ec")) {
+if (disabled("ec") || disabled("edward")) {
     $proxy->serverflags("-groups ffdhe2048");
 } else {
     $proxy->serverflags("-groups X25519");
@@ -290,7 +290,7 @@ $proxy->start();
 ok(TLSProxy::Message->fail(), "Server sends HRR with no key_shares");
 
 SKIP: {
-    skip "No EC support in this OpenSSL build", 1 if disabled("ec");
+    skip "No EC or EDWARD support in this OpenSSL build", 1 if disabled("ec") || disabled("edward");
     #Test 23: Trailing data on key_share in ServerHello should fail
     $proxy->clear();
     $direction = CLIENT_TO_SERVER;

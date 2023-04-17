@@ -16,7 +16,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_ec");
 
-plan skip_all => 'EC is not supported in this build' if disabled('ec');
+plan skip_all => 'EC is not supported in this build' if (disabled('ec') || disabled('edward'));
 
 plan tests => 15;
 

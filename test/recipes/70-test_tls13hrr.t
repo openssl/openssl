@@ -26,6 +26,9 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLS1.3 enabled"
     if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
 
+plan skip_all => "$test_name needs EC enabled"
+    if disabled("ec") || disabled("edward");
+
 my $proxy = TLSProxy::Proxy->new(
     undef,
     cmdstr(app(["openssl"]), display => 1),

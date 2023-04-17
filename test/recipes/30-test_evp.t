@@ -26,6 +26,7 @@ my $no_des = disabled("des");
 my $no_dh = disabled("dh");
 my $no_dsa = disabled("dsa");
 my $no_ec = disabled("ec");
+my $no_edward = disabled("edward");
 my $no_ec2m = disabled("ec2m");
 my $no_sm2 = disabled("sm2");
 my $no_siv = disabled("siv");
@@ -73,14 +74,14 @@ push @files, qw(
                 evpmac_cmac_des.txt
                ) unless $no_des;
 push @files, qw(evppkey_dsa.txt) unless $no_dsa;
-push @files, qw(evppkey_ecx.txt) unless $no_ec;
+push @files, qw(evppkey_ecx.txt) unless $no_edward;
 push @files, qw(
                 evppkey_ecc.txt
                 evppkey_ecdh.txt
                 evppkey_ecdsa.txt
                 evppkey_kas.txt
                 evppkey_mismatch.txt
-               ) unless $no_ec;
+               ) unless ($no_ec || $no_edward);
 
 # A list of tests that only run with the default provider
 # (i.e. The algorithms are not present in the fips provider)

@@ -315,7 +315,7 @@ static int test_tls13ccs(int tst)
 
     if ((tst >= 3 && tst <= 5) || tst >= 9) {
         /* HRR handshake */
-#if defined(OPENSSL_NO_EC)
+#if (defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_EDWARD))
 # if !defined(OPENSSL_NO_DH)
         if (!TEST_true(SSL_CTX_set1_groups_list(sctx, "ffdhe3072")))
             goto err;

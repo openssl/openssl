@@ -888,6 +888,7 @@ err:
 
 
 #ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EDWARD
 /* Array indexes used in test_fromdata_ecx */
 # define PRIV_KEY        0
 # define PUB_KEY         1
@@ -1156,6 +1157,7 @@ err:
 
     return ret;
 }
+# endif /* OPENSSL_NO_EDWARD */
 
 static int test_fromdata_ec(void)
 {
@@ -1772,7 +1774,9 @@ int setup_tests(void)
     ADD_TEST(test_fromdata_dsa_fips186_4);
 #endif
 #ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EDWARD
     ADD_ALL_TESTS(test_fromdata_ecx, 4 * 3);
+# endif
     ADD_TEST(test_fromdata_ec);
     ADD_TEST(test_ec_dup_no_operation);
     ADD_TEST(test_ec_dup_keygen_operation);

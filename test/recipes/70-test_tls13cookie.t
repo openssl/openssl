@@ -44,11 +44,11 @@ my $testtype;
 #Test 1: Inserting a cookie into an HRR should see it echoed in the ClientHello
 $testtype = COOKIE_ONLY;
 $proxy->filter(\&cookie_filter);
-$proxy->serverflags("-curves X25519") if !disabled("ec");
+$proxy->serverflags("-curves X25519") if (!disabled("ec") && !disabled("edward"));
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 2;
 SKIP: {
-    skip "EC disabled", 1, if disabled("ec");
+    skip "EC disabled", 1, if (disabled("ec") || disabled("edward"));
     ok(TLSProxy::Message->success() && $cookieseen == 1, "Cookie seen");
 }
 
@@ -58,7 +58,7 @@ SKIP: {
 #        required
 $testtype = COOKIE_AND_KEY_SHARE;
 $proxy->clear();
-if (disabled("ec")) {
+if (disabled("ec") || disabled("edward")) {
     $proxy->clientflags("-curves ffdhe3072:ffdhe2048");
     $proxy->serverflags("-curves ffdhe2048");
 } else {

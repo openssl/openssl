@@ -29,7 +29,7 @@ plan skip_all => "$test_name needs TLSv1.3 enabled"
     if disabled("tls1_3");
 
 plan skip_all => "$test_name needs EC enabled"
-    if disabled("ec");
+    if disabled("ec") || disabled("edward");
 
 @handmessages = (
     [TLSProxy::Message::MT_CLIENT_HELLO,

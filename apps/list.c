@@ -1337,6 +1337,9 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_EC
     BIO_puts(bio_out, "EC\n");
 #endif
+#ifdef OPENSSL_NO_EDWARD
+    BIO_puts(bio_out, "EDWARD\n");
+#endif
 #ifdef OPENSSL_NO_EC2M
     BIO_puts(bio_out, "EC2M\n");
 #endif
