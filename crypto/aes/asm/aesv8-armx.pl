@@ -3367,7 +3367,7 @@ $code.=<<___	if ($flavour =~ /64/);
 .align	4
 .Lxts_dec_tail4x:
 	add	$inp,$inp,#16
-	vld1.32	{$dat0},[$inp],#16
+	tst	$tailcnt,#0xf
 	veor	$tmp1,$dat1,$tmp0
 	vst1.8	{$tmp1},[$out],#16
 	veor	$tmp2,$dat2,$tmp2
@@ -3376,6 +3376,8 @@ $code.=<<___	if ($flavour =~ /64/);
 	veor	$tmp4,$dat4,$tmp4
 	vst1.8	{$tmp3-$tmp4},[$out],#32
 
+	b.eq	.Lxts_dec_abort
+	vld1.32	{$dat0},[$inp],#16
 	b	.Lxts_done
 .align	4
 .Lxts_outer_dec_tail:
