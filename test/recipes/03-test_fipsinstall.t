@@ -24,7 +24,15 @@ use platform;
 
 plan skip_all => "Test only supported in a fips build" if disabled("fips");
 
-plan tests => 34;
+# Compatible options for pedantic FIPS compliance
+my @pedantic_okay =
+    ( 'ems_check', 'no_drbg_truncated_digests', 'self_test_onload' );
+
+# Incompatible options for pedantic FIPS compliance
+my @pedantic_fail =
+    ( 'no_conditional_errors', 'no_security_checks', 'self_test_oninstall' );
+
+plan tests => 35 + (scalar @pedantic_okay) + (scalar @pedantic_fail);
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 my $fipskey = $ENV{FIPSKEY} // config('FIPSKEY') // '00';
@@ -379,4 +387,21 @@ ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
 
 ok(find_line_file('drbg-no-trunc-md = 1', 'fips.cnf') == 1,
    'fipsinstall will allow option for truncated digests with DRBGs');
+
+
+ok(run(app(['openssl', 'fipsinstall', '-out', 'fips-pedantic.cnf',
+            '-module', $infile, '-pedantic'])),
+       "fipsinstall accepts -pedantic option");
+
+foreach my $o (@pedantic_okay) {
+    ok(run(app(['openssl', 'fipsinstall', '-out', "fips-${o}.cnf",
+                '-module', $infile, '-pedantic', "-${o}"])),
+           "fipsinstall accepts -${o} after -pedantic option");
+}
+
+foreach my $o (@pedantic_fail) {
+    ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips_fail.cnf',
+                 '-module', $infile, '-pedantic', "-${o}"])),
+            "fipsinstall disallows -${o} after -pedantic option");
+}
 
