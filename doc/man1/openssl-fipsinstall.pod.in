@@ -19,6 +19,7 @@ B<openssl fipsinstall>
 [B<-macopt> I<nm>:I<v>]
 [B<-noout>]
 [B<-quiet>]
+[B<-pedantic>]
 [B<-no_conditional_errors>]
 [B<-no_security_checks>]
 [B<-ems_check>]
@@ -157,6 +158,14 @@ The default digest is SHA-256.
 =item B<-noout>
 
 Disable logging of the self tests.
+
+=item B<-pedantic>
+
+Configure the module so that it is strictly FIPS compliant rather
+than being backwards compatible.  This enables conditional errors,
+security checks etc.  Note that any previous configuration options will
+be overwritten and any subsequent configuration options that violate
+FIPS compliance will result in an error.
 
 =item B<-no_conditional_errors>
 
