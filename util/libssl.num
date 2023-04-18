@@ -562,3 +562,5 @@ SSL_is_tls                              ?	3_2_0	EXIST::FUNCTION:
 SSL_is_quic                             ?	3_2_0	EXIST::FUNCTION:
 SSL_new_stream                          ?	3_2_0	EXIST::FUNCTION:
 SSL_get0_connection                     ?	3_2_0	EXIST::FUNCTION:
+SSL_is_connection                       ?	3_2_0	EXIST::FUNCTION:
+SSL_get_stream_type                     ?	3_2_0	EXIST::FUNCTION:
