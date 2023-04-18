@@ -215,16 +215,17 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
         }
 
         if (c_connected && c_write_done && !s_read_done) {
-            if (!ossl_quic_tserver_read(tserver,
+            if (!ossl_quic_tserver_read(tserver, 0,
                                         (unsigned char *)msg2 + s_total_read,
                                         sizeof(msg2) - s_total_read, &l)) {
-                if (!TEST_true(ossl_quic_tserver_has_read_ended(tserver)))
+                if (!TEST_true(ossl_quic_tserver_has_read_ended(tserver, 0)))
                     goto err;
 
                 if (!TEST_mem_eq(msg1, sizeof(msg1) - 1, msg2, s_total_read))
                     goto err;
 
                 s_begin_write = 1;
+                s_read_done   = 1;
             } else {
                 s_total_read += l;
                 if (!TEST_size_t_le(s_total_read, sizeof(msg1) - 1))
@@ -233,7 +234,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
         }
 
         if (s_begin_write && s_total_written < sizeof(msg1) - 1) {
-            if (!TEST_true(ossl_quic_tserver_write(tserver,
+            if (!TEST_true(ossl_quic_tserver_write(tserver, 0,
                                                    (unsigned char *)msg2 + s_total_written,
                                                    sizeof(msg1) - 1 - s_total_written, &l)))
                 goto err;
@@ -241,7 +242,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
             s_total_written += l;
 
             if (s_total_written == sizeof(msg1) - 1) {
-                ossl_quic_tserver_conclude(tserver);
+                ossl_quic_tserver_conclude(tserver, 0);
                 c_begin_read = 1;
             }
         }

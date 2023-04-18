@@ -86,6 +86,7 @@ int ossl_quic_tserver_is_terminated(const QUIC_TSERVER *srv);
  * ossl_quic_tserver_has_read_ended() to identify this condition.
  */
 int ossl_quic_tserver_read(QUIC_TSERVER *srv,
+                           uint64_t stream_id,
                            unsigned char *buf,
                            size_t buf_len,
                            size_t *bytes_read);
@@ -93,7 +94,7 @@ int ossl_quic_tserver_read(QUIC_TSERVER *srv,
 /*
  * Returns 1 if the read part of the stream has ended normally.
  */
-int ossl_quic_tserver_has_read_ended(QUIC_TSERVER *srv);
+int ossl_quic_tserver_has_read_ended(QUIC_TSERVER *srv, uint64_t stream_id);
 
 /*
  * Attempts to write to stream 0. Writes the number of bytes consumed to
@@ -107,6 +108,7 @@ int ossl_quic_tserver_has_read_ended(QUIC_TSERVER *srv);
  * Returns 0 if connection is not currently active.
  */
 int ossl_quic_tserver_write(QUIC_TSERVER *srv,
+                            uint64_t stream_id,
                             const unsigned char *buf,
                             size_t buf_len,
                             size_t *bytes_written);
@@ -114,7 +116,15 @@ int ossl_quic_tserver_write(QUIC_TSERVER *srv,
 /*
  * Signals normal end of the stream.
  */
-int ossl_quic_tserver_conclude(QUIC_TSERVER *srv);
+int ossl_quic_tserver_conclude(QUIC_TSERVER *srv, uint64_t stream_id);
+
+/*
+ * Create a server-initiated stream. The stream ID of the newly
+ * created stream is written to *stream_id.
+ */
+int ossl_quic_tserver_stream_new(QUIC_TSERVER *srv,
+                                 int is_uni,
+                                 uint64_t *stream_id);
 
 BIO *ossl_quic_tserver_get0_rbio(QUIC_TSERVER *srv);
 

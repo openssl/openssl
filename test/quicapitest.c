@@ -42,6 +42,7 @@ static int test_quic_write_read(int idx)
     size_t msglen = strlen(msg);
     size_t numbytes = 0;
     int ssock = 0, csock = 0;
+    uint64_t sid = UINT64_MAX;
 
     if (idx == 1 && !qtest_supports_blocking())
         return TEST_skip("Blocking tests not supported in this build");
@@ -61,6 +62,10 @@ static int test_quic_write_read(int idx)
             goto end;
     }
 
+    if (!TEST_true(ossl_quic_tserver_stream_new(qtserv, /*is_uni=*/0, &sid))
+        || !TEST_uint64_t_eq(sid, 1)) /* server-initiated, so first SID is 1 */
+        goto end;
+
     for (j = 0; j < 2; j++) {
         /* Check that sending and receiving app data is ok */
         if (!TEST_true(SSL_write_ex(clientquic, msg, msglen, &numbytes)))
@@ -72,7 +77,7 @@ static int test_quic_write_read(int idx)
 
                 ossl_quic_tserver_tick(qtserv);
 
-                if (!TEST_true(ossl_quic_tserver_read(qtserv, buf, sizeof(buf),
+                if (!TEST_true(ossl_quic_tserver_read(qtserv, sid, buf, sizeof(buf),
                                                       &numbytes)))
                     goto end;
             } while (numbytes == 0);
@@ -81,7 +86,7 @@ static int test_quic_write_read(int idx)
                 goto end;
         }
 
-        if (!TEST_true(ossl_quic_tserver_write(qtserv, (unsigned char *)msg,
+        if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, (unsigned char *)msg,
                                                msglen, &numbytes)))
             goto end;
         ossl_quic_tserver_tick(qtserv);
