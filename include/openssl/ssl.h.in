@@ -2266,6 +2266,7 @@ __owur int SSL_net_write_desired(SSL *s);
 __owur int SSL_set_blocking_mode(SSL *s, int blocking);
 __owur int SSL_get_blocking_mode(SSL *s);
 __owur int SSL_set_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr);
+__owur SSL *SSL_get0_connection(SSL *s);
 
 #define SSL_STREAM_FLAG_UNI     (1U << 0)
 __owur SSL *SSL_new_stream(SSL *s, uint64_t flags);
