@@ -129,6 +129,22 @@ int ossl_quic_tserver_stream_new(QUIC_TSERVER *srv,
 
 BIO *ossl_quic_tserver_get0_rbio(QUIC_TSERVER *srv);
 
+/*
+ * Returns 1 if the peer has sent a STOP_SENDING frame for a stream.
+ * app_error_code is written if this returns 1.
+ */
+int ossl_quic_tserver_stream_has_peer_stop_sending(QUIC_TSERVER *srv,
+                                                   uint64_t stream_id,
+                                                   uint64_t *app_error_code);
+
+/*
+ * Returns 1 if the peer has sent a RESET_STREAM frame for a stream.
+ * app_error_code is written if this returns 1.
+ */
+int ossl_quic_tserver_stream_has_peer_reset_stream(QUIC_TSERVER *srv,
+                                                   uint64_t stream_id,
+                                                   uint64_t *app_error_code);
+
 # endif
 
 #endif
