@@ -254,6 +254,12 @@ void ossl_quic_sstream_fin(QUIC_SSTREAM *qss);
 int ossl_quic_sstream_get_final_size(QUIC_SSTREAM *qss, uint64_t *final_size);
 
 /*
+ * Returns 1 iff all bytes (and any FIN, if any) which have been appended to the
+ * QUIC_SSTREAM so far, and any FIN (if any), have been both sent and acked.
+ */
+int ossl_quic_sstream_is_totally_acked(QUIC_SSTREAM *qss);
+
+/*
  * Resizes the internal ring buffer. All stream data is preserved safely.
  *
  * This can be used to expand or contract the ring buffer, but not to contract
