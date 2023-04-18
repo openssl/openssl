@@ -129,7 +129,9 @@ static int depack_do_frame_reset_stream(PACKET *pkt,
         return 0;
     }
 
-    stream->peer_reset_stream = 1;
+    stream->peer_reset_stream       = 1;
+    stream->peer_reset_stream_aec   = frame_data.app_error_code;
+
     ossl_quic_stream_map_update_state(&ch->qsm, stream);
     return 1;
 }
@@ -171,7 +173,8 @@ static int depack_do_frame_stop_sending(PACKET *pkt,
         return 0;
     }
 
-    stream->peer_stop_sending = 1;
+    stream->peer_stop_sending       = 1;
+    stream->peer_stop_sending_aec   = frame_data.app_error_code;
 
     /*
      * RFC 9000 s. 3.5: Receiving a STOP_SENDING frame means we must respond in

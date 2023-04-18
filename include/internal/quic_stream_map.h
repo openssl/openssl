@@ -60,6 +60,18 @@ struct quic_stream_st {
      */
     uint64_t        reset_stream_aec;
 
+    /*
+     * Application Error Code (AEC) for incoming STOP_SENDING frame.
+     * This is only valid if peer_stop_sending is 1.
+     */
+    uint64_t        peer_stop_sending_aec;
+
+    /*
+     * Application Error Code (AEC) for incoming RESET_STREAM frame.
+     * This  is only valid if peer_reset_stream is 1.
+     */
+    uint64_t        peer_reset_stream_aec;
+
     /* Temporary value used by TXP. */
     uint64_t        txp_txfc_new_credit_consumed;
 
