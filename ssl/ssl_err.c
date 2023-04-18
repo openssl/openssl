@@ -104,6 +104,7 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "compression library error"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CONNECTION_TYPE_NOT_SET),
     "connection type not set"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CONN_USE_ONLY), "conn use only"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CONTEXT_NOT_DANE_ENABLED),
     "context not dane enabled"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_COOKIE_GEN_CALLBACK_FAILURE),

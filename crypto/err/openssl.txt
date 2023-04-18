@@ -1342,6 +1342,7 @@ SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE:307:\
 	compression id not within private range
 SSL_R_COMPRESSION_LIBRARY_ERROR:142:compression library error
 SSL_R_CONNECTION_TYPE_NOT_SET:144:connection type not set
+SSL_R_CONN_USE_ONLY:356:conn use only
 SSL_R_CONTEXT_NOT_DANE_ENABLED:167:context not dane enabled
 SSL_R_COOKIE_GEN_CALLBACK_FAILURE:400:cookie gen callback failure
 SSL_R_COOKIE_MISMATCH:308:cookie mismatch
