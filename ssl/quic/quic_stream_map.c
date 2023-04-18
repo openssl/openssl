@@ -102,7 +102,9 @@ static int cmp_stream(const QUIC_STREAM *a, const QUIC_STREAM *b)
 
 int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
                               uint64_t (*get_stream_limit_cb)(int uni, void *arg),
-                              void *get_stream_limit_cb_arg)
+                              void *get_stream_limit_cb_arg,
+                              QUIC_RXFC *max_streams_bidi_rxfc,
+                              QUIC_RXFC *max_streams_uni_rxfc)
 {
     qsm->map = lh_QUIC_STREAM_new(hash_stream, cmp_stream);
     qsm->active_list.prev = qsm->active_list.next = &qsm->active_list;
@@ -114,6 +116,8 @@ int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
 
     qsm->get_stream_limit_cb        = get_stream_limit_cb;
     qsm->get_stream_limit_cb_arg    = get_stream_limit_cb_arg;
+    qsm->max_streams_bidi_rxfc      = max_streams_bidi_rxfc;
+    qsm->max_streams_uni_rxfc       = max_streams_uni_rxfc;
     return 1;
 }
 
@@ -294,11 +298,24 @@ void ossl_quic_stream_map_push_accept_queue(QUIC_STREAM_MAP *qsm,
     ++qsm->num_accept;
 }
 
-void ossl_quic_stream_map_remove_from_accept_queue(QUIC_STREAM_MAP *qsm,
-                                                   QUIC_STREAM *s)
+static QUIC_RXFC *qsm_get_max_streams_rxfc(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
 {
+    return ossl_quic_stream_is_bidi(s)
+        ? qsm->max_streams_bidi_rxfc
+        : qsm->max_streams_uni_rxfc;
+}
+
+void ossl_quic_stream_map_remove_from_accept_queue(QUIC_STREAM_MAP *qsm,
+                                                   QUIC_STREAM *s,
+                                                   OSSL_TIME rtt)
+{
+    QUIC_RXFC *max_streams_rxfc;
+
     list_remove(&qsm->accept_list, &s->accept_node);
     --qsm->num_accept;
+
+    if ((max_streams_rxfc = qsm_get_max_streams_rxfc(qsm, s)) != NULL)
+        ossl_quic_rxfc_on_retire(max_streams_rxfc, 1, rtt);
 }
 
 size_t ossl_quic_stream_map_get_accept_queue_len(QUIC_STREAM_MAP *qsm)

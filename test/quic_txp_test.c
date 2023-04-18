@@ -174,7 +174,9 @@ static int helper_init(struct helper *h)
                                                h->cc_data)))
         goto err;
 
-    if (!TEST_true(ossl_quic_stream_map_init(&h->qsm, NULL, NULL)))
+    if (!TEST_true(ossl_quic_stream_map_init(&h->qsm, NULL, NULL,
+                                             &h->max_streams_bidi_rxfc,
+                                             &h->max_streams_uni_rxfc)))
         goto err;
 
     h->have_qsm = 1;

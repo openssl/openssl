@@ -256,6 +256,7 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
     if (stream == NULL) {
         uint64_t peer_role, stream_ordinal;
         uint64_t *p_next_ordinal_local, *p_next_ordinal_remote;
+        QUIC_RXFC *max_streams_fc;
         int is_uni;
 
         /*
@@ -299,6 +300,32 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
                 ? &ch->next_remote_stream_ordinal_uni
                 : &ch->next_remote_stream_ordinal_bidi;
 
+            /* Check this isn't violating stream count flow control. */
+            max_streams_fc = is_uni
+                ? &ch->max_streams_uni_rxfc
+                : &ch->max_streams_bidi_rxfc;
+
+            if (!ossl_quic_rxfc_on_rx_stream_frame(max_streams_fc,
+                                                   stream_ordinal + 1,
+                                                   /*is_fin=*/0)) {
+                ossl_quic_channel_raise_protocol_error(ch,
+                                                       QUIC_ERR_INTERNAL_ERROR,
+                                                       frame_type,
+                                                       "internal error (stream count RXFC)");
+                return 0;
+            }
+
+            if (ossl_quic_rxfc_get_error(max_streams_fc, 0) != QUIC_ERR_NO_ERROR) {
+                ossl_quic_channel_raise_protocol_error(ch, QUIC_ERR_STREAM_LIMIT_ERROR,
+                                                       frame_type,
+                                                       "exceeded maximum allowed streams");
+                return 0;
+            }
+
+            /*
+             * Create the named stream and any streams coming before it yet to
+             * be created.
+             */
             while (*p_next_ordinal_remote <= stream_ordinal) {
                 uint64_t stream_id = (*p_next_ordinal_remote << 2) |
                     (frame_data.stream_id
