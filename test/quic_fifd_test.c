@@ -40,6 +40,9 @@ static void regen_frame(uint64_t frame_type, uint64_t stream_id,
     regen_frame_p(frame_type, stream_id, pkt, arg);
 }
 
+static void sstream_updated(uint64_t stream_id, void *arg)
+{}
+
 typedef struct info_st {
     QUIC_FIFD fifd;
     OSSL_ACKM *ackm;
@@ -329,7 +332,8 @@ static int test_fifd(int idx)
         || !TEST_true(ossl_quic_fifd_init(&info.fifd, info.cfq, info.ackm,
                                           info.txpim,
                                           get_sstream_by_id, NULL,
-                                          regen_frame, NULL)))
+                                          regen_frame, NULL,
+                                          sstream_updated, NULL)))
         goto err;
 
     for (i = 0; i < OSSL_NELEM(info.sstream); ++i)
