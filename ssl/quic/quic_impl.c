@@ -354,15 +354,20 @@ void ossl_quic_free(SSL *s)
         assert(ctx.qc->num_xso > 0);
         --ctx.qc->num_xso;
 
-        ctx.xso->stream->deleted = 1;
+        /* If a stream's send part has not been finished, auto-reset it. */
+        if (ctx.xso->stream->sstream != NULL
+            && !ossl_quic_sstream_get_final_size(ctx.xso->stream->sstream, NULL))
+            ossl_quic_stream_map_reset_stream_send_part(ossl_quic_channel_get_qsm(ctx.qc->ch),
+                                                        ctx.xso->stream, 0);
 
-        /* Auto-conclude stream. */
-        /* TODO(QUIC): Do RESET_STREAM here instead of auto-conclude */
-        if (ctx.xso->stream->sstream != NULL)
-            ossl_quic_sstream_fin(ctx.xso->stream->sstream);
+        /* Do STOP_SENDING for the receive part, if applicable. */
+        if (ctx.xso->stream->rstream != NULL)
+            ossl_quic_stream_map_stop_sending_recv_part(ossl_quic_channel_get_qsm(ctx.qc->ch),
+                                                        ctx.xso->stream, 0);
 
         /* Update stream state. */
-        ossl_quic_stream_map_update_state(ossl_quic_channel_get_qsm(ctx.xso->conn->ch),
+        ctx.xso->stream->deleted = 1;
+        ossl_quic_stream_map_update_state(ossl_quic_channel_get_qsm(ctx.qc->ch),
                                           ctx.xso->stream);
 
         quic_unlock(ctx.qc);
