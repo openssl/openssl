@@ -159,6 +159,14 @@ struct quic_channel_st {
     /* Maximum active CID limit, as negotiated by transport parameters. */
     uint64_t                        rx_active_conn_id_limit;
 
+    /*
+     * Used to allocate stream IDs. This is a stream ordinal, i.e., a stream ID
+     * without the low two bits designating type and initiator. Shift and or in
+     * the type bits to convert to a stream ID.
+     */
+    uint64_t                        next_local_stream_ordinal_bidi;
+    uint64_t                        next_local_stream_ordinal_uni;
+
     /* Valid if we are in the TERMINATING or TERMINATED states. */
     QUIC_TERMINATE_CAUSE            terminate_cause;
 

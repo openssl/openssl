@@ -270,6 +270,13 @@ SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch);
  */
 CRYPTO_MUTEX *ossl_quic_channel_get_mutex(QUIC_CHANNEL *ch);
 
+/*
+ * Creates a new locally-initiated stream in the stream mapper, choosing an
+ * appropriate stream ID. If is_uni is 1, creates a unidirectional stream, else
+ * creates a bidirectional stream.
+ */
+QUIC_STREAM *ossl_quic_channel_new_stream(QUIC_CHANNEL *ch, int is_uni);
+
 # endif
 
 #endif

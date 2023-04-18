@@ -2213,3 +2213,32 @@ SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch)
 {
     return ch->tls;
 }
+
+QUIC_STREAM *ossl_quic_channel_new_stream(QUIC_CHANNEL *ch, int is_uni)
+{
+    QUIC_STREAM *qs;
+    int type = 0;
+    uint64_t stream_id, *p_next_ordinal;
+
+    type |= ch->is_server ? QUIC_STREAM_INITIATOR_SERVER
+                          : QUIC_STREAM_INITIATOR_CLIENT;
+
+    if (is_uni) {
+        p_next_ordinal = &ch->next_local_stream_ordinal_uni;
+        type |= QUIC_STREAM_DIR_UNI;
+    } else {
+        p_next_ordinal = &ch->next_local_stream_ordinal_bidi;
+        type |= QUIC_STREAM_DIR_BIDI;
+    }
+
+    if (*p_next_ordinal >= ((uint64_t)1) << 62)
+        return NULL;
+
+    stream_id = ((*p_next_ordinal) << 2) | type;
+
+    if ((qs = ossl_quic_stream_map_alloc(&ch->qsm, stream_id, type)) == NULL)
+        return NULL;
+
+    ++*p_next_ordinal;
+    return qs;
+}

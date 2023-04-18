@@ -257,10 +257,16 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     if (!create_channel(qc))
         goto err;
 
+    if ((qc->default_xso = (QUIC_XSO *)ossl_quic_conn_stream_new(&qc->ssl, 0)) == NULL)
+        goto err;
+
     return ssl_base;
 
 err:
-    SSL_free(qc->tls);
+    if (qc != NULL) {
+        ossl_quic_channel_free(qc->ch);
+        SSL_free(qc->tls);
+    }
     OPENSSL_free(qc);
     return NULL;
 }
@@ -275,7 +281,38 @@ void ossl_quic_free(SSL *s)
     if (!expect_quic(s, &ctx))
         return;
 
+    if (ctx.is_stream) {
+        /*
+         * When a QSSO is freed, the XSO is freed immediately, because the XSO
+         * itself only contains API personality layer data. However the
+         * underlying QUIC_STREAM is not freed immediately but is instead marked
+         * as deleted for later collection.
+         */
+
+        quic_lock(ctx.qc);
+
+        assert(ctx.qc->num_xso > 0);
+        --ctx.qc->num_xso;
+
+        ctx.xso->stream->deleted = 1;
+
+        quic_unlock(ctx.qc);
+
+        /* Note: SSL_free calls OPENSSL_free(xso) for us */
+        return;
+    }
+
     quic_lock(ctx.qc);
+
+    /*
+     * Free the default XSO, if any. The QUIC_STREAM is not deleted at this
+     * stage, but is freed during the channel free when the whole QSM is freed.
+     */
+    if (ctx.qc->default_xso != NULL)
+        SSL_free(&ctx.qc->default_xso->ssl);
+
+    /* Ensure we have no remaining XSOs. */
+    assert(ctx.qc->num_xso == 0);
 
     if (ctx.qc->is_thread_assisted && ctx.qc->started) {
         ossl_quic_thread_assist_wait_stopped(&ctx.qc->thread_assist);
@@ -1047,12 +1084,20 @@ SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags)
 {
     QCTX ctx;
     QUIC_XSO *xso = NULL;
+    int is_uni = ((flags & SSL_STREAM_FLAG_UNI) != 0);
 
     if (!expect_quic_conn_only(s, &ctx))
         return NULL;
 
+    quic_lock(ctx.qc);
+
+    if (ossl_quic_channel_is_term_any(ctx.qc->ch)) {
+        QUIC_RAISE_NON_NORMAL_ERROR(ctx.qc, SSL_R_PROTOCOL_IS_SHUTDOWN, NULL);
+        goto err;
+    }
+
     if ((xso = OPENSSL_zalloc(sizeof(*xso))) == NULL)
-        return NULL;
+        goto err;
 
     if (!ossl_ssl_init(&xso->ssl, s->ctx, s->method, SSL_TYPE_QUIC_XSO))
         goto err;
@@ -1061,11 +1106,18 @@ SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags)
     xso->blocking   = ctx.qc->default_blocking;
     xso->ssl_mode   = ctx.qc->default_ssl_mode;
 
-    xso->stream     = NULL; /* TODO XXX ossl_quic_channel_new_stream */
+    xso->stream     = ossl_quic_channel_new_stream(ctx.qc->ch, is_uni);
+    if (xso->stream == NULL)
+        goto err;
+
+    ++ctx.qc->num_xso;
+
+    quic_unlock(ctx.qc);
     return &xso->ssl;
 
 err:
     OPENSSL_free(xso);
+    quic_unlock(ctx.qc);
     return NULL;
 }
 

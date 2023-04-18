@@ -101,6 +101,9 @@ struct quic_stream_st {
 
     /* A FIN has been retired from the rstream buffer. */
     unsigned int    recv_fin_retired        : 1;
+
+    /* The stream's XSO has been deleted. Pending GC. */
+    unsigned int    deleted                 : 1;
 };
 
 /*
