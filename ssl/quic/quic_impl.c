@@ -25,6 +25,9 @@ static int qc_wait_for_default_xso_for_read(QUIC_CONNECTION *qc);
 static void quic_lock(QUIC_CONNECTION *qc);
 static void quic_unlock(QUIC_CONNECTION *qc);
 static int quic_do_handshake(QUIC_CONNECTION *qc);
+static void qc_update_reject_policy(QUIC_CONNECTION *qc);
+static void qc_touch_default_xso(QUIC_CONNECTION *qc);
+static void qc_set_default_xso(QUIC_CONNECTION *qc, QUIC_XSO *xso, int touch);
 
 /*
  * QUIC Front-End I/O API: Common Utilities
@@ -303,6 +306,8 @@ SSL *ossl_quic_new(SSL_CTX *ctx)
     if (!create_channel(qc))
         goto err;
 
+    qc_update_reject_policy(qc);
+
     /*
      * We do not create the default XSO yet. The reason for this is that the
      * stream ID of the default XSO will depend on whether the stream is client
@@ -456,6 +461,21 @@ void ossl_quic_conn_force_assist_thread_wake(SSL *s)
 
     if (ctx.qc->is_thread_assisted && ctx.qc->started)
         ossl_quic_thread_assist_notify_deadline_changed(&ctx.qc->thread_assist);
+}
+
+QUIC_NEEDS_LOCK
+static void qc_touch_default_xso(QUIC_CONNECTION *qc)
+{
+    qc->default_xso_created = 1;
+    qc_update_reject_policy(qc);
+}
+
+QUIC_NEEDS_LOCK
+static void qc_set_default_xso(QUIC_CONNECTION *qc, QUIC_XSO *xso, int touch)
+{
+    qc->default_xso = xso;
+    if (touch)
+        qc_touch_default_xso(qc);
 }
 
 /*
@@ -1170,11 +1190,12 @@ static int qc_try_create_default_xso_for_write(QUIC_CONNECTION *qc)
     if (qc->default_stream_mode == SSL_DEFAULT_STREAM_MODE_AUTO_UNI)
         flags |= SSL_STREAM_FLAG_UNI;
 
-    qc->default_xso = (QUIC_XSO *)ossl_quic_conn_stream_new(&qc->ssl, flags);
+    qc_set_default_xso(qc, (QUIC_XSO *)ossl_quic_conn_stream_new(&qc->ssl, flags),
+                       /*touch=*/0);
     if (qc->default_xso == NULL)
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
 
-    qc->default_xso_created = 1;
+    qc_touch_default_xso(qc);
     return 1;
 }
 
@@ -1267,11 +1288,11 @@ static int qc_wait_for_default_xso_for_read(QUIC_CONNECTION *qc)
      * We now have qs != NULL. Make it the default stream, creating the
      * necessary XSO.
      */
-    qc->default_xso = create_xso_from_stream(qc, qs);
+    qc_set_default_xso(qc, create_xso_from_stream(qc, qs), /*touch=*/0);
     if (qc->default_xso == NULL)
         return QUIC_RAISE_NON_NORMAL_ERROR(qc, ERR_R_INTERNAL_ERROR, NULL);
 
-    qc->default_xso_created = 1;
+    qc_touch_default_xso(qc); /* inhibits default XSO */
     return 1;
 }
 
@@ -1326,7 +1347,7 @@ SSL *ossl_quic_conn_stream_new(SSL *s, uint64_t flags)
     if (xso == NULL)
         goto err;
 
-    ctx.qc->default_xso_created = 1; /* inhibits default XSO */
+    qc_touch_default_xso(ctx.qc); /* inhibits default XSO */
     quic_unlock(ctx.qc);
     return &xso->ssl;
 
@@ -2055,11 +2076,9 @@ SSL *ossl_quic_detach_stream(SSL *s)
 
     quic_lock(ctx.qc);
 
-    xso = ctx.qc->default_xso;
-    ctx.qc->default_xso = NULL;
-
     /* Calling this function inhibits default XSO autocreation. */
-    ctx.qc->default_xso_created = 1;
+    xso = ctx.qc->default_xso;
+    qc_set_default_xso(ctx.qc, NULL, /*touch=*/1);
 
     quic_unlock(ctx.qc);
 
@@ -2090,10 +2109,8 @@ int ossl_quic_attach_stream(SSL *conn, SSL *stream)
                                            "connection already has a default stream");
     }
 
-    ctx.qc->default_xso = (QUIC_XSO *)stream;
-
     /* Calling this function inhibits default XSO autocreation. */
-    ctx.qc->default_xso_created = 1;
+    qc_set_default_xso(ctx.qc, (QUIC_XSO *)stream, /*touch=*/1);
 
     quic_unlock(ctx.qc);
     return 1;
@@ -2103,6 +2120,33 @@ int ossl_quic_attach_stream(SSL *conn, SSL *stream)
  * SSL_set_incoming_stream_reject_policy
  * -------------------------------------
  */
+QUIC_NEEDS_LOCK
+static int qc_get_effective_incoming_stream_reject_policy(QUIC_CONNECTION *qc)
+{
+    switch (qc->incoming_stream_reject_policy) {
+        case SSL_INCOMING_STREAM_REJECT_POLICY_AUTO:
+            if ((qc->default_xso == NULL && !qc->default_xso_created)
+                || qc->default_stream_mode == SSL_DEFAULT_STREAM_MODE_NONE)
+                return SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT;
+            else
+                return SSL_INCOMING_STREAM_REJECT_POLICY_REJECT;
+
+        default:
+            return qc->incoming_stream_reject_policy;
+    }
+}
+
+QUIC_NEEDS_LOCK
+static void qc_update_reject_policy(QUIC_CONNECTION *qc)
+{
+    int policy = qc_get_effective_incoming_stream_reject_policy(qc);
+    int enable_reject = (policy == SSL_INCOMING_STREAM_REJECT_POLICY_REJECT);
+
+    ossl_quic_channel_set_incoming_stream_auto_reject(qc->ch,
+                                                      enable_reject,
+                                                      qc->incoming_stream_reject_aec);
+}
+
 QUIC_TAKES_LOCK
 int ossl_quic_set_incoming_stream_reject_policy(SSL *s, int policy,
                                                 uint64_t aec)
@@ -2128,6 +2172,7 @@ int ossl_quic_set_incoming_stream_reject_policy(SSL *s, int policy,
         break;
     }
 
+    qc_update_reject_policy(ctx.qc);
     quic_unlock(ctx.qc);
     return ret;
 }
@@ -2136,22 +2181,6 @@ int ossl_quic_set_incoming_stream_reject_policy(SSL *s, int policy,
  * SSL_accept_stream
  * -----------------
  */
-QUIC_NEEDS_LOCK
-static int qc_get_effective_incoming_stream_reject_policy(QUIC_CONNECTION *qc)
-{
-    switch (qc->incoming_stream_reject_policy) {
-        case SSL_INCOMING_STREAM_REJECT_POLICY_AUTO:
-            if ((qc->default_xso == NULL && qc->default_xso_created)
-                || qc->default_stream_mode == SSL_DEFAULT_STREAM_MODE_NONE)
-                return SSL_INCOMING_STREAM_REJECT_POLICY_ACCEPT;
-            else
-                return SSL_INCOMING_STREAM_REJECT_POLICY_REJECT;
-
-        default:
-            return qc->incoming_stream_reject_policy;
-    }
-}
-
 struct wait_for_incoming_stream_args {
     QUIC_CONNECTION *qc;
     QUIC_STREAM     *qs;
@@ -2228,7 +2257,7 @@ SSL *ossl_quic_accept_stream(SSL *s, uint64_t flags)
     new_s = &xso->ssl;
 
     /* Calling this function inhibits default XSO autocreation. */
-    ctx.qc->default_xso_created = 1;
+    qc_touch_default_xso(ctx.qc); /* inhibits default XSO */
 
 out:
     quic_unlock(ctx.qc);

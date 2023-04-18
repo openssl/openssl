@@ -2342,10 +2342,32 @@ QUIC_STREAM *ossl_quic_channel_new_stream_remote(QUIC_CHANNEL *ch,
     if (!ch_init_new_stream(ch, qs, /*can_send=*/!is_uni, /*can_recv=*/1))
         goto err;
 
-    ossl_quic_stream_map_push_accept_queue(&ch->qsm, qs);
+    if (ch->incoming_stream_auto_reject)
+        ossl_quic_channel_reject_stream(ch, qs);
+    else
+        ossl_quic_stream_map_push_accept_queue(&ch->qsm, qs);
+
     return qs;
 
 err:
     ossl_quic_stream_map_release(&ch->qsm, qs);
     return NULL;
+}
+
+void ossl_quic_channel_set_incoming_stream_auto_reject(QUIC_CHANNEL *ch,
+                                                       int enable,
+                                                       uint64_t aec)
+{
+    ch->incoming_stream_auto_reject     = (enable != 0);
+    ch->incoming_stream_auto_reject_aec = aec;
+}
+
+void ossl_quic_channel_reject_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs)
+{
+    ossl_quic_stream_stop_sending(qs, ch->incoming_stream_auto_reject_aec);
+    ossl_quic_stream_reset(qs, ch->incoming_stream_auto_reject_aec);
+
+    qs->deleted = 1;
+
+    ossl_quic_stream_map_update_state(&ch->qsm, qs);
 }

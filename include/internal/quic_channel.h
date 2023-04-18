@@ -299,6 +299,23 @@ QUIC_STREAM *ossl_quic_channel_new_stream_local(QUIC_CHANNEL *ch, int is_uni);
 QUIC_STREAM *ossl_quic_channel_new_stream_remote(QUIC_CHANNEL *ch,
                                                  uint64_t stream_id);
 
+/*
+ * Configures incoming stream auto-reject. If enabled, incoming streams have
+ * both their sending and receiving parts automatically rejected using
+ * STOP_SENDING and STREAM_RESET frames. aec is the application error
+ * code to be used for those frames.
+ */
+void ossl_quic_channel_set_incoming_stream_auto_reject(QUIC_CHANNEL *ch,
+                                                       int enable,
+                                                       uint64_t aec);
+
+/*
+ * Causes the channel to reject the sending and receiving parts of a stream,
+ * as though autorejected. Can be used if a stream has already been
+ * accepted.
+ */
+void ossl_quic_channel_reject_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs);
+
 # endif
 
 #endif

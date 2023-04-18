@@ -167,6 +167,12 @@ struct quic_channel_st {
     uint64_t                        next_local_stream_ordinal_bidi;
     uint64_t                        next_local_stream_ordinal_uni;
 
+    /*
+     * Application error code to be used for STOP_SENDING/RESET_STREAM frames
+     * used to autoreject incoming streams.
+     */
+    uint64_t                        incoming_stream_auto_reject_aec;
+
     /* Valid if we are in the TERMINATING or TERMINATED states. */
     QUIC_TERMINATE_CAUSE            terminate_cause;
 
@@ -290,6 +296,9 @@ struct quic_channel_st {
      * 10.1).
      */
     unsigned int                    have_sent_ack_eliciting_since_rx    : 1;
+
+    /* Should incoming streams automatically be rejected? */
+    unsigned int                    incoming_stream_auto_reject         : 1;
 };
 
 # endif
