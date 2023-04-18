@@ -21,7 +21,8 @@ static void list_insert_tail(QUIC_STREAM_LIST_NODE *l,
                              QUIC_STREAM_LIST_NODE *n)
 {
     /* Must not be in list. */
-    assert(n->prev == NULL && n->next == NULL);
+    assert(n->prev == NULL && n->next == NULL
+           && l->prev != NULL && l->next != NULL);
 
     n->prev = l->prev;
     n->prev->next = n;
@@ -43,12 +44,18 @@ static void list_remove(QUIC_STREAM_LIST_NODE *l,
 static QUIC_STREAM *list_next(QUIC_STREAM_LIST_NODE *l, QUIC_STREAM_LIST_NODE *n,
                               size_t off)
 {
+    assert(n->prev != NULL && n->next != NULL
+           && (n == l || (n->prev != n && n->next != n))
+           && l->prev != NULL && l->next != NULL);
+
     n = n->next;
 
     if (n == l)
         n = n->next;
     if (n == l)
         return NULL;
+
+    assert(n != NULL);
 
     return (QUIC_STREAM *)(((char *)n) - off);
 }
@@ -196,12 +203,12 @@ static void stream_map_mark_inactive(QUIC_STREAM_MAP *qsm, QUIC_STREAM *s)
     if (!s->active)
         return;
 
-    list_remove(&qsm->active_list, &s->active_node);
-
     if (qsm->rr_cur == s)
         qsm->rr_cur = active_next(&qsm->active_list, s);
     if (qsm->rr_cur == s)
         qsm->rr_cur = NULL;
+
+    list_remove(&qsm->active_list, &s->active_node);
 
     s->active = 0;
 }
@@ -252,7 +259,7 @@ static int qsm_ready_for_gc(QUIC_STREAM_MAP *qsm, QUIC_STREAM *qs)
     assert(!qs->deleted
            || qs->sstream == NULL
            || qs->reset_stream
-           || ossl_quic_sstream_get_final_size(qs, NULL));
+           || ossl_quic_sstream_get_final_size(qs->sstream, NULL));
 
     return
         qs->deleted
@@ -372,9 +379,12 @@ size_t ossl_quic_stream_map_get_accept_queue_len(QUIC_STREAM_MAP *qsm)
 
 void ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm)
 {
-    QUIC_STREAM *qs, *qsn;
+    QUIC_STREAM *qs, *qs_head, *qsn = NULL;
 
-    for (qs = ready_for_gc_head(&qsm->ready_for_gc_list); qs != NULL; qs = qsn) {
+    for (qs = qs_head = ready_for_gc_head(&qsm->ready_for_gc_list);
+         qs != NULL && qs != qs_head;
+         qs = qsn)
+    {
          qsn = ready_for_gc_next(&qsm->ready_for_gc_list, qs);
 
          ossl_quic_stream_map_release(qsm, qs);
