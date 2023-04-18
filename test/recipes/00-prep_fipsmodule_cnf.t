@@ -30,7 +30,7 @@ my $fipsmoduleconf = bldtop_file('test', 'fipsmodule.cnf');
 plan tests => 1;
 
 # Create the $fipsmoduleconf file
-ok(run(app(['openssl', 'fipsinstall',
+ok(run(app(['openssl', 'fipsinstall', '-pedantic',
             '-module', $fipsmodule, '-provider_name', 'fips',
             '-section_name', 'fips_sect', '-out', $fipsmoduleconf])),
    "fips install");
